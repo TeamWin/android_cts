@@ -1,6 +1,6 @@
 package android.server.am.lifecycle;
 
-import static android.support.test.runner.lifecycle.Stage.STOPPED;
+import static android.server.am.lifecycle.LifecycleLog.ActivityCallback.ON_STOP;
 
 import android.app.Activity;
 import android.content.Intent;
@@ -27,7 +27,7 @@ public class ActivityLifecycleKeyguardTests extends ActivityLifecycleClientTestB
                     .gotoKeyguard();
 
             final Activity activity = mFirstActivityTestRule.launchActivity(new Intent());
-            waitAndAssertActivityStates(state(activity, STOPPED));
+            waitAndAssertActivityStates(state(activity, ON_STOP));
 
             LifecycleVerifier.assertLaunchAndStopSequence(FirstActivity.class, getLifecycleLog());
         }

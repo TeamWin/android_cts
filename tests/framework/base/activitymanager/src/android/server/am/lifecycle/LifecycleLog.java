@@ -1,6 +1,13 @@
 package android.server.am.lifecycle;
 
 import static android.server.am.StateLogger.log;
+import static android.support.test.runner.lifecycle.Stage.CREATED;
+import static android.support.test.runner.lifecycle.Stage.DESTROYED;
+import static android.support.test.runner.lifecycle.Stage.PAUSED;
+import static android.support.test.runner.lifecycle.Stage.PRE_ON_CREATE;
+import static android.support.test.runner.lifecycle.Stage.RESUMED;
+import static android.support.test.runner.lifecycle.Stage.STARTED;
+import static android.support.test.runner.lifecycle.Stage.STOPPED;
 
 import android.app.Activity;
 import android.support.test.runner.lifecycle.ActivityLifecycleCallback;
@@ -15,7 +22,19 @@ import java.util.List;
  */
 class LifecycleLog implements ActivityLifecycleCallback {
 
-    private List<Pair<String, Stage>> mLog = new ArrayList<>();
+    enum ActivityCallback {
+        PRE_ON_CREATE,
+        ON_CREATE,
+        ON_START,
+        ON_RESUME,
+        ON_PAUSE,
+        ON_STOP,
+        ON_RESTART,
+        ON_DESTROY,
+        ON_ACTIVITY_RESULT
+    }
+
+    private List<Pair<String, ActivityCallback>> mLog = new ArrayList<>();
 
     /** Clear the entire transition log. */
     void clear() {
@@ -27,24 +46,55 @@ class LifecycleLog implements ActivityLifecycleCallback {
     public void onActivityLifecycleChanged(Activity activity, Stage stage) {
         final String activityName = activity.getClass().getCanonicalName();
         log("Activity " + activityName + " moved to stage " + stage);
-        mLog.add(new Pair<>(activityName, stage));
+        mLog.add(new Pair<>(activityName, stageToCallback(stage)));
+    }
+
+    /** Add activity callback to the log. */
+    public void onActivityCallback(Activity activity, ActivityCallback callback) {
+        final String activityName = activity.getClass().getCanonicalName();
+        log("Activity " + activityName + " got a callback " + callback);
+        mLog.add(new Pair<>(activityName, callback));
     }
 
     /** Get logs for all recorded transitions. */
-    List<Pair<String, Stage>> getLog() {
-        return mLog;
+    List<Pair<String, ActivityCallback>> getLog() {
+        // Wrap in a new list to prevent concurrent modification
+        return new ArrayList<>(mLog);
     }
 
     /** Get transition logs for the specified activity. */
-    List<Stage> getActivityLog(Class<? extends Activity> activityClass) {
+    List<ActivityCallback> getActivityLog(Class<? extends Activity> activityClass) {
         final String activityName = activityClass.getCanonicalName();
         log("Looking up log for activity: " + activityName);
-        final List<Stage> activityLog = new ArrayList<>();
-        for (Pair<String, Stage> transition : mLog) {
+        final List<ActivityCallback> activityLog = new ArrayList<>();
+        for (Pair<String, ActivityCallback> transition : mLog) {
             if (transition.first.equals(activityName)) {
                 activityLog.add(transition.second);
             }
         }
         return activityLog;
+    }
+
+    private static ActivityCallback stageToCallback(Stage stage) {
+        switch (stage) {
+            case PRE_ON_CREATE:
+                return ActivityCallback.PRE_ON_CREATE;
+            case CREATED:
+                return ActivityCallback.ON_CREATE;
+            case STARTED:
+                return ActivityCallback.ON_START;
+            case RESUMED:
+                return ActivityCallback.ON_RESUME;
+            case PAUSED:
+                return ActivityCallback.ON_PAUSE;
+            case STOPPED:
+                return ActivityCallback.ON_STOP;
+            case RESTARTED:
+                return ActivityCallback.ON_RESTART;
+            case DESTROYED:
+                return ActivityCallback.ON_DESTROY;
+            default:
+                throw new IllegalArgumentException("Unsupported stage: " + stage);
+        }
     }
 }
