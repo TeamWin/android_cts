@@ -67,6 +67,7 @@ class ActivityManagerState {
     private final List<ActivityStack> mStacks = new ArrayList<>();
     private KeyguardControllerState mKeyguardControllerState;
     private int mFocusedStackId = -1;
+    private boolean mIsHomeRecentsComponent = false;
     private String mResumedActivityRecord = null;
     private final List<String> mResumedActivities = new ArrayList<>();
 
@@ -157,8 +158,8 @@ class ActivityManagerState {
         if (state.resumedActivity != null) {
             mResumedActivityRecord = state.resumedActivity.title;
         }
+        mIsHomeRecentsComponent = state.isHomeRecentsComponent;
     }
-
 
     private void reset() {
         mDisplays.clear();
@@ -167,6 +168,13 @@ class ActivityManagerState {
         mResumedActivityRecord = null;
         mResumedActivities.clear();
         mKeyguardControllerState = null;
+    }
+
+    /**
+     * @return Whether the home activity is the recents component.
+     */
+    boolean isHomeRecentsComponent() {
+        return mIsHomeRecentsComponent;
     }
 
     ActivityDisplay getDisplay(int displayId) {
@@ -408,6 +416,11 @@ class ActivityManagerState {
             }
         }
         return -1;
+    }
+
+    boolean isHomeActivityVisible() {
+        final Activity homeActivity = getHomeActivity();
+        return homeActivity != null && homeActivity.visible;
     }
 
     boolean isRecentsActivityVisible() {

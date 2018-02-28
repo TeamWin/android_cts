@@ -30,6 +30,7 @@ import static android.server.am.Components.DOCKED_ACTIVITY;
 import static android.server.am.Components.LAUNCHING_ACTIVITY;
 import static android.server.am.Components.NON_RESIZEABLE_ACTIVITY;
 import static android.server.am.Components.NO_RELAUNCH_ACTIVITY;
+import static android.server.am.Components.RESIZEABLE_ACTIVITY;
 import static android.server.am.Components.SINGLE_INSTANCE_ACTIVITY;
 import static android.server.am.Components.SINGLE_TASK_ACTIVITY;
 import static android.server.am.Components.TEST_ACTIVITY;
@@ -67,10 +68,15 @@ public class ActivityManagerSplitScreenTests extends ActivityManagerTestBase {
     private static final int TASK_SIZE = 600;
     private static final int STACK_SIZE = 300;
 
+    private boolean mIsHomeRecentsComponent;
+
     @Before
     @Override
     public void setUp() throws Exception {
         super.setUp();
+
+        mAmWmState.getAmState().computeState();
+        mIsHomeRecentsComponent = mAmWmState.getAmState().isHomeRecentsComponent();
 
         assumeTrue("Skipping test: no split multi-window support",
                 supportsSplitScreenMultiWindow());
@@ -461,14 +467,17 @@ public class ActivityManagerSplitScreenTests extends ActivityManagerTestBase {
                 rotationSession.set(i);
                 launchActivityInDockStackAndMinimize(DOCKED_ACTIVITY);
 
-                // Unminimize the docked stack
-                pressAppSwitchButtonAndWaitForRecents();
-                waitForDockNotMinimized();
-                assertDockNotMinimized();
+                if (mIsHomeRecentsComponent) {
+                    launchActivity(TEST_ACTIVITY,
+                            WINDOWING_MODE_FULLSCREEN_OR_SPLIT_SCREEN_SECONDARY);
+                } else {
+                    // Unminimize the docked stack
+                    pressAppSwitchButtonAndWaitForRecents();
+                    waitForDockNotMinimized();
+                    assertDockNotMinimized();
+                }
 
                 // Dismiss the dock stack
-                launchActivity(TEST_ACTIVITY,
-                        WINDOWING_MODE_FULLSCREEN_OR_SPLIT_SCREEN_SECONDARY);
                 setActivityTaskWindowingMode(DOCKED_ACTIVITY,
                         WINDOWING_MODE_FULLSCREEN_OR_SPLIT_SCREEN_SECONDARY);
                 mAmWmState.computeState(DOCKED_ACTIVITY);
@@ -520,7 +529,12 @@ public class ActivityManagerSplitScreenTests extends ActivityManagerTestBase {
             mAmWmState.computeState(TEST_ACTIVITY);
 
             // Unminimized back to splitscreen
-            pressAppSwitchButtonAndWaitForRecents();
+            if (mIsHomeRecentsComponent) {
+                launchActivity(RESIZEABLE_ACTIVITY,
+                        WINDOWING_MODE_FULLSCREEN_OR_SPLIT_SCREEN_SECONDARY);
+            } else {
+                pressAppSwitchButtonAndWaitForRecents();
+            }
             mAmWmState.computeState(TEST_ACTIVITY);
         }
     }
