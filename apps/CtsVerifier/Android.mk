@@ -52,6 +52,7 @@ LOCAL_JAVA_LIBRARIES += bouncycastle
 LOCAL_JAVA_LIBRARIES += voip-common
 
 LOCAL_PACKAGE_NAME := CtsVerifier
+LOCAL_PRIVATE_PLATFORM_APIS := true
 
 LOCAL_JNI_SHARED_LIBRARIES := libctsverifier_jni \
 		libaudioloopback_jni \
