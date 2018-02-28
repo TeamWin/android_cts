@@ -203,6 +203,50 @@ public class CreateAndManageUserTest extends BaseDeviceOwnerTest {
         mContext.unregisterReceiver(receiver);
     }
 
+    public void testCreateAndManageUser() throws Exception {
+        String testUserName = "TestUser_" + System.currentTimeMillis();
+
+        UserHandle userHandle = mDevicePolicyManager.createAndManageUser(
+                getWho(),
+                testUserName,
+                getWho(),
+                null,
+                /* flags */ 0);
+        Log.d(TAG, "User create: " + userHandle);
+    }
+
+    public void testCreateAndManageUser_LowStorage() throws Exception {
+        String testUserName = "TestUser_" + System.currentTimeMillis();
+
+        try {
+            mDevicePolicyManager.createAndManageUser(
+                    getWho(),
+                    testUserName,
+                    getWho(),
+                    null,
+                /* flags */ 0);
+            fail("createAndManageUser should throw UserOperationException");
+        } catch (UserManager.UserOperationException e) {
+            assertEquals(UserManager.USER_OPERATION_ERROR_LOW_STORAGE, e.getUserOperationResult());
+        }
+    }
+
+    public void testCreateAndManageUser_MaxUsers() throws Exception {
+        String testUserName = "TestUser_" + System.currentTimeMillis();
+
+        try {
+            mDevicePolicyManager.createAndManageUser(
+                    getWho(),
+                    testUserName,
+                    getWho(),
+                    null,
+                /* flags */ 0);
+            fail("createAndManageUser should throw UserOperationException");
+        } catch (UserManager.UserOperationException e) {
+            assertEquals(UserManager.USER_OPERATION_ERROR_MAX_USERS, e.getUserOperationResult());
+        }
+    }
+
     public void testCreateAndManageUser_GetSecondaryUsers() throws Exception {
         String testUserName = "TestUser_" + System.currentTimeMillis();
 
@@ -264,7 +308,7 @@ public class CreateAndManageUserTest extends BaseDeviceOwnerTest {
         try {
             assertTrue(mDevicePolicyManager.switchUser(getWho(), userHandle));
             assertEquals(userHandle, broadcastReceiver.waitForBroadcastReceived());
-            assertEquals(DevicePolicyManager.USER_OPERATION_ERROR_CURRENT_USER,
+            assertEquals(UserManager.USER_OPERATION_ERROR_CURRENT_USER,
                     mDevicePolicyManager.stopUser(getWho(), userHandle));
         } finally {
             localBroadcastManager.unregisterReceiver(broadcastReceiver);
@@ -291,7 +335,7 @@ public class CreateAndManageUserTest extends BaseDeviceOwnerTest {
 
         try {
             // Start user in background and wait for onUserStarted
-            assertEquals(DevicePolicyManager.USER_OPERATION_SUCCESS,
+            assertEquals(UserManager.USER_OPERATION_SUCCESS,
                     mDevicePolicyManager.startUserInBackground(getWho(), userHandle));
             assertEquals(userHandle, broadcastReceiver.waitForBroadcastReceived());
         } finally {
@@ -311,7 +355,7 @@ public class CreateAndManageUserTest extends BaseDeviceOwnerTest {
         Log.d(TAG, "User create: " + userHandle);
 
         // Start user in background and should receive max running users error
-        assertEquals(DevicePolicyManager.USER_OPERATION_ERROR_MAX_RUNNING_USERS,
+        assertEquals(UserManager.USER_OPERATION_ERROR_MAX_RUNNING_USERS,
                 mDevicePolicyManager.startUserInBackground(getWho(), userHandle));
     }
 
@@ -328,7 +372,7 @@ public class CreateAndManageUserTest extends BaseDeviceOwnerTest {
                 null,
                 /* flags */ 0);
         Log.d(TAG, "User create: " + userHandle);
-        assertEquals(DevicePolicyManager.USER_OPERATION_SUCCESS,
+        assertEquals(UserManager.USER_OPERATION_SUCCESS,
                 mDevicePolicyManager.startUserInBackground(getWho(), userHandle));
 
         LocalBroadcastReceiver broadcastReceiver = new LocalBroadcastReceiver();
@@ -336,7 +380,7 @@ public class CreateAndManageUserTest extends BaseDeviceOwnerTest {
                 new IntentFilter(BasicAdminReceiver.ACTION_USER_STOPPED));
 
         try {
-            assertEquals(DevicePolicyManager.USER_OPERATION_SUCCESS,
+            assertEquals(UserManager.USER_OPERATION_SUCCESS,
                     mDevicePolicyManager.stopUser(getWho(), userHandle));
             assertEquals(userHandle, broadcastReceiver.waitForBroadcastReceived());
         } finally {
@@ -360,7 +404,7 @@ public class CreateAndManageUserTest extends BaseDeviceOwnerTest {
                 null,
                 DevicePolicyManager.MAKE_USER_EPHEMERAL);
         Log.d(TAG, "User create: " + userHandle);
-        assertEquals(DevicePolicyManager.USER_OPERATION_SUCCESS,
+        assertEquals(UserManager.USER_OPERATION_SUCCESS,
                 mDevicePolicyManager.startUserInBackground(getWho(), userHandle));
 
         LocalBroadcastReceiver broadcastReceiver = new LocalBroadcastReceiver();
@@ -368,7 +412,7 @@ public class CreateAndManageUserTest extends BaseDeviceOwnerTest {
                 new IntentFilter(BasicAdminReceiver.ACTION_USER_REMOVED));
 
         try {
-            assertEquals(DevicePolicyManager.USER_OPERATION_SUCCESS,
+            assertEquals(UserManager.USER_OPERATION_SUCCESS,
                     mDevicePolicyManager.stopUser(getWho(), userHandle));
             assertEquals(userHandle, broadcastReceiver.waitForBroadcastReceived());
         } finally {
@@ -381,7 +425,7 @@ public class CreateAndManageUserTest extends BaseDeviceOwnerTest {
     @SuppressWarnings("unused")
     private static void logoutUser(Context context, DevicePolicyManager devicePolicyManager,
             ComponentName componentName) {
-        assertEquals("cannot logout user", DevicePolicyManager.USER_OPERATION_SUCCESS,
+        assertEquals("cannot logout user", UserManager.USER_OPERATION_SUCCESS,
                 devicePolicyManager.logoutUser(componentName));
     }
 
@@ -471,7 +515,7 @@ public class CreateAndManageUserTest extends BaseDeviceOwnerTest {
                 bundle,
                 createAndManageUserFlags);
         Log.d(TAG, "User create: " + userHandle);
-        assertEquals(DevicePolicyManager.USER_OPERATION_SUCCESS,
+        assertEquals(UserManager.USER_OPERATION_SUCCESS,
                 mDevicePolicyManager.startUserInBackground(getWho(), userHandle));
 
         return userHandle;

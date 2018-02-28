@@ -237,6 +237,44 @@ public class DeviceOwnerTest extends BaseDevicePolicyTest {
         assertTrue("User must be ephemeral", 0 != (getUserFlags(userId) & FLAG_EPHEMERAL));
     }
 
+    public void testCreateAndManageUser_LowStorage() throws Exception {
+        if (!mHasCreateAndManageUserFeature) {
+            return;
+        }
+
+        try {
+            // Force low storage
+            getDevice().setSetting("global", "sys_storage_threshold_percentage", "100");
+            getDevice().setSetting("global", "sys_storage_threshold_max_bytes",
+                    String.valueOf(Long.MAX_VALUE));
+
+            // The next createAndManageUser should return USER_OPERATION_ERROR_LOW_STORAGE.
+            executeDeviceTestMethod(".CreateAndManageUserTest",
+                    "testCreateAndManageUser_LowStorage");
+        } finally {
+            getDevice().executeShellCommand(
+                    "settings delete global sys_storage_threshold_percentage");
+            getDevice().executeShellCommand(
+                    "settings delete global sys_storage_threshold_max_bytes");
+        }
+    }
+
+    public void testCreateAndManageUser_MaxUsers() throws Exception {
+        if (!mHasCreateAndManageUserFeature) {
+            return;
+        }
+
+        int maxUsers = getDevice().getMaxNumberOfUsersSupported();
+        // Primary user is already there, so we can create up to maxUsers -1.
+        for (int i = 0; i < maxUsers - 1; i++) {
+            executeDeviceTestMethod(".CreateAndManageUserTest",
+                    "testCreateAndManageUser");
+        }
+        // The next createAndManageUser should return USER_OPERATION_ERROR_MAX_USERS.
+        executeDeviceTestMethod(".CreateAndManageUserTest",
+                "testCreateAndManageUser_MaxUsers");
+    }
+
     /**
      * Test creating an user using the DevicePolicyManager's createAndManageUser.
      * {@link android.app.admin.DevicePolicyManager#getSecondaryUsers} is tested.
