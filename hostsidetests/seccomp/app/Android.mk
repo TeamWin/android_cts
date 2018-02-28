@@ -37,10 +37,6 @@ LOCAL_JNI_SHARED_LIBRARIES := \
           libctsseccomp_jni \
           libcts_jni \
           libnativehelper_compat_libc++ \
-          libnativehelper \
-          libcutils \
-          libc++ \
-          libpackagelistparser \
 
 LOCAL_SRC_FILES := $(call all-java-files-under, src)
 
