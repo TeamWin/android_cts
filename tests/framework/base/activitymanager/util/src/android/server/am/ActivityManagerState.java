@@ -22,7 +22,6 @@ import static android.app.WindowConfiguration.ACTIVITY_TYPE_RECENTS;
 import static android.app.WindowConfiguration.ACTIVITY_TYPE_STANDARD;
 import static android.app.WindowConfiguration.ACTIVITY_TYPE_UNDEFINED;
 import static android.app.WindowConfiguration.WINDOWING_MODE_UNDEFINED;
-import static android.server.am.ActivityManagerTestBase.getActivityComponentName;
 import static android.server.am.ComponentNameUtils.getActivityName;
 import static android.server.am.ProtoExtractors.extract;
 import static android.server.am.StateLogger.log;
@@ -31,6 +30,7 @@ import static android.server.am.StateLogger.logE;
 import android.content.ComponentName;
 import android.graphics.Rect;
 import android.os.ParcelFileDescriptor;
+import android.os.SystemClock;
 import android.support.test.InstrumentationRegistry;
 
 import com.android.server.am.proto.nano.ActivityDisplayProto;
@@ -67,6 +67,7 @@ class ActivityManagerState {
     private final List<ActivityStack> mStacks = new ArrayList<>();
     private KeyguardControllerState mKeyguardControllerState;
     private int mFocusedStackId = -1;
+    private boolean mIsHomeRecentsComponent = false;
     private String mResumedActivityRecord = null;
     private final List<String> mResumedActivities = new ArrayList<>();
 
@@ -89,12 +90,7 @@ class ActivityManagerState {
             if (retry) {
                 log("***Incomplete AM state. Retrying...");
                 // Wait half a second between retries for activity manager to finish transitioning.
-                try {
-                    Thread.sleep(500);
-                } catch (InterruptedException e) {
-                    log(e.toString());
-                    // Well I guess we are not waiting...
-                }
+                SystemClock.sleep(500);
             }
 
             String dumpsysCmd = "";
@@ -162,8 +158,8 @@ class ActivityManagerState {
         if (state.resumedActivity != null) {
             mResumedActivityRecord = state.resumedActivity.title;
         }
+        mIsHomeRecentsComponent = state.isHomeRecentsComponent;
     }
-
 
     private void reset() {
         mDisplays.clear();
@@ -172,6 +168,13 @@ class ActivityManagerState {
         mResumedActivityRecord = null;
         mResumedActivities.clear();
         mKeyguardControllerState = null;
+    }
+
+    /**
+     * @return Whether the home activity is the recents component.
+     */
+    boolean isHomeRecentsComponent() {
+        return mIsHomeRecentsComponent;
     }
 
     ActivityDisplay getDisplay(int displayId) {
@@ -331,16 +334,11 @@ class ActivityManagerState {
     }
 
     boolean containsActivity(ComponentName activityName) {
-        return containsActivity(getActivityName(activityName));
-    }
-
-    /** TODO(b/73349193): Use {@link #containsActivity(ComponentName)} instead. */
-    @Deprecated
-    boolean containsActivity(String fullActivityName) {
+        final String fullName = getActivityName(activityName);
         for (ActivityStack stack : mStacks) {
             for (ActivityTask task : stack.mTasks) {
                 for (Activity activity : task.mActivities) {
-                    if (activity.name.equals(fullActivityName)) {
+                    if (activity.name.equals(fullName)) {
                         return true;
                     }
                 }
@@ -349,8 +347,8 @@ class ActivityManagerState {
         return false;
     }
 
-    boolean containsActivityInWindowingMode(String activityName, int windowingMode) {
-        final String fullName = getActivityComponentName(activityName);
+    boolean containsActivityInWindowingMode(ComponentName activityName, int windowingMode) {
+        final String fullName = getActivityName(activityName);
         for (ActivityStack stack : mStacks) {
             for (ActivityTask task : stack.mTasks) {
                 for (Activity activity : task.mActivities) {
@@ -365,16 +363,11 @@ class ActivityManagerState {
     }
 
     boolean isActivityVisible(ComponentName activityName) {
-        return isActivityVisible(getActivityName(activityName));
-    }
-
-    /** TODO(b/73349193): Use {@link #isActivityVisible(ComponentName)} instead. */
-    @Deprecated
-    boolean isActivityVisible(String fullActivityName) {
+        final String fullName = getActivityName(activityName);
         for (ActivityStack stack : mStacks) {
             for (ActivityTask task : stack.mTasks) {
                 for (Activity activity : task.mActivities) {
-                    if (activity.name.equals(fullActivityName)) {
+                    if (activity.name.equals(fullName)) {
                         return activity.visible;
                     }
                 }
@@ -398,16 +391,7 @@ class ActivityManagerState {
     }
 
     boolean hasActivityState(ComponentName activityName, String activityState) {
-        return hasActivityStateInternal(getActivityName(activityName), activityState);
-    }
-
-    /** TODO(b/73349193): Use {@link #hasActivityState(ComponentName, String)} instead. */
-    @Deprecated
-    boolean hasActivityState(String activityName, String activityState) {
-        return hasActivityStateInternal(getActivityComponentName(activityName), activityState);
-    }
-
-    private boolean hasActivityStateInternal(String fullName, String activityState) {
+        final String fullName = getActivityName(activityName);
         for (ActivityStack stack : mStacks) {
             for (ActivityTask task : stack.mTasks) {
                 for (Activity activity : task.mActivities) {
@@ -432,6 +416,11 @@ class ActivityManagerState {
             }
         }
         return -1;
+    }
+
+    boolean isHomeActivityVisible() {
+        final Activity homeActivity = getHomeActivity();
+        return homeActivity != null && homeActivity.visible;
     }
 
     boolean isRecentsActivityVisible() {
@@ -475,27 +464,12 @@ class ActivityManagerState {
     }
 
     int getStackIdByActivity(ComponentName activityName) {
-        return getStackIdByActivityInternal(getTaskByActivity(activityName));
-    }
-
-    @Deprecated
-    int getStackIdByActivityName(String activityName) {
-        return getStackIdByActivityInternal(getTaskByActivityName(activityName));
-    }
-
-    private int getStackIdByActivityInternal(ActivityTask task) {
+        final ActivityTask task = getTaskByActivity(activityName);
         return  (task == null) ? INVALID_STACK_ID : task.mStackId;
     }
 
     ActivityTask getTaskByActivity(ComponentName activityName) {
         return getTaskByActivityInternal(getActivityName(activityName), WINDOWING_MODE_UNDEFINED);
-    }
-
-    /** TODO(b/73349193): Use {@link #getTaskByActivity(ComponentName)} instead. */
-    @Deprecated
-    ActivityTask getTaskByActivityName(String activityName) {
-        return getTaskByActivityInternal(
-                getActivityComponentName(activityName), WINDOWING_MODE_UNDEFINED);
     }
 
     ActivityTask getTaskByActivity(ComponentName activityName, int windowingMode) {

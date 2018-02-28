@@ -28,6 +28,7 @@ import android.app.KeyguardManager;
 import android.graphics.Point;
 import android.os.PowerManager;
 import android.os.RemoteException;
+import android.os.SystemClock;
 import android.support.test.InstrumentationRegistry;
 import android.support.test.uiautomator.UiDevice;
 import android.util.Log;
@@ -119,11 +120,7 @@ public class UiDeviceUtils {
                 return;
             }
             Log.d(TAG, msg + " retry=" + retry);
-            try {
-                Thread.sleep(50);
-            } catch (InterruptedException e) {
-                logE("Sleep interrupted: " + msg, e);
-            }
+            SystemClock.sleep(50);
         } while (retry++ < 5);
         if (!waitFor.getAsBoolean()) {
             logE(msg + " FAILED");

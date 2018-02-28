@@ -17,7 +17,8 @@ LOCAL_PATH := $(call my-dir)
 include $(CLEAR_VARS)
 
 LOCAL_PACKAGE_NAME := CtsSystemApiAnnotationTestCases
-
+LOCAL_SRC_FILES := $(call all-java-files-under,src)
+LOCAL_STATIC_JAVA_LIBRARIES := compatibility-device-util
 LOCAL_SIGNATURE_API_FILES := \
     system-current.api \
     system-removed.api \

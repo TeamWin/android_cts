@@ -26,6 +26,8 @@ import android.test.AndroidTestCase;
 import android.util.Log;
 import com.google.common.io.BaseEncoding;
 import java.util.Base64;
+import java.util.HashSet;
+import java.util.StringJoiner;
 import java.util.UUID;
 
 
@@ -35,9 +37,17 @@ import java.util.UUID;
  */
 public class MediaDrmMetricsTest extends AndroidTestCase {
     private static final String TAG = MediaDrmMetricsTest.class.getSimpleName();
-
     private static final UUID CLEARKEY_SCHEME_UUID =
             new UUID(0xe2719d58a985b3c9L, 0x781ab030af78d30eL);
+    private static final String GOOGLE_CLEARKEY_VENDOR_ID = "Google.ClearKey CDM";
+
+    private String dumpBundleKeys(PersistableBundle bundle) {
+      StringJoiner joiner = new StringJoiner(",");
+      for (String key : bundle.keySet()) {
+        joiner.add(key);
+      }
+      return joiner.toString();
+    }
 
     public void testGetMetricsEmpty() throws Exception {
         MediaDrm drm = new MediaDrm(CLEARKEY_SCHEME_UUID);
@@ -45,7 +55,10 @@ public class MediaDrmMetricsTest extends AndroidTestCase {
 
         PersistableBundle metrics = drm.getMetrics();
         assertNotNull(metrics);
-        assertTrue(metrics.isEmpty());
+
+        assertEquals(1, metrics.keySet().size());
+        // The clear key plugin metrics should be included.
+        assertTrue(metrics.keySet().contains(GOOGLE_CLEARKEY_VENDOR_ID));
         drm.close();
     }
 
@@ -57,23 +70,32 @@ public class MediaDrmMetricsTest extends AndroidTestCase {
         byte[] sid2 = drm.openSession();
         assertNotNull(sid2);
 
+        drm.closeSession(sid1);
+        drm.closeSession(sid2);
+
         PersistableBundle metrics = drm.getMetrics();
         assertNotNull(metrics);
-        assertEquals(3, metrics.keySet().size());
+        assertEquals(dumpBundleKeys(metrics), 5, metrics.keySet().size());
+        // The clear key plugin metrics should be included.
+        assertTrue(metrics.keySet().contains(GOOGLE_CLEARKEY_VENDOR_ID));
 
         assertEquals(2, metrics.getLong(
             MediaDrm.MetricsConstants.OPEN_SESSION_OK_COUNT, -1));
         assertEquals(-1, metrics.getLong(
             MediaDrm.MetricsConstants.OPEN_SESSION_ERROR_COUNT, -1));
+        assertEquals(2, metrics.getLong(
+            MediaDrm.MetricsConstants.CLOSE_SESSION_OK_COUNT, -1));
+        assertEquals(-1, metrics.getLong(
+            MediaDrm.MetricsConstants.CLOSE_SESSION_ERROR_COUNT, -1));
 
         PersistableBundle startTimesMs = metrics.getPersistableBundle(
             MediaDrm.MetricsConstants.SESSION_START_TIMES_MS);
         assertNotNull(startTimesMs);
         assertEquals(2, startTimesMs.keySet().size());
-        assertThat("Start times contain all session ids.",
+        assertThat("Start times contain all session ids. ",
             startTimesMs.keySet(), containsInAnyOrder(
-                BaseEncoding.base16().encode(sid1),
-                BaseEncoding.base16().encode(sid2)));
+                BaseEncoding.base16().encode(sid1).toLowerCase(),
+                BaseEncoding.base16().encode(sid2).toLowerCase()));
 
         PersistableBundle endTimesMs = metrics.getPersistableBundle(
             MediaDrm.MetricsConstants.SESSION_END_TIMES_MS);
@@ -81,9 +103,9 @@ public class MediaDrmMetricsTest extends AndroidTestCase {
         assertEquals(2, endTimesMs.keySet().size());
         assertThat("End times contain all session ids.",
             endTimesMs.keySet(), containsInAnyOrder(
-                BaseEncoding.base16().encode(sid1),
-                BaseEncoding.base16().encode(sid2)));
-        drm.close();
+                BaseEncoding.base16().encode(sid1).toLowerCase(),
+                BaseEncoding.base16().encode(sid2).toLowerCase()));
+       drm.close();
     }
 
     public void testGetMetricsGetKeyRequest() throws Exception {
@@ -104,7 +126,9 @@ public class MediaDrmMetricsTest extends AndroidTestCase {
         assertNotNull(metrics);
 
         // Verify the count of metric, operation counts and errors.
-        assertEquals(6, metrics.keySet().size());
+        assertEquals(7, metrics.keySet().size());
+        // The clear key plugin metrics should be included.
+        assertTrue(metrics.keySet().contains(GOOGLE_CLEARKEY_VENDOR_ID));
         assertEquals(1, metrics.getLong(
             MediaDrm.MetricsConstants.OPEN_SESSION_OK_COUNT, -1));
         assertEquals(1, metrics.getLong(
@@ -118,7 +142,7 @@ public class MediaDrmMetricsTest extends AndroidTestCase {
 
         // Verify the start and end time groups in the nested
         // PersistableBundles.
-        String hexSid = BaseEncoding.base16().encode(sid);
+        String hexSid = BaseEncoding.base16().encode(sid).toLowerCase();
         PersistableBundle startTimesMs = metrics.getPersistableBundle(
             MediaDrm.MetricsConstants.SESSION_START_TIMES_MS);
         assertNotNull(startTimesMs);

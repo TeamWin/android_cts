@@ -19,7 +19,6 @@ package android.app.uiautomation.cts;
 import android.accessibilityservice.AccessibilityServiceInfo;
 import android.app.Activity;
 import android.app.UiAutomation;
-import android.app.uiautomation.cts.R;
 import android.content.ContentResolver;
 import android.content.Context;
 import android.content.Intent;
@@ -121,7 +120,6 @@ public class UiAutomationTest extends InstrumentationTestCase {
         }
     }
 
-    @Presubmit
     public void testWindowContentFrameStatsNoAnimation() throws Exception {
         Activity activity = null;
         try {

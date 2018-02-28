@@ -18,6 +18,7 @@ package com.android.cts.verifier.audio.peripheralprofile;
 
 import android.os.Environment;
 import android.support.annotation.Nullable;
+import android.util.Log;
 import android.util.Xml;
 
 import org.xml.sax.Attributes;
@@ -40,6 +41,9 @@ import javax.xml.parsers.SAXParser;
 import javax.xml.parsers.SAXParserFactory;
 
 public class ProfileManager {
+    private static final String TAG = "ProfileManager";
+    private static final boolean DEBUG = false;
+
     private static final String mBuiltInprofiles =
         "<?xml version='1.0' encoding='UTF-8' standalone='yes' ?>" +
         "<ProfileList Version=\"1.0.0\">" +
@@ -55,8 +59,10 @@ public class ProfileManager {
                 "<OutputDevInfo ChanCounts=\"2\" ChanPosMasks=\"12\" ChanIndexMasks=\"3\" Encodings=\"4\" SampleRates=\"44100,48000\" />" +
                 "<InputDevInfo ChanCounts=\"1,2\" ChanPosMasks=\"12,16\" ChanIndexMasks=\"3\" Encodings=\"4\" SampleRates=\"44100,48000\" />" +
             "</PeripheralProfile>" +
-            "<PeripheralProfile ProfileName=\"mir\" ProfileDescription=\"Reference USB Dongle\" ProductName=\"USB-Audio - USB Audio\">" +
+            "<PeripheralProfile ProfileName=\"Pixel USB-C Dongle + Wired Analog Headset\" ProfileDescription=\"Reference USB Dongle\" ProductName=\"USB-Audio - USB-C to 3.5mm-Headphone Adapte\">" +
                 "<OutputDevInfo ChanCounts=\"2\" ChanPosMasks=\"12\" ChanIndexMasks=\"3\" Encodings=\"4\" SampleRates=\"48000\" />" +
+                "<InputDevInfo ChanCounts=\"1,2\" ChanPosMasks=\"12,16\" ChanIndexMasks=\"3\" Encodings=\"4\" SampleRates=\"48000\" />" +
+                "<ButtonInfo HasBtnA=\"1\" HasBtnB=\"1\" HasBtnC=\"1\" HasBtnD=\"1\" />" +
             "</PeripheralProfile>" +
         "</ProfileList>";
 

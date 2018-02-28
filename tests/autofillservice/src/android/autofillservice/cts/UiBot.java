@@ -19,7 +19,6 @@ package android.autofillservice.cts;
 import static android.autofillservice.cts.Timeouts.SAVE_NOT_SHOWN_NAPTIME_MS;
 import static android.autofillservice.cts.Timeouts.SAVE_TIMEOUT;
 import static android.autofillservice.cts.Timeouts.UI_DATASET_PICKER_TIMEOUT;
-import static android.autofillservice.cts.Timeouts.UI_RECENTS_SWITCH_TIMEOUT;
 import static android.autofillservice.cts.Timeouts.UI_SCREEN_ORIENTATION_TIMEOUT;
 import static android.autofillservice.cts.Timeouts.UI_TIMEOUT;
 import static android.service.autofill.SaveInfo.SAVE_DATA_TYPE_ADDRESS;
@@ -377,23 +376,6 @@ final class UiBot {
     void pressHome() {
         Log.d(TAG, "pressHome()");
         mDevice.pressHome();
-    }
-
-    /**
-     * Uses the Recents button to switch back to previous activity
-     */
-    void switchAppsUsingRecents() throws Exception {
-        Log.d(TAG, "switchAppsUsingRecents()");
-
-        // Press once to show list of apps...
-        mDevice.pressRecentApps();
-
-        // ...wait until apps are shown...
-        // TODO(b/37566627): figure out a way to wait for a specific UI instead.
-        SystemClock.sleep(UI_RECENTS_SWITCH_TIMEOUT.ms());
-
-        // ...press again to go back to the activity.
-        mDevice.pressRecentApps();
     }
 
     /**

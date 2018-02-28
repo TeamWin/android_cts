@@ -16,13 +16,9 @@
 
 package android.server.am;
 
-import static android.server.am.ComponentNameUtils.getWindowName;
 import static android.server.am.UiDeviceUtils.pressBackButton;
 import static android.server.am.deprecatedsdk.Components.MAIN_ACTIVITY;
 
-import static org.junit.Assert.assertTrue;
-
-import android.content.ComponentName;
 import android.support.test.runner.AndroidJUnit4;
 
 import org.junit.After;
@@ -55,8 +51,8 @@ public class DeprecatedTargetSdkTest extends ActivityManagerTestBase {
     public void testCompatibilityDialog() throws Exception {
         // Launch target app.
         launchActivity(MAIN_ACTIVITY);
-        assertActivityDisplayed(MAIN_ACTIVITY);
-        assertWindowDisplayed(DEPRECATED_TARGET_SDK_VERSION_DIALOG);
+        mAmWmState.assertActivityDisplayed(MAIN_ACTIVITY);
+        mAmWmState.assertWindowDisplayed(DEPRECATED_TARGET_SDK_VERSION_DIALOG);
 
         // Go back to dismiss the warning dialog.
         pressBackButton();
@@ -65,14 +61,5 @@ public class DeprecatedTargetSdkTest extends ActivityManagerTestBase {
         // resume rather than starting from scratch (as far as ActivityStack is concerned) and it
         // won't invoke the warning dialog.
         pressBackButton();
-    }
-
-    private void assertActivityDisplayed(final ComponentName activityName) throws Exception {
-        assertWindowDisplayed(getWindowName(activityName));
-    }
-
-    private void assertWindowDisplayed(final String windowName) throws Exception {
-        mAmWmState.waitForValidState(WaitForValidActivityState.forWindow(windowName));
-        assertTrue(windowName + "is visible", mAmWmState.getWmState().isWindowVisible(windowName));
     }
 }

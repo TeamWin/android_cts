@@ -36,8 +36,6 @@ include $(BUILD_SHARED_LIBRARY)
 include $(CLEAR_VARS)
 LOCAL_PACKAGE_NAME := CtsHiddenApiDiscoveryTestCases
 LOCAL_MODULE_PATH := $(TARGET_OUT_DATA_APPS)
-LOCAL_MULTILIB := both
 LOCAL_SIGNATURE_API_FILES := blacklist.api
 LOCAL_JNI_SHARED_LIBRARIES := libcts_hiddenapi
-LOCAL_NDK_STL_VARIANT := c++_static
 include $(LOCAL_PATH)/../build_signature_apk.mk

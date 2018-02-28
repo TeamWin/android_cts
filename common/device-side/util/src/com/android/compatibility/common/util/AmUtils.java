@@ -28,7 +28,7 @@ public class AmUtils {
 
     /** Run "adb shell am kill PACKAGE" */
     public static void runKill(String packageName) {
-        SystemUtil.runShellCommandForNoOutput("am kill " + packageName);
+        SystemUtil.runShellCommandForNoOutput("am kill --user cur " + packageName);
     }
 
     /** Run "adb shell am set-standby-bucket" */

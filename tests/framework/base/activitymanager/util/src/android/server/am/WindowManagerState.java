@@ -29,6 +29,7 @@ import static org.junit.Assert.fail;
 import android.content.res.Configuration;
 import android.graphics.Rect;
 import android.os.ParcelFileDescriptor;
+import android.os.SystemClock;
 import android.support.test.InstrumentationRegistry;
 import android.view.nano.DisplayInfoProto;
 
@@ -119,12 +120,7 @@ public class WindowManagerState {
             if (retry) {
                 log("***Incomplete WM state. Retrying...");
                 // Wait half a second between retries for window manager to finish transitioning...
-                try {
-                    Thread.sleep(500);
-                } catch (InterruptedException e) {
-                    log(e.toString());
-                    // Well I guess we are not waiting...
-                }
+                SystemClock.sleep(500);
             }
 
             dump = executeShellCommand(DUMPSYS_WINDOW);

@@ -51,6 +51,8 @@ import static android.server.am.ComponentNameUtils.getActivityName;
 import static android.server.am.ComponentNameUtils.getLogTag;
 import static android.server.am.ComponentNameUtils.getSimpleClassName;
 import static android.server.am.ComponentNameUtils.getWindowName;
+import static android.server.am.Components.LAUNCHING_ACTIVITY;
+import static android.server.am.Components.TEST_ACTIVITY;
 import static android.server.am.StateLogger.log;
 import static android.server.am.StateLogger.logAlways;
 import static android.server.am.StateLogger.logE;
@@ -130,9 +132,6 @@ public abstract class ActivityManagerTestBase {
     private static final String AM_MOVE_TOP_ACTIVITY_TO_PINNED_STACK_COMMAND_FORMAT =
             "am stack move-top-activity-to-pinned-stack %1d 0 0 500 500";
 
-    // TODO(b/73349193): Remove this.
-    static final String LAUNCHING_ACTIVITY_NAME = "LaunchingActivity";
-
     /** Broadcast shell command for finishing {@link BroadcastReceiverActivity}. */
     static final String FINISH_ACTIVITY_BROADCAST
             = "am broadcast -a trigger_broadcast --ez finish true";
@@ -152,26 +151,15 @@ public abstract class ActivityManagerTestBase {
 
     private static final int INVALID_DISPLAY_ID = Display.INVALID_DISPLAY;
 
-    private static final String DEFAULT_COMPONENT_NAME = "android.server.am";
-
     private static final int UI_MODE_TYPE_MASK = 0x0f;
     private static final int UI_MODE_TYPE_VR_HEADSET = 0x07;
 
     private static Boolean sHasHomeScreen = null;
 
-    // TODO(b/73349193): Remove this when all activity name are specified by {@link ComponentName}.
-    static String componentName = DEFAULT_COMPONENT_NAME;
-
     protected static final int INVALID_DEVICE_ROTATION = -1;
 
     protected Context mContext;
     protected ActivityManager mAm;
-
-    // TODO(b/73349193): Use {@link #getAmStartCmd(ComponentName, String...)} instead.
-    @Deprecated
-    protected static String getAmStartCmd(final String activityName) {
-        return "am start -n " + getActivityComponentName(activityName);
-    }
 
     /**
      * @return the am command to start the given activity with the following extra key/value pairs.
@@ -181,13 +169,6 @@ public abstract class ActivityManagerTestBase {
     protected static String getAmStartCmd(final ComponentName activityName,
             final String... keyValuePairs) {
         return getAmStartCmdInternal(getActivityName(activityName), keyValuePairs);
-    }
-
-    // TODO(b/73349193): Use {@link #getAmStartCmd(ComponentName, String...)} instead.
-    @Deprecated
-    protected static String getAmStartCmd(final String activityName,
-            final String... keyValuePairs) {
-        return getAmStartCmdInternal(getActivityComponentName(activityName), keyValuePairs);
     }
 
     private static String getAmStartCmdInternal(final String activityName,
@@ -218,14 +199,6 @@ public abstract class ActivityManagerTestBase {
         return getAmStartCmdInternal(getActivityName(activityName), displayId, keyValuePair);
     }
 
-    // TODO(b/73349193): Use {@link #getAmStartCmd(ComponentName, String...)} instead.
-    @Deprecated
-    protected static String getAmStartCmd(final String activityName, final int displayId,
-            final String... keyValuePair) {
-        return getAmStartCmdInternal(
-                getActivityComponentName(activityName), displayId, keyValuePair);
-    }
-
     private static String getAmStartCmdInternal(final String activityName, final int displayId,
             final String... keyValuePairs) {
         return appendKeyValuePairs(
@@ -242,12 +215,6 @@ public abstract class ActivityManagerTestBase {
         return "am start -n " + getActivityName(activityName) + " -f 0x18000000";
     }
 
-    /** TODO(b/73349193): Use {@link #getAmStartCmdInNewTask(ComponentName)} instead. */
-    @Deprecated
-    protected static String getAmStartCmdInNewTask(final String activityName) {
-        return "am start -n " + getActivityComponentName(activityName) + " -f 0x18000000";
-    }
-
     protected static String getAmStartCmdOverHome(final ComponentName activityName) {
         return "am start --activity-task-on-home -n " + getActivityName(activityName);
     }
@@ -258,46 +225,6 @@ public abstract class ActivityManagerTestBase {
 
     protected static String getOrientationBroadcast(int orientation) {
         return "am broadcast -a trigger_broadcast --ei orientation " + orientation;
-    }
-
-    // TODO(b/73349193): Remove this when all activity name are specified by {@link ComponentName}.
-    static String getActivityComponentName(final String activityName) {
-        return getActivityComponentName(componentName, activityName);
-    }
-
-    private static boolean isFullyQualifiedActivityName(String name) {
-        return name != null && name.contains(".");
-    }
-
-    static String getActivityComponentName(final String packageName, final String activityName) {
-        return packageName + "/" + (isFullyQualifiedActivityName(activityName) ? "" : ".") +
-                activityName;
-    }
-
-    // TODO(b/73349193): Remove this when all activity name are specified by {@link ComponentName}.
-    // A little ugly, but lets avoid having to strip static everywhere for
-    // now.
-    public static void setComponentName(String name) {
-        componentName = name;
-    }
-
-    protected static void setDefaultComponentName() {
-        setComponentName(DEFAULT_COMPONENT_NAME);
-    }
-
-    private static String getBaseWindowName(final String packageName, boolean prependPackageName) {
-        return packageName + "/" + (prependPackageName ? packageName + "." : "");
-    }
-
-    // TODO(b/73349193): Remove this when all activity name are specified by {@link ComponentName}.
-    static String getActivityWindowName(final String activityName) {
-        return getActivityWindowName(componentName, activityName);
-    }
-
-    // TODO(b/73349193): Remove this when all activity name are specified by {@link ComponentName}.
-    static String getActivityWindowName(final String packageName, final String activityName) {
-        return getBaseWindowName(packageName, !isFullyQualifiedActivityName(activityName))
-                + activityName;
     }
 
     protected ActivityAndWindowManagersState mAmWmState = new ActivityAndWindowManagersState();
@@ -328,7 +255,6 @@ public abstract class ActivityManagerTestBase {
     public void setUp() throws Exception {
         mContext = InstrumentationRegistry.getContext();
         mAm = mContext.getSystemService(ActivityManager.class);
-        setDefaultComponentName();
         executeShellCommand("pm grant " + mContext.getPackageName()
                 + " android.permission.MANAGE_ACTIVITY_STACKS");
         executeShellCommand("pm grant " + mContext.getPackageName()
@@ -384,30 +310,21 @@ public abstract class ActivityManagerTestBase {
         fis.close();
     }
 
-    protected Bitmap takeScreenshot() throws Exception {
+    protected Bitmap takeScreenshot() {
         return InstrumentationRegistry.getInstrumentation().getUiAutomation().takeScreenshot();
     }
 
-    protected void launchActivity(final ComponentName activityName, final String... keyValuePairs)
-            throws Exception {
+    protected void launchActivity(final ComponentName activityName, final String... keyValuePairs) {
         executeShellCommand(getAmStartCmd(activityName, keyValuePairs));
         mAmWmState.waitForValidState(new WaitForValidActivityState(activityName));
     }
 
-    // TODO(b/73349193): Use {@link #launchActivity(ComponentName, String...)} instead.
-    @Deprecated
-    protected void launchActivity(final String targetActivityName, final String... keyValuePairs)
-            throws Exception {
-        executeShellCommand(getAmStartCmd(targetActivityName, keyValuePairs));
-        mAmWmState.waitForValidState(targetActivityName);
-    }
-
     protected void launchActivityNoWait(final ComponentName targetActivityName,
-            final String... keyValuePairs) throws Exception {
+            final String... keyValuePairs) {
         executeShellCommand(getAmStartCmd(targetActivityName, keyValuePairs));
     }
 
-    protected void launchActivityInNewTask(final ComponentName activityName) throws Exception {
+    protected void launchActivityInNewTask(final ComponentName activityName) {
         executeShellCommand(getAmStartCmdInNewTask(activityName));
         mAmWmState.waitForValidState(activityName);
     }
@@ -417,10 +334,10 @@ public abstract class ActivityManagerTestBase {
      * @return the stack id of the newly created stack.
      */
     @Deprecated
-    protected int launchActivityInNewDynamicStack(final String activityName) throws Exception {
+    protected int launchActivityInNewDynamicStack(ComponentName activityName) {
         HashSet<Integer> stackIds = getStackIds();
         executeShellCommand("am stack start " + ActivityAndWindowManagersState.DEFAULT_DISPLAY_ID
-                + " " + getActivityComponentName(activityName));
+                + " " + getActivityName(activityName));
         HashSet<Integer> newStackIds = getStackIds();
         newStackIds.removeAll(stackIds);
         if (newStackIds.isEmpty()) {
@@ -436,7 +353,7 @@ public abstract class ActivityManagerTestBase {
     }
 
     /** Returns the set of stack ids. */
-    private HashSet<Integer> getStackIds() throws Exception {
+    private HashSet<Integer> getStackIds() {
         mAmWmState.computeState(true);
         final List<ActivityManagerState.ActivityStack> stacks = mAmWmState.getAmState().getStacks();
         final HashSet<Integer> stackIds = new HashSet<>();
@@ -446,25 +363,13 @@ public abstract class ActivityManagerTestBase {
         return stackIds;
     }
 
-    protected void launchHomeActivity()
-            throws Exception {
+    protected void launchHomeActivity() {
         executeShellCommand(AM_START_HOME_ACTIVITY_COMMAND);
         mAmWmState.waitForHomeActivityVisible();
     }
 
     protected void launchActivity(ComponentName activityName, int windowingMode,
-            final String... keyValuePairs) throws Exception {
-        executeShellCommand(getAmStartCmd(activityName, keyValuePairs)
-                + " --windowingMode " + windowingMode);
-        mAmWmState.waitForValidState(new WaitForValidActivityState.Builder(activityName)
-                .setWindowingMode(windowingMode)
-                .build());
-    }
-
-    // TODO(b/73349193): Use {@link #launchActivity(ComponentName, int, String...)} instead.
-    @Deprecated
-    protected void launchActivity(String activityName, int windowingMode,
-            final String... keyValuePairs) throws Exception {
+            final String... keyValuePairs) {
         executeShellCommand(getAmStartCmd(activityName, keyValuePairs)
                 + " --windowingMode " + windowingMode);
         mAmWmState.waitForValidState(new WaitForValidActivityState.Builder(activityName)
@@ -473,32 +378,22 @@ public abstract class ActivityManagerTestBase {
     }
 
     protected void launchActivityOnDisplay(ComponentName targetActivityName, int displayId,
-            String... keyValuePairs) throws Exception {
+            String... keyValuePairs) {
         executeShellCommand(getAmStartCmd(targetActivityName, displayId, keyValuePairs));
 
         mAmWmState.waitForValidState(new WaitForValidActivityState(targetActivityName));
-    }
-
-    // TODO(b/73349193): Use {@link #launchActivityOnDisplay(ComponentName, int, String...)}
-    @Deprecated
-    protected void launchActivityOnDisplay(String targetActivityName, int displayId,
-            String... keyValuePairs) throws Exception {
-        executeShellCommand(getAmStartCmd(targetActivityName, displayId, keyValuePairs));
-
-        mAmWmState.waitForValidState(targetActivityName);
     }
 
     /**
      * Launches {@param  activityName} into split-screen primary windowing mode and also makes
      * the recents activity visible to the side of it.
      */
-    protected void launchActivityInSplitScreenWithRecents(
-            ComponentName activityName) throws Exception {
+    protected void launchActivityInSplitScreenWithRecents(ComponentName activityName) {
         launchActivityInSplitScreenWithRecents(activityName, SPLIT_SCREEN_CREATE_MODE_TOP_OR_LEFT);
     }
 
-    protected void launchActivityInSplitScreenWithRecents(
-            ComponentName activityName, int createMode) throws Exception {
+    protected void launchActivityInSplitScreenWithRecents(ComponentName activityName,
+            int createMode) {
         launchActivity(activityName);
         final int taskId = mAmWmState.getAmState().getTaskByActivity(activityName).mTaskId;
         mAm.setTaskWindowingModeSplitScreenPrimary(taskId, createMode, true /* onTop */,
@@ -517,15 +412,15 @@ public abstract class ActivityManagerTestBase {
      * and {@param secondaryActivity} to the side in split-screen secondary windowing mode.
      */
     protected void launchActivitiesInSplitScreen(LaunchActivityBuilder primaryActivity,
-            LaunchActivityBuilder secondaryActivity) throws Exception {
+            LaunchActivityBuilder secondaryActivity) {
         // Launch split-screen primary.
         primaryActivity
                 .setUseInstrumentation()
                 .setWaitForLaunched(true)
                 .execute();
 
-        final int taskId = mAmWmState.getAmState().getTaskByActivityName(
-                primaryActivity.mTargetActivityName).mTaskId;
+        final int taskId = mAmWmState.getAmState().getTaskByActivity(
+                primaryActivity.mTargetActivity).mTaskId;
         mAm.setTaskWindowingModeSplitScreenPrimary(taskId, SPLIT_SCREEN_CREATE_MODE_TOP_OR_LEFT,
                 true /* onTop */, false /* animate */, null /* initialBounds */,
                 true /* showRecents */);
@@ -541,8 +436,7 @@ public abstract class ActivityManagerTestBase {
                 .execute();
     }
 
-    protected void setActivityTaskWindowingMode(final ComponentName activityName,
-            final int windowingMode) throws Exception {
+    protected void setActivityTaskWindowingMode(ComponentName activityName, int windowingMode) {
         final int taskId = getActivityTaskId(activityName);
         mAm.setTaskWindowingMode(taskId, windowingMode, true /* toTop */);
         mAmWmState.waitForValidState(new WaitForValidActivityState.Builder(activityName)
@@ -551,16 +445,7 @@ public abstract class ActivityManagerTestBase {
                 .build());
     }
 
-    // TODO(b/73349193): Use {@link #setActivityTaskWindowingMode(ComponentName, int)} instead.
-    @Deprecated
-    protected void setActivityTaskWindowingMode(String activityName, int windowingMode)
-            throws Exception {
-        final int taskId = getActivityTaskId(activityName);
-        mAm.setTaskWindowingMode(taskId, windowingMode, true /* toTop */);
-        mAmWmState.waitForValidState(activityName, windowingMode, ACTIVITY_TYPE_STANDARD);
-    }
-
-    protected void moveActivityToStack(ComponentName activityName, int stackId) throws Exception {
+    protected void moveActivityToStack(ComponentName activityName, int stackId) {
         final int taskId = getActivityTaskId(activityName);
         final String cmd = AM_MOVE_TASK + taskId + " " + stackId + " true";
         executeShellCommand(cmd);
@@ -571,13 +456,8 @@ public abstract class ActivityManagerTestBase {
     }
 
     protected void resizeActivityTask(
-            ComponentName activityName, int left, int top, int right, int bottom)
-            throws Exception {
-        resizeActivityTask(getActivityTaskId(activityName), left, top, right, bottom);
-    }
-
-    private void resizeActivityTask(int taskId, int left, int top, int right, int bottom)
-            throws Exception {
+            ComponentName activityName, int left, int top, int right, int bottom) {
+        final int taskId = getActivityTaskId(activityName);
         final String cmd = "am task resize "
                 + taskId + " " + left + " " + top + " " + right + " " + bottom;
         executeShellCommand(cmd);
@@ -596,7 +476,7 @@ public abstract class ActivityManagerTestBase {
                 stackTop, stackWidth, stackHeight));
     }
 
-    protected void pressAppSwitchButtonAndWaitForRecents() throws Exception {
+    protected void pressAppSwitchButtonAndWaitForRecents() {
         pressAppSwitchButton();
         mAmWmState.waitForRecentsActivityVisible();
         mAmWmState.waitForAppTransitionIdle();
@@ -612,17 +492,7 @@ public abstract class ActivityManagerTestBase {
 
     @Deprecated
     protected int getActivityTaskId(final ComponentName activityName) {
-        return getWindowTaskId(getWindowName(activityName));
-    }
-
-    // TODO(b/73349193): Use {@link #getActivityTaskId(ComponentName)} instead.
-    @Deprecated
-    protected int getActivityTaskId(final String activityName) {
-        return getWindowTaskId(getActivityWindowName(activityName));
-    }
-
-    @Deprecated
-    private int getWindowTaskId(final String windowName) {
+        final String windowName = getWindowName(activityName);
         final String output = executeShellCommand(AM_STACK_LIST);
         final Pattern activityPattern = Pattern.compile("(.*) " + windowName + " (.*)");
         for (final String line : output.split("\\n")) {
@@ -792,7 +662,7 @@ public abstract class ActivityManagerTestBase {
             return this;
         }
 
-        public LockScreenSession enterAndConfirmLockCredential() throws Exception {
+        public LockScreenSession enterAndConfirmLockCredential() {
             waitForDeviceIdle(3000);
 
             runCommandAndPrintOutput("input text " + LOCK_CREDENTIAL);
@@ -829,7 +699,7 @@ public abstract class ActivityManagerTestBase {
             return this;
         }
 
-        public LockScreenSession gotoKeyguard() throws Exception {
+        public LockScreenSession gotoKeyguard() {
             if (DEBUG && isLockDisabled()) {
                 logE("LockScreenSession.gotoKeygurad() is called without lock enabled.");
             }
@@ -1013,7 +883,7 @@ public abstract class ActivityManagerTestBase {
     }
 
     private static class ActivityLifecycleCountsValidator extends RetryValidator {
-        private final String mActivityName;
+        private final ComponentName mActivityName;
         private final LogSeparator mLogSeparator;
         private final int mCreateCount;
         private final int mStartCount;
@@ -1022,7 +892,7 @@ public abstract class ActivityManagerTestBase {
         private final int mStopCount;
         private final int mDestroyCount;
 
-        ActivityLifecycleCountsValidator(String activityName, LogSeparator logSeparator,
+        ActivityLifecycleCountsValidator(ComponentName activityName, LogSeparator logSeparator,
                 int createCount, int startCount, int resumeCount, int pauseCount, int stopCount,
                 int destroyCount) {
             mActivityName = activityName;
@@ -1052,7 +922,7 @@ public abstract class ActivityManagerTestBase {
                     mPauseCount, mStopCount, mDestroyCount)
                     .mapToObj(Integer::toString)
                     .collect(Collectors.joining("/"));
-            return mActivityName + " lifecycle count mismatched:"
+            return getActivityName(mActivityName) + " lifecycle count mismatched:"
                     + " expected=" + expected
                     + " actual=" + lifecycleCounts.counters();
         }
@@ -1060,14 +930,14 @@ public abstract class ActivityManagerTestBase {
 
     void assertActivityLifecycle(ComponentName activityName, boolean relaunched,
             LogSeparator logSeparator) {
-        final String logTag = getLogTag(activityName);
         new RetryValidator() {
 
             @Nullable
             @Override
             protected String validate() {
                 final ActivityLifecycleCounts lifecycleCounts =
-                        new ActivityLifecycleCounts(logTag, logSeparator);
+                        new ActivityLifecycleCounts(activityName, logSeparator);
+                final String logTag = getLogTag(activityName);
                 if (relaunched) {
                     if (lifecycleCounts.mDestroyCount < 1) {
                         return logTag + " must have been destroyed. mDestroyCount="
@@ -1099,14 +969,14 @@ public abstract class ActivityManagerTestBase {
 
     protected void assertRelaunchOrConfigChanged(ComponentName activityName, int numRelaunch,
             int numConfigChange, LogSeparator logSeparator) {
-        final String logTag = getLogTag(activityName);
         new RetryValidator() {
 
             @Nullable
             @Override
             protected String validate() {
                 final ActivityLifecycleCounts lifecycleCounts =
-                        new ActivityLifecycleCounts(logTag, logSeparator);
+                        new ActivityLifecycleCounts(activityName, logSeparator);
+                final String logTag = getLogTag(activityName);
                 if (lifecycleCounts.mDestroyCount != numRelaunch) {
                     return logTag + " has been destroyed " + lifecycleCounts.mDestroyCount
                             + " time(s), expecting " + numRelaunch;
@@ -1131,19 +1001,17 @@ public abstract class ActivityManagerTestBase {
             protected String validate() {
                 final ActivityLifecycleCounts lifecycleCounts =
                         new ActivityLifecycleCounts(activityName, logSeparator);
-
+                final String logTag = getLogTag(activityName);
                 if (lifecycleCounts.mDestroyCount != 1) {
-                    return getActivityName(activityName) + " has been destroyed "
-                            + lifecycleCounts.mDestroyCount
+                    return logTag + " has been destroyed " + lifecycleCounts.mDestroyCount
                             + " time(s), expecting single destruction.";
                 }
                 if (lifecycleCounts.mCreateCount != 0) {
-                    return getActivityName(activityName) + " has been (re)created "
-                            + lifecycleCounts.mCreateCount + " time(s), not expecting any.";
+                    return logTag + " has been (re)created " + lifecycleCounts.mCreateCount
+                            + " time(s), not expecting any.";
                 }
                 if (lifecycleCounts.mConfigurationChangedCount != 0) {
-                    return getActivityName(activityName) + " has received "
-                            + lifecycleCounts.mConfigurationChangedCount
+                    return logTag + " has received " + lifecycleCounts.mConfigurationChangedCount
                             + " onConfigurationChanged() calls, not expecting any.";
                 }
                 return null;
@@ -1152,48 +1020,30 @@ public abstract class ActivityManagerTestBase {
     }
 
     void assertSingleLaunch(ComponentName activityName, LogSeparator logSeparator) {
-        assertSingleLaunch(getLogTag(activityName), logSeparator);
-    }
-
-    // TODO(b/73349193): Use {@link #assertSingleLaunch(ComponentName, LogSeparator)} instead.
-    @Deprecated
-    void assertSingleLaunch(String logTag, LogSeparator logSeparator) {
-        new ActivityLifecycleCountsValidator(logTag, logSeparator, 1 /* createCount */,
+        new ActivityLifecycleCountsValidator(activityName, logSeparator, 1 /* createCount */,
                 1 /* startCount */, 1 /* resumeCount */, 0 /* pauseCount */, 0 /* stopCount */,
                 0 /* destroyCount */)
                 .assertValidator("***Waiting for activity create, start, and resume");
     }
 
     void assertSingleLaunchAndStop(ComponentName activityName, LogSeparator logSeparator) {
-        assertSingleLaunchAndStop(getLogTag(activityName), logSeparator);
-    }
-
-    // TODO(b/73349193): Use {@link #assertSingleLaunchAndStop(ComponentName, LogSeparator)}.
-    @Deprecated
-    void assertSingleLaunchAndStop(String logTag, LogSeparator logSeparator) {
-        new ActivityLifecycleCountsValidator(logTag, logSeparator, 1 /* createCount */,
+        new ActivityLifecycleCountsValidator(activityName, logSeparator, 1 /* createCount */,
                 1 /* startCount */, 1 /* resumeCount */, 1 /* pauseCount */, 1 /* stopCount */,
                 0 /* destroyCount */)
                 .assertValidator("***Waiting for activity create, start, resume, pause, and stop");
     }
 
     void assertSingleStartAndStop(ComponentName activityName, LogSeparator logSeparator) {
-        assertSingleStartAndStop(getLogTag(activityName), logSeparator);
-    }
-
-    // TODO(b/73349193): Use {@link #assertSingleStartAndStop(ComponentName, LogSeparator)}.
-    @Deprecated
-    void assertSingleStartAndStop(String logTag, LogSeparator logSeparator) {
-        new ActivityLifecycleCountsValidator(logTag, logSeparator, 0 /* createCount */,
+        new ActivityLifecycleCountsValidator(activityName, logSeparator, 0 /* createCount */,
                 1 /* startCount */, 1 /* resumeCount */, 1 /* pauseCount */, 1 /* stopCount */,
                 0 /* destroyCount */)
                 .assertValidator("***Waiting for activity start, resume, pause, and stop");
     }
 
     void assertSingleStart(ComponentName activityName, LogSeparator logSeparator) {
-        new ActivityLifecycleCountsValidator(getLogTag(activityName), logSeparator,
-                0 /* createCount */, 1 /* startCount */, 1 /* resumeCount */, 0 /* pauseCount */,
-                0 /* stopCount */, 0 /* destroyCount */)
+        new ActivityLifecycleCountsValidator(activityName, logSeparator, 0 /* createCount */,
+                1 /* startCount */, 1 /* resumeCount */, 0 /* pauseCount */, 0 /* stopCount */,
+                0 /* destroyCount */)
                 .assertValidator("***Waiting for activity start and resume");
     }
 
@@ -1264,22 +1114,16 @@ public abstract class ActivityManagerTestBase {
     @Nullable
     ReportedSizes getLastReportedSizesForActivity(
             ComponentName activityName, LogSeparator logSeparator) {
-        return getLastReportedSizesForActivity(getLogTag(activityName), logSeparator);
-    }
-
-    // TODO(b/73349193): Use {@link #getLastReportedSizesForActivity(ComponentName, LogSeparator)}.
-    @Deprecated
-    @Nullable
-    ReportedSizes getLastReportedSizesForActivity(String activityName, LogSeparator logSeparator) {
+        final String logTag = getLogTag(activityName);
         for (int retry = 1; retry <= 5; retry++ ) {
-            final ReportedSizes result = readLastReportedSizes(logSeparator, activityName);
+            final ReportedSizes result = readLastReportedSizes(logSeparator, logTag);
             if (result != null) {
                 return result;
             }
             logAlways("***Waiting for sizes to be reported... retry=" + retry);
             SystemClock.sleep(1000);
         }
-        logE("***Waiting for activity size failed: activityName=" + activityName);
+        logE("***Waiting for activity size failed: activityName=" + logTag);
         return null;
     }
 
@@ -1341,15 +1185,9 @@ public abstract class ActivityManagerTestBase {
         int mDestroyCount;
 
         ActivityLifecycleCounts(ComponentName componentName, LogSeparator logSeparator) {
-            this(getLogTag(componentName), logSeparator);
-        }
-
-        // TODO(b/73349193): Use {@link ActivityLifecycleCounts(ComponentName, LogSeparator)}.
-        @Deprecated
-        ActivityLifecycleCounts(String logTag, LogSeparator logSeparator) {
             int lineIndex = 0;
             waitForIdle();
-            for (String line : getDeviceLogsForComponents(logSeparator, logTag)) {
+            for (String line : getDeviceLogsForComponents(logSeparator, getLogTag(componentName))) {
                 line = line.trim();
                 lineIndex++;
 
@@ -1433,7 +1271,7 @@ public abstract class ActivityManagerTestBase {
         }
     }
 
-    protected void stopTestPackage(final ComponentName activityName) throws Exception {
+    protected void stopTestPackage(final ComponentName activityName) {
         executeShellCommand("am force-stop " + activityName.getPackageName());
     }
 
@@ -1444,12 +1282,8 @@ public abstract class ActivityManagerTestBase {
     protected static class LaunchActivityBuilder {
         private final ActivityAndWindowManagersState mAmWmState;
 
-        // The component to be launched
-        private ComponentName mComponent;
-
         // The activity to be launched
-        private String mTargetActivityName = "TestActivity";
-        private String mTargetPackage = componentName;
+        private ComponentName mTargetActivity = TEST_ACTIVITY;
         private boolean mUseApplicationContext;
         private boolean mToSide;
         private boolean mRandomData;
@@ -1457,14 +1291,13 @@ public abstract class ActivityManagerTestBase {
         private boolean mMultipleTask;
         private int mDisplayId = INVALID_DISPLAY_ID;
         // A proxy activity that launches other activities including mTargetActivityName
-        private String mLaunchingActivityName = LAUNCHING_ACTIVITY_NAME;
-        private ComponentName mLaunchingActivity;
+        private ComponentName mLaunchingActivity = LAUNCHING_ACTIVITY;
         private boolean mReorderToFront;
         private boolean mWaitForLaunched;
         private boolean mSuppressExceptions;
         // Use of the following variables indicates that a broadcast receiver should be used instead
         // of a launching activity;
-        private String mBroadcastReceiverPackage;
+        private ComponentName mBroadcastReceiver;
         private String mBroadcastReceiverAction;
 
         private enum LauncherType {
@@ -1507,18 +1340,8 @@ public abstract class ActivityManagerTestBase {
             return this;
         }
 
-        public LaunchActivityBuilder setTargetActivity(ComponentName activity) {
-            mComponent = activity;
-
-            mTargetActivityName = getSimpleClassName(activity);
-            mTargetPackage = activity.getPackageName();
-            return this;
-        }
-
-        // TODO(b/73349193): Use {@link #setTargetActivity(ComponentName)} instead.
-        @Deprecated
-        public LaunchActivityBuilder setTargetActivityName(String name) {
-            mTargetActivityName = name;
+        public LaunchActivityBuilder setTargetActivity(ComponentName targetActivity) {
+            mTargetActivity = targetActivity;
             return this;
         }
 
@@ -1527,16 +1350,8 @@ public abstract class ActivityManagerTestBase {
             return this;
         }
 
-        // TODO(b/73349193): Use {@link #setLaunchingActivity(ComponentName)} instead.
-        @Deprecated
-        public LaunchActivityBuilder setLaunchingActivityName(String name) {
-            mLaunchingActivityName = name;
-            mLauncherType = LauncherType.LAUNCHING_ACTIVITY;
-            return this;
-        }
-
-        public LaunchActivityBuilder setLaunchingActivity(ComponentName component) {
-            mLaunchingActivity = component;
+        public LaunchActivityBuilder setLaunchingActivity(ComponentName launchingActivity) {
+            mLaunchingActivity = launchingActivity;
             mLauncherType = LauncherType.LAUNCHING_ACTIVITY;
             return this;
         }
@@ -1549,7 +1364,7 @@ public abstract class ActivityManagerTestBase {
         /** Use broadcast receiver as a launchpad for activities. */
         public LaunchActivityBuilder setUseBroadcastReceiver(final ComponentName broadcastReceiver,
                 final String broadcastAction) {
-            mBroadcastReceiverPackage = broadcastReceiver.getPackageName();
+            mBroadcastReceiver = broadcastReceiver;
             mBroadcastReceiverAction = broadcastAction;
             mLauncherType = LauncherType.BROADCAST_RECEIVER;
             return this;
@@ -1569,7 +1384,7 @@ public abstract class ActivityManagerTestBase {
             return this;
         }
 
-        public void execute() throws Exception {
+        public void execute() {
             switch (mLauncherType) {
                 case INSTRUMENTATION:
                     launchUsingInstrumentation();
@@ -1580,8 +1395,7 @@ public abstract class ActivityManagerTestBase {
             }
 
             if (mWaitForLaunched) {
-                mAmWmState.waitForValidState(false /* compareTaskAndStackBounds */, mTargetPackage,
-                        new WaitForValidActivityState.Builder(mTargetActivityName).build());
+                mAmWmState.waitForValidState(mTargetActivity);
             }
         }
 
@@ -1595,12 +1409,11 @@ public abstract class ActivityManagerTestBase {
             b.putBoolean(KEY_NEW_TASK, mNewTask);
             b.putBoolean(KEY_MULTIPLE_TASK, mMultipleTask);
             b.putBoolean(KEY_REORDER_TO_FRONT, mReorderToFront);
-            b.putString(KEY_TARGET_ACTIVITY, mTargetActivityName);
-            b.putString(KEY_TARGET_PACKAGE, mTargetPackage);
+            b.putString(KEY_TARGET_ACTIVITY, getSimpleClassName(mTargetActivity));
+            b.putString(KEY_TARGET_PACKAGE, mTargetActivity.getPackageName());
             b.putInt(KEY_DISPLAY_ID, mDisplayId);
             b.putBoolean(KEY_USE_APPLICATION_CONTEXT, mUseApplicationContext);
-            b.putString(KEY_TARGET_COMPONENT, mComponent != null ? getActivityName(mComponent)
-                    : null);
+            b.putString(KEY_TARGET_COMPONENT, getActivityName(mTargetActivity));
             b.putBoolean(KEY_SUPPRESS_EXCEPTIONS, mSuppressExceptions);
             final Context context = InstrumentationRegistry.getContext();
             launchActivityFromExtras(context, b);
@@ -1609,20 +1422,16 @@ public abstract class ActivityManagerTestBase {
         /** Build and execute a shell command to launch an activity. */
         private void launchUsingShellCommand() {
             StringBuilder commandBuilder = new StringBuilder();
-            if (mBroadcastReceiverPackage != null && mBroadcastReceiverAction != null) {
+            if (mBroadcastReceiver != null && mBroadcastReceiverAction != null) {
                 // Use broadcast receiver to launch the target.
-                commandBuilder.append("am broadcast -a ").append(mBroadcastReceiverAction);
-                commandBuilder.append(" -p ").append(mBroadcastReceiverPackage);
-                // Include stopped packages
-                commandBuilder.append(" -f 0x00000020");
+                commandBuilder.append("am broadcast -a ").append(mBroadcastReceiverAction)
+                        .append(" -p ").append(mBroadcastReceiver.getPackageName())
+                        // Include stopped packages
+                        .append(" -f 0x00000020");
             } else {
                 // Use launching activity to launch the target.
-                if (mLaunchingActivity != null) {
-                    commandBuilder.append(getAmStartCmd(mLaunchingActivity));
-                } else {
-                    commandBuilder.append(getAmStartCmd(mLaunchingActivityName));
-                }
-                commandBuilder.append(" -f 0x20000020");
+                commandBuilder.append(getAmStartCmd(mLaunchingActivity))
+                        .append(" -f 0x20000020");
             }
 
             // Add a flag to ensure we actually mean to launch an activity.
@@ -1643,11 +1452,6 @@ public abstract class ActivityManagerTestBase {
             if (mReorderToFront) {
                 commandBuilder.append(" --ez " + KEY_REORDER_TO_FRONT + " true");
             }
-            if (mTargetActivityName != null) {
-                commandBuilder.append(" --es " + KEY_TARGET_ACTIVITY + " ")
-                        .append(mTargetActivityName);
-                commandBuilder.append(" --es " + KEY_TARGET_PACKAGE + " ").append(mTargetPackage);
-            }
             if (mDisplayId != INVALID_DISPLAY_ID) {
                 commandBuilder.append(" --ei " + KEY_DISPLAY_ID + " ").append(mDisplayId);
             }
@@ -1656,11 +1460,11 @@ public abstract class ActivityManagerTestBase {
                 commandBuilder.append(" --ez " + KEY_USE_APPLICATION_CONTEXT + " true");
             }
 
-            if (mComponent != null) {
+            if (mTargetActivity != null) {
                 // {@link ActivityLauncher} parses this extra string by
                 // {@link ComponentName#unflattenFromString(String)}.
                 commandBuilder.append(" --es " + KEY_TARGET_COMPONENT + " ")
-                        .append(getActivityName(mComponent));
+                        .append(getActivityName(mTargetActivity));
             }
 
             if (mSuppressExceptions) {

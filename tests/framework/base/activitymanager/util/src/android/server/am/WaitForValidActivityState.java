@@ -29,7 +29,6 @@ import static android.app.WindowConfiguration.WINDOWING_MODE_SPLIT_SCREEN_PRIMAR
 import static android.app.WindowConfiguration.WINDOWING_MODE_SPLIT_SCREEN_SECONDARY;
 import static android.app.WindowConfiguration.WINDOWING_MODE_UNDEFINED;
 import static android.server.am.ComponentNameUtils.getActivityName;
-import static android.server.am.ComponentNameUtils.getSimpleClassName;
 import static android.server.am.ComponentNameUtils.getWindowName;
 
 import android.content.ComponentName;
@@ -37,13 +36,9 @@ import android.support.annotation.Nullable;
 
 public class WaitForValidActivityState {
     @Nullable
-    public final String componentName;
+    public final ComponentName activityName;
     @Nullable
     public final String windowName;
-    /** TODO(b/73349193): Use {@link #componentName} and  {@link #windowName}. */
-    @Deprecated
-    @Nullable
-    public final String activityName;
     public final int stackId;
     public final int windowingMode;
     public final int activityType;
@@ -53,29 +48,16 @@ public class WaitForValidActivityState {
     }
 
     public WaitForValidActivityState(final ComponentName activityName) {
-        this.componentName = getActivityName(activityName);
-        this.windowName = getWindowName(activityName);
-        this.activityName = getSimpleClassName(activityName);
-        this.stackId = INVALID_STACK_ID;
-        this.windowingMode = WINDOWING_MODE_UNDEFINED;
-        this.activityType = ACTIVITY_TYPE_UNDEFINED;
-    }
-
-    /** TODO(b/73349193): Use {@link #WaitForValidActivityState(ComponentName)}. */
-    @Deprecated
-    public WaitForValidActivityState(String activityName) {
-        this.componentName = null;
-        this.windowName = null;
         this.activityName = activityName;
+        this.windowName = getWindowName(activityName);
         this.stackId = INVALID_STACK_ID;
         this.windowingMode = WINDOWING_MODE_UNDEFINED;
         this.activityType = ACTIVITY_TYPE_UNDEFINED;
     }
 
     private WaitForValidActivityState(final Builder builder) {
-        this.componentName = builder.mComponentName;
-        this.windowName = builder.mWindowName;
         this.activityName = builder.mActivityName;
+        this.windowName = builder.mWindowName;
         this.stackId = builder.mStackId;
         this.windowingMode = builder.mWindowingMode;
         this.activityType = builder.mActivityType;
@@ -84,10 +66,8 @@ public class WaitForValidActivityState {
     @Override
     public String toString() {
         final StringBuilder sb = new StringBuilder("wait:");
-        if (componentName != null) {
-            sb.append(" activity=").append(componentName);
-        } else if (activityName != null) {
-            sb.append(" activity=").append(activityName);
+        if (activityName != null) {
+            sb.append(" activity=").append(getActivityName(activityName));
         }
         if (activityType != ACTIVITY_TYPE_UNDEFINED) {
             sb.append(" type=").append(activityTypeName(activityType));
@@ -131,11 +111,9 @@ public class WaitForValidActivityState {
 
     public static class Builder {
         @Nullable
-        private String mComponentName = null;
+        private ComponentName mActivityName = null;
         @Nullable
         private String mWindowName = null;
-        @Nullable
-        private String mActivityName = null;
         private int mStackId = INVALID_STACK_ID;
         private int mWindowingMode = WINDOWING_MODE_UNDEFINED;
         private int mActivityType = ACTIVITY_TYPE_UNDEFINED;
@@ -143,15 +121,8 @@ public class WaitForValidActivityState {
         private Builder() {}
 
         public Builder(final ComponentName activityName) {
-            mComponentName = getActivityName(activityName);
-            mWindowName = getWindowName(activityName);
-            mActivityName = getSimpleClassName(activityName);
-        }
-
-        /** Use(b/73349193): {@link #Builder(ComponentName)}. */
-        @Deprecated
-        public Builder(String activityName) {
             mActivityName = activityName;
+            mWindowName = getWindowName(activityName);
         }
 
         private Builder setWindowName(String windowName) {

@@ -16,34 +16,45 @@
 
 package com.android.cts.permissiondeclareapp;
 
-import android.content.BroadcastReceiver;
+import android.content.ClipboardManager;
+import android.content.ContentProvider;
+import android.content.ContentValues;
 import android.content.Context;
 import android.content.Intent;
 import android.content.UriPermission;
+import android.database.Cursor;
 import android.net.Uri;
-import android.util.Log;
+import android.os.Binder;
+import android.os.Bundle;
 
 import java.util.List;
 
-public class GrantUriPermission extends BroadcastReceiver {
+public class UtilsProvider extends ContentProvider {
+    public static final Uri URI = Uri.parse("content://com.android.cts.permissiondeclareapp/");
+
     public static final String ACTION_GRANT_URI = "grantUri";
     public static final String ACTION_REVOKE_URI = "revokeUri";
     public static final String ACTION_START_ACTIVITY = "startActivity";
     public static final String ACTION_START_SERVICE = "startService";
     public static final String ACTION_VERIFY_OUTGOING_PERSISTED = "verifyOutgoingPersisted";
+    public static final String ACTION_SET_PRIMARY_CLIP = "setPrimaryClip";
+    public static final String ACTION_CLEAR_PRIMARY_CLIP = "clearPrimaryClip";
+    public static final String ACTION_SET_INSTALLER_PACKAGE_NAME = "setInstallerPackageName";
 
     public static final String EXTRA_PACKAGE_NAME = "packageName";
+    public static final String EXTRA_INSTALLER_PACKAGE_NAME = "installerPackageName";
     public static final String EXTRA_INTENT = Intent.EXTRA_INTENT;
     public static final String EXTRA_URI = "uri";
     public static final String EXTRA_MODE = "mode";
 
-    public static final int SUCCESS = 101;
-    public static final int FAILURE = 100;
-
     @Override
-    public void onReceive(Context context, Intent intent) {
+    public Bundle call(String method, String arg, Bundle extras) {
+        final Context context = getContext();
+        final Intent intent = extras.getParcelable(Intent.EXTRA_INTENT);
+        final String action = intent.getAction();
+
+        final long token = Binder.clearCallingIdentity();
         try {
-            final String action = intent.getAction();
             if (ACTION_GRANT_URI.equals(action)) {
                 final Uri uri = intent.getParcelableExtra(EXTRA_URI);
                 context.grantUriPermission(intent.getStringExtra(EXTRA_PACKAGE_NAME), uri,
@@ -64,17 +75,23 @@ public class GrantUriPermission extends BroadcastReceiver {
 
             } else if (ACTION_VERIFY_OUTGOING_PERSISTED.equals(action)) {
                 verifyOutgoingPersisted(context, intent);
-            }
 
-            if (isOrderedBroadcast()) {
-                setResultCode(SUCCESS);
+            } else if (ACTION_SET_PRIMARY_CLIP.equals(action)) {
+                context.getSystemService(ClipboardManager.class)
+                        .setPrimaryClip(intent.getClipData());
+
+            } else if (ACTION_CLEAR_PRIMARY_CLIP.equals(action)) {
+                context.getSystemService(ClipboardManager.class).clearPrimaryClip();
+
+            } else if (ACTION_SET_INSTALLER_PACKAGE_NAME.equals(action)) {
+                context.getPackageManager().setInstallerPackageName(
+                        intent.getStringExtra(EXTRA_PACKAGE_NAME),
+                        intent.getStringExtra(EXTRA_INSTALLER_PACKAGE_NAME));
             }
-        } catch (SecurityException e) {
-            Log.i("GrantUriPermission", "Security exception", e);
-            if (isOrderedBroadcast()) {
-                setResultCode(FAILURE);
-            }
+        } finally {
+            Binder.restoreCallingIdentity(token);
         }
+        return null;
     }
 
     private void verifyOutgoingPersisted(Context context, Intent intent) {
@@ -97,5 +114,36 @@ public class GrantUriPermission extends BroadcastReceiver {
                 throw new SecurityException("Unexpected grant");
             }
         }
+    }
+
+    @Override
+    public boolean onCreate() {
+        return true;
+    }
+
+    @Override
+    public Cursor query(Uri uri, String[] projection, String selection, String[] selectionArgs,
+            String sortOrder) {
+        throw new UnsupportedOperationException();
+    }
+
+    @Override
+    public String getType(Uri uri) {
+        throw new UnsupportedOperationException();
+    }
+
+    @Override
+    public Uri insert(Uri uri, ContentValues values) {
+        throw new UnsupportedOperationException();
+    }
+
+    @Override
+    public int delete(Uri uri, String selection, String[] selectionArgs) {
+        throw new UnsupportedOperationException();
+    }
+
+    @Override
+    public int update(Uri uri, ContentValues values, String selection, String[] selectionArgs) {
+        throw new UnsupportedOperationException();
     }
 }
