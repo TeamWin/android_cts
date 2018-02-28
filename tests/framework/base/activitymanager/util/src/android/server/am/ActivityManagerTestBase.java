@@ -243,15 +243,19 @@ public abstract class ActivityManagerTestBase {
 
     @After
     public void tearDown() throws Exception {
+        // Synchronous execution of removeStacksWithActivityTypes() ensures that all activities but
+        // home are cleaned up from the stack at the end of each test. Am force stop shell commands
+        // might be asynchronous and could interrupt the stack cleanup process if executed first.
+        removeStacksWithActivityTypes(ALL_ACTIVITY_TYPE_BUT_HOME);
         executeShellCommand(AM_FORCE_STOP_TEST_PACKAGE);
         executeShellCommand(AM_FORCE_STOP_SECOND_TEST_PACKAGE);
         executeShellCommand(AM_FORCE_STOP_THIRD_TEST_PACKAGE);
-        removeStacksWithActivityTypes(ALL_ACTIVITY_TYPE_BUT_HOME);
         pressHomeButton();
     }
 
     protected void removeStacksWithActivityTypes(int... activityTypes) {
         mAm.removeStacksWithActivityTypes(activityTypes);
+        waitForIdle();
     }
 
     protected void removeStacksInWindowingModes(int... windowingModes) {
