@@ -35,7 +35,6 @@ import android.graphics.PixelFormat;
 import android.graphics.PostProcessor;
 import android.graphics.Rect;
 import android.graphics.drawable.Drawable;
-import android.graphics.drawable.BitmapDrawable;
 import android.graphics.drawable.NinePatchDrawable;
 import android.net.Uri;
 import android.support.test.InstrumentationRegistry;
@@ -46,23 +45,18 @@ import android.util.TypedValue;
 
 import com.android.compatibility.common.util.BitmapUtils;
 
+import org.junit.Before;
+import org.junit.Test;
+import org.junit.runner.RunWith;
+
 import java.io.ByteArrayOutputStream;
 import java.io.File;
-import java.io.FileInputStream;
-import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
-import java.lang.ArrayIndexOutOfBoundsException;
-import java.lang.NullPointerException;
-import java.lang.RuntimeException;
 import java.nio.ByteBuffer;
 import java.util.function.IntFunction;
-
-import org.junit.Before;
-import org.junit.Test;
-import org.junit.runner.RunWith;
 
 @RunWith(AndroidJUnit4.class)
 public class ImageDecoderTest {
@@ -1375,13 +1369,13 @@ public class ImageDecoderTest {
     }
 
     @Test
-    public void testPreferRamOverQualityPlusHardware() {
+    public void testConserveMemoryPlusHardware() {
         class Listener implements ImageDecoder.OnHeaderDecodedListener {
             int allocator;
             @Override
             public void onHeaderDecoded(ImageDecoder decoder, ImageDecoder.ImageInfo info,
                                         ImageDecoder.Source src) {
-                decoder.setPreferRamOverQuality(true);
+                decoder.setConserveMemory(true);
                 decoder.setAllocator(allocator);
             }
         };
@@ -1427,7 +1421,7 @@ public class ImageDecoderTest {
     }
 
     @Test
-    public void testPreferRamOverQuality() {
+    public void testConserveMemory() {
         class Listener implements ImageDecoder.OnHeaderDecodedListener {
             boolean doPostProcess;
             boolean preferRamOverQuality;
@@ -1435,7 +1429,7 @@ public class ImageDecoderTest {
             public void onHeaderDecoded(ImageDecoder decoder, ImageDecoder.ImageInfo info,
                                         ImageDecoder.Source src) {
                 if (preferRamOverQuality) {
-                    decoder.setPreferRamOverQuality(true);
+                    decoder.setConserveMemory(true);
                 }
                 if (doPostProcess) {
                     decoder.setPostProcessor((c) -> {
@@ -1448,7 +1442,7 @@ public class ImageDecoderTest {
         };
         Listener l = new Listener();
         // All of these images are opaque, so they can save RAM with
-        // setPreferRamOverQuality.
+        // setConserveMemory.
         int resIds[] = new int[] { R.drawable.png_test, R.drawable.baseline_jpeg,
                                    // If this were stored in drawable/, it would
                                    // be converted from 16-bit to 8. FIXME: Is
