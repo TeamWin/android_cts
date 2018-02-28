@@ -15,6 +15,7 @@
  */
 package android.uirendering.cts.testinfrastructure;
 
+import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.fail;
 
 import android.app.Activity;
@@ -92,6 +93,7 @@ public class DrawActivity extends Activity {
                 e.printStackTrace();
             }
         }
+        assertNotNull("Timeout waiting for draw", mPositionInfo);
         return mPositionInfo;
     }
 
