@@ -15,6 +15,8 @@
  */
 package android.autofillservice.cts;
 
+import static android.autofillservice.cts.common.ShellHelper.runShellCommand;
+
 import static com.google.common.truth.Truth.assertThat;
 
 import android.app.Activity;
@@ -63,11 +65,16 @@ abstract class CustomDescriptionWithLinkTestCase extends AutoFillServiceTestCase
     public final void testTapLink_changeOrientationThenTapBack() throws Exception {
         mUiBot.setScreenOrientation(UiBot.PORTRAIT);
         try {
+            runShellCommand("wm density 420");
             saveUiRestoredAfterTappingLinkTest(
                     PostSaveLinkTappedAction.ROTATE_THEN_TAP_BACK_BUTTON);
         } finally {
             mUiBot.setScreenOrientation(UiBot.PORTRAIT);
-            cleanUpAfterScreenOrientationIsBackToPortrait();
+            try {
+                cleanUpAfterScreenOrientationIsBackToPortrait();
+            } finally {
+                runShellCommand("wm density reset");
+            }
         }
     }
 
