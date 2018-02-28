@@ -62,5 +62,7 @@ public class ExtractedTextTest {
         assertEquals(1, hintText.getSpans(0, hintText.length(), StyleSpan.class).length);
 
         assertEquals(0, extractedText.describeContents());
+
+        p.recycle();
     }
 }
