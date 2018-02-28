@@ -2,8 +2,8 @@ package android.server.am.lifecycle;
 
 import static org.junit.Assert.fail;
 
-import android.annotation.SuppressLint;
 import android.app.Activity;
+import android.server.am.lifecycle.LifecycleLog.ActivityCallback;
 import android.support.test.runner.lifecycle.ActivityLifecycleCallback;
 import android.support.test.runner.lifecycle.Stage;
 import android.util.Pair;
@@ -24,12 +24,12 @@ public class LifecycleTracker implements ActivityLifecycleCallback {
         mLifecycleLog = lifecycleLog;
     }
 
-    void waitAndAssertActivityStates(Pair<Activity, Stage>[] activityStates) {
+    void waitAndAssertActivityStates(Pair<Activity, ActivityCallback>[] activityCallbacks) {
         final boolean waitResult = waitForConditionWithTimeout(
-                () -> pendingStates(activityStates).isEmpty(), 5 * 1000);
+                () -> pendingCallbacks(activityCallbacks).isEmpty(), 5 * 1000);
 
         if (!waitResult) {
-            fail("Expected lifecycle states not achieved: " + pendingStates(activityStates));
+            fail("Expected lifecycle states not achieved: " + pendingCallbacks(activityCallbacks));
         }
     }
 
@@ -39,20 +39,22 @@ public class LifecycleTracker implements ActivityLifecycleCallback {
     }
 
     /** Get a list of activity states that were not reached yet. */
-    private List<Pair<Activity, Stage>> pendingStates(Pair<Activity, Stage>[] activityStates) {
-        final List<Pair<Activity, Stage>> notReachedActivityStates = new ArrayList<>();
+    private List<Pair<Activity, ActivityCallback>> pendingCallbacks(Pair<Activity,
+            ActivityCallback>[] activityCallbacks) {
+        final List<Pair<Activity, ActivityCallback>> notReachedActivityCallbacks = new ArrayList<>();
 
-        for (Pair<Activity, Stage> activityState : activityStates) {
-            final Activity activity = activityState.first;
-            final List<Stage> transitionList = mLifecycleLog.getActivityLog(activity.getClass());
+        for (Pair<Activity, ActivityCallback> activityCallback : activityCallbacks) {
+            final Activity activity = activityCallback.first;
+            final List<ActivityCallback> transitionList =
+                    mLifecycleLog.getActivityLog(activity.getClass());
             if (transitionList.isEmpty()
-                    || transitionList.get(transitionList.size() - 1) != activityState.second) {
+                    || transitionList.get(transitionList.size() - 1) != activityCallback.second) {
                 // The activity either hasn't got any state transitions yet or the current state is
                 // not the one we expect.
-                notReachedActivityStates.add(activityState);
+                notReachedActivityCallbacks.add(activityCallback);
             }
         }
-        return notReachedActivityStates;
+        return notReachedActivityCallbacks;
     }
 
     /** Blocking call to wait for a condition to become true with max timeout. */

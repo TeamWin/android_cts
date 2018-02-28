@@ -1,102 +1,108 @@
 package android.server.am.lifecycle;
 
-import static android.support.test.runner.lifecycle.Stage.CREATED;
-import static android.support.test.runner.lifecycle.Stage.DESTROYED;
-import static android.support.test.runner.lifecycle.Stage.PAUSED;
-import static android.support.test.runner.lifecycle.Stage.PRE_ON_CREATE;
-import static android.support.test.runner.lifecycle.Stage.RESUMED;
-import static android.support.test.runner.lifecycle.Stage.STARTED;
-import static android.support.test.runner.lifecycle.Stage.STOPPED;
+import static android.server.am.StateLogger.log;
+import static android.server.am.lifecycle.LifecycleLog.ActivityCallback.ON_ACTIVITY_RESULT;
+import static android.server.am.lifecycle.LifecycleLog.ActivityCallback.ON_CREATE;
+import static android.server.am.lifecycle.LifecycleLog.ActivityCallback.ON_DESTROY;
+import static android.server.am.lifecycle.LifecycleLog.ActivityCallback.ON_PAUSE;
+import static android.server.am.lifecycle.LifecycleLog.ActivityCallback.ON_RESTART;
+import static android.server.am.lifecycle.LifecycleLog.ActivityCallback.ON_RESUME;
+import static android.server.am.lifecycle.LifecycleLog.ActivityCallback.ON_START;
+import static android.server.am.lifecycle.LifecycleLog.ActivityCallback.ON_STOP;
+import static android.server.am.lifecycle.LifecycleLog.ActivityCallback.PRE_ON_CREATE;
+
+import static org.junit.Assert.assertEquals;
 
 import android.app.Activity;
-import android.support.test.runner.lifecycle.Stage;
+import android.server.am.lifecycle.LifecycleLog.ActivityCallback;
 import android.util.Pair;
 
 import java.util.Arrays;
 import java.util.List;
-
-import static android.server.am.StateLogger.log;
-import static org.junit.Assert.assertEquals;
 
 /** Util class that verifies correct activity state transition sequences. */
 class LifecycleVerifier {
 
     static void assertLaunchSequence(Class<? extends Activity> activityClass,
             LifecycleLog lifecycleLog) {
-        final List<Stage> observedTransitions = lifecycleLog.getActivityLog(activityClass);
+        final List<ActivityCallback> observedTransitions =
+                lifecycleLog.getActivityLog(activityClass);
         log("Observed sequence: " + observedTransitions);
         final String errorMessage = errorDuringTransition(activityClass, "launch");
 
-        final List<Stage> expectedTransitions =
-                Arrays.asList(PRE_ON_CREATE, CREATED, STARTED, RESUMED);
+        final List<ActivityCallback> expectedTransitions =
+                Arrays.asList(PRE_ON_CREATE, ON_CREATE, ON_START, ON_RESUME);
         assertEquals(errorMessage, expectedTransitions, observedTransitions);
     }
 
     static void assertLaunchSequence(Class<? extends Activity> launchingActivity,
             Class<? extends Activity> existingActivity, LifecycleLog lifecycleLog) {
-        final List<Pair<String, Stage>> observedTransitions = lifecycleLog.getLog();
+        final List<Pair<String, ActivityCallback>> observedTransitions = lifecycleLog.getLog();
         log("Observed sequence: " + observedTransitions);
         final String errorMessage = errorDuringTransition(launchingActivity, "launch");
 
-        final List<Pair<String, Stage>> expectedTransitions = Arrays.asList(
-                transition(existingActivity, PAUSED),
+        final List<Pair<String, ActivityCallback>> expectedTransitions = Arrays.asList(
+                transition(existingActivity, ON_PAUSE),
                 transition(launchingActivity, PRE_ON_CREATE),
-                transition(launchingActivity, CREATED),
-                transition(launchingActivity, STARTED),
-                transition(launchingActivity, RESUMED),
-                transition(existingActivity, STOPPED));
+                transition(launchingActivity, ON_CREATE),
+                transition(launchingActivity, ON_START),
+                transition(launchingActivity, ON_RESUME),
+                transition(existingActivity, ON_STOP));
         assertEquals(errorMessage, expectedTransitions, observedTransitions);
     }
 
     static void assertLaunchAndStopSequence(Class<? extends Activity> activityClass,
             LifecycleLog lifecycleLog) {
-        final List<Stage> observedTransitions = lifecycleLog.getActivityLog(activityClass);
+        final List<ActivityCallback> observedTransitions =
+                lifecycleLog.getActivityLog(activityClass);
         log("Observed sequence: " + observedTransitions);
         final String errorMessage = errorDuringTransition(activityClass, "launch and stop");
 
-        final List<Stage> expectedTransitions =
-                Arrays.asList(PRE_ON_CREATE, CREATED, STARTED, RESUMED, PAUSED, STOPPED);
+        final List<ActivityCallback> expectedTransitions =
+                Arrays.asList(PRE_ON_CREATE, ON_CREATE, ON_START, ON_RESUME, ON_PAUSE, ON_STOP);
         assertEquals(errorMessage, expectedTransitions, observedTransitions);
     }
 
     static void assertLaunchAndDestroySequence(Class<? extends Activity> activityClass,
             LifecycleLog lifecycleLog) {
-        final List<Stage> observedTransitions = lifecycleLog.getActivityLog(activityClass);
+        final List<ActivityCallback> observedTransitions =
+                lifecycleLog.getActivityLog(activityClass);
         log("Observed sequence: " + observedTransitions);
         final String errorMessage = errorDuringTransition(activityClass, "launch and destroy");
 
-        final List<Stage> expectedTransitions =
-                Arrays.asList(PRE_ON_CREATE, CREATED, STARTED, RESUMED, PAUSED, STOPPED, DESTROYED);
+        final List<ActivityCallback> expectedTransitions = Arrays.asList(PRE_ON_CREATE, ON_CREATE,
+                ON_START, ON_RESUME, ON_PAUSE, ON_STOP, ON_DESTROY);
         assertEquals(errorMessage, expectedTransitions, observedTransitions);
     }
 
     static void assertRelaunchSequence(Class<? extends Activity> activityClass,
-            LifecycleLog lifecycleLog, Stage startState) {
-        final List<Stage> expectedTransitions;
-        if (startState == PAUSED) {
+            LifecycleLog lifecycleLog, ActivityCallback startState) {
+        final List<ActivityCallback> expectedTransitions;
+        if (startState == ON_PAUSE) {
             expectedTransitions = Arrays.asList(
-                    STOPPED, DESTROYED, PRE_ON_CREATE, CREATED, STARTED, RESUMED, PAUSED);
-        } else if (startState == STOPPED) {
+                    ON_STOP, ON_DESTROY, PRE_ON_CREATE, ON_CREATE, ON_START, ON_RESUME, ON_PAUSE);
+        } else if (startState == ON_STOP) {
             expectedTransitions = Arrays.asList(
-                    DESTROYED, PRE_ON_CREATE, CREATED, STARTED, RESUMED, PAUSED, STOPPED);
+                    ON_DESTROY, PRE_ON_CREATE, ON_CREATE, ON_START, ON_RESUME, ON_PAUSE, ON_STOP);
         } else {
             expectedTransitions = Arrays.asList(
-                    PAUSED, STOPPED, DESTROYED, PRE_ON_CREATE, CREATED, STARTED, RESUMED);
+                    ON_PAUSE, ON_STOP, ON_DESTROY, PRE_ON_CREATE, ON_CREATE, ON_START, ON_RESUME);
         }
         assertSequence(activityClass, lifecycleLog, expectedTransitions, "relaunch");
     }
 
-    static void assertSequence(Class<? extends Activity> activityClass,
-            LifecycleLog lifecycleLog, List<Stage> expectedTransitions, String transition) {
-        final List<Stage> observedTransitions = lifecycleLog.getActivityLog(activityClass);
+    static void assertSequence(Class<? extends Activity> activityClass, LifecycleLog lifecycleLog,
+            List<ActivityCallback> expectedTransitions, String transition) {
+        final List<ActivityCallback> observedTransitions =
+                lifecycleLog.getActivityLog(activityClass);
         log("Observed sequence: " + observedTransitions);
         final String errorMessage = errorDuringTransition(activityClass, transition);
 
         assertEquals(errorMessage, expectedTransitions, observedTransitions);
     }
 
-    private static Pair<String, Stage> transition(
-            Class<? extends Activity> activityClass, Stage state) {
+    private static Pair<String, ActivityCallback> transition(
+            Class<? extends Activity> activityClass, ActivityCallback state) {
         return new Pair<>(activityClass.getCanonicalName(), state);
     }
 
