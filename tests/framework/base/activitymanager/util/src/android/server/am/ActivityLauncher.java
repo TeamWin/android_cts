@@ -20,6 +20,7 @@ import static android.content.Intent.FLAG_ACTIVITY_LAUNCH_ADJACENT;
 import static android.content.Intent.FLAG_ACTIVITY_MULTIPLE_TASK;
 import static android.content.Intent.FLAG_ACTIVITY_NEW_TASK;
 import static android.content.Intent.FLAG_ACTIVITY_REORDER_TO_FRONT;
+import static android.server.am.Components.TEST_ACTIVITY;
 
 import android.app.ActivityOptions;
 import android.app.PendingIntent;
@@ -67,15 +68,6 @@ public class ActivityLauncher {
      */
     public static final String KEY_TARGET_COMPONENT = "target_component";
     /**
-     * Key for string extra with target activity name.
-     */
-    public static final String KEY_TARGET_ACTIVITY = "target_activity";
-    /**
-     * Key for string extra with target package name. If {@link #KEY_TARGET_ACTIVITY} is provided
-     * and this extra is not, then current application's package name will be used.
-     */
-    public static final String KEY_TARGET_PACKAGE = "target_package";
-    /**
      * Key for int extra with target display id where the activity should be launched. Adding this
      * automatically applies {@link Intent#FLAG_ACTIVITY_NEW_TASK} and
      * {@link Intent#FLAG_ACTIVITY_MULTIPLE_TASK} to the intent.
@@ -108,21 +100,9 @@ public class ActivityLauncher {
 
         Log.i(TAG, "launchActivityFromExtras: extras=" + extras);
 
-        final Intent newIntent = new Intent();
         final String targetComponent = extras.getString(KEY_TARGET_COMPONENT);
-        final String targetActivity = extras.getString(KEY_TARGET_ACTIVITY);
-        if (!TextUtils.isEmpty(targetComponent)) {
-            newIntent.setComponent(ComponentName.unflattenFromString(targetComponent));
-        } else if (targetActivity != null) {
-            final String extraPackageName = extras.getString(KEY_TARGET_PACKAGE);
-            final String packageName = extraPackageName != null ? extraPackageName
-                    : context.getApplicationContext().getPackageName();
-            newIntent.setComponent(new ComponentName(packageName,
-                    packageName + "." + targetActivity));
-        } else {
-            newIntent.setComponent(new ComponentName("android.server.am",
-                    "android.server.am.TestActivity"));
-        }
+        final Intent newIntent = new Intent().setComponent(TextUtils.isEmpty(targetComponent)
+                ? TEST_ACTIVITY : ComponentName.unflattenFromString(targetComponent));
 
         if (extras.getBoolean(KEY_LAUNCH_TO_SIDE)) {
             newIntent.addFlags(FLAG_ACTIVITY_NEW_TASK | FLAG_ACTIVITY_LAUNCH_ADJACENT);

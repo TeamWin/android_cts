@@ -22,13 +22,12 @@ import static android.app.WindowConfiguration.WINDOWING_MODE_SPLIT_SCREEN_SECOND
 import static android.server.am.ActivityAndWindowManagersState.DEFAULT_DISPLAY_ID;
 import static android.server.am.ActivityLauncher.KEY_LAUNCH_ACTIVITY;
 import static android.server.am.ActivityLauncher.KEY_NEW_TASK;
-import static android.server.am.ActivityLauncher.KEY_TARGET_ACTIVITY;
+import static android.server.am.ActivityLauncher.KEY_TARGET_COMPONENT;
 import static android.server.am.ActivityManagerDisplayTestBase.ReportedDisplayMetrics
         .getDisplayMetrics;
 import static android.server.am.ActivityManagerState.STATE_RESUMED;
 import static android.server.am.ActivityManagerState.STATE_STOPPED;
 import static android.server.am.ComponentNameUtils.getActivityName;
-import static android.server.am.ComponentNameUtils.getSimpleClassName;
 import static android.server.am.ComponentNameUtils.getWindowName;
 import static android.server.am.Components.ALT_LAUNCHING_ACTIVITY;
 import static android.server.am.Components.BROADCAST_RECEIVER_ACTIVITY;
@@ -252,8 +251,8 @@ public class ActivityManagerMultiDisplayTests extends ActivityManagerDisplayTest
 
             // Launch non-resizeable activity from secondary display.
             executeShellCommand("am broadcast -a trigger_broadcast --ez " + KEY_LAUNCH_ACTIVITY
-                    + " true --ez " + KEY_NEW_TASK + " true --es " + KEY_TARGET_ACTIVITY + " "
-                    + getSimpleClassName(NON_RESIZEABLE_ACTIVITY));
+                    + " true --ez " + KEY_NEW_TASK + " true --es " + KEY_TARGET_COMPONENT + " "
+                    + getActivityName(NON_RESIZEABLE_ACTIVITY));
             mAmWmState.computeState(NON_RESIZEABLE_ACTIVITY);
 
             // Check that non-resizeable activity is on the secondary display, because of the
@@ -1466,8 +1465,8 @@ public class ActivityManagerMultiDisplayTests extends ActivityManagerDisplayTest
                     focusedStack.mDisplayId);
 
             executeShellCommand("am broadcast -a trigger_broadcast --ez " + KEY_LAUNCH_ACTIVITY
-                    + " true --ez " + KEY_NEW_TASK + " true --es " + KEY_TARGET_ACTIVITY + " "
-                    + getSimpleClassName(LAUNCHING_ACTIVITY));
+                    + " true --ez " + KEY_NEW_TASK + " true --es " + KEY_TARGET_COMPONENT + " "
+                    + getActivityName(LAUNCHING_ACTIVITY));
 
             // Check that the third activity ends up in a new task in the same stack as the
             // first activity
