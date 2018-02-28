@@ -18,7 +18,7 @@ package android.server.am;
 
 import static android.content.pm.PackageManager.FEATURE_ACTIVITIES_ON_SECONDARY_DISPLAYS;
 import static android.server.am.ActivityAndWindowManagersState.DEFAULT_DISPLAY_ID;
-import static android.server.am.ComponentNameUtils.getSimpleClassName;
+import static android.server.am.ComponentNameUtils.getActivityName;
 import static android.server.am.Components.VIRTUAL_DISPLAY_ACTIVITY;
 import static android.server.am.StateLogger.log;
 
@@ -335,9 +335,8 @@ class ActivityManagerDisplayTestBase extends ActivityManagerTestBase {
                     .append(" --ez resize_display ").append(mResizeDisplay);
             if (mLaunchActivity != null) {
                 createVirtualDisplayCommand
-                        .append(" --es launch_target_activity ")
-                        // TODO(b/73349193): Should pass component name.
-                        .append(getSimpleClassName(mLaunchActivity));
+                        .append(" --es launch_target_component ")
+                        .append(getActivityName(mLaunchActivity));
             }
             executeShellCommand(createVirtualDisplayCommand.toString());
             mVirtualDisplayCreated = true;
