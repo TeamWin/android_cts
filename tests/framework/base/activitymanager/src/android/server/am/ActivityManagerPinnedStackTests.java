@@ -28,7 +28,6 @@ import static android.server.am.ActivityManagerState.STATE_RESUMED;
 import static android.server.am.ActivityManagerState.STATE_STOPPED;
 import static android.server.am.ComponentNameUtils.getActivityName;
 import static android.server.am.ComponentNameUtils.getLogTag;
-import static android.server.am.ComponentNameUtils.getSimpleClassName;
 import static android.server.am.ComponentNameUtils.getWindowName;
 import static android.server.am.Components.ALWAYS_FOCUSABLE_PIP_ACTIVITY;
 import static android.server.am.Components.LAUNCHING_ACTIVITY;
@@ -484,7 +483,7 @@ public class ActivityManagerPinnedStackTests extends ActivityManagerTestBase {
         // was not created in the process
         launchActivity(PIP_ACTIVITY,
                 EXTRA_ENTER_PIP_ON_PAUSE, "true",
-                EXTRA_START_ACTIVITY, getSimpleClassName(NON_RESIZEABLE_ACTIVITY));
+                EXTRA_START_ACTIVITY, getActivityName(NON_RESIZEABLE_ACTIVITY));
         mAmWmState.computeState(false /* compareTaskAndStackBounds */,
                 new WaitForValidActivityState(NON_RESIZEABLE_ACTIVITY));
         assertPinnedStackDoesNotExist();
@@ -1133,7 +1132,7 @@ public class ActivityManagerPinnedStackTests extends ActivityManagerTestBase {
         // a result, the task will not have a component matching the same activity as what it was
         // started with
         launchActivity(TEST_ACTIVITY_WITH_SAME_AFFINITY,
-                EXTRA_START_ACTIVITY, getSimpleClassName(TEST_ACTIVITY),
+                EXTRA_START_ACTIVITY, getActivityName(TEST_ACTIVITY),
                 EXTRA_FINISH_SELF_ON_RESUME, "true");
         mAmWmState.waitForValidState(new WaitForValidActivityState.Builder(TEST_ACTIVITY)
                 .setWindowingMode(WINDOWING_MODE_FULLSCREEN)
@@ -1168,7 +1167,7 @@ public class ActivityManagerPinnedStackTests extends ActivityManagerTestBase {
         // Launch an activity into the pinned stack with a fixed affinity
         launchActivity(TEST_ACTIVITY_WITH_SAME_AFFINITY,
                 EXTRA_ENTER_PIP, "true",
-                EXTRA_START_ACTIVITY, getSimpleClassName(PIP_ACTIVITY),
+                EXTRA_START_ACTIVITY, getActivityName(PIP_ACTIVITY),
                 EXTRA_FINISH_SELF_ON_RESUME, "true");
         mAmWmState.waitForValidState(new WaitForValidActivityState.Builder(PIP_ACTIVITY)
                 .setWindowingMode(WINDOWING_MODE_PINNED)
