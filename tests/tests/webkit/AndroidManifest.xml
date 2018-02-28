@@ -64,8 +64,6 @@
                  android:process=":testprocessB"
                  android:exported="false" />
 
-        <meta-data android:name="android.webkit.WebView.EnableSafeBrowsing" android:value="false" />
-
         <!-- Specify a preloaded font list to ensure that this doesn't interfere
              with the operation of the renderer process (as in b/70968451)
          -->
