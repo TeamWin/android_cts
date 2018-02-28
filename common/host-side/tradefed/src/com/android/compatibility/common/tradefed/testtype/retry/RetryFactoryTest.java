@@ -21,6 +21,8 @@ import com.android.compatibility.common.tradefed.util.RetryFilterHelper;
 import com.android.compatibility.common.tradefed.util.RetryType;
 import com.android.tradefed.build.IBuildInfo;
 import com.android.tradefed.config.ConfigurationException;
+import com.android.tradefed.config.IConfiguration;
+import com.android.tradefed.config.IConfigurationReceiver;
 import com.android.tradefed.config.Option;
 import com.android.tradefed.config.Option.Importance;
 import com.android.tradefed.config.OptionClass;
@@ -54,7 +56,8 @@ import java.util.Set;
  */
 @OptionClass(alias = "compatibility")
 public class RetryFactoryTest implements IRemoteTest, IDeviceTest, IBuildReceiver,
-        ISystemStatusCheckerReceiver, IInvocationContextReceiver, IShardableTest {
+        ISystemStatusCheckerReceiver, IInvocationContextReceiver, IShardableTest,
+        IConfigurationReceiver {
 
     /**
      * Mirror the {@link CompatibilityTestSuite} options in order to create it.
@@ -117,6 +120,7 @@ public class RetryFactoryTest implements IRemoteTest, IDeviceTest, IBuildReceive
     private IBuildInfo mBuildInfo;
     private ITestDevice mDevice;
     private IInvocationContext mContext;
+    private IConfiguration mMainConfiguration;
 
     @Override
     public void setSystemStatusChecker(List<ISystemStatusChecker> systemCheckers) {
@@ -141,6 +145,11 @@ public class RetryFactoryTest implements IRemoteTest, IDeviceTest, IBuildReceive
     @Override
     public void setInvocationContext(IInvocationContext invocationContext) {
         mContext = invocationContext;
+    }
+
+    @Override
+    public void setConfiguration(IConfiguration configuration) {
+        mMainConfiguration = configuration;
     }
 
     /**
@@ -197,6 +206,7 @@ public class RetryFactoryTest implements IRemoteTest, IDeviceTest, IBuildReceive
         test.setBuild(mBuildInfo);
         test.setSystemStatusChecker(mStatusCheckers);
         test.setInvocationContext(mContext);
+        test.setConfiguration(mMainConfiguration);
         // reset the retry id - Ensure that retry of retry does not throw
         test.resetRetryId();
         test.isRetry();
