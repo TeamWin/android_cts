@@ -24,6 +24,9 @@ import android.server.cts.ActivityManagerState.ActivityTask;
 import com.android.ddmlib.Log.LogLevel;
 import com.android.tradefed.log.LogUtil.CLog;
 
+import org.junit.Ignore;
+import org.junit.Test;
+
 import java.awt.Rectangle;
 import java.util.ArrayList;
 import java.util.List;
@@ -345,6 +348,25 @@ public class ActivityManagerAppConfigurationTests extends ActivityManagerTestBas
         //      getLastReportedSizesForActivity(PORTRAIT_ACTIVITY_NAME, logSeparator);
         // assertEquals("portrait activity should not have moved from portrait",
         //         1 /* portrait */, updatedReportedSizes.orientation);
+    }
+
+    // TODO(b/70870253): This test seems malfunction.
+    @Ignore("b/70870253")
+    @Test
+    public void testNonFullscreenActivityProhibited() throws Exception {
+        setComponentName(TRANSLUCENT_CURRENT_PACKAGE);
+
+        // We do not wait for the activity as it should not launch based on the restrictions around
+        // specifying orientation. We instead start an activity known to launch immediately after
+        // so that we can ensure processing the first activity occurred.
+        launchActivityNoWait(TRANSLUCENT_ACTIVITY);
+        setDefaultComponentName();
+        launchActivity(PORTRAIT_ACTIVITY_NAME);
+
+        assertFalse("target SDK > 26 non-fullscreen activity should not reach onResume",
+                mAmWmState.getAmState().containsActivity(
+                        ActivityManagerTestBase.getActivityComponentName(
+                                TRANSLUCENT_ACTIVITY, TRANSLUCENT_ACTIVITY)));
     }
 
     public void testNonFullscreenActivityPermitted() throws Exception {
