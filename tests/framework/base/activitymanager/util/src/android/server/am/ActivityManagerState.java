@@ -51,7 +51,7 @@ import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.List;
 
-class ActivityManagerState {
+public class ActivityManagerState {
 
     public static final int DUMP_MODE_ACTIVITIES = 0;
 

@@ -8,6 +8,8 @@ import static android.server.am.lifecycle.LifecycleLog.ActivityCallback.ON_RESUM
 import static android.server.am.lifecycle.LifecycleLog.ActivityCallback.ON_START;
 import static android.server.am.lifecycle.LifecycleLog.ActivityCallback.ON_STOP;
 import static android.server.am.lifecycle.LifecycleLog.ActivityCallback.PRE_ON_CREATE;
+import static android.server.am.ActivityManagerState.STATE_STOPPED;
+import static android.server.am.UiDeviceUtils.pressBackButton;
 import static android.view.Surface.ROTATION_0;
 import static android.view.Surface.ROTATION_180;
 import static android.view.Surface.ROTATION_270;
@@ -16,12 +18,15 @@ import static android.view.Surface.ROTATION_90;
 import static org.junit.Assert.fail;
 
 import android.app.Activity;
+import android.content.ComponentName;
 import android.content.Intent;
 import android.platform.test.annotations.Presubmit;
 import android.support.test.InstrumentationRegistry;
 import android.support.test.filters.FlakyTest;
 import android.support.test.filters.MediumTest;
 import android.support.test.runner.AndroidJUnit4;
+
+import com.android.compatibility.common.util.AmUtils;
 
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -181,5 +186,35 @@ public class ActivityLifecycleTests extends ActivityLifecycleClientTestBase {
         LifecycleVerifier.assertSequence(LaunchForResultActivity.class,
                 getLifecycleLog(), Arrays.asList(PRE_ON_CREATE, ON_CREATE, ON_START, ON_RESUME,
                         ON_PAUSE, ON_ACTIVITY_RESULT, ON_RESUME), "activityResult");
+    }
+
+    /**
+     * The following test ensures an activity is brought back if its process is ended in the
+     * background.
+     */
+    @Presubmit
+    @FlakyTest
+    @Test
+    public void testRestoreFromKill() throws Exception {
+        final LaunchActivityBuilder builder = getLaunchActivityBuilder();
+        final ComponentName targetActivity = builder.getTargetActivity();
+
+        // Launch activity whose process will be killed
+        builder.execute();
+
+        // Start activity in another process to put original activity in background.
+        mFirstActivityTestRule.launchActivity(new Intent());
+        mAmWmState.waitForActivityState(targetActivity, STATE_STOPPED);
+
+        // Kill first activity
+        AmUtils.runKill(targetActivity.getPackageName(), true /* wait */);
+
+        // Return back to first activity
+        pressBackButton();
+
+        // Verify activity is resumed
+        mAmWmState.waitForValidState(targetActivity);
+        mAmWmState.assertResumedActivity("Originally launched activity should be resumed",
+                targetActivity);
     }
 }

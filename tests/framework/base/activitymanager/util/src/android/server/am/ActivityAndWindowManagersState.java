@@ -121,7 +121,7 @@ public class ActivityAndWindowManagersState {
      *
      * @param activityNames name list of activities to wait for.
      */
-    void waitForValidState(ComponentName... activityNames) {
+    public void waitForValidState(ComponentName... activityNames) {
         waitForValidState(false /* compareTaskAndStackBounds */,
                 Arrays.stream(activityNames)
                         .map(WaitForValidActivityState::new)
@@ -264,7 +264,7 @@ public class ActivityAndWindowManagersState {
                 "***Waiting for Display unfrozen");
     }
 
-    void waitForActivityState(ComponentName activityName, String activityState) {
+    public void waitForActivityState(ComponentName activityName, String activityState) {
         waitForWithAmState(state -> state.hasActivityState(activityName, activityState),
                 "***Waiting for Activity State: " + activityState);
     }
@@ -553,7 +553,7 @@ public class ActivityAndWindowManagersState {
         assertNotEquals(msg, mWmState.getFocusedApp(), getActivityName(activityName));
     }
 
-    void assertResumedActivity(final String msg, final ComponentName activityName) {
+    public void assertResumedActivity(final String msg, final ComponentName activityName) {
         assertEquals(msg, getActivityName(activityName), mAmState.getResumedActivity());
     }
 
