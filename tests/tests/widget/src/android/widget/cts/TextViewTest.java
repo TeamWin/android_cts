@@ -3506,7 +3506,7 @@ public class TextViewTest {
         final float doubleSpacing = mTextView.getLayout().getLineWidth(0);
 
         assertEquals("Double spacing should have two times the spacing of single spacing",
-                doubleSpacing - zeroSpacing, 2f * (singleSpacing - zeroSpacing), 1f);
+                doubleSpacing - zeroSpacing, 2f * (singleSpacing - zeroSpacing), 2f);
     }
 
     @UiThreadTest
