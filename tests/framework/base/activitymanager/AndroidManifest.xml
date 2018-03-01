@@ -61,6 +61,10 @@
                 android:name="android.server.am.lifecycle.ActivityLifecycleClientTestBase$TranslucentActivity"
                 android:theme="@android:style/Theme.Translucent.NoTitleBar" />
 
+        <activity
+                android:name="android.server.am.lifecycle.ActivityLifecycleClientTestBase$SecondTranslucentActivity"
+                android:theme="@android:style/Theme.Translucent.NoTitleBar" />
+
         <activity android:name="android.server.am.lifecycle.ActivityLifecycleClientTestBase$LaunchForResultActivity"/>
 
         <activity android:name="android.server.am.lifecycle.ActivityLifecycleClientTestBase$ResultActivity"/>

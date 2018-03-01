@@ -63,6 +63,42 @@ class LifecycleVerifier {
         assertEquals(errorMessage, expectedTransitions, observedTransitions);
     }
 
+    static void assertLaunchAndPauseSequence(Class<? extends Activity> activityClass,
+            LifecycleLog lifecycleLog) {
+        final List<ActivityCallback> observedTransitions =
+                lifecycleLog.getActivityLog(activityClass);
+        log("Observed sequence: " + observedTransitions);
+        final String errorMessage = errorDuringTransition(activityClass, "launch and pause");
+
+        final List<ActivityCallback> expectedTransitions =
+                Arrays.asList(PRE_ON_CREATE, ON_CREATE, ON_START, ON_RESUME, ON_PAUSE);
+        assertEquals(errorMessage, expectedTransitions, observedTransitions);
+    }
+
+    static void assertRestartAndPauseSequence(Class<? extends Activity> activityClass,
+                                              LifecycleLog lifecycleLog) {
+        final List<ActivityCallback> observedTransitions =
+                lifecycleLog.getActivityLog(activityClass);
+        log("Observed sequence: " + observedTransitions);
+        final String errorMessage = errorDuringTransition(activityClass, "restart and pause");
+
+        final List<ActivityCallback> expectedTransitions =
+                Arrays.asList(ON_RESTART, ON_START, ON_RESUME, ON_PAUSE);
+        assertEquals(errorMessage, expectedTransitions, observedTransitions);
+    }
+
+    static void assertRecreateAndPauseSequence(Class<? extends Activity> activityClass,
+                                              LifecycleLog lifecycleLog) {
+        final List<ActivityCallback> observedTransitions =
+                lifecycleLog.getActivityLog(activityClass);
+        log("Observed sequence: " + observedTransitions);
+        final String errorMessage = errorDuringTransition(activityClass, "recreateA  and pause");
+
+        final List<ActivityCallback> expectedTransitions =
+                Arrays.asList(ON_DESTROY, PRE_ON_CREATE, ON_CREATE, ON_START, ON_RESUME, ON_PAUSE);
+        assertEquals(errorMessage, expectedTransitions, observedTransitions);
+    }
+
     static void assertLaunchAndDestroySequence(Class<? extends Activity> activityClass,
             LifecycleLog lifecycleLog) {
         final List<ActivityCallback> observedTransitions =
