@@ -21,8 +21,6 @@ import android.server.am.component.ComponentsBase;
 
 public class Components extends ComponentsBase {
 
-    public static final ComponentName MOVING_CHILD_TEST_ACTIVITY =
-            component(Components.class, "MovingChildTestActivity");
     public static final ComponentName DIALOG_TEST_ACTIVITY =
             component(Components.class, "DialogTestActivity");
 }
