@@ -18,7 +18,6 @@ package android.view.cts.surfacevalidator;
 import android.content.Context;
 import android.graphics.Bitmap;
 import android.graphics.Point;
-import android.graphics.Rect;
 import android.os.Handler;
 import android.os.HandlerThread;
 import android.os.Trace;
@@ -107,8 +106,7 @@ public class SurfacePixelValidator {
         }
     };
 
-    public SurfacePixelValidator(Context context, Point size, Rect boundsToCheck,
-            PixelChecker pixelChecker) {
+    public SurfacePixelValidator(Context context, Point size, PixelChecker pixelChecker) {
         mWidth = size.x;
         mHeight = size.y;
 
@@ -122,8 +120,6 @@ public class SurfacePixelValidator {
         mScript = new ScriptC_PixelCounter(mRS);
 
         mInPixelsAllocation = createBufferQueueAllocation();
-        mScript.set_BOUNDS(new int[] {boundsToCheck.left, boundsToCheck.top,
-                boundsToCheck.right, boundsToCheck.bottom});
         mScript.set_THRESHOLD(PIXEL_CHANNEL_THRESHOLD);
 
         mInPixelsAllocation.setOnBufferAvailableListener(
