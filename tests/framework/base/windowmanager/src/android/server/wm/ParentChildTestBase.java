@@ -18,6 +18,7 @@ package android.server.wm;
 
 import static android.app.WindowConfiguration.WINDOWING_MODE_SPLIT_SCREEN_PRIMARY;
 import static android.server.am.StateLogger.log;
+import static android.server.wm.frametestapp.Components.DialogTestActivity.EXTRA_TEST_CASE;
 
 import android.content.ComponentName;
 import android.server.am.ActivityManagerTestBase;
@@ -25,15 +26,12 @@ import android.server.am.WindowManagerState.WindowState;
 
 abstract class ParentChildTestBase extends ActivityManagerTestBase {
 
-    /** Extra key for test case name. */
-    private static final String EXTRA_TEST_CASE = "test-case";
-
     interface ParentChildTest {
         void doTest(WindowState parent, WindowState child);
     }
 
     private void startTestCase(String testCase) throws Exception {
-        executeShellCommand(getAmStartCmd(activityName(), EXTRA_TEST_CASE, testCase));
+        launchActivity(activityName(), EXTRA_TEST_CASE, testCase);
     }
 
     private void startTestCaseDocked(String testCase) throws Exception {
