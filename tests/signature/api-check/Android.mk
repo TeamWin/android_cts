@@ -26,7 +26,7 @@ LOCAL_SRC_FILES := $(call all-java-files-under, src/java)
 
 LOCAL_MODULE := cts-api-signature-test
 
-LOCAL_SDK_VERSION := current
+LOCAL_SDK_VERSION := test_current
 
 LOCAL_STATIC_JAVA_LIBRARIES := \
     cts-signature-common \
