@@ -18,22 +18,34 @@ package android.content.pm.cts;
 
 import android.content.cts.R;
 
+import static android.content.pm.PackageManager.GET_ACTIVITIES;
+import static android.content.pm.PackageManager.GET_META_DATA;
+import static android.content.pm.PackageManager.GET_PERMISSIONS;
+import static android.content.pm.PackageManager.GET_PROVIDERS;
+import static android.content.pm.PackageManager.GET_RECEIVERS;
+import static android.content.pm.PackageManager.GET_SERVICES;
+
+import static com.google.common.truth.Truth.assertThat;
 
 import android.content.ComponentName;
 import android.content.Intent;
 import android.content.IntentFilter;
+import android.content.pm.ActivityInfo;
 import android.content.pm.ApplicationInfo;
 import android.content.pm.InstrumentationInfo;
 import android.content.pm.PackageInfo;
+import android.content.pm.PackageItemInfo;
 import android.content.pm.PackageManager;
 import android.content.pm.PermissionGroupInfo;
 import android.content.pm.PermissionInfo;
 import android.content.pm.ProviderInfo;
 import android.content.pm.ResolveInfo;
 import android.content.pm.PackageManager.NameNotFoundException;
+import android.content.pm.ServiceInfo;
 import android.test.AndroidTestCase;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Iterator;
 import java.util.List;
 
@@ -45,6 +57,8 @@ import java.util.List;
 public class PackageManagerTest extends AndroidTestCase {
     private PackageManager mPackageManager;
     private static final String PACKAGE_NAME = "android.content.cts";
+    private static final String CONTENT_PKG_NAME = "android.content.cts";
+    private static final String APPLICATION_NAME = "android.content.cts.MockApplication";
     private static final String ACTIVITY_ACTION_NAME = "android.intent.action.PMTEST";
     private static final String MAIN_ACTION_NAME = "android.intent.action.MAIN";
     private static final String SERVICE_ACTION_NAME =
@@ -55,6 +69,8 @@ public class PackageManagerTest extends AndroidTestCase {
     private static final String SERVICE_NAME = "android.content.pm.cts.TestPmService";
     private static final String RECEIVER_NAME = "android.content.pm.cts.PmTestReceiver";
     private static final String INSTRUMENT_NAME = "android.content.pm.cts.TestPmInstrumentation";
+    private static final String CALL_ABROAD_PERMISSION_NAME =
+            "android.content.cts.CALL_ABROAD_PERMISSION";
     private static final String PROVIDER_NAME = "android.content.cts.MockContentProvider";
     private static final String PERMISSIONGROUP_NAME = "android.permission-group.COST_MONEY";
 
@@ -110,7 +126,7 @@ public class PackageManagerTest extends AndroidTestCase {
         String testPermissionsGroup = "android.permission-group.COST_MONEY";
         List<PermissionInfo> permissions = mPackageManager.queryPermissionsByGroup(
                 testPermissionsGroup, PackageManager.GET_META_DATA);
-        checkPermissionInfoName("android.content.cts.CALL_ABROAD_PERMISSION", permissions);
+        checkPermissionInfoName(CALL_ABROAD_PERMISSION_NAME, permissions);
 
         ApplicationInfo appInfo = mPackageManager.getApplicationInfo(PACKAGE_NAME, 0);
         List<ProviderInfo> providers = mPackageManager.queryContentProviders(PACKAGE_NAME,
@@ -514,5 +530,95 @@ public class PackageManagerTest extends AndroidTestCase {
         assertEquals("shared:android.uid.system", result[0]);
         assertEquals(null, result[1]);
         assertEquals("com.android.cts.ctsshim", result[2]);
+    }
+
+    public void testGetInstalledPackages() throws Exception {
+        List<PackageInfo> pkgs = mPackageManager.getInstalledPackages(GET_META_DATA
+                | GET_PERMISSIONS | GET_ACTIVITIES | GET_PROVIDERS | GET_SERVICES | GET_RECEIVERS);
+
+        PackageInfo pkgInfo = findPackageOrFail(pkgs, PACKAGE_NAME);
+
+        // Check metadata
+        assertEquals(APPLICATION_NAME, pkgInfo.applicationInfo.name);
+        assertEquals("Android TestCase", pkgInfo.applicationInfo.loadLabel(mPackageManager));
+        assertEquals(PACKAGE_NAME, pkgInfo.applicationInfo.packageName);
+        assertTrue(pkgInfo.applicationInfo.enabled);
+        // The process name defaults to the package name when not set.
+        assertEquals(PACKAGE_NAME, pkgInfo.applicationInfo.processName);
+
+        // Check required permissions
+        List<String> requestedPermissions = Arrays.asList(pkgInfo.requestedPermissions);
+        assertThat(requestedPermissions).containsAllOf(
+                "android.permission.MANAGE_ACCOUNTS",
+                "android.permission.ACCESS_NETWORK_STATE",
+                "android.content.cts.permission.TEST_GRANTED");
+
+        // Check declared permissions
+        PermissionInfo declaredPermission = (PermissionInfo) findPackageItemOrFail(
+                pkgInfo.permissions, CALL_ABROAD_PERMISSION_NAME);
+        assertEquals("Call abroad", declaredPermission.loadLabel(mPackageManager));
+        assertEquals(PERMISSIONGROUP_NAME, declaredPermission.group);
+        assertEquals(PermissionInfo.PROTECTION_NORMAL, declaredPermission.protectionLevel);
+
+        // Check activities
+        ActivityInfo activity = findPackageItemOrFail(pkgInfo.activities, ACTIVITY_NAME);
+        assertTrue(activity.enabled);
+        assertTrue(activity.exported); // Has intent filters - export by default.
+        assertEquals(PACKAGE_NAME, activity.taskAffinity);
+        assertEquals(ActivityInfo.LAUNCH_SINGLE_TOP, activity.launchMode);
+
+        // Check services
+        ServiceInfo service = findPackageItemOrFail(pkgInfo.services, SERVICE_NAME);
+        assertTrue(service.enabled);
+        assertTrue(service.exported); // Has intent filters - export by default.
+        assertEquals(PACKAGE_NAME, service.packageName);
+        assertEquals(CALL_ABROAD_PERMISSION_NAME, service.permission);
+
+        // Check ContentProviders
+        ProviderInfo provider = findPackageItemOrFail(pkgInfo.providers, PROVIDER_NAME);
+        assertTrue(provider.enabled);
+        assertFalse(provider.exported); // Don't export by default.
+        assertEquals(PACKAGE_NAME, provider.packageName);
+        assertEquals("ctstest", provider.authority);
+
+        // Check Receivers
+        ActivityInfo receiver = findPackageItemOrFail(pkgInfo.receivers, RECEIVER_NAME);
+        assertTrue(receiver.enabled);
+        assertTrue(receiver.exported); // Has intent filters - export by default.
+        assertEquals(PACKAGE_NAME, receiver.packageName);
+    }
+
+    public void testGetInstalledApplications() throws Exception {
+        List<ApplicationInfo> apps = mPackageManager.getInstalledApplications(GET_META_DATA);
+
+        ApplicationInfo app = findPackageItemOrFail(
+                apps.toArray(new ApplicationInfo[] {}), APPLICATION_NAME);
+
+        assertEquals(APPLICATION_NAME, app.name);
+        assertEquals("Android TestCase", app.loadLabel(mPackageManager));
+        assertEquals(PACKAGE_NAME, app.packageName);
+        assertTrue(app.enabled);
+        // The process name defaults to the package name when not set.
+        assertEquals(PACKAGE_NAME, app.processName);
+    }
+
+    private PackageInfo findPackageOrFail(List<PackageInfo> pkgInfos, String pkgName) {
+        for (PackageInfo pkgInfo : pkgInfos) {
+            if (pkgName.equals(pkgInfo.packageName)) {
+                return pkgInfo;
+            }
+        }
+        fail("Package not found with name " + pkgName);
+        return null;
+    }
+
+    private <T extends PackageItemInfo> T findPackageItemOrFail(T[] items, String name) {
+        for (T item : items) {
+            if (name.equals(item.name)) {
+                return item;
+            }
+        }
+        fail("Package item not found with name " + name);
+        return null;
     }
 }
