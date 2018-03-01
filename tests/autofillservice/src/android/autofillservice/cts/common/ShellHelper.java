@@ -20,6 +20,7 @@ import android.support.annotation.NonNull;
 import android.support.test.InstrumentationRegistry;
 import android.text.TextUtils;
 import android.util.Log;
+import android.view.View;
 
 import com.android.compatibility.common.util.SystemUtil;
 
@@ -45,6 +46,21 @@ public final class ShellHelper {
             throw new RuntimeException("Command '" + command + "' failed: ", e);
         }
     }
+
+    /**
+     * Tap on the view center, it may change window focus.
+     */
+    public static void tap(View view) {
+        final int[] xy = new int[2];
+        view.getLocationOnScreen(xy);
+        final int viewWidth = view.getWidth();
+        final int viewHeight = view.getHeight();
+        final int x = (int) (xy[0] + (viewWidth / 2.0f));
+        final int y = (int) (xy[1] + (viewHeight / 2.0f));
+
+        runShellCommand("input touchscreen tap %d %d", x, y);
+    }
+
 
     private ShellHelper() {
         throw new UnsupportedOperationException("contain static methods only");
