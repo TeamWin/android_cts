@@ -111,9 +111,11 @@ public class SurfaceViewTests extends ActivityTestBase {
                 mAnimator.cancel();
             }
         };
-        Screenshotter screenshotter = testOffset -> {
+        Screenshotter screenshotter = testPositionInfo -> {
             Bitmap source = getInstrumentation().getUiAutomation().takeScreenshot();
-            return Bitmap.createBitmap(source, testOffset.x, testOffset.y, TEST_WIDTH, TEST_HEIGHT);
+            return Bitmap.createBitmap(source,
+                    testPositionInfo.screenOffset.x, testPositionInfo.screenOffset.y,
+                    TEST_WIDTH, TEST_HEIGHT);
         };
         createTest()
                 .addLayout(R.layout.frame_layout, initializer, true)
@@ -131,7 +133,7 @@ public class SurfaceViewTests extends ActivityTestBase {
         }
 
         @Override
-        public Bitmap takeScreenshot(Point point /* ignored */) {
+        public Bitmap takeScreenshot(TestPositionInfo testPositionInfo) {
             SynchronousPixelCopy copy = new SynchronousPixelCopy();
             Bitmap dest = Bitmap.createBitmap(
                     TEST_WIDTH, TEST_HEIGHT, Config.ARGB_8888);
