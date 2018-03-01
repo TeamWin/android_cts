@@ -244,8 +244,15 @@ public class AudioFocusTest extends CtsAndroidTestCase {
             assertEquals("1st abandon failed", AudioManager.AUDIOFOCUS_REQUEST_GRANTED, res);
             focusRequests[1] = null;
             Thread.sleep(TEST_TIMING_TOLERANCE_MS);
-            assertEquals("Focus gain not dispatched", AudioManager.AUDIOFOCUS_GAIN,
-                    focusListeners[0].getFocusChangeAndReset());
+            // when focus was lost because it was requested with GAIN, focus is not given back
+            if (gainType != AudioManager.AUDIOFOCUS_GAIN) {
+                assertEquals("Focus gain not dispatched", AudioManager.AUDIOFOCUS_GAIN,
+                        focusListeners[0].getFocusChangeAndReset());
+            } else {
+                // verify there was no focus change because focus user 0 was kicked out of stack
+                assertEquals("Focus change was dispatched", AudioManager.AUDIOFOCUS_NONE,
+                        focusListeners[0].getFocusChangeAndReset());
+            }
             res = am.abandonAudioFocusRequest(focusRequests[0]);
             assertEquals("2nd abandon failed", AudioManager.AUDIOFOCUS_REQUEST_GRANTED, res);
             focusRequests[0] = null;
