@@ -20,9 +20,11 @@ import static android.hardware.display.DisplayManager.VIRTUAL_DISPLAY_FLAG_OWN_C
 import static android.hardware.display.DisplayManager.VIRTUAL_DISPLAY_FLAG_PUBLIC;
 import static android.server.am.ActivityLauncher.KEY_DISPLAY_ID;
 import static android.server.am.ActivityLauncher.KEY_LAUNCH_ACTIVITY;
-import static android.server.am.ActivityLauncher.KEY_TARGET_ACTIVITY;
+import static android.server.am.ActivityLauncher.KEY_TARGET_COMPONENT;
+import static android.server.am.ComponentNameUtils.getActivityName;
 
 import android.app.Activity;
+import android.content.ComponentName;
 import android.content.Intent;
 import android.hardware.display.DisplayManager;
 import android.hardware.display.VirtualDisplay;
@@ -47,7 +49,7 @@ public class VirtualDisplayActivity extends Activity implements SurfaceHolder.Ca
             = "can_show_with_insecure_keyguard";
     private static final String KEY_PUBLIC_DISPLAY = "public_display";
     private static final String KEY_RESIZE_DISPLAY = "resize_display";
-    private static final String KEY_LAUNCH_TARGET_ACTIVITY = "launch_target_activity";
+    private static final String KEY_LAUNCH_TARGET_COMPONENT = "launch_target_component";
     private static final String KEY_COUNT = "count";
 
     private DisplayManager mDisplayManager;
@@ -161,7 +163,7 @@ public class VirtualDisplayActivity extends Activity implements SurfaceHolder.Ca
 
         final int densityDpi = entry.extras.getInt(KEY_DENSITY_DPI, DEFAULT_DENSITY_DPI);
         final boolean resizeDisplay = entry.extras.getBoolean(KEY_RESIZE_DISPLAY);
-        final String launchActivityName = entry.extras.getString(KEY_LAUNCH_TARGET_ACTIVITY);
+        final String launchComponentName = entry.extras.getString(KEY_LAUNCH_TARGET_COMPONENT);
         final Surface surface = surfaceHolder.getSurface();
 
         // Initially, the surface will not have a set width or height so rely on the parent.
@@ -192,11 +194,13 @@ public class VirtualDisplayActivity extends Activity implements SurfaceHolder.Ca
             mVirtualDisplays.put(surface,
                     new VirtualDisplayEntry(virtualDisplay, entry.surfaceView, densityDpi,
                             resizeDisplay));
-            if (launchActivityName != null) {
+            if (launchComponentName != null) {
+                final ComponentName targetActivity =
+                        ComponentName.unflattenFromString(launchComponentName);
                 final int displayId = virtualDisplay.getDisplay().getDisplayId();
                 Log.d(TAG, "Launch activity after display created: activityName="
-                        + launchActivityName + ", displayId=" + displayId);
-                launchActivity(launchActivityName, displayId);
+                        + getActivityName(targetActivity) + ", displayId=" + displayId);
+                launchActivity(targetActivity, displayId);
             }
         } catch (IllegalArgumentException e) {
             final ViewGroup root = (ViewGroup) findViewById(android.R.id.content);
@@ -227,10 +231,10 @@ public class VirtualDisplayActivity extends Activity implements SurfaceHolder.Ca
                 surfaceHolder.getSurfaceFrame().height() / 2, vd.density);
     }
 
-    private void launchActivity(String activityName, int displayId) {
+    private void launchActivity(ComponentName activityName, int displayId) {
         final Bundle extras = new Bundle();
         extras.putBoolean(KEY_LAUNCH_ACTIVITY, true);
-        extras.putString(KEY_TARGET_ACTIVITY, activityName);
+        extras.putString(KEY_TARGET_COMPONENT, getActivityName(activityName));
         extras.putInt(KEY_DISPLAY_ID, displayId);
         ActivityLauncher.launchActivityFromExtras(this, extras);
     }

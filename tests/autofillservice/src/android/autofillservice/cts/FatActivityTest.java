@@ -80,7 +80,7 @@ public class FatActivityTest extends AutoFillServiceTestCase {
         mFatActivity.onInput((v) -> v.requestFocus());
         final FillRequest fillRequest = sReplier.getNextFillRequest();
         mStructure = fillRequest.structure;
-        mUiBot.assertNoDatasets();
+        mUiBot.assertNoDatasetsEver();
 
         // TODO: should only have X children, but there is an extra
         // TextView that's probably coming from the title. For now we're just ignoring it, but
@@ -144,7 +144,7 @@ public class FatActivityTest extends AutoFillServiceTestCase {
         mFatActivity.onInput((v) -> mFatActivity.getAutofillManager().requestAutofill(v));
         final FillRequest fillRequest = sReplier.getNextFillRequest();
         mStructure = fillRequest.structure;
-        mUiBot.assertNoDatasets();
+        mUiBot.assertNoDatasetsEver();
 
         // TODO: should only have X children, but there is an extra
         // TextView that's probably coming from the title. For now we're just ignoring it, but

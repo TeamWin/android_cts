@@ -20,12 +20,19 @@ import static org.junit.Assert.assertEquals;
 import com.android.compatibility.common.tradefed.build.CompatibilityBuildHelper;
 import com.android.compatibility.common.tradefed.testtype.suite.CompatibilityTestSuite;
 import com.android.compatibility.common.tradefed.util.RetryFilterHelper;
+import com.android.tradefed.build.IBuildInfo;
+import com.android.tradefed.build.IDeviceBuildInfo;
+import com.android.tradefed.config.Configuration;
+import com.android.tradefed.config.ConfigurationDef;
 import com.android.tradefed.config.IConfiguration;
 import com.android.tradefed.config.OptionClass;
 import com.android.tradefed.config.OptionSetter;
 import com.android.tradefed.device.DeviceNotAvailableException;
 import com.android.tradefed.device.ITestDevice;
+import com.android.tradefed.invoker.IInvocationContext;
+import com.android.tradefed.invoker.InvocationContext;
 import com.android.tradefed.result.ITestInvocationListener;
+import com.android.tradefed.suite.checker.ISystemStatusChecker;
 import com.android.tradefed.testtype.IRemoteTest;
 import com.android.tradefed.testtype.StubTest;
 
@@ -39,6 +46,7 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 
 /**
  * Unit tests for {@link RetryFactoryTest}.
@@ -49,6 +57,12 @@ public class RetryFactoryTestTest {
     private RetryFactoryTest mFactory;
     private ITestInvocationListener mMockListener;
     private RetryFilterHelper mSpyFilter;
+
+    private List<ISystemStatusChecker> mCheckers;
+    private IBuildInfo mMockInfo;
+    private ITestDevice mMockDevice;
+    private IConfiguration mMockMainConfiguration;
+    private IInvocationContext mMockContext;
 
     /**
      * A {@link CompatibilityTestSuite} that does not run anything.
@@ -70,8 +84,28 @@ public class RetryFactoryTestTest {
         }
     }
 
+    @OptionClass(alias = "compatibility")
+    public static class TestCompatibilityTestSuite extends CompatibilityTestSuite {
+        @Override
+        public LinkedHashMap<String, IConfiguration> loadTests() {
+            LinkedHashMap<String, IConfiguration> tests = new LinkedHashMap<>();
+            IConfiguration config = new Configuration("test", "test");
+            config.setTest(new StubTest());
+            tests.put("module1", config);
+            return tests;
+        }
+    }
+
     @Before
     public void setUp() {
+        mMockMainConfiguration = new Configuration("mockMain", "mockMain");
+        mCheckers = new ArrayList<>();
+        mMockInfo = EasyMock.createMock(IDeviceBuildInfo.class);
+        mMockDevice = EasyMock.createMock(ITestDevice.class);
+        mMockContext = new InvocationContext();
+        mMockContext.addAllocatedDevice(ConfigurationDef.DEFAULT_DEVICE_NAME, mMockDevice);
+        mMockContext.addDeviceBuildInfo(ConfigurationDef.DEFAULT_DEVICE_NAME, mMockInfo);
+
         mSpyFilter = new RetryFilterHelper() {
             @Override
             public void validateBuildFingerprint(ITestDevice device)
@@ -123,5 +157,37 @@ public class RetryFactoryTestTest {
         Collection<IRemoteTest> res = mFactory.split(2);
         assertEquals(2, res.size());
         EasyMock.verify(mMockListener);
+    }
+
+    /**
+     * This test is meant to validate more end-to-end that the retry can create the runner, and
+     * running it works properly for the main use case.
+     */
+    @Test
+    public void testValidation() throws Exception {
+        mFactory = new RetryFactoryTest() {
+            @Override
+            protected RetryFilterHelper createFilterHelper(CompatibilityBuildHelper buildHelper) {
+                return mSpyFilter;
+            }
+            @Override
+            CompatibilityTestSuite createTest() {
+                return new TestCompatibilityTestSuite();
+            }
+        };
+        mFactory.setBuild(mMockInfo);
+        mFactory.setDevice(mMockDevice);
+        mFactory.setSystemStatusChecker(mCheckers);
+        mFactory.setConfiguration(mMockMainConfiguration);
+        mFactory.setInvocationContext(mMockContext);
+
+        mMockListener.testModuleStarted(EasyMock.anyObject());
+        mMockListener.testRunStarted("module1", 0);
+        mMockListener.testRunEnded(EasyMock.anyLong(), (Map<String, String>) EasyMock.anyObject());
+        mMockListener.testModuleEnded();
+
+        EasyMock.replay(mMockListener, mMockInfo, mMockDevice);
+        mFactory.run(mMockListener);
+        EasyMock.verify(mMockListener, mMockInfo, mMockDevice);
     }
 }

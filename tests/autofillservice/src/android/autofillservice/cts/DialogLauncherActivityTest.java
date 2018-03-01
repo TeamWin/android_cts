@@ -67,7 +67,7 @@ public class DialogLauncherActivityTest extends AutoFillServiceTestCase {
 
         // Asserts results.
         try {
-            mUiBot.assertNoDatasets();
+            mUiBot.assertNoDatasetsEver();
             // Make sure nodes were properly generated.
             assertTextIsSanitized(fillRequest.structure, ID_USERNAME);
             assertTextIsSanitized(fillRequest.structure, ID_PASSWORD);

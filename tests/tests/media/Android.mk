@@ -52,7 +52,9 @@ LOCAL_STATIC_JAVA_LIBRARIES := \
     ctstestserver \
     junit \
     ndkaudio \
-    testng
+    testng \
+    truth-prebuilt \
+    mockito-target-minus-junit4
 
 LOCAL_JNI_SHARED_LIBRARIES := \
     libaudio_jni \

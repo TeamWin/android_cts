@@ -41,15 +41,12 @@ import static android.server.am.ActivityLauncher.KEY_NEW_TASK;
 import static android.server.am.ActivityLauncher.KEY_RANDOM_DATA;
 import static android.server.am.ActivityLauncher.KEY_REORDER_TO_FRONT;
 import static android.server.am.ActivityLauncher.KEY_SUPPRESS_EXCEPTIONS;
-import static android.server.am.ActivityLauncher.KEY_TARGET_ACTIVITY;
 import static android.server.am.ActivityLauncher.KEY_TARGET_COMPONENT;
-import static android.server.am.ActivityLauncher.KEY_TARGET_PACKAGE;
 import static android.server.am.ActivityLauncher.KEY_USE_APPLICATION_CONTEXT;
 import static android.server.am.ActivityLauncher.KEY_USE_INSTRUMENTATION;
 import static android.server.am.ActivityLauncher.launchActivityFromExtras;
 import static android.server.am.ComponentNameUtils.getActivityName;
 import static android.server.am.ComponentNameUtils.getLogTag;
-import static android.server.am.ComponentNameUtils.getSimpleClassName;
 import static android.server.am.ComponentNameUtils.getWindowName;
 import static android.server.am.Components.LAUNCHING_ACTIVITY;
 import static android.server.am.Components.TEST_ACTIVITY;
@@ -229,28 +226,6 @@ public abstract class ActivityManagerTestBase {
 
     protected ActivityAndWindowManagersState mAmWmState = new ActivityAndWindowManagersState();
 
-    private SurfaceTraceReceiver mSurfaceTraceReceiver;
-    private Thread mSurfaceTraceThread;
-
-    protected void installSurfaceObserver(SurfaceTraceReceiver.SurfaceObserver observer) {
-        mSurfaceTraceReceiver = new SurfaceTraceReceiver(observer);
-        mSurfaceTraceThread = new Thread() {
-            @Override
-            public void run() {
-                try {
-                    registerSurfaceTraceReceiver("wm surface-trace", mSurfaceTraceReceiver);
-                } catch (IOException e) {
-                    logE("Error running wm surface-trace: " + e.toString());
-                }
-            }
-        };
-        mSurfaceTraceThread.start();
-    }
-
-    protected void removeSurfaceObserver() {
-        mSurfaceTraceThread.interrupt();
-    }
-
     @Before
     public void setUp() throws Exception {
         mContext = InstrumentationRegistry.getContext();
@@ -294,20 +269,6 @@ public abstract class ActivityManagerTestBase {
             logE("Error running shell command: " + command);
             throw new RuntimeException(e);
         }
-    }
-
-    protected static void registerSurfaceTraceReceiver(String command, SurfaceTraceReceiver outputReceiver)
-            throws IOException {
-        log("Shell command: " + command);
-        ParcelFileDescriptor pfd = InstrumentationRegistry.getInstrumentation().getUiAutomation()
-                .executeShellCommand(command);
-        byte[] buf = new byte[512];
-        int bytesRead;
-        FileInputStream fis = new ParcelFileDescriptor.AutoCloseInputStream(pfd);
-        while ((bytesRead = fis.read(buf)) != -1) {
-            outputReceiver.addOutput(buf, 0, bytesRead);
-        }
-        fis.close();
     }
 
     protected Bitmap takeScreenshot() {
@@ -1409,8 +1370,6 @@ public abstract class ActivityManagerTestBase {
             b.putBoolean(KEY_NEW_TASK, mNewTask);
             b.putBoolean(KEY_MULTIPLE_TASK, mMultipleTask);
             b.putBoolean(KEY_REORDER_TO_FRONT, mReorderToFront);
-            b.putString(KEY_TARGET_ACTIVITY, getSimpleClassName(mTargetActivity));
-            b.putString(KEY_TARGET_PACKAGE, mTargetActivity.getPackageName());
             b.putInt(KEY_DISPLAY_ID, mDisplayId);
             b.putBoolean(KEY_USE_APPLICATION_CONTEXT, mUseApplicationContext);
             b.putString(KEY_TARGET_COMPONENT, getActivityName(mTargetActivity));

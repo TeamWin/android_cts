@@ -84,7 +84,7 @@ public class AutoFinishSessionTest extends AutoFillServiceTestCase {
 
         sReplier.getNextFillRequest();
 
-        mUiBot.assertNoDatasets();
+        mUiBot.assertNoDatasetsEver();
 
         // remove first set of views
         mActivity.syncRunOnUiThread(() -> {
@@ -214,7 +214,7 @@ public class AutoFinishSessionTest extends AutoFillServiceTestCase {
 
         sReplier.getNextFillRequest();
 
-        mUiBot.assertNoDatasets();
+        mUiBot.assertNoDatasetsEver();
 
         mActivity.syncRunOnUiThread(() -> {
             mEditText1.setText("editText1-filled");

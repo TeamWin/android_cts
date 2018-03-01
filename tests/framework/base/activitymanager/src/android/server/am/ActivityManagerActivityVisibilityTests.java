@@ -399,6 +399,7 @@ public class ActivityManagerActivityVisibilityTests extends ActivityManagerTestB
     }
 
     @Test
+    @FlakyTest(bugId = 74034092)
     @Presubmit
     public void testTurnScreenOnSingleTask() throws Exception {
         try (final LockScreenSession lockScreenSession = new LockScreenSession()) {

@@ -19,6 +19,7 @@ import static android.app.ActivityManager.SPLIT_SCREEN_CREATE_MODE_TOP_OR_LEFT;
 import static android.autofillservice.cts.Helper.ID_PASSWORD;
 import static android.autofillservice.cts.Helper.ID_USERNAME;
 import static android.autofillservice.cts.common.ShellHelper.runShellCommand;
+import static android.autofillservice.cts.common.ShellHelper.tap;
 
 import static com.google.common.truth.Truth.assertThat;
 
@@ -36,8 +37,6 @@ import org.junit.Test;
 import java.util.concurrent.TimeoutException;
 
 public class MultiWindowLoginActivityTest extends AutoFillServiceTestCase {
-
-    private static final String TAG = "MultiWindowTest";
 
     @Rule
     public final AutofillActivityTestRule<MultiWindowLoginActivity> mActivityRule =
@@ -66,7 +65,7 @@ public class MultiWindowLoginActivityTest extends AutoFillServiceTestCase {
     }
 
 
-    protected String runAmStartActivity(Class activityClass, int flags) {
+    protected String runAmStartActivity(Class<? extends Activity> activityClass, int flags) {
         return runAmStartActivity(activityClass.getName(), flags);
     }
 
@@ -88,20 +87,6 @@ public class MultiWindowLoginActivityTest extends AutoFillServiceTestCase {
         // it doesn't work using startActivity(intent), have to go through shell command.
         runAmStartActivity(activity2,
                 Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_LAUNCH_ADJACENT);
-    }
-
-    /**
-     * Tap on the view center, it may change window focus.
-     */
-    public static void tap(View view) {
-        final int[] xy = new int[2];
-        view.getLocationOnScreen(xy);
-        final int viewWidth = view.getWidth();
-        final int viewHeight = view.getHeight();
-        final int x = (int) (xy[0] + (viewWidth / 2.0f));
-        final int y = (int) (xy[1] + (viewHeight / 2.0f));
-
-        runShellCommand("input touchscreen tap %d %d", x, y);
     }
 
     @Test

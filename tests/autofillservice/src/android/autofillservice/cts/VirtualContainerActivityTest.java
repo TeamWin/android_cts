@@ -400,7 +400,7 @@ public class VirtualContainerActivityTest extends AutoFillServiceTestCase {
         sReplier.getNextFillRequest();
 
         // Auto-fill it.
-        mUiBot.assertNoDatasets();
+        mUiBot.assertNoDatasetsEver();
 
         // Assert callback was called
         callback.assertUiUnavailableEvent(mActivity.mCustomView, mActivity.mUsername.text.id);

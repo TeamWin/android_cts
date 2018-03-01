@@ -35,7 +35,6 @@ import android.graphics.PixelFormat;
 import android.graphics.PostProcessor;
 import android.graphics.Rect;
 import android.graphics.drawable.Drawable;
-import android.graphics.drawable.BitmapDrawable;
 import android.graphics.drawable.NinePatchDrawable;
 import android.net.Uri;
 import android.support.test.InstrumentationRegistry;
@@ -46,23 +45,19 @@ import android.util.TypedValue;
 
 import com.android.compatibility.common.util.BitmapUtils;
 
+import org.junit.Before;
+import org.junit.Test;
+import org.junit.runner.RunWith;
+
 import java.io.ByteArrayOutputStream;
 import java.io.File;
-import java.io.FileInputStream;
-import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
-import java.lang.ArrayIndexOutOfBoundsException;
-import java.lang.NullPointerException;
-import java.lang.RuntimeException;
 import java.nio.ByteBuffer;
 import java.util.function.IntFunction;
-
-import org.junit.Before;
-import org.junit.Test;
-import org.junit.runner.RunWith;
+import java.util.function.Supplier;
 
 @RunWith(AndroidJUnit4.class)
 public class ImageDecoderTest {
@@ -1375,13 +1370,13 @@ public class ImageDecoderTest {
     }
 
     @Test
-    public void testPreferRamOverQualityPlusHardware() {
+    public void testConserveMemoryPlusHardware() {
         class Listener implements ImageDecoder.OnHeaderDecodedListener {
             int allocator;
             @Override
             public void onHeaderDecoded(ImageDecoder decoder, ImageDecoder.ImageInfo info,
                                         ImageDecoder.Source src) {
-                decoder.setPreferRamOverQuality(true);
+                decoder.setConserveMemory(true);
                 decoder.setAllocator(allocator);
             }
         };
@@ -1427,7 +1422,7 @@ public class ImageDecoderTest {
     }
 
     @Test
-    public void testPreferRamOverQuality() {
+    public void testConserveMemory() {
         class Listener implements ImageDecoder.OnHeaderDecodedListener {
             boolean doPostProcess;
             boolean preferRamOverQuality;
@@ -1435,7 +1430,7 @@ public class ImageDecoderTest {
             public void onHeaderDecoded(ImageDecoder decoder, ImageDecoder.ImageInfo info,
                                         ImageDecoder.Source src) {
                 if (preferRamOverQuality) {
-                    decoder.setPreferRamOverQuality(true);
+                    decoder.setConserveMemory(true);
                 }
                 if (doPostProcess) {
                     decoder.setPostProcessor((c) -> {
@@ -1448,7 +1443,7 @@ public class ImageDecoderTest {
         };
         Listener l = new Listener();
         // All of these images are opaque, so they can save RAM with
-        // setPreferRamOverQuality.
+        // setConserveMemory.
         int resIds[] = new int[] { R.drawable.png_test, R.drawable.baseline_jpeg,
                                    // If this were stored in drawable/, it would
                                    // be converted from 16-bit to 8. FIXME: Is
@@ -1549,6 +1544,8 @@ public class ImageDecoderTest {
         fail("should not have reached here!");
     }
 
+    private interface ByteBufferSupplier extends Supplier<ByteBuffer> {};
+
     @Test
     public void testOffsetByteArray() {
         for (Record record : RECORDS) {
@@ -1561,78 +1558,77 @@ public class ImageDecoderTest {
             int myPosition = 7;
             assertEquals(offset, myOffset + myPosition);
 
-            SourceCreator[] creators = new SourceCreator[] {
-                // Internally, this gives the buffer a position, but not an offset.
-                unused -> ImageDecoder.createSource(ByteBuffer.wrap(array, offset, length)),
-                unused -> {
+            ByteBufferSupplier[] suppliers = new ByteBufferSupplier[] {
+                    // Internally, this gives the buffer a position, but not an offset.
+                    () -> ByteBuffer.wrap(array, offset, length),
                     // Same, but make it readOnly to ensure that we test the
                     // ByteBufferSource rather than the ByteArraySource.
-                    ByteBuffer buf = ByteBuffer.wrap(array, offset, length);
-                    return ImageDecoder.createSource(buf.asReadOnlyBuffer());
-                },
-                unused -> {
-                    // slice() to give the buffer an offset.
-                    ByteBuffer buf = ByteBuffer.wrap(array, 0, array.length - extra);
-                    buf.position(offset);
-                    return ImageDecoder.createSource(buf.slice());
-                },
-                unused -> {
-                    // Same, but make it readOnly to ensure that we test the
-                    // ByteBufferSource rather than the ByteArraySource.
-                    ByteBuffer buf = ByteBuffer.wrap(array, 0, array.length - extra);
-                    buf.position(offset);
-                    return ImageDecoder.createSource(buf.slice().asReadOnlyBuffer());
-                },
-                unused -> {
-                    // Use both a position and an offset.
-                    ByteBuffer buf = ByteBuffer.wrap(array, myOffset,
+                    () -> ByteBuffer.wrap(array, offset, length).asReadOnlyBuffer(),
+                    () -> {
+                        // slice() to give the buffer an offset.
+                        ByteBuffer buf = ByteBuffer.wrap(array, 0, array.length - extra);
+                        buf.position(offset);
+                        return buf.slice();
+                    },
+                    () -> {
+                        // Same, but make it readOnly to ensure that we test the
+                        // ByteBufferSource rather than the ByteArraySource.
+                        ByteBuffer buf = ByteBuffer.wrap(array, 0, array.length - extra);
+                        buf.position(offset);
+                        return buf.slice().asReadOnlyBuffer();
+                    },
+                    () -> {
+                        // Use both a position and an offset.
+                        ByteBuffer buf = ByteBuffer.wrap(array, myOffset,
                             array.length - extra - myOffset);
-                    buf = buf.slice();
-                    buf.position(myPosition);
-                    return ImageDecoder.createSource(buf);
-                },
-                unused -> {
-                    // Same, as readOnly.
-                    ByteBuffer buf = ByteBuffer.wrap(array, myOffset,
-                            array.length - extra - myOffset);
-                    buf = buf.slice();
-                    buf.position(myPosition);
-                    return ImageDecoder.createSource(buf.asReadOnlyBuffer());
-                },
-                unused -> {
-                    // Direct ByteBuffer with a position.
-                    ByteBuffer buf = ByteBuffer.allocateDirect(array.length);
-                    buf.put(array);
-                    buf.position(offset);
-                    return ImageDecoder.createSource(buf);
-                },
-                unused -> {
-                    // Sliced direct ByteBuffer, for an offset.
-                    ByteBuffer buf = ByteBuffer.allocateDirect(array.length);
-                    buf.put(array);
-                    buf.position(offset);
-                    return ImageDecoder.createSource(buf.slice());
-                },
-                unused -> {
-                    // Direct ByteBuffer with position and offset.
-                    ByteBuffer buf = ByteBuffer.allocateDirect(array.length);
-                    buf.put(array);
-                    buf.position(myOffset);
-                    buf = buf.slice();
-                    buf.position(myPosition);
-                    return ImageDecoder.createSource(buf);
-                },
+                        buf = buf.slice();
+                        buf.position(myPosition);
+                        return buf;
+                    },
+                    () -> {
+                        // Same, as readOnly.
+                        ByteBuffer buf = ByteBuffer.wrap(array, myOffset,
+                                array.length - extra - myOffset);
+                        buf = buf.slice();
+                        buf.position(myPosition);
+                        return buf.asReadOnlyBuffer();
+                    },
+                    () -> {
+                        // Direct ByteBuffer with a position.
+                        ByteBuffer buf = ByteBuffer.allocateDirect(array.length);
+                        buf.put(array);
+                        buf.position(offset);
+                        return buf;
+                    },
+                    () -> {
+                        // Sliced direct ByteBuffer, for an offset.
+                        ByteBuffer buf = ByteBuffer.allocateDirect(array.length);
+                        buf.put(array);
+                        buf.position(offset);
+                        return buf.slice();
+                    },
+                    () -> {
+                        // Direct ByteBuffer with position and offset.
+                        ByteBuffer buf = ByteBuffer.allocateDirect(array.length);
+                        buf.put(array);
+                        buf.position(myOffset);
+                        buf = buf.slice();
+                        buf.position(myPosition);
+                        return buf;
+                    },
             };
-            for (SourceCreator f : creators) {
-                ImageDecoder.Source src = f.apply(0);
+            for (int i = 0; i < suppliers.length; ++i) {
+                ByteBuffer buffer = suppliers[i].get();
+                final int position = buffer.position();
+                ImageDecoder.Source src = ImageDecoder.createSource(buffer);
                 try {
-                    Drawable drawable = ImageDecoder.decodeDrawable(src, (decoder, info, s) -> {
-                        decoder.setOnPartialImageListener((error, source) -> false);
-                    });
+                    Drawable drawable = ImageDecoder.decodeDrawable(src);
                     assertNotNull(drawable);
                 } catch (IOException e) {
                     fail("Failed with exception " + e);
                 }
+                assertEquals("Mismatch for supplier " + i,
+                        position, buffer.position());
             }
         }
     }

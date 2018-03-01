@@ -75,7 +75,7 @@ public class CustomDescriptionDateTest extends AutoFillServiceTestCase {
         sReplier.getNextFillRequest();
 
         // Autofill it.
-        mUiBot.assertNoDatasets();
+        mUiBot.assertNoDatasetsEver();
 
         // Trigger save.
         mActivity.setDate(2010, Calendar.DECEMBER, 12);

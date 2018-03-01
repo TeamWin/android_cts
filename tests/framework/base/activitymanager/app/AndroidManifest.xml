@@ -252,6 +252,7 @@
         <activity android:name=".VirtualDisplayActivity"
                   android:resizeableActivity="true"
                   android:exported="true"
+                  android:taskAffinity="nobody.but.VirtualDisplayActivity"
                   android:configChanges="orientation|screenSize|smallestScreenSize|screenLayout"
         />
         <activity android:name=".ShowWhenLockedActivity"

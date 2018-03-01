@@ -115,7 +115,7 @@ public class OptionalSaveActivityTest extends AutoFillServiceTestCase {
         mActivity.syncRunOnUiThread(() -> mActivity.mAddress1.requestFocus());
 
         // Sanity check.
-        mUiBot.assertNoDatasets();
+        mUiBot.assertNoDatasetsEver();
 
         // Wait for onFill() before proceeding, otherwise the fields might be changed before
         // the session started.
@@ -172,7 +172,7 @@ public class OptionalSaveActivityTest extends AutoFillServiceTestCase {
         mActivity.syncRunOnUiThread(() -> mActivity.mAddress1.requestFocus());
 
         // Sanity check.
-        mUiBot.assertNoDatasets();
+        mUiBot.assertNoDatasetsEver();
 
         // Wait for onFill() before proceeding, otherwise the fields might be changed before
         // the session started.

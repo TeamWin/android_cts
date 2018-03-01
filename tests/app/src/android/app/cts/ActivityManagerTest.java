@@ -38,12 +38,16 @@ import android.content.IntentFilter;
 import android.content.pm.ConfigurationInfo;
 import android.content.res.Resources;
 import android.platform.test.annotations.RestrictedBuildTest;
+import android.support.test.uiautomator.UiDevice;
 import android.test.InstrumentationTestCase;
+import android.util.Log;
 
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
 public class ActivityManagerTest extends InstrumentationTestCase {
+    private static final String TAG = ActivityManagerTest.class.getSimpleName();
     private static final String STUB_PACKAGE_NAME = "android.app.stubs";
     private static final int WAITFOR_MSEC = 5000;
     private static final String SERVICE_NAME = "android.app.stubs.MockService";
@@ -310,6 +314,31 @@ public class ActivityManagerTest extends InstrumentationTestCase {
         mContext.stopService(intent);
         boolean destroyed = MockService.waitForDestroy(WAIT_TIME);
         assertTrue(destroyed);
+    }
+
+    private void executeAndLogShellCommand(String cmd) throws IOException {
+        final UiDevice uiDevice = UiDevice.getInstance(mInstrumentation);
+        final String output = uiDevice.executeShellCommand(cmd);
+        Log.d(TAG, "executed[" + cmd + "]; output[" + output.trim() + "]");
+    }
+
+    private void setForcedAppStandby(String packageName, boolean enabled) throws IOException {
+        final StringBuilder cmdBuilder = new StringBuilder("appops set ")
+                .append(packageName)
+                .append(" RUN_ANY_IN_BACKGROUND ")
+                .append(enabled ? "ignore" : "allow");
+        executeAndLogShellCommand(cmdBuilder.toString());
+    }
+
+    public void testIsBackgroundRestricted() throws IOException {
+        // This instrumentation runs in the target package's uid.
+        final Context targetContext = mInstrumentation.getTargetContext();
+        final String targetPackage = targetContext.getPackageName();
+        final ActivityManager am = targetContext.getSystemService(ActivityManager.class);
+        setForcedAppStandby(targetPackage, true);
+        assertTrue(am.isBackgroundRestricted());
+        setForcedAppStandby(targetPackage, false);
+        assertFalse(am.isBackgroundRestricted());
     }
 
     public void testGetMemoryInfo() {

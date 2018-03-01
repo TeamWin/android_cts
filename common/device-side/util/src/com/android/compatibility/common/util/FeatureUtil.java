@@ -31,6 +31,7 @@ public class FeatureUtil {
 
     public static final String LEANBACK_FEATURE = "android.software.leanback";
     public static final String LOW_RAM_FEATURE = "android.hardware.ram.low";
+    public static final String TELEPHONY_FEATURE = "android.hardware.telephony";
     public static final String TV_FEATURE = "android.hardware.type.television";
     public static final String WATCH_FEATURE = "android.hardware.type.watch";
 
@@ -92,5 +93,10 @@ public class FeatureUtil {
 
     private static PackageManager getPackageManager() {
         return InstrumentationRegistry.getInstrumentation().getTargetContext().getPackageManager();
+    }
+
+    /** Returns true if the device has feature TELEPHONY_FEATURE */
+    public static boolean hasTelephony() {
+        return hasSystemFeature(TELEPHONY_FEATURE);
     }
 }

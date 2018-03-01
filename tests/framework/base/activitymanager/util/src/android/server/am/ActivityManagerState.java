@@ -34,6 +34,7 @@ import android.os.SystemClock;
 import android.support.test.InstrumentationRegistry;
 
 import com.android.server.am.proto.nano.ActivityDisplayProto;
+import com.android.server.am.proto.nano.ActivityManagerServiceDumpActivitiesProto;
 import com.android.server.am.proto.nano.ActivityRecordProto;
 import com.android.server.am.proto.nano.ActivityStackProto;
 import com.android.server.am.proto.nano.ActivityStackSupervisorProto;
@@ -148,7 +149,8 @@ class ActivityManagerState {
     private void parseSysDumpProto(byte[] sysDump) throws InvalidProtocolBufferNanoException {
         reset();
 
-        ActivityStackSupervisorProto state = ActivityStackSupervisorProto.parseFrom(sysDump);
+        ActivityStackSupervisorProto state = ActivityManagerServiceDumpActivitiesProto.parseFrom(sysDump)
+                .activityStackSupervisor;
         for (int i = 0; i < state.displays.length; i++) {
             ActivityDisplayProto activityDisplay = state.displays[i];
             mDisplays.add(new ActivityDisplay(activityDisplay, this));

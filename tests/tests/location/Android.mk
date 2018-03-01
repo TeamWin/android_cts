@@ -60,6 +60,7 @@ LOCAL_SRC_FILES := $(call all-java-files-under, src) \
    $(call all-proto-files-under, protos)
 
 LOCAL_PACKAGE_NAME := CtsLocationTestCases
+LOCAL_PRIVATE_PLATFORM_APIS := true
 
 LOCAL_JACK_FLAGS := --multi-dex native
 LOCAL_DX_FLAGS := --multi-dex

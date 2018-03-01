@@ -24,7 +24,7 @@ final class Timeouts {
     /**
      * Timeout until framework binds / unbinds from service.
      */
-    static final Timeout CONNECTION_TIMEOUT = new Timeout("CONNECTION_TIMEOUT", 1000, 2F, 10000);
+    static final Timeout CONNECTION_TIMEOUT = new Timeout("CONNECTION_TIMEOUT", 5000, 2F, 10000);
 
     /**
      * Timeout until framework unbinds from a service.
@@ -34,17 +34,17 @@ final class Timeouts {
     /**
      * Timeout to get the expected number of fill events.
      */
-    static final Timeout FILL_EVENTS_TIMEOUT = new Timeout("FILL_EVENTS_TIMEOUT", 1000, 2F, 10000);
+    static final Timeout FILL_EVENTS_TIMEOUT = new Timeout("FILL_EVENTS_TIMEOUT", 5000, 2F, 10000);
 
     /**
      * Timeout for expected autofill requests.
      */
-    static final Timeout FILL_TIMEOUT = new Timeout("FILL_TIMEOUT", 500, 2F, 10000);
+    static final Timeout FILL_TIMEOUT = new Timeout("FILL_TIMEOUT", 5000, 2F, 10000);
 
     /**
      * Timeout for expected save requests.
      */
-    static final Timeout SAVE_TIMEOUT = new Timeout("SAVE_TIMEOUT", 1000, 2F, 10000);
+    static final Timeout SAVE_TIMEOUT = new Timeout("SAVE_TIMEOUT", 5000, 2F, 10000);
 
     /**
      * Timeout used when save is not expected to be shown - test will sleep for that amount of time
@@ -55,7 +55,7 @@ final class Timeouts {
     /**
      * Timeout for UI operations. Typically used by {@link UiBot}.
      */
-    static final Timeout UI_TIMEOUT = new Timeout("UI_TIMEOUT", 500, 2F, 10000);
+    static final Timeout UI_TIMEOUT = new Timeout("UI_TIMEOUT", 5000, 2F, 10000);
 
     /**
      * Timeout for webview operations. Typically used by {@link UiBot}.
@@ -71,13 +71,19 @@ final class Timeouts {
      * <p>Typically used by {@link UiBot}.
      */
     static final Timeout UI_DATASET_PICKER_TIMEOUT =
-            new Timeout("UI_DATASET_PICKER_TIMEOUT", 2000, 2F, 4000);
+            new Timeout("UI_DATASET_PICKER_TIMEOUT", 5000, 2F, 10000);
+
+    /**
+     * Timeout used when the dataset picker is not expected to be shown - test will sleep for that
+     * amount of time as there is no callback that be received to assert it's not shown.
+     */
+    static final long DATASET_PICKER_NOT_SHOWN_NAPTIME_MS = 5000;
 
     /**
      * Timeout (in milliseconds) for an activity to be brought out to top.
      */
     static final Timeout ACTIVITY_RESURRECTION =
-            new Timeout("ACTIVITY_RESURRECTION", 6000, 1.5F, 20000);
+            new Timeout("ACTIVITY_RESURRECTION", 6000, 3F, 20000);
 
     /**
      * Timeout for changing the screen orientation.

@@ -1,16 +1,18 @@
 package android.server.am.lifecycle;
 
-import static android.support.test.runner.lifecycle.Stage.CREATED;
-import static android.support.test.runner.lifecycle.Stage.DESTROYED;
-import static android.support.test.runner.lifecycle.Stage.PAUSED;
-import static android.support.test.runner.lifecycle.Stage.PRE_ON_CREATE;
-import static android.support.test.runner.lifecycle.Stage.RESUMED;
-import static android.support.test.runner.lifecycle.Stage.STARTED;
-import static android.support.test.runner.lifecycle.Stage.STOPPED;
+import static android.server.am.lifecycle.LifecycleLog.ActivityCallback.ON_ACTIVITY_RESULT;
+import static android.server.am.lifecycle.LifecycleLog.ActivityCallback.ON_CREATE;
+import static android.server.am.lifecycle.LifecycleLog.ActivityCallback.ON_DESTROY;
+import static android.server.am.lifecycle.LifecycleLog.ActivityCallback.ON_PAUSE;
+import static android.server.am.lifecycle.LifecycleLog.ActivityCallback.ON_RESUME;
+import static android.server.am.lifecycle.LifecycleLog.ActivityCallback.ON_START;
+import static android.server.am.lifecycle.LifecycleLog.ActivityCallback.ON_STOP;
+import static android.server.am.lifecycle.LifecycleLog.ActivityCallback.PRE_ON_CREATE;
 import static android.view.Surface.ROTATION_0;
 import static android.view.Surface.ROTATION_180;
 import static android.view.Surface.ROTATION_270;
 import static android.view.Surface.ROTATION_90;
+
 import static org.junit.Assert.fail;
 
 import android.app.Activity;
@@ -39,7 +41,7 @@ public class ActivityLifecycleTests extends ActivityLifecycleClientTestBase {
     @Test
     public void testSingleLaunch() throws Exception {
         final Activity activity = mFirstActivityTestRule.launchActivity(new Intent());
-        waitAndAssertActivityStates(state(activity, RESUMED));
+        waitAndAssertActivityStates(state(activity, ON_RESUME));
 
         LifecycleVerifier.assertLaunchSequence(FirstActivity.class, getLifecycleLog());
     }
@@ -47,12 +49,12 @@ public class ActivityLifecycleTests extends ActivityLifecycleClientTestBase {
     @Test
     public void testLaunchOnTop() throws Exception {
         final Activity firstActivity = mFirstActivityTestRule.launchActivity(new Intent());
-        waitAndAssertActivityStates(state(firstActivity, RESUMED));
+        waitAndAssertActivityStates(state(firstActivity, ON_RESUME));
 
         getLifecycleLog().clear();
         final Activity secondActivity = mSecondActivityTestRule.launchActivity(new Intent());
-        waitAndAssertActivityStates(state(firstActivity, STOPPED),
-                state(secondActivity, RESUMED));
+        waitAndAssertActivityStates(state(firstActivity, ON_STOP),
+                state(secondActivity, ON_RESUME));
 
         LifecycleVerifier.assertLaunchSequence(SecondActivity.class, FirstActivity.class,
                 getLifecycleLog());
@@ -64,7 +66,7 @@ public class ActivityLifecycleTests extends ActivityLifecycleClientTestBase {
         final Activity activity = mFirstActivityTestRule.launchActivity(new Intent());
 
         activity.finish();
-        waitAndAssertActivityStates(state(activity, DESTROYED));
+        waitAndAssertActivityStates(state(activity, ON_DESTROY));
 
         LifecycleVerifier.assertLaunchAndDestroySequence(FirstActivity.class, getLifecycleLog());
     }
@@ -73,13 +75,13 @@ public class ActivityLifecycleTests extends ActivityLifecycleClientTestBase {
     @Test
     public void testRelaunchResumed() throws Exception {
         final Activity activity = mFirstActivityTestRule.launchActivity(new Intent());
-        waitAndAssertActivityStates(state(activity, RESUMED));
+        waitAndAssertActivityStates(state(activity, ON_RESUME));
 
         getLifecycleLog().clear();
         InstrumentationRegistry.getInstrumentation().runOnMainSync(activity::recreate);
-        waitAndAssertActivityStates(state(activity, RESUMED));
+        waitAndAssertActivityStates(state(activity, ON_RESUME));
 
-        LifecycleVerifier.assertRelaunchSequence(FirstActivity.class, getLifecycleLog(), RESUMED);
+        LifecycleVerifier.assertRelaunchSequence(FirstActivity.class, getLifecycleLog(), ON_RESUME);
     }
 
     @FlakyTest(bugId = 72956507)
@@ -89,14 +91,14 @@ public class ActivityLifecycleTests extends ActivityLifecycleClientTestBase {
         final Activity topTranslucentActivity =
                 mTranslucentActivityTestRule.launchActivity(new Intent());
 
-        waitAndAssertActivityStates(state(pausedActivity, PAUSED),
-                state(topTranslucentActivity, RESUMED));
+        waitAndAssertActivityStates(state(pausedActivity, ON_PAUSE),
+                state(topTranslucentActivity, ON_RESUME));
 
         getLifecycleLog().clear();
         InstrumentationRegistry.getInstrumentation().runOnMainSync(pausedActivity::recreate);
-        waitAndAssertActivityStates(state(pausedActivity, PAUSED));
+        waitAndAssertActivityStates(state(pausedActivity, ON_PAUSE));
 
-        LifecycleVerifier.assertRelaunchSequence(FirstActivity.class, getLifecycleLog(), PAUSED);
+        LifecycleVerifier.assertRelaunchSequence(FirstActivity.class, getLifecycleLog(), ON_PAUSE);
     }
 
     @FlakyTest(bugId = 72956507)
@@ -105,25 +107,26 @@ public class ActivityLifecycleTests extends ActivityLifecycleClientTestBase {
         final Activity stoppedActivity = mFirstActivityTestRule.launchActivity(new Intent());
         final Activity topActivity = mSecondActivityTestRule.launchActivity(new Intent());
 
-        waitAndAssertActivityStates(state(stoppedActivity, STOPPED), state(topActivity, RESUMED));
+        waitAndAssertActivityStates(state(stoppedActivity, ON_STOP), state(topActivity, ON_RESUME));
 
         getLifecycleLog().clear();
         InstrumentationRegistry.getInstrumentation().runOnMainSync(stoppedActivity::recreate);
-        waitAndAssertActivityStates(state(stoppedActivity, STOPPED));
+        waitAndAssertActivityStates(state(stoppedActivity, ON_STOP));
 
-        LifecycleVerifier.assertRelaunchSequence(FirstActivity.class, getLifecycleLog(), STOPPED);
+        LifecycleVerifier.assertRelaunchSequence(FirstActivity.class, getLifecycleLog(), ON_STOP);
     }
 
     @FlakyTest(bugId = 72956507)
     @Test
     public void testRelaunchConfigurationChangedWhileBecomingVisible() throws Exception {
-        final Activity becomingVisibleActivity = mFirstActivityTestRule.launchActivity(new Intent());
+        final Activity becomingVisibleActivity =
+                mFirstActivityTestRule.launchActivity(new Intent());
         final Activity translucentActivity =
                 mTranslucentActivityTestRule.launchActivity(new Intent());
         final Activity topOpaqueActivity = mSecondActivityTestRule.launchActivity(new Intent());
 
-        waitAndAssertActivityStates(state(becomingVisibleActivity, STOPPED),
-                state(translucentActivity, STOPPED), state(topOpaqueActivity, RESUMED));
+        waitAndAssertActivityStates(state(becomingVisibleActivity, ON_STOP),
+                state(translucentActivity, ON_STOP), state(topOpaqueActivity, ON_RESUME));
 
         getLifecycleLog().clear();
         try (final RotationSession rotationSession = new RotationSession()) {
@@ -143,9 +146,9 @@ public class ActivityLifecycleTests extends ActivityLifecycleClientTestBase {
             }
 
             // Assert that the top activity was relaunched.
-            waitAndAssertActivityStates(state(topOpaqueActivity, RESUMED));
+            waitAndAssertActivityStates(state(topOpaqueActivity, ON_RESUME));
             LifecycleVerifier.assertRelaunchSequence(
-                    SecondActivity.class, getLifecycleLog(), RESUMED);
+                    SecondActivity.class, getLifecycleLog(), ON_RESUME);
 
             // Finish the top activity
             getLifecycleLog().clear();
@@ -153,15 +156,30 @@ public class ActivityLifecycleTests extends ActivityLifecycleClientTestBase {
 
             // Assert that the translucent activity and the activity visible behind it were
             // relaunched.
-            waitAndAssertActivityStates(state(becomingVisibleActivity, PAUSED),
-                    state(translucentActivity, RESUMED));
+            waitAndAssertActivityStates(state(becomingVisibleActivity, ON_PAUSE),
+                    state(translucentActivity, ON_RESUME));
 
             LifecycleVerifier.assertSequence(FirstActivity.class, getLifecycleLog(),
-                    Arrays.asList(DESTROYED, PRE_ON_CREATE, CREATED, STARTED, RESUMED, PAUSED),
-                    "becomingVisiblePaused");
+                    Arrays.asList(ON_DESTROY, PRE_ON_CREATE, ON_CREATE, ON_START, ON_RESUME,
+                            ON_PAUSE), "becomingVisiblePaused");
             LifecycleVerifier.assertSequence(TranslucentActivity.class, getLifecycleLog(),
-                    Arrays.asList(DESTROYED, PRE_ON_CREATE, CREATED, STARTED, RESUMED),
+                    Arrays.asList(ON_DESTROY, PRE_ON_CREATE, ON_CREATE, ON_START, ON_RESUME),
                     "becomingVisibleResumed");
         }
+    }
+
+    @FlakyTest(bugId = 72956507)
+    @Test
+    public void testOnActivityResult() throws Exception {
+        getLifecycleLog().clear();
+        final Intent intent = new Intent();
+        final Activity launchForResultActivity =
+                mLaunchForResultActivityTestRule.launchActivity(intent);
+
+        waitAndAssertActivityStates(state(launchForResultActivity, ON_RESUME));
+
+        LifecycleVerifier.assertSequence(LaunchForResultActivity.class,
+                getLifecycleLog(), Arrays.asList(PRE_ON_CREATE, ON_CREATE, ON_START, ON_RESUME,
+                        ON_PAUSE, ON_ACTIVITY_RESULT, ON_RESUME), "activityResult");
     }
 }

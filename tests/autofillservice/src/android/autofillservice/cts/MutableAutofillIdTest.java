@@ -169,11 +169,11 @@ public class MutableAutofillIdTest extends AutoFillServiceTestCase {
         final FillRequest fillRequest1 = sReplier.getNextFillRequest();
         final ViewNode node1Request1 = assertTextIsSanitized(fillRequest1.structure, ID_L1C1);
         assertThat(node1Request1.getAutofillId()).isEqualTo(oldIdField1);
-        mUiBot.assertNoDatasets();
+        mUiBot.assertNoDatasetsEver();
 
         // Make sure 2nd field doesn't trigger a new request
         mActivity.focusCell(1, 2); // No window change because it's not showing dataset picker.
-        mUiBot.assertNoDatasets();
+        mUiBot.assertNoDatasetsEver();
 
         // Now change 1st view value...
         mActivity.setText(1, 1, "OLD");
@@ -201,7 +201,7 @@ public class MutableAutofillIdTest extends AutoFillServiceTestCase {
         final ViewNode node1Request2 = assertTextIsSanitized(fillRequest2.structure, ID_L1C1);
         // Make sure node has new id.
         assertThat(node1Request2.getAutofillId()).isEqualTo(newIdField1);
-        mUiBot.assertNoDatasets();
+        mUiBot.assertNoDatasetsEver();
 
         // Now triggers save
         mActivity.setText(1, 1, "NEW");

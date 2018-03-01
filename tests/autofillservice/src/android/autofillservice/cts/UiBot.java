@@ -16,6 +16,7 @@
 
 package android.autofillservice.cts;
 
+import static android.autofillservice.cts.Timeouts.DATASET_PICKER_NOT_SHOWN_NAPTIME_MS;
 import static android.autofillservice.cts.Timeouts.SAVE_NOT_SHOWN_NAPTIME_MS;
 import static android.autofillservice.cts.Timeouts.SAVE_TIMEOUT;
 import static android.autofillservice.cts.Timeouts.UI_DATASET_PICKER_TIMEOUT;
@@ -109,6 +110,8 @@ final class UiBot {
     private final UiAutomation mAutoman;
     private final Timeout mDefaultTimeout;
 
+    private boolean mOkToCallAssertNoDatasets;
+
     UiBot() {
         this(UI_TIMEOUT);
     }
@@ -122,13 +125,35 @@ final class UiBot {
         mAutoman = instrumentation.getUiAutomation();
     }
 
+    void reset() {
+        mOkToCallAssertNoDatasets = false;
+    }
+
     /**
-     * Asserts the dataset chooser is not shown.
+     * Asserts the dataset picker is not shown anymore.
+     *
+     * @throws IllegalStateException if called *before* an assertion was made to make sure the
+     * dataset picker is shown - if that's not the case, call
+     * {@link #assertNoDatasetsEver()} instead.
      */
     void assertNoDatasets() throws Exception {
-        // TODO: split between assertDatasetsGone() and assertDatasetNeverShown() to optimize
-        // which method to use (assertNotShowing() or assertNeverShown());
+        if (!mOkToCallAssertNoDatasets) {
+            throw new IllegalStateException(
+                    "Cannot call assertNoDatasets() without calling assertDatasets first");
+        }
         assertNotShowingAnymore("datasets", DATASET_PICKER_SELECTOR, UI_DATASET_PICKER_TIMEOUT);
+        mOkToCallAssertNoDatasets = false;
+    }
+
+    /**
+     * Asserts the dataset picker was never shown.
+     *
+     * <p>This method is slower than {@link #assertNoDatasets()} and should only be called in the
+     * cases where the dataset picker was not previous shown.
+     */
+    void assertNoDatasetsEver() throws Exception {
+        assertNeverShown("dataset picker", DATASET_PICKER_SELECTOR,
+                DATASET_PICKER_NOT_SHOWN_NAPTIME_MS);
     }
 
     /**
@@ -379,7 +404,7 @@ final class UiBot {
     }
 
     /**
-     * Asserts the save snackbar is not showing and returns it.
+     * Asserts the save snackbar is not showing.
      */
     void assertSaveNotShowing(int type) throws Exception {
         assertNeverShown("save UI for type " + type, SAVE_UI_SELECTOR, SAVE_NOT_SHOWN_NAPTIME_MS);
@@ -674,6 +699,10 @@ final class UiBot {
 
         final String expectedTitle = getString(RESOURCE_STRING_DATASET_PICKER_ACCESSIBILITY_TITLE);
         assertAccessibilityTitle(picker, expectedTitle);
+
+        if (picker != null) {
+            mOkToCallAssertNoDatasets = true;
+        }
 
         return picker;
     }

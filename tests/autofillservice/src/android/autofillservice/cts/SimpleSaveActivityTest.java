@@ -440,7 +440,7 @@ public class SimpleSaveActivityTest extends CustomDescriptionWithLinkTestCase {
         // Trigger autofill.
         mActivity.syncRunOnUiThread(() -> mActivity.mInput.requestFocus());
         sReplier.getNextFillRequest();
-        mUiBot.assertNoDatasets();
+        mUiBot.assertNoDatasetsEver();
 
         // Trigger save, but don't tap it.
         mActivity.syncRunOnUiThread(() -> {
@@ -469,7 +469,7 @@ public class SimpleSaveActivityTest extends CustomDescriptionWithLinkTestCase {
         mUiBot.assertShownByText(TEXT_LABEL, Timeouts.ACTIVITY_RESURRECTION);
         mUiBot.assertSaveNotShowing(SAVE_DATA_TYPE_GENERIC);
         sReplier.getNextFillRequest();
-        mUiBot.assertNoDatasets();
+        mUiBot.assertNoDatasetsEver();
 
         // Trigger and select UI.
         mActivity.syncRunOnUiThread(() -> mActivity.mPassword.requestFocus());
@@ -871,7 +871,7 @@ public class SimpleSaveActivityTest extends CustomDescriptionWithLinkTestCase {
         // Trigger autofill.
         mActivity.syncRunOnUiThread(() -> mActivity.mInput.requestFocus());
         sReplier.getNextFillRequest();
-        mUiBot.assertNoDatasets();
+        mUiBot.assertNoDatasetsEver();
 
         // Trigger save.
         mActivity.syncRunOnUiThread(() -> {

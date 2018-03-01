@@ -965,7 +965,7 @@ public class PartitionedActivityTest extends AutoFillServiceTestCase {
         focusCell(2, 1);
         mUiBot.assertNoDatasets();
         focusCellNoWindowChange(2, 2);
-        mUiBot.assertNoDatasets();
+        mUiBot.assertNoDatasetsEver();
     }
 
     /**

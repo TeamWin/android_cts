@@ -40,6 +40,7 @@ import static android.autofillservice.cts.LoginActivity.BACKDOOR_USERNAME;
 import static android.autofillservice.cts.LoginActivity.ID_USERNAME_CONTAINER;
 import static android.autofillservice.cts.LoginActivity.getWelcomeMessage;
 import static android.autofillservice.cts.common.ShellHelper.runShellCommand;
+import static android.autofillservice.cts.common.ShellHelper.tap;
 import static android.service.autofill.FillRequest.FLAG_MANUAL_REQUEST;
 import static android.service.autofill.SaveInfo.SAVE_DATA_TYPE_ADDRESS;
 import static android.service.autofill.SaveInfo.SAVE_DATA_TYPE_CREDIT_CARD;
@@ -112,7 +113,7 @@ public class LoginActivityTest extends AbstractLoginActivityTestCase {
         sReplier.getNextFillRequest();
 
         // Make sure UI is not shown.
-        mUiBot.assertNoDatasets();
+        mUiBot.assertNoDatasetsEver();
 
         // Test connection lifecycle.
         waitUntilDisconnected();
@@ -141,7 +142,7 @@ public class LoginActivityTest extends AbstractLoginActivityTestCase {
         sReplier.getNextFillRequest();
 
         // Make sure UI is not shown.
-        mUiBot.assertNoDatasets();
+        mUiBot.assertNoDatasetsEver();
 
         // Try again, forcing it
         sReplier.addResponse(new CannedDataset.Builder()
@@ -192,10 +193,10 @@ public class LoginActivityTest extends AbstractLoginActivityTestCase {
         sReplier.getNextFillRequest();
 
         // Make sure UI is not shown.
-        mUiBot.assertNoDatasets();
+        mUiBot.assertNoDatasetsEver();
         sReplier.assertNoUnhandledFillRequests();
         mActivity.onPassword(View::requestFocus);
-        mUiBot.assertNoDatasets();
+        mUiBot.assertNoDatasetsEver();
         sReplier.assertNoUnhandledFillRequests();
 
         // Try again, forcing it
@@ -543,7 +544,7 @@ public class LoginActivityTest extends AbstractLoginActivityTestCase {
         requestFocusOnPassword();
         mUiBot.assertNoDatasets();
         requestFocusOnUsernameNoWindowChange();
-        mUiBot.assertNoDatasets();
+        mUiBot.assertNoDatasetsEver();
     }
 
     @Test
@@ -572,6 +573,36 @@ public class LoginActivityTest extends AbstractLoginActivityTestCase {
         mUiBot.assertNoDatasets();
 
         requestFocusOnUsernameNoWindowChange();
+        mUiBot.assertNoDatasetsEver();
+    }
+
+    @Test
+    public void testAutofillTapOutside() throws Exception {
+        // Set service.
+        enableService();
+        final MyAutofillCallback callback = mActivity.registerCallback();
+
+        // Set expectations.
+        sReplier.addResponse(new CannedDataset.Builder()
+                .setField(ID_USERNAME, "dude")
+                .setField(ID_PASSWORD, "sweet")
+                .setPresentation(createPresentation("The Dude"))
+                .build());
+        mActivity.expectAutoFill("dude", "sweet");
+
+        // Trigger autofill.
+        requestFocusOnUsername();
+        sReplier.getNextFillRequest();
+        final View username = mActivity.getUsername();
+
+        callback.assertUiShownEvent(username);
+        mUiBot.assertDatasets("The Dude");
+
+        // tapping outside autofill window should close it and raise ui hidden event
+        mUiBot.waitForWindowChange(() -> tap(mActivity.getUsernameLabel()),
+                Timeouts.UI_TIMEOUT.getMaxValue());
+        callback.assertUiHiddenEvent(username);
+
         mUiBot.assertNoDatasets();
     }
 
@@ -655,7 +686,7 @@ public class LoginActivityTest extends AbstractLoginActivityTestCase {
         sReplier.getNextFillRequest();
 
         // Auto-fill it.
-        mUiBot.assertNoDatasets();
+        mUiBot.assertNoDatasetsEver();
 
         // Assert callback was called
         final View username = mActivity.getUsername();
@@ -1153,7 +1184,7 @@ public class LoginActivityTest extends AbstractLoginActivityTestCase {
         }
 
         // Sanity check.
-        mUiBot.assertNoDatasets();
+        mUiBot.assertNoDatasetsEver();
 
         // Wait for onFill() before proceeding, otherwise the fields might be changed before
         // the session started
@@ -1214,7 +1245,7 @@ public class LoginActivityTest extends AbstractLoginActivityTestCase {
         mActivity.onUsername(View::requestFocus);
 
         // Sanity check.
-        mUiBot.assertNoDatasets();
+        mUiBot.assertNoDatasetsEver();
 
         // Wait for onFill() before proceeding, otherwise the fields might be changed before
         // the session started
@@ -1279,7 +1310,7 @@ public class LoginActivityTest extends AbstractLoginActivityTestCase {
         }
 
         // Sanity check.
-        mUiBot.assertNoDatasets();
+        mUiBot.assertNoDatasetsEver();
 
         // Wait for onFill() before proceeding, otherwise the fields might be changed before
         // the session started
@@ -1330,7 +1361,7 @@ public class LoginActivityTest extends AbstractLoginActivityTestCase {
         // Wait for onFill() before changing value, otherwise the fields might be changed before
         // the session started
         sReplier.getNextFillRequest();
-        mUiBot.assertNoDatasets();
+        mUiBot.assertNoDatasetsEver();
 
         // Set credentials...
         mActivity.onPassword((v) -> v.setText("thou should pass")); // contains pass
@@ -1372,7 +1403,7 @@ public class LoginActivityTest extends AbstractLoginActivityTestCase {
         mActivity.onUsername(View::requestFocus);
 
         // Sanity check.
-        mUiBot.assertNoDatasets();
+        mUiBot.assertNoDatasetsEver();
 
         // Wait for onFill() before proceeding, otherwise the fields might be changed before
         // the session started
@@ -1434,7 +1465,7 @@ public class LoginActivityTest extends AbstractLoginActivityTestCase {
         mActivity.onUsername(View::requestFocus);
 
         // Sanity check.
-        mUiBot.assertNoDatasets();
+        mUiBot.assertNoDatasetsEver();
 
         // Wait for onFill() before proceeding, otherwise the fields might be changed before
         // the session started
@@ -1523,7 +1554,7 @@ public class LoginActivityTest extends AbstractLoginActivityTestCase {
         mActivity.onUsername(View::requestFocus);
 
         // Sanity check.
-        mUiBot.assertNoDatasets();
+        mUiBot.assertNoDatasetsEver();
 
         // Wait for onFill() before proceeding, otherwise the fields might be changed before
         // the session started.
@@ -1560,7 +1591,7 @@ public class LoginActivityTest extends AbstractLoginActivityTestCase {
         mActivity.onUsername(View::requestFocus);
 
         // Sanity check.
-        mUiBot.assertNoDatasets();
+        mUiBot.assertNoDatasetsEver();
 
         // Wait for onFill() before proceeding, otherwise the fields might be changed before
         // the session started
@@ -1730,7 +1761,7 @@ public class LoginActivityTest extends AbstractLoginActivityTestCase {
         // Trigger auto-fill.
         mActivity.onUsername(View::requestFocus);
 
-        mUiBot.assertNoDatasets();
+        mUiBot.assertNoDatasetsEver();
 
         final FillRequest fillRequest = sReplier.getNextFillRequest();
 
@@ -2009,13 +2040,13 @@ public class LoginActivityTest extends AbstractLoginActivityTestCase {
                 // Trigger auto-fill.
                 mActivity.onUsername(View::requestFocus);
 
-                // Sanity check.
-                mUiBot.assertNoDatasets();
-
                 // Wait for onFill() before proceeding, otherwise the fields might be changed before
                 // the session started
                 waitUntilConnected();
                 sReplier.getNextFillRequest();
+
+                // Sanity check.
+                mUiBot.assertNoDatasetsEver();
 
                 // Set credentials...
                 mActivity.onUsername((v) -> v.setText(username));
@@ -2236,7 +2267,7 @@ public class LoginActivityTest extends AbstractLoginActivityTestCase {
         // Then try to trigger autofill again...
         mActivity.onPassword(View::requestFocus);
         //...it should not work!
-        mUiBot.assertNoDatasets();
+        mUiBot.assertNoDatasetsEver();
     }
 
     @Test

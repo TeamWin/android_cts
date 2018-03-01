@@ -65,6 +65,8 @@ public class AccessibilityEventTest extends TestCase {
 
         // make sure all fields properly marshaled
         assertEqualsAccessiblityEvent(sentEvent, receivedEvent);
+
+        parcel.recycle();
     }
 
     /**
@@ -159,6 +161,8 @@ public class AccessibilityEventTest extends TestCase {
         AccessibilityEvent unmarshaledEvent = AccessibilityEvent.obtain();
         unmarshaledEvent.initFromParcel(parcel);
         assertEqualsAccessiblityEvent(marshaledEvent, unmarshaledEvent);
+
+        parcel.recycle();
     }
 
     /**
