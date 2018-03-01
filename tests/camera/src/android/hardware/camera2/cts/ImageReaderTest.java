@@ -25,6 +25,7 @@ import android.graphics.ImageFormat;
 import android.graphics.Matrix;
 import android.graphics.Rect;
 import android.graphics.RectF;
+import android.hardware.HardwareBuffer;
 import android.hardware.camera2.CameraCharacteristics;
 import android.hardware.camera2.CameraDevice;
 import android.hardware.camera2.CaptureRequest;
@@ -1042,6 +1043,8 @@ public class ImageReaderTest extends Camera2AndroidTestCase {
             if (VERBOSE) Log.v(TAG, "Got the latest image");
             CameraTestUtils.validateImage(img, sz.getWidth(), sz.getHeight(), format,
                     DEBUG_FILE_NAME_BASE);
+            HardwareBuffer hwb = img.getHardwareBuffer();
+            assertNotNull("Unable to retrieve the Image's HardwareBuffer", hwb);
             if (VERBOSE) Log.v(TAG, "finish validation of image " + numImageVerified);
             img.close();
             numImageVerified++;
