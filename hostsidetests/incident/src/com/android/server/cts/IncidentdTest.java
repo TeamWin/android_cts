@@ -47,9 +47,9 @@ public class IncidentdTest extends ProtoDumpTestCase {
 
         PowerIncidentTest.verifyPowerManagerServiceDumpProto(dump.getPower(), filterLevel);
 
-        AlarmManagerIncidentTest.verifyAlarmManagerServiceProto(dump.getAlarm(), filterLevel);
+        AlarmManagerIncidentTest.verifyAlarmManagerServiceDumpProto(dump.getAlarm(), filterLevel);
 
-        MemInfoIncidentTest.verifyMemInfoProto(dump.getMeminfo(), filterLevel);
+        MemInfoIncidentTest.verifyMemInfoDumpProto(dump.getMeminfo(), filterLevel);
 
         JobSchedulerIncidentTest.verifyJobSchedulerServiceDumpProto(dump.getJobscheduler(), filterLevel);
     }

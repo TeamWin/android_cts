@@ -17,13 +17,14 @@
 package com.android.server.cts;
 
 import com.android.server.AlarmClockMetadataProto;
-import com.android.server.AlarmManagerServiceProto;
+import com.android.server.AlarmManagerServiceDumpProto;
 import com.android.server.AlarmProto;
 import com.android.server.BatchProto;
 import com.android.server.BroadcastStatsProto;
 import com.android.server.ConstantsProto;
 import com.android.server.FilterStatsProto;
 import com.android.server.ForceAppStandbyTrackerProto;
+import com.android.server.ForceAppStandbyTrackerProto.RunAnyInBackgroundRestrictedPackages;
 import com.android.server.IdleDispatchEntryProto;
 import com.android.server.InFlightProto;
 import com.android.server.WakeupEventProto;
@@ -34,13 +35,13 @@ import java.util.List;
  */
 public class AlarmManagerIncidentTest extends ProtoDumpTestCase {
     public void testAlarmManagerServiceDump() throws Exception {
-        final AlarmManagerServiceProto dump =
-                getDump(AlarmManagerServiceProto.parser(), "dumpsys alarm --proto");
+        final AlarmManagerServiceDumpProto dump =
+                getDump(AlarmManagerServiceDumpProto.parser(), "dumpsys alarm --proto");
 
-        verifyAlarmManagerServiceProto(dump, PRIVACY_NONE);
+        verifyAlarmManagerServiceDumpProto(dump, PRIVACY_NONE);
     }
 
-    static void verifyAlarmManagerServiceProto(AlarmManagerServiceProto dump, final int filterLevel) throws Exception {
+    static void verifyAlarmManagerServiceDumpProto(AlarmManagerServiceDumpProto dump, final int filterLevel) throws Exception {
         // Times should be positive.
         assertTrue(0 < dump.getCurrentTime());
         assertTrue(0 < dump.getElapsedRealtime());
@@ -68,7 +69,7 @@ public class AlarmManagerIncidentTest extends ProtoDumpTestCase {
         for (int aid : forceAppStandbyTracker.getTempPowerSaveWhitelistAppIdsList()) {
             assertTrue(0 <= aid);
         }
-        for (ForceAppStandbyTrackerProto.RunAnyInBackgroundRestrictedPackages r : forceAppStandbyTracker.getRunAnyInBackgroundRestrictedPackagesList()) {
+        for (RunAnyInBackgroundRestrictedPackages r : forceAppStandbyTracker.getRunAnyInBackgroundRestrictedPackagesList()) {
             assertTrue(0 <= r.getUid());
         }
 
@@ -136,17 +137,17 @@ public class AlarmManagerIncidentTest extends ProtoDumpTestCase {
             }
         }
 
-        for (AlarmManagerServiceProto.LastAllowWhileIdleDispatch l : dump.getLastAllowWhileIdleDispatchTimesList()) {
+        for (AlarmManagerServiceDumpProto.LastAllowWhileIdleDispatch l : dump.getLastAllowWhileIdleDispatchTimesList()) {
             assertTrue(0 <= l.getUid());
             assertTrue(0 < l.getTimeMs());
         }
 
-        for (AlarmManagerServiceProto.TopAlarm ta : dump.getTopAlarmsList()) {
+        for (AlarmManagerServiceDumpProto.TopAlarm ta : dump.getTopAlarmsList()) {
             assertTrue(0 <= ta.getUid());
             testFilterStatsProto(ta.getFilter(), filterLevel);
         }
 
-        for (AlarmManagerServiceProto.AlarmStat as : dump.getAlarmStatsList()) {
+        for (AlarmManagerServiceDumpProto.AlarmStat as : dump.getAlarmStatsList()) {
             testBroadcastStatsProto(as.getBroadcast());
             for (FilterStatsProto f : as.getFiltersList()) {
                 testFilterStatsProto(f, filterLevel);

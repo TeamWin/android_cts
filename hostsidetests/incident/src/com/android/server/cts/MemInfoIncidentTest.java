@@ -16,22 +16,22 @@
 
 package com.android.server.cts;
 
-import com.android.server.am.proto.MemInfoProto;
-import com.android.server.am.proto.MemInfoProto.AppData;
-import com.android.server.am.proto.MemInfoProto.MemItem;
-import com.android.server.am.proto.MemInfoProto.ProcessMemory;
+import com.android.server.am.proto.MemInfoDumpProto;
+import com.android.server.am.proto.MemInfoDumpProto.AppData;
+import com.android.server.am.proto.MemInfoDumpProto.MemItem;
+import com.android.server.am.proto.MemInfoDumpProto.ProcessMemory;
 
 /** Test to check that ActivityManager properly outputs meminfo data. */
 public class MemInfoIncidentTest extends ProtoDumpTestCase {
 
     public void testMemInfoDump() throws Exception {
-        final MemInfoProto dump =
-                getDump(MemInfoProto.parser(), "dumpsys meminfo -a --proto");
+        final MemInfoDumpProto dump =
+                getDump(MemInfoDumpProto.parser(), "dumpsys meminfo -a --proto");
 
-        verifyMemInfoProto(dump, PRIVACY_NONE);
+        verifyMemInfoDumpProto(dump, PRIVACY_NONE);
     }
 
-    static void verifyMemInfoProto(MemInfoProto dump, final int filterLevel) throws Exception {
+    static void verifyMemInfoDumpProto(MemInfoDumpProto dump, final int filterLevel) throws Exception {
         assertTrue(dump.getUptimeDurationMs() >= 0);
         assertTrue(dump.getElapsedRealtimeMs() >= 0);
 
