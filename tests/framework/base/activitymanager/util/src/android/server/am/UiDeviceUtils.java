@@ -71,7 +71,7 @@ public class UiDeviceUtils {
         getDevice().pressHome();
     }
 
-    static void pressBackButton() {
+    public static void pressBackButton() {
         if (DEBUG) Log.d(TAG, "pressBackButton");
         getDevice().pressBack();
     }

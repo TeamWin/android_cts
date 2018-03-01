@@ -1305,6 +1305,10 @@ public abstract class ActivityManagerTestBase {
             return this;
         }
 
+        public ComponentName getTargetActivity() {
+            return mTargetActivity;
+        }
+
         public LaunchActivityBuilder setTargetActivity(ComponentName targetActivity) {
             mTargetActivity = targetActivity;
             return this;
