@@ -269,18 +269,26 @@ public class ActivityManagerSplitScreenTests extends ActivityManagerTestBase {
 
     private void launchTargetToSide(ComponentName targetActivityName,
             boolean taskCountMustIncrement) throws Exception {
+        // Launch in fullscreen first
+        getLaunchActivityBuilder().setTargetActivity(LAUNCHING_ACTIVITY)
+                .setUseInstrumentation()
+                .setWaitForLaunched(true)
+                .execute();
+
+        // Move to split-screen primary
+        final int taskId = mAmWmState.getAmState().getTaskByActivity(LAUNCHING_ACTIVITY).mTaskId;
+        mAm.setTaskWindowingModeSplitScreenPrimary(taskId, SPLIT_SCREEN_CREATE_MODE_TOP_OR_LEFT,
+                true /* onTop */, false /* animate */, null /* initialBounds */,
+                true /* showRecents */);
+        mAmWmState.waitForRecentsActivityVisible();
+
+        // Launch target to side
         final LaunchActivityBuilder targetActivityLauncher = getLaunchActivityBuilder()
                 .setTargetActivity(targetActivityName)
                 .setToSide(true)
                 .setRandomData(true)
                 .setMultipleTask(false);
-
-        // TODO(b/70618153): A workaround to allow activities to launch in split-screen leads to
-        // the target being launched directly. Options such as LaunchActivityBuilder#setRandomData
-        // are not respected.
-        launchActivitiesInSplitScreen(
-                getLaunchActivityBuilder().setTargetActivity(LAUNCHING_ACTIVITY),
-                targetActivityLauncher);
+        targetActivityLauncher.execute();
 
         mAmWmState.computeState(targetActivityName, LAUNCHING_ACTIVITY);
         mAmWmState.assertContainsStack("Must contain fullscreen stack.",
