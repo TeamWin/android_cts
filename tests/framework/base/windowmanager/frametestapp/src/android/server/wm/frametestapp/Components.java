@@ -18,6 +18,7 @@ package android.server.wm.frametestapp;
 
 import android.content.ComponentName;
 import android.server.am.component.ComponentsBase;
+import android.support.annotation.StringDef;
 
 public class Components extends ComponentsBase {
 
@@ -25,4 +26,31 @@ public class Components extends ComponentsBase {
             component(Components.class, "MovingChildTestActivity");
     public static final ComponentName DIALOG_TEST_ACTIVITY =
             component(Components.class, "DialogTestActivity");
+
+    /**
+     * Extra key and value constants of {@link android.server.wm.DialogTestActivity}.
+     */
+    public static class DialogTestActivity {
+        public static final String DIALOG_WINDOW_NAME = "TestDialog";
+        // Extra key for test case name.
+        public static final String EXTRA_TEST_CASE = "test-case";
+        // Value constants for {@link #EXTRA_TEST_CASE}.
+        public static final String TEST_EXPLICIT_POSITION_MATCH_PARENT =
+                "ExplicitPositionMatchParent";
+        public static final String TEST_EXPLICIT_POSITION_MATCH_PARENT_NO_LIMITS =
+                "ExplicitPositionMatchParentNoLimits";
+        public static final String TEST_EXPLICIT_SIZE = "ExplicitSize";
+        public static final String TEST_EXPLICIT_SIZE_BOTTOM_RIGHT_GRAVITY =
+                "ExplicitSizeBottomRightGravity";
+        public static final String TEST_EXPLICIT_SIZE_TOP_LEFT_GRAVITY =
+                "ExplicitSizeTopLeftGravity";
+        public static final String TEST_MATCH_PARENT = "MatchParent";
+        public static final String TEST_MATCH_PARENT_LAYOUT_IN_OVERSCAN =
+                "MatchParentLayoutInOverscan";
+        public static final String TEST_NO_FOCUS = "NoFocus";
+        public static final String TEST_OVER_SIZED_DIMENSIONS = "OversizedDimensions";
+        public static final String TEST_OVER_SIZED_DIMENSIONS_NO_LIMITS =
+                "OversizedDimensionsNoLimits";
+        public static final String TEST_WITH_MARGINS = "WithMargins";
+    }
 }
