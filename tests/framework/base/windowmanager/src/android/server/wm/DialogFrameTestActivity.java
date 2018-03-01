@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2015 The Android Open Source Project
+ * Copyright (C) 2018 The Android Open Source Project
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,21 +14,8 @@
  * limitations under the License.
  */
 
-package android.server.wm.frametestapp;
+package android.server.wm;
 
-import static android.server.wm.frametestapp.Components.DialogTestActivity.DIALOG_WINDOW_NAME;
-import static android.server.wm.frametestapp.Components.DialogTestActivity.EXTRA_TEST_CASE;
-import static android.server.wm.frametestapp.Components.DialogTestActivity.TEST_EXPLICIT_POSITION_MATCH_PARENT;
-import static android.server.wm.frametestapp.Components.DialogTestActivity.TEST_EXPLICIT_POSITION_MATCH_PARENT_NO_LIMITS;
-import static android.server.wm.frametestapp.Components.DialogTestActivity.TEST_EXPLICIT_SIZE;
-import static android.server.wm.frametestapp.Components.DialogTestActivity.TEST_EXPLICIT_SIZE_BOTTOM_RIGHT_GRAVITY;
-import static android.server.wm.frametestapp.Components.DialogTestActivity.TEST_EXPLICIT_SIZE_TOP_LEFT_GRAVITY;
-import static android.server.wm.frametestapp.Components.DialogTestActivity.TEST_MATCH_PARENT;
-import static android.server.wm.frametestapp.Components.DialogTestActivity.TEST_MATCH_PARENT_LAYOUT_IN_OVERSCAN;
-import static android.server.wm.frametestapp.Components.DialogTestActivity.TEST_NO_FOCUS;
-import static android.server.wm.frametestapp.Components.DialogTestActivity.TEST_OVER_SIZED_DIMENSIONS;
-import static android.server.wm.frametestapp.Components.DialogTestActivity.TEST_OVER_SIZED_DIMENSIONS_NO_LIMITS;
-import static android.server.wm.frametestapp.Components.DialogTestActivity.TEST_WITH_MARGINS;
 import static android.view.ViewGroup.LayoutParams.MATCH_PARENT;
 import static android.view.WindowManager.LayoutParams.FLAG_LAYOUT_IN_OVERSCAN;
 import static android.view.WindowManager.LayoutParams.FLAG_LAYOUT_IN_SCREEN;
@@ -40,11 +27,33 @@ import android.app.AlertDialog;
 import android.content.Intent;
 import android.view.Gravity;
 import android.view.Window;
-import android.view.WindowManager;
+import android.view.WindowManager.LayoutParams;
 
 import java.util.function.Consumer;
 
-public class DialogTestActivity extends Activity {
+// TODO: Make this an inner class of {@link DialogFrameTest}.
+public class DialogFrameTestActivity extends Activity {
+
+    static final String DIALOG_WINDOW_NAME = "TestDialog";
+
+    // TODO: Passing layout parameters for {@link Dialog} in extra of {@link Intent} instead of
+    // using test case name.
+    // Extra key for test case name.
+    static final String EXTRA_TEST_CASE = "test-case";
+    // Value constants for {@link #EXTRA_TEST_CASE}.
+    static final String TEST_EXPLICIT_POSITION_MATCH_PARENT = "ExplicitPositionMatchParent";
+    static final String TEST_EXPLICIT_POSITION_MATCH_PARENT_NO_LIMITS =
+            "ExplicitPositionMatchParentNoLimits";
+    static final String TEST_EXPLICIT_SIZE = "ExplicitSize";
+    static final String TEST_EXPLICIT_SIZE_BOTTOM_RIGHT_GRAVITY =
+            "ExplicitSizeBottomRightGravity";
+    static final String TEST_EXPLICIT_SIZE_TOP_LEFT_GRAVITY = "ExplicitSizeTopLeftGravity";
+    static final String TEST_MATCH_PARENT = "MatchParent";
+    static final String TEST_MATCH_PARENT_LAYOUT_IN_OVERSCAN = "MatchParentLayoutInOverscan";
+    static final String TEST_NO_FOCUS = "NoFocus";
+    static final String TEST_OVER_SIZED_DIMENSIONS = "OversizedDimensions";
+    static final String TEST_OVER_SIZED_DIMENSIONS_NO_LIMITS = "OversizedDimensionsNoLimits";
+    static final String TEST_WITH_MARGINS = "WithMargins";
 
     private AlertDialog mDialog;
 
@@ -101,7 +110,7 @@ public class DialogTestActivity extends Activity {
         }
     }
 
-    private void doLayoutParamTest(Consumer<WindowManager.LayoutParams> setUp) {
+    private void doLayoutParamTest(Consumer<LayoutParams> setUp) {
         mDialog = new AlertDialog.Builder(this).create();
 
         mDialog.setMessage("Testing is fun!");
@@ -109,7 +118,7 @@ public class DialogTestActivity extends Activity {
         mDialog.create();
 
         Window w = mDialog.getWindow();
-        final WindowManager.LayoutParams params = w.getAttributes();
+        final LayoutParams params = w.getAttributes();
         setUp.accept(params);
         w.setAttributes(params);
 
@@ -192,7 +201,7 @@ public class DialogTestActivity extends Activity {
     }
 
     private void testNoFocus() {
-        doLayoutParamTest(params ->  params.flags |=FLAG_NOT_FOCUSABLE);
+        doLayoutParamTest(params -> params.flags |= FLAG_NOT_FOCUSABLE);
     }
 
     private void testWithMargins() {

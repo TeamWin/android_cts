@@ -23,8 +23,7 @@ LOCAL_SRC_FILES := \
     $(call all-java-files-under, src) \
     $(call all-java-files-under, alertwindowservice/src) \
     $(call all-named-files-under,Components.java, alertwindowapp) \
-    $(call all-named-files-under,Components.java, alertwindowappsdk25) \
-    $(call all-named-files-under,Components.java, frametestapp)
+    $(call all-named-files-under,Components.java, alertwindowappsdk25)
 
 LOCAL_PACKAGE_NAME := CtsWindowManagerDeviceTestCases
 
