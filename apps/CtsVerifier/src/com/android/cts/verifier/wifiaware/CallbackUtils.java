@@ -163,6 +163,7 @@ public class CallbackUtils {
         public static final int ON_MESSAGE_SEND_SUCCEEDED = 0x1 << 6;
         public static final int ON_MESSAGE_SEND_FAILED = 0x1 << 7;
         public static final int ON_MESSAGE_RECEIVED = 0x1 << 8;
+        public static final int ON_SERVICE_DISCOVERED_WITH_RANGE = 0x1 << 9;
 
         /**
          * Data container for all parameters which can be returned by any DiscoverySessionCallback
@@ -181,6 +182,7 @@ public class CallbackUtils {
             public byte[] serviceSpecificInfo;
             public List<byte[]> matchFilter;
             public int messageId;
+            public int distanceMm;
         }
 
         private CountDownLatch mBlocker = null;
@@ -312,6 +314,18 @@ public class CallbackUtils {
             callbackData.peerHandle = peerHandle;
             callbackData.serviceSpecificInfo = serviceSpecificInfo;
             callbackData.matchFilter = matchFilter;
+            processCallback(callbackData);
+        }
+
+        @Override
+        public void onServiceDiscoveredWithinRange(PeerHandle peerHandle,
+                byte[] serviceSpecificInfo,
+                List<byte[]> matchFilter, int distanceMm) {
+            CallbackData callbackData = new CallbackData(ON_SERVICE_DISCOVERED_WITH_RANGE);
+            callbackData.peerHandle = peerHandle;
+            callbackData.serviceSpecificInfo = serviceSpecificInfo;
+            callbackData.matchFilter = matchFilter;
+            callbackData.distanceMm = distanceMm;
             processCallback(callbackData);
         }
 

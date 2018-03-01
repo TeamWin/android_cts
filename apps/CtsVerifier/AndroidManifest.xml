@@ -2129,6 +2129,14 @@
                   android:label="@string/aware_data_path_oob_passphrase_initiator"
                   android:configChanges="keyboardHidden|orientation|screenSize" />
 
+        <activity android:name=".wifiaware.DiscoveryRangingPublishTestActivity"
+                  android:label="@string/aware_discovery_ranging_publish"
+                  android:configChanges="keyboardHidden|orientation|screenSize" />
+
+        <activity android:name=".wifiaware.DiscoveryRangingSubscribeTestActivity"
+                  android:label="@string/aware_discovery_ranging_subscribe"
+                  android:configChanges="keyboardHidden|orientation|screenSize" />
+
         <activity-alias android:name=".CtsVerifierActivity" android:label="@string/app_name"
                 android:targetActivity=".TestListActivity">
             <intent-filter>
