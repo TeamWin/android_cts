@@ -3936,7 +3936,7 @@ Follow the instructions on the screen to measure the frequency response for the 
         This test requires that you have connected a mandated USB Audio Interface peripheral.
         Connect the outputs to the inputs (with patch cables). Start playback by pressing the
         \"Record Loopback\" button and verify that the recorded signal is displayed in the wave
-        display view. ()It may be necessary to adjust the input controls on the peripheral).
+        display view. (It may be necessary to adjust the input controls on the peripheral).
        </string>
 
     <!-- USB Audio Peripheral Buttons Test -->
