@@ -15,17 +15,16 @@
 LOCAL_PATH := $(call my-dir)
 
 include $(CLEAR_VARS)
-LOCAL_MODULE := cts-hidden-api-blacklist
-LOCAL_MODULE_STEM := blacklist.api
-LOCAL_MODULE_CLASS := ETC
-LOCAL_MODULE_PATH = $(TARGET_OUT_DATA_ETC)
-LOCAL_COMPATIBILITY_SUITE := cts vts general-tests
-include $(BUILD_SYSTEM)/base_rules.mk
-$(eval $(call copy-one-file,$(INTERNAL_PLATFORM_HIDDENAPI_BLACKLIST),$(LOCAL_BUILT_MODULE)))
-
-include $(CLEAR_VARS)
-LOCAL_PACKAGE_NAME := CtsHiddenApiDiscoveryTestCases
+LOCAL_PACKAGE_NAME := CtsHiddenApiKillswitchTestCases
+LOCAL_MODULE_TAGS := optional
 LOCAL_MODULE_PATH := $(TARGET_OUT_DATA_APPS)
-LOCAL_SIGNATURE_API_FILES := blacklist.api
+LOCAL_MULTILIB := both
 LOCAL_JNI_SHARED_LIBRARIES := libcts_dexchecker
-include $(LOCAL_PATH)/../build_signature_apk.mk
+LOCAL_NDK_STL_VARIANT := c++_static
+
+# Tag this module as a cts test artifact
+LOCAL_COMPATIBILITY_SUITE := cts vts general-tests
+LOCAL_SDK_VERSION := current
+LOCAL_STATIC_JAVA_LIBRARIES := cts-api-signature-test
+
+include $(BUILD_CTS_PACKAGE)
