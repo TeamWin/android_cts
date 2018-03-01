@@ -59,6 +59,8 @@ public class AccessPrivateDataTest extends AndroidTestCase {
      */
     private static final String PUBLIC_FILE_NAME = "public_file.txt";
 
+    private static final String QTAGUID_STATS_FILE = "/proc/net/xt_qtaguid/stats";
+
     private static final Uri PRIVATE_TARGET = Uri.parse("content://com.android.cts.appwithdata/");
 
     /**
@@ -106,7 +108,15 @@ public class AccessPrivateDataTest extends AndroidTestCase {
         }
     }
 
-    public void testAccessPrivateTrafficStats() throws IOException {
+    public void testAccessProcQtaguidTrafficStatsFailed() {
+        // For untrusted app with SDK P or above, proc/net/xt_qtaguid files are no long readable.
+        // They can only read their own stats from TrafficStats API. The test for TrafficStats API
+        // will ensure they cannot read other apps stats.
+        assertFalse("untrusted app should not be able to read qtaguid profile",
+            new File(QTAGUID_STATS_FILE).canRead());
+    }
+
+    public void testAccessPrivateTrafficStats() {
         int otherAppUid = -1;
         try {
             otherAppUid = getContext()
@@ -115,20 +125,12 @@ public class AccessPrivateDataTest extends AndroidTestCase {
         } catch (NameNotFoundException e) {
             fail("Was not able to find other app");
         }
-        try {
-            BufferedReader qtaguidReader = new BufferedReader(new FileReader("/proc/net/xt_qtaguid/stats"));
-            String line;
-            while ((line = qtaguidReader.readLine()) != null) {
-                String tokens[] = line.split(" ");
-                if (tokens.length > 3 && tokens[3].equals(String.valueOf(otherAppUid))) {
-                    // CreatePrivateDataTest:testCreatePrivateData ensures we can access our own stats data
-                    fail("Other apps detailed traffic stats leaked");
-                }
-            }
-            qtaguidReader.close();
-        } catch (FileNotFoundException e) {
-            fail("Was not able to access qtaguid/stats: " + e);
-        }
+
+        final int UNSUPPORTED = -1;
+        assertEquals(UNSUPPORTED, TrafficStats.getUidRxBytes(otherAppUid));
+        assertEquals(UNSUPPORTED, TrafficStats.getUidRxPackets(otherAppUid));
+        assertEquals(UNSUPPORTED, TrafficStats.getUidTxBytes(otherAppUid));
+        assertEquals(UNSUPPORTED, TrafficStats.getUidTxPackets(otherAppUid));
     }
 
     public void testTrafficStatsStatsUidSelf() throws Exception {

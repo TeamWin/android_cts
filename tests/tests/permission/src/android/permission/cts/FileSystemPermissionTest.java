@@ -257,7 +257,7 @@ public class FileSystemPermissionTest extends AndroidTestCase {
     @MediumTest
     public void testDevQtaguidSane() throws Exception {
         File f = new File("/dev/xt_qtaguid");
-        assertTrue(f.canRead());
+        assertFalse(f.canRead());
         assertFalse(f.canWrite());
         assertFalse(f.canExecute());
 
@@ -268,8 +268,8 @@ public class FileSystemPermissionTest extends AndroidTestCase {
     @MediumTest
     public void testProcQtaguidCtrlSane() throws Exception {
         File f = new File("/proc/net/xt_qtaguid/ctrl");
-        assertTrue(f.canRead());
-        assertTrue(f.canWrite());
+        assertFalse(f.canRead());
+        assertFalse(f.canWrite());
         assertFalse(f.canExecute());
 
         assertFileOwnedBy(f, "root");
@@ -279,7 +279,7 @@ public class FileSystemPermissionTest extends AndroidTestCase {
     @MediumTest
     public void testProcQtaguidStatsSane() throws Exception {
         File f = new File("/proc/net/xt_qtaguid/stats");
-        assertTrue(f.canRead());
+        assertFalse(f.canRead());
         assertFalse(f.canWrite());
         assertFalse(f.canExecute());
 
