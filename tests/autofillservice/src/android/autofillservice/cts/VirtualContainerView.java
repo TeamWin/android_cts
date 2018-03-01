@@ -47,6 +47,7 @@ import android.view.accessibility.AccessibilityEvent;
 import android.view.accessibility.AccessibilityManager;
 import android.view.accessibility.AccessibilityNodeInfo;
 import android.view.accessibility.AccessibilityNodeProvider;
+import android.view.autofill.AutofillId;
 import android.view.autofill.AutofillManager;
 import android.view.autofill.AutofillValue;
 
@@ -58,6 +59,7 @@ import java.util.concurrent.TimeUnit;
 class VirtualContainerView extends View {
 
     private static final String TAG = "VirtualContainerView";
+    private static final int LOGIN_BUTTON_VIRTUAL_ID = 666;
 
     static final String LABEL_CLASS = "my.readonly.view";
     static final String TEXT_CLASS = "my.editable.view";
@@ -66,6 +68,7 @@ class VirtualContainerView extends View {
     private final ArrayList<Line> mLines = new ArrayList<>();
     private final SparseArray<Item> mItems = new SparseArray<>();
     private final AutofillManager mAfm;
+    final AutofillId mLoginButtonId;
 
     private Line mFocusedLine;
 
@@ -106,6 +109,7 @@ class VirtualContainerView extends View {
         mLineLength = mTextHeight + mVerticalGap;
         mTextPaint.setTextSize(mTextHeight);
         Log.d(TAG, "Text height: " + mTextHeight);
+        mLoginButtonId = new AutofillId(getAutofillId(), LOGIN_BUTTON_VIRTUAL_ID);
     }
 
     @Override
@@ -250,6 +254,29 @@ class VirtualContainerView extends View {
             }
         }
     }
+
+    @Override
+    public boolean isVisibleToUserForAutofill(int virtualId) {
+        // TODO(b/72811561): implement / add test case that exercises it
+        final boolean isVisible = super.isVisibleToUserForAutofill(virtualId);
+        Log.d(TAG, "isVisibleToUserForAutofill(" + virtualId + "): " + isVisible);
+        return isVisible;
+    }
+
+    /**
+     * Emulates clicking the login button.
+     */
+    void clickLogin() {
+        Log.d(TAG, "clickLogin()");
+        if (mCompatMode) {
+            // TODO(b/73649008): implement it
+            throw new IllegalArgumentException("clickLogin() on compat mode not implemented yet");
+        } else {
+            mAfm.notifyViewClicked(this, LOGIN_BUTTON_VIRTUAL_ID);
+        }
+    }
+
+
 
     private Item getItem(int id) {
         final Item item = mItems.get(id);
