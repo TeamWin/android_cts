@@ -372,6 +372,13 @@ public abstract class ActivityManagerTestBase {
         mAmWmState.waitForRecentsActivityVisible();
     }
 
+    public void moveTaskToPrimarySplitScreen(int taskId) {
+        mAm.setTaskWindowingModeSplitScreenPrimary(taskId, SPLIT_SCREEN_CREATE_MODE_TOP_OR_LEFT,
+                true /* onTop */, false /* animate */, null /* initialBounds */,
+                true /* showRecents */);
+        mAmWmState.waitForRecentsActivityVisible();
+    }
+
     /**
      * Launches {@param primaryActivity} into split-screen primary windowing mode
      * and {@param secondaryActivity} to the side in split-screen secondary windowing mode.
@@ -386,10 +393,7 @@ public abstract class ActivityManagerTestBase {
 
         final int taskId = mAmWmState.getAmState().getTaskByActivity(
                 primaryActivity.mTargetActivity).mTaskId;
-        mAm.setTaskWindowingModeSplitScreenPrimary(taskId, SPLIT_SCREEN_CREATE_MODE_TOP_OR_LEFT,
-                true /* onTop */, false /* animate */, null /* initialBounds */,
-                true /* showRecents */);
-        mAmWmState.waitForRecentsActivityVisible();
+        moveTaskToPrimarySplitScreen(taskId);
 
         // Launch split-screen secondary
         // Recents become focused, so we can just launch new task in focused stack

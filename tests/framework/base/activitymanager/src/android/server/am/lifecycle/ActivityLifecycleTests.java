@@ -173,6 +173,133 @@ public class ActivityLifecycleTests extends ActivityLifecycleClientTestBase {
         }
     }
 
+    @FlakyTest(bugId = 73832787)
+    @Test
+    public void testPausedWithTranslucentOnTop() throws Exception {
+        // Launch fullscreen activity
+        final Activity firstActivity =
+                mFirstActivityTestRule.launchActivity(new Intent());
+
+        // Launch translucent activity on top
+        final Activity translucentActivity =
+                mTranslucentActivityTestRule.launchActivity(new Intent());
+
+        // Launch another translucent activity on top to make sure the fullscreen activity
+        // transitions to final state
+        final Activity secondTranslucentActivity =
+                mSecondTranslucentActivityTestRule.launchActivity(new Intent());
+
+        // Wait for the second translucent activity to become resumed.
+        waitAndAssertActivityStates(state(secondTranslucentActivity, ON_RESUME),
+                state(firstActivity, ON_PAUSE));
+
+        // Assert that the fullscreen activity was not stopped and is in the paused state.
+        LifecycleVerifier.assertLaunchAndPauseSequence(FirstActivity.class, getLifecycleLog());
+    }
+
+    @FlakyTest(bugId = 73832787)
+    @Test
+    public void testPausedWhenReturningWithTranslucentOnTop() throws Exception {
+        // Launch fullscreen activity
+        final Activity firstActivity =
+                mFirstActivityTestRule.launchActivity(new Intent());
+
+        // Launch translucent activity
+        final Activity translucentActivity =
+                mTranslucentActivityTestRule.launchActivity(new Intent());
+
+        // Launch another fullscreen activity
+        final Activity secondActivity =
+                mSecondActivityTestRule.launchActivity(new Intent());
+
+        // Wait for top activity to resume
+        waitAndAssertActivityStates(state(secondActivity, ON_RESUME),
+                state(translucentActivity, ON_STOP), state(firstActivity, ON_STOP));
+
+        getLifecycleLog().clear();
+
+        // Finish top activity
+        mSecondActivityTestRule.finishActivity();
+
+        // Wait for translucent activity to resume
+        waitAndAssertActivityStates(state(translucentActivity, ON_RESUME),
+                state(firstActivity, ON_PAUSE));
+
+        // Verify that the first activity was restarted to pause
+        LifecycleVerifier.assertRestartAndPauseSequence(FirstActivity.class, getLifecycleLog());
+    }
+
+    @FlakyTest(bugId = 73832787)
+    @Test
+    public void testPausedWhenRecreatedFromInNonFocusedStack() throws Exception {
+        // Launch first activity
+        final Activity firstActivity =
+                mFirstActivityTestRule.launchActivity(new Intent());
+
+        // Launch second activity to stop first
+        final Activity secondActivity =
+                mSecondActivityTestRule.launchActivity(new Intent());
+
+        // Wait for second activity to resume
+        waitAndAssertActivityStates(state(secondActivity, ON_RESUME));
+
+        // Enter split screen
+        moveTaskToPrimarySplitScreen(secondActivity.getTaskId());
+
+        getLifecycleLog().clear();
+
+        // Start an activity in separate task (will be placed in secondary stack)
+        getLaunchActivityBuilder().execute();
+
+        waitAndAssertActivityStates(state(secondActivity, ON_PAUSE));
+
+        // Finish top activity
+        secondActivity.finish();
+
+        waitAndAssertActivityStates(state(firstActivity, ON_PAUSE));
+
+        // Verify that the first activity was recreated to pause as it was created before
+        // windowing mode was switched
+        LifecycleVerifier.assertRecreateAndPauseSequence(FirstActivity.class, getLifecycleLog());
+    }
+
+    @FlakyTest(bugId = 73832787)
+    @Test
+    public void testPausedWhenRestartedFromInNonFocusedStack() throws Exception {
+        // Launch first activity
+        final Activity firstActivity =
+                mFirstActivityTestRule.launchActivity(new Intent());
+
+        // Wait for second activity to resume
+        waitAndAssertActivityStates(state(firstActivity, ON_RESUME));
+
+        // Enter split screen
+        moveTaskToPrimarySplitScreen(firstActivity.getTaskId());
+
+        // Launch second activity to stop first
+        final Activity secondActivity =
+                mSecondActivityTestRule.launchActivity(new Intent());
+
+        // Wait for second activity to resume
+        waitAndAssertActivityStates(state(secondActivity, ON_RESUME));
+
+        // Start an activity in separate task (will be placed in secondary stack)
+        getLaunchActivityBuilder().execute();
+
+        waitAndAssertActivityStates(state(secondActivity, ON_PAUSE));
+
+        getLifecycleLog().clear();
+
+        // Finish top activity
+        secondActivity.finish();
+
+        waitAndAssertActivityStates(state(firstActivity, ON_PAUSE));
+
+        // Verify that the first activity was restarted to pause as it was brought back after
+        // windowing mode was switched
+        LifecycleVerifier.assertRestartAndPauseSequence(FirstActivity.class, getLifecycleLog());
+    }
+
     @FlakyTest(bugId = 72956507)
     @Test
     public void testOnActivityResult() throws Exception {
