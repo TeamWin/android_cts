@@ -114,6 +114,9 @@ public class DalvikTest implements IAbiReceiver, IBuildReceiver, IDeviceTest, IR
     private static String END_TEST = "end-test";
     private static String FAILURE = "failure";
 
+    // If we are running with adbconnection jdwp provider (hence a libjdwp agent).
+    private boolean mIsAdbConnection = true;
+
     @Option(name = "run-name", description = "The name to use when reporting results")
     private String mRunName;
 
@@ -122,6 +125,16 @@ public class DalvikTest implements IAbiReceiver, IBuildReceiver, IDeviceTest, IR
 
     @Option(name = "dalvik-arg", description = "Holds arguments to pass to Dalvik")
     private List<String> mDalvikArgs = new ArrayList<>();
+
+    @Option(name = "dalvik-arg-adbconnection",
+            description = "Holds arguments to pass to Dalvik when " +
+                          "dalvik.vm.jdwp-provider == adbconnection or default or is empty")
+    private List<String> mDalvikArgsAdbconnection = new ArrayList<>();
+
+    @Option(name = "dalvik-arg-internal",
+            description = "Holds arguments to pass to Dalvik only when " +
+                          "dalvik.vm.jdwp-provider == internal")
+    private List<String> mDalvikArgsInternal = new ArrayList<>();
 
     @Option(name = "runner-arg",
             description = "Holds arguments to pass to the device-side test runner")
@@ -149,6 +162,13 @@ public class DalvikTest implements IAbiReceiver, IBuildReceiver, IDeviceTest, IR
             isTimeVal = true,
             description="The hint about the test's runtime.")
     private long mRuntimeHint = 60000;// 1 minute
+
+    @Option(name = "known-failures-adbconnection",
+            description = "Comma-separated list of files specifying known-failures to be skipped")
+    private String mKnownFailuresAdbconnection;
+    @Option(name = "known-failures-internal",
+            description = "Comma-separated list of files specifying known-failures to be skipped")
+    private String mKnownFailuresInternal;
 
     @Option(name = "known-failures",
             description = "Comma-separated list of files specifying known-failures to be skipped")
@@ -274,6 +294,17 @@ public class DalvikTest implements IAbiReceiver, IBuildReceiver, IDeviceTest, IR
         mCollectTestsOnly = shouldCollectTest;
     }
 
+    private static boolean isAdbconnection(ITestDevice device) throws DeviceNotAvailableException {
+        String provider = device.getProperty("dalvik.vm.jdwp-provider");
+        if (provider == null || provider.equals("default") || provider.equals("adbconnection")) {
+            return true;
+        } else if (provider.equals("internal")) {
+            return false;
+        } else {
+            throw new RuntimeException("Unknown dalvik.vm.jdwp-provider = " + provider);
+        }
+    }
+
     /**
      * {@inheritDoc}
      */
@@ -281,6 +312,7 @@ public class DalvikTest implements IAbiReceiver, IBuildReceiver, IDeviceTest, IR
     public void run(final ITestInvocationListener listener) throws DeviceNotAvailableException {
         String abiName = mAbi.getName();
         String bitness = AbiUtils.getBitness(abiName);
+        mIsAdbConnection = isAdbconnection(getDevice());
 
         File tmpExcludeFile = null;
         try {
@@ -306,6 +338,13 @@ public class DalvikTest implements IAbiReceiver, IBuildReceiver, IDeviceTest, IR
             }
         }
 
+        if (mIsAdbConnection) {
+            Log.logAndDisplay(LogLevel.INFO, TAG, "Running with ADBConnection/libjdwp agent");
+            mDalvikArgs.addAll(mDalvikArgsAdbconnection);
+        } else {
+            Log.logAndDisplay(LogLevel.INFO, TAG, "Running with internal jdwp implementation");
+            mDalvikArgs.addAll(mDalvikArgsInternal);
+        }
 
         // Create command
         mDalvikArgs.add("-Duser.name=shell");
@@ -409,10 +448,18 @@ public class DalvikTest implements IAbiReceiver, IBuildReceiver, IDeviceTest, IR
                     ExpectationStore.parse(expectationFiles, ModeId.DEVICE);
             // create expectation store from expectation files found in module resources dir
             ExpectationStore resourceStore = null;
+            Set<String> knownFailuresFiles = new HashSet<String>();
+            Splitter splitter = Splitter.on(',').trimResults();
             if (mKnownFailures != null) {
-                Splitter splitter = Splitter.on(',').trimResults();
-                Set<String> knownFailuresFiles =
-                        new HashSet<>(splitter.splitToList(mKnownFailures));
+                knownFailuresFiles.addAll(splitter.splitToList(mKnownFailures));
+            }
+            if (mIsAdbConnection && mKnownFailuresAdbconnection != null) {
+                knownFailuresFiles.addAll(splitter.splitToList(mKnownFailuresAdbconnection));
+            }
+            if (!mIsAdbConnection && mKnownFailuresInternal != null) {
+                knownFailuresFiles.addAll(splitter.splitToList(mKnownFailuresInternal));
+            }
+            if (knownFailuresFiles.size() != 0) {
                 resourceStore = ExpectationStore.parseResources(
                         getClass(), knownFailuresFiles, ModeId.DEVICE);
             }
