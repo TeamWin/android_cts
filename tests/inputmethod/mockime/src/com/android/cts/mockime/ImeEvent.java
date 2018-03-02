@@ -95,6 +95,16 @@ public final class ImeEvent {
         bundle.putBundle("mExitState", mExitState != null ? mExitState.toBundle() : null);
         bundle.putBundle("mArguments", mArguments);
         bundle.putString("mReturnType", mReturnType.name());
+        switch (mReturnType) {
+            case Null:
+            case KnownUnsupportedType:
+                break;
+            case Boolean:
+                bundle.putBoolean("mReturnValue", getReturnBooleanValue());
+                break;
+            default:
+                throw new UnsupportedOperationException("Unsupported type=" + mReturnType);
+        }
         return bundle;
     }
 
