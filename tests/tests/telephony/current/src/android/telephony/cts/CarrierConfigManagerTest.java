@@ -16,20 +16,31 @@
 
 package android.telephony.cts;
 
+import static android.app.AppOpsManager.MODE_ALLOWED;
+import static android.app.AppOpsManager.MODE_IGNORED;
+import static android.app.AppOpsManager.OPSTR_READ_PHONE_STATE;
+
 import static androidx.test.InstrumentationRegistry.getContext;
+
+import static com.android.compatibility.common.util.AppOpsUtils.setOpMode;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
 import android.content.Context;
 import android.net.ConnectivityManager;
 import android.os.PersistableBundle;
+import android.platform.test.annotations.SecurityTest;
 import android.telephony.CarrierConfigManager;
 import android.telephony.SubscriptionManager;
 import android.telephony.TelephonyManager;
 
+import java.io.IOException;
+
+import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 
@@ -43,6 +54,15 @@ public class CarrierConfigManagerTest {
                 getContext().getSystemService(Context.TELEPHONY_SERVICE);
         mConfigManager = (CarrierConfigManager)
                 getContext().getSystemService(Context.CARRIER_CONFIG_SERVICE);
+    }
+
+    @After
+    public void tearDown() throws Exception {
+        try {
+            setOpMode("android.telephony.cts", OPSTR_READ_PHONE_STATE, MODE_ALLOWED);
+        } catch (IOException e) {
+            fail();
+        }
     }
 
     /**
@@ -97,6 +117,30 @@ public class CarrierConfigManagerTest {
     @Test
     public void testGetConfig() {
         PersistableBundle config = mConfigManager.getConfig();
+        checkConfig(config);
+    }
+
+    @SecurityTest
+    @Test
+    public void testRevokePermission() {
+        PersistableBundle config;
+
+        try {
+            setOpMode("android.telephony.cts", OPSTR_READ_PHONE_STATE, MODE_IGNORED);
+        } catch (IOException e) {
+            fail();
+        }
+
+        config = mConfigManager.getConfig();
+        assertTrue(config.isEmptyParcel());
+
+        try {
+            setOpMode("android.telephony.cts", OPSTR_READ_PHONE_STATE, MODE_ALLOWED);
+        } catch (IOException e) {
+            fail();
+        }
+
+        config = mConfigManager.getConfig();
         checkConfig(config);
     }
 
