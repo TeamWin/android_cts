@@ -47,6 +47,24 @@ public class CameraUtils {
     }
 
     /**
+     * Returns {@code true} if this device only supports {@code EXTERNAL} mode operation in the
+     * Camera2 API for the given camera ID.
+     *
+     * @param context {@link Context} to access the {@link CameraManager} in.
+     * @param cameraId the ID of the camera device to check.
+     * @return {@code true} if this device only supports {@code LEGACY} mode.
+     */
+    public static boolean isExternal(Context context, int cameraId) throws Exception {
+        CameraManager manager = (CameraManager) context.getSystemService(Context.CAMERA_SERVICE);
+        String cameraIdStr = manager.getCameraIdList()[cameraId];
+        CameraCharacteristics characteristics =
+                manager.getCameraCharacteristics(cameraIdStr);
+
+        return characteristics.get(CameraCharacteristics.INFO_SUPPORTED_HARDWARE_LEVEL) ==
+                CameraCharacteristics.INFO_SUPPORTED_HARDWARE_LEVEL_EXTERNAL;
+    }
+
+    /**
      * Shared size comparison method used by size comparators.
      *
      * <p>Compares the number of pixels it covers.If two the areas of two sizes are same, compare
