@@ -27,13 +27,13 @@ import android.os.LocaleList;
 import android.support.test.InstrumentationRegistry;
 import android.support.test.filters.SmallTest;
 import android.support.test.runner.AndroidJUnit4;
+import android.view.textclassifier.Logger;
+import android.view.textclassifier.Logger.Config;
 import android.view.textclassifier.TextClassification;
 import android.view.textclassifier.TextClassificationManager;
 import android.view.textclassifier.TextClassifier;
 import android.view.textclassifier.TextLinks;
 import android.view.textclassifier.TextSelection;
-import android.view.textclassifier.logging.Logger;
-import android.view.textclassifier.logging.Logger.Config;
 
 import org.junit.Before;
 import org.junit.Test;
