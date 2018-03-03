@@ -1656,51 +1656,6 @@
         </activity>
         <!-- End sensor tests definitions -->
 
-        <activity android:name=".location.LocationModeOffTestActivity"
-                android:label="@string/location_mode_off_test">
-            <intent-filter>
-                <action android:name="android.intent.action.MAIN" />
-                <category android:name="android.cts.intent.category.MANUAL_TEST" />
-            </intent-filter>
-            <meta-data android:name="test_category" android:value="@string/test_category_location" />
-            <meta-data android:name="test_excluded_features"
-                    android:value="android.hardware.type.television:android.software.leanback" />
-        </activity>
-        <activity android:name=".location.LocationModeHighAccuracyTestActivity"
-                android:label="@string/location_mode_high_accuracy_test">
-            <intent-filter>
-                <action android:name="android.intent.action.MAIN" />
-                <category android:name="android.cts.intent.category.MANUAL_TEST" />
-            </intent-filter>
-            <meta-data android:name="test_category" android:value="@string/test_category_location" />
-            <meta-data android:name="test_required_features"
-                    android:value="android.hardware.location.network:android.hardware.location.gps" />
-            <meta-data android:name="test_excluded_features"
-                    android:value="android.hardware.type.television:android.software.leanback" />
-        </activity>
-        <activity android:name=".location.LocationModeBatterySavingTestActivity"
-                android:label="@string/location_mode_battery_saving_test">
-            <intent-filter>
-                <action android:name="android.intent.action.MAIN" />
-                <category android:name="android.cts.intent.category.MANUAL_TEST" />
-            </intent-filter>
-            <meta-data android:name="test_category" android:value="@string/test_category_location" />
-            <meta-data android:name="test_required_features" android:value="android.hardware.location.network" />
-            <meta-data android:name="test_excluded_features"
-                    android:value="android.hardware.type.television:android.software.leanback" />
-        </activity>
-        <activity android:name=".location.LocationModeDeviceOnlyTestActivity"
-                android:label="@string/location_mode_device_only_test">
-            <intent-filter>
-                <action android:name="android.intent.action.MAIN" />
-                <category android:name="android.cts.intent.category.MANUAL_TEST" />
-            </intent-filter>
-            <meta-data android:name="test_category" android:value="@string/test_category_location" />
-            <meta-data android:name="test_required_features" android:value="android.hardware.location.gps" />
-            <meta-data android:name="test_excluded_features"
-                    android:value="android.hardware.type.television:android.software.leanback" />
-        </activity>
-
         <activity android:name=".camera.formats.CameraFormatsActivity"
                  android:label="@string/camera_format"
                  android:screenOrientation="landscape">

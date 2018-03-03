@@ -1670,57 +1670,6 @@
     <string name="cp_get_rules">Retrieving Automatic Zen Rules</string>
     <string name="cp_get_rule">Retrieving Automatic Zen Rule</string>
 
-    <string name="location_mode_high_accuracy_test">High Accuracy Mode Test</string>
-    <string name="location_mode_high_accuracy_info">
-        This test checks that the Location Mode API is consistent with the
-        Location Provider API when the device is in High Accuracy location mode.
-    </string>
-    <string name="location_mode_select_high_accuracy">
-        Please select the \"High accuracy\" mode at Settings > Location
-        (hint: tap the "Mode" item) and return here.
-    </string>
-    <string name="location_mode_battery_saving_test">Battery Saving Mode Test</string>
-    <string name="location_mode_battery_saving_info">
-        This test checks that the Location Mode API is consistent with the
-        Location Provider API when the device is in Battery Saving location mode.
-    </string>
-    <string name="location_mode_select_battery_saving">
-        Please select the \"Battery Saving\" mode at Settings > Location
-        (hint: tap the "Mode" item) and return here.
-    </string>
-    <string name="location_mode_device_only_test">Device Only Mode Test</string>
-    <string name="location_mode_device_only_info">
-        This test checks that the Location Mode API is consistent with the
-        Location Provider API when the device is in Device Only location mode.
-    </string>
-    <string name="location_mode_select_device_only">
-        Please select the \"Device Only\" mode at
-        Settings > Location (hint: tap the "Mode" item) and return here.
-    </string>
-    <string name="location_mode_off_test">Location Mode Off Test</string>
-    <string name="location_mode_off_info">
-        This test checks that the Location Mode API is consistent with the
-        Location Provider API when the device is in the Off location mode.
-    </string>
-
-    <string name="location_mode_start_settings">Launch Settings</string>
-    <string name="location_mode_turn_on">
-        Please turn ON location access (the switch at the top of Settings > Location)
-        and return here.
-    </string>
-    <string name="location_mode_turn_off">
-        Please turn OFF location access (the switch at the top of Settings > Location)
-        and return here.
-    </string>
-    <string name="location_mode_secure_gps_on">GPS provider should be ON in secure settings.</string>
-    <string name="location_mode_secure_gps_off">GPS provider should be OFF in secure settings.</string>
-    <string name="location_mode_secure_nlp_on">Network location provider should be ON in secure settings.</string>
-    <string name="location_mode_secure_nlp_off">Network location provider should be OFF in secure settings.</string>
-    <string name="location_mode_manager_gps_on">GPS provider should be ON in LocationManager.</string>
-    <string name="location_mode_manager_gps_off">GPS provider should be OFF in LocationManager.</string>
-    <string name="location_mode_manager_nlp_on">Network location provider should be ON in LocationManager.</string>
-    <string name="location_mode_manager_nlp_off">Network location provider should be OFF in LocationManager.</string>
-
     <string name="cacert_test">CA Cert Notification Test</string>
     <string name="cacert_info">This test checks that when a CA Certificate is installed, the user is notified.</string>
     <string name="cacert_do_something">Do it</string>
