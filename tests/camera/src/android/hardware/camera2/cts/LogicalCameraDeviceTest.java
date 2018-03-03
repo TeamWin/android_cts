@@ -478,6 +478,9 @@ public final class LogicalCameraDeviceTest extends Camera2SurfaceViewTestCase {
         outputConfigs.add(new OutputConfiguration(logicalTarget.getSurface()));
 
         // Add physical YUV streams
+        if (physicalCameraIds.size() != 2) {
+            throw new IllegalArgumentException("phyiscalCameraIds must contain 2 camera ids");
+        }
         List<ImageReader> physicalTargets = new ArrayList<>();
         for (String physicalCameraId : physicalCameraIds) {
             ImageReader physicalTarget = CameraTestUtils.makeImageReader(previewSize,
@@ -541,6 +544,18 @@ public final class LogicalCameraDeviceTest extends Camera2SurfaceViewTestCase {
 
         double logicalAvgDurationMs = (logicalTimestamps[NUM_FRAMES_CHECKED-1] -
                 logicalTimestamps[0])/(NS_PER_MS*(NUM_FRAMES_CHECKED-1));
+
+        // Request one logical stream and one physical stream
+        simpleResultListener = new SimpleCaptureCallback();
+        requestBuilder.addTarget(physicalTargets.get(1).getSurface());
+        mSession.setRepeatingRequest(requestBuilder.build(), simpleResultListener,
+                mHandler);
+
+        // Verify results for physical streams request.
+        CaptureResultTest.validateCaptureResult(mCollector, simpleResultListener,
+                mStaticInfo, mAllStaticInfo, physicalCameraIds.subList(1, 2), requestBuilder,
+                NUM_FRAMES_CHECKED);
+
 
         // Start requesting on both logical and physical streams
         SimpleCaptureCallback simpleResultListenerDual =

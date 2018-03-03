@@ -1662,25 +1662,6 @@ public class RobustnessTest extends Camera2AndroidTestCase {
     private void testOutputCombination(String cameraId, int[] config, MaxStreamSizes maxSizes)
             throws Exception {
 
-        //TODO: Remove below test workaround once HAL is fixed.
-        if (mStaticInfo.isLogicalMultiCamera()) {
-            int yuvStreams = 0;
-            int rawStreams = 0;
-            for (int i = 0; i < config.length; i+= 2) {
-                int format = config[i];
-                if (format == JPEG) {
-                    return;
-                } else if (format == YUV || format == PRIV) {
-                    yuvStreams++;
-                } else if (format == RAW) {
-                    rawStreams++;
-                }
-            }
-            if (yuvStreams > 2) {
-                return;
-            }
-        }
-
         Log.i(TAG, String.format("Testing single Camera %s, config %s",
                         cameraId, MaxStreamSizes.configToString(config)));
 
