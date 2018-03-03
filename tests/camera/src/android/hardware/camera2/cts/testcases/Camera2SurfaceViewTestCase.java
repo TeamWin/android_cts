@@ -825,6 +825,7 @@ public class Camera2SurfaceViewTestCase extends
         int minBurstFps = (int) Math.floor(1e9 / frameDuration + 0.05f);
         boolean foundConstantMaxYUVRange = false;
         boolean foundYUVStreamingRange = false;
+        boolean isExternalCamera = mStaticInfo.isExternalCamera();
 
         // Find suitable target FPS range - as high as possible that covers the max YUV rate
         // Also verify that there's a good preview rate as well
@@ -835,14 +836,19 @@ public class Camera2SurfaceViewTestCase extends
             if (fpsRange.getLower() == minBurstFps && fpsRange.getUpper() == minBurstFps) {
                 foundConstantMaxYUVRange = true;
                 targetRange = fpsRange;
+            } else if (isExternalCamera && fpsRange.getUpper() == minBurstFps) {
+                targetRange = fpsRange;
             }
             if (fpsRange.getLower() <= 15 && fpsRange.getUpper() == minBurstFps) {
                 foundYUVStreamingRange = true;
             }
+
         }
 
-        assertTrue(String.format("Cam %s: Target FPS range of (%d, %d) must be supported",
-                cameraId, minBurstFps, minBurstFps), foundConstantMaxYUVRange);
+        if (!isExternalCamera) {
+            assertTrue(String.format("Cam %s: Target FPS range of (%d, %d) must be supported",
+                    cameraId, minBurstFps, minBurstFps), foundConstantMaxYUVRange);
+        }
         assertTrue(String.format(
                 "Cam %s: Target FPS range of (x, %d) where x <= 15 must be supported",
                 cameraId, minBurstFps), foundYUVStreamingRange);

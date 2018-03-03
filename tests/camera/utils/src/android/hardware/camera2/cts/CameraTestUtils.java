@@ -2241,50 +2241,82 @@ public class CameraTestUtils extends Assert {
                     dateTime.startsWith(localDatetime));
         }
 
-        // TAG_FOCAL_LENGTH.
-        float[] focalLengths = staticInfo.getAvailableFocalLengthsChecked();
-        float exifFocalLength = (float)exif.getAttributeDouble(ExifInterface.TAG_FOCAL_LENGTH, -1);
-        collector.expectEquals("Focal length should match",
-                getClosestValueInArray(focalLengths, exifFocalLength),
-                exifFocalLength, EXIF_FOCAL_LENGTH_ERROR_MARGIN);
-        // More checks for focal length.
-        collector.expectEquals("Exif focal length should match capture result",
-                validateFocalLength(result, staticInfo, collector),
-                exifFocalLength, EXIF_FOCAL_LENGTH_ERROR_MARGIN);
+        boolean isExternalCamera = staticInfo.isExternalCamera();
+        if (!isExternalCamera) {
+            // TAG_FOCAL_LENGTH.
+            float[] focalLengths = staticInfo.getAvailableFocalLengthsChecked();
+            float exifFocalLength = (float)exif.getAttributeDouble(
+                        ExifInterface.TAG_FOCAL_LENGTH, -1);
+            collector.expectEquals("Focal length should match",
+                    getClosestValueInArray(focalLengths, exifFocalLength),
+                    exifFocalLength, EXIF_FOCAL_LENGTH_ERROR_MARGIN);
+            // More checks for focal length.
+            collector.expectEquals("Exif focal length should match capture result",
+                    validateFocalLength(result, staticInfo, collector),
+                    exifFocalLength, EXIF_FOCAL_LENGTH_ERROR_MARGIN);
 
-        // TAG_EXPOSURE_TIME
-        // ExifInterface API gives exposure time value in the form of float instead of rational
-        String exposureTime = exif.getAttribute(ExifInterface.TAG_EXPOSURE_TIME);
-        collector.expectNotNull("Exif TAG_EXPOSURE_TIME shouldn't be null", exposureTime);
-        if (staticInfo.areKeysAvailable(CaptureResult.SENSOR_EXPOSURE_TIME)) {
-            if (exposureTime != null) {
-                double exposureTimeValue = Double.parseDouble(exposureTime);
-                long expTimeResult = result.get(CaptureResult.SENSOR_EXPOSURE_TIME);
-                double expected = expTimeResult / 1e9;
-                double tolerance = expected * EXIF_EXPOSURE_TIME_ERROR_MARGIN_RATIO;
-                tolerance = Math.max(tolerance, EXIF_EXPOSURE_TIME_MIN_ERROR_MARGIN_SEC);
-                collector.expectEquals("Exif exposure time doesn't match", expected,
-                        exposureTimeValue, tolerance);
+            // TAG_EXPOSURE_TIME
+            // ExifInterface API gives exposure time value in the form of float instead of rational
+            String exposureTime = exif.getAttribute(ExifInterface.TAG_EXPOSURE_TIME);
+            collector.expectNotNull("Exif TAG_EXPOSURE_TIME shouldn't be null", exposureTime);
+            if (staticInfo.areKeysAvailable(CaptureResult.SENSOR_EXPOSURE_TIME)) {
+                if (exposureTime != null) {
+                    double exposureTimeValue = Double.parseDouble(exposureTime);
+                    long expTimeResult = result.get(CaptureResult.SENSOR_EXPOSURE_TIME);
+                    double expected = expTimeResult / 1e9;
+                    double tolerance = expected * EXIF_EXPOSURE_TIME_ERROR_MARGIN_RATIO;
+                    tolerance = Math.max(tolerance, EXIF_EXPOSURE_TIME_MIN_ERROR_MARGIN_SEC);
+                    collector.expectEquals("Exif exposure time doesn't match", expected,
+                            exposureTimeValue, tolerance);
+                }
+            }
+
+            // TAG_APERTURE
+            // ExifInterface API gives aperture value in the form of float instead of rational
+            String exifAperture = exif.getAttribute(ExifInterface.TAG_APERTURE);
+            collector.expectNotNull("Exif TAG_APERTURE shouldn't be null", exifAperture);
+            if (staticInfo.areKeysAvailable(CameraCharacteristics.LENS_INFO_AVAILABLE_APERTURES)) {
+                float[] apertures = staticInfo.getAvailableAperturesChecked();
+                if (exifAperture != null) {
+                    float apertureValue = Float.parseFloat(exifAperture);
+                    collector.expectEquals("Aperture value should match",
+                            getClosestValueInArray(apertures, apertureValue),
+                            apertureValue, EXIF_APERTURE_ERROR_MARGIN);
+                    // More checks for aperture.
+                    collector.expectEquals("Exif aperture length should match capture result",
+                            validateAperture(result, staticInfo, collector),
+                            apertureValue, EXIF_APERTURE_ERROR_MARGIN);
+                }
+            }
+
+            // TAG_MAKE
+            String make = exif.getAttribute(ExifInterface.TAG_MAKE);
+            collector.expectEquals("Exif TAG_MAKE is incorrect", Build.MANUFACTURER, make);
+
+            // TAG_MODEL
+            String model = exif.getAttribute(ExifInterface.TAG_MODEL);
+            collector.expectEquals("Exif TAG_MODEL is incorrect", Build.MODEL, model);
+
+
+            // TAG_ISO
+            int iso = exif.getAttributeInt(ExifInterface.TAG_ISO, /*defaultValue*/-1);
+            if (staticInfo.areKeysAvailable(CaptureResult.SENSOR_SENSITIVITY) ||
+                    staticInfo.areKeysAvailable(CaptureResult.CONTROL_POST_RAW_SENSITIVITY_BOOST)) {
+                int expectedIso = 100;
+                if (staticInfo.areKeysAvailable(CaptureResult.SENSOR_SENSITIVITY)) {
+                    expectedIso = result.get(CaptureResult.SENSOR_SENSITIVITY);
+                }
+                if (staticInfo.areKeysAvailable(CaptureResult.CONTROL_POST_RAW_SENSITIVITY_BOOST)) {
+                    expectedIso = expectedIso *
+                            result.get(CaptureResult.CONTROL_POST_RAW_SENSITIVITY_BOOST);
+                } else {
+                    expectedIso *= 100;
+                }
+                collector.expectInRange("Exif TAG_ISO is incorrect", iso,
+                        expectedIso/100, (expectedIso+50)/100);
             }
         }
 
-        // TAG_APERTURE
-        // ExifInterface API gives aperture value in the form of float instead of rational
-        String exifAperture = exif.getAttribute(ExifInterface.TAG_APERTURE);
-        collector.expectNotNull("Exif TAG_APERTURE shouldn't be null", exifAperture);
-        if (staticInfo.areKeysAvailable(CameraCharacteristics.LENS_INFO_AVAILABLE_APERTURES)) {
-            float[] apertures = staticInfo.getAvailableAperturesChecked();
-            if (exifAperture != null) {
-                float apertureValue = Float.parseFloat(exifAperture);
-                collector.expectEquals("Aperture value should match",
-                        getClosestValueInArray(apertures, apertureValue),
-                        apertureValue, EXIF_APERTURE_ERROR_MARGIN);
-                // More checks for aperture.
-                collector.expectEquals("Exif aperture length should match capture result",
-                        validateAperture(result, staticInfo, collector),
-                        apertureValue, EXIF_APERTURE_ERROR_MARGIN);
-            }
-        }
 
         /**
          * TAG_FLASH. TODO: For full devices, can check a lot more info
@@ -2299,33 +2331,6 @@ public class CameraTestUtils extends Assert {
          */
         String whiteBalance = exif.getAttribute(ExifInterface.TAG_WHITE_BALANCE);
         collector.expectNotNull("Exif TAG_WHITE_BALANCE shouldn't be null", whiteBalance);
-
-        // TAG_MAKE
-        String make = exif.getAttribute(ExifInterface.TAG_MAKE);
-        collector.expectEquals("Exif TAG_MAKE is incorrect", Build.MANUFACTURER, make);
-
-        // TAG_MODEL
-        String model = exif.getAttribute(ExifInterface.TAG_MODEL);
-        collector.expectEquals("Exif TAG_MODEL is incorrect", Build.MODEL, model);
-
-
-        // TAG_ISO
-        int iso = exif.getAttributeInt(ExifInterface.TAG_ISO, /*defaultValue*/-1);
-        if (staticInfo.areKeysAvailable(CaptureResult.SENSOR_SENSITIVITY) ||
-                staticInfo.areKeysAvailable(CaptureResult.CONTROL_POST_RAW_SENSITIVITY_BOOST)) {
-            int expectedIso = 100;
-            if (staticInfo.areKeysAvailable(CaptureResult.SENSOR_SENSITIVITY)) {
-                expectedIso = result.get(CaptureResult.SENSOR_SENSITIVITY);
-            }
-            if (staticInfo.areKeysAvailable(CaptureResult.CONTROL_POST_RAW_SENSITIVITY_BOOST)) {
-                expectedIso = expectedIso *
-                        result.get(CaptureResult.CONTROL_POST_RAW_SENSITIVITY_BOOST);
-            } else {
-                expectedIso *= 100;
-            }
-            collector.expectInRange("Exif TAG_ISO is incorrect", iso,
-                    expectedIso/100, (expectedIso+50)/100);
-        }
 
         // TAG_DATETIME_DIGITIZED (a.k.a Create time for digital cameras).
         String digitizedTime = exif.getAttribute(ExifInterface.TAG_DATETIME_DIGITIZED);
