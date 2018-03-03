@@ -31,7 +31,6 @@ import android.os.Bundle;
 import android.os.Handler;
 import android.os.HandlerThread;
 import android.os.IBinder;
-import android.os.LocaleList;
 import android.os.Looper;
 import android.os.Parcel;
 import android.os.Process;
@@ -132,12 +131,6 @@ public final class MockIme extends InputMethodService {
                         final int newCursorPosition =
                                 command.getExtras().getInt("newCursorPosition");
                         getCurrentInputConnection().commitText(text, newCursorPosition);
-                        break;
-                    }
-                    case "reportLanguageHint": {
-                        final LocaleList languageHint =
-                                command.getExtras().getParcelable("languageHint");
-                        getCurrentInputConnection().reportLanguageHint(languageHint);
                         break;
                     }
                     case "setBackDisposition": {
