@@ -1457,6 +1457,8 @@
     <string name="aware_status_network_success">Network formed ...</string>
     <string name="aware_status_network_failed">Network request failure - timed out!</string>
     <string name="aware_status_sleeping_wait_for_responder">Pausing to let Responder time to set up ...</string>
+    <string name="aware_status_ranging_peer_failure">Ranging to PeerHandle failure: %1$d or %2$d!</string>
+    <string name="aware_status_ranging_mac_failure">Ranging to MAC address failure: %1$d or %2$d!</string>
     <string name="aware_status_lifecycle_ok">Discovery lifecycle validated!</string>
 
     <string name="aware_data_path_open_unsolicited_publish">Data Path: Open: Unsolicited Publish</string>

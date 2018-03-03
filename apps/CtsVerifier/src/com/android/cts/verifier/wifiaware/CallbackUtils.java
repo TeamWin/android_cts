@@ -25,6 +25,8 @@ import android.net.wifi.aware.PeerHandle;
 import android.net.wifi.aware.PublishDiscoverySession;
 import android.net.wifi.aware.SubscribeDiscoverySession;
 import android.net.wifi.aware.WifiAwareSession;
+import android.net.wifi.rtt.RangingResult;
+import android.net.wifi.rtt.RangingResultCallback;
 import android.util.Log;
 import android.util.Pair;
 
@@ -349,6 +351,46 @@ public class CallbackUtils {
             callbackData.peerHandle = peerHandle;
             callbackData.serviceSpecificInfo = message;
             processCallback(callbackData);
+        }
+    }
+
+    /**
+     * Utility RangingResultCallback - provides mechanism for blocking/serializing access with the
+     * waitForRangingResults method.
+     */
+    public static class RangingCb extends RangingResultCallback {
+        public static final int TIMEOUT = -1;
+        public static final int ON_FAILURE = 0;
+        public static final int ON_RESULTS = 1;
+
+        private CountDownLatch mBlocker = new CountDownLatch(1);
+        private int mStatus = TIMEOUT;
+        private List<RangingResult> mResults = null;
+
+        /**
+         * Wait (blocks) for Ranging results callbacks - or times-out.
+         *
+         * @return Pair of status & Ranging results if succeeded, null otherwise.
+         */
+        public Pair<Integer, List<RangingResult>> waitForRangingResults()
+                throws InterruptedException {
+            if (mBlocker.await(CALLBACK_TIMEOUT_SEC, TimeUnit.SECONDS)) {
+                return new Pair<>(mStatus, mResults);
+            }
+            return new Pair<>(TIMEOUT, null);
+        }
+
+        @Override
+        public void onRangingFailure(int code) {
+            mStatus = ON_FAILURE;
+            mBlocker.countDown();
+        }
+
+        @Override
+        public void onRangingResults(List<RangingResult> results) {
+            mStatus = ON_RESULTS;
+            mResults = results;
+            mBlocker.countDown();
         }
     }
 }

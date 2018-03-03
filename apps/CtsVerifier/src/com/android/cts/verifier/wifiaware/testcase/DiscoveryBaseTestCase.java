@@ -17,6 +17,7 @@
 package com.android.cts.verifier.wifiaware.testcase;
 
 import android.content.Context;
+import android.net.MacAddress;
 import android.net.wifi.aware.DiscoverySession;
 import android.net.wifi.aware.PeerHandle;
 import android.net.wifi.aware.PublishConfig;
@@ -62,7 +63,7 @@ public abstract class DiscoveryBaseTestCase extends BaseTestCase {
     private static final byte[] SUB_SSI = "Arbitrary bytes for the subscribe discovery".getBytes();
     private static final byte[] MSG_SUB_TO_PUB = "Let's talk".getBytes();
     protected static final int MESSAGE_ID = 1234;
-    private static final int LARGE_ENOUGH_DISTANCE = 100000; // 100 meters
+    protected static final int LARGE_ENOUGH_DISTANCE = 100000; // 100 meters
 
     protected boolean mIsUnsolicited;
     protected boolean mIsRangingRequired;
@@ -74,6 +75,8 @@ public abstract class DiscoveryBaseTestCase extends BaseTestCase {
     protected DiscoverySession mWifiAwareDiscoverySession;
     protected CallbackUtils.DiscoveryCb mDiscoveryCb;
     protected PeerHandle mPeerHandle;
+    protected MacAddress mMyMacAddress;
+    protected MacAddress mPeerMacAddress;
 
     public DiscoveryBaseTestCase(Context context, boolean isUnsolicited,
             boolean isRangingRequired) {
@@ -84,8 +87,15 @@ public abstract class DiscoveryBaseTestCase extends BaseTestCase {
     }
 
     private boolean executeAttach() throws InterruptedException {
+        // attach (optionally with an identity listener)
         CallbackUtils.AttachCb attachCb = new CallbackUtils.AttachCb();
-        mWifiAwareManager.attach(attachCb, mHandler);
+        CallbackUtils.IdentityListenerSingleShot identityL = new CallbackUtils
+                .IdentityListenerSingleShot();
+        if (mIsRangingRequired) {
+            mWifiAwareManager.attach(attachCb, identityL, mHandler);
+        } else {
+            mWifiAwareManager.attach(attachCb, mHandler);
+        }
         Pair<Integer, WifiAwareSession> results = attachCb.waitForAttach();
         switch (results.first) {
             case CallbackUtils.AttachCb.TIMEOUT:
@@ -106,6 +116,22 @@ public abstract class DiscoveryBaseTestCase extends BaseTestCase {
         mListener.onTestMsgReceived(mContext.getString(R.string.aware_status_attached));
         if (DBG) {
             Log.d(TAG, "executeTest: attach succeeded");
+        }
+
+        // 1.5 optionally wait for identity (necessary in ranging cases)
+        if (mIsRangingRequired) {
+            byte[] mac = identityL.waitForMac();
+            if (mac == null) {
+                setFailureReason(mContext.getString(R.string.aware_status_identity_fail));
+                Log.e(TAG, "executeAttach: identity callback not triggered");
+                return false;
+            }
+            mMyMacAddress = MacAddress.fromBytes(mac);
+            mListener.onTestMsgReceived(mResources.getString(R.string.aware_status_identity,
+                    mMyMacAddress));
+            if (DBG) {
+                Log.d(TAG, "executeAttach: identity received: " + mMyMacAddress.toString());
+            }
         }
 
         return true;
@@ -161,7 +187,7 @@ public abstract class DiscoveryBaseTestCase extends BaseTestCase {
 
         // 3. wait for discovery
         callbackData = mDiscoveryCb.waitForCallbacks(
-                mIsRangingRequired ? CallbackUtils.DiscoveryCb.ON_SERVICE_DISCOVERED_WITH_RANGE
+                mIsRangingRequired ? CallbackUtils.DiscoveryCb.ON_SERVICE_DISCOVERED
                         : CallbackUtils.DiscoveryCb.ON_SERVICE_DISCOVERED);
         switch (callbackData.callback) {
             case CallbackUtils.DiscoveryCb.TIMEOUT:
@@ -174,11 +200,24 @@ public abstract class DiscoveryBaseTestCase extends BaseTestCase {
         if (DBG) Log.d(TAG, "executeTestSubscriber: discovery");
 
         //    validate discovery parameters match
-        if (!Arrays.equals(PUB_SSI, callbackData.serviceSpecificInfo)) {
-            setFailureReason(mContext.getString(R.string.aware_status_discovery_fail));
-            Log.e(TAG, "executeTestSubscriber: discovery but SSI mismatch: rx='" + new String(
-                    callbackData.serviceSpecificInfo) + "'");
-            return false;
+        if (mIsRangingRequired) {
+            try {
+                mPeerMacAddress = MacAddress.fromBytes(callbackData.serviceSpecificInfo);
+            } catch (IllegalArgumentException e) {
+                setFailureReason(mContext.getString(R.string.aware_status_discovery_fail));
+                Log.e(TAG, "executeTestSubscriber: invalid MAC received in SSI: rx='" + new String(
+                        callbackData.serviceSpecificInfo) + "'");
+                return false;
+            }
+            mListener.onTestMsgReceived(mResources.getString(R.string.aware_status_received_mac,
+                    mPeerMacAddress));
+        } else {
+            if (!Arrays.equals(PUB_SSI, callbackData.serviceSpecificInfo)) {
+                setFailureReason(mContext.getString(R.string.aware_status_discovery_fail));
+                Log.e(TAG, "executeTestSubscriber: discovery but SSI mismatch: rx='" + new String(
+                        callbackData.serviceSpecificInfo) + "'");
+                return false;
+            }
         }
         if (callbackData.matchFilter.size() != 1 || !Arrays.equals(MATCH_FILTER_BYTES,
                 callbackData.matchFilter.get(0))) {
@@ -199,7 +238,8 @@ public abstract class DiscoveryBaseTestCase extends BaseTestCase {
         }
 
         // 4. send message & wait for send status
-        mWifiAwareDiscoverySession.sendMessage(mPeerHandle, MESSAGE_ID, MSG_SUB_TO_PUB);
+        mWifiAwareDiscoverySession.sendMessage(mPeerHandle, MESSAGE_ID,
+                mIsRangingRequired ? mMyMacAddress.toByteArray() : MSG_SUB_TO_PUB);
         callbackData = mDiscoveryCb.waitForCallbacks(
                 CallbackUtils.DiscoveryCb.ON_MESSAGE_SEND_SUCCEEDED
                         | CallbackUtils.DiscoveryCb.ON_MESSAGE_SEND_FAILED);
@@ -238,7 +278,8 @@ public abstract class DiscoveryBaseTestCase extends BaseTestCase {
         List<byte[]> matchFilter = new ArrayList<>();
         matchFilter.add(MATCH_FILTER_BYTES);
         PublishConfig publishConfig = new PublishConfig.Builder().setServiceName(
-                SERVICE_NAME).setServiceSpecificInfo(PUB_SSI).setMatchFilter(
+                SERVICE_NAME).setServiceSpecificInfo(
+                mIsRangingRequired ? mMyMacAddress.toByteArray() : PUB_SSI).setMatchFilter(
                 matchFilter).setPublishType(mIsUnsolicited ? PublishConfig.PUBLISH_TYPE_UNSOLICITED
                 : PublishConfig.PUBLISH_TYPE_SOLICITED).setTerminateNotificationEnabled(
                 true).setRangingEnabled(mIsRangingRequired).build();
@@ -277,11 +318,24 @@ public abstract class DiscoveryBaseTestCase extends BaseTestCase {
         if (DBG) Log.d(TAG, "executeTestPublisher: received message");
 
         //    validate that received the expected message
-        if (!Arrays.equals(MSG_SUB_TO_PUB, callbackData.serviceSpecificInfo)) {
-            setFailureReason(mContext.getString(R.string.aware_status_receive_failure));
-            Log.e(TAG, "executeTestPublisher: receive message message content mismatch: rx='"
-                    + new String(callbackData.serviceSpecificInfo) + "'");
-            return false;
+        if (mIsRangingRequired) {
+            try {
+                mPeerMacAddress = MacAddress.fromBytes(callbackData.serviceSpecificInfo);
+            } catch (IllegalArgumentException e) {
+                setFailureReason(mContext.getString(R.string.aware_status_discovery_fail));
+                Log.e(TAG, "executeTestSubscriber: invalid MAC received in SSI: rx='" + new String(
+                        callbackData.serviceSpecificInfo) + "'");
+                return false;
+            }
+            mListener.onTestMsgReceived(mResources.getString(R.string.aware_status_received_mac,
+                    mPeerMacAddress));
+        } else {
+            if (!Arrays.equals(MSG_SUB_TO_PUB, callbackData.serviceSpecificInfo)) {
+                setFailureReason(mContext.getString(R.string.aware_status_receive_failure));
+                Log.e(TAG, "executeTestPublisher: receive message message content mismatch: rx='"
+                        + new String(callbackData.serviceSpecificInfo) + "'");
+                return false;
+            }
         }
         if (mPeerHandle == null) {
             setFailureReason(mContext.getString(R.string.aware_status_receive_failure));

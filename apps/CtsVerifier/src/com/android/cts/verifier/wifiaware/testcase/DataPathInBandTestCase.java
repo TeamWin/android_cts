@@ -84,11 +84,22 @@ public class DataPathInBandTestCase extends DiscoveryBaseTestCase {
                             + ", mIsUnsolicited=" + mIsUnsolicited);
         }
 
+        boolean success;
         if (mIsPublish) {
-            return executeTestPublisher();
+            success = executeTestPublisher();
         } else {
-            return executeTestSubscriber();
+            success = executeTestSubscriber();
         }
+        if (!success) {
+            return false;
+        }
+
+        // destroy session
+        mWifiAwareDiscoverySession.close();
+        mWifiAwareDiscoverySession = null;
+
+        mListener.onTestMsgReceived(mContext.getString(R.string.aware_status_lifecycle_ok));
+        return true;
     }
 
     private boolean executeTestSubscriber() throws InterruptedException {
@@ -140,11 +151,6 @@ public class DataPathInBandTestCase extends DiscoveryBaseTestCase {
         mListener.onTestMsgReceived(mContext.getString(R.string.aware_status_network_success));
         if (DBG) Log.d(TAG, "executeTestSubscriber: network request granted - AVAILABLE");
 
-        // 7. destroy session
-        mWifiAwareDiscoverySession.close();
-        mWifiAwareDiscoverySession = null;
-
-        mListener.onTestMsgReceived(mContext.getString(R.string.aware_status_lifecycle_ok));
         return true;
     }
 
@@ -204,11 +210,6 @@ public class DataPathInBandTestCase extends DiscoveryBaseTestCase {
         mListener.onTestMsgReceived(mContext.getString(R.string.aware_status_network_success));
         if (DBG) Log.d(TAG, "executeTestPublisher: network request granted - AVAILABLE");
 
-        // 7. destroy session
-        mWifiAwareDiscoverySession.close();
-        mWifiAwareDiscoverySession = null;
-
-        mListener.onTestMsgReceived(mContext.getString(R.string.aware_status_lifecycle_ok));
         return true;
     }
 }
