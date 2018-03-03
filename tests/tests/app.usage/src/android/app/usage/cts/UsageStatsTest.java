@@ -198,7 +198,6 @@ public class UsageStatsTest {
 
         boolean found = false;
         // Check all the events.
-        ArrayList<UsageEvents.Event> eventList = new ArrayList<>();
         while (events.hasNextEvent()) {
             UsageEvents.Event event = new UsageEvents.Event();
             assertTrue(events.getNextEvent(event));
@@ -218,6 +217,38 @@ public class UsageStatsTest {
         final int bucket = bucketMap.getOrDefault(mTargetPackage, -1);
         assertEquals("Incorrect bucket returned for " + mTargetPackage, bucket,
                 UsageStatsManager.STANDBY_BUCKET_RARE);
+    }
+
+    @Test
+    public void testQueryEventsForSelf() throws Exception {
+        setAppOpsMode("ignore"); // To ensure permission is not required
+        // Time drifts of 2s are expected inside usage stats
+        final long start = System.currentTimeMillis() - 2_000;
+        mUiDevice.executeShellCommand("am set-standby-bucket " + mTargetPackage + " rare");
+        Thread.sleep(100);
+        mUiDevice.executeShellCommand("am set-standby-bucket " + mTargetPackage + " working_set");
+        Thread.sleep(100);
+        final long end = System.currentTimeMillis() + 2_000;
+        final UsageEvents events = mUsageStatsManager.queryEventsForSelf(start, end);
+        long rareTimeStamp = end + 1; // Initializing as rareTimeStamp > workingTimeStamp
+        long workingTimeStamp = start - 1;
+        int numEvents = 0;
+        while (events.hasNextEvent()) {
+            UsageEvents.Event event = new UsageEvents.Event();
+            assertTrue(events.getNextEvent(event));
+            numEvents++;
+            assertEquals("Event for a different package", mTargetPackage, event.getPackageName());
+            if (event.mEventType == Event.STANDBY_BUCKET_CHANGED) {
+                if (event.getStandbyBucket() == UsageStatsManager.STANDBY_BUCKET_RARE) {
+                    rareTimeStamp = event.mTimeStamp;
+                }
+                else if (event.getStandbyBucket() == UsageStatsManager.STANDBY_BUCKET_WORKING_SET) {
+                    workingTimeStamp = event.mTimeStamp;
+                }
+            }
+        }
+        assertTrue("Only " + numEvents + " events returned", numEvents >= 2);
+        assertLessThan(rareTimeStamp, workingTimeStamp);
     }
 
     /**
