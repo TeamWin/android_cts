@@ -17,18 +17,39 @@
 package android.server.wm;
 
 import static android.server.am.ComponentNameUtils.getWindowName;
-import static android.server.am.StateLogger.logE;
-import static android.server.wm.frametestapp.Components.DIALOG_TEST_ACTIVITY;
+import static android.server.wm.DialogFrameTestActivity.DIALOG_WINDOW_NAME;
+import static android.server.wm.DialogFrameTestActivity
+        .TEST_EXPLICIT_POSITION_MATCH_PARENT;
+import static android.server.wm.DialogFrameTestActivity
+        .TEST_EXPLICIT_POSITION_MATCH_PARENT_NO_LIMITS;
+import static android.server.wm.DialogFrameTestActivity.TEST_EXPLICIT_SIZE;
+import static android.server.wm.DialogFrameTestActivity
+        .TEST_EXPLICIT_SIZE_BOTTOM_RIGHT_GRAVITY;
+import static android.server.wm.DialogFrameTestActivity
+        .TEST_EXPLICIT_SIZE_TOP_LEFT_GRAVITY;
+import static android.server.wm.DialogFrameTestActivity.TEST_MATCH_PARENT;
+import static android.server.wm.DialogFrameTestActivity
+        .TEST_MATCH_PARENT_LAYOUT_IN_OVERSCAN;
+import static android.server.wm.DialogFrameTestActivity.TEST_NO_FOCUS;
+import static android.server.wm.DialogFrameTestActivity.TEST_OVER_SIZED_DIMENSIONS;
+import static android.server.wm.DialogFrameTestActivity
+        .TEST_OVER_SIZED_DIMENSIONS_NO_LIMITS;
+import static android.server.wm.DialogFrameTestActivity.TEST_WITH_MARGINS;
 
+import static org.hamcrest.MatcherAssert.assertThat;
+import static org.hamcrest.Matchers.greaterThan;
 import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertTrue;
 
 import android.content.ComponentName;
 import android.graphics.Rect;
 import android.server.am.WaitForValidActivityState;
 import android.server.am.WindowManagerState;
 import android.server.am.WindowManagerState.WindowState;
+import android.support.test.InstrumentationRegistry;
+import android.support.test.rule.ActivityTestRule;
 
+import org.junit.Ignore;
+import org.junit.Rule;
 import org.junit.Test;
 
 import java.util.ArrayList;
@@ -37,35 +58,39 @@ import java.util.List;
 /**
  * Build/Install/Run:
  *     atest CtsWindowManagerDeviceTestCases:DialogFrameTests
+ *
+ * TODO: Consolidate this class with {@link ParentChildTestBase}.
  */
-public class DialogFrameTests extends ParentChildTestBase {
+public class DialogFrameTests extends ParentChildTestBase<DialogFrameTestActivity> {
 
-    /** @see android.server.wm.frametestapp.DialogTestActivity#DIALOG_WINDOW_NAME */
-    private static final String DIALOG_WINDOW_NAME = "TestDialog";
+    private static final ComponentName DIALOG_FRAME_TEST_ACTIVITY = new ComponentName(
+            InstrumentationRegistry.getContext(), DialogFrameTestActivity.class);
 
-    private List<WindowState> mWindowList = new ArrayList<>();
+    @Rule
+    public final ActivityTestRule<DialogFrameTestActivity> mDialogTestActivity =
+            new ActivityTestRule<>(DialogFrameTestActivity.class, false /* initialTOuchMode */,
+                    false /* launchActivity */);
 
     @Override
     ComponentName activityName() {
-        return DIALOG_TEST_ACTIVITY;
+        return DIALOG_FRAME_TEST_ACTIVITY;
+    }
+
+    @Override
+    ActivityTestRule<DialogFrameTestActivity> activityRule() {
+        return mDialogTestActivity;
     }
 
     private WindowState getSingleWindow(final String windowName) {
-        try {
-            mAmWmState.getWmState().getMatchingVisibleWindowState(windowName, mWindowList);
-            return mWindowList.get(0);
-        } catch (Exception e) {
-            logE("Couldn't find window: " + windowName);
-            return null;
-        }
+        final List<WindowState> windowList = new ArrayList<>();
+        mAmWmState.getWmState().getMatchingVisibleWindowState(windowName, windowList);
+        assertThat(windowList.size(), greaterThan(0));
+        return windowList.get(0);
     }
 
     @Override
     void doSingleTest(ParentChildTest t) throws Exception {
-        final WaitForValidActivityState waitForVisible =
-                WaitForValidActivityState.forWindow(DIALOG_WINDOW_NAME);
-
-        mAmWmState.computeState(waitForVisible);
+        mAmWmState.computeState(WaitForValidActivityState.forWindow(DIALOG_WINDOW_NAME));
         WindowState dialog = getSingleWindow(DIALOG_WINDOW_NAME);
         WindowState parent = getSingleWindow(getWindowName(activityName()));
 
@@ -76,10 +101,9 @@ public class DialogFrameTests extends ParentChildTestBase {
     // the same content frame as the main activity window
     @Test
     public void testMatchParentDialog() throws Exception {
-        doParentChildTest("MatchParent",
-                (WindowState parent, WindowState dialog) -> {
-                    assertEquals(parent.getContentFrame(), dialog.getFrame());
-                });
+        doParentChildTest(TEST_MATCH_PARENT, (parent, dialog) ->
+                assertEquals(parent.getContentFrame(), dialog.getFrame())
+        );
     }
 
     // If we have LAYOUT_IN_SCREEN and LAYOUT_IN_OVERSCAN with MATCH_PARENT,
@@ -87,10 +111,9 @@ public class DialogFrameTests extends ParentChildTestBase {
     // as the main window main frame.
     @Test
     public void testMatchParentDialogLayoutInOverscan() throws Exception {
-        doParentChildTest("MatchParentLayoutInOverscan",
-                (WindowState parent, WindowState dialog) -> {
-                    assertEquals(parent.getFrame(), dialog.getFrame());
-                });
+        doParentChildTest(TEST_MATCH_PARENT_LAYOUT_IN_OVERSCAN, (parent, dialog) ->
+                assertEquals(parent.getFrame(), dialog.getFrame())
+        );
     }
 
     private static final int explicitDimension = 200;
@@ -98,89 +121,81 @@ public class DialogFrameTests extends ParentChildTestBase {
     // The default gravity for dialogs should center them.
     @Test
     public void testExplicitSizeDefaultGravity() throws Exception {
-        doParentChildTest("ExplicitSize",
-                (WindowState parent, WindowState dialog) -> {
-                    Rect contentFrame = parent.getContentFrame();
-                    Rect expectedFrame = new Rect(
-                            contentFrame.left + (contentFrame.width() - explicitDimension) / 2,
-                            contentFrame.top + (contentFrame.height() - explicitDimension) / 2,
-                            contentFrame.left + (contentFrame.width() + explicitDimension) / 2,
-                            contentFrame.top + (contentFrame.height() + explicitDimension) / 2);
-                    assertEquals(expectedFrame, dialog.getFrame());
-                });
+        doParentChildTest(TEST_EXPLICIT_SIZE, (parent, dialog) -> {
+            Rect contentFrame = parent.getContentFrame();
+            Rect expectedFrame = new Rect(
+                    contentFrame.left + (contentFrame.width() - explicitDimension) / 2,
+                    contentFrame.top + (contentFrame.height() - explicitDimension) / 2,
+                    contentFrame.left + (contentFrame.width() + explicitDimension) / 2,
+                    contentFrame.top + (contentFrame.height() + explicitDimension) / 2);
+            assertEquals(expectedFrame, dialog.getFrame());
+        });
     }
 
     @Test
     public void testExplicitSizeTopLeftGravity() throws Exception {
-        doParentChildTest("ExplicitSizeTopLeftGravity",
-                (WindowState parent, WindowState dialog) -> {
-                    Rect contentFrame = parent.getContentFrame();
-                    Rect expectedFrame = new Rect(
-                            contentFrame.left,
-                            contentFrame.top,
-                            contentFrame.left + explicitDimension,
-                            contentFrame.top + explicitDimension);
-                    assertEquals(expectedFrame, dialog.getFrame());
-                });
+        doParentChildTest(TEST_EXPLICIT_SIZE_TOP_LEFT_GRAVITY, (parent, dialog) -> {
+            Rect contentFrame = parent.getContentFrame();
+            Rect expectedFrame = new Rect(
+                    contentFrame.left,
+                    contentFrame.top,
+                    contentFrame.left + explicitDimension,
+                    contentFrame.top + explicitDimension);
+            assertEquals(expectedFrame, dialog.getFrame());
+        });
     }
 
     @Test
     public void testExplicitSizeBottomRightGravity() throws Exception {
-        doParentChildTest("ExplicitSizeBottomRightGravity",
-                (WindowState parent, WindowState dialog) -> {
-                    Rect contentFrame = parent.getContentFrame();
-                    Rect expectedFrame = new Rect(
-                            contentFrame.left + contentFrame.width() - explicitDimension,
-                            contentFrame.top + contentFrame.height() - explicitDimension,
-                            contentFrame.left + contentFrame.width(),
-                            contentFrame.top + contentFrame.height());
-                    assertEquals(expectedFrame, dialog.getFrame());
-                });
+        doParentChildTest(TEST_EXPLICIT_SIZE_BOTTOM_RIGHT_GRAVITY, (parent, dialog) -> {
+            Rect contentFrame = parent.getContentFrame();
+            Rect expectedFrame = new Rect(
+                    contentFrame.left + contentFrame.width() - explicitDimension,
+                    contentFrame.top + contentFrame.height() - explicitDimension,
+                    contentFrame.left + contentFrame.width(),
+                    contentFrame.top + contentFrame.height());
+            assertEquals(expectedFrame, dialog.getFrame());
+        });
     }
 
-    // TODO: Commented out for now because it doesn't work. We end up
-    // insetting the decor on the bottom. I think this is a bug
-    // probably in the default dialog flags:
-    // b/30127373
-    //    public void testOversizedDimensions() throws Exception {
-    //        doParentChildTest("OversizedDimensions",
-    //            (WindowState parent, WindowState dialog) -> {
-    // With the default flags oversize should result in clipping to
-    // parent frame.
-    //                assertEquals(parent.getContentFrame(), dialog.getFrame());
-    //         });
-    //    }
-
-
+    // TODO(b/30127373): Commented out for now because it doesn't work. We end up insetting the
+    // decor on the bottom. I think this is a bug probably in the default dialog flags:
+    @Ignore
+    @Test
+    public void testOversizedDimensions() throws Exception {
+        doParentChildTest(TEST_OVER_SIZED_DIMENSIONS, (parent, dialog) ->
+                // With the default flags oversize should result in clipping to
+                // parent frame.
+                assertEquals(parent.getContentFrame(), dialog.getFrame())
+        );
+    }
 
     // TODO(b/63993863) : Disabled pending public API to fetch maximum surface size.
-    //static final int oversizedDimension = 5000;
-    // With FLAG_LAYOUT_NO_LIMITS  we should get the size we request, even if its much
-    // larger than the screen.
-    // @Test
-    // public void testOversizedDimensionsNoLimits() throws Exception {
+    static final int oversizedDimension = 5000;
+    // With FLAG_LAYOUT_NO_LIMITS  we should get the size we request, even if its much larger than
+    // the screen.
+    @Ignore
+    @Test
+    public void testOversizedDimensionsNoLimits() throws Exception {
         // TODO(b/36890978): We only run this in fullscreen because of the
         // unclear status of NO_LIMITS for non-child surfaces in MW modes
-    // doFullscreenTest("OversizedDimensionsNoLimits",
-    // (WindowState parent, WindowState dialog) -> {
-    // Rect contentFrame = parent.getContentFrame();
-    // Rect expectedFrame = new Rect(contentFrame.left, contentFrame.top,
-    // contentFrame.left + oversizedDimension,
-    // contentFrame.top + oversizedDimension);
-    // assertEquals(expectedFrame, dialog.getFrame());
-    // });
-    //}
+        doFullscreenTest(TEST_OVER_SIZED_DIMENSIONS_NO_LIMITS, (parent, dialog) -> {
+            Rect contentFrame = parent.getContentFrame();
+            Rect expectedFrame = new Rect(contentFrame.left, contentFrame.top,
+                    contentFrame.left + oversizedDimension,
+                    contentFrame.top + oversizedDimension);
+            assertEquals(expectedFrame, dialog.getFrame());
+        });
+    }
 
     // If we request the MATCH_PARENT and a non-zero position, we wouldn't be
     // able to fit all of our content, so we should be adjusted to just fit the
     // content frame.
     @Test
     public void testExplicitPositionMatchParent() throws Exception {
-        doParentChildTest("ExplicitPositionMatchParent",
-                (WindowState parent, WindowState dialog) -> {
-                    assertEquals(parent.getContentFrame(),
-                            dialog.getFrame());
-                });
+        doParentChildTest(TEST_EXPLICIT_POSITION_MATCH_PARENT, (parent, dialog) ->
+                assertEquals(parent.getContentFrame(), dialog.getFrame())
+        );
     }
 
     // Unless we pass NO_LIMITS in which case our requested position should
@@ -188,60 +203,52 @@ public class DialogFrameTests extends ParentChildTestBase {
     @Test
     public void testExplicitPositionMatchParentNoLimits() throws Exception {
         final int explicitPosition = 100;
-        doParentChildTest("ExplicitPositionMatchParentNoLimits",
-                (WindowState parent, WindowState dialog) -> {
-                    Rect contentFrame = parent.getContentFrame();
-                    Rect expectedFrame = new Rect(contentFrame);
-                    expectedFrame.offset(explicitPosition, explicitPosition);
-                    assertEquals(expectedFrame, dialog.getFrame());
-                });
+        doParentChildTest(TEST_EXPLICIT_POSITION_MATCH_PARENT_NO_LIMITS, (parent, dialog) -> {
+            Rect contentFrame = parent.getContentFrame();
+            Rect expectedFrame = new Rect(contentFrame);
+            expectedFrame.offset(explicitPosition, explicitPosition);
+            assertEquals(expectedFrame, dialog.getFrame());
+        });
     }
 
     // We run the two focus tests fullscreen only because switching to the
     // docked stack will strip away focus from the task anyway.
     @Test
     public void testDialogReceivesFocus() throws Exception {
-        doFullscreenTest("MatchParent",
-                (WindowState parent, WindowState dialog) -> {
-                    assertEquals(dialog.getName(), mAmWmState.getWmState().getFocusedWindow());
-                });
+        doFullscreenTest(TEST_MATCH_PARENT, (parent, dialog) ->
+                assertEquals(dialog.getName(), mAmWmState.getWmState().getFocusedWindow())
+        );
     }
 
     @Test
     public void testNoFocusDialog() throws Exception {
-        doFullscreenTest("NoFocus",
-                (WindowState parent, WindowState dialog) -> {
-                    assertEquals(parent.getName(), mAmWmState.getWmState().getFocusedWindow());
-                });
+        doFullscreenTest(TEST_NO_FOCUS, (parent, dialog) ->
+                assertEquals(parent.getName(), mAmWmState.getWmState().getFocusedWindow())
+        );
     }
 
     @Test
     public void testMarginsArePercentagesOfContentFrame() throws Exception {
         float horizontalMargin = .25f;
         float verticalMargin = .35f;
-        doParentChildTest("WithMargins",
-                (WindowState parent, WindowState dialog) -> {
-                    Rect frame = parent.getContentFrame();
-                    Rect expectedFrame = new Rect(
-                            (int) (horizontalMargin * frame.width() + frame.left),
-                            (int) (verticalMargin * frame.height() + frame.top),
-                            (int) (horizontalMargin * frame.width() + frame.left)
-                                    + explicitDimension,
-                            (int) (verticalMargin * frame.height() + frame.top)
-                                    + explicitDimension);
-                    assertEquals(expectedFrame, dialog.getFrame());
-                });
+        doParentChildTest(TEST_WITH_MARGINS, (parent, dialog) -> {
+            Rect frame = parent.getContentFrame();
+            Rect expectedFrame = new Rect(
+                    (int) (horizontalMargin * frame.width() + frame.left),
+                    (int) (verticalMargin * frame.height() + frame.top),
+                    (int) (horizontalMargin * frame.width() + frame.left) + explicitDimension,
+                    (int) (verticalMargin * frame.height() + frame.top) + explicitDimension);
+            assertEquals(expectedFrame, dialog.getFrame());
+        });
     }
 
     @Test
     public void testDialogPlacedAboveParent() throws Exception {
         final WindowManagerState wmState = mAmWmState.getWmState();
-        doParentChildTest("MatchParent",
-                (WindowState parent, WindowState dialog) -> {
-                    // Not only should the dialog be higher, but it should be
-                    // leave multiple layers of space inbetween for DimLayers,
-                    // etc...
-                    assertTrue(wmState.getZOrder(dialog) > wmState.getZOrder(parent));
-                });
+        doParentChildTest(TEST_MATCH_PARENT, (parent, dialog) ->
+                // Not only should the dialog be higher, but it should be leave multiple layers of
+                // space in between for DimLayers, etc...
+                assertThat(wmState.getZOrder(dialog), greaterThan(wmState.getZOrder(parent)))
+        );
     }
 }

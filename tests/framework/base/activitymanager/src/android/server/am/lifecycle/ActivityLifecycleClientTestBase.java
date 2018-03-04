@@ -29,6 +29,10 @@ public class ActivityLifecycleClientTestBase extends ActivityManagerTestBase {
     final ActivityTestRule mTranslucentActivityTestRule = new ActivityTestRule(
             TranslucentActivity.class, true /* initialTouchMode */, false /* launchActivity */);
 
+    final ActivityTestRule mSecondTranslucentActivityTestRule = new ActivityTestRule(
+            SecondTranslucentActivity.class, true /* initialTouchMode */,
+            false /* launchActivity */);
+
     final ActivityTestRule mLaunchForResultActivityTestRule = new ActivityTestRule(
             LaunchForResultActivity.class, true /* initialTouchMode */, false /* launchActivity */);
 
@@ -91,6 +95,10 @@ public class ActivityLifecycleClientTestBase extends ActivityManagerTestBase {
 
     // Translucent test activity
     public static class TranslucentActivity extends Activity {
+    }
+
+    // Translucent test activity
+    public static class SecondTranslucentActivity extends Activity {
     }
 
     /**

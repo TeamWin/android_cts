@@ -15,41 +15,34 @@
  */
 package com.android.compatibility.common.util;
 
-import android.util.Log;
-
 import org.junit.rules.TestRule;
 import org.junit.runner.Description;
 import org.junit.runners.model.Statement;
 
 /**
- * Custom JUnit4 rule that provides a callback upon test failures.
+ * Custom JUnit4 rule that provides "before" / "after" callbacks, which is useful to use with
+ * {@link org.junit.rules.RuleChain}.
  */
-public abstract class OnFailureRule implements TestRule {
-    private String mLogTag = "OnFailureRule";
-
-    public OnFailureRule() {
-    }
-
-    public OnFailureRule(String logTag) {
-        mLogTag = logTag;
-    }
-
+public class BeforeAfterRule implements TestRule {
     @Override
     public Statement apply(Statement base, Description description) {
         return new Statement() {
 
             @Override
             public void evaluate() throws Throwable {
+                onBefore(base, description);
                 try {
                     base.evaluate();
-                } catch (Throwable t) {
-                    Log.e(mLogTag, "Test failed: description=" +  description + "\nThrowable=" + t);
-                    onTestFailure(base, description, t);
-                    throw t;
+                } finally {
+                    onAfter(base, description);
                 }
             }
         };
     }
 
-    protected abstract void onTestFailure(Statement base, Description description, Throwable t);
+    protected void onBefore(Statement base, Description description) throws Throwable {
+    }
+
+    protected void onAfter(Statement base, Description description) throws Throwable {
+    }
 }

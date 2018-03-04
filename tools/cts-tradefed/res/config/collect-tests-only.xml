@@ -25,7 +25,7 @@
     <option name="plan" value="collect-tests-only" />
 
     <option name="skip-preconditions" value="true" />
-    <option name="skip-connectivity-check" value="true" />
+    <option name="skip-system-status-check" value="com.android.compatibility.common.tradefed.targetprep.NetworkConnectivityChecker" />
     <option name="preparer-whitelist" value="com.android.tradefed.targetprep.suite.SuiteApkInstaller" />
     <option name="preparer-whitelist" value="com.android.compatibility.common.tradefed.targetprep.ApkInstaller" />
     <option name="preparer-whitelist" value="com.android.compatibility.common.tradefed.targetprep.FilePusher" />

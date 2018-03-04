@@ -29,11 +29,11 @@ import android.os.PowerManager;
 import android.support.test.InstrumentationRegistry;
 import android.util.Log;
 
+import com.android.compatibility.common.util.BeforeAfterRule;
 import com.android.compatibility.common.util.OnFailureRule;
 
-import org.junit.After;
-import org.junit.Before;
 import org.junit.Rule;
+import org.junit.rules.RuleChain;
 import org.junit.runner.Description;
 import org.junit.runners.model.Statement;
 
@@ -46,8 +46,7 @@ public class BatterySavingTestBase {
 
     protected final BroadcastRpc mRpc = new BroadcastRpc();
 
-    @Rule
-    public final OnFailureRule mDumpOnFailureRule = new OnFailureRule() {
+    private final OnFailureRule mDumpOnFailureRule = new OnFailureRule(TAG) {
         @Override
         protected void onTestFailure(Statement base, Description description, Throwable t) {
             runCommandAndPrintOnLogcat(TAG, "dumpsys power");
@@ -57,16 +56,22 @@ public class BatterySavingTestBase {
         }
     };
 
-    @Before
-    public final void resetDumpsysBatteryBeforeTest() throws Exception {
-        turnOnScreen(true);
-    }
+    private final BeforeAfterRule mInitializeAndCleanupRule = new BeforeAfterRule() {
+        @Override
+        protected void onBefore(Statement base, Description description) throws Throwable {
+            turnOnScreen(true);
+        }
 
-    @After
-    public final void resetDumpsysBatteryAfterTest() throws Exception {
-        runDumpsysBatteryReset();
-        turnOnScreen(true);
-    }
+        @Override
+        protected void onAfter(Statement base, Description description) throws Throwable {
+            runDumpsysBatteryReset();
+            turnOnScreen(true);
+        }
+    };
+
+    @Rule
+    public RuleChain Rules = RuleChain.outerRule(mInitializeAndCleanupRule)
+            .around(mDumpOnFailureRule);
 
     public String getLogTag() {
         return TAG;

@@ -90,6 +90,20 @@ public class StrictModeTest {
     }
 
     @Test
+    public void testThreadBuilder() throws Exception {
+        StrictMode.ThreadPolicy policy = new StrictMode.ThreadPolicy.Builder().detectDiskReads().penaltyLog().build();
+        StrictMode.setThreadPolicy(new StrictMode.ThreadPolicy.Builder(policy).build());
+
+        final File test = File.createTempFile("foo", "bar");
+        inspectViolation(
+                test::exists,
+                violation -> {
+                    assertThat(violation.getViolationDetails()).isNull();
+                    assertThat(violation.getStackTrace()).contains("DiskReadViolation");
+                });
+    }
+
+    @Test
     public void testUnclosedCloseable() throws Exception {
         StrictMode.setVmPolicy(
                 new StrictMode.VmPolicy.Builder().detectLeakedClosableObjects().build());

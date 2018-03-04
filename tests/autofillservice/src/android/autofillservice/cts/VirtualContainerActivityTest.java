@@ -451,6 +451,7 @@ public class VirtualContainerActivityTest extends AutoFillServiceTestCase {
 
     @Test
     public void testSave_submitButtonClicked() throws Throwable {
+        if (mCompatMode) return; // TODO(b/73649008): implement it
         saveTest(CommitType.SUBMIT_BUTTON_CLICKED);
     }
 
@@ -476,10 +477,9 @@ public class VirtualContainerActivityTest extends AutoFillServiceTestCase {
                 response.setSaveInfoFlags(SaveInfo.FLAG_SAVE_ON_ALL_VIEWS_INVISIBLE);
                 break;
             case SUBMIT_BUTTON_CLICKED:
-                System.out.println(">DUDE: SET CLKIC IT"); // felipeal: tmp
                 response
                     .setSaveInfoFlags(SaveInfo.FLAG_DONT_SAVE_ON_FINISH)
-                    .setSaveTriggerId(mActivity.mLoginButtonId);
+                    .setSaveTriggerId(mActivity.mCustomView.mLoginButtonId);
                 break;
         }
         sReplier.addResponse(response.build());
@@ -506,8 +506,7 @@ public class VirtualContainerActivityTest extends AutoFillServiceTestCase {
                 mActivity.getAutofillManager().commit();
                 break;
             case SUBMIT_BUTTON_CLICKED:
-                System.out.println(">DUDE: CLICK IT"); // felipeal: tmp
-                mActivity.clickLogin();
+                mActivity.mCustomView.clickLogin();
                 break;
             default:
                 throw new IllegalArgumentException("unknown type: " + commitType);

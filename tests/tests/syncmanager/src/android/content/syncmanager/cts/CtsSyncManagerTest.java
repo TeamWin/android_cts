@@ -74,7 +74,7 @@ public class CtsSyncManagerTest {
     public static final boolean DEBUG = false;
 
     @Rule
-    public final OnFailureRule mDumpOnFailureRule = new OnFailureRule() {
+    public final OnFailureRule mDumpOnFailureRule = new OnFailureRule(TAG) {
         @Override
         protected void onTestFailure(Statement base, Description description, Throwable t) {
             runCommandAndPrintOnLogcat(TAG, "dumpsys content");

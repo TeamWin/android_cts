@@ -27,7 +27,6 @@ import android.content.IntentFilter;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.HandlerThread;
-import android.os.LocaleList;
 import android.os.Parcel;
 import android.os.ParcelFileDescriptor;
 import android.os.SystemClock;
@@ -291,32 +290,6 @@ public class MockImeSession implements AutoCloseable {
         params.putInt("newCursorPosition", newCursorPosition);
         final ImeCommand command = new ImeCommand(
                 "commitText", SystemClock.elapsedRealtimeNanos(), true, params);
-        final Intent intent = new Intent();
-        intent.setPackage(mContext.getPackageName());
-        intent.setAction(MockIme.getCommandActionName(mImeEventActionName));
-        intent.putExtras(command.toBundle());
-        mContext.sendBroadcast(intent);
-        return command;
-    }
-
-    /**
-     * Lets {@link MockIme} to call
-     * {@link android.view.inputmethod.InputConnection#reportLanguageHint(LocaleList)} with the
-     * given parameters.
-     *
-     * <p>This triggers {@code getCurrentInputConnection().reportLanguageHint(languageHint)}.</p>
-     *
-     * @param languageHint to be passed as the {@code languageHint} parameter
-     * @return {@link ImeCommand} object that can be passed to
-     *         {@link ImeEventStreamTestUtils#expectCommand(ImeEventStream, ImeCommand, long)} to
-     *         wait until this event is handled by {@link MockIme}
-     */
-    @NonNull
-    public ImeCommand callReportLnaguageHint(@NonNull LocaleList languageHint) {
-        final Bundle params = new Bundle();
-        params.putParcelable("languageHint", languageHint);
-        final ImeCommand command = new ImeCommand(
-                "reportLanguageHint", SystemClock.elapsedRealtimeNanos(), true, params);
         final Intent intent = new Intent();
         intent.setPackage(mContext.getPackageName());
         intent.setAction(MockIme.getCommandActionName(mImeEventActionName));

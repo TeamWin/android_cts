@@ -18,22 +18,25 @@ package android.server.wm;
 
 import static android.app.WindowConfiguration.WINDOWING_MODE_SPLIT_SCREEN_PRIMARY;
 import static android.server.am.StateLogger.log;
+import static android.server.wm.DialogFrameTestActivity.EXTRA_TEST_CASE;
 
+import android.app.Activity;
 import android.content.ComponentName;
+import android.content.Intent;
 import android.server.am.ActivityManagerTestBase;
 import android.server.am.WindowManagerState.WindowState;
+import android.support.test.rule.ActivityTestRule;
 
-abstract class ParentChildTestBase extends ActivityManagerTestBase {
-
-    /** Extra key for test case name. */
-    private static final String EXTRA_TEST_CASE = "test-case";
+abstract class ParentChildTestBase<T extends Activity> extends ActivityManagerTestBase {
 
     interface ParentChildTest {
         void doTest(WindowState parent, WindowState child);
     }
 
     private void startTestCase(String testCase) throws Exception {
-        executeShellCommand(getAmStartCmd(activityName(), EXTRA_TEST_CASE, testCase));
+        final Intent intent = new Intent()
+                .putExtra(EXTRA_TEST_CASE, testCase);
+        activityRule().launchActivity(intent);
     }
 
     private void startTestCaseDocked(String testCase) throws Exception {
@@ -42,6 +45,7 @@ abstract class ParentChildTestBase extends ActivityManagerTestBase {
     }
 
     abstract ComponentName activityName();
+    abstract ActivityTestRule<T> activityRule();
 
     abstract void doSingleTest(ParentChildTest t) throws Exception;
 
@@ -49,7 +53,7 @@ abstract class ParentChildTestBase extends ActivityManagerTestBase {
         log("Running test fullscreen");
         startTestCase(testCase);
         doSingleTest(t);
-        stopTestPackage(activityName());
+        activityRule().finishActivity();
     }
 
     private void doDockedTest(String testCase, ParentChildTest t) throws Exception {
@@ -60,7 +64,7 @@ abstract class ParentChildTestBase extends ActivityManagerTestBase {
         }
         startTestCaseDocked(testCase);
         doSingleTest(t);
-        stopTestPackage(activityName());
+        activityRule().finishActivity();
     }
 
     void doParentChildTest(String testCase, ParentChildTest t) throws Exception {

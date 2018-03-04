@@ -30,6 +30,7 @@ import com.android.tradefed.result.InputStreamSource;
 import com.android.tradefed.result.LogDataType;
 import com.android.tradefed.result.LogFile;
 import com.android.tradefed.result.LogFileSaver;
+import com.android.tradefed.result.TestRunResult;
 import com.android.tradefed.result.TestSummary;
 import com.android.tradefed.result.suite.IFormatterGenerator;
 import com.android.tradefed.result.suite.SuiteResultReporter;
@@ -47,6 +48,7 @@ import java.io.InputStream;
 import java.io.OutputStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.Collection;
 import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -70,6 +72,8 @@ public class CertificationSuiteResultReporter extends XmlFormattedGeneratorRepor
     public static final String SUMMARY_FILE = "invocation_summary.txt";
     public static final String FAILURE_REPORT_NAME = "test_result_failures_suite.html";
     public static final String FAILURE_XSL_FILE_NAME = "compatibility_failures.xsl";
+
+    public static final String BUILD_FINGERPRINT = "build_fingerprint";
 
     @Option(name = "result-server", description = "Server to publish test results.")
     private String mResultServer;
@@ -299,6 +303,9 @@ public class CertificationSuiteResultReporter extends XmlFormattedGeneratorRepor
     public void postFormattingStep(File resultDir, File reportFile) {
         super.postFormattingStep(resultDir,reportFile);
 
+        createChecksum(resultDir, getRunResults(),
+                getPrimaryBuildInfo().getBuildAttributes().get(BUILD_FINGERPRINT));
+
         File failureReport = null;
         if (mIncludeHtml) {
             // Create the html report before the zip file.
@@ -514,5 +521,13 @@ public class CertificationSuiteResultReporter extends XmlFormattedGeneratorRepor
             transformer.transform(new StreamSource(inputXml), new StreamResult(outputStream));
         } catch (IOException | TransformerException ignored) { }
         return failureReport;
+    }
+
+    /**
+     * Generates a checksum files based on the results.
+     */
+    private void createChecksum(File resultDir, Collection<TestRunResult> results,
+            String buildFingerprint) {
+        CertificationChecksumHelper.tryCreateChecksum(resultDir, results, buildFingerprint);
     }
 }

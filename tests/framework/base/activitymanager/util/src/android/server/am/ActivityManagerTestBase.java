@@ -243,15 +243,19 @@ public abstract class ActivityManagerTestBase {
 
     @After
     public void tearDown() throws Exception {
+        // Synchronous execution of removeStacksWithActivityTypes() ensures that all activities but
+        // home are cleaned up from the stack at the end of each test. Am force stop shell commands
+        // might be asynchronous and could interrupt the stack cleanup process if executed first.
+        removeStacksWithActivityTypes(ALL_ACTIVITY_TYPE_BUT_HOME);
         executeShellCommand(AM_FORCE_STOP_TEST_PACKAGE);
         executeShellCommand(AM_FORCE_STOP_SECOND_TEST_PACKAGE);
         executeShellCommand(AM_FORCE_STOP_THIRD_TEST_PACKAGE);
-        removeStacksWithActivityTypes(ALL_ACTIVITY_TYPE_BUT_HOME);
         pressHomeButton();
     }
 
     protected void removeStacksWithActivityTypes(int... activityTypes) {
         mAm.removeStacksWithActivityTypes(activityTypes);
+        waitForIdle();
     }
 
     protected void removeStacksInWindowingModes(int... windowingModes) {
@@ -368,6 +372,13 @@ public abstract class ActivityManagerTestBase {
         mAmWmState.waitForRecentsActivityVisible();
     }
 
+    public void moveTaskToPrimarySplitScreen(int taskId) {
+        mAm.setTaskWindowingModeSplitScreenPrimary(taskId, SPLIT_SCREEN_CREATE_MODE_TOP_OR_LEFT,
+                true /* onTop */, false /* animate */, null /* initialBounds */,
+                true /* showRecents */);
+        mAmWmState.waitForRecentsActivityVisible();
+    }
+
     /**
      * Launches {@param primaryActivity} into split-screen primary windowing mode
      * and {@param secondaryActivity} to the side in split-screen secondary windowing mode.
@@ -382,10 +393,7 @@ public abstract class ActivityManagerTestBase {
 
         final int taskId = mAmWmState.getAmState().getTaskByActivity(
                 primaryActivity.mTargetActivity).mTaskId;
-        mAm.setTaskWindowingModeSplitScreenPrimary(taskId, SPLIT_SCREEN_CREATE_MODE_TOP_OR_LEFT,
-                true /* onTop */, false /* animate */, null /* initialBounds */,
-                true /* showRecents */);
-        mAmWmState.waitForRecentsActivityVisible();
+        moveTaskToPrimarySplitScreen(taskId);
 
         // Launch split-screen secondary
         // Recents become focused, so we can just launch new task in focused stack
@@ -1299,6 +1307,10 @@ public abstract class ActivityManagerTestBase {
         public LaunchActivityBuilder setUseApplicationContext(boolean useApplicationContext) {
             mUseApplicationContext = useApplicationContext;
             return this;
+        }
+
+        public ComponentName getTargetActivity() {
+            return mTargetActivity;
         }
 
         public LaunchActivityBuilder setTargetActivity(ComponentName targetActivity) {

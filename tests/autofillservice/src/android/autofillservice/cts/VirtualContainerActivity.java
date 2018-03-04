@@ -26,8 +26,6 @@ import android.autofillservice.cts.VirtualContainerView.Line;
 import android.autofillservice.cts.VirtualContainerView.Line.OneTimeLineWatcher;
 import android.graphics.Canvas;
 import android.os.Bundle;
-import android.util.Log;
-import android.view.autofill.AutofillId;
 import android.widget.EditText;
 
 /**
@@ -40,9 +38,6 @@ import android.widget.EditText;
  */
 public class VirtualContainerActivity extends AbstractAutoFillActivity {
 
-    private static final String TAG = "VirtualContainerActivity";
-    private static final int LOGIN_BUTTON_VIRTUAL_ID = 666;
-
     static final String BLANK_VALUE = "        ";
 
     EditText mUrlBar;
@@ -50,8 +45,6 @@ public class VirtualContainerActivity extends AbstractAutoFillActivity {
 
     Line mUsername;
     Line mPassword;
-
-    AutofillId mLoginButtonId;
 
     private FillExpectation mExpectation;
 
@@ -67,16 +60,6 @@ public class VirtualContainerActivity extends AbstractAutoFillActivity {
         mUrlBar.setText("ftp://dev.null/4/8/15/16/23/42");
         mUsername = mCustomView.addLine(ID_USERNAME_LABEL, "Username", ID_USERNAME, BLANK_VALUE);
         mPassword = mCustomView.addLine(ID_PASSWORD_LABEL, "Password", ID_PASSWORD, BLANK_VALUE);
-
-        mLoginButtonId = new AutofillId(mCustomView.getAutofillId(), LOGIN_BUTTON_VIRTUAL_ID);
-    }
-
-    /**
-     * Emulates clicking the login button.
-     */
-    void clickLogin() {
-        Log.d(TAG, "clickLogin()");
-        getAutofillManager().notifyViewClicked(mCustomView, LOGIN_BUTTON_VIRTUAL_ID);
     }
 
     /**

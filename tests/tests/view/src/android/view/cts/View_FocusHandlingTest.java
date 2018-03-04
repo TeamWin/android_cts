@@ -279,6 +279,11 @@ public class View_FocusHandlingTest {
         InstrumentationRegistry.getInstrumentation().setInTouchMode(false);
         for (View v : new View[]{v1, v2, v3, v4}) v.setEnabled(true);
         assertEquals(true, v1.isFocused());
+
+        // enabled state is restricted to the view only (not children)
+        v2.requestFocus();
+        parent.setEnabled(false);
+        assertTrue(v2.isFocused());
     }
 
     @Test

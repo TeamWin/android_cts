@@ -4292,11 +4292,19 @@ public class ViewTest {
         assertTrue(overridingView.hasOverlappingRendering());
     }
 
-    @Test
-    public void testUpdateDragShadow() {
-        View view = mActivity.findViewById(R.id.fit_windows);
-        assertTrue(view.isAttachedToWindow());
+    private boolean startDragAndDrop(View view, View.DragShadowBuilder shadowBuilder) {
+        final Point size = new Point();
+        mActivity.getDisplay().getSize(size);
+        final MotionEvent event = MotionEvent.obtain(
+                SystemClock.uptimeMillis(), SystemClock.uptimeMillis(),
+                MotionEvent.ACTION_DOWN, size.x / 2, size.y / 2, 1);
+        event.setSource(InputDevice.SOURCE_TOUCHSCREEN);
+        mInstrumentation.getUiAutomation().injectInputEvent(event, true);
 
+        return view.startDragAndDrop(ClipData.newPlainText("", ""), shadowBuilder, view, 0);
+    }
+
+    private static View.DragShadowBuilder createDragShadowBuidler() {
         View.DragShadowBuilder shadowBuilder = mock(View.DragShadowBuilder.class);
         doAnswer(a -> {
             final Point outPoint = (Point) a.getArguments()[0];
@@ -4304,12 +4312,25 @@ public class ViewTest {
             outPoint.y = 1;
             return null;
         }).when(shadowBuilder).onProvideShadowMetrics(any(), any());
-        view.startDragAndDrop(ClipData.newPlainText("", ""), shadowBuilder, view, 0);
-        reset(shadowBuilder);
+        return shadowBuilder;
+    }
 
-        view.updateDragShadow(shadowBuilder);
-        // TODO: Verify with the canvas from the drag surface instead.
-        verify(shadowBuilder).onDrawShadow(any(Canvas.class));
+    @Test
+    public void testUpdateDragShadow() {
+        View view = mActivity.findViewById(R.id.fit_windows);
+        assertTrue(view.isAttachedToWindow());
+
+        final View.DragShadowBuilder shadowBuilder = createDragShadowBuidler();
+        try {
+            assertTrue("Could not start drag and drop", startDragAndDrop(view, shadowBuilder));
+            reset(shadowBuilder);
+            view.updateDragShadow(shadowBuilder);
+            // TODO: Verify with the canvas from the drag surface instead.
+            verify(shadowBuilder).onDrawShadow(any(Canvas.class));
+        } finally {
+            // Ensure to cancel drag and drop operation so that it does not affect other tests.
+            view.cancelDragAndDrop();
+        }
     }
 
     @Test
@@ -4317,12 +4338,18 @@ public class ViewTest {
         View view = new View(mActivity);
         assertFalse(view.isAttachedToWindow());
 
-        View.DragShadowBuilder shadowBuilder = mock(View.DragShadowBuilder.class);
-        view.startDragAndDrop(ClipData.newPlainText("", ""), shadowBuilder, view, 0);
-        reset(shadowBuilder);
+        View.DragShadowBuilder shadowBuilder = createDragShadowBuidler();
+        try {
+            assertFalse("Drag and drop for detached view must fail",
+                    startDragAndDrop(view, shadowBuilder));
+            reset(shadowBuilder);
 
-        view.updateDragShadow(shadowBuilder);
-        verify(shadowBuilder, never()).onDrawShadow(any(Canvas.class));
+            view.updateDragShadow(shadowBuilder);
+            verify(shadowBuilder, never()).onDrawShadow(any(Canvas.class));
+        } finally {
+            // Ensure to cancel drag and drop operation so that it does not affect other tests.
+            view.cancelDragAndDrop();
+        }
     }
 
     @Test
@@ -4330,7 +4357,7 @@ public class ViewTest {
         View view = mActivity.findViewById(R.id.fit_windows);
         assertTrue(view.isAttachedToWindow());
 
-        View.DragShadowBuilder shadowBuilder = mock(View.DragShadowBuilder.class);
+        View.DragShadowBuilder shadowBuilder = createDragShadowBuidler();
         view.updateDragShadow(shadowBuilder);
         verify(shadowBuilder, never()).onDrawShadow(any(Canvas.class));
     }

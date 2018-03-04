@@ -1757,14 +1757,14 @@ public class ActivityManagerMultiDisplayTests extends ActivityManagerDisplayTest
 
         void turnDisplayOff() {
             if (mExternalDisplayHelper == null) {
-                new RuntimeException("No external display created");
+                throw new RuntimeException("No external display created");
             }
             mExternalDisplayHelper.turnDisplayOff();
         }
 
         void turnDisplayOn() {
             if (mExternalDisplayHelper == null) {
-                new RuntimeException("No external display created");
+                throw new RuntimeException("No external display created");
             }
             mExternalDisplayHelper.turnDisplayOn();
         }

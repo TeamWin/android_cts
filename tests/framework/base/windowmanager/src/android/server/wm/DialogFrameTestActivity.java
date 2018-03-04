@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2015 The Android Open Source Project
+ * Copyright (C) 2018 The Android Open Source Project
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,24 +14,46 @@
  * limitations under the License.
  */
 
-package android.server.wm.frametestapp;
+package android.server.wm;
+
+import static android.view.ViewGroup.LayoutParams.MATCH_PARENT;
+import static android.view.WindowManager.LayoutParams.FLAG_LAYOUT_IN_OVERSCAN;
+import static android.view.WindowManager.LayoutParams.FLAG_LAYOUT_IN_SCREEN;
+import static android.view.WindowManager.LayoutParams.FLAG_LAYOUT_NO_LIMITS;
+import static android.view.WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE;
 
 import android.app.Activity;
 import android.app.AlertDialog;
 import android.content.Intent;
 import android.view.Gravity;
 import android.view.Window;
-import android.view.WindowManager;
+import android.view.WindowManager.LayoutParams;
 
-public class DialogTestActivity extends Activity {
+import java.util.function.Consumer;
 
-    private static final String DIALOG_WINDOW_NAME = "TestDialog";
+// TODO: Make this an inner class of {@link DialogFrameTest}.
+public class DialogFrameTestActivity extends Activity {
 
-    /**
-     * Extra key for test case name.
-     * @see android.server.wm.ParentChildTestBase#EXTRA_TEST_CASE
-     */
-    private static final String EXTRA_TEST_CASE = "test-case";
+    static final String DIALOG_WINDOW_NAME = "TestDialog";
+
+    // TODO: Passing layout parameters for {@link Dialog} in extra of {@link Intent} instead of
+    // using test case name.
+    // Extra key for test case name.
+    static final String EXTRA_TEST_CASE = "test-case";
+    // Value constants for {@link #EXTRA_TEST_CASE}.
+    static final String TEST_EXPLICIT_POSITION_MATCH_PARENT = "ExplicitPositionMatchParent";
+    static final String TEST_EXPLICIT_POSITION_MATCH_PARENT_NO_LIMITS =
+            "ExplicitPositionMatchParentNoLimits";
+    static final String TEST_EXPLICIT_SIZE = "ExplicitSize";
+    static final String TEST_EXPLICIT_SIZE_BOTTOM_RIGHT_GRAVITY =
+            "ExplicitSizeBottomRightGravity";
+    static final String TEST_EXPLICIT_SIZE_TOP_LEFT_GRAVITY = "ExplicitSizeTopLeftGravity";
+    static final String TEST_MATCH_PARENT = "MatchParent";
+    static final String TEST_MATCH_PARENT_LAYOUT_IN_OVERSCAN = "MatchParentLayoutInOverscan";
+    static final String TEST_NO_FOCUS = "NoFocus";
+    static final String TEST_OVER_SIZED_DIMENSIONS = "OversizedDimensions";
+    static final String TEST_OVER_SIZED_DIMENSIONS_NO_LIMITS = "OversizedDimensionsNoLimits";
+    static final String TEST_WITH_MARGINS = "WithMargins";
 
     private AlertDialog mDialog;
 
@@ -50,37 +72,37 @@ public class DialogTestActivity extends Activity {
     private void setupTest(Intent intent) {
         final String testCase = intent.getStringExtra(EXTRA_TEST_CASE);
         switch (testCase) {
-            case "MatchParent":
+            case TEST_MATCH_PARENT:
                 testMatchParent();
                 break;
-            case "MatchParentLayoutInOverscan":
+            case TEST_MATCH_PARENT_LAYOUT_IN_OVERSCAN:
                 testMatchParentLayoutInOverscan();
                 break;
-            case "ExplicitSize":
+            case TEST_EXPLICIT_SIZE:
                 testExplicitSize();
                 break;
-            case "ExplicitSizeTopLeftGravity":
+            case TEST_EXPLICIT_SIZE_TOP_LEFT_GRAVITY:
                 testExplicitSizeTopLeftGravity();
                 break;
-            case "ExplicitSizeBottomRightGravity":
+            case TEST_EXPLICIT_SIZE_BOTTOM_RIGHT_GRAVITY:
                 testExplicitSizeBottomRightGravity();
                 break;
-            case "OversizedDimensions":
+            case TEST_OVER_SIZED_DIMENSIONS:
                 testOversizedDimensions();
                 break;
-            case "OversizedDimensionsNoLimits":
+            case TEST_OVER_SIZED_DIMENSIONS_NO_LIMITS:
                 testOversizedDimensionsNoLimits();
                 break;
-            case "ExplicitPositionMatchParent":
+            case TEST_EXPLICIT_POSITION_MATCH_PARENT:
                 testExplicitPositionMatchParent();
                 break;
-            case "ExplicitPositionMatchParentNoLimits":
+            case TEST_EXPLICIT_POSITION_MATCH_PARENT_NO_LIMITS:
                 testExplicitPositionMatchParentNoLimits();
                 break;
-            case "NoFocus":
+            case TEST_NO_FOCUS:
                 testNoFocus();
                 break;
-            case "WithMargins":
+            case TEST_WITH_MARGINS:
                 testWithMargins();
                 break;
             default:
@@ -88,11 +110,7 @@ public class DialogTestActivity extends Activity {
         }
     }
 
-    interface DialogLayoutParamsTest {
-        void doSetup(WindowManager.LayoutParams p);
-    }
-
-    private void doLayoutParamTest(DialogLayoutParamsTest t) {
+    private void doLayoutParamTest(Consumer<LayoutParams> setUp) {
         mDialog = new AlertDialog.Builder(this).create();
 
         mDialog.setMessage("Testing is fun!");
@@ -100,38 +118,38 @@ public class DialogTestActivity extends Activity {
         mDialog.create();
 
         Window w = mDialog.getWindow();
-        final WindowManager.LayoutParams params = w.getAttributes();
-        t.doSetup(params);
+        final LayoutParams params = w.getAttributes();
+        setUp.accept(params);
         w.setAttributes(params);
 
         mDialog.show();
     }
 
     private void testMatchParent() {
-        doLayoutParamTest((WindowManager.LayoutParams params) -> {
-            params.width = WindowManager.LayoutParams.MATCH_PARENT;
-            params.height = WindowManager.LayoutParams.MATCH_PARENT;
+        doLayoutParamTest(params -> {
+            params.width = MATCH_PARENT;
+            params.height = MATCH_PARENT;
         });
     }
 
     private void testMatchParentLayoutInOverscan() {
-        doLayoutParamTest((WindowManager.LayoutParams params) -> {
-            params.width = WindowManager.LayoutParams.MATCH_PARENT;
-            params.height = WindowManager.LayoutParams.MATCH_PARENT;
-            params.flags |= WindowManager.LayoutParams.FLAG_LAYOUT_IN_SCREEN;
-            params.flags |= WindowManager.LayoutParams.FLAG_LAYOUT_IN_OVERSCAN;
+        doLayoutParamTest(params -> {
+            params.width = MATCH_PARENT;
+            params.height = MATCH_PARENT;
+            params.flags |= FLAG_LAYOUT_IN_SCREEN;
+            params.flags |= FLAG_LAYOUT_IN_OVERSCAN;
         });
     }
 
     private void testExplicitSize() {
-        doLayoutParamTest((WindowManager.LayoutParams params) -> {
+        doLayoutParamTest(params -> {
             params.width = 200;
             params.height = 200;
         });
     }
 
     private void testExplicitSizeTopLeftGravity() {
-        doLayoutParamTest((WindowManager.LayoutParams params) -> {
+        doLayoutParamTest(params -> {
             params.width = 200;
             params.height = 200;
             params.gravity = Gravity.TOP | Gravity.LEFT;
@@ -139,7 +157,7 @@ public class DialogTestActivity extends Activity {
     }
 
     private void testExplicitSizeBottomRightGravity() {
-        doLayoutParamTest((WindowManager.LayoutParams params) -> {
+        doLayoutParamTest(params -> {
             params.width = 200;
             params.height = 200;
             params.gravity = Gravity.BOTTOM | Gravity.RIGHT;
@@ -147,49 +165,47 @@ public class DialogTestActivity extends Activity {
     }
 
     private void testOversizedDimensions() {
-        doLayoutParamTest((WindowManager.LayoutParams params) -> {
+        doLayoutParamTest(params -> {
             params.width = 100000;
             params.height = 100000;
         });
     }
 
     private void testOversizedDimensionsNoLimits() {
-        doLayoutParamTest((WindowManager.LayoutParams params) -> {
+        doLayoutParamTest(params -> {
             params.width = 5000;
             params.height = 5000;
-            params.flags |= WindowManager.LayoutParams.FLAG_LAYOUT_NO_LIMITS;
+            params.flags |= FLAG_LAYOUT_NO_LIMITS;
             params.gravity = Gravity.LEFT | Gravity.TOP;
         });
     }
 
     private void testExplicitPositionMatchParent() {
-        doLayoutParamTest((WindowManager.LayoutParams params) -> {
-            params.width = WindowManager.LayoutParams.MATCH_PARENT;
-            params.height = WindowManager.LayoutParams.MATCH_PARENT;
+        doLayoutParamTest(params -> {
+            params.width = MATCH_PARENT;
+            params.height = MATCH_PARENT;
             params.x = 100;
             params.y = 100;
         });
     }
 
     private void testExplicitPositionMatchParentNoLimits() {
-        doLayoutParamTest((WindowManager.LayoutParams params) -> {
-            params.width = WindowManager.LayoutParams.MATCH_PARENT;
-            params.height = WindowManager.LayoutParams.MATCH_PARENT;
+        doLayoutParamTest(params -> {
+            params.width = MATCH_PARENT;
+            params.height = MATCH_PARENT;
             params.gravity = Gravity.LEFT | Gravity.TOP;
-            params.flags |= WindowManager.LayoutParams.FLAG_LAYOUT_NO_LIMITS;
+            params.flags |= FLAG_LAYOUT_NO_LIMITS;
             params.x = 100;
             params.y = 100;
         });
     }
 
     private void testNoFocus() {
-        doLayoutParamTest((WindowManager.LayoutParams params) -> {
-            params.flags |= WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE;
-        });
+        doLayoutParamTest(params -> params.flags |= FLAG_NOT_FOCUSABLE);
     }
 
     private void testWithMargins() {
-        doLayoutParamTest((WindowManager.LayoutParams params) -> {
+        doLayoutParamTest(params -> {
             params.gravity = Gravity.LEFT | Gravity.TOP;
             params.horizontalMargin = .25f;
             params.verticalMargin = .35f;
