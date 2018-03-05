@@ -16,12 +16,12 @@
 
 package android.server.am;
 
-import static android.server.am.ActivityAndWindowManagersState.DEFAULT_DISPLAY_ID;
 import static android.server.am.ComponentNameUtils.getActivityName;
 import static android.server.am.Components.ALT_LAUNCHING_ACTIVITY;
 import static android.server.am.Components.LAUNCHING_ACTIVITY;
 import static android.server.am.Components.RESIZEABLE_ACTIVITY;
 import static android.server.am.Components.VR_TEST_ACTIVITY;
+import static android.view.Display.DEFAULT_DISPLAY;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
@@ -220,12 +220,12 @@ public class ActivityManagerVrDisplayTests extends ActivityManagerDisplayTestBas
 
         // Check that activity is launched in focused stack on primary display.
         mAmWmState.assertFocusedActivity("Launched activity must be focused", RESIZEABLE_ACTIVITY);
-        final int frontStackId = mAmWmState.getAmState().getFrontStackId(DEFAULT_DISPLAY_ID);
+        final int frontStackId = mAmWmState.getAmState().getFrontStackId(DEFAULT_DISPLAY);
         final ActivityManagerState.ActivityStack frontStack
                 = mAmWmState.getAmState().getStackById(frontStackId);
         assertEquals("Launched activity must be resumed in front stack",
                 getActivityName(RESIZEABLE_ACTIVITY), frontStack.mResumedActivity);
         assertEquals("Front stack must be on primary display",
-                DEFAULT_DISPLAY_ID, frontStack.mDisplayId);
+                DEFAULT_DISPLAY, frontStack.mDisplayId);
     }
 }
