@@ -189,8 +189,16 @@ public class DrawActivity extends Activity {
     }
 
     private class DrawCounterListener implements ViewTreeObserver.OnDrawListener {
+        private static final int DEBUG_REQUIRE_EXTRA_FRAMES = 1;
+        private int mDrawCount = 0;
+
         @Override
         public void onDraw() {
+            if (++mDrawCount <= DEBUG_REQUIRE_EXTRA_FRAMES) {
+                mView.postInvalidate();
+                return;
+            }
+
             long vsyncMillis = mView.getDrawingTime();
 
             mView.post(() -> mView.getViewTreeObserver().removeOnDrawListener(this));
