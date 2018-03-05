@@ -189,7 +189,8 @@
 
         <!--Test for PackageManager-->
         <activity android:name="android.content.pm.cts.TestPmActivity"
-                android:icon="@drawable/start">
+                android:icon="@drawable/start"
+                android:launchMode="singleTop">
             <intent-filter>
                 <action android:name="android.intent.action.PMTEST" />
                 <category android:name="android.intent.category.FRAMEWORK_INSTRUMENTATION_TEST" />
@@ -203,7 +204,8 @@
             </intent-filter>
         </activity>
         <!--Test for PackageManager-->
-        <service android:name="android.content.pm.cts.TestPmService">
+        <service android:name="android.content.pm.cts.TestPmService"
+            android:permission="android.content.cts.CALL_ABROAD_PERMISSION">
             <intent-filter>
                 <action android:name="android.content.pm.cts.activity.PMTEST_SERVICE" />
             </intent-filter>
