@@ -16,21 +16,7 @@
 
 package android.security.cts;
 
-import com.android.tradefed.device.CollectingOutputReceiver;
-import com.android.tradefed.device.DeviceNotAvailableException;
-import com.android.tradefed.device.ITestDevice;
-import com.android.tradefed.testtype.DeviceTestCase;
-
-import android.platform.test.annotations.RootPermissionTest;
 import android.platform.test.annotations.SecurityTest;
-
-import java.io.BufferedOutputStream;
-import java.io.File;
-import java.io.FileOutputStream;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.OutputStream;
-import java.util.Scanner;
 
 @SecurityTest
 public class Poc16_12 extends SecurityTestCase {
@@ -157,4 +143,21 @@ public class Poc16_12 extends SecurityTestCase {
             "echo 18014398509481980 > /sys/kernel/debug/tracing/buffer_size_kb";
         AdbUtils.runCommandLine(command, getDevice());
     }
+
+    /*
+     * b/31251628
+     */
+    @SecurityTest
+    public void testPocCVE_2016_6790() throws Exception {
+        AdbUtils.runCommandLine("logcat -c" , getDevice());
+        AdbUtils.runPocNoOutput("CVE-2016-6790", getDevice(), 60);
+        //CTS begins the next test before failure is detected.
+        //Sleep to allow PoC to hit.
+        Thread.sleep(30000);
+        String logcatOut = AdbUtils.runCommandLine("logcat -d", getDevice());
+        assertNotMatches("[\\s\\n\\S]*Fatal signal 11 \\(SIGSEGV\\)" +
+                         "[\\s\\n\\S]*>>> /system/bin/" +
+                         "mediaserver <<<[\\s\\n\\S]*", logcatOut);
+    }
+
 }
