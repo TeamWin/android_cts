@@ -28,6 +28,8 @@ import static android.server.am.ActivityManagerState.STATE_RESUMED;
 import static android.server.am.Components.ALT_LAUNCHING_ACTIVITY;
 import static android.server.am.Components.ALWAYS_FOCUSABLE_PIP_ACTIVITY;
 import static android.server.am.Components.BROADCAST_RECEIVER_ACTIVITY;
+import static android.server.am.Components.BroadcastReceiverActivity.ACTION_TRIGGER_BROADCAST;
+import static android.server.am.Components.BroadcastReceiverActivity.EXTRA_FINISH_BROADCAST;
 import static android.server.am.Components.DOCKED_ACTIVITY;
 import static android.server.am.Components.LAUNCHING_ACTIVITY;
 import static android.server.am.Components.LAUNCH_PIP_ON_PIP_ACTIVITY;
@@ -61,6 +63,11 @@ import org.junit.Test;
  *     atest CtsActivityManagerDeviceTestCases:ActivityManagerActivityVisibilityTests
  */
 public class ActivityManagerActivityVisibilityTests extends ActivityManagerTestBase {
+
+    // TODO(b/70247058): Use {@link Context#sendBroadcast(Intent).
+    // Shell command to finish {@link #BROADCAST_RECEIVER_ACTIVITY}.
+    private static final String FINISH_ACTIVITY_BROADCAST = "am broadcast -a "
+            + ACTION_TRIGGER_BROADCAST + " --ez " + EXTRA_FINISH_BROADCAST + " true";
 
     @Rule
     public final DisableScreenDozeRule mDisableScreenDozeRule = new DisableScreenDozeRule();

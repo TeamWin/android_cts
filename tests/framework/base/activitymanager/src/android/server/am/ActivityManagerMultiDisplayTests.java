@@ -31,6 +31,8 @@ import static android.server.am.ComponentNameUtils.getActivityName;
 import static android.server.am.ComponentNameUtils.getWindowName;
 import static android.server.am.Components.ALT_LAUNCHING_ACTIVITY;
 import static android.server.am.Components.BROADCAST_RECEIVER_ACTIVITY;
+import static android.server.am.Components.BroadcastReceiverActivity.ACTION_TRIGGER_BROADCAST;
+import static android.server.am.Components.BroadcastReceiverActivity.EXTRA_FINISH_BROADCAST;
 import static android.server.am.Components.LAUNCHING_ACTIVITY;
 import static android.server.am.Components.LAUNCH_BROADCAST_ACTION;
 import static android.server.am.Components.LAUNCH_BROADCAST_RECEIVER;
@@ -76,6 +78,15 @@ import java.util.regex.Pattern;
  *     atest CtsActivityManagerDeviceTestCases:ActivityManagerMultiDisplayTests
  */
 public class ActivityManagerMultiDisplayTests extends ActivityManagerDisplayTestBase {
+
+    // TODO(b/70247058): Use {@link Context#sendBroadcast(Intent).
+    // Shell command to finish {@link #BROADCAST_RECEIVER_ACTIVITY}.
+    private static final String FINISH_ACTIVITY_BROADCAST = "am broadcast -a "
+            + ACTION_TRIGGER_BROADCAST + " --ez " + EXTRA_FINISH_BROADCAST + " true";
+    // Shell command to launch activity via {@link #BROADCAST_RECEIVER_ACTIVITY}.
+    private static final String LAUNCH_ACTIVITY_BROADCAST = "am broadcast -a "
+            + ACTION_TRIGGER_BROADCAST + " --ez " + KEY_LAUNCH_ACTIVITY + " true --ez "
+            + KEY_NEW_TASK + " true --es " + KEY_TARGET_COMPONENT + " ";
 
     @Before
     @Override
@@ -250,9 +261,8 @@ public class ActivityManagerMultiDisplayTests extends ActivityManagerDisplayTest
             mAmWmState.assertFocusedStack("Focus must be on the secondary display", frontStackId);
 
             // Launch non-resizeable activity from secondary display.
-            executeShellCommand("am broadcast -a trigger_broadcast --ez " + KEY_LAUNCH_ACTIVITY
-                    + " true --ez " + KEY_NEW_TASK + " true --es " + KEY_TARGET_COMPONENT + " "
-                    + getActivityName(NON_RESIZEABLE_ACTIVITY));
+            executeShellCommand(
+                    LAUNCH_ACTIVITY_BROADCAST + getActivityName(NON_RESIZEABLE_ACTIVITY));
             mAmWmState.computeState(NON_RESIZEABLE_ACTIVITY);
 
             // Check that non-resizeable activity is on the secondary display, because of the
@@ -1464,9 +1474,7 @@ public class ActivityManagerMultiDisplayTests extends ActivityManagerDisplayTest
             assertEquals("Focus must be on primary display", DEFAULT_DISPLAY_ID,
                     focusedStack.mDisplayId);
 
-            executeShellCommand("am broadcast -a trigger_broadcast --ez " + KEY_LAUNCH_ACTIVITY
-                    + " true --ez " + KEY_NEW_TASK + " true --es " + KEY_TARGET_COMPONENT + " "
-                    + getActivityName(LAUNCHING_ACTIVITY));
+            executeShellCommand(LAUNCH_ACTIVITY_BROADCAST + getActivityName(LAUNCHING_ACTIVITY));
 
             // Check that the third activity ends up in a new task in the same stack as the
             // first activity
