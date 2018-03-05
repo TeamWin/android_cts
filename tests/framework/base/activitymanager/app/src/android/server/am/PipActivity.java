@@ -19,16 +19,37 @@ package android.server.am;
 import static android.app.WindowConfiguration.WINDOWING_MODE_PINNED;
 import static android.content.Intent.FLAG_ACTIVITY_CLEAR_TASK;
 import static android.content.Intent.FLAG_ACTIVITY_NEW_TASK;
+import static android.server.am.Components.PipActivity.ACTION_ENTER_PIP;
+import static android.server.am.Components.PipActivity.ACTION_EXPAND_PIP;
+import static android.server.am.Components.PipActivity.ACTION_FINISH;
+import static android.server.am.Components.PipActivity.ACTION_MOVE_TO_BACK;
+import static android.server.am.Components.PipActivity.ACTION_SET_REQUESTED_ORIENTATION;
+import static android.server.am.Components.PipActivity.EXTRA_ASSERT_NO_ON_STOP_BEFORE_PIP;
+import static android.server.am.Components.PipActivity.EXTRA_ENTER_PIP;
+import static android.server.am.Components.PipActivity.EXTRA_ENTER_PIP_ASPECT_RATIO_DENOMINATOR;
+import static android.server.am.Components.PipActivity.EXTRA_ENTER_PIP_ASPECT_RATIO_NUMERATOR;
+import static android.server.am.Components.PipActivity.EXTRA_ENTER_PIP_ON_PAUSE;
+import static android.server.am.Components.PipActivity.EXTRA_FINISH_SELF_ON_RESUME;
+import static android.server.am.Components.PipActivity.EXTRA_ON_PAUSE_DELAY;
+import static android.server.am.Components.PipActivity.EXTRA_PIP_ORIENTATION;
+import static android.server.am.Components.PipActivity.EXTRA_REENTER_PIP_ON_EXIT;
+import static android.server.am.Components.PipActivity.EXTRA_SET_ASPECT_RATIO_DENOMINATOR;
+import static android.server.am.Components.PipActivity.EXTRA_SET_ASPECT_RATIO_NUMERATOR;
+import static android.server.am.Components.PipActivity.EXTRA_SET_ASPECT_RATIO_WITH_DELAY_DENOMINATOR;
+import static android.server.am.Components.PipActivity.EXTRA_SET_ASPECT_RATIO_WITH_DELAY_NUMERATOR;
+import static android.server.am.Components.PipActivity.EXTRA_SHOW_OVER_KEYGUARD;
+import static android.server.am.Components.PipActivity.EXTRA_START_ACTIVITY;
+import static android.server.am.Components.PipActivity.EXTRA_TAP_TO_FINISH;
 
 import android.app.Activity;
 import android.app.ActivityOptions;
 import android.app.PictureInPictureParams;
-import android.content.res.Configuration;
 import android.content.BroadcastReceiver;
 import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
+import android.content.res.Configuration;
 import android.graphics.Rect;
 import android.os.Bundle;
 import android.os.Handler;
@@ -39,62 +60,7 @@ import android.view.WindowManager;
 
 public class PipActivity extends AbstractLifecycleLogActivity {
 
-    private static final String TAG = "PipActivity";
-
-    // Intent action that this activity dynamically registers to enter picture-in-picture
-    private static final String ACTION_ENTER_PIP = "android.server.am.PipActivity.enter_pip";
-    // Intent action that this activity dynamically registers to move itself to the back
-    private static final String ACTION_MOVE_TO_BACK = "android.server.am.PipActivity.move_to_back";
-    // Intent action that this activity dynamically registers to expand itself.
-    // If EXTRA_SET_ASPECT_RATIO_WITH_DELAY is set, it will also attempt to apply the aspect ratio
-    // after a short delay.
-    private static final String ACTION_EXPAND_PIP = "android.server.am.PipActivity.expand_pip";
-    // Intent action that this activity dynamically registers to set requested orientation.
-    // Will apply the oriention to the value set in the EXTRA_FIXED_ORIENTATION extra.
-    private static final String ACTION_SET_REQUESTED_ORIENTATION =
-            "android.server.am.PipActivity.set_requested_orientation";
-    // Intent action that will finish this activity
-    private static final String ACTION_FINISH = "android.server.am.PipActivity.finish";
-
-    // Sets the fixed orientation (can be one of {@link ActivityInfo.ScreenOrientation}
-    private static final String EXTRA_FIXED_ORIENTATION = "fixed_orientation";
-    // Calls enterPictureInPicture() on creation
-    private static final String EXTRA_ENTER_PIP = "enter_pip";
-    // Used with EXTRA_AUTO_ENTER_PIP, value specifies the aspect ratio to enter PIP with
-    private static final String EXTRA_ENTER_PIP_ASPECT_RATIO_NUMERATOR =
-            "enter_pip_aspect_ratio_numerator";
-    // Used with EXTRA_AUTO_ENTER_PIP, value specifies the aspect ratio to enter PIP with
-    private static final String EXTRA_ENTER_PIP_ASPECT_RATIO_DENOMINATOR =
-            "enter_pip_aspect_ratio_denominator";
-    // Calls setPictureInPictureAspectRatio with the aspect ratio specified in the value
-    private static final String EXTRA_SET_ASPECT_RATIO_NUMERATOR = "set_aspect_ratio_numerator";
-    // Calls setPictureInPictureAspectRatio with the aspect ratio specified in the value
-    private static final String EXTRA_SET_ASPECT_RATIO_DENOMINATOR = "set_aspect_ratio_denominator";
-    // Calls setPictureInPictureAspectRatio with the aspect ratio specified in the value with a
-    // fixed delay
-    private static final String EXTRA_SET_ASPECT_RATIO_WITH_DELAY_NUMERATOR =
-            "set_aspect_ratio_with_delay_numerator";
-    // Calls setPictureInPictureAspectRatio with the aspect ratio specified in the value with a
-    // fixed delay
-    private static final String EXTRA_SET_ASPECT_RATIO_WITH_DELAY_DENOMINATOR =
-            "set_aspect_ratio_with_delay_denominator";
-    // Adds a click listener to finish this activity when it is clicked
-    private static final String EXTRA_TAP_TO_FINISH = "tap_to_finish";
-    // Calls requestAutoEnterPictureInPicture() with the value provided
-    private static final String EXTRA_ENTER_PIP_ON_PAUSE = "enter_pip_on_pause";
-    // Starts the activity (component name) provided by the value at the end of onCreate
-    private static final String EXTRA_START_ACTIVITY = "start_activity";
-    // Finishes the activity at the end of onResume (after EXTRA_START_ACTIVITY is handled)
-    private static final String EXTRA_FINISH_SELF_ON_RESUME = "finish_self_on_resume";
-    // Calls enterPictureInPicture() again after onPictureInPictureModeChanged(false) is called
-    private static final String EXTRA_REENTER_PIP_ON_EXIT = "reenter_pip_on_exit";
-    // Shows this activity over the keyguard
-    private static final String EXTRA_SHOW_OVER_KEYGUARD = "show_over_keyguard";
-    // Adds an assertion that we do not ever get onStop() before we enter picture in picture
-    private static final String EXTRA_ASSERT_NO_ON_STOP_BEFORE_PIP = "assert_no_on_stop_before_pip";
-    // The amount to delay to artificially introduce in onPause() (before EXTRA_ENTER_PIP_ON_PAUSE
-    // is processed)
-    private static final String EXTRA_ON_PAUSE_DELAY = "on_pause_delay";
+    private static final String TAG = PipActivity.class.getSimpleName();
 
     private boolean mEnteredPictureInPicture;
 
@@ -132,7 +98,7 @@ public class PipActivity extends AbstractLifecycleLogActivity {
                         break;
                     case ACTION_SET_REQUESTED_ORIENTATION:
                         setRequestedOrientation(Integer.parseInt(intent.getStringExtra(
-                                EXTRA_FIXED_ORIENTATION)));
+                                EXTRA_PIP_ORIENTATION)));
                         break;
                     case ACTION_FINISH:
                         finish();
@@ -147,8 +113,8 @@ public class PipActivity extends AbstractLifecycleLogActivity {
         super.onCreate(savedInstanceState);
 
         // Set the fixed orientation if requested
-        if (getIntent().hasExtra(EXTRA_FIXED_ORIENTATION)) {
-            final int ori = Integer.parseInt(getIntent().getStringExtra(EXTRA_FIXED_ORIENTATION));
+        if (getIntent().hasExtra(EXTRA_PIP_ORIENTATION)) {
+            final int ori = Integer.parseInt(getIntent().getStringExtra(EXTRA_PIP_ORIENTATION));
             setRequestedOrientation(ori);
         }
 
