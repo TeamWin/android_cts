@@ -95,6 +95,24 @@ public class AnimatedImageDrawableTest {
         new AnimatedImageDrawable();
     }
 
+    @Test
+    public void testMutate() {
+        AnimatedImageDrawable aid1 = (AnimatedImageDrawable) mRes.getDrawable(R.drawable.animated);
+        AnimatedImageDrawable aid2 = (AnimatedImageDrawable) mRes.getDrawable(R.drawable.animated);
+
+        final int originalAlpha = aid1.getAlpha();
+        assertEquals(255, originalAlpha);
+        assertEquals(255, aid2.getAlpha());
+
+        try {
+            aid1.mutate();
+            aid1.setAlpha(100);
+            assertEquals(originalAlpha, aid2.getAlpha());
+        } finally {
+            mRes.getDrawable(R.drawable.animated).setAlpha(originalAlpha);
+        }
+    }
+
     private AnimatedImageDrawable createFromImageDecoder(int resId) {
         Uri uri = null;
         try {
@@ -215,7 +233,7 @@ public class AnimatedImageDrawableTest {
 
             drawable.registerAnimationCallback(cb);
             assertTrue(drawable.unregisterAnimationCallback(cb));
-            drawable.setLoopCount(0);
+            drawable.setRepeatCount(0);
             drawable.start();
         });
 
@@ -249,7 +267,7 @@ public class AnimatedImageDrawableTest {
         cb.assertStarted(true);
 
         // Only run the animation one time.
-        drawable.setLoopCount(0);
+        drawable.setRepeatCount(0);
 
         // Extra time, to wait for the message to post.
         cb.waitForEnd(DURATION * 2);
@@ -284,7 +302,7 @@ public class AnimatedImageDrawableTest {
         cb.assertStarted(true);
 
         // Only run the animation one time.
-        drawable.setLoopCount(0);
+        drawable.setRepeatCount(0);
 
         // The drawable will prevent skipping frames, so we actually have to
         // draw each frame. (Start with 1, since we already drew frame 0.)
@@ -309,7 +327,7 @@ public class AnimatedImageDrawableTest {
         mActivityRule.runOnUiThread(() -> {
             setContentView(drawable);
 
-            drawable.setLoopCount(0);
+            drawable.setRepeatCount(0);
             drawable.start();
             drawable.registerAnimationCallback(cb);
         });
@@ -342,42 +360,42 @@ public class AnimatedImageDrawableTest {
     }
 
     @Test
-    public void testLoopCounts() throws Throwable {
-        for (int loopCount : new int[] { 3, 5, 7, 16 }) {
+    public void testRepeatCounts() throws Throwable {
+        for (int repeatCount : new int[] { 3, 5, 7, 16 }) {
             AnimatedImageDrawable drawable = createFromImageDecoder(RES_ID);
-            assertEquals(AnimatedImageDrawable.LOOP_INFINITE, drawable.getLoopCount());
+            assertEquals(AnimatedImageDrawable.REPEAT_INFINITE, drawable.getRepeatCount());
 
             Callback cb = new Callback(drawable);
             mActivityRule.runOnUiThread(() -> {
                 setContentView(drawable);
 
                 drawable.registerAnimationCallback(cb);
-                drawable.setLoopCount(loopCount);
-                assertEquals(loopCount, drawable.getLoopCount());
+                drawable.setRepeatCount(repeatCount);
+                assertEquals(repeatCount, drawable.getRepeatCount());
                 drawable.start();
             });
 
-            // The animation runs loopCount + 1 total times.
-            cb.waitForEnd(DURATION * loopCount);
+            // The animation runs repeatCount + 1 total times.
+            cb.waitForEnd(DURATION * repeatCount);
             cb.assertEnded(false);
 
             cb.waitForEnd(DURATION * 2);
             cb.assertEnded(true);
 
-            drawable.setLoopCount(AnimatedImageDrawable.LOOP_INFINITE);
-            assertEquals(AnimatedImageDrawable.LOOP_INFINITE, drawable.getLoopCount());
+            drawable.setRepeatCount(AnimatedImageDrawable.REPEAT_INFINITE);
+            assertEquals(AnimatedImageDrawable.REPEAT_INFINITE, drawable.getRepeatCount());
         }
     }
 
     @Test
-    public void testLoopCountInfinite() throws Throwable {
+    public void testRepeatCountInfinite() throws Throwable {
         AnimatedImageDrawable drawable = createFromImageDecoder(RES_ID);
         Callback cb = new Callback(drawable);
         mActivityRule.runOnUiThread(() -> {
             setContentView(drawable);
 
             drawable.registerAnimationCallback(cb);
-            drawable.setLoopCount(AnimatedImageDrawable.LOOP_INFINITE);
+            drawable.setRepeatCount(AnimatedImageDrawable.REPEAT_INFINITE);
             drawable.start();
         });
 
@@ -547,5 +565,35 @@ public class AnimatedImageDrawableTest {
         assertNotNull(drawable);
         assertTrue(drawable instanceof AnimatedImageDrawable);
         assertTrue(drawable.isAutoMirrored());
+    }
+
+    @Test
+    public void testRepeatCountFromXml() throws XmlPullParserException, IOException {
+        XmlPullParser parser = mRes.getXml(R.drawable.animatedimagedrawable_loop_count);
+        Drawable drawable = Drawable.createFromXml(mRes, parser);
+        assertNotNull(drawable);
+        assertTrue(drawable instanceof AnimatedImageDrawable);
+
+        AnimatedImageDrawable aid = (AnimatedImageDrawable) drawable;
+        assertEquals(17, aid.getRepeatCount());
+    }
+
+    @Test
+    public void testInfiniteRepeatCountFromXml() throws XmlPullParserException, IOException {
+        // This image has an encoded repeat count of 1. Verify that.
+        Drawable drawable = mRes.getDrawable(R.drawable.animated_one_loop);
+        assertNotNull(drawable);
+        assertTrue(drawable instanceof AnimatedImageDrawable);
+        AnimatedImageDrawable aid = (AnimatedImageDrawable) drawable;
+        assertEquals(1, aid.getRepeatCount());
+
+        // This layout uses the same image and overrides the repeat count to infinity.
+        XmlPullParser parser = mRes.getXml(R.drawable.animatedimagedrawable_loop_count_infinite);
+        drawable = Drawable.createFromXml(mRes, parser);
+        assertNotNull(drawable);
+        assertTrue(drawable instanceof AnimatedImageDrawable);
+
+        aid = (AnimatedImageDrawable) drawable;
+        assertEquals(AnimatedImageDrawable.REPEAT_INFINITE, aid.getRepeatCount());
     }
 }
