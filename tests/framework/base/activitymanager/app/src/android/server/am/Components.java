@@ -160,11 +160,11 @@ public class Components extends ComponentsBase {
      */
     public static class AssistantActivity {
         // Launches the given activity in onResume
-        public static final String EXTRA_LAUNCH_NEW_TASK = "launch_new_task";
-        // Finishes this activity in onResume, this happens after EXTRA_LAUNCH_NEW_TASK
-        public static final String EXTRA_FINISH_SELF = "finish_self";
+        public static final String EXTRA_ASSISTANT_LAUNCH_NEW_TASK = "launch_new_task";
+        // Finishes this activity in onResume, this happens after EXTRA_ASSISTANT_LAUNCH_NEW_TASK
+        public static final String EXTRA_ASSISTANT_FINISH_SELF = "finish_self";
         // Attempts to enter picture-in-picture in onResume
-        public static final String EXTRA_ENTER_PIP = "enter_pip";
+        public static final String EXTRA_ASSISTANT_ENTER_PIP = "enter_pip";
         // Display on which Assistant runs
         public static final String EXTRA_ASSISTANT_DISPLAY_ID = "assistant_display_id";
     }
@@ -178,7 +178,7 @@ public class Components extends ComponentsBase {
      */
     public static class LaunchAssistantActivityIntoAssistantStack {
         // Launches the translucent assist activity
-        public static final String EXTRA_IS_TRANSLUCENT = "is_translucent";
+        public static final String EXTRA_ASSISTANT_IS_TRANSLUCENT = "is_translucent";
     }
 
     /** Action and extra key constants for {@link android.server.am.PipActivity}.

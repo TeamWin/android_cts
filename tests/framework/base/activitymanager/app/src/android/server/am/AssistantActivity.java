@@ -20,9 +20,9 @@ import static android.app.WindowConfiguration.ACTIVITY_TYPE_ASSISTANT;
 import static android.content.Intent.FLAG_ACTIVITY_CLEAR_TASK;
 import static android.content.Intent.FLAG_ACTIVITY_NEW_TASK;
 import static android.server.am.Components.AssistantActivity.EXTRA_ASSISTANT_DISPLAY_ID;
-import static android.server.am.Components.AssistantActivity.EXTRA_ENTER_PIP;
-import static android.server.am.Components.AssistantActivity.EXTRA_FINISH_SELF;
-import static android.server.am.Components.AssistantActivity.EXTRA_LAUNCH_NEW_TASK;
+import static android.server.am.Components.AssistantActivity.EXTRA_ASSISTANT_ENTER_PIP;
+import static android.server.am.Components.AssistantActivity.EXTRA_ASSISTANT_FINISH_SELF;
+import static android.server.am.Components.AssistantActivity.EXTRA_ASSISTANT_LAUNCH_NEW_TASK;
 
 import android.app.Activity;
 import android.app.ActivityOptions;
@@ -40,9 +40,9 @@ public class AssistantActivity extends Activity {
         setContentView(R.layout.assistant);
 
         // Launch the new activity if requested
-        if (getIntent().hasExtra(EXTRA_LAUNCH_NEW_TASK)) {
+        if (getIntent().hasExtra(EXTRA_ASSISTANT_LAUNCH_NEW_TASK)) {
             final ComponentName launchActivity = ComponentName.unflattenFromString(
-                    getIntent().getStringExtra(EXTRA_LAUNCH_NEW_TASK));
+                    getIntent().getStringExtra(EXTRA_ASSISTANT_LAUNCH_NEW_TASK));
             final Intent launchIntent = new Intent();
             launchIntent.setComponent(launchActivity)
                     .setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
@@ -57,7 +57,7 @@ public class AssistantActivity extends Activity {
         }
 
         // Enter pip if requested
-        if (getIntent().hasExtra(EXTRA_ENTER_PIP)) {
+        if (getIntent().hasExtra(EXTRA_ASSISTANT_ENTER_PIP)) {
             try {
                 enterPictureInPictureMode();
             } catch (IllegalStateException e) {
@@ -67,7 +67,7 @@ public class AssistantActivity extends Activity {
         }
 
         // Finish this activity if requested
-        if (getIntent().hasExtra(EXTRA_FINISH_SELF)) {
+        if (getIntent().hasExtra(EXTRA_ASSISTANT_FINISH_SELF)) {
             finish();
         }
     }
