@@ -38,7 +38,6 @@ import org.junit.ClassRule;
  * the Autofill APIs.
  */
 public class VirtualContainerActivityCompatModeTest extends VirtualContainerActivityTest {
-    private static final String TAG = "VirtualContainerActivityCompatModeTest";
     private static final Context sContext = InstrumentationRegistry.getContext();
 
     @ClassRule
