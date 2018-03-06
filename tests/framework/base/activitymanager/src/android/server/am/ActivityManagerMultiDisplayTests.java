@@ -60,7 +60,6 @@ import static org.junit.Assume.assumeTrue;
 import android.content.ComponentName;
 import android.platform.test.annotations.Presubmit;
 import android.server.am.ActivityManagerState.ActivityDisplay;
-import android.server.am.displayservice.DisplayHelper;
 import android.support.annotation.Nullable;
 import android.support.test.filters.FlakyTest;
 
@@ -1725,7 +1724,7 @@ public class ActivityManagerMultiDisplayTests extends ActivityManagerDisplayTest
     private class ExternalDisplaySession implements AutoCloseable {
 
         @Nullable
-        private DisplayHelper mExternalDisplayHelper;
+        private VirtualDisplayHelper mExternalDisplayHelper;
 
         /**
          * Creates a private virtual display with the external and show with insecure
@@ -1736,9 +1735,8 @@ public class ActivityManagerMultiDisplayTests extends ActivityManagerDisplayTest
             final List<ActivityDisplay> originalDS = getDisplaysStates();
             final int originalDisplayCount = originalDS.size();
 
-            mExternalDisplayHelper = new DisplayHelper();
-            mExternalDisplayHelper.createAndWaitForDisplay(true /* external */,
-                    showContentWhenLocked);
+            mExternalDisplayHelper = new VirtualDisplayHelper();
+            mExternalDisplayHelper.createAndWaitForDisplay(showContentWhenLocked);
 
             // Wait for the virtual display to be created and get configurations.
             final List<ActivityDisplay> ds = getDisplayStateAfterChange(originalDisplayCount + 1);
@@ -1773,7 +1771,7 @@ public class ActivityManagerMultiDisplayTests extends ActivityManagerDisplayTest
         }
     }
 
-    private class PrimaryDisplayStateSession implements AutoCloseable {
+    private static class PrimaryDisplayStateSession implements AutoCloseable {
 
         void turnScreenOff() {
             setPrimaryDisplayState(false);
@@ -1791,7 +1789,7 @@ public class ActivityManagerMultiDisplayTests extends ActivityManagerDisplayTest
             } else {
                 pressSleepButton();
             }
-            DisplayHelper.waitForDefaultDisplayState(wantOn);
+            VirtualDisplayHelper.waitForDefaultDisplayState(wantOn);
         }
     }
 }
