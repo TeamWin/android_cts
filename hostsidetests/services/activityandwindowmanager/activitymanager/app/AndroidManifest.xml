@@ -323,7 +323,8 @@
         </receiver>
 
         <activity android:name=".AssistantActivity"
-            android:exported="true" />
+            android:exported="true"
+            android:screenOrientation="locked" />
         <activity android:name=".TranslucentAssistantActivity"
             android:exported="true"
             android:theme="@style/Theme.Transparent" />
