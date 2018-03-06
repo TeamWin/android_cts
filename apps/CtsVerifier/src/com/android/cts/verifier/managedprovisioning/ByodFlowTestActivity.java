@@ -439,7 +439,7 @@ public class ByodFlowTestActivity extends DialogTestListActivity {
                 PolicyTransparencyTestListActivity.class);
         policyTransparencyTestIntent.putExtra(
                 PolicyTransparencyTestListActivity.EXTRA_MODE,
-                PolicyTransparencyTestListActivity.MODE_PROFILE_OWNER);
+                PolicyTransparencyTestListActivity.MODE_MANAGED_PROFILE);
         policyTransparencyTestIntent.putExtra(
                 PolicyTransparencyTestActivity.EXTRA_TEST_ID, "BYOD_PolicyTransparency");
         mPolicyTransparencyTest = TestListItem.newTest(this,
