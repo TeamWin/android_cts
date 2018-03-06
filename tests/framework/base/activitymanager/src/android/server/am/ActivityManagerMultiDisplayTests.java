@@ -1135,7 +1135,7 @@ public class ActivityManagerMultiDisplayTests extends ActivityManagerDisplayTest
 
             // Resize the docked stack, so that activity with virtual display will also be resized.
             final LogSeparator logSeparator = clearLogcat();
-            executeShellCommand(getResizeVirtualDisplayCommand());
+            virtualDisplaySession.resizeDisplay();
 
             mAmWmState.waitForWithAmState(amState -> {
                 try {
@@ -1720,11 +1720,6 @@ public class ActivityManagerMultiDisplayTests extends ActivityManagerDisplayTest
                     + lifecycleCounts.mMovedToDisplayCount
                     + " onMovedToDisplay() calls, expecting " + 1);
         }
-    }
-
-    private static String getResizeVirtualDisplayCommand() {
-        return getAmStartCmd(VIRTUAL_DISPLAY_ACTIVITY) + " -f 0x20000000" +
-                " --es command resize_display";
     }
 
     private class ExternalDisplaySession implements AutoCloseable {

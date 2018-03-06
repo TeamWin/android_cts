@@ -246,6 +246,28 @@ public class Components extends ComponentsBase {
         public static final String EXTRA_TAP_TO_FINISH = "tap_to_finish";
     }
 
+    /**
+     * Extra key constants for {@link android.server.am.VirtualDisplayActivity}.
+     *
+     * TODO(b/73346885): These constants should be in
+     * {@link android.server.am.VirtualDisplayActivity} once the activity is moved to test APK.
+     */
+    public static class VirtualDisplayActivity {
+        public static final String VIRTUAL_DISPLAY_PREFIX = "HostedVirtualDisplay";
+        public static final String KEY_CAN_SHOW_WITH_INSECURE_KEYGUARD =
+                "can_show_with_insecure_keyguard";
+        public static final String KEY_COMMAND = "command";
+        public static final String KEY_COUNT = "count";
+        public static final String KEY_DENSITY_DPI = "density_dpi";
+        public static final String KEY_LAUNCH_TARGET_COMPONENT = "launch_target_component";
+        public static final String KEY_PUBLIC_DISPLAY = "public_display";
+        public static final String KEY_RESIZE_DISPLAY = "resize_display";
+        // Value constants of {@link #KEY_COMMAND}.
+        public static final String COMMAND_CREATE_DISPLAY = "create_display";
+        public static final String COMMAND_DESTROY_DISPLAY = "destroy_display";
+        public static final String COMMAND_RESIZE_DISPLAY = "resize_display";
+    }
+
     private static ComponentName component(String className) {
         return component(Components.class, className);
     }
