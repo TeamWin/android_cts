@@ -326,7 +326,14 @@ public class FileSystemPermissionTest extends AndroidTestCase {
             byte bytes[] = new byte[SIZEOF_U64];
             ByteBuffer buf = ByteBuffer.wrap(bytes).order(ByteOrder.nativeOrder());
             int read = Os.read(pagemap, buf);
-            if (read != bytes.length)
+
+            if (read == 0)
+                // /proc/[pid]/maps may contain entries that are outside the process's VM space,
+                // like the [vectors] page on 32-bit ARM devices.  In this case, seek() succeeds but
+                // read() returns 0.  The kernel is telling us that there are no more pagemap
+                // entries to read, so we can stop here.
+                break;
+            else if (read != bytes.length)
                 throw new IOException("read(" + bytes.length + ") returned " + read);
 
             buf.position(0);
