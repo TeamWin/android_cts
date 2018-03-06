@@ -29,7 +29,8 @@ LOCAL_JAVA_LIBRARIES := android.test.runner.stubs
 LOCAL_STATIC_JAVA_LIBRARIES := \
     ctstestrunner-axt \
     androidx.test.rules \
-    ub-uiautomator
+    ub-uiautomator \
+    compatibility-device-util
 
 LOCAL_SRC_FILES := $(call all-java-files-under, src)
 
