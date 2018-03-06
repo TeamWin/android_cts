@@ -48,6 +48,7 @@ public class ManagedUserPositiveTestActivity extends PassFailButtons.TestListAct
     private static final String DEVICE_ADMIN_SETTINGS_ID = "DEVICE_ADMIN_SETTINGS";
     private static final String DISABLE_STATUS_BAR_TEST_ID = "DISABLE_STATUS_BAR";
     private static final String DISABLE_KEYGUARD_TEST_ID = "DISABLE_KEYGUARD";
+    private static final String POLICY_TRANSPARENCY_TEST_ID = "POLICY_TRANSPARENCY";
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -146,6 +147,20 @@ public class ManagedUserPositiveTestActivity extends PassFailButtons.TestListAct
                                 createManagedUserIntentWithBooleanParameter(
                                         CommandReceiverActivity.COMMAND_SET_KEYGUARD_DISABLED,
                                         false))}));
+
+        // Policy Transparency
+        final Intent policyTransparencyTestIntent = new Intent(this,
+                PolicyTransparencyTestListActivity.class);
+        policyTransparencyTestIntent.putExtra(
+                PolicyTransparencyTestListActivity.EXTRA_MODE,
+                PolicyTransparencyTestListActivity.MODE_MANAGED_USER);
+        // So that PolicyTransparencyTestListActivity knows which test to update with the result:
+        policyTransparencyTestIntent.putExtra(
+                PolicyTransparencyTestActivity.EXTRA_TEST_ID, POLICY_TRANSPARENCY_TEST_ID);
+        adapter.add(createTestItem(this, POLICY_TRANSPARENCY_TEST_ID,
+                R.string.device_profile_owner_policy_transparency_test,
+                policyTransparencyTestIntent));
+
     }
 
 
