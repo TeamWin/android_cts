@@ -27,7 +27,6 @@ import static org.mockito.Mockito.when;
 import android.app.Instrumentation;
 import android.app.slice.Slice;
 import android.app.slice.SliceManager;
-import android.app.slice.SliceManager.SliceCallback;
 import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
@@ -110,37 +109,6 @@ public class SliceManagerTest {
         mSliceManager.unpinSlice(BASE_URI);
 
         verify(LocalSliceProvider.sProxy, timeout(2000)).onSliceUnpinned(eq(BASE_URI));
-    }
-
-    @Test
-    public void testRegisterPin() {
-        SliceCallback callback = mock(SliceCallback.class);
-
-        mSliceManager.registerSliceCallback(BASE_URI, Collections.emptyList(), callback);
-        verify(LocalSliceProvider.sProxy, timeout(2000)).onSlicePinned(eq(BASE_URI));
-
-        mSliceManager.unregisterSliceCallback(BASE_URI, callback);
-        verify(LocalSliceProvider.sProxy, timeout(2000)).onSliceUnpinned(eq(BASE_URI));
-    }
-
-    @Test
-    public void testCallback() {
-        SliceCallback callback = mock(SliceCallback.class);
-
-        mSliceManager.registerSliceCallback(BASE_URI, Collections.emptyList(),
-                command -> command.run(), callback);
-        verify(LocalSliceProvider.sProxy, timeout(2000)).onSlicePinned(eq(BASE_URI));
-
-        try {
-            Slice s = new Slice.Builder(BASE_URI).build();
-            when(LocalSliceProvider.sProxy.onBindSlice(any(), any())).thenReturn(s);
-
-            mContext.getContentResolver().notifyChange(BASE_URI, null);
-            verify(callback, new Timeout(2000, atLeastOnce())).onSliceUpdated(any());
-        } finally {
-            mSliceManager.unregisterSliceCallback(BASE_URI, callback);
-            verify(LocalSliceProvider.sProxy, timeout(2000)).onSliceUnpinned(eq(BASE_URI));
-        }
     }
 
     @Test
