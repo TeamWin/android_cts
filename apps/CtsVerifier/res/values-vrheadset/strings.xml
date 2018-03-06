@@ -20,6 +20,7 @@
         <item>com.android.cts.verifier.car.CarDockTestActivity</item>
         <item>com.android.cts.verifier.deskclock.DeskClockTestsActivity</item>
         <item>com.android.cts.verifier.screenpinning.ScreenPinningTestActivity</item>
+        <item>com.android.cts.verifier.sensors.SignificantMotionTestActivity</item>
         <item>com.android.cts.verifier.notifications.ShortcutThrottlingResetActivity</item>
         <item>com.android.cts.verifier.vr.VrListenerVerifierActivity</item>
     </string-array>
