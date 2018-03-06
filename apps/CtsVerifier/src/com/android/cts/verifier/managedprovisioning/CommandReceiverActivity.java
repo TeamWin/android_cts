@@ -280,11 +280,12 @@ public class CommandReceiverActivity extends Activity {
                             return;
                         }
                         clearAllPoliciesAndRestrictions();
-                    } else if(mode == PolicyTransparencyTestListActivity.MODE_PROFILE_OWNER) {
+                    } else if (mode == PolicyTransparencyTestListActivity.MODE_MANAGED_PROFILE
+                            || mode == PolicyTransparencyTestListActivity.MODE_MANAGED_USER) {
                         if (!mDpm.isProfileOwnerApp(getPackageName())) {
                             return;
                         }
-                        clearProfileOwnerRelatedPoliciesAndRestrictions();
+                        clearProfileOwnerRelatedPoliciesAndRestrictions(mode);
                     }
                     // No policies need to be cleared for COMP at the moment.
                 } break;
@@ -598,9 +599,8 @@ public class CommandReceiverActivity extends Activity {
                 PackageManager.DONT_KILL_APP);
     }
 
-    private void clearProfileOwnerRelatedPoliciesAndRestrictions() {
-        clearPolicyTransparencyUserRestriction(
-                PolicyTransparencyTestListActivity.MODE_PROFILE_OWNER);
+    private void clearProfileOwnerRelatedPoliciesAndRestrictions(int mode) {
+        clearPolicyTransparencyUserRestriction(mode);
         clearProfileOwnerRelatedPolicies();
     }
 
