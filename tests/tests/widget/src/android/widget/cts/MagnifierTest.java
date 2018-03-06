@@ -43,7 +43,10 @@ import org.junit.Rule;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
+import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
@@ -143,6 +146,20 @@ public class MagnifierTest {
     }
 
     @Test
+    @UiThreadTest
+    public void testSizeAndZoom_areValid() {
+        final View view = new View(mActivity);
+        mLayout.addView(view, new LayoutParams(200, 200));
+        mMagnifier = new Magnifier(view);
+        mMagnifier.show(10, 10);
+        // Size should be non-zero.
+        assertTrue(mMagnifier.getWidth() > 0);
+        assertTrue(mMagnifier.getHeight() > 0);
+        // The magnified view region should be zoomed in, not out.
+        assertTrue(mMagnifier.getZoom() > 1.0f);
+    }
+
+    @Test
     public void testWindowContent() throws Throwable {
         prepareFourQuadrantsScenario();
         final CountDownLatch latch = new CountDownLatch(1);
@@ -154,6 +171,8 @@ public class MagnifierTest {
         });
         assertTrue(TIME_LIMIT_EXCEEDED, latch.await(1, TimeUnit.SECONDS));
 
+        assertEquals(mMagnifier.getWidth(), mMagnifier.getContent().getWidth());
+        assertEquals(mMagnifier.getHeight(), mMagnifier.getContent().getHeight());
         assertFourQuadrants(mMagnifier.getContent());
     }
 
@@ -224,13 +243,16 @@ public class MagnifierTest {
     }
 
     /**
-     * Asserts that the current bitmap contains exactly four different colors,
-     * and that they are (almost) equally distributed.
+     * Asserts that the current bitmap contains four different dominant colors, which
+     * are (almost) equally distributed. The test takes into account an amount of
+     * noise, possible consequence of upscaling and filtering the magnified content.
      *
      * @param bitmap the bitmap to be checked
      */
     private void assertFourQuadrants(final Bitmap bitmap) {
+        final int expectedQuadrants = 4;
         final int totalPixels = bitmap.getWidth() * bitmap.getHeight();
+
         final Map<Integer, Integer> colorCount = new HashMap<>();
         for (int x = 0; x < bitmap.getWidth(); ++x) {
             for (int y = 0; y < bitmap.getHeight(); ++y) {
@@ -238,11 +260,21 @@ public class MagnifierTest {
                 colorCount.put(currentColor, colorCount.getOrDefault(currentColor, 0) + 1);
             }
         }
-        assertEquals(4, colorCount.size());
-        for (Integer color : colorCount.keySet()) {
-            final int currentCount = colorCount.get(color);
-            final float proportion = 1.0f * Math.abs(4 * currentCount - totalPixels) / totalPixels;
-            assertTrue(proportion <= 0.2f);
+        assertTrue(colorCount.size() >= expectedQuadrants);
+
+        final List<Integer> counts = new ArrayList<>(colorCount.values());
+        Collections.sort(counts);
+
+        int quadrantsTotal = 0;
+        for (int i = counts.size() - expectedQuadrants; i < counts.size(); ++i) {
+            quadrantsTotal += counts.get(i);
+        }
+        assertTrue(1.0f * (totalPixels - quadrantsTotal) / totalPixels <= 0.1f);
+
+        for (int i = counts.size() - expectedQuadrants; i < counts.size(); ++i) {
+            final float proportion = 1.0f
+                    * Math.abs(expectedQuadrants * counts.get(i) - quadrantsTotal) / quadrantsTotal;
+            assertTrue(proportion <= 0.1f);
         }
     }
 }
