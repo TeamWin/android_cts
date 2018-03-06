@@ -4,6 +4,8 @@
 #
 # Builds and runs signature APK tests.
 
+set -e
+
 if [ -z "$ANDROID_BUILD_TOP" ]; then
     echo "Missing environment variables. Did you run build/envsetup.sh and lunch?" >&2
     exit 1
@@ -24,6 +26,7 @@ CtsApacheHttpLegacyUsesLibraryApiSignatureTestCases
 CtsSystemApiAnnotationTestCases
 
 CtsHiddenApiDiscoveryTestCases
+CtsHiddenApiKillswitchTestCases
 "
 else
     PACKAGES=${1+"$@"}
