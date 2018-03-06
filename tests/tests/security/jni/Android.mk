@@ -40,16 +40,7 @@ LOCAL_SHARED_LIBRARIES := \
 		libselinux \
 		libc++ \
 		libpcre2 \
-		libpackagelistparser \
-		libpowermanager \
-		libbase \
-		libunwind \
-		libhardware \
-		libsync \
-		libcamera_metadata \
-		libspeexresampler \
-		liblzma \
-		libstagefright_foundation
+		libpackagelistparser
 
 LOCAL_C_INCLUDES += ndk/sources/cpufeatures
 LOCAL_STATIC_LIBRARIES := cpufeatures
