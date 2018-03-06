@@ -91,8 +91,7 @@ final class UiBot {
     private static final String RESOURCE_STRING_SAVE_SNACKBAR_ACCESSIBILITY_TITLE =
             "autofill_save_accessibility_title";
 
-    private static final BySelector DATASET_PICKER_SELECTOR = By.res("android",
-            RESOURCE_ID_DATASET_PICKER);
+    static final BySelector DATASET_PICKER_SELECTOR = By.res("android", RESOURCE_ID_DATASET_PICKER);
     private static final BySelector SAVE_UI_SELECTOR = By.res("android", RESOURCE_ID_SAVE_SNACKBAR);
 
     private static final boolean DONT_DUMP_ON_ERROR = false;
@@ -127,6 +126,10 @@ final class UiBot {
 
     void reset() {
         mOkToCallAssertNoDatasets = false;
+    }
+
+    UiDevice getDevice() {
+        return mDevice;
     }
 
     /**

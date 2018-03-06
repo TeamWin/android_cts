@@ -29,6 +29,7 @@ import static android.autofillservice.cts.UiBot.LANDSCAPE;
 import static android.autofillservice.cts.UiBot.PORTRAIT;
 import static android.autofillservice.cts.common.ShellHelper.runShellCommand;
 import static android.service.autofill.SaveInfo.SAVE_DATA_TYPE_PASSWORD;
+import static android.service.autofill.SaveInfo.SAVE_DATA_TYPE_USERNAME;
 
 import static com.google.common.truth.Truth.assertThat;
 import static com.google.common.truth.Truth.assertWithMessage;
@@ -39,6 +40,8 @@ import android.content.Intent;
 import android.content.IntentSender;
 import android.os.Bundle;
 import android.os.SystemClock;
+import android.support.test.uiautomator.UiObject2;
+import android.support.test.uiautomator.Until;
 import android.view.autofill.AutofillValue;
 
 import org.junit.After;
@@ -378,5 +381,87 @@ public class SessionLifecycleTest extends AutoFillServiceTestCase {
 
         // Dataset should still be shown
         mUiBot.assertDatasets("dataset1");
+    }
+
+    @Test
+    public void testDatasetGoesAwayWhenAutofilledAppIsKilled() throws Exception {
+        // Set service.
+        enableService();
+
+        // Start activity that is autofilled in a separate process so it can be killed
+        startAndWaitExternalActivity();
+
+        final CannedFillResponse response = new CannedFillResponse.Builder()
+                .addDataset(new CannedFillResponse.CannedDataset.Builder(
+                        createPresentation("dataset"))
+                                .setField(ID_USERNAME, "filled").build())
+                .build();
+        sReplier.addResponse(response);
+
+        // Trigger autofill on username
+        mUiBot.selectByRelativeId(ID_USERNAME);
+
+        // Wait for fill request to be processed
+        sReplier.getNextFillRequest();
+
+        // Wait until dataset is shown
+        mUiBot.assertDatasets("dataset");
+
+        // Kill activity
+        killOfProcessLoginActivityProcess();
+
+        // Make sure dataset is not shown anymore
+        // TODO: calling mUiBot.assertNoDatasets() fails with StaleObjectException because it
+        // takes a while for the UiDevice to return return when searching for
+        // UiBot.DATASET_PICKER_SELECTOR here - must investigate why
+        mUiBot.getDevice().wait(Until.gone(UiBot.DATASET_PICKER_SELECTOR),
+                Timeouts.DATASET_PICKER_NOT_SHOWN_NAPTIME_MS);
+
+        // Restart activity an make sure the dataset is still not shown
+        startAndWaitExternalActivity();
+        mUiBot.assertNoDatasets();
+    }
+
+    @Test
+    public void testSaveRemainsWhenAutofilledAppIsKilled() throws Exception {
+        // Set service.
+        enableService();
+
+        // Start activity that is autofilled in a separate process so it can be killed
+        startAndWaitExternalActivity();
+
+        final CannedFillResponse response = new CannedFillResponse.Builder()
+                .setRequiredSavableIds(SAVE_DATA_TYPE_USERNAME, ID_USERNAME)
+                .build();
+        sReplier.addResponse(response);
+
+        // Trigger autofill on username
+        mUiBot.selectByRelativeId(ID_USERNAME);
+
+        // Wait for fill request to be processed
+        sReplier.getNextFillRequest();
+
+        // Wait until dataset is shown
+        mUiBot.assertNoDatasetsEver();
+
+        // Trigger save
+        mUiBot.setTextByRelativeId(ID_USERNAME, "dude");
+        mUiBot.selectByRelativeId(ID_LOGIN);
+        mUiBot.assertSaveShowing(SAVE_DATA_TYPE_USERNAME);
+
+        // Kill activity
+        killOfProcessLoginActivityProcess();
+
+        // Make sure save is still showing
+        final UiObject2 saveSnackBar = mUiBot.assertSaveShowing(SAVE_DATA_TYPE_USERNAME);
+
+        mUiBot.saveForAutofill(saveSnackBar, true);
+
+        final InstrumentedAutoFillService.SaveRequest saveRequest = sReplier.getNextSaveRequest();
+
+        // Make sure data is correctly saved
+        final AssistStructure.ViewNode username = findNodeByResourceId(saveRequest.structure,
+                ID_USERNAME);
+        assertTextAndValue(username, "dude");
     }
 }
