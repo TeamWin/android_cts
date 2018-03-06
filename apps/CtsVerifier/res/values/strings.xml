@@ -1872,6 +1872,7 @@ You should be prompted to select credentials; choose the ones you just installed
         4. Verify that the background color of the remaining image is blue.\n
         5. Verify that the header text says \"CtsVerifier\".\n
         6. Confirm your credentials and verify that the credentials you entered previously work.
+        7. The work app should be launched.
     </string>
     <string name="provisioning_byod_confirm_work_credentials_header">
         CtsVerifier
