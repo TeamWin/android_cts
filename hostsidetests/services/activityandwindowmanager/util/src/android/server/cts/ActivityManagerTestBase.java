@@ -1094,6 +1094,28 @@ public abstract class ActivityManagerTestBase extends DeviceTestCase {
         return null;
     }
 
+    /** Waits for at least one onMultiWindowModeChanged event. */
+    ActivityLifecycleCounts waitForOnMultiWindowModeChanged(
+            String activityName, String logSeparator) throws Exception {
+        int retriesLeft = 5;
+        ActivityLifecycleCounts result;
+        do {
+            result = new ActivityLifecycleCounts(activityName, logSeparator);
+            if (result.mMultiWindowModeChangedCount < 1) {
+                log("***waitForOnMultiWindowModeChanged...");
+                try {
+                    Thread.sleep(1000);
+                } catch (InterruptedException e) {
+                    log(e.toString());
+                    // Well I guess we are not waiting...
+                }
+            } else {
+                break;
+            }
+        } while (retriesLeft-- > 0);
+        return result;
+    }
+
     class ActivityLifecycleCounts {
         int mCreateCount;
         int mResumeCount;
