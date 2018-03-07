@@ -62,7 +62,7 @@ public class RetryRule implements TestRule {
                         if (timeout != null) {
                             long before = timeout.ms();
                             timeout.increase();
-                            Log.d(TAG, "Increased " + timeout.getName() + " from " + before + "ms "
+                            Log.d(TAG, "Increased " + timeout.getName() + " from " + before + "ms"
                                     + " to " + timeout.ms() + "ms");
                         }
                         caught = e;

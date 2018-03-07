@@ -385,6 +385,8 @@ class VirtualContainerView extends View {
         final Item text;
         // Boundaries of the text field, relative to the CustomView
         final Rect bounds = new Rect();
+        // Boundaries of the text field, relative to the screen
+        Rect absBounds;
 
         private boolean focused;
         private boolean visible = true;
@@ -396,6 +398,12 @@ class VirtualContainerView extends View {
 
         void changeFocus(boolean focused) {
             this.focused = focused;
+
+            if (focused) {
+                absBounds = getAbsCoordinates();
+                Log.v(TAG, "Setting absBounds for " + text.id + " on focus change: " + absBounds);
+            }
+
             if (mCompatMode) {
                 final AccessibilityEvent event = AccessibilityEvent.obtain();
                 event.setEventType(AccessibilityEvent.TYPE_VIEW_FOCUSED);
@@ -404,12 +412,11 @@ class VirtualContainerView extends View {
                 event.setPackageName(getContext().getPackageName());
                 // TODO(b/72811561): recycle event?
                 getContext().getSystemService(AccessibilityManager.class)
-                    .sendAccessibilityEvent(event);
+                        .sendAccessibilityEvent(event);
                 return;
             }
 
             if (focused) {
-                final Rect absBounds = getAbsCoordinates();
                 Log.d(TAG, "focus gained on " + text.id + "; absBounds=" + absBounds);
                 mAfm.notifyViewEntered(VirtualContainerView.this, text.id, absBounds);
             } else {
@@ -522,8 +529,9 @@ class VirtualContainerView extends View {
             node.setClassName(className);
             node.setEditable(editable);
             node.setViewIdResourceName(resourceId);
-            // TODO(b/73548352): ideally item should have its own bounds
-            node.setBoundsInScreen(line.bounds);
+            if (line.absBounds != null) {
+                node.setBoundsInScreen(line.absBounds);
+            }
             node.setText(text);
             return node;
         }
