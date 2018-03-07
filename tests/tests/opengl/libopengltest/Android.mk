@@ -36,7 +36,8 @@ LOCAL_SRC_FILES := common.cpp \
 
 LOCAL_C_INCLUDES := $(JNI_H_INCLUDE)
 
-LOCAL_CXX_STL := libc++_static
+LOCAL_SDK_VERSION := current
+LOCAL_NDK_STL_VARIANT := none
 
 LOCAL_SHARED_LIBRARIES := libGLESv2 liblog
 
