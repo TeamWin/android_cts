@@ -42,6 +42,7 @@ import android.net.Uri;
 import android.support.test.InstrumentationRegistry;
 import android.support.test.rule.ActivityTestRule;
 import android.support.test.runner.AndroidJUnit4;
+import android.view.View;
 import android.widget.ImageView;
 
 import com.android.compatibility.common.util.BitmapUtils;
@@ -565,6 +566,51 @@ public class AnimatedImageDrawableTest {
         assertNotNull(drawable);
         assertTrue(drawable instanceof AnimatedImageDrawable);
         assertTrue(drawable.isAutoMirrored());
+    }
+
+    private void drawAndCompare(Bitmap expected, Drawable drawable) {
+        Bitmap test = Bitmap.createBitmap(drawable.getIntrinsicWidth(),
+                drawable.getIntrinsicHeight(), Bitmap.Config.ARGB_8888);
+        Canvas canvas = new Canvas(test);
+        drawable.draw(canvas);
+        BitmapUtils.compareBitmaps(expected, test);
+    }
+
+    @Test
+    public void testAutoMirroredDrawing() {
+        AnimatedImageDrawable drawable = createFromImageDecoder(RES_ID);
+        assertFalse(drawable.isAutoMirrored());
+
+        final int width = drawable.getIntrinsicWidth();
+        final int height = drawable.getIntrinsicHeight();
+        Bitmap normal = Bitmap.createBitmap(width, height, Bitmap.Config.ARGB_8888);
+        {
+            Canvas canvas = new Canvas(normal);
+            drawable.draw(canvas);
+        }
+
+        Bitmap flipped = Bitmap.createBitmap(width, height, Bitmap.Config.ARGB_8888);
+        {
+            Canvas canvas = new Canvas(flipped);
+            canvas.translate(width, 0);
+            canvas.scale(-1, 1);
+            drawable.draw(canvas);
+        }
+
+        for (int i = 0; i < width; ++i) {
+            for (int j = 0; j < height; ++j) {
+                assertEquals(normal.getPixel(i, j), flipped.getPixel(width - 1 - i, j));
+            }
+        }
+
+        drawable.setAutoMirrored(true);
+        drawAndCompare(normal, drawable);
+
+        drawable.setLayoutDirection(View.LAYOUT_DIRECTION_RTL);
+        drawAndCompare(flipped, drawable);
+
+        drawable.setAutoMirrored(false);
+        drawAndCompare(normal, drawable);
     }
 
     @Test
