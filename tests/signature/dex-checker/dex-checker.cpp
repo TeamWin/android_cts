@@ -43,7 +43,7 @@ class ScopedUtfChars {
 };
 
 extern "C" JNIEXPORT void JNICALL
-Java_android_signature_cts_api_HiddenApiTest_getField_1JNI(
+Java_android_signature_cts_DexMemberChecker_getField_1JNI(
     JNIEnv* env, jclass, jclass klass, jstring name, jstring type) {
   ScopedUtfChars utf_name(env, name);
   ScopedUtfChars utf_type(env, type);
@@ -53,7 +53,7 @@ Java_android_signature_cts_api_HiddenApiTest_getField_1JNI(
 }
 
 extern "C" JNIEXPORT void JNICALL
-Java_android_signature_cts_api_HiddenApiTest_getStaticField_1JNI(
+Java_android_signature_cts_DexMemberChecker_getStaticField_1JNI(
     JNIEnv* env, jclass, jclass klass, jstring name, jstring type) {
   ScopedUtfChars utf_name(env, name);
   ScopedUtfChars utf_type(env, type);
@@ -63,7 +63,7 @@ Java_android_signature_cts_api_HiddenApiTest_getStaticField_1JNI(
 }
 
 extern "C" JNIEXPORT void JNICALL
-Java_android_signature_cts_api_HiddenApiTest_getMethod_1JNI(
+Java_android_signature_cts_DexMemberChecker_getMethod_1JNI(
     JNIEnv* env, jclass, jclass klass, jstring name, jstring signature) {
   ScopedUtfChars utf_name(env, name);
   ScopedUtfChars utf_signature(env, signature);
@@ -73,7 +73,7 @@ Java_android_signature_cts_api_HiddenApiTest_getMethod_1JNI(
 }
 
 extern "C" JNIEXPORT void JNICALL
-Java_android_signature_cts_api_HiddenApiTest_getStaticMethod_1JNI(
+Java_android_signature_cts_DexMemberChecker_getStaticMethod_1JNI(
     JNIEnv* env, jclass, jclass klass, jstring name, jstring signature) {
   ScopedUtfChars utf_name(env, name);
   ScopedUtfChars utf_signature(env, signature);

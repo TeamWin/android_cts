@@ -21,13 +21,17 @@ import android.signature.cts.DexApiDocumentParser;
 import android.signature.cts.DexApiDocumentParser.DexField;
 import android.signature.cts.DexApiDocumentParser.DexMember;
 import android.signature.cts.DexApiDocumentParser.DexMethod;
+import android.signature.cts.DexMemberChecker;
 import android.signature.cts.FailureType;
+import android.signature.cts.ResultObserver;
+
 import java.io.File;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
 import java.util.Comparator;
 import java.util.List;
+import java.util.Set;
 import java.util.stream.Stream;
 import java.text.ParseException;
 
@@ -52,134 +56,57 @@ public class HiddenApiTest extends AbstractApiTest {
      * Will check the entire API, and then report the complete list of failures
      */
     public void testSignature() {
-        System.loadLibrary("cts_hiddenapi");
+        DexMemberChecker.init();
         runWithTestResultObserver(resultObserver -> {
+            DexMemberChecker.Observer observer = new DexMemberChecker.Observer() {
+                @Override
+                public void classAccessible(boolean accessible, DexMember member) {
+                }
+
+                @Override
+                public void fieldAccessibleViaReflection(boolean accessible, DexField field) {
+                    if (accessible) {
+                        resultObserver.notifyFailure(
+                                FailureType.EXTRA_FIELD,
+                                field.toString(),
+                                "Hidden field accessible through reflection");
+                    }
+                }
+
+                @Override
+                public void fieldAccessibleViaJni(boolean accessible, DexField field) {
+                    if (accessible) {
+                        resultObserver.notifyFailure(
+                                FailureType.EXTRA_FIELD,
+                                field.toString(),
+                                "Hidden field accessible through JNI");
+                    }
+                }
+
+                @Override
+                public void methodAccessibleViaReflection(boolean accessible, DexMethod method) {
+                    if (accessible) {
+                        resultObserver.notifyFailure(
+                                FailureType.EXTRA_METHOD,
+                                method.toString(),
+                                "Hidden method accessible through reflection");
+                    }
+                }
+
+                @Override
+                public void methodAccessibleViaJni(boolean accessible, DexMethod method) {
+                    if (accessible) {
+                        resultObserver.notifyFailure(
+                                FailureType.EXTRA_METHOD,
+                                method.toString(),
+                                "Hidden method accessible through JNI");
+                    }
+                }
+            };
             parseDexApiFilesAsStream(hiddenApiFiles).forEach(dexMember -> {
-                checkSingleMember(dexMember, resultObserver);
+                DexMemberChecker.checkSingleMember(dexMember, observer);
             });
         });
-    }
-
-    /**
-     * Check that a DexMember cannot be discovered with reflection or JNI, and
-     * record results in the result
-     */
-    private void checkSingleMember(DexMember dexMember, TestResultObserver resultObserver) {
-        Class<?> klass = findClass(dexMember);
-        if (klass == null) {
-            // Class not found. Therefore its members are not visible.
-            return;
-        }
-
-        if (dexMember instanceof DexField) {
-            if (hasMatchingField_Reflection(klass, (DexField) dexMember)) {
-                resultObserver.notifyFailure(
-                        FailureType.EXTRA_FIELD,
-                        dexMember.toString(),
-                        "Hidden field accessible through reflection");
-            }
-            if (hasMatchingField_JNI(klass, (DexField) dexMember)) {
-                resultObserver.notifyFailure(
-                        FailureType.EXTRA_FIELD,
-                        dexMember.toString(),
-                        "Hidden field accessible through JNI");
-            }
-        } else if (dexMember instanceof DexMethod) {
-            if (hasMatchingMethod_Reflection(klass, (DexMethod) dexMember)) {
-                resultObserver.notifyFailure(
-                        FailureType.EXTRA_METHOD,
-                        dexMember.toString(),
-                        "Hidden method accessible through reflection");
-            }
-            if (hasMatchingMethod_JNI(klass, (DexMethod) dexMember)) {
-                resultObserver.notifyFailure(
-                        FailureType.EXTRA_METHOD,
-                        dexMember.toString(),
-                        "Hidden method accessible through JNI");
-            }
-        } else {
-            throw new IllegalStateException("Unexpected type of dex member");
-        }
-    }
-
-    private boolean typesMatch(Class<?>[] classes, List<String> typeNames) {
-        if (classes.length != typeNames.size()) {
-            return false;
-        }
-        for (int i = 0; i < classes.length; ++i) {
-            if (!classes[i].getTypeName().equals(typeNames.get(i))) {
-                return false;
-            }
-        }
-        return true;
-    }
-
-    private Class<?> findClass(DexMember dexMember) {
-        Class<?> klass = null;
-        try {
-            return Class.forName(dexMember.getJavaClassName());
-        } catch (ClassNotFoundException ex) {
-            return null;
-        }
-    }
-
-    private static boolean hasMatchingField_Reflection(Class<?> klass, DexField dexField) {
-        try {
-            klass.getDeclaredField(dexField.getName());
-            return true;
-        } catch (NoSuchFieldException ex) {
-            return false;
-        }
-    }
-
-    private static boolean hasMatchingField_JNI(Class<?> klass, DexField dexField) {
-        try {
-            getField_JNI(klass, dexField.getName(), dexField.getDexType());
-            return true;
-        } catch (NoSuchFieldError ex) {
-        }
-        try {
-            getStaticField_JNI(klass, dexField.getName(), dexField.getDexType());
-            return true;
-        } catch (NoSuchFieldError ex) {
-        }
-        return false;
-    }
-
-    private boolean hasMatchingMethod_Reflection(Class<?> klass, DexMethod dexMethod) {
-        List<String> methodParams = dexMethod.getJavaParameterTypes();
-
-        if (dexMethod.isConstructor()) {
-            for (Constructor constructor : klass.getDeclaredConstructors()) {
-                if (typesMatch(constructor.getParameterTypes(), methodParams)) {
-                    return true;
-                }
-            }
-        } else {
-            for (Method method : klass.getDeclaredMethods()) {
-                if (method.getName().equals(dexMethod.getName())
-                        && typesMatch(method.getParameterTypes(), methodParams)) {
-                    return true;
-                }
-            }
-        }
-        return false;
-    }
-
-    private static boolean hasMatchingMethod_JNI(Class<?> klass, DexMethod dexMethod) {
-        try {
-            getMethod_JNI(klass, dexMethod.getName(), dexMethod.getDexSignature());
-            return true;
-        } catch (NoSuchMethodError ex) {
-        }
-        if (!dexMethod.isConstructor()) {
-            try {
-                getStaticMethod_JNI(klass, dexMethod.getName(), dexMethod.getDexSignature());
-                return true;
-            } catch (NoSuchMethodError ex) {
-            }
-        }
-        return false;
     }
 
     private static Stream<DexMember> parseDexApiFilesAsStream(String[] apiFiles) {
@@ -190,9 +117,4 @@ public class HiddenApiTest extends AbstractApiTest {
                 .flatMap(stream -> dexApiDocumentParser.parseAsStream(stream));
     }
 
-    private static native boolean getField_JNI(Class<?> klass, String name, String type);
-    private static native boolean getStaticField_JNI(Class<?> klass, String name, String type);
-    private static native boolean getMethod_JNI(Class<?> klass, String name, String signature);
-    private static native boolean getStaticMethod_JNI(Class<?> klass, String name,
-            String signature);
 }
