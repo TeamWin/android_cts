@@ -146,7 +146,7 @@ public class Components extends ComponentsBase {
     public static class TestActivity {
         // Finishes the activity
         public static final String TEST_ACTIVITY_ACTION_FINISH_SELF =
-                TestActivity.class.getName() + ".finish_self";
+                "android.server.am.TestActivity.finish_self";
         // Sets the fixed orientation (can be one of {@link ActivityInfo.ScreenOrientation}
         public static final String EXTRA_FIXED_ORIENTATION = "fixed_orientation";
     }
