@@ -54,6 +54,14 @@ public class AlwaysOnVpnMultiStageTest extends BaseDeviceAdminTest {
     }
 
     public void testAlwaysOnVpnDisabled() throws Exception {
+        // Wait until always-on vpn package is being removed (with 1 minute timeout).
+        for (int i = 0; i < 60; i++) {
+            if (mDevicePolicyManager.getAlwaysOnVpnPackage(ADMIN_RECEIVER_COMPONENT) == null) {
+                break;
+            }
+            Thread.sleep(1000);  // 1 second.
+        }
+
         // After the vpn app being uninstalled, check that always-on vpn is null
         assertNull(mDevicePolicyManager.getAlwaysOnVpnPackage(ADMIN_RECEIVER_COMPONENT));
         assertFalse(VpnTestHelper.isNetworkVpn(mContext));
