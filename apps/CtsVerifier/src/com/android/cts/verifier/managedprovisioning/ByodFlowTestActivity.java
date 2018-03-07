@@ -109,6 +109,7 @@ public class ByodFlowTestActivity extends DialogTestListActivity {
     private TestListItem mOrganizationInfoTest;
     private TestListItem mPolicyTransparencyTest;
     private TestListItem mTurnOffWorkFeaturesTest;
+    private TestListItem mWidgetTest;
 
     public ByodFlowTestActivity() {
         super(R.layout.provisioning_byod,
@@ -630,6 +631,14 @@ public class ByodFlowTestActivity extends DialogTestListActivity {
                     R.string.provisioning_byod_no_gps_location_feature, Toast.LENGTH_SHORT)
                     .show();
         }
+
+        mWidgetTest = TestListItem.newTest(this,
+                R.string.provisioning_byod_work_profile_widget,
+                "BYOD_WorkProfileWidget",
+                new Intent(WorkProfileWidgetActivity.ACTION_TEST_WORK_PROFILE_WIDGET),
+                new String[] {PackageManager.FEATURE_APP_WIDGETS});
+        adapter.add(mWidgetTest);
+
     }
 
     // Return whether the intent can be resolved in the current profile
@@ -758,5 +767,4 @@ public class ByodFlowTestActivity extends DialogTestListActivity {
             new ComponentName(ByodFlowTestActivity.this, HandleIntentActivity.class.getName()),
             enableState, PackageManager.DONT_KILL_APP);
     }
-
 }
