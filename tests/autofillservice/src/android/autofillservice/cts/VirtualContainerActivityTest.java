@@ -520,13 +520,6 @@ public class VirtualContainerActivityTest extends AutoFillServiceTestCase {
         final ViewNode username = findNodeByResourceId(saveRequest.structure, ID_USERNAME);
         final ViewNode password = findNodeByResourceId(saveRequest.structure, ID_PASSWORD);
 
-        if (mCompatMode) {
-            // TODO(b/73557456): temporarily not checking values as it's not working
-            assertThat(username).isNotNull();
-            assertThat(password).isNotNull();
-            return;
-        }
-
         assertTextAndValue(username, "foo");
         assertTextAndValue(password, "bar");
     }
