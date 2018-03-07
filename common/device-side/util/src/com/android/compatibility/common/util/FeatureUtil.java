@@ -99,4 +99,9 @@ public class FeatureUtil {
     public static boolean hasTelephony() {
         return hasSystemFeature(TELEPHONY_FEATURE);
     }
+
+    /** Returns true if the device has feature FEATURE_MICROPHONE */
+    public static boolean hasMicrophone() {
+        return hasSystemFeature(getPackageManager().FEATURE_MICROPHONE);
+    }
 }
