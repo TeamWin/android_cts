@@ -59,6 +59,9 @@ import java.util.concurrent.TimeoutException;
  */
 public class VirtualContainerActivityTest extends AutoFillServiceTestCase {
 
+    // TODO(b/74256300): remove when fixed it :-)
+    private static final boolean BUG_74256300_FIXED = false;
+
     @Rule
     public final AutofillActivityTestRule<VirtualContainerActivity> mActivityRule =
             new AutofillActivityTestRule<VirtualContainerActivity>(VirtualContainerActivity.class) {
@@ -143,22 +146,24 @@ public class VirtualContainerActivityTest extends AutoFillServiceTestCase {
 
         // Set expectations.
         sReplier.addResponse(new CannedDataset.Builder()
-                .setField(ID_USERNAME, "dude")
-                .setField(ID_PASSWORD, "sweet")
-                .setPresentation(createPresentation("The Dude"))
+                .setField(ID_USERNAME, "dude", createPresentation("DUDE"))
+                .setField(ID_PASSWORD, "sweet", createPresentation("SWEET"))
                 .build());
         mActivity.expectAutoFill("dude", "sweet");
         mActivity.mCustomView.setSync(sync);
 
         // Trigger auto-fill.
         focusToUsername();
-        assertDatasetShown(mActivity.mUsername, "The Dude");
+        assertDatasetShown(mActivity.mUsername, "DUDE");
 
         // Play around with focus to make sure picker is properly drawn.
-        focusToPassword();
-        assertDatasetShown(mActivity.mPassword, "The Dude");
-        focusToUsername();
-        assertDatasetShown(mActivity.mUsername, "The Dude");
+        if (BUG_74256300_FIXED || !mCompatMode) {
+            focusToPassword();
+            assertDatasetShown(mActivity.mPassword, "SWEET");
+
+            focusToUsername();
+            assertDatasetShown(mActivity.mUsername, "DUDE");
+        }
 
         // Make sure input was sanitized.
         final FillRequest request = sReplier.getNextFillRequest();
@@ -206,7 +211,7 @@ public class VirtualContainerActivityTest extends AutoFillServiceTestCase {
         assertWithMessage("Password node is focused").that(password.isFocused()).isFalse();
 
         // Auto-fill it.
-        mUiBot.selectDataset("The Dude");
+        mUiBot.selectDataset("DUDE");
 
         // Check the results.
         mActivity.assertAutoFilled();
@@ -476,11 +481,16 @@ public class VirtualContainerActivityTest extends AutoFillServiceTestCase {
             case PARENT_VIEW_GONE:
                 response.setSaveInfoFlags(SaveInfo.FLAG_SAVE_ON_ALL_VIEWS_INVISIBLE);
                 break;
+            case EXPLICIT_COMMIT:
+                // does nothing
+                break;
             case SUBMIT_BUTTON_CLICKED:
                 response
                     .setSaveInfoFlags(SaveInfo.FLAG_DONT_SAVE_ON_FINISH)
                     .setSaveTriggerId(mActivity.mCustomView.mLoginButtonId);
                 break;
+            default:
+                throw new IllegalArgumentException("invalid type: " + commitType);
         }
         sReplier.addResponse(response.build());
 
@@ -577,10 +587,6 @@ public class VirtualContainerActivityTest extends AutoFillServiceTestCase {
      * Asserts the dataset picker is properly displayed in a give line.
      */
     private void assertDatasetShown(Line line, String... expectedDatasets) throws Exception {
-        // TODO(b/73548352): temporary workaround until we figure out why there's a mismatch on the
-        // values reported while running on compat mode.
-        if (mCompatMode) return;
-
         final Rect pickerBounds = mUiBot.assertDatasets(expectedDatasets).getVisibleBounds();
         final Rect fieldBounds = line.getAbsCoordinates();
         assertWithMessage("vertical coordinates don't match; picker=%s, field=%s", pickerBounds,
