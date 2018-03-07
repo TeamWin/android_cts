@@ -33,6 +33,8 @@ LOCAL_SRC_FILES := $(call all-java-files-under, src)
 # Tag this module as a cts test artifact
 LOCAL_COMPATIBILITY_SUITE := cts vts general-tests
 
-LOCAL_SDK_VERSION := current
+#TODO(b/72620511) Apps should not use platform APIs directly
+#LOCAL_SDK_VERSION := current
+LOCAL_PRIVATE_PLATFORM_APIS := true
 
 include $(BUILD_CTS_PACKAGE)
