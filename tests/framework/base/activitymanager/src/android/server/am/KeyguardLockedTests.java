@@ -21,6 +21,8 @@ import static android.app.WindowConfiguration.WINDOWING_MODE_PINNED;
 import static android.server.am.Components.DISMISS_KEYGUARD_ACTIVITY;
 import static android.server.am.Components.DISMISS_KEYGUARD_METHOD_ACTIVITY;
 import static android.server.am.Components.PIP_ACTIVITY;
+import static android.server.am.Components.PipActivity.ACTION_ENTER_PIP;
+import static android.server.am.Components.PipActivity.EXTRA_SHOW_OVER_KEYGUARD;
 import static android.server.am.Components.SHOW_WHEN_LOCKED_ACTIVITY;
 import static android.server.am.UiDeviceUtils.pressBackButton;
 
@@ -36,9 +38,6 @@ import org.junit.Test;
  *     atest CtsActivityManagerDeviceTestCases:KeyguardLockedTests
  */
 public class KeyguardLockedTests extends KeyguardTestBase {
-
-    private static final String ACTION_ENTER_PIP = "android.server.am.PipActivity.enter_pip";
-    private static final String EXTRA_SHOW_OVER_KEYGUARD = "show_over_keyguard";
 
     @Before
     @Override
