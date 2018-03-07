@@ -728,6 +728,55 @@ public class ImageDecoderTest {
     }
 
     @Test
+    public void testResizeTransparency() {
+        ImageDecoder.Source src = mCreators[0].apply(R.drawable.animated);
+        Drawable dr = null;
+        try {
+            dr = ImageDecoder.decodeDrawable(src, (decoder, info, s) -> {
+                decoder.setResize(info.getSize().getWidth() - 5, info.getSize().getHeight() - 5);
+            });
+        } catch (IOException e) {
+            fail("Failed with exception " + e);
+        }
+
+        final int width = dr.getIntrinsicWidth();
+        final int height = dr.getIntrinsicHeight();
+
+        // Draw to a fully transparent Bitmap. Pixels that are transparent in the image will be
+        // transparent.
+        Bitmap normal = Bitmap.createBitmap(width, height, Bitmap.Config.ARGB_8888);
+        {
+            Canvas canvas = new Canvas(normal);
+            dr.draw(canvas);
+        }
+
+        // Draw to a BLUE Bitmap. Any pixels that are transparent in the image remain BLUE.
+        Bitmap blended = Bitmap.createBitmap(width, height, Bitmap.Config.ARGB_8888);
+        {
+            Canvas canvas = new Canvas(blended);
+            canvas.drawColor(Color.BLUE);
+            dr.draw(canvas);
+        }
+
+        boolean hasTransparency = false;
+        for (int i = 0; i < width; ++i) {
+            for (int j = 0; j < height; ++j) {
+                int normalColor = normal.getPixel(i, j);
+                int blendedColor = blended.getPixel(i, j);
+                if (normalColor == Color.TRANSPARENT) {
+                    hasTransparency = true;
+                    assertEquals(Color.BLUE, blendedColor);
+                } else if (Color.alpha(normalColor) == 255) {
+                    assertEquals(normalColor, blendedColor);
+                }
+            }
+        }
+
+        // Verify that the image has transparency. Otherwise the test is not useful.
+        assertTrue(hasTransparency);
+    }
+
+    @Test
     public void testOnPartialImage() {
         class PartialImageCallback implements ImageDecoder.OnPartialImageListener {
             public boolean wasCalled;
