@@ -456,7 +456,6 @@ public class VirtualContainerActivityTest extends AutoFillServiceTestCase {
 
     @Test
     public void testSave_submitButtonClicked() throws Throwable {
-        if (mCompatMode) return; // TODO(b/73649008): implement it
         saveTest(CommitType.SUBMIT_BUTTON_CLICKED);
     }
 
