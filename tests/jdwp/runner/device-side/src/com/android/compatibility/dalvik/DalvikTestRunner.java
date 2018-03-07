@@ -55,6 +55,8 @@ public class DalvikTestRunner {
     private static final String COLLECT_TESTS_ONLY = "--collect-tests-only";
     private static final String JUNIT_IGNORE = "org.junit.Ignore";
 
+    private static final String RUNNER_JAR = "cts-dalvik-device-test-runner.jar";
+
     public static void main(String[] args) {
         String abiName = null;
         Set<String> includes = new HashSet<>();
@@ -160,18 +162,28 @@ public class DalvikTestRunner {
     private static List<Class<?>> getClasses(String[] jars, String abiName) {
         List<Class<?>> classes = new ArrayList<>();
         for (String jar : jars) {
+            if (jar.contains(RUNNER_JAR)) {
+                // The runner jar must be added to the class path to invoke DalvikTestRunner,
+                // but should not be searched for test classes
+                continue;
+            }
             try {
                 ClassLoader loader = createClassLoader(jar, abiName);
                 DexFile file = new DexFile(jar);
                 Enumeration<String> entries = file.entries();
                 while (entries.hasMoreElements()) {
                     String e = entries.nextElement();
-                    Class<?> cls = loader.loadClass(e);
-                    if (isTestClass(cls)) {
-                        classes.add(cls);
+                    try {
+                        Class<?> cls = loader.loadClass(e);
+                        if (isTestClass(cls)) {
+                            classes.add(cls);
+                        }
+                    } catch (ClassNotFoundException ex) {
+                        System.out.println(String.format(
+                                "Skipping dex entry %s in %s", e, jar));
                     }
                 }
-            } catch (IllegalAccessError | IOException | ClassNotFoundException e) {
+            } catch (IllegalAccessError | IOException e) {
                 e.printStackTrace();
             }
         }
