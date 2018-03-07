@@ -21,6 +21,7 @@ import android.content.Context;
 import android.content.pm.PackageInfo;
 import android.content.pm.PackageManager;
 import android.hardware.display.BrightnessChangeEvent;
+import android.hardware.display.BrightnessConfiguration;
 import android.hardware.display.DisplayManager;
 import android.os.ParcelFileDescriptor;
 import android.os.PowerManager;
@@ -49,8 +50,16 @@ public class BrightnessTest extends InstrumentationTestCase {
                 InstrumentationRegistry.getContext().getSystemService(DisplayManager.class);
         PowerManager pm =
                 InstrumentationRegistry.getContext().getSystemService(PowerManager.class);
+        // Fail early if screen isn't on as wakelock won't wake it up.
+        assertTrue(pm.isInteractive());
+
         mWakeLock = pm.newWakeLock(PowerManager.SCREEN_BRIGHT_WAKE_LOCK, "BrightnessTest");
         mWakeLock.acquire();
+
+        runShellCommand("pm revoke " + InstrumentationRegistry.getContext().getPackageName()
+                + " android.permission.CONFIGURE_DISPLAY_BRIGHTNESS");
+        runShellCommand("pm revoke " + InstrumentationRegistry.getContext().getPackageName()
+                + " android.permission.BRIGHTNESS_SLIDER_USAGE");
     }
 
     @Override
@@ -111,6 +120,151 @@ public class BrightnessTest extends InstrumentationTestCase {
         }
     }
 
+    public void testNoTrackingForManualBrightness() throws IOException, InterruptedException {
+        if (!systemAppWithPermission("android.permission.BRIGHTNESS_SLIDER_USAGE",
+                InstrumentationRegistry.getContext())) {
+            // Don't run as there is no app that has permission to access slider usage.
+            return;
+        }
+        int previousBrightness = getSystemSetting(Settings.System.SCREEN_BRIGHTNESS);
+        int previousBrightnessMode =
+                getSystemSetting(Settings.System.SCREEN_BRIGHTNESS_MODE);
+        try {
+            setSystemSetting(Settings.System.SCREEN_BRIGHTNESS_MODE,
+                    Settings.System.SCREEN_BRIGHTNESS_MODE_MANUAL);
+            int mode = getSystemSetting(Settings.System.SCREEN_BRIGHTNESS_MODE);
+            assertEquals(Settings.System.SCREEN_BRIGHTNESS_MODE_MANUAL, mode);
+
+            runShellCommand("pm grant " + InstrumentationRegistry.getContext().getPackageName()
+                    + " android.permission.BRIGHTNESS_SLIDER_USAGE");
+
+            // Setup and remember some initial state.
+            recordSliderEvents();
+            setSystemSetting(Settings.System.SCREEN_BRIGHTNESS, 20);
+            assertTrue(getNewEvents().isEmpty());
+
+            // Then change the brightness
+            setSystemSetting(Settings.System.SCREEN_BRIGHTNESS, 80);
+            Thread.sleep(200);
+            // There shouldn't be any events.
+            assertTrue(getNewEvents().isEmpty());
+        } finally {
+            setSystemSetting(Settings.System.SCREEN_BRIGHTNESS, previousBrightness);
+            setSystemSetting(Settings.System.SCREEN_BRIGHTNESS_MODE, previousBrightnessMode);
+        }
+    }
+
+    public void testSliderUsagePermission() throws IOException, InterruptedException {
+        runShellCommand("pm revoke " + InstrumentationRegistry.getContext().getPackageName()
+                + " android.permission.BRIGHTNESS_SLIDER_USAGE");
+
+        try {
+            mDisplayManager.getBrightnessEvents();
+        } catch (SecurityException e) {
+            // Expected
+            return;
+        }
+        fail();
+    }
+
+    public void testConfigureBrightnessPermission() throws IOException, InterruptedException {
+        runShellCommand("pm revoke " + InstrumentationRegistry.getContext().getPackageName()
+                + " android.permission.CONFIGURE_DISPLAY_BRIGHTNESS");
+
+        BrightnessConfiguration config =
+            new BrightnessConfiguration.Builder(
+                    new float[]{0.0f, 1000.0f},new float[]{20.0f, 500.0f})
+                .setDescription("some test").build();
+
+        try {
+            mDisplayManager.setBrightnessConfiguration(config);
+        } catch (SecurityException e) {
+            // Expected
+            return;
+        }
+        fail();
+    }
+
+    public void testPushSimpleCurves() throws IOException, InterruptedException {
+        if (!systemAppWithPermission("android.permission.CONFIGURE_DISPLAY_BRIGHTNESS",
+                InstrumentationRegistry.getContext())) {
+            // Don't run as there is no app that has permission to push curves.
+            return;
+        }
+        runShellCommand("pm grant " + InstrumentationRegistry.getContext().getPackageName()
+                + " android.permission.CONFIGURE_DISPLAY_BRIGHTNESS");
+
+        BrightnessConfiguration config =
+                new BrightnessConfiguration.Builder(
+                        new float[]{0.0f, 1000.0f},new float[]{20.0f, 500.0f})
+                        .setDescription("some test").build();
+        mDisplayManager.setBrightnessConfiguration(config);
+        mDisplayManager.setBrightnessConfiguration(null);
+    }
+
+    public void testSliderEventsReflectCurves() throws IOException, InterruptedException {
+        if (!systemAppWithPermission("android.permission.BRIGHTNESS_SLIDER_USAGE",
+                InstrumentationRegistry.getContext())) {
+            // Don't run as there is no app that has permission to access slider usage.
+            return;
+        }
+        if (!systemAppWithPermission("android.permission.CONFIGURE_DISPLAY_BRIGHTNESS",
+                InstrumentationRegistry.getContext())) {
+            // Don't run as there is no app that has permission to push curves.
+            return;
+        }
+
+        BrightnessConfiguration config =
+                new BrightnessConfiguration.Builder(
+                        new float[]{0.0f, 10000.0f},new float[]{15.0f, 400.0f})
+                        .setDescription("model:8").build();
+
+        int previousBrightness = getSystemSetting(Settings.System.SCREEN_BRIGHTNESS);
+        int previousBrightnessMode =
+                getSystemSetting(Settings.System.SCREEN_BRIGHTNESS_MODE);
+        try {
+            setSystemSetting(Settings.System.SCREEN_BRIGHTNESS_MODE,
+                    Settings.System.SCREEN_BRIGHTNESS_MODE_AUTOMATIC);
+            int mode = getSystemSetting(Settings.System.SCREEN_BRIGHTNESS_MODE);
+            assertEquals(Settings.System.SCREEN_BRIGHTNESS_MODE_AUTOMATIC, mode);
+
+            runShellCommand("pm grant " + InstrumentationRegistry.getContext().getPackageName()
+                    + " android.permission.BRIGHTNESS_SLIDER_USAGE");
+            runShellCommand("pm grant " + InstrumentationRegistry.getContext().getPackageName()
+                    + " android.permission.CONFIGURE_DISPLAY_BRIGHTNESS");
+
+            // Setup and remember some initial state.
+            recordSliderEvents();
+            setSystemSetting(Settings.System.SCREEN_BRIGHTNESS, 20);
+            getNewEvents(1);
+
+            // Update brightness while we have a custom curve.
+            mDisplayManager.setBrightnessConfiguration(config);
+            setSystemSetting(Settings.System.SCREEN_BRIGHTNESS, 60);
+
+            // Check we got a slider event for the change.
+            List<BrightnessChangeEvent> newEvents = getNewEvents(1);
+            assertEquals(1, newEvents.size());
+            BrightnessChangeEvent firstEvent = newEvents.get(0);
+            assertValidLuxData(firstEvent);
+            assertFalse(firstEvent.isDefaultBrightnessConfig);
+
+            // Update brightness again now with default curve.
+            mDisplayManager.setBrightnessConfiguration(null);
+            setSystemSetting(Settings.System.SCREEN_BRIGHTNESS, 200);
+
+            // Check we get a second slider event.
+            newEvents = getNewEvents(1);
+            assertEquals(1, newEvents.size());
+            BrightnessChangeEvent secondEvent = newEvents.get(0);
+            assertValidLuxData(secondEvent);
+            assertTrue(secondEvent.isDefaultBrightnessConfig);
+        } finally {
+            setSystemSetting(Settings.System.SCREEN_BRIGHTNESS, previousBrightness);
+            setSystemSetting(Settings.System.SCREEN_BRIGHTNESS_MODE, previousBrightnessMode);
+        }
+    }
+
     private void assertValidLuxData(BrightnessChangeEvent event) {
         assertNotNull(event.luxTimestamps);
         assertNotNull(event.luxValues);
@@ -142,16 +296,22 @@ public class BrightnessTest extends InstrumentationTestCase {
             if (i != 0) {
                 Thread.sleep(100);
             }
-            List<BrightnessChangeEvent> events = mDisplayManager.getBrightnessEvents();
-            for (BrightnessChangeEvent event : events) {
-                if (!mLastReadEvents.containsKey(event.timeStamp)) {
-                    newEvents.add(event);
-                }
+            newEvents.addAll(getNewEvents());
+        }
+        return newEvents;
+    }
+
+    private List<BrightnessChangeEvent> getNewEvents() {
+        List<BrightnessChangeEvent> newEvents = new ArrayList<>();
+        List<BrightnessChangeEvent> events = mDisplayManager.getBrightnessEvents();
+        for (BrightnessChangeEvent event : events) {
+            if (!mLastReadEvents.containsKey(event.timeStamp)) {
+                newEvents.add(event);
             }
-            mLastReadEvents = new HashMap<>();
-            for (BrightnessChangeEvent event : events) {
-                mLastReadEvents.put(event.timeStamp, event);
-            }
+        }
+        mLastReadEvents = new HashMap<>();
+        for (BrightnessChangeEvent event : events) {
+            mLastReadEvents.put(event.timeStamp, event);
         }
         return newEvents;
     }
