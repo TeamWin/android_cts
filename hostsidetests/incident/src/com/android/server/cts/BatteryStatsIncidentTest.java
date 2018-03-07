@@ -370,23 +370,17 @@ public class BatteryStatsIncidentTest extends ProtoDumpTestCase {
         testTimerProto(u.getVideo());
 
         for (UidProto.Job j : u.getJobsList()) {
-            if (filterLevel >= PRIVACY_EXPLICIT) {
-                assertNotNull(j.getName());
-                assertFalse(j.getName().isEmpty());
-            } else {
-                assertTrue(j.getName().isEmpty());
-            }
+            assertNotNull(j.getName());
+            assertFalse(j.getName().isEmpty());
+
             testTimerProto(j.getTotal());
             testTimerProto(j.getBackground());
         }
 
         for (UidProto.JobCompletion jc : u.getJobCompletionList()) {
-            if (filterLevel >= PRIVACY_EXPLICIT) {
-                assertNotNull(jc.getName());
-                assertFalse(jc.getName().isEmpty());
-            } else {
-                assertTrue(jc.getName().isEmpty());
-            }
+            assertNotNull(jc.getName());
+            assertFalse(jc.getName().isEmpty());
+
             for (UidProto.JobCompletion.ReasonCount rc : jc.getReasonCountList()) {
                 assertTrue(0 <= rc.getCount());
             }
@@ -444,11 +438,8 @@ public class BatteryStatsIncidentTest extends ProtoDumpTestCase {
         }
 
         for (UidProto.Sync s : u.getSyncsList()) {
-            if (filterLevel >= PRIVACY_EXPLICIT) {
-                assertFalse(s.getName().isEmpty());
-            } else {
-                assertTrue(s.getName().isEmpty());
-            }
+            assertFalse(s.getName().isEmpty());
+
             testTimerProto(s.getTotal());
             testTimerProto(s.getBackground());
         }
@@ -465,10 +456,7 @@ public class BatteryStatsIncidentTest extends ProtoDumpTestCase {
 
         for (UidProto.Wakelock w : u.getWakelocksList()) {
             // Unfortunately, apps can legitimately pass an empty string as the wakelock name, so we
-            // can't guarantee that wakelock names will be non-empty for EXPLICIT+.
-            if (filterLevel == PRIVACY_AUTO) {
-                assertTrue(w.getName().isEmpty());
-            }
+            // can't guarantee that wakelock names will be non-empty.
             testTimerProto(w.getFull());
             testTimerProto(w.getPartial());
             testTimerProto(w.getBackgroundPartial());
@@ -476,9 +464,6 @@ public class BatteryStatsIncidentTest extends ProtoDumpTestCase {
         }
 
         for (UidProto.WakeupAlarm wa : u.getWakeupAlarmList()) {
-            if (filterLevel == PRIVACY_AUTO) {
-                assertTrue(wa.getName().isEmpty());
-            }
             assertTrue(0 <= wa.getCount());
         }
 
