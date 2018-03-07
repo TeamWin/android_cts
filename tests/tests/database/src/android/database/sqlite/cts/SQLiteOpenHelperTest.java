@@ -19,6 +19,7 @@ package android.database.sqlite.cts;
 import android.app.ActivityManager;
 import android.content.Context;
 import android.database.Cursor;
+import android.database.DatabaseUtils;
 import android.database.sqlite.SQLiteCursor;
 import android.database.sqlite.SQLiteCursorDriver;
 import android.database.sqlite.SQLiteDatabase;
@@ -288,6 +289,15 @@ public class SQLiteOpenHelperTest extends AndroidTestCase {
                 .rawQuery("select * from test_table2", null)) {
             assertEquals(1, cursor.getColumnCount());
         }
+    }
+
+    public void testSetWriteAheadLoggingDisablesCompatibilityWal() {
+        // Verify that compatibility WAL is not enabled, if an application explicitly disables WAL
+
+        mOpenHelper.setWriteAheadLoggingEnabled(false);
+        String journalMode = DatabaseUtils
+                .stringForQuery(mOpenHelper.getWritableDatabase(), "PRAGMA journal_mode", null);
+        assertFalse("Default journal mode should not be WAL", "WAL".equalsIgnoreCase(journalMode));
     }
 
     private MockOpenHelper getOpenHelper() {
