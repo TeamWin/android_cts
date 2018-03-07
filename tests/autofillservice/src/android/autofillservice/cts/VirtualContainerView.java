@@ -269,14 +269,11 @@ class VirtualContainerView extends View {
     void clickLogin() {
         Log.d(TAG, "clickLogin()");
         if (mCompatMode) {
-            // TODO(b/73649008): implement it
-            throw new IllegalArgumentException("clickLogin() on compat mode not implemented yet");
+            sendAccessibilityEvent(AccessibilityEvent.TYPE_VIEW_CLICKED, LOGIN_BUTTON_VIRTUAL_ID);
         } else {
             mAfm.notifyViewClicked(this, LOGIN_BUTTON_VIRTUAL_ID);
         }
     }
-
-
 
     private Item getItem(int id) {
         final Item item = mItems.get(id);
@@ -300,6 +297,15 @@ class VirtualContainerView extends View {
             node.addChild(this, id);
         }
 
+        return node;
+    }
+
+    private AccessibilityNodeInfo onProvideAutofillCompatModeAccessibilityNodeInfoForLoginButton() {
+        final AccessibilityNodeInfo node = AccessibilityNodeInfo.obtain();
+        node.setSource(this, LOGIN_BUTTON_VIRTUAL_ID);
+        node.setPackageName(getContext().getPackageName());
+        // TODO(b/72811561): ideally this button should be visible / drawn in the canvas and contain
+        // more properties like boundaries, class name, text etc...
         return node;
     }
 
@@ -341,12 +347,16 @@ class VirtualContainerView extends View {
                 @Override
                 public AccessibilityNodeInfo createAccessibilityNodeInfo(int virtualViewId) {
                     Log.d(TAG, "createAccessibilityNodeInfo(): id=" + virtualViewId);
-                    if (virtualViewId == AccessibilityNodeProvider.HOST_VIEW_ID) {
-                        return onProvideAutofillCompatModeAccessibilityNodeInfo();
+                    switch (virtualViewId) {
+                        case AccessibilityNodeProvider.HOST_VIEW_ID:
+                            return onProvideAutofillCompatModeAccessibilityNodeInfo();
+                        case LOGIN_BUTTON_VIRTUAL_ID:
+                            return onProvideAutofillCompatModeAccessibilityNodeInfoForLoginButton();
+                        default:
+                            final Item item = getItem(virtualViewId);
+                            return item.provideAccessibilityNodeInfo(VirtualContainerView.this,
+                                    getContext());
                     }
-                    final Item item = getItem(virtualViewId);
-                    return item.provideAccessibilityNodeInfo(VirtualContainerView.this,
-                            getContext());
                 }
 
                 @Override
@@ -377,6 +387,16 @@ class VirtualContainerView extends View {
         mOverrideDispatchProvideAutofillStructure = flag;
     }
 
+    private void sendAccessibilityEvent(int eventType, int virtualId) {
+        final AccessibilityEvent event = AccessibilityEvent.obtain();
+        event.setEventType(eventType);
+        event.setSource(VirtualContainerView.this, virtualId);
+        event.setEnabled(true);
+        event.setPackageName(getContext().getPackageName());
+        // TODO(b/72811561): recycle event?
+        getContext().getSystemService(AccessibilityManager.class).sendAccessibilityEvent(event);
+    }
+
     private static int nextId;
 
     final class Line {
@@ -405,14 +425,7 @@ class VirtualContainerView extends View {
             }
 
             if (mCompatMode) {
-                final AccessibilityEvent event = AccessibilityEvent.obtain();
-                event.setEventType(AccessibilityEvent.TYPE_VIEW_FOCUSED);
-                event.setSource(VirtualContainerView.this, text.id);
-                event.setEnabled(true);
-                event.setPackageName(getContext().getPackageName());
-                // TODO(b/72811561): recycle event?
-                getContext().getSystemService(AccessibilityManager.class)
-                        .sendAccessibilityEvent(event);
+                sendAccessibilityEvent(AccessibilityEvent.TYPE_VIEW_FOCUSED, text.id);
                 return;
             }
 
