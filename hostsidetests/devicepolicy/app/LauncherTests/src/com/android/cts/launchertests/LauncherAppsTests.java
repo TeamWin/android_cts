@@ -25,7 +25,6 @@ import android.content.ServiceConnection;
 import android.content.pm.ApplicationInfo;
 import android.content.pm.LauncherActivityInfo;
 import android.content.pm.LauncherApps;
-import android.content.pm.PackageManager;
 import android.net.Uri;
 import android.os.Bundle;
 import android.os.Handler;
@@ -94,13 +93,8 @@ public class LauncherAppsTests extends AndroidTestCase {
     }
 
     public void testGetActivitiesForUserFails() throws Exception {
-        try {
-            List<LauncherActivityInfo> activities =
-                    mLauncherApps.getActivityList(null, mUser);
-            fail("getActivities for non-profile user failed to throw exception");
-        } catch (SecurityException e) {
-            // Expected.
-        }
+        expectSecurityException(() -> mLauncherApps.getActivityList(null, mUser),
+                "getActivities for non-profile user failed to throw exception");
     }
 
     public void testSimpleAppInstalledForUser() throws Exception {
@@ -125,18 +119,17 @@ public class LauncherAppsTests extends AndroidTestCase {
     }
 
     public void testAccessPrimaryProfileFromManagedProfile() throws Exception {
-        // Try to access main profile from managed profile, which is not allowed.
-        assertEquals(0, mLauncherApps.getActivityList(null, mUser).size());
-        try {
-            mLauncherApps.getApplicationInfo(SIMPLE_APP_PACKAGE, /* flags= */ 0, mUser);
-            fail("Missing exception");
-        } catch (PackageManager.NameNotFoundException e) {
-            // Expected.
-        }
-        assertFalse(mLauncherApps.isPackageEnabled(SIMPLE_APP_PACKAGE, mUser));
+        expectSecurityException(() -> mLauncherApps.getActivityList(null, mUser),
+                "getting activity list failed to throw security exception");
+        expectSecurityException(
+                () -> mLauncherApps.getApplicationInfo(SIMPLE_APP_PACKAGE, /* flags= */ 0, mUser),
+                "get applicationInfo failed to throw security exception");
+        expectSecurityException(() -> mLauncherApps.isPackageEnabled(SIMPLE_APP_PACKAGE, mUser),
+                "isPackageEnabled failed to throw security exception");
 
         final Intent intent = new Intent(Intent.ACTION_VIEW, Uri.parse("http://www.android.com/"));
-        assertNull(mLauncherApps.resolveActivity(intent, mUser));
+        expectSecurityException(() -> mLauncherApps.resolveActivity(intent, mUser),
+                "resolveActivity failed to throw security exception");
     }
 
     public void testGetProfiles_fromMainProfile() {
@@ -177,27 +170,17 @@ public class LauncherAppsTests extends AndroidTestCase {
     }
 
     public void testLaunchNonExportActivityFails() throws Exception {
-        try {
-            mLauncherApps.startMainActivity(new ComponentName(
-                    SIMPLE_APP_PACKAGE,
-                    SIMPLE_APP_PACKAGE + ".NonExportedActivity"),
-                    mUser, null, null);
-            fail("starting non-exported activity failed to throw exception");
-        } catch (SecurityException e) {
-            // Expected.
-        }
+        expectSecurityException(() -> mLauncherApps.startMainActivity(new ComponentName(
+                SIMPLE_APP_PACKAGE, SIMPLE_APP_PACKAGE + ".NonExportedActivity"),
+                mUser, null, null),
+                "starting non-exported activity failed to throw exception");
     }
 
     public void testLaunchNonExportLauncherFails() throws Exception {
-        try {
-            mLauncherApps.startMainActivity(new ComponentName(
-                    SIMPLE_APP_PACKAGE,
-                    SIMPLE_APP_PACKAGE + ".NonLauncherActivity"),
-                    mUser, null, null);
-            fail("starting non-launcher activity failed to throw exception");
-        } catch (SecurityException e) {
-            // Expected.
-        }
+        expectSecurityException(() -> mLauncherApps.startMainActivity(new ComponentName(
+                SIMPLE_APP_PACKAGE, SIMPLE_APP_PACKAGE + ".NonLauncherActivity"),
+                mUser, null, null),
+                "starting non-launcher activity failed to throw exception");
     }
 
     public void testLaunchMainActivity() throws Exception {
@@ -211,6 +194,21 @@ public class LauncherAppsTests extends AndroidTestCase {
                 mUser, null, null);
         assertEquals(RESULT_PASS, receiver.waitForActivity());
         mInstrumentation.getContext().unregisterReceiver(receiver);
+    }
+
+    private void expectSecurityException(ExceptionRunnable action, String failMessage)
+            throws Exception {
+        try {
+            action.run();
+            fail(failMessage);
+        } catch (SecurityException e) {
+            // expected
+        }
+    }
+
+    @FunctionalInterface
+    public interface ExceptionRunnable {
+        void run() throws Exception;
     }
 
     private UserHandle getUserHandleArgument(UserManager userManager, String key,
