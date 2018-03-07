@@ -442,7 +442,6 @@ public class CallDetailsTest extends BaseTelecomTestWithMockServices {
         mOnExtrasChangedCounter.waitForCount(2, WAIT_FOR_STATE_CHANGE_TIMEOUT_MS);
 
         Bundle extras = mCall.getDetails().getExtras();
-        assertEquals(2, extras.size());
         assertTrue(extras.containsKey(TEST_EXTRA_KEY));
         assertEquals(TEST_SUBJECT, extras.getString(TEST_EXTRA_KEY));
         assertTrue(extras.containsKey(TEST_EXTRA_KEY2));
@@ -463,7 +462,6 @@ public class CallDetailsTest extends BaseTelecomTestWithMockServices {
 
         mConnection.removeExtras(Arrays.asList(TEST_EXTRA_KEY));
         verifyRemoveConnectionExtras();
-
     }
 
     /**
@@ -488,7 +486,6 @@ public class CallDetailsTest extends BaseTelecomTestWithMockServices {
         mOnExtrasChangedCounter.waitForCount(3, WAIT_FOR_STATE_CHANGE_TIMEOUT_MS);
 
         Bundle extras = mCall.getDetails().getExtras();
-        assertEquals(1, extras.size());
         assertFalse(extras.containsKey(TEST_EXTRA_KEY));
         assertTrue(extras.containsKey(TEST_EXTRA_KEY2));
         assertEquals(TEST_EXTRA_VALUE, extras.getInt(TEST_EXTRA_KEY2));
@@ -543,7 +540,8 @@ public class CallDetailsTest extends BaseTelecomTestWithMockServices {
         mCall.removeExtras(Arrays.asList(TEST_EXTRA_KEY2, TEST_EXTRA_KEY3));
         counter.waitForCount(3, WAIT_FOR_STATE_CHANGE_TIMEOUT_MS);
         extras = mConnection.getExtras();
-        assertTrue(extras.isEmpty());
+        assertFalse(extras.containsKey(TEST_EXTRA_KEY2));
+        assertFalse(extras.containsKey(TEST_EXTRA_KEY3));
     }
 
     /**
