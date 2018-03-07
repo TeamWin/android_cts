@@ -2706,7 +2706,15 @@
         </activity>
 
         <activity android:name=".managedprovisioning.TurnOffWorkActivity"
-                android:label="@string/provisioning_byod_turn_off_work">
+                  android:label="@string/provisioning_byod_turn_off_work">
+        </activity>
+
+        <activity android:name=".managedprovisioning.WorkProfileWidgetActivity"
+                  android:label="@string/provisioning_byod_work_profile_widget">
+        <intent-filter>
+                <action android:name="com.android.cts.verifier.byod.test_work_profile_widget"/>
+                <category android:name="android.intent.category.DEFAULT"/>
+            </intent-filter>
         </activity>
 
         <receiver android:name=".managedprovisioning.DeviceAdminTestReceiver"
