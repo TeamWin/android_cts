@@ -42,9 +42,9 @@ public final class DeviceTestConstants {
            "android.inputmethodservice.cts.devicetest.InputMethodServiceDeviceTest";
     public static final String TEST_CREATE_IME1 = "testCreateIme1";
     public static final String TEST_SWITCH_IME1_TO_IME2 = "testSwitchIme1ToIme2";
-    public static final String TEST_SET_INPUTMETHOD_AND_SUBTYPE = "testSetInputMethodAndSubtype";
+    public static final String TEST_SWITCH_INPUTMETHOD = "testSwitchInputMethod";
     public static final String TEST_SWITCH_NEXT_INPUT = "testSwitchToNextInputMethod";
-    public static final String TEST_SWITCH_LAST_INPUT = "testSwitchToLastInputMethod";
+    public static final String TEST_SWITCH_PREVIOUS_INPUT = "switchToPreviousInputMethod";
     public static final String TEST_INPUT_UNBINDS_ON_IME_STOPPED = "testInputUnbindsOnImeStopped";
     public static final String TEST_INPUT_UNBINDS_ON_APP_STOPPED = "testInputUnbindsOnAppStopped";
 }

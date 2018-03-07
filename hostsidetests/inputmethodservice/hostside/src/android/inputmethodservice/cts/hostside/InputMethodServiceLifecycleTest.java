@@ -106,10 +106,10 @@ public class InputMethodServiceLifecycleTest extends BaseHostJUnit4Test {
     }
 
     @Test
-    public void testSetInputMethodAndSubtype() throws Exception {
+    public void testSwitchInputMethod() throws Exception {
         final TestInfo testSetInputMethod = new TestInfo(
                 DeviceTestConstants.PACKAGE, DeviceTestConstants.TEST_CLASS,
-                DeviceTestConstants.TEST_SET_INPUTMETHOD_AND_SUBTYPE);
+                DeviceTestConstants.TEST_SWITCH_INPUTMETHOD);
         sendTestStartEvent(testSetInputMethod);
         installPackage(Ime1Constants.APK, "-r");
         installPackage(Ime2Constants.APK, "-r");
@@ -138,10 +138,10 @@ public class InputMethodServiceLifecycleTest extends BaseHostJUnit4Test {
     }
 
     @Test
-    public void testSwitchToLastInput() throws Exception {
+    public void testSwitchToPreviousInput() throws Exception {
         final TestInfo testSwitchInputs = new TestInfo(
                 DeviceTestConstants.PACKAGE, DeviceTestConstants.TEST_CLASS,
-                DeviceTestConstants.TEST_SWITCH_LAST_INPUT);
+                DeviceTestConstants.TEST_SWITCH_PREVIOUS_INPUT);
         sendTestStartEvent(testSwitchInputs);
         installPackage(Ime1Constants.APK, "-r");
         installPackage(Ime2Constants.APK, "-r");
