@@ -624,7 +624,7 @@ public class AttentionManagementVerifierActivity
             mNm.setInterruptionFilter(NotificationManager.INTERRUPTION_FILTER_PRIORITY);
             NotificationManager.Policy policy = mNm.getNotificationPolicy();
             policy = new NotificationManager.Policy(
-                    NotificationManager.Policy.PRIORITY_CATEGORY_MEDIA_SYSTEM_OTHER,
+                    NotificationManager.Policy.PRIORITY_CATEGORY_MEDIA,
                     policy.priorityCallSenders,
                     policy.priorityMessageSenders);
             mNm.setNotificationPolicy(policy);
