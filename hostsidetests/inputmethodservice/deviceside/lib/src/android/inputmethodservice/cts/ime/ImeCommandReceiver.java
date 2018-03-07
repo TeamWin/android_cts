@@ -86,17 +86,18 @@ final class ImeCommandReceiver<T extends InputMethodService & ImeCommandCallback
                 mIme.commandRequestHideSelf(flags);
                 return;
             }
-            case ImeCommandConstants.COMMAND_SET_INPUT_METHOD_AND_SUBTYPE: {
+            case ImeCommandConstants.COMMAND_SWITCH_INPUT_METHOD_WITH_SUBTYPE: {
                 final String imeId = getString1(intent);
-                mIme.setInputMethodAndSubtype(imeId, null);
+                // we don't support mock imes with subtypes yet.
+                mIme.switchInputMethod(imeId, null /* subtype*/);
                 return;
             }
             case ImeCommandConstants.COMMAND_SWITCH_TO_NEXT_INPUT: {
                 mIme.switchToNextInputMethod(false);
                 return;
             }
-            case ImeCommandConstants.COMMAND_SWITCH_TO_LAST_INPUT: {
-                mIme.switchToLastInputMethod();
+            case ImeCommandConstants.COMMAND_SWITCH_TO_PREVIOUS_INPUT: {
+                mIme.switchToPreviousInputMethod();
                 return;
             }
             default: {
