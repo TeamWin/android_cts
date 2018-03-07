@@ -92,6 +92,8 @@ public class JarHostTestTest {
         mTest = new JarHostTest();
         mTestDir = FileUtil.createTempDir("jarhostest");
         mListener = EasyMock.createMock(ITestInvocationListener.class);
+        OptionSetter setter = new OptionSetter(mTest);
+        setter.setOptionValue("enable-pretty-logs", "false");
     }
 
     @After
@@ -162,6 +164,7 @@ public class JarHostTestTest {
         File testJar = getJarResource(TEST_JAR1, mTestDir);
         mTest = new JarHostTestable(mTestDir);
         OptionSetter setter = new OptionSetter(mTest);
+        setter.setOptionValue("enable-pretty-logs", "false");
         setter.setOptionValue("jar", testJar.getName());
         // sharCount is ignored; will split by number of classes
         List<IRemoteTest> res = (List<IRemoteTest>)mTest.split(1);
@@ -185,6 +188,7 @@ public class JarHostTestTest {
         ITestDevice device = EasyMock.createNiceMock(ITestDevice.class);
         mTest.setDevice(device);
         OptionSetter setter = new OptionSetter(mTest);
+        setter.setOptionValue("enable-pretty-logs", "false");
         setter.setOptionValue("jar", testJar.getName());
         // full class count without sharding
         assertEquals(238, mTest.countTestCases());
