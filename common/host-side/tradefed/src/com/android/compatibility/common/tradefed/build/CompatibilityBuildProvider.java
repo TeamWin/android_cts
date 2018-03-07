@@ -19,6 +19,7 @@ import com.android.annotations.VisibleForTesting;
 import com.android.tradefed.build.BuildRetrievalError;
 import com.android.tradefed.build.DeviceBuildInfo;
 import com.android.tradefed.build.IBuildInfo;
+import com.android.tradefed.build.IBuildInfo.BuildInfoProperties;
 import com.android.tradefed.build.IBuildProvider;
 import com.android.tradefed.build.IDeviceBuildInfo;
 import com.android.tradefed.build.IDeviceBuildProvider;
@@ -239,6 +240,12 @@ public class CompatibilityBuildProvider implements IDeviceBuildProvider, IInvoca
         info.addBuildAttribute(ROOT_DIR, rootDir.getAbsolutePath());
         // For DeviceBuildInfo we populate the testsDir folder of the build info.
         if (info instanceof IDeviceBuildInfo) {
+            if (mArtificialRootDir == null) {
+                // If the real CTS directory is used, do not copy it again.
+                info.setProperties(
+                        BuildInfoProperties.DO_NOT_LINK_TESTS_DIR,
+                        BuildInfoProperties.DO_NOT_COPY_ON_SHARDING);
+            }
             File testDir = new File(rootDir, String.format("android-%s/testcases/",
                     getSuiteInfoName().toLowerCase()));
             ((IDeviceBuildInfo) info).setTestsDir(testDir, "0");
