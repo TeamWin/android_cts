@@ -17,7 +17,7 @@
 package android.server.am;
 
 import static android.server.am.Components.LaunchAssistantActivityIntoAssistantStack
-        .EXTRA_IS_TRANSLUCENT;
+        .EXTRA_ASSISTANT_IS_TRANSLUCENT;
 
 import android.app.Activity;
 import android.content.Intent;
@@ -38,7 +38,7 @@ public class LaunchAssistantActivityIntoAssistantStack extends Activity {
     }
 
     private static boolean isTranslucent(Intent intent) {
-        return intent.hasExtra(EXTRA_IS_TRANSLUCENT)
-                && Boolean.valueOf(intent.getStringExtra(EXTRA_IS_TRANSLUCENT));
+        return intent.hasExtra(EXTRA_ASSISTANT_IS_TRANSLUCENT)
+                && Boolean.valueOf(intent.getStringExtra(EXTRA_ASSISTANT_IS_TRANSLUCENT));
     }
 }

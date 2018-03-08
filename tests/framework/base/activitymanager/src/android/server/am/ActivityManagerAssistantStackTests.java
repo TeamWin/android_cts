@@ -30,12 +30,14 @@ import static android.server.am.Components.ANIMATION_TEST_ACTIVITY;
 import static android.server.am.Components.ASSISTANT_ACTIVITY;
 import static android.server.am.Components.ASSISTANT_VOICE_INTERACTION_SERVICE;
 import static android.server.am.Components.AssistantActivity.EXTRA_ASSISTANT_DISPLAY_ID;
-import static android.server.am.Components.AssistantActivity.EXTRA_FINISH_SELF;
-import static android.server.am.Components.AssistantActivity.EXTRA_LAUNCH_NEW_TASK;
+import static android.server.am.Components.AssistantActivity.EXTRA_ASSISTANT_ENTER_PIP;
+import static android.server.am.Components.AssistantActivity.EXTRA_ASSISTANT_FINISH_SELF;
+import static android.server.am.Components.AssistantActivity.EXTRA_ASSISTANT_LAUNCH_NEW_TASK;
 import static android.server.am.Components.DOCKED_ACTIVITY;
 import static android.server.am.Components.LAUNCH_ASSISTANT_ACTIVITY_FROM_SESSION;
 import static android.server.am.Components.LAUNCH_ASSISTANT_ACTIVITY_INTO_STACK;
-import static android.server.am.Components.LaunchAssistantActivityIntoAssistantStack.EXTRA_IS_TRANSLUCENT;
+import static android.server.am.Components.LaunchAssistantActivityIntoAssistantStack
+        .EXTRA_ASSISTANT_IS_TRANSLUCENT;
 import static android.server.am.Components.PIP_ACTIVITY;
 import static android.server.am.Components.PipActivity.EXTRA_ENTER_PIP;
 import static android.server.am.Components.TEST_ACTIVITY;
@@ -169,7 +171,7 @@ public class ActivityManagerAssistantStackTests extends ActivityManagerTestBase 
             assistantSession.setVoiceInteractionService(ASSISTANT_VOICE_INTERACTION_SERVICE);
 
             launchActivityOnDisplay(LAUNCH_ASSISTANT_ACTIVITY_INTO_STACK, mAssistantDisplayId,
-                    EXTRA_LAUNCH_NEW_TASK, getActivityName(TEST_ACTIVITY),
+                    EXTRA_ASSISTANT_LAUNCH_NEW_TASK, getActivityName(TEST_ACTIVITY),
                     EXTRA_ASSISTANT_DISPLAY_ID, Integer.toString(mAssistantDisplayId));
         }
 
@@ -205,7 +207,7 @@ public class ActivityManagerAssistantStackTests extends ActivityManagerTestBase 
             assistantSession.setVoiceInteractionService(ASSISTANT_VOICE_INTERACTION_SERVICE);
 
             launchActivity(LAUNCH_ASSISTANT_ACTIVITY_INTO_STACK,
-                    EXTRA_FINISH_SELF, "true");
+                    EXTRA_ASSISTANT_FINISH_SELF, "true");
         }
         waitForValidStateWithActivityTypeAndWindowingMode(
                 TEST_ACTIVITY, ACTIVITY_TYPE_STANDARD, WINDOWING_MODE_FULLSCREEN);
@@ -225,7 +227,7 @@ public class ActivityManagerAssistantStackTests extends ActivityManagerTestBase 
             assistantSession.setVoiceInteractionService(ASSISTANT_VOICE_INTERACTION_SERVICE);
 
             launchActivity(LAUNCH_ASSISTANT_ACTIVITY_INTO_STACK,
-                    Components.AssistantActivity.EXTRA_ENTER_PIP, "true");
+                    EXTRA_ASSISTANT_ENTER_PIP, "true");
         }
         waitForValidStateWithActivityType(ASSISTANT_ACTIVITY, ACTIVITY_TYPE_ASSISTANT);
         mAmWmState.assertDoesNotContainStack("Must not contain pinned stack.",
@@ -244,7 +246,7 @@ public class ActivityManagerAssistantStackTests extends ActivityManagerTestBase 
                     WINDOWING_MODE_SPLIT_SCREEN_SECONDARY);
             launchHomeActivity();
             launchActivity(LAUNCH_ASSISTANT_ACTIVITY_INTO_STACK,
-                    EXTRA_IS_TRANSLUCENT, "true");
+                    EXTRA_ASSISTANT_IS_TRANSLUCENT, "true");
             waitForValidStateWithActivityType(
                     TRANSLUCENT_ASSISTANT_ACTIVITY, ACTIVITY_TYPE_ASSISTANT);
             assertAssistantStackExists();
@@ -258,7 +260,7 @@ public class ActivityManagerAssistantStackTests extends ActivityManagerTestBase 
             removeStacksWithActivityTypes(ACTIVITY_TYPE_ASSISTANT);
             launchActivityOnDisplay(TEST_ACTIVITY, mAssistantDisplayId);
             launchActivity(LAUNCH_ASSISTANT_ACTIVITY_INTO_STACK,
-                    EXTRA_IS_TRANSLUCENT, "true");
+                    EXTRA_ASSISTANT_IS_TRANSLUCENT, "true");
             waitForValidStateWithActivityType(
                     TRANSLUCENT_ASSISTANT_ACTIVITY, ACTIVITY_TYPE_ASSISTANT);
             assertAssistantStackExists();
@@ -269,8 +271,8 @@ public class ActivityManagerAssistantStackTests extends ActivityManagerTestBase 
             removeStacksWithActivityTypes(ACTIVITY_TYPE_ASSISTANT);
             launchHomeActivity();
             launchActivity(LAUNCH_ASSISTANT_ACTIVITY_INTO_STACK,
-                    EXTRA_IS_TRANSLUCENT, "true",
-                    EXTRA_LAUNCH_NEW_TASK, getActivityName(TEST_ACTIVITY));
+                    EXTRA_ASSISTANT_IS_TRANSLUCENT, "true",
+                    EXTRA_ASSISTANT_LAUNCH_NEW_TASK, getActivityName(TEST_ACTIVITY));
             waitForValidStateWithActivityTypeAndWindowingMode(
                     TEST_ACTIVITY, ACTIVITY_TYPE_STANDARD, WINDOWING_MODE_FULLSCREEN);
             mAmWmState.assertHomeActivityVisible(false);
@@ -293,7 +295,7 @@ public class ActivityManagerAssistantStackTests extends ActivityManagerTestBase 
                 mAmWmState.assertContainsStack("Must contain docked stack.",
                         WINDOWING_MODE_SPLIT_SCREEN_PRIMARY, ACTIVITY_TYPE_STANDARD);
                 launchActivity(LAUNCH_ASSISTANT_ACTIVITY_INTO_STACK,
-                        EXTRA_IS_TRANSLUCENT, "true");
+                        EXTRA_ASSISTANT_IS_TRANSLUCENT, "true");
                 waitForValidStateWithActivityType(
                         TRANSLUCENT_ASSISTANT_ACTIVITY, ACTIVITY_TYPE_ASSISTANT);
                 assertAssistantStackExists();
@@ -354,7 +356,7 @@ public class ActivityManagerAssistantStackTests extends ActivityManagerTestBase 
             launchActivity(TEST_ACTIVITY);
             launchActivity(PIP_ACTIVITY, EXTRA_ENTER_PIP, "true");
             launchActivity(LAUNCH_ASSISTANT_ACTIVITY_INTO_STACK,
-                    EXTRA_IS_TRANSLUCENT, String.valueOf(true));
+                    EXTRA_ASSISTANT_IS_TRANSLUCENT, String.valueOf(true));
             waitForValidStateWithActivityType(
                     TRANSLUCENT_ASSISTANT_ACTIVITY, ACTIVITY_TYPE_ASSISTANT);
             assertAssistantStackExists();
