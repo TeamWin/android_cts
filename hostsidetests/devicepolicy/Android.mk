@@ -29,6 +29,9 @@ LOCAL_CTS_TEST_PACKAGE := android.adminhostside
 # tag this module as a cts test artifact
 LOCAL_COMPATIBILITY_SUITE := cts arcts vts general-tests
 
+# Need the dependency to build/run the module solely by atest.
+LOCAL_ADDITIONAL_DEPENDENCIES := $(TARGET_OUT_TESTCASES)/cts-current-api/current.api
+
 include $(BUILD_CTS_HOST_JAVA_LIBRARY)
 
 # Build the test APKs using their own makefiles
