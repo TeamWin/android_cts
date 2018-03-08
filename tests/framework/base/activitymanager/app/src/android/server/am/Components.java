@@ -170,6 +170,17 @@ public class Components extends ComponentsBase {
     }
 
     /**
+     * Extra key constants for {@link android.server.am.BottomActivity}.
+     *
+     * TODO(b/73346885): These constants should be in {@link android.server.am.BottomActivity}
+     * once the activity is moved to test APK.
+     */
+    public static class BottomActivity {
+        public static final String EXTRA_BOTTOM_WALLPAPER = "USE_WALLPAPER";
+        public static final String EXTRA_STOP_DELAY = "STOP_DELAY";
+    }
+
+    /**
      * Extra key constants for {@link android.server.am.BroadcastReceiverActivity}.
      *
      * TODO(b/73346885): These constants should be in
@@ -259,6 +270,18 @@ public class Components extends ComponentsBase {
         public static final String EXTRA_START_ACTIVITY = "start_activity";
         // Adds a click listener to finish this activity when it is clicked
         public static final String EXTRA_TAP_TO_FINISH = "tap_to_finish";
+    }
+
+    /**
+     * Extra key constants for {@link android.server.am.TopActivity} and
+     * {@link android.server.am.TranslucentTopActivity}.
+     *
+     * TODO(b/73346885): These constants should be in {@link android.server.am.TopActivity}
+     * once the activity is moved to test APK.
+     */
+    public static class TopActivity {
+        public static final String EXTRA_FINISH_DELAY = "FINISH_DELAY";
+        public static final String EXTRA_TOP_WALLPAPER = "USE_WALLPAPER";
     }
 
     /**
