@@ -32,13 +32,13 @@ LOCAL_SRC_FILES := \
     $(call all-named-files-under,Components.java, appPrereleaseSdk) \
     $(call all-named-files-under,Components.java, appSecondUid) \
     $(call all-named-files-under,Components.java, appThirdUid) \
+    $(call all-named-files-under,Components.java, displayserviceapp) \
     $(call all-named-files-under,Components.java, translucentapp) \
     $(call all-named-files-under,Components.java, translucentappsdk26) \
 
 LOCAL_STATIC_JAVA_LIBRARIES := \
     android-support-test \
-    cts-amwm-util \
-    cts-display-service-app-util
+    cts-amwm-util
 
 LOCAL_CTS_TEST_PACKAGE := android.server
 
