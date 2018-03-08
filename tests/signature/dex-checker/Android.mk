@@ -1,4 +1,4 @@
-# Copyright (C) 2017 The Android Open Source Project
+# Copyright (C) 2018 The Android Open Source Project
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -12,4 +12,14 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-include $(call all-subdir-makefiles)
+LOCAL_PATH := $(call my-dir)
+
+include $(CLEAR_VARS)
+LOCAL_MODULE := libcts_dexchecker
+LOCAL_MODULE_TAGS := optional
+LOCAL_SRC_FILES := dex-checker.cpp
+LOCAL_CFLAGS := -Wall -Werror
+LOCAL_C_INCLUDES := $(JNI_H_INCLUDE)
+LOCAL_SDK_VERSION := current
+LOCAL_NDK_STL_VARIANT := c++_static
+include $(BUILD_SHARED_LIBRARY)

@@ -23,26 +23,27 @@ import static android.app.WindowConfiguration.WINDOWING_MODE_PINNED;
 import static android.app.WindowConfiguration.WINDOWING_MODE_SPLIT_SCREEN_PRIMARY;
 import static android.app.WindowConfiguration.WINDOWING_MODE_SPLIT_SCREEN_SECONDARY;
 import static android.app.WindowConfiguration.WINDOWING_MODE_UNDEFINED;
-import static android.server.am.ActivityAndWindowManagersState.DEFAULT_DISPLAY_ID;
 import static android.server.am.ActivityManagerState.STATE_RESUMED;
 import static android.server.am.ComponentNameUtils.getActivityName;
 import static android.server.am.Components.ANIMATION_TEST_ACTIVITY;
 import static android.server.am.Components.ASSISTANT_ACTIVITY;
 import static android.server.am.Components.ASSISTANT_VOICE_INTERACTION_SERVICE;
 import static android.server.am.Components.AssistantActivity.EXTRA_ASSISTANT_DISPLAY_ID;
-import static android.server.am.Components.AssistantActivity.EXTRA_ENTER_PIP;
-import static android.server.am.Components.AssistantActivity.EXTRA_FINISH_SELF;
-import static android.server.am.Components.AssistantActivity.EXTRA_LAUNCH_NEW_TASK;
+import static android.server.am.Components.AssistantActivity.EXTRA_ASSISTANT_ENTER_PIP;
+import static android.server.am.Components.AssistantActivity.EXTRA_ASSISTANT_FINISH_SELF;
+import static android.server.am.Components.AssistantActivity.EXTRA_ASSISTANT_LAUNCH_NEW_TASK;
 import static android.server.am.Components.DOCKED_ACTIVITY;
 import static android.server.am.Components.LAUNCH_ASSISTANT_ACTIVITY_FROM_SESSION;
 import static android.server.am.Components.LAUNCH_ASSISTANT_ACTIVITY_INTO_STACK;
 import static android.server.am.Components.LaunchAssistantActivityIntoAssistantStack
-        .EXTRA_IS_TRANSLUCENT;
+        .EXTRA_ASSISTANT_IS_TRANSLUCENT;
 import static android.server.am.Components.PIP_ACTIVITY;
+import static android.server.am.Components.PipActivity.EXTRA_ENTER_PIP;
 import static android.server.am.Components.TEST_ACTIVITY;
 import static android.server.am.Components.TRANSLUCENT_ASSISTANT_ACTIVITY;
 import static android.server.am.Components.TestActivity.TEST_ACTIVITY_ACTION_FINISH_SELF;
 import static android.server.am.UiDeviceUtils.pressBackButton;
+import static android.view.Display.DEFAULT_DISPLAY;
 
 import static org.hamcrest.Matchers.hasSize;
 import static org.junit.Assert.assertEquals;
@@ -66,7 +67,7 @@ import org.junit.Test;
 @FlakyTest(bugId = 71875631)
 public class ActivityManagerAssistantStackTests extends ActivityManagerTestBase {
 
-    private int mAssistantDisplayId = DEFAULT_DISPLAY_ID;
+    private int mAssistantDisplayId = DEFAULT_DISPLAY;
 
     public void setUp() throws Exception {
         super.setUp();
@@ -170,7 +171,7 @@ public class ActivityManagerAssistantStackTests extends ActivityManagerTestBase 
             assistantSession.setVoiceInteractionService(ASSISTANT_VOICE_INTERACTION_SERVICE);
 
             launchActivityOnDisplay(LAUNCH_ASSISTANT_ACTIVITY_INTO_STACK, mAssistantDisplayId,
-                    EXTRA_LAUNCH_NEW_TASK, getActivityName(TEST_ACTIVITY),
+                    EXTRA_ASSISTANT_LAUNCH_NEW_TASK, getActivityName(TEST_ACTIVITY),
                     EXTRA_ASSISTANT_DISPLAY_ID, Integer.toString(mAssistantDisplayId));
         }
 
@@ -206,7 +207,7 @@ public class ActivityManagerAssistantStackTests extends ActivityManagerTestBase 
             assistantSession.setVoiceInteractionService(ASSISTANT_VOICE_INTERACTION_SERVICE);
 
             launchActivity(LAUNCH_ASSISTANT_ACTIVITY_INTO_STACK,
-                    EXTRA_FINISH_SELF, "true");
+                    EXTRA_ASSISTANT_FINISH_SELF, "true");
         }
         waitForValidStateWithActivityTypeAndWindowingMode(
                 TEST_ACTIVITY, ACTIVITY_TYPE_STANDARD, WINDOWING_MODE_FULLSCREEN);
@@ -226,7 +227,7 @@ public class ActivityManagerAssistantStackTests extends ActivityManagerTestBase 
             assistantSession.setVoiceInteractionService(ASSISTANT_VOICE_INTERACTION_SERVICE);
 
             launchActivity(LAUNCH_ASSISTANT_ACTIVITY_INTO_STACK,
-                    EXTRA_ENTER_PIP, "true");
+                    EXTRA_ASSISTANT_ENTER_PIP, "true");
         }
         waitForValidStateWithActivityType(ASSISTANT_ACTIVITY, ACTIVITY_TYPE_ASSISTANT);
         mAmWmState.assertDoesNotContainStack("Must not contain pinned stack.",
@@ -245,7 +246,7 @@ public class ActivityManagerAssistantStackTests extends ActivityManagerTestBase 
                     WINDOWING_MODE_SPLIT_SCREEN_SECONDARY);
             launchHomeActivity();
             launchActivity(LAUNCH_ASSISTANT_ACTIVITY_INTO_STACK,
-                    EXTRA_IS_TRANSLUCENT, "true");
+                    EXTRA_ASSISTANT_IS_TRANSLUCENT, "true");
             waitForValidStateWithActivityType(
                     TRANSLUCENT_ASSISTANT_ACTIVITY, ACTIVITY_TYPE_ASSISTANT);
             assertAssistantStackExists();
@@ -259,7 +260,7 @@ public class ActivityManagerAssistantStackTests extends ActivityManagerTestBase 
             removeStacksWithActivityTypes(ACTIVITY_TYPE_ASSISTANT);
             launchActivityOnDisplay(TEST_ACTIVITY, mAssistantDisplayId);
             launchActivity(LAUNCH_ASSISTANT_ACTIVITY_INTO_STACK,
-                    EXTRA_IS_TRANSLUCENT, "true");
+                    EXTRA_ASSISTANT_IS_TRANSLUCENT, "true");
             waitForValidStateWithActivityType(
                     TRANSLUCENT_ASSISTANT_ACTIVITY, ACTIVITY_TYPE_ASSISTANT);
             assertAssistantStackExists();
@@ -270,8 +271,8 @@ public class ActivityManagerAssistantStackTests extends ActivityManagerTestBase 
             removeStacksWithActivityTypes(ACTIVITY_TYPE_ASSISTANT);
             launchHomeActivity();
             launchActivity(LAUNCH_ASSISTANT_ACTIVITY_INTO_STACK,
-                    EXTRA_IS_TRANSLUCENT, "true",
-                    EXTRA_LAUNCH_NEW_TASK, getActivityName(TEST_ACTIVITY));
+                    EXTRA_ASSISTANT_IS_TRANSLUCENT, "true",
+                    EXTRA_ASSISTANT_LAUNCH_NEW_TASK, getActivityName(TEST_ACTIVITY));
             waitForValidStateWithActivityTypeAndWindowingMode(
                     TEST_ACTIVITY, ACTIVITY_TYPE_STANDARD, WINDOWING_MODE_FULLSCREEN);
             mAmWmState.assertHomeActivityVisible(false);
@@ -294,7 +295,7 @@ public class ActivityManagerAssistantStackTests extends ActivityManagerTestBase 
                 mAmWmState.assertContainsStack("Must contain docked stack.",
                         WINDOWING_MODE_SPLIT_SCREEN_PRIMARY, ACTIVITY_TYPE_STANDARD);
                 launchActivity(LAUNCH_ASSISTANT_ACTIVITY_INTO_STACK,
-                        EXTRA_IS_TRANSLUCENT, "true");
+                        EXTRA_ASSISTANT_IS_TRANSLUCENT, "true");
                 waitForValidStateWithActivityType(
                         TRANSLUCENT_ASSISTANT_ACTIVITY, ACTIVITY_TYPE_ASSISTANT);
                 assertAssistantStackExists();
@@ -355,7 +356,7 @@ public class ActivityManagerAssistantStackTests extends ActivityManagerTestBase 
             launchActivity(TEST_ACTIVITY);
             launchActivity(PIP_ACTIVITY, EXTRA_ENTER_PIP, "true");
             launchActivity(LAUNCH_ASSISTANT_ACTIVITY_INTO_STACK,
-                    EXTRA_IS_TRANSLUCENT, String.valueOf(true));
+                    EXTRA_ASSISTANT_IS_TRANSLUCENT, String.valueOf(true));
             waitForValidStateWithActivityType(
                     TRANSLUCENT_ASSISTANT_ACTIVITY, ACTIVITY_TYPE_ASSISTANT);
             assertAssistantStackExists();
@@ -392,7 +393,7 @@ public class ActivityManagerAssistantStackTests extends ActivityManagerTestBase 
     // Any 2D Activity in VR mode is run on a special VR virtual display, so check if the Assistant
     // is going to run on the same display as other tasks.
     protected boolean assistantRunsOnPrimaryDisplay() {
-        return mAssistantDisplayId == DEFAULT_DISPLAY_ID;
+        return mAssistantDisplayId == DEFAULT_DISPLAY;
     }
 
     /** Helper class to save, set, and restore

@@ -146,7 +146,7 @@ public class Components extends ComponentsBase {
     public static class TestActivity {
         // Finishes the activity
         public static final String TEST_ACTIVITY_ACTION_FINISH_SELF =
-                TestActivity.class.getName() + ".finish_self";
+                "android.server.am.TestActivity.finish_self";
         // Sets the fixed orientation (can be one of {@link ActivityInfo.ScreenOrientation}
         public static final String EXTRA_FIXED_ORIENTATION = "fixed_orientation";
     }
@@ -160,13 +160,28 @@ public class Components extends ComponentsBase {
      */
     public static class AssistantActivity {
         // Launches the given activity in onResume
-        public static final String EXTRA_LAUNCH_NEW_TASK = "launch_new_task";
-        // Finishes this activity in onResume, this happens after EXTRA_LAUNCH_NEW_TASK
-        public static final String EXTRA_FINISH_SELF = "finish_self";
+        public static final String EXTRA_ASSISTANT_LAUNCH_NEW_TASK = "launch_new_task";
+        // Finishes this activity in onResume, this happens after EXTRA_ASSISTANT_LAUNCH_NEW_TASK
+        public static final String EXTRA_ASSISTANT_FINISH_SELF = "finish_self";
         // Attempts to enter picture-in-picture in onResume
-        public static final String EXTRA_ENTER_PIP = "enter_pip";
+        public static final String EXTRA_ASSISTANT_ENTER_PIP = "enter_pip";
         // Display on which Assistant runs
         public static final String EXTRA_ASSISTANT_DISPLAY_ID = "assistant_display_id";
+    }
+
+    /**
+     * Extra key constants for {@link android.server.am.BroadcastReceiverActivity}.
+     *
+     * TODO(b/73346885): These constants should be in
+     * {@link android.server.am.BroadcastReceiverActivity} once the activity is moved to test APK.
+     */
+    public static class BroadcastReceiverActivity {
+        public static final String ACTION_TRIGGER_BROADCAST = "trigger_broadcast";
+        public static final String EXTRA_DISMISS_KEYGUARD = "dismissKeyguard";
+        public static final String EXTRA_DISMISS_KEYGUARD_METHOD = "dismissKeyguardMethod";
+        public static final String EXTRA_FINISH_BROADCAST = "finish";
+        public static final String EXTRA_MOVE_BROADCAST_TO_BACK = "moveToBack";
+        public static final String EXTRA_BROADCAST_ORIENTATION = "orientation";
     }
 
     /**
@@ -178,7 +193,94 @@ public class Components extends ComponentsBase {
      */
     public static class LaunchAssistantActivityIntoAssistantStack {
         // Launches the translucent assist activity
-        public static final String EXTRA_IS_TRANSLUCENT = "is_translucent";
+        public static final String EXTRA_ASSISTANT_IS_TRANSLUCENT = "is_translucent";
+    }
+
+    /** Action and extra key constants for {@link android.server.am.PipActivity}.
+     *
+     * TODO(b/73346885): These constants should be in {@link android.server.am.PipActivity}
+     * once the activity is moved to test APK.
+     */
+    public static class PipActivity {
+        // Intent action that this activity dynamically registers to enter picture-in-picture
+        public static final String ACTION_ENTER_PIP = "android.server.am.PipActivity.enter_pip";
+        // Intent action that this activity dynamically registers to move itself to the back
+        public static final String ACTION_MOVE_TO_BACK =
+                "android.server.am.PipActivity.move_to_back";
+        // Intent action that this activity dynamically registers to expand itself.
+        // If EXTRA_SET_ASPECT_RATIO_WITH_DELAY is set, it will also attempt to apply the aspect
+        // ratio after a short delay.
+        public static final String ACTION_EXPAND_PIP = "android.server.am.PipActivity.expand_pip";
+        // Intent action that this activity dynamically registers to set requested orientation.
+        // Will apply the oriention to the value set in the EXTRA_FIXED_ORIENTATION extra.
+        public static final String ACTION_SET_REQUESTED_ORIENTATION =
+                "android.server.am.PipActivity.set_requested_orientation";
+        // Intent action that will finish this activity
+        public static final String ACTION_FINISH = "android.server.am.PipActivity.finish";
+
+        // Adds an assertion that we do not ever get onStop() before we enter picture in picture
+        public static final String EXTRA_ASSERT_NO_ON_STOP_BEFORE_PIP =
+                "assert_no_on_stop_before_pip";
+        // Calls enterPictureInPicture() on creation
+        public static final String EXTRA_ENTER_PIP = "enter_pip";
+        // Used with EXTRA_AUTO_ENTER_PIP, value specifies the aspect ratio to enter PIP with
+        public static final String EXTRA_ENTER_PIP_ASPECT_RATIO_NUMERATOR =
+                "enter_pip_aspect_ratio_numerator";
+        // Used with EXTRA_AUTO_ENTER_PIP, value specifies the aspect ratio to enter PIP with
+        public static final String EXTRA_ENTER_PIP_ASPECT_RATIO_DENOMINATOR =
+                "enter_pip_aspect_ratio_denominator";
+        // Calls requestAutoEnterPictureInPicture() with the value provided
+        public static final String EXTRA_ENTER_PIP_ON_PAUSE = "enter_pip_on_pause";
+        // Finishes the activity at the end of onResume (after EXTRA_START_ACTIVITY is handled)
+        public static final String EXTRA_FINISH_SELF_ON_RESUME = "finish_self_on_resume";
+        // Sets the fixed orientation (can be one of {@link ActivityInfo.ScreenOrientation}
+        public static final String EXTRA_PIP_ORIENTATION = "fixed_orientation";
+        // The amount to delay to artificially introduce in onPause()
+        // (before EXTRA_ENTER_PIP_ON_PAUSE is processed)
+        public static final String EXTRA_ON_PAUSE_DELAY = "on_pause_delay";
+        // Calls enterPictureInPicture() again after onPictureInPictureModeChanged(false) is called
+        public static final String EXTRA_REENTER_PIP_ON_EXIT = "reenter_pip_on_exit";
+        // Calls setPictureInPictureAspectRatio with the aspect ratio specified in the value
+        public static final String EXTRA_SET_ASPECT_RATIO_DENOMINATOR =
+                "set_aspect_ratio_denominator";
+        // Calls setPictureInPictureAspectRatio with the aspect ratio specified in the value
+        public static final String EXTRA_SET_ASPECT_RATIO_NUMERATOR = "set_aspect_ratio_numerator";
+        // Calls setPictureInPictureAspectRatio with the aspect ratio specified in the value with a
+        // fixed delay
+        public static final String EXTRA_SET_ASPECT_RATIO_WITH_DELAY_NUMERATOR =
+                "set_aspect_ratio_with_delay_numerator";
+        // Calls setPictureInPictureAspectRatio with the aspect ratio specified in the value with a
+        // fixed delay
+        public static final String EXTRA_SET_ASPECT_RATIO_WITH_DELAY_DENOMINATOR =
+                "set_aspect_ratio_with_delay_denominator";
+        // Shows this activity over the keyguard
+        public static final String EXTRA_SHOW_OVER_KEYGUARD = "show_over_keyguard";
+        // Starts the activity (component name) provided by the value at the end of onCreate
+        public static final String EXTRA_START_ACTIVITY = "start_activity";
+        // Adds a click listener to finish this activity when it is clicked
+        public static final String EXTRA_TAP_TO_FINISH = "tap_to_finish";
+    }
+
+    /**
+     * Extra key constants for {@link android.server.am.VirtualDisplayActivity}.
+     *
+     * TODO(b/73346885): These constants should be in
+     * {@link android.server.am.VirtualDisplayActivity} once the activity is moved to test APK.
+     */
+    public static class VirtualDisplayActivity {
+        public static final String VIRTUAL_DISPLAY_PREFIX = "HostedVirtualDisplay";
+        public static final String KEY_CAN_SHOW_WITH_INSECURE_KEYGUARD =
+                "can_show_with_insecure_keyguard";
+        public static final String KEY_COMMAND = "command";
+        public static final String KEY_COUNT = "count";
+        public static final String KEY_DENSITY_DPI = "density_dpi";
+        public static final String KEY_LAUNCH_TARGET_COMPONENT = "launch_target_component";
+        public static final String KEY_PUBLIC_DISPLAY = "public_display";
+        public static final String KEY_RESIZE_DISPLAY = "resize_display";
+        // Value constants of {@link #KEY_COMMAND}.
+        public static final String COMMAND_CREATE_DISPLAY = "create_display";
+        public static final String COMMAND_DESTROY_DISPLAY = "destroy_display";
+        public static final String COMMAND_RESIZE_DISPLAY = "resize_display";
     }
 
     private static ComponentName component(String className) {

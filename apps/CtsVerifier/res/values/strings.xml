@@ -1872,6 +1872,7 @@ You should be prompted to select credentials; choose the ones you just installed
         4. Verify that the background color of the remaining image is blue.\n
         5. Verify that the header text says \"CtsVerifier\".\n
         6. Confirm your credentials and verify that the credentials you entered previously work.
+        7. The work app should be launched.
     </string>
     <string name="provisioning_byod_confirm_work_credentials_header">
         CtsVerifier
@@ -2573,6 +2574,15 @@ You should be prompted to select credentials; choose the ones you just installed
 
         1. Press the Go button to set a new password for the personal side.\n
         2. Lock and unlock the screen to verify that the personal side password was set correctly.\n
+    </string>
+    <string name="provisioning_byod_work_profile_widget">Work profile widget</string>
+    <string name="provisioning_byod_work_profile_widget_info">Verify that work profile widget can be added into launcher</string>
+    <string name="provisioning_byod_work_profile_widget_description">
+        This test verifies that the widget in work profile can be added into Launcher.\n
+
+        1. Go to home screen.\n
+        2. Add the widget titled \"CTS Verifier\" and badged with work profile briefcase to the home screen.\n
+        3. If you can add the widget to the home screen, please select \"pass\". Otherwise, select \"fail\".
     </string>
 
     <!-- Strings for DeviceOwnerNegativeTestActivity -->

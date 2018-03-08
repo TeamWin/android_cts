@@ -174,6 +174,7 @@ public class DeviceAdminTestReceiver extends DeviceAdminReceiver {
         filter.addAction(SetSupportMessageActivity.ACTION_SET_SUPPORT_MSG);
         filter.addAction(KeyChainTestActivity.ACTION_KEYCHAIN);
         filter.addAction(CommandReceiverActivity.ACTION_EXECUTE_COMMAND);
+        filter.addAction(WorkProfileWidgetActivity.ACTION_TEST_WORK_PROFILE_WIDGET);
         dpm.addCrossProfileIntentFilter(getWho(context), filter,
                 DevicePolicyManager.FLAG_MANAGED_CAN_ACCESS_PARENT);
 

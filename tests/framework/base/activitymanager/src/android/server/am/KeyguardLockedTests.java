@@ -18,9 +18,13 @@ package android.server.am;
 
 import static android.app.WindowConfiguration.ACTIVITY_TYPE_STANDARD;
 import static android.app.WindowConfiguration.WINDOWING_MODE_PINNED;
+import static android.server.am.Components.BroadcastReceiverActivity.ACTION_TRIGGER_BROADCAST;
+import static android.server.am.Components.BroadcastReceiverActivity.EXTRA_DISMISS_KEYGUARD;
 import static android.server.am.Components.DISMISS_KEYGUARD_ACTIVITY;
 import static android.server.am.Components.DISMISS_KEYGUARD_METHOD_ACTIVITY;
 import static android.server.am.Components.PIP_ACTIVITY;
+import static android.server.am.Components.PipActivity.ACTION_ENTER_PIP;
+import static android.server.am.Components.PipActivity.EXTRA_SHOW_OVER_KEYGUARD;
 import static android.server.am.Components.SHOW_WHEN_LOCKED_ACTIVITY;
 import static android.server.am.UiDeviceUtils.pressBackButton;
 
@@ -37,8 +41,10 @@ import org.junit.Test;
  */
 public class KeyguardLockedTests extends KeyguardTestBase {
 
-    private static final String ACTION_ENTER_PIP = "android.server.am.PipActivity.enter_pip";
-    private static final String EXTRA_SHOW_OVER_KEYGUARD = "show_over_keyguard";
+    // TODO(b/70247058): Use {@link Context#sendBroadcast(Intent).
+    // Shell command to dismiss keyguard via {@link #BROADCAST_RECEIVER_ACTIVITY}.
+    private static final String DISMISS_KEYGUARD_BROADCAST = "am broadcast -a "
+            + ACTION_TRIGGER_BROADCAST + " --ez " + EXTRA_DISMISS_KEYGUARD + " true";
 
     @Before
     @Override
@@ -107,7 +113,7 @@ public class KeyguardLockedTests extends KeyguardTestBase {
             launchActivity(SHOW_WHEN_LOCKED_ACTIVITY);
             mAmWmState.computeState(SHOW_WHEN_LOCKED_ACTIVITY);
             mAmWmState.assertVisibility(SHOW_WHEN_LOCKED_ACTIVITY, true);
-            executeShellCommand("am broadcast -a trigger_broadcast --ez dismissKeyguard true");
+            executeShellCommand(DISMISS_KEYGUARD_BROADCAST);
             lockScreenSession.enterAndConfirmLockCredential();
 
             // Make sure we stay on Keyguard.

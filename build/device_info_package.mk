@@ -96,6 +96,10 @@ LOCAL_MODULE_TAGS := optional
 # And when built explicitly put it in the data partition
 LOCAL_MODULE_PATH := $(TARGET_OUT_DATA_APPS)
 
+
+#TODO(b/72620511) remove this condition when AtsDeviceInfo can be built with SDK again
+ifneq ($(LOCAL_PRIVATE_PLATFORM_APIS),true)
 LOCAL_SDK_VERSION := current
+endif
 
 include $(BUILD_CTS_SUPPORT_PACKAGE)

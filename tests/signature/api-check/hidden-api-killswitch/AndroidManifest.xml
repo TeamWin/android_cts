@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!--
- * Copyright (C) 2017 The Android Open Source Project
+ * Copyright (C) 2018 The Android Open Source Project
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,13 +14,13 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  -->
+
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
-          xmlns:androidprv="http://schemas.android.com/apk/prv/res/android"
-          package="android.server.am.displayservice">
-    <uses-permission android:name="android.permission.FOREGROUND_SERVICE"/>
-    <uses-permission android:name="android.permission.WAKE_LOCK" />
-    <application android:label="CtsDisplayService">
-        <service android:name=".VirtualDisplayService"
-                 android:exported="true" />
-    </application>
+          package="android.signature.cts.api.killswitch">
+
+    <application/>
+
+    <instrumentation android:name="repackaged.android.test.InstrumentationTestRunner"
+                     android:targetPackage="android.signature.cts.api.killswitch"
+                     android:label="Hidden API Killswitch Test"/>
 </manifest>

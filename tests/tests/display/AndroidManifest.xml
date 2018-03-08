@@ -23,6 +23,8 @@
     <!-- For testing brightness slider tracking. -->
     <uses-permission android:name="android.permission.BRIGHTNESS_SLIDER_USAGE" />
     <uses-permission android:name="android.permission.WAKE_LOCK" />
+    <!-- For testing pushing brightness curves. -->
+    <uses-permission android:name="android.permission.CONFIGURE_DISPLAY_BRIGHTNESS" />
 
     <application>
         <uses-library android:name="android.test.runner" />

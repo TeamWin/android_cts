@@ -17,16 +17,31 @@
 package android.server.am;
 
 import static android.content.pm.PackageManager.FEATURE_ACTIVITIES_ON_SECONDARY_DISPLAYS;
-import static android.server.am.ActivityAndWindowManagersState.DEFAULT_DISPLAY_ID;
 import static android.server.am.ComponentNameUtils.getActivityName;
 import static android.server.am.Components.VIRTUAL_DISPLAY_ACTIVITY;
+import static android.server.am.Components.VirtualDisplayActivity.COMMAND_CREATE_DISPLAY;
+import static android.server.am.Components.VirtualDisplayActivity.COMMAND_DESTROY_DISPLAY;
+import static android.server.am.Components.VirtualDisplayActivity.COMMAND_RESIZE_DISPLAY;
+import static android.server.am.Components.VirtualDisplayActivity
+        .KEY_CAN_SHOW_WITH_INSECURE_KEYGUARD;
+import static android.server.am.Components.VirtualDisplayActivity.KEY_COMMAND;
+import static android.server.am.Components.VirtualDisplayActivity.KEY_COUNT;
+import static android.server.am.Components.VirtualDisplayActivity.KEY_DENSITY_DPI;
+import static android.server.am.Components.VirtualDisplayActivity.KEY_LAUNCH_TARGET_COMPONENT;
+import static android.server.am.Components.VirtualDisplayActivity.KEY_PUBLIC_DISPLAY;
+import static android.server.am.Components.VirtualDisplayActivity.KEY_RESIZE_DISPLAY;
+import static android.server.am.Components.VirtualDisplayActivity.VIRTUAL_DISPLAY_PREFIX;
 import static android.server.am.StateLogger.log;
+import static android.server.am.StateLogger.logAlways;
+import static android.view.Display.DEFAULT_DISPLAY;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.fail;
 
 import android.content.ComponentName;
 import android.content.res.Configuration;
+import android.os.SystemClock;
 import android.provider.Settings;
 import android.server.am.ActivityManagerState.ActivityDisplay;
 import android.server.am.settings.SettingsSession;
@@ -64,7 +79,7 @@ class ActivityManagerDisplayTestBase extends ActivityManagerTestBase {
     ActivityDisplay getDisplayState(List<ActivityDisplay> displays, int width, int height,
             int dpi) {
         for (ActivityDisplay display : displays) {
-            if (display.mId == DEFAULT_DISPLAY_ID) {
+            if (display.mId == DEFAULT_DISPLAY) {
                 continue;
             }
             final Configuration config = display.mFullConfiguration;
@@ -203,59 +218,63 @@ class ActivityManagerDisplayTestBase extends ActivityManagerTestBase {
         private final OverlayDisplayDevicesSession mOverlayDisplayDeviceSession =
                 new OverlayDisplayDevicesSession();
 
-        public VirtualDisplaySession setDensityDpi(int densityDpi) {
+        VirtualDisplaySession setDensityDpi(int densityDpi) {
             mDensityDpi = densityDpi;
             return this;
         }
 
-        public VirtualDisplaySession setLaunchInSplitScreen(boolean launchInSplitScreen) {
+        VirtualDisplaySession setLaunchInSplitScreen(boolean launchInSplitScreen) {
             mLaunchInSplitScreen = launchInSplitScreen;
             return this;
         }
 
-        public VirtualDisplaySession setCanShowWithInsecureKeyguard(
-                boolean canShowWithInsecureKeyguard) {
+        VirtualDisplaySession setCanShowWithInsecureKeyguard(boolean canShowWithInsecureKeyguard) {
             mCanShowWithInsecureKeyguard = canShowWithInsecureKeyguard;
             return this;
         }
 
-        public VirtualDisplaySession setPublicDisplay(boolean publicDisplay) {
+        VirtualDisplaySession setPublicDisplay(boolean publicDisplay) {
             mPublicDisplay = publicDisplay;
             return this;
         }
 
-        public VirtualDisplaySession setResizeDisplay(boolean resizeDisplay) {
+        VirtualDisplaySession setResizeDisplay(boolean resizeDisplay) {
             mResizeDisplay = resizeDisplay;
             return this;
         }
 
-        public VirtualDisplaySession setLaunchActivity(ComponentName launchActivity) {
+        VirtualDisplaySession setLaunchActivity(ComponentName launchActivity) {
             mLaunchActivity = launchActivity;
             return this;
         }
 
-        public VirtualDisplaySession setSimulateDisplay(boolean simulateDisplay) {
+        VirtualDisplaySession setSimulateDisplay(boolean simulateDisplay) {
             mSimulateDisplay = simulateDisplay;
             return this;
         }
 
-        public VirtualDisplaySession setMustBeCreated(boolean mustBeCreated) {
+        VirtualDisplaySession setMustBeCreated(boolean mustBeCreated) {
             mMustBeCreated = mustBeCreated;
             return this;
         }
 
         @Nullable
-        public ActivityDisplay createDisplay() throws Exception {
+        ActivityDisplay createDisplay() throws Exception {
             return createDisplays(1).stream().findFirst().orElse(null);
         }
 
         @NonNull
-        public List<ActivityDisplay> createDisplays(int count) throws Exception {
+        List<ActivityDisplay> createDisplays(int count) throws Exception {
             if (mSimulateDisplay) {
                 return simulateDisplay();
             } else {
                 return createVirtualDisplays(count);
             }
+        }
+
+        void resizeDisplay() {
+            executeShellCommand(getAmStartCmd(VIRTUAL_DISPLAY_ACTIVITY)
+                    + " -f 0x20000000" + " --es " + KEY_COMMAND + " " + COMMAND_RESIZE_DISPLAY);
         }
 
         @Override
@@ -301,7 +320,7 @@ class ActivityManagerDisplayTestBase extends ActivityManagerTestBase {
          * @return A list of {@link ActivityDisplay} that represent newly created displays.
          * @throws Exception
          */
-        private List<ActivityDisplay> createVirtualDisplays(int displayCount) throws Exception {
+        private List<ActivityDisplay> createVirtualDisplays(int displayCount) {
             // Start an activity that is able to create virtual displays.
             if (mLaunchInSplitScreen) {
                 getLaunchActivityBuilder()
@@ -322,20 +341,20 @@ class ActivityManagerDisplayTestBase extends ActivityManagerTestBase {
             final StringBuilder createVirtualDisplayCommand = new StringBuilder(
                     getAmStartCmd(VIRTUAL_DISPLAY_ACTIVITY))
                     .append(" -f 0x20000000")
-                    .append(" --es command create_display");
+                    .append(" --es " + KEY_COMMAND + " " + COMMAND_CREATE_DISPLAY);
             if (mDensityDpi != INVALID_DENSITY_DPI) {
                 createVirtualDisplayCommand
-                        .append(" --ei density_dpi ")
+                        .append(" --ei " + KEY_DENSITY_DPI + " ")
                         .append(mDensityDpi);
             }
-            createVirtualDisplayCommand.append(" --ei count ").append(displayCount)
-                    .append(" --ez can_show_with_insecure_keyguard ")
+            createVirtualDisplayCommand.append(" --ei " + KEY_COUNT + " ").append(displayCount)
+                    .append(" --ez " + KEY_CAN_SHOW_WITH_INSECURE_KEYGUARD + " ")
                     .append(mCanShowWithInsecureKeyguard)
-                    .append(" --ez public_display ").append(mPublicDisplay)
-                    .append(" --ez resize_display ").append(mResizeDisplay);
+                    .append(" --ez " + KEY_PUBLIC_DISPLAY + " ").append(mPublicDisplay)
+                    .append(" --ez " + KEY_RESIZE_DISPLAY + " ").append(mResizeDisplay);
             if (mLaunchActivity != null) {
                 createVirtualDisplayCommand
-                        .append(" --es launch_target_component ")
+                        .append(" --es " + KEY_LAUNCH_TARGET_COMPONENT + " ")
                         .append(getActivityName(mLaunchActivity));
             }
             executeShellCommand(createVirtualDisplayCommand.toString());
@@ -347,38 +366,29 @@ class ActivityManagerDisplayTestBase extends ActivityManagerTestBase {
         /**
          * Destroy existing virtual display.
          */
-        void destroyVirtualDisplays() throws Exception {
+        void destroyVirtualDisplays() {
             final String destroyVirtualDisplayCommand = getAmStartCmd(VIRTUAL_DISPLAY_ACTIVITY)
                     + " -f 0x20000000"
-                    + " --es command destroy_display";
+                    + " --es " + KEY_COMMAND + " " + COMMAND_DESTROY_DISPLAY;
             executeShellCommand(destroyVirtualDisplayCommand);
             waitForDisplaysDestroyed();
         }
 
-        private void waitForDisplaysDestroyed() throws Exception {
-            int tries = 0;
-            boolean done;
-            do {
-                done = !isHostedVirtualDisplayPresent();
-                if (!done && tries > 0) {
-                    log("Waiting for hosted displays destruction");
-                    try {
-                        Thread.sleep(500);
-                    } catch (InterruptedException e) {
-                        // Oh well
-                    }
+        private void waitForDisplaysDestroyed() {
+            for (int retry = 1; retry <= 5; retry++) {
+                if (!isHostedVirtualDisplayPresent()) {
+                    return;
                 }
-
-                tries++;
-            } while (tries < 10 && !done);
-
-            assertTrue(done);
+                logAlways("Waiting for hosted displays destruction... retry=" + retry);
+                SystemClock.sleep(500);
+            }
+            fail("Waiting for hosted displays destruction failed.");
         }
 
-        private boolean isHostedVirtualDisplayPresent() throws Exception {
+        private boolean isHostedVirtualDisplayPresent() {
             mAmWmState.computeState(true);
             return mAmWmState.getWmState().getDisplays().stream().anyMatch(
-                    d -> d.getName() != null && d.getName().contains("HostedVirtualDisplay"));
+                    d -> d.getName() != null && d.getName().contains(VIRTUAL_DISPLAY_PREFIX));
         }
 
         /**
@@ -388,7 +398,7 @@ class ActivityManagerDisplayTestBase extends ActivityManagerTestBase {
          * @return list of new displays, empty list if no new display is created.
          */
         private List<ActivityDisplay> assertAndGetNewDisplays(int newDisplayCount,
-                List<ActivityDisplay> originalDS) throws Exception {
+                List<ActivityDisplay> originalDS) {
             final int originalDisplayCount = originalDS.size();
 
             // Wait for the display(s) to be created and get configurations.
