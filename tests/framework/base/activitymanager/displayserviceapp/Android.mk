@@ -12,4 +12,24 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-include $(call all-subdir-makefiles)
+LOCAL_PATH:= $(call my-dir)
+
+include $(CLEAR_VARS)
+
+# Don't include this package in any target.
+LOCAL_MODULE_TAGS := tests
+
+LOCAL_STATIC_JAVA_LIBRARIES := cts-am-app-base
+
+LOCAL_SRC_FILES := $(call all-java-files-under, src) \
+
+LOCAL_SDK_VERSION := test_current
+
+# Tag this module as a cts test artifact
+LOCAL_COMPATIBILITY_SUITE := cts vts general-tests
+
+LOCAL_PACKAGE_NAME := CtsDisplayServiceApp
+
+include $(call all-makefiles-under,$(LOCAL_PATH))
+
+include $(BUILD_CTS_SUPPORT_PACKAGE)
