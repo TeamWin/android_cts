@@ -474,6 +474,17 @@ public class StrictModeTest {
         context.stopService(intent);
     }
 
+    public void testExplicitGc() throws Exception {
+        StrictMode.setThreadPolicy(new StrictMode.ThreadPolicy.Builder()
+                .detectExplicitGc()
+                .penaltyLog()
+                .build());
+
+        assertViolation("StrictModeExplicitGcViolation", () -> {
+            Runtime.getRuntime().gc();
+        });
+    }
+
     private static void assertViolation(String expected, ThrowingRunnable r) throws Exception {
         inspectViolation(r, violation -> assertThat(violation.getStackTrace()).contains(expected));
     }
