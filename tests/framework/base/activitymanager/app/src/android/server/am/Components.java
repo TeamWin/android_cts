@@ -196,6 +196,19 @@ public class Components extends ComponentsBase {
     }
 
     /**
+     *  Logging constants for {@link android.server.am.KeyguardDismissLoggerCallback}.
+     *
+     * TODO(b/73346885): These constants should be in
+     * {@link android.server.am.KeyguardDismissLoggerCallback} once the class is moved to test APK.
+     */
+    public static class KeyguardDismissLoggerCallback {
+        public static final String KEYGUARD_DISMISS_LOG_TAG = "KeyguardDismissLoggerCallback";
+        public static final String ENTRY_ON_DISMISS_CANCELLED = "onDismissCancelled";
+        public static final String ENTRY_ON_DISMISS_ERROR = "onDismissError";
+        public static final String ENTRY_ON_DISMISS_SUCCEEDED = "onDismissSucceeded";
+    }
+
+    /**
      * Extra key constants for {@link #LAUNCH_ASSISTANT_ACTIVITY_INTO_STACK}.
      *
      * TODO(b/73346885): These constants should be in
