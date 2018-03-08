@@ -18,15 +18,6 @@ package android.server.am.displayservice;
 
 import static android.hardware.display.DisplayManager.VIRTUAL_DISPLAY_FLAG_OWN_CONTENT_ONLY;
 import static android.hardware.display.DisplayManager.VIRTUAL_DISPLAY_FLAG_PRESENTATION;
-import static android.server.am.displayservice.Components.VirtualDisplayService.COMMAND_CREATE;
-import static android.server.am.displayservice.Components.VirtualDisplayService.COMMAND_DESTROY;
-import static android.server.am.displayservice.Components.VirtualDisplayService.COMMAND_OFF;
-import static android.server.am.displayservice.Components.VirtualDisplayService.COMMAND_ON;
-import static android.server.am.displayservice.Components.VirtualDisplayService.EXTRA_COMMAND;
-import static android.server.am.displayservice.Components.VirtualDisplayService
-        .EXTRA_SHOW_CONTENT_WHEN_LOCKED;
-import static android.server.am.displayservice.Components.VirtualDisplayService
-        .VIRTUAL_DISPLAY_NAME;
 
 import android.app.Notification;
 import android.app.NotificationChannel;
@@ -42,6 +33,17 @@ import android.util.Log;
 
 public class VirtualDisplayService extends Service {
     private static final String TAG = VirtualDisplayService.class.getSimpleName();
+
+    public static final String VIRTUAL_DISPLAY_NAME = "CtsVirtualDisplay";
+    // String extra key for command. Value should be one of COMMAND_* below.
+    public static final String EXTRA_COMMAND = "command";
+    // Boolean extra key to show keyguard on the display.
+    public static final String EXTRA_SHOW_CONTENT_WHEN_LOCKED = "show_content_when_locked";
+    // Extra values for {@link #EXTRA_COMMAND}.
+    public static final String COMMAND_CREATE = "create";
+    public static final String COMMAND_DESTROY = "destroy";
+    public static final String COMMAND_OFF = "off";
+    public static final String COMMAND_ON = "on";
 
     /** See {@link DisplayManager#VIRTUAL_DISPLAY_FLAG_CAN_SHOW_WITH_INSECURE_KEYGUARD}. */
     private static final int VIRTUAL_DISPLAY_FLAG_CAN_SHOW_WITH_INSECURE_KEYGUARD = 1 << 5;
