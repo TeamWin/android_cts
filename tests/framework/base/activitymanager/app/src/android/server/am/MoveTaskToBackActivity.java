@@ -24,8 +24,6 @@ import android.os.Bundle;
  */
 public class MoveTaskToBackActivity extends AbstractLifecycleLogActivity {
 
-    private static final String TAG = MoveTaskToBackActivity.class.getSimpleName();
-
     private String mFinishPoint;
 
     @Override
@@ -53,10 +51,4 @@ public class MoveTaskToBackActivity extends AbstractLifecycleLogActivity {
             moveTaskToBack(true /* nonRoot */);
         }
     }
-
-    @Override
-    protected String getTag() {
-        return TAG;
-    }
-
 }

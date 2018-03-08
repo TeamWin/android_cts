@@ -17,11 +17,4 @@
 package android.server.am;
 
 public class NonResizeableActivity extends AbstractLifecycleLogActivity {
-
-     private static final String TAG = NonResizeableActivity.class.getSimpleName();
-
-    @Override
-    protected String getTag() {
-        return TAG;
-    }
 }

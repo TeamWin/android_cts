@@ -17,11 +17,4 @@
 package android.server.am;
 
 public class NoRelaunchActivity extends AbstractLifecycleLogActivity {
-
-    private static final String TAG = NoRelaunchActivity.class.getSimpleName();
-
-    @Override
-    protected String getTag() {
-        return TAG;
-    }
 }

@@ -17,10 +17,4 @@
 package android.server.am;
 
 public class TurnScreenOnShowOnLockActivity extends AbstractLifecycleLogActivity {
-    private static final String TAG = TurnScreenOnShowOnLockActivity.class.getSimpleName();
-
-    @Override
-    protected String getTag() {
-        return TAG;
-    }
 }
