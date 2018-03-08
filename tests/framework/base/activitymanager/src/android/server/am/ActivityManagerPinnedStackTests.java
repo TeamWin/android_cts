@@ -22,7 +22,6 @@ import static android.app.WindowConfiguration.ACTIVITY_TYPE_STANDARD;
 import static android.app.WindowConfiguration.WINDOWING_MODE_FULLSCREEN;
 import static android.app.WindowConfiguration.WINDOWING_MODE_PINNED;
 import static android.app.WindowConfiguration.WINDOWING_MODE_UNDEFINED;
-import static android.server.am.ActivityAndWindowManagersState.DEFAULT_DISPLAY_ID;
 import static android.server.am.ActivityManagerState.STATE_DESTROYED;
 import static android.server.am.ActivityManagerState.STATE_RESUMED;
 import static android.server.am.ActivityManagerState.STATE_STOPPED;
@@ -66,6 +65,7 @@ import static android.server.am.Components.TRANSLUCENT_TEST_ACTIVITY;
 import static android.server.am.Components.TestActivity.EXTRA_FIXED_ORIENTATION;
 import static android.server.am.Components.TestActivity.TEST_ACTIVITY_ACTION_FINISH_SELF;
 import static android.server.am.UiDeviceUtils.pressWindowButton;
+import static android.view.Display.DEFAULT_DISPLAY;
 
 import static org.hamcrest.Matchers.lessThan;
 import static org.junit.Assert.assertEquals;
@@ -587,10 +587,10 @@ public class ActivityManagerPinnedStackTests extends ActivityManagerTestBase {
         // Relaunch the activity to fullscreen to trigger the activity to exit and re-enter pip
         launchActivity(PIP_ACTIVITY);
         mAmWmState.waitForWithAmState(amState ->
-                amState.getFrontStackWindowingMode(DEFAULT_DISPLAY_ID) == WINDOWING_MODE_FULLSCREEN,
+                amState.getFrontStackWindowingMode(DEFAULT_DISPLAY) == WINDOWING_MODE_FULLSCREEN,
                 "Waiting for PIP to exit to fullscreen");
         mAmWmState.waitForWithAmState(amState ->
-                amState.getFrontStackWindowingMode(DEFAULT_DISPLAY_ID) == WINDOWING_MODE_PINNED,
+                amState.getFrontStackWindowingMode(DEFAULT_DISPLAY) == WINDOWING_MODE_PINNED,
                 "Waiting to re-enter PIP");
         mAmWmState.assertHomeActivityVisible(true);
     }
@@ -611,10 +611,10 @@ public class ActivityManagerPinnedStackTests extends ActivityManagerTestBase {
         // Relaunch the activity to fullscreen to trigger the activity to exit and re-enter pip
         launchActivity(PIP_ACTIVITY);
         mAmWmState.waitForWithAmState(amState ->
-                amState.getFrontStackWindowingMode(DEFAULT_DISPLAY_ID) == WINDOWING_MODE_FULLSCREEN,
+                amState.getFrontStackWindowingMode(DEFAULT_DISPLAY) == WINDOWING_MODE_FULLSCREEN,
                 "Waiting for PIP to exit to fullscreen");
         mAmWmState.waitForWithAmState(amState ->
-                amState.getFrontStackWindowingMode(DEFAULT_DISPLAY_ID) == WINDOWING_MODE_PINNED,
+                amState.getFrontStackWindowingMode(DEFAULT_DISPLAY) == WINDOWING_MODE_PINNED,
                 "Waiting to re-enter PIP");
         mAmWmState.assertVisibility(TEST_ACTIVITY, true);
     }

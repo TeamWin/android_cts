@@ -17,7 +17,6 @@
 package android.server.am;
 
 import static android.content.pm.PackageManager.FEATURE_ACTIVITIES_ON_SECONDARY_DISPLAYS;
-import static android.server.am.ActivityAndWindowManagersState.DEFAULT_DISPLAY_ID;
 import static android.server.am.ComponentNameUtils.getActivityName;
 import static android.server.am.Components.VIRTUAL_DISPLAY_ACTIVITY;
 import static android.server.am.Components.VirtualDisplayActivity.COMMAND_CREATE_DISPLAY;
@@ -34,6 +33,7 @@ import static android.server.am.Components.VirtualDisplayActivity.KEY_RESIZE_DIS
 import static android.server.am.Components.VirtualDisplayActivity.VIRTUAL_DISPLAY_PREFIX;
 import static android.server.am.StateLogger.log;
 import static android.server.am.StateLogger.logAlways;
+import static android.view.Display.DEFAULT_DISPLAY;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
@@ -79,7 +79,7 @@ class ActivityManagerDisplayTestBase extends ActivityManagerTestBase {
     ActivityDisplay getDisplayState(List<ActivityDisplay> displays, int width, int height,
             int dpi) {
         for (ActivityDisplay display : displays) {
-            if (display.mId == DEFAULT_DISPLAY_ID) {
+            if (display.mId == DEFAULT_DISPLAY) {
                 continue;
             }
             final Configuration config = display.mFullConfiguration;

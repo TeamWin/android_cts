@@ -61,6 +61,8 @@ import static android.server.am.UiDeviceUtils.pressSleepButton;
 import static android.server.am.UiDeviceUtils.pressUnlockButton;
 import static android.server.am.UiDeviceUtils.pressWakeupButton;
 import static android.server.am.UiDeviceUtils.waitForDeviceIdle;
+import static android.view.Display.DEFAULT_DISPLAY;
+import static android.view.Display.INVALID_DISPLAY;
 
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
@@ -78,7 +80,6 @@ import android.server.am.settings.SettingsSession;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
 import android.support.test.InstrumentationRegistry;
-import android.view.Display;
 
 import com.android.compatibility.common.util.SystemUtil;
 
@@ -135,8 +136,6 @@ public abstract class ActivityManagerTestBase {
     private static final String AM_NO_HOME_SCREEN = "am no-home-screen";
 
     private static final String LOCK_CREDENTIAL = "1234";
-
-    private static final int INVALID_DISPLAY_ID = Display.INVALID_DISPLAY;
 
     private static final int UI_MODE_TYPE_MASK = 0x0f;
     private static final int UI_MODE_TYPE_VR_HEADSET = 0x07;
@@ -287,8 +286,8 @@ public abstract class ActivityManagerTestBase {
     @Deprecated
     protected int launchActivityInNewDynamicStack(ComponentName activityName) {
         HashSet<Integer> stackIds = getStackIds();
-        executeShellCommand("am stack start " + ActivityAndWindowManagersState.DEFAULT_DISPLAY_ID
-                + " " + getActivityName(activityName));
+        executeShellCommand("am stack start " + DEFAULT_DISPLAY + " "
+                + getActivityName(activityName));
         HashSet<Integer> newStackIds = getStackIds();
         newStackIds.removeAll(stackIds);
         if (newStackIds.isEmpty()) {
@@ -1244,7 +1243,7 @@ public abstract class ActivityManagerTestBase {
         private boolean mRandomData;
         private boolean mNewTask;
         private boolean mMultipleTask;
-        private int mDisplayId = INVALID_DISPLAY_ID;
+        private int mDisplayId = INVALID_DISPLAY;
         // A proxy activity that launches other activities including mTargetActivityName
         private ComponentName mLaunchingActivity = LAUNCHING_ACTIVITY;
         private boolean mReorderToFront;
@@ -1409,7 +1408,7 @@ public abstract class ActivityManagerTestBase {
             if (mReorderToFront) {
                 commandBuilder.append(" --ez " + KEY_REORDER_TO_FRONT + " true");
             }
-            if (mDisplayId != INVALID_DISPLAY_ID) {
+            if (mDisplayId != INVALID_DISPLAY) {
                 commandBuilder.append(" --ei " + KEY_DISPLAY_ID + " ").append(mDisplayId);
             }
 
