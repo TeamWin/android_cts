@@ -3938,6 +3938,7 @@ Follow the instructions on the screen to measure the frequency response for the 
     <!-- Strings for voicemail broadcast test -->
     <string name="voicemail_broadcast_test">Voicemail Broadcast Test</string>
     <string name="voicemail_broadcast_instructions">This test verifies that the default dialer can intercept the voicemail notification. The test must be conducted on a SIM with visual voicemail disabled</string>
+    <string name="voicemail_broadcast_no_carrier_support">The carrier does not support voicemail, this test is not applicable.</string>
     <string name="voicemail_leave_voicemail">Send a voicemail to the device, CTS verifier should receive a voicemail notification broadcast</string>
     <string name="voicemail_broadcast_received">Voicemail broadcast Received</string>
 
