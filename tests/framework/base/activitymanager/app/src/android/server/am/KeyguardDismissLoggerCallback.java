@@ -16,39 +16,43 @@
 
 package android.server.am;
 
+import static android.server.am.Components.KeyguardDismissLoggerCallback.ENTRY_ON_DISMISS_CANCELLED;
+import static android.server.am.Components.KeyguardDismissLoggerCallback.ENTRY_ON_DISMISS_ERROR;
+import static android.server.am.Components.KeyguardDismissLoggerCallback.ENTRY_ON_DISMISS_SUCCEEDED;
+import static android.server.am.Components.KeyguardDismissLoggerCallback.KEYGUARD_DISMISS_LOG_TAG;
+
 import android.app.KeyguardManager;
 import android.app.KeyguardManager.KeyguardDismissCallback;
 import android.content.Context;
 import android.util.Log;
 
-public class KeyguardDismissLoggerCallback extends KeyguardDismissCallback {
-
-    private final String TAG = "KeyguardDismissLoggerCallback";
+class KeyguardDismissLoggerCallback extends KeyguardDismissCallback {
 
     private final Context mContext;
 
-    public KeyguardDismissLoggerCallback(Context context) {
+    KeyguardDismissLoggerCallback(Context context) {
         mContext = context;
     }
 
     @Override
     public void onDismissError() {
-        Log.i(TAG, "onDismissError");
+        Log.i(KEYGUARD_DISMISS_LOG_TAG, ENTRY_ON_DISMISS_ERROR);
     }
 
     @Override
     public void onDismissSucceeded() {
         if (mContext.getSystemService(KeyguardManager.class).isDeviceLocked()) {
-            // Device is still locked? What a fail. Don't print "onDismissSucceded" such that the
+            // Device is still locked? What a fail. Don't print "onDismissSucceeded" such that the
             // log fails.
-            Log.i(TAG, "dismiss succedded was called but device is still locked.");
+            Log.i(KEYGUARD_DISMISS_LOG_TAG,
+                    "dismiss succeeded was called but device is still locked.");
         } else {
-            Log.i(TAG, "onDismissSucceeded");
+            Log.i(KEYGUARD_DISMISS_LOG_TAG, ENTRY_ON_DISMISS_SUCCEEDED);
         }
     }
 
     @Override
     public void onDismissCancelled() {
-        Log.i(TAG, "onDismissCancelled");
+        Log.i(KEYGUARD_DISMISS_LOG_TAG, ENTRY_ON_DISMISS_CANCELLED);
     }
 }
