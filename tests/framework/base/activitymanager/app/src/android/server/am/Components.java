@@ -170,6 +170,21 @@ public class Components extends ComponentsBase {
     }
 
     /**
+     * Extra key constants for {@link android.server.am.BroadcastReceiverActivity}.
+     *
+     * TODO(b/73346885): These constants should be in
+     * {@link android.server.am.BroadcastReceiverActivity} once the activity is moved to test APK.
+     */
+    public static class BroadcastReceiverActivity {
+        public static final String ACTION_TRIGGER_BROADCAST = "trigger_broadcast";
+        public static final String EXTRA_DISMISS_KEYGUARD = "dismissKeyguard";
+        public static final String EXTRA_DISMISS_KEYGUARD_METHOD = "dismissKeyguardMethod";
+        public static final String EXTRA_FINISH_BROADCAST = "finish";
+        public static final String EXTRA_MOVE_BROADCAST_TO_BACK = "moveToBack";
+        public static final String EXTRA_BROADCAST_ORIENTATION = "orientation";
+    }
+
+    /**
      * Extra key constants for {@link #LAUNCH_ASSISTANT_ACTIVITY_INTO_STACK}.
      *
      * TODO(b/73346885): These constants should be in
