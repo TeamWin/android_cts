@@ -19,10 +19,6 @@ package android.server.am;
 import android.content.res.Configuration;
 
 public class LandscapeOrientationActivity extends AbstractLifecycleLogActivity {
-    @Override
-    protected String getTag() {
-        return "LandscapeOrientationActivity";
-    }
 
     @Override
     protected void onResume() {

@@ -15,15 +15,10 @@
  */
 
 package android.server.am;
+
 import android.view.WindowManager;
 
 public class TurnScreenOnWithRelayoutActivity extends AbstractLifecycleLogActivity {
-    private static final String TAG = TurnScreenOnWithRelayoutActivity.class.getSimpleName();
-
-    @Override
-    protected String getTag() {
-        return TAG;
-    }
 
     @Override
     protected void onStart() {

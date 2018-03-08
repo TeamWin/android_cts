@@ -28,15 +28,8 @@ import android.view.WindowManager;
 
 public class BottomActivity extends AbstractLifecycleLogActivity {
 
-    private static final String TAG = BottomActivity.class.getSimpleName();
-
     private int mStopDelay;
     private View mFloatingWindow;
-
-    @Override
-    protected String getTag() {
-        return TAG;
-    }
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -75,16 +68,16 @@ public class BottomActivity extends AbstractLifecycleLogActivity {
 
     @Override
     public void onResume() {
-        Log.d(TAG, "onResume() E");
+        Log.d(getTag(), "onResume() E");
         super.onResume();
 
         if (mStopDelay > 0) {
             // Refresh floating window
-            Log.d(TAG, "Scheduling invalidate Floating Window in onResume()");
+            Log.d(getTag(), "Scheduling invalidate Floating Window in onResume()");
             mFloatingWindow.invalidate();
         }
 
-        Log.d(TAG, "onResume() X");
+        Log.d(getTag(), "onResume() X");
     }
 
     @Override
@@ -92,11 +85,11 @@ public class BottomActivity extends AbstractLifecycleLogActivity {
         super.onStop();
 
         if (mStopDelay > 0) {
-            Log.d(TAG, "Stalling onStop() by " + mStopDelay + " ms...");
+            Log.d(getTag(), "Stalling onStop() by " + mStopDelay + " ms...");
             SystemClock.sleep(mStopDelay);
 
             // Refresh floating window
-            Log.d(TAG, "Scheduling invalidate Floating Window in onStop()");
+            Log.d(getTag(), "Scheduling invalidate Floating Window in onStop()");
             mFloatingWindow.invalidate();
         }
     }

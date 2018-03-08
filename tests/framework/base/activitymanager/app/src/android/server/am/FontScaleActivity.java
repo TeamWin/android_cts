@@ -15,7 +15,6 @@
  */
 package android.server.am;
 
-import android.content.res.Configuration;
 import android.content.res.TypedArray;
 import android.content.res.XmlResourceParser;
 import android.os.Bundle;
@@ -29,7 +28,6 @@ import org.xmlpull.v1.XmlPullParserException;
 import java.io.IOException;
 
 public class FontScaleActivity extends AbstractLifecycleLogActivity {
-    private static final String TAG = FontScaleActivity.class.getSimpleName();
 
     @Override
     protected void onCreate(Bundle icicle) {
@@ -67,10 +65,4 @@ public class FontScaleActivity extends AbstractLifecycleLogActivity {
         final int fontActivityDpi = getResources().getDisplayMetrics().densityDpi;
         Log.i(getTag(), "fontActivityDpi=" + fontActivityDpi);
     }
-
-    @Override
-    protected String getTag() {
-        return TAG;
-    }
-
 }
