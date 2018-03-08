@@ -17,10 +17,4 @@
 package android.server.am;
 
 public class TurnScreenOnAttrActivity extends AbstractLifecycleLogActivity {
-    private static final String TAG = TurnScreenOnAttrActivity.class.getSimpleName();
-
-    @Override
-    protected String getTag() {
-        return TAG;
-    }
 }
