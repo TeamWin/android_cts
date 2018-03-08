@@ -182,7 +182,7 @@ public class UseSharedLibraryTest {
         PackageInfo libPackageInfo = InstrumentationRegistry.getInstrumentation()
                 .getContext().getPackageManager().getPackageInfo(STATIC_LIB_PROVIDER_PKG, 0);
         assertEquals(STATIC_LIB_PROVIDER_PKG, libPackageInfo.packageName);
-        assertSame(1, libPackageInfo.versionCode);
+        assertEquals(1, libPackageInfo.versionCode);
 
         // Make sure we see the lib we depend on via getting installed packages
         List<PackageInfo> installedPackages = InstrumentationRegistry.getInstrumentation()
@@ -196,13 +196,13 @@ public class UseSharedLibraryTest {
                 usedLibraryVersionCode = installedPackage.applicationInfo.versionCode;
             }
         }
-        assertSame(1, usedLibraryVersionCode);
+        assertEquals(1L, usedLibraryVersionCode);
 
         // Make sure we see only the lib we depend on via getting its app info
         ApplicationInfo appInfo = InstrumentationRegistry.getInstrumentation()
                 .getContext().getPackageManager().getApplicationInfo(STATIC_LIB_PROVIDER_PKG, 0);
         assertEquals(STATIC_LIB_PROVIDER_PKG, appInfo.packageName);
-        assertSame(1, libPackageInfo.versionCode);
+        assertEquals(1, libPackageInfo.versionCode);
 
         // Make sure we see the lib we depend on via getting installed apps
         List<ApplicationInfo> installedApps = InstrumentationRegistry.getInstrumentation()
@@ -216,6 +216,6 @@ public class UseSharedLibraryTest {
                 usedLibraryVersionCode = installedApp.versionCode;
             }
         }
-        assertSame(1, usedLibraryVersionCode);
+        assertEquals(1L, usedLibraryVersionCode);
     }
 }
