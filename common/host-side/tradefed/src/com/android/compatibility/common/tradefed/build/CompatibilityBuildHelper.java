@@ -303,7 +303,7 @@ public class CompatibilityBuildHelper {
 
         File testFile;
         for (String testDir: testDirs) {
-            testFile = new File(getTestsDir(), filename);
+            testFile = new File(testDir, filename);
             if (testFile.exists()) {
                 return testFile;
             }
