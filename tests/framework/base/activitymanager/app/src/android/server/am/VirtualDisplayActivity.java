@@ -22,6 +22,17 @@ import static android.server.am.ActivityLauncher.KEY_DISPLAY_ID;
 import static android.server.am.ActivityLauncher.KEY_LAUNCH_ACTIVITY;
 import static android.server.am.ActivityLauncher.KEY_TARGET_COMPONENT;
 import static android.server.am.ComponentNameUtils.getActivityName;
+import static android.server.am.Components.VirtualDisplayActivity.COMMAND_CREATE_DISPLAY;
+import static android.server.am.Components.VirtualDisplayActivity.COMMAND_DESTROY_DISPLAY;
+import static android.server.am.Components.VirtualDisplayActivity.COMMAND_RESIZE_DISPLAY;
+import static android.server.am.Components.VirtualDisplayActivity.KEY_CAN_SHOW_WITH_INSECURE_KEYGUARD;
+import static android.server.am.Components.VirtualDisplayActivity.KEY_COMMAND;
+import static android.server.am.Components.VirtualDisplayActivity.KEY_COUNT;
+import static android.server.am.Components.VirtualDisplayActivity.KEY_DENSITY_DPI;
+import static android.server.am.Components.VirtualDisplayActivity.KEY_LAUNCH_TARGET_COMPONENT;
+import static android.server.am.Components.VirtualDisplayActivity.KEY_PUBLIC_DISPLAY;
+import static android.server.am.Components.VirtualDisplayActivity.KEY_RESIZE_DISPLAY;
+import static android.server.am.Components.VirtualDisplayActivity.VIRTUAL_DISPLAY_PREFIX;
 
 import android.app.Activity;
 import android.content.ComponentName;
@@ -41,25 +52,16 @@ import java.util.HashMap;
  * Activity that is able to create and destroy a virtual display.
  */
 public class VirtualDisplayActivity extends Activity implements SurfaceHolder.Callback {
-    private static final String TAG = "VirtualDisplayActivity";
+    private static final String TAG = VirtualDisplayActivity.class.getSimpleName();
 
     private static final int DEFAULT_DENSITY_DPI = 160;
-    private static final String KEY_DENSITY_DPI = "density_dpi";
-    private static final String KEY_CAN_SHOW_WITH_INSECURE_KEYGUARD
-            = "can_show_with_insecure_keyguard";
-    private static final String KEY_PUBLIC_DISPLAY = "public_display";
-    private static final String KEY_RESIZE_DISPLAY = "resize_display";
-    private static final String KEY_LAUNCH_TARGET_COMPONENT = "launch_target_component";
-    private static final String KEY_COUNT = "count";
-
-    private DisplayManager mDisplayManager;
 
     // Container for details about a pending virtual display creation request.
     private static class VirtualDisplayRequest {
-        public final SurfaceView surfaceView;
-        public final Bundle extras;
+        final SurfaceView surfaceView;
+        final Bundle extras;
 
-        public VirtualDisplayRequest(SurfaceView surfaceView, Bundle extras) {
+        VirtualDisplayRequest(SurfaceView surfaceView, Bundle extras) {
             this.surfaceView = surfaceView;
             this.extras = extras;
         }
@@ -67,12 +69,12 @@ public class VirtualDisplayActivity extends Activity implements SurfaceHolder.Ca
 
     // Container to hold association between an active virtual display and surface view.
     private static class VirtualDisplayEntry {
-        public final VirtualDisplay display;
-        public final SurfaceView surfaceView;
-        public final boolean resizeDisplay;
-        public final int density;
+        final VirtualDisplay display;
+        final SurfaceView surfaceView;
+        final boolean resizeDisplay;
+        final int density;
 
-        public VirtualDisplayEntry(VirtualDisplay display, SurfaceView surfaceView, int density,
+        VirtualDisplayEntry(VirtualDisplay display, SurfaceView surfaceView, int density,
                 boolean resizeDisplay) {
             this.display = display;
             this.surfaceView = surfaceView;
@@ -81,16 +83,15 @@ public class VirtualDisplayActivity extends Activity implements SurfaceHolder.Ca
         }
     }
 
-    private HashMap<Surface, VirtualDisplayRequest> mPendingDisplayRequests;
-    private HashMap<Surface, VirtualDisplayEntry> mVirtualDisplays;
+    private final HashMap<Surface, VirtualDisplayRequest> mPendingDisplayRequests = new HashMap<>();
+    private final HashMap<Surface, VirtualDisplayEntry> mVirtualDisplays = new HashMap<>();
+    private DisplayManager mDisplayManager;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.virtual_display_layout);
 
-        mVirtualDisplays = new HashMap<>();
-        mPendingDisplayRequests = new HashMap<>();
         mDisplayManager = (DisplayManager) getSystemService(DISPLAY_SERVICE);
     }
 
@@ -102,15 +103,15 @@ public class VirtualDisplayActivity extends Activity implements SurfaceHolder.Ca
             return;
         }
 
-        String command = extras.getString("command");
+        String command = extras.getString(KEY_COMMAND);
         switch (command) {
-            case "create_display":
+            case COMMAND_CREATE_DISPLAY:
                 createVirtualDisplay(extras);
                 break;
-            case "destroy_display":
+            case COMMAND_DESTROY_DISPLAY:
                 destroyVirtualDisplays();
                 break;
-            case "resize_display":
+            case COMMAND_RESIZE_DISPLAY:
                 resizeDisplay();
                 break;
         }
@@ -127,7 +128,7 @@ public class VirtualDisplayActivity extends Activity implements SurfaceHolder.Ca
         Log.d(TAG, "createVirtualDisplays. requested count:" + requestedCount);
 
         for (int displayCount = 0; displayCount < requestedCount; ++displayCount) {
-            final ViewGroup root = (ViewGroup) findViewById(android.R.id.content);
+            final ViewGroup root = findViewById(android.R.id.content);
             final SurfaceView surfaceView = new SurfaceView(this);
             surfaceView.setLayoutParams(new ViewGroup.LayoutParams(
                     ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT));
@@ -140,7 +141,7 @@ public class VirtualDisplayActivity extends Activity implements SurfaceHolder.Ca
 
     private void destroyVirtualDisplays() {
         Log.d(TAG, "destroyVirtualDisplays");
-        final ViewGroup root = (ViewGroup) findViewById(android.R.id.content);
+        final ViewGroup root = findViewById(android.R.id.content);
 
         for (VirtualDisplayEntry entry : mVirtualDisplays.values()) {
             Log.d(TAG, "destroying:" + entry.display);
@@ -189,7 +190,7 @@ public class VirtualDisplayActivity extends Activity implements SurfaceHolder.Ca
                 + ", publicDisplay=" + publicDisplay);
         try {
             VirtualDisplay virtualDisplay = mDisplayManager.createVirtualDisplay(
-                    "HostedVirtualDisplay" + mVirtualDisplays.size(), width,
+                    VIRTUAL_DISPLAY_PREFIX + mVirtualDisplays.size(), width,
                     height, densityDpi, surface, flags);
             mVirtualDisplays.put(surface,
                     new VirtualDisplayEntry(virtualDisplay, entry.surfaceView, densityDpi,
@@ -203,11 +204,10 @@ public class VirtualDisplayActivity extends Activity implements SurfaceHolder.Ca
                 launchActivity(targetActivity, displayId);
             }
         } catch (IllegalArgumentException e) {
-            final ViewGroup root = (ViewGroup) findViewById(android.R.id.content);
+            final ViewGroup root = findViewById(android.R.id.content);
             // This is expected when trying to create show-when-locked public display.
             root.removeView(entry.surfaceView);
         }
-
     }
 
     @Override
