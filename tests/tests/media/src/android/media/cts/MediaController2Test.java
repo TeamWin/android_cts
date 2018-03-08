@@ -135,6 +135,7 @@ public class MediaController2Test extends MediaSession2TestBase {
         assertTrue(mPlayer.mSkipToPreviousCalled);
     }
 
+    @Ignore
     @Test
     public void testSkipToNextItem() throws InterruptedException {
         mController.skipToNextItem();
