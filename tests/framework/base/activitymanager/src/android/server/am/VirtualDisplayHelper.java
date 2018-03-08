@@ -13,23 +13,26 @@
  * See the License for the specific language governing permissions and
  * limitations under the License
  */
+
 package android.server.am;
 
 import static android.server.am.ComponentNameUtils.getActivityName;
 import static android.server.am.StateLogger.logAlways;
-import static android.server.am.displayservice.Components.VIRTUAL_DISPLAY_SERVICE;
-import static android.server.am.displayservice.Components.VirtualDisplayService.COMMAND_CREATE;
-import static android.server.am.displayservice.Components.VirtualDisplayService.COMMAND_DESTROY;
-import static android.server.am.displayservice.Components.VirtualDisplayService.COMMAND_OFF;
-import static android.server.am.displayservice.Components.VirtualDisplayService.COMMAND_ON;
-import static android.server.am.displayservice.Components.VirtualDisplayService.EXTRA_COMMAND;
-import static android.server.am.displayservice.Components.VirtualDisplayService.EXTRA_SHOW_CONTENT_WHEN_LOCKED;
-import static android.server.am.displayservice.Components.VirtualDisplayService.VIRTUAL_DISPLAY_NAME;
+import static android.server.am.displayservice.VirtualDisplayService.COMMAND_CREATE;
+import static android.server.am.displayservice.VirtualDisplayService.COMMAND_DESTROY;
+import static android.server.am.displayservice.VirtualDisplayService.COMMAND_OFF;
+import static android.server.am.displayservice.VirtualDisplayService.COMMAND_ON;
+import static android.server.am.displayservice.VirtualDisplayService.EXTRA_COMMAND;
+import static android.server.am.displayservice.VirtualDisplayService.EXTRA_SHOW_CONTENT_WHEN_LOCKED;
+import static android.server.am.displayservice.VirtualDisplayService.VIRTUAL_DISPLAY_NAME;
+import static android.support.test.InstrumentationRegistry.getContext;
 import static android.support.test.InstrumentationRegistry.getInstrumentation;
 
 import static org.junit.Assert.fail;
 
+import android.content.ComponentName;
 import android.os.SystemClock;
+import android.server.am.displayservice.VirtualDisplayService;
 import android.support.annotation.Nullable;
 
 import com.android.compatibility.common.util.SystemUtil;
@@ -41,10 +44,13 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 /**
- * Helper class to create virtual display with communicating with VirtualDisplayService in
- * CtsDisplayServiceApp.
+ * Helper class to create virtual display with communicating with {@link VirtualDisplayService}.
  */
 class VirtualDisplayHelper {
+
+    private static final ComponentName VIRTUAL_DISPLAY_SERVICE = new ComponentName(
+            getContext(), VirtualDisplayService.class);
+
     private static final Pattern DISPLAY_DEVICE_PATTERN = Pattern.compile(
             ".*DisplayDeviceInfo\\{\"([^\"]+)\":.*, state (\\S+),.*\\}.*");
 
