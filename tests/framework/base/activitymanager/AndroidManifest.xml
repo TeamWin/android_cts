@@ -23,9 +23,6 @@
     <uses-permission android:name="android.permission.MANAGE_ACTIVITY_STACKS" />
     <uses-permission android:name="android.permission.ACTIVITY_EMBEDDING" />
     <uses-permission android:name="android.permission.WRITE_SECURE_SETTINGS" />
-    <!-- The following two permissions are necessary for VirtualDisplayService. -->
-    <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
-    <uses-permission android:name="android.permission.WAKE_LOCK" />
 
     <application android:label="CtsActivityManagerDeviceTestCases">
         <uses-library android:name="android.test.runner" />
@@ -74,9 +71,6 @@
 
         <activity android:name="android.server.am.StartActivityTests$TestActivity2" />
 
-        <service
-            android:name="android.server.am.displayservice.VirtualDisplayService"
-            android:exported="true" />
     </application>
 
     <instrumentation

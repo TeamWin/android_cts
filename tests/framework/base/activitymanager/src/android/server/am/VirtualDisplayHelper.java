@@ -16,23 +16,19 @@
 
 package android.server.am;
 
-import static android.server.am.ComponentNameUtils.getActivityName;
+import static android.hardware.display.DisplayManager.VIRTUAL_DISPLAY_FLAG_OWN_CONTENT_ONLY;
+import static android.hardware.display.DisplayManager.VIRTUAL_DISPLAY_FLAG_PRESENTATION;
 import static android.server.am.StateLogger.logAlways;
-import static android.server.am.displayservice.VirtualDisplayService.COMMAND_CREATE;
-import static android.server.am.displayservice.VirtualDisplayService.COMMAND_DESTROY;
-import static android.server.am.displayservice.VirtualDisplayService.COMMAND_OFF;
-import static android.server.am.displayservice.VirtualDisplayService.COMMAND_ON;
-import static android.server.am.displayservice.VirtualDisplayService.EXTRA_COMMAND;
-import static android.server.am.displayservice.VirtualDisplayService.EXTRA_SHOW_CONTENT_WHEN_LOCKED;
-import static android.server.am.displayservice.VirtualDisplayService.VIRTUAL_DISPLAY_NAME;
 import static android.support.test.InstrumentationRegistry.getContext;
 import static android.support.test.InstrumentationRegistry.getInstrumentation;
 
 import static org.junit.Assert.fail;
 
-import android.content.ComponentName;
+import android.graphics.PixelFormat;
+import android.hardware.display.DisplayManager;
+import android.hardware.display.VirtualDisplay;
+import android.media.ImageReader;
 import android.os.SystemClock;
-import android.server.am.displayservice.VirtualDisplayService;
 import android.support.annotation.Nullable;
 
 import com.android.compatibility.common.util.SystemUtil;
@@ -44,51 +40,61 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 /**
- * Helper class to create virtual display with communicating with {@link VirtualDisplayService}.
+ * Helper class to create virtual display.
  */
 class VirtualDisplayHelper {
 
-    private static final ComponentName VIRTUAL_DISPLAY_SERVICE = new ComponentName(
-            getContext(), VirtualDisplayService.class);
+    private static final String VIRTUAL_DISPLAY_NAME = "CtsVirtualDisplay";
+    /** See {@link DisplayManager#VIRTUAL_DISPLAY_FLAG_CAN_SHOW_WITH_INSECURE_KEYGUARD}. */
+    private static final int VIRTUAL_DISPLAY_FLAG_CAN_SHOW_WITH_INSECURE_KEYGUARD = 1 << 5;
 
     private static final Pattern DISPLAY_DEVICE_PATTERN = Pattern.compile(
             ".*DisplayDeviceInfo\\{\"([^\"]+)\":.*, state (\\S+),.*\\}.*");
+    private static final int DENSITY = 160;
+    private static final int HEIGHT = 480;
+    private static final int WIDTH = 800;
 
+    private ImageReader mReader;
+    private VirtualDisplay mVirtualDisplay;
     private boolean mCreated;
 
     void createAndWaitForDisplay(boolean requestShowWhenLocked) {
-        StringBuilder command = new StringBuilder("am startfgservice -n "
-                + getActivityName(VIRTUAL_DISPLAY_SERVICE));
-        command.append(" --es " + EXTRA_COMMAND + " " + COMMAND_CREATE);
-        if (requestShowWhenLocked) {
-            command.append(" --ez " + EXTRA_SHOW_CONTENT_WHEN_LOCKED + " true");
-        }
-        executeShellCommand(command.toString());
-
+        createVirtualDisplay(requestShowWhenLocked);
         waitForDisplayState(false /* default */, true /* on */);
         mCreated = true;
     }
 
     void turnDisplayOff() {
-        executeShellCommand("am start-service -n " + getActivityName(VIRTUAL_DISPLAY_SERVICE)
-                + " --es " + EXTRA_COMMAND + " " + COMMAND_OFF);
+        mVirtualDisplay.setSurface(null);
         waitForDisplayState(false /* default */, false /* on */);
     }
 
     void turnDisplayOn() {
-        executeShellCommand("am start-service -n " + getActivityName(VIRTUAL_DISPLAY_SERVICE)
-                        + " --es " + EXTRA_COMMAND + " " + COMMAND_ON);
+        mVirtualDisplay.setSurface(mReader.getSurface());
         waitForDisplayState(false /* default */, true /* on */);
     }
 
     void releaseDisplay() {
         if (mCreated) {
-            executeShellCommand("am start-service -n " + getActivityName(VIRTUAL_DISPLAY_SERVICE)
-                            + " --es " + EXTRA_COMMAND + " " + COMMAND_DESTROY);
+            mVirtualDisplay.release();
+            mReader.close();
             waitForDisplayCondition(false /* defaultDisplay */, Objects::isNull,
                     "Waiting for virtual display destroy");
         }
         mCreated = false;
+    }
+
+    private void createVirtualDisplay(boolean requestShowWhenLocked) {
+        mReader = ImageReader.newInstance(WIDTH, HEIGHT, PixelFormat.RGBA_8888, 2);
+
+        final DisplayManager displayManager = getContext().getSystemService(DisplayManager.class);
+
+        int flags = VIRTUAL_DISPLAY_FLAG_PRESENTATION | VIRTUAL_DISPLAY_FLAG_OWN_CONTENT_ONLY;
+        if (requestShowWhenLocked) {
+            flags |= VIRTUAL_DISPLAY_FLAG_CAN_SHOW_WITH_INSECURE_KEYGUARD;
+        }
+        mVirtualDisplay = displayManager.createVirtualDisplay(
+                VIRTUAL_DISPLAY_NAME, WIDTH, HEIGHT, DENSITY, mReader.getSurface(), flags);
     }
 
     static void waitForDefaultDisplayState(boolean wantOn) {
