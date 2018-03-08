@@ -36,6 +36,7 @@
             <intent-filter>
                 <action android:name="android.slice.cts.action.TEST_ACTION" />
                 <category android:name="android.intent.category.DEFAULT" />
+                <category android:name="android.app.slice.category.SLICE" />
             </intent-filter>
         </provider>
 
