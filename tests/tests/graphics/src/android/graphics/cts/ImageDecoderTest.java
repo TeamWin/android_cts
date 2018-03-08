@@ -20,6 +20,7 @@ import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
+import static org.junit.Assert.assertSame;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
@@ -31,6 +32,7 @@ import android.graphics.BitmapFactory;
 import android.graphics.Canvas;
 import android.graphics.Color;
 import android.graphics.ImageDecoder;
+import android.graphics.ImageDecoder.OnPartialImageListener;
 import android.graphics.PixelFormat;
 import android.graphics.PostProcessor;
 import android.graphics.Rect;
@@ -317,6 +319,30 @@ public class ImageDecoderTest {
         }
     }
 
+    private static final int[] ALLOCATORS = new int[] {
+        ImageDecoder.ALLOCATOR_SOFTWARE,
+        ImageDecoder.ALLOCATOR_SHARED_MEMORY,
+        ImageDecoder.ALLOCATOR_HARDWARE,
+        ImageDecoder.ALLOCATOR_DEFAULT,
+    };
+
+    @Test
+    public void testGetAllocator() {
+        final int resId = RECORDS[0].resId;
+        ImageDecoder.Source src = mCreators[0].apply(resId);
+        try {
+            ImageDecoder.decodeDrawable(src, (decoder, info, s) -> {
+                assertEquals(ImageDecoder.ALLOCATOR_DEFAULT, decoder.getAllocator());
+                for (int allocator : ALLOCATORS) {
+                    decoder.setAllocator(allocator);
+                    assertEquals(allocator, decoder.getAllocator());
+                }
+            });
+        } catch (IOException e) {
+            fail("Failed " + getAsResourceUri(resId) + " with exception " + e);
+        }
+    }
+
     @Test
     public void testSetAllocatorDecodeBitmap() {
         class Listener implements ImageDecoder.OnHeaderDecodedListener {
@@ -338,16 +364,10 @@ public class ImageDecoderTest {
         };
         Listener l = new Listener();
 
-        int allocators[] = new int[] {
-            ImageDecoder.ALLOCATOR_DEFAULT,
-            ImageDecoder.ALLOCATOR_SOFTWARE,
-            ImageDecoder.ALLOCATOR_SHARED_MEMORY,
-            ImageDecoder.ALLOCATOR_HARDWARE,
-        };
         boolean trueFalse[] = new boolean[] { true, false };
         for (Record record : RECORDS) {
             for (SourceCreator f : mCreators) {
-                for (int allocator : allocators) {
+                for (int allocator : ALLOCATORS) {
                     for (boolean doCrop : trueFalse) {
                         for (boolean doScale : trueFalse) {
                             l.doCrop = doCrop;
@@ -394,6 +414,25 @@ public class ImageDecoderTest {
     }
 
     @Test
+    public void testGetUnpremul() {
+        final int resId = RECORDS[0].resId;
+        ImageDecoder.Source src = mCreators[0].apply(resId);
+        try {
+            ImageDecoder.decodeBitmap(src, (decoder, info, s) -> {
+                assertFalse(decoder.getRequireUnpremultiplied());
+
+                decoder.setRequireUnpremultiplied(true);
+                assertTrue(decoder.getRequireUnpremultiplied());
+
+                decoder.setRequireUnpremultiplied(false);
+                assertFalse(decoder.getRequireUnpremultiplied());
+            });
+        } catch (IOException e) {
+            fail("Failed " + getAsResourceUri(resId) + " with exception " + e);
+        }
+    }
+
+    @Test
     public void testUnpremul() {
         int[] resIds = new int[] { R.drawable.png_test, R.drawable.alpha };
         boolean[] hasAlpha = new boolean[] { false,     true };
@@ -422,6 +461,29 @@ public class ImageDecoderTest {
                     fail("Failed with exception " + e);
                 }
             }
+        }
+    }
+
+    @Test
+    public void testGetPostProcessor() {
+        PostProcessor[] processors = new PostProcessor[] {
+                (canvas) -> PixelFormat.UNKNOWN,
+                (canvas) -> PixelFormat.UNKNOWN,
+                null,
+        };
+        final int resId = RECORDS[0].resId;
+        ImageDecoder.Source src = mCreators[0].apply(resId);
+        try {
+            ImageDecoder.decodeDrawable(src, (decoder, info, s) -> {
+                assertNull(decoder.getPostProcessor());
+
+                for (PostProcessor pp : processors) {
+                    decoder.setPostProcessor(pp);
+                    assertSame(pp, decoder.getPostProcessor());
+                }
+            });
+        } catch (IOException e) {
+            fail("Failed " + getAsResourceUri(resId) + " with exception " + e);
         }
     }
 
@@ -777,8 +839,32 @@ public class ImageDecoderTest {
     }
 
     @Test
+    public void testGetOnPartialImageListener() {
+        OnPartialImageListener[] listeners = new OnPartialImageListener[] {
+                (error, src) -> true,
+                (error, src) -> false,
+                null,
+        };
+
+        final int resId = RECORDS[0].resId;
+        ImageDecoder.Source src = mCreators[0].apply(resId);
+        try {
+            ImageDecoder.decodeDrawable(src, (decoder, info, s) -> {
+                assertNull(decoder.getOnPartialImageListener());
+
+                for (OnPartialImageListener l : listeners) {
+                    decoder.setOnPartialImageListener(l);
+                    assertSame(l, decoder.getOnPartialImageListener());
+                }
+            });
+        } catch (IOException e) {
+            fail("Failed " + getAsResourceUri(resId) + " with exception " + e);
+        }
+    }
+
+    @Test
     public void testOnPartialImage() {
-        class PartialImageCallback implements ImageDecoder.OnPartialImageListener {
+        class PartialImageCallback implements OnPartialImageListener {
             public boolean wasCalled;
             public boolean returnDrawable;
             @Override
@@ -832,7 +918,7 @@ public class ImageDecoderTest {
 
     @Test
     public void testCorruptException() {
-        class PartialImageCallback implements ImageDecoder.OnPartialImageListener {
+        class PartialImageCallback implements OnPartialImageListener {
             public boolean wasCalled = false;
             @Override
             public boolean onPartialImage(int error, ImageDecoder.Source src) {
@@ -878,6 +964,25 @@ public class ImageDecoderTest {
             // This is correct.
         } catch (Throwable t) {
             fail("Should have thrown DummyException - threw " + t + " instead");
+        }
+    }
+
+    @Test
+    public void testGetMutable() {
+        final int resId = RECORDS[0].resId;
+        ImageDecoder.Source src = mCreators[0].apply(resId);
+        try {
+            ImageDecoder.decodeDrawable(src, (decoder, info, s) -> {
+                assertFalse(decoder.getMutable());
+
+                decoder.setMutable(true);
+                assertTrue(decoder.getMutable());
+
+                decoder.setMutable(false);
+                assertFalse(decoder.getMutable());
+            });
+        } catch (IOException e) {
+            fail("Failed " + getAsResourceUri(resId) + " with exception " + e);
         }
     }
 
@@ -1131,6 +1236,27 @@ public class ImageDecoderTest {
     }
 
     @Test
+    public void testGetCrop() {
+        final int resId = RECORDS[0].resId;
+        ImageDecoder.Source src = mCreators[0].apply(resId);
+        try {
+            ImageDecoder.decodeDrawable(src, (decoder, info, s) -> {
+                assertNull(decoder.getCrop());
+
+                Rect r = new Rect(0, 0, info.getSize().getWidth() / 2, 5);
+                decoder.setCrop(r);
+                assertEquals(r, decoder.getCrop());
+
+                r = new Rect(0, 0, 5, 10);
+                decoder.setCrop(r);
+                assertEquals(r, decoder.getCrop());
+            });
+        } catch (IOException e) {
+            fail("Failed " + getAsResourceUri(resId) + " with exception " + e);
+        }
+    }
+
+    @Test
     public void testCrop() {
         class Listener implements ImageDecoder.OnHeaderDecodedListener {
             public boolean doScale;
@@ -1325,13 +1451,13 @@ public class ImageDecoderTest {
 
     @Test
     public void testAlphaMaskNonGray() {
-        // It is safe to call setAsAlphaMask on a non-gray image.
+        // It is safe to call setDecodeAsAlphaMask on a non-gray image.
         SourceCreator f = mCreators[0];
         ImageDecoder.Source src = f.apply(R.drawable.png_test);
         assertNotNull(src);
         try {
             Bitmap bm = ImageDecoder.decodeBitmap(src, (decoder, info, s) -> {
-                decoder.setAsAlphaMask(true);
+                decoder.setDecodeAsAlphaMask(true);
                 decoder.setAllocator(ImageDecoder.ALLOCATOR_SOFTWARE);
             });
             assertNotNull(bm);
@@ -1349,11 +1475,30 @@ public class ImageDecoderTest {
         assertNotNull(src);
         try {
             ImageDecoder.decodeDrawable(src, (decoder, info, s) -> {
-                decoder.setAsAlphaMask(true);
+                decoder.setDecodeAsAlphaMask(true);
                 decoder.setAllocator(ImageDecoder.ALLOCATOR_HARDWARE);
             });
         } catch (IOException e) {
             fail("Failed with exception " + e);
+        }
+    }
+
+    @Test
+    public void testGetAlphaMask() {
+        final int resId = R.drawable.grayscale_png;
+        ImageDecoder.Source src = mCreators[0].apply(resId);
+        try {
+            ImageDecoder.decodeDrawable(src, (decoder, info, s) -> {
+                assertFalse(decoder.getDecodeAsAlphaMask());
+
+                decoder.setDecodeAsAlphaMask(true);
+                assertTrue(decoder.getDecodeAsAlphaMask());
+
+                decoder.setDecodeAsAlphaMask(false);
+                assertFalse(decoder.getDecodeAsAlphaMask());
+            });
+        } catch (IOException e) {
+            fail("Failed " + getAsResourceUri(resId) + " with exception " + e);
         }
     }
 
@@ -1366,7 +1511,7 @@ public class ImageDecoderTest {
             @Override
             public void onHeaderDecoded(ImageDecoder decoder, ImageDecoder.ImageInfo info,
                                         ImageDecoder.Source src) {
-                decoder.setAsAlphaMask(true);
+                decoder.setDecodeAsAlphaMask(true);
                 if (doScale) {
                     decoder.setResize(info.getSize().getWidth() / 2,
                                       info.getSize().getHeight() / 2);
@@ -1419,6 +1564,25 @@ public class ImageDecoderTest {
     }
 
     @Test
+    public void testGetConserveMemory() {
+        final int resId = RECORDS[0].resId;
+        ImageDecoder.Source src = mCreators[0].apply(resId);
+        try {
+            ImageDecoder.decodeDrawable(src, (decoder, info, s) -> {
+                assertFalse(decoder.getConserveMemory());
+
+                decoder.setConserveMemory(true);
+                assertTrue(decoder.getConserveMemory());
+
+                decoder.setConserveMemory(false);
+                assertFalse(decoder.getConserveMemory());
+            });
+        } catch (IOException e) {
+            fail("Failed " + getAsResourceUri(resId) + " with exception " + e);
+        }
+    }
+
+    @Test
     public void testConserveMemoryPlusHardware() {
         class Listener implements ImageDecoder.OnHeaderDecodedListener {
             int allocator;
@@ -1435,10 +1599,6 @@ public class ImageDecoderTest {
         // do not decode to 565. basi6a16 will still downconvert from F16 to
         // 8888.
         boolean hardwareOverrides[] = new boolean[] { true, false };
-        int[] allocators = new int[] { ImageDecoder.ALLOCATOR_HARDWARE,
-                                       ImageDecoder.ALLOCATOR_SOFTWARE,
-                                       ImageDecoder.ALLOCATOR_DEFAULT,
-                                       ImageDecoder.ALLOCATOR_SHARED_MEMORY };
         SourceCreator f = mCreators[0];
         for (int i = 0; i < resIds.length; ++i) {
             Bitmap normal = null;
@@ -1449,7 +1609,7 @@ public class ImageDecoderTest {
             }
             assertNotNull(normal);
             int normalByteCount = normal.getAllocationByteCount();
-            for (int allocator : allocators) {
+            for (int allocator : ALLOCATORS) {
                 l.allocator = allocator;
                 Bitmap test = null;
                 try {
