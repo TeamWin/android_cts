@@ -305,6 +305,17 @@ public class StrictModeTest extends InstrumentationTestCase {
         });
     }
 
+    public void testExplicitGc() throws Exception {
+        StrictMode.setThreadPolicy(new StrictMode.ThreadPolicy.Builder()
+                .detectExplicitGc()
+                .penaltyLog()
+                .build());
+
+        assertViolation("StrictModeExplicitGcViolation", () -> {
+            Runtime.getRuntime().gc();
+        });
+    }
+
     private static void assertViolation(String expected, ThrowingRunnable r) throws Exception {
         final LinkedBlockingQueue<String> violations = new LinkedBlockingQueue<>();
         StrictMode.setViolationListener(new ViolationListener() {
