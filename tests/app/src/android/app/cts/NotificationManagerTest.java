@@ -97,54 +97,65 @@ public class NotificationManagerTest extends AndroidTestCase {
         }
     }
 
-    public void testOnlyPostPCanToggleAlarmsAndMediaTest() throws Exception {
+    public void testOnlyPostPCanToggleAlarmsMediaSystemTest() throws Exception {
         toggleNotificationPolicyAccess(mContext.getPackageName(),
                 InstrumentationRegistry.getInstrumentation(), true);
 
         if (mContext.getApplicationInfo().targetSdkVersion >= Build.VERSION_CODES.P) {
-            // Post-P can toggle alarms and media
-            // toggle on alarms and media:
+            // Post-P can toggle alarms, media, system
+            // toggle on alarms, media, system:
             mNotificationManager.setNotificationPolicy(new NotificationManager.Policy(
                     NotificationManager.Policy.PRIORITY_CATEGORY_ALARMS
-                            | NotificationManager.Policy.PRIORITY_CATEGORY_MEDIA_SYSTEM_OTHER, 0, 0));
+                            | NotificationManager.Policy.PRIORITY_CATEGORY_MEDIA
+                            | NotificationManager.Policy.PRIORITY_CATEGORY_SYSTEM, 0, 0));
             NotificationManager.Policy policy = mNotificationManager.getNotificationPolicy();
             assertTrue((policy.priorityCategories
                     & NotificationManager.Policy.PRIORITY_CATEGORY_ALARMS) != 0);
             assertTrue((policy.priorityCategories
-                    & NotificationManager.Policy.PRIORITY_CATEGORY_MEDIA_SYSTEM_OTHER) != 0);
+                    & NotificationManager.Policy.PRIORITY_CATEGORY_MEDIA) != 0);
+            assertTrue((policy.priorityCategories
+                    & NotificationManager.Policy.PRIORITY_CATEGORY_SYSTEM) != 0);
 
-            // toggle off alarms and media
+            // toggle off alarms, media, system
             mNotificationManager.setNotificationPolicy(new NotificationManager.Policy(0, 0, 0));
             policy = mNotificationManager.getNotificationPolicy();
             assertTrue((policy.priorityCategories
                     & NotificationManager.Policy.PRIORITY_CATEGORY_ALARMS) == 0);
             assertTrue((policy.priorityCategories &
-                    NotificationManager.Policy.PRIORITY_CATEGORY_MEDIA_SYSTEM_OTHER) == 0);
+                    NotificationManager.Policy.PRIORITY_CATEGORY_MEDIA) == 0);
+            assertTrue((policy.priorityCategories &
+                    NotificationManager.Policy.PRIORITY_CATEGORY_SYSTEM) == 0);
         } else {
             // Pre-P cannot toggle alarms and media
             NotificationManager.Policy origPolicy = mNotificationManager.getNotificationPolicy();
             int alarmBit = origPolicy.priorityCategories & NotificationManager.Policy
                     .PRIORITY_CATEGORY_ALARMS;
             int mediaBit = origPolicy.priorityCategories & NotificationManager.Policy
-                    .PRIORITY_CATEGORY_MEDIA_SYSTEM_OTHER;
+                    .PRIORITY_CATEGORY_MEDIA;
+            int systemBit = origPolicy.priorityCategories & NotificationManager.Policy
+                    .PRIORITY_CATEGORY_SYSTEM;
 
-            // attempt to toggle off alarms and media:
+            // attempt to toggle off alarms, media, system:
             mNotificationManager.setNotificationPolicy(new NotificationManager.Policy(0, 0, 0));
             NotificationManager.Policy policy = mNotificationManager.getNotificationPolicy();
             assertEquals(alarmBit, policy.priorityCategories
                     & NotificationManager.Policy.PRIORITY_CATEGORY_ALARMS);
             assertEquals(mediaBit, policy.priorityCategories
-                    & NotificationManager.Policy.PRIORITY_CATEGORY_MEDIA_SYSTEM_OTHER);
+                    & NotificationManager.Policy.PRIORITY_CATEGORY_MEDIA);
+            assertEquals(systemBit, policy.priorityCategories
+                    & NotificationManager.Policy.PRIORITY_CATEGORY_SYSTEM);
 
-            // attempt to toggle on alarms and media:
+            // attempt to toggle on alarms, media, system:
             mNotificationManager.setNotificationPolicy(new NotificationManager.Policy(
                     NotificationManager.Policy.PRIORITY_CATEGORY_ALARMS
-                            | NotificationManager.Policy.PRIORITY_CATEGORY_MEDIA_SYSTEM_OTHER, 0, 0));
+                            | NotificationManager.Policy.PRIORITY_CATEGORY_MEDIA, 0, 0));
             policy = mNotificationManager.getNotificationPolicy();
             assertEquals(alarmBit, policy.priorityCategories
                     & NotificationManager.Policy.PRIORITY_CATEGORY_ALARMS);
             assertEquals(mediaBit, policy.priorityCategories
-                    & NotificationManager.Policy.PRIORITY_CATEGORY_MEDIA_SYSTEM_OTHER);
+                    & NotificationManager.Policy.PRIORITY_CATEGORY_MEDIA);
+            assertEquals(systemBit, policy.priorityCategories
+                    & NotificationManager.Policy.PRIORITY_CATEGORY_SYSTEM);
         }
     }
 

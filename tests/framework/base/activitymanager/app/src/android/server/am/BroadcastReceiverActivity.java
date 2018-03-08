@@ -16,6 +16,12 @@
 
 package android.server.am;
 
+import static android.server.am.Components.BroadcastReceiverActivity.ACTION_TRIGGER_BROADCAST;
+import static android.server.am.Components.BroadcastReceiverActivity.EXTRA_BROADCAST_ORIENTATION;
+import static android.server.am.Components.BroadcastReceiverActivity.EXTRA_DISMISS_KEYGUARD;
+import static android.server.am.Components.BroadcastReceiverActivity.EXTRA_DISMISS_KEYGUARD_METHOD;
+import static android.server.am.Components.BroadcastReceiverActivity.EXTRA_FINISH_BROADCAST;
+import static android.server.am.Components.BroadcastReceiverActivity.EXTRA_MOVE_BROADCAST_TO_BACK;
 import static android.view.WindowManager.LayoutParams.FLAG_DISMISS_KEYGUARD;
 
 import android.app.Activity;
@@ -31,8 +37,6 @@ import android.util.Log;
  * Activity that registers broadcast receiver .
  */
 public class BroadcastReceiverActivity extends Activity {
-
-    public static final String ACTION_TRIGGER_BROADCAST = "trigger_broadcast";
     private static final String TAG = BroadcastReceiverActivity.class.getSimpleName();
 
     private TestBroadcastReceiver mBroadcastReceiver = new TestBroadcastReceiver();
@@ -62,19 +66,19 @@ public class BroadcastReceiverActivity extends Activity {
             if (extras == null) {
                 return;
             }
-            if (extras.getBoolean("finish")) {
+            if (extras.getBoolean(EXTRA_FINISH_BROADCAST)) {
                 finish();
             }
-            if (extras.getBoolean("moveToBack")) {
+            if (extras.getBoolean(EXTRA_MOVE_BROADCAST_TO_BACK)) {
                 moveTaskToBack(true);
             }
-            if (extras.containsKey("orientation")) {
-                setRequestedOrientation(extras.getInt("orientation"));
+            if (extras.containsKey(EXTRA_BROADCAST_ORIENTATION)) {
+                setRequestedOrientation(extras.getInt(EXTRA_BROADCAST_ORIENTATION));
             }
-            if (extras.getBoolean("dismissKeyguard")) {
+            if (extras.getBoolean(EXTRA_DISMISS_KEYGUARD)) {
                 getWindow().addFlags(FLAG_DISMISS_KEYGUARD);
             }
-            if (extras.getBoolean("dismissKeyguardMethod")) {
+            if (extras.getBoolean(EXTRA_DISMISS_KEYGUARD_METHOD)) {
                 getSystemService(KeyguardManager.class).requestDismissKeyguard(
                         BroadcastReceiverActivity.this, new KeyguardDismissLoggerCallback(context));
             }

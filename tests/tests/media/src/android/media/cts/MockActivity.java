@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2016 The Android Open Source Project
+ * Copyright 2018 The Android Open Source Project
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,19 +14,9 @@
  * limitations under the License.
  */
 
-package android.server.am;
+package android.media.cts;
 
-public class TranslucentTopActivity extends TopActivity {
+import android.app.Activity;
 
-    private static final String TAG = TranslucentTopActivity.class.getSimpleName();
-
-    @Override
-    protected String getTag() {
-        return TAG;
-    }
-
-    @Override
-    protected void setWallpaperTheme() {
-        setTheme(R.style.TranslucentWallpaperTheme);
-    }
+public class MockActivity extends Activity {
 }

@@ -37,8 +37,7 @@ LOCAL_SRC_FILES := \
 
 LOCAL_STATIC_JAVA_LIBRARIES := \
     android-support-test \
-    cts-amwm-util \
-    cts-display-service-app-util
+    cts-amwm-util
 
 LOCAL_CTS_TEST_PACKAGE := android.server
 

@@ -725,6 +725,21 @@ public class WebSettingsTest extends ActivityInstrumentationTestCase2<WebViewCts
         assertEquals("No database", mOnUiThread.getTitle());
     }
 
+    public void testDisabledActionModeMenuItems() throws Throwable {
+        if (!NullWebViewUtils.isWebViewAvailable()) {
+            return;
+        }
+
+        assertEquals(WebSettings.MENU_ITEM_NONE, mSettings.getDisabledActionModeMenuItems());
+
+        int allDisabledFlags = WebSettings.MENU_ITEM_NONE | WebSettings.MENU_ITEM_SHARE |
+                WebSettings.MENU_ITEM_WEB_SEARCH | WebSettings.MENU_ITEM_PROCESS_TEXT;
+        for (int i = WebSettings.MENU_ITEM_NONE; i <= allDisabledFlags; i++) {
+            mSettings.setDisabledActionModeMenuItems(i);
+            assertEquals(i, mSettings.getDisabledActionModeMenuItems());
+        }
+    }
+
     public void testLoadsImagesAutomatically() throws Throwable {
         if (!NullWebViewUtils.isWebViewAvailable()) {
             return;
