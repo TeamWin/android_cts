@@ -20,10 +20,4 @@ package android.server.am;
  * An activity that has the noHistory flag set.
  */
 public class NoHistoryActivity extends AbstractLifecycleLogActivity {
-    private static final String TAG = NoHistoryActivity.class.getSimpleName();
-
-    @Override
-    protected String getTag() {
-        return TAG;
-    }
 }

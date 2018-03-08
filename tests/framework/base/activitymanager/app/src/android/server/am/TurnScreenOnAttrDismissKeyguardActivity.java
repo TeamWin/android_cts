@@ -20,17 +20,11 @@ import android.app.KeyguardManager;
 import android.os.Bundle;
 
 public class TurnScreenOnAttrDismissKeyguardActivity extends AbstractLifecycleLogActivity {
-    private static final String TAG = TurnScreenOnAttrDismissKeyguardActivity.class.getSimpleName();
 
     @Override
     protected void onCreate(Bundle icicle) {
         super.onCreate(icicle);
         ((KeyguardManager) getSystemService(KEYGUARD_SERVICE))
                 .requestDismissKeyguard(this, new KeyguardDismissLoggerCallback(this));
-    }
-
-    @Override
-    protected String getTag() {
-        return TAG;
     }
 }

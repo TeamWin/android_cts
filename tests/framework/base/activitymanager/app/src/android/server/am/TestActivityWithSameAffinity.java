@@ -17,18 +17,11 @@
 package android.server.am;
 
 import android.app.PictureInPictureParams;
-import android.content.BroadcastReceiver;
 import android.content.ComponentName;
-import android.content.Context;
 import android.content.Intent;
-import android.content.IntentFilter;
-import android.content.res.Configuration;
 import android.os.Bundle;
-import android.util.Log;
 
 public class TestActivityWithSameAffinity extends TestActivity {
-
-    private static final String TAG = TestActivityWithSameAffinity.class.getSimpleName();
 
     // Calls enterPictureInPicture() on creation
     private static final String EXTRA_ENTER_PIP = "enter_pip";
@@ -63,10 +56,5 @@ public class TestActivityWithSameAffinity extends TestActivity {
         if (getIntent().hasExtra(EXTRA_FINISH_SELF_ON_RESUME)) {
             finish();
         }
-    }
-
-    @Override
-    protected String getTag() {
-        return TAG;
     }
 }

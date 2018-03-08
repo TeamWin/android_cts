@@ -17,16 +17,10 @@
 package android.server.am;
 
 public class TurnScreenOnAttrRemoveAttrActivity extends AbstractLifecycleLogActivity {
-    private static final String TAG = TurnScreenOnAttrRemoveAttrActivity.class.getSimpleName();
 
     @Override
     protected void onStop() {
         super.onStop();
         setTurnScreenOn(false);
-    }
-
-    @Override
-    protected String getTag() {
-        return TAG;
     }
 }
