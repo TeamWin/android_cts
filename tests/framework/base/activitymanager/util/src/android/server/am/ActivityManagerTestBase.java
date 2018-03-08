@@ -327,11 +327,15 @@ public abstract class ActivityManagerTestBase {
                 .build());
     }
 
-    protected void launchActivityOnDisplay(ComponentName targetActivityName, int displayId,
+    protected void launchActivityOnDisplay(ComponentName activityName, int displayId,
             String... keyValuePairs) {
-        executeShellCommand(getAmStartCmd(targetActivityName, displayId, keyValuePairs));
+        launchActivityOnDisplayNoWait(activityName, displayId, keyValuePairs);
+        mAmWmState.waitForValidState(activityName);
+    }
 
-        mAmWmState.waitForValidState(new WaitForValidActivityState(targetActivityName));
+    protected void launchActivityOnDisplayNoWait(ComponentName activityName, int displayId,
+            String... keyValuePairs) {
+        executeShellCommand(getAmStartCmd(activityName, displayId, keyValuePairs));
     }
 
     /**
