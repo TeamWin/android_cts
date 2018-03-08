@@ -321,12 +321,17 @@ public class MediaPreparer extends PreconditionPreparer {
             // Option 'local-media-path' has not been defined
             // Get directory to store media files on this host
             File mediaFolder = getDefaultMediaDir();
-            if(!mediaFolder.exists() || mediaFolder.list().length == 0){
-                // If directory already exists and contains files, it has been created by previous
-                // runs of MediaPreparer. Assume media files exist inside.
-                // Else, create directory if needed and download/extract media files inside.
-                mediaFolder.mkdirs();
-                downloadMediaToHost(device, buildInfo, mediaFolder);
+            synchronized (MediaPreparer.class) {
+                // Synchronize this block so that multiple shards won't download/extract
+                // this file to the same location on the host. Only an issue in Android O and above,
+                // where MediaPreparer is used for multiple, shardable modules.
+                if(!mediaFolder.exists() || mediaFolder.list().length == 0){
+                    // If directory already exists and contains files, it has been created by
+                    // previous runs of MediaPreparer. Assume media files exist inside.
+                    // Else, create directory if needed and download/extract media files inside.
+                    mediaFolder.mkdirs();
+                    downloadMediaToHost(device, buildInfo, mediaFolder);
+                }
             }
             // set mLocalMediaPath to where the CTS media files have been extracted
             updateLocalMediaPath(device, mediaFolder);
