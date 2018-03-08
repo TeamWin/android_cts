@@ -30,15 +30,14 @@ import static android.server.am.Components.ANIMATION_TEST_ACTIVITY;
 import static android.server.am.Components.ASSISTANT_ACTIVITY;
 import static android.server.am.Components.ASSISTANT_VOICE_INTERACTION_SERVICE;
 import static android.server.am.Components.AssistantActivity.EXTRA_ASSISTANT_DISPLAY_ID;
-import static android.server.am.Components.AssistantActivity.EXTRA_ENTER_PIP;
 import static android.server.am.Components.AssistantActivity.EXTRA_FINISH_SELF;
 import static android.server.am.Components.AssistantActivity.EXTRA_LAUNCH_NEW_TASK;
 import static android.server.am.Components.DOCKED_ACTIVITY;
 import static android.server.am.Components.LAUNCH_ASSISTANT_ACTIVITY_FROM_SESSION;
 import static android.server.am.Components.LAUNCH_ASSISTANT_ACTIVITY_INTO_STACK;
-import static android.server.am.Components.LaunchAssistantActivityIntoAssistantStack
-        .EXTRA_IS_TRANSLUCENT;
+import static android.server.am.Components.LaunchAssistantActivityIntoAssistantStack.EXTRA_IS_TRANSLUCENT;
 import static android.server.am.Components.PIP_ACTIVITY;
+import static android.server.am.Components.PipActivity.EXTRA_ENTER_PIP;
 import static android.server.am.Components.TEST_ACTIVITY;
 import static android.server.am.Components.TRANSLUCENT_ASSISTANT_ACTIVITY;
 import static android.server.am.Components.TestActivity.TEST_ACTIVITY_ACTION_FINISH_SELF;
@@ -226,7 +225,7 @@ public class ActivityManagerAssistantStackTests extends ActivityManagerTestBase 
             assistantSession.setVoiceInteractionService(ASSISTANT_VOICE_INTERACTION_SERVICE);
 
             launchActivity(LAUNCH_ASSISTANT_ACTIVITY_INTO_STACK,
-                    EXTRA_ENTER_PIP, "true");
+                    Components.AssistantActivity.EXTRA_ENTER_PIP, "true");
         }
         waitForValidStateWithActivityType(ASSISTANT_ACTIVITY, ACTIVITY_TYPE_ASSISTANT);
         mAmWmState.assertDoesNotContainStack("Must not contain pinned stack.",
