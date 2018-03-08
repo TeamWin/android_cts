@@ -23,7 +23,6 @@ import static android.app.WindowConfiguration.WINDOWING_MODE_PINNED;
 import static android.app.WindowConfiguration.WINDOWING_MODE_SPLIT_SCREEN_PRIMARY;
 import static android.app.WindowConfiguration.WINDOWING_MODE_SPLIT_SCREEN_SECONDARY;
 import static android.app.WindowConfiguration.WINDOWING_MODE_UNDEFINED;
-import static android.server.am.ActivityAndWindowManagersState.DEFAULT_DISPLAY_ID;
 import static android.server.am.ActivityManagerState.STATE_RESUMED;
 import static android.server.am.ComponentNameUtils.getActivityName;
 import static android.server.am.Components.ANIMATION_TEST_ACTIVITY;
@@ -44,6 +43,7 @@ import static android.server.am.Components.TEST_ACTIVITY;
 import static android.server.am.Components.TRANSLUCENT_ASSISTANT_ACTIVITY;
 import static android.server.am.Components.TestActivity.TEST_ACTIVITY_ACTION_FINISH_SELF;
 import static android.server.am.UiDeviceUtils.pressBackButton;
+import static android.view.Display.DEFAULT_DISPLAY;
 
 import static org.hamcrest.Matchers.hasSize;
 import static org.junit.Assert.assertEquals;
@@ -67,7 +67,7 @@ import org.junit.Test;
 @FlakyTest(bugId = 71875631)
 public class ActivityManagerAssistantStackTests extends ActivityManagerTestBase {
 
-    private int mAssistantDisplayId = DEFAULT_DISPLAY_ID;
+    private int mAssistantDisplayId = DEFAULT_DISPLAY;
 
     public void setUp() throws Exception {
         super.setUp();
@@ -393,7 +393,7 @@ public class ActivityManagerAssistantStackTests extends ActivityManagerTestBase 
     // Any 2D Activity in VR mode is run on a special VR virtual display, so check if the Assistant
     // is going to run on the same display as other tasks.
     protected boolean assistantRunsOnPrimaryDisplay() {
-        return mAssistantDisplayId == DEFAULT_DISPLAY_ID;
+        return mAssistantDisplayId == DEFAULT_DISPLAY;
     }
 
     /** Helper class to save, set, and restore

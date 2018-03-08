@@ -28,6 +28,8 @@ import static android.server.am.ComponentNameUtils.getWindowName;
 import static android.server.am.StateLogger.log;
 import static android.server.am.StateLogger.logAlways;
 import static android.server.am.StateLogger.logE;
+import static android.util.DisplayMetrics.DENSITY_DEFAULT;
+import static android.view.Display.DEFAULT_DISPLAY;
 
 import static org.hamcrest.Matchers.greaterThan;
 import static org.hamcrest.Matchers.lessThan;
@@ -62,12 +64,6 @@ import java.util.function.Predicate;
  * Combined state of the activity manager and window manager.
  */
 public class ActivityAndWindowManagersState {
-
-    // Clone of android DisplayMetrics.DENSITY_DEFAULT (DENSITY_MEDIUM)
-    // (Needed in host-side tests to convert dp to px.)
-    private static final int DISPLAY_DENSITY_DEFAULT = 160;
-    // TODO: Change to use framework constant.
-    public static final int DEFAULT_DISPLAY_ID = 0;
 
     // Default minimal size of resizable task, used if none is set explicitly.
     // Must be kept in sync with 'default_minimal_size_resizable_task' dimen from frameworks/base.
@@ -509,23 +505,23 @@ public class ActivityAndWindowManagersState {
     }
 
     void assertFrontStack(String msg, int stackId) {
-        assertEquals(msg, stackId, mAmState.getFrontStackId(DEFAULT_DISPLAY_ID));
-        assertEquals(msg, stackId, mWmState.getFrontStackId(DEFAULT_DISPLAY_ID));
+        assertEquals(msg, stackId, mAmState.getFrontStackId(DEFAULT_DISPLAY));
+        assertEquals(msg, stackId, mWmState.getFrontStackId(DEFAULT_DISPLAY));
     }
 
     void assertFrontStack(String msg, int windowingMode, int activityType) {
         if (windowingMode != WINDOWING_MODE_UNDEFINED) {
             assertEquals(msg, windowingMode,
-                    mAmState.getFrontStackWindowingMode(DEFAULT_DISPLAY_ID));
+                    mAmState.getFrontStackWindowingMode(DEFAULT_DISPLAY));
         }
         if (activityType != ACTIVITY_TYPE_UNDEFINED) {
-            assertEquals(msg, activityType, mAmState.getFrontStackActivityType(DEFAULT_DISPLAY_ID));
+            assertEquals(msg, activityType, mAmState.getFrontStackActivityType(DEFAULT_DISPLAY));
         }
     }
 
     void assertFrontStackActivityType(String msg, int activityType) {
-        assertEquals(msg, activityType, mAmState.getFrontStackActivityType(DEFAULT_DISPLAY_ID));
-        assertEquals(msg, activityType, mWmState.getFrontStackActivityType(DEFAULT_DISPLAY_ID));
+        assertEquals(msg, activityType, mAmState.getFrontStackActivityType(DEFAULT_DISPLAY));
+        assertEquals(msg, activityType, mWmState.getFrontStackActivityType(DEFAULT_DISPLAY));
     }
 
     @Deprecated
@@ -595,8 +591,8 @@ public class ActivityAndWindowManagersState {
      */
     void assertDeviceDefaultDisplaySize(String errorMessage) {
         computeState(true);
-        final int minTaskSizePx = defaultMinimalTaskSize(DEFAULT_DISPLAY_ID);
-        final Display display = getWmState().getDisplay(DEFAULT_DISPLAY_ID);
+        final int minTaskSizePx = defaultMinimalTaskSize(DEFAULT_DISPLAY);
+        final Display display = getWmState().getDisplay(DEFAULT_DISPLAY);
         final Rect displayRect = display.getDisplayRect();
         if (Math.min(displayRect.width(), displayRect.height()) < minTaskSizePx) {
             fail(errorMessage);
@@ -825,16 +821,14 @@ public class ActivityAndWindowManagersState {
                         } else {
                             // Minimal dimensions affect task size, so bounds of task and stack must
                             // be different - will compare dimensions instead.
-                            int targetWidth = (int) Math.max(aTaskMinWidth,
-                                    aStackBounds.width());
+                            int targetWidth = Math.max(aTaskMinWidth, aStackBounds.width());
                             assertEquals("Task width must be set according to minimal width"
                                             + " taskId=" + taskId + ", stackId=" + stackId,
-                                    targetWidth, (int) wTaskBounds.width());
-                            int targetHeight = (int) Math.max(aTaskMinHeight,
-                                    aStackBounds.height());
+                                    targetWidth, wTaskBounds.width());
+                            int targetHeight = Math.max(aTaskMinHeight, aStackBounds.height());
                             assertEquals("Task height must be set according to minimal height"
                                             + " taskId=" + taskId + ", stackId=" + stackId,
-                                    targetHeight, (int) wTaskBounds.height());
+                                    targetHeight, wTaskBounds.height());
                         }
                     }
                 }
@@ -863,7 +857,7 @@ public class ActivityAndWindowManagersState {
     }
 
     static int dpToPx(float dp, int densityDpi) {
-        return (int) (dp * densityDpi / DISPLAY_DENSITY_DEFAULT + 0.5f);
+        return (int) (dp * densityDpi / DENSITY_DEFAULT + 0.5f);
     }
 
     private int defaultMinimalTaskSize(int displayId) {
