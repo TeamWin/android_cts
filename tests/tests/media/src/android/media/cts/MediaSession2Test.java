@@ -23,6 +23,7 @@ import static junit.framework.Assert.assertEquals;
 import static junit.framework.Assert.assertTrue;
 
 import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNotEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.fail;
@@ -34,6 +35,7 @@ import android.media.MediaController2;
 import android.media.MediaController2.PlaybackInfo;
 import android.media.MediaItem2;
 import android.media.MediaPlayerBase;
+import android.media.MediaPlaylistAgent;
 import android.media.MediaSession2;
 import android.media.MediaSession2.Builder;
 import android.media.MediaSession2.Command;
@@ -111,13 +113,20 @@ public class MediaSession2Test extends MediaSession2TestBase {
     }
 
     @Test
-    public void testUpdatePlayer() throws Exception {
+    public void testUpdatePlayer() {
         MockPlayer player = new MockPlayer(0);
         // Test if setPlayer doesn't crash with various situations.
         mSession.updatePlayer(mPlayer, null, null);
+        assertEquals(mPlayer, mSession.getPlayer());
+        MediaPlaylistAgent agent = mSession.getPlaylistAgent();
+        assertNotNull(agent);
+
         mSession.updatePlayer(player, null, null);
-        mSession.close();
-    }
+        assertEquals(player, mSession.getPlayer());
+        assertNotNull(mSession.getPlaylistAgent());
+        assertNotEquals(agent, mSession.getPlaylistAgent());
+        // TODO(jaewan): Test whether the session registers callbacks to the new player (b/74370608)
+   }
 
     @Test
     public void testSetPlayer_playbackInfo() throws Exception {
