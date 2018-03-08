@@ -73,7 +73,7 @@ public class ActivityManagerAssistantStackTests extends ActivityManagerTestBase 
         super.setUp();
         try (final AssistantSession assistantSession = new AssistantSession()) {
             assistantSession.setVoiceInteractionService(ASSISTANT_VOICE_INTERACTION_SERVICE);
-            launchActivity(LAUNCH_ASSISTANT_ACTIVITY_INTO_STACK);
+            launchActivityNoWait(LAUNCH_ASSISTANT_ACTIVITY_INTO_STACK);
             waitForValidStateWithActivityType(ASSISTANT_ACTIVITY, ACTIVITY_TYPE_ASSISTANT);
             ActivityManagerState.ActivityStack assistantStack =
                     mAmWmState.getAmState().getStackByActivityType(ACTIVITY_TYPE_ASSISTANT);
@@ -88,7 +88,7 @@ public class ActivityManagerAssistantStackTests extends ActivityManagerTestBase 
         try (final AssistantSession assistantSession = new AssistantSession()) {
             assistantSession.setVoiceInteractionService(ASSISTANT_VOICE_INTERACTION_SERVICE);
 
-            launchActivity(LAUNCH_ASSISTANT_ACTIVITY_FROM_SESSION);
+            launchActivityNoWait(LAUNCH_ASSISTANT_ACTIVITY_FROM_SESSION);
             waitForValidStateWithActivityType(ASSISTANT_ACTIVITY, ACTIVITY_TYPE_ASSISTANT);
 
             // Ensure that the activity launched in the fullscreen assistant stack
@@ -127,7 +127,7 @@ public class ActivityManagerAssistantStackTests extends ActivityManagerTestBase 
         try (final AssistantSession assistantSession = new AssistantSession()) {
             assistantSession.setVoiceInteractionService(ASSISTANT_VOICE_INTERACTION_SERVICE);
 
-            launchActivity(LAUNCH_ASSISTANT_ACTIVITY_FROM_SESSION);
+            launchActivityNoWait(LAUNCH_ASSISTANT_ACTIVITY_FROM_SESSION);
             waitForValidStateWithActivityType(ASSISTANT_ACTIVITY, ACTIVITY_TYPE_ASSISTANT);
             assertAssistantStackExists();
 
@@ -141,7 +141,7 @@ public class ActivityManagerAssistantStackTests extends ActivityManagerTestBase 
     @Test
     @Presubmit
     public void testAssistantStackLaunchNewTask() throws Exception {
-        assertAssistantStackCanLaunchAndReturnFromNewTask();
+        assertAssistantStackCanLaunchAndReturnFromNewTask(WINDOWING_MODE_FULLSCREEN);
     }
 
     @Test
@@ -159,28 +159,23 @@ public class ActivityManagerAssistantStackTests extends ActivityManagerTestBase 
         mAmWmState.assertContainsStack("Must contain docked stack.",
                 WINDOWING_MODE_SPLIT_SCREEN_PRIMARY, ACTIVITY_TYPE_STANDARD);
 
-        assertAssistantStackCanLaunchAndReturnFromNewTask();
+        assertAssistantStackCanLaunchAndReturnFromNewTask(WINDOWING_MODE_SPLIT_SCREEN_SECONDARY);
     }
 
-    private void assertAssistantStackCanLaunchAndReturnFromNewTask() throws Exception {
-        final boolean inSplitScreenMode = mAmWmState.getAmState().containsStack(
-                WINDOWING_MODE_SPLIT_SCREEN_PRIMARY, ACTIVITY_TYPE_STANDARD);
-
+    private void assertAssistantStackCanLaunchAndReturnFromNewTask(int expectedWindowingMode)
+            throws Exception {
         // Enable the assistant and launch an assistant activity which will launch a new task
         try (final AssistantSession assistantSession = new AssistantSession()) {
             assistantSession.setVoiceInteractionService(ASSISTANT_VOICE_INTERACTION_SERVICE);
 
-            launchActivityOnDisplay(LAUNCH_ASSISTANT_ACTIVITY_INTO_STACK, mAssistantDisplayId,
+            launchActivityOnDisplayNoWait(LAUNCH_ASSISTANT_ACTIVITY_INTO_STACK, mAssistantDisplayId,
                     EXTRA_ASSISTANT_LAUNCH_NEW_TASK, getActivityName(TEST_ACTIVITY),
                     EXTRA_ASSISTANT_DISPLAY_ID, Integer.toString(mAssistantDisplayId));
+            // Ensure that the fullscreen stack is on top and the test activity is now visible
+            waitForValidStateWithActivityTypeAndWindowingMode(
+                    TEST_ACTIVITY, ACTIVITY_TYPE_STANDARD, expectedWindowingMode);
         }
 
-        final int expectedWindowingMode = inSplitScreenMode
-                ? WINDOWING_MODE_SPLIT_SCREEN_SECONDARY
-                : WINDOWING_MODE_FULLSCREEN;
-        // Ensure that the fullscreen stack is on top and the test activity is now visible
-        waitForValidStateWithActivityTypeAndWindowingMode(
-                TEST_ACTIVITY, ACTIVITY_TYPE_STANDARD, expectedWindowingMode);
         mAmWmState.assertFocusedActivity("TestActivity should be resumed", TEST_ACTIVITY);
         mAmWmState.assertFrontStack("Fullscreen stack should be on top.",
                 expectedWindowingMode, ACTIVITY_TYPE_STANDARD);
@@ -206,8 +201,10 @@ public class ActivityManagerAssistantStackTests extends ActivityManagerTestBase 
         try (final AssistantSession assistantSession = new AssistantSession()) {
             assistantSession.setVoiceInteractionService(ASSISTANT_VOICE_INTERACTION_SERVICE);
 
-            launchActivity(LAUNCH_ASSISTANT_ACTIVITY_INTO_STACK,
+            launchActivityNoWait(LAUNCH_ASSISTANT_ACTIVITY_INTO_STACK,
                     EXTRA_ASSISTANT_FINISH_SELF, "true");
+            mAmWmState.waitFor((amState, wmState) -> !amState.containsActivity(ASSISTANT_ACTIVITY),
+                    "Waiting for " + getActivityName(ASSISTANT_ACTIVITY) + " finished");
         }
         waitForValidStateWithActivityTypeAndWindowingMode(
                 TEST_ACTIVITY, ACTIVITY_TYPE_STANDARD, WINDOWING_MODE_FULLSCREEN);
@@ -226,7 +223,7 @@ public class ActivityManagerAssistantStackTests extends ActivityManagerTestBase 
         try (final AssistantSession assistantSession = new AssistantSession()) {
             assistantSession.setVoiceInteractionService(ASSISTANT_VOICE_INTERACTION_SERVICE);
 
-            launchActivity(LAUNCH_ASSISTANT_ACTIVITY_INTO_STACK,
+            launchActivityNoWait(LAUNCH_ASSISTANT_ACTIVITY_INTO_STACK,
                     EXTRA_ASSISTANT_ENTER_PIP, "true");
         }
         waitForValidStateWithActivityType(ASSISTANT_ACTIVITY, ACTIVITY_TYPE_ASSISTANT);
@@ -245,7 +242,7 @@ public class ActivityManagerAssistantStackTests extends ActivityManagerTestBase 
             removeStacksInWindowingModes(WINDOWING_MODE_FULLSCREEN,
                     WINDOWING_MODE_SPLIT_SCREEN_SECONDARY);
             launchHomeActivity();
-            launchActivity(LAUNCH_ASSISTANT_ACTIVITY_INTO_STACK,
+            launchActivityNoWait(LAUNCH_ASSISTANT_ACTIVITY_INTO_STACK,
                     EXTRA_ASSISTANT_IS_TRANSLUCENT, "true");
             waitForValidStateWithActivityType(
                     TRANSLUCENT_ASSISTANT_ACTIVITY, ACTIVITY_TYPE_ASSISTANT);
@@ -259,7 +256,7 @@ public class ActivityManagerAssistantStackTests extends ActivityManagerTestBase 
             // also visible
             removeStacksWithActivityTypes(ACTIVITY_TYPE_ASSISTANT);
             launchActivityOnDisplay(TEST_ACTIVITY, mAssistantDisplayId);
-            launchActivity(LAUNCH_ASSISTANT_ACTIVITY_INTO_STACK,
+            launchActivityNoWait(LAUNCH_ASSISTANT_ACTIVITY_INTO_STACK,
                     EXTRA_ASSISTANT_IS_TRANSLUCENT, "true");
             waitForValidStateWithActivityType(
                     TRANSLUCENT_ASSISTANT_ACTIVITY, ACTIVITY_TYPE_ASSISTANT);
@@ -270,7 +267,7 @@ public class ActivityManagerAssistantStackTests extends ActivityManagerTestBase 
             // back.Ensure home is visible.
             removeStacksWithActivityTypes(ACTIVITY_TYPE_ASSISTANT);
             launchHomeActivity();
-            launchActivity(LAUNCH_ASSISTANT_ACTIVITY_INTO_STACK,
+            launchActivityNoWait(LAUNCH_ASSISTANT_ACTIVITY_INTO_STACK,
                     EXTRA_ASSISTANT_IS_TRANSLUCENT, "true",
                     EXTRA_ASSISTANT_LAUNCH_NEW_TASK, getActivityName(TEST_ACTIVITY));
             waitForValidStateWithActivityTypeAndWindowingMode(
@@ -294,7 +291,7 @@ public class ActivityManagerAssistantStackTests extends ActivityManagerTestBase 
                         getLaunchActivityBuilder().setTargetActivity(TEST_ACTIVITY));
                 mAmWmState.assertContainsStack("Must contain docked stack.",
                         WINDOWING_MODE_SPLIT_SCREEN_PRIMARY, ACTIVITY_TYPE_STANDARD);
-                launchActivity(LAUNCH_ASSISTANT_ACTIVITY_INTO_STACK,
+                launchActivityNoWait(LAUNCH_ASSISTANT_ACTIVITY_INTO_STACK,
                         EXTRA_ASSISTANT_IS_TRANSLUCENT, "true");
                 waitForValidStateWithActivityType(
                         TRANSLUCENT_ASSISTANT_ACTIVITY, ACTIVITY_TYPE_ASSISTANT);
@@ -313,7 +310,9 @@ public class ActivityManagerAssistantStackTests extends ActivityManagerTestBase 
             assistantSession.setVoiceInteractionService(ASSISTANT_VOICE_INTERACTION_SERVICE);
 
             // Launch the assistant
-            launchActivityOnDisplay(LAUNCH_ASSISTANT_ACTIVITY_FROM_SESSION, mAssistantDisplayId);
+            launchActivityOnDisplayNoWait(LAUNCH_ASSISTANT_ACTIVITY_FROM_SESSION,
+                    mAssistantDisplayId);
+            waitForValidStateWithActivityType(ASSISTANT_ACTIVITY, ACTIVITY_TYPE_ASSISTANT);
             assertAssistantStackExists();
             mAmWmState.assertVisibility(ASSISTANT_ACTIVITY, true);
             mAmWmState.assertFocusedStack("Expected assistant stack focused",
@@ -327,10 +326,14 @@ public class ActivityManagerAssistantStackTests extends ActivityManagerTestBase 
             // Launch a new fullscreen activity
             // Using Animation Test Activity because it is opaque on all devices.
             launchActivityOnDisplay(ANIMATION_TEST_ACTIVITY, mAssistantDisplayId);
+            // Wait for animation finished.
+            mAmWmState.waitForActivityState(ANIMATION_TEST_ACTIVITY, STATE_RESUMED);
             mAmWmState.assertVisibility(ASSISTANT_ACTIVITY, false);
 
             // Launch the assistant again and ensure that it goes into the same task
-            launchActivityOnDisplay(LAUNCH_ASSISTANT_ACTIVITY_FROM_SESSION, mAssistantDisplayId);
+            launchActivityOnDisplayNoWait(LAUNCH_ASSISTANT_ACTIVITY_FROM_SESSION,
+                    mAssistantDisplayId);
+            waitForValidStateWithActivityType(ASSISTANT_ACTIVITY, ACTIVITY_TYPE_ASSISTANT);
             assertAssistantStackExists();
             mAmWmState.assertVisibility(ASSISTANT_ACTIVITY, true);
             mAmWmState.assertFocusedStack("Expected assistant stack focused",
@@ -355,7 +358,7 @@ public class ActivityManagerAssistantStackTests extends ActivityManagerTestBase 
             // ensure that the test activity is still visible
             launchActivity(TEST_ACTIVITY);
             launchActivity(PIP_ACTIVITY, EXTRA_ENTER_PIP, "true");
-            launchActivity(LAUNCH_ASSISTANT_ACTIVITY_INTO_STACK,
+            launchActivityNoWait(LAUNCH_ASSISTANT_ACTIVITY_INTO_STACK,
                     EXTRA_ASSISTANT_IS_TRANSLUCENT, String.valueOf(true));
             waitForValidStateWithActivityType(
                     TRANSLUCENT_ASSISTANT_ACTIVITY, ACTIVITY_TYPE_ASSISTANT);
