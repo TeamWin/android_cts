@@ -211,12 +211,12 @@ public class ActivityAndWindowManagersState {
         ComponentName homeActivity = mAmState.getHomeActivityName();
         // Sometimes this function is called before we know what Home Activity is
         if (homeActivity == null) {
-            log("Computing state to determine Home Activity");
+            logAlways("Computing state to determine Home Activity");
             computeState(true);
             homeActivity = mAmState.getHomeActivityName();
         }
         assertNotNull("homeActivity should not be null", homeActivity);
-        waitForValidState(new WaitForValidActivityState(homeActivity));
+        waitForValidState(homeActivity);
         return mAmState.isHomeActivityVisible();
     }
 
