@@ -660,7 +660,7 @@ public abstract class DeviceAndProfileOwnerTest extends BaseDevicePolicyTest {
                 "testDisallowAutofill_allowed");
     }
 
-    public void testSetMeteredDataDisabled() throws Exception {
+    public void testSetMeteredDataDisabledPackages() throws Exception {
         if (!mHasFeature) {
             return;
         }
