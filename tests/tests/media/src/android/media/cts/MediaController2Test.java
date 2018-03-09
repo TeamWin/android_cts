@@ -16,6 +16,17 @@
 
 package android.media.cts;
 
+import static android.media.cts.TestUtils.ensurePlaylistParamsModeEquals;
+
+import static junit.framework.Assert.assertEquals;
+
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNotEquals;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertNull;
+import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.fail;
+
 import android.app.PendingIntent;
 import android.content.Context;
 import android.content.Intent;
@@ -24,6 +35,7 @@ import android.media.MediaController2;
 import android.media.MediaController2.ControllerCallback;
 import android.media.MediaItem2;
 import android.media.MediaMetadata2;
+import android.media.MediaPlayerBase;
 import android.media.MediaPlaylistAgent;
 import android.media.MediaSession2;
 import android.media.MediaSession2.Command;
@@ -31,7 +43,6 @@ import android.media.MediaSession2.CommandGroup;
 import android.media.MediaSession2.ControllerInfo;
 import android.media.MediaSession2.PlaylistParams;
 import android.media.MediaSession2.SessionCallback;
-import android.media.PlaybackState2;
 import android.media.Rating2;
 import android.media.SessionToken2;
 import android.media.VolumeProvider2;
@@ -54,23 +65,11 @@ import org.junit.Ignore;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
-import java.util.List;
 import java.lang.reflect.Method;
+import java.util.List;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicReference;
-
-import static android.media.cts.TestUtils.ensurePlaylistParamsModeEquals;
-
-import static junit.framework.Assert.assertEquals;
-import static junit.framework.Assert.assertTrue;
-
-import static org.junit.Assert.*;
-import static org.mockito.ArgumentMatchers.argThat;
-import static org.mockito.ArgumentMatchers.isNull;
-import static org.mockito.Mockito.spy;
-import static org.mockito.Mockito.timeout;
-import static org.mockito.Mockito.verify;
 
 /**
  * Tests {@link MediaController2}.
@@ -593,28 +592,6 @@ public class MediaController2Test extends MediaSession2TestBase {
         assertEquals(mContext.getPackageName(), mController.getSessionToken().getPackageName());
     }
 
-    // This also tests getPlaybackState().
-    @Ignore
-    @Test
-    public void testControllerCallback_onPlaybackStateChanged() throws InterruptedException {
-        final CountDownLatch latch = new CountDownLatch(1);
-        final ControllerCallback callback = new ControllerCallback() {
-            @Override
-            public void onPlaybackStateChanged(MediaController2 controller,
-                    PlaybackState2 state) {
-                // Called only once when the player's playback state is changed after this.
-                assertEquals(PlaybackState2.STATE_PAUSED, state.getState());
-                latch.countDown();
-            }
-        };
-        mPlayer.notifyPlaybackState(createPlaybackState(PlaybackState2.STATE_PLAYING));
-        mController = createController(mSession.getToken(), true, callback);
-        assertEquals(PlaybackState2.STATE_PLAYING, mController.getPlaybackState().getState());
-        mPlayer.notifyPlaybackState(createPlaybackState(PlaybackState2.STATE_PAUSED));
-        assertTrue(latch.await(WAIT_TIME_MS, TimeUnit.MILLISECONDS));
-        assertEquals(PlaybackState2.STATE_PAUSED, mController.getPlaybackState().getState());
-    }
-
     @Test
     public void testSendCustomCommand() throws InterruptedException {
         // TODO(jaewan): Need to revisit with the permission.
@@ -913,7 +890,7 @@ public class MediaController2Test extends MediaSession2TestBase {
             });
             final MediaController2 controller = createController(mSession.getToken());
             testHandler.post(() -> {
-                final PlaybackState2 state = createPlaybackState(PlaybackState2.STATE_ERROR);
+                final int state = MediaPlayerBase.PLAYER_STATE_ERROR;
                 for (int i = 0; i < 100; i++) {
                     // triggers call from session to controller.
                     player.notifyPlaybackState(state);

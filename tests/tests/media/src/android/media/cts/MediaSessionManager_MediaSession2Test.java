@@ -18,6 +18,7 @@ package android.media.cts;
 
 import android.content.Context;
 import android.media.MediaController2;
+import android.media.MediaPlayerBase;
 import android.media.MediaSession2;
 import android.media.MediaSession2.ControllerInfo;
 import android.media.MediaSession2.SessionCallback;
@@ -82,7 +83,7 @@ public class MediaSessionManager_MediaSession2Test extends MediaSession2TestBase
     @Test
     public void testGetMediaSession2Tokens_hasMediaController() throws InterruptedException {
         final MockPlayer player = (MockPlayer) mSession.getPlayer();
-        player.notifyPlaybackState(createPlaybackState(PlaybackState.STATE_STOPPED));
+        player.notifyPlaybackState(MediaPlayerBase.PLAYER_STATE_IDLE);
 
         MediaController2 controller = null;
         List<SessionToken2> tokens = mManager.getActiveSessionTokens();
@@ -98,7 +99,7 @@ public class MediaSessionManager_MediaSession2Test extends MediaSession2TestBase
         assertNotNull(controller);
 
         // Test if the found controller is correct one.
-        assertEquals(PlaybackState.STATE_STOPPED, controller.getPlaybackState().getState());
+        assertEquals(MediaPlayerBase.PLAYER_STATE_IDLE, controller.getPlayerState());
         controller.play();
 
         assertTrue(player.mCountDownLatch.await(WAIT_TIME_MS, TimeUnit.MILLISECONDS));
