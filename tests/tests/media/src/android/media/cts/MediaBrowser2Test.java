@@ -16,6 +16,9 @@
 
 package android.media.cts;
 
+import static android.media.cts.MockMediaLibraryService2.EXTRAS;
+import static android.media.cts.MockMediaLibraryService2.ROOT_ID;
+
 import static junit.framework.Assert.assertEquals;
 import static junit.framework.Assert.assertFalse;
 import static junit.framework.Assert.assertNotNull;
@@ -23,13 +26,17 @@ import static junit.framework.Assert.assertTrue;
 import static junit.framework.Assert.assertNull;
 import static junit.framework.Assert.fail;
 
+import static org.junit.Assert.assertNotEquals;
+
 import android.annotation.Nullable;
 import android.content.Context;
 import android.media.MediaBrowser2;
 import android.media.MediaBrowser2.BrowserCallback;
 import android.media.MediaController2;
+import android.media.MediaController2.ControllerCallback;
 import android.media.MediaItem2;
 import android.media.MediaLibraryService2.MediaLibrarySession;
+import android.media.MediaLibraryService2.MediaLibrarySession.MediaLibrarySessionCallback;
 import android.media.MediaMetadata2;
 import android.media.MediaPlaylistAgent;
 import android.media.MediaSession2;
@@ -40,7 +47,6 @@ import android.media.MediaSession2.ControllerInfo;
 import android.media.MediaSession2.PlaylistParams;
 import android.media.PlaybackState2;
 import android.media.SessionToken2;
-import android.media.cts.TestServiceRegistry.SessionCallbackProxy;
 import android.os.Bundle;
 import android.os.ResultReceiver;
 import android.os.Process;
@@ -55,6 +61,7 @@ import org.junit.Ignore;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
+import java.lang.reflect.Method;
 import java.util.List;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
@@ -73,23 +80,27 @@ public class MediaBrowser2Test extends MediaController2Test {
 
     @Override
     TestControllerInterface onCreateController(@NonNull SessionToken2 token,
-            @Nullable TestControllerCallbackInterface callback) {
+            @Nullable ControllerCallback callback) {
         if (callback == null) {
-            callback = new TestBrowserCallbackInterface() {};
+            callback = new BrowserCallback() {};
         }
         return new TestMediaBrowser(mContext, token, new TestBrowserCallback(callback));
     }
 
-    interface TestBrowserCallbackInterface extends TestControllerCallbackInterface {
-        // Browser specific callbacks
-        default void onGetLibraryRootDone(Bundle rootHints, String rootMediaId, Bundle rootExtra) {}
-        default void onGetItemDone(String mediaId, MediaItem2 result) {}
-        default void onChildrenChanged(String parentId, int itemCount, Bundle extras) {}
-        default void onGetChildrenDone(String parentId, int page, int pageSize,
-                List<MediaItem2> result, Bundle extras) {}
-        default void onSearchResultChanged(String query, int itemCount, Bundle extras) {}
-        default void onGetSearchResultDone(String query, int page, int pageSize,
-                List<MediaItem2> result, Bundle extras) {}
+    /**
+     * Test if the {@link TestBrowserCallback} wraps the callback proxy without missing any method.
+     */
+    @Test
+    public void testTestBrowserCallback() {
+        Method[] methods = TestBrowserCallback.class.getMethods();
+        assertNotNull(methods);
+        for (int i = 0; i < methods.length; i++) {
+            // For any methods in the controller callback, TestControllerCallback should have
+            // overriden the method and call matching API in the callback proxy.
+            assertNotEquals("TestBrowserCallback should override " + methods[i]
+                            + " and call callback proxy",
+                    BrowserCallback.class, methods[i].getDeclaringClass());
+        }
     }
 
     @Test
@@ -98,13 +109,13 @@ public class MediaBrowser2Test extends MediaController2Test {
         param.putString(TAG, TAG);
 
         final CountDownLatch latch = new CountDownLatch(1);
-        final TestControllerCallbackInterface callback = new TestBrowserCallbackInterface() {
+        final BrowserCallback callback = new BrowserCallback() {
             @Override
-            public void onGetLibraryRootDone(Bundle rootHints, String rootMediaId,
-                    Bundle rootExtra) {
+            public void onGetLibraryRootDone(MediaBrowser2 browser,
+                    Bundle rootHints, String rootMediaId, Bundle rootExtra) {
                 assertTrue(TestUtils.equals(param, rootHints));
-                assertEquals(MockMediaLibraryService2.ROOT_ID, rootMediaId);
-                assertTrue(TestUtils.equals(MockMediaLibraryService2.EXTRAS, rootExtra));
+                assertEquals(ROOT_ID, rootMediaId);
+                assertTrue(TestUtils.equals(EXTRAS, rootExtra));
                 latch.countDown();
             }
         };
@@ -121,9 +132,9 @@ public class MediaBrowser2Test extends MediaController2Test {
         final String mediaId = MockMediaLibraryService2.MEDIA_ID_GET_ITEM;
 
         final CountDownLatch latch = new CountDownLatch(1);
-        final TestControllerCallbackInterface callback = new TestBrowserCallbackInterface() {
+        final BrowserCallback callback = new BrowserCallback() {
             @Override
-            public void onGetItemDone(String mediaIdOut, MediaItem2 result) {
+            public void onGetItemDone(MediaBrowser2 browser, String mediaIdOut, MediaItem2 result) {
                 assertEquals(mediaId, mediaIdOut);
                 assertNotNull(result);
                 assertEquals(mediaId, result.getMediaId());
@@ -142,9 +153,9 @@ public class MediaBrowser2Test extends MediaController2Test {
         final String mediaId = "random_media_id";
 
         final CountDownLatch latch = new CountDownLatch(1);
-        final TestControllerCallbackInterface callback = new TestBrowserCallbackInterface() {
+        final BrowserCallback callback = new BrowserCallback() {
             @Override
-            public void onGetItemDone(String mediaIdOut, MediaItem2 result) {
+            public void onGetItemDone(MediaBrowser2 browser, String mediaIdOut, MediaItem2 result) {
                 assertEquals(mediaId, mediaIdOut);
                 assertNull(result);
                 latch.countDown();
@@ -166,10 +177,10 @@ public class MediaBrowser2Test extends MediaController2Test {
         extras.putString(TAG, TAG);
 
         final CountDownLatch latch = new CountDownLatch(1);
-        final TestControllerCallbackInterface callback = new TestBrowserCallbackInterface() {
+        final BrowserCallback callback = new BrowserCallback() {
             @Override
-            public void onGetChildrenDone(String parentIdOut, int pageOut, int pageSizeOut,
-                    List<MediaItem2> result, Bundle extrasOut) {
+            public void onGetChildrenDone(MediaBrowser2 browser, String parentIdOut, int pageOut,
+                    int pageSizeOut, List<MediaItem2> result, Bundle extrasOut) {
                 assertEquals(parentId, parentIdOut);
                 assertEquals(page, pageOut);
                 assertEquals(pageSize, pageSizeOut);
@@ -202,10 +213,10 @@ public class MediaBrowser2Test extends MediaController2Test {
         final String parentId = MockMediaLibraryService2.PARENT_ID_NO_CHILDREN;
 
         final CountDownLatch latch = new CountDownLatch(1);
-        final TestControllerCallbackInterface callback = new TestBrowserCallbackInterface() {
+        final BrowserCallback callback = new BrowserCallback() {
             @Override
-            public void onGetChildrenDone(String parentIdOut, int pageOut, int pageSizeOut,
-                    List<MediaItem2> result, Bundle extrasOut) {
+            public void onGetChildrenDone(MediaBrowser2 browser, String parentIdOut,
+                    int pageOut, int pageSizeOut, List<MediaItem2> result, Bundle extrasOut) {
                 assertNotNull(result);
                 assertEquals(0, result.size());
                 latch.countDown();
@@ -223,10 +234,10 @@ public class MediaBrowser2Test extends MediaController2Test {
         final String parentId = MockMediaLibraryService2.PARENT_ID_ERROR;
 
         final CountDownLatch latch = new CountDownLatch(1);
-        final TestControllerCallbackInterface callback = new TestBrowserCallbackInterface() {
+        final BrowserCallback callback = new BrowserCallback() {
             @Override
-            public void onGetChildrenDone(String parentIdOut, int pageOut, int pageSizeOut,
-                    List<MediaItem2> result, Bundle extrasOut) {
+            public void onGetChildrenDone(MediaBrowser2 browser, String parentIdOut,
+                    int pageOut, int pageSizeOut, List<MediaItem2> result, Bundle extrasOut) {
                 assertNull(result);
                 latch.countDown();
             }
@@ -249,9 +260,10 @@ public class MediaBrowser2Test extends MediaController2Test {
 
         final CountDownLatch latchForSearch = new CountDownLatch(1);
         final CountDownLatch latchForGetSearchResult = new CountDownLatch(1);
-        final TestControllerCallbackInterface callback = new TestBrowserCallbackInterface() {
+        final BrowserCallback callback = new BrowserCallback() {
             @Override
-            public void onSearchResultChanged(String queryOut, int itemCount, Bundle extrasOut) {
+            public void onSearchResultChanged(MediaBrowser2 browser,
+                    String queryOut, int itemCount, Bundle extrasOut) {
                 assertEquals(query, queryOut);
                 assertTrue(TestUtils.equals(extras, extrasOut));
                 assertEquals(MockMediaLibraryService2.SEARCH_RESULT_COUNT, itemCount);
@@ -259,8 +271,8 @@ public class MediaBrowser2Test extends MediaController2Test {
             }
 
             @Override
-            public void onGetSearchResultDone(String queryOut, int pageOut, int pageSizeOut,
-                    List<MediaItem2> result, Bundle extrasOut) {
+            public void onGetSearchResultDone(MediaBrowser2 browser, String queryOut,
+                    int pageOut, int pageSizeOut, List<MediaItem2> result, Bundle extrasOut) {
                 assertEquals(query, queryOut);
                 assertEquals(page, pageOut);
                 assertEquals(pageSize, pageSizeOut);
@@ -300,9 +312,10 @@ public class MediaBrowser2Test extends MediaController2Test {
         extras.putString(TAG, TAG);
 
         final CountDownLatch latch = new CountDownLatch(1);
-        final TestControllerCallbackInterface callback = new TestBrowserCallbackInterface() {
+        final BrowserCallback callback = new BrowserCallback() {
             @Override
-            public void onSearchResultChanged(String queryOut, int itemCount, Bundle extrasOut) {
+            public void onSearchResultChanged(
+                    MediaBrowser2 browser, String queryOut, int itemCount, Bundle extrasOut) {
                 assertEquals(query, queryOut);
                 assertTrue(TestUtils.equals(extras, extrasOut));
                 assertEquals(MockMediaLibraryService2.SEARCH_RESULT_COUNT, itemCount);
@@ -324,9 +337,10 @@ public class MediaBrowser2Test extends MediaController2Test {
         extras.putString(TAG, TAG);
 
         final CountDownLatch latch = new CountDownLatch(1);
-        final TestControllerCallbackInterface callback = new TestBrowserCallbackInterface() {
+        final BrowserCallback callback = new BrowserCallback() {
             @Override
-            public void onSearchResultChanged(String queryOut, int itemCount, Bundle extrasOut) {
+            public void onSearchResultChanged(
+                    MediaBrowser2 browser, String queryOut, int itemCount, Bundle extrasOut) {
                 assertEquals(query, queryOut);
                 assertTrue(TestUtils.equals(extras, extrasOut));
                 assertEquals(0, itemCount);
@@ -347,7 +361,7 @@ public class MediaBrowser2Test extends MediaController2Test {
         testExtras.putString(testParentId, testParentId);
 
         final CountDownLatch latch = new CountDownLatch(1);
-        final SessionCallbackProxy callbackProxy = new SessionCallbackProxy(mContext) {
+        final MediaLibrarySessionCallback callback = new MediaLibrarySessionCallback(mContext) {
             @Override
             public void onSubscribe(@NonNull MediaLibrarySession session,
                     @NonNull ControllerInfo info, @NonNull String parentId,
@@ -359,7 +373,7 @@ public class MediaBrowser2Test extends MediaController2Test {
                 }
             }
         };
-        TestServiceRegistry.getInstance().setSessionCallbackProxy(callbackProxy);
+        TestServiceRegistry.getInstance().setSessionCallback(callback);
         final SessionToken2 token = MockMediaLibraryService2.getToken(mContext);
         MediaBrowser2 browser = (MediaBrowser2) createController(token);
         browser.subscribe(testParentId, testExtras);
@@ -371,7 +385,7 @@ public class MediaBrowser2Test extends MediaController2Test {
     public void testUnsubscribe() throws InterruptedException {
         final String testParentId = "testUnsubscribeId";
         final CountDownLatch latch = new CountDownLatch(1);
-        final SessionCallbackProxy callbackProxy = new SessionCallbackProxy(mContext) {
+        final MediaLibrarySessionCallback callback = new MediaLibrarySessionCallback(mContext) {
             @Override
             public void onUnsubscribe(@NonNull MediaLibrarySession session,
                     @NonNull ControllerInfo info, @NonNull String parentId) {
@@ -381,7 +395,7 @@ public class MediaBrowser2Test extends MediaController2Test {
                 }
             }
         };
-        TestServiceRegistry.getInstance().setSessionCallbackProxy(callbackProxy);
+        TestServiceRegistry.getInstance().setSessionCallback(callback);
         final SessionToken2 token = MockMediaLibraryService2.getToken(mContext);
         MediaBrowser2 browser = (MediaBrowser2) createController(token);
         browser.unsubscribe(testParentId);
@@ -398,41 +412,43 @@ public class MediaBrowser2Test extends MediaController2Test {
         testExtras.putString(testParentId1, testParentId1);
 
         final CountDownLatch latch = new CountDownLatch(3);
-        final SessionCallbackProxy sessionCallbackProxy = new SessionCallbackProxy(mContext) {
-            @Override
-            public CommandGroup onConnect(@NonNull MediaSession2 session,
-                    @NonNull ControllerInfo controller) {
-                if (Process.myUid() == controller.getUid()) {
-                    assertTrue(session instanceof MediaLibrarySession);
-                    if (mSession != null) {
-                        mSession.close();
-                    }
-                    mSession = session;
-                    // Shouldn't trigger onChildrenChanged() for the browser, because it hasn't
-                    // subscribed.
-                    ((MediaLibrarySession) session).notifyChildrenChanged(
-                            testParentId1, testChildrenCount, null);
-                    ((MediaLibrarySession) session).notifyChildrenChanged(
-                            controller, testParentId1, testChildrenCount, null);
-                }
-                return super.onConnect(session, controller);
-            }
-
-            @Override
-            public void onSubscribe(@NonNull MediaLibrarySession session,
-                    @NonNull ControllerInfo info, @NonNull String parentId,
-                    @Nullable Bundle extras) {
-                if (Process.myUid() == info.getUid()) {
-                    session.notifyChildrenChanged(testParentId2, testChildrenCount, null);
-                    session.notifyChildrenChanged(info, testParentId2, testChildrenCount,
-                            testExtras);
-                }
-            }
-        };
-        final TestBrowserCallbackInterface controllerCallbackProxy =
-                new TestBrowserCallbackInterface() {
+        final MediaLibrarySessionCallback sessionCallback =
+                new MediaLibrarySessionCallback(mContext) {
                     @Override
-                    public void onChildrenChanged(String parentId, int itemCount, Bundle extras) {
+                    public CommandGroup onConnect(@NonNull MediaSession2 session,
+                            @NonNull ControllerInfo controller) {
+                        if (Process.myUid() == controller.getUid()) {
+                            assertTrue(session instanceof MediaLibrarySession);
+                            if (mSession != null) {
+                                mSession.close();
+                            }
+                            mSession = session;
+                            // Shouldn't trigger onChildrenChanged() for the browser, because it
+                            // hasn't subscribed.
+                            ((MediaLibrarySession) session).notifyChildrenChanged(
+                                    testParentId1, testChildrenCount, null);
+                            ((MediaLibrarySession) session).notifyChildrenChanged(
+                                    controller, testParentId1, testChildrenCount, null);
+                        }
+                        return super.onConnect(session, controller);
+                    }
+
+                    @Override
+                    public void onSubscribe(@NonNull MediaLibrarySession session,
+                            @NonNull ControllerInfo info, @NonNull String parentId,
+                            @Nullable Bundle extras) {
+                        if (Process.myUid() == info.getUid()) {
+                            session.notifyChildrenChanged(testParentId2, testChildrenCount, null);
+                            session.notifyChildrenChanged(info, testParentId2, testChildrenCount,
+                                    testExtras);
+                        }
+                    }
+        };
+        final BrowserCallback controllerCallbackProxy =
+                new BrowserCallback() {
+                    @Override
+                    public void onChildrenChanged(MediaBrowser2 browser, String parentId,
+                            int itemCount, Bundle extras) {
                         switch ((int) latch.getCount()) {
                             case 3:
                                 assertEquals(testParentId2, parentId);
@@ -452,7 +468,7 @@ public class MediaBrowser2Test extends MediaController2Test {
                         }
                     }
                 };
-        TestServiceRegistry.getInstance().setSessionCallbackProxy(sessionCallbackProxy);
+        TestServiceRegistry.getInstance().setSessionCallback(sessionCallback);
         final SessionToken2 token = MockMediaLibraryService2.getToken(mContext);
         final MediaBrowser2 browser = (MediaBrowser2) createController(
                 token, true, controllerCallbackProxy);
@@ -464,11 +480,11 @@ public class MediaBrowser2Test extends MediaController2Test {
 
     public static class TestBrowserCallback extends BrowserCallback
             implements WaitForConnectionInterface {
-        private final TestControllerCallbackInterface mCallbackProxy;
+        private final ControllerCallback mCallbackProxy;
         public final CountDownLatch connectLatch = new CountDownLatch(1);
         public final CountDownLatch disconnectLatch = new CountDownLatch(1);
 
-        TestBrowserCallback(TestControllerCallbackInterface callbackProxy) {
+        TestBrowserCallback(ControllerCallback callbackProxy) {
             if (callbackProxy == null) {
                 throw new IllegalArgumentException("Callback proxy shouldn't be null. Test bug");
             }
@@ -488,96 +504,6 @@ public class MediaBrowser2Test extends MediaController2Test {
         }
 
         @Override
-        public void onPlaybackStateChanged(MediaController2 controller, PlaybackState2 state) {
-            mCallbackProxy.onPlaybackStateChanged(state);
-        }
-
-        @Override
-        public void onPlaylistParamsChanged(MediaController2 controller, PlaylistParams params) {
-            mCallbackProxy.onPlaylistParamsChanged(params);
-        }
-
-        @Override
-        public void onPlaybackInfoChanged(MediaController2 controller,
-                MediaController2.PlaybackInfo info) {
-            mCallbackProxy.onPlaybackInfoChanged(info);
-        }
-
-        @Override
-        public void onCustomCommand(MediaController2 controller, Command command, Bundle args,
-                ResultReceiver receiver) {
-            mCallbackProxy.onCustomCommand(command, args, receiver);
-        }
-
-        @Override
-        public void onCustomLayoutChanged(MediaController2 controller, List<CommandButton> layout) {
-            mCallbackProxy.onCustomLayoutChanged(layout);
-        }
-
-        @Override
-        public void onAllowedCommandsChanged(MediaController2 controller, CommandGroup commands) {
-            mCallbackProxy.onAllowedCommandsChanged(commands);
-        }
-
-        @Override
-        public void onGetLibraryRootDone(MediaBrowser2 browser, Bundle rootHints,
-                String rootMediaId, Bundle rootExtra) {
-            super.onGetLibraryRootDone(browser, rootHints, rootMediaId, rootExtra);
-            if (mCallbackProxy instanceof TestBrowserCallbackInterface) {
-                ((TestBrowserCallbackInterface) mCallbackProxy)
-                        .onGetLibraryRootDone(rootHints, rootMediaId, rootExtra);
-            }
-        }
-
-        @Override
-        public void onGetItemDone(MediaBrowser2 browser, String mediaId, MediaItem2 result) {
-            super.onGetItemDone(browser, mediaId, result);
-            if (mCallbackProxy instanceof TestBrowserCallbackInterface) {
-                ((TestBrowserCallbackInterface) mCallbackProxy).onGetItemDone(mediaId, result);
-            }
-        }
-
-        @Override
-        public void onGetChildrenDone(MediaBrowser2 browser, String parentId, int page,
-                int pageSize, List<MediaItem2> result, Bundle extras) {
-            super.onGetChildrenDone(browser, parentId, page, pageSize, result, extras);
-            if (mCallbackProxy instanceof TestBrowserCallbackInterface) {
-                ((TestBrowserCallbackInterface) mCallbackProxy)
-                        .onGetChildrenDone(parentId, page, pageSize, result, extras);
-            }
-        }
-
-        @Override
-        public void onSearchResultChanged(MediaBrowser2 browser, String query, int itemCount,
-                Bundle extras) {
-            super.onSearchResultChanged(browser, query, itemCount, extras);
-            if (mCallbackProxy instanceof TestBrowserCallbackInterface) {
-                ((TestBrowserCallbackInterface) mCallbackProxy)
-                        .onSearchResultChanged(query, itemCount, extras);
-            }
-        }
-
-        @Override
-        public void onGetSearchResultDone(MediaBrowser2 browser, String query, int page,
-                int pageSize, List<MediaItem2> result, Bundle extras) {
-            super.onGetSearchResultDone(browser, query, page, pageSize, result, extras);
-            if (mCallbackProxy instanceof TestBrowserCallbackInterface) {
-                ((TestBrowserCallbackInterface) mCallbackProxy)
-                        .onGetSearchResultDone(query, page, pageSize, result, extras);
-            }
-        }
-
-        @Override
-        public void onChildrenChanged(MediaBrowser2 browser, String parentId, int itemCount,
-                Bundle extras) {
-            super.onChildrenChanged(browser, parentId, itemCount, extras);
-            if (mCallbackProxy instanceof TestBrowserCallbackInterface) {
-                ((TestBrowserCallbackInterface) mCallbackProxy)
-                        .onChildrenChanged(parentId, itemCount, extras);
-            }
-        }
-
-        @Override
         public void waitForConnect(boolean expect) throws InterruptedException {
             if (expect) {
                 assertTrue(connectLatch.await(WAIT_TIME_MS, TimeUnit.MILLISECONDS));
@@ -592,6 +518,158 @@ public class MediaBrowser2Test extends MediaController2Test {
                 assertTrue(disconnectLatch.await(WAIT_TIME_MS, TimeUnit.MILLISECONDS));
             } else {
                 assertFalse(disconnectLatch.await(TIMEOUT_MS, TimeUnit.MILLISECONDS));
+            }
+        }
+
+        @Override
+        public void onPlaybackStateChanged(MediaController2 controller, PlaybackState2 state) {
+            mCallbackProxy.onPlaybackStateChanged(controller, state);
+        }
+
+        @Override
+        public void onPlaylistParamsChanged(MediaController2 controller, PlaylistParams params) {
+            mCallbackProxy.onPlaylistParamsChanged(controller, params);
+        }
+
+        @Override
+        public void onPlaybackInfoChanged(MediaController2 controller,
+                MediaController2.PlaybackInfo info) {
+            mCallbackProxy.onPlaybackInfoChanged(controller, info);
+        }
+
+        @Override
+        public void onCustomCommand(MediaController2 controller, Command command, Bundle args,
+                ResultReceiver receiver) {
+            mCallbackProxy.onCustomCommand(controller, command, args, receiver);
+        }
+
+        @Override
+        public void onCustomLayoutChanged(MediaController2 controller, List<CommandButton> layout) {
+            mCallbackProxy.onCustomLayoutChanged(controller, layout);
+        }
+
+        @Override
+        public void onAllowedCommandsChanged(MediaController2 controller, CommandGroup commands) {
+            mCallbackProxy.onAllowedCommandsChanged(controller, commands);
+        }
+
+        @Override
+        public void onPlaylistChanged(MediaController2 controller, List<MediaItem2> playlist) {
+            mCallbackProxy.onPlaylistChanged(controller, playlist);
+        }
+
+        @Override
+        public void onPlayerStateChanged(MediaController2 controller, int state) {
+            mCallbackProxy.onPlayerStateChanged(controller, state);
+        }
+
+        @Override
+        public void onPositionChanged(MediaController2 controller, long eventTimeMs,
+                long positionMs) {
+            mCallbackProxy.onPositionChanged(controller, eventTimeMs, positionMs);
+        }
+
+        @Override
+        public void onPlaybackSpeedChanged(MediaController2 controller, float speed) {
+            mCallbackProxy.onPlaybackSpeedChanged(controller, speed);
+        }
+
+        @Override
+        public void onBufferedPositionChanged(MediaController2 controller, long positionMs) {
+            mCallbackProxy.onBufferedPositionChanged(controller, positionMs);
+        }
+
+        @Override
+        public void onError(MediaController2 controller, int errorCode, Bundle extras) {
+            mCallbackProxy.onError(controller, errorCode, extras);
+        }
+
+        @Override
+        public void onCurrentMediaItemChanged(MediaController2 controller, MediaItem2 item) {
+            mCallbackProxy.onCurrentMediaItemChanged(controller, item);
+        }
+
+        @Override
+        public void onPlaylistChanged(MediaController2 controller, MediaPlaylistAgent playlistAgent,
+                List<MediaItem2> list, MediaMetadata2 metadata) {
+            mCallbackProxy.onPlaylistChanged(controller, playlistAgent, list, metadata);
+        }
+
+        @Override
+        public void onPlaylistMetadataChanged(MediaController2 controller,
+                MediaPlaylistAgent playlistAgent, MediaMetadata2 metadata) {
+            mCallbackProxy.onPlaylistMetadataChanged(controller, playlistAgent, metadata);
+        }
+
+        @Override
+        public void onShuffleModeChanged(MediaController2 controller,
+                MediaPlaylistAgent playlistAgent,
+                int shuffleMode) {
+            mCallbackProxy.onShuffleModeChanged(controller, playlistAgent, shuffleMode);
+        }
+
+        @Override
+        public void onRepeatModeChanged(MediaController2 controller,
+                MediaPlaylistAgent playlistAgent,
+                int repeatMode) {
+            mCallbackProxy.onRepeatModeChanged(controller, playlistAgent, repeatMode);
+        }
+
+        @Override
+        public void onGetLibraryRootDone(MediaBrowser2 browser, Bundle rootHints,
+                String rootMediaId, Bundle rootExtra) {
+            super.onGetLibraryRootDone(browser, rootHints, rootMediaId, rootExtra);
+            if (mCallbackProxy instanceof BrowserCallback) {
+                ((BrowserCallback) mCallbackProxy)
+                        .onGetLibraryRootDone(browser, rootHints, rootMediaId, rootExtra);
+            }
+        }
+
+        @Override
+        public void onGetItemDone(MediaBrowser2 browser, String mediaId, MediaItem2 result) {
+            super.onGetItemDone(browser, mediaId, result);
+            if (mCallbackProxy instanceof BrowserCallback) {
+                ((BrowserCallback) mCallbackProxy).onGetItemDone(browser, mediaId, result);
+            }
+        }
+
+        @Override
+        public void onGetChildrenDone(MediaBrowser2 browser, String parentId, int page,
+                int pageSize, List<MediaItem2> result, Bundle extras) {
+            super.onGetChildrenDone(browser, parentId, page, pageSize, result, extras);
+            if (mCallbackProxy instanceof BrowserCallback) {
+                ((BrowserCallback) mCallbackProxy)
+                        .onGetChildrenDone(browser, parentId, page, pageSize, result, extras);
+            }
+        }
+
+        @Override
+        public void onSearchResultChanged(MediaBrowser2 browser, String query, int itemCount,
+                Bundle extras) {
+            super.onSearchResultChanged(browser, query, itemCount, extras);
+            if (mCallbackProxy instanceof BrowserCallback) {
+                ((BrowserCallback) mCallbackProxy)
+                        .onSearchResultChanged(browser, query, itemCount, extras);
+            }
+        }
+
+        @Override
+        public void onGetSearchResultDone(MediaBrowser2 browser, String query, int page,
+                int pageSize, List<MediaItem2> result, Bundle extras) {
+            super.onGetSearchResultDone(browser, query, page, pageSize, result, extras);
+            if (mCallbackProxy instanceof BrowserCallback) {
+                ((BrowserCallback) mCallbackProxy)
+                        .onGetSearchResultDone(browser, query, page, pageSize, result, extras);
+            }
+        }
+
+        @Override
+        public void onChildrenChanged(MediaBrowser2 browser, String parentId, int itemCount,
+                Bundle extras) {
+            super.onChildrenChanged(browser, parentId, itemCount, extras);
+            if (mCallbackProxy instanceof BrowserCallback) {
+                ((BrowserCallback) mCallbackProxy)
+                        .onChildrenChanged(browser, parentId, itemCount, extras);
             }
         }
     }

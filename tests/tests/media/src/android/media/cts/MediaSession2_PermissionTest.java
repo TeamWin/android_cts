@@ -48,6 +48,8 @@ import static org.mockito.Mockito.timeout;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
+import android.media.MediaController2;
+import android.media.MediaController2.ControllerCallback;
 import android.media.MediaSession2;
 import android.media.MediaSession2.Command;
 import android.media.MediaSession2.CommandGroup;
@@ -390,8 +392,7 @@ public class MediaSession2_PermissionTest extends MediaSession2TestBase {
         createSessionWithAllowedActions(
                 createCommandGroupWith(COMMAND_CODE_PREPARE_FROM_SEARCH));
 
-        TestControllerCallbackInterface controllerCallback =
-                mock(TestControllerCallbackInterface.class);
+        ControllerCallback controllerCallback = mock(ControllerCallback.class);
         MediaController2 controller =
                 createController(mSession.getToken(), true, controllerCallback);
 
@@ -404,7 +405,7 @@ public class MediaSession2_PermissionTest extends MediaSession2TestBase {
         mSession.setAllowedCommands(getTestControllerInfo(),
                 createCommandGroupWithout(COMMAND_CODE_PREPARE_FROM_SEARCH));
         verify(controllerCallback, timeout(TIMEOUT_MS).atLeastOnce())
-                .onAllowedCommandsChanged(any());
+                .onAllowedCommandsChanged(eq(controller), any());
 
         controller.prepareFromSearch(query, null);
         verify(mCallback, after(WAIT_TIME_MS).never()).onPrepareFromSearch(
