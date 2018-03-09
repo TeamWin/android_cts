@@ -25,6 +25,8 @@ import static android.app.WindowConfiguration.WINDOWING_MODE_SPLIT_SCREEN_PRIMAR
 import static android.app.WindowConfiguration.WINDOWING_MODE_SPLIT_SCREEN_SECONDARY;
 import static android.server.am.ActivityManagerState.STATE_PAUSED;
 import static android.server.am.ActivityManagerState.STATE_RESUMED;
+import static android.server.am.ActivityManagerState.STATE_STOPPED;
+import static android.server.am.ComponentNameUtils.getActivityName;
 import static android.server.am.Components.ALT_LAUNCHING_ACTIVITY;
 import static android.server.am.Components.ALWAYS_FOCUSABLE_PIP_ACTIVITY;
 import static android.server.am.Components.BROADCAST_RECEIVER_ACTIVITY;
@@ -54,9 +56,7 @@ import static org.junit.Assert.assertNotEquals;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assume.assumeTrue;
 
-import android.content.ComponentName;
 import android.platform.test.annotations.Presubmit;
-import android.support.test.filters.FlakyTest;
 
 import org.junit.Rule;
 import org.junit.Test;
@@ -108,7 +108,6 @@ public class ActivityManagerActivityVisibilityTests extends ActivityManagerTestB
         launchHomeActivity();
         launchActivity(ALWAYS_FOCUSABLE_PIP_ACTIVITY);
 
-        mAmWmState.computeState(ALWAYS_FOCUSABLE_PIP_ACTIVITY);
         mAmWmState.assertFrontStack("Fullscreen stack must be the front stack.",
                 WINDOWING_MODE_FULLSCREEN, ACTIVITY_TYPE_STANDARD);
         mAmWmState.assertVisibility(ALWAYS_FOCUSABLE_PIP_ACTIVITY, true);
@@ -164,15 +163,14 @@ public class ActivityManagerActivityVisibilityTests extends ActivityManagerTestB
     }
 
     @Presubmit
-    @FlakyTest(bugId = 72526786)
     @Test
     public void testTurnScreenOnActivity() throws Exception {
         try (final LockScreenSession lockScreenSession = new LockScreenSession()) {
             lockScreenSession.sleepDevice();
             launchActivity(TURN_SCREEN_ON_ACTIVITY);
-            mAmWmState.computeState(TURN_SCREEN_ON_ACTIVITY);
+
             mAmWmState.assertVisibility(TURN_SCREEN_ON_ACTIVITY, true);
-            assertTrue(isDisplayOn());
+            assertTrue("Display turns on", isDisplayOn());
         }
     }
 
@@ -183,12 +181,13 @@ public class ActivityManagerActivityVisibilityTests extends ActivityManagerTestB
 
         // Launch two activities in docked stack.
         launchActivityInSplitScreenWithRecents(LAUNCHING_ACTIVITY);
-        getLaunchActivityBuilder().setTargetActivity(BROADCAST_RECEIVER_ACTIVITY).execute();
-        mAmWmState.computeState(BROADCAST_RECEIVER_ACTIVITY);
+        getLaunchActivityBuilder()
+                .setTargetActivity(BROADCAST_RECEIVER_ACTIVITY)
+                .setWaitForLaunched(true)
+                .execute();
         mAmWmState.assertVisibility(BROADCAST_RECEIVER_ACTIVITY, true);
         // Launch something to fullscreen stack to make it focused.
         launchActivity(TEST_ACTIVITY, WINDOWING_MODE_FULLSCREEN_OR_SPLIT_SCREEN_SECONDARY);
-        mAmWmState.computeState(TEST_ACTIVITY);
         mAmWmState.assertVisibility(TEST_ACTIVITY, true);
         // Finish activity in non-focused (docked) stack.
         executeShellCommand(FINISH_ACTIVITY_BROADCAST);
@@ -220,12 +219,10 @@ public class ActivityManagerActivityVisibilityTests extends ActivityManagerTestB
 
         // Launch an activity that calls "moveTaskToBack" to finish itself.
         launchActivity(MOVE_TASK_TO_BACK_ACTIVITY, EXTRA_FINISH_POINT, finishPoint);
-        mAmWmState.waitForValidState(MOVE_TASK_TO_BACK_ACTIVITY);
         mAmWmState.assertVisibility(MOVE_TASK_TO_BACK_ACTIVITY, true);
 
         // Launch a different activity on top.
         launchActivity(BROADCAST_RECEIVER_ACTIVITY);
-        mAmWmState.waitForValidState(BROADCAST_RECEIVER_ACTIVITY);
         mAmWmState.waitForActivityState(BROADCAST_RECEIVER_ACTIVITY, STATE_RESUMED);
         mAmWmState.assertVisibility(MOVE_TASK_TO_BACK_ACTIVITY, false);
         mAmWmState.assertVisibility(BROADCAST_RECEIVER_ACTIVITY, true);
@@ -307,8 +304,9 @@ public class ActivityManagerActivityVisibilityTests extends ActivityManagerTestB
         // front.
 
         // Bring launching activity back to the foreground
-        launchActivity(LAUNCHING_ACTIVITY);
-        mAmWmState.waitForValidState(LAUNCHING_ACTIVITY);
+        launchActivityNoWait(LAUNCHING_ACTIVITY);
+        // Wait for the most front activity of the task.
+        mAmWmState.waitForValidState(ALT_LAUNCHING_ACTIVITY);
 
         // Ensure the alternate launching activity is still in focus.
         mAmWmState.assertFocusedActivity("Alt Launching Activity must be focused",
@@ -316,6 +314,7 @@ public class ActivityManagerActivityVisibilityTests extends ActivityManagerTestB
 
         pressBackButton();
 
+        // Wait for the bottom activity back to the foreground.
         mAmWmState.waitForValidState(LAUNCHING_ACTIVITY);
 
         // Ensure launching activity was brought forward.
@@ -352,9 +351,8 @@ public class ActivityManagerActivityVisibilityTests extends ActivityManagerTestB
                     .sleepDevice();
             final LogSeparator logSeparator = clearLogcat();
             launchActivity(TURN_SCREEN_ON_ATTR_ACTIVITY);
-            mAmWmState.computeState(TURN_SCREEN_ON_ATTR_ACTIVITY);
             mAmWmState.assertVisibility(TURN_SCREEN_ON_ATTR_ACTIVITY, true);
-            assertTrue(isDisplayOn());
+            assertTrue("Display turns on", isDisplayOn());
             assertSingleLaunch(TURN_SCREEN_ON_ATTR_ACTIVITY, logSeparator);
         }
     }
@@ -367,9 +365,10 @@ public class ActivityManagerActivityVisibilityTests extends ActivityManagerTestB
             lockScreenSession.setLockCredential()
                     .sleepDevice();
             final LogSeparator logSeparator = clearLogcat();
-            launchActivity(TURN_SCREEN_ON_ATTR_ACTIVITY);
-            mAmWmState.computeState(TURN_SCREEN_ON_ATTR_ACTIVITY);
-            assertFalse(isDisplayOn());
+            launchActivityNoWait(TURN_SCREEN_ON_ATTR_ACTIVITY);
+            // Wait for the activity stopped because lock screen prevent showing the activity.
+            mAmWmState.waitForActivityState(TURN_SCREEN_ON_ATTR_ACTIVITY, STATE_STOPPED);
+            assertFalse("Display keeps off", isDisplayOn());
             assertSingleLaunchAndStop(TURN_SCREEN_ON_ATTR_ACTIVITY, logSeparator);
         }
     }
@@ -381,9 +380,8 @@ public class ActivityManagerActivityVisibilityTests extends ActivityManagerTestB
             mAmWmState.waitForAllStoppedActivities();
             final LogSeparator logSeparator = clearLogcat();
             launchActivity(TURN_SCREEN_ON_SHOW_ON_LOCK_ACTIVITY);
-            mAmWmState.computeState(TURN_SCREEN_ON_SHOW_ON_LOCK_ACTIVITY);
             mAmWmState.assertVisibility(TURN_SCREEN_ON_SHOW_ON_LOCK_ACTIVITY, true);
-            assertTrue(isDisplayOn());
+            assertTrue("Display turns on", isDisplayOn());
             assertSingleLaunch(TURN_SCREEN_ON_SHOW_ON_LOCK_ACTIVITY, logSeparator);
         }
     }
@@ -395,38 +393,36 @@ public class ActivityManagerActivityVisibilityTests extends ActivityManagerTestB
             mAmWmState.waitForAllStoppedActivities();
             LogSeparator logSeparator = clearLogcat();
             launchActivity(TURN_SCREEN_ON_ATTR_REMOVE_ATTR_ACTIVITY);
-            mAmWmState.computeState(TURN_SCREEN_ON_ATTR_REMOVE_ATTR_ACTIVITY);
-            assertTrue(isDisplayOn());
+            assertTrue("Display turns on", isDisplayOn());
             assertSingleLaunch(TURN_SCREEN_ON_ATTR_REMOVE_ATTR_ACTIVITY, logSeparator);
 
             lockScreenSession.sleepDevice();
             mAmWmState.waitForAllStoppedActivities();
             logSeparator = clearLogcat();
             launchActivity(TURN_SCREEN_ON_ATTR_REMOVE_ATTR_ACTIVITY);
-            assertFalse(isDisplayOn());
+            // Display should keep off, because setTurnScreenOn(false) has been called at
+            // {@link TURN_SCREEN_ON_ATTR_REMOVE_ATTR_ACTIVITY}'s onStop.
+            assertFalse("Display keeps off", isDisplayOn());
             assertSingleStartAndStop(TURN_SCREEN_ON_ATTR_REMOVE_ATTR_ACTIVITY, logSeparator);
         }
     }
 
     @Test
-    @FlakyTest(bugId = 74034092)
     @Presubmit
     public void testTurnScreenOnSingleTask() throws Exception {
         try (final LockScreenSession lockScreenSession = new LockScreenSession()) {
             lockScreenSession.sleepDevice();
             LogSeparator logSeparator = clearLogcat();
             launchActivity(TURN_SCREEN_ON_SINGLE_TASK_ACTIVITY);
-            mAmWmState.computeState(TURN_SCREEN_ON_SINGLE_TASK_ACTIVITY);
             mAmWmState.assertVisibility(TURN_SCREEN_ON_SINGLE_TASK_ACTIVITY, true);
-            assertTrue(isDisplayOn());
+            assertTrue("Display turns on", isDisplayOn());
             assertSingleLaunch(TURN_SCREEN_ON_SINGLE_TASK_ACTIVITY, logSeparator);
 
             lockScreenSession.sleepDevice();
             logSeparator = clearLogcat();
             launchActivity(TURN_SCREEN_ON_SINGLE_TASK_ACTIVITY);
-            mAmWmState.computeState(TURN_SCREEN_ON_SINGLE_TASK_ACTIVITY);
             mAmWmState.assertVisibility(TURN_SCREEN_ON_SINGLE_TASK_ACTIVITY, true);
-            assertTrue(isDisplayOn());
+            assertTrue("Display turns on", isDisplayOn());
             assertSingleStart(TURN_SCREEN_ON_SINGLE_TASK_ACTIVITY, logSeparator);
         }
     }
@@ -436,23 +432,16 @@ public class ActivityManagerActivityVisibilityTests extends ActivityManagerTestB
         try (final LockScreenSession lockScreenSession = new LockScreenSession()) {
             lockScreenSession.sleepDevice();
             launchActivity(TURN_SCREEN_ON_WITH_RELAYOUT_ACTIVITY);
-            mAmWmState.computeState(TURN_SCREEN_ON_WITH_RELAYOUT_ACTIVITY);
             mAmWmState.assertVisibility(TURN_SCREEN_ON_WITH_RELAYOUT_ACTIVITY, true);
 
-            LogSeparator logSeparator = clearLogcat();
             lockScreenSession.sleepDevice();
-            mAmWmState.waitFor("Waiting for stopped state", () ->
-                    lifecycleStopOccurred(TURN_SCREEN_ON_WITH_RELAYOUT_ACTIVITY, logSeparator));
+            mAmWmState.waitForActivityState(TURN_SCREEN_ON_WITH_RELAYOUT_ACTIVITY, STATE_STOPPED);
 
             // Ensure there was an actual stop if the waitFor timed out.
-            assertTrue(lifecycleStopOccurred(TURN_SCREEN_ON_WITH_RELAYOUT_ACTIVITY, logSeparator));
-            assertFalse(isDisplayOn());
+            assertTrue(getActivityName(TURN_SCREEN_ON_WITH_RELAYOUT_ACTIVITY) + " stopped",
+                    mAmWmState.getAmState().hasActivityState(
+                            TURN_SCREEN_ON_WITH_RELAYOUT_ACTIVITY, STATE_STOPPED));
+            assertFalse("Display keeps off", isDisplayOn());
         }
-    }
-
-    private boolean lifecycleStopOccurred(ComponentName activityName, LogSeparator logSeparator) {
-        ActivityLifecycleCounts lifecycleCounts = new ActivityLifecycleCounts(activityName,
-                logSeparator);
-        return lifecycleCounts.mStopCount > 0;
     }
 }
