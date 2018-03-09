@@ -33,6 +33,8 @@ import android.media.SessionToken2;
 import android.media.cts.TestServiceRegistry.SessionCallbackProxy;
 import android.media.cts.TestUtils.SyncHandler;
 import android.os.Bundle;
+import android.support.annotation.NonNull;
+import android.support.annotation.Nullable;
 import android.util.Log;
 
 import java.io.FileDescriptor;
@@ -102,8 +104,8 @@ public class MockMediaLibraryService2 extends MediaLibraryService2 {
 
     @Override
     public void onCreate() {
-        super.onCreate();
         TestServiceRegistry.getInstance().setServiceInstance(this);
+        super.onCreate();
     }
 
     @Override
@@ -150,9 +152,9 @@ public class MockMediaLibraryService2 extends MediaLibraryService2 {
         }
 
         @Override
-        public CommandGroup onConnect(MediaSession2 session,
-                ControllerInfo controller) {
-            return mCallbackProxy.onConnect(controller);
+        public CommandGroup onConnect(@NonNull MediaSession2 session,
+                @NonNull ControllerInfo controller) {
+            return mCallbackProxy.onConnect(session, controller);
         }
 
         @Override
@@ -217,15 +219,16 @@ public class MockMediaLibraryService2 extends MediaLibraryService2 {
         }
 
         @Override
-        public void onSubscribe(MediaLibrarySession session, ControllerInfo controller,
-                String parentId, Bundle extras) {
-            mCallbackProxy.onSubscribe(controller, parentId, extras);
+        public void onSubscribe(@NonNull MediaLibrarySession session,
+                @NonNull ControllerInfo controller, @NonNull String parentId,
+                @Nullable Bundle extras) {
+            mCallbackProxy.onSubscribe(session, controller, parentId, extras);
         }
 
         @Override
-        public void onUnsubscribe(MediaLibrarySession session, ControllerInfo controller,
-                String parentId) {
-            mCallbackProxy.onUnsubscribe(controller, parentId);
+        public void onUnsubscribe(@NonNull MediaLibrarySession session,
+                @NonNull ControllerInfo controller, String parentId) {
+            mCallbackProxy.onUnsubscribe(session, controller, parentId);
         }
     }
 
