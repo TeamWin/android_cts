@@ -41,6 +41,7 @@ public class VirtualContainerActivity extends AbstractAutoFillActivity {
     static final String BLANK_VALUE = "        ";
 
     EditText mUrlBar;
+    EditText mUrlBar2;
     VirtualContainerView mCustomView;
 
     Line mUsername;
@@ -55,6 +56,7 @@ public class VirtualContainerActivity extends AbstractAutoFillActivity {
         setContentView(R.layout.virtual_container_activity);
 
         mUrlBar = findViewById(R.id.my_url_bar);
+        mUrlBar2 = findViewById(R.id.my_url_bar2);
         mCustomView = findViewById(R.id.virtual_container_view);
 
         mUrlBar.setText("ftp://dev.null/4/8/15/16/23/42");
