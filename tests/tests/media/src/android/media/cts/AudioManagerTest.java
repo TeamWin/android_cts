@@ -38,7 +38,10 @@ import static android.provider.Settings.System.SOUND_EFFECTS_ENABLED;
 
 import android.app.ActivityManager;
 import android.app.NotificationManager;
+import android.content.BroadcastReceiver;
 import android.content.Context;
+import android.content.Intent;
+import android.content.IntentFilter;
 import android.content.res.Resources;
 import android.media.AudioManager;
 import android.content.pm.PackageManager;
@@ -142,6 +145,73 @@ public class AudioManagerTest extends InstrumentationTestCase {
         assertTrue(mAudioManager.isMicrophoneMute());
         mAudioManager.setMicrophoneMute(false);
         assertFalse(mAudioManager.isMicrophoneMute());
+    }
+
+    public void testMicrophoneMuteIntent() throws Exception {
+        final MyBlockingIntentReceiver receiver = new MyBlockingIntentReceiver();
+        final boolean initialMicMute = mAudioManager.isMicrophoneMute();
+        try {
+            mContext.registerReceiver(receiver,
+                    new IntentFilter(AudioManager.ACTION_MICROPHONE_MUTE_CHANGED));
+            // change the mic mute state
+            mAudioManager.setMicrophoneMute(!initialMicMute);
+            // verify a change was reported
+            final boolean intentFired = receiver.waitForMicMuteChanged(500/*ms*/);
+            assertTrue("ACTION_MICROPHONE_MUTE_CHANGED wasn't fired", intentFired);
+            // verify the mic mute state is expected
+            final boolean newMicMute = mAudioManager.isMicrophoneMute();
+            assertTrue("new mic mute state not as expected (" + !initialMicMute + ")",
+                    newMicMute == !initialMicMute);
+        } finally {
+            mContext.unregisterReceiver(receiver);
+            mAudioManager.setMicrophoneMute(initialMicMute);
+        }
+    }
+
+    // helper class to simplify that abstracts out the handling of spurious wakeups in Object.wait()
+    private static final class SafeWaitObject {
+        private boolean mQuit = false;
+
+        public void safeNotify() {
+            synchronized (this) {
+                mQuit = true;
+                this.notify();
+            }
+        }
+
+        public void safeWait(long millis) throws InterruptedException {
+            final long timeOutTime = java.lang.System.currentTimeMillis() + millis;
+            synchronized (this) {
+                while (!mQuit) {
+                    final long timeToWait = timeOutTime - java.lang.System.currentTimeMillis();
+                    if (timeToWait < 0) { break; }
+                    this.wait(timeToWait);
+                }
+            }
+        }
+    }
+
+    private static final class MyBlockingIntentReceiver extends BroadcastReceiver {
+        private final SafeWaitObject mLock = new SafeWaitObject();
+        // state protected by mLock
+        private boolean mIntentReceived = false;
+
+        @Override
+        public void onReceive(Context context, Intent intent) {
+            synchronized (mLock) {
+                mIntentReceived = true;
+                mLock.safeNotify();
+            }
+        }
+
+        public boolean waitForMicMuteChanged(long timeOutMs) {
+            synchronized (mLock) {
+                try {
+                    mLock.safeWait(timeOutMs);
+                } catch (InterruptedException e) { }
+                return mIntentReceived;
+            }
+        }
     }
 
     public void testSoundEffects() throws Exception {
