@@ -57,6 +57,7 @@ import android.provider.Settings;
 import android.server.am.settings.SettingsSession;
 import android.support.test.filters.FlakyTest;
 
+import org.junit.Ignore;
 import org.junit.Test;
 
 /**
@@ -146,6 +147,7 @@ public class ActivityManagerAssistantStackTests extends ActivityManagerTestBase 
 
     @Test
     @Presubmit
+    @Ignore("b/70677280")
     public void testAssistantStackLaunchNewTaskWithDockedStack() throws Exception {
         assumeTrue(assistantRunsOnPrimaryDisplay());
         assumeTrue(supportsSplitScreenMultiWindow());
