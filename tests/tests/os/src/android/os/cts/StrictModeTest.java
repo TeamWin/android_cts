@@ -413,6 +413,16 @@ public class StrictModeTest {
     }
 
     @Test
+    public void testExplicitGc() throws Exception {
+        StrictMode.setThreadPolicy(
+                new StrictMode.ThreadPolicy.Builder().detectExplicitGc().penaltyLog().build());
+
+        inspectViolation(
+                () -> { Runtime.getRuntime().gc(); },
+                violation -> assertPolicy(violation, StrictMode.DETECT_EXPLICIT_GC));
+    }
+
+    @Test
     public void testViolationAcrossBinder() throws Exception {
         runWithRemoteServiceBound(
                 getContext(),
