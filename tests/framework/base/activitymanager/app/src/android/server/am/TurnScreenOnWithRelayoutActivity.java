@@ -16,9 +16,10 @@
 
 package android.server.am;
 
+import android.app.Activity;
 import android.view.WindowManager;
 
-public class TurnScreenOnWithRelayoutActivity extends AbstractLifecycleLogActivity {
+public class TurnScreenOnWithRelayoutActivity extends Activity {
 
     @Override
     protected void onStart() {
