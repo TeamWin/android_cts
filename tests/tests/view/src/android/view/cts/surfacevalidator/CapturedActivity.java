@@ -33,10 +33,10 @@ import android.os.Bundle;
 import android.os.Handler;
 import android.os.Looper;
 import android.support.test.InstrumentationRegistry;
+import android.support.test.uiautomator.By;
 import android.support.test.uiautomator.UiDevice;
-import android.support.test.uiautomator.UiObject;
-import android.support.test.uiautomator.UiObjectNotFoundException;
-import android.support.test.uiautomator.UiSelector;
+import android.support.test.uiautomator.UiObject2;
+import android.support.test.uiautomator.Until;
 import android.util.DisplayMetrics;
 import android.util.Log;
 import android.util.SparseArray;
@@ -69,6 +69,8 @@ public class CapturedActivity extends Activity {
     private static final int RETRY_COUNT = 2;
 
     private static final long START_CAPTURE_DELAY_MS = 4000;
+
+    private static final String ACCEPT_RESOURCE_ID = "android:id/button1";
 
     private MediaPlayer mMediaPlayer;
 
@@ -106,14 +108,14 @@ public class CapturedActivity extends Activity {
         mMediaPlayer.setLooping(true);
     }
 
-    public void dismissPermissionDialog() throws UiObjectNotFoundException {
+    public void dismissPermissionDialog() {
         // The permission dialog will be auto-opened by the activity - find it and accept
         UiDevice uiDevice = UiDevice.getInstance(InstrumentationRegistry.getInstrumentation());
-        UiSelector acceptButtonSelector = new UiSelector().resourceId("android:id/button1");
-        UiObject acceptButton = uiDevice.findObject(acceptButtonSelector);
-            if (acceptButton.waitForExists(PERMISSION_DIALOG_WAIT_MS)) {
-            boolean success = acceptButton.click();
-            Log.d(TAG, "found permission dialog, click attempt success = " + success);
+        UiObject2 acceptButton = uiDevice.wait(Until.findObject(By.res(ACCEPT_RESOURCE_ID)),
+                PERMISSION_DIALOG_WAIT_MS);
+        if (acceptButton != null) {
+            Log.d(TAG, "found permission dialog after searching all windows, clicked");
+            acceptButton.click();
         }
     }
 
