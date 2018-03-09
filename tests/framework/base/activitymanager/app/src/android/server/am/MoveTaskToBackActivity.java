@@ -16,6 +16,10 @@
 
 package android.server.am;
 
+import static android.server.am.Components.MoveTaskToBackActivity.EXTRA_FINISH_POINT;
+import static android.server.am.Components.MoveTaskToBackActivity.FINISH_POINT_ON_PAUSE;
+import static android.server.am.Components.MoveTaskToBackActivity.FINISH_POINT_ON_STOP;
+
 import android.content.Intent;
 import android.os.Bundle;
 
@@ -31,14 +35,14 @@ public class MoveTaskToBackActivity extends AbstractLifecycleLogActivity {
         super.onCreate(icicle);
 
         final Intent intent = getIntent();
-        mFinishPoint = intent.getExtras().getString("finish_point");
+        mFinishPoint = intent.getExtras().getString(EXTRA_FINISH_POINT);
     }
 
     @Override
     protected void onPause() {
         super.onPause();
 
-        if (mFinishPoint.equals("on_pause")) {
+        if (FINISH_POINT_ON_PAUSE.equals(mFinishPoint)) {
             moveTaskToBack(true /* nonRoot */);
         }
     }
@@ -47,7 +51,7 @@ public class MoveTaskToBackActivity extends AbstractLifecycleLogActivity {
     protected void onStop() {
         super.onStop();
 
-        if (mFinishPoint.equals("on_stop")) {
+        if (FINISH_POINT_ON_STOP.equals(mFinishPoint)) {
             moveTaskToBack(true /* nonRoot */);
         }
     }

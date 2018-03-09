@@ -220,7 +220,20 @@ public class Components extends ComponentsBase {
         public static final String EXTRA_ASSISTANT_IS_TRANSLUCENT = "is_translucent";
     }
 
-    /** Action and extra key constants for {@link android.server.am.PipActivity}.
+    /**
+     * Extra constants for {@link android.server.am.MoveTaskToBackActivity}.
+     *
+     * TODO(b/73346885): These constants should be in
+     * {@link android.server.am.MoveTaskToBackActivity} once the activity is moved to test APK.
+     */
+    public static class MoveTaskToBackActivity {
+        public static final String EXTRA_FINISH_POINT = "finish_point";
+        public static final String FINISH_POINT_ON_PAUSE = "on_pause";
+        public static final String FINISH_POINT_ON_STOP = "on_stop";
+    }
+
+    /**
+     * Action and extra key constants for {@link android.server.am.PipActivity}.
      *
      * TODO(b/73346885): These constants should be in {@link android.server.am.PipActivity}
      * once the activity is moved to test APK.
