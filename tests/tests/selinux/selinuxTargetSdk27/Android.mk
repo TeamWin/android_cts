@@ -38,7 +38,7 @@ LOCAL_JNI_SHARED_LIBRARIES := \
 
 LOCAL_SRC_FILES := $(call all-java-files-under, src common)
 LOCAL_PACKAGE_NAME := CtsSelinuxTargetSdk27TestCases
-LOCAL_SDK_VERSION := current
+LOCAL_PRIVATE_PLATFORM_APIS := true
 LOCAL_COMPATIBILITY_SUITE := cts vts general-tests
 include $(BUILD_CTS_PACKAGE)
 
