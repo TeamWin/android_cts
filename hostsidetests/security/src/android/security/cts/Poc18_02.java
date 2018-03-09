@@ -33,4 +33,23 @@ public class Poc18_02 extends SecurityTestCase {
                          "[\\s\\n\\S]*>>> /system/bin/" +
                          "mediaserver <<<[\\s\\n\\S]*", logcatOut);
     }
+
+    /**
+     *  b/35269676
+     */
+    @SecurityTest
+    public void testPocCVE_2017_11041() throws Exception {
+        AdbUtils.runCommandLine("logcat -c", getDevice());
+        AdbUtils.runPocNoOutput("CVE-2017-11041", getDevice(), 60);
+        //Sleep to allow crash log to propogate to logcat
+        Thread.sleep(3000);
+        String logcatOut = AdbUtils.runCommandLine("logcat -d", getDevice());
+        //PoC may cause continuous crashes, reboot
+        AdbUtils.runCommandLine("reboot", getDevice());
+        getDevice().waitForDeviceAvailable(60);
+        updateKernelStartTime();
+        assertNotMatches("[\\s\\n\\S]*Fatal signal 11 \\(SIGSEGV\\)" +
+                         "[\\s\\n\\S]*>>> /system/bin/" +
+                         "mediaserver <<<[\\s\\n\\S]*", logcatOut);
+    }
  }
