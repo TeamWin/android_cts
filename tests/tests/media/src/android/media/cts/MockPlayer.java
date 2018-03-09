@@ -55,6 +55,7 @@ public class MockPlayer extends MediaPlayerBase {
     public List<MediaItem2> mPlaylist;
     public PlaylistParams mPlaylistParams;
 
+    private @PlayerState int mLastPlayerState;
     private PlaybackState2 mLastPlaybackState;
     private AudioAttributes mAudioAttributes;
 
