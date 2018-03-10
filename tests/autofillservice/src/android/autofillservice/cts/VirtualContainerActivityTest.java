@@ -140,7 +140,6 @@ public class VirtualContainerActivityTest extends AutoFillServiceTestCase {
      * Tests autofilling the virtual views, using the sync / async version of ViewStructure.addChild
      */
     private void autofillTest(boolean sync) throws Exception {
-        if (sRanAlready) return;
         // Set service.
         enableService();
 
@@ -219,7 +218,6 @@ public class VirtualContainerActivityTest extends AutoFillServiceTestCase {
 
     @Test
     public void testAutofillTwoDatasets() throws Exception {
-        if (sRanAlready) return;
         // Set service.
         enableService();
 
@@ -244,10 +242,12 @@ public class VirtualContainerActivityTest extends AutoFillServiceTestCase {
         assertDatasetShown(mActivity.mUsername, "The Dude", "THE DUDE");
 
         // Play around with focus to make sure picker is properly drawn.
-        focusToPassword();
-        assertDatasetShown(mActivity.mPassword, "The Dude", "THE DUDE");
-        focusToUsername();
-        assertDatasetShown(mActivity.mUsername, "The Dude", "THE DUDE");
+        if (BUG_74256300_FIXED || !mCompatMode) {
+            focusToPassword();
+            assertDatasetShown(mActivity.mPassword, "The Dude", "THE DUDE");
+            focusToUsername();
+            assertDatasetShown(mActivity.mUsername, "The Dude", "THE DUDE");
+        }
 
         // Auto-fill it.
         mUiBot.selectDataset("THE DUDE");
@@ -258,7 +258,6 @@ public class VirtualContainerActivityTest extends AutoFillServiceTestCase {
 
     @Test
     public void testAutofillOverrideDispatchProvideAutofillStructure() throws Exception {
-        if (sRanAlready) return;
         mActivity.mCustomView.setOverrideDispatchProvideAutofillStructure(true);
         autofillTest(true);
     }
@@ -340,7 +339,6 @@ public class VirtualContainerActivityTest extends AutoFillServiceTestCase {
 
     @Test
     public void testAutofillCallbacks() throws Exception {
-        if (sRanAlready) return;
         // Set service.
         enableService();
         final MyAutofillCallback callback = mActivity.registerCallback();
@@ -367,7 +365,6 @@ public class VirtualContainerActivityTest extends AutoFillServiceTestCase {
 
     @Test
     public void testAutofillCallbackDisabled() throws Throwable {
-        if (sRanAlready) return;
         // Set service.
         disableService();
         final MyAutofillCallback callback = mActivity.registerCallback();
@@ -381,26 +378,14 @@ public class VirtualContainerActivityTest extends AutoFillServiceTestCase {
 
     @Test
     public void testAutofillCallbackNoDatasets() throws Throwable {
-        callbackUnavailableTest(NO_RESPONSE);
-    }
-
-    @Test
-    public void testAutofillCallbackNoDatasetsButSaveInfo() throws Throwable {
-        callbackUnavailableTest(new CannedFillResponse.Builder()
-                .setRequiredSavableIds(SAVE_DATA_TYPE_PASSWORD, ID_USERNAME, ID_PASSWORD)
-                .build());
-    }
-
-    private void callbackUnavailableTest(CannedFillResponse response) throws Throwable {
-        if (sRanAlready) return;
         // Set service.
         enableService();
         final MyAutofillCallback callback = mActivity.registerCallback();
 
         // Set expectations.
-        sReplier.addResponse(response);
+        sReplier.addResponse(NO_RESPONSE);
 
-        // Trigger auto-fill.
+        // Trigger autofill.
         focusToUsernameExpectNoWindowEvent();
         sReplier.getNextFillRequest();
 
@@ -412,8 +397,33 @@ public class VirtualContainerActivityTest extends AutoFillServiceTestCase {
     }
 
     @Test
+    public void testAutofillCallbackNoDatasetsButSaveInfo() throws Throwable {
+        // Set service.
+        enableService();
+        final MyAutofillCallback callback = mActivity.registerCallback();
+
+        // Set expectations.
+        sReplier.addResponse(new CannedFillResponse.Builder()
+                .setRequiredSavableIds(SAVE_DATA_TYPE_PASSWORD, ID_USERNAME, ID_PASSWORD)
+                .build());
+
+        // Trigger autofill.
+        focusToUsernameExpectNoWindowEvent();
+        sReplier.getNextFillRequest();
+
+        // Autofill it.
+        mUiBot.assertNoDatasetsEver();
+
+        // Assert callback was called
+        callback.assertUiUnavailableEvent(mActivity.mCustomView, mActivity.mUsername.text.id);
+
+        // Make sure save is not triggered
+        mActivity.getAutofillManager().commit();
+        mUiBot.assertSaveNotShowing(SAVE_DATA_TYPE_PASSWORD);
+    }
+
+    @Test
     public void testSaveDialogNotShownWhenBackIsPressed() throws Exception {
-        if (sRanAlready) return;
         // Set service.
         enableService();
 
@@ -467,7 +477,6 @@ public class VirtualContainerActivityTest extends AutoFillServiceTestCase {
     }
 
     private void saveTest(CommitType commitType) throws Throwable {
-        if (sRanAlready) return;
         // Set service.
         enableService();
 
@@ -535,8 +544,6 @@ public class VirtualContainerActivityTest extends AutoFillServiceTestCase {
 
     @Test
     public void testSaveNotShownWhenVirtualViewValueChanges() throws Throwable {
-        if (mCompatMode) return; // TODO(b/72811561): figure out why it fails on compat mode
-
         // Set service.
         enableService();
 
@@ -559,7 +566,6 @@ public class VirtualContainerActivityTest extends AutoFillServiceTestCase {
 
     @Test
     public void testAppCannotFakePackageName() throws Exception {
-        if (sRanAlready) return;
         // Set service.
         enableService();
 
@@ -608,7 +614,4 @@ public class VirtualContainerActivityTest extends AutoFillServiceTestCase {
         assertThat(urlBar.getWebDomain()).isNull();
         assertThat(urlBar.getWebScheme()).isNull();
     }
-
-    // TODO(b/72811561): currently only one test pass at time
-    protected static boolean sRanAlready = false;
 }
