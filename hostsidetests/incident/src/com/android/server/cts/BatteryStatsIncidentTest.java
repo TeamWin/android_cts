@@ -22,6 +22,7 @@ import android.os.SystemProto;
 import android.os.TimerProto;
 import android.os.UidProto;
 import android.service.batterystats.BatteryStatsServiceDumpProto;
+import android.telephony.NetworkTypeEnum;
 
 /**
  * Test to BatteryStats proto dump.
@@ -172,8 +173,11 @@ public class BatteryStatsIncidentTest extends ProtoDumpTestCase {
         }
 
         for (SystemProto.DataConnection dc : s.getDataConnectionList()) {
-            assertTrue(SystemProto.DataConnection.Name.getDescriptor().getValues()
-                    .contains(dc.getName().getValueDescriptor()));
+            // If isNone is not set, then the name will be a valid network type.
+            if (!dc.getIsNone()) {
+                assertTrue(NetworkTypeEnum.getDescriptor().getValues()
+                        .contains(dc.getName().getValueDescriptor()));
+            }
             testTimerProto(dc.getTotal());
         }
 
