@@ -16,8 +16,6 @@
 
 package com.android.compatibility.dalvik;
 
-import com.android.compatibility.common.util.TestSuiteFilter;
-
 import dalvik.system.DexFile;
 import dalvik.system.PathClassLoader;
 
@@ -98,7 +96,7 @@ public class DalvikTestRunner {
 
         String[] classPathItems = System.getProperty("java.class.path").split(File.pathSeparator);
         List<Class<?>> classes = getClasses(classPathItems, abiName);
-        config.suite = TestSuiteFilter.createSuite(classes, config.includes, config.excludes);
+        config.suite = new FilterableTestSuite(classes, config.includes, config.excludes);
 
         return config;
     }
@@ -319,5 +317,97 @@ public class DalvikTestRunner {
         Set<String> excludes = new HashSet<>();
         boolean collectTestsOnly = false;
         TestSuite suite;
+    }
+
+    /**
+     * A {@link TestSuite} that can filter which tests run, given the include and exclude filters.
+     *
+     * This had to be private inner class because the test runner would find it and think it was a
+     * suite of tests, but it has no tests in it, causing a crash.
+     */
+    private static class FilterableTestSuite extends TestSuite {
+
+        private Set<String> mIncludes;
+        private Set<String> mExcludes;
+
+        public FilterableTestSuite(List<Class<?>> classes, Set<String> includes,
+                Set<String> excludes) {
+            super(classes.toArray(new Class<?>[classes.size()]));
+            mIncludes = includes;
+            mExcludes = excludes;
+        }
+
+        /**
+         * {@inheritDoc}
+         */
+        @Override
+        public int countTestCases() {
+            return countTests(this);
+        }
+
+        private int countTests(Test test) {
+            if (test instanceof TestSuite) {
+                // If the test is a suite it could contain multiple tests, these need to be split
+                // out into separate tests so they can be filtered
+                TestSuite suite = (TestSuite) test;
+                Enumeration<Test> enumerator = suite.tests();
+                int count = 0;
+                while (enumerator.hasMoreElements()) {
+                    count += countTests(enumerator.nextElement());
+                }
+                return count;
+            } else if (shouldRun(test)) {
+                return 1;
+            }
+            return 0;
+        }
+
+        /**
+         * {@inheritDoc}
+         */
+        @Override
+        public void runTest(Test test, TestResult result) {
+            runTests(test, result);
+        }
+
+        private void runTests(Test test, TestResult result) {
+            if (test instanceof TestSuite) {
+                // If the test is a suite it could contain multiple tests, these need to be split
+                // out into separate tests so they can be filtered
+                TestSuite suite = (TestSuite) test;
+                Enumeration<Test> enumerator = suite.tests();
+                while (enumerator.hasMoreElements()) {
+                    runTests(enumerator.nextElement(), result);
+                }
+            } else if (shouldRun(test)) {
+                test.run(result);
+            }
+        }
+
+        private boolean shouldRun(Test test) {
+            String fullName = test.toString();
+            String[] parts = fullName.split("[\\(\\)]");
+            String className = parts[1];
+            String methodName = String.format("%s#%s", className, parts[0]);
+            int index = className.lastIndexOf('.');
+            String packageName = index < 0 ? "" : className.substring(0, index);
+
+            if (mExcludes.contains(packageName)) {
+                // Skip package because it was excluded
+                return false;
+            }
+            if (mExcludes.contains(className)) {
+                // Skip class because it was excluded
+                return false;
+            }
+            if (mExcludes.contains(methodName)) {
+                // Skip method because it was excluded
+                return false;
+            }
+            return mIncludes.isEmpty()
+                    || mIncludes.contains(methodName)
+                    || mIncludes.contains(className)
+                    || mIncludes.contains(packageName);
+        }
     }
 }
