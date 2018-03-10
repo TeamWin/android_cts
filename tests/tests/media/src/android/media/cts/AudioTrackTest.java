@@ -22,6 +22,7 @@ import android.content.pm.PackageManager;
 import android.media.AudioAttributes;
 import android.media.AudioFormat;
 import android.media.AudioManager;
+import android.media.AudioPresentation;
 import android.media.AudioTimestamp;
 import android.media.AudioTrack;
 import android.media.PlaybackParams;
@@ -36,6 +37,8 @@ import com.android.compatibility.common.util.ResultUnit;
 import java.nio.ByteBuffer;
 import java.nio.FloatBuffer;
 import java.nio.ShortBuffer;
+import java.util.HashMap;
+import java.util.Locale;
 
 public class AudioTrackTest extends CtsAndroidTestCase {
     private String TAG = "AudioTrackTest";
@@ -2450,6 +2453,11 @@ public class AudioTrackTest extends CtsAndroidTestCase {
         }
     }
 
+    public void testSetPresentationDefaultTrack() throws Exception {
+        final AudioTrack track = new AudioTrack.Builder().build();
+        assertEquals(AudioTrack.ERROR, track.setPresentation(createAudioPresentation()));
+    }
+
 /* Do not run in JB-MR1. will be re-opened in the next platform release.
     public void testResourceLeakage() throws Exception {
         final int BUFFER_SIZE = 600 * 1024;
@@ -2490,4 +2498,15 @@ public class AudioTrackTest extends CtsAndroidTestCase {
         }
     }
 
+    private static AudioPresentation createAudioPresentation() {
+        return new AudioPresentation(
+                42 /*presentationId*/,
+                43 /*programId*/,
+                new HashMap<String, String>(),
+                Locale.US.toString(),
+                AudioPresentation.MASTERING_NOT_INDICATED,
+                false /*audioDescriptionAvailable*/,
+                false /*spokenSubtitlesAvailable*/,
+                false /*dialogueEnhancementAvailable*/);
+    }
 }
