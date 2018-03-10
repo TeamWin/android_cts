@@ -58,45 +58,64 @@ public class DalvikTestRunner {
     private static final String RUNNER_JAR = "cts-dalvik-device-test-runner.jar";
 
     public static void main(String[] args) {
+        Config config;
+        try {
+            config = createConfig(args);
+        } catch (Throwable t) {
+            // Simulate one failed test.
+            System.out.println("start-run:1");
+            System.out.println("start-test:FailedConfigCreation");
+            System.out.println("failure:" + DalvikTestListener.stringify(t));
+            System.out.println("end-run:1");
+            throw new RuntimeException(t);
+        }
+        run(config);
+    }
+
+    private static Config createConfig(String[] args) {
         String abiName = null;
-        Set<String> includes = new HashSet<>();
-        Set<String> excludes = new HashSet<>();
-        boolean collectTestsOnly = false;
+        Config config = new Config();
 
         for (String arg : args) {
             if (arg.startsWith(ABI)) {
                 abiName = arg.substring(ABI.length());
             } else if (arg.startsWith(INCLUDE)) {
                 for (String include : arg.substring(INCLUDE.length()).split(",")) {
-                    includes.add(include);
+                    config.includes.add(include);
                 }
             } else if (arg.startsWith(EXCLUDE)) {
                 for (String exclude : arg.substring(EXCLUDE.length()).split(",")) {
-                    excludes.add(exclude);
+                    config.excludes.add(exclude);
                 }
             } else if (arg.startsWith(INCLUDE_FILE)) {
-                loadFilters(arg.substring(INCLUDE_FILE.length()), includes);
+                loadFilters(arg.substring(INCLUDE_FILE.length()), config.includes);
             } else if (arg.startsWith(EXCLUDE_FILE)) {
-                loadFilters(arg.substring(EXCLUDE_FILE.length()), excludes);
+                loadFilters(arg.substring(EXCLUDE_FILE.length()), config.excludes);
             } else if (COLLECT_TESTS_ONLY.equals(arg)) {
-                collectTestsOnly = true;
+                config.collectTestsOnly = true;
             }
         }
 
-        TestListener listener = new DalvikTestListener();
         String[] classPathItems = System.getProperty("java.class.path").split(File.pathSeparator);
         List<Class<?>> classes = getClasses(classPathItems, abiName);
-        TestSuite suite = TestSuiteFilter.createSuite(classes, includes, excludes);
-        int count = suite.countTestCases();
+        config.suite = TestSuiteFilter.createSuite(classes, config.includes, config.excludes);
+
+        return config;
+    }
+
+    private static void run(Config config) {
+        TestListener listener = new DalvikTestListener();
+
+        int count = config.suite.countTestCases();
         System.out.println(String.format("start-run:%d", count));
         long start = System.currentTimeMillis();
 
-        if (collectTestsOnly) { // only simulate running/passing the tests with the listener
-            collectTests(suite, listener, includes, excludes);
+        if (config.collectTestsOnly) { // only simulate running/passing the tests with the listener
+            collectTests(config.suite, listener, config.includes, config.excludes);
         } else { // run the tests
             TestResult result = new TestResult();
             result.addListener(listener);
-            suite.run(result);
+            config.suite.run(result);
         }
 
         long end = System.currentTimeMillis();
@@ -185,6 +204,8 @@ public class DalvikTestRunner {
                 }
             } catch (IllegalAccessError | IOException e) {
                 e.printStackTrace();
+            } catch (Exception e) {
+                throw new RuntimeException(jar, e);
             }
         }
         return classes;
@@ -212,8 +233,12 @@ public class DalvikTestRunner {
             }
         }
 
-        if (!hasPublicTestMethods(cls)) {
-            return false;
+        try {
+            if (!hasPublicTestMethods(cls)) {
+                return false;
+            }
+        } catch (Throwable exc) {
+            throw new RuntimeException(cls.toString(), exc);
         }
 
         // TODO: Add junit4 support here
@@ -284,8 +309,15 @@ public class DalvikTestRunner {
             return className;
         }
 
-        private String stringify(Throwable error) {
+        public static String stringify(Throwable error) {
             return Arrays.toString(error.getStackTrace()).replaceAll("\n", " ");
         }
+    }
+
+    private static class Config {
+        Set<String> includes = new HashSet<>();
+        Set<String> excludes = new HashSet<>();
+        boolean collectTestsOnly = false;
+        TestSuite suite;
     }
 }

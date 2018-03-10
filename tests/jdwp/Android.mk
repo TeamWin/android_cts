@@ -26,6 +26,9 @@ LOCAL_MODULE_TAGS := tests
 # Tag this module as a cts test artifact
 LOCAL_COMPATIBILITY_SUITE := cts vts general-tests
 
+LOCAL_DEX_PREOPT := false
+LOCAL_PROGUARD_ENABLED := disabled
+
 include $(BUILD_JAVA_LIBRARY)
 
 include $(call all-makefiles-under,$(LOCAL_PATH))
