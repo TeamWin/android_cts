@@ -71,6 +71,7 @@ class VirtualContainerView extends View {
     final AutofillId mLoginButtonId;
 
     private Line mFocusedLine;
+    private int mNextChildId;
 
     private Paint mTextPaint;
     private int mTextHeight;
@@ -238,6 +239,8 @@ class VirtualContainerView extends View {
             child.setId(1000 + index, packageName, "id", item.resourceId);
             child.setText(item.text);
             if (TextUtils.getTrimmedLength(item.text) > 0) {
+                // TODO: Must checked trimmed length because input fields use 8 empty spaces to
+                // set width
                 child.setAutofillValue(AutofillValue.forText(item.text));
             }
             child.setFocused(item.line.focused);
@@ -257,7 +260,8 @@ class VirtualContainerView extends View {
 
     @Override
     public boolean isVisibleToUserForAutofill(int virtualId) {
-        // TODO(b/72811561): implement / add test case that exercises it
+        // TODO(b/37566627): implement / add test case that exercises it when not on compat mode
+        // (for compat mode it's ok because we're calling setVisible() in the a11y node
         final boolean isVisible = super.isVisibleToUserForAutofill(virtualId);
         Log.d(TAG, "isVisibleToUserForAutofill(" + virtualId + "): " + isVisible);
         return isVisible;
@@ -304,7 +308,7 @@ class VirtualContainerView extends View {
         final AccessibilityNodeInfo node = AccessibilityNodeInfo.obtain();
         node.setSource(this, LOGIN_BUTTON_VIRTUAL_ID);
         node.setPackageName(getContext().getPackageName());
-        // TODO(b/72811561): ideally this button should be visible / drawn in the canvas and contain
+        // TODO(b/37566627): ideally this button should be visible / drawn in the canvas and contain
         // more properties like boundaries, class name, text etc...
         return node;
     }
@@ -393,11 +397,8 @@ class VirtualContainerView extends View {
         event.setSource(VirtualContainerView.this, virtualId);
         event.setEnabled(true);
         event.setPackageName(getContext().getPackageName());
-        // TODO(b/72811561): recycle event?
         getContext().getSystemService(AccessibilityManager.class).sendAccessibilityEvent(event);
     }
-
-    private static int nextId;
 
     final class Line {
 
@@ -412,8 +413,8 @@ class VirtualContainerView extends View {
         private boolean visible = true;
 
         private Line(String labelId, String label, String textId, String text) {
-            this.label = new Item(this, ++nextId, labelId, label, false, false);
-            this.text = new Item(this, ++nextId, textId, text, true, true);
+            this.label = new Item(this, ++mNextChildId, labelId, label, false, false);
+            this.text = new Item(this, ++mNextChildId, textId, text, true, true);
         }
 
         void changeFocus(boolean focused) {
@@ -542,10 +543,15 @@ class VirtualContainerView extends View {
             node.setClassName(className);
             node.setEditable(editable);
             node.setViewIdResourceName(resourceId);
+            node.setVisibleToUser(true);
             if (line.absBounds != null) {
                 node.setBoundsInScreen(line.absBounds);
             }
-            node.setText(text);
+            if (TextUtils.getTrimmedLength(text) > 0) {
+                // TODO: Must checked trimmed length because input fields use 8 empty spaces to
+                // set width
+                node.setText(text);
+            }
             return node;
         }
 

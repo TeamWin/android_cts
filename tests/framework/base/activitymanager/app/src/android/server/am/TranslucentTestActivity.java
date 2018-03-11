@@ -20,17 +20,10 @@ import android.os.Bundle;
 
 public class TranslucentTestActivity extends TestActivity {
 
-    private static final String TAG = TranslucentTestActivity.class.getSimpleName();
-
     @Override
     protected void onCreate(Bundle icicle) {
         super.onCreate(icicle);
 
         setContentView(R.layout.task_overlay);
-    }
-
-    @Override
-    protected String getTag() {
-        return TAG;
     }
 }

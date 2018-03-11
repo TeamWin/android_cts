@@ -19,10 +19,6 @@ import android.content.res.Configuration;
 import android.os.Bundle;
 
 public class ResizeableActivity extends AbstractLifecycleLogActivity {
-    @Override
-    protected String getTag() {
-        return "ResizeableActivity";
-    }
 
     @Override
     protected void onCreate(Bundle icicle) {

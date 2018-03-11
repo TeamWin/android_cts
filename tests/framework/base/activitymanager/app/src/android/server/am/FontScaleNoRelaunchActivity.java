@@ -13,6 +13,7 @@
  * License for the specific language governing permissions and limitations
  * under the License.
  */
+
 package android.server.am;
 
 import android.content.res.Configuration;
@@ -23,10 +24,5 @@ public class FontScaleNoRelaunchActivity extends FontScaleActivity {
         super.onConfigurationChanged(newConfig);
         dumpActivityDpi();
         dumpFontSize();
-    }
-
-    @Override
-    protected String getTag() {
-        return FontScaleNoRelaunchActivity.class.getSimpleName();
     }
 }

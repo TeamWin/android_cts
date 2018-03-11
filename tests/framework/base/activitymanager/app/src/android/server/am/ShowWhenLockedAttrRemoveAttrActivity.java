@@ -16,20 +16,11 @@
 
 package android.server.am;
 
-import android.os.Bundle;
-
 public class ShowWhenLockedAttrRemoveAttrActivity extends AbstractLifecycleLogActivity {
-    private static final String TAG = ShowWhenLockedAttrRemoveAttrActivity.class.getSimpleName();
 
     @Override
     protected void onStop() {
         super.onStop();
         setShowWhenLocked(false);
     }
-
-    @Override
-    protected String getTag() {
-        return TAG;
-    }
-
 }

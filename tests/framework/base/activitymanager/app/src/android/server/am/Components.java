@@ -170,6 +170,17 @@ public class Components extends ComponentsBase {
     }
 
     /**
+     * Extra key constants for {@link android.server.am.BottomActivity}.
+     *
+     * TODO(b/73346885): These constants should be in {@link android.server.am.BottomActivity}
+     * once the activity is moved to test APK.
+     */
+    public static class BottomActivity {
+        public static final String EXTRA_BOTTOM_WALLPAPER = "USE_WALLPAPER";
+        public static final String EXTRA_STOP_DELAY = "STOP_DELAY";
+    }
+
+    /**
      * Extra key constants for {@link android.server.am.BroadcastReceiverActivity}.
      *
      * TODO(b/73346885): These constants should be in
@@ -185,6 +196,19 @@ public class Components extends ComponentsBase {
     }
 
     /**
+     *  Logging constants for {@link android.server.am.KeyguardDismissLoggerCallback}.
+     *
+     * TODO(b/73346885): These constants should be in
+     * {@link android.server.am.KeyguardDismissLoggerCallback} once the class is moved to test APK.
+     */
+    public static class KeyguardDismissLoggerCallback {
+        public static final String KEYGUARD_DISMISS_LOG_TAG = "KeyguardDismissLoggerCallback";
+        public static final String ENTRY_ON_DISMISS_CANCELLED = "onDismissCancelled";
+        public static final String ENTRY_ON_DISMISS_ERROR = "onDismissError";
+        public static final String ENTRY_ON_DISMISS_SUCCEEDED = "onDismissSucceeded";
+    }
+
+    /**
      * Extra key constants for {@link #LAUNCH_ASSISTANT_ACTIVITY_INTO_STACK}.
      *
      * TODO(b/73346885): These constants should be in
@@ -196,7 +220,20 @@ public class Components extends ComponentsBase {
         public static final String EXTRA_ASSISTANT_IS_TRANSLUCENT = "is_translucent";
     }
 
-    /** Action and extra key constants for {@link android.server.am.PipActivity}.
+    /**
+     * Extra constants for {@link android.server.am.MoveTaskToBackActivity}.
+     *
+     * TODO(b/73346885): These constants should be in
+     * {@link android.server.am.MoveTaskToBackActivity} once the activity is moved to test APK.
+     */
+    public static class MoveTaskToBackActivity {
+        public static final String EXTRA_FINISH_POINT = "finish_point";
+        public static final String FINISH_POINT_ON_PAUSE = "on_pause";
+        public static final String FINISH_POINT_ON_STOP = "on_stop";
+    }
+
+    /**
+     * Action and extra key constants for {@link android.server.am.PipActivity}.
      *
      * TODO(b/73346885): These constants should be in {@link android.server.am.PipActivity}
      * once the activity is moved to test APK.
@@ -259,6 +296,18 @@ public class Components extends ComponentsBase {
         public static final String EXTRA_START_ACTIVITY = "start_activity";
         // Adds a click listener to finish this activity when it is clicked
         public static final String EXTRA_TAP_TO_FINISH = "tap_to_finish";
+    }
+
+    /**
+     * Extra key constants for {@link android.server.am.TopActivity} and
+     * {@link android.server.am.TranslucentTopActivity}.
+     *
+     * TODO(b/73346885): These constants should be in {@link android.server.am.TopActivity}
+     * once the activity is moved to test APK.
+     */
+    public static class TopActivity {
+        public static final String EXTRA_FINISH_DELAY = "FINISH_DELAY";
+        public static final String EXTRA_TOP_WALLPAPER = "USE_WALLPAPER";
     }
 
     /**

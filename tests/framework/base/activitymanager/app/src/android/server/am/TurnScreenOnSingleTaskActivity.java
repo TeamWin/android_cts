@@ -17,10 +17,4 @@
 package android.server.am;
 
 public class TurnScreenOnSingleTaskActivity extends AbstractLifecycleLogActivity {
-    private static final String TAG = TurnScreenOnSingleTaskActivity.class.getSimpleName();
-
-    @Override
-    protected String getTag() {
-        return TAG;
-    }
 }

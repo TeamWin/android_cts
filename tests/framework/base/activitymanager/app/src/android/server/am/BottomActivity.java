@@ -16,8 +16,11 @@
 
 package android.server.am;
 
-import android.content.Context;
+import static android.server.am.Components.BottomActivity.EXTRA_BOTTOM_WALLPAPER;
+import static android.server.am.Components.BottomActivity.EXTRA_STOP_DELAY;
+
 import android.os.Bundle;
+import android.os.SystemClock;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -25,21 +28,14 @@ import android.view.WindowManager;
 
 public class BottomActivity extends AbstractLifecycleLogActivity {
 
-    private static final String TAG = BottomActivity.class.getSimpleName();
-
     private int mStopDelay;
     private View mFloatingWindow;
-
-    @Override
-    protected String getTag() {
-        return TAG;
-    }
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
 
-        final boolean useWallpaper = getIntent().getBooleanExtra("USE_WALLPAPER", false);
+        final boolean useWallpaper = getIntent().getBooleanExtra(EXTRA_BOTTOM_WALLPAPER, false);
         if (useWallpaper) {
             setTheme(R.style.WallpaperTheme);
         }
@@ -56,7 +52,7 @@ public class BottomActivity extends AbstractLifecycleLogActivity {
         // Note that if the test fails, we shouldn't try to change the app here to make
         // it pass. The test app is artificially made to simulate an failure case, but
         // it's not doing anything wrong.
-        mStopDelay = getIntent().getIntExtra("STOP_DELAY", 0);
+        mStopDelay = getIntent().getIntExtra(EXTRA_STOP_DELAY, 0);
         if (mStopDelay > 0) {
             LayoutInflater inflater = getLayoutInflater();
             mFloatingWindow = inflater.inflate(R.layout.floating, null);
@@ -72,16 +68,16 @@ public class BottomActivity extends AbstractLifecycleLogActivity {
 
     @Override
     public void onResume() {
-        Log.d(TAG, "onResume() E");
+        Log.d(getTag(), "onResume() E");
         super.onResume();
 
         if (mStopDelay > 0) {
             // Refresh floating window
-            Log.d(TAG, "Scheuling invalidate Floating Window in onResume()");
+            Log.d(getTag(), "Scheduling invalidate Floating Window in onResume()");
             mFloatingWindow.invalidate();
         }
 
-        Log.d(TAG, "onResume() X");
+        Log.d(getTag(), "onResume() X");
     }
 
     @Override
@@ -89,13 +85,11 @@ public class BottomActivity extends AbstractLifecycleLogActivity {
         super.onStop();
 
         if (mStopDelay > 0) {
-            try {
-                Log.d(TAG, "Stalling onStop() by " + mStopDelay + " ms...");
-                Thread.sleep(mStopDelay);
-            } catch(InterruptedException e) {}
+            Log.d(getTag(), "Stalling onStop() by " + mStopDelay + " ms...");
+            SystemClock.sleep(mStopDelay);
 
             // Refresh floating window
-            Log.d(TAG, "Scheuling invalidate Floating Window in onStop()");
+            Log.d(getTag(), "Scheduling invalidate Floating Window in onStop()");
             mFloatingWindow.invalidate();
         }
     }

@@ -28,8 +28,6 @@ import android.os.Bundle;
 
 public class TestActivity extends AbstractLifecycleLogActivity {
 
-    private static final String TAG = TestActivity.class.getSimpleName();
-
     private BroadcastReceiver mReceiver = new BroadcastReceiver() {
         @Override
         public void onReceive(Context context, Intent intent) {
@@ -75,10 +73,5 @@ public class TestActivity extends AbstractLifecycleLogActivity {
         super.onConfigurationChanged(newConfig);
         dumpDisplaySize(newConfig);
         dumpConfiguration(newConfig);
-    }
-
-    @Override
-    protected String getTag() {
-        return TAG;
     }
 }

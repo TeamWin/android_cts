@@ -16,6 +16,7 @@
 
 package android.telecom.cts;
 
+import android.os.Bundle;
 import android.telecom.Connection;
 import android.telecom.ConnectionRequest;
 import android.telecom.ConnectionService;
@@ -35,6 +36,8 @@ import java.util.concurrent.TimeUnit;
  * received.
  */
 public class MockConnectionService extends ConnectionService {
+    public static final String EXTRA_TEST = "com.android.telecom.extra.TEST";
+    public static final String TEST_VALUE = "we've got it";
     public static final int CONNECTION_PRESENTATION =  TelecomManager.PRESENTATION_ALLOWED;
 
     public static final int EVENT_CONNECTION_SERVICE_FOCUS_GAINED = 0;
@@ -81,7 +84,10 @@ public class MockConnectionService extends ConnectionService {
             connection.setConnectionProperties(connection.getConnectionProperties() |
                     Connection.PROPERTY_IS_RTT);
         }
-
+        // Emit an extra into the connection.  We'll see if it makes it through.
+        Bundle testExtra = new Bundle();
+        testExtra.putString(EXTRA_TEST, TEST_VALUE);
+        connection.putExtras(testExtra);
         outgoingConnections.add(connection);
         lock.release();
         return connection;
@@ -104,6 +110,10 @@ public class MockConnectionService extends ConnectionService {
                     Connection.PROPERTY_IS_RTT);
         }
         connection.setRinging();
+        // Emit an extra into the connection.  We'll see if it makes it through.
+        Bundle testExtra = new Bundle();
+        testExtra.putString(EXTRA_TEST, TEST_VALUE);
+        connection.putExtras(testExtra);
 
         incomingConnections.add(connection);
         lock.release();

@@ -88,7 +88,9 @@ public abstract class AbstractLifecycleLogActivity extends Activity {
         Log.i(getTag(), "onUserLeaveHint");
     }
 
-    protected abstract String getTag();
+    protected final String getTag() {
+        return getClass().getSimpleName();
+    }
 
     protected void dumpConfiguration(Configuration config) {
         Log.i(getTag(), "Configuration: " + config);

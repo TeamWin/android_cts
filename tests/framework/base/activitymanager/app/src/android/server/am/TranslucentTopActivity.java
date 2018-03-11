@@ -16,38 +16,10 @@
 
 package android.server.am;
 
-import android.os.Handler;
-import android.os.Bundle;
-import android.util.Log;
-
-public class TranslucentTopActivity extends AbstractLifecycleLogActivity {
-
-    private static final String TAG = TranslucentTopActivity.class.getSimpleName();
+public class TranslucentTopActivity extends TopActivity {
 
     @Override
-    protected String getTag() {
-        return TAG;
-    }
-
-    @Override
-    protected void onCreate(Bundle savedInstanceState) {
-        super.onCreate(savedInstanceState);
-
-        final boolean useWallpaper = getIntent().getBooleanExtra("USE_WALLPAPER", false);
-        if (useWallpaper) {
-            setTheme(R.style.TranslucentWallpaperTheme);
-        }
-
-        final int finishDelay = getIntent().getIntExtra("FINISH_DELAY", 0);
-        if (finishDelay > 0) {
-            Handler handler = new Handler();
-            handler.postDelayed(new Runnable() {
-                @Override
-                public void run() {
-                    Log.d(TAG, "Calling finish()");
-                    finish();
-                }
-            }, finishDelay);
-        }
+    protected void setWallpaperTheme() {
+        setTheme(R.style.TranslucentWallpaperTheme);
     }
 }

@@ -16,37 +16,34 @@
 
 package android.server.am;
 
+import static android.server.am.Components.TopActivity.EXTRA_FINISH_DELAY;
+import static android.server.am.Components.TopActivity.EXTRA_TOP_WALLPAPER;
+
 import android.os.Handler;
 import android.os.Bundle;
 import android.util.Log;
 
 public class TopActivity extends AbstractLifecycleLogActivity {
 
-    private static final String TAG = TopActivity.class.getSimpleName();
-
-    @Override
-    protected String getTag() {
-        return TAG;
+    protected void setWallpaperTheme() {
+        setTheme(R.style.WallpaperTheme);
     }
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
 
-        final boolean useWallpaper = getIntent().getBooleanExtra("USE_WALLPAPER", false);
+        final boolean useWallpaper = getIntent().getBooleanExtra(EXTRA_TOP_WALLPAPER, false);
         if (useWallpaper) {
-            setTheme(R.style.WallpaperTheme);
+            setWallpaperTheme();
         }
 
-        final int finishDelay = getIntent().getIntExtra("FINISH_DELAY", 0);
+        final int finishDelay = getIntent().getIntExtra(EXTRA_FINISH_DELAY, 0);
         if (finishDelay > 0) {
             Handler handler = new Handler();
-            handler.postDelayed(new Runnable() {
-                @Override
-                public void run() {
-                    Log.d(TAG, "Calling finish()");
+            handler.postDelayed(() -> {
+                    Log.d(getTag(), "Calling finish()");
                     finish();
-                }
             }, finishDelay);
         }
     }

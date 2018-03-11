@@ -30,10 +30,7 @@ LOCAL_C_INCLUDES := $(JNI_H_INCLUDE)
 
 LOCAL_SHARED_LIBRARIES := libEGL libGLESv2 libandroid liblog
 
-LOCAL_CXX_STL := libc++_static
-
-# TODO (dimitry): replace LOCAL_CXX_STL with LOCAL_SDK_VERSION+LOCAL_NDK_STL_VARIANT
-# LOCAL_SDK_VERSION := 23
-# LOCAL_NDK_STL_VARIANT := c++_static
+LOCAL_SDK_VERSION := current
+LOCAL_NDK_STL_VARIANT := c++_static
 
 include $(BUILD_SHARED_LIBRARY)

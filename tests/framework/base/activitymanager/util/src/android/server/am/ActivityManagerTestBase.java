@@ -265,13 +265,13 @@ public abstract class ActivityManagerTestBase {
     }
 
     protected void launchActivity(final ComponentName activityName, final String... keyValuePairs) {
-        executeShellCommand(getAmStartCmd(activityName, keyValuePairs));
-        mAmWmState.waitForValidState(new WaitForValidActivityState(activityName));
+        launchActivityNoWait(activityName, keyValuePairs);
+        mAmWmState.waitForValidState(activityName);
     }
 
-    protected void launchActivityNoWait(final ComponentName targetActivityName,
+    protected void launchActivityNoWait(final ComponentName activityName,
             final String... keyValuePairs) {
-        executeShellCommand(getAmStartCmd(targetActivityName, keyValuePairs));
+        executeShellCommand(getAmStartCmd(activityName, keyValuePairs));
     }
 
     protected void launchActivityInNewTask(final ComponentName activityName) {
@@ -327,11 +327,15 @@ public abstract class ActivityManagerTestBase {
                 .build());
     }
 
-    protected void launchActivityOnDisplay(ComponentName targetActivityName, int displayId,
+    protected void launchActivityOnDisplay(ComponentName activityName, int displayId,
             String... keyValuePairs) {
-        executeShellCommand(getAmStartCmd(targetActivityName, displayId, keyValuePairs));
+        launchActivityOnDisplayNoWait(activityName, displayId, keyValuePairs);
+        mAmWmState.waitForValidState(activityName);
+    }
 
-        mAmWmState.waitForValidState(new WaitForValidActivityState(targetActivityName));
+    protected void launchActivityOnDisplayNoWait(ComponentName activityName, int displayId,
+            String... keyValuePairs) {
+        executeShellCommand(getAmStartCmd(activityName, displayId, keyValuePairs));
     }
 
     /**

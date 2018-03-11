@@ -18,16 +18,12 @@ package android.telecom.cts;
 
 import static android.telecom.cts.TestUtils.TEST_HANDOVER_DEST_PHONE_ACCOUNT_HANDLE;
 import static android.telecom.cts.TestUtils.TEST_HANDOVER_SRC_PHONE_ACCOUNT_HANDLE;
-import static android.telecom.cts.TestUtils.TEST_PHONE_ACCOUNT_HANDOVER_SRC;
 import static android.telecom.cts.TestUtils.WAIT_FOR_STATE_CHANGE_TIMEOUT_MS;
-import static android.telecom.cts.TestUtils.waitOnLocalMainLooper;
 
 import android.net.Uri;
 import android.os.Bundle;
 import android.telecom.Call;
-import android.telecom.Connection;
 import android.telecom.ConnectionRequest;
-import android.telecom.ConnectionService;
 import android.telecom.PhoneAccountHandle;
 import android.telecom.TelecomManager;
 import android.telecom.VideoProfile;
@@ -90,7 +86,7 @@ public class HandoverTest extends BaseTelecomTestWithMockServices {
         Call callbackCall = (Call) mOnHandoverFailedCounter.getArgs(0)[0];
         int failureReason = (int) mOnHandoverFailedCounter.getArgs(0)[1];
         assertEquals(call, callbackCall);
-        assertEquals(Call.Callback.HANDOVER_FAILURE_DEST_NOT_SUPPORTED, failureReason);
+        assertEquals(Call.Callback.HANDOVER_FAILURE_NOT_SUPPORTED, failureReason);
 
         call.disconnect();
     }
@@ -115,7 +111,7 @@ public class HandoverTest extends BaseTelecomTestWithMockServices {
         Call callbackCall = (Call) mOnHandoverFailedCounter.getArgs(0)[0];
         int failureReason = (int) mOnHandoverFailedCounter.getArgs(0)[1];
         assertEquals(call, callbackCall);
-        assertEquals(Call.Callback.HANDOVER_FAILURE_DEST_NOT_SUPPORTED, failureReason);
+        assertEquals(Call.Callback.HANDOVER_FAILURE_NOT_SUPPORTED, failureReason);
 
         call.disconnect();
     }

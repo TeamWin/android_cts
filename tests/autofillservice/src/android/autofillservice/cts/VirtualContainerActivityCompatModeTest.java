@@ -19,19 +19,14 @@ import static android.autofillservice.cts.Helper.assertTextIsSanitized;
 import static android.autofillservice.cts.Helper.getContext;
 import static android.autofillservice.cts.Helper.hasAutofillFeature;
 import static android.autofillservice.cts.InstrumentedAutoFillServiceCompatMode.SERVICE_NAME;
-import static android.autofillservice.cts.InstrumentedAutoFillServiceCompatMode.SERVICE_PACKAGE;
-import static android.autofillservice.cts.common.SettingsHelper.NAMESPACE_GLOBAL;
-import static android.provider.Settings.Global.AUTOFILL_COMPAT_ALLOWED_PACKAGES;
 
 import static com.google.common.truth.Truth.assertThat;
 
 import android.app.assist.AssistStructure.ViewNode;
-import android.autofillservice.cts.common.SettingsStateChangerRule;
 import android.content.Context;
 import android.support.test.InstrumentationRegistry;
 
 import org.junit.After;
-import org.junit.ClassRule;
 
 /**
  * Test case for an activity containing virtual children but using the A11Y compat mode to implement
@@ -39,10 +34,6 @@ import org.junit.ClassRule;
  */
 public class VirtualContainerActivityCompatModeTest extends VirtualContainerActivityTest {
     private static final Context sContext = InstrumentationRegistry.getContext();
-
-    @ClassRule
-    public static final SettingsStateChangerRule sCompatModeChanger = new SettingsStateChangerRule(
-            sContext, NAMESPACE_GLOBAL, AUTOFILL_COMPAT_ALLOWED_PACKAGES, SERVICE_PACKAGE);
 
     public VirtualContainerActivityCompatModeTest() {
         super(true);
@@ -61,6 +52,7 @@ public class VirtualContainerActivityCompatModeTest extends VirtualContainerActi
     @Override
     protected void postActivityLaunched(VirtualContainerActivity activity) {
         // Set our own compat mode as well..
+        // NOTE: because it's set here, we don't need to whitelist the package on Settings.
         activity.mCustomView.setCompatMode(true);
     }
 
@@ -83,11 +75,5 @@ public class VirtualContainerActivityCompatModeTest extends VirtualContainerActi
         assertTextIsSanitized(urlBar);
         assertThat(urlBar.getWebDomain()).isEqualTo("dev.null");
         assertThat(urlBar.getWebScheme()).isEqualTo("ftp");
-    }
-
-    // TODO(b/72811561): currently only one test pass at time; remove once they all pass
-    @After
-    public void thereCanBeOnlyOne() {
-        sRanAlready = true;
     }
 }

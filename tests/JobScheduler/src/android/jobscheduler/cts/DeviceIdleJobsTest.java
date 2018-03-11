@@ -60,6 +60,14 @@ public class DeviceIdleJobsTest {
     private static final long POLL_INTERVAL = 500;
     private static final long DEFAULT_WAIT_TIMEOUT = 1000;
 
+    enum Bucket {
+        ACTIVE,
+        WORKING_SET,
+        FREQUENT,
+        RARE,
+        NEVER
+    }
+
     private Context mContext;
     private UiDevice mUiDevice;
     private PowerManager mPowerManager;
@@ -112,7 +120,7 @@ public class DeviceIdleJobsTest {
         mContext.registerReceiver(mReceiver, intentFilter);
         assertFalse("Test package already in temp whitelist", isTestAppTempWhitelisted());
         makeTestPackageIdle();
-        makeTestPackageStandbyActive();
+        setTestPackageStandbyBucket(Bucket.ACTIVE);
     }
 
 
@@ -147,7 +155,7 @@ public class DeviceIdleJobsTest {
         startAndKeepTestActivity();
         toggleDeviceIdleState(false);
         assertTrue("Job for foreground app did not start immediately when device exited doze",
-                awaitJobStart(DEFAULT_WAIT_TIMEOUT));
+                awaitJobStart(3_000));
     }
 
     @Test
@@ -167,11 +175,23 @@ public class DeviceIdleJobsTest {
 
     @Test
     public void testJobsInNeverApp() throws Exception {
-        makeTestPackageStandbyNever();
+        setTestPackageStandbyBucket(Bucket.NEVER);
         enterFakeUnpluggedState();
         Thread.sleep(DEFAULT_WAIT_TIMEOUT);
         sendScheduleJobBroadcast(false);
-        assertFalse("New job started in NEVER standby", awaitJobStart(DEFAULT_WAIT_TIMEOUT));
+        assertFalse("New job started in NEVER standby", awaitJobStart(3_000));
+        resetFakeUnpluggedState();
+    }
+
+    @Test
+    public void testUidActiveBypassesStandby() throws Exception {
+        setTestPackageStandbyBucket(Bucket.NEVER);
+        enterFakeUnpluggedState();
+        tempWhitelistTestApp(6_000);
+        Thread.sleep(DEFAULT_WAIT_TIMEOUT);
+        sendScheduleJobBroadcast(false);
+        assertTrue("New job in uid-active app failed to start in NEVER standby",
+                awaitJobStart(4_000));
         resetFakeUnpluggedState();
     }
 
@@ -233,12 +253,19 @@ public class DeviceIdleJobsTest {
         mUiDevice.executeShellCommand("am make-uid-idle --user current " + TEST_APP_PACKAGE);
     }
 
-    private void makeTestPackageStandbyActive() throws Exception {
-        mUiDevice.executeShellCommand("am set-standby-bucket " + TEST_APP_PACKAGE + " active");
-    }
-
-    private void makeTestPackageStandbyNever() throws Exception {
-        mUiDevice.executeShellCommand("am set-standby-bucket " + TEST_APP_PACKAGE + " never");
+    private void setTestPackageStandbyBucket(Bucket bucket) throws Exception {
+        final String bucketName;
+        switch (bucket) {
+            case ACTIVE: bucketName = "active"; break;
+            case WORKING_SET: bucketName = "working"; break;
+            case FREQUENT: bucketName = "frequent"; break;
+            case RARE: bucketName = "rare"; break;
+            case NEVER: bucketName = "never"; break;
+            default:
+                throw new IllegalArgumentException("Requested unknown bucket " + bucket);
+        }
+        mUiDevice.executeShellCommand("am set-standby-bucket " + TEST_APP_PACKAGE
+                + " " + bucketName);
     }
 
     private void enterFakeUnpluggedState() throws Exception {

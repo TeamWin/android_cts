@@ -16,25 +16,16 @@
 
 package android.server.am;
 
-import android.app.Activity;
 import android.os.Bundle;
-import android.server.am.SwipeRefreshLayout;
-
 
 /**
  * An activity containing a SwipeRefreshLayout which prevents activity idle.
  */
 public class SwipeRefreshActivity extends AbstractLifecycleLogActivity {
-    private static final String TAG = SwipeRefreshActivity.class.getSimpleName();
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(new SwipeRefreshLayout(this));
-    }
-
-    @Override
-    protected String getTag() {
-        return TAG;
     }
 }

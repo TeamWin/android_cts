@@ -21,6 +21,7 @@
     <uses-permission android:name="android.permission.INTERNET" />
 
     <application android:maxRecents="1">
+        <uses-library android:name="org.apache.http.legacy" />
         <uses-library android:name="android.test.runner" />
         <activity android:name=".WebViewStartupCtsActivity"
             android:label="WebViewStartupCtsActivity"
