@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package android.view.textclassifier.logging.cts;
+package android.view.textclassifier.cts;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertThat;
@@ -23,11 +23,12 @@ import android.content.Context;
 import android.support.test.InstrumentationRegistry;
 import android.support.test.filters.SmallTest;
 import android.support.test.runner.AndroidJUnit4;
-import android.view.textclassifier.logging.Logger;
-import android.view.textclassifier.logging.Logger.Config;
-import android.view.textclassifier.logging.Logger.WidgetType;
-import android.view.textclassifier.logging.SelectionEvent;
-import android.view.textclassifier.logging.SelectionEvent.EventType;
+import android.view.textclassifier.Logger;
+import android.view.textclassifier.Logger.Config;
+import android.view.textclassifier.Logger.WidgetType;
+import android.view.textclassifier.SelectionEvent;
+import android.view.textclassifier.SelectionEvent.EventType;
+import android.view.textclassifier.SelectionEvent.InvocationMethod;
 
 import org.hamcrest.BaseMatcher;
 import org.hamcrest.Description;
@@ -118,7 +119,7 @@ public class LoggerTest {
     }
 
     private static Matcher<SelectionEvent> isSelectionEvent(
-            final int start, final int end, @SelectionEvent.InvocationMethod int invocationMethod,
+            final int start, final int end, @InvocationMethod int invocationMethod,
             @EventType int eventType) {
         return new BaseMatcher<SelectionEvent>() {
             @Override
