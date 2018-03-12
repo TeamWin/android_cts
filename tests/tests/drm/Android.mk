@@ -37,7 +37,7 @@ LOCAL_JNI_SHARED_LIBRARIES := \
 	libctsdrm_jni \
 	libdrmtestplugin
 
-LOCAL_SDK_VERSION := current
+LOCAL_PRIVATE_PLATFORM_APIS := true
 
 include $(BUILD_CTS_PACKAGE)
 
