@@ -26,6 +26,9 @@ import static android.media.MediaSession2.COMMAND_CODE_PLAYBACK_SET_VOLUME;
 import static android.media.MediaSession2.COMMAND_CODE_PLAYBACK_SKIP_NEXT_ITEM;
 import static android.media.MediaSession2.COMMAND_CODE_PLAYBACK_SKIP_PREV_ITEM;
 import static android.media.MediaSession2.COMMAND_CODE_PLAYBACK_STOP;
+import static android.media.MediaSession2.COMMAND_CODE_PLAYLIST_ADD_ITEM;
+import static android.media.MediaSession2.COMMAND_CODE_PLAYLIST_REMOVE_ITEM;
+import static android.media.MediaSession2.COMMAND_CODE_PLAYLIST_REPLACE_ITEM;
 import static android.media.MediaSession2.COMMAND_CODE_PLAYLIST_SET_LIST;
 import static android.media.MediaSession2.COMMAND_CODE_PLAYLIST_SET_LIST_METADATA;
 import static android.media.MediaSession2.COMMAND_CODE_PLAY_FROM_MEDIA_ID;
@@ -294,6 +297,54 @@ public class MediaSession2_PermissionTest extends MediaSession2TestBase {
         createSessionWithAllowedActions(
                 createCommandGroupWithout(COMMAND_CODE_PLAYLIST_SET_LIST_METADATA));
         createController(mSession.getToken()).updatePlaylistMetadata(null);
+        verify(mCallback, after(WAIT_TIME_MS).never()).onCommandRequest(any(), any(), any());
+    }
+
+    @Test
+    public void testAddPlaylistItem() throws InterruptedException {
+        MediaItem2 testItem = TestUtils.createMediaItemWithMetadata(mContext);
+        createSessionWithAllowedActions(
+                createCommandGroupWith(COMMAND_CODE_PLAYLIST_ADD_ITEM));
+        createController(mSession.getToken()).addPlaylistItem(0, testItem);
+        verify(mCallback, timeout(TIMEOUT_MS).atLeastOnce()).onCommandRequest(
+                matchesSession(), matchesCaller(),
+                matches(COMMAND_CODE_PLAYLIST_ADD_ITEM));
+
+        createSessionWithAllowedActions(
+                createCommandGroupWithout(COMMAND_CODE_PLAYLIST_ADD_ITEM));
+        createController(mSession.getToken()).addPlaylistItem(0, testItem);
+        verify(mCallback, after(WAIT_TIME_MS).never()).onCommandRequest(any(), any(), any());
+    }
+
+    @Test
+    public void testRemovePlaylistItem() throws InterruptedException {
+        MediaItem2 testItem = TestUtils.createMediaItemWithMetadata(mContext);
+        createSessionWithAllowedActions(
+                createCommandGroupWith(COMMAND_CODE_PLAYLIST_REMOVE_ITEM));
+        createController(mSession.getToken()).removePlaylistItem(testItem);
+        verify(mCallback, timeout(TIMEOUT_MS).atLeastOnce()).onCommandRequest(
+                matchesSession(), matchesCaller(),
+                matches(COMMAND_CODE_PLAYLIST_REMOVE_ITEM));
+
+        createSessionWithAllowedActions(
+                createCommandGroupWithout(COMMAND_CODE_PLAYLIST_REMOVE_ITEM));
+        createController(mSession.getToken()).removePlaylistItem(testItem);
+        verify(mCallback, after(WAIT_TIME_MS).never()).onCommandRequest(any(), any(), any());
+    }
+
+    @Test
+    public void testReplacePlaylistItem() throws InterruptedException {
+        MediaItem2 testItem = TestUtils.createMediaItemWithMetadata(mContext);
+        createSessionWithAllowedActions(
+                createCommandGroupWith(COMMAND_CODE_PLAYLIST_REPLACE_ITEM));
+        createController(mSession.getToken()).replacePlaylistItem(0, testItem);
+        verify(mCallback, timeout(TIMEOUT_MS).atLeastOnce()).onCommandRequest(
+                matchesSession(), matchesCaller(),
+                matches(COMMAND_CODE_PLAYLIST_REPLACE_ITEM));
+
+        createSessionWithAllowedActions(
+                createCommandGroupWithout(COMMAND_CODE_PLAYLIST_REPLACE_ITEM));
+        createController(mSession.getToken()).replacePlaylistItem(0, testItem);
         verify(mCallback, after(WAIT_TIME_MS).never()).onCommandRequest(any(), any(), any());
     }
 

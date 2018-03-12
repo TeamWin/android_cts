@@ -450,6 +450,82 @@ public class MediaController2Test extends MediaSession2TestBase {
         }
     }
 
+    @Test
+    public void testAddPlaylistItem() throws InterruptedException {
+        final int testIndex = 12;
+        final MediaItem2 testMediaItem = TestUtils.createMediaItemWithMetadata(mContext);
+        final CountDownLatch latch = new CountDownLatch(1);
+        final MediaPlaylistAgent agent = new MediaPlaylistAgent(mContext) {
+            @Override
+            public void addPlaylistItem(int index, MediaItem2 item) {
+                assertEquals(testIndex, index);
+                assertEquals(testMediaItem.getMediaId(), item.getMediaId());
+                latch.countDown();
+            }
+        };
+        try (final MediaSession2 session = new MediaSession2.Builder(mContext)
+                .setPlayer(mPlayer)
+                .setPlaylistAgent(agent)
+                .setId("testAddPlaylistItem")
+                .setSessionCallback(sHandlerExecutor, new SessionCallback(mContext) {})
+                .build()) {
+            createController(session.getToken()).addPlaylistItem(testIndex, testMediaItem);
+            assertTrue(latch.await(TIMEOUT_MS, TimeUnit.MILLISECONDS));
+        }
+    }
+
+    @Test
+    public void testRemovePlaylistItem() throws InterruptedException {
+        final List<MediaItem2> testList = TestUtils.createPlaylist(mContext);
+        final CountDownLatch latch = new CountDownLatch(1);
+        final MediaPlaylistAgent agent = new MediaPlaylistAgent(mContext) {
+            @Override
+            public void removePlaylistItem(MediaItem2 item) {
+                assertEquals(testList.get(0), item);
+                latch.countDown();
+            }
+
+            @Override
+            public List<MediaItem2> getPlaylist() {
+                return testList;
+            }
+        };
+        try (final MediaSession2 session = new MediaSession2.Builder(mContext)
+                .setPlayer(mPlayer)
+                .setPlaylistAgent(agent)
+                .setId("testRemovePlaylistItem")
+                .setSessionCallback(sHandlerExecutor, new SessionCallback(mContext) {})
+                .build()) {
+            MediaController2 controller = createController(session.getToken());
+            controller.removePlaylistItem(controller.getPlaylist().get(0));
+            assertTrue(latch.await(TIMEOUT_MS, TimeUnit.MILLISECONDS));
+        }
+    }
+
+    @Test
+    public void testReplacePlaylistItem() throws InterruptedException {
+        final int testIndex = 12;
+        final MediaItem2 testMediaItem = TestUtils.createMediaItemWithMetadata(mContext);
+        final CountDownLatch latch = new CountDownLatch(1);
+        final MediaPlaylistAgent agent = new MediaPlaylistAgent(mContext) {
+            @Override
+            public void replacePlaylistItem(int index, MediaItem2 item) {
+                assertEquals(testIndex, index);
+                assertEquals(testMediaItem.getMediaId(), item.getMediaId());
+                latch.countDown();
+            }
+        };
+        try (final MediaSession2 session = new MediaSession2.Builder(mContext)
+                .setPlayer(mPlayer)
+                .setPlaylistAgent(agent)
+                .setId("testReplacePlaylistItem")
+                .setSessionCallback(sHandlerExecutor, new SessionCallback(mContext) {})
+                .build()) {
+            createController(session.getToken()).replacePlaylistItem(testIndex, testMediaItem);
+            assertTrue(latch.await(TIMEOUT_MS, TimeUnit.MILLISECONDS));
+        }
+    }
+
     @Ignore
     @Test
     public void testGetSetPlaylistParams() throws Exception {
