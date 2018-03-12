@@ -28,9 +28,8 @@ LOCAL_SRC_FILES := \
 LOCAL_C_INCLUDES := $(JNI_H_INCLUDE) 
 
 LOCAL_SHARED_LIBRARIES := libnativehelper_compat_libc++ liblog
-LOCAL_SDK_VERSION := 23
 LOCAL_CPPFLAGS := -std=gnu++11
-LOCAL_NDK_STL_VARIANT := c++_static
+LOCAL_CXX_STL := libc++_static
 
 LOCAL_CFLAGS := -Wno-unused-parameter -Wall -Werror
 
