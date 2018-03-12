@@ -23,13 +23,6 @@ import android.os.Bundle;
 /** Activity that changes UI mode on creation and handles corresponding configuration change. */
 public class NightModeActivity extends AbstractLifecycleLogActivity {
 
-    private static final String TAG = NightModeActivity.class.getSimpleName();
-
-    @Override
-    protected String getTag() {
-        return TAG;
-    }
-
     @Override
     protected void onCreate(Bundle icicle) {
         super.onCreate(icicle);

@@ -18,13 +18,6 @@ package android.server.am;
 
 public class TranslucentTopActivity extends TopActivity {
 
-    private static final String TAG = TranslucentTopActivity.class.getSimpleName();
-
-    @Override
-    protected String getTag() {
-        return TAG;
-    }
-
     @Override
     protected void setWallpaperTheme() {
         setTheme(R.style.TranslucentWallpaperTheme);

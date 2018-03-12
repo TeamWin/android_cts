@@ -25,13 +25,6 @@ import android.util.Log;
 
 public class TopActivity extends AbstractLifecycleLogActivity {
 
-    private static final String TAG = TopActivity.class.getSimpleName();
-
-    @Override
-    protected String getTag() {
-        return TAG;
-    }
-
     protected void setWallpaperTheme() {
         setTheme(R.style.WallpaperTheme);
     }
@@ -49,7 +42,7 @@ public class TopActivity extends AbstractLifecycleLogActivity {
         if (finishDelay > 0) {
             Handler handler = new Handler();
             handler.postDelayed(() -> {
-                    Log.d(TAG, "Calling finish()");
+                    Log.d(getTag(), "Calling finish()");
                     finish();
             }, finishDelay);
         }

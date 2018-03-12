@@ -20,9 +20,4 @@ package android.server.am;
  * Activity with DialogWhenLarge Theme.
  */
 public class DialogWhenLargeActivity extends AbstractLifecycleLogActivity {
-    private static final String TAG = DialogWhenLargeActivity.class.getSimpleName();
-    @Override
-    protected String getTag() {
-        return TAG;
-    }
 }

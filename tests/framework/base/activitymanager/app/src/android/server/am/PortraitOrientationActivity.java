@@ -21,11 +21,6 @@ import android.content.res.Configuration;
 public class PortraitOrientationActivity extends AbstractLifecycleLogActivity {
 
     @Override
-    protected String getTag() {
-        return "PortraitOrientationActivity";
-    }
-
-    @Override
     protected void onResume() {
         super.onResume();
         final Configuration config = getResources().getConfiguration();

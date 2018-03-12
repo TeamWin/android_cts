@@ -24,7 +24,6 @@ LOCAL_STATIC_JAVA_LIBRARIES := \
     android-support-test \
     ub-uiautomator \
     mockito-target-minus-junit4 \
-    platformprotosnano
 
 LOCAL_JAVA_LIBRARIES := \
     android.test.runner.stubs \
@@ -35,6 +34,8 @@ LOCAL_MODULE_TAGS := optional
 LOCAL_MODULE := compatibility-device-util
 
 LOCAL_SDK_VERSION := test_current
+
+LOCAL_JARJAR_RULES := $(LOCAL_PATH)/protobuf-jarjar-rules.txt
 
 include $(BUILD_STATIC_JAVA_LIBRARY)
 

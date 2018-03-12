@@ -54,6 +54,8 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
+import com.android.cts.IBinderPermissionTestService;
+
 /**
  * Test {@link ContextWrapper}.
  */
@@ -79,6 +81,8 @@ public class ContextWrapperTest extends AndroidTestCase {
     private final static String MOCK_ACTION1 = ACTION_BROADCAST_TESTORDER + "1";
     private final static String MOCK_ACTION2 = ACTION_BROADCAST_TESTORDER + "2";
 
+    // Note: keep these constants in sync with the permissions used by BinderPermissionTestService.
+    //
     // A permission that's granted to this test package.
     public static final String GRANTED_PERMISSION = "android.permission.USE_CREDENTIALS";
     // A permission that's not granted to this test package.
@@ -96,6 +100,8 @@ public class ContextWrapperTest extends AndroidTestCase {
 
     private boolean mWallpaperChanged;
     private BitmapDrawable mOriginalWallpaper;
+    private volatile IBinderPermissionTestService mBinderPermissionTestService;
+    private ServiceConnection mBinderPermissionTestConnection;
 
     @Override
     protected void setUp() throws Exception {
@@ -626,13 +632,13 @@ public class ContextWrapperTest extends AndroidTestCase {
         }
     }
 
-    public void testCheckCallingPermission() {
+    public void testCheckCallingPermissionNoIpc() {
         // Denied because no IPC is active.
         int retValue = mContextWrapper.checkCallingPermission(GRANTED_PERMISSION);
         assertEquals(PackageManager.PERMISSION_DENIED, retValue);
     }
 
-    public void testEnforceCallingPermission() {
+    public void testEnforceCallingPermissionNoIpc() {
         try {
             mContextWrapper.enforceCallingPermission(
                     GRANTED_PERMISSION,
@@ -641,6 +647,61 @@ public class ContextWrapperTest extends AndroidTestCase {
         } catch (SecurityException e) {
             // Currently no IPC is handled by this process, this exception is expected
         }
+    }
+
+    public void testEnforceCallingPermission() throws Exception {
+        bindBinderPermissionTestService();
+        try {
+            mBinderPermissionTestService.callEnforceCallingPermissionGranted();
+
+            try {
+                mBinderPermissionTestService.callEnforceCallingPermissionNotGranted();
+                fail("Permission shouldn't be granted.");
+            } catch (SecurityException expected) {
+            }
+        } finally {
+            getContext().unbindService(mBinderPermissionTestConnection);
+        }
+    }
+
+    public void testCheckCallingPermission() throws Exception {
+        bindBinderPermissionTestService();
+        try {
+            int returnValue = mBinderPermissionTestService.callCheckCallingPermissionGranted();
+            assertEquals(PackageManager.PERMISSION_GRANTED, returnValue);
+
+            returnValue = mBinderPermissionTestService.callCheckCallingPermissionNotGranted();
+            assertEquals(PackageManager.PERMISSION_DENIED, returnValue);
+        } finally {
+            getContext().unbindService(mBinderPermissionTestConnection);
+        }
+    }
+
+    private void bindBinderPermissionTestService() {
+        Intent intent = new Intent(getContext(), IBinderPermissionTestService.class);
+        intent.setComponent(new ComponentName(
+                "com.android.cts", "com.android.cts.BinderPermissionTestService"));
+
+        mBinderPermissionTestConnection = new ServiceConnection() {
+            @Override
+            public void onServiceConnected(ComponentName componentName, IBinder iBinder) {
+                mBinderPermissionTestService =
+                        IBinderPermissionTestService.Stub.asInterface(iBinder);
+            }
+
+            @Override
+            public void onServiceDisconnected(ComponentName componentName) {
+            }
+        };
+
+        assertTrue("Service not bound", getContext().bindService(
+                intent, mBinderPermissionTestConnection, Context.BIND_AUTO_CREATE));
+
+        new PollingCheck(15 * 1000) {
+            protected boolean check() {
+                return mBinderPermissionTestService != null; // Service was bound.
+            }
+        }.run();
     }
 
     public void testCheckUriPermission1() {

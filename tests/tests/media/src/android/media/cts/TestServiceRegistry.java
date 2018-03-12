@@ -18,17 +18,13 @@ package android.media.cts;
 
 import static org.junit.Assert.fail;
 
-import android.content.Context;
-import android.media.MediaLibraryService2;
-import android.media.MediaSession2;
-import android.media.MediaSession2.CommandGroup;
-import android.media.MediaSession2.ControllerInfo;
+import android.media.MediaSession2.SessionCallback;
 import android.media.MediaSessionService2;
 import android.media.cts.TestUtils.SyncHandler;
-import android.os.Bundle;
 import android.os.Handler;
-import android.os.Process;
 import android.support.annotation.GuardedBy;
+import android.support.annotation.NonNull;
+import android.support.annotation.Nullable;
 
 /**
  * Keeps the instance of currently running {@link MockMediaSessionService2}. And also provides
@@ -37,51 +33,6 @@ import android.support.annotation.GuardedBy;
  * It only support only one service at a time.
  */
 public class TestServiceRegistry {
-    /**
-     * Proxy for both {@link MediaSession2.SessionCallback} and
-     * {@link MediaLibraryService2.MediaLibrarySession.SessionCallback}.
-     */
-    public static abstract class SessionCallbackProxy {
-        private final Context mContext;
-
-        /**
-         * Constructor
-         */
-        public SessionCallbackProxy(Context context) {
-            mContext = context;
-        }
-
-        public final Context getContext() {
-            return mContext;
-        }
-
-        /**
-         * @param controller
-         * @return
-         */
-        public CommandGroup onConnect(ControllerInfo controller) {
-            if (Process.myUid() == controller.getUid()) {
-                CommandGroup commands = new CommandGroup(mContext);
-                commands.addAllPredefinedCommands();
-                return commands;
-            }
-            return null;
-        }
-
-        /**
-         * Called when enclosing service is created.
-         */
-        public void onServiceCreated(MediaSessionService2 service) { }
-
-        /**
-         * Called when enclosing service is destroyed.
-         */
-        public void onServiceDestroyed() { }
-
-        public void onSubscribe(ControllerInfo info, String parentId, Bundle extra) { }
-        public void onUnsubscribe(ControllerInfo info, String parentId) { }
-    }
-
     @GuardedBy("TestServiceRegistry.class")
     private static TestServiceRegistry sInstance;
     @GuardedBy("TestServiceRegistry.class")
@@ -89,7 +40,17 @@ public class TestServiceRegistry {
     @GuardedBy("TestServiceRegistry.class")
     private SyncHandler mHandler;
     @GuardedBy("TestServiceRegistry.class")
-    private SessionCallbackProxy mCallbackProxy;
+    private SessionCallback mSessionCallback;
+    @GuardedBy("TestServiceRegistry.class")
+    private SessionServiceCallback mSessionServiceCallback;
+
+    /**
+     * Callback for session service's lifecyle (onCreate() / onDestroy())
+     */
+    public interface SessionServiceCallback {
+        default void onCreated() {}
+        default void onDestroyed() {}
+    }
 
     public static TestServiceRegistry getInstance() {
         synchronized (TestServiceRegistry.class) {
@@ -112,15 +73,21 @@ public class TestServiceRegistry {
         }
     }
 
-    public void setSessionCallbackProxy(SessionCallbackProxy callbackProxy) {
+    public void setSessionServiceCallback(SessionServiceCallback sessionServiceCallback) {
         synchronized (TestServiceRegistry.class) {
-            mCallbackProxy = callbackProxy;
+            mSessionServiceCallback = sessionServiceCallback;
         }
     }
 
-    public SessionCallbackProxy getSessionCallbackProxy() {
+    public void setSessionCallback(SessionCallback sessionCallback) {
         synchronized (TestServiceRegistry.class) {
-            return mCallbackProxy;
+            mSessionCallback = sessionCallback;
+        }
+    }
+
+    public SessionCallback getSessionCallback() {
+        synchronized (TestServiceRegistry.class) {
+            return mSessionCallback;
         }
     }
 
@@ -131,8 +98,8 @@ public class TestServiceRegistry {
                         + " previoulsy running service doesn't break current test");
             }
             mService = service;
-            if (mCallbackProxy != null) {
-                mCallbackProxy.onServiceCreated(service);
+            if (mSessionServiceCallback != null) {
+                mSessionServiceCallback.onCreated();
             }
         }
     }
@@ -145,8 +112,8 @@ public class TestServiceRegistry {
 
     public void cleanUp() {
         synchronized (TestServiceRegistry.class) {
-            final SessionCallbackProxy callbackProxy = mCallbackProxy;
             if (mService != null) {
+                // TODO(jaewan): Remove this, and override SessionService#onDestroy() to do this
                 mService.getSession().close();
                 // stopSelf() would not kill service while the binder connection established by
                 // bindService() exists, and close() above will do the job instead.
@@ -157,10 +124,10 @@ public class TestServiceRegistry {
             if (mHandler != null) {
                 mHandler.removeCallbacksAndMessages(null);
             }
-            mCallbackProxy = null;
-
-            if (callbackProxy != null) {
-                callbackProxy.onServiceDestroyed();
+            mSessionCallback = null;
+            if (mSessionServiceCallback != null) {
+                mSessionServiceCallback.onDestroyed();
+                mSessionServiceCallback = null;
             }
         }
     }

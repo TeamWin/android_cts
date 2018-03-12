@@ -56,7 +56,8 @@ LOCAL_AAPT_FLAGS := \
 	-c tlh \
 	-c xx,xx-rYY
 
-LOCAL_SRC_FILES := $(call all-java-files-under, src)
+LOCAL_SRC_FILES := $(call all-java-files-under, src) \
+    $(call all-Iaidl-files-under, BinderPermissionTestService)
 LOCAL_MULTILIB := both
 LOCAL_PACKAGE_NAME := CtsContentTestCases
 LOCAL_PRIVATE_PLATFORM_APIS := true

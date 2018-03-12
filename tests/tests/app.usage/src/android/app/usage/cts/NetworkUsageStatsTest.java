@@ -481,31 +481,16 @@ public class NetworkUsageStatsTest extends InstrumentationTestCase {
                 result = mNsm.queryDetails(
                         mNetworkInterfacesToTest[i].getNetworkType(), getSubscriberId(i),
                         mStartTime, mEndTime);
-                assertTrue(result != null);
-                NetworkStats.Bucket bucket = new NetworkStats.Bucket();
-                long totalTxPackets = 0;
-                long totalRxPackets = 0;
-                long totalTxBytes = 0;
-                long totalRxBytes = 0;
-                while (result.hasNextBucket()) {
-                    assertTrue(result.getNextBucket(bucket));
-                    assertTimestamps(bucket);
-                    assertEquals(bucket.getState(), NetworkStats.Bucket.STATE_ALL);
-                    assertEquals(bucket.getMetered(), NetworkStats.Bucket.METERED_ALL);
-                    assertEquals(bucket.getDefaultNetwork(),
-                            NetworkStats.Bucket.DEFAULT_NETWORK_ALL);
-                    if (bucket.getUid() == Process.myUid()) {
-                        totalTxPackets += bucket.getTxPackets();
-                        totalRxPackets += bucket.getRxPackets();
-                        totalTxBytes += bucket.getTxBytes();
-                        totalRxBytes += bucket.getRxBytes();
-                    }
-                }
-                assertFalse(result.getNextBucket(bucket));
-                assertTrue("No Rx bytes usage for uid " + Process.myUid(), totalRxBytes > 0);
-                assertTrue("No Rx packets usage for uid " + Process.myUid(), totalRxPackets > 0);
-                assertTrue("No Tx bytes usage for uid " + Process.myUid(), totalTxBytes > 0);
-                assertTrue("No Tx packets usage for uid " + Process.myUid(), totalTxPackets > 0);
+                long totalBytesWithSubscriberId = getTotalAndAssertNotEmpty(result);
+
+                // Test without filtering by subscriberId
+                result = mNsm.queryDetails(
+                        mNetworkInterfacesToTest[i].getNetworkType(), null,
+                        mStartTime, mEndTime);
+
+                assertTrue("More bytes with subscriberId filter than without.",
+                        getTotalAndAssertNotEmpty(result) >= totalBytesWithSubscriberId);
+
             } catch (RemoteException | SecurityException e) {
                 fail("testAppDetails fails with exception: " + e.toString());
             } finally {
@@ -666,6 +651,36 @@ public class NetworkUsageStatsTest extends InstrumentationTestCase {
 
             mNsm.unregisterUsageCallback(usageCallback);
         }
+    }
+
+    private long getTotalAndAssertNotEmpty(NetworkStats result) {
+        assertTrue(result != null);
+        NetworkStats.Bucket bucket = new NetworkStats.Bucket();
+        long totalTxPackets = 0;
+        long totalRxPackets = 0;
+        long totalTxBytes = 0;
+        long totalRxBytes = 0;
+        while (result.hasNextBucket()) {
+            assertTrue(result.getNextBucket(bucket));
+            assertTimestamps(bucket);
+            assertEquals(bucket.getState(), NetworkStats.Bucket.STATE_ALL);
+            assertEquals(bucket.getMetered(), NetworkStats.Bucket.METERED_ALL);
+            assertEquals(bucket.getDefaultNetwork(),
+                    NetworkStats.Bucket.DEFAULT_NETWORK_ALL);
+            if (bucket.getUid() == Process.myUid()) {
+                totalTxPackets += bucket.getTxPackets();
+                totalRxPackets += bucket.getRxPackets();
+                totalTxBytes += bucket.getTxBytes();
+                totalRxBytes += bucket.getRxBytes();
+            }
+        }
+        assertFalse(result.getNextBucket(bucket));
+        assertTrue("No Rx bytes usage for uid " + Process.myUid(), totalRxBytes > 0);
+        assertTrue("No Rx packets usage for uid " + Process.myUid(), totalRxPackets > 0);
+        assertTrue("No Tx bytes usage for uid " + Process.myUid(), totalTxBytes > 0);
+        assertTrue("No Tx packets usage for uid " + Process.myUid(), totalTxPackets > 0);
+
+        return totalRxBytes + totalTxBytes;
     }
 
     private void assertTimestamps(final NetworkStats.Bucket bucket) {

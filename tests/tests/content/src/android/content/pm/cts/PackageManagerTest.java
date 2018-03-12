@@ -18,6 +18,9 @@ package android.content.pm.cts;
 
 import android.content.cts.R;
 
+import static android.content.pm.ApplicationInfo.FLAG_HAS_CODE;
+import static android.content.pm.ApplicationInfo.FLAG_INSTALLED;
+import static android.content.pm.ApplicationInfo.FLAG_SYSTEM;
 import static android.content.pm.PackageManager.GET_ACTIVITIES;
 import static android.content.pm.PackageManager.GET_META_DATA;
 import static android.content.pm.PackageManager.GET_PERMISSIONS;
@@ -539,12 +542,16 @@ public class PackageManagerTest extends AndroidTestCase {
         PackageInfo pkgInfo = findPackageOrFail(pkgs, PACKAGE_NAME);
 
         // Check metadata
-        assertEquals(APPLICATION_NAME, pkgInfo.applicationInfo.name);
-        assertEquals("Android TestCase", pkgInfo.applicationInfo.loadLabel(mPackageManager));
-        assertEquals(PACKAGE_NAME, pkgInfo.applicationInfo.packageName);
-        assertTrue(pkgInfo.applicationInfo.enabled);
+        ApplicationInfo appInfo = pkgInfo.applicationInfo;
+        assertEquals(APPLICATION_NAME, appInfo.name);
+        assertEquals("Android TestCase", appInfo.loadLabel(mPackageManager));
+        assertEquals(PACKAGE_NAME, appInfo.packageName);
+        assertTrue(appInfo.enabled);
         // The process name defaults to the package name when not set.
-        assertEquals(PACKAGE_NAME, pkgInfo.applicationInfo.processName);
+        assertEquals(PACKAGE_NAME, appInfo.processName);
+        assertEquals(0, appInfo.flags & FLAG_SYSTEM);
+        assertEquals(FLAG_INSTALLED, appInfo.flags & FLAG_INSTALLED);
+        assertEquals(FLAG_HAS_CODE, appInfo.flags & FLAG_HAS_CODE);
 
         // Check required permissions
         List<String> requestedPermissions = Arrays.asList(pkgInfo.requestedPermissions);
@@ -586,6 +593,19 @@ public class PackageManagerTest extends AndroidTestCase {
         assertTrue(receiver.enabled);
         assertTrue(receiver.exported); // Has intent filters - export by default.
         assertEquals(PACKAGE_NAME, receiver.packageName);
+    }
+
+    // Tests that other packages can be queried.
+    public void testGetInstalledPackages_OtherPackages() throws Exception {
+        List<PackageInfo> pkgInfos = mPackageManager.getInstalledPackages(0);
+
+        // Check a normal package.
+        PackageInfo pkgInfo = findPackageOrFail(pkgInfos, "com.android.cts.stub"); // A test package
+        assertEquals(0, pkgInfo.applicationInfo.flags & FLAG_SYSTEM);
+
+        // Check a system package.
+        pkgInfo = findPackageOrFail(pkgInfos, "android");
+        assertEquals(FLAG_SYSTEM, pkgInfo.applicationInfo.flags & FLAG_SYSTEM);
     }
 
     public void testGetInstalledApplications() throws Exception {

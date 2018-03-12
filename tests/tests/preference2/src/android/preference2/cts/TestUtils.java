@@ -45,6 +45,7 @@ public class TestUtils {
     final UiDevice device;
     private final Instrumentation mInstrumentation;
     private final UiAutomation mAutomation;
+    private int mStatusBarHeight = -1;
 
     TestUtils() {
         mInstrumentation = InstrumentationRegistry.getInstrumentation();
@@ -58,8 +59,8 @@ public class TestUtils {
 
         Bitmap bt = mAutomation.takeScreenshot();
         // Crop-out the top bar where current time is displayed since any time change would
-        // introduce flakiness (we are cutting 5% of the screen height).
-        int yToCut = bt.getHeight() / 20;
+        // introduce flakiness (we are cutting 5% of the screen height or status_bar_height).
+        int yToCut = Math.max(bt.getHeight() / 20, getStatusBarHeight());
         // Crop the right side for scrollbar which might or might not be visible. But on
         // watch, the scroll bar is a curve and occupies 20% of the screen on the right
         // hand side.
@@ -192,6 +193,23 @@ public class TestUtils {
         String componentName = activity.getPackageName();
         String baseWindowName = componentName + "/" + componentName + ".";
         return baseWindowName + activity.getClass().getSimpleName();
+    }
+
+    private int getStatusBarHeight() {
+        // Cache the result to keep it fast.
+        if (mStatusBarHeight >= 0) {
+            return mStatusBarHeight;
+        }
+
+        int result = 0;
+        int resourceId = mInstrumentation.getTargetContext().getResources()
+                .getIdentifier("status_bar_height", "dimen", "android");
+        if (resourceId > 0) {
+            result = mInstrumentation.getTargetContext().getResources()
+                    .getDimensionPixelSize(resourceId);
+        }
+        mStatusBarHeight = result;
+        return result;
     }
 
     private String runShellCommand(String cmd) {

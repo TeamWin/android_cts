@@ -42,7 +42,6 @@ import java.util.Arrays;
 @Presubmit
 public class ActivityLifecycleTests extends ActivityLifecycleClientTestBase {
 
-    @FlakyTest(bugId = 72956507)
     @Test
     public void testSingleLaunch() throws Exception {
         final Activity activity = mFirstActivityTestRule.launchActivity(new Intent());
@@ -65,7 +64,6 @@ public class ActivityLifecycleTests extends ActivityLifecycleClientTestBase {
                 getLifecycleLog());
     }
 
-    @FlakyTest(bugId = 70649184)
     @Test
     public void testLaunchAndDestroy() throws Exception {
         final Activity activity = mFirstActivityTestRule.launchActivity(new Intent());
@@ -76,7 +74,6 @@ public class ActivityLifecycleTests extends ActivityLifecycleClientTestBase {
         LifecycleVerifier.assertLaunchAndDestroySequence(FirstActivity.class, getLifecycleLog());
     }
 
-    @FlakyTest(bugId = 72956507)
     @Test
     public void testRelaunchResumed() throws Exception {
         final Activity activity = mFirstActivityTestRule.launchActivity(new Intent());
@@ -89,7 +86,6 @@ public class ActivityLifecycleTests extends ActivityLifecycleClientTestBase {
         LifecycleVerifier.assertRelaunchSequence(FirstActivity.class, getLifecycleLog(), ON_RESUME);
     }
 
-    @FlakyTest(bugId = 72956507)
     @Test
     public void testRelaunchPaused() throws Exception {
         final Activity pausedActivity = mFirstActivityTestRule.launchActivity(new Intent());
@@ -106,7 +102,6 @@ public class ActivityLifecycleTests extends ActivityLifecycleClientTestBase {
         LifecycleVerifier.assertRelaunchSequence(FirstActivity.class, getLifecycleLog(), ON_PAUSE);
     }
 
-    @FlakyTest(bugId = 72956507)
     @Test
     public void testRelaunchStopped() throws Exception {
         final Activity stoppedActivity = mFirstActivityTestRule.launchActivity(new Intent());
@@ -121,7 +116,6 @@ public class ActivityLifecycleTests extends ActivityLifecycleClientTestBase {
         LifecycleVerifier.assertRelaunchSequence(FirstActivity.class, getLifecycleLog(), ON_STOP);
     }
 
-    @FlakyTest(bugId = 72956507)
     @Test
     public void testRelaunchConfigurationChangedWhileBecomingVisible() throws Exception {
         final Activity becomingVisibleActivity =
@@ -173,7 +167,6 @@ public class ActivityLifecycleTests extends ActivityLifecycleClientTestBase {
         }
     }
 
-    @FlakyTest(bugId = 73832787)
     @Test
     public void testPausedWithTranslucentOnTop() throws Exception {
         // Launch fullscreen activity
@@ -197,7 +190,6 @@ public class ActivityLifecycleTests extends ActivityLifecycleClientTestBase {
         LifecycleVerifier.assertLaunchAndPauseSequence(FirstActivity.class, getLifecycleLog());
     }
 
-    @FlakyTest(bugId = 73832787)
     @Test
     public void testPausedWhenReturningWithTranslucentOnTop() throws Exception {
         // Launch fullscreen activity
@@ -229,7 +221,7 @@ public class ActivityLifecycleTests extends ActivityLifecycleClientTestBase {
         LifecycleVerifier.assertRestartAndPauseSequence(FirstActivity.class, getLifecycleLog());
     }
 
-    @FlakyTest(bugId = 73832787)
+    @FlakyTest(bugId = 74409828)
     @Test
     public void testPausedWhenRecreatedFromInNonFocusedStack() throws Exception {
         // Launch first activity
@@ -263,7 +255,6 @@ public class ActivityLifecycleTests extends ActivityLifecycleClientTestBase {
         LifecycleVerifier.assertRecreateAndPauseSequence(FirstActivity.class, getLifecycleLog());
     }
 
-    @FlakyTest(bugId = 73832787)
     @Test
     public void testPausedWhenRestartedFromInNonFocusedStack() throws Exception {
         // Launch first activity
@@ -300,7 +291,6 @@ public class ActivityLifecycleTests extends ActivityLifecycleClientTestBase {
         LifecycleVerifier.assertRestartAndPauseSequence(FirstActivity.class, getLifecycleLog());
     }
 
-    @FlakyTest(bugId = 72956507)
     @Test
     public void testOnActivityResult() throws Exception {
         getLifecycleLog().clear();
@@ -320,7 +310,6 @@ public class ActivityLifecycleTests extends ActivityLifecycleClientTestBase {
      * background.
      */
     @Presubmit
-    @FlakyTest
     @Test
     public void testRestoreFromKill() throws Exception {
         final LaunchActivityBuilder builder = getLaunchActivityBuilder();

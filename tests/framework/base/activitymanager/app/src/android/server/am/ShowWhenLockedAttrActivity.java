@@ -17,11 +17,4 @@
 package android.server.am;
 
 public class ShowWhenLockedAttrActivity extends AbstractLifecycleLogActivity {
-    private static final String TAG = ShowWhenLockedAttrActivity.class.getSimpleName();
-
-    @Override
-    protected String getTag() {
-        return TAG;
-    }
-
 }

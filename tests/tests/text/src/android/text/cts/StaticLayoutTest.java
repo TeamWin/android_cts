@@ -1238,6 +1238,19 @@ public class StaticLayoutTest {
         layout.getPrimaryHorizontal(layout.getText().length());
     }
 
+    @Test
+    public void testNegativeWidth() {
+        StaticLayout.Builder.obtain("a", 0, 1, new TextPaint(), 5)
+            .setIndents(new int[] { 10 }, new int[] { 10 })
+            .setBreakStrategy(Layout.BREAK_STRATEGY_HIGH_QUALITY).build();
+        StaticLayout.Builder.obtain("a", 0, 1, new TextPaint(), 5)
+            .setIndents(new int[] { 10 }, new int[] { 10 })
+            .setBreakStrategy(Layout.BREAK_STRATEGY_SIMPLE).build();
+        StaticLayout.Builder.obtain("a", 0, 1, new TextPaint(), 5)
+            .setIndents(new int[] { 10 }, new int[] { 10 })
+            .setBreakStrategy(Layout.BREAK_STRATEGY_BALANCED).build();
+    }
+
     // TODO: Re-enable once http://b/65207701 is fixed.
     @Test
     @Suppress

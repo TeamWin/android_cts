@@ -16,18 +16,24 @@
 
 package android.server.am;
 
+import static android.server.am.Components.KeyguardDismissLoggerCallback.ENTRY_ON_DISMISS_CANCELLED;
+import static android.server.am.Components.KeyguardDismissLoggerCallback.ENTRY_ON_DISMISS_ERROR;
+import static android.server.am.Components.KeyguardDismissLoggerCallback.ENTRY_ON_DISMISS_SUCCEEDED;
+import static android.server.am.Components.KeyguardDismissLoggerCallback.KEYGUARD_DISMISS_LOG_TAG;
 import static android.server.am.StateLogger.log;
+import static android.server.am.StateLogger.logAlways;
 
 import static org.junit.Assert.fail;
 
 import android.app.KeyguardManager;
+import android.os.SystemClock;
 
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-public class KeyguardTestBase extends ActivityManagerTestBase {
+class KeyguardTestBase extends ActivityManagerTestBase {
 
-    protected KeyguardManager mKeyguardManager;
+    KeyguardManager mKeyguardManager;
 
     @Override
     public void setUp() throws Exception {
@@ -35,25 +41,22 @@ public class KeyguardTestBase extends ActivityManagerTestBase {
         mKeyguardManager = mContext.getSystemService(KeyguardManager.class);
     }
 
-    protected void assertOnDismissSucceededInLogcat(LogSeparator logSeparator) throws Exception {
-        assertInLogcat("KeyguardDismissLoggerCallback", "onDismissSucceeded", logSeparator);
+    void assertOnDismissSucceededInLogcat(LogSeparator logSeparator) {
+        assertInLogcat(KEYGUARD_DISMISS_LOG_TAG, ENTRY_ON_DISMISS_SUCCEEDED, logSeparator);
     }
 
-    protected void assertOnDismissCancelledInLogcat(LogSeparator logSeparator) throws Exception {
-        assertInLogcat("KeyguardDismissLoggerCallback", "onDismissCancelled", logSeparator);
+    void assertOnDismissCancelledInLogcat(LogSeparator logSeparator) {
+        assertInLogcat(KEYGUARD_DISMISS_LOG_TAG, ENTRY_ON_DISMISS_CANCELLED, logSeparator);
     }
 
-    protected void assertOnDismissErrorInLogcat(LogSeparator logSeparator) throws Exception {
-        assertInLogcat("KeyguardDismissLoggerCallback", "onDismissError", logSeparator);
+    void assertOnDismissErrorInLogcat(LogSeparator logSeparator) {
+        assertInLogcat(KEYGUARD_DISMISS_LOG_TAG, ENTRY_ON_DISMISS_ERROR, logSeparator);
     }
 
-    private void assertInLogcat(String activityName, String entry, LogSeparator logSeparator)
-            throws Exception {
+    private void assertInLogcat(String logTag, String entry, LogSeparator logSeparator) {
         final Pattern pattern = Pattern.compile("(.+)" + entry);
-        int tries = 0;
-        while (tries < 5) {
-            final String[] lines = getDeviceLogsForComponents(logSeparator, activityName);
-            log("Looking at logcat");
+        for (int retry = 1; retry <= 5; retry++) {
+            final String[] lines = getDeviceLogsForComponents(logSeparator, logTag);
             for (int i = lines.length - 1; i >= 0; i--) {
                 final String line = lines[i].trim();
                 log(line);
@@ -62,9 +65,9 @@ public class KeyguardTestBase extends ActivityManagerTestBase {
                     return;
                 }
             }
-            tries++;
-            Thread.sleep(500);
+            logAlways("Waiting for " + entry + "... retry=" + retry);
+            SystemClock.sleep(500);
         }
-        fail("Not in logcat: " + entry);
+        fail("Waiting for " + entry + " failed");
     }
 }

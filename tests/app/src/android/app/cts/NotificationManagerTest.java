@@ -16,6 +16,19 @@
 
 package android.app.cts;
 
+import static android.app.NotificationManager.Policy.SUPPRESSED_EFFECT_AMBIENT;
+import static android.app.NotificationManager.Policy.SUPPRESSED_EFFECT_BADGE;
+import static android.app.NotificationManager.Policy.SUPPRESSED_EFFECT_FULL_SCREEN_INTENT;
+import static android.app.NotificationManager.Policy.SUPPRESSED_EFFECT_LIGHTS;
+import static android.app.NotificationManager.Policy.SUPPRESSED_EFFECT_NOTIFICATION_LIST;
+import static android.app.NotificationManager.Policy.SUPPRESSED_EFFECT_PEEK;
+import static android.app.NotificationManager.Policy.SUPPRESSED_EFFECT_SCREEN_OFF;
+import static android.app.NotificationManager.Policy.SUPPRESSED_EFFECT_SCREEN_ON;
+import static android.app.NotificationManager.Policy.SUPPRESSED_EFFECT_STATUS_BAR;
+
+import static junit.framework.Assert.assertEquals;
+
+import android.app.ActivityManager;
 import android.app.Instrumentation;
 import android.app.Notification;
 import android.app.NotificationChannel;
@@ -58,6 +71,7 @@ public class NotificationManagerTest extends AndroidTestCase {
     final String NOTIFICATION_CHANNEL_ID = "NotificationManagerTest";
 
     private NotificationManager mNotificationManager;
+    private ActivityManager mActivityManager;
     private String mId;
 
     @Override
@@ -71,6 +85,7 @@ public class NotificationManagerTest extends AndroidTestCase {
         mNotificationManager.cancelAll();
         mNotificationManager.createNotificationChannel(new NotificationChannel(
                 NOTIFICATION_CHANNEL_ID, "name", NotificationManager.IMPORTANCE_DEFAULT));
+        mActivityManager = (ActivityManager) mContext.getSystemService(Context.ACTIVITY_SERVICE);
         // delay between tests so notifications aren't dropped by the rate limiter
         try {
             Thread.sleep(500);
@@ -97,7 +112,11 @@ public class NotificationManagerTest extends AndroidTestCase {
         }
     }
 
-    public void testOnlyPostPCanToggleAlarmsMediaSystemTest() throws Exception {
+    public void testPostPCanToggleAlarmsMediaSystemTest() throws Exception {
+        if (mActivityManager.isLowRamDevice()) {
+            return;
+        }
+
         toggleNotificationPolicyAccess(mContext.getPackageName(),
                 InstrumentationRegistry.getInstrumentation(), true);
 
@@ -125,37 +144,6 @@ public class NotificationManagerTest extends AndroidTestCase {
                     NotificationManager.Policy.PRIORITY_CATEGORY_MEDIA) == 0);
             assertTrue((policy.priorityCategories &
                     NotificationManager.Policy.PRIORITY_CATEGORY_SYSTEM) == 0);
-        } else {
-            // Pre-P cannot toggle alarms and media
-            NotificationManager.Policy origPolicy = mNotificationManager.getNotificationPolicy();
-            int alarmBit = origPolicy.priorityCategories & NotificationManager.Policy
-                    .PRIORITY_CATEGORY_ALARMS;
-            int mediaBit = origPolicy.priorityCategories & NotificationManager.Policy
-                    .PRIORITY_CATEGORY_MEDIA;
-            int systemBit = origPolicy.priorityCategories & NotificationManager.Policy
-                    .PRIORITY_CATEGORY_SYSTEM;
-
-            // attempt to toggle off alarms, media, system:
-            mNotificationManager.setNotificationPolicy(new NotificationManager.Policy(0, 0, 0));
-            NotificationManager.Policy policy = mNotificationManager.getNotificationPolicy();
-            assertEquals(alarmBit, policy.priorityCategories
-                    & NotificationManager.Policy.PRIORITY_CATEGORY_ALARMS);
-            assertEquals(mediaBit, policy.priorityCategories
-                    & NotificationManager.Policy.PRIORITY_CATEGORY_MEDIA);
-            assertEquals(systemBit, policy.priorityCategories
-                    & NotificationManager.Policy.PRIORITY_CATEGORY_SYSTEM);
-
-            // attempt to toggle on alarms, media, system:
-            mNotificationManager.setNotificationPolicy(new NotificationManager.Policy(
-                    NotificationManager.Policy.PRIORITY_CATEGORY_ALARMS
-                            | NotificationManager.Policy.PRIORITY_CATEGORY_MEDIA, 0, 0));
-            policy = mNotificationManager.getNotificationPolicy();
-            assertEquals(alarmBit, policy.priorityCategories
-                    & NotificationManager.Policy.PRIORITY_CATEGORY_ALARMS);
-            assertEquals(mediaBit, policy.priorityCategories
-                    & NotificationManager.Policy.PRIORITY_CATEGORY_MEDIA);
-            assertEquals(systemBit, policy.priorityCategories
-                    & NotificationManager.Policy.PRIORITY_CATEGORY_SYSTEM);
         }
     }
 
@@ -780,6 +768,80 @@ public class NotificationManagerTest extends AndroidTestCase {
             // pass
         }
         assertOnlySomeNotificationsAutogrouped(postedIds);
+    }
+
+    public void testSetNotificationPolicy_P_setOldFields() throws Exception {
+        if (mActivityManager.isLowRamDevice()) {
+            return;
+        }
+        toggleNotificationPolicyAccess(mContext.getPackageName(),
+                InstrumentationRegistry.getInstrumentation(), true);
+        if (mContext.getApplicationInfo().targetSdkVersion >= Build.VERSION_CODES.P) {
+            NotificationManager.Policy appPolicy = new NotificationManager.Policy(0, 0, 0,
+                    SUPPRESSED_EFFECT_SCREEN_ON | SUPPRESSED_EFFECT_SCREEN_OFF);
+            mNotificationManager.setNotificationPolicy(appPolicy);
+
+            int expected = SUPPRESSED_EFFECT_SCREEN_ON | SUPPRESSED_EFFECT_SCREEN_OFF
+                    | SUPPRESSED_EFFECT_PEEK | SUPPRESSED_EFFECT_AMBIENT
+                    | SUPPRESSED_EFFECT_LIGHTS | SUPPRESSED_EFFECT_FULL_SCREEN_INTENT;
+
+            assertEquals(expected,
+                    mNotificationManager.getNotificationPolicy().suppressedVisualEffects);
+        }
+        toggleNotificationPolicyAccess(mContext.getPackageName(),
+                InstrumentationRegistry.getInstrumentation(), false);
+    }
+
+    public void testSetNotificationPolicy_P_setNewFields() throws Exception {
+        if (mActivityManager.isLowRamDevice()) {
+            return;
+        }
+        toggleNotificationPolicyAccess(mContext.getPackageName(),
+                InstrumentationRegistry.getInstrumentation(), true);
+        if (mContext.getApplicationInfo().targetSdkVersion >= Build.VERSION_CODES.P) {
+            NotificationManager.Policy appPolicy = new NotificationManager.Policy(0, 0, 0,
+                    SUPPRESSED_EFFECT_NOTIFICATION_LIST | SUPPRESSED_EFFECT_AMBIENT
+                            | SUPPRESSED_EFFECT_LIGHTS | SUPPRESSED_EFFECT_FULL_SCREEN_INTENT);
+            mNotificationManager.setNotificationPolicy(appPolicy);
+
+            int expected = SUPPRESSED_EFFECT_NOTIFICATION_LIST | SUPPRESSED_EFFECT_SCREEN_OFF
+                    | SUPPRESSED_EFFECT_AMBIENT | SUPPRESSED_EFFECT_LIGHTS
+                    | SUPPRESSED_EFFECT_FULL_SCREEN_INTENT;
+            assertEquals(expected,
+                    mNotificationManager.getNotificationPolicy().suppressedVisualEffects);
+        }
+        toggleNotificationPolicyAccess(mContext.getPackageName(),
+                InstrumentationRegistry.getInstrumentation(), false);
+    }
+
+    public void testSetNotificationPolicy_P_setOldNewFields() throws Exception {
+        if (mActivityManager.isLowRamDevice()) {
+            return;
+        }
+        toggleNotificationPolicyAccess(mContext.getPackageName(),
+                InstrumentationRegistry.getInstrumentation(), true);
+        if (mContext.getApplicationInfo().targetSdkVersion >= Build.VERSION_CODES.P) {
+
+            NotificationManager.Policy appPolicy = new NotificationManager.Policy(0, 0, 0,
+                    SUPPRESSED_EFFECT_SCREEN_ON | SUPPRESSED_EFFECT_STATUS_BAR);
+            mNotificationManager.setNotificationPolicy(appPolicy);
+
+            int expected = SUPPRESSED_EFFECT_STATUS_BAR;
+            assertEquals(expected,
+                    mNotificationManager.getNotificationPolicy().suppressedVisualEffects);
+
+            appPolicy = new NotificationManager.Policy(0, 0, 0,
+                    SUPPRESSED_EFFECT_SCREEN_ON | SUPPRESSED_EFFECT_AMBIENT
+                            | SUPPRESSED_EFFECT_LIGHTS | SUPPRESSED_EFFECT_FULL_SCREEN_INTENT);
+            mNotificationManager.setNotificationPolicy(appPolicy);
+
+            expected = SUPPRESSED_EFFECT_SCREEN_OFF | SUPPRESSED_EFFECT_AMBIENT
+                    | SUPPRESSED_EFFECT_LIGHTS | SUPPRESSED_EFFECT_FULL_SCREEN_INTENT;
+            assertEquals(expected,
+                    mNotificationManager.getNotificationPolicy().suppressedVisualEffects);
+        }
+        toggleNotificationPolicyAccess(mContext.getPackageName(),
+                InstrumentationRegistry.getInstrumentation(), false);
     }
 
     private PendingIntent getPendingIntent() {

@@ -60,8 +60,6 @@ import android.view.WindowManager;
 
 public class PipActivity extends AbstractLifecycleLogActivity {
 
-    private static final String TAG = PipActivity.class.getSimpleName();
-
     private boolean mEnteredPictureInPicture;
 
     private Handler mHandler = new Handler();
@@ -218,7 +216,7 @@ public class PipActivity extends AbstractLifecycleLogActivity {
         super.onStop();
 
         if (getIntent().hasExtra(EXTRA_ASSERT_NO_ON_STOP_BEFORE_PIP) && !mEnteredPictureInPicture) {
-            Log.w(TAG, "Unexpected onStop() called before entering picture-in-picture");
+            Log.w(getTag(), "Unexpected onStop() called before entering picture-in-picture");
             finish();
         }
     }
@@ -236,8 +234,8 @@ public class PipActivity extends AbstractLifecycleLogActivity {
 
         // Fail early if the activity state does not match the dispatched state
         if (isInPictureInPictureMode() != isInPictureInPictureMode) {
-            Log.w(TAG, "Received onPictureInPictureModeChanged mode=" + isInPictureInPictureMode
-                    + " activityState=" + isInPictureInPictureMode());
+            Log.w(getTag(), "Received onPictureInPictureModeChanged mode="
+                    + isInPictureInPictureMode + " activityState=" + isInPictureInPictureMode());
             finish();
         }
 
@@ -287,11 +285,6 @@ public class PipActivity extends AbstractLifecycleLogActivity {
         intent.putExtra(EXTRA_ENTER_PIP, "true");
         intent.putExtra(EXTRA_ASSERT_NO_ON_STOP_BEFORE_PIP, "true");
         caller.startActivity(intent);
-    }
-
-    @Override
-    protected String getTag() {
-        return TAG;
     }
 
     /**
