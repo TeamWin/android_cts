@@ -72,7 +72,7 @@ public class VirtualContainerActivityTest extends AutoFillServiceTestCase {
     };
 
     private final boolean mCompatMode;
-    private VirtualContainerActivity mActivity;
+    protected VirtualContainerActivity mActivity;
 
     public VirtualContainerActivityTest() {
         this(false);
@@ -591,7 +591,7 @@ public class VirtualContainerActivityTest extends AutoFillServiceTestCase {
     /**
      * Asserts the dataset picker is properly displayed in a give line.
      */
-    private void assertDatasetShown(Line line, String... expectedDatasets) throws Exception {
+    protected void assertDatasetShown(Line line, String... expectedDatasets) throws Exception {
         final Rect pickerBounds = mUiBot.assertDatasets(expectedDatasets).getVisibleBounds();
         final Rect fieldBounds = line.getAbsCoordinates();
         assertWithMessage("vertical coordinates don't match; picker=%s, field=%s", pickerBounds,
@@ -600,7 +600,7 @@ public class VirtualContainerActivityTest extends AutoFillServiceTestCase {
                 fieldBounds).that(pickerBounds.left).isEqualTo(fieldBounds.left);
     }
 
-    private void assertLabel(ViewNode node, String expectedValue) {
+    protected void assertLabel(ViewNode node, String expectedValue) {
         if (mCompatMode) {
             // Compat mode doesn't set AutofillValue of non-editable fields
             assertTextOnly(node, expectedValue);
