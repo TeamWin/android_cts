@@ -21,6 +21,7 @@ import android.content.Context;
 import android.content.Intent;
 import android.media.AudioManager;
 import android.media.MediaController2;
+import android.media.MediaController2.ControllerCallback;
 import android.media.MediaSession2;
 import android.media.MediaSession2.Command;
 import android.media.MediaSession2.CommandGroup;
@@ -31,7 +32,7 @@ import android.media.PlaybackState2;
 import android.media.Rating2;
 import android.media.SessionToken2;
 import android.media.VolumeProvider2;
-import android.media.cts.TestServiceRegistry.SessionCallbackProxy;
+import android.media.cts.TestServiceRegistry.SessionServiceCallback;
 import android.media.cts.TestUtils.SyncHandler;
 import android.net.Uri;
 import android.os.Bundle;
@@ -50,6 +51,7 @@ import org.junit.Ignore;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
+import java.lang.reflect.Method;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 
@@ -100,6 +102,23 @@ public class MediaController2Test extends MediaSession2TestBase {
             mSession.close();
         }
         TestServiceRegistry.getInstance().cleanUp();
+    }
+
+    /**
+     * Test if the {@link MediaSession2TestBase.TestControllerCallback} wraps the callback proxy
+     * without missing any method.
+     */
+    @Test
+    public void testTestControllerCallback() {
+        Method[] methods = TestControllerCallback.class.getMethods();
+        assertNotNull(methods);
+        for (int i = 0; i < methods.length; i++) {
+            // For any methods in the controller callback, TestControllerCallback should have
+            // overriden the method and call matching API in the callback proxy.
+            assertNotEquals("TestControllerCallback should override " + methods[i]
+                            + " and call callback proxy",
+                    ControllerCallback.class, methods[i].getDeclaringClass());
+        }
     }
 
     @Test
@@ -241,9 +260,10 @@ public class MediaController2Test extends MediaSession2TestBase {
                 null /* PlaylistMetadata */);
 
         final CountDownLatch latch = new CountDownLatch(1);
-        final TestControllerCallbackInterface callback = new TestControllerCallbackInterface() {
+        final ControllerCallback callback = new ControllerCallback() {
             @Override
-            public void onPlaylistParamsChanged(PlaylistParams givenParams) {
+            public void onPlaylistParamsChanged(MediaController2 controller,
+                    PlaylistParams givenParams) {
                 ensurePlaylistParamsModeEquals(params, givenParams);
                 latch.countDown();
             }
@@ -303,9 +323,10 @@ public class MediaController2Test extends MediaSession2TestBase {
     @Test
     public void testControllerCallback_onPlaybackStateChanged() throws InterruptedException {
         final CountDownLatch latch = new CountDownLatch(1);
-        final TestControllerCallbackInterface callback = new TestControllerCallbackInterface() {
+        final ControllerCallback callback = new ControllerCallback() {
             @Override
-            public void onPlaybackStateChanged(PlaybackState2 state) {
+            public void onPlaybackStateChanged(MediaController2 controller,
+                    PlaybackState2 state) {
                 // Called only once when the player's playback state is changed after this.
                 assertEquals(PlaybackState2.STATE_PAUSED, state.getState());
                 latch.countDown();
@@ -678,7 +699,7 @@ public class MediaController2Test extends MediaSession2TestBase {
 
     public void testConnectToService(String id) throws InterruptedException {
         final CountDownLatch latch = new CountDownLatch(1);
-        final SessionCallbackProxy proxy = new SessionCallbackProxy(mContext) {
+        final SessionCallback sessionCallback = new SessionCallback(mContext) {
             @Override
             public CommandGroup onConnect(@NonNull MediaSession2 session,
                     @NonNull ControllerInfo controller) {
@@ -695,7 +716,7 @@ public class MediaController2Test extends MediaSession2TestBase {
                 return super.onConnect(session, controller);
             }
         };
-        TestServiceRegistry.getInstance().setSessionCallbackProxy(proxy);
+        TestServiceRegistry.getInstance().setSessionCallback(sessionCallback);
 
         mController = createController(TestUtils.getServiceToken(mContext, id));
         assertTrue(latch.await(TIMEOUT_MS, TimeUnit.MILLISECONDS));
@@ -772,13 +793,12 @@ public class MediaController2Test extends MediaSession2TestBase {
 
     private void testCloseFromService(String id) throws InterruptedException {
         final CountDownLatch latch = new CountDownLatch(1);
-        final SessionCallbackProxy proxy = new SessionCallbackProxy(mContext) {
+        TestServiceRegistry.getInstance().setSessionServiceCallback(new SessionServiceCallback() {
             @Override
-            public void onServiceDestroyed() {
+            public void onDestroyed() {
                 latch.countDown();
             }
-        };
-        TestServiceRegistry.getInstance().setSessionCallbackProxy(proxy);
+        });
         mController = createController(TestUtils.getServiceToken(mContext, id));
         mController.close();
         // Wait until close triggers onDestroy() of the session service.
