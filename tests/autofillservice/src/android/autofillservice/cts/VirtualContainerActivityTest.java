@@ -588,6 +588,60 @@ public class VirtualContainerActivityTest extends AutoFillServiceTestCase {
                 .isEqualTo(mPackageName);
     }
 
+    @Test
+    public void testDatasetFiltering() throws Exception {
+        final String aa = "Two A's";
+        final String ab = "A and B";
+        final String b = "Only B";
+
+        enableService();
+
+        // Set expectations.
+        sReplier.addResponse(new CannedFillResponse.Builder()
+                .addDataset(new CannedDataset.Builder()
+                        .setField(ID_USERNAME, "aa")
+                        .setPresentation(createPresentation(aa))
+                        .build())
+                .addDataset(new CannedDataset.Builder()
+                        .setField(ID_USERNAME, "ab")
+                        .setPresentation(createPresentation(ab))
+                        .build())
+                .addDataset(new CannedDataset.Builder()
+                        .setField(ID_USERNAME, "b")
+                        .setPresentation(createPresentation(b))
+                        .build())
+                .build());
+
+        // Trigger auto-fill.
+        focusToUsername();
+        sReplier.getNextFillRequest();
+
+        // With no filter text all datasets should be shown
+        mUiBot.assertDatasets(aa, ab, b);
+
+        // Only two datasets start with 'a'
+        mActivity.mUsername.setText("a");
+        mUiBot.assertDatasets(aa, ab);
+
+        // Only one dataset start with 'aa'
+        mActivity.mUsername.setText("aa");
+        mUiBot.assertDatasets(aa);
+
+        // Only two datasets start with 'a'
+        mActivity.mUsername.setText("a");
+        mUiBot.assertDatasets(aa, ab);
+
+        // With no filter text all datasets should be shown
+        mActivity.mUsername.setText("");
+        mUiBot.assertDatasets(aa, ab, b);
+
+        // No dataset start with 'aaa'
+        final MyAutofillCallback callback = mActivity.registerCallback();
+        mActivity.mUsername.setText("aaa");
+        callback.assertUiHiddenEvent(mActivity.mCustomView, mActivity.mUsername.text.id);
+        mUiBot.assertNoDatasets();
+    }
+
     /**
      * Asserts the dataset picker is properly displayed in a give line.
      */
