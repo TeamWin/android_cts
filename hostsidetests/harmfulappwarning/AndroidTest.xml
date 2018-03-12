@@ -14,7 +14,7 @@
      limitations under the License.
 -->
 <configuration description="Config for the CTS Harmful App Warning host test cases">
-    <option name="config-descriptor:metadata" key="component" value="art" />
+    <option name="config-descriptor:metadata" key="component" value="security" />
     <option name="test-suite-tag" value="cts" />
     <target_preparer class="com.android.tradefed.targetprep.suite.SuiteApkInstaller">
         <option name="cleanup-apks" value="true" />
