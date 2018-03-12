@@ -22,6 +22,7 @@ import static org.junit.Assert.fail;
 
 import android.content.Context;
 import android.media.MediaItem2;
+import android.media.MediaMetadata2;
 import android.media.MediaSession2.PlaylistParams;
 import android.media.SessionToken2;
 import android.media.session.MediaSessionManager;
@@ -97,9 +98,12 @@ public final class TestUtils {
     }
 
     /**
-     * Returns randomized playlist for testing purpose
+     * Create a playlist for testing purpose
+     * <p>
+     * Caller's method name will be used for prefix of each media item's media id.
+     *
      * @param context context
-     * @return random playlist
+     * @return the newly created playlist
      */
     public static List<MediaItem2> createPlaylist(Context context) {
         final List<MediaItem2> list = new ArrayList<>();
@@ -109,6 +113,32 @@ public final class TestUtils {
         list.add(new MediaItem2.Builder(context, MediaItem2.FLAG_PLAYABLE)
                 .setMediaId(caller + "_item_2").build());
         return list;
+    }
+
+    /**
+     * Create a media item with the metadata for testing purpose.
+     *
+     * @param context context
+     * @return the newly created media item
+     * @see #createMetadata(Context)
+     */
+    public static MediaItem2 createMediaItemWithMetadata(Context context) {
+        return new MediaItem2.Builder(context, MediaItem2.FLAG_PLAYABLE)
+                .setMetadata(createMetadata(context)).build();
+    }
+
+    /**
+     * Create a media metadata for testing purpose.
+     * <p>
+     * Caller's method name will be used for the media id.
+     *
+     * @param context context
+     * @return the newly created media item
+     */
+    public static MediaMetadata2 createMetadata(Context context) {
+        String mediaId = Thread.currentThread().getStackTrace()[1].getMethodName();
+        return new MediaMetadata2.Builder(context)
+                .putString(MediaMetadata2.METADATA_KEY_MEDIA_ID, mediaId).build();
     }
 
     /**

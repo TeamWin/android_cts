@@ -269,6 +269,47 @@ public class MediaSession2Test extends MediaSession2TestBase {
     }
 
     @Test
+    public void testUpdatePlaylistMetadata() throws InterruptedException {
+        final MediaMetadata2 testMetadata = TestUtils.createMetadata(mContext);
+        final CountDownLatch latch = new CountDownLatch(1);
+        final MediaPlaylistAgent agent = new MediaPlaylistAgent(mContext) {
+            @Override
+            public void updatePlaylistMetadata(MediaMetadata2 metadata) {
+                assertEquals(testMetadata, metadata);
+                latch.countDown();
+            }
+        };
+        try (final MediaSession2 session = new MediaSession2.Builder(mContext)
+                .setPlayer(mPlayer)
+                .setPlaylistAgent(agent)
+                .setId("testUpdatePlaylistMetadata")
+                .setSessionCallback(sHandlerExecutor, new SessionCallback(mContext) { })
+                .build()) {
+            session.updatePlaylistMetadata(testMetadata);
+            assertTrue(latch.await(TIMEOUT_MS, TimeUnit.MILLISECONDS));
+        }
+    }
+
+    @Test
+    public void testGetPlaylistMetadata() {
+        final MediaMetadata2 testMetadata = TestUtils.createMetadata(mContext);
+        final MediaPlaylistAgent agent = new MediaPlaylistAgent(mContext) {
+            @Override
+            public MediaMetadata2 getPlaylistMetadata() {
+                return testMetadata;
+            }
+        };
+        try (final MediaSession2 session = new MediaSession2.Builder(mContext)
+                .setPlayer(mPlayer)
+                .setPlaylistAgent(agent)
+                .setId("testGetPlaylistMetadata")
+                .setSessionCallback(sHandlerExecutor, new SessionCallback(mContext) { })
+                .build()) {
+            assertEquals(testMetadata, session.getPlaylistMetadata());
+        }
+    }
+
+    @Test
     public void testSessionCallback_onPlaylistChanged() throws InterruptedException {
         final List<MediaItem2> list = TestUtils.createPlaylist(mContext);
         final CountDownLatch latch = new CountDownLatch(1);

@@ -334,6 +334,122 @@ public class MediaController2Test extends MediaSession2TestBase {
         }
     }
 
+    @Test
+    public void testUpdatePlaylistMetadata() throws InterruptedException {
+        final MediaItem2 item = TestUtils.createMediaItemWithMetadata(mContext);
+        final CountDownLatch latch = new CountDownLatch(1);
+        final MediaPlaylistAgent agent = new MediaPlaylistAgent(mContext) {
+            @Override
+            public void updatePlaylistMetadata(MediaMetadata2 metadata) {
+                assertNotNull(metadata);
+                assertEquals(item.getMetadata().getMediaId(), metadata.getMediaId());
+                latch.countDown();
+            }
+        };
+        try (final MediaSession2 session = new MediaSession2.Builder(mContext)
+                .setPlayer(mPlayer)
+                .setId("testUpdatePlaylistMetadata")
+                .setSessionCallback(sHandlerExecutor, new SessionCallback(mContext) {})
+                .setPlaylistAgent(agent)
+                .build()) {
+            MediaController2 controller = createController(session.getToken());
+            controller.updatePlaylistMetadata(item.getMetadata());
+            assertTrue(latch.await(TIMEOUT_MS, TimeUnit.MILLISECONDS));
+        }
+    }
+
+    @Test
+    public void testGetPlaylistMetadata() throws InterruptedException {
+        final MediaItem2 item = TestUtils.createMediaItemWithMetadata(mContext);
+        final AtomicReference<MediaMetadata2> metadataFromCallback = new AtomicReference<>();
+        final CountDownLatch latch = new CountDownLatch(1);
+        final ControllerCallback callback = new ControllerCallback() {
+            @Override
+            public void onPlaylistMetadataChanged(MediaController2 controller,
+                    MediaPlaylistAgent playlistAgent, MediaMetadata2 metadata) {
+                assertEquals(item.getMetadata().getMediaId(), metadata.getMediaId());
+                metadataFromCallback.set(metadata);
+                latch.countDown();
+            }
+        };
+        final MediaPlaylistAgent agent = new MediaPlaylistAgent(mContext) {
+            @Override
+            public MediaMetadata2 getPlaylistMetadata() {
+                return item.getMetadata();
+            }
+        };
+        try (final MediaSession2 session = new MediaSession2.Builder(mContext)
+                .setPlayer(mPlayer)
+                .setId("testGetPlaylistMetadata")
+                .setSessionCallback(sHandlerExecutor, new SessionCallback(mContext) {})
+                .setPlaylistAgent(agent)
+                .build()) {
+            MediaController2 controller = createController(session.getToken(), true, callback);
+            agent.notifyPlaylistMetadataChanged();
+            assertTrue(latch.await(TIMEOUT_MS, TimeUnit.MILLISECONDS));
+            assertEquals(metadataFromCallback.get().getMediaId(),
+                    controller.getPlaylistMetadata().getMediaId());
+        }
+    }
+
+    /**
+     * Test whether {@link MediaSession2#setPlaylist(List, MediaMetadata2)} is notified
+     * through the
+     * {@link ControllerCallback#onPlaylistMetadataChanged(MediaController2, MediaPlaylistAgent, MediaMetadata2)}
+     * if the controller doesn't have {@link MediaSession2#COMMAND_CODE_PLAYLIST_GET_LIST} but
+     * {@link MediaSession2#COMMAND_CODE_PLAYLIST_GET_LIST_METADATA}.
+     */
+    @Test
+    public void testControllerCallback_onPlaylistMetadataChanged() throws InterruptedException {
+        final MediaItem2 item = TestUtils.createMediaItemWithMetadata(mContext);
+        final List<MediaItem2> list = TestUtils.createPlaylist(mContext);
+        final CountDownLatch latch = new CountDownLatch(2);
+        final ControllerCallback callback = new ControllerCallback() {
+            @Override
+            public void onPlaylistMetadataChanged(MediaController2 controller,
+                    MediaPlaylistAgent playlistAgent, MediaMetadata2 metadata) {
+                assertNotNull(metadata);
+                assertEquals(item.getMediaId(), metadata.getMediaId());
+                latch.countDown();
+            }
+        };
+        final SessionCallback sessionCallback = new SessionCallback(mContext) {
+            @Override
+            public CommandGroup onConnect(MediaSession2 session, ControllerInfo controller) {
+                if (Process.myUid() == controller.getUid()) {
+                    CommandGroup commands = new CommandGroup(mContext);
+                    commands.addCommand(new Command(mContext,
+                              MediaSession2.COMMAND_CODE_PLAYLIST_GET_LIST_METADATA));
+                    return commands;
+                }
+                return super.onConnect(session, controller);
+            }
+        };
+        final MediaPlaylistAgent agent = new MediaPlaylistAgent(mContext) {
+            @Override
+            public MediaMetadata2 getPlaylistMetadata() {
+                return item.getMetadata();
+            }
+
+            @Override
+            public List<MediaItem2> getPlaylist() {
+                return list;
+            }
+        };
+        try (final MediaSession2 session = new MediaSession2.Builder(mContext)
+                .setPlayer(mPlayer)
+                .setId("testControllerCallback_onPlaylistMetadataChanged")
+                .setSessionCallback(sHandlerExecutor, sessionCallback)
+                .setPlaylistAgent(agent)
+                .build()) {
+            MediaController2 controller = createController(session.getToken(), true, callback);
+            agent.notifyPlaylistMetadataChanged();
+            // It also calls onPlaylistMetadataChanged() if it doesn't have permission for getList()
+            agent.notifyPlaylistChanged();
+            assertTrue(latch.await(TIMEOUT_MS, TimeUnit.MILLISECONDS));
+        }
+    }
+
     @Ignore
     @Test
     public void testGetSetPlaylistParams() throws Exception {

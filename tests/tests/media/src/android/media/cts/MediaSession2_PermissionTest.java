@@ -27,6 +27,7 @@ import static android.media.MediaSession2.COMMAND_CODE_PLAYBACK_SKIP_NEXT_ITEM;
 import static android.media.MediaSession2.COMMAND_CODE_PLAYBACK_SKIP_PREV_ITEM;
 import static android.media.MediaSession2.COMMAND_CODE_PLAYBACK_STOP;
 import static android.media.MediaSession2.COMMAND_CODE_PLAYLIST_SET_LIST;
+import static android.media.MediaSession2.COMMAND_CODE_PLAYLIST_SET_LIST_METADATA;
 import static android.media.MediaSession2.COMMAND_CODE_PLAY_FROM_MEDIA_ID;
 import static android.media.MediaSession2.COMMAND_CODE_PLAY_FROM_SEARCH;
 import static android.media.MediaSession2.COMMAND_CODE_PLAY_FROM_URI;
@@ -278,6 +279,21 @@ public class MediaSession2_PermissionTest extends MediaSession2TestBase {
         createSessionWithAllowedActions(
                 createCommandGroupWithout(COMMAND_CODE_PLAYLIST_SET_LIST));
         createController(mSession.getToken()).setPlaylist(list, null);
+        verify(mCallback, after(WAIT_TIME_MS).never()).onCommandRequest(any(), any(), any());
+    }
+
+    @Test
+    public void testUpdatePlaylistMetadata() throws InterruptedException {
+        createSessionWithAllowedActions(
+                createCommandGroupWith(COMMAND_CODE_PLAYLIST_SET_LIST_METADATA));
+        createController(mSession.getToken()).updatePlaylistMetadata(null);
+        verify(mCallback, timeout(TIMEOUT_MS).atLeastOnce()).onCommandRequest(
+                matchesSession(), matchesCaller(),
+                matches(COMMAND_CODE_PLAYLIST_SET_LIST_METADATA));
+
+        createSessionWithAllowedActions(
+                createCommandGroupWithout(COMMAND_CODE_PLAYLIST_SET_LIST_METADATA));
+        createController(mSession.getToken()).updatePlaylistMetadata(null);
         verify(mCallback, after(WAIT_TIME_MS).never()).onCommandRequest(any(), any(), any());
     }
 
