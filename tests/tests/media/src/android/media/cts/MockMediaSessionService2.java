@@ -16,8 +16,6 @@
 
 package android.media.cts;
 
-import static junit.framework.Assert.fail;
-
 import android.app.Notification;
 import android.app.NotificationChannel;
 import android.app.NotificationManager;
@@ -29,6 +27,8 @@ import android.media.MediaSession2.SessionCallback;
 import android.media.MediaSessionService2;
 import android.media.cts.TestServiceRegistry.SessionCallbackProxy;
 import android.media.cts.TestUtils.SyncHandler;
+import android.support.annotation.NonNull;
+import android.support.annotation.Nullable;
 
 import java.util.concurrent.Executor;
 
@@ -48,8 +48,8 @@ public class MockMediaSessionService2 extends MediaSessionService2 {
 
     @Override
     public void onCreate() {
-        super.onCreate();
         TestServiceRegistry.getInstance().setServiceInstance(this);
+        super.onCreate();
         mNotificationManager = (NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE);
     }
 
@@ -105,9 +105,9 @@ public class MockMediaSessionService2 extends MediaSessionService2 {
         }
 
         @Override
-        public CommandGroup onConnect(MediaSession2 session,
-                ControllerInfo controller) {
-            return mCallbackProxy.onConnect(controller);
+        public CommandGroup onConnect(@NonNull MediaSession2 session,
+                @NonNull ControllerInfo controller) {
+            return mCallbackProxy.onConnect(session, controller);
         }
     }
 }

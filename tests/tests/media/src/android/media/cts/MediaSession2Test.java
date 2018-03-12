@@ -146,8 +146,7 @@ public class MediaSession2Test extends MediaSession2TestBase {
         final TestControllerCallbackInterface callback = new TestControllerCallbackInterface() {
             @Override
             public void onPlaybackInfoChanged(PlaybackInfo info) {
-                Assert.assertEquals(MediaController2.PlaybackInfo.PLAYBACK_TYPE_REMOTE,
-                        info.getPlaybackType());
+                Assert.assertEquals(PlaybackInfo.PLAYBACK_TYPE_REMOTE, info.getPlaybackType());
                 assertEquals(attrs, info.getAudioAttributes());
                 assertEquals(volumeControlType, info.getPlaybackType());
                 assertEquals(maxVolume, info.getMaxVolume());
