@@ -32,6 +32,7 @@ import android.content.Context;
 import android.media.AudioAttributes;
 import android.media.AudioManager;
 import android.media.MediaController2;
+import android.media.MediaController2.ControllerCallback;
 import android.media.MediaController2.PlaybackInfo;
 import android.media.MediaItem2;
 import android.media.MediaPlayerBase;
@@ -52,7 +53,6 @@ import android.os.ResultReceiver;
 import android.support.annotation.NonNull;
 import android.support.test.filters.SmallTest;
 import android.support.test.runner.AndroidJUnit4;
-import android.text.TextUtils;
 
 import junit.framework.Assert;
 
@@ -143,11 +143,11 @@ public class MediaSession2Test extends MediaSession2TestBase {
                 new VolumeProvider2(mContext, volumeControlType, maxVolume, currentVolume) { };
 
         final CountDownLatch latch = new CountDownLatch(1);
-        final TestControllerCallbackInterface callback = new TestControllerCallbackInterface() {
+        final ControllerCallback callback = new ControllerCallback() {
             @Override
-            public void onPlaybackInfoChanged(PlaybackInfo info) {
-                Assert.assertEquals(MediaController2.PlaybackInfo.PLAYBACK_TYPE_REMOTE,
-                        info.getPlaybackType());
+            public void onPlaybackInfoChanged(MediaController2 controller,
+                    PlaybackInfo info) {
+                Assert.assertEquals(PlaybackInfo.PLAYBACK_TYPE_REMOTE, info.getPlaybackType());
                 assertEquals(attrs, info.getAudioAttributes());
                 assertEquals(volumeControlType, info.getPlaybackType());
                 assertEquals(maxVolume, info.getMaxVolume());
@@ -231,9 +231,10 @@ public class MediaSession2Test extends MediaSession2TestBase {
         final List<MediaItem2> playlist = new ArrayList<>();
 
         final CountDownLatch latch = new CountDownLatch(1);
-        final TestControllerCallbackInterface callback = new TestControllerCallbackInterface() {
+        final ControllerCallback callback = new ControllerCallback() {
             @Override
-            public void onPlaylistChanged(List<MediaItem2> givenList) {
+            public void onPlaylistChanged(MediaController2 controller,
+                    List<MediaItem2> givenList) {
                 assertMediaItemListEquals(playlist, givenList);
                 latch.countDown();
             }
@@ -259,9 +260,10 @@ public class MediaSession2Test extends MediaSession2TestBase {
                 null /* PlaylistMetadata */);
 
         final CountDownLatch latch = new CountDownLatch(1);
-        final TestControllerCallbackInterface callback = new TestControllerCallbackInterface() {
+        final ControllerCallback callback = new ControllerCallback() {
             @Override
-            public void onPlaylistParamsChanged(PlaylistParams givenParams) {
+            public void onPlaylistParamsChanged(MediaController2 controller,
+                    PlaylistParams givenParams) {
                 ensurePlaylistParamsModeEquals(params, givenParams);
                 latch.countDown();
             }
@@ -428,9 +430,10 @@ public class MediaSession2Test extends MediaSession2TestBase {
                 mSession.close();
                 mSession = session;
             }
-            final TestControllerCallbackInterface callback = new TestControllerCallbackInterface() {
+            final ControllerCallback callback = new ControllerCallback() {
                 @Override
-                public void onCustomLayoutChanged(List<CommandButton> layout) {
+                public void onCustomLayoutChanged(MediaController2 controller2,
+                        List<CommandButton> layout) {
                     assertEquals(layout.size(), buttons.size());
                     for (int i = 0; i < layout.size(); i++) {
                         assertEquals(layout.get(i).getCommand(), buttons.get(i).getCommand());
@@ -447,6 +450,39 @@ public class MediaSession2Test extends MediaSession2TestBase {
     }
 
     @Test
+    public void testSetAllowedCommands() throws InterruptedException {
+        final CommandGroup commands = new CommandGroup(mContext);
+        commands.addCommand(new Command(mContext, MediaSession2.COMMAND_CODE_PLAYBACK_PLAY));
+        commands.addCommand(new Command(mContext, MediaSession2.COMMAND_CODE_PLAYBACK_PAUSE));
+        commands.addCommand(new Command(mContext, MediaSession2.COMMAND_CODE_PLAYBACK_STOP));
+
+        final CountDownLatch latch = new CountDownLatch(1);
+        final ControllerCallback callback = new ControllerCallback() {
+            @Override
+            public void onAllowedCommandsChanged(MediaController2 controller,
+                    CommandGroup commandsOut) {
+                assertNotNull(commandsOut);
+                List<Command> expected = commands.getCommands();
+                List<Command> actual = commandsOut.getCommands();
+
+                assertNotNull(actual);
+                assertEquals(expected.size(), actual.size());
+                for (int i = 0; i < expected.size(); i++) {
+                    assertEquals(expected.get(i), actual.get(i));
+                }
+                latch.countDown();
+            }
+        };
+
+        final MediaController2 controller = createController(mSession.getToken(), true, callback);
+        ControllerInfo controllerInfo = getTestControllerInfo();
+        assertNotNull(controllerInfo);
+
+        mSession.setAllowedCommands(controllerInfo, commands);
+        assertTrue(latch.await(WAIT_TIME_MS, TimeUnit.MILLISECONDS));
+    }
+
+    @Test
     public void testSendCustomAction() throws InterruptedException {
         final Command testCommand =
                 new Command(mContext, MediaSession2.COMMAND_CODE_PLAYBACK_PREPARE);
@@ -454,9 +490,10 @@ public class MediaSession2Test extends MediaSession2TestBase {
         testArgs.putString("args", "testSendCustomAction");
 
         final CountDownLatch latch = new CountDownLatch(2);
-        final TestControllerCallbackInterface callback = new TestControllerCallbackInterface() {
+        final ControllerCallback callback = new ControllerCallback() {
             @Override
-            public void onCustomCommand(Command command, Bundle args, ResultReceiver receiver) {
+            public void onCustomCommand(MediaController2 controller, Command command,
+                    Bundle args, ResultReceiver receiver) {
                 assertEquals(testCommand, command);
                 assertTrue(TestUtils.equals(testArgs, args));
                 assertNull(receiver);
@@ -478,13 +515,12 @@ public class MediaSession2Test extends MediaSession2TestBase {
     private ControllerInfo getTestControllerInfo() {
         List<ControllerInfo> controllers = mSession.getConnectedControllers();
         assertNotNull(controllers);
-        final String packageName = mContext.getPackageName();
         for (int i = 0; i < controllers.size(); i++) {
-            if (TextUtils.equals(packageName, controllers.get(i).getPackageName())) {
+            if (Process.myUid() == controllers.get(i).getUid()) {
                 return controllers.get(i);
             }
         }
-        fail("Fails to get custom command");
+        fail("Failed to get test controller info");
         return null;
     }
 

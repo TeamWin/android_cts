@@ -25,14 +25,13 @@ import android.media.DataSourceDesc;
 import android.media.MediaItem2;
 import android.media.MediaLibraryService2;
 import android.media.MediaMetadata2;
-import android.media.MediaSession2;
-import android.media.MediaSession2.CommandGroup;
 import android.media.MediaSession2.ControllerInfo;
 import android.media.MediaLibraryService2.MediaLibrarySession.MediaLibrarySessionCallback;
 import android.media.SessionToken2;
-import android.media.cts.TestServiceRegistry.SessionCallbackProxy;
 import android.media.cts.TestUtils.SyncHandler;
 import android.os.Bundle;
+import android.support.annotation.NonNull;
+import android.support.annotation.Nullable;
 import android.util.Log;
 
 import java.io.FileDescriptor;
@@ -102,8 +101,8 @@ public class MockMediaLibraryService2 extends MediaLibraryService2 {
 
     @Override
     public void onCreate() {
-        super.onCreate();
         TestServiceRegistry.getInstance().setServiceInstance(this);
+        super.onCreate();
     }
 
     @Override
@@ -111,23 +110,21 @@ public class MockMediaLibraryService2 extends MediaLibraryService2 {
         final MockPlayer player = new MockPlayer(1);
         final SyncHandler handler = (SyncHandler) TestServiceRegistry.getInstance().getHandler();
         final Executor executor = (runnable) -> handler.post(runnable);
-        SessionCallbackProxy sessionCallbackProxy = TestServiceRegistry.getInstance()
-                .getSessionCallbackProxy();
-        if (sessionCallbackProxy == null) {
-            // Ensures non-null
-            sessionCallbackProxy = new SessionCallbackProxy(this) {};
+        MediaLibrarySessionCallback librarySessionCallback = (MediaLibrarySessionCallback)
+                TestServiceRegistry.getInstance().getSessionCallback();
+        if (librarySessionCallback == null) {
+            // Use default callback
+            librarySessionCallback = new TestLibrarySessionCallback();
         }
-        TestLibrarySessionCallback callback =
-                new TestLibrarySessionCallback(sessionCallbackProxy);
         mSession = new MediaLibrarySession.Builder(MockMediaLibraryService2.this, executor,
-                callback).setPlayer(player).setId(sessionId).build();
+                librarySessionCallback).setPlayer(player).setId(sessionId).build();
         return mSession;
     }
 
     @Override
     public void onDestroy() {
-        TestServiceRegistry.getInstance().cleanUp();
         super.onDestroy();
+        TestServiceRegistry.getInstance().cleanUp();
     }
 
     public static SessionToken2 getToken(Context context) {
@@ -142,17 +139,8 @@ public class MockMediaLibraryService2 extends MediaLibraryService2 {
     }
 
     private class TestLibrarySessionCallback extends MediaLibrarySessionCallback {
-        private final SessionCallbackProxy mCallbackProxy;
-
-        public TestLibrarySessionCallback(SessionCallbackProxy callbackProxy) {
+        public TestLibrarySessionCallback() {
             super(MockMediaLibraryService2.this);
-            mCallbackProxy = callbackProxy;
-        }
-
-        @Override
-        public CommandGroup onConnect(MediaSession2 session,
-                ControllerInfo controller) {
-            return mCallbackProxy.onConnect(controller);
         }
 
         @Override
@@ -214,18 +202,6 @@ public class MockMediaLibraryService2 extends MediaLibraryService2 {
             } else {
                 return null;
             }
-        }
-
-        @Override
-        public void onSubscribe(MediaLibrarySession session, ControllerInfo controller,
-                String parentId, Bundle extras) {
-            mCallbackProxy.onSubscribe(controller, parentId, extras);
-        }
-
-        @Override
-        public void onUnsubscribe(MediaLibrarySession session, ControllerInfo controller,
-                String parentId) {
-            mCallbackProxy.onUnsubscribe(controller, parentId);
         }
     }
 
