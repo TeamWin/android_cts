@@ -23,6 +23,8 @@ import android.content.Context;
 import android.media.MediaController2;
 import android.media.MediaController2.ControllerCallback;
 import android.media.MediaItem2;
+import android.media.MediaMetadata2;
+import android.media.MediaPlaylistAgent;
 import android.media.MediaSession2;
 import android.media.MediaSession2.Command;
 import android.media.MediaSession2.CommandButton;
@@ -63,19 +65,6 @@ abstract class MediaSession2TestBase {
 
     interface TestControllerInterface {
         ControllerCallback getCallback();
-    }
-
-    // Any change here should be also reflected to the TestControllerCallback and
-    // TestBrowserCallback
-    interface TestControllerCallbackInterface {
-        // Add methods in ControllerCallback that you want to test.
-        default void onPlaylistChanged(List<MediaItem2> playlist) {}
-        default void onPlaylistParamsChanged(MediaSession2.PlaylistParams params) {}
-        default void onPlaybackInfoChanged(MediaController2.PlaybackInfo info) {}
-        default void onPlaybackStateChanged(PlaybackState2 state) {}
-        default void onCustomLayoutChanged(List<CommandButton> layout) {}
-        default void onAllowedCommandsChanged(CommandGroup commands) {}
-        default void onCustomCommand(Command command, Bundle args, ResultReceiver receiver) {}
     }
 
     interface WaitForConnectionInterface {
@@ -131,7 +120,7 @@ abstract class MediaSession2TestBase {
     }
 
     final MediaController2 createController(@NonNull SessionToken2 token,
-            boolean waitForConnect, @Nullable TestControllerCallbackInterface callback)
+            boolean waitForConnect, @Nullable ControllerCallback callback)
             throws InterruptedException {
         TestControllerInterface instance = onCreateController(token, callback);
         if (!(instance instanceof MediaController2)) {
@@ -171,20 +160,20 @@ abstract class MediaSession2TestBase {
     }
 
     TestControllerInterface onCreateController(@NonNull SessionToken2 token,
-            @Nullable TestControllerCallbackInterface callback) {
+            @Nullable ControllerCallback callback) {
         if (callback == null) {
-            callback = new TestControllerCallbackInterface() {};
+            callback = new ControllerCallback() {};
         }
         return new TestMediaController(mContext, token, new TestControllerCallback(callback));
     }
 
     public static class TestControllerCallback extends MediaController2.ControllerCallback
             implements WaitForConnectionInterface {
-        public final TestControllerCallbackInterface mCallbackProxy;
+        public final ControllerCallback mCallbackProxy;
         public final CountDownLatch connectLatch = new CountDownLatch(1);
         public final CountDownLatch disconnectLatch = new CountDownLatch(1);
 
-        TestControllerCallback(@NonNull TestControllerCallbackInterface callbackProxy) {
+        TestControllerCallback(@NonNull ControllerCallback callbackProxy) {
             if (callbackProxy == null) {
                 throw new IllegalArgumentException("Callback proxy shouldn't be null. Test bug");
             }
@@ -201,17 +190,6 @@ abstract class MediaSession2TestBase {
         @Override
         public void onDisconnected(MediaController2 controller) {
             disconnectLatch.countDown();
-        }
-
-        @Override
-        public void onPlaybackStateChanged(MediaController2 controller, PlaybackState2 state) {
-            mCallbackProxy.onPlaybackStateChanged(state);
-        }
-
-        @Override
-        public void onCustomCommand(MediaController2 controller, Command command, Bundle args,
-                ResultReceiver receiver) {
-            mCallbackProxy.onCustomCommand(command, args, receiver);
         }
 
         @Override
@@ -233,30 +211,98 @@ abstract class MediaSession2TestBase {
         }
 
         @Override
+        public void onPlaybackStateChanged(MediaController2 controller, PlaybackState2 state) {
+            mCallbackProxy.onPlaybackStateChanged(controller, state);
+        }
+
+        @Override
+        public void onCustomCommand(MediaController2 controller, Command command, Bundle args,
+                ResultReceiver receiver) {
+            mCallbackProxy.onCustomCommand(controller, command, args, receiver);
+        }
+
+        @Override
         public void onPlaylistChanged(MediaController2 controller, List<MediaItem2> params) {
-            mCallbackProxy.onPlaylistChanged(params);
+            mCallbackProxy.onPlaylistChanged(controller, params);
         }
 
         @Override
         public void onPlaylistParamsChanged(MediaController2 controller,
                 MediaSession2.PlaylistParams params) {
-            mCallbackProxy.onPlaylistParamsChanged(params);
+            mCallbackProxy.onPlaylistParamsChanged(controller, params);
         }
 
         @Override
         public void onPlaybackInfoChanged(MediaController2 controller,
                 MediaController2.PlaybackInfo info) {
-            mCallbackProxy.onPlaybackInfoChanged(info);
+            mCallbackProxy.onPlaybackInfoChanged(controller, info);
         }
 
         @Override
         public void onCustomLayoutChanged(MediaController2 controller, List<CommandButton> layout) {
-            mCallbackProxy.onCustomLayoutChanged(layout);
+            mCallbackProxy.onCustomLayoutChanged(controller, layout);
         }
 
         @Override
         public void onAllowedCommandsChanged(MediaController2 controller, CommandGroup commands) {
-            mCallbackProxy.onAllowedCommandsChanged(commands);
+            mCallbackProxy.onAllowedCommandsChanged(controller, commands);
+        }
+
+        @Override
+        public void onPlayerStateChanged(MediaController2 controller, int state) {
+            mCallbackProxy.onPlayerStateChanged(controller, state);
+        }
+
+        @Override
+        public void onPositionChanged(MediaController2 controller, long eventTimeMs,
+                long positionMs) {
+            mCallbackProxy.onPositionChanged(controller, eventTimeMs, positionMs);
+        }
+
+        @Override
+        public void onPlaybackSpeedChanged(MediaController2 controller, float speed) {
+            mCallbackProxy.onPlaybackSpeedChanged(controller, speed);
+        }
+
+        @Override
+        public void onBufferedPositionChanged(MediaController2 controller, long positionMs) {
+            mCallbackProxy.onBufferedPositionChanged(controller, positionMs);
+        }
+
+        @Override
+        public void onError(MediaController2 controller, int errorCode, Bundle extras) {
+            mCallbackProxy.onError(controller, errorCode, extras);
+        }
+
+        @Override
+        public void onCurrentMediaItemChanged(MediaController2 controller, MediaItem2 item) {
+            mCallbackProxy.onCurrentMediaItemChanged(controller, item);
+        }
+
+        @Override
+        public void onPlaylistChanged(MediaController2 controller, MediaPlaylistAgent playlistAgent,
+                List<MediaItem2> list, MediaMetadata2 metadata) {
+            mCallbackProxy.onPlaylistChanged(controller, playlistAgent, list, metadata);
+        }
+
+        @Override
+        public void onPlaylistMetadataChanged(MediaController2 controller,
+                MediaPlaylistAgent playlistAgent, MediaMetadata2 metadata) {
+            mCallbackProxy.onPlaylistMetadataChanged(controller, playlistAgent, metadata);
+        }
+
+        @Override
+        public void onShuffleModeChanged(MediaController2 controller,
+                MediaPlaylistAgent playlistAgent,
+                int shuffleMode) {
+            mCallbackProxy.onShuffleModeChanged(controller, playlistAgent, shuffleMode);
+        }
+
+        @Override
+        public void onRepeatModeChanged(MediaController2 controller,
+                MediaPlaylistAgent playlistAgent,
+                int repeatMode) {
+            mCallbackProxy.onRepeatModeChanged(controller, playlistAgent, repeatMode);
         }
     }
 

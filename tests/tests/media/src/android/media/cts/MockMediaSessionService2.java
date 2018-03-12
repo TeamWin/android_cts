@@ -21,11 +21,8 @@ import android.app.NotificationChannel;
 import android.app.NotificationManager;
 import android.content.Context;
 import android.media.MediaSession2;
-import android.media.MediaSession2.CommandGroup;
-import android.media.MediaSession2.ControllerInfo;
 import android.media.MediaSession2.SessionCallback;
 import android.media.MediaSessionService2;
-import android.media.cts.TestServiceRegistry.SessionCallbackProxy;
 import android.media.cts.TestUtils.SyncHandler;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
@@ -33,7 +30,7 @@ import android.support.annotation.Nullable;
 import java.util.concurrent.Executor;
 
 /**
- * Mock implementation of {@link android.media.MediaSessionService2} for testing.
+ * Mock implementation of {@link MediaSessionService2} for testing.
  */
 public class MockMediaSessionService2 extends MediaSessionService2 {
     // Keep in sync with the AndroidManifest.xml
@@ -58,25 +55,22 @@ public class MockMediaSessionService2 extends MediaSessionService2 {
         final MockPlayer player = new MockPlayer(1);
         final SyncHandler handler = (SyncHandler) TestServiceRegistry.getInstance().getHandler();
         final Executor executor = (runnable) -> handler.post(runnable);
-        SessionCallbackProxy sessionCallbackProxy = TestServiceRegistry.getInstance()
-                .getSessionCallbackProxy();
-        if (sessionCallbackProxy == null) {
+        SessionCallback sessionCallback = TestServiceRegistry.getInstance().getSessionCallback();
+        if (sessionCallback == null) {
             // Ensures non-null
-            sessionCallbackProxy = new SessionCallbackProxy(this) {};
+            sessionCallback = new SessionCallback(this) {};
         }
-        TestSessionServiceCallback callback =
-                new TestSessionServiceCallback(sessionCallbackProxy);
         mSession = new MediaSession2.Builder(this)
                 .setPlayer(player)
-                .setSessionCallback(executor, callback)
+                .setSessionCallback(executor, sessionCallback)
                 .setId(sessionId).build();
         return mSession;
     }
 
     @Override
     public void onDestroy() {
-        TestServiceRegistry.getInstance().cleanUp();
         super.onDestroy();
+        TestServiceRegistry.getInstance().cleanUp();
     }
 
     @Override
@@ -94,20 +88,5 @@ public class MockMediaSessionService2 extends MediaSessionService2 {
                 .setContentText("Dummt test notification")
                 .setSmallIcon(android.R.drawable.sym_def_app_icon).build();
         return new MediaNotification(this, DEFAULT_MEDIA_NOTIFICATION_ID, notification);
-    }
-
-    private class TestSessionServiceCallback extends SessionCallback {
-        private final SessionCallbackProxy mCallbackProxy;
-
-        public TestSessionServiceCallback(SessionCallbackProxy callbackProxy) {
-            super(MockMediaSessionService2.this);
-            mCallbackProxy = callbackProxy;
-        }
-
-        @Override
-        public CommandGroup onConnect(@NonNull MediaSession2 session,
-                @NonNull ControllerInfo controller) {
-            return mCallbackProxy.onConnect(session, controller);
-        }
     }
 }
