@@ -29,6 +29,7 @@ import static org.junit.Assert.fail;
 import static org.mockito.ArgumentMatchers.argThat;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.ArgumentMatchers.isNull;
+import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.spy;
 import static org.mockito.Mockito.timeout;
 import static org.mockito.Mockito.verify;
@@ -187,30 +188,6 @@ public class MediaController2Test extends MediaSession2TestBase {
 
     @Ignore
     @Test
-    public void testSkipToPreviousItem() throws InterruptedException {
-        mController.skipToPreviousItem();
-        try {
-            assertTrue(mPlayer.mCountDownLatch.await(WAIT_TIME_MS, TimeUnit.MILLISECONDS));
-        } catch (InterruptedException e) {
-            fail(e.getMessage());
-        }
-        assertTrue(mPlayer.mSkipToPreviousCalled);
-    }
-
-    @Ignore
-    @Test
-    public void testSkipToNextItem() throws InterruptedException {
-        mController.skipToNextItem();
-        try {
-            assertTrue(mPlayer.mCountDownLatch.await(WAIT_TIME_MS, TimeUnit.MILLISECONDS));
-        } catch (InterruptedException e) {
-            fail(e.getMessage());
-        }
-        assertTrue(mPlayer.mSkipToNextCalled);
-    }
-
-    @Ignore
-    @Test
     public void testStop() throws InterruptedException {
         mController.stop();
         try {
@@ -268,23 +245,6 @@ public class MediaController2Test extends MediaSession2TestBase {
         assertTrue(mPlayer.mSeekToCalled);
         assertEquals(seekPosition, mPlayer.mSeekPosition);
     }
-
-    // TODO(jaewan): Re-enable this test
-    /*
-    @Test
-    public void testSetCurrentPlaylistItem() throws InterruptedException {
-        final
-        final int itemIndex = 9;
-        mController.skipToPlaylistItem(itemIndex);
-        try {
-            assertTrue(mPlayer.mCountDownLatch.await(WAIT_TIME_MS, TimeUnit.MILLISECONDS));
-        } catch (InterruptedException e) {
-            fail(e.getMessage());
-        }
-        assertTrue(mPlayer.mSetCurrentPlaylistCalled);
-        assertEquals(itemIndex, mPlayer.mCurrentItem);
-    }
-    */
 
     @Test
     public void testGetSessionActivity() {
@@ -472,8 +432,7 @@ public class MediaController2Test extends MediaSession2TestBase {
     @Test
     public void testRemovePlaylistItem() throws InterruptedException {
         final List<MediaItem2> testList = TestUtils.createPlaylist(mContext);
-        final MediaItem2 testMediaItem = TestUtils.createMediaItemWithMetadata(mContext);
-        when(mMockAgent.getPlaylist()).thenReturn(testList);
+        doReturn(testList).when(mMockAgent).getPlaylist();
 
         // Recreate controller for sending removePlaylistItem.
         // It's easier to ensure that MediaController2.getPlaylist() returns the playlist from the
@@ -496,6 +455,32 @@ public class MediaController2Test extends MediaSession2TestBase {
                 .replacePlaylistItem(eq(testIndex), argThat((item) -> {
                     assertNotNull(item);
                     assertEquals(testMediaItem.getMediaId(), item.getMediaId());
+                    return true;
+                }));
+    }
+
+    @Test
+    public void testSkipToPreviousItem() {
+        mController.skipToPreviousItem();
+        verify(mMockAgent, timeout(TIMEOUT_MS).atLeastOnce()).skipToPreviousItem();
+    }
+
+    @Test
+    public void testSkipToNextItem() {
+        mController.skipToNextItem();
+        verify(mMockAgent, timeout(TIMEOUT_MS).atLeastOnce()).skipToNextItem();
+    }
+
+    @Test
+    public void testSkipToPlaylistItem() throws InterruptedException {
+        final List<MediaItem2> testList = TestUtils.createPlaylist(mContext);
+        doReturn(testList).when(mMockAgent).getPlaylist();
+
+        MediaController2 controller = createController(mSession.getToken());
+        controller.skipToPlaylistItem(controller.getPlaylist().get(0));
+        verify(mMockAgent, timeout(TIMEOUT_MS).atLeastOnce())
+                .skipToPlaylistItem(argThat((item) -> {
+                    assertEquals(testList.get(0), item);
                     return true;
                 }));
     }
