@@ -34,6 +34,7 @@ import android.view.ViewStructure.HtmlInfo;
 import org.junit.AfterClass;
 import org.junit.Before;
 import org.junit.BeforeClass;
+import org.junit.Ignore;
 import org.junit.Rule;
 import org.junit.Test;
 
@@ -85,11 +86,21 @@ public class WebViewActivityTest extends AutoFillServiceTestCase {
 
     @Test
     public void testAutofillOneDataset() throws Exception {
+        autofillOneDatasetTest(false);
+    }
+
+    @Ignore("blocked on b/74793485")
+    @Test
+    public void testAutofillOneDataset_usingAppContext() throws Exception {
+        autofillOneDatasetTest(true);
+    }
+
+    private void autofillOneDatasetTest(boolean usesAppContext) throws Exception {
         // Set service.
         enableService();
 
         // Load WebView
-        final MyWebView myWebView = mActivity.loadWebView();
+        final MyWebView myWebView = mActivity.loadWebView(usesAppContext);
 
         // Set expectations.
         myWebView.expectAutofill("dude", "sweet");

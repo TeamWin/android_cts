@@ -112,6 +112,12 @@ public class VirtualContainerActivityTest extends AutoFillServiceTestCase {
         autofillTest(false);
     }
 
+    @Test
+    public void testAutofill_appContext() throws Exception {
+        mActivity.mCustomView.setAutofillManager(mActivity.getApplicationContext());
+        autofillTest(true);
+    }
+
     /**
      * Focus to username and expect window event
      */
