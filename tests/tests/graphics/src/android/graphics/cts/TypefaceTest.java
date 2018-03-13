@@ -30,6 +30,7 @@ import android.content.Context;
 import android.content.res.AssetManager;
 import android.graphics.Paint;
 import android.graphics.Typeface;
+import android.graphics.Typeface.Builder;
 import android.support.test.InstrumentationRegistry;
 import android.support.test.filters.SmallTest;
 import android.support.test.runner.AndroidJUnit4;
@@ -679,5 +680,87 @@ public class TypefaceTest {
         paint.setTypeface(new Typeface.Builder(am, "WeightEqualsEmVariableFont.ttf")
                 .setFontVariationSettings("'wght' 1300").build());
         assertEquals(100.0f, paint.measureText("a"), 0.0f);
+    }
+
+    @Test
+    public void testTypefaceCreate_getWeight() {
+        Typeface typeface = Typeface.DEFAULT;
+        assertEquals(400, typeface.getWeight());
+        assertFalse(typeface.isItalic());
+
+        typeface = Typeface.create(Typeface.DEFAULT, 100, false /* italic */);
+        assertEquals(100, typeface.getWeight());
+        assertFalse(typeface.isItalic());
+
+        typeface = Typeface.create(Typeface.DEFAULT, 100, true /* italic */);
+        assertEquals(100, typeface.getWeight());
+        assertTrue(typeface.isItalic());
+
+        typeface = Typeface.create(Typeface.DEFAULT, 400, false /* italic */);
+        assertEquals(400, typeface.getWeight());
+        assertFalse(typeface.isItalic());
+
+        typeface = Typeface.create(Typeface.DEFAULT, 400, true /* italic */);
+        assertEquals(400, typeface.getWeight());
+        assertTrue(typeface.isItalic());
+
+        typeface = Typeface.create(Typeface.DEFAULT, 700, false /* italic */);
+        assertEquals(700, typeface.getWeight());
+        assertFalse(typeface.isItalic());
+
+        typeface = Typeface.create(Typeface.DEFAULT, 700, true /* italic */);
+        assertEquals(700, typeface.getWeight());
+        assertTrue(typeface.isItalic());
+
+        // Non-standard weight.
+        typeface = Typeface.create(Typeface.DEFAULT, 250, false /* italic */);
+        assertEquals(250, typeface.getWeight());
+        assertFalse(typeface.isItalic());
+
+        typeface = Typeface.create(Typeface.DEFAULT, 250, true /* italic */);
+        assertEquals(250, typeface.getWeight());
+        assertTrue(typeface.isItalic());
+
+    }
+
+    @Test
+    public void testTypefaceCreate_customFont_getWeight() {
+        final AssetManager am = mContext.getAssets();
+
+        Typeface typeface = new Builder(am, "ascii_a3em_weight100_upright.ttf").build();
+        assertEquals(100, typeface.getWeight());
+        assertFalse(typeface.isItalic());
+
+        typeface = new Builder(am, "ascii_b3em_weight100_italic.ttf").build();
+        assertEquals(100, typeface.getWeight());
+        assertTrue(typeface.isItalic());
+
+    }
+
+    @Test
+    public void testTypefaceCreate_customFont_customWeight() {
+        final AssetManager am = mContext.getAssets();
+        Typeface typeface = new Builder(am, "ascii_a3em_weight100_upright.ttf")
+                .setWeight(400).build();
+        assertEquals(400, typeface.getWeight());
+        assertFalse(typeface.isItalic());
+
+        typeface = new Builder(am, "ascii_b3em_weight100_italic.ttf").setWeight(400).build();
+        assertEquals(400, typeface.getWeight());
+        assertTrue(typeface.isItalic());
+    }
+
+    @Test
+    public void testTypefaceCreate_customFont_customItalic() {
+        final AssetManager am = mContext.getAssets();
+
+        Typeface typeface = new Builder(am, "ascii_a3em_weight100_upright.ttf")
+                .setItalic(true).build();
+        assertEquals(100, typeface.getWeight());
+        assertTrue(typeface.isItalic());
+
+        typeface = new Builder(am, "ascii_b3em_weight100_italic.ttf").setItalic(false).build();
+        assertEquals(100, typeface.getWeight());
+        assertFalse(typeface.isItalic());
     }
 }
