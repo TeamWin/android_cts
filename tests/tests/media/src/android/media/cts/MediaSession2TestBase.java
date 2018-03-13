@@ -167,6 +167,7 @@ abstract class MediaSession2TestBase {
         return new TestMediaController(mContext, token, new TestControllerCallback(callback));
     }
 
+    // TODO(jaewan): (Can be Post-P): Deprecate this
     public static class TestControllerCallback extends MediaController2.ControllerCallback
             implements WaitForConnectionInterface {
         public final ControllerCallback mCallbackProxy;
