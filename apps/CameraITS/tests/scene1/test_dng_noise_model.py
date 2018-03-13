@@ -119,8 +119,8 @@ def main():
 
     # PASS/FAIL check
     for i, ch in enumerate(BAYER_LIST):
-        diffs = [var_measured[i][j] - var_expected[i][j]
-                 for j in range(NUM_STEPS)]
+        diffs = [abs(var_measured[i][j] - var_expected[i][j])
+                 for j in range(len(sensitivities))]
         print 'Diffs (%s):'%(ch), diffs
         for j, diff in enumerate(diffs):
             thresh = max(DIFF_THRESH, FRAC_THRESH*var_expected[i][j])
