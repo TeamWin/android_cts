@@ -18,22 +18,16 @@ package android.server.wm;
 
 import static android.server.am.ComponentNameUtils.getWindowName;
 import static android.server.wm.DialogFrameTestActivity.DIALOG_WINDOW_NAME;
-import static android.server.wm.DialogFrameTestActivity
-        .TEST_EXPLICIT_POSITION_MATCH_PARENT;
-import static android.server.wm.DialogFrameTestActivity
-        .TEST_EXPLICIT_POSITION_MATCH_PARENT_NO_LIMITS;
+import static android.server.wm.DialogFrameTestActivity.TEST_EXPLICIT_POSITION_MATCH_PARENT;
+import static android.server.wm.DialogFrameTestActivity.TEST_EXPLICIT_POSITION_MATCH_PARENT_NO_LIMITS;
 import static android.server.wm.DialogFrameTestActivity.TEST_EXPLICIT_SIZE;
-import static android.server.wm.DialogFrameTestActivity
-        .TEST_EXPLICIT_SIZE_BOTTOM_RIGHT_GRAVITY;
-import static android.server.wm.DialogFrameTestActivity
-        .TEST_EXPLICIT_SIZE_TOP_LEFT_GRAVITY;
+import static android.server.wm.DialogFrameTestActivity.TEST_EXPLICIT_SIZE_BOTTOM_RIGHT_GRAVITY;
+import static android.server.wm.DialogFrameTestActivity.TEST_EXPLICIT_SIZE_TOP_LEFT_GRAVITY;
 import static android.server.wm.DialogFrameTestActivity.TEST_MATCH_PARENT;
-import static android.server.wm.DialogFrameTestActivity
-        .TEST_MATCH_PARENT_LAYOUT_IN_OVERSCAN;
+import static android.server.wm.DialogFrameTestActivity.TEST_MATCH_PARENT_LAYOUT_IN_OVERSCAN;
 import static android.server.wm.DialogFrameTestActivity.TEST_NO_FOCUS;
 import static android.server.wm.DialogFrameTestActivity.TEST_OVER_SIZED_DIMENSIONS;
-import static android.server.wm.DialogFrameTestActivity
-        .TEST_OVER_SIZED_DIMENSIONS_NO_LIMITS;
+import static android.server.wm.DialogFrameTestActivity.TEST_OVER_SIZED_DIMENSIONS_NO_LIMITS;
 import static android.server.wm.DialogFrameTestActivity.TEST_WITH_MARGINS;
 
 import static org.hamcrest.MatcherAssert.assertThat;
@@ -52,7 +46,6 @@ import org.junit.Ignore;
 import org.junit.Rule;
 import org.junit.Test;
 
-import java.util.ArrayList;
 import java.util.List;
 
 /**
@@ -82,8 +75,8 @@ public class DialogFrameTests extends ParentChildTestBase<DialogFrameTestActivit
     }
 
     private WindowState getSingleWindow(final String windowName) {
-        final List<WindowState> windowList = new ArrayList<>();
-        mAmWmState.getWmState().getMatchingVisibleWindowState(windowName, windowList);
+        final List<WindowState> windowList =
+                mAmWmState.getWmState().getMatchingVisibleWindowState(windowName);
         assertThat(windowList.size(), greaterThan(0));
         return windowList.get(0);
     }

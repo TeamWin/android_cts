@@ -52,13 +52,13 @@ import android.server.am.WindowManagerState.WindowStack;
 import android.server.am.WindowManagerState.WindowState;
 import android.server.am.WindowManagerState.WindowTask;
 
-import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Objects;
 import java.util.function.BiPredicate;
 import java.util.function.BooleanSupplier;
 import java.util.function.Predicate;
+import java.util.stream.Collectors;
 
 /**
  * Combined state of the activity manager and window manager.
@@ -74,8 +74,8 @@ public class ActivityAndWindowManagersState {
     // frameworks/base.
     private static final int DEFAULT_PIP_RESIZABLE_TASK_SIZE_DP = 108;
 
-    private ActivityManagerState mAmState = new ActivityManagerState();
-    private WindowManagerState mWmState = new WindowManagerState();
+    private final ActivityManagerState mAmState = new ActivityManagerState();
+    private final WindowManagerState mWmState = new WindowManagerState();
 
     /**
      * Compute AM and WM state of device, check sanity and bounds.
@@ -161,15 +161,19 @@ public class ActivityAndWindowManagersState {
      * Ensures all exiting windows have been removed.
      */
     void waitForAllExitingWindows() {
+        List<WindowState> exitingWindows = null;
         for (int retry = 1; retry <= 5; retry++) {
             mWmState.computeState();
-            if (!mWmState.containsExitingWindow()) {
+            exitingWindows = mWmState.getExitingWindows();
+            if (exitingWindows.isEmpty()) {
                 return;
             }
             logAlways("***Waiting for all exiting windows have been removed... retry=" + retry);
             SystemClock.sleep(1000);
         }
-        fail("All exiting windows have been removed");
+        fail("All exiting windows have been removed, actual=" + exitingWindows.stream()
+                .map(WindowState::getName)
+                .collect(Collectors.joining(",")));
     }
 
     void waitForAllStoppedActivities() {
@@ -196,7 +200,7 @@ public class ActivityAndWindowManagersState {
         for (int retry = 1; retry <= 5; retry++) {
             mAmState.computeState();
             mWmState.computeState();
-            if (shouldWaitForDebuggerWindow()
+            if (shouldWaitForDebuggerWindow(activityName)
                     || shouldWaitForActivityRecords(activityName)) {
                 logAlways("***Waiting for debugger window... retry=" + retry);
                 SystemClock.sleep(1000);
@@ -367,7 +371,6 @@ public class ActivityAndWindowManagersState {
         // and for placing them in correct stacks (if requested).
         boolean allActivityWindowsVisible = true;
         boolean tasksInCorrectStacks = true;
-        List<WindowState> matchingWindowStates = new ArrayList<>();
         for (final WaitForValidActivityState state : waitForActivitiesVisible) {
             final ComponentName activityName = state.activityName;
             final String windowName = state.windowName;
@@ -375,7 +378,8 @@ public class ActivityAndWindowManagersState {
             final int windowingMode = state.windowingMode;
             final int activityType = state.activityType;
 
-            mWmState.getMatchingVisibleWindowState(windowName, matchingWindowStates);
+            final List<WindowState> matchingWindowStates =
+                    mWmState.getMatchingVisibleWindowState(windowName);
             boolean activityWindowVisible = !matchingWindowStates.isEmpty();
             if (!activityWindowVisible) {
                 logAlways("Activity window not visible: " + windowName);
@@ -432,9 +436,9 @@ public class ActivityAndWindowManagersState {
         return false;
     }
 
-    private boolean shouldWaitForDebuggerWindow() {
-        List<WindowState> matchingWindowStates = new ArrayList<>();
-        mWmState.getMatchingVisibleWindowState("android.server.am", matchingWindowStates);
+    private boolean shouldWaitForDebuggerWindow(ComponentName activityName) {
+        List<WindowState> matchingWindowStates =
+                mWmState.getMatchingVisibleWindowState(activityName.getPackageName());
         for (WindowState ws : matchingWindowStates) {
             if (ws.isDebuggerWindow()) {
                 return false;
