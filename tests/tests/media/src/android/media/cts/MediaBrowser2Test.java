@@ -22,8 +22,8 @@ import static android.media.cts.MockMediaLibraryService2.ROOT_ID;
 import static junit.framework.Assert.assertEquals;
 import static junit.framework.Assert.assertFalse;
 import static junit.framework.Assert.assertNotNull;
-import static junit.framework.Assert.assertTrue;
 import static junit.framework.Assert.assertNull;
+import static junit.framework.Assert.assertTrue;
 import static junit.framework.Assert.fail;
 
 import static org.junit.Assert.assertNotEquals;
@@ -45,11 +45,10 @@ import android.media.MediaSession2.CommandButton;
 import android.media.MediaSession2.CommandGroup;
 import android.media.MediaSession2.ControllerInfo;
 import android.media.MediaSession2.PlaylistParams;
-import android.media.PlaybackState2;
 import android.media.SessionToken2;
 import android.os.Bundle;
-import android.os.ResultReceiver;
 import android.os.Process;
+import android.os.ResultReceiver;
 import android.support.annotation.CallSuper;
 import android.support.annotation.NonNull;
 import android.support.test.filters.SmallTest;
@@ -519,11 +518,6 @@ public class MediaBrowser2Test extends MediaController2Test {
             } else {
                 assertFalse(disconnectLatch.await(TIMEOUT_MS, TimeUnit.MILLISECONDS));
             }
-        }
-
-        @Override
-        public void onPlaybackStateChanged(MediaController2 controller, PlaybackState2 state) {
-            mCallbackProxy.onPlaybackStateChanged(controller, state);
         }
 
         @Override
