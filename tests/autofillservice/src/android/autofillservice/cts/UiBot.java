@@ -338,8 +338,18 @@ final class UiBot {
             // Not found as expected.
             return;
         }
+        String childrenText = null;
+        try {
+            childrenText = getChildrenAsText(object).toString();
+        } catch (Throwable t) {
+            // getChildrenAsText() itself could throw an exception (like StateObjectException),
+            // which we should ignore (otherwise it would mask the real issue).
+            if (object != null) {
+                childrenText = object.toString();
+            }
+        }
         throw new RetryableException(timeout, "Should not be showing %s, but got %s",
-                description, getChildrenAsText(object));
+                description, childrenText);
     }
 
     /**

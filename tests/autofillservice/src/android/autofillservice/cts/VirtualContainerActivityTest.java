@@ -72,7 +72,7 @@ public class VirtualContainerActivityTest extends AutoFillServiceTestCase {
     };
 
     private final boolean mCompatMode;
-    private VirtualContainerActivity mActivity;
+    protected VirtualContainerActivity mActivity;
 
     public VirtualContainerActivityTest() {
         this(false);
@@ -588,10 +588,64 @@ public class VirtualContainerActivityTest extends AutoFillServiceTestCase {
                 .isEqualTo(mPackageName);
     }
 
+    @Test
+    public void testDatasetFiltering() throws Exception {
+        final String aa = "Two A's";
+        final String ab = "A and B";
+        final String b = "Only B";
+
+        enableService();
+
+        // Set expectations.
+        sReplier.addResponse(new CannedFillResponse.Builder()
+                .addDataset(new CannedDataset.Builder()
+                        .setField(ID_USERNAME, "aa")
+                        .setPresentation(createPresentation(aa))
+                        .build())
+                .addDataset(new CannedDataset.Builder()
+                        .setField(ID_USERNAME, "ab")
+                        .setPresentation(createPresentation(ab))
+                        .build())
+                .addDataset(new CannedDataset.Builder()
+                        .setField(ID_USERNAME, "b")
+                        .setPresentation(createPresentation(b))
+                        .build())
+                .build());
+
+        // Trigger auto-fill.
+        focusToUsername();
+        sReplier.getNextFillRequest();
+
+        // With no filter text all datasets should be shown
+        mUiBot.assertDatasets(aa, ab, b);
+
+        // Only two datasets start with 'a'
+        mActivity.mUsername.setText("a");
+        mUiBot.assertDatasets(aa, ab);
+
+        // Only one dataset start with 'aa'
+        mActivity.mUsername.setText("aa");
+        mUiBot.assertDatasets(aa);
+
+        // Only two datasets start with 'a'
+        mActivity.mUsername.setText("a");
+        mUiBot.assertDatasets(aa, ab);
+
+        // With no filter text all datasets should be shown
+        mActivity.mUsername.setText("");
+        mUiBot.assertDatasets(aa, ab, b);
+
+        // No dataset start with 'aaa'
+        final MyAutofillCallback callback = mActivity.registerCallback();
+        mActivity.mUsername.setText("aaa");
+        callback.assertUiHiddenEvent(mActivity.mCustomView, mActivity.mUsername.text.id);
+        mUiBot.assertNoDatasets();
+    }
+
     /**
      * Asserts the dataset picker is properly displayed in a give line.
      */
-    private void assertDatasetShown(Line line, String... expectedDatasets) throws Exception {
+    protected void assertDatasetShown(Line line, String... expectedDatasets) throws Exception {
         final Rect pickerBounds = mUiBot.assertDatasets(expectedDatasets).getVisibleBounds();
         final Rect fieldBounds = line.getAbsCoordinates();
         assertWithMessage("vertical coordinates don't match; picker=%s, field=%s", pickerBounds,
@@ -600,7 +654,7 @@ public class VirtualContainerActivityTest extends AutoFillServiceTestCase {
                 fieldBounds).that(pickerBounds.left).isEqualTo(fieldBounds.left);
     }
 
-    private void assertLabel(ViewNode node, String expectedValue) {
+    protected void assertLabel(ViewNode node, String expectedValue) {
         if (mCompatMode) {
             // Compat mode doesn't set AutofillValue of non-editable fields
             assertTextOnly(node, expectedValue);

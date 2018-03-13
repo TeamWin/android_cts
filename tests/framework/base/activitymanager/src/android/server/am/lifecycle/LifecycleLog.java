@@ -18,7 +18,8 @@ import java.util.ArrayList;
 import java.util.List;
 
 /**
- * Used as a shared log storage of activity lifecycle transitions.
+ * Used as a shared log storage of activity lifecycle transitions. Methods must be synchronized to
+ * prevent concurrent modification of the log store.
  */
 class LifecycleLog implements ActivityLifecycleCallback {
 
@@ -34,36 +35,40 @@ class LifecycleLog implements ActivityLifecycleCallback {
         ON_ACTIVITY_RESULT
     }
 
+    /**
+     * Log for encountered activity callbacks. Note that methods accessing or modifying this
+     * list should be synchronized as it can be accessed from different threads.
+     */
     private List<Pair<String, ActivityCallback>> mLog = new ArrayList<>();
 
     /** Clear the entire transition log. */
-    void clear() {
+    synchronized void clear() {
         mLog.clear();
     }
 
     /** Add transition of an activity to the log. */
     @Override
-    public void onActivityLifecycleChanged(Activity activity, Stage stage) {
+    synchronized public void onActivityLifecycleChanged(Activity activity, Stage stage) {
         final String activityName = activity.getClass().getCanonicalName();
         log("Activity " + activityName + " moved to stage " + stage);
         mLog.add(new Pair<>(activityName, stageToCallback(stage)));
     }
 
     /** Add activity callback to the log. */
-    public void onActivityCallback(Activity activity, ActivityCallback callback) {
+    synchronized public void onActivityCallback(Activity activity, ActivityCallback callback) {
         final String activityName = activity.getClass().getCanonicalName();
         log("Activity " + activityName + " got a callback " + callback);
         mLog.add(new Pair<>(activityName, callback));
     }
 
     /** Get logs for all recorded transitions. */
-    List<Pair<String, ActivityCallback>> getLog() {
+    synchronized List<Pair<String, ActivityCallback>> getLog() {
         // Wrap in a new list to prevent concurrent modification
         return new ArrayList<>(mLog);
     }
 
     /** Get transition logs for the specified activity. */
-    List<ActivityCallback> getActivityLog(Class<? extends Activity> activityClass) {
+    synchronized List<ActivityCallback> getActivityLog(Class<? extends Activity> activityClass) {
         final String activityName = activityClass.getCanonicalName();
         log("Looking up log for activity: " + activityName);
         final List<ActivityCallback> activityLog = new ArrayList<>();
