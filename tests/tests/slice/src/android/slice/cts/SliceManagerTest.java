@@ -18,14 +18,12 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.fail;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
-import static org.mockito.Mockito.atLeastOnce;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.timeout;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import android.app.Instrumentation;
-import android.app.slice.Slice;
 import android.app.slice.SliceManager;
 import android.content.ComponentName;
 import android.content.Context;
@@ -39,9 +37,7 @@ import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
-import org.mockito.invocation.InvocationOnMock;
 import org.mockito.stubbing.Answer;
-import org.mockito.verification.Timeout;
 
 import java.io.BufferedReader;
 import java.io.InputStreamReader;
@@ -55,16 +51,9 @@ public class SliceManagerTest {
     private final Context mContext = InstrumentationRegistry.getContext();
     private final SliceManager mSliceManager = mContext.getSystemService(SliceManager.class);
 
-    private String mSetupLauncher;
-
     @Before
     public void setup() {
         LocalSliceProvider.sProxy = mock(SliceProvider.class);
-        try {
-            mSetupLauncher = getDefaultLauncher();
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
         try {
             mSliceManager.unpinSlice(BASE_URI);
         } catch (Exception e) {
@@ -77,21 +66,10 @@ public class SliceManagerTest {
             mSliceManager.unpinSlice(BASE_URI);
         } catch (Exception e) {
         }
-        if (mSetupLauncher != null) {
-            setLauncher(mSetupLauncher);
-        }
-    }
-
-    @Test(expected = SecurityException.class)
-    public void testNoAccess() {
-        mSliceManager.pinSlice(BASE_URI, Collections.emptyList());
-        fail();
     }
 
     @Test
     public void testPinSlice() throws Exception {
-        setLauncher(new ComponentName(mContext.getPackageName(), Launcher.class.getName())
-                .flattenToString());
         mSliceManager.pinSlice(BASE_URI, Collections.emptyList());
 
         verify(LocalSliceProvider.sProxy, timeout(2000)).onSlicePinned(eq(BASE_URI));
@@ -99,8 +77,6 @@ public class SliceManagerTest {
 
     @Test
     public void testUnpinSlice() throws Exception {
-        setLauncher(new ComponentName(mContext.getPackageName(), Launcher.class.getName())
-                .flattenToString());
 
         mSliceManager.pinSlice(BASE_URI, Collections.emptyList());
 
@@ -136,11 +112,6 @@ public class SliceManagerTest {
             }
         }
         throw new Exception("Default launcher not found");
-    }
-
-    public static void setLauncher(String component) throws Exception {
-        runShellCommand("cmd package set-home-activity --user "
-                + getInstrumentation().getContext().getUserId() + " " + component);
     }
 
     public static ArrayList<String> runShellCommand(String command) throws Exception {
