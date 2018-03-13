@@ -21,7 +21,6 @@ import static android.media.MediaSession2.COMMAND_CODE_PLAYBACK_PAUSE;
 import static android.media.MediaSession2.COMMAND_CODE_PLAYBACK_PLAY;
 import static android.media.MediaSession2.COMMAND_CODE_PLAYBACK_REWIND;
 import static android.media.MediaSession2.COMMAND_CODE_PLAYBACK_SEEK_TO;
-import static android.media.MediaSession2.COMMAND_CODE_PLAYBACK_SET_PLAYLIST_PARAMS;
 import static android.media.MediaSession2.COMMAND_CODE_PLAYBACK_SET_VOLUME;
 import static android.media.MediaSession2.COMMAND_CODE_PLAYBACK_SKIP_NEXT_ITEM;
 import static android.media.MediaSession2.COMMAND_CODE_PLAYBACK_SKIP_PREV_ITEM;
@@ -38,7 +37,6 @@ import static android.media.MediaSession2.COMMAND_CODE_PREPARE_FROM_MEDIA_ID;
 import static android.media.MediaSession2.COMMAND_CODE_PREPARE_FROM_SEARCH;
 import static android.media.MediaSession2.COMMAND_CODE_PREPARE_FROM_URI;
 import static android.media.MediaSession2.ControllerInfo;
-import static android.media.MediaSession2.PlaylistParams;
 
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.fail;
@@ -345,23 +343,6 @@ public class MediaSession2_PermissionTest extends MediaSession2TestBase {
         createSessionWithAllowedActions(
                 createCommandGroupWithout(COMMAND_CODE_PLAYLIST_REPLACE_ITEM));
         createController(mSession.getToken()).replacePlaylistItem(0, testItem);
-        verify(mCallback, after(WAIT_TIME_MS).never()).onCommandRequest(any(), any(), any());
-    }
-
-    @Test
-    public void testSetPlaylistParams() throws InterruptedException {
-        final PlaylistParams param = new PlaylistParams(mContext,
-                PlaylistParams.REPEAT_MODE_ALL, PlaylistParams.SHUFFLE_MODE_ALL, null);
-        createSessionWithAllowedActions(
-                createCommandGroupWith(COMMAND_CODE_PLAYBACK_SET_PLAYLIST_PARAMS));
-        createController(mSession.getToken()).setPlaylistParams(param);
-        verify(mCallback, timeout(TIMEOUT_MS).atLeastOnce()).onCommandRequest(
-                matchesSession(), matchesCaller(),
-                matches(COMMAND_CODE_PLAYBACK_SET_PLAYLIST_PARAMS));
-
-        createSessionWithAllowedActions(
-                createCommandGroupWithout(COMMAND_CODE_PLAYBACK_SET_PLAYLIST_PARAMS));
-        createController(mSession.getToken()).setPlaylistParams(param);
         verify(mCallback, after(WAIT_TIME_MS).never()).onCommandRequest(any(), any(), any());
     }
 
