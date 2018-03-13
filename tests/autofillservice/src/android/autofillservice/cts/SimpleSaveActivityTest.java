@@ -36,6 +36,7 @@ import android.autofillservice.cts.CannedFillResponse.CannedDataset;
 import android.autofillservice.cts.InstrumentedAutoFillService.SaveRequest;
 import android.autofillservice.cts.SimpleSaveActivity.FillExpectation;
 import android.content.Intent;
+import android.graphics.Bitmap;
 import android.service.autofill.BatchUpdates;
 import android.service.autofill.CustomDescription;
 import android.service.autofill.RegexValidator;
@@ -1064,19 +1065,30 @@ public class SimpleSaveActivityTest extends CustomDescriptionWithLinkTestCase {
         mActivity.syncRunOnUiThread(() -> mActivity.mInput.requestFocus());
         sReplier.getNextFillRequest();
         Helper.assertHasSessions(mPackageName);
+
         // Trigger save.
-        mActivity.syncRunOnUiThread(() -> {
-            mActivity.mInput.setText("108");
-            mActivity.mCommit.performClick();
-        });
-        UiObject2 saveUi = mUiBot.assertSaveShowing(SAVE_DATA_TYPE_GENERIC);
+        mActivity.syncRunOnUiThread(() -> mActivity.mInput.setText("108"));
+
+        // Take a screenshot to make sure button doesn't disappear.
+        final String commitBefore = mUiBot.assertShownByRelativeId(ID_COMMIT).getText();
+        assertThat(commitBefore.toUpperCase()).isEqualTo("COMMIT");
+        final Bitmap screenshotBefore = mActivity.takeScreenshot();
 
         // Save it...
+        mActivity.syncRunOnUiThread(() -> mActivity.mCommit.performClick());
+        final UiObject2 saveUi = mUiBot.assertSaveShowing(SAVE_DATA_TYPE_GENERIC);
         mUiBot.saveForAutofill(saveUi, true);
+
+        // Make sure save button is showning (it was removed on earlier versions of the feature)
+        final String commitAfter = mUiBot.assertShownByRelativeId(ID_COMMIT).getText();
+        assertThat(commitAfter.toUpperCase()).isEqualTo("COMMIT");
+        final Bitmap screenshotAfter = mActivity.takeScreenshot();
 
         // ... and assert results
         final SaveRequest saveRequest = sReplier.getNextSaveRequest();
         assertTextAndValue(findNodeByResourceId(saveRequest.structure, ID_INPUT), "108");
+
+        Helper.assertBitmapsAreSame("screenshot", screenshotBefore, screenshotAfter);
     }
 
     @Override

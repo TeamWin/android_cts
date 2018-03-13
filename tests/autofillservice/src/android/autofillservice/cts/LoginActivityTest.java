@@ -67,7 +67,9 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.IntentSender;
+import android.graphics.Bitmap;
 import android.graphics.Color;
+import android.graphics.Rect;
 import android.os.Bundle;
 import android.os.SystemClock;
 import android.service.autofill.SaveInfo;
@@ -356,6 +358,78 @@ public class LoginActivityTest extends AbstractLoginActivityTestCase {
                 findNodeByResourceId(request.structure, ID_USERNAME).isFocused()).isTrue();
         assertWithMessage("Password node is focused").that(
                 findNodeByResourceId(request.structure, ID_PASSWORD).isFocused()).isFalse();
+    }
+
+    @Test
+    public void testDatasetPickerPosition() throws Exception {
+        // Set service.
+        enableService();
+        final MyAutofillCallback callback = mActivity.registerCallback();
+        final View username = mActivity.getUsername();
+        final View password = mActivity.getPassword();
+
+        // Set expectations.
+        final CannedFillResponse.Builder builder = new CannedFillResponse.Builder()
+                .addDataset(new CannedDataset.Builder()
+                        .setField(ID_USERNAME, "dude", createPresentation("DUDE"))
+                        .setField(ID_PASSWORD, "sweet", createPresentation("SWEET"))
+                        .build());
+        sReplier.addResponse(builder.build());
+
+        // Trigger autofill on username
+        final Rect usernameBoundaries1 = mUiBot.selectByRelativeId(ID_USERNAME).getVisibleBounds();
+        sReplier.getNextFillRequest();
+        callback.assertUiShownEvent(username);
+        final Rect usernamePickerBoundaries1 = mUiBot.assertDatasets("DUDE").getVisibleBounds();
+        final Bitmap usernameScreenshot1 = mUiBot.takeScreenshot();
+        Log.v(TAG,
+                "Username1 at " + usernameBoundaries1 + "; picker at " + usernamePickerBoundaries1);
+        // TODO(b/37566627): assertions below might be too aggressive - use range instead?
+        assertThat(usernamePickerBoundaries1.top).isEqualTo(usernameBoundaries1.bottom);
+        assertThat(usernamePickerBoundaries1.left).isEqualTo(usernameBoundaries1.left);
+
+        // Move to password
+        final Rect passwordBoundaries1 = mUiBot.selectByRelativeId(ID_PASSWORD).getVisibleBounds();
+        callback.assertUiHiddenEvent(username);
+        callback.assertUiShownEvent(password);
+        final Rect passwordPickerBoundaries1 = mUiBot.assertDatasets("SWEET").getVisibleBounds();
+        final Bitmap passwordScreenshot1 = mUiBot.takeScreenshot();
+        Log.v(TAG,
+                "Password1 at " + passwordBoundaries1 + "; picker at " + passwordPickerBoundaries1);
+        // TODO(b/37566627): assertions below might be too aggressive - use range instead?
+        assertThat(passwordPickerBoundaries1.top).isEqualTo(passwordBoundaries1.bottom);
+        assertThat(passwordPickerBoundaries1.left).isEqualTo(passwordBoundaries1.left);
+
+        // Then back to username
+        final Rect usernameBoundaries2 = mUiBot.selectByRelativeId(ID_USERNAME).getVisibleBounds();
+        callback.assertUiHiddenEvent(password);
+        callback.assertUiShownEvent(username);
+        final Rect usernamePickerBoundaries2 = mUiBot.assertDatasets("DUDE").getVisibleBounds();
+        final Bitmap usernameScreenshot2 = mUiBot.takeScreenshot();
+        Log.v(TAG,
+                "Username2 at " + usernameBoundaries2 + "; picker at " + usernamePickerBoundaries2);
+
+        // And back to the password again..
+        final Rect passwordBoundaries2 = mUiBot.selectByRelativeId(ID_PASSWORD).getVisibleBounds();
+        callback.assertUiHiddenEvent(username);
+        callback.assertUiShownEvent(password);
+        final Rect passwordPickerBoundaries2 = mUiBot.assertDatasets("SWEET").getVisibleBounds();
+        final Bitmap passwordScreenshot2 = mUiBot.takeScreenshot();
+        Log.v(TAG,
+                "Password2 at " + passwordBoundaries2 + "; picker at " + passwordPickerBoundaries2);
+
+        // Assert final state matches initial...
+        // ... for username
+        assertThat(usernameBoundaries2).isEqualTo(usernameBoundaries1);
+        assertThat(usernamePickerBoundaries2).isEqualTo(usernamePickerBoundaries1);
+        Helper.assertBitmapsAreSame("username", usernameScreenshot1, usernameScreenshot2);
+        // ... for password
+        assertThat(passwordBoundaries2).isEqualTo(passwordBoundaries1);
+        assertThat(passwordPickerBoundaries2).isEqualTo(passwordPickerBoundaries1);
+        Helper.assertBitmapsAreSame("password", passwordScreenshot1, passwordScreenshot2);
+
+        // Final sanity check
+        callback.assertNumberUnhandledEvents(0);
     }
 
     @Test
