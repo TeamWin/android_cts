@@ -404,6 +404,30 @@ public class MediaSession2Test extends MediaSession2TestBase {
     }
 
     @Test
+    public void testOnDisconnectCallback() throws InterruptedException {
+        final CountDownLatch latch = new CountDownLatch(1);
+        try (final MediaSession2 session = new MediaSession2.Builder(mContext)
+                .setPlayer(mPlayer)
+                .setSessionCallback(sHandlerExecutor, new SessionCallback(mContext) {
+                    @Override
+                    public void onDisconnected(MediaSession2 session,
+                            ControllerInfo controller) {
+                        assertEquals(Process.myUid(), controller.getUid());
+                        latch.countDown();
+                    }
+                }).build()) {
+            if (mSession != null) {
+                mSession.close();
+                mSession = session;
+            }
+
+            MediaController2 controller = createController(mSession.getToken(), true, null);
+            controller.close();
+            assertTrue(latch.await(WAIT_TIME_MS, TimeUnit.MILLISECONDS));
+        }
+    }
+
+    @Test
     public void testSetCustomLayout() throws InterruptedException {
         final List<CommandButton> buttons = new ArrayList<>();
         buttons.add(new CommandButton.Builder(mContext)
