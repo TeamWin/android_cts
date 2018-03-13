@@ -57,6 +57,8 @@ LOCAL_STATIC_JAVA_LIBRARIES := \
 
 LOCAL_JNI_SHARED_LIBRARIES := \
     libaudio_jni \
+    libc++ \
+    libctscodecutils_jni \
     libctsimagereader_jni \
     libctsmediadrm_jni \
     libctsmediacodec_jni \
