@@ -16,6 +16,13 @@
 
 package android.display.cts;
 
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.fail;
+
+import android.Manifest;
 import android.app.UiAutomation;
 import android.content.Context;
 import android.content.pm.PackageInfo;
@@ -27,7 +34,14 @@ import android.os.ParcelFileDescriptor;
 import android.os.PowerManager;
 import android.provider.Settings;
 import android.support.test.InstrumentationRegistry;
+import android.support.test.filters.MediumTest;
+import android.support.test.runner.AndroidJUnit4;
 import android.test.InstrumentationTestCase;
+
+import org.junit.After;
+import org.junit.Before;
+import org.junit.Test;
+import org.junit.runner.RunWith;
 
 import java.io.FileDescriptor;
 import java.io.FileInputStream;
@@ -38,40 +52,40 @@ import java.util.List;
 import java.util.Map;
 import java.util.Scanner;
 
-public class BrightnessTest extends InstrumentationTestCase {
+@MediumTest
+@RunWith(AndroidJUnit4.class)
+public class BrightnessTest {
 
     private Map<Long, BrightnessChangeEvent> mLastReadEvents = new HashMap<>();
     private DisplayManager mDisplayManager;
-    PowerManager.WakeLock mWakeLock;
+    private PowerManager.WakeLock mWakeLock;
+    private Context mContext;
 
-    @Override
+    @Before
     public void setUp() {
-        mDisplayManager =
-                InstrumentationRegistry.getContext().getSystemService(DisplayManager.class);
-        PowerManager pm =
-                InstrumentationRegistry.getContext().getSystemService(PowerManager.class);
-        // Fail early if screen isn't on as wakelock won't wake it up.
-        assertTrue(pm.isInteractive());
+        mContext = InstrumentationRegistry.getContext();
+        mDisplayManager = mContext.getSystemService(DisplayManager.class);
+        PowerManager pm = mContext.getSystemService(PowerManager.class);
 
-        mWakeLock = pm.newWakeLock(PowerManager.SCREEN_BRIGHT_WAKE_LOCK, "BrightnessTest");
+        mWakeLock = pm.newWakeLock(
+                PowerManager.SCREEN_BRIGHT_WAKE_LOCK | PowerManager.ACQUIRE_CAUSES_WAKEUP,
+                "BrightnessTest");
         mWakeLock.acquire();
-
-        runShellCommand("pm revoke " + InstrumentationRegistry.getContext().getPackageName()
-                + " android.permission.CONFIGURE_DISPLAY_BRIGHTNESS");
-        runShellCommand("pm revoke " + InstrumentationRegistry.getContext().getPackageName()
-                + " android.permission.BRIGHTNESS_SLIDER_USAGE");
     }
 
-    @Override
+    @After
     public void tearDown() {
         if (mWakeLock != null) {
             mWakeLock.release();
         }
+
+        revokePermission(Manifest.permission.CONFIGURE_DISPLAY_BRIGHTNESS);
+        revokePermission(Manifest.permission.BRIGHTNESS_SLIDER_USAGE);
     }
 
+    @Test
     public void testBrightnessSliderTracking() throws IOException, InterruptedException {
-        if (!systemAppWithPermission("android.permission.BRIGHTNESS_SLIDER_USAGE",
-                InstrumentationRegistry.getContext())) {
+        if (numberOfSystemAppsWithPermission(Manifest.permission.BRIGHTNESS_SLIDER_USAGE) == 0) {
             // Don't run as there is no app that has permission to access slider usage.
             return;
         }
@@ -85,8 +99,7 @@ public class BrightnessTest extends InstrumentationTestCase {
             int mode = getSystemSetting(Settings.System.SCREEN_BRIGHTNESS_MODE);
             assertEquals(Settings.System.SCREEN_BRIGHTNESS_MODE_AUTOMATIC, mode);
 
-            runShellCommand("pm grant " + InstrumentationRegistry.getContext().getPackageName()
-                    + " android.permission.BRIGHTNESS_SLIDER_USAGE");
+            grantPermission(Manifest.permission.BRIGHTNESS_SLIDER_USAGE);
 
             // Setup and remember some initial state.
             recordSliderEvents();
@@ -120,9 +133,9 @@ public class BrightnessTest extends InstrumentationTestCase {
         }
     }
 
+    @Test
     public void testNoTrackingForManualBrightness() throws IOException, InterruptedException {
-        if (!systemAppWithPermission("android.permission.BRIGHTNESS_SLIDER_USAGE",
-                InstrumentationRegistry.getContext())) {
+        if (numberOfSystemAppsWithPermission(Manifest.permission.BRIGHTNESS_SLIDER_USAGE) == 0) {
             // Don't run as there is no app that has permission to access slider usage.
             return;
         }
@@ -135,8 +148,7 @@ public class BrightnessTest extends InstrumentationTestCase {
             int mode = getSystemSetting(Settings.System.SCREEN_BRIGHTNESS_MODE);
             assertEquals(Settings.System.SCREEN_BRIGHTNESS_MODE_MANUAL, mode);
 
-            runShellCommand("pm grant " + InstrumentationRegistry.getContext().getPackageName()
-                    + " android.permission.BRIGHTNESS_SLIDER_USAGE");
+            grantPermission(Manifest.permission.BRIGHTNESS_SLIDER_USAGE);
 
             // Setup and remember some initial state.
             recordSliderEvents();
@@ -154,9 +166,9 @@ public class BrightnessTest extends InstrumentationTestCase {
         }
     }
 
+    @Test
     public void testSliderUsagePermission() throws IOException, InterruptedException {
-        runShellCommand("pm revoke " + InstrumentationRegistry.getContext().getPackageName()
-                + " android.permission.BRIGHTNESS_SLIDER_USAGE");
+        revokePermission(Manifest.permission.BRIGHTNESS_SLIDER_USAGE);
 
         try {
             mDisplayManager.getBrightnessEvents();
@@ -167,9 +179,9 @@ public class BrightnessTest extends InstrumentationTestCase {
         fail();
     }
 
+    @Test
     public void testConfigureBrightnessPermission() throws IOException, InterruptedException {
-        runShellCommand("pm revoke " + InstrumentationRegistry.getContext().getPackageName()
-                + " android.permission.CONFIGURE_DISPLAY_BRIGHTNESS");
+        revokePermission(Manifest.permission.CONFIGURE_DISPLAY_BRIGHTNESS);
 
         BrightnessConfiguration config =
             new BrightnessConfiguration.Builder(
@@ -185,15 +197,14 @@ public class BrightnessTest extends InstrumentationTestCase {
         fail();
     }
 
+    @Test
     public void testPushSimpleCurves() throws IOException, InterruptedException {
-        if (!systemAppWithPermission("android.permission.CONFIGURE_DISPLAY_BRIGHTNESS",
-                InstrumentationRegistry.getContext())) {
+        if (numberOfSystemAppsWithPermission(
+                    Manifest.permission.CONFIGURE_DISPLAY_BRIGHTNESS) == 0) {
             // Don't run as there is no app that has permission to push curves.
             return;
         }
-        runShellCommand("pm grant " + InstrumentationRegistry.getContext().getPackageName()
-                + " android.permission.CONFIGURE_DISPLAY_BRIGHTNESS");
-
+        grantPermission(Manifest.permission.CONFIGURE_DISPLAY_BRIGHTNESS);
         BrightnessConfiguration config =
                 new BrightnessConfiguration.Builder(
                         new float[]{0.0f, 1000.0f},new float[]{20.0f, 500.0f})
@@ -202,14 +213,14 @@ public class BrightnessTest extends InstrumentationTestCase {
         mDisplayManager.setBrightnessConfiguration(null);
     }
 
+    @Test
     public void testSliderEventsReflectCurves() throws IOException, InterruptedException {
-        if (!systemAppWithPermission("android.permission.BRIGHTNESS_SLIDER_USAGE",
-                InstrumentationRegistry.getContext())) {
+        if (numberOfSystemAppsWithPermission(Manifest.permission.BRIGHTNESS_SLIDER_USAGE) == 0) {
             // Don't run as there is no app that has permission to access slider usage.
             return;
         }
-        if (!systemAppWithPermission("android.permission.CONFIGURE_DISPLAY_BRIGHTNESS",
-                InstrumentationRegistry.getContext())) {
+        if (numberOfSystemAppsWithPermission(
+                    Manifest.permission.CONFIGURE_DISPLAY_BRIGHTNESS) == 0) {
             // Don't run as there is no app that has permission to push curves.
             return;
         }
@@ -228,10 +239,8 @@ public class BrightnessTest extends InstrumentationTestCase {
             int mode = getSystemSetting(Settings.System.SCREEN_BRIGHTNESS_MODE);
             assertEquals(Settings.System.SCREEN_BRIGHTNESS_MODE_AUTOMATIC, mode);
 
-            runShellCommand("pm grant " + InstrumentationRegistry.getContext().getPackageName()
-                    + " android.permission.BRIGHTNESS_SLIDER_USAGE");
-            runShellCommand("pm grant " + InstrumentationRegistry.getContext().getPackageName()
-                    + " android.permission.CONFIGURE_DISPLAY_BRIGHTNESS");
+            grantPermission(Manifest.permission.BRIGHTNESS_SLIDER_USAGE);
+            grantPermission(Manifest.permission.CONFIGURE_DISPLAY_BRIGHTNESS);
 
             // Setup and remember some initial state.
             recordSliderEvents();
@@ -265,6 +274,12 @@ public class BrightnessTest extends InstrumentationTestCase {
         }
     }
 
+    @Test
+    public void testAtMostOneAppHoldsBrightnessConfigurationPermission() {
+        assertTrue(numberOfSystemAppsWithPermission(
+                    Manifest.permission.CONFIGURE_DISPLAY_BRIGHTNESS) < 2);
+    }
+
     private void assertValidLuxData(BrightnessChangeEvent event) {
         assertNotNull(event.luxTimestamps);
         assertNotNull(event.luxValues);
@@ -281,12 +296,12 @@ public class BrightnessTest extends InstrumentationTestCase {
     }
 
     /**
-     * Check if there exists a system app that has the permission.
+     * Returns the number of system apps with the given permission.
      */
-    private boolean systemAppWithPermission(String permission, Context context) {
-        List<PackageInfo> packages = context.getPackageManager().getPackagesHoldingPermissions(
+    private int numberOfSystemAppsWithPermission(String permission) {
+        List<PackageInfo> packages = mContext.getPackageManager().getPackagesHoldingPermissions(
                 new String[] {permission}, PackageManager.MATCH_SYSTEM_ONLY);
-        return !packages.isEmpty();
+        return packages.size();
     }
 
     private List<BrightnessChangeEvent> getNewEvents(int expected)
@@ -332,6 +347,15 @@ public class BrightnessTest extends InstrumentationTestCase {
             throws IOException {
         runShellCommand("settings put system " + setting + " " + Integer.toString(value));
     }
+
+    private void grantPermission(String permission) {
+        runShellCommand("pm grant " + mContext.getPackageName() + " " + permission);
+    }
+
+    private void revokePermission(String permission) {
+        runShellCommand("pm revoke " + mContext.getPackageName() + " " + permission);
+    }
+
 
     private String runShellCommand(String cmd) {
         UiAutomation automation = InstrumentationRegistry.getInstrumentation().getUiAutomation();
