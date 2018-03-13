@@ -30,6 +30,9 @@ public class BusinessLogic {
 
     /* A map from testcase name to the business logic rules for the test case */
     protected Map<String, List<BusinessLogicRule>> mRules;
+    /* Feature flag determining if device specific tests are executed. */
+    public boolean mConditionalTestsEnabled;
+    private AuthenticationStatusEnum mAuthenticationStatus = AuthenticationStatusEnum.UNKNOWN;
 
     /**
      * Determines whether business logic exists for a given test name
@@ -58,6 +61,40 @@ public class BusinessLogic {
             if (rule.invokeConditions(executor)) {
                 rule.invokeActions(executor);
             }
+        }
+    }
+
+    public void setAuthenticationStatus(String authenticationStatus) {
+        try {
+            mAuthenticationStatus = Enum.valueOf(AuthenticationStatusEnum.class,
+                    authenticationStatus);
+        } catch (IllegalArgumentException e) {
+            // Invalid value, set to unknown
+            mAuthenticationStatus = AuthenticationStatusEnum.UNKNOWN;
+        }
+    }
+
+    public boolean isAuthorized() {
+        return AuthenticationStatusEnum.AUTHORIZED.equals(mAuthenticationStatus);
+    }
+
+    /**
+     * Builds a user readable string tha explains the authentication status and the effect on tests
+     * which require authentication to execute.
+     */
+    public String getAuthenticationStatusMessage() {
+        switch (mAuthenticationStatus) {
+            case AUTHORIZED:
+                return "Authorized";
+            case NOT_AUTHENTICATED:
+                return "authorization failed, please ensure the service account key is "
+                        + "properly installed.";
+            case NOT_AUTHORIZED:
+                return "service account is not authorized to access information for this device. "
+                        + "Please verify device properties are set correctly and account "
+                        + "permissions are configured to the Business Logic Api.";
+            default:
+                return "something went wrong, please try again.";
         }
     }
 
@@ -153,4 +190,15 @@ public class BusinessLogic {
                     mMethodArgs.toArray(new String[mMethodArgs.size()]));
         }
     }
+
+    /**
+     * Nested enum of the possible authentication statuses.
+     */
+    protected enum AuthenticationStatusEnum {
+        UNKNOWN,
+        NOT_AUTHENTICATED,
+        NOT_AUTHORIZED,
+        AUTHORIZED
+    }
+
 }

@@ -46,7 +46,9 @@ public class CtsTradefedTest extends TestCase {
 
     @Override
     protected void tearDown() throws Exception {
-        System.setProperty(PROPERTY_NAME, mOriginalProperty);
+        if (mOriginalProperty != null) {
+            System.setProperty(PROPERTY_NAME, mOriginalProperty);
+        }
         super.tearDown();
     }
 
