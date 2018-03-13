@@ -29,6 +29,7 @@ import static com.android.compatibility.common.util.AppOpsUtils.setOpMode;
 
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.reset;
+import static org.mockito.Mockito.timeout;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyZeroInteractions;
 
@@ -48,6 +49,9 @@ import java.util.Map;
 import java.util.Set;
 
 public class AppOpsTest extends InstrumentationTestCase {
+    // Notifying OnOpChangedListener callbacks is an async operation, so we define a timeout.
+    private static final int MODE_WATCHER_TIMEOUT_MS = 5000;
+
     private AppOpsManager mAppOps;
     private Context mContext;
     private String mOpPackageName;
@@ -203,12 +207,14 @@ public class AppOpsTest extends InstrumentationTestCase {
             // Make a change to the app op's mode.
             reset(watcher);
             setOpMode(mOpPackageName, OPSTR_READ_SMS, MODE_ERRORED);
-            verify(watcher).onOpChanged(OPSTR_READ_SMS, mOpPackageName);
+            verify(watcher, timeout(MODE_WATCHER_TIMEOUT_MS))
+                    .onOpChanged(OPSTR_READ_SMS, mOpPackageName);
 
             // Make another change to the app op's mode.
             reset(watcher);
             setOpMode(mOpPackageName, OPSTR_READ_SMS, MODE_ALLOWED);
-            verify(watcher).onOpChanged(OPSTR_READ_SMS, mOpPackageName);
+            verify(watcher, timeout(MODE_WATCHER_TIMEOUT_MS))
+                    .onOpChanged(OPSTR_READ_SMS, mOpPackageName);
 
             // Set mode to the same value as before - expect no call to the listener.
             reset(watcher);
