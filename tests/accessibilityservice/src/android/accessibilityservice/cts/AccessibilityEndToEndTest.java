@@ -41,11 +41,14 @@ import android.accessibilityservice.cts.R;
 import java.util.Iterator;
 import java.util.List;
 
+import com.android.compatibility.common.util.CddTest;
+
 /**
  * This class performs end-to-end testing of the accessibility feature by
  * creating an {@link Activity} and poking around so {@link AccessibilityEvent}s
  * are generated and their correct dispatch verified.
  */
+@CddTest(requirement="3.10/C-1-2,W-1-1")
 public class AccessibilityEndToEndTest extends
         AccessibilityActivityTestCase<AccessibilityEndToEndActivity> {
 

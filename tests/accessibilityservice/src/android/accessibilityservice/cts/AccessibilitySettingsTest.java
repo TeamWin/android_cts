@@ -25,10 +25,13 @@ import android.test.suitebuilder.annotation.MediumTest;
 
 import java.util.List;
 
+import com.android.compatibility.common.util.CddTest;
+
 /**
  * This test case is responsible to verify that the intent for launching
  * accessibility settings has an activity that handles it.
  */
+@CddTest(requirement="3.10/C-1-3")
 public class AccessibilitySettingsTest extends AndroidTestCase {
 
     @MediumTest
