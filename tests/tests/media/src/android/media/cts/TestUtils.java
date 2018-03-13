@@ -21,6 +21,8 @@ import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
 import android.content.Context;
+import android.media.MediaItem2;
+import android.media.MediaMetadata2;
 import android.media.MediaSession2.PlaylistParams;
 import android.media.SessionToken2;
 import android.media.session.MediaSessionManager;
@@ -28,6 +30,7 @@ import android.os.Bundle;
 import android.os.Handler;
 import android.os.Looper;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 import java.util.concurrent.CountDownLatch;
@@ -47,7 +50,6 @@ public final class TestUtils {
      * @param id
      * @return
      */
-    // TODO(jaewan): Currently not working.
     public static SessionToken2 getServiceToken(Context context, String id) {
         MediaSessionManager manager =
                 (MediaSessionManager) context.getSystemService(Context.MEDIA_SESSION_SERVICE);
@@ -96,6 +98,50 @@ public final class TestUtils {
     }
 
     /**
+     * Create a playlist for testing purpose
+     * <p>
+     * Caller's method name will be used for prefix of each media item's media id.
+     *
+     * @param context context
+     * @return the newly created playlist
+     */
+    public static List<MediaItem2> createPlaylist(Context context) {
+        final List<MediaItem2> list = new ArrayList<>();
+        String caller = Thread.currentThread().getStackTrace()[1].getMethodName();
+        list.add(new MediaItem2.Builder(context, MediaItem2.FLAG_PLAYABLE)
+                .setMediaId(caller + "_item_1").build());
+        list.add(new MediaItem2.Builder(context, MediaItem2.FLAG_PLAYABLE)
+                .setMediaId(caller + "_item_2").build());
+        return list;
+    }
+
+    /**
+     * Create a media item with the metadata for testing purpose.
+     *
+     * @param context context
+     * @return the newly created media item
+     * @see #createMetadata(Context)
+     */
+    public static MediaItem2 createMediaItemWithMetadata(Context context) {
+        return new MediaItem2.Builder(context, MediaItem2.FLAG_PLAYABLE)
+                .setMetadata(createMetadata(context)).build();
+    }
+
+    /**
+     * Create a media metadata for testing purpose.
+     * <p>
+     * Caller's method name will be used for the media id.
+     *
+     * @param context context
+     * @return the newly created media item
+     */
+    public static MediaMetadata2 createMetadata(Context context) {
+        String mediaId = Thread.currentThread().getStackTrace()[1].getMethodName();
+        return new MediaMetadata2.Builder(context)
+                .putString(MediaMetadata2.METADATA_KEY_MEDIA_ID, mediaId).build();
+    }
+
+    /**
      * Handler that always waits until the Runnable finishes.
      */
     public static class SyncHandler extends Handler {
@@ -104,10 +150,10 @@ public final class TestUtils {
         }
 
         public void postAndSync(Runnable runnable) throws InterruptedException {
-            final CountDownLatch latch = new CountDownLatch(1);
             if (getLooper() == Looper.myLooper()) {
                 runnable.run();
             } else {
+                final CountDownLatch latch = new CountDownLatch(1);
                 post(()->{
                     runnable.run();
                     latch.countDown();
