@@ -21,9 +21,7 @@ import android.media.DataSourceDesc;
 import android.media.MediaItem2;
 import android.media.MediaPlayerBase;
 import android.media.MediaSession2.PlaylistParams;
-import android.media.PlaybackState2;
 import android.support.annotation.NonNull;
-import android.support.annotation.Nullable;
 import android.util.ArrayMap;
 
 import java.util.List;
@@ -56,7 +54,6 @@ public class MockPlayer extends MediaPlayerBase {
     public PlaylistParams mPlaylistParams;
 
     private @PlayerState int mLastPlayerState;
-    private PlaybackState2 mLastPlaybackState;
     private AudioAttributes mAudioAttributes;
 
     public MockPlayer(int count) {
@@ -170,18 +167,9 @@ public class MockPlayer extends MediaPlayerBase {
     }
     */
 
-    // TODO: Uncomment or remove
-    /*
-    @Nullable
-    @Override
-    public PlaybackState2 getPlaybackState() {
-        return mLastPlaybackState;
-    }
-    */
-
     @Override
     public int getPlayerState() {
-        return mLastPlaybackState.getState();
+        return mLastPlayerState;
     }
 
     @Override
@@ -201,13 +189,12 @@ public class MockPlayer extends MediaPlayerBase {
         mCallbacks.remove(callback);
     }
 
-    public void notifyPlaybackState(final PlaybackState2 state) {
-        mLastPlaybackState = state;
+    public void notifyPlaybackState(final int state) {
+        mLastPlayerState = state;
         for (int i = 0; i < mCallbacks.size(); i++) {
             final PlayerEventCallback callback = mCallbacks.keyAt(i);
             final Executor executor = mCallbacks.valueAt(i);
-            // TODO: Uncomment or remove
-            //executor.execute(() -> callback.onPlaybackStateChanged(state));
+            executor.execute(() -> callback.onPlayerStateChanged(this, state));
         }
     }
 
