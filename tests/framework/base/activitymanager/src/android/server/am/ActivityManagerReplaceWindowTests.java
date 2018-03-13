@@ -31,7 +31,6 @@ import android.os.SystemClock;
 import org.junit.Before;
 import org.junit.Test;
 
-import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 
@@ -95,8 +94,8 @@ public class ActivityManagerReplaceWindowTests extends ActivityManagerTestBase {
 
         mAmWmState.assertVisibility(activityName, true);
 
-        final List<String> windowTokens = new ArrayList<>();
-        mAmWmState.getWmState().getMatchingWindowTokens(windowName, windowTokens);
+        final List<String> windowTokens =
+                mAmWmState.getWmState().getMatchingWindowTokens(windowName);
 
         assertEquals("Should have exactly one window for the activity.",
                 1, windowTokens.size());
