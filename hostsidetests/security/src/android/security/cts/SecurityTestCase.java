@@ -93,7 +93,7 @@ public class SecurityTestCase extends DeviceTestCase {
      */
     @Override
     public void tearDown() throws Exception {
-        getDevice().waitForDeviceOnline(60 * 1000);
+        getDevice().waitForDeviceAvailable(120 * 1000);
         String cmdOut = getDevice().executeShellCommand("dumpsys meminfo");
         long uptime = Long.parseLong(cmdOut.substring(cmdOut.indexOf("Uptime: ") + 8,
                       cmdOut.indexOf("Realtime: ") - 1))/1000;
