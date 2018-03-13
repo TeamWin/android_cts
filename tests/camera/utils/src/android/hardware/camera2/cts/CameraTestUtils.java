@@ -79,9 +79,7 @@ import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicLong;
-import java.util.concurrent.Executor;
 import java.util.concurrent.LinkedBlockingQueue;
-import java.util.concurrent.RejectedExecutionException;
 import java.util.concurrent.Semaphore;
 import java.util.concurrent.TimeUnit;
 import java.text.ParseException;
@@ -804,8 +802,8 @@ public class CameraTestUtils extends Assert {
             outConfigurations.add(new OutputConfiguration(surface));
         }
         SessionConfiguration sessionConfig = new SessionConfiguration(
-                SessionConfiguration.SESSION_HIGH_SPEED, outConfigurations,
-                new HandlerExecutor(handler), sessionListener);
+                SessionConfiguration.SESSION_HIGH_SPEED, outConfigurations, sessionListener,
+                handler);
         sessionConfig.setSessionParameters(recordSessionParams);
         camera.createCaptureSession(sessionConfig);
 
@@ -1511,22 +1509,6 @@ public class CameraTestUtils extends Assert {
             default:
                 throw new UnsupportedOperationException("Unsupported format for validation: "
                         + format);
-        }
-    }
-
-    public static class HandlerExecutor implements Executor {
-        private final Handler mHandler;
-
-        public HandlerExecutor(Handler handler) {
-            assertNotNull("handler must be valid", handler);
-            mHandler = handler;
-        }
-
-        @Override
-        public void execute(Runnable runCmd) {
-            if (!mHandler.post(runCmd)) {
-                throw new RejectedExecutionException("Handler post failed!");
-            }
         }
     }
 
