@@ -207,21 +207,27 @@ public class StaticMetadata {
      * at least the desired one (but could be higher)
      */
     public boolean isHardwareLevelAtLeast(int level) {
+        final int[] sortedHwLevels = {
+            CameraCharacteristics.INFO_SUPPORTED_HARDWARE_LEVEL_LEGACY,
+            CameraCharacteristics.INFO_SUPPORTED_HARDWARE_LEVEL_EXTERNAL,
+            CameraCharacteristics.INFO_SUPPORTED_HARDWARE_LEVEL_LIMITED,
+            CameraCharacteristics.INFO_SUPPORTED_HARDWARE_LEVEL_FULL,
+            CameraCharacteristics.INFO_SUPPORTED_HARDWARE_LEVEL_3
+        };
         int deviceLevel = getHardwareLevelChecked();
         if (level == deviceLevel) {
             return true;
         }
-        if (deviceLevel == CameraCharacteristics.INFO_SUPPORTED_HARDWARE_LEVEL_LEGACY) {
-            return level == deviceLevel;
-        } else if (deviceLevel == CameraCharacteristics.INFO_SUPPORTED_HARDWARE_LEVEL_EXTERNAL) {
-            // External is between LEGACY and LIMITED
-            if (level == CameraCharacteristics.INFO_SUPPORTED_HARDWARE_LEVEL_LEGACY) {
+
+        for (int sortedlevel : sortedHwLevels) {
+            if (sortedlevel == level) {
                 return true;
+            } else if (sortedlevel == deviceLevel) {
+                return false;
             }
-            return false;
         }
-        // deviceLevel is not LEGACY, can use numerical sort
-        return level <= deviceLevel;
+        Assert.fail("Unknown hardwareLevel " + level + " and device hardware level " + deviceLevel);
+        return false;
     }
 
     /**
