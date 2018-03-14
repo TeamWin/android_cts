@@ -125,13 +125,9 @@ public class ActivityManagerDockedStackTests extends ActivityManagerTestBase {
         // Remove the docked stack, and ensure that
         final String logSeparator = clearLogcat();
         removeStacks(DOCKED_STACK_ID);
-        final ActivityLifecycleCounts lifecycleCounts = new ActivityLifecycleCounts(
+        final ActivityLifecycleCounts lifecycleCounts = waitForOnMultiWindowModeChanged(
                 TEST_ACTIVITY_NAME, logSeparator);
-        if (lifecycleCounts.mMultiWindowModeChangedCount != 1) {
-            fail(TEST_ACTIVITY_NAME + " has received "
-                    + lifecycleCounts.mMultiWindowModeChangedCount
-                    + " onMultiWindowModeChanged() calls, expecting 1");
-        }
+        assertEquals(1, lifecycleCounts.mMultiWindowModeChangedCount);
     }
 
     public void testLaunchToSideAndBringToFront() throws Exception {
