@@ -99,8 +99,7 @@ public class InputMethodServiceTest extends EndToEndImeTestBase {
         });
     }
 
-    @Test
-    public void testSetBackDispositionWillDismiss() throws Exception {
+    private void verifyImeConsumesBackButton(int backDisposition) throws Exception {
         try (MockImeSession imeSession = MockImeSession.create(
                 InstrumentationRegistry.getContext(),
                 InstrumentationRegistry.getInstrumentation().getUiAutomation(),
@@ -110,8 +109,7 @@ public class InputMethodServiceTest extends EndToEndImeTestBase {
             final TestActivity testActivity = createTestActivity(SOFT_INPUT_STATE_ALWAYS_VISIBLE);
             expectEvent(stream, event -> "onStartInputView".equals(event.getEventName()), TIMEOUT);
 
-            final ImeCommand command = imeSession.callSetBackDisposition(
-                    InputMethodService.BACK_DISPOSITION_WILL_DISMISS);
+            final ImeCommand command = imeSession.callSetBackDisposition(backDisposition);
             expectCommand(stream, command, TIMEOUT);
 
             testActivity.setIgnoreBackKey(true);
@@ -119,12 +117,7 @@ public class InputMethodServiceTest extends EndToEndImeTestBase {
                     (long) getOnMainSync(() -> testActivity.getOnBackPressedCallCount()));
             mInstrumentation.sendKeyDownUpSync(KeyEvent.KEYCODE_BACK);
 
-            // InputMethodService#onKeyDown() should handle back key event.
-            // TODO: Also check InputMethodService#requestHideSelf()
             expectEvent(stream, backKeyDownMatcher(true), CHECK_EXIT_EVENT_ONLY, TIMEOUT);
-
-            // keyboard will hide
-            expectEvent(stream, event -> "hideSoftInput".equals(event.getEventName()), TIMEOUT);
 
             // Make sure TestActivity#onBackPressed() is NOT called.
             try {
@@ -138,36 +131,23 @@ public class InputMethodServiceTest extends EndToEndImeTestBase {
     }
 
     @Test
+    public void testSetBackDispositionDefault() throws Exception {
+        verifyImeConsumesBackButton(InputMethodService.BACK_DISPOSITION_DEFAULT);
+    }
+
+    @Test
     public void testSetBackDispositionWillNotDismiss() throws Exception {
-        try (MockImeSession imeSession = MockImeSession.create(
-                InstrumentationRegistry.getContext(),
-                InstrumentationRegistry.getInstrumentation().getUiAutomation(),
-                new ImeSettings.Builder())) {
-            final ImeEventStream stream = imeSession.openEventStream();
+        verifyImeConsumesBackButton(InputMethodService.BACK_DISPOSITION_WILL_NOT_DISMISS);
+    }
 
-            final TestActivity testActivity = createTestActivity(SOFT_INPUT_STATE_ALWAYS_VISIBLE);
-            expectEvent(stream, event -> "onStartInputView".equals(event.getEventName()), TIMEOUT);
+    @Test
+    public void testSetBackDispositionWillDismiss() throws Exception {
+        verifyImeConsumesBackButton(InputMethodService.BACK_DISPOSITION_WILL_DISMISS);
+    }
 
-            final ImeCommand command = imeSession.callSetBackDisposition(
-                    InputMethodService.BACK_DISPOSITION_WILL_NOT_DISMISS);
-            expectCommand(stream, command, TIMEOUT);
-
-            testActivity.setIgnoreBackKey(true);
-            assertEquals(0,
-                    (long) getOnMainSync(() -> testActivity.getOnBackPressedCallCount()));
-            mInstrumentation.sendKeyDownUpSync(KeyEvent.KEYCODE_BACK);
-
-            // InputMethodService#onKeyDown() will not handle back key event.
-            // TODO: Also check InputMethodService#requestHideSelf()
-            expectEvent(stream, backKeyDownMatcher(false), CHECK_EXIT_EVENT_ONLY, TIMEOUT);
-
-            // keyboard will not hide
-            notExpectEvent(stream, event -> "hideSoftInput".equals(event.getEventName()),
-                    EXPECTED_TIMEOUT);
-
-            // Activity#onBackPressed() should be called.
-            waitOnMainUntil(() -> testActivity.getOnBackPressedCallCount() > 0, TIMEOUT);
-        }
+    @Test
+    public void testSetBackDispositionAdjustNothing() throws Exception {
+        verifyImeConsumesBackButton(InputMethodService.BACK_DISPOSITION_ADJUST_NOTHING);
     }
 
     @Test
