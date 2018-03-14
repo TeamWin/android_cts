@@ -40,6 +40,7 @@ import android.util.Size;
 import android.view.Surface;
 
 import com.android.compatibility.common.util.MediaUtils;
+import com.android.compatibility.common.util.CddTest;
 
 import java.io.File;
 import java.io.IOException;
@@ -1615,10 +1616,12 @@ public class VideoEncoderTest extends MediaPlayerTestBase {
 
     // Tests encoder profiles required by CDD.
     // H264
+    @CddTest(requirement="5.2.2/C-1-2")
     public void testH264LowQualitySDSupport()   {
         support(h264(), 320, 240, 20, 384 * 1000);
     }
 
+    @CddTest(requirement="5.2.2/C-2-1")
     public void testH264HighQualitySDSupport()   {
         support(h264(), 720, 480, 30, 2 * 1000000);
     }
@@ -1635,6 +1638,7 @@ public class VideoEncoderTest extends MediaPlayerTestBase {
         detailed(h264(), 720, 480, 30, 2 * 1000000, true /* flex */);
     }
 
+    @CddTest(requirement="5.2.2/C-2-1")
     public void testH264Surf480p30fps2Mbps()   {
         detailed(h264(), 720, 480, 30, 2 * 1000000, false /* flex */);
     }
@@ -1643,6 +1647,7 @@ public class VideoEncoderTest extends MediaPlayerTestBase {
         detailed(h264(), 1280, 720, 30, 4 * 1000000, true /* flex */);
     }
 
+    @CddTest(requirement="5.2.2/C-2-1")
     public void testH264Surf720p30fps4Mbps()   {
         detailed(h264(), 1280, 720, 30, 4 * 1000000, false /* flex */);
     }
@@ -1651,15 +1656,17 @@ public class VideoEncoderTest extends MediaPlayerTestBase {
         detailed(h264(), 1920, 1080, 30, 10 * 1000000, true /* flex */);
     }
 
+    @CddTest(requirement="5.2.2/C-2-1")
     public void testH264Surf1080p30fps10Mbps()   {
         detailed(h264(), 1920, 1080, 30, 10 * 1000000, false /* flex */);
     }
 
     // VP8
+    @CddTest(requirement="5.2.3/C-2-1")
     public void testVP8LowQualitySDSupport()   {
         support(vp8(), 320, 180, 30, 800 * 1000);
     }
-
+    @CddTest(requirement="5.2.3/C-2-1")
     public void testVP8HighQualitySDSupport()   {
         support(vp8(), 640, 360, 30, 2 * 1000000);
     }
@@ -1680,6 +1687,7 @@ public class VideoEncoderTest extends MediaPlayerTestBase {
         detailed(vp8(), 640, 360, 30, 2 * 1000000, false /* flex */);
     }
 
+    @CddTest(requirement="5.2.3/C-2-1")
     public void testVP8Flex720p30fps4Mbps()   {
         detailed(vp8(), 1280, 720, 30, 4 * 1000000, true /* flex */);
     }
@@ -1688,6 +1696,7 @@ public class VideoEncoderTest extends MediaPlayerTestBase {
         detailed(vp8(), 1280, 720, 30, 4 * 1000000, false /* flex */);
     }
 
+    @CddTest(requirement="5.2.3/C-2-1")
     public void testVP8Flex1080p30fps10Mbps()   {
         detailed(vp8(), 1920, 1080, 30, 10 * 1000000, true /* flex */);
     }

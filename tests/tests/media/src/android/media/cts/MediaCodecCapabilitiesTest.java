@@ -45,6 +45,8 @@ import java.util.Set;
 import java.util.Arrays;
 import java.util.Vector;
 
+import com.android.compatibility.common.util.CddTest;
+
 /**
  * Basic sanity test of data returned by MediaCodeCapabilities.
  */
@@ -78,6 +80,7 @@ public class MediaCodecCapabilitiesTest extends MediaPlayerTestBase {
     // Android device implementations with H.264 encoders, MUST support Baseline Profile Level 3.
     // SHOULD support Main Profile/ Level 4, if supported the device must also support Main
     // Profile/Level 4 decoding.
+    @CddTest(requirement="5.2.2/C-1-1")
     public void testH264EncoderProfileAndLevel() throws Exception {
         if (!MediaUtils.checkEncoder(MIMETYPE_VIDEO_AVC)) {
             return; // skip
@@ -96,6 +99,7 @@ public class MediaCodecCapabilitiesTest extends MediaPlayerTestBase {
 
     // Android device implementations with H.264 decoders, MUST support Baseline Profile Level 3.
     // Android Television Devices MUST support High Profile Level 4.2.
+    @CddTest(requirement="5.3.4/C-1-1/T-1-1")
     public void testH264DecoderProfileAndLevel() throws Exception {
         if (!MediaUtils.checkDecoder(MIMETYPE_VIDEO_AVC)) {
             return; // skip
@@ -113,6 +117,7 @@ public class MediaCodecCapabilitiesTest extends MediaPlayerTestBase {
     }
 
     // Android device implementations with H.263 encoders, MUST support Level 45.
+    @CddTest(requirement="5.2.1/C-1-1")
     public void testH263EncoderProfileAndLevel() throws Exception {
         if (!MediaUtils.checkEncoder(MIMETYPE_VIDEO_H263)) {
             return; // skip
@@ -124,6 +129,7 @@ public class MediaCodecCapabilitiesTest extends MediaPlayerTestBase {
     }
 
     // Android device implementations with H.263 decoders, MUST support Level 30.
+    @CddTest(requirement="5.3.2/C-1-1")
     public void testH263DecoderProfileAndLevel() throws Exception {
         if (!MediaUtils.checkDecoder(MIMETYPE_VIDEO_H263)) {
             return; // skip
@@ -135,6 +141,7 @@ public class MediaCodecCapabilitiesTest extends MediaPlayerTestBase {
     }
 
     // Android device implementations with MPEG-4 decoders, MUST support Simple Profile Level 3.
+    @CddTest(requirement="5.3.3/C-1-1")
     public void testMpeg4DecoderProfileAndLevel() throws Exception {
         if (!MediaUtils.checkDecoder(MIMETYPE_VIDEO_MPEG4)) {
             return; // skip
@@ -150,6 +157,7 @@ public class MediaCodecCapabilitiesTest extends MediaPlayerTestBase {
     // Android Television Devices MUST support the Main Profile Level 4.1 Main tier.
     // When the UHD video decoding profile is supported, it MUST support Main10 Level 5 Main
     // Tier profile.
+    @CddTest(requirement="5.3.5/C-1-1,T-1-1,T-2-1")
     public void testH265DecoderProfileAndLevel() throws Exception {
         if (!MediaUtils.checkDecoder(MIMETYPE_VIDEO_HEVC)) {
             return; // skip

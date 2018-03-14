@@ -36,6 +36,7 @@ import android.util.Log;
 import android.view.Surface;
 import android.net.Uri;
 
+import com.android.compatibility.common.util.CddTest;
 import com.android.compatibility.common.util.DeviceReportLog;
 import com.android.compatibility.common.util.DynamicConfigDeviceSide;
 import com.android.compatibility.common.util.MediaUtils;
@@ -1629,19 +1630,23 @@ public class DecoderTest extends MediaPlayerTestBase {
         assertEquals("different number of frames when using Surface", frames1, frames2);
     }
 
+    @CddTest(requirement="5.3.4/C-1-1")
     public void testCodecBasicH264() throws Exception {
         testDecode(R.raw.video_480x360_mp4_h264_1000kbps_25fps_aac_stereo_128kbps_44100hz, 240);
     }
 
+    @CddTest(requirement="5.3.5/C-1-1")
     public void testCodecBasicHEVC() throws Exception {
         testDecode(
                 R.raw.bbb_s1_720x480_mp4_hevc_mp3_1600kbps_30fps_aac_he_6ch_240kbps_48000hz, 300);
     }
 
+    @CddTest(requirement="5.3.2/C-1-1")
     public void testCodecBasicH263() throws Exception {
         testDecode(R.raw.video_176x144_3gp_h263_300kbps_12fps_aac_stereo_128kbps_22050hz, 122);
     }
 
+    @CddTest(requirement="5.3.3/C-1-1")
     public void testCodecBasicMpeg4() throws Exception {
         testDecode(R.raw.video_480x360_mp4_mpeg4_860kbps_25fps_aac_stereo_128kbps_44100hz, 249);
     }
@@ -1654,6 +1659,7 @@ public class DecoderTest extends MediaPlayerTestBase {
         testDecode(R.raw.video_480x360_webm_vp9_333kbps_25fps_vorbis_stereo_128kbps_48000hz, 240);
     }
 
+    @CddTest(requirement="5.3.4/C-1-2")
     public void testH264Decode320x240() throws Exception {
         testDecode(R.raw.bbb_s1_320x240_mp4_h264_mp2_800kbps_30fps_aac_lc_5ch_240kbps_44100hz, 300);
     }
@@ -1682,6 +1688,7 @@ public class DecoderTest extends MediaPlayerTestBase {
         testDecode(R.raw.bbb_s4_1280x720_mp4_h264_mp31_8mbps_30fps_aac_he_mono_40kbps_44100hz, 300);
     }
 
+    @CddTest(requirement="5.3.4/T-1-2")
     public void testH264Decode60fps1280x720Tv() throws Exception {
         if (checkTv()) {
             assertTrue(MediaUtils.canDecodeVideo(
@@ -1701,6 +1708,7 @@ public class DecoderTest extends MediaPlayerTestBase {
         }
     }
 
+    @CddTest(requirement="5.3.4/C-2-1")
     public void testH264Decode60fps1280x720() throws Exception {
         testDecode(
             R.raw.bbb_s3_1280x720_mp4_h264_mp32_8mbps_60fps_aac_he_v2_6ch_144kbps_44100hz, 600);
@@ -1731,6 +1739,7 @@ public class DecoderTest extends MediaPlayerTestBase {
                 150);
     }
 
+    @CddTest(requirement="5.3.4/C-2-2,T-1-1")
     public void testH264Decode60fps1920x1080Tv() throws Exception {
         if (checkTv()) {
             assertTrue(MediaUtils.canDecodeVideo(
@@ -1756,6 +1765,7 @@ public class DecoderTest extends MediaPlayerTestBase {
                 300);
     }
 
+    @CddTest(requirement="5.3.6/C-1-1")
     public void testVP8Decode320x180() throws Exception {
         testDecode(R.raw.bbb_s1_320x180_webm_vp8_800kbps_30fps_opus_5ch_320kbps_48000hz, 300);
     }
@@ -1770,10 +1780,12 @@ public class DecoderTest extends MediaPlayerTestBase {
         }
     }
 
+    @CddTest(requirement="5.3.6/C-2-1")
     public void testVP8Decode30fps1280x720() throws Exception {
         testDecode(R.raw.bbb_s4_1280x720_webm_vp8_8mbps_30fps_opus_mono_64kbps_48000hz, 300);
     }
 
+    @CddTest(requirement="5.3.6/C-2-1/T-2-1")
     public void testVP8Decode60fps1280x720Tv() throws Exception {
         if (checkTv()) {
             assertTrue(MediaUtils.canDecodeVideo(MediaFormat.MIMETYPE_VIDEO_VP8, 1280, 720, 60));
@@ -1790,11 +1802,13 @@ public class DecoderTest extends MediaPlayerTestBase {
         }
     }
 
+    @CddTest(requirement="5.3.6/C-2-2")
     public void testVP8Decode30fps1920x1080() throws Exception {
         testDecode(
                 R.raw.bbb_s4_1920x1080_wide_webm_vp8_20mbps_30fps_vorbis_6ch_384kbps_44100hz, 150);
     }
 
+    @CddTest(requirement="5.3.6/C-2-2,T-1-1")
     public void testVP8Decode60fps1920x1080Tv() throws Exception {
         if (checkTv()) {
             assertTrue(MediaUtils.canDecodeVideo(MediaFormat.MIMETYPE_VIDEO_VP8, 1920, 1080, 60));
@@ -1805,10 +1819,12 @@ public class DecoderTest extends MediaPlayerTestBase {
         testDecode(R.raw.bbb_s2_1920x1080_webm_vp8_20mbps_60fps_vorbis_6ch_384kbps_48000hz, 300);
     }
 
+    @CddTest(requirement="5.3.7/C-1-1")
     public void testVP9Decode320x180() throws Exception {
         testDecode(R.raw.bbb_s1_320x180_webm_vp9_0p11_600kbps_30fps_vorbis_mono_64kbps_48000hz, 300);
     }
 
+    @CddTest(requirement="5.3.7/C-1-1")
     public void testVP9Decode640x360() throws Exception {
         testDecode(
                 R.raw.bbb_s1_640x360_webm_vp9_0p21_1600kbps_30fps_vorbis_stereo_128kbps_48000hz,
@@ -1821,11 +1837,13 @@ public class DecoderTest extends MediaPlayerTestBase {
         }
     }
 
+    @CddTest(requirement="5.3.7/C-2-2")
     public void testVP9Decode30fps1280x720() throws Exception {
         testDecode(
                 R.raw.bbb_s4_1280x720_webm_vp9_0p31_4mbps_30fps_opus_stereo_128kbps_48000hz, 300);
     }
 
+    @CddTest(requirement="5.3.7/T-2-1")
     public void testVP9Decode60fps1920x1080() throws Exception {
         testDecode(
                 R.raw.bbb_s2_1920x1080_webm_vp9_0p41_10mbps_60fps_vorbis_6ch_384kbps_22050hz, 300);
@@ -1836,6 +1854,7 @@ public class DecoderTest extends MediaPlayerTestBase {
                 R.raw.bbb_s4_3840x2160_webm_vp9_0p5_20mbps_30fps_vorbis_6ch_384kbps_24000hz, 150);
     }
 
+    @CddTest(requirement="5.3.7/C-3-1")
     public void testVP9Decode60fps3840x2160() throws Exception {
         testDecode(
                 R.raw.bbb_s2_3840x2160_webm_vp9_0p51_20mbps_60fps_vorbis_6ch_384kbps_32000hz, 300);
@@ -1859,11 +1878,13 @@ public class DecoderTest extends MediaPlayerTestBase {
         }
     }
 
+    @CddTest(requirement="5.3.5/C-1-2")
     public void testHEVCDecode30fps1280x720() throws Exception {
         testDecode(
                 R.raw.bbb_s4_1280x720_mp4_hevc_mp31_4mbps_30fps_aac_he_stereo_80kbps_32000hz, 300);
     }
 
+    @CddTest(requirement="5.3.5/C-1-2,T-1-1")
     public void testHEVCDecode30fps1920x1080Tv() throws Exception {
         if (checkTv()) {
             assertTrue(MediaUtils.canDecodeVideo(
@@ -1872,6 +1893,7 @@ public class DecoderTest extends MediaPlayerTestBase {
         }
     }
 
+    @CddTest(requirement="5.3.5/C-1-2")
     public void testHEVCDecode60fps1920x1080() throws Exception {
         testDecode(
                 R.raw.bbb_s2_1920x1080_mp4_hevc_mp41_10mbps_60fps_aac_lc_6ch_384kbps_22050hz, 300);
@@ -1882,6 +1904,7 @@ public class DecoderTest extends MediaPlayerTestBase {
                 R.raw.bbb_s4_3840x2160_mp4_hevc_mp5_20mbps_30fps_aac_lc_6ch_384kbps_24000hz, 150);
     }
 
+    @CddTest(requirement="5.3.5/C-2-1")
     public void testHEVCDecode60fps3840x2160() throws Exception {
         testDecode(
                 R.raw.bbb_s2_3840x2160_mp4_hevc_mp51_20mbps_60fps_aac_lc_6ch_384kbps_32000hz, 300);
