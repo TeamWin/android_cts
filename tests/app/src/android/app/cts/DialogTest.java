@@ -195,7 +195,7 @@ public class DialogTest extends ActivityInstrumentationTestCase2<DialogStubActiv
         mInstrumentation.waitForIdleSync();
 
         assertEquals(View.GONE, decor.getVisibility());
-        assertTrue(d.isShowing());
+        assertFalse(d.isShowing());
 
         runTestOnUiThread(new Runnable() {
             public void run() {
