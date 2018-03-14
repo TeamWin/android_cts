@@ -36,6 +36,7 @@ import android.app.Instrumentation;
 import android.app.UiAutomation;
 import android.content.Context;
 import android.content.res.Resources;
+import android.graphics.Bitmap;
 import android.os.SystemClock;
 import android.service.autofill.SaveInfo;
 import android.support.annotation.NonNull;
@@ -282,9 +283,11 @@ final class UiBot {
     /**
      * Selects a view by id.
      */
-    void selectByRelativeId(String id) throws Exception {
+    UiObject2 selectByRelativeId(String id) throws Exception {
         Log.v(TAG, "selectByRelativeId(): " + id);
-        waitForObject(By.res(mPackageName, id)).click();
+        UiObject2 object = waitForObject(By.res(mPackageName, id));
+        object.click();
+        return object;
     }
 
     /**
@@ -306,6 +309,7 @@ final class UiBot {
         assertThat(obj).isNotNull();
         return obj;
     }
+
     /**
      * Asserts the id is not shown on the screen anymore, using a resource id from the test package.
      *
@@ -338,8 +342,18 @@ final class UiBot {
             // Not found as expected.
             return;
         }
+        String childrenText = null;
+        try {
+            childrenText = getChildrenAsText(object).toString();
+        } catch (Throwable t) {
+            // getChildrenAsText() itself could throw an exception (like StateObjectException),
+            // which we should ignore (otherwise it would mask the real issue).
+            if (object != null) {
+                childrenText = object.toString();
+            }
+        }
         throw new RetryableException(timeout, "Should not be showing %s, but got %s",
-                description, getChildrenAsText(object));
+                description, childrenText);
     }
 
     /**
@@ -769,6 +783,17 @@ final class UiBot {
             Log.e(TAG, "exception dumping window hierarchy", e);
             return;
         }
+    }
+
+    // TODO(b/74358143): ideally we should take a screenshot limited by the boundaries of the
+    // activity window, so external elements (such as the clock) are filtered out and don't cause
+    // test flakiness when the contents are compared.
+    public Bitmap takeScreenshot() {
+        final long before = SystemClock.elapsedRealtime();
+        final Bitmap bitmap = mAutoman.takeScreenshot();
+        final long delta = SystemClock.elapsedRealtime() - before;
+        Log.v(TAG, "Screenshot taken in " + delta + "ms");
+        return bitmap;
     }
 
     /**

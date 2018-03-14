@@ -58,7 +58,6 @@ import android.support.test.filters.FlakyTest;
 import org.junit.Ignore;
 import org.junit.Test;
 
-import java.util.ArrayList;
 import java.util.List;
 
 /**
@@ -636,13 +635,13 @@ public class ActivityManagerAppConfigurationTests extends ActivityManagerTestBas
         mAmWmState.computeState(activityName);
         mAmWmState.assertFocusedWindow("Test window must be the front window.", windowName);
 
-        final List<WindowManagerState.WindowState> tempWindowList = new ArrayList<>();
-        mAmWmState.getWmState().getMatchingVisibleWindowState(windowName, tempWindowList);
+        final List<WindowManagerState.WindowState> windowList =
+                mAmWmState.getWmState().getMatchingVisibleWindowState(windowName);
 
         assertEquals("Should have exactly one window state for the activity.", 1,
-                tempWindowList.size());
+                windowList.size());
 
-        WindowManagerState.WindowState windowState = tempWindowList.get(0);
+        WindowManagerState.WindowState windowState = windowList.get(0);
         assertNotNull("Should have a valid window", windowState);
 
         WindowManagerState.Display display = mAmWmState.getWmState()

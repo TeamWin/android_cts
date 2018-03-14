@@ -29,7 +29,6 @@ import android.media.MediaSession2;
 import android.media.MediaSession2.Command;
 import android.media.MediaSession2.CommandButton;
 import android.media.MediaSession2.CommandGroup;
-import android.media.PlaybackState2;
 import android.media.SessionToken2;
 import android.os.Bundle;
 import android.os.HandlerThread;
@@ -39,13 +38,14 @@ import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
 import android.support.test.InstrumentationRegistry;
 
+import org.junit.AfterClass;
+import org.junit.BeforeClass;
+
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.Executor;
 import java.util.concurrent.TimeUnit;
-import org.junit.AfterClass;
-import org.junit.BeforeClass;
 
 /**
  * Base class for session test.
@@ -105,16 +105,6 @@ abstract class MediaSession2TestBase {
         }
     }
 
-    /**
-     * Creates a {@link android.media.session.PlaybackState} with the given state.
-     *
-     * @param state one of the PlaybackState.STATE_xxx.
-     * @return a PlaybackState
-     */
-    public PlaybackState2 createPlaybackState(int state) {
-        return new PlaybackState2(mContext, state, 0, 0, 1.0f, 0, 0);
-    }
-
     final MediaController2 createController(SessionToken2 token) throws InterruptedException {
         return createController(token, true, null);
     }
@@ -167,6 +157,7 @@ abstract class MediaSession2TestBase {
         return new TestMediaController(mContext, token, new TestControllerCallback(callback));
     }
 
+    // TODO(jaewan): (Can be Post-P): Deprecate this
     public static class TestControllerCallback extends MediaController2.ControllerCallback
             implements WaitForConnectionInterface {
         public final ControllerCallback mCallbackProxy;
@@ -208,11 +199,6 @@ abstract class MediaSession2TestBase {
             } else {
                 assertFalse(disconnectLatch.await(TIMEOUT_MS, TimeUnit.MILLISECONDS));
             }
-        }
-
-        @Override
-        public void onPlaybackStateChanged(MediaController2 controller, PlaybackState2 state) {
-            mCallbackProxy.onPlaybackStateChanged(controller, state);
         }
 
         @Override

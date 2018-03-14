@@ -30,6 +30,8 @@ import android.content.res.Configuration;
 import android.graphics.Rect;
 import android.os.ParcelFileDescriptor;
 import android.os.SystemClock;
+import android.support.annotation.NonNull;
+import android.support.annotation.Nullable;
 import android.support.test.InstrumentationRegistry;
 import android.view.nano.DisplayInfoProto;
 
@@ -56,10 +58,14 @@ import java.io.FileInputStream;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
+import java.util.function.Predicate;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 public class WindowManagerState {
     public static final String TRANSIT_ACTIVITY_OPEN = "TRANSIT_ACTIVITY_OPEN";
@@ -309,72 +315,43 @@ public class WindowManagerState {
         }
     }
 
-    void getMatchingWindowTokens(final String windowName, List<String> tokenList) {
-        tokenList.clear();
-
-        for (WindowState ws : mWindowStates) {
-            if (windowName.equals(ws.getName())) {
-                tokenList.add(ws.getToken());
-            }
-        }
+    List<String> getMatchingWindowTokens(final String windowName) {
+        return getMatchingWindows(ws -> windowName.equals(ws.getName()))
+                .map(WindowState::getToken)
+                .collect(Collectors.toList());
     }
 
-    public void getMatchingVisibleWindowState(final String windowName, List<WindowState> windowList) {
-        windowList.clear();
-        for (WindowState ws : mWindowStates) {
-            if (ws.isShown() && windowName.equals(ws.getName())) {
-                windowList.add(ws);
-            }
-        }
+    public List<WindowState> getMatchingVisibleWindowState(final String windowName) {
+        return getMatchingWindows(ws -> ws.isShown() && windowName.equals(ws.getName()))
+                .collect(Collectors.toList());
     }
 
-    public boolean containsExitingWindow() {
-        for (WindowState ws : mWindowStates) {
-            if (ws.isExitingWindow()) {
-                return true;
-            }
-        }
-
-        return false;
+    List<WindowState> getExitingWindows() {
+        return getMatchingWindows(WindowState::isExitingWindow)
+                .collect(Collectors.toList());
     }
 
+    private Stream<WindowState> getMatchingWindows(Predicate<WindowState> condition) {
+        return mWindowStates.stream().filter(condition);
+    }
+
+    @Nullable
     public WindowState getWindowByPackageName(String packageName, int windowType) {
-        for (WindowState ws : mWindowStates) {
-            final String name = ws.getName();
-            if (name == null || !name.contains(packageName)) {
-                continue;
-            }
-            if (windowType != ws.getType()) {
-                continue;
-            }
-            return ws;
-        }
-
-        return null;
+        final List<WindowState> windowList = getWindowsByPackageName(packageName, windowType);
+        return windowList.isEmpty() ? null : windowList.get(0);
     }
 
-    public void getWindowsByPackageName(String packageName, List<Integer> restrictToTypeList,
-            List<WindowState> outWindowList) {
-        outWindowList.clear();
-        for (WindowState ws : mWindowStates) {
-            final String name = ws.getName();
-            if (name == null || !name.contains(packageName)) {
-                continue;
-            }
-            if (restrictToTypeList != null && !restrictToTypeList.contains(ws.getType())) {
-                continue;
-            }
-            outWindowList.add(ws);
-        }
+    public List<WindowState> getWindowsByPackageName(String packageName, int... restrictToTypes) {
+        return getMatchingWindows(ws ->
+                (ws.getName().equals(packageName) || ws.getName().startsWith(packageName + "/"))
+                && Arrays.stream(restrictToTypes).anyMatch(type -> type == ws.getType()))
+                .collect(Collectors.toList());
     }
 
     WindowState getWindowStateForAppToken(String appToken) {
-        for (WindowState ws : mWindowStates) {
-            if (ws.getToken().equals(appToken)) {
-                return ws;
-            }
-        }
-        return null;
+        return getMatchingWindows(ws -> ws.getToken().equals(appToken))
+                .findFirst()
+                .orElse(null);
     }
 
     Display getDisplay(int displayId) {
@@ -837,6 +814,7 @@ public class WindowManagerState {
             }
         }
 
+        @NonNull
         public String getName() {
             return mName;
         }
