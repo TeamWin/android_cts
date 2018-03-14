@@ -222,7 +222,7 @@ public class MediaSession2_PermissionTest extends MediaSession2TestBase {
 
     @Test
     public void testSetPlaylist() throws InterruptedException {
-        List<MediaItem2> list = TestUtils.createPlaylist(mContext);
+        List<MediaItem2> list = TestUtils.createPlaylist(mContext, 2);
         testOnCommandRequest(COMMAND_CODE_PLAYLIST_SET_LIST, (controller) -> {
             controller.setPlaylist(list, null);
         });
