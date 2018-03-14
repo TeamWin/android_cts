@@ -128,7 +128,7 @@ public class XfermodeTest extends ActivityTestBase {
                 BG_COLOR, DST_COLOR, SCREEN_COLOR, SRC_COLOR } },
     };
 
-    @Parameterized.Parameters(name = "{0}")
+    @Parameterized.Parameters
     public static List<Config> configs() {
         return configs(MODES_AND_EXPECTED_COLORS);
     }
