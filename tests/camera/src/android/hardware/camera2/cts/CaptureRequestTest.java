@@ -2713,6 +2713,10 @@ public class CaptureRequestTest extends Camera2SurfaceViewTestCase {
             // Allow a larger error margin (1.5%) for timestamps
             frameDurationErrorMargin = 0.015f;
         }
+        if (mStaticInfo.isExternalCamera()) {
+            // Allow a even larger error margin (15%) for external camera timestamps
+            frameDurationErrorMargin = 0.15f;
+        }
 
         boolean antiBandingOffIsSupported = mStaticInfo.isAntiBandingOffModeSupported();
         Range<Integer> fpsRange;
