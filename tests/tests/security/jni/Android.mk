@@ -31,7 +31,6 @@ LOCAL_SRC_FILES := \
 		android_security_cts_SeccompTest.cpp \
 		android_security_cts_MMapExecutableTest.cpp \
 		android_security_cts_EncryptionTest.cpp \
-		android_security_cts_StagefrightCodecTest.cpp \
 
 LOCAL_SHARED_LIBRARIES := \
 		libnativehelper \
