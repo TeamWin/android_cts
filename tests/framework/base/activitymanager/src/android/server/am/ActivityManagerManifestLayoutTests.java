@@ -37,7 +37,6 @@ import android.server.am.WindowManagerState.WindowState;
 
 import org.junit.Test;
 
-import java.util.ArrayList;
 import java.util.List;
 
 /**
@@ -61,7 +60,6 @@ public class ActivityManagerManifestLayoutTests extends ActivityManagerTestBase 
     private static final int GRAVITY_HOR_LEFT   = 0x20;
     private static final int GRAVITY_HOR_RIGHT  = 0x40;
 
-    private List<WindowState> mTempWindowList = new ArrayList();
     private Display mDisplay;
     private WindowState mWindowState;
 
@@ -168,12 +166,13 @@ public class ActivityManagerManifestLayoutTests extends ActivityManagerTestBase 
             mAmWmState.assertVisibility(activityName, true);
         }
 
-        mAmWmState.getWmState().getMatchingVisibleWindowState(windowName, mTempWindowList);
+        final List<WindowState> windowList =
+                mAmWmState.getWmState().getMatchingVisibleWindowState(windowName);
 
         assertEquals("Should have exactly one window state for the activity.",
-                1, mTempWindowList.size());
+                1, windowList.size());
 
-        mWindowState = mTempWindowList.get(0);
+        mWindowState = windowList.get(0);
         assertNotNull("Should have a valid window", mWindowState);
 
         mDisplay = mAmWmState.getWmState().getDisplay(mWindowState.getDisplayId());

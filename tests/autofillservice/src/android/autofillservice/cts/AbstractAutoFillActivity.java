@@ -16,10 +16,17 @@
 
 package android.autofillservice.cts;
 
+import static com.google.common.truth.Truth.assertThat;
 import static com.google.common.truth.Truth.assertWithMessage;
 
 import android.app.Activity;
+import android.graphics.Bitmap;
+import android.graphics.Rect;
+import android.view.PixelCopy;
+import android.view.View;
 import android.view.autofill.AutofillManager;
+
+import com.android.compatibility.common.util.SynchronousPixelCopy;
 
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
@@ -61,6 +68,28 @@ abstract class AbstractAutoFillActivity extends Activity {
 
     protected AutofillManager getAutofillManager() {
         return getSystemService(AutofillManager.class);
+    }
+
+    /**
+     * Takes a screenshot from the whole activity.
+     *
+     * <p><b>Note:</b> this screenshot only contains the contents of the activity, it doesn't
+     * include the autofill UIs; if you need to check that, please use
+     * {@link UiBot#takeScreenshot()} instead.
+     */
+    public Bitmap takeScreenshot() {
+        final View rootView = findViewById(android.R.id.content).getRootView();
+
+        final Rect srcRect = new Rect();
+        syncRunOnUiThread(() -> rootView.getGlobalVisibleRect(srcRect));
+        final Bitmap dest = Bitmap.createBitmap(
+                srcRect.width(), srcRect.height(), Bitmap.Config.ARGB_8888);
+
+        final SynchronousPixelCopy copy = new SynchronousPixelCopy();
+        final int copyResult = copy.request(getWindow(), srcRect, dest);
+        assertThat(copyResult).isEqualTo(PixelCopy.SUCCESS);
+
+        return dest;
     }
 
     /**

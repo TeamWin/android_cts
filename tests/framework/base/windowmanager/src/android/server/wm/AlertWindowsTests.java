@@ -37,8 +37,6 @@ import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 
-import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 
 /**
@@ -63,17 +61,19 @@ public class AlertWindowsTests extends ActivityManagerTestBase {
     private static final int TYPE_INPUT_METHOD          = FIRST_SYSTEM_WINDOW + 11;
     private static final int TYPE_NAVIGATION_BAR        = FIRST_SYSTEM_WINDOW + 19;
 
-    private final List<Integer> mAlertWindowTypes = Arrays.asList(
+    private static final int[] ALERT_WINDOW_TYPES = {
             TYPE_PHONE,
             TYPE_PRIORITY_PHONE,
             TYPE_SYSTEM_ALERT,
             TYPE_SYSTEM_ERROR,
             TYPE_SYSTEM_OVERLAY,
-            TYPE_APPLICATION_OVERLAY);
-    private final List<Integer> mSystemWindowTypes = Arrays.asList(
+            TYPE_APPLICATION_OVERLAY
+    };
+    private static final int[] SYSTEM_WINDOW_TYPES = {
             TYPE_STATUS_BAR,
             TYPE_INPUT_METHOD,
-            TYPE_NAVIGATION_BAR);
+            TYPE_NAVIGATION_BAR
+    };
 
     @Before
     @Override
@@ -128,7 +128,7 @@ public class AlertWindowsTests extends ActivityManagerTestBase {
         assertAlertWindows(activityName, hasAlertWindowPermission, atLeastO);
     }
 
-    private boolean allWindowsHidden(ArrayList<WindowManagerState.WindowState> windows) {
+    private boolean allWindowsHidden(List<WindowManagerState.WindowState> windows) {
         for (WindowManagerState.WindowState ws : windows) {
             if (ws.isShown()) {
                 return false;
@@ -140,10 +140,10 @@ public class AlertWindowsTests extends ActivityManagerTestBase {
     private void assertAlertWindows(final ComponentName activityName,
             final boolean hasAlertWindowPermission, final boolean atLeastO) throws Exception {
         final String packageName = activityName.getPackageName();
-        final WindowManagerState wMState = mAmWmState.getWmState();
+        final WindowManagerState wmState = mAmWmState.getWmState();
 
-        final ArrayList<WindowManagerState.WindowState> alertWindows = new ArrayList<>();
-        wMState.getWindowsByPackageName(packageName, mAlertWindowTypes, alertWindows);
+        final List<WindowManagerState.WindowState> alertWindows =
+                wmState.getWindowsByPackageName(packageName, ALERT_WINDOW_TYPES);
 
         if (!hasAlertWindowPermission) {
             // When running in VR Mode, an App Op restriction is
@@ -172,7 +172,7 @@ public class AlertWindowsTests extends ActivityManagerTestBase {
         }
 
         final WindowManagerState.WindowState mainAppWindow =
-                wMState.getWindowByPackageName(packageName, TYPE_BASE_APPLICATION);
+                wmState.getWindowByPackageName(packageName, TYPE_BASE_APPLICATION);
 
         assertNotNull(mainAppWindow);
 
@@ -181,14 +181,13 @@ public class AlertWindowsTests extends ActivityManagerTestBase {
                 alertWindows.get(alertWindows.size() - 1);
 
         // Assert that the alert windows have higher z-order than the main app window
-        final WindowManagerState wmState = mAmWmState.getWmState();
         assertTrue("lowestAlertWindow=" + lowestAlertWindow + " less than mainAppWindow="
                 + mainAppWindow,
                 wmState.getZOrder(lowestAlertWindow) > wmState.getZOrder(mainAppWindow));
 
         // Assert that legacy alert windows have a lower z-order than the new alert window layer.
         final WindowManagerState.WindowState appOverlayWindow =
-                wMState.getWindowByPackageName(packageName, TYPE_APPLICATION_OVERLAY);
+                wmState.getWindowByPackageName(packageName, TYPE_APPLICATION_OVERLAY);
         if (appOverlayWindow != null && highestAlertWindow != appOverlayWindow) {
             assertTrue("highestAlertWindow=" + highestAlertWindow
                             + " greater than appOverlayWindow=" + appOverlayWindow,
@@ -196,8 +195,8 @@ public class AlertWindowsTests extends ActivityManagerTestBase {
         }
 
         // Assert that alert windows are below key system windows.
-        final ArrayList<WindowManagerState.WindowState> systemWindows = new ArrayList<>();
-        wMState.getWindowsByPackageName(packageName, mSystemWindowTypes, systemWindows);
+        final List<WindowManagerState.WindowState> systemWindows =
+                wmState.getWindowsByPackageName(packageName, SYSTEM_WINDOW_TYPES);
         if (!systemWindows.isEmpty()) {
             final WindowManagerState.WindowState lowestSystemWindow = alertWindows.get(0);
             assertTrue("highestAlertWindow=" + highestAlertWindow

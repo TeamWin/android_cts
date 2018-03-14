@@ -41,7 +41,6 @@ import static android.server.am.Components.PipActivity.ACTION_ENTER_PIP;
 import static android.server.am.Components.PipActivity.ACTION_EXPAND_PIP;
 import static android.server.am.Components.PipActivity.ACTION_FINISH;
 import static android.server.am.Components.PipActivity.ACTION_MOVE_TO_BACK;
-
 import static android.server.am.Components.PipActivity.ACTION_SET_REQUESTED_ORIENTATION;
 import static android.server.am.Components.PipActivity.EXTRA_ASSERT_NO_ON_STOP_BEFORE_PIP;
 import static android.server.am.Components.PipActivity.EXTRA_ENTER_PIP;
@@ -89,7 +88,6 @@ import android.util.Size;
 import org.junit.Ignore;
 import org.junit.Test;
 
-import java.util.ArrayList;
 import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -1479,8 +1477,8 @@ public class ActivityManagerPinnedStackTests extends ActivityManagerTestBase {
             throws Exception {
         String windowName = getWindowName(activityName);
         mAmWmState.computeState(activityName);
-        final List<WindowManagerState.WindowState> tempWindowList = new ArrayList<>();
-        mAmWmState.getWmState().getMatchingVisibleWindowState(windowName, tempWindowList);
+        final List<WindowManagerState.WindowState> tempWindowList =
+                mAmWmState.getWmState().getMatchingVisibleWindowState(windowName);
         return tempWindowList.get(0);
     }
 

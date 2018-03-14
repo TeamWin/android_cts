@@ -207,12 +207,42 @@ public class StaticMetadata {
      * at least the desired one (but could be higher)
      */
     public boolean isHardwareLevelAtLeast(int level) {
+        final int[] sortedHwLevels = {
+            CameraCharacteristics.INFO_SUPPORTED_HARDWARE_LEVEL_LEGACY,
+            CameraCharacteristics.INFO_SUPPORTED_HARDWARE_LEVEL_EXTERNAL,
+            CameraCharacteristics.INFO_SUPPORTED_HARDWARE_LEVEL_LIMITED,
+            CameraCharacteristics.INFO_SUPPORTED_HARDWARE_LEVEL_FULL,
+            CameraCharacteristics.INFO_SUPPORTED_HARDWARE_LEVEL_3
+        };
         int deviceLevel = getHardwareLevelChecked();
-        if (deviceLevel == CameraCharacteristics.INFO_SUPPORTED_HARDWARE_LEVEL_LEGACY) {
-            return level == deviceLevel;
+        if (level == deviceLevel) {
+            return true;
         }
-        // deviceLevel is not LEGACY, can use numerical sort
-        return level <= deviceLevel;
+
+        for (int sortedlevel : sortedHwLevels) {
+            if (sortedlevel == level) {
+                return true;
+            } else if (sortedlevel == deviceLevel) {
+                return false;
+            }
+        }
+        Assert.fail("Unknown hardwareLevel " + level + " and device hardware level " + deviceLevel);
+        return false;
+    }
+
+    /**
+     * Whether or not the camera is an external camera. If so the hardware level
+     * reported by android.info.supportedHardwareLevel is
+     * {@value CameraMetadata#INFO_SUPPORTED_HARDWARE_LEVEL_EXTERNAL}.
+     *
+     * <p>If the camera device is not reporting the hardwareLevel, this
+     * will cause the test to fail.</p>
+     *
+     * @return {@code true} if the device is external, {@code false} otherwise.
+     */
+    public boolean isExternalCamera() {
+        int deviceLevel = getHardwareLevelChecked();
+        return deviceLevel == CameraCharacteristics.INFO_SUPPORTED_HARDWARE_LEVEL_EXTERNAL;
     }
 
     /**

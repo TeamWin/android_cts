@@ -39,6 +39,7 @@ public class Components extends ComponentsBase {
     public static final ComponentName DISMISS_KEYGUARD_METHOD_ACTIVITY =
             component("DismissKeyguardMethodActivity");
     public static final ComponentName DOCKED_ACTIVITY = component("DockedActivity");
+    /** This activity is an alias activity pointing {@link TrampolineActivity} in AndroidManifest.xml */
     public static final ComponentName ENTRY_POINT_ALIAS_ACTIVITY =
             component("EntryPointAliasActivity");
     public static final ComponentName FONT_SCALE_ACTIVITY = component("FontScaleActivity");

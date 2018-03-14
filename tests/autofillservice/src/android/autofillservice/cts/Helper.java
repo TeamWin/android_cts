@@ -38,8 +38,10 @@ import android.autofillservice.cts.common.SettingsHelper;
 import android.content.ComponentName;
 import android.content.Context;
 import android.content.pm.PackageManager;
+import android.graphics.Bitmap;
 import android.icu.util.Calendar;
 import android.os.Bundle;
+import android.os.Environment;
 import android.service.autofill.FieldClassification;
 import android.service.autofill.FieldClassification.Match;
 import android.service.autofill.FillContext;
@@ -58,8 +60,11 @@ import android.view.autofill.AutofillManager.AutofillCallback;
 import android.view.autofill.AutofillValue;
 import android.webkit.WebView;
 
+import com.android.compatibility.common.util.BitmapUtils;
 import com.android.compatibility.common.util.RequiredFeatureRule;
 
+import java.io.File;
+import java.io.IOException;
 import java.lang.reflect.Field;
 import java.util.List;
 import java.util.Map;
@@ -93,9 +98,12 @@ final class Helper {
 
     private static final String CMD_LIST_SESSIONS = "cmd autofill list sessions";
 
-    private final static String ACCELLEROMETER_CHANGE =
+    private static final String ACCELLEROMETER_CHANGE =
             "content insert --uri content://settings/system --bind name:s:accelerometer_rotation "
                     + "--bind value:i:%d";
+
+    private static final String LOCAL_DIRECTORY = Environment.getExternalStorageDirectory()
+            + "/CtsAutoFillServiceTestCases";
 
     /**
      * Helper interface used to filter nodes.
@@ -1187,6 +1195,53 @@ final class Helper {
             if (expectedHint.equals(actualHint)) return true;
         }
         return false;
+    }
+
+    /**
+     * Asserts that 2 bitmaps have are the same. If they aren't throws an exception and dump them
+     * locally so their can be visually inspected.
+     *
+     * @param filename base name of the files generated in case of error
+     * @param bitmap1 first bitmap to be compared
+     * @param bitmap2 second bitmap to be compared
+     */
+    public static void assertBitmapsAreSame(@NonNull String filename, @Nullable Bitmap bitmap1,
+            @Nullable Bitmap bitmap2) throws IOException {
+        assertWithMessage("1st bitmap is null").that(bitmap1).isNotNull();
+        assertWithMessage("2nd bitmap is null").that(bitmap2).isNotNull();
+        final boolean same = bitmap1.sameAs(bitmap2);
+        if (same) {
+            Log.v(TAG, "bitmap comparison passed for " + filename);
+            return;
+        }
+
+        final File dir = new File(LOCAL_DIRECTORY);
+        dir.mkdirs();
+        if (!dir.exists()) {
+            Log.e(TAG, "Could not create directory " + dir);
+            throw new AssertionError("bitmap comparison failed for " + filename
+                    + ", and bitmaps could not be dumped on " + dir);
+        }
+        final File dump1 = dumpBitmap(bitmap1, dir, filename + "-1.png");
+        final File dump2 = dumpBitmap(bitmap2, dir, filename + "-2.png");
+        throw new AssertionError(
+                "bitmap comparison failed; check contents of " + dump1 + " and " + dump2);
+    }
+
+    @Nullable
+    private static File dumpBitmap(@NonNull Bitmap bitmap, @NonNull File dir,
+            @NonNull String filename) throws IOException {
+        final File file = new File(dir, filename);
+        if (file.exists()) {
+            file.delete();
+        }
+        if (!file.createNewFile()) {
+            Log.e(TAG, "Could not create file " + file);
+            return null;
+        }
+        Log.d(TAG, "Dumping bitmap at " + file);
+        BitmapUtils.saveBitmap(bitmap, file.getParent(), file.getName());
+        return file;
     }
 
     private Helper() {
