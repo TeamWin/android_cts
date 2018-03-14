@@ -32,6 +32,7 @@ extern int register_android_security_cts_AudioEffectBinderTest(JNIEnv* env);
 extern int register_android_security_cts_StagefrightFoundationTest(JNIEnv* env);
 extern int register_android_security_cts_GraphicBufferInfoLeakTest(JNIEnv* env);
 extern int register_android_security_cts_IDRMInfoLeakTest(JNIEnv* env);
+extern int register_android_security_cts_StagefrightCodecTest(JNIEnv* env);
 
 jint JNI_OnLoad(JavaVM *vm, void *reserved) {
     JNIEnv *env = NULL;
@@ -98,6 +99,10 @@ jint JNI_OnLoad(JavaVM *vm, void *reserved) {
 
     if (register_android_security_cts_IDRMInfoLeakTest(env)) {
         return JNI_ERR;
+    }
+
+    if (register_android_security_cts_StagefrightCodecTest(env)) {
+	return JNI_ERR;
     }
 
     return JNI_VERSION_1_4;
