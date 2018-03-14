@@ -68,7 +68,7 @@ class VirtualContainerView extends View {
 
     private final ArrayList<Line> mLines = new ArrayList<>();
     private final SparseArray<Item> mItems = new SparseArray<>();
-    private final AutofillManager mAfm;
+    private AutofillManager mAfm;
     final AutofillId mLoginButtonId;
 
     private Line mFocusedLine;
@@ -93,7 +93,7 @@ class VirtualContainerView extends View {
     public VirtualContainerView(Context context, AttributeSet attrs) {
         super(context, attrs);
 
-        mAfm = context.getSystemService(AutofillManager.class);
+        setAutofillManager(context);
 
         mTextPaint = new Paint();
 
@@ -112,6 +112,11 @@ class VirtualContainerView extends View {
         mTextPaint.setTextSize(mTextHeight);
         Log.d(TAG, "Text height: " + mTextHeight);
         mLoginButtonId = new AutofillId(getAutofillId(), LOGIN_BUTTON_VIRTUAL_ID);
+    }
+
+    public void setAutofillManager(Context context) {
+        mAfm = context.getSystemService(AutofillManager.class);
+        Log.d(TAG, "Set AFM from " + context);
     }
 
     @Override
@@ -398,6 +403,7 @@ class VirtualContainerView extends View {
         event.setSource(VirtualContainerView.this, virtualId);
         event.setEnabled(true);
         event.setPackageName(getContext().getPackageName());
+        Log.v(TAG, "sendAccessibilityEvent(" + eventType + ", " + virtualId + "): " + event);
         getContext().getSystemService(AccessibilityManager.class).sendAccessibilityEvent(event);
     }
 

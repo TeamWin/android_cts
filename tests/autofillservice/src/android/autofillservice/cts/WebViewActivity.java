@@ -15,6 +15,7 @@
  */
 package android.autofillservice.cts;
 
+import android.content.Context;
 import android.os.Bundle;
 import android.os.SystemClock;
 import android.support.test.uiautomator.UiObject2;
@@ -45,6 +46,7 @@ public class WebViewActivity extends AbstractAutoFillActivity {
 
     private MyWebView mWebView;
 
+    private LinearLayout mParent;
     private LinearLayout mOutsideContainer1;
     private LinearLayout mOutsideContainer2;
     EditText mOutside1;
@@ -56,30 +58,7 @@ public class WebViewActivity extends AbstractAutoFillActivity {
 
         setContentView(R.layout.webview_activity);
 
-        mWebView = findViewById(R.id.webview);
-        mWebView.setWebViewClient(new WebViewClient() {
-            // WebView does not set the WebDomain on file:// requests, so we need to use an https://
-            // request and intercept it to provide the real data.
-            @Override
-            public WebResourceResponse shouldInterceptRequest(WebView view,
-                    WebResourceRequest request) {
-                final String url = request.getUrl().toString();
-                if (!url.equals(FAKE_URL)) {
-                    Log.d(TAG, "Ignoring " + url);
-                    return super.shouldInterceptRequest(view, request);
-                }
-
-                final String rawPath = request.getUrl().getPath().substring(1); // Remove leading /
-                Log.d(TAG, "Converting " + url + " to " + rawPath);
-                // NOTE: cannot use try() because it would close the stream before WebView uses it.
-                try {
-                    return new WebResourceResponse("text/html", "utf-8", getAssets().open(rawPath));
-                } catch (IOException e) {
-                    throw new IllegalArgumentException("Error opening " + rawPath, e);
-                }
-            }
-        });
-
+        mParent = findViewById(R.id.parent);
         mOutsideContainer1 = findViewById(R.id.outsideContainer1);
         mOutsideContainer2 = findViewById(R.id.outsideContainer2);
         mOutside1 = findViewById(R.id.outside1);
@@ -87,7 +66,41 @@ public class WebViewActivity extends AbstractAutoFillActivity {
     }
 
     public MyWebView loadWebView() {
-        syncRunOnUiThread(() -> mWebView.loadUrl(FAKE_URL));
+        return loadWebView(false);
+    }
+
+    public MyWebView loadWebView(boolean usingAppContext) {
+        syncRunOnUiThread(() -> {
+            final Context context = usingAppContext ? getApplicationContext() : this;
+            mWebView = new MyWebView(context);
+            mParent.addView(mWebView);
+            mWebView.setWebViewClient(new WebViewClient() {
+                // WebView does not set the WebDomain on file:// requests, so we need to use an
+                // https:// request and intercept it to provide the real data.
+                @Override
+                public WebResourceResponse shouldInterceptRequest(WebView view,
+                        WebResourceRequest request) {
+                    final String url = request.getUrl().toString();
+                    if (!url.equals(FAKE_URL)) {
+                        Log.d(TAG, "Ignoring " + url);
+                        return super.shouldInterceptRequest(view, request);
+                    }
+
+                    final String rawPath = request.getUrl().getPath()
+                            .substring(1); // Remove leading /
+                    Log.d(TAG, "Converting " + url + " to " + rawPath);
+                    // NOTE: cannot use try-with-resources because it would close the stream before
+                    // WebView uses it.
+                    try {
+                        return new WebResourceResponse("text/html", "utf-8",
+                                getAssets().open(rawPath));
+                    } catch (IOException e) {
+                        throw new IllegalArgumentException("Error opening " + rawPath, e);
+                    }
+                }
+            });
+            mWebView.loadUrl(FAKE_URL);
+        });
         return mWebView;
     }
 

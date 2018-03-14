@@ -35,6 +35,10 @@ public class MyWebView extends WebView {
 
     private FillExpectation mExpectation;
 
+    public MyWebView(Context context) {
+        super(context);
+    }
+
     public MyWebView(Context context, AttributeSet attrs) {
         super(context, attrs);
     }
