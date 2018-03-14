@@ -18,9 +18,7 @@ package android.media.cts;
 
 import android.media.AudioAttributes;
 import android.media.DataSourceDesc;
-import android.media.MediaItem2;
 import android.media.MediaPlayerBase;
-import android.media.MediaSession2.PlaylistParams;
 import android.support.annotation.NonNull;
 import android.util.ArrayMap;
 
@@ -42,14 +40,8 @@ public class MockPlayer extends MediaPlayerBase {
     public boolean mRewindCalled;
     public boolean mSeekToCalled;
     public long mSeekPosition;
-    public boolean mSetCurrentPlaylistItemCalled;
-    public MediaItem2 mCurrentItem;
-    public boolean mSetPlaylistCalled;
-    public boolean mSetPlaylistParamsCalled;
 
     public ArrayMap<PlayerEventCallback, Executor> mCallbacks = new ArrayMap<>();
-    public List<MediaItem2> mPlaylist;
-    public PlaylistParams mPlaylistParams;
 
     private @PlayerState int mLastPlayerState;
     private AudioAttributes mAudioAttributes;
@@ -134,18 +126,6 @@ public class MockPlayer extends MediaPlayerBase {
         }
     }
 
-    // TODO: Uncomment or remove
-    /*
-    @Override
-    public void setCurrentPlaylistItem(MediaItem2 item) {
-        mSetCurrentPlaylistItemCalled = true;
-        mCurrentItem = item;
-        if (mCountDownLatch != null) {
-            mCountDownLatch.countDown();
-        }
-    }
-    */
-
     @Override
     public void skipToNext() {
         // No-op. This skipToNext() means 'skip to next item in the setNextDataSources()'
@@ -215,37 +195,6 @@ public class MockPlayer extends MediaPlayerBase {
         }
     }
 
-    // TODO: Uncomment or remove
-    /*
-    @Override
-    public void setPlaylistParams(PlaylistParams params) {
-        mSetPlaylistParamsCalled = true;
-        mPlaylistParams = params;
-    }
-    */
-
-    // TODO: Uncomment or remove
-    /*
-    @Override
-    public void addPlaylistItem(int index, MediaItem2 item) {
-    }
-    */
-
-    // TODO: Uncomment or remove
-    /*
-    @Override
-    public void removePlaylistItem(MediaItem2 item) {
-    }
-    */
-
-    // TODO: Uncomment or remove
-    /*
-    @Override
-    public PlaylistParams getPlaylistParams() {
-        return mPlaylistParams;
-    }
-    */
-
     @Override
     public void setAudioAttributes(AudioAttributes attributes) {
         mAudioAttributes = attributes;
@@ -255,23 +204,6 @@ public class MockPlayer extends MediaPlayerBase {
     public AudioAttributes getAudioAttributes() {
         return mAudioAttributes;
     }
-
-    // TODO: Uncomment or remove
-    /*
-    @Override
-    public void setPlaylist(List<MediaItem2> playlist) {
-        mSetPlaylistCalled = true;
-        mPlaylist = playlist;
-    }
-    */
-
-    // TODO: Uncomment or remove
-    /*
-    @Override
-    public List<MediaItem2> getPlaylist() {
-        return mPlaylist;
-    }
-    */
 
     @Override
     public void setDataSource(@NonNull DataSourceDesc dsd) {
