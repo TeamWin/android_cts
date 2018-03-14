@@ -26,9 +26,12 @@ import android.view.View;
 
 import com.android.cts.verifier.R;
 
+import com.android.compatibility.common.util.CddTest;
+
 /**
  * Tests for verifying TV app behavior for third-party TV input apps.
  */
+@CddTest(requirement="3.12.1/C-1-1,3.12.1.1/C-1-1,C-1-2,3.12.1.2/C-1-1")
 public class TvInputDiscoveryTestActivity extends TvAppVerifierActivity
         implements View.OnClickListener {
     private static final String TAG = "TvInputDiscoveryTestActivity";
