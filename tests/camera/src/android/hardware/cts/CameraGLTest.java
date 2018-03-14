@@ -21,6 +21,7 @@ import android.graphics.SurfaceTexture;
 import android.hardware.Camera;
 import android.hardware.Camera.Parameters;
 import android.hardware.Camera.Size;
+import android.hardware.cts.helpers.CameraUtils;
 
 import android.opengl.GLES20;
 import android.opengl.GLSurfaceView;
@@ -80,6 +81,7 @@ public class CameraGLTest extends ActivityInstrumentationTestCase2<GLSurfaceView
     private final ConditionVariable mPreviewDone = new ConditionVariable();
 
     Camera mCamera;
+    boolean mIsExternalCamera;
     SurfaceTexture mSurfaceTexture;
     private final Object mSurfaceTextureSyncLock = new Object();
     Renderer mRenderer;
@@ -135,6 +137,12 @@ public class CameraGLTest extends ActivityInstrumentationTestCase2<GLSurfaceView
                 // These must be instantiated outside the UI thread, since the
                 // UI thread will be doing a lot of waiting, stopping callbacks.
                 mCamera = Camera.open(cameraId);
+                try {
+                    mIsExternalCamera = CameraUtils.isExternal(
+                            getInstrumentation().getContext(), cameraId);
+                } catch (Exception e) {
+                    Log.e(TAG, "Unable to query external camera!" + e);
+                }
                 mSurfaceTexture = new SurfaceTexture(mRenderer.getTextureID());
                 Log.v(TAG, "Camera " + cameraId + " is opened.");
                 startDone.open();
@@ -510,12 +518,14 @@ public class CameraGLTest extends ActivityInstrumentationTestCase2<GLSurfaceView
             int kLoopCount = 100;
             // Number of frames that can be out of bounds before calling this a failure
             int kMaxOutOfBoundsFrames = kLoopCount / 25; // 4% of frames
+            int kExtCamMaxOutOfBoundsFrames = kLoopCount / 10; // 10% threshold for external camera
             // Ignore timestamp issues before this frame
             int kFirstTestedFrame = 10;
             // Slop in timestamp testing, needed because timestamps are not
             // currently being set by driver-level code so are subject to
             // user-space timing variability
             float kTestSlopMargin = 20; // ms
+            float kExtCamTestSlopMargin = 0.2f; // *100%
 
             boolean noTimeout;
             initializeMessageLooper(cameraId);
@@ -604,6 +614,12 @@ public class CameraGLTest extends ActivityInstrumentationTestCase2<GLSurfaceView
                             fps[Parameters.PREVIEW_FPS_MAX_INDEX];
                     float slopMinFrameDurationMs = expectedMinFrameDurationMs  -
                             kTestSlopMargin;
+                    if (mIsExternalCamera) {
+                        slopMaxFrameDurationMs =
+                                expectedMaxFrameDurationMs * (1.0f + kExtCamTestSlopMargin);
+                        slopMinFrameDurationMs =
+                                expectedMinFrameDurationMs * (1.0f - kExtCamTestSlopMargin);
+                    }
 
                     int outOfBoundsCount = 0;
                     // Ignore last frame because preview is turned off which impacts fps
@@ -624,11 +640,13 @@ public class CameraGLTest extends ActivityInstrumentationTestCase2<GLSurfaceView
                             outOfBoundsCount++;
                         }
                     }
+                    int oobThreshold = mIsExternalCamera ?
+                            kExtCamMaxOutOfBoundsFrames : kMaxOutOfBoundsFrames;
                     assertTrue(
                             "Too many frame intervals out of frame rate bounds: "
                             + outOfBoundsCount +
-                            ", limit " + kMaxOutOfBoundsFrames,
-                            outOfBoundsCount <= kMaxOutOfBoundsFrames);
+                            ", limit " + oobThreshold,
+                            outOfBoundsCount <= oobThreshold);
                 }
             }
             terminateMessageLooper();

@@ -303,9 +303,6 @@ public final class LogicalCameraDeviceTest extends Camera2SurfaceViewTestCase {
                     continue;
                 }
 
-                assertTrue("Logical multi-camera must be LIMITED or higher",
-                        mStaticInfo.isHardwareLevelAtLeastLimited());
-
                 Size yuvSize = mOrderedPreviewSizes.get(0);
                 List<OutputConfiguration> outputConfigs = new ArrayList<>();
                 List<ImageReader> imageReaders = new ArrayList<>();

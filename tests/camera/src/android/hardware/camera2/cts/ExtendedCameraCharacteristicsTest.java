@@ -82,6 +82,7 @@ public class ExtendedCameraCharacteristicsTest extends AndroidTestCase {
     private static final int LIMITED = CameraCharacteristics.INFO_SUPPORTED_HARDWARE_LEVEL_LIMITED;
     private static final int FULL = CameraCharacteristics.INFO_SUPPORTED_HARDWARE_LEVEL_FULL;
     private static final int LEVEL_3 = CameraCharacteristics.INFO_SUPPORTED_HARDWARE_LEVEL_3;
+    private static final int EXTERNAL = CameraCharacteristics.INFO_SUPPORTED_HARDWARE_LEVEL_EXTERNAL;
     private static final int OPT = Integer.MAX_VALUE;  // For keys that are optional on all hardware levels.
 
     /*
@@ -143,7 +144,7 @@ public class ExtendedCameraCharacteristicsTest extends AndroidTestCase {
     /**
      * Test that the available stream configurations contain a few required formats and sizes.
      */
-    public void testAvailableStreamConfigs() {
+    public void testAvailableStreamConfigs() throws Exception {
         int counter = 0;
         for (CameraCharacteristics c : mCharacteristics) {
             StreamConfigurationMap config =
@@ -214,12 +215,32 @@ public class ExtendedCameraCharacteristicsTest extends AndroidTestCase {
             ArrayList<Size> jpegSizesList = new ArrayList<>(Arrays.asList(jpegSizes));
             ArrayList<Size> yuvSizesList = new ArrayList<>(Arrays.asList(yuvSizes));
             ArrayList<Size> privateSizesList = new ArrayList<>(Arrays.asList(privateSizes));
-
-            int cameraId = Integer.valueOf(mIds[counter]);
-            CamcorderProfile maxVideoProfile = CamcorderProfile.get(
-                    cameraId, CamcorderProfile.QUALITY_HIGH);
-            Size maxVideoSize = new Size(
-                    maxVideoProfile.videoFrameWidth, maxVideoProfile.videoFrameHeight);
+            boolean isExternalCamera = (hwLevel ==
+                    CameraCharacteristics.INFO_SUPPORTED_HARDWARE_LEVEL_EXTERNAL);
+            Size maxVideoSize = null;
+            if (isExternalCamera) {
+                // TODO: for now, use FULLHD 30 as largest possible video size
+                List<Size> videoSizes = CameraTestUtils.getSupportedVideoSizes(
+                        mIds[counter], mCameraManager, FULLHD);
+                for (Size sz : videoSizes) {
+                    long minFrameDuration = config.getOutputMinFrameDuration(
+                            android.media.MediaRecorder.class, sz);
+                    // Give some margin for rounding error
+                    if (minFrameDuration > (1e9 / 30.1)) {
+                        maxVideoSize = sz;
+                        break;
+                    }
+                }
+            } else {
+                int cameraId = Integer.valueOf(mIds[counter]);
+                CamcorderProfile maxVideoProfile = CamcorderProfile.get(
+                        cameraId, CamcorderProfile.QUALITY_HIGH);
+                maxVideoSize = new Size(
+                        maxVideoProfile.videoFrameWidth, maxVideoProfile.videoFrameHeight);
+            }
+            if (maxVideoSize == null) {
+                fail("Camera " + mIds[counter] + " does not support any 30fps video output");
+            }
 
             // Handle FullHD special case first
             if (jpegSizesList.contains(FULLHD)) {
@@ -341,7 +362,6 @@ public class ExtendedCameraCharacteristicsTest extends AndroidTestCase {
                 expectKeyAvailable(c, CameraCharacteristics.LENS_FACING                                     , OPT      ,   BC                   );
                 expectKeyAvailable(c, CameraCharacteristics.LENS_INFO_AVAILABLE_APERTURES                   , FULL     ,   MANUAL_SENSOR        );
                 expectKeyAvailable(c, CameraCharacteristics.LENS_INFO_AVAILABLE_FILTER_DENSITIES            , FULL     ,   MANUAL_SENSOR        );
-                expectKeyAvailable(c, CameraCharacteristics.LENS_INFO_AVAILABLE_FOCAL_LENGTHS               , OPT      ,   BC                   );
                 expectKeyAvailable(c, CameraCharacteristics.LENS_INFO_AVAILABLE_OPTICAL_STABILIZATION       , LIMITED  ,   BC                   );
                 expectKeyAvailable(c, CameraCharacteristics.LENS_INFO_FOCUS_DISTANCE_CALIBRATION            , LIMITED  ,   MANUAL_SENSOR        );
                 expectKeyAvailable(c, CameraCharacteristics.LENS_INFO_HYPERFOCAL_DISTANCE                   , LIMITED  ,   BC                   );
@@ -358,7 +378,6 @@ public class ExtendedCameraCharacteristicsTest extends AndroidTestCase {
                 expectKeyAvailable(c, CameraCharacteristics.SCALER_AVAILABLE_MAX_DIGITAL_ZOOM               , OPT      ,   BC                   );
                 expectKeyAvailable(c, CameraCharacteristics.SCALER_STREAM_CONFIGURATION_MAP                 , OPT      ,   BC                   );
                 expectKeyAvailable(c, CameraCharacteristics.SCALER_CROPPING_TYPE                            , OPT      ,   BC                   );
-                expectKeyAvailable(c, CameraCharacteristics.SENSOR_AVAILABLE_TEST_PATTERN_MODES             , OPT      ,   BC                   );
                 expectKeyAvailable(c, CameraCharacteristics.SENSOR_BLACK_LEVEL_PATTERN                      , FULL     ,   MANUAL_SENSOR, RAW   );
                 expectKeyAvailable(c, CameraCharacteristics.SENSOR_CALIBRATION_TRANSFORM1                   , OPT      ,   RAW                  );
                 expectKeyAvailable(c, CameraCharacteristics.SENSOR_COLOR_TRANSFORM1                         , OPT      ,   RAW                  );
@@ -367,7 +386,6 @@ public class ExtendedCameraCharacteristicsTest extends AndroidTestCase {
                 expectKeyAvailable(c, CameraCharacteristics.SENSOR_INFO_COLOR_FILTER_ARRANGEMENT            , FULL     ,   RAW                  );
                 expectKeyAvailable(c, CameraCharacteristics.SENSOR_INFO_EXPOSURE_TIME_RANGE                 , FULL     ,   MANUAL_SENSOR        );
                 expectKeyAvailable(c, CameraCharacteristics.SENSOR_INFO_MAX_FRAME_DURATION                  , FULL     ,   MANUAL_SENSOR        );
-                expectKeyAvailable(c, CameraCharacteristics.SENSOR_INFO_PHYSICAL_SIZE                       , OPT      ,   BC                   );
                 expectKeyAvailable(c, CameraCharacteristics.SENSOR_INFO_PIXEL_ARRAY_SIZE                    , OPT      ,   BC                   );
                 expectKeyAvailable(c, CameraCharacteristics.SENSOR_INFO_SENSITIVITY_RANGE                   , FULL     ,   MANUAL_SENSOR        );
                 expectKeyAvailable(c, CameraCharacteristics.SENSOR_INFO_WHITE_LEVEL                         , OPT      ,   RAW                  );
@@ -409,6 +427,17 @@ public class ExtendedCameraCharacteristicsTest extends AndroidTestCase {
                 expectKeyAvailable(c,
                         CameraCharacteristics.CONTROL_POST_RAW_SENSITIVITY_BOOST_RANGE, OPT, BC);
             }
+
+            // External Camera exceptional keys
+            Integer hwLevel = c.get(CameraCharacteristics.INFO_SUPPORTED_HARDWARE_LEVEL);
+            boolean isExternalCamera = (hwLevel ==
+                    CameraCharacteristics.INFO_SUPPORTED_HARDWARE_LEVEL_EXTERNAL);
+            if (!isExternalCamera) {
+                expectKeyAvailable(c, CameraCharacteristics.LENS_INFO_AVAILABLE_FOCAL_LENGTHS               , OPT      ,   BC                   );
+                expectKeyAvailable(c, CameraCharacteristics.SENSOR_AVAILABLE_TEST_PATTERN_MODES             , OPT      ,   BC                   );
+                expectKeyAvailable(c, CameraCharacteristics.SENSOR_INFO_PHYSICAL_SIZE                       , OPT      ,   BC                   );
+            }
+
 
             // Verify version is a short text string.
             if (allKeys.contains(CameraCharacteristics.INFO_VERSION)) {
@@ -1598,17 +1627,17 @@ public class ExtendedCameraCharacteristicsTest extends AndroidTestCase {
                 return Integer.MAX_VALUE;
             case LEGACY:
                 return 0; // lowest
-            case LIMITED:
+            case EXTERNAL:
                 return 1; // second lowest
+            case LIMITED:
+                return 2;
             case FULL:
-                return 2; // good
+                return 3; // good
+            case LEVEL_3:
+                return 4;
             default:
-                if (level >= LEVEL_3) {
-                    return level; // higher levels map directly
-                }
+                fail("Unknown HW level: " + level);
         }
-
-        fail("Unknown HW level: " + level);
         return -1;
     }
 
@@ -1620,6 +1649,8 @@ public class ExtendedCameraCharacteristicsTest extends AndroidTestCase {
                 return "LIMITED";
             case FULL:
                 return "FULL";
+            case EXTERNAL:
+                return "EXTERNAL";
             default:
                 if (level >= LEVEL_3) {
                     return String.format("LEVEL_%d", level);
