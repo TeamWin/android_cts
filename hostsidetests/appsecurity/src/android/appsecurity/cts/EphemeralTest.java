@@ -275,6 +275,11 @@ public class EphemeralTest extends DeviceTestCase
         runDeviceTests(EPHEMERAL_1_PKG, TEST_CLASS, "testWakeLockPermission");
     }
 
+    /** Test for search manager */
+    public void testGetSearchableInfo() throws Throwable {
+        runDeviceTests(EPHEMERAL_1_PKG, TEST_CLASS, "testGetSearchableInfo");
+    }
+
     private static final HashMap<String, String> makeArgs(
             String action, String category, String mimeType) {
         if (action == null || action.length() == 0) {
