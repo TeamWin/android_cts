@@ -67,7 +67,6 @@ public class MediaSessionManager_MediaSession2Test extends MediaSession2TestBase
                 .setSessionCallback(sHandlerExecutor, new SessionCallback(mContext) { })
                 .setId(TAG)
                 .build();
-        ensureChangeInSession();
     }
 
     @After
@@ -113,19 +112,16 @@ public class MediaSessionManager_MediaSession2Test extends MediaSession2TestBase
      */
     @Test
     public void testGetSessionTokens_sessionRejected() throws InterruptedException {
-        sHandler.postAndSync(() -> {
-            mSession.close();
-            mSession = new MediaSession2.Builder(mContext).setPlayer(new MockPlayer(0))
-                    .setId(TAG).setSessionCallback(sHandlerExecutor, new SessionCallback(mContext) {
-                        @Override
-                        public MediaSession2.CommandGroup onConnect(
-                                MediaSession2 session, ControllerInfo controller) {
-                            // Reject all connection request.
-                            return null;
-                        }
-                    }).build();
-        });
-        ensureChangeInSession();
+        mSession.close();
+        mSession = new MediaSession2.Builder(mContext).setPlayer(new MockPlayer(0))
+                .setId(TAG).setSessionCallback(sHandlerExecutor, new SessionCallback(mContext) {
+                    @Override
+                    public MediaSession2.CommandGroup onConnect(
+                            MediaSession2 session, ControllerInfo controller) {
+                        // Reject all connection request.
+                        return null;
+                    }
+                }).build();
 
         boolean foundSession = false;
         List<SessionToken2> tokens = mManager.getActiveSessionTokens();
@@ -142,14 +138,10 @@ public class MediaSessionManager_MediaSession2Test extends MediaSession2TestBase
     }
 
     @Test
-    public void testGetMediaSession2Tokens_playerRemoved() throws InterruptedException {
-        // Release
-        sHandler.postAndSync(() -> {
-            mSession.close();
-        });
-        ensureChangeInSession();
+    public void testGetMediaSession2Tokens_sessionClosed() throws InterruptedException {
+        mSession.close();
 
-        // When the mSession's player becomes null, it should lose binder connection between server.
+        // When a session is closed, it should lose binder connection between server immediately.
         // So server will forget the session.
         List<SessionToken2> tokens = mManager.getActiveSessionTokens();
         for (int i = 0; i < tokens.size(); i++) {
@@ -310,12 +302,6 @@ public class MediaSessionManager_MediaSession2Test extends MediaSession2TestBase
         listener.reset();
         session3.close();
         assertFalse(listener.await());
-    }
-
-    // Ensures if the session creation/release is notified to the server.
-    private void ensureChangeInSession() throws InterruptedException {
-        // TODO(jaewan): Wait by listener.
-        Thread.sleep(WAIT_TIME_MS);
     }
 
     private class TokensChangedListener implements OnSessionTokensChangedListener {
