@@ -20,6 +20,7 @@ import static android.media.AudioFormat.CHANNEL_IN_MONO;
 import static android.media.AudioFormat.ENCODING_PCM_16BIT;
 import static android.media.MediaRecorder.AudioSource.MIC;
 import static org.hamcrest.CoreMatchers.is;
+import static org.hamcrest.CoreMatchers.equalTo;
 import static org.hamcrest.CoreMatchers.notNullValue;
 import static org.hamcrest.CoreMatchers.nullValue;
 import static org.junit.Assert.assertSame;
@@ -29,6 +30,8 @@ import static org.junit.Assert.fail;
 import android.Manifest;
 import android.app.NotificationChannel;
 import android.app.NotificationManager;
+import android.app.SearchManager;
+import android.app.SearchableInfo;
 import android.content.ActivityNotFoundException;
 import android.content.BroadcastReceiver;
 import android.content.ComponentName;
@@ -1177,6 +1180,51 @@ public class ClientTest {
             if (wakeLock != null &&  wakeLock.isHeld()) {
                 wakeLock.release();
             }
+        }
+    }
+
+    @Test
+    public void testGetSearchableInfo() throws Throwable {
+        final SearchManager searchManager = (SearchManager) InstrumentationRegistry.getContext()
+                .getSystemService(Context.SEARCH_SERVICE);
+        // get searchable info for a component in ourself; pass
+        {
+            final SearchableInfo info = searchManager.getSearchableInfo(
+                    new ComponentName("com.android.cts.ephemeralapp1",
+                            "com.android.cts.ephemeralapp1.EphemeralActivity"));
+            assertThat(info, is(notNullValue()));
+            assertThat(info.getSearchActivity(),
+                    is(equalTo(
+                            new ComponentName("com.android.cts.ephemeralapp1",
+                                    "com.android.cts.ephemeralapp1.EphemeralActivity"))));
+        }
+
+        // get searchable info for a component in a different instant application; fail
+        {
+            final SearchableInfo info = searchManager.getSearchableInfo(
+                    new ComponentName("com.android.cts.ephemeralapp2",
+                            "com.android.cts.ephemeralapp2.EphemeralActivity"));
+            assertThat(info, is(nullValue()));
+        }
+
+        // get searchable info for an exposed in a full application; pass
+        {
+            final SearchableInfo info = searchManager.getSearchableInfo(
+                    new ComponentName("com.android.cts.normalapp",
+                            "com.android.cts.normalapp.ExposedActivity"));
+            assertThat(info, is(notNullValue()));
+            assertThat(info.getSearchActivity(),
+                    is(equalTo(
+                            new ComponentName("com.android.cts.normalapp",
+                                    "com.android.cts.normalapp.ExposedActivity"))));
+        }
+
+        // get searchable info for an unexposed component in a full application; fail
+        {
+            final SearchableInfo info = searchManager.getSearchableInfo(
+                    new ComponentName("com.android.cts.normalapp",
+                            "com.android.cts.normalapp.NormalActivity"));
+            assertThat(info, is(nullValue()));
         }
     }
 
