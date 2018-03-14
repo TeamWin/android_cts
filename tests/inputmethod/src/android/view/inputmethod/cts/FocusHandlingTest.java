@@ -19,6 +19,7 @@ package android.view.inputmethod.cts;
 import static android.view.WindowManager.LayoutParams.SOFT_INPUT_STATE_ALWAYS_VISIBLE;
 import static android.widget.PopupWindow.INPUT_METHOD_NOT_NEEDED;
 
+import static com.android.cts.mockime.ImeEventStreamTestUtils.editorMatcher;
 import static com.android.cts.mockime.ImeEventStreamTestUtils.expectBindInput;
 import static com.android.cts.mockime.ImeEventStreamTestUtils.expectCommand;
 import static com.android.cts.mockime.ImeEventStreamTestUtils.expectEvent;
@@ -31,6 +32,7 @@ import android.content.Context;
 import android.os.Build;
 import android.os.IBinder;
 import android.os.Process;
+import android.os.SystemClock;
 import android.support.test.InstrumentationRegistry;
 import android.support.test.filters.MediumTest;
 import android.support.test.runner.AndroidJUnit4;
@@ -66,16 +68,17 @@ public class FocusHandlingTest extends EndToEndImeTestBase {
     static final long TIMEOUT = TimeUnit.SECONDS.toMillis(5);
     static final long NOT_EXPECT_TIMEOUT = TimeUnit.SECONDS.toMillis(1);
 
-    private static final String TEST_MARKER = "android.view.inputmethod.cts.FocusHandlingTest";
+    private static final String TEST_MARKER_PREFIX =
+        "android.view.inputmethod.cts.FocusHandlingTest";
 
-    public EditText launchTestActivity() {
+    public EditText launchTestActivity(String marker) {
         final AtomicReference<EditText> editTextRef = new AtomicReference<>();
         TestActivity.startSync(activity-> {
             final LinearLayout layout = new LinearLayout(activity);
             layout.setOrientation(LinearLayout.VERTICAL);
 
             final EditText editText = new EditText(activity);
-            editText.setPrivateImeOptions(TEST_MARKER);
+            editText.setPrivateImeOptions(marker);
             editText.setHint("editText");
             editText.requestFocus();
             editTextRef.set(editText);
@@ -86,6 +89,10 @@ public class FocusHandlingTest extends EndToEndImeTestBase {
         return editTextRef.get();
     }
 
+    private static String getTestMarker() {
+        return TEST_MARKER_PREFIX + "/"  + SystemClock.elapsedRealtimeNanos();
+    }
+
     @Test
     public void testOnStartInputCalledOnceIme() throws Exception {
         try (MockImeSession imeSession = MockImeSession.create(
@@ -94,7 +101,8 @@ public class FocusHandlingTest extends EndToEndImeTestBase {
                 new ImeSettings.Builder())) {
             final ImeEventStream stream = imeSession.openEventStream();
 
-            final EditText editText = launchTestActivity();
+            final String marker = getTestMarker();
+            final EditText editText = launchTestActivity(marker);
 
             // Wait until the MockIme gets bound to the TestActivity.
             expectBindInput(stream, Process.myPid(), TIMEOUT);
@@ -104,19 +112,14 @@ public class FocusHandlingTest extends EndToEndImeTestBase {
                     InstrumentationRegistry.getInstrumentation(), editText);
 
             // Wait until "onStartInput" gets called for the EditText.
-            final ImeEvent onStart = expectEvent(stream, event -> {
-                if (!TextUtils.equals("onStartInput", event.getEventName())) {
-                    return false;
-                }
-                final EditorInfo editorInfo = event.getArguments().getParcelable("editorInfo");
-                return TextUtils.equals(TEST_MARKER, editorInfo.privateImeOptions);
-            }, TIMEOUT);
+            final ImeEvent onStart =
+                    expectEvent(stream, editorMatcher("onStartInput", marker), TIMEOUT);
+
             assertFalse(stream.dump(), onStart.getEnterState().hasDummyInputConnection());
             assertFalse(stream.dump(), onStart.getArguments().getBoolean("restarting"));
 
             // There shouldn't be onStartInput any more.
-            notExpectEvent(stream, event -> "onStartInput".equals(event.getEventName()),
-                    NOT_EXPECT_TIMEOUT);
+            notExpectEvent(stream, editorMatcher("onStartInput", marker), NOT_EXPECT_TIMEOUT);
         }
     }
 
@@ -128,6 +131,7 @@ public class FocusHandlingTest extends EndToEndImeTestBase {
                 new ImeSettings.Builder())) {
             final ImeEventStream stream = imeSession.openEventStream();
 
+            final String marker = getTestMarker();
             final TestActivity testActivity = TestActivity.startSync(activity -> {
                 final LinearLayout layout = new LinearLayout(activity);
                 layout.setOrientation(LinearLayout.VERTICAL);
@@ -139,6 +143,7 @@ public class FocusHandlingTest extends EndToEndImeTestBase {
                     }
                 };
                 textView.setText("textView");
+                textView.setPrivateImeOptions(marker);
                 textView.requestFocus();
 
                 activity.getWindow().setSoftInputMode(SOFT_INPUT_STATE_ALWAYS_VISIBLE);
@@ -148,11 +153,9 @@ public class FocusHandlingTest extends EndToEndImeTestBase {
 
             if (testActivity.getApplicationInfo().targetSdkVersion >= Build.VERSION_CODES.P) {
                 // Input shouldn't start
-                notExpectEvent(stream, event -> "onStartInput".equals(event.getEventName()),
-                        TIMEOUT);
+                notExpectEvent(stream, editorMatcher("onStartInput", marker), TIMEOUT);
                 // There shouldn't be onStartInput because the focused view is not an editor.
-                notExpectEvent(stream, event -> "showSoftInput".equals(event.getEventName()),
-                        TIMEOUT);
+                notExpectEvent(stream, event -> "showSoftInput".equals(event.getEventName()), TIMEOUT);
             } else {
                 // Wait until the MockIme gets bound to the TestActivity.
                 expectBindInput(stream, Process.myPid(), TIMEOUT);
@@ -170,6 +173,7 @@ public class FocusHandlingTest extends EndToEndImeTestBase {
                 new ImeSettings.Builder())) {
             final ImeEventStream stream = imeSession.openEventStream();
 
+            final String marker = getTestMarker();
             TestActivity.startSync(activity -> {
                 final LinearLayout layout = new LinearLayout(activity);
                 layout.setOrientation(LinearLayout.VERTICAL);
@@ -182,12 +186,13 @@ public class FocusHandlingTest extends EndToEndImeTestBase {
                 };
                 textView.setText("textView");
                 textView.requestFocus();
+                textView.setPrivateImeOptions(marker);
                 layout.addView(textView);
                 return layout;
             });
 
             // Input shouldn't start
-            notExpectEvent(stream, event -> "onStartInput".equals(event.getEventName()), TIMEOUT);
+            notExpectEvent(stream, editorMatcher("onStartInput", marker), TIMEOUT);
         }
     }
 
@@ -199,11 +204,13 @@ public class FocusHandlingTest extends EndToEndImeTestBase {
                 new ImeSettings.Builder())) {
             final ImeEventStream stream = imeSession.openEventStream();
 
+            final String marker = getTestMarker();
             TestActivity.startSync(activity -> {
                 final LinearLayout layout = new LinearLayout(activity);
                 layout.setOrientation(LinearLayout.VERTICAL);
 
                 final EditText editText = new EditText(activity);
+                editText.setPrivateImeOptions(marker);
                 editText.setText("Editable");
                 editText.requestFocus();
                 layout.addView(editText);
@@ -211,7 +218,7 @@ public class FocusHandlingTest extends EndToEndImeTestBase {
             });
 
             // Input should start
-            expectEvent(stream, event -> "onStartInput".equals(event.getEventName()), TIMEOUT);
+            expectEvent(stream, editorMatcher("onStartInput", marker), TIMEOUT);
         }
     }
 
@@ -235,15 +242,17 @@ public class FocusHandlingTest extends EndToEndImeTestBase {
             // Activity adds EditText at a later point.
             TestUtils.waitOnMainUntil(() -> layoutRef.get().hasWindowFocus(), TIMEOUT);
             InstrumentationRegistry.getInstrumentation().waitForIdleSync();
+            final String marker = getTestMarker();
             testActivity.runOnUiThread(() -> {
                 final EditText editText = new EditText(testActivity);
                 editText.setText("Editable");
+                editText.setPrivateImeOptions(marker);
                 layoutRef.get().addView(editText);
                 editText.requestFocus();
             });
 
             // Input should start
-            expectEvent(stream, event -> "onStartInput".equals(event.getEventName()), TIMEOUT);
+            expectEvent(stream, editorMatcher("onStartInput", marker), TIMEOUT);
         }
     }
 
@@ -296,19 +305,14 @@ public class FocusHandlingTest extends EndToEndImeTestBase {
                 new ImeSettings.Builder())) {
             final ImeEventStream stream = imeSession.openEventStream();
 
-            final EditText editText = launchTestActivity();
+            final String marker = getTestMarker();
+            final EditText editText = launchTestActivity(marker);
             instrumentation.runOnMainSync(() -> editText.requestFocus());
 
             // Wait until the MockIme gets bound to the TestActivity.
             expectBindInput(stream, Process.myPid(), TIMEOUT);
 
-            expectEvent(stream, event -> {
-                if (!TextUtils.equals("onStartInput", event.getEventName())) {
-                    return false;
-                }
-                final EditorInfo editorInfo = event.getArguments().getParcelable("editorInfo");
-                return TextUtils.equals(TEST_MARKER, editorInfo.privateImeOptions);
-            }, TIMEOUT);
+            expectEvent(stream, editorMatcher("onStartInput", marker), TIMEOUT);
 
             // Make sure that InputConnection#commitText() works.
             final ImeCommand commit1 = imeSession.callCommitText("test commit", 1);
@@ -345,8 +349,10 @@ public class FocusHandlingTest extends EndToEndImeTestBase {
 
             stream.skipAll();
 
+            final String marker2 = getTestMarker();
             // Call InputMethodManager#restartInput()
             instrumentation.runOnMainSync(() -> {
+                editText.setPrivateImeOptions(marker2);
                 editText.getContext()
                         .getSystemService(InputMethodManager.class)
                         .restartInput(editText);
@@ -361,7 +367,7 @@ public class FocusHandlingTest extends EndToEndImeTestBase {
                     return false;
                 }
                 final EditorInfo editorInfo = event.getArguments().getParcelable("editorInfo");
-                return TextUtils.equals(TEST_MARKER, editorInfo.privateImeOptions);
+                return TextUtils.equals(marker2, editorInfo.privateImeOptions);
             }, TIMEOUT);
 
             // Make sure that InputConnection#commitText() works.
@@ -403,19 +409,14 @@ public class FocusHandlingTest extends EndToEndImeTestBase {
                 new ImeSettings.Builder())) {
             final ImeEventStream stream = imeSession.openEventStream();
 
-            final EditText editText = launchTestActivity();
+            final String marker = getTestMarker();
+            final EditText editText = launchTestActivity(marker);
             instrumentation.runOnMainSync(() -> editText.requestFocus());
 
             // Wait until the MockIme gets bound to the TestActivity.
             expectBindInput(stream, Process.myPid(), TIMEOUT);
 
-            expectEvent(stream, event -> {
-                if (!TextUtils.equals("onStartInput", event.getEventName())) {
-                    return false;
-                }
-                final EditorInfo editorInfo = event.getArguments().getParcelable("editorInfo");
-                return TextUtils.equals(TEST_MARKER, editorInfo.privateImeOptions);
-            }, TIMEOUT);
+            expectEvent(stream, editorMatcher("onStartInput", marker), TIMEOUT);
 
             // Get app window token
             final IBinder appWindowToken = TestUtils.getOnMainSync(
