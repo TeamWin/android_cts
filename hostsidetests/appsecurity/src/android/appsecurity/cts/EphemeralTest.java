@@ -30,9 +30,12 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import com.android.compatibility.common.util.CddTest;
+
 /**
  * Tests for ephemeral packages.
  */
+@CddTest(requirement="3.15/C-0-1,C-0-2,C-0-3,C-0-4")
 public class EphemeralTest extends DeviceTestCase
         implements IAbiReceiver, IBuildReceiver {
 
@@ -130,22 +133,27 @@ public class EphemeralTest extends DeviceTestCase
         super.tearDown();
     }
 
+    @CddTest(requirement="3.15/C-0-2,C-0-3")
     public void testNormalQuery() throws Exception {
         runDeviceTests(NORMAL_PKG, TEST_CLASS, "testQuery");
     }
 
+    @CddTest(requirement="3.15/C-0-2,C-0-3")
     public void testNormalStartNormal() throws Exception {
         runDeviceTests(NORMAL_PKG, TEST_CLASS, "testStartNormal");
     }
 
+    @CddTest(requirement="3.15/C-0-2/C-0-3")
     public void testNormalStartEphemeral() throws Exception {
         runDeviceTests(NORMAL_PKG, TEST_CLASS, "testStartEphemeral");
     }
 
+    @CddTest(requirement="3.15/C-0-2,C-0-3")
     public void testEphemeralQuery() throws Exception {
         runDeviceTests(EPHEMERAL_1_PKG, TEST_CLASS, "testQuery");
     }
 
+    @CddTest(requirement="3.15/C-0-2,C-0-3")
     public void testEphemeralStartNormal() throws Exception {
         runDeviceTests(EPHEMERAL_1_PKG, TEST_CLASS, "testStartNormal");
     }
@@ -153,41 +161,62 @@ public class EphemeralTest extends DeviceTestCase
     // each connection to an exposed component needs to run in its own test to
     // avoid sharing state. once an instant app is exposed to a component, it's
     // exposed until the device restarts or the instant app is removed.
+    @CddTest(requirement="3.15/C-0-2,C-0-3")
     public void testEphemeralStartExposed01() throws Exception {
         runDeviceTests(EPHEMERAL_1_PKG, TEST_CLASS, "testStartExposed01");
     }
+
+    @CddTest(requirement="3.15/C-0-2,C-0-3")
     public void testEphemeralStartExposed02() throws Exception {
         runDeviceTests(EPHEMERAL_1_PKG, TEST_CLASS, "testStartExposed02");
     }
+
+    @CddTest(requirement="3.15/C-0-2,C-0-3")
     public void testEphemeralStartExposed03() throws Exception {
         runDeviceTests(EPHEMERAL_1_PKG, TEST_CLASS, "testStartExposed03");
     }
+
+    @CddTest(requirement="3.15/C-0-2,C-0-3")
     public void testEphemeralStartExposed04() throws Exception {
         runDeviceTests(EPHEMERAL_1_PKG, TEST_CLASS, "testStartExposed04");
     }
+
+    @CddTest(requirement="3.15/C-0-2,C-0-3")
     public void testEphemeralStartExposed05() throws Exception {
         runDeviceTests(EPHEMERAL_1_PKG, TEST_CLASS, "testStartExposed05");
     }
+
+    @CddTest(requirement="C-0-2,C-0-3")
     public void testEphemeralStartExposed06() throws Exception {
         runDeviceTests(EPHEMERAL_1_PKG, TEST_CLASS, "testStartExposed06");
     }
+
+    @CddTest(requirement="C-0-2,C-0-3")
     public void testEphemeralStartExposed07() throws Exception {
         runDeviceTests(EPHEMERAL_1_PKG, TEST_CLASS, "testStartExposed07");
     }
+
+    @CddTest(requirement="C-0-2,C-0-3")
     public void testEphemeralStartExposed08() throws Exception {
         runDeviceTests(EPHEMERAL_1_PKG, TEST_CLASS, "testStartExposed08");
     }
+
+    @CddTest(requirement="C-0-2,C-0-3")
     public void testEphemeralStartExposed09() throws Exception {
         runDeviceTests(EPHEMERAL_1_PKG, TEST_CLASS, "testStartExposed09");
     }
+
+    @CddTest(requirement="C-0-2,C-0-3")
     public void testEphemeralStartExposed10() throws Exception {
         runDeviceTests(EPHEMERAL_1_PKG, TEST_CLASS, "testStartExposed10");
     }
 
+    @CddTest(requirement="3.15/C-0-2,C-0-3")
     public void testEphemeralStartEphemeral() throws Exception {
         runDeviceTests(EPHEMERAL_1_PKG, TEST_CLASS, "testStartEphemeral");
     }
 
+    @CddTest(requirement="3.15/C-0-3")
     public void testExposedSystemActivities() throws Exception {
         for (Map<String, String> testArgs : EXPECTED_EXPOSED_INTENTS) {
             final boolean exposed = isIntentExposed(testArgs);
@@ -203,6 +232,7 @@ public class EphemeralTest extends DeviceTestCase
         runDeviceTests(EPHEMERAL_1_PKG, TEST_CLASS, "testBuildSerialUnknown");
     }
 
+    @CddTest(requirement="3.15/C-0-4")
     public void testPackageInfo() throws Exception {
         runDeviceTests(EPHEMERAL_1_PKG, TEST_CLASS, "testPackageInfo");
     }
@@ -211,10 +241,12 @@ public class EphemeralTest extends DeviceTestCase
         runDeviceTests(EPHEMERAL_1_PKG, WEBVIEW_TEST_CLASS, "testWebViewLoads");
     }
 
+    @CddTest(requirement="3.15/C-0-1")
     public void testInstallPermissionNotGranted() throws Exception {
         runDeviceTests(EPHEMERAL_1_PKG, TEST_CLASS, "testInstallPermissionNotGranted");
     }
 
+    @CddTest(requirement="3.15/C-0-1")
     public void testInstallPermissionGranted() throws Exception {
         runDeviceTests(EPHEMERAL_1_PKG, TEST_CLASS, "testInstallPermissionGranted");
     }
