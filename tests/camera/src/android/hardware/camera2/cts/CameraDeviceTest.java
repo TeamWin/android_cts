@@ -797,14 +797,13 @@ public class CameraDeviceTest extends Camera2AndroidTestCase {
         outConfigs.add(new OutputConfiguration(new Size(1, 1), SurfaceTexture.class));
         outConfigs.add(new OutputConfiguration(new Size(2, 2), SurfaceTexture.class));
         mSessionMockListener = spy(new BlockingSessionCallback());
-        HandlerExecutor executor = new HandlerExecutor(mHandler);
         InputConfiguration inputConfig = new InputConfiguration(1, 1, ImageFormat.PRIVATE);
 
         SessionConfiguration regularSessionConfig = new SessionConfiguration(
-                SessionConfiguration.SESSION_REGULAR, outConfigs, executor, mSessionMockListener);
+                SessionConfiguration.SESSION_REGULAR, outConfigs, mSessionMockListener, null);
 
         SessionConfiguration highspeedSessionConfig = new SessionConfiguration(
-                SessionConfiguration.SESSION_HIGH_SPEED, outConfigs, executor, mSessionMockListener);
+                SessionConfiguration.SESSION_HIGH_SPEED, outConfigs, mSessionMockListener, null);
 
         assertEquals("Session configuration output doesn't match",
                 regularSessionConfig.getOutputConfigurations(), outConfigs);
@@ -820,11 +819,11 @@ public class CameraDeviceTest extends Camera2AndroidTestCase {
                 regularSessionConfig.getStateCallback(),
                 highspeedSessionConfig.getStateCallback());
 
-        assertEquals("Session configuration executor doesn't match",
-                regularSessionConfig.getExecutor(), executor);
+        assertEquals("Session configuration handler doesn't match",
+                regularSessionConfig.getHandler(), null);
 
         assertEquals("Session configuration handler doesn't match",
-                regularSessionConfig.getExecutor(), highspeedSessionConfig.getExecutor());
+                regularSessionConfig.getHandler(), highspeedSessionConfig.getHandler());
 
         regularSessionConfig.setInputConfiguration(inputConfig);
         assertEquals("Session configuration input doesn't match",
@@ -958,8 +957,7 @@ public class CameraDeviceTest extends Camera2AndroidTestCase {
             List<OutputConfiguration> outputs = new ArrayList<>();
             outputs.add(new OutputConfiguration(imageReader.getSurface()));
             SessionConfiguration sessionConfig = new SessionConfiguration(
-                    SessionConfiguration.SESSION_REGULAR, outputs,
-                    new HandlerExecutor(mHandler), mSessionMockListener);
+                    SessionConfiguration.SESSION_REGULAR, outputs, mSessionMockListener, mHandler);
 
             CaptureRequest.Builder builder =
                     mCamera.createCaptureRequest(CameraDevice.TEMPLATE_STILL_CAPTURE);
@@ -1140,8 +1138,7 @@ public class CameraDeviceTest extends Camera2AndroidTestCase {
             List<OutputConfiguration> outputs = new ArrayList<>();
             outputs.add(new OutputConfiguration(imageReader.getSurface()));
             SessionConfiguration sessionConfig = new SessionConfiguration(
-                    SessionConfiguration.SESSION_REGULAR, outputs,
-                    new HandlerExecutor(mHandler), mSessionMockListener);
+                    SessionConfiguration.SESSION_REGULAR, outputs, mSessionMockListener, mHandler);
 
             CaptureRequest.Builder builder =
                     mCamera.createCaptureRequest(CameraDevice.TEMPLATE_STILL_CAPTURE);
@@ -1257,8 +1254,8 @@ public class CameraDeviceTest extends Camera2AndroidTestCase {
         outConfigs.add(new OutputConfiguration(output1Surface));
         outConfigs.add(new OutputConfiguration(output2Surface));
         SessionConfiguration sessionConfig = new SessionConfiguration(
-                SessionConfiguration.SESSION_REGULAR, outConfigs,
-                new HandlerExecutor(mHandler), mSessionMockListener);
+                SessionConfiguration.SESSION_REGULAR, outConfigs, mSessionMockListener,
+                mHandler);
         CaptureRequest.Builder r = mCamera.createCaptureRequest(CameraDevice.TEMPLATE_PREVIEW);
         sessionConfig.setSessionParameters(r.build());
         mCamera.createCaptureSession(sessionConfig);
