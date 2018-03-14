@@ -213,33 +213,17 @@ public class AccessibilityEndToEndTest extends
         expected.setClassName(Button.class.getName());
         expected.setPackageName(getActivity().getPackageName());
         expected.getText().add(getActivity().getString(R.string.button_title));
-        expected.setItemCount(3);
-        expected.setCurrentItemIndex(2);
+        expected.setItemCount(4);
+        expected.setCurrentItemIndex(3);
         expected.setEnabled(true);
 
-        final Button button = (Button) getActivity().findViewById(R.id.button);
+        final Button button = (Button) getActivity().findViewById(R.id.buttonWithTooltip);
 
         AccessibilityEvent awaitedEvent =
             getInstrumentation().getUiAutomation().executeAndWaitForEvent(
-                new Runnable() {
-            @Override
-            public void run() {
-                // trigger the event
-                getActivity().runOnUiThread(new Runnable() {
-                    @Override
-                    public void run() {
-                        button.requestFocus();
-                    }
-                });
-            }},
-            new UiAutomation.AccessibilityEventFilter() {
-                // check the received event
-                @Override
-                public boolean accept(AccessibilityEvent event) {
-                    return equalsAccessiblityEvent(event, expected);
-                }
-            },
-            TIMEOUT_ASYNC_PROCESSING);
+                    () -> getActivity().runOnUiThread(() -> button.requestFocus()),
+                    (event) -> equalsAccessiblityEvent(event, expected),
+                    TIMEOUT_ASYNC_PROCESSING);
         assertNotNull("Did not receive expected event: " + expected, awaitedEvent);
     }
 
@@ -608,7 +592,7 @@ public class AccessibilityEndToEndTest extends
         final UiAutomation uiAutomation = instrumentation.getUiAutomation();
         final AccessibilityNodeInfo buttonNode = uiAutomation.getRootInActiveWindow()
                 .findAccessibilityNodeInfosByViewId(
-                        "android.accessibilityservice.cts:id/button")
+                        "android.accessibilityservice.cts:id/buttonWithTooltip")
                 .get(0);
         assertEquals("Tooltip text not reported to accessibility",
                 instrumentation.getContext().getString(R.string.button_tooltip),
@@ -621,9 +605,9 @@ public class AccessibilityEndToEndTest extends
         final UiAutomation uiAutomation = instrumentation.getUiAutomation();
         final AccessibilityNodeInfo buttonNode = uiAutomation.getRootInActiveWindow()
                 .findAccessibilityNodeInfosByViewId(
-                        "android.accessibilityservice.cts:id/button")
+                        "android.accessibilityservice.cts:id/buttonWithTooltip")
                 .get(0);
-        assertFalse(hasTooltip(R.id.button));
+        assertFalse(hasTooltipShowing(R.id.buttonWithTooltip));
         assertThat(ACTION_SHOW_TOOLTIP, in(buttonNode.getActionList()));
         assertThat(ACTION_HIDE_TOOLTIP, not(in(buttonNode.getActionList())));
         uiAutomation.executeAndWaitForEvent(() -> buttonNode.performAction(
@@ -635,7 +619,7 @@ public class AccessibilityEndToEndTest extends
         buttonNode.refresh();
         assertThat(ACTION_HIDE_TOOLTIP, in(buttonNode.getActionList()));
         assertThat(ACTION_SHOW_TOOLTIP, not(in(buttonNode.getActionList())));
-        assertTrue(hasTooltip(R.id.button));
+        assertTrue(hasTooltipShowing(R.id.buttonWithTooltip));
     }
 
     private static void assertPackageName(AccessibilityNodeInfo node, String packageName) {
@@ -748,7 +732,7 @@ public class AccessibilityEndToEndTest extends
         return true;
     }
 
-    private boolean hasTooltip(int id) {
+    private boolean hasTooltipShowing(int id) {
         return getOnMain(getInstrumentation(), () -> {
             final View viewWithTooltip = getActivity().findViewById(id);
             if (viewWithTooltip == null) {
