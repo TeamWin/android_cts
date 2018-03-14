@@ -223,20 +223,6 @@ public class NoWifiStatePermissionTest extends AndroidTestCase {
     }
 
     /**
-     * Verify that WifiManager#saveConfiguration() requires permissions.
-     * <p>Requires Permission:
-     *   {@link android.Manifest.permission#CHANGE_WIFI_STATE}.
-     */
-    public void testSaveConfiguration() {
-        try {
-            mWifiManager.saveConfiguration();
-            fail("WifiManager.saveConfiguration didn't throw SecurityException as expected");
-        } catch (SecurityException e) {
-            // expected
-        }
-    }
-
-    /**
      * Verify that WifiManager#pingSupplicant() requires permissions.
      * <p>Requires Permission:
      *   {@link android.Manifest.permission#CHANGE_WIFI_STATE}.
