@@ -21,10 +21,12 @@ import com.android.compatibility.common.tradefed.testtype.SubPlan;
 import com.android.compatibility.common.tradefed.testtype.retry.RetryFactoryTest;
 import com.android.ddmlib.Log.LogLevel;
 import com.android.tradefed.build.IBuildInfo;
+import com.android.tradefed.config.ConfigurationException;
 import com.android.tradefed.config.IConfiguration;
 import com.android.tradefed.config.Option;
 import com.android.tradefed.config.Option.Importance;
 import com.android.tradefed.config.OptionClass;
+import com.android.tradefed.config.OptionSetter;
 import com.android.tradefed.log.LogUtil.CLog;
 import com.android.tradefed.testtype.IAbi;
 import com.android.tradefed.testtype.suite.BaseTestSuite;
@@ -64,6 +66,20 @@ public class CompatibilityTestSuite extends BaseTestSuite {
     private CompatibilityBuildHelper mBuildHelper;
     /** Tag if the current instance is running as a retry from RetryFactory */
     private boolean mIsRetry = false;
+
+    /**
+     * Ctor that sets some default for Compatibility runs.
+     */
+    public CompatibilityTestSuite() {
+        try {
+            OptionSetter setter = new OptionSetter(this);
+            setter.setOptionValue("config-patterns", ".*.config");
+            setter.setOptionValue("skip-loading-config-jar", "true");
+        } catch (ConfigurationException e) {
+            // Should not happen
+            throw new RuntimeException(e);
+        }
+    }
 
     @Override
     public void setBuild(IBuildInfo buildInfo) {
@@ -144,10 +160,8 @@ public class CompatibilityTestSuite extends BaseTestSuite {
     @Override
     public LinkedHashMap<String, IConfiguration> loadingStrategy(
             Set<IAbi> abis, File testsDir, String suitePrefix, String suiteTag) {
-        LinkedHashMap<String, IConfiguration> loadedConfigs = new LinkedHashMap<>();
-        // Load the configs that are part of the tests dir
-        loadedConfigs.putAll(
-                getModuleLoader().loadConfigsFromDirectory(testsDir, abis, suitePrefix, suiteTag));
+        LinkedHashMap<String, IConfiguration> loadedConfigs =
+                super.loadingStrategy(abis, testsDir, suitePrefix, suiteTag);
         // Add an extra check in CTS since we never expect the config folder to be empty.
         if (loadedConfigs.size() == 0) {
             if (mIsRetry) {
