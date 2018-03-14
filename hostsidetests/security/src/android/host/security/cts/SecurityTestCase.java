@@ -28,6 +28,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.util.Scanner;
+import java.util.regex.Pattern;
 
 public class SecurityTestCase extends DeviceTestCase {
 
@@ -85,5 +86,13 @@ public class SecurityTestCase extends DeviceTestCase {
                     - kernelStartTime < 2));
         //TODO(badash@): add ability to catch runtime restart
         getDevice().executeAdbCommand("unroot");
+    }
+
+    public void assertMatches(String pattern, String input) throws Exception {
+        assertTrue("Pattern not found", Pattern.matches(pattern, input));
+    }
+
+    public void assertNotMatches(String pattern, String input) throws Exception {
+        assertFalse("Pattern found", Pattern.matches(pattern, input));
     }
 }
