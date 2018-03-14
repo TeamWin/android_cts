@@ -1008,10 +1008,17 @@ public abstract class DeviceAndProfileOwnerTest extends BaseDevicePolicyTest {
                 ? "testSetScreenCaptureDisabled_true"
                 : "testSetScreenCaptureDisabled_false";
         executeDeviceTestMethod(".ScreenCaptureDisabledTest", testMethodName);
-        startSimpleActivityAsUser(userId);
+
         testMethodName = disabled
                 ? "testScreenCaptureImpossible"
                 : "testScreenCapturePossible";
+
+        if (userId == mPrimaryUserId) {
+            // If testing for user-0, also make sure the existing screen can't be captured.
+            executeDeviceTestMethod(".ScreenCaptureDisabledTest", testMethodName);
+        }
+
+        startSimpleActivityAsUser(userId);
         executeDeviceTestMethod(".ScreenCaptureDisabledTest", testMethodName);
     }
 
@@ -1021,13 +1028,25 @@ public abstract class DeviceAndProfileOwnerTest extends BaseDevicePolicyTest {
                 ? "testSetScreenCaptureDisabled_true"
                 : "testSetScreenCaptureDisabled_false";
         executeDeviceTestMethod(".ScreenCaptureDisabledTest", testMethodName);
-        // Make sure the foreground activity is from the target user.
-        startSimpleActivityAsUser(userId);
-        // Check whether the VoiceInteractionService can retrieve the screenshot.
         testMethodName = disabled
                 ? "testScreenCaptureImpossible_assist"
                 : "testScreenCapturePossible_assist";
+
+        // Check whether the VoiceInteractionService can retrieve the screenshot.
         installAppAsUser(DEVICE_ADMIN_APK, mPrimaryUserId);
+
+        if (userId == mPrimaryUserId) {
+            // If testing for user-0, also make sure the existing screen can't be captured.
+            runDeviceTestsAsUser(
+                    DEVICE_ADMIN_PKG,
+                    ".AssistScreenCaptureDisabledTest",
+                    testMethodName,
+                    mPrimaryUserId);
+        }
+
+        // Make sure the foreground activity is from the target user.
+        startSimpleActivityAsUser(userId);
+
         runDeviceTestsAsUser(
                 DEVICE_ADMIN_PKG,
                 ".AssistScreenCaptureDisabledTest",
