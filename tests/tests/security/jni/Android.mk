@@ -30,7 +30,6 @@ LOCAL_SRC_FILES := \
 		android_security_cts_SELinuxTest.cpp \
 		android_security_cts_MMapExecutableTest.cpp \
 		android_security_cts_EncryptionTest.cpp \
-		android_security_cts_StagefrightCodecTest.cpp \
 
 LOCAL_C_INCLUDES := $(JNI_H_INCLUDE) \
 										$(TOP)/frameworks/native/include/media/openmax
