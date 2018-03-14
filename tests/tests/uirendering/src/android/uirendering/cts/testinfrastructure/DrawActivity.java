@@ -34,7 +34,8 @@ import android.uirendering.cts.R;
  */
 public class DrawActivity extends Activity {
     private final static long TIME_OUT_MS = 10000;
-    private final Point mLock = new Point();
+    private final Object mLock = new Object();
+    private ActivityTestBase.TestPositionInfo mPositionInfo;
     public static final int MIN_NUMBER_OF_DRAWS = 20;
 
     private Handler mHandler;
@@ -55,7 +56,8 @@ public class DrawActivity extends Activity {
         return mOnTv;
     }
 
-    public Point enqueueRenderSpecAndWait(int layoutId, CanvasClient canvasClient, String webViewUrl,
+    public ActivityTestBase.TestPositionInfo enqueueRenderSpecAndWait(int layoutId,
+            CanvasClient canvasClient, String webViewUrl,
             @Nullable ViewInitializer viewInitializer, boolean useHardware) {
         ((RenderSpecHandler) mHandler).setViewInitializer(viewInitializer);
         int arg2 = (useHardware ? View.LAYER_TYPE_NONE : View.LAYER_TYPE_SOFTWARE);
@@ -67,16 +69,14 @@ public class DrawActivity extends Activity {
             mHandler.obtainMessage(RenderSpecHandler.LAYOUT_MSG, layoutId, arg2).sendToTarget();
         }
 
-        Point point = new Point();
         synchronized (mLock) {
             try {
                 mLock.wait(TIME_OUT_MS);
-                point.set(mLock.x, mLock.y);
             } catch (InterruptedException e) {
                 e.printStackTrace();
             }
         }
-        return point;
+        return mPositionInfo;
     }
 
     private ViewInitializer mViewInitializer;
@@ -162,9 +162,14 @@ public class DrawActivity extends Activity {
             if (mCurrentDraws < MIN_NUMBER_OF_DRAWS + mExtraDraws) {
                 mView.postInvalidate();
             } else {
+                final int[] location = new int[2];
+                mViewWrapper.getLocationInWindow(location);
+                Point surfaceOffset = new Point(location[0], location[1]);
+                mViewWrapper.getLocationOnScreen(location);
+                Point screenOffset = new Point(location[0], location[1]);
                 synchronized (mLock) {
-                    final int[] locationOnScreen = mViewWrapper.getLocationOnScreen();
-                    mLock.set(locationOnScreen[0], locationOnScreen[1]);
+                    mPositionInfo = new ActivityTestBase.TestPositionInfo(
+                            surfaceOffset, screenOffset);
                     mLock.notify();
                 }
                 mView.getViewTreeObserver().removeOnPreDrawListener(this);
