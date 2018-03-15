@@ -208,11 +208,6 @@ abstract class MediaSession2TestBase {
         }
 
         @Override
-        public void onPlaylistChanged(MediaController2 controller, List<MediaItem2> params) {
-            mCallbackProxy.onPlaylistChanged(controller, params);
-        }
-
-        @Override
         public void onPlaylistParamsChanged(MediaController2 controller,
                 MediaSession2.PlaylistParams params) {
             mCallbackProxy.onPlaylistParamsChanged(controller, params);
