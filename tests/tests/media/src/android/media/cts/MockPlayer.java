@@ -37,8 +37,6 @@ public class MockPlayer extends MediaPlayerBase {
     public boolean mPlayCalled;
     public boolean mPauseCalled;
     public boolean mStopCalled;
-    public boolean mSkipToPreviousCalled;
-    public boolean mSkipToNextCalled;
     public boolean mPrepareCalled;
     public boolean mFastForwardCalled;
     public boolean mRewindCalled;
@@ -97,25 +95,6 @@ public class MockPlayer extends MediaPlayerBase {
     }
     */
 
-    // TODO: Uncomment or remove
-    /*
-    @Override
-    public void skipToPrevious() {
-        mSkipToPreviousCalled = true;
-        if (mCountDownLatch != null) {
-            mCountDownLatch.countDown();
-        }
-    }
-    */
-
-    @Override
-    public void skipToNext() {
-        mSkipToNextCalled = true;
-        if (mCountDownLatch != null) {
-            mCountDownLatch.countDown();
-        }
-    }
-
     @Override
     public void prepare() {
         mPrepareCalled = true;
@@ -166,6 +145,11 @@ public class MockPlayer extends MediaPlayerBase {
         }
     }
     */
+
+    @Override
+    public void skipToNext() {
+        // No-op. This skipToNext() means 'skip to next item in the setNextDataSources()'
+    }
 
     @Override
     public int getPlayerState() {
