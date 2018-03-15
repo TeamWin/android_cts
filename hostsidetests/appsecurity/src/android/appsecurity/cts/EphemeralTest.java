@@ -220,6 +220,10 @@ public class EphemeralTest extends DeviceTestCase
         runDeviceTests(EPHEMERAL_1_PKG, TEST_CLASS, "testPackageInfo");
     }
 
+    public void testActivityInfo() throws Exception {
+        runDeviceTests(EPHEMERAL_1_PKG, TEST_CLASS, "testActivityInfo");
+    }
+
     public void testWebViewLoads() throws Exception {
         runDeviceTests(EPHEMERAL_1_PKG, WEBVIEW_TEST_CLASS, "testWebViewLoads");
     }
