@@ -37,6 +37,7 @@ import com.android.compatibility.common.util.CtsAndroidTestCase;
 import com.android.compatibility.common.util.DeviceReportLog;
 import com.android.compatibility.common.util.ResultType;
 import com.android.compatibility.common.util.ResultUnit;
+import com.android.compatibility.common.util.CddTest;
 
 import java.nio.ByteBuffer;
 import java.util.ArrayList;
@@ -251,6 +252,7 @@ public class AudioRecordTest extends CtsAndroidTestCase {
                 AudioFormat.CHANNEL_IN_STEREO, AudioFormat.ENCODING_PCM_8BIT);
     }
 
+    @CddTest(requirement="5.4.1/C-1-1")
     public void testAudioRecordLocalMono16Bit() throws Exception {
         doTest("local_mono_16bit", true /*localRecord*/, false /*customHandler*/,
                 30 /*periodsPerSecond*/, 2 /*markerPeriodsPerSecond*/,

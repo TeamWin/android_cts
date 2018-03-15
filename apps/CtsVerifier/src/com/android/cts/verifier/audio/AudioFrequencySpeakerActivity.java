@@ -51,9 +51,12 @@ import android.widget.SeekBar;
 import android.widget.LinearLayout;
 import android.widget.ProgressBar;
 
+import com.android.compatibility.common.util.CddTest;
+
 /**
  * Tests Audio Device roundtrip latency by using a loopback plug.
  */
+@CddTest(requirement="7.8.2/C-1-1")
 public class AudioFrequencySpeakerActivity extends AudioFrequencyActivity implements Runnable,
     AudioRecord.OnRecordPositionUpdateListener {
     private static final String TAG = "AudioFrequencySpeakerActivity";

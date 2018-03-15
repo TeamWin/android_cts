@@ -27,6 +27,8 @@ import android.media.audiofx.NoiseSuppressor;
 import android.media.MediaRecorder;
 import android.test.AndroidTestCase;
 
+import com.android.compatibility.common.util.CddTest;
+
 
 public class AudioPreProcessingTest extends AndroidTestCase {
 
@@ -47,6 +49,7 @@ public class AudioPreProcessingTest extends AndroidTestCase {
     //----------------------------------
 
     //Test case 1.1: test NS creation and release
+    @CddTest(requirement="5.4.2/C-1-2")
     public void test1_1NsCreateAndRelease() throws Exception {
         if (!hasMicrophone()) {
             return;
@@ -71,6 +74,7 @@ public class AudioPreProcessingTest extends AndroidTestCase {
     //----------------------------------
 
     //Test case 1.2: test setEnabled() and getEnabled()
+    @CddTest(requirement="5.4.2/C-2-1")
     public void test1_2NsSetEnabledGetEnabled() throws Exception {
         if (!hasMicrophone()) {
             return;
@@ -169,6 +173,7 @@ public class AudioPreProcessingTest extends AndroidTestCase {
     //----------------------------------
 
     //Test case 3.1: test AGC creation and release
+    @CddTest(requirement="5.4.2/C-1-3")
     public void test3_1AgcCreateAndRelease() throws Exception {
         if (!hasMicrophone()) {
             return;
@@ -193,6 +198,7 @@ public class AudioPreProcessingTest extends AndroidTestCase {
     //----------------------------------
 
     //Test case 3.2: test AGC setEnabled() and getEnabled()
+    @CddTest(requirement="5.4.2/C-1-3")
     public void test3_2AgcSetEnabledGetEnabled() throws Exception {
         if (!hasMicrophone()) {
             return;
