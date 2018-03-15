@@ -243,7 +243,9 @@ public class VoicemailContractTest extends InstrumentationTestCase {
 
         Uri uri = mVoicemailProvider.insert(Voicemails.buildSourceUri(FOREIGN_SOURCE), values);
 
-        mVoicemailProvider.update(uri, new ContentValues(), null, null);
+        ContentValues updateValues = new ContentValues();
+        updateValues.put(Voicemails.IS_READ, "1");
+        mVoicemailProvider.update(uri, updateValues, null, null);
 
         try (Cursor cursor = mVoicemailProvider
                 .query(uri, new String[] {Voicemails.DIRTY}, null, null, null)) {
@@ -351,7 +353,9 @@ public class VoicemailContractTest extends InstrumentationTestCase {
 
         Uri uri = mVoicemailProvider.insert(Voicemails.buildSourceUri(mSourcePackageName), values);
 
-        mVoicemailProvider.update(uri, new ContentValues(), null, null);
+        ContentValues updateValues = new ContentValues();
+        updateValues.put(Voicemails.IS_READ, "1");
+        mVoicemailProvider.update(uri, updateValues, null, null);
 
         try (Cursor cursor = mVoicemailProvider
                 .query(uri, new String[] {Voicemails.DIRTY}, null, null, null)) {
