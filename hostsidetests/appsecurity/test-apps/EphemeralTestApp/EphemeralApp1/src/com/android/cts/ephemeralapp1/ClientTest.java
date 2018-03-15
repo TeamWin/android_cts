@@ -39,6 +39,7 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.ServiceConnection;
+import android.content.pm.ActivityInfo;
 import android.content.pm.PackageInfo;
 import android.content.pm.PackageManager;
 import android.content.pm.ProviderInfo;
@@ -961,6 +962,73 @@ public class ClientTest {
                     .getPackageInfo("com.android.cts.ephemeralapp2", 0);
             fail("Instant apps should not be able to access PackageInfo for another Instant App.");
         } catch (PackageManager.NameNotFoundException expected) {
+        }
+    }
+
+    @Test
+    public void testActivityInfo() throws Exception {
+        // own package info
+        {
+            final ComponentName component = new ComponentName(
+                    "com.android.cts.ephemeralapp1",
+                    "com.android.cts.ephemeralapp1.EphemeralActivity");
+            final ActivityInfo info = InstrumentationRegistry.getContext().getPackageManager()
+                .getActivityInfo(component, 0);
+            assertThat(info.packageName,
+                    is("com.android.cts.ephemeralapp1"));
+        }
+
+        // exposed application package info
+        {
+            final ComponentName component = new ComponentName(
+                    "com.android.cts.normalapp",
+                    "com.android.cts.normalapp.ExposedActivity");
+            final ActivityInfo info = InstrumentationRegistry.getContext().getPackageManager()
+                .getActivityInfo(component, 0);
+            assertThat(info.packageName,
+                    is("com.android.cts.normalapp"));
+        }
+
+        // implicitly exposed application package info not accessible
+        {
+            try {
+                final ComponentName component = new ComponentName(
+                        "com.android.cts.normalapp",
+                        "com.android.cts.normalapp.NormalWebActivity");
+                final ActivityInfo info = InstrumentationRegistry.getContext().getPackageManager()
+                        .getActivityInfo(component, 0);
+                fail("Instant apps should not be able to access ActivityInfo for"
+                        + " an activity that implicitly exposes itself to Instant Apps.");
+            } catch (PackageManager.NameNotFoundException expected) {
+            }
+        }
+
+        // unexposed application package info not accessible
+        {
+            try {
+                final ComponentName component = new ComponentName(
+                        "com.android.cts.normalapp",
+                        "com.android.cts.normalapp.NormalActivity");
+                final ActivityInfo info = InstrumentationRegistry.getContext().getPackageManager()
+                        .getActivityInfo(component, 0);
+                fail("Instant apps should not be able to access ActivityInfo for"
+                        + " an activity that does not expose itself to Instant Apps.");
+            } catch (PackageManager.NameNotFoundException expected) {
+            }
+        }
+
+        // instant application (with visibleToInstantApp component) package info not accessible
+        {
+            try {
+                final ComponentName component = new ComponentName(
+                        "com.android.cts.ephemeralapp2",
+                        "com.android.cts.ephemeralapp2.ExposedActivity");
+                final ActivityInfo info = InstrumentationRegistry.getContext().getPackageManager()
+                        .getActivityInfo(component, 0);
+                fail("Instant apps should not be able to access ActivityInfo for"
+                        + " another Instant App.");
+            } catch (PackageManager.NameNotFoundException expected) {
+            }
         }
     }
 
