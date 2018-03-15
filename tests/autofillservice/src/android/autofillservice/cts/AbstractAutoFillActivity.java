@@ -78,10 +78,15 @@ abstract class AbstractAutoFillActivity extends Activity {
      * {@link UiBot#takeScreenshot()} instead.
      */
     public Bitmap takeScreenshot() {
-        final View rootView = findViewById(android.R.id.content).getRootView();
+        return takeScreenshot(findViewById(android.R.id.content).getRootView());
+    }
 
+    /**
+     * Takes a screenshot from the a view.
+     */
+    public Bitmap takeScreenshot(View view) {
         final Rect srcRect = new Rect();
-        syncRunOnUiThread(() -> rootView.getGlobalVisibleRect(srcRect));
+        syncRunOnUiThread(() -> view.getGlobalVisibleRect(srcRect));
         final Bitmap dest = Bitmap.createBitmap(
                 srcRect.width(), srcRect.height(), Bitmap.Config.ARGB_8888);
 

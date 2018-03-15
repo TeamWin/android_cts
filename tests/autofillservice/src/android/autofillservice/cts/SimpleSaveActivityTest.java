@@ -1072,7 +1072,7 @@ public class SimpleSaveActivityTest extends CustomDescriptionWithLinkTestCase {
         // Take a screenshot to make sure button doesn't disappear.
         final String commitBefore = mUiBot.assertShownByRelativeId(ID_COMMIT).getText();
         assertThat(commitBefore.toUpperCase()).isEqualTo("COMMIT");
-        final Bitmap screenshotBefore = mActivity.takeScreenshot();
+        final Bitmap screenshotBefore = mActivity.takeScreenshot(mActivity.mCommit);
 
         // Save it...
         mActivity.syncRunOnUiThread(() -> mActivity.mCommit.performClick());
@@ -1082,13 +1082,13 @@ public class SimpleSaveActivityTest extends CustomDescriptionWithLinkTestCase {
         // Make sure save button is showning (it was removed on earlier versions of the feature)
         final String commitAfter = mUiBot.assertShownByRelativeId(ID_COMMIT).getText();
         assertThat(commitAfter.toUpperCase()).isEqualTo("COMMIT");
-        final Bitmap screenshotAfter = mActivity.takeScreenshot();
+        final Bitmap screenshotAfter = mActivity.takeScreenshot(mActivity.mCommit);
 
         // ... and assert results
         final SaveRequest saveRequest = sReplier.getNextSaveRequest();
         assertTextAndValue(findNodeByResourceId(saveRequest.structure, ID_INPUT), "108");
 
-        Helper.assertBitmapsAreSame("screenshot", screenshotBefore, screenshotAfter);
+        Helper.assertBitmapsAreSame("commit-button", screenshotBefore, screenshotAfter);
     }
 
     @Override
