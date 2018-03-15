@@ -111,10 +111,6 @@ public class PowerIncidentTest extends ProtoDumpTestCase {
         assertTrue(dump.getScreenDimDurationMs() >= 0);
 
         for (WakeLockProto wl : dump.getWakeLocksList()) {
-            if (filterLevel == PRIVACY_AUTO) {
-                // Tag may or may not be empty, but for AUTO, it should always be empty.
-                assertTrue(wl.getTag().isEmpty());
-            }
             assertTrue(0 <= wl.getAcqMs());
             assertTrue(0 <= wl.getUid());
             assertTrue(0 <= wl.getPid());

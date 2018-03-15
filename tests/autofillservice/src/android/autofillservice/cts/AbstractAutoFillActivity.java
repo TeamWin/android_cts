@@ -78,10 +78,15 @@ abstract class AbstractAutoFillActivity extends Activity {
      * {@link UiBot#takeScreenshot()} instead.
      */
     public Bitmap takeScreenshot() {
-        final View rootView = findViewById(android.R.id.content).getRootView();
+        return takeScreenshot(findViewById(android.R.id.content).getRootView());
+    }
 
+    /**
+     * Takes a screenshot from the a view.
+     */
+    public Bitmap takeScreenshot(View view) {
         final Rect srcRect = new Rect();
-        syncRunOnUiThread(() -> rootView.getGlobalVisibleRect(srcRect));
+        syncRunOnUiThread(() -> view.getGlobalVisibleRect(srcRect));
         final Bitmap dest = Bitmap.createBitmap(
                 srcRect.width(), srcRect.height(), Bitmap.Config.ARGB_8888);
 
@@ -94,6 +99,9 @@ abstract class AbstractAutoFillActivity extends Activity {
 
     /**
      * Registers and returns a custom callback for autofill events.
+     *
+     * <p>Note: caller doesn't need to call {@link #unregisterCallback()}, it will be automatically
+     * unregistered on {@link #finish()}.
      */
     protected MyAutofillCallback registerCallback() {
         assertWithMessage("already registered").that(mCallback).isNull();
@@ -104,10 +112,25 @@ abstract class AbstractAutoFillActivity extends Activity {
 
     /**
      * Unregister the callback from the {@link AutofillManager}.
+     *
+     * <p>This method just neeed to be called when a test case wants to explicitly test the behavior
+     * of the activity when the callback is unregistered.
      */
     protected void unregisterCallback() {
         assertWithMessage("not registered").that(mCallback).isNotNull();
+        unregisterNonNullCallback();
+    }
+
+    private void unregisterNonNullCallback() {
         getAutofillManager().unregisterCallback(mCallback);
         mCallback = null;
+    }
+
+    @Override
+    public void finish() {
+        if (mCallback != null) {
+            unregisterNonNullCallback();
+        }
+        super.finish();
     }
 }
