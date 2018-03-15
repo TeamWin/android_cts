@@ -678,6 +678,9 @@ public class VisualVoicemailServiceTest extends InstrumentationTestCase {
     }
 
     private boolean hasDataSms() {
+        if (mTelephonyManager.getPhoneType() == TelephonyManager.PHONE_TYPE_CDMA) {
+            return false;
+        }
         String mccmnc = mTelephonyManager.getSimOperator();
         return !CarrierCapability.UNSUPPORT_DATA_SMS_MESSAGES.contains(mccmnc);
     }
