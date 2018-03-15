@@ -128,6 +128,9 @@ public class XfermodeTest extends ActivityTestBase {
 
         { PorterDuff.Mode.SCREEN, new int[] {
                 BG_COLOR, DST_COLOR, SCREEN_COLOR, SRC_COLOR } },
+
+        { PorterDuff.Mode.CLEAR, new int[] {
+            BG_COLOR, BG_COLOR, BG_COLOR, BG_COLOR } },
     };
 
     @Parameterized.Parameters
