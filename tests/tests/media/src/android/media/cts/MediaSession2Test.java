@@ -33,6 +33,7 @@ import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.ArgumentMatchers.isNull;
 import static org.mockito.Mockito.after;
 import static org.mockito.Mockito.clearInvocations;
+import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.spy;
 import static org.mockito.Mockito.timeout;
@@ -286,22 +287,23 @@ public class MediaSession2Test extends MediaSession2TestBase {
         });
     }
 
-    @Ignore
     @Test
-    public void testSkipToNextItem() throws Exception {
-        sHandler.postAndSync(() -> {
-            mSession.skipToNextItem();
-            assertTrue(mPlayer.mSkipToNextCalled);
-        });
+    public void testSkipToPreviousItem() {
+        mSession.skipToPreviousItem();
+        verify(mMockAgent).skipToPreviousItem();
     }
 
-    @Ignore
     @Test
-    public void testSkipToPreviousItem() throws Exception {
-        sHandler.postAndSync(() -> {
-            mSession.skipToPreviousItem();
-            assertTrue(mPlayer.mSkipToPreviousCalled);
-        });
+    public void testSkipToNextItem() throws Exception {
+        mSession.skipToNextItem();
+        verify(mMockAgent).skipToNextItem();
+    }
+
+    @Test
+    public void testSkipToPlaylistItem() throws Exception {
+        final MediaItem2 testMediaItem = TestUtils.createMediaItemWithMetadata(mContext);
+        mSession.skipToPlaylistItem(testMediaItem);
+        verify(mMockAgent).skipToPlaylistItem(eq(testMediaItem));
     }
 
     @Test
@@ -314,7 +316,7 @@ public class MediaSession2Test extends MediaSession2TestBase {
     @Test
     public void testGetPlaylist() {
         final List<MediaItem2> list = TestUtils.createPlaylist(mContext);
-        when(mMockAgent.getPlaylist()).thenReturn(list);
+        doReturn(list).when(mMockAgent).getPlaylist();
         assertEquals(list, mSession.getPlaylist());
     }
 
@@ -329,7 +331,7 @@ public class MediaSession2Test extends MediaSession2TestBase {
     @Test
     public void testGetPlaylistMetadata() {
         final MediaMetadata2 testMetadata = TestUtils.createMetadata(mContext);
-        when(mMockAgent.getPlaylistMetadata()).thenReturn(testMetadata);
+        doReturn(testMetadata).when(mMockAgent).getPlaylistMetadata();
         assertEquals(testMetadata, mSession.getPlaylistMetadata());
     }
 
