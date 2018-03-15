@@ -35,6 +35,8 @@ import org.junit.runners.model.Statement;
  */
 public class AutofillLoggingTestRule implements TestRule, SafeCleanerRule.Dumper {
 
+    private static final String TAG = "AutofillLoggingTestRule";
+
     private final String mTag;
     private boolean mDumped;
 
@@ -48,6 +50,8 @@ public class AutofillLoggingTestRule implements TestRule, SafeCleanerRule.Dumper
 
             @Override
             public void evaluate() throws Throwable {
+                final String testName = description.getDisplayName();
+                Log.v(TAG, "@Before " + testName);
                 final String levelBefore = runShellCommand("cmd autofill get log_level");
                 if (!levelBefore.equals("verbose")) {
                     runShellCommand("cmd autofill set log_level verbose");
@@ -55,11 +59,15 @@ public class AutofillLoggingTestRule implements TestRule, SafeCleanerRule.Dumper
                 try {
                     base.evaluate();
                 } catch (Throwable t) {
-                    dump(description.getDisplayName(), t);
+                    dump(testName, t);
                     throw t;
                 } finally {
-                    if (!levelBefore.equals("verbose")) {
-                        runShellCommand("cmd autofill set log_level %s", levelBefore);
+                    try {
+                        if (!levelBefore.equals("verbose")) {
+                            runShellCommand("cmd autofill set log_level %s", levelBefore);
+                        }
+                    } finally {
+                        Log.v(TAG, "@After " + testName);
                     }
                 }
             }

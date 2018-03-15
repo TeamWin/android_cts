@@ -767,6 +767,7 @@ final class UiBot {
      * Dumps the current view hierarchy int the output stream.
      */
     public void dumpScreen(String cause) {
+        new Exception("dumpScreen(cause=" + cause + ") stacktrace").printStackTrace(System.out);
         try {
             try (ByteArrayOutputStream os = new ByteArrayOutputStream()) {
                 mDevice.dumpWindowHierarchy(os);
