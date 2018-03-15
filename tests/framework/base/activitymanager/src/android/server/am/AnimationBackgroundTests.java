@@ -55,6 +55,7 @@ public class AnimationBackgroundTests extends ActivityManagerTestBase {
         launchActivityOnDisplay(LAUNCHING_ACTIVITY, DEFAULT_DISPLAY);
         getLaunchActivityBuilder().setTargetActivity(ANIMATION_TEST_ACTIVITY).execute();
         mAmWmState.computeState(ANIMATION_TEST_ACTIVITY);
+        mAmWmState.waitForAppTransitionIdle();
         assertFalse("window animation background needs to be gone", mAmWmState.getWmState()
                 .getStandardStackByWindowingMode(WINDOWING_MODE_FULLSCREEN)
                 .isWindowAnimationBackgroundSurfaceShowing());
