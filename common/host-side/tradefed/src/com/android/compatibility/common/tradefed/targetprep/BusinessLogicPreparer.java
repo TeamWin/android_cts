@@ -86,7 +86,7 @@ public class BusinessLogicPreparer implements ITargetCleaner {
     private String mApiKey;
 
     @Option(name = "business-logic-api-scope", description = "The URI of api scope to use when " +
-            "retrieving business logic rules.", mandatory = true)
+            "retrieving business logic rules.")
     /* URI of api scope to use when retrieving business logic rules */
     private  String mApiScope;
 
