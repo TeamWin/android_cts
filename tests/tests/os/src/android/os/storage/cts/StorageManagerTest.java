@@ -317,7 +317,7 @@ public class StorageManagerTest extends AndroidTestCase {
             if (onReadError != null) {
                 throw onReadError;
             }
-            final int len = (int)(Math.min(size, data.length - offset));
+            final int len = (int)(Math.min(size, bytes.length - offset));
             for (int i = 0; i < len; i++) {
                 data[i] = bytes[(int)(i + offset)];
             }
@@ -645,6 +645,41 @@ public class StorageManagerTest extends AndroidTestCase {
             assertEquals(64, readBytes);
             for (int i = 0; i < 64; i++) {
                 assertEquals('L', bytes[i]);
+            }
+        }
+    }
+
+    public void testOpenProxyFileDescriptor_largeRead() throws Exception {
+        final int SIZE = 1024 * 1024;
+        final TestProxyFileDescriptorCallback callback =
+                new TestProxyFileDescriptorCallback(SIZE, "abcdefghijklmnopqrstuvwxyz");
+        final byte[] bytes = new byte[SIZE];
+        try (final ParcelFileDescriptor fd = mStorageManager.openProxyFileDescriptor(
+                ParcelFileDescriptor.MODE_READ_ONLY, callback)) {
+            final int readBytes = Os.read(
+                    fd.getFileDescriptor(), bytes, 0, bytes.length);
+            assertEquals(bytes.length, readBytes);
+            for (int i = 0; i < bytes.length; i++) {
+                assertEquals(callback.bytes[i], bytes[i]);
+            }
+        }
+    }
+
+    public void testOpenProxyFileDescriptor_largeWrite() throws Exception {
+        final int SIZE = 1024 * 1024;
+        final TestProxyFileDescriptorCallback callback =
+                new TestProxyFileDescriptorCallback(SIZE, "abcdefghijklmnopqrstuvwxyz");
+        final byte[] bytes = new byte[SIZE];
+        for (int i = 0; i < SIZE; i++) {
+            bytes[i] = (byte)(i % 123);
+        }
+        try (final ParcelFileDescriptor fd = mStorageManager.openProxyFileDescriptor(
+                ParcelFileDescriptor.MODE_WRITE_ONLY, callback)) {
+            final int writtenBytes = Os.write(
+                    fd.getFileDescriptor(), bytes, 0, bytes.length);
+            assertEquals(bytes.length, writtenBytes);
+            for (int i = 0; i < bytes.length; i++) {
+                assertEquals(bytes[i], callback.bytes[i]);
             }
         }
     }
