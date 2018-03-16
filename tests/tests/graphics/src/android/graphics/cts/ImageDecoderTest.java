@@ -26,6 +26,7 @@ import static org.junit.Assert.fail;
 
 import android.content.ContentResolver;
 import android.content.Context;
+import android.content.res.AssetManager;
 import android.content.res.Resources;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
@@ -1851,6 +1852,51 @@ public class ImageDecoderTest {
                 assertNotNull(drawable);
             } catch (IOException e) {
                 fail("Failed " + getAsResourceUri(record.resId) + " with " + e);
+            }
+        }
+    }
+
+    private static class AssetRecord {
+        public final String name;
+        public final int width;
+        public final int height;
+
+        AssetRecord(String name, int width, int height) {
+            this.name = name;
+            this.width = width;
+            this.height = height;
+        }
+    }
+
+    @Test
+    public void testAssetSource() {
+        AssetRecord[] records = new AssetRecord[] {
+                new AssetRecord("almost-red-adobe.png", 1, 1),
+                new AssetRecord("green-p3.png", 64, 64),
+                new AssetRecord("green-srgb.png", 64, 64),
+                new AssetRecord("prophoto-rgba16f.png", 64, 64),
+                new AssetRecord("purple-cmyk.png", 64, 64),
+                new AssetRecord("purple-displayprofile.png", 64, 64),
+                new AssetRecord("red-adobergb.png", 64, 64),
+                new AssetRecord("translucent-green-p3.png", 64, 64),
+        };
+
+        // CTS infrastructure fails to create F16 HARDWARE Bitmaps, so this switches
+        // to using software.
+        ImageDecoder.OnHeaderDecodedListener listener = (decoder, info, s) -> {
+            decoder.setAllocator(ImageDecoder.ALLOCATOR_SOFTWARE);
+        };
+
+        AssetManager assets = mRes.getAssets();
+        for (AssetRecord record : records) {
+            ImageDecoder.Source src = ImageDecoder.createSource(assets, record.name);
+            try {
+                Drawable dr = ImageDecoder.decodeDrawable(src, listener);
+                assertNotNull(record.name, dr);
+                assertEquals(record.name, record.width, dr.getIntrinsicWidth());
+                assertEquals(record.name, record.height, dr.getIntrinsicHeight());
+            } catch (IOException e) {
+                fail("Failed to decode asset " + record.name + " with " + e);
             }
         }
     }
