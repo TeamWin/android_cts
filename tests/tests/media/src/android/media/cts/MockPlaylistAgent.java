@@ -17,18 +17,132 @@
 package android.media.cts;
 
 import android.content.Context;
+import android.media.MediaItem2;
+import android.media.MediaMetadata2;
 import android.media.MediaPlaylistAgent;
+
+import java.util.List;
+import java.util.concurrent.CountDownLatch;
 
 /**
  * A mock implementation of {@link MediaPlaylistAgent} for testing.
  * <p>
- * Ideally Mockito should work without this class, but it hass following issues.
- *   - Creating mock instance with Mockito.mock() fails because it doesn't initialize provider
- *     and null provider will cause NPE.
- *   - Creating spy instance with Mockito.spy() fails because spy() doesn't work for inner class.
+ * Do not use mockito for {@link MediaPlaylistAgent}. Instead, use this.
+ * Mocks created from mockito should not be shared across different threads.
  */
 public class MockPlaylistAgent extends MediaPlaylistAgent {
+    public final CountDownLatch mCountDownLatch = new CountDownLatch(1);
+
+    public List<MediaItem2> mPlaylist;
+    public MediaMetadata2 mMetadata;
+    public MediaItem2 mItem;
+    public int mIndex = -1;
+    public @RepeatMode int mRepeatMode = -1;
+    public @ShuffleMode int mShuffleMode = -1;
+
+    public boolean mSetPlaylistCalled;
+    public boolean mUpdatePlaylistMetadataCalled;
+    public boolean mAddPlaylistItemCalled;
+    public boolean mRemovePlaylistItemCalled;
+    public boolean mReplacePlaylistItemCalled;
+    public boolean mSkipToPlaylistItemCalled;
+    public boolean mSkipToPreviousItemCalled;
+    public boolean mSkipToNextItemCalled;
+    public boolean mSetRepeatModeCalled;
+    public boolean mSetShuffleModeCalled;
+
     public MockPlaylistAgent(Context context) {
         super(context);
+    }
+
+    @Override
+    public List<MediaItem2> getPlaylist() {
+        return mPlaylist;
+    }
+
+    @Override
+    public void setPlaylist(List<MediaItem2> list, MediaMetadata2 metadata) {
+        mSetPlaylistCalled = true;
+        mPlaylist = list;
+        mMetadata = metadata;
+        mCountDownLatch.countDown();
+    }
+
+    @Override
+    public MediaMetadata2 getPlaylistMetadata() {
+        return mMetadata;
+    }
+
+    @Override
+    public void updatePlaylistMetadata(MediaMetadata2 metadata) {
+        mUpdatePlaylistMetadataCalled = true;
+        mMetadata = metadata;
+        mCountDownLatch.countDown();
+    }
+
+    @Override
+    public void addPlaylistItem(int index, MediaItem2 item) {
+        mAddPlaylistItemCalled = true;
+        mIndex = index;
+        mItem = item;
+        mCountDownLatch.countDown();
+    }
+
+    @Override
+    public void removePlaylistItem(MediaItem2 item) {
+        mRemovePlaylistItemCalled = true;
+        mItem = item;
+        mCountDownLatch.countDown();
+    }
+
+    @Override
+    public void replacePlaylistItem(int index, MediaItem2 item) {
+        mReplacePlaylistItemCalled = true;
+        mIndex = index;
+        mItem = item;
+        mCountDownLatch.countDown();
+    }
+
+    @Override
+    public void skipToPlaylistItem(MediaItem2 item) {
+        mSkipToPlaylistItemCalled = true;
+        mItem = item;
+        mCountDownLatch.countDown();
+    }
+
+    @Override
+    public void skipToPreviousItem() {
+        mSkipToPreviousItemCalled = true;
+        mCountDownLatch.countDown();
+    }
+
+    @Override
+    public void skipToNextItem() {
+        mSkipToNextItemCalled = true;
+        mCountDownLatch.countDown();
+    }
+
+    @Override
+    public int getRepeatMode() {
+        return mRepeatMode;
+    }
+
+    @Override
+    public void setRepeatMode(int repeatMode) {
+        mSetRepeatModeCalled = true;
+        mRepeatMode = repeatMode;
+        mCountDownLatch.countDown();
+    }
+
+    @Override
+    public int getShuffleMode() {
+        return mShuffleMode;
+    }
+
+    @Override
+    public void setShuffleMode(int shuffleMode) {
+        mSetShuffleModeCalled = true;
+        mShuffleMode = shuffleMode;
+        mCountDownLatch.countDown();
     }
 }
