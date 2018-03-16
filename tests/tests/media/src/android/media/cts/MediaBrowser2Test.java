@@ -548,11 +548,6 @@ public class MediaBrowser2Test extends MediaController2Test {
         }
 
         @Override
-        public void onPlaylistChanged(MediaController2 controller, List<MediaItem2> playlist) {
-            mCallbackProxy.onPlaylistChanged(controller, playlist);
-        }
-
-        @Override
         public void onPlayerStateChanged(MediaController2 controller, int state) {
             mCallbackProxy.onPlayerStateChanged(controller, state);
         }
