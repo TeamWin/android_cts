@@ -268,7 +268,8 @@ public class MediaController2Test extends MediaSession2TestBase {
     }
 
     /**
-     * This also tests {@link ControllerCallback#onPlaylistChanged(MediaController2, List)}
+     * This also tests {@link ControllerCallback#onPlaylistChanged(
+     * MediaController2, MediaPlaylistAgent, List, MediaMetadata2)}.
      */
     @Test
     public void testGetPlaylist() throws InterruptedException {
