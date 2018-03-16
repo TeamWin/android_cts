@@ -25,15 +25,18 @@ import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
+import android.graphics.Color;
 import android.support.test.filters.SmallTest;
 import android.support.test.runner.AndroidJUnit4;
 import android.text.Layout;
 import android.text.PrecomputedText;
 import android.text.PrecomputedText.Params;
+import android.text.Spannable;
 import android.text.SpannableStringBuilder;
 import android.text.Spanned;
 import android.text.TextDirectionHeuristics;
 import android.text.TextPaint;
+import android.text.style.BackgroundColorSpan;
 import android.text.style.LocaleSpan;
 
 import org.junit.Test;
@@ -202,6 +205,42 @@ public class PrecomputedTextTest {
 
         assertEquals(SPAN_START, s.nextSpanTransition(0, s.length(), LocaleSpan.class));
         assertEquals(SPAN_END, s.nextSpanTransition(SPAN_START, s.length(), LocaleSpan.class));
+    }
+
+    @Test
+    public void testSpannedInterface_Spannable() {
+        final BackgroundColorSpan span = new BackgroundColorSpan(Color.RED);
+        final Params param = new Params.Builder(PAINT).build();
+        final Spannable s = PrecomputedText.create(STRING, param);
+        assertEquals(0, s.getSpans(0, s.length(), BackgroundColorSpan.class).length);
+
+        s.setSpan(span, SPAN_START, SPAN_END, Spanned.SPAN_INCLUSIVE_EXCLUSIVE);
+
+        final BackgroundColorSpan[] spans = s.getSpans(0, s.length(), BackgroundColorSpan.class);
+        assertEquals(SPAN_START, s.getSpanStart(span));
+        assertEquals(SPAN_END, s.getSpanEnd(span));
+        assertTrue((s.getSpanFlags(span) & Spanned.SPAN_INCLUSIVE_EXCLUSIVE) != 0);
+
+        assertEquals(SPAN_START, s.nextSpanTransition(0, s.length(), BackgroundColorSpan.class));
+        assertEquals(SPAN_END,
+                s.nextSpanTransition(SPAN_START, s.length(), BackgroundColorSpan.class));
+
+        s.removeSpan(span);
+        assertEquals(0, s.getSpans(0, s.length(), BackgroundColorSpan.class).length);
+    }
+
+    @Test(expected = IllegalArgumentException.class)
+    public void testSpannedInterface_Spannable_setSpan_MetricsAffectingSpan() {
+        final Params param = new Params.Builder(PAINT).build();
+        final Spannable s = PrecomputedText.create(SPANNED, param);
+        s.setSpan(SPAN, SPAN_START, SPAN_END, Spanned.SPAN_INCLUSIVE_EXCLUSIVE);
+    }
+
+    @Test(expected = IllegalArgumentException.class)
+    public void testSpannedInterface_Spannable_removeSpan_MetricsAffectingSpan() {
+        final Params param = new Params.Builder(PAINT).build();
+        final Spannable s = PrecomputedText.create(SPANNED, param);
+        s.removeSpan(SPAN);
     }
 
     @Test
