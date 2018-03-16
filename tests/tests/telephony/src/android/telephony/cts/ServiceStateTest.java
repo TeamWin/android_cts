@@ -55,9 +55,9 @@ public class ServiceStateTest extends AndroidTestCase {
         assertEquals(OPERATOR_ALPHA_SHORT, serviceState.getOperatorAlphaShort());
         assertEquals(OPERATOR_NUMERIC, serviceState.getOperatorNumeric());
 
-        serviceState.setSystemAndNetworkId(SYSTEM_ID, NETWORK_ID);
-        assertEquals(SYSTEM_ID, serviceState.getSystemId());
-        assertEquals(NETWORK_ID, serviceState.getNetworkId());
+        serviceState.setCdmaSystemAndNetworkId(SYSTEM_ID, NETWORK_ID);
+        assertEquals(SYSTEM_ID, serviceState.getCdmaSystemId());
+        assertEquals(NETWORK_ID, serviceState.getCdmaNetworkId());
 
         assertTrue(serviceState.hashCode() > 0);
         assertNotNull(serviceState.toString());
