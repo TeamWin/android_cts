@@ -102,8 +102,8 @@ def main():
 
     # Pass/fail check.
     for ch in range(4):
-        diffs = [var_measured[ch][i] - var_expected[ch][i]
-                 for i in range(NUM_STEPS)]
+        diffs = [abs(var_measured[ch][i] - var_expected[ch][i])
+                 for i in range(len(sensitivities))]
         print "Diffs (%s):"%(["R","GR","GB","B"][ch]), diffs
         for i,diff in enumerate(diffs):
             thresh = max(DIFF_THRESH, FRAC_THRESH * var_expected[ch][i])
