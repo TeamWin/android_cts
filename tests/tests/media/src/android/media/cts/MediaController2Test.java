@@ -16,8 +16,6 @@
 
 package android.media.cts;
 
-import static android.media.cts.TestUtils.ensurePlaylistParamsModeEquals;
-
 import static junit.framework.Assert.assertEquals;
 
 import static org.junit.Assert.assertFalse;
@@ -49,7 +47,6 @@ import android.media.MediaSession2;
 import android.media.MediaSession2.Command;
 import android.media.MediaSession2.CommandGroup;
 import android.media.MediaSession2.ControllerInfo;
-import android.media.MediaSession2.PlaylistParams;
 import android.media.MediaSession2.SessionCallback;
 import android.media.Rating2;
 import android.media.SessionToken2;
@@ -486,32 +483,78 @@ public class MediaController2Test extends MediaSession2TestBase {
                 }));
     }
 
-    @Ignore
+    /**
+     * This also tests {@link ControllerCallback#onShuffleModeChanged(
+     * MediaController2, MediaPlaylistAgent, int)}.
+     */
     @Test
-    public void testGetSetPlaylistParams() throws Exception {
-        final PlaylistParams params = new PlaylistParams(mContext,
-                PlaylistParams.REPEAT_MODE_ALL,
-                PlaylistParams.SHUFFLE_MODE_ALL,
-                null /* PlaylistMetadata */);
-
+    public void testGetShuffleMode() throws InterruptedException {
+        final int testShuffleMode = MediaPlaylistAgent.SHUFFLE_MODE_GROUP;
+        final MediaPlaylistAgent agent = new MediaPlaylistAgent(mContext) {
+            @Override
+            public int getShuffleMode() {
+                return testShuffleMode;
+            }
+        };
         final CountDownLatch latch = new CountDownLatch(1);
         final ControllerCallback callback = new ControllerCallback() {
             @Override
-            public void onPlaylistParamsChanged(MediaController2 controller,
-                    PlaylistParams givenParams) {
-                ensurePlaylistParamsModeEquals(params, givenParams);
+            public void onShuffleModeChanged(MediaController2 controller,
+                    MediaPlaylistAgent playlistAgent, int shuffleMode) {
+                assertEquals(testShuffleMode, shuffleMode);
                 latch.countDown();
             }
         };
-
-        final MediaController2 controller = createController(mSession.getToken(), true, callback);
-        controller.setPlaylistParams(params);
-
-        assertTrue(latch.await(WAIT_TIME_MS, TimeUnit.MILLISECONDS));
-        ensurePlaylistParamsModeEquals(params, mSession.getPlaylistParams());
-        ensurePlaylistParamsModeEquals(params, controller.getPlaylistParams());
+        mSession.updatePlayer(mPlayer, agent, null);
+        MediaController2 controller = createController(mSession.getToken(), true, callback);
+        agent.notifyShuffleModeChanged();
+        assertTrue(latch.await(TIMEOUT_MS, TimeUnit.MILLISECONDS));
+        assertEquals(testShuffleMode, controller.getShuffleMode());
     }
 
+    @Test
+    public void testSetShuffleMode() {
+        final int testShuffleMode = MediaPlaylistAgent.SHUFFLE_MODE_GROUP;
+        mController.setShuffleMode(testShuffleMode);
+        verify(mMockAgent, timeout(TIMEOUT_MS).atLeastOnce()).setShuffleMode(eq(testShuffleMode));
+    }
+
+    /**
+     * This also tests {@link ControllerCallback#onRepeatModeChanged(
+     * MediaController2, MediaPlaylistAgent, int)}.
+     */
+    @Test
+    public void testGetRepeatMode() throws InterruptedException {
+        final int testRepeatMode = MediaPlaylistAgent.REPEAT_MODE_GROUP;
+        final MediaPlaylistAgent agent = new MediaPlaylistAgent(mContext) {
+            @Override
+            public int getRepeatMode() {
+                return testRepeatMode;
+            }
+        };
+        final CountDownLatch latch = new CountDownLatch(1);
+        final ControllerCallback callback = new ControllerCallback() {
+            @Override
+            public void onRepeatModeChanged(MediaController2 controller,
+                    MediaPlaylistAgent playlistAgent, int repeatMode) {
+                assertEquals(testRepeatMode, repeatMode);
+                latch.countDown();
+            }
+        };
+        mSession.updatePlayer(mPlayer, agent, null);
+        MediaController2 controller = createController(mSession.getToken(), true, callback);
+        agent.notifyRepeatModeChanged();
+        assertTrue(latch.await(TIMEOUT_MS, TimeUnit.MILLISECONDS));
+        assertEquals(testRepeatMode, controller.getRepeatMode());
+    }
+
+    @Test
+    public void testSetRepeatMode() {
+        final int testRepeatMode = MediaPlaylistAgent.REPEAT_MODE_GROUP;
+        mController.setRepeatMode(testRepeatMode);
+        verify(mMockAgent, timeout(TIMEOUT_MS).atLeastOnce()).setRepeatMode(eq(testRepeatMode));
+    }
+    
     @Test
     public void testSetVolumeTo() throws Exception {
         final int maxVolume = 100;

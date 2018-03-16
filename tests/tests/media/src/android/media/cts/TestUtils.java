@@ -16,7 +16,6 @@
 
 package android.media.cts;
 
-import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
@@ -24,7 +23,6 @@ import android.content.Context;
 import android.media.DataSourceDesc;
 import android.media.MediaItem2;
 import android.media.MediaMetadata2;
-import android.media.MediaSession2.PlaylistParams;
 import android.media.SessionToken2;
 import android.media.session.MediaSessionManager;
 import android.os.Bundle;
@@ -92,11 +90,6 @@ public final class TestUtils {
             }
         }
         return true;
-    }
-
-    public static void ensurePlaylistParamsModeEquals(PlaylistParams a, PlaylistParams b) {
-        assertEquals(a.getRepeatMode(), b.getRepeatMode());
-        assertEquals(a.getShuffleMode(), b.getShuffleMode());
     }
 
     /**
