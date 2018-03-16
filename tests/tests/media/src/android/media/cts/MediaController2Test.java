@@ -162,7 +162,7 @@ public class MediaController2Test extends MediaSession2TestBase {
     }
 
     @Test
-    public void testPlay() throws InterruptedException {
+    public void testPlay() {
         mController.play();
         try {
             assertTrue(mPlayer.mCountDownLatch.await(WAIT_TIME_MS, TimeUnit.MILLISECONDS));
@@ -173,7 +173,7 @@ public class MediaController2Test extends MediaSession2TestBase {
     }
 
     @Test
-    public void testPause() throws InterruptedException {
+    public void testPause() {
         mController.pause();
         try {
             assertTrue(mPlayer.mCountDownLatch.await(WAIT_TIME_MS, TimeUnit.MILLISECONDS));
@@ -185,7 +185,7 @@ public class MediaController2Test extends MediaSession2TestBase {
 
     @Ignore
     @Test
-    public void testStop() throws InterruptedException {
+    public void testStop() {
         mController.stop();
         try {
             assertTrue(mPlayer.mCountDownLatch.await(WAIT_TIME_MS, TimeUnit.MILLISECONDS));
@@ -196,7 +196,7 @@ public class MediaController2Test extends MediaSession2TestBase {
     }
 
     @Test
-    public void testPrepare() throws InterruptedException {
+    public void testPrepare() {
         mController.prepare();
         try {
             assertTrue(mPlayer.mCountDownLatch.await(WAIT_TIME_MS, TimeUnit.MILLISECONDS));
@@ -208,7 +208,7 @@ public class MediaController2Test extends MediaSession2TestBase {
 
     @Ignore
     @Test
-    public void testFastForward() throws InterruptedException {
+    public void testFastForward() {
         mController.fastForward();
         try {
             assertTrue(mPlayer.mCountDownLatch.await(WAIT_TIME_MS, TimeUnit.MILLISECONDS));
@@ -220,7 +220,7 @@ public class MediaController2Test extends MediaSession2TestBase {
 
     @Ignore
     @Test
-    public void testRewind() throws InterruptedException {
+    public void testRewind() {
         mController.rewind();
         try {
             assertTrue(mPlayer.mCountDownLatch.await(WAIT_TIME_MS, TimeUnit.MILLISECONDS));
@@ -231,7 +231,7 @@ public class MediaController2Test extends MediaSession2TestBase {
     }
 
     @Test
-    public void testSeekTo() throws InterruptedException {
+    public void testSeekTo() {
         final long seekPosition = 12125L;
         mController.seekTo(seekPosition);
         try {
@@ -241,6 +241,25 @@ public class MediaController2Test extends MediaSession2TestBase {
         }
         assertTrue(mPlayer.mSeekToCalled);
         assertEquals(seekPosition, mPlayer.mSeekPosition);
+    }
+
+    @Test
+    public void testGettersAfterConnected() throws InterruptedException {
+        final int state = MediaPlayerBase.PLAYER_STATE_PLAYING;
+        final long position = 150000;
+        final long bufferedPosition = 900000;
+
+        mPlayer.mLastPlayerState = state;
+        mPlayer.mCurrentPosition = position;
+        mPlayer.mBufferedPosition = bufferedPosition;
+
+        MediaController2 controller = createController(mSession.getToken());
+        assertEquals(state, controller.getPlayerState());
+        assertEquals(bufferedPosition, controller.getBufferedPosition());
+        // TODO (jaewan): Enable this test when Session2/Controller2's get(set)PlaybackSpeed
+        //                is implemented. (b/74093080)
+        //assertEquals(speed, controller.getPlaybackSpeed());
+        //assertEquals(position + speed * elapsedTime, controller.getPosition(), delta);
     }
 
     @Test
@@ -1019,7 +1038,7 @@ public class MediaController2Test extends MediaSession2TestBase {
     }
 
     @Test
-    public void testClose_twice() throws InterruptedException {
+    public void testClose_twice() {
         mController.close();
         mController.close();
     }
