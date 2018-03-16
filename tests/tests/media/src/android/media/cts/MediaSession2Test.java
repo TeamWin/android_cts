@@ -17,15 +17,16 @@
 package android.media.cts;
 
 import static android.media.AudioAttributes.CONTENT_TYPE_MUSIC;
+import static android.media.MediaItem2.FLAG_PLAYABLE;
 import static android.media.cts.TestUtils.ensurePlaylistParamsModeEquals;
 
-import static junit.framework.Assert.assertEquals;
-import static junit.framework.Assert.assertTrue;
-
+import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
+import static org.junit.Assert.assertSame;
+import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.argThat;
@@ -43,6 +44,7 @@ import static org.mockito.Mockito.when;
 import android.content.Context;
 import android.media.AudioAttributes;
 import android.media.AudioManager;
+import android.media.DataSourceDesc;
 import android.media.MediaController2;
 import android.media.MediaController2.ControllerCallback;
 import android.media.MediaController2.PlaybackInfo;
@@ -74,6 +76,7 @@ import org.junit.Ignore;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
+import java.io.FileDescriptor;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.CountDownLatch;
@@ -172,6 +175,107 @@ public class MediaSession2Test extends MediaSession2TestBase {
         assertTrue(latchForSessionCallback.await(WAIT_TIME_MS, TimeUnit.MILLISECONDS));
         assertTrue(latchForControllerCallback.await(WAIT_TIME_MS, TimeUnit.MILLISECONDS));
         assertEquals(targetState, controller.getPlayerState());
+    }
+
+    @Test
+    public void testCurrentDataSourceChanged() throws Exception {
+        final int listSize = 5;
+        final List<MediaItem2> list = TestUtils.createPlaylist(mContext, listSize);
+        final MediaPlaylistAgent agent = new MediaPlaylistAgent(mContext) {
+            @Override
+            public List<MediaItem2> getPlaylist() {
+                return list;
+            }
+        };
+
+        MediaItem2 currentItem = list.get(3);
+
+        final CountDownLatch latchForSessionCallback = new CountDownLatch(1);
+        try (final MediaSession2 session = new MediaSession2.Builder(mContext)
+                .setPlayer(mPlayer)
+                .setPlaylistAgent(agent)
+                .setId("testCurrentDataSourceChanged")
+                .setSessionCallback(sHandlerExecutor, new SessionCallback(mContext) {
+                    @Override
+                    public void onCurrentMediaItemChanged(MediaSession2 session,
+                            MediaPlayerBase player, MediaItem2 itemOut) {
+                        assertSame(currentItem, itemOut);
+                        latchForSessionCallback.countDown();
+                    }
+                }).build()) {
+
+            mPlayer.notifyCurrentDataSourceChanged(currentItem.getDataSourceDesc());
+            assertTrue(latchForSessionCallback.await(WAIT_TIME_MS, TimeUnit.MILLISECONDS));
+            // TODO (jaewan): Test that controllers are also notified. (b/74505936)
+        }
+    }
+
+    @Test
+    public void testMediaPrepared() throws Exception {
+        final int listSize = 5;
+        final List<MediaItem2> list = TestUtils.createPlaylist(mContext, listSize);
+        final MediaPlaylistAgent agent = new MediaPlaylistAgent(mContext) {
+            @Override
+            public List<MediaItem2> getPlaylist() {
+                return list;
+            }
+        };
+
+        MediaItem2 currentItem = list.get(3);
+
+        final CountDownLatch latchForSessionCallback = new CountDownLatch(1);
+        try (final MediaSession2 session = new MediaSession2.Builder(mContext)
+                .setPlayer(mPlayer)
+                .setPlaylistAgent(agent)
+                .setId("testMediaPrepared")
+                .setSessionCallback(sHandlerExecutor, new SessionCallback(mContext) {
+                    @Override
+                    public void onMediaPrepared(MediaSession2 session, MediaPlayerBase player,
+                            MediaItem2 itemOut) {
+                        assertSame(currentItem, itemOut);
+                        latchForSessionCallback.countDown();
+                    }
+                }).build()) {
+
+            mPlayer.notifyMediaPrepared(currentItem.getDataSourceDesc());
+            assertTrue(latchForSessionCallback.await(WAIT_TIME_MS, TimeUnit.MILLISECONDS));
+            // TODO (jaewan): Test that controllers are also notified. (b/74505936)
+        }
+    }
+
+    @Test
+    public void testBufferingStateChanged() throws Exception {
+        final int listSize = 5;
+        final List<MediaItem2> list = TestUtils.createPlaylist(mContext, listSize);
+        final MediaPlaylistAgent agent = new MediaPlaylistAgent(mContext) {
+            @Override
+            public List<MediaItem2> getPlaylist() {
+                return list;
+            }
+        };
+
+        MediaItem2 currentItem = list.get(3);
+        final int buffState = MediaPlayerBase.BUFFERING_STATE_BUFFERING_COMPLETE;
+
+        final CountDownLatch latchForSessionCallback = new CountDownLatch(1);
+        try (final MediaSession2 session = new MediaSession2.Builder(mContext)
+                .setPlayer(mPlayer)
+                .setPlaylistAgent(agent)
+                .setId("testBufferingStateChanged")
+                .setSessionCallback(sHandlerExecutor, new SessionCallback(mContext) {
+                    @Override
+                    public void onBufferingStateChanged(MediaSession2 session,
+                            MediaPlayerBase player, MediaItem2 itemOut, int stateOut) {
+                        assertSame(currentItem, itemOut);
+                        assertEquals(buffState, stateOut);
+                        latchForSessionCallback.countDown();
+                    }
+                }).build()) {
+
+            mPlayer.notifyBufferingStateChanged(currentItem.getDataSourceDesc(), buffState);
+            assertTrue(latchForSessionCallback.await(WAIT_TIME_MS, TimeUnit.MILLISECONDS));
+            // TODO (jaewan): Test that controllers are also notified. (b/74505936)
+        }
     }
 
     @Test
@@ -308,14 +412,14 @@ public class MediaSession2Test extends MediaSession2TestBase {
 
     @Test
     public void testSetPlaylist() {
-        final List<MediaItem2> list = TestUtils.createPlaylist(mContext);
+        final List<MediaItem2> list = TestUtils.createPlaylist(mContext, 2);
         mSession.setPlaylist(list, null);
         verify(mMockAgent, timeout(TIMEOUT_MS).atLeastOnce()).setPlaylist(eq(list), isNull());
     }
 
     @Test
     public void testGetPlaylist() {
-        final List<MediaItem2> list = TestUtils.createPlaylist(mContext);
+        final List<MediaItem2> list = TestUtils.createPlaylist(mContext, 2);
         doReturn(list).when(mMockAgent).getPlaylist();
         assertEquals(list, mSession.getPlaylist());
     }
@@ -337,7 +441,7 @@ public class MediaSession2Test extends MediaSession2TestBase {
 
     @Test
     public void testSessionCallback_onPlaylistChanged() throws InterruptedException {
-        final List<MediaItem2> list = TestUtils.createPlaylist(mContext);
+        final List<MediaItem2> list = TestUtils.createPlaylist(mContext, 2);
         final CountDownLatch latch = new CountDownLatch(1);
         final MediaPlaylistAgent agent = new MediaPlaylistAgent(mContext) {
             @Override

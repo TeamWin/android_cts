@@ -182,6 +182,30 @@ public class MockPlayer extends MediaPlayerBase {
         }
     }
 
+    public void notifyCurrentDataSourceChanged(DataSourceDesc dsd) {
+        for (int i = 0; i < mCallbacks.size(); i++) {
+            final PlayerEventCallback callback = mCallbacks.keyAt(i);
+            final Executor executor = mCallbacks.valueAt(i);
+            executor.execute(() -> callback.onCurrentDataSourceChanged(this, dsd));
+        }
+    }
+
+    public void notifyMediaPrepared(DataSourceDesc dsd) {
+        for (int i = 0; i < mCallbacks.size(); i++) {
+            final PlayerEventCallback callback = mCallbacks.keyAt(i);
+            final Executor executor = mCallbacks.valueAt(i);
+            executor.execute(() -> callback.onMediaPrepared(this, dsd));
+        }
+    }
+
+    public void notifyBufferingStateChanged(DataSourceDesc dsd, @BuffState int buffState) {
+        for (int i = 0; i < mCallbacks.size(); i++) {
+            final PlayerEventCallback callback = mCallbacks.keyAt(i);
+            final Executor executor = mCallbacks.valueAt(i);
+            executor.execute(() -> callback.onBufferingStateChanged(this, dsd, buffState));
+        }
+    }
+
     public void notifyError(int what) {
         for (int i = 0; i < mCallbacks.size(); i++) {
             final PlayerEventCallback callback = mCallbacks.keyAt(i);
