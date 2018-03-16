@@ -20,6 +20,8 @@ import java.io.File;
 import java.io.IOException;
 import java.util.Arrays;
 import java.util.Enumeration;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 import java.util.stream.Stream;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipFile;
@@ -41,37 +43,11 @@ public class UnofficialApisUsageTest extends DeviceTestCase {
     public final static boolean DEBUG = true;
     private ITestDevice device;
     private FilePuller filePuller;
-    private Stream<PulledFile> pulledFiles;
-    private Stream<File> apiFiles;
-    private ApprovedApis approvedApis;
-    private DexAnalyzer extractedApis;
 
     @Override
     protected void setUp() throws Exception {
         device = getDevice();
         filePuller = new FilePuller(device);
-
-        try {
-            // pulls packages and libraries which are in vendor partition and have code.
-            pulledFiles = Stream.concat(getPackages(), getLibraries())
-                    .filter(module -> getRealPath(module.path).startsWith("/vendor"))
-                    .map(module -> filePuller.pullFromDevice(module.path, module.name))
-                    .filter(file -> hasCode(file.fileInHost));
-
-        } catch (DeviceNotAvailableException e) {
-            throw new RuntimeException("Cannot connect to device", e);
-        }
-
-        apiFiles = Arrays.stream(new String[] {
-            "/current.txt",
-            "/system-current.txt",
-            "/android-test-base-current.txt",
-            "/android-test-runner-current.txt",
-            "/android-test-mock-current.txt"
-        }).map(name -> new File(name));
-
-        approvedApis = new ApprovedApis(apiFiles);
-        extractedApis = new DexAnalyzer(pulledFiles, approvedApis);
     }
 
     @Override
@@ -163,26 +139,111 @@ public class UnofficialApisUsageTest extends DeviceTestCase {
     }
 
     /**
+     * These tests are required only for the Treble-ized devices launching with P or later.
+     *
+     * @throws DeviceNotAvailableException
+     */
+    private boolean isTestRequired() throws DeviceNotAvailableException {
+        return PropertyUtil.propertyEquals(device, "ro.treble.enabled", "true")
+                && PropertyUtil.getFirstApiLevel(device) > 27 /* O_MR1 */;
+    }
+
+    /**
      * The main test. If there is any type/method/field reference to unknown type/method/field, then
      * it indicates that vendors are using non-approved APIs.
      */
     @Test
     public void testNonApiReferences() throws Exception {
-        if (PropertyUtil.propertyEquals(device, "ro.treble.enabled", "true") &&
-               PropertyUtil.getFirstApiLevel(device) > 27 /* O_MR1 */) {
-            StringBuffer sb = new StringBuffer(10000);
-            extractedApis.collectUndefinedTypeReferences().sorted().forEach(
-                    ref -> sb.append("Undefined type ref: " + ref.getName() + " from: "
-                            + ref.printReferencedFrom() + "\n"));
-            extractedApis.collectUndefinedMethodReferences().sorted().forEach(
-                    ref -> sb.append("Undefined method ref: " + ref.getFullSignature() + " from: "
-                            + ref.printReferencedFrom() + "\n"));
-            extractedApis.collectUndefinedFieldReferences().sorted().forEach(
-                    ref -> sb.append("Undefined field ref: " + ref.getFullSignature() + " from: "
-                            + ref.printReferencedFrom() + "\n"));
-            if (sb.length() != 0) {
-                fail(sb.toString());
-            }
+        if (!isTestRequired()) {
+            return;
+        }
+        Stream<PulledFile> pulledFiles;
+        Stream<File> apiFiles;
+        ApprovedApis approvedApis;
+        DexAnalyzer extractedApis;
+
+        try {
+            // pulls packages and libraries which are in vendor partition and have code.
+            pulledFiles = Stream.concat(getPackages(), getLibraries())
+                    .filter(module -> getRealPath(module.path).startsWith("/vendor"))
+                    .map(module -> filePuller.pullFromDevice(module.path, module.name))
+                    .filter(file -> hasCode(file.fileInHost));
+
+        } catch (DeviceNotAvailableException e) {
+            throw new RuntimeException("Cannot connect to device", e);
+        }
+
+        apiFiles = Arrays.stream(new String[] {
+            "/current.txt",
+            "/system-current.txt",
+            "/android-test-base-current.txt",
+            "/android-test-runner-current.txt",
+            "/android-test-mock-current.txt"
+        }).map(name -> new File(name));
+
+        approvedApis = new ApprovedApis(apiFiles);
+        extractedApis = new DexAnalyzer(pulledFiles, approvedApis);
+
+        StringBuilder sb = new StringBuilder(10000);
+        extractedApis.collectUndefinedTypeReferences().sorted().forEach(
+                ref -> sb.append("Undefined type ref: " + ref.getName() + " from: "
+                        + ref.printReferencedFrom() + "\n"));
+        extractedApis.collectUndefinedMethodReferences().sorted().forEach(
+                ref -> sb.append("Undefined method ref: " + ref.getFullSignature() + " from: "
+                        + ref.printReferencedFrom() + "\n"));
+        extractedApis.collectUndefinedFieldReferences().sorted().forEach(
+                ref -> sb.append("Undefined field ref: " + ref.getFullSignature() + " from: "
+                        + ref.printReferencedFrom() + "\n"));
+        if (sb.length() != 0) {
+            fail(sb.toString());
+        }
+    }
+
+    /**
+     * Ensures that vendor apps are not targeting pre-P SDK.
+     */
+    @Test
+    public void testTargetSdk() throws Exception {
+        if (!isTestRequired()) {
+            return;
+        }
+        StringBuilder output = new StringBuilder();
+        Pattern p = Pattern.compile(".*targetSdk=(.*)\n");
+        getPackages()
+                .filter(module -> getRealPath(module.path).startsWith("/vendor"))
+                .forEach(module -> {
+                    try {
+                        // This is very dependent on how the information is shown in the dump.
+                        // Sould be checked for amendment whenever the format changes in
+                        // dumpPackagesLPr in Settings.java
+                        // 1. targetSdk version is shown as 'targetSdk=<number>'.
+                        // 2: tail -1 is for the case when an apk is updated in the data partition.
+                        // In that case, we get dumps for two packages (first for the updated one,
+                        // and then for the original one). Among these two, we use targetSdk for
+                        // the original one (the last dump), because the updated one can be
+                        // uninstalled or wiped out at any time.
+                        String result = device.executeShellCommand(
+                                "dumpsys package " + module.name + " | grep targetSdk= | tail -1");
+                        Matcher m = p.matcher(result);
+                        if (m.matches() && m.groupCount() == 1) {
+                            String versionString = m.group(1);
+                            int versionInt = Integer.parseInt(versionString);
+                            if (versionInt <= 27) {
+                                output.append("Vendor package " + module.name
+                                        + " is targeting old SDK: " + versionString + "\n");
+                            }
+                        } else {
+                            output.append(
+                                    "Failed to get targetSDK for vendor package " + module.name
+                                            + "\n");
+                        }
+                    } catch (DeviceNotAvailableException e) {
+                        output.append("Failed to get info for vendor package " + module.name
+                                + ". Cause: " + e.getMessage() + "\n");
+                    }
+                });
+        if (output.length() != 0) {
+            fail(output.toString());
         }
     }
 }
