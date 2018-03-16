@@ -21,6 +21,11 @@
         <option name="push" value="Bug-77238656->/data/local/tmp/Bug-77238656" />
 
         <!--__________________-->
+        <!-- Bulletin 2015-12 -->
+        <!-- Please add tests solely from this bulletin below to avoid merge conflict -->
+        <option name="push" value="CVE-2015-6626->/data/local/tmp/CVE-2015-6626" />
+
+        <!--__________________-->
         <!-- Bulletin 2016-04 -->
         <!-- Please add tests solely from this bulletin below to avoid merge conflict -->
         <option name="push" value="CVE-2016-2419->/data/local/tmp/CVE-2016-2419" />
