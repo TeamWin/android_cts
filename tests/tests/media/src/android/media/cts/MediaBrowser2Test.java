@@ -44,7 +44,6 @@ import android.media.MediaSession2.Command;
 import android.media.MediaSession2.CommandButton;
 import android.media.MediaSession2.CommandGroup;
 import android.media.MediaSession2.ControllerInfo;
-import android.media.MediaSession2.PlaylistParams;
 import android.media.SessionToken2;
 import android.os.Bundle;
 import android.os.Process;
@@ -518,11 +517,6 @@ public class MediaBrowser2Test extends MediaController2Test {
             } else {
                 assertFalse(disconnectLatch.await(TIMEOUT_MS, TimeUnit.MILLISECONDS));
             }
-        }
-
-        @Override
-        public void onPlaylistParamsChanged(MediaController2 controller, PlaylistParams params) {
-            mCallbackProxy.onPlaylistParamsChanged(controller, params);
         }
 
         @Override
