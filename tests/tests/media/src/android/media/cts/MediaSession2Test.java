@@ -403,6 +403,27 @@ public class MediaSession2Test extends MediaSession2TestBase {
     }
 
     @Test
+    public void testGetPlayerState() {
+        final int state = MediaPlayerBase.PLAYER_STATE_PLAYING;
+        mPlayer.mLastPlayerState = state;
+        assertEquals(state, mSession.getPlayerState());
+    }
+
+    @Test
+    public void testGetPosition() {
+        final long position = 150000;
+        mPlayer.mCurrentPosition = position;
+        assertEquals(position, mSession.getPosition());
+    }
+
+    @Test
+    public void testGetBufferedPosition() {
+        final long bufferedPosition = 900000;
+        mPlayer.mBufferedPosition = bufferedPosition;
+        assertEquals(bufferedPosition, mSession.getBufferedPosition());
+    }
+
+    @Test
     public void testSetPlaylist() {
         final List<MediaItem2> list = TestUtils.createPlaylist(mContext, 2);
         mSession.setPlaylist(list, null);
