@@ -254,8 +254,8 @@ public class MediaController2Test extends MediaSession2TestBase {
     }
 
     @Test
-    public void testSetPlaylist() throws InterruptedException {
-        final List<MediaItem2> list = TestUtils.createPlaylist(mContext);
+    public void testSetPlaylist() {
+        final List<MediaItem2> list = TestUtils.createPlaylist(mContext, 2);
         mController.setPlaylist(list, null);
         verify(mMockAgent, timeout(TIMEOUT_MS).atLeastOnce()).setPlaylist(argThat((playlist) -> {
             assertNotNull(playlist);
@@ -272,7 +272,7 @@ public class MediaController2Test extends MediaSession2TestBase {
      */
     @Test
     public void testGetPlaylist() throws InterruptedException {
-        final List<MediaItem2> testList = TestUtils.createPlaylist(mContext);
+        final List<MediaItem2> testList = TestUtils.createPlaylist(mContext, 2);
         final AtomicReference<List<MediaItem2>> listFromCallback = new AtomicReference<>();
         final CountDownLatch latch = new CountDownLatch(1);
         final ControllerCallback callback = new ControllerCallback() {
@@ -368,7 +368,7 @@ public class MediaController2Test extends MediaSession2TestBase {
     @Test
     public void testControllerCallback_onPlaylistMetadataChanged() throws InterruptedException {
         final MediaItem2 item = TestUtils.createMediaItemWithMetadata(mContext);
-        final List<MediaItem2> list = TestUtils.createPlaylist(mContext);
+        final List<MediaItem2> list = TestUtils.createPlaylist(mContext, 2);
         final CountDownLatch latch = new CountDownLatch(2);
         final ControllerCallback callback = new ControllerCallback() {
             @Override
@@ -417,7 +417,7 @@ public class MediaController2Test extends MediaSession2TestBase {
     }
 
     @Test
-    public void testAddPlaylistItem() throws InterruptedException {
+    public void testAddPlaylistItem() {
         final int testIndex = 12;
         final MediaItem2 testMediaItem = TestUtils.createMediaItemWithMetadata(mContext);
         mController.addPlaylistItem(testIndex, testMediaItem);
@@ -431,7 +431,7 @@ public class MediaController2Test extends MediaSession2TestBase {
 
     @Test
     public void testRemovePlaylistItem() throws InterruptedException {
-        final List<MediaItem2> testList = TestUtils.createPlaylist(mContext);
+        final List<MediaItem2> testList = TestUtils.createPlaylist(mContext, 2);
         doReturn(testList).when(mMockAgent).getPlaylist();
 
         // Recreate controller for sending removePlaylistItem.
@@ -473,7 +473,7 @@ public class MediaController2Test extends MediaSession2TestBase {
 
     @Test
     public void testSkipToPlaylistItem() throws InterruptedException {
-        final List<MediaItem2> testList = TestUtils.createPlaylist(mContext);
+        final List<MediaItem2> testList = TestUtils.createPlaylist(mContext, 2);
         doReturn(testList).when(mMockAgent).getPlaylist();
 
         MediaController2 controller = createController(mSession.getToken());
