@@ -30,7 +30,7 @@ import android.util.Log;
  */
 public class TestJobSchedulerReceiver extends BroadcastReceiver {
     private static final String TAG = TestJobSchedulerReceiver.class.getSimpleName();
-    private static final String PACKAGE_NAME = "com.android.servicestests.apps.jobtestapp";
+    private static final String PACKAGE_NAME = "android.jobscheduler.cts.jobtestapp";
 
     public static final String EXTRA_JOB_ID_KEY = PACKAGE_NAME + ".extra.JOB_ID";
     public static final String EXTRA_ALLOW_IN_IDLE = PACKAGE_NAME + ".extra.ALLOW_IN_IDLE";
