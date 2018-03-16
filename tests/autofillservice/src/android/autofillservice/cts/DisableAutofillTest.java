@@ -125,7 +125,6 @@ public class DisableAutofillTest extends AutoFillServiceTestCase {
             // Asserts isEnabled() status.
             assertAutofillEnabled(activity, action == PostLaunchAction.ASSERT_ENABLED_AND_AUTOFILL);
         } finally {
-            activity.unregisterCallback();
             activity.finish();
         }
     }
@@ -168,7 +167,6 @@ public class DisableAutofillTest extends AutoFillServiceTestCase {
             // Asserts isEnabled() status.
             assertAutofillEnabled(activity, action == PostLaunchAction.ASSERT_ENABLED_AND_AUTOFILL);
         } finally {
-            activity.unregisterCallback();
             activity.finish();
         }
     }

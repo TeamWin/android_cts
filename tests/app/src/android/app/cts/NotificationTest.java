@@ -96,6 +96,25 @@ public class NotificationTest extends AndroidTestCase {
         assertEquals(expected, mNotification.describeContents());
     }
 
+    public void testCategories() {
+        assertNotNull(Notification.CATEGORY_ALARM);
+        assertNotNull(Notification.CATEGORY_CALL);
+        assertNotNull(Notification.CATEGORY_EMAIL);
+        assertNotNull(Notification.CATEGORY_ERROR);
+        assertNotNull(Notification.CATEGORY_EVENT);
+        assertNotNull(Notification.CATEGORY_MESSAGE);
+        assertNotNull(Notification.CATEGORY_NAVIGATION);
+        assertNotNull(Notification.CATEGORY_PROGRESS);
+        assertNotNull(Notification.CATEGORY_PROMO);
+        assertNotNull(Notification.CATEGORY_RECOMMENDATION);
+        assertNotNull(Notification.CATEGORY_REMINDER);
+        assertNotNull(Notification.CATEGORY_SERVICE);
+        assertNotNull(Notification.CATEGORY_SOCIAL);
+        assertNotNull(Notification.CATEGORY_STATUS);
+        assertNotNull(Notification.CATEGORY_SYSTEM);
+        assertNotNull(Notification.CATEGORY_TRANSPORT);
+    }
+
     public void testWriteToParcel() {
 
         mNotification = new Notification.Builder(mContext, CHANNEL.getId())

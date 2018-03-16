@@ -21,7 +21,6 @@ import static android.media.MediaSession2.COMMAND_CODE_PLAYBACK_PAUSE;
 import static android.media.MediaSession2.COMMAND_CODE_PLAYBACK_PLAY;
 import static android.media.MediaSession2.COMMAND_CODE_PLAYBACK_REWIND;
 import static android.media.MediaSession2.COMMAND_CODE_PLAYBACK_SEEK_TO;
-import static android.media.MediaSession2.COMMAND_CODE_PLAYBACK_SET_PLAYLIST_PARAMS;
 import static android.media.MediaSession2.COMMAND_CODE_PLAYBACK_SET_VOLUME;
 import static android.media.MediaSession2.COMMAND_CODE_PLAYBACK_SKIP_NEXT_ITEM;
 import static android.media.MediaSession2.COMMAND_CODE_PLAYBACK_SKIP_PREV_ITEM;
@@ -31,6 +30,7 @@ import static android.media.MediaSession2.COMMAND_CODE_PLAYLIST_REMOVE_ITEM;
 import static android.media.MediaSession2.COMMAND_CODE_PLAYLIST_REPLACE_ITEM;
 import static android.media.MediaSession2.COMMAND_CODE_PLAYLIST_SET_LIST;
 import static android.media.MediaSession2.COMMAND_CODE_PLAYLIST_SET_LIST_METADATA;
+import static android.media.MediaSession2.COMMAND_CODE_PLAYLIST_SKIP_TO_PLAYLIST_ITEM;
 import static android.media.MediaSession2.COMMAND_CODE_PLAY_FROM_MEDIA_ID;
 import static android.media.MediaSession2.COMMAND_CODE_PLAY_FROM_SEARCH;
 import static android.media.MediaSession2.COMMAND_CODE_PLAY_FROM_URI;
@@ -38,7 +38,6 @@ import static android.media.MediaSession2.COMMAND_CODE_PREPARE_FROM_MEDIA_ID;
 import static android.media.MediaSession2.COMMAND_CODE_PREPARE_FROM_SEARCH;
 import static android.media.MediaSession2.COMMAND_CODE_PREPARE_FROM_URI;
 import static android.media.MediaSession2.ControllerInfo;
-import static android.media.MediaSession2.PlaylistParams;
 
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.fail;
@@ -48,11 +47,13 @@ import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.ArgumentMatchers.isNull;
 import static org.mockito.Mockito.after;
 import static org.mockito.Mockito.clearInvocations;
+import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.timeout;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
+import android.annotation.NonNull;
 import android.media.MediaController2;
 import android.media.MediaController2.ControllerCallback;
 import android.media.MediaItem2;
@@ -120,7 +121,7 @@ public class MediaSession2_PermissionTest extends MediaSession2TestBase {
             commands = new CommandGroup(mContext);
         }
         mCallback = mock(SessionCallback.class);
-        when(mCallback.onConnect(any(), any())).thenReturn(commands);
+        doReturn(commands).when(mCallback).onConnect(any(), any());
         if (mSession != null) {
             mSession.close();
         }
@@ -142,240 +143,127 @@ public class MediaSession2_PermissionTest extends MediaSession2TestBase {
         return commands;
     }
 
+    private void testOnCommandRequest(int commandCode, PermissionTestRunnable runnable)
+            throws InterruptedException {
+        createSessionWithAllowedActions(createCommandGroupWith(commandCode));
+        runnable.run(createController(mSession.getToken()));
+        verify(mCallback, timeout(TIMEOUT_MS).atLeastOnce()).onCommandRequest(
+                matchesSession(), matchesCaller(), matches(commandCode));
+
+        createSessionWithAllowedActions(createCommandGroupWithout(commandCode));
+        runnable.run(createController(mSession.getToken()));
+        verify(mCallback, after(WAIT_TIME_MS).never()).onCommandRequest(any(), any(), any());
+    }
+
     @Test
     public void testPlay() throws InterruptedException {
-        createSessionWithAllowedActions(createCommandGroupWith(COMMAND_CODE_PLAYBACK_PLAY));
-        createController(mSession.getToken()).play();
-        verify(mCallback, timeout(TIMEOUT_MS).atLeastOnce()).onCommandRequest(
-                matchesSession(), matchesCaller(), matches(COMMAND_CODE_PLAYBACK_PLAY));
-
-        createSessionWithAllowedActions(createCommandGroupWithout(COMMAND_CODE_PLAYBACK_PLAY));
-        createController(mSession.getToken()).play();
-        verify(mCallback, after(WAIT_TIME_MS).never()).onCommandRequest(any(), any(), any());
+        testOnCommandRequest(COMMAND_CODE_PLAYBACK_PLAY, (controller) -> {
+            controller.play();
+        });
     }
 
     @Test
     public void testPause() throws InterruptedException {
-        createSessionWithAllowedActions(createCommandGroupWith(COMMAND_CODE_PLAYBACK_PAUSE));
-        createController(mSession.getToken()).pause();
-        verify(mCallback, timeout(TIMEOUT_MS).atLeastOnce()).onCommandRequest(
-                matchesSession(), matchesCaller(), matches(COMMAND_CODE_PLAYBACK_PAUSE));
-
-        createSessionWithAllowedActions(createCommandGroupWithout(COMMAND_CODE_PLAYBACK_PAUSE));
-        createController(mSession.getToken()).pause();
-        verify(mCallback, after(WAIT_TIME_MS).never()).onCommandRequest(any(), any(), any());
+        testOnCommandRequest(COMMAND_CODE_PLAYBACK_PAUSE, (controller) -> {
+            controller.pause();
+        });
     }
 
     @Test
     public void testStop() throws InterruptedException {
-        createSessionWithAllowedActions(createCommandGroupWith(COMMAND_CODE_PLAYBACK_STOP));
-        createController(mSession.getToken()).stop();
-        verify(mCallback, timeout(TIMEOUT_MS).atLeastOnce()).onCommandRequest(
-                matchesSession(), matchesCaller(), matches(COMMAND_CODE_PLAYBACK_STOP));
-
-        createSessionWithAllowedActions(createCommandGroupWithout(COMMAND_CODE_PLAYBACK_STOP));
-        createController(mSession.getToken()).stop();
-        verify(mCallback, after(WAIT_TIME_MS).never()).onCommandRequest(any(), any(), any());
-    }
-
-    @Test
-    public void testSkipToNext() throws InterruptedException {
-        createSessionWithAllowedActions(
-                createCommandGroupWith(COMMAND_CODE_PLAYBACK_SKIP_NEXT_ITEM));
-        createController(mSession.getToken()).skipToNextItem();
-        verify(mCallback, timeout(TIMEOUT_MS).atLeastOnce()).onCommandRequest(
-                matchesSession(), matchesCaller(), matches(COMMAND_CODE_PLAYBACK_SKIP_NEXT_ITEM));
-
-        createSessionWithAllowedActions(
-                createCommandGroupWithout(COMMAND_CODE_PLAYBACK_SKIP_NEXT_ITEM));
-        createController(mSession.getToken()).skipToNextItem();
-        verify(mCallback, after(WAIT_TIME_MS).never()).onCommandRequest(any(), any(), any());
-    }
-
-    @Test
-    public void testSkipToPrevious() throws InterruptedException {
-        createSessionWithAllowedActions(
-                createCommandGroupWith(COMMAND_CODE_PLAYBACK_SKIP_PREV_ITEM));
-        createController(mSession.getToken()).skipToPreviousItem();
-        verify(mCallback, timeout(TIMEOUT_MS).atLeastOnce()).onCommandRequest(
-                matchesSession(), matchesCaller(), matches(COMMAND_CODE_PLAYBACK_SKIP_PREV_ITEM));
-
-        createSessionWithAllowedActions(
-                createCommandGroupWithout(COMMAND_CODE_PLAYBACK_SKIP_PREV_ITEM));
-        createController(mSession.getToken()).skipToPreviousItem();
-        verify(mCallback, after(WAIT_TIME_MS).never()).onCommandRequest(any(), any(), any());
+        testOnCommandRequest(COMMAND_CODE_PLAYBACK_STOP, (controller) -> {
+            controller.stop();
+        });
     }
 
     @Test
     public void testFastForward() throws InterruptedException {
-        createSessionWithAllowedActions(
-                createCommandGroupWith(COMMAND_CODE_PLAYBACK_FAST_FORWARD));
-        createController(mSession.getToken()).fastForward();
-        verify(mCallback, timeout(TIMEOUT_MS).atLeastOnce()).onCommandRequest(
-                matchesSession(), matchesCaller(), matches(COMMAND_CODE_PLAYBACK_FAST_FORWARD));
-
-        createSessionWithAllowedActions(
-                createCommandGroupWithout(COMMAND_CODE_PLAYBACK_FAST_FORWARD));
-        createController(mSession.getToken()).fastForward();
-        verify(mCallback, after(WAIT_TIME_MS).never()).onCommandRequest(any(), any(), any());
+        testOnCommandRequest(COMMAND_CODE_PLAYBACK_FAST_FORWARD, (controller) -> {
+            controller.fastForward();
+        });
     }
 
     @Test
     public void testRewind() throws InterruptedException {
-        createSessionWithAllowedActions(
-                createCommandGroupWith(COMMAND_CODE_PLAYBACK_REWIND));
-        createController(mSession.getToken()).rewind();
-        verify(mCallback, timeout(TIMEOUT_MS).atLeastOnce()).onCommandRequest(
-                matchesSession(), matchesCaller(), matches(COMMAND_CODE_PLAYBACK_REWIND));
-
-        createSessionWithAllowedActions(createCommandGroupWithout(COMMAND_CODE_PLAYBACK_REWIND));
-        createController(mSession.getToken()).rewind();
-        verify(mCallback, after(WAIT_TIME_MS).never()).onCommandRequest(any(), any(), any());
+        testOnCommandRequest(COMMAND_CODE_PLAYBACK_REWIND, (controller) -> {
+            controller.rewind();
+        });
     }
 
     @Test
     public void testSeekTo() throws InterruptedException {
         final long position = 10;
-        createSessionWithAllowedActions(
-                createCommandGroupWith(COMMAND_CODE_PLAYBACK_SEEK_TO));
-        createController(mSession.getToken()).seekTo(position);
-        verify(mCallback, timeout(TIMEOUT_MS).atLeastOnce()).onCommandRequest(
-                matchesSession(), matchesCaller(), matches(COMMAND_CODE_PLAYBACK_SEEK_TO));
-
-        createSessionWithAllowedActions(createCommandGroupWithout(COMMAND_CODE_PLAYBACK_SEEK_TO));
-        createController(mSession.getToken()).seekTo(position);
-        verify(mCallback, after(WAIT_TIME_MS).never()).onCommandRequest(any(), any(), any());
+        testOnCommandRequest(COMMAND_CODE_PLAYBACK_SEEK_TO, (controller) -> {
+            controller.seekTo(position);
+        });
     }
 
-    // TODO(jaewan): Uncomment when we implement skipToPlaylistItem()
-    /*
+    @Test
+    public void testSkipToNext() throws InterruptedException {
+        testOnCommandRequest(COMMAND_CODE_PLAYBACK_SKIP_NEXT_ITEM, (controller) -> {
+            controller.skipToNextItem();
+        });
+    }
+
+    @Test
+    public void testSkipToPrevious() throws InterruptedException {
+        testOnCommandRequest(COMMAND_CODE_PLAYBACK_SKIP_PREV_ITEM, (controller) -> {
+            controller.skipToPreviousItem();
+        });
+    }
+
     @Test
     public void testSkipToPlaylistItem() throws InterruptedException {
-        final Uri uri = Uri.parse("set://current.playlist.item");
-        final DataSourceDesc dsd = new DataSourceDesc.Builder()
-                .setDataSource(mContext, uri).build();
-        final MediaItem2 item = new MediaItem2.Builder(mContext, MediaItem2.FLAG_PLAYABLE)
-                .setDataSourceDesc(dsd).build();
-        createSessionWithAllowedActions(
-                createCommandGroupWith(COMMAND_CODE_PLAYBACK_SET_CURRENT_PLAYLIST_ITEM));
-        createController(mSession.getToken()).skipToPlaylistItem(item);
-        verify(mCallback, timeout(TIMEOUT_MS).atLeastOnce()).onCommandRequest(matchesCaller(),
-                matches(COMMAND_CODE_PLAYBACK_SET_CURRENT_PLAYLIST_ITEM));
-
-        createSessionWithAllowedActions(
-                createCommandGroupWithout(COMMAND_CODE_PLAYBACK_SET_CURRENT_PLAYLIST_ITEM));
-        createController(mSession.getToken()).skipToPlaylistItem(item);
-        verify(mCallback, after(WAIT_TIME_MS).never()).onCommandRequest(any(), any());
+        MediaItem2 testItem = TestUtils.createMediaItemWithMetadata(mContext);
+        testOnCommandRequest(COMMAND_CODE_PLAYLIST_SKIP_TO_PLAYLIST_ITEM, (controller) -> {
+            controller.skipToPlaylistItem(testItem);
+        });
     }
-    */
 
     @Test
     public void testSetPlaylist() throws InterruptedException {
-        List<MediaItem2> list = TestUtils.createPlaylist(mContext);
-        createSessionWithAllowedActions(
-                createCommandGroupWith(COMMAND_CODE_PLAYLIST_SET_LIST));
-        createController(mSession.getToken()).setPlaylist(list, null);
-        verify(mCallback, timeout(TIMEOUT_MS).atLeastOnce()).onCommandRequest(
-                matchesSession(), matchesCaller(),
-                matches(COMMAND_CODE_PLAYLIST_SET_LIST));
-
-        createSessionWithAllowedActions(
-                createCommandGroupWithout(COMMAND_CODE_PLAYLIST_SET_LIST));
-        createController(mSession.getToken()).setPlaylist(list, null);
-        verify(mCallback, after(WAIT_TIME_MS).never()).onCommandRequest(any(), any(), any());
+        List<MediaItem2> list = TestUtils.createPlaylist(mContext, 2);
+        testOnCommandRequest(COMMAND_CODE_PLAYLIST_SET_LIST, (controller) -> {
+            controller.setPlaylist(list, null);
+        });
     }
 
     @Test
     public void testUpdatePlaylistMetadata() throws InterruptedException {
-        createSessionWithAllowedActions(
-                createCommandGroupWith(COMMAND_CODE_PLAYLIST_SET_LIST_METADATA));
-        createController(mSession.getToken()).updatePlaylistMetadata(null);
-        verify(mCallback, timeout(TIMEOUT_MS).atLeastOnce()).onCommandRequest(
-                matchesSession(), matchesCaller(),
-                matches(COMMAND_CODE_PLAYLIST_SET_LIST_METADATA));
-
-        createSessionWithAllowedActions(
-                createCommandGroupWithout(COMMAND_CODE_PLAYLIST_SET_LIST_METADATA));
-        createController(mSession.getToken()).updatePlaylistMetadata(null);
-        verify(mCallback, after(WAIT_TIME_MS).never()).onCommandRequest(any(), any(), any());
+        testOnCommandRequest(COMMAND_CODE_PLAYLIST_SET_LIST_METADATA, (controller) -> {
+            controller.updatePlaylistMetadata(null);
+        });
     }
 
     @Test
     public void testAddPlaylistItem() throws InterruptedException {
         MediaItem2 testItem = TestUtils.createMediaItemWithMetadata(mContext);
-        createSessionWithAllowedActions(
-                createCommandGroupWith(COMMAND_CODE_PLAYLIST_ADD_ITEM));
-        createController(mSession.getToken()).addPlaylistItem(0, testItem);
-        verify(mCallback, timeout(TIMEOUT_MS).atLeastOnce()).onCommandRequest(
-                matchesSession(), matchesCaller(),
-                matches(COMMAND_CODE_PLAYLIST_ADD_ITEM));
-
-        createSessionWithAllowedActions(
-                createCommandGroupWithout(COMMAND_CODE_PLAYLIST_ADD_ITEM));
-        createController(mSession.getToken()).addPlaylistItem(0, testItem);
-        verify(mCallback, after(WAIT_TIME_MS).never()).onCommandRequest(any(), any(), any());
+        testOnCommandRequest(COMMAND_CODE_PLAYLIST_ADD_ITEM, (controller) -> {
+            controller.addPlaylistItem(0, testItem);
+        });
     }
 
     @Test
     public void testRemovePlaylistItem() throws InterruptedException {
         MediaItem2 testItem = TestUtils.createMediaItemWithMetadata(mContext);
-        createSessionWithAllowedActions(
-                createCommandGroupWith(COMMAND_CODE_PLAYLIST_REMOVE_ITEM));
-        createController(mSession.getToken()).removePlaylistItem(testItem);
-        verify(mCallback, timeout(TIMEOUT_MS).atLeastOnce()).onCommandRequest(
-                matchesSession(), matchesCaller(),
-                matches(COMMAND_CODE_PLAYLIST_REMOVE_ITEM));
-
-        createSessionWithAllowedActions(
-                createCommandGroupWithout(COMMAND_CODE_PLAYLIST_REMOVE_ITEM));
-        createController(mSession.getToken()).removePlaylistItem(testItem);
-        verify(mCallback, after(WAIT_TIME_MS).never()).onCommandRequest(any(), any(), any());
+        testOnCommandRequest(COMMAND_CODE_PLAYLIST_REMOVE_ITEM, (controller) -> {
+            controller.removePlaylistItem(testItem);
+        });
     }
 
     @Test
     public void testReplacePlaylistItem() throws InterruptedException {
         MediaItem2 testItem = TestUtils.createMediaItemWithMetadata(mContext);
-        createSessionWithAllowedActions(
-                createCommandGroupWith(COMMAND_CODE_PLAYLIST_REPLACE_ITEM));
-        createController(mSession.getToken()).replacePlaylistItem(0, testItem);
-        verify(mCallback, timeout(TIMEOUT_MS).atLeastOnce()).onCommandRequest(
-                matchesSession(), matchesCaller(),
-                matches(COMMAND_CODE_PLAYLIST_REPLACE_ITEM));
-
-        createSessionWithAllowedActions(
-                createCommandGroupWithout(COMMAND_CODE_PLAYLIST_REPLACE_ITEM));
-        createController(mSession.getToken()).replacePlaylistItem(0, testItem);
-        verify(mCallback, after(WAIT_TIME_MS).never()).onCommandRequest(any(), any(), any());
-    }
-
-    @Test
-    public void testSetPlaylistParams() throws InterruptedException {
-        final PlaylistParams param = new PlaylistParams(mContext,
-                PlaylistParams.REPEAT_MODE_ALL, PlaylistParams.SHUFFLE_MODE_ALL, null);
-        createSessionWithAllowedActions(
-                createCommandGroupWith(COMMAND_CODE_PLAYBACK_SET_PLAYLIST_PARAMS));
-        createController(mSession.getToken()).setPlaylistParams(param);
-        verify(mCallback, timeout(TIMEOUT_MS).atLeastOnce()).onCommandRequest(
-                matchesSession(), matchesCaller(),
-                matches(COMMAND_CODE_PLAYBACK_SET_PLAYLIST_PARAMS));
-
-        createSessionWithAllowedActions(
-                createCommandGroupWithout(COMMAND_CODE_PLAYBACK_SET_PLAYLIST_PARAMS));
-        createController(mSession.getToken()).setPlaylistParams(param);
-        verify(mCallback, after(WAIT_TIME_MS).never()).onCommandRequest(any(), any(), any());
+        testOnCommandRequest(COMMAND_CODE_PLAYLIST_REPLACE_ITEM, (controller) -> {
+            controller.replacePlaylistItem(0, testItem);
+        });
     }
 
     @Test
     public void testSetVolume() throws InterruptedException {
-        createSessionWithAllowedActions(createCommandGroupWith(COMMAND_CODE_PLAYBACK_SET_VOLUME));
-        createController(mSession.getToken()).setVolumeTo(0, 0);
-        verify(mCallback, timeout(TIMEOUT_MS).atLeastOnce()).onCommandRequest(
-                matchesSession(), matchesCaller(), matches(COMMAND_CODE_PLAYBACK_SET_VOLUME));
-
-        createSessionWithAllowedActions(
-                createCommandGroupWithout(COMMAND_CODE_PLAYBACK_SET_VOLUME));
-        createController(mSession.getToken()).setVolumeTo(0, 0);
-        verify(mCallback, after(WAIT_TIME_MS).never()).onCommandRequest(any(), any(), any());
+        testOnCommandRequest(COMMAND_CODE_PLAYBACK_SET_VOLUME, (controller) -> {
+            controller.setVolumeTo(0, 0);
+        });
     }
 
     @Test
@@ -507,5 +395,10 @@ public class MediaSession2_PermissionTest extends MediaSession2TestBase {
         }
         fail("Failed to get test controller info");
         return null;
+    }
+
+    @FunctionalInterface
+    private interface PermissionTestRunnable {
+        void run(@NonNull MediaController2 controller);
     }
 }

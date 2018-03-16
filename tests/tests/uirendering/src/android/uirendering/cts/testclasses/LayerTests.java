@@ -47,7 +47,6 @@ import android.view.View;
 import android.view.ViewTreeObserver;
 import android.widget.FrameLayout;
 
-import org.junit.Ignore;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
@@ -340,41 +339,8 @@ public class LayerTests extends ActivityTestBase {
             .runWithVerifier(new RectVerifier(Color.WHITE, Color.GREEN, new Rect(40, 40, 70, 70)));
     }
 
-    // STOPSHIP: delete this test when Skia pipeline ships as the default and modify next test
-    // testSaveLayerUnclippedWithColorFilterSW to run for both HW and SW
-    @Ignore
     @Test
-    public void testSaveLayerUnclippedWithColorFilterHW() {
-        // verify that HW can draw nested unclipped layers with chained color filters
-        createTest()
-            .addCanvasClient((canvas, width, height) -> {
-                Paint redPaint = new Paint();
-                redPaint.setColor(0xffff0000);
-                Paint firstLayerPaint = new Paint();
-                float[] blueToGreenMatrix = new float[20];
-                blueToGreenMatrix[7] = blueToGreenMatrix[18] = 1.0f;
-                ColorMatrixColorFilter blueToGreenFilter =
-                      new ColorMatrixColorFilter(blueToGreenMatrix);
-                firstLayerPaint.setColorFilter(blueToGreenFilter);
-                Paint secondLayerPaint = new Paint();
-                float[] redToBlueMatrix = new float[20];
-                redToBlueMatrix[10] = redToBlueMatrix[18] = 1.0f;
-                ColorMatrixColorFilter redToBlueFilter =
-                      new ColorMatrixColorFilter(redToBlueMatrix);
-                secondLayerPaint.setColorFilter(redToBlueFilter);
-                canvas.saveLayer(40, 5, 80, 70, firstLayerPaint, 0);
-                canvas.saveLayer(5, 40, 70, 80, secondLayerPaint, 0);
-                canvas.drawRect(10, 10, 70, 70, redPaint);
-                canvas.restore();
-                canvas.restore();
-            }, true)
-            // HWUI pipeline does not support a color filter for unclipped save layer and draws
-            // as if the filter is not set.
-            .runWithVerifier(new RectVerifier(Color.WHITE, Color.RED, new Rect(10, 10, 70, 70)));
-    }
-
-    @Test
-    public void testSaveLayerUnclippedWithColorFilterSW() {
+    public void testSaveLayerUnclippedWithColorFilter() {
         // verify that SW can draw nested unclipped layers with chained color filters
         createTest()
             .addCanvasClient((canvas, width, height) -> {
@@ -397,7 +363,7 @@ public class LayerTests extends ActivityTestBase {
                 canvas.drawRect(10, 10, 70, 70, redPaint);
                 canvas.restore();
                 canvas.restore();
-            }, false)
+            })
             .runWithVerifier(new SamplePointVerifier(
                 new Point[] {
                     // just outside of rect

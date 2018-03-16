@@ -19,6 +19,7 @@ package com.android.cts.mockime;
 import android.os.SystemClock;
 import android.support.annotation.NonNull;
 import android.text.TextUtils;
+import android.view.inputmethod.EditorInfo;
 import android.view.inputmethod.InputBinding;
 
 import java.util.Optional;
@@ -137,6 +138,24 @@ public final class ImeEventStreamTestUtils {
         } catch (InterruptedException e) {
             throw new RuntimeException("expectEvent failed: " + stream.dump(), e);
         }
+    }
+
+    /**
+     * Checks if {@param eventName} has occurred on the EditText(or TextView) of the current
+     * activity.
+     * @param eventName event name to check
+     * @param marker Test marker set to {@link android.widget.EditText#setPrivateImeOptions(String)}
+     * @return true if event occurred.
+     */
+    public static Predicate<ImeEvent> editorMatcher(
+        @NonNull String eventName, @NonNull String marker) {
+        return event -> {
+            if (!TextUtils.equals(eventName, event.getEventName())) {
+                return false;
+            }
+            final EditorInfo editorInfo = event.getArguments().getParcelable("editorInfo");
+            return TextUtils.equals(marker, editorInfo.privateImeOptions);
+        };
     }
 
     /**

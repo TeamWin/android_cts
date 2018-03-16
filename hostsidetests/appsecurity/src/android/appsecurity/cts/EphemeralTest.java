@@ -220,6 +220,10 @@ public class EphemeralTest extends DeviceTestCase
         runDeviceTests(EPHEMERAL_1_PKG, TEST_CLASS, "testPackageInfo");
     }
 
+    public void testActivityInfo() throws Exception {
+        runDeviceTests(EPHEMERAL_1_PKG, TEST_CLASS, "testActivityInfo");
+    }
+
     public void testWebViewLoads() throws Exception {
         runDeviceTests(EPHEMERAL_1_PKG, WEBVIEW_TEST_CLASS, "testWebViewLoads");
     }
@@ -273,6 +277,11 @@ public class EphemeralTest extends DeviceTestCase
     /** Test for android.permission.WAKE_LOCK */
     public void testWakeLockPermission() throws Throwable {
         runDeviceTests(EPHEMERAL_1_PKG, TEST_CLASS, "testWakeLockPermission");
+    }
+
+    /** Test for search manager */
+    public void testGetSearchableInfo() throws Throwable {
+        runDeviceTests(EPHEMERAL_1_PKG, TEST_CLASS, "testGetSearchableInfo");
     }
 
     private static final HashMap<String, String> makeArgs(

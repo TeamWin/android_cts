@@ -17,6 +17,7 @@
 
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools"
+    android:id="@+id/parent"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:focusable="true"
@@ -59,10 +60,5 @@
             android:layout_height="wrap_content" />
     </LinearLayout>
 
-    <android.autofillservice.cts.MyWebView
-        android:id="@+id/webview"
-        android:layout_width="fill_parent"
-        android:layout_height="fill_parent"
-    />
-
+    <!--  WebView will be dynamically added here -->
 </LinearLayout>

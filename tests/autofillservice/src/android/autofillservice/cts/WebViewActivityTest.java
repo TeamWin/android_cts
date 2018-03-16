@@ -30,10 +30,12 @@ import android.autofillservice.cts.InstrumentedAutoFillService.SaveRequest;
 import android.support.test.uiautomator.UiObject2;
 import android.view.KeyEvent;
 import android.view.ViewStructure.HtmlInfo;
+import android.view.autofill.AutofillManager;
 
 import org.junit.AfterClass;
 import org.junit.Before;
 import org.junit.BeforeClass;
+import org.junit.Ignore;
 import org.junit.Rule;
 import org.junit.Test;
 
@@ -85,11 +87,24 @@ public class WebViewActivityTest extends AutoFillServiceTestCase {
 
     @Test
     public void testAutofillOneDataset() throws Exception {
+        autofillOneDatasetTest(false);
+    }
+
+    @Ignore("blocked on b/74793485")
+    @Test
+    public void testAutofillOneDataset_usingAppContext() throws Exception {
+        autofillOneDatasetTest(true);
+    }
+
+    private void autofillOneDatasetTest(boolean usesAppContext) throws Exception {
         // Set service.
         enableService();
 
         // Load WebView
-        final MyWebView myWebView = mActivity.loadWebView();
+        final MyWebView myWebView = mActivity.loadWebView(usesAppContext);
+        // Sanity check to make sure autofill is enabled in the application context
+        assertThat(myWebView.getContext().getSystemService(AutofillManager.class).isEnabled())
+                .isTrue();
 
         // Set expectations.
         myWebView.expectAutofill("dude", "sweet");

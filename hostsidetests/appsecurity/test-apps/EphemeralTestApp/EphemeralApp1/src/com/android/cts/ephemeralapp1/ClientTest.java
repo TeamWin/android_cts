@@ -20,6 +20,7 @@ import static android.media.AudioFormat.CHANNEL_IN_MONO;
 import static android.media.AudioFormat.ENCODING_PCM_16BIT;
 import static android.media.MediaRecorder.AudioSource.MIC;
 import static org.hamcrest.CoreMatchers.is;
+import static org.hamcrest.CoreMatchers.equalTo;
 import static org.hamcrest.CoreMatchers.notNullValue;
 import static org.hamcrest.CoreMatchers.nullValue;
 import static org.junit.Assert.assertSame;
@@ -29,6 +30,8 @@ import static org.junit.Assert.fail;
 import android.Manifest;
 import android.app.NotificationChannel;
 import android.app.NotificationManager;
+import android.app.SearchManager;
+import android.app.SearchableInfo;
 import android.content.ActivityNotFoundException;
 import android.content.BroadcastReceiver;
 import android.content.ComponentName;
@@ -36,6 +39,7 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.ServiceConnection;
+import android.content.pm.ActivityInfo;
 import android.content.pm.PackageInfo;
 import android.content.pm.PackageManager;
 import android.content.pm.ProviderInfo;
@@ -962,6 +966,73 @@ public class ClientTest {
     }
 
     @Test
+    public void testActivityInfo() throws Exception {
+        // own package info
+        {
+            final ComponentName component = new ComponentName(
+                    "com.android.cts.ephemeralapp1",
+                    "com.android.cts.ephemeralapp1.EphemeralActivity");
+            final ActivityInfo info = InstrumentationRegistry.getContext().getPackageManager()
+                .getActivityInfo(component, 0);
+            assertThat(info.packageName,
+                    is("com.android.cts.ephemeralapp1"));
+        }
+
+        // exposed application package info
+        {
+            final ComponentName component = new ComponentName(
+                    "com.android.cts.normalapp",
+                    "com.android.cts.normalapp.ExposedActivity");
+            final ActivityInfo info = InstrumentationRegistry.getContext().getPackageManager()
+                .getActivityInfo(component, 0);
+            assertThat(info.packageName,
+                    is("com.android.cts.normalapp"));
+        }
+
+        // implicitly exposed application package info not accessible
+        {
+            try {
+                final ComponentName component = new ComponentName(
+                        "com.android.cts.normalapp",
+                        "com.android.cts.normalapp.NormalWebActivity");
+                final ActivityInfo info = InstrumentationRegistry.getContext().getPackageManager()
+                        .getActivityInfo(component, 0);
+                fail("Instant apps should not be able to access ActivityInfo for"
+                        + " an activity that implicitly exposes itself to Instant Apps.");
+            } catch (PackageManager.NameNotFoundException expected) {
+            }
+        }
+
+        // unexposed application package info not accessible
+        {
+            try {
+                final ComponentName component = new ComponentName(
+                        "com.android.cts.normalapp",
+                        "com.android.cts.normalapp.NormalActivity");
+                final ActivityInfo info = InstrumentationRegistry.getContext().getPackageManager()
+                        .getActivityInfo(component, 0);
+                fail("Instant apps should not be able to access ActivityInfo for"
+                        + " an activity that does not expose itself to Instant Apps.");
+            } catch (PackageManager.NameNotFoundException expected) {
+            }
+        }
+
+        // instant application (with visibleToInstantApp component) package info not accessible
+        {
+            try {
+                final ComponentName component = new ComponentName(
+                        "com.android.cts.ephemeralapp2",
+                        "com.android.cts.ephemeralapp2.ExposedActivity");
+                final ActivityInfo info = InstrumentationRegistry.getContext().getPackageManager()
+                        .getActivityInfo(component, 0);
+                fail("Instant apps should not be able to access ActivityInfo for"
+                        + " another Instant App.");
+            } catch (PackageManager.NameNotFoundException expected) {
+            }
+        }
+    }
+
+    @Test
     public void testInstallPermissionNotGranted() throws Exception {
         assertThat(InstrumentationRegistry.getContext()
                     .checkCallingOrSelfPermission(Manifest.permission.SET_ALARM),
@@ -1177,6 +1248,51 @@ public class ClientTest {
             if (wakeLock != null &&  wakeLock.isHeld()) {
                 wakeLock.release();
             }
+        }
+    }
+
+    @Test
+    public void testGetSearchableInfo() throws Throwable {
+        final SearchManager searchManager = (SearchManager) InstrumentationRegistry.getContext()
+                .getSystemService(Context.SEARCH_SERVICE);
+        // get searchable info for a component in ourself; pass
+        {
+            final SearchableInfo info = searchManager.getSearchableInfo(
+                    new ComponentName("com.android.cts.ephemeralapp1",
+                            "com.android.cts.ephemeralapp1.EphemeralActivity"));
+            assertThat(info, is(notNullValue()));
+            assertThat(info.getSearchActivity(),
+                    is(equalTo(
+                            new ComponentName("com.android.cts.ephemeralapp1",
+                                    "com.android.cts.ephemeralapp1.EphemeralActivity"))));
+        }
+
+        // get searchable info for a component in a different instant application; fail
+        {
+            final SearchableInfo info = searchManager.getSearchableInfo(
+                    new ComponentName("com.android.cts.ephemeralapp2",
+                            "com.android.cts.ephemeralapp2.EphemeralActivity"));
+            assertThat(info, is(nullValue()));
+        }
+
+        // get searchable info for an exposed in a full application; pass
+        {
+            final SearchableInfo info = searchManager.getSearchableInfo(
+                    new ComponentName("com.android.cts.normalapp",
+                            "com.android.cts.normalapp.ExposedActivity"));
+            assertThat(info, is(notNullValue()));
+            assertThat(info.getSearchActivity(),
+                    is(equalTo(
+                            new ComponentName("com.android.cts.normalapp",
+                                    "com.android.cts.normalapp.ExposedActivity"))));
+        }
+
+        // get searchable info for an unexposed component in a full application; fail
+        {
+            final SearchableInfo info = searchManager.getSearchableInfo(
+                    new ComponentName("com.android.cts.normalapp",
+                            "com.android.cts.normalapp.NormalActivity"));
+            assertThat(info, is(nullValue()));
         }
     }
 
