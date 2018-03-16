@@ -21,6 +21,7 @@ import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
 import android.content.Context;
+import android.media.DataSourceDesc;
 import android.media.MediaItem2;
 import android.media.MediaMetadata2;
 import android.media.MediaSession2.PlaylistParams;
@@ -30,6 +31,7 @@ import android.os.Bundle;
 import android.os.Handler;
 import android.os.Looper;
 
+import java.io.FileDescriptor;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
@@ -103,15 +105,21 @@ public final class TestUtils {
      * Caller's method name will be used for prefix of each media item's media id.
      *
      * @param context context
+     * @param size lits size
      * @return the newly created playlist
      */
-    public static List<MediaItem2> createPlaylist(Context context) {
+    public static List<MediaItem2> createPlaylist(Context context, int size) {
         final List<MediaItem2> list = new ArrayList<>();
         String caller = Thread.currentThread().getStackTrace()[1].getMethodName();
-        list.add(new MediaItem2.Builder(context, MediaItem2.FLAG_PLAYABLE)
-                .setMediaId(caller + "_item_1").build());
-        list.add(new MediaItem2.Builder(context, MediaItem2.FLAG_PLAYABLE)
-                .setMediaId(caller + "_item_2").build());
+        for (int i = 0; i < size; i++) {
+            list.add(new MediaItem2.Builder(context, MediaItem2.FLAG_PLAYABLE)
+                    .setMediaId(caller + "_item_" + (size + 1))
+                    .setDataSourceDesc(
+                            new DataSourceDesc.Builder()
+                                    .setDataSource(new FileDescriptor())
+                                    .build())
+                    .build());
+        }
         return list;
     }
 
