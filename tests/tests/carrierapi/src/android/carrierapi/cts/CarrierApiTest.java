@@ -27,7 +27,10 @@ import android.content.pm.PackageManager;
 import android.database.Cursor;
 import android.net.ConnectivityManager;
 import android.net.Uri;
+import android.os.Handler;
+import android.os.HandlerThread;
 import android.provider.VoicemailContract;
+import android.telephony.PhoneStateListener;
 import android.telephony.SubscriptionInfo;
 import android.telephony.SubscriptionManager;
 import android.telephony.TelephonyManager;
@@ -42,6 +45,7 @@ import java.security.NoSuchAlgorithmException;
 import java.util.List;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicReference;
 
 public class CarrierApiTest extends AndroidTestCase {
     private static final String TAG = "CarrierApiTest";
@@ -55,6 +59,7 @@ public class CarrierApiTest extends AndroidTestCase {
     private boolean hasCellular;
     private String selfPackageName;
     private String selfCertHash;
+    private HandlerThread mListenerThread;
 
     private static final String FiDevCert = "24EB92CBB156B280FA4E1429A6ECEEB6E5C1BFE4";
 
@@ -74,6 +79,8 @@ public class CarrierApiTest extends AndroidTestCase {
         mStatusContentUri = VoicemailContract.Status.buildSourceUri(selfPackageName);
         mStatusProvider = getContext().getContentResolver()
                 .acquireContentProviderClient(mStatusContentUri);
+        mListenerThread = new HandlerThread("CarrierApiTest");
+        mListenerThread.start();
         hasCellular = hasCellular();
         if (!hasCellular) {
             Log.e(TAG, "No cellular support, all tests will be skipped.");
@@ -82,6 +89,7 @@ public class CarrierApiTest extends AndroidTestCase {
 
     @Override
     public void tearDown() throws Exception {
+        mListenerThread.quit();
         try {
             mStatusProvider.delete(mStatusContentUri, null, null);
             mVoicemailProvider.delete(mVoicemailContentUri, null, null);
@@ -299,6 +307,53 @@ public class CarrierApiTest extends AndroidTestCase {
         } catch (SecurityException e) {
             failMessage();
         }
+    }
+
+    public void testPhoneStateListener() throws Exception {
+        if (!hasCellular) return;
+        final AtomicReference<SecurityException> error = new AtomicReference<>();
+        final CountDownLatch latch = new CountDownLatch(1);
+        new Handler(mListenerThread.getLooper()).post(() -> {
+            PhoneStateListener listener = new PhoneStateListener() {};
+            try {
+                mTelephonyManager.listen(
+                        listener, PhoneStateListener.LISTEN_MESSAGE_WAITING_INDICATOR);
+                mTelephonyManager.listen(
+                        listener, PhoneStateListener.LISTEN_CALL_FORWARDING_INDICATOR);
+            } catch (SecurityException e) {
+                error.set(e);
+            } finally {
+                mTelephonyManager.listen(listener, PhoneStateListener.LISTEN_NONE);
+                latch.countDown();
+            }
+        });
+        assertTrue("Test timed out", latch.await(30L, TimeUnit.SECONDS));
+        if (error.get() != null) {
+            failMessage();
+        }
+    }
+
+    public void testSubscriptionInfoChangeListener() throws Exception {
+        if (!hasCellular) return;
+        final AtomicReference<SecurityException> error = new AtomicReference<>();
+        final CountDownLatch latch = new CountDownLatch(1);
+        new Handler(mListenerThread.getLooper()).post(() -> {
+            SubscriptionManager.OnSubscriptionsChangedListener listener =
+                    new SubscriptionManager.OnSubscriptionsChangedListener();
+            try {
+                mSubscriptionManager.addOnSubscriptionsChangedListener(listener);
+            } catch (SecurityException e) {
+                error.set(e);
+            } finally {
+                mSubscriptionManager.removeOnSubscriptionsChangedListener(listener);
+                latch.countDown();
+            }
+        });
+        assertTrue("Test timed out", latch.await(30L, TimeUnit.SECONDS));
+        if (error.get() != null) {
+            failMessage();
+        }
+
     }
 
     private static class IntentReceiver extends BroadcastReceiver {
