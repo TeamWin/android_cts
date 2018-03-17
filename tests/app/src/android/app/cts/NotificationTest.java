@@ -23,9 +23,9 @@ import android.app.NotificationChannel;
 import android.app.NotificationManager;
 import android.app.PendingIntent;
 import android.app.RemoteInput;
+import android.app.stubs.R;
 import android.content.Context;
 import android.content.Intent;
-import android.content.res.Resources;
 import android.graphics.drawable.Icon;
 import android.net.Uri;
 import android.os.Build;
@@ -34,9 +34,9 @@ import android.os.Parcelable;
 import android.support.annotation.Nullable;
 import android.test.AndroidTestCase;
 import android.widget.RemoteViews;
-import java.util.function.Consumer;
 
 import java.util.ArrayList;
+import java.util.function.Consumer;
 
 public class NotificationTest extends AndroidTestCase {
     private static final String TEXT_RESULT_KEY = "text";
@@ -466,6 +466,39 @@ public class NotificationTest extends AndroidTestCase {
                 Notification.Action.SEMANTIC_ACTION_DELETE,
                 action.clone().getSemanticAction());
     }
+
+    public void testPerson_constructor() {
+        Notification.Person person = new Notification.Person();
+        assertFalse(person.isBot());
+        assertFalse(person.isImportant());
+        assertNull(person.getIcon());
+        assertNull(person.getKey());
+        assertNull(person.getName());
+        assertNull(person.getUri());
+    }
+
+    public void testPerson_parcelable() {
+        Notification.Person person = new Notification.Person()
+                .setBot(true)
+                .setImportant(true)
+                .setIcon(Icon.createWithResource(mContext, R.drawable.icon_blue))
+                .setKey("key")
+                .setName("Name")
+                .setUri(Uri.fromParts("a", "b", "c").toString());
+
+        Parcel parcel = Parcel.obtain();
+        person.writeToParcel(parcel, 0);
+        parcel.setDataPosition(0);
+        Notification.Person result = Notification.Person.CREATOR.createFromParcel(parcel);
+
+        assertEquals(person.isBot(), result.isBot());
+        assertEquals(person.isImportant(), result.isImportant());
+        assertEquals(person.getIcon().getResId(), result.getIcon().getResId());
+        assertEquals(person.getKey(), result.getKey());
+        assertEquals(person.getName(), result.getName());
+        assertEquals(person.getUri(), result.getUri());
+    }
+
 
     private static RemoteInput newDataOnlyRemoteInput() {
         return new RemoteInput.Builder(DATA_RESULT_KEY)
