@@ -110,9 +110,6 @@
     <!-- b/26235244 -->
     <option name="compatibility:exclude-filter" value="android.util.cts.EventLogTest#testWriteEventWithOversizeValue" />
 
-    <!-- b/31803630 -->
-    <option name="compatibility:exclude-filter" value="CtsSecurityTestCases android.security.cts.ListeningPortsTest" />
-
     <!-- b/63115400 -->
     <option name="compatibility:exclude-filter" value="CtsSecurityHostTestCases android.security.cts.SELinuxHostTest#testAospFileContexts" />
     <!-- b/64221494 -->
