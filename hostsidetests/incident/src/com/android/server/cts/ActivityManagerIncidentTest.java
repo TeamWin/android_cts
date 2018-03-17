@@ -91,7 +91,6 @@ mybroadcast:
             assertTrue(perUserServices.getServiceRecordsCount() > 0);
             for (ServiceRecordProto service : perUserServices.getServiceRecordsList()) {
                 assertFalse(service.getShortName().isEmpty());
-                assertFalse(service.getHexHash().isEmpty());
                 assertFalse(service.getPackageName().isEmpty());
                 assertFalse(service.getProcessName().isEmpty());
                 assertFalse(service.getAppinfo().getBaseDir().isEmpty());

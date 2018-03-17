@@ -40,10 +40,12 @@ public class MockPlayer extends MediaPlayerBase {
     public boolean mRewindCalled;
     public boolean mSeekToCalled;
     public long mSeekPosition;
+    public long mCurrentPosition;
+    public long mBufferedPosition;
+    public @PlayerState int mLastPlayerState;
 
     public ArrayMap<PlayerEventCallback, Executor> mCallbacks = new ArrayMap<>();
 
-    private @PlayerState int mLastPlayerState;
     private AudioAttributes mAudioAttributes;
 
     public MockPlayer(int count) {
@@ -134,6 +136,16 @@ public class MockPlayer extends MediaPlayerBase {
     @Override
     public int getPlayerState() {
         return mLastPlayerState;
+    }
+
+    @Override
+    public long getCurrentPosition() {
+        return mCurrentPosition;
+    }
+
+    @Override
+    public long getBufferedPosition() {
+        return mBufferedPosition;
     }
 
     @Override

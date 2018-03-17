@@ -441,7 +441,7 @@ public class FieldsClassificationTest extends AutoFillServiceTestCase {
     }
 
     /*
-     * TODO(b/70407264): other scenarios:
+     * TODO(b/73648631): other scenarios:
      *
      * - Multipartition (for example, one response with FieldsDetection, others with datasets,
      *   saveinfo, and/or ignoredIds)
