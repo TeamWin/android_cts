@@ -36,6 +36,12 @@
             </intent-filter>
         </activity>
 
+        <activity android:name="android.graphics.cts.VulkanPreTransformCtsActivity"
+            android:label="VulkanPreTransformCtsActivity"
+            android:screenOrientation="landscape"
+            android:theme="@android:style/Theme.NoTitleBar.Fullscreen">
+        </activity>
+
         <activity android:name="android.graphics.drawable.cts.DrawableStubActivity"
                   android:theme="@style/WhiteBackgroundNoWindowAnimation"
                   android:screenOrientation="locked"/>
