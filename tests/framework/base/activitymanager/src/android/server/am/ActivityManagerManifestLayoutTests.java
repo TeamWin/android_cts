@@ -22,6 +22,7 @@ import static android.server.am.ActivityAndWindowManagersState.dpToPx;
 import static android.server.am.ComponentNameUtils.getWindowName;
 import static android.server.am.Components.BOTTOM_LEFT_LAYOUT_ACTIVITY;
 import static android.server.am.Components.BOTTOM_RIGHT_LAYOUT_ACTIVITY;
+import static android.server.am.Components.TEST_ACTIVITY;
 import static android.server.am.Components.TOP_LEFT_LAYOUT_ACTIVITY;
 import static android.server.am.Components.TOP_RIGHT_LAYOUT_ACTIVITY;
 
@@ -104,7 +105,9 @@ public class ActivityManagerManifestLayoutTests extends ActivityManagerTestBase 
             launchActivity(BOTTOM_RIGHT_LAYOUT_ACTIVITY, WINDOWING_MODE_FREEFORM);
             resizeActivityTask(BOTTOM_RIGHT_LAYOUT_ACTIVITY, 0, 0, 1, 1);
         } else { // stackId == DOCKED_STACK_ID
-            launchActivityInSplitScreenWithRecents(BOTTOM_RIGHT_LAYOUT_ACTIVITY);
+            launchActivitiesInSplitScreen(
+                    getLaunchActivityBuilder().setTargetActivity(BOTTOM_RIGHT_LAYOUT_ACTIVITY),
+                    getLaunchActivityBuilder().setTargetActivity(TEST_ACTIVITY));
             resizeDockedStack(1, 1, 1, 1);
         }
         getDisplayAndWindowState(BOTTOM_RIGHT_LAYOUT_ACTIVITY, false);
