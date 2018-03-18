@@ -91,7 +91,6 @@ public class PowerIncidentTest extends ProtoDumpTestCase {
         final LooperProto looper = dump.getLooper();
         assertNotNull(looper.getThreadName());
         assertTrue(looper.getThreadId() > 0);
-        assertTrue(looper.getIdentityHashCode() > 0);
 
         assertTrue(dump.getSuspendBlockersCount() > 0);
 

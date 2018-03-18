@@ -30,6 +30,7 @@ import static android.media.MediaSession2.COMMAND_CODE_PLAYLIST_REMOVE_ITEM;
 import static android.media.MediaSession2.COMMAND_CODE_PLAYLIST_REPLACE_ITEM;
 import static android.media.MediaSession2.COMMAND_CODE_PLAYLIST_SET_LIST;
 import static android.media.MediaSession2.COMMAND_CODE_PLAYLIST_SET_LIST_METADATA;
+import static android.media.MediaSession2.COMMAND_CODE_PLAYLIST_SKIP_TO_PLAYLIST_ITEM;
 import static android.media.MediaSession2.COMMAND_CODE_PLAY_FROM_MEDIA_ID;
 import static android.media.MediaSession2.COMMAND_CODE_PLAY_FROM_SEARCH;
 import static android.media.MediaSession2.COMMAND_CODE_PLAY_FROM_URI;
@@ -46,6 +47,7 @@ import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.ArgumentMatchers.isNull;
 import static org.mockito.Mockito.after;
 import static org.mockito.Mockito.clearInvocations;
+import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.timeout;
 import static org.mockito.Mockito.verify;
@@ -119,7 +121,7 @@ public class MediaSession2_PermissionTest extends MediaSession2TestBase {
             commands = new CommandGroup(mContext);
         }
         mCallback = mock(SessionCallback.class);
-        when(mCallback.onConnect(any(), any())).thenReturn(commands);
+        doReturn(commands).when(mCallback).onConnect(any(), any());
         if (mSession != null) {
             mSession.close();
         }
@@ -175,20 +177,6 @@ public class MediaSession2_PermissionTest extends MediaSession2TestBase {
     }
 
     @Test
-    public void testSkipToNext() throws InterruptedException {
-        testOnCommandRequest(COMMAND_CODE_PLAYBACK_SKIP_NEXT_ITEM, (controller) -> {
-            controller.skipToNextItem();
-        });
-    }
-
-    @Test
-    public void testSkipToPrevious() throws InterruptedException {
-        testOnCommandRequest(COMMAND_CODE_PLAYBACK_SKIP_PREV_ITEM, (controller) -> {
-            controller.skipToPreviousItem();
-        });
-    }
-
-    @Test
     public void testFastForward() throws InterruptedException {
         testOnCommandRequest(COMMAND_CODE_PLAYBACK_FAST_FORWARD, (controller) -> {
             controller.fastForward();
@@ -210,31 +198,31 @@ public class MediaSession2_PermissionTest extends MediaSession2TestBase {
         });
     }
 
-    // TODO(jaewan): Uncomment when we implement skipToPlaylistItem()
-    /*
+    @Test
+    public void testSkipToNext() throws InterruptedException {
+        testOnCommandRequest(COMMAND_CODE_PLAYBACK_SKIP_NEXT_ITEM, (controller) -> {
+            controller.skipToNextItem();
+        });
+    }
+
+    @Test
+    public void testSkipToPrevious() throws InterruptedException {
+        testOnCommandRequest(COMMAND_CODE_PLAYBACK_SKIP_PREV_ITEM, (controller) -> {
+            controller.skipToPreviousItem();
+        });
+    }
+
     @Test
     public void testSkipToPlaylistItem() throws InterruptedException {
-        final Uri uri = Uri.parse("set://current.playlist.item");
-        final DataSourceDesc dsd = new DataSourceDesc.Builder()
-                .setDataSource(mContext, uri).build();
-        final MediaItem2 item = new MediaItem2.Builder(mContext, MediaItem2.FLAG_PLAYABLE)
-                .setDataSourceDesc(dsd).build();
-        createSessionWithAllowedActions(
-                createCommandGroupWith(COMMAND_CODE_PLAYBACK_SET_CURRENT_PLAYLIST_ITEM));
-        createController(mSession.getToken()).skipToPlaylistItem(item);
-        verify(mCallback, timeout(TIMEOUT_MS).atLeastOnce()).onCommandRequest(matchesCaller(),
-                matches(COMMAND_CODE_PLAYBACK_SET_CURRENT_PLAYLIST_ITEM));
-
-        createSessionWithAllowedActions(
-                createCommandGroupWithout(COMMAND_CODE_PLAYBACK_SET_CURRENT_PLAYLIST_ITEM));
-        createController(mSession.getToken()).skipToPlaylistItem(item);
-        verify(mCallback, after(WAIT_TIME_MS).never()).onCommandRequest(any(), any());
+        MediaItem2 testItem = TestUtils.createMediaItemWithMetadata(mContext);
+        testOnCommandRequest(COMMAND_CODE_PLAYLIST_SKIP_TO_PLAYLIST_ITEM, (controller) -> {
+            controller.skipToPlaylistItem(testItem);
+        });
     }
-    */
 
     @Test
     public void testSetPlaylist() throws InterruptedException {
-        List<MediaItem2> list = TestUtils.createPlaylist(mContext);
+        List<MediaItem2> list = TestUtils.createPlaylist(mContext, 2);
         testOnCommandRequest(COMMAND_CODE_PLAYLIST_SET_LIST, (controller) -> {
             controller.setPlaylist(list, null);
         });

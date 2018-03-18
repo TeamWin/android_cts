@@ -43,6 +43,8 @@ public class IncidentdTest extends ProtoDumpTestCase {
             BatteryIncidentTest.verifyBatteryServiceDumpProto(dump.getBattery(), filterLevel);
         }
 
+        DiskStatsProtoTest.verifyDiskStatsServiceDumpProto(dump.getDiskstats(), filterLevel, getDevice());
+
         PackageIncidentTest.verifyPackageServiceDumpProto(dump.getPackage(), filterLevel);
 
         PowerIncidentTest.verifyPowerManagerServiceDumpProto(dump.getPower(), filterLevel);

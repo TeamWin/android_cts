@@ -25,7 +25,6 @@ import android.media.MediaController2.ControllerCallback;
 import android.media.MediaItem2;
 import android.media.MediaMetadata2;
 import android.media.MediaPlaylistAgent;
-import android.media.MediaSession2;
 import android.media.MediaSession2.Command;
 import android.media.MediaSession2.CommandButton;
 import android.media.MediaSession2.CommandGroup;
@@ -205,17 +204,6 @@ abstract class MediaSession2TestBase {
         public void onCustomCommand(MediaController2 controller, Command command, Bundle args,
                 ResultReceiver receiver) {
             mCallbackProxy.onCustomCommand(controller, command, args, receiver);
-        }
-
-        @Override
-        public void onPlaylistChanged(MediaController2 controller, List<MediaItem2> params) {
-            mCallbackProxy.onPlaylistChanged(controller, params);
-        }
-
-        @Override
-        public void onPlaylistParamsChanged(MediaController2 controller,
-                MediaSession2.PlaylistParams params) {
-            mCallbackProxy.onPlaylistParamsChanged(controller, params);
         }
 
         @Override

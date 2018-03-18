@@ -44,7 +44,6 @@ import android.media.MediaSession2.Command;
 import android.media.MediaSession2.CommandButton;
 import android.media.MediaSession2.CommandGroup;
 import android.media.MediaSession2.ControllerInfo;
-import android.media.MediaSession2.PlaylistParams;
 import android.media.SessionToken2;
 import android.os.Bundle;
 import android.os.Process;
@@ -521,11 +520,6 @@ public class MediaBrowser2Test extends MediaController2Test {
         }
 
         @Override
-        public void onPlaylistParamsChanged(MediaController2 controller, PlaylistParams params) {
-            mCallbackProxy.onPlaylistParamsChanged(controller, params);
-        }
-
-        @Override
         public void onPlaybackInfoChanged(MediaController2 controller,
                 MediaController2.PlaybackInfo info) {
             mCallbackProxy.onPlaybackInfoChanged(controller, info);
@@ -545,11 +539,6 @@ public class MediaBrowser2Test extends MediaController2Test {
         @Override
         public void onAllowedCommandsChanged(MediaController2 controller, CommandGroup commands) {
             mCallbackProxy.onAllowedCommandsChanged(controller, commands);
-        }
-
-        @Override
-        public void onPlaylistChanged(MediaController2 controller, List<MediaItem2> playlist) {
-            mCallbackProxy.onPlaylistChanged(controller, playlist);
         }
 
         @Override
