@@ -194,11 +194,12 @@ public class EphemeralTest extends DeviceTestCase
     }
     public void testEphemeralGetInstaller02() throws Exception {
         installApp(NORMAL_APK, "com.android.cts.normalapp");
-        runDeviceTests(EPHEMERAL_1_PKG, TEST_CLASS, "testGetInstaller03");
-    }
-    public void testEphemeralGetInstaller03() throws Exception {
         installEphemeralApp(EPHEMERAL_1_APK, "com.android.cts.normalapp");
         runDeviceTests(EPHEMERAL_1_PKG, TEST_CLASS, "testGetInstaller02");
+    }
+    public void testEphemeralGetInstaller03() throws Exception {
+        installApp(NORMAL_APK, "com.android.cts.normalapp");
+        runDeviceTests(EPHEMERAL_1_PKG, TEST_CLASS, "testGetInstaller03");
     }
 
     public void testExposedSystemActivities() throws Exception {
