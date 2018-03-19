@@ -17,9 +17,12 @@
 package android.security.cts;
 
 import android.content.pm.PackageManager;
+import android.os.Process;
+import android.os.UserHandle;
 import android.platform.test.annotations.SecurityTest;
 import android.test.AndroidTestCase;
 import android.util.Log;
+import com.android.compatibility.common.util.FeatureUtil;
 import junit.framework.AssertionFailedError;
 
 import java.io.File;
@@ -46,6 +49,8 @@ public class ListeningPortsTest extends AndroidTestCase {
 
     private static final int CONN_TIMEOUT_IN_MS = 5000;
 
+    private boolean mIsTelevision;
+
     /** Ports that are allowed to be listening. */
     private static final List<String> EXCEPTION_PATTERNS = new ArrayList<String>(6);
 
@@ -71,6 +76,12 @@ public class ListeningPortsTest extends AndroidTestCase {
         // IPv6 exceptions
         // TODO: this is not standard notation for IPv6. Use [$addr]:$port instead as per RFC 3986.
         EXCEPTION_PATTERNS.add(":::5555");          // emulator port for adb
+    }
+
+    @Override
+    protected void setUp() throws Exception {
+        super.setUp();
+        mIsTelevision = FeatureUtil.isTV();
     }
 
     /**
@@ -220,6 +231,14 @@ public class ListeningPortsTest extends AndroidTestCase {
                     && (!entry.localAddress.isLoopbackAddress() ^ loopback)) {
                 if (isTcp && !isTcpConnectable(entry.localAddress, entry.port)) {
                     continue;
+                }
+                // allow non-system processes to listen on a device with TV capabilities
+                if (mIsTelevision) {
+                    int appId = UserHandle.getAppId(entry.uid);
+                    if (appId >= Process.FIRST_APPLICATION_UID
+                            && appId <= Process.LAST_APPLICATION_UID) {
+                        continue;
+                    }
                 }
 
                 errors += "\nFound port listening on addr="
