@@ -97,8 +97,6 @@ public class MockPlayer extends MediaPlayerBase {
         }
     }
 
-    // TODO: Uncomment or remove
-    /*
     @Override
     public void fastForward() {
         mFastForwardCalled = true;
@@ -106,10 +104,7 @@ public class MockPlayer extends MediaPlayerBase {
             mCountDownLatch.countDown();
         }
     }
-    */
 
-    // TODO: Uncomment or remove
-    /*
     @Override
     public void rewind() {
         mRewindCalled = true;
@@ -117,7 +112,6 @@ public class MockPlayer extends MediaPlayerBase {
             mCountDownLatch.countDown();
         }
     }
-    */
 
     @Override
     public void seekTo(long pos) {
