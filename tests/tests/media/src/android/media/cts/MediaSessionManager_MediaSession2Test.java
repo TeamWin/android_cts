@@ -16,6 +16,13 @@
 
 package android.media.cts;
 
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertNull;
+import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.fail;
+
 import android.content.Context;
 import android.media.MediaController2;
 import android.media.MediaPlayerBase;
@@ -25,7 +32,6 @@ import android.media.MediaSession2.SessionCallback;
 import android.media.SessionToken2;
 import android.media.session.MediaSessionManager;
 import android.media.session.MediaSessionManager.OnSessionTokensChangedListener;
-import android.media.session.PlaybackState;
 import android.support.test.filters.SmallTest;
 import android.support.test.runner.AndroidJUnit4;
 
@@ -35,12 +41,10 @@ import org.junit.Ignore;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
-import java.util.UUID;
 import java.util.List;
+import java.util.UUID;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
-
-import static org.junit.Assert.*;
 
 /**
  * Tests {@link MediaSessionManager} with {@link MediaSession2} specific APIs.
