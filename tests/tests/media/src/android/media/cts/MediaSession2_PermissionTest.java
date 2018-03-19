@@ -39,29 +39,22 @@ import static android.media.MediaSession2.COMMAND_CODE_PREPARE_FROM_SEARCH;
 import static android.media.MediaSession2.COMMAND_CODE_PREPARE_FROM_URI;
 import static android.media.MediaSession2.ControllerInfo;
 
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertNull;
+import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.argThat;
-import static org.mockito.ArgumentMatchers.eq;
-import static org.mockito.ArgumentMatchers.isNull;
-import static org.mockito.Mockito.after;
-import static org.mockito.Mockito.clearInvocations;
-import static org.mockito.Mockito.doReturn;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.timeout;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.when;
 
 import android.annotation.NonNull;
+import android.content.Context;
 import android.media.MediaController2;
-import android.media.MediaController2.ControllerCallback;
 import android.media.MediaItem2;
 import android.media.MediaSession2;
 import android.media.MediaSession2.Command;
 import android.media.MediaSession2.CommandGroup;
-import android.media.MediaSession2.SessionCallback;
 import android.net.Uri;
+import android.os.Bundle;
 import android.os.Process;
 import android.support.test.filters.MediumTest;
 import android.support.test.runner.AndroidJUnit4;
@@ -72,6 +65,8 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 
 import java.util.List;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.TimeUnit;
 
 /**
  * Tests whether {@link MediaSession2} receives commands that hasn't allowed.
@@ -83,19 +78,7 @@ public class MediaSession2_PermissionTest extends MediaSession2TestBase {
 
     private MockPlayer mPlayer;
     private MediaSession2 mSession;
-    private MediaSession2.SessionCallback mCallback;
-
-    private MediaSession2 matchesSession() {
-        return argThat((session) -> session == mSession);
-    }
-
-    private static ControllerInfo matchesCaller() {
-        return argThat((controllerInfo) -> controllerInfo.getUid() == Process.myUid());
-    }
-
-    private static Command matches(final int commandCode) {
-        return argThat((command) -> command.getCommandCode() == commandCode);
-    }
+    private MySessionCallback mCallback;
 
     @Before
     @Override
@@ -115,13 +98,17 @@ public class MediaSession2_PermissionTest extends MediaSession2TestBase {
         mCallback = null;
     }
 
-    private MediaSession2 createSessionWithAllowedActions(CommandGroup commands) {
+    private MediaSession2 createSessionWithAllowedActions(final CommandGroup commands) {
         mPlayer = new MockPlayer(0);
-        if (commands == null) {
-            commands = new CommandGroup(mContext);
-        }
-        mCallback = mock(SessionCallback.class);
-        doReturn(commands).when(mCallback).onConnect(any(), any());
+        mCallback = new MySessionCallback(mContext) {
+            @Override
+            public CommandGroup onConnect(MediaSession2 session, ControllerInfo controller) {
+                if (Process.myUid() != controller.getUid()) {
+                    return null;
+                }
+                return commands == null ? new CommandGroup(mContext) : commands;
+            }
+        };
         if (mSession != null) {
             mSession.close();
         }
@@ -147,12 +134,16 @@ public class MediaSession2_PermissionTest extends MediaSession2TestBase {
             throws InterruptedException {
         createSessionWithAllowedActions(createCommandGroupWith(commandCode));
         runnable.run(createController(mSession.getToken()));
-        verify(mCallback, timeout(TIMEOUT_MS).atLeastOnce()).onCommandRequest(
-                matchesSession(), matchesCaller(), matches(commandCode));
+
+        assertTrue(mCallback.mCountDownLatch.await(TIMEOUT_MS, TimeUnit.MILLISECONDS));
+        assertTrue(mCallback.mOnCommandRequestCalled);
+        assertEquals(commandCode, mCallback.mCommand.getCommandCode());
 
         createSessionWithAllowedActions(createCommandGroupWithout(commandCode));
         runnable.run(createController(mSession.getToken()));
-        verify(mCallback, after(WAIT_TIME_MS).never()).onCommandRequest(any(), any(), any());
+
+        assertFalse(mCallback.mCountDownLatch.await(WAIT_TIME_MS, TimeUnit.MILLISECONDS));
+        assertFalse(mCallback.mOnCommandRequestCalled);
     }
 
     @Test
@@ -272,14 +263,17 @@ public class MediaSession2_PermissionTest extends MediaSession2TestBase {
         createSessionWithAllowedActions(
                 createCommandGroupWith(COMMAND_CODE_PLAY_FROM_MEDIA_ID));
         createController(mSession.getToken()).playFromMediaId(mediaId, null);
-        verify(mCallback, timeout(TIMEOUT_MS).atLeastOnce()).onPlayFromMediaId(
-                matchesSession(), matchesCaller(), eq(mediaId), isNull());
+
+        assertTrue(mCallback.mCountDownLatch.await(TIMEOUT_MS, TimeUnit.MILLISECONDS));
+        assertTrue(mCallback.mOnPlayFromMediaIdCalled);
+        assertEquals(mediaId, mCallback.mMediaId);
+        assertNull(mCallback.mExtras);
 
         createSessionWithAllowedActions(
                 createCommandGroupWithout(COMMAND_CODE_PLAY_FROM_MEDIA_ID));
         createController(mSession.getToken()).playFromMediaId(mediaId, null);
-        verify(mCallback, after(WAIT_TIME_MS).never()).onPlayFromMediaId(
-                any(), any(), any(), any());
+        assertFalse(mCallback.mCountDownLatch.await(WAIT_TIME_MS, TimeUnit.MILLISECONDS));
+        assertFalse(mCallback.mOnPlayFromMediaIdCalled);
     }
 
     @Test
@@ -288,13 +282,17 @@ public class MediaSession2_PermissionTest extends MediaSession2TestBase {
         createSessionWithAllowedActions(
                 createCommandGroupWith(COMMAND_CODE_PLAY_FROM_URI));
         createController(mSession.getToken()).playFromUri(uri, null);
-        verify(mCallback, timeout(TIMEOUT_MS).atLeastOnce()).onPlayFromUri(
-                matchesSession(), matchesCaller(), eq(uri), isNull());
+
+        assertTrue(mCallback.mCountDownLatch.await(TIMEOUT_MS, TimeUnit.MILLISECONDS));
+        assertTrue(mCallback.mOnPlayFromUriCalled);
+        assertEquals(uri, mCallback.mUri);
+        assertNull(mCallback.mExtras);
 
         createSessionWithAllowedActions(
                 createCommandGroupWithout(COMMAND_CODE_PLAY_FROM_URI));
         createController(mSession.getToken()).playFromUri(uri, null);
-        verify(mCallback, after(WAIT_TIME_MS).never()).onPlayFromUri(any(), any(), any(), any());
+        assertFalse(mCallback.mCountDownLatch.await(WAIT_TIME_MS, TimeUnit.MILLISECONDS));
+        assertFalse(mCallback.mOnPlayFromUriCalled);
     }
 
     @Test
@@ -303,13 +301,17 @@ public class MediaSession2_PermissionTest extends MediaSession2TestBase {
         createSessionWithAllowedActions(
                 createCommandGroupWith(COMMAND_CODE_PLAY_FROM_SEARCH));
         createController(mSession.getToken()).playFromSearch(query, null);
-        verify(mCallback, timeout(TIMEOUT_MS).atLeastOnce()).onPlayFromSearch(
-                matchesSession(), matchesCaller(), eq(query), isNull());
+
+        assertTrue(mCallback.mCountDownLatch.await(TIMEOUT_MS, TimeUnit.MILLISECONDS));
+        assertTrue(mCallback.mOnPlayFromSearchCalled);
+        assertEquals(query, mCallback.mQuery);
+        assertNull(mCallback.mExtras);
 
         createSessionWithAllowedActions(
                 createCommandGroupWithout(COMMAND_CODE_PLAY_FROM_SEARCH));
         createController(mSession.getToken()).playFromSearch(query, null);
-        verify(mCallback, after(WAIT_TIME_MS).never()).onPlayFromSearch(any(), any(), any(), any());
+        assertFalse(mCallback.mCountDownLatch.await(WAIT_TIME_MS, TimeUnit.MILLISECONDS));
+        assertFalse(mCallback.mOnPlayFromSearchCalled);
     }
 
     @Test
@@ -318,14 +320,17 @@ public class MediaSession2_PermissionTest extends MediaSession2TestBase {
         createSessionWithAllowedActions(
                 createCommandGroupWith(COMMAND_CODE_PREPARE_FROM_MEDIA_ID));
         createController(mSession.getToken()).prepareFromMediaId(mediaId, null);
-        verify(mCallback, timeout(TIMEOUT_MS).atLeastOnce()).onPrepareFromMediaId(
-                matchesSession(), matchesCaller(), eq(mediaId), isNull());
+
+        assertTrue(mCallback.mCountDownLatch.await(TIMEOUT_MS, TimeUnit.MILLISECONDS));
+        assertTrue(mCallback.mOnPrepareFromMediaIdCalled);
+        assertEquals(mediaId, mCallback.mMediaId);
+        assertNull(mCallback.mExtras);
 
         createSessionWithAllowedActions(
                 createCommandGroupWithout(COMMAND_CODE_PREPARE_FROM_MEDIA_ID));
         createController(mSession.getToken()).prepareFromMediaId(mediaId, null);
-        verify(mCallback, after(WAIT_TIME_MS).never()).onPrepareFromMediaId(
-                any(), any(), any(), any());
+        assertFalse(mCallback.mCountDownLatch.await(WAIT_TIME_MS, TimeUnit.MILLISECONDS));
+        assertFalse(mCallback.mOnPrepareFromMediaIdCalled);
     }
 
     @Test
@@ -334,13 +339,17 @@ public class MediaSession2_PermissionTest extends MediaSession2TestBase {
         createSessionWithAllowedActions(
                 createCommandGroupWith(COMMAND_CODE_PREPARE_FROM_URI));
         createController(mSession.getToken()).prepareFromUri(uri, null);
-        verify(mCallback, timeout(TIMEOUT_MS).atLeastOnce()).onPrepareFromUri(
-                matchesSession(), matchesCaller(), eq(uri), isNull());
+
+        assertTrue(mCallback.mCountDownLatch.await(TIMEOUT_MS, TimeUnit.MILLISECONDS));
+        assertTrue(mCallback.mOnPrepareFromUriCalled);
+        assertEquals(uri, mCallback.mUri);
+        assertNull(mCallback.mExtras);
 
         createSessionWithAllowedActions(
                 createCommandGroupWithout(COMMAND_CODE_PREPARE_FROM_URI));
         createController(mSession.getToken()).prepareFromUri(uri, null);
-        verify(mCallback, after(WAIT_TIME_MS).never()).onPrepareFromUri(any(), any(), any(), any());
+        assertFalse(mCallback.mCountDownLatch.await(WAIT_TIME_MS, TimeUnit.MILLISECONDS));
+        assertFalse(mCallback.mOnPrepareFromUriCalled);
     }
 
     @Test
@@ -349,14 +358,17 @@ public class MediaSession2_PermissionTest extends MediaSession2TestBase {
         createSessionWithAllowedActions(
                 createCommandGroupWith(COMMAND_CODE_PREPARE_FROM_SEARCH));
         createController(mSession.getToken()).prepareFromSearch(query, null);
-        verify(mCallback, timeout(TIMEOUT_MS).atLeastOnce()).onPrepareFromSearch(
-                matchesSession(), matchesCaller(), eq(query), isNull());
+
+        assertTrue(mCallback.mCountDownLatch.await(TIMEOUT_MS, TimeUnit.MILLISECONDS));
+        assertTrue(mCallback.mOnPrepareFromSearchCalled);
+        assertEquals(query, mCallback.mQuery);
+        assertNull(mCallback.mExtras);
 
         createSessionWithAllowedActions(
                 createCommandGroupWithout(COMMAND_CODE_PREPARE_FROM_SEARCH));
         createController(mSession.getToken()).prepareFromSearch(query, null);
-        verify(mCallback, after(WAIT_TIME_MS).never()).onPrepareFromSearch(
-                any(), any(), any(), any());
+        assertFalse(mCallback.mCountDownLatch.await(WAIT_TIME_MS, TimeUnit.MILLISECONDS));
+        assertFalse(mCallback.mOnPrepareFromSearchCalled);
     }
 
     @Test
@@ -365,24 +377,25 @@ public class MediaSession2_PermissionTest extends MediaSession2TestBase {
         createSessionWithAllowedActions(
                 createCommandGroupWith(COMMAND_CODE_PREPARE_FROM_SEARCH));
 
-        ControllerCallback controllerCallback = mock(ControllerCallback.class);
+        ControllerCallbackForPermissionChange controllerCallback =
+                new ControllerCallbackForPermissionChange();
         MediaController2 controller =
                 createController(mSession.getToken(), true, controllerCallback);
 
         controller.prepareFromSearch(query, null);
-        verify(mCallback, timeout(TIMEOUT_MS).atLeastOnce()).onPrepareFromSearch(
-                matchesSession(), matchesCaller(), eq(query), isNull());
-        clearInvocations(mCallback);
+        assertTrue(mCallback.mCountDownLatch.await(TIMEOUT_MS, TimeUnit.MILLISECONDS));
+        assertTrue(mCallback.mOnPrepareFromSearchCalled);
+        assertEquals(query, mCallback.mQuery);
+        assertNull(mCallback.mExtras);
+        mCallback.reset();
 
         // Change allowed commands.
         mSession.setAllowedCommands(getTestControllerInfo(),
                 createCommandGroupWithout(COMMAND_CODE_PREPARE_FROM_SEARCH));
-        verify(controllerCallback, timeout(TIMEOUT_MS).atLeastOnce())
-                .onAllowedCommandsChanged(eq(controller), any());
+        assertTrue(controllerCallback.mCountDownLatch.await(TIMEOUT_MS, TimeUnit.MILLISECONDS));
 
         controller.prepareFromSearch(query, null);
-        verify(mCallback, after(WAIT_TIME_MS).never()).onPrepareFromSearch(
-                any(), any(), any(), any());
+        assertFalse(mCallback.mCountDownLatch.await(WAIT_TIME_MS, TimeUnit.MILLISECONDS));
     }
 
     private ControllerInfo getTestControllerInfo() {
@@ -400,5 +413,128 @@ public class MediaSession2_PermissionTest extends MediaSession2TestBase {
     @FunctionalInterface
     private interface PermissionTestRunnable {
         void run(@NonNull MediaController2 controller);
+    }
+
+    public class MySessionCallback extends MediaSession2.SessionCallback {
+        public CountDownLatch mCountDownLatch;
+
+        public Command mCommand;
+        public String mMediaId;
+        public String mQuery;
+        public Uri mUri;
+        public Bundle mExtras;
+
+        public boolean mOnCommandRequestCalled;
+        public boolean mOnPlayFromMediaIdCalled;
+        public boolean mOnPlayFromSearchCalled;
+        public boolean mOnPlayFromUriCalled;
+        public boolean mOnPrepareFromMediaIdCalled;
+        public boolean mOnPrepareFromSearchCalled;
+        public boolean mOnPrepareFromUriCalled;
+
+
+        public MySessionCallback(Context context) {
+            super(context);
+            mCountDownLatch = new CountDownLatch(1);
+        }
+
+        public void reset() {
+            mCountDownLatch = new CountDownLatch(1);
+
+            mCommand = null;
+            mMediaId = null;
+            mQuery = null;
+            mUri = null;
+            mExtras = null;
+
+            mOnCommandRequestCalled = false;
+            mOnPlayFromMediaIdCalled = false;
+            mOnPlayFromSearchCalled = false;
+            mOnPlayFromUriCalled = false;
+            mOnPrepareFromMediaIdCalled = false;
+            mOnPrepareFromSearchCalled = false;
+            mOnPrepareFromUriCalled = false;
+        }
+
+        @Override
+        public boolean onCommandRequest(MediaSession2 session, ControllerInfo controller,
+                Command command) {
+            assertEquals(Process.myUid(), controller.getUid());
+            mOnCommandRequestCalled = true;
+            mCommand = command;
+            mCountDownLatch.countDown();
+            return super.onCommandRequest(session, controller, command);
+        }
+
+        @Override
+        public void onPlayFromMediaId(MediaSession2 session, ControllerInfo controller,
+                String mediaId, Bundle extras) {
+            assertEquals(Process.myUid(), controller.getUid());
+            mOnPlayFromMediaIdCalled = true;
+            mMediaId = mediaId;
+            mExtras = extras;
+            mCountDownLatch.countDown();
+        }
+
+        @Override
+        public void onPlayFromSearch(MediaSession2 session, ControllerInfo controller,
+                String query, Bundle extras) {
+            assertEquals(Process.myUid(), controller.getUid());
+            mOnPlayFromSearchCalled = true;
+            mQuery = query;
+            mExtras = extras;
+            mCountDownLatch.countDown();
+        }
+
+        @Override
+        public void onPlayFromUri(MediaSession2 session, ControllerInfo controller,
+                Uri uri, Bundle extras) {
+            assertEquals(Process.myUid(), controller.getUid());
+            mOnPlayFromUriCalled = true;
+            mUri = uri;
+            mExtras = extras;
+            mCountDownLatch.countDown();
+        }
+
+        @Override
+        public void onPrepareFromMediaId(MediaSession2 session, ControllerInfo controller,
+                String mediaId, Bundle extras) {
+            assertEquals(Process.myUid(), controller.getUid());
+            mOnPrepareFromMediaIdCalled = true;
+            mMediaId = mediaId;
+            mExtras = extras;
+            mCountDownLatch.countDown();
+        }
+
+        @Override
+        public void onPrepareFromSearch(MediaSession2 session, ControllerInfo controller,
+                String query, Bundle extras) {
+            assertEquals(Process.myUid(), controller.getUid());
+            mOnPrepareFromSearchCalled = true;
+            mQuery = query;
+            mExtras = extras;
+            mCountDownLatch.countDown();
+        }
+
+        @Override
+        public void onPrepareFromUri(MediaSession2 session, ControllerInfo controller,
+                Uri uri, Bundle extras) {
+            assertEquals(Process.myUid(), controller.getUid());
+            mOnPrepareFromUriCalled = true;
+            mUri = uri;
+            mExtras = extras;
+            mCountDownLatch.countDown();
+        }
+
+        // TODO(jaewan): Add permission test for setRating()
+    }
+
+    public class ControllerCallbackForPermissionChange extends MediaController2.ControllerCallback {
+        public CountDownLatch mCountDownLatch = new CountDownLatch(1);
+
+        @Override
+        public void onAllowedCommandsChanged(MediaController2 controller, CommandGroup commands) {
+            mCountDownLatch.countDown();
+        }
     }
 }
