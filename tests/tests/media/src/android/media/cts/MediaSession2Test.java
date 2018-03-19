@@ -371,6 +371,18 @@ public class MediaSession2Test extends MediaSession2TestBase {
     }
 
     @Test
+    public void testFastForward() {
+        mSession.fastForward();
+        assertTrue(mPlayer.mFastForwardCalled);
+    }
+
+    @Test
+    public void testRewind() {
+        mSession.rewind();
+        assertTrue(mPlayer.mRewindCalled);
+    }
+
+    @Test
     public void testSkipToPreviousItem() {
         mSession.skipToPreviousItem();
         assertTrue(mMockAgent.mSkipToPreviousItemCalled);
