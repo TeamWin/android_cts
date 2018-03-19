@@ -47,6 +47,8 @@ import android.content.pm.ResolveInfo;
 import android.database.Cursor;
 import android.hardware.camera2.CameraDevice;
 import android.hardware.camera2.CameraManager;
+import android.location.Criteria;
+import android.location.LocationManager;
 import android.media.AudioRecord;
 import android.net.ConnectivityManager;
 import android.net.Uri;
@@ -1149,43 +1151,20 @@ public class ClientTest {
     }
 
     @Test
-    public void testAccessCoarseLocationPermission() throws Throwable {
+    public void testAccessCoarseLocationPermission() {
         final Context context = InstrumentationRegistry.getContext();
-        final ConnectivityManager mCm =
-                (ConnectivityManager) context.getSystemService(Context.CONNECTIVITY_SERVICE);
-        if (mCm.getNetworkInfo(ConnectivityManager.TYPE_MOBILE) == null) {
-            return;
-        }
 
-        final TelephonyManager mTelephonyManager =
-                (TelephonyManager) context.getSystemService(Context.TELEPHONY_SERVICE);
-        // getCellLocation should never return null, but that is allowed if the cell network type
-        // is LTE (since there is no LteCellLocation class)
-        if (mTelephonyManager.getNetworkType() != TelephonyManager.NETWORK_TYPE_LTE) {
-            assertThat(mTelephonyManager.getCellLocation(), is(notNullValue()));
-        }
+        LocationManager locationManager =
+                (LocationManager) context.getSystemService(Context.LOCATION_SERVICE);
 
-        final CountDownLatch latch = new CountDownLatch(1);
-        final TestThread t = new TestThread(() -> {
-            Looper.prepare();
-            mPhoneStateListener = new PhoneStateListener() {
-                @Override
-                public void onCellLocationChanged(CellLocation location) {
-                    latch.countDown();
-                }
-            };
-            mTelephonyManager.listen(mPhoneStateListener, PhoneStateListener.LISTEN_CELL_LOCATION);
-            Looper.loop();
-        });
-        t.start();
-
+        Criteria criteria = new Criteria();
+        criteria.setAccuracy(Criteria.ACCURACY_COARSE);
+        final String bestProvider = locationManager.getBestProvider(criteria, false);
         try {
-            CellLocation.requestLocationUpdate();
-            assertThat(latch.await(1000, TimeUnit.MILLISECONDS), is(true));
-        } finally {
-            mTelephonyManager.listen(mPhoneStateListener, PhoneStateListener.LISTEN_NONE);
+            locationManager.getLastKnownLocation(bestProvider);
+        } catch (SecurityException e) {
+            fail("Permission not granted.");
         }
-        t.checkException();
     }
 
     @Test
