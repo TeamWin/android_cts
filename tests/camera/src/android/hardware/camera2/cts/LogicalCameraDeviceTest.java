@@ -55,6 +55,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 import static org.mockito.Mockito.*;
 
@@ -391,7 +392,7 @@ public final class LogicalCameraDeviceTest extends Camera2SurfaceViewTestCase {
     private Size findCommonPreviewSize(String cameraId,
             List<String> dualPhysicalCameraIds) throws Exception {
 
-        List<String> physicalCameraIds =
+        Set<String> physicalCameraIds =
                 mStaticInfo.getCharacteristics().getPhysicalCameraIds();
         assertTrue("Logical camera must contain at least 2 physical camera ids",
                 physicalCameraIds.size() >= 2);
