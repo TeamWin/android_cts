@@ -243,8 +243,6 @@ public class ActivityLifecycleTests extends ActivityLifecycleClientTestBase {
         // Start an activity in separate task (will be placed in secondary stack)
         getLaunchActivityBuilder().execute();
 
-        waitAndAssertActivityStates(state(secondActivity, ON_PAUSE));
-
         // Finish top activity
         secondActivity.finish();
 
