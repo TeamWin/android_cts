@@ -18,7 +18,6 @@ package com.android.cts.usepermission;
 
 import static junit.framework.Assert.assertEquals;
 
-import static org.junit.Assert.assertNull;
 import static org.junit.Assert.fail;
 
 import static com.android.cts.externalstorageapp.CommonExternalStorageTest.assertDirNoAccess;
@@ -30,8 +29,8 @@ import static com.android.cts.externalstorageapp.CommonExternalStorageTest.logCo
 import android.Manifest;
 import android.content.pm.PackageManager;
 import android.os.Environment;
+
 import org.junit.Before;
-import org.junit.Ignore;
 import org.junit.Test;
 
 /**
@@ -50,7 +49,6 @@ public class UsePermissionTest23 extends BasePermissionsTest {
         mWatch = pm.hasSystemFeature(PackageManager.FEATURE_WATCH);
     }
 
-    @Ignore
     @Test
     public void testFail() throws Exception {
         fail("Expected");
