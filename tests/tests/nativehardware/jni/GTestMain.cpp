@@ -14,18 +14,9 @@
  * limitations under the License.
  */
 
-#ifndef NATIVEHARDWARE_TEST_H
-#define NATIVEHARDWARE_TEST_H
+#include <gtest/gtest.h>
 
-namespace android {
-
-class NativeHardwareTest {
-public:
-    virtual bool SetUp() = 0;
-    virtual void TearDown() = 0;
-    virtual ~NativeHardwareTest() = default;
-};
-
-} // namespace android
-
-#endif // NATIVEHARDWARE_TEST_H
+int main(int argc, char **argv) {
+    ::testing::InitGoogleTest(&argc, argv);
+    return RUN_ALL_TESTS();
+}
