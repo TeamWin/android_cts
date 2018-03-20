@@ -793,7 +793,7 @@ public class BitmapColorSpaceTest {
     }
 
     @Test
-    @RequiresDevice
+    @RequiresDevice // SwiftShader does not yet have support for F16 in HARDWARE b/75778024
     public void test16bitHardware() {
         // Decoding to HARDWARE may use LINEAR_EXTENDED_SRGB or SRGB, depending
         // on whether F16 is supported in HARDWARE.
