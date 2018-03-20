@@ -51,6 +51,9 @@ import java.util.Random;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 
+import com.android.compatibility.common.util.CddTest;
+
+@CddTest(requirement="7.3/C-0-2,C-0-1")
 public class SensorTest extends SensorTestCase {
     private static final String TAG = "SensorTest";
 
@@ -115,6 +118,7 @@ public class SensorTest extends SensorTestCase {
         }
     }
 
+    @CddTest(requirement="7.3/C-0-1")
     @SuppressWarnings("deprecation")
     public void testSensorOperations() {
         // Because we can't know every sensors unit details, so we can't assert
@@ -189,6 +193,7 @@ public class SensorTest extends SensorTestCase {
         }
     }
 
+    @CddTest(requirement="7.3/C-0-2")
     public void testValuesForAllSensors() {
         for (Sensor sensor : mSensorList) {
             assertSensorValues(sensor);
@@ -207,6 +212,7 @@ public class SensorTest extends SensorTestCase {
 
     // Some sensors like proximity, significant motion etc. are defined as wake-up sensors by
     // default. Check if the wake-up flag is set correctly.
+    @CddTest(requirement="7.3/C-0-2")
     @Presubmit
     public void testWakeUpFlags() {
         final int TYPE_WAKE_GESTURE = 23;

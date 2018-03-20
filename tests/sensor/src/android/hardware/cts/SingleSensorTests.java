@@ -17,14 +17,14 @@
 package android.hardware.cts;
 
 import android.content.Context;
+import android.content.pm.PackageManager;
 import android.hardware.Sensor;
 import android.hardware.SensorManager;
 import android.hardware.cts.helpers.SensorCtsHelper;
 import android.hardware.cts.helpers.SensorStats;
 import android.hardware.cts.helpers.TestSensorEnvironment;
 import android.hardware.cts.helpers.sensoroperations.TestSensorOperation;
-import android.content.pm.PackageManager;
-
+import com.android.compatibility.common.util.CddTest;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Map.Entry;
@@ -85,6 +85,7 @@ import java.util.concurrent.TimeUnit;
  * running, or if the sensor's sampled data indeed falls into a large standard deviation.
  * </p>
  */
+@CddTest(requirement="7.3.1/H-1-1,C-1-1,C-1-6,C-3-1,C-4-1,7.3.2/H-1-1,C-1-2,C-1-4,C-1-9,C-2-1,7.3.4/H-1-1,T-1-1,A-1-1,C-1-1,C-1-2,C-1-3,C-1-7,C-2-1,C-3-1,7.3.5/C-1-1,C-1-2,7.3/C-1-7,7.3/C-1-2")
 public class SingleSensorTests extends SensorTestCase {
     private static final String TAG = "SingleSensorTests";
 

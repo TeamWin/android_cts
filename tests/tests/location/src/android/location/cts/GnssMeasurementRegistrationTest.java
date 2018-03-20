@@ -23,6 +23,8 @@ import android.util.Log;
 
 import java.util.List;
 
+import com.android.compatibility.common.util.CddTest;
+
 /**
  * Test for {@link GnssMeasurement}s without location registration.
  *
@@ -77,6 +79,7 @@ public class GnssMeasurementRegistrationTest extends GnssTestCase {
     /**
      * Test GPS measurements registration.
      */
+    @CddTest(requirement="7.3.3/C-2-1")
     public void testGnssMeasurementRegistration() throws Exception {
         // Checks if GPS hardware feature is present, skips test (pass) if not,
         // and hard asserts that Location/GPS (Provider) is turned on if is Cts Verifier.

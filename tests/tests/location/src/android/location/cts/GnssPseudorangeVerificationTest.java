@@ -85,7 +85,7 @@ public class GnssPseudorangeVerificationTest extends GnssTestCase {
    * It only performs sanity checks for the measurements received.
    * This tests uses actual data retrieved from Gnss HAL.
    */
-  @CddTest(requirement="7.3.3")
+  @CddTest(requirement="7.3.3/C-2-2")
   public void testPseudorangeValue() throws Exception {
     // Checks if Gnss hardware feature is present, skips test (pass) if not,
     // and hard asserts that Location/Gnss (Provider) is turned on if is Cts Verifier.
@@ -228,7 +228,7 @@ public class GnssPseudorangeVerificationTest extends GnssTestCase {
  * Use pseudorange calculation library to calculate position then compare to location from
  * Location Manager.
  */
-  @CddTest(requirement="7.3.3")
+  @CddTest(requirement="7.3.3/C-2-2")
   public void testPseudoPosition() throws Exception {
     // Checks if Gnss hardware feature is present, skips test (pass) if not,
     // and hard asserts that Location/Gnss (Provider) is turned on if is Cts Verifier.

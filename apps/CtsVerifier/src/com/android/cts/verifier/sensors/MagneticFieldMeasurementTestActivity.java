@@ -31,6 +31,8 @@ import android.hardware.cts.helpers.sensoroperations.TestSensorOperation;
 import android.hardware.cts.helpers.sensorverification.MagnitudeVerification;
 import android.hardware.cts.helpers.sensorverification.StandardDeviationVerification;
 
+import com.android.compatibility.common.util.CddTest;
+
 /**
  * Semi-automated test that focuses characteristics associated with Accelerometer measurements.
  * These test cases require calibration of the sensor before performing the verifications.
@@ -114,6 +116,7 @@ public class MagneticFieldMeasurementTestActivity extends SensorCtsVerifierTestA
      * Additionally, the device's debug output (adb logcat) dumps the set of values associated with
      * the failure to help track down the issue.
      */
+    @CddTest(requirement="7.3.2/C-1-9")
     @SuppressWarnings("unused")
     public String testStandardDeviation() throws Throwable {
         getTestLogger().logMessage(R.string.snsr_mag_verify_std_dev);
