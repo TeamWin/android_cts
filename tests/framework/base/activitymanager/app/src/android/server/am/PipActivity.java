@@ -118,7 +118,7 @@ public class PipActivity extends AbstractLifecycleLogActivity {
 
         // Set the window flag to show over the keyguard
         if (getIntent().hasExtra(EXTRA_SHOW_OVER_KEYGUARD)) {
-            getWindow().addFlags(WindowManager.LayoutParams.FLAG_SHOW_WHEN_LOCKED);
+            setShowWhenLocked(true);
         }
 
         // Enter picture in picture with the given aspect ratio if provided
