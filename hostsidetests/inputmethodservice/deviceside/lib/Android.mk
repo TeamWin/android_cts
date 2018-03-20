@@ -28,6 +28,6 @@ LOCAL_COMPATIBILITY_SUITE := cts vts general-tests
 
 LOCAL_MODULE := CtsInputMethodServiceLib
 
-LOCAL_SDK_VERSION := current
+LOCAL_SDK_VERSION := test_current
 
 include $(BUILD_STATIC_JAVA_LIBRARY)
