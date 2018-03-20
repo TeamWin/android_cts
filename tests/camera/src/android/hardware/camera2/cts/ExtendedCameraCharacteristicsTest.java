@@ -31,6 +31,7 @@ import android.hardware.camera2.params.ColorSpaceTransform;
 import android.hardware.camera2.params.StreamConfigurationMap;
 import android.media.CamcorderProfile;
 import android.media.ImageReader;
+import android.os.Build;
 import android.test.AndroidTestCase;
 import android.util.Log;
 import android.util.Rational;
@@ -879,7 +880,7 @@ public class ExtendedCameraCharacteristicsTest extends AndroidTestCase {
             float[] poseTranslation = c.get(CameraCharacteristics.LENS_POSE_TRANSLATION);
             Integer poseReference = c.get(CameraCharacteristics.LENS_POSE_REFERENCE);
             float[] cameraIntrinsics = c.get(CameraCharacteristics.LENS_INTRINSIC_CALIBRATION);
-            float[] radialDistortion = c.get(CameraCharacteristics.LENS_RADIAL_DISTORTION);
+            float[] distortion = getLensDistortion(c);
             Rect precorrectionArray = c.get(
                 CameraCharacteristics.SENSOR_INFO_PRE_CORRECTION_ACTIVE_ARRAY_SIZE);
 
@@ -936,13 +937,13 @@ public class ExtendedCameraCharacteristicsTest extends AndroidTestCase {
                         depthIsExclusive != null);
 
                 verifyLensCalibration(poseRotation, poseTranslation, poseReference,
-                        cameraIntrinsics, radialDistortion, precorrectionArray);
+                        cameraIntrinsics, distortion, precorrectionArray);
 
             } else {
                 boolean hasFields =
                     hasDepth16 && (poseTranslation != null) &&
                     (poseRotation != null) && (cameraIntrinsics != null) &&
-                    (radialDistortion != null) && (depthIsExclusive != null);
+                    (distortion != null) && (depthIsExclusive != null);
 
                 mCollector.expectTrue(
                         "All necessary depth fields defined, but DEPTH_OUTPUT capability is not listed",
@@ -953,7 +954,7 @@ public class ExtendedCameraCharacteristicsTest extends AndroidTestCase {
     }
 
     private void verifyLensCalibration(float[] poseRotation, float[] poseTranslation,
-            Integer poseReference, float[] cameraIntrinsics, float[] radialDistortion,
+            Integer poseReference, float[] cameraIntrinsics, float[] distortion,
             Rect precorrectionArray) {
 
         mCollector.expectTrue(
@@ -969,8 +970,8 @@ public class ExtendedCameraCharacteristicsTest extends AndroidTestCase {
             "LENS_INTRINSIC_CALIBRATION not right size",
             cameraIntrinsics != null && cameraIntrinsics.length == 5);
         mCollector.expectTrue(
-            "LENS_RADIAL_DISTORTION not right size",
-            radialDistortion != null && radialDistortion.length == 6);
+            "LENS_DISTORTION not right size",
+            distortion != null && distortion.length == 6);
 
         if (poseRotation != null && poseRotation.length == 4) {
             float normSq =
@@ -1024,7 +1025,7 @@ public class ExtendedCameraCharacteristicsTest extends AndroidTestCase {
             // TODO: Verify focal lengths and skew are reasonable
         }
 
-        if (radialDistortion != null) {
+        if (distortion != null) {
             // TODO: Verify radial distortion
         }
 
@@ -1439,12 +1440,12 @@ public class ExtendedCameraCharacteristicsTest extends AndroidTestCase {
                     Integer poseReference = pc.get(CameraCharacteristics.LENS_POSE_REFERENCE);
                     float[] cameraIntrinsics = pc.get(
                             CameraCharacteristics.LENS_INTRINSIC_CALIBRATION);
-                    float[] radialDistortion = pc.get(CameraCharacteristics.LENS_RADIAL_DISTORTION);
+                    float[] distortion = getLensDistortion(pc);
                     Rect precorrectionArray = pc.get(
                             CameraCharacteristics.SENSOR_INFO_PRE_CORRECTION_ACTIVE_ARRAY_SIZE);
 
                     verifyLensCalibration(poseRotation, poseTranslation, poseReference,
-                            cameraIntrinsics, radialDistortion, precorrectionArray);
+                            cameraIntrinsics, distortion, precorrectionArray);
 
                     Integer timestampSourcePhysical =
                             pc.get(CameraCharacteristics.SENSOR_INFO_TIMESTAMP_SOURCE);
@@ -1454,6 +1455,30 @@ public class ExtendedCameraCharacteristicsTest extends AndroidTestCase {
             }
             counter++;
         }
+    }
+
+    /**
+     * Get lens distortion coefficients, as a list of 6 floats; returns null if no valid
+     * distortion field is available
+     */
+    private float[] getLensDistortion(CameraCharacteristics c) {
+        float[] distortion = null;
+        float[] newDistortion = c.get(CameraCharacteristics.LENS_DISTORTION);
+        if (Build.VERSION.FIRST_SDK_INT > Build.VERSION_CODES.O_MR1 || newDistortion != null) {
+            // New devices need to use fixed radial distortion definition; old devices can
+            // opt-in to it
+            if (newDistortion != null && newDistortion.length == 5) {
+                distortion = new float[6];
+                distortion[0] = 1.0f;
+                for (int i = 1; i < 6; i++) {
+                    distortion[i] = newDistortion[i-1];
+                }
+            }
+        } else {
+            // Select old field only if on older first SDK and new definition not available
+            distortion = c.get(CameraCharacteristics.LENS_RADIAL_DISTORTION);
+        }
+        return distortion;
     }
 
     /**
