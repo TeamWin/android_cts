@@ -16,7 +16,7 @@
 
 package com.android.server.cts;
 
-import android.app.JobParametersProto;
+import android.app.job.StopReasonEnum;
 import android.net.NetworkCapabilitiesProto;
 import android.net.NetworkRequestProto;
 import com.android.server.job.ConstantsProto;
@@ -132,7 +132,7 @@ public class JobSchedulerIncidentTest extends ProtoDumpTestCase {
             assertTrue(0 <= pe.getActiveTopState().getCount());
 
             for (DataSetProto.PackageEntryProto.StopReasonCount src : pe.getStopReasonsList()) {
-                assertTrue(JobParametersProto.CancelReason.getDescriptor().getValues()
+                assertTrue(StopReasonEnum.getDescriptor().getValues()
                         .contains(src.getReason().getValueDescriptor()));
                 assertTrue(0 <= src.getCount());
             }
@@ -149,7 +149,7 @@ public class JobSchedulerIncidentTest extends ProtoDumpTestCase {
                     .contains(he.getEvent().getValueDescriptor()));
             assertTrue(0 <= he.getTimeSinceEventMs()); // Should be positive.
             assertTrue(0 <= he.getUid());
-            assertTrue(JobParametersProto.CancelReason.getDescriptor().getValues()
+            assertTrue(StopReasonEnum.getDescriptor().getValues()
                     .contains(he.getStopReason().getValueDescriptor()));
             if (filterLevel == PRIVACY_AUTO) {
                 assertTrue(he.getTag().isEmpty());
