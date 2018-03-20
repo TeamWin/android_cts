@@ -329,8 +329,6 @@ public class JobSchedulerIncidentTest extends ProtoDumpTestCase {
         }
         StateControllerProto.TimeController tc = sc.getTime();
         assertTrue(0 <=  tc.getNowElapsedRealtime());
-        assertTrue(0 <= tc.getTimeUntilNextDelayAlarmMs());
-        assertTrue(0 <= tc.getTimeUntilNextDeadlineAlarmMs());
         for (StateControllerProto.TimeController.TrackedJob tj : tc.getTrackedJobsList()) {
             testJobStatusShortInfoProto(tj.getInfo(), filterLevel);
             assertTrue(0 <= tj.getSourceUid());

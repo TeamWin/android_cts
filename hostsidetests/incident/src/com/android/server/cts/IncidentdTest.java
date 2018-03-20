@@ -37,6 +37,8 @@ public class IncidentdTest extends ProtoDumpTestCase {
 
         SettingsIncidentTest.verifySettingsServiceDumpProto(dump.getSettings(), filterLevel);
 
+        NotificationIncidentTest.verifyNotificationServiceDumpProto(dump.getNotification(), filterLevel);
+
         BatteryStatsIncidentTest.verifyBatteryStatsServiceDumpProto(dump.getBatterystats(), filterLevel);
 
         if (BatteryIncidentTest.hasBattery(getDevice())) {
