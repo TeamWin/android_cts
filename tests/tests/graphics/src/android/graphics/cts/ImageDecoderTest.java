@@ -37,12 +37,14 @@ import android.graphics.ImageDecoder.OnPartialImageListener;
 import android.graphics.PixelFormat;
 import android.graphics.PostProcessor;
 import android.graphics.Rect;
+import android.graphics.drawable.BitmapDrawable;
 import android.graphics.drawable.Drawable;
 import android.graphics.drawable.NinePatchDrawable;
 import android.net.Uri;
 import android.support.test.InstrumentationRegistry;
 import android.support.test.runner.AndroidJUnit4;
 import android.support.v4.content.FileProvider;
+import android.util.DisplayMetrics;
 import android.util.Size;
 import android.util.TypedValue;
 
@@ -1853,6 +1855,56 @@ public class ImageDecoderTest {
             } catch (IOException e) {
                 fail("Failed " + getAsResourceUri(record.resId) + " with " + e);
             }
+        }
+    }
+
+    private BitmapDrawable decodeBitmapDrawable(int resId) {
+        ImageDecoder.Source src = ImageDecoder.createSource(mRes, resId);
+        try {
+            Drawable drawable = ImageDecoder.decodeDrawable(src);
+            assertNotNull(drawable);
+            assertTrue(drawable instanceof BitmapDrawable);
+            return (BitmapDrawable) drawable;
+        } catch (IOException e) {
+            fail("Failed " + getAsResourceUri(resId) + " with " + e);
+            return null;
+        }
+    }
+
+    @Test
+    public void testUpscale() {
+        final int originalDensity = mRes.getDisplayMetrics().densityDpi;
+
+        try {
+            for (Record record : RECORDS) {
+                final int resId = record.resId;
+
+                // Set a high density. This will result in a larger drawable, but
+                // not a larger Bitmap.
+                mRes.getDisplayMetrics().densityDpi = DisplayMetrics.DENSITY_XXXHIGH;
+                BitmapDrawable drawable = decodeBitmapDrawable(resId);
+
+                Bitmap bm = drawable.getBitmap();
+                assertEquals(record.width, bm.getWidth());
+                assertEquals(record.height, bm.getHeight());
+
+                assertTrue(drawable.getIntrinsicWidth() > record.width);
+                assertTrue(drawable.getIntrinsicHeight() > record.height);
+
+                // Set a low density. This will result in a smaller drawable and
+                // Bitmap.
+                mRes.getDisplayMetrics().densityDpi = DisplayMetrics.DENSITY_LOW;
+                drawable = decodeBitmapDrawable(resId);
+
+                bm = drawable.getBitmap();
+                assertTrue(bm.getWidth() < record.width);
+                assertTrue(bm.getHeight() < record.height);
+
+                assertEquals(bm.getWidth(), drawable.getIntrinsicWidth());
+                assertEquals(bm.getHeight(), drawable.getIntrinsicHeight());
+            }
+        } finally {
+            mRes.getDisplayMetrics().densityDpi = originalDensity;
         }
     }
 
