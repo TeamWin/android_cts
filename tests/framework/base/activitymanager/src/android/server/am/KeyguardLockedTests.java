@@ -24,6 +24,7 @@ import static android.server.am.Components.DISMISS_KEYGUARD_ACTIVITY;
 import static android.server.am.Components.DISMISS_KEYGUARD_METHOD_ACTIVITY;
 import static android.server.am.Components.PIP_ACTIVITY;
 import static android.server.am.Components.PipActivity.ACTION_ENTER_PIP;
+import static android.server.am.Components.PipActivity.EXTRA_ENTER_PIP;
 import static android.server.am.Components.PipActivity.EXTRA_SHOW_OVER_KEYGUARD;
 import static android.server.am.Components.SHOW_WHEN_LOCKED_ACTIVITY;
 import static android.server.am.UiDeviceUtils.pressBackButton;
@@ -32,6 +33,7 @@ import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assume.assumeTrue;
 
+import android.content.ComponentName;
 import org.junit.Before;
 import org.junit.Test;
 
@@ -162,16 +164,19 @@ public class KeyguardLockedTests extends KeyguardTestBase {
         assumeTrue(supportsPip());
 
         try (final LockScreenSession lockScreenSession = new LockScreenSession()) {
-            lockScreenSession.setLockCredential()
-                    .gotoKeyguard();
-            assertTrue(mAmWmState.getAmState().getKeyguardControllerState().keyguardShowing);
+            lockScreenSession.setLockCredential();
 
-            // Enter PiP on an activity on top of the keyguard, and ensure that it prompts the user
-            // for their credentials and does not enter picture-in-picture yet
+            // Show the PiP activity in fullscreen
             launchActivity(PIP_ACTIVITY, EXTRA_SHOW_OVER_KEYGUARD, "true");
-            executeShellCommand("am broadcast -a " + ACTION_ENTER_PIP);
+
+            // Go to the lockscreen
+            lockScreenSession.gotoKeyguard();
             mAmWmState.waitForKeyguardShowingAndOccluded();
             mAmWmState.assertKeyguardShowingAndOccluded();
+
+            // Request that the PiP activity enter picture-in-picture mode (ensure it does not)
+            executeShellCommand("am broadcast -a " + ACTION_ENTER_PIP);
+            waitForEnterPip(PIP_ACTIVITY);
             mAmWmState.assertDoesNotContainStack("Must not contain pinned stack.",
                     WINDOWING_MODE_PINNED, ACTIVITY_TYPE_STANDARD);
 
@@ -180,6 +185,7 @@ public class KeyguardLockedTests extends KeyguardTestBase {
             lockScreenSession.enterAndConfirmLockCredential();
             mAmWmState.waitForKeyguardGone();
             mAmWmState.assertKeyguardGone();
+            waitForEnterPip(PIP_ACTIVITY);
             mAmWmState.assertContainsStack("Must contain pinned stack.", WINDOWING_MODE_PINNED,
                     ACTIVITY_TYPE_STANDARD);
         }
@@ -191,17 +197,21 @@ public class KeyguardLockedTests extends KeyguardTestBase {
 
         try (final LockScreenSession lockScreenSession = new LockScreenSession()) {
             lockScreenSession.setLockCredential();
-            launchActivity(PIP_ACTIVITY);
-            executeShellCommand("am broadcast -a " + ACTION_ENTER_PIP);
-            mAmWmState.computeState(PIP_ACTIVITY);
+
+            // Show an activity in PIP
+            launchActivity(PIP_ACTIVITY, EXTRA_ENTER_PIP, "true");
+            waitForEnterPip(PIP_ACTIVITY);
             mAmWmState.assertContainsStack("Must contain pinned stack.", WINDOWING_MODE_PINNED,
                     ACTIVITY_TYPE_STANDARD);
             mAmWmState.assertVisibility(PIP_ACTIVITY, true);
 
+            // Show an activity that will keep above the keyguard
             launchActivity(SHOW_WHEN_LOCKED_ACTIVITY);
             mAmWmState.computeState(SHOW_WHEN_LOCKED_ACTIVITY);
             mAmWmState.assertVisibility(SHOW_WHEN_LOCKED_ACTIVITY, true);
 
+            // Lock the screen and ensure that the fullscreen activity showing over the lockscreen
+            // is visible, but not the PiP activity
             lockScreenSession.gotoKeyguard();
             mAmWmState.computeState(true);
             mAmWmState.assertKeyguardShowingAndOccluded();
@@ -216,16 +226,31 @@ public class KeyguardLockedTests extends KeyguardTestBase {
 
         try (final LockScreenSession lockScreenSession = new LockScreenSession()) {
             lockScreenSession.setLockCredential();
-            launchActivity(PIP_ACTIVITY, EXTRA_SHOW_OVER_KEYGUARD, "true");
-            executeShellCommand("am broadcast -a " + ACTION_ENTER_PIP);
-            mAmWmState.computeState(PIP_ACTIVITY);
+
+            // Show an activity in PIP
+            launchActivity(PIP_ACTIVITY, EXTRA_ENTER_PIP, "true",
+                    EXTRA_SHOW_OVER_KEYGUARD, "true");
+            waitForEnterPip(PIP_ACTIVITY);
             mAmWmState.assertContainsStack("Must contain pinned stack.", WINDOWING_MODE_PINNED,
                     ACTIVITY_TYPE_STANDARD);
             mAmWmState.assertVisibility(PIP_ACTIVITY, true);
 
+            // Lock the screen and ensure the PiP activity is not visible on the lockscreen even
+            // though it's marked as showing over the lockscreen itself
             lockScreenSession.gotoKeyguard();
             mAmWmState.assertKeyguardShowingAndNotOccluded();
             mAmWmState.assertVisibility(PIP_ACTIVITY, false);
         }
+    }
+
+    /**
+     * Waits until the given activity has entered picture-in-picture mode (allowing for the
+     * subsequent animation to start).
+     */
+    private void waitForEnterPip(ComponentName activityName) {
+        mAmWmState.waitForValidState(new WaitForValidActivityState.Builder(activityName)
+                .setWindowingMode(WINDOWING_MODE_PINNED)
+                .setActivityType(ACTIVITY_TYPE_STANDARD)
+                .build());
     }
 }

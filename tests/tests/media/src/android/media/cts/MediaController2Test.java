@@ -194,7 +194,6 @@ public class MediaController2Test extends MediaSession2TestBase {
         assertTrue(mPlayer.mPrepareCalled);
     }
 
-    @Ignore
     @Test
     public void testFastForward() {
         mController.fastForward();
@@ -206,7 +205,6 @@ public class MediaController2Test extends MediaSession2TestBase {
         assertTrue(mPlayer.mFastForwardCalled);
     }
 
-    @Ignore
     @Test
     public void testRewind() {
         mController.rewind();

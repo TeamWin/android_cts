@@ -371,6 +371,18 @@ public class MediaSession2Test extends MediaSession2TestBase {
     }
 
     @Test
+    public void testFastForward() {
+        mSession.fastForward();
+        assertTrue(mPlayer.mFastForwardCalled);
+    }
+
+    @Test
+    public void testRewind() {
+        mSession.rewind();
+        assertTrue(mPlayer.mRewindCalled);
+    }
+
+    @Test
     public void testSkipToPreviousItem() {
         mSession.skipToPreviousItem();
         assertTrue(mMockAgent.mSkipToPreviousItemCalled);
@@ -778,6 +790,27 @@ public class MediaSession2Test extends MediaSession2TestBase {
         assertNotNull(controllerInfo);
         // TODO(jaewan): Test receivers as well.
         mSession.sendCustomCommand(controllerInfo, testCommand, testArgs, null);
+        assertTrue(latch.await(WAIT_TIME_MS, TimeUnit.MILLISECONDS));
+    }
+
+    @Test
+    public void testNotifyError() throws InterruptedException {
+        final int errorCode = MediaSession2.ERROR_CODE_NOT_AVAILABLE_IN_REGION;
+        final Bundle extras = new Bundle();
+        extras.putString("args", "testNotifyError");
+
+        final CountDownLatch latch = new CountDownLatch(1);
+        final ControllerCallback callback = new ControllerCallback() {
+            @Override
+            public void onError(MediaController2 controller, int errorCodeOut, Bundle extrasOut) {
+                assertEquals(errorCode, errorCodeOut);
+                assertTrue(TestUtils.equals(extras, extrasOut));
+                latch.countDown();
+            }
+        };
+        final MediaController2 controller = createController(mSession.getToken(), true, callback);
+        // TODO(jaewan): Test with multiple controllers
+        mSession.notifyError(errorCode, extras);
         assertTrue(latch.await(WAIT_TIME_MS, TimeUnit.MILLISECONDS));
     }
 
