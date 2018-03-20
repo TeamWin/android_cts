@@ -53,6 +53,7 @@ import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 import static junit.framework.Assert.assertTrue;
 import static org.mockito.Mockito.*;
@@ -1764,7 +1765,7 @@ public class RobustnessTest extends Camera2AndroidTestCase {
         // Timeout is relaxed by 1 second for LEGACY devices to reduce false positive rate in CTS
         final int TIMEOUT_FOR_RESULT_MS = (mStaticInfo.isHardwareLevelLegacy()) ? 2000 : 1000;
         final int MIN_RESULT_COUNT = 3;
-        List<String> physicalCameraIds = mStaticInfo.getCharacteristics().getPhysicalCameraIds();
+        Set<String> physicalCameraIds = mStaticInfo.getCharacteristics().getPhysicalCameraIds();
 
         for (int i = 0; i < config.length; i += 2) {
             int format = config[i];

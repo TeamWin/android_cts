@@ -46,6 +46,7 @@ import java.util.List;
 import java.util.Objects;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+import java.util.Set;
 
 import static android.hardware.camera2.cts.helpers.AssertHelpers.*;
 
@@ -1406,7 +1407,7 @@ public class ExtendedCameraCharacteristicsTest extends AndroidTestCase {
             boolean supportLogicalCamera = arrayContains(capabilities,
                     CameraCharacteristics.REQUEST_AVAILABLE_CAPABILITIES_LOGICAL_MULTI_CAMERA);
             if (supportLogicalCamera) {
-                List<String> physicalCameraIds = c.getPhysicalCameraIds();
+                Set<String> physicalCameraIds = c.getPhysicalCameraIds();
                 assertNotNull("android.logicalCam.physicalCameraIds shouldn't be null",
                     physicalCameraIds);
                 assertTrue("Logical camera must contain at least 2 physical camera ids",

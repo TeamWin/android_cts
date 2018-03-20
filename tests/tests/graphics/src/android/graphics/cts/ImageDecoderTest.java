@@ -1841,4 +1841,17 @@ public class ImageDecoderTest {
             }
         }
     }
+
+    @Test
+    public void testResourceSource() {
+        for (Record record : RECORDS) {
+            ImageDecoder.Source src = ImageDecoder.createSource(mRes, record.resId);
+            try {
+                Drawable drawable = ImageDecoder.decodeDrawable(src);
+                assertNotNull(drawable);
+            } catch (IOException e) {
+                fail("Failed " + getAsResourceUri(record.resId) + " with " + e);
+            }
+        }
+    }
 }

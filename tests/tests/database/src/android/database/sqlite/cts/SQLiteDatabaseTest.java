@@ -49,7 +49,11 @@ import static android.database.sqlite.cts.DatabaseTestUtils.getDbInfoOutput;
 import static android.database.sqlite.cts.DatabaseTestUtils.waitForConnectionToClose;
 
 public class SQLiteDatabaseTest extends AndroidTestCase {
+
     private static final String TAG = "SQLiteDatabaseTest";
+    private static final String EXPECTED_MAJOR_MINOR_VERSION = "3.22";
+    private static final int EXPECTED_MIN_PATCH_LEVEL = 0;
+
     private SQLiteDatabase mDatabase;
     private File mDatabaseFile;
     private String mDatabaseFilePath;
@@ -61,6 +65,7 @@ public class SQLiteDatabaseTest extends AndroidTestCase {
 
     private static final String DATABASE_FILE_NAME = "database_test.db";
     private static final String TABLE_NAME = "test";
+
     private static final int COLUMN_ID_INDEX = 0;
     private static final int COLUMN_NAME_INDEX = 1;
     private static final int COLUMN_AGE_INDEX = 2;
@@ -1690,6 +1695,24 @@ public class SQLiteDatabaseTest extends AndroidTestCase {
                 readThread.isAlive());
 
         assertTrue("ReadThread failed with errors: " + errors, errors.isEmpty());
+    }
+
+    public void testSqliteLibraryVersion() {
+        // SQLite uses semantic versioning in a form of MAJOR.MINOR.PATCH.
+        // Major/minor should match, while patch can be newer
+        String fullVersionStr = DatabaseUtils
+                .stringForQuery(mDatabase, "select sqlite_version()", null);
+        int lastDot = fullVersionStr.lastIndexOf('.');
+        assertTrue(
+                "Unexpected version format, expected MAJOR.MINOR.PATCH but was " + fullVersionStr,
+                lastDot > 0);
+        String majorMinor = fullVersionStr.substring(0, lastDot);
+        assertEquals(
+                "Expected SQLite library version " + EXPECTED_MAJOR_MINOR_VERSION + ", but was "
+                        + fullVersionStr, EXPECTED_MAJOR_MINOR_VERSION, majorMinor);
+        int patchLevel = Integer.valueOf(fullVersionStr.substring(lastDot + 1));
+        assertTrue("Expected minimum patch level " + EXPECTED_MIN_PATCH_LEVEL + ", but was "
+                + patchLevel, patchLevel >= EXPECTED_MIN_PATCH_LEVEL);
     }
 
 }

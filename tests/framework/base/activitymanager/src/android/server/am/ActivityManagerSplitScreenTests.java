@@ -75,7 +75,6 @@ public class ActivityManagerSplitScreenTests extends ActivityManagerTestBase {
     public void setUp() throws Exception {
         super.setUp();
 
-        mAmWmState.getAmState().computeState();
         mIsHomeRecentsComponent = mAmWmState.getAmState().isHomeRecentsComponent();
 
         assumeTrue("Skipping test: no split multi-window support",
@@ -621,6 +620,8 @@ public class ActivityManagerSplitScreenTests extends ActivityManagerTestBase {
     @Test
     @Presubmit
     public void testStackListOrderLaunchDockedActivity() throws Exception {
+        assumeTrue(!mIsHomeRecentsComponent);
+
         launchActivityInSplitScreenWithRecents(TEST_ACTIVITY);
 
         final int homeStackIndex = mAmWmState.getStackIndexByActivityType(ACTIVITY_TYPE_HOME);
