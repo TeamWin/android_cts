@@ -50,7 +50,7 @@ public abstract class CtsBaseInputMethod extends InputMethodService implements I
 
     @Override
     public void onCreate() {
-        mLogTag = "CtsBaseInputMethod";//getClass().getSimpleName();
+        mLogTag = getClass().getSimpleName();
         if (DEBUG) {
             Log.d(mLogTag, "onCreate:");
         }
