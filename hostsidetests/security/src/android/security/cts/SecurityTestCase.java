@@ -102,4 +102,10 @@ public class SecurityTestCase extends DeviceTestCase {
     public void assertNotMatches(String pattern, String input) throws Exception {
         assertFalse("Pattern found", Pattern.matches(pattern, input));
     }
+
+    public void assertNotMatchesMultiLine(String pattern, String input) throws Exception {
+       assertFalse("Pattern found",
+                   Pattern.compile(pattern,
+                   Pattern.DOTALL).matcher(input).matches());
+    }
 }
