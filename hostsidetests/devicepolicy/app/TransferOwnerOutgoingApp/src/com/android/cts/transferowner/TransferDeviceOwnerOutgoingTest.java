@@ -53,7 +53,7 @@ public class TransferDeviceOwnerOutgoingTest extends DeviceAndProfileOwnerTransf
     }
 
     @Test
-    public void testTransfer() throws Throwable {
+    public void testTransferOwnership() throws Throwable {
         PersistableBundle b = new PersistableBundle();
         mDevicePolicyManager.transferOwnership(mOutgoingComponentName, INCOMING_COMPONENT_NAME, b);
         assertTrue(mDevicePolicyManager.isAdminActive(INCOMING_COMPONENT_NAME));

@@ -28,6 +28,8 @@ public class MixedDeviceOwnerHostSideTransferTest extends
             "com.android.cts.transferowner.TransferDeviceOwnerOutgoingTest";
     private static final String TRANSFER_DEVICE_OWNER_INCOMING_TEST =
             "com.android.cts.transferowner.TransferDeviceOwnerIncomingTest";
+    public static final String TRANSFER_PROFILE_OWNER_OUTGOING_TEST =
+            "com.android.cts.transferowner.TransferProfileOwnerOutgoingTest";
 
     @Override
     protected void setUp() throws Exception {
@@ -59,8 +61,8 @@ public class MixedDeviceOwnerHostSideTransferTest extends
         installAppAsUser(TRANSFER_OWNER_INCOMING_APK, profileUserId);
 
         runDeviceTestsAsUser(TRANSFER_OWNER_OUTGOING_PKG,
-                mOutgoingTestClassName,
-                "testTransferOwner", profileUserId);
+                TRANSFER_PROFILE_OWNER_OUTGOING_TEST,
+                "testTransferOwnership", profileUserId);
 
         waitForBroadcastIdle();
 
@@ -82,13 +84,13 @@ public class MixedDeviceOwnerHostSideTransferTest extends
         installAppAsUser(TRANSFER_OWNER_INCOMING_APK, profileUserId);
 
         runDeviceTestsAsUser(TRANSFER_OWNER_OUTGOING_PKG,
-                mOutgoingTestClassName,
-                "testTransferOwner", profileUserId);
+                TRANSFER_PROFILE_OWNER_OUTGOING_TEST,
+                "testTransferOwnership", profileUserId);
         waitForBroadcastIdle();
 
         runDeviceTestsAsUser(TRANSFER_OWNER_OUTGOING_PKG,
                 mOutgoingTestClassName,
-                "testTransferOwner", mUserId);
+                "testTransferOwnership", mUserId);
         waitForBroadcastIdle();
 
         assertAffiliationIdsAreIntact(profileUserId, mIncomingTestClassName);
