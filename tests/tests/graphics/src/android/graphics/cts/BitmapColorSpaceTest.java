@@ -746,22 +746,10 @@ public class BitmapColorSpaceTest {
 
     @Test
     public void testEncodeP3() {
-        byte[] asset = null;
-        try (InputStream in = mResources.getAssets().open("prophoto-rgba16f.png")) {
-            ByteArrayOutputStream out = new ByteArrayOutputStream();
-            byte[] buffer = new byte[4096];
-            int bytesRead;
-            while ((bytesRead = in.read(buffer)) != -1) {
-                out.write(buffer, 0, bytesRead);
-            }
-            asset = out.toByteArray();
-        } catch (IOException e) {
-            fail("Failed with " + e);
-        }
-
         Bitmap b = null;
+        ImageDecoder.Source src = ImageDecoder.createSource(mResources.getAssets(),
+                "prophoto-rgba16f.png");
         try {
-            ImageDecoder.Source src = ImageDecoder.createSource(ByteBuffer.wrap(asset));
             b = ImageDecoder.decodeBitmap(src, (decoder, info, s) -> {
                 decoder.setAllocator(ImageDecoder.ALLOCATOR_SOFTWARE);
             });
@@ -780,7 +768,7 @@ public class BitmapColorSpaceTest {
             assertTrue("Failed to encode F16 to " + format, b.compress(format, 100, out));
 
             byte[] array = out.toByteArray();
-            ImageDecoder.Source src = ImageDecoder.createSource(ByteBuffer.wrap(array));
+            src = ImageDecoder.createSource(ByteBuffer.wrap(array));
 
             try {
                 Bitmap b2 = ImageDecoder.decodeBitmap(src);
