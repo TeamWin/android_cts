@@ -43,7 +43,7 @@ public class FingerprintIncidentTest extends ProtoDumpTestCase {
 
     static void verifyFingerprintServiceDumpProto(FingerprintServiceDumpProto dump, int filterLevel) {
         // There should be at least one user.
-        assertTrue(1 <= dump.getUsersCount());
+        assertTrue("There should be at least one user", 1 <= dump.getUsersCount());
 
         for (int i = 0; i < dump.getUsersCount(); ++i) {
             final FingerprintUserStatsProto userStats = dump.getUsers(i);
