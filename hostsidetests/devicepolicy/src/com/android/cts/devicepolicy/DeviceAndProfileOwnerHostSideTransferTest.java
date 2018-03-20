@@ -19,13 +19,13 @@ public abstract class DeviceAndProfileOwnerHostSideTransferTest extends BaseDevi
     protected String mOutgoingTestClassName;
     protected String mIncomingTestClassName;
 
-    public void testTransfer() throws Exception {
+    public void testTransferOwnership() throws Exception {
         if (!mHasFeature) {
             return;
         }
         runDeviceTestsAsUser(TRANSFER_OWNER_OUTGOING_PKG,
                 mOutgoingTestClassName,
-                "testTransfer", mUserId);
+                "testTransferOwnership", mUserId);
     }
 
     public void testTransferSameAdmin() throws Exception {
@@ -59,13 +59,13 @@ public abstract class DeviceAndProfileOwnerHostSideTransferTest extends BaseDevi
                 "testTransferPoliciesAreRetainedAfterTransfer", mUserId);
     }
 
-    public void testTransferOwnerChangedBroadcast() throws Exception {
+    public void testTransferOwnershipChangedBroadcast() throws Exception {
         if (!mHasFeature) {
             return;
         }
         runDeviceTestsAsUser(TRANSFER_OWNER_OUTGOING_PKG,
                 mOutgoingTestClassName,
-                "testTransferOwnerChangedBroadcast", mUserId);
+                "testTransferOwnershipChangedBroadcast", mUserId);
     }
 
     public void testTransferCompleteCallback() throws Exception {
@@ -74,7 +74,7 @@ public abstract class DeviceAndProfileOwnerHostSideTransferTest extends BaseDevi
         }
         runDeviceTestsAsUser(TRANSFER_OWNER_OUTGOING_PKG,
                 mOutgoingTestClassName,
-                "testTransferOwner", mUserId);
+                "testTransferOwnership", mUserId);
 
         waitForBroadcastIdle();
 
@@ -90,13 +90,13 @@ public abstract class DeviceAndProfileOwnerHostSideTransferTest extends BaseDevi
         mIncomingTestClassName = incomingTestClassName;
     }
 
-    public void testTransferNoMetadata() throws Exception {
+    public void testTransferOwnershipNoMetadata() throws Exception {
         if (!mHasFeature) {
             return;
         }
         runDeviceTestsAsUser(TRANSFER_OWNER_OUTGOING_PKG,
                 mOutgoingTestClassName,
-                "testTransferNoMetadata", mUserId);
+                "testTransferOwnershipNoMetadata", mUserId);
     }
 
     public void testIsTransferBundlePersisted() throws DeviceNotAvailableException {
