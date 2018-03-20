@@ -2,7 +2,9 @@ package android.server.am.lifecycle;
 
 import static android.server.am.StateLogger.log;
 import static android.server.am.lifecycle.LifecycleLog.ActivityCallback.ON_ACTIVITY_RESULT;
+import static android.server.am.lifecycle.LifecycleLog.ActivityCallback.ON_POST_CREATE;
 
+import android.annotation.Nullable;
 import android.app.Activity;
 import android.content.Intent;
 import android.os.Bundle;
@@ -35,6 +37,10 @@ public class ActivityLifecycleClientTestBase extends ActivityManagerTestBase {
 
     final ActivityTestRule mLaunchForResultActivityTestRule = new ActivityTestRule(
             LaunchForResultActivity.class, true /* initialTouchMode */, false /* launchActivity */);
+
+    final ActivityTestRule mCallbackTrackingActivityTestRule = new ActivityTestRule(
+            CallbackTrackingActivity.class, true /* initialTouchMode */,
+            false /* launchActivity */);
 
     private final ActivityLifecycleMonitor mLifecycleMonitor = ActivityLifecycleMonitorRegistry
             .getInstance();
@@ -102,14 +108,19 @@ public class ActivityLifecycleClientTestBase extends ActivityManagerTestBase {
     }
 
     /**
-     * Base activity that records callbacks other then lifecycle transitions.
-     * Currently it only tracks {@link Activity#onActivityResult(int, int, Intent)}.
+     * Base activity that records callbacks other then main lifecycle transitions.
      */
     public static class CallbackTrackingActivity extends Activity {
         @Override
         protected void onActivityResult(int requestCode, int resultCode, Intent data) {
             super.onActivityResult(requestCode, resultCode, data);
             mLifecycleLog.onActivityCallback(this, ON_ACTIVITY_RESULT);
+        }
+
+        @Override
+        protected void onPostCreate(@Nullable Bundle savedInstanceState) {
+            super.onPostCreate(savedInstanceState);
+            mLifecycleLog.onActivityCallback(this, ON_POST_CREATE);
         }
     }
 
