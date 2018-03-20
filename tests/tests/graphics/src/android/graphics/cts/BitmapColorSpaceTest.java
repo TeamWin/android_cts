@@ -33,6 +33,7 @@ import android.os.Parcel;
 import android.support.annotation.ColorInt;
 import android.support.annotation.NonNull;
 import android.support.test.InstrumentationRegistry;
+import android.support.test.filters.RequiresDevice;
 import android.support.test.filters.SmallTest;
 import android.support.test.runner.AndroidJUnit4;
 import android.util.Log;
@@ -788,6 +789,27 @@ public class BitmapColorSpaceTest {
             } catch (IOException e) {
                 fail("Failed with " + e);
             }
+        }
+    }
+
+    @Test
+    @RequiresDevice
+    public void test16bitHardware() {
+        // Decoding to HARDWARE may use LINEAR_EXTENDED_SRGB or SRGB, depending
+        // on whether F16 is supported in HARDWARE.
+        try (InputStream in = mResources.getAssets().open("prophoto-rgba16f.png")) {
+            BitmapFactory.Options options = new BitmapFactory.Options();
+            options.inPreferredConfig = Bitmap.Config.HARDWARE;
+            Bitmap b = BitmapFactory.decodeStream(in, null, options);
+            assertEquals(Bitmap.Config.HARDWARE, b.getConfig());
+
+            final ColorSpace cs = b.getColorSpace();
+            if (cs != ColorSpace.get(ColorSpace.Named.LINEAR_EXTENDED_SRGB)
+                    && cs != ColorSpace.get(ColorSpace.Named.SRGB)) {
+                fail("Unexpected color space " + cs);
+            }
+        } catch (Exception e) {
+            fail("Failed with " + e);
         }
     }
 }
