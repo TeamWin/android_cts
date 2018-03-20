@@ -120,10 +120,11 @@ public class InputMethodServiceDeviceTest {
         pollingCheck(() -> helper.queryAllEvents()
                         .filter(isNewerThan(switchImeTime))
                         .filter(isFrom(Ime2Constants.CLASS))
-                        .collect(sequenceOfTypes(ON_CREATE, ON_START_INPUT))
+                        .collect(sequenceOfTypes(ON_CREATE, ON_BIND_INPUT, ON_START_INPUT))
                         .matched(),
                 TIMEOUT,
-                "CtsInputMethod2.onCreate and onStartInput are called in sequence");
+                "CtsInputMethod2.onCreate, onBindInput, and onStartInput are called"
+                        + " in sequence");
     }
 
     @Test
