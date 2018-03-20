@@ -36,6 +36,7 @@ import static android.server.am.Components.SHOW_WHEN_LOCKED_WITH_DIALOG_ACTIVITY
 import static android.server.am.Components.TEST_ACTIVITY;
 import static android.server.am.Components.TURN_SCREEN_ON_ATTR_DISMISS_KEYGUARD_ACTIVITY;
 import static android.server.am.Components.TURN_SCREEN_ON_DISMISS_KEYGUARD_ACTIVITY;
+import static android.server.am.UiDeviceUtils.pressBackButton;
 import static android.server.am.UiDeviceUtils.pressHomeButton;
 import static android.view.Surface.ROTATION_90;
 import static android.view.WindowManager.LayoutParams.TYPE_WALLPAPER;
@@ -314,6 +315,9 @@ public class KeyguardTests extends KeyguardTestBase {
 
     @Test
     public void testUnoccludeRotationChange() throws Exception {
+
+        // Go home now to make sure Home is behind Keyguard.
+        pressHomeButton();
         try (final LockScreenSession lockScreenSession = new LockScreenSession();
              final RotationSession rotationSession = new RotationSession()) {
             lockScreenSession.gotoKeyguard();
@@ -323,7 +327,7 @@ public class KeyguardTests extends KeyguardTestBase {
             mAmWmState.assertVisibility(SHOW_WHEN_LOCKED_ACTIVITY, true);
 
             rotationSession.set(ROTATION_90);
-            pressHomeButton();
+            pressBackButton();
             mAmWmState.waitForKeyguardShowingAndNotOccluded();
             mAmWmState.waitForDisplayUnfrozen();
             mAmWmState.assertSanity();
