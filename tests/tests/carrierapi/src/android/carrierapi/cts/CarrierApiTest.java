@@ -25,6 +25,8 @@ import android.content.pm.PackageManager;
 import android.net.ConnectivityManager;
 import android.os.Handler;
 import android.os.HandlerThread;
+import android.os.PersistableBundle;
+import android.telephony.CarrierConfigManager;
 import android.telephony.PhoneStateListener;
 import android.telephony.SubscriptionInfo;
 import android.telephony.SubscriptionManager;
@@ -45,6 +47,7 @@ import java.util.concurrent.atomic.AtomicReference;
 public class CarrierApiTest extends AndroidTestCase {
     private static final String TAG = "CarrierApiTest";
     private TelephonyManager mTelephonyManager;
+    private CarrierConfigManager mCarrierConfigManager;
     private PackageManager mPackageManager;
     private SubscriptionManager mSubscriptionManager;
     private boolean hasCellular;
@@ -59,6 +62,8 @@ public class CarrierApiTest extends AndroidTestCase {
         super.setUp();
         mTelephonyManager = (TelephonyManager)
                 getContext().getSystemService(Context.TELEPHONY_SERVICE);
+        mCarrierConfigManager = (CarrierConfigManager)
+                getContext().getSystemService(Context.CARRIER_CONFIG_SERVICE);
         mPackageManager = getContext().getPackageManager();
         mSubscriptionManager = (SubscriptionManager)
                 getContext().getSystemService(Context.TELEPHONY_SUBSCRIPTION_SERVICE);
@@ -209,6 +214,23 @@ public class CarrierApiTest extends AndroidTestCase {
         }
     }
 
+    public void testCarrierConfigIsAccessible() {
+        if (!hasCellular) return;
+        try {
+            PersistableBundle bundle = mCarrierConfigManager.getConfig();
+            assertNotNull("CarrierConfigManager#getConfig() returned null", bundle);
+            assertFalse("CarrierConfigManager#getConfig() returned empty bundle", bundle.isEmpty());
+
+            int subId = SubscriptionManager.getDefaultSubscriptionId();
+            bundle = mCarrierConfigManager.getConfigForSubId(subId);
+            assertNotNull("CarrierConfigManager#getConfigForSubId() returned null", bundle);
+            assertFalse("CarrierConfigManager#getConfigForSubId() returned empty bundle",
+                    bundle.isEmpty());
+        } catch (SecurityException e) {
+            failMessage();
+        }
+    }
+
     public void testTelephonyApisAreAccessible() {
         if (!hasCellular) return;
         // The following methods may return any value depending on the state of the device. Simply
@@ -229,12 +251,9 @@ public class CarrierApiTest extends AndroidTestCase {
             mTelephonyManager.getGroupIdLevel1();
             mTelephonyManager.getLine1Number();
             mTelephonyManager.getVoiceMailNumber();
-            // TODO(b/73136824): Uncomment this once CarrierConfigManager permission issue is
-            // resolved.
-            // mTelephonyManager.getVisualVoicemailPackageName();
+            mTelephonyManager.getVisualVoicemailPackageName();
             mTelephonyManager.getVoiceMailAlphaTag();
-            // TODO(b/73884967): Uncomment this once this is using the right permission check.
-            // mTelephonyManager.getForbiddenPlmns();
+            mTelephonyManager.getForbiddenPlmns();
             mTelephonyManager.getServiceState();
         } catch (SecurityException e) {
             failMessage();
