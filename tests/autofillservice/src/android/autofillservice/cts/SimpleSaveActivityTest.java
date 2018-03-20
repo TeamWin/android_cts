@@ -1029,6 +1029,41 @@ public class SimpleSaveActivityTest extends CustomDescriptionWithLinkTestCase {
     }
 
     @Test
+    public void testDontSaveWhenInitialValueAndNoUserInputAndServiceDatasets() throws Throwable {
+        // Prepare activitiy.
+        startActivity();
+        mActivity.syncRunOnUiThread(() -> {
+            // NOTE: input's value must be a subset of the dataset value, otherwise the dataset
+            // picker is filtered out
+            mActivity.mInput.setText("f");
+            mActivity.mPassword.setText("b");
+        });
+
+        // Set service.
+        enableService();
+
+        // Set expectations.
+        sReplier.addResponse(new CannedFillResponse.Builder()
+                .addDataset(new CannedDataset.Builder()
+                        .setField(ID_INPUT, "foo")
+                        .setField(ID_PASSWORD, "bar")
+                        .setPresentation(createPresentation("The Dude"))
+                        .build())
+                .setRequiredSavableIds(SAVE_DATA_TYPE_PASSWORD, ID_INPUT, ID_PASSWORD).build());
+
+        // Trigger auto-fill.
+        mActivity.syncRunOnUiThread(() -> mActivity.mInput.requestFocus());
+        sReplier.getNextFillRequest();
+        mUiBot.assertDatasets("The Dude");
+
+        // Trigger save.
+        mActivity.getAutofillManager().commit();
+
+        // Assert it's not showing.
+        mUiBot.assertSaveNotShowing(SAVE_DATA_TYPE_PASSWORD);
+    }
+
+    @Test
     public void testExplicitySaveButton() throws Exception {
         explicitySaveButtonTest(false, 0);
     }
