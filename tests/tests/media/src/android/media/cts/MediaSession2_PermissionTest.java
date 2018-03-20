@@ -22,8 +22,8 @@ import static android.media.MediaSession2.COMMAND_CODE_PLAYBACK_PLAY;
 import static android.media.MediaSession2.COMMAND_CODE_PLAYBACK_REWIND;
 import static android.media.MediaSession2.COMMAND_CODE_PLAYBACK_SEEK_TO;
 import static android.media.MediaSession2.COMMAND_CODE_PLAYBACK_SET_VOLUME;
-import static android.media.MediaSession2.COMMAND_CODE_PLAYBACK_SKIP_NEXT_ITEM;
-import static android.media.MediaSession2.COMMAND_CODE_PLAYBACK_SKIP_PREV_ITEM;
+import static android.media.MediaSession2.COMMAND_CODE_PLAYLIST_SKIP_NEXT_ITEM;
+import static android.media.MediaSession2.COMMAND_CODE_PLAYLIST_SKIP_PREV_ITEM;
 import static android.media.MediaSession2.COMMAND_CODE_PLAYBACK_STOP;
 import static android.media.MediaSession2.COMMAND_CODE_PLAYLIST_ADD_ITEM;
 import static android.media.MediaSession2.COMMAND_CODE_PLAYLIST_REMOVE_ITEM;
@@ -31,12 +31,12 @@ import static android.media.MediaSession2.COMMAND_CODE_PLAYLIST_REPLACE_ITEM;
 import static android.media.MediaSession2.COMMAND_CODE_PLAYLIST_SET_LIST;
 import static android.media.MediaSession2.COMMAND_CODE_PLAYLIST_SET_LIST_METADATA;
 import static android.media.MediaSession2.COMMAND_CODE_PLAYLIST_SKIP_TO_PLAYLIST_ITEM;
-import static android.media.MediaSession2.COMMAND_CODE_PLAY_FROM_MEDIA_ID;
-import static android.media.MediaSession2.COMMAND_CODE_PLAY_FROM_SEARCH;
-import static android.media.MediaSession2.COMMAND_CODE_PLAY_FROM_URI;
-import static android.media.MediaSession2.COMMAND_CODE_PREPARE_FROM_MEDIA_ID;
-import static android.media.MediaSession2.COMMAND_CODE_PREPARE_FROM_SEARCH;
-import static android.media.MediaSession2.COMMAND_CODE_PREPARE_FROM_URI;
+import static android.media.MediaSession2.COMMAND_CODE_SESSION_PLAY_FROM_MEDIA_ID;
+import static android.media.MediaSession2.COMMAND_CODE_SESSION_PLAY_FROM_SEARCH;
+import static android.media.MediaSession2.COMMAND_CODE_SESSION_PLAY_FROM_URI;
+import static android.media.MediaSession2.COMMAND_CODE_SESSION_PREPARE_FROM_MEDIA_ID;
+import static android.media.MediaSession2.COMMAND_CODE_SESSION_PREPARE_FROM_SEARCH;
+import static android.media.MediaSession2.COMMAND_CODE_SESSION_PREPARE_FROM_URI;
 import static android.media.MediaSession2.ControllerInfo;
 
 import static org.junit.Assert.assertEquals;
@@ -193,14 +193,14 @@ public class MediaSession2_PermissionTest extends MediaSession2TestBase {
 
     @Test
     public void testSkipToNext() throws InterruptedException {
-        testOnCommandRequest(COMMAND_CODE_PLAYBACK_SKIP_NEXT_ITEM, (controller) -> {
+        testOnCommandRequest(COMMAND_CODE_PLAYLIST_SKIP_NEXT_ITEM, (controller) -> {
             controller.skipToNextItem();
         });
     }
 
     @Test
     public void testSkipToPrevious() throws InterruptedException {
-        testOnCommandRequest(COMMAND_CODE_PLAYBACK_SKIP_PREV_ITEM, (controller) -> {
+        testOnCommandRequest(COMMAND_CODE_PLAYLIST_SKIP_PREV_ITEM, (controller) -> {
             controller.skipToPreviousItem();
         });
     }
@@ -263,7 +263,7 @@ public class MediaSession2_PermissionTest extends MediaSession2TestBase {
     public void testPlayFromMediaId() throws InterruptedException {
         final String mediaId = "testPlayFromMediaId";
         createSessionWithAllowedActions(
-                createCommandGroupWith(COMMAND_CODE_PLAY_FROM_MEDIA_ID));
+                createCommandGroupWith(COMMAND_CODE_SESSION_PLAY_FROM_MEDIA_ID));
         createController(mSession.getToken()).playFromMediaId(mediaId, null);
 
         assertTrue(mCallback.mCountDownLatch.await(TIMEOUT_MS, TimeUnit.MILLISECONDS));
@@ -272,7 +272,7 @@ public class MediaSession2_PermissionTest extends MediaSession2TestBase {
         assertNull(mCallback.mExtras);
 
         createSessionWithAllowedActions(
-                createCommandGroupWithout(COMMAND_CODE_PLAY_FROM_MEDIA_ID));
+                createCommandGroupWithout(COMMAND_CODE_SESSION_PLAY_FROM_MEDIA_ID));
         createController(mSession.getToken()).playFromMediaId(mediaId, null);
         assertFalse(mCallback.mCountDownLatch.await(WAIT_TIME_MS, TimeUnit.MILLISECONDS));
         assertFalse(mCallback.mOnPlayFromMediaIdCalled);
@@ -282,7 +282,7 @@ public class MediaSession2_PermissionTest extends MediaSession2TestBase {
     public void testPlayFromUri() throws InterruptedException {
         final Uri uri = Uri.parse("play://from.uri");
         createSessionWithAllowedActions(
-                createCommandGroupWith(COMMAND_CODE_PLAY_FROM_URI));
+                createCommandGroupWith(COMMAND_CODE_SESSION_PLAY_FROM_URI));
         createController(mSession.getToken()).playFromUri(uri, null);
 
         assertTrue(mCallback.mCountDownLatch.await(TIMEOUT_MS, TimeUnit.MILLISECONDS));
@@ -291,7 +291,7 @@ public class MediaSession2_PermissionTest extends MediaSession2TestBase {
         assertNull(mCallback.mExtras);
 
         createSessionWithAllowedActions(
-                createCommandGroupWithout(COMMAND_CODE_PLAY_FROM_URI));
+                createCommandGroupWithout(COMMAND_CODE_SESSION_PLAY_FROM_URI));
         createController(mSession.getToken()).playFromUri(uri, null);
         assertFalse(mCallback.mCountDownLatch.await(WAIT_TIME_MS, TimeUnit.MILLISECONDS));
         assertFalse(mCallback.mOnPlayFromUriCalled);
@@ -301,7 +301,7 @@ public class MediaSession2_PermissionTest extends MediaSession2TestBase {
     public void testPlayFromSearch() throws InterruptedException {
         final String query = "testPlayFromSearch";
         createSessionWithAllowedActions(
-                createCommandGroupWith(COMMAND_CODE_PLAY_FROM_SEARCH));
+                createCommandGroupWith(COMMAND_CODE_SESSION_PLAY_FROM_SEARCH));
         createController(mSession.getToken()).playFromSearch(query, null);
 
         assertTrue(mCallback.mCountDownLatch.await(TIMEOUT_MS, TimeUnit.MILLISECONDS));
@@ -310,7 +310,7 @@ public class MediaSession2_PermissionTest extends MediaSession2TestBase {
         assertNull(mCallback.mExtras);
 
         createSessionWithAllowedActions(
-                createCommandGroupWithout(COMMAND_CODE_PLAY_FROM_SEARCH));
+                createCommandGroupWithout(COMMAND_CODE_SESSION_PLAY_FROM_SEARCH));
         createController(mSession.getToken()).playFromSearch(query, null);
         assertFalse(mCallback.mCountDownLatch.await(WAIT_TIME_MS, TimeUnit.MILLISECONDS));
         assertFalse(mCallback.mOnPlayFromSearchCalled);
@@ -320,7 +320,7 @@ public class MediaSession2_PermissionTest extends MediaSession2TestBase {
     public void testPrepareFromMediaId() throws InterruptedException {
         final String mediaId = "testPrepareFromMediaId";
         createSessionWithAllowedActions(
-                createCommandGroupWith(COMMAND_CODE_PREPARE_FROM_MEDIA_ID));
+                createCommandGroupWith(COMMAND_CODE_SESSION_PREPARE_FROM_MEDIA_ID));
         createController(mSession.getToken()).prepareFromMediaId(mediaId, null);
 
         assertTrue(mCallback.mCountDownLatch.await(TIMEOUT_MS, TimeUnit.MILLISECONDS));
@@ -329,7 +329,7 @@ public class MediaSession2_PermissionTest extends MediaSession2TestBase {
         assertNull(mCallback.mExtras);
 
         createSessionWithAllowedActions(
-                createCommandGroupWithout(COMMAND_CODE_PREPARE_FROM_MEDIA_ID));
+                createCommandGroupWithout(COMMAND_CODE_SESSION_PREPARE_FROM_MEDIA_ID));
         createController(mSession.getToken()).prepareFromMediaId(mediaId, null);
         assertFalse(mCallback.mCountDownLatch.await(WAIT_TIME_MS, TimeUnit.MILLISECONDS));
         assertFalse(mCallback.mOnPrepareFromMediaIdCalled);
@@ -339,7 +339,7 @@ public class MediaSession2_PermissionTest extends MediaSession2TestBase {
     public void testPrepareFromUri() throws InterruptedException {
         final Uri uri = Uri.parse("prepare://from.uri");
         createSessionWithAllowedActions(
-                createCommandGroupWith(COMMAND_CODE_PREPARE_FROM_URI));
+                createCommandGroupWith(COMMAND_CODE_SESSION_PREPARE_FROM_URI));
         createController(mSession.getToken()).prepareFromUri(uri, null);
 
         assertTrue(mCallback.mCountDownLatch.await(TIMEOUT_MS, TimeUnit.MILLISECONDS));
@@ -348,7 +348,7 @@ public class MediaSession2_PermissionTest extends MediaSession2TestBase {
         assertNull(mCallback.mExtras);
 
         createSessionWithAllowedActions(
-                createCommandGroupWithout(COMMAND_CODE_PREPARE_FROM_URI));
+                createCommandGroupWithout(COMMAND_CODE_SESSION_PREPARE_FROM_URI));
         createController(mSession.getToken()).prepareFromUri(uri, null);
         assertFalse(mCallback.mCountDownLatch.await(WAIT_TIME_MS, TimeUnit.MILLISECONDS));
         assertFalse(mCallback.mOnPrepareFromUriCalled);
@@ -358,7 +358,7 @@ public class MediaSession2_PermissionTest extends MediaSession2TestBase {
     public void testPrepareFromSearch() throws InterruptedException {
         final String query = "testPrepareFromSearch";
         createSessionWithAllowedActions(
-                createCommandGroupWith(COMMAND_CODE_PREPARE_FROM_SEARCH));
+                createCommandGroupWith(COMMAND_CODE_SESSION_PREPARE_FROM_SEARCH));
         createController(mSession.getToken()).prepareFromSearch(query, null);
 
         assertTrue(mCallback.mCountDownLatch.await(TIMEOUT_MS, TimeUnit.MILLISECONDS));
@@ -367,7 +367,7 @@ public class MediaSession2_PermissionTest extends MediaSession2TestBase {
         assertNull(mCallback.mExtras);
 
         createSessionWithAllowedActions(
-                createCommandGroupWithout(COMMAND_CODE_PREPARE_FROM_SEARCH));
+                createCommandGroupWithout(COMMAND_CODE_SESSION_PREPARE_FROM_SEARCH));
         createController(mSession.getToken()).prepareFromSearch(query, null);
         assertFalse(mCallback.mCountDownLatch.await(WAIT_TIME_MS, TimeUnit.MILLISECONDS));
         assertFalse(mCallback.mOnPrepareFromSearchCalled);
@@ -377,7 +377,7 @@ public class MediaSession2_PermissionTest extends MediaSession2TestBase {
     public void testChangingPermissionWithSetAllowedCommands() throws InterruptedException {
         final String query = "testChangingPermissionWithSetAllowedCommands";
         createSessionWithAllowedActions(
-                createCommandGroupWith(COMMAND_CODE_PREPARE_FROM_SEARCH));
+                createCommandGroupWith(COMMAND_CODE_SESSION_PREPARE_FROM_SEARCH));
 
         ControllerCallbackForPermissionChange controllerCallback =
                 new ControllerCallbackForPermissionChange();
@@ -393,7 +393,7 @@ public class MediaSession2_PermissionTest extends MediaSession2TestBase {
 
         // Change allowed commands.
         mSession.setAllowedCommands(getTestControllerInfo(),
-                createCommandGroupWithout(COMMAND_CODE_PREPARE_FROM_SEARCH));
+                createCommandGroupWithout(COMMAND_CODE_SESSION_PREPARE_FROM_SEARCH));
         assertTrue(controllerCallback.mCountDownLatch.await(TIMEOUT_MS, TimeUnit.MILLISECONDS));
 
         controller.prepareFromSearch(query, null);
