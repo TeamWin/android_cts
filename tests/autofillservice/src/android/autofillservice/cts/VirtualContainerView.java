@@ -90,6 +90,16 @@ class VirtualContainerView extends View {
     private AccessibilityDelegate mAccessibilityDelegate;
     private AccessibilityNodeProvider mAccessibilityNodeProvider;
 
+    /**
+     * Enum defining how the view communicate visibility changes to the framework
+     */
+    enum VisibilityIntegrationMode {
+        NOTIFY_AFM,
+        OVERRIDE_IS_VISIBLE_TO_USER
+    }
+
+    private VisibilityIntegrationMode mVisibilityIntegrationMode;
+
     public VirtualContainerView(Context context, AttributeSet attrs) {
         super(context, attrs);
 
@@ -266,10 +276,21 @@ class VirtualContainerView extends View {
 
     @Override
     public boolean isVisibleToUserForAutofill(int virtualId) {
-        // TODO(b/37566627): implement / add test case that exercises it when not on compat mode
-        // (for compat mode it's ok because we're calling setVisible() in the a11y node
-        final boolean isVisible = super.isVisibleToUserForAutofill(virtualId);
-        Log.d(TAG, "isVisibleToUserForAutofill(" + virtualId + "): " + isVisible);
+        boolean callSuper = true;
+        if (mVisibilityIntegrationMode == null) {
+            Log.w(TAG, "isVisibleToUserForAutofill(): mVisibilityIntegrationMode not set");
+        } else {
+            callSuper = mVisibilityIntegrationMode == VisibilityIntegrationMode.NOTIFY_AFM;
+        }
+        final boolean isVisible;
+        if (callSuper) {
+            isVisible = super.isVisibleToUserForAutofill(virtualId);
+            Log.d(TAG, "isVisibleToUserForAutofill(" + virtualId + ") using super: " + isVisible);
+        } else {
+            final Item item = getItem(virtualId);
+            isVisible = item.line.visible;
+            Log.d(TAG, "isVisibleToUserForAutofill(" + virtualId + ") set by test: " + isVisible);
+        }
         return isVisible;
     }
 
@@ -446,13 +467,23 @@ class VirtualContainerView extends View {
             }
         }
 
+        void setVisibilityIntegrationMode(VisibilityIntegrationMode mode) {
+            mVisibilityIntegrationMode = mode;
+        }
+
         void changeVisibility(boolean visible) {
+            if (mVisibilityIntegrationMode == null) {
+                throw new IllegalStateException("must call setVisibilityIntegrationMode() first");
+            }
             if (this.visible == visible) {
                 return;
             }
             this.visible = visible;
-            mAfm.notifyViewVisibilityChanged(VirtualContainerView.this, text.id, visible);
-            Log.d(TAG, "visibility changed view: " + text.id + "; visible:" + visible);
+            Log.d(TAG, "visibility changed view: " + text.id + "; visible:" + visible
+                    + "; integrationMode: " + mVisibilityIntegrationMode);
+            if (mVisibilityIntegrationMode == VisibilityIntegrationMode.NOTIFY_AFM) {
+                mAfm.notifyViewVisibilityChanged(VirtualContainerView.this, text.id, visible);
+            }
             invalidate();
         }
 
