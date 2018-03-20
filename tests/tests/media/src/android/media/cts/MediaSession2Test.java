@@ -62,6 +62,7 @@ import org.junit.runner.RunWith;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Set;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 
@@ -744,13 +745,13 @@ public class MediaSession2Test extends MediaSession2TestBase {
             public void onAllowedCommandsChanged(MediaController2 controller,
                     CommandGroup commandsOut) {
                 assertNotNull(commandsOut);
-                List<Command> expected = commands.getCommands();
-                List<Command> actual = commandsOut.getCommands();
+                Set<Command> expected = commands.getCommands();
+                Set<Command> actual = commandsOut.getCommands();
 
                 assertNotNull(actual);
                 assertEquals(expected.size(), actual.size());
-                for (int i = 0; i < expected.size(); i++) {
-                    assertEquals(expected.get(i), actual.get(i));
+                for (Command command : expected) {
+                    assertTrue(actual.contains(command));
                 }
                 latch.countDown();
             }
