@@ -1,7 +1,6 @@
 package android.server.am.lifecycle;
 
 import static android.server.am.StateLogger.log;
-import static android.server.am.lifecycle.LifecycleLog.ActivityCallback.ON_ACTIVITY_RESULT;
 import static android.server.am.lifecycle.LifecycleLog.ActivityCallback.ON_CREATE;
 import static android.server.am.lifecycle.LifecycleLog.ActivityCallback.ON_DESTROY;
 import static android.server.am.lifecycle.LifecycleLog.ActivityCallback.ON_PAUSE;
