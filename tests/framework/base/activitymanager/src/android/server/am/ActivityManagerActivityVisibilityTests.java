@@ -89,8 +89,12 @@ public class ActivityManagerActivityVisibilityTests extends ActivityManagerTestB
 
         assertNotEquals(stackId, INVALID_STACK_ID);
         executeShellCommand(getMoveToPinnedStackCommand(stackId));
+        mAmWmState.waitForValidState(
+                new WaitForValidActivityState.Builder(ALWAYS_FOCUSABLE_PIP_ACTIVITY)
+                        .setWindowingMode(WINDOWING_MODE_PINNED)
+                        .setActivityType(ACTIVITY_TYPE_STANDARD)
+                        .build());
 
-        mAmWmState.computeState(LAUNCH_PIP_ON_PIP_ACTIVITY, ALWAYS_FOCUSABLE_PIP_ACTIVITY);
         mAmWmState.assertFrontStack("Pinned stack must be the front stack.",
                 WINDOWING_MODE_PINNED, ACTIVITY_TYPE_STANDARD);
         mAmWmState.assertVisibility(LAUNCH_PIP_ON_PIP_ACTIVITY, true);
@@ -132,8 +136,11 @@ public class ActivityManagerActivityVisibilityTests extends ActivityManagerTestB
 
         assertNotEquals(stackId, INVALID_STACK_ID);
         executeShellCommand(getMoveToPinnedStackCommand(stackId));
-
-        mAmWmState.computeState(ALWAYS_FOCUSABLE_PIP_ACTIVITY);
+        mAmWmState.waitForValidState(
+                new WaitForValidActivityState.Builder(ALWAYS_FOCUSABLE_PIP_ACTIVITY)
+                        .setWindowingMode(WINDOWING_MODE_PINNED)
+                        .setActivityType(ACTIVITY_TYPE_STANDARD)
+                        .build());
 
         mAmWmState.assertVisibility(ALWAYS_FOCUSABLE_PIP_ACTIVITY, true);
         mAmWmState.assertVisibility(TEST_ACTIVITY, false);
