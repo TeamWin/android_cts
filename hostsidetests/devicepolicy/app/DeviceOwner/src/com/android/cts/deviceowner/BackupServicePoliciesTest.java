@@ -15,23 +15,20 @@
  */
 package com.android.cts.deviceowner;
 
-import android.app.admin.DevicePolicyManager;
-import android.app.backup.BackupManager;
 import android.content.ComponentName;
 
 public class BackupServicePoliciesTest extends BaseDeviceOwnerTest {
 
-    private static final String LOCAL_TRANSPORT =
-            "android/com.android.internal.backup.LocalTransport";
+    private static final String LOCAL_TRANSPORT_COMPONENT =
+            "android/com.android.internal.backup.LocalTransportService";
 
-    private BackupManager mBackupManager;
     private ComponentName mLocalBackupTransportComponent;
 
     @Override
     protected void setUp() throws Exception {
         super.setUp();
-        mBackupManager = new BackupManager(getContext());
-        mLocalBackupTransportComponent = ComponentName.unflattenFromString(LOCAL_TRANSPORT);
+        mLocalBackupTransportComponent = ComponentName.unflattenFromString(
+                LOCAL_TRANSPORT_COMPONENT);
     }
 
     /**
@@ -53,16 +50,17 @@ public class BackupServicePoliciesTest extends BaseDeviceOwnerTest {
      * <p>After setting a mandatory backup transport, the backup service should be enabled and the
      * mandatory backup transport
      */
-    public void testGetAndSetMandatoryBackupTransport() {
+    public void testGetAndSetMandatoryBackupTransport() throws Exception {
         assertFalse(mDevicePolicyManager.isBackupServiceEnabled(getWho()));
 
-        // Make backups with the local transport mandatory.
-        mDevicePolicyManager.setMandatoryBackupTransport(getWho(), mLocalBackupTransportComponent);
+        // Make backups with the local transport mandatory and verify the operation succeeded.
+        assertTrue(mDevicePolicyManager.setMandatoryBackupTransport(
+                getWho(), mLocalBackupTransportComponent));
 
-        // Verify that the backup service has been enabled...
+        // Verify that the backup service has been enabled.
         assertTrue(mDevicePolicyManager.isBackupServiceEnabled(getWho()));
 
-        // ... and the local transport should be used.
+        // Verify the local transport should be used.
         assertEquals(
                 mLocalBackupTransportComponent, mDevicePolicyManager.getMandatoryBackupTransport());
 

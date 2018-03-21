@@ -34,9 +34,6 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 
 import java.io.FileNotFoundException;
-import java.lang.Thread;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 
 /**
  * Test for checking the interaction between backup policies which can be set by a device owner and
@@ -44,9 +41,6 @@ import java.util.regex.Pattern;
  */
 @RunWith(DeviceJUnit4ClassRunner.class)
 public class BackupDeviceOwnerHostSideTest extends BaseBackupHostSideTest {
-
-    private static final long MAX_TRANSPORTS_WAIT_MS = 5000;
-    private static final long LIST_TRANSPORTS_RETRY_MS = 200;
     private static final String DEVICE_OWNER_APK = "CtsBackupDeviceOwnerApp.apk";
     private static final String DEVICE_OWNER_PKG = "android.cts.backup.deviceownerapp";
     private static final String DEVICE_OWNER_TEST_CLASS = ".BackupDeviceOwnerTest";
@@ -118,7 +112,7 @@ public class BackupDeviceOwnerHostSideTest extends BaseBackupHostSideTest {
                 isBackupEnabled());
 
         // Get the transports; eventually wait for the backup subsystem to initialize.
-        String[] transports = waitForTransportsAndReturnTheList();
+        String[] transports = listTransport();
 
         // Verify that the local transport is selected.
         assertEquals(LOCAL_TRANSPORT, getCurrentTransport());
@@ -154,7 +148,7 @@ public class BackupDeviceOwnerHostSideTest extends BaseBackupHostSideTest {
                 isBackupEnabled());
 
         // Get the transports; eventually wait for the backup subsystem to initialize.
-        String[] transportComponents = waitForTransportComponentsAndReturnTheList();
+        String[] transportComponents = listTransportComponents();
 
         // Verify that the local transport is selected.
         assertEquals(LOCAL_TRANSPORT, getCurrentTransport());
@@ -198,36 +192,17 @@ public class BackupDeviceOwnerHostSideTest extends BaseBackupHostSideTest {
         getDevice().executeShellCommand("bmgr enable " + enable);
     }
 
-    private String[] waitForTransportsAndReturnTheList()
+    private String[] listTransport()
             throws DeviceNotAvailableException, InterruptedException {
-        long startTime = System.currentTimeMillis();
-        String output = "";
-        do {
-            output = getDevice().executeShellCommand("bmgr list transports");
-            if (!"No transports available.".equals(output.trim())) {
-                break;
-            } else {
-                output = "";
-            }
-            Thread.sleep(LIST_TRANSPORTS_RETRY_MS);
-        } while (System.currentTimeMillis() - startTime < MAX_TRANSPORTS_WAIT_MS);
+        String output = getDevice().executeShellCommand("bmgr list transports");
         output = output.replace("*", "");
         return output.trim().split("\\s+");
     }
 
-    private String[] waitForTransportComponentsAndReturnTheList()
+    private String[] listTransportComponents()
             throws DeviceNotAvailableException, InterruptedException {
-        long startTime = System.currentTimeMillis();
-        String[] transportComponents;
-        do {
-            String output = getDevice().executeShellCommand("bmgr list transports -c");
-            transportComponents = output.trim().split("\\s+");
-            if (transportComponents.length > 0 && !transportComponents[0].isEmpty()) {
-                break;
-            }
-            Thread.sleep(LIST_TRANSPORTS_RETRY_MS);
-        } while (System.currentTimeMillis() - startTime < MAX_TRANSPORTS_WAIT_MS);
-        return transportComponents;
+        String output = getDevice().executeShellCommand("bmgr list transports -c");
+        return output.trim().split("\\s+");
     }
 
     private void setBackupTransport(String transport) throws DeviceNotAvailableException {
