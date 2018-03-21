@@ -115,7 +115,12 @@ public class ShortcutManagerManagedUserTest extends ShortcutManagerDeviceTestBas
                     assertEquals(userCurrent, si.getUserHandle());
                 });
 
-        assertWith(getLauncherApps().getShortcuts(q, userOther)).isEmpty();
+        try {
+            assertWith(getLauncherApps().getShortcuts(q, userOther)).isEmpty();
+            fail("Didn't throw SecurityException");
+        } catch (SecurityException e) {
+            // okay
+        }
 
         // TODO Make sure the activity actually starts.
         getLauncherApps().startShortcut(getContext().getPackageName(), "s1", null, null,
@@ -124,8 +129,8 @@ public class ShortcutManagerManagedUserTest extends ShortcutManagerDeviceTestBas
         try {
             getLauncherApps().startShortcut(getContext().getPackageName(), "s1", null, null,
                     userOther);
-            fail("Didn't throw ActivityNotFoundException");
-        } catch (ActivityNotFoundException e) {
+            fail("Didn't throw SecurityException");
+        } catch (SecurityException e) {
             // okay
         }
     }
