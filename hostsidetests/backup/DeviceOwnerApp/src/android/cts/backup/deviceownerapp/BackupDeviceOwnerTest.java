@@ -36,8 +36,8 @@ import org.junit.runner.RunWith;
 @RunWith(AndroidJUnit4.class)
 public class BackupDeviceOwnerTest {
 
-    private static final String LOCAL_TRANSPORT =
-            "android/com.android.internal.backup.LocalTransport";
+    private static final String LOCAL_TRANSPORT_COMPONENT =
+            "android/com.android.internal.backup.LocalTransportService";
 
     private DevicePolicyManager mDevicePolicyManager;
     private ComponentName mLocalBackupTransportComponent;
@@ -45,7 +45,8 @@ public class BackupDeviceOwnerTest {
     @Before
     public void setup() {
         mDevicePolicyManager = getTargetContext().getSystemService(DevicePolicyManager.class);
-        mLocalBackupTransportComponent = ComponentName.unflattenFromString(LOCAL_TRANSPORT);
+        mLocalBackupTransportComponent = ComponentName.unflattenFromString(
+                LOCAL_TRANSPORT_COMPONENT);
         assertDeviceOwner();
     }
 
@@ -64,9 +65,10 @@ public class BackupDeviceOwnerTest {
     }
 
     @Test
-    public void testSetMandatoryBackupTransport() {
-        // Make backups with the local transport mandatory.
-        mDevicePolicyManager.setMandatoryBackupTransport(getWho(), mLocalBackupTransportComponent);
+    public void testSetMandatoryBackupTransport() throws Exception {
+        // Make backups with the local transport mandatory and verify the operation succeeded.
+        assertTrue(mDevicePolicyManager.setMandatoryBackupTransport(
+                getWho(), mLocalBackupTransportComponent));
 
         // Verify backup service is enabled.
         assertTrue(mDevicePolicyManager.isBackupServiceEnabled(getWho()));
@@ -76,9 +78,9 @@ public class BackupDeviceOwnerTest {
     }
 
     @Test
-    public void testClearMandatoryBackupTransport() {
-        // Clear the mandatory backup transport.
-        mDevicePolicyManager.setMandatoryBackupTransport(getWho(), null);
+    public void testClearMandatoryBackupTransport() throws Exception {
+        // Clear the mandatory backup transport and verify the operation succeeded.
+        assertTrue(mDevicePolicyManager.setMandatoryBackupTransport(getWho(), null));
 
         // Verify the mandatory backup transport is not set any more.
         assertNull(mDevicePolicyManager.getMandatoryBackupTransport());
@@ -95,3 +97,4 @@ public class BackupDeviceOwnerTest {
         return BackupDeviceAdminReceiver.getComponentName(getTargetContext());
     }
 }
+
