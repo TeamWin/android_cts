@@ -33,14 +33,14 @@ import android.os.ParcelFileDescriptor;
 import android.os.SystemClock;
 import android.support.test.InstrumentationRegistry;
 
-import com.android.server.am.proto.nano.ActivityDisplayProto;
-import com.android.server.am.proto.nano.ActivityManagerServiceDumpActivitiesProto;
-import com.android.server.am.proto.nano.ActivityRecordProto;
-import com.android.server.am.proto.nano.ActivityStackProto;
-import com.android.server.am.proto.nano.ActivityStackSupervisorProto;
-import com.android.server.am.proto.nano.KeyguardControllerProto;
-import com.android.server.am.proto.nano.TaskRecordProto;
-import com.android.server.wm.proto.nano.ConfigurationContainerProto;
+import com.android.server.am.nano.ActivityDisplayProto;
+import com.android.server.am.nano.ActivityManagerServiceDumpActivitiesProto;
+import com.android.server.am.nano.ActivityRecordProto;
+import com.android.server.am.nano.ActivityStackProto;
+import com.android.server.am.nano.ActivityStackSupervisorProto;
+import com.android.server.am.nano.KeyguardControllerProto;
+import com.android.server.am.nano.TaskRecordProto;
+import com.android.server.wm.nano.ConfigurationContainerProto;
 
 import com.google.protobuf.nano.InvalidProtocolBufferNanoException;
 
