@@ -38,7 +38,6 @@ import android.util.Log;
 import android.view.SurfaceHolder;
 
 import java.io.IOException;
-import java.nio.ByteBuffer;
 import java.nio.CharBuffer;
 import java.nio.charset.Charset;
 import java.util.Arrays;
@@ -69,6 +68,7 @@ public class MediaDrmClearkeyTest extends MediaPlayerTestBase {
     private static final byte[] CLEAR_KEY_WEBM = "_CLEAR_KEY_WEBM_".getBytes();
 
     private static final int CONNECTION_RETRIES = 10;
+    private static final int NUMBER_OF_SECURE_STOPS = 10;
     private static final int SLEEP_TIME_MS = 1000;
     private static final int VIDEO_WIDTH_CENC = 1280;
     private static final int VIDEO_HEIGHT_CENC = 720;
@@ -789,5 +789,112 @@ public class MediaDrmClearkeyTest extends MediaPlayerTestBase {
         }
      }
 
-    /* TODO: add secure stop tests */
+    public void testSecureStop() {
+        MediaDrm drm = startDrm(new byte[][] {CLEAR_KEY_CENC}, "cenc", COMMON_PSSH_SCHEME_UUID);
+        if (!drm.isCryptoSchemeSupported(COMMON_PSSH_SCHEME_UUID)) {
+            stopDrm(drm);
+            throw new Error(ERR_MSG_CRYPTO_SCHEME_NOT_SUPPORTED);
+        }
+
+        byte[] sessionId = null;
+        try {
+            drm.removeAllSecureStops();
+            Log.d(TAG, "Test getSecureStops from an empty list.");
+            List<byte[]> secureStops = drm.getSecureStops();
+            assertTrue(secureStops.isEmpty());
+
+            Log.d(TAG, "Test getSecureStopIds from an empty list.");
+            List<byte[]> secureStopIds = drm.getSecureStopIds();
+            assertTrue(secureStopIds.isEmpty());
+
+            mSessionId = openSession(drm);
+
+            mMediaCodecPlayer = new MediaCodecClearKeyPlayer(
+                    getActivity().getSurfaceHolder(), mSessionId, false, mContext.getResources());
+            mMediaCodecPlayer.setAudioDataSource(CENC_AUDIO_URL, null, false);
+            mMediaCodecPlayer.setVideoDataSource(CENC_VIDEO_URL, null, true);
+            mMediaCodecPlayer.start();
+            mMediaCodecPlayer.prepare();
+            mDrmInitData = mMediaCodecPlayer.getDrmInitData();
+
+            for (int i = 0; i < NUMBER_OF_SECURE_STOPS; ++i) {
+                getKeys(drm, "cenc", mSessionId, mDrmInitData, new byte[][] {CLEAR_KEY_CENC});
+            }
+            Log.d(TAG, "Test getSecureStops.");
+            secureStops = drm.getSecureStops();
+            assertEquals(NUMBER_OF_SECURE_STOPS, secureStops.size());
+
+            Log.d(TAG, "Test getSecureStopIds.");
+            secureStopIds = drm.getSecureStopIds();
+            assertEquals(NUMBER_OF_SECURE_STOPS, secureStopIds.size());
+
+            Log.d(TAG, "Test getSecureStop using secure stop Ids.");
+            for (int i = 0; i < secureStops.size(); ++i) {
+                byte[] secureStop = drm.getSecureStop(secureStopIds.get(i));
+                assertTrue(Arrays.equals(secureStops.get(i), secureStop));
+            }
+
+            Log.d(TAG, "Test removeSecureStop given a secure stop Id.");
+            drm.removeSecureStop(secureStopIds.get(NUMBER_OF_SECURE_STOPS - 1));
+            secureStops = drm.getSecureStops();
+            secureStopIds = drm.getSecureStopIds();
+            assertEquals(NUMBER_OF_SECURE_STOPS - 1, secureStops.size());
+            assertEquals(NUMBER_OF_SECURE_STOPS - 1, secureStopIds.size());
+
+            Log.d(TAG, "Test releaseSecureStops given a release message.");
+            // Simulate server response message by removing
+            // every other secure stops to make it interesting.
+            List<byte[]> releaseList = new ArrayList<byte[]>();
+            int releaseListSize = 0;
+            for (int i = 0; i < secureStops.size(); i += 2) {
+                byte[] secureStop = secureStops.get(i);
+                releaseList.add(secureStop);
+                releaseListSize += secureStop.length;
+            }
+
+            // ClearKey's release message format (this is a format shared between
+            // the server and the drm service).
+            // The clearkey implementation expects the message to contain
+            // a 4 byte count of the number of fixed length secure stops
+            // to follow.
+            String count = String.format("%04d", releaseList.size());
+            byte[] releaseMessage = new byte[count.length() + releaseListSize];
+
+            byte[] buffer = count.getBytes();
+            System.arraycopy(buffer, 0, releaseMessage, 0, count.length());
+
+            int destPosition = count.length();
+            for (int i = 0; i < releaseList.size(); ++i) {
+                byte[] secureStop = releaseList.get(i);
+                int secureStopSize = secureStop.length;
+                System.arraycopy(secureStop, 0, releaseMessage, destPosition, secureStopSize);
+                destPosition += secureStopSize;
+            }
+
+            drm.releaseSecureStops(releaseMessage);
+            secureStops = drm.getSecureStops();
+            secureStopIds = drm.getSecureStopIds();
+            // All odd numbered secure stops are removed in the test,
+            // leaving 2nd, 4th, 6th and the 8th element.
+            assertEquals((NUMBER_OF_SECURE_STOPS - 1) / 2, secureStops.size());
+            assertEquals((NUMBER_OF_SECURE_STOPS - 1 ) / 2, secureStopIds.size());
+
+            Log.d(TAG, "Test removeAllSecureStops.");
+            drm.removeAllSecureStops();
+            secureStops = drm.getSecureStops();
+            assertTrue(secureStops.isEmpty());
+            secureStopIds = drm.getSecureStopIds();
+            assertTrue(secureStopIds.isEmpty());
+
+            mMediaCodecPlayer.reset();
+            closeSession(drm, mSessionId);
+        } catch (Exception e) {
+            throw new Error("Unexpected exception requesting open sessions", e);
+        } finally {
+            if (sessionId != null) {
+                drm.closeSession(sessionId);
+            }
+            stopDrm(drm);
+        }
+    }
 }
