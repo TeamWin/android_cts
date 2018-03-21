@@ -533,6 +533,7 @@ public class CaptureResultTest extends Camera2AndroidTestCase {
             waiverKeys.add(CaptureResult.LENS_POSE_TRANSLATION);
             waiverKeys.add(CaptureResult.LENS_INTRINSIC_CALIBRATION);
             waiverKeys.add(CaptureResult.LENS_RADIAL_DISTORTION);
+            waiverKeys.add(CaptureResult.LENS_DISTORTION);
         }
 
         // Waived if RAW output is not supported
@@ -848,6 +849,7 @@ public class CaptureResultTest extends Camera2AndroidTestCase {
         resultKeys.add(CaptureResult.LENS_STATE);
         resultKeys.add(CaptureResult.LENS_INTRINSIC_CALIBRATION);
         resultKeys.add(CaptureResult.LENS_RADIAL_DISTORTION);
+        resultKeys.add(CaptureResult.LENS_DISTORTION);
         resultKeys.add(CaptureResult.NOISE_REDUCTION_MODE);
         resultKeys.add(CaptureResult.REQUEST_PIPELINE_DEPTH);
         resultKeys.add(CaptureResult.SCALER_CROP_REGION);

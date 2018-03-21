@@ -90,6 +90,7 @@ import android.text.PrecomputedText;
 import android.text.Selection;
 import android.text.Spannable;
 import android.text.SpannableString;
+import android.text.SpannableStringBuilder;
 import android.text.Spanned;
 import android.text.TextPaint;
 import android.text.TextUtils;
@@ -8044,6 +8045,39 @@ public class TextViewTest {
 
         mTextView.setTextMetricsParams(param);
         assertTrue(param.equals(mTextView.getTextMetricsParams()));
+    }
+
+    @Test
+    public void testDynamicLayoutReflowCrash_b75652829() throws Throwable {
+        final SpannableStringBuilder text = new SpannableStringBuilder("abcde");
+        text.setSpan(new UnderlineSpan(), 0, 5, Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
+
+        mActivityRule.runOnUiThread(() -> {
+            mTextView = new EditText(mActivity);
+            mActivity.setContentView(mTextView);
+            mTextView.setText(text, BufferType.EDITABLE);
+            mTextView.requestFocus();
+            mTextView.setSelected(true);
+            mTextView.setTextClassifier(TextClassifier.NO_OP);
+        });
+        mInstrumentation.waitForIdleSync();
+
+        mActivityRule.runOnUiThread(() -> {
+            // Set selection and try to start action mode.
+            final Bundle args = new Bundle();
+            args.putInt(AccessibilityNodeInfo.ACTION_ARGUMENT_SELECTION_START_INT, 0);
+            args.putInt(AccessibilityNodeInfo.ACTION_ARGUMENT_SELECTION_END_INT, text.length());
+            mTextView.performAccessibilityAction(
+                    AccessibilityNodeInfo.ACTION_SET_SELECTION, args);
+        });
+        mInstrumentation.waitForIdleSync();
+
+        mActivityRule.runOnUiThread(() -> {
+            Editable editable = (Editable) mTextView.getText();
+            SpannableStringBuilder ssb = new SpannableStringBuilder("a");
+            ssb.setSpan(new UnderlineSpan(), 0, 1, Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
+            editable.replace(5, 5, ssb);
+        });
     }
 
     private void initializeTextForSmartSelection(CharSequence text) throws Throwable {

@@ -40,7 +40,9 @@
                 android:resizeableActivity="true"
                 android:supportsPictureInPicture="true"
                 android:configChanges="orientation|screenSize|smallestScreenSize|screenLayout"
-                android:theme="@style/Theme.Transparent" />
+                android:theme="@style/Theme.Transparent"
+                android:exported="true"
+        />
         <activity android:name=".VrTestActivity"
                 android:resizeableActivity="true"
                 android:exported="true"

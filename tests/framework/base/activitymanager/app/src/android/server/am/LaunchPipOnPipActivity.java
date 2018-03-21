@@ -18,11 +18,14 @@ package android.server.am;
 
 import android.app.Activity;
 import android.content.pm.PackageManager;
+import android.content.res.Configuration;
 
 public class LaunchPipOnPipActivity extends Activity {
+
     @Override
-    public void onPictureInPictureModeChanged(boolean isInPictureInPictureMode) {
-        super.onPictureInPictureModeChanged(isInPictureInPictureMode);
+    public void onPictureInPictureModeChanged(boolean isInPictureInPictureMode,
+            Configuration newConfig) {
+        super.onPictureInPictureModeChanged(isInPictureInPictureMode, newConfig);
         AlwaysFocusablePipActivity.launchAlwaysFocusablePipActivity(this,
             getPackageManager().hasSystemFeature(PackageManager.FEATURE_LEANBACK));
     }

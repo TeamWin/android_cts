@@ -282,17 +282,17 @@ def get_smallest_yuv_format(props, match_ar=None):
     return fmt
 
 
-def get_largest_yuv_format(props):
-    """Return a capture request and format spec for the smallest yuv size.
+def get_largest_yuv_format(props, match_ar=None):
+    """Return a capture request and format spec for the largest yuv size.
 
     Args:
         props: the object returned from its.device.get_camera_properties().
 
     Returns:
-        fmt:    an output format specification, for the smallest possible yuv
+        fmt:    an output format specification, for the largest possible yuv
         format for this device.
     """
-    size = get_available_output_sizes("yuv", props)[0]
+    size = get_available_output_sizes("yuv", props, match_ar_size=match_ar)[0]
     fmt = {"format":"yuv", "width":size[0], "height":size[1]}
 
     return fmt

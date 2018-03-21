@@ -4,6 +4,7 @@ import static android.server.am.lifecycle.LifecycleLog.ActivityCallback.ON_ACTIV
 import static android.server.am.lifecycle.LifecycleLog.ActivityCallback.ON_CREATE;
 import static android.server.am.lifecycle.LifecycleLog.ActivityCallback.ON_DESTROY;
 import static android.server.am.lifecycle.LifecycleLog.ActivityCallback.ON_PAUSE;
+import static android.server.am.lifecycle.LifecycleLog.ActivityCallback.ON_POST_CREATE;
 import static android.server.am.lifecycle.LifecycleLog.ActivityCallback.ON_RESUME;
 import static android.server.am.lifecycle.LifecycleLog.ActivityCallback.ON_START;
 import static android.server.am.lifecycle.LifecycleLog.ActivityCallback.ON_STOP;
@@ -259,13 +260,13 @@ public class ActivityLifecycleTests extends ActivityLifecycleClientTestBase {
         final Activity firstActivity =
                 mFirstActivityTestRule.launchActivity(new Intent());
 
-        // Wait for second activity to resume
+        // Wait for first activity to resume
         waitAndAssertActivityStates(state(firstActivity, ON_RESUME));
 
         // Enter split screen
         moveTaskToPrimarySplitScreen(firstActivity.getTaskId());
 
-        // Launch second activity to stop first
+        // Launch second activity to pause first
         final Activity secondActivity =
                 mSecondActivityTestRule.launchActivity(new Intent());
 
@@ -291,16 +292,109 @@ public class ActivityLifecycleTests extends ActivityLifecycleClientTestBase {
 
     @Test
     public void testOnActivityResult() throws Exception {
-        getLifecycleLog().clear();
-        final Intent intent = new Intent();
         final Activity launchForResultActivity =
-                mLaunchForResultActivityTestRule.launchActivity(intent);
+                mLaunchForResultActivityTestRule.launchActivity(new Intent());
 
         waitAndAssertActivityStates(state(launchForResultActivity, ON_RESUME));
 
         LifecycleVerifier.assertSequence(LaunchForResultActivity.class,
-                getLifecycleLog(), Arrays.asList(PRE_ON_CREATE, ON_CREATE, ON_START, ON_RESUME,
-                        ON_PAUSE, ON_ACTIVITY_RESULT, ON_RESUME), "activityResult");
+                getLifecycleLog(), Arrays.asList(PRE_ON_CREATE, ON_CREATE, ON_START, ON_POST_CREATE,
+                        ON_RESUME, ON_PAUSE, ON_ACTIVITY_RESULT, ON_RESUME), "activityResult");
+    }
+
+    @Test
+    public void testOnPostCreateAfterCreate() throws Exception {
+        final Activity callbackTrackingActivity =
+                mCallbackTrackingActivityTestRule.launchActivity(new Intent());
+
+        waitAndAssertActivityStates(state(callbackTrackingActivity, ON_RESUME));
+
+        LifecycleVerifier.assertSequence(CallbackTrackingActivity.class,
+                getLifecycleLog(),
+                Arrays.asList(PRE_ON_CREATE, ON_CREATE, ON_START, ON_POST_CREATE, ON_RESUME),
+                "create");
+    }
+
+    @Test
+    public void testOnPostCreateAfterRecreateInOnResume() throws Exception {
+        // Launch activity
+        final Activity trackingActivity =
+                mCallbackTrackingActivityTestRule.launchActivity(new Intent());
+
+        // Wait for activity to resume
+        waitAndAssertActivityStates(state(trackingActivity, ON_RESUME));
+
+        // Call "recreate" and assert sequence
+        getLifecycleLog().clear();
+        InstrumentationRegistry.getInstrumentation().runOnMainSync(trackingActivity::recreate);
+        waitAndAssertActivityStates(state(trackingActivity, ON_RESUME));
+
+        LifecycleVerifier.assertSequence(CallbackTrackingActivity.class,
+                getLifecycleLog(),
+                Arrays.asList(ON_PAUSE, ON_STOP, ON_DESTROY, PRE_ON_CREATE, ON_CREATE, ON_START,
+                        ON_POST_CREATE, ON_RESUME),
+                "recreate");
+    }
+
+    @Test
+    public void testOnPostCreateAfterRecreateInOnPause() throws Exception {
+        // Launch activity
+        final Activity trackingActivity =
+                mCallbackTrackingActivityTestRule.launchActivity(new Intent());
+
+        // Wait for activity to resume
+        waitAndAssertActivityStates(state(trackingActivity, ON_RESUME));
+
+        // Enter split screen
+        moveTaskToPrimarySplitScreen(trackingActivity.getTaskId());
+
+        // Start an activity in separate task (will be placed in secondary stack)
+        getLaunchActivityBuilder().execute();
+
+        // Wait for first activity to become paused
+        waitAndAssertActivityStates(state(trackingActivity, ON_PAUSE));
+
+        // Call "recreate" and assert sequence
+        getLifecycleLog().clear();
+        InstrumentationRegistry.getInstrumentation().runOnMainSync(trackingActivity::recreate);
+        waitAndAssertActivityStates(state(trackingActivity, ON_PAUSE));
+
+        LifecycleVerifier.assertSequence(CallbackTrackingActivity.class,
+                getLifecycleLog(),
+                Arrays.asList(ON_STOP, ON_DESTROY, PRE_ON_CREATE, ON_CREATE, ON_START,
+                        ON_POST_CREATE, ON_RESUME, ON_PAUSE),
+                "recreate");
+    }
+
+    @Test
+    public void testOnPostCreateAfterRecreateInOnStop() throws Exception {
+        // Launch first activity
+        final Activity trackingActivity =
+                mCallbackTrackingActivityTestRule.launchActivity(new Intent());
+
+        // Wait for activity to resume
+        waitAndAssertActivityStates(state(trackingActivity, ON_RESUME));
+
+        // Launch second activity to cover and stop first
+        final Activity secondActivity =
+                mSecondActivityTestRule.launchActivity(new Intent());
+
+        // Wait for second activity to become resumed
+        waitAndAssertActivityStates(state(secondActivity, ON_RESUME));
+
+        // Wait for first activity to become stopped
+        waitAndAssertActivityStates(state(trackingActivity, ON_STOP));
+
+        // Call "recreate" and assert sequence
+        getLifecycleLog().clear();
+        InstrumentationRegistry.getInstrumentation().runOnMainSync(trackingActivity::recreate);
+        waitAndAssertActivityStates(state(trackingActivity, ON_STOP));
+
+        LifecycleVerifier.assertSequence(CallbackTrackingActivity.class,
+                getLifecycleLog(),
+                Arrays.asList(ON_DESTROY, PRE_ON_CREATE, ON_CREATE, ON_START, ON_POST_CREATE,
+                        ON_RESUME, ON_PAUSE, ON_STOP),
+                "recreate");
     }
 
     /**

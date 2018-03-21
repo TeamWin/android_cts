@@ -12,6 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+import math
 import os.path
 import cv2
 import its.caps
@@ -20,15 +21,35 @@ import its.image
 import its.objects
 import numpy as np
 
-NAME = os.path.basename(__file__).split(".")[0]
-NUM_DISTORT_PARAMS = 6
+FMT_ATOL = 0.01  # Absolute tolerance on format ratio
+AR_CHECKED = ["4:3", "16:9"]  # Aspect ratios checked
+FOV_PERCENT_RTOL = 0.15  # Relative tolerance on circle FoV % to expected
 LARGE_SIZE = 2000   # Define the size of a large image
+NAME = os.path.basename(__file__).split(".")[0]
+NUM_DISTORT_PARAMS = 5
 THRESH_L_AR = 0.02  # aspect ratio test threshold of large images
 THRESH_XS_AR = 0.05  # aspect ratio test threshold of mini images
 THRESH_L_CP = 0.02  # Crop test threshold of large images
 THRESH_XS_CP = 0.05  # Crop test threshold of mini images
 THRESH_MIN_PIXEL = 4  # Crop test allowed offset
 PREVIEW_SIZE = (1920, 1080)  # preview size
+
+
+def calc_circle_image_ratio(circle_w, circle_h, image_w, image_h):
+    """Calculate the circle coverage of the image.
+
+    Args:
+        circle_w (int):      width of circle
+        circle_h (int):      height of circle
+        image_w (int):       width of image
+        image_h (int):       height of image
+    Returns:
+        fov_percent (float): % of image covered by circle
+    """
+    circle_area = math.pi * math.pow(np.mean([circle_w, circle_h])/2.0, 2)
+    image_area = image_w * image_h
+    fov_percent = 100*circle_area/image_area
+    return fov_percent
 
 
 def main():
@@ -62,6 +83,7 @@ def main():
                         "cmpr": "raw", "cmpr_size": None})
     format_list.append({"iter": "jpeg", "iter_max": None,
                         "cmpr": "yuv", "cmpr_size": PREVIEW_SIZE})
+    ref_fov_percent = {}
     with its.device.ItsSession() as cam:
         props = cam.get_camera_properties()
         its.caps.skip_unless(its.caps.read_3a(props))
@@ -91,20 +113,21 @@ def main():
         if raw_avlb:
             # Capture full-frame raw. Use its aspect ratio and circle center
             # location as ground truth for the other jepg or yuv images.
+            print "Creating references for fov_coverage from RAW"
             out_surface = {"format": "raw"}
             cap_raw = cam.do_capture(req, out_surface)
             print "Captured %s %dx%d" % ("raw", cap_raw["width"],
                                          cap_raw["height"])
             img_raw = its.image.convert_capture_to_rgb_image(cap_raw,
                                                              props=props)
-            if its.caps.radial_distortion_correction(props):
+            if its.caps.distortion_correction(props):
                 # Intrinsic cal is of format: [f_x, f_y, c_x, c_y, s]
                 # [f_x, f_y] is the horizontal and vertical focal lengths,
                 # [c_x, c_y] is the position of the optical axis,
                 # and s is skew of sensor plane vs lens plane.
                 print "Applying intrinsic calibration and distortion params"
                 ical = np.array(props["android.lens.intrinsicCalibration"])
-                msg = "Cannot include radial distortion without intrinsic cal!"
+                msg = "Cannot include lens distortion without intrinsic cal!"
                 assert len(ical) == 5, msg
                 sensor_h = props["android.sensor.info.physicalSize"]["height"]
                 sensor_w = props["android.sensor.info.physicalSize"]["width"]
@@ -129,14 +152,14 @@ def main():
                 assert np.isclose(fd_h_pix, ical[1], rtol=0.20), e_msg
 
                 # distortion
-                rad_dist = props["android.lens.radialDistortion"]
-                print "android.lens.radialDistortion:", rad_dist
+                rad_dist = props["android.lens.distortion"]
+                print "android.lens.distortion:", rad_dist
                 e_msg = "%s param(s) found. %d expected." % (len(rad_dist),
                                                              NUM_DISTORT_PARAMS)
                 assert len(rad_dist) == NUM_DISTORT_PARAMS, e_msg
-                opencv_dist = np.array([rad_dist[1], rad_dist[2],
-                                        rad_dist[4], rad_dist[5],
-                                        rad_dist[3]])
+                opencv_dist = np.array([rad_dist[0], rad_dist[1],
+                                        rad_dist[3], rad_dist[4],
+                                        rad_dist[2]])
                 print "dist:", opencv_dist
                 img_raw = cv2.undistort(img_raw, k, opencv_dist)
             size_raw = img_raw.shape
@@ -145,11 +168,33 @@ def main():
             img_name = "%s_%s_w%d_h%d.png" % (NAME, "raw", w_raw, h_raw)
             aspect_ratio_gt, cc_ct_gt, circle_size_raw = measure_aspect_ratio(
                     img_raw, 1, img_name, debug)
+            raw_fov_percent = calc_circle_image_ratio(
+                    circle_size_raw[1], circle_size_raw[0], w_raw, h_raw)
             # Normalize the circle size to 1/4 of the image size, so that
             # circle size won"t affect the crop test result
             factor_cp_thres = (min(size_raw[0:1])/4.0) / max(circle_size_raw)
             thres_l_cp_test = THRESH_L_CP * factor_cp_thres
             thres_xs_cp_test = THRESH_XS_CP * factor_cp_thres
+            ref_fov_percent["raw"] = [raw_fov_percent, w_raw, h_raw]
+            print "Created RAW references\n"
+        print "Creating references for fov_coverage from largest YUVs"
+        for ar_check in AR_CHECKED:
+            match_ar = [float(x) for x in ar_check.split(":")]
+            fmt = its.objects.get_largest_yuv_format(
+                    props, match_ar=match_ar)
+            cap = cam.do_capture(req, fmt)
+            w = cap["width"]
+            h = cap["height"]
+            print "Captured %s %dx%d" % ("yuv", w, h)
+            img = its.image.convert_capture_to_rgb_image(cap, props=props)
+            img_name = "%s_%s_w%d_h%d.png" % (NAME, "yuv", w, h)
+            _, _, circle_size = measure_aspect_ratio(
+                    img, 1, img_name, debug)
+            fov_percent = calc_circle_image_ratio(
+                    circle_size[1], circle_size[0], w, h)
+
+            ref_fov_percent[ar_check] = [fov_percent, w, h]
+        print "Created YUV references\n"
 
         # Take pictures of each settings with all the image sizes available.
         for fmt in format_list:
@@ -160,7 +205,7 @@ def main():
             if dual_target:
                 sizes = its.objects.get_available_output_sizes(
                         fmt_cmpr, props, fmt["cmpr_size"])
-                if len(sizes) == 0:  # device might not support RAW
+                if not sizes:  # device might not support RAW
                     continue
                 size_cmpr = sizes[0]
             for size_iter in its.objects.get_available_output_sizes(
@@ -188,10 +233,11 @@ def main():
                 assert frm_iter["format"] == fmt_iter
                 assert frm_iter["width"] == w_iter
                 assert frm_iter["height"] == h_iter
-                print "Captured %s with %s %dx%d" % (fmt_iter, fmt_cmpr,
-                                                     w_iter, h_iter)
+                print "Captured %s with %s %dx%d. Compared size: %dx%d" % (
+                        fmt_iter, fmt_cmpr, w_iter, h_iter, size_cmpr[0],
+                        size_cmpr[1])
                 img = its.image.convert_capture_to_rgb_image(frm_iter)
-                if its.caps.radial_distortion_correction(props):
+                if its.caps.distortion_correction(props) and raw_avlb:
                     w_scale = float(w_iter)/w_raw
                     h_scale = float(h_iter)/h_raw
                     k_scale = np.array([[ical[0]*w_scale, ical[4],
@@ -205,6 +251,31 @@ def main():
                                                           w_iter, h_iter)
                 aspect_ratio, cc_ct, (cc_w, cc_h) = measure_aspect_ratio(
                         img, raw_avlb, img_name, debug)
+                # check fov coverage for all fmts in AR_CHECKED
+                fov_percent = calc_circle_image_ratio(
+                        cc_w, cc_h, w_iter, h_iter)
+                for ar_check in AR_CHECKED:
+                    match_ar_list = [float(x) for x in ar_check.split(":")]
+                    match_ar = match_ar_list[0] / match_ar_list[1]
+                    if np.isclose(float(w_iter)/h_iter, match_ar,
+                                  atol=FMT_ATOL):
+                        chk_fov_percent = ref_fov_percent[ar_check][0]
+                        w_ref = ref_fov_percent[ar_check][1]
+                        h_ref = ref_fov_percent[ar_check][2]
+                        if ref_fov_percent["raw"]:
+                            if np.isclose(ref_fov_percent["raw"][1] /
+                                          ref_fov_percent["raw"][2], match_ar,
+                                          atol=FMT_ATOL):
+                                chk_fov_percent = ref_fov_percent["raw"][0]
+                                w_ref = ref_fov_percent["raw"][1]
+                                h_ref = ref_fov_percent["raw"][2]
+                        msg = "FoV %%: %.2f, Ref FoV %%: %.2f, TOL=%.f%%, " % (
+                                fov_percent, chk_fov_percent,
+                                FOV_PERCENT_RTOL*100)
+                        msg += "img: %dx%d, ref: %dx%d" % (w_iter, h_iter,
+                                                           w_ref, h_ref)
+                        assert np.isclose(fov_percent, chk_fov_percent,
+                                          rtol=FOV_PERCENT_RTOL), msg
                 # check pass/fail for aspect ratio
                 # image size >= LARGE_SIZE: use THRESH_L_AR
                 # image size == 0 (extreme case): THRESH_XS_AR
@@ -438,7 +509,7 @@ def measure_aspect_ratio(img, raw_avlb, img_name, debug):
         its.image.write_image(img/255, img_name, True)
 
     print "Aspect ratio: %.3f" % aspect_ratio
-    print "Circle center position regarding to image center:",
+    print "Circle center position wrt to image center:",
     print "%.3fx%.3f" % (cc_ct["vert"], cc_ct["hori"])
     return aspect_ratio, cc_ct, (circle_w, circle_h)
 

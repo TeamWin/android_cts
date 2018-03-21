@@ -112,7 +112,7 @@ public abstract class DeviceAndProfileOwnerTransferOutgoingTest {
     }
 
     @Test
-    public void testTransferOwnerChangedBroadcast() throws Throwable {
+    public void testTransferOwnershipChangedBroadcast() throws Throwable {
         BlockingBroadcastReceiver receiver = new BlockingBroadcastReceiver(mContext,
                 mOwnerChangedBroadcastAction);
         try {
@@ -127,11 +127,7 @@ public abstract class DeviceAndProfileOwnerTransferOutgoingTest {
         }
     }
 
-    @Test
-    public void testTransferOwner() throws Throwable {
-        PersistableBundle b = new PersistableBundle();
-        mDevicePolicyManager.transferOwnership(mOutgoingComponentName, INCOMING_COMPONENT_NAME, b);
-    }
+    abstract public void testTransferOwnership() throws Throwable;
 
     @Test
     public void testTransferOwnershipNullBundle() throws Throwable {
@@ -140,7 +136,7 @@ public abstract class DeviceAndProfileOwnerTransferOutgoingTest {
     }
 
     @Test
-    public void testTransferNoMetadata() throws Throwable {
+    public void testTransferOwnershipNoMetadata() throws Throwable {
         PersistableBundle b = new PersistableBundle();
         assertThrows(
                 IllegalArgumentException.class,

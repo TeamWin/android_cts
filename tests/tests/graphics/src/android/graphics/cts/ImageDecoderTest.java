@@ -26,6 +26,7 @@ import static org.junit.Assert.fail;
 
 import android.content.ContentResolver;
 import android.content.Context;
+import android.content.res.AssetManager;
 import android.content.res.Resources;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
@@ -36,12 +37,14 @@ import android.graphics.ImageDecoder.OnPartialImageListener;
 import android.graphics.PixelFormat;
 import android.graphics.PostProcessor;
 import android.graphics.Rect;
+import android.graphics.drawable.BitmapDrawable;
 import android.graphics.drawable.Drawable;
 import android.graphics.drawable.NinePatchDrawable;
 import android.net.Uri;
 import android.support.test.InstrumentationRegistry;
 import android.support.test.runner.AndroidJUnit4;
 import android.support.v4.content.FileProvider;
+import android.util.DisplayMetrics;
 import android.util.Size;
 import android.util.TypedValue;
 
@@ -1851,6 +1854,101 @@ public class ImageDecoderTest {
                 assertNotNull(drawable);
             } catch (IOException e) {
                 fail("Failed " + getAsResourceUri(record.resId) + " with " + e);
+            }
+        }
+    }
+
+    private BitmapDrawable decodeBitmapDrawable(int resId) {
+        ImageDecoder.Source src = ImageDecoder.createSource(mRes, resId);
+        try {
+            Drawable drawable = ImageDecoder.decodeDrawable(src);
+            assertNotNull(drawable);
+            assertTrue(drawable instanceof BitmapDrawable);
+            return (BitmapDrawable) drawable;
+        } catch (IOException e) {
+            fail("Failed " + getAsResourceUri(resId) + " with " + e);
+            return null;
+        }
+    }
+
+    @Test
+    public void testUpscale() {
+        final int originalDensity = mRes.getDisplayMetrics().densityDpi;
+
+        try {
+            for (Record record : RECORDS) {
+                final int resId = record.resId;
+
+                // Set a high density. This will result in a larger drawable, but
+                // not a larger Bitmap.
+                mRes.getDisplayMetrics().densityDpi = DisplayMetrics.DENSITY_XXXHIGH;
+                BitmapDrawable drawable = decodeBitmapDrawable(resId);
+
+                Bitmap bm = drawable.getBitmap();
+                assertEquals(record.width, bm.getWidth());
+                assertEquals(record.height, bm.getHeight());
+
+                assertTrue(drawable.getIntrinsicWidth() > record.width);
+                assertTrue(drawable.getIntrinsicHeight() > record.height);
+
+                // Set a low density. This will result in a smaller drawable and
+                // Bitmap.
+                mRes.getDisplayMetrics().densityDpi = DisplayMetrics.DENSITY_LOW;
+                drawable = decodeBitmapDrawable(resId);
+
+                bm = drawable.getBitmap();
+                assertTrue(bm.getWidth() < record.width);
+                assertTrue(bm.getHeight() < record.height);
+
+                assertEquals(bm.getWidth(), drawable.getIntrinsicWidth());
+                assertEquals(bm.getHeight(), drawable.getIntrinsicHeight());
+            }
+        } finally {
+            mRes.getDisplayMetrics().densityDpi = originalDensity;
+        }
+    }
+
+    private static class AssetRecord {
+        public final String name;
+        public final int width;
+        public final int height;
+
+        AssetRecord(String name, int width, int height) {
+            this.name = name;
+            this.width = width;
+            this.height = height;
+        }
+    }
+
+    @Test
+    public void testAssetSource() {
+        AssetRecord[] records = new AssetRecord[] {
+                new AssetRecord("almost-red-adobe.png", 1, 1),
+                new AssetRecord("green-p3.png", 64, 64),
+                new AssetRecord("green-srgb.png", 64, 64),
+                new AssetRecord("prophoto-rgba16f.png", 64, 64),
+                new AssetRecord("purple-cmyk.png", 64, 64),
+                new AssetRecord("purple-displayprofile.png", 64, 64),
+                new AssetRecord("red-adobergb.png", 64, 64),
+                new AssetRecord("translucent-green-p3.png", 64, 64),
+        };
+
+        // CTS infrastructure fails to create F16 HARDWARE Bitmaps, so this switches
+        // to using software.
+        ImageDecoder.OnHeaderDecodedListener listener = (decoder, info, s) -> {
+            decoder.setAllocator(ImageDecoder.ALLOCATOR_SOFTWARE);
+        };
+
+        AssetManager assets = mRes.getAssets();
+        for (AssetRecord record : records) {
+            ImageDecoder.Source src = ImageDecoder.createSource(assets, record.name);
+            try {
+                Drawable dr = ImageDecoder.decodeDrawable(src, listener);
+                assertNotNull(record.name, dr);
+                assertEquals(record.name, record.width, dr.getIntrinsicWidth());
+                assertEquals(record.name, record.height, dr.getIntrinsicHeight());
+            } catch (IOException e) {
+                fail("Failed to decode asset " + record.name + " with " + e);
             }
         }
     }

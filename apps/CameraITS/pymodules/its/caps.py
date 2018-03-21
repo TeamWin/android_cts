@@ -97,8 +97,8 @@ def legacy(props):
     return props.has_key("android.info.supportedHardwareLevel") and \
            props["android.info.supportedHardwareLevel"] == 2
 
-def radial_distortion_correction(props):
-    """Returns whether a device supports RADIAL_DISTORTION_CORRECTION
+def distortion_correction(props):
+    """Returns whether a device supports DISTORTION_CORRECTION
     capabilities.
 
     Args:
@@ -107,8 +107,8 @@ def radial_distortion_correction(props):
     Returns:
         Boolean.
     """
-    return props.has_key("android.lens.radialDistortion") and \
-           props["android.lens.radialDistortion"] is not None
+    return props.has_key("android.lens.distortion") and \
+           props["android.lens.distortion"] is not None
 
 def manual_sensor(props):
     """Returns whether a device supports MANUAL_SENSOR capabilities.
@@ -493,4 +493,3 @@ class __UnitTest(unittest.TestCase):
 
 if __name__ == '__main__':
     unittest.main()
-
