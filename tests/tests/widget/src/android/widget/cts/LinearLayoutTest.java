@@ -1220,10 +1220,11 @@ public class LinearLayoutTest {
     @Test
     public void testZeroWeightDistributionHorizontal() throws Throwable {
         // Ensure that weight is correctly distributed when there is no excess space.
-        final View parent = mActivity.findViewById(android.R.id.content);
-        WidgetTestUtils.runOnMainAndDrawSync(mActivityRule, parent,
+        final View content = mActivity.findViewById(android.R.id.content);
+        WidgetTestUtils.runOnMainAndDrawSync(mActivityRule, content,
                 () -> mActivity.setContentView(R.layout.linearlayout_zero_weight_horizontal));
 
+        final View parent = mActivity.findViewById(R.id.container1);
         assertEquals(0, mActivity.findViewById(R.id.view1).getWidth());
         assertEquals(0, mActivity.findViewById(R.id.view2).getWidth());
         assertEquals(parent.getWidth(), mActivity.findViewById(R.id.view3).getWidth());
@@ -1232,13 +1233,14 @@ public class LinearLayoutTest {
     @Test
     public void testZeroWeightDistributionVertical() throws Throwable {
         // Ensure that weight is correctly distributed when there is no excess space.
-        final View parent = mActivity.findViewById(android.R.id.content);
-        WidgetTestUtils.runOnMainAndDrawSync(mActivityRule, parent,
+        final View content = mActivity.findViewById(android.R.id.content);
+        WidgetTestUtils.runOnMainAndDrawSync(mActivityRule, content,
                 () -> mActivity.setContentView(R.layout.linearlayout_zero_weight_vertical));
 
-        assertEquals(0, mActivity.findViewById(R.id.view1).getWidth());
-        assertEquals(0, mActivity.findViewById(R.id.view2).getWidth());
-        assertEquals(parent.getWidth(), mActivity.findViewById(R.id.view3).getWidth());
+        final View parent = mActivity.findViewById(R.id.container1);
+        assertEquals(0, mActivity.findViewById(R.id.view1).getHeight());
+        assertEquals(0, mActivity.findViewById(R.id.view2).getHeight());
+        assertEquals(parent.getHeight(), mActivity.findViewById(R.id.view3).getHeight());
     }
 
     private class MockListView extends ListView {
