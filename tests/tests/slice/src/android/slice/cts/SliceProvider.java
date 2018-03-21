@@ -78,10 +78,12 @@ public class SliceProvider extends android.app.slice.SliceProvider {
                 Builder b = new Builder(sliceUri);
                 return b.addSubSlice(new Slice.Builder(b).build(), "subslice").build();
             case "/text":
-                return new Slice.Builder(sliceUri).addText("Expected text", "text").build();
+                return new Slice.Builder(sliceUri).addText("Expected text", "text",
+                        Collections.emptyList()).build();
             case "/icon":
                 return new Slice.Builder(sliceUri).addIcon(
-                        Icon.createWithResource(getContext(), R.drawable.size_48x48), "icon").build();
+                        Icon.createWithResource(getContext(), R.drawable.size_48x48), "icon",
+                        Collections.emptyList()).build();
             case "/action":
                 Builder builder = new Builder(sliceUri);
                 Slice subSlice = new Slice.Builder(builder).build();
@@ -89,20 +91,23 @@ public class SliceProvider extends android.app.slice.SliceProvider {
                         new Intent(getContext().getPackageName() + ".action"), 0);
                 return builder.addAction(broadcast, subSlice, "action").build();
             case "/int":
-                return new Slice.Builder(sliceUri).addInt(0xff121212, "int").build();
+                return new Slice.Builder(sliceUri).addInt(0xff121212, "int",
+                        Collections.emptyList()).build();
             case "/timestamp":
-                return new Slice.Builder(sliceUri).addTimestamp(43, "timestamp").build();
+                return new Slice.Builder(sliceUri).addLong(43, "timestamp",
+                        Collections.emptyList()).build();
             case "/hints":
                 return new Slice.Builder(sliceUri)
-                        .addHints(Slice.HINT_LIST)
-                        .addText("Text", null, Slice.HINT_TITLE)
+                        .addHints(Arrays.asList(Slice.HINT_LIST))
+                        .addText("Text", null, Arrays.asList(Slice.HINT_TITLE))
                         .addIcon(Icon.createWithResource(getContext(), R.drawable.size_48x48),
-                                null, Slice.HINT_NO_TINT, Slice.HINT_LARGE)
+                                null, Arrays.asList(Slice.HINT_NO_TINT, Slice.HINT_LARGE))
                         .build();
             case "/bundle":
                 Bundle b1 = new Bundle();
                 b1.putParcelable("a", new TestParcel());
-                return new Slice.Builder(sliceUri).addBundle(b1, "bundle").build();
+                return new Slice.Builder(sliceUri).addBundle(b1, "bundle",
+                        Collections.emptyList()).build();
             case "/spec":
                 return new Slice.Builder(sliceUri)
                         .setSpec(new SliceSpec(SPEC_TYPE, SPEC_REV))
