@@ -26,7 +26,7 @@ AR_CHECKED = ["4:3", "16:9"]  # Aspect ratios checked
 FOV_PERCENT_RTOL = 0.15  # Relative tolerance on circle FoV % to expected
 LARGE_SIZE = 2000   # Define the size of a large image
 NAME = os.path.basename(__file__).split(".")[0]
-NUM_DISTORT_PARAMS = 6
+NUM_DISTORT_PARAMS = 5
 THRESH_L_AR = 0.02  # aspect ratio test threshold of large images
 THRESH_XS_AR = 0.05  # aspect ratio test threshold of mini images
 THRESH_L_CP = 0.02  # Crop test threshold of large images
@@ -120,14 +120,14 @@ def main():
                                          cap_raw["height"])
             img_raw = its.image.convert_capture_to_rgb_image(cap_raw,
                                                              props=props)
-            if its.caps.radial_distortion_correction(props):
+            if its.caps.distortion_correction(props):
                 # Intrinsic cal is of format: [f_x, f_y, c_x, c_y, s]
                 # [f_x, f_y] is the horizontal and vertical focal lengths,
                 # [c_x, c_y] is the position of the optical axis,
                 # and s is skew of sensor plane vs lens plane.
                 print "Applying intrinsic calibration and distortion params"
                 ical = np.array(props["android.lens.intrinsicCalibration"])
-                msg = "Cannot include radial distortion without intrinsic cal!"
+                msg = "Cannot include lens distortion without intrinsic cal!"
                 assert len(ical) == 5, msg
                 sensor_h = props["android.sensor.info.physicalSize"]["height"]
                 sensor_w = props["android.sensor.info.physicalSize"]["width"]
@@ -152,14 +152,14 @@ def main():
                 assert np.isclose(fd_h_pix, ical[1], rtol=0.20), e_msg
 
                 # distortion
-                rad_dist = props["android.lens.radialDistortion"]
-                print "android.lens.radialDistortion:", rad_dist
+                rad_dist = props["android.lens.distortion"]
+                print "android.lens.distortion:", rad_dist
                 e_msg = "%s param(s) found. %d expected." % (len(rad_dist),
                                                              NUM_DISTORT_PARAMS)
                 assert len(rad_dist) == NUM_DISTORT_PARAMS, e_msg
-                opencv_dist = np.array([rad_dist[1], rad_dist[2],
-                                        rad_dist[4], rad_dist[5],
-                                        rad_dist[3]])
+                opencv_dist = np.array([rad_dist[0], rad_dist[1],
+                                        rad_dist[3], rad_dist[4],
+                                        rad_dist[2]])
                 print "dist:", opencv_dist
                 img_raw = cv2.undistort(img_raw, k, opencv_dist)
             size_raw = img_raw.shape
@@ -237,7 +237,7 @@ def main():
                         fmt_iter, fmt_cmpr, w_iter, h_iter, size_cmpr[0],
                         size_cmpr[1])
                 img = its.image.convert_capture_to_rgb_image(frm_iter)
-                if its.caps.radial_distortion_correction(props) and raw_avlb:
+                if its.caps.distortion_correction(props) and raw_avlb:
                     w_scale = float(w_iter)/w_raw
                     h_scale = float(h_iter)/h_raw
                     k_scale = np.array([[ical[0]*w_scale, ical[4],
