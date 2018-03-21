@@ -35,21 +35,21 @@ import android.support.annotation.Nullable;
 import android.support.test.InstrumentationRegistry;
 import android.view.nano.DisplayInfoProto;
 
-import com.android.server.wm.proto.nano.AppTransitionProto;
-import com.android.server.wm.proto.nano.AppWindowTokenProto;
-import com.android.server.wm.proto.nano.ConfigurationContainerProto;
-import com.android.server.wm.proto.nano.DisplayFramesProto;
-import com.android.server.wm.proto.nano.DisplayProto;
-import com.android.server.wm.proto.nano.IdentifierProto;
-import com.android.server.wm.proto.nano.PinnedStackControllerProto;
-import com.android.server.wm.proto.nano.StackProto;
-import com.android.server.wm.proto.nano.TaskProto;
-import com.android.server.wm.proto.nano.WindowContainerProto;
-import com.android.server.wm.proto.nano.WindowManagerServiceDumpProto;
-import com.android.server.wm.proto.nano.WindowStateAnimatorProto;
-import com.android.server.wm.proto.nano.WindowStateProto;
-import com.android.server.wm.proto.nano.WindowSurfaceControllerProto;
-import com.android.server.wm.proto.nano.WindowTokenProto;
+import com.android.server.wm.nano.AppTransitionProto;
+import com.android.server.wm.nano.AppWindowTokenProto;
+import com.android.server.wm.nano.ConfigurationContainerProto;
+import com.android.server.wm.nano.DisplayFramesProto;
+import com.android.server.wm.nano.DisplayProto;
+import com.android.server.wm.nano.IdentifierProto;
+import com.android.server.wm.nano.PinnedStackControllerProto;
+import com.android.server.wm.nano.StackProto;
+import com.android.server.wm.nano.TaskProto;
+import com.android.server.wm.nano.WindowContainerProto;
+import com.android.server.wm.nano.WindowManagerServiceDumpProto;
+import com.android.server.wm.nano.WindowStateAnimatorProto;
+import com.android.server.wm.nano.WindowStateProto;
+import com.android.server.wm.nano.WindowSurfaceControllerProto;
+import com.android.server.wm.nano.WindowTokenProto;
 
 import com.google.protobuf.nano.InvalidProtocolBufferNanoException;
 
