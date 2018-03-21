@@ -555,17 +555,31 @@ public class AnimatedImageDrawableTest {
 
     @Test
     public void testAutoMirroredFromXml() throws XmlPullParserException, IOException {
-        XmlPullParser parser = mRes.getXml(R.drawable.animatedimagedrawable_tag);
+        AnimatedImageDrawable drawable = parseXml(R.drawable.animatedimagedrawable_tag);
+        assertFalse(drawable.isAutoMirrored());
+
+        drawable = parseXml(R.drawable.animatedimagedrawable_automirrored);
+        assertTrue(drawable.isAutoMirrored());
+    }
+
+    private AnimatedImageDrawable parseXml(int resId) throws XmlPullParserException, IOException {
+        XmlPullParser parser = mRes.getXml(resId);
         Drawable drawable = Drawable.createFromXml(mRes, parser);
         assertNotNull(drawable);
         assertTrue(drawable instanceof AnimatedImageDrawable);
-        assertFalse(drawable.isAutoMirrored());
+        return (AnimatedImageDrawable) drawable;
+    }
 
-        parser = mRes.getXml(R.drawable.animatedimagedrawable_automirrored);
-        drawable = Drawable.createFromXml(mRes, parser);
-        assertNotNull(drawable);
-        assertTrue(drawable instanceof AnimatedImageDrawable);
-        assertTrue(drawable.isAutoMirrored());
+    @Test
+    public void testAutoStartFromXml() throws XmlPullParserException, IOException {
+        AnimatedImageDrawable drawable = parseXml(R.drawable.animatedimagedrawable_tag);
+        assertFalse(drawable.isRunning());
+
+        drawable = parseXml(R.drawable.animatedimagedrawable_autostart_false);
+        assertFalse(drawable.isRunning());
+
+        drawable = parseXml(R.drawable.animatedimagedrawable_autostart);
+        assertTrue(drawable.isRunning());
     }
 
     private void drawAndCompare(Bitmap expected, Drawable drawable) {
