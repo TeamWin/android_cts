@@ -56,4 +56,9 @@ public class SettingsStateManager implements StateManager<String> {
     public String get() {
         return SettingsHelper.get(mNamespace, mKey);
     }
+
+    @Override
+    public String toString() {
+        return "SettingsStateManager[namespace=" + mNamespace + ", key=" + mKey + "]";
+    }
 }
