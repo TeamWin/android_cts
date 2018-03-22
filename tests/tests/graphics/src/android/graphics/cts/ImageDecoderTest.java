@@ -883,7 +883,7 @@ public class ImageDecoderTest {
                 });
             });
         } catch (DecodeException e) {
-            assertEquals(ImageDecoder.ERROR_SOURCE_INCOMPLETE, e.getError());
+            assertEquals(DecodeException.SOURCE_INCOMPLETE, e.getError());
             assertSame(src, e.getSource());
         } catch (IOException ioe) {
             fail("Threw some other exception: " + ioe);
@@ -937,7 +937,7 @@ public class ImageDecoderTest {
         } catch (IOException ioe) {
             assertTrue(ioe instanceof DecodeException);
             DecodeException decodeException = (DecodeException) ioe;
-            assertEquals(ImageDecoder.ERROR_SOURCE_EXCEPTION, decodeException.getError());
+            assertEquals(DecodeException.SOURCE_EXCEPTION, decodeException.getError());
             Throwable throwable = decodeException.getCause();
             assertNotNull(throwable);
             assertTrue(throwable instanceof IOException);
@@ -954,7 +954,7 @@ public class ImageDecoderTest {
             @Override
             public boolean onPartialImage(DecodeException e) {
                 wasCalled = true;
-                assertEquals(ImageDecoder.ERROR_SOURCE_INCOMPLETE, e.getError());
+                assertEquals(DecodeException.SOURCE_INCOMPLETE, e.getError());
                 assertSame(source, e.getSource());
                 return returnDrawable;
             }
@@ -1010,7 +1010,7 @@ public class ImageDecoderTest {
             @Override
             public boolean onPartialImage(DecodeException e) {
                 wasCalled = true;
-                assertEquals(ImageDecoder.ERROR_SOURCE_ERROR, e.getError());
+                assertEquals(DecodeException.SOURCE_MALFORMED_DATA, e.getError());
                 assertSame(source, e.getSource());
                 return true;
             }
