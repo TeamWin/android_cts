@@ -69,8 +69,6 @@ public class BusinessLogicPreparer implements ITargetCleaner {
     private static final String FILE_EXT = ".bl";
     /* Default amount of time to attempt connection to the business logic service, in seconds */
     private static final int DEFAULT_CONNECTION_TIME = 10;
-    /* URI of api scope to use when retrieving business logic rules */
-    private static final String APE_API_SCOPE = "https://www.googleapis.com/auth/androidPartner";
     /* Dynamic config constants */
     private static final String DYNAMIC_CONFIG_FEATURES_KEY = "business_logic_device_features";
     private static final String DYNAMIC_CONFIG_PROPERTIES_KEY = "business_logic_device_properties";
@@ -86,6 +84,11 @@ public class BusinessLogicPreparer implements ITargetCleaner {
     @Option(name = "business-logic-api-key", description = "The API key to use when accessing " +
             "the business logic service.", mandatory = true)
     private String mApiKey;
+
+    @Option(name = "business-logic-api-scope", description = "The URI of api scope to use when " +
+            "retrieving business logic rules.")
+    /* URI of api scope to use when retrieving business logic rules */
+    private  String mApiScope;
 
     @Option(name = "cleanup", description = "Whether to remove config files from the test " +
             "target after test completion.")
@@ -295,9 +298,13 @@ public class BusinessLogicPreparer implements ITargetCleaner {
             CLog.d("Environment variable APE_API_KEY not set.");
             return null;
         }
+        if (Strings.isNullOrEmpty(mApiScope)) {
+            CLog.d("API scope not set, use flag --business-logic-api-scope.");
+            return null;
+        }
         try {
             Credential credential = GoogleCredential.fromStream(new FileInputStream(keyFilePath))
-                    .createScoped(Collections.singleton(APE_API_SCOPE));
+                    .createScoped(Collections.singleton(mApiScope));
             credential.refreshToken();
             return credential.getAccessToken();
         } catch (FileNotFoundException e) {
