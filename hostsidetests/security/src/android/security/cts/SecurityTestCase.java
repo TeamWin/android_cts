@@ -43,10 +43,9 @@ public class SecurityTestCase extends DeviceTestCase {
     public void setUp() throws Exception {
         super.setUp();
 
-        String cmdOut = getDevice().executeShellCommand("dumpsys meminfo");
-        long uptime = Long.parseLong(cmdOut.substring(cmdOut.indexOf("Uptime: ") + 8,
-                      cmdOut.indexOf("Realtime: ") - 1))/1000;
-        kernelStartTime = System.currentTimeMillis()/1000 - uptime;
+        String uptime = getDevice().executeShellCommand("cat /proc/uptime");
+        kernelStartTime = System.currentTimeMillis()/1000 -
+            Integer.parseInt(uptime.substring(0, uptime.indexOf('.')));
         //TODO:(badash@): Watch for other things to track.
         //     Specifically time when app framework starts
     }
@@ -55,10 +54,9 @@ public class SecurityTestCase extends DeviceTestCase {
      * Allows a CTS test to pass if called after a planned reboot.
      */
     public void updateKernelStartTime() throws Exception {
-        String cmdOut = getDevice().executeShellCommand("dumpsys meminfo");
-        long uptime = Long.parseLong(cmdOut.substring(cmdOut.indexOf("Uptime: ") + 8,
-                      cmdOut.indexOf("Realtime: ") - 1))/1000;
-        kernelStartTime = System.currentTimeMillis()/1000 - uptime;
+        String uptime = getDevice().executeShellCommand("cat /proc/uptime");
+        kernelStartTime = System.currentTimeMillis()/1000 -
+            Integer.parseInt(uptime.substring(0, uptime.indexOf('.')));
     }
 
     /**
@@ -94,11 +92,11 @@ public class SecurityTestCase extends DeviceTestCase {
     @Override
     public void tearDown() throws Exception {
         getDevice().waitForDeviceAvailable(120 * 1000);
-        String cmdOut = getDevice().executeShellCommand("dumpsys meminfo");
-        long uptime = Long.parseLong(cmdOut.substring(cmdOut.indexOf("Uptime: ") + 8,
-                      cmdOut.indexOf("Realtime: ") - 1))/1000;
+        String uptime = getDevice().executeShellCommand("cat /proc/uptime");
         assertTrue("Phone has had a hard reset",
-            (System.currentTimeMillis()/1000 - uptime - kernelStartTime < 2));
+            (System.currentTimeMillis()/1000 -
+                Integer.parseInt(uptime.substring(0, uptime.indexOf('.')))
+                    - kernelStartTime < 2));
         //TODO(badash@): add ability to catch runtime restart
         getDevice().executeAdbCommand("unroot");
     }
