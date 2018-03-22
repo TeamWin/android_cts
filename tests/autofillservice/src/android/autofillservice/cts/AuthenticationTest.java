@@ -21,6 +21,8 @@ import static android.app.Activity.RESULT_OK;
 import static android.autofillservice.cts.Helper.ID_PASSWORD;
 import static android.autofillservice.cts.Helper.ID_USERNAME;
 import static android.autofillservice.cts.Helper.UNUSED_AUTOFILL_VALUE;
+import static android.autofillservice.cts.Helper.assertTextAndValue;
+import static android.autofillservice.cts.Helper.findNodeByResourceId;
 import static android.autofillservice.cts.LoginActivity.getWelcomeMessage;
 import static android.service.autofill.SaveInfo.SAVE_DATA_TYPE_PASSWORD;
 import static android.view.View.IMPORTANT_FOR_AUTOFILL_NO;
@@ -28,6 +30,7 @@ import static android.view.View.IMPORTANT_FOR_AUTOFILL_NO;
 import static com.google.common.truth.Truth.assertThat;
 import static com.google.common.truth.Truth.assertWithMessage;
 
+import android.app.assist.AssistStructure.ViewNode;
 import android.autofillservice.cts.CannedFillResponse.CannedDataset;
 import android.autofillservice.cts.InstrumentedAutoFillService.SaveRequest;
 import android.content.IntentSender;
@@ -978,6 +981,33 @@ public class AuthenticationTest extends AbstractLoginActivityTestCase {
         mUiBot.selectDataset("Tap to auth response");
         callback.assertUiHiddenEvent(username);
         mUiBot.assertNoDatasets();
+
+        if (!canSave) {
+            // Our work is done!
+            return;
+        }
+
+        // Set credentials...
+        mActivity.onUsername((v) -> v.setText("malkovich"));
+        mActivity.onPassword((v) -> v.setText("malkovich"));
+
+        // ...and login
+        final String expectedMessage = getWelcomeMessage("malkovich");
+        final String actualMessage = mActivity.tapLogin();
+        assertWithMessage("Wrong welcome msg").that(actualMessage).isEqualTo(expectedMessage);
+
+        // Assert the snack bar is shown and tap "Save".
+        mUiBot.saveForAutofill(true, SAVE_DATA_TYPE_PASSWORD);
+
+        final SaveRequest saveRequest = sReplier.getNextSaveRequest();
+        sReplier.assertNoUnhandledSaveRequests();
+        assertThat(saveRequest.datasetIds).isNull();
+
+        // Assert value of expected fields - should not be sanitized.
+        final ViewNode usernameNode = findNodeByResourceId(saveRequest.structure, ID_USERNAME);
+        assertTextAndValue(usernameNode, "malkovich");
+        final ViewNode passwordNode = findNodeByResourceId(saveRequest.structure, ID_PASSWORD);
+        assertTextAndValue(passwordNode, "malkovich");
     }
 
     @Test
