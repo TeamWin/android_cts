@@ -53,7 +53,7 @@ To run a test module:
 'run cts --module <module_name>'
 
 To run a specific test:
-'run cts --test <test_name>'
+'run cts --module <module_name> --test <test_name>'
 
 To shard a plan test run on multiple devices
 'run cts --shards <number of shards>
