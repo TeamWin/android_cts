@@ -64,6 +64,10 @@ public class FillResponseTest {
         assertThrows(IllegalArgumentException.class,
                 () -> mBuilder.setAuthentication(new AutofillId[] {}, mIntentSender,
                         mPresentation));
+        // ids with null value
+        assertThrows(IllegalArgumentException.class,
+                () -> mBuilder.setAuthentication(new AutofillId[] {null}, mIntentSender,
+                        mPresentation));
         // null intent sender
         assertThrows(IllegalArgumentException.class,
                 () -> mBuilder.setAuthentication(mIds, null, mPresentation));
