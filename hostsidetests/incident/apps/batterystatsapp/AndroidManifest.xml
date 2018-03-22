@@ -35,8 +35,6 @@
 
         <activity android:name=".BatteryStatsForegroundActivity" android:exported="true" />
 
-        <service android:name=".BatteryStatsWifiTransferTests$TransferService" android:exported="true" />
-
         <service android:name=".SimpleForegroundService" android:exported="true" />
 
         <service android:name=".SimpleJobService"
