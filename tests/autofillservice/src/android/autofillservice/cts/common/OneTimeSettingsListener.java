@@ -16,6 +16,9 @@
 
 package android.autofillservice.cts.common;
 
+import static android.autofillservice.cts.common.SettingsHelper.NAMESPACE_GLOBAL;
+import static android.autofillservice.cts.common.SettingsHelper.NAMESPACE_SECURE;
+
 import android.content.ContentResolver;
 import android.content.Context;
 import android.database.ContentObserver;
@@ -36,10 +39,25 @@ public final class OneTimeSettingsListener extends ContentObserver {
     private final String mKey;
 
     public OneTimeSettingsListener(Context context, String key) {
+        this(context, NAMESPACE_SECURE, key);
+    }
+
+    public OneTimeSettingsListener(Context context, String namespace, String key) {
         super(new Handler(Looper.getMainLooper()));
         mKey = key;
         mResolver = context.getContentResolver();
-        mResolver.registerContentObserver(Settings.Secure.getUriFor(key), false, this);
+        final Uri uri;
+        switch (namespace) {
+            case NAMESPACE_SECURE:
+                uri = Settings.Secure.getUriFor(key);
+                break;
+            case NAMESPACE_GLOBAL:
+                uri = Settings.Global.getUriFor(key);
+                break;
+            default:
+                throw new IllegalArgumentException("invalid namespace: " + namespace);
+        }
+        mResolver.registerContentObserver(uri, false, this);
     }
 
     @Override

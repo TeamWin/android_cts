@@ -96,7 +96,7 @@ public class VirtualContainerActivityCompatModeTest extends VirtualContainerActi
 
     @Test
     public void testMultipleUrlBars_firstDoesNotExist() throws Exception {
-        SettingsHelper.set(NAMESPACE_GLOBAL, AUTOFILL_COMPAT_MODE_ALLOWED_PACKAGES,
+        SettingsHelper.syncSet(sContext, NAMESPACE_GLOBAL, AUTOFILL_COMPAT_MODE_ALLOWED_PACKAGES,
                 SERVICE_PACKAGE + "[first_am_i,my_url_bar]");
 
         // Set service.
@@ -120,7 +120,7 @@ public class VirtualContainerActivityCompatModeTest extends VirtualContainerActi
 
     @Test
     public void testMultipleUrlBars_bothExist() throws Exception {
-        SettingsHelper.set(NAMESPACE_GLOBAL, AUTOFILL_COMPAT_MODE_ALLOWED_PACKAGES,
+        SettingsHelper.syncSet(sContext, NAMESPACE_GLOBAL, AUTOFILL_COMPAT_MODE_ALLOWED_PACKAGES,
                 SERVICE_PACKAGE + "[my_url_bar,my_url_bar2]");
 
         // Set service.
