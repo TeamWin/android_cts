@@ -33,6 +33,7 @@ import android.graphics.BitmapFactory;
 import android.graphics.Canvas;
 import android.graphics.Color;
 import android.graphics.ImageDecoder;
+import android.graphics.ImageDecoder.DecodeException;
 import android.graphics.ImageDecoder.OnPartialImageListener;
 import android.graphics.PixelFormat;
 import android.graphics.PostProcessor;
@@ -219,7 +220,7 @@ public class ImageDecoderTest {
                 assertNotNull("failed to create Source for " + fullName, src);
                 try {
                     Drawable d = ImageDecoder.decodeDrawable(src, (decoder, info, s) -> {
-                        decoder.setOnPartialImageListener((e, source) -> {
+                        decoder.setOnPartialImageListener((e) -> {
                             fail("error for image " + fullName + ":\n" + e);
                             return false;
                         });
@@ -844,8 +845,8 @@ public class ImageDecoderTest {
     @Test
     public void testGetOnPartialImageListener() {
         OnPartialImageListener[] listeners = new OnPartialImageListener[] {
-                (error, src) -> true,
-                (error, src) -> false,
+                (e) -> true,
+                (e) -> false,
                 null,
         };
 
@@ -866,14 +867,95 @@ public class ImageDecoderTest {
     }
 
     @Test
+    public void testEarlyIncomplete() {
+        byte[] bytes = getAsByteArray(R.raw.basi6a16);
+        // This is too early to create a partial image, so we throw the Exception
+        // without calling the listener.
+        int truncatedLength = 49;
+        ImageDecoder.Source src = ImageDecoder.createSource(
+                ByteBuffer.wrap(bytes, 0, truncatedLength));
+        try {
+            ImageDecoder.decodeDrawable(src, (decoder, info, s) -> {
+                decoder.setOnPartialImageListener((e) -> {
+                    fail("No need to call listener; no partial image to display!"
+                            + " Exception: " + e);
+                    return false;
+                });
+            });
+        } catch (DecodeException e) {
+            assertEquals(DecodeException.SOURCE_INCOMPLETE, e.getError());
+            assertSame(src, e.getSource());
+        } catch (IOException ioe) {
+            fail("Threw some other exception: " + ioe);
+        }
+    }
+
+    private class ExceptionStream extends InputStream {
+        private final InputStream mInputStream;
+        private final int mExceptionPosition;
+        int mPosition;
+
+        ExceptionStream(int resId, int exceptionPosition) {
+            mInputStream = mRes.openRawResource(resId);
+            mExceptionPosition = exceptionPosition;
+            mPosition = 0;
+        }
+
+        @Override
+        public int read() throws IOException {
+            if (mPosition >= mExceptionPosition) {
+                throw new IOException();
+            }
+
+            int value = mInputStream.read();
+            mPosition++;
+            return value;
+        }
+
+        @Override
+        public int read(byte[] b, int off, int len) throws IOException {
+            if (mPosition + len <= mExceptionPosition) {
+                final int bytesRead = mInputStream.read(b, off, len);
+                mPosition += bytesRead;
+                return bytesRead;
+            }
+
+            len = mExceptionPosition - mPosition;
+            mPosition += mInputStream.read(b, off, len);
+            throw new IOException();
+        }
+    }
+
+    @Test
+    public void testExceptionInStream() throws Throwable {
+        InputStream is = new ExceptionStream(R.drawable.animated, 27570);
+        ImageDecoder.Source src = ImageDecoder.createSource(mRes, is, Bitmap.DENSITY_NONE);
+        Drawable dr = null;
+        try {
+            dr = ImageDecoder.decodeDrawable(src);
+            fail("Expected to throw an exception!");
+        } catch (IOException ioe) {
+            assertTrue(ioe instanceof DecodeException);
+            DecodeException decodeException = (DecodeException) ioe;
+            assertEquals(DecodeException.SOURCE_EXCEPTION, decodeException.getError());
+            Throwable throwable = decodeException.getCause();
+            assertNotNull(throwable);
+            assertTrue(throwable instanceof IOException);
+        }
+        assertNull(dr);
+    }
+
+    @Test
     public void testOnPartialImage() {
         class PartialImageCallback implements OnPartialImageListener {
             public boolean wasCalled;
             public boolean returnDrawable;
+            public ImageDecoder.Source source;
             @Override
-            public boolean onPartialImage(int error, ImageDecoder.Source src) {
+            public boolean onPartialImage(DecodeException e) {
                 wasCalled = true;
-                assertEquals(ImageDecoder.ERROR_SOURCE_INCOMPLETE, error);
+                assertEquals(DecodeException.SOURCE_INCOMPLETE, e.getError());
+                assertSame(source, e.getSource());
                 return returnDrawable;
             }
         };
@@ -891,6 +973,7 @@ public class ImageDecoderTest {
                         ByteBuffer.wrap(bytes, 0, truncatedLength));
                 callback.wasCalled = false;
                 callback.returnDrawable = !abort;
+                callback.source = src;
                 try {
                     Drawable drawable = ImageDecoder.decodeDrawable(src, (decoder, info, s) -> {
                         decoder.setOnPartialImageListener(callback);
@@ -911,7 +994,7 @@ public class ImageDecoderTest {
             try {
                 ImageDecoder.decodeDrawable(src);
                 fail("Should have thrown an exception!");
-            } catch (ImageDecoder.IncompleteException incomplete) {
+            } catch (DecodeException incomplete) {
                 // This is the correct behavior.
             } catch (IOException e) {
                 fail("Failed with exception " + e);
@@ -923,10 +1006,12 @@ public class ImageDecoderTest {
     public void testCorruptException() {
         class PartialImageCallback implements OnPartialImageListener {
             public boolean wasCalled = false;
+            public ImageDecoder.Source source;
             @Override
-            public boolean onPartialImage(int error, ImageDecoder.Source src) {
+            public boolean onPartialImage(DecodeException e) {
                 wasCalled = true;
-                assertEquals(ImageDecoder.ERROR_SOURCE_ERROR, error);
+                assertEquals(DecodeException.SOURCE_MALFORMED_DATA, e.getError());
+                assertSame(source, e.getSource());
                 return true;
             }
         };
@@ -939,6 +1024,7 @@ public class ImageDecoderTest {
         }
         ImageDecoder.Source src = ImageDecoder.createSource(ByteBuffer.wrap(bytes));
         callback.wasCalled = false;
+        callback.source = src;
         try {
             ImageDecoder.decodeDrawable(src, (decoder, info, s) -> {
                 decoder.setOnPartialImageListener(callback);
@@ -958,7 +1044,7 @@ public class ImageDecoderTest {
                 ByteBuffer.wrap(bytes, 0, bytes.length / 2));
         try {
             ImageDecoder.decodeDrawable(src, (decoder, info, s) -> {
-                decoder.setOnPartialImageListener((e, source) -> {
+                decoder.setOnPartialImageListener((e) -> {
                     throw new DummyException();
                 });
             });
