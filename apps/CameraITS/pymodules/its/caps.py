@@ -471,7 +471,7 @@ def logical_multi_camera_physical_ids(props):
     if logical_multi_camera(props):
         physicalIds = props['android.logicalMultiCamera.physicalIds'];
         physicalIdsString = ''.join(chr(e) for e in physicalIds);
-        physicalIdsList = physicalIdsString.split('\x00');
+        physicalIdsList = filter(None, physicalIdsString.split('\x00'));
     return physicalIdsList
 
 def debug_mode():
