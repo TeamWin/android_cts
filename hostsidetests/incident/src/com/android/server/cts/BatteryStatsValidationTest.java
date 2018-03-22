@@ -64,11 +64,6 @@ public class BatteryStatsValidationTest extends ProtoDumpTestCase {
     private static final long SCREEN_STATE_CHANGE_TIMEOUT = 4000;
     private static final long SCREEN_STATE_POLLING_INTERVAL = 500;
 
-    // Low end of packet size. TODO: Get exact packet size
-    private static final int LOW_MTU = 1500;
-    // High end of packet size. TODO: Get exact packet size
-    private static final int HIGH_MTU = 2500;
-
     // Constants from BatteryStatsBgVsFgActions.java (not directly accessible here).
     public static final String KEY_ACTION = "action";
     public static final String ACTION_BLE_SCAN_OPTIMIZED = "action.ble_scan_optimized";
@@ -77,8 +72,6 @@ public class BatteryStatsValidationTest extends ProtoDumpTestCase {
     public static final String ACTION_JOB_SCHEDULE = "action.jobs";
     public static final String ACTION_SYNC = "action.sync";
     public static final String ACTION_WIFI_SCAN = "action.wifi_scan";
-    public static final String ACTION_WIFI_DOWNLOAD = "action.wifi_download";
-    public static final String ACTION_WIFI_UPLOAD = "action.wifi_upload";
     public static final String ACTION_SLEEP_WHILE_BACKGROUND = "action.sleep_background";
     public static final String ACTION_SLEEP_WHILE_TOP = "action.sleep_top";
     public static final String ACTION_SHOW_APPLICATION_OVERLAY = "action.show_application_overlay";
@@ -93,9 +86,6 @@ public class BatteryStatsValidationTest extends ProtoDumpTestCase {
         // Uninstall to clear the history in case it's still on the device.
         getDevice().uninstallPackage(DEVICE_SIDE_TEST_PACKAGE);
     }
-
-    /** Smallest possible HTTP header. */
-    private static final int MIN_HTTP_HEADER_BYTES = 26;
 
     @Override
     protected void tearDown() throws Exception {
@@ -510,70 +500,6 @@ public class BatteryStatsValidationTest extends ProtoDumpTestCase {
         assertValueRange("sy", DEVICE_SIDE_SYNC_COMPONENT, 5, 10000, 10000 * 2);
     }
 
-    /**
-     * Tests the total bytes reported for downloading over wifi.
-     */
-    public void testWifiDownload() throws Exception {
-        if (isTV() || !hasFeature(FEATURE_WIFI, true)) {
-            return;
-        }
-
-        batteryOnScreenOff();
-        installPackage(DEVICE_SIDE_TEST_APK, true);
-
-        final long FUZZ = 50 * 1024;
-
-        long prevBytes = getLongValue(getUid(), "nt", "", 6);
-
-        String requestCode = executeForeground(ACTION_WIFI_DOWNLOAD, 60_000);
-        long downloadedBytes = getDownloadedBytes(requestCode);
-        assertTrue(downloadedBytes > 0);
-        long min = prevBytes + downloadedBytes + MIN_HTTP_HEADER_BYTES;
-        long max = prevBytes + downloadedBytes + FUZZ; // Add some fuzzing.
-        assertValueRange("nt", "", 6, min, max); // wifi_bytes_rx
-        assertValueRange("nt", "", 10, min / HIGH_MTU, max / LOW_MTU); // wifi_packets_rx
-
-        // Do the background download
-        long prevBgBytes = getLongValue(getUid(), "nt", "", 20);
-        requestCode = executeBackground(ACTION_WIFI_DOWNLOAD, 60_000);
-        downloadedBytes = getDownloadedBytes(requestCode);
-
-        long minBg = prevBgBytes + downloadedBytes + MIN_HTTP_HEADER_BYTES;
-        long maxBg = prevBgBytes + downloadedBytes + FUZZ;
-        assertValueRange("nt", "", 20, minBg, maxBg); // wifi_bytes_bg_rx
-        assertValueRange("nt", "", 24, minBg / HIGH_MTU, maxBg / LOW_MTU); // wifi_packets_bg_rx
-
-        // Also increases total wifi counts.
-        min += downloadedBytes + MIN_HTTP_HEADER_BYTES;
-        max += downloadedBytes + FUZZ;
-        assertValueRange("nt", "", 6, min, max); // wifi_bytes_rx
-        assertValueRange("nt", "", 10, min / HIGH_MTU, max / LOW_MTU); // wifi_packets_rx
-
-        batteryOffScreenOn();
-    }
-
-    /**
-     * Tests the total bytes reported for uploading over wifi.
-     */
-    public void testWifiUpload() throws Exception {
-        if (isTV() || !hasFeature(FEATURE_WIFI, true)) {
-            return;
-        }
-
-        batteryOnScreenOff();
-        installPackage(DEVICE_SIDE_TEST_APK, true);
-
-        executeBackground(ACTION_WIFI_UPLOAD, 60_000);
-        int min = MIN_HTTP_HEADER_BYTES + (2 * 1024);
-        int max = min + (6 * 1024); // Add some fuzzing.
-        assertValueRange("nt", "", 21, min, max); // wifi_bytes_bg_tx
-
-        executeForeground(ACTION_WIFI_UPLOAD, 60_000);
-        assertValueRange("nt", "", 7, min * 2, max * 2); // wifi_bytes_tx
-
-        batteryOffScreenOn();
-    }
-
     private int getUid() throws Exception {
         String uidLine = getDevice().executeShellCommand("cmd package list packages -U "
                 + DEVICE_SIDE_TEST_PACKAGE);
@@ -765,27 +691,6 @@ public class BatteryStatsValidationTest extends ProtoDumpTestCase {
         } catch (com.android.tradefed.device.DeviceNotAvailableException e) {
             System.err.println(e);
         }
-    }
-
-    /**
-     * Returns the bytes downloaded for the wifi transfer download tests.
-     * @param requestCode the output of executeForeground() or executeBackground() to identify in
-     *                    the logcat the line associated with the desired download information
-     */
-    private long getDownloadedBytes(String requestCode) throws Exception {
-        String log = getDevice().executeShellCommand(
-                String.format("logcat -d -s BatteryStatsWifiTransferTests -e 'request %s d=\\d+'",
-                        requestCode));
-        String[] lines = log.split("\n");
-        long size = 0;
-        for (int i = lines.length - 1; i >= 0; i--) {
-            String[] parts = lines[i].split("d=");
-            String num = parts[parts.length - 1].trim();
-            if (num.matches("\\d+")) {
-                size = Integer.parseInt(num);
-            }
-        }
-        return size;
     }
 
     /** Determine if device is just a TV and is not expected to have proper batterystats. */
