@@ -73,6 +73,7 @@ import java.util.concurrent.TimeUnit;
 // TODO(jaewan): Implement host-side test so browser and service can run in different processes.
 @RunWith(AndroidJUnit4.class)
 @SmallTest
+@Ignore
 public class MediaBrowser2Test extends MediaController2Test {
     private static final String TAG = "MediaBrowser2Test";
 

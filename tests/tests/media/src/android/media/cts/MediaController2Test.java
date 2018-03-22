@@ -77,6 +77,7 @@ import java.util.concurrent.atomic.AtomicReference;
 @RunWith(AndroidJUnit4.class)
 @SmallTest
 @FlakyTest
+@Ignore
 public class MediaController2Test extends MediaSession2TestBase {
     private static final String TAG = "MediaController2Test";
 
