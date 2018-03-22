@@ -16,10 +16,10 @@
 
 package com.android.server.cts;
 
-import com.android.server.am.proto.MemInfoDumpProto;
-import com.android.server.am.proto.MemInfoDumpProto.AppData;
-import com.android.server.am.proto.MemInfoDumpProto.MemItem;
-import com.android.server.am.proto.MemInfoDumpProto.ProcessMemory;
+import com.android.server.am.MemInfoDumpProto;
+import com.android.server.am.MemInfoDumpProto.AppData;
+import com.android.server.am.MemInfoDumpProto.MemItem;
+import com.android.server.am.MemInfoDumpProto.ProcessMemory;
 
 /** Test to check that ActivityManager properly outputs meminfo data. */
 public class MemInfoIncidentTest extends ProtoDumpTestCase {

@@ -123,7 +123,7 @@ public class UserRestrictions {
             Settings.ACTION_SETTINGS,
             Settings.ACTION_SOUND_SETTINGS,
             Settings.ACTION_APPLICATION_SETTINGS,
-            Settings.ACTION_SOUND_SETTINGS,
+            Settings.ACTION_SETTINGS,
             Settings.ACTION_SECURITY_SETTINGS,
             Settings.ACTION_WIRELESS_SETTINGS,
             Settings.ACTION_WIRELESS_SETTINGS,

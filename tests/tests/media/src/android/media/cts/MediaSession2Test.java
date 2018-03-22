@@ -70,6 +70,7 @@ import java.util.concurrent.TimeUnit;
  */
 @RunWith(AndroidJUnit4.class)
 @SmallTest
+@Ignore
 public class MediaSession2Test extends MediaSession2TestBase {
     private static final String TAG = "MediaSession2Test";
 
