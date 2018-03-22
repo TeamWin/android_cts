@@ -62,12 +62,5 @@ public class GnssHardwareInfoTest extends GnssTestCase {
     assertTrue("gnssHardwareModelName must not be null", gnssHardwareModelName != null);
     assertTrue("gnssHardwareModelName must be descriptive - at least 4 characters long",
         gnssHardwareModelName.length() >= MIN_HARDWARE_MODEL_NAME_LENGTH);
-
-    if (mTestLocationManager.getLocationManager().getGnssYearOfHardware() >=
-        MIN_HARDWARE_YEAR_FOR_VALID_STRING) {
-      assertFalse("gnssHardwareModelName must be descriptive - not default value",
-          gnssHardwareModelName.contentEquals(
-              LocationManager.GNSS_HARDWARE_MODEL_NAME_UNKNOWN));
-    }
   }
 }
