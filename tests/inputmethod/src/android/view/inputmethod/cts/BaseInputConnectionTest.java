@@ -36,8 +36,6 @@ import android.text.Selection;
 import android.text.Spannable;
 import android.text.SpannableString;
 import android.text.TextUtils;
-import android.view.KeyCharacterMap;
-import android.view.KeyEvent;
 import android.view.View;
 import android.view.Window;
 import android.view.inputmethod.BaseInputConnection;
@@ -216,30 +214,6 @@ public class BaseInputConnectionTest {
         dummyConnection.setComposingText(str, str.length());
         dummyConnection.finishComposingText();
         PollingCheck.waitFor(() -> text.toString().equals(mView.getText().toString()));
-    }
-
-    /**
-     * Provides standard implementation for sending a key event to the window
-     * attached to the input connection's view
-     */
-    @Test
-    public void testSendKeyEvent() throws Throwable {
-        mActivityRule.runOnUiThread(() -> {
-            assertTrue(mView.requestFocus());
-            assertTrue(mView.isFocused());
-        });
-
-        // 12-key support
-        KeyCharacterMap keymap = KeyCharacterMap.load(KeyCharacterMap.VIRTUAL_KEYBOARD);
-        if (keymap.getKeyboardType() == KeyCharacterMap.NUMERIC) {
-            // 'Q' in case of 12-key(NUMERIC) keyboard
-            mConnection.sendKeyEvent(new KeyEvent(KeyEvent.ACTION_DOWN, KeyEvent.KEYCODE_7));
-            mConnection.sendKeyEvent(new KeyEvent(KeyEvent.ACTION_DOWN, KeyEvent.KEYCODE_7));
-        } else {
-            mInstrumentation.sendStringSync("q");
-            mInstrumentation.waitForIdleSync();
-        }
-        PollingCheck.waitFor(() -> "q".equals(mView.getText().toString()));
     }
 
     /**
