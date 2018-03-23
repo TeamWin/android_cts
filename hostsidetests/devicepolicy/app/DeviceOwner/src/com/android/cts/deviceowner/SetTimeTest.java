@@ -31,16 +31,26 @@ import java.util.concurrent.TimeUnit;
  */
 public class SetTimeTest extends BaseDeviceOwnerTest {
 
-    private final long TEST_TIME_1 = 10000000;
-    private final long TEST_TIME_2 = 100000000;
-    private final String TEST_TIME_ZONE_1 = "America/New_York";
-    private final String TEST_TIME_ZONE_2 = "America/Los_Angeles";
-    private final long TIMEOUT_SEC = 10;
+    private static final long TEST_TIME_1 = 10000000;
+    private static final long TEST_TIME_2 = 100000000;
+    private static final String TEST_TIME_ZONE_1 = "America/New_York";
+    private static final String TEST_TIME_ZONE_2 = "America/Los_Angeles";
+    private static final long TIMEOUT_SEC = 10;
+
+    // Real world time to restore after the test.
+    private long mStartTimeWallClockMillis;
+    // Elapsed time to measure time taken by the test.
+    private long mStartTimeElapsedNanos;
+
+    @Override
+    protected void setUp() throws Exception {
+        super.setUp();
+        saveTime();
+    }
 
     @Override
     protected void tearDown() throws Exception {
-        mDevicePolicyManager.setGlobalSetting(getWho(), Settings.Global.AUTO_TIME, "1");
-        mDevicePolicyManager.setGlobalSetting(getWho(), Settings.Global.AUTO_TIME_ZONE, "1");
+        restoreTime();
         super.tearDown();
     }
 
@@ -102,5 +112,22 @@ public class SetTimeTest extends BaseDeviceOwnerTest {
     public void testSetTimeZoneFailWithAutoTimezoneOn() {
         mDevicePolicyManager.setGlobalSetting(getWho(), Settings.Global.AUTO_TIME_ZONE, "1");
         assertFalse(mDevicePolicyManager.setTimeZone(getWho(), TEST_TIME_ZONE_1));
+    }
+
+    private void saveTime() {
+        mStartTimeWallClockMillis = System.currentTimeMillis();
+        mStartTimeElapsedNanos = System.nanoTime();
+    }
+
+    private void restoreTime() {
+        mDevicePolicyManager.setGlobalSetting(getWho(), Settings.Global.AUTO_TIME, "0");
+        mDevicePolicyManager.setGlobalSetting(getWho(), Settings.Global.AUTO_TIME_ZONE, "0");
+
+        final long estimatedNow = mStartTimeWallClockMillis +
+                TimeUnit.NANOSECONDS.toMillis(System.nanoTime() - mStartTimeElapsedNanos);
+        mDevicePolicyManager.setTime(getWho(), estimatedNow);
+
+        mDevicePolicyManager.setGlobalSetting(getWho(), Settings.Global.AUTO_TIME, "1");
+        mDevicePolicyManager.setGlobalSetting(getWho(), Settings.Global.AUTO_TIME_ZONE, "1");
     }
 }
