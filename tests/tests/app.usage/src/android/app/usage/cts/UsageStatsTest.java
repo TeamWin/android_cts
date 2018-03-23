@@ -40,6 +40,7 @@ import android.support.test.runner.AndroidJUnit4;
 import android.support.test.uiautomator.By;
 import android.support.test.uiautomator.UiDevice;
 import android.support.test.uiautomator.Until;
+import android.text.format.DateUtils;
 import android.util.SparseLongArray;
 
 import org.junit.Before;
@@ -186,6 +187,32 @@ public class UsageStatsTest {
                 assertEquals(UsageEvents.Event.MOVE_TO_BACKGROUND, event.getEventType());
             }
         }
+    }
+
+    @Test
+    public void testAppLaunchCount() throws Exception {
+        long endTime = System.currentTimeMillis();
+        long startTime = endTime - DateUtils.DAY_IN_MILLIS;
+        Map<String,UsageStats> events = mUsageStatsManager.queryAndAggregateUsageStats(
+                startTime, endTime);
+        UsageStats stats = events.get(mTargetPackage);
+        int startingCount = stats.getAppLaunchCount();
+        launchSubActivity(Activities.ActivityOne.class);
+        launchSubActivity(Activities.ActivityTwo.class);
+        endTime = System.currentTimeMillis();
+        events = mUsageStatsManager.queryAndAggregateUsageStats(
+                startTime, endTime);
+        stats = events.get(mTargetPackage);
+        assertEquals(startingCount + 1, stats.getAppLaunchCount());
+        mUiDevice.pressHome();
+        launchSubActivity(Activities.ActivityOne.class);
+        launchSubActivity(Activities.ActivityTwo.class);
+        launchSubActivity(Activities.ActivityThree.class);
+        endTime = System.currentTimeMillis();
+        events = mUsageStatsManager.queryAndAggregateUsageStats(
+                startTime, endTime);
+        stats = events.get(mTargetPackage);
+        assertEquals(startingCount + 2, stats.getAppLaunchCount());
     }
 
     @Test
