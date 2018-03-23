@@ -62,7 +62,6 @@ import android.content.ComponentName;
 import android.platform.test.annotations.Presubmit;
 import android.server.am.ActivityManagerState.ActivityDisplay;
 import android.support.annotation.Nullable;
-import android.support.test.filters.FlakyTest;
 
 import org.junit.Before;
 import org.junit.Test;
@@ -453,7 +452,6 @@ public class ActivityManagerMultiDisplayTests extends ActivityManagerDisplayTest
      * Tests launching an activity on simulated display and then launching another activity from the
      * first one - it must appear on the secondary display, because it was launched from there.
      */
-    @FlakyTest(bugId = 71564456)
     @Presubmit
     @Test
     public void testConsequentLaunchActivityFromSecondaryDisplay() throws Exception {
@@ -661,7 +659,6 @@ public class ActivityManagerMultiDisplayTests extends ActivityManagerDisplayTest
     /**
      * Test that move-task works when moving between displays.
      */
-    @FlakyTest(bugId = 72231060)
     @Presubmit
     @Test
     public void testMoveTaskBetweenDisplays() throws Exception {
@@ -702,7 +699,6 @@ public class ActivityManagerMultiDisplayTests extends ActivityManagerDisplayTest
      * is moved correctly.
      * This version launches virtual display creator to fullscreen stack in split-screen.
      */
-    @FlakyTest(bugId = 69573940)
     @Presubmit
     @Test
     public void testStackFocusSwitchOnDisplayRemoved() throws Exception {
@@ -1107,7 +1103,6 @@ public class ActivityManagerMultiDisplayTests extends ActivityManagerDisplayTest
     /**
      * Test that all activities that were on the private display are destroyed on display removal.
      */
-    @FlakyTest(bugId = 63404575)
     @Presubmit
     @Test
     public void testContentDestroyOnDisplayRemoved() throws Exception {
