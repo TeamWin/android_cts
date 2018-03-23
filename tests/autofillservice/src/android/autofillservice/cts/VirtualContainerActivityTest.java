@@ -43,6 +43,7 @@ import android.content.ComponentName;
 import android.graphics.Rect;
 import android.service.autofill.SaveInfo;
 import android.support.test.uiautomator.UiObject2;
+import android.text.InputType;
 import android.view.ViewGroup;
 import android.view.autofill.AutofillManager;
 
@@ -194,6 +195,13 @@ public class VirtualContainerActivityTest extends AutoFillServiceTestCase {
 
         assertThat(username.getIdEntry()).isEqualTo(ID_USERNAME);
         assertThat(password.getIdEntry()).isEqualTo(ID_PASSWORD);
+
+        assertThat(username.getInputType())
+                .isEqualTo(InputType.TYPE_CLASS_TEXT | InputType.TYPE_TEXT_VARIATION_NORMAL);
+        assertThat(usernameLabel.getInputType()).isEqualTo(0);
+        assertThat(password.getInputType())
+                .isEqualTo(InputType.TYPE_CLASS_TEXT | InputType.TYPE_TEXT_VARIATION_PASSWORD);
+        assertThat(passwordLabel.getInputType()).isEqualTo(0);
 
         final String[] autofillHints = username.getAutofillHints();
         if (mCompatMode) {
