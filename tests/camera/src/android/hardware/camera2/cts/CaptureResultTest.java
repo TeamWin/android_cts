@@ -551,6 +551,14 @@ public class CaptureResultTest extends Camera2AndroidTestCase {
             waiverKeys.add(CaptureResult.CONTROL_POST_RAW_SENSITIVITY_BOOST);
         }
 
+        // Waived if MONOCHROME capability
+        if (!staticInfo.isCapabilitySupported(
+                CameraCharacteristics.REQUEST_AVAILABLE_CAPABILITIES_MONOCHROME)) {
+            waiverKeys.add(CaptureResult.COLOR_CORRECTION_MODE);
+            waiverKeys.add(CaptureResult.COLOR_CORRECTION_TRANSFORM);
+            waiverKeys.add(CaptureResult.COLOR_CORRECTION_GAINS);
+        }
+
         if (staticInfo.getAeMaxRegionsChecked() == 0) {
             waiverKeys.add(CaptureResult.CONTROL_AE_REGIONS);
         }
