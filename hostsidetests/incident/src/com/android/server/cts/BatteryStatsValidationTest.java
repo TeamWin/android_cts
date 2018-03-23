@@ -370,9 +370,7 @@ public class BatteryStatsValidationTest extends ProtoDumpTestCase {
         }
         batteryOnScreenOff();
         installPackage(DEVICE_SIDE_TEST_APK, true);
-        // Make the test app standby-active so it can run jobs immediately
-        getDevice().executeShellCommand("am set-standby-bucket "
-                + DEVICE_SIDE_TEST_PACKAGE + " active");
+        allowImmediateSyncs();
 
         // Background test.
         executeBackground(ACTION_JOB_SCHEDULE, 60_000);
@@ -393,9 +391,7 @@ public class BatteryStatsValidationTest extends ProtoDumpTestCase {
         }
         batteryOnScreenOff();
         installPackage(DEVICE_SIDE_TEST_APK, true);
-        // Make the test app standby-active so it can run syncs immediately
-        getDevice().executeShellCommand("am set-standby-bucket "
-                + DEVICE_SIDE_TEST_PACKAGE + " active");
+        allowImmediateSyncs();
 
         // Background test.
         executeBackground(ACTION_SYNC, 60_000);
@@ -472,6 +468,7 @@ public class BatteryStatsValidationTest extends ProtoDumpTestCase {
         batteryOnScreenOff();
 
         installPackage(DEVICE_SIDE_TEST_APK, true);
+        allowImmediateSyncs();
 
         runDeviceTests(DEVICE_SIDE_TEST_PACKAGE, ".BatteryStatsJobDurationTests",
                 "testJobDuration");
@@ -489,6 +486,7 @@ public class BatteryStatsValidationTest extends ProtoDumpTestCase {
         batteryOnScreenOff();
 
         installPackage(DEVICE_SIDE_TEST_APK, true);
+        allowImmediateSyncs();
 
         runDeviceTests(DEVICE_SIDE_TEST_PACKAGE, ".BatteryStatsSyncTest", "testRunSyncs");
 
@@ -591,6 +589,12 @@ public class BatteryStatsValidationTest extends ProtoDumpTestCase {
     private void allowBackgroundServices() throws Exception {
         getDevice().executeShellCommand(String.format(
                 "cmd deviceidle tempwhitelist %s", DEVICE_SIDE_TEST_PACKAGE));
+    }
+
+    /** Make the test-app standby-active so it can run syncs and jobs immediately. */
+    protected void allowImmediateSyncs() throws Exception {
+        getDevice().executeShellCommand("am set-standby-bucket "
+                + DEVICE_SIDE_TEST_PACKAGE + " active");
     }
 
     /**
