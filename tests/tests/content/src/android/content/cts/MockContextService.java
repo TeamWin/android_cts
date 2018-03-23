@@ -25,11 +25,9 @@ import android.os.IBinder;
 import android.os.Message;
 
 /**
- * This class is used for {@link ContextWrapper}
- *
- * @see ContextWrapperTest
+ * This class is used for {@link ContextTest}.
  */
-public class MockContextWrapperService extends Service {
+public class MockContextService extends Service {
     private static boolean mHadCalledOnBind = false;
     private static boolean mHadCalledOnUnbind = false;
     private static boolean mHadCalledOnStart = false;
