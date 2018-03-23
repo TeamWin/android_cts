@@ -97,15 +97,14 @@ public final class TestUtils {
      * <p>
      * Caller's method name will be used for prefix of each media item's media id.
      *
-     * @param context context
      * @param size lits size
      * @return the newly created playlist
      */
-    public static List<MediaItem2> createPlaylist(Context context, int size) {
+    public static List<MediaItem2> createPlaylist(int size) {
         final List<MediaItem2> list = new ArrayList<>();
         String caller = Thread.currentThread().getStackTrace()[1].getMethodName();
         for (int i = 0; i < size; i++) {
-            list.add(new MediaItem2.Builder(context, MediaItem2.FLAG_PLAYABLE)
+            list.add(new MediaItem2.Builder(MediaItem2.FLAG_PLAYABLE)
                     .setMediaId(caller + "_item_" + (size + 1))
                     .setDataSourceDesc(
                             new DataSourceDesc.Builder()
@@ -119,13 +118,12 @@ public final class TestUtils {
     /**
      * Create a media item with the metadata for testing purpose.
      *
-     * @param context context
      * @return the newly created media item
-     * @see #createMetadata(Context)
+     * @see #createMetadata()
      */
-    public static MediaItem2 createMediaItemWithMetadata(Context context) {
-        return new MediaItem2.Builder(context, MediaItem2.FLAG_PLAYABLE)
-                .setMetadata(createMetadata(context)).build();
+    public static MediaItem2 createMediaItemWithMetadata() {
+        return new MediaItem2.Builder(MediaItem2.FLAG_PLAYABLE)
+                .setMetadata(createMetadata()).build();
     }
 
     /**
@@ -133,12 +131,11 @@ public final class TestUtils {
      * <p>
      * Caller's method name will be used for the media id.
      *
-     * @param context context
      * @return the newly created media item
      */
-    public static MediaMetadata2 createMetadata(Context context) {
+    public static MediaMetadata2 createMetadata() {
         String mediaId = Thread.currentThread().getStackTrace()[1].getMethodName();
-        return new MediaMetadata2.Builder(context)
+        return new MediaMetadata2.Builder()
                 .putString(MediaMetadata2.METADATA_KEY_MEDIA_ID, mediaId).build();
     }
 
