@@ -249,6 +249,9 @@ class VirtualContainerView extends View {
                     : structure.asyncNewChild(index);
             child.setAutofillId(structure.getAutofillId(), item.id);
             child.setDataIsSensitive(item.sensitive);
+            if (item.editable) {
+                child.setInputType(item.line.inputType);
+            }
             index++;
             child.setClassName(item.className);
             // Must set "fake" idEntry because that's what the test cases use to find nodes.
@@ -352,8 +355,8 @@ class VirtualContainerView extends View {
                         new Pair<>("a1", "v2"));
     }
 
-    Line addLine(String labelId, String label, String textId, String text) {
-        final Line line = new Line(labelId, label, textId, text);
+    Line addLine(String labelId, String label, String textId, String text, int inputType) {
+        final Line line = new Line(labelId, label, textId, text, inputType);
         Log.d(TAG, "addLine: " + line);
         mLines.add(line);
         mItems.put(line.label.id, line.label);
@@ -439,10 +442,12 @@ class VirtualContainerView extends View {
 
         private boolean focused;
         private boolean visible = true;
+        private final int inputType;
 
-        private Line(String labelId, String label, String textId, String text) {
+        private Line(String labelId, String label, String textId, String text, int inputType) {
             this.label = new Item(this, ++mNextChildId, labelId, label, false, false);
             this.text = new Item(this, ++mNextChildId, textId, text, true, true);
+            this.inputType = inputType;
         }
 
         void changeFocus(boolean focused) {
@@ -582,6 +587,7 @@ class VirtualContainerView extends View {
             node.setEditable(editable);
             node.setViewIdResourceName(resourceId);
             node.setVisibleToUser(true);
+            node.setInputType(line.inputType);
             if (line.absBounds != null) {
                 node.setBoundsInScreen(line.absBounds);
             }
