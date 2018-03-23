@@ -130,6 +130,42 @@ public class ActivityManagerMultiDisplayTests extends ActivityManagerDisplayTest
     }
 
     /**
+     * Tests launching an activity on primary display explicitly.
+     */
+    @Test
+    public void testLaunchActivityOnPrimaryDisplay() throws Exception {
+        // Launch activity on primary display explicitly.
+        launchActivityOnDisplay(LAUNCHING_ACTIVITY, 0);
+        mAmWmState.computeState(LAUNCHING_ACTIVITY);
+
+        mAmWmState.assertFocusedActivity("Activity launched on primary display must be focused",
+                LAUNCHING_ACTIVITY);
+
+        // Check that activity is on the right display.
+        int frontStackId = mAmWmState.getAmState().getFrontStackId(0 /* displayId */);
+        ActivityManagerState.ActivityStack frontStack
+                = mAmWmState.getAmState().getStackById(frontStackId);
+        assertEquals("Launched activity must be on the primary display and resumed",
+                getActivityName(LAUNCHING_ACTIVITY), frontStack.mResumedActivity);
+        mAmWmState.assertFocusedStack("Focus must be on primary display", frontStackId);
+
+        // Launch another activity on primary display using the first one
+        getLaunchActivityBuilder().setTargetActivity(TEST_ACTIVITY).setNewTask(true)
+                .setMultipleTask(true).setDisplayId(0).execute();
+        mAmWmState.computeState(TEST_ACTIVITY);
+
+        mAmWmState.assertFocusedActivity("Activity launched on primary display must be focused",
+                TEST_ACTIVITY);
+
+        // Check that activity is on the right display.
+        frontStackId = mAmWmState.getAmState().getFrontStackId(0 /* displayId */);
+        frontStack = mAmWmState.getAmState().getStackById(frontStackId);
+        assertEquals("Launched activity must be on the primary display and resumed",
+                getActivityName(TEST_ACTIVITY), frontStack.mResumedActivity);
+        mAmWmState.assertFocusedStack("Focus must be on primary display", frontStackId);
+    }
+
+    /**
      * Tests launching a non-resizeable activity on virtual display. It should land on the
      * default display.
      */
