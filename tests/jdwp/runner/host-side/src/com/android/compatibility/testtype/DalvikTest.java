@@ -283,11 +283,15 @@ public class DalvikTest implements IAbiReceiver, IBuildReceiver, IDeviceTest, IR
         String bitness = AbiUtils.getBitness(abiName);
 
         File tmpExcludeFile = null;
+        String excludeFile = "";
         try {
             // push one file of exclude filters to the device
             tmpExcludeFile = getExcludeFile();
             if (!mDevice.pushFile(tmpExcludeFile, EXCLUDE_FILE)) {
                 Log.logAndDisplay(LogLevel.ERROR, TAG, "Couldn't push file: " + tmpExcludeFile);
+            } else {
+                // If sucessfully pushed then add it as a filter.
+                excludeFile = String.format("--exclude-filter-file=%s", EXCLUDE_FILE);
             }
         } catch (IOException e) {
             throw new RuntimeException("Failed to parse expectations", e);
@@ -296,6 +300,7 @@ public class DalvikTest implements IAbiReceiver, IBuildReceiver, IDeviceTest, IR
         }
 
         // push one file of include filters to the device, if file exists
+        String includeFile = "";
         if (mIncludeTestFile != null) {
             String path = mIncludeTestFile.getAbsolutePath();
             if (!mIncludeTestFile.isFile() || !mIncludeTestFile.canRead()) {
@@ -303,6 +308,9 @@ public class DalvikTest implements IAbiReceiver, IBuildReceiver, IDeviceTest, IR
             }
             if (!mDevice.pushFile(mIncludeTestFile, INCLUDE_FILE)) {
                 Log.logAndDisplay(LogLevel.ERROR, TAG, "Couldn't push file: " + path);
+            } else {
+                // If sucessfully pushed then add it as a filter.
+                includeFile = String.format("--include-filter-file=%s", INCLUDE_FILE);
             }
         }
 
@@ -329,9 +337,7 @@ public class DalvikTest implements IAbiReceiver, IBuildReceiver, IDeviceTest, IR
             excludeFilters.append("--exclude-filter=");
             excludeFilters.append(ArrayUtil.join(",", mExcludeFilters));
         }
-        // Filter files
-        String includeFile = String.format("--include-filter-file=%s", INCLUDE_FILE);
-        String excludeFile = String.format("--exclude-filter-file=%s", EXCLUDE_FILE);
+
         // Communicate with DalvikTestRunner if tests should only be collected
         String collectTestsOnlyString = (mCollectTestsOnly) ? "--collect-tests-only" : "";
         final String command = String.format(COMMAND, bitness,
