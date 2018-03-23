@@ -21,6 +21,8 @@ import android.os.HardwarePropertiesManager;
 import android.test.AndroidTestCase;
 import android.util.Log;
 
+import com.android.compatibility.common.util.CddTest;
+
 import java.lang.Math;
 
 public class VrTemperatureTest extends BaseDeviceOwnerTest {
@@ -78,6 +80,7 @@ public class VrTemperatureTest extends BaseDeviceOwnerTest {
     /**
      * Tests that temperature sensors return valid values.
      */
+    @CddTest(requirement="7.9.2/C-1-13")
     public void testVrTemperatures() throws InterruptedException, SecurityException {
         if (!supportsVrHighPerformance())
             return;
