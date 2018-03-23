@@ -17,9 +17,9 @@
 package com.android.compatibility.common.tradefed.result;
 
 import com.android.ddmlib.Log.LogLevel;
-import com.android.tradefed.build.IBuildInfo;
 import com.android.tradefed.config.Option;
 import com.android.tradefed.config.OptionCopier;
+import com.android.tradefed.device.ITestDevice;
 import com.android.tradefed.invoker.IInvocationContext;
 import com.android.tradefed.log.LogUtil.CLog;
 import com.android.tradefed.result.IShardableListener;
@@ -56,10 +56,10 @@ public class ConsoleReporter implements IShardableListener {
             CLog.w("InvocationContext should not be null");
             return;
         }
-        IBuildInfo primaryBuild = context.getBuildInfos().get(0);
+        ITestDevice primaryDevice = context.getDevices().get(0);
 
         // Escape any "%" signs in the device serial.
-        mDeviceSerial = primaryBuild.getDeviceSerial().replace("%", "%%");
+        mDeviceSerial = primaryDevice.getSerialNumber().replace("%", "%%");
     }
 
     /**
@@ -104,7 +104,6 @@ public class ConsoleReporter implements IShardableListener {
      */
     @Override
     public void testIgnored(TestDescription test) {
-        mCurrentTestNum--;
         logProgress("%s ignore", test);
     }
 
