@@ -268,7 +268,7 @@ public class KeyManagementTest extends ActivityInstrumentationTestCase2<KeyManag
 
         // Install keypair.
         assertTrue(mDevicePolicyManager.installKeyPair(
-            getWho(), privKey, new Certificate[] {cert}, alias, false, false));
+            getWho(), privKey, new Certificate[] {cert}, alias, 0));
         try {
             // Request and retrieve using the alias.
             assertGranted(alias, false);
