@@ -18,6 +18,7 @@ package android.print.test;
 
 import android.app.Activity;
 import android.app.KeyguardManager;
+import android.content.res.Configuration;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.WindowManager;
@@ -48,6 +49,13 @@ public class PrintDocumentActivity extends Activity {
                     "We cannot deal with lifecycle. Hence finishing " + this + " for " + mTestId);
             finish();
         }
+    }
+
+    @Override
+    public void onConfigurationChanged(Configuration newConfig) {
+        super.onConfigurationChanged(newConfig);
+
+        Log.d(LOG_TAG, "onConfigurationChanged(" + newConfig + ")");
     }
 
     @Override
