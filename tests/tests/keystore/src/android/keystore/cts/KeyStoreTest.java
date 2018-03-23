@@ -206,7 +206,8 @@ public class KeyStoreTest extends TestCase {
         // TODO enable AndroidKeyStore when CTS can set up the keystore
         return (StandardNames.IS_RI && ks.getProvider().getName().equals("BC"))
                 || "AndroidKeyStore".equalsIgnoreCase(ks.getType())
-                || "TimaKeyStore".equalsIgnoreCase(ks.getType());
+                || "TimaKeyStore".equalsIgnoreCase(ks.getType())
+                || "KnoxAndroidKeyStore".equalsIgnoreCase(ks.getType());
     }
 
     private static boolean isNullPasswordAllowed(KeyStore ks) {
