@@ -197,24 +197,12 @@ public class MediaController2Test extends MediaSession2TestBase {
 
     @Test
     public void testFastForward() {
-        mController.fastForward();
-        try {
-            assertTrue(mPlayer.mCountDownLatch.await(WAIT_TIME_MS, TimeUnit.MILLISECONDS));
-        } catch (InterruptedException e) {
-            fail(e.getMessage());
-        }
-        assertTrue(mPlayer.mFastForwardCalled);
+        // TODO(jaewan): Implement
     }
 
     @Test
     public void testRewind() {
-        mController.rewind();
-        try {
-            assertTrue(mPlayer.mCountDownLatch.await(WAIT_TIME_MS, TimeUnit.MILLISECONDS));
-        } catch (InterruptedException e) {
-            fail(e.getMessage());
-        }
-        assertTrue(mPlayer.mRewindCalled);
+        // TODO(jaewan): Implement
     }
 
     @Test

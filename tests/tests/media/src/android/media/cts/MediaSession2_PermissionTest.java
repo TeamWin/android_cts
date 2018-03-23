@@ -16,10 +16,10 @@
 
 package android.media.cts;
 
-import static android.media.MediaSession2.COMMAND_CODE_PLAYBACK_FAST_FORWARD;
+import static android.media.MediaSession2.COMMAND_CODE_SESSION_FAST_FORWARD;
 import static android.media.MediaSession2.COMMAND_CODE_PLAYBACK_PAUSE;
 import static android.media.MediaSession2.COMMAND_CODE_PLAYBACK_PLAY;
-import static android.media.MediaSession2.COMMAND_CODE_PLAYBACK_REWIND;
+import static android.media.MediaSession2.COMMAND_CODE_SESSION_REWIND;
 import static android.media.MediaSession2.COMMAND_CODE_PLAYBACK_SEEK_TO;
 import static android.media.MediaSession2.COMMAND_CODE_PLAYBACK_SET_VOLUME;
 import static android.media.MediaSession2.COMMAND_CODE_PLAYLIST_SKIP_NEXT_ITEM;
@@ -170,14 +170,14 @@ public class MediaSession2_PermissionTest extends MediaSession2TestBase {
 
     @Test
     public void testFastForward() throws InterruptedException {
-        testOnCommandRequest(COMMAND_CODE_PLAYBACK_FAST_FORWARD, (controller) -> {
+        testOnCommandRequest(COMMAND_CODE_SESSION_FAST_FORWARD, (controller) -> {
             controller.fastForward();
         });
     }
 
     @Test
     public void testRewind() throws InterruptedException {
-        testOnCommandRequest(COMMAND_CODE_PLAYBACK_REWIND, (controller) -> {
+        testOnCommandRequest(COMMAND_CODE_SESSION_REWIND, (controller) -> {
             controller.rewind();
         });
     }
