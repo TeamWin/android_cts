@@ -414,7 +414,7 @@ public class MediaSession2Test extends MediaSession2TestBase {
     public void testGetPosition() {
         final long position = 150000;
         mPlayer.mCurrentPosition = position;
-        assertEquals(position, mSession.getPosition());
+        assertEquals(position, mSession.getCurrentPosition());
     }
 
     @Test
