@@ -182,11 +182,11 @@ public class HardwareBitmapTests extends ActivityTestBase {
 
     @Test
     public void testSetDensity() {
-        createTest().addCanvasClientWithoutUsingPicture((canvas, width, height) -> {
+        createTest().addCanvasClient((canvas, width, height) -> {
             Bitmap bitmap = BitmapFactory.decodeResource(mRes, R.drawable.robot);
             bitmap.setDensity(DisplayMetrics.DENSITY_LOW);
             canvas.drawBitmap(bitmap, 0, 0, null);
-        }, true).addCanvasClientWithoutUsingPicture((canvas, width, height) -> {
+        }, true).addCanvasClient((canvas, width, height) -> {
             Bitmap hardwareBitmap = BitmapFactory.decodeResource(mRes, R.drawable.robot,
                     HARDWARE_OPTIONS);
             hardwareBitmap.setDensity(DisplayMetrics.DENSITY_LOW);

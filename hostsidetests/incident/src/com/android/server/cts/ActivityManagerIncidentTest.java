@@ -16,18 +16,18 @@
 
 package com.android.server.cts;
 
-import com.android.server.am.proto.ActiveServicesProto;
-import com.android.server.am.proto.ActiveServicesProto.ServicesByUser;
-import com.android.server.am.proto.ActivityManagerServiceDumpBroadcastsProto;
-import com.android.server.am.proto.ActivityManagerServiceDumpProcessesProto;
-import com.android.server.am.proto.ActivityManagerServiceDumpProcessesProto.LruProcesses;
-import com.android.server.am.proto.ActivityManagerServiceDumpServicesProto;
-import com.android.server.am.proto.BroadcastQueueProto;
-import com.android.server.am.proto.BroadcastQueueProto.BroadcastSummary;
-import com.android.server.am.proto.BroadcastRecordProto;
-import com.android.server.am.proto.ProcessRecordProto;
-import com.android.server.am.proto.ServiceRecordProto;
-import com.android.server.am.proto.UidRecordProto;
+import com.android.server.am.ActiveServicesProto;
+import com.android.server.am.ActiveServicesProto.ServicesByUser;
+import com.android.server.am.ActivityManagerServiceDumpBroadcastsProto;
+import com.android.server.am.ActivityManagerServiceDumpProcessesProto;
+import com.android.server.am.ActivityManagerServiceDumpProcessesProto.LruProcesses;
+import com.android.server.am.ActivityManagerServiceDumpServicesProto;
+import com.android.server.am.BroadcastQueueProto;
+import com.android.server.am.BroadcastQueueProto.BroadcastSummary;
+import com.android.server.am.BroadcastRecordProto;
+import com.android.server.am.ProcessRecordProto;
+import com.android.server.am.ServiceRecordProto;
+import com.android.server.am.UidRecordProto;
 
 /**
  * Test to check that the activity manager service properly outputs its dump state.

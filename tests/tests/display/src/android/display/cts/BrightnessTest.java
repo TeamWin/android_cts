@@ -19,6 +19,7 @@ package android.display.cts;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
@@ -36,7 +37,7 @@ import android.provider.Settings;
 import android.support.test.InstrumentationRegistry;
 import android.support.test.filters.MediumTest;
 import android.support.test.runner.AndroidJUnit4;
-import android.test.InstrumentationTestCase;
+import android.util.Pair;
 
 import org.junit.After;
 import org.junit.Before;
@@ -84,7 +85,7 @@ public class BrightnessTest {
     }
 
     @Test
-    public void testBrightnessSliderTracking() throws IOException, InterruptedException {
+    public void testBrightnessSliderTracking() throws InterruptedException {
         if (numberOfSystemAppsWithPermission(Manifest.permission.BRIGHTNESS_SLIDER_USAGE) == 0) {
             // Don't run as there is no app that has permission to access slider usage.
             return;
@@ -134,7 +135,7 @@ public class BrightnessTest {
     }
 
     @Test
-    public void testNoTrackingForManualBrightness() throws IOException, InterruptedException {
+    public void testNoTrackingForManualBrightness() throws InterruptedException {
         if (numberOfSystemAppsWithPermission(Manifest.permission.BRIGHTNESS_SLIDER_USAGE) == 0) {
             // Don't run as there is no app that has permission to access slider usage.
             return;
@@ -167,7 +168,7 @@ public class BrightnessTest {
     }
 
     @Test
-    public void testSliderUsagePermission() throws IOException, InterruptedException {
+    public void testSliderUsagePermission() {
         revokePermission(Manifest.permission.BRIGHTNESS_SLIDER_USAGE);
 
         try {
@@ -180,7 +181,7 @@ public class BrightnessTest {
     }
 
     @Test
-    public void testConfigureBrightnessPermission() throws IOException, InterruptedException {
+    public void testConfigureBrightnessPermission() {
         revokePermission(Manifest.permission.CONFIGURE_DISPLAY_BRIGHTNESS);
 
         BrightnessConfiguration config =
@@ -198,23 +199,55 @@ public class BrightnessTest {
     }
 
     @Test
-    public void testPushSimpleCurves() throws IOException, InterruptedException {
+    public void testSetGetSimpleCurve() {
         if (numberOfSystemAppsWithPermission(
                     Manifest.permission.CONFIGURE_DISPLAY_BRIGHTNESS) == 0) {
             // Don't run as there is no app that has permission to push curves.
             return;
         }
+
         grantPermission(Manifest.permission.CONFIGURE_DISPLAY_BRIGHTNESS);
+
         BrightnessConfiguration config =
                 new BrightnessConfiguration.Builder(
                         new float[]{0.0f, 1000.0f},new float[]{20.0f, 500.0f})
                         .setDescription("some test").build();
         mDisplayManager.setBrightnessConfiguration(config);
+        BrightnessConfiguration returnedConfig = mDisplayManager.getBrightnessConfiguration();
+        assertEquals(config, returnedConfig);
+
+        // After clearing the curve we should get back the default curve.
         mDisplayManager.setBrightnessConfiguration(null);
+        returnedConfig = mDisplayManager.getBrightnessConfiguration();
+        assertEquals(mDisplayManager.getDefaultBrightnessConfiguration(), returnedConfig);
     }
 
     @Test
-    public void testSliderEventsReflectCurves() throws IOException, InterruptedException {
+    public void testGetDefaultCurve()  {
+        if (numberOfSystemAppsWithPermission(Manifest.permission.BRIGHTNESS_SLIDER_USAGE) == 0) {
+            // Don't run as there is no app that has permission to push curves.
+            return;
+        }
+
+        grantPermission(Manifest.permission.CONFIGURE_DISPLAY_BRIGHTNESS);
+
+        BrightnessConfiguration defaultConfig = mDisplayManager.getDefaultBrightnessConfiguration();
+        // Must provide a default config if an app with CONFIGURE_DISPLAY_BRIGHTNESS exists.
+        assertNotNull(defaultConfig);
+
+        Pair<float[], float[]> curve = defaultConfig.getCurve();
+        assertTrue(curve.first.length > 0);
+        assertEquals(curve.first.length, curve.second.length);
+        assertInRange(curve.first, 0, Float.MAX_VALUE);
+        assertInRange(curve.second, 0, Float.MAX_VALUE);
+        assertEquals(0.0, curve.first[0], 0.1);
+        assertMonotonic(curve.first, true /*strictly increasing*/, "lux");
+        assertMonotonic(curve.second, false /*strictly increasing*/, "nits");
+    }
+
+
+    @Test
+    public void testSliderEventsReflectCurves() throws InterruptedException {
         if (numberOfSystemAppsWithPermission(Manifest.permission.BRIGHTNESS_SLIDER_USAGE) == 0) {
             // Don't run as there is no app that has permission to access slider usage.
             return;
@@ -339,12 +372,11 @@ public class BrightnessTest {
         }
     }
 
-    private int getSystemSetting(String setting) throws IOException {
+    private int getSystemSetting(String setting) {
         return Integer.parseInt(runShellCommand("settings get system " + setting));
     }
 
-    private void setSystemSetting(String setting, int value)
-            throws IOException {
+    private void setSystemSetting(String setting, int value) {
         runShellCommand("settings put system " + setting + " " + Integer.toString(value));
     }
 
@@ -367,6 +399,28 @@ public class BrightnessTest {
     private String convertFileDescriptorToString(FileDescriptor desc) {
         try (Scanner s = new Scanner(new FileInputStream(desc)).useDelimiter("\\Z")) {
             return s.hasNext() ? s.next() : "";
+        }
+    }
+
+    private static void assertInRange(float[] values, float min, float max) {
+        for (int i = 0; i < values.length; i++) {
+            assertFalse(Float.isNaN(values[i]));
+            assertTrue(values[i] >= min);
+            assertTrue(values[i] <= max);
+        }
+    }
+
+    private static void assertMonotonic(float[] values, boolean strictlyIncreasing, String name) {
+        if (values.length <= 1) {
+            return;
+        }
+        float prev = values[0];
+        for (int i = 1; i < values.length; i++) {
+            if (prev > values[i] || (prev == values[i] && strictlyIncreasing)) {
+                String condition = strictlyIncreasing ? "strictly increasing" : "monotonic";
+                fail(name + " values must be " + condition);
+            }
+            prev = values[i];
         }
     }
 }

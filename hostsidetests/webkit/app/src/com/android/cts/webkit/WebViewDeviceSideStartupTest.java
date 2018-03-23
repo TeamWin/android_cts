@@ -214,29 +214,29 @@ public class WebViewDeviceSideStartupTest
 
     /**
      * Ensure that a WebView created on the UI thread returns that thread as its creator thread.
-     * This ensures WebView.getLooper() is not implemented as 'return Looper.myLooper();'.
+     * This ensures WebView.getWebViewLooper() is not implemented as 'return Looper.myLooper();'.
      */
     public void testGetWebViewLooperCreatedOnUiThreadFromInstrThread() {
         PackageManager pm = mActivity.getPackageManager();
         if (!pm.hasSystemFeature(PackageManager.FEATURE_WEBVIEW)) return;
 
         WebView[] webviewHolder = new WebView[1];
-        // Create the WebView on the UI thread and then ensure webview.getLooper() returns the UI
-        // thread.
+        // Create the WebView on the UI thread and then ensure webview.getWebViewLooper() returns
+        // the UI thread.
         getInstrumentation().runOnMainSync(new Runnable() {
             @Override
             public void run() {
                 webviewHolder[0] = createAndCheckWebViewLooper();
             }
         });
-        assertEquals(Looper.getMainLooper(), webviewHolder[0].getLooper());
+        assertEquals(Looper.getMainLooper(), webviewHolder[0].getWebViewLooper());
     }
 
     /**
      * Ensure that a WebView created on a background thread returns that thread as its creator
      * thread.
-     * This ensures WebView.getLooper() is not bound to the UI thread regardless of the thread it is
-     * created on..
+     * This ensures WebView.getWebViewLooper() is not bound to the UI thread regardless of the
+     * thread it is created on..
      */
     public void testGetWebViewLooperCreatedOnBackgroundThreadFromInstThread()
             throws InterruptedException {
@@ -256,14 +256,14 @@ public class WebViewDeviceSideStartupTest
             }
         });
         backgroundThread.join(TEST_TIMEOUT_MS);
-        assertEquals(backgroundThread.getLooper(), webviewHolder[0].getLooper());
+        assertEquals(backgroundThread.getLooper(), webviewHolder[0].getWebViewLooper());
     }
 
     private WebView createAndCheckWebViewLooper() {
         // Ensure we are running this on a thread with a Looper - otherwise there's no point.
         assertNotNull(Looper.myLooper());
         WebView webview = new WebView(mActivity);
-        assertEquals(Looper.myLooper(), webview.getLooper());
+        assertEquals(Looper.myLooper(), webview.getWebViewLooper());
         return webview;
     }
 }

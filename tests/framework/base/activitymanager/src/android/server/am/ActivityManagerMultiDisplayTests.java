@@ -62,7 +62,6 @@ import android.content.ComponentName;
 import android.platform.test.annotations.Presubmit;
 import android.server.am.ActivityManagerState.ActivityDisplay;
 import android.support.annotation.Nullable;
-import android.support.test.filters.FlakyTest;
 
 import org.junit.Before;
 import org.junit.Test;
@@ -127,6 +126,42 @@ public class ActivityManagerMultiDisplayTests extends ActivityManagerDisplayTest
             assertEquals("Activity launched on secondary display must have proper configuration",
                     CUSTOM_DENSITY_DPI, reportedSizes.densityDpi);
         }
+    }
+
+    /**
+     * Tests launching an activity on primary display explicitly.
+     */
+    @Test
+    public void testLaunchActivityOnPrimaryDisplay() throws Exception {
+        // Launch activity on primary display explicitly.
+        launchActivityOnDisplay(LAUNCHING_ACTIVITY, 0);
+        mAmWmState.computeState(LAUNCHING_ACTIVITY);
+
+        mAmWmState.assertFocusedActivity("Activity launched on primary display must be focused",
+                LAUNCHING_ACTIVITY);
+
+        // Check that activity is on the right display.
+        int frontStackId = mAmWmState.getAmState().getFrontStackId(0 /* displayId */);
+        ActivityManagerState.ActivityStack frontStack
+                = mAmWmState.getAmState().getStackById(frontStackId);
+        assertEquals("Launched activity must be on the primary display and resumed",
+                getActivityName(LAUNCHING_ACTIVITY), frontStack.mResumedActivity);
+        mAmWmState.assertFocusedStack("Focus must be on primary display", frontStackId);
+
+        // Launch another activity on primary display using the first one
+        getLaunchActivityBuilder().setTargetActivity(TEST_ACTIVITY).setNewTask(true)
+                .setMultipleTask(true).setDisplayId(0).execute();
+        mAmWmState.computeState(TEST_ACTIVITY);
+
+        mAmWmState.assertFocusedActivity("Activity launched on primary display must be focused",
+                TEST_ACTIVITY);
+
+        // Check that activity is on the right display.
+        frontStackId = mAmWmState.getAmState().getFrontStackId(0 /* displayId */);
+        frontStack = mAmWmState.getAmState().getStackById(frontStackId);
+        assertEquals("Launched activity must be on the primary display and resumed",
+                getActivityName(TEST_ACTIVITY), frontStack.mResumedActivity);
+        mAmWmState.assertFocusedStack("Focus must be on primary display", frontStackId);
     }
 
     /**
@@ -417,7 +452,6 @@ public class ActivityManagerMultiDisplayTests extends ActivityManagerDisplayTest
      * Tests launching an activity on simulated display and then launching another activity from the
      * first one - it must appear on the secondary display, because it was launched from there.
      */
-    @FlakyTest(bugId = 71564456)
     @Presubmit
     @Test
     public void testConsequentLaunchActivityFromSecondaryDisplay() throws Exception {
@@ -625,7 +659,6 @@ public class ActivityManagerMultiDisplayTests extends ActivityManagerDisplayTest
     /**
      * Test that move-task works when moving between displays.
      */
-    @FlakyTest(bugId = 72231060)
     @Presubmit
     @Test
     public void testMoveTaskBetweenDisplays() throws Exception {
@@ -666,7 +699,6 @@ public class ActivityManagerMultiDisplayTests extends ActivityManagerDisplayTest
      * is moved correctly.
      * This version launches virtual display creator to fullscreen stack in split-screen.
      */
-    @FlakyTest(bugId = 69573940)
     @Presubmit
     @Test
     public void testStackFocusSwitchOnDisplayRemoved() throws Exception {
@@ -1071,7 +1103,6 @@ public class ActivityManagerMultiDisplayTests extends ActivityManagerDisplayTest
     /**
      * Test that all activities that were on the private display are destroyed on display removal.
      */
-    @FlakyTest(bugId = 63404575)
     @Presubmit
     @Test
     public void testContentDestroyOnDisplayRemoved() throws Exception {

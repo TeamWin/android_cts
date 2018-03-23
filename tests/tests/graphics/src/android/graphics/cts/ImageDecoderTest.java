@@ -26,22 +26,26 @@ import static org.junit.Assert.fail;
 
 import android.content.ContentResolver;
 import android.content.Context;
+import android.content.res.AssetManager;
 import android.content.res.Resources;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.graphics.Canvas;
 import android.graphics.Color;
 import android.graphics.ImageDecoder;
+import android.graphics.ImageDecoder.DecodeException;
 import android.graphics.ImageDecoder.OnPartialImageListener;
 import android.graphics.PixelFormat;
 import android.graphics.PostProcessor;
 import android.graphics.Rect;
+import android.graphics.drawable.BitmapDrawable;
 import android.graphics.drawable.Drawable;
 import android.graphics.drawable.NinePatchDrawable;
 import android.net.Uri;
 import android.support.test.InstrumentationRegistry;
 import android.support.test.runner.AndroidJUnit4;
 import android.support.v4.content.FileProvider;
+import android.util.DisplayMetrics;
 import android.util.Size;
 import android.util.TypedValue;
 
@@ -216,7 +220,7 @@ public class ImageDecoderTest {
                 assertNotNull("failed to create Source for " + fullName, src);
                 try {
                     Drawable d = ImageDecoder.decodeDrawable(src, (decoder, info, s) -> {
-                        decoder.setOnPartialImageListener((e, source) -> {
+                        decoder.setOnPartialImageListener((e) -> {
                             fail("error for image " + fullName + ":\n" + e);
                             return false;
                         });
@@ -841,8 +845,8 @@ public class ImageDecoderTest {
     @Test
     public void testGetOnPartialImageListener() {
         OnPartialImageListener[] listeners = new OnPartialImageListener[] {
-                (error, src) -> true,
-                (error, src) -> false,
+                (e) -> true,
+                (e) -> false,
                 null,
         };
 
@@ -863,14 +867,95 @@ public class ImageDecoderTest {
     }
 
     @Test
+    public void testEarlyIncomplete() {
+        byte[] bytes = getAsByteArray(R.raw.basi6a16);
+        // This is too early to create a partial image, so we throw the Exception
+        // without calling the listener.
+        int truncatedLength = 49;
+        ImageDecoder.Source src = ImageDecoder.createSource(
+                ByteBuffer.wrap(bytes, 0, truncatedLength));
+        try {
+            ImageDecoder.decodeDrawable(src, (decoder, info, s) -> {
+                decoder.setOnPartialImageListener((e) -> {
+                    fail("No need to call listener; no partial image to display!"
+                            + " Exception: " + e);
+                    return false;
+                });
+            });
+        } catch (DecodeException e) {
+            assertEquals(DecodeException.SOURCE_INCOMPLETE, e.getError());
+            assertSame(src, e.getSource());
+        } catch (IOException ioe) {
+            fail("Threw some other exception: " + ioe);
+        }
+    }
+
+    private class ExceptionStream extends InputStream {
+        private final InputStream mInputStream;
+        private final int mExceptionPosition;
+        int mPosition;
+
+        ExceptionStream(int resId, int exceptionPosition) {
+            mInputStream = mRes.openRawResource(resId);
+            mExceptionPosition = exceptionPosition;
+            mPosition = 0;
+        }
+
+        @Override
+        public int read() throws IOException {
+            if (mPosition >= mExceptionPosition) {
+                throw new IOException();
+            }
+
+            int value = mInputStream.read();
+            mPosition++;
+            return value;
+        }
+
+        @Override
+        public int read(byte[] b, int off, int len) throws IOException {
+            if (mPosition + len <= mExceptionPosition) {
+                final int bytesRead = mInputStream.read(b, off, len);
+                mPosition += bytesRead;
+                return bytesRead;
+            }
+
+            len = mExceptionPosition - mPosition;
+            mPosition += mInputStream.read(b, off, len);
+            throw new IOException();
+        }
+    }
+
+    @Test
+    public void testExceptionInStream() throws Throwable {
+        InputStream is = new ExceptionStream(R.drawable.animated, 27570);
+        ImageDecoder.Source src = ImageDecoder.createSource(mRes, is, Bitmap.DENSITY_NONE);
+        Drawable dr = null;
+        try {
+            dr = ImageDecoder.decodeDrawable(src);
+            fail("Expected to throw an exception!");
+        } catch (IOException ioe) {
+            assertTrue(ioe instanceof DecodeException);
+            DecodeException decodeException = (DecodeException) ioe;
+            assertEquals(DecodeException.SOURCE_EXCEPTION, decodeException.getError());
+            Throwable throwable = decodeException.getCause();
+            assertNotNull(throwable);
+            assertTrue(throwable instanceof IOException);
+        }
+        assertNull(dr);
+    }
+
+    @Test
     public void testOnPartialImage() {
         class PartialImageCallback implements OnPartialImageListener {
             public boolean wasCalled;
             public boolean returnDrawable;
+            public ImageDecoder.Source source;
             @Override
-            public boolean onPartialImage(int error, ImageDecoder.Source src) {
+            public boolean onPartialImage(DecodeException e) {
                 wasCalled = true;
-                assertEquals(ImageDecoder.ERROR_SOURCE_INCOMPLETE, error);
+                assertEquals(DecodeException.SOURCE_INCOMPLETE, e.getError());
+                assertSame(source, e.getSource());
                 return returnDrawable;
             }
         };
@@ -888,6 +973,7 @@ public class ImageDecoderTest {
                         ByteBuffer.wrap(bytes, 0, truncatedLength));
                 callback.wasCalled = false;
                 callback.returnDrawable = !abort;
+                callback.source = src;
                 try {
                     Drawable drawable = ImageDecoder.decodeDrawable(src, (decoder, info, s) -> {
                         decoder.setOnPartialImageListener(callback);
@@ -908,7 +994,7 @@ public class ImageDecoderTest {
             try {
                 ImageDecoder.decodeDrawable(src);
                 fail("Should have thrown an exception!");
-            } catch (ImageDecoder.IncompleteException incomplete) {
+            } catch (DecodeException incomplete) {
                 // This is the correct behavior.
             } catch (IOException e) {
                 fail("Failed with exception " + e);
@@ -920,10 +1006,12 @@ public class ImageDecoderTest {
     public void testCorruptException() {
         class PartialImageCallback implements OnPartialImageListener {
             public boolean wasCalled = false;
+            public ImageDecoder.Source source;
             @Override
-            public boolean onPartialImage(int error, ImageDecoder.Source src) {
+            public boolean onPartialImage(DecodeException e) {
                 wasCalled = true;
-                assertEquals(ImageDecoder.ERROR_SOURCE_ERROR, error);
+                assertEquals(DecodeException.SOURCE_MALFORMED_DATA, e.getError());
+                assertSame(source, e.getSource());
                 return true;
             }
         };
@@ -936,6 +1024,7 @@ public class ImageDecoderTest {
         }
         ImageDecoder.Source src = ImageDecoder.createSource(ByteBuffer.wrap(bytes));
         callback.wasCalled = false;
+        callback.source = src;
         try {
             ImageDecoder.decodeDrawable(src, (decoder, info, s) -> {
                 decoder.setOnPartialImageListener(callback);
@@ -955,7 +1044,7 @@ public class ImageDecoderTest {
                 ByteBuffer.wrap(bytes, 0, bytes.length / 2));
         try {
             ImageDecoder.decodeDrawable(src, (decoder, info, s) -> {
-                decoder.setOnPartialImageListener((e, source) -> {
+                decoder.setOnPartialImageListener((e) -> {
                     throw new DummyException();
                 });
             });
@@ -1851,6 +1940,101 @@ public class ImageDecoderTest {
                 assertNotNull(drawable);
             } catch (IOException e) {
                 fail("Failed " + getAsResourceUri(record.resId) + " with " + e);
+            }
+        }
+    }
+
+    private BitmapDrawable decodeBitmapDrawable(int resId) {
+        ImageDecoder.Source src = ImageDecoder.createSource(mRes, resId);
+        try {
+            Drawable drawable = ImageDecoder.decodeDrawable(src);
+            assertNotNull(drawable);
+            assertTrue(drawable instanceof BitmapDrawable);
+            return (BitmapDrawable) drawable;
+        } catch (IOException e) {
+            fail("Failed " + getAsResourceUri(resId) + " with " + e);
+            return null;
+        }
+    }
+
+    @Test
+    public void testUpscale() {
+        final int originalDensity = mRes.getDisplayMetrics().densityDpi;
+
+        try {
+            for (Record record : RECORDS) {
+                final int resId = record.resId;
+
+                // Set a high density. This will result in a larger drawable, but
+                // not a larger Bitmap.
+                mRes.getDisplayMetrics().densityDpi = DisplayMetrics.DENSITY_XXXHIGH;
+                BitmapDrawable drawable = decodeBitmapDrawable(resId);
+
+                Bitmap bm = drawable.getBitmap();
+                assertEquals(record.width, bm.getWidth());
+                assertEquals(record.height, bm.getHeight());
+
+                assertTrue(drawable.getIntrinsicWidth() > record.width);
+                assertTrue(drawable.getIntrinsicHeight() > record.height);
+
+                // Set a low density. This will result in a smaller drawable and
+                // Bitmap.
+                mRes.getDisplayMetrics().densityDpi = DisplayMetrics.DENSITY_LOW;
+                drawable = decodeBitmapDrawable(resId);
+
+                bm = drawable.getBitmap();
+                assertTrue(bm.getWidth() < record.width);
+                assertTrue(bm.getHeight() < record.height);
+
+                assertEquals(bm.getWidth(), drawable.getIntrinsicWidth());
+                assertEquals(bm.getHeight(), drawable.getIntrinsicHeight());
+            }
+        } finally {
+            mRes.getDisplayMetrics().densityDpi = originalDensity;
+        }
+    }
+
+    private static class AssetRecord {
+        public final String name;
+        public final int width;
+        public final int height;
+
+        AssetRecord(String name, int width, int height) {
+            this.name = name;
+            this.width = width;
+            this.height = height;
+        }
+    }
+
+    @Test
+    public void testAssetSource() {
+        AssetRecord[] records = new AssetRecord[] {
+                new AssetRecord("almost-red-adobe.png", 1, 1),
+                new AssetRecord("green-p3.png", 64, 64),
+                new AssetRecord("green-srgb.png", 64, 64),
+                new AssetRecord("prophoto-rgba16f.png", 64, 64),
+                new AssetRecord("purple-cmyk.png", 64, 64),
+                new AssetRecord("purple-displayprofile.png", 64, 64),
+                new AssetRecord("red-adobergb.png", 64, 64),
+                new AssetRecord("translucent-green-p3.png", 64, 64),
+        };
+
+        // CTS infrastructure fails to create F16 HARDWARE Bitmaps, so this switches
+        // to using software.
+        ImageDecoder.OnHeaderDecodedListener listener = (decoder, info, s) -> {
+            decoder.setAllocator(ImageDecoder.ALLOCATOR_SOFTWARE);
+        };
+
+        AssetManager assets = mRes.getAssets();
+        for (AssetRecord record : records) {
+            ImageDecoder.Source src = ImageDecoder.createSource(assets, record.name);
+            try {
+                Drawable dr = ImageDecoder.decodeDrawable(src, listener);
+                assertNotNull(record.name, dr);
+                assertEquals(record.name, record.width, dr.getIntrinsicWidth());
+                assertEquals(record.name, record.height, dr.getIntrinsicHeight());
+            } catch (IOException e) {
+                fail("Failed to decode asset " + record.name + " with " + e);
             }
         }
     }

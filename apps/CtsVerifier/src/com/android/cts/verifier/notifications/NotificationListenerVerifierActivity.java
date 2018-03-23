@@ -34,10 +34,12 @@ import static com.android.cts.verifier.notifications.MockListener.REASON_LISTENE
 
 import android.annotation.SuppressLint;
 import android.app.ActivityManager;
+import android.app.AlertDialog;
 import android.app.Notification;
 import android.app.NotificationChannel;
 import android.app.NotificationChannelGroup;
 import android.content.Context;
+import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.os.Bundle;
@@ -66,6 +68,7 @@ public class NotificationListenerVerifierActivity extends InteractiveVerifierAct
     private static final String TAG = "NoListenerVerifier";
     private static final String NOTIFICATION_CHANNEL_ID = TAG;
     protected static final String PREFS = "listener_prefs";
+    final int NUM_NOTIFICATIONS_SENT = 3; // # notifications sent by sendNotifications()
 
     private String mTag1;
     private String mTag2;
@@ -106,6 +109,7 @@ public class NotificationListenerVerifierActivity extends InteractiveVerifierAct
         } else {
             tests.add(new IsEnabledTest());
             tests.add(new ServiceStartedTest());
+            tests.add(new SuspendedAppNotificationTest());
             tests.add(new NotificationReceivedTest());
             tests.add(new DataIntactTest());
             tests.add(new DismissOneTest());
@@ -200,6 +204,105 @@ public class NotificationListenerVerifierActivity extends InteractiveVerifierAct
     }
 
     // Tests
+
+    private class SuspendedAppNotificationTest extends InteractiveTestCase {
+        final static int READY_TO_SUSPEND = 0;
+        final static int APP_SUSPENDED = 1;
+        final static int READY_TO_UNSUSPEND = 2;
+        final static int APP_UNSUSPENDED = 3;
+        int state = -1;
+
+        @Override
+        protected View inflate(ViewGroup parent) {
+            return createAutoItem(parent, R.string.nls_suspend_app);
+        }
+
+        @Override
+        protected void setUp() {
+            MockListener.getInstance().resetData();
+            createChannel();
+            sendNotifications();
+            status = READY;
+            state = READY_TO_SUSPEND;
+        }
+
+        @Override
+        protected void test() {
+            status = RETEST;
+            if (state == READY_TO_SUSPEND) {
+                // check that notifications were posted, then clear posted
+                List<String> result = MockListener.getInstance().mPosted;
+                if (result.size() != NUM_NOTIFICATIONS_SENT) {
+                    logFail("Wanted " + NUM_NOTIFICATIONS_SENT + " notifications to be posted,"
+                            + " but got: " + result.size());
+                    status = FAIL;
+                    return;
+                } else {
+                    MockListener.getInstance().mPosted.clear();
+
+                    // prompt to suspend package
+                    status = WAIT_FOR_USER;
+                    new AlertDialog.Builder(NotificationListenerVerifierActivity.this)
+                            .setIcon(android.R.drawable.ic_dialog_info)
+                            .setTitle(R.string.nls_suspend_app_title)
+                            .setMessage(R.string.nls_suspend_app_msg)
+                            .setPositiveButton(android.R.string.ok,
+                                    new DialogInterface.OnClickListener() {
+                                        @Override
+                                        public void onClick(DialogInterface dialog, int which) {
+                                            state = APP_SUSPENDED;
+                                            status = READY;
+                                            next();
+                                        }
+                                    })
+                            .show();
+                }
+            } else if (state == APP_SUSPENDED) {
+                List<String> result = MockListener.getInstance().mRemoved;
+                if (result.size() != NUM_NOTIFICATIONS_SENT) {
+                    logFail("Wanted " + NUM_NOTIFICATIONS_SENT + " notifications to be removed,"
+                            + " but got: " + result.size());
+                    status = FAIL;
+                    return;
+                } else {
+                    state = READY_TO_UNSUSPEND;
+                }
+            } else if (state == READY_TO_UNSUSPEND) {
+                status = WAIT_FOR_USER;
+                new AlertDialog.Builder(NotificationListenerVerifierActivity.this)
+                        .setIcon(android.R.drawable.ic_dialog_info)
+                        .setTitle(R.string.nls_unsuspend_app_title)
+                        .setMessage(R.string.nls_unsuspend_app_msg)
+                        .setPositiveButton(android.R.string.ok,
+                                new DialogInterface.OnClickListener() {
+                                    @Override
+                                    public void onClick(DialogInterface dialog, int which) {
+                                        state = APP_UNSUSPENDED;
+                                        status = READY;
+                                        next();
+                                    }
+                                })
+                        .show();
+            } else {
+                List<String> result = MockListener.getInstance().mPosted;
+                if (result.size() != NUM_NOTIFICATIONS_SENT) {
+                    logFail("Wanted " + NUM_NOTIFICATIONS_SENT + " notifications to be posted,"
+                            + " but got: " + result.size());
+                    status = FAIL;
+                } else {
+                    status = PASS;
+                }
+            }
+        }
+
+        @Override
+        protected void tearDown() {
+            mNm.cancelAll();
+            deleteChannel();
+            MockListener.getInstance().resetData();
+            delay();
+        }
+    }
 
     private class NotificationReceivedTest extends InteractiveTestCase {
         @Override

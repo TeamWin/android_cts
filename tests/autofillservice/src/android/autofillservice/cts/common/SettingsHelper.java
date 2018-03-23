@@ -58,7 +58,8 @@ public final class SettingsHelper {
             return;
         }
 
-        final OneTimeSettingsListener observer = new OneTimeSettingsListener(context, key);
+        final OneTimeSettingsListener observer =
+                new OneTimeSettingsListener(context, namespace, key);
         set(namespace, key, value);
         observer.assertCalled();
 

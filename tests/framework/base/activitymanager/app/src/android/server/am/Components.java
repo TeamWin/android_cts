@@ -75,6 +75,7 @@ public class Components extends ComponentsBase {
     public static final ComponentName PIP_ON_STOP_ACTIVITY = component("PipOnStopActivity");
     public static final ComponentName PORTRAIT_ORIENTATION_ACTIVITY =
             component("PortraitOrientationActivity");
+    public static final ComponentName RECURSIVE_ACTIVITY = component("RecursiveActivity");
     public static final ComponentName RESIZEABLE_ACTIVITY = component("ResizeableActivity");
     public static final ComponentName RESUME_WHILE_PAUSING_ACTIVITY =
             component("ResumeWhilePausingActivity");

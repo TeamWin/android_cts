@@ -22,9 +22,9 @@ import android.renderscript.Type;
 import java.util.Random;
 import android.util.Log;
 
-public class rsAllocationCopyTest extends RSBaseCompute {
+public class RsAllocationCopyTest extends RSBaseCompute {
 
-    public void test_rsAllocationCopy1D_Byte() {
+    public void test_RsAllocationCopy1D_Byte() {
         Random random = new Random(0x172d8ab9);
         int width = random.nextInt(512);
         int arr_len = width;
@@ -69,7 +69,7 @@ public class rsAllocationCopyTest extends RSBaseCompute {
                    result);
     }
 
-    public void test_rsAllocationCopy1D_Short() {
+    public void test_RsAllocationCopy1D_Short() {
         Random random = new Random(0x172d8ab9);
         int width = random.nextInt(512);
         int arr_len = width;
@@ -116,7 +116,7 @@ public class rsAllocationCopyTest extends RSBaseCompute {
                    result);
     }
 
-    public void test_rsAllocationCopy1D_Int() {
+    public void test_RsAllocationCopy1D_Int() {
         Random random = new Random(0x172d8ab9);
         int width = random.nextInt(512);
         int arr_len = width;
@@ -163,7 +163,7 @@ public class rsAllocationCopyTest extends RSBaseCompute {
                    result);
     }
 
-    public void test_rsAllocationCopy1D_Float() {
+    public void test_RsAllocationCopy1D_Float() {
         Random random = new Random(0x172d8ab9);
         int width = random.nextInt(512);
         int arr_len = width;
@@ -211,7 +211,7 @@ public class rsAllocationCopyTest extends RSBaseCompute {
                    result);
     }
 
-    public void test_rsAllocationCopy1D_Long() {
+    public void test_RsAllocationCopy1D_Long() {
         Random random = new Random(0x172d8ab9);
         int width = random.nextInt(512);
         int arr_len = width;
@@ -259,7 +259,7 @@ public class rsAllocationCopyTest extends RSBaseCompute {
     }
 
 
-    public void test_rsAllocationCopy2D_Byte() {
+    public void test_RsAllocationCopy2D_Byte() {
         Random random = new Random(0x172d8ab9);
         int width = random.nextInt(128);
         int height = random.nextInt(128);
@@ -313,7 +313,7 @@ public class rsAllocationCopyTest extends RSBaseCompute {
                    result);
     }
 
-    public void test_rsAllocationCopy2D_Short() {
+    public void test_RsAllocationCopy2D_Short() {
         Random random = new Random(0x172d8ab9);
         int width = random.nextInt(128);
         int height = random.nextInt(128);
@@ -369,7 +369,7 @@ public class rsAllocationCopyTest extends RSBaseCompute {
                    result);
     }
 
-    public void test_rsAllocationCopy2D_Int() {
+    public void test_RsAllocationCopy2D_Int() {
         Random random = new Random(0x172d8ab9);
         int width = random.nextInt(128);
         int height = random.nextInt(128);
@@ -425,7 +425,7 @@ public class rsAllocationCopyTest extends RSBaseCompute {
                    result);
     }
 
-    public void test_rsAllocationCopy2D_Float() {
+    public void test_RsAllocationCopy2D_Float() {
         Random random = new Random(0x172d8ab9);
         int width = random.nextInt(128);
         int height = random.nextInt(128);
@@ -481,7 +481,7 @@ public class rsAllocationCopyTest extends RSBaseCompute {
                    result);
     }
 
-    public void test_rsAllocationCopy2D_Long() {
+    public void test_RsAllocationCopy2D_Long() {
         Random random = new Random(0x172d8ab9);
         int width = random.nextInt(128);
         int height = random.nextInt(128);

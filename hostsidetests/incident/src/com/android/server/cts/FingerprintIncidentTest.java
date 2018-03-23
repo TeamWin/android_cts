@@ -42,28 +42,22 @@ public class FingerprintIncidentTest extends ProtoDumpTestCase {
     }
 
     static void verifyFingerprintServiceDumpProto(FingerprintServiceDumpProto dump, int filterLevel) {
-        // There should be at least one user.
-        assertTrue(1 <= dump.getUsersCount());
-
         for (int i = 0; i < dump.getUsersCount(); ++i) {
             final FingerprintUserStatsProto userStats = dump.getUsers(i);
             assertTrue(0 <= userStats.getUserId());
             assertTrue(0 <= userStats.getNumFingerprints());
 
-            final PerformanceStatsProto normal = userStats.getNormal();
-            assertTrue(0 <= normal.getAccept());
-            assertTrue(0 <= normal.getReject());
-            assertTrue(0 <= normal.getAcquire());
-            assertTrue(0 <= normal.getLockout());
-            assertTrue(0 <= normal.getPermanentLockout());
-
-            final PerformanceStatsProto crypto = userStats.getCrypto();
-            assertTrue(0 <= crypto.getAccept());
-            assertTrue(0 <= crypto.getReject());
-            assertTrue(0 <= crypto.getAcquire());
-            assertTrue(0 <= crypto.getLockout());
-            assertTrue(0 <= crypto.getPermanentLockout());
+            verifyPerformanceStatsProto(userStats.getNormal());
+            verifyPerformanceStatsProto(userStats.getCrypto());
         }
+    }
+
+    private static void verifyPerformanceStatsProto(PerformanceStatsProto psp) {
+        assertTrue(0 <= psp.getAccept());
+        assertTrue(0 <= psp.getReject());
+        assertTrue(0 <= psp.getAcquire());
+        assertTrue(0 <= psp.getLockout());
+        assertTrue(0 <= psp.getPermanentLockout());
     }
 
     static boolean supportsFingerprint(ITestDevice device) throws DeviceNotAvailableException {

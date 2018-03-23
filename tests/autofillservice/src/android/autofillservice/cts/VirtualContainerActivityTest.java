@@ -29,7 +29,6 @@ import static android.autofillservice.cts.VirtualContainerView.ID_URL_BAR;
 import static android.autofillservice.cts.VirtualContainerView.LABEL_CLASS;
 import static android.autofillservice.cts.VirtualContainerView.TEXT_CLASS;
 import static android.service.autofill.SaveInfo.SAVE_DATA_TYPE_PASSWORD;
-import static android.service.autofill.SaveInfo.SAVE_DATA_TYPE_USERNAME;
 
 import static com.google.common.truth.Truth.assertThat;
 import static com.google.common.truth.Truth.assertWithMessage;
@@ -39,6 +38,7 @@ import android.autofillservice.cts.CannedFillResponse.CannedDataset;
 import android.autofillservice.cts.InstrumentedAutoFillService.FillRequest;
 import android.autofillservice.cts.InstrumentedAutoFillService.SaveRequest;
 import android.autofillservice.cts.VirtualContainerView.Line;
+import android.autofillservice.cts.VirtualContainerView.VisibilityIntegrationMode;
 import android.content.ComponentName;
 import android.graphics.Rect;
 import android.service.autofill.SaveInfo;
@@ -458,8 +458,13 @@ public class VirtualContainerActivityTest extends AutoFillServiceTestCase {
     }
 
     @Test
-    public void testSave_childViewsGone() throws Throwable {
-        saveTest(CommitType.CHILDREN_VIEWS_GONE);
+    public void testSave_childViewsGone_notifyAfm() throws Throwable {
+        saveTest(CommitType.CHILDREN_VIEWS_GONE_NOTIFY_CALLBACK_API);
+    }
+
+    @Test
+    public void testSave_childViewsGone_updateView() throws Throwable {
+        saveTest(CommitType.CHILDREN_VIEWS_GONE_NOTIFY_CALLBACK_API);
     }
 
     @Test
@@ -479,7 +484,8 @@ public class VirtualContainerActivityTest extends AutoFillServiceTestCase {
     }
 
     enum CommitType {
-        CHILDREN_VIEWS_GONE,
+        CHILDREN_VIEWS_GONE_NOTIFY_CALLBACK_API,
+        CHILDREN_VIEWS_GONE_IS_VISIBLE_API,
         PARENT_VIEW_GONE,
         EXPLICIT_COMMIT,
         SUBMIT_BUTTON_CLICKED
@@ -494,9 +500,13 @@ public class VirtualContainerActivityTest extends AutoFillServiceTestCase {
                 .setRequiredSavableIds(SAVE_DATA_TYPE_PASSWORD, ID_USERNAME, ID_PASSWORD);
 
         switch (commitType) {
-            case CHILDREN_VIEWS_GONE:
+            case CHILDREN_VIEWS_GONE_NOTIFY_CALLBACK_API:
+            case CHILDREN_VIEWS_GONE_IS_VISIBLE_API:
             case PARENT_VIEW_GONE:
-                response.setSaveInfoFlags(SaveInfo.FLAG_SAVE_ON_ALL_VIEWS_INVISIBLE);
+                if (!mCompatMode) {
+                    // Compat mode already set the flag by default
+                    response.setSaveInfoFlags(SaveInfo.FLAG_SAVE_ON_ALL_VIEWS_INVISIBLE);
+                }
                 break;
             case EXPLICIT_COMMIT:
                 // does nothing
@@ -518,10 +528,14 @@ public class VirtualContainerActivityTest extends AutoFillServiceTestCase {
         // Fill in some stuff
         mActivity.mUsername.setText("foo");
         mActivity.mPassword.setText("bar");
+
+        // Trigger save.
         switch (commitType) {
-            case CHILDREN_VIEWS_GONE:
-                mActivity.mUsername.changeVisibility(false);
-                mActivity.mPassword.changeVisibility(false);
+            case CHILDREN_VIEWS_GONE_NOTIFY_CALLBACK_API:
+                setViewsInvisible(VisibilityIntegrationMode.NOTIFY_AFM);
+                break;
+            case CHILDREN_VIEWS_GONE_IS_VISIBLE_API:
+                setViewsInvisible(VisibilityIntegrationMode.OVERRIDE_IS_VISIBLE_TO_USER);
                 break;
             case PARENT_VIEW_GONE:
                 mActivity.runOnUiThread(() -> {
@@ -539,7 +553,7 @@ public class VirtualContainerActivityTest extends AutoFillServiceTestCase {
                 throw new IllegalArgumentException("unknown type: " + commitType);
         }
 
-        // Trigger save.
+        // Assert UI is showing.
         mUiBot.saveForAutofill(true, SAVE_DATA_TYPE_PASSWORD);
 
         // Assert results
@@ -551,26 +565,120 @@ public class VirtualContainerActivityTest extends AutoFillServiceTestCase {
         assertTextAndValue(password, "bar");
     }
 
+    private void setViewsInvisible(VisibilityIntegrationMode mode) {
+        mActivity.mUsername.setVisibilityIntegrationMode(mode);
+        mActivity.mPassword.setVisibilityIntegrationMode(mode);
+        mActivity.mUsername.changeVisibility(false);
+        mActivity.mPassword.changeVisibility(false);
+    }
+
+    // NOTE: tests where save is not shown only makes sense when calling commit() explicitly,
+    // otherwise the test could pass but the UI is still shown *after* the app is committed.
+    // We could still test them by explicitly committing and then checking that the Save UI is not
+    // shown again, but then we wouldn't be effectively testing that the context was committed
+
     @Test
-    public void testSaveNotShownWhenVirtualViewValueChanges() throws Throwable {
+    public void testSaveNotShown_noUserInput() throws Throwable {
         // Set service.
         enableService();
 
         // Set expectations.
         sReplier.addResponse(new CannedFillResponse.Builder()
-                .setRequiredSavableIds(SAVE_DATA_TYPE_USERNAME, ID_USERNAME)
-                .setSaveInfoFlags(SaveInfo.FLAG_SAVE_ON_ALL_VIEWS_INVISIBLE)
-                .build());
+                .setRequiredSavableIds(SAVE_DATA_TYPE_PASSWORD, ID_USERNAME, ID_PASSWORD).build());
 
         // Trigger auto-fill.
         focusToUsernameExpectNoWindowEvent();
         sReplier.getNextFillRequest();
 
-        // Fill in some stuff
+        // Trigger save.
+        mActivity.getAutofillManager().commit();
+
+        // Assert it's not showing.
+        mUiBot.assertSaveNotShowing(SAVE_DATA_TYPE_PASSWORD);
+    }
+
+    @Test
+    public void testSaveNotShown_initialValues_noUserInput() throws Throwable {
+        // Prepare activitiy.
         mActivity.mUsername.setText("foo");
+        mActivity.mPassword.setText("bar");
+
+        // Set service.
+        enableService();
+
+        // Set expectations.
+        sReplier.addResponse(new CannedFillResponse.Builder()
+                .setRequiredSavableIds(SAVE_DATA_TYPE_PASSWORD, ID_USERNAME, ID_PASSWORD).build());
+
+        // Trigger auto-fill.
+        focusToUsernameExpectNoWindowEvent();
+        sReplier.getNextFillRequest();
 
         // Trigger save.
-        mUiBot.assertSaveNotShowing(SAVE_DATA_TYPE_USERNAME);
+        mActivity.getAutofillManager().commit();
+
+        // Assert it's not showing.
+        mUiBot.assertSaveNotShowing(SAVE_DATA_TYPE_PASSWORD);
+    }
+
+    @Test
+    public void testSaveNotShown_initialValues_noUserInput_serviceDatasets() throws Throwable {
+        // Prepare activitiy.
+        mActivity.mUsername.setText("foo");
+        mActivity.mPassword.setText("bar");
+
+        // Set service.
+        enableService();
+
+        // Set expectations.
+        sReplier.addResponse(new CannedFillResponse.Builder()
+                .addDataset(new CannedDataset.Builder()
+                        .setField(ID_USERNAME, "dude")
+                        .setField(ID_PASSWORD, "sweet")
+                        .setPresentation(createPresentation("The Dude"))
+                        .build())
+                .setRequiredSavableIds(SAVE_DATA_TYPE_PASSWORD, ID_USERNAME, ID_PASSWORD).build());
+
+        // Trigger auto-fill.
+        focusToUsernameExpectNoWindowEvent();
+        sReplier.getNextFillRequest();
+        assertDatasetShown(mActivity.mUsername, "The Dude");
+
+        // Trigger save.
+        mActivity.getAutofillManager().commit();
+
+        // Assert it's not showing.
+        mUiBot.assertSaveNotShowing(SAVE_DATA_TYPE_PASSWORD);
+    }
+
+    @Test
+    public void testSaveNotShown_userInputMatchesDatasets() throws Throwable {
+        // Prepare activitiy.
+        mActivity.mUsername.setText("foo");
+        mActivity.mPassword.setText("bar");
+
+        // Set service.
+        enableService();
+
+        // Set expectations.
+        sReplier.addResponse(new CannedFillResponse.Builder()
+                .addDataset(new CannedDataset.Builder()
+                        .setField(ID_USERNAME, "foo")
+                        .setField(ID_PASSWORD, "bar")
+                        .setPresentation(createPresentation("The Dude"))
+                        .build())
+                .setRequiredSavableIds(SAVE_DATA_TYPE_PASSWORD, ID_USERNAME, ID_PASSWORD).build());
+
+        // Trigger auto-fill.
+        focusToUsernameExpectNoWindowEvent();
+        sReplier.getNextFillRequest();
+        assertDatasetShown(mActivity.mUsername, "The Dude");
+
+        // Trigger save.
+        mActivity.getAutofillManager().commit();
+
+        // Assert it's not showing.
+        mUiBot.assertSaveNotShowing(SAVE_DATA_TYPE_PASSWORD);
     }
 
     @Test

@@ -65,6 +65,8 @@ public class StateChangerRule<T> implements TestRule {
                     final T currentValue = mStateManager.get();
                     if (!Objects.equals(currentValue, previousValue)) {
                         mStateManager.set(previousValue);
+                        // TODO: if set() thowns a RuntimeException, JUnit will silently catch it
+                        // and re-run the test case; it should fail instead.
                     }
                 }
             }

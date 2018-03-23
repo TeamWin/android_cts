@@ -45,21 +45,6 @@ public class SliceBuilderTest {
     @Test
     public void testInt() {
         Slice s = new Slice.Builder(BASE_URI)
-                .addInt(0xff121212, "subtype", Slice.HINT_TITLE)
-                .build();
-        assertEquals(BASE_URI, s.getUri());
-        assertEquals(1, s.getItems().size());
-
-        SliceItem item = s.getItems().get(0);
-        assertEquals(SliceItem.FORMAT_INT, item.getFormat());
-        assertEquals(0xff121212, item.getInt());
-        assertEquals("subtype", item.getSubType());
-        assertTrue(item.hasHint(Slice.HINT_TITLE));
-    }
-
-    @Test
-    public void testIntList() {
-        Slice s = new Slice.Builder(BASE_URI)
                 .addInt(0xff121212, "subtype", Arrays.asList(Slice.HINT_TITLE))
                 .build();
         assertEquals(BASE_URI, s.getUri());
@@ -74,22 +59,6 @@ public class SliceBuilderTest {
 
     @Test
     public void testIcon() {
-        Icon i = Icon.createWithResource(mContext, R.drawable.size_48x48);
-        Slice s = new Slice.Builder(BASE_URI)
-                .addIcon(i, "subtype", Slice.HINT_TITLE)
-                .build();
-        assertEquals(BASE_URI, s.getUri());
-        assertEquals(1, s.getItems().size());
-
-        SliceItem item = s.getItems().get(0);
-        assertEquals(SliceItem.FORMAT_IMAGE, item.getFormat());
-        assertEquals(i, item.getIcon());
-        assertEquals("subtype", item.getSubType());
-        assertTrue(item.hasHint(Slice.HINT_TITLE));
-    }
-
-    @Test
-    public void testIconList() {
         Icon i = Icon.createWithResource(mContext, R.drawable.size_48x48);
         Slice s = new Slice.Builder(BASE_URI)
                 .addIcon(i, "subtype", Arrays.asList(Slice.HINT_TITLE))
@@ -108,22 +77,6 @@ public class SliceBuilderTest {
     public void testText() {
         CharSequence i = "Some text";
         Slice s = new Slice.Builder(BASE_URI)
-                .addText(i, "subtype", Slice.HINT_TITLE)
-                .build();
-        assertEquals(BASE_URI, s.getUri());
-        assertEquals(1, s.getItems().size());
-
-        SliceItem item = s.getItems().get(0);
-        assertEquals(SliceItem.FORMAT_TEXT, item.getFormat());
-        assertEquals(i, item.getText());
-        assertEquals("subtype", item.getSubType());
-        assertTrue(item.hasHint(Slice.HINT_TITLE));
-    }
-
-    @Test
-    public void testTextList() {
-        CharSequence i = "Some text";
-        Slice s = new Slice.Builder(BASE_URI)
                 .addText(i, "subtype", Arrays.asList(Slice.HINT_TITLE))
                 .build();
         assertEquals(BASE_URI, s.getUri());
@@ -138,22 +91,6 @@ public class SliceBuilderTest {
 
     @Test
     public void testTimestamp() {
-        long i = 43L;
-        Slice s = new Slice.Builder(BASE_URI)
-                .addTimestamp(i, "subtype", Slice.HINT_TITLE)
-                .build();
-        assertEquals(BASE_URI, s.getUri());
-        assertEquals(1, s.getItems().size());
-
-        SliceItem item = s.getItems().get(0);
-        assertEquals(SliceItem.FORMAT_TIMESTAMP, item.getFormat());
-        assertEquals(i, item.getTimestamp());
-        assertEquals("subtype", item.getSubType());
-        assertTrue(item.hasHint(Slice.HINT_TITLE));
-    }
-
-    @Test
-    public void testTimestampList() {
         long i = 43L;
         Slice s = new Slice.Builder(BASE_URI)
                 .addTimestamp(i, "subtype", Arrays.asList(Slice.HINT_TITLE))
@@ -172,22 +109,6 @@ public class SliceBuilderTest {
     public void testRemoteInput() {
         RemoteInput i = new RemoteInput.Builder("key").build();
         Slice s = new Slice.Builder(BASE_URI)
-                .addRemoteInput(i, "subtype", Slice.HINT_TITLE)
-                .build();
-        assertEquals(BASE_URI, s.getUri());
-        assertEquals(1, s.getItems().size());
-
-        SliceItem item = s.getItems().get(0);
-        assertEquals(SliceItem.FORMAT_REMOTE_INPUT, item.getFormat());
-        assertEquals(i, item.getRemoteInput());
-        assertEquals("subtype", item.getSubType());
-        assertTrue(item.hasHint(Slice.HINT_TITLE));
-    }
-
-    @Test
-    public void testRemoteInputList() {
-        RemoteInput i = new RemoteInput.Builder("key").build();
-        Slice s = new Slice.Builder(BASE_URI)
                 .addRemoteInput(i, "subtype", Arrays.asList(Slice.HINT_TITLE))
                 .build();
         assertEquals(BASE_URI, s.getUri());
@@ -204,22 +125,6 @@ public class SliceBuilderTest {
     public void testBundle() {
         Bundle i = new Bundle();
         Slice s = new Slice.Builder(BASE_URI)
-                .addBundle(i, "subtype", Slice.HINT_TITLE)
-                .build();
-        assertEquals(BASE_URI, s.getUri());
-        assertEquals(1, s.getItems().size());
-
-        SliceItem item = s.getItems().get(0);
-        assertEquals(SliceItem.FORMAT_BUNDLE, item.getFormat());
-        assertEquals(i, item.getBundle());
-        assertEquals("subtype", item.getSubType());
-        assertTrue(item.hasHint(Slice.HINT_TITLE));
-    }
-
-    @Test
-    public void testBundleList() {
-        Bundle i = new Bundle();
-        Slice s = new Slice.Builder(BASE_URI)
                 .addBundle(i, "subtype", Arrays.asList(Slice.HINT_TITLE))
                 .build();
         assertEquals(BASE_URI, s.getUri());
@@ -230,23 +135,6 @@ public class SliceBuilderTest {
         assertEquals(i, item.getBundle());
         assertEquals("subtype", item.getSubType());
         assertTrue(item.hasHint(Slice.HINT_TITLE));
-    }
-
-    @Test
-    public void testAction() {
-        PendingIntent i = PendingIntent.getActivity(mContext, 0, new Intent(), 0);
-        Slice subSlice = new Slice.Builder(BASE_URI.buildUpon().appendPath("s").build()).build();
-        Slice s = new Slice.Builder(BASE_URI)
-                .addAction(i, subSlice)
-                .build();
-        assertEquals(BASE_URI, s.getUri());
-        assertEquals(1, s.getItems().size());
-
-        SliceItem item = s.getItems().get(0);
-        assertEquals(SliceItem.FORMAT_ACTION, item.getFormat());
-        assertEquals(i, item.getAction());
-        assertEquals(null, item.getSubType());
-        assertEquals(subSlice, item.getSlice());
     }
 
     @Test
@@ -263,21 +151,6 @@ public class SliceBuilderTest {
         assertEquals(SliceItem.FORMAT_ACTION, item.getFormat());
         assertEquals(i, item.getAction());
         assertEquals("subtype", item.getSubType());
-        assertEquals(subSlice, item.getSlice());
-    }
-
-    @Test
-    public void testSubslice() {
-        Slice subSlice = new Slice.Builder(BASE_URI.buildUpon().appendPath("s").build()).build();
-        Slice s = new Slice.Builder(BASE_URI)
-                .addSubSlice(subSlice)
-                .build();
-        assertEquals(BASE_URI, s.getUri());
-        assertEquals(1, s.getItems().size());
-
-        SliceItem item = s.getItems().get(0);
-        assertEquals(SliceItem.FORMAT_SLICE, item.getFormat());
-        assertEquals(null, item.getSubType());
         assertEquals(subSlice, item.getSlice());
     }
 

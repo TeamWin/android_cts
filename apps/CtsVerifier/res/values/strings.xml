@@ -1656,6 +1656,15 @@
     <string name="nls_snooze_one_time">Check that service can snooze a notification for a given time.</string>
     <string name="nls_get_snoozed">Check that service can retrieve snoozed notifications.</string>
     <string name="nls_unsnooze_one">Check that service can unsnooze a notification.</string>
+    <string name="nls_suspend_app_title">Suspend App</string>
+    <string name="nls_suspend_app_msg">Please suspend the current app by enabling USB debugging on the device and issuing the following command:\n\n
+        adb shell cmd notification suspend_package com.android.cts.verifier\n\n
+        Once the app is suspended, press OK to continue.</string>
+    <string name="nls_unsuspend_app_title">Unsuspend App</string>
+    <string name="nls_unsuspend_app_msg">Please unsuspend the current app by enabling USB debugging on the device and issuing the following command:\n\n
+        adb shell cmd notification unsuspend_package com.android.cts.verifier\n\n
+        Once the app is unsuspended, press OK to continue.</string>
+    <string name="nls_suspend_app">Check that suspended app notifications are removed and unsuspended app notifications are posted.</string>
     <string name="nas_note_missed_enqueued">Check that notification was not enqueued.</string>
     <string name="cp_test">Condition Provider test</string>
     <string name="cp_service_name">Condition Provider for CTS Verifier</string>
@@ -3147,7 +3156,7 @@ You should be prompted to select credentials; choose the ones you just installed
     <string name="disallow_apps_control">Disallow controlling apps</string>
     <string name="disallow_apps_control_action">DISABLE/UNINSTALL/FORCE STOP-ing any app in the managed device/profile other than CtsVerifier</string>
     <string name="disallow_config_cell_broadcasts">Disallow config cell broadcasts</string>
-    <string name="disallow_config_cell_broadcasts_action">Configuring cell broadcasts</string>
+    <string name="disallow_config_cell_broadcasts_action">Configuring emergency alerts(cell broadcasts)</string>
     <string name="disallow_config_credentials">Disallow config credentials</string>
     <string name="disallow_config_credentials_action">Configuring user credentials</string>
     <string name="disallow_config_mobile_networks">Disallow config mobile networks</string>

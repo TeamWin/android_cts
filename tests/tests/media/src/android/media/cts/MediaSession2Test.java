@@ -70,6 +70,7 @@ import java.util.concurrent.TimeUnit;
  */
 @RunWith(AndroidJUnit4.class)
 @SmallTest
+@Ignore
 public class MediaSession2Test extends MediaSession2TestBase {
     private static final String TAG = "MediaSession2Test";
 
@@ -640,14 +641,14 @@ public class MediaSession2Test extends MediaSession2TestBase {
         assertEquals(1, callback.commands.size());
         assertEquals(MediaSession2.COMMAND_CODE_PLAYBACK_PAUSE,
                 (long) callback.commands.get(0).getCommandCode());
-        // TODO(jaewan): uncomment followings once skipToNextItem is implemented (b/74090741)
-//        controller.skipToNextItem();
-//        assertTrue(mPlayer.mCountDownLatch.await(WAIT_TIME_MS, TimeUnit.MILLISECONDS));
-//        assertTrue(mPlayer.mSkipToNextCalled);
-//        assertFalse(mPlayer.mPauseCalled);
-//        assertEquals(2, callback.commands.size());
-//        assertEquals(MediaSession2.COMMAND_CODE_PLAYBACK_SKIP_NEXT_ITEM,
-//                (long) callback.commands.get(1).getCommandCode());
+
+        controller.play();
+        assertTrue(mPlayer.mCountDownLatch.await(WAIT_TIME_MS, TimeUnit.MILLISECONDS));
+        assertTrue(mPlayer.mPlayCalled);
+        assertFalse(mPlayer.mPauseCalled);
+        assertEquals(2, callback.commands.size());
+        assertEquals(MediaSession2.COMMAND_CODE_PLAYBACK_PLAY,
+                (long) callback.commands.get(1).getCommandCode());
     }
 
     @Test
