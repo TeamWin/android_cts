@@ -35,6 +35,7 @@
         <activity android:name="android.server.wm.DialogFrameTestActivity" />
         <activity android:name="android.server.wm.DisplayCutoutTests$TestActivity" />
         <activity android:name="android.server.wm.LocationOnScreenTests$TestActivity" />
+        <activity android:name="android.server.wm.LocationInWindowTests$TestActivity" />
 
     </application>
 
