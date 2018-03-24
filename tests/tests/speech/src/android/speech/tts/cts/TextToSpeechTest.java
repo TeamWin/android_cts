@@ -20,6 +20,8 @@ import android.os.Environment;
 import android.speech.tts.TextToSpeech;
 import android.test.AndroidTestCase;
 
+import com.android.compatibility.common.util.CddTest;
+
 import java.io.File;
 import java.util.HashMap;
 import java.util.List;
@@ -33,7 +35,8 @@ public class TextToSpeechTest extends AndroidTestCase {
     private static final String SAMPLE_FILE_NAME = "mytts.wav";
 
     private TextToSpeechWrapper mTts;
-
+    
+    @CddTest(requirement="3.11/C-0-1")
     @Override
     protected void setUp() throws Exception {
         super.setUp();
@@ -92,6 +95,7 @@ public class TextToSpeechTest extends AndroidTestCase {
         return false;
     }
 
+    @CddTest(requirement="3.11/H-0-1")
     private void assertContainsEngine(String engine, List<TextToSpeech.EngineInfo> engines) {
         for (TextToSpeech.EngineInfo engineInfo : engines) {
             if (engineInfo.name.equals(engine)) {
@@ -169,7 +173,8 @@ public class TextToSpeechTest extends AndroidTestCase {
         assertNotNull("getEngines() returned null", engines);
         assertContainsEngine(getTts().getDefaultEngine(), engines);
     }
-
+    
+    @CddTest(requirement="3.11/H-0-1/W-0-1")
     public void testGetEnginesIncludesMock() throws Exception {
         if (mTts == null) {
             return;

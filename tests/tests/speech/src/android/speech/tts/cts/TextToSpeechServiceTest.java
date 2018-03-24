@@ -26,9 +26,12 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.List;
 
+import com.android.compatibility.common.util.CddTest;
+
 /**
  * Tests for {@link android.speech.tts.TextToSpeechService} using StubTextToSpeechService.
  */
+@CddTest(requirement="3.11/H-0-1,C-1-1")
 public class TextToSpeechServiceTest extends AndroidTestCase {
     private static final String UTTERANCE = "text to speech cts test";
     private static final String SAMPLE_FILE_NAME = "mytts.wav";
