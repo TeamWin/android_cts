@@ -146,6 +146,7 @@ public class RobustnessTest extends Camera2AndroidTestCase {
 
                 assertTrue("Camera does not contain outputted image resolution " + actualSize,
                         testSizes.contains(actualSize));
+                imageReader.close();
             } finally {
                 closeDevice(id);
             }
