@@ -20,6 +20,7 @@ import static android.app.AlarmManager.ELAPSED_REALTIME_WAKEUP;
 
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
+import static org.junit.Assume.assumeTrue;
 
 import android.alarmmanager.alarmtestapp.cts.TestAlarmReceiver;
 import android.alarmmanager.alarmtestapp.cts.TestAlarmScheduler;
@@ -28,6 +29,7 @@ import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
+import android.content.res.Resources;
 import android.os.BatteryManager;
 import android.os.SystemClock;
 import android.support.test.InstrumentationRegistry;
@@ -103,6 +105,7 @@ public class AppStandbyTests {
         final IntentFilter intentFilter = new IntentFilter();
         intentFilter.addAction(TestAlarmReceiver.ACTION_REPORT_ALARM_EXPIRED);
         mContext.registerReceiver(mAlarmStateReceiver, intentFilter);
+        assumeTrue("App Standby not enabled on device", isAppStandbyEnabled());
         setAppStandbyBucket("active");
         scheduleAlarm(SystemClock.elapsedRealtime(), false, 0);
         Thread.sleep(MIN_FUTURITY);
@@ -277,9 +280,25 @@ public class AppStandbyTests {
         }
     }
 
+    private boolean isAppStandbyEnabled() throws IOException {
+        boolean powerSaveSupported = false;
+        boolean appStandbySetting = true;
+        try {
+            // check the resource first as if this fails, we evaluate to false anyway.
+            powerSaveSupported = mContext.getResources().getBoolean(Resources.getSystem()
+                    .getIdentifier("config_enableAutoPowerModes", "bool", "android"));
+            final String result = executeAndLog("settings get global app_standby_enabled");
+            appStandbySetting = (Integer.parseInt(result) == 1);
+        } catch (Resources.NotFoundException | NumberFormatException nfe) {
+            Log.i(TAG, "Exception while reading constants. Using powerSaveSupported="
+                    + powerSaveSupported + ", appStandbySetting=" + appStandbySetting, nfe);
+        }
+        return appStandbySetting && powerSaveSupported;
+    }
+
     private String executeAndLog(String cmd) throws IOException {
-        final String output = mUiDevice.executeShellCommand(cmd);
-        Log.d(TAG, "command: [" + cmd + "], output: [" + output.trim() + "]");
+        final String output = mUiDevice.executeShellCommand(cmd).trim();
+        Log.d(TAG, "command: [" + cmd + "], output: [" + output + "]");
         return output;
     }
 
