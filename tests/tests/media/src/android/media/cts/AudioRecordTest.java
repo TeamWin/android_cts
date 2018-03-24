@@ -615,6 +615,9 @@ public class AudioRecordTest {
         // We will record audio for 20 sec from active and idle state expecting
         // the recording from active state to have data while from idle silence.
         try {
+            // Ensure no race and UID active
+            makeMyUidStateActive();
+
             // Setup a recorder
             final AudioRecord candidateRecorder = new AudioRecord.Builder()
                     .setAudioSource(MediaRecorder.AudioSource.MIC)
@@ -643,7 +646,7 @@ public class AudioRecordTest {
             // Start clean
             buffer.clear();
             // Force idle the package
-            makeMyPackageIdle();
+            makeMyUidStateIdle();
             // Read five seconds of data
             readDataTimed(recorder, 5000, buffer);
             // Ensure we read empty bytes
@@ -652,7 +655,7 @@ public class AudioRecordTest {
             // Start clean
             buffer.clear();
             // Reset to active
-            makeMyPackageActive();
+            makeMyUidStateActive();
             // Read five seconds of data
             readDataTimed(recorder, 5000, buffer);
             // Ensure we read non-empty bytes
@@ -662,7 +665,7 @@ public class AudioRecordTest {
                 recorder.stop();
                 recorder.release();
             }
-            makeMyPackageActive();
+            resetMyUidState();
         }
     }
 
@@ -1489,15 +1492,21 @@ public class AudioRecordTest {
         }
     }
 
-    private static void makeMyPackageActive() throws IOException {
-        final String command = "cmd media.audio_policy reset-uid-state "
-                +  InstrumentationRegistry.getTargetContext().getPackageName();
+    private static void makeMyUidStateActive() throws IOException {
+        final String command = "cmd media.audio_policy set-uid-state "
+                + InstrumentationRegistry.getTargetContext().getPackageName() + " active";
         SystemUtil.runShellCommand(InstrumentationRegistry.getInstrumentation(), command);
     }
 
-    private static void makeMyPackageIdle() throws IOException {
+    private static void makeMyUidStateIdle() throws IOException {
         final String command = "cmd media.audio_policy set-uid-state "
                 + InstrumentationRegistry.getTargetContext().getPackageName() + " idle";
+        SystemUtil.runShellCommand(InstrumentationRegistry.getInstrumentation(), command);
+    }
+
+    private static void resetMyUidState() throws IOException {
+        final String command = "cmd media.audio_policy reset-uid-state "
+                +  InstrumentationRegistry.getTargetContext().getPackageName();
         SystemUtil.runShellCommand(InstrumentationRegistry.getInstrumentation(), command);
     }
 
