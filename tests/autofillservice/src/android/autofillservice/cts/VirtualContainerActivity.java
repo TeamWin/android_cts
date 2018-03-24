@@ -26,6 +26,7 @@ import android.autofillservice.cts.VirtualContainerView.Line;
 import android.autofillservice.cts.VirtualContainerView.Line.OneTimeLineWatcher;
 import android.graphics.Canvas;
 import android.os.Bundle;
+import android.text.InputType;
 import android.widget.EditText;
 
 /**
@@ -60,8 +61,10 @@ public class VirtualContainerActivity extends AbstractAutoFillActivity {
         mCustomView = findViewById(R.id.virtual_container_view);
 
         mUrlBar.setText("ftp://dev.null/4/8/15/16/23/42");
-        mUsername = mCustomView.addLine(ID_USERNAME_LABEL, "Username", ID_USERNAME, BLANK_VALUE);
-        mPassword = mCustomView.addLine(ID_PASSWORD_LABEL, "Password", ID_PASSWORD, BLANK_VALUE);
+        mUsername = mCustomView.addLine(ID_USERNAME_LABEL, "Username", ID_USERNAME, BLANK_VALUE,
+                InputType.TYPE_CLASS_TEXT | InputType.TYPE_TEXT_VARIATION_NORMAL);
+        mPassword = mCustomView.addLine(ID_PASSWORD_LABEL, "Password", ID_PASSWORD, BLANK_VALUE,
+                InputType.TYPE_CLASS_TEXT | InputType.TYPE_TEXT_VARIATION_PASSWORD);
     }
 
     /**
