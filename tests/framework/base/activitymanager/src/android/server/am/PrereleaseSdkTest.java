@@ -20,6 +20,7 @@ import static android.server.am.UiDeviceUtils.pressBackButton;
 import static android.server.am.prerelease.Components.MAIN_ACTIVITY;
 
 import org.junit.After;
+import org.junit.Before;
 import org.junit.Test;
 
 /**
@@ -32,6 +33,13 @@ public class PrereleaseSdkTest extends ActivityManagerTestBase {
 
     /** @see com.android.server.am.UnsupportedCompileSdkDialog */
     private static final String UNSUPPORTED_COMPILE_SDK_DIALOG = "UnsupportedCompileSdkDialog";
+
+    @Before
+    @Override
+    public void setUp() throws Exception {
+        super.setUp();
+        mAm.alwaysShowUnsupportedCompileSdkWarning(MAIN_ACTIVITY);
+    }
 
     @After
     @Override

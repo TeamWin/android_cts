@@ -31,8 +31,9 @@ import android.os.IBinder;
 import android.os.ParcelFileDescriptor;
 import android.os.RemoteException;
 import android.telephony.MbmsDownloadSession;
+import android.telephony.mbms.DownloadProgressListener;
 import android.telephony.mbms.DownloadRequest;
-import android.telephony.mbms.DownloadStateCallback;
+import android.telephony.mbms.DownloadStatusListener;
 import android.telephony.mbms.FileInfo;
 import android.telephony.mbms.FileServiceInfo;
 import android.telephony.mbms.MbmsDownloadSessionCallback;
@@ -114,7 +115,8 @@ public class CtsDownloadService extends Service {
     }
 
     private MbmsDownloadSessionCallback mAppCallback;
-    private DownloadStateCallback mDownloadStateCallback;
+    private DownloadStatusListener mDownloadStatusListener;
+    private DownloadProgressListener mDownloadProgressListener;
 
     private HandlerThread mHandlerThread;
     private Handler mHandler;
@@ -203,9 +205,16 @@ public class CtsDownloadService extends Service {
         }
 
         @Override
-        public int registerStateCallback(DownloadRequest downloadRequest,
-                DownloadStateCallback listener) throws RemoteException {
-            mDownloadStateCallback = listener;
+        public int addProgressListener(DownloadRequest downloadRequest,
+                DownloadProgressListener listener) throws RemoteException {
+            mDownloadProgressListener = listener;
+            return MbmsErrors.SUCCESS;
+        }
+
+        @Override
+        public int addStatusListener(DownloadRequest downloadRequest,
+                DownloadStatusListener listener) throws RemoteException {
+            mDownloadStatusListener = listener;
             return MbmsErrors.SUCCESS;
         }
 
@@ -243,9 +252,9 @@ public class CtsDownloadService extends Service {
         }
 
         @Override
-        public int unregisterStateCallback(DownloadRequest downloadRequest,
-                DownloadStateCallback callback) {
-            mDownloadStateCallback = null;
+        public int removeStatusListener(DownloadRequest downloadRequest,
+                DownloadStatusListener callback) {
+            mDownloadStatusListener = null;
             return MbmsErrors.SUCCESS;
         }
 
@@ -272,7 +281,7 @@ public class CtsDownloadService extends Service {
             mAppCallback = null;
             mErrorCodeOverride = MbmsErrors.SUCCESS;
             mReceivedRequests.clear();
-            mDownloadStateCallback = null;
+            mDownloadStatusListener = null;
             mTempFileRootDirPath = null;
         }
 
@@ -295,19 +304,19 @@ public class CtsDownloadService extends Service {
         public void fireOnProgressUpdated(DownloadRequest request, FileInfo fileInfo,
                 int currentDownloadSize, int fullDownloadSize,
                 int currentDecodedSize, int fullDecodedSize) {
-            if (mDownloadStateCallback == null) {
+            if (mDownloadStatusListener == null) {
                 return;
             }
-            mHandler.post(() -> mDownloadStateCallback.onProgressUpdated(request, fileInfo,
+            mHandler.post(() -> mDownloadProgressListener.onProgressUpdated(request, fileInfo,
                     currentDownloadSize, fullDownloadSize, currentDecodedSize, fullDecodedSize));
         }
 
         @Override
         public void fireOnStateUpdated(DownloadRequest request, FileInfo fileInfo, int state) {
-            if (mDownloadStateCallback == null) {
+            if (mDownloadStatusListener == null) {
                 return;
             }
-            mHandler.post(() -> mDownloadStateCallback.onStateUpdated(request, fileInfo, state));
+            mHandler.post(() -> mDownloadStatusListener.onStatusUpdated(request, fileInfo, state));
         }
 
         @Override

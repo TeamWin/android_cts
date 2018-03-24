@@ -288,16 +288,25 @@ public final class TestMeasurementUtil {
 
         int accumulatedDeltaRangeState = measurement.getAccumulatedDeltaRangeState();
         softAssert.assertTrue("accumulated_delta_range_state: " +
-                        "Accumulated delta range state",
+                "Accumulated delta range state",
                 timeInNs,
-                "0 <= X <= 7",
+                "X & ~ADR_STATE_ALL == 0",
                 String.valueOf(accumulatedDeltaRangeState),
-                accumulatedDeltaRangeState >= 0 && accumulatedDeltaRangeState <= 7);
+                (accumulatedDeltaRangeState & ~GnssMeasurement.ADR_STATE_ALL) == 0);
+        softAssert.assertTrue("accumulated_delta_range_state: " +
+                "Accumulated delta range state",
+                timeInNs,
+                "ADR_STATE_HALF_CYCLE_REPORTED, or !ADR_STATE_HALF_CYCLE_RESOLVED",
+                String.valueOf(accumulatedDeltaRangeState),
+                ((accumulatedDeltaRangeState &
+                  GnssMeasurement.ADR_STATE_HALF_CYCLE_REPORTED) != 0) ||
+                 (accumulatedDeltaRangeState &
+                  GnssMeasurement.ADR_STATE_HALF_CYCLE_RESOLVED) == 0);
         if (accumulatedDeltaRangeState > 0) {
             double accumulatedDeltaRangeInMeters =
                     measurement.getAccumulatedDeltaRangeMeters();
             softAssert.assertTrue("accumulated_delta_range_m: " +
-                            "Accumulated delta range in meter",
+                    "Accumulated delta range in meter",
                     timeInNs,
                     "X != 0.0",
                     String.valueOf(accumulatedDeltaRangeInMeters),
@@ -305,7 +314,7 @@ public final class TestMeasurementUtil {
             double accumulatedDeltaRangeUncertainty =
                     measurement.getAccumulatedDeltaRangeUncertaintyMeters();
             softAssert.assertTrue("accumulated_delta_range_uncertainty_m: " +
-                            "Accumulated delta range uncertainty in meter",
+                    "Accumulated delta range uncertainty in meter",
                     timeInNs,
                     "X > 0.0",
                     String.valueOf(accumulatedDeltaRangeUncertainty),

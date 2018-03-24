@@ -1,4 +1,4 @@
-# Copyright (C) 2017 The Android Open Source Project
+# Copyright (C) 2018 The Android Open Source Project
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -14,6 +14,9 @@
 
 LOCAL_PATH:= $(call my-dir)
 
+#
+# NativeMidiEchoTest
+#
 include $(CLEAR_VARS)
 
 # Don't include this package in any target.
@@ -22,17 +25,22 @@ LOCAL_MODULE_TAGS := optional
 # When built, explicitly put it in the data partition.
 LOCAL_MODULE_PATH := $(TARGET_OUT_DATA_APPS)
 
-LOCAL_STATIC_JAVA_LIBRARIES := ub-uiautomator android-support-test
-
-LOCAL_SRC_FILES := $(call all-java-files-under, src)
-LOCAL_SRC_FILES += $(call all-java-files-under, app/src)
-
+# Tag this module as a cts test artifact
 LOCAL_COMPATIBILITY_SUITE := cts vts general-tests
 
-LOCAL_PACKAGE_NAME := CtsAlarmManagerTestCases
+LOCAL_SRC_FILES := $(call all-java-files-under, java)
 
-LOCAL_PRIVATE_PLATFORM_APIS := true
+LOCAL_STATIC_JAVA_LIBRARIES := compatibility-device-util ctstestrunner
+LOCAL_JNI_SHARED_LIBRARIES := libnativemidi_jni
+LOCAL_JAVA_LIBRARIES := android.test.base.stubs
+
+# Must match the package name in CtsTestCaseList.mk
+LOCAL_PACKAGE_NAME := CtsNativeMidiTestCases
+LOCAL_MULTILIB := both
+
+LOCAL_SDK_VERSION := current
+LOCAL_NDK_STL_VARIANT := c++_static
 
 include $(BUILD_CTS_PACKAGE)
 
-include $(call all-makefiles-under, $(LOCAL_PATH))
+include $(call all-makefiles-under,$(LOCAL_PATH))

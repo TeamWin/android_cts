@@ -4601,6 +4601,39 @@ public class ViewTest {
         assertEquals(Color.GREEN, greenShadow.getOutlineAmbientShadowColor());
     }
 
+    @Test
+    public void testPivot() {
+        View view = new View(mContext);
+        int widthSpec = View.MeasureSpec.makeMeasureSpec(100, View.MeasureSpec.EXACTLY);
+        int heightSpec = View.MeasureSpec.makeMeasureSpec(200, View.MeasureSpec.EXACTLY);
+        view.measure(widthSpec, heightSpec);
+        assertEquals(100, view.getMeasuredWidth());
+        assertEquals(200, view.getMeasuredHeight());
+        view.layout(0, 0, 100, 200);
+        assertEquals(100, view.getWidth());
+        assertEquals(200, view.getHeight());
+
+        // Assert default pivot behavior
+        assertEquals(50, view.getPivotX(), 0.0f);
+        assertEquals(100, view.getPivotY(), 0.0f);
+        assertFalse(view.isPivotSet());
+
+        // Assert it changes as expected
+        view.setPivotX(15);
+        assertEquals(15, view.getPivotX(), 0.0f);
+        assertEquals(100, view.getPivotY(), 0.0f);
+        assertTrue(view.isPivotSet());
+        view.setPivotY(0);
+        assertEquals(0, view.getPivotY(), 0.0f);
+        assertTrue(view.isPivotSet());
+
+        // Asset resetting back to default
+        view.resetPivot();
+        assertEquals(50, view.getPivotX(), 0.0f);
+        assertEquals(100, view.getPivotY(), 0.0f);
+        assertFalse(view.isPivotSet());
+    }
+
     private static class MockDrawable extends Drawable {
         private boolean mCalledSetTint = false;
 

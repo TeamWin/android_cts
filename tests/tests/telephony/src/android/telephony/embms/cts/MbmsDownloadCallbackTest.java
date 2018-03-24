@@ -18,8 +18,9 @@ package android.telephony.embms.cts;
 
 import android.telephony.MbmsDownloadSession;
 import android.telephony.cts.embmstestapp.CtsDownloadService;
+import android.telephony.mbms.DownloadProgressListener;
 import android.telephony.mbms.DownloadRequest;
-import android.telephony.mbms.DownloadStateCallback;
+import android.telephony.mbms.DownloadStatusListener;
 import android.telephony.mbms.FileInfo;
 
 import com.android.internal.os.SomeArgs;
@@ -28,16 +29,33 @@ import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.TimeUnit;
 
-public class MbmsDownloadStateCallbackTest extends MbmsDownloadTestBase {
+public class MbmsDownloadCallbackTest extends MbmsDownloadTestBase {
     private static final long SHORT_TIMEOUT = 500;
 
-    private class TestDSCallback extends DownloadStateCallback {
-        private final BlockingQueue<SomeArgs> mProgressUpdatedCalls = new LinkedBlockingQueue<>();
-        private final BlockingQueue<SomeArgs> mStateUpdatedCalls = new LinkedBlockingQueue<>();
+    private class TestDSCallback extends DownloadStatusListener {
+        private final BlockingQueue<SomeArgs> mCalls = new LinkedBlockingQueue<>();
 
-        public TestDSCallback(int filterFlags) {
-            super(filterFlags);
+        @Override
+        public void onStatusUpdated(DownloadRequest request, FileInfo fileInfo,
+                @MbmsDownloadSession.DownloadStatus int state) {
+            SomeArgs args = SomeArgs.obtain();
+            args.arg1 = request;
+            args.arg2 = fileInfo;
+            args.arg3 = state;
+            mCalls.add(args);
         }
+
+        public SomeArgs waitOnStateUpdated(long timeout) {
+            try {
+                return mCalls.poll(timeout, TimeUnit.MILLISECONDS);
+            } catch (InterruptedException e) {
+                return null;
+            }
+        }
+    }
+
+    private class TestDPCallback extends DownloadProgressListener {
+        private final BlockingQueue<SomeArgs> mProgressUpdatedCalls = new LinkedBlockingQueue<>();
 
         @Override
         public void onProgressUpdated(DownloadRequest request, FileInfo fileInfo, int
@@ -53,27 +71,9 @@ public class MbmsDownloadStateCallbackTest extends MbmsDownloadTestBase {
             mProgressUpdatedCalls.add(args);
         }
 
-        @Override
-        public void onStateUpdated(DownloadRequest request, FileInfo fileInfo,
-                @MbmsDownloadSession.DownloadStatus int state) {
-            SomeArgs args = SomeArgs.obtain();
-            args.arg1 = request;
-            args.arg2 = fileInfo;
-            args.arg3 = state;
-            mStateUpdatedCalls.add(args);
-        }
-
         public SomeArgs waitOnProgressUpdated(long timeout) {
             try {
                 return mProgressUpdatedCalls.poll(timeout, TimeUnit.MILLISECONDS);
-            } catch (InterruptedException e) {
-                return null;
-            }
-        }
-
-        public SomeArgs waitOnStateUpdated(long timeout) {
-            try {
-                return mStateUpdatedCalls.poll(timeout, TimeUnit.MILLISECONDS);
             } catch (InterruptedException e) {
                 return null;
             }
@@ -82,12 +82,14 @@ public class MbmsDownloadStateCallbackTest extends MbmsDownloadTestBase {
 
     public void testFullCallback() throws Exception {
         int sampleInt = 10;
-        TestDSCallback callback = new TestDSCallback(DownloadStateCallback.ALL_UPDATES);
+        TestDSCallback statusCallback = new TestDSCallback();
+        TestDPCallback progressCallback = new TestDPCallback();
         DownloadRequest request = downloadRequestTemplate.build();
-        mDownloadSession.registerStateCallback(request, mCallbackExecutor, callback);
+        mDownloadSession.addStatusListener(request, mCallbackExecutor, statusCallback);
+        mDownloadSession.addProgressListener(request, mCallbackExecutor, progressCallback);
         mMiddlewareControl.fireOnProgressUpdated(request, CtsDownloadService.FILE_INFO,
                 sampleInt, sampleInt, sampleInt, sampleInt);
-        SomeArgs progressArgs = callback.waitOnProgressUpdated(ASYNC_TIMEOUT);
+        SomeArgs progressArgs = progressCallback.waitOnProgressUpdated(ASYNC_TIMEOUT);
         assertEquals(request, progressArgs.arg1);
         assertEquals(CtsDownloadService.FILE_INFO, progressArgs.arg2);
         assertEquals(sampleInt, progressArgs.arg3);
@@ -96,43 +98,24 @@ public class MbmsDownloadStateCallbackTest extends MbmsDownloadTestBase {
         assertEquals(sampleInt, progressArgs.arg6);
 
         mMiddlewareControl.fireOnStateUpdated(request, CtsDownloadService.FILE_INFO, sampleInt);
-        SomeArgs stateArgs = callback.waitOnStateUpdated(ASYNC_TIMEOUT);
+        SomeArgs stateArgs = statusCallback.waitOnStateUpdated(ASYNC_TIMEOUT);
         assertEquals(request, stateArgs.arg1);
         assertEquals(CtsDownloadService.FILE_INFO, stateArgs.arg2);
         assertEquals(sampleInt, stateArgs.arg3);
     }
 
     public void testDeregistration() throws Exception {
-        TestDSCallback callback = new TestDSCallback(DownloadStateCallback.ALL_UPDATES);
+        TestDSCallback statusCallback = new TestDSCallback();
+        TestDPCallback progressCallback = new TestDPCallback();
         DownloadRequest request = downloadRequestTemplate.build();
-        mDownloadSession.registerStateCallback(request, mCallbackExecutor, callback);
-        mDownloadSession.unregisterStateCallback(request, callback);
+        mDownloadSession.addProgressListener(request, mCallbackExecutor, progressCallback);
+        mDownloadSession.addStatusListener(request, mCallbackExecutor, statusCallback);
+        mDownloadSession.removeProgressListener(request, progressCallback);
+        mDownloadSession.removeStatusListener(request, statusCallback);
 
         mMiddlewareControl.fireOnStateUpdated(null, null, 0);
-        assertNull(callback.waitOnStateUpdated(SHORT_TIMEOUT));
+        assertNull(statusCallback.waitOnStateUpdated(SHORT_TIMEOUT));
         mMiddlewareControl.fireOnProgressUpdated(null, null, 0, 0, 0, 0);
-        assertNull(callback.waitOnProgressUpdated(SHORT_TIMEOUT));
-    }
-
-    public void testCallbackFiltering1() throws Exception {
-        TestDSCallback callback = new TestDSCallback(DownloadStateCallback.PROGRESS_UPDATES);
-        DownloadRequest request = downloadRequestTemplate.build();
-        mDownloadSession.registerStateCallback(request, mCallbackExecutor, callback);
-
-        mMiddlewareControl.fireOnStateUpdated(null, null, 0);
-        assertNull(callback.waitOnStateUpdated(SHORT_TIMEOUT));
-        mMiddlewareControl.fireOnProgressUpdated(null, null, 0, 0, 0, 0);
-        assertNotNull(callback.waitOnProgressUpdated(SHORT_TIMEOUT));
-    }
-
-    public void testCallbackFiltering2() throws Exception {
-        TestDSCallback callback = new TestDSCallback(DownloadStateCallback.STATE_UPDATES);
-        DownloadRequest request = downloadRequestTemplate.build();
-        mDownloadSession.registerStateCallback(request, mCallbackExecutor, callback);
-
-        mMiddlewareControl.fireOnStateUpdated(null, null, 0);
-        assertNotNull(callback.waitOnStateUpdated(SHORT_TIMEOUT));
-        mMiddlewareControl.fireOnProgressUpdated(null, null, 0, 0, 0, 0);
-        assertNull(callback.waitOnProgressUpdated(SHORT_TIMEOUT));
+        assertNull(progressCallback.waitOnProgressUpdated(SHORT_TIMEOUT));
     }
 }
