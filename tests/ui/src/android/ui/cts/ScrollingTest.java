@@ -17,6 +17,7 @@ package android.ui.cts;
 
 import android.test.ActivityInstrumentationTestCase2;
 
+import com.android.compatibility.common.util.CddTest;
 import com.android.compatibility.common.util.DeviceReportLog;
 import com.android.compatibility.common.util.MeasureRun;
 import com.android.compatibility.common.util.MeasureTime;
@@ -59,6 +60,7 @@ public class ScrollingTest extends ActivityInstrumentationTestCase2<ScrollingAct
         super.tearDown();
     }
 
+    @CddTest(requirement="8.1/H-0-2")
     public void testFullScrolling() throws Exception {
         final int NUMBER_REPEAT = 10;
         final ScrollingActivity activity = mActivity;

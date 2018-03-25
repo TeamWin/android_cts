@@ -24,6 +24,8 @@ import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 
+import com.android.compatibility.common.util.CddTest;
+
 public class GraphicsStatsValidationTest extends ProtoDumpTestCase {
     private static final String TAG = "GraphicsStatsValidationTest";
 
@@ -48,6 +50,7 @@ public class GraphicsStatsValidationTest extends ProtoDumpTestCase {
         killTestApp();
     }
 
+    @CddTest(requirement="8.1/C-0-1/T-0-1")
     public void testBasicDrawFrame() throws Exception {
         GraphicsStatsProto[] results = runDrawTest("testDrawTenFrames");
         GraphicsStatsProto statsBefore = results[0];
