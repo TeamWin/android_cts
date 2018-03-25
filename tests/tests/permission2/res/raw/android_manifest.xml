@@ -56,6 +56,7 @@
     <protected-broadcast android:name="android.intent.action.SPLIT_CONFIGURATION_CHANGED" />
     <protected-broadcast android:name="android.intent.action.LOCALE_CHANGED" />
     <protected-broadcast android:name="android.intent.action.BATTERY_CHANGED" />
+    <protected-broadcast android:name="android.intent.action.BATTERY_LEVEL_CHANGED" />
     <protected-broadcast android:name="android.intent.action.BATTERY_LOW" />
     <protected-broadcast android:name="android.intent.action.BATTERY_OKAY" />
     <protected-broadcast android:name="android.intent.action.ACTION_POWER_CONNECTED" />
@@ -87,6 +88,7 @@
     <protected-broadcast android:name="android.intent.action.OVERLAY_CHANGED" />
     <protected-broadcast android:name="android.intent.action.OVERLAY_REMOVED" />
     <protected-broadcast android:name="android.intent.action.OVERLAY_PRIORITY_CHANGED" />
+    <protected-broadcast android:name="android.intent.action.USER_ACTIVITY_NOTIFICATION" />
 
     <protected-broadcast android:name="android.os.action.POWER_SAVE_MODE_CHANGED" />
     <protected-broadcast android:name="android.os.action.POWER_SAVE_MODE_CHANGING" />
@@ -2402,6 +2404,12 @@
     <permission android:name="android.permission.UPDATE_CONFIG"
         android:protectionLevel="signature|privileged" />
 
+    <!-- Allows an application to query the current time zone rules state
+         on device.
+         @SystemApi @hide -->
+    <permission android:name="android.permission.QUERY_TIME_ZONE_RULES"
+                android:protectionLevel="signature|privileged" />
+
     <!-- Allows a time zone rule updater application to request
          the system installs / uninstalls timezone rules.
          <p>An application requesting this permission is responsible for
@@ -2543,6 +2551,12 @@
          @hide -->
     <permission android:name="android.permission.MANAGE_APP_OPS_RESTRICTIONS"
         android:protectionLevel="signature|installer" />
+
+    <!-- Allows an application to update the user app op modes.
+         Not for use by third party apps.
+         @hide -->
+    <permission android:name="android.permission.MANAGE_APP_OPS_MODES"
+        android:protectionLevel="signature|installer|verifier" />
 
     <!-- @SystemApi Allows an application to open windows that are for use by parts
          of the system user interface.
@@ -2972,7 +2986,18 @@
          settings app.  This permission cannot be granted to third-party apps.
          <p>Protection level: signature
     -->
-    <permission android:name="android.permission.MANAGE_SCOPED_ACCESS_DIRECTORY_PERMISSIONS"
+    <permission
+         android:name="android.permission.MANAGE_SCOPED_ACCESS_DIRECTORY_PERMISSIONS"
+         android:protectionLevel="signature" />
+
+    <!-- @hide
+         Allows an application to change the status of a persistable URI permission granted
+         to another application.
+         <p>This permission should <em>only</em> be requested by the platform
+         settings app.  This permission cannot be granted to third-party apps.
+         <p>Protection level: signature
+    -->
+    <permission android:name="android.permission.FORCE_PERSISTABLE_URI_PERMISSIONS"
         android:protectionLevel="signature" />
 
     <!-- @SystemApi Old permission for deleting an app's cache files, no longer used,
@@ -3070,20 +3095,22 @@
     <!-- Allows an application to collect usage infomation about brightness slider changes.
          <p>Not for use by third-party applications.</p>
          @hide
-         @SystemApi -->
+         @SystemApi
+         @TestApi -->
     <permission android:name="android.permission.BRIGHTNESS_SLIDER_USAGE"
         android:protectionLevel="signature|privileged|development" />
 
     <!-- Allows an application to collect ambient light stats.
          <p>Not for use by third party applications.</p>
-         TODO: Make a system API
-         @hide -->
+         @hide
+         @SystemApi -->
     <permission android:name="android.permission.ACCESS_AMBIENT_LIGHT_STATS"
         android:protectionLevel="signature|privileged|development" />
 
     <!-- Allows an application to modify the display brightness configuration
          @hide
-         @SystemApi -->
+         @SystemApi
+         @TestApi -->
     <permission android:name="android.permission.CONFIGURE_DISPLAY_BRIGHTNESS"
         android:protectionLevel="signature|privileged|development" />
 
@@ -3312,13 +3339,6 @@
     <!-- @hide Allows sysui to manage user grants of slice permissions. -->
     <permission android:name="android.permission.MANAGE_SLICE_PERMISSIONS"
         android:protectionLevel="signature" />
-
-    <!-- Allows an application to bind app's slices and get their
-         content. This content will be surfaced to the
-         user and not to leave the device.
-         <p>Not for use by third-party applications.-->
-    <permission android:name="android.permission.BIND_SLICE"
-        android:protectionLevel="signature|privileged|development" />
 
     <!-- @SystemApi Private permission, to restrict who can bring up a dialog to add a new
          keyguard widget
@@ -3734,9 +3754,16 @@
 
     <!-- Must be required by system/priv apps when accessing the sound trigger
          APIs given by {@link SoundTriggerManager}.
-         @hide <p>Not for use by third-party applications.</p> -->
+         @hide
+         @SystemApi -->
     <permission android:name="android.permission.MANAGE_SOUND_TRIGGER"
         android:protectionLevel="signature|privileged" />
+
+    <!-- Must be required by system/priv apps implementing sound trigger detection services
+         @hide
+         @SystemApi -->
+    <permission android:name="android.permission.BIND_SOUND_TRIGGER_DETECTION_SERVICE"
+        android:protectionLevel="signature" />
 
     <!-- @SystemApi Allows trusted applications to dispatch managed provisioning message to Managed
          Provisioning app. If requesting app does not have permission, it will be ignored.
@@ -3810,6 +3837,15 @@
     <permission android:name="android.permission.INSTANT_APP_FOREGROUND_SERVICE"
         android:protectionLevel="signature|development|instant|appop" />
 
+    <!-- Allows a regular application to use {@link android.app.Service#startForeground
+         Service.startForeground}.
+         <p>Protection level: normal
+    -->
+    <permission android:name="android.permission.FOREGROUND_SERVICE"
+        android:description="@string/permdesc_foregroundService"
+        android:label="@string/permlab_foregroundService"
+        android:protectionLevel="normal|instant" />
+
     <!-- @SystemApi Allows to access all app shortcuts.
          @hide -->
     <permission android:name="android.permission.ACCESS_SHORTCUTS"
@@ -3844,6 +3880,17 @@
          @hide <p>Not for use by third-party applications. -->
     <permission android:name="android.permission.CONTROL_REMOTE_APP_TRANSITION_ANIMATIONS"
         android:protectionLevel="signature|privileged" />
+
+    <!-- Allows an application to watch changes and/or active state of app ops.
+         @hide <p>Not for use by third-party applications. -->
+    <permission android:name="android.permission.WATCH_APPOPS"
+        android:protectionLevel="signature" />
+
+    <!-- Allows an application to directly open the "Open by default" page inside a package's
+         Details screen.
+         @hide <p>Not for use by third-party applications. -->
+    <permission android:name="android.permission.OPEN_APPLICATION_DETAILS_OPEN_BY_DEFAULT_PAGE"
+                android:protectionLevel="signature" />
 
     <application android:process="system"
                  android:persistent="true"

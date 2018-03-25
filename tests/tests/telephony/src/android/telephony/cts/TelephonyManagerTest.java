@@ -289,10 +289,14 @@ public class TelephonyManagerTest {
     }
 
     private static void assertImei(String id) {
+        assertFalse("Imei should not be empty or null", TextUtils.isEmpty(id));
         // IMEI may include the check digit
         String imeiPattern = "[0-9]{14,15}";
+        String invalidPattern = "[0]{14,15}";
         assertTrue("IMEI " + id + " does not match pattern " + imeiPattern,
                 Pattern.matches(imeiPattern, id));
+        assertFalse("IMEI " + id + " must not be a zero sequence" + invalidPattern,
+                Pattern.matches(invalidPattern, id));
         if (id.length() == 15) {
             // if the ID is 15 digits, the 15th must be a check digit.
             assertImeiCheckDigit(id);
@@ -340,6 +344,7 @@ public class TelephonyManagerTest {
         // CDMA device IDs may either be a 14-hex-digit MEID or an
         // 8-hex-digit ESN.  If it's an ESN, it may not be a
         // pseudo-ESN.
+        assertFalse("Meid ESN should not be empty or null", TextUtils.isEmpty(id));
         if (id.length() == 14) {
             assertMeidFormat(id);
         } else if (id.length() == 8) {
@@ -351,17 +356,23 @@ public class TelephonyManagerTest {
 
     private static void assertHexadecimalEsnFormat(String deviceId) {
         String esnPattern = "[0-9a-fA-F]{8}";
+        String invalidPattern = "[0]{8}";
         assertTrue("ESN hex device id " + deviceId + " does not match pattern " + esnPattern,
                    Pattern.matches(esnPattern, deviceId));
         assertFalse("ESN hex device id " + deviceId + " must not be a pseudo-ESN",
                     "80".equals(deviceId.substring(0, 2)));
+        assertFalse("ESN hex device id " + deviceId + "must not be a zero sequence",
+                Pattern.matches(invalidPattern, deviceId));
     }
 
     private static void assertMeidFormat(String deviceId) {
         // MEID must NOT include the check digit.
         String meidPattern = "[0-9a-fA-F]{14}";
-        assertTrue("MEID device id " + deviceId + " does not match pattern " + meidPattern,
-                   Pattern.matches(meidPattern, deviceId));
+        String invalidPattern = "[0]{14}";
+        assertTrue("MEID device id " + deviceId + " does not match pattern "
+                + meidPattern, Pattern.matches(meidPattern, deviceId));
+        assertFalse("MEID device id " + deviceId + "must not be a zero sequence",
+                Pattern.matches(invalidPattern, deviceId));
     }
 
     private void assertSerialNumber() {
@@ -476,12 +487,8 @@ public class TelephonyManagerTest {
         String imei = mTelephonyManager.getImei();
 
         if (mPackageManager.hasSystemFeature(PackageManager.FEATURE_TELEPHONY)) {
-            if (!TextUtils.isEmpty(imei)) {
+            if (mTelephonyManager.getPhoneType() == TelephonyManager.PHONE_TYPE_GSM) {
                 assertImei(imei);
-            } else {
-                // If IMEI is empty, then MEID must not be empty. A phone should have either a
-                // IMEI or MEID. The validation of MEID will be checked by testGetMeid().
-                assertFalse(TextUtils.isEmpty(mTelephonyManager.getMeid()));
             }
         }
     }
@@ -515,12 +522,8 @@ public class TelephonyManagerTest {
         String meid = mTelephonyManager.getMeid();
 
         if (mPackageManager.hasSystemFeature(PackageManager.FEATURE_TELEPHONY)) {
-            if (!TextUtils.isEmpty(meid)) {
-                assertImei(meid);
-            } else {
-                // If MEID is empty, then IMEI must not be empty. A phone should have either a
-                // IMEI or MEID. The validation of IMEI will be checked by testGetImei().
-                assertFalse(TextUtils.isEmpty(mTelephonyManager.getImei()));
+            if (mTelephonyManager.getPhoneType() == TelephonyManager.PHONE_TYPE_CDMA) {
+                assertMeidEsn(meid);
             }
         }
     }

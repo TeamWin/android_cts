@@ -25,7 +25,7 @@ import static android.autofillservice.cts.InstrumentedAutoFillServiceCompatMode.
 import static android.autofillservice.cts.VirtualContainerView.ID_URL_BAR;
 import static android.autofillservice.cts.VirtualContainerView.ID_URL_BAR2;
 import static android.autofillservice.cts.common.SettingsHelper.NAMESPACE_GLOBAL;
-import static android.provider.Settings.Global.AUTOFILL_COMPAT_ALLOWED_PACKAGES;
+import static android.provider.Settings.Global.AUTOFILL_COMPAT_MODE_ALLOWED_PACKAGES;
 
 import static com.google.common.truth.Truth.assertThat;
 
@@ -50,7 +50,7 @@ public class VirtualContainerActivityCompatModeTest extends VirtualContainerActi
 
     @ClassRule
     public static final SettingsStateChangerRule sCompatModeChanger = new SettingsStateChangerRule(
-            sContext, NAMESPACE_GLOBAL, AUTOFILL_COMPAT_ALLOWED_PACKAGES,
+            sContext, NAMESPACE_GLOBAL, AUTOFILL_COMPAT_MODE_ALLOWED_PACKAGES,
             SERVICE_PACKAGE + "[my_url_bar]");
 
     public VirtualContainerActivityCompatModeTest() {
@@ -96,7 +96,7 @@ public class VirtualContainerActivityCompatModeTest extends VirtualContainerActi
 
     @Test
     public void testMultipleUrlBars_firstDoesNotExist() throws Exception {
-        SettingsHelper.set(NAMESPACE_GLOBAL, AUTOFILL_COMPAT_ALLOWED_PACKAGES,
+        SettingsHelper.syncSet(sContext, NAMESPACE_GLOBAL, AUTOFILL_COMPAT_MODE_ALLOWED_PACKAGES,
                 SERVICE_PACKAGE + "[first_am_i,my_url_bar]");
 
         // Set service.
@@ -120,7 +120,7 @@ public class VirtualContainerActivityCompatModeTest extends VirtualContainerActi
 
     @Test
     public void testMultipleUrlBars_bothExist() throws Exception {
-        SettingsHelper.set(NAMESPACE_GLOBAL, AUTOFILL_COMPAT_ALLOWED_PACKAGES,
+        SettingsHelper.syncSet(sContext, NAMESPACE_GLOBAL, AUTOFILL_COMPAT_MODE_ALLOWED_PACKAGES,
                 SERVICE_PACKAGE + "[my_url_bar,my_url_bar2]");
 
         // Set service.

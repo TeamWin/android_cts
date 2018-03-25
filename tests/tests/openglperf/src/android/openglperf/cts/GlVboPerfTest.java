@@ -42,7 +42,7 @@ public class GlVboPerfTest extends
     }
 
     public void testVboWithVaryingIndexBufferNumbers() throws Exception {
-        final int[] numIndexBuffers = {1, 10, 100, 200, 400}; // per vertex buffer
+        final int[] numIndexBuffers = {1, 10, 100, 200}; // per vertex buffer
         float[] fpsVbo = new float[numIndexBuffers.length];
         float[] fpsNonVbo = new float[numIndexBuffers.length];
 

@@ -43,6 +43,7 @@ import android.content.ComponentName;
 import android.graphics.Rect;
 import android.service.autofill.SaveInfo;
 import android.support.test.uiautomator.UiObject2;
+import android.text.InputType;
 import android.view.ViewGroup;
 import android.view.autofill.AutofillManager;
 
@@ -194,6 +195,13 @@ public class VirtualContainerActivityTest extends AutoFillServiceTestCase {
 
         assertThat(username.getIdEntry()).isEqualTo(ID_USERNAME);
         assertThat(password.getIdEntry()).isEqualTo(ID_PASSWORD);
+
+        assertThat(username.getInputType())
+                .isEqualTo(InputType.TYPE_CLASS_TEXT | InputType.TYPE_TEXT_VARIATION_NORMAL);
+        assertThat(usernameLabel.getInputType()).isEqualTo(0);
+        assertThat(password.getInputType())
+                .isEqualTo(InputType.TYPE_CLASS_TEXT | InputType.TYPE_TEXT_VARIATION_PASSWORD);
+        assertThat(passwordLabel.getInputType()).isEqualTo(0);
 
         final String[] autofillHints = username.getAutofillHints();
         if (mCompatMode) {
@@ -503,7 +511,10 @@ public class VirtualContainerActivityTest extends AutoFillServiceTestCase {
             case CHILDREN_VIEWS_GONE_NOTIFY_CALLBACK_API:
             case CHILDREN_VIEWS_GONE_IS_VISIBLE_API:
             case PARENT_VIEW_GONE:
-                response.setSaveInfoFlags(SaveInfo.FLAG_SAVE_ON_ALL_VIEWS_INVISIBLE);
+                if (!mCompatMode) {
+                    // Compat mode already set the flag by default
+                    response.setSaveInfoFlags(SaveInfo.FLAG_SAVE_ON_ALL_VIEWS_INVISIBLE);
+                }
                 break;
             case EXPLICIT_COMMIT:
                 // does nothing

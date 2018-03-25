@@ -16,19 +16,26 @@
 
 package com.android.compatibility.common.tradefed.result;
 
+import static org.junit.Assert.*;
+
 import com.android.tradefed.config.OptionSetter;
 import com.android.tradefed.invoker.IInvocationContext;
 import com.android.tradefed.result.TestDescription;
 import com.android.tradefed.util.AbiUtils;
 
-import junit.framework.TestCase;
+import org.junit.After;
+import org.junit.Before;
+import org.junit.Test;
+import org.junit.runner.RunWith;
+import org.junit.runners.JUnit4;
 
 import java.util.HashMap;
 
 /**
- * Tests for {@link ConsoleReporter}.
+ * Unit tests for {@link ConsoleReporter}.
  */
-public class ConsoleReporterTest extends TestCase {
+@RunWith(JUnit4.class)
+public class ConsoleReporterTest {
 
     private static final String NAME = "ModuleName";
     private static final String NAME2 = "ModuleName2";
@@ -45,21 +52,22 @@ public class ConsoleReporterTest extends TestCase {
     private ConsoleReporter mReporter;
     private IInvocationContext mContext;
 
-    @Override
+    @Before
     public void setUp() throws Exception {
         mReporter = new ConsoleReporter();
         OptionSetter setter = new OptionSetter(mReporter);
         setter.setOptionValue("quiet-output", "true");
     }
 
-    @Override
+    @After
     public void tearDown() throws Exception {
         mReporter = null;
     }
 
+    @Test
     public void testResultReporting_singleModule() throws Exception {
         mReporter.invocationStarted(mContext);
-        mReporter.testRunStarted(ID, 3);
+        mReporter.testRunStarted(ID, 4);
         runTests();
 
         mReporter.testRunEnded(10, new HashMap<String, String>());
@@ -68,28 +76,29 @@ public class ConsoleReporterTest extends TestCase {
         assertEquals(ID, mReporter.getModuleId());
         assertEquals(2, mReporter.getFailedTests());
         assertEquals(1, mReporter.getPassedTests());
-        assertEquals(3, mReporter.getCurrentTestNum());
-        assertEquals(3, mReporter.getTotalTestsInModule());
+        assertEquals(4, mReporter.getCurrentTestNum());
+        assertEquals(4, mReporter.getTotalTestsInModule());
     }
 
+    @Test
     public void testResultReporting_multipleModules() throws Exception {
         mReporter.invocationStarted(mContext);
-        mReporter.testRunStarted(ID, 3);
+        mReporter.testRunStarted(ID, 4);
         runTests();
 
         assertEquals(ID, mReporter.getModuleId());
         assertEquals(2, mReporter.getFailedTests());
         assertEquals(1, mReporter.getPassedTests());
-        assertEquals(3, mReporter.getCurrentTestNum());
-        assertEquals(3, mReporter.getTotalTestsInModule());
+        assertEquals(4, mReporter.getCurrentTestNum());
+        assertEquals(4, mReporter.getTotalTestsInModule());
 
         // Should reset counters
-        mReporter.testRunStarted(ID2, 3);
+        mReporter.testRunStarted(ID2, 4);
         assertEquals(ID2, mReporter.getModuleId());
         assertEquals(0, mReporter.getFailedTests());
         assertEquals(0, mReporter.getPassedTests());
         assertEquals(0, mReporter.getCurrentTestNum());
-        assertEquals(3, mReporter.getTotalTestsInModule());
+        assertEquals(4, mReporter.getTotalTestsInModule());
     }
 
     /** Run 4 test, but one is ignored */

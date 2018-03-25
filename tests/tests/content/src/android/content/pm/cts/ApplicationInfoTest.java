@@ -19,11 +19,14 @@ package android.content.pm.cts;
 import static android.content.pm.ApplicationInfo.CATEGORY_MAPS;
 import static android.content.pm.ApplicationInfo.CATEGORY_PRODUCTIVITY;
 import static android.content.pm.ApplicationInfo.CATEGORY_UNDEFINED;
+import static android.content.pm.ApplicationInfo.FLAG_MULTIARCH;
+import static android.content.pm.ApplicationInfo.FLAG_SUPPORTS_RTL;
 import static android.os.Process.FIRST_APPLICATION_UID;
 import static android.os.Process.LAST_APPLICATION_UID;
 
 import static org.junit.Assert.assertArrayEquals;
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
@@ -137,8 +140,11 @@ public class ApplicationInfoTest {
     public void verifyOwnInfo() throws NameNotFoundException {
         mApplicationInfo = getContext().getPackageManager().getApplicationInfo(mPackageName, 0);
 
+        assertEquals("Android TestCase", mApplicationInfo.nonLocalizedLabel);
+        assertEquals(R.drawable.size_48x48, mApplicationInfo.icon);
         assertEquals("android.content.cts.MockApplication", mApplicationInfo.name);
-        assertEquals(true, mApplicationInfo.hasRtlSupport());
+        int flags = FLAG_MULTIARCH | FLAG_SUPPORTS_RTL;
+        assertEquals(flags, mApplicationInfo.flags & flags);
         assertEquals(CATEGORY_PRODUCTIVITY, mApplicationInfo.category);
     }
 
@@ -170,10 +176,7 @@ public class ApplicationInfoTest {
         assertEquals("/data/user/0/" + SYNC_ACCOUNT_ACCESS_STUB_PACKAGE_NAME,
                 mApplicationInfo.credentialProtectedDataDir);
         assertNull(mApplicationInfo.sharedLibraryFiles);
-        assertNull(mApplicationInfo.classLoaderName);
-        assertNull(mApplicationInfo.splitClassLoaderNames);
         assertTrue(mApplicationInfo.enabled);
-        assertEquals(1, mApplicationInfo.targetSandboxVersion);
         assertNull(mApplicationInfo.manageSpaceActivityName);
         assertEquals(0, mApplicationInfo.descriptionRes);
         assertEquals(0, mApplicationInfo.uiOptions);

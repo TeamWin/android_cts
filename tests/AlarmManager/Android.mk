@@ -31,7 +31,7 @@ LOCAL_COMPATIBILITY_SUITE := cts vts general-tests
 
 LOCAL_PACKAGE_NAME := CtsAlarmManagerTestCases
 
-LOCAL_SDK_VERSION := current
+LOCAL_PRIVATE_PLATFORM_APIS := true
 
 include $(BUILD_CTS_PACKAGE)
 
