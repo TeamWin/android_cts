@@ -559,8 +559,9 @@ public class MediaBrowser2Test extends MediaController2Test {
         }
 
         @Override
-        public void onBufferedPositionChanged(MediaController2 controller, long positionMs) {
-            mCallbackProxy.onBufferedPositionChanged(controller, positionMs);
+        public void onBufferingStateChanged(MediaController2 controller, MediaItem2 item,
+                int state) {
+            mCallbackProxy.onBufferingStateChanged(controller, item, state);
         }
 
         @Override
