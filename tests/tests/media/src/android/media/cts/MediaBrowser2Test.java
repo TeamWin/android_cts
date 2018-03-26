@@ -559,8 +559,9 @@ public class MediaBrowser2Test extends MediaController2Test {
         }
 
         @Override
-        public void onBufferedPositionChanged(MediaController2 controller, long positionMs) {
-            mCallbackProxy.onBufferedPositionChanged(controller, positionMs);
+        public void onBufferingStateChanged(MediaController2 controller, MediaItem2 item,
+                int state) {
+            mCallbackProxy.onBufferingStateChanged(controller, item, state);
         }
 
         @Override
@@ -574,29 +575,25 @@ public class MediaBrowser2Test extends MediaController2Test {
         }
 
         @Override
-        public void onPlaylistChanged(MediaController2 controller, MediaPlaylistAgent playlistAgent,
+        public void onPlaylistChanged(MediaController2 controller,
                 List<MediaItem2> list, MediaMetadata2 metadata) {
-            mCallbackProxy.onPlaylistChanged(controller, playlistAgent, list, metadata);
+            mCallbackProxy.onPlaylistChanged(controller, list, metadata);
         }
 
         @Override
         public void onPlaylistMetadataChanged(MediaController2 controller,
-                MediaPlaylistAgent playlistAgent, MediaMetadata2 metadata) {
-            mCallbackProxy.onPlaylistMetadataChanged(controller, playlistAgent, metadata);
+                MediaMetadata2 metadata) {
+            mCallbackProxy.onPlaylistMetadataChanged(controller, metadata);
         }
 
         @Override
-        public void onShuffleModeChanged(MediaController2 controller,
-                MediaPlaylistAgent playlistAgent,
-                int shuffleMode) {
-            mCallbackProxy.onShuffleModeChanged(controller, playlistAgent, shuffleMode);
+        public void onShuffleModeChanged(MediaController2 controller, int shuffleMode) {
+            mCallbackProxy.onShuffleModeChanged(controller, shuffleMode);
         }
 
         @Override
-        public void onRepeatModeChanged(MediaController2 controller,
-                MediaPlaylistAgent playlistAgent,
-                int repeatMode) {
-            mCallbackProxy.onRepeatModeChanged(controller, playlistAgent, repeatMode);
+        public void onRepeatModeChanged(MediaController2 controller, int repeatMode) {
+            mCallbackProxy.onRepeatModeChanged(controller, repeatMode);
         }
 
         @Override

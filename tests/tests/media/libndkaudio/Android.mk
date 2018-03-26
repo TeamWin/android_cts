@@ -37,7 +37,7 @@ LOCAL_SRC_FILES := \
   AudioRecorder.cpp \
   com_android_ndkaudio_AudioRecorder.cpp
 
-LOCAL_CXX_STL := libc++_static
+LOCAL_CXX_STL := libc++
 
 LOCAL_SHARED_LIBRARIES := liblog libOpenSLES
 

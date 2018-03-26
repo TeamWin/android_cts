@@ -285,8 +285,7 @@ public class MediaController2Test extends MediaSession2TestBase {
         final ControllerCallback callback = new ControllerCallback() {
             @Override
             public void onPlaylistChanged(MediaController2 controller,
-                    MediaPlaylistAgent playlistAgent, List<MediaItem2> playlist,
-                    MediaMetadata2 metadata) {
+                    List<MediaItem2> playlist, MediaMetadata2 metadata) {
                 assertNotNull(playlist);
                 assertEquals(testList.size(), playlist.size());
                 for (int i = 0; i < playlist.size(); i++) {
@@ -335,7 +334,7 @@ public class MediaController2Test extends MediaSession2TestBase {
         final ControllerCallback callback = new ControllerCallback() {
             @Override
             public void onPlaylistMetadataChanged(MediaController2 controller,
-                    MediaPlaylistAgent playlistAgent, MediaMetadata2 metadata) {
+                    MediaMetadata2 metadata) {
                 assertNotNull(testMetadata);
                 assertEquals(testMetadata.getMediaId(), metadata.getMediaId());
                 metadataFromCallback.set(metadata);
@@ -377,7 +376,7 @@ public class MediaController2Test extends MediaSession2TestBase {
         final ControllerCallback callback = new ControllerCallback() {
             @Override
             public void onPlaylistMetadataChanged(MediaController2 controller,
-                    MediaPlaylistAgent playlistAgent, MediaMetadata2 metadata) {
+                    MediaMetadata2 metadata) {
                 assertNotNull(metadata);
                 assertEquals(item.getMediaId(), metadata.getMediaId());
                 latch.countDown();
@@ -502,8 +501,7 @@ public class MediaController2Test extends MediaSession2TestBase {
         final CountDownLatch latch = new CountDownLatch(1);
         final ControllerCallback callback = new ControllerCallback() {
             @Override
-            public void onShuffleModeChanged(MediaController2 controller,
-                    MediaPlaylistAgent playlistAgent, int shuffleMode) {
+            public void onShuffleModeChanged(MediaController2 controller, int shuffleMode) {
                 assertEquals(testShuffleMode, shuffleMode);
                 latch.countDown();
             }
@@ -541,8 +539,7 @@ public class MediaController2Test extends MediaSession2TestBase {
         final CountDownLatch latch = new CountDownLatch(1);
         final ControllerCallback callback = new ControllerCallback() {
             @Override
-            public void onRepeatModeChanged(MediaController2 controller,
-                    MediaPlaylistAgent playlistAgent, int repeatMode) {
+            public void onRepeatModeChanged(MediaController2 controller, int repeatMode) {
                 assertEquals(testRepeatMode, repeatMode);
                 latch.countDown();
             }
