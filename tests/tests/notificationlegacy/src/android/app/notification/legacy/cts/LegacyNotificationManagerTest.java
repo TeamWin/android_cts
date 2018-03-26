@@ -29,12 +29,20 @@ import static junit.framework.Assert.assertEquals;
 
 import android.app.ActivityManager;
 import android.app.Instrumentation;
+import android.app.Notification;
+import android.app.NotificationChannel;
 import android.app.NotificationManager;
+import android.app.PendingIntent;
 import android.app.UiAutomation;
+import android.content.ComponentName;
 import android.content.Context;
+import android.content.Intent;
 import android.os.ParcelFileDescriptor;
+import android.provider.Telephony.Threads;
+import android.service.notification.NotificationListenerService;
 import android.support.test.InstrumentationRegistry;
 import android.support.test.runner.AndroidJUnit4;
+import android.util.Log;
 
 import junit.framework.Assert;
 
@@ -51,16 +59,23 @@ import java.io.InputStream;
  */
 @RunWith(AndroidJUnit4.class)
 public class LegacyNotificationManagerTest {
+    final String TAG = "LegacyNoManTest";
 
+    final String NOTIFICATION_CHANNEL_ID = "LegacyNotificationManagerTest";
     private NotificationManager mNotificationManager;
     private ActivityManager mActivityManager;
     private Context mContext;
+    private MockNotificationListener mListener;
 
     @Before
     public void setUp() throws Exception {
         mContext = InstrumentationRegistry.getContext();
+        toggleListenerAccess(MockNotificationListener.getId(),
+                InstrumentationRegistry.getInstrumentation(), false);
         mNotificationManager = (NotificationManager) mContext.getSystemService(
                 Context.NOTIFICATION_SERVICE);
+        mNotificationManager.createNotificationChannel(new NotificationChannel(
+                NOTIFICATION_CHANNEL_ID, "name", NotificationManager.IMPORTANCE_DEFAULT));
         mActivityManager = (ActivityManager) mContext.getSystemService(Context.ACTIVITY_SERVICE);
     }
 
@@ -154,6 +169,38 @@ public class LegacyNotificationManagerTest {
     }
 
     @Test
+    public void testSuspendPackage() throws Exception {
+        toggleListenerAccess(MockNotificationListener.getId(),
+                InstrumentationRegistry.getInstrumentation(), true);
+        Thread.sleep(500); // wait for listener to be allowed
+
+        mListener = MockNotificationListener.getInstance();
+        Assert.assertNotNull(mListener);
+
+        sendNotification(1, R.drawable.icon_black);
+        Thread.sleep(500); // wait for notification listener to receive notification
+        assertEquals(1, mListener.mPosted.size());
+        mListener.resetData();
+
+        // suspend package, listener receives onRemoved
+        suspendPackage(mContext.getPackageName(), InstrumentationRegistry.getInstrumentation(),
+                true);
+        Thread.sleep(500); // wait for notification listener to get response
+        assertEquals(1, mListener.mRemoved.size());
+
+        // unsuspend package, listener receives onPosted
+        suspendPackage(mContext.getPackageName(), InstrumentationRegistry.getInstrumentation(),
+                false);
+        Thread.sleep(500); // wait for notification listener to get response
+        assertEquals(1, mListener.mPosted.size());
+
+        toggleListenerAccess(MockNotificationListener.getId(),
+                InstrumentationRegistry.getInstrumentation(), false);
+
+        mListener.resetData();
+    }
+
+    @Test
     public void testSetNotificationPolicy_preP_setOldNewFields() throws Exception {
         if (mActivityManager.isLowRamDevice()) {
             return;
@@ -177,12 +224,66 @@ public class LegacyNotificationManagerTest {
                 InstrumentationRegistry.getInstrumentation(), false);
     }
 
+    private void sendNotification(final int id, final int icon) throws Exception {
+        sendNotification(id, null, icon);
+    }
+
+    private void sendNotification(final int id, String groupKey, final int icon) throws Exception {
+        final Intent intent = new Intent(Intent.ACTION_MAIN, Threads.CONTENT_URI);
+
+        intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_SINGLE_TOP
+                | Intent.FLAG_ACTIVITY_CLEAR_TOP);
+        intent.setAction(Intent.ACTION_MAIN);
+
+        final PendingIntent pendingIntent = PendingIntent.getActivity(mContext, 0, intent, 0);
+        final Notification notification =
+                new Notification.Builder(mContext, NOTIFICATION_CHANNEL_ID)
+                        .setSmallIcon(icon)
+                        .setWhen(System.currentTimeMillis())
+                        .setContentTitle("notify#" + id)
+                        .setContentText("This is #" + id + "notification  ")
+                        .setContentIntent(pendingIntent)
+                        .setGroup(groupKey)
+                        .build();
+        mNotificationManager.notify(id, notification);
+    }
+
     private void toggleNotificationPolicyAccess(String packageName,
             Instrumentation instrumentation, boolean on) throws IOException {
 
         String command = " cmd notification " + (on ? "allow_dnd " : "disallow_dnd ") + packageName;
 
-        // Get permission to change dnd policy
+        runCommand(command, instrumentation);
+
+        NotificationManager nm = mContext.getSystemService(NotificationManager.class);
+        Assert.assertEquals("Notification Policy Access Grant is " +
+                        nm.isNotificationPolicyAccessGranted() + " not " + on, on,
+                nm.isNotificationPolicyAccessGranted());
+    }
+
+    private void suspendPackage(String packageName,
+            Instrumentation instrumentation, boolean suspend) throws IOException {
+        String command = " cmd notification " + (suspend ? "suspend_package "
+                : "unsuspend_package ") + packageName;
+
+        runCommand(command, instrumentation);
+    }
+
+    private void toggleListenerAccess(String componentName, Instrumentation instrumentation,
+            boolean on) throws IOException {
+
+        String command = " cmd notification " + (on ? "allow_listener " : "disallow_listener ")
+                + componentName;
+
+        runCommand(command, instrumentation);
+
+        final NotificationManager nm = mContext.getSystemService(NotificationManager.class);
+        final ComponentName listenerComponent = MockNotificationListener.getComponentName();
+        Assert.assertTrue(listenerComponent + " has not been granted access",
+                nm.isNotificationListenerAccessGranted(listenerComponent) == on);
+    }
+
+    private void runCommand(String command, Instrumentation instrumentation) throws IOException {
         UiAutomation uiAutomation = instrumentation.getUiAutomation();
         // Execute command
         try (ParcelFileDescriptor fd = uiAutomation.executeShellCommand(command)) {
@@ -197,11 +298,5 @@ public class LegacyNotificationManagerTest {
         } finally {
             uiAutomation.destroy();
         }
-
-        NotificationManager nm = (NotificationManager) mContext.getSystemService(
-                Context.NOTIFICATION_SERVICE);
-        assertEquals("Notification Policy Access Grant is " +
-                        nm.isNotificationPolicyAccessGranted() + " not " + on, on,
-                nm.isNotificationPolicyAccessGranted());
     }
 }
