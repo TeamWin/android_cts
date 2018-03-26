@@ -233,12 +233,15 @@ public class ActivityLifecycleTests extends ActivityLifecycleClientTestBase {
         final Activity secondActivity =
                 mSecondActivityTestRule.launchActivity(new Intent());
 
-        // Wait for second activity to resume
-        waitAndAssertActivityStates(state(secondActivity, ON_RESUME));
+        // Wait for second activity to resume. We must also wait for the first activity to stop
+        // so that this event is not included in the logs.
+        waitAndAssertActivityStates(state(secondActivity, ON_RESUME),
+                state(firstActivity, ON_STOP));
 
         // Enter split screen
         moveTaskToPrimarySplitScreen(secondActivity.getTaskId());
 
+        // CLear logs so we can capture just the destroy sequence
         getLifecycleLog().clear();
 
         // Start an activity in separate task (will be placed in secondary stack)
