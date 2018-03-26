@@ -342,6 +342,12 @@ public class MediaMetadataRetrieverTest extends AndroidTestCase {
      */
     public void testGetScaledFrameAtTime() {
         int resId = R.raw.binary_counter_320x240_30fps_600frames;
+        if (!MediaUtils.hasCodecForResourceAndDomain(getContext(), resId, "video/")
+            && mPackageManager.hasSystemFeature(PackageManager.FEATURE_WATCH)) {
+            MediaUtils.skipTest("no video codecs for resource on watch");
+            return;
+        }
+
         MediaMetadataRetriever retriever = new MediaMetadataRetriever();
         Resources resources = getContext().getResources();
         AssetFileDescriptor afd = resources.openRawResourceFd(resId);
