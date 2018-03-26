@@ -15,6 +15,7 @@
 package android.slice.cts;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
@@ -24,6 +25,9 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import android.app.Instrumentation;
+import android.app.PendingIntent;
+import android.app.slice.Slice;
+import android.app.slice.SliceItem;
 import android.app.slice.SliceManager;
 import android.content.ComponentName;
 import android.content.Context;
@@ -37,6 +41,7 @@ import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
+import org.mockito.invocation.InvocationOnMock;
 import org.mockito.stubbing.Answer;
 
 import java.io.BufferedReader;
@@ -101,6 +106,41 @@ public class SliceManagerTest {
 
         assertEquals(BASE_URI.buildUpon().path("intent").build(), uri);
         verify(LocalSliceProvider.sProxy).onMapIntentToUri(eq(intent));
+    }
+
+    @Test
+    public void testOnCreatePermissionSlice() {
+        LocalSliceProvider.sAnswer = invocation -> {
+            throw new SecurityException("No slices allowed");
+        };
+        try {
+            Uri uri = BASE_URI.buildUpon().path("permission").build();
+            PendingIntent intent = PendingIntent.getBroadcast(mContext, 0, new Intent(""), 0);
+
+            when(LocalSliceProvider.sProxy.onCreatePermissionRequest(any())).thenReturn(intent);
+
+            Slice s = mSliceManager.bindSlice(uri, Collections.emptyList());
+
+            /// Make sure we get a callback for creating the intent.
+            verify(LocalSliceProvider.sProxy).onCreatePermissionRequest(eq(uri));
+            // Verify the intent we get back is the one we returned.
+            PendingIntent i = findAction(s);
+            assertTrue(intent == i);
+        } finally {
+            LocalSliceProvider.sAnswer = null;
+        }
+    }
+
+    private PendingIntent findAction(Slice s) {
+        for (SliceItem item : s.getItems()) {
+            if (SliceItem.FORMAT_SLICE.equals(item.getFormat())) {
+                return findAction(item.getSlice());
+            }
+            if (SliceItem.FORMAT_ACTION.equals(item.getFormat())) {
+                return item.getAction();
+            }
+        }
+        return null;
     }
 
     public static String getDefaultLauncher() throws Exception {
