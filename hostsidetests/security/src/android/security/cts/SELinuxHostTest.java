@@ -614,6 +614,7 @@ public class SELinuxHostTest extends DeviceTestCase implements IBuildReceiver, I
 
         /* run property_info_checker on property_contexts */
         ProcessBuilder pb = new ProcessBuilder(propertyInfoChecker.getAbsolutePath(),
+                devicePolicyFile.getAbsolutePath(),
                 devicePcFile.getAbsolutePath());
         pb.redirectOutput(ProcessBuilder.Redirect.PIPE);
         pb.redirectErrorStream(true);
