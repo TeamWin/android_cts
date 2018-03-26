@@ -201,6 +201,13 @@ public class BaseDevicePolicyTest extends DeviceTestCase implements IBuildReceiv
         getDevice().startUser(userId);
     }
 
+    /**
+     * Starts switching to the user with the given ID.
+     *
+     * <p>This is not blocking. Some operations will be flaky if called immediately afterwards, such
+     * as {@link #wakeupAndDismissKeyguard()}. Call {@link #waitForBroadcastIdle()} between this
+     * method and those operations to ensure that switching the user has finished.
+     */
     protected void switchUser(int userId) throws Exception {
         // TODO Move this logic to ITestDevice
         executeShellCommand("am switch-user " + userId);
