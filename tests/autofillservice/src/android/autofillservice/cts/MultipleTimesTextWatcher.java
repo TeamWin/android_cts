@@ -64,7 +64,8 @@ class MultipleTimesTextWatcher implements TextWatcher {
     void assertAutoFilled() throws Exception {
         final boolean set = mLatch.await(FILL_TIMEOUT.ms(), TimeUnit.MILLISECONDS);
         if (!set) {
-            throw new RetryableException(FILL_TIMEOUT, "Timeout (%s ms) on EditText %s", mName);
+            throw new RetryableException(FILL_TIMEOUT, "Timeout (%s ms) on EditText %s",
+                    FILL_TIMEOUT.ms(), mName);
         }
         final String actual = mEditText.getText().toString();
         assertWithMessage("Wrong auto-fill value on EditText %s", mName)
