@@ -18,6 +18,7 @@ package android.hardware.camera2.cts;
 
 import android.hardware.camera2.CameraManager;
 import android.hardware.camera2.CameraAccessException;
+import android.hardware.camera2.cts.CameraTestUtils.HandlerExecutor;
 import android.hardware.camera2.cts.testcases.Camera2AndroidTestCase;
 import android.hardware.camera2.cts.helpers.StaticMetadata;
 import android.hardware.camera2.cts.helpers.StaticMetadata.CheckLevel;
@@ -26,6 +27,7 @@ import android.os.SystemClock;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.concurrent.ArrayBlockingQueue;
+import java.util.concurrent.Executor;
 import java.util.concurrent.TimeUnit;
 
 import static org.mockito.Mockito.*;
@@ -123,9 +125,15 @@ public class FlashlightTest extends Camera2AndroidTestCase {
     }
 
     public void testTorchCallback() throws Exception {
+        testTorchCallback(/*useExecutor*/ false);
+        testTorchCallback(/*useExecutor*/ true);
+    }
+
+    private void testTorchCallback(boolean useExecutor) throws Exception {
         if (mFlashCameraIdList.size() == 0)
             return;
 
+        final Executor executor = useExecutor ? new HandlerExecutor(mHandler) : null;
         // reset torch mode status
         for (String id : mFlashCameraIdList) {
             resetTorchModeStatus(id);
@@ -135,7 +143,11 @@ public class FlashlightTest extends Camera2AndroidTestCase {
 
         for (int i = 0; i < NUM_REGISTERS; i++) {
             // should get OFF for all cameras with a flash unit.
-            mCameraManager.registerTorchCallback(torchListener, mHandler);
+            if (useExecutor) {
+                mCameraManager.registerTorchCallback(executor, torchListener);
+            } else {
+                mCameraManager.registerTorchCallback(torchListener, mHandler);
+            }
             mCameraManager.unregisterTorchCallback(torchListener);
         }
 
