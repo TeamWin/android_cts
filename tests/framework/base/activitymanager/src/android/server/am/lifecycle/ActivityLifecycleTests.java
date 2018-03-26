@@ -302,6 +302,7 @@ public class ActivityLifecycleTests extends ActivityLifecycleClientTestBase {
                         ON_RESUME, ON_PAUSE, ON_ACTIVITY_RESULT, ON_RESUME), "activityResult");
     }
 
+    @FlakyTest(bugId = 76088057)
     @Test
     public void testOnPostCreateAfterCreate() throws Exception {
         final Activity callbackTrackingActivity =
@@ -315,6 +316,7 @@ public class ActivityLifecycleTests extends ActivityLifecycleClientTestBase {
                 "create");
     }
 
+    @FlakyTest(bugId = 76088057)
     @Test
     public void testOnPostCreateAfterRecreateInOnResume() throws Exception {
         // Launch activity
@@ -336,6 +338,7 @@ public class ActivityLifecycleTests extends ActivityLifecycleClientTestBase {
                 "recreate");
     }
 
+    @FlakyTest(bugId = 76088057)
     @Test
     public void testOnPostCreateAfterRecreateInOnPause() throws Exception {
         // Launch activity
@@ -366,6 +369,7 @@ public class ActivityLifecycleTests extends ActivityLifecycleClientTestBase {
                 "recreate");
     }
 
+    @FlakyTest(bugId = 76088057)
     @Test
     public void testOnPostCreateAfterRecreateInOnStop() throws Exception {
         // Launch first activity
