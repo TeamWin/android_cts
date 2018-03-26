@@ -15,6 +15,7 @@
  */
 package android.media.cts;
 
+import static android.media.AudioAttributes.USAGE_GAME;
 import static android.support.test.InstrumentationRegistry.getInstrumentation;
 
 import android.app.PendingIntent;
@@ -91,7 +92,7 @@ public class MediaSessionTest extends AndroidTestCase {
         // Verify by getting the controller and checking all its fields
         MediaController controller = mSession.getController();
         assertNotNull(controller);
-        verifyNewSession(controller, TEST_SESSION_TAG);
+        verifyNewSession(controller);
     }
 
     /**
@@ -303,15 +304,13 @@ public class MediaSessionTest extends AndroidTestCase {
             assertEquals(VolumeProvider.VOLUME_CONTROL_FIXED, info.getVolumeControl());
 
             // test setPlaybackToLocal
-            AudioAttributes attrs = new AudioAttributes.Builder().addTag(TEST_VALUE).build();
+            AudioAttributes attrs = new AudioAttributes.Builder().setUsage(USAGE_GAME).build();
             mSession.setPlaybackToLocal(attrs);
 
             info = controller.getPlaybackInfo();
             assertNotNull(info);
             assertEquals(MediaController.PlaybackInfo.PLAYBACK_TYPE_LOCAL, info.getPlaybackType());
-            Set<String> tags = info.getAudioAttributes().getTags();
-            assertNotNull(tags);
-            assertTrue(tags.contains(TEST_VALUE));
+            assertEquals(attrs, info.getAudioAttributes());
         }
     }
 
@@ -516,7 +515,7 @@ public class MediaSessionTest extends AndroidTestCase {
      *
      * @param controller The controller for the session
      */
-    private void verifyNewSession(MediaController controller, String tag) {
+    private void verifyNewSession(MediaController controller) {
         assertEquals("New session has unexpected configuration", 0L, controller.getFlags());
         assertNull("New session has unexpected configuration", controller.getExtras());
         assertNull("New session has unexpected configuration", controller.getMetadata());
@@ -531,7 +530,6 @@ public class MediaSessionTest extends AndroidTestCase {
 
         assertNotNull(controller.getSessionToken());
         assertNotNull(controller.getTransportControls());
-        assertEquals(tag, controller.getTag());
 
         MediaController.PlaybackInfo info = controller.getPlaybackInfo();
         assertNotNull(info);
