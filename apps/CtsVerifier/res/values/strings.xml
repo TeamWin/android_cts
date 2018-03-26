@@ -2744,6 +2744,7 @@ You should be prompted to select credentials; choose the ones you just installed
     <string name="start_lock_task_button_label">Start LockTask mode</string>
     <string name="device_owner_lock_task_ui_default_test">Default LockTask UI</string>
     <string name="device_owner_lock_task_ui_default_test_info">
+            Press the button below to reset to default LockTask UI.
             Observe the following UI restrictions. Mark the test as \'pass\' only if ALL of the
             requirements below are met.\n\n
             1) Nothing is shown in the status bar, including notification icons, connectivity icons,
@@ -2751,7 +2752,7 @@ You should be prompted to select credentials; choose the ones you just installed
             2) The status bar can\'t be expanded. That is, the \'swipe-down\' gesture doesn\'t work
             for the status bar.\n
             3) The Home button is hidden.\n
-            4) The Recents button is hidden.\n
+            4) The Overview button is hidden and the Overview gesture (swipe-up) does not work.\n
             5) Long-press the power button. The power button menu, which usually shows the power-off
             button, etc., isn\'t shown.\n
             6) Press the power button to turn off the screen, and press it again to turn the screen
@@ -2767,7 +2768,7 @@ You should be prompted to select credentials; choose the ones you just installed
             2) The status bar can\'t be expanded. That is, the \'swipe-down\' gesture doesn\'t work
             for the status bar.\n
             3) The Home button is hidden.\n
-            4) The Recents button is hidden.\n
+            4) The Overview button is hidden and the Overview gesture (swipe-up) does not work.\n
             5) Long-press the power button. The power button menu, which usually shows the power-off
             button, etc., isn\'t shown.\n
             6) Press the power button to turn off the screen, and press it again to turn the screen
@@ -2778,13 +2779,13 @@ You should be prompted to select credentials; choose the ones you just installed
     <string name="device_owner_lock_task_ui_notifications_test">Enable notifications</string>
     <string name="device_owner_lock_task_ui_notifications_test_info">
             Press the button below to enable notifications. Observe the notification icons on the
-            status bar are now enabled. The status bar can also be expanded to show the
-            notifications. However, all Settings UI should remain invisible, including Quick
-            Settings and any link to the Settings app.\n\n
+            status bar are now enabled and the Home button is shown. The status bar can also be
+            expanded to show the notifications. However, all Settings UI should remain invisible,
+            including Quick Settings and any link to the Settings app.\n\n
             The rest of the UI restrictions should still apply:\n
             1) System info area is still hidden on the status bar.\n
-            2) The Home button is hidden.\n
-            3) The Recents button is hidden.\n
+            2) The Overview button is hidden and the Overview gesture (swipe-up) does not work.\n
+            3) Holding the Home button and swiping to the right does not bring up other tasks.\n
             4) Long-press the power button. The power button menu, which usually shows the power-off
             button, etc., isn\'t shown.\n
             5) Press the power button to turn off the screen, and press it again to turn the screen
@@ -2801,29 +2802,30 @@ You should be prompted to select credentials; choose the ones you just installed
             battery status, clock, etc.\n
             2) The status bar can\'t be expanded. That is, the \'swipe-down\' gesture doesn\'t work
             for the status bar.\n
-            3) The Recents button is hidden.\n
-            4) Long-press the power button. The power button menu, which usually shows the power-off
+            3) The Overview button is hidden and the Overview gesture (swipe-up) does not work.\n
+            4) Holding the Home button and swiping to the right does not bring up other tasks.\n
+            5) Long-press the power button. The power button menu, which usually shows the power-off
             button, etc., isn\'t shown.\n
-            5) Press the power button to turn off the screen, and press it again to turn the screen
+            6) Press the power button to turn off the screen, and press it again to turn the screen
             back on. Lock screen shouldn\'t be shown.\n
-            6) The assist gesture isn\'t available.\n\n
+            7) The assist gesture isn\'t available.\n\n
             Mark the test as \'pass\' only if ALL of the above requirements are met.
     </string>
-    <string name="device_owner_lock_task_ui_recents_test">Enable Recents button</string>
+    <string name="device_owner_lock_task_ui_recents_test">Enable Overview button</string>
     <string name="device_owner_lock_task_ui_recents_test_info">
-            Press the button below to enable the Recents button. Observe the Recents button is now
-            enabled. Press the Recents button and verify the Recents view can be opened.\n\n
+            Press the button below to enable the Overview button. Observe the Home button is now
+            enabled. Press the Overview button or perform the Overview gesture
+            (swipe up) and verify the Overview view can be opened.\n\n
             The rest of the UI restrictions should still apply:\n
             1) Nothing is shown in the status bar, including notification icons, connectivity icons,
             battery status, clock, etc.\n
             2) The status bar can\'t be expanded. That is, the \'swipe-down\' gesture doesn\'t work
             for the status bar.\n
-            3) The Home button is hidden.\n
-            4) Long-press the power button. The power button menu, which usually shows the power-off
+            3) Long-press the power button. The power button menu, which usually shows the power-off
             button, etc., isn\'t shown.\n
-            5) Press the power button to turn off the screen, and press it again to turn the screen
+            4) Press the power button to turn off the screen, and press it again to turn the screen
             back on. Lock screen shouldn\'t be shown.\n
-            6) The assist gesture isn\'t available.\n\n
+            5) The assist gesture isn\'t available.\n\n
             Mark the test as \'pass\' only if ALL of the above requirements are met.
     </string>
     <string name="device_owner_lock_task_ui_global_actions_test">Enable global actions</string>
@@ -2838,9 +2840,9 @@ You should be prompted to select credentials; choose the ones you just installed
             2) The status bar can\'t be expanded. That is, the \'swipe-down\' gesture doesn\'t work
             for the status bar.\n
             3) The Home button is hidden.\n
-            4) The Recents button is hidden.\n
-            5) Long-press the power button. The power button menu, which usually shows the power-off
-            button, etc., isn\'t shown.\n
+            4) The Overview button is hidden and the Overview gesture (swipe-up) does not work.\n
+            5) Press the power button to turn off the screen, and press it again to turn the screen
+            back on. Lock screen shouldn\'t be shown.\n
             6) The assist gesture isn\'t available.\n\n
             Mark the test as \'pass\' only if ALL of the above requirements are met.
     </string>
@@ -2855,7 +2857,7 @@ You should be prompted to select credentials; choose the ones you just installed
             2) The status bar can\'t be expanded. That is, the \'swipe-down\' gesture doesn\'t work
             for the status bar, even on the lock screen.\n
             3) The Home button is hidden.\n
-            4) The Recents button is hidden.\n
+            4) The Overview button is hidden and the Overview gesture (swipe-up) does not work.\n
             5) Long-press the power button. The power button menu, which usually shows the power-off
             button, etc., isn\'t shown.\n
             6) The assist gesture isn\'t available.\n\n
