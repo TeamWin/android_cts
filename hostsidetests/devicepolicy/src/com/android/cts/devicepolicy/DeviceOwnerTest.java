@@ -982,6 +982,7 @@ public class DeviceOwnerTest extends BaseDevicePolicyTest {
         setProfileOwnerOrFail(DEVICE_OWNER_COMPONENT, userId);
 
         switchUser(userId);
+        waitForBroadcastIdle();
         wakeupAndDismissKeyguard();
 
         // Setting the same affiliation ids on both users and running the lock task tests.
