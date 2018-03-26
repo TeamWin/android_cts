@@ -192,38 +192,6 @@ public class InputMethodServiceDeviceTest {
                 TIMEOUT, "CtsInputMethod1.hideSoftInput is called");
     }
 
-    @Test
-    public void testOnStartInputCalledOnceIme1() throws Exception {
-        final TestHelper helper = new TestHelper(
-                getClass(), DeviceTestConstants.TEST_ON_START_INPUT_CALLED_ONCE_IME1);
-
-        helper.launchActivity(DeviceTestConstants.PACKAGE, DeviceTestConstants.TEST_ACTIVITY_CLASS);
-        helper.findUiObject(R.id.text_entry).click();
-
-        // we should've only one onStartInput call.
-        pollingCheck(() -> helper.queryAllEvents()
-                        .collect(startingFrom(helper.isStartOfTest()))
-                        .filter(isFrom(Ime1Constants.CLASS).and(isType(ON_START_INPUT)))
-                        .findAny()
-                        .isPresent(),
-                TIMEOUT, "CtsInputMethod1.onStartInput is called");
-        List<DeviceEvent> startInputEvents = helper.queryAllEvents()
-                .collect(startingFrom(helper.isStartOfTest()))
-                .filter(isFrom(Ime1Constants.CLASS).and(isType(ON_START_INPUT)))
-                .collect(Collectors.toList());
-
-        assertEquals("CtsInputMethod1.onStartInput is called exactly once",
-                startInputEvents.size(),
-                1);
-
-        // check if that single event didn't cause IME restart.
-        final DeviceEvent event = startInputEvents.get(0);
-        Boolean isRestarting = DeviceEvent.getEventParamBoolean(
-                        DeviceEventTypeParam.ON_START_INPUT_RESTARTING, event);
-        assertTrue(isRestarting != null);
-        assertFalse(isRestarting);
-    }
-
     /**
      * Build stream collector of {@link DeviceEvent} collecting sequence that elements have
      * specified types.
