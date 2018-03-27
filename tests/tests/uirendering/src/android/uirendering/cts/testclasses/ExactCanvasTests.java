@@ -246,7 +246,7 @@ public class ExactCanvasTests extends ActivityTestBase {
     public void testUnclippedSaveLayerRounding() {
         createTest()
                 .addCanvasClient((canvas, width, height) -> {
-                    canvas.saveLayerAlpha(10.5f, 10.5f, 79.5f, 79.5f, 255, 0);
+                    canvas.saveLayerAlpha(10.5f, 10.5f, 79.5f, 79.5f, 255);
                     canvas.drawRect(20, 20, 70, 70, new Paint());
                     canvas.restore();
                 })
