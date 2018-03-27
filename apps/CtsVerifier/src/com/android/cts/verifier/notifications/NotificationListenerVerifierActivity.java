@@ -271,9 +271,6 @@ public class NotificationListenerVerifierActivity extends InteractiveVerifierAct
                                 "data integrity test: notification ID (%d, %d)");
                         pass &= checkEquals(mWhen3, payload.getLong(JSON_WHEN),
                                 "data integrity test: notification when (%d, %d)");
-                    } else {
-                        pass = false;
-                        logFail("unexpected notification tag: " + tag);
                     }
                 } catch (JSONException e) {
                     pass = false;
@@ -281,7 +278,7 @@ public class NotificationListenerVerifierActivity extends InteractiveVerifierAct
                 }
             }
 
-            pass &= found.size() == 3;
+            pass &= found.size() >= 3;
             status = pass ? PASS : FAIL;
         }
 
