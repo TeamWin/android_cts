@@ -127,14 +127,7 @@ public class DynamicConfigPusher extends BaseTargetPreparer implements ITargetCl
         }
 
         // Use DynamicConfigHandler to merge local and service configuration into one file
-        File hostFile = null;
-        try {
-            hostFile = DynamicConfigHandler.getMergedDynamicConfigFile(
-                    localConfigFile, apfeConfigInJson, mModuleName);
-        } catch (IOException | XmlPullParserException | JSONException e) {
-            throw new TargetSetupError("Cannot get merged dynamic config file", e,
-                    device.getDeviceDescriptor());
-        }
+        File hostFile = mergeConfigFiles(localConfigFile, apfeConfigInJson, mModuleName, device);
 
         if (TestTarget.DEVICE.equals(mTarget)) {
             String deviceDest = String.format("%s%s.dynamic",
@@ -191,5 +184,23 @@ public class DynamicConfigPusher extends BaseTargetPreparer implements ITargetCl
                     e, device.getDeviceDescriptor());
         }
         return localConfigFile;
+    }
+
+    @VisibleForTesting
+    File mergeConfigFiles(File localConfigFile, String apfeConfigInJson, String moduleName,
+            ITestDevice device) throws TargetSetupError {
+        File hostFile = null;
+        try {
+            hostFile = DynamicConfigHandler.getMergedDynamicConfigFile(
+                    localConfigFile, apfeConfigInJson, moduleName);
+            return hostFile;
+        } catch (IOException | XmlPullParserException | JSONException e) {
+            throw new TargetSetupError("Cannot get merged dynamic config file", e,
+                    device.getDeviceDescriptor());
+        } finally {
+            if (mExtractFromResource) {
+                FileUtil.deleteFile(localConfigFile);
+            }
+        }
     }
 }
