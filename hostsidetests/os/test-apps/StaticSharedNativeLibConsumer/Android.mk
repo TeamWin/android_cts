@@ -53,7 +53,8 @@ LOCAL_SRC_FILES := $(call all-cpp-files-under)
 LOCAL_SHARED_LIBRARIES := liblog \
     libstaticsharednativelibprovider
 
-LOCAL_CXX_STL := none
+LOCAL_SDK_VERSION := current
+LOCAL_NDK_STL_VARIANT := none
 
 LOCAL_C_INCLUDES += \
     $(JNI_H_INCLUDE) \
