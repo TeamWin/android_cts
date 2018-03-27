@@ -360,7 +360,7 @@ public class MediaBrowser2Test extends MediaController2Test {
         testExtras.putString(testParentId, testParentId);
 
         final CountDownLatch latch = new CountDownLatch(1);
-        final MediaLibrarySessionCallback callback = new MediaLibrarySessionCallback(mContext) {
+        final MediaLibrarySessionCallback callback = new MediaLibrarySessionCallback() {
             @Override
             public void onSubscribe(@NonNull MediaLibrarySession session,
                     @NonNull ControllerInfo info, @NonNull String parentId,
@@ -384,7 +384,7 @@ public class MediaBrowser2Test extends MediaController2Test {
     public void testUnsubscribe() throws InterruptedException {
         final String testParentId = "testUnsubscribeId";
         final CountDownLatch latch = new CountDownLatch(1);
-        final MediaLibrarySessionCallback callback = new MediaLibrarySessionCallback(mContext) {
+        final MediaLibrarySessionCallback callback = new MediaLibrarySessionCallback() {
             @Override
             public void onUnsubscribe(@NonNull MediaLibrarySession session,
                     @NonNull ControllerInfo info, @NonNull String parentId) {
@@ -412,7 +412,7 @@ public class MediaBrowser2Test extends MediaController2Test {
 
         final CountDownLatch latch = new CountDownLatch(3);
         final MediaLibrarySessionCallback sessionCallback =
-                new MediaLibrarySessionCallback(mContext) {
+                new MediaLibrarySessionCallback() {
                     @Override
                     public CommandGroup onConnect(@NonNull MediaSession2 session,
                             @NonNull ControllerInfo controller) {

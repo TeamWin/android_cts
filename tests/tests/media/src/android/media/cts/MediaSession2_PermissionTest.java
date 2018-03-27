@@ -47,7 +47,6 @@ import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
 import android.annotation.NonNull;
-import android.content.Context;
 import android.media.MediaController2;
 import android.media.MediaItem2;
 import android.media.MediaSession2;
@@ -102,13 +101,13 @@ public class MediaSession2_PermissionTest extends MediaSession2TestBase {
 
     private MediaSession2 createSessionWithAllowedActions(final CommandGroup commands) {
         mPlayer = new MockPlayer(0);
-        mCallback = new MySessionCallback(mContext) {
+        mCallback = new MySessionCallback() {
             @Override
             public CommandGroup onConnect(MediaSession2 session, ControllerInfo controller) {
                 if (Process.myUid() != controller.getUid()) {
                     return null;
                 }
-                return commands == null ? new CommandGroup(mContext) : commands;
+                return commands == null ? new CommandGroup() : commands;
             }
         };
         if (mSession != null) {
@@ -120,15 +119,15 @@ public class MediaSession2_PermissionTest extends MediaSession2TestBase {
     }
 
     private CommandGroup createCommandGroupWith(int commandCode) {
-        CommandGroup commands = new CommandGroup(mContext);
-        commands.addCommand(new Command(mContext, commandCode));
+        CommandGroup commands = new CommandGroup();
+        commands.addCommand(new Command(commandCode));
         return commands;
     }
 
     private CommandGroup createCommandGroupWithout(int commandCode) {
-        CommandGroup commands = new CommandGroup(mContext);
+        CommandGroup commands = new CommandGroup();
         commands.addAllPredefinedCommands();
-        commands.removeCommand(new Command(mContext, commandCode));
+        commands.removeCommand(new Command(commandCode));
         return commands;
     }
 
@@ -207,7 +206,7 @@ public class MediaSession2_PermissionTest extends MediaSession2TestBase {
 
     @Test
     public void testSkipToPlaylistItem() throws InterruptedException {
-        MediaItem2 testItem = TestUtils.createMediaItemWithMetadata(mContext);
+        MediaItem2 testItem = TestUtils.createMediaItemWithMetadata();
         testOnCommandRequest(COMMAND_CODE_PLAYLIST_SKIP_TO_PLAYLIST_ITEM, (controller) -> {
             controller.skipToPlaylistItem(testItem);
         });
@@ -215,7 +214,7 @@ public class MediaSession2_PermissionTest extends MediaSession2TestBase {
 
     @Test
     public void testSetPlaylist() throws InterruptedException {
-        List<MediaItem2> list = TestUtils.createPlaylist(mContext, 2);
+        List<MediaItem2> list = TestUtils.createPlaylist(2);
         testOnCommandRequest(COMMAND_CODE_PLAYLIST_SET_LIST, (controller) -> {
             controller.setPlaylist(list, null);
         });
@@ -230,7 +229,7 @@ public class MediaSession2_PermissionTest extends MediaSession2TestBase {
 
     @Test
     public void testAddPlaylistItem() throws InterruptedException {
-        MediaItem2 testItem = TestUtils.createMediaItemWithMetadata(mContext);
+        MediaItem2 testItem = TestUtils.createMediaItemWithMetadata();
         testOnCommandRequest(COMMAND_CODE_PLAYLIST_ADD_ITEM, (controller) -> {
             controller.addPlaylistItem(0, testItem);
         });
@@ -238,7 +237,7 @@ public class MediaSession2_PermissionTest extends MediaSession2TestBase {
 
     @Test
     public void testRemovePlaylistItem() throws InterruptedException {
-        MediaItem2 testItem = TestUtils.createMediaItemWithMetadata(mContext);
+        MediaItem2 testItem = TestUtils.createMediaItemWithMetadata();
         testOnCommandRequest(COMMAND_CODE_PLAYLIST_REMOVE_ITEM, (controller) -> {
             controller.removePlaylistItem(testItem);
         });
@@ -246,7 +245,7 @@ public class MediaSession2_PermissionTest extends MediaSession2TestBase {
 
     @Test
     public void testReplacePlaylistItem() throws InterruptedException {
-        MediaItem2 testItem = TestUtils.createMediaItemWithMetadata(mContext);
+        MediaItem2 testItem = TestUtils.createMediaItemWithMetadata();
         testOnCommandRequest(COMMAND_CODE_PLAYLIST_REPLACE_ITEM, (controller) -> {
             controller.replacePlaylistItem(0, testItem);
         });
@@ -435,8 +434,7 @@ public class MediaSession2_PermissionTest extends MediaSession2TestBase {
         public boolean mOnPrepareFromUriCalled;
 
 
-        public MySessionCallback(Context context) {
-            super(context);
+        public MySessionCallback() {
             mCountDownLatch = new CountDownLatch(1);
         }
 

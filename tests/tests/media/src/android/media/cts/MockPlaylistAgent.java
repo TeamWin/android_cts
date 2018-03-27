@@ -16,7 +16,6 @@
 
 package android.media.cts;
 
-import android.content.Context;
 import android.media.MediaItem2;
 import android.media.MediaMetadata2;
 import android.media.MediaPlaylistAgent;
@@ -50,10 +49,6 @@ public class MockPlaylistAgent extends MediaPlaylistAgent {
     public boolean mSkipToNextItemCalled;
     public boolean mSetRepeatModeCalled;
     public boolean mSetShuffleModeCalled;
-
-    public MockPlaylistAgent(Context context) {
-        super(context);
-    }
 
     @Override
     public List<MediaItem2> getPlaylist() {
