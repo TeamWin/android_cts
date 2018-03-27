@@ -38,6 +38,7 @@ import android.os.PowerManager;
 import android.os.RemoteException;
 import android.os.SystemClock;
 import android.server.am.WindowManagerState;
+import android.support.test.InstrumentationRegistry;
 import android.support.test.uiautomator.BySelector;
 import android.support.test.uiautomator.UiDevice;
 import android.support.test.uiautomator.UiSelector;
@@ -191,9 +192,8 @@ public class ActivityManagerProcessStateTest extends InstrumentationTestCase {
         }
         assertTrue("Expected SecurityException thrown", gotException);
 
-        cmd = "pm grant " + STUB_PACKAGE_NAME + " "
-                + Manifest.permission.PACKAGE_USAGE_STATS;
-        result = SystemUtil.runShellCommand(getInstrumentation(), cmd);
+        InstrumentationRegistry.getInstrumentation().getUiAutomation().grantRuntimePermission(
+                STUB_PACKAGE_NAME, android.Manifest.permission.PACKAGE_USAGE_STATS);
         /*
         Log.d("XXXX", "Invoke: " + cmd);
         Log.d("XXXX", "Result: " + result);
@@ -363,9 +363,8 @@ public class ActivityManagerProcessStateTest extends InstrumentationTestCase {
 
         ActivityManager am = mContext.getSystemService(ActivityManager.class);
 
-        String cmd = "pm grant " + STUB_PACKAGE_NAME + " "
-                + Manifest.permission.PACKAGE_USAGE_STATS;
-        String result = SystemUtil.runShellCommand(getInstrumentation(), cmd);
+        InstrumentationRegistry.getInstrumentation().getUiAutomation().grantRuntimePermission(
+                STUB_PACKAGE_NAME, android.Manifest.permission.PACKAGE_USAGE_STATS);
         /*
         Log.d("XXXX", "Invoke: " + cmd);
         Log.d("XXXX", "Result: " + result);
@@ -407,8 +406,8 @@ public class ActivityManagerProcessStateTest extends InstrumentationTestCase {
         // And wait for the uid report to be gone.
         uidWatcher.waitFor(WatchUidRunner.CMD_GONE, null);
 
-        cmd = "appops set " + SIMPLE_PACKAGE_NAME + " RUN_IN_BACKGROUND deny";
-        result = SystemUtil.runShellCommand(getInstrumentation(), cmd);
+        String cmd = "appops set " + SIMPLE_PACKAGE_NAME + " RUN_IN_BACKGROUND deny";
+        String result = SystemUtil.runShellCommand(getInstrumentation(), cmd);
 
         // This is a side-effect of the app op command.
         uidWatcher.expect(WatchUidRunner.CMD_IDLE, null);
@@ -531,9 +530,8 @@ public class ActivityManagerProcessStateTest extends InstrumentationTestCase {
 
         ActivityManager am = mContext.getSystemService(ActivityManager.class);
 
-        String cmd = "pm grant " + STUB_PACKAGE_NAME + " "
-                + Manifest.permission.PACKAGE_USAGE_STATS;
-        String result = SystemUtil.runShellCommand(getInstrumentation(), cmd);
+        InstrumentationRegistry.getInstrumentation().getUiAutomation().grantRuntimePermission(
+                STUB_PACKAGE_NAME, android.Manifest.permission.PACKAGE_USAGE_STATS);
         /*
         Log.d("XXXX", "Invoke: " + cmd);
         Log.d("XXXX", "Result: " + result);
@@ -583,8 +581,8 @@ public class ActivityManagerProcessStateTest extends InstrumentationTestCase {
         // And wait for the uid report to be gone.
         uidWatcher.waitFor(WatchUidRunner.CMD_GONE, null, WAIT_TIME);
 
-        cmd = "appops set " + SIMPLE_PACKAGE_NAME + " RUN_IN_BACKGROUND deny";
-        result = SystemUtil.runShellCommand(getInstrumentation(), cmd);
+        String cmd = "appops set " + SIMPLE_PACKAGE_NAME + " RUN_IN_BACKGROUND deny";
+        String result = SystemUtil.runShellCommand(getInstrumentation(), cmd);
 
         // This is a side-effect of the app op command.
         uidWatcher.expect(WatchUidRunner.CMD_IDLE, null);
@@ -927,13 +925,12 @@ public class ActivityManagerProcessStateTest extends InstrumentationTestCase {
 
         ActivityManager am = mContext.getSystemService(ActivityManager.class);
 
-        String cmd = "pm grant " + STUB_PACKAGE_NAME + " "
-                + Manifest.permission.PACKAGE_USAGE_STATS;
-        String result = SystemUtil.runShellCommand(getInstrumentation(), cmd);
+        InstrumentationRegistry.getInstrumentation().getUiAutomation().grantRuntimePermission(
+                STUB_PACKAGE_NAME, android.Manifest.permission.PACKAGE_USAGE_STATS);
 
         // We don't want to wait for the uid to actually go idle, we can force it now.
-        cmd = "am make-uid-idle " + CANT_SAVE_STATE_1_PACKAGE_NAME;
-        result = SystemUtil.runShellCommand(getInstrumentation(), cmd);
+        String cmd = "am make-uid-idle " + CANT_SAVE_STATE_1_PACKAGE_NAME;
+        String result = SystemUtil.runShellCommand(getInstrumentation(), cmd);
 
         ApplicationInfo appInfo = mContext.getPackageManager().getApplicationInfo(
                 CANT_SAVE_STATE_1_PACKAGE_NAME, 0);
@@ -1056,13 +1053,12 @@ public class ActivityManagerProcessStateTest extends InstrumentationTestCase {
         ActivityManager am = mContext.getSystemService(ActivityManager.class);
         UiDevice device = UiDevice.getInstance(getInstrumentation());
 
-        String cmd = "pm grant " + STUB_PACKAGE_NAME + " "
-                + Manifest.permission.PACKAGE_USAGE_STATS;
-        String result = SystemUtil.runShellCommand(getInstrumentation(), cmd);
+        InstrumentationRegistry.getInstrumentation().getUiAutomation().grantRuntimePermission(
+                STUB_PACKAGE_NAME, android.Manifest.permission.PACKAGE_USAGE_STATS);
 
         // We don't want to wait for the uid to actually go idle, we can force it now.
-        cmd = "am make-uid-idle " + CANT_SAVE_STATE_1_PACKAGE_NAME;
-        result = SystemUtil.runShellCommand(getInstrumentation(), cmd);
+        String cmd = "am make-uid-idle " + CANT_SAVE_STATE_1_PACKAGE_NAME;
+        String result = SystemUtil.runShellCommand(getInstrumentation(), cmd);
         cmd = "am make-uid-idle " + CANT_SAVE_STATE_2_PACKAGE_NAME;
         result = SystemUtil.runShellCommand(getInstrumentation(), cmd);
 
