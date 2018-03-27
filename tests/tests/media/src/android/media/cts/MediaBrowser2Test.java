@@ -38,11 +38,10 @@ import android.media.MediaItem2;
 import android.media.MediaLibraryService2.MediaLibrarySession;
 import android.media.MediaLibraryService2.MediaLibrarySession.MediaLibrarySessionCallback;
 import android.media.MediaMetadata2;
-import android.media.MediaPlaylistAgent;
 import android.media.MediaSession2;
-import android.media.MediaSession2.Command;
+import android.media.SessionCommand2;
 import android.media.MediaSession2.CommandButton;
-import android.media.MediaSession2.CommandGroup;
+import android.media.SessionCommandGroup2;
 import android.media.MediaSession2.ControllerInfo;
 import android.media.SessionToken2;
 import android.os.Bundle;
@@ -414,7 +413,7 @@ public class MediaBrowser2Test extends MediaController2Test {
         final MediaLibrarySessionCallback sessionCallback =
                 new MediaLibrarySessionCallback() {
                     @Override
-                    public CommandGroup onConnect(@NonNull MediaSession2 session,
+                    public SessionCommandGroup2 onConnect(@NonNull MediaSession2 session,
                             @NonNull ControllerInfo controller) {
                         if (Process.myUid() == controller.getUid()) {
                             assertTrue(session instanceof MediaLibrarySession);
@@ -492,7 +491,7 @@ public class MediaBrowser2Test extends MediaController2Test {
 
         @CallSuper
         @Override
-        public void onConnected(MediaController2 controller, CommandGroup commands) {
+        public void onConnected(MediaController2 controller, SessionCommandGroup2 commands) {
             connectLatch.countDown();
         }
 
@@ -527,8 +526,8 @@ public class MediaBrowser2Test extends MediaController2Test {
         }
 
         @Override
-        public void onCustomCommand(MediaController2 controller, Command command, Bundle args,
-                ResultReceiver receiver) {
+        public void onCustomCommand(MediaController2 controller, SessionCommand2 command,
+                Bundle args, ResultReceiver receiver) {
             mCallbackProxy.onCustomCommand(controller, command, args, receiver);
         }
 
@@ -538,7 +537,8 @@ public class MediaBrowser2Test extends MediaController2Test {
         }
 
         @Override
-        public void onAllowedCommandsChanged(MediaController2 controller, CommandGroup commands) {
+        public void onAllowedCommandsChanged(MediaController2 controller,
+                SessionCommandGroup2 commands) {
             mCallbackProxy.onAllowedCommandsChanged(controller, commands);
         }
 
