@@ -23,6 +23,7 @@ import android.net.TrafficStats;
 import android.net.Uri;
 import android.os.Bundle;
 import android.os.ParcelFileDescriptor;
+import android.system.Os;
 import android.util.Log;
 
 import java.io.IOException;
@@ -79,8 +80,12 @@ public class MyProvider extends ContentProvider {
                 return null;
             }
             case "tag": {
-                Log.v(TAG, "My UID is " + android.os.Process.myUid());
-                TrafficStats.setThreadStatsUidSelf();
+                final int uid = Os.getuid();
+                Log.v(TAG, "My UID is " + uid);
+                TrafficStats.setThreadStatsUid(uid);
+                if (TrafficStats.getThreadStatsUid() != uid) {
+                    throw new AssertionError("TrafficStats UID mismatch!");
+                }
                 try {
                     final ParcelFileDescriptor pfd = extras.getParcelable("fd");
                     TrafficStats.tagFileDescriptor(pfd.getFileDescriptor());
