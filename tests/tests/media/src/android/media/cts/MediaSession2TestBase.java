@@ -24,10 +24,9 @@ import android.media.MediaController2;
 import android.media.MediaController2.ControllerCallback;
 import android.media.MediaItem2;
 import android.media.MediaMetadata2;
-import android.media.MediaPlaylistAgent;
-import android.media.MediaSession2.Command;
+import android.media.SessionCommand2;
 import android.media.MediaSession2.CommandButton;
-import android.media.MediaSession2.CommandGroup;
+import android.media.SessionCommandGroup2;
 import android.media.SessionToken2;
 import android.os.Bundle;
 import android.os.HandlerThread;
@@ -172,7 +171,7 @@ abstract class MediaSession2TestBase {
 
         @CallSuper
         @Override
-        public void onConnected(MediaController2 controller, CommandGroup commands) {
+        public void onConnected(MediaController2 controller, SessionCommandGroup2 commands) {
             connectLatch.countDown();
         }
 
@@ -201,8 +200,8 @@ abstract class MediaSession2TestBase {
         }
 
         @Override
-        public void onCustomCommand(MediaController2 controller, Command command, Bundle args,
-                ResultReceiver receiver) {
+        public void onCustomCommand(MediaController2 controller, SessionCommand2 command,
+                Bundle args, ResultReceiver receiver) {
             mCallbackProxy.onCustomCommand(controller, command, args, receiver);
         }
 
@@ -218,7 +217,8 @@ abstract class MediaSession2TestBase {
         }
 
         @Override
-        public void onAllowedCommandsChanged(MediaController2 controller, CommandGroup commands) {
+        public void onAllowedCommandsChanged(MediaController2 controller,
+                SessionCommandGroup2 commands) {
             mCallbackProxy.onAllowedCommandsChanged(controller, commands);
         }
 
