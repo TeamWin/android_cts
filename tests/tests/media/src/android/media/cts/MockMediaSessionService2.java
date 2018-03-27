@@ -58,7 +58,7 @@ public class MockMediaSessionService2 extends MediaSessionService2 {
         SessionCallback sessionCallback = TestServiceRegistry.getInstance().getSessionCallback();
         if (sessionCallback == null) {
             // Ensures non-null
-            sessionCallback = new SessionCallback(this) {};
+            sessionCallback = new SessionCallback() {};
         }
         mSession = new MediaSession2.Builder(this)
                 .setPlayer(player)
@@ -87,6 +87,6 @@ public class MockMediaSessionService2 extends MediaSessionService2 {
                 .setContentTitle(getPackageName())
                 .setContentText("Dummt test notification")
                 .setSmallIcon(android.R.drawable.sym_def_app_icon).build();
-        return new MediaNotification(this, DEFAULT_MEDIA_NOTIFICATION_ID, notification);
+        return new MediaNotification(DEFAULT_MEDIA_NOTIFICATION_ID, notification);
     }
 }
