@@ -357,7 +357,7 @@ public class AttentionManagementVerifierActivity
                     Log.e(TAG, "failed to unpack data from mocklistener", e);
                 }
             }
-            pass &= found.size() == 3;
+            pass &= found.size() >= 3;
             status = pass ? PASS : FAIL;
         }
 
