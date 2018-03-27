@@ -50,7 +50,7 @@ public class LocalSliceProvider extends SliceProvider {
     @Override
     public void attachInfo(Context context, ProviderInfo info) {
         mSliceService = mock(SliceManager.class, withSettings()
-                .spiedInstance(context.getSystemService(Context.SLICE_SERVICE))
+                .spiedInstance(context.getSystemService(SliceManager.class))
                 .defaultAnswer(invocation -> {
                     Answer s = sAnswer != null ? sAnswer : Answers.CALLS_REAL_METHODS;
                     return s.answer(invocation);
@@ -58,7 +58,7 @@ public class LocalSliceProvider extends SliceProvider {
         context = new ContextWrapper(context) {
             @Override
             public Object getSystemService(String name) {
-                if (Context.SLICE_SERVICE.equals(name)) {
+                if (getSystemServiceName(SliceManager.class).equals(name)) {
                     return mSliceService;
                 }
                 return super.getSystemService(name);
