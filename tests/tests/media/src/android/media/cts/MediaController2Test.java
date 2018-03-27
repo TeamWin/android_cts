@@ -36,8 +36,8 @@ import android.media.MediaMetadata2;
 import android.media.MediaPlayerBase;
 import android.media.MediaPlaylistAgent;
 import android.media.MediaSession2;
-import android.media.MediaSession2.Command;
-import android.media.MediaSession2.CommandGroup;
+import android.media.SessionCommand2;
+import android.media.SessionCommandGroup2;
 import android.media.MediaSession2.ControllerInfo;
 import android.media.MediaSession2.SessionCallback;
 import android.media.Rating2;
@@ -102,7 +102,7 @@ public class MediaController2Test extends MediaSession2TestBase {
                 .setPlaylistAgent(mMockAgent)
                 .setSessionCallback(sHandlerExecutor, new SessionCallback() {
                     @Override
-                    public CommandGroup onConnect(MediaSession2 session,
+                    public SessionCommandGroup2 onConnect(MediaSession2 session,
                             ControllerInfo controller) {
                         if (Process.myUid() == controller.getUid()) {
                             return super.onConnect(session, controller);
@@ -263,7 +263,7 @@ public class MediaController2Test extends MediaSession2TestBase {
 
     /**
      * This also tests {@link ControllerCallback#onPlaylistChanged(
-     * MediaController2, MediaPlaylistAgent, List, MediaMetadata2)}.
+     * MediaController2, List, MediaMetadata2)}.
      */
     @Test
     public void testGetPlaylist() throws InterruptedException {
@@ -352,9 +352,9 @@ public class MediaController2Test extends MediaSession2TestBase {
     /**
      * Test whether {@link MediaSession2#setPlaylist(List, MediaMetadata2)} is notified
      * through the
-     * {@link ControllerCallback#onPlaylistMetadataChanged(MediaController2, MediaPlaylistAgent, MediaMetadata2)}
-     * if the controller doesn't have {@link MediaSession2#COMMAND_CODE_PLAYLIST_GET_LIST} but
-     * {@link MediaSession2#COMMAND_CODE_PLAYLIST_GET_LIST_METADATA}.
+     * {@link ControllerCallback#onPlaylistMetadataChanged(MediaController2, MediaMetadata2)}
+     * if the controller doesn't have {@link SessionCommand2#COMMAND_CODE_PLAYLIST_GET_LIST} but
+     * {@link SessionCommand2#COMMAND_CODE_PLAYLIST_GET_LIST_METADATA}.
      */
     @Test
     public void testControllerCallback_onPlaylistMetadataChanged() throws InterruptedException {
@@ -372,11 +372,12 @@ public class MediaController2Test extends MediaSession2TestBase {
         };
         final SessionCallback sessionCallback = new SessionCallback() {
             @Override
-            public CommandGroup onConnect(MediaSession2 session, ControllerInfo controller) {
+            public SessionCommandGroup2 onConnect(MediaSession2 session,
+                    ControllerInfo controller) {
                 if (Process.myUid() == controller.getUid()) {
-                    CommandGroup commands = new CommandGroup();
-                    commands.addCommand(new Command(
-                            MediaSession2.COMMAND_CODE_PLAYLIST_GET_LIST_METADATA));
+                    SessionCommandGroup2 commands = new SessionCommandGroup2();
+                    commands.addCommand(new SessionCommand2(
+                              SessionCommand2.COMMAND_CODE_PLAYLIST_GET_LIST_METADATA));
                     return commands;
                 }
                 return super.onConnect(session, controller);
@@ -474,8 +475,7 @@ public class MediaController2Test extends MediaSession2TestBase {
     }
 
     /**
-     * This also tests {@link ControllerCallback#onShuffleModeChanged(
-     * MediaController2, MediaPlaylistAgent, int)}.
+     * This also tests {@link ControllerCallback#onShuffleModeChanged(MediaController2, int)}.
      */
     @Test
     public void testGetShuffleMode() throws InterruptedException {
@@ -512,8 +512,7 @@ public class MediaController2Test extends MediaSession2TestBase {
     }
 
     /**
-     * This also tests {@link ControllerCallback#onRepeatModeChanged(
-     * MediaController2, MediaPlaylistAgent, int)}.
+     * This also tests {@link ControllerCallback#onRepeatModeChanged(MediaController2, int)}.
      */
     @Test
     public void testGetRepeatMode() throws InterruptedException {
@@ -593,7 +592,8 @@ public class MediaController2Test extends MediaSession2TestBase {
     @Test
     public void testSendCustomCommand() throws InterruptedException {
         // TODO(jaewan): Need to revisit with the permission.
-        final Command testCommand = new Command(MediaSession2.COMMAND_CODE_PLAYBACK_PREPARE);
+        final SessionCommand2 testCommand =
+                new SessionCommand2(SessionCommand2.COMMAND_CODE_PLAYBACK_PREPARE);
         final Bundle testArgs = new Bundle();
         testArgs.putString("args", "testSendCustomAction");
 
@@ -601,7 +601,7 @@ public class MediaController2Test extends MediaSession2TestBase {
         final SessionCallback callback = new SessionCallback() {
             @Override
             public void onCustomCommand(MediaSession2 session, ControllerInfo controller,
-                    Command customCommand, Bundle args, ResultReceiver cb) {
+                    SessionCommand2 customCommand, Bundle args, ResultReceiver cb) {
                 super.onCustomCommand(session, controller, customCommand, args, cb);
                 assertEquals(mContext.getPackageName(), controller.getPackageName());
                 assertEquals(testCommand, customCommand);
@@ -630,7 +630,7 @@ public class MediaController2Test extends MediaSession2TestBase {
     public void testControllerCallback_sessionRejects() throws InterruptedException {
         final MediaSession2.SessionCallback sessionCallback = new SessionCallback() {
             @Override
-            public MediaSession2.CommandGroup onConnect(MediaSession2 session,
+            public SessionCommandGroup2 onConnect(MediaSession2 session,
                     ControllerInfo controller) {
                 return null;
             }
@@ -949,7 +949,7 @@ public class MediaController2Test extends MediaSession2TestBase {
         final CountDownLatch latch = new CountDownLatch(1);
         final SessionCallback sessionCallback = new SessionCallback() {
             @Override
-            public CommandGroup onConnect(@NonNull MediaSession2 session,
+            public SessionCommandGroup2 onConnect(@NonNull MediaSession2 session,
                     @NonNull ControllerInfo controller) {
                 if (Process.myUid() == controller.getUid()) {
                     if (mSession != null) {

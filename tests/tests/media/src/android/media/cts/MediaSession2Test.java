@@ -39,9 +39,9 @@ import android.media.MediaPlayerBase;
 import android.media.MediaPlaylistAgent;
 import android.media.MediaSession2;
 import android.media.MediaSession2.Builder;
-import android.media.MediaSession2.Command;
+import android.media.SessionCommand2;
 import android.media.MediaSession2.CommandButton;
-import android.media.MediaSession2.CommandGroup;
+import android.media.SessionCommandGroup2;
 import android.media.MediaSession2.ControllerInfo;
 import android.media.MediaSession2.SessionCallback;
 import android.media.VolumeProvider2;
@@ -90,7 +90,7 @@ public class MediaSession2Test extends MediaSession2TestBase {
                 .setPlaylistAgent(mMockAgent)
                 .setSessionCallback(sHandlerExecutor, new SessionCallback() {
                     @Override
-                    public CommandGroup onConnect(MediaSession2 session,
+                    public SessionCommandGroup2 onConnect(MediaSession2 session,
                             ControllerInfo controller) {
                         if (Process.myUid() == controller.getUid()) {
                             return super.onConnect(session, controller);
@@ -628,7 +628,7 @@ public class MediaSession2Test extends MediaSession2TestBase {
         assertFalse(mPlayer.mCountDownLatch.await(WAIT_TIME_MS, TimeUnit.MILLISECONDS));
         assertFalse(mPlayer.mPauseCalled);
         assertEquals(1, callback.commands.size());
-        assertEquals(MediaSession2.COMMAND_CODE_PLAYBACK_PAUSE,
+        assertEquals(SessionCommand2.COMMAND_CODE_PLAYBACK_PAUSE,
                 (long) callback.commands.get(0).getCommandCode());
 
         controller.play();
@@ -636,7 +636,7 @@ public class MediaSession2Test extends MediaSession2TestBase {
         assertTrue(mPlayer.mPlayCalled);
         assertFalse(mPlayer.mPauseCalled);
         assertEquals(2, callback.commands.size());
-        assertEquals(MediaSession2.COMMAND_CODE_PLAYBACK_PLAY,
+        assertEquals(SessionCommand2.COMMAND_CODE_PLAYBACK_PLAY,
                 (long) callback.commands.get(1).getCommandCode());
     }
 
@@ -678,12 +678,12 @@ public class MediaSession2Test extends MediaSession2TestBase {
     public void testSetCustomLayout() throws InterruptedException {
         final List<CommandButton> buttons = new ArrayList<>();
         buttons.add(new CommandButton.Builder()
-                .setCommand(new Command(MediaSession2.COMMAND_CODE_PLAYBACK_PLAY))
+                .setCommand(new SessionCommand2(SessionCommand2.COMMAND_CODE_PLAYBACK_PLAY))
                 .setDisplayName("button").build());
         final CountDownLatch latch = new CountDownLatch(1);
         final SessionCallback sessionCallback = new SessionCallback() {
             @Override
-            public CommandGroup onConnect(MediaSession2 session,
+            public SessionCommandGroup2 onConnect(MediaSession2 session,
                     ControllerInfo controller) {
                 if (mContext.getPackageName().equals(controller.getPackageName())) {
                     mSession.setCustomLayout(controller, buttons);
@@ -722,23 +722,23 @@ public class MediaSession2Test extends MediaSession2TestBase {
 
     @Test
     public void testSetAllowedCommands() throws InterruptedException {
-        final CommandGroup commands = new CommandGroup();
-        commands.addCommand(new Command(MediaSession2.COMMAND_CODE_PLAYBACK_PLAY));
-        commands.addCommand(new Command(MediaSession2.COMMAND_CODE_PLAYBACK_PAUSE));
-        commands.addCommand(new Command(MediaSession2.COMMAND_CODE_PLAYBACK_STOP));
+        final SessionCommandGroup2 commands = new SessionCommandGroup2();
+        commands.addCommand(new SessionCommand2(SessionCommand2.COMMAND_CODE_PLAYBACK_PLAY));
+        commands.addCommand(new SessionCommand2(SessionCommand2.COMMAND_CODE_PLAYBACK_PAUSE));
+        commands.addCommand(new SessionCommand2(SessionCommand2.COMMAND_CODE_PLAYBACK_STOP));
 
         final CountDownLatch latch = new CountDownLatch(1);
         final ControllerCallback callback = new ControllerCallback() {
             @Override
             public void onAllowedCommandsChanged(MediaController2 controller,
-                    CommandGroup commandsOut) {
+                    SessionCommandGroup2 commandsOut) {
                 assertNotNull(commandsOut);
-                Set<Command> expected = commands.getCommands();
-                Set<Command> actual = commandsOut.getCommands();
+                Set<SessionCommand2> expected = commands.getCommands();
+                Set<SessionCommand2> actual = commandsOut.getCommands();
 
                 assertNotNull(actual);
                 assertEquals(expected.size(), actual.size());
-                for (Command command : expected) {
+                for (SessionCommand2 command : expected) {
                     assertTrue(actual.contains(command));
                 }
                 latch.countDown();
@@ -755,14 +755,15 @@ public class MediaSession2Test extends MediaSession2TestBase {
 
     @Test
     public void testSendCustomAction() throws InterruptedException {
-        final Command testCommand = new Command(MediaSession2.COMMAND_CODE_PLAYBACK_PREPARE);
+        final SessionCommand2 testCommand = new SessionCommand2(
+                SessionCommand2.COMMAND_CODE_PLAYBACK_PREPARE);
         final Bundle testArgs = new Bundle();
         testArgs.putString("args", "testSendCustomAction");
 
         final CountDownLatch latch = new CountDownLatch(2);
         final ControllerCallback callback = new ControllerCallback() {
             @Override
-            public void onCustomCommand(MediaController2 controller, Command command,
+            public void onCustomCommand(MediaController2 controller, SessionCommand2 command,
                     Bundle args, ResultReceiver receiver) {
                 assertEquals(testCommand, command);
                 assertTrue(TestUtils.equals(testArgs, args));
@@ -817,7 +818,7 @@ public class MediaSession2Test extends MediaSession2TestBase {
 
     public class MockOnConnectCallback extends SessionCallback {
         @Override
-        public MediaSession2.CommandGroup onConnect(MediaSession2 session,
+        public SessionCommandGroup2 onConnect(MediaSession2 session,
                 ControllerInfo controllerInfo) {
             if (Process.myUid() != controllerInfo.getUid()) {
                 return null;
@@ -831,16 +832,16 @@ public class MediaSession2Test extends MediaSession2TestBase {
     }
 
     public class MockOnCommandCallback extends SessionCallback {
-        public final ArrayList<MediaSession2.Command> commands = new ArrayList<>();
+        public final ArrayList<SessionCommand2> commands = new ArrayList<>();
 
         @Override
         public boolean onCommandRequest(MediaSession2 session, ControllerInfo controllerInfo,
-                MediaSession2.Command command) {
+                SessionCommand2 command) {
             assertEquals(mContext.getPackageName(), controllerInfo.getPackageName());
             assertEquals(Process.myUid(), controllerInfo.getUid());
             assertFalse(controllerInfo.isTrusted());
             commands.add(command);
-            if (command.getCommandCode() == MediaSession2.COMMAND_CODE_PLAYBACK_PAUSE) {
+            if (command.getCommandCode() == SessionCommand2.COMMAND_CODE_PLAYBACK_PAUSE) {
                 return false;
             }
             return true;
