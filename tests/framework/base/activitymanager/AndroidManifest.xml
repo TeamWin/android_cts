@@ -71,6 +71,9 @@
 
         <activity android:name="android.server.am.lifecycle.ActivityLifecycleClientTestBase$ResultActivity"/>
 
+        <activity android:name="android.server.am.lifecycle.ActivityLifecycleClientTestBase$SingleTopActivity"
+                  android:launchMode="singleTop" />
+
         <activity android:name="android.server.am.StartActivityTests$TestActivity2" />
 
     </application>

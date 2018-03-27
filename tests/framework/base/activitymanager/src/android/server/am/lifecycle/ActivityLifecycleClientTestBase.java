@@ -2,6 +2,7 @@ package android.server.am.lifecycle;
 
 import static android.server.am.StateLogger.log;
 import static android.server.am.lifecycle.LifecycleLog.ActivityCallback.ON_ACTIVITY_RESULT;
+import static android.server.am.lifecycle.LifecycleLog.ActivityCallback.ON_NEW_INTENT;
 import static android.server.am.lifecycle.LifecycleLog.ActivityCallback.ON_POST_CREATE;
 
 import android.annotation.Nullable;
@@ -22,6 +23,8 @@ import org.junit.Before;
 /** Base class for device-side tests that verify correct activity lifecycle transitions. */
 public class ActivityLifecycleClientTestBase extends ActivityManagerTestBase {
 
+    static final String EXTRA_RECREATE = "recreate";
+
     final ActivityTestRule mFirstActivityTestRule = new ActivityTestRule(FirstActivity.class,
             true /* initialTouchMode */, false /* launchActivity */);
 
@@ -41,6 +44,9 @@ public class ActivityLifecycleClientTestBase extends ActivityManagerTestBase {
     final ActivityTestRule mCallbackTrackingActivityTestRule = new ActivityTestRule(
             CallbackTrackingActivity.class, true /* initialTouchMode */,
             false /* launchActivity */);
+
+    final ActivityTestRule mSingleTopActivityTestRule = new ActivityTestRule(
+            SingleTopActivity.class, true /* initialTouchMode */, false /* launchActivity */);
 
     private final ActivityLifecycleMonitor mLifecycleMonitor = ActivityLifecycleMonitorRegistry
             .getInstance();
@@ -122,6 +128,12 @@ public class ActivityLifecycleClientTestBase extends ActivityManagerTestBase {
             super.onPostCreate(savedInstanceState);
             mLifecycleLog.onActivityCallback(this, ON_POST_CREATE);
         }
+
+        @Override
+        protected void onNewIntent(Intent intent) {
+            super.onNewIntent(intent);
+            mLifecycleLog.onActivityCallback(this, ON_NEW_INTENT);
+        }
     }
 
     /**
@@ -148,6 +160,18 @@ public class ActivityLifecycleClientTestBase extends ActivityManagerTestBase {
             super.onResume();
             setResult(RESULT_OK);
             finish();
+        }
+    }
+
+    /** Test activity that can call {@link Activity#recreate()} if requested in a new intent. */
+    public static class SingleTopActivity extends CallbackTrackingActivity {
+
+        @Override
+        protected void onNewIntent(Intent intent) {
+            super.onNewIntent(intent);
+            if (intent != null && intent.getBooleanExtra(EXTRA_RECREATE, false)) {
+                recreate();
+            }
         }
     }
 }
