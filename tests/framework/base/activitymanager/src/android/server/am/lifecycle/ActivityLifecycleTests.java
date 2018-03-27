@@ -6,6 +6,7 @@ import static android.server.am.lifecycle.LifecycleLog.ActivityCallback.ON_DESTR
 import static android.server.am.lifecycle.LifecycleLog.ActivityCallback.ON_NEW_INTENT;
 import static android.server.am.lifecycle.LifecycleLog.ActivityCallback.ON_PAUSE;
 import static android.server.am.lifecycle.LifecycleLog.ActivityCallback.ON_POST_CREATE;
+import static android.server.am.lifecycle.LifecycleLog.ActivityCallback.ON_RESTART;
 import static android.server.am.lifecycle.LifecycleLog.ActivityCallback.ON_RESUME;
 import static android.server.am.lifecycle.LifecycleLog.ActivityCallback.ON_START;
 import static android.server.am.lifecycle.LifecycleLog.ActivityCallback.ON_STOP;
@@ -49,7 +50,8 @@ public class ActivityLifecycleTests extends ActivityLifecycleClientTestBase {
         final Activity activity = mFirstActivityTestRule.launchActivity(new Intent());
         waitAndAssertActivityStates(state(activity, ON_RESUME));
 
-        LifecycleVerifier.assertLaunchSequence(FirstActivity.class, getLifecycleLog());
+        LifecycleVerifier.assertLaunchSequence(FirstActivity.class, getLifecycleLog(),
+                false /* includeCallbacks */);
     }
 
     @Test
@@ -457,5 +459,105 @@ public class ActivityLifecycleTests extends ActivityLifecycleClientTestBase {
         LifecycleVerifier.assertSequence(SingleTopActivity.class, getLifecycleLog(),
                 Arrays.asList(ON_NEW_INTENT, ON_DESTROY, PRE_ON_CREATE, ON_CREATE, ON_START,
                         ON_POST_CREATE, ON_RESUME), "recreate");
+    }
+
+    @Test
+    @FlakyTest(bugId = 65236456)
+    public void testOnNewIntent() throws Exception {
+        // Launch a singleTop activity
+        final Activity singleTopActivity =
+                mSingleTopActivityTestRule.launchActivity(new Intent());
+
+        // Wait for the activity to resume
+        waitAndAssertActivityStates(state(singleTopActivity, ON_RESUME));
+        LifecycleVerifier.assertLaunchSequence(SingleTopActivity.class, getLifecycleLog(),
+                true /* includeCallbacks */);
+
+        // Try to launch again
+        getLifecycleLog().clear();
+        final Intent intent = new Intent(InstrumentationRegistry.getContext(),
+                SingleTopActivity.class);
+        intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+        InstrumentationRegistry.getTargetContext().startActivity(intent);
+
+        // Wait for the activity to resume again
+        waitAndAssertActivityStates(state(singleTopActivity, ON_RESUME));
+
+        // Verify that the first activity was paused, new intent was delivered and resumed again
+        LifecycleVerifier.assertSequence(SingleTopActivity.class, getLifecycleLog(),
+                Arrays.asList(ON_PAUSE, ON_NEW_INTENT, ON_RESUME), "newIntent");
+    }
+
+    @Test
+    @FlakyTest(bugId = 65236456)
+    public void testOnNewIntentFromHidden() throws Exception {
+        // Launch a singleTop activity
+        final Activity singleTopActivity =
+                mSingleTopActivityTestRule.launchActivity(new Intent());
+
+        // Wait for the activity to resume
+        waitAndAssertActivityStates(state(singleTopActivity, ON_RESUME));
+        LifecycleVerifier.assertLaunchSequence(SingleTopActivity.class, getLifecycleLog(),
+                true /* includeCallbacks */);
+
+        // Launch something on top
+        final Intent newTaskIntent = new Intent();
+        newTaskIntent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_MULTIPLE_TASK);
+        final Activity secondActivity = mSecondActivityTestRule.launchActivity(newTaskIntent);
+
+        // Wait for the activity to resume
+        waitAndAssertActivityStates(state(secondActivity, ON_RESUME));
+        waitAndAssertActivityStates(state(singleTopActivity, ON_STOP));
+
+        // Try to launch again
+        getLifecycleLog().clear();
+        final Intent intent = new Intent(InstrumentationRegistry.getContext(),
+                SingleTopActivity.class);
+        intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+        InstrumentationRegistry.getTargetContext().startActivity(intent);
+
+        // Wait for the activity to resume again
+        waitAndAssertActivityStates(state(singleTopActivity, ON_RESUME));
+
+        // Verify that the first activity was restarted, new intent was delivered and resumed again
+        LifecycleVerifier.assertSequence(SingleTopActivity.class, getLifecycleLog(),
+                Arrays.asList(ON_NEW_INTENT, ON_RESTART, ON_START, ON_RESUME), "newIntent");
+        // TODO(b/65236456): This should actually be ON_RESTART, ON_START, ON_NEW_INTENT, ON_RESUME
+    }
+
+    @Test
+    @FlakyTest(bugId = 65236456)
+    public void testOnNewIntentFromPaused() throws Exception {
+        // Launch a singleTop activity
+        final Activity singleTopActivity =
+                mSingleTopActivityTestRule.launchActivity(new Intent());
+
+        // Wait for the activity to resume
+        waitAndAssertActivityStates(state(singleTopActivity, ON_RESUME));
+        LifecycleVerifier.assertLaunchSequence(SingleTopActivity.class, getLifecycleLog(),
+                true /* includeCallbacks */);
+
+        // Enter split screen
+        moveTaskToPrimarySplitScreen(singleTopActivity.getTaskId());
+
+        // Start an activity in separate task (will be placed in secondary stack)
+        getLaunchActivityBuilder().execute();
+
+        // Wait for the activity to resume
+        waitAndAssertActivityStates(state(singleTopActivity, ON_PAUSE));
+
+        // Try to launch again
+        getLifecycleLog().clear();
+        final Intent intent = new Intent(InstrumentationRegistry.getContext(),
+                SingleTopActivity.class);
+        intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+        InstrumentationRegistry.getTargetContext().startActivity(intent);
+
+        // Wait for the activity to resume again
+        waitAndAssertActivityStates(state(singleTopActivity, ON_RESUME));
+
+        // Verify that the first activity was restarted, new intent was delivered and resumed again
+        LifecycleVerifier.assertSequence(SingleTopActivity.class, getLifecycleLog(),
+                Arrays.asList(ON_NEW_INTENT, ON_RESUME), "newIntent");
     }
 }
