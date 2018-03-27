@@ -18,8 +18,6 @@
 #ifndef ANDROID_VULKANTESTHELPERS_H
 #define ANDROID_VULKANTESTHELPERS_H
 
-#define LOG_TAG "VulkanTestHelpers"
-
 #include <vector>
 
 #include <cstdlib>

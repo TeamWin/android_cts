@@ -27,8 +27,10 @@ LOCAL_SRC_FILES := \
 	android_graphics_cts_BitmapTest.cpp \
 	android_graphics_cts_SyncTest.cpp \
 	android_graphics_cts_CameraGpuCtsActivity.cpp \
+	android_graphics_cts_CameraVulkanGpuTest.cpp \
 	android_graphics_cts_MediaVulkanGpuTest.cpp \
 	android_graphics_cts_VulkanFeaturesTest.cpp \
+	CameraTestHelpers.cpp \
 	ImageReaderTestHelpers.cpp \
 	MediaTestHelpers.cpp \
 	VulkanTestHelpers.cpp
