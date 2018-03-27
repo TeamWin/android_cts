@@ -30,11 +30,13 @@ def main():
 
     with its.device.ItsSession() as cam:
         props = cam.get_camera_properties()
+        mono_camera = its.caps.mono_camera(props)
         fd_modes = props['android.statistics.info.availableFaceDetectModes']
         a = props['android.sensor.info.activeArraySize']
         aw, ah = a['right'] - a['left'], a['bottom'] - a['top']
         if its.caps.read_3a(props):
-            gain, exp, _, _, focus = cam.do_3a(get_results=True)
+            gain, exp, _, _, focus = cam.do_3a(get_results=True,
+                                               mono_camera=mono_camera)
             print 'iso = %d' % gain
             print 'exp = %.2fms' % (exp*1.0E-6)
             if focus == 0.0:

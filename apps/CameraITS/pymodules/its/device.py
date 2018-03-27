@@ -412,7 +412,7 @@ class ItsSession(object):
                     do_ae=True, do_awb=True, do_af=True,
                     lock_ae=False, lock_awb=False,
                     get_results=False,
-                    ev_comp=0):
+                    ev_comp=0, mono_camera=False):
         """Perform a 3A operation on the device.
 
         Triggers some or all of AE, AWB, and AF, and returns once they have
@@ -432,6 +432,7 @@ class ItsSession(object):
             lock_awb: Request AWB lock after convergence, and wait for it.
             get_results: Return the 3A results from this function.
             ev_comp: An EV compensation value to use when running AE.
+            mono_camera: Boolean for monochrome camera.
 
         Region format in args:
             Arguments are lists of weighted regions; each weighted region is a
@@ -492,8 +493,9 @@ class ItsSession(object):
                 raise its.error.Error('Invalid command response')
         if converged and not get_results:
             return None,None,None,None,None
-        if (do_ae and ae_sens == None or do_awb and awb_gains == None
+        if (do_ae and ae_sens == None or (not mono_camera and do_awb and awb_gains == None)
                 or do_af and af_dist == None or not converged):
+
             raise its.error.Error('3A failed to converge')
         return ae_sens, ae_exp, awb_gains, awb_transform, af_dist
 
