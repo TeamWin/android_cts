@@ -525,6 +525,7 @@ public final class CameraDeviceInfo extends DeviceInfo {
         charsKeyNames.add(CameraCharacteristics.REPROCESS_MAX_CAPTURE_STALL.getName());
         charsKeyNames.add(CameraCharacteristics.DEPTH_DEPTH_IS_EXCLUSIVE.getName());
         charsKeyNames.add(CameraCharacteristics.LOGICAL_MULTI_CAMERA_SENSOR_SYNC_TYPE.getName());
+        charsKeyNames.add(CameraCharacteristics.DISTORTION_CORRECTION_AVAILABLE_MODES.getName());
 
         return charsKeyNames;
     }
