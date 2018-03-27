@@ -13,6 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 package android.autofillservice.cts;
 
 import static android.autofillservice.cts.GridActivity.ID_L1C1;
@@ -138,6 +139,63 @@ public class MutableAutofillIdTest extends AutoFillServiceTestCase {
                 .onCell(1, 2, "l1c2");
         mUiBot.selectDataset(datasetPicker, "l1c2");
         expectation.assertAutoFilled();
+    }
+
+    @Test
+    public void testViewGoneDuringAutofillCanStillBeFilled() throws Exception {
+        enableService();
+
+        final EditText field1 = mActivity.getCell(1, 1);
+        final AutofillId oldIdField1 = field1.getAutofillId();
+        final EditText field2 = mActivity.getCell(1, 2);
+        final AutofillId idField2 = field2.getAutofillId();
+
+        // Prepare response
+        final CannedFillResponse response1 = new CannedFillResponse.Builder()
+                .addDataset(new CannedDataset.Builder()
+                        .setField(oldIdField1, "l1c1", createPresentation("l1c1"))
+                        .setField(idField2, "l1c2", createPresentation("l1c2"))
+                        .build())
+                .build();
+        sReplier.addResponse(response1);
+
+        // Trigger autofill on 1st view.
+        focusCell(1, 1);
+        final FillRequest fillRequest1 = sReplier.getNextFillRequest();
+        final ViewNode node1Request1 = assertTextIsSanitized(fillRequest1.structure, ID_L1C1);
+        assertThat(node1Request1.getAutofillId()).isEqualTo(oldIdField1);
+        mUiBot.assertDatasets("l1c1");
+
+        // Make sure 2nd field shows picker
+        focusCell(1, 2);
+        final UiObject2 picker1 = mUiBot.assertDatasets("l1c2");
+
+        // Now change id of 1st view
+        final AutofillId newIdField1 = mActivity.getAutofillManager().getNextAutofillId();
+
+        // Change id
+        mActivity.removeCell(1, 1);
+        field1.setAutofillId(newIdField1);
+        assertThat(field1.getAutofillId()).isEqualTo(newIdField1);
+        Log.d(TAG, "Changed id of " + ID_L1C1 + " from " + oldIdField1 + " to " + newIdField1);
+
+        // Autofill it - just 2nd field should be autofilled
+        final FillExpectation expectation1 = mActivity.expectAutofill().onCell(1, 2, "l1c2");
+        mUiBot.selectDataset(picker1, "l1c2");
+        expectation1.assertAutoFilled();
+
+        // Re-add the cell before triggering autofill on it
+        field1.setAutofillId(oldIdField1);
+        mActivity.addCell(1, 1, field1);
+
+        // Tap 1st field again - it should be autofillable
+        mActivity.focusCell(1, 1);
+        final UiObject2 picker2 = mUiBot.assertDatasets("l1c1");
+
+        // Now autofill again
+        final FillExpectation expectation2 = mActivity.expectAutofill().onCell(1, 1, "l1c1");
+        mUiBot.selectDataset(picker2, "l1c1");
+        expectation2.assertAutoFilled();
     }
 
     @Test
