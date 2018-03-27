@@ -228,9 +228,8 @@ abstract class MediaSession2TestBase {
         }
 
         @Override
-        public void onPositionChanged(MediaController2 controller, long eventTimeMs,
-                long positionMs) {
-            mCallbackProxy.onPositionChanged(controller, eventTimeMs, positionMs);
+        public void onSeekCompleted(MediaController2 controller, long position) {
+            mCallbackProxy.onSeekCompleted(controller, position);
         }
 
         @Override
