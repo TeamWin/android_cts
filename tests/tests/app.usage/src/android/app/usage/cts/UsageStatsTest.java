@@ -19,6 +19,7 @@ package android.app.usage.cts;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.fail;
 
 import android.app.Activity;
 import android.app.AppOpsManager;
@@ -26,6 +27,7 @@ import android.app.Notification;
 import android.app.NotificationChannel;
 import android.app.NotificationManager;
 import android.app.PendingIntent;
+import android.app.usage.EventStats;
 import android.app.usage.UsageEvents;
 import android.app.usage.UsageEvents.Event;
 import android.app.usage.UsageStats;
@@ -41,6 +43,8 @@ import android.support.test.uiautomator.By;
 import android.support.test.uiautomator.UiDevice;
 import android.support.test.uiautomator.Until;
 import android.text.format.DateUtils;
+import android.util.Log;
+import android.util.SparseArray;
 import android.util.SparseLongArray;
 
 import org.junit.Before;
@@ -70,6 +74,9 @@ import java.util.concurrent.TimeUnit;
  */
 @RunWith(AndroidJUnit4.class)
 public class UsageStatsTest {
+    private static final boolean DEBUG = false;
+    private static final String TAG = "UsageStatsTest";
+
     private static final String APPOPS_SET_SHELL_COMMAND = "appops set {0} " +
             AppOpsManager.OPSTR_GET_USAGE_STATS + " {1}";
 
@@ -472,5 +479,206 @@ public class UsageStatsTest {
         }
         assertTrue(found);
         mUiDevice.pressBack();
+    }
+
+
+    private long getInteractiveEvents(long startTime, List<Event> out) {
+        final long endTime = System.currentTimeMillis();
+        if (DEBUG) Log.i(TAG, "Looking for interactive events between " + startTime + " and "
+                + endTime);
+        UsageEvents events = mUsageStatsManager.queryEvents(startTime, endTime);
+
+        long latestTime = 0;
+
+        // Find events.
+        while (events.hasNextEvent()) {
+            UsageEvents.Event event = new UsageEvents.Event();
+            assertTrue(events.getNextEvent(event));
+            if (event.getEventType() == Event.SCREEN_INTERACTIVE ||
+                    event.getEventType() == Event.SCREEN_NON_INTERACTIVE) {
+                if (out != null) {
+                    out.add(event);
+                }
+                if (DEBUG) Log.i(TAG, "Next interactive event type " + event.getEventType()
+                        + " time=" + event.getTimeStamp());
+                if (latestTime < event.getTimeStamp()) {
+                    latestTime = event.getTimeStamp();
+                }
+            }
+        }
+
+        return latestTime;
+    }
+
+    private ArrayList<Event> waitForInteractiveEventCount(long startTime, int count) {
+        final ArrayList<Event> events = new ArrayList<>();
+        final long endTime = SystemClock.uptimeMillis() + 2000;
+        do {
+            events.clear();
+            getInteractiveEvents(startTime, events);
+            if (events.size() == count) {
+                return events;
+            }
+            if (events.size() > count) {
+                fail("Found too many events: got " + events.size() + ", expected " + count);
+                return events;
+            }
+            SystemClock.sleep(10);
+        } while (SystemClock.uptimeMillis() < endTime);
+
+        fail("Timed out waiting for " + count + " events, only reached " + events.size());
+        return events;
+    }
+
+    static class AggrEventData {
+        int interactiveCount;
+        long interactiveDuration;
+        int nonInteractiveCount;
+        long nonInteractiveDuration;
+    }
+
+    private SparseArray<AggrEventData> getAggrEventData(long beforeTime) {
+        final long endTime = System.currentTimeMillis();
+
+        final SparseLongArray intervalLengths = new SparseLongArray();
+        intervalLengths.put(UsageStatsManager.INTERVAL_DAILY, DAY);
+        intervalLengths.put(UsageStatsManager.INTERVAL_WEEKLY, WEEK);
+        intervalLengths.put(UsageStatsManager.INTERVAL_MONTHLY, MONTH);
+        intervalLengths.put(UsageStatsManager.INTERVAL_YEARLY, YEAR);
+
+        final SparseArray<AggrEventData> allAggr = new SparseArray<>();
+
+        final int intervalCount = intervalLengths.size();
+        for (int i = 0; i < intervalCount; i++) {
+            final int intervalType = intervalLengths.keyAt(i);
+            final long intervalDuration = intervalLengths.valueAt(i);
+            final long startTime = endTime - (2 * intervalDuration);
+            List<EventStats> statsList = mUsageStatsManager.queryEventStats(intervalType,
+                    startTime, endTime);
+            assertFalse(statsList.isEmpty());
+
+            final AggrEventData aggr = new AggrEventData();
+            allAggr.put(intervalType, aggr);
+
+            boolean foundInteractive = false;
+            for (EventStats stats : statsList) {
+                // Verify that each period is a day long.
+                //assertLessThanOrEqual(stats.getLastTimeStamp() - stats.getFirstTimeStamp(),
+                //        intervalDuration);
+                switch (stats.getEventType()) {
+                    case Event.SCREEN_INTERACTIVE:
+                        aggr.interactiveCount += stats.getCount();
+                        aggr.interactiveDuration += stats.getTotalTime();
+                        foundInteractive = true;
+                        break;
+                    case Event.SCREEN_NON_INTERACTIVE:
+                        aggr.nonInteractiveCount += stats.getCount();
+                        aggr.nonInteractiveDuration += stats.getTotalTime();
+                        break;
+                }
+            }
+
+            assertTrue("Did not find screen interactive data in interval " + intervalType,
+                    foundInteractive);
+        }
+
+        return allAggr;
+    }
+
+    private void verifyCount(int oldCount, int newCount, boolean larger, String label,
+            int interval) {
+        if (larger) {
+            if (newCount <= oldCount) {
+                fail(label + " count newer " + newCount
+                        + "expected to be larger than older " + oldCount
+                        + " @ interval " + interval);
+            }
+        } else {
+            if (newCount != oldCount) {
+                fail(label + " count newer " + newCount
+                        + "expected to be same as older " + oldCount
+                        + " @ interval " + interval);
+            }
+        }
+    }
+
+    private void verifyDuration(long oldDur, long newDur, boolean larger, String label,
+            int interval) {
+        if (larger) {
+            if (newDur <= oldDur) {
+                fail(label + " duration newer " + newDur
+                        + "expected to be larger than older " + oldDur
+                        + " @ interval " + interval);
+            }
+        } else {
+            if (newDur != oldDur) {
+                fail(label + " duration newer " + newDur
+                        + "expected to be same as older " + oldDur
+                        + " @ interval " + interval);
+            }
+        }
+    }
+
+    private void verifyAggrEventData(SparseArray<AggrEventData> older,
+            SparseArray<AggrEventData> newer, boolean interactiveLarger,
+            boolean nonInteractiveLarger) {
+        for (int i = 0; i < older.size(); i++) {
+            AggrEventData o = older.valueAt(i);
+            AggrEventData n = newer.valueAt(i);
+            // When we are told something is larger, that means we have transitioned
+            // *out* of that state -- so the duration of that state is expected to
+            // increase, but the count should stay the same (and the count of the state
+            // we transition to is increased).
+            verifyCount(o.interactiveCount, n.interactiveCount, nonInteractiveLarger,
+                    "Interactive", older.keyAt(i));
+            verifyDuration(o.interactiveDuration, n.interactiveDuration, interactiveLarger,
+                    "Interactive", older.keyAt(i));
+            verifyCount(o.nonInteractiveCount, n.nonInteractiveCount, interactiveLarger,
+                    "Non-interactive", older.keyAt(i));
+            verifyDuration(o.nonInteractiveDuration, n.nonInteractiveDuration, nonInteractiveLarger,
+                    "Non-nteractive", older.keyAt(i));
+        }
+    }
+
+    @Test
+    public void testInteractiveEvents() throws Exception {
+        // We need to start out with the screen on.
+        if (!mUiDevice.isScreenOn()) {
+            mUiDevice.wakeUp();
+            SystemClock.sleep(1000);
+        }
+
+        try {
+            ArrayList<Event> events;
+
+            // Determine time to start looking for events.
+            final long startTime = getInteractiveEvents(0, null) + 1;
+            SparseArray<AggrEventData> baseAggr = getAggrEventData(0);
+
+            // First test -- put device to sleep and make sure we see this event.
+            mUiDevice.sleep();
+
+            // Do we have one event, going in to non-interactive mode?
+            events = waitForInteractiveEventCount(startTime, 1);
+            assertEquals(Event.SCREEN_NON_INTERACTIVE, events.get(0).getEventType());
+            SparseArray<AggrEventData> offAggr = getAggrEventData(startTime);
+            verifyAggrEventData(baseAggr, offAggr, true, false);
+
+            // Next test -- turn screen on and make sure we have a second event.
+            // XXX need to wait a bit so we don't accidentally trigger double-power
+            // to launch camera.  (SHOULD FIX HOW WE WAKEUP / SLEEP TO NOT USE POWER KEY)
+            SystemClock.sleep(500);
+            mUiDevice.wakeUp();
+            events = waitForInteractiveEventCount(startTime, 2);
+            assertEquals(Event.SCREEN_NON_INTERACTIVE, events.get(0).getEventType());
+            assertEquals(Event.SCREEN_INTERACTIVE, events.get(1).getEventType());
+            SparseArray<AggrEventData> onAggr = getAggrEventData(startTime);
+            verifyAggrEventData(offAggr, onAggr, false, true);
+
+        } finally {
+            // Dismiss keyguard to get device back in its normal state.
+            mUiDevice.wakeUp();
+            mUiDevice.executeShellCommand("wm dismiss-keyguard");
+        }
     }
 }
