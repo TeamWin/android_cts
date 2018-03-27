@@ -30,7 +30,7 @@ public class DismissTimerTest extends AlarmClockTestBase {
     public void testAll() throws Exception {
         assertEquals(Utils.COMPLETION_RESULT, runTest(Utils.TestcaseType.SET_TIMER_FOR_DISMISSAL));
         try {
-            Thread.sleep(1500);
+            Thread.sleep(5000);
         } catch (InterruptedException ignored) {
         }
         assertEquals(Utils.COMPLETION_RESULT, runTest(Utils.TestcaseType.DISMISS_TIMER));

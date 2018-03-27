@@ -573,7 +573,7 @@ public class VirtualContainerActivityTest extends AutoFillServiceTestCase {
         assertTextAndValue(password, "bar");
     }
 
-    private void setViewsInvisible(VisibilityIntegrationMode mode) {
+    protected void setViewsInvisible(VisibilityIntegrationMode mode) {
         mActivity.mUsername.setVisibilityIntegrationMode(mode);
         mActivity.mPassword.setVisibilityIntegrationMode(mode);
         mActivity.mUsername.changeVisibility(false);

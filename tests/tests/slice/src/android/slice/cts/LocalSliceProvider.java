@@ -14,20 +14,57 @@
 
 package android.slice.cts;
 
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.withSettings;
+
+import android.app.PendingIntent;
 import android.app.slice.Slice;
+import android.app.slice.SliceManager;
 import android.app.slice.SliceSpec;
+import android.content.Context;
+import android.content.ContextWrapper;
 import android.content.Intent;
+import android.content.pm.ProviderInfo;
 import android.net.Uri;
+import android.util.Log;
+
+import org.mockito.Answers;
+import org.mockito.listeners.InvocationListener;
+import org.mockito.listeners.MethodInvocationReport;
+import org.mockito.stubbing.Answer;
 
 import java.util.Collection;
 import java.util.List;
 
 public class LocalSliceProvider extends SliceProvider {
     public static SliceProvider sProxy;
+    public static Answer sAnswer;
+
+    private SliceManager mSliceService;
 
     @Override
     public boolean onCreate() {
         return sProxy == null || sProxy.onCreate();
+    }
+
+    @Override
+    public void attachInfo(Context context, ProviderInfo info) {
+        mSliceService = mock(SliceManager.class, withSettings()
+                .spiedInstance(context.getSystemService(SliceManager.class))
+                .defaultAnswer(invocation -> {
+                    Answer s = sAnswer != null ? sAnswer : Answers.CALLS_REAL_METHODS;
+                    return s.answer(invocation);
+                }));
+        context = new ContextWrapper(context) {
+            @Override
+            public Object getSystemService(String name) {
+                if (getSystemServiceName(SliceManager.class).equals(name)) {
+                    return mSliceService;
+                }
+                return super.getSystemService(name);
+            }
+        };
+        super.attachInfo(context, info);
     }
 
     @Override
@@ -58,5 +95,11 @@ public class LocalSliceProvider extends SliceProvider {
     public void onSliceUnpinned(Uri sliceUri) {
         if (sProxy != null) sProxy.onSliceUnpinned(sliceUri);
         super.onSliceUnpinned(sliceUri);
+    }
+
+    @Override
+    public PendingIntent onCreatePermissionRequest(Uri sliceUri) {
+        if (sProxy != null) return sProxy.onCreatePermissionRequest(sliceUri);
+        return super.onCreatePermissionRequest(sliceUri);
     }
 }

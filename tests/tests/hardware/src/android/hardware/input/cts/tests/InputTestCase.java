@@ -39,8 +39,6 @@ import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.TimeUnit;
 
-import libcore.io.IoUtils;
-
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Rule;
@@ -71,7 +69,7 @@ public class InputTestCase {
         new ActivityTestRule<>(InputCtsActivity.class);
 
     @Before
-    public void setUp() throws Exception {
+    public void setUp() {
         clearKeys();
         clearMotions();
         mInstrumentation = InstrumentationRegistry.getInstrumentation();
@@ -80,8 +78,10 @@ public class InputTestCase {
     }
 
     @After
-    public void tearDown() throws Exception {
-        IoUtils.closeQuietly(mOutputStream);
+    public void tearDown() {
+        try {
+            mOutputStream.close();
+        } catch (IOException ignored) {}
     }
 
     /**
@@ -177,12 +177,14 @@ public class InputTestCase {
         mMotions.clear();
     }
 
-    private void setupPipes() throws IOException {
+    private void setupPipes() {
         UiAutomation ui = mInstrumentation.getUiAutomation();
         ParcelFileDescriptor[] pipes = ui.executeShellCommandRw(HID_COMMAND);
 
         mOutputStream = new ParcelFileDescriptor.AutoCloseOutputStream(pipes[1]);
-        IoUtils.closeQuietly(pipes[0]); // hid command is write-only
+        try {
+          pipes[0].close(); // hid command is write-only
+        } catch (IOException ignored) {}
     }
 
     private String getEvents(int id) throws IOException {
@@ -200,6 +202,7 @@ public class InputTestCase {
         }
         return baos.toString();
     }
+
 
     private class InputListener implements InputCallback {
         @Override
