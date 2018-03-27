@@ -23,7 +23,7 @@ import android.os.Bundle;
 
 import android.content.cts.R;
 
-public class ContextWrapperCtsActivity extends Activity {
+public class ContextCtsActivity extends Activity {
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
