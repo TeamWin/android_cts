@@ -99,6 +99,10 @@ final class UiBot {
         mAutoman = instrumentation.getUiAutomation();
     }
 
+    UiDevice getDevice() {
+        return mDevice;
+    }
+
     /**
      * Asserts the dataset chooser is not shown.
      */
