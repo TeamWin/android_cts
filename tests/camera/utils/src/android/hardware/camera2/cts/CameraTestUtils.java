@@ -81,7 +81,6 @@ import java.util.List;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.Executor;
 import java.util.concurrent.LinkedBlockingQueue;
-import java.util.concurrent.RejectedExecutionException;
 import java.util.concurrent.Semaphore;
 import java.util.concurrent.TimeUnit;
 import java.text.ParseException;
@@ -1524,9 +1523,7 @@ public class CameraTestUtils extends Assert {
 
         @Override
         public void execute(Runnable runCmd) {
-            if (!mHandler.post(runCmd)) {
-                throw new RejectedExecutionException("Handler post failed!");
-            }
+            mHandler.post(runCmd);
         }
     }
 

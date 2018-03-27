@@ -16,21 +16,22 @@
 
 package android.keystore.cts;
 
+import android.app.KeyguardManager;
+import android.content.Context;
+import android.os.SystemClock;
 import android.platform.test.annotations.Presubmit;
 import android.security.keystore.KeyProperties;
 import android.security.keystore.KeyProtection;
+import android.server.am.ActivityManagerTestBase;
 import android.test.AndroidTestCase;
 import android.test.MoreAsserts;
-
-import android.keystore.cts.R;
 
 import java.security.AlgorithmParameters;
 import java.security.InvalidKeyException;
 import java.security.Key;
+import java.security.KeyStoreException;
 import java.security.Provider;
 import java.security.Security;
-import java.security.Signature;
-import java.security.SignatureException;
 import java.security.spec.AlgorithmParameterSpec;
 import java.security.spec.MGF1ParameterSpec;
 import java.security.Provider.Service;
@@ -221,6 +222,34 @@ public class CipherTest extends AndroidTestCase {
 
     private static final byte[] AES256_KAT_KEY_BYTES =
             HexEncoding.decode("cf601cc10aaf434d1f01747136aff222af7fb426d101901712214c3fea18125f");
+
+    private class DeviceLockSession  extends ActivityManagerTestBase implements AutoCloseable {
+
+        private LockScreenSession mLockCredential;
+
+        public DeviceLockSession() throws Exception {
+            setUp();
+            mLockCredential = new LockScreenSession();
+            mLockCredential.setLockCredential();
+        }
+
+        public void performDeviceLock() {
+            mLockCredential.sleepDevice();
+            SystemClock.sleep(200);
+        }
+
+        public void performDeviceUnlock() throws Exception {
+            mLockCredential.gotoKeyguard();
+            mLockCredential.enterAndConfirmLockCredential();
+            launchHomeActivity();
+        }
+
+        @Override
+        public void close() throws Exception {
+            mLockCredential.close();
+            tearDown();
+        }
+    }
 
     @Presubmit
     public void testAlgorithmList() {
@@ -773,6 +802,45 @@ public class CipherTest extends AndroidTestCase {
         String transformationUpperCase = transformation.toUpperCase(Locale.US);
         return (transformationUpperCase.endsWith("/PKCS1PADDING"))
                 || (transformationUpperCase.contains("OAEP"));
+    }
+
+    public void testCanCreateAuthBoundKeyWhenScreenLocked() throws Exception {
+        final boolean isUserAuthRequired = true;
+
+        try (DeviceLockSession dl = new DeviceLockSession()) {
+            KeyguardManager keyguardManager = (KeyguardManager)getContext().getSystemService(Context.KEYGUARD_SERVICE);
+
+            dl.performDeviceLock();
+            assertTrue(keyguardManager.isDeviceLocked());
+
+            Provider provider = Security.getProvider(EXPECTED_PROVIDER_NAME);
+            assertNotNull(provider);
+
+            for (String algorithm : EXPECTED_ALGORITHMS) {
+                for (ImportedKey key : importKatKeys(algorithm,
+                        KeyProperties.PURPOSE_ENCRYPT | KeyProperties.PURPOSE_DECRYPT,
+                        false, isUserAuthRequired)) {
+                    assertNotNull(key);
+                }
+            }
+        }
+    }
+
+    public void testCannotCreateAuthBoundKeyWhenDevicePinNotSet() throws Exception {
+        final boolean isUserAuthRequired = true;
+
+        KeyguardManager keyguardManager = (KeyguardManager)getContext().getSystemService(Context.KEYGUARD_SERVICE);
+        assertFalse(keyguardManager.isDeviceLocked());
+
+        for (String algorithm : EXPECTED_ALGORITHMS) {
+            try {
+                importKatKeys(algorithm, KeyProperties.PURPOSE_ENCRYPT | KeyProperties.PURPOSE_DECRYPT,
+                        false, isUserAuthRequired);
+                fail("Importing auth bound keys to an insecure device should fail");
+            } catch (KeyStoreException e) {
+                // Expected behavior
+            }
+        }
     }
 
     public void testInitDecryptFailsWhenNotAuthorizedToDecrypt() throws Exception {
@@ -1487,8 +1555,14 @@ public class CipherTest extends AndroidTestCase {
     private Collection<ImportedKey> importKatKeys(
             String transformation, int purposes, boolean ivProvidedWhenEncrypting)
             throws Exception {
+      return importKatKeys(transformation, purposes, ivProvidedWhenEncrypting, false);
+    }
+
+    private Collection<ImportedKey> importKatKeys(
+            String transformation, int purposes, boolean ivProvidedWhenEncrypting,
+            boolean isUserAuthRequired) throws Exception {
         KeyProtection importParams = TestUtils.getMinimalWorkingImportParametersForCipheringWith(
-                transformation, purposes, ivProvidedWhenEncrypting);
+            transformation, purposes, ivProvidedWhenEncrypting, isUserAuthRequired);
         String keyAlgorithm = TestUtils.getCipherKeyAlgorithm(transformation);
         if (KeyProperties.KEY_ALGORITHM_AES.equalsIgnoreCase(keyAlgorithm)) {
             return Arrays.asList(

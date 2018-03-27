@@ -46,6 +46,7 @@ import com.android.compatibility.common.util.MediaUtils;
 
 import org.junit.After;
 import org.junit.Before;
+import org.junit.Ignore;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -59,6 +60,7 @@ import java.util.List;
 /**
  * Test {@link VideoView2}.
  */
+@Ignore
 @LargeTest
 @RunWith(AndroidJUnit4.class)
 public class VideoView2Test {
