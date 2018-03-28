@@ -210,9 +210,14 @@ public class ResourcesTest extends AndroidTestCase {
         assertEquals(mResources.getColor(R.color.testcolor1), focusColor);
     }
 
-    public void testGetColorStateListNull() {
-        // XML that's not a selector or gradient returns null
-        assertNull(mResources.getColorStateList(R.drawable.density_test));
+    public void testGetColorStateListThrows() {
+        try {
+            // XML that's not a selector or gradient throws
+            mResources.getColorStateList(R.drawable.density_test);
+            fail("Failed at testGetColorStateList");
+        } catch (NotFoundException expected) {
+            // expected
+        }
     }
 
     public void testGetColor() {
