@@ -18,7 +18,6 @@ package android.uirendering.cts.testclasses;
 
 import static org.junit.Assert.assertEquals;
 
-import android.animation.ObjectAnimator;
 import android.animation.ValueAnimator;
 import android.graphics.Canvas;
 import android.graphics.Color;
@@ -187,25 +186,30 @@ public class LayerTests extends ActivityTestBase {
     @Test
     public void testLayerClear() {
         ViewInitializer initializer = new ViewInitializer() {
-            ObjectAnimator mAnimator;
+            ValueAnimator mAnimator;
             @Override
             public void initializeView(View view) {
                 FrameLayout root = (FrameLayout) view.findViewById(R.id.frame_layout);
                 root.setAlpha(0.5f);
 
-                View child = new View(view.getContext());
+                final View child = new View(view.getContext());
                 child.setBackgroundColor(Color.BLUE);
                 child.setTranslationX(10);
-                child.setTranslationY(10);
                 child.setLayoutParams(
                         new FrameLayout.LayoutParams(50, 50));
                 child.setLayerType(View.LAYER_TYPE_HARDWARE, null);
                 root.addView(child);
 
-                mAnimator = ObjectAnimator.ofInt(child, "translationY", 0, 20);
+                mAnimator = ValueAnimator.ofInt(0, 20);
                 mAnimator.setRepeatMode(ValueAnimator.REVERSE);
                 mAnimator.setRepeatCount(ValueAnimator.INFINITE);
                 mAnimator.setDuration(200);
+                mAnimator.addUpdateListener(new ValueAnimator.AnimatorUpdateListener() {
+                    @Override
+                    public void onAnimationUpdate(ValueAnimator animation) {
+                        child.setTranslationY((Integer) mAnimator.getAnimatedValue());
+                    }
+                });
                 mAnimator.start();
             }
             @Override
