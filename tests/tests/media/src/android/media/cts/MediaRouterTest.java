@@ -362,8 +362,7 @@ public class MediaRouterTest extends InstrumentationTestCase {
         MediaRouter.SimpleCallback mrsc = (MediaRouter.SimpleCallback) callback;
 
         final int allRouteTypes = MediaRouter.ROUTE_TYPE_LIVE_AUDIO
-                | MediaRouter.ROUTE_TYPE_LIVE_VIDEO | MediaRouter.ROUTE_TYPE_REMOTE_DISPLAY
-                | MediaRouter.ROUTE_TYPE_USER;
+                | MediaRouter.ROUTE_TYPE_LIVE_VIDEO | MediaRouter.ROUTE_TYPE_USER;
         mMediaRouter.addCallback(allRouteTypes, callback);
 
         // Test onRouteAdded().
@@ -376,7 +375,7 @@ public class MediaRouterTest extends InstrumentationTestCase {
         mrc.onRouteAdded(mMediaRouter, callback.mAddedRoute);
         mrsc.onRouteAdded(mMediaRouter, callback.mAddedRoute);
 
-        RouteInfo prevSelectedRoute = mMediaRouter.getSelectedRoute();
+        RouteInfo prevSelectedRoute = mMediaRouter.getSelectedRoute(allRouteTypes);
 
         // Test onRouteSelected() and onRouteUnselected().
         callback.reset();
