@@ -187,7 +187,7 @@ public abstract class DiscoveryBaseTestCase extends BaseTestCase {
 
         // 3. wait for discovery
         callbackData = mDiscoveryCb.waitForCallbacks(
-                mIsRangingRequired ? CallbackUtils.DiscoveryCb.ON_SERVICE_DISCOVERED
+                mIsRangingRequired ? CallbackUtils.DiscoveryCb.ON_SERVICE_DISCOVERED_WITH_RANGE
                         : CallbackUtils.DiscoveryCb.ON_SERVICE_DISCOVERED);
         switch (callbackData.callback) {
             case CallbackUtils.DiscoveryCb.TIMEOUT:
