@@ -62,6 +62,7 @@
     <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE"/>
     <uses-permission android:name="com.android.providers.tv.permission.WRITE_EPG_DATA" />
     <uses-permission android:name="android.permission.USE_FINGERPRINT"/>
+    <uses-permission android:name="android.permission.USE_BIOMETRIC"/>
     <uses-permission android:name="android.permission.ACCESS_NOTIFICATION_POLICY" />
     <uses-permission android:name="android.permission.ACCESS_WIFI_STATE" />
     <uses-permission android:name="android.permission.CHANGE_WIFI_STATE" />
@@ -1000,7 +1001,7 @@
             <meta-data android:name="test_required_features" android:value="android.hardware.fingerprint" />
         </activity>
 
-        <activity android:name=".security.FingerprintDialogBoundKeysTest"
+        <activity android:name=".security.BiometricDialogBoundKeysTest"
             android:label="@string/sec_fingerprint_dialog_bound_key_test"
             android:configChanges="keyboardHidden|orientation|screenSize" >
             <intent-filter>
