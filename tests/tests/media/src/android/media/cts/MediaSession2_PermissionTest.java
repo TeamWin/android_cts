@@ -16,27 +16,27 @@
 
 package android.media.cts;
 
-import static android.media.MediaSession2.COMMAND_CODE_PLAYBACK_FAST_FORWARD;
-import static android.media.MediaSession2.COMMAND_CODE_PLAYBACK_PAUSE;
-import static android.media.MediaSession2.COMMAND_CODE_PLAYBACK_PLAY;
-import static android.media.MediaSession2.COMMAND_CODE_PLAYBACK_REWIND;
-import static android.media.MediaSession2.COMMAND_CODE_PLAYBACK_SEEK_TO;
-import static android.media.MediaSession2.COMMAND_CODE_PLAYBACK_SET_VOLUME;
-import static android.media.MediaSession2.COMMAND_CODE_PLAYLIST_SKIP_NEXT_ITEM;
-import static android.media.MediaSession2.COMMAND_CODE_PLAYLIST_SKIP_PREV_ITEM;
-import static android.media.MediaSession2.COMMAND_CODE_PLAYBACK_STOP;
-import static android.media.MediaSession2.COMMAND_CODE_PLAYLIST_ADD_ITEM;
-import static android.media.MediaSession2.COMMAND_CODE_PLAYLIST_REMOVE_ITEM;
-import static android.media.MediaSession2.COMMAND_CODE_PLAYLIST_REPLACE_ITEM;
-import static android.media.MediaSession2.COMMAND_CODE_PLAYLIST_SET_LIST;
-import static android.media.MediaSession2.COMMAND_CODE_PLAYLIST_SET_LIST_METADATA;
-import static android.media.MediaSession2.COMMAND_CODE_PLAYLIST_SKIP_TO_PLAYLIST_ITEM;
-import static android.media.MediaSession2.COMMAND_CODE_SESSION_PLAY_FROM_MEDIA_ID;
-import static android.media.MediaSession2.COMMAND_CODE_SESSION_PLAY_FROM_SEARCH;
-import static android.media.MediaSession2.COMMAND_CODE_SESSION_PLAY_FROM_URI;
-import static android.media.MediaSession2.COMMAND_CODE_SESSION_PREPARE_FROM_MEDIA_ID;
-import static android.media.MediaSession2.COMMAND_CODE_SESSION_PREPARE_FROM_SEARCH;
-import static android.media.MediaSession2.COMMAND_CODE_SESSION_PREPARE_FROM_URI;
+import static android.media.SessionCommand2.COMMAND_CODE_SESSION_FAST_FORWARD;
+import static android.media.SessionCommand2.COMMAND_CODE_PLAYBACK_PAUSE;
+import static android.media.SessionCommand2.COMMAND_CODE_PLAYBACK_PLAY;
+import static android.media.SessionCommand2.COMMAND_CODE_SESSION_REWIND;
+import static android.media.SessionCommand2.COMMAND_CODE_PLAYBACK_SEEK_TO;
+import static android.media.SessionCommand2.COMMAND_CODE_SET_VOLUME;
+import static android.media.SessionCommand2.COMMAND_CODE_PLAYLIST_SKIP_NEXT_ITEM;
+import static android.media.SessionCommand2.COMMAND_CODE_PLAYLIST_SKIP_PREV_ITEM;
+import static android.media.SessionCommand2.COMMAND_CODE_PLAYBACK_STOP;
+import static android.media.SessionCommand2.COMMAND_CODE_PLAYLIST_ADD_ITEM;
+import static android.media.SessionCommand2.COMMAND_CODE_PLAYLIST_REMOVE_ITEM;
+import static android.media.SessionCommand2.COMMAND_CODE_PLAYLIST_REPLACE_ITEM;
+import static android.media.SessionCommand2.COMMAND_CODE_PLAYLIST_SET_LIST;
+import static android.media.SessionCommand2.COMMAND_CODE_PLAYLIST_SET_LIST_METADATA;
+import static android.media.SessionCommand2.COMMAND_CODE_PLAYLIST_SKIP_TO_PLAYLIST_ITEM;
+import static android.media.SessionCommand2.COMMAND_CODE_SESSION_PLAY_FROM_MEDIA_ID;
+import static android.media.SessionCommand2.COMMAND_CODE_SESSION_PLAY_FROM_SEARCH;
+import static android.media.SessionCommand2.COMMAND_CODE_SESSION_PLAY_FROM_URI;
+import static android.media.SessionCommand2.COMMAND_CODE_SESSION_PREPARE_FROM_MEDIA_ID;
+import static android.media.SessionCommand2.COMMAND_CODE_SESSION_PREPARE_FROM_SEARCH;
+import static android.media.SessionCommand2.COMMAND_CODE_SESSION_PREPARE_FROM_URI;
 import static android.media.MediaSession2.ControllerInfo;
 
 import static org.junit.Assert.assertEquals;
@@ -47,12 +47,11 @@ import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
 import android.annotation.NonNull;
-import android.content.Context;
 import android.media.MediaController2;
 import android.media.MediaItem2;
 import android.media.MediaSession2;
-import android.media.MediaSession2.Command;
-import android.media.MediaSession2.CommandGroup;
+import android.media.SessionCommand2;
+import android.media.SessionCommandGroup2;
 import android.net.Uri;
 import android.os.Bundle;
 import android.os.Process;
@@ -100,15 +99,16 @@ public class MediaSession2_PermissionTest extends MediaSession2TestBase {
         mCallback = null;
     }
 
-    private MediaSession2 createSessionWithAllowedActions(final CommandGroup commands) {
+    private MediaSession2 createSessionWithAllowedActions(final SessionCommandGroup2 commands) {
         mPlayer = new MockPlayer(0);
-        mCallback = new MySessionCallback(mContext) {
+        mCallback = new MySessionCallback() {
             @Override
-            public CommandGroup onConnect(MediaSession2 session, ControllerInfo controller) {
+            public SessionCommandGroup2 onConnect(MediaSession2 session,
+                    ControllerInfo controller) {
                 if (Process.myUid() != controller.getUid()) {
                     return null;
                 }
-                return commands == null ? new CommandGroup(mContext) : commands;
+                return commands == null ? new SessionCommandGroup2() : commands;
             }
         };
         if (mSession != null) {
@@ -119,16 +119,16 @@ public class MediaSession2_PermissionTest extends MediaSession2TestBase {
         return mSession;
     }
 
-    private CommandGroup createCommandGroupWith(int commandCode) {
-        CommandGroup commands = new CommandGroup(mContext);
-        commands.addCommand(new Command(mContext, commandCode));
+    private SessionCommandGroup2 createCommandGroupWith(int commandCode) {
+        SessionCommandGroup2 commands = new SessionCommandGroup2();
+        commands.addCommand(new SessionCommand2(commandCode));
         return commands;
     }
 
-    private CommandGroup createCommandGroupWithout(int commandCode) {
-        CommandGroup commands = new CommandGroup(mContext);
+    private SessionCommandGroup2 createCommandGroupWithout(int commandCode) {
+        SessionCommandGroup2 commands = new SessionCommandGroup2();
         commands.addAllPredefinedCommands();
-        commands.removeCommand(new Command(mContext, commandCode));
+        commands.removeCommand(new SessionCommand2(commandCode));
         return commands;
     }
 
@@ -171,14 +171,14 @@ public class MediaSession2_PermissionTest extends MediaSession2TestBase {
 
     @Test
     public void testFastForward() throws InterruptedException {
-        testOnCommandRequest(COMMAND_CODE_PLAYBACK_FAST_FORWARD, (controller) -> {
+        testOnCommandRequest(COMMAND_CODE_SESSION_FAST_FORWARD, (controller) -> {
             controller.fastForward();
         });
     }
 
     @Test
     public void testRewind() throws InterruptedException {
-        testOnCommandRequest(COMMAND_CODE_PLAYBACK_REWIND, (controller) -> {
+        testOnCommandRequest(COMMAND_CODE_SESSION_REWIND, (controller) -> {
             controller.rewind();
         });
     }
@@ -207,7 +207,7 @@ public class MediaSession2_PermissionTest extends MediaSession2TestBase {
 
     @Test
     public void testSkipToPlaylistItem() throws InterruptedException {
-        MediaItem2 testItem = TestUtils.createMediaItemWithMetadata(mContext);
+        MediaItem2 testItem = TestUtils.createMediaItemWithMetadata();
         testOnCommandRequest(COMMAND_CODE_PLAYLIST_SKIP_TO_PLAYLIST_ITEM, (controller) -> {
             controller.skipToPlaylistItem(testItem);
         });
@@ -215,7 +215,7 @@ public class MediaSession2_PermissionTest extends MediaSession2TestBase {
 
     @Test
     public void testSetPlaylist() throws InterruptedException {
-        List<MediaItem2> list = TestUtils.createPlaylist(mContext, 2);
+        List<MediaItem2> list = TestUtils.createPlaylist(2);
         testOnCommandRequest(COMMAND_CODE_PLAYLIST_SET_LIST, (controller) -> {
             controller.setPlaylist(list, null);
         });
@@ -230,7 +230,7 @@ public class MediaSession2_PermissionTest extends MediaSession2TestBase {
 
     @Test
     public void testAddPlaylistItem() throws InterruptedException {
-        MediaItem2 testItem = TestUtils.createMediaItemWithMetadata(mContext);
+        MediaItem2 testItem = TestUtils.createMediaItemWithMetadata();
         testOnCommandRequest(COMMAND_CODE_PLAYLIST_ADD_ITEM, (controller) -> {
             controller.addPlaylistItem(0, testItem);
         });
@@ -238,7 +238,7 @@ public class MediaSession2_PermissionTest extends MediaSession2TestBase {
 
     @Test
     public void testRemovePlaylistItem() throws InterruptedException {
-        MediaItem2 testItem = TestUtils.createMediaItemWithMetadata(mContext);
+        MediaItem2 testItem = TestUtils.createMediaItemWithMetadata();
         testOnCommandRequest(COMMAND_CODE_PLAYLIST_REMOVE_ITEM, (controller) -> {
             controller.removePlaylistItem(testItem);
         });
@@ -246,7 +246,7 @@ public class MediaSession2_PermissionTest extends MediaSession2TestBase {
 
     @Test
     public void testReplacePlaylistItem() throws InterruptedException {
-        MediaItem2 testItem = TestUtils.createMediaItemWithMetadata(mContext);
+        MediaItem2 testItem = TestUtils.createMediaItemWithMetadata();
         testOnCommandRequest(COMMAND_CODE_PLAYLIST_REPLACE_ITEM, (controller) -> {
             controller.replacePlaylistItem(0, testItem);
         });
@@ -254,7 +254,7 @@ public class MediaSession2_PermissionTest extends MediaSession2TestBase {
 
     @Test
     public void testSetVolume() throws InterruptedException {
-        testOnCommandRequest(COMMAND_CODE_PLAYBACK_SET_VOLUME, (controller) -> {
+        testOnCommandRequest(COMMAND_CODE_SET_VOLUME, (controller) -> {
             controller.setVolumeTo(0, 0);
         });
     }
@@ -420,7 +420,7 @@ public class MediaSession2_PermissionTest extends MediaSession2TestBase {
     public class MySessionCallback extends MediaSession2.SessionCallback {
         public CountDownLatch mCountDownLatch;
 
-        public Command mCommand;
+        public SessionCommand2 mCommand;
         public String mMediaId;
         public String mQuery;
         public Uri mUri;
@@ -435,8 +435,7 @@ public class MediaSession2_PermissionTest extends MediaSession2TestBase {
         public boolean mOnPrepareFromUriCalled;
 
 
-        public MySessionCallback(Context context) {
-            super(context);
+        public MySessionCallback() {
             mCountDownLatch = new CountDownLatch(1);
         }
 
@@ -460,7 +459,7 @@ public class MediaSession2_PermissionTest extends MediaSession2TestBase {
 
         @Override
         public boolean onCommandRequest(MediaSession2 session, ControllerInfo controller,
-                Command command) {
+                SessionCommand2 command) {
             assertEquals(Process.myUid(), controller.getUid());
             mOnCommandRequestCalled = true;
             mCommand = command;
@@ -535,7 +534,8 @@ public class MediaSession2_PermissionTest extends MediaSession2TestBase {
         public CountDownLatch mCountDownLatch = new CountDownLatch(1);
 
         @Override
-        public void onAllowedCommandsChanged(MediaController2 controller, CommandGroup commands) {
+        public void onAllowedCommandsChanged(MediaController2 controller,
+                SessionCommandGroup2 commands) {
             mCountDownLatch.countDown();
         }
     }

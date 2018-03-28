@@ -19,7 +19,6 @@ package android.media.cts;
 import static junit.framework.Assert.assertEquals;
 import static junit.framework.Assert.assertTrue;
 
-import android.content.Context;
 import android.media.MediaMetadata2;
 import android.media.MediaMetadata2.Builder;
 import android.media.Rating2;
@@ -37,22 +36,15 @@ import org.junit.runner.RunWith;
 @SmallTest
 @Ignore
 public class MediaMetadata2Test {
-    private Context mContext;
-
-    @Before
-    public void setUp() throws Exception {
-        mContext = InstrumentationRegistry.getTargetContext();
-    }
-
     @Test
     public void testBuilder() {
         final Bundle extras = new Bundle();
         extras.putString("MediaMetadata2Test", "testBuilder");
         final String title = "title";
         final long discNumber = 10;
-        final Rating2 rating = Rating2.newThumbRating(mContext, true);
+        final Rating2 rating = Rating2.newThumbRating(true);
 
-        Builder builder = new Builder(mContext);
+        Builder builder = new Builder();
         builder.setExtras(extras);
         builder.putString(MediaMetadata2.METADATA_KEY_DISPLAY_TITLE, title);
         builder.putLong(MediaMetadata2.METADATA_KEY_DISC_NUMBER, discNumber);

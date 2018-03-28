@@ -29,6 +29,7 @@ import android.media.MediaPlayerBase;
 import android.media.MediaSession2;
 import android.media.MediaSession2.ControllerInfo;
 import android.media.MediaSession2.SessionCallback;
+import android.media.SessionCommandGroup2;
 import android.media.SessionToken2;
 import android.media.session.MediaSessionManager;
 import android.media.session.MediaSessionManager.OnSessionTokensChangedListener;
@@ -69,7 +70,7 @@ public class MediaSessionManager_MediaSession2Test extends MediaSession2TestBase
         final MockPlayer player = new MockPlayer(1);
         mSession = new MediaSession2.Builder(mContext)
                 .setPlayer(player)
-                .setSessionCallback(sHandlerExecutor, new SessionCallback(mContext) { })
+                .setSessionCallback(sHandlerExecutor, new SessionCallback() { })
                 .setId(TAG)
                 .build();
     }
@@ -119,9 +120,9 @@ public class MediaSessionManager_MediaSession2Test extends MediaSession2TestBase
     public void testGetSessionTokens_sessionRejected() throws InterruptedException {
         mSession.close();
         mSession = new MediaSession2.Builder(mContext).setPlayer(new MockPlayer(0))
-                .setId(TAG).setSessionCallback(sHandlerExecutor, new SessionCallback(mContext) {
+                .setId(TAG).setSessionCallback(sHandlerExecutor, new SessionCallback() {
                     @Override
-                    public MediaSession2.CommandGroup onConnect(
+                    public SessionCommandGroup2 onConnect(
                             MediaSession2 session, ControllerInfo controller) {
                         // Reject all connection request.
                         return null;

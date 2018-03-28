@@ -3,6 +3,7 @@ package android.server.am.lifecycle;
 import static android.server.am.lifecycle.LifecycleLog.ActivityCallback.ON_ACTIVITY_RESULT;
 import static android.server.am.lifecycle.LifecycleLog.ActivityCallback.ON_CREATE;
 import static android.server.am.lifecycle.LifecycleLog.ActivityCallback.ON_DESTROY;
+import static android.server.am.lifecycle.LifecycleLog.ActivityCallback.ON_NEW_INTENT;
 import static android.server.am.lifecycle.LifecycleLog.ActivityCallback.ON_PAUSE;
 import static android.server.am.lifecycle.LifecycleLog.ActivityCallback.ON_POST_CREATE;
 import static android.server.am.lifecycle.LifecycleLog.ActivityCallback.ON_RESUME;
@@ -305,7 +306,6 @@ public class ActivityLifecycleTests extends ActivityLifecycleClientTestBase {
                         ON_RESUME, ON_PAUSE, ON_ACTIVITY_RESULT, ON_RESUME), "activityResult");
     }
 
-    @FlakyTest(bugId = 76088057)
     @Test
     public void testOnPostCreateAfterCreate() throws Exception {
         final Activity callbackTrackingActivity =
@@ -319,7 +319,6 @@ public class ActivityLifecycleTests extends ActivityLifecycleClientTestBase {
                 "create");
     }
 
-    @FlakyTest(bugId = 76088057)
     @Test
     public void testOnPostCreateAfterRecreateInOnResume() throws Exception {
         // Launch activity
@@ -341,7 +340,6 @@ public class ActivityLifecycleTests extends ActivityLifecycleClientTestBase {
                 "recreate");
     }
 
-    @FlakyTest(bugId = 76088057)
     @Test
     public void testOnPostCreateAfterRecreateInOnPause() throws Exception {
         // Launch activity
@@ -372,7 +370,6 @@ public class ActivityLifecycleTests extends ActivityLifecycleClientTestBase {
                 "recreate");
     }
 
-    @FlakyTest(bugId = 76088057)
     @Test
     public void testOnPostCreateAfterRecreateInOnStop() throws Exception {
         // Launch first activity
@@ -408,7 +405,6 @@ public class ActivityLifecycleTests extends ActivityLifecycleClientTestBase {
      * The following test ensures an activity is brought back if its process is ended in the
      * background.
      */
-    @Presubmit
     @Test
     public void testRestoreFromKill() throws Exception {
         final LaunchActivityBuilder builder = getLaunchActivityBuilder();
@@ -431,5 +427,35 @@ public class ActivityLifecycleTests extends ActivityLifecycleClientTestBase {
         mAmWmState.waitForValidState(targetActivity);
         mAmWmState.assertResumedActivity("Originally launched activity should be resumed",
                 targetActivity);
+    }
+
+    /**
+     * The that recreate request from an activity is executed immediately.
+     */
+    @Test
+    public void testLocalRecreate() throws Exception {
+        // Launch the activity that will recreate itself
+        Activity recreatingActivity = mSingleTopActivityTestRule.launchActivity(new Intent());
+
+        // Launch second activity to cover and stop first
+        getLaunchActivityBuilder().setNewTask(true).setMultipleTask(true).execute();
+
+        // Wait for first activity to become stopped
+        waitAndAssertActivityStates(state(recreatingActivity, ON_STOP));
+
+        // Launch the activity again to recreate
+        getLifecycleLog().clear();
+        final Intent intent = new Intent(InstrumentationRegistry.getContext(),
+                SingleTopActivity.class);
+        intent.putExtra(EXTRA_RECREATE, true);
+        intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+        InstrumentationRegistry.getTargetContext().startActivity(intent);
+
+        // Wait for activity to resume
+        waitAndAssertActivityStates(state(recreatingActivity, ON_RESUME));
+
+        LifecycleVerifier.assertSequence(SingleTopActivity.class, getLifecycleLog(),
+                Arrays.asList(ON_NEW_INTENT, ON_DESTROY, PRE_ON_CREATE, ON_CREATE, ON_START,
+                        ON_POST_CREATE, ON_RESUME), "recreate");
     }
 }
