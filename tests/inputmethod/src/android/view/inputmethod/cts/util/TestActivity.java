@@ -16,6 +16,8 @@
 
 package android.view.inputmethod.cts.util;
 
+import static android.view.WindowManager.LayoutParams.SOFT_INPUT_STATE_UNCHANGED;
+
 import android.app.Activity;
 import android.content.Intent;
 import android.os.Bundle;
@@ -24,6 +26,8 @@ import android.support.annotation.NonNull;
 import android.support.annotation.UiThread;
 import android.support.test.InstrumentationRegistry;
 import android.view.View;
+import android.view.Window;
+import android.view.WindowManager;
 
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicReference;
@@ -68,6 +72,12 @@ public final class TestActivity extends Activity {
         if (mInitializer == null) {
             mInitializer = sInitializer.get();
         }
+        // Currently SOFT_INPUT_STATE_UNSPECIFIED isn't appropriate for CTS test because there is no
+        // clear spec about how it behaves.  In order to make our tests deterministic, currently we
+        // must use SOFT_INPUT_STATE_UNCHANGED.
+        // TODO(Bug 77152727): Remove the following code once we define how
+        // SOFT_INPUT_STATE_UNSPECIFIED actually behaves.
+        setSoftInputState(SOFT_INPUT_STATE_UNCHANGED);
         setContentView(mInitializer.apply(this));
     }
 
@@ -123,5 +133,24 @@ public final class TestActivity extends Activity {
                 .addFlags(additionalFlags);
         return (TestActivity) InstrumentationRegistry
                 .getInstrumentation().startActivitySync(intent);
+    }
+
+    /**
+     * Updates {@link WindowManager.LayoutParams#softInputMode}.
+     *
+     * @param newState One of {@link WindowManager.LayoutParams#SOFT_INPUT_STATE_UNSPECIFIED},
+     *                 {@link WindowManager.LayoutParams#SOFT_INPUT_STATE_UNCHANGED},
+     *                 {@link WindowManager.LayoutParams#SOFT_INPUT_STATE_HIDDEN},
+     *                 {@link WindowManager.LayoutParams#SOFT_INPUT_STATE_ALWAYS_HIDDEN},
+     *                 {@link WindowManager.LayoutParams#SOFT_INPUT_STATE_VISIBLE},
+     *                 {@link WindowManager.LayoutParams#SOFT_INPUT_STATE_ALWAYS_VISIBLE}
+     */
+    private void setSoftInputState(int newState) {
+        final Window window = getWindow();
+        final int currentSoftInputMode = window.getAttributes().softInputMode;
+        final int newSoftInputMode =
+                (currentSoftInputMode & ~WindowManager.LayoutParams.SOFT_INPUT_MASK_STATE)
+                        | newState;
+        window.setSoftInputMode(newSoftInputMode);
     }
 }
