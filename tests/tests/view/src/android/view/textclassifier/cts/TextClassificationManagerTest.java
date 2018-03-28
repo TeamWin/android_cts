@@ -17,7 +17,6 @@
 package android.view.textclassifier.cts;
 
 import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
@@ -27,8 +26,6 @@ import android.os.LocaleList;
 import android.support.test.InstrumentationRegistry;
 import android.support.test.filters.SmallTest;
 import android.support.test.runner.AndroidJUnit4;
-import android.view.textclassifier.Logger;
-import android.view.textclassifier.Logger.Config;
 import android.view.textclassifier.TextClassification;
 import android.view.textclassifier.TextClassificationManager;
 import android.view.textclassifier.TextClassifier;
@@ -112,19 +109,6 @@ public class TextClassificationManagerTest {
     @Test
     public void testGenerateLinks() {
         assertValidResult(mClassifier.generateLinks(TEXT, null));
-    }
-
-    @Test
-    public void testGetLogger() {
-        final Logger logger = mClassifier.getLogger(new Config(
-                InstrumentationRegistry.getTargetContext(), Logger.WIDGET_TEXTVIEW, null));
-        assertNotNull(logger);
-        assertNotNull(logger.getTokenIterator(LOCALES.get(0)));
-    }
-
-    @Test
-    public void testDisabledLogger() {
-        assertFalse(Logger.DISABLED.isSmartSelection("sig.na.ture"));
     }
 
     @Test
