@@ -103,6 +103,7 @@ public class TextClassificationManagerTest {
         assertValidResult(classification);
         assertNull(classification.getText());
         assertEquals(0, classification.getEntityCount());
+        assertEquals(0, classification.getActions().size());
         assertNull(classification.getIcon());
         assertNull(classification.getLabel());
         assertNull(classification.getIntent());
@@ -184,7 +185,7 @@ public class TextClassificationManagerTest {
             assertTrue(confidenceScore >= 0);
             assertTrue(confidenceScore <= 1);
         }
-        assertTrue(classification.getSecondaryActionsCount() >= 0);
+        assertNotNull(classification.getActions());
         assertNotNull(classification.getSignature());
     }
 
