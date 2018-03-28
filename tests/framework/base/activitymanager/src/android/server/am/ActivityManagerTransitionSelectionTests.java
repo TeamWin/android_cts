@@ -27,6 +27,7 @@ import static android.server.am.WindowManagerState.TRANSIT_ACTIVITY_CLOSE;
 import static android.server.am.WindowManagerState.TRANSIT_ACTIVITY_OPEN;
 import static android.server.am.WindowManagerState.TRANSIT_TASK_CLOSE;
 import static android.server.am.WindowManagerState.TRANSIT_TASK_OPEN;
+import static android.server.am.WindowManagerState.TRANSIT_TRANSLUCENT_ACTIVITY_CLOSE;
 import static android.server.am.WindowManagerState.TRANSIT_WALLPAPER_CLOSE;
 import static android.server.am.WindowManagerState.TRANSIT_WALLPAPER_INTRA_CLOSE;
 import static android.server.am.WindowManagerState.TRANSIT_WALLPAPER_INTRA_OPEN;
@@ -187,38 +188,38 @@ public class ActivityManagerTransitionSelectionTests extends ActivityManagerTest
     @Test
     public void testCloseActivity_NeitherWallpaper_Translucent() {
         testCloseActivityTranslucent(false /*bottomWallpaper*/, false /*topWallpaper*/,
-                TRANSIT_ACTIVITY_CLOSE);
+                TRANSIT_TRANSLUCENT_ACTIVITY_CLOSE);
     }
 
     @Test
     public void testCloseActivity_BottomWallpaper_Translucent() {
         testCloseActivityTranslucent(true /*bottomWallpaper*/, false /*topWallpaper*/,
-                TRANSIT_WALLPAPER_OPEN);
+                TRANSIT_TRANSLUCENT_ACTIVITY_CLOSE);
     }
 
     @Test
     public void testCloseActivity_BothWallpaper_Translucent() {
         testCloseActivityTranslucent(true /*bottomWallpaper*/, true /*topWallpaper*/,
-                TRANSIT_WALLPAPER_INTRA_CLOSE);
+                TRANSIT_TRANSLUCENT_ACTIVITY_CLOSE);
     }
 
     @Test
     public void testCloseTask_NeitherWallpaper_Translucent() {
         testCloseTaskTranslucent(false /*bottomWallpaper*/, false /*topWallpaper*/,
-                TRANSIT_TASK_CLOSE);
+                TRANSIT_TRANSLUCENT_ACTIVITY_CLOSE);
     }
 
     @FlakyTest(bugId = 71792333)
     @Test
     public void testCloseTask_BottomWallpaper_Translucent() {
         testCloseTaskTranslucent(true /*bottomWallpaper*/, false /*topWallpaper*/,
-                TRANSIT_WALLPAPER_OPEN);
+                TRANSIT_TRANSLUCENT_ACTIVITY_CLOSE);
     }
 
     @Test
     public void testCloseTask_BothWallpaper_Translucent() {
         testCloseTaskTranslucent(true /*bottomWallpaper*/, true /*topWallpaper*/,
-                TRANSIT_WALLPAPER_INTRA_CLOSE);
+                TRANSIT_TRANSLUCENT_ACTIVITY_CLOSE);
     }
 
     //------------------------------------------------------------------------//
