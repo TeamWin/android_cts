@@ -1407,9 +1407,9 @@
         start in a role, and the other should start in the complementary
         role. Your device must pass the tests in all roles.
     </string>
-    <string name="aware_not_enabled">Wi-Fi is not enabled</string>
-    <string name="aware_not_enabled_message">These tests require Wi-Fi to be enabled.
-        Click the button below to go to system settings and enable Wi-Fi.</string>
+    <string name="aware_not_enabled">Wi-Fi / Location Mode is not enabled</string>
+    <string name="aware_not_enabled_message">These tests require Wi-Fi and Location Mode to be enabled.
+        Click the button below to go to system settings and enable Wi-Fi and Location Mode.</string>
     <string name="aware_settings">Wi-Fi Settings</string>
     <string name="aware_setup_error">
         Test failed.\n\nSet up error. Check whether Wi-Fi is enabled.</string>
@@ -1457,8 +1457,10 @@
     <string name="aware_status_network_success">Network formed ...</string>
     <string name="aware_status_network_failed">Network request failure - timed out!</string>
     <string name="aware_status_sleeping_wait_for_responder">Pausing to let Responder time to set up ...</string>
-    <string name="aware_status_ranging_peer_failure">Ranging to PeerHandle failure: %1$d or %2$d!</string>
-    <string name="aware_status_ranging_mac_failure">Ranging to MAC address failure: %1$d or %2$d!</string>
+    <string name="aware_status_ranging_peer_failure">Ranging to PeerHandle failure: %1$d failures of %2$d attempts!</string>
+    <string name="aware_status_ranging_mac_failure">Ranging to MAC address failure: %1$d failures of %2$d attempts!</string>
+    <string name="aware_status_ranging_peer_success">Ranging to PeerHandle success: %1$d successes of %2$d attempts!</string>
+    <string name="aware_status_ranging_mac_success">Ranging to MAC address success: %1$d successes of %2$d attempts!</string>
     <string name="aware_status_lifecycle_ok">Discovery lifecycle validated!</string>
 
     <string name="aware_data_path_open_unsolicited_publish">Data Path: Open: Unsolicited Publish</string>
