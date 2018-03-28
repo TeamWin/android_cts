@@ -62,6 +62,7 @@ import android.content.ComponentName;
 import android.platform.test.annotations.Presubmit;
 import android.server.am.ActivityManagerState.ActivityDisplay;
 import android.support.annotation.Nullable;
+import android.support.test.filters.FlakyTest;
 
 import org.junit.Before;
 import org.junit.Test;
@@ -700,6 +701,7 @@ public class ActivityManagerMultiDisplayTests extends ActivityManagerDisplayTest
      * This version launches virtual display creator to fullscreen stack in split-screen.
      */
     @Presubmit
+    @FlakyTest(bugId = 77207453)
     @Test
     public void testStackFocusSwitchOnDisplayRemoved() throws Exception {
         assumeTrue(supportsSplitScreenMultiWindow());
