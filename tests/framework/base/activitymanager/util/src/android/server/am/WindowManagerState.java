@@ -83,6 +83,10 @@ public class WindowManagerState {
             "TRANSIT_KEYGUARD_GOING_AWAY_ON_WALLPAPER";
     public static final String TRANSIT_KEYGUARD_OCCLUDE = "TRANSIT_KEYGUARD_OCCLUDE";
     public static final String TRANSIT_KEYGUARD_UNOCCLUDE = "TRANSIT_KEYGUARD_UNOCCLUDE";
+    public static final String TRANSIT_TRANSLUCENT_ACTIVITY_OPEN =
+            "TRANSIT_TRANSLUCENT_ACTIVITY_OPEN";
+    public static final String TRANSIT_TRANSLUCENT_ACTIVITY_CLOSE =
+            "TRANSIT_TRANSLUCENT_ACTIVITY_CLOSE";
 
     public static final String APP_STATE_IDLE = "APP_STATE_IDLE";
 
@@ -307,6 +311,12 @@ public class WindowManagerState {
             }
             case AppTransitionProto.TRANSIT_KEYGUARD_UNOCCLUDE: {
                 return TRANSIT_KEYGUARD_UNOCCLUDE;
+            }
+            case AppTransitionProto.TRANSIT_TRANSLUCENT_ACTIVITY_OPEN: {
+                return TRANSIT_TRANSLUCENT_ACTIVITY_OPEN;
+            }
+            case AppTransitionProto.TRANSIT_TRANSLUCENT_ACTIVITY_CLOSE: {
+                return TRANSIT_TRANSLUCENT_ACTIVITY_CLOSE;
             }
             default: {
                 fail("Invalid lastUsedAppTransition");
