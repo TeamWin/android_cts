@@ -21,6 +21,7 @@ import static android.autofillservice.cts.common.ShellHelper.runShellCommand;
 import android.support.annotation.NonNull;
 import android.util.Log;
 
+import org.junit.AssumptionViolatedException;
 import org.junit.rules.TestRule;
 import org.junit.runner.Description;
 import org.junit.runners.model.Statement;
@@ -78,6 +79,12 @@ public class AutofillLoggingTestRule implements TestRule, SafeCleanerRule.Dumper
     public void dump(@NonNull String testName, @NonNull Throwable t) {
         if (mDumped) {
             Log.e(mTag, "dump(" + testName + "): already dumped");
+            return;
+        }
+        if ((t instanceof AssumptionViolatedException)) {
+            // This exception is used to indicate a test should be skipped and is
+            // ignored by JUnit runners - we don't need to dump it...
+            Log.w(TAG, "ignoring exception: " + t);
             return;
         }
         Log.e(mTag, "Dumping after exception on " + testName, t);
