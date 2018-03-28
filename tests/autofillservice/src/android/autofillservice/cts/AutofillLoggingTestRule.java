@@ -20,6 +20,7 @@ import static android.autofillservice.cts.Helper.runShellCommand;
 
 import android.util.Log;
 
+import org.junit.AssumptionViolatedException;
 import org.junit.rules.TestRule;
 import org.junit.runner.Description;
 import org.junit.runners.model.Statement;
@@ -52,8 +53,14 @@ public class AutofillLoggingTestRule implements TestRule {
                 try {
                     base.evaluate();
                 } catch (Throwable t) {
-                    final String dump = runShellCommand("dumpsys autofill");
-                    Log.e(mTag, "dump for " + description.getDisplayName() + ": \n" + dump, t);
+                    if ((t instanceof AssumptionViolatedException)) {
+                        // This exception is used to indicate a test should be skipped and is
+                        // ignored by JUnit runners - we don't need to dump it...
+                        Log.w(mTag, "ignoring exception: " + t);
+                    } else {
+                        final String dump = runShellCommand("dumpsys autofill");
+                        Log.e(mTag, "dump for " + description.getDisplayName() + ": \n" + dump, t);
+                    }
                     throw t;
                 } finally {
                     if (!levelBefore.equals("verbose")) {
