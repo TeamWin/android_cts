@@ -999,12 +999,13 @@ public class CanvasTest {
 
     @Test
     public void testClipRectF() {
+        mCanvas.save();
         // intersect with clip larger than canvas
         assertTrue(mCanvas.clipRect(new RectF(0, 0, 10, 31), Op.INTERSECT));
         // intersect with clip outside of canvas bounds
         assertFalse(mCanvas.clipRect(new RectF(10, 31, 11, 32), Op.INTERSECT));
-        // replace with clip that is larger than canvas
-        assertTrue(mCanvas.clipRect(new RectF(0, 0, 10, 31), Op.REPLACE));
+        // replace with the original clip
+        mCanvas.restore();
         // intersect with clip that covers top portion of canvas
         assertTrue(mCanvas.clipRect(new RectF(0, 0, 20, 10), Op.INTERSECT));
         // intersect with clip that covers bottom portion of canvas
@@ -1015,12 +1016,13 @@ public class CanvasTest {
 
     @Test
     public void testClipRect() {
+        mCanvas.save();
         // intersect with clip larger than canvas
         assertTrue(mCanvas.clipRect(new Rect(0, 0, 10, 31), Op.INTERSECT));
         // intersect with clip outside of canvas bounds
         assertFalse(mCanvas.clipRect(new Rect(10, 31, 11, 32), Op.INTERSECT));
-        // replace with clip that is larger than canvas
-        assertTrue(mCanvas.clipRect(new Rect(0, 0, 10, 31), Op.REPLACE));
+        // replace with the original clip
+        mCanvas.restore();
         // intersect with clip that covers top portion of canvas
         assertTrue(mCanvas.clipRect(new Rect(0, 0, 20, 10), Op.INTERSECT));
         // intersect with clip that covers bottom portion of canvas
@@ -1031,12 +1033,13 @@ public class CanvasTest {
 
     @Test
     public void testClipRect4I() {
+        mCanvas.save();
         // intersect with clip larger than canvas
         assertTrue(mCanvas.clipRect(0, 0, 10, 31, Op.INTERSECT));
         // intersect with clip outside of canvas bounds
         assertFalse(mCanvas.clipRect(10, 31, 11, 32, Op.INTERSECT));
-        // replace with clip that is larger than canvas
-        assertTrue(mCanvas.clipRect(0, 0, 10, 31, Op.REPLACE));
+        // replace with the original clip
+        mCanvas.restore();
         // intersect with clip that covers top portion of canvas
         assertTrue(mCanvas.clipRect(0, 0, 20, 10, Op.INTERSECT));
         // intersect with clip that covers bottom portion of canvas
@@ -1047,12 +1050,13 @@ public class CanvasTest {
 
     @Test
     public void testClipRect4F() {
+        mCanvas.save();
         // intersect with clip larger than canvas
         assertTrue(mCanvas.clipRect(0f, 0f, 10f, 31f, Op.INTERSECT));
         // intersect with clip outside of canvas bounds
         assertFalse(mCanvas.clipRect(10f, 31f, 11f, 32f, Op.INTERSECT));
-        // replace with clip that is larger than canvas
-        assertTrue(mCanvas.clipRect(0f, 0f, 10f, 31f, Op.REPLACE));
+        // replace with the original clip
+        mCanvas.restore();
         // intersect with clip that covers top portion of canvas
         assertTrue(mCanvas.clipRect(0f, 0f, 20f, 10f, Op.INTERSECT));
         // intersect with clip that covers bottom portion of canvas
@@ -1066,7 +1070,7 @@ public class CanvasTest {
         // remove center, clip not empty
         assertTrue(mCanvas.clipOutRect(new RectF(1, 1, 9, 27)));
         // replace clip, verify difference doesn't widen
-        assertFalse(mCanvas.clipRect(new RectF(0, 0, 0, 0), Op.REPLACE));
+        assertFalse(mCanvas.clipRect(new RectF(0, 0, 0, 0)));
         assertFalse(mCanvas.clipOutRect(new RectF(0, 0, 100, 100)));
     }
 
@@ -1075,7 +1079,7 @@ public class CanvasTest {
         // remove center, clip not empty
         assertTrue(mCanvas.clipOutRect(new Rect(1, 1, 9, 27)));
         // replace clip, verify difference doesn't widen
-        assertFalse(mCanvas.clipRect(new Rect(0, 0, 0, 0), Op.REPLACE));
+        assertFalse(mCanvas.clipRect(new Rect(0, 0, 0, 0)));
         assertFalse(mCanvas.clipOutRect(new Rect(0, 0, 100, 100)));
     }
 
@@ -1084,7 +1088,7 @@ public class CanvasTest {
         // remove center, clip not empty
         assertTrue(mCanvas.clipOutRect(1, 1, 9, 27));
         // replace clip, verify difference doesn't widen
-        assertFalse(mCanvas.clipRect(0, 0, 0, 0, Op.REPLACE));
+        assertFalse(mCanvas.clipRect(0, 0, 0, 0));
         assertFalse(mCanvas.clipOutRect(0, 0, 100, 100));
     }
 
@@ -1093,7 +1097,7 @@ public class CanvasTest {
         // remove center, clip not empty
         assertTrue(mCanvas.clipOutRect(1f, 1f, 9f, 27f));
         // replace clip, verify difference doesn't widen
-        assertFalse(mCanvas.clipRect(0f, 0f, 0f, 0f, Op.REPLACE));
+        assertFalse(mCanvas.clipRect(0f, 0f, 0f, 0f));
         assertFalse(mCanvas.clipOutRect(0f, 0f, 100f, 100f));
     }
 
@@ -1139,12 +1143,13 @@ public class CanvasTest {
         final Path pOut = new Path();
         pOut.addRoundRect(new RectF(10, 31, 11, 32), 0.5f, 0.5f, Direction.CW);
 
+        mCanvas.save();
         // intersect with clip larger than canvas
         assertTrue(mCanvas.clipPath(p, Op.INTERSECT));
         // intersect with clip outside of canvas bounds
         assertFalse(mCanvas.clipPath(pOut, Op.INTERSECT));
-        // replace with clip that is larger than canvas
-        assertTrue(mCanvas.clipPath(p, Op.REPLACE));
+        // replace with the original clip
+        mCanvas.restore();
         // intersect with clip that covers top portion of canvas
         assertTrue(mCanvas.clipPath(pIn, Op.INTERSECT));
         // intersect with clip outside of canvas bounds
