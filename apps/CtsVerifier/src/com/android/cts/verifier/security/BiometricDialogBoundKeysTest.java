@@ -17,17 +17,17 @@
 package com.android.cts.verifier.security;
 
 import android.content.DialogInterface;
-import android.hardware.fingerprint.FingerprintDialog;
+import android.hardware.biometrics.BiometricDialog;
 import android.os.CancellationSignal;
 import android.os.Handler;
 import android.os.Looper;
 
 import java.util.concurrent.Executor;
 
-public class FingerprintDialogBoundKeysTest extends FingerprintBoundKeysTest {
+public class BiometricDialogBoundKeysTest extends FingerprintBoundKeysTest {
 
     private DialogCallback mDialogCallback;
-    private FingerprintDialog mFingerprintDialog;
+    private BiometricDialog mBiometricDialog;
     private CancellationSignal mCancellationSignal;
 
     private final Handler mHandler = new Handler(Looper.getMainLooper());
@@ -41,14 +41,14 @@ public class FingerprintDialogBoundKeysTest extends FingerprintBoundKeysTest {
     };
 
     private class DialogCallback extends
-            FingerprintDialog.AuthenticationCallback {
+            BiometricDialog.AuthenticationCallback {
         @Override
         public void onAuthenticationError(int errMsgId, CharSequence errString) {
             showToast(errString.toString());
         }
 
         @Override
-        public void onAuthenticationSucceeded(FingerprintDialog.AuthenticationResult result) {
+        public void onAuthenticationSucceeded(BiometricDialog.AuthenticationResult result) {
             if (tryEncrypt()) {
                 showToast("Test passed.");
                 getPassButton().setEnabled(true);
@@ -62,7 +62,7 @@ public class FingerprintDialogBoundKeysTest extends FingerprintBoundKeysTest {
     protected void showAuthenticationScreen() {
         mCancellationSignal = new CancellationSignal();
         mDialogCallback = new DialogCallback();
-        mFingerprintDialog = new FingerprintDialog.Builder()
+        mBiometricDialog = new BiometricDialog.Builder(getApplicationContext())
                 .setTitle("Authenticate with fingerprint")
                 .setNegativeButton("Cancel", mExecutor,
                         (DialogInterface dialogInterface, int which) -> {
@@ -70,9 +70,9 @@ public class FingerprintDialogBoundKeysTest extends FingerprintBoundKeysTest {
                                 mHandler.post(mNegativeButtonRunnable);
                             }
                         })
-                .build(getApplicationContext());
-        mFingerprintDialog.authenticate(
-                new FingerprintDialog.CryptoObject(getCipher()),
+                .build();
+        mBiometricDialog.authenticate(
+                new BiometricDialog.CryptoObject(getCipher()),
                 mCancellationSignal, mExecutor, mDialogCallback);
     }
 }
