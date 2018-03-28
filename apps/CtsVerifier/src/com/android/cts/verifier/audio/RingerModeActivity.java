@@ -631,7 +631,7 @@ public class RingerModeActivity extends InteractiveVerifierActivity {
                     return;
                 }
             } else {
-                if (RINGER_MODE_NORMAL != mAudioManager.getRingerMode()) {
+                if (RINGER_MODE_SILENT != mAudioManager.getRingerMode()) {
                     setFailed();
                     return;
                 }
