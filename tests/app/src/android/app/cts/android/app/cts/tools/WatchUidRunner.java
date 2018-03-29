@@ -102,7 +102,7 @@ public class WatchUidRunner {
         mDefaultWaitTime = defaultWaitTime;
         mSpaceSplitter = Pattern.compile("\\s+");
         ParcelFileDescriptor[] pfds = instrumentation.getUiAutomation().executeShellCommandRw(
-                "am watch-uids");
+                "am watch-uids --oom " + uid);
         mReadFd = pfds[0];
         mReadStream = new ParcelFileDescriptor.AutoCloseInputStream(mReadFd);
         mReadReader = new BufferedReader(new InputStreamReader(mReadStream));
@@ -131,15 +131,22 @@ public class WatchUidRunner {
 
     public void expect(int cmd, String procState, long timeout) {
         long waitUntil = SystemClock.uptimeMillis() + timeout;
-        String[] line = waitForNextLine(waitUntil);
+        String[] line = waitForNextLine(waitUntil, cmd, procState);
         if (!COMMAND_TO_STRING[cmd].equals(line[1])) {
-            throw new IllegalStateException("Expected cmd " + COMMAND_TO_STRING[cmd]
-                    + " but next report was " + Arrays.toString(line));
+            String msg = "Expected cmd " + COMMAND_TO_STRING[cmd]
+                    + " uid " + mUid + " but next report was " + Arrays.toString(line);
+            Log.d(TAG, msg);
+            logRemainingLines();
+            throw new IllegalStateException(msg);
         }
         if (procState != null && (line.length < 3 || !procState.equals(line[2]))) {
-            throw new IllegalStateException("Expected procstate " + procState
-                    + " but next report was " + Arrays.toString(line));
+            String msg = "Expected procstate " + procState
+                    + " uid " + mUid + " but next report was " + Arrays.toString(line);
+            Log.d(TAG, msg);
+            logRemainingLines();
+            throw new IllegalStateException(msg);
         }
+        Log.d(TAG, "Got expected: " + Arrays.toString(line));
     }
 
     public void waitFor(int cmd, String procState) {
@@ -149,12 +156,14 @@ public class WatchUidRunner {
     public void waitFor(int cmd, String procState, long timeout) {
         long waitUntil = SystemClock.uptimeMillis() + timeout;
         while (true) {
-            String[] line = waitForNextLine(waitUntil);
+            String[] line = waitForNextLine(waitUntil, cmd, procState);
             if (COMMAND_TO_STRING[cmd].equals(line[1])) {
                 if (procState == null) {
+                    Log.d(TAG, "Waited for: " + Arrays.toString(line));
                     return;
                 }
                 if (line.length >= 3 && procState.equals(line[2])) {
+                    Log.d(TAG, "Waited for: " + Arrays.toString(line));
                     return;
                 } else {
                     Log.d(TAG, "Skipping because procstate not " + procState + ": "
@@ -167,19 +176,42 @@ public class WatchUidRunner {
         }
     }
 
-    String[] waitForNextLine(long waitUntil) {
+    void logRemainingLines() {
         synchronized (mPendingLines) {
-            while (mPendingLines.size() == 0) {
-                long now = SystemClock.uptimeMillis();
-                if (now >= waitUntil) {
-                    throw new IllegalStateException("Timed out waiting for next line");
-                }
-                try {
-                    mPendingLines.wait(waitUntil - now);
-                } catch (InterruptedException e) {
+            while (mPendingLines.size() > 0) {
+                String[] res = mPendingLines.remove(0);
+                if (res[0].startsWith("#")) {
+                    Log.d(TAG, "Remaining: " + res[0]);
+                } else {
+                    Log.d(TAG, "Remaining: " + Arrays.toString(res));
                 }
             }
-            return mPendingLines.remove(0);
+        }
+    }
+
+    String[] waitForNextLine(long waitUntil, int cmd, String procState) {
+        synchronized (mPendingLines) {
+            while (true) {
+                while (mPendingLines.size() == 0) {
+                    long now = SystemClock.uptimeMillis();
+                    if (now >= waitUntil) {
+                        String msg = "Timed out waiting for next line: "
+                                + "cmd=" + COMMAND_TO_STRING[cmd] + " procState=" + procState;
+                        Log.d(TAG, msg);
+                        throw new IllegalStateException(msg);
+                    }
+                    try {
+                        mPendingLines.wait(waitUntil - now);
+                    } catch (InterruptedException e) {
+                    }
+                }
+                String[] res = mPendingLines.remove(0);
+                if (res[0].startsWith("#")) {
+                    Log.d(TAG, "Note: " + res[0]);
+                } else {
+                    return res;
+                }
+            }
         }
     }
 
@@ -206,15 +238,18 @@ public class WatchUidRunner {
             String[] line;
             try {
                 while ((line = readNextLine()) != null) {
-                    if (line.length < 2) {
-                        Log.d(TAG, "Skipping too short: " + mLastReadLine);
-                        continue;
+                    boolean comment = line.length == 1 && line[0].startsWith("#");
+                    if (!comment) {
+                        if (line.length < 2) {
+                            Log.d(TAG, "Skipping too short: " + mLastReadLine);
+                            continue;
+                        }
+                        if (!line[0].equals(mUidStr)) {
+                            Log.d(TAG, "Skipping ignored uid: " + mLastReadLine);
+                            continue;
+                        }
                     }
-                    if (!line[0].equals(mUidStr)) {
-                        Log.d(TAG, "Skipping ignored uid: " + mLastReadLine);
-                        continue;
-                    }
-                    Log.d(TAG, "Enqueueing: " + mLastReadLine);
+                    //Log.d(TAG, "Enqueueing: " + mLastReadLine);
                     synchronized (mPendingLines) {
                         if (mStopping) {
                             return;
@@ -232,6 +267,9 @@ public class WatchUidRunner {
             mLastReadLine = mReadReader.readLine();
             if (mLastReadLine == null) {
                 return null;
+            }
+            if (mLastReadLine.startsWith("#")) {
+                return new String[] { mLastReadLine };
             }
             return mSpaceSplitter.split(mLastReadLine);
         }
