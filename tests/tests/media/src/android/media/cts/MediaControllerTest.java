@@ -20,11 +20,13 @@ import android.media.Rating;
 import android.media.VolumeProvider;
 import android.media.session.MediaController;
 import android.media.session.MediaSession;
+import android.media.session.MediaSessionManager.RemoteUserInfo;
 import android.media.session.PlaybackState.CustomAction;
 import android.net.Uri;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Looper;
+import android.os.Process;
 import android.os.ResultReceiver;
 import android.test.AndroidTestCase;
 
@@ -43,6 +45,7 @@ public class MediaControllerTest extends AndroidTestCase {
     private MediaSession mSession;
     private MediaSessionCallback mCallback = new MediaSessionCallback();
     private MediaController mController;
+    private RemoteUserInfo mControllerInfo;
 
     @Override
     protected void setUp() throws Exception {
@@ -50,6 +53,8 @@ public class MediaControllerTest extends AndroidTestCase {
         mSession = new MediaSession(getContext(), SESSION_TAG);
         mSession.setCallback(mCallback, mHandler);
         mController = mSession.getController();
+        mControllerInfo = new RemoteUserInfo(
+                getContext().getPackageName(), Process.myPid(), Process.myUid());
     }
 
     public void testGetPackageName() {
@@ -80,6 +85,7 @@ public class MediaControllerTest extends AndroidTestCase {
             assertNotNull(mCallback.mCommandCallback);
             assertEquals(command, mCallback.mCommand);
             assertEquals(EXTRAS_VALUE, mCallback.mExtras.getString(EXTRAS_KEY));
+            assertEquals(mControllerInfo, mCallback.mCallerInfo);
         }
     }
 
@@ -141,50 +147,43 @@ public class MediaControllerTest extends AndroidTestCase {
             controls.play();
             mWaitLock.wait(TIME_OUT_MS);
             assertTrue(mCallback.mOnPlayCalled);
-            // just call the callback once directly so it's marked as tested
-            callback.onPlay();
+            assertEquals(mControllerInfo, mCallback.mCallerInfo);
 
             mCallback.reset();
             controls.pause();
             mWaitLock.wait(TIME_OUT_MS);
             assertTrue(mCallback.mOnPauseCalled);
-            // just call the callback once directly so it's marked as tested
-            callback.onPause();
+            assertEquals(mControllerInfo, mCallback.mCallerInfo);
 
             mCallback.reset();
             controls.stop();
             mWaitLock.wait(TIME_OUT_MS);
             assertTrue(mCallback.mOnStopCalled);
-            // just call the callback once directly so it's marked as tested
-            callback.onStop();
+            assertEquals(mControllerInfo, mCallback.mCallerInfo);
 
             mCallback.reset();
             controls.fastForward();
             mWaitLock.wait(TIME_OUT_MS);
             assertTrue(mCallback.mOnFastForwardCalled);
-            // just call the callback once directly so it's marked as tested
-            callback.onFastForward();
+            assertEquals(mControllerInfo, mCallback.mCallerInfo);
 
             mCallback.reset();
             controls.rewind();
             mWaitLock.wait(TIME_OUT_MS);
             assertTrue(mCallback.mOnRewindCalled);
-            // just call the callback once directly so it's marked as tested
-            callback.onRewind();
+            assertEquals(mControllerInfo, mCallback.mCallerInfo);
 
             mCallback.reset();
             controls.skipToPrevious();
             mWaitLock.wait(TIME_OUT_MS);
             assertTrue(mCallback.mOnSkipToPreviousCalled);
-            // just call the callback once directly so it's marked as tested
-            callback.onSkipToPrevious();
+            assertEquals(mControllerInfo, mCallback.mCallerInfo);
 
             mCallback.reset();
             controls.skipToNext();
             mWaitLock.wait(TIME_OUT_MS);
             assertTrue(mCallback.mOnSkipToNextCalled);
-            // just call the callback once directly so it's marked as tested
-            callback.onSkipToNext();
+            assertEquals(mControllerInfo, mCallback.mCallerInfo);
 
             mCallback.reset();
             final long seekPosition = 1000;
@@ -192,8 +191,7 @@ public class MediaControllerTest extends AndroidTestCase {
             mWaitLock.wait(TIME_OUT_MS);
             assertTrue(mCallback.mOnSeekToCalled);
             assertEquals(seekPosition, mCallback.mSeekPosition);
-            // just call the callback once directly so it's marked as tested
-            callback.onSeekTo(mCallback.mSeekPosition);
+            assertEquals(mControllerInfo, mCallback.mCallerInfo);
 
             mCallback.reset();
             final Rating rating = Rating.newStarRating(Rating.RATING_5_STARS, 3f);
@@ -202,8 +200,7 @@ public class MediaControllerTest extends AndroidTestCase {
             assertTrue(mCallback.mOnSetRatingCalled);
             assertEquals(rating.getRatingStyle(), mCallback.mRating.getRatingStyle());
             assertEquals(rating.getStarRating(), mCallback.mRating.getStarRating());
-            // just call the callback once directly so it's marked as tested
-            callback.onSetRating(mCallback.mRating);
+            assertEquals(mControllerInfo, mCallback.mCallerInfo);
 
             mCallback.reset();
             final String mediaId = "test-media-id";
@@ -214,8 +211,7 @@ public class MediaControllerTest extends AndroidTestCase {
             assertTrue(mCallback.mOnPlayFromMediaIdCalled);
             assertEquals(mediaId, mCallback.mMediaId);
             assertEquals(EXTRAS_VALUE, mCallback.mExtras.getString(EXTRAS_KEY));
-            // just call the callback once directly so it's marked as tested
-            callback.onPlayFromMediaId(mCallback.mMediaId, mCallback.mExtras);
+            assertEquals(mControllerInfo, mCallback.mCallerInfo);
 
             mCallback.reset();
             final String query = "test-query";
@@ -224,8 +220,7 @@ public class MediaControllerTest extends AndroidTestCase {
             assertTrue(mCallback.mOnPlayFromSearchCalled);
             assertEquals(query, mCallback.mQuery);
             assertEquals(EXTRAS_VALUE, mCallback.mExtras.getString(EXTRAS_KEY));
-            // just call the callback once directly so it's marked as tested
-            callback.onPlayFromSearch(mCallback.mQuery, mCallback.mExtras);
+            assertEquals(mControllerInfo, mCallback.mCallerInfo);
 
             mCallback.reset();
             final Uri uri = Uri.parse("content://test/popcorn.mod");
@@ -234,8 +229,7 @@ public class MediaControllerTest extends AndroidTestCase {
             assertTrue(mCallback.mOnPlayFromUriCalled);
             assertEquals(uri, mCallback.mUri);
             assertEquals(EXTRAS_VALUE, mCallback.mExtras.getString(EXTRAS_KEY));
-            // just call the callback once directly so it's marked as tested
-            callback.onPlayFromUri(mCallback.mUri, mCallback.mExtras);
+            assertEquals(mControllerInfo, mCallback.mCallerInfo);
 
             mCallback.reset();
             final String action = "test-action";
@@ -244,8 +238,7 @@ public class MediaControllerTest extends AndroidTestCase {
             assertTrue(mCallback.mOnCustomActionCalled);
             assertEquals(action, mCallback.mAction);
             assertEquals(EXTRAS_VALUE, mCallback.mExtras.getString(EXTRAS_KEY));
-            // just call the callback once directly so it's marked as tested
-            callback.onCustomAction(mCallback.mAction, mCallback.mExtras);
+            assertEquals(mControllerInfo, mCallback.mCallerInfo);
 
             mCallback.reset();
             mCallback.mOnCustomActionCalled = false;
@@ -256,8 +249,7 @@ public class MediaControllerTest extends AndroidTestCase {
             assertTrue(mCallback.mOnCustomActionCalled);
             assertEquals(action, mCallback.mAction);
             assertEquals(EXTRAS_VALUE, mCallback.mExtras.getString(EXTRAS_KEY));
-            // just call the callback once directly so it's marked as tested
-            callback.onCustomAction(mCallback.mAction, mCallback.mExtras);
+            assertEquals(mControllerInfo, mCallback.mCallerInfo);
 
             mCallback.reset();
             final long queueItemId = 1000;
@@ -265,15 +257,13 @@ public class MediaControllerTest extends AndroidTestCase {
             mWaitLock.wait(TIME_OUT_MS);
             assertTrue(mCallback.mOnSkipToQueueItemCalled);
             assertEquals(queueItemId, mCallback.mQueueItemId);
-            // just call the callback once directly so it's marked as tested
-            callback.onSkipToQueueItem(mCallback.mQueueItemId);
+            assertEquals(mControllerInfo, mCallback.mCallerInfo);
 
             mCallback.reset();
             controls.prepare();
             mWaitLock.wait(TIME_OUT_MS);
             assertTrue(mCallback.mOnPrepareCalled);
-            // just call the callback once directly so it's marked as tested
-            callback.onPrepare();
+            assertEquals(mControllerInfo, mCallback.mCallerInfo);
 
             mCallback.reset();
             controls.prepareFromMediaId(mediaId, extras);
@@ -281,8 +271,7 @@ public class MediaControllerTest extends AndroidTestCase {
             assertTrue(mCallback.mOnPrepareFromMediaIdCalled);
             assertEquals(mediaId, mCallback.mMediaId);
             assertEquals(EXTRAS_VALUE, mCallback.mExtras.getString(EXTRAS_KEY));
-            // just call the callback once directly so it's marked as tested
-            callback.onPrepareFromMediaId(mCallback.mMediaId, mCallback.mExtras);
+            assertEquals(mControllerInfo, mCallback.mCallerInfo);
 
             mCallback.reset();
             controls.prepareFromSearch(query, extras);
@@ -290,8 +279,7 @@ public class MediaControllerTest extends AndroidTestCase {
             assertTrue(mCallback.mOnPrepareFromSearchCalled);
             assertEquals(query, mCallback.mQuery);
             assertEquals(EXTRAS_VALUE, mCallback.mExtras.getString(EXTRAS_KEY));
-            // just call the callback once directly so it's marked as tested
-            callback.onPrepareFromSearch(mCallback.mQuery, mCallback.mExtras);
+            assertEquals(mControllerInfo, mCallback.mCallerInfo);
 
             mCallback.reset();
             controls.prepareFromUri(uri, extras);
@@ -299,6 +287,33 @@ public class MediaControllerTest extends AndroidTestCase {
             assertTrue(mCallback.mOnPrepareFromUriCalled);
             assertEquals(uri, mCallback.mUri);
             assertEquals(EXTRAS_VALUE, mCallback.mExtras.getString(EXTRAS_KEY));
+            assertEquals(mControllerInfo, mCallback.mCallerInfo);
+
+            // just call the callback once directly so it's marked as tested
+            try {
+                callback.onPlay();
+                callback.onPause();
+                callback.onStop();
+                callback.onFastForward();
+                callback.onRewind();
+                callback.onSkipToPrevious();
+                callback.onSkipToNext();
+                callback.onSeekTo(mCallback.mSeekPosition);
+                callback.onSetRating(mCallback.mRating);
+                callback.onPlayFromMediaId(mCallback.mMediaId, mCallback.mExtras);
+                callback.onPlayFromSearch(mCallback.mQuery, mCallback.mExtras);
+                callback.onPlayFromUri(mCallback.mUri, mCallback.mExtras);
+                callback.onCustomAction(mCallback.mAction, mCallback.mExtras);
+                callback.onCustomAction(mCallback.mAction, mCallback.mExtras);
+                callback.onSkipToQueueItem(mCallback.mQueueItemId);
+                callback.onPrepare();
+                callback.onPrepareFromMediaId(mCallback.mMediaId, mCallback.mExtras);
+                callback.onPrepareFromSearch(mCallback.mQuery, mCallback.mExtras);
+                callback.onPrepareFromUri(Uri.parse("http://d.android.com"), mCallback.mExtras);
+            } catch (IllegalStateException ex) {
+                // Expected, since the MediaSession.getCurrentControllerInfo() is called in every
+                // callback method, but no controller is sending any command.
+            }
         }
     }
 
@@ -332,6 +347,7 @@ public class MediaControllerTest extends AndroidTestCase {
         private String mCommand;
         private Bundle mExtras;
         private ResultReceiver mCommandCallback;
+        private RemoteUserInfo mCallerInfo;
 
         private boolean mOnPlayCalled;
         private boolean mOnPauseCalled;
@@ -364,6 +380,7 @@ public class MediaControllerTest extends AndroidTestCase {
             mExtras = null;
             mCommand = null;
             mCommandCallback = null;
+            mCallerInfo = null;
 
             mOnPlayCalled = false;
             mOnPauseCalled = false;
@@ -390,6 +407,7 @@ public class MediaControllerTest extends AndroidTestCase {
         public void onPlay() {
             synchronized (mWaitLock) {
                 mOnPlayCalled = true;
+                mCallerInfo = mSession.getCurrentControllerInfo();
                 mWaitLock.notify();
             }
         }
@@ -398,6 +416,7 @@ public class MediaControllerTest extends AndroidTestCase {
         public void onPause() {
             synchronized (mWaitLock) {
                 mOnPauseCalled = true;
+                mCallerInfo = mSession.getCurrentControllerInfo();
                 mWaitLock.notify();
             }
         }
@@ -406,6 +425,7 @@ public class MediaControllerTest extends AndroidTestCase {
         public void onStop() {
             synchronized (mWaitLock) {
                 mOnStopCalled = true;
+                mCallerInfo = mSession.getCurrentControllerInfo();
                 mWaitLock.notify();
             }
         }
@@ -414,6 +434,7 @@ public class MediaControllerTest extends AndroidTestCase {
         public void onFastForward() {
             synchronized (mWaitLock) {
                 mOnFastForwardCalled = true;
+                mCallerInfo = mSession.getCurrentControllerInfo();
                 mWaitLock.notify();
             }
         }
@@ -422,6 +443,7 @@ public class MediaControllerTest extends AndroidTestCase {
         public void onRewind() {
             synchronized (mWaitLock) {
                 mOnRewindCalled = true;
+                mCallerInfo = mSession.getCurrentControllerInfo();
                 mWaitLock.notify();
             }
         }
@@ -430,6 +452,7 @@ public class MediaControllerTest extends AndroidTestCase {
         public void onSkipToPrevious() {
             synchronized (mWaitLock) {
                 mOnSkipToPreviousCalled = true;
+                mCallerInfo = mSession.getCurrentControllerInfo();
                 mWaitLock.notify();
             }
         }
@@ -438,6 +461,7 @@ public class MediaControllerTest extends AndroidTestCase {
         public void onSkipToNext() {
             synchronized (mWaitLock) {
                 mOnSkipToNextCalled = true;
+                mCallerInfo = mSession.getCurrentControllerInfo();
                 mWaitLock.notify();
             }
         }
@@ -447,6 +471,7 @@ public class MediaControllerTest extends AndroidTestCase {
             synchronized (mWaitLock) {
                 mOnSeekToCalled = true;
                 mSeekPosition = pos;
+                mCallerInfo = mSession.getCurrentControllerInfo();
                 mWaitLock.notify();
             }
         }
@@ -456,6 +481,7 @@ public class MediaControllerTest extends AndroidTestCase {
             synchronized (mWaitLock) {
                 mOnSetRatingCalled = true;
                 mRating = rating;
+                mCallerInfo = mSession.getCurrentControllerInfo();
                 mWaitLock.notify();
             }
         }
@@ -466,6 +492,7 @@ public class MediaControllerTest extends AndroidTestCase {
                 mOnPlayFromMediaIdCalled = true;
                 mMediaId = mediaId;
                 mExtras = extras;
+                mCallerInfo = mSession.getCurrentControllerInfo();
                 mWaitLock.notify();
             }
         }
@@ -476,6 +503,7 @@ public class MediaControllerTest extends AndroidTestCase {
                 mOnPlayFromSearchCalled = true;
                 mQuery = query;
                 mExtras = extras;
+                mCallerInfo = mSession.getCurrentControllerInfo();
                 mWaitLock.notify();
             }
         }
@@ -486,6 +514,7 @@ public class MediaControllerTest extends AndroidTestCase {
                 mOnPlayFromUriCalled = true;
                 mUri = uri;
                 mExtras = extras;
+                mCallerInfo = mSession.getCurrentControllerInfo();
                 mWaitLock.notify();
             }
         }
@@ -496,6 +525,7 @@ public class MediaControllerTest extends AndroidTestCase {
                 mOnCustomActionCalled = true;
                 mAction = action;
                 mExtras = extras;
+                mCallerInfo = mSession.getCurrentControllerInfo();
                 mWaitLock.notify();
             }
         }
@@ -505,6 +535,7 @@ public class MediaControllerTest extends AndroidTestCase {
             synchronized (mWaitLock) {
                 mOnSkipToQueueItemCalled = true;
                 mQueueItemId = id;
+                mCallerInfo = mSession.getCurrentControllerInfo();
                 mWaitLock.notify();
             }
         }
@@ -516,6 +547,7 @@ public class MediaControllerTest extends AndroidTestCase {
                 mCommand = command;
                 mExtras = extras;
                 mCommandCallback = cb;
+                mCallerInfo = mSession.getCurrentControllerInfo();
                 mWaitLock.notify();
             }
         }
@@ -524,6 +556,7 @@ public class MediaControllerTest extends AndroidTestCase {
         public void onPrepare() {
             synchronized (mWaitLock) {
                 mOnPrepareCalled = true;
+                mCallerInfo = mSession.getCurrentControllerInfo();
                 mWaitLock.notify();
             }
         }
@@ -534,6 +567,7 @@ public class MediaControllerTest extends AndroidTestCase {
                 mOnPrepareFromMediaIdCalled = true;
                 mMediaId = mediaId;
                 mExtras = extras;
+                mCallerInfo = mSession.getCurrentControllerInfo();
                 mWaitLock.notify();
             }
         }
@@ -544,6 +578,7 @@ public class MediaControllerTest extends AndroidTestCase {
                 mOnPrepareFromSearchCalled = true;
                 mQuery = query;
                 mExtras = extras;
+                mCallerInfo = mSession.getCurrentControllerInfo();
                 mWaitLock.notify();
             }
         }
@@ -554,6 +589,7 @@ public class MediaControllerTest extends AndroidTestCase {
                 mOnPrepareFromUriCalled = true;
                 mUri = uri;
                 mExtras = extras;
+                mCallerInfo = mSession.getCurrentControllerInfo();
                 mWaitLock.notify();
             }
         }
