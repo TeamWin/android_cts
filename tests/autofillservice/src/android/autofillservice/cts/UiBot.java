@@ -369,6 +369,7 @@ final class UiBot {
                             description, timeout, getChildrenAsText(object)));
         }
     }
+
     /**
      * Gets the text set on a view.
      */
