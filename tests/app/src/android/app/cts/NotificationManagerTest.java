@@ -17,7 +17,6 @@
 package android.app.cts;
 
 import static android.app.NotificationManager.Policy.SUPPRESSED_EFFECT_AMBIENT;
-import static android.app.NotificationManager.Policy.SUPPRESSED_EFFECT_BADGE;
 import static android.app.NotificationManager.Policy.SUPPRESSED_EFFECT_FULL_SCREEN_INTENT;
 import static android.app.NotificationManager.Policy.SUPPRESSED_EFFECT_LIGHTS;
 import static android.app.NotificationManager.Policy.SUPPRESSED_EFFECT_NOTIFICATION_LIST;
@@ -25,8 +24,6 @@ import static android.app.NotificationManager.Policy.SUPPRESSED_EFFECT_PEEK;
 import static android.app.NotificationManager.Policy.SUPPRESSED_EFFECT_SCREEN_OFF;
 import static android.app.NotificationManager.Policy.SUPPRESSED_EFFECT_SCREEN_ON;
 import static android.app.NotificationManager.Policy.SUPPRESSED_EFFECT_STATUS_BAR;
-
-import static junit.framework.Assert.assertEquals;
 
 import android.app.ActivityManager;
 import android.app.Instrumentation;
@@ -36,7 +33,9 @@ import android.app.NotificationChannelGroup;
 import android.app.NotificationManager;
 import android.app.PendingIntent;
 import android.app.UiAutomation;
+import android.app.stubs.MockNotificationListener;
 import android.app.stubs.R;
+import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
 import android.graphics.Bitmap;
@@ -48,6 +47,7 @@ import android.os.Build;
 import android.os.ParcelFileDescriptor;
 import android.provider.Settings;
 import android.provider.Telephony.Threads;
+import android.service.notification.NotificationListenerService;
 import android.service.notification.StatusBarNotification;
 import android.support.test.InstrumentationRegistry;
 import android.test.AndroidTestCase;
@@ -73,6 +73,7 @@ public class NotificationManagerTest extends AndroidTestCase {
     private NotificationManager mNotificationManager;
     private ActivityManager mActivityManager;
     private String mId;
+    private MockNotificationListener mListener;
 
     @Override
     protected void setUp() throws Exception {
@@ -104,6 +105,9 @@ public class NotificationManagerTest extends AndroidTestCase {
             }
             mNotificationManager.deleteNotificationChannel(nc.getId());
         }
+
+        toggleListenerAccess(MockNotificationListener.getId(),
+                InstrumentationRegistry.getInstrumentation(), false);
 
         List<NotificationChannelGroup> groups = mNotificationManager.getNotificationChannelGroups();
         // Delete all groups.
@@ -145,6 +149,9 @@ public class NotificationManagerTest extends AndroidTestCase {
             assertTrue((policy.priorityCategories &
                     NotificationManager.Policy.PRIORITY_CATEGORY_SYSTEM) == 0);
         }
+
+        toggleNotificationPolicyAccess(mContext.getPackageName(),
+                InstrumentationRegistry.getInstrumentation(), false);
     }
 
     public void testCreateChannelGroup() throws Exception {
@@ -456,6 +463,48 @@ public class NotificationManagerTest extends AndroidTestCase {
                         + sbn.getKey());
             }
         }
+    }
+
+    public void testSuspendPackage() throws Exception {
+        toggleListenerAccess(MockNotificationListener.getId(),
+                InstrumentationRegistry.getInstrumentation(), true);
+        Thread.sleep(500); // wait for listener to be allowed
+
+        mListener = MockNotificationListener.getInstance();
+        assertNotNull(mListener);
+
+        sendNotification(1, R.drawable.black);
+        Thread.sleep(500); // wait for notification listener to receive notification
+        assertEquals(1, mListener.mPosted.size());
+
+        // suspend package, ranking should be updated with suspended = true
+        suspendPackage(mContext.getPackageName(), InstrumentationRegistry.getInstrumentation(),
+                true);
+        Thread.sleep(500); // wait for notification listener to get response
+        NotificationListenerService.RankingMap rankingMap = mListener.mRankingMap;
+        NotificationListenerService.Ranking outRanking = new NotificationListenerService.Ranking();
+        for (String key : rankingMap.getOrderedKeys()) {
+            if (key.contains(mListener.getPackageName())) {
+                rankingMap.getRanking(key, outRanking);
+                Log.d(TAG, "key=" + key + " suspended=" + outRanking.isSuspended());
+                assertTrue(outRanking.isSuspended());
+            }
+        }
+
+        // unsuspend package, ranking should be updated with suspended = false
+        suspendPackage(mContext.getPackageName(), InstrumentationRegistry.getInstrumentation(),
+                false);
+        Thread.sleep(500); // wait for notification listener to get response
+        rankingMap = mListener.mRankingMap;
+        for (String key : rankingMap.getOrderedKeys()) {
+            if (key.contains(mListener.getPackageName())) {
+                rankingMap.getRanking(key, outRanking);
+                Log.d(TAG, "key=" + key + " suspended=" + outRanking.isSuspended());
+                assertFalse(outRanking.isSuspended());
+            }
+        }
+
+        mListener.resetData();
     }
 
     public void testNotify_blockedChannel() throws Exception {
@@ -1000,7 +1049,37 @@ public class NotificationManagerTest extends AndroidTestCase {
 
         String command = " cmd notification " + (on ? "allow_dnd " : "disallow_dnd ") + packageName;
 
-        // Get permission to change dnd policy
+        runCommand(command, instrumentation);
+
+        NotificationManager nm = mContext.getSystemService(NotificationManager.class);
+        Assert.assertEquals("Notification Policy Access Grant is " +
+                        nm.isNotificationPolicyAccessGranted() + " not " + on, on,
+                nm.isNotificationPolicyAccessGranted());
+    }
+
+    private void suspendPackage(String packageName,
+            Instrumentation instrumentation, boolean suspend) throws IOException {
+        String command = " cmd notification " + (suspend ? "suspend_package "
+                : "unsuspend_package ") + packageName;
+
+        runCommand(command, instrumentation);
+    }
+
+    private void toggleListenerAccess(String componentName, Instrumentation instrumentation,
+            boolean on) throws IOException {
+
+        String command = " cmd notification " + (on ? "allow_listener " : "disallow_listener ")
+                + componentName;
+
+        runCommand(command, instrumentation);
+
+        final NotificationManager nm = mContext.getSystemService(NotificationManager.class);
+        final ComponentName listenerComponent = MockNotificationListener.getComponentName();
+        assertTrue(listenerComponent + " has not been granted access",
+                nm.isNotificationListenerAccessGranted(listenerComponent) == on);
+    }
+
+    private void runCommand(String command, Instrumentation instrumentation) throws IOException {
         UiAutomation uiAutomation = instrumentation.getUiAutomation();
         // Execute command
         try (ParcelFileDescriptor fd = uiAutomation.executeShellCommand(command)) {
@@ -1015,11 +1094,5 @@ public class NotificationManagerTest extends AndroidTestCase {
         } finally {
             uiAutomation.destroy();
         }
-
-        NotificationManager nm = (NotificationManager) mContext.getSystemService(
-                Context.NOTIFICATION_SERVICE);
-        Assert.assertEquals("Notification Policy Access Grant is " +
-                        nm.isNotificationPolicyAccessGranted() + " not " + on, on,
-                nm.isNotificationPolicyAccessGranted());
     }
 }
