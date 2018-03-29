@@ -16,6 +16,8 @@
 package com.android.compatibility.common.tradefed.targetprep;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
@@ -26,6 +28,7 @@ import com.android.tradefed.device.ITestDevice;
 import com.android.tradefed.targetprep.TargetSetupError;
 import com.android.tradefed.util.FileUtil;
 
+import org.easymock.Capture;
 import org.easymock.EasyMock;
 import org.junit.Before;
 import org.junit.Test;
@@ -34,6 +37,8 @@ import org.junit.runners.JUnit4;
 
 import java.io.File;
 import java.io.FileNotFoundException;
+import java.util.HashMap;
+import java.util.Map;
 
 /**
  * Unit tests for {@link DynamicConfigPusher}.
@@ -166,5 +171,44 @@ public class DynamicConfigPusherTest {
             FileUtil.deleteFile(res);
         }
         EasyMock.verify(mMockDevice, mMockBuildInfo);
+    }
+
+    /**
+     * Test an end-to-end usage of the dynamic config file from the jar.
+     */
+    @Test
+    public void testSetUp() throws Exception {
+        final File[] localConfig = new File[1];
+        mPreparer = new DynamicConfigPusher() {
+            @Override
+            File mergeConfigFiles(
+                    File localConfigFile, String apfeConfigInJson, String moduleName,
+                    ITestDevice device) throws TargetSetupError {
+                localConfig[0] = localConfigFile;
+                return super.mergeConfigFiles(localConfigFile,apfeConfigInJson,moduleName,device);
+            }
+        };
+        OptionSetter setter = new OptionSetter(mPreparer);
+        setter.setOptionValue("config-filename", "moduleName");
+        setter.setOptionValue("extract-from-resource", "true");
+        // Look up the file under that name instead of the config-filename
+        setter.setOptionValue("dynamic-resource-name", RESOURCE_DYNAMIC_CONFIG);
+
+        Map<String, String> attributes = new HashMap<>();
+        attributes.put(CompatibilityBuildHelper.SUITE_VERSION, "v1");
+        EasyMock.expect(mMockBuildInfo.getBuildAttributes()).andStubReturn(attributes);
+        Capture<File> capture = new Capture<>();
+        mMockBuildInfo.setFile(EasyMock.contains("moduleName"), EasyMock.capture(capture),
+                EasyMock.eq("DYNAMIC_CONFIG_FILE:moduleName"));
+
+        EasyMock.replay(mMockDevice, mMockBuildInfo);
+        mPreparer.setUp(mMockDevice, mMockBuildInfo);
+        EasyMock.verify(mMockDevice, mMockBuildInfo);
+        assertNotNull(localConfig[0]);
+        // Ensure that the extracted file was deleted.
+        assertFalse(localConfig[0].exists());
+        File dynamicFile = capture.getValue();
+        assertTrue(dynamicFile.exists());
+        FileUtil.deleteFile(dynamicFile);
     }
 }

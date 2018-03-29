@@ -34,7 +34,6 @@ import java.util.concurrent.TimeUnit;
  * {@link Settings.Global#AIRPLANE_MODE_ON}.
  */
 public class AirplaneModeRestrictionTest extends BaseDeviceOwnerTest {
-    private static final String LOG_TAG = "AirplaneModeRestrictionTest";
     private static final int TIMEOUT_SEC = 5;
 
     @Override
@@ -52,11 +51,11 @@ public class AirplaneModeRestrictionTest extends BaseDeviceOwnerTest {
     public void testAirplaneModeTurnedOffWhenRestrictionSet() throws Exception {
         final CountDownLatch latch = new CountDownLatch(1);
         // Using array so that it can be modified in broadcast receiver.
-        int value[] = new int[1];
+        boolean value[] = new boolean[1];
         BroadcastReceiver receiver = new BroadcastReceiver() {
             @Override
             public void onReceive(Context context, Intent intent) {
-                value[0] = intent.getIntExtra("state", 1);
+                value[0] = intent.getBooleanExtra("state", true);
                 latch.countDown();
             }
         };
@@ -66,7 +65,7 @@ public class AirplaneModeRestrictionTest extends BaseDeviceOwnerTest {
             Settings.Global.putInt(mContext.getContentResolver(), AIRPLANE_MODE_ON, 1);
             mDevicePolicyManager.addUserRestriction(getWho(), UserManager.DISALLOW_AIRPLANE_MODE);
             assertTrue(latch.await(TIMEOUT_SEC, TimeUnit.SECONDS));
-            assertEquals(0, value[0]);
+            assertFalse(value[0]);
             assertEquals(0, Settings.Global.getInt(
                     mContext.getContentResolver(), Settings.Global.AIRPLANE_MODE_ON));
         } finally {

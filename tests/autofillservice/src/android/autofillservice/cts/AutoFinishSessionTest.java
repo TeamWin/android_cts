@@ -33,7 +33,6 @@ import android.view.ViewGroup;
 import android.widget.EditText;
 
 import org.junit.Before;
-import org.junit.Ignore;
 import org.junit.Rule;
 import org.junit.Test;
 
@@ -250,7 +249,6 @@ public class AutoFinishSessionTest extends AutoFillServiceTestCase {
                 .getAutofillValue().getTextValue().toString()).isEqualTo("editText1-filled");
     }
 
-    @Ignore("temporarily disabled because UI is shown - b/73736562")
     @Test
     public void removeViewInBackground() throws Exception {
         activityToBackgroundShouldNotTriggerSave(
@@ -263,7 +261,6 @@ public class AutoFinishSessionTest extends AutoFillServiceTestCase {
                 null);
     }
 
-    @Ignore("temporarily disabled because UI is shown - b/73736562")
     @Test
     public void hideViewInBackground() throws Exception {
         activityToBackgroundShouldNotTriggerSave(() -> {
@@ -275,14 +272,12 @@ public class AutoFinishSessionTest extends AutoFillServiceTestCase {
                 null);
     }
 
-    @Ignore("temporarily disabled because UI is shown - b/73736562")
     @Test
     public void hideParentInBackground() throws Exception {
         activityToBackgroundShouldNotTriggerSave(() -> mParent.setVisibility(ViewGroup.INVISIBLE),
                 null);
     }
 
-    @Ignore("temporarily disabled because UI is shown - b/73736562")
     @Test
     public void removeParentInBackground() throws Exception {
         activityToBackgroundShouldNotTriggerSave(

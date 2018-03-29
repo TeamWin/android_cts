@@ -27,8 +27,10 @@ def main():
     with its.device.ItsSession() as cam:
         props = cam.get_camera_properties()
         its.caps.skip_unless(its.caps.read_3a(props))
+        mono_camera = its.caps.mono_camera(props)
 
-        sens, exp, gains, xform, focus = cam.do_3a(get_results=True)
+        sens, exp, gains, xform, focus = cam.do_3a(get_results=True,
+                                                   mono_camera=mono_camera)
         print 'AE: sensitivity %d, exposure %dms' % (sens, exp/1000000)
         print 'AWB: gains', gains, 'transform', xform
         print 'AF: distance', focus
