@@ -40,6 +40,8 @@ def main():
                              its.caps.lsc_map(props) and
                              its.caps.lsc_off(props))
 
+        mono_camera = its.caps.mono_camera(props)
+
         assert(props.has_key("android.lens.info.shadingMapSize") and
                props["android.lens.info.shadingMapSize"] != None)
 
@@ -56,7 +58,7 @@ def main():
         #      shading modes.
         #   3. Lens shading maps with mode HIGH_QUALITY are similar after
         #      switching shading modes.
-        cam.do_3a();
+        cam.do_3a(mono_camera=mono_camera);
 
         # Get the reference lens shading maps for OFF, FAST, and HIGH_QUALITY
         # in different sessions.
