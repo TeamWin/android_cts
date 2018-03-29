@@ -463,30 +463,35 @@ public class KeyManagementTest extends ActivityInstrumentationTestCase2<KeyManag
                     devIdOpt = devIdOpt | modesToTest.get(j);
                 }
             }
-            // Now run the test with all supported key algorithms
-            for (SupportedKeyAlgorithm supportedKey: SUPPORTED_KEY_ALGORITHMS) {
-                Certificate attestation = generateKeyAndCheckAttestation(
-                        supportedKey.keyAlgorithm, supportedKey.signatureAlgorithm,
-                        supportedKey.signaturePaddingSchemes, devIdOpt);
-                assertNotNull(String.format(
-                        "Attestation should be valid for key %s with attestation modes %s",
-                        supportedKey.keyAlgorithm, devIdOpt), attestation);
-                // Set the expected values for serial, IMEI and MEID depending on whether
-                // attestation for them was requested.
-                String expectedSerial = null;
-                if ((devIdOpt & ID_TYPE_SERIAL) != 0) {
-                    expectedSerial = Build.getSerial();
+            try {
+
+                // Now run the test with all supported key algorithms
+                for (SupportedKeyAlgorithm supportedKey: SUPPORTED_KEY_ALGORITHMS) {
+                    Certificate attestation = generateKeyAndCheckAttestation(
+                            supportedKey.keyAlgorithm, supportedKey.signatureAlgorithm,
+                            supportedKey.signaturePaddingSchemes, devIdOpt);
+                    assertNotNull(String.format(
+                            "Attestation should be valid for key %s with attestation modes %s",
+                            supportedKey.keyAlgorithm, devIdOpt), attestation);
+                    // Set the expected values for serial, IMEI and MEID depending on whether
+                    // attestation for them was requested.
+                    String expectedSerial = null;
+                    if ((devIdOpt & ID_TYPE_SERIAL) != 0) {
+                        expectedSerial = Build.getSerial();
+                    }
+                    String expectedImei = null;
+                    if ((devIdOpt & ID_TYPE_IMEI) != 0) {
+                        expectedImei = imei;
+                    }
+                    // Expected MEID is always null for now.
+                    // TODO: Figure out a better way to identify whether MEID attestation on the
+                    // device should work.
+                    String expectedMeid = null;
+                    validateDeviceIdAttestationData(attestation, expectedSerial, expectedImei,
+                            expectedMeid);
                 }
-                String expectedImei = null;
-                if ((devIdOpt & ID_TYPE_IMEI) != 0) {
-                    expectedImei = imei;
-                }
-                // Expected MEID is always null for now.
-                // TODO: Figure out a better way to identify whether MEID attestation on the
-                // device should work.
-                String expectedMeid = null;
-                validateDeviceIdAttestationData(attestation, expectedSerial, expectedImei,
-                        expectedMeid);
+            } catch (UnsupportedOperationException expected) {
+                // The Device does not support attestation.
             }
         }
     }
