@@ -112,11 +112,12 @@ def main():
         its.caps.skip_unless(not its.caps.fixed_focus(props))
         its.caps.skip_unless(its.caps.read_3a(props) and
                              its.caps.lens_approx_calibrated(props))
+        mono_camera = its.caps.mono_camera(props)
         min_fd = props['android.lens.info.minimumFocusDistance']
         fmt = {'format': 'yuv', 'width': VGA_WIDTH, 'height': VGA_HEIGHT}
 
         # Get proper sensitivity, exposure time, and focus distance with 3A.
-        s, e, _, _, fd = cam.do_3a(get_results=True)
+        s, e, _, _, fd = cam.do_3a(get_results=True, mono_camera=mono_camera)
 
         # Get sharpness for each focal distance
         d = test_lens_movement_reporting(cam, props, fmt, s, e, fd, chart)

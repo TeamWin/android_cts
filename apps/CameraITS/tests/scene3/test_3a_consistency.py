@@ -34,6 +34,7 @@ def main():
     with its.device.ItsSession() as cam:
         props = cam.get_camera_properties()
         its.caps.skip_unless(its.caps.read_3a(props))
+        mono_camera = its.caps.mono_camera(props)
 
         exps = []
         senses = []
@@ -41,7 +42,8 @@ def main():
         fds = []
         for _ in range(NUM_TEST_ITERATIONS):
             try:
-                s, e, gains, xform, fd = cam.do_3a(get_results=True)
+                s, e, gains, xform, fd = cam.do_3a(get_results=True,
+                                                   mono_camera=mono_camera)
                 print ' sensitivity', s, 'exposure', e
                 print ' gains', gains, 'transform', xform
                 print ' fd', fd

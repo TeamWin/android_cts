@@ -92,13 +92,15 @@ def main():
         its.caps.skip_unless(full_device or limited_device)
         level3_device = its.caps.level3(props)
         raw_avlb = its.caps.raw16(props)
+        mono_camera = its.caps.mono_camera(props)
         run_crop_test = (level3_device or full_device) and raw_avlb
         if not run_crop_test:
             print "Crop test skipped"
         debug = its.caps.debug_mode()
         # Converge 3A and get the estimates.
         sens, exp, gains, xform, focus = cam.do_3a(get_results=True,
-                                                   lock_ae=True, lock_awb=True)
+                                                   lock_ae=True, lock_awb=True,
+                                                   mono_camera=mono_camera)
         print "AE sensitivity %d, exposure %dms" % (sens, exp / 1000000.0)
         print "AWB gains", gains
         print "AWB transform", xform

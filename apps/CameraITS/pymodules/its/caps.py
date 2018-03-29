@@ -474,6 +474,18 @@ def logical_multi_camera_physical_ids(props):
         physicalIdsList = filter(None, physicalIdsString.split('\x00'));
     return physicalIdsList
 
+def mono_camera(props):
+    """Returns whether a device is monochromatic.
+
+    Args:
+        props: Camera properties object.
+
+    Return:
+        Boolean.
+    """
+    return props.has_key("android.request.availableCapabilities") and \
+           12 in props["android.request.availableCapabilities"]
+
 def debug_mode():
     """Returns True/False for whether test is run in debug mode.
 
