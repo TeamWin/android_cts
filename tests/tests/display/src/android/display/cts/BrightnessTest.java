@@ -381,13 +381,14 @@ public class BrightnessTest {
     }
 
     private void grantPermission(String permission) {
-        runShellCommand("pm grant " + mContext.getPackageName() + " " + permission);
+        InstrumentationRegistry.getInstrumentation().getUiAutomation()
+                .grantRuntimePermission(mContext.getPackageName(), permission);
     }
 
     private void revokePermission(String permission) {
-        runShellCommand("pm revoke " + mContext.getPackageName() + " " + permission);
+        InstrumentationRegistry.getInstrumentation().getUiAutomation()
+                .revokeRuntimePermission(mContext.getPackageName(), permission);
     }
-
 
     private String runShellCommand(String cmd) {
         UiAutomation automation = InstrumentationRegistry.getInstrumentation().getUiAutomation();

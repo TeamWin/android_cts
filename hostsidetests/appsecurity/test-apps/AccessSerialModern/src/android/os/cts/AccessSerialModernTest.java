@@ -19,13 +19,10 @@ package android.os.cts;
 import static junit.framework.Assert.assertTrue;
 import static junit.framework.Assert.fail;
 
-import android.Manifest;
 import android.os.Build;
 import android.support.test.InstrumentationRegistry;
-import com.android.compatibility.common.util.SystemUtil;
-import org.junit.Test;
 
-import java.io.IOException;
+import org.junit.Test;
 
 /**
  * Test that legacy apps can access the device serial without the phone permission.
@@ -63,9 +60,9 @@ public class AccessSerialModernTest {
         }
     }
 
-    private void grantReadPhoneStatePermission() throws IOException {
-        SystemUtil.runShellCommand(InstrumentationRegistry.getInstrumentation(),
-                "pm grant " + InstrumentationRegistry.getContext().getPackageName()
-                + " " + Manifest.permission.READ_PHONE_STATE);
+    private void grantReadPhoneStatePermission() {
+        InstrumentationRegistry.getInstrumentation().getUiAutomation().grantRuntimePermission(
+                InstrumentationRegistry.getContext().getPackageName(),
+                android.Manifest.permission.READ_PHONE_STATE);
     }
 }

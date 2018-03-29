@@ -64,6 +64,10 @@ public class SystemUtil {
     public static String runShellCommand(Instrumentation instrumentation, String cmd)
             throws IOException {
         Log.v(TAG, "Running command: " + cmd);
+        if (cmd.startsWith("pm grant ") || cmd.startsWith("pm revoke ")) {
+            throw new UnsupportedOperationException("Use UiAutomation.grantRuntimePermission() "
+                    + "or revokeRuntimePermission() directly, which are more robust.");
+        }
         ParcelFileDescriptor pfd = instrumentation.getUiAutomation().executeShellCommand(cmd);
         byte[] buf = new byte[512];
         int bytesRead;
