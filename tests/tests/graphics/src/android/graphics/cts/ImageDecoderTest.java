@@ -44,6 +44,7 @@ import android.graphics.drawable.Drawable;
 import android.graphics.drawable.NinePatchDrawable;
 import android.net.Uri;
 import android.support.test.InstrumentationRegistry;
+import android.support.test.filters.LargeTest;
 import android.support.test.runner.AndroidJUnit4;
 import android.support.v4.content.FileProvider;
 import android.util.DisplayMetrics;
@@ -199,26 +200,27 @@ public class ImageDecoderTest {
 
     private interface SourceCreator extends IntFunction<ImageDecoder.Source> {};
 
-    private SourceCreator mCreators[] = new SourceCreator[] {
-        resId -> ImageDecoder.createSource(getAsByteBufferWrap(resId)),
-        resId -> ImageDecoder.createSource(getAsDirectByteBuffer(resId)),
-        resId -> ImageDecoder.createSource(getAsReadOnlyByteBuffer(resId)),
-        resId -> ImageDecoder.createSource(getAsFile(resId)),
+    private SourceCreator[] mCreators = new SourceCreator[] {
+            resId -> ImageDecoder.createSource(getAsByteBufferWrap(resId)),
+            resId -> ImageDecoder.createSource(getAsDirectByteBuffer(resId)),
+            resId -> ImageDecoder.createSource(getAsReadOnlyByteBuffer(resId)),
+            resId -> ImageDecoder.createSource(getAsFile(resId)),
     };
 
     private interface UriCreator extends IntFunction<Uri> {};
 
-    @Test
-    public void testUris() {
-        UriCreator creators[] = new UriCreator[] {
+    private UriCreator[] mUriCreators = new UriCreator[] {
             resId -> getAsResourceUri(resId),
             resId -> getAsFileUri(resId),
             resId -> getAsContentUri(resId),
-        };
+    };
+
+    @Test
+    public void testUris() {
         for (Record record : RECORDS) {
             int resId = record.resId;
             String name = mRes.getResourceEntryName(resId);
-            for (UriCreator f : creators) {
+            for (UriCreator f : mUriCreators) {
                 ImageDecoder.Source src = null;
                 Uri uri = f.apply(resId);
                 String fullName = name + ": " + uri.toString();
@@ -2113,5 +2115,78 @@ public class ImageDecoderTest {
                 // This is expected.
             }
         }
+    }
+
+    private Bitmap drawToBitmap(Drawable dr) {
+        Bitmap bm = Bitmap.createBitmap(dr.getIntrinsicWidth(), dr.getIntrinsicHeight(),
+                Bitmap.Config.ARGB_8888);
+        Canvas canvas = new Canvas(bm);
+        dr.draw(canvas);
+        return bm;
+    }
+
+    private void testReuse(ImageDecoder.Source src, String name) {
+        Drawable first = null;
+        try {
+            first = ImageDecoder.decodeDrawable(src, (decoder, info, s) -> {
+                decoder.setAllocator(ImageDecoder.ALLOCATOR_SOFTWARE);
+            });
+        } catch (IOException e) {
+            fail("Failed on first decode of " + name + " using " + src + "!");
+        }
+
+        Drawable second = null;
+        try {
+            second = ImageDecoder.decodeDrawable(src, (decoder, info, s) -> {
+                decoder.setAllocator(ImageDecoder.ALLOCATOR_SOFTWARE);
+            });
+        } catch (IOException e) {
+            fail("Failed on second decode of " + name + " using " + src + "!");
+        }
+
+        assertEquals(first.getIntrinsicWidth(), second.getIntrinsicWidth());
+        assertEquals(first.getIntrinsicHeight(), second.getIntrinsicHeight());
+
+        Bitmap bm1 = drawToBitmap(first);
+        Bitmap bm2 = drawToBitmap(second);
+        BitmapUtils.compareBitmaps(bm1, bm2);
+    }
+
+    @Test
+    @LargeTest
+    public void testReuse() {
+        for (Record record : RECORDS) {
+            String name = getAsResourceUri(record.resId).toString();
+            for (SourceCreator f : mCreators) {
+                ImageDecoder.Source src = f.apply(record.resId);
+                testReuse(src, name);
+            }
+
+            {
+                ImageDecoder.Source src = ImageDecoder.createSource(mRes, record.resId);
+                testReuse(src, name);
+            }
+
+            for (UriCreator f : mUriCreators) {
+                Uri uri = f.apply(record.resId);
+                ImageDecoder.Source src = ImageDecoder.createSource(mContentResolver, uri);
+                testReuse(src, uri.toString());
+            }
+
+            {
+                ImageDecoder.Source src = ImageDecoder.createSource(getAsFile(record.resId));
+                testReuse(src, name);
+            }
+        }
+
+        AssetManager assets = mRes.getAssets();
+        for (AssetRecord record : ASSETS) {
+            ImageDecoder.Source src = ImageDecoder.createSource(assets, record.name);
+            testReuse(src, record.name);
+        }
+
+
+        ImageDecoder.Source src = mCreators[0].apply(R.drawable.animated);
+        testReuse(src, "animated.gif");
     }
 }
