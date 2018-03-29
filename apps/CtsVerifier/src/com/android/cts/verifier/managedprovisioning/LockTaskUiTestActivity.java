@@ -125,11 +125,11 @@ public class LockTaskUiTestActivity extends PassFailButtons.TestListActivity {
     }
 
     private void addTestsToAdapter(final ArrayTestListAdapter adapter) {
-        adapter.add(createInteractiveTestItem(this,
+        adapter.add(createSetLockTaskFeaturesTest(
                 TEST_ID_DEFAULT,
+                LOCK_TASK_FEATURE_NONE,
                 R.string.device_owner_lock_task_ui_default_test,
-                R.string.device_owner_lock_task_ui_default_test_info,
-                new ButtonInfo[]{}));
+                R.string.device_owner_lock_task_ui_default_test_info));
 
         adapter.add(createSetLockTaskFeaturesTest(
                 TEST_ID_SYSTEM_INFO,
@@ -139,7 +139,7 @@ public class LockTaskUiTestActivity extends PassFailButtons.TestListActivity {
 
         adapter.add(createSetLockTaskFeaturesTest(
                 TEST_ID_NOTIFICATIONS,
-                LOCK_TASK_FEATURE_NOTIFICATIONS,
+                LOCK_TASK_FEATURE_HOME | LOCK_TASK_FEATURE_NOTIFICATIONS,
                 R.string.device_owner_lock_task_ui_notifications_test,
                 R.string.device_owner_lock_task_ui_notifications_test_info));
 
@@ -151,7 +151,7 @@ public class LockTaskUiTestActivity extends PassFailButtons.TestListActivity {
 
         adapter.add(createSetLockTaskFeaturesTest(
                 TEST_ID_RECENTS,
-                LOCK_TASK_FEATURE_OVERVIEW,
+                LOCK_TASK_FEATURE_HOME | LOCK_TASK_FEATURE_OVERVIEW,
                 R.string.device_owner_lock_task_ui_recents_test,
                 R.string.device_owner_lock_task_ui_recents_test_info));
 
