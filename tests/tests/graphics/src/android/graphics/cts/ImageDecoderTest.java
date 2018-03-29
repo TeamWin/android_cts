@@ -32,6 +32,7 @@ import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.graphics.Canvas;
 import android.graphics.Color;
+import android.graphics.ColorSpace;
 import android.graphics.ImageDecoder;
 import android.graphics.ImageDecoder.DecodeException;
 import android.graphics.ImageDecoder.OnPartialImageListener;
@@ -76,24 +77,28 @@ public class ImageDecoderTest {
         public final int width;
         public final int height;
         public final String mimeType;
+        public final ColorSpace colorSpace;
 
-        public Record(int resId, int width, int height, String mimeType) {
+        Record(int resId, int width, int height, String mimeType, ColorSpace colorSpace) {
             this.resId    = resId;
             this.width    = width;
             this.height   = height;
             this.mimeType = mimeType;
+            this.colorSpace = colorSpace;
         }
     }
 
+    private static final ColorSpace sSRGB = ColorSpace.get(ColorSpace.Named.SRGB);
+
     private static final Record[] RECORDS = new Record[] {
-        new Record(R.drawable.baseline_jpeg, 1280, 960, "image/jpeg"),
-        new Record(R.drawable.png_test, 640, 480, "image/png"),
-        new Record(R.drawable.gif_test, 320, 240, "image/gif"),
-        new Record(R.drawable.bmp_test, 320, 240, "image/bmp"),
-        new Record(R.drawable.webp_test, 640, 480, "image/webp"),
-        new Record(R.drawable.google_chrome, 256, 256, "image/x-ico"),
-        new Record(R.drawable.color_wheel, 128, 128, "image/x-ico"),
-        new Record(R.raw.sample_1mp, 600, 338, "image/x-adobe-dng"),
+        new Record(R.drawable.baseline_jpeg, 1280, 960, "image/jpeg", sSRGB),
+        new Record(R.drawable.png_test, 640, 480, "image/png", sSRGB),
+        new Record(R.drawable.gif_test, 320, 240, "image/gif", sSRGB),
+        new Record(R.drawable.bmp_test, 320, 240, "image/bmp", sSRGB),
+        new Record(R.drawable.webp_test, 640, 480, "image/webp", sSRGB),
+        new Record(R.drawable.google_chrome, 256, 256, "image/x-ico", sSRGB),
+        new Record(R.drawable.color_wheel, 128, 128, "image/x-ico", sSRGB),
+        new Record(R.raw.sample_1mp, 600, 338, "image/x-adobe-dng", sSRGB),
     };
 
     // offset is how many bytes to offset the beginning of the image.
@@ -243,32 +248,19 @@ public class ImageDecoderTest {
 
     @Test
     public void testInfo() {
-        class Listener implements ImageDecoder.OnHeaderDecodedListener {
-            public int mWidth;
-            public int mHeight;
-            public String mMimeType;
-
-            @Override
-            public void onHeaderDecoded(ImageDecoder decoder, ImageDecoder.ImageInfo info,
-                                        ImageDecoder.Source src) {
-                mWidth  = info.getSize().getWidth();
-                mHeight = info.getSize().getHeight();
-                mMimeType = info.getMimeType();
-            }
-        };
-        Listener l = new Listener();
-
         for (Record record : RECORDS) {
             for (SourceCreator f : mCreators) {
                 ImageDecoder.Source src = f.apply(record.resId);
                 assertNotNull(src);
                 try {
-                    ImageDecoder.decodeDrawable(src, l);
-                    assertEquals(record.width,  l.mWidth);
-                    assertEquals(record.height, l.mHeight);
-                    assertEquals(record.mimeType, l.mMimeType);
+                    ImageDecoder.decodeDrawable(src, (decoder, info, s) -> {
+                        assertEquals(record.width,  info.getSize().getWidth());
+                        assertEquals(record.height, info.getSize().getHeight());
+                        assertEquals(record.mimeType, info.getMimeType());
+                        assertSame(record.colorSpace, info.getColorSpace());
+                    });
                 } catch (IOException e) {
-                    fail("Failed with exception " + e);
+                    fail("Failed " + getAsResourceUri(record.resId) + " with exception " + e);
                 }
             }
         }
@@ -360,7 +352,7 @@ public class ImageDecoderTest {
                                         ImageDecoder.Source src) {
                 decoder.setAllocator(allocator);
                 if (doScale) {
-                    decoder.setSampleSize(2);
+                    decoder.setTargetSampleSize(2);
                 }
                 if (doCrop) {
                     decoder.setCrop(new Rect(1, 1, info.getSize().getWidth()  / 2 - 1,
@@ -748,7 +740,7 @@ public class ImageDecoderTest {
                 ImageDecoder.Source src = mCreators[0].apply(record.resId);
                 try {
                     Drawable dr = ImageDecoder.decodeDrawable(src, (decoder, info, s) -> {
-                        decoder.setSampleSize(sampleSize);
+                        decoder.setTargetSampleSize(sampleSize);
                     });
 
                     checkSampleSize(name, record.width, sampleSize, dr.getIntrinsicWidth());
@@ -774,7 +766,8 @@ public class ImageDecoderTest {
                     ImageDecoder.Source src = f.apply(record.resId);
                     try {
                         Drawable dr = ImageDecoder.decodeDrawable(src, (decoder, info, s) -> {
-                            decoder.setSampleSize(supplySampleSize.applyAsInt(info.getSize()));
+                            int sampleSize = supplySampleSize.applyAsInt(info.getSize());
+                            decoder.setTargetSampleSize(sampleSize);
                         });
                         assertEquals(1, dr.getIntrinsicWidth());
                     } catch (IOException e) {
@@ -1179,7 +1172,7 @@ public class ImageDecoderTest {
     public void testZeroSampleSize() {
         ImageDecoder.Source src = mCreators[0].apply(R.drawable.png_test);
         try {
-            ImageDecoder.decodeDrawable(src, (decoder, info, s) -> decoder.setSampleSize(0));
+            ImageDecoder.decodeDrawable(src, (decoder, info, s) -> decoder.setTargetSampleSize(0));
         } catch (IOException e) {
             fail("Failed with exception " + e);
         }
@@ -1189,7 +1182,7 @@ public class ImageDecoderTest {
     public void testNegativeSampleSize() {
         ImageDecoder.Source src = mCreators[0].apply(R.drawable.png_test);
         try {
-            ImageDecoder.decodeDrawable(src, (decoder, info, s) -> decoder.setSampleSize(-2));
+            ImageDecoder.decodeDrawable(src, (decoder, info, s) -> decoder.setTargetSampleSize(-2));
         } catch (IOException e) {
             fail("Failed with exception " + e);
         }
@@ -1455,7 +1448,7 @@ public class ImageDecoderTest {
         } catch (IOException e) {
             fail("Failed with exception " + e);
         }
-        l.cachedDecoder.setSampleSize(2);
+        l.cachedDecoder.setTargetSampleSize(2);
     }
 
     @Test(expected=IllegalStateException.class)
@@ -1997,43 +1990,127 @@ public class ImageDecoderTest {
         public final String name;
         public final int width;
         public final int height;
+        public final boolean isF16;
+        private final ColorSpace mColorSpace;
 
-        AssetRecord(String name, int width, int height) {
+        AssetRecord(String name, int width, int height, boolean isF16, ColorSpace colorSpace) {
             this.name = name;
             this.width = width;
             this.height = height;
+            this.isF16 = isF16;
+            mColorSpace = colorSpace;
+        }
+
+        public void checkColorSpace(ColorSpace requested, ColorSpace actual) {
+            assertNotNull(actual);
+            if (this.isF16) {
+                assertSame(ColorSpace.get(ColorSpace.Named.LINEAR_EXTENDED_SRGB), actual);
+            } else if (requested != null) {
+                assertSame(requested, actual);
+            } else if (mColorSpace == null) {
+                assertEquals(this.name, "Unknown", actual.getName());
+            } else {
+                assertSame(this.name, mColorSpace, actual);
+            }
+        }
+    }
+
+    private static final AssetRecord[] ASSETS = new AssetRecord[] {
+            // A null ColorSpace means that the color space is "Unknown".
+            new AssetRecord("almost-red-adobe.png", 1, 1, false, null),
+            new AssetRecord("green-p3.png", 64, 64, false,
+                    ColorSpace.get(ColorSpace.Named.DISPLAY_P3)),
+            new AssetRecord("green-srgb.png", 64, 64, false, sSRGB),
+            new AssetRecord("prophoto-rgba16f.png", 64, 64, true,
+                    ColorSpace.get(ColorSpace.Named.LINEAR_EXTENDED_SRGB)),
+            new AssetRecord("purple-cmyk.png", 64, 64, false, sSRGB),
+            new AssetRecord("purple-displayprofile.png", 64, 64, false, null),
+            new AssetRecord("red-adobergb.png", 64, 64, false,
+                    ColorSpace.get(ColorSpace.Named.ADOBE_RGB)),
+            new AssetRecord("translucent-green-p3.png", 64, 64, false,
+                    ColorSpace.get(ColorSpace.Named.DISPLAY_P3)),
+    };
+
+    @Test
+    public void testAssetSource() {
+        AssetManager assets = mRes.getAssets();
+        for (AssetRecord record : ASSETS) {
+            ImageDecoder.Source src = ImageDecoder.createSource(assets, record.name);
+            try {
+                Bitmap bm = ImageDecoder.decodeBitmap(src, (decoder, info, s) -> {
+                    if (record.isF16) {
+                        // CTS infrastructure fails to create F16 HARDWARE Bitmaps, so this
+                        // switches to using software.
+                        decoder.setAllocator(ImageDecoder.ALLOCATOR_SOFTWARE);
+                    }
+
+                    record.checkColorSpace(null, info.getColorSpace());
+                });
+                assertEquals(record.name, record.width, bm.getWidth());
+                assertEquals(record.name, record.height, bm.getHeight());
+                record.checkColorSpace(null, bm.getColorSpace());
+            } catch (IOException e) {
+                fail("Failed to decode asset " + record.name + " with " + e);
+            }
         }
     }
 
     @Test
-    public void testAssetSource() {
-        AssetRecord[] records = new AssetRecord[] {
-                new AssetRecord("almost-red-adobe.png", 1, 1),
-                new AssetRecord("green-p3.png", 64, 64),
-                new AssetRecord("green-srgb.png", 64, 64),
-                new AssetRecord("prophoto-rgba16f.png", 64, 64),
-                new AssetRecord("purple-cmyk.png", 64, 64),
-                new AssetRecord("purple-displayprofile.png", 64, 64),
-                new AssetRecord("red-adobergb.png", 64, 64),
-                new AssetRecord("translucent-green-p3.png", 64, 64),
-        };
-
-        // CTS infrastructure fails to create F16 HARDWARE Bitmaps, so this switches
-        // to using software.
-        ImageDecoder.OnHeaderDecodedListener listener = (decoder, info, s) -> {
-            decoder.setAllocator(ImageDecoder.ALLOCATOR_SOFTWARE);
-        };
-
+    public void testTargetColorSpace() {
         AssetManager assets = mRes.getAssets();
-        for (AssetRecord record : records) {
+        for (AssetRecord record : ASSETS) {
             ImageDecoder.Source src = ImageDecoder.createSource(assets, record.name);
+            for (ColorSpace cs : new ColorSpace[] {
+                    sSRGB,
+                    ColorSpace.get(ColorSpace.Named.LINEAR_EXTENDED_SRGB),
+                    ColorSpace.get(ColorSpace.Named.DISPLAY_P3),
+                    ColorSpace.get(ColorSpace.Named.ADOBE_RGB),
+                    ColorSpace.get(ColorSpace.Named.BT709),
+                    ColorSpace.get(ColorSpace.Named.BT2020),
+                    ColorSpace.get(ColorSpace.Named.DCI_P3),
+                    ColorSpace.get(ColorSpace.Named.NTSC_1953),
+                    ColorSpace.get(ColorSpace.Named.SMPTE_C),
+                    ColorSpace.get(ColorSpace.Named.PRO_PHOTO_RGB),
+                    // FIXME: These will not match due to b/77276533.
+                    // ColorSpace.get(ColorSpace.Named.LINEAR_SRGB),
+                    // ColorSpace.get(ColorSpace.Named.ACES),
+                    // ColorSpace.get(ColorSpace.Named.ACESCG),
+            }) {
+                try {
+                    Bitmap bm = ImageDecoder.decodeBitmap(src, (decoder, info, s) -> {
+                        if (record.isF16) {
+                            // CTS infrastructure fails to create F16 HARDWARE Bitmaps, so this
+                            // switches to using software.
+                            decoder.setAllocator(ImageDecoder.ALLOCATOR_SOFTWARE);
+                        }
+                        decoder.setTargetColorSpace(cs);
+                    });
+                    record.checkColorSpace(cs, bm.getColorSpace());
+                } catch (IOException e) {
+                    fail("Failed to decode asset " + record.name + " to " + cs + " with " + e);
+                }
+            }
+        }
+    }
+
+    @Test
+    public void testTargetColorSpaceNonRGB() {
+        ImageDecoder.Source src = mCreators[0].apply(R.drawable.png_test);
+        for (ColorSpace cs : new ColorSpace[] {
+                ColorSpace.get(ColorSpace.Named.EXTENDED_SRGB),
+                ColorSpace.get(ColorSpace.Named.CIE_LAB),
+                ColorSpace.get(ColorSpace.Named.CIE_XYZ),
+        }) {
             try {
-                Drawable dr = ImageDecoder.decodeDrawable(src, listener);
-                assertNotNull(record.name, dr);
-                assertEquals(record.name, record.width, dr.getIntrinsicWidth());
-                assertEquals(record.name, record.height, dr.getIntrinsicHeight());
+                ImageDecoder.decodeDrawable(src, (decoder, info, s) -> {
+                    decoder.setTargetColorSpace(cs);
+                });
+                fail("Should have thrown an IllegalArgumentException for setTargetColorSpace("
+                        + cs + ")!");
             } catch (IOException e) {
-                fail("Failed to decode asset " + record.name + " with " + e);
+                fail("Failed to decode png_test with " + e);
+            } catch (IllegalArgumentException illegal) {
+                // This is expected.
             }
         }
     }
