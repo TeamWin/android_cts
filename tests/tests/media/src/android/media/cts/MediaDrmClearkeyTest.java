@@ -754,22 +754,22 @@ public class MediaDrmClearkeyTest extends MediaPlayerTestBase {
         try {
             drm = new MediaDrm(COMMON_PSSH_SCHEME_UUID);
 
-            sessionId = drm.openSession(MediaDrm.SW_SECURE_CRYPTO);
-            if (drm.getSecurityLevel(sessionId) != MediaDrm.SW_SECURE_CRYPTO) {
-                throw new Error("expected security level to be SW_SECURE_CRYPTO");
+            sessionId = drm.openSession(MediaDrm.SECURITY_LEVEL_SW_SECURE_CRYPTO);
+            if (drm.getSecurityLevel(sessionId) != MediaDrm.SECURITY_LEVEL_SW_SECURE_CRYPTO) {
+                throw new Error("expected security level to be SECURITY_LEVEL_SW_SECURE_CRYPTO");
             }
             drm.closeSession(sessionId);
             sessionId = null;
 
             sessionId = drm.openSession();
-            if (drm.getSecurityLevel(sessionId) != MediaDrm.SW_SECURE_CRYPTO) {
-                throw new Error("expected security level to be SW_SECURE_CRYPTO");
+            if (drm.getSecurityLevel(sessionId) != MediaDrm.SECURITY_LEVEL_SW_SECURE_CRYPTO) {
+                throw new Error("expected security level to be SECURITY_LEVEL_SW_SECURE_CRYPTO");
             }
             drm.closeSession(sessionId);
             sessionId = null;
 
             try {
-                sessionId = drm.openSession(MediaDrm.SW_SECURE_DECODE);
+                sessionId = drm.openSession(MediaDrm.SECURITY_LEVEL_SW_SECURE_DECODE);
             } catch (IllegalArgumentException e) {
                 /* caught expected exception */
             } catch (Exception e) {
