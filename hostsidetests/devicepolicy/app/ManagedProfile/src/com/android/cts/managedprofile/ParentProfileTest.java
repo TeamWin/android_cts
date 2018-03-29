@@ -77,8 +77,6 @@ public class ParentProfileTest extends BaseManagedProfileTest {
             .add("setTrustAgentConfiguration")
             .add("getRequiredStrongAuthTimeout")
             .add("setRequiredStrongAuthTimeout")
-            .add("getPasswordBlacklistName")
-            .add("setPasswordBlacklist")
             .build();
 
     private static final String LOG_TAG = "ParentProfileTest";
