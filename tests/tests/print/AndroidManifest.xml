@@ -25,7 +25,8 @@
 
         <uses-library android:name="android.test.runner"/>
 
-        <activity android:name="android.print.cts.PrintDocumentActivity"/>
+        <activity android:name="android.print.cts.PrintDocumentActivity"
+                  android:configChanges="mnc|mnc|touchscreen|navigation|screenLayout|screenSize|smallestScreenSize|orientation|locale|keyboard|keyboardHidden|fontScale|uiMode|layoutDirection|density"/>
 
         <service
             android:name="android.print.cts.services.FirstPrintService"
