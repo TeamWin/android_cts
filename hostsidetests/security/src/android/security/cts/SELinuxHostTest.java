@@ -729,6 +729,24 @@ public class SELinuxHostTest extends DeviceTestCase implements IBuildReceiver, I
     }
 
     /**
+     * Tests that all types in /proc have the proc_type attribute.
+     *
+     * @throws Exception
+     */
+    public void testProcTypeViolators() throws Exception {
+        assertSepolicyTests("TestProcTypeViolations", "/sepolicy_tests");
+    }
+
+    /**
+     * Tests that all types in /sys have the sysfs_type attribute.
+     *
+     * @throws Exception
+     */
+    public void testSysfsTypeViolators() throws Exception {
+        assertSepolicyTests("TestSysfsTypeViolations", "/sepolicy_tests");
+    }
+
+    /**
      * Tests that all types on /vendor have the vendor_file_type attribute.
      *
      * @throws Exception
