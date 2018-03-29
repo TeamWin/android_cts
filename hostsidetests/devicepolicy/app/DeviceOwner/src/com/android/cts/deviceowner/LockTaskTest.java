@@ -190,8 +190,8 @@ public class LockTaskTest {
     public void testSetLockTaskFeatures() {
         final int[] flags = new int[] {
                 LOCK_TASK_FEATURE_SYSTEM_INFO,
-                LOCK_TASK_FEATURE_NOTIFICATIONS,
                 LOCK_TASK_FEATURE_HOME,
+                LOCK_TASK_FEATURE_NOTIFICATIONS,
                 LOCK_TASK_FEATURE_OVERVIEW,
                 LOCK_TASK_FEATURE_GLOBAL_ACTIONS,
                 LOCK_TASK_FEATURE_KEYGUARD
@@ -199,8 +199,8 @@ public class LockTaskTest {
 
         int cumulative = LOCK_TASK_FEATURE_NONE;
         for (int flag : flags) {
-            if (flag == LOCK_TASK_FEATURE_OVERVIEW) {
-                // Overview can only be used in combination with HOME
+            if (flag == LOCK_TASK_FEATURE_OVERVIEW || flag == LOCK_TASK_FEATURE_NOTIFICATIONS) {
+                // Those flags can only be used in combination with HOME
                 assertThrows(
                         IllegalArgumentException.class,
                         () -> mDevicePolicyManager.setLockTaskFeatures(ADMIN_COMPONENT, flag));
