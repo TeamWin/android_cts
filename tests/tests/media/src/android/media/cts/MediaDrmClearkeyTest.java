@@ -31,7 +31,7 @@ import android.media.CamcorderProfile;
 import android.net.Uri;
 import android.os.Environment;
 import android.os.Looper;
-import android.support.annotation.NonNull;
+import androidx.annotation.NonNull;
 import android.test.ActivityInstrumentationTestCase2;
 import android.util.Base64;
 import android.util.Log;

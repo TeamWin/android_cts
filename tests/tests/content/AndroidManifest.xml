@@ -228,7 +228,7 @@
         <provider android:name="android.content.cts.MockRemoteContentProvider"
             android:authorities="remotectstest"
             android:process=":remoteprovider" android:multiprocess="false" />
-        <provider android:name="android.support.v4.content.FileProvider"
+        <provider android:name="androidx.core.content.FileProvider"
             android:authorities="android.content.cts.fileprovider"
             android:grantUriPermissions="true">
             <meta-data

@@ -45,8 +45,8 @@ import android.os.SystemClock;
 import android.provider.Settings;
 import android.server.am.ActivityManagerState.ActivityDisplay;
 import android.server.am.settings.SettingsSession;
-import android.support.annotation.NonNull;
-import android.support.annotation.Nullable;
+import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
 import android.util.Size;
 
 import java.util.ArrayList;

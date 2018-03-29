@@ -24,13 +24,15 @@ LOCAL_JAVA_LIBRARIES := android.test.runner.stubs android.test.base.stubs
 
 LOCAL_STATIC_JAVA_LIBRARIES += \
     android-support-test \
-    android-support-v4 \
     mockito-target-minus-junit4 \
     compatibility-device-util \
     ctsdeviceutillegacy \
     ctstestrunner \
-    android-support-annotations \
+    androidx.annotation_annotation \
     junit
+
+LOCAL_STATIC_ANDROID_LIBRARIES += \
+    androidx.core_core
 
 LOCAL_JNI_SHARED_LIBRARIES := libctsgraphics_jni
 

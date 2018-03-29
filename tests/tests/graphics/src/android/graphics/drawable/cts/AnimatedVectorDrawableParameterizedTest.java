@@ -29,7 +29,7 @@ import android.graphics.Color;
 import android.graphics.Rect;
 import android.graphics.cts.R;
 import android.graphics.drawable.AnimatedVectorDrawable;
-import android.support.annotation.Nullable;
+import androidx.annotation.Nullable;
 import android.support.test.InstrumentationRegistry;
 import android.support.test.filters.LargeTest;
 import android.support.test.filters.MediumTest;

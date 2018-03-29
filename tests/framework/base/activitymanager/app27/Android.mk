@@ -19,9 +19,10 @@ include $(CLEAR_VARS)
 # Don't include this package in any target.
 LOCAL_MODULE_TAGS := tests
 
+LOCAL_USE_AAPT2 := true
+
 LOCAL_STATIC_JAVA_LIBRARIES := \
-    android-support-v4 \
-    cts-am-app-base \
+    cts-am-app-base
 
 LOCAL_SRC_FILES := $(call all-java-files-under, src)
 

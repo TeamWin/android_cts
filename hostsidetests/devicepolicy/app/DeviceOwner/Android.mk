@@ -35,13 +35,17 @@ LOCAL_JAVA_LIBRARIES := \
     android.test.base.stubs \
     bouncycastle
 
+LOCAL_USE_AAPT2 := true
+
 LOCAL_STATIC_JAVA_LIBRARIES := \
     ctstestrunner \
     compatibility-device-util \
-    android-support-v4 \
     android-support-test \
     cts-security-test-support-library \
     testng
+
+LOCAL_STATIC_ANDROID_LIBRARIES := \
+    androidx.legacy_legacy-support-v4
 
 # tag this module as a cts test artifact
 LOCAL_COMPATIBILITY_SUITE := arcts cts vts general-tests

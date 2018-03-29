@@ -16,7 +16,7 @@
 
 package android.autofillservice.cts;
 
-import android.support.annotation.NonNull;
+import androidx.annotation.NonNull;
 
 /**
  * Generic helper for JUnit needs.
