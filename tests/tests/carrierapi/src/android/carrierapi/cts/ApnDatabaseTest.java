@@ -17,23 +17,19 @@ package android.carrierapi.cts;
 
 import android.content.ContentResolver;
 import android.content.ContentValues;
+import android.content.pm.PackageManager;
 import android.database.Cursor;
 import android.database.sqlite.SQLiteException;
 import android.net.Uri;
 import android.provider.Telephony.Carriers;
 import android.support.test.InstrumentationRegistry;
 import android.support.test.runner.AndroidJUnit4;
-import android.test.InstrumentationTestCase;
 import android.util.Log;
-
-import com.android.internal.telephony.uicc.IccUtils;
 
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
-import java.security.MessageDigest;
-import java.security.NoSuchAlgorithmException;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
@@ -53,6 +49,8 @@ public class ApnDatabaseTest {
     private static final String TAG = "ApnDatabaseTest";
 
     private ContentResolver mContentResolver;
+    private PackageManager mPackageManager;
+    private boolean mHasCellular;
 
     private static final String NAME = "carrierName";
     private static final String APN = "apn";
@@ -99,6 +97,12 @@ public class ApnDatabaseTest {
     @Before
     public void setUp() throws Exception {
         mContentResolver = InstrumentationRegistry.getContext().getContentResolver();
+        mPackageManager = InstrumentationRegistry.getContext().getPackageManager();
+        // Checks whether the cellular stack should be running on this device.
+        mHasCellular = mPackageManager.hasSystemFeature(PackageManager.FEATURE_TELEPHONY);
+        if (!mHasCellular) {
+            Log.e(TAG, "No cellular support, all tests will be skipped.");
+        }
     }
 
     private void failMessage() {
@@ -112,6 +116,7 @@ public class ApnDatabaseTest {
      */
     @Test
     public void testValidCase() {
+        if (!mHasCellular) return;
         Uri uri = Carriers.CONTENT_URI;
         // CONTENT_URI = Uri.parse("content://telephony/carriers");
         // Create A set of column_name/value pairs to add to the database.
@@ -179,6 +184,7 @@ public class ApnDatabaseTest {
 
     @Test
     public void testQueryConflictCase() {
+        if (!mHasCellular) return;
         String invalidColumn = "random";
         Uri uri = Carriers.CONTENT_URI;
         // CONTENT_URI = Uri.parse("content://telephony/carriers");
@@ -234,6 +240,7 @@ public class ApnDatabaseTest {
 
     @Test
     public void testUpdateConflictCase() {
+        if (!mHasCellular) return;
         Uri uri = Carriers.CONTENT_URI;
         // CONTENT_URI = Uri.parse("content://telephony/carriers");
         // Create A set of column_name/value pairs to add to the database.
@@ -300,6 +307,7 @@ public class ApnDatabaseTest {
 
     @Test
     public void testDeleteConflictCase() {
+        if (!mHasCellular) return;
         String invalidColumn = "random";
         Uri uri = Carriers.CONTENT_URI;
         // CONTENT_URI = Uri.parse("content://telephony/carriers");
