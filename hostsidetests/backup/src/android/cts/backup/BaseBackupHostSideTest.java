@@ -219,4 +219,16 @@ public abstract class BaseBackupHostSideTest extends BaseHostJUnit4Test {
         }
     }
 
+    private void setLocalTransportParameters(String parameters) throws Exception {
+        getDevice().executeShellCommand("settings put secure backup_local_transport_parameters "
+                + parameters);
+    }
+
+    protected void enableFakeEncryptionOnTransport() throws Exception {
+        setLocalTransportParameters("fake_encryption_flag=true");
+    }
+
+    protected void disableFakeEncryptionOnTransport() throws Exception {
+        setLocalTransportParameters("fake_encryption_flag=false");
+    }
 }
