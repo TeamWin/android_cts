@@ -130,7 +130,7 @@ public abstract class BasePrintTest {
      *
      * @return the UI device
      */
-    public UiDevice getUiDevice() {
+    public static UiDevice getUiDevice() {
         return UiDevice.getInstance(getInstrumentation());
     }
 
@@ -192,6 +192,13 @@ public abstract class BasePrintTest {
         Log.d(LOG_TAG, "setUpClass()");
 
         Instrumentation instrumentation = getInstrumentation();
+
+        // Prevent rotation
+        getUiDevice().freezeRotation();
+        while (!getUiDevice().isNaturalOrientation()) {
+            getUiDevice().setOrientationNatural();
+            getUiDevice().waitForIdle();
+        }
 
         // Make sure we start with a clean slate.
         Log.d(LOG_TAG, "clearPrintSpoolerData()");
@@ -284,6 +291,9 @@ public abstract class BasePrintTest {
 
         SystemUtil.runShellCommand(instrumentation, "settings put secure "
                     + Settings.Secure.DISABLED_PRINT_SERVICES + " null");
+
+        // Allow rotation
+        getUiDevice().unfreezeRotation();
 
         Log.d(LOG_TAG, "tearDownClass() done");
     }
