@@ -53,6 +53,20 @@ public class ProtoDumpTestCase extends DeviceTestCase implements IBuildReceiver 
     protected static final int PRIVACY_LOCAL = 2;
     /** No privacy filtering has been done. All fields should be present. */
     protected static final int PRIVACY_NONE = 3;
+    protected static String privacyToString(int privacy) {
+        switch (privacy) {
+            case PRIVACY_AUTO:
+                return "AUTO";
+            case PRIVACY_EXPLICIT:
+                return "EXPLICIT";
+            case PRIVACY_LOCAL:
+                return "LOCAL";
+            case PRIVACY_NONE:
+                return "NONE";
+            default:
+                return "UNKNOWN";
+        }
+    }
 
     protected IBuildInfo mCtsBuild;
 
