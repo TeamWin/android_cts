@@ -170,9 +170,6 @@ public class JobSchedulerIncidentTest extends ProtoDumpTestCase {
         assertNotNull(jssi);
 
         assertTrue(0 <= jssi.getCallingUid());
-        if (filterLevel == PRIVACY_AUTO) {
-            assertTrue(jssi.getBatteryName().isEmpty());
-        }
     }
 
     private static void testJobStatusDumpProto(JobStatusDumpProto jsd) throws Exception {
