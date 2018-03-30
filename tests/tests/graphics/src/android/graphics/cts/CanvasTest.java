@@ -56,7 +56,6 @@ import com.android.compatibility.common.util.ColorUtils;
 
 import java.io.IOException;
 import java.io.InputStream;
-import java.util.Vector;
 
 import org.junit.Assert;
 import org.junit.Before;
@@ -207,7 +206,7 @@ public class CanvasTest {
     }
 
     @Test
-    public void testSave1() {
+    public void testSave() {
         final Matrix m1 = new Matrix();
         m1.setValues(values1);
         mCanvas.setMatrix(m1);
@@ -232,289 +231,15 @@ public class CanvasTest {
     }
 
     @Test
-    public void testSave2() {
-        // test save current matrix only
-        Matrix m1 = new Matrix();
-        m1.setValues(values1);
-        mCanvas.setMatrix(m1);
-        mCanvas.save(Canvas.MATRIX_SAVE_FLAG);
-
-        Matrix m2 = new Matrix();
-        m2.setValues(values2);
-        mCanvas.setMatrix(m2);
-
-        float[] values3 = new float[FLOAT_ARRAY_LEN];
-        Matrix m3 = mCanvas.getMatrix();
-        m3.getValues(values3);
-
-        assertArrayEquals(values2, values3, 0.0f);
-
-        mCanvas.restore();
-        float[] values4 = new float[FLOAT_ARRAY_LEN];
-        Matrix m4 = mCanvas.getMatrix();
-        m4.getValues(values4);
-
-        assertArrayEquals(values1, values4, 0.0f);
-
-        // test save current clip only, don't know how to get clip saved,
-        // but can make sure Matrix can't be saved in this case
-        m1 = new Matrix();
-        m1.setValues(values1);
-        mCanvas.setMatrix(m1);
-        mCanvas.save(Canvas.CLIP_SAVE_FLAG);
-
-        m2 = new Matrix();
-        m2.setValues(values2);
-        mCanvas.setMatrix(m2);
-
-        values3 = new float[FLOAT_ARRAY_LEN];
-        m3 = mCanvas.getMatrix();
-        m3.getValues(values3);
-
-        assertArrayEquals(values2, values3, 0.0f);
-
-        mCanvas.restore();
-        values4 = new float[FLOAT_ARRAY_LEN];
-        m4 = mCanvas.getMatrix();
-        m4.getValues(values4);
-
-        assertArrayEquals(values2, values4, 0.0f);
-
-        // test save everything
-        m1 = new Matrix();
-        m1.setValues(values1);
-        mCanvas.setMatrix(m1);
-        mCanvas.save(Canvas.ALL_SAVE_FLAG);
-
-        m2 = new Matrix();
-        m2.setValues(values2);
-        mCanvas.setMatrix(m2);
-
-        values3 = new float[FLOAT_ARRAY_LEN];
-        m3 = mCanvas.getMatrix();
-        m3.getValues(values3);
-
-        assertArrayEquals(values2, values3, 0.0f);
-
-        mCanvas.restore();
-        values4 = new float[FLOAT_ARRAY_LEN];
-        m4 = mCanvas.getMatrix();
-        m4.getValues(values4);
-
-        assertArrayEquals(values1, values4, 0.0f);
-    }
-
-    @Test
-    public void testSaveFlags1() {
-        int[] flags = {
-            Canvas.MATRIX_SAVE_FLAG,
-        };
-        verifySaveFlagsSequence(flags);
-    }
-
-    @Test
-    public void testSaveFlags2() {
-        int[] flags = {
-            Canvas.CLIP_SAVE_FLAG,
-        };
-        verifySaveFlagsSequence(flags);
-    }
-
-    @Test
-    public void testSaveFlags3() {
-        int[] flags = {
-            Canvas.ALL_SAVE_FLAG,
-            Canvas.MATRIX_SAVE_FLAG,
-            Canvas.MATRIX_SAVE_FLAG,
-        };
-        verifySaveFlagsSequence(flags);
-    }
-
-    @Test
-    public void testSaveFlags4() {
-        int[] flags = {
-            Canvas.ALL_SAVE_FLAG,
-            Canvas.CLIP_SAVE_FLAG,
-            Canvas.CLIP_SAVE_FLAG,
-        };
-        verifySaveFlagsSequence(flags);
-    }
-
-    @Test
-    public void testSaveFlags5() {
-        int[] flags = {
-            Canvas.MATRIX_SAVE_FLAG,
-            Canvas.MATRIX_SAVE_FLAG,
-            Canvas.CLIP_SAVE_FLAG,
-            Canvas.CLIP_SAVE_FLAG,
-            Canvas.MATRIX_SAVE_FLAG,
-            Canvas.MATRIX_SAVE_FLAG,
-        };
-        verifySaveFlagsSequence(flags);
-    }
-
-    @Test
-    public void testSaveFlags6() {
-        int[] flags = {
-            Canvas.CLIP_SAVE_FLAG,
-            Canvas.CLIP_SAVE_FLAG,
-            Canvas.MATRIX_SAVE_FLAG,
-            Canvas.MATRIX_SAVE_FLAG,
-            Canvas.CLIP_SAVE_FLAG,
-            Canvas.CLIP_SAVE_FLAG,
-        };
-        verifySaveFlagsSequence(flags);
-    }
-
-    @Test
-    public void testSaveFlags7() {
-        int[] flags = {
-            Canvas.MATRIX_SAVE_FLAG,
-            Canvas.MATRIX_SAVE_FLAG,
-            Canvas.ALL_SAVE_FLAG,
-            Canvas.ALL_SAVE_FLAG,
-            Canvas.CLIP_SAVE_FLAG,
-            Canvas.CLIP_SAVE_FLAG,
-        };
-        verifySaveFlagsSequence(flags);
-    }
-
-    @Test
-    public void testSaveFlags8() {
-        int[] flags = {
-            Canvas.MATRIX_SAVE_FLAG,
-            Canvas.CLIP_SAVE_FLAG,
-            Canvas.ALL_SAVE_FLAG,
-            Canvas.MATRIX_SAVE_FLAG,
-            Canvas.CLIP_SAVE_FLAG,
-            Canvas.ALL_SAVE_FLAG,
-        };
-        verifySaveFlagsSequence(flags);
-    }
-
-    // This test exercises the saveLayer flag that preserves the clip
-    // state across the matching restore call boundary. This is a vanilla
-    // test and doesn't exercise any interaction between the clip stack
-    // and SkCanvas' deferred save/restore system.
-    @Test
-    public void testSaveFlags9() {
-        Rect clip0 = new Rect();
-        assertTrue(mCanvas.getClipBounds(clip0));
-
-        mCanvas.save(Canvas.MATRIX_SAVE_FLAG);
-
-            // All clip elements should be preserved after restore
-            mCanvas.clipRect(0, 0, BITMAP_WIDTH / 2, BITMAP_HEIGHT);
-            Path path = new Path();
-            path.addOval(0.25f * BITMAP_WIDTH, 0.25f * BITMAP_HEIGHT,
-                         0.75f * BITMAP_WIDTH, 0.75f * BITMAP_HEIGHT,
-                         Path.Direction.CW);
-            mCanvas.clipPath(path);
-            mCanvas.clipRect(0, 0, BITMAP_WIDTH, BITMAP_HEIGHT / 2);
-
-            Rect clip1 = new Rect();
-            assertTrue(mCanvas.getClipBounds(clip1));
-            assertTrue(clip1 != clip0);
-            assertTrue(clip0.contains(clip1));
-
-        mCanvas.restore();
-
-        Rect clip2 = new Rect();
-        assertTrue(mCanvas.getClipBounds(clip2));
-        assertEquals(clip2, clip1);
-    }
-
-    // This test exercises the saveLayer MATRIX_SAVE_FLAG flag and its
-    // interaction with the clip stack and SkCanvas deferred save/restore
-    // system.
-    @Test
-    public void testSaveFlags10() {
-        RectF rect1 = new RectF(0, 0, BITMAP_WIDTH / 2, BITMAP_HEIGHT);
-        RectF rect2 = new RectF(0, 0, BITMAP_WIDTH, BITMAP_HEIGHT / 2);
-        Path path = new Path();
-        path.addOval(0.25f * BITMAP_WIDTH, 0.25f * BITMAP_HEIGHT,
-                     0.75f * BITMAP_WIDTH, 0.75f * BITMAP_HEIGHT,
-                     Path.Direction.CW);
-
-        Rect clip0 = new Rect();
-        assertTrue(mCanvas.getClipBounds(clip0));
-
-        // Exercise various Canvas lazy-save interactions.
-        mCanvas.save();
-            mCanvas.save();
-                mCanvas.clipRect(rect1);
-                mCanvas.clipPath(path);
-
-                Rect clip1 = new Rect();
-                assertTrue(mCanvas.getClipBounds(clip1));
-                assertTrue(clip1 != clip0);
-
-                mCanvas.save(Canvas.MATRIX_SAVE_FLAG);
-                    mCanvas.save(Canvas.MATRIX_SAVE_FLAG);
-                        mCanvas.clipRect(rect2);
-                        mCanvas.clipPath(path);
-
-                        Rect clip2 = new Rect();
-                        assertTrue(mCanvas.getClipBounds(clip2));
-                        assertTrue(clip2 != clip1);
-                        assertTrue(clip2 != clip0);
-
-                        mCanvas.save();
-                            mCanvas.translate(10, 5);
-                            mCanvas.save(Canvas.MATRIX_SAVE_FLAG);
-                                // An uncommitted save/restore frame: exercises
-                                // the partial save emulation, ensuring there
-                                // are no side effects.
-                                Rect clip3 = new Rect();
-                                assertTrue(mCanvas.getClipBounds(clip3));
-                                clip3.offset(10, 5); // adjust for local offset
-                                assertEquals(clip3, clip2);
-                            mCanvas.restore();
-
-                            Rect clip4 = new Rect();
-                            assertTrue(mCanvas.getClipBounds(clip4));
-                            clip4.offset(10, 5); // adjust for local offset
-                            assertEquals(clip4, clip2);
-                        mCanvas.restore();
-
-                        Rect clip5 = new Rect();
-                        assertTrue(mCanvas.getClipBounds(clip5));
-                        assertEquals(clip5, clip2);
-                    mCanvas.restore();
-
-                    // clip2 survives the preceding restore
-                    Rect clip6 = new Rect();
-                    assertTrue(mCanvas.getClipBounds(clip6));
-                    assertEquals(clip6, clip2);
-                mCanvas.restore();
-
-                // clip2 also survives the preceding restore
-                Rect clip7 = new Rect();
-                assertTrue(mCanvas.getClipBounds(clip7));
-                assertEquals(clip7, clip2);
-            mCanvas.restore();
-
-            // clip1 does _not_ survive the preceding restore
-            Rect clip8 = new Rect();
-            assertTrue(mCanvas.getClipBounds(clip8));
-            assertEquals(clip8, clip0);
-        mCanvas.restore();
-
-        Rect clip9 = new Rect();
-        assertTrue(mCanvas.getClipBounds(clip9));
-        assertEquals(clip9, clip0);
-    }
-
-    @Test
     public void testSaveLayer1() {
         final Paint p = new Paint();
         final RectF rF = new RectF(0, 10, 31, 0);
 
-        // test save current matrix only
+        // test save everything
         Matrix m1 = new Matrix();
         m1.setValues(values1);
         mCanvas.setMatrix(m1);
-        mCanvas.saveLayer(rF, p, Canvas.MATRIX_SAVE_FLAG);
+        mCanvas.saveLayer(rF, p);
 
         Matrix m2 = new Matrix();
         m2.setValues(values2);
@@ -529,52 +254,6 @@ public class CanvasTest {
         mCanvas.restore();
         float[] values4 = new float[FLOAT_ARRAY_LEN];
         Matrix m4 = mCanvas.getMatrix();
-        m4.getValues(values4);
-
-        assertArrayEquals(values1, values4, 0.0f);
-
-        // test save current clip flag only: this should save matrix as well
-        m1 = new Matrix();
-        m1.setValues(values1);
-        mCanvas.setMatrix(m1);
-        mCanvas.saveLayer(rF, p, Canvas.CLIP_SAVE_FLAG);
-
-        m2 = new Matrix();
-        m2.setValues(values2);
-        mCanvas.setMatrix(m2);
-
-        values3 = new float[FLOAT_ARRAY_LEN];
-        m3 = mCanvas.getMatrix();
-        m3.getValues(values3);
-
-        assertArrayEquals(values2, values3, 0.0f);
-
-        mCanvas.restore();
-        values4 = new float[FLOAT_ARRAY_LEN];
-        m4 = mCanvas.getMatrix();
-        m4.getValues(values4);
-
-        assertArrayEquals(values1, values4, 0.0f);
-
-        // test save everything
-        m1 = new Matrix();
-        m1.setValues(values1);
-        mCanvas.setMatrix(m1);
-        mCanvas.saveLayer(rF, p, Canvas.ALL_SAVE_FLAG);
-
-        m2 = new Matrix();
-        m2.setValues(values2);
-        mCanvas.setMatrix(m2);
-
-        values3 = new float[FLOAT_ARRAY_LEN];
-        m3 = mCanvas.getMatrix();
-        m3.getValues(values3);
-
-        assertArrayEquals(values2, values3, 0.0f);
-
-        mCanvas.restore();
-        values4 = new float[FLOAT_ARRAY_LEN];
-        m4 = mCanvas.getMatrix();
         m4.getValues(values4);
 
         assertArrayEquals(values1, values4, 0.0f);
@@ -584,11 +263,11 @@ public class CanvasTest {
     public void testSaveLayer2() {
         final Paint p = new Paint();
 
-        // test save current matrix only
+        // test save everything
         Matrix m1 = new Matrix();
         m1.setValues(values1);
         mCanvas.setMatrix(m1);
-        mCanvas.saveLayer(10, 0, 0, 31, p, Canvas.MATRIX_SAVE_FLAG);
+        mCanvas.saveLayer(10, 0, 0, 31, p);
 
         Matrix m2 = new Matrix();
         m2.setValues(values2);
@@ -603,52 +282,6 @@ public class CanvasTest {
         mCanvas.restore();
         float[] values4 = new float[FLOAT_ARRAY_LEN];
         Matrix m4 = mCanvas.getMatrix();
-        m4.getValues(values4);
-
-        assertArrayEquals(values1, values4, 0.0f);
-
-        // test save current clip flag only: this should save matrix as well
-        m1 = new Matrix();
-        m1.setValues(values1);
-        mCanvas.setMatrix(m1);
-        mCanvas.saveLayer(10, 0, 0, 31, p, Canvas.CLIP_SAVE_FLAG);
-
-        m2 = new Matrix();
-        m2.setValues(values2);
-        mCanvas.setMatrix(m2);
-
-        values3 = new float[FLOAT_ARRAY_LEN];
-        m3 = mCanvas.getMatrix();
-        m3.getValues(values3);
-
-        assertArrayEquals(values2, values3, 0.0f);
-
-        mCanvas.restore();
-        values4 = new float[FLOAT_ARRAY_LEN];
-        m4 = mCanvas.getMatrix();
-        m4.getValues(values4);
-
-        assertArrayEquals(values1, values4, 0.0f);
-
-        // test save everything
-        m1 = new Matrix();
-        m1.setValues(values1);
-        mCanvas.setMatrix(m1);
-        mCanvas.saveLayer(10, 0, 0, 31, p, Canvas.ALL_SAVE_FLAG);
-
-        m2 = new Matrix();
-        m2.setValues(values2);
-        mCanvas.setMatrix(m2);
-
-        values3 = new float[FLOAT_ARRAY_LEN];
-        m3 = mCanvas.getMatrix();
-        m3.getValues(values3);
-
-        assertArrayEquals(values2, values3, 0.0f);
-
-        mCanvas.restore();
-        values4 = new float[FLOAT_ARRAY_LEN];
-        m4 = mCanvas.getMatrix();
         m4.getValues(values4);
 
         assertArrayEquals(values1, values4, 0.0f);
@@ -658,11 +291,11 @@ public class CanvasTest {
     public void testSaveLayerAlpha1() {
         final RectF rF = new RectF(0, 10, 31, 0);
 
-        // test save current matrix only
+        // test save everything
         Matrix m1 = new Matrix();
         m1.setValues(values1);
         mCanvas.setMatrix(m1);
-        mCanvas.saveLayerAlpha(rF, 0xff, Canvas.MATRIX_SAVE_FLAG);
+        mCanvas.saveLayerAlpha(rF, 0xff);
 
         Matrix m2 = new Matrix();
         m2.setValues(values2);
@@ -677,52 +310,6 @@ public class CanvasTest {
         mCanvas.restore();
         float[] values4 = new float[FLOAT_ARRAY_LEN];
         Matrix m4 = mCanvas.getMatrix();
-        m4.getValues(values4);
-
-        assertArrayEquals(values1, values4, 0.0f);
-
-        // test save current clip flag only: this should save matrix as well
-        m1 = new Matrix();
-        m1.setValues(values1);
-        mCanvas.setMatrix(m1);
-        mCanvas.saveLayerAlpha(rF, 0xff, Canvas.CLIP_SAVE_FLAG);
-
-        m2 = new Matrix();
-        m2.setValues(values2);
-        mCanvas.setMatrix(m2);
-
-        values3 = new float[FLOAT_ARRAY_LEN];
-        m3 = mCanvas.getMatrix();
-        m3.getValues(values3);
-
-        assertArrayEquals(values2, values3, 0.0f);
-
-        mCanvas.restore();
-        values4 = new float[FLOAT_ARRAY_LEN];
-        m4 = mCanvas.getMatrix();
-        m4.getValues(values4);
-
-        assertArrayEquals(values1, values4, 0.0f);
-
-        // test save everything
-        m1 = new Matrix();
-        m1.setValues(values1);
-        mCanvas.setMatrix(m1);
-        mCanvas.saveLayerAlpha(rF, 0xff, Canvas.ALL_SAVE_FLAG);
-
-        m2 = new Matrix();
-        m2.setValues(values2);
-        mCanvas.setMatrix(m2);
-
-        values3 = new float[FLOAT_ARRAY_LEN];
-        m3 = mCanvas.getMatrix();
-        m3.getValues(values3);
-
-        assertArrayEquals(values2, values3, 0.0f);
-
-        mCanvas.restore();
-        values4 = new float[FLOAT_ARRAY_LEN];
-        m4 = mCanvas.getMatrix();
         m4.getValues(values4);
 
         assertArrayEquals(values1, values4, 0.0f);
@@ -730,11 +317,11 @@ public class CanvasTest {
 
     @Test
     public void testSaveLayerAlpha2() {
-        // test save current matrix only
+        // test save everything
         Matrix m1 = new Matrix();
         m1.setValues(values1);
         mCanvas.setMatrix(m1);
-        mCanvas.saveLayerAlpha(0, 10, 31, 0, 0xff, Canvas.MATRIX_SAVE_FLAG);
+        mCanvas.saveLayerAlpha(0, 10, 31, 0, 0xff);
 
         Matrix m2 = new Matrix();
         m2.setValues(values2);
@@ -749,52 +336,6 @@ public class CanvasTest {
         mCanvas.restore();
         float[] values4 = new float[FLOAT_ARRAY_LEN];
         Matrix m4 = mCanvas.getMatrix();
-        m4.getValues(values4);
-
-        assertArrayEquals(values1, values4, 0.0f);
-
-        // test save current clip flag only: this should save matrix as well
-        m1 = new Matrix();
-        m1.setValues(values1);
-        mCanvas.setMatrix(m1);
-        mCanvas.saveLayerAlpha(0, 10, 31, 0, 0xff, Canvas.CLIP_SAVE_FLAG);
-
-        m2 = new Matrix();
-        m2.setValues(values2);
-        mCanvas.setMatrix(m2);
-
-        values3 = new float[FLOAT_ARRAY_LEN];
-        m3 = mCanvas.getMatrix();
-        m3.getValues(values3);
-
-        assertArrayEquals(values2, values3, 0.0f);
-
-        mCanvas.restore();
-        values4 = new float[FLOAT_ARRAY_LEN];
-        m4 = mCanvas.getMatrix();
-        m4.getValues(values4);
-
-        assertArrayEquals(values1, values4, 0.0f);
-
-        // test save everything
-        m1 = new Matrix();
-        m1.setValues(values1);
-        mCanvas.setMatrix(m1);
-        mCanvas.saveLayerAlpha(0, 10, 31, 0, 0xff, Canvas.ALL_SAVE_FLAG);
-
-        m2 = new Matrix();
-        m2.setValues(values2);
-        mCanvas.setMatrix(m2);
-
-        values3 = new float[FLOAT_ARRAY_LEN];
-        m3 = mCanvas.getMatrix();
-        m3.getValues(values3);
-
-        assertArrayEquals(values2, values3, 0.0f);
-
-        mCanvas.restore();
-        values4 = new float[FLOAT_ARRAY_LEN];
-        m4 = mCanvas.getMatrix();
         m4.getValues(values4);
 
         assertArrayEquals(values1, values4, 0.0f);
@@ -808,9 +349,9 @@ public class CanvasTest {
         assertEquals(2, mCanvas.getSaveCount());
         mCanvas.save();
         assertEquals(3, mCanvas.getSaveCount());
-        mCanvas.saveLayer(new RectF(), new Paint(), Canvas.ALL_SAVE_FLAG);
+        mCanvas.saveLayer(new RectF(), new Paint());
         assertEquals(4, mCanvas.getSaveCount());
-        mCanvas.saveLayerAlpha(new RectF(), 0, Canvas.ALL_SAVE_FLAG);
+        mCanvas.saveLayerAlpha(new RectF(), 0);
         assertEquals(5, mCanvas.getSaveCount());
     }
 
@@ -999,12 +540,13 @@ public class CanvasTest {
 
     @Test
     public void testClipRectF() {
+        mCanvas.save();
         // intersect with clip larger than canvas
         assertTrue(mCanvas.clipRect(new RectF(0, 0, 10, 31), Op.INTERSECT));
         // intersect with clip outside of canvas bounds
         assertFalse(mCanvas.clipRect(new RectF(10, 31, 11, 32), Op.INTERSECT));
-        // replace with clip that is larger than canvas
-        assertTrue(mCanvas.clipRect(new RectF(0, 0, 10, 31), Op.REPLACE));
+        // replace with the original clip
+        mCanvas.restore();
         // intersect with clip that covers top portion of canvas
         assertTrue(mCanvas.clipRect(new RectF(0, 0, 20, 10), Op.INTERSECT));
         // intersect with clip that covers bottom portion of canvas
@@ -1015,12 +557,13 @@ public class CanvasTest {
 
     @Test
     public void testClipRect() {
+        mCanvas.save();
         // intersect with clip larger than canvas
         assertTrue(mCanvas.clipRect(new Rect(0, 0, 10, 31), Op.INTERSECT));
         // intersect with clip outside of canvas bounds
         assertFalse(mCanvas.clipRect(new Rect(10, 31, 11, 32), Op.INTERSECT));
-        // replace with clip that is larger than canvas
-        assertTrue(mCanvas.clipRect(new Rect(0, 0, 10, 31), Op.REPLACE));
+        // replace with the original clip
+        mCanvas.restore();
         // intersect with clip that covers top portion of canvas
         assertTrue(mCanvas.clipRect(new Rect(0, 0, 20, 10), Op.INTERSECT));
         // intersect with clip that covers bottom portion of canvas
@@ -1031,12 +574,13 @@ public class CanvasTest {
 
     @Test
     public void testClipRect4I() {
+        mCanvas.save();
         // intersect with clip larger than canvas
         assertTrue(mCanvas.clipRect(0, 0, 10, 31, Op.INTERSECT));
         // intersect with clip outside of canvas bounds
         assertFalse(mCanvas.clipRect(10, 31, 11, 32, Op.INTERSECT));
-        // replace with clip that is larger than canvas
-        assertTrue(mCanvas.clipRect(0, 0, 10, 31, Op.REPLACE));
+        // replace with the original clip
+        mCanvas.restore();
         // intersect with clip that covers top portion of canvas
         assertTrue(mCanvas.clipRect(0, 0, 20, 10, Op.INTERSECT));
         // intersect with clip that covers bottom portion of canvas
@@ -1047,12 +591,13 @@ public class CanvasTest {
 
     @Test
     public void testClipRect4F() {
+        mCanvas.save();
         // intersect with clip larger than canvas
         assertTrue(mCanvas.clipRect(0f, 0f, 10f, 31f, Op.INTERSECT));
         // intersect with clip outside of canvas bounds
         assertFalse(mCanvas.clipRect(10f, 31f, 11f, 32f, Op.INTERSECT));
-        // replace with clip that is larger than canvas
-        assertTrue(mCanvas.clipRect(0f, 0f, 10f, 31f, Op.REPLACE));
+        // replace with the original clip
+        mCanvas.restore();
         // intersect with clip that covers top portion of canvas
         assertTrue(mCanvas.clipRect(0f, 0f, 20f, 10f, Op.INTERSECT));
         // intersect with clip that covers bottom portion of canvas
@@ -1066,7 +611,7 @@ public class CanvasTest {
         // remove center, clip not empty
         assertTrue(mCanvas.clipOutRect(new RectF(1, 1, 9, 27)));
         // replace clip, verify difference doesn't widen
-        assertFalse(mCanvas.clipRect(new RectF(0, 0, 0, 0), Op.REPLACE));
+        assertFalse(mCanvas.clipRect(new RectF(0, 0, 0, 0)));
         assertFalse(mCanvas.clipOutRect(new RectF(0, 0, 100, 100)));
     }
 
@@ -1075,7 +620,7 @@ public class CanvasTest {
         // remove center, clip not empty
         assertTrue(mCanvas.clipOutRect(new Rect(1, 1, 9, 27)));
         // replace clip, verify difference doesn't widen
-        assertFalse(mCanvas.clipRect(new Rect(0, 0, 0, 0), Op.REPLACE));
+        assertFalse(mCanvas.clipRect(new Rect(0, 0, 0, 0)));
         assertFalse(mCanvas.clipOutRect(new Rect(0, 0, 100, 100)));
     }
 
@@ -1084,7 +629,7 @@ public class CanvasTest {
         // remove center, clip not empty
         assertTrue(mCanvas.clipOutRect(1, 1, 9, 27));
         // replace clip, verify difference doesn't widen
-        assertFalse(mCanvas.clipRect(0, 0, 0, 0, Op.REPLACE));
+        assertFalse(mCanvas.clipRect(0, 0, 0, 0));
         assertFalse(mCanvas.clipOutRect(0, 0, 100, 100));
     }
 
@@ -1093,7 +638,7 @@ public class CanvasTest {
         // remove center, clip not empty
         assertTrue(mCanvas.clipOutRect(1f, 1f, 9f, 27f));
         // replace clip, verify difference doesn't widen
-        assertFalse(mCanvas.clipRect(0f, 0f, 0f, 0f, Op.REPLACE));
+        assertFalse(mCanvas.clipRect(0f, 0f, 0f, 0f));
         assertFalse(mCanvas.clipOutRect(0f, 0f, 100f, 100f));
     }
 
@@ -1139,12 +684,13 @@ public class CanvasTest {
         final Path pOut = new Path();
         pOut.addRoundRect(new RectF(10, 31, 11, 32), 0.5f, 0.5f, Direction.CW);
 
+        mCanvas.save();
         // intersect with clip larger than canvas
         assertTrue(mCanvas.clipPath(p, Op.INTERSECT));
         // intersect with clip outside of canvas bounds
         assertFalse(mCanvas.clipPath(pOut, Op.INTERSECT));
-        // replace with clip that is larger than canvas
-        assertTrue(mCanvas.clipPath(p, Op.REPLACE));
+        // replace with the original clip
+        mCanvas.restore();
         // intersect with clip that covers top portion of canvas
         assertTrue(mCanvas.clipPath(pIn, Op.INTERSECT));
         // intersect with clip outside of canvas bounds
@@ -2196,45 +1742,6 @@ public class CanvasTest {
         final RectF clip = new RectF(mCanvas.getClipBounds());
         mCanvas.getMatrix().mapRect(clip);
         return clip;
-    }
-
-    // Loops through the passed flags, applying each in order with successive calls
-    // to save, verifying the clip and matrix values when restoring.
-    private void verifySaveFlagsSequence(int[] saveFlags) {
-        final Vector<RectF> clips = new Vector<RectF>();
-        final Vector<Matrix> matrices = new Vector<Matrix>();
-
-        assertTrue(BITMAP_WIDTH > saveFlags.length);
-        assertTrue(BITMAP_HEIGHT > saveFlags.length);
-
-        for (int i = 0; i < saveFlags.length; ++i) {
-            clips.add(getDeviceClip());
-            matrices.add(mCanvas.getMatrix());
-            mCanvas.save(saveFlags[i]);
-
-            mCanvas.translate(1, 1);
-            mCanvas.clipRect(0, 0, BITMAP_WIDTH - i - 1, BITMAP_HEIGHT - i - 1);
-
-            if (i  > 0) {
-                // We are mutating the state on each iteration.
-                assertFalse(clips.elementAt(i).equals(clips.elementAt(i - 1)));
-                assertFalse(matrices.elementAt(i).equals(matrices.elementAt(i - 1)));
-            }
-        }
-
-        for (int i = saveFlags.length - 1; i >= 0; --i) {
-            // If clip/matrix flags are not set, the associated state should be preserved.
-            if ((saveFlags[i] & Canvas.CLIP_SAVE_FLAG) == 0) {
-                clips.elementAt(i).set(getDeviceClip());
-            }
-            if ((saveFlags[i] & Canvas.MATRIX_SAVE_FLAG) == 0) {
-                matrices.elementAt(i).set(mCanvas.getMatrix());
-            }
-
-            mCanvas.restore();
-            assertEquals(clips.elementAt(i), getDeviceClip());
-            assertEquals(matrices.elementAt(i), mCanvas.getMatrix());
-        }
     }
 
     @Test

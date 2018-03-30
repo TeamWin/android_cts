@@ -1407,9 +1407,9 @@
         start in a role, and the other should start in the complementary
         role. Your device must pass the tests in all roles.
     </string>
-    <string name="aware_not_enabled">Wi-Fi is not enabled</string>
-    <string name="aware_not_enabled_message">These tests require Wi-Fi to be enabled.
-        Click the button below to go to system settings and enable Wi-Fi.</string>
+    <string name="aware_not_enabled">Wi-Fi / Location Mode is not enabled</string>
+    <string name="aware_not_enabled_message">These tests require Wi-Fi and Location Mode to be enabled.
+        Click the button below to go to system settings and enable Wi-Fi and Location Mode.</string>
     <string name="aware_settings">Wi-Fi Settings</string>
     <string name="aware_setup_error">
         Test failed.\n\nSet up error. Check whether Wi-Fi is enabled.</string>
@@ -1457,8 +1457,10 @@
     <string name="aware_status_network_success">Network formed ...</string>
     <string name="aware_status_network_failed">Network request failure - timed out!</string>
     <string name="aware_status_sleeping_wait_for_responder">Pausing to let Responder time to set up ...</string>
-    <string name="aware_status_ranging_peer_failure">Ranging to PeerHandle failure: %1$d or %2$d!</string>
-    <string name="aware_status_ranging_mac_failure">Ranging to MAC address failure: %1$d or %2$d!</string>
+    <string name="aware_status_ranging_peer_failure">Ranging to PeerHandle failure: %1$d failures of %2$d attempts!</string>
+    <string name="aware_status_ranging_mac_failure">Ranging to MAC address failure: %1$d failures of %2$d attempts!</string>
+    <string name="aware_status_ranging_peer_success">Ranging to PeerHandle success: %1$d successes of %2$d attempts!</string>
+    <string name="aware_status_ranging_mac_success">Ranging to MAC address success: %1$d successes of %2$d attempts!</string>
     <string name="aware_status_lifecycle_ok">Discovery lifecycle validated!</string>
 
     <string name="aware_data_path_open_unsolicited_publish">Data Path: Open: Unsolicited Publish</string>
@@ -1656,15 +1658,6 @@
     <string name="nls_snooze_one_time">Check that service can snooze a notification for a given time.</string>
     <string name="nls_get_snoozed">Check that service can retrieve snoozed notifications.</string>
     <string name="nls_unsnooze_one">Check that service can unsnooze a notification.</string>
-    <string name="nls_suspend_app_title">Suspend App</string>
-    <string name="nls_suspend_app_msg">Please suspend the current app by enabling USB debugging on the device and issuing the following command:\n\n
-        adb shell cmd notification suspend_package com.android.cts.verifier\n\n
-        Once the app is suspended, press OK to continue.</string>
-    <string name="nls_unsuspend_app_title">Unsuspend App</string>
-    <string name="nls_unsuspend_app_msg">Please unsuspend the current app by enabling USB debugging on the device and issuing the following command:\n\n
-        adb shell cmd notification unsuspend_package com.android.cts.verifier\n\n
-        Once the app is unsuspended, press OK to continue.</string>
-    <string name="nls_suspend_app">Check that suspended app notifications are removed and unsuspended app notifications are posted.</string>
     <string name="nas_note_missed_enqueued">Check that notification was not enqueued.</string>
     <string name="cp_test">Condition Provider test</string>
     <string name="cp_service_name">Condition Provider for CTS Verifier</string>
@@ -2656,8 +2649,9 @@ You should be prompted to select credentials; choose the ones you just installed
     <string name="set_device_owner_button_label">Set up device owner</string>
     <string name="set_device_owner_dialog_title">Set up device owner</string>
     <string name="set_device_owner_dialog_text">
+            This test requires CtsEmptyDeviceOwner.apk to be installed on the device.
             Please set the device owner by enabling USB debugging on the device and issuing the following command on the host:\n
-            adb shell dpm set-device-owner \'com.android.cts.verifier/com.android.cts.verifier.managedprovisioning.DeviceAdminTestReceiver\'
+            adb shell dpm set-device-owner com.android.cts.emptydeviceowner/.EmptyDeviceAdmin
     </string>
     <string name="device_owner_remove_device_owner_test">Remove device owner</string>
     <string name="device_owner_remove_device_owner_test_info">
@@ -2744,6 +2738,7 @@ You should be prompted to select credentials; choose the ones you just installed
     <string name="start_lock_task_button_label">Start LockTask mode</string>
     <string name="device_owner_lock_task_ui_default_test">Default LockTask UI</string>
     <string name="device_owner_lock_task_ui_default_test_info">
+            Press the button below to reset to default LockTask UI.
             Observe the following UI restrictions. Mark the test as \'pass\' only if ALL of the
             requirements below are met.\n\n
             1) Nothing is shown in the status bar, including notification icons, connectivity icons,
@@ -2751,7 +2746,7 @@ You should be prompted to select credentials; choose the ones you just installed
             2) The status bar can\'t be expanded. That is, the \'swipe-down\' gesture doesn\'t work
             for the status bar.\n
             3) The Home button is hidden.\n
-            4) The Recents button is hidden.\n
+            4) The Overview button is hidden and the Overview gesture (swipe-up) does not work.\n
             5) Long-press the power button. The power button menu, which usually shows the power-off
             button, etc., isn\'t shown.\n
             6) Press the power button to turn off the screen, and press it again to turn the screen
@@ -2767,7 +2762,7 @@ You should be prompted to select credentials; choose the ones you just installed
             2) The status bar can\'t be expanded. That is, the \'swipe-down\' gesture doesn\'t work
             for the status bar.\n
             3) The Home button is hidden.\n
-            4) The Recents button is hidden.\n
+            4) The Overview button is hidden and the Overview gesture (swipe-up) does not work.\n
             5) Long-press the power button. The power button menu, which usually shows the power-off
             button, etc., isn\'t shown.\n
             6) Press the power button to turn off the screen, and press it again to turn the screen
@@ -2778,13 +2773,13 @@ You should be prompted to select credentials; choose the ones you just installed
     <string name="device_owner_lock_task_ui_notifications_test">Enable notifications</string>
     <string name="device_owner_lock_task_ui_notifications_test_info">
             Press the button below to enable notifications. Observe the notification icons on the
-            status bar are now enabled. The status bar can also be expanded to show the
-            notifications. However, all Settings UI should remain invisible, including Quick
-            Settings and any link to the Settings app.\n\n
+            status bar are now enabled and the Home button is shown. The status bar can also be
+            expanded to show the notifications. However, all Settings UI should remain invisible,
+            including Quick Settings and any link to the Settings app.\n\n
             The rest of the UI restrictions should still apply:\n
             1) System info area is still hidden on the status bar.\n
-            2) The Home button is hidden.\n
-            3) The Recents button is hidden.\n
+            2) The Overview button is hidden and the Overview gesture (swipe-up) does not work.\n
+            3) Holding the Home button and swiping to the right does not bring up other tasks.\n
             4) Long-press the power button. The power button menu, which usually shows the power-off
             button, etc., isn\'t shown.\n
             5) Press the power button to turn off the screen, and press it again to turn the screen
@@ -2801,29 +2796,30 @@ You should be prompted to select credentials; choose the ones you just installed
             battery status, clock, etc.\n
             2) The status bar can\'t be expanded. That is, the \'swipe-down\' gesture doesn\'t work
             for the status bar.\n
-            3) The Recents button is hidden.\n
-            4) Long-press the power button. The power button menu, which usually shows the power-off
+            3) The Overview button is hidden and the Overview gesture (swipe-up) does not work.\n
+            4) Holding the Home button and swiping to the right does not bring up other tasks.\n
+            5) Long-press the power button. The power button menu, which usually shows the power-off
             button, etc., isn\'t shown.\n
-            5) Press the power button to turn off the screen, and press it again to turn the screen
+            6) Press the power button to turn off the screen, and press it again to turn the screen
             back on. Lock screen shouldn\'t be shown.\n
-            6) The assist gesture isn\'t available.\n\n
+            7) The assist gesture isn\'t available.\n\n
             Mark the test as \'pass\' only if ALL of the above requirements are met.
     </string>
-    <string name="device_owner_lock_task_ui_recents_test">Enable Recents button</string>
+    <string name="device_owner_lock_task_ui_recents_test">Enable Overview button</string>
     <string name="device_owner_lock_task_ui_recents_test_info">
-            Press the button below to enable the Recents button. Observe the Recents button is now
-            enabled. Press the Recents button and verify the Recents view can be opened.\n\n
+            Press the button below to enable the Overview button. Observe the Home button is now
+            enabled. Press the Overview button or perform the Overview gesture
+            (swipe up) and verify the Overview view can be opened.\n\n
             The rest of the UI restrictions should still apply:\n
             1) Nothing is shown in the status bar, including notification icons, connectivity icons,
             battery status, clock, etc.\n
             2) The status bar can\'t be expanded. That is, the \'swipe-down\' gesture doesn\'t work
             for the status bar.\n
-            3) The Home button is hidden.\n
-            4) Long-press the power button. The power button menu, which usually shows the power-off
+            3) Long-press the power button. The power button menu, which usually shows the power-off
             button, etc., isn\'t shown.\n
-            5) Press the power button to turn off the screen, and press it again to turn the screen
+            4) Press the power button to turn off the screen, and press it again to turn the screen
             back on. Lock screen shouldn\'t be shown.\n
-            6) The assist gesture isn\'t available.\n\n
+            5) The assist gesture isn\'t available.\n\n
             Mark the test as \'pass\' only if ALL of the above requirements are met.
     </string>
     <string name="device_owner_lock_task_ui_global_actions_test">Enable global actions</string>
@@ -2838,9 +2834,9 @@ You should be prompted to select credentials; choose the ones you just installed
             2) The status bar can\'t be expanded. That is, the \'swipe-down\' gesture doesn\'t work
             for the status bar.\n
             3) The Home button is hidden.\n
-            4) The Recents button is hidden.\n
-            5) Long-press the power button. The power button menu, which usually shows the power-off
-            button, etc., isn\'t shown.\n
+            4) The Overview button is hidden and the Overview gesture (swipe-up) does not work.\n
+            5) Press the power button to turn off the screen, and press it again to turn the screen
+            back on. Lock screen shouldn\'t be shown.\n
             6) The assist gesture isn\'t available.\n\n
             Mark the test as \'pass\' only if ALL of the above requirements are met.
     </string>
@@ -2855,7 +2851,7 @@ You should be prompted to select credentials; choose the ones you just installed
             2) The status bar can\'t be expanded. That is, the \'swipe-down\' gesture doesn\'t work
             for the status bar, even on the lock screen.\n
             3) The Home button is hidden.\n
-            4) The Recents button is hidden.\n
+            4) The Overview button is hidden and the Overview gesture (swipe-up) does not work.\n
             5) Long-press the power button. The power button menu, which usually shows the power-off
             button, etc., isn\'t shown.\n
             6) The assist gesture isn\'t available.\n\n

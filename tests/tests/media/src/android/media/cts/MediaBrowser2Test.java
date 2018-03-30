@@ -38,11 +38,10 @@ import android.media.MediaItem2;
 import android.media.MediaLibraryService2.MediaLibrarySession;
 import android.media.MediaLibraryService2.MediaLibrarySession.MediaLibrarySessionCallback;
 import android.media.MediaMetadata2;
-import android.media.MediaPlaylistAgent;
 import android.media.MediaSession2;
-import android.media.MediaSession2.Command;
+import android.media.SessionCommand2;
 import android.media.MediaSession2.CommandButton;
-import android.media.MediaSession2.CommandGroup;
+import android.media.SessionCommandGroup2;
 import android.media.MediaSession2.ControllerInfo;
 import android.media.SessionToken2;
 import android.os.Bundle;
@@ -360,7 +359,7 @@ public class MediaBrowser2Test extends MediaController2Test {
         testExtras.putString(testParentId, testParentId);
 
         final CountDownLatch latch = new CountDownLatch(1);
-        final MediaLibrarySessionCallback callback = new MediaLibrarySessionCallback(mContext) {
+        final MediaLibrarySessionCallback callback = new MediaLibrarySessionCallback() {
             @Override
             public void onSubscribe(@NonNull MediaLibrarySession session,
                     @NonNull ControllerInfo info, @NonNull String parentId,
@@ -384,7 +383,7 @@ public class MediaBrowser2Test extends MediaController2Test {
     public void testUnsubscribe() throws InterruptedException {
         final String testParentId = "testUnsubscribeId";
         final CountDownLatch latch = new CountDownLatch(1);
-        final MediaLibrarySessionCallback callback = new MediaLibrarySessionCallback(mContext) {
+        final MediaLibrarySessionCallback callback = new MediaLibrarySessionCallback() {
             @Override
             public void onUnsubscribe(@NonNull MediaLibrarySession session,
                     @NonNull ControllerInfo info, @NonNull String parentId) {
@@ -412,9 +411,9 @@ public class MediaBrowser2Test extends MediaController2Test {
 
         final CountDownLatch latch = new CountDownLatch(3);
         final MediaLibrarySessionCallback sessionCallback =
-                new MediaLibrarySessionCallback(mContext) {
+                new MediaLibrarySessionCallback() {
                     @Override
-                    public CommandGroup onConnect(@NonNull MediaSession2 session,
+                    public SessionCommandGroup2 onConnect(@NonNull MediaSession2 session,
                             @NonNull ControllerInfo controller) {
                         if (Process.myUid() == controller.getUid()) {
                             assertTrue(session instanceof MediaLibrarySession);
@@ -492,7 +491,7 @@ public class MediaBrowser2Test extends MediaController2Test {
 
         @CallSuper
         @Override
-        public void onConnected(MediaController2 controller, CommandGroup commands) {
+        public void onConnected(MediaController2 controller, SessionCommandGroup2 commands) {
             connectLatch.countDown();
         }
 
@@ -527,8 +526,8 @@ public class MediaBrowser2Test extends MediaController2Test {
         }
 
         @Override
-        public void onCustomCommand(MediaController2 controller, Command command, Bundle args,
-                ResultReceiver receiver) {
+        public void onCustomCommand(MediaController2 controller, SessionCommand2 command,
+                Bundle args, ResultReceiver receiver) {
             mCallbackProxy.onCustomCommand(controller, command, args, receiver);
         }
 
@@ -538,7 +537,8 @@ public class MediaBrowser2Test extends MediaController2Test {
         }
 
         @Override
-        public void onAllowedCommandsChanged(MediaController2 controller, CommandGroup commands) {
+        public void onAllowedCommandsChanged(MediaController2 controller,
+                SessionCommandGroup2 commands) {
             mCallbackProxy.onAllowedCommandsChanged(controller, commands);
         }
 
@@ -548,9 +548,8 @@ public class MediaBrowser2Test extends MediaController2Test {
         }
 
         @Override
-        public void onPositionChanged(MediaController2 controller, long eventTimeMs,
-                long positionMs) {
-            mCallbackProxy.onPositionChanged(controller, eventTimeMs, positionMs);
+        public void onSeekCompleted(MediaController2 controller, long position) {
+            mCallbackProxy.onSeekCompleted(controller, position);
         }
 
         @Override

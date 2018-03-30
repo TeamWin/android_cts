@@ -536,6 +536,24 @@ public class CaptureResultTest extends Camera2AndroidTestCase {
             waiverKeys.add(CaptureResult.LENS_DISTORTION);
         }
 
+        //Keys for lens distortion correction
+        int[] distortionModes = staticInfo.getCharacteristics().get(
+                CameraCharacteristics.DISTORTION_CORRECTION_AVAILABLE_MODES);
+        if (distortionModes == null) {
+            waiverKeys.add(CaptureResult.DISTORTION_CORRECTION_MODE);
+        } else {
+            boolean gotNonOff = false;
+            for (int mode : distortionModes) {
+                if (mode != CaptureRequest.DISTORTION_CORRECTION_MODE_OFF) {
+                    gotNonOff = true;
+                    break;
+                }
+            }
+            if (!gotNonOff) {
+                waiverKeys.add(CaptureResult.DISTORTION_CORRECTION_MODE);
+            }
+        }
+
         // Waived if RAW output is not supported
         int[] outputFormats = staticInfo.getAvailableFormats(
                 StaticMetadata.StreamDirection.Output);
@@ -549,6 +567,14 @@ public class CaptureResultTest extends Camera2AndroidTestCase {
         }
         if (!supportRaw) {
             waiverKeys.add(CaptureResult.CONTROL_POST_RAW_SENSITIVITY_BOOST);
+        }
+
+        // Waived if MONOCHROME capability
+        if (!staticInfo.isCapabilitySupported(
+                CameraCharacteristics.REQUEST_AVAILABLE_CAPABILITIES_MONOCHROME)) {
+            waiverKeys.add(CaptureResult.COLOR_CORRECTION_MODE);
+            waiverKeys.add(CaptureResult.COLOR_CORRECTION_TRANSFORM);
+            waiverKeys.add(CaptureResult.COLOR_CORRECTION_GAINS);
         }
 
         if (staticInfo.getAeMaxRegionsChecked() == 0) {
@@ -881,6 +907,7 @@ public class CaptureResultTest extends Camera2AndroidTestCase {
         resultKeys.add(CaptureResult.TONEMAP_PRESET_CURVE);
         resultKeys.add(CaptureResult.BLACK_LEVEL_LOCK);
         resultKeys.add(CaptureResult.REPROCESS_EFFECTIVE_EXPOSURE_FACTOR);
+        resultKeys.add(CaptureResult.DISTORTION_CORRECTION_MODE);
 
         return resultKeys;
     }

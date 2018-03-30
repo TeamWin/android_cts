@@ -49,6 +49,9 @@ def test_flip_mirror(cam, props, fmt, chart):
         boolean: True if flipped, False if not
     """
 
+    # determine if monochrome camera
+    mono_camera = its.caps.mono_camera(props)
+
     # determine if in debug mode
     debug = its.caps.debug_mode()
 
@@ -56,7 +59,7 @@ def test_flip_mirror(cam, props, fmt, chart):
     template = cv2.imread(CHART_FILE, cv2.IMREAD_ANYDEPTH)
 
     # take img, crop chart, scale and prep for cv2 template match
-    s, e, _, _, fd = cam.do_3a(get_results=True)
+    s, e, _, _, fd = cam.do_3a(get_results=True, mono_camera=mono_camera)
     req = its.objects.manual_capture_request(s, e, fd)
     cap = cam.do_capture(req, fmt)
     y, _, _ = its.image.convert_capture_to_planes(cap, props)

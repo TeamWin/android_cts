@@ -129,10 +129,11 @@ def main():
         its.caps.skip_unless(not its.caps.fixed_focus(props))
         its.caps.skip_unless(its.caps.read_3a(props) and
                              its.caps.lens_calibrated(props))
+        mono_camera = its.caps.mono_camera(props)
         fmt = {'format': 'yuv', 'width': VGA_WIDTH, 'height': VGA_HEIGHT}
 
         # Get proper sensitivity and exposure time with 3A
-        s, e, _, _, _ = cam.do_3a(get_results=True)
+        s, e, _, _, _ = cam.do_3a(get_results=True, mono_camera=mono_camera)
 
         # Get sharpness for each focal distance
         d_stat, d_move = test_lens_position(cam, props, fmt, s, e, chart)

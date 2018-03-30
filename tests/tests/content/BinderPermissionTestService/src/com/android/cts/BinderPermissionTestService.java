@@ -30,11 +30,11 @@ import android.os.IBinder;
 public class BinderPermissionTestService extends Service {
 
     // Note: keep these constants in sync with GRANTED_PERMISSION and NOT_GRANTED_PERMISSION in
-    // ContextWrapperTest.
+    // ContextTest.
     //
-    // A permission that's granted to the content test package (ContextWrapperTest).
+    // A permission that's granted to the content test package (ContextTest).
     public static final String CALLER_GRANTED_PERMISSION = "android.permission.USE_CREDENTIALS";
-    // A permission that's not granted to the content test package (ContextWrapperTest).
+    // A permission that's not granted to the content test package (ContextTest).
     public static final String CALLER_NOT_GRANTED_PERMISSION = "android.permission.HARDWARE_TEST";
 
     private static String TEST_NOT_ALLOWED_MESSAGE = "Test: you're not allowed to do this.";

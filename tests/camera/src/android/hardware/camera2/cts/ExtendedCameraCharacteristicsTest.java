@@ -105,6 +105,8 @@ public class ExtendedCameraCharacteristicsTest extends AndroidTestCase {
             CameraCharacteristics.REQUEST_AVAILABLE_CAPABILITIES_PRIVATE_REPROCESSING;
     private static final int CONSTRAINED_HIGH_SPEED =
             CameraCharacteristics.REQUEST_AVAILABLE_CAPABILITIES_CONSTRAINED_HIGH_SPEED_VIDEO;
+    private static final int MONOCHROME =
+            CameraCharacteristics.REQUEST_AVAILABLE_CAPABILITIES_MONOCHROME;
     private static final int HIGH_SPEED_FPS_LOWER_MIN = 30;
     private static final int HIGH_SPEED_FPS_UPPER_MIN = 120;
 
@@ -380,7 +382,7 @@ public class ExtendedCameraCharacteristicsTest extends AndroidTestCase {
                 expectKeyAvailable(c, CameraCharacteristics.SCALER_AVAILABLE_MAX_DIGITAL_ZOOM               , OPT      ,   BC                   );
                 expectKeyAvailable(c, CameraCharacteristics.SCALER_STREAM_CONFIGURATION_MAP                 , OPT      ,   BC                   );
                 expectKeyAvailable(c, CameraCharacteristics.SCALER_CROPPING_TYPE                            , OPT      ,   BC                   );
-                expectKeyAvailable(c, CameraCharacteristics.SENSOR_BLACK_LEVEL_PATTERN                      , FULL     ,   MANUAL_SENSOR, RAW   );
+                expectKeyAvailable(c, CameraCharacteristics.SENSOR_BLACK_LEVEL_PATTERN                      , FULL     ,   RAW                  );
                 expectKeyAvailable(c, CameraCharacteristics.SENSOR_CALIBRATION_TRANSFORM1                   , OPT      ,   RAW                  );
                 expectKeyAvailable(c, CameraCharacteristics.SENSOR_COLOR_TRANSFORM1                         , OPT      ,   RAW                  );
                 expectKeyAvailable(c, CameraCharacteristics.SENSOR_FORWARD_MATRIX1                          , OPT      ,   RAW                  );
@@ -1454,6 +1456,39 @@ public class ExtendedCameraCharacteristicsTest extends AndroidTestCase {
                 }
             }
             counter++;
+        }
+    }
+
+    /**
+     * Check monochrome camera capability
+     */
+    public void testMonochromeCharacteristics() {
+        int counter = 0;
+
+        for (CameraCharacteristics c : mCharacteristics) {
+            Log.i(TAG, "testMonochromeCharacteristics: Testing camera ID " + mIds[counter]);
+
+            int[] capabilities = c.get(CameraCharacteristics.REQUEST_AVAILABLE_CAPABILITIES);
+            assertNotNull("android.request.availableCapabilities must never be null",
+                    capabilities);
+            boolean supportMonochrome = arrayContains(capabilities, MONOCHROME);
+
+            if (!supportMonochrome) {
+                continue;
+            }
+
+            assertTrue("Monochrome camera must have BACKWARD_COMPATIBLE capability",
+                    arrayContains(capabilities, BC));
+            assertTrue("Monochrome camera must not have RAW capability",
+                    !arrayContains(capabilities, RAW));
+            assertTrue("Monochrome camera must not have MANUAL_POST_PROCESSING capability",
+                    !arrayContains(capabilities, MANUAL_POSTPROC));
+
+            // Check that awbSupportedModes only contains AUTO
+            int[] awbAvailableModes = c.get(CameraCharacteristics.CONTROL_AWB_AVAILABLE_MODES);
+            assertTrue("availableAwbModes must not be null", awbAvailableModes != null);
+            assertTrue("availableAwbModes must contain only AUTO", awbAvailableModes.length == 1 &&
+                    awbAvailableModes[0] == CaptureRequest.CONTROL_AWB_MODE_AUTO);
         }
     }
 

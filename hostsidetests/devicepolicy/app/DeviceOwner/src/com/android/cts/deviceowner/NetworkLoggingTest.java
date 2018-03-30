@@ -135,7 +135,9 @@ public class NetworkLoggingTest extends BaseDeviceOwnerTest {
      * traffic, so that the batch of logs is created
      */
     public void testNetworkLoggingAndRetrieval() throws Exception {
-        mBatchesRequested = InstrumentationRegistry.getArguments().getInt(ARG_BATCH_COUNT, 1);
+        mBatchesRequested =
+                Integer.parseInt(
+                        InstrumentationRegistry.getArguments().getString(ARG_BATCH_COUNT, "1"));
         mBatchCountDown = new CountDownLatch(mBatchesRequested);
         // register a receiver that listens for DeviceAdminReceiver#onNetworkLogsAvailable()
         final IntentFilter filterNetworkLogsAvailable = new IntentFilter(
@@ -192,7 +194,8 @@ public class NetworkLoggingTest extends BaseDeviceOwnerTest {
     }
 
     private void verifyNetworkLogs(List<NetworkEvent> networkEvents, int eventsExpected) {
-        assertTrue(networkEvents.size() == FULL_LOG_BATCH_SIZE);
+        // allow a batch to be slightly smaller or larger.
+        assertTrue(Math.abs(eventsExpected - networkEvents.size()) <= 50);
         int ctsPackageNameCounter = 0;
         // allow a small down margin for verification, to avoid flakiness
         final int eventsExpectedWithMargin = eventsExpected - 50;

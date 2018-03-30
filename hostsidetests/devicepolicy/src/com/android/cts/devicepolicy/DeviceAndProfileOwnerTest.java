@@ -660,7 +660,7 @@ public abstract class DeviceAndProfileOwnerTest extends BaseDevicePolicyTest {
                 "testDisallowAutofill_allowed");
     }
 
-    public void testSetMeteredDataDisabled() throws Exception {
+    public void testSetMeteredDataDisabledPackages() throws Exception {
         if (!mHasFeature) {
             return;
         }
@@ -849,6 +849,13 @@ public abstract class DeviceAndProfileOwnerTest extends BaseDevicePolicyTest {
             return;
         }
         executeDeviceTestClass(".PasswordSufficientInitiallyTest");
+    }
+
+    public void testSetSystemSetting() throws Exception {
+        if (!mHasFeature) {
+            return;
+        }
+        executeDeviceTestClass(".SetSystemSettingTest");
     }
 
     protected void executeResetPasswordWithTokenTests(Boolean allowFailures) throws Exception {

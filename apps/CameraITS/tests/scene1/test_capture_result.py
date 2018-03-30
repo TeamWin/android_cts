@@ -108,7 +108,8 @@ def test_auto(cam, w_map, h_map, props):
     # Get 3A lock first, so the auto values in the capture result are
     # populated properly.
     rect = [[0,0,1,1,1]]
-    cam.do_3a(rect, rect, rect, do_af=False)
+    mono_camera = its.caps.mono_camera(props)
+    cam.do_3a(rect, rect, rect, do_af=False, mono_camera=mono_camera)
 
     cap = cam.do_capture(auto_req)
     cap_res = cap["metadata"]

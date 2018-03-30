@@ -15,7 +15,6 @@
  */
 package android.media.cts;
 
-import android.media.AudioAttributes;
 import android.media.AudioManager;
 import android.media.Rating;
 import android.media.VolumeProvider;
@@ -303,6 +302,7 @@ public class MediaControllerTest extends AndroidTestCase {
         }
     }
 
+    /*
     public void testPlaybackInfo() {
         final int playbackType = MediaController.PlaybackInfo.PLAYBACK_TYPE_LOCAL;
         final int volumeControl = VolumeProvider.VOLUME_CONTROL_ABSOLUTE;
@@ -319,6 +319,7 @@ public class MediaControllerTest extends AndroidTestCase {
         assertEquals(maxVolume, info.getMaxVolume());
         assertEquals(currentVolume, info.getCurrentVolume());
     }
+    */
 
     private class MediaSessionCallback extends MediaSession.Callback {
         private long mSeekPosition;

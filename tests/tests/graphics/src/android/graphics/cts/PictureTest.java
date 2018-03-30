@@ -28,7 +28,6 @@ import android.graphics.Paint;
 import android.graphics.Paint.Style;
 import android.graphics.Picture;
 import android.graphics.Rect;
-import android.graphics.Region.Op;
 import android.support.test.filters.SmallTest;
 import android.support.test.runner.AndroidJUnit4;
 
@@ -71,7 +70,7 @@ public class PictureTest {
     // Add an extra save with a transform and clip
     private void createImbalance(Canvas canvas) {
         canvas.save();
-        canvas.clipRect(mClipRect, Op.REPLACE);
+        canvas.clipRect(mClipRect);
         canvas.translate(1.0f, 1.0f);
         Paint paint = new Paint();
         paint.setColor(Color.GREEN);

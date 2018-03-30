@@ -36,8 +36,6 @@ public class MockPlayer extends MediaPlayerBase {
     public boolean mPauseCalled;
     public boolean mStopCalled;
     public boolean mPrepareCalled;
-    public boolean mFastForwardCalled;
-    public boolean mRewindCalled;
     public boolean mSeekToCalled;
     public long mSeekPosition;
     public long mCurrentPosition;
@@ -92,22 +90,6 @@ public class MockPlayer extends MediaPlayerBase {
     @Override
     public void prepare() {
         mPrepareCalled = true;
-        if (mCountDownLatch != null) {
-            mCountDownLatch.countDown();
-        }
-    }
-
-    @Override
-    public void fastForward() {
-        mFastForwardCalled = true;
-        if (mCountDownLatch != null) {
-            mCountDownLatch.countDown();
-        }
-    }
-
-    @Override
-    public void rewind() {
-        mRewindCalled = true;
         if (mCountDownLatch != null) {
             mCountDownLatch.countDown();
         }

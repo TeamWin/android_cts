@@ -21,13 +21,17 @@ import android.providers.settings.SettingsOperationProto;
 import android.providers.settings.SettingsServiceDumpProto;
 import android.providers.settings.UserSettingsProto;
 
+import com.android.ddmlib.Log.LogLevel;
+import com.android.tradefed.log.LogUtil.CLog;
 import com.google.protobuf.GeneratedMessage;
 
 import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.List;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 /**
  * Test to check that the settings service properly outputs its dump state.
@@ -53,9 +57,12 @@ public class SettingsIncidentTest extends ProtoDumpTestCase {
         UserSettingsProto userSettings = dump.getUserSettings(0);
         assertEquals(0, userSettings.getUserId());
 
+        CLog.logAndDisplay(LogLevel.INFO, "#*#*#*#*#*#*#*#*#*#*# SECURE #*#*#*#*#*#*#*#*#*#*#");
         verifySettings(userSettings.getSecureSettings());
+        CLog.logAndDisplay(LogLevel.INFO, "#*#*#*#*#*#*#*#*#*#*# SYSTEM #*#*#*#*#*#*#*#*#*#*#");
         verifySettings(userSettings.getSystemSettings());
 
+        CLog.logAndDisplay(LogLevel.INFO, "#*#*#*#*#*#*#*#*#*#*# GLOBAL #*#*#*#*#*#*#*#*#*#*#");
         verifySettings(dump.getGlobalSettings());
     }
 
@@ -71,15 +78,32 @@ public class SettingsIncidentTest extends ProtoDumpTestCase {
     }
 
     private static List<SettingProto> getSettingProtos(GeneratedMessage settingsProto) {
-        return Arrays.stream(settingsProto.getClass().getDeclaredMethods())
+        CLog.d("Checking out class: " + settingsProto.getClass());
+
+        Stream<SettingProto> settings = Arrays.stream(settingsProto.getClass().getDeclaredMethods())
                 .filter((method) ->
                         method.getName().startsWith("get")
                                 && !method.getName().endsWith("OrBuilder")
                                 && method.getParameterCount() == 0
                                 && !Modifier.isStatic(method.getModifiers())
                                 && method.getReturnType() == SettingProto.class)
-                .map((method) -> (SettingProto) invoke(method, settingsProto))
-                .collect(Collectors.toList());
+                .map((method) -> (SettingProto) invoke(method, settingsProto));
+
+        // Get fields in the submessages.
+        Stream<SettingProto> subSettings = Arrays.stream(settingsProto.getClass().getDeclaredMethods())
+                .filter((method) ->
+                        method.getName().startsWith("get")
+                                && !method.getName().endsWith("OrBuilder")
+                                && method.getParameterCount() == 0
+                                && !Modifier.isStatic(method.getModifiers())
+                                && method.getReturnType() != SettingProto.class
+                                && GeneratedMessage.class.isAssignableFrom(method.getReturnType())
+                                && method.getReturnType() != settingsProto.getClass())
+                .map((method) -> getSettingProtos((GeneratedMessage) invoke(method, settingsProto)))
+                // getSettingsProtos returns List<>, so flatten all of them into one.
+                .flatMap(Collection::stream);
+
+        return Stream.concat(settings, subSettings).collect(Collectors.toList());
     }
 
     private static <T> T invoke(Method method, Object instance, Object... args) {
@@ -108,6 +132,7 @@ public class SettingsIncidentTest extends ProtoDumpTestCase {
     private static void verifySettings(List<SettingProto> settings) throws Exception {
         assertFalse(settings.isEmpty());
 
+        CLog.d("Field count: " + settings.size());
         for (SettingProto setting : settings) {
             try {
                 final String id = setting.getId();

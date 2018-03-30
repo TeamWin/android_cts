@@ -1289,9 +1289,9 @@ public class ClientTest {
     }
 
     private static void grantInstantAppForegroundServicePermission() throws IOException {
-        SystemUtil.runShellCommand(InstrumentationRegistry.getInstrumentation(),
-                "pm grant " + InstrumentationRegistry.getContext().getPackageName()
-                        + " " + Manifest.permission.INSTANT_APP_FOREGROUND_SERVICE);
+        InstrumentationRegistry.getInstrumentation().getUiAutomation().grantRuntimePermission(
+                InstrumentationRegistry.getContext().getPackageName(),
+                android.Manifest.permission.INSTANT_APP_FOREGROUND_SERVICE);
     }
 
     private static Intent makeIntent(String action, String category, String mimeType) {

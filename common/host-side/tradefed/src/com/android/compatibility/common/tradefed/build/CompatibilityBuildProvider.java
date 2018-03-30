@@ -245,6 +245,8 @@ public class CompatibilityBuildProvider implements IDeviceBuildProvider, IInvoca
                 info.setProperties(
                         BuildInfoProperties.DO_NOT_LINK_TESTS_DIR,
                         BuildInfoProperties.DO_NOT_COPY_ON_SHARDING);
+            } else {
+                info.setProperties(BuildInfoProperties.DO_NOT_COPY_ON_SHARDING);
             }
             File testDir = new File(rootDir, String.format("android-%s/testcases/",
                     getSuiteInfoName().toLowerCase()));

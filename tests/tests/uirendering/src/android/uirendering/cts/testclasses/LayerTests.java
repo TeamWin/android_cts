@@ -18,7 +18,6 @@ package android.uirendering.cts.testclasses;
 
 import static org.junit.Assert.assertEquals;
 
-import android.animation.ObjectAnimator;
 import android.animation.ValueAnimator;
 import android.graphics.Canvas;
 import android.graphics.Color;
@@ -26,11 +25,9 @@ import android.graphics.ColorMatrix;
 import android.graphics.ColorMatrixColorFilter;
 import android.graphics.Matrix;
 import android.graphics.Paint;
-import android.graphics.Point;
 import android.graphics.PorterDuff;
 import android.graphics.PorterDuffXfermode;
 import android.graphics.Rect;
-import android.graphics.Region.Op;
 import android.support.annotation.ColorInt;
 import android.support.test.filters.LargeTest;
 import android.support.test.filters.MediumTest;
@@ -39,7 +36,6 @@ import android.uirendering.cts.R;
 import android.uirendering.cts.bitmapverifiers.ColorCountVerifier;
 import android.uirendering.cts.bitmapverifiers.ColorVerifier;
 import android.uirendering.cts.bitmapverifiers.RectVerifier;
-import android.uirendering.cts.bitmapverifiers.SamplePointVerifier;
 import android.uirendering.cts.testinfrastructure.ActivityTestBase;
 import android.uirendering.cts.testinfrastructure.ViewInitializer;
 import android.view.Gravity;
@@ -190,25 +186,30 @@ public class LayerTests extends ActivityTestBase {
     @Test
     public void testLayerClear() {
         ViewInitializer initializer = new ViewInitializer() {
-            ObjectAnimator mAnimator;
+            ValueAnimator mAnimator;
             @Override
             public void initializeView(View view) {
                 FrameLayout root = (FrameLayout) view.findViewById(R.id.frame_layout);
                 root.setAlpha(0.5f);
 
-                View child = new View(view.getContext());
+                final View child = new View(view.getContext());
                 child.setBackgroundColor(Color.BLUE);
                 child.setTranslationX(10);
-                child.setTranslationY(10);
                 child.setLayoutParams(
                         new FrameLayout.LayoutParams(50, 50));
                 child.setLayerType(View.LAYER_TYPE_HARDWARE, null);
                 root.addView(child);
 
-                mAnimator = ObjectAnimator.ofInt(child, "translationY", 0, 20);
+                mAnimator = ValueAnimator.ofInt(0, 20);
                 mAnimator.setRepeatMode(ValueAnimator.REVERSE);
                 mAnimator.setRepeatCount(ValueAnimator.INFINITE);
                 mAnimator.setDuration(200);
+                mAnimator.addUpdateListener(new ValueAnimator.AnimatorUpdateListener() {
+                    @Override
+                    public void onAnimationUpdate(ValueAnimator animation) {
+                        child.setTranslationY((Integer) mAnimator.getAnimatedValue());
+                    }
+                });
                 mAnimator.start();
             }
             @Override
@@ -312,7 +313,7 @@ public class LayerTests extends ActivityTestBase {
     }
 
     @Test
-    public void testSaveLayerClippedWithColorFilter() {
+    public void testSaveLayerWithColorFilter() {
         // verify that renderer can draw nested clipped layers with chained color filters
         createTest()
             .addCanvasClient((canvas, width, height) -> {
@@ -330,8 +331,8 @@ public class LayerTests extends ActivityTestBase {
                 secondLayerPaint.setColorFilter(redToBlueFilter);
                 // The color filters are applied starting first with the inner layer and then the
                 // outer layer.
-                canvas.saveLayer(40, 5, 80, 70, firstLayerPaint, Canvas.CLIP_TO_LAYER_SAVE_FLAG);
-                canvas.saveLayer(5, 40, 70, 80, secondLayerPaint, Canvas.CLIP_TO_LAYER_SAVE_FLAG);
+                canvas.saveLayer(40, 5, 80, 70, firstLayerPaint);
+                canvas.saveLayer(5, 40, 70, 80, secondLayerPaint);
                 canvas.drawRect(10, 10, 70, 70, redPaint);
                 canvas.restore();
                 canvas.restore();
@@ -340,61 +341,14 @@ public class LayerTests extends ActivityTestBase {
     }
 
     @Test
-    public void testSaveLayerUnclippedWithColorFilter() {
-        // verify that SW can draw nested unclipped layers with chained color filters
-        createTest()
-            .addCanvasClient((canvas, width, height) -> {
-                Paint redPaint = new Paint();
-                redPaint.setColor(0xffff0000);
-                Paint firstLayerPaint = new Paint();
-                float[] blueToGreenMatrix = new float[20];
-                blueToGreenMatrix[7] = blueToGreenMatrix[18] = 1.0f;
-                ColorMatrixColorFilter blueToGreenFilter =
-                    new ColorMatrixColorFilter(blueToGreenMatrix);
-                firstLayerPaint.setColorFilter(blueToGreenFilter);
-                Paint secondLayerPaint = new Paint();
-                float[] redToBlueMatrix = new float[20];
-                redToBlueMatrix[10] = redToBlueMatrix[18] = 1.0f;
-                ColorMatrixColorFilter redToBlueFilter =
-                    new ColorMatrixColorFilter(redToBlueMatrix);
-                secondLayerPaint.setColorFilter(redToBlueFilter);
-                canvas.saveLayer(40, 5, 80, 70, firstLayerPaint, 0);
-                canvas.saveLayer(5, 40, 70, 80, secondLayerPaint, 0);
-                canvas.drawRect(10, 10, 70, 70, redPaint);
-                canvas.restore();
-                canvas.restore();
-            })
-            .runWithVerifier(new SamplePointVerifier(
-                new Point[] {
-                    // just outside of rect
-                    new Point(9, 9), new Point(70, 10), new Point(10, 70), new Point(70, 70),
-                    // red rect
-                    new Point(10, 10), new Point(39, 39),
-                    // black rect
-                    new Point(40, 10), new Point(69, 39),
-                    // blue rect
-                    new Point(10, 40), new Point(39, 69),
-                    // green rect
-                    new Point(40, 40), new Point(69, 69),
-                },
-                new int[] {
-                    Color.WHITE, Color.WHITE, Color.WHITE, Color.WHITE,
-                    Color.RED, Color.RED,
-                    Color.BLACK, Color.BLACK,
-                    Color.BLUE, Color.BLUE,
-                    Color.GREEN, Color.GREEN,
-                }));
-    }
-
-    @Test
-    public void testSaveLayerClippedWithAlpha() {
+    public void testSaveLayerWithAlpha() {
         // verify that renderer can draw nested clipped layers with different alpha
         createTest() // picture mode is disable due to bug:34871089
             .addCanvasClient((canvas, width, height) -> {
                 Paint redPaint = new Paint();
                 redPaint.setColor(0xffff0000);
-                canvas.saveLayerAlpha(40, 5, 80, 70, 0x7f, Canvas.CLIP_TO_LAYER_SAVE_FLAG);
-                canvas.saveLayerAlpha(5, 40, 70, 80, 0x3f, Canvas.CLIP_TO_LAYER_SAVE_FLAG);
+                canvas.saveLayerAlpha(40, 5, 80, 70, 0x7f);
+                canvas.saveLayerAlpha(5, 40, 70, 80, 0x3f);
                 canvas.drawRect(10, 10, 70, 70, redPaint);
                 canvas.restore();
                 canvas.restore();
@@ -403,42 +357,7 @@ public class LayerTests extends ActivityTestBase {
     }
 
     @Test
-    public void testSaveLayerUnclippedWithAlpha() {
-        // verify that renderer can draw nested unclipped layers with different alpha
-        createTest() // picture mode is disable due to bug:34871089
-            .addCanvasClient((canvas, width, height) -> {
-                Paint redPaint = new Paint();
-                redPaint.setColor(0xffff0000);
-                canvas.saveLayerAlpha(40, 5, 80, 70, 0x7f, 0);
-                canvas.saveLayerAlpha(5, 40, 70, 80, 0x3f, 0);
-                canvas.drawRect(10, 10, 70, 70, redPaint);
-                canvas.restore();
-                canvas.restore();
-            })
-            .runWithVerifier(new SamplePointVerifier(
-                new Point[]{
-                    // just outside of rect
-                    new Point(9, 9), new Point(70, 10), new Point(10, 70), new Point(70, 70),
-                    // red rect outside both layers
-                    new Point(10, 10), new Point(39, 39),
-                    // pink rect overlapping one of the layers
-                    new Point(40, 10), new Point(69, 39),
-                    // pink rect overlapping one of the layers
-                    new Point(10, 40), new Point(39, 69),
-                    // pink rect overlapping both layers
-                    new Point(40, 40), new Point(69, 69),
-                },
-                new int[]{
-                    Color.WHITE, Color.WHITE, Color.WHITE, Color.WHITE,
-                    Color.RED, Color.RED,
-                    0xffff8080, 0xffff8080,
-                    0xffffC0C0, 0xffffC0C0,
-                    0xffffE0E0, 0xffffE0E0,
-                }));
-    }
-
-    @Test
-    public void testSaveLayerUnclipped_restoreBehavior() {
+    public void testSaveLayerRestoreBehavior() {
         createTest()
                 .addCanvasClient((canvas, width, height) -> {
                     //set identity matrix
@@ -446,40 +365,10 @@ public class LayerTests extends ActivityTestBase {
                     canvas.setMatrix(identity);
                     final Paint p = new Paint();
 
-                    canvas.saveLayer(0, 0, width, height, p, 0);
+                    canvas.saveLayer(0, 0, width, height, p);
 
                     //change matrix and clip to something different
-                    canvas.clipRect(0, 0, width >> 1, height >> 1, Op.INTERSECT);
-                    Matrix scaledMatrix = new Matrix();
-                    scaledMatrix.setScale(4, 5);
-                    canvas.setMatrix(scaledMatrix);
-                    assertEquals(scaledMatrix, canvas.getMatrix());
-
-                    canvas.drawColor(Color.BLUE);
-                    canvas.restore();
-
-                    //check if identity matrix is restored
-                    assertEquals(identity, canvas.getMatrix());
-
-                    //should draw to the entire canvas, because clip has been removed
-                    canvas.drawColor(Color.RED);
-                })
-                .runWithVerifier(new ColorVerifier(Color.RED));
-    }
-
-    @Test
-    public void testSaveLayerClipped_restoreBehavior() {
-        createTest()
-                .addCanvasClient((canvas, width, height) -> {
-                    //set identity matrix
-                    Matrix identity = new Matrix();
-                    canvas.setMatrix(identity);
-                    final Paint p = new Paint();
-
-                    canvas.saveLayer(0, 0, width, height, p, Canvas.CLIP_TO_LAYER_SAVE_FLAG);
-
-                    //change matrix and clip to something different
-                    canvas.clipRect(0, 0, width >> 1, height >> 1, Op.INTERSECT);
+                    canvas.clipRect(0, 0, width >> 1, height >> 1);
                     Matrix scaledMatrix = new Matrix();
                     scaledMatrix.setScale(4, 5);
                     canvas.setMatrix(scaledMatrix);

@@ -79,14 +79,14 @@ public class MeteredDataRestrictionTest extends BaseDeviceAdminTest {
         resetMeteredNetwork();
     }
 
-    public void testSetMeteredDataDisabled() {
+    public void testSetMeteredDataDisabledPackages() {
         final List<String> restrictedPkgs = new ArrayList<>();
         restrictedPkgs.add(METERED_DATA_APP_PKG);
-        final List<String> excludedPkgs = mDevicePolicyManager.setMeteredDataDisabled(
+        final List<String> excludedPkgs = mDevicePolicyManager.setMeteredDataDisabledPackages(
                 ADMIN_RECEIVER_COMPONENT, restrictedPkgs);
         assertTrue("Packages not restricted: " + excludedPkgs, excludedPkgs.isEmpty());
 
-        List<String> actualRestrictedPkgs = mDevicePolicyManager.getMeteredDataDisabled(
+        List<String> actualRestrictedPkgs = mDevicePolicyManager.getMeteredDataDisabledPackages(
                 ADMIN_RECEIVER_COMPONENT);
         assertEquals("Actual restricted pkgs: " + actualRestrictedPkgs,
                 1, actualRestrictedPkgs.size());
@@ -95,8 +95,8 @@ public class MeteredDataRestrictionTest extends BaseDeviceAdminTest {
         verifyAppNetworkState(true);
 
         restrictedPkgs.clear();
-        mDevicePolicyManager.setMeteredDataDisabled(ADMIN_RECEIVER_COMPONENT, restrictedPkgs);
-        actualRestrictedPkgs = mDevicePolicyManager.getMeteredDataDisabled(
+        mDevicePolicyManager.setMeteredDataDisabledPackages(ADMIN_RECEIVER_COMPONENT, restrictedPkgs);
+        actualRestrictedPkgs = mDevicePolicyManager.getMeteredDataDisabledPackages(
                 ADMIN_RECEIVER_COMPONENT);
         assertTrue("Actual restricted pkgs: " + actualRestrictedPkgs,
                 actualRestrictedPkgs.isEmpty());
