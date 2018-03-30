@@ -40,7 +40,7 @@ public class SeccompHostJUnit4DeviceTest extends BaseHostJUnit4Test {
     private static final String TEST_APP = "CtsSeccompDeviceApp.apk";
 
     private static final String TEST_CTS_SYSCALL_BLOCKED = "testCTSSyscallBlocked";
-    private static final String TEST_CTS_SWAP_ON_OFF_BLOCKED = "testCTSSwapOnOffBlocked";
+    private static final String TEST_CTS_SYSCALL_ALLOWED = "testCTSSyscallAllowed";
 
     @Before
     public void setUp() throws Exception {
@@ -53,8 +53,8 @@ public class SeccompHostJUnit4DeviceTest extends BaseHostJUnit4Test {
     }
 
     @Test
-    public void testCTSSwapOnOffBlocked() throws Exception {
-        Assert.assertTrue(runDeviceTests(TEST_PKG, TEST_CLASS, TEST_CTS_SWAP_ON_OFF_BLOCKED));
+    public void testCTSSyscallAllowed() throws Exception {
+        Assert.assertTrue(runDeviceTests(TEST_PKG, TEST_CLASS, TEST_CTS_SYSCALL_ALLOWED));
     }
 
     @After
