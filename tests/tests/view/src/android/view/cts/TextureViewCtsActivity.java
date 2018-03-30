@@ -22,6 +22,7 @@ import static android.opengl.GLES20.glClearColor;
 
 import android.app.Activity;
 import android.graphics.Color;
+import android.graphics.Matrix;
 import android.graphics.SurfaceTexture;
 import android.opengl.GLUtils;
 import android.os.Bundle;
@@ -54,6 +55,8 @@ public class TextureViewCtsActivity extends Activity implements SurfaceTextureLi
     private CountDownLatch mEnterAnimationFence = new CountDownLatch(1);
 
     private SurfaceTexture mSurface;
+    private int mSurfaceWidth;
+    private int mSurfaceHeight;
     private int mSurfaceUpdatedCount;
 
     static final int EGL_CONTEXT_CLIENT_VERSION = 0x3098;
@@ -88,6 +91,16 @@ public class TextureViewCtsActivity extends Activity implements SurfaceTextureLi
                 LayoutParams.MATCH_PARENT, LayoutParams.MATCH_PARENT);
 
         setContentView(content);
+    }
+
+    @Override
+    protected void onDestroy() {
+        super.onDestroy();
+        try {
+            runOnGLThread(this::doFinishGL);
+        } catch (Throwable t) {
+            throw new RuntimeException(t);
+        }
     }
 
     @Override
@@ -136,6 +149,10 @@ public class TextureViewCtsActivity extends Activity implements SurfaceTextureLi
         }
     }
 
+    public TextureView getTextureView() {
+        return mTextureView;
+    }
+
     public void waitForSurface() throws InterruptedException {
         synchronized (mLock) {
             while (mSurface == null) {
@@ -162,9 +179,34 @@ public class TextureViewCtsActivity extends Activity implements SurfaceTextureLi
         });
     }
 
-    public void finishGL() throws Throwable {
-        if (mEglSurface == null) return;
-        runOnGLThread(() -> doFinishGL());
+    interface DrawFrame {
+        void drawFrame(int width, int height);
+    }
+
+    public void drawFrame(Matrix transform, DrawFrame callback) throws Throwable {
+        CountDownLatch fence = new CountDownLatch(1);
+        runOnUiThread(() -> {
+            mTextureView.setTransform(transform);
+            fence.countDown();
+        });
+        waitForEnterAnimationComplete();
+        waitForSurface();
+        initGl();
+        fence.await();
+        int surfaceUpdateCount = mSurfaceUpdatedCount;
+        runOnGLThread(() -> {
+            callback.drawFrame(mSurfaceWidth, mSurfaceHeight);
+            if (!mEgl.eglSwapBuffers(mEglDisplay, mEglSurface)) {
+                throw new RuntimeException("Cannot swap buffers");
+            }
+        });
+        waitForSurfaceUpdateCount(surfaceUpdateCount + 1);
+    }
+
+    private static final Matrix IDENTITY = new Matrix();
+
+    public void drawFrame(DrawFrame callback) throws Throwable {
+        drawFrame(IDENTITY, callback);
     }
 
     public int waitForSurfaceUpdateCount(int updateCount) throws InterruptedException {
@@ -181,17 +223,25 @@ public class TextureViewCtsActivity extends Activity implements SurfaceTextureLi
     }
 
     private void doFinishGL() {
-        mEgl.eglDestroyContext(mEglDisplay, mEglContext);
-        mEglContext = null;
-        mEgl.eglDestroySurface(mEglDisplay, mEglSurface);
-        mEglSurface = null;
-        mEgl.eglTerminate(mEglDisplay);
+        if (mEglSurface != null) {
+            mEgl.eglDestroySurface(mEglDisplay, mEglSurface);
+            mEglSurface = null;
+        }
+        if (mEglContext != null) {
+            mEgl.eglDestroyContext(mEglDisplay, mEglContext);
+            mEglContext = null;
+        }
+        if (mEglDisplay != null) {
+            mEgl.eglTerminate(mEglDisplay);
+        }
     }
 
     @Override
     public void onSurfaceTextureAvailable(SurfaceTexture surface, int width, int height) {
         synchronized (mLock) {
             mSurface = surface;
+            mSurfaceWidth = width;
+            mSurfaceHeight = height;
             mLock.notifyAll();
         }
     }
