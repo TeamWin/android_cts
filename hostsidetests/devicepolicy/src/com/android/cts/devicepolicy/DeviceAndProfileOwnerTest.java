@@ -809,13 +809,6 @@ public abstract class DeviceAndProfileOwnerTest extends BaseDevicePolicyTest {
 
     }
 
-    public void testPasswordBlacklist() throws Exception {
-        if (!mHasFeature) {
-            return;
-        }
-        executeDeviceTestClass(".PasswordBlacklistTest");
-    }
-
     public void testRequiredStrongAuthTimeout() throws Exception {
         if (!mHasFeature) {
             return;
