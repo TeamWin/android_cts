@@ -21,11 +21,19 @@ import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
+import static org.mockito.Matchers.anyInt;
+import static org.mockito.Mockito.any;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
 
+import android.content.Context;
 import android.graphics.Bitmap;
 import android.graphics.Canvas;
+import android.graphics.Paint;
+import android.graphics.Paint.FontMetricsInt;
 import android.graphics.Typeface;
 import android.os.LocaleList;
+import android.support.test.InstrumentationRegistry;
 import android.support.test.filters.SmallTest;
 import android.support.test.filters.Suppress;
 import android.support.test.runner.AndroidJUnit4;
@@ -44,11 +52,14 @@ import android.text.TextPaint;
 import android.text.TextUtils;
 import android.text.TextUtils.TruncateAt;
 import android.text.method.cts.EditorState;
+import android.text.style.ReplacementSpan;
 import android.text.style.StyleSpan;
+import android.text.style.TextAppearanceSpan;
 
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
+import org.mockito.ArgumentCaptor;
 
 import java.text.Normalizer;
 import java.util.ArrayList;
@@ -1477,5 +1488,52 @@ public class StaticLayoutTest {
                 }
             }
         }
+    }
+
+
+    @Test
+    public void testReplacementFontMetricsTest() {
+        Context context = InstrumentationRegistry.getInstrumentation().getTargetContext();
+
+        Typeface tf = new Typeface.Builder(context.getAssets(), "fonts/samplefont.ttf").build();
+        assertNotNull(tf);
+        TextPaint paint = new TextPaint();
+        paint.setTypeface(tf);
+
+        ReplacementSpan firstReplacement = mock(ReplacementSpan.class);
+        ArgumentCaptor<FontMetricsInt> fm1Captor = ArgumentCaptor.forClass(FontMetricsInt.class);
+        when(firstReplacement.getSize(
+            any(Paint.class), any(CharSequence.class), anyInt(), anyInt(),
+            fm1Captor.capture())).thenReturn(0);
+        TextAppearanceSpan firstStyleSpan = new TextAppearanceSpan(
+                null /* family */, Typeface.NORMAL /* style */, 100 /* text size, 1em = 100px */,
+                null /* text color */, null /* link color */);
+
+        ReplacementSpan secondReplacement = mock(ReplacementSpan.class);
+        ArgumentCaptor<FontMetricsInt> fm2Captor = ArgumentCaptor.forClass(FontMetricsInt.class);
+        when(secondReplacement.getSize(
+            any(Paint.class), any(CharSequence.class), any(Integer.class), any(Integer.class),
+            fm2Captor.capture())).thenReturn(0);
+        TextAppearanceSpan secondStyleSpan = new TextAppearanceSpan(
+                null /* family */, Typeface.NORMAL /* style */, 200 /* text size, 1em = 200px */,
+                null /* text color */, null /* link color */);
+
+        SpannableStringBuilder ssb = new SpannableStringBuilder("Hello, World\nHello, Android");
+        ssb.setSpan(firstStyleSpan, 0, 13, Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
+        ssb.setSpan(firstReplacement, 0, 13, Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
+        ssb.setSpan(secondStyleSpan, 13, 27, Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
+        ssb.setSpan(secondReplacement, 13, 27, Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
+
+        StaticLayout.Builder.obtain(ssb, 0, ssb.length(), paint, Integer.MAX_VALUE).build();
+
+        FontMetricsInt firstMetrics = fm1Captor.getValue();
+        FontMetricsInt secondMetrics = fm2Captor.getValue();
+
+        // The samplefont.ttf has 0.8em ascent and 0.2em descent.
+        assertEquals(-100, firstMetrics.ascent);
+        assertEquals(20, firstMetrics.descent);
+
+        assertEquals(-200, secondMetrics.ascent);
+        assertEquals(40, secondMetrics.descent);
     }
 }
