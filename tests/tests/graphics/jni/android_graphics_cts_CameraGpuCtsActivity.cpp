@@ -20,9 +20,7 @@
 #include <jni.h>
 #include <unistd.h>
 
-#include <deque>
 #include <memory>
-#include <mutex>
 #include <vector>
 
 #include <android/log.h>
@@ -36,8 +34,8 @@
 #include <GLES/gl.h>
 #include <GLES/glext.h>
 #include <GLES2/gl2.h>
-#include <media/NdkImage.h>
-#include <media/NdkImageReader.h>
+
+#include "ImageReaderTestHelpers.h"
 
 //#define ALOGV(...) __android_log_print(ANDROID_LOG_VERBOSE, LOG_TAG, __VA_ARGS__)
 //#define ALOGD(...) __android_log_print(ANDROID_LOG_DEBUG, LOG_TAG, __VA_ARGS__)
@@ -286,129 +284,6 @@ class CameraHelper {
 
     bool mIsCameraReady{false};
     const char* mCameraId{nullptr};
-};
-
-class ImageReaderHelper {
-  public:
-    using ImagePtr = std::unique_ptr<AImage, decltype(&AImage_delete)>;
-
-    ImageReaderHelper(int32_t width, int32_t height, int32_t format, uint64_t usage,
-                      int32_t maxImages)
-        : mWidth(width), mHeight(height), mFormat(format), mUsage(usage), mMaxImages(maxImages) {}
-
-    ~ImageReaderHelper() {
-        mAcquiredImage.reset();
-        if (mImgReaderAnw) {
-            AImageReader_delete(mImgReader);
-            // No need to call ANativeWindow_release on imageReaderAnw
-        }
-    }
-
-    int initImageReader() {
-        if (mImgReader != nullptr || mImgReaderAnw != nullptr) {
-            ALOGE("Cannot re-initalize image reader, mImgReader=%p, mImgReaderAnw=%p", mImgReader,
-                  mImgReaderAnw);
-            return -1;
-        }
-
-        int ret =
-            AImageReader_newWithUsage(mWidth, mHeight, mFormat, mUsage, mMaxImages, &mImgReader);
-        if (ret != AMEDIA_OK || mImgReader == nullptr) {
-            ALOGE("Failed to create new AImageReader, ret=%d, mImgReader=%p", ret, mImgReader);
-            return -1;
-        }
-
-        ret = AImageReader_setImageListener(mImgReader, &mReaderAvailableCb);
-        if (ret != AMEDIA_OK) {
-            ALOGE("Failed to set image available listener, ret=%d.", ret);
-            return ret;
-        }
-
-        ret = AImageReader_getWindow(mImgReader, &mImgReaderAnw);
-        if (ret != AMEDIA_OK || mImgReaderAnw == nullptr) {
-            ALOGE("Failed to get ANativeWindow from AImageReader, ret=%d, mImgReaderAnw=%p.", ret,
-                  mImgReaderAnw);
-            return -1;
-        }
-
-        return 0;
-    }
-
-    ANativeWindow* getNativeWindow() { return mImgReaderAnw; }
-
-    int getBufferFromCurrentImage(AHardwareBuffer** outBuffer) {
-        std::lock_guard<std::mutex> lock(mMutex);
-
-        int ret = 0;
-        uint8_t* data;
-        int data_size;
-        if (mAvailableImages > 0) {
-            AImage* outImage = nullptr;
-
-            mAvailableImages -= 1;
-
-            ret = AImageReader_acquireNextImage(mImgReader, &outImage);
-            if (ret != AMEDIA_OK || outImage == nullptr) {
-                // When the BufferQueue is in async mode, it is still possible that
-                // AImageReader_acquireNextImage returns nothing after onFrameAvailable.
-                ALOGW("Failed to acquire image, ret=%d, outIamge=%p.", ret, outImage);
-            } else {
-                // Any exisitng in mAcquiredImage will be deleted and released automatically.
-                mAcquiredImage.reset(outImage);
-            }
-            // Expected getPlaneData to fail for AIMAGE_FORMAT_PRIV, if not then
-            // return error
-            ret = AImage_getPlaneData(outImage, 0, &data, &data_size);
-            if (ret != AMEDIA_IMGREADER_CANNOT_LOCK_IMAGE)
-              return -EINVAL;
-        }
-
-        if (mAcquiredImage == nullptr) {
-            return -EAGAIN;
-        }
-
-        // Note that AImage_getHardwareBuffer is not acquiring additional reference to the buffer,
-        // so we can return it here any times we want without worrying about releasing.
-        AHardwareBuffer* buffer = nullptr;
-        ret = AImage_getHardwareBuffer(mAcquiredImage.get(), &buffer);
-        if (ret != AMEDIA_OK || buffer == nullptr) {
-            ALOGE("Faild to get hardware buffer, ret=%d, outBuffer=%p.", ret, buffer);
-            return -ENOMEM;
-        }
-
-        *outBuffer = buffer;
-        return 0;
-    }
-
-    void handleImageAvailable() {
-        std::lock_guard<std::mutex> lock(mMutex);
-
-        mAvailableImages += 1;
-    }
-
-    static void onImageAvailable(void* obj, AImageReader*) {
-        ImageReaderHelper* thiz = reinterpret_cast<ImageReaderHelper*>(obj);
-        thiz->handleImageAvailable();
-    }
-
-  private:
-    int32_t mWidth;
-    int32_t mHeight;
-    int32_t mFormat;
-    uint64_t mUsage;
-    uint32_t mMaxImages;
-
-    std::mutex mMutex;
-    // Number of images that's avaiable for acquire.
-    size_t mAvailableImages{0};
-    // Although AImageReader supports acquiring multiple images at a time, we don't really need it
-    // in this test. We only acquire one image that a time.
-    ImagePtr mAcquiredImage{nullptr, AImage_delete};
-
-    AImageReader* mImgReader{nullptr};
-    ANativeWindow* mImgReaderAnw{nullptr};
-
-    AImageReader_ImageListener mReaderAvailableCb{this, onImageAvailable};
 };
 
 class CameraFrameRenderer {
