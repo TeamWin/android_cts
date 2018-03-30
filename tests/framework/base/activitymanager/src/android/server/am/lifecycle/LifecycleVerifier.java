@@ -4,6 +4,7 @@ import static android.server.am.StateLogger.log;
 import static android.server.am.lifecycle.LifecycleLog.ActivityCallback.ON_CREATE;
 import static android.server.am.lifecycle.LifecycleLog.ActivityCallback.ON_DESTROY;
 import static android.server.am.lifecycle.LifecycleLog.ActivityCallback.ON_PAUSE;
+import static android.server.am.lifecycle.LifecycleLog.ActivityCallback.ON_POST_CREATE;
 import static android.server.am.lifecycle.LifecycleLog.ActivityCallback.ON_RESTART;
 import static android.server.am.lifecycle.LifecycleLog.ActivityCallback.ON_RESUME;
 import static android.server.am.lifecycle.LifecycleLog.ActivityCallback.ON_START;
@@ -23,14 +24,15 @@ import java.util.List;
 class LifecycleVerifier {
 
     static void assertLaunchSequence(Class<? extends Activity> activityClass,
-            LifecycleLog lifecycleLog) {
+            LifecycleLog lifecycleLog, boolean includeCallbacks) {
         final List<ActivityCallback> observedTransitions =
                 lifecycleLog.getActivityLog(activityClass);
         log("Observed sequence: " + observedTransitions);
         final String errorMessage = errorDuringTransition(activityClass, "launch");
 
-        final List<ActivityCallback> expectedTransitions =
-                Arrays.asList(PRE_ON_CREATE, ON_CREATE, ON_START, ON_RESUME);
+        final List<ActivityCallback> expectedTransitions = includeCallbacks
+                ? Arrays.asList(PRE_ON_CREATE, ON_CREATE, ON_START, ON_POST_CREATE, ON_RESUME)
+                : Arrays.asList(PRE_ON_CREATE, ON_CREATE, ON_START, ON_RESUME);
         assertEquals(errorMessage, expectedTransitions, observedTransitions);
     }
 
