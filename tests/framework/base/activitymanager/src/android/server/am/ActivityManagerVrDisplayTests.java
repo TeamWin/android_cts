@@ -43,23 +43,34 @@ public class ActivityManagerVrDisplayTests extends ActivityManagerDisplayTestBas
     private static final int VR_VIRTUAL_DISPLAY_HEIGHT = 900;
     private static final int VR_VIRTUAL_DISPLAY_DPI = 320;
 
+    private boolean mVrHeadset;
+
     @Before
     @Override
     public void setUp() throws Exception {
         super.setUp();
 
         assumeTrue(supportsVrMode());
+        mVrHeadset = isUiModeLockedToVrHeadset();
     }
 
-    private static class VrModeSession implements AutoCloseable {
+    /**
+     * VrModeSession is used to enable or disable persistent vr mode and the vr virtual display. For
+     * standalone vr devices, VrModeSession has no effect, because the device is already in
+     * persistent vr mode whenever it's on, and turning off persistent vr mode on a standalone vr
+     * device puts the device in a bad state.
+     */
+     private class VrModeSession implements AutoCloseable {
 
         void enablePersistentVrMode() throws Exception {
+            if (mVrHeadset) { return; }
             executeShellCommand("setprop vr_virtualdisplay true");
             executeShellCommand("vr set-persistent-vr-mode-enabled true");
         }
 
         @Override
         public void close() throws Exception {
+            if (mVrHeadset) { return; }
             executeShellCommand("vr set-persistent-vr-mode-enabled false");
             executeShellCommand("setprop vr_virtualdisplay false");
         }
@@ -162,6 +173,12 @@ public class ActivityManagerVrDisplayTests extends ActivityManagerDisplayTestBas
     @Test
     public void testActivityLaunchPostVr() throws Exception {
         assumeTrue(supportsMultiDisplay());
+
+        if (mVrHeadset) {
+            // This test doesn't apply to a standalone vr device, since vr is always enabled, and
+            // there is no "post vr" behavior to verify.
+            return;
+        }
 
         try (final VrModeSession vrModeSession = new VrModeSession()) {
             // Put the device in persistent vr mode.
