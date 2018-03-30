@@ -610,6 +610,8 @@ public class ItsService extends Service implements SensorEventListener {
                     doGetProps();
                 } else if ("startSensorEvents".equals(cmdObj.getString("cmdName"))) {
                     doStartSensorEvents();
+                } else if ("checkSensorExistence".equals(cmdObj.getString("cmdName"))) {
+                    doCheckSensorExistence();
                 } else if ("getSensorEvents".equals(cmdObj.getString("cmdName"))) {
                     doGetSensorEvents();
                 } else if ("do3A".equals(cmdObj.getString("cmdName"))) {
@@ -811,6 +813,18 @@ public class ItsService extends Service implements SensorEventListener {
             mEventsEnabled = true;
         }
         mSocketRunnableObj.sendResponse("sensorEventsStarted", "");
+    }
+
+    private void doCheckSensorExistence() throws ItsException {
+        try {
+            JSONObject obj = new JSONObject();
+            obj.put("accel", mAccelSensor != null);
+            obj.put("mag", mMagSensor != null);
+            obj.put("gyro", mGyroSensor != null);
+            mSocketRunnableObj.sendResponse("sensorExistence", null, obj, null);
+        } catch (org.json.JSONException e) {
+            throw new ItsException("JSON error: ", e);
+        }
     }
 
     private void doGetSensorEvents() throws ItsException {
