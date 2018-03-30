@@ -33,6 +33,7 @@ LOCAL_SRC_FILES := \
 	CameraTestHelpers.cpp \
 	ImageReaderTestHelpers.cpp \
 	MediaTestHelpers.cpp \
+	NativeTestHelpers.cpp \
 	VulkanTestHelpers.cpp
 
 LOCAL_CFLAGS += -std=c++14 -Wall -Werror -DGL_GLEXT_PROTOTYPES -DEGL_EGLEXT_PROTOTYPES

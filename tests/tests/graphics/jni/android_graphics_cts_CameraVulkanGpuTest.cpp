@@ -20,14 +20,8 @@
 
 #include "CameraTestHelpers.h"
 #include "ImageReaderTestHelpers.h"
+#include "NativeTestHelpers.h"
 #include "VulkanTestHelpers.h"
-
-// Copied from tests/sensor/jni/nativeTestHelper.h
-#define ASSERT(condition, format, args...)                                     \
-  if (!(condition)) {                                                          \
-    fail(env, format, ##args);                                                 \
-    return;                                                                    \
-  }
 
 namespace {
 
@@ -38,22 +32,6 @@ static constexpr uint32_t kTestImageFormat = AIMAGE_FORMAT_PRIVATE;
 static constexpr uint64_t kTestImageUsage =
     AHARDWAREBUFFER_USAGE_GPU_SAMPLED_IMAGE;
 static constexpr uint32_t kTestImageCount = 3;
-
-// Raises a java exception.
-void fail(JNIEnv *env, const char *format, ...) {
-  va_list args;
-
-  va_start(args, format);
-  char *msg;
-  vasprintf(&msg, format, args);
-  va_end(args);
-
-  jclass exClass;
-  const char *className = "java/lang/AssertionError";
-  exClass = env->FindClass(className);
-  env->ThrowNew(exClass, msg);
-  free(msg);
-}
 
 // Checks if a vector has more than 10 unique values, in which case we consider
 // it noisy.

@@ -21,14 +21,8 @@
 
 #include "ImageReaderTestHelpers.h"
 #include "MediaTestHelpers.h"
+#include "NativeTestHelpers.h"
 #include "VulkanTestHelpers.h"
-
-// Copied from tests/sensor/jni/nativeTestHelper.h
-#define ASSERT(condition, format, args...)                                     \
-  if (!(condition)) {                                                          \
-    fail(env, format, ##args);                                                 \
-    return;                                                                    \
-  }
 
 namespace {
 
@@ -39,23 +33,8 @@ static constexpr uint64_t kTestImageUsage =
     AHARDWAREBUFFER_USAGE_GPU_SAMPLED_IMAGE;
 static constexpr uint32_t kTestImageCount = 3;
 
-// Raises a java exception.
-void fail(JNIEnv *env, const char *format, ...) {
-  va_list args;
-
-  va_start(args, format);
-  char *msg;
-  vasprintf(&msg, format, args);
-  va_end(args);
-
-  jclass exClass;
-  const char *className = "java/lang/AssertionError";
-  exClass = env->FindClass(className);
-  env->ThrowNew(exClass, msg);
-  free(msg);
-}
-
-// Confirms that the two values match, allowing for an error of tolerance per channel.
+// Confirms that the two values match, allowing for an error of tolerance per
+// channel.
 bool fuzzyMatch(uint32_t value1, uint32_t value2, int32_t tolerance) {
   for (size_t i = 0; i < 4; ++i) {
     size_t shift = 8 * i;
@@ -120,7 +99,7 @@ static void loadMediaAndVerifyFrameImport(JNIEnv *env, jclass, jobject assetMgr,
     ret = imageReader.getBufferFromCurrentImage(&buffer);
   }
 
-  // Import the AHardwareBuffer into Vulkan. 
+  // Import the AHardwareBuffer into Vulkan.
   VkAHardwareBufferImage vkImage(&init);
   ASSERT(vkImage.init(buffer), "Could not init VkAHardwareBufferImage.");
 
