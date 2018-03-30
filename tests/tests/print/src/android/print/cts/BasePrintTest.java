@@ -169,6 +169,13 @@ public abstract class BasePrintTest extends InstrumentationTestCase {
 
         mUiDevice = UiDevice.getInstance(getInstrumentation());
 
+        // Prevent rotation
+        mUiDevice.freezeRotation();
+        while (!mUiDevice.isNaturalOrientation()) {
+            mUiDevice.setOrientationNatural();
+            mUiDevice.waitForIdle();
+        }
+
         // Make sure we start with a clean slate.
         Log.d(LOG_TAG, "clearPrintSpoolerData()");
         clearPrintSpoolerData();
@@ -240,6 +247,9 @@ public abstract class BasePrintTest extends InstrumentationTestCase {
         // Make sure the spooler is cleaned, this also un-approves all services
         Log.d(LOG_TAG, "clearPrintSpoolerData()");
         clearPrintSpoolerData();
+
+        // Allow rotation
+        mUiDevice.unfreezeRotation();
 
         super.tearDown();
         Log.d(LOG_TAG, "tearDown() done");

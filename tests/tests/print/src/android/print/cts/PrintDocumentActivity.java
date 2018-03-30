@@ -17,6 +17,7 @@
 package android.print.cts;
 
 import android.app.Activity;
+import android.content.res.Configuration;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.WindowManager;
@@ -35,6 +36,13 @@ public class PrintDocumentActivity extends Activity {
                 | WindowManager.LayoutParams.FLAG_DISMISS_KEYGUARD);
 
         BasePrintTest.onActivityCreateCalled(this);
+    }
+
+    @Override
+    public void onConfigurationChanged(Configuration newConfig) {
+        super.onConfigurationChanged(newConfig);
+
+        Log.d(LOG_TAG, "onConfigurationChanged(" + newConfig + ")");
     }
 
     @Override
