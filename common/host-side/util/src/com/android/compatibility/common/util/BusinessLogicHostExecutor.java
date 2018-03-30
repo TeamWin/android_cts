@@ -16,8 +16,10 @@
 
 package com.android.compatibility.common.util;
 
+import com.android.ddmlib.Log;
 import com.android.tradefed.build.IBuildInfo;
 import com.android.tradefed.device.ITestDevice;
+import com.android.tradefed.log.LogUtil;
 
 import java.lang.reflect.Method;
 import java.util.Arrays;
@@ -44,6 +46,14 @@ public class BusinessLogicHostExecutor extends BusinessLogicExecutor {
     @Override
     protected Object getTestObject() {
         return mTestObj;
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public void logInfo(String format, Object... args) {
+        LogUtil.printLog(Log.LogLevel.INFO, LOG_TAG, String.format(format, args));
     }
 
     /**
