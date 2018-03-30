@@ -51,6 +51,14 @@ public class TextClassificationManagerTest {
     private static final String TEXT = "An email address is test@example.com. A phone number"
             + " might be +12122537077. Somebody lives at 123 Main Street, Mountain View, CA,"
             + " and there's good stuff at https://www.android.com :)";
+    private static final TextSelection.Request TEXT_SELECTION_REQUEST =
+            new TextSelection.Request.Builder(TEXT, START, END)
+                    .setDefaultLocales(LOCALES)
+                    .build();
+    private static final TextClassification.Request TEXT_CLASSIFICATION_REQUEST =
+            new TextClassification.Request.Builder(TEXT, START, END)
+                    .setDefaultLocales(LOCALES)
+                    .build();
 
     private TextClassificationManager mManager;
     private TextClassifier mClassifier;
@@ -72,14 +80,12 @@ public class TextClassificationManagerTest {
 
     @Test
     public void testSmartSelection() {
-        assertValidResult(mClassifier.suggestSelection(TEXT, START, END,
-                new TextSelection.Options().setDefaultLocales(LOCALES)));
+        assertValidResult(mClassifier.suggestSelection(TEXT_SELECTION_REQUEST));
     }
 
     @Test
     public void testClassifyText() {
-        assertValidResult(mClassifier.classifyText(TEXT, START, END,
-                new TextClassification.Options().setDefaultLocales(LOCALES)));
+        assertValidResult(mClassifier.classifyText(TEXT_CLASSIFICATION_REQUEST));
     }
 
     @Test
@@ -87,16 +93,14 @@ public class TextClassificationManagerTest {
         mManager.setTextClassifier(TextClassifier.NO_OP);
         mClassifier = mManager.getTextClassifier();
 
-        final TextSelection selection = mClassifier.suggestSelection(TEXT, START, END,
-                new TextSelection.Options().setDefaultLocales(LOCALES));
+        final TextSelection selection = mClassifier.suggestSelection(TEXT_SELECTION_REQUEST);
         assertValidResult(selection);
         assertEquals(START, selection.getSelectionStartIndex());
         assertEquals(END, selection.getSelectionEndIndex());
         assertEquals(0, selection.getEntityCount());
 
         final TextClassification classification =
-                mClassifier.classifyText(TEXT, START, END,
-                        new TextClassification.Options().setDefaultLocales(LOCALES));
+                mClassifier.classifyText(TEXT_CLASSIFICATION_REQUEST);
         assertValidResult(classification);
         assertNull(classification.getText());
         assertEquals(0, classification.getEntityCount());
@@ -109,12 +113,12 @@ public class TextClassificationManagerTest {
 
     @Test
     public void testGenerateLinks() {
-        assertValidResult(mClassifier.generateLinks(TEXT, null));
+        assertValidResult(mClassifier.generateLinks(new TextLinks.Request.Builder(TEXT).build()));
     }
 
     @Test
     public void testResolveEntityListModifications_only_hints() {
-        TextClassifier.EntityConfig entityConfig = TextClassifier.EntityConfig.create(
+        TextClassifier.EntityConfig entityConfig = TextClassifier.EntityConfig.createWithHints(
                 Arrays.asList("some_hint"));
         assertEquals(1, entityConfig.getHints().size());
         assertTrue(entityConfig.getHints().contains("some_hint"));
@@ -138,7 +142,7 @@ public class TextClassificationManagerTest {
     @Test
     public void testResolveEntityListModifications_explicit() {
         TextClassifier.EntityConfig entityConfig =
-                TextClassifier.EntityConfig.createWithEntityList(Arrays.asList("a", "b"));
+                TextClassifier.EntityConfig.createWithExplicitEntityList(Arrays.asList("a", "b"));
         assertEquals(Collections.EMPTY_LIST, entityConfig.getHints());
         assertEquals(Arrays.asList("a", "b"),
                 entityConfig.resolveEntityListModifications(Arrays.asList("w", "x")));
@@ -156,7 +160,6 @@ public class TextClassificationManagerTest {
             assertTrue(confidenceScore >= 0);
             assertTrue(confidenceScore <= 1);
         }
-        assertNotNull(selection.getSignature());
     }
 
     private static void assertValidResult(TextClassification classification) {
@@ -170,7 +173,6 @@ public class TextClassificationManagerTest {
             assertTrue(confidenceScore <= 1);
         }
         assertNotNull(classification.getActions());
-        assertNotNull(classification.getSignature());
     }
 
     private static void assertValidResult(TextLinks links) {

@@ -191,8 +191,7 @@ public class TextViewTest {
     private static final int SMARTSELECT_END = 40;
     private static final TextClassifier FAKE_TEXT_CLASSIFIER = new TextClassifier() {
         @Override
-        public TextSelection suggestSelection(
-                CharSequence text, int start, int end, TextSelection.Options options) {
+        public TextSelection suggestSelection(TextSelection.Request request) {
             return new TextSelection.Builder(SMARTSELECT_START, SMARTSELECT_END).build();
         }
     };
