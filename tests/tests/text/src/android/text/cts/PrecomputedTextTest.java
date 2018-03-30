@@ -25,7 +25,11 @@ import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
+import android.content.Context;
 import android.graphics.Color;
+import android.graphics.Rect;
+import android.graphics.Typeface;
+import android.support.test.InstrumentationRegistry;
 import android.support.test.filters.SmallTest;
 import android.support.test.runner.AndroidJUnit4;
 import android.text.Layout;
@@ -259,14 +263,6 @@ public class PrecomputedTextTest {
     }
 
     @Test
-    public void testGetText() {
-        final Params param = new Params.Builder(PAINT).build();
-        assertEquals(STRING.toString(), PrecomputedText.create(STRING, param).getText().toString());
-        assertEquals(SPANNED.toString(),
-                PrecomputedText.create(SPANNED, param).getText().toString());
-    }
-
-    @Test
     public void testGetParagraphCount() {
         final Params param = new Params.Builder(PAINT).build();
         final PrecomputedText pm = PrecomputedText.create(STRING, param);
@@ -280,6 +276,203 @@ public class PrecomputedTextTest {
         assertEquals(7, pm1.getParagraphEnd(0));
         assertEquals(7, pm1.getParagraphStart(1));
         assertEquals(pm1.length(), pm1.getParagraphEnd(1));
+    }
+
+    @Test
+    public void testGetWidth() {
+        final Context context = InstrumentationRegistry.getInstrumentation().getTargetContext();
+
+        // The test font has following coverage and width.
+        // U+0020: 10em
+        // U+002E (.): 10em
+        // U+0043 (C): 100em
+        // U+0049 (I): 1em
+        // U+004C (L): 50em
+        // U+0056 (V): 5em
+        // U+0058 (X): 10em
+        // U+005F (_): 0em
+        // U+FFFD (invalid surrogate will be replaced to this): 7em
+        // U+10331 (\uD800\uDF31): 10em
+        final Typeface tf = new Typeface.Builder(context.getAssets(),
+                "fonts/StaticLayoutLineBreakingTestFont.ttf").build();
+        final TextPaint paint = new TextPaint();
+        paint.setTypeface(tf);
+        paint.setTextSize(1);  // Make 1em = 1px
+
+        final Params param = new Params.Builder(paint).build();
+        assertEquals(0.0f, PrecomputedText.create("", param).getWidth(0, 0), 0.0f);
+
+        assertEquals(0.0f, PrecomputedText.create("I", param).getWidth(0, 0), 0.0f);
+        assertEquals(0.0f, PrecomputedText.create("I", param).getWidth(1, 1), 0.0f);
+        assertEquals(1.0f, PrecomputedText.create("I", param).getWidth(0, 1), 0.0f);
+
+        assertEquals(0.0f, PrecomputedText.create("V", param).getWidth(0, 0), 0.0f);
+        assertEquals(0.0f, PrecomputedText.create("V", param).getWidth(1, 1), 0.0f);
+        assertEquals(5.0f, PrecomputedText.create("V", param).getWidth(0, 1), 0.0f);
+
+        assertEquals(0.0f, PrecomputedText.create("IV", param).getWidth(0, 0), 0.0f);
+        assertEquals(0.0f, PrecomputedText.create("IV", param).getWidth(1, 1), 0.0f);
+        assertEquals(0.0f, PrecomputedText.create("IV", param).getWidth(2, 2), 0.0f);
+        assertEquals(1.0f, PrecomputedText.create("IV", param).getWidth(0, 1), 0.0f);
+        assertEquals(5.0f, PrecomputedText.create("IV", param).getWidth(1, 2), 0.0f);
+        assertEquals(6.0f, PrecomputedText.create("IV", param).getWidth(0, 2), 0.0f);
+
+        assertEquals(0.0f, PrecomputedText.create("I\nV", param).getWidth(0, 0), 0.0f);
+        assertEquals(0.0f, PrecomputedText.create("I\nV", param).getWidth(1, 1), 0.0f);
+        assertEquals(0.0f, PrecomputedText.create("I\nV", param).getWidth(2, 2), 0.0f);
+        assertEquals(0.0f, PrecomputedText.create("I\nV", param).getWidth(3, 3), 0.0f);
+        assertEquals(1.0f, PrecomputedText.create("I\nV", param).getWidth(0, 1), 0.0f);
+        assertEquals(1.0f, PrecomputedText.create("I\nV", param).getWidth(0, 2), 0.0f);
+        assertEquals(5.0f, PrecomputedText.create("I\nV", param).getWidth(2, 3), 0.0f);
+    }
+
+    @Test(expected = IllegalArgumentException.class)
+    public void testGetWidth_negative_start_offset() {
+        final Params param = new Params.Builder(PAINT).build();
+        PrecomputedText.create("a", param).getWidth(-1, 0);
+    }
+
+    @Test(expected = IllegalArgumentException.class)
+    public void testGetWidth_negative_end_offset() {
+        final Params param = new Params.Builder(PAINT).build();
+        PrecomputedText.create("a", param).getWidth(0, -1);
+    }
+
+    @Test(expected = IllegalArgumentException.class)
+    public void testGetWidth_index_out_of_bounds_start_offset() {
+        final Params param = new Params.Builder(PAINT).build();
+        PrecomputedText.create("a", param).getWidth(2, 2);
+    }
+
+    @Test(expected = IllegalArgumentException.class)
+    public void testGetWidth_index_out_of_bounds_end_offset() {
+        final Params param = new Params.Builder(PAINT).build();
+        PrecomputedText.create("a", param).getWidth(0, 2);
+    }
+
+    @Test(expected = IllegalArgumentException.class)
+    public void testGetWidth_reverse_offset() {
+        final Params param = new Params.Builder(PAINT).build();
+        PrecomputedText.create("a", param).getWidth(1, 0);
+    }
+
+    @Test(expected = IllegalArgumentException.class)
+    public void testGetWidth_across_paragraph_boundary() {
+        final Params param = new Params.Builder(PAINT).build();
+        PrecomputedText.create("a\nb", param).getWidth(0, 3);
+    }
+
+    @Test
+    public void testGetBounds() {
+        final Context context = InstrumentationRegistry.getInstrumentation().getTargetContext();
+
+        // The test font has following coverage and width.
+        // U+0020: 10em
+        // U+002E (.): 10em
+        // U+0043 (C): 100em
+        // U+0049 (I): 1em
+        // U+004C (L): 50em
+        // U+0056 (V): 5em
+        // U+0058 (X): 10em
+        // U+005F (_): 0em
+        // U+FFFD (invalid surrogate will be replaced to this): 7em
+        // U+10331 (\uD800\uDF31): 10em
+        final Typeface tf = new Typeface.Builder(context.getAssets(),
+                "fonts/StaticLayoutLineBreakingTestFont.ttf").build();
+        final TextPaint paint = new TextPaint();
+        paint.setTypeface(tf);
+        paint.setTextSize(1);  // Make 1em = 1px
+
+        final Params param = new Params.Builder(paint).build();
+        final Rect rect = new Rect();
+
+        rect.set(0, 0, 0, 0);
+        PrecomputedText.create("", param).getBounds(0, 0, rect);
+        assertEquals(new Rect(0, 0, 0, 0), rect);
+
+        rect.set(0, 0, 0, 0);
+        PrecomputedText.create("I", param).getBounds(0, 1, rect);
+        assertEquals(new Rect(0, -1, 1, 0), rect);
+
+        rect.set(0, 0, 0, 0);
+        PrecomputedText.create("I", param).getBounds(1, 1, rect);
+        assertEquals(new Rect(0, 0, 0, 0), rect);
+
+        rect.set(0, 0, 0, 0);
+        PrecomputedText.create("IV", param).getBounds(0, 0, rect);
+        assertEquals(new Rect(0, 0, 0, 0), rect);
+
+        rect.set(0, 0, 0, 0);
+        PrecomputedText.create("IV", param).getBounds(0, 0, rect);
+        assertEquals(new Rect(0, 0, 0, 0), rect);
+
+        rect.set(0, 0, 0, 0);
+        PrecomputedText.create("IV", param).getBounds(1, 1, rect);
+        assertEquals(new Rect(0, 0, 0, 0), rect);
+
+        rect.set(0, 0, 0, 0);
+        PrecomputedText.create("IV", param).getBounds(2, 2, rect);
+        assertEquals(new Rect(0, 0, 0, 0), rect);
+
+        rect.set(0, 0, 0, 0);
+        PrecomputedText.create("IV", param).getBounds(0, 1, rect);
+        assertEquals(new Rect(0, -1, 1, 0), rect);
+
+        rect.set(0, 0, 0, 0);
+        PrecomputedText.create("IV", param).getBounds(1, 2, rect);
+        assertEquals(new Rect(0, -5, 5, 0), rect);
+
+        rect.set(0, 0, 0, 0);
+        PrecomputedText.create("IV", param).getBounds(0, 2, rect);
+        assertEquals(new Rect(0, -5, 6, 0), rect);
+    }
+
+    @Test(expected = IllegalArgumentException.class)
+    public void testGetBounds_negative_start_offset() {
+        final Rect rect = new Rect();
+        final Params param = new Params.Builder(PAINT).build();
+        PrecomputedText.create("a", param).getBounds(-1, 0, rect);
+    }
+
+    @Test(expected = IllegalArgumentException.class)
+    public void testGetBounds_negative_end_offset() {
+        final Rect rect = new Rect();
+        final Params param = new Params.Builder(PAINT).build();
+        PrecomputedText.create("a", param).getBounds(0, -1, rect);
+    }
+
+    @Test(expected = IllegalArgumentException.class)
+    public void testGetBounds_index_out_of_bounds_start_offset() {
+        final Rect rect = new Rect();
+        final Params param = new Params.Builder(PAINT).build();
+        PrecomputedText.create("a", param).getBounds(2, 2, rect);
+    }
+
+    @Test(expected = IllegalArgumentException.class)
+    public void testGetBounds_index_out_of_bounds_end_offset() {
+        final Rect rect = new Rect();
+        final Params param = new Params.Builder(PAINT).build();
+        PrecomputedText.create("a", param).getBounds(0, 2, rect);
+    }
+
+    @Test(expected = IllegalArgumentException.class)
+    public void testGetBounds_reverse_offset() {
+        final Rect rect = new Rect();
+        final Params param = new Params.Builder(PAINT).build();
+        PrecomputedText.create("a", param).getBounds(1, 0, rect);
+    }
+
+    @Test(expected = NullPointerException.class)
+    public void testGetBounds_null_rect() {
+        final Params param = new Params.Builder(PAINT).build();
+        PrecomputedText.create("a", param).getBounds(0, 1, null);
+    }
+
+    @Test(expected = IllegalArgumentException.class)
+    public void testGetBounds_across_paragraph_boundary() {
+        final Rect rect = new Rect();
+        final Params param = new Params.Builder(PAINT).build();
+        PrecomputedText.create("a\nb", param).getBounds(0, 3, rect);
     }
 
 }
