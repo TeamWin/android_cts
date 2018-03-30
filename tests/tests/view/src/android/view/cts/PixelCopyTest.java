@@ -729,7 +729,7 @@ public class PixelCopyTest {
         return bitmap.getPixel((int) (bitmap.getWidth() * xpos), (int) (bitmap.getHeight() * ypos));
     }
 
-    private void assertBitmapQuadColor(Bitmap bitmap, int topLeft, int topRight,
+    public static void assertBitmapQuadColor(Bitmap bitmap, int topLeft, int topRight,
                 int bottomLeft, int bottomRight) {
         // Just quickly sample 4 pixels in the various regions.
         assertEquals("Top left " + Integer.toHexString(topLeft) + ", actual= "
