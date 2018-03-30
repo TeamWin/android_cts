@@ -44,6 +44,7 @@ import android.graphics.drawable.Drawable;
 import android.graphics.drawable.NinePatchDrawable;
 import android.net.Uri;
 import android.support.test.InstrumentationRegistry;
+import android.support.test.filters.LargeTest;
 import android.support.test.runner.AndroidJUnit4;
 import android.support.v4.content.FileProvider;
 import android.util.DisplayMetrics;
@@ -199,26 +200,27 @@ public class ImageDecoderTest {
 
     private interface SourceCreator extends IntFunction<ImageDecoder.Source> {};
 
-    private SourceCreator mCreators[] = new SourceCreator[] {
-        resId -> ImageDecoder.createSource(getAsByteBufferWrap(resId)),
-        resId -> ImageDecoder.createSource(getAsDirectByteBuffer(resId)),
-        resId -> ImageDecoder.createSource(getAsReadOnlyByteBuffer(resId)),
-        resId -> ImageDecoder.createSource(getAsFile(resId)),
+    private SourceCreator[] mCreators = new SourceCreator[] {
+            resId -> ImageDecoder.createSource(getAsByteBufferWrap(resId)),
+            resId -> ImageDecoder.createSource(getAsDirectByteBuffer(resId)),
+            resId -> ImageDecoder.createSource(getAsReadOnlyByteBuffer(resId)),
+            resId -> ImageDecoder.createSource(getAsFile(resId)),
     };
 
     private interface UriCreator extends IntFunction<Uri> {};
 
-    @Test
-    public void testUris() {
-        UriCreator creators[] = new UriCreator[] {
+    private UriCreator[] mUriCreators = new UriCreator[] {
             resId -> getAsResourceUri(resId),
             resId -> getAsFileUri(resId),
             resId -> getAsContentUri(resId),
-        };
+    };
+
+    @Test
+    public void testUris() {
         for (Record record : RECORDS) {
             int resId = record.resId;
             String name = mRes.getResourceEntryName(resId);
-            for (UriCreator f : creators) {
+            for (UriCreator f : mUriCreators) {
                 ImageDecoder.Source src = null;
                 Uri uri = f.apply(resId);
                 String fullName = name + ": " + uri.toString();
@@ -417,13 +419,13 @@ public class ImageDecoderTest {
         ImageDecoder.Source src = mCreators[0].apply(resId);
         try {
             ImageDecoder.decodeBitmap(src, (decoder, info, s) -> {
-                assertFalse(decoder.getRequireUnpremultiplied());
+                assertFalse(decoder.isUnpremultipliedRequired());
 
-                decoder.setRequireUnpremultiplied(true);
-                assertTrue(decoder.getRequireUnpremultiplied());
+                decoder.setUnpremultipliedRequired(true);
+                assertTrue(decoder.isUnpremultipliedRequired());
 
-                decoder.setRequireUnpremultiplied(false);
-                assertFalse(decoder.getRequireUnpremultiplied());
+                decoder.setUnpremultipliedRequired(false);
+                assertFalse(decoder.isUnpremultipliedRequired());
             });
         } catch (IOException e) {
             fail("Failed " + getAsResourceUri(resId) + " with exception " + e);
@@ -451,7 +453,7 @@ public class ImageDecoderTest {
                     assertNotNull(src);
 
                     Bitmap unpremul = ImageDecoder.decodeBitmap(src,
-                            (decoder, info, s) -> decoder.setRequireUnpremultiplied(true));
+                            (decoder, info, s) -> decoder.setUnpremultipliedRequired(true));
                     assertNotNull(unpremul);
                     assertEquals(unpremul.hasAlpha(), hasAlpha[i]);
                     assertFalse(unpremul.isPremultiplied());
@@ -677,7 +679,7 @@ public class ImageDecoderTest {
         ImageDecoder.Source src = mCreators[0].apply(RECORDS[0].resId);
         try {
             ImageDecoder.decodeDrawable(src, (decoder, info, s) -> {
-                decoder.setRequireUnpremultiplied(true);
+                decoder.setUnpremultipliedRequired(true);
                 decoder.setPostProcessor((c) -> PixelFormat.UNKNOWN);
             });
         } catch (IOException e) {
@@ -1049,13 +1051,13 @@ public class ImageDecoderTest {
         ImageDecoder.Source src = mCreators[0].apply(resId);
         try {
             ImageDecoder.decodeDrawable(src, (decoder, info, s) -> {
-                assertFalse(decoder.getMutable());
+                assertFalse(decoder.isMutableRequired());
 
-                decoder.setMutable(true);
-                assertTrue(decoder.getMutable());
+                decoder.setMutableRequired(true);
+                assertTrue(decoder.isMutableRequired());
 
-                decoder.setMutable(false);
-                assertFalse(decoder.getMutable());
+                decoder.setMutableRequired(false);
+                assertFalse(decoder.isMutableRequired());
             });
         } catch (IOException e) {
             fail("Failed " + getAsResourceUri(resId) + " with exception " + e);
@@ -1074,7 +1076,7 @@ public class ImageDecoderTest {
             public void onHeaderDecoded(ImageDecoder decoder,
                                         ImageDecoder.ImageInfo info,
                                         ImageDecoder.Source src) {
-                decoder.setMutable(true);
+                decoder.setMutableRequired(true);
                 decoder.setAllocator(allocator);
                 if (postProcess) {
                     decoder.setPostProcessor((c) -> PixelFormat.UNKNOWN);
@@ -1109,7 +1111,7 @@ public class ImageDecoderTest {
         ImageDecoder.Source src = mCreators[0].apply(RECORDS[0].resId);
         try {
             ImageDecoder.decodeBitmap(src, (decoder, info, s) -> {
-                decoder.setMutable(true);
+                decoder.setMutableRequired(true);
                 decoder.setAllocator(ImageDecoder.ALLOCATOR_HARDWARE);
             });
         } catch (IOException e) {
@@ -1122,7 +1124,7 @@ public class ImageDecoderTest {
         ImageDecoder.Source src = mCreators[0].apply(RECORDS[0].resId);
         try {
             ImageDecoder.decodeDrawable(src, (decoder, info, s) -> {
-                decoder.setMutable(true);
+                decoder.setMutableRequired(true);
             });
         } catch (IOException e) {
             fail("Failed with exception " + e);
@@ -1257,7 +1259,7 @@ public class ImageDecoderTest {
             public void onHeaderDecoded(ImageDecoder decoder, ImageDecoder.ImageInfo info,
                                         ImageDecoder.Source src) {
                 decoder.setTargetSize(width, height);
-                decoder.setRequireUnpremultiplied(true);
+                decoder.setUnpremultipliedRequired(true);
             }
         };
         ResizeListener l = new ResizeListener();
@@ -1290,7 +1292,7 @@ public class ImageDecoderTest {
             ImageDecoder.decodeBitmap(src, (decoder, info, s) -> {
                 Size size = info.getSize();
                 decoder.setTargetSize(size.getWidth() * 2, size.getHeight() * 2);
-                decoder.setRequireUnpremultiplied(true);
+                decoder.setUnpremultipliedRequired(true);
             });
         } catch (IOException e) {
             fail("Failed with exception " + e);
@@ -1307,7 +1309,7 @@ public class ImageDecoderTest {
                 int width = size.getWidth() / 2 + 3;
                 int height = size.getHeight() / 2 + 3;
                 decoder.setTargetSize(width, height);
-                decoder.setRequireUnpremultiplied(true);
+                decoder.setUnpremultipliedRequired(true);
             });
         } catch (IOException e) {
             fail("Failed with exception " + e);
@@ -1456,7 +1458,7 @@ public class ImageDecoderTest {
         ImageDecoder.Source src = mCreators[0].apply(R.drawable.png_test);
         try {
             ImageDecoder.decodeDrawable(src, (decoder, info, s) ->
-                    decoder.setRequireUnpremultiplied(true));
+                    decoder.setUnpremultipliedRequired(true));
         } catch (IOException e) {
             fail("Failed with exception " + e);
         }
@@ -1531,13 +1533,13 @@ public class ImageDecoderTest {
 
     @Test
     public void testAlphaMaskNonGray() {
-        // It is safe to call setDecodeAsAlphaMask on a non-gray image.
+        // It is safe to call setDecodeAsAlphaMaskEnabled on a non-gray image.
         SourceCreator f = mCreators[0];
         ImageDecoder.Source src = f.apply(R.drawable.png_test);
         assertNotNull(src);
         try {
             Bitmap bm = ImageDecoder.decodeBitmap(src, (decoder, info, s) -> {
-                decoder.setDecodeAsAlphaMask(true);
+                decoder.setDecodeAsAlphaMaskEnabled(true);
                 decoder.setAllocator(ImageDecoder.ALLOCATOR_SOFTWARE);
             });
             assertNotNull(bm);
@@ -1555,7 +1557,7 @@ public class ImageDecoderTest {
         assertNotNull(src);
         try {
             ImageDecoder.decodeDrawable(src, (decoder, info, s) -> {
-                decoder.setDecodeAsAlphaMask(true);
+                decoder.setDecodeAsAlphaMaskEnabled(true);
                 decoder.setAllocator(ImageDecoder.ALLOCATOR_HARDWARE);
             });
         } catch (IOException e) {
@@ -1569,13 +1571,13 @@ public class ImageDecoderTest {
         ImageDecoder.Source src = mCreators[0].apply(resId);
         try {
             ImageDecoder.decodeDrawable(src, (decoder, info, s) -> {
-                assertFalse(decoder.getDecodeAsAlphaMask());
+                assertFalse(decoder.isDecodeAsAlphaMaskEnabled());
 
-                decoder.setDecodeAsAlphaMask(true);
-                assertTrue(decoder.getDecodeAsAlphaMask());
+                decoder.setDecodeAsAlphaMaskEnabled(true);
+                assertTrue(decoder.isDecodeAsAlphaMaskEnabled());
 
-                decoder.setDecodeAsAlphaMask(false);
-                assertFalse(decoder.getDecodeAsAlphaMask());
+                decoder.setDecodeAsAlphaMaskEnabled(false);
+                assertFalse(decoder.isDecodeAsAlphaMaskEnabled());
             });
         } catch (IOException e) {
             fail("Failed " + getAsResourceUri(resId) + " with exception " + e);
@@ -1591,7 +1593,7 @@ public class ImageDecoderTest {
             @Override
             public void onHeaderDecoded(ImageDecoder decoder, ImageDecoder.ImageInfo info,
                                         ImageDecoder.Source src) {
-                decoder.setDecodeAsAlphaMask(true);
+                decoder.setDecodeAsAlphaMaskEnabled(true);
                 Size size = info.getSize();
                 if (doScale) {
                     decoder.setTargetSize(size.getWidth() / 2,
@@ -2113,5 +2115,78 @@ public class ImageDecoderTest {
                 // This is expected.
             }
         }
+    }
+
+    private Bitmap drawToBitmap(Drawable dr) {
+        Bitmap bm = Bitmap.createBitmap(dr.getIntrinsicWidth(), dr.getIntrinsicHeight(),
+                Bitmap.Config.ARGB_8888);
+        Canvas canvas = new Canvas(bm);
+        dr.draw(canvas);
+        return bm;
+    }
+
+    private void testReuse(ImageDecoder.Source src, String name) {
+        Drawable first = null;
+        try {
+            first = ImageDecoder.decodeDrawable(src, (decoder, info, s) -> {
+                decoder.setAllocator(ImageDecoder.ALLOCATOR_SOFTWARE);
+            });
+        } catch (IOException e) {
+            fail("Failed on first decode of " + name + " using " + src + "!");
+        }
+
+        Drawable second = null;
+        try {
+            second = ImageDecoder.decodeDrawable(src, (decoder, info, s) -> {
+                decoder.setAllocator(ImageDecoder.ALLOCATOR_SOFTWARE);
+            });
+        } catch (IOException e) {
+            fail("Failed on second decode of " + name + " using " + src + "!");
+        }
+
+        assertEquals(first.getIntrinsicWidth(), second.getIntrinsicWidth());
+        assertEquals(first.getIntrinsicHeight(), second.getIntrinsicHeight());
+
+        Bitmap bm1 = drawToBitmap(first);
+        Bitmap bm2 = drawToBitmap(second);
+        BitmapUtils.compareBitmaps(bm1, bm2);
+    }
+
+    @Test
+    @LargeTest
+    public void testReuse() {
+        for (Record record : RECORDS) {
+            String name = getAsResourceUri(record.resId).toString();
+            for (SourceCreator f : mCreators) {
+                ImageDecoder.Source src = f.apply(record.resId);
+                testReuse(src, name);
+            }
+
+            {
+                ImageDecoder.Source src = ImageDecoder.createSource(mRes, record.resId);
+                testReuse(src, name);
+            }
+
+            for (UriCreator f : mUriCreators) {
+                Uri uri = f.apply(record.resId);
+                ImageDecoder.Source src = ImageDecoder.createSource(mContentResolver, uri);
+                testReuse(src, uri.toString());
+            }
+
+            {
+                ImageDecoder.Source src = ImageDecoder.createSource(getAsFile(record.resId));
+                testReuse(src, name);
+            }
+        }
+
+        AssetManager assets = mRes.getAssets();
+        for (AssetRecord record : ASSETS) {
+            ImageDecoder.Source src = ImageDecoder.createSource(assets, record.name);
+            testReuse(src, record.name);
+        }
+
+
+        ImageDecoder.Source src = mCreators[0].apply(R.drawable.animated);
+        testReuse(src, "animated.gif");
     }
 }
