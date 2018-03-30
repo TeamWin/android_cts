@@ -25,6 +25,7 @@ import com.android.tradefed.build.IBuildInfo;
 import com.android.tradefed.config.OptionSetter;
 import com.android.tradefed.device.ITestDevice;
 import com.android.tradefed.log.LogUtil.CLog;
+import com.android.tradefed.metrics.proto.MetricMeasurement.Metric;
 import com.android.tradefed.result.ITestInvocationListener;
 import com.android.tradefed.result.TestDescription;
 import com.android.tradefed.testtype.DeviceJUnit4ClassRunner.TestMetrics;
@@ -286,7 +287,7 @@ public class JarHostTestTest {
         OptionSetter setter = new OptionSetter(mTest);
         setter.setOptionValue("jar", "thisjardoesnotexistatall.jar");
         mListener.testRunStarted(EasyMock.anyObject(), EasyMock.eq(0));
-        mListener.testRunEnded(EasyMock.anyLong(), (Map<String, String>) EasyMock.anyObject());
+        mListener.testRunEnded(EasyMock.anyLong(), (HashMap<String, Metric>) EasyMock.anyObject());
         EasyMock.replay(mListener);
         try {
             mTest.run(mListener);
@@ -312,7 +313,7 @@ public class JarHostTestTest {
         Map<String, String> metrics = new HashMap<>();
         metrics.put("key", "value");
         mListener.testEnded(EasyMock.eq(tid), EasyMock.anyLong(), EasyMock.eq(metrics));
-        mListener.testRunEnded(EasyMock.anyLong(), (Map<String, String>) EasyMock.anyObject());
+        mListener.testRunEnded(EasyMock.anyLong(), (HashMap<String, Metric>) EasyMock.anyObject());
         EasyMock.replay(mListener);
         mTest.run(mListener);
         EasyMock.verify(mListener);
