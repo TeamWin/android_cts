@@ -56,6 +56,10 @@ public class EphemeralTest extends DeviceTestCase
     private static final String UNEXPOSED_APK = "CtsEphemeralTestsUnexposedApp.apk";
     private static final String UNEXPOSED_PKG = "com.android.cts.unexposedapp";
 
+    // an application that gets upgraded from 'instant' to 'full'
+    private static final String UPGRADED_APK = "CtsInstantUpgradeApp.apk";
+    private static final String UPGRADED_PKG = "com.android.cts.instantupgradeapp";
+
     private static final String TEST_CLASS = ".ClientTest";
     private static final String WEBVIEW_TEST_CLASS = ".WebViewTest";
 
@@ -284,6 +288,16 @@ public class EphemeralTest extends DeviceTestCase
         runDeviceTests(EPHEMERAL_1_PKG, TEST_CLASS, "testGetSearchableInfo");
     }
 
+    /** Test for upgrade from instant --> full */
+    public void testInstantAppUpgrade() throws Throwable {
+        installEphemeralApp(UPGRADED_APK);
+        runDeviceTests(UPGRADED_PKG, TEST_CLASS, "testInstantApplicationWritePreferences");
+        runDeviceTests(UPGRADED_PKG, TEST_CLASS, "testInstantApplicationWriteFile");
+        installFullApp(UPGRADED_APK);
+        runDeviceTests(UPGRADED_PKG, TEST_CLASS, "testFullApplicationReadPreferences");
+        runDeviceTests(UPGRADED_PKG, TEST_CLASS, "testFullApplicationReadFile");
+    }
+
     private static final HashMap<String, String> makeArgs(
             String action, String category, String mimeType) {
         if (action == null || action.length() == 0) {
@@ -359,6 +373,11 @@ public class EphemeralTest extends DeviceTestCase
                 "--ephemeral", "-i", installer));
     }
 
+    private void installFullApp(String apk) throws Exception {
+        CompatibilityBuildHelper buildHelper = new CompatibilityBuildHelper(mBuildInfo);
+        assertNull(getDevice().installPackage(buildHelper.getTestFile(apk), true, "--full"));
+    }
+
     private void installTestPackages() throws Exception {
         installApp(NORMAL_APK);
         installApp(UNEXPOSED_APK);
@@ -373,5 +392,6 @@ public class EphemeralTest extends DeviceTestCase
         getDevice().uninstallPackage(IMPLICIT_PKG);
         getDevice().uninstallPackage(EPHEMERAL_1_PKG);
         getDevice().uninstallPackage(EPHEMERAL_2_PKG);
+        getDevice().uninstallPackage(UPGRADED_PKG);
     }
 }
