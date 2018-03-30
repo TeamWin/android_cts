@@ -17,6 +17,7 @@
 package android.view.inputmethod.cts;
 
 import static android.view.WindowManager.LayoutParams.SOFT_INPUT_STATE_ALWAYS_VISIBLE;
+import static android.view.inputmethod.cts.util.TestUtils.runOnMainSync;
 import static android.widget.PopupWindow.INPUT_METHOD_NOT_NEEDED;
 
 import static com.android.cts.mockime.ImeEventStreamTestUtils.editorMatcher;
@@ -447,6 +448,34 @@ public class FocusHandlingTest extends EndToEndImeTestBase {
 
             TestUtils.waitOnMainUntil(
                     () -> TextUtils.equals(editText.getText(), "test commit"), TIMEOUT);
+        }
+    }
+
+    /**
+     * Test {@link EditText#setShowSoftInputOnFocus(boolean)}.
+     */
+    @Test
+    public void testSetShowInputOnFocus() throws Exception {
+        try (MockImeSession imeSession = MockImeSession.create(
+                InstrumentationRegistry.getContext(),
+                InstrumentationRegistry.getInstrumentation().getUiAutomation(),
+                new ImeSettings.Builder())) {
+            final ImeEventStream stream = imeSession.openEventStream();
+
+            final String marker = getTestMarker();
+            final EditText editText = launchTestActivity(marker);
+            runOnMainSync(() -> editText.setShowSoftInputOnFocus(false));
+
+            // Wait until "onStartInput" gets called for the EditText.
+            expectEvent(stream, editorMatcher("onStartInput", marker), TIMEOUT);
+
+            // Emulate tap event
+            CtsTouchUtils.emulateTapOnViewCenter(
+                    InstrumentationRegistry.getInstrumentation(), editText);
+
+            // "showSoftInput" must not happen when setShowSoftInputOnFocus(false) is called.
+            notExpectEvent(stream, event -> "showSoftInput".equals(event.getEventName()),
+                    NOT_EXPECT_TIMEOUT);
         }
     }
 }
