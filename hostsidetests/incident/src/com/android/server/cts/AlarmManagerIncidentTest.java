@@ -45,8 +45,9 @@ public class AlarmManagerIncidentTest extends ProtoDumpTestCase {
         // Times should be positive.
         assertTrue(0 < dump.getCurrentTime());
         assertTrue(0 < dump.getElapsedRealtime());
-        assertTrue(0 < dump.getLastTimeChangeClockTime());
-        assertTrue(0 < dump.getLastTimeChangeRealtime());
+        // Can be 0 if the time hasn't been changed yet.
+        assertTrue(0 <= dump.getLastTimeChangeClockTime());
+        assertTrue(0 <= dump.getLastTimeChangeRealtime());
 
         // ConstantsProto
         ConstantsProto settings = dump.getSettings();
