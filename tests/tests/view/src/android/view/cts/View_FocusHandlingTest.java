@@ -224,6 +224,19 @@ public class View_FocusHandlingTest {
         assertNull(v2.findFocus());
         assertNull(v3.findFocus());
         assertNull(v4.findFocus());
+
+        // test visibility with a nested focusable
+        ViewGroup vg = (ViewGroup) activity.findViewById(R.id.auto_test_area);
+        vg.setVisibility(View.INVISIBLE);
+        View sub = new View(activity);
+        vg.addView(sub, 10, 10);
+        sub.setFocusable(View.FOCUSABLE);
+        for (View v : new View[]{v1, v2, v3, v4}) {
+            v.setFocusable(false);
+        }
+        assertNull(vg.getRootView().findFocus());
+        vg.setVisibility(View.VISIBLE);
+        assertSame(sub, vg.getRootView().findFocus());
     }
 
     @UiThreadTest
