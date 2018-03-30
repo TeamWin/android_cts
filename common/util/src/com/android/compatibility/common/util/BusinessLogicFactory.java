@@ -27,11 +27,15 @@ import com.android.compatibility.common.util.BusinessLogic.BusinessLogicRulesLis
 
 import java.io.File;
 import java.io.IOException;
+import java.text.ParseException;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Scanner;
+import java.util.TimeZone;
 
 /**
  * Factory for creating a {@link BusinessLogic}
@@ -57,6 +61,10 @@ public class BusinessLogicFactory {
     // Name of the field in the response object that stores that the auth status of the request.
     private static final String AUTHENTICATION_STATUS = "authenticationStatus";
     public static final String CONDITIONAL_TESTS_ENABLED = "conditionalTestsEnabled";
+    // Name of the timestamp field
+    private static final String TIMESTAMP = "timestamp";
+    // Date and time pattern for raw timestamp string
+    private static final String TIMESTAMP_PATTERN = "yyyy-MM-dd'T'HH:mm:ss.SSS'Z'";
 
     /**
      * Create a BusinessLogic instance from a file of business logic data, formatted in JSON.
@@ -78,6 +86,9 @@ public class BusinessLogicFactory {
             if (root.has(CONDITIONAL_TESTS_ENABLED)){
                 boolean enabled = root.getBoolean(CONDITIONAL_TESTS_ENABLED);
                 bl.mConditionalTestsEnabled = enabled;
+            }
+            if (root.has(TIMESTAMP)) {
+                bl.mTimestamp = parseTimestamp(root.getString(TIMESTAMP));
             }
             try {
                 jsonRulesLists = root.getJSONArray(BUSINESS_LOGIC_RULES_LISTS);
@@ -194,6 +205,17 @@ public class BusinessLogicFactory {
             ruleActions.add(new BusinessLogicRuleAction(methodName, methodArgs));
         }
         return ruleActions;
+    }
+
+    /* Pare a timestamp string with format TIMESTAMP_PATTERN to a date object */
+    private static Date parseTimestamp(String timestamp) {
+        SimpleDateFormat format = new SimpleDateFormat(TIMESTAMP_PATTERN);
+        format.setTimeZone(TimeZone.getTimeZone("UTC"));
+        try {
+            return format.parse(timestamp);
+        } catch (ParseException e) {
+            return null;
+        }
     }
 
     /* Extract string from file */

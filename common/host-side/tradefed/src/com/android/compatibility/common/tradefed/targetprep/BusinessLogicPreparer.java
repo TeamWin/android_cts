@@ -50,6 +50,7 @@ import java.io.IOException;
 import java.net.URL;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.Date;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -65,6 +66,12 @@ public class BusinessLogicPreparer implements ITargetCleaner {
 
     /* String for creating files to store the business logic configuration on the host */
     private static final String FILE_LOCATION = "business-logic";
+    /* String for creating cached business logic configuration files */
+    private static final String BL_CACHE_FILE = "business-logic-cache";
+    /* Number of days for which cached business logic is valid */
+    private static final int BL_CACHE_DAYS = 5;
+    /* BL_CACHE_DAYS converted to millis */
+    private static final long BL_CACHE_MILLIS = BL_CACHE_DAYS * 1000 * 60 * 60 * 24L;
     /* Extension of business logic files */
     private static final String FILE_EXT = ".bl";
     /* Default amount of time to attempt connection to the business logic service, in seconds */
@@ -90,9 +97,9 @@ public class BusinessLogicPreparer implements ITargetCleaner {
     /* URI of api scope to use when retrieving business logic rules */
     private  String mApiScope;
 
-    @Option(name = "cleanup", description = "Whether to remove config files from the test " +
-            "target after test completion.")
-    private boolean mCleanup = true;
+    @Option(name = "cache-business-logic", description = "Whether to keep and use cached " +
+            "business logic files.")
+    private boolean mCache = false;
 
     @Option(name = "ignore-business-logic-failure", description = "Whether to proceed with the " +
             "suite invocation if retrieval of business logic fails.")
@@ -116,10 +123,13 @@ public class BusinessLogicPreparer implements ITargetCleaner {
     public void setUp(ITestDevice device, IBuildInfo buildInfo) throws TargetSetupError, BuildError,
             DeviceNotAvailableException {
         String requestString = buildRequestString(device, buildInfo);
-        // Retrieve business logic string from service
         String businessLogicString = null;
+        // use cached business logic string if options are set accordingly and cache is valid,
+        // otherwise proceed with remote download.
+        if (!mCache || (businessLogicString = readFromCache(mUrl)) == null) {
+            CLog.i("Attempting to connect to business logic service...");
+        }
         long start = System.currentTimeMillis();
-        CLog.i("Attempting to connect to business logic service...");
         while (businessLogicString == null
                 && System.currentTimeMillis() < (start + (mMaxConnectionTime * 1000))) {
             try {
@@ -140,6 +150,10 @@ public class BusinessLogicPreparer implements ITargetCleaner {
                         + "anyways (though tests depending on the remote configuration will fail).",
                         TestSuiteInfo.getInstance().getName()), device.getDeviceDescriptor());
             }
+        }
+
+        if (mCache) {
+            writeToCache(businessLogicString, mUrl);
         }
         // Push business logic string to host file
         try {
@@ -265,19 +279,77 @@ public class BusinessLogicPreparer implements ITargetCleaner {
     }
 
     /**
+     * Read the string from the business logic cache, handling the following cases with a null
+     * return value:
+     * - The cached file does not exist
+     * - The cached file cannot be read
+     * - The cached file is timestamped more than BL_CACHE_DAYS prior to now
+     * In the last two cases, the file is deleted so an up-to-date configuration may be cached anew
+     */
+    private static synchronized String readFromCache(String url) {
+        // url hashCode makes file unique, in case host runs multiple suites using business logic
+        String cachedString = null;
+        File cachedFile = getCachedFile(url);
+        if (!cachedFile.exists()) {
+            CLog.i("No cached business logic found");
+            return null;
+        }
+        try {
+            BusinessLogic cachedLogic = BusinessLogicFactory.createFromFile(cachedFile);
+            Date cachedDate = cachedLogic.getTimestamp();
+            if (System.currentTimeMillis() - cachedDate.getTime() < BL_CACHE_MILLIS) {
+                CLog.i("Using cached business logic");
+                return cachedString = FileUtil.readStringFromFile(cachedFile);
+            } else {
+                CLog.i("Cached business logic out-of-date, deleting cached file");
+                FileUtil.deleteFile(cachedFile);
+            }
+        } catch (IOException e) {
+            CLog.w("Failed to read cached business logic, deleting cached file");
+            FileUtil.deleteFile(cachedFile);
+        }
+        return null;
+    }
+
+    /**
+     * Write a string retrieved from the business logic service to the cache file, only if the
+     * file does not already exist. Synchronize this method to prevent concurrent writes in the
+     * sharding case.
+     * @param blString the string to cache
+     * @url the url containing which the name of the suite to which the business logic string
+     * refers. Useful for getting the correct cached file.
+     */
+    private static synchronized void writeToCache(String blString, String url) {
+        File cachedFile = getCachedFile(url);
+        if (!cachedFile.exists()) {
+            // don't overwrite existing file, whether from previous shard or previous invocation
+            try {
+                FileUtil.writeToFile(blString, cachedFile);
+            } catch (IOException e) {
+                throw new RuntimeException("Failed to write business logic to cache file", e);
+            }
+        }
+    }
+
+    /**
+     * Get the cached business logic file given the base url used to retrieve this logic.
+     */
+    private static File getCachedFile(String url) {
+        return new File(System.getProperty("java.io.tmpdir"), BL_CACHE_FILE + url.hashCode());
+    }
+
+    /**
      * {@inheritDoc}
      */
     @Override
     public void tearDown(ITestDevice device, IBuildInfo buildInfo, Throwable e)
             throws DeviceNotAvailableException {
-        // Clean up host file
-        if (mCleanup) {
-            if (mHostFilePushed != null) {
-                FileUtil.deleteFile(new File(mHostFilePushed));
-            }
-            if (mDeviceFilePushed != null && !(e instanceof DeviceNotAvailableException)) {
-                removeDeviceFile(device);
-            }
+        // Clean up existing host and device files unconditionally
+        if (mHostFilePushed != null) {
+            FileUtil.deleteFile(new File(mHostFilePushed));
+        }
+        if (mDeviceFilePushed != null && !(e instanceof DeviceNotAvailableException)) {
+            removeDeviceFile(device);
         }
     }
 
