@@ -389,7 +389,8 @@ public class CipherTest extends AndroidTestCase {
         }
     }
 
-    private boolean isDecryptValid(byte[] expectedPlaintext, byte[] ciphertext, Cipher cipher, AlgorithmParameters params, ImportedKey key) {
+    private boolean isDecryptValid(byte[] expectedPlaintext, byte[] ciphertext, Cipher cipher,
+            AlgorithmParameters params, ImportedKey key) {
         try {
             Key decryptionKey = key.getKeystoreBackedDecryptionKey();
             cipher.init(Cipher.DECRYPT_MODE, decryptionKey, params);
@@ -401,21 +402,29 @@ public class CipherTest extends AndroidTestCase {
         }
     }
 
+    @Presubmit
+    public void testKeyguardLockAndUnlock()
+            throws Exception {
+        try (DeviceLockSession dl = new DeviceLockSession()) {
+            KeyguardManager keyguardManager = (KeyguardManager)getContext()
+                    .getSystemService(Context.KEYGUARD_SERVICE);
+
+            dl.performDeviceLock();
+            assertTrue(keyguardManager.isDeviceLocked());
+
+            dl.performDeviceUnlock();
+            assertFalse(keyguardManager.isDeviceLocked());
+        }
+    }
+
     public void testEmptyPlaintextEncryptsAndDecryptsWhenUnlockedRequired()
             throws Exception {
         final boolean isUnlockedDeviceRequired = true;
         final boolean isUserAuthRequired = false;
 
         try (DeviceLockSession dl = new DeviceLockSession()) {
-            KeyguardManager keyguardManager = (KeyguardManager)getContext().getSystemService(Context.KEYGUARD_SERVICE);
-
-            // Verify device lock/unlock capabilities and leave the device in an unlocked state,
-            // which is required for the top of the loop
-            dl.performDeviceLock();
-            assertTrue(keyguardManager.isDeviceLocked());
-
-            dl.performDeviceUnlock();
-            assertFalse(keyguardManager.isDeviceLocked());
+            KeyguardManager keyguardManager = (KeyguardManager)getContext()
+                .getSystemService(Context.KEYGUARD_SERVICE);
 
             Provider provider = Security.getProvider(EXPECTED_PROVIDER_NAME);
             assertNotNull(provider);
@@ -459,9 +468,6 @@ public class CipherTest extends AndroidTestCase {
                         dl.performDeviceUnlock();
                         cipher = Cipher.getInstance(algorithm, provider);
                         assertTrue(isDecryptValid(expectedPlaintext, ciphertext, cipher, params, key));
-
-                        // We shouldn't get here if the keyguard is locked
-                        assertFalse(keyguardManager.isDeviceLocked());
                     } catch (Throwable e) {
                         throw new RuntimeException(
                               "Failed for " + algorithm + " with key " + key.getAlias(),
