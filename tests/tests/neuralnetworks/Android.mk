@@ -24,10 +24,11 @@ LOCAL_MODULE_STEM_32 := $(LOCAL_MODULE)32
 LOCAL_MODULE_STEM_64 := $(LOCAL_MODULE)64
 
 LOCAL_SRC_FILES := \
-     src/TestValidation.cpp \
+     src/TestGenerated.cpp \
      src/TestMemory.cpp \
      src/TestTrivialModel.cpp \
-     src/TestGenerated.cpp
+     src/TestValidateOperations.cpp \
+     src/TestValidation.cpp
 
 LOCAL_C_INCLUDES := frameworks/ml/nn/runtime/include/
 LOCAL_C_INCLUDES += frameworks/ml/nn/runtime/test/
