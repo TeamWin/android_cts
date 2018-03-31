@@ -14,6 +14,9 @@
  * limitations under the License.
  *
  */
+
+#define LOG_TAG "VulkanTestHelpers"
+
 #include "VulkanTestHelpers.h"
 
 #include <android/asset_manager.h>
