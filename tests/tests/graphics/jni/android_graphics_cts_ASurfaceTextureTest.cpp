@@ -24,26 +24,7 @@
 #include <android/surface_texture.h>
 #include <android/surface_texture_jni.h>
 
-static void fail(JNIEnv* env, const char* format, ...) {
-    va_list args;
-
-    va_start(args, format);
-    char *msg;
-    vasprintf(&msg, format, args);
-    va_end(args);
-
-    jclass exClass;
-    const char *className = "java/lang/AssertionError";
-    exClass = env->FindClass(className);
-    env->ThrowNew(exClass, msg);
-    free(msg);
-}
-
-#define ASSERT(condition, format, args...) \
-        if (!(condition)) { \
-            fail(env, format, ## args); \
-            return; \
-        }
+#include "NativeTestHelpers.h"
 
 // ------------------------------------------------------------------------------------------------
 
