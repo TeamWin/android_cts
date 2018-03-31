@@ -45,7 +45,7 @@ public class MbmsDownloadCallbackTest extends MbmsDownloadTestBase {
             mCalls.add(args);
         }
 
-        public SomeArgs waitOnStateUpdated(long timeout) {
+        public SomeArgs waitOnStatusUpdated(long timeout) {
             try {
                 return mCalls.poll(timeout, TimeUnit.MILLISECONDS);
             } catch (InterruptedException e) {
@@ -87,20 +87,20 @@ public class MbmsDownloadCallbackTest extends MbmsDownloadTestBase {
         DownloadRequest request = downloadRequestTemplate.build();
         mDownloadSession.addStatusListener(request, mCallbackExecutor, statusCallback);
         mDownloadSession.addProgressListener(request, mCallbackExecutor, progressCallback);
-        mMiddlewareControl.fireOnProgressUpdated(request, CtsDownloadService.FILE_INFO,
+        mMiddlewareControl.fireOnProgressUpdated(request, CtsDownloadService.FILE_INFO_1,
                 sampleInt, sampleInt, sampleInt, sampleInt);
         SomeArgs progressArgs = progressCallback.waitOnProgressUpdated(ASYNC_TIMEOUT);
         assertEquals(request, progressArgs.arg1);
-        assertEquals(CtsDownloadService.FILE_INFO, progressArgs.arg2);
+        assertEquals(CtsDownloadService.FILE_INFO_1, progressArgs.arg2);
         assertEquals(sampleInt, progressArgs.arg3);
         assertEquals(sampleInt, progressArgs.arg4);
         assertEquals(sampleInt, progressArgs.arg5);
         assertEquals(sampleInt, progressArgs.arg6);
 
-        mMiddlewareControl.fireOnStateUpdated(request, CtsDownloadService.FILE_INFO, sampleInt);
-        SomeArgs stateArgs = statusCallback.waitOnStateUpdated(ASYNC_TIMEOUT);
+        mMiddlewareControl.fireOnStateUpdated(request, CtsDownloadService.FILE_INFO_1, sampleInt);
+        SomeArgs stateArgs = statusCallback.waitOnStatusUpdated(ASYNC_TIMEOUT);
         assertEquals(request, stateArgs.arg1);
-        assertEquals(CtsDownloadService.FILE_INFO, stateArgs.arg2);
+        assertEquals(CtsDownloadService.FILE_INFO_1, stateArgs.arg2);
         assertEquals(sampleInt, stateArgs.arg3);
     }
 
@@ -114,7 +114,7 @@ public class MbmsDownloadCallbackTest extends MbmsDownloadTestBase {
         mDownloadSession.removeStatusListener(request, statusCallback);
 
         mMiddlewareControl.fireOnStateUpdated(null, null, 0);
-        assertNull(statusCallback.waitOnStateUpdated(SHORT_TIMEOUT));
+        assertNull(statusCallback.waitOnStatusUpdated(SHORT_TIMEOUT));
         mMiddlewareControl.fireOnProgressUpdated(null, null, 0, 0, 0, 0);
         assertNull(progressCallback.waitOnProgressUpdated(SHORT_TIMEOUT));
     }
