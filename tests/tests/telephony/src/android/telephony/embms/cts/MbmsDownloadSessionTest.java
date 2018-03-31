@@ -151,14 +151,14 @@ public class MbmsDownloadSessionTest extends MbmsDownloadTestBase {
 
     public void testGetDownloadStatus() throws Exception {
         DownloadRequest request = downloadRequestTemplate.build();
-        mDownloadSession.requestDownloadState(request, CtsDownloadService.FILE_INFO);
+        mDownloadSession.requestDownloadState(request, CtsDownloadService.FILE_INFO_1);
 
         List<Bundle> getDownloadStatusCalls =
                 getMiddlewareCalls(CtsDownloadService.METHOD_GET_DOWNLOAD_STATUS);
         assertEquals(1, getDownloadStatusCalls.size());
         assertEquals(request, getDownloadStatusCalls.get(0).getParcelable(
                 CtsDownloadService.ARGUMENT_DOWNLOAD_REQUEST));
-        assertEquals(CtsDownloadService.FILE_INFO, getDownloadStatusCalls.get(0).getParcelable(
+        assertEquals(CtsDownloadService.FILE_INFO_1, getDownloadStatusCalls.get(0).getParcelable(
                 CtsDownloadService.ARGUMENT_FILE_INFO));
     }
 

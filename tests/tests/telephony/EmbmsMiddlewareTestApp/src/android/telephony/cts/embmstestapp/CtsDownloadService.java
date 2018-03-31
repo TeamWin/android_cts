@@ -92,15 +92,30 @@ public class CtsDownloadService extends Service {
             ComponentName.unflattenFromString(
                     "android.telephony.cts/android.telephony.mbms.MbmsDownloadReceiver");
 
-    public static final Uri DOWNLOAD_SOURCE_URI = Uri.parse("http://www.example.com/file_download");
+    public static final Uri DOWNLOAD_SOURCE_URI_ROOT =
+            Uri.parse("http://www.example.com/file_download");
     public static final FileServiceInfo FILE_SERVICE_INFO;
-    public static final FileInfo FILE_INFO = new FileInfo(
-            DOWNLOAD_SOURCE_URI.buildUpon().appendPath("file1.txt").build(),
+    public static final FileInfo FILE_INFO_1 = new FileInfo(
+            DOWNLOAD_SOURCE_URI_ROOT.buildUpon().appendPath("file1.txt").build(),
+            "text/plain");
+    public static final FileInfo FILE_INFO_2 = new FileInfo(
+            DOWNLOAD_SOURCE_URI_ROOT.buildUpon().appendPath("sub_dir1")
+                    .appendPath("sub_dir2")
+                    .appendPath("file2.txt")
+                    .build(),
             "text/plain");
     public static final byte[] SAMPLE_FILE_DATA = "this is some sample file data".getBytes();
 
+    // Define allowed source URIs so that we don't have to do the prefix matching calculation
+    public static final Uri SOURCE_URI_1 = DOWNLOAD_SOURCE_URI_ROOT.buildUpon()
+            .appendPath("file1.txt").build();
+    public static final Uri SOURCE_URI_2 = DOWNLOAD_SOURCE_URI_ROOT.buildUpon()
+            .appendPath("sub_dir1").appendPath("*").build();
+    public static final Uri SOURCE_URI_3 = DOWNLOAD_SOURCE_URI_ROOT.buildUpon()
+            .appendPath("*").build();
+
     static {
-        String id = "FileServiceId";
+        String id = "urn:3GPP:service_0-0";
         Map<Locale, String> localeDict = new HashMap<Locale, String>() {{
             put(Locale.US, "Entertainment Source 1");
             put(Locale.CANADA, "Entertainment Source 1, eh?");
@@ -109,9 +124,13 @@ public class CtsDownloadService extends Service {
             add(Locale.CANADA);
             add(Locale.US);
         }};
+        List<FileInfo> files = new ArrayList<FileInfo>() {{
+            add(FILE_INFO_1);
+            add(FILE_INFO_2);
+        }};
         FILE_SERVICE_INFO = new FileServiceInfo(localeDict, "class1", locales,
                 id, new Date(2017, 8, 21, 18, 20, 29),
-                new Date(2017, 8, 21, 18, 23, 9), Collections.singletonList(FILE_INFO));
+                new Date(2017, 8, 21, 18, 23, 9), files);
     }
 
     private MbmsDownloadSessionCallback mAppCallback;
@@ -322,10 +341,12 @@ public class CtsDownloadService extends Service {
         @Override
         public void actuallyStartDownloadFlow() {
             DownloadRequest request = mReceivedRequests.get(0);
+            List<FileInfo> requestedFiles = getRequestedFiles(request);
             // Compose the FILE_DESCRIPTOR_REQUEST_INTENT to get some FDs to write to
             Intent requestIntent = new Intent(VendorUtils.ACTION_FILE_DESCRIPTOR_REQUEST);
             requestIntent.putExtra(VendorUtils.EXTRA_SERVICE_ID, request.getFileServiceId());
-            requestIntent.putExtra(VendorUtils.EXTRA_FD_COUNT, 1);
+
+            requestIntent.putExtra(VendorUtils.EXTRA_FD_COUNT, requestedFiles.size());
             requestIntent.putExtra(VendorUtils.EXTRA_TEMP_FILE_ROOT, mTempFileRootDirPath);
             requestIntent.setComponent(CTS_TEST_RECEIVER_COMPONENT);
 
@@ -339,52 +360,36 @@ public class CtsDownloadService extends Service {
                         public void onReceive(Context context, Intent intent) {
                             logd("Got file-descriptors");
                             Bundle extras = getResultExtras(false);
-                            UriPathPair tempFile = (UriPathPair) extras.getParcelableArrayList(
-                                    VendorUtils.EXTRA_FREE_URI_LIST).get(0);
-                            int result = MbmsDownloadSession.RESULT_SUCCESSFUL;
-                            try {
-                                ParcelFileDescriptor tempFileFd =
-                                        getContentResolver().openFileDescriptor(
-                                                tempFile.getContentUri(), "rw");
-                                OutputStream destinationStream =
-                                        new ParcelFileDescriptor.AutoCloseOutputStream(tempFileFd);
+                            List<UriPathPair> tempFiles = extras.getParcelableArrayList(
+                                    VendorUtils.EXTRA_FREE_URI_LIST);
 
-                                destinationStream.write(SAMPLE_FILE_DATA);
-                                destinationStream.flush();
-                            } catch (IOException e) {
-                                result = MbmsDownloadSession.RESULT_CANCELLED;
-                            }
+                            for (int i = 0; i < tempFiles.size(); i++) {
+                                UriPathPair tempFile = tempFiles.get(i);
+                                FileInfo requestedFile = requestedFiles.get(i);
+                                int result = writeContentsToTempFile(tempFile);
 
-                            Intent downloadResultIntent =
-                                    new Intent(VendorUtils.ACTION_DOWNLOAD_RESULT_INTERNAL);
-                            downloadResultIntent.putExtra(
-                                    MbmsDownloadSession.EXTRA_MBMS_DOWNLOAD_REQUEST, request);
-                            downloadResultIntent.putExtra(VendorUtils.EXTRA_FINAL_URI,
-                                    tempFile.getFilePathUri());
-                            downloadResultIntent.putExtra(MbmsDownloadSession.EXTRA_MBMS_FILE_INFO,
-                                    FILE_INFO);
-                            downloadResultIntent.putExtra(VendorUtils.EXTRA_TEMP_FILE_ROOT,
-                                    mTempFileRootDirPath);
-                            downloadResultIntent.putExtra(
-                                    MbmsDownloadSession.EXTRA_MBMS_DOWNLOAD_RESULT, result);
-                            downloadResultIntent.setComponent(CTS_TEST_RECEIVER_COMPONENT);
+                                Intent downloadResultIntent = composeDownloadResultIntent(
+                                        tempFile, request, result, requestedFile);
 
-                            logd("Sending broadcast to app: " + downloadResultIntent.toString());
-                            sendOrderedBroadcast(downloadResultIntent,
-                                    null, // receiverPermission
-                                    new BroadcastReceiver() {
-                                        @Override
-                                        public void onReceive(Context context, Intent intent) {
-                                            Bundle b = new Bundle();
-                                            b.putString(METHOD_NAME, METHOD_DOWNLOAD_RESULT_ACK);
-                                            b.putInt(ARGUMENT_RESULT_CODE, getResultCode());
-                                            mReceivedCalls.add(b);
-                                        }
-                                    },
-                                    null, // scheduler
-                                    Activity.RESULT_OK,
-                                    null, // initialData
-                                    null /* initialExtras */);
+                                logd("Sending broadcast to app: "
+                                        + downloadResultIntent.toString());
+                                sendOrderedBroadcast(downloadResultIntent,
+                                        null, // receiverPermission
+                                        new BroadcastReceiver() {
+                                            @Override
+                                            public void onReceive(Context context, Intent intent) {
+                                                Bundle b = new Bundle();
+                                                b.putString(METHOD_NAME,
+                                                        METHOD_DOWNLOAD_RESULT_ACK);
+                                                b.putInt(ARGUMENT_RESULT_CODE, getResultCode());
+                                                mReceivedCalls.add(b);
+                                            }
+                                        },
+                                        null, // scheduler
+                                        Activity.RESULT_OK,
+                                        null, // initialData
+                                        null /* initialExtras */);
+                        }
                         }
                     },
                     mHandler, // scheduler
@@ -394,6 +399,54 @@ public class CtsDownloadService extends Service {
 
         }
     };
+
+    private List<FileInfo> getRequestedFiles(DownloadRequest request) {
+        if (SOURCE_URI_1.equals(request.getSourceUri())) {
+            return Collections.singletonList(FILE_INFO_1);
+        }
+        if (SOURCE_URI_2.equals(request.getSourceUri())) {
+            return Collections.singletonList(FILE_INFO_2);
+        }
+        if (SOURCE_URI_3.equals(request.getSourceUri())) {
+            return FILE_SERVICE_INFO.getFiles();
+        }
+        return Collections.emptyList();
+    }
+
+    private Intent composeDownloadResultIntent(UriPathPair tempFile, DownloadRequest request,
+            int result, FileInfo downloadedFile) {
+        Intent downloadResultIntent =
+                new Intent(VendorUtils.ACTION_DOWNLOAD_RESULT_INTERNAL);
+        downloadResultIntent.putExtra(
+                MbmsDownloadSession.EXTRA_MBMS_DOWNLOAD_REQUEST, request);
+        downloadResultIntent.putExtra(VendorUtils.EXTRA_FINAL_URI,
+                tempFile.getFilePathUri());
+        downloadResultIntent.putExtra(
+                MbmsDownloadSession.EXTRA_MBMS_FILE_INFO, downloadedFile);
+        downloadResultIntent.putExtra(VendorUtils.EXTRA_TEMP_FILE_ROOT,
+                mTempFileRootDirPath);
+        downloadResultIntent.putExtra(
+                MbmsDownloadSession.EXTRA_MBMS_DOWNLOAD_RESULT, result);
+        downloadResultIntent.setComponent(CTS_TEST_RECEIVER_COMPONENT);
+        return downloadResultIntent;
+    }
+
+    private int writeContentsToTempFile(UriPathPair tempFile) {
+        int result = MbmsDownloadSession.RESULT_SUCCESSFUL;
+        try {
+            ParcelFileDescriptor tempFileFd =
+                    getContentResolver().openFileDescriptor(
+                            tempFile.getContentUri(), "rw");
+            OutputStream destinationStream =
+                    new ParcelFileDescriptor.AutoCloseOutputStream(tempFileFd);
+
+            destinationStream.write(SAMPLE_FILE_DATA);
+            destinationStream.flush();
+        } catch (IOException e) {
+            result = MbmsDownloadSession.RESULT_CANCELLED;
+        }
+        return result;
+    }
 
     @Override
     public void onDestroy() {
