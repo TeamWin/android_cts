@@ -494,7 +494,7 @@ public abstract class ActivityManagerTestBase {
     }
 
     // TODO: Switch to using a feature flag, when available.
-    protected boolean isUiModeLockedToVrHeadset() {
+    protected static boolean isUiModeLockedToVrHeadset() {
         final String output = runCommandAndPrintOutput("dumpsys uimode");
 
         Integer curUiMode = null;
