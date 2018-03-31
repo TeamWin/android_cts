@@ -27,10 +27,13 @@ LOCAL_SRC_FILES := \
 	android_graphics_cts_BitmapTest.cpp \
 	android_graphics_cts_SyncTest.cpp \
 	android_graphics_cts_CameraGpuCtsActivity.cpp \
+	android_graphics_cts_CameraVulkanGpuTest.cpp \
 	android_graphics_cts_MediaVulkanGpuTest.cpp \
 	android_graphics_cts_VulkanFeaturesTest.cpp \
+	CameraTestHelpers.cpp \
 	ImageReaderTestHelpers.cpp \
 	MediaTestHelpers.cpp \
+	NativeTestHelpers.cpp \
 	VulkanTestHelpers.cpp
 
 LOCAL_CFLAGS += -std=c++14 -Wall -Werror -DGL_GLEXT_PROTOTYPES -DEGL_EGLEXT_PROTOTYPES
