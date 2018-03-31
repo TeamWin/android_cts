@@ -525,6 +525,19 @@ public class PkgInstallSignatureVerificationTest extends DeviceTestCase implemen
         assertInstallSucceeds("v3-rsa-pkcs1-sha256-2048-2-with-por_1_2-full-caps.apk");
     }
 
+    public void testInstallV3KeyRotationToAncestor() throws Exception {
+        // tests that a v3 signed APK with RSA key cannot be upgraded by one of its past certs
+        assertInstallSucceeds("v3-rsa-pkcs1-sha256-2048-2-with-por_1_2-full-caps.apk");
+        assertInstallFails("v3-rsa-pkcs1-sha256-2048-1.apk");
+    }
+
+    public void testInstallV3KeyRotationToAncestorWithRollback() throws Exception {
+        // tests that a v3 signed APK with RSA key can be upgraded by one of its past certs if it
+        // has granted that cert the rollback capability
+        assertInstallSucceeds("v3-rsa-pkcs1-sha256-2048-2-with-por_1_2-full-and-roll-caps.apk");
+        assertInstallSucceeds("v3-rsa-pkcs1-sha256-2048-1.apk");
+    }
+
     public void testInstallV3KeyRotationMultipleHops() throws Exception {
         // tests that a v3 signed APK with RSA key can rotate to a new key which is the result of
         // multiple rotations from the original: APK signed with key 1 can be updated by key 3, when
