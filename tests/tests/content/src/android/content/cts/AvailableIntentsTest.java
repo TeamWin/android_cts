@@ -28,6 +28,7 @@ import android.os.storage.StorageManager;
 import android.provider.AlarmClock;
 import android.provider.MediaStore;
 import android.provider.Settings;
+import android.provider.Telephony;
 import android.speech.RecognizerIntent;
 import android.telecom.TelecomManager;
 import android.test.AndroidTestCase;
@@ -365,6 +366,13 @@ public class AvailableIntentsTest extends AndroidTestCase {
         PackageManager packageManager = mContext.getPackageManager();
         if (packageManager.hasSystemFeature(PackageManager.FEATURE_PICTURE_IN_PICTURE)) {
             assertCanBeHandled(new Intent(Settings.ACTION_PICTURE_IN_PICTURE_SETTINGS));
+        }
+    }
+
+    public void testChangeDefaultSmsApplication() {
+        PackageManager packageManager = mContext.getPackageManager();
+        if (packageManager.hasSystemFeature(PackageManager.FEATURE_TELEPHONY)) {
+            assertCanBeHandled(new Intent(Telephony.Sms.Intents.ACTION_CHANGE_DEFAULT));
         }
     }
 }
