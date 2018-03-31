@@ -18,6 +18,7 @@
 #include <EGL/eglext.h>
 #include <GLES2/gl2.h>
 #include <GLES2/gl2ext.h>
+#include <GLES3/gl3.h>
 
 #include <iterator>
 #include <set>
@@ -46,27 +47,37 @@ bool FormatIsFloat(uint32_t format) {
     return format == AHARDWAREBUFFER_FORMAT_R16G16B16A16_FLOAT;
 }
 
+void UploadData(const AHardwareBuffer_Desc& desc, GLenum format, GLenum type, const void* data) {
+    if (desc.layers <= 1) {
+        glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, desc.width, desc.height, format, type, data);
+    } else {
+        for (uint32_t layer = 0; layer < desc.layers; ++layer) {
+            glTexSubImage3D(GL_TEXTURE_2D_ARRAY, 0, 0, 0, layer, desc.width, desc.height, 1,
+                            format, type, data);
+        }
+    }
+}
+
 // Uploads opaque red to the currently bound texture.
-void UploadRedPixels(int width, int height, uint32_t format) {
+void UploadRedPixels(const AHardwareBuffer_Desc& desc) {
     glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
-    switch (format) {
+    switch (desc.format) {
         case AHARDWAREBUFFER_FORMAT_R5G6B5_UNORM:
         case AHARDWAREBUFFER_FORMAT_R8G8B8_UNORM:
         case AHARDWAREBUFFER_FORMAT_R8G8B8X8_UNORM: {
             // GL_RGB565 supports uploading GL_UNSIGNED_BYTE data.
-            const int size = width * height * 3;
+            const int size = desc.width * desc.height * 3;
             std::unique_ptr<uint8_t[]> pixels(new uint8_t[size]);
             for (int i = 0; i < size; i += 3) {
                 pixels[i] = 255;
                 pixels[i + 1] = 0;
                 pixels[i + 2] = 0;
             }
-            glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, width, height, GL_RGB,
-                            GL_UNSIGNED_BYTE, pixels.get());
+            UploadData(desc, GL_RGB, GL_UNSIGNED_BYTE, pixels.get());
             break;
         }
         case AHARDWAREBUFFER_FORMAT_R8G8B8A8_UNORM: {
-            const int size = width * height * 4;
+            const int size = desc.width * desc.height * 4;
             std::unique_ptr<uint8_t[]> pixels(new uint8_t[size]);
             for (int i = 0; i < size; i += 4) {
                 pixels[i] = 255;
@@ -74,12 +85,11 @@ void UploadRedPixels(int width, int height, uint32_t format) {
                 pixels[i + 2] = 0;
                 pixels[i + 3] = 255;
             }
-            glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, width, height, GL_RGBA,
-                            GL_UNSIGNED_BYTE, pixels.get());
+            UploadData(desc, GL_RGBA, GL_UNSIGNED_BYTE, pixels.get());
             break;
         }
         case AHARDWAREBUFFER_FORMAT_R16G16B16A16_FLOAT: {
-            const int size = width * height * 4;
+            const int size = desc.width * desc.height * 4;
             std::unique_ptr<float[]> pixels(new float[size]);
             for (int i = 0; i < size; i += 4) {
                 pixels[i] = 1.f;
@@ -87,19 +97,17 @@ void UploadRedPixels(int width, int height, uint32_t format) {
                 pixels[i + 2] = 0.f;
                 pixels[i + 3] = 1.f;
             }
-            glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, width, height, GL_RGBA,
-                            GL_FLOAT, pixels.get());
+            UploadData(desc, GL_RGBA, GL_FLOAT, pixels.get());
             break;
         }
         case AHARDWAREBUFFER_FORMAT_R10G10B10A2_UNORM: {
-            const int size = width * height;
+            const int size = desc.width * desc.height;
             std::unique_ptr<uint32_t[]> pixels(new uint32_t[size]);
             for (int i = 0; i < size; ++i) {
                 // Opaque red is top 2 bits and bottom 10 bits set.
                 pixels[i] = 0xc00003ff;
             }
-            glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, width, height, GL_RGBA,
-                            GL_UNSIGNED_INT_2_10_10_10_REV_EXT, pixels.get());
+            UploadData(desc, GL_RGBA, GL_UNSIGNED_INT_2_10_10_10_REV_EXT, pixels.get());
             break;
         }
         default: FAIL() << "Unrecognized AHardwareBuffer format"; break;
@@ -115,15 +123,16 @@ struct GoldenPixel {
     GoldenColor color;
 };
 
-// Vertex shader that draws
+// Vertex shader that draws a textured shape.
 const char* kVertexShader = R"glsl(
     #version 100
     attribute vec2 aPosition;
+    attribute float aDepth;
     varying mediump vec2 vTexCoords;
     void main() {
         vTexCoords = (vec2(1.0) + aPosition) * 0.5;
         gl_Position.xy = aPosition * 0.5;
-        gl_Position.z = 0.0;
+        gl_Position.z = aDepth;
         gl_Position.w = 1.0;
     }
 )glsl";
@@ -138,10 +147,53 @@ const char* kFragmentShader = R"glsl(
     }
 )glsl";
 
-const float kPositions[] = {
+const char* kVertexShaderEs3 = R"glsl(
+    #version 300 es
+    in vec2 aPosition;
+    in float aDepth;
+    out mediump vec2 vTexCoords;
+    void main() {
+        vTexCoords = (vec2(1.0) + aPosition) * 0.5;
+        gl_Position.xy = aPosition * 0.5;
+        gl_Position.z = aDepth;
+        gl_Position.w = 1.0;
+    }
+)glsl";
+
+const char* kArrayFragmentShaderEs3 = R"glsl(
+    #version 300 es
+    precision mediump float;
+    in mediump vec2 vTexCoords;
+    uniform lowp sampler2DArray uTexture;
+    uniform mediump float uLayer;
+    out lowp vec4 color;
+    void main() {
+        color = texture(uTexture, vec3(vTexCoords, uLayer));
+    }
+)glsl";
+
+// Interleaved X and Y coordinates for 2 triangles forming a quad with CCW
+// orientation.
+const float kQuadPositions[] = {
     -1.f, -1.f, 1.f, 1.f, -1.f, 1.f,
     -1.f, -1.f, 1.f, -1.f, 1.f, 1.f,
 };
+
+// Interleaved X, Y and Z coordinates for 4 triangles forming a "pyramid" as
+// seen from above. The center vertex has Z=1, while the edge vertices have Z=-1.
+// It looks like this:
+//
+//        +---+ 1, 1
+//        |\ /| 
+//        | x |
+//        |/ \|
+// -1, -1 +---+
+/*const float kPyramidPositions[] = {
+    -1.f, -1.f, -1.f, 0.f, 0.f, 1.f, -1.f, 1.f, -1.f,
+    -1.f, 1.f, -1.f, 0.f, 0.f, 1.f, 1.f, 1.f, -1.f,
+    1.f, 1.f, -1.f, 0.f, 0.f, 1.f, 1.f, -1.f, -1.f,
+    1.f, -1.f, -1.f, 0.f, 0.f, 1.f, -1.f, -1.f, -1.f,
+};*/
 
 }  // namespace
 
@@ -155,6 +207,7 @@ protected:
     EGLDisplay mDisplay = EGL_NO_DISPLAY;
     EGLSurface mSurface = EGL_NO_SURFACE;
     EGLContext mContext[2];
+    int mGLVersion = 0;
 };
 
 void AHardwareBufferGLTest::SetUp() {
@@ -189,6 +242,7 @@ void AHardwareBufferGLTest::SetUp() {
     }
     ASSERT_NE(EGL_NO_CONTEXT, mContext[0]);
     ASSERT_NE(EGL_NO_CONTEXT, mContext[1]);
+    mGLVersion = context_attrib_list[1];
 
     // Parse EGL extension strings into a set for easier processing.
     std::istringstream eglext_stream(eglQueryString(mDisplay, EGL_EXTENSIONS));
@@ -222,20 +276,19 @@ void AHardwareBufferGLTest::TearDown() {
 
 class AHardwareBufferColorFormatTest
     : public AHardwareBufferGLTest,
-      public ::testing::WithParamInterface<uint32_t> {};
+      public ::testing::WithParamInterface<AHardwareBuffer_Desc> {};
 
 // Verify that when allocating an AHardwareBuffer succeeds with GPU_COLOR_OUTPUT,
 // it can be bound as a framebuffer attachment, glClear'ed and then read from
 // another context using glReadPixels.
 TEST_P(AHardwareBufferColorFormatTest, GpuColorOutputIsRenderable) {
-    const uint32_t format = GetParam();
     AHardwareBuffer* buffer = NULL;
-    AHardwareBuffer_Desc desc = {};
+    AHardwareBuffer_Desc desc = GetParam();
     desc.width = 100;
     desc.height = 100;
-    desc.layers = 1;
-    desc.format = format;
     desc.usage = AHARDWAREBUFFER_USAGE_GPU_COLOR_OUTPUT;
+    // This test does not make sense for layered buffers - don't bother testing them.
+    if (desc.layers > 1) return;
 
     int result = AHardwareBuffer_allocate(&desc, &buffer);
     // Skip if this format cannot be allocated.
@@ -284,7 +337,7 @@ TEST_P(AHardwareBufferColorFormatTest, GpuColorOutputIsRenderable) {
     const GoldenPixel goldens[] =
         {{10, 10, kBlack}, {10, 90, kRed}, {90, 10, kRed}, {90, 90, kBlack}};
     for (const GoldenPixel& golden : goldens) {
-        if (FormatIsFloat(format)) {
+        if (FormatIsFloat(desc.format)) {
             float pixel[4] = {0.5f, 0.5f, 0.5f, 0.5f};
             glReadPixels(golden.x, golden.y, 1, 1, GL_RGBA, GL_FLOAT, pixel);
             EXPECT_EQ(GLenum{GL_NO_ERROR}, glGetError());
@@ -292,7 +345,7 @@ TEST_P(AHardwareBufferColorFormatTest, GpuColorOutputIsRenderable) {
             EXPECT_EQ(0.f, pixel[1]);
             EXPECT_EQ(0.f, pixel[2]);
             // Formats without alpha should be read as opaque.
-            EXPECT_EQ((golden.color == kRed || !FormatHasAlpha(format)) ? 1.f : 0.f,
+            EXPECT_EQ((golden.color == kRed || !FormatHasAlpha(desc.format)) ? 1.f : 0.f,
                       pixel[3]);
         } else {
             uint8_t pixel[4] = {127, 127, 127, 127};
@@ -302,7 +355,7 @@ TEST_P(AHardwareBufferColorFormatTest, GpuColorOutputIsRenderable) {
             EXPECT_EQ(0, pixel[1]);
             EXPECT_EQ(0, pixel[2]);
             // Formats without alpha should be read as opaque.
-            EXPECT_EQ((golden.color == kRed || !FormatHasAlpha(format)) ? 255 : 0,
+            EXPECT_EQ((golden.color == kRed || !FormatHasAlpha(desc.format)) ? 255 : 0,
                       pixel[3]);
         }
     }
@@ -321,14 +374,18 @@ TEST_P(AHardwareBufferColorFormatTest, GpuColorOutputIsRenderable) {
 // it can be bound as a texture, set to a color with glTexSubImage2D and sampled
 // from in a fragment shader.
 TEST_P(AHardwareBufferColorFormatTest, GpuSampledImageCanBeSampled) {
-    const uint32_t format = GetParam();
     AHardwareBuffer* buffer = NULL;
-    AHardwareBuffer_Desc desc = {};
-    desc.width = 10;
-    desc.height = 20;
-    desc.layers = 1;
-    desc.format = format;
+    AHardwareBuffer_Desc desc = GetParam();
     desc.usage = AHARDWAREBUFFER_USAGE_GPU_SAMPLED_IMAGE;
+
+    // Skip texture arrays if the device doesn't support OpenGL ES 3.
+    if (desc.layers > 1 && mGLVersion < 3) return;
+
+    const GLenum textarget = desc.layers > 1 ? GL_TEXTURE_2D_ARRAY : GL_TEXTURE_2D;
+    const char* vertex_shader_source =
+        desc.layers > 1 ? kVertexShaderEs3 : kVertexShader;
+    const char* fragment_shader_source =
+        desc.layers > 1 ? kArrayFragmentShaderEs3 : kFragmentShader;
 
     int result = AHardwareBuffer_allocate(&desc, &buffer);
     // Skip if this format cannot be allocated.
@@ -345,12 +402,12 @@ TEST_P(AHardwareBufferColorFormatTest, GpuSampledImageCanBeSampled) {
         eglMakeCurrent(mDisplay, mSurface, mSurface, mContext[i]);
         glGenTextures(1, &texture[i]);
         glActiveTexture(GL_TEXTURE1);
-        glBindTexture(GL_TEXTURE_2D, texture[i]);
-        glEGLImageTargetTexture2DOES(GL_TEXTURE_2D, static_cast<GLeglImageOES>(egl_image));
+        glBindTexture(textarget, texture[i]);
+        glEGLImageTargetTexture2DOES(textarget, static_cast<GLeglImageOES>(egl_image));
         EXPECT_EQ(GLenum{GL_NO_ERROR}, glGetError());
     }
     // In the second context, upload opaque red to the texture.
-    UploadRedPixels(desc.width, desc.height, format);
+    UploadRedPixels(desc);
     glFinish();
 
     // In the first context, draw a quad that samples from the texture.
@@ -370,12 +427,12 @@ TEST_P(AHardwareBufferColorFormatTest, GpuSampledImageCanBeSampled) {
     GLint status = GL_FALSE;
     GLuint program = glCreateProgram();
     GLuint vertex_shader = glCreateShader(GL_VERTEX_SHADER);
-    glShaderSource(vertex_shader, 1, &kVertexShader, nullptr);
+    glShaderSource(vertex_shader, 1, &vertex_shader_source, nullptr);
     glCompileShader(vertex_shader);
     glGetShaderiv(vertex_shader, GL_COMPILE_STATUS, &status);
     ASSERT_EQ(GL_TRUE, status);
     GLuint fragment_shader = glCreateShader(GL_FRAGMENT_SHADER);
-    glShaderSource(fragment_shader, 1, &kFragmentShader, nullptr);
+    glShaderSource(fragment_shader, 1, &fragment_shader_source, nullptr);
     glCompileShader(fragment_shader);
     glGetShaderiv(fragment_shader, GL_COMPILE_STATUS, &status);
     ASSERT_EQ(GL_TRUE, status);
@@ -389,12 +446,18 @@ TEST_P(AHardwareBufferColorFormatTest, GpuSampledImageCanBeSampled) {
     glDeleteShader(vertex_shader);
     glDeleteShader(fragment_shader);
     glUseProgram(program);
+    EXPECT_EQ(GLenum{GL_NO_ERROR}, glGetError());
 
-    // Draw a textured quad.
+    // Draw a textured quad. Use a constant attribute for depth.
     GLint a_position_location = glGetAttribLocation(program, "aPosition");
-    glVertexAttribPointer(a_position_location, 2, GL_FLOAT, GL_TRUE, 0, kPositions);
+    GLint a_depth_location = glGetAttribLocation(program, "aDepth");
+    glVertexAttribPointer(a_position_location, 2, GL_FLOAT, GL_TRUE, 0, kQuadPositions);
+    glVertexAttrib1f(a_depth_location, 0.f);
     glEnableVertexAttribArray(a_position_location);
     glUniform1i(glGetUniformLocation(program, "uTexture"), 1);
+    if (desc.layers > 1) {
+        glUniform1f(glGetUniformLocation(program, "uLayer"), static_cast<float>(desc.layers - 1));
+    }
     glDisable(GL_CULL_FACE);
     glViewport(0, 0, 40, 40);
     glDrawArrays(GL_TRIANGLES, 0, 6);
@@ -413,7 +476,6 @@ TEST_P(AHardwareBufferColorFormatTest, GpuSampledImageCanBeSampled) {
         EXPECT_EQ(0, pixel[1]);
         EXPECT_EQ(0, pixel[2]);
         EXPECT_EQ(golden.color == kRed ? 255 : 0, pixel[3]);
-            /*<< "x = " << golden.x << ", y = " << golden.y;*/
     }
 
     // Tear down the GL objects.
@@ -428,13 +490,26 @@ TEST_P(AHardwareBufferColorFormatTest, GpuSampledImageCanBeSampled) {
 }
 
 INSTANTIATE_TEST_CASE_P(
-    AllColorFormats,
+    SingleLayer,
     AHardwareBufferColorFormatTest,
-    ::testing::Values(AHARDWAREBUFFER_FORMAT_R8G8B8A8_UNORM,
-                      AHARDWAREBUFFER_FORMAT_R8G8B8X8_UNORM,
-                      AHARDWAREBUFFER_FORMAT_R8G8B8_UNORM,
-                      AHARDWAREBUFFER_FORMAT_R5G6B5_UNORM,
-                      AHARDWAREBUFFER_FORMAT_R16G16B16A16_FLOAT,
-                      AHARDWAREBUFFER_FORMAT_R10G10B10A2_UNORM));
+    ::testing::Values(
+        AHardwareBuffer_Desc{10, 20, 1, AHARDWAREBUFFER_FORMAT_R8G8B8A8_UNORM, 0, 0, 0, 0},
+        AHardwareBuffer_Desc{20, 10, 1, AHARDWAREBUFFER_FORMAT_R8G8B8X8_UNORM, 0, 0, 0, 0},
+        AHardwareBuffer_Desc{16, 20, 1, AHARDWAREBUFFER_FORMAT_R8G8B8_UNORM, 0, 0, 0, 0},
+        AHardwareBuffer_Desc{10, 20, 1, AHARDWAREBUFFER_FORMAT_R5G6B5_UNORM, 0, 0, 0, 0},
+        AHardwareBuffer_Desc{10, 20, 1, AHARDWAREBUFFER_FORMAT_R16G16B16A16_FLOAT, 0, 0, 0, 0},
+        AHardwareBuffer_Desc{10, 20, 1, AHARDWAREBUFFER_FORMAT_R10G10B10A2_UNORM, 0, 0, 0, 0}));
+
+INSTANTIATE_TEST_CASE_P(
+    MultipleLayers,
+    AHardwareBufferColorFormatTest,
+    ::testing::Values(
+        AHardwareBuffer_Desc{25, 16, 7, AHARDWAREBUFFER_FORMAT_R8G8B8A8_UNORM, 0, 0, 0, 0},
+        AHardwareBuffer_Desc{32, 32, 4, AHARDWAREBUFFER_FORMAT_R8G8B8A8_UNORM, 0, 0, 0, 0},
+        AHardwareBuffer_Desc{30, 30, 3, AHARDWAREBUFFER_FORMAT_R8G8B8X8_UNORM, 0, 0, 0, 0},
+        AHardwareBuffer_Desc{50, 50, 4, AHARDWAREBUFFER_FORMAT_R8G8B8_UNORM, 0, 0, 0, 0},
+        AHardwareBuffer_Desc{20, 10, 2, AHARDWAREBUFFER_FORMAT_R5G6B5_UNORM, 0, 0, 0, 0},
+        AHardwareBuffer_Desc{20, 20, 4, AHARDWAREBUFFER_FORMAT_R16G16B16A16_FLOAT, 0, 0, 0, 0},
+        AHardwareBuffer_Desc{30, 20, 16, AHARDWAREBUFFER_FORMAT_R10G10B10A2_UNORM, 0, 0, 0, 0}));
 
 }  // namespace android
