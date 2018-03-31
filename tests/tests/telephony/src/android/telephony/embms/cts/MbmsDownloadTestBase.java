@@ -110,6 +110,7 @@ public class MbmsDownloadTestBase extends InstrumentationTestCase {
     }
 
     DownloadRequest.Builder downloadRequestTemplate;
+    Uri destinationDirectoryUri;
 
     Context mContext;
     HandlerThread mHandlerThread;
@@ -130,9 +131,9 @@ public class MbmsDownloadTestBase extends InstrumentationTestCase {
 
         File destinationDirectory = new File(mContext.getFilesDir(), "downloads");
         destinationDirectory.mkdirs();
-        Uri destinationDirectoryUri = Uri.fromFile(destinationDirectory);
+        destinationDirectoryUri = Uri.fromFile(destinationDirectory);
         downloadRequestTemplate = new DownloadRequest.Builder(
-                CtsDownloadService.DOWNLOAD_SOURCE_URI, destinationDirectoryUri)
+                CtsDownloadService.SOURCE_URI_1, destinationDirectoryUri)
                 .setServiceInfo(CtsDownloadService.FILE_SERVICE_INFO);
         getControlBinder();
         setupDownloadSession();

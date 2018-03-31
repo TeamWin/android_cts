@@ -922,32 +922,6 @@ public class DevicePolicyManagerTest extends AndroidTestCase {
         }
     }
 
-    public void testSetPasswordBlacklist_failIfNotDeviceOrProfileOwner() {
-        if (!mDeviceAdmin) {
-            Log.w(TAG, "Skipping testSetPasswordBlacklist_failIfNotDeviceOrProfileOwner");
-            return;
-        }
-        try {
-            mDevicePolicyManager.setPasswordBlacklist(mComponent, null, null);
-            fail("did not throw expected SecurityException");
-        } catch (SecurityException e) {
-            assertProfileOwnerMessage(e.getMessage());
-        }
-    }
-
-    public void testGetPasswordBlacklistName_failIfNotDeviceOrProfileOwner() {
-        if (!mDeviceAdmin) {
-            Log.w(TAG, "Skipping testGetPasswordBlacklistName_failIfNotDeviceOrProfileOwner");
-            return;
-        }
-        try {
-            mDevicePolicyManager.getPasswordBlacklistName(mComponent);
-            fail("did not throw expected SecurityException");
-        } catch (SecurityException e) {
-            assertProfileOwnerMessage(e.getMessage());
-        }
-    }
-
     public void testGenerateKeyPair_failIfNotProfileOwner() {
         if (!mDeviceAdmin) {
             Log.w(TAG, "Skipping testGenerateKeyPair_failIfNotProfileOwner");
