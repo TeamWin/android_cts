@@ -23,7 +23,7 @@ LOCAL_SRC_FILES := \
     AHardwareBufferTest.cpp \
     GTestMain.cpp
 
-LOCAL_SHARED_LIBRARIES := libandroid liblog libEGL libGLESv2
+LOCAL_SHARED_LIBRARIES := libandroid liblog libEGL libGLESv2 libGLESv3
 
 LOCAL_WHOLE_STATIC_LIBRARIES := libnativetesthelper_jni
 
