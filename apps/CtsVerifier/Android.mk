@@ -98,6 +98,7 @@ include $(BUILD_MULTI_PREBUILT)
 
 pre-installed-apps := \
     CtsEmptyDeviceAdmin \
+    CtsEmptyDeviceOwner \
     CtsPermissionApp \
     NotificationBot
 
@@ -120,7 +121,7 @@ endef
 cts-verifier: CtsVerifier adb $(pre-installed-apps)
 	adb install -r $(PRODUCT_OUT)/data/app/CtsVerifier/CtsVerifier.apk \
 		$(foreach app,$(pre-installed-apps), \
-		    && adb install -r $(call apk-location-for,$(app))) \
+		    && adb install -r -t $(call apk-location-for,$(app))) \
 		&& adb shell "am start -n com.android.cts.verifier/.CtsVerifierActivity"
 
 #

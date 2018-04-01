@@ -373,10 +373,8 @@ public class UiAutomationTest extends InstrumentationTestCase {
     }
 
     private void grantWriteSecureSettingsPermission(UiAutomation uiAutomation) throws IOException {
-        Context context = getInstrumentation().getContext();
-        ParcelFileDescriptor fd = uiAutomation.executeShellCommand("pm grant "
-                + context.getPackageName() + "android.permission.WRITE_SECURE_SETTINGS");
-        fd.close();
+        uiAutomation.grantRuntimePermission(getInstrumentation().getContext().getPackageName(),
+                android.Manifest.permission.WRITE_SECURE_SETTINGS);
     }
 
     private void enableAccessibilityService() {

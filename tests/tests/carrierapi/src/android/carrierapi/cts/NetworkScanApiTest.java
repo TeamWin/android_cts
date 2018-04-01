@@ -16,6 +16,7 @@
 package android.carrierapi.cts;
 
 import android.content.Context;
+import android.content.pm.PackageManager;
 import android.os.Handler;
 import android.os.HandlerThread;
 import android.os.Message;
@@ -52,6 +53,7 @@ import static org.junit.Assert.fail;
 @RunWith(AndroidJUnit4.class)
 public class NetworkScanApiTest {
     private TelephonyManager mTelephonyManager;
+    private PackageManager mPackageManager;
     private static final String TAG = "NetworkScanApiTest";
     private int mNetworkScanStatus;
     private static final int EVENT_NETWORK_SCAN_START = 100;
@@ -72,6 +74,7 @@ public class NetworkScanApiTest {
     public void setUp() throws Exception {
         mTelephonyManager = (TelephonyManager)
                 InstrumentationRegistry.getContext().getSystemService(Context.TELEPHONY_SERVICE);
+        mPackageManager = InstrumentationRegistry.getContext().getPackageManager();
         mTestHandlerThread = new NetworkScanHandlerThread(TAG);
         mTestHandlerThread.start();
     }
@@ -179,6 +182,11 @@ public class NetworkScanApiTest {
      */
     @Test
     public void testRequestNetworkScan() throws InterruptedException {
+        if (!mPackageManager.hasSystemFeature(PackageManager.FEATURE_TELEPHONY)) {
+            // Checks whether the cellular stack should be running on this device.
+            Log.e(TAG, "No cellular support, the test will be skipped.");
+            return;
+        }
         if (!mTelephonyManager.hasCarrierPrivileges()) {
             fail("This test requires a SIM card with carrier privilege rule on it.");
         }

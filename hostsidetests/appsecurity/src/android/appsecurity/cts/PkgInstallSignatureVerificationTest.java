@@ -726,6 +726,12 @@ public class PkgInstallSignatureVerificationTest extends DeviceTestCase implemen
                 "testHasSigningCertificateByUidSha256");
     }
 
+    public void testInstallV3KeyRotationHasDuplicateSigningCertificateHistory() throws Exception {
+        // tests that an app's proof-of-rotation signing history cannot contain the same certificate
+        // more than once.
+        assertInstallFails("v3-rsa-pkcs1-sha256-2048-2-with-por_1_2_2-full-caps.apk");
+    }
+
     private void assertInstallSucceeds(String apkFilenameInResources) throws Exception {
         String installResult = installPackageFromResource(apkFilenameInResources);
         if (installResult != null) {

@@ -867,12 +867,12 @@ abstract class TestUtils extends Assert {
     static KeyProtection getMinimalWorkingImportParametersForCipheringWith(
             String transformation, int purposes, boolean ivProvidedWhenEncrypting) {
         return getMinimalWorkingImportParametersForCipheringWith(transformation, purposes,
-            ivProvidedWhenEncrypting, false);
+            ivProvidedWhenEncrypting, false, false);
     }
 
     static KeyProtection getMinimalWorkingImportParametersForCipheringWith(
             String transformation, int purposes, boolean ivProvidedWhenEncrypting,
-            boolean isUserAuthRequired) {
+            boolean isUnlockedDeviceRequired, boolean isUserAuthRequired) {
         String keyAlgorithm = TestUtils.getCipherKeyAlgorithm(transformation);
         if (KeyProperties.KEY_ALGORITHM_AES.equalsIgnoreCase(keyAlgorithm)) {
             String encryptionPadding = TestUtils.getCipherEncryptionPadding(transformation);
@@ -889,6 +889,7 @@ abstract class TestUtils extends Assert {
                     .setBlockModes(blockMode)
                     .setEncryptionPaddings(encryptionPadding)
                     .setRandomizedEncryptionRequired(randomizedEncryptionRequired)
+                    .setUnlockedDeviceRequired(isUnlockedDeviceRequired)
                     .setUserAuthenticationRequired(isUserAuthRequired)
                     .setUserAuthenticationValidityDurationSeconds(3600)
                     .build();
@@ -903,6 +904,8 @@ abstract class TestUtils extends Assert {
                     .setEncryptionPaddings(encryptionPadding)
                     .setRandomizedEncryptionRequired(randomizedEncryptionRequired)
                     .setUserAuthenticationRequired(isUserAuthRequired)
+                    .setUserAuthenticationValidityDurationSeconds(3600)
+                    .setUnlockedDeviceRequired(isUnlockedDeviceRequired)
                     .build();
         } else {
             throw new IllegalArgumentException("Unsupported key algorithm: " + keyAlgorithm);

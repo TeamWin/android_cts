@@ -37,8 +37,10 @@ import android.autofillservice.cts.InstrumentedAutoFillService.SaveRequest;
 import android.autofillservice.cts.SimpleSaveActivity.FillExpectation;
 import android.content.Intent;
 import android.graphics.Bitmap;
+import android.os.Bundle;
 import android.service.autofill.BatchUpdates;
 import android.service.autofill.CustomDescription;
+import android.service.autofill.FillEventHistory;
 import android.service.autofill.RegexValidator;
 import android.service.autofill.SaveInfo;
 import android.service.autofill.TextValueSanitizer;
@@ -292,6 +294,61 @@ public class SimpleSaveActivityTest extends CustomDescriptionWithLinkTestCase {
 
         // Make sure Save UI for 1st session was canceled....
         mUiBot.assertSaveNotShowing(SAVE_DATA_TYPE_GENERIC);
+    }
+
+    @Test
+    public void testSaveWithParcelableOnClientState() throws Exception {
+        startActivity();
+
+        // Set service.
+        enableService();
+
+        // Set expectations.
+        final AutofillId id = new AutofillId(42);
+        final Bundle clientState = new Bundle();
+        clientState.putParcelable("id", id);
+        clientState.putParcelable("my_id", new MyAutofillId(id));
+        sReplier.addResponse(new CannedFillResponse.Builder()
+                .setRequiredSavableIds(SAVE_DATA_TYPE_GENERIC, ID_INPUT)
+                .setExtras(clientState)
+                .build());
+
+        // Trigger autofill.
+        mActivity.syncRunOnUiThread(() -> mActivity.mInput.requestFocus());
+        sReplier.getNextFillRequest();
+
+        // Trigger save.
+        mActivity.syncRunOnUiThread(() -> {
+            mActivity.mInput.setText("108");
+            mActivity.mCommit.performClick();
+        });
+        UiObject2 saveUi = mUiBot.assertSaveShowing(SAVE_DATA_TYPE_GENERIC);
+
+        // Save it...
+        mUiBot.saveForAutofill(saveUi, true);
+
+        // ... and assert results
+        final SaveRequest saveRequest = sReplier.getNextSaveRequest();
+        assertMyClientState(saveRequest.data);
+
+        // Also check fillevent history
+        final FillEventHistory history = InstrumentedAutoFillService.getFillEventHistory(1);
+        @SuppressWarnings("deprecation")
+        final Bundle deprecatedState = history.getClientState();
+        assertMyClientState(deprecatedState);
+        assertMyClientState(history.getEvents().get(0).getClientState());
+    }
+
+    private void assertMyClientState(Bundle data) {
+        // Must set proper classpath before reading the data, otherwise Bundle will use it's
+        // on class classloader, which is the framework's.
+        data.setClassLoader(getClass().getClassLoader());
+
+        final AutofillId expectedId = new AutofillId(42);
+        final AutofillId actualId = data.getParcelable("id");
+        assertThat(actualId).isEqualTo(expectedId);
+        final MyAutofillId actualMyId = data.getParcelable("my_id");
+        assertThat(actualMyId).isEqualTo(new MyAutofillId(expectedId));
     }
 
     @Test

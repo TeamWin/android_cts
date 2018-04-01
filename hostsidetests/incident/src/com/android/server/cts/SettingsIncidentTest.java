@@ -22,14 +22,20 @@ import android.providers.settings.SettingsServiceDumpProto;
 import android.providers.settings.UserSettingsProto;
 
 import com.android.ddmlib.Log.LogLevel;
+import com.android.incident.Destination;
+import com.android.incident.Privacy;
 import com.android.tradefed.log.LogUtil.CLog;
 import com.google.protobuf.GeneratedMessage;
+import com.google.protobuf.Descriptors.FieldDescriptor;
 
 import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
 import java.util.Arrays;
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
+import java.util.Map;
+import java.util.HashMap;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -58,52 +64,64 @@ public class SettingsIncidentTest extends ProtoDumpTestCase {
         assertEquals(0, userSettings.getUserId());
 
         CLog.logAndDisplay(LogLevel.INFO, "#*#*#*#*#*#*#*#*#*#*# SECURE #*#*#*#*#*#*#*#*#*#*#");
-        verifySettings(userSettings.getSecureSettings());
+        verifySettings(userSettings.getSecureSettings(), filterLevel);
         CLog.logAndDisplay(LogLevel.INFO, "#*#*#*#*#*#*#*#*#*#*# SYSTEM #*#*#*#*#*#*#*#*#*#*#");
-        verifySettings(userSettings.getSystemSettings());
+        verifySettings(userSettings.getSystemSettings(), filterLevel);
 
         CLog.logAndDisplay(LogLevel.INFO, "#*#*#*#*#*#*#*#*#*#*# GLOBAL #*#*#*#*#*#*#*#*#*#*#");
-        verifySettings(dump.getGlobalSettings());
+        verifySettings(dump.getGlobalSettings(), filterLevel);
     }
 
-    private static void verifySettings(GeneratedMessage settings) throws Exception {
-        verifySettings(getSettingProtos(settings));
+    private static void verifySettings(GeneratedMessage settings, final int filterLevel) throws Exception {
+        verifySettings(getSettingProtos(settings), filterLevel);
 
         final List<SettingsOperationProto> ops = invoke(settings, "getHistoricalOperationsList");
         for (SettingsOperationProto op : ops) {
             assertTrue(op.getTimestamp() >= 0);
             assertNotNull(op.getOperation());
             // setting is optional
+            if (filterLevel == PRIVACY_AUTO) {
+                // SettingOperationProto is EXPLICIT by default.
+                assertTrue(op.getOperation().isEmpty());
+                assertTrue(op.getSetting().isEmpty());
+            }
         }
     }
 
-    private static List<SettingProto> getSettingProtos(GeneratedMessage settingsProto) {
+    private static Map<SettingProto, Destination> getSettingProtos(GeneratedMessage settingsProto) {
         CLog.d("Checking out class: " + settingsProto.getClass());
 
-        Stream<SettingProto> settings = Arrays.stream(settingsProto.getClass().getDeclaredMethods())
-                .filter((method) ->
-                        method.getName().startsWith("get")
-                                && !method.getName().endsWith("OrBuilder")
-                                && method.getParameterCount() == 0
-                                && !Modifier.isStatic(method.getModifiers())
-                                && method.getReturnType() == SettingProto.class)
-                .map((method) -> (SettingProto) invoke(method, settingsProto));
+        Map<SettingProto, Destination> settings = new HashMap<>();
+        for (FieldDescriptor fd : settingsProto.getDescriptorForType().getFields()) {
+            if (fd.getType() != FieldDescriptor.Type.MESSAGE) {
+                // Only looking for SettingProtos and messages that contain them. Skip any primitive
+                // fields.
+                continue;
+            }
+            List<Object> tmp;
+            if (fd.isRepeated()) {
+                tmp = (List) settingsProto.getField(fd);
+            } else {
+                tmp = new ArrayList<>();
+                tmp.add(settingsProto.getField(fd));
+            }
+            Destination dest = fd.getOptions().getExtension(Privacy.privacy).getDest();
+            for (Object o : tmp) {
+                if ("android.providers.settings.SettingProto".equals(fd.getMessageType().getFullName())) {
+                    // The container's default privacy doesn't affect message types. However,
+                    // anotations on the field override the message's default annotation. If a
+                    // message field doesn't have an annotation, it is treated as EXPLICIT by
+                    // default.
+                    settings.put((SettingProto) o, dest == Destination.DEST_UNSET ? Destination.DEST_EXPLICIT : dest);
+                } else {
+                    // Sub messages don't inherit the container's default privacy. If the field had
+                    // an annotation, it would override the sub message's default privacy.
+                    settings.putAll(getSettingProtos((GeneratedMessage) o));
+                }
+            }
+        }
 
-        // Get fields in the submessages.
-        Stream<SettingProto> subSettings = Arrays.stream(settingsProto.getClass().getDeclaredMethods())
-                .filter((method) ->
-                        method.getName().startsWith("get")
-                                && !method.getName().endsWith("OrBuilder")
-                                && method.getParameterCount() == 0
-                                && !Modifier.isStatic(method.getModifiers())
-                                && method.getReturnType() != SettingProto.class
-                                && GeneratedMessage.class.isAssignableFrom(method.getReturnType())
-                                && method.getReturnType() != settingsProto.getClass())
-                .map((method) -> getSettingProtos((GeneratedMessage) invoke(method, settingsProto)))
-                // getSettingsProtos returns List<>, so flatten all of them into one.
-                .flatMap(Collection::stream);
-
-        return Stream.concat(settings, subSettings).collect(Collectors.toList());
+        return settings;
     }
 
     private static <T> T invoke(Method method, Object instance, Object... args) {
@@ -129,11 +147,13 @@ public class SettingsIncidentTest extends ProtoDumpTestCase {
         return c == Integer.class ? int.class : c;
     }
 
-    private static void verifySettings(List<SettingProto> settings) throws Exception {
+    private static void verifySettings(Map<SettingProto, Destination> settings, final int filterLevel) throws Exception {
         assertFalse(settings.isEmpty());
 
         CLog.d("Field count: " + settings.size());
-        for (SettingProto setting : settings) {
+        for (Map.Entry<SettingProto, Destination> sDPair : settings.entrySet()) {
+            SettingProto setting = sDPair.getKey();
+            Destination dest = sDPair.getValue();
             try {
                 final String id = setting.getId();
                 if (!id.isEmpty()) {
@@ -141,6 +161,27 @@ public class SettingsIncidentTest extends ProtoDumpTestCase {
                     Long.parseLong(id);
                 }
                 assertNotNull(setting.getName());
+                if (filterLevel < PRIVACY_LOCAL) {
+                    if  (dest == Destination.DEST_LOCAL) {
+                        // Any filter that is not LOCAL should make sure local isn't printed at all.
+                        String err = "Setting '" + setting.getName() + "' with LOCAL privacy didn't strip data for filter level '" + privacyToString(filterLevel) + "'";
+                        assertTrue(err, setting.getId().isEmpty());
+                        assertTrue(err, setting.getName().isEmpty());
+                        assertTrue(err, setting.getPkg().isEmpty());
+                        assertTrue(err, setting.getValue().isEmpty());
+                        assertTrue(err, setting.getDefaultValue().isEmpty());
+                    }
+                    if (filterLevel < PRIVACY_EXPLICIT) {
+                        if (dest == Destination.DEST_EXPLICIT) {
+                            String err = "Setting '" + setting.getName() + "' with EXPLICIT privacy didn't strip data for filter level '" + privacyToString(filterLevel) + "'";
+                            assertTrue(err, setting.getId().isEmpty());
+                            assertTrue(err, setting.getName().isEmpty());
+                            assertTrue(err, setting.getPkg().isEmpty());
+                            assertTrue(err, setting.getValue().isEmpty());
+                            assertTrue(err, setting.getDefaultValue().isEmpty());
+                        }
+                    }
+                }
                 // pkg is optional
                 // value can be anything
                 // default can be anything

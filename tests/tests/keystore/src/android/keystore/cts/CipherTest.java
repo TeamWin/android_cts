@@ -20,6 +20,7 @@ import android.app.KeyguardManager;
 import android.content.Context;
 import android.os.SystemClock;
 import android.platform.test.annotations.Presubmit;
+import android.security.keystore.KeyGenParameterSpec;
 import android.security.keystore.KeyProperties;
 import android.security.keystore.KeyProtection;
 import android.server.am.ActivityManagerTestBase;
@@ -29,9 +30,12 @@ import android.test.MoreAsserts;
 import java.security.AlgorithmParameters;
 import java.security.InvalidKeyException;
 import java.security.Key;
+import java.security.KeyStore;
 import java.security.KeyStoreException;
 import java.security.Provider;
 import java.security.Security;
+import java.security.Signature;
+import java.security.SignatureException;
 import java.security.spec.AlgorithmParameterSpec;
 import java.security.spec.MGF1ParameterSpec;
 import java.security.Provider.Service;
@@ -47,6 +51,8 @@ import java.util.TreeMap;
 import javax.crypto.BadPaddingException;
 import javax.crypto.Cipher;
 import javax.crypto.IllegalBlockSizeException;
+import javax.crypto.KeyGenerator;
+import javax.crypto.SecretKey;
 import javax.crypto.spec.GCMParameterSpec;
 import javax.crypto.spec.IvParameterSpec;
 import javax.crypto.spec.OAEPParameterSpec;
@@ -378,6 +384,95 @@ public class CipherTest extends AndroidTestCase {
                     throw new RuntimeException(
                             "Failed for " + algorithm + " with key " + key.getAlias(),
                             e);
+                }
+            }
+        }
+    }
+
+    private boolean isDecryptValid(byte[] expectedPlaintext, byte[] ciphertext, Cipher cipher,
+            AlgorithmParameters params, ImportedKey key) {
+        try {
+            Key decryptionKey = key.getKeystoreBackedDecryptionKey();
+            cipher.init(Cipher.DECRYPT_MODE, decryptionKey, params);
+            byte[] actualPlaintext = cipher.doFinal(ciphertext);
+            MoreAsserts.assertEquals(expectedPlaintext, actualPlaintext);
+            return true;
+        } catch (Throwable e) {
+            return false;
+        }
+    }
+
+    @Presubmit
+    public void testKeyguardLockAndUnlock()
+            throws Exception {
+        try (DeviceLockSession dl = new DeviceLockSession()) {
+            KeyguardManager keyguardManager = (KeyguardManager)getContext()
+                    .getSystemService(Context.KEYGUARD_SERVICE);
+
+            dl.performDeviceLock();
+            assertTrue(keyguardManager.isDeviceLocked());
+
+            dl.performDeviceUnlock();
+            assertFalse(keyguardManager.isDeviceLocked());
+        }
+    }
+
+    public void testEmptyPlaintextEncryptsAndDecryptsWhenUnlockedRequired()
+            throws Exception {
+        final boolean isUnlockedDeviceRequired = true;
+        final boolean isUserAuthRequired = false;
+
+        try (DeviceLockSession dl = new DeviceLockSession()) {
+            KeyguardManager keyguardManager = (KeyguardManager)getContext()
+                .getSystemService(Context.KEYGUARD_SERVICE);
+
+            Provider provider = Security.getProvider(EXPECTED_PROVIDER_NAME);
+            assertNotNull(provider);
+            final byte[] originalPlaintext = EmptyArray.BYTE;
+            for (String algorithm : EXPECTED_ALGORITHMS) {
+                for (ImportedKey key : importKatKeys(
+                        algorithm,
+                        KeyProperties.PURPOSE_ENCRYPT | KeyProperties.PURPOSE_DECRYPT,
+                        false, isUnlockedDeviceRequired, isUserAuthRequired)) {
+                    try {
+                        // Encrypt the data with the device locked
+                        dl.performDeviceLock();
+                        Key encryptionKey = key.getKeystoreBackedEncryptionKey();
+                        byte[] plaintext = truncatePlaintextIfNecessary(
+                               algorithm, encryptionKey, originalPlaintext);
+                        if (plaintext == null) {
+                            // Key is too short to encrypt anything using this transformation
+                            continue;
+                        }
+
+                        Cipher cipher = Cipher.getInstance(algorithm, provider);
+                        cipher.init(Cipher.ENCRYPT_MODE, encryptionKey);
+                        AlgorithmParameters params = cipher.getParameters();
+                        byte[] ciphertext = cipher.doFinal(plaintext);
+                        byte[] expectedPlaintext = plaintext;
+                        if ("RSA/ECB/NoPadding".equalsIgnoreCase(algorithm)) {
+                            // RSA decryption without padding left-pads resulting plaintext with NUL
+                            // bytes to the length of RSA modulus.
+                            int modulusLengthBytes = (TestUtils.getKeySizeBits(encryptionKey) + 7) / 8;
+                            expectedPlaintext = TestUtils.leftPadWithZeroBytes(
+                                   expectedPlaintext, modulusLengthBytes);
+                        }
+
+                        // Then attempt to decrypt the data with the device still locked
+                        // This should fail.
+                        cipher = Cipher.getInstance(algorithm, provider);
+                        assertFalse(isDecryptValid(expectedPlaintext, ciphertext, cipher, params, key));
+
+                        // Then attempt to decrypt the data with the device unlocked
+                        // This should succeed
+                        dl.performDeviceUnlock();
+                        cipher = Cipher.getInstance(algorithm, provider);
+                        assertTrue(isDecryptValid(expectedPlaintext, ciphertext, cipher, params, key));
+                    } catch (Throwable e) {
+                        throw new RuntimeException(
+                              "Failed for " + algorithm + " with key " + key.getAlias(),
+                               e);
+                    }
                 }
             }
         }
@@ -805,6 +900,7 @@ public class CipherTest extends AndroidTestCase {
     }
 
     public void testCanCreateAuthBoundKeyWhenScreenLocked() throws Exception {
+        final boolean isUnlockedDeviceRequired = false;
         final boolean isUserAuthRequired = true;
 
         try (DeviceLockSession dl = new DeviceLockSession()) {
@@ -819,7 +915,7 @@ public class CipherTest extends AndroidTestCase {
             for (String algorithm : EXPECTED_ALGORITHMS) {
                 for (ImportedKey key : importKatKeys(algorithm,
                         KeyProperties.PURPOSE_ENCRYPT | KeyProperties.PURPOSE_DECRYPT,
-                        false, isUserAuthRequired)) {
+                        false, isUnlockedDeviceRequired, isUserAuthRequired)) {
                     assertNotNull(key);
                 }
             }
@@ -828,6 +924,7 @@ public class CipherTest extends AndroidTestCase {
 
     public void testCannotCreateAuthBoundKeyWhenDevicePinNotSet() throws Exception {
         final boolean isUserAuthRequired = true;
+        final boolean isUnlockedDeviceRequired = false;
 
         KeyguardManager keyguardManager = (KeyguardManager)getContext().getSystemService(Context.KEYGUARD_SERVICE);
         assertFalse(keyguardManager.isDeviceLocked());
@@ -835,7 +932,7 @@ public class CipherTest extends AndroidTestCase {
         for (String algorithm : EXPECTED_ALGORITHMS) {
             try {
                 importKatKeys(algorithm, KeyProperties.PURPOSE_ENCRYPT | KeyProperties.PURPOSE_DECRYPT,
-                        false, isUserAuthRequired);
+                        false, isUnlockedDeviceRequired, isUserAuthRequired);
                 fail("Importing auth bound keys to an insecure device should fail");
             } catch (KeyStoreException e) {
                 // Expected behavior
@@ -1555,14 +1652,15 @@ public class CipherTest extends AndroidTestCase {
     private Collection<ImportedKey> importKatKeys(
             String transformation, int purposes, boolean ivProvidedWhenEncrypting)
             throws Exception {
-      return importKatKeys(transformation, purposes, ivProvidedWhenEncrypting, false);
+      return importKatKeys(transformation, purposes, ivProvidedWhenEncrypting, false, false);
     }
 
     private Collection<ImportedKey> importKatKeys(
             String transformation, int purposes, boolean ivProvidedWhenEncrypting,
-            boolean isUserAuthRequired) throws Exception {
+            boolean isUnlockedDeviceRequired, boolean isUserAuthRequired) throws Exception {
         KeyProtection importParams = TestUtils.getMinimalWorkingImportParametersForCipheringWith(
-            transformation, purposes, ivProvidedWhenEncrypting, isUserAuthRequired);
+            transformation, purposes, ivProvidedWhenEncrypting, isUnlockedDeviceRequired,
+            isUserAuthRequired);
         String keyAlgorithm = TestUtils.getCipherKeyAlgorithm(transformation);
         if (KeyProperties.KEY_ALGORITHM_AES.equalsIgnoreCase(keyAlgorithm)) {
             return Arrays.asList(

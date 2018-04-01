@@ -26,6 +26,7 @@ import android.content.pm.PackageManager;
 import android.os.IBinder;
 import android.os.Parcel;
 import android.os.RemoteException;
+import android.support.test.InstrumentationRegistry;
 
 import com.android.compatibility.common.util.SystemUtil;
 
@@ -67,8 +68,9 @@ public final class ServiceProcessController {
         mServiceIntents = serviceIntents;
         mServicePackage = mServiceIntents[0].getComponent().getPackageName();
         mDefaultWaitTime = defaultWaitTime;
-        String cmd = "pm grant " + mMyPackageName + " " + Manifest.permission.PACKAGE_USAGE_STATS;
-        String result = SystemUtil.runShellCommand(mInstrumentation, cmd);
+
+        InstrumentationRegistry.getInstrumentation().getUiAutomation().grantRuntimePermission(
+                mMyPackageName, android.Manifest.permission.PACKAGE_USAGE_STATS);
         /*
         Log.d("XXXX", "Invoke: " + cmd);
         Log.d("XXXX", "Result: " + result);

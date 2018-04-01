@@ -17,6 +17,7 @@
 package android.view.inputmethod.cts;
 
 import static android.view.WindowManager.LayoutParams.SOFT_INPUT_STATE_ALWAYS_VISIBLE;
+import static android.view.inputmethod.cts.util.TestUtils.runOnMainSync;
 import static android.widget.PopupWindow.INPUT_METHOD_NOT_NEEDED;
 
 import static com.android.cts.mockime.ImeEventStreamTestUtils.editorMatcher;
@@ -166,37 +167,6 @@ public class FocusHandlingTest extends EndToEndImeTestBase {
     }
 
     @Test
-    public void testNoEditorNoStartInput() throws Exception {
-        try (MockImeSession imeSession = MockImeSession.create(
-                InstrumentationRegistry.getContext(),
-                InstrumentationRegistry.getInstrumentation().getUiAutomation(),
-                new ImeSettings.Builder())) {
-            final ImeEventStream stream = imeSession.openEventStream();
-
-            final String marker = getTestMarker();
-            TestActivity.startSync(activity -> {
-                final LinearLayout layout = new LinearLayout(activity);
-                layout.setOrientation(LinearLayout.VERTICAL);
-
-                final TextView textView = new TextView(activity) {
-                    @Override
-                    public boolean onCheckIsTextEditor() {
-                        return false;
-                    }
-                };
-                textView.setText("textView");
-                textView.requestFocus();
-                textView.setPrivateImeOptions(marker);
-                layout.addView(textView);
-                return layout;
-            });
-
-            // Input shouldn't start
-            notExpectEvent(stream, editorMatcher("onStartInput", marker), TIMEOUT);
-        }
-    }
-
-    @Test
     public void testEditorStartsInput() throws Exception {
         try (MockImeSession imeSession = MockImeSession.create(
                 InstrumentationRegistry.getContext(),
@@ -215,40 +185,6 @@ public class FocusHandlingTest extends EndToEndImeTestBase {
                 editText.requestFocus();
                 layout.addView(editText);
                 return layout;
-            });
-
-            // Input should start
-            expectEvent(stream, editorMatcher("onStartInput", marker), TIMEOUT);
-        }
-    }
-
-    @Test
-    public void testDelayedAddEditorStartsInput() throws Exception {
-        try (MockImeSession imeSession = MockImeSession.create(
-                InstrumentationRegistry.getContext(),
-                InstrumentationRegistry.getInstrumentation().getUiAutomation(),
-                new ImeSettings.Builder())) {
-            final ImeEventStream stream = imeSession.openEventStream();
-
-            final AtomicReference<LinearLayout> layoutRef = new AtomicReference<>();
-            final TestActivity testActivity = TestActivity.startSync(activity -> {
-                final LinearLayout layout = new LinearLayout(activity);
-                layout.setOrientation(LinearLayout.VERTICAL);
-                layoutRef.set(layout);
-
-                return layout;
-            });
-
-            // Activity adds EditText at a later point.
-            TestUtils.waitOnMainUntil(() -> layoutRef.get().hasWindowFocus(), TIMEOUT);
-            InstrumentationRegistry.getInstrumentation().waitForIdleSync();
-            final String marker = getTestMarker();
-            testActivity.runOnUiThread(() -> {
-                final EditText editText = new EditText(testActivity);
-                editText.setText("Editable");
-                editText.setPrivateImeOptions(marker);
-                layoutRef.get().addView(editText);
-                editText.requestFocus();
             });
 
             // Input should start
@@ -447,6 +383,34 @@ public class FocusHandlingTest extends EndToEndImeTestBase {
 
             TestUtils.waitOnMainUntil(
                     () -> TextUtils.equals(editText.getText(), "test commit"), TIMEOUT);
+        }
+    }
+
+    /**
+     * Test {@link EditText#setShowSoftInputOnFocus(boolean)}.
+     */
+    @Test
+    public void testSetShowInputOnFocus() throws Exception {
+        try (MockImeSession imeSession = MockImeSession.create(
+                InstrumentationRegistry.getContext(),
+                InstrumentationRegistry.getInstrumentation().getUiAutomation(),
+                new ImeSettings.Builder())) {
+            final ImeEventStream stream = imeSession.openEventStream();
+
+            final String marker = getTestMarker();
+            final EditText editText = launchTestActivity(marker);
+            runOnMainSync(() -> editText.setShowSoftInputOnFocus(false));
+
+            // Wait until "onStartInput" gets called for the EditText.
+            expectEvent(stream, editorMatcher("onStartInput", marker), TIMEOUT);
+
+            // Emulate tap event
+            CtsTouchUtils.emulateTapOnViewCenter(
+                    InstrumentationRegistry.getInstrumentation(), editText);
+
+            // "showSoftInput" must not happen when setShowSoftInputOnFocus(false) is called.
+            notExpectEvent(stream, event -> "showSoftInput".equals(event.getEventName()),
+                    NOT_EXPECT_TIMEOUT);
         }
     }
 }
