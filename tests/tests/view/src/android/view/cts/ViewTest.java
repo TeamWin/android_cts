@@ -88,6 +88,7 @@ import android.view.TouchDelegate;
 import android.view.View;
 import android.view.View.BaseSavedState;
 import android.view.View.OnLongClickListener;
+import android.view.View.OnUnhandledKeyEventListener;
 import android.view.ViewConfiguration;
 import android.view.ViewGroup;
 import android.view.ViewParent;
@@ -2447,12 +2448,12 @@ public class ViewTest {
     }
 
     @Test
-    public void testKeyFallback() throws Throwable {
-        MockFallbackListener listener = new MockFallbackListener();
+    public void testUnhandledKeys() throws Throwable {
+        MockUnhandledKeyListener listener = new MockUnhandledKeyListener();
         ViewGroup viewGroup = (ViewGroup) mActivity.findViewById(R.id.viewlayout_root);
         // Attaching a fallback handler
         TextView mockView1 = new TextView(mActivity);
-        mockView1.addKeyFallbackListener(listener);
+        mockView1.addOnUnhandledKeyEventListener(listener);
 
         // Before the view is attached, it shouldn't respond to anything
         mInstrumentation.sendKeyDownUpSync(KeyEvent.KEYCODE_B);
@@ -2466,9 +2467,9 @@ public class ViewTest {
         listener.reset();
 
         // If multiple on one view, last added should receive event first
-        MockFallbackListener listener2 = new MockFallbackListener();
+        MockUnhandledKeyListener listener2 = new MockUnhandledKeyListener();
         listener2.mReturnVal = true;
-        mActivityRule.runOnUiThread(() -> mockView1.addKeyFallbackListener(listener2));
+        mActivityRule.runOnUiThread(() -> mockView1.addOnUnhandledKeyEventListener(listener2));
         mInstrumentation.waitForIdleSync();
         mInstrumentation.sendKeyDownUpSync(KeyEvent.KEYCODE_B);
         assertTrue(listener2.fired());
@@ -2477,8 +2478,8 @@ public class ViewTest {
 
         // If removed, it should not receive fallbacks anymore
         mActivityRule.runOnUiThread(() -> {
-            mockView1.removeKeyFallbackListener(listener);
-            mockView1.removeKeyFallbackListener(listener2);
+            mockView1.removeOnUnhandledKeyEventListener(listener);
+            mockView1.removeOnUnhandledKeyEventListener(listener2);
         });
         mInstrumentation.waitForIdleSync();
         mInstrumentation.sendKeyDownUpSync(KeyEvent.KEYCODE_B);
@@ -2500,7 +2501,7 @@ public class ViewTest {
         listener.mReturnVal = true;
         mActivityRule.runOnUiThread(() -> {
             for (View v : allViews) {
-                v.addKeyFallbackListener(listener);
+                v.addOnUnhandledKeyEventListener(listener);
             }
         });
         mInstrumentation.waitForIdleSync();
@@ -2509,31 +2510,34 @@ public class ViewTest {
         assertEquals(lastInHigher, listener.mLastView);
         listener.reset();
 
-        mActivityRule.runOnUiThread(() -> lastInHigher.removeKeyFallbackListener(listener));
+        mActivityRule.runOnUiThread(
+                () -> lastInHigher.removeOnUnhandledKeyEventListener(listener));
         mInstrumentation.waitForIdleSync();
         mInstrumentation.sendKeyDownUpSync(KeyEvent.KEYCODE_B);
         assertEquals(lowerInHigher, listener.mLastView);
         listener.reset();
 
-        mActivityRule.runOnUiThread(() -> lowerInHigher.removeKeyFallbackListener(listener));
+        mActivityRule.runOnUiThread(
+                () -> lowerInHigher.removeOnUnhandledKeyEventListener(listener));
         mInstrumentation.waitForIdleSync();
         mInstrumentation.sendKeyDownUpSync(KeyEvent.KEYCODE_B);
         assertEquals(higherGroup, listener.mLastView);
         listener.reset();
 
-        mActivityRule.runOnUiThread(() -> higherGroup.removeKeyFallbackListener(listener));
+        mActivityRule.runOnUiThread(() -> higherGroup.removeOnUnhandledKeyEventListener(listener));
         mInstrumentation.waitForIdleSync();
         mInstrumentation.sendKeyDownUpSync(KeyEvent.KEYCODE_B);
         assertEquals(lastButton, listener.mLastView);
         listener.reset();
 
-        mActivityRule.runOnUiThread(() -> lastButton.removeKeyFallbackListener(listener));
+        mActivityRule.runOnUiThread(() -> lastButton.removeOnUnhandledKeyEventListener(listener));
         mInstrumentation.waitForIdleSync();
         mInstrumentation.sendKeyDownUpSync(KeyEvent.KEYCODE_B);
         assertEquals(higherInNormal, listener.mLastView);
         listener.reset();
 
-        mActivityRule.runOnUiThread(() -> higherInNormal.removeKeyFallbackListener(listener));
+        mActivityRule.runOnUiThread(
+                () -> higherInNormal.removeOnUnhandledKeyEventListener(listener));
         mInstrumentation.waitForIdleSync();
         mInstrumentation.sendKeyDownUpSync(KeyEvent.KEYCODE_B);
         assertEquals(lastInNormal, listener.mLastView);
@@ -4985,13 +4989,13 @@ public class ViewTest {
         public View firstChild;
     }
 
-    private static class MockFallbackListener implements View.OnKeyFallbackListener {
+    private static class MockUnhandledKeyListener implements OnUnhandledKeyEventListener {
         public View mLastView = null;
         public boolean mGotUp = false;
         public boolean mReturnVal = false;
 
         @Override
-        public boolean onKeyFallback(View v, KeyEvent event) {
+        public boolean onUnhandledKeyEvent(View v, KeyEvent event) {
             if (event.getAction() == KeyEvent.ACTION_DOWN) {
                 mLastView = v;
             } else if (event.getAction() == KeyEvent.ACTION_UP) {
