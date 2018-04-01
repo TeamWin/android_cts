@@ -90,12 +90,12 @@ public final class ServiceProcessController {
                 mServicePackage, 0);
         mUid = appInfo.uid;
 
-        mUidForegroundListener = new UidImportanceListener(appInfo.uid, mDefaultWaitTime);
-        mAm.addOnUidImportanceListener(mUidForegroundListener,
-                ActivityManager.RunningAppProcessInfo.IMPORTANCE_SERVICE);
-        mUidGoneListener = new UidImportanceListener(appInfo.uid, mDefaultWaitTime);
-        mAm.addOnUidImportanceListener(mUidGoneListener,
-                ActivityManager.RunningAppProcessInfo.IMPORTANCE_EMPTY);
+        mUidForegroundListener = new UidImportanceListener(mContext, appInfo.uid,
+                ActivityManager.RunningAppProcessInfo.IMPORTANCE_SERVICE, mDefaultWaitTime);
+        mUidForegroundListener.register();
+        mUidGoneListener = new UidImportanceListener(mContext, appInfo.uid,
+                ActivityManager.RunningAppProcessInfo.IMPORTANCE_EMPTY, mDefaultWaitTime);
+        mUidGoneListener.register();
 
         mUidWatcher = new WatchUidRunner(instrumentation, appInfo.uid, mDefaultWaitTime);
     }
@@ -143,12 +143,17 @@ public final class ServiceProcessController {
         SystemUtil.runShellCommand(mInstrumentation, cmd);
     }
 
+    public void setAppOpMode(String opStr, String mode) throws IOException {
+        String cmd = "cmd appops set " + mServicePackage + " " + opStr + "  " + mode;
+        SystemUtil.runShellCommand(mInstrumentation, cmd);
+    }
+
     public void cleanup() throws IOException {
         removeFromWhitelist();
         allowBackgroundOp();
         mUidWatcher.finish();
-        mAm.removeOnUidImportanceListener(mUidGoneListener);
-        mAm.removeOnUidImportanceListener(mUidForegroundListener);
+        mUidGoneListener.unregister();
+        mUidForegroundListener.unregister();
         mData.recycle();
     }
 
