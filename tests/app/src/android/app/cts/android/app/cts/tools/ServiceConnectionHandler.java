@@ -62,7 +62,8 @@ public final class ServiceConnectionHandler implements ServiceConnection {
             if (mMonitoring) {
                 throw new IllegalStateException("Already monitoring");
             }
-            if (!mContext.bindService(mIntent, this, Context.BIND_WAIVE_PRIORITY)) {
+            if (!mContext.bindService(mIntent, this, Context.BIND_WAIVE_PRIORITY
+                    | Context.BIND_ALLOW_OOM_MANAGEMENT)) {
                 throw new IllegalStateException("Failed to bind " + mIntent);
             }
             mMonitoring = true;
