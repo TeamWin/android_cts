@@ -155,6 +155,13 @@ public class BatterySaverAlarmTest extends BatterySavingTestBase {
         return action;
     }
 
+    private static void forcePackageIntoBg(String packageName) throws Exception {
+        runMakeUidIdle(packageName);
+        Thread.sleep(200);
+        runKill(packageName, /*wait=*/ true);
+        Thread.sleep(1000);
+    }
+
     @LargeTest
     @Test
     public void testAllowWhileIdleThrottled() throws Exception {
@@ -164,9 +171,7 @@ public class BatterySaverAlarmTest extends BatterySavingTestBase {
 
         enableBatterySaver(true);
 
-        // Make sure the UID is not in the FG.
-        runMakeUidIdle(targetPackage);
-        runKill(targetPackage);
+        forcePackageIntoBg(targetPackage);
 
         // First alarm shouldn't be throttled.
         final long triggerElapsed1 = SystemClock.elapsedRealtime() + MIN_FUTURITY;
@@ -232,9 +237,7 @@ public class BatterySaverAlarmTest extends BatterySavingTestBase {
 
         enableBatterySaver(true);
 
-        // Make sure the UID is not in the FG.
-        runMakeUidIdle(targetPackage);
-        runKill(targetPackage);
+        forcePackageIntoBg(targetPackage);
 
         // When battery saver is enabled, alarms should be blocked.
         final long triggerElapsed1 = SystemClock.elapsedRealtime() + MIN_FUTURITY;
@@ -253,9 +256,7 @@ public class BatterySaverAlarmTest extends BatterySavingTestBase {
         // Try again.
         mAlarmCount.set(0);
 
-        // Make sure the UID is not in the FG.
-        runMakeUidIdle(targetPackage);
-        runKill(targetPackage);
+        forcePackageIntoBg(targetPackage);
 
         // When battery saver is enabled, alarms should be blocked.
         final long triggerElapsed2 = SystemClock.elapsedRealtime() + MIN_FUTURITY;
