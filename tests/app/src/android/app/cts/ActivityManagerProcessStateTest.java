@@ -20,6 +20,7 @@ import android.Manifest;
 import android.accessibilityservice.AccessibilityService;
 import android.app.Activity;
 import android.app.ActivityManager;
+import android.app.AppOpsManager;
 import android.app.Instrumentation;
 import android.app.KeyguardManager;
 import android.app.cts.android.app.cts.tools.ServiceConnectionHandler;
@@ -66,12 +67,19 @@ public class ActivityManagerProcessStateTest extends InstrumentationTestCase {
     static final String CANT_SAVE_STATE_1_PACKAGE_NAME = "com.android.test.cantsavestate1";
     static final String CANT_SAVE_STATE_2_PACKAGE_NAME = "com.android.test.cantsavestate2";
 
+    // Actions
+    static final String ACTION_START_FOREGROUND = "com.android.test.action.START_FOREGROUND";
+    static final String ACTION_STOP_FOREGROUND = "com.android.test.action.STOP_FOREGROUND";
+
     private static final int TEMP_WHITELIST_DURATION_MS = 2000;
 
     private Context mContext;
     private Instrumentation mInstrumentation;
     private Intent mServiceIntent;
+    private Intent mServiceStartForegroundIntent;
+    private Intent mServiceStopForegroundIntent;
     private Intent mService2Intent;
+    private Intent mMainProcess[];
     private Intent mAllProcesses[];
 
     @Override
@@ -81,8 +89,14 @@ public class ActivityManagerProcessStateTest extends InstrumentationTestCase {
         mContext = mInstrumentation.getContext();
         mServiceIntent = new Intent();
         mServiceIntent.setClassName(SIMPLE_PACKAGE_NAME, SIMPLE_PACKAGE_NAME + SIMPLE_SERVICE);
+        mServiceStartForegroundIntent = new Intent(mServiceIntent);
+        mServiceStartForegroundIntent.setAction(ACTION_START_FOREGROUND);
+        mServiceStopForegroundIntent = new Intent(mServiceIntent);
+        mServiceStopForegroundIntent.setAction(ACTION_STOP_FOREGROUND);
         mService2Intent = new Intent();
         mService2Intent.setClassName(SIMPLE_PACKAGE_NAME, SIMPLE_PACKAGE_NAME + SIMPLE_SERVICE2);
+        mMainProcess = new Intent[1];
+        mMainProcess[0] = mServiceIntent;
         mAllProcesses = new Intent[2];
         mAllProcesses[0] = mServiceIntent;
         mAllProcesses[1] = mService2Intent;
@@ -173,20 +187,14 @@ public class ActivityManagerProcessStateTest extends InstrumentationTestCase {
 
         ApplicationInfo appInfo = mContext.getPackageManager().getApplicationInfo(
                 SIMPLE_PACKAGE_NAME, 0);
-        UidImportanceListener uidForegroundListener = new UidImportanceListener(appInfo.uid,
-                WAIT_TIME);
+        UidImportanceListener uidForegroundListener = new UidImportanceListener(mContext,
+                appInfo.uid, ActivityManager.RunningAppProcessInfo.IMPORTANCE_SERVICE, WAIT_TIME);
 
-        String cmd = "pm revoke " + STUB_PACKAGE_NAME + " "
-                + Manifest.permission.PACKAGE_USAGE_STATS;
-        String result = SystemUtil.runShellCommand(getInstrumentation(), cmd);
-        /*
-        Log.d("XXXX", "Invoke: " + cmd);
-        Log.d("XXXX", "Result: " + result);
-        */
+        InstrumentationRegistry.getInstrumentation().getUiAutomation().revokeRuntimePermission(
+                STUB_PACKAGE_NAME, android.Manifest.permission.PACKAGE_USAGE_STATS);
         boolean gotException = false;
         try {
-            am.addOnUidImportanceListener(uidForegroundListener,
-                    ActivityManager.RunningAppProcessInfo.IMPORTANCE_SERVICE);
+            uidForegroundListener.register();
         } catch (SecurityException e) {
             gotException = true;
         }
@@ -200,12 +208,11 @@ public class ActivityManagerProcessStateTest extends InstrumentationTestCase {
         Log.d("XXXX", SystemUtil.runShellCommand(getInstrumentation(), "dumpsys package "
                 + STUB_PACKAGE_NAME));
         */
-        am.addOnUidImportanceListener(uidForegroundListener,
-                ActivityManager.RunningAppProcessInfo.IMPORTANCE_SERVICE);
+        uidForegroundListener.register();
 
-        UidImportanceListener uidGoneListener = new UidImportanceListener(appInfo.uid, WAIT_TIME);
-        am.addOnUidImportanceListener(uidGoneListener,
-                ActivityManager.RunningAppProcessInfo.IMPORTANCE_CACHED);
+        UidImportanceListener uidGoneListener = new UidImportanceListener(mContext,
+                appInfo.uid, ActivityManager.RunningAppProcessInfo.IMPORTANCE_CACHED, WAIT_TIME);
+        uidGoneListener.register();
 
         WatchUidRunner uidWatcher = new WatchUidRunner(getInstrumentation(), appInfo.uid,
                 WAIT_TIME);
@@ -341,11 +348,9 @@ public class ActivityManagerProcessStateTest extends InstrumentationTestCase {
             uidWatcher.expect(WatchUidRunner.CMD_PROCSTATE, WatchUidRunner.STATE_CACHED_EMPTY);
         } finally {
             data.recycle();
-
             uidWatcher.finish();
-
-            am.removeOnUidImportanceListener(uidForegroundListener);
-            am.removeOnUidImportanceListener(uidGoneListener);
+            uidForegroundListener.unregister();
+            uidGoneListener.unregister();
         }
     }
 
@@ -375,13 +380,12 @@ public class ActivityManagerProcessStateTest extends InstrumentationTestCase {
         ApplicationInfo appInfo = mContext.getPackageManager().getApplicationInfo(
                 SIMPLE_PACKAGE_NAME, 0);
 
-        UidImportanceListener uidForegroundListener = new UidImportanceListener(appInfo.uid,
-                WAIT_TIME);
-        am.addOnUidImportanceListener(uidForegroundListener,
-                ActivityManager.RunningAppProcessInfo.IMPORTANCE_SERVICE);
-        UidImportanceListener uidGoneListener = new UidImportanceListener(appInfo.uid, WAIT_TIME);
-        am.addOnUidImportanceListener(uidGoneListener,
-                ActivityManager.RunningAppProcessInfo.IMPORTANCE_EMPTY);
+        UidImportanceListener uidForegroundListener = new UidImportanceListener(mContext,
+                appInfo.uid, ActivityManager.RunningAppProcessInfo.IMPORTANCE_SERVICE, WAIT_TIME);
+        uidForegroundListener.register();
+        UidImportanceListener uidGoneListener = new UidImportanceListener(mContext,
+                appInfo.uid, ActivityManager.RunningAppProcessInfo.IMPORTANCE_EMPTY, WAIT_TIME);
+        uidGoneListener.register();
 
         WatchUidRunner uidWatcher = new WatchUidRunner(getInstrumentation(), appInfo.uid,
                 WAIT_TIME);
@@ -510,8 +514,8 @@ public class ActivityManagerProcessStateTest extends InstrumentationTestCase {
             cmd = "cmd deviceidle whitelist -" + SIMPLE_PACKAGE_NAME;
             result = SystemUtil.runShellCommand(getInstrumentation(), cmd);
 
-            am.removeOnUidImportanceListener(uidGoneListener);
-            am.removeOnUidImportanceListener(uidForegroundListener);
+            uidGoneListener.unregister();
+            uidForegroundListener.unregister();
 
             data.recycle();
         }
@@ -542,13 +546,12 @@ public class ActivityManagerProcessStateTest extends InstrumentationTestCase {
         ApplicationInfo appInfo = mContext.getPackageManager().getApplicationInfo(
                 SIMPLE_PACKAGE_NAME, 0);
 
-        UidImportanceListener uidServiceListener = new UidImportanceListener(appInfo.uid,
-                WAIT_TIME);
-        am.addOnUidImportanceListener(uidServiceListener,
-                ActivityManager.RunningAppProcessInfo.IMPORTANCE_SERVICE);
-        UidImportanceListener uidGoneListener = new UidImportanceListener(appInfo.uid, WAIT_TIME);
-        am.addOnUidImportanceListener(uidGoneListener,
-                ActivityManager.RunningAppProcessInfo.IMPORTANCE_CACHED);
+        UidImportanceListener uidServiceListener = new UidImportanceListener(mContext,
+                appInfo.uid, ActivityManager.RunningAppProcessInfo.IMPORTANCE_SERVICE, WAIT_TIME);
+        uidServiceListener.register();
+        UidImportanceListener uidGoneListener = new UidImportanceListener(mContext,
+                appInfo.uid, ActivityManager.RunningAppProcessInfo.IMPORTANCE_CACHED, WAIT_TIME);
+        uidGoneListener.register();
 
         WatchUidRunner uidWatcher = new WatchUidRunner(getInstrumentation(), appInfo.uid,
                 WAIT_TIME);
@@ -682,8 +685,8 @@ public class ActivityManagerProcessStateTest extends InstrumentationTestCase {
             cmd = "cmd deviceidle whitelist -" + SIMPLE_PACKAGE_NAME;
             result = SystemUtil.runShellCommand(getInstrumentation(), cmd);
 
-            am.removeOnUidImportanceListener(uidGoneListener);
-            am.removeOnUidImportanceListener(uidServiceListener);
+            uidGoneListener.unregister();
+            uidServiceListener.unregister();
 
             data.recycle();
         }
@@ -820,7 +823,6 @@ public class ActivityManagerProcessStateTest extends InstrumentationTestCase {
         }
     }
 
-
     /**
      * Test that background check does allow services to be started from activities.
      */
@@ -908,6 +910,160 @@ public class ActivityManagerProcessStateTest extends InstrumentationTestCase {
     }
 
     /**
+     * Test that the foreground service app op does prevent the foreground state.
+     */
+    public void testForegroundServiceAppOp() throws Exception {
+        final ServiceProcessController controller = new ServiceProcessController(mContext,
+                getInstrumentation(), STUB_PACKAGE_NAME, mAllProcesses, WAIT_TIME);
+        final ServiceConnectionHandler conn = new ServiceConnectionHandler(mContext,
+                mServiceIntent, WAIT_TIME);
+        final WatchUidRunner uidWatcher = controller.getUidWatcher();
+
+        try {
+            // First kill the process to start out in a stable state.
+            controller.ensureProcessGone();
+
+            // Do initial setup.
+            controller.makeUidIdle();
+            controller.removeFromWhitelist();
+            controller.setAppOpMode(AppOpsManager.OPSTR_START_FOREGROUND, "allow");
+
+            // Put app on whitelist, to allow service to run.
+            controller.addToWhitelist();
+
+            // We will use this to monitor when the service is running.
+            conn.startMonitoring();
+
+            // -------- START SERVICE AND THEN SUCCESSFULLY GO TO FOREGROUND
+
+            // Now start the service and wait for it to come up.
+            mContext.startService(mServiceStartForegroundIntent);
+            conn.waitForConnect();
+
+            // Also make sure the uid state reports are as expected.
+            uidWatcher.waitFor(WatchUidRunner.CMD_UNCACHED, null);
+            uidWatcher.expect(WatchUidRunner.CMD_PROCSTATE, WatchUidRunner.STATE_SERVICE);
+            uidWatcher.waitFor(WatchUidRunner.CMD_ACTIVE, null);
+            uidWatcher.expect(WatchUidRunner.CMD_PROCSTATE, WatchUidRunner.STATE_FG_SERVICE);
+
+            // Now take it out of foreground and confirm.
+            mContext.startService(mServiceStopForegroundIntent);
+            uidWatcher.expect(WatchUidRunner.CMD_PROCSTATE, WatchUidRunner.STATE_SERVICE);
+
+            // Good, now stop the service and wait for it to go away.
+            mContext.stopService(mServiceStartForegroundIntent);
+            conn.waitForDisconnect();
+
+            // There may be a transient STATE_SERVICE we don't care about, so waitFor.
+            uidWatcher.waitFor(WatchUidRunner.CMD_CACHED, null);
+            uidWatcher.expect(WatchUidRunner.CMD_PROCSTATE, WatchUidRunner.STATE_CACHED_EMPTY);
+
+            // We don't want to wait for the uid to actually go idle, we can force it now.
+            controller.makeUidIdle();
+            uidWatcher.expect(WatchUidRunner.CMD_IDLE, null);
+
+            // Make sure the process is gone so we start over fresh.
+            controller.ensureProcessGone();
+
+            // -------- START SERVICE AND BLOCK GOING TO FOREGROUND
+
+            // Now we will deny the app op and ensure the service can't become foreground.
+            controller.setAppOpMode(AppOpsManager.OPSTR_START_FOREGROUND, "ignore");
+
+            // Now start the service and wait for it to come up.
+            mContext.startService(mServiceStartForegroundIntent);
+            conn.waitForConnect();
+
+            // Also make sure the uid state reports are as expected.
+            uidWatcher.waitFor(WatchUidRunner.CMD_UNCACHED, null);
+            uidWatcher.expect(WatchUidRunner.CMD_PROCSTATE, WatchUidRunner.STATE_SERVICE);
+
+            // Good, now stop the service and wait for it to go away.
+            mContext.stopService(mServiceStartForegroundIntent);
+            conn.waitForDisconnect();
+
+            // THIS MUST BE AN EXPECT: we want to make sure we don't get in to STATE_FG_SERVICE.
+            uidWatcher.expect(WatchUidRunner.CMD_CACHED, null);
+            uidWatcher.expect(WatchUidRunner.CMD_PROCSTATE, WatchUidRunner.STATE_CACHED_EMPTY);
+
+            // Make sure the uid is idle (it should be anyway, it never went active here).
+            controller.makeUidIdle();
+
+            // Make sure the process is gone so we start over fresh.
+            controller.ensureProcessGone();
+
+            // -------- DIRECT START FOREGROUND SERVICE SUCCESSFULLY
+
+            controller.setAppOpMode(AppOpsManager.OPSTR_START_FOREGROUND, "allow");
+
+            // Now start the service and wait for it to come up.
+            mContext.startForegroundService(mServiceStartForegroundIntent);
+            conn.waitForConnect();
+
+            // Make sure it becomes a foreground service.  The process state changes here
+            // are weird looking because we first need to force the app out of idle to allow
+            // it to start the service.
+            uidWatcher.waitFor(WatchUidRunner.CMD_ACTIVE, null);
+            uidWatcher.waitFor(WatchUidRunner.CMD_UNCACHED, null);
+            uidWatcher.waitFor(WatchUidRunner.CMD_PROCSTATE, WatchUidRunner.STATE_FG_SERVICE);
+
+            // Good, now stop the service and wait for it to go away.
+            mContext.stopService(mServiceStartForegroundIntent);
+            conn.waitForDisconnect();
+
+            // There may be a transient STATE_SERVICE we don't care about, so waitFor.
+            uidWatcher.waitFor(WatchUidRunner.CMD_CACHED, null);
+            uidWatcher.expect(WatchUidRunner.CMD_PROCSTATE, WatchUidRunner.STATE_CACHED_EMPTY);
+
+            // We don't want to wait for the uid to actually go idle, we can force it now.
+            controller.makeUidIdle();
+            uidWatcher.expect(WatchUidRunner.CMD_IDLE, null);
+
+            // Make sure the process is gone so we start over fresh.
+            controller.ensureProcessGone();
+
+            // -------- DIRECT START FOREGROUND SERVICE BLOCKED
+
+            // Now we will deny the app op and ensure the service can't become foreground.
+            controller.setAppOpMode(AppOpsManager.OPSTR_START_FOREGROUND, "ignore");
+
+            // But we will put it on the whitelist so the service is still allowed to start.
+            controller.addToWhitelist();
+
+            // Now start the service and wait for it to come up.
+            mContext.startForegroundService(mServiceStartForegroundIntent);
+            conn.waitForConnect();
+
+            // In this case we only get to run it as a regular service.
+            uidWatcher.waitFor(WatchUidRunner.CMD_UNCACHED, null);
+            uidWatcher.waitFor(WatchUidRunner.CMD_PROCSTATE, WatchUidRunner.STATE_SERVICE);
+
+            // Good, now stop the service and wait for it to go away.
+            mContext.stopService(mServiceStartForegroundIntent);
+            conn.waitForDisconnect();
+
+            // THIS MUST BE AN EXPECT: we want to make sure we don't get in to STATE_FG_SERVICE.
+            uidWatcher.expect(WatchUidRunner.CMD_CACHED, null);
+            uidWatcher.expect(WatchUidRunner.CMD_PROCSTATE, WatchUidRunner.STATE_CACHED_EMPTY);
+
+            // Make sure the uid is idle (it should be anyway, it never went active here).
+            controller.makeUidIdle();
+
+            // Make sure the process is gone so we start over fresh.
+            controller.ensureProcessGone();
+
+            // -------- XXX NEED TO TEST NON-WHITELIST CASE WHERE NOTHING HAPPENS
+
+        } finally {
+            mContext.stopService(mServiceStartForegroundIntent);
+            conn.stopMonitoringIfNeeded();
+            controller.cleanup();
+            controller.setAppOpMode(AppOpsManager.OPSTR_START_FOREGROUND, "allow");
+            controller.removeFromWhitelist();
+        }
+    }
+
+    /**
      * Test that a single "can't save state" app has the proper process management
      * semantics.
      */
@@ -937,14 +1093,14 @@ public class ActivityManagerProcessStateTest extends InstrumentationTestCase {
 
         // This test is also using UidImportanceListener to make sure the correct
         // heavy-weight state is reported there.
-        UidImportanceListener uidForegroundListener = new UidImportanceListener(appInfo.uid,
+        UidImportanceListener uidForegroundListener = new UidImportanceListener(mContext,
+                appInfo.uid, ActivityManager.RunningAppProcessInfo.IMPORTANCE_FOREGROUND,
                 WAIT_TIME);
-        am.addOnUidImportanceListener(uidForegroundListener,
-                ActivityManager.RunningAppProcessInfo.IMPORTANCE_FOREGROUND);
-        UidImportanceListener uidBackgroundListener = new UidImportanceListener(appInfo.uid,
+        uidForegroundListener.register();
+        UidImportanceListener uidBackgroundListener = new UidImportanceListener(mContext,
+                appInfo.uid, ActivityManager.RunningAppProcessInfo.IMPORTANCE_CANT_SAVE_STATE-1,
                 WAIT_TIME);
-        am.addOnUidImportanceListener(uidBackgroundListener,
-                ActivityManager.RunningAppProcessInfo.IMPORTANCE_CANT_SAVE_STATE-1);
+        uidBackgroundListener.register();
 
         WatchUidRunner uidWatcher = new WatchUidRunner(getInstrumentation(), appInfo.uid,
                 WAIT_TIME);
@@ -1023,9 +1179,8 @@ public class ActivityManagerProcessStateTest extends InstrumentationTestCase {
 
         } finally {
             uidWatcher.finish();
-
-            am.removeOnUidImportanceListener(uidForegroundListener);
-            am.removeOnUidImportanceListener(uidBackgroundListener);
+            uidForegroundListener.unregister();
+            uidBackgroundListener.unregister();
         }
     }
 
