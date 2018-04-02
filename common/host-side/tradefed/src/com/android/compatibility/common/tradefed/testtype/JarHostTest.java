@@ -21,11 +21,13 @@ import com.android.tradefed.config.Option;
 import com.android.tradefed.config.Option.Importance;
 import com.android.tradefed.device.DeviceNotAvailableException;
 import com.android.tradefed.log.LogUtil.CLog;
+import com.android.tradefed.metrics.proto.MetricMeasurement.Metric;
 import com.android.tradefed.result.ITestInvocationListener;
 import com.android.tradefed.result.ResultForwarder;
 import com.android.tradefed.testtype.HostTest;
 import com.android.tradefed.testtype.IRemoteTest;
 import com.android.tradefed.util.StreamUtil;
+import com.android.tradefed.util.proto.TfMetricProtoUtil;
 
 import com.google.common.annotations.VisibleForTesting;
 
@@ -164,8 +166,9 @@ public class JarHostTest extends HostTest {
             }
             super.run(hostListener);
         } finally {
-            listener.testRunEnded(System.currentTimeMillis() - startTime,
-                    hostListener.getMetrics());
+            HashMap<String, Metric> metrics = hostListener.getNewMetrics();
+            metrics.putAll(TfMetricProtoUtil.upgradeConvert(hostListener.getMetrics()));
+            listener.testRunEnded(System.currentTimeMillis() - startTime, metrics);
         }
     }
 
@@ -177,6 +180,7 @@ public class JarHostTest extends HostTest {
     public class HostTestListener extends ResultForwarder {
 
         private Map<String, String> mCollectedMetrics = new HashMap<>();
+        private HashMap<String, Metric> mCollectedNewMetrics = new HashMap<>();
 
         public HostTestListener(ITestInvocationListener listener) {
             super(listener);
@@ -200,10 +204,26 @@ public class JarHostTest extends HostTest {
         }
 
         /**
+         * {@inheritDoc}
+         */
+        @Override
+        public void testRunEnded(long elapsedTime, HashMap<String, Metric> metrics) {
+            CLog.d("HostTestListener.testRunEnded(%d, %s)", elapsedTime, metrics.toString());
+            mCollectedNewMetrics.putAll(metrics);
+        }
+
+        /**
          * Returns all the metrics reported by the tests
          */
         Map<String, String> getMetrics() {
             return mCollectedMetrics;
+        }
+
+        /**
+         * Returns all the proto metrics reported by the tests
+         */
+        HashMap<String, Metric> getNewMetrics() {
+            return mCollectedNewMetrics;
         }
     }
 }
