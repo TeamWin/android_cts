@@ -118,8 +118,6 @@ const float fragData[] = {
 static const char* requiredInstanceExtensions[] = {
         "VK_KHR_surface",
         "VK_KHR_android_surface",
-        "VK_KHR_get_surface_capabilities2",
-        "VK_KHR_get_physical_device_properties2",
 };
 
 static const char* requiredDeviceExtensions[] = {
