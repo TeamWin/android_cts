@@ -20,12 +20,9 @@ import static com.google.common.truth.Truth.assertWithMessage;
 import android.app.AlertDialog;
 import android.content.Context;
 import android.os.Bundle;
-import android.os.IBinder;
 import android.util.DisplayMetrics;
-import android.util.Log;
 import android.view.Display;
 import android.view.WindowManager;
-import android.view.WindowManager.LayoutParams;
 import android.widget.Button;
 import android.widget.EditText;
 
@@ -33,8 +30,6 @@ import android.widget.EditText;
  * Activity that has buttons to launch dialogs that should then be autofillable.
  */
 public class DialogLauncherActivity extends AbstractAutoFillActivity {
-
-    private static final String TAG = "DialogLauncherActivity";
 
     private FillExpectation mExpectation;
     private LoginDialog mDialog;
@@ -120,27 +115,6 @@ public class DialogLauncherActivity extends AbstractAutoFillActivity {
             setContentView(R.layout.login_activity);
             mUsernameEditText = findViewById(R.id.username);
             mPasswordEditText = findViewById(R.id.password);
-        }
-
-        // TODO(b/68816440): temporary hack to make sure tests pass - everything below should be
-        // removed
-        private IBinder mToken;
-
-        @Override
-        public void onAttachedToWindow() {
-            super.onAttachedToWindow();
-
-            mToken = DialogLauncherActivity.this.getWindow().getAttributes().token;
-            Log.v(TAG, "onAttachedToWindow(): " + mToken);
-        }
-
-
-        @Override
-        public void onWindowAttributesChanged(LayoutParams params) {
-            Log.v(TAG, "onWindowAttributesChanged: p.token=" + params.token + "hack=" + mToken);
-            params.token = mToken;
-
-            super.onWindowAttributesChanged(params);
         }
     }
 }
