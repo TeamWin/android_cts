@@ -40,6 +40,12 @@
         <!-- Please add tests solely from this bulletin below to avoid merge conflict -->
         <option name="push" value="CVE-2015-6626->/data/local/tmp/CVE-2015-6626" />
 
+        <!--__________________-->
+        <!-- Bulletin 2016-02 -->
+        <!-- Please add tests solely from this bulletin below to avoid merge conflict -->
+        <option name="push" value="CVE-2016-0811->/data/local/tmp/CVE-2016-0811" />
+
+        <!--__________________-->
         <!-- Bulletin 2016-04 -->
         <!-- Please add tests solely from this bulletin below to avoid merge conflict -->
         <option name="push" value="CVE-2016-2412->/data/local/tmp/CVE-2016-2412" />
