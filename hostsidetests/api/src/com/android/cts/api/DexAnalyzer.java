@@ -458,6 +458,15 @@ public class DexAnalyzer {
                 // core java libraries are exempted.
                 return true;
             }
+            if (ref instanceof MemberRef) {
+                MemberRef memberRef = (MemberRef)ref;
+                if (memberRef.getFullSignature().equals(
+                        "android.os.SystemProperties.set(java.lang.String,java.lang.String)void")) {
+                    // SystemProperties.set is exceptionally allowed.
+                    // TODO(b/73750660): remove this when sysprops are publicized via IDs.
+                    return true;
+                }
+            }
             return false;
         }
     }
