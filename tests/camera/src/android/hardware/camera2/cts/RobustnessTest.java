@@ -967,6 +967,63 @@ public class RobustnessTest extends Camera2AndroidTestCase {
         }
     }
 
+    public void testConfigureAbandonedSurface() throws Exception {
+        for (String id : mCameraIds) {
+            Log.i(TAG, String.format(
+                    "Testing Camera %s for configuring abandoned surface", id));
+
+            openDevice(id);
+            try {
+                SurfaceTexture preview = new SurfaceTexture(/*random int*/ 1);
+                Surface previewSurface = new Surface(preview);
+
+                // Abandon preview SurfaceTexture.
+                preview.release();
+
+                try {
+                    CaptureRequest.Builder previewRequest = preparePreviewTestSession(preview);
+                    fail("Configuring abandoned surfaces must fail!");
+                } catch (IllegalArgumentException e) {
+                    // expected
+                    Log.i(TAG, "normal session check passed");
+                }
+
+                // Try constrained high speed session/requests
+                if (!mStaticInfo.isConstrainedHighSpeedVideoSupported()) {
+                    continue;
+                }
+
+                List<Surface> surfaces = new ArrayList<>();
+                surfaces.add(previewSurface);
+                CameraCaptureSession.StateCallback sessionListener =
+                        mock(CameraCaptureSession.StateCallback.class);
+
+                try {
+                    mCamera.createConstrainedHighSpeedCaptureSession(surfaces,
+                            sessionListener, mHandler);
+                    fail("Configuring abandoned surfaces in high speed session must fail!");
+                } catch (IllegalArgumentException e) {
+                    // expected
+                    Log.i(TAG, "high speed session check 1 passed");
+                }
+
+                // Also try abandone the Surface directly
+                previewSurface.release();
+
+                try {
+                    mCamera.createConstrainedHighSpeedCaptureSession(surfaces,
+                            sessionListener, mHandler);
+                    fail("Configuring abandoned surfaces in high speed session must fail!");
+                } catch (IllegalArgumentException e) {
+                    // expected
+                    Log.i(TAG, "high speed session check 2 passed");
+                }
+            } finally {
+                closeDevice(id);
+            }
+        }
+    }
+
     public void testAfSceneChange() throws Exception {
         final int NUM_FRAMES_VERIFIED = 3;
 
