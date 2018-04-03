@@ -17,7 +17,7 @@
 package android.view.inputmethod.cts.util;
 
 import android.app.Instrumentation;
-import android.support.annotation.NonNull;
+import androidx.annotation.NonNull;
 import android.support.test.InstrumentationRegistry;
 
 import java.util.concurrent.TimeoutException;

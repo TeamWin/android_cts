@@ -27,7 +27,7 @@ LOCAL_STATIC_JAVA_LIBRARIES += \
     mockito-target-minus-junit4 \
     compatibility-device-util \
     ctstestrunner \
-    android-support-annotations \
+    androidx.annotation_annotation \
     junit
 
 LOCAL_SRC_FILES := $(call all-java-files-under, src)

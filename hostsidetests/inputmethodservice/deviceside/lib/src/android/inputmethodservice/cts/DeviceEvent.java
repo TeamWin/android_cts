@@ -34,7 +34,7 @@ import android.inputmethodservice.cts.db.Entity;
 import android.inputmethodservice.cts.db.Field;
 import android.inputmethodservice.cts.db.Table;
 import android.os.SystemClock;
-import android.support.annotation.NonNull;
+import androidx.annotation.NonNull;
 import android.util.Log;
 
 import java.util.function.Predicate;

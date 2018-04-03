@@ -30,8 +30,8 @@ import android.media.MediaLibraryService2.MediaLibrarySession.MediaLibrarySessio
 import android.media.SessionToken2;
 import android.media.cts.TestUtils.SyncHandler;
 import android.os.Bundle;
-import android.support.annotation.NonNull;
-import android.support.annotation.Nullable;
+import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
 import android.util.Log;
 
 import java.io.FileDescriptor;

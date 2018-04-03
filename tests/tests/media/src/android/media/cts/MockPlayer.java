@@ -19,7 +19,7 @@ package android.media.cts;
 import android.media.AudioAttributes;
 import android.media.DataSourceDesc;
 import android.media.MediaPlayerBase;
-import android.support.annotation.NonNull;
+import androidx.annotation.NonNull;
 import android.util.ArrayMap;
 
 import java.util.List;

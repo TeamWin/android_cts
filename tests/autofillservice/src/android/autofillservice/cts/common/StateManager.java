@@ -15,7 +15,7 @@
  */
 package android.autofillservice.cts.common;
 
-import android.support.annotation.Nullable;
+import androidx.annotation.Nullable;
 
 /**
  * Abstraction for a state that is managed somewhere, like Android Settings.

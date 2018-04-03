@@ -16,7 +16,7 @@
 
 package android.autofillservice.cts;
 
-import android.support.annotation.Nullable;
+import androidx.annotation.Nullable;
 
 /**
  * Exception that cause the {@link RetryRule} to re-try a test.
