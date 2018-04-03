@@ -29,22 +29,27 @@ public class HardwareBufferVrTest extends AndroidTestCase {
         if (!pm.hasSystemFeature(PackageManager.FEATURE_VR_MODE_HIGH_PERFORMANCE)) {
             return;
         }
-
         final long flags = HardwareBuffer.USAGE_GPU_SAMPLED_IMAGE | HardwareBuffer.USAGE_GPU_COLOR_OUTPUT;
-        HardwareBuffer buffer = HardwareBuffer.create(
-            2, 4, HardwareBuffer.RGBA_8888, 2, flags);
-        assertEquals(2, buffer.getWidth());
-        assertEquals(4, buffer.getHeight());
-        assertEquals(2, buffer.getLayers());
-        assertEquals(HardwareBuffer.RGBA_8888, buffer.getFormat());
-        assertEquals(flags, buffer.getUsage());
+        final int formats[] = {
+            HardwareBuffer.RGB_565,
+            HardwareBuffer.RGBA_8888,
+            HardwareBuffer.RGBA_1010102,
+            HardwareBuffer.RGBA_FP16,
+        };
+        for (final int format : formats) {
+            HardwareBuffer buffer = HardwareBuffer.create(2, 4, format, 2, flags);
+            assertEquals(2, buffer.getWidth());
+            assertEquals(4, buffer.getHeight());
+            assertEquals(2, buffer.getLayers());
+            assertEquals(format, buffer.getFormat());
+            assertEquals(flags, buffer.getUsage());
 
-        buffer = HardwareBuffer.create(
-            4, 12, HardwareBuffer.RGB_565, 3, flags);
-        assertEquals(4, buffer.getWidth());
-        assertEquals(12, buffer.getHeight());
-        assertEquals(3, buffer.getLayers());
-        assertEquals(HardwareBuffer.RGB_565, buffer.getFormat());
-        assertEquals(flags, buffer.getUsage());
+            buffer = HardwareBuffer.create(345, 231, format, 5, flags);
+            assertEquals(345, buffer.getWidth());
+            assertEquals(231, buffer.getHeight());
+            assertEquals(5, buffer.getLayers());
+            assertEquals(format, buffer.getFormat());
+            assertEquals(flags, buffer.getUsage());
+        }
     }
 }
