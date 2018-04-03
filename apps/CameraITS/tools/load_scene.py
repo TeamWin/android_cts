@@ -18,6 +18,8 @@ import subprocess
 import sys
 import time
 
+import numpy as np
+
 
 def main():
     """Load charts on device and display."""
@@ -47,7 +49,7 @@ def main():
     remote_scene_file = '/sdcard/Download/%s.pdf' % scene
     local_scene_file = os.path.join(os.environ['CAMERA_ITS_TOP'], 'tests',
                                     scene)
-    if chart_distance == 20 and camera_fov < 90:
+    if np.isclose(chart_distance, 20, rtol=0.1) and camera_fov < 90:
         local_scene_file = os.path.join(local_scene_file,
                                         scene+'_0.67_scaled.pdf')
     else:

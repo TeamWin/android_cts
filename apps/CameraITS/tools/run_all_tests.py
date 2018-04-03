@@ -28,6 +28,8 @@ import its.device
 from its.device import ItsSession
 import its.image
 
+import numpy as np
+
 CHART_DELAY = 1  # seconds
 CHART_DISTANCE = 30.0  # cm
 CHART_HEIGHT = 13.5  # cm
@@ -173,7 +175,6 @@ def main():
     skip_scene_validation = False
     chart_distance = CHART_DISTANCE
     chart_height = CHART_HEIGHT
-    approx_equal = lambda a, b, t: abs(a - b) < t
 
     for s in sys.argv[1:]:
         if s[:7] == "camera=" and len(s) > 7:
@@ -194,6 +195,7 @@ def main():
         elif s[:5] == 'dist=' and len(s) > 5:
             chart_distance = float(re.sub('cm', '', s[5:]))
 
+    chart_dist_arg = 'dist= ' + str(chart_distance)
     auto_scene_switch = chart_host_id is not None
     merge_result_switch = result_device_id is not None
 
@@ -319,7 +321,6 @@ def main():
                     if (not merge_result_switch or
                             (merge_result_switch and camera_ids[0] == '0')):
                         scene_arg = 'scene=' + scene
-                        chart_dist_arg = 'dist= ' + str(chart_distance)
                         fov_arg = 'fov=' + camera_fov
                         cmd = ['python',
                                os.path.join(os.getcwd(), 'tools/load_scene.py'),
@@ -343,8 +344,8 @@ def main():
             # Extract chart from scene for scene3 once up front
             chart_loc_arg = ''
             if scene == 'scene3':
-                if float(camera_fov) < 90 and approx_equal(chart_distance, 20,
-                                                           1E-6):
+                if float(camera_fov) < 90 and np.isclose(chart_distance, 20,
+                                                         rtol=0.1):
                     chart_height *= 0.67
                 chart = its.cv2image.Chart(SCENE3_FILE, chart_height,
                                            chart_distance, CHART_SCALE_START,
@@ -384,6 +385,7 @@ def main():
                     if skip_code is not SKIP_RET_CODE:
                         cmd = ['python', os.path.join(os.getcwd(), testpath)]
                         cmd += sys.argv[1:] + [camera_id_arg] + [chart_loc_arg]
+                        cmd += [chart_dist_arg]
                         with open(outpath, 'w') as fout, open(errpath, 'w') as ferr:
                             test_code = subprocess.call(
                                 cmd, stderr=ferr, stdout=fout, cwd=outdir)
