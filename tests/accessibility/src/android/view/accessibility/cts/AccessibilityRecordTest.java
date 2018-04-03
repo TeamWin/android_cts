@@ -35,21 +35,6 @@ import java.util.List;
  */
 @Presubmit
 public class AccessibilityRecordTest extends AndroidTestCase {
-
-    /** The number of properties of the {@link AccessibilityEvent} class. */
-    private static final int NON_STATIC_FIELD_COUNT = 24;
-
-    /**
-     * Test that no new fields have been added without updating the
-     * marshaling tests. Note that the marshaling tests are in
-     * AccessibilityEventTests since it is a super class that is
-     * responsible for marshaling and unmarshaling.
-     */
-    @SmallTest
-    public void testNoNewFieldsAddedWithoutUpdadingMarshallTests() {
-        assertNoNewNonStaticFieldsAdded(AccessibilityRecord.class, NON_STATIC_FIELD_COUNT);
-    }
-
     /**
      * Tests the cloning obtain method.
      */
@@ -197,25 +182,5 @@ public class AccessibilityRecordTest extends AndroidTestCase {
             TestCase.assertEquals(message, expectedTextIterator.next().toString(),
                     receivedTextIterator.next().toString());
         }
-    }
-
-    /**
-     * Asserts that no new fields have been added, so we are testing marshaling
-     * of all such.
-     */
-    static void assertNoNewNonStaticFieldsAdded(Class<?> clazz, int expectedCount) {
-        int nonStaticFieldCount = 0;
-
-        while (clazz != Object.class) {
-            for (Field field : clazz.getDeclaredFields()) {
-                if ((field.getModifiers() & Modifier.STATIC) == 0) {
-                    nonStaticFieldCount++;
-                }
-            }
-            clazz = clazz.getSuperclass();
-        }
-
-        String message = "New fields have been added, so add code to test marshaling them.";
-        assertEquals(message, expectedCount, nonStaticFieldCount);
     }
 }

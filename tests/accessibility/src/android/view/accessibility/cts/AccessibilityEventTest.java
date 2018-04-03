@@ -32,21 +32,6 @@ import junit.framework.TestCase;
  */
 @Presubmit
 public class AccessibilityEventTest extends TestCase {
-
-    /** The number of properties of the {@link AccessibilityEvent} class. */
-    private static final int NON_STATIC_FIELD_COUNT = 32;
-
-    /**
-     * Test that no new fields have been added without updating the
-     * marshaling tests.
-     */
-    @SmallTest
-    public void testNoNewFieldsAddedWithoutUpdadingMarshallTests() {
-        // no new fields, so we are testing marshaling of all such
-        AccessibilityRecordTest.assertNoNewNonStaticFieldsAdded(AccessibilityEvent.class,
-                NON_STATIC_FIELD_COUNT);
-    }
-
     /**
      * Tests whether accessibility events are correctly written and
      * read from a parcel (version 1).
