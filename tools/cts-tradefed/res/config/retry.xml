@@ -37,7 +37,6 @@
 
     <option name="plan" value="cts-retry" />
     <option name="test-tag" value="cts" />
-    <option name="skip-device-info" value="true" />
     <option name="enable-root" value="false" />
 
     <!-- retain 200MB of host log -->
