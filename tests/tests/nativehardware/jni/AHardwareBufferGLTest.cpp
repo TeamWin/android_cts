@@ -173,28 +173,63 @@ struct GoldenPixel {
     GoldenColor color;
 };
 
+void CheckGoldenPixel(const GoldenPixel& golden, uint8_t* pixel, bool alpha_format) {
+    EXPECT_EQ(GLenum{GL_NO_ERROR}, glGetError());
+    EXPECT_EQ(golden.color == kRed ? 255 : 0, pixel[0]);
+    EXPECT_EQ(0, pixel[1]);
+    EXPECT_EQ(golden.color == kBlue ? 255 : 0, pixel[2]);
+    // Formats without alpha should be read as opaque.
+    EXPECT_EQ((golden.color != kZero || !alpha_format) ? 255 : 0,
+              pixel[3]);
+}
+
+void CheckGoldenPixel(const GoldenPixel& golden, float* pixel, bool alpha_format) {
+    EXPECT_EQ(GLenum{GL_NO_ERROR}, glGetError());
+    EXPECT_EQ(golden.color == kRed ? 1.f : 0.f, pixel[0]);
+    EXPECT_EQ(0.f, pixel[1]);
+    EXPECT_EQ(golden.color == kBlue ? 1.f : 0.f, pixel[2]);
+    // Formats without alpha should be read as opaque.
+    EXPECT_EQ((golden.color != kZero || !alpha_format) ? 1.f : 0.f,
+              pixel[3]);
+}
+
 void CheckGoldenPixels(const std::vector<GoldenPixel>& goldens, bool float_format, bool alpha_format) {
+    glPixelStorei(GL_PACK_ALIGNMENT, 1);
+    // In OpenGL, Y axis grows up, so bottom = minimum Y coordinate.
+    int bottom = INT_MAX, left = INT_MAX, right = 0, top = 0;
     for (const GoldenPixel& golden : goldens) {
+        left = std::min(left, golden.x);
+        right = std::max(right, golden.x);
+        bottom = std::min(bottom, golden.y);
+        top = std::max(top, golden.y);
         if (float_format) {
             float pixel[4] = {0.5f, 0.5f, 0.5f, 0.5f};
             glReadPixels(golden.x, golden.y, 1, 1, GL_RGBA, GL_FLOAT, pixel);
-            EXPECT_EQ(GLenum{GL_NO_ERROR}, glGetError());
-            EXPECT_EQ(golden.color == kRed ? 1.f : 0.f, pixel[0]);
-            EXPECT_EQ(0.f, pixel[1]);
-            EXPECT_EQ(golden.color == kBlue ? 1.f : 0.f, pixel[2]);
-            // Formats without alpha should be read as opaque.
-            EXPECT_EQ((golden.color != kZero || !alpha_format) ? 1.f : 0.f,
-                      pixel[3]);
+            CheckGoldenPixel(golden, pixel, alpha_format);
         } else {
             uint8_t pixel[4] = {127, 127, 127, 127};
             glReadPixels(golden.x, golden.y, 1, 1, GL_RGBA, GL_UNSIGNED_BYTE, pixel);
-            EXPECT_EQ(GLenum{GL_NO_ERROR}, glGetError());
-            EXPECT_EQ(golden.color == kRed ? 255 : 0, pixel[0]);
-            EXPECT_EQ(0, pixel[1]);
-            EXPECT_EQ(golden.color == kBlue ? 255 : 0, pixel[2]);
-            // Formats without alpha should be read as opaque.
-            EXPECT_EQ((golden.color != kZero || !alpha_format) ? 255 : 0,
-                      pixel[3]);
+            CheckGoldenPixel(golden, pixel, alpha_format);
+        }
+    }
+    // Repeat the test, but read back all the necessary pixels in a single glReadPixels call.
+    const int width = right - left + 1;
+    const int height = top - bottom + 1;
+    if (float_format) {
+        std::unique_ptr<float[]> pixels(new float[width * height * 4]);
+        glReadPixels(left, bottom, width, height, GL_RGBA, GL_FLOAT, pixels.get());
+        EXPECT_EQ(GLenum{GL_NO_ERROR}, glGetError());
+        for (const GoldenPixel& golden : goldens) {
+            float* pixel = pixels.get() + ((golden.y - bottom) * width + golden.x - left) * 4;
+            CheckGoldenPixel(golden, pixel, alpha_format);
+        }
+    } else {
+        std::unique_ptr<uint8_t[]> pixels(new uint8_t[width * height * 4]);
+        glReadPixels(left, bottom, width, height, GL_RGBA, GL_UNSIGNED_BYTE, pixels.get());
+        EXPECT_EQ(GLenum{GL_NO_ERROR}, glGetError());
+        for (const GoldenPixel& golden : goldens) {
+            uint8_t* pixel = pixels.get() + ((golden.y - bottom) * width + golden.x - left) * 4;
+            CheckGoldenPixel(golden, pixel, alpha_format);
         }
     }
 }

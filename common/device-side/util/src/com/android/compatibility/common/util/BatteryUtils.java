@@ -65,6 +65,7 @@ public class BatteryUtils {
                             != getPowerManager().getLocationPowerSaveMode()));
         } else {
             putGlobalSetting(Global.LOW_POWER_MODE, "0");
+            putGlobalSetting(Global.LOW_POWER_MODE_STICKY, "0");
             waitUntil("Battery saver still on", () -> !getPowerManager().isPowerSaveMode());
             waitUntil("Location mode still " + getPowerManager().getLocationPowerSaveMode(),
                     () -> (PowerManager.LOCATION_MODE_NO_CHANGE
