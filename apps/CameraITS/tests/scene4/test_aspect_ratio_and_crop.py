@@ -178,6 +178,7 @@ def main():
             thres_l_cp_test = THRESH_L_CP * factor_cp_thres
             thres_xs_cp_test = THRESH_XS_CP * factor_cp_thres
             ref_fov_percent["raw"] = [raw_fov_percent, w_raw, h_raw]
+            print ref_fov_percent["raw"]
             print "Created RAW references\n"
         print "Creating references for fov_coverage from largest YUVs"
         for ar_check in AR_CHECKED:
@@ -196,6 +197,7 @@ def main():
                     circle_size[1], circle_size[0], w, h)
 
             ref_fov_percent[ar_check] = [fov_percent, w, h]
+            print ref_fov_percent[ar_check]
         print "Created YUV references\n"
 
         # Take pictures of each settings with all the image sizes available.
@@ -265,12 +267,13 @@ def main():
                         w_ref = ref_fov_percent[ar_check][1]
                         h_ref = ref_fov_percent[ar_check][2]
                         if ref_fov_percent["raw"]:
-                            if np.isclose(ref_fov_percent["raw"][1] /
+                            if np.isclose(float(ref_fov_percent["raw"][1]) /
                                           ref_fov_percent["raw"][2], match_ar,
                                           atol=FMT_ATOL):
                                 chk_fov_percent = ref_fov_percent["raw"][0]
                                 w_ref = ref_fov_percent["raw"][1]
                                 h_ref = ref_fov_percent["raw"][2]
+                                print "Using RAW as reference"
                         msg = "FoV %%: %.2f, Ref FoV %%: %.2f, TOL=%.f%%, " % (
                                 fov_percent, chk_fov_percent,
                                 FOV_PERCENT_RTOL*100)
