@@ -18,7 +18,7 @@ package android.autofillservice.cts;
 
 import static android.autofillservice.cts.common.ShellHelper.runShellCommand;
 
-import android.support.annotation.NonNull;
+import androidx.annotation.NonNull;
 import android.util.Log;
 
 import org.junit.AssumptionViolatedException;

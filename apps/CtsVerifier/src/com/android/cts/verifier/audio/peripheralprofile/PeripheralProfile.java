@@ -17,7 +17,7 @@
 package com.android.cts.verifier.audio.peripheralprofile;
 
 import android.media.AudioDeviceInfo;
-import android.support.annotation.NonNull;
+import androidx.annotation.NonNull;
 
 import com.android.cts.verifier.audio.peripheralprofile.ListsHelper;
 

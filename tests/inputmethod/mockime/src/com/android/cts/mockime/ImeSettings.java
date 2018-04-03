@@ -18,9 +18,9 @@ package com.android.cts.mockime;
 
 import android.os.Parcel;
 import android.os.PersistableBundle;
-import android.support.annotation.ColorInt;
-import android.support.annotation.NonNull;
-import android.support.annotation.Nullable;
+import androidx.annotation.ColorInt;
+import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
 
 /**
  * An immutable data store to control the behavior of {@link MockIme}.

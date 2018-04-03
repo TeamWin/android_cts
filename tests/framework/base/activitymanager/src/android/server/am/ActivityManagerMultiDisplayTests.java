@@ -61,7 +61,7 @@ import static org.junit.Assume.assumeTrue;
 import android.content.ComponentName;
 import android.platform.test.annotations.Presubmit;
 import android.server.am.ActivityManagerState.ActivityDisplay;
-import android.support.annotation.Nullable;
+import androidx.annotation.Nullable;
 import android.support.test.filters.FlakyTest;
 
 import org.junit.Before;

@@ -28,6 +28,8 @@ LOCAL_SRC_FILES := $(call all-java-files-under, src) $(call all-Iaidl-files-unde
 LOCAL_AIDL_INCLUDES := \
     frameworks/native/aidl/gui
 
+LOCAL_USE_AAPT2 := true
+
 LOCAL_STATIC_JAVA_LIBRARIES := android-ex-camera2 \
                                compatibility-common-util-devicesidelib \
                                cts-sensors-tests \
@@ -37,12 +39,15 @@ LOCAL_STATIC_JAVA_LIBRARIES := android-ex-camera2 \
                                androidplot \
                                ctsverifier-opencv \
                                core-tests-support \
-                               android-support-v4  \
+                               androidx.legacy_legacy-support-v4  \
                                mockito-target-minus-junit4 \
                                mockwebserver \
                                compatibility-device-util \
                                platform-test-annotations \
                                cts-security-test-support-library
+
+LOCAL_STATIC_ANDROID_LIBRARIES := \
+    androidx.legacy_legacy-support-v4
 
 LOCAL_JAVA_LIBRARIES += telephony-common
 LOCAL_JAVA_LIBRARIES += android.test.runner.stubs
@@ -82,7 +87,7 @@ LOCAL_SRC_FILES := \
     $(call java-files-in, src/com/android/cts/verifier) \
     $(call all-Iaidl-files-under, src)
 
-LOCAL_STATIC_JAVA_LIBRARIES := android-support-v4 \
+LOCAL_STATIC_JAVA_LIBRARIES := androidx.legacy_legacy-support-v4 \
                                compatibility-common-util-devicesidelib \
                                compatibility-device-util \
 

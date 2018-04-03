@@ -34,7 +34,7 @@ LOCAL_STATIC_JAVA_LIBRARIES :=  \
     truth-prebuilt \
     accountaccesslib
 
-LOCAL_STATIC_ANDROID_LIBRARIES := android-support-v4
+LOCAL_STATIC_ANDROID_LIBRARIES := androidx.legacy_legacy-support-v4
 
 # Use multi-dex as the compatibility-common-util-devicesidelib dependency
 # on compatibility-device-util pushes us beyond 64k methods.

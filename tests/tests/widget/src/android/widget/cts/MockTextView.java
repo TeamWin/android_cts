@@ -18,7 +18,7 @@ package android.widget.cts;
 
 import android.content.Context;
 import android.graphics.drawable.Drawable;
-import android.support.annotation.Nullable;
+import androidx.annotation.Nullable;
 import android.text.method.MovementMethod;
 import android.util.AttributeSet;
 import android.widget.TextView;
