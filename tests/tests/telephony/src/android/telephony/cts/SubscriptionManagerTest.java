@@ -16,63 +16,241 @@
 
 package android.telephony.cts;
 
-import android.content.Context;
+import static android.net.NetworkCapabilities.NET_CAPABILITY_NOT_METERED;
+import static android.net.NetworkCapabilities.TRANSPORT_CELLULAR;
+
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.fail;
+
+import android.annotation.Nullable;
+import android.content.pm.PackageManager;
 import android.net.ConnectivityManager;
-import android.os.Looper;
+import android.net.ConnectivityManager.NetworkCallback;
+import android.net.Network;
+import android.net.NetworkCapabilities;
+import android.net.NetworkRequest;
+import android.support.test.InstrumentationRegistry;
+import android.support.test.runner.AndroidJUnit4;
 import android.telephony.SubscriptionInfo;
 import android.telephony.SubscriptionManager;
-import android.test.AndroidTestCase;
-import android.util.Log;
+import android.telephony.SubscriptionPlan;
 
-import com.android.compatibility.common.util.TestThread;
+import com.android.compatibility.common.util.SystemUtil;
 
+import org.junit.Before;
+import org.junit.Test;
+import org.junit.runner.RunWith;
+
+import java.time.ZonedDateTime;
+import java.util.Arrays;
 import java.util.List;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.TimeUnit;
+import java.util.function.Predicate;
 
-public class SubscriptionManagerTest extends AndroidTestCase {
-    private SubscriptionManager mSubscriptionManager;
-    private static ConnectivityManager mCm;
-    private SubscriptionManager.OnSubscriptionsChangedListener mListener;
-    private final Object mLock = new Object();
-    private boolean mOnSubscriptionsChangedCalled = false;
-    private static final int TOLERANCE = 1000;
-    private static final String TAG = "android.telephony.cts.SubscriptionManagerTest";
+@RunWith(AndroidJUnit4.class)
+public class SubscriptionManagerTest {
+    private SubscriptionManager mSm;
 
-    @Override
-    protected void setUp() throws Exception {
-        super.setUp();
-        mSubscriptionManager = new SubscriptionManager(getContext());
-        mCm = (ConnectivityManager)getContext().getSystemService(Context.CONNECTIVITY_SERVICE);
+    private int mSubId;
+    private String mPackageName;
+
+    @Before
+    public void setUp() throws Exception {
+        mSm = InstrumentationRegistry.getContext().getSystemService(SubscriptionManager.class);
+        mSubId = SubscriptionManager.getDefaultDataSubscriptionId();
+        mPackageName = InstrumentationRegistry.getContext().getPackageName();
     }
 
-    @Override
-    protected void tearDown() throws Exception {
-        if (mListener != null) {
-            // unregister the listener
-            mSubscriptionManager.removeOnSubscriptionsChangedListener(mListener);
+    /**
+     * Sanity check that both {@link PackageManager#FEATURE_TELEPHONY} and
+     * {@link NetworkCapabilities#TRANSPORT_CELLULAR} network must both be
+     * either defined or undefined; you can't cross the streams.
+     */
+    @Test
+    public void testSanity() throws Exception {
+        final boolean hasCellular = findCellularNetwork() != null;
+        if (isSupported() && !hasCellular) {
+            fail("Device claims to support " + PackageManager.FEATURE_TELEPHONY
+                    + " but has no active cellular network, which is required for validation");
+        } else if (!isSupported() && hasCellular) {
+            fail("Device has active cellular network, but claims to not support "
+                    + PackageManager.FEATURE_TELEPHONY);
         }
-        super.tearDown();
+
+        if (isSupported()) {
+            if (mSubId == SubscriptionManager.INVALID_SUBSCRIPTION_ID) {
+                fail("Device must have a valid default data subId for validation");
+            }
+        }
     }
 
-    public void testGetActiveSubscriptionInfoCount() {
-        if (mCm.getNetworkInfo(ConnectivityManager.TYPE_MOBILE) == null) {
-            Log.d(TAG, "Skipping test that requires ConnectivityManager.TYPE_MOBILE");
-            return;
-        }
-        assertTrue(mSubscriptionManager.getActiveSubscriptionInfoCount() <=
-                mSubscriptionManager.getActiveSubscriptionInfoCountMax());
+    @Test
+    public void testGetActiveSubscriptionInfoCount() throws Exception {
+        if (!isSupported()) return;
+
+        assertTrue(mSm.getActiveSubscriptionInfoCount() <=
+                mSm.getActiveSubscriptionInfoCountMax());
     }
 
-    public void testActiveSubscriptions() {
-        if (mCm.getNetworkInfo(ConnectivityManager.TYPE_MOBILE) == null) {
-            Log.d(TAG, "Skipping test that requires ConnectivityManager.TYPE_MOBILE");
-            return;
-        }
-        List<SubscriptionInfo> subList = mSubscriptionManager.getActiveSubscriptionInfoList();
+    @Test
+    public void testActiveSubscriptions() throws Exception {
+        if (!isSupported()) return;
+
+        List<SubscriptionInfo> subList = mSm.getActiveSubscriptionInfoList();
         // Assert when there is no sim card present or detected
-        assertTrue(subList != null && subList.size() > 0);
+        assertNotNull("Active subscriber required", subList);
+        assertFalse("Active subscriber required", subList.isEmpty());
         for (int i = 0; i < subList.size(); i++) {
             assertTrue(subList.get(i).getSubscriptionId() >= 0);
             assertTrue(subList.get(i).getSimSlotIndex() >= 0);
         }
+    }
+
+    @Test
+    public void testSubscriptionPlans() throws Exception {
+        if (!isSupported()) return;
+
+        // Make ourselves the owner
+        setSubPlanOwner(mSubId, mPackageName);
+
+        // Push empty list and we get empty back
+        mSm.setSubscriptionPlans(mSubId, Arrays.asList());
+        assertEquals(Arrays.asList(), mSm.getSubscriptionPlans(mSubId));
+
+        // Push simple plan and get it back
+        final SubscriptionPlan plan = buildSubscriptionPlan();
+        mSm.setSubscriptionPlans(mSubId, Arrays.asList(plan));
+        assertEquals(Arrays.asList(plan), mSm.getSubscriptionPlans(mSubId));
+
+        // Now revoke our access
+        setSubPlanOwner(mSubId, null);
+        try {
+            mSm.setSubscriptionPlans(mSubId, Arrays.asList());
+            fail();
+        } catch (SecurityException expected) {
+        }
+        try {
+            mSm.getSubscriptionPlans(mSubId);
+            fail();
+        } catch (SecurityException expected) {
+        }
+    }
+
+    @Test
+    public void testSubscriptionPlansOverrideCongested() throws Exception {
+        if (!isSupported()) return;
+
+        // Make ourselves the owner
+        setSubPlanOwner(mSubId, mPackageName);
+
+        // Missing plans means no overrides
+        mSm.setSubscriptionPlans(mSubId, Arrays.asList());
+        try {
+            mSm.setSubscriptionOverrideCongested(mSubId, true, 0);
+            fail();
+        } catch (SecurityException | IllegalStateException expected) {
+        }
+
+        // Defining plans means we get to override
+        final SubscriptionPlan plan = buildSubscriptionPlan();
+        mSm.setSubscriptionPlans(mSubId, Arrays.asList(plan));
+        mSm.setSubscriptionOverrideCongested(mSubId, true, 0);
+        mSm.setSubscriptionOverrideCongested(mSubId, false, 0);
+
+        // Now revoke our access
+        setSubPlanOwner(mSubId, null);
+        try {
+            mSm.setSubscriptionOverrideCongested(mSubId, true, 0);
+            fail();
+        } catch (SecurityException | IllegalStateException expected) {
+        }
+    }
+
+    @Test
+    public void testSubscriptionPlansOverrideUnmetered() throws Exception {
+        if (!isSupported()) return;
+
+        final ConnectivityManager cm = InstrumentationRegistry.getContext()
+                .getSystemService(ConnectivityManager.class);
+        final Network net = findCellularNetwork();
+        assertNotNull("Active cellular network required", net);
+
+        // Make ourselves the owner and define some plans
+        setSubPlanOwner(mSubId, mPackageName);
+        mSm.setSubscriptionPlans(mSubId, Arrays.asList(buildSubscriptionPlan()));
+
+        // Cellular is metered by default
+        assertFalse(cm.getNetworkCapabilities(net).hasCapability(NET_CAPABILITY_NOT_METERED));
+
+        // Override should make it go unmetered
+        {
+            final CountDownLatch latch = waitForNetworkCapabilities(net, caps -> {
+                return caps.hasCapability(NET_CAPABILITY_NOT_METERED);
+            });
+            mSm.setSubscriptionOverrideUnmetered(mSubId, true, 0);
+            latch.await(10, TimeUnit.SECONDS);
+        }
+
+        // Clearing override should make it go metered
+        {
+            final CountDownLatch latch = waitForNetworkCapabilities(net, caps -> {
+                return !caps.hasCapability(NET_CAPABILITY_NOT_METERED);
+            });
+            mSm.setSubscriptionOverrideUnmetered(mSubId, false, 0);
+            latch.await(10, TimeUnit.SECONDS);
+        }
+    }
+
+    public static CountDownLatch waitForNetworkCapabilities(Network network,
+            Predicate<NetworkCapabilities> predicate) {
+        final CountDownLatch latch = new CountDownLatch(1);
+        final ConnectivityManager cm = InstrumentationRegistry.getContext()
+                .getSystemService(ConnectivityManager.class);
+        cm.registerNetworkCallback(new NetworkRequest.Builder().build(),
+                new NetworkCallback() {
+                    @Override
+                    public void onCapabilitiesChanged(Network net, NetworkCapabilities caps) {
+                        if (net.equals(network) && predicate.test(caps)) {
+                            latch.countDown();
+                            cm.unregisterNetworkCallback(this);
+                        }
+                    }
+                });
+        return latch;
+    }
+
+    private static SubscriptionPlan buildSubscriptionPlan() {
+        return SubscriptionPlan.Builder
+                .createRecurringMonthly(ZonedDateTime.parse("2007-03-14T00:00:00.000Z"))
+                .setTitle("CTS")
+                .setDataLimit(1_000_000_000, SubscriptionPlan.LIMIT_BEHAVIOR_DISABLED)
+                .setDataUsage(500_000_000, System.currentTimeMillis())
+                .build();
+    }
+
+    private static @Nullable Network findCellularNetwork() {
+        final ConnectivityManager cm = InstrumentationRegistry.getContext()
+                .getSystemService(ConnectivityManager.class);
+        for (Network net : cm.getAllNetworks()) {
+            final NetworkCapabilities caps = cm.getNetworkCapabilities(net);
+            if (caps != null && caps.hasTransport(TRANSPORT_CELLULAR)) {
+                return net;
+            }
+        }
+        return null;
+    }
+
+    private static boolean isSupported() {
+        return InstrumentationRegistry.getContext().getPackageManager()
+                .hasSystemFeature(PackageManager.FEATURE_TELEPHONY);
+    }
+
+    private static void setSubPlanOwner(int subId, String packageName) throws Exception {
+        SystemUtil.runShellCommand(InstrumentationRegistry.getInstrumentation(),
+                "cmd netpolicy set sub-plan-owner " + subId + " " + packageName);
     }
 }
