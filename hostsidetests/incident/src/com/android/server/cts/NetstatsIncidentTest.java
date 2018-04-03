@@ -392,4 +392,25 @@ public class NetstatsIncidentTest extends ProtoDumpTestCase {
         final String commandOutput = getDevice().executeShellCommand("pm list features");
         return commandOutput.contains(FEATURE_WIFI);
     }
+
+    // Currently only verifies that privacy filtering is done properly.
+    static void verifyNetworkStatsServiceDumpProto(NetworkStatsServiceDumpProto dump, final int filterLevel) throws Exception {
+        if (filterLevel == PRIVACY_AUTO) {
+            for (NetworkInterfaceProto nip : dump.getActiveInterfacesList()) {
+                verifyNetworkInterfaceProto(nip, filterLevel);
+            }
+            for (NetworkInterfaceProto nip : dump.getActiveUidInterfacesList()) {
+                verifyNetworkInterfaceProto(nip, filterLevel);
+            }
+        }
+    }
+
+    private static void verifyNetworkInterfaceProto(NetworkInterfaceProto nip, final int filterLevel) throws Exception {
+        for (NetworkIdentityProto ni : nip.getIdentities().getIdentitiesList()) {
+            if (filterLevel == PRIVACY_AUTO) {
+                assertTrue(ni.getSubscriberId().isEmpty());
+                assertTrue(ni.getNetworkId().isEmpty());
+            }
+        }
+    }
 }
