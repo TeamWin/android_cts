@@ -53,7 +53,7 @@ public class TextClassifierValueObjectsTest {
     private static final String TEXT = "abcdefghijklmnopqrstuvwxyz";
     private static final int START = 5;
     private static final int END = 20;
-    private static final String SIGNATURE = "sig.na-ture";
+    private static final String ID = "id123";
     private static final LocaleList LOCALES = LocaleList.forLanguageTags("fr,en,de,es");
 
     @Test
@@ -64,7 +64,7 @@ public class TextClassifierValueObjectsTest {
         final TextSelection selection = new TextSelection.Builder(START, END)
                 .setEntityType(TextClassifier.TYPE_ADDRESS, addressScore)
                 .setEntityType(TextClassifier.TYPE_EMAIL, emailScore)
-                .setSignature(SIGNATURE)
+                .setId(ID)
                 .build();
 
         assertEquals(START, selection.getSelectionStartIndex());
@@ -77,7 +77,7 @@ public class TextClassifierValueObjectsTest {
         assertEquals(emailScore, selection.getConfidenceScore(TextClassifier.TYPE_EMAIL),
                 ACCEPTED_DELTA);
         assertEquals(0, selection.getConfidenceScore("random_type"), ACCEPTED_DELTA);
-        assertEquals(SIGNATURE, selection.getSignature());
+        assertEquals(ID, selection.getId());
     }
 
     @Test
@@ -85,11 +85,11 @@ public class TextClassifierValueObjectsTest {
         final int start = 0;
         final int end = 1;
         final float confidenceScore = 0.5f;
-        final String signature = "2hukwu3m3k44f1gb0";
+        final String id = "2hukwu3m3k44f1gb0";
 
         final TextSelection selection = new TextSelection.Builder(start, end)
                 .setEntityType(TextClassifier.TYPE_URL, confidenceScore)
-                .setSignature(signature)
+                .setId(id)
                 .build();
 
         assertEquals(start, selection.getSelectionStartIndex());
@@ -99,14 +99,14 @@ public class TextClassifierValueObjectsTest {
         assertEquals(confidenceScore, selection.getConfidenceScore(TextClassifier.TYPE_URL),
                 ACCEPTED_DELTA);
         assertEquals(0, selection.getConfidenceScore("random_type"), ACCEPTED_DELTA);
-        assertEquals(signature, selection.getSignature());
+        assertEquals(id, selection.getId());
     }
 
     @Test
     public void testTextSelection_defaultValues() {
         TextSelection selection = new TextSelection.Builder(START, END).build();
         assertEquals(0, selection.getEntityCount());
-        assertEquals("", selection.getSignature());
+        assertNull(selection.getId());
     }
 
     @Test
@@ -139,13 +139,6 @@ public class TextClassifierValueObjectsTest {
                 .build();
     }
 
-    @Test(expected = NullPointerException.class)
-    public void testTextSelection_invalidSignature() {
-        new TextSelection.Builder(START, END)
-                .setSignature(null)
-                .build();
-    }
-
     @Test(expected = IndexOutOfBoundsException.class)
     public void testTextSelection_entityIndexOutOfBounds() {
         final TextSelection selection = new TextSelection.Builder(START, END).build();
@@ -154,23 +147,30 @@ public class TextClassifierValueObjectsTest {
     }
 
     @Test
-    public void testTextSelectionOptions() {
-        final TextSelection.Options options = new TextSelection.Options()
-                .setDefaultLocales(LOCALES);
-        assertEquals(LOCALES, options.getDefaultLocales());
+    public void testTextSelectionRequest() {
+        final TextSelection.Request request = new TextSelection.Request.Builder(TEXT, START, END)
+                .setDefaultLocales(LOCALES)
+                .build();
+        assertEquals(TEXT, request.getText());
+        assertEquals(START, request.getStartIndex());
+        assertEquals(END, request.getEndIndex());
+        assertEquals(LOCALES, request.getDefaultLocales());
     }
 
     @Test
-    public void testTextSelectionOptions_nullValues() {
-        final TextSelection.Options options = new TextSelection.Options()
-                .setDefaultLocales(null);
-        assertNull(options.getDefaultLocales());
+    public void testTextSelectionRequest_nullValues() {
+        final TextSelection.Request request =
+                new TextSelection.Request.Builder(TEXT, START, END)
+                        .setDefaultLocales(null)
+                        .build();
+        assertNull(request.getDefaultLocales());
     }
 
     @Test
-    public void testTextSelectionOptions_defaultValues() {
-        final TextSelection.Options options = new TextSelection.Options();
-        assertNull(options.getDefaultLocales());
+    public void testTextSelectionRequest_defaultValues() {
+        final TextSelection.Request request =
+                new TextSelection.Request.Builder(TEXT, START, END).build();
+        assertNull(request.getDefaultLocales());
     }
 
     @Test
@@ -194,7 +194,7 @@ public class TextClassifierValueObjectsTest {
                 .setEntityType(TextClassifier.TYPE_EMAIL, emailScore)
                 .addAction(new RemoteAction(icon1, label1, description1, intent1))
                 .addAction(new RemoteAction(icon2, label2, description2, intent2))
-                .setSignature(SIGNATURE)
+                .setId(ID)
                 .build();
 
         assertEquals(TEXT, classification.getText());
@@ -222,7 +222,7 @@ public class TextClassifierValueObjectsTest {
         assertEquals(description2, classification.getActions().get(1).getContentDescription());
         assertEquals(intent2, classification.getActions().get(1).getActionIntent());
         assertNotNull(classification.getActions().get(1).getIcon());
-        assertEquals(SIGNATURE, classification.getSignature());
+        assertEquals(ID, classification.getId());
     }
 
     @Test
@@ -242,7 +242,7 @@ public class TextClassifierValueObjectsTest {
                 .setLabel(label)
                 .setIcon(icon)
                 .setOnClickListener(onClick)
-                .setSignature(SIGNATURE)
+                .setId(ID)
                 .build();
 
         assertEquals(TEXT, classification.getText());
@@ -259,7 +259,7 @@ public class TextClassifierValueObjectsTest {
         assertEquals(label, classification.getLabel());
         assertEquals(icon, classification.getIcon());
         assertEquals(onClick, classification.getOnClickListener());
-        assertEquals(SIGNATURE, classification.getSignature());
+        assertEquals(ID, classification.getId());
     }
 
     @Test
@@ -273,27 +273,32 @@ public class TextClassifierValueObjectsTest {
         assertEquals(null, classification.getIcon());
         assertEquals(null, classification.getOnClickListener());
         assertEquals(0, classification.getActions().size());
-        assertEquals("", classification.getSignature());
+        assertNull(classification.getId());
     }
 
     @Test
-    public void testTextClassificationOptions() {
-        final TextClassification.Options options = new TextClassification.Options()
-                .setDefaultLocales(LOCALES);
-        assertEquals(LOCALES, options.getDefaultLocales());
+    public void testTextClassificationRequest() {
+        final TextClassification.Request request =
+                new TextClassification.Request.Builder(TEXT, START, END)
+                        .setDefaultLocales(LOCALES)
+                        .build();
+        assertEquals(LOCALES, request.getDefaultLocales());
     }
 
     @Test
-    public void testTextClassificationOptions_nullValues() {
-        final TextClassification.Options options = new TextClassification.Options()
-                .setDefaultLocales(null);
-        assertNull(options.getDefaultLocales());
+    public void testTextClassificationRequest_nullValues() {
+        final TextClassification.Request request =
+                new TextClassification.Request.Builder(TEXT, START, END)
+                        .setDefaultLocales(null)
+                        .build();
+        assertNull(request.getDefaultLocales());
     }
 
     @Test
-    public void testTextClassificationOptions_defaultValues() {
-        final TextClassification.Options options = new TextClassification.Options();
-        assertNull(options.getDefaultLocales());
+    public void testTextClassificationRequest_defaultValues() {
+        final TextClassification.Request request =
+                new TextClassification.Request.Builder(TEXT, START, END).build();
+        assertNull(request.getDefaultLocales());
     }
 
     // TODO: Add more tests.

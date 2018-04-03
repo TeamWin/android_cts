@@ -414,7 +414,7 @@ public class NetworkUsageStatsTest extends InstrumentationTestCase {
                 result = mNsm.querySummary(
                         mNetworkInterfacesToTest[i].getNetworkType(), getSubscriberId(i),
                         mStartTime, mEndTime);
-                assertTrue(result != null);
+                assertNotNull(result);
                 NetworkStats.Bucket bucket = new NetworkStats.Bucket();
                 long totalTxPackets = 0;
                 long totalRxPackets = 0;
@@ -448,8 +448,6 @@ public class NetworkUsageStatsTest extends InstrumentationTestCase {
                 assertTrue("No Rx packets usage for uid " + Process.myUid(), totalRxPackets > 0);
                 assertTrue("No Tx bytes usage for uid " + Process.myUid(), totalTxBytes > 0);
                 assertTrue("No Tx packets usage for uid " + Process.myUid(), totalTxPackets > 0);
-            } catch (RemoteException | SecurityException e) {
-                fail("testAppSummary fails with exception: " + e.toString());
             } finally {
                 if (result != null) {
                     result.close();
@@ -524,7 +522,7 @@ public class NetworkUsageStatsTest extends InstrumentationTestCase {
                 result = mNsm.queryDetailsForUid(
                         mNetworkInterfacesToTest[i].getNetworkType(), getSubscriberId(i),
                         mStartTime, mEndTime, Process.myUid());
-                assertTrue(result != null);
+                assertNotNull(result);
                 NetworkStats.Bucket bucket = new NetworkStats.Bucket();
                 long totalTxPackets = 0;
                 long totalRxPackets = 0;
@@ -548,8 +546,6 @@ public class NetworkUsageStatsTest extends InstrumentationTestCase {
                 assertTrue("No Rx packets usage for uid " + Process.myUid(), totalRxPackets > 0);
                 assertTrue("No Tx bytes usage for uid " + Process.myUid(), totalTxBytes > 0);
                 assertTrue("No Tx packets usage for uid " + Process.myUid(), totalTxPackets > 0);
-            } catch (RemoteException | SecurityException e) {
-                fail("testUidDetails fails with exception: " + e.toString());
             } finally {
                 if (result != null) {
                     result.close();
@@ -561,8 +557,6 @@ public class NetworkUsageStatsTest extends InstrumentationTestCase {
                         mNetworkInterfacesToTest[i].getNetworkType(), getSubscriberId(i),
                         mStartTime, mEndTime, Process.myUid());
                 fail("negative testUidDetails fails: no exception thrown.");
-            } catch (RemoteException e) {
-                fail("testUidDetails fails with exception: " + e.toString());
             } catch (SecurityException e) {
                 // expected outcome
             }
@@ -581,7 +575,7 @@ public class NetworkUsageStatsTest extends InstrumentationTestCase {
                 result = mNsm.queryDetailsForUidTag(
                         mNetworkInterfacesToTest[i].getNetworkType(), getSubscriberId(i),
                         mStartTime, mEndTime, Process.myUid(), NETWORK_TAG);
-                assertTrue(result != null);
+                assertNotNull(result);
                 NetworkStats.Bucket bucket = new NetworkStats.Bucket();
                 long totalTxPackets = 0;
                 long totalRxPackets = 0;
@@ -604,14 +598,72 @@ public class NetworkUsageStatsTest extends InstrumentationTestCase {
                 }
                 assertTrue("No Rx bytes tagged with 0x" + Integer.toHexString(NETWORK_TAG)
                         + " for uid " + Process.myUid(), totalRxBytes > 0);
-                assertTrue("No Rx packets tagged with " + Integer.toHexString(NETWORK_TAG)
+                assertTrue("No Rx packets tagged with 0x" + Integer.toHexString(NETWORK_TAG)
                         + " for uid " + Process.myUid(), totalRxPackets > 0);
                 assertTrue("No Tx bytes tagged with 0x" + Integer.toHexString(NETWORK_TAG)
                         + " for uid " + Process.myUid(), totalTxBytes > 0);
                 assertTrue("No Tx packets tagged with 0x" + Integer.toHexString(NETWORK_TAG)
                         + " for uid " + Process.myUid(), totalTxPackets > 0);
+            } finally {
+                if (result != null) {
+                    result.close();
+                }
+            }
+            setAppOpsMode(AppOpsManager.OPSTR_GET_USAGE_STATS, "deny");
+            try {
+                result = mNsm.queryDetailsForUidTag(
+                        mNetworkInterfacesToTest[i].getNetworkType(), getSubscriberId(i),
+                        mStartTime, mEndTime, Process.myUid(), NETWORK_TAG);
+                fail("negative testUidDetails fails: no exception thrown.");
             } catch (SecurityException e) {
-                fail("testUidDetails fails with exception: " + e.toString());
+                // expected outcome
+            }
+        }
+    }
+
+    public void testUidTagStateDetails() throws Exception {
+        for (int i = 0; i < mNetworkInterfacesToTest.length; ++i) {
+            // Relatively large tolerance to accommodate for history bucket size.
+            if (!shouldTestThisNetworkType(i, MINUTE * 120)) {
+                continue;
+            }
+            setAppOpsMode(AppOpsManager.OPSTR_GET_USAGE_STATS, "allow");
+            NetworkStats result = null;
+            try {
+                // Assume test is running in the background and thus is in STATE_DEFAULT.
+                result = mNsm.queryDetailsForUidTagState(
+                        mNetworkInterfacesToTest[i].getNetworkType(), getSubscriberId(i),
+                        mStartTime, mEndTime, Process.myUid(), NETWORK_TAG,
+                        NetworkStats.Bucket.STATE_DEFAULT);
+                assertNotNull(result);
+                NetworkStats.Bucket bucket = new NetworkStats.Bucket();
+                long totalTxPackets = 0;
+                long totalRxPackets = 0;
+                long totalTxBytes = 0;
+                long totalRxBytes = 0;
+                while (result.hasNextBucket()) {
+                    assertTrue(result.getNextBucket(bucket));
+                    assertTimestamps(bucket);
+                    assertEquals(bucket.getState(), NetworkStats.Bucket.STATE_DEFAULT);
+                    assertEquals(bucket.getMetered(), NetworkStats.Bucket.METERED_ALL);
+                    assertEquals(bucket.getDefaultNetwork(),
+                            NetworkStats.Bucket.DEFAULT_NETWORK_ALL);
+                    assertEquals(bucket.getUid(), Process.myUid());
+                    if (bucket.getTag() == NETWORK_TAG) {
+                        totalTxPackets += bucket.getTxPackets();
+                        totalRxPackets += bucket.getRxPackets();
+                        totalTxBytes += bucket.getTxBytes();
+                        totalRxBytes += bucket.getRxBytes();
+                    }
+                }
+                assertTrue("No Rx bytes tagged with 0x" + Integer.toHexString(NETWORK_TAG)
+                        + " for uid " + Process.myUid(), totalRxBytes > 0);
+                assertTrue("No Rx packets tagged with 0x" + Integer.toHexString(NETWORK_TAG)
+                        + " for uid " + Process.myUid(), totalRxPackets > 0);
+                assertTrue("No Tx bytes tagged with 0x" + Integer.toHexString(NETWORK_TAG)
+                        + " for uid " + Process.myUid(), totalTxBytes > 0);
+                assertTrue("No Tx packets tagged with 0x" + Integer.toHexString(NETWORK_TAG)
+                        + " for uid " + Process.myUid(), totalTxPackets > 0);
             } finally {
                 if (result != null) {
                     result.close();

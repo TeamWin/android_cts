@@ -15,6 +15,7 @@ import static android.hardware.camera2.cts.CameraTestUtils.*;
 import static com.android.ex.camera2.blocking.BlockingSessionCallback.*;
 
 import android.graphics.ImageFormat;
+import android.graphics.SurfaceTexture;
 import android.hardware.camera2.CameraCharacteristics;
 import android.hardware.camera2.CameraCaptureSession;
 import android.hardware.camera2.CameraConstrainedHighSpeedCaptureSession;
@@ -305,6 +306,116 @@ public class RecordingTest extends Camera2SurfaceViewTestCase {
     public void testConstrainedHighSpeedRecording() throws Exception {
         constrainedHighSpeedRecording(/*enableSessionParams*/ false);
         constrainedHighSpeedRecording(/*enableSessionParams*/ true);
+    }
+
+    public void testAbandonedHighSpeedRequest() throws Exception {
+        for (String id : mCameraIds) {
+            try {
+                Log.i(TAG, "Testing bad suface for createHighSpeedRequestList for camera " + id);
+                // Re-use the MediaRecorder object for the same camera device.
+                mMediaRecorder = new MediaRecorder();
+                openDevice(id);
+                if (!mStaticInfo.isColorOutputSupported()) {
+                    Log.i(TAG, "Camera " + id +
+                            " does not support color outputs, skipping");
+                    continue;
+                }
+                if (!mStaticInfo.isConstrainedHighSpeedVideoSupported()) {
+                    Log.i(TAG, "Camera " + id +
+                            " does not support constrained high speed video, skipping");
+                    continue;
+                }
+
+                StreamConfigurationMap config =
+                        mStaticInfo.getValueFromKeyNonNull(
+                                CameraCharacteristics.SCALER_STREAM_CONFIGURATION_MAP);
+                Size[] highSpeedVideoSizes = config.getHighSpeedVideoSizes();
+                Size size = highSpeedVideoSizes[0];
+                Range<Integer> fpsRange = getHighestHighSpeedFixedFpsRangeForSize(config, size);
+                mCollector.expectNotNull("Unable to find the fixed frame rate fps range for " +
+                        "size " + size, fpsRange);
+                if (fpsRange == null) {
+                    continue;
+                }
+
+                int captureRate = fpsRange.getLower();
+                int videoFramerate = captureRate / SLOWMO_SLOW_FACTOR;
+                // Skip the test if the highest recording FPS supported by CamcorderProfile
+                if (fpsRange.getUpper() > getFpsFromHighSpeedProfileForSize(size)) {
+                    Log.w(TAG, "high speed recording " + size + "@" + captureRate + "fps"
+                            + " is not supported by CamcorderProfile");
+                    continue;
+                }
+
+                mOutMediaFileName = VIDEO_FILE_PATH + "/test_video.mp4";
+                prepareRecording(size, videoFramerate, captureRate);
+                updatePreviewSurfaceWithVideo(size, captureRate);
+
+                List<Surface> outputSurfaces = new ArrayList<Surface>(2);
+                assertTrue("Both preview and recording surfaces should be valid",
+                        mPreviewSurface.isValid() && mRecordingSurface.isValid());
+
+                outputSurfaces.add(mPreviewSurface);
+                outputSurfaces.add(mRecordingSurface);
+
+                mSessionListener = new BlockingSessionCallback();
+                mSession = configureCameraSession(mCamera, outputSurfaces, /*highSpeed*/true,
+                        mSessionListener, mHandler);
+
+                CaptureRequest.Builder requestBuilder =
+                        mCamera.createCaptureRequest(CameraDevice.TEMPLATE_RECORD);
+                requestBuilder.set(CaptureRequest.CONTROL_AE_TARGET_FPS_RANGE, fpsRange);
+                requestBuilder.addTarget(mPreviewSurface);
+                requestBuilder.addTarget(mRecordingSurface);
+
+                // 1. Test abandoned MediaRecorder
+                releaseRecorder();
+                try {
+                    List<CaptureRequest> slowMoRequests =
+                            ((CameraConstrainedHighSpeedCaptureSession) mSession).
+                            createHighSpeedRequestList(requestBuilder.build());
+                    fail("Create high speed request on abandoned surface must fail!");
+                } catch (IllegalArgumentException e) {
+                    Log.i(TAG, "Release recording surface test passed");
+                    // expected
+                }
+
+                // 2. Test abandoned preview surface
+                mMediaRecorder = new MediaRecorder();
+                SurfaceTexture preview = new SurfaceTexture(/*random int*/ 1);
+                Surface previewSurface = new Surface(preview);
+                preview.setDefaultBufferSize(size.getWidth(), size.getHeight());
+
+                outputSurfaces = new ArrayList<Surface>();
+                outputSurfaces.add(previewSurface);
+
+                prepareRecording(size, videoFramerate, captureRate);
+                updatePreviewSurfaceWithVideo(size, captureRate);
+
+                mSession = configureCameraSession(mCamera, outputSurfaces, /*highSpeed*/true,
+                        mSessionListener, mHandler);
+
+                requestBuilder = mCamera.createCaptureRequest(CameraDevice.TEMPLATE_RECORD);
+                requestBuilder.set(CaptureRequest.CONTROL_AE_TARGET_FPS_RANGE, fpsRange);
+                requestBuilder.addTarget(previewSurface);
+
+                // Abandon preview surface.
+                previewSurface.release();
+
+                try {
+                    List<CaptureRequest> slowMoRequests =
+                            ((CameraConstrainedHighSpeedCaptureSession) mSession).
+                            createHighSpeedRequestList(requestBuilder.build());
+                    fail("Create high speed request on abandoned preview surface must fail!");
+                } catch (IllegalArgumentException e) {
+                    Log.i(TAG, "Release preview surface test passed");
+                    // expected
+                }
+            } finally {
+                closeDevice();
+                releaseRecorder();
+            }
+        }
     }
 
     /**
