@@ -35,6 +35,8 @@ public class IncidentdTest extends ProtoDumpTestCase {
             FingerprintIncidentTest.verifyFingerprintServiceDumpProto(dump.getFingerprint(), filterLevel);
         }
 
+        NetstatsIncidentTest.verifyNetworkStatsServiceDumpProto(dump.getNetstats(), filterLevel);
+
         SettingsIncidentTest.verifySettingsServiceDumpProto(dump.getSettings(), filterLevel);
 
         NotificationIncidentTest.verifyNotificationServiceDumpProto(dump.getNotification(), filterLevel);
@@ -51,11 +53,28 @@ public class IncidentdTest extends ProtoDumpTestCase {
 
         PowerIncidentTest.verifyPowerManagerServiceDumpProto(dump.getPower(), filterLevel);
 
+        if (PrintProtoTest.supportsPrinting(getDevice())) {
+            PrintProtoTest.verifyPrintServiceDumpProto(dump.getPrint(), filterLevel);
+        }
+
+        // Procstats currently has no EXPLICIT or LOCAL fields
+
+        // TODO: create test for Activities
+        // TODO: create test for Broadcasts
+        // TODO: create test for Amservices
+        // TODO: create test for Amprocesses
+
         AlarmManagerIncidentTest.verifyAlarmManagerServiceDumpProto(dump.getAlarm(), filterLevel);
 
         MemInfoIncidentTest.verifyMemInfoDumpProto(dump.getMeminfo(), filterLevel);
 
+        // GraphicsStats is expected to be all AUTOMATIC.
+
+        // TODO: create test for WindowManager
+
         JobSchedulerIncidentTest.verifyJobSchedulerServiceDumpProto(dump.getJobscheduler(), filterLevel);
+
+        // TODO: create test for USB
     }
 
     // Splitting these into separate methods to make debugging easier.
