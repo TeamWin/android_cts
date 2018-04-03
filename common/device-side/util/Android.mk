@@ -24,6 +24,7 @@ LOCAL_STATIC_JAVA_LIBRARIES := \
     android-support-test \
     ub-uiautomator \
     mockito-target-minus-junit4 \
+    androidx.annotation_annotation
 
 LOCAL_JAVA_LIBRARIES := \
     android.test.runner.stubs \

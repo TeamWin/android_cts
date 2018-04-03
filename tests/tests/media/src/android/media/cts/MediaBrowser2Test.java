@@ -47,8 +47,8 @@ import android.media.SessionToken2;
 import android.os.Bundle;
 import android.os.Process;
 import android.os.ResultReceiver;
-import android.support.annotation.CallSuper;
-import android.support.annotation.NonNull;
+import androidx.annotation.CallSuper;
+import androidx.annotation.NonNull;
 import android.support.test.filters.SmallTest;
 import android.support.test.runner.AndroidJUnit4;
 

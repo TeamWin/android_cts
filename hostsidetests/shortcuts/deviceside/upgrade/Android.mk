@@ -36,7 +36,7 @@ LOCAL_RESOURCE_DIR :=  $(LOCAL_PATH)/version1/res
 
 LOCAL_STATIC_JAVA_LIBRARIES := \
     android-support-test \
-    android-support-v4 \
+    androidx.legacy_legacy-support-v4 \
     mockito-target-minus-junit4 \
     compatibility-device-util \
     ctstestrunner \
@@ -69,7 +69,7 @@ LOCAL_RESOURCE_DIR :=  $(LOCAL_PATH)/version2/res
 
 LOCAL_STATIC_JAVA_LIBRARIES := \
     android-support-test \
-    android-support-v4 \
+    androidx.legacy_legacy-support-v4 \
     mockito-target-minus-junit4 \
     compatibility-device-util \
     ctstestrunner \

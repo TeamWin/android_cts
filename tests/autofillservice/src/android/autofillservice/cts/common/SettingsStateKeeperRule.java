@@ -17,7 +17,7 @@ package android.autofillservice.cts.common;
 
 import android.content.Context;
 import android.provider.Settings;
-import android.support.annotation.NonNull;
+import androidx.annotation.NonNull;
 
 /**
  * JUnit rule used to restore a {@link Settings} preference after the test is run.

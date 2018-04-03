@@ -46,7 +46,7 @@
                   android:theme="@style/WhiteBackgroundNoWindowAnimation"
                   android:screenOrientation="locked"/>
         <provider
-            android:name="android.support.v4.content.FileProvider"
+            android:name="androidx.core.content.FileProvider"
             android:authorities="android.graphics.cts.fileprovider"
             android:exported="false"
             android:grantUriPermissions="true"
