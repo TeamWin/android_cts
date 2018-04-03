@@ -25,6 +25,7 @@ import static android.view.Display.DEFAULT_DISPLAY;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
+import static org.junit.Assume.assumeFalse;
 import static org.junit.Assume.assumeTrue;
 
 import android.server.am.ActivityManagerState.ActivityDisplay;
@@ -43,7 +44,6 @@ public class ActivityManagerVrDisplayTests extends ActivityManagerDisplayTestBas
     private static final int VR_VIRTUAL_DISPLAY_HEIGHT = 900;
     private static final int VR_VIRTUAL_DISPLAY_DPI = 320;
 
-    private boolean mVrHeadset;
 
     @Before
     @Override
@@ -51,7 +51,6 @@ public class ActivityManagerVrDisplayTests extends ActivityManagerDisplayTestBas
         super.setUp();
 
         assumeTrue(supportsVrMode());
-        mVrHeadset = isUiModeLockedToVrHeadset();
     }
 
     /**
@@ -60,17 +59,18 @@ public class ActivityManagerVrDisplayTests extends ActivityManagerDisplayTestBas
      * persistent vr mode whenever it's on, and turning off persistent vr mode on a standalone vr
      * device puts the device in a bad state.
      */
-     private class VrModeSession implements AutoCloseable {
+    private static class VrModeSession implements AutoCloseable {
+        private boolean applyVrModeChanges = !ActivityManagerTestBase.isUiModeLockedToVrHeadset();
 
         void enablePersistentVrMode() throws Exception {
-            if (mVrHeadset) { return; }
+            if (!applyVrModeChanges) { return; }
             executeShellCommand("setprop vr_virtualdisplay true");
             executeShellCommand("vr set-persistent-vr-mode-enabled true");
         }
 
         @Override
         public void close() throws Exception {
-            if (mVrHeadset) { return; }
+            if (!applyVrModeChanges) { return; }
             executeShellCommand("vr set-persistent-vr-mode-enabled false");
             executeShellCommand("setprop vr_virtualdisplay false");
         }
@@ -173,12 +173,9 @@ public class ActivityManagerVrDisplayTests extends ActivityManagerDisplayTestBas
     @Test
     public void testActivityLaunchPostVr() throws Exception {
         assumeTrue(supportsMultiDisplay());
-
-        if (mVrHeadset) {
-            // This test doesn't apply to a standalone vr device, since vr is always enabled, and
-            // there is no "post vr" behavior to verify.
-            return;
-        }
+        // This test doesn't apply to a standalone vr device, since vr is always enabled, and
+        // there is no "post vr" behavior to verify.
+        assumeFalse(isUiModeLockedToVrHeadset());
 
         try (final VrModeSession vrModeSession = new VrModeSession()) {
             // Put the device in persistent vr mode.
