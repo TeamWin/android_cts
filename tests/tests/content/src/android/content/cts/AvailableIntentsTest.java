@@ -32,6 +32,8 @@ import android.speech.RecognizerIntent;
 import android.telecom.TelecomManager;
 import android.test.AndroidTestCase;
 
+import com.android.compatibility.common.util.FeatureUtil;
+
 import java.util.List;
 
 public class AvailableIntentsTest extends AndroidTestCase {
@@ -329,8 +331,12 @@ public class AvailableIntentsTest extends AndroidTestCase {
     public void testManageStorage() {
         assertCanBeHandled(new Intent(StorageManager.ACTION_MANAGE_STORAGE));
     }
- 
+
     public void testVoiceCommand() {
+        if (FeatureUtil.isLowRam()) {
+            // Low ram devices do not support voice command, skip this test
+            return;
+        }
         PackageManager packageManager = mContext.getPackageManager();
         if (packageManager.hasSystemFeature(PackageManager.FEATURE_MICROPHONE)) {
             Intent intent = new Intent(Intent.ACTION_VOICE_COMMAND);
@@ -340,6 +346,10 @@ public class AvailableIntentsTest extends AndroidTestCase {
     }
 
     public void testVoiceSearchHandsFree() {
+        if (FeatureUtil.isLowRam()) {
+            // Low ram devices do not support hands-free hot word, skip this test
+            return;
+        }
         PackageManager packageManager = mContext.getPackageManager();
         if (packageManager.hasSystemFeature(PackageManager.FEATURE_MICROPHONE)) {
             Intent intent = new Intent(RecognizerIntent.ACTION_VOICE_SEARCH_HANDS_FREE);
