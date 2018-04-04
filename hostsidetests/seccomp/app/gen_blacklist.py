@@ -3,10 +3,15 @@
 # This script generates syscall name to number mapping for supported
 # architectures.  To update the output, runs:
 #
-#  $ app/gen_blacklist.py > app/assets/syscalls.json
+#  $ app/gen_blacklist.py --allowed app/assets/syscalls_allowed.json \
+#      --blocked app/assets/syscalls_blocked.json
+#
+# Note that these are just syscalls that explicitly allowed and blocked in CTS
+# currently.
 #
 # TODO: Consider generating it in Android.mk/bp.
 
+import argparse
 import glob
 import json
 import os
@@ -14,14 +19,39 @@ import subprocess
 
 _SUPPORTED_ARCHS = ['arm', 'arm64', 'x86', 'x86_64', 'mips', 'mips64']
 
-_INTERESTED_SYSCALLS = {
-    'swapon': 'all',
-    'swapoff': 'all',
-    'add_key': 'all',
-    'keyctl': 'all',
+# Syscalls that are currently explicitly allowed in CTS
+_SYSCALLS_ALLOWED_IN_CTS = {
     'openat': 'all',
-    'syncfs': 'all',
-    'inotify_init': 'arm,x86,mips',
+
+    # b/35034743 - do not remove test without reading bug.
+    'syncfs': 'arm64',
+
+    # b/35906875 - do not remove test without reading bug
+    'inotify_init': 'arm',
+}
+
+# Syscalls that are currently explicitly blocked in CTS
+_SYSCALLS_BLOCKED_IN_CTS = {
+    'acct': 'all',
+    'add_key': 'all',
+    'adjtimex': 'all',
+    'chroot': 'all',
+    'clock_adjtime': 'all',
+    'clock_settime': 'all',
+    'delete_module': 'all',
+    'init_module': 'all',
+    'keyctl': 'all',
+    'mount': 'all',
+    'reboot': 'all',
+    'setdomainname': 'all',
+    'sethostname': 'all',
+    'settimeofday': 'all',
+    'swapoff': 'all',
+    'swapoff': 'all',
+    'swapon': 'all',
+    'swapon': 'all',
+    'syslog': 'all',
+    'umount2': 'all',
 }
 
 def create_syscall_name_to_number_map(arch, names):
@@ -108,17 +138,38 @@ def get_latest_clang_path():
       return clang_exe
   raise FileNotFoundError('Cannot locate clang executable')
 
-def main():
-  dictionary = {}
-  for arch in _SUPPORTED_ARCHS:
-    syscall_names = []
-    for syscall in _INTERESTED_SYSCALLS.keys():
-      if (arch in _INTERESTED_SYSCALLS[syscall] or
-          'all' == _INTERESTED_SYSCALLS[syscall]):
-        syscall_names.append(syscall)
-    dictionary[arch] = create_syscall_name_to_number_map(arch, syscall_names)
+def collect_syscall_names_for_arch(syscall_map, arch):
+  syscall_names = []
+  for syscall in syscall_map.keys():
+    if (arch in syscall_map[syscall] or
+        'all' == syscall_map[syscall]):
+      syscall_names.append(syscall)
+  return syscall_names
 
-  print(json.dumps(dictionary, sort_keys=True, indent=2))
+def main():
+  parser = argparse.ArgumentParser('syscall name to number generator')
+  parser.add_argument('--allowed', metavar='path/to/json', type=str)
+  parser.add_argument('--blocked', metavar='path/to/json', type=str)
+  args = parser.parse_args()
+
+  allowed = {}
+  blocked = {}
+  for arch in _SUPPORTED_ARCHS:
+    blocked[arch] = create_syscall_name_to_number_map(
+        arch,
+        collect_syscall_names_for_arch(_SYSCALLS_BLOCKED_IN_CTS, arch))
+    allowed[arch] = create_syscall_name_to_number_map(
+        arch,
+        collect_syscall_names_for_arch(_SYSCALLS_ALLOWED_IN_CTS, arch))
+
+  msg_do_not_modify = '# DO NOT MODIFY.  CHANGE gen_blacklist.py INSTEAD.'
+  with open(args.allowed, 'w') as f:
+    print(msg_do_not_modify, file=f)
+    json.dump(allowed, f, sort_keys=True, indent=2)
+
+  with open(args.blocked, 'w') as f:
+    print(msg_do_not_modify, file=f)
+    json.dump(blocked, f, sort_keys=True, indent=2)
 
 if __name__ == '__main__':
   main()
