@@ -36,7 +36,7 @@ LOCAL_STATIC_JAVA_LIBRARIES := \
     ctstestrunner \
     ctstestserver \
     mockito-target-minus-junit4 \
-    android-support-v4
+    androidx.legacy_legacy-support-v4
 
 LOCAL_SRC_FILES := $(call all-java-files-under, src) \
               src/android/app/stubs/ISecondary.aidl

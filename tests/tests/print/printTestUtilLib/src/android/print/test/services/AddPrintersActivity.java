@@ -18,7 +18,7 @@ package android.print.test.services;
 
 import android.app.Activity;
 import android.os.Bundle;
-import android.support.annotation.NonNull;
+import androidx.annotation.NonNull;
 
 import java.util.ArrayList;
 

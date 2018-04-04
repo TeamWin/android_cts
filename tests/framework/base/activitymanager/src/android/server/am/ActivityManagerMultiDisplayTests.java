@@ -61,7 +61,7 @@ import static org.junit.Assume.assumeTrue;
 import android.content.ComponentName;
 import android.platform.test.annotations.Presubmit;
 import android.server.am.ActivityManagerState.ActivityDisplay;
-import android.support.annotation.Nullable;
+import androidx.annotation.Nullable;
 import android.support.test.filters.FlakyTest;
 
 import org.junit.Before;
@@ -419,6 +419,7 @@ public class ActivityManagerMultiDisplayTests extends ActivityManagerDisplayTest
      * primary display.
      */
     @Presubmit
+    @FlakyTest(bugId = 77469851)
     @Test
     public void testConsequentLaunchActivity() throws Exception {
         try (final VirtualDisplaySession virtualDisplaySession = new VirtualDisplaySession()) {

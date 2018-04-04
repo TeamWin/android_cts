@@ -320,4 +320,35 @@ TEST(AHardwareBufferTest, LockAndUnlockSucceed) {
     AHardwareBuffer_release(buffer);
 }
 
+TEST(AHardwareBufferTest, ProtectedContentAndCpuReadIncompatible) {
+    AHardwareBuffer* buffer = NULL;
+    AHardwareBuffer_Desc desc = {};
+    desc.width = 120;
+    desc.width = 240;
+    desc.layers = 1;
+    desc.usage = AHARDWAREBUFFER_USAGE_GPU_COLOR_OUTPUT | AHARDWAREBUFFER_USAGE_CPU_READ_OFTEN;
+    desc.format = AHARDWAREBUFFER_FORMAT_R8G8B8A8_UNORM;
+
+    // Allocation of a CPU-readable buffer should succeed...
+    int err = AHardwareBuffer_allocate(&desc, &buffer);
+    EXPECT_EQ(NO_ERROR, err);
+    AHardwareBuffer_release(buffer);
+    buffer = nullptr;
+
+    // ...but not if it's a protected buffer.
+    desc.usage =
+        AHARDWAREBUFFER_USAGE_GPU_COLOR_OUTPUT |
+        AHARDWAREBUFFER_USAGE_CPU_READ_OFTEN |
+        AHARDWAREBUFFER_USAGE_PROTECTED_CONTENT;
+    err = AHardwareBuffer_allocate(&desc, &buffer);
+    EXPECT_NE(NO_ERROR, err);
+
+    desc.usage =
+        AHARDWAREBUFFER_USAGE_GPU_COLOR_OUTPUT |
+        AHARDWAREBUFFER_USAGE_CPU_READ_RARELY |
+        AHARDWAREBUFFER_USAGE_PROTECTED_CONTENT;
+    err = AHardwareBuffer_allocate(&desc, &buffer);
+    EXPECT_NE(NO_ERROR, err);
+}
+
 } // namespace android

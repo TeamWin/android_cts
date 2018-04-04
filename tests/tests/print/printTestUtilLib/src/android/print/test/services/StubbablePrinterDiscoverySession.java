@@ -21,7 +21,7 @@ import android.print.PrinterId;
 import android.printservice.CustomPrinterIconCallback;
 import android.printservice.PrintService;
 import android.printservice.PrinterDiscoverySession;
-import android.support.annotation.NonNull;
+import androidx.annotation.NonNull;
 
 import java.util.List;
 

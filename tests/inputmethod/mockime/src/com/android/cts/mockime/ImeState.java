@@ -17,8 +17,8 @@
 package com.android.cts.mockime;
 
 import android.os.Bundle;
-import android.support.annotation.NonNull;
-import android.support.annotation.Nullable;
+import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
 
 /**
  * An immutable object that stores several runtime state of {@link MockIme}.

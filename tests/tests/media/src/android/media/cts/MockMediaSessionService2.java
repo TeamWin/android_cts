@@ -24,8 +24,8 @@ import android.media.MediaSession2;
 import android.media.MediaSession2.SessionCallback;
 import android.media.MediaSessionService2;
 import android.media.cts.TestUtils.SyncHandler;
-import android.support.annotation.NonNull;
-import android.support.annotation.Nullable;
+import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
 
 import java.util.concurrent.Executor;
 

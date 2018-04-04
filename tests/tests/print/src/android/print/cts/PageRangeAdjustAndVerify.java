@@ -45,7 +45,7 @@ import android.print.test.services.SecondPrintService;
 import android.print.test.services.StubbablePrinterDiscoverySession;
 import android.printservice.PrintJob;
 import android.printservice.PrintService;
-import android.support.annotation.NonNull;
+import androidx.annotation.NonNull;
 import android.util.Log;
 
 import org.junit.Before;

@@ -25,9 +25,9 @@ import android.os.Handler;
 import android.os.IBinder;
 import android.os.Looper;
 import android.os.ResultReceiver;
-import android.support.annotation.BinderThread;
-import android.support.annotation.MainThread;
-import android.support.annotation.Nullable;
+import androidx.annotation.BinderThread;
+import androidx.annotation.MainThread;
+import androidx.annotation.Nullable;
 import android.view.WindowManager;
 import android.widget.TextView;
 

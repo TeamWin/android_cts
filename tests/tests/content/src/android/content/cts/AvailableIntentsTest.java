@@ -332,8 +332,12 @@ public class AvailableIntentsTest extends AndroidTestCase {
     public void testManageStorage() {
         assertCanBeHandled(new Intent(StorageManager.ACTION_MANAGE_STORAGE));
     }
- 
+
     public void testVoiceCommand() {
+        if (FeatureUtil.isLowRam()) {
+            // Low ram devices do not support voice command, skip this test
+            return;
+        }
         PackageManager packageManager = mContext.getPackageManager();
         if (packageManager.hasSystemFeature(PackageManager.FEATURE_MICROPHONE)) {
             Intent intent = new Intent(Intent.ACTION_VOICE_COMMAND);

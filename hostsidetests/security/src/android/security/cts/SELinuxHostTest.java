@@ -147,8 +147,13 @@ public class SELinuxHostTest extends DeviceTestCase implements IBuildReceiver, I
         if (mDevice.doesFileExist("/system/etc/selinux/plat_file_contexts")) {
             devicePlatFcFile = getDeviceFile(mDevice, cachedDevicePlatFcFiles,
                     "/system/etc/selinux/plat_file_contexts", "plat_file_contexts");
-            deviceNonplatFcFile = getDeviceFile(mDevice, cachedDeviceNonplatFcFiles,
-                    "/vendor/etc/selinux/nonplat_file_contexts", "nonplat_file_contexts");
+            if (mDevice.doesFileExist("/vendor/etc/selinux/nonplat_file_contexts")){
+                deviceNonplatFcFile = getDeviceFile(mDevice, cachedDeviceNonplatFcFiles,
+                        "/vendor/etc/selinux/nonplat_file_contexts", "nonplat_file_contexts");
+            } else {
+                deviceNonplatFcFile = getDeviceFile(mDevice, cachedDeviceNonplatFcFiles,
+                        "/vendor/etc/selinux/vendor_file_contexts", "vendor_file_contexts");
+            }
         } else {
             devicePlatFcFile = getDeviceFile(mDevice, cachedDevicePlatFcFiles,
                     "/plat_file_contexts", "plat_file_contexts");
@@ -167,6 +172,9 @@ public class SELinuxHostTest extends DeviceTestCase implements IBuildReceiver, I
     private static File getDeviceFile(ITestDevice device,
             Map<ITestDevice, File> cache, String deviceFilePath,
             String tmpFileName) throws Exception {
+        if (!device.doesFileExist(deviceFilePath)){
+            throw new Exception();
+        }
         File file;
         synchronized (cache) {
             file = cache.get(device);
@@ -726,6 +734,24 @@ public class SELinuxHostTest extends DeviceTestCase implements IBuildReceiver, I
      */
     public void testDataTypeViolators() throws Exception {
         assertSepolicyTests("TestDataTypeViolations", "/sepolicy_tests");
+    }
+
+    /**
+     * Tests that all types in /proc have the proc_type attribute.
+     *
+     * @throws Exception
+     */
+    public void testProcTypeViolators() throws Exception {
+        assertSepolicyTests("TestProcTypeViolations", "/sepolicy_tests");
+    }
+
+    /**
+     * Tests that all types in /sys have the sysfs_type attribute.
+     *
+     * @throws Exception
+     */
+    public void testSysfsTypeViolators() throws Exception {
+        assertSepolicyTests("TestSysfsTypeViolations", "/sepolicy_tests");
     }
 
     /**
