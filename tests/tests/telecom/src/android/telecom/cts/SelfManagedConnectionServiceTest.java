@@ -20,6 +20,7 @@ import android.net.Uri;
 import android.os.Bundle;
 import android.telecom.CallAudioState;
 import android.telecom.Connection;
+import android.telecom.ConnectionService;
 import android.telecom.PhoneAccount;
 import android.telecom.PhoneAccountHandle;
 import android.telecom.TelecomManager;
@@ -39,7 +40,8 @@ import static android.telecom.cts.TestUtils.waitOnAllHandlers;
 
 public class SelfManagedConnectionServiceTest extends BaseTelecomTestWithMockServices {
     private Uri TEST_ADDRESS_1 = Uri.fromParts("sip", "call1@test.com", null);
-    private Uri TEST_ADDRESS_2 = Uri.fromParts("sip", "call2@test.com", null);
+    private Uri TEST_ADDRESS_2 = Uri.fromParts("tel", "650-555-1212", null);
+    private Uri TEST_ADDRESS_3 = Uri.fromParts("tel", "650-555-1213", null);
 
     @Override
     protected void setUp() throws Exception {
@@ -100,17 +102,26 @@ public class SelfManagedConnectionServiceTest extends BaseTelecomTestWithMockSer
         PhoneAccount registeredAccount = mTelecomManager.getPhoneAccount(
                 TestUtils.TEST_SELF_MANAGED_HANDLE_1);
 
+        assertPhoneAccountRegistered(TestUtils.TEST_SELF_MANAGED_HANDLE_2);
+        assertPhoneAccountEnabled(TestUtils.TEST_SELF_MANAGED_HANDLE_2);
+        PhoneAccount registeredAccount2 = mTelecomManager.getPhoneAccount(
+                TestUtils.TEST_SELF_MANAGED_HANDLE_2);
+
         // It should exist and be the same as the previously registered one.
         assertNotNull(registeredAccount);
+        assertNotNull(registeredAccount2);
 
         // We cannot just check for equality of the PhoneAccount since the one we registered is not
         // enabled, and the one we get back after registration is.
         assertPhoneAccountEquals(TestUtils.TEST_SELF_MANAGED_PHONE_ACCOUNT_1, registeredAccount);
+        assertPhoneAccountEquals(TestUtils.TEST_SELF_MANAGED_PHONE_ACCOUNT_2, registeredAccount2);
 
         // An important assumption is that self-managed PhoneAccounts are automatically
         // enabled by default.
         assertTrue("Self-managed PhoneAccounts must be enabled by default.",
                 registeredAccount.isEnabled());
+        assertTrue("Self-managed PhoneAccounts must be enabled by default.",
+                registeredAccount2.isEnabled());
     }
 
     /**
@@ -198,15 +209,20 @@ public class SelfManagedConnectionServiceTest extends BaseTelecomTestWithMockSer
             return;
         }
 
-        TestUtils.addIncomingCall(getInstrumentation(), mTelecomManager,
-                TestUtils.TEST_SELF_MANAGED_HANDLE_1, TEST_ADDRESS_1);
+        addAndVerifyIncomingCall(TestUtils.TEST_SELF_MANAGED_HANDLE_1, TEST_ADDRESS_1);
+        addAndVerifyIncomingCall(TestUtils.TEST_SELF_MANAGED_HANDLE_2, TEST_ADDRESS_3);
+    }
+
+    private void addAndVerifyIncomingCall(PhoneAccountHandle handle, Uri address)
+            throws Exception {
+        TestUtils.addIncomingCall(getInstrumentation(), mTelecomManager, handle, address);
 
         // Ensure Telecom bound to the self managed CS
         if (!CtsSelfManagedConnectionService.waitForBinding()) {
             fail("Could not bind to Self-Managed ConnectionService");
         }
 
-        SelfManagedConnection connection = TestUtils.waitForAndGetConnection(TEST_ADDRESS_1);
+        SelfManagedConnection connection = TestUtils.waitForAndGetConnection(address);
 
         // Expect callback indicating that UI should be shown.
         connection.getOnShowIncomingUiInvokeCounter().waitForCount(1);
@@ -222,7 +238,7 @@ public class SelfManagedConnectionServiceTest extends BaseTelecomTestWithMockSer
      * Tests ensures that Telecom disallow to place outgoing self-managed call when the ongoing
      * managed call can not be held.
      */
-    public void testDisallowOutgoingCallWhileOngoingManagedCallCanNotBeHeld() {
+    public void testDisallowOutgoingCallWhileOngoingManagedCallCanNotBeHeld() throws Exception {
         if (!mShouldTestTelecom) {
             return;
         }
@@ -240,34 +256,47 @@ public class SelfManagedConnectionServiceTest extends BaseTelecomTestWithMockSer
                 TestUtils.TEST_SELF_MANAGED_HANDLE_1, TEST_ADDRESS_1);
 
         // THEN the new outgoing call is failed.
+        CtsSelfManagedConnectionService.waitForBinding();
         assertTrue(CtsSelfManagedConnectionService.getConnectionService().waitForUpdate(
                 CtsSelfManagedConnectionService.CREATE_OUTGOING_CONNECTION_FAILED_LOCK));
     }
 
     /**
      * Tests ability to add a new self-managed outgoing connection.
+     * <p>
+     * A self-managed {@link ConnectionService} shall be able to place an outgoing call to tel or
+     * sip {@link Uri}s without being interrupted by system UX or other Telephony-related logic.
      */
     public void testAddSelfManagedOutgoingConnection() throws Exception {
         if (!mShouldTestTelecom) {
             return;
         }
-        TestUtils.placeOutgoingCall(getInstrumentation(), mTelecomManager,
-                TestUtils.TEST_SELF_MANAGED_HANDLE_1, TEST_ADDRESS_1);
+        placeAndVerifyOutgoingCall(TestUtils.TEST_SELF_MANAGED_HANDLE_1, TEST_ADDRESS_1);
+    }
+
+    private void placeAndVerifyOutgoingCall(PhoneAccountHandle handle, Uri address) throws Exception {
+
+        TestUtils.placeOutgoingCall(getInstrumentation(), mTelecomManager, handle, address);
 
         // Ensure Telecom bound to the self managed CS
         if (!CtsSelfManagedConnectionService.waitForBinding()) {
             fail("Could not bind to Self-Managed ConnectionService");
         }
 
-        SelfManagedConnection connection = TestUtils.waitForAndGetConnection(TEST_ADDRESS_1);
-        assert(!connection.isIncomingCall());
+        SelfManagedConnection connection = TestUtils.waitForAndGetConnection(address);
+        assertNotNull("Self-Managed Connection should NOT be null.", connection);
+        assertTrue("Self-Managed Connection should be outgoing.", !connection.isIncomingCall());
 
+        // The self-managed ConnectionService must NOT have been prompted to show its incoming call
+        // UI for an outgoing call.
         assertEquals(connection.getOnShowIncomingUiInvokeCounter().getInvokeCount(), 0);
 
         setActiveAndVerify(connection);
 
         // Expect there to be no managed calls at the moment.
         assertFalse(mTelecomManager.isInManagedCall());
+        // But there should be a call (including self-managed).
+        assertTrue(mTelecomManager.isInCall());
 
         setDisconnectedAndVerify(connection);
     }
