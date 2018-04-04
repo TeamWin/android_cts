@@ -18,6 +18,7 @@ package android.seccomp.cts.app;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.util.Iterator;
 
 import android.content.Context;
 import android.content.res.AssetManager;
@@ -43,47 +44,39 @@ public class SeccompDeviceTest {
         System.loadLibrary("ctsseccomp_jni");
     }
 
-    private JSONObject mSyscallMap;
+    private JSONObject mAllowedSyscallMap;
+    private JSONObject mBlockedSyscallMap;
 
     @Before
     public void initializeSyscallMap() throws IOException, JSONException {
         final Context context = InstrumentationRegistry.getInstrumentation().getTargetContext();
         AssetManager manager = context.getAssets();
-        String json = null;
-        try (InputStream is = manager.open("syscalls.json")) {
-            json = readInputStreamFully(is);
+        try (InputStream is = manager.open("syscalls_allowed.json")) {
+            mAllowedSyscallMap = new JSONObject(readInputStreamFully(is));
         }
-        mSyscallMap = new JSONObject(json);
+        try (InputStream is = manager.open("syscalls_blocked.json")) {
+            mBlockedSyscallMap = new JSONObject(readInputStreamFully(is));
+        }
+    }
+
+    @Test
+    public void testCTSSyscallAllowed() throws JSONException {
+        JSONObject map = mAllowedSyscallMap.getJSONObject(getCurrentArch());
+        Iterator<String> iter = map.keys();
+        while (iter.hasNext()) {
+            String syscallName = iter.next();
+            testAllowed(map.getInt(syscallName));
+        }
     }
 
     @Test
     public void testCTSSyscallBlocked() throws JSONException {
-        String arch = getCurrentArch();
-
-        testBlocked(getSyscallNumber(arch, "add_key"));
-        testBlocked(getSyscallNumber(arch, "keyctl"));
-        testAllowed(getSyscallNumber(arch, "openat"));
-
-        if (CpuFeatures.isArm64Cpu()) {
-            // b/35034743 - do not remove test without reading bug.
-            testAllowed(getSyscallNumber(arch, "syncfs"));
-        } else if (CpuFeatures.isArmCpu()) {
-            // b/35906875 - do not remove test without reading bug
-            testAllowed(getSyscallNumber(arch, "inotify_init"));
+        JSONObject map = mBlockedSyscallMap.getJSONObject(getCurrentArch());
+        Iterator<String> iter = map.keys();
+        while (iter.hasNext()) {
+            String syscallName = iter.next();
+            testBlocked(map.getInt(syscallName));
         }
-    }
-
-    @Test
-    public void testCTSSwapOnOffBlocked() throws JSONException {
-        String arch = getCurrentArch();
-
-        testBlocked(getSyscallNumber(arch, "swapon"));
-        testBlocked(getSyscallNumber(arch, "swapoff"));
-    }
-
-    private int getSyscallNumber(String arch, String name) throws JSONException {
-        JSONObject perArchMap = mSyscallMap.getJSONObject(arch);
-        return perArchMap.getInt(name);
     }
 
     private static String getCurrentArch() {
