@@ -111,7 +111,7 @@ public class ActivityManagerConfigChangeTests extends ActivityManagerTestBase {
             }
 
             for (int rotation = 0; rotation < 4; rotation += rotationStep) {
-                final LogSeparator logSeparator = clearLogcat();
+                final LogSeparator logSeparator = separateLogs();
                 rotationSession.set(rotation);
                 mAmWmState.computeState(activityName);
                 assertRelaunchOrConfigChanged(activityName, numRelaunch, numConfigChange,
@@ -133,14 +133,14 @@ public class ActivityManagerConfigChangeTests extends ActivityManagerTestBase {
             ComponentName activityName, boolean relaunch) throws Exception {
         try (final FontScaleSession fontScaleSession = new FontScaleSession()) {
             fontScaleSession.set(1.0f);
-            LogSeparator logSeparator = clearLogcat();
+            LogSeparator logSeparator = separateLogs();
             launchActivity(activityName);
             mAmWmState.computeState(activityName);
 
             final int densityDpi = getActivityDensityDpi(activityName, logSeparator);
 
             for (float fontScale = 0.85f; fontScale <= 1.3f; fontScale += 0.15f) {
-                logSeparator = clearLogcat();
+                logSeparator = separateLogs();
                 fontScaleSession.set(fontScale);
                 mAmWmState.computeState(activityName);
                 assertRelaunchOrConfigChanged(activityName, relaunch ? 1 : 0, relaunch ? 0 : 1,
@@ -161,13 +161,13 @@ public class ActivityManagerConfigChangeTests extends ActivityManagerTestBase {
      */
     @Test
     public void testUpdateApplicationInfo() throws Exception {
-        final LogSeparator firstLogSeparator = clearLogcat();
+        final LogSeparator firstLogSeparator = separateLogs();
 
         // Launch an activity that prints applied config.
         launchActivity(TEST_ACTIVITY);
         final int assetSeq = readAssetSeqNumber(TEST_ACTIVITY, firstLogSeparator);
 
-        final LogSeparator logSeparator = clearLogcat();
+        final LogSeparator logSeparator = separateLogs();
         // Update package info.
         executeShellCommand("am update-appinfo all " + TEST_ACTIVITY.getPackageName());
         mAmWmState.waitForWithAmState((amState) -> {

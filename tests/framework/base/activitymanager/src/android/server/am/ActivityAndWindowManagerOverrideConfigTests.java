@@ -79,7 +79,7 @@ public class ActivityAndWindowManagerOverrideConfigTests extends ActivityManager
 
         try (final RotationSession rotationSession = new RotationSession()) {
             rotationSession.set(ROTATION_0);
-            LogSeparator logSeparator = clearLogcat();
+            LogSeparator logSeparator = separateLogs();
             resizeActivityTask(LOG_CONFIGURATION_ACTIVITY, 0, 0, 100, 100);
             ConfigurationChangeObserver c = new ConfigurationChangeObserver();
             final boolean reportedSizeAfterResize = c.findConfigurationChange(
@@ -87,7 +87,7 @@ public class ActivityAndWindowManagerOverrideConfigTests extends ActivityManager
             assertTrue("Expected to observe configuration change when resizing",
                     reportedSizeAfterResize);
 
-            logSeparator = clearLogcat();
+            logSeparator = separateLogs();
             rotationSession.set(ROTATION_180);
             final boolean reportedSizeAfterRotation = c.findConfigurationChange(
                     LOG_CONFIGURATION_ACTIVITY, logSeparator);

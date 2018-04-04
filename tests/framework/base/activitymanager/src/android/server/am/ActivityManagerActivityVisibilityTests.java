@@ -356,7 +356,7 @@ public class ActivityManagerActivityVisibilityTests extends ActivityManagerTestB
         try (final LockScreenSession lockScreenSession = new LockScreenSession()) {
             lockScreenSession.disableLockScreen()
                     .sleepDevice();
-            final LogSeparator logSeparator = clearLogcat();
+            final LogSeparator logSeparator = separateLogs();
             launchActivity(TURN_SCREEN_ON_ATTR_ACTIVITY);
             mAmWmState.assertVisibility(TURN_SCREEN_ON_ATTR_ACTIVITY, true);
             assertTrue("Display turns on", isDisplayOn());
@@ -371,7 +371,7 @@ public class ActivityManagerActivityVisibilityTests extends ActivityManagerTestB
         try (final LockScreenSession lockScreenSession = new LockScreenSession()) {
             lockScreenSession.setLockCredential()
                     .sleepDevice();
-            final LogSeparator logSeparator = clearLogcat();
+            final LogSeparator logSeparator = separateLogs();
             launchActivityNoWait(TURN_SCREEN_ON_ATTR_ACTIVITY);
             // Wait for the activity stopped because lock screen prevent showing the activity.
             mAmWmState.waitForActivityState(TURN_SCREEN_ON_ATTR_ACTIVITY, STATE_STOPPED);
@@ -385,7 +385,7 @@ public class ActivityManagerActivityVisibilityTests extends ActivityManagerTestB
         try (final LockScreenSession lockScreenSession = new LockScreenSession()) {
             lockScreenSession.sleepDevice();
             mAmWmState.waitForAllStoppedActivities();
-            final LogSeparator logSeparator = clearLogcat();
+            final LogSeparator logSeparator = separateLogs();
             launchActivity(TURN_SCREEN_ON_SHOW_ON_LOCK_ACTIVITY);
             mAmWmState.assertVisibility(TURN_SCREEN_ON_SHOW_ON_LOCK_ACTIVITY, true);
             assertTrue("Display turns on", isDisplayOn());
@@ -398,14 +398,14 @@ public class ActivityManagerActivityVisibilityTests extends ActivityManagerTestB
         try (final LockScreenSession lockScreenSession = new LockScreenSession()) {
             lockScreenSession.sleepDevice();
             mAmWmState.waitForAllStoppedActivities();
-            LogSeparator logSeparator = clearLogcat();
+            LogSeparator logSeparator = separateLogs();
             launchActivity(TURN_SCREEN_ON_ATTR_REMOVE_ATTR_ACTIVITY);
             assertTrue("Display turns on", isDisplayOn());
             assertSingleLaunch(TURN_SCREEN_ON_ATTR_REMOVE_ATTR_ACTIVITY, logSeparator);
 
             lockScreenSession.sleepDevice();
             mAmWmState.waitForAllStoppedActivities();
-            logSeparator = clearLogcat();
+            logSeparator = separateLogs();
             launchActivity(TURN_SCREEN_ON_ATTR_REMOVE_ATTR_ACTIVITY);
             // Display should keep off, because setTurnScreenOn(false) has been called at
             // {@link TURN_SCREEN_ON_ATTR_REMOVE_ATTR_ACTIVITY}'s onStop.
@@ -419,14 +419,14 @@ public class ActivityManagerActivityVisibilityTests extends ActivityManagerTestB
     public void testTurnScreenOnSingleTask() throws Exception {
         try (final LockScreenSession lockScreenSession = new LockScreenSession()) {
             lockScreenSession.sleepDevice();
-            LogSeparator logSeparator = clearLogcat();
+            LogSeparator logSeparator = separateLogs();
             launchActivity(TURN_SCREEN_ON_SINGLE_TASK_ACTIVITY);
             mAmWmState.assertVisibility(TURN_SCREEN_ON_SINGLE_TASK_ACTIVITY, true);
             assertTrue("Display turns on", isDisplayOn());
             assertSingleLaunch(TURN_SCREEN_ON_SINGLE_TASK_ACTIVITY, logSeparator);
 
             lockScreenSession.sleepDevice();
-            logSeparator = clearLogcat();
+            logSeparator = separateLogs();
             launchActivity(TURN_SCREEN_ON_SINGLE_TASK_ACTIVITY);
             mAmWmState.assertVisibility(TURN_SCREEN_ON_SINGLE_TASK_ACTIVITY, true);
             assertTrue("Display turns on", isDisplayOn());

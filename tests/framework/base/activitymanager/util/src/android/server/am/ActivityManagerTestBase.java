@@ -768,12 +768,11 @@ public abstract class ActivityManagerTestBase {
     }
 
     /**
-     * Tries to clear logcat and inserts log separator in case clearing didn't succeed, so we can
-     * always find the starting point from where to evaluate following logs.
+     * Inserts a log separator so we can always find the starting point from where to evaluate
+     * following logs.
      * @return Unique log separator.
      */
-    protected LogSeparator clearLogcat() {
-        executeShellCommand("logcat -c");
+    protected LogSeparator separateLogs() {
         final LogSeparator logSeparator = new LogSeparator();
         executeShellCommand("log -t " + LOG_SEPARATOR + " " + logSeparator);
         return logSeparator;
