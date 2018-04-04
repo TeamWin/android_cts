@@ -245,7 +245,7 @@ public class DialogTest {
         mInstrumentation.waitForIdleSync();
 
         assertEquals(View.GONE, decor.getVisibility());
-        assertTrue(d.isShowing());
+        assertFalse(d.isShowing());
 
         mActivityRule.runOnUiThread(new Runnable() {
             public void run() {
