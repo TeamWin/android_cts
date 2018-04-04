@@ -352,6 +352,18 @@ public class DecoderTest extends MediaPlayerTestBase {
                 R.raw.color_176x144_srgb_lr_sdr_h265, 4 /* testId */,
                 MediaFormat.COLOR_RANGE_LIMITED, MediaFormat.COLOR_STANDARD_BT709,
                 2 /* MediaFormat.COLOR_TRANSFER_SRGB */);
+        // Test the main10 streams with surface as the decoder might
+        // support opaque buffers only.
+        testColorAspects(
+                R.raw.color_176x144_bt2020_lr_smpte2084_h265, 5 /* testId */,
+                MediaFormat.COLOR_RANGE_LIMITED, MediaFormat.COLOR_STANDARD_BT2020,
+                MediaFormat.COLOR_TRANSFER_ST2084,
+                getActivity().getSurfaceHolder().getSurface());
+        testColorAspects(
+                R.raw.color_176x144_bt2020_lr_hlg_h265, 6 /* testId */,
+                MediaFormat.COLOR_RANGE_LIMITED, MediaFormat.COLOR_STANDARD_BT2020,
+                MediaFormat.COLOR_TRANSFER_HLG,
+                getActivity().getSurfaceHolder().getSurface());
     }
 
     /**
@@ -392,6 +404,13 @@ public class DecoderTest extends MediaPlayerTestBase {
     private void testColorAspects(
             int res, int testId, int expectRange, int expectStandard, int expectTransfer)
             throws Exception {
+        testColorAspects(
+                res, testId, expectRange, expectStandard, expectTransfer, null /*surface*/);
+    }
+
+    private void testColorAspects(
+            int res, int testId, int expectRange, int expectStandard, int expectTransfer,
+            Surface surface) throws Exception {
         MediaFormat format = MediaUtils.getTrackFormatForResource(mContext, res, "video");
         MediaFormat mimeFormat = new MediaFormat();
         mimeFormat.setString(MediaFormat.KEY_MIME, format.getString(MediaFormat.KEY_MIME));
@@ -400,21 +419,21 @@ public class DecoderTest extends MediaPlayerTestBase {
             if (!MediaUtils.supports(decoderName, format)) {
                 MediaUtils.skipTest(decoderName + " cannot play resource " + res);
             } else {
-                testColorAspects(
-                        decoderName, res, testId, expectRange, expectStandard, expectTransfer);
+                testColorAspects(decoderName, res, testId,
+                        expectRange, expectStandard, expectTransfer, surface);
             }
         }
     }
 
     private void testColorAspects(
             String decoderName, int res, int testId, int expectRange,
-            int expectStandard, int expectTransfer) throws Exception {
+            int expectStandard, int expectTransfer, Surface surface) throws Exception {
         AssetFileDescriptor fd = mResources.openRawResourceFd(res);
         MediaExtractor ex = new MediaExtractor();
         ex.setDataSource(fd.getFileDescriptor(), fd.getStartOffset(), fd.getLength());
         MediaFormat format = ex.getTrackFormat(0);
         MediaCodec dec = MediaCodec.createByCodecName(decoderName);
-        dec.configure(format, null, null, 0);
+        dec.configure(format, surface, null, 0);
         dec.start();
         ByteBuffer[] buf = dec.getInputBuffers();
         ex.selectTrack(0);
@@ -493,6 +512,8 @@ public class DecoderTest extends MediaPlayerTestBase {
             log.setSummary("result", 0, ResultType.HIGHER_BETTER, ResultUnit.COUNT);
         }
         log.submit(getInstrumentation());
+
+        assertTrue(rangeMatch && colorMatch && transferMatch);
 
         dec.release();
         ex.release();
