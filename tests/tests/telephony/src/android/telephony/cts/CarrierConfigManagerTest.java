@@ -78,7 +78,6 @@ public class CarrierConfigManagerTest extends AndroidTestCase {
                 config.getBoolean(CarrierConfigManager.KEY_VVM_PREFETCH_BOOL), true);
             assertEquals("KEY_CARRIER_VVM_PACKAGE_NAME_STRING doesn't match static default.",
                 config.getString(CarrierConfigManager.KEY_CARRIER_VVM_PACKAGE_NAME_STRING), "");
-            assertFalse(CarrierConfigManager.isConfigForIdentifiedCarrier(config));
         }
     }
 
