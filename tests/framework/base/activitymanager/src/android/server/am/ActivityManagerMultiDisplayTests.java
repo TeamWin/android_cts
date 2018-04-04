@@ -106,7 +106,7 @@ public class ActivityManagerMultiDisplayTests extends ActivityManagerDisplayTest
             final ActivityDisplay newDisplay = virtualDisplaySession.createDisplay();
 
             // Launch activity on new secondary display.
-            final LogSeparator logSeparator = clearLogcat();
+            final LogSeparator logSeparator = separateLogs();
             launchActivityOnDisplay(TEST_ACTIVITY, newDisplay.mId);
             mAmWmState.computeState(TEST_ACTIVITY);
 
@@ -363,7 +363,7 @@ public class ActivityManagerMultiDisplayTests extends ActivityManagerDisplayTest
             // Create new virtual display.
             final ActivityDisplay newDisplay = virtualDisplaySession.createDisplay();
 
-            final LogSeparator logSeparator = clearLogcat();
+            final LogSeparator logSeparator = separateLogs();
 
             // Try to launch an activity and check it security exception was triggered.
             getLaunchActivityBuilder()
@@ -587,7 +587,7 @@ public class ActivityManagerMultiDisplayTests extends ActivityManagerDisplayTest
                     "Activity launched on secondary display must be resumed",
                     LAUNCHING_ACTIVITY);
 
-            final LogSeparator logSeparator = clearLogcat();
+            final LogSeparator logSeparator = separateLogs();
 
             // Launch second activity from app on secondary display specifying same display id.
             getLaunchActivityBuilder()
@@ -778,7 +778,7 @@ public class ActivityManagerMultiDisplayTests extends ActivityManagerDisplayTest
             mAmWmState.assertFocusedStack("Focus must be on secondary display", frontStackId);
 
             // Destroy virtual display.
-            logSeparator = clearLogcat();
+            logSeparator = separateLogs();
         }
 
         mAmWmState.computeState(true);
@@ -1046,7 +1046,7 @@ public class ActivityManagerMultiDisplayTests extends ActivityManagerDisplayTest
             assertEquals("Focused stack must be on secondary display", newDisplay.mId,
                     focusedStack.mDisplayId);
 
-            final LogSeparator logSeparator = clearLogcat();
+            final LogSeparator logSeparator = separateLogs();
 
             // Launch other activity with different uid and check security exception is triggered.
             getLaunchActivityBuilder()
@@ -1126,7 +1126,7 @@ public class ActivityManagerMultiDisplayTests extends ActivityManagerDisplayTest
                     RESIZEABLE_ACTIVITY);
 
             // Destroy the display and check if activities are removed from system.
-            logSeparator = clearLogcat();
+            logSeparator = separateLogs();
         }
 
         mAmWmState.waitForWithAmState(
@@ -1165,7 +1165,7 @@ public class ActivityManagerMultiDisplayTests extends ActivityManagerDisplayTest
             mAmWmState.assertVisibility(VIRTUAL_DISPLAY_ACTIVITY, true /* visible */);
 
             // Launch a resizeable activity on new secondary display.
-            final LogSeparator initialLogSeparator = clearLogcat();
+            final LogSeparator initialLogSeparator = separateLogs();
             launchActivityOnDisplay(RESIZEABLE_ACTIVITY, newDisplay.mId);
             mAmWmState.assertVisibility(RESIZEABLE_ACTIVITY, true /* visible */);
             mAmWmState.assertFocusedActivity("Launched activity must be focused",
@@ -1176,7 +1176,7 @@ public class ActivityManagerMultiDisplayTests extends ActivityManagerDisplayTest
                     RESIZEABLE_ACTIVITY, initialLogSeparator);
 
             // Resize the docked stack, so that activity with virtual display will also be resized.
-            final LogSeparator logSeparator = clearLogcat();
+            final LogSeparator logSeparator = separateLogs();
             virtualDisplaySession.resizeDisplay();
 
             mAmWmState.waitForWithAmState(amState -> {
@@ -1333,7 +1333,7 @@ public class ActivityManagerMultiDisplayTests extends ActivityManagerDisplayTest
             mAmWmState.assertVisibility(VIRTUAL_DISPLAY_ACTIVITY, true /* visible */);
 
             // Launch activity on new secondary display.
-            LogSeparator logSeparator = clearLogcat();
+            LogSeparator logSeparator = separateLogs();
             launchActivityOnDisplay(RESIZEABLE_ACTIVITY, newDisplay.mId);
             mAmWmState.assertFocusedActivity("Focus must be on secondary display",
                     RESIZEABLE_ACTIVITY);
@@ -1351,7 +1351,7 @@ public class ActivityManagerMultiDisplayTests extends ActivityManagerDisplayTest
                 final int initialRotation = mAmWmState.getWmState().getRotation();
                 rotationSession.set((initialRotation + 1) % 4);
 
-                logSeparator = clearLogcat();
+                logSeparator = separateLogs();
                 launchActivityOnDisplay(TEST_ACTIVITY, newDisplay.mId);
                 mAmWmState.waitForActivityState(TEST_ACTIVITY, STATE_RESUMED);
                 mAmWmState.assertFocusedActivity("Focus must be on secondary display",
@@ -1369,7 +1369,7 @@ public class ActivityManagerMultiDisplayTests extends ActivityManagerDisplayTest
     private void rotateAndCheckSameSizes(
             RotationSession rotationSession, ComponentName activityName) throws Exception {
         for (int rotation = 3; rotation >= 0; --rotation) {
-            final LogSeparator logSeparator = clearLogcat();
+            final LogSeparator logSeparator = separateLogs();
             rotationSession.set(rotation);
             final ReportedSizes rotatedSizes = getLastReportedSizesForActivity(activityName,
                     logSeparator);
