@@ -18,7 +18,10 @@ package android.signature.cts.api;
 
 import android.provider.Settings;
 import android.signature.cts.DexApiDocumentParser;
+import android.signature.cts.DexField;
+import android.signature.cts.DexMember;
 import android.signature.cts.DexMemberChecker;
+import android.signature.cts.DexMethod;
 import android.signature.cts.FailureType;
 
 public class KillswitchTest extends AbstractApiTest {
@@ -40,71 +43,74 @@ public class KillswitchTest extends AbstractApiTest {
             " when global setting hidden_api_blacklist_exemptions is set to *";
 
     public void testKillswitch() {
-        // for now, just verify that we can access something *not* on the light grey or white list
-        DexApiDocumentParser.DexMember member = new DexApiDocumentParser.DexField(
-                "Ldalvik/system/VMRuntime;", "THE_ONE", "Ldalvik/system/VMRuntime;");
-        runWithTestResultObserver(resultObserver ->
-                DexMemberChecker.checkSingleMember(member, new DexMemberChecker.Observer() {
-                    @Override
-                    public void classAccessible(boolean accessible,
-                            DexApiDocumentParser.DexMember member) {
-                        if (!accessible) {
-                            resultObserver.notifyFailure(
-                                    FailureType.MISSING_CLASS,
-                                    member.toString(),
-                                    "Class from boot classpath is not accessible"
-                                            + ERROR_MESSAGE_APPENDIX);
-                        }
+        runWithTestResultObserver(resultObserver -> {
+            DexMemberChecker.Observer observer = new DexMemberChecker.Observer() {
+                @Override
+                public void classAccessible(boolean accessible, DexMember member) {
+                    if (!accessible) {
+                        resultObserver.notifyFailure(
+                                FailureType.MISSING_CLASS,
+                                member.toString(),
+                                "Class from boot classpath is not accessible"
+                                        + ERROR_MESSAGE_APPENDIX);
+                    }
+                }
+
+                @Override
+                public void fieldAccessibleViaReflection(boolean accessible, DexField field) {
+                    if (!accessible) {
+                        resultObserver.notifyFailure(
+                                FailureType.MISSING_FIELD,
+                                field.toString(),
+                                "Field from boot classpath is not accessible via reflection"
+                                        + ERROR_MESSAGE_APPENDIX);
+                    }
+                }
+
+                @Override
+                public void fieldAccessibleViaJni(boolean accessible, DexField field) {
+                    if (!accessible) {
+                        resultObserver.notifyFailure(
+                                FailureType.MISSING_FIELD,
+                                field.toString(),
+                                "Field from boot classpath is not accessible via JNI"
+                                        + ERROR_MESSAGE_APPENDIX);
+                    }
+                }
+
+                @Override
+                public void methodAccessibleViaReflection(boolean accessible, DexMethod method) {
+                    if (method.isStaticConstructor()) {
+                        // Skip static constructors. They cannot be discovered with reflection.
+                        return;
                     }
 
-                    @Override
-                    public void fieldAccessibleViaReflection(boolean accessible,
-                            DexApiDocumentParser.DexField field) {
-                        if (!accessible) {
-                            resultObserver.notifyFailure(
-                                    FailureType.MISSING_FIELD,
-                                    field.toString(),
-                                    "Field from boot classpath is not accessible via reflection"
-                                            + ERROR_MESSAGE_APPENDIX);
-                        }
+                    if (!accessible) {
+                        resultObserver.notifyFailure(
+                                FailureType.MISSING_METHOD,
+                                method.toString(),
+                                "Method from boot classpath is not accessible via reflection"
+                                        + ERROR_MESSAGE_APPENDIX);
                     }
+                }
 
-                    @Override
-                    public void fieldAccessibleViaJni(boolean accessible,
-                            DexApiDocumentParser.DexField field) {
-                        if (!accessible) {
-                            resultObserver.notifyFailure(
-                                    FailureType.MISSING_FIELD,
-                                    field.toString(),
-                                    "Field from boot classpath is not accessible via JNI"
-                                            + ERROR_MESSAGE_APPENDIX);
-                        }
+                @Override
+                public void methodAccessibleViaJni(boolean accessible, DexMethod method) {
+                    if (!accessible) {
+                        resultObserver.notifyFailure(
+                                FailureType.MISSING_METHOD,
+                                method.toString(),
+                                "Method from boot classpath is not accessible via JNI"
+                                        + ERROR_MESSAGE_APPENDIX);
                     }
+                }
 
-                    @Override
-                    public void methodAccessibleViaReflection(boolean accessible,
-                            DexApiDocumentParser.DexMethod method) {
-                        if (!accessible) {
-                            resultObserver.notifyFailure(
-                                    FailureType.MISSING_METHOD,
-                                    method.toString(),
-                                    "Method from boot classpath is not accessible via reflection"
-                                            + ERROR_MESSAGE_APPENDIX);
-                        }
-                    }
-
-                    @Override
-                    public void methodAccessibleViaJni(boolean accessible,
-                            DexApiDocumentParser.DexMethod method) {
-                        if (!accessible) {
-                            resultObserver.notifyFailure(
-                                    FailureType.MISSING_METHOD,
-                                    method.toString(),
-                                    "Method from boot classpath is not accessible via JNI"
-                                            + ERROR_MESSAGE_APPENDIX);
-                        }
-                    }
-
-                }));
+            };
+            classProvider.getAllClasses().forEach(klass -> {
+                classProvider.getAllMembers(klass).forEach(member -> {
+                    DexMemberChecker.checkSingleMember(member, observer);
+                });
+            });
+        });
     }
 }

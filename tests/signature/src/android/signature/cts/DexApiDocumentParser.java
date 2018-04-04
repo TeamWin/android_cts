@@ -19,13 +19,10 @@ import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
-import java.util.ArrayList;
-import java.util.List;
 import java.util.Spliterator;
 import java.util.function.Consumer;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
-import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import java.util.stream.StreamSupport;
 import java.text.ParseException;
@@ -52,7 +49,7 @@ public class DexApiDocumentParser {
         private static final Pattern REGEX_CLASS = Pattern.compile("^L[^->]*;$");
         private static final Pattern REGEX_FIELD = Pattern.compile("^(L[^->]*;)->(.*):(.*)$");
         private static final Pattern REGEX_METHOD =
-                Pattern.compile("^(L[^->]*;)->(.*)\\((.*)\\)(.*)$");
+                Pattern.compile("^(L[^->]*;)->(.*)(\\(.*\\).*)$");
 
         DexApiSpliterator(BufferedReader reader) {
             mReader = reader;
@@ -137,169 +134,11 @@ public class DexApiDocumentParser {
                             matchField.group(1), matchField.group(2), matchField.group(3));
                 } else if (matchMethod.matches()) {
                     return new DexMethod(
-                            matchMethod.group(1),matchMethod.group(2),
-                            parseDexTypeList(matchMethod.group(3)), matchMethod.group(4));
+                            matchMethod.group(1),matchMethod.group(2), matchMethod.group(3));
                 } else {
                     throw new IllegalStateException();
                 }
             }
-        }
-
-        private List<String> parseDexTypeList(String typeSequence) throws ParseException {
-            List<String> list = new ArrayList<String>();
-            while (!typeSequence.isEmpty()) {
-                String type = firstDexTypeFromList(typeSequence);
-                list.add(type);
-                typeSequence = typeSequence.substring(type.length());
-            }
-            return list;
-        }
-
-        /**
-         * Returns the first dex type in `typeList` or throws a ParserException
-         * if a dex type is not recognized. The input is not changed.
-         */
-        private String firstDexTypeFromList(String typeList) throws ParseException {
-            String dexDimension = "";
-            while (typeList.startsWith("[")) {
-                dexDimension += "[";
-                typeList = typeList.substring(1);
-            }
-
-            String type = null;
-            if (typeList.startsWith("V")
-                    || typeList.startsWith("Z")
-                    || typeList.startsWith("B")
-                    || typeList.startsWith("C")
-                    || typeList.startsWith("S")
-                    || typeList.startsWith("I")
-                    || typeList.startsWith("J")
-                    || typeList.startsWith("F")
-                    || typeList.startsWith("D")) {
-                type = typeList.substring(0, 1);
-            } else if (typeList.startsWith("L") && typeList.indexOf(";") > 0) {
-                type = typeList.substring(0, typeList.indexOf(";") + 1);
-            } else {
-                throw new ParseException(
-                        "Unexpected dex type in \"" + typeList + "\"", mLineNum);
-            }
-
-            return dexDimension + type;
-        }
-    }
-
-    /**
-     * Represents one class member parsed from the reader of dex signatures.
-     */
-    public static abstract class DexMember {
-        private final String mName;
-        private final String mClassDescriptor;
-        private final String mType;
-
-        protected DexMember(String className, String name, String type) {
-            mName = name;
-            mClassDescriptor = className;
-            mType = type;
-        }
-
-        public String getName() {
-            return mName;
-        }
-
-        public String getDexClassName() {
-            return mClassDescriptor;
-        }
-
-        public String getJavaClassName() {
-            return dexToJavaType(mClassDescriptor);
-        }
-
-        public String getDexType() {
-            return mType;
-        }
-
-        public String getJavaType() {
-            return dexToJavaType(mType);
-        }
-
-        /**
-         * Converts `type` to a Java type.
-         */
-        protected static String dexToJavaType(String type) {
-            String javaDimension = "";
-            while (type.startsWith("[")) {
-                javaDimension += "[]";
-                type = type.substring(1);
-            }
-
-            String javaType = null;
-            if ("V".equals(type)) {
-                javaType = "void";
-            } else if ("Z".equals(type)) {
-                javaType = "boolean";
-            } else if ("B".equals(type)) {
-                javaType = "byte";
-            } else if ("C".equals(type)) {
-                javaType = "char";
-            } else if ("S".equals(type)) {
-                javaType = "short";
-            } else if ("I".equals(type)) {
-                javaType = "int";
-            } else if ("J".equals(type)) {
-                javaType = "long";
-            } else if ("F".equals(type)) {
-                javaType = "float";
-            } else if ("D".equals(type)) {
-                javaType = "double";
-            } else if (type.startsWith("L") && type.endsWith(";")) {
-                javaType = type.substring(1, type.length() - 1).replace('/', '.');
-            } else {
-                throw new IllegalStateException("Unexpected type " + type);
-            }
-
-            return javaType + javaDimension;
-        }
-    }
-
-    public static class DexField extends DexMember {
-        public DexField(String className, String name, String type) {
-            super(className, name, type);
-        }
-
-        @Override
-        public String toString() {
-            return getJavaType() + " " + getJavaClassName() + "." + getName();
-        }
-    }
-
-    public static class DexMethod extends DexMember {
-        private final List<String> mParamTypeList;
-
-        public DexMethod(String className, String name, List<String> paramTypeList,
-                String dexReturnType) {
-            super(className, name, dexReturnType);
-            mParamTypeList = paramTypeList;
-        }
-
-        public String getDexSignature() {
-            return "(" + String.join("", mParamTypeList) + ")" + getDexType();
-        }
-
-        public List<String> getJavaParameterTypes() {
-            return mParamTypeList
-                    .stream()
-                    .map(DexMember::dexToJavaType)
-                    .collect(Collectors.toList());
-        }
-
-        public boolean isConstructor() {
-            return "<init>".equals(getName()) && "V".equals(getDexType());
-        }
-
-        @Override
-        public String toString() {
-            return getJavaType() + " " + getJavaClassName() + "." + getName()
-                    + "(" + String.join(", ", getJavaParameterTypes()) + ")";
         }
     }
 }

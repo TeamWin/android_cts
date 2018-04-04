@@ -36,4 +36,9 @@ public abstract class ClassProvider {
      * Gets all classes available to this provider.
      */
     public abstract Stream<Class<?>> getAllClasses();
+
+    /**
+     * Gets all class members available for the given class.
+     */
+    public abstract Stream<DexMember> getAllMembers(Class<?> klass);
 }
