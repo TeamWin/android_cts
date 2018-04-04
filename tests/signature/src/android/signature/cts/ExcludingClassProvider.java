@@ -45,4 +45,9 @@ public class ExcludingClassProvider extends ClassProvider {
         return base.getAllClasses()
                 .filter(clazz -> !testForExclusion.test(clazz.getCanonicalName()));
     }
+
+    @Override
+    public Stream<DexMember> getAllMembers(Class<?> klass) {
+        return base.getAllMembers(klass);
+    }
 }
