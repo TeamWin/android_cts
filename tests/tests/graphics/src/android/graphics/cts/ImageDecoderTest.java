@@ -1652,13 +1652,13 @@ public class ImageDecoderTest {
         ImageDecoder.Source src = mCreators[0].apply(resId);
         try {
             ImageDecoder.decodeDrawable(src, (decoder, info, s) -> {
-                assertFalse(decoder.getConserveMemory());
+                assertEquals(ImageDecoder.MEMORY_POLICY_DEFAULT, decoder.getMemorySizePolicy());
 
-                decoder.setConserveMemory(true);
-                assertTrue(decoder.getConserveMemory());
+                decoder.setMemorySizePolicy(ImageDecoder.MEMORY_POLICY_LOW_RAM);
+                assertEquals(ImageDecoder.MEMORY_POLICY_LOW_RAM, decoder.getMemorySizePolicy());
 
-                decoder.setConserveMemory(false);
-                assertFalse(decoder.getConserveMemory());
+                decoder.setMemorySizePolicy(ImageDecoder.MEMORY_POLICY_DEFAULT);
+                assertEquals(ImageDecoder.MEMORY_POLICY_DEFAULT, decoder.getMemorySizePolicy());
             });
         } catch (IOException e) {
             fail("Failed " + getAsResourceUri(resId) + " with exception " + e);
@@ -1672,7 +1672,7 @@ public class ImageDecoderTest {
             @Override
             public void onHeaderDecoded(ImageDecoder decoder, ImageDecoder.ImageInfo info,
                                         ImageDecoder.Source src) {
-                decoder.setConserveMemory(true);
+                decoder.setMemorySizePolicy(ImageDecoder.MEMORY_POLICY_LOW_RAM);
                 decoder.setAllocator(allocator);
             }
         };
@@ -1722,7 +1722,7 @@ public class ImageDecoderTest {
             public void onHeaderDecoded(ImageDecoder decoder, ImageDecoder.ImageInfo info,
                                         ImageDecoder.Source src) {
                 if (preferRamOverQuality) {
-                    decoder.setConserveMemory(true);
+                    decoder.setMemorySizePolicy(ImageDecoder.MEMORY_POLICY_LOW_RAM);
                 }
                 if (doPostProcess) {
                     decoder.setPostProcessor((c) -> {
