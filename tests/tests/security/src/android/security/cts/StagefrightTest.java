@@ -27,6 +27,8 @@ import android.util.Log;
 import android.content.Context;
 import android.content.res.AssetFileDescriptor;
 import android.content.res.Resources;
+import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
 import android.graphics.SurfaceTexture;
 import android.media.MediaCodec;
 import android.media.MediaCodecInfo;
@@ -614,6 +616,15 @@ public class StagefrightTest extends InstrumentationTestCase {
         doStagefrightTest(R.raw.bug_37093318, (4 * 60 * 1000));
     }
 
+    @SecurityTest
+    public void testStagefright_bug_73172046() throws Exception {
+        doStagefrightTest(R.raw.bug_73172046);
+
+        Bitmap bitmap = BitmapFactory.decodeResource(
+                getInstrumentation().getContext().getResources(), R.raw.bug_73172046);
+        bitmap.recycle();
+    }
+
     private void doStagefrightTest(final int rid) throws Exception {
         doStagefrightTestMediaPlayer(rid);
         doStagefrightTestMediaCodec(rid);
@@ -655,7 +666,7 @@ public class StagefrightTest extends InstrumentationTestCase {
         in2.close();
         Log.i(TAG, "checked server");
     }
-  
+
     private void doStagefrightTest(final int rid, int timeout) throws Exception {
         runWithTimeout(new Runnable() {
             @Override
