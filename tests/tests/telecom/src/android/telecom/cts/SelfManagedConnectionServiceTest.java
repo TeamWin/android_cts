@@ -18,11 +18,13 @@ package android.telecom.cts;
 
 import android.net.Uri;
 import android.os.Bundle;
+import android.telecom.Call;
 import android.telecom.CallAudioState;
 import android.telecom.Connection;
 import android.telecom.PhoneAccount;
 import android.telecom.PhoneAccountHandle;
 import android.telecom.TelecomManager;
+import android.telecom.VideoProfile;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -233,7 +235,12 @@ public class SelfManagedConnectionServiceTest extends BaseTelecomTestWithMockSer
         int capabilities = connection.getConnectionCapabilities();
         capabilities &= ~Connection.CAPABILITY_HOLD;
         connection.setConnectionCapabilities(capabilities);
-        connection.setActive();
+
+        // answer the incoming call
+        MockInCallService inCallService = mInCallCallbacks.getService();
+        Call call = inCallService.getLastCall();
+        call.answer(VideoProfile.STATE_AUDIO_ONLY);
+        assertConnectionState(connection, Connection.STATE_ACTIVE);
 
         // WHEN place a self-managed outgoing call
         TestUtils.placeOutgoingCall(getInstrumentation(), mTelecomManager,
