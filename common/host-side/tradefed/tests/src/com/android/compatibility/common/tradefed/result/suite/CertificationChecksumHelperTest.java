@@ -93,9 +93,9 @@ public class CertificationChecksumHelperTest {
         for (int i = 0; i < testCount; i++) {
             TestDescription test = new TestDescription("com.class.path", "testMethod" + i);
             results.testStarted(test);
-            results.testEnded(test, new HashMap<>());
+            results.testEnded(test, new HashMap<String, String>());
         }
-        results.testRunEnded(500L, new HashMap<>());
+        results.testRunEnded(500L, new HashMap<String, String>());
         return results;
     }
 }

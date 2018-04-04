@@ -31,6 +31,7 @@ import com.android.tradefed.device.DeviceNotAvailableException;
 import com.android.tradefed.device.ITestDevice;
 import com.android.tradefed.invoker.IInvocationContext;
 import com.android.tradefed.invoker.InvocationContext;
+import com.android.tradefed.metrics.proto.MetricMeasurement.Metric;
 import com.android.tradefed.result.ITestInvocationListener;
 import com.android.tradefed.suite.checker.ISystemStatusChecker;
 import com.android.tradefed.testtype.IRemoteTest;
@@ -44,9 +45,9 @@ import org.junit.runners.JUnit4;
 
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
-import java.util.Map;
 
 /**
  * Unit tests for {@link RetryFactoryTest}.
@@ -183,7 +184,8 @@ public class RetryFactoryTestTest {
 
         mMockListener.testModuleStarted(EasyMock.anyObject());
         mMockListener.testRunStarted("module1", 0);
-        mMockListener.testRunEnded(EasyMock.anyLong(), (Map<String, String>) EasyMock.anyObject());
+        mMockListener.testRunEnded(EasyMock.anyLong(),
+                (HashMap<String, Metric>) EasyMock.anyObject());
         mMockListener.testModuleEnded();
 
         EasyMock.replay(mMockListener, mMockInfo, mMockDevice);
