@@ -116,10 +116,6 @@ public abstract class ActivityManagerTestBase {
     public void setUp() throws Exception {
         mContext = InstrumentationRegistry.getContext();
         mAm = mContext.getSystemService(ActivityManager.class);
-        executeShellCommand("pm grant " + mContext.getPackageName()
-                + " android.permission.MANAGE_ACTIVITY_STACKS");
-        executeShellCommand("pm grant " + mContext.getPackageName()
-                + " android.permission.ACTIVITY_EMBEDDING");
 
         pressWakeupButton();
         pressUnlockButton();
