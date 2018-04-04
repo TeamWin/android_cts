@@ -845,7 +845,7 @@ public class ActivityManagerPinnedStackTests extends ActivityManagerTestBase {
         // Launch a PiP activity and ensure configuration change only happened once, and that the
         // configuration change happened after the picture-in-picture and multi-window callbacks
         launchActivity(PIP_ACTIVITY);
-        LogSeparator logSeparator = clearLogcat();
+        LogSeparator logSeparator = separateLogs();
         executeShellCommand("am broadcast -a " + ACTION_ENTER_PIP);
         waitForEnterPip(PIP_ACTIVITY);
         assertPinnedStackExists();
@@ -854,7 +854,7 @@ public class ActivityManagerPinnedStackTests extends ActivityManagerTestBase {
 
         // Trigger it to go back to fullscreen and ensure that only triggered one configuration
         // change as well
-        logSeparator = clearLogcat();
+        logSeparator = separateLogs();
         launchActivity(PIP_ACTIVITY);
         waitForValidPictureInPictureCallbacks(PIP_ACTIVITY, logSeparator);
         assertValidPictureInPictureCallbackOrder(PIP_ACTIVITY, logSeparator);
@@ -886,7 +886,7 @@ public class ActivityManagerPinnedStackTests extends ActivityManagerTestBase {
             assertPinnedStackExists();
 
             // Relaunch the PiP activity back into fullscreen
-            LogSeparator logSeparator = clearLogcat();
+            LogSeparator logSeparator = separateLogs();
             launchActivity(PIP_ACTIVITY);
             // Wait until the PiP activity is reparented into the fullscreen stack (happens after
             // the transition has finished)
@@ -916,7 +916,7 @@ public class ActivityManagerPinnedStackTests extends ActivityManagerTestBase {
         assertPinnedStackExists();
 
         // Dismiss it
-        LogSeparator logSeparator = clearLogcat();
+        LogSeparator logSeparator = separateLogs();
         removeStacksInWindowingModes(WINDOWING_MODE_PINNED);
         waitForExitPipToFullscreen(PIP_ACTIVITY);
 
@@ -1032,7 +1032,7 @@ public class ActivityManagerPinnedStackTests extends ActivityManagerTestBase {
 
         // Finish the task overlay activity while animating and ensure that the PiP activity never
         // got resumed
-        LogSeparator logSeparator = clearLogcat();
+        LogSeparator logSeparator = separateLogs();
         executeShellCommand("am stack resize-animated " + stackId + " 20 20 500 500");
         executeShellCommand("am broadcast -a " + TEST_ACTIVITY_ACTION_FINISH_SELF);
         mAmWmState.waitFor((amState, wmState) ->
@@ -1168,7 +1168,7 @@ public class ActivityManagerPinnedStackTests extends ActivityManagerTestBase {
     public void testDisplayMetricsPinUnpin() throws Exception {
         assumeTrue(supportsPip());
 
-        LogSeparator logSeparator = clearLogcat();
+        LogSeparator logSeparator = separateLogs();
         launchActivity(TEST_ACTIVITY);
         final int defaultWindowingMode = mAmWmState.getAmState()
                 .getTaskByActivity(TEST_ACTIVITY).getWindowingMode();
@@ -1178,7 +1178,7 @@ public class ActivityManagerPinnedStackTests extends ActivityManagerTestBase {
         assertNotNull("Must report display dimensions", initialSizes);
         assertNotNull("Must report app bounds", initialAppBounds);
 
-        logSeparator = clearLogcat();
+        logSeparator = separateLogs();
         launchActivity(PIP_ACTIVITY, EXTRA_ENTER_PIP, "true");
         // Wait for animation complete since we are comparing bounds
         waitForEnterPipAnimationComplete(PIP_ACTIVITY);
@@ -1193,7 +1193,7 @@ public class ActivityManagerPinnedStackTests extends ActivityManagerTestBase {
         assertNotEquals("Reported app size when pinned must be different from default",
                 initialAppSize, pinnedAppSize);
 
-        logSeparator = clearLogcat();
+        logSeparator = separateLogs();
         launchActivity(PIP_ACTIVITY, defaultWindowingMode);
         final ReportedSizes finalSizes = getLastReportedSizesForActivity(PIP_ACTIVITY,
                 logSeparator);

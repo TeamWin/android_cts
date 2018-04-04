@@ -84,7 +84,7 @@ public class ActivityManagerAmStartOptionsTests extends ActivityManagerTestBase 
     private void startActivityAndVerifyResult(final ComponentName entryActivity,
             final ComponentName actualActivity, boolean shouldStart) throws Exception {
         // See TODO below
-        // final LogSeparator logSeparator = clearLogcat();
+        // final LogSeparator logSeparator = separateLogs();
 
         // Pass in different data only when cold starting. This is to make the intent
         // different in subsequent warm/hot launches, so that the entrypoint alias

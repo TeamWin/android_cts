@@ -114,7 +114,7 @@ public class KeyguardTransitionTests extends ActivityManagerTestBase {
     public void testOccludeManifestAttr() throws Exception {
         try (final LockScreenSession lockScreenSession = new LockScreenSession()) {
             lockScreenSession.gotoKeyguard();
-            final LogSeparator logSeparator = clearLogcat();
+            final LogSeparator logSeparator = separateLogs();
             launchActivity(SHOW_WHEN_LOCKED_ATTR_ACTIVITY);
             mAmWmState.computeState(SHOW_WHEN_LOCKED_ATTR_ACTIVITY);
             assertEquals("Picked wrong transition", TRANSIT_KEYGUARD_OCCLUDE,
@@ -127,7 +127,7 @@ public class KeyguardTransitionTests extends ActivityManagerTestBase {
     public void testOccludeAttrRemove() throws Exception {
         try (final LockScreenSession lockScreenSession = new LockScreenSession()) {
             lockScreenSession.gotoKeyguard();
-            LogSeparator logSeparator = clearLogcat();
+            LogSeparator logSeparator = separateLogs();
             launchActivity(SHOW_WHEN_LOCKED_ATTR_REMOVE_ATTR_ACTIVITY);
             mAmWmState.computeState(SHOW_WHEN_LOCKED_ATTR_REMOVE_ATTR_ACTIVITY);
             assertEquals("Picked wrong transition", TRANSIT_KEYGUARD_OCCLUDE,
@@ -135,7 +135,7 @@ public class KeyguardTransitionTests extends ActivityManagerTestBase {
             assertSingleLaunch(SHOW_WHEN_LOCKED_ATTR_REMOVE_ATTR_ACTIVITY, logSeparator);
 
             lockScreenSession.gotoKeyguard();
-            logSeparator = clearLogcat();
+            logSeparator = separateLogs();
             launchActivity(SHOW_WHEN_LOCKED_ATTR_REMOVE_ATTR_ACTIVITY);
             mAmWmState.computeState(SHOW_WHEN_LOCKED_ATTR_REMOVE_ATTR_ACTIVITY);
             assertSingleStartAndStop(SHOW_WHEN_LOCKED_ATTR_REMOVE_ATTR_ACTIVITY, logSeparator);

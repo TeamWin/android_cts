@@ -150,7 +150,7 @@ public class ActivityManagerSplitScreenTests extends ActivityManagerTestBase {
                 WINDOWING_MODE_SPLIT_SCREEN_PRIMARY, ACTIVITY_TYPE_STANDARD);
 
         // Exit split-screen mode and ensure we only get 1 multi-window mode changed callback.
-        final LogSeparator logSeparator = clearLogcat();
+        final LogSeparator logSeparator = separateLogs();
         removeStacksInWindowingModes(WINDOWING_MODE_SPLIT_SCREEN_PRIMARY);
         final ActivityLifecycleCounts lifecycleCounts = waitForOnMultiWindowModeChanged(
                 TEST_ACTIVITY, logSeparator);
@@ -164,7 +164,7 @@ public class ActivityManagerSplitScreenTests extends ActivityManagerTestBase {
         launchActivity(TEST_ACTIVITY, WINDOWING_MODE_FULLSCREEN);
 
         // Move to docked stack.
-        LogSeparator logSeparator = clearLogcat();
+        LogSeparator logSeparator = separateLogs();
         setActivityTaskWindowingMode(TEST_ACTIVITY, WINDOWING_MODE_SPLIT_SCREEN_PRIMARY);
         ActivityLifecycleCounts lifecycleCounts = waitForOnMultiWindowModeChanged(
                 TEST_ACTIVITY, logSeparator);
@@ -177,7 +177,7 @@ public class ActivityManagerSplitScreenTests extends ActivityManagerTestBase {
         launchActivity(TEST_ACTIVITY, WINDOWING_MODE_SPLIT_SCREEN_PRIMARY);
 
         // Move activity back to fullscreen stack.
-        logSeparator = clearLogcat();
+        logSeparator = separateLogs();
         setActivityTaskWindowingMode(TEST_ACTIVITY, WINDOWING_MODE_FULLSCREEN);
         lifecycleCounts = waitForOnMultiWindowModeChanged(TEST_ACTIVITY, logSeparator);
         assertEquals("mMultiWindowModeChangedCount",
@@ -583,7 +583,7 @@ public class ActivityManagerSplitScreenTests extends ActivityManagerTestBase {
         final Rect initialDockBounds = mAmWmState.getWmState().getStandardStackByWindowingMode(
                 WINDOWING_MODE_SPLIT_SCREEN_PRIMARY) .getBounds();
 
-        final LogSeparator logSeparator = clearLogcat();
+        final LogSeparator logSeparator = separateLogs();
 
         Rect newBounds = computeNewDockBounds(fullScreenBounds, initialDockBounds, true);
         resizeDockedStack(
