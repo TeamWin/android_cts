@@ -26,7 +26,8 @@ LOCAL_JAVA_LIBRARIES := telephony-common
 
 LOCAL_STATIC_JAVA_LIBRARIES := \
     ctstestrunner \
-    compatibility-device-util
+    compatibility-device-util \
+    truth-prebuilt
 
 LOCAL_HOST_SHARED_LIBRARIES := compatibility-device-telephony-preconditions
 
