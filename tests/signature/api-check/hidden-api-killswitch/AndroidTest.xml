@@ -30,6 +30,6 @@
         <option name="package" value="android.signature.cts.api.killswitch" />
         <option name="runner" value="repackaged.android.test.InstrumentationTestRunner" />
         <option name="class" value="android.signature.cts.api.KillswitchTest" />
-        <option name="runtime-hint" value="30s" />
+        <option name="runtime-hint" value="60s" />
     </test>
 </configuration>

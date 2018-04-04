@@ -18,10 +18,10 @@ package android.signature.cts.api;
 
 import android.os.Bundle;
 import android.signature.cts.DexApiDocumentParser;
-import android.signature.cts.DexApiDocumentParser.DexField;
-import android.signature.cts.DexApiDocumentParser.DexMember;
-import android.signature.cts.DexApiDocumentParser.DexMethod;
+import android.signature.cts.DexField;
+import android.signature.cts.DexMember;
 import android.signature.cts.DexMemberChecker;
+import android.signature.cts.DexMethod;
 import android.signature.cts.FailureType;
 import android.signature.cts.ResultObserver;
 
