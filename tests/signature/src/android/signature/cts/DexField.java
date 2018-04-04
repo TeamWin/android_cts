@@ -1,5 +1,4 @@
-<?xml version="1.0" encoding="utf-8"?>
-<!--
+/*
  * Copyright (C) 2018 The Android Open Source Project
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -13,14 +12,16 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
- -->
+ */
+package android.signature.cts;
 
-<manifest xmlns:android="http://schemas.android.com/apk/res/android"
-          package="android.signature.cts.api.killswitch">
+public class DexField extends DexMember {
+  public DexField(String className, String name, String type) {
+      super(className, name, type);
+  }
 
-    <application android:debuggable="true"/>
-
-    <instrumentation android:name="repackaged.android.test.InstrumentationTestRunner"
-                     android:targetPackage="android.signature.cts.api.killswitch"
-                     android:label="Hidden API Killswitch Test"/>
-</manifest>
+  @Override
+  public String toString() {
+      return getJavaType() + " " + getJavaClassName() + "." + getName();
+  }
+}
