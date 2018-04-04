@@ -46,6 +46,7 @@ public class BusinessLogicTest {
             "  \"businessLogicRulesLists\": [\n" +
             "    {\n" +
             "      \"testName\": \"testCaseName1\",\n" +
+            "      \"description\": \"first test\",\n" +
             "      \"businessLogicRules\": [\n" +
             "        {\n" +
             "          \"ruleConditions\": [\n" +
@@ -132,10 +133,11 @@ public class BusinessLogicTest {
         try {
             BusinessLogic bl = BusinessLogicFactory.createFromFile(file);
             assertEquals("Wrong number of business logic rule lists", 3, bl.mRules.size());
-
-            List<BusinessLogicRule> ruleList1 = bl.mRules.get("testCaseName1");
-            assertEquals("Wrong number of rules in first rule list", 1, ruleList1.size());
-            BusinessLogicRule rule1 = ruleList1.get(0);
+            String description = bl.mRules.get("testCaseName1").get(0).getDescription();
+            assertEquals("Wrong or missing rule list description", "first test", description);
+            List<BusinessLogicRule> rulesList1 = bl.mRules.get("testCaseName1").get(0).getRules();
+            assertEquals("Wrong number of rules in first rule list", 1, rulesList1.size());
+            BusinessLogicRule rule1 = rulesList1.get(0);
             List<BusinessLogicRuleCondition> rule1Conditions = rule1.mConditions;
             assertEquals("Wrong number of conditions", 1, rule1Conditions.size());
             BusinessLogicRuleCondition rule1Condition = rule1Conditions.get(0);
@@ -159,9 +161,9 @@ public class BusinessLogicTest {
             assertEquals("Wrong arg for business logic rule action", "arg2",
                     rule1Action.mMethodArgs.get(1));
 
-            List<BusinessLogicRule> ruleList2 = bl.mRules.get("testCaseName2");
-            assertEquals("Wrong number of rules in second rule list", 2, ruleList2.size());
-            BusinessLogicRule rule2 = ruleList2.get(0);
+            List<BusinessLogicRule> rulesList2 = bl.mRules.get("testCaseName2").get(0).getRules();
+            assertEquals("Wrong number of rules in second rule list", 2, rulesList2.size());
+            BusinessLogicRule rule2 = rulesList2.get(0);
             List<BusinessLogicRuleCondition> rule2Conditions = rule2.mConditions;
             assertEquals("Wrong number of conditions", 1, rule2Conditions.size());
             BusinessLogicRuleCondition rule2Condition = rule2Conditions.get(0);
@@ -184,7 +186,7 @@ public class BusinessLogicTest {
                     rule2Action.mMethodArgs.get(0));
             assertEquals("Wrong arg for business logic rule action", "arg2",
                     rule2Action.mMethodArgs.get(1));
-            BusinessLogicRule rule3 = ruleList2.get(1);
+            BusinessLogicRule rule3 = rulesList2.get(1);
             List<BusinessLogicRuleCondition> rule3Conditions = rule3.mConditions;
             assertEquals("Wrong number of conditions", 2, rule3Conditions.size());
             BusinessLogicRuleCondition rule3Condition1 = rule3Conditions.get(0);
@@ -222,8 +224,8 @@ public class BusinessLogicTest {
             assertEquals("Wrong arg string count for business logic rule action", 0,
                     rule3Action2.mMethodArgs.size());
 
-            List<BusinessLogicRule> ruleList3 = bl.mRules.get("testCaseName3");
-            assertEquals("Wrong number of rules in third rule list", 0, ruleList3.size());
+            List<BusinessLogicRule> rulesList3 = bl.mRules.get("testCaseName3").get(0).getRules();
+            assertEquals("Wrong number of rules in third rule list", 0, rulesList3.size());
         } finally {
             FileUtil.deleteFile(file);
         }
