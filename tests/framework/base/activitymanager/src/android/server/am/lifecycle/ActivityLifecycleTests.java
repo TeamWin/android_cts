@@ -121,6 +121,7 @@ public class ActivityLifecycleTests extends ActivityLifecycleClientTestBase {
     }
 
     @Test
+    @FlakyTest(bugId = 77565927)
     public void testRelaunchConfigurationChangedWhileBecomingVisible() throws Exception {
         final Activity becomingVisibleActivity =
                 mFirstActivityTestRule.launchActivity(new Intent());
@@ -434,6 +435,7 @@ public class ActivityLifecycleTests extends ActivityLifecycleClientTestBase {
     /**
      * The that recreate request from an activity is executed immediately.
      */
+    @FlakyTest(bugId = 77565927)
     @Test
     public void testLocalRecreate() throws Exception {
         // Launch the activity that will recreate itself
