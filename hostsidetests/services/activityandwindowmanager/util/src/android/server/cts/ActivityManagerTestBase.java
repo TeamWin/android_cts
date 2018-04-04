@@ -560,7 +560,8 @@ public abstract class ActivityManagerTestBase extends DeviceTestCase {
     protected boolean isHandheld() throws DeviceNotAvailableException {
         return !hasDeviceFeature("android.software.leanback")
                 && !hasDeviceFeature("android.hardware.type.watch")
-                && !hasDeviceFeature("android.hardware.type.embedded");
+                && !hasDeviceFeature("android.hardware.type.embedded")
+                && !hasDeviceFeature("android.hardware.type.automotive");
     }
 
     // TODO: Switch to using a feature flag, when available.
