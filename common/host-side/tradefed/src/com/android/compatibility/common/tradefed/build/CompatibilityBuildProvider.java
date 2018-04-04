@@ -23,7 +23,6 @@ import com.android.tradefed.build.IBuildInfo.BuildInfoProperties;
 import com.android.tradefed.build.IBuildProvider;
 import com.android.tradefed.build.IDeviceBuildInfo;
 import com.android.tradefed.build.IDeviceBuildProvider;
-import com.android.tradefed.build.VersionedFile;
 import com.android.tradefed.config.Option;
 import com.android.tradefed.config.Option.Importance;
 import com.android.tradefed.config.OptionClass;
@@ -37,8 +36,10 @@ import com.android.tradefed.util.FileUtil;
 import java.io.File;
 import java.io.IOException;
 import java.text.SimpleDateFormat;
+import java.util.ArrayList;
 import java.util.Date;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.regex.Pattern;
 /**
@@ -206,12 +207,10 @@ public class CompatibilityBuildProvider implements IDeviceBuildProvider, IInvoca
     public void cleanUp(IBuildInfo info) {
         // Everything should have been copied properly to result folder, we clean up
         if (info instanceof IDeviceBuildInfo) {
-            for (VersionedFile f : info.getFiles()) {
-                // do not delete the testsdir since it's the real CTS folder.
-                if (!f.getFile().equals(((IDeviceBuildInfo) info).getTestsDir())) {
-                    FileUtil.recursiveDelete(f.getFile());
-                }
-            }
+            List<File> doNotDelete = new ArrayList<>();
+            // Clean up everything except the tests dir
+            doNotDelete.add(((IDeviceBuildInfo) info).getTestsDir());
+            info.cleanUp(doNotDelete);
         } else {
             info.cleanUp();
         }
