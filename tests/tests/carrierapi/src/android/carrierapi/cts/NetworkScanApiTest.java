@@ -19,6 +19,7 @@ import android.content.Context;
 import android.os.Handler;
 import android.os.HandlerThread;
 import android.os.Message;
+import android.os.Parcel;
 import android.support.test.InstrumentationRegistry;
 import android.support.test.runner.AndroidJUnit4;
 import android.telephony.CellInfo;
@@ -39,9 +40,14 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNotSame;
+import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.fail;
 
 /**
@@ -61,12 +67,34 @@ public class NetworkScanApiTest {
     private List<CellInfo> mScanResults = null;
     private NetworkScanHandlerThread mTestHandlerThread;
     private Handler mHandler;
+    private NetworkScan mNetworkScan;
     private NetworkScanRequest mNetworkScanRequest;
     private NetworkScanCallbackImpl mNetworkScanCallback;
     private static final int MAX_INIT_WAIT_MS = 60000; // 60 seconds
     private Object mLock = new Object();
     private boolean mReady;
     private int mErrorCode;
+    /* All the following constants are used to construct NetworkScanRequest*/
+    private static final int SCAN_TYPE = NetworkScanRequest.SCAN_TYPE_ONE_SHOT;
+    private static final boolean INCREMENTAL_RESULTS = true;
+    private static final int SEARCH_PERIODICITY_SEC = 5;
+    private static final int MAX_SEARCH_TIME_SEC = 300;
+    private static final int INCREMENTAL_RESULTS_PERIODICITY_SEC = 3;
+    private static final ArrayList<String> MCC_MNC = new ArrayList<>();
+    private static final RadioAccessSpecifier[] RADIO_ACCESS_SPECIFIERS = {
+            new RadioAccessSpecifier(
+                    AccessNetworkConstants.AccessNetworkType.GERAN,
+                    null /* bands */,
+                    null /* channels */),
+            new RadioAccessSpecifier(
+                    AccessNetworkConstants.AccessNetworkType.EUTRAN,
+                    null /* bands */,
+                    null /* channels */),
+            new RadioAccessSpecifier(
+                    AccessNetworkConstants.AccessNetworkType.UTRAN,
+                    null /* bands */,
+                    null /* channels */)
+    };
 
     @Before
     public void setUp() throws Exception {
@@ -116,7 +144,7 @@ public class NetworkScanApiTest {
                     switch (msg.what) {
                         case EVENT_NETWORK_SCAN_START:
                             Log.d(TAG, "request network scan");
-                            mTelephonyManager.requestNetworkScan(
+                            mNetworkScan = mTelephonyManager.requestNetworkScan(
                                     mNetworkScanRequest, mNetworkScanCallback);
                             break;
                         default:
@@ -147,6 +175,8 @@ public class NetworkScanApiTest {
             Log.d(TAG, "onError: " + String.valueOf(error));
             mNetworkScanStatus = EVENT_NETWORK_SCAN_ERROR;
             mErrorCode = error;
+            Log.d(TAG, "Stop the network scan");
+            mNetworkScan.stopScan();
             setReady(true);
         }
     }
@@ -157,17 +187,14 @@ public class NetworkScanApiTest {
             int ranLte = AccessNetworkConstants.AccessNetworkType.EUTRAN;
             int[] lteChannels = {((CellInfoLte) cellInfo).getCellIdentity().getEarfcn()};
             ras = new RadioAccessSpecifier(ranLte, null /* bands */, lteChannels);
-            Log.d(TAG, "CellInfoLte channel: " + lteChannels[0]);
         } else if (cellInfo instanceof CellInfoWcdma) {
             int ranLte = AccessNetworkConstants.AccessNetworkType.UTRAN;
             int[] wcdmaChannels = {((CellInfoWcdma) cellInfo).getCellIdentity().getUarfcn()};
             ras = new RadioAccessSpecifier(ranLte, null /* bands */, wcdmaChannels);
-            Log.d(TAG, "CellInfoWcdma channel: " + wcdmaChannels[0]);
         } else if (cellInfo instanceof CellInfoGsm) {
             int ranGsm = AccessNetworkConstants.AccessNetworkType.GERAN;
             int[] gsmChannels = {((CellInfoGsm) cellInfo).getCellIdentity().getArfcn()};
             ras = new RadioAccessSpecifier(ranGsm, null /* bands */, gsmChannels);
-            Log.d(TAG, "CellInfoGsm channel: " + gsmChannels[0]);
         } else {
             ras = null;
         }
@@ -185,7 +212,6 @@ public class NetworkScanApiTest {
 
         // Make sure that there should be at least one entry.
         List<CellInfo> allCellInfo = mTelephonyManager.getAllCellInfo();
-        Log.d(TAG, "allCellInfo: " + allCellInfo.toString());
         if (allCellInfo == null) {
             fail("TelephonyManager.getAllCellInfo() returned NULL!");
         }
@@ -254,5 +280,140 @@ public class NetworkScanApiTest {
             return true;
         }
         return false;
+    }
+
+    private ArrayList<String> getPlmns() {
+        ArrayList<String> mccMncs = new ArrayList<>();
+        mccMncs.add("310260");
+        mccMncs.add("310120");
+        return mccMncs;
+    }
+
+    /**
+     * To test its constructor and getters.
+     */
+    @Test
+    public void testNetworkScanRequest_ConstructorAndGetters(){
+        NetworkScanRequest networkScanRequest = new NetworkScanRequest(
+                SCAN_TYPE,
+                RADIO_ACCESS_SPECIFIERS,
+                SEARCH_PERIODICITY_SEC,
+                MAX_SEARCH_TIME_SEC,
+                INCREMENTAL_RESULTS,
+                INCREMENTAL_RESULTS_PERIODICITY_SEC,
+                getPlmns());
+
+        assertEquals("getScanType() returns wrong value",
+                SCAN_TYPE, networkScanRequest.getScanType());
+        assertEquals("getSpecifiers() returns wrong value",
+                RADIO_ACCESS_SPECIFIERS, networkScanRequest.getSpecifiers());
+        assertEquals("getSearchPeriodicity() returns wrong value",
+                SEARCH_PERIODICITY_SEC, networkScanRequest.getSearchPeriodicity());
+        assertEquals("getMaxSearchTime() returns wrong value",
+                MAX_SEARCH_TIME_SEC, networkScanRequest.getMaxSearchTime());
+        assertEquals("getIncrementalResults() returns wrong value",
+                INCREMENTAL_RESULTS, networkScanRequest.getIncrementalResults());
+        assertEquals("getIncrementalResultsPeriodicity() returns wrong value",
+                INCREMENTAL_RESULTS_PERIODICITY_SEC,
+                networkScanRequest.getIncrementalResultsPeriodicity());
+        assertEquals("getPlmns() returns wrong value", getPlmns(), networkScanRequest.getPlmns());
+        assertEquals("describeContents() returns wrong value",
+                0, networkScanRequest.describeContents());
+    }
+
+    /**
+     * To test its hashCode method.
+     */
+    @Test
+    public void testNetworkScanRequestParcel_Hashcode() {
+        NetworkScanRequest networkScanRequest1 = new NetworkScanRequest(
+                SCAN_TYPE,
+                RADIO_ACCESS_SPECIFIERS,
+                SEARCH_PERIODICITY_SEC,
+                MAX_SEARCH_TIME_SEC,
+                INCREMENTAL_RESULTS,
+                INCREMENTAL_RESULTS_PERIODICITY_SEC,
+                getPlmns());
+
+        NetworkScanRequest networkScanRequest2 = new NetworkScanRequest(
+                SCAN_TYPE,
+                RADIO_ACCESS_SPECIFIERS,
+                SEARCH_PERIODICITY_SEC,
+                MAX_SEARCH_TIME_SEC,
+                INCREMENTAL_RESULTS,
+                INCREMENTAL_RESULTS_PERIODICITY_SEC,
+                getPlmns());
+
+        NetworkScanRequest networkScanRequest3 = new NetworkScanRequest(
+                SCAN_TYPE,
+                null,
+                SEARCH_PERIODICITY_SEC,
+                MAX_SEARCH_TIME_SEC,
+                false,
+                0,
+                getPlmns());
+
+        assertEquals("hashCode() returns different hash code for same objects",
+                networkScanRequest1.hashCode(), networkScanRequest2.hashCode());
+        assertNotSame("hashCode() returns same hash code for different objects",
+                networkScanRequest1.hashCode(), networkScanRequest3.hashCode());
+    }
+
+    /**
+     * To test its comparision method.
+     */
+    @Test
+    public void testNetworkScanRequestParcel_Equals() {
+        NetworkScanRequest networkScanRequest1 = new NetworkScanRequest(
+                SCAN_TYPE,
+                RADIO_ACCESS_SPECIFIERS,
+                SEARCH_PERIODICITY_SEC,
+                MAX_SEARCH_TIME_SEC,
+                INCREMENTAL_RESULTS,
+                INCREMENTAL_RESULTS_PERIODICITY_SEC,
+                getPlmns());
+
+        NetworkScanRequest networkScanRequest2 = new NetworkScanRequest(
+                SCAN_TYPE,
+                RADIO_ACCESS_SPECIFIERS,
+                SEARCH_PERIODICITY_SEC,
+                MAX_SEARCH_TIME_SEC,
+                INCREMENTAL_RESULTS,
+                INCREMENTAL_RESULTS_PERIODICITY_SEC,
+                getPlmns());
+
+        assertTrue(networkScanRequest1.equals(networkScanRequest2));
+
+        networkScanRequest2 = new NetworkScanRequest(
+                SCAN_TYPE,
+                RADIO_ACCESS_SPECIFIERS,
+                SEARCH_PERIODICITY_SEC,
+                MAX_SEARCH_TIME_SEC,
+                INCREMENTAL_RESULTS,
+                INCREMENTAL_RESULTS_PERIODICITY_SEC,
+                null /* List of PLMN ids (MCC-MNC) */);
+        assertFalse(networkScanRequest1.equals(networkScanRequest2));
+    }
+
+    /**
+     * To test its writeToParcel and createFromParcel methods.
+     */
+    @Test
+    public void testNetworkScanRequestParcel_Parcel() {
+        NetworkScanRequest networkScanRequest = new NetworkScanRequest(
+                SCAN_TYPE,
+                null /* Radio Access Specifier */,
+                SEARCH_PERIODICITY_SEC,
+                MAX_SEARCH_TIME_SEC,
+                INCREMENTAL_RESULTS,
+                INCREMENTAL_RESULTS_PERIODICITY_SEC,
+                getPlmns());
+
+        Parcel p = Parcel.obtain();
+        networkScanRequest.writeToParcel(p, 0);
+        p.setDataPosition(0);
+        NetworkScanRequest newnsr = NetworkScanRequest.CREATOR.createFromParcel(p);
+        assertTrue(networkScanRequest.equals(newnsr));
+
     }
 }
