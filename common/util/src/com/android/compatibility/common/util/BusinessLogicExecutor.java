@@ -29,6 +29,8 @@ import org.junit.AssumptionViolatedException;
  */
 public abstract class BusinessLogicExecutor {
 
+    protected static final String LOG_TAG = "BusinessLogicExecutor";
+
     /** String representations of the String class and String[] class */
     protected static final String STRING_CLASS = "java.lang.String";
     protected static final String STRING_ARRAY_CLASS = "[Ljava.lang.String;";
@@ -113,6 +115,13 @@ public abstract class BusinessLogicExecutor {
         ResolvedMethod rm = getResolvedMethod(cls, method.substring(index + 1), args);
         return rm.invoke(obj);
     }
+
+    /**
+     * Log information with whichever logging mechanism is available to the instance. This varies
+     * from host-side to device-side, so implementations are left to subclasses.
+     * See {@link String.format(String, Object...)} for parameter information.
+     */
+    public abstract void logInfo(String format, Object... args);
 
     /**
      * Get the test object. This method is left abstract, since non-abstract subclasses will set
