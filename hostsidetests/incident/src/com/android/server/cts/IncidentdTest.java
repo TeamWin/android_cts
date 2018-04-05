@@ -80,18 +80,14 @@ public class IncidentdTest extends ProtoDumpTestCase {
     // Splitting these into separate methods to make debugging easier.
 
     public void testIncidentReportDumpAuto() throws Exception {
-        testIncidentReportDump(PRIVACY_AUTO, "A");
-        testIncidentReportDump(PRIVACY_AUTO, "AUTO");
         testIncidentReportDump(PRIVACY_AUTO, "AUTOMATIC");
     }
 
     public void testIncidentReportDumpExplicit() throws Exception {
-        testIncidentReportDump(PRIVACY_EXPLICIT, "E" );
         testIncidentReportDump(PRIVACY_EXPLICIT, "EXPLICIT");
     }
 
     public void testIncidentReportDumpLocal() throws Exception {
-        testIncidentReportDump(PRIVACY_LOCAL, "L" );
         testIncidentReportDump(PRIVACY_LOCAL, "LOCAL");
     }
 
