@@ -23,6 +23,7 @@ import org.json.JSONObject;
 import com.android.compatibility.common.util.BusinessLogic.BusinessLogicRule;
 import com.android.compatibility.common.util.BusinessLogic.BusinessLogicRuleAction;
 import com.android.compatibility.common.util.BusinessLogic.BusinessLogicRuleCondition;
+import com.android.compatibility.common.util.BusinessLogic.BusinessLogicRulesList;
 
 import java.io.File;
 import java.io.IOException;
@@ -47,6 +48,8 @@ public class BusinessLogicFactory {
     private static final String RULE_CONDITIONS = "ruleConditions";
     // Name of rule actions array
     private static final String RULE_ACTIONS = "ruleActions";
+    // Description of a rule list object
+    private static final String RULES_LIST_DESCRIPTION = "description";
     // Name of method name string
     private static final String METHOD_NAME = "methodName";
     // Name of method args array of strings
@@ -62,12 +65,12 @@ public class BusinessLogicFactory {
      */
     public static BusinessLogic createFromFile(File f) {
         // Populate the map from testname to business rules for this new BusinessLogic instance
-        Map<String, List<BusinessLogicRule>> rulesMap = new HashMap<>();
+        Map<String, List<BusinessLogicRulesList>> rulesMap = new HashMap<>();
         BusinessLogic bl = new BusinessLogic();
         try {
             String businessLogicString = readFile(f);
             JSONObject root = new JSONObject(businessLogicString);
-            JSONArray rulesLists = null;
+            JSONArray jsonRulesLists = null;
             if (root.has(AUTHENTICATION_STATUS)){
                 String authStatus = root.getString(AUTHENTICATION_STATUS);
                 bl.setAuthenticationStatus(authStatus);
@@ -77,34 +80,20 @@ public class BusinessLogicFactory {
                 bl.mConditionalTestsEnabled = enabled;
             }
             try {
-                rulesLists = root.getJSONArray(BUSINESS_LOGIC_RULES_LISTS);
+                jsonRulesLists = root.getJSONArray(BUSINESS_LOGIC_RULES_LISTS);
             } catch (JSONException e) {
                 bl.mRules = rulesMap;
                 return bl; // no rules defined for this suite, leave internal map empty
             }
-            for (int i = 0; i < rulesLists.length(); i++) {
-                JSONObject rulesList = rulesLists.getJSONObject(i);
-                String testName = rulesList.getString(TEST_NAME);
-                List<BusinessLogicRule> rules = new ArrayList<>();
-                JSONArray rulesJSONArray = null;
-                try {
-                    rulesJSONArray = rulesList.getJSONArray(BUSINESS_LOGIC_RULES);
-                } catch (JSONException e) {
-                    // no rules defined for this test case
-                    rulesMap.put(testName, rules); // add empty rule list to internal map
-                    continue; // advance to next test case
+            for (int i = 0; i < jsonRulesLists.length(); i++) {
+                JSONObject jsonRulesList = jsonRulesLists.getJSONObject(i);
+                String testName = jsonRulesList.getString(TEST_NAME);
+                List<BusinessLogicRulesList> testRulesLists = rulesMap.get(testName);
+                if (testRulesLists == null) {
+                    testRulesLists = new ArrayList<>();
                 }
-                for (int j = 0; j < rulesJSONArray.length(); j++) {
-                    JSONObject ruleJSONObject = rulesJSONArray.getJSONObject(j);
-                    // Build conditions list
-                    List<BusinessLogicRuleCondition> ruleConditions =
-                            extractRuleConditionList(ruleJSONObject);
-                    // Build actions list
-                    List<BusinessLogicRuleAction> ruleActions =
-                            extractRuleActionList(ruleJSONObject);
-                    rules.add(new BusinessLogicRule(ruleConditions, ruleActions));
-                }
-                rulesMap.put(testName, rules);
+                testRulesLists.add(extractRulesList(jsonRulesList));
+                rulesMap.put(testName, testRulesLists);
             }
         } catch (IOException | JSONException e) {
             throw new RuntimeException("Business Logic failed", e);
@@ -112,6 +101,37 @@ public class BusinessLogicFactory {
         // Return business logic
         bl.mRules = rulesMap;
         return bl;
+    }
+
+    /* Extract a BusinessLogicRulesList from the representative JSON object */
+    private static BusinessLogicRulesList extractRulesList(JSONObject rulesListJSONObject)
+            throws JSONException {
+        // First, parse the description for this rule list object, if one exists
+        String description = null;
+        try {
+            description = rulesListJSONObject.getString(RULES_LIST_DESCRIPTION);
+        } catch (JSONException e) { /* no description set, leave null */}
+
+        // Next, get the list of rules
+        List<BusinessLogicRule> rules = new ArrayList<>();
+        JSONArray rulesJSONArray = null;
+        try {
+            rulesJSONArray = rulesListJSONObject.getJSONArray(BUSINESS_LOGIC_RULES);
+        } catch (JSONException e) {
+            // no rules defined for this test case, return new, rule-less BusinessLogicRulesList
+            return new BusinessLogicRulesList(rules, description);
+        }
+        for (int j = 0; j < rulesJSONArray.length(); j++) {
+            JSONObject ruleJSONObject = rulesJSONArray.getJSONObject(j);
+            // Build conditions list
+            List<BusinessLogicRuleCondition> ruleConditions =
+                    extractRuleConditionList(ruleJSONObject);
+            // Build actions list
+            List<BusinessLogicRuleAction> ruleActions =
+                    extractRuleActionList(ruleJSONObject);
+            rules.add(new BusinessLogicRule(ruleConditions, ruleActions));
+        }
+        return new BusinessLogicRulesList(rules, description);
     }
 
     /* Extract all BusinessLogicRuleConditions from a JSON business logic rule */
