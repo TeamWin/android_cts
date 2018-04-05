@@ -18,6 +18,7 @@ package com.android.compatibility.common.util;
 
 import java.io.PrintWriter;
 import java.io.StringWriter;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -39,6 +40,9 @@ public class BusinessLogic {
     /* Feature flag determining if device specific tests are executed. */
     public boolean mConditionalTestsEnabled;
     private AuthenticationStatusEnum mAuthenticationStatus = AuthenticationStatusEnum.UNKNOWN;
+
+    // A Date denoting the time of request from the business logic service
+    protected Date mTimestamp;
 
     /**
      * Determines whether business logic exists for a given test name
@@ -167,6 +171,10 @@ public class BusinessLogic {
 
     public boolean isAuthorized() {
         return AuthenticationStatusEnum.AUTHORIZED.equals(mAuthenticationStatus);
+    }
+
+    public Date getTimestamp() {
+        return mTimestamp;
     }
 
     /**
