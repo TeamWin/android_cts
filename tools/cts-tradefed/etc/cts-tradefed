@@ -31,6 +31,11 @@ checkPath() {
     fi;
 }
 
+# readlink does not work on MacOS so rely on our own realpath
+realpath() {
+    [[ $1 = /* ]] && echo "$1" || echo "$PWD/${1#./}"
+}
+
 checkPath aapt
 checkPath adb
 checkPath java
@@ -76,7 +81,7 @@ fi;
 
 if [ -z ${CTS_ROOT} ]; then
     # assume we're in an extracted cts install
-    CTS_ROOT="$(dirname $(readlink -e $0))/../.."
+    CTS_ROOT="$(dirname $(realpath $0))/../.."
 fi;
 
 JAR_DIR=${CTS_ROOT}/android-cts/tools
