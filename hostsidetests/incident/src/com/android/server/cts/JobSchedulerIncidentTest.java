@@ -258,11 +258,6 @@ public class JobSchedulerIncidentTest extends ProtoDumpTestCase {
     private static void testStateControllerProto(StateControllerProto sc, int filterLevel) throws Exception {
         assertNotNull(sc);
 
-        StateControllerProto.AppIdleController aic = sc.getAppIdle();
-        for (StateControllerProto.AppIdleController.TrackedJob tj : aic.getTrackedJobsList()) {
-            testJobStatusShortInfoProto(tj.getInfo(), filterLevel);
-            assertTrue(0 <= tj.getSourceUid());
-        }
         StateControllerProto.BackgroundJobsController bjc = sc.getBackground();
         for (StateControllerProto.BackgroundJobsController.TrackedJob tj : bjc.getTrackedJobsList()) {
             testJobStatusShortInfoProto(tj.getInfo(), filterLevel);

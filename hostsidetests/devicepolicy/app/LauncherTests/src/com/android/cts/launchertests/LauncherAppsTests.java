@@ -196,6 +196,12 @@ public class LauncherAppsTests extends AndroidTestCase {
         mInstrumentation.getContext().unregisterReceiver(receiver);
     }
 
+    public void testReverseAccessNoThrow() throws Exception {
+        // Trying to access the main profile from a managed profile -> shouldn't throw but
+        // should just return false.
+        assertFalse(mLauncherApps.isPackageEnabled("android", mUser));
+    }
+
     private void expectSecurityException(ExceptionRunnable action, String failMessage)
             throws Exception {
         try {

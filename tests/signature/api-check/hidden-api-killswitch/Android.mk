@@ -19,7 +19,7 @@ LOCAL_PACKAGE_NAME := CtsHiddenApiKillswitchTestCases
 LOCAL_MODULE_TAGS := optional
 LOCAL_MODULE_PATH := $(TARGET_OUT_DATA_APPS)
 LOCAL_MULTILIB := both
-LOCAL_JNI_SHARED_LIBRARIES := libcts_dexchecker
+LOCAL_JNI_SHARED_LIBRARIES := libcts_dexchecker libclassdescriptors
 LOCAL_NDK_STL_VARIANT := c++_static
 
 # Tag this module as a cts test artifact

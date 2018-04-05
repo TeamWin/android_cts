@@ -18,7 +18,7 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
           package="android.signature.cts.api.killswitch">
 
-    <application/>
+    <application android:debuggable="true"/>
 
     <instrumentation android:name="repackaged.android.test.InstrumentationTestRunner"
                      android:targetPackage="android.signature.cts.api.killswitch"

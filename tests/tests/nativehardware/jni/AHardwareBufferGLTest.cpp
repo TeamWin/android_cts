@@ -39,6 +39,7 @@ bool FormatHasAlpha(uint32_t format) {
         case AHARDWAREBUFFER_FORMAT_R8G8B8A8_UNORM:
         case AHARDWAREBUFFER_FORMAT_R16G16B16A16_FLOAT:
         case AHARDWAREBUFFER_FORMAT_R10G10B10A2_UNORM:
+        case GL_RGBA8:
             return true;
         default: return false;
     }
@@ -65,7 +66,8 @@ void UploadRedPixels(const AHardwareBuffer_Desc& desc) {
     switch (desc.format) {
         case AHARDWAREBUFFER_FORMAT_R5G6B5_UNORM:
         case AHARDWAREBUFFER_FORMAT_R8G8B8_UNORM:
-        case AHARDWAREBUFFER_FORMAT_R8G8B8X8_UNORM: {
+        case AHARDWAREBUFFER_FORMAT_R8G8B8X8_UNORM:
+        case GL_RGB8: {
             // GL_RGB565 supports uploading GL_UNSIGNED_BYTE data.
             const int size = desc.width * desc.height * 3;
             std::unique_ptr<uint8_t[]> pixels(new uint8_t[size]);
@@ -77,7 +79,8 @@ void UploadRedPixels(const AHardwareBuffer_Desc& desc) {
             UploadData(desc, GL_RGB, GL_UNSIGNED_BYTE, pixels.get());
             break;
         }
-        case AHARDWAREBUFFER_FORMAT_R8G8B8A8_UNORM: {
+        case AHARDWAREBUFFER_FORMAT_R8G8B8A8_UNORM:
+        case GL_RGBA8: {
             const int size = desc.width * desc.height * 4;
             std::unique_ptr<uint8_t[]> pixels(new uint8_t[size]);
             for (int i = 0; i < size; i += 4) {
@@ -117,55 +120,39 @@ void UploadRedPixels(const AHardwareBuffer_Desc& desc) {
 }
 
 // Draws the following checkerboard pattern using glScissor and glClear.
-// The number is the depth value.
+// The number after the color is the stencil value and the floating point number is the depth value.
 //        +-----+-----+ (W, H)
-//        | OR  | Ob  |
+//        | OR1 | Ob2 |
 //        | 0.5 | 0.0 |
 //        +-----+-----+  TB = transparent black
-//        | TB  | OR  |  OR = opaque red
+//        | TB0 | OR1 |  OR = opaque red
 //        | 1.0 | 0.5 |  Ob = opaque blue
 // (0, 0) +-----+-----+
 //
 void DrawCheckerboard(int width, int height) {
     glEnable(GL_SCISSOR_TEST);
+    const GLbitfield all_bits = GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT;
+
     glClearColor(1.f, 0.f, 0.f, 1.f);
     glClearDepthf(0.5f);
+    glClearStencil(1);
     glScissor(0, 0, width, height);
-    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+    glClear(all_bits);
+
     glClearColor(0.f, 0.f, 0.f, 0.f);
     glClearDepthf(1.0f);
+    glClearStencil(0);
     glScissor(0, 0, width / 2, height / 2);
-    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+    glClear(all_bits);
+
     glClearColor(0.f, 0.f, 1.f, 1.f);
     glClearDepthf(0.f);
+    glClearStencil(2);
     glScissor(width / 2, height / 2, width / 2, height / 2);
-    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-    glDisable(GL_SCISSOR_TEST);
-}
+    glClear(all_bits);
 
-void CompileProgram(const char* vertex_source, const char* fragment_source, GLuint* program_out) {
-    GLint status = GL_FALSE;
-    GLuint& program = *program_out;
-    program = glCreateProgram();
-    GLuint vertex_shader = glCreateShader(GL_VERTEX_SHADER);
-    glShaderSource(vertex_shader, 1, &vertex_source, nullptr);
-    glCompileShader(vertex_shader);
-    glGetShaderiv(vertex_shader, GL_COMPILE_STATUS, &status);
-    ASSERT_EQ(GL_TRUE, status);
-    GLuint fragment_shader = glCreateShader(GL_FRAGMENT_SHADER);
-    glShaderSource(fragment_shader, 1, &fragment_source, nullptr);
-    glCompileShader(fragment_shader);
-    glGetShaderiv(fragment_shader, GL_COMPILE_STATUS, &status);
-    ASSERT_EQ(GL_TRUE, status);
-    glAttachShader(program, vertex_shader);
-    glAttachShader(program, fragment_shader);
-    glLinkProgram(program);
-    glGetProgramiv(program, GL_LINK_STATUS, &status);
-    ASSERT_EQ(GL_TRUE, status);
-    glDetachShader(program, vertex_shader);
-    glDetachShader(program, fragment_shader);
-    glDeleteShader(vertex_shader);
-    glDeleteShader(fragment_shader);
+    glDisable(GL_SCISSOR_TEST);
+    EXPECT_EQ(GLenum{GL_NO_ERROR}, glGetError());
 }
 
 enum GoldenColor {
@@ -314,6 +301,7 @@ const float kQuadPositions[] = {
     -1.f, -1.f, 1.f, 1.f, -1.f, 1.f,
     -1.f, -1.f, 1.f, -1.f, 1.f, 1.f,
 };
+const GLsizei kQuadVertexCount = 6;
 
 // Interleaved X, Y and Z coordinates for 4 triangles forming a "pyramid" as
 // seen from above. The center vertex has Z=1, while the edge vertices have Z=-1.
@@ -330,30 +318,50 @@ const float kPyramidPositions[] = {
     1.f, 1.f, -1.f, 0.f, 0.f, 1.f, 1.f, -1.f, -1.f,
     1.f, -1.f, -1.f, 0.f, 0.f, 1.f, -1.f, -1.f, -1.f,
 };
+const GLsizei kPyramidVertexCount = 12;
 
 }  // namespace
 
 class AHardwareBufferGLTest : public ::testing::TestWithParam<AHardwareBuffer_Desc> {
 public:
+    enum AttachmentType {
+        kNone,
+        kBufferAsTexture,
+        kBufferAsRenderbuffer,
+        kRenderbuffer,
+    };
+
     void SetUp() override;
     virtual bool SetUpBuffer(const AHardwareBuffer_Desc& desc);
-    void TearDownBuffer();
+    void SetUpProgram(const char* vertex_source, const char* fragment_source,
+                      const float* mesh, float scale, int texture_unit = 0);
+    void SetUpTexture(const AHardwareBuffer_Desc& desc, int unit);
+    void SetUpFramebuffer(int width, int height, AttachmentType color,
+                          AttachmentType depth = kNone, AttachmentType stencil = kNone,
+                          AttachmentType depth_stencil = kNone);
     void TearDown() override;
+
     void MakeCurrent(int which) {
         if (GetParam().stride != 0) return;
-        eglMakeCurrent(mDisplay, mSurface, mSurface, mContext[which]);
+        mWhich = which;
+        eglMakeCurrent(mDisplay, mSurface, mSurface, mContext[mWhich]);
     }
 
 protected:
     std::set<std::string> mEGLExtensions;
     EGLDisplay mDisplay = EGL_NO_DISPLAY;
     EGLSurface mSurface = EGL_NO_SURFACE;
-    EGLContext mContext[2];
+    EGLContext mContext[2] = { EGL_NO_CONTEXT, EGL_NO_CONTEXT };
+    int mWhich = 0;  // Which of the two EGL contexts is current.
+    int mContextCount = 2;  // Will be 2 in AHB test cases and 1 in pure GL test cases.
     int mGLVersion = 0;
 
     AHardwareBuffer* mBuffer = nullptr;
     EGLImageKHR mEGLImage = EGL_NO_IMAGE_KHR;
     GLenum mTexTarget = GL_NONE;
+    GLuint mProgram = 0;
+    GLuint mTextures[2] = { 0, 0 };
+    GLuint mFramebuffers[2] = { 0, 0 };
 };
 
 void AHardwareBufferGLTest::SetUp() {
@@ -416,7 +424,10 @@ bool AHardwareBufferGLTest::SetUpBuffer(const AHardwareBuffer_Desc& desc) {
     // and the test should be run in a single context, without using AHardwareBuffer.
     // This simplifies verifying that the test behaves as expected even if the
     // AHardwareBuffer format under test is not supported.
-    if (desc.stride != 0) return true;
+    if (desc.stride != 0) {
+        mContextCount = 1;
+        return true;
+    }
 
     int result = AHardwareBuffer_allocate(&desc, &mBuffer);
     // Skip if this format cannot be allocated.
@@ -430,17 +441,178 @@ bool AHardwareBufferGLTest::SetUpBuffer(const AHardwareBuffer_Desc& desc) {
     return mEGLImage != EGL_NO_IMAGE_KHR;
 }
 
-void AHardwareBufferGLTest::TearDownBuffer() {
-    if (mBuffer != nullptr) {
-        eglDestroyImageKHR(mDisplay, mEGLImage);
-        AHardwareBuffer_release(mBuffer);
+void AHardwareBufferGLTest::SetUpProgram(const char* vertex_source, const char* fragment_source,
+                                         const float* mesh, float scale, int texture_unit) {
+    ASSERT_EQ(0U, mProgram);
+    GLint status = GL_FALSE;
+    mProgram = glCreateProgram();
+    GLuint vertex_shader = glCreateShader(GL_VERTEX_SHADER);
+    glShaderSource(vertex_shader, 1, &vertex_source, nullptr);
+    glCompileShader(vertex_shader);
+    glGetShaderiv(vertex_shader, GL_COMPILE_STATUS, &status);
+    ASSERT_EQ(GL_TRUE, status) << "Vertex shader compilation failed";
+    GLuint fragment_shader = glCreateShader(GL_FRAGMENT_SHADER);
+    glShaderSource(fragment_shader, 1, &fragment_source, nullptr);
+    glCompileShader(fragment_shader);
+    glGetShaderiv(fragment_shader, GL_COMPILE_STATUS, &status);
+    ASSERT_EQ(GL_TRUE, status) << "Fragment shader compilation failed";
+    glAttachShader(mProgram, vertex_shader);
+    glAttachShader(mProgram, fragment_shader);
+    glLinkProgram(mProgram);
+    glGetProgramiv(mProgram, GL_LINK_STATUS, &status);
+    ASSERT_EQ(GL_TRUE, status) << "Shader program linking failed";
+    glDetachShader(mProgram, vertex_shader);
+    glDetachShader(mProgram, fragment_shader);
+    glDeleteShader(vertex_shader);
+    glDeleteShader(fragment_shader);
+    glUseProgram(mProgram);
+    ASSERT_EQ(GLenum{GL_NO_ERROR}, glGetError());
+
+    GLint a_position_location = glGetAttribLocation(mProgram, "aPosition");
+    GLint a_depth_location = glGetAttribLocation(mProgram, "aDepth");
+    if (mesh == kQuadPositions) {
+        glVertexAttribPointer(a_position_location, 2, GL_FLOAT, GL_TRUE, 0, kQuadPositions);
+        glVertexAttrib1f(a_depth_location, 0.f);
+        glEnableVertexAttribArray(a_position_location);
+    } else if (mesh == kPyramidPositions) {
+        glVertexAttribPointer(a_position_location, 2, GL_FLOAT, GL_TRUE, 3 * sizeof(float),
+                              kPyramidPositions);
+        glVertexAttribPointer(a_depth_location, 1, GL_FLOAT, GL_TRUE, 3 * sizeof(float),
+                              kPyramidPositions + 2);
+        glEnableVertexAttribArray(a_position_location);
+        glEnableVertexAttribArray(a_depth_location);
+    } else {
+        FAIL() << "Unknown mesh";
     }
+    glUniform1f(glGetUniformLocation(mProgram, "uScale"), scale);
+    GLint u_color_location = glGetUniformLocation(mProgram, "uColor");
+    if (u_color_location >= 0) {
+        glUniform4f(u_color_location, 1.f, 0.f, 0.f, 1.f);
+    }
+    GLint u_texture_location = glGetUniformLocation(mProgram, "uTexture");
+    if (u_texture_location >= 0) {
+        glUniform1i(u_texture_location, texture_unit);
+    }
+    GLint u_layer_location = glGetUniformLocation(mProgram, "uLayer");
+    if (u_layer_location >= 0) {
+        glUniform1f(u_layer_location, static_cast<float>(GetParam().layers));
+    }
+}
+
+void AHardwareBufferGLTest::SetUpTexture(const AHardwareBuffer_Desc& desc, int unit) {
+    GLuint& texture = mTextures[mWhich];
+    glGenTextures(1, &texture);
+    glActiveTexture(GL_TEXTURE0 + unit);
+    glBindTexture(mTexTarget, texture);
+    if (desc.stride == 0) {
+        glEGLImageTargetTexture2DOES(mTexTarget, static_cast<GLeglImageOES>(mEGLImage));
+    } else {
+        // Stride is nonzero, so interpret desc.format as a GL format.
+        if (desc.layers > 1) {
+            glTexStorage3D(mTexTarget, 1, desc.format, desc.width, desc.height, desc.layers);
+        } else if (mGLVersion >= 3) {
+            glTexStorage2D(mTexTarget, 1, desc.format, desc.width, desc.height);
+        } else {
+            GLenum format = 0, type = 0;
+            switch (desc.format) {
+                case GL_RGB8:
+                    format = GL_RGB;
+                    type = GL_UNSIGNED_BYTE;
+                    break;
+                case GL_RGBA8:
+                    format = GL_RGBA;
+                    type = GL_UNSIGNED_BYTE;
+                    break;
+                case GL_DEPTH_COMPONENT16:
+                    format = GL_DEPTH_COMPONENT;
+                    type = GL_UNSIGNED_SHORT;
+                    break;
+                case GL_DEPTH24_STENCIL8:
+                    format = GL_DEPTH_STENCIL;
+                    type = GL_UNSIGNED_INT_24_8;
+                default:
+                    FAIL() << "Unrecognized GL format"; break;
+            }
+            glTexImage2D(mTexTarget, 0, desc.format, desc.width, desc.height, 0,
+                         format, type, nullptr);
+        }
+    }
+    ASSERT_EQ(GLenum{GL_NO_ERROR}, glGetError());
+}
+
+void AHardwareBufferGLTest::SetUpFramebuffer(int width, int height,
+                                             AttachmentType color,
+                                             AttachmentType depth,
+                                             AttachmentType stencil,
+                                             AttachmentType depth_stencil) {
+    AHardwareBuffer_Desc desc = GetParam();
+    AttachmentType attachment_types[] = { color, depth, stencil, depth_stencil };
+    GLenum attachment_points[] = {
+        GL_COLOR_ATTACHMENT0, GL_DEPTH_ATTACHMENT, GL_STENCIL_ATTACHMENT,
+        GL_DEPTH_STENCIL_ATTACHMENT
+    };
+    GLenum default_formats[] = {
+      GL_RGBA8, GL_DEPTH_COMPONENT16, GL_STENCIL_INDEX8, GL_DEPTH24_STENCIL8
+    };
+    GLuint& fbo = mFramebuffers[mWhich];
+    glGenFramebuffers(1, &fbo);
+    glBindFramebuffer(GL_FRAMEBUFFER, fbo);
+    for (int i = 0; i < 3; ++i) {
+        switch (attachment_types[i]) {
+            case kNone:
+                break;
+            case kBufferAsTexture:
+                ASSERT_NE(0U, mTextures[mWhich]);
+                if (mTexTarget == GL_TEXTURE_2D) {
+                    glFramebufferTexture2D(GL_FRAMEBUFFER, attachment_points[i], mTexTarget,
+                                           mTextures[mWhich], 0);
+                } else {
+                    // desc.layers is never modified in the test body.
+                    glFramebufferTextureLayer(GL_FRAMEBUFFER, attachment_points[i],
+                                              mTextures[mWhich], 0, desc.layers - 1);
+                }
+                break;
+            case kBufferAsRenderbuffer: {
+                GLuint renderbuffer = 0;
+                glGenRenderbuffers(1, &renderbuffer);
+                glBindRenderbuffer(GL_RENDERBUFFER, renderbuffer);
+                if (desc.stride == 0) {
+                    glEGLImageTargetRenderbufferStorageOES(GL_RENDERBUFFER,
+                                                           static_cast<GLeglImageOES>(mEGLImage));
+                } else {
+                    glRenderbufferStorage(GL_RENDERBUFFER, desc.format, width, height);
+                }
+                glFramebufferRenderbuffer(GL_FRAMEBUFFER, attachment_points[i],
+                                          GL_RENDERBUFFER, renderbuffer);
+                break;
+            }
+            case kRenderbuffer: {
+                GLuint renderbuffer = 0;
+                glGenRenderbuffers(1, &renderbuffer);
+                glBindRenderbuffer(GL_RENDERBUFFER, renderbuffer);
+                glRenderbufferStorage(GL_RENDERBUFFER, default_formats[i], width, height);
+                glFramebufferRenderbuffer(GL_FRAMEBUFFER, attachment_points[i],
+                                          GL_RENDERBUFFER, renderbuffer);
+                break;
+            }
+            default: FAIL() << "Unrecognized binding type";
+        }
+    }
+    ASSERT_EQ(GLenum{GL_NO_ERROR}, glGetError());
+    ASSERT_EQ(GLenum{GL_FRAMEBUFFER_COMPLETE},
+              glCheckFramebufferStatus(GL_FRAMEBUFFER));
+    glViewport(0, 0, width, height);
 }
 
 void AHardwareBufferGLTest::TearDown() {
     eglMakeCurrent(mDisplay, EGL_NO_SURFACE, EGL_NO_SURFACE, EGL_NO_CONTEXT);
     for (int i = 0; i < 2; ++i) {
+        // All GL objects will be deleted along with the context.
         eglDestroyContext(mDisplay, mContext[i]);
+    }
+    if (mBuffer != nullptr) {
+        eglDestroyImageKHR(mDisplay, mEGLImage);
+        AHardwareBuffer_release(mBuffer);
     }
     if (mSurface != EGL_NO_SURFACE) {
         eglDestroySurface(mDisplay, mSurface);
@@ -462,26 +634,15 @@ TEST_P(AHardwareBufferColorFormatTest, GpuColorOutputIsRenderable) {
     if (desc.layers > 1) return;
     if (!SetUpBuffer(desc)) return;
 
-    // Bind the EGLImage to renderbuffers and framebuffers in both contexts.
-    GLuint renderbuffer[2], fbo[2];
-    for (int i = 0; i < 2; ++i) {
+    for (int i = 0; i < mContextCount; ++i) {
         MakeCurrent(i);
-        glGenRenderbuffers(1, &renderbuffer[i]);
-        glBindRenderbuffer(GL_RENDERBUFFER, renderbuffer[i]);
-        glEGLImageTargetRenderbufferStorageOES(GL_RENDERBUFFER, static_cast<GLeglImageOES>(mEGLImage));
-        EXPECT_EQ(GLenum{GL_NO_ERROR}, glGetError());
-        glGenFramebuffers(1, &fbo[i]);
-        glBindFramebuffer(GL_FRAMEBUFFER, fbo[i]);
-        glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_RENDERBUFFER, renderbuffer[i]);
-        ASSERT_EQ(GLenum{GL_FRAMEBUFFER_COMPLETE},
-                  glCheckFramebufferStatus(GL_FRAMEBUFFER));
+        SetUpFramebuffer(desc.width, desc.height, kBufferAsRenderbuffer);
     }
 
     // Draw a simple checkerboard pattern in the second context, which will
     // be current after the loop above, then read it in the first.
     DrawCheckerboard(desc.width, desc.height);
     glFinish();
-    EXPECT_EQ(GLenum{GL_NO_ERROR}, glGetError());
 
     MakeCurrent(0);
     std::vector<GoldenPixel> goldens{
@@ -491,14 +652,6 @@ TEST_P(AHardwareBufferColorFormatTest, GpuColorOutputIsRenderable) {
         {10, 10, kZero}, {40, 10, kZero}, {60, 10, kRed},  {90, 10, kRed},
     };
     CheckGoldenPixels(goldens, FormatIsFloat(desc.format), FormatHasAlpha(desc.format));
-
-    // Clean up GL objects
-    for (int i = 0; i < 2; ++i) {
-        MakeCurrent(i);
-        glDeleteFramebuffers(1, &fbo[i]);
-        glDeleteRenderbuffers(1, &renderbuffer[i]);
-    }
-    TearDownBuffer();
 }
 
 // Verify that when allocating an AHardwareBuffer succeeds with GPU_SAMPLED_IMAGE,
@@ -510,14 +663,10 @@ TEST_P(AHardwareBufferColorFormatTest, GpuSampledImageCanBeSampled) {
     if (!SetUpBuffer(desc)) return;
 
     // Bind the EGLImage to textures in both contexts.
-    GLuint texture[2];
-    for (int i = 0; i < 2; ++i) {
+    const int kTextureUnit = 6;
+    for (int i = 0; i < mContextCount; ++i) {
         MakeCurrent(i);
-        glGenTextures(1, &texture[i]);
-        glActiveTexture(GL_TEXTURE1);
-        glBindTexture(mTexTarget, texture[i]);
-        glEGLImageTargetTexture2DOES(mTexTarget, static_cast<GLeglImageOES>(mEGLImage));
-        EXPECT_EQ(GLenum{GL_NO_ERROR}, glGetError());
+        SetUpTexture(desc, kTextureUnit);
     }
     // In the second context, upload opaque red to the texture.
     UploadRedPixels(desc);
@@ -525,38 +674,14 @@ TEST_P(AHardwareBufferColorFormatTest, GpuSampledImageCanBeSampled) {
 
     // In the first context, draw a quad that samples from the texture.
     MakeCurrent(0);
-    GLuint fbo, renderbuffer;
-    glGenFramebuffers(1, &fbo);
-    glBindFramebuffer(GL_FRAMEBUFFER, fbo);
-    glGenRenderbuffers(1, &renderbuffer);
-    glBindRenderbuffer(GL_RENDERBUFFER, renderbuffer);
-    glRenderbufferStorage(GL_RENDERBUFFER, GL_RGBA8, 40, 40);
-    glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_RENDERBUFFER, renderbuffer);
-    ASSERT_EQ(GLenum{GL_FRAMEBUFFER_COMPLETE}, glCheckFramebufferStatus(GL_FRAMEBUFFER));
+    SetUpFramebuffer(40, 40, kRenderbuffer);
     glClearColor(0.f, 0.f, 0.f, 0.f);
     glClear(GL_COLOR_BUFFER_BIT);
 
-    // Compile the shader.
-    GLuint program = 0;
-    CompileProgram(desc.layers > 1 ? kVertexShaderEs3 : kVertexShader,
-                   desc.layers > 1 ? kArrayFragmentShaderEs3 : kTextureFragmentShader,
-                   &program);
-    glUseProgram(program);
-    EXPECT_EQ(GLenum{GL_NO_ERROR}, glGetError());
-
-    // Draw a textured quad. Use a constant attribute for depth.
-    GLint a_position_location = glGetAttribLocation(program, "aPosition");
-    GLint a_depth_location = glGetAttribLocation(program, "aDepth");
-    glVertexAttribPointer(a_position_location, 2, GL_FLOAT, GL_TRUE, 0, kQuadPositions);
-    glVertexAttrib1f(a_depth_location, 0.f);
-    glEnableVertexAttribArray(a_position_location);
-    glUniform1i(glGetUniformLocation(program, "uTexture"), 1);
-    glUniform1f(glGetUniformLocation(program, "uScale"), 0.5f);
-    if (desc.layers > 1) {
-        glUniform1f(glGetUniformLocation(program, "uLayer"), static_cast<float>(desc.layers - 1));
-    }
-    glViewport(0, 0, 40, 40);
-    glDrawArrays(GL_TRIANGLES, 0, 6);
+    SetUpProgram(desc.layers > 1 ? kVertexShaderEs3 : kVertexShader,
+                 desc.layers > 1 ? kArrayFragmentShaderEs3 : kTextureFragmentShader,
+                 kQuadPositions, 0.5f, kTextureUnit);
+    glDrawArrays(GL_TRIANGLES, 0, kQuadVertexCount);
     EXPECT_EQ(GLenum{GL_NO_ERROR}, glGetError());
 
     // Check the rendered pixels. There should be a red square in the middle.
@@ -567,15 +692,6 @@ TEST_P(AHardwareBufferColorFormatTest, GpuSampledImageCanBeSampled) {
         {5,  5, kZero}, {15,  5, kZero}, {25, 5,  kZero}, {35, 5,  kZero},
     };
     CheckGoldenPixels(goldens, /*float_format=*/false, /*alpha_format=*/true);
-
-    // Tear down the GL objects.
-    glDeleteProgram(program);
-    glDeleteFramebuffers(1, &fbo);
-    glDeleteRenderbuffers(1, &renderbuffer);
-    glDeleteTextures(1, &texture[0]);
-    MakeCurrent(1);
-    glDeleteTextures(1, &texture[1]);
-    TearDownBuffer();
 }
 
 // Verify that buffers which have both GPU_SAMPLED_IMAGE and GPU_COLOR_OUTPUT
@@ -586,66 +702,27 @@ TEST_P(AHardwareBufferColorFormatTest, GpuColorOutputAndSampledImage) {
     if (!SetUpBuffer(desc)) return;
 
     // Bind the EGLImage to textures in both contexts.
-    GLuint texture[2];
-    for (int i = 0; i < 2; ++i) {
+    const int kTextureUnit = 1;
+    for (int i = 0; i < mContextCount; ++i) {
         MakeCurrent(i);
-        glGenTextures(1, &texture[i]);
-        glActiveTexture(GL_TEXTURE1);
-        glBindTexture(mTexTarget, texture[i]);
-        glEGLImageTargetTexture2DOES(mTexTarget, static_cast<GLeglImageOES>(mEGLImage));
-        EXPECT_EQ(GLenum{GL_NO_ERROR}, glGetError());
+        SetUpTexture(desc, kTextureUnit);
     }
 
     // In the second context, draw a checkerboard pattern.
-    GLuint texture_fbo;
-    glGenFramebuffers(1, &texture_fbo);
-    glBindFramebuffer(GL_FRAMEBUFFER, texture_fbo);
-    if (desc.layers > 1) {
-        glFramebufferTextureLayer(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, texture[1], 0, desc.layers - 1);
-    } else {
-        glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, texture[1], 0);
-    }
-    ASSERT_EQ(GLenum{GL_FRAMEBUFFER_COMPLETE},
-              glCheckFramebufferStatus(GL_FRAMEBUFFER));
-
+    SetUpFramebuffer(desc.width, desc.height, kBufferAsTexture);
     DrawCheckerboard(desc.width, desc.height);
     glFinish();
-    EXPECT_EQ(GLenum{GL_NO_ERROR}, glGetError());
 
     // In the first context, draw a quad that samples from the texture.
     MakeCurrent(0);
-    GLuint fbo, renderbuffer;
-    glGenFramebuffers(1, &fbo);
-    glBindFramebuffer(GL_FRAMEBUFFER, fbo);
-    glGenRenderbuffers(1, &renderbuffer);
-    glBindRenderbuffer(GL_RENDERBUFFER, renderbuffer);
-    glRenderbufferStorage(GL_RENDERBUFFER, GL_RGBA8, 40, 40);
-    glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_RENDERBUFFER, renderbuffer);
-    ASSERT_EQ(GLenum{GL_FRAMEBUFFER_COMPLETE}, glCheckFramebufferStatus(GL_FRAMEBUFFER));
+    SetUpFramebuffer(40, 40, kRenderbuffer);
     glClearColor(0.f, 0.f, 0.f, 0.f);
     glClear(GL_COLOR_BUFFER_BIT);
 
-    // Compile the shader.
-    GLuint program = 0;
-    CompileProgram(desc.layers > 1 ? kVertexShaderEs3 : kVertexShader,
-                   desc.layers > 1 ? kArrayFragmentShaderEs3 : kTextureFragmentShader,
-                   &program);
-    glUseProgram(program);
-    EXPECT_EQ(GLenum{GL_NO_ERROR}, glGetError());
-
-    // Draw a textured quad. Use a constant attribute for depth.
-    GLint a_position_location = glGetAttribLocation(program, "aPosition");
-    GLint a_depth_location = glGetAttribLocation(program, "aDepth");
-    glVertexAttribPointer(a_position_location, 2, GL_FLOAT, GL_TRUE, 0, kQuadPositions);
-    glVertexAttrib1f(a_depth_location, 0.f);
-    glEnableVertexAttribArray(a_position_location);
-    glUniform1i(glGetUniformLocation(program, "uTexture"), 1);
-    glUniform1f(glGetUniformLocation(program, "uScale"), 0.5f);
-    if (desc.layers > 1) {
-        glUniform1f(glGetUniformLocation(program, "uLayer"), static_cast<float>(desc.layers - 1));
-    }
-    glViewport(0, 0, 40, 40);
-    glDrawArrays(GL_TRIANGLES, 0, 6);
+    SetUpProgram(desc.layers > 1 ? kVertexShaderEs3 : kVertexShader,
+                 desc.layers > 1 ? kArrayFragmentShaderEs3 : kTextureFragmentShader,
+                 kQuadPositions, 0.5f, kTextureUnit);
+    glDrawArrays(GL_TRIANGLES, 0, kQuadVertexCount);
     EXPECT_EQ(GLenum{GL_NO_ERROR}, glGetError());
 
     // Check the rendered pixels. The lower left area of the checkerboard will
@@ -659,22 +736,14 @@ TEST_P(AHardwareBufferColorFormatTest, GpuColorOutputAndSampledImage) {
         {5, 5,  kZero}, {15, 5,  kZero},    {25, 5,  kZero}, {35, 5,  kZero},
     };
     CheckGoldenPixels(goldens, /*float_format=*/false, /*alpha_format=*/true);
-
-    // Tear down the GL objects.
-    glDeleteProgram(program);
-    glDeleteFramebuffers(1, &fbo);
-    glDeleteRenderbuffers(1, &renderbuffer);
-    glDeleteTextures(1, &texture[0]);
-    MakeCurrent(1);
-    glDeleteFramebuffers(1, &texture_fbo);
-    glDeleteTextures(1, &texture[1]);
-    TearDownBuffer();
 }
 
 INSTANTIATE_TEST_CASE_P(
     SingleLayer,
     AHardwareBufferColorFormatTest,
     ::testing::Values(
+        AHardwareBuffer_Desc{75, 33, 1, GL_RGB8, 0, 1, 0, 0},
+        AHardwareBuffer_Desc{64, 80, 1, GL_RGBA8, 0, 1, 0, 0},
         AHardwareBuffer_Desc{10, 20, 1, AHARDWAREBUFFER_FORMAT_R8G8B8A8_UNORM, 0, 0, 0, 0},
         AHardwareBuffer_Desc{20, 10, 1, AHARDWAREBUFFER_FORMAT_R8G8B8X8_UNORM, 0, 0, 0, 0},
         AHardwareBuffer_Desc{16, 20, 1, AHARDWAREBUFFER_FORMAT_R8G8B8_UNORM, 0, 0, 0, 0},
@@ -686,6 +755,8 @@ INSTANTIATE_TEST_CASE_P(
     MultipleLayers,
     AHardwareBufferColorFormatTest,
     ::testing::Values(
+        AHardwareBuffer_Desc{75, 33, 5, GL_RGB8, 0, 1, 0, 0},
+        AHardwareBuffer_Desc{64, 80, 6, GL_RGBA8, 0, 1, 0, 0},
         AHardwareBuffer_Desc{25, 16, 7, AHARDWAREBUFFER_FORMAT_R8G8B8A8_UNORM, 0, 0, 0, 0},
         AHardwareBuffer_Desc{32, 32, 4, AHARDWAREBUFFER_FORMAT_R8G8B8A8_UNORM, 0, 0, 0, 0},
         AHardwareBuffer_Desc{30, 30, 3, AHARDWAREBUFFER_FORMAT_R8G8B8X8_UNORM, 0, 0, 0, 0},
@@ -695,14 +766,7 @@ INSTANTIATE_TEST_CASE_P(
         AHardwareBuffer_Desc{30, 20, 16, AHARDWAREBUFFER_FORMAT_R10G10B10A2_UNORM, 0, 0, 0, 0}));
 
 
-class AHardwareBufferDepthFormatTest : public AHardwareBufferGLTest {
-public:
-    bool SetUpBuffer(const AHardwareBuffer_Desc& desc) override {
-        // ES 2.0 only supports GL_DEPTH_COMPONENT16 for depth renderbuffers.
-        if (desc.stride != 0 && mGLVersion < 3 && desc.format != GL_DEPTH_COMPONENT16) return false;
-        return AHardwareBufferGLTest::SetUpBuffer(desc);
-    }
-};
+class AHardwareBufferDepthFormatTest : public AHardwareBufferGLTest {};
 
 // Verify that depth testing against a depth buffer rendered in another context
 // works correctly.
@@ -717,56 +781,24 @@ TEST_P(AHardwareBufferDepthFormatTest, DepthAffectsDrawAcrossContexts) {
 
     // Bind the EGLImage to renderbuffers and framebuffers in both contexts.
     // The depth buffer is shared, but the color buffer is not.
-    GLuint fbo[2], color_rb[2], depth_rb[2];
-    for (int i = 0; i < 2; ++i) {
+    for (int i = 0; i < mContextCount; ++i) {
         MakeCurrent(i);
-        glGenFramebuffers(1, &fbo[i]);
-        glBindFramebuffer(GL_FRAMEBUFFER, fbo[i]);
-        glGenRenderbuffers(1, &color_rb[i]);
-        glBindRenderbuffer(GL_RENDERBUFFER, color_rb[i]);
-        glRenderbufferStorage(GL_RENDERBUFFER, GL_RGBA8, 40, 40);
-        glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_RENDERBUFFER, color_rb[i]);
-        glGenRenderbuffers(1, &depth_rb[i]);
-        glBindRenderbuffer(GL_RENDERBUFFER, depth_rb[i]);
-        if (desc.stride == 0) {
-            glEGLImageTargetRenderbufferStorageOES(GL_RENDERBUFFER, static_cast<GLeglImageOES>(mEGLImage));
-        } else {
-            glRenderbufferStorage(GL_RENDERBUFFER, desc.format, 40, 40);
-        }
-        EXPECT_EQ(GLenum{GL_NO_ERROR}, glGetError());
-        glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_RENDERBUFFER, depth_rb[i]);
-        ASSERT_EQ(GLenum{GL_FRAMEBUFFER_COMPLETE},
-                  glCheckFramebufferStatus(GL_FRAMEBUFFER));
+        SetUpFramebuffer(40, 40, kRenderbuffer, kBufferAsRenderbuffer);
     }
 
     // In the second context, clear the depth buffer to a checkerboard pattern.
     DrawCheckerboard(40, 40);
     glFinish();
-    EXPECT_EQ(GLenum{GL_NO_ERROR}, glGetError());
 
     // In the first context, clear the color buffer only, then draw a red pyramid.
     MakeCurrent(0);
+    SetUpProgram(kVertexShader, kColorFragmentShader, kPyramidPositions, 1.f);
     glClearColor(0.f, 0.f, 0.f, 0.f);
     glClear(GL_COLOR_BUFFER_BIT);
-    GLuint program = 0;
-    CompileProgram(kVertexShader, kColorFragmentShader, &program);
-    glUseProgram(program);
-    EXPECT_EQ(GLenum{GL_NO_ERROR}, glGetError());
-
-    GLint a_position_location = glGetAttribLocation(program, "aPosition");
-    GLint a_depth_location = glGetAttribLocation(program, "aDepth");
-    glVertexAttribPointer(a_position_location, 2, GL_FLOAT, GL_TRUE, 3 * sizeof(float), kPyramidPositions);
-    glVertexAttribPointer(a_depth_location, 1, GL_FLOAT, GL_TRUE, 3 * sizeof(float), kPyramidPositions + 2);
-    glEnableVertexAttribArray(a_position_location);
-    glEnableVertexAttribArray(a_depth_location);
-    glUniform4f(glGetUniformLocation(program, "uColor"), 1.f, 0.f, 0.f, 1.f);
-    glUniform1f(glGetUniformLocation(program, "uScale"), 1.0f);
-    glViewport(0, 0, 40, 40);
     glEnable(GL_DEPTH_TEST);
     glDepthFunc(GL_LESS);
-    glDrawArrays(GL_TRIANGLES, 0, 12);
+    glDrawArrays(GL_TRIANGLES, 0, kPyramidVertexCount);
     EXPECT_EQ(GLenum{GL_NO_ERROR}, glGetError());
-    glFinish();
 
     // Check golden pixels.
     std::vector<GoldenPixel> goldens{
@@ -776,16 +808,6 @@ TEST_P(AHardwareBufferDepthFormatTest, DepthAffectsDrawAcrossContexts) {
         {5, 5,  kRed}, {15, 5,  kRed},  {25, 5,  kRed},  {35, 5,  kRed},
     };
     CheckGoldenPixels(goldens, /*float_format=*/false, /*alpha_format=*/true);
-
-    // Tear down the GL objects.
-    glDeleteProgram(program);
-    for (int i = 0; i < 2; ++i) {
-        MakeCurrent(i);
-        glDeleteFramebuffers(1, &fbo[i]);
-        glDeleteRenderbuffers(1, &color_rb[i]);
-        glDeleteRenderbuffers(1, &depth_rb[i]);
-    }
-    TearDownBuffer();
 }
 
 // Verify that depth buffers with usage GPU_SAMPLED_IMAGE can be used as textures.
@@ -799,70 +821,28 @@ TEST_P(AHardwareBufferDepthFormatTest, DepthCanBeSampled) {
 
     // Bind the EGLImage to renderbuffers and framebuffers in both contexts.
     // The depth buffer is shared, but the color buffer is not.
-    GLuint fbo[2], depth_texture[2], color_rb;
+    const int kTextureUnit = 3;
     for (int i = 0; i < 2; ++i) {
         MakeCurrent(i);
-        glGenFramebuffers(1, &fbo[i]);
-        glBindFramebuffer(GL_FRAMEBUFFER, fbo[i]);
-        glGenTextures(1, &depth_texture[i]);
-        glActiveTexture(GL_TEXTURE3);
-        glBindTexture(mTexTarget, depth_texture[i]);
-        if (desc.stride == 0) {
-            glEGLImageTargetTexture2DOES(mTexTarget, static_cast<GLeglImageOES>(mEGLImage));
-        } else {
-            if (desc.layers > 1) {
-                glTexStorage3D(mTexTarget, 1, desc.format, desc.width, desc.height, desc.layers);
-            } else {
-                glTexStorage2D(mTexTarget, 1, desc.format, desc.width, desc.height);
-            }
-        }
+        SetUpTexture(desc, kTextureUnit);
         glTexParameteri(mTexTarget, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
         glTexParameteri(mTexTarget, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
-        EXPECT_EQ(GLenum{GL_NO_ERROR}, glGetError());
     }
 
     // In the second context, attach the depth texture to the framebuffer and clear to 1.
-    if (desc.layers > 1) {
-        glFramebufferTextureLayer(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, depth_texture[1], 0, desc.layers - 1);
-    } else {
-        glFramebufferTexture2D(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, mTexTarget, depth_texture[1], 0);
-    }
-    ASSERT_EQ(GLenum{GL_FRAMEBUFFER_COMPLETE},
-              glCheckFramebufferStatus(GL_FRAMEBUFFER));
+    SetUpFramebuffer(40, 40, kNone, kBufferAsTexture);
     glClearDepthf(1.f);
     glClear(GL_DEPTH_BUFFER_BIT);
     glFinish();
 
     // In the first context, draw a quad using the depth texture.
     MakeCurrent(0);
-    glBindFramebuffer(GL_FRAMEBUFFER, fbo[0]);
-    glGenRenderbuffers(1, &color_rb);
-    glBindRenderbuffer(GL_RENDERBUFFER, color_rb);
-    glRenderbufferStorage(GL_RENDERBUFFER, GL_RGBA8, 40, 40);
-    glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_RENDERBUFFER, color_rb);
-    ASSERT_EQ(GLenum{GL_FRAMEBUFFER_COMPLETE},
-                  glCheckFramebufferStatus(GL_FRAMEBUFFER));
-
+    SetUpFramebuffer(40, 40, kRenderbuffer);
     glClearColor(0.f, 0.f, 0.f, 0.f);
     glClear(GL_COLOR_BUFFER_BIT);
-    GLuint program = 0;
-    CompileProgram(desc.layers > 1 ? kVertexShaderEs3 : kVertexShader,
-                   desc.layers > 1 ? kArrayFragmentShaderEs3 : kTextureFragmentShader,
-                   &program);
-    glUseProgram(program);
-    EXPECT_EQ(GLenum{GL_NO_ERROR}, glGetError());
-
-    GLint a_position_location = glGetAttribLocation(program, "aPosition");
-    GLint a_depth_location = glGetAttribLocation(program, "aDepth");
-    glVertexAttribPointer(a_position_location, 2, GL_FLOAT, GL_TRUE, 0, kQuadPositions);
-    glVertexAttrib1f(a_depth_location, 0.f);
-    glEnableVertexAttribArray(a_position_location);
-    glUniform1i(glGetUniformLocation(program, "uTexture"), 3);
-    glUniform1f(glGetUniformLocation(program, "uScale"), 0.5f);
-    if (desc.layers > 1) {
-        glUniform1f(glGetUniformLocation(program, "uLayer"), static_cast<float>(desc.layers - 1));
-    }
-    glViewport(0, 0, 40, 40);
+    SetUpProgram(desc.layers > 1 ? kVertexShaderEs3 : kVertexShader,
+                 desc.layers > 1 ? kArrayFragmentShaderEs3 : kTextureFragmentShader,
+                 kQuadPositions, 0.5f, kTextureUnit);
     glDrawArrays(GL_TRIANGLES, 0, 12);
     EXPECT_EQ(GLenum{GL_NO_ERROR}, glGetError());
     glFinish();
@@ -875,13 +855,6 @@ TEST_P(AHardwareBufferDepthFormatTest, DepthCanBeSampled) {
         {5,  5, kZero}, {15,  5, kZero}, {25, 5,  kZero}, {35, 5,  kZero},
     };
     CheckGoldenPixels(goldens, /*float_format=*/false, /*alpha_format=*/true);
-
-    glDeleteRenderbuffers(1, &color_rb);
-    for (int i = 0; i < 2; ++i) {
-        MakeCurrent(i);
-        glDeleteTextures(1, &depth_texture[i]);
-        glDeleteFramebuffers(1, &fbo[i]);
-    }
 }
 
 // See comment in SetUpBuffer for explanation of nonzero stride and GL format.
@@ -907,5 +880,65 @@ INSTANTIATE_TEST_CASE_P(
         AHardwareBuffer_Desc{57, 33, 7, AHARDWAREBUFFER_FORMAT_D24_UNORM_S8_UINT, 0, 0, 0, 0},
         AHardwareBuffer_Desc{20, 10, 5, AHARDWAREBUFFER_FORMAT_D32_FLOAT, 0, 0, 0, 0},
         AHardwareBuffer_Desc{57, 33, 3, AHARDWAREBUFFER_FORMAT_D32_FLOAT_S8_UINT, 0, 0, 0, 0}));
+
+
+class AHardwareBufferStencilFormatTest : public AHardwareBufferGLTest {};
+
+// Verify that stencil testing against a stencil buffer rendered in another context
+// works correctly.
+TEST_P(AHardwareBufferStencilFormatTest, StencilAffectsDrawAcrossContexts) {
+    AHardwareBuffer_Desc desc = GetParam();
+    desc.width = 40;
+    desc.height = 40;
+    desc.usage = AHARDWAREBUFFER_USAGE_GPU_COLOR_OUTPUT;
+    // This test does not make sense for layered buffers - don't bother testing them.
+    if (desc.layers > 1) return;
+    if (!SetUpBuffer(desc)) return;
+
+    // Bind the EGLImage to renderbuffers and framebuffers in both contexts.
+    // The depth buffer is shared, but the color buffer is not.
+    for (int i = 0; i < mContextCount; ++i) {
+        MakeCurrent(i);
+        SetUpFramebuffer(40, 40, kRenderbuffer, kNone, kBufferAsRenderbuffer);
+    }
+
+    // In the second context, clear the stencil buffer to a checkerboard pattern.
+    DrawCheckerboard(40, 40);
+    glFinish();
+
+    // In the first context, clear the color buffer only, then draw a flat quad.
+    MakeCurrent(0);
+    SetUpProgram(kVertexShader, kColorFragmentShader, kQuadPositions, 1.f);
+    glClearColor(0.f, 0.f, 0.f, 0.f);
+    glClear(GL_COLOR_BUFFER_BIT);
+    glEnable(GL_STENCIL_TEST);
+    glStencilFunc(GL_ALWAYS, 0, 0xFF);
+    glStencilOp(GL_KEEP, GL_INCR, GL_INCR);
+    glDrawArrays(GL_TRIANGLES, 0, 6);
+    glClear(GL_COLOR_BUFFER_BIT);
+    glStencilFunc(GL_EQUAL, 2, 0xFF);
+    glStencilOp(GL_KEEP, GL_KEEP, GL_KEEP);
+    glDrawArrays(GL_TRIANGLES, 0, 6);
+    EXPECT_EQ(GLenum{GL_NO_ERROR}, glGetError());
+
+    // Check golden pixels.
+    std::vector<GoldenPixel> goldens{
+        {5, 35, kRed},  {15, 35, kRed},  {25, 35, kZero}, {35, 35, kZero},
+        {5, 25, kRed},  {15, 25, kRed},  {25, 25, kZero}, {35, 25, kZero},
+        {5, 15, kZero}, {15, 15, kZero}, {25, 15, kRed},  {35, 15, kRed},
+        {5, 5,  kZero}, {15, 5,  kZero}, {25, 5,  kRed},  {35, 5,  kRed},
+    };
+    CheckGoldenPixels(goldens, /*float_format=*/false, /*alpha_format=*/true);
+}
+
+// See comment in SetUpBuffer for explanation of nonzero stride and GL format.
+INSTANTIATE_TEST_CASE_P(
+    SingleLayer,
+    AHardwareBufferStencilFormatTest,
+    ::testing::Values(
+        AHardwareBuffer_Desc{49, 57, 1, GL_STENCIL_INDEX8, 0, 1, 0, 0},
+        AHardwareBuffer_Desc{26, 26, 1, AHARDWAREBUFFER_FORMAT_S8_UINT, 0, 0, 0, 0},
+        AHardwareBuffer_Desc{57, 33, 1, AHARDWAREBUFFER_FORMAT_D24_UNORM_S8_UINT, 0, 0, 0, 0},
+        AHardwareBuffer_Desc{17, 23, 1, AHARDWAREBUFFER_FORMAT_D32_FLOAT_S8_UINT, 0, 0, 0, 0}));
 
 }  // namespace android

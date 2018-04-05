@@ -18,6 +18,7 @@ package android.signature.cts.tests;
 import java.util.stream.Stream;
 
 import android.signature.cts.ClassProvider;
+import android.signature.cts.DexMember;
 import android.signature.cts.tests.data.AbstractClass;
 import android.signature.cts.tests.data.SystemApiClass;
 import android.signature.cts.tests.data.FinalClass;
@@ -46,4 +47,8 @@ public class TestClassesProvider extends ClassProvider {
         return builder.build();
     }
 
+    @Override
+    public Stream<DexMember> getAllMembers(Class<?> klass) {
+        return null;
+    }
 }

@@ -52,6 +52,10 @@ public class CompatibilityBuildProviderTest {
             String getRootDirPath() {
                 return mRootDir.getAbsolutePath();
             }
+            @Override
+            protected String getSuiteInfoName() {
+                return "CTS";
+            }
         };
     }
 
@@ -79,6 +83,8 @@ public class CompatibilityBuildProviderTest {
      */
     @Test
     public void testBaseGetBuild_withDevice() throws Exception {
+        // Create real testcases dir
+        new File(mRootDir, "android-cts/testcases").mkdirs();
         OptionSetter setter = new OptionSetter(mProvider);
         setter.setOptionValue("use-device-build-info", "true");
         setter.setOptionValue("branch", "build_branch");

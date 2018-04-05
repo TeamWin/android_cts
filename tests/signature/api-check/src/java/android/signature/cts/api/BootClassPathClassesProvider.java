@@ -18,6 +18,9 @@ package android.signature.cts.api;
 
 import android.os.Debug;
 import android.signature.cts.ClassProvider;
+import android.signature.cts.DexField;
+import android.signature.cts.DexMethod;
+import android.signature.cts.DexMember;
 import dalvik.system.BaseDexClassLoader;
 
 import java.io.File;
@@ -34,19 +37,9 @@ public class BootClassPathClassesProvider extends ClassProvider {
 
     @Override
     public Stream<Class<?>> getAllClasses() {
-        if (!sJvmtiAttached) {
-            try {
-                Debug.attachJvmtiAgent(copyAgentToFile("classdescriptors").getAbsolutePath(), null,
-                        BootClassPathClassesProvider.class.getClassLoader());
-                sJvmtiAttached = true;
-                initialize();
-            } catch (Exception e) {
-                throw new RuntimeException("Error while attaching JVMTI agent", e);
-            }
-        }
+        maybeAttachJvmtiAgent();
         return Arrays.stream(getClassloaderDescriptors(Object.class.getClassLoader()))
                 .map(descriptor -> {
-                    System.err.println("Class name = " + descriptor);
                     String classname = descriptor.replace('/', '.');
                     // omit L and ; at the front and at the end
                     return classname.substring(1, classname.length() - 1);
@@ -58,6 +51,42 @@ public class BootClassPathClassesProvider extends ClassProvider {
                         throw new RuntimeException("Cannot load " + classname, e);
                     }
                 });
+    }
+
+    @Override
+    public Stream<DexMember> getAllMembers(Class<?> klass) {
+        maybeAttachJvmtiAgent();
+
+        String[][] field_infos = getClassMemberNamesAndTypes(klass, /* fields */ true);
+        String[][] method_infos = getClassMemberNamesAndTypes(klass, /* fields */ false);
+        if (field_infos.length != 2 || field_infos[0].length != field_infos[1].length ||
+            method_infos.length != 2 || method_infos[0].length != method_infos[1].length) {
+          throw new RuntimeException("Invalid result from getClassMemberNamesAndTypes");
+        }
+
+        String klass_desc = "L" + klass.getName().replace('.', '/') + ";";
+        DexMember[] members = new DexMember[field_infos[0].length + method_infos[0].length];
+        for (int i = 0; i < field_infos[0].length; i++) {
+            members[i] = new DexField(klass_desc, field_infos[0][i], field_infos[1][i]);
+        }
+        for (int i = 0; i < method_infos[0].length; i++) {
+            members[i + field_infos[0].length] =
+                new DexMethod(klass_desc, method_infos[0][i], method_infos[1][i]);
+        }
+        return Arrays.stream(members);
+    }
+
+    private static void maybeAttachJvmtiAgent() {
+      if (!sJvmtiAttached) {
+          try {
+              Debug.attachJvmtiAgent(copyAgentToFile("classdescriptors").getAbsolutePath(), null,
+                      BootClassPathClassesProvider.class.getClassLoader());
+              sJvmtiAttached = true;
+              initialize();
+          } catch (Exception e) {
+              throw new RuntimeException("Error while attaching JVMTI agent", e);
+          }
+      }
     }
 
     private static File copyAgentToFile(String lib) throws Exception {
@@ -84,4 +113,5 @@ public class BootClassPathClassesProvider extends ClassProvider {
     private static native void initialize();
 
     private static native String[] getClassloaderDescriptors(ClassLoader loader);
+    private static native String[][] getClassMemberNamesAndTypes(Class<?> klass, boolean getFields);
 }

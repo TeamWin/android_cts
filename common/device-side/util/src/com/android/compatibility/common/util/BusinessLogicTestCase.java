@@ -50,7 +50,7 @@ public class BusinessLogicTestCase {
 
     @Before
     public void handleBusinessLogic() {
-        loadBuisnessLogic();
+        loadBusinessLogic();
         executeBusinessLogic();
     }
 
@@ -70,7 +70,7 @@ public class BusinessLogicTestCase {
         }
     }
 
-    protected void loadBuisnessLogic() {
+    protected void loadBusinessLogic() {
         File businessLogicFile = new File(BusinessLogic.DEVICE_FILE);
         if (businessLogicFile.canRead()) {
             mBusinessLogic = BusinessLogicFactory.createFromFile(businessLogicFile);

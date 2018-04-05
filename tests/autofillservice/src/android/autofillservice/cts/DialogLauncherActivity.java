@@ -15,13 +15,16 @@
  */
 package android.autofillservice.cts;
 
+import static com.google.common.truth.Truth.assertThat;
 import static com.google.common.truth.Truth.assertWithMessage;
 
 import android.app.AlertDialog;
 import android.content.Context;
+import android.graphics.Rect;
 import android.os.Bundle;
 import android.util.DisplayMetrics;
 import android.view.Display;
+import android.view.View;
 import android.view.WindowManager;
 import android.widget.Button;
 import android.widget.EditText;
@@ -54,6 +57,16 @@ public class DialogLauncherActivity extends AbstractAutoFillActivity {
         syncRunOnUiThread(() -> mLaunchButton.performClick());
         // TODO: should assert by id, but it's not working
         uiBot.assertShownByText("Username");
+    }
+
+    void assertInDialogBounds(Rect rect) {
+        final int[] location = new int[2];
+        final View view = mDialog.getWindow().getDecorView();
+        view.getLocationOnScreen(location);
+        assertThat(location[0]).isAtMost(rect.left);
+        assertThat(rect.right).isAtMost(location[0] + view.getWidth());
+        assertThat(location[1]).isAtMost(rect.top);
+        assertThat(rect.bottom).isAtMost(location[1] + view.getHeight());
     }
 
     void maximizeDialog() {
