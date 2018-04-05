@@ -23,8 +23,6 @@ import android.telephony.mbms.DownloadRequest;
 import android.telephony.mbms.DownloadStatusListener;
 import android.telephony.mbms.FileInfo;
 
-import com.android.internal.os.SomeArgs;
-
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.TimeUnit;
