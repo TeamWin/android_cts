@@ -55,10 +55,10 @@ public class PrintProtoTest extends ProtoDumpTestCase {
     }
 
     static void verifyPrintServiceDumpProto(PrintServiceDumpProto dump, final int filterLevel) throws Exception {
-        assertTrue(dump.getUserStatesCount() > 0);
-
-        PrintUserStateProto userState = dump.getUserStatesList().get(0);
-        assertEquals(0, userState.getUserId());
+        if (dump.getUserStatesCount() > 0) {
+            PrintUserStateProto userState = dump.getUserStatesList().get(0);
+            assertEquals(0, userState.getUserId());
+        }
 
         for (PrintUserStateProto pus : dump.getUserStatesList()) {
             for (ActivePrintServiceProto aps : pus.getActiveServicesList()) {
