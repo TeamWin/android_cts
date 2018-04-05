@@ -122,7 +122,7 @@ public class TextClassificationManagerTest {
                 Arrays.asList("some_hint"));
         assertEquals(1, entityConfig.getHints().size());
         assertTrue(entityConfig.getHints().contains("some_hint"));
-        assertEquals(Arrays.asList("foo", "bar"),
+        assertEquals(new HashSet<String>(Arrays.asList("foo", "bar")),
                 entityConfig.resolveEntityListModifications(Arrays.asList("foo", "bar")));
     }
 
@@ -144,7 +144,7 @@ public class TextClassificationManagerTest {
         TextClassifier.EntityConfig entityConfig =
                 TextClassifier.EntityConfig.createWithExplicitEntityList(Arrays.asList("a", "b"));
         assertEquals(Collections.EMPTY_LIST, entityConfig.getHints());
-        assertEquals(Arrays.asList("a", "b"),
+        assertEquals(new HashSet<String>(Arrays.asList("a", "b")),
                 entityConfig.resolveEntityListModifications(Arrays.asList("w", "x")));
     }
 
