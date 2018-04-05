@@ -18,6 +18,7 @@ package android.os.cts;
 
 import static com.google.common.truth.Truth.assertThat;
 import static com.google.common.truth.Truth.assertWithMessage;
+import static org.junit.Assert.fail;
 
 import android.content.ComponentName;
 import android.content.Context;
@@ -443,6 +444,32 @@ public class StrictModeTest {
                         throw new RuntimeException(e);
                     }
                 });
+    }
+
+    @Test
+    public void testNonSdkApiUsage() throws Exception {
+        StrictMode.VmPolicy oldPolicy = StrictMode.getVmPolicy();
+        try {
+            StrictMode.setVmPolicy(
+                    new StrictMode.VmPolicy.Builder().detectNonSdkApiUsage().build());
+            Class<?> clazz = Class.forName("dalvik.system.VMRuntime");
+            inspectViolation(
+                () -> {
+                    try {
+                        clazz.getDeclaredMethod("setHiddenApiExemptions", String[].class);
+                        fail();
+                    } catch (NoSuchMethodException expected) {
+                    }
+                },
+                violation -> {
+                     assertPolicy(violation, StrictMode.DETECT_VM_NON_SDK_API_USAGE);
+                     assertThat(violation.getViolationDetails()).contains("setHiddenApiExemptions");
+                     assertThat(violation.getStackTrace()).contains("testNonSdkApiUsage");
+                }
+            );
+        } finally {
+            StrictMode.setVmPolicy(oldPolicy);
+        }
     }
 
     private static void runWithRemoteServiceBound(Context context, Consumer<ISecondary> consumer)
