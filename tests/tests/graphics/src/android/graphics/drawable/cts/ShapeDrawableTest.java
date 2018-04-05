@@ -373,7 +373,7 @@ public class ShapeDrawableTest {
         a.setShape(new OvalShape());
 
         ShapeDrawable b = (ShapeDrawable) a.getConstantState().newDrawable();
-        assertSame(a.getShape(), b.getShape());
+        assertEquals(a.getShape(), b.getShape());
         a.mutate();
 
         assertNotNull(a.getShape());
