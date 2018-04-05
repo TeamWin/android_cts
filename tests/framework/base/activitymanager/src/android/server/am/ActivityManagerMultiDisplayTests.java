@@ -61,8 +61,9 @@ import static org.junit.Assume.assumeTrue;
 import android.content.ComponentName;
 import android.platform.test.annotations.Presubmit;
 import android.server.am.ActivityManagerState.ActivityDisplay;
-import androidx.annotation.Nullable;
 import android.support.test.filters.FlakyTest;
+
+import androidx.annotation.Nullable;
 
 import org.junit.Before;
 import org.junit.Test;
@@ -75,6 +76,8 @@ import java.util.regex.Pattern;
  * Build/Install/Run:
  *     atest CtsActivityManagerDeviceTestCases:ActivityManagerMultiDisplayTests
  */
+@Presubmit
+@FlakyTest(bugId = 77652261)
 public class ActivityManagerMultiDisplayTests extends ActivityManagerDisplayTestBase {
 
     // TODO(b/70247058): Use {@link Context#sendBroadcast(Intent).
@@ -97,8 +100,6 @@ public class ActivityManagerMultiDisplayTests extends ActivityManagerDisplayTest
     /**
      * Tests launching an activity on virtual display.
      */
-    @Presubmit
-    @FlakyTest(bugId = 77270929)
     @Test
     public void testLaunchActivityOnSecondaryDisplay() throws Exception {
         try (final VirtualDisplaySession virtualDisplaySession = new VirtualDisplaySession()) {
@@ -418,8 +419,6 @@ public class ActivityManagerMultiDisplayTests extends ActivityManagerDisplayTest
      * command and without specifying the display id - the second activity must appear on the
      * primary display.
      */
-    @Presubmit
-    @FlakyTest(bugId = 77469851)
     @Test
     public void testConsequentLaunchActivity() throws Exception {
         try (final VirtualDisplaySession virtualDisplaySession = new VirtualDisplaySession()) {
@@ -455,7 +454,6 @@ public class ActivityManagerMultiDisplayTests extends ActivityManagerDisplayTest
      * Tests launching an activity on simulated display and then launching another activity from the
      * first one - it must appear on the secondary display, because it was launched from there.
      */
-    @Presubmit
     @Test
     public void testConsequentLaunchActivityFromSecondaryDisplay() throws Exception {
         try (final VirtualDisplaySession virtualDisplaySession = new VirtualDisplaySession()) {
@@ -634,7 +632,6 @@ public class ActivityManagerMultiDisplayTests extends ActivityManagerDisplayTest
      * Tests launching activities on secondary and then on primary display to see if the stack
      * visibility is not affected.
      */
-    @Presubmit
     @Test
     public void testLaunchActivitiesAffectsVisibility() throws Exception {
         // Start launching activity.
@@ -662,7 +659,6 @@ public class ActivityManagerMultiDisplayTests extends ActivityManagerDisplayTest
     /**
      * Test that move-task works when moving between displays.
      */
-    @Presubmit
     @Test
     public void testMoveTaskBetweenDisplays() throws Exception {
         try (final VirtualDisplaySession virtualDisplaySession = new VirtualDisplaySession()) {
@@ -702,8 +698,6 @@ public class ActivityManagerMultiDisplayTests extends ActivityManagerDisplayTest
      * is moved correctly.
      * This version launches virtual display creator to fullscreen stack in split-screen.
      */
-    @Presubmit
-    @FlakyTest(bugId = 77207453)
     @Test
     public void testStackFocusSwitchOnDisplayRemoved() throws Exception {
         assumeTrue(supportsSplitScreenMultiWindow());
@@ -1107,7 +1101,6 @@ public class ActivityManagerMultiDisplayTests extends ActivityManagerDisplayTest
     /**
      * Test that all activities that were on the private display are destroyed on display removal.
      */
-    @Presubmit
     @Test
     public void testContentDestroyOnDisplayRemoved() throws Exception {
         LogSeparator logSeparator;
@@ -1157,7 +1150,6 @@ public class ActivityManagerMultiDisplayTests extends ActivityManagerDisplayTest
     /**
      * Test that the update of display metrics updates all its content.
      */
-    @Presubmit
     @Test
     public void testDisplayResize() throws Exception {
         try (final VirtualDisplaySession virtualDisplaySession = new VirtualDisplaySession()) {
