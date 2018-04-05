@@ -18,7 +18,7 @@
 #include <EGL/eglext.h>
 #include <GLES2/gl2.h>
 #include <GLES2/gl2ext.h>
-#include <GLES3/gl3.h>
+#include <GLES3/gl31.h>
 
 #include <iterator>
 #include <set>
@@ -39,6 +39,8 @@ bool FormatHasAlpha(uint32_t format) {
         case AHARDWAREBUFFER_FORMAT_R8G8B8A8_UNORM:
         case AHARDWAREBUFFER_FORMAT_R16G16B16A16_FLOAT:
         case AHARDWAREBUFFER_FORMAT_R10G10B10A2_UNORM:
+        // This may look scary, but fortunately AHardwareBuffer formats and GL pixel formats
+        // do not overlap.
         case GL_RGBA8:
             return true;
         default: return false;
@@ -236,8 +238,7 @@ void CheckGoldenPixels(const std::vector<GoldenPixel>& goldens, bool float_forma
 }
 
 // Vertex shader that draws a textured shape.
-const char* kVertexShader = R"glsl(
-    #version 100
+const char* kVertexShader = R"glsl(#version 100
     attribute vec2 aPosition;
     attribute float aDepth;
     uniform mediump float uScale;
@@ -250,8 +251,7 @@ const char* kVertexShader = R"glsl(
     }
 )glsl";
 
-const char* kTextureFragmentShader = R"glsl(
-    #version 100
+const char* kTextureFragmentShader = R"glsl(#version 100
     precision mediump float;
     varying mediump vec2 vTexCoords;
     uniform lowp sampler2D uTexture;
@@ -260,8 +260,7 @@ const char* kTextureFragmentShader = R"glsl(
     }
 )glsl";
 
-const char* kColorFragmentShader = R"glsl(
-    #version 100
+const char* kColorFragmentShader = R"glsl(#version 100
     precision mediump float;
     uniform lowp vec4 uColor;
     void main() {
@@ -269,8 +268,7 @@ const char* kColorFragmentShader = R"glsl(
     }
 )glsl";
 
-const char* kVertexShaderEs3 = R"glsl(
-    #version 300 es
+const char* kVertexShaderEs3 = R"glsl(#version 300 es
     in vec2 aPosition;
     in float aDepth;
     uniform mediump float uScale;
@@ -283,8 +281,33 @@ const char* kVertexShaderEs3 = R"glsl(
     }
 )glsl";
 
-const char* kArrayFragmentShaderEs3 = R"glsl(
-    #version 300 es
+const char* kSsboVertexShaderEs3 = R"glsl(#version 310 es
+    in vec2 aPosition;
+    in float aDepth;
+    uniform mediump float uScale;
+    layout(std430, binding=0) buffer Output {
+        vec2 data[];
+    } bOutput;
+    out mediump vec2 vTexCoords;
+    void main() {
+        bOutput.data[gl_VertexID] = aPosition;
+        vTexCoords = (vec2(1.0) + aPosition) * 0.5;
+        gl_Position.xy = aPosition * uScale;
+        gl_Position.z = aDepth;
+        gl_Position.w = 1.0;
+    }
+)glsl";
+
+const char* kColorFragmentShaderEs3 = R"glsl(#version 300 es
+    precision mediump float;
+    uniform lowp vec4 uColor;
+    out mediump vec4 color;
+    void main() {
+        color = uColor;
+    }
+)glsl";
+
+const char* kArrayFragmentShaderEs3 = R"glsl(#version 300 es
     precision mediump float;
     in mediump vec2 vTexCoords;
     uniform lowp sampler2DArray uTexture;
@@ -336,6 +359,7 @@ public:
     void SetUpProgram(const char* vertex_source, const char* fragment_source,
                       const float* mesh, float scale, int texture_unit = 0);
     void SetUpTexture(const AHardwareBuffer_Desc& desc, int unit);
+    void SetUpBufferObject(uint32_t size, GLenum target, GLbitfield flags);
     void SetUpFramebuffer(int width, int height, AttachmentType color,
                           AttachmentType depth = kNone, AttachmentType stencil = kNone,
                           AttachmentType depth_stencil = kNone);
@@ -346,21 +370,26 @@ public:
         mWhich = which;
         eglMakeCurrent(mDisplay, mSurface, mSurface, mContext[mWhich]);
     }
+    bool HasGLExtension(const std::string& s) {
+        return mGLExtensions.find(s) != mGLExtensions.end();
+    }
 
 protected:
     std::set<std::string> mEGLExtensions;
+    std::set<std::string> mGLExtensions;
     EGLDisplay mDisplay = EGL_NO_DISPLAY;
     EGLSurface mSurface = EGL_NO_SURFACE;
     EGLContext mContext[2] = { EGL_NO_CONTEXT, EGL_NO_CONTEXT };
     int mWhich = 0;  // Which of the two EGL contexts is current.
     int mContextCount = 2;  // Will be 2 in AHB test cases and 1 in pure GL test cases.
-    int mGLVersion = 0;
+    int mGLVersion = 0;  // major_version * 10 + minor_version
 
     AHardwareBuffer* mBuffer = nullptr;
     EGLImageKHR mEGLImage = EGL_NO_IMAGE_KHR;
     GLenum mTexTarget = GL_NONE;
     GLuint mProgram = 0;
     GLuint mTextures[2] = { 0, 0 };
+    GLuint mBufferObjects[2] = { 0, 0 };
     GLuint mFramebuffers[2] = { 0, 0 };
 };
 
@@ -396,7 +425,6 @@ void AHardwareBufferGLTest::SetUp() {
     }
     ASSERT_NE(EGL_NO_CONTEXT, mContext[0]);
     ASSERT_NE(EGL_NO_CONTEXT, mContext[1]);
-    mGLVersion = context_attrib_list[1];
 
     // Parse EGL extension strings into a set for easier processing.
     std::istringstream eglext_stream(eglQueryString(mDisplay, EGL_EXTENSIONS));
@@ -415,11 +443,25 @@ void AHardwareBufferGLTest::SetUp() {
     }
     EGLBoolean result = eglMakeCurrent(mDisplay, mSurface, mSurface, mContext[0]);
     ASSERT_EQ(EGLBoolean{EGL_TRUE}, result);
+
+    // Parse GL extension strings into a set for easier processing.
+    std::istringstream glext_stream(reinterpret_cast<const char*>(glGetString(GL_EXTENSIONS)));
+    mGLExtensions = std::set<std::string>{
+        std::istream_iterator<std::string>{glext_stream},
+        std::istream_iterator<std::string>{}
+    };
+    // Parse GL version. Find the first dot, then treat the digit before it as the major version
+    // and the digit after it as the minor version.
+    std::string version = reinterpret_cast<const char*>(glGetString(GL_VERSION));
+    std::size_t dot_pos = version.find('.');
+    ASSERT_TRUE(dot_pos > 0 && dot_pos < version.size() - 1);
+    mGLVersion = (version[dot_pos - 1] - '0') * 10 + (version[dot_pos + 1] - '0');
+    ASSERT_GE(mGLVersion, 20);
 }
 
 bool AHardwareBufferGLTest::SetUpBuffer(const AHardwareBuffer_Desc& desc) {
     mTexTarget = desc.layers > 1 ? GL_TEXTURE_2D_ARRAY : GL_TEXTURE_2D;
-    if (desc.layers > 1 && mGLVersion < 3) return false;
+    if (desc.layers > 1 && mGLVersion < 30) return false;
     // Nonzero stride indicates that desc.format should be interpreted as a GL format
     // and the test should be run in a single context, without using AHardwareBuffer.
     // This simplifies verifying that the test behaves as expected even if the
@@ -432,6 +474,8 @@ bool AHardwareBufferGLTest::SetUpBuffer(const AHardwareBuffer_Desc& desc) {
     int result = AHardwareBuffer_allocate(&desc, &mBuffer);
     // Skip if this format cannot be allocated.
     if (result != NO_ERROR) return false;
+    // Do not create the EGLImage if this is a blob format.
+    if (desc.format == AHARDWAREBUFFER_FORMAT_BLOB) return true;
 
     const EGLint attrib_list[] = { EGL_NONE };
     mEGLImage = eglCreateImageKHR(
@@ -510,7 +554,7 @@ void AHardwareBufferGLTest::SetUpTexture(const AHardwareBuffer_Desc& desc, int u
         // Stride is nonzero, so interpret desc.format as a GL format.
         if (desc.layers > 1) {
             glTexStorage3D(mTexTarget, 1, desc.format, desc.width, desc.height, desc.layers);
-        } else if (mGLVersion >= 3) {
+        } else if (mGLVersion >= 30) {
             glTexStorage2D(mTexTarget, 1, desc.format, desc.width, desc.height);
         } else {
             GLenum format = 0, type = 0;
@@ -537,6 +581,14 @@ void AHardwareBufferGLTest::SetUpTexture(const AHardwareBuffer_Desc& desc, int u
                          format, type, nullptr);
         }
     }
+    ASSERT_EQ(GLenum{GL_NO_ERROR}, glGetError());
+}
+
+void AHardwareBufferGLTest::SetUpBufferObject(uint32_t size, GLenum target, GLbitfield flags) {
+    glGenBuffers(1, &mBufferObjects[mWhich]);
+    glBindBuffer(target, mBufferObjects[mWhich]);
+    glBufferStorageExternalEXT(target, 0, size,
+                               eglGetNativeClientBufferANDROID(mBuffer), flags);
     ASSERT_EQ(GLenum{GL_NO_ERROR}, glGetError());
 }
 
@@ -619,6 +671,149 @@ void AHardwareBufferGLTest::TearDown() {
     }
     eglTerminate(mDisplay);
 }
+
+
+class AHardwareBufferBlobFormatTest : public AHardwareBufferGLTest {
+public:
+    bool SetUpBuffer(const AHardwareBuffer_Desc& desc) override {
+        if (!HasGLExtension("GL_EXT_external_buffer")) return false;
+        return AHardwareBufferGLTest::SetUpBuffer(desc);
+    }
+};
+
+// Verifies that a blob buffer can be used to supply vertex attributes to a shader.
+TEST_P(AHardwareBufferBlobFormatTest, GpuDataBufferVertexBuffer) {
+    AHardwareBuffer_Desc desc = GetParam();
+    desc.width = sizeof kQuadPositions;
+    desc.usage = AHARDWAREBUFFER_USAGE_GPU_DATA_BUFFER;
+    if (!SetUpBuffer(desc)) return;
+
+    SetUpProgram(kVertexShader, kColorFragmentShader, kQuadPositions, 0.5f);
+
+    for (int i = 0; i < mContextCount; ++i) {
+        MakeCurrent(i);
+        SetUpBufferObject(desc.width, GL_ARRAY_BUFFER,
+                          GL_DYNAMIC_STORAGE_BIT_EXT | GL_MAP_WRITE_BIT);
+    }
+    float* data = static_cast<float*>(
+        glMapBufferRange(GL_ARRAY_BUFFER, 0, desc.width,
+                         GL_MAP_WRITE_BIT | GL_MAP_INVALIDATE_BUFFER_BIT));
+    memcpy(data, kQuadPositions, desc.width);
+    glUnmapBuffer(GL_ARRAY_BUFFER);
+    glFinish();
+
+    MakeCurrent(0);
+    SetUpFramebuffer(40, 40, kRenderbuffer);
+    GLint a_position_location = glGetAttribLocation(mProgram, "aPosition");
+    glVertexAttribPointer(a_position_location, 2, GL_FLOAT, GL_TRUE, 0, 0);
+    glDrawArrays(GL_TRIANGLES, 0, kQuadVertexCount);
+    EXPECT_EQ(GLenum{GL_NO_ERROR}, glGetError());
+
+    // Check the rendered pixels. There should be a red square in the middle.
+    std::vector<GoldenPixel> goldens{
+        {5, 35, kZero}, {15, 35, kZero}, {25, 35, kZero}, {35, 35, kZero},
+        {5, 25, kZero}, {15, 25, kRed},  {25, 25, kRed},  {35, 25, kZero},
+        {5, 15, kZero}, {15, 15, kRed},  {25, 15, kRed},  {35, 15, kZero},
+        {5,  5, kZero}, {15,  5, kZero}, {25, 5,  kZero}, {35, 5,  kZero},
+    };
+    CheckGoldenPixels(goldens, /*float_format=*/false, /*alpha_format=*/true);
+}
+
+// Verifies that a blob buffer can be directly accessed from the CPU.
+TEST_P(AHardwareBufferBlobFormatTest, GpuDataBufferCpuWrite) {
+    AHardwareBuffer_Desc desc = GetParam();
+    desc.width = sizeof kQuadPositions;
+    desc.usage = AHARDWAREBUFFER_USAGE_CPU_WRITE_RARELY | AHARDWAREBUFFER_USAGE_GPU_DATA_BUFFER;
+    if (!SetUpBuffer(desc)) return;
+
+    SetUpProgram(kVertexShader, kColorFragmentShader, kQuadPositions, 0.5f);
+
+    for (int i = 0; i < mContextCount; ++i) {
+        MakeCurrent(i);
+        SetUpBufferObject(desc.width, GL_ARRAY_BUFFER,
+                          GL_DYNAMIC_STORAGE_BIT_EXT | GL_MAP_WRITE_BIT);
+    }
+
+    // Clear the buffer to zero
+    std::vector<float> zero_data(desc.width / sizeof(float), 0.f);
+    glBufferSubData(GL_ARRAY_BUFFER, 0, desc.width, zero_data.data());
+    glFinish();
+
+    // Upload actual data with CPU access
+    float* data = nullptr;
+    int result = AHardwareBuffer_lock(mBuffer, AHARDWAREBUFFER_USAGE_CPU_WRITE_RARELY,
+                                      -1, nullptr, reinterpret_cast<void**>(&data));
+    ASSERT_EQ(NO_ERROR, result);
+    memcpy(data, kQuadPositions, desc.width);
+    AHardwareBuffer_unlock(mBuffer, nullptr);
+
+    // Render the buffer in the other context
+    MakeCurrent(0);
+    SetUpFramebuffer(40, 40, kRenderbuffer);
+    GLint a_position_location = glGetAttribLocation(mProgram, "aPosition");
+    glVertexAttribPointer(a_position_location, 2, GL_FLOAT, GL_TRUE, 0, 0);
+    glDrawArrays(GL_TRIANGLES, 0, kQuadVertexCount);
+    EXPECT_EQ(GLenum{GL_NO_ERROR}, glGetError());
+
+    // Check the rendered pixels. There should be a red square in the middle.
+    std::vector<GoldenPixel> goldens{
+        {5, 35, kZero}, {15, 35, kZero}, {25, 35, kZero}, {35, 35, kZero},
+        {5, 25, kZero}, {15, 25, kRed},  {25, 25, kRed},  {35, 25, kZero},
+        {5, 15, kZero}, {15, 15, kRed},  {25, 15, kRed},  {35, 15, kZero},
+        {5,  5, kZero}, {15,  5, kZero}, {25, 5,  kZero}, {35, 5,  kZero},
+    };
+    CheckGoldenPixels(goldens, /*float_format=*/false, /*alpha_format=*/true);
+}
+
+// Verifies that data written into a blob buffer from the GPU can be read on the CPU.
+TEST_P(AHardwareBufferBlobFormatTest, GpuDataBufferCpuRead) {
+    AHardwareBuffer_Desc desc = GetParam();
+    desc.width = sizeof kQuadPositions;
+    desc.usage = AHARDWAREBUFFER_USAGE_CPU_READ_RARELY | AHARDWAREBUFFER_USAGE_GPU_DATA_BUFFER;
+    // Shader storage buffer objects are only supported in OpenGL ES 3.1+
+    if (mGLVersion < 31) return;
+    if (!SetUpBuffer(desc)) return;
+
+    for (int i = 0; i < mContextCount; ++i) {
+        MakeCurrent(i);
+        SetUpBufferObject(desc.width, GL_SHADER_STORAGE_BUFFER,
+                          GL_DYNAMIC_STORAGE_BIT_EXT | GL_MAP_READ_BIT);
+    }
+
+    // Clear the buffer to zero
+    std::vector<float> zero_data(desc.width / sizeof(float), 0.f);
+    glBufferSubData(GL_SHADER_STORAGE_BUFFER, 0, desc.width, zero_data.data());
+    glFinish();
+
+    // Write into the buffer with a shader
+    SetUpFramebuffer(40, 40, kRenderbuffer);
+    SetUpProgram(kSsboVertexShaderEs3, kColorFragmentShaderEs3, kQuadPositions, 0.5f);
+    glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 0, mBufferObjects[mWhich]);
+    glDrawArrays(GL_TRIANGLES, 0, kQuadVertexCount);
+    glFinish();
+    EXPECT_EQ(GLenum{GL_NO_ERROR}, glGetError());
+
+    // Inspect the data written into the buffer using CPU access.
+    MakeCurrent(0);
+    float* data = nullptr;
+    int result = AHardwareBuffer_lock(mBuffer, AHARDWAREBUFFER_USAGE_CPU_READ_RARELY,
+                                      -1, nullptr, reinterpret_cast<void**>(&data));
+    ASSERT_EQ(NO_ERROR, result);
+    std::ostringstream s;
+    for (int i = 0; i < 12; ++i) {
+        s << data[i] << ", ";
+    }
+    EXPECT_EQ(0, memcmp(kQuadPositions, data, desc.width)) << s.str();
+    AHardwareBuffer_unlock(mBuffer, nullptr);
+}
+
+// The first case tests an ordinary GL buffer, while the second one tests an AHB-backed buffer.
+INSTANTIATE_TEST_CASE_P(
+    BlobBuffer,
+    AHardwareBufferBlobFormatTest,
+    ::testing::Values(
+        AHardwareBuffer_Desc{1, 1, 1, AHARDWAREBUFFER_FORMAT_BLOB, 0, 0, 0, 0}));
+
 
 class AHardwareBufferColorFormatTest : public AHardwareBufferGLTest {};
 
@@ -816,7 +1011,7 @@ TEST_P(AHardwareBufferDepthFormatTest, DepthCanBeSampled) {
     desc.usage = AHARDWAREBUFFER_USAGE_GPU_COLOR_OUTPUT | AHARDWAREBUFFER_USAGE_GPU_SAMPLED_IMAGE;
     // ES 2.0 does not support depth textures. There is an extension OES_depth_texture, but it is
     // incompatible with ES 3.x depth texture support.
-    if (mGLVersion < 3) return;
+    if (mGLVersion < 30) return;
     if (!SetUpBuffer(desc)) return;
 
     // Bind the EGLImage to renderbuffers and framebuffers in both contexts.
