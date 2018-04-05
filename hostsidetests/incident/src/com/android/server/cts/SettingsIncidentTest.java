@@ -58,15 +58,15 @@ public class SettingsIncidentTest extends ProtoDumpTestCase {
     }
 
     static void verifySettingsServiceDumpProto(SettingsServiceDumpProto dump, final int filterLevel) throws Exception {
-        assertTrue(dump.getUserSettingsCount() > 0);
+        if (dump.getUserSettingsCount() > 0) {
+            UserSettingsProto userSettings = dump.getUserSettings(0);
+            assertEquals(0, userSettings.getUserId());
 
-        UserSettingsProto userSettings = dump.getUserSettings(0);
-        assertEquals(0, userSettings.getUserId());
-
-        CLog.logAndDisplay(LogLevel.INFO, "#*#*#*#*#*#*#*#*#*#*# SECURE #*#*#*#*#*#*#*#*#*#*#");
-        verifySettings(userSettings.getSecureSettings(), filterLevel);
-        CLog.logAndDisplay(LogLevel.INFO, "#*#*#*#*#*#*#*#*#*#*# SYSTEM #*#*#*#*#*#*#*#*#*#*#");
-        verifySettings(userSettings.getSystemSettings(), filterLevel);
+            CLog.logAndDisplay(LogLevel.INFO, "#*#*#*#*#*#*#*#*#*#*# SECURE #*#*#*#*#*#*#*#*#*#*#");
+            verifySettings(userSettings.getSecureSettings(), filterLevel);
+            CLog.logAndDisplay(LogLevel.INFO, "#*#*#*#*#*#*#*#*#*#*# SYSTEM #*#*#*#*#*#*#*#*#*#*#");
+            verifySettings(userSettings.getSystemSettings(), filterLevel);
+        }
 
         CLog.logAndDisplay(LogLevel.INFO, "#*#*#*#*#*#*#*#*#*#*# GLOBAL #*#*#*#*#*#*#*#*#*#*#");
         verifySettings(dump.getGlobalSettings(), filterLevel);
