@@ -19,6 +19,7 @@
 
 extern int register_android_graphics_cts_ANativeWindowTest(JNIEnv*);
 extern int register_android_graphics_cts_ASurfaceTextureTest(JNIEnv*);
+extern int register_android_graphics_cts_BasicVulkanGpuTest(JNIEnv*);
 extern int register_android_graphics_cts_BitmapTest(JNIEnv*);
 extern int register_android_graphics_cts_CameraGpuCtsActivity(JNIEnv*);
 extern int register_android_graphics_cts_CameraVulkanGpuTest(JNIEnv*);
@@ -45,6 +46,10 @@ jint JNI_OnLoad(JavaVM* vm, void* /*reserved*/) {
     if (register_android_graphics_cts_VulkanFeaturesTest(env))
         return JNI_ERR;
     if (register_android_graphics_cts_VulkanPreTransformCtsActivity(env))
+        return JNI_ERR;
+    if (register_android_graphics_cts_BasicVulkanGpuTest(env))
+        return JNI_ERR;
+    if (register_android_graphics_cts_CameraVulkanGpuTest(env))
         return JNI_ERR;
     return JNI_VERSION_1_4;
 }
