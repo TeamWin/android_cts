@@ -204,7 +204,7 @@ uint32_t VkInit::findMemoryType(uint32_t memoryTypeBitsRequirement,
 
 VkAHardwareBufferImage::VkAHardwareBufferImage(VkInit *init) : mInit(init) {}
 
-bool VkAHardwareBufferImage::init(AHardwareBuffer *buffer) {
+bool VkAHardwareBufferImage::init(AHardwareBuffer *buffer, int syncFd) {
   AHardwareBuffer_Desc bufferDesc;
   AHardwareBuffer_describe(buffer, &bufferDesc);
   ASSERT(bufferDesc.layers == 1);
@@ -375,6 +375,33 @@ bool VkAHardwareBufferImage::init(AHardwareBuffer *buffer) {
   };
   VK_CALL(vkCreateImageView(mInit->device(), &viewCreateInfo, nullptr, &mView));
 
+  // Create semaphore if necessary.
+  if (syncFd != -1) {
+    VkSemaphoreCreateInfo semaphoreCreateInfo{
+        .sType = VK_STRUCTURE_TYPE_SEMAPHORE_CREATE_INFO,
+        .pNext = nullptr,
+        .flags = 0,
+    };
+    VK_CALL(vkCreateSemaphore(mInit->device(), &semaphoreCreateInfo, nullptr,
+                              &mSemaphore));
+
+    // Import the fd into a semaphore.
+    VkImportSemaphoreFdInfoKHR importSemaphoreInfo{
+        .sType = VK_STRUCTURE_TYPE_IMPORT_SEMAPHORE_FD_INFO_KHR,
+        .pNext = nullptr,
+        .semaphore = mSemaphore,
+        .flags = VK_SEMAPHORE_IMPORT_TEMPORARY_BIT,
+        .handleType = VK_EXTERNAL_SEMAPHORE_HANDLE_TYPE_SYNC_FD_BIT,
+        .fd = syncFd,
+    };
+
+    PFN_vkImportSemaphoreFdKHR importSemaphoreFd =
+        (PFN_vkImportSemaphoreFdKHR)vkGetDeviceProcAddr(
+            mInit->device(), "vkImportSemaphoreFdKHR");
+    ASSERT(importSemaphoreFd);
+    VK_CALL(importSemaphoreFd(mInit->device(), &importSemaphoreInfo));
+  }
+
   return true;
 }
 
@@ -395,10 +422,16 @@ VkAHardwareBufferImage::~VkAHardwareBufferImage() {
     vkDestroyImage(mInit->device(), mImage, nullptr);
     mImage = VK_NULL_HANDLE;
   }
+  if (mSemaphore != VK_NULL_HANDLE) {
+    vkDestroySemaphore(mInit->device(), mSemaphore, nullptr);
+    mSemaphore = VK_NULL_HANDLE;
+  }
 }
 
-VkImageRenderer::VkImageRenderer(VkInit *init, uint32_t width, uint32_t height)
-    : mInit(init), mWidth(width), mHeight(height) {}
+VkImageRenderer::VkImageRenderer(VkInit *init, uint32_t width, uint32_t height,
+                                 VkFormat format, uint32_t bytesPerPixel)
+    : mInit(init), mWidth(width), mHeight(height), mFormat(format),
+      mResultBufferSize(width * height * bytesPerPixel) {}
 
 bool VkImageRenderer::init(JNIEnv *env, jobject assetMgr) {
   // Create an image to back our framebuffer.
@@ -411,7 +444,7 @@ bool VkImageRenderer::init(JNIEnv *env, jobject assetMgr) {
         .pNext = nullptr,
         .flags = 0u,
         .imageType = VK_IMAGE_TYPE_2D,
-        .format = VK_FORMAT_R8G8B8A8_UNORM,
+        .format = mFormat,
         .extent = {mWidth, mHeight, 1u},
         .mipLevels = 1u,
         .arrayLayers = 1u,
@@ -452,7 +485,7 @@ bool VkImageRenderer::init(JNIEnv *env, jobject assetMgr) {
         .flags = 0u,
         .image = mDestImage,
         .viewType = VK_IMAGE_VIEW_TYPE_2D,
-        .format = VK_FORMAT_R8G8B8A8_UNORM,
+        .format = mFormat,
         .components = {VK_COMPONENT_SWIZZLE_IDENTITY,
                        VK_COMPONENT_SWIZZLE_IDENTITY,
                        VK_COMPONENT_SWIZZLE_IDENTITY,
@@ -467,7 +500,7 @@ bool VkImageRenderer::init(JNIEnv *env, jobject assetMgr) {
   {
     VkAttachmentDescription attachmentDesc{
         .flags = 0u,
-        .format = VK_FORMAT_R8G8B8A8_UNORM,
+        .format = mFormat,
         .samples = VK_SAMPLE_COUNT_1_BIT,
         .loadOp = VK_ATTACHMENT_LOAD_OP_CLEAR,
         .storeOp = VK_ATTACHMENT_STORE_OP_STORE,
@@ -535,7 +568,6 @@ bool VkImageRenderer::init(JNIEnv *env, jobject assetMgr) {
             memReq.memoryTypeBits, VK_MEMORY_PROPERTY_HOST_COHERENT_BIT |
                                        VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT),
     };
-
     VK_CALL(vkAllocateMemory(mInit->device(), &allocInfo, nullptr,
                              &mVertexBufferMemory));
 
@@ -568,7 +600,6 @@ bool VkImageRenderer::init(JNIEnv *env, jobject assetMgr) {
 
   // Create the host-side buffer which will be used to read back the results.
   {
-    mResultBufferSize = static_cast<VkDeviceSize>(mWidth * mHeight * 4);
     VkBufferCreateInfo bufferCreateInfo{
         .sType = VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO,
         .pNext = nullptr,
@@ -748,7 +779,27 @@ VkImageRenderer::~VkImageRenderer() {
 
 bool VkImageRenderer::renderImageAndReadback(VkImage image, VkSampler sampler,
                                              VkImageView view,
+                                             VkSemaphore semaphore,
+                                             bool useImmutableSampler,
                                              std::vector<uint32_t> *data) {
+  std::vector<uint8_t> unconvertedData;
+  ASSERT(renderImageAndReadback(image, sampler, view, semaphore,
+                                useImmutableSampler, &unconvertedData));
+  if ((unconvertedData.size() % sizeof(uint32_t)) != 0)
+    return false;
+
+  const uint32_t *dataPtr =
+      reinterpret_cast<const uint32_t *>(unconvertedData.data());
+  *data = std::vector<uint32_t>(dataPtr, dataPtr + unconvertedData.size() /
+                                                       sizeof(uint32_t));
+  return true;
+}
+
+bool VkImageRenderer::renderImageAndReadback(VkImage image, VkSampler sampler,
+                                             VkImageView view,
+                                             VkSemaphore semaphore,
+                                             bool useImmutableSampler,
+                                             std::vector<uint8_t> *data) {
   cleanUpTemporaries();
 
   // Create graphics pipeline.
@@ -758,7 +809,7 @@ bool VkImageRenderer::renderImageAndReadback(VkImage image, VkSampler sampler,
         .descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER,
         .descriptorCount = 1u,
         .stageFlags = VK_SHADER_STAGE_FRAGMENT_BIT,
-        .pImmutableSamplers = &sampler,
+        .pImmutableSamplers = useImmutableSampler ? &sampler : nullptr,
     };
     const VkDescriptorSetLayoutCreateInfo descriptorSetLayoutCreateInfo = {
         .sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO,
@@ -1070,12 +1121,15 @@ bool VkImageRenderer::renderImageAndReadback(VkImage image, VkSampler sampler,
 
   VK_CALL(vkEndCommandBuffer(mCmdBuffer));
 
+  VkPipelineStageFlags semaphoreWaitFlags =
+      VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT;
   VkSubmitInfo submitInfo{
       .sType = VK_STRUCTURE_TYPE_SUBMIT_INFO,
       .pNext = nullptr,
-      .waitSemaphoreCount = 0u,
-      .pWaitSemaphores = nullptr,
-      .pWaitDstStageMask = nullptr,
+      .waitSemaphoreCount = semaphore != VK_NULL_HANDLE ? 1u : 0u,
+      .pWaitSemaphores = semaphore != VK_NULL_HANDLE ? &semaphore : nullptr,
+      .pWaitDstStageMask =
+          semaphore != VK_NULL_HANDLE ? &semaphoreWaitFlags : nullptr,
       .commandBufferCount = 1u,
       .pCommandBuffers = &mCmdBuffer,
       .signalSemaphoreCount = 0u,
@@ -1089,9 +1143,8 @@ bool VkImageRenderer::renderImageAndReadback(VkImage image, VkSampler sampler,
   void *outData;
   VK_CALL(vkMapMemory(mInit->device(), mResultBufferMemory, 0u,
                       mResultBufferSize, 0u, &outData));
-  uint32_t *uData = reinterpret_cast<uint32_t *>(outData);
-  *data = std::vector<uint32_t>(uData,
-                                uData + mResultBufferSize / sizeof(uint32_t));
+  uint8_t *uData = reinterpret_cast<uint8_t *>(outData);
+  *data = std::vector<uint8_t>(uData, uData + mResultBufferSize);
   vkUnmapMemory(mInit->device(), mResultBufferMemory);
 
   return true;
