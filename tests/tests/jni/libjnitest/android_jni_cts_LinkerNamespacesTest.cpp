@@ -75,13 +75,14 @@ static bool is_directory(const std::string& path) {
   return false;
 }
 
-static bool not_accessible(const std::string& library, const std::string& err) {
-  return err.find("dlopen failed: library \"" + library + "\"") == 0 &&
+static bool not_accessible(const std::string& err) {
+  return err.find("dlopen failed: library \"") == 0 &&
          err.find("is not accessible for the namespace \"classloader-namespace\"") != std::string::npos;
 }
 
-static bool not_found(const std::string& library, const std::string& err) {
-  return err == "dlopen failed: library \"" + library + "\" not found";
+static bool not_found(const std::string& err) {
+  return err.find("dlopen failed: library \"") == 0 &&
+         err.find("\" not found") != std::string::npos;
 }
 
 static bool wrong_arch(const std::string& library, const std::string& err) {
@@ -117,7 +118,7 @@ static bool check_lib(const std::string& path,
   } else { // (handle == nullptr && !shouldBeAccessible(path))
     // Check the error message
     std::string err = dlerror();
-    if (!not_accessible(path, err) && !not_found(path, err) && !wrong_arch(path, err)) {
+    if (!not_accessible(err) && !not_found(err) && !wrong_arch(path, err)) {
       errors->push_back("unexpected dlerror: " + err);
       return false;
     }
@@ -244,7 +245,7 @@ extern "C" JNIEXPORT jstring JNICALL
     if (handle == nullptr) {
       std::string err = dlerror();
       // The libraries should be present and produce specific dlerror when inaccessible.
-      if (!not_accessible(library, err)) {
+      if (!not_accessible(err)) {
           errors.push_back("Mandatory system library \"" + library + "\" failed to load with unexpected error: " + err);
           success = false;
       }
