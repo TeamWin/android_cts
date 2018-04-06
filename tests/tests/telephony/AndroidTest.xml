@@ -30,6 +30,7 @@
     </target_preparer>
     <test class="com.android.tradefed.testtype.AndroidJUnitTest" >
         <option name="package" value="android.telephony.cts" />
+        <option name="hidden-api-checks" value="false"/>
     </test>
     <target_preparer class="com.android.tradefed.targetprep.RunCommandTargetPreparer">
         <option name="run-command" value="pm disable com.google.android.dialer/com.android.voicemail.impl.StatusCheckJobService" />
