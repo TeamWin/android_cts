@@ -35,6 +35,85 @@ THRESH_MIN_PIXEL = 4  # Crop test allowed offset
 PREVIEW_SIZE = (1920, 1080)  # preview size
 
 
+def convert_ar_to_float(ar_string):
+    """Convert aspect ratio string into float.
+
+    Args:
+        ar_string:  "4:3" or "16:9"
+    Returns:
+        float(ar_string)
+    """
+    ar_list = [float(x) for x in ar_string.split(":")]
+    return ar_list[0] / ar_list[1]
+
+
+def determine_sensor_aspect_ratio(props):
+    """Determine the aspect ratio of the sensor.
+
+    Args:
+        props:      camera properties
+    Returns:
+        matched entry in AR_CHECKED
+    """
+    match_ar = None
+    sensor_size = props["android.sensor.info.activeArraySize"]
+    sensor_ar = (float(abs(sensor_size["right"] - sensor_size["left"])) /
+                 abs(sensor_size["bottom"] - sensor_size["top"]))
+    for ar_string in AR_CHECKED:
+        if np.isclose(sensor_ar, convert_ar_to_float(ar_string), atol=FMT_ATOL):
+            match_ar = ar_string
+    if not match_ar:
+        print "Error: no aspect ratio match with sensor parameters!"
+    return match_ar
+
+
+def aspect_ratio_scale_factors(camera_ar_string):
+    """Determine scale factors for each aspect ratio to correct cropping.
+
+    Args:
+        camera_ar_string:   camera aspect ratio that is the baseline
+    Returns:
+        dict of correction ratios with AR_CHECKED values as keys
+    """
+    ar_scaling = {}
+    camera_ar = convert_ar_to_float(camera_ar_string)
+    for ar_string in AR_CHECKED:
+        ar = convert_ar_to_float(ar_string)
+        ar_scaling[ar_string] = ar / camera_ar
+    return ar_scaling
+
+
+def find_yuv_fov_reference(cam, req, props):
+    """Determine the circle coverage of the image in YUV reference image.
+
+    Args:
+        cam:        camera object
+        req:        camera request
+        props:      camera properties
+
+    Returns:
+        ref_fov:    dict with [fmt, % coverage, w, h]
+    """
+    ref_fov = {}
+    ar = determine_sensor_aspect_ratio(props)
+    match_ar = [float(x) for x in ar.split(":")]
+    fmt = its.objects.get_largest_yuv_format(props, match_ar=match_ar)
+    cap = cam.do_capture(req, fmt)
+    w = cap["width"]
+    h = cap["height"]
+    img = its.image.convert_capture_to_rgb_image(cap, props=props)
+    print "Captured %s %dx%d" % ("yuv", w, h)
+    img_name = "%s_%s_w%d_h%d.png" % (NAME, "yuv", w, h)
+    _, _, circle_size = measure_aspect_ratio(img, False, img_name, True)
+    fov_percent = calc_circle_image_ratio(circle_size[1], circle_size[0], w, h)
+    ref_fov["fmt"] = ar
+    ref_fov["percent"] = fov_percent
+    ref_fov["w"] = w
+    ref_fov["h"] = h
+    print "Using YUV reference:", ref_fov
+    return ref_fov
+
+
 def calc_circle_image_ratio(circle_w, circle_h, image_w, image_h):
     """Calculate the circle coverage of the image.
 
@@ -83,7 +162,7 @@ def main():
                         "cmpr": "raw", "cmpr_size": None})
     format_list.append({"iter": "jpeg", "iter_max": None,
                         "cmpr": "yuv", "cmpr_size": PREVIEW_SIZE})
-    ref_fov_percent = {}
+    ref_fov = {}
     with its.device.ItsSession() as cam:
         props = cam.get_camera_properties()
         its.caps.skip_unless(its.caps.read_3a(props))
@@ -169,36 +248,24 @@ def main():
             h_raw = size_raw[0]
             img_name = "%s_%s_w%d_h%d.png" % (NAME, "raw", w_raw, h_raw)
             aspect_ratio_gt, cc_ct_gt, circle_size_raw = measure_aspect_ratio(
-                    img_raw, 1, img_name, debug)
+                    img_raw, raw_avlb, img_name, debug)
             raw_fov_percent = calc_circle_image_ratio(
                     circle_size_raw[1], circle_size_raw[0], w_raw, h_raw)
             # Normalize the circle size to 1/4 of the image size, so that
-            # circle size won"t affect the crop test result
+            # circle size won't affect the crop test result
             factor_cp_thres = (min(size_raw[0:1])/4.0) / max(circle_size_raw)
             thres_l_cp_test = THRESH_L_CP * factor_cp_thres
             thres_xs_cp_test = THRESH_XS_CP * factor_cp_thres
-            ref_fov_percent["raw"] = [raw_fov_percent, w_raw, h_raw]
-            print ref_fov_percent["raw"]
-            print "Created RAW references\n"
-        print "Creating references for fov_coverage from largest YUVs"
-        for ar_check in AR_CHECKED:
-            match_ar = [float(x) for x in ar_check.split(":")]
-            fmt = its.objects.get_largest_yuv_format(
-                    props, match_ar=match_ar)
-            cap = cam.do_capture(req, fmt)
-            w = cap["width"]
-            h = cap["height"]
-            print "Captured %s %dx%d" % ("yuv", w, h)
-            img = its.image.convert_capture_to_rgb_image(cap, props=props)
-            img_name = "%s_%s_w%d_h%d.png" % (NAME, "yuv", w, h)
-            _, _, circle_size = measure_aspect_ratio(
-                    img, 1, img_name, debug)
-            fov_percent = calc_circle_image_ratio(
-                    circle_size[1], circle_size[0], w, h)
+            ref_fov["fmt"] = determine_sensor_aspect_ratio(props)
+            ref_fov["percent"] = raw_fov_percent
+            ref_fov["w"] = w_raw
+            ref_fov["h"] = h_raw
+            print "Using RAW reference:", ref_fov
+        else:
+            ref_fov = find_yuv_fov_reference(cam, req, props)
 
-            ref_fov_percent[ar_check] = [fov_percent, w, h]
-            print ref_fov_percent[ar_check]
-        print "Created YUV references\n"
+        # Determine scaling factors for AR calculations
+        ar_scaling = aspect_ratio_scale_factors(ref_fov["fmt"])
 
         # Take pictures of each settings with all the image sizes available.
         for fmt in format_list:
@@ -263,23 +330,16 @@ def main():
                     match_ar = match_ar_list[0] / match_ar_list[1]
                     if np.isclose(float(w_iter)/h_iter, match_ar,
                                   atol=FMT_ATOL):
-                        chk_fov_percent = ref_fov_percent[ar_check][0]
-                        w_ref = ref_fov_percent[ar_check][1]
-                        h_ref = ref_fov_percent[ar_check][2]
-                        if ref_fov_percent["raw"]:
-                            if np.isclose(float(ref_fov_percent["raw"][1]) /
-                                          ref_fov_percent["raw"][2], match_ar,
-                                          atol=FMT_ATOL):
-                                chk_fov_percent = ref_fov_percent["raw"][0]
-                                w_ref = ref_fov_percent["raw"][1]
-                                h_ref = ref_fov_percent["raw"][2]
-                                print "Using RAW as reference"
+                        # scale check value based on aspect ratio
+                        chk_percent = ref_fov["percent"] * ar_scaling[ar_check]
+
                         msg = "FoV %%: %.2f, Ref FoV %%: %.2f, TOL=%.f%%, " % (
-                                fov_percent, chk_fov_percent,
+                                fov_percent, chk_percent,
                                 FOV_PERCENT_RTOL*100)
                         msg += "img: %dx%d, ref: %dx%d" % (w_iter, h_iter,
-                                                           w_ref, h_ref)
-                        assert np.isclose(fov_percent, chk_fov_percent,
+                                                           ref_fov["w"],
+                                                           ref_fov["h"])
+                        assert np.isclose(fov_percent, chk_percent,
                                           rtol=FOV_PERCENT_RTOL), msg
                 # check pass/fail for aspect ratio
                 # image size >= LARGE_SIZE: use THRESH_L_AR
