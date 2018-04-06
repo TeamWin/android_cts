@@ -508,9 +508,13 @@ class VirtualContainerView extends View {
             text.text = value;
             final AutofillManager autofillManager =
                     getContext().getSystemService(AutofillManager.class);
-            if (autofillManager != null) {
-                autofillManager.notifyValueChanged(VirtualContainerView.this, text.id,
-                        AutofillValue.forText(text.text));
+            if (mCompatMode) {
+                sendAccessibilityEvent(AccessibilityEvent.TYPE_VIEW_TEXT_CHANGED, text.id);
+            } else {
+                if (autofillManager != null) {
+                    autofillManager.notifyValueChanged(VirtualContainerView.this, text.id,
+                            AutofillValue.forText(text.text));
+                }
             }
             invalidate();
         }
