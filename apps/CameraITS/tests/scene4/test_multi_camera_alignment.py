@@ -25,8 +25,9 @@ import its.objects
 
 import numpy as np
 
-ALIGN_THRESH = 0.005
+ALIGN_TOL_PERCENT = 1
 CHART_DISTANCE_CM = 22  # cm
+CIRCLE_TOL_PERCENT = 10
 NAME = os.path.basename(__file__).split('.')[0]
 ROTATE_REF_MATRIX = np.array([0, 0, 0, 1])
 TRANS_REF_MATRIX = np.array([0, 0, 0])
@@ -56,22 +57,22 @@ def find_circle(gray, name):
         gray:           gray scale image array [0,255]
         name:           string of file name
     Returns:
-        center:         circle center location (x, y)
+        circle:         (circle_center_x, circle_center_y, radius)
     """
 
     cv2_version = cv2.__version__
     try:
         if cv2_version.startswith('2.4.'):
-            center = cv2.HoughCircles(gray, cv2.cv.CV_HOUGH_GRADIENT,
+            circle = cv2.HoughCircles(gray, cv2.cv.CV_HOUGH_GRADIENT,
                                       1, 20)[0][0]
         elif cv2_version.startswith('3.2.'):
-            center = cv2.HoughCircles(gray, cv2.HOUGH_GRADIENT,
+            circle = cv2.HoughCircles(gray, cv2.HOUGH_GRADIENT,
                                       1, 20)[0][0]
     except TypeError:
-        center = None
+        circle = None
         its.image.write_image(gray[..., np.newaxis]/255.0, name)
-    assert center is not None, 'No circle found!'
-    return center
+    assert circle is not None, 'No circle found!'
+    return circle
 
 
 def main():
@@ -89,8 +90,8 @@ def main():
                              its.caps.logical_multi_camera(props) and
                              its.caps.raw16(props) and
                              its.caps.manual_sensor(props))
-        props = cam.get_camera_properties()
         debug = its.caps.debug_mode()
+        avail_fls = props['android.lens.info.availableFocalLengths']
 
         max_raw_size = its.objects.get_available_output_sizes('raw', props)[0]
         w, h = its.objects.get_available_output_sizes(
@@ -121,6 +122,8 @@ def main():
     rotation = {}
     trans = {}
     circle = {}
+    fl = {}
+    sensor_diag = {}
     point = {}
     for i in ids:
         print 'Starting camera %s' % i
@@ -179,6 +182,10 @@ def main():
         circle[i] = find_circle(cv2.cvtColor(img_rot, cv2.COLOR_BGR2GRAY),
                                 '%s_gray%s.jpg' % (NAME, i))
 
+        # Find focal length & sensor size
+        fl[i] = props_physical[i]['android.lens.info.availableFocalLengths'][0]
+        sensor_diag[i] = math.sqrt(size_raw[i][0] ** 2 + size_raw[i][1] ** 2)
+
         # Find 3D location of circle centers
         point[i] = np.dot(np.linalg.inv(k[i]),
                           np.array([circle[i][0],
@@ -195,7 +202,7 @@ def main():
     t = -1 * trans[ref_index]
     print 't:', t
 
-    # estimation ids[0] circle center from ids[1] & params
+    # Estimate ids[0] circle center from ids[1] & params
     estimated_0 = cv2.projectPoints(point[ids[1]].reshape(1, 3),
                                     r, t, k[ids[0]], None)[0][0][0]
     err_0 = np.linalg.norm(estimated_0 - circle[ids[0]][:2])
@@ -205,7 +212,7 @@ def main():
                                          estimated_0[0])
     print 'Error(pixels): %.1f' % err_0
 
-    # estimation ids[0] circle center from ids[1] & params
+    # Estimate ids[0] circle center from ids[1] & params
     estimated_1 = cv2.projectPoints(point[ids[0]].reshape(1, 3),
                                     r.T, -np.dot(r, t), k[ids[1]],
                                     None)[0][0][0]
@@ -218,11 +225,23 @@ def main():
     err_0 /= math.sqrt(size_raw[ids[0]][0]**2 + size_raw[ids[0]][1]**2)
     err_1 /= math.sqrt(size_raw[ids[1]][0]**2 + size_raw[ids[1]][1]**2)
     msg = '%s -> %s center error too large! val=%.1f%%, THRESH=%.f%%' % (
-            ids[1], ids[0], err_0*100, ALIGN_THRESH*100)
-    assert err_0 < ALIGN_THRESH, msg
+            ids[1], ids[0], err_0*100, ALIGN_TOL_PERCENT)
+    assert err_0*100 < ALIGN_TOL_PERCENT, msg
     msg = '%s -> %s center error too large! val=%.1f%%, THRESH=%.f%%' % (
-            ids[0], ids[1], err_1*100, ALIGN_THRESH*100)
-    assert err_1 < ALIGN_THRESH, msg
+            ids[0], ids[1], err_1*100, ALIGN_TOL_PERCENT)
+    assert err_1*100 < ALIGN_TOL_PERCENT, msg
+
+    # Check focal length and circle size if more than 1 focal length
+    if len(avail_fls) > 1:
+        print 'circle_0: %.2f, circle_1: %.2f' % (
+                circle[ids[0]][2], circle[ids[1]][2])
+        print 'fl_0: %.2f, fl_1: %.2f' % (fl[ids[0]], fl[ids[1]])
+        print 'diag_0: %.2f, diag_1: %.2f' % (
+                sensor_diag[ids[0]], sensor_diag[ids[1]])
+        msg = 'Circle size does not scale properly.'
+        assert np.isclose(circle[ids[0]][2]/fl[ids[0]]*sensor_diag[ids[0]],
+                          circle[ids[1]][2]/fl[ids[1]]*sensor_diag[ids[1]],
+                          rtol=CIRCLE_TOL_PERCENT/100.0), msg
 
 
 if __name__ == '__main__':
