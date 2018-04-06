@@ -332,7 +332,7 @@ public class ModuleDef implements IModuleDef {
     private void runPreparerSetup(ITargetPreparer preparer) throws DeviceNotAvailableException {
         String preparerName = preparer.getClass().getCanonicalName();
         if (!mPreparerWhitelist.isEmpty() && !mPreparerWhitelist.contains(preparerName)) {
-            CLog.w("Skipping Preparer: %s since it is not in the whitelist %s",
+            CLog.d("Skipping Preparer: %s since it is not in the whitelist %s",
                     preparerName, mPreparerWhitelist);
             return;
         }
