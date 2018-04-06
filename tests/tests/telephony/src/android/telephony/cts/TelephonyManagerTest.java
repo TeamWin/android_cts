@@ -619,6 +619,10 @@ public class TelephonyManagerTest {
      */
     @Test
     public void testSetNetworkSelectionModeAutomatic() {
+        if (!mPackageManager.hasSystemFeature(PackageManager.FEATURE_TELEPHONY)) {
+            Log.d(TAG, "Skipping test that requires FEATURE_TELEPHONY");
+            return;
+        }
         try {
             mTelephonyManager.setNetworkSelectionModeAutomatic();
             fail("Expected SecurityException. App does not have carrier privileges.");
@@ -633,6 +637,10 @@ public class TelephonyManagerTest {
      */
     @Test
     public void testSetNetworkSelectionModeManual() {
+        if (!mPackageManager.hasSystemFeature(PackageManager.FEATURE_TELEPHONY)) {
+            Log.d(TAG, "Skipping test that requires FEATURE_TELEPHONY");
+            return;
+        }
         try {
             mTelephonyManager.setNetworkSelectionModeManual(
                     "" /* operatorNumeric */, false /* persistSelection */);
