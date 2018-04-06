@@ -186,6 +186,7 @@ public class VirtualContainerActivityCompatModeTest extends VirtualContainerActi
 
         // Fill in some stuff
         mActivity.mUsername.setText("foo");
+        focusToPasswordExpectNoWindowEvent();
         mActivity.mPassword.setText("bar");
 
         // Change URL bar before views become invisible
@@ -243,6 +244,7 @@ public class VirtualContainerActivityCompatModeTest extends VirtualContainerActi
 
         // Fill in some stuff
         mActivity.mUsername.setText("foo");
+        focusToPasswordExpectNoWindowEvent();
         mActivity.mPassword.setText("bar");
 
         // Change URL bar before views become invisible
@@ -273,6 +275,7 @@ public class VirtualContainerActivityCompatModeTest extends VirtualContainerActi
 
         // Fill in some stuff
         mActivity.mUsername.setText("foo");
+        focusToPasswordExpectNoWindowEvent();
         mActivity.mPassword.setText("bar");
 
         // Change URL bar before views become invisible
