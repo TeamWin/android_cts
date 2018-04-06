@@ -2330,6 +2330,15 @@ public class CameraTestUtils extends Assert {
                 collector.expectInRange("Exif TAG_ISO is incorrect", iso,
                         expectedIso/100, (expectedIso+50)/100);
             }
+        } else {
+            // External camera specific checks
+            // TAG_MAKE
+            String make = exif.getAttribute(ExifInterface.TAG_MAKE);
+            collector.expectNotNull("Exif TAG_MAKE is null", make);
+
+            // TAG_MODEL
+            String model = exif.getAttribute(ExifInterface.TAG_MODEL);
+            collector.expectNotNull("Exif TAG_MODEL is nuill", model);
         }
 
 
