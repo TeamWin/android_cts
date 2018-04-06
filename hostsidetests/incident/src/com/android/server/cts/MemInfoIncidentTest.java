@@ -26,7 +26,7 @@ public class MemInfoIncidentTest extends ProtoDumpTestCase {
 
     public void testMemInfoDump() throws Exception {
         final MemInfoDumpProto dump =
-                getDump(MemInfoDumpProto.parser(), "dumpsys meminfo -a --proto");
+                getDump(MemInfoDumpProto.parser(), "dumpsys -t 30000 meminfo -a --proto");
 
         verifyMemInfoDumpProto(dump, PRIVACY_NONE);
     }
