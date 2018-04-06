@@ -23,20 +23,18 @@ import java.util.List;
 public class DexMemberChecker {
 
     public interface Observer {
-        void classAccessible(boolean accessible, DexApiDocumentParser.DexMember member);
-        void fieldAccessibleViaReflection(boolean accessible, DexApiDocumentParser.DexField field);
-        void fieldAccessibleViaJni(boolean accessible, DexApiDocumentParser.DexField field);
-        void methodAccessibleViaReflection(boolean accessible,
-                DexApiDocumentParser.DexMethod method);
-        void methodAccessibleViaJni(boolean accessible, DexApiDocumentParser.DexMethod method);
+        void classAccessible(boolean accessible, DexMember member);
+        void fieldAccessibleViaReflection(boolean accessible, DexField field);
+        void fieldAccessibleViaJni(boolean accessible, DexField field);
+        void methodAccessibleViaReflection(boolean accessible, DexMethod method);
+        void methodAccessibleViaJni(boolean accessible, DexMethod method);
     }
 
     public static void init() {
         System.loadLibrary("cts_dexchecker");
     }
 
-    public static void checkSingleMember(DexApiDocumentParser.DexMember dexMember,
-            DexMemberChecker.Observer observer) {
+    public static void checkSingleMember(DexMember dexMember, DexMemberChecker.Observer observer) {
         Class<?> klass = findClass(dexMember);
         if (klass == null) {
             // Class not found. Therefore its members are not visible.
@@ -45,17 +43,16 @@ public class DexMemberChecker {
         }
         observer.classAccessible(true, dexMember);
 
-        StringBuilder error = new StringBuilder("Hidden ");
-        if (dexMember instanceof DexApiDocumentParser.DexField) {
-            DexApiDocumentParser.DexField field = (DexApiDocumentParser.DexField) dexMember;
+        if (dexMember instanceof DexField) {
+            DexField field = (DexField) dexMember;
             observer.fieldAccessibleViaReflection(
                     hasMatchingField_Reflection(klass, field),
                     field);
             observer.fieldAccessibleViaJni(
                     hasMatchingField_JNI(klass, field),
                     field);
-        } else if (dexMember instanceof DexApiDocumentParser.DexMethod) {
-            DexApiDocumentParser.DexMethod method = (DexApiDocumentParser.DexMethod) dexMember;
+        } else if (dexMember instanceof DexMethod) {
+            DexMethod method = (DexMethod) dexMember;
             observer.methodAccessibleViaReflection(
                     hasMatchingMethod_Reflection(klass, method),
                     method);
@@ -79,8 +76,7 @@ public class DexMemberChecker {
         return true;
     }
 
-    private static Class<?> findClass(DexApiDocumentParser.DexMember dexMember) {
-        Class<?> klass = null;
+    private static Class<?> findClass(DexMember dexMember) {
         try {
             return Class.forName(dexMember.getJavaClassName());
         } catch (ClassNotFoundException ex) {
@@ -88,8 +84,7 @@ public class DexMemberChecker {
         }
     }
 
-    private static boolean hasMatchingField_Reflection(Class<?> klass,
-            DexApiDocumentParser.DexField dexField) {
+    private static boolean hasMatchingField_Reflection(Class<?> klass, DexField dexField) {
         try {
             klass.getDeclaredField(dexField.getName());
             return true;
@@ -98,8 +93,7 @@ public class DexMemberChecker {
         }
     }
 
-    private static boolean hasMatchingField_JNI(Class<?> klass,
-            DexApiDocumentParser.DexField dexField) {
+    private static boolean hasMatchingField_JNI(Class<?> klass, DexField dexField) {
         try {
             getField_JNI(klass, dexField.getName(), dexField.getDexType());
             return true;
@@ -113,8 +107,7 @@ public class DexMemberChecker {
         return false;
     }
 
-    private static boolean hasMatchingMethod_Reflection(Class<?> klass,
-            DexApiDocumentParser.DexMethod dexMethod) {
+    private static boolean hasMatchingMethod_Reflection(Class<?> klass, DexMethod dexMethod) {
         List<String> methodParams = dexMethod.getJavaParameterTypes();
 
         if (dexMethod.isConstructor()) {
@@ -134,8 +127,7 @@ public class DexMemberChecker {
         return false;
     }
 
-    private static boolean hasMatchingMethod_JNI(Class<?> klass,
-            DexApiDocumentParser.DexMethod dexMethod) {
+    private static boolean hasMatchingMethod_JNI(Class<?> klass, DexMethod dexMethod) {
         try {
             getMethod_JNI(klass, dexMethod.getName(), dexMethod.getDexSignature());
             return true;

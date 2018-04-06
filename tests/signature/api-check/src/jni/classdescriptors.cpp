@@ -17,7 +17,12 @@
 #include <jni.h>
 #include <jvmti.h>
 
+#include <stdlib.h>
 #include <string.h>
+#include <type_traits>
+
+#include <iostream>
+#include <sstream>
 
 namespace android {
 namespace signature {
@@ -49,6 +54,35 @@ static void Cleanup(char** data, jint cnt) {
     Dealloc(data[i]);
   }
   Dealloc(data);
+}
+
+template<typename T>
+class ScopedJvmtiReference {
+ static_assert(std::is_pointer<T>::value, "T must be a pointer type");
+
+ public:
+  ScopedJvmtiReference() : ref_(nullptr) {}
+
+  ~ScopedJvmtiReference() {
+    if (ref_ != nullptr) {
+      Dealloc(ref_);
+    }
+  }
+
+  // Return the pointer value.
+  T Get() { return ref_; };
+
+  // Return a pointer to the pointer value.
+  T* GetPtr() { return &ref_; };
+
+ private:
+  T ref_;
+};
+
+static void abortIfExceptionPending(JNIEnv* env) {
+  if (env->ExceptionCheck()) {
+    abort();
+  }
 }
 
 extern "C" JNIEXPORT jint JNICALL Agent_OnAttach(JavaVM* vm,
@@ -120,6 +154,72 @@ extern "C" JNIEXPORT void JNICALL Java_android_signature_cts_api_BootClassPathCl
     env->ThrowNew(rt_exception, "Failed to find get_class_loader_class_descriptors extension");
     return;
   }
+}
+
+extern "C" JNIEXPORT jobjectArray JNICALL
+Java_android_signature_cts_api_BootClassPathClassesProvider_getClassMemberNamesAndTypes(
+    JNIEnv* env, jclass, jclass klass, jboolean getFields) {
+  jvmtiError error;
+
+  jint count;
+  ScopedJvmtiReference<jfieldID*> fids;
+  ScopedJvmtiReference<jmethodID*> mids;
+
+  // Request a list of field/method IDs using JVMTI.
+  error = (getFields != JNI_FALSE) ? jvmti_env->GetClassFields(klass, &count, fids.GetPtr())
+                                   : jvmti_env->GetClassMethods(klass, &count, mids.GetPtr());
+  if (error != JVMTI_ERROR_NONE) {
+    std::stringstream ss;
+    ss << "Error while executing "
+       << ((getFields != JNI_FALSE) ? "GetClassFields" : "GetClassMethods")
+       << ", error code: " << static_cast<unsigned>(error);
+    std::string error = ss.str();
+    jclass rt_exception = env->FindClass("java/lang/RuntimeException");
+    env->ThrowNew(rt_exception, error.c_str());
+    return nullptr;
+  }
+
+  jobjectArray names = env->NewObjectArray(count, env->FindClass("java/lang/String"), nullptr);
+  abortIfExceptionPending(env);
+  jobjectArray types = env->NewObjectArray(count, env->FindClass("java/lang/String"), nullptr);
+  abortIfExceptionPending(env);
+
+  // Convert IDs to names and types using JVMTI.
+  for (jint i = 0; i < count; ++i) {
+    ScopedJvmtiReference<char*> name;
+    ScopedJvmtiReference<char*> type;
+
+    error = (getFields != JNI_FALSE)
+        ? jvmti_env->GetFieldName(klass, fids.Get()[i], name.GetPtr(), type.GetPtr(), nullptr)
+        : jvmti_env->GetMethodName(mids.Get()[i], name.GetPtr(), type.GetPtr(), nullptr);
+    if (error != JVMTI_ERROR_NONE) {
+      std::stringstream ss;
+      ss << "Error while executing "
+         << ((getFields != JNI_FALSE) ? "GetFieldName" : "GetMethodName")
+         << ", error code: " << static_cast<unsigned>(error);
+      std::string error = ss.str();
+      jclass rt_exception = env->FindClass("java/lang/RuntimeException");
+      env->ThrowNew(rt_exception, error.c_str());
+      return nullptr;
+    }
+
+    env->SetObjectArrayElement(names, i, env->NewStringUTF(name.Get()));
+    abortIfExceptionPending(env);
+    env->SetObjectArrayElement(types, i, env->NewStringUTF(type.Get()));
+    abortIfExceptionPending(env);
+  }
+
+  // Return as a array size 2 x count, where result[0] is an array of names and
+  // result[1] is an array of types.
+  jobjectArray result = env->NewObjectArray(
+      /* count */ 2, env->FindClass("[Ljava/lang/String;"), nullptr);
+  abortIfExceptionPending(env);
+  env->SetObjectArrayElement(result, 0, names);
+  abortIfExceptionPending(env);
+  env->SetObjectArrayElement(result, 1, types);
+  abortIfExceptionPending(env);
+
+  return result;
 }
 
 }  // namespace api

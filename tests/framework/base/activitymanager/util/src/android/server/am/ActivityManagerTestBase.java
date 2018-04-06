@@ -77,8 +77,8 @@ import android.os.Bundle;
 import android.os.SystemClock;
 import android.provider.Settings;
 import android.server.am.settings.SettingsSession;
-import android.support.annotation.NonNull;
-import android.support.annotation.Nullable;
+import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
 import android.support.test.InstrumentationRegistry;
 
 import com.android.compatibility.common.util.SystemUtil;
@@ -768,12 +768,11 @@ public abstract class ActivityManagerTestBase {
     }
 
     /**
-     * Tries to clear logcat and inserts log separator in case clearing didn't succeed, so we can
-     * always find the starting point from where to evaluate following logs.
+     * Inserts a log separator so we can always find the starting point from where to evaluate
+     * following logs.
      * @return Unique log separator.
      */
-    protected LogSeparator clearLogcat() {
-        executeShellCommand("logcat -c");
+    protected LogSeparator separateLogs() {
         final LogSeparator logSeparator = new LogSeparator();
         executeShellCommand("log -t " + LOG_SEPARATOR + " " + logSeparator);
         return logSeparator;

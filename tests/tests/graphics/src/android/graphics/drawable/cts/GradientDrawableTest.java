@@ -367,9 +367,9 @@ public class GradientDrawableTest {
         gradientDrawable.setColor(color);
         assertEquals("Color was set to RED", color, gradientDrawable.getColor());
 
-        color = null;
-        gradientDrawable.setColor(color);
-        assertEquals("Color was set to null (TRANSPARENT)", color, gradientDrawable.getColor());
+        gradientDrawable.setColor(null);
+        assertEquals("Color was set to null (TRANSPARENT)",
+                ColorStateList.valueOf(Color.TRANSPARENT), gradientDrawable.getColor());
     }
 
     @Test

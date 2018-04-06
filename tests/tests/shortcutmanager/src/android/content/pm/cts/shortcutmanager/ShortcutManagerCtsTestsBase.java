@@ -36,7 +36,7 @@ import android.os.PersistableBundle;
 import android.os.StrictMode;
 import android.os.StrictMode.ThreadPolicy;
 import android.os.UserHandle;
-import android.support.annotation.NonNull;
+import androidx.annotation.NonNull;
 import android.test.InstrumentationTestCase;
 import android.text.TextUtils;
 

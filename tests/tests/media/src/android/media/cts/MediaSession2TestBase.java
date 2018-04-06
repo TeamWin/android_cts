@@ -31,9 +31,9 @@ import android.media.SessionToken2;
 import android.os.Bundle;
 import android.os.HandlerThread;
 import android.os.ResultReceiver;
-import android.support.annotation.CallSuper;
-import android.support.annotation.NonNull;
-import android.support.annotation.Nullable;
+import androidx.annotation.CallSuper;
+import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
 import android.support.test.InstrumentationRegistry;
 
 import org.junit.AfterClass;

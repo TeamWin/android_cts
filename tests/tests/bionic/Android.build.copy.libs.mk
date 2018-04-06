@@ -36,6 +36,7 @@ my_bionic_testlib_files := \
   libdlext_test_runpath_zip/libdlext_test_runpath_zip_zipaligned.zip \
   libdlext_test_zip/libdlext_test_zip.so \
   libdlext_test_zip/libdlext_test_zip_zipaligned.zip \
+  libelf-tls-library.so \
   libsysv-hash-table-library.so \
   libtest_atexit.so \
   libtest_check_order_dlsym.so \

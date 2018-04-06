@@ -25,6 +25,7 @@ import static android.app.admin.DevicePolicyManager.ID_TYPE_SERIAL;
 import android.app.admin.DevicePolicyManager;
 import android.content.ComponentName;
 import android.content.Context;
+import android.content.pm.PackageManager;
 import android.content.res.AssetManager;
 import android.keystore.cts.Attestation;
 import android.keystore.cts.AuthorizationList;
@@ -385,6 +386,15 @@ public class KeyManagementTest extends ActivityInstrumentationTestCase2<KeyManag
         leaf.verify(rootKey);
     }
 
+    private boolean isDeviceIdAttestationSupported() {
+        PackageManager pm = getActivity().getPackageManager();
+        return pm.hasSystemFeature(PackageManager.FEATURE_DEVICE_ID_ATTESTATION);
+    }
+
+    private boolean isDeviceIdAttestationRequested(int deviceIdAttestationFlags) {
+        return deviceIdAttestationFlags != 0;
+    }
+
     /**
      * Generates a key using DevicePolicyManager.generateKeyPair using the given key algorithm,
      * then test signing and verifying using generated key.
@@ -411,15 +421,38 @@ public class KeyManagementTest extends ActivityInstrumentationTestCase2<KeyManag
             KeyGenParameterSpec spec = specBuilder.build();
             AttestedKeyPair generated = mDevicePolicyManager.generateKeyPair(
                     getWho(), keyAlgorithm, spec, deviceIdAttestationFlags);
-            assertNotNull(
-                    String.format("Failed generation of %s key with Device ID attestation %d",
-                        keyAlgorithm, deviceIdAttestationFlags), generated);
+            // If Device ID attestation was requested, check it succeeded if and only if device ID
+            // attestation is supported.
+            if (isDeviceIdAttestationRequested(deviceIdAttestationFlags)) {
+                if (generated == null) {
+                    assertFalse(String.format("Failed getting Device ID attestation for key " +
+                                "algorithm %s, with flags %s, despite device declaring support.",
+                                keyAlgorithm, deviceIdAttestationFlags),
+                            isDeviceIdAttestationSupported());
+                    return null;
+                } else {
+                    assertTrue(String.format("Device ID attestation for key " +
+                                "algorithm %s, with flags %d should not have succeeded.",
+                                keyAlgorithm, deviceIdAttestationFlags),
+                            isDeviceIdAttestationSupported());
+                }
+            } else {
+                assertNotNull(
+                        String.format("Key generation (of type %s) must succeed when Device ID " +
+                            "attestation was not requested.", keyAlgorithm), generated);
+            }
             final KeyPair keyPair = generated.getKeyPair();
             verifySignatureOverData(signatureAlgorithm, keyPair);
             List<Certificate> attestation = generated.getAttestationRecord();
             validateAttestationRecord(attestation, attestationChallenge);
             validateSignatureChain(attestation, keyPair.getPublic());
             return attestation.get(0);
+        } catch (UnsupportedOperationException ex) {
+            assertTrue(String.format("Unexpected failure while generating key %s with ID flags %d: %s",
+                        keyAlgorithm, deviceIdAttestationFlags, ex),
+                    isDeviceIdAttestationRequested(deviceIdAttestationFlags) &&
+                    !isDeviceIdAttestationSupported());
+            return null;
         } finally {
             assertTrue(mDevicePolicyManager.removeKeyPair(getWho(), alias));
         }
@@ -431,9 +464,9 @@ public class KeyManagementTest extends ActivityInstrumentationTestCase2<KeyManag
      */
     public void testCanGenerateKeyPairWithKeyAttestation() throws Exception {
         for (SupportedKeyAlgorithm supportedKey: SUPPORTED_KEY_ALGORITHMS) {
-            generateKeyAndCheckAttestation(
+            assertNotNull(generateKeyAndCheckAttestation(
                     supportedKey.keyAlgorithm, supportedKey.signatureAlgorithm,
-                    supportedKey.signaturePaddingSchemes, 0);
+                    supportedKey.signaturePaddingSchemes, 0));
         }
     }
 
@@ -464,12 +497,16 @@ public class KeyManagementTest extends ActivityInstrumentationTestCase2<KeyManag
                 }
             }
             try {
-
                 // Now run the test with all supported key algorithms
                 for (SupportedKeyAlgorithm supportedKey: SUPPORTED_KEY_ALGORITHMS) {
                     Certificate attestation = generateKeyAndCheckAttestation(
                             supportedKey.keyAlgorithm, supportedKey.signatureAlgorithm,
                             supportedKey.signaturePaddingSchemes, devIdOpt);
+                    // generateKeyAndCheckAttestation should return null if device ID attestation
+                    // is not supported. Simply continue to test the next combination.
+                    if (attestation == null && !isDeviceIdAttestationSupported()) {
+                        continue;
+                    }
                     assertNotNull(String.format(
                             "Attestation should be valid for key %s with attestation modes %s",
                             supportedKey.keyAlgorithm, devIdOpt), attestation);
@@ -491,7 +528,9 @@ public class KeyManagementTest extends ActivityInstrumentationTestCase2<KeyManag
                             expectedMeid);
                 }
             } catch (UnsupportedOperationException expected) {
-                // The Device does not support attestation.
+                // Make sure the test only fails if the device is not meant to support Device
+                // ID attestation.
+                assertFalse(isDeviceIdAttestationSupported());
             }
         }
     }

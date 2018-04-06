@@ -17,8 +17,8 @@ package android.autofillservice.cts.common;
 
 import android.content.Context;
 import android.provider.Settings;
-import android.support.annotation.NonNull;
-import android.support.annotation.Nullable;
+import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
 
 /**
  * JUnit rule used to set a {@link Settings} preference before the test is run.

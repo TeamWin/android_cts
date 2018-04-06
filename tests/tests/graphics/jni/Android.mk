@@ -24,6 +24,7 @@ LOCAL_SRC_FILES := \
 	CtsGraphicsJniOnLoad.cpp \
 	android_graphics_cts_ANativeWindowTest.cpp \
 	android_graphics_cts_ASurfaceTextureTest.cpp \
+	android_graphics_cts_BasicVulkanGpuTest.cpp \
 	android_graphics_cts_BitmapTest.cpp \
 	android_graphics_cts_SyncTest.cpp \
 	android_graphics_cts_CameraGpuCtsActivity.cpp \

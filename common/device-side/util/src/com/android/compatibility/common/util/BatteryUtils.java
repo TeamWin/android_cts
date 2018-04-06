@@ -58,13 +58,14 @@ public class BatteryUtils {
      */
     public static void enableBatterySaver(boolean enabled) throws Exception {
         if (enabled) {
+            SystemUtil.runShellCommandForNoOutput("cmd power set-mode 1");
             putGlobalSetting(Global.LOW_POWER_MODE, "1");
             waitUntil("Battery saver still off", () -> getPowerManager().isPowerSaveMode());
             waitUntil("Location mode still " + getPowerManager().getLocationPowerSaveMode(),
                     () -> (PowerManager.LOCATION_MODE_NO_CHANGE
                             != getPowerManager().getLocationPowerSaveMode()));
         } else {
-            putGlobalSetting(Global.LOW_POWER_MODE, "0");
+            SystemUtil.runShellCommandForNoOutput("cmd power set-mode 0");
             putGlobalSetting(Global.LOW_POWER_MODE_STICKY, "0");
             waitUntil("Battery saver still on", () -> !getPowerManager().isPowerSaveMode());
             waitUntil("Location mode still " + getPowerManager().getLocationPowerSaveMode(),

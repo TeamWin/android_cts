@@ -28,6 +28,8 @@ import its.device
 from its.device import ItsSession
 import its.image
 
+import numpy as np
+
 CHART_DELAY = 1  # seconds
 CHART_DISTANCE = 30.0  # cm
 CHART_HEIGHT = 13.5  # cm
@@ -36,11 +38,40 @@ CHART_SCALE_STOP = 1.35
 CHART_SCALE_STEP = 0.025
 FACING_EXTERNAL = 2
 NUM_TRYS = 2
-SCENE3_FILE = os.path.join(os.environ['CAMERA_ITS_TOP'], 'pymodules', 'its',
-                           'test_images', 'ISO12233.png')
+SCENE3_FILE = os.path.join(os.environ["CAMERA_ITS_TOP"], "pymodules", "its",
+                           "test_images", "ISO12233.png")
 SKIP_RET_CODE = 101  # note this must be same as tests/scene*/test_*
 VGA_HEIGHT = 480
 VGA_WIDTH = 640
+
+# Not yet mandated tests
+NOT_YET_MANDATED = {
+        "scene0": [
+                "test_jitter",
+                "test_burst_capture",
+                "test_test_patterns"
+        ],
+        "scene1": [
+                "test_ae_af",
+                "test_ae_precapture_trigger",
+                "test_crop_region_raw",
+                "test_ev_compensation_advanced",
+                "test_ev_compensation_basic",
+                "test_yuv_plus_jpeg"
+        ],
+        "scene2": [
+                "test_num_faces",
+        ],
+        "scene3": [
+                "test_3a_consistency",
+                "test_flip_mirror",
+                "test_lens_movement_reporting",
+                "test_lens_position"
+        ],
+        "scene4": [],
+        "scene5": [],
+        "sensor_fusion": []
+}
 
 
 def calc_camera_fov():
@@ -112,34 +143,6 @@ def main():
         dist:    [Experimental] chart distance in cm.
     """
 
-    # Not yet mandated tests
-    NOT_YET_MANDATED = {
-        "scene0": [
-            "test_jitter",
-            "test_burst_capture"
-            ],
-        "scene1": [
-            "test_ae_af",
-            "test_ae_precapture_trigger",
-            "test_crop_region_raw",
-            "test_ev_compensation_advanced",
-            "test_ev_compensation_basic",
-            "test_yuv_plus_jpeg"
-            ],
-        "scene2": [
-            "test_num_faces",
-            ],
-        "scene3": [
-            "test_3a_consistency",
-            "test_flip_mirror",
-            "test_lens_movement_reporting",
-            "test_lens_position"
-            ],
-        "scene4": [],
-        "scene5": [],
-        "sensor_fusion": []
-    }
-
     all_scenes = ["scene0", "scene1", "scene2", "scene3", "scene4", "scene5",
                   "sensor_fusion"]
 
@@ -173,7 +176,6 @@ def main():
     skip_scene_validation = False
     chart_distance = CHART_DISTANCE
     chart_height = CHART_HEIGHT
-    approx_equal = lambda a, b, t: abs(a - b) < t
 
     for s in sys.argv[1:]:
         if s[:7] == "camera=" and len(s) > 7:
@@ -194,6 +196,7 @@ def main():
         elif s[:5] == 'dist=' and len(s) > 5:
             chart_distance = float(re.sub('cm', '', s[5:]))
 
+    chart_dist_arg = 'dist= ' + str(chart_distance)
     auto_scene_switch = chart_host_id is not None
     merge_result_switch = result_device_id is not None
 
@@ -319,7 +322,6 @@ def main():
                     if (not merge_result_switch or
                             (merge_result_switch and camera_ids[0] == '0')):
                         scene_arg = 'scene=' + scene
-                        chart_dist_arg = 'dist= ' + str(chart_distance)
                         fov_arg = 'fov=' + camera_fov
                         cmd = ['python',
                                os.path.join(os.getcwd(), 'tools/load_scene.py'),
@@ -343,8 +345,8 @@ def main():
             # Extract chart from scene for scene3 once up front
             chart_loc_arg = ''
             if scene == 'scene3':
-                if float(camera_fov) < 90 and approx_equal(chart_distance, 20,
-                                                           1E-6):
+                if float(camera_fov) < 90 and np.isclose(chart_distance, 20,
+                                                         rtol=0.1):
                     chart_height *= 0.67
                 chart = its.cv2image.Chart(SCENE3_FILE, chart_height,
                                            chart_distance, CHART_SCALE_START,
@@ -384,6 +386,7 @@ def main():
                     if skip_code is not SKIP_RET_CODE:
                         cmd = ['python', os.path.join(os.getcwd(), testpath)]
                         cmd += sys.argv[1:] + [camera_id_arg] + [chart_loc_arg]
+                        cmd += [chart_dist_arg]
                         with open(outpath, 'w') as fout, open(errpath, 'w') as ferr:
                             test_code = subprocess.call(
                                 cmd, stderr=ferr, stdout=fout, cwd=outdir)

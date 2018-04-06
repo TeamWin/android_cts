@@ -32,7 +32,7 @@ import static android.server.am.ComponentNameUtils.getActivityName;
 import static android.server.am.ComponentNameUtils.getWindowName;
 
 import android.content.ComponentName;
-import android.support.annotation.Nullable;
+import androidx.annotation.Nullable;
 
 public class WaitForValidActivityState {
     @Nullable

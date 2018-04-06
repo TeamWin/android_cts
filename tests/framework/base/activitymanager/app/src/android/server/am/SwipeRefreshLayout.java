@@ -20,10 +20,10 @@ import android.content.Context;
 import android.util.AttributeSet;
 
 /**
- * An extension of {@link android.support.v4.widget.SwipeRefreshLayout} that calls
+ * An extension of {@link androidx.swiperefreshlayout.widget.SwipeRefreshLayout} that calls
  * {@link #setRefreshing} during construction, preventing activity idle.
  */
-public class SwipeRefreshLayout extends android.support.v4.widget.SwipeRefreshLayout {
+public class SwipeRefreshLayout extends androidx.swiperefreshlayout.widget.SwipeRefreshLayout {
     public SwipeRefreshLayout(Context context) {
         super(context);
         initialize();

@@ -12,9 +12,10 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-import unittest
-import its.objects
 import sys
+import unittest
+
+import its.objects
 
 
 def skip_unless(cond):
@@ -485,6 +486,22 @@ def mono_camera(props):
     """
     return props.has_key("android.request.availableCapabilities") and \
            12 in props["android.request.availableCapabilities"]
+
+
+def face_detect(props):
+    """Returns whether a device has face detection mode.
+
+    props['android.statistics.info.availableFaceDetectModes'] != 0 is face det
+
+    Args:
+        props: Camera properties objects.
+
+    Returns:
+        Boolean.
+    """
+    return props.has_key("android.statistics.info.availableFaceDetectModes") and \
+        props["android.statistics.info.availableFaceDetectModes"] != [0]
+
 
 def debug_mode():
     """Returns True/False for whether test is run in debug mode.

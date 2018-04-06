@@ -335,7 +335,10 @@ public class ScopedDirectoryAccessClientTest extends DocumentsClientTestCase {
         if (!supportedHardwareForScopedDirectoryAccess()) return;
 
         final StorageVolume volume = getPrimaryVolume();
-        final String dir = DIRECTORY_PICTURES;
+        // TODO: ideally it should test all directories, but that would be too slow, and would
+        // require a more sophisticated way to get the toggle object (for example, it might require
+        // scrolling on devices with small screens)
+        final String dir = DIRECTORY_DOCUMENTS;
 
         // First, triggers it.
         deniesOnceForAllTest(volume, dir);
@@ -372,10 +375,13 @@ public class ScopedDirectoryAccessClientTest extends DocumentsClientTestCase {
         if (!supportedHardwareForScopedDirectoryAccess()) return;
 
         final StorageVolume volume = getPrimaryVolume();
-        final String dir = DIRECTORY_PICTURES;
+        // TODO: ideally it should test all directories, but that would be too slow, and would
+        // require a more sophisticated way to get the toggle object (for example, it might require
+        // scrolling on devices with small screens)
+        final String dir = DIRECTORY_DOCUMENTS;
 
         // First, grants it
-        userAcceptsTest(volume, DIRECTORY_PICTURES);
+        userAcceptsTest(volume, dir);
 
         // Then revoke it using settings.
 

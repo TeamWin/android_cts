@@ -22,9 +22,9 @@ import android.media.MediaSession2.SessionCallback;
 import android.media.MediaSessionService2;
 import android.media.cts.TestUtils.SyncHandler;
 import android.os.Handler;
-import android.support.annotation.GuardedBy;
-import android.support.annotation.NonNull;
-import android.support.annotation.Nullable;
+import androidx.annotation.GuardedBy;
+import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
 
 /**
  * Keeps the instance of currently running {@link MockMediaSessionService2}. And also provides

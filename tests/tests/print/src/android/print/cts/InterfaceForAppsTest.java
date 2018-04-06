@@ -37,7 +37,7 @@ import android.print.test.services.PrintServiceCallbacks;
 import android.print.test.services.PrinterDiscoverySessionCallbacks;
 import android.print.test.services.SecondPrintService;
 import android.print.test.services.StubbablePrinterDiscoverySession;
-import android.support.annotation.NonNull;
+import androidx.annotation.NonNull;
 import android.support.test.runner.AndroidJUnit4;
 import android.util.Log;
 

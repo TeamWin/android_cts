@@ -21,6 +21,7 @@ import static android.autofillservice.cts.SimpleSaveActivity.ID_PASSWORD;
 
 import android.autofillservice.cts.CannedFillResponse.CannedDataset;
 import android.autofillservice.cts.InstrumentedAutoFillService.FillRequest;
+import android.support.test.uiautomator.UiObject2;
 import android.view.View;
 
 import org.junit.Before;
@@ -106,6 +107,11 @@ public class DialogLauncherActivityTest extends AutoFillServiceTestCase {
         // Trigger autofill.
         mActivity.onUsername(View::requestFocus);
         sReplier.getNextFillRequest();
+
+        final UiObject2 picker = mUiBot.assertDatasets("The Dude");
+        if (!Helper.isAutofillWindowFullScreen(mActivity)) {
+            mActivity.assertInDialogBounds(picker.getVisibleBounds());
+        }
 
         // Asserts results.
         mUiBot.selectDataset("The Dude");

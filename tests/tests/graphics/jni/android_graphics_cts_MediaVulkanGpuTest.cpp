@@ -76,7 +76,8 @@ static void loadMediaAndVerifyFrameImport(JNIEnv *env, jclass, jobject assetMgr,
     // Could not initialize Vulkan due to lack of device support, skip test.
     return;
   }
-  VkImageRenderer renderer(&init, kTestImageWidth, kTestImageHeight);
+  VkImageRenderer renderer(&init, kTestImageWidth, kTestImageHeight,
+                           VK_FORMAT_R8G8B8A8_UNORM, 4);
   ASSERT(renderer.init(env, assetMgr), "Could not init VkImageRenderer.");
 
   // Set up the image reader and media helpers used to get a frames from video.
@@ -105,8 +106,9 @@ static void loadMediaAndVerifyFrameImport(JNIEnv *env, jclass, jobject assetMgr,
 
   // Render the AHardwareBuffer using Vulkan and read back the result.
   std::vector<uint32_t> framePixels;
-  ASSERT(renderer.renderImageAndReadback(vkImage.image(), vkImage.sampler(),
-                                         vkImage.view(), &framePixels),
+  ASSERT(renderer.renderImageAndReadback(
+             vkImage.image(), vkImage.sampler(), vkImage.view(),
+             vkImage.semaphore(), true /* useImmutableSampler */, &framePixels),
          "Could not get frame pixels from Vulkan.");
   ASSERT(framePixels.size() == kTestImageWidth * kTestImageHeight,
          "Unexpected number of pixels in frame");

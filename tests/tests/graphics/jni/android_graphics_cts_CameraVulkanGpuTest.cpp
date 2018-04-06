@@ -59,7 +59,8 @@ static void loadCameraAndVerifyFrameImport(JNIEnv *env, jclass,
     // Could not initialize Vulkan due to lack of device support, skip test.
     return;
   }
-  VkImageRenderer renderer(&init, kTestImageWidth, kTestImageHeight);
+  VkImageRenderer renderer(&init, kTestImageWidth, kTestImageHeight,
+                           VK_FORMAT_R8G8B8A8_UNORM, 4);
   ASSERT(renderer.init(env, assetMgr), "Could not init VkImageRenderer.");
 
   // Initialize image reader and camera helpers.
@@ -88,8 +89,9 @@ static void loadCameraAndVerifyFrameImport(JNIEnv *env, jclass,
 
   // Render the AHardwareBuffer using Vulkan and read back the result.
   std::vector<uint32_t> imageData;
-  ASSERT(renderer.renderImageAndReadback(vkImage.image(), vkImage.sampler(),
-                                         vkImage.view(), &imageData),
+  ASSERT(renderer.renderImageAndReadback(
+             vkImage.image(), vkImage.sampler(), vkImage.view(),
+             vkImage.semaphore(), true /* useImmutableSampler */, &imageData),
          "Could not render/read-back Vulkan pixels.");
 
   // Ensure that we see noise.

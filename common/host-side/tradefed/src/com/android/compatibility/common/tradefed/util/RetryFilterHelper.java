@@ -101,6 +101,10 @@ public class RetryFilterHelper {
      */
     public void validateBuildFingerprint(ITestDevice device) throws DeviceNotAvailableException {
         String oldBuildFingerprint = new LightInvocationResult(getResult()).getBuildFingerprint();
+        if (oldBuildFingerprint == null) {
+            throw new IllegalArgumentException(
+                    "Could not find the build_fingerprint field in the result xml.");
+        }
         String currentBuildFingerprint = device.getProperty("ro.build.fingerprint");
         if (!oldBuildFingerprint.equals(currentBuildFingerprint)) {
             throw new IllegalArgumentException(String.format(

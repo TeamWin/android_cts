@@ -1001,7 +1001,7 @@
             <meta-data android:name="test_required_features" android:value="android.hardware.fingerprint" />
         </activity>
 
-        <activity android:name=".security.BiometricDialogBoundKeysTest"
+        <activity android:name=".security.BiometricPromptBoundKeysTest"
             android:label="@string/sec_fingerprint_dialog_bound_key_test"
             android:configChanges="keyboardHidden|orientation|screenSize" >
             <intent-filter>
@@ -1573,7 +1573,7 @@
 
         <activity android:name=".sensors.OffBodySensorTestActivity"
             android:label="@string/snsr_offbody_sensor_test">
-            <receiver android:name="com.android.cts.verifier.sensors.OffBodySensorTestActivity$AlarmReceiver"></receiver>
+<!--            <receiver android:name="com.android.cts.verifier.sensors.OffBodySensorTestActivity$AlarmReceiver"></receiver>-->
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
                 <category android:name="android.cts.intent.category.MANUAL_TEST" />
@@ -2598,7 +2598,7 @@
         </activity>
 
         <provider
-            android:name="android.support.v4.content.FileProvider"
+            android:name="androidx.core.content.FileProvider"
             android:authorities="com.android.cts.verifier.managedprovisioning.fileprovider"
             android:grantUriPermissions="true"
             android:exported="false">

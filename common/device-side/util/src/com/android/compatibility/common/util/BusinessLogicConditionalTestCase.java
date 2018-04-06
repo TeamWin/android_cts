@@ -26,7 +26,7 @@ public class BusinessLogicConditionalTestCase extends BusinessLogicTestCase {
     @Override
     @Before
     public void handleBusinessLogic() {
-        super.loadBuisnessLogic();
+        super.loadBusinessLogic();
         ensureAuthenticated();
         super.executeBusinessLogic();
     }
