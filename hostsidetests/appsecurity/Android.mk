@@ -30,6 +30,10 @@ LOCAL_CTS_TEST_PACKAGE := android.appsecurity
 # tag this module as a cts test artifact
 LOCAL_COMPATIBILITY_SUITE := cts
 
+LOCAL_REQUIRED_MODULES := \
+	CtsCorruptApkTests_b71360999 \
+	CtsCorruptApkTests_b71361168
+
 include $(BUILD_CTS_HOST_JAVA_LIBRARY)
 
 # Build the test APKs using their own makefiles
