@@ -17,6 +17,7 @@ package com.android.cts.deviceowner;
 
 
 import android.app.admin.DevicePolicyManager;
+import android.app.admin.FreezePeriod;
 import android.app.admin.SystemUpdatePolicy;
 import android.app.admin.SystemUpdatePolicy.ValidationFailedException;
 import android.content.BroadcastReceiver;
@@ -29,6 +30,7 @@ import android.provider.Settings.Global;
 import android.util.Pair;
 
 import java.time.LocalDate;
+import java.time.MonthDay;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.Semaphore;
@@ -255,12 +257,12 @@ public class SystemUpdatePolicyTest extends BaseDeviceOwnerTest {
         setFreezePeriods(policy, dates);
         mDevicePolicyManager.setSystemUpdatePolicy(getWho(), policy);
 
-        List<Pair<Integer, Integer>> loadedFreezePeriods = mDevicePolicyManager
+        List<FreezePeriod> loadedFreezePeriods = mDevicePolicyManager
                 .getSystemUpdatePolicy().getFreezePeriods();
         assertEquals(dates.length / 2, loadedFreezePeriods.size());
         for (int i = 0; i < dates.length; i += 2) {
-            assertEquals(parseDate(dates[i]), (int) loadedFreezePeriods.get(i / 2).first);
-            assertEquals(parseDate(dates[i + 1]), (int) loadedFreezePeriods.get(i / 2).second);
+            assertEquals(parseMonthDay(dates[i]), loadedFreezePeriods.get(i / 2).getStart());
+            assertEquals(parseMonthDay(dates[i + 1]), loadedFreezePeriods.get(i / 2).getEnd());
         }
     }
 
@@ -296,18 +298,16 @@ public class SystemUpdatePolicyTest extends BaseDeviceOwnerTest {
 
     //dates are in MM-DD format
     private void setFreezePeriods(SystemUpdatePolicy policy, String... dates) {
-        List<Pair<Integer, Integer>> periods = new ArrayList<>();
+        List<FreezePeriod> periods = new ArrayList<>();
         for (int i = 0; i < dates.length; i+= 2) {
-            periods.add(new Pair<>(parseDate(dates[i]), parseDate(dates[i + 1])));
+            periods.add(new FreezePeriod(parseMonthDay(dates[i]), parseMonthDay(dates[i + 1])));
         }
         policy.setFreezePeriods(periods);
     }
 
-    private int parseDate(String date) {
-        // Use leap year when parsing date string to handle "02-29", but force round down
-        // to Feb 28th by overriding the year to non-leap year.
-        return  LocalDate.of(2000, Integer.parseInt(date.substring(0, 2)),
-                Integer.parseInt(date.substring(3, 5))).withYear(2001).getDayOfYear();
+    private MonthDay parseMonthDay(String date) {
+        return MonthDay.of(Integer.parseInt(date.substring(0, 2)),
+                Integer.parseInt(date.substring(3, 5)));
     }
 
     private void clearFreezeRecord() throws Exception {
