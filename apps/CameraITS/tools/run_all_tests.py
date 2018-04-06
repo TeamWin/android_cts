@@ -38,11 +38,40 @@ CHART_SCALE_STOP = 1.35
 CHART_SCALE_STEP = 0.025
 FACING_EXTERNAL = 2
 NUM_TRYS = 2
-SCENE3_FILE = os.path.join(os.environ['CAMERA_ITS_TOP'], 'pymodules', 'its',
-                           'test_images', 'ISO12233.png')
+SCENE3_FILE = os.path.join(os.environ["CAMERA_ITS_TOP"], "pymodules", "its",
+                           "test_images", "ISO12233.png")
 SKIP_RET_CODE = 101  # note this must be same as tests/scene*/test_*
 VGA_HEIGHT = 480
 VGA_WIDTH = 640
+
+# Not yet mandated tests
+NOT_YET_MANDATED = {
+        "scene0": [
+                "test_jitter",
+                "test_burst_capture",
+                "test_test_patterns"
+        ],
+        "scene1": [
+                "test_ae_af",
+                "test_ae_precapture_trigger",
+                "test_crop_region_raw",
+                "test_ev_compensation_advanced",
+                "test_ev_compensation_basic",
+                "test_yuv_plus_jpeg"
+        ],
+        "scene2": [
+                "test_num_faces",
+        ],
+        "scene3": [
+                "test_3a_consistency",
+                "test_flip_mirror",
+                "test_lens_movement_reporting",
+                "test_lens_position"
+        ],
+        "scene4": [],
+        "scene5": [],
+        "sensor_fusion": []
+}
 
 
 def calc_camera_fov():
@@ -113,34 +142,6 @@ def main():
                  is setup up front and don't require tester validation.
         dist:    [Experimental] chart distance in cm.
     """
-
-    # Not yet mandated tests
-    NOT_YET_MANDATED = {
-        "scene0": [
-            "test_jitter",
-            "test_burst_capture"
-            ],
-        "scene1": [
-            "test_ae_af",
-            "test_ae_precapture_trigger",
-            "test_crop_region_raw",
-            "test_ev_compensation_advanced",
-            "test_ev_compensation_basic",
-            "test_yuv_plus_jpeg"
-            ],
-        "scene2": [
-            "test_num_faces",
-            ],
-        "scene3": [
-            "test_3a_consistency",
-            "test_flip_mirror",
-            "test_lens_movement_reporting",
-            "test_lens_position"
-            ],
-        "scene4": [],
-        "scene5": [],
-        "sensor_fusion": []
-    }
 
     all_scenes = ["scene0", "scene1", "scene2", "scene3", "scene4", "scene5",
                   "sensor_fusion"]
