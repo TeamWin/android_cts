@@ -55,7 +55,7 @@ public class LocalSliceProvider extends SliceProvider {
                     Answer s = sAnswer != null ? sAnswer : Answers.CALLS_REAL_METHODS;
                     return s.answer(invocation);
                 }));
-        context = new ContextWrapper(context) {
+        Context wrapped = new ContextWrapper(context) {
             @Override
             public Object getSystemService(String name) {
                 if (Context.SLICE_SERVICE.equals(name)) {
@@ -64,7 +64,7 @@ public class LocalSliceProvider extends SliceProvider {
                 return super.getSystemService(name);
             }
         };
-        super.attachInfo(context, info);
+        super.attachInfo(wrapped, info);
     }
 
     @Override
