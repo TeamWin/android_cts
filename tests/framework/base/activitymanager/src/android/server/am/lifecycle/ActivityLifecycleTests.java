@@ -43,6 +43,7 @@ import java.util.Arrays;
 @MediumTest
 @RunWith(AndroidJUnit4.class)
 @Presubmit
+@FlakyTest(bugId = 77652261)
 public class ActivityLifecycleTests extends ActivityLifecycleClientTestBase {
 
     @Test
@@ -121,7 +122,6 @@ public class ActivityLifecycleTests extends ActivityLifecycleClientTestBase {
     }
 
     @Test
-    @FlakyTest(bugId = 77565927)
     public void testRelaunchConfigurationChangedWhileBecomingVisible() throws Exception {
         final Activity becomingVisibleActivity =
                 mFirstActivityTestRule.launchActivity(new Intent());
@@ -226,7 +226,6 @@ public class ActivityLifecycleTests extends ActivityLifecycleClientTestBase {
         LifecycleVerifier.assertRestartAndPauseSequence(FirstActivity.class, getLifecycleLog());
     }
 
-    @FlakyTest(bugId = 74409828)
     @Test
     public void testPausedWhenRecreatedFromInNonFocusedStack() throws Exception {
         // Launch first activity
@@ -435,7 +434,6 @@ public class ActivityLifecycleTests extends ActivityLifecycleClientTestBase {
     /**
      * The that recreate request from an activity is executed immediately.
      */
-    @FlakyTest(bugId = 77565927)
     @Test
     public void testLocalRecreate() throws Exception {
         // Launch the activity that will recreate itself
@@ -464,7 +462,6 @@ public class ActivityLifecycleTests extends ActivityLifecycleClientTestBase {
     }
 
     @Test
-    @FlakyTest(bugId = 65236456)
     public void testOnNewIntent() throws Exception {
         // Launch a singleTop activity
         final Activity singleTopActivity =
@@ -491,7 +488,6 @@ public class ActivityLifecycleTests extends ActivityLifecycleClientTestBase {
     }
 
     @Test
-    @FlakyTest(bugId = 65236456)
     public void testOnNewIntentFromHidden() throws Exception {
         // Launch a singleTop activity
         final Activity singleTopActivity =
@@ -528,7 +524,6 @@ public class ActivityLifecycleTests extends ActivityLifecycleClientTestBase {
     }
 
     @Test
-    @FlakyTest(bugId = 65236456)
     public void testOnNewIntentFromPaused() throws Exception {
         // Launch a singleTop activity
         final Activity singleTopActivity =
