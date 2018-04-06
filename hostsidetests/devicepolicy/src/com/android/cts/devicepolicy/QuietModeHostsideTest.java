@@ -50,6 +50,9 @@ public class QuietModeHostsideTest extends BaseDevicePolicyTest {
     }
 
     public void testQuietMode() throws Exception {
+        if (!mHasFeature) {
+          return;
+        }
         runDeviceTestsAsUser(
                 TEST_PACKAGE,
                 TEST_CLASS,
