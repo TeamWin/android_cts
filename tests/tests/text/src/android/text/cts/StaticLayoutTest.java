@@ -1122,7 +1122,7 @@ public class StaticLayoutTest {
 
     @Test
     public void testVeryLargeString() {
-        final int MAX_COUNT = 1 << 21;
+        final int MAX_COUNT = 1 << 20;
         final int WORD_SIZE = 32;
         char[] longText = new char[MAX_COUNT];
         for (int n = 0; n < MAX_COUNT; n++) {
