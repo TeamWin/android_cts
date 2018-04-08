@@ -22,6 +22,7 @@ import android.app.Notification.MessagingStyle.Message;
 import android.app.NotificationChannel;
 import android.app.NotificationManager;
 import android.app.PendingIntent;
+import android.app.Person;
 import android.app.RemoteInput;
 import android.app.stubs.R;
 import android.content.Context;
@@ -266,21 +267,22 @@ public class NotificationTest extends AndroidTestCase {
         String name = "name";
         String key = "key";
         String uri = "name:name";
-        Notification.Person person = new Notification.Person()
+        Person person = new Person.Builder()
                 .setName(name)
                 .setIcon(Icon.createWithResource(mContext, 1))
                 .setKey(key)
-                .setUri(uri);
+                .setUri(uri)
+                .build();
         mNotification = new Notification.Builder(mContext, CHANNEL.getId())
                 .setSmallIcon(1)
                 .setContentTitle(CONTENT_TITLE)
                 .addPerson(person)
                 .build();
 
-        ArrayList<Notification.Person> restoredPeople = mNotification.extras.getParcelableArrayList(
+        ArrayList<Person> restoredPeople = mNotification.extras.getParcelableArrayList(
                 Notification.EXTRA_PEOPLE_LIST);
         assertNotNull(restoredPeople);
-        Notification.Person restoredPerson = restoredPeople.get(0);
+        Person restoredPerson = restoredPeople.get(0);
         assertNotNull(restoredPerson);
         assertNotNull(restoredPerson.getIcon());
         assertEquals(name, restoredPerson.getName());
@@ -292,12 +294,13 @@ public class NotificationTest extends AndroidTestCase {
         String name = "name";
         String key = "key";
         String uri = "name:name";
-        Notification.Person user = new Notification.Person()
+        Person user = new Person.Builder()
                 .setName(name)
                 .setIcon(Icon.createWithResource(mContext, 1))
                 .setKey(key)
-                .setUri(uri);
-        Notification.Person participant = new Notification.Person().setName("sender");
+                .setUri(uri)
+                .build();
+        Person participant = new Person.Builder().setName("sender").build();
         Notification.MessagingStyle messagingStyle = new Notification.MessagingStyle(user)
                 .addMessage("text", 0, participant)
                 .addMessage(new Message("text 2", 0, participant));
@@ -306,7 +309,7 @@ public class NotificationTest extends AndroidTestCase {
                 .setStyle(messagingStyle)
                 .build();
 
-        Notification.Person restoredPerson = mNotification.extras.getParcelable(
+        Person restoredPerson = mNotification.extras.getParcelable(
                 Notification.EXTRA_MESSAGING_PERSON);
         assertNotNull(restoredPerson);
         assertNotNull(restoredPerson.getIcon());
@@ -466,39 +469,6 @@ public class NotificationTest extends AndroidTestCase {
                 Notification.Action.SEMANTIC_ACTION_DELETE,
                 action.clone().getSemanticAction());
     }
-
-    public void testPerson_constructor() {
-        Notification.Person person = new Notification.Person();
-        assertFalse(person.isBot());
-        assertFalse(person.isImportant());
-        assertNull(person.getIcon());
-        assertNull(person.getKey());
-        assertNull(person.getName());
-        assertNull(person.getUri());
-    }
-
-    public void testPerson_parcelable() {
-        Notification.Person person = new Notification.Person()
-                .setBot(true)
-                .setImportant(true)
-                .setIcon(Icon.createWithResource(mContext, R.drawable.icon_blue))
-                .setKey("key")
-                .setName("Name")
-                .setUri(Uri.fromParts("a", "b", "c").toString());
-
-        Parcel parcel = Parcel.obtain();
-        person.writeToParcel(parcel, 0);
-        parcel.setDataPosition(0);
-        Notification.Person result = Notification.Person.CREATOR.createFromParcel(parcel);
-
-        assertEquals(person.isBot(), result.isBot());
-        assertEquals(person.isImportant(), result.isImportant());
-        assertEquals(person.getIcon().getResId(), result.getIcon().getResId());
-        assertEquals(person.getKey(), result.getKey());
-        assertEquals(person.getName(), result.getName());
-        assertEquals(person.getUri(), result.getUri());
-    }
-
 
     private static RemoteInput newDataOnlyRemoteInput() {
         return new RemoteInput.Builder(DATA_RESULT_KEY)

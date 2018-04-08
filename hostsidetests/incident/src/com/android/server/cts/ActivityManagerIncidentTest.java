@@ -25,9 +25,13 @@ import com.android.server.am.ActivityManagerServiceDumpServicesProto;
 import com.android.server.am.BroadcastQueueProto;
 import com.android.server.am.BroadcastQueueProto.BroadcastSummary;
 import com.android.server.am.BroadcastRecordProto;
+import com.android.server.am.ConnectionRecordProto;
+import com.android.server.am.GrantUriProto;
+import com.android.server.am.NeededUriGrantsProto;
 import com.android.server.am.ProcessRecordProto;
 import com.android.server.am.ServiceRecordProto;
 import com.android.server.am.UidRecordProto;
+import com.android.server.am.UriPermissionOwnerProto;
 
 /**
  * Test to check that the activity manager service properly outputs its dump state.
@@ -96,6 +100,71 @@ mybroadcast:
                 assertFalse(service.getAppinfo().getBaseDir().isEmpty());
                 assertFalse(service.getAppinfo().getDataDir().isEmpty());
             }
+        }
+
+        verifyActivityManagerServiceDumpServicesProto(dump, PRIVACY_NONE);
+    }
+
+    static void verifyActivityManagerServiceDumpServicesProto(ActivityManagerServiceDumpServicesProto dump, final int filterLevel) throws Exception {
+        for (ServicesByUser sbu : dump.getActiveServices().getServicesByUsersList()) {
+            for (ServiceRecordProto srp : sbu.getServiceRecordsList()) {
+                verifyServiceRecordProto(srp, filterLevel);
+            }
+        }
+    }
+
+    private static void verifyServiceRecordProto(ServiceRecordProto srp, final int filterLevel) throws Exception {
+        if (filterLevel == PRIVACY_AUTO) {
+            assertTrue(srp.getAppinfo().getBaseDir().isEmpty());
+            assertTrue(srp.getAppinfo().getResDir().isEmpty());
+            assertTrue(srp.getAppinfo().getDataDir().isEmpty());
+        } else {
+            assertFalse(srp.getAppinfo().getBaseDir().isEmpty());
+            assertFalse(srp.getAppinfo().getDataDir().isEmpty());
+        }
+        for (ServiceRecordProto.StartItem si : srp.getDeliveredStartsList()) {
+            verifyServiceRecordProtoStartItem(si, filterLevel);
+        }
+        for (ServiceRecordProto.StartItem si : srp.getPendingStartsList()) {
+            verifyServiceRecordProtoStartItem(si, filterLevel);
+        }
+        for (ConnectionRecordProto crp : srp.getConnectionsList()) {
+            verifyConnectionRecordProto(crp, filterLevel);
+        }
+    }
+
+    private static void verifyServiceRecordProtoStartItem(ServiceRecordProto.StartItem si, final int filterLevel) throws Exception {
+        verifyNeededUriGrantsProto(si.getNeededGrants(), filterLevel);
+        verifyUriPermissionOwnerProto(si.getUriPermissions(), filterLevel);
+    }
+
+    private static void verifyNeededUriGrantsProto(NeededUriGrantsProto nugp, final int filterLevel) throws Exception {
+        for (GrantUriProto gup : nugp.getGrantsList()) {
+            verifyGrantUriProto(gup, filterLevel);
+        }
+    }
+
+    private static void verifyUriPermissionOwnerProto(UriPermissionOwnerProto upop, final int filterLevel) throws Exception {
+        if (filterLevel == PRIVACY_AUTO) {
+            assertTrue(upop.getOwner().isEmpty());
+        }
+        for (GrantUriProto gup : upop.getReadPermsList()) {
+            verifyGrantUriProto(gup, filterLevel);
+        }
+        for (GrantUriProto gup : upop.getWritePermsList()) {
+            verifyGrantUriProto(gup, filterLevel);
+        }
+    }
+
+    private static void verifyGrantUriProto(GrantUriProto gup, final int filterLevel) throws Exception {
+        if (filterLevel == PRIVACY_AUTO) {
+            assertTrue(gup.getUri().isEmpty());
+        }
+    }
+
+    private static void verifyConnectionRecordProto(ConnectionRecordProto crp, final int filterLevel) throws Exception {
+        for (ConnectionRecordProto.Flag f : crp.getFlagsList()) {
+            assertTrue(ConnectionRecordProto.Flag.getDescriptor().getValues().contains(f.getValueDescriptor()));
         }
     }
 

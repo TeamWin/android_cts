@@ -147,6 +147,14 @@ public class VirtualContainerActivityTest extends AutoFillServiceTestCase {
     }
 
     /**
+     * Focus to password and expect no autofill window event
+     */
+    void focusToPasswordExpectNoWindowEvent() throws Throwable {
+        // TODO should use waitForWindowChange() if we can filter out event of app Activity itself.
+        mActivityRule.runOnUiThread(() -> mActivity.mPassword.changeFocus(true));
+    }
+
+    /**
      * Tests autofilling the virtual views, using the sync / async version of ViewStructure.addChild
      */
     private void autofillTest(boolean sync) throws Exception {
@@ -535,6 +543,7 @@ public class VirtualContainerActivityTest extends AutoFillServiceTestCase {
 
         // Fill in some stuff
         mActivity.mUsername.setText("foo");
+        focusToPasswordExpectNoWindowEvent();
         mActivity.mPassword.setText("bar");
 
         // Trigger save.
@@ -714,7 +723,7 @@ public class VirtualContainerActivityTest extends AutoFillServiceTestCase {
     }
 
     @Test
-    public void testDatasetFiltering() throws Exception {
+    public void testDatasetFiltering() throws Throwable {
         final String aa = "Two A's";
         final String ab = "A and B";
         final String b = "Only B";
@@ -738,7 +747,7 @@ public class VirtualContainerActivityTest extends AutoFillServiceTestCase {
                 .build());
 
         // Trigger auto-fill.
-        focusToUsername();
+        focusToUsernameExpectNoWindowEvent();
         sReplier.getNextFillRequest();
 
         // With no filter text all datasets should be shown

@@ -192,6 +192,7 @@
     <string name="bt_control">Bluetooth Control</string>
     <string name="bt_device_communication">Device Communication</string>
     <string name="bt_le">Bluetooth LE</string>
+    <string name="bt_hid">Bluetooth HID</string>
 
     <string name="bt_toggle_bluetooth">Toggle Bluetooth</string>
     <string name="bt_toggle_instructions">Disable and enable Bluetooth to successfully complete this test.</string>
@@ -223,6 +224,40 @@
         \n\nUse the \"Make Discoverable\" and \"Pick Server\" buttons to connect the two Bluetooth
         devices together and start the test.
     </string>
+
+    <!-- Strings for HidHost and HidDevice activity -->
+    <string name="bt_hid_host_test_name">Bluetooth HID Host Test</string>
+    <string name="bt_hid_host_test_info">
+        Start the CTS Verifier on another device, start the Bluetooth test, and choose
+        \"Bluetooth HID Device\" to complete the test.
+        \n\nClick \"Register app\" and \"Make discoverable\" on another device first, and click
+        \"Select device\". Choose the device from device picker. If the remote device is already
+        paired, unpair it first from system Settings.
+        \n\nAfter the remote device completes the \"Send_report\" command, text \"bluetooth\" should
+        appear in the EditText. Mark the test as passed.
+    </string>
+    <string name="bt_hid_host">Bluetooth HID Host</string>
+    <string name="bt_hid_host_select_device">Select device</string>
+
+    <string name="bt_hid_device_test_name">Bluetooth HID Device Test</string>
+    <string name="bt_hid_device_test_info">
+        Start the CTS Verifier on another device, start the Bluetooth test, and choose
+        \"Bluetooth HID Host\" to complete the test.
+        \n\nFirst, click the \"Register app\" button, and click the \"Make discoverable\" button.
+        \n\nThen, on another device, click the \"Select device" button, and choose this device.
+        \n\nWait until the dialog shows up for pairing two devices.
+        \n\nFinally, click the \"Test send_report\", \"Test reply_report\", \"Test report_error\".
+        \n\nIf all the commands are successful, then click \"Unregister app\" and mark the test as
+        passed.
+    </string>
+
+    <string name="bt_hid_device">Bluetooth HID Device</string>
+    <string name="bt_hid_device_register">Register app</string>
+    <string name="bt_hid_device_unregister">Unregister app</string>
+    <string name="bt_hid_device_send_report">Test Send_report</string>
+    <string name="bt_hid_device_reply_report">Test Reply_report</string>
+    <string name="bt_hid_device_report_error">Test Report_error</string>
+
 
     <string name="bt_secure_server">Secure Server</string>
     <string name="bt_secure_server_instructions">Start the CTS Verifier on another device, start the Bluetooth test, and choose \"Secure Client\" to complete the test.</string>

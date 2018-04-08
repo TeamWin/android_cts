@@ -27,6 +27,7 @@ import android.media.AudioTimestamp;
 import android.media.AudioTrack;
 import android.media.PlaybackParams;
 import android.platform.test.annotations.Presubmit;
+import android.support.test.filters.LargeTest;
 import android.util.Log;
 
 import com.android.compatibility.common.util.CtsAndroidTestCase;
@@ -2261,6 +2262,67 @@ public class AudioTrackTest extends CtsAndroidTestCase {
             track.stop();
         }
         track.release();
+    }
+
+    // Test that AudioTrack stop limits drain to only those frames written at the time of stop.
+    // This ensures consistent stop behavior on Android P and beyond, where data written
+    // immediately after a stop doesn't get caught in the drain.
+    @LargeTest
+    public void testStopDrain() throws Exception {
+        final String TEST_NAME = "testStopDrain";
+        final int TEST_SR = 8000;
+        final int TEST_CONF = AudioFormat.CHANNEL_OUT_MONO; // required for test
+        final int TEST_FORMAT = AudioFormat.ENCODING_PCM_8BIT; // required for test
+        final int TEST_MODE = AudioTrack.MODE_STREAM; // required for test
+        final int TEST_STREAM_TYPE = AudioManager.STREAM_MUSIC;
+
+        final int channelCount = AudioFormat.channelCountFromOutChannelMask(TEST_CONF);
+        final int bytesPerSample = AudioFormat.getBytesPerSample(TEST_FORMAT);
+        final int bytesPerFrame = channelCount * bytesPerSample;
+        final int frameCount = TEST_SR * 3; // 3 seconds of buffer.
+        final int bufferSizeInBytes = frameCount * bytesPerFrame;
+
+        final AudioTrack track = new AudioTrack(
+                TEST_STREAM_TYPE, TEST_SR, TEST_CONF, TEST_FORMAT, bufferSizeInBytes, TEST_MODE);
+
+        try {
+            // Create 6 seconds of data, but send down only 3 seconds to fill buffer.
+            final byte[] soundData = AudioHelper.createSoundDataInByteArray(
+                    bufferSizeInBytes * 2, TEST_SR, 600 /* frequency */, 0 /* sweep */);
+            assertEquals("cannot fill AudioTrack buffer",
+                    bufferSizeInBytes,
+                    track.write(soundData, 0 /* offsetInBytes */, bufferSizeInBytes));
+
+            // Set the track playing.
+            track.play();
+
+            // Note that the timings here are very generous for our test (really the
+            // granularity we need is on the order of a second).  If we don't get scheduled
+            // to run within about a second or so - this should be extremely rare -
+            // the result should be a false pass (rather than a false fail).
+
+            // After 1.5 seconds stop.
+            Thread.sleep(1500 /* millis */); // Assume device starts within 1.5 sec.
+            track.stop();
+
+            // We should drain 1.5 seconds and fill another 3 seconds of data.
+            // We shouldn't be able to write 6 seconds of data - that indicates stop continues
+            // to drain beyond the frames written at the time of stop.
+            int length = 0;
+            while (length < soundData.length) {
+                Thread.sleep(800 /* millis */); // assume larger than AF thread loop period
+                final int delta = track.write(soundData, length, soundData.length - length);
+                assertTrue("track write error: " + delta, delta >= 0);
+                if (delta == 0) break;
+                length += delta;
+            }
+
+            // Check to see we limit the data drained (should be able to exactly fill the buffer).
+            assertEquals("stop drain must be limited " + bufferSizeInBytes + " != " + length,
+                    bufferSizeInBytes, length);
+        } finally {
+            track.release();
+        }
     }
 
     public void testVariableSpeedPlayback() throws Exception {

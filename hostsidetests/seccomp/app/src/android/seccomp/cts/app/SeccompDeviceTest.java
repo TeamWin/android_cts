@@ -85,9 +85,9 @@ public class SeccompDeviceTest {
         } else if (CpuFeatures.isArmCpu()) {
             return "arm";
         } else if (CpuFeatures.isX86_64Cpu()) {
-            return "x86";
-        } else if (CpuFeatures.isX86Cpu()) {
             return "x86_64";
+        } else if (CpuFeatures.isX86Cpu()) {
+            return "x86";
         } else if (CpuFeatures.isMips64Cpu()) {
             return "mips64";
         } else if (CpuFeatures.isMipsCpu()) {

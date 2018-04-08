@@ -186,8 +186,6 @@ public class NotificationIncidentTest extends ProtoDumpTestCase {
     }
 
     private static void verifyNotificationRecordProto(NotificationRecordProto record, final int filterLevel) throws Exception {
-        assertTrue(record.getImportance() > IMPORTANCE_NONE);
-
         // Ensure these fields exist, at least
         record.getFlags();
         record.getChannelId();
