@@ -61,7 +61,6 @@ public class IncidentdIsolatedTest extends ProtoDumpTestCase {
         assertTrue(dump.hasCpuInfo());
         assertTrue(dump.hasCpuFreq());
         assertTrue(dump.hasProcessesAndThreads());
-        assertTrue(dump.hasBatteryType());
     }
 
     public void testReportInPrivateDirectory() throws Exception {

@@ -271,6 +271,52 @@
         </activity>
 
         <!--
+             CTS Verifier Bluetooth Hid Device Test Screen
+                 test category : bt_device_communication
+                 test parent : BluetoothTestActivity
+        -->
+        <activity
+            android:name=".bluetooth.HidDeviceActivity"
+            android:configChanges="keyboardHidden|orientation|screenSize"
+            android:label="@string/bt_hid_device" >
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+
+                <category android:name="android.cts.intent.category.MANUAL_TEST" />
+            </intent-filter>
+
+            <meta-data
+                android:name="test_category"
+                android:value="@string/bt_hid" />
+            <meta-data
+                android:name="test_parent"
+                android:value="com.android.cts.verifier.bluetooth.BluetoothTestActivity" />
+        </activity>
+
+        <!--
+             CTS Verifier Bluetooth Hid Host Test Screen
+                 test category : bt_device_communication
+                 test parent : BluetoothTestActivity
+        -->
+        <activity
+            android:name=".bluetooth.HidHostActivity"
+            android:configChanges="keyboardHidden|orientation|screenSize"
+            android:label="@string/bt_hid_host" >
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+
+                <category android:name="android.cts.intent.category.MANUAL_TEST" />
+            </intent-filter>
+
+            <meta-data
+                android:name="test_category"
+                android:value="@string/bt_hid" />
+            <meta-data
+                android:name="test_parent"
+                android:value="com.android.cts.verifier.bluetooth.BluetoothTestActivity" />
+        </activity>
+
+        <!--
              CTS Verifier Bluetooth Secure Server Test Screen
                  test category : bt_device_communication
                  test parent : BluetoothTestActivity
@@ -1001,7 +1047,7 @@
             <meta-data android:name="test_required_features" android:value="android.hardware.fingerprint" />
         </activity>
 
-        <activity android:name=".security.BiometricDialogBoundKeysTest"
+        <activity android:name=".security.BiometricPromptBoundKeysTest"
             android:label="@string/sec_fingerprint_dialog_bound_key_test"
             android:configChanges="keyboardHidden|orientation|screenSize" >
             <intent-filter>

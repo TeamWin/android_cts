@@ -80,20 +80,24 @@ public class BackupDeviceOwnerHostSideTest extends BaseBackupHostSideTest {
     @After
     @Override
     public void tearDown() throws Exception {
-        try {
-            // Clear the policy.
-            checkDeviceTest("testClearMandatoryBackupTransport");
-            // Re-enable backup service in case something went wrong during the test.
-            checkDeviceTest("testEnableBackupService");
-            // Re-enable backups if they were originally enabled.
-            enableBackup(mBackupsInitiallyEnabled);
-            // Restore originally selected transport.
-            if (mOriginalTransport != null) {
-                setBackupTransport(mOriginalTransport);
+        if (mIsBackupSupported && mIsDeviceManagementSupported) {
+            try {
+                // Clear the policy.
+                checkDeviceTest("testClearMandatoryBackupTransport");
+                // Re-enable backup service in case something went wrong during the test.
+                checkDeviceTest("testEnableBackupService");
+                // Re-enable backups if they were originally enabled.
+                enableBackup(mBackupsInitiallyEnabled);
+                // Restore originally selected transport.
+                if (mOriginalTransport != null) {
+                    setBackupTransport(mOriginalTransport);
+                }
+            } finally {
+                getDevice().removeAdmin(DEVICE_OWNER_COMPONENT, mPrimaryUserId);
+                getDevice().uninstallPackage(DEVICE_OWNER_PKG);
+                super.tearDown();
             }
-        } finally {
-            getDevice().removeAdmin(DEVICE_OWNER_COMPONENT, mPrimaryUserId);
-            getDevice().uninstallPackage(DEVICE_OWNER_PKG);
+        } else {
             super.tearDown();
         }
     }

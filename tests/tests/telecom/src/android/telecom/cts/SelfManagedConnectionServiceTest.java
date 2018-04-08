@@ -40,8 +40,9 @@ import static android.telecom.cts.TestUtils.waitOnAllHandlers;
 
 public class SelfManagedConnectionServiceTest extends BaseTelecomTestWithMockServices {
     private Uri TEST_ADDRESS_1 = Uri.fromParts("sip", "call1@test.com", null);
-    private Uri TEST_ADDRESS_2 = Uri.fromParts("tel", "650-555-1212", null);
-    private Uri TEST_ADDRESS_3 = Uri.fromParts("tel", "650-555-1213", null);
+    private Uri TEST_ADDRESS_2 = Uri.fromParts("tel", "6505551212", null);
+    private Uri TEST_ADDRESS_3 = Uri.fromParts("tel", "6505551213", null);
+    private Uri TEST_ADDRESS_4 = Uri.fromParts(TestUtils.TEST_URI_SCHEME, "fizzle_schmozle", null);
 
     @Override
     protected void setUp() throws Exception {
@@ -54,6 +55,7 @@ public class SelfManagedConnectionServiceTest extends BaseTelecomTestWithMockSer
 
             mTelecomManager.registerPhoneAccount(TestUtils.TEST_SELF_MANAGED_PHONE_ACCOUNT_1);
             mTelecomManager.registerPhoneAccount(TestUtils.TEST_SELF_MANAGED_PHONE_ACCOUNT_2);
+            mTelecomManager.registerPhoneAccount(TestUtils.TEST_SELF_MANAGED_PHONE_ACCOUNT_3);
         }
     }
 
@@ -67,6 +69,7 @@ public class SelfManagedConnectionServiceTest extends BaseTelecomTestWithMockSer
             connectionService.tearDown();
             mTelecomManager.unregisterPhoneAccount(TestUtils.TEST_SELF_MANAGED_HANDLE_1);
             mTelecomManager.unregisterPhoneAccount(TestUtils.TEST_SELF_MANAGED_HANDLE_2);
+            mTelecomManager.unregisterPhoneAccount(TestUtils.TEST_SELF_MANAGED_HANDLE_3);
         }
     }
 
@@ -84,44 +87,46 @@ public class SelfManagedConnectionServiceTest extends BaseTelecomTestWithMockSer
 
         assertTrue(phoneAccountHandles.contains(TestUtils.TEST_SELF_MANAGED_HANDLE_1));
         assertTrue(phoneAccountHandles.contains(TestUtils.TEST_SELF_MANAGED_HANDLE_2));
+        assertTrue(phoneAccountHandles.contains(TestUtils.TEST_SELF_MANAGED_HANDLE_3));
         assertFalse(phoneAccountHandles.contains(TestUtils.TEST_PHONE_ACCOUNT_HANDLE));
     }
 
     /**
      * Tests the ability to successfully register a self-managed
      * {@link android.telecom.PhoneAccount}.
+     * <p>
+     * It should be possible to register self-managed Connection Services which suppor the TEL, SIP,
+     * or other URI schemes.
      */
     public void testRegisterSelfManagedConnectionService() {
         if (!mShouldTestTelecom) {
             return;
         }
+        verifyAccountRegistration(TestUtils.TEST_SELF_MANAGED_HANDLE_1,
+                TestUtils.TEST_SELF_MANAGED_PHONE_ACCOUNT_1);
+        verifyAccountRegistration(TestUtils.TEST_SELF_MANAGED_HANDLE_2,
+                TestUtils.TEST_SELF_MANAGED_PHONE_ACCOUNT_2);
+        verifyAccountRegistration(TestUtils.TEST_SELF_MANAGED_HANDLE_3,
+                TestUtils.TEST_SELF_MANAGED_PHONE_ACCOUNT_3);
+    }
 
+    private void verifyAccountRegistration(PhoneAccountHandle handle, PhoneAccount phoneAccount) {
         // The phone account is registered in the setup method.
-        assertPhoneAccountRegistered(TestUtils.TEST_SELF_MANAGED_HANDLE_1);
-        assertPhoneAccountEnabled(TestUtils.TEST_SELF_MANAGED_HANDLE_1);
-        PhoneAccount registeredAccount = mTelecomManager.getPhoneAccount(
-                TestUtils.TEST_SELF_MANAGED_HANDLE_1);
-
-        assertPhoneAccountRegistered(TestUtils.TEST_SELF_MANAGED_HANDLE_2);
-        assertPhoneAccountEnabled(TestUtils.TEST_SELF_MANAGED_HANDLE_2);
-        PhoneAccount registeredAccount2 = mTelecomManager.getPhoneAccount(
-                TestUtils.TEST_SELF_MANAGED_HANDLE_2);
+        assertPhoneAccountRegistered(handle);
+        assertPhoneAccountEnabled(handle);
+        PhoneAccount registeredAccount = mTelecomManager.getPhoneAccount(handle);
 
         // It should exist and be the same as the previously registered one.
         assertNotNull(registeredAccount);
-        assertNotNull(registeredAccount2);
 
         // We cannot just check for equality of the PhoneAccount since the one we registered is not
         // enabled, and the one we get back after registration is.
-        assertPhoneAccountEquals(TestUtils.TEST_SELF_MANAGED_PHONE_ACCOUNT_1, registeredAccount);
-        assertPhoneAccountEquals(TestUtils.TEST_SELF_MANAGED_PHONE_ACCOUNT_2, registeredAccount2);
+        assertPhoneAccountEquals(phoneAccount, registeredAccount);
 
         // An important assumption is that self-managed PhoneAccounts are automatically
         // enabled by default.
         assertTrue("Self-managed PhoneAccounts must be enabled by default.",
                 registeredAccount.isEnabled());
-        assertTrue("Self-managed PhoneAccounts must be enabled by default.",
-                registeredAccount2.isEnabled());
     }
 
     /**
@@ -211,6 +216,7 @@ public class SelfManagedConnectionServiceTest extends BaseTelecomTestWithMockSer
 
         addAndVerifyIncomingCall(TestUtils.TEST_SELF_MANAGED_HANDLE_1, TEST_ADDRESS_1);
         addAndVerifyIncomingCall(TestUtils.TEST_SELF_MANAGED_HANDLE_2, TEST_ADDRESS_3);
+        addAndVerifyIncomingCall(TestUtils.TEST_SELF_MANAGED_HANDLE_3, TEST_ADDRESS_4);
     }
 
     private void addAndVerifyIncomingCall(PhoneAccountHandle handle, Uri address)
@@ -230,6 +236,7 @@ public class SelfManagedConnectionServiceTest extends BaseTelecomTestWithMockSer
 
         // Expect there to be no managed calls at the moment.
         assertFalse(mTelecomManager.isInManagedCall());
+        assertTrue(mTelecomManager.isInCall());
 
         setDisconnectedAndVerify(connection);
     }
@@ -272,6 +279,8 @@ public class SelfManagedConnectionServiceTest extends BaseTelecomTestWithMockSer
             return;
         }
         placeAndVerifyOutgoingCall(TestUtils.TEST_SELF_MANAGED_HANDLE_1, TEST_ADDRESS_1);
+        placeAndVerifyOutgoingCall(TestUtils.TEST_SELF_MANAGED_HANDLE_2, TEST_ADDRESS_3);
+        placeAndVerifyOutgoingCall(TestUtils.TEST_SELF_MANAGED_HANDLE_3, TEST_ADDRESS_4);
     }
 
     private void placeAndVerifyOutgoingCall(PhoneAccountHandle handle, Uri address) throws Exception {

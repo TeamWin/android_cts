@@ -59,6 +59,7 @@ import java.io.BufferedReader;
 import java.io.File;
 import java.io.InputStream;
 import java.io.InputStreamReader;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.StringTokenizer;
 import java.util.UUID;
@@ -96,6 +97,9 @@ public class MediaPlayerTest extends MediaPlayerTestBase {
     private final Vector<Integer> mSubtitleTrackIndex = new Vector<>();
     private final Monitor mOnSubtitleDataCalled = new Monitor();
     private int mSelectedSubtitleIndex;
+
+    private final LinkedList<MediaTimestamp> mTimestamps = new LinkedList<>();
+    private final Monitor mOnMediaTimeDiscontinuityCalled = new Monitor();
 
     private File mOutFile;
 
@@ -1347,6 +1351,62 @@ public class MediaPlayerTest extends MediaPlayerTestBase {
         assertEquals("MediaPlayer had error in timestamp.",
                 ts1.getAnchorMediaTimeUs() + (long)(playTime * ts1.getMediaClockRate() * 1000),
                 ts2.getAnchorMediaTimeUs(), toleranceUs);
+
+        mMediaPlayer.stop();
+    }
+
+    public void testMediaTimeDiscontinuity() throws Exception {
+        if (!checkLoadResource(
+                R.raw.bbb_s1_320x240_mp4_h264_mp2_800kbps_30fps_aac_lc_5ch_240kbps_44100hz)) {
+            return; // skip
+        }
+
+        mMediaPlayer.setOnSeekCompleteListener(
+                new MediaPlayer.OnSeekCompleteListener() {
+                    @Override
+                    public void onSeekComplete(MediaPlayer mp) {
+                        mOnSeekCompleteCalled.signal();
+                    }
+                });
+        mMediaPlayer.setOnMediaTimeDiscontinuityListener(
+                new MediaPlayer.OnMediaTimeDiscontinuityListener() {
+                    @Override
+                    public void onMediaTimeDiscontinuity(MediaPlayer mp, MediaTimestamp timestamp) {
+                        mOnMediaTimeDiscontinuityCalled.signal();
+                        mTimestamps.add(timestamp);
+                    }
+                });
+        mMediaPlayer.setDisplay(mActivity.getSurfaceHolder());
+        mMediaPlayer.prepare();
+
+        // Timestamp needs to be reported when playback starts.
+        mOnMediaTimeDiscontinuityCalled.reset();
+        mMediaPlayer.start();
+        mOnMediaTimeDiscontinuityCalled.waitForSignal();
+        assertEquals(1.0f, mTimestamps.getLast().getMediaClockRate());
+
+        // Timestamp needs to be reported when seeking is done.
+        mOnSeekCompleteCalled.reset();
+        mOnMediaTimeDiscontinuityCalled.reset();
+        mMediaPlayer.seekTo(3000);
+        mOnSeekCompleteCalled.waitForSignal();
+        while (mTimestamps.getLast().getMediaClockRate() != 1.0f) {
+            // During the seeking the clock might be paused temporarily, but player eventually need
+            // to start the playback after seeking.
+            mOnMediaTimeDiscontinuityCalled.waitForSignal();
+        }
+
+        // Timestamp needs to be updated when playback rate changes.
+        mOnMediaTimeDiscontinuityCalled.reset();
+        mMediaPlayer.setPlaybackParams(new PlaybackParams().setSpeed(0.5f));
+        mOnMediaTimeDiscontinuityCalled.waitForSignal();
+        assertEquals(0.5f, mTimestamps.getLast().getMediaClockRate());
+
+        // Timestamp needs to be updated when player is paused.
+        mOnMediaTimeDiscontinuityCalled.reset();
+        mMediaPlayer.pause();
+        mOnMediaTimeDiscontinuityCalled.waitForSignal();
+        assertEquals(0.0f, mTimestamps.getLast().getMediaClockRate());
 
         mMediaPlayer.stop();
     }

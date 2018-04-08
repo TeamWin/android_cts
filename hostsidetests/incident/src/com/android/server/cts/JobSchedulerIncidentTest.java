@@ -151,9 +151,6 @@ public class JobSchedulerIncidentTest extends ProtoDumpTestCase {
             assertTrue(0 <= he.getUid());
             assertTrue(StopReasonEnum.getDescriptor().getValues()
                     .contains(he.getStopReason().getValueDescriptor()));
-            if (filterLevel == PRIVACY_AUTO) {
-                assertTrue(he.getTag().isEmpty());
-            }
         }
     }
 

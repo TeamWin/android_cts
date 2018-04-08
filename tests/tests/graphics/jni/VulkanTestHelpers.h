@@ -61,10 +61,11 @@ public:
   VkAHardwareBufferImage(VkInit *init);
   ~VkAHardwareBufferImage();
 
-  bool init(AHardwareBuffer *buffer);
+  bool init(AHardwareBuffer *buffer, int syncFd = -1);
   VkImage image() { return mImage; }
   VkSampler sampler() { return mSampler; }
   VkImageView view() { return mView; }
+  VkSemaphore semaphore() { return mSemaphore; }
 
 private:
   VkInit *const mInit;
@@ -73,32 +74,41 @@ private:
   VkSampler mSampler = VK_NULL_HANDLE;
   VkImageView mView = VK_NULL_HANDLE;
   VkSamplerYcbcrConversion mConversion = VK_NULL_HANDLE;
+  VkSemaphore mSemaphore = VK_NULL_HANDLE;
 };
 
 // Renders a provided image to a new texture, then reads back that texture to
 // disk.
 class VkImageRenderer {
 public:
-  VkImageRenderer(VkInit *init, uint32_t width, uint32_t height);
+  VkImageRenderer(VkInit *init, uint32_t width, uint32_t height,
+                  VkFormat format, uint32_t bytesPerPixel);
   ~VkImageRenderer();
 
   bool init(JNIEnv *env, jobject assetMgr);
   bool renderImageAndReadback(VkImage image, VkSampler sampler,
-                              VkImageView view, std::vector<uint32_t> *data);
+                              VkImageView view, VkSemaphore semaphore,
+                              bool useImmutableSampler,
+                              std::vector<uint8_t> *data);
+  bool renderImageAndReadback(VkImage image, VkSampler sampler,
+                              VkImageView view, VkSemaphore semaphore,
+                              bool useImmutableSampler,
+                              std::vector<uint32_t> *data);
 
 private:
   // Cleans up the temporary renderImageAndReadback variables.
   void cleanUpTemporaries();
 
-  VkInit *const mInit = VK_NULL_HANDLE;
-  uint32_t mWidth = 0;
-  uint32_t mHeight = 0;
+  VkInit *const mInit;
+  const uint32_t mWidth;
+  const uint32_t mHeight;
+  const VkFormat mFormat;
+  const VkDeviceSize mResultBufferSize;
   VkImage mDestImage = VK_NULL_HANDLE;
   VkDeviceMemory mDestImageMemory = VK_NULL_HANDLE;
   VkImageView mDestImageView = VK_NULL_HANDLE;
   VkBuffer mResultBuffer = VK_NULL_HANDLE;
   VkDeviceMemory mResultBufferMemory = VK_NULL_HANDLE;
-  VkDeviceSize mResultBufferSize = 0;
   VkDescriptorPool mDescriptorPool = VK_NULL_HANDLE;
   VkCommandPool mCmdPool = VK_NULL_HANDLE;
   VkRenderPass mRenderPass = VK_NULL_HANDLE;

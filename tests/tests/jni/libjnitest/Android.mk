@@ -38,6 +38,8 @@ LOCAL_SRC_FILES := \
 
 LOCAL_C_INCLUDES := $(JNI_H_INCLUDE)
 
+LOCAL_STATIC_LIBRARIES := libbase_ndk
+
 LOCAL_SHARED_LIBRARIES := libdl liblog libnativehelper_compat_libc++
 
 LOCAL_SDK_VERSION := 23

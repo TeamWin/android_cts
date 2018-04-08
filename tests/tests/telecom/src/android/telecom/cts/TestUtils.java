@@ -77,6 +77,10 @@ public class TestUtils {
     public static final PhoneAccountHandle TEST_SELF_MANAGED_HANDLE_2 =
             new PhoneAccountHandle(new ComponentName(PACKAGE, SELF_MANAGED_COMPONENT),
                     SELF_MANAGED_ACCOUNT_ID_2);
+    public static final String SELF_MANAGED_ACCOUNT_ID_3 = "ctstest_SELF_MANAGED_ID_3";
+    public static final PhoneAccountHandle TEST_SELF_MANAGED_HANDLE_3 =
+            new PhoneAccountHandle(new ComponentName(PACKAGE, SELF_MANAGED_COMPONENT),
+                    SELF_MANAGED_ACCOUNT_ID_3);
 
     public static final String ACCOUNT_LABEL = "CTSConnectionService";
     public static final PhoneAccount TEST_PHONE_ACCOUNT = PhoneAccount.builder(
@@ -122,6 +126,18 @@ public class TestUtils {
             .build();
     public static final String REMOTE_ACCOUNT_LABEL = "CTSRemoteConnectionService";
     public static final String SELF_MANAGED_ACCOUNT_LABEL = "android.telecom.cts";
+    public static final String TEST_URI_SCHEME = "foobuzz";
+    public static final PhoneAccount TEST_SELF_MANAGED_PHONE_ACCOUNT_3 = PhoneAccount.builder(
+            TEST_SELF_MANAGED_HANDLE_3, SELF_MANAGED_ACCOUNT_LABEL)
+            .setAddress(Uri.fromParts(TEST_URI_SCHEME, "test@test.com", null))
+            .setSubscriptionAddress(Uri.fromParts(TEST_URI_SCHEME, "test@test.com", null))
+            .setCapabilities(PhoneAccount.CAPABILITY_SELF_MANAGED |
+                    PhoneAccount.CAPABILITY_SUPPORTS_VIDEO_CALLING |
+                    PhoneAccount.CAPABILITY_VIDEO_CALLING)
+            .setHighlightColor(Color.BLUE)
+            .setShortDescription(SELF_MANAGED_ACCOUNT_LABEL)
+            .addSupportedUriScheme(TEST_URI_SCHEME)
+            .build();
     public static final PhoneAccount TEST_SELF_MANAGED_PHONE_ACCOUNT_2 = PhoneAccount.builder(
             TEST_SELF_MANAGED_HANDLE_2, SELF_MANAGED_ACCOUNT_LABEL)
             .setAddress(Uri.parse("sip:test@test.com"))

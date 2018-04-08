@@ -96,8 +96,7 @@ public class ProtoDumpTestCase extends DeviceTestCase implements IBuildReceiver 
      * @throws InvalidProtocolBufferException If there was an error parsing
      *      the proto. Note that a 0 length buffer is not necessarily an error.
      */
-    public <T extends MessageLite> T getDump(Parser<T> parser, String command)
-            throws DeviceNotAvailableException, InvalidProtocolBufferException {
+    public <T extends MessageLite> T getDump(Parser<T> parser, String command) throws Exception {
         final CollectingByteOutputReceiver receiver = new CollectingByteOutputReceiver();
         getDevice().executeShellCommand(command, receiver);
         return parser.parseFrom(receiver.getOutput());
