@@ -54,19 +54,19 @@ public class EuiccManagerTest {
     private static final String ACTIVATION_CODE = "1$LOCALHOST$04386-AGYFT-A74Y8-3F815";
 
     private static final String[] sCallbackActions =
-            new String[] {
-                ACTION_DOWNLOAD_SUBSCRIPTION,
-                ACTION_DELETE_SUBSCRIPTION,
-                ACTION_SWITCH_TO_SUBSCRIPTION,
-                ACTION_START_TEST_RESOLUTION_ACTIVITY,
+            new String[]{
+                    ACTION_DOWNLOAD_SUBSCRIPTION,
+                    ACTION_DELETE_SUBSCRIPTION,
+                    ACTION_SWITCH_TO_SUBSCRIPTION,
+                    ACTION_START_TEST_RESOLUTION_ACTIVITY,
             };
 
-    private MockEuiccManager mMockEuiccManager;
+    private EuiccManager mEuiccManager;
     private CallbackReceiver mCallbackReceiver;
 
     @Before
     public void setUp() throws Exception {
-        mMockEuiccManager = new MockEuiccManager(getContext());
+        mEuiccManager = (EuiccManager) getContext().getSystemService(Context.EUICC_SERVICE);
     }
 
     @After
@@ -79,10 +79,12 @@ public class EuiccManagerTest {
     @Test
     public void testGetEid() {
         // test disabled state only for now
-        mMockEuiccManager.setEnabled(false /* enabled */);
+        if (mEuiccManager.isEnabled()) {
+            return;
+        }
 
         // call getEid()
-        String eid = mMockEuiccManager.getEid();
+        String eid = mEuiccManager.getEid();
 
         // verify result is null
         assertNull(eid);
@@ -91,7 +93,9 @@ public class EuiccManagerTest {
     @Test
     public void testDownloadSubscription() {
         // test disabled state only for now
-        mMockEuiccManager.setEnabled(false /* enabled */);
+        if (mEuiccManager.isEnabled()) {
+            return;
+        }
 
         // set up CountDownLatch and receiver
         CountDownLatch countDownLatch = new CountDownLatch(1);
@@ -103,7 +107,7 @@ public class EuiccManagerTest {
         // call downloadSubscription()
         DownloadableSubscription subscription = createDownloadableSubscription();
         PendingIntent callbackIntent = createCallbackIntent(ACTION_DOWNLOAD_SUBSCRIPTION);
-        mMockEuiccManager.downloadSubscription(
+        mEuiccManager.downloadSubscription(
                 subscription, false /* switchAfterDownload */, callbackIntent);
 
         // wait for callback
@@ -121,10 +125,12 @@ public class EuiccManagerTest {
     @Test
     public void testGetEuiccInfo() {
         // test disabled state only for now
-        mMockEuiccManager.setEnabled(false /* enabled */);
+        if (mEuiccManager.isEnabled()) {
+            return;
+        }
 
         // call getEuiccInfo()
-        EuiccInfo euiccInfo = mMockEuiccManager.getEuiccInfo();
+        EuiccInfo euiccInfo = mEuiccManager.getEuiccInfo();
 
         // verify result is null
         assertNull(euiccInfo);
@@ -133,7 +139,9 @@ public class EuiccManagerTest {
     @Test
     public void testDeleteSubscription() {
         // test disabled state only for now
-        mMockEuiccManager.setEnabled(false /* enabled */);
+        if (mEuiccManager.isEnabled()) {
+            return;
+        }
 
         // set up CountDownLatch and receiver
         CountDownLatch countDownLatch = new CountDownLatch(1);
@@ -143,7 +151,7 @@ public class EuiccManagerTest {
 
         // call deleteSubscription()
         PendingIntent callbackIntent = createCallbackIntent(ACTION_DELETE_SUBSCRIPTION);
-        mMockEuiccManager.deleteSubscription(3, callbackIntent);
+        mEuiccManager.deleteSubscription(3, callbackIntent);
 
         // wait for callback
         try {
@@ -160,7 +168,9 @@ public class EuiccManagerTest {
     @Test
     public void testSwitchToSubscription() {
         // test disabled state only for now
-        mMockEuiccManager.setEnabled(false /* enabled */);
+        if (mEuiccManager.isEnabled()) {
+            return;
+        }
 
         // set up CountDownLatch and receiver
         CountDownLatch countDownLatch = new CountDownLatch(1);
@@ -171,7 +181,7 @@ public class EuiccManagerTest {
 
         // call deleteSubscription()
         PendingIntent callbackIntent = createCallbackIntent(ACTION_SWITCH_TO_SUBSCRIPTION);
-        mMockEuiccManager.switchToSubscription(4, callbackIntent);
+        mEuiccManager.switchToSubscription(4, callbackIntent);
 
         // wait for callback
         try {
@@ -232,25 +242,6 @@ public class EuiccManagerTest {
         Intent intent = new Intent(action);
         return PendingIntent.getBroadcast(
                 getContext(), REQUEST_CODE, intent, PendingIntent.FLAG_UPDATE_CURRENT);
-    }
-
-    /** Mock version of {@link EuiccManager} that overrides {@link EuiccManager#isEnabled()}. */
-    private class MockEuiccManager extends EuiccManager {
-
-        private boolean mEnabled = false;
-
-        public MockEuiccManager(Context context) {
-            super(context);
-        }
-
-        public void setEnabled(boolean enabled) {
-            mEnabled = enabled;
-        }
-
-        @Override
-        public boolean isEnabled() {
-            return mEnabled;
-        }
     }
 
     private static class CallbackReceiver extends BroadcastReceiver {
