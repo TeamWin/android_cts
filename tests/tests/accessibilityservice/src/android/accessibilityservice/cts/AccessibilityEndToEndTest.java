@@ -23,12 +23,20 @@ import android.app.NotificationManager;
 import android.app.PendingIntent;
 import android.app.Service;
 import android.app.UiAutomation;
+import android.appwidget.AppWidgetHost;
+import android.appwidget.AppWidgetManager;
+import android.appwidget.AppWidgetProviderInfo;
+import android.content.ComponentName;
+import android.content.Context;
 import android.content.Intent;
+import android.content.pm.PackageManager;
 import android.content.res.Configuration;
+import android.os.Process;
 import android.test.suitebuilder.annotation.MediumTest;
 import android.text.TextUtils;
 import android.util.Log;
 import android.view.accessibility.AccessibilityEvent;
+import android.view.accessibility.AccessibilityNodeInfo;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.ListView;
@@ -37,6 +45,7 @@ import com.android.cts.accessibilityservice.R;
 
 import java.util.Iterator;
 import java.util.List;
+import java.util.concurrent.TimeoutException;
 
 /**
  * This class performs end-to-end testing of the accessibility feature by
@@ -47,6 +56,14 @@ public class AccessibilityEndToEndTest extends
         AccessibilityActivityTestCase<AccessibilityEndToEndActivity> {
 
     private static final String LOG_TAG = "AccessibilityEndToEndTest";
+
+    private static final String GRANT_BIND_APP_WIDGET_PERMISSION_COMMAND =
+            "appwidget grantbind --package com.android.cts.accessibilityservice --user 0";
+
+    private static final String REVOKE_BIND_APP_WIDGET_PERMISSION_COMMAND =
+            "appwidget revokebind --package com.android.cts.accessibilityservice --user 0";
+
+    private static final String APP_WIDGET_PROVIDER_PACKAGE = "foo.bar.baz";
 
     /**
      * Creates a new instance for testing {@link AccessibilityEndToEndActivity}.
@@ -372,6 +389,203 @@ public class AccessibilityEndToEndTest extends
             },
             TIMEOUT_ASYNC_PROCESSING);
         assertNotNull("Did not receive expected event: " + expected, awaitedEvent);
+    }
+
+    @MediumTest
+    public void testPackageNameCannotBeFaked() throws Exception {
+        getActivity().runOnUiThread(fakePackageNameAndVerify);
+
+        // Make sure event package cannot be faked
+        try {
+            getInstrumentation().getUiAutomation().executeAndWaitForEvent(getInstrumentationAndRunOnMainSyncFindViewByIdAndRequestFocus
+                , verifyEventTypeViewFocusedAndPackageName
+                , TIMEOUT_ASYNC_PROCESSING);
+        } catch (TimeoutException e) {
+            fail("Events from fake package should be fixed to use the correct package");
+        }
+    }
+
+    @MediumTest
+    public void testPackageNameCannotBeFakedAppWidget() throws Exception {
+        if (!hasAppWidgets()) {
+            return;
+        }
+
+        getInstrumentation().runOnMainSync(fakePackageNameAndVerify);
+
+        // Make sure we cannot send events as if from the widget package
+        try {
+            getInstrumentation().getUiAutomation().executeAndWaitForEvent(getInstrumentationAndRunOnMainSyncFindViewByIdAndRequestFocus
+                , verifyEventTypeViewFocusedAndPackageName
+                , TIMEOUT_ASYNC_PROCESSING);
+        } catch (TimeoutException e) {
+            fail("Should not be able to send events from a widget package if no widget hosted");
+        }
+
+        // Create a host and start listening.
+        final AppWidgetHost host = new AppWidgetHost(getInstrumentation().getTargetContext(), 0);
+        host.deleteHost();
+        host.startListening();
+
+        // Well, app do not have this permission unless explicitly granted
+        // by the user. Now we will pretend for the user and grant it.
+        grantBindAppWidgetPermission();
+
+        // Allocate an app widget id to bind.
+        final int appWidgetId = host.allocateAppWidgetId();
+        try {
+            // Grab a provider we defined to be bound.
+            final AppWidgetProviderInfo provider = getAppWidgetProviderInfo();
+
+            // Bind the widget.
+            final boolean widgetBound = getAppWidgetManager().bindAppWidgetIdIfAllowed(
+                    appWidgetId, provider.getProfile(), provider.provider, null);
+            assertTrue(widgetBound);
+
+            // Make sure the app can use the package of a widget it hosts
+            getInstrumentation().runOnMainSync(getInstrumentationUiAutomationRootInActiveWindowAndVerifyPackageName);
+
+            // Make sure we can send events as if from the widget package
+            try {
+                getInstrumentation().getUiAutomation().executeAndWaitForEvent(getInstrumentationAndRunOnMainSyncGetActivityFindViewByIdClick
+                    , verifyEventTypeViewClickedAndAppWidgetProviderPackage
+                    , TIMEOUT_ASYNC_PROCESSING);
+            } catch (TimeoutException e) {
+                fail("Should be able to send events from a widget package if widget hosted");
+            }
+        } finally {
+            // Clean up.
+            host.deleteAppWidgetId(appWidgetId);
+            host.deleteHost();
+            revokeBindAppWidgetPermission();
+        }
+    }
+
+    // LAMBDA
+    private Runnable getInstrumentationUiAutomationRootInActiveWindowAndVerifyPackageName = new Runnable() {
+        @Override
+        public void run(){
+            // Make sure we can report nodes as if from the widget package
+            AccessibilityNodeInfo root = getInstrumentation().getUiAutomation()
+                    .getRootInActiveWindow();
+            assertPackageName(root, APP_WIDGET_PROVIDER_PACKAGE);
+        }
+    };
+
+    // LAMBDA
+    private Runnable getInstrumentationAndRunOnMainSyncFindViewByIdAndRequestFocus = new Runnable() {
+        @Override
+        public void run(){
+            getInstrumentation().runOnMainSync(findViewByIdAndRequestFocus);
+        }
+    };
+
+    // LAMBDA
+    private Runnable getInstrumentationAndRunOnMainSyncGetActivityFindViewByIdClick = new Runnable() {
+        @Override
+        public void run() {
+            getInstrumentation().runOnMainSync(getActivityFindViewByIdClick);
+        }
+    };
+
+    // LAMBDA
+    private Runnable findViewByIdAndRequestFocus = new Runnable() {
+        @Override
+        public void run() {
+            getActivity().findViewById(R.id.button).requestFocus();
+        }
+    };
+
+    // LAMBDA
+    private Runnable getActivityFindViewByIdClick = new Runnable() {
+        @Override
+        public void run() {
+            getActivity().findViewById(R.id.button).performClick();
+        }
+    };
+
+    // LAMBDA
+    private UiAutomation.AccessibilityEventFilter verifyEventTypeViewClickedAndAppWidgetProviderPackage = new UiAutomation.AccessibilityEventFilter() {
+        @Override
+        public boolean accept(AccessibilityEvent event) {
+            return verifyEventTypeAndPackageName(event, AccessibilityEvent.TYPE_VIEW_CLICKED, APP_WIDGET_PROVIDER_PACKAGE);
+        }
+    };
+
+    // LAMBDA
+    private UiAutomation.AccessibilityEventFilter verifyEventTypeViewFocusedAndPackageName = new UiAutomation.AccessibilityEventFilter() {
+        @Override
+        public boolean accept(AccessibilityEvent event) {
+            return verifyEventTypeAndPackageName(event, AccessibilityEvent.TYPE_VIEW_FOCUSED, getActivity().getPackageName());
+        }
+    };
+
+    // LAMBDA Helper
+    private boolean verifyEventTypeAndPackageName(AccessibilityEvent event, int eventType, String packageName) {
+        return event.getEventType() == eventType && event.getPackageName().equals(packageName);
+    }
+
+    // LAMBDA
+    private Runnable fakePackageNameAndVerify = new Runnable() {
+        @Override
+        public void run() {
+            // Set the activity to report fake package for events and nodes
+            getActivity().setReportedPackageName(APP_WIDGET_PROVIDER_PACKAGE);
+
+            // Make sure we cannot report nodes as if from the widget package
+            AccessibilityNodeInfo root = getInstrumentation().getUiAutomation()
+                    .getRootInActiveWindow();
+            assertPackageName(root, getActivity().getPackageName());
+        }
+    };
+
+    private static void assertPackageName(AccessibilityNodeInfo node, String packageName) {
+        if (node == null) {
+            return;
+        }
+        assertEquals(packageName, node.getPackageName());
+        final int childCount = node.getChildCount();
+        for (int i = 0; i < childCount; i++) {
+            AccessibilityNodeInfo child = node.getChild(i);
+            if (child != null) {
+                assertPackageName(child, packageName);
+            }
+        }
+    }
+
+    private AppWidgetProviderInfo getAppWidgetProviderInfo() {
+        final ComponentName componentName = new ComponentName(
+                "foo.bar.baz", "foo.bar.baz.MyAppWidgetProvider");
+        final List<AppWidgetProviderInfo> providers = getAppWidgetManager().getInstalledProviders();
+        final int providerCount = providers.size();
+        for (int i = 0; i < providerCount; i++) {
+            final AppWidgetProviderInfo provider = providers.get(i);
+            if (componentName.equals(provider.provider)
+                    && Process.myUserHandle().equals(provider.getProfile())) {
+                return provider;
+            }
+        }
+        return null;
+    }
+
+    private void grantBindAppWidgetPermission() throws Exception {
+        ShellCommandBuilder.execShellCommand(getInstrumentation().getUiAutomation(),
+                GRANT_BIND_APP_WIDGET_PERMISSION_COMMAND);
+    }
+
+    private void revokeBindAppWidgetPermission() throws Exception {
+        ShellCommandBuilder.execShellCommand(getInstrumentation().getUiAutomation(),
+                REVOKE_BIND_APP_WIDGET_PERMISSION_COMMAND);
+    }
+
+    private AppWidgetManager getAppWidgetManager() {
+        return (AppWidgetManager) getInstrumentation().getTargetContext()
+                .getSystemService(Context.APPWIDGET_SERVICE);
+    }
+
+    private boolean hasAppWidgets() {
+        return getInstrumentation().getTargetContext().getPackageManager()
+                .hasSystemFeature(PackageManager.FEATURE_APP_WIDGETS);
     }
 
     /**
