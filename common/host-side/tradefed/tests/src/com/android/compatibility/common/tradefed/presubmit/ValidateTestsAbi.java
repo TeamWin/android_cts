@@ -44,11 +44,19 @@ import java.util.Set;
 @RunWith(JUnit4.class)
 public class ValidateTestsAbi {
 
-    /**
-     *  This particular module is shipping all it's dependencies in all abis with prebuilt stuff.
-     *  Excluding it for now to have the test setup.
-     */
-    private static final String MODULE_EXCEPTION = "CtsSplitApp";
+    private static final Set<String> MODULE_EXCEPTIONS = new HashSet<>();
+    static {
+        /**
+         *  This particular module is shipping all it's dependencies in all abis with prebuilt stuff.
+         *  Excluding it for now to have the test setup.
+         */
+        MODULE_EXCEPTIONS.add("CtsSplitApp");
+
+        /**
+         *  This module tests for security vulnerabilities when installing attacker-devised APKs.
+         */
+        MODULE_EXCEPTIONS.add("CtsCorruptApkTests");
+    }
 
     private static final Set<String> BINARY_EXCEPTIONS = new HashSet<>();
     static {
@@ -74,13 +82,13 @@ public class ValidateTestsAbi {
         File[] listApks = testcases.listFiles(new FilenameFilter() {
             @Override
             public boolean accept(File dir, String name) {
-                if (name.startsWith(MODULE_EXCEPTION)) {
-                    return false;
+                for (String module : MODULE_EXCEPTIONS) {
+                    if (name.startsWith(module)) {
+                        return false;
+                    }
                 }
-                if (name.endsWith(".apk")) {
-                    return true;
-                }
-                return false;
+
+                return name.endsWith(".apk");
             }
         });
         assertTrue(listApks.length > 0);
