@@ -59,13 +59,13 @@ public class IncidentdTest extends ProtoDumpTestCase {
 
         // Procstats currently has no EXPLICIT or LOCAL fields
 
-        // TODO: create test for Activities
+        // ActivityManagerServiceDumpActivitiesProto has no EXPLICIT or LOCAL fields.
 
         // ActivityManagerServiceDumpBroadcastsProto has no EXPLICIT or LOCAL fields.
 
         ActivityManagerIncidentTest.verifyActivityManagerServiceDumpServicesProto(dump.getAmservices(), filterLevel);
 
-        // TODO: create test for Amprocesses
+        ActivityManagerIncidentTest.verifyActivityManagerServiceDumpProcessesProto(dump.getAmprocesses(), filterLevel);
 
         AlarmManagerIncidentTest.verifyAlarmManagerServiceDumpProto(dump.getAlarm(), filterLevel);
 
