@@ -34,7 +34,7 @@ public class RandomRWTest extends CtsAndroidTestCase {
         super.tearDown();
     }
 
-    @CddTest(requirement="8.2")
+    @CddTest(requirement="8.2/H-0-4,T-0-4")
     public void testRandomRead() throws Exception {
         final int READ_BUFFER_SIZE = 4 * 1024;
         final long fileSize = FileUtil.getFileSizeExceedingMemory(getContext(), READ_BUFFER_SIZE);
@@ -49,7 +49,7 @@ public class RandomRWTest extends CtsAndroidTestCase {
     }
 
     // It is taking too long in some device, and thus cannot run multiple times
-    @CddTest(requirement="8.2")
+    @CddTest(requirement="8.2/H-0-2,T-0-2")
     public void testRandomUpdate() throws Exception {
         final int WRITE_BUFFER_SIZE = 4 * 1024;
         final long usableSpace = Environment.getDataDirectory().getUsableSpace();

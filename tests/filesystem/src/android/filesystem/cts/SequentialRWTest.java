@@ -18,6 +18,7 @@ package android.filesystem.cts;
 
 import com.android.compatibility.common.util.CtsAndroidTestCase;
 
+import com.android.compatibility.common.util.CddTest;
 import com.android.compatibility.common.util.DeviceReportLog;
 import com.android.compatibility.common.util.MeasureRun;
 import com.android.compatibility.common.util.MeasureTime;
@@ -46,7 +47,7 @@ public class SequentialRWTest extends CtsAndroidTestCase {
         super.tearDown();
     }
 
-    @CddTest(requirement="8.2")
+    @CddTest(requirement="8.2/H-0-1,T-0-1")
     public void testSingleSequentialWrite() throws Exception {
         final long fileSize = FileUtil.getFileSizeExceedingMemory(getContext(), BUFFER_SIZE);
         if (fileSize == 0) { // not enough space, give up
@@ -88,7 +89,7 @@ public class SequentialRWTest extends CtsAndroidTestCase {
                 NUMBER_REPETITION, REPORT_LOG_NAME, streamName);
     }
 
-    @CddTest(requirement="8.2")
+    @CddTest(requirement="8.2/H-0-3,T-0-3")
     public void testSingleSequentialRead() throws Exception {
         final long fileSize = FileUtil.getFileSizeExceedingMemory(getContext(), BUFFER_SIZE);
         if (fileSize == 0) { // not enough space, give up
