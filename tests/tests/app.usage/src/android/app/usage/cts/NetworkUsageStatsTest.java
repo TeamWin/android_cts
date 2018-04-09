@@ -36,6 +36,8 @@ import android.telephony.TelephonyManager;
 import android.test.InstrumentationTestCase;
 import android.util.Log;
 
+import com.android.compatibility.common.util.SystemUtil;
+
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
@@ -249,6 +251,12 @@ public class NetworkUsageStatsTest extends InstrumentationTestCase {
             Log.w(LOG_TAG, "App op " + appop + " could not be read.");
         }
         return result;
+    }
+
+    private boolean isInForeground() throws IOException {
+        String result = SystemUtil.runShellCommand(getInstrumentation(),
+                "cmd activity get-uid-state " + Process.myUid());
+        return result.contains("FOREGROUND");
     }
 
     private static String convertStreamToString(InputStream is) {
@@ -630,11 +638,11 @@ public class NetworkUsageStatsTest extends InstrumentationTestCase {
             setAppOpsMode(AppOpsManager.OPSTR_GET_USAGE_STATS, "allow");
             NetworkStats result = null;
             try {
-                // Assume test is running in the background and thus is in STATE_DEFAULT.
+                int currentState = isInForeground() ?
+                        NetworkStats.Bucket.STATE_FOREGROUND : NetworkStats.Bucket.STATE_DEFAULT;
                 result = mNsm.queryDetailsForUidTagState(
                         mNetworkInterfacesToTest[i].getNetworkType(), getSubscriberId(i),
-                        mStartTime, mEndTime, Process.myUid(), NETWORK_TAG,
-                        NetworkStats.Bucket.STATE_DEFAULT);
+                        mStartTime, mEndTime, Process.myUid(), NETWORK_TAG, currentState);
                 assertNotNull(result);
                 NetworkStats.Bucket bucket = new NetworkStats.Bucket();
                 long totalTxPackets = 0;
@@ -644,7 +652,7 @@ public class NetworkUsageStatsTest extends InstrumentationTestCase {
                 while (result.hasNextBucket()) {
                     assertTrue(result.getNextBucket(bucket));
                     assertTimestamps(bucket);
-                    assertEquals(bucket.getState(), NetworkStats.Bucket.STATE_DEFAULT);
+                    assertEquals(bucket.getState(), currentState);
                     assertEquals(bucket.getMetered(), NetworkStats.Bucket.METERED_ALL);
                     assertEquals(bucket.getDefaultNetwork(),
                             NetworkStats.Bucket.DEFAULT_NETWORK_ALL);
