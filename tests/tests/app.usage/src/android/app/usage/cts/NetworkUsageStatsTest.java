@@ -44,6 +44,7 @@ import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.net.URL;
 import java.text.MessageFormat;
+import java.util.ArrayList;
 import java.util.Scanner;
 import java.net.HttpURLConnection;
 
@@ -626,6 +627,23 @@ public class NetworkUsageStatsTest extends InstrumentationTestCase {
                 mStartTime, mEndTime, Process.myUid(), tag, state);
     }
 
+    private void assertAlmostNoUnexpectedTraffic(NetworkStats result, int expectedTag,
+            int expectedState, long maxUnexpected) {
+        long total = 0;
+        NetworkStats.Bucket bucket = new NetworkStats.Bucket();
+        while (result.hasNextBucket()) {
+            assertTrue(result.getNextBucket(bucket));
+            total += bucket.getRxBytes() + bucket.getTxBytes();
+        }
+        if (total <= maxUnexpected) return;
+
+        fail(String.format("More than %d bytes of traffic when querying for "
+                + "tag %s state %s. Last bucket: uid=%d tag=%s state=%s bytes=%d/%d",
+                maxUnexpected, tagToString(expectedTag), stateToString(expectedState),
+                bucket.getUid(), tagToString(bucket.getTag()), stateToString(bucket.getState()),
+                bucket.getRxBytes(), bucket.getTxBytes()));
+    }
+
     public void testUidTagStateDetails() throws Exception {
         for (int i = 0; i < mNetworkInterfacesToTest.length; ++i) {
             // Relatively large tolerance to accommodate for history bucket size.
@@ -636,8 +654,55 @@ public class NetworkUsageStatsTest extends InstrumentationTestCase {
             NetworkStats result = null;
             try {
                 int currentState = isInForeground() ? STATE_FOREGROUND : STATE_DEFAULT;
-                result = getNetworkStatsForTagState(i, NETWORK_TAG, currentState);
-                getTotalAndAssertNotEmpty(result, null, currentState);
+                int otherState = (currentState == STATE_DEFAULT) ? STATE_FOREGROUND : STATE_DEFAULT;
+
+                int[] tagsWithTraffic = {NETWORK_TAG, TAG_NONE};
+                int[] statesWithTraffic = {currentState, STATE_ALL};
+                ArrayList<Long> resultsWithTraffic = new ArrayList<>();
+
+                int[] statesWithNoTraffic = {otherState};
+                int[] tagsWithNoTraffic = {NETWORK_TAG + 1};
+                ArrayList<Long> resultsWithNoTraffic = new ArrayList<>();
+
+                // Expect to see traffic when querying for any combination of a tag in
+                // tagsWithTraffic and a state in statesWithTraffic.
+                for (int tag : tagsWithTraffic) {
+                    for (int state : statesWithTraffic) {
+                        result = getNetworkStatsForTagState(i, tag, state);
+                        resultsWithTraffic.add(getTotalAndAssertNotEmpty(result, tag, state));
+                        result.close();
+                        result = null;
+                    }
+                }
+
+                // Expect that the results are within a few percentage points of each other.
+                // This is ensures that FIN retransmits after the transfer is complete don't cause
+                // the test to be flaky. The test URL currently returns just over 100k so this
+                // should not be too noisy.
+                long firstTotal = resultsWithTraffic.get(0);
+                for (long total : resultsWithTraffic) {
+                    assertTrue(total >= firstTotal * 0.9);
+                    assertTrue(total <= firstTotal * 1.1);
+                }
+
+                // Expect to see no traffic when querying for any tag in tagsWithNoTraffic or any
+                // state in statesWithNoTraffic.
+                for (int tag : tagsWithNoTraffic) {
+                    for (int state : statesWithTraffic) {
+                        result = getNetworkStatsForTagState(i, tag, state);
+                        assertAlmostNoUnexpectedTraffic(result, tag, state, firstTotal / 100);
+                        result.close();
+                        result = null;
+                    }
+                }
+                for (int tag : tagsWithTraffic) {
+                    for (int state : statesWithNoTraffic) {
+                        result = getNetworkStatsForTagState(i, tag, state);
+                        assertAlmostNoUnexpectedTraffic(result, tag, state, firstTotal / 100);
+                        result.close();
+                        result = null;
+                    }
+                }
             } finally {
                 if (result != null) {
                     result.close();
