@@ -50,6 +50,18 @@ import java.net.HttpURLConnection;
 import libcore.io.IoUtils;
 import libcore.io.Streams;
 
+import static android.app.usage.NetworkStats.Bucket.DEFAULT_NETWORK_ALL;
+import static android.app.usage.NetworkStats.Bucket.DEFAULT_NETWORK_NO;
+import static android.app.usage.NetworkStats.Bucket.DEFAULT_NETWORK_YES;
+import static android.app.usage.NetworkStats.Bucket.METERED_ALL;
+import static android.app.usage.NetworkStats.Bucket.METERED_YES;
+import static android.app.usage.NetworkStats.Bucket.METERED_NO;
+import static android.app.usage.NetworkStats.Bucket.STATE_ALL;
+import static android.app.usage.NetworkStats.Bucket.STATE_DEFAULT;
+import static android.app.usage.NetworkStats.Bucket.STATE_FOREGROUND;
+import static android.app.usage.NetworkStats.Bucket.TAG_NONE;
+import static android.app.usage.NetworkStats.Bucket.UID_ALL;
+
 public class NetworkUsageStatsTest extends InstrumentationTestCase {
     private static final String LOG_TAG = "NetworkUsageStatsTest";
     private static final String APPOPS_SET_SHELL_COMMAND = "appops set {0} {1} {2}";
@@ -140,6 +152,7 @@ public class NetworkUsageStatsTest extends InstrumentationTestCase {
                     }
     };
 
+    private String mPkg;
     private NetworkStatsManager mNsm;
     private ConnectivityManager mCm;
     private PackageManager mPm;
@@ -208,6 +221,8 @@ public class NetworkUsageStatsTest extends InstrumentationTestCase {
 
         mPm = getInstrumentation().getContext().getPackageManager();
 
+        mPkg = getInstrumentation().getContext().getPackageName();
+
         mWriteSettingsMode = getAppOpsMode(AppOpsManager.OPSTR_WRITE_SETTINGS);
         setAppOpsMode(AppOpsManager.OPSTR_WRITE_SETTINGS, "allow");
         mUsageStatsMode = getAppOpsMode(AppOpsManager.OPSTR_GET_USAGE_STATS);
@@ -225,28 +240,13 @@ public class NetworkUsageStatsTest extends InstrumentationTestCase {
     }
 
     private void setAppOpsMode(String appop, String mode) throws Exception {
-        final String command = MessageFormat.format(APPOPS_SET_SHELL_COMMAND,
-                getInstrumentation().getContext().getPackageName(), appop, mode);
-        ParcelFileDescriptor pfd = getInstrumentation().getUiAutomation()
-                .executeShellCommand(command);
-        try {
-            Streams.readFully(new FileInputStream(pfd.getFileDescriptor()));
-        } finally {
-            IoUtils.closeQuietly(pfd.getFileDescriptor());
-        }
+        final String command = MessageFormat.format(APPOPS_SET_SHELL_COMMAND, mPkg, appop, mode);
+        SystemUtil.runShellCommand(command);
     }
 
     private String getAppOpsMode(String appop) throws Exception {
-        String result;
-        final String command = MessageFormat.format(APPOPS_GET_SHELL_COMMAND,
-                getInstrumentation().getContext().getPackageName(), appop);
-        ParcelFileDescriptor pfd = getInstrumentation().getUiAutomation()
-                .executeShellCommand(command);
-        try {
-            result = convertStreamToString(new FileInputStream(pfd.getFileDescriptor()));
-        } finally {
-            IoUtils.closeQuietly(pfd.getFileDescriptor());
-        }
+        final String command = MessageFormat.format(APPOPS_GET_SHELL_COMMAND, mPkg, appop);
+        String result = SystemUtil.runShellCommand(command);
         if (result == null) {
             Log.w(LOG_TAG, "App op " + appop + " could not be read.");
         }
@@ -257,12 +257,6 @@ public class NetworkUsageStatsTest extends InstrumentationTestCase {
         String result = SystemUtil.runShellCommand(getInstrumentation(),
                 "cmd activity get-uid-state " + Process.myUid());
         return result.contains("FOREGROUND");
-    }
-
-    private static String convertStreamToString(InputStream is) {
-        try (Scanner scanner = new Scanner(is).useDelimiter("\\A")) {
-            return scanner.hasNext() ? scanner.next() : null;
-        }
     }
 
     private class NetworkCallback extends ConnectivityManager.NetworkCallback {
@@ -359,10 +353,10 @@ public class NetworkUsageStatsTest extends InstrumentationTestCase {
             }
             assertNotNull(bucket);
             assertTimestamps(bucket);
-            assertEquals(bucket.getState(), NetworkStats.Bucket.STATE_ALL);
-            assertEquals(bucket.getUid(), NetworkStats.Bucket.UID_ALL);
-            assertEquals(bucket.getMetered(), NetworkStats.Bucket.METERED_ALL);
-            assertEquals(bucket.getDefaultNetwork(), NetworkStats.Bucket.DEFAULT_NETWORK_ALL);
+            assertEquals(bucket.getState(), STATE_ALL);
+            assertEquals(bucket.getUid(), UID_ALL);
+            assertEquals(bucket.getMetered(), METERED_ALL);
+            assertEquals(bucket.getDefaultNetwork(), DEFAULT_NETWORK_ALL);
             setAppOpsMode(AppOpsManager.OPSTR_GET_USAGE_STATS, "deny");
             try {
                 bucket = mNsm.querySummaryForDevice(
@@ -393,10 +387,10 @@ public class NetworkUsageStatsTest extends InstrumentationTestCase {
             }
             assertNotNull(bucket);
             assertTimestamps(bucket);
-            assertEquals(bucket.getState(), NetworkStats.Bucket.STATE_ALL);
-            assertEquals(bucket.getUid(), NetworkStats.Bucket.UID_ALL);
-            assertEquals(bucket.getMetered(), NetworkStats.Bucket.METERED_ALL);
-            assertEquals(bucket.getDefaultNetwork(), NetworkStats.Bucket.DEFAULT_NETWORK_ALL);
+            assertEquals(bucket.getState(), STATE_ALL);
+            assertEquals(bucket.getUid(), UID_ALL);
+            assertEquals(bucket.getMetered(), METERED_ALL);
+            assertEquals(bucket.getDefaultNetwork(), DEFAULT_NETWORK_ALL);
             setAppOpsMode(AppOpsManager.OPSTR_GET_USAGE_STATS, "deny");
             try {
                 bucket = mNsm.querySummaryForUser(
@@ -431,10 +425,9 @@ public class NetworkUsageStatsTest extends InstrumentationTestCase {
                 boolean hasCorrectMetering = false;
                 boolean hasCorrectIsDefault = false;
                 int expectedMetering = mNetworkInterfacesToTest[i].getMetered() ?
-                        NetworkStats.Bucket.METERED_YES : NetworkStats.Bucket.METERED_NO;
+                        METERED_YES : METERED_NO;
                 int expectedIsDefault = mNetworkInterfacesToTest[i].getIsDefault() ?
-                        NetworkStats.Bucket.DEFAULT_NETWORK_YES :
-                        NetworkStats.Bucket.DEFAULT_NETWORK_NO;
+                        DEFAULT_NETWORK_YES : DEFAULT_NETWORK_NO;
                 while (result.hasNextBucket()) {
                     assertTrue(result.getNextBucket(bucket));
                     assertTimestamps(bucket);
@@ -539,10 +532,9 @@ public class NetworkUsageStatsTest extends InstrumentationTestCase {
                 while (result.hasNextBucket()) {
                     assertTrue(result.getNextBucket(bucket));
                     assertTimestamps(bucket);
-                    assertEquals(bucket.getState(), NetworkStats.Bucket.STATE_ALL);
-                    assertEquals(bucket.getMetered(), NetworkStats.Bucket.METERED_ALL);
-                    assertEquals(bucket.getDefaultNetwork(),
-                            NetworkStats.Bucket.DEFAULT_NETWORK_ALL);
+                    assertEquals(bucket.getState(), STATE_ALL);
+                    assertEquals(bucket.getMetered(), METERED_ALL);
+                    assertEquals(bucket.getDefaultNetwork(), DEFAULT_NETWORK_ALL);
                     assertEquals(bucket.getUid(), Process.myUid());
                     totalTxPackets += bucket.getTxPackets();
                     totalRxPackets += bucket.getRxPackets();
@@ -592,10 +584,9 @@ public class NetworkUsageStatsTest extends InstrumentationTestCase {
                 while (result.hasNextBucket()) {
                     assertTrue(result.getNextBucket(bucket));
                     assertTimestamps(bucket);
-                    assertEquals(bucket.getState(), NetworkStats.Bucket.STATE_ALL);
-                    assertEquals(bucket.getMetered(), NetworkStats.Bucket.METERED_ALL);
-                    assertEquals(bucket.getDefaultNetwork(),
-                            NetworkStats.Bucket.DEFAULT_NETWORK_ALL);
+                    assertEquals(bucket.getState(), STATE_ALL);
+                    assertEquals(bucket.getMetered(), METERED_ALL);
+                    assertEquals(bucket.getDefaultNetwork(), DEFAULT_NETWORK_ALL);
                     assertEquals(bucket.getUid(), Process.myUid());
                     if (bucket.getTag() == NETWORK_TAG) {
                         totalTxPackets += bucket.getTxPackets();
@@ -629,6 +620,12 @@ public class NetworkUsageStatsTest extends InstrumentationTestCase {
         }
     }
 
+    private NetworkStats getNetworkStatsForTagState(int i, int tag, int state) {
+        return mNsm.queryDetailsForUidTagState(
+                mNetworkInterfacesToTest[i].getNetworkType(), getSubscriberId(i),
+                mStartTime, mEndTime, Process.myUid(), tag, state);
+    }
+
     public void testUidTagStateDetails() throws Exception {
         for (int i = 0; i < mNetworkInterfacesToTest.length; ++i) {
             // Relatively large tolerance to accommodate for history bucket size.
@@ -638,40 +635,9 @@ public class NetworkUsageStatsTest extends InstrumentationTestCase {
             setAppOpsMode(AppOpsManager.OPSTR_GET_USAGE_STATS, "allow");
             NetworkStats result = null;
             try {
-                int currentState = isInForeground() ?
-                        NetworkStats.Bucket.STATE_FOREGROUND : NetworkStats.Bucket.STATE_DEFAULT;
-                result = mNsm.queryDetailsForUidTagState(
-                        mNetworkInterfacesToTest[i].getNetworkType(), getSubscriberId(i),
-                        mStartTime, mEndTime, Process.myUid(), NETWORK_TAG, currentState);
-                assertNotNull(result);
-                NetworkStats.Bucket bucket = new NetworkStats.Bucket();
-                long totalTxPackets = 0;
-                long totalRxPackets = 0;
-                long totalTxBytes = 0;
-                long totalRxBytes = 0;
-                while (result.hasNextBucket()) {
-                    assertTrue(result.getNextBucket(bucket));
-                    assertTimestamps(bucket);
-                    assertEquals(bucket.getState(), currentState);
-                    assertEquals(bucket.getMetered(), NetworkStats.Bucket.METERED_ALL);
-                    assertEquals(bucket.getDefaultNetwork(),
-                            NetworkStats.Bucket.DEFAULT_NETWORK_ALL);
-                    assertEquals(bucket.getUid(), Process.myUid());
-                    if (bucket.getTag() == NETWORK_TAG) {
-                        totalTxPackets += bucket.getTxPackets();
-                        totalRxPackets += bucket.getRxPackets();
-                        totalTxBytes += bucket.getTxBytes();
-                        totalRxBytes += bucket.getRxBytes();
-                    }
-                }
-                assertTrue("No Rx bytes tagged with 0x" + Integer.toHexString(NETWORK_TAG)
-                        + " for uid " + Process.myUid(), totalRxBytes > 0);
-                assertTrue("No Rx packets tagged with 0x" + Integer.toHexString(NETWORK_TAG)
-                        + " for uid " + Process.myUid(), totalRxPackets > 0);
-                assertTrue("No Tx bytes tagged with 0x" + Integer.toHexString(NETWORK_TAG)
-                        + " for uid " + Process.myUid(), totalTxBytes > 0);
-                assertTrue("No Tx packets tagged with 0x" + Integer.toHexString(NETWORK_TAG)
-                        + " for uid " + Process.myUid(), totalTxPackets > 0);
+                int currentState = isInForeground() ? STATE_FOREGROUND : STATE_DEFAULT;
+                result = getNetworkStatsForTagState(i, NETWORK_TAG, currentState);
+                getTotalAndAssertNotEmpty(result, null, currentState);
             } finally {
                 if (result != null) {
                     result.close();
@@ -713,7 +679,31 @@ public class NetworkUsageStatsTest extends InstrumentationTestCase {
         }
     }
 
-    private long getTotalAndAssertNotEmpty(NetworkStats result) {
+    private String tagToString(Integer tag) {
+        if (tag == null) return "null";
+        switch (tag) {
+            case TAG_NONE:
+                return "TAG_NONE";
+            default:
+                return "0x" + Integer.toHexString(tag);
+        }
+    }
+
+    private String stateToString(Integer state) {
+        if (state == null) return "null";
+        switch (state) {
+            case STATE_ALL:
+                return "STATE_ALL";
+            case STATE_DEFAULT:
+                return "STATE_DEFAULT";
+            case STATE_FOREGROUND:
+                return "STATE_FOREGROUND";
+        }
+        throw new IllegalArgumentException("Unknown state " + state);
+    }
+
+    private long getTotalAndAssertNotEmpty(NetworkStats result, Integer expectedTag,
+            Integer expectedState) {
         assertTrue(result != null);
         NetworkStats.Bucket bucket = new NetworkStats.Bucket();
         long totalTxPackets = 0;
@@ -723,10 +713,10 @@ public class NetworkUsageStatsTest extends InstrumentationTestCase {
         while (result.hasNextBucket()) {
             assertTrue(result.getNextBucket(bucket));
             assertTimestamps(bucket);
-            assertEquals(bucket.getState(), NetworkStats.Bucket.STATE_ALL);
-            assertEquals(bucket.getMetered(), NetworkStats.Bucket.METERED_ALL);
-            assertEquals(bucket.getDefaultNetwork(),
-                    NetworkStats.Bucket.DEFAULT_NETWORK_ALL);
+            if (expectedTag != null) assertEquals(bucket.getTag(), (int) expectedTag);
+            if (expectedState != null) assertEquals(bucket.getState(), (int) expectedState);
+            assertEquals(bucket.getMetered(), METERED_ALL);
+            assertEquals(bucket.getDefaultNetwork(), DEFAULT_NETWORK_ALL);
             if (bucket.getUid() == Process.myUid()) {
                 totalTxPackets += bucket.getTxPackets();
                 totalRxPackets += bucket.getRxPackets();
@@ -735,12 +725,18 @@ public class NetworkUsageStatsTest extends InstrumentationTestCase {
             }
         }
         assertFalse(result.getNextBucket(bucket));
-        assertTrue("No Rx bytes usage for uid " + Process.myUid(), totalRxBytes > 0);
-        assertTrue("No Rx packets usage for uid " + Process.myUid(), totalRxPackets > 0);
-        assertTrue("No Tx bytes usage for uid " + Process.myUid(), totalTxBytes > 0);
-        assertTrue("No Tx packets usage for uid " + Process.myUid(), totalTxPackets > 0);
+        String msg = String.format("uid %d tag %s state %s",
+                Process.myUid(), tagToString(expectedTag), stateToString(expectedState));
+        assertTrue("No Rx bytes usage for " + msg, totalRxBytes > 0);
+        assertTrue("No Rx packets usage for " + msg, totalRxPackets > 0);
+        assertTrue("No Tx bytes usage for " + msg, totalTxBytes > 0);
+        assertTrue("No Tx packets usage for " + msg, totalTxPackets > 0);
 
         return totalRxBytes + totalTxBytes;
+    }
+
+    private long getTotalAndAssertNotEmpty(NetworkStats result) {
+        return getTotalAndAssertNotEmpty(result, null, STATE_ALL);
     }
 
     private void assertTimestamps(final NetworkStats.Bucket bucket) {
