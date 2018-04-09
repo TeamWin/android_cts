@@ -122,7 +122,7 @@ public class CaptioningManagerTest extends InstrumentationTestCase {
         execShellCommand("settings put secure " + name + " " + value);
     }
 
-    private void execShellCommand(String cmd) {
+    public void execShellCommand(String cmd) {
         ParcelFileDescriptor pfd = mUiAutomation.executeShellCommand(cmd);
         InputStream is = new FileInputStream(pfd.getFileDescriptor());
         try {
