@@ -16,7 +16,9 @@
 
 package android.telephony.cts;
 
+import static android.net.NetworkCapabilities.NET_CAPABILITY_INTERNET;
 import static android.net.NetworkCapabilities.NET_CAPABILITY_NOT_METERED;
+import static android.net.NetworkCapabilities.NET_CAPABILITY_NOT_RESTRICTED;
 import static android.net.NetworkCapabilities.TRANSPORT_CELLULAR;
 
 import static org.junit.Assert.assertEquals;
@@ -237,7 +239,9 @@ public class SubscriptionManagerTest {
                 .getSystemService(ConnectivityManager.class);
         for (Network net : cm.getAllNetworks()) {
             final NetworkCapabilities caps = cm.getNetworkCapabilities(net);
-            if (caps != null && caps.hasTransport(TRANSPORT_CELLULAR)) {
+            if (caps != null && caps.hasTransport(TRANSPORT_CELLULAR)
+                    && caps.hasCapability(NET_CAPABILITY_INTERNET)
+                    && caps.hasCapability(NET_CAPABILITY_NOT_RESTRICTED)) {
                 return net;
             }
         }
