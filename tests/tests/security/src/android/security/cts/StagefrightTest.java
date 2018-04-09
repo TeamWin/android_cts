@@ -244,6 +244,11 @@ public class StagefrightTest extends InstrumentationTestCase {
      ***********************************************************/
 
     @SecurityTest
+    public void testStagefright_b72165027() throws Exception {
+        doStagefrightTest(R.raw.bug_72165027);
+    }
+
+    @SecurityTest
     public void testStagefright_bug_65483665() throws Exception {
         doStagefrightTest(R.raw.bug_65483665);
     }
@@ -257,6 +262,11 @@ public class StagefrightTest extends InstrumentationTestCase {
      to prevent merge conflicts, add M tests below this comment,
      before any existing test methods
      ***********************************************************/
+
+    @SecurityTest
+    public void testStagefright_bug_70897454() throws Exception {
+        doStagefrightTestRawBlob(R.raw.b70897454_avc, "video/avc", 320, 420);
+    }
 
     @SecurityTest
     public void testStagefright_bug_69478425() throws Exception {
@@ -906,6 +916,11 @@ public class StagefrightTest extends InstrumentationTestCase {
     @SecurityTest
     public void testBug_37930177() throws Exception {
         doStagefrightTestRawBlob(R.raw.bug_37930177_hevc, "video/hevc", 320, 240);
+    }
+
+    @SecurityTest
+    public void testBug_70897394() throws Exception {
+        doStagefrightTestRawBlob(R.raw.bug_70897394_avc, "video/avc", 320, 240);
     }
 
     private void runWithTimeout(Runnable runner, int timeout) {
