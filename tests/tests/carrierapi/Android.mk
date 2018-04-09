@@ -38,4 +38,10 @@ LOCAL_COMPATIBILITY_SUITE := cts vts general-tests
 LOCAL_JAVA_LIBRARIES += android.test.runner.stubs telephony-common
 LOCAL_JAVA_LIBRARIES += android.test.base.stubs
 
+# This APK must be signed to match the test SIM's cert whitelist.
+# While "testkey" is the default, there are different per-device testkeys, so
+# hard-code the AOSP default key to ensure it is used regardless of build
+# environment.
+LOCAL_CERTIFICATE := build/make/target/product/security/testkey
+
 include $(BUILD_CTS_PACKAGE)
