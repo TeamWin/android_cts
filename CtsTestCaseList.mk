@@ -111,6 +111,7 @@ cts_support_packages := \
     CtsSimpleApp \
     CtsSimplePreMApp \
     CtsSomeAccessibilityServices \
+    CtsAccessibilityWidgetProvider \
     CtsSyncInvalidAccountAuthorityTestCases \
     CtsThemeDeviceApp \
     TestDeviceSetup \
