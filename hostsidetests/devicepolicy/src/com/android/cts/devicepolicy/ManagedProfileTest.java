@@ -203,6 +203,9 @@ public class ManagedProfileTest extends BaseDevicePolicyTest {
 
     /** Profile should get locked if it is not in foreground no matter what. */
     public void testWorkProfileTimeoutBackground() throws Exception {
+        if (!mHasFeature) {
+            return;
+        }
         setUpWorkProfileTimeout();
 
         startDummyActivity(mPrimaryUserId, true);
@@ -213,6 +216,9 @@ public class ManagedProfileTest extends BaseDevicePolicyTest {
 
     /** Profile should get locked if it is in foreground but with no user activity. */
     public void testWorkProfileTimeoutIdleActivity() throws Exception {
+        if (!mHasFeature) {
+            return;
+        }
         setUpWorkProfileTimeout();
 
         startDummyActivity(mProfileUserId, false);
@@ -223,6 +229,9 @@ public class ManagedProfileTest extends BaseDevicePolicyTest {
 
     /** User activity in profile should prevent it from locking. */
     public void testWorkProfileTimeoutUserActivity() throws Exception {
+        if (!mHasFeature) {
+            return;
+        }
         setUpWorkProfileTimeout();
 
         startDummyActivity(mProfileUserId, false);
@@ -233,6 +242,9 @@ public class ManagedProfileTest extends BaseDevicePolicyTest {
 
     /** Keep screen on window flag in the profile should prevent it from locking. */
     public void testWorkProfileTimeoutKeepScreenOnWindow() throws Exception {
+        if (!mHasFeature) {
+            return;
+        }
         setUpWorkProfileTimeout();
 
         startDummyActivity(mProfileUserId, true);
