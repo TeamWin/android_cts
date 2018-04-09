@@ -33,6 +33,7 @@
 #include <unordered_set>
 #include <vector>
 
+#include <android-base/strings.h>
 #include <nativehelper/JNIHelp.h>
 #include <nativehelper/ScopedLocalRef.h>
 #include <nativehelper/ScopedUtfChars.h>
@@ -75,13 +76,14 @@ static bool is_directory(const std::string& path) {
   return false;
 }
 
-static bool not_accessible(const std::string& library, const std::string& err) {
-  return err.find("dlopen failed: library \"" + library + "\"") == 0 &&
+static bool not_accessible(const std::string& err) {
+  return err.find("dlopen failed: library \"") == 0 &&
          err.find("is not accessible for the namespace \"classloader-namespace\"") != std::string::npos;
 }
 
-static bool not_found(const std::string& library, const std::string& err) {
-  return err == "dlopen failed: library \"" + library + "\" not found";
+static bool not_found(const std::string& err) {
+  return err.find("dlopen failed: library \"") == 0 &&
+         err.find("\" not found") != std::string::npos;
 }
 
 static bool wrong_arch(const std::string& library, const std::string& err) {
@@ -91,21 +93,32 @@ static bool wrong_arch(const std::string& library, const std::string& err) {
   return err.find("dlopen failed: \"" + library + "\" has unexpected e_machine: ") == 0;
 }
 
+static bool is_library_on_path(const std::vector<std::string>& library_search_paths,
+                               const std::string& baselib,
+                               const std::string& path) {
+  for (const auto& search_path : library_search_paths) {
+    if (search_path + "/" + baselib == path) {
+      return true;
+    }
+  }
+  return false;
+}
+
 static bool check_lib(const std::string& path,
-                      const std::string& library_path,
+                      const std::vector<std::string>& library_search_paths,
                       const std::unordered_set<std::string>& libraries,
                       std::vector<std::string>* errors) {
   std::unique_ptr<void, int (*)(void*)> handle(dlopen(path.c_str(), RTLD_NOW), dlclose);
 
   // The current restrictions on public libraries:
-  //  - It must exist only in the top level directory of "library_path".
+  //  - It must exist only in the top level directory of "library_search_paths".
   //  - No library with the same name can be found in a sub directory.
   //  - Each public library does not contain any directory components.
 
   // Check if this library should be considered a public library.
   std::string baselib = basename(path.c_str());
   if (libraries.find(baselib) != libraries.end() &&
-      library_path + "/" + baselib == path) {
+      is_library_on_path(library_search_paths, baselib, path)) {
     if (handle.get() == nullptr) {
       errors->push_back("The library \"" + path +
                         "\" is a public library but it cannot be loaded: " + dlerror());
@@ -117,7 +130,7 @@ static bool check_lib(const std::string& path,
   } else { // (handle == nullptr && !shouldBeAccessible(path))
     // Check the error message
     std::string err = dlerror();
-    if (!not_accessible(path, err) && !not_found(path, err) && !wrong_arch(path, err)) {
+    if (!not_accessible(err) && !not_found(err) && !wrong_arch(path, err)) {
       errors->push_back("unexpected dlerror: " + err);
       return false;
     }
@@ -126,6 +139,7 @@ static bool check_lib(const std::string& path,
 }
 
 static bool check_path(const std::string& library_path,
+                       const std::vector<std::string>& library_search_paths,
                        const std::unordered_set<std::string>& libraries,
                        std::vector<std::string>* errors) {
   bool success = true;
@@ -152,7 +166,7 @@ static bool check_path(const std::string& library_path,
       std::string path = dir + "/" + dp->d_name;
       if (is_directory(path)) {
         dirs.push_back(path);
-      } else if (!check_lib(path, library_path, libraries, errors)) {
+      } else if (!check_lib(path, library_search_paths, libraries, errors)) {
         success = false;
       }
     }
@@ -209,6 +223,9 @@ static bool jobject_array_to_set(JNIEnv* env,
   return success;
 }
 
+// This is not public function but only known way to get search path of the default namespace.
+extern "C" void android_get_LD_LIBRARY_PATH(char*, size_t) __attribute__((__weak__));
+
 extern "C" JNIEXPORT jstring JNICALL
     Java_android_jni_cts_LinkerNamespacesHelper_runAccessibilityTestImpl(
         JNIEnv* env,
@@ -233,7 +250,28 @@ extern "C" JNIEXPORT jstring JNICALL
   }
 
   // Check the system libraries.
-  if (!check_path(kSystemLibraryPath, system_public_libraries, &errors)) {
+
+  // Check current search path and add the rest of search path configured for
+  // the default namepsace.
+  char default_search_paths[PATH_MAX];
+  android_get_LD_LIBRARY_PATH(default_search_paths, sizeof(default_search_paths));
+
+
+  std::vector<std::string> library_search_paths = android::base::Split(default_search_paths, ":");
+  // Remove everything pointing outside of /system/lib*
+  library_search_paths.erase(
+      std::remove_if(library_search_paths.begin(),
+                     library_search_paths.end(),
+                     [](const std::string& path) {
+                       return !android::base::StartsWith(path, "/system/lib");
+                     }),
+      library_search_paths.end());
+
+  // This path should be tested too - this is because apps may rely on some
+  // libraries being available in /system/${LIB}/
+  library_search_paths.push_back(kSystemLibraryPath);
+
+  if (!check_path(kSystemLibraryPath, library_search_paths, system_public_libraries, &errors)) {
     success = false;
   }
 
@@ -244,7 +282,7 @@ extern "C" JNIEXPORT jstring JNICALL
     if (handle == nullptr) {
       std::string err = dlerror();
       // The libraries should be present and produce specific dlerror when inaccessible.
-      if (!not_accessible(library, err)) {
+      if (!not_accessible(err)) {
           errors.push_back("Mandatory system library \"" + library + "\" failed to load with unexpected error: " + err);
           success = false;
       }
@@ -254,7 +292,7 @@ extern "C" JNIEXPORT jstring JNICALL
   }
 
   // Check the vendor libraries.
-  if (!check_path(kVendorLibraryPath, vendor_public_libraries, &errors)) {
+  if (!check_path(kVendorLibraryPath, { kVendorLibraryPath }, vendor_public_libraries, &errors)) {
     success = false;
   }
 
