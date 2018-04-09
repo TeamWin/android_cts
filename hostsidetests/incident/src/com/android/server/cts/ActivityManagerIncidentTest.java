@@ -16,22 +16,27 @@
 
 package com.android.server.cts;
 
+import com.android.server.am.ActiveInstrumentationProto;
 import com.android.server.am.ActiveServicesProto;
 import com.android.server.am.ActiveServicesProto.ServicesByUser;
 import com.android.server.am.ActivityManagerServiceDumpBroadcastsProto;
 import com.android.server.am.ActivityManagerServiceDumpProcessesProto;
 import com.android.server.am.ActivityManagerServiceDumpProcessesProto.LruProcesses;
 import com.android.server.am.ActivityManagerServiceDumpServicesProto;
+import com.android.server.am.AppErrorsProto;
+import com.android.server.am.AppTimeTrackerProto;
 import com.android.server.am.BroadcastQueueProto;
 import com.android.server.am.BroadcastQueueProto.BroadcastSummary;
 import com.android.server.am.BroadcastRecordProto;
 import com.android.server.am.ConnectionRecordProto;
 import com.android.server.am.GrantUriProto;
+import com.android.server.am.ImportanceTokenProto;
 import com.android.server.am.NeededUriGrantsProto;
 import com.android.server.am.ProcessRecordProto;
 import com.android.server.am.ServiceRecordProto;
 import com.android.server.am.UidRecordProto;
 import com.android.server.am.UriPermissionOwnerProto;
+import com.android.server.am.VrControllerProto;
 
 /**
  * Test to check that the activity manager service properly outputs its dump state.
@@ -201,5 +206,75 @@ mybroadcast:
         assertTrue(dump.getUidObserversCount() > 0);
         assertTrue(dump.getAdjSeq() > 0);
         assertTrue(dump.getLruSeq() > 0);
+
+        verifyActivityManagerServiceDumpProcessesProto(dump, PRIVACY_NONE);
+    }
+
+    static void verifyActivityManagerServiceDumpProcessesProto(ActivityManagerServiceDumpProcessesProto dump, final int filterLevel) throws Exception {
+        for (ActiveInstrumentationProto aip : dump.getActiveInstrumentationsList()) {
+            verifyActiveInstrumentationProto(aip, filterLevel);
+        }
+        for (UidRecordProto urp : dump.getActiveUidsList()) {
+            verifyUidRecordProto(urp, filterLevel);
+        }
+        for (UidRecordProto urp : dump.getValidateUidsList()) {
+            verifyUidRecordProto(urp, filterLevel);
+        }
+        for (ImportanceTokenProto itp : dump.getImportantProcsList()) {
+            verifyImportanceTokenProto(itp, filterLevel);
+        }
+        verifyAppErrorsProto(dump.getAppErrors(), filterLevel);
+        verifyVrControllerProto(dump.getVrController(), filterLevel);
+        verifyAppTimeTrackerProto(dump.getCurrentTracker(), filterLevel);
+        if (filterLevel == PRIVACY_AUTO) {
+            assertTrue(dump.getMemWatchProcesses().getDump().getFile().isEmpty());
+        }
+    }
+
+    private static void verifyActiveInstrumentationProto(ActiveInstrumentationProto aip, final int filterLevel) throws Exception {
+        if (filterLevel == PRIVACY_AUTO) {
+            assertTrue(aip.getArguments().isEmpty());
+        }
+    }
+
+    private static void verifyUidRecordProto(UidRecordProto urp, final int filterLevel) throws Exception {
+        for (UidRecordProto.Change c : urp.getLastReportedChangesList()) {
+            assertTrue(UidRecordProto.Change.getDescriptor().getValues().contains(c.getValueDescriptor()));
+        }
+        assertTrue(urp.getNumProcs() >= 0);
+    }
+
+    private static void verifyImportanceTokenProto(ImportanceTokenProto itp, final int filterLevel) throws Exception {
+        if (filterLevel == PRIVACY_AUTO) {
+            // The entire message is tagged as EXPLICIT, so even the pid should be stripped out.
+            assertTrue(itp.getPid() == 0);
+            assertTrue(itp.getToken().isEmpty());
+            assertTrue(itp.getReason().isEmpty());
+        }
+    }
+
+    private static void verifyAppErrorsProto(AppErrorsProto aep, final int filterLevel) throws Exception {
+        assertTrue(aep.getNowUptimeMs() >= 0);
+        if (filterLevel == PRIVACY_AUTO) {
+            for (AppErrorsProto.BadProcess bp : aep.getBadProcessesList()) {
+                for (AppErrorsProto.BadProcess.Entry e : bp.getEntriesList()) {
+                    assertTrue(e.getLongMsg().isEmpty());
+                    assertTrue(e.getStack().isEmpty());
+                }
+            }
+        }
+    }
+
+    private static void verifyVrControllerProto(VrControllerProto vcp, final int filterLevel) throws Exception {
+        for (VrControllerProto.VrMode vm : vcp.getVrModeList()) {
+            assertTrue(VrControllerProto.VrMode.getDescriptor().getValues().contains(vm.getValueDescriptor()));
+        }
+    }
+
+    private static void verifyAppTimeTrackerProto(AppTimeTrackerProto attp, final int filterLevel) throws Exception {
+        assertTrue(attp.getTotalDurationMs() >= 0);
+        for (AppTimeTrackerProto.PackageTime pt : attp.getPackageTimesList()) {
+            assertTrue(pt.getDurationMs() >= 0);
+        }
     }
 }
