@@ -25,12 +25,16 @@ import android.support.test.filters.SmallTest;
 import android.support.test.runner.AndroidJUnit4;
 import android.text.Layout;
 import android.text.Selection;
+import android.text.SpanWatcher;
+import android.text.Spannable;
 import android.text.SpannableStringBuilder;
 import android.text.StaticLayout;
 import android.text.TextPaint;
 
 import org.junit.Test;
 import org.junit.runner.RunWith;
+
+import java.util.concurrent.CountDownLatch;
 
 @SmallTest
 @RunWith(AndroidJUnit4.class)
@@ -967,5 +971,30 @@ public class SelectionTest {
         assertTrue(Selection.moveToRightEdge(builder, layout));
         assertEquals(text.length(), Selection.getSelectionStart(builder));
         assertEquals(text.length(), Selection.getSelectionEnd(builder));
+    }
+
+    @Test
+    public void testRemoveSelectionOnlyTriggersOneSpanRemoved() {
+        Spannable spannable = new SpannableStringBuilder("abcdef");
+        Selection.setSelection(spannable, 0, 2);
+
+        final CountDownLatch latch = new CountDownLatch(1);
+        SpanWatcher watcher = new SpanWatcher() {
+            @Override
+            public void onSpanAdded(Spannable text, Object what, int start, int end) {}
+
+            @Override
+            public void onSpanRemoved(Spannable text, Object what, int start, int end) {
+                latch.countDown();
+            }
+
+            @Override
+            public void onSpanChanged(Spannable text, Object what, int ostart, int oend, int nstart,
+                    int nend) {}
+        };
+        spannable.setSpan(watcher, 0, 2, 0);
+
+        Selection.removeSelection(spannable);
+        assertEquals(0, latch.getCount());
     }
 }
