@@ -100,7 +100,6 @@ def main():
         # Do 3A and get the values
         s, e, _, _, fd = cam.do_3a(get_results=True,
                                    lock_ae=True, lock_awb=True)
-        e *= 2  # TODO: remove when RAW images bright enough
         req = its.objects.manual_capture_request(s, e, fd, True, props)
 
         # get physical camera properties
@@ -139,10 +138,8 @@ def main():
         # convert to [0, 255] images
         img_raw *= 255
 
-        # rotate images and scale to match calibration data
-        # TODO remove rotation when not needed w/ EVT2
-        img_rot = np.rot90(cv2.resize(img_raw.astype(np.uint8), None,
-                                      fx=2, fy=2), k=2)
+        # scale to match calibration data
+        img = cv2.resize(img_raw.astype(np.uint8), None, fx=2, fy=2)
 
         # load parameters for each physical camera
         ical = props_physical[i]['android.lens.intrinsicCalibration']
@@ -164,22 +161,20 @@ def main():
             reference[i] = True
         else:
             reference[i] = False
-        # TODO: change below to android.lens.distortion when builds working
-        rad_dist = np.array(
-                props_physical[i]['android.lens.radialDistortion'])
-        assert len(rad_dist) == 6, 'radialDistortion has wrong # of params.'
 
         # Apply correction to image (if available)
         if its.caps.distortion_correction(props):
-            cv2_distort = np.array([rad_dist[1], rad_dist[2],
-                                    rad_dist[4], rad_dist[5],
-                                    rad_dist[3]])
-            img_rot = cv2.undistort(img_rot, k[i], cv2_distort)
-            its.image.write_image(img_rot/255.0, '%s_correct_%s.jpg' % (
+            distort = np.array(props_physical[i]['android.lens.distortion'])
+            assert len(distort) == 5, 'radialDistortion has wrong # of params.'
+            cv2_distort = np.array([distort[0], distort[1],
+                                    distort[3], distort[4],
+                                    distort[2]])
+            img = cv2.undistort(img, k[i], cv2_distort)
+            its.image.write_image(img/255.0, '%s_correct_%s.jpg' % (
                     NAME, i))
 
         # Find the circles in grayscale image
-        circle[i] = find_circle(cv2.cvtColor(img_rot, cv2.COLOR_BGR2GRAY),
+        circle[i] = find_circle(cv2.cvtColor(img, cv2.COLOR_BGR2GRAY),
                                 '%s_gray%s.jpg' % (NAME, i))
 
         # Find focal length & sensor size
