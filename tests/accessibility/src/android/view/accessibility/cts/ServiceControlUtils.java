@@ -119,6 +119,9 @@ public class ServiceControlUtils {
         final Object waitLockForA11yOff = new Object();
         AccessibilityManager manager = (AccessibilityManager) instrumentation
                 .getContext().getSystemService(Context.ACCESSIBILITY_SERVICE);
+        if (!manager.isEnabled()) {
+            return;
+        }
         manager.addAccessibilityStateChangeListener(
                 new AccessibilityManager.AccessibilityStateChangeListener() {
                     @Override
