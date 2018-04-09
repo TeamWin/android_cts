@@ -10,6 +10,7 @@ import java.util.concurrent.CountDownLatch;
 public final class WebViewReadyHelper {
     private final CountDownLatch mLatch;
     private final WebView mWebView;
+    private int mDrawCount = 0;
 
     public WebViewReadyHelper(WebView webview, CountDownLatch latch) {
         mWebView = webview;
@@ -38,6 +39,10 @@ public final class WebViewReadyHelper {
     private OnDrawListener mOnDrawListener = new OnDrawListener() {
         @Override
         public void onDraw() {
+            if (++mDrawCount < 2) {
+                mWebView.postInvalidate();
+                return;
+            }
             mWebView.post(() -> {
                 mWebView.getViewTreeObserver().removeOnDrawListener(mOnDrawListener);
                 mLatch.countDown();
