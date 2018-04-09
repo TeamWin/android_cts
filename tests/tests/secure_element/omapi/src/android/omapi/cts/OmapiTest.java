@@ -284,6 +284,9 @@ public class OmapiTest extends AndroidTestCase {
 
     public void testLongSelectResponse() {
         byte[] selectResponse = testSelectableAid(LONG_SELECT_RESPONSE_AID);
+        if (selectResponse == null) {
+            return;
+        }
         assertTrue("Select Response is not complete", verifyBerTlvData(selectResponse));
     }
 
@@ -316,22 +319,25 @@ public class OmapiTest extends AndroidTestCase {
 
     /** Tests if NoSuchElementException in Select */
     public void testWrongAid() {
-        testNonSelectableAid(NON_SELECTABLE_AID);
-    }
-
-    public void testNonSelectableAid(byte[] aid) {
-        boolean exception = false;
-        Session session = null;
         try {
             waitForConnection();
             Reader[] readers = seService.getReaders();
-
             for (Reader reader : readers) {
-                assertTrue(reader.isSecureElementPresent());
-                session = reader.openSession();
-                assertNotNull("null session", session);
-                Channel channel = session.openLogicalChannel(aid, (byte)0x00);
+                testNonSelectableAid(reader, NON_SELECTABLE_AID);
             }
+        } catch (TimeoutException e) {
+            fail("unexpected exception " + e);
+        }
+    }
+
+    public void testNonSelectableAid(Reader reader, byte[] aid) {
+        boolean exception = false;
+        Session session = null;
+        try {
+            assertTrue(reader.isSecureElementPresent());
+            session = reader.openSession();
+            assertNotNull("null session", session);
+            Channel channel = session.openLogicalChannel(aid, (byte)0x00);
         } catch (NoSuchElementException e) {
             exception = true;
             if (session != null) {
