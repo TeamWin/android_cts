@@ -69,6 +69,7 @@ public class StorageManagerTest extends AndroidTestCase {
     private static final String TEST1_NEW_CONTENTS = "1\n";
 
     private StorageManager mStorageManager;
+    private final Handler mHandler = new Handler(Looper.getMainLooper());
 
     @Override
     protected void setUp() throws Exception {
@@ -354,11 +355,11 @@ public class StorageManagerTest extends AndroidTestCase {
         final TestProxyFileDescriptorCallback cherryCallback =
                 new TestProxyFileDescriptorCallback(1024 * 1024, "Cherry");
         try (final ParcelFileDescriptor appleFd = mStorageManager.openProxyFileDescriptor(
-                     ParcelFileDescriptor.MODE_READ_ONLY, appleCallback);
+                     ParcelFileDescriptor.MODE_READ_ONLY, appleCallback, mHandler);
              final ParcelFileDescriptor orangeFd = mStorageManager.openProxyFileDescriptor(
-                     ParcelFileDescriptor.MODE_WRITE_ONLY, orangeCallback);
+                     ParcelFileDescriptor.MODE_WRITE_ONLY, orangeCallback, mHandler);
              final ParcelFileDescriptor cherryFd = mStorageManager.openProxyFileDescriptor(
-                     ParcelFileDescriptor.MODE_READ_WRITE, cherryCallback)) {
+                     ParcelFileDescriptor.MODE_READ_WRITE, cherryCallback, mHandler)) {
             // Stat
             assertEquals(appleCallback.onGetSize(), appleFd.getStatSize());
             assertEquals(orangeCallback.onGetSize(), orangeFd.getStatSize());
@@ -486,13 +487,13 @@ public class StorageManagerTest extends AndroidTestCase {
         callback.onGetSizeError = new ErrnoException("onGetSize", OsConstants.ENOENT);
         try {
             try (final ParcelFileDescriptor fd = mStorageManager.openProxyFileDescriptor(
-                    ParcelFileDescriptor.MODE_READ_WRITE, callback)) {}
+                    ParcelFileDescriptor.MODE_READ_WRITE, callback, mHandler)) {}
             fail();
         } catch (IOException exp) {}
         callback.onGetSizeError = null;
 
         try (final ParcelFileDescriptor fd = mStorageManager.openProxyFileDescriptor(
-                ParcelFileDescriptor.MODE_READ_WRITE, callback)) {
+                ParcelFileDescriptor.MODE_READ_WRITE, callback, mHandler)) {
             callback.onReadError = new ErrnoException("onRead", OsConstants.EIO);
             try {
                 Os.read(fd.getFileDescriptor(), bytes, 0, bytes.length);
@@ -585,7 +586,7 @@ public class StorageManagerTest extends AndroidTestCase {
 
         try (final ParcelFileDescriptor blockFd =
                     mStorageManager.openProxyFileDescriptor(
-                            ParcelFileDescriptor.MODE_READ_ONLY, blockCallback);
+                            ParcelFileDescriptor.MODE_READ_ONLY, blockCallback, mHandler);
              final ParcelFileDescriptor asyncFd =
                     mStorageManager.openProxyFileDescriptor(
                             ParcelFileDescriptor.MODE_READ_ONLY, asyncCallback, handler)) {
@@ -637,7 +638,7 @@ public class StorageManagerTest extends AndroidTestCase {
         };
         final byte[] bytes = new byte[128];
         try (final ParcelFileDescriptor fd = mStorageManager.openProxyFileDescriptor(
-                ParcelFileDescriptor.MODE_READ_ONLY, callback)) {
+                ParcelFileDescriptor.MODE_READ_ONLY, callback, mHandler)) {
             assertEquals(8L * 1024L * 1024L * 1024L, fd.getStatSize());
 
             final int readBytes = Os.pread(
@@ -655,7 +656,7 @@ public class StorageManagerTest extends AndroidTestCase {
                 new TestProxyFileDescriptorCallback(SIZE, "abcdefghijklmnopqrstuvwxyz");
         final byte[] bytes = new byte[SIZE];
         try (final ParcelFileDescriptor fd = mStorageManager.openProxyFileDescriptor(
-                ParcelFileDescriptor.MODE_READ_ONLY, callback)) {
+                ParcelFileDescriptor.MODE_READ_ONLY, callback, mHandler)) {
             final int readBytes = Os.read(
                     fd.getFileDescriptor(), bytes, 0, bytes.length);
             assertEquals(bytes.length, readBytes);
@@ -674,7 +675,7 @@ public class StorageManagerTest extends AndroidTestCase {
             bytes[i] = (byte)(i % 123);
         }
         try (final ParcelFileDescriptor fd = mStorageManager.openProxyFileDescriptor(
-                ParcelFileDescriptor.MODE_WRITE_ONLY, callback)) {
+                ParcelFileDescriptor.MODE_WRITE_ONLY, callback, mHandler)) {
             final int writtenBytes = Os.write(
                     fd.getFileDescriptor(), bytes, 0, bytes.length);
             assertEquals(bytes.length, writtenBytes);
