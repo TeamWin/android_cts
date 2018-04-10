@@ -26,21 +26,24 @@ import android.signature.cts.FailureType;
 
 public class KillswitchTest extends AbstractApiTest {
 
+    private String mExemptions;
+
     @Override
     protected void setUp() throws Exception {
         super.setUp();
         DexMemberChecker.init();
         // precondition check: make sure global setting has been configured properly.
         // This should be done via an adb command, configured in AndroidTest.xml.
-        assertEquals("Global setting " + Settings.Global.HIDDEN_API_BLACKLIST_EXEMPTIONS,
-                "*",
-                Settings.Global.getString(
-                        getInstrumentation().getContext().getContentResolver(),
-                        Settings.Global.HIDDEN_API_BLACKLIST_EXEMPTIONS));
+        mExemptions = Settings.Global.getString(
+            getInstrumentation().getContext().getContentResolver(),
+            Settings.Global.HIDDEN_API_BLACKLIST_EXEMPTIONS);
+        assertTrue("Global setting " + Settings.Global.HIDDEN_API_BLACKLIST_EXEMPTIONS,
+                "*".equals(mExemptions) || "L".equals(mExemptions));
     }
 
-    private static final String ERROR_MESSAGE_APPENDIX =
-            " when global setting hidden_api_blacklist_exemptions is set to *";
+    private String errorMessageAppendix() {
+        return " when global setting hidden_api_blacklist_exemptions is set to " + mExemptions;
+    }
 
     public void testKillswitch() {
         runWithTestResultObserver(resultObserver -> {
@@ -52,7 +55,7 @@ public class KillswitchTest extends AbstractApiTest {
                                 FailureType.MISSING_CLASS,
                                 member.toString(),
                                 "Class from boot classpath is not accessible"
-                                        + ERROR_MESSAGE_APPENDIX);
+                                        + errorMessageAppendix());
                     }
                 }
 
@@ -63,7 +66,7 @@ public class KillswitchTest extends AbstractApiTest {
                                 FailureType.MISSING_FIELD,
                                 field.toString(),
                                 "Field from boot classpath is not accessible via reflection"
-                                        + ERROR_MESSAGE_APPENDIX);
+                                        + errorMessageAppendix());
                     }
                 }
 
@@ -74,7 +77,7 @@ public class KillswitchTest extends AbstractApiTest {
                                 FailureType.MISSING_FIELD,
                                 field.toString(),
                                 "Field from boot classpath is not accessible via JNI"
-                                        + ERROR_MESSAGE_APPENDIX);
+                                        + errorMessageAppendix());
                     }
                 }
 
@@ -90,7 +93,7 @@ public class KillswitchTest extends AbstractApiTest {
                                 FailureType.MISSING_METHOD,
                                 method.toString(),
                                 "Method from boot classpath is not accessible via reflection"
-                                        + ERROR_MESSAGE_APPENDIX);
+                                        + errorMessageAppendix());
                     }
                 }
 
@@ -101,7 +104,7 @@ public class KillswitchTest extends AbstractApiTest {
                                 FailureType.MISSING_METHOD,
                                 method.toString(),
                                 "Method from boot classpath is not accessible via JNI"
-                                        + ERROR_MESSAGE_APPENDIX);
+                                        + errorMessageAppendix());
                     }
                 }
 
