@@ -640,8 +640,12 @@ public class AudioRecordTest {
 
             // Read five seconds of data
             readDataTimed(recorder, 5000, buffer);
-            // Ensure we read non-empty bytes
-            assertSilence(buffer, false);
+            // Ensure we read non-empty bytes. Some systems only
+            // emulate audio devices and do not provide any actual audio data.
+            if (isAudioSilent(buffer)) {
+                Log.w(TAG, "Recording does not produce audio data");
+                return;
+            }
 
             // Start clean
             buffer.clear();
@@ -650,7 +654,7 @@ public class AudioRecordTest {
             // Read five seconds of data
             readDataTimed(recorder, 5000, buffer);
             // Ensure we read empty bytes
-            assertSilence(buffer, true);
+            assertTrue("Recording was not silenced while UID idle", isAudioSilent(buffer));
 
             // Start clean
             buffer.clear();
@@ -659,7 +663,7 @@ public class AudioRecordTest {
             // Read five seconds of data
             readDataTimed(recorder, 5000, buffer);
             // Ensure we read non-empty bytes
-            assertSilence(buffer, false);
+            assertFalse("Recording was silenced while UID active", isAudioSilent(buffer));
         } finally {
             if (recorder != null) {
                 recorder.stop();
@@ -1465,7 +1469,7 @@ public class AudioRecordTest {
         }
     }
 
-    private static void assertSilence(ShortBuffer buffer, boolean silence) {
+    private static boolean isAudioSilent(ShortBuffer buffer) {
         // Always need some bytes read
         assertTrue("Buffer should have some data", buffer.position() > 0);
 
@@ -1481,15 +1485,7 @@ public class AudioRecordTest {
                 totalSilenceCount++;
             }
         }
-        if (silence) {
-            if (totalSilenceCount < valueCount / 2) {
-                fail("Recording was not silenced while UID idle");
-            }
-        } else {
-            if (totalSilenceCount > valueCount / 2) {
-                fail("Recording was silenced while UID active");
-            }
-        }
+        return totalSilenceCount > valueCount / 2;
     }
 
     private static void makeMyUidStateActive() throws IOException {
