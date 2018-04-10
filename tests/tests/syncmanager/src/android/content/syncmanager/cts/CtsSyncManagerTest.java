@@ -221,7 +221,7 @@ public class CtsSyncManagerTest {
                     rb -> rb.setGetSyncInvocations(GetSyncInvocations.newBuilder()));
             final int calls =  res.getSyncInvocations().getSyncInvocationsCount();
             Log.i(TAG, "NumSyncInvocations=" + calls);
-            return calls > 7; // Arbitrarily bigger than 4.
+            return calls > 4; // Arbitrarily bigger than 4.
         });
     }
 
