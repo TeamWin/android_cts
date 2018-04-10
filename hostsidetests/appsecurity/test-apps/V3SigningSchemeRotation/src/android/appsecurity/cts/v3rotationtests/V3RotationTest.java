@@ -18,7 +18,6 @@ package android.appsecurity.cts.v3rotationtests;
 
 import android.content.pm.PackageInfo;
 import android.content.pm.PackageManager;
-import android.content.pm.Signature;
 import android.util.Log;
 import android.test.AndroidTestCase;
 
@@ -116,19 +115,20 @@ public class V3RotationTest extends AndroidTestCase {
         PackageManager pm = getContext().getPackageManager();
         PackageInfo pi = pm.getPackageInfo(PKG, PackageManager.GET_SIGNING_CERTIFICATES);
         assertNotNull("Failed to get signatures in PackageInfo of " + PKG,
-                pi.signingInfo);
-        assertFalse("Multiple signing certificates found in signing certificate history for " + PKG,
-                pi.signingInfo.hasMultipleSigners());
-        Signature[] signingHistory = pi.signingInfo.getSigningCertificateHistory();
-        int numSigningSets = signingHistory.length;
+                pi.signingCertificateHistory);
+        int numSigningSets = pi.signingCertificateHistory.length;
         assertEquals("PackageInfo for " + PKG + "contains the wrong number of signing certificat "
                 + " rotations.  Expected 2 (corresponding to one rotation). Found: "
-                + numSigningSets, 2, numSigningSets);
-        // check to see if we match the certs for which we're looking
+                + numSigningSets, 2, pi.signingCertificateHistory.length);
+
+        // make sure all entries have at most one signing certificate.  Also check to see if we
+        // match the certs for which we're looking
         boolean matchedFirst = false;
         boolean matchedSecond = false;
-        for (int i = 0; i < numSigningSets; i++) {
-            String reportedCert = signingHistory[i].toCharsString();
+        for (int i = 0; i < numSigningSets; i ++) {
+            assertEquals("Multiple signing certificates found in signing certificate history for "
+                    + PKG, 1, pi.signingCertificateHistory[i].length);
+            String reportedCert = pi.signingCertificateHistory[i][0].toCharsString();
             if (FIRST_CERT_HEX.equals(reportedCert)) {
                 matchedFirst = true;
             } else if (SECOND_CERT_HEX.equals(reportedCert)) {
