@@ -75,7 +75,7 @@ public class IncidentdTest extends ProtoDumpTestCase {
 
         JobSchedulerIncidentTest.verifyJobSchedulerServiceDumpProto(dump.getJobscheduler(), filterLevel);
 
-        // TODO: create test for USB
+        UsbIncidentTest.verifyUsbServiceDumpProto(dump.getUsb(), filterLevel);
     }
 
     // Splitting these into separate methods to make debugging easier.
