@@ -423,7 +423,8 @@ public class BatteryStatsIncidentTest extends ProtoDumpTestCase {
             assertNotNull(p.getName());
             assertFalse(p.getName().isEmpty());
             assertTrue(0 <= p.getUserDurationMs());
-            assertTrue(0 <= p.getSystemDurationMs());
+            assertTrue("Process system duration is negative: " + p.getSystemDurationMs(),
+                    0 <= p.getSystemDurationMs());
             assertTrue(0 <= p.getForegroundDurationMs());
             assertTrue(0 <= p.getStartCount());
             assertTrue(0 <= p.getAnrCount());

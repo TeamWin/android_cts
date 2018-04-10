@@ -101,6 +101,10 @@ public class BusinessLogicPreparer implements ITargetCleaner {
             "business logic files.")
     private boolean mCache = false;
 
+    @Option(name = "clean-cache-business-logic", description = "Like option " +
+            "'cache-business-logic', but forces a refresh of the cached business logic file")
+    private boolean mCleanCache = false;
+
     @Option(name = "ignore-business-logic-failure", description = "Whether to proceed with the " +
             "suite invocation if retrieval of business logic fails.")
     private boolean mIgnoreFailure = false;
@@ -126,7 +130,7 @@ public class BusinessLogicPreparer implements ITargetCleaner {
         String businessLogicString = null;
         // use cached business logic string if options are set accordingly and cache is valid,
         // otherwise proceed with remote download.
-        if (!mCache || (businessLogicString = readFromCache(mUrl)) == null) {
+        if (!shouldReadCache() || (businessLogicString = readFromCache(requestString)) == null) {
             CLog.i("Attempting to connect to business logic service...");
         }
         long start = System.currentTimeMillis();
@@ -152,8 +156,8 @@ public class BusinessLogicPreparer implements ITargetCleaner {
             }
         }
 
-        if (mCache) {
-            writeToCache(businessLogicString, mUrl);
+        if (shouldWriteCache()) {
+            writeToCache(businessLogicString, requestString, mCleanCache);
         }
         // Push business logic string to host file
         try {
@@ -243,6 +247,14 @@ public class BusinessLogicPreparer implements ITargetCleaner {
         }
     }
 
+    private boolean shouldReadCache() {
+        return mCache && !mCleanCache;
+    }
+
+    private boolean shouldWriteCache() {
+        return mCache || mCleanCache;
+    }
+
     private String getSuiteName() {
         return TestSuiteInfo.getInstance().getName().toLowerCase();
     }
@@ -287,7 +299,8 @@ public class BusinessLogicPreparer implements ITargetCleaner {
      * In the last two cases, the file is deleted so an up-to-date configuration may be cached anew
      */
     private static synchronized String readFromCache(String url) {
-        // url hashCode makes file unique, in case host runs multiple suites using business logic
+        // url hashCode makes file unique, in case host runs invocations for different
+        // device builds and/or test suites using business logic
         String cachedString = null;
         File cachedFile = getCachedFile(url);
         if (!cachedFile.exists()) {
@@ -298,7 +311,7 @@ public class BusinessLogicPreparer implements ITargetCleaner {
             BusinessLogic cachedLogic = BusinessLogicFactory.createFromFile(cachedFile);
             Date cachedDate = cachedLogic.getTimestamp();
             if (System.currentTimeMillis() - cachedDate.getTime() < BL_CACHE_MILLIS) {
-                CLog.i("Using cached business logic");
+                CLog.i("Using cached business logic from: %s", cachedDate.toString());
                 return cachedString = FileUtil.readStringFromFile(cachedFile);
             } else {
                 CLog.i("Cached business logic out-of-date, deleting cached file");
@@ -316,12 +329,12 @@ public class BusinessLogicPreparer implements ITargetCleaner {
      * file does not already exist. Synchronize this method to prevent concurrent writes in the
      * sharding case.
      * @param blString the string to cache
-     * @url the url containing which the name of the suite to which the business logic string
-     * refers. Useful for getting the correct cached file.
+     * @url the business logic request url containing suite and device information, useful for
+     * getting the correct cached file.
      */
-    private static synchronized void writeToCache(String blString, String url) {
+    private static synchronized void writeToCache(String blString, String url, boolean overwrite) {
         File cachedFile = getCachedFile(url);
-        if (!cachedFile.exists()) {
+        if (!cachedFile.exists() || overwrite) {
             // don't overwrite existing file, whether from previous shard or previous invocation
             try {
                 FileUtil.writeToFile(blString, cachedFile);
