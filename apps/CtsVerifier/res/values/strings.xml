@@ -3162,7 +3162,7 @@ You should be prompted to select credentials; choose the ones you just installed
         3. Verify that performing the following action will trigger a support dialog:\n
            <xliff:g id="user_action" example="Adding an account">%2$s</xliff:g>.\n
         4. Verify that the support dialog displays the short support message set earlier.\n
-        5. Verify that clicking the "More details" link will redirect to Device administrators
+        5. Verify that clicking the "Learn more" link will redirect to Device administrators
            page in Settings app which displays the long support message set earlier.\n
     </string>
     <string name="user_restriction_set_step">
