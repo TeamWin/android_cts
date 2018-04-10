@@ -22,6 +22,7 @@ import static com.google.common.truth.Truth.assertWithMessage;
 
 import android.content.Context;
 import android.provider.Settings;
+
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 
@@ -55,6 +56,12 @@ public final class SettingsHelper {
             @NonNull String key, @Nullable String value) {
         if (value == null) {
             syncDelete(context, namespace, key);
+            return;
+        }
+
+        final String currentValue = get(namespace, key);
+        if (value.equals(currentValue)) {
+            // Already set, ignore
             return;
         }
 

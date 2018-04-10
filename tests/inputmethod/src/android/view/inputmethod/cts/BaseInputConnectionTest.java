@@ -32,6 +32,7 @@ import android.text.Editable;
 import android.text.Selection;
 import android.text.Spannable;
 import android.text.SpannableString;
+import android.text.Spanned;
 import android.text.TextUtils;
 import android.view.View;
 import android.view.inputmethod.BaseInputConnection;
@@ -448,5 +449,17 @@ public class BaseInputConnectionTest {
                 Uri.parse("https://example.com"));
         // The default implementation should do nothing and just return false.
         assertFalse(connection.commitContent(inputContentInfo, 0 /* flags */, null /* opts */));
+    }
+
+    @Test
+    public void testGetSelectedText_wrongSelection() {
+        final BaseInputConnection connection = createBaseInputConnection();
+        Editable editable = connection.getEditable();
+        editable.append("hello");
+        editable.setSpan(Selection.SELECTION_START, 4, 4, Spanned.SPAN_POINT_POINT);
+        editable.removeSpan(Selection.SELECTION_END);
+
+        // Should not crash.
+        connection.getSelectedText(0);
     }
 }

@@ -15,11 +15,7 @@
  */
 package com.android.server.cts;
 
-import com.android.server.fingerprint.FingerprintServiceDumpProto;
-
 import android.os.IncidentProto;
-import android.os.SystemPropertiesProto;
-import com.android.tradefed.log.LogUtil.CLog;
 
 /**
  * Tests incidentd reports filters fields correctly based on its privacy tags.
@@ -30,6 +26,8 @@ public class IncidentdTest extends ProtoDumpTestCase {
     public void testIncidentReportDump(final int filterLevel, final String dest) throws Exception {
         final String destArg = dest == null || dest.isEmpty() ? "" : "-p " + dest;
         final IncidentProto dump = getDump(IncidentProto.parser(), "incident " + destArg + " 2>/dev/null");
+
+        SystemPropertiesTest.verifySystemPropertiesProto(dump.getSystemProperties(), filterLevel, mCtsBuild);
 
         if (FingerprintIncidentTest.supportsFingerprint(getDevice())) {
             FingerprintIncidentTest.verifyFingerprintServiceDumpProto(dump.getFingerprint(), filterLevel);
@@ -59,13 +57,13 @@ public class IncidentdTest extends ProtoDumpTestCase {
 
         // Procstats currently has no EXPLICIT or LOCAL fields
 
-        // TODO: create test for Activities
+        // ActivityManagerServiceDumpActivitiesProto has no EXPLICIT or LOCAL fields.
 
         // ActivityManagerServiceDumpBroadcastsProto has no EXPLICIT or LOCAL fields.
 
         ActivityManagerIncidentTest.verifyActivityManagerServiceDumpServicesProto(dump.getAmservices(), filterLevel);
 
-        // TODO: create test for Amprocesses
+        ActivityManagerIncidentTest.verifyActivityManagerServiceDumpProcessesProto(dump.getAmprocesses(), filterLevel);
 
         AlarmManagerIncidentTest.verifyAlarmManagerServiceDumpProto(dump.getAlarm(), filterLevel);
 
@@ -92,49 +90,5 @@ public class IncidentdTest extends ProtoDumpTestCase {
 
     public void testIncidentReportDumpLocal() throws Exception {
         testIncidentReportDump(PRIVACY_LOCAL, "LOCAL");
-    }
-
-    public void testSystemPropertiesLocal() throws Exception {
-        final IncidentProto dump = getDump(IncidentProto.parser(),
-                "incident -p LOCAL 1000 2>/dev/null");
-
-        SystemPropertiesProto properties = dump.getSystemProperties();
-        // check local tagged data show up
-        assertTrue(properties.getExtraPropertiesCount() >= 1);
-        // check explicit tagged data show up
-        assertFalse(properties.getDalvikVm().getHeapmaxfree().isEmpty());
-        // check automatic tagged data show up
-        assertTrue(properties.getRo().getBuild().getVersion().getIncremental()
-            .equals(mCtsBuild.getBuildId()));
-    }
-
-    public void testSystemPropertiesExplicit() throws Exception {
-        final IncidentProto dump = getDump(IncidentProto.parser(),
-                "incident -p EXPLICIT 1000 2>/dev/null");
-
-        SystemPropertiesProto properties = dump.getSystemProperties();
-        // check local tagged data must not show up
-        assertTrue(properties.getExtraPropertiesCount() == 0);
-        // check explicit tagged data show up
-        assertFalse(properties.getDalvikVm().getHeapmaxfree().isEmpty());
-        // check automatic tagged data show up
-        CLog.i(mCtsBuild.getBuildId());
-        CLog.i(properties.getRo().getBuild().getVersion().getIncremental());
-        assertTrue(properties.getRo().getBuild().getVersion().getIncremental()
-            .equals(mCtsBuild.getBuildId()));
-    }
-
-    public void testSystemPropertiesAutomatic() throws Exception {
-        final IncidentProto dump = getDump(IncidentProto.parser(),
-                "incident -p AUTO 1000 2>/dev/null");
-
-        SystemPropertiesProto properties = dump.getSystemProperties();
-        // check local tagged data must not show up
-        assertTrue(properties.getExtraPropertiesCount() == 0);
-        // check explicit tagged data must not show up
-        assertTrue(properties.getDalvikVm().getHeapmaxfree().isEmpty());
-        // check automatic tagged data show up
-        assertTrue(properties.getRo().getBuild().getVersion().getIncremental()
-            .equals(mCtsBuild.getBuildId()));
     }
 }
