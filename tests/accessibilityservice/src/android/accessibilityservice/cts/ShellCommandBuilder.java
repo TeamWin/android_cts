@@ -69,7 +69,7 @@ public class ShellCommandBuilder {
         return this;
     }
 
-    private static void execShellCommand(UiAutomation automation, String command) {
+    public static void execShellCommand(UiAutomation automation, String command) {
         try (ParcelFileDescriptor fd = automation.executeShellCommand(command)) {
             try (InputStream inputStream = new FileInputStream(fd.getFileDescriptor())) {
                 try (BufferedReader reader = new BufferedReader(
