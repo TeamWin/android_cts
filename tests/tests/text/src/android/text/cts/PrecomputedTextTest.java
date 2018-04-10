@@ -42,6 +42,7 @@ import android.text.TextDirectionHeuristics;
 import android.text.TextPaint;
 import android.text.style.BackgroundColorSpan;
 import android.text.style.LocaleSpan;
+import android.text.style.TextAppearanceSpan;
 
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -326,6 +327,66 @@ public class PrecomputedTextTest {
         assertEquals(5.0f, PrecomputedText.create("I\nV", param).getWidth(2, 3), 0.0f);
     }
 
+    @Test
+    public void testGetWidth_multiStyle() {
+        final Context context = InstrumentationRegistry.getInstrumentation().getTargetContext();
+        final SpannableStringBuilder ssb = new SpannableStringBuilder("II");
+        ssb.setSpan(new TextAppearanceSpan(null /* family */, Typeface.NORMAL, 1 /* text size */,
+                null /* color */, null /* link color */), 0, 1, Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
+        ssb.setSpan(new TextAppearanceSpan(null /* family */, Typeface.NORMAL, 5 /* text size */,
+                null /* color */, null /* link color */), 1, 2, Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
+
+        final Typeface tf = new Typeface.Builder(context.getAssets(),
+                "fonts/StaticLayoutLineBreakingTestFont.ttf").build();
+        final TextPaint paint = new TextPaint();
+        paint.setTypeface(tf);
+        paint.setTextSize(1);  // Make 1em = 1px
+
+        final Params param = new Params.Builder(paint).build();
+
+        assertEquals(0.0f, PrecomputedText.create(ssb, param).getWidth(0, 0), 0.0f);
+        assertEquals(0.0f, PrecomputedText.create(ssb, param).getWidth(1, 1), 0.0f);
+        assertEquals(0.0f, PrecomputedText.create(ssb, param).getWidth(2, 2), 0.0f);
+
+        assertEquals(1.0f, PrecomputedText.create(ssb, param).getWidth(0, 1), 0.0f);
+        assertEquals(5.0f, PrecomputedText.create(ssb, param).getWidth(1, 2), 0.0f);
+
+        assertEquals(6.0f, PrecomputedText.create(ssb, param).getWidth(0, 2), 0.0f);
+    }
+
+    @Test
+    public void testGetWidth_multiStyle2() {
+        final Context context = InstrumentationRegistry.getInstrumentation().getTargetContext();
+        final SpannableStringBuilder ssb = new SpannableStringBuilder("IVI");
+        ssb.setSpan(new TextAppearanceSpan(null /* family */, Typeface.NORMAL, 1 /* text size */,
+                null /* color */, null /* link color */), 0, 1, Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
+        ssb.setSpan(new TextAppearanceSpan(null /* family */, Typeface.NORMAL, 5 /* text size */,
+                null /* color */, null /* link color */), 1, 2, Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
+        ssb.setSpan(new TextAppearanceSpan(null /* family */, Typeface.NORMAL, 5 /* text size */,
+                null /* color */, null /* link color */), 2, 3, Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
+
+        final Typeface tf = new Typeface.Builder(context.getAssets(),
+                "fonts/StaticLayoutLineBreakingTestFont.ttf").build();
+        final TextPaint paint = new TextPaint();
+        paint.setTypeface(tf);
+        paint.setTextSize(1);  // Make 1em = 1px
+
+        final Params param = new Params.Builder(paint).build();
+
+        assertEquals(0.0f, PrecomputedText.create(ssb, param).getWidth(0, 0), 0.0f);
+        assertEquals(0.0f, PrecomputedText.create(ssb, param).getWidth(1, 1), 0.0f);
+        assertEquals(0.0f, PrecomputedText.create(ssb, param).getWidth(2, 2), 0.0f);
+        assertEquals(0.0f, PrecomputedText.create(ssb, param).getWidth(3, 3), 0.0f);
+
+        assertEquals(1.0f, PrecomputedText.create(ssb, param).getWidth(0, 1), 0.0f);
+        assertEquals(25.0f, PrecomputedText.create(ssb, param).getWidth(1, 2), 0.0f);
+        assertEquals(5.0f, PrecomputedText.create(ssb, param).getWidth(2, 3), 0.0f);
+
+        assertEquals(26.0f, PrecomputedText.create(ssb, param).getWidth(0, 2), 0.0f);
+        assertEquals(30.0f, PrecomputedText.create(ssb, param).getWidth(1, 3), 0.0f);
+        assertEquals(31.0f, PrecomputedText.create(ssb, param).getWidth(0, 3), 0.0f);
+    }
+
     @Test(expected = IllegalArgumentException.class)
     public void testGetWidth_negative_start_offset() {
         final Params param = new Params.Builder(PAINT).build();
@@ -425,6 +486,90 @@ public class PrecomputedTextTest {
         rect.set(0, 0, 0, 0);
         PrecomputedText.create("IV", param).getBounds(0, 2, rect);
         assertEquals(new Rect(0, -5, 6, 0), rect);
+    }
+
+    @Test
+    public void testGetBounds_multiStyle() {
+        final Context context = InstrumentationRegistry.getInstrumentation().getTargetContext();
+        final SpannableStringBuilder ssb = new SpannableStringBuilder("II");
+        ssb.setSpan(new TextAppearanceSpan(null /* family */, Typeface.NORMAL, 1 /* text size */,
+                null /* color */, null /* link color */), 0, 1, Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
+        ssb.setSpan(new TextAppearanceSpan(null /* family */, Typeface.NORMAL, 5 /* text size */,
+                null /* color */, null /* link color */), 1, 2, Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
+
+        final Typeface tf = new Typeface.Builder(context.getAssets(),
+                "fonts/StaticLayoutLineBreakingTestFont.ttf").build();
+        final TextPaint paint = new TextPaint();
+        paint.setTypeface(tf);
+        paint.setTextSize(1);  // Make 1em = 1px
+
+        final Params param = new Params.Builder(paint).build();
+        final Rect rect = new Rect();
+
+        rect.set(0, 0, 0, 0);
+        PrecomputedText.create(ssb, param).getBounds(0, 0, rect);
+        assertEquals(new Rect(0, 0, 0, 0), rect);
+
+        rect.set(0, 0, 0, 0);
+        PrecomputedText.create(ssb, param).getBounds(0, 1, rect);
+        assertEquals(new Rect(0, -1, 1, 0), rect);
+
+        rect.set(0, 0, 0, 0);
+        PrecomputedText.create(ssb, param).getBounds(1, 2, rect);
+        assertEquals(new Rect(0, -5, 5, 0), rect);
+
+        rect.set(0, 0, 0, 0);
+        PrecomputedText.create(ssb, param).getBounds(0, 2, rect);
+        assertEquals(new Rect(0, -5, 6, 0), rect);
+    }
+
+    @Test
+    public void testGetBounds_multiStyle2() {
+        final Context context = InstrumentationRegistry.getInstrumentation().getTargetContext();
+        final SpannableStringBuilder ssb = new SpannableStringBuilder("IVI");
+        ssb.setSpan(new TextAppearanceSpan(null /* family */, Typeface.NORMAL, 1 /* text size */,
+                null /* color */, null /* link color */), 0, 1, Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
+        ssb.setSpan(new TextAppearanceSpan(null /* family */, Typeface.NORMAL, 5 /* text size */,
+                null /* color */, null /* link color */), 1, 2, Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
+        ssb.setSpan(new TextAppearanceSpan(null /* family */, Typeface.NORMAL, 5 /* text size */,
+                null /* color */, null /* link color */), 2, 3, Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
+
+        final Typeface tf = new Typeface.Builder(context.getAssets(),
+                "fonts/StaticLayoutLineBreakingTestFont.ttf").build();
+        final TextPaint paint = new TextPaint();
+        paint.setTypeface(tf);
+        paint.setTextSize(1);  // Make 1em = 1px
+
+        final Params param = new Params.Builder(paint).build();
+        final Rect rect = new Rect();
+
+        rect.set(0, 0, 0, 0);
+        PrecomputedText.create(ssb, param).getBounds(0, 0, rect);
+        assertEquals(new Rect(0, 0, 0, 0), rect);
+
+        rect.set(0, 0, 0, 0);
+        PrecomputedText.create(ssb, param).getBounds(0, 1, rect);
+        assertEquals(new Rect(0, -1, 1, 0), rect);
+
+        rect.set(0, 0, 0, 0);
+        PrecomputedText.create(ssb, param).getBounds(1, 2, rect);
+        assertEquals(new Rect(0, -25, 25, 0), rect);
+
+        rect.set(0, 0, 0, 0);
+        PrecomputedText.create(ssb, param).getBounds(2, 3, rect);
+        assertEquals(new Rect(0, -5, 5, 0), rect);
+
+        rect.set(0, 0, 0, 0);
+        PrecomputedText.create(ssb, param).getBounds(0, 2, rect);
+        assertEquals(new Rect(0, -25, 26, 0), rect);
+
+        rect.set(0, 0, 0, 0);
+        PrecomputedText.create(ssb, param).getBounds(1, 3, rect);
+        assertEquals(new Rect(0, -25, 30, 0), rect);
+
+        rect.set(0, 0, 0, 0);
+        PrecomputedText.create(ssb, param).getBounds(0, 3, rect);
+        assertEquals(new Rect(0, -25, 31, 0), rect);
     }
 
     @Test(expected = IllegalArgumentException.class)
