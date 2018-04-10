@@ -34,6 +34,41 @@
 namespace android {
 namespace {
 
+union IntFloat {
+    uint32_t i;
+    float f;
+};
+
+// Copied from android.util.Half
+float FloatFromHalf(uint16_t bits) {
+    uint32_t s = bits & 0x8000;
+    uint32_t e = (bits & 0x7C00) >> 10;
+    uint32_t m = bits & 0x3FF;
+    uint32_t outE = 0;
+    uint32_t outM = 0;
+    if (e == 0) { // Denormal or 0
+        if (m != 0) {
+            // Convert denorm fp16 into normalized fp32
+            IntFloat uif;
+            uif.i = (126 << 23);
+            float denormal = uif.f;
+            uif.i += m;
+            float o = uif.f - denormal;
+            return s == 0 ? o : -o;
+        }
+    } else {
+        outM = m << 13;
+        if (e == 0x1f) { // Infinite or NaN
+            outE = 0xff;
+        } else {
+            outE = e - 15 + 127;
+        }
+    }
+    IntFloat result;
+    result.i = (s << 16) | (outE << 23) | outM;
+    return result.f;
+}
+
 bool FormatHasAlpha(uint32_t format) {
     switch (format) {
         case AHARDWAREBUFFER_FORMAT_R8G8B8A8_UNORM:
@@ -849,6 +884,99 @@ TEST_P(AHardwareBufferColorFormatTest, GpuColorOutputIsRenderable) {
     CheckGoldenPixels(goldens, FormatIsFloat(desc.format), FormatHasAlpha(desc.format));
 }
 
+// Verifies that the content of GPU_COLOR_OUTPUT buffers can be read on the CPU.
+TEST_P(AHardwareBufferColorFormatTest, GpuColorOutputCpuRead) {
+    AHardwareBuffer_Desc desc = GetParam();
+    desc.width = 10;
+    desc.height = 10;
+    desc.usage = AHARDWAREBUFFER_USAGE_GPU_COLOR_OUTPUT | AHARDWAREBUFFER_USAGE_CPU_READ_RARELY;
+    // This test does not make sense for GL formats. Layered buffers do not support CPU access.
+    if (desc.stride != 0 || desc.layers > 1) return;
+    if (!SetUpBuffer(desc)) return;
+
+    MakeCurrent(1);
+    SetUpFramebuffer(desc.width, desc.height, kBufferAsRenderbuffer);
+    // Draw a simple checkerboard pattern in the second context, which will
+    // be current after the loop above, then read it in the first.
+    DrawCheckerboard(desc.width, desc.height);
+    glFinish();
+
+    MakeCurrent(0);
+    // Retrieve the stride and lock the buffer for CPU access.
+    AHardwareBuffer_describe(mBuffer, &desc);
+    void* data = nullptr;
+    int result = AHardwareBuffer_lock(mBuffer, AHARDWAREBUFFER_USAGE_CPU_READ_RARELY,
+                                      -1, nullptr, &data);
+    ASSERT_EQ(NO_ERROR, result);
+
+    std::vector<GoldenPixel> goldens{
+        {0, 9, kRed},  {4, 9, kRed},  {5, 9, kBlue}, {9, 9, kBlue},
+        {0, 5, kRed},  {4, 5, kRed},  {5, 5, kBlue}, {9, 5, kBlue},
+        {0, 4, kZero}, {4, 4, kZero}, {5, 4, kRed},  {9, 4, kRed},
+        {0, 0, kZero}, {4, 0, kZero}, {5, 0, kRed},  {9, 0, kRed},
+    };
+    for (const GoldenPixel& golden : goldens) {
+        ptrdiff_t row_offset = golden.y * desc.stride;
+        switch (desc.format) {
+            case AHARDWAREBUFFER_FORMAT_R8G8B8A8_UNORM:
+            case AHARDWAREBUFFER_FORMAT_R8G8B8X8_UNORM: {
+                uint8_t* pixel = reinterpret_cast<uint8_t*>(data) + (row_offset + golden.x) * 4;
+                uint8_t pixel_to_check[4];
+                memcpy(pixel_to_check, pixel, 4);
+                if (desc.format == AHARDWAREBUFFER_FORMAT_R8G8B8X8_UNORM) {
+                    pixel_to_check[3] = 255;
+                }
+                CheckGoldenPixel(golden, pixel_to_check, FormatHasAlpha(desc.format));
+                break;
+            }
+            case AHARDWAREBUFFER_FORMAT_R8G8B8_UNORM: {
+                uint8_t* pixel = reinterpret_cast<uint8_t*>(data) + (row_offset + golden.x) * 3;
+                uint8_t pixel_to_check[4];
+                memcpy(pixel_to_check, pixel, 3);
+                pixel_to_check[3] = 255;
+                CheckGoldenPixel(golden, pixel_to_check, /*alpha_format=*/false);
+                break;
+            }
+            case AHARDWAREBUFFER_FORMAT_R5G6B5_UNORM: {
+                uint16_t* pixel = reinterpret_cast<uint16_t*>(
+                    reinterpret_cast<uint8_t*>(data) + (row_offset + golden.x) * 2);
+                uint8_t pixel_to_check[4] = {
+                    static_cast<uint8_t>(((*pixel & 0xF800) >> 11) * (255.f/31.f)),
+                    static_cast<uint8_t>(((*pixel & 0x07E0) >> 5) * (255.f/63.f)),
+                    static_cast<uint8_t>((*pixel & 0x001F) * (255.f/31.f)),
+                    255,
+                };
+                CheckGoldenPixel(golden, pixel_to_check, /*alpha_format=*/false);
+                break;
+            }
+            case AHARDWAREBUFFER_FORMAT_R16G16B16A16_FLOAT: {
+                uint16_t* pixel = reinterpret_cast<uint16_t*>(
+                    reinterpret_cast<uint8_t*>(data) + (row_offset + golden.x) * 8);
+                float pixel_to_check[4];
+                for (int i = 0; i < 4; ++i) {
+                    pixel_to_check[i] = FloatFromHalf(pixel[i]);
+                }
+                CheckGoldenPixel(golden, pixel_to_check, /*alpha_format=*/true);
+                break;
+            }
+            case AHARDWAREBUFFER_FORMAT_R10G10B10A2_UNORM: {
+                uint32_t* pixel = reinterpret_cast<uint32_t*>(
+                    reinterpret_cast<uint8_t*>(data) + (row_offset + golden.x) * 4);
+                uint8_t pixel_to_check[4] = {
+                    static_cast<uint8_t>((*pixel & 0x000003FF) * (255.f/1023.f)),
+                    static_cast<uint8_t>(((*pixel & 0x000FFC00) >> 10) * (255.f/1023.f)),
+                    static_cast<uint8_t>(((*pixel & 0x3FF00000) >> 20) * (255.f/1023.f)),
+                    static_cast<uint8_t>(((*pixel & 0xC0000000) >> 30) * (255.f/3.f)),
+                };
+                CheckGoldenPixel(golden, pixel_to_check, /*alpha_format=*/true);
+                break;
+            }
+            default: FAIL() << "Unrecognized AHardwareBuffer format"; break;
+        }
+    }
+    AHardwareBuffer_unlock(mBuffer, nullptr);
+}
+
 // Verify that when allocating an AHardwareBuffer succeeds with GPU_SAMPLED_IMAGE,
 // it can be bound as a texture, set to a color with glTexSubImage2D and sampled
 // from in a fragment shader.
@@ -952,8 +1080,8 @@ INSTANTIATE_TEST_CASE_P(
     ::testing::Values(
         AHardwareBuffer_Desc{75, 33, 5, GL_RGB8, 0, 1, 0, 0},
         AHardwareBuffer_Desc{64, 80, 6, GL_RGBA8, 0, 1, 0, 0},
-        AHardwareBuffer_Desc{25, 16, 7, AHARDWAREBUFFER_FORMAT_R8G8B8A8_UNORM, 0, 0, 0, 0},
-        AHardwareBuffer_Desc{32, 32, 4, AHARDWAREBUFFER_FORMAT_R8G8B8A8_UNORM, 0, 0, 0, 0},
+        AHardwareBuffer_Desc{25, 77, 7, AHARDWAREBUFFER_FORMAT_R8G8B8A8_UNORM, 0, 0, 0, 0},
+        //AHardwareBuffer_Desc{32, 32, 4, AHARDWAREBUFFER_FORMAT_R8G8B8A8_UNORM, 0, 0, 0, 0},
         AHardwareBuffer_Desc{30, 30, 3, AHARDWAREBUFFER_FORMAT_R8G8B8X8_UNORM, 0, 0, 0, 0},
         AHardwareBuffer_Desc{50, 50, 4, AHARDWAREBUFFER_FORMAT_R8G8B8_UNORM, 0, 0, 0, 0},
         AHardwareBuffer_Desc{20, 10, 2, AHARDWAREBUFFER_FORMAT_R5G6B5_UNORM, 0, 0, 0, 0},
