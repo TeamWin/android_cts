@@ -238,7 +238,7 @@ public class UsageStatsTest {
             UsageEvents.Event event = new UsageEvents.Event();
             assertTrue(events.getNextEvent(event));
             if (event.getEventType() == UsageEvents.Event.STANDBY_BUCKET_CHANGED) {
-                found |= event.getStandbyBucket() == UsageStatsManager.STANDBY_BUCKET_RARE;
+                found |= event.getAppStandbyBucket() == UsageStatsManager.STANDBY_BUCKET_RARE;
             }
         }
 
@@ -275,10 +275,11 @@ public class UsageStatsTest {
             numEvents++;
             assertEquals("Event for a different package", mTargetPackage, event.getPackageName());
             if (event.getEventType() == Event.STANDBY_BUCKET_CHANGED) {
-                if (event.getStandbyBucket() == UsageStatsManager.STANDBY_BUCKET_RARE) {
+                if (event.getAppStandbyBucket() == UsageStatsManager.STANDBY_BUCKET_RARE) {
                     rareTimeStamp = event.mTimeStamp;
                 }
-                else if (event.getStandbyBucket() == UsageStatsManager.STANDBY_BUCKET_WORKING_SET) {
+                else if (event.getAppStandbyBucket() == UsageStatsManager
+                        .STANDBY_BUCKET_WORKING_SET) {
                     workingTimeStamp = event.mTimeStamp;
                 }
             }
