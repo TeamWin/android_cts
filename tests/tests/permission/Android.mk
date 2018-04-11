@@ -27,8 +27,6 @@ LOCAL_COMPATIBILITY_SUITE := cts vts general-tests
 # Include both the 32 and 64 bit versions
 LOCAL_MULTILIB := both
 
-LOCAL_JAVA_LIBRARIES := telephony-common
-
 LOCAL_STATIC_JAVA_LIBRARIES := \
     ctstestrunner \
     guava \
@@ -41,9 +39,8 @@ LOCAL_SRC_FILES := $(call all-java-files-under, src)
 
 LOCAL_PACKAGE_NAME := CtsPermissionTestCases
 
-# uncomment when b/13249777 is fixed
-#LOCAL_SDK_VERSION := current
-LOCAL_PRIVATE_PLATFORM_APIS := true
+LOCAL_SDK_VERSION := test_current
+
 LOCAL_JAVA_LIBRARIES += android.test.runner.stubs
 LOCAL_JAVA_LIBRARIES += android.test.base.stubs
 
