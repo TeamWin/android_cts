@@ -72,7 +72,7 @@ public class SliceManagerTest {
 
     @Test
     public void testPinSlice() throws Exception {
-        mSliceManager.pinSlice(BASE_URI, Collections.emptyList());
+        mSliceManager.pinSlice(BASE_URI, Collections.emptySet());
 
         verify(LocalSliceProvider.sProxy, timeout(2000)).onSlicePinned(eq(BASE_URI));
     }
@@ -80,7 +80,7 @@ public class SliceManagerTest {
     @Test
     public void testUnpinSlice() throws Exception {
 
-        mSliceManager.pinSlice(BASE_URI, Collections.emptyList());
+        mSliceManager.pinSlice(BASE_URI, Collections.emptySet());
 
         verify(LocalSliceProvider.sProxy, timeout(2000)).onSlicePinned(eq(BASE_URI));
 
@@ -116,7 +116,7 @@ public class SliceManagerTest {
 
             when(LocalSliceProvider.sProxy.onCreatePermissionRequest(any())).thenReturn(intent);
 
-            Slice s = mSliceManager.bindSlice(uri, Collections.emptyList());
+            Slice s = mSliceManager.bindSlice(uri, Collections.emptySet());
 
             /// Make sure we get a callback for creating the intent.
             verify(LocalSliceProvider.sProxy).onCreatePermissionRequest(eq(uri));
