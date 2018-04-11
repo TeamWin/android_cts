@@ -22,6 +22,7 @@ import static org.junit.Assert.assertTrue;
 
 import android.inputmethodservice.Keyboard;
 import android.inputmethodservice.Keyboard.Key;
+import android.platform.test.annotations.Presubmit;
 import android.support.test.InstrumentationRegistry;
 import android.support.test.filters.SmallTest;
 import android.support.test.runner.AndroidJUnit4;
@@ -30,6 +31,7 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 
 @SmallTest
+@Presubmit
 @RunWith(AndroidJUnit4.class)
 public class KeyboardTest {
     @Test

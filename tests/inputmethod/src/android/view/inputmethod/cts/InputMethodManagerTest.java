@@ -29,6 +29,7 @@ import static org.junit.Assert.fail;
 import android.app.Instrumentation;
 import android.content.Context;
 import android.content.Intent;
+import android.platform.test.annotations.Presubmit;
 import androidx.annotation.NonNull;
 import android.support.test.InstrumentationRegistry;
 import android.support.test.filters.MediumTest;
@@ -55,6 +56,7 @@ import java.util.concurrent.atomic.AtomicReference;
 import java.util.stream.Collectors;
 
 @MediumTest
+@Presubmit
 @RunWith(AndroidJUnit4.class)
 public class InputMethodManagerTest {
     private static final long TIMEOUT = TimeUnit.SECONDS.toMillis(5);

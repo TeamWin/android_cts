@@ -33,6 +33,7 @@ import android.content.pm.ResolveInfo;
 import android.content.pm.ServiceInfo;
 import android.os.Parcel;
 import android.os.ParcelFileDescriptor;
+import android.platform.test.annotations.Presubmit;
 import android.support.test.InstrumentationRegistry;
 import android.support.test.filters.SmallTest;
 import android.support.test.runner.AndroidJUnit4;
@@ -55,6 +56,7 @@ import java.nio.charset.StandardCharsets;
 import java.util.List;
 
 @SmallTest
+@Presubmit
 @RunWith(AndroidJUnit4.class)
 public class InputMethodInfoTest {
     private Context mContext;

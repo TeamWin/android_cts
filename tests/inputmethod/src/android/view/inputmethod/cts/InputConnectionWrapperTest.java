@@ -33,6 +33,7 @@ import static org.mockito.Mockito.verify;
 import android.content.ClipDescription;
 import android.net.Uri;
 import android.os.Bundle;
+import android.platform.test.annotations.Presubmit;
 import android.support.test.filters.SmallTest;
 import android.support.test.runner.AndroidJUnit4;
 import android.text.TextUtils;
@@ -50,6 +51,7 @@ import org.junit.runner.RunWith;
 import org.mockito.ArgumentCaptor;
 
 @SmallTest
+@Presubmit
 @RunWith(AndroidJUnit4.class)
 public class InputConnectionWrapperTest {
     @Test
