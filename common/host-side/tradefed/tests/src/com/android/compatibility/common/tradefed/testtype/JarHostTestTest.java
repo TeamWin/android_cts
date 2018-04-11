@@ -19,9 +19,8 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
-import com.android.compatibility.common.tradefed.build.CompatibilityBuildHelper;
 import com.android.tradefed.build.BuildInfo;
-import com.android.tradefed.build.IBuildInfo;
+import com.android.tradefed.build.DeviceBuildInfo;
 import com.android.tradefed.config.OptionSetter;
 import com.android.tradefed.device.ITestDevice;
 import com.android.tradefed.log.LogUtil.CLog;
@@ -42,7 +41,6 @@ import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
 
 import java.io.File;
-import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.MalformedURLException;
@@ -62,6 +60,7 @@ public class JarHostTestTest {
     private static final String TEST_JAR1 = "/testtype/testJar1.jar";
     private static final String TEST_JAR2 = "/testtype/testJar2.jar";
     private JarHostTest mTest;
+    private DeviceBuildInfo mStubBuildInfo;
     private File mTestDir = null;
     private ITestInvocationListener mListener;
 
@@ -76,16 +75,6 @@ public class JarHostTestTest {
         public JarHostTestable(File testDir) {
             mTestDir = testDir;
         }
-
-        @Override
-        CompatibilityBuildHelper createBuildHelper(IBuildInfo info) {
-            return new CompatibilityBuildHelper(info) {
-                @Override
-                public File getTestsDir() throws FileNotFoundException {
-                    return mTestDir;
-                }
-            };
-        }
     }
 
     @Before
@@ -95,6 +84,8 @@ public class JarHostTestTest {
         mListener = EasyMock.createMock(ITestInvocationListener.class);
         OptionSetter setter = new OptionSetter(mTest);
         setter.setOptionValue("enable-pretty-logs", "false");
+        mStubBuildInfo = new DeviceBuildInfo();
+        mStubBuildInfo.setTestsDir(mTestDir, "v1");
     }
 
     @After
@@ -164,6 +155,7 @@ public class JarHostTestTest {
     public void testSplit_withJar() throws Exception {
         File testJar = getJarResource(TEST_JAR1, mTestDir);
         mTest = new JarHostTestable(mTestDir);
+        mTest.setBuild(mStubBuildInfo);
         OptionSetter setter = new OptionSetter(mTest);
         setter.setOptionValue("enable-pretty-logs", "false");
         setter.setOptionValue("jar", testJar.getName());
@@ -185,7 +177,7 @@ public class JarHostTestTest {
     public void testGetTestShard_withJar() throws Exception {
         File testJar = getJarResource(TEST_JAR2, mTestDir);
         mTest = new JarHostTestLoader(mTestDir, testJar);
-        mTest.setBuild(new BuildInfo());
+        mTest.setBuild(mStubBuildInfo);
         ITestDevice device = EasyMock.createNiceMock(ITestDevice.class);
         mTest.setDevice(device);
         OptionSetter setter = new OptionSetter(mTest);
@@ -256,15 +248,6 @@ public class JarHostTestTest {
             mTestJar = jar;
         }
 
-        @Override
-        CompatibilityBuildHelper createBuildHelper(IBuildInfo info) {
-            return new CompatibilityBuildHelper(info) {
-                @Override
-                public File getTestsDir() throws FileNotFoundException {
-                    return mTestDir;
-                }
-            };
-        }
         @Override
         protected ClassLoader getClassLoader() {
             ClassLoader child = super.getClassLoader();

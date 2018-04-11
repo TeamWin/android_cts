@@ -146,6 +146,7 @@ public class CtsConfigLoadingTest {
         FolderBuildInfo stubFolder = new FolderBuildInfo("-1", "-1");
         stubFolder.setRootDir(new File(ctsRoot));
         stubFolder.addBuildAttribute(CompatibilityBuildHelper.SUITE_NAME, "CTS");
+        stubFolder.addBuildAttribute("ROOT_DIR", ctsRoot);
         // We expect to be able to load every single config in testcases/
         for (File config : listConfig) {
             IConfiguration c = ConfigurationFactory.getInstance()
