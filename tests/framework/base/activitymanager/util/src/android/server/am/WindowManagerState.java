@@ -527,7 +527,7 @@ public class WindowManagerState {
         return new Rect(mDefaultPinnedStackBounds);
     }
 
-    Rect getPinnedStackMomentBounds() {
+    Rect getPinnedStackMovementBounds() {
         return new Rect(mPinnedStackMovementBounds);
     }
 
@@ -575,6 +575,7 @@ public class WindowManagerState {
         int mStackId;
         ArrayList<WindowTask> mTasks = new ArrayList<>();
         boolean mWindowAnimationBackgroundSurfaceShowing;
+        boolean mAnimatingBounds;
 
         WindowStack(StackProto proto) {
             super(proto.windowContainer);
@@ -588,6 +589,7 @@ public class WindowManagerState {
                 mSubWindows.addAll(task.getWindows());
             }
             mWindowAnimationBackgroundSurfaceShowing = proto.animationBackgroundSurfaceIsDimming;
+            mAnimatingBounds = proto.animatingBounds;
         }
 
         WindowTask getTask(int taskId) {
