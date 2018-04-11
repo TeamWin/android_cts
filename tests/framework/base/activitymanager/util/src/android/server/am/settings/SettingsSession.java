@@ -58,7 +58,7 @@ public class SettingsSession<T> implements AutoCloseable {
      */
     private static final SessionCounters sSessionCounters = new SessionCounters();
 
-    private final Uri mUri;
+    protected final Uri mUri;
     private final SettingsGetter<T> mGetter;
     private final SettingsSetter<T> mSetter;
     private final boolean mHasInitialValue;
