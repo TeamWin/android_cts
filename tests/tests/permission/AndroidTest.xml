@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Copyright (C) 2018 The Android Open Source Project
+
+     Licensed under the Apache License, Version 2.0 (the "License");
+     you may not use this file except in compliance with the License.
+     You may obtain a copy of the License at
+
+          http://www.apache.org/licenses/LICENSE-2.0
+
+     Unless required by applicable law or agreed to in writing, software
+     distributed under the License is distributed on an "AS IS" BASIS,
+     WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+     See the License for the specific language governing permissions and
+     limitations under the License.
+-->
+<configuration description="Config for CTS Permission test cases">
+    <include name="common-config" />
+    <option name="cts-apk-installer:test-file-name" value="CtsPermissionTestCases.apk" />
+
+    <!-- Create place to store apks -->
+    <option name="run-command:run-command" value="mkdir -p /data/local/tmp/cts/permissions" />
+    <option name="run-command:teardown-command" value="rm -rf /data/local/tmp/cts" />
+
+    <!-- Load additional APKs onto device -->
+    <target_preparer class="com.android.cts.tradefed.targetprep.CtsFilePusher">
+        <option name="push" value="CtsAppThatRequestsPermissionAandB.apk->/data/local/tmp/cts/permissions/CtsAppThatRequestsPermissionAandB.apk" />
+        <option name="push" value="CtsAppThatRequestsPermissionAandC.apk->/data/local/tmp/cts/permissions/CtsAppThatRequestsPermissionAandC.apk" />
+    </target_preparer>
+
+    <!-- Remove additional apps if installed -->
+    <option name="run-command:teardown-command" value="pm uninstall android.permission.cts.appthatrequestpermission" />
+</configuration>
