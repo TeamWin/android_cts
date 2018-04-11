@@ -22,7 +22,6 @@ import static android.app.WindowConfiguration.ACTIVITY_TYPE_STANDARD;
 import static android.app.WindowConfiguration.WINDOWING_MODE_FULLSCREEN;
 import static android.app.WindowConfiguration.WINDOWING_MODE_PINNED;
 import static android.app.WindowConfiguration.WINDOWING_MODE_UNDEFINED;
-import static android.server.am.ActivityManagerState.STATE_DESTROYED;
 import static android.server.am.ActivityManagerState.STATE_RESUMED;
 import static android.server.am.ActivityManagerState.STATE_STOPPED;
 import static android.server.am.ComponentNameUtils.getActivityName;
@@ -33,6 +32,7 @@ import static android.server.am.Components.LAUNCHING_ACTIVITY;
 import static android.server.am.Components.LAUNCH_ENTER_PIP_ACTIVITY;
 import static android.server.am.Components.LAUNCH_INTO_PINNED_STACK_PIP_ACTIVITY;
 import static android.server.am.Components.NON_RESIZEABLE_ACTIVITY;
+import static android.server.am.Components.NO_RELAUNCH_ACTIVITY;
 import static android.server.am.Components.PIP_ACTIVITY;
 import static android.server.am.Components.PIP_ACTIVITY2;
 import static android.server.am.Components.PIP_ACTIVITY_WITH_SAME_AFFINITY;
@@ -65,7 +65,6 @@ import static android.server.am.Components.TestActivity.EXTRA_FIXED_ORIENTATION;
 import static android.server.am.Components.TestActivity.TEST_ACTIVITY_ACTION_FINISH_SELF;
 import static android.server.am.UiDeviceUtils.pressWindowButton;
 import static android.view.Display.DEFAULT_DISPLAY;
-
 import static org.hamcrest.Matchers.lessThan;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotEquals;
@@ -76,21 +75,28 @@ import static org.junit.Assert.fail;
 import static org.junit.Assume.assumeTrue;
 
 import android.content.ComponentName;
+import android.content.Context;
+import android.database.ContentObserver;
 import android.graphics.Rect;
+import android.os.Handler;
+import android.os.Looper;
 import android.platform.test.annotations.Presubmit;
 import android.provider.Settings;
 import android.server.am.ActivityManagerState.ActivityStack;
 import android.server.am.ActivityManagerState.ActivityTask;
+import android.server.am.WindowManagerState.WindowStack;
 import android.server.am.settings.SettingsSession;
 import android.support.test.filters.FlakyTest;
+import android.support.test.InstrumentationRegistry;
+import android.util.Log;
 import android.util.Size;
-
-import org.junit.Ignore;
-import org.junit.Test;
-
 import java.util.List;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.TimeUnit;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+import org.junit.Ignore;
+import org.junit.Test;
 
 /**
  * Build/Install/Run:
@@ -98,6 +104,7 @@ import java.util.regex.Pattern;
  */
 @FlakyTest(bugId = 71792368)
 public class ActivityManagerPinnedStackTests extends ActivityManagerTestBase {
+    private static final String TAG = ActivityManagerPinnedStackTests.class.getSimpleName();
 
     private static final String APP_OPS_OP_ENTER_PICTURE_IN_PICTURE = "PICTURE_IN_PICTURE";
     private static final int APP_OPS_MODE_ALLOWED = 0;
@@ -231,7 +238,7 @@ public class ActivityManagerPinnedStackTests extends ActivityManagerTestBase {
             rotationSession.set(ROTATION_0);
             WindowManagerState wmState = mAmWmState.getWmState();
             wmState.computeState();
-            Rect pipMovementBounds = wmState.getPinnedStackMomentBounds();
+            Rect pipMovementBounds = wmState.getPinnedStackMovementBounds();
             Rect stableBounds = wmState.getStableBounds();
             assertTrue(pipMovementBounds.width() > 0 && pipMovementBounds.height() > 0);
             assertTrue(stableBounds.contains(pipMovementBounds));
@@ -239,7 +246,7 @@ public class ActivityManagerPinnedStackTests extends ActivityManagerTestBase {
             rotationSession.set(ROTATION_90);
             wmState = mAmWmState.getWmState();
             wmState.computeState();
-            pipMovementBounds = wmState.getPinnedStackMomentBounds();
+            pipMovementBounds = wmState.getPinnedStackMovementBounds();
             stableBounds = wmState.getStableBounds();
             assertTrue(pipMovementBounds.width() > 0 && pipMovementBounds.height() > 0);
             assertTrue(stableBounds.contains(pipMovementBounds));
@@ -614,9 +621,7 @@ public class ActivityManagerPinnedStackTests extends ActivityManagerTestBase {
         mAmWmState.waitForWithAmState(amState ->
                 amState.getFrontStackWindowingMode(DEFAULT_DISPLAY) == WINDOWING_MODE_FULLSCREEN,
                 "Waiting for PIP to exit to fullscreen");
-        mAmWmState.waitForWithAmState(amState ->
-                amState.getFrontStackWindowingMode(DEFAULT_DISPLAY) == WINDOWING_MODE_PINNED,
-                "Waiting to re-enter PIP");
+        waitForEnterPipAnimationComplete(PIP_ACTIVITY);
         mAmWmState.assertVisibility(TEST_ACTIVITY, true);
     }
 
@@ -866,6 +871,24 @@ public class ActivityManagerPinnedStackTests extends ActivityManagerTestBase {
             super(Settings.Global.getUriFor(Settings.Global.TRANSITION_ANIMATION_SCALE),
                     Settings.Global::getFloat,
                     Settings.Global::putFloat);
+        }
+
+        @Override
+        public void close() throws Exception {
+            // Wait for the restored setting to apply before we continue on with the next test
+            final CountDownLatch waitLock = new CountDownLatch(1);
+            final Context context = InstrumentationRegistry.getTargetContext();
+            context.getContentResolver().registerContentObserver(mUri, false,
+                    new ContentObserver(new Handler(Looper.getMainLooper())) {
+                        @Override
+                        public void onChange(boolean selfChange) {
+                            waitLock.countDown();
+                        }
+                    });
+            super.close();
+            if (!waitLock.await(2, TimeUnit.SECONDS)) {
+                Log.i(TAG, "TransitionAnimationScaleSession value not restored");
+            }
         }
     }
 
@@ -1182,7 +1205,6 @@ public class ActivityManagerPinnedStackTests extends ActivityManagerTestBase {
         launchActivity(PIP_ACTIVITY, EXTRA_ENTER_PIP, "true");
         // Wait for animation complete since we are comparing bounds
         waitForEnterPipAnimationComplete(PIP_ACTIVITY);
-        mAmWmState.waitForAppTransitionIdle();
         final ReportedSizes pinnedSizes = getLastReportedSizesForActivity(PIP_ACTIVITY,
                 logSeparator);
         final Rect pinnedAppBounds = readAppBounds(PIP_ACTIVITY, logSeparator);
@@ -1209,6 +1231,11 @@ public class ActivityManagerPinnedStackTests extends ActivityManagerTestBase {
     public void testEnterPictureInPictureSavePosition() throws Exception {
         assumeTrue(supportsPip());
 
+        // Ensure we have static shelf offset by running this test over a non-home activity
+        launchActivity(NO_RELAUNCH_ACTIVITY);
+        mAmWmState.waitForActivityState(mAmWmState.getAmState().getHomeActivityName(),
+                STATE_STOPPED);
+
         // Launch PiP activity with auto-enter PiP, save the default position of the PiP
         // (while the PiP is still animating sleep)
         launchActivity(PIP_ACTIVITY, EXTRA_ENTER_PIP, "true");
@@ -1217,17 +1244,9 @@ public class ActivityManagerPinnedStackTests extends ActivityManagerTestBase {
         assertPinnedStackExists();
 
         // Move the PiP to a new position on screen
-        final int stackId = getPinnedStack().mStackId;
-        final Rect initialDefaultBounds = mAmWmState.getWmState().getDefaultPinnedStackBounds();
-        final Rect offsetStackBounds = getPinnedStackBounds();
-        if (offsetStackBounds.top == initialDefaultBounds.top) {
-            // If the default gravity is top-aligned, offset down instead of up
-            offsetStackBounds.offset(0, 100);
-        } else {
-            offsetStackBounds.offset(0, -100);
-        }
-        resizeStack(stackId, offsetStackBounds.left, offsetStackBounds.top, offsetStackBounds.right,
-                offsetStackBounds.bottom);
+        final Rect initialBounds = new Rect();
+        final Rect offsetBounds = new Rect();
+        offsetPipWithinMovementBounds(100 /* offsetY */, initialBounds, offsetBounds);
 
         // Expand the PiP back to fullscreen and back into PiP and ensure that it is in the same
         // position as before we expanded (and that the default bounds reflect that)
@@ -1238,9 +1257,9 @@ public class ActivityManagerPinnedStackTests extends ActivityManagerTestBase {
         mAmWmState.computeState(true);
         // Due to rounding in how we save and apply the snap fraction we may be a pixel off, so just
         // account for that in this check
-        offsetStackBounds.inset(-1, -1);
-        assertTrue("Expected offsetBounds=" + offsetStackBounds + " to contain bounds="
-                + getPinnedStackBounds(), offsetStackBounds.contains(getPinnedStackBounds()));
+        offsetBounds.inset(-1, -1);
+        assertTrue("Expected offsetBounds=" + offsetBounds + " to contain bounds="
+                + getPinnedStackBounds(), offsetBounds.contains(getPinnedStackBounds()));
 
         // Expand the PiP, then launch an activity in a new task, and ensure that the PiP goes back
         // to the default position (and not the saved position) the next time it is launched
@@ -1249,11 +1268,12 @@ public class ActivityManagerPinnedStackTests extends ActivityManagerTestBase {
         launchActivity(TEST_ACTIVITY);
         executeShellCommand("am broadcast -a " + TEST_ACTIVITY_ACTION_FINISH_SELF);
         mAmWmState.waitForActivityState(PIP_ACTIVITY, STATE_RESUMED);
+        mAmWmState.waitForAppTransitionIdle();
         executeShellCommand("am broadcast -a " + ACTION_ENTER_PIP);
         waitForEnterPipAnimationComplete(PIP_ACTIVITY);
-        mAmWmState.computeState(true);
-        assertTrue("Expected initialBounds=" + initialDefaultBounds + " to equal bounds="
-                + getPinnedStackBounds(), initialDefaultBounds.equals(getPinnedStackBounds()));
+        assertPinnedStackExists();
+        assertTrue("Expected initialBounds=" + initialBounds + " to equal bounds="
+                + getPinnedStackBounds(), initialBounds.equals(getPinnedStackBounds()));
     }
 
     @Presubmit
@@ -1261,6 +1281,11 @@ public class ActivityManagerPinnedStackTests extends ActivityManagerTestBase {
     @FlakyTest(bugId = 71792368)
     public void testEnterPictureInPictureDiscardSavedPositionOnFinish() throws Exception {
         assumeTrue(supportsPip());
+
+        // Ensure we have static shelf offset by running this test over a non-home activity
+        launchActivity(NO_RELAUNCH_ACTIVITY);
+        mAmWmState.waitForActivityState(mAmWmState.getAmState().getHomeActivityName(),
+                STATE_STOPPED);
 
         // Launch PiP activity with auto-enter PiP, save the default position of the PiP
         // (while the PiP is still animating sleep)
@@ -1270,21 +1295,12 @@ public class ActivityManagerPinnedStackTests extends ActivityManagerTestBase {
         assertPinnedStackExists();
 
         // Move the PiP to a new position on screen
-        final int stackId = getPinnedStack().mStackId;
-        final Rect initialDefaultBounds = mAmWmState.getWmState().getDefaultPinnedStackBounds();
-        final Rect offsetStackBounds = getPinnedStackBounds();
-        if (offsetStackBounds.top == initialDefaultBounds.top) {
-            // If the default gravity is top-aligned, offset down instead of up
-            offsetStackBounds.offset(0, 100);
-        } else {
-            offsetStackBounds.offset(0, -100);
-        }
-        resizeStack(stackId, offsetStackBounds.left, offsetStackBounds.top, offsetStackBounds.right,
-                offsetStackBounds.bottom);
+        final Rect initialBounds = new Rect();
+        final Rect offsetBounds = new Rect();
+        offsetPipWithinMovementBounds(100 /* offsetY */, initialBounds, offsetBounds);
 
         // Finish the activity
         executeShellCommand("am broadcast -a " + ACTION_FINISH);
-        mAmWmState.waitForActivityState(PIP_ACTIVITY, STATE_DESTROYED);
         mAmWmState.waitForWithAmState(amState -> getPinnedStack() == null,
                 "Waiting for pinned stack to be removed...");
         assertPinnedStackDoesNotExist();
@@ -1294,8 +1310,29 @@ public class ActivityManagerPinnedStackTests extends ActivityManagerTestBase {
         launchActivity(PIP_ACTIVITY, EXTRA_ENTER_PIP, "true");
         waitForEnterPipAnimationComplete(PIP_ACTIVITY);
         assertPinnedStackExists();
-        assertTrue("Expected initialBounds=" + initialDefaultBounds + " to equal bounds="
-                + getPinnedStackBounds(), initialDefaultBounds.equals(getPinnedStackBounds()));
+        assertTrue("Expected initialBounds=" + initialBounds + " to equal bounds="
+                + getPinnedStackBounds(), initialBounds.equals(getPinnedStackBounds()));
+    }
+
+    /**
+     * Offsets the PiP in a direction by {@param offsetY} such that it is still within the movement
+     * bounds.
+     */
+    private void offsetPipWithinMovementBounds(int offsetY, Rect initialBoundsOut,
+            Rect offsetBoundsOut) {
+        final ActivityStack stack = getPinnedStack();
+        final Rect displayRect = mAmWmState.getWmState().getDisplay(stack.mDisplayId)
+                .getDisplayRect();
+        initialBoundsOut.set(getPinnedStackBounds());
+        offsetBoundsOut.set(initialBoundsOut);
+        if (initialBoundsOut.top < displayRect.centerY()) {
+            // If the default gravity is top-aligned, offset down instead of up
+            offsetBoundsOut.offset(0, offsetY);
+        } else {
+            offsetBoundsOut.offset(0, -offsetY);
+        }
+        resizeStack(stack.mStackId, offsetBoundsOut.left, offsetBoundsOut.top,
+                offsetBoundsOut.right, offsetBoundsOut.bottom);
     }
 
     private static final Pattern sAppBoundsPattern = Pattern.compile(
@@ -1355,7 +1392,7 @@ public class ActivityManagerPinnedStackTests extends ActivityManagerTestBase {
                 imeContentFrame.right - imeContentInsets.width(),
                 imeContentFrame.bottom - imeContentInsets.height());
         wmState.computeState();
-        Rect pipMovementBounds = wmState.getPinnedStackMomentBounds();
+        Rect pipMovementBounds = wmState.getPinnedStackMovementBounds();
         assertTrue(!Rect.intersects(pipMovementBounds, imeBounds));
     }
 
@@ -1435,7 +1472,10 @@ public class ActivityManagerPinnedStackTests extends ActivityManagerTestBase {
      */
     private void waitForEnterPipAnimationComplete(ComponentName activityName) {
         waitForEnterPip(activityName);
-        mAmWmState.waitForAppTransitionIdle();
+        mAmWmState.waitFor((amState, wmState) -> {
+                WindowStack stack = wmState.getStandardStackByWindowingMode(WINDOWING_MODE_PINNED);
+                return stack != null && !stack.mAnimatingBounds;
+            }, "Waiting for pinned stack bounds animation to finish");
     }
 
     /**
