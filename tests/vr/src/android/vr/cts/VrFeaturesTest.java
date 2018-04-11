@@ -15,7 +15,9 @@
  */
 package android.vr.cts;
 
+import android.content.Context;
 import android.content.pm.PackageManager;
+import android.os.PowerManager;
 import android.os.Process;
 import android.test.ActivityInstrumentationTestCase2;
 
@@ -35,6 +37,18 @@ public class VrFeaturesTest extends ActivityInstrumentationTestCase2<CtsActivity
         if (hasVrMode || hasVrModeHighPerf) {
             assertTrue("FEATURE_VR_MODE and FEATURE_VR_MODE_HIGH_PERFORMANCE must be used together",
                     hasVrMode && hasVrModeHighPerf);
+        }
+    }
+
+    public void testSustainedPerformanceModeSupported() {
+        mActivity = getActivity();
+        PowerManager pm = (PowerManager) mActivity.getSystemService(Context.POWER_SERVICE);
+        boolean hasVrModeHighPerf = mActivity.getPackageManager().hasSystemFeature(
+                PackageManager.FEATURE_VR_MODE_HIGH_PERFORMANCE);
+        boolean hasSustainedPerformanceMode = pm.isSustainedPerformanceModeSupported();
+        if (hasVrModeHighPerf) {
+            assertTrue("FEATURE_VR_MODE_HIGH_PERFORMANCE requires support for sustained performance mode",
+                    hasSustainedPerformanceMode);
         }
     }
 }

@@ -1,4 +1,4 @@
-# Copyright (C) 2014 The Android Open Source Project
+# Copyright (C) 2018 The Android Open Source Project
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -12,31 +12,19 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-LOCAL_PATH:= $(call my-dir)
+LOCAL_PATH := $(call my-dir)
 
 include $(CLEAR_VARS)
-
-LOCAL_PACKAGE_NAME := CtsUsageStatsTestCases
-LOCAL_PRIVATE_PLATFORM_APIS := true
-
-# don't include this package in any target
+LOCAL_PACKAGE_NAME := CtsHiddenApiWhitelistTestCases
 LOCAL_MODULE_TAGS := optional
-
-# and when built explicitly put it in the data partition
 LOCAL_MODULE_PATH := $(TARGET_OUT_DATA_APPS)
-
-LOCAL_STATIC_JAVA_LIBRARIES := \
-    android-support-test \
-    compatibility-device-util \
-    ctstestrunner \
-    junit \
-    ub-uiautomator
-
-LOCAL_JAVA_LIBRARIES := android.test.base.stubs android.test.runner.stubs
-
-LOCAL_SRC_FILES := $(call all-java-files-under, src)
+LOCAL_MULTILIB := both
+LOCAL_JNI_SHARED_LIBRARIES := libcts_dexchecker libclassdescriptors
+LOCAL_NDK_STL_VARIANT := c++_static
 
 # Tag this module as a cts test artifact
 LOCAL_COMPATIBILITY_SUITE := cts vts general-tests
+LOCAL_SDK_VERSION := current
+LOCAL_STATIC_JAVA_LIBRARIES := cts-api-signature-test
 
 include $(BUILD_CTS_PACKAGE)
