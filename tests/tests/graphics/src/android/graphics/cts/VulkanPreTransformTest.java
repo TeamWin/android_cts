@@ -17,7 +17,7 @@
 package android.graphics.cts;
 
 import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.assertNotNull;
 
 import android.graphics.Bitmap;
 import android.graphics.Color;
@@ -64,7 +64,7 @@ import org.junit.runner.RunWith;
 public class VulkanPreTransformTest {
     private static final String TAG = "vulkan";
     private static final boolean DEBUG = false;
-    private VulkanPreTransformCtsActivity mActivity;
+    private static VulkanPreTransformCtsActivity sActivity = null;
 
     @Rule
     public ActivityTestRule<VulkanPreTransformCtsActivity> mActivityRule =
@@ -81,47 +81,35 @@ public class VulkanPreTransformTest {
     @Test
     public void testVulkanPreTransformSetToMatchCurrentTransform() throws Throwable {
         Log.d(TAG, "testVulkanPreTransformSetToMatchCurrentTransform start");
-        mActivity = mActivityRule.launchActivity(null);
-        int ret = mActivity.testVulkanPreTransform(true);
-        if (ret > 0) {
-            Log.d(TAG, "Hardware not supported for this test");
-            mActivity.finish();
-            return;
-        }
-        assertTrue("testVulkanPreTransformSetToMatchCurrentTransform failed", ret == 0);
-        assertTrue("Not properly rotated", validatePixelValuesAfterRotation(true));
-        mActivity.finish();
+        sActivity = mActivityRule.launchActivity(null);
+        sActivity.testVulkanPreTransform(true);
+        sActivity.finish();
+        sActivity = null;
     }
 
     @Test
     public void testVulkanPreTransformNotSetToMatchCurrentTransform() throws Throwable {
         Log.d(TAG, "testVulkanPreTransformNotSetToMatchCurrentTransform start");
-        mActivity = mActivityRule.launchActivity(null);
-        int ret = mActivity.testVulkanPreTransform(false);
-        if (ret > 0) {
-            Log.d(TAG, "Hardware not supported for this test");
-            mActivity.finish();
-            return;
-        }
-        assertTrue("testVulkanPreTransformNotSetToMatchCurrentTransform failed", ret == 0);
-        assertTrue("Not properly rotated", validatePixelValuesAfterRotation(false));
-        mActivity.finish();
+        sActivity = mActivityRule.launchActivity(null);
+        sActivity.testVulkanPreTransform(false);
+        sActivity.finish();
+        sActivity = null;
     }
 
-    private Bitmap takeScreenshot() {
+    private static Bitmap takeScreenshot() {
+        assertNotNull("sActivity should not be null", sActivity);
         Rect srcRect = new Rect();
-        mActivity.findViewById(R.id.surfaceview).getGlobalVisibleRect(srcRect);
-
+        sActivity.findViewById(R.id.surfaceview).getGlobalVisibleRect(srcRect);
         SynchronousPixelCopy copy = new SynchronousPixelCopy();
         Bitmap dest =
                 Bitmap.createBitmap(srcRect.width(), srcRect.height(), Bitmap.Config.ARGB_8888);
         int copyResult =
-                copy.request((SurfaceView) mActivity.findViewById(R.id.surfaceview), srcRect, dest);
-        assertEquals(PixelCopy.SUCCESS, copyResult);
+                copy.request((SurfaceView) sActivity.findViewById(R.id.surfaceview), srcRect, dest);
+        assertEquals("PixelCopy failed", PixelCopy.SUCCESS, copyResult);
         return dest;
     }
 
-    private int pixelDiff(int pixel, int expectedR, int expectedG, int expectedB) {
+    private static int pixelDiff(int pixel, int expectedR, int expectedG, int expectedB) {
         int actualR = Color.red(pixel);
         int actualG = Color.green(pixel);
         int actualB = Color.blue(pixel);
@@ -132,7 +120,7 @@ public class VulkanPreTransformTest {
                 + Math.abs(actualB - expectedB);
     }
 
-    private boolean validatePixelValuesAfterRotation(boolean setPreTransform) {
+    private static boolean validatePixelValuesAfterRotation(boolean setPreTransform) {
         Bitmap bitmap = takeScreenshot();
 
         int width = bitmap.getWidth();
