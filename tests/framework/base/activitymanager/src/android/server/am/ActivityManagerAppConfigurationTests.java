@@ -369,14 +369,14 @@ public class ActivityManagerAppConfigurationTests extends ActivityManagerTestBas
     @Test
     public void testNonfullscreenAppOrientationRequests() throws Exception {
         LogSeparator logSeparator = separateLogs();
-        launchActivity(PORTRAIT_ORIENTATION_ACTIVITY);
+        launchActivity(PORTRAIT_ORIENTATION_ACTIVITY, WINDOWING_MODE_FULLSCREEN);
         final ReportedSizes initialReportedSizes =
                 getLastReportedSizesForActivity(PORTRAIT_ORIENTATION_ACTIVITY, logSeparator);
         assertEquals("portrait activity should be in portrait",
                 1 /* portrait */, initialReportedSizes.orientation);
         logSeparator = separateLogs();
 
-        launchActivity(SDK26_TRANSLUCENT_LANDSCAPE_ACTIVITY);
+        launchActivity(SDK26_TRANSLUCENT_LANDSCAPE_ACTIVITY, WINDOWING_MODE_FULLSCREEN);
         assertEquals("Legacy non-fullscreen activity requested landscape orientation",
                 0 /* landscape */, mAmWmState.getWmState().getLastOrientation());
 
