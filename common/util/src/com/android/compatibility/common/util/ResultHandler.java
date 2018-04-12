@@ -73,6 +73,7 @@ public class ResultHandler {
     private static final String ABI_ATTR = "abi";
     private static final String BUGREPORT_TAG = "BugReport";
     private static final String BUILD_FINGERPRINT = "build_fingerprint";
+    private static final String BUILD_FINGERPRINT_UNALTERED = "build_fingerprint_unaltered";
     private static final String BUILD_ID = "build_id";
     private static final String BUILD_PRODUCT = "build_product";
     private static final String BUILD_TAG = "Build";
@@ -192,7 +193,9 @@ public class ResultHandler {
             result.addInvocationInfo(BUILD_ID, parser.getAttributeValue(NS, BUILD_ID));
             result.addInvocationInfo(BUILD_PRODUCT, parser.getAttributeValue(NS,
                     BUILD_PRODUCT));
-            result.setBuildFingerprint(parser.getAttributeValue(NS, BUILD_FINGERPRINT));
+            String unalteredFingerprint = parser.getAttributeValue(NS, BUILD_FINGERPRINT_UNALTERED);
+            result.setBuildFingerprint(Strings.isNullOrEmpty(unalteredFingerprint) ?
+                    parser.getAttributeValue(NS, BUILD_FINGERPRINT) : unalteredFingerprint);
 
             // TODO(stuartscott): may want to reload these incase the retry was done with
             // --skip-device-info flag
