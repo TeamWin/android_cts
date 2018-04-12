@@ -31,14 +31,12 @@ import android.os.Bundle;
 import android.os.Parcel;
 import android.support.test.InstrumentationRegistry;
 import android.support.test.runner.AndroidJUnit4;
-import android.util.ArraySet;
 
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
 import java.util.Arrays;
 import java.util.Collections;
-import java.util.Comparator;
 import java.util.List;
 
 @RunWith(AndroidJUnit4.class)
@@ -102,17 +100,17 @@ public class SliceBuilderTest {
     }
 
     @Test
-    public void testTimestamp() {
+    public void testLong() {
         long i = 43L;
         Slice s = new Slice.Builder(BASE_URI, SPEC)
-                .addTimestamp(i, "subtype", Arrays.asList(Slice.HINT_TITLE))
+                .addLong(i, "subtype", Arrays.asList(Slice.HINT_TITLE))
                 .build();
         assertEquals(BASE_URI, s.getUri());
         assertEquals(1, s.getItems().size());
 
         SliceItem item = s.getItems().get(0);
-        assertEquals(SliceItem.FORMAT_TIMESTAMP, item.getFormat());
-        assertEquals(i, item.getTimestamp());
+        assertEquals(SliceItem.FORMAT_LONG, item.getFormat());
+        assertEquals(i, item.getLong());
         assertEquals("subtype", item.getSubType());
         assertTrue(item.hasHint(Slice.HINT_TITLE));
 
@@ -158,7 +156,8 @@ public class SliceBuilderTest {
     @Test
     public void testActionSubtype() {
         PendingIntent i = PendingIntent.getActivity(mContext, 0, new Intent(), 0);
-        Slice subSlice = new Slice.Builder(BASE_URI.buildUpon().appendPath("s").build()).build();
+        Slice subSlice = new Slice.Builder(BASE_URI.buildUpon().appendPath("s").build(), SPEC)
+                .build();
         Slice s = new Slice.Builder(BASE_URI, SPEC)
                 .addAction(i, subSlice, "subtype")
                 .build();
@@ -176,7 +175,8 @@ public class SliceBuilderTest {
 
     @Test
     public void testSubsliceSubtype() {
-        Slice subSlice = new Slice.Builder(BASE_URI.buildUpon().appendPath("s").build()).build();
+        Slice subSlice = new Slice.Builder(BASE_URI.buildUpon().appendPath("s").build(), SPEC)
+                .build();
         Slice s = new Slice.Builder(BASE_URI, SPEC)
                 .addSubSlice(subSlice, "subtype")
                 .build();
