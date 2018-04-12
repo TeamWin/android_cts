@@ -2760,29 +2760,31 @@ public class TimeTest {
         verifyNormalizeResult(false, t, expected, 57724200000L);
     }
 
-    @Test
-    public void testNormalize_stdToStdSkip() {
-        // In Kiritimati, 1st Jan 1995 10:00 - 10:40 was a skip from STD -> STD (plus they do not
-        // observe DST).
-        String timezone = "Pacific/Kiritimati";
-        Time t = new Time(timezone);
-        Time expected = new Time(timezone);
-
-        // isDst = 0, normalize(false)
-        Fields.set(t, 1995, 0, 1, 10, 20, 0, 0 /* isDst */, 9, 9, 9);
-        Fields.set(expected, 1995, 0, 1, 10, 20, 0, 0 /* isDst */, 9, 9, 9);
-        verifyNormalizeResult(false, t, expected, -1);
-
-        // isDst = 1, normalize(false)
-        Fields.set(t, 1995, 0, 1, 10, 20, 0, 1 /* isDst */, 9, 9, 9);
-        Fields.set(expected, 1995, 0, 1, 10, 20, 0, 1 /* isDst */, 9, 9, 9);
-        verifyNormalizeResult(false, t, expected, -1);
-
-        // isDst = -1, normalize(false)
-        Fields.set(t, 1995, 0, 1, 10, 20, 0, -1 /* isDst */, 9, 9, 9);
-        Fields.set(expected, 1995, 0, 1, 10, 20, 0, -1 /* isDst */, 9, 9, 9);
-        verifyNormalizeResult(false, t, expected, -1);
-    }
+    // Removal of test for CTS that is dependent on IANA rules data version. Fails >= 2018d
+    // http://b/76362687
+    // @Test
+    // public void testNormalize_stdToStdSkip() {
+    //     // In Kiritimati, 1st Jan 1995 10:00 - 10:40 was a skip from STD -> STD (plus they do not
+    //     // observe DST).
+    //     String timezone = "Pacific/Kiritimati";
+    //     Time t = new Time(timezone);
+    //     Time expected = new Time(timezone);
+    //
+    //     // isDst = 0, normalize(false)
+    //     Fields.set(t, 1995, 0, 1, 10, 20, 0, 0 /* isDst */, 9, 9, 9);
+    //     Fields.set(expected, 1995, 0, 1, 10, 20, 0, 0 /* isDst */, 9, 9, 9);
+    //     verifyNormalizeResult(false, t, expected, -1);
+    //
+    //     // isDst = 1, normalize(false)
+    //     Fields.set(t, 1995, 0, 1, 10, 20, 0, 1 /* isDst */, 9, 9, 9);
+    //     Fields.set(expected, 1995, 0, 1, 10, 20, 0, 1 /* isDst */, 9, 9, 9);
+    //     verifyNormalizeResult(false, t, expected, -1);
+    //
+    //     // isDst = -1, normalize(false)
+    //     Fields.set(t, 1995, 0, 1, 10, 20, 0, -1 /* isDst */, 9, 9, 9);
+    //     Fields.set(expected, 1995, 0, 1, 10, 20, 0, -1 /* isDst */, 9, 9, 9);
+    //     verifyNormalizeResult(false, t, expected, -1);
+    // }
 
     @Test
     public void testNormalize_utcWithDst() {
