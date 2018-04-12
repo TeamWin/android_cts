@@ -27,6 +27,7 @@ import android.telephony.mbms.MbmsDownloadReceiver;
 
 import java.io.File;
 import java.io.InputStream;
+import java.util.Collections;
 import java.util.List;
 
 public class MbmsDownloadFlowTest extends MbmsDownloadTestBase {
@@ -127,6 +128,12 @@ public class MbmsDownloadFlowTest extends MbmsDownloadTestBase {
         assertEquals(downloadRequest,
                 downloadDoneIntent.getParcelableExtra(
                         MbmsDownloadSession.EXTRA_MBMS_DOWNLOAD_REQUEST));
+        assertEquals(downloadRequest.getSubscriptionId(),
+                ((DownloadRequest) downloadDoneIntent.getParcelableExtra(
+                        MbmsDownloadSession.EXTRA_MBMS_DOWNLOAD_REQUEST)).getSubscriptionId());
+        assertEquals(downloadRequest.getDestinationUri(),
+                ((DownloadRequest) downloadDoneIntent.getParcelableExtra(
+                        MbmsDownloadSession.EXTRA_MBMS_DOWNLOAD_REQUEST)).getDestinationUri());
         assertEquals(expectedFileInfo,
                 downloadDoneIntent.getParcelableExtra(MbmsDownloadSession.EXTRA_MBMS_FILE_INFO));
         return downloadDoneIntent.getParcelableExtra(
@@ -146,8 +153,16 @@ public class MbmsDownloadFlowTest extends MbmsDownloadTestBase {
     }
 
     private void checkDownloadResultAck(int numAcks) throws Exception {
-        List<Bundle> downloadResultAck =
-                getMiddlewareCalls(CtsDownloadService.METHOD_DOWNLOAD_RESULT_ACK);
+        // Poll until we get to the right number.
+        List<Bundle> downloadResultAck = Collections.emptyList();
+        long currentTime = System.currentTimeMillis();
+        while (System.currentTimeMillis() < currentTime + ASYNC_TIMEOUT) {
+            downloadResultAck = getMiddlewareCalls(CtsDownloadService.METHOD_DOWNLOAD_RESULT_ACK);
+            if (numAcks == downloadResultAck.size()) {
+                break;
+            }
+            Thread.sleep(200);
+        }
         assertEquals(numAcks, downloadResultAck.size());
         downloadResultAck.forEach((ack) -> assertEquals(MbmsDownloadReceiver.RESULT_OK,
                 ack.getInt(CtsDownloadService.ARGUMENT_RESULT_CODE, -1)));

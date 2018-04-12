@@ -24,7 +24,8 @@
                 android:icon="@drawable/size_48x48"
                 android:maxRecents="1"
                 android:multiArch="true"
-                android:supportsRtl="true">
+                android:supportsRtl="true"
+                android:debuggable="true">
         <uses-library android:name="android.test.runner" />
 
         <provider android:name=".SliceProvider"
