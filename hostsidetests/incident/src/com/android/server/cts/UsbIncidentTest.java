@@ -72,7 +72,7 @@ public class UsbIncidentTest extends ProtoDumpTestCase {
             assertTrue(udmp.getSystemKeys().isEmpty());
             assertTrue(udmp.getUserKeys().isEmpty());
             if (filterLevel < PRIVACY_EXPLICIT) {
-                assertTrue(udmp.getLastKeyRecevied().isEmpty());
+                assertTrue(udmp.getLastKeyReceived().isEmpty());
             }
         }
     }
