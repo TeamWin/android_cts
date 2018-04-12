@@ -33,6 +33,7 @@ import java.util.stream.Stream;
 import java.util.stream.StreamSupport;
 
 import org.jf.dexlib2.DexFileFactory;
+import org.jf.dexlib2.DexFileFactory.DexFileNotFoundException;
 import org.jf.dexlib2.Opcodes;
 import org.jf.dexlib2.ReferenceType;
 import org.jf.dexlib2.dexbacked.DexBackedClassDef;
@@ -294,12 +295,31 @@ public class DexAnalyzer {
      * Parse a dex file to extract symbols defined in the file and symbols referenced from the file
      */
     private void parse(PulledFile file) {
-        try {
-            if (UnofficialApisUsageTest.DEBUG) {
-                System.err.println("Analyzing file: " + file.pathInDevice);
-            }
+        if (UnofficialApisUsageTest.DEBUG) {
+            System.err.println("Analyzing file: " + file.pathInDevice);
+        }
 
-            DexBackedDexFile dexFile = DexFileFactory.loadDexFile(file.fileInHost,
+        try {
+            parseInner(file, "classes.dex");
+        } catch (DexFileNotFoundException e) {
+            // classes.dex must exist
+            throw new RuntimeException("classes.dex" + " not found in " + file, e);
+        }
+
+        int i = 2;
+        while (true) {
+            try {
+                parseInner(file, String.format("classes%d.dex", i++));
+            } catch (DexFileNotFoundException e) {
+                // failing to find additional dex files is okay. we just stop trying.
+                break;
+            }
+        }
+    }
+
+    private void parseInner(PulledFile file, String dexEntry) throws DexFileNotFoundException {
+        try {
+            DexBackedDexFile dexFile = DexFileFactory.loadDexEntry(file.fileInHost, dexEntry, true,
                     Opcodes.getDefault());
 
             // 1. extract defined symbols and add them to the maps
