@@ -20,6 +20,7 @@
 #include <GLES2/gl2ext.h>
 #include <GLES3/gl31.h>
 
+#include <cmath>
 #include <iterator>
 #include <set>
 #include <sstream>
@@ -69,6 +70,10 @@ float FloatFromHalf(uint16_t bits) {
     return result.f;
 }
 
+int MipLevelCount(uint32_t width, uint32_t height) {
+    return 1 + static_cast<int>(std::floor(std::log2(static_cast<float>(std::max(width, height)))));
+}
+
 bool FormatHasAlpha(uint32_t format) {
     switch (format) {
         case AHARDWAREBUFFER_FORMAT_R8G8B8A8_UNORM:
@@ -77,13 +82,15 @@ bool FormatHasAlpha(uint32_t format) {
         // This may look scary, but fortunately AHardwareBuffer formats and GL pixel formats
         // do not overlap.
         case GL_RGBA8:
+        case GL_RGBA16F:
+        case GL_SRGB8_ALPHA8:
             return true;
         default: return false;
     }
 }
 
 bool FormatIsFloat(uint32_t format) {
-    return format == AHARDWAREBUFFER_FORMAT_R16G16B16A16_FLOAT;
+    return format == AHARDWAREBUFFER_FORMAT_R16G16B16A16_FLOAT || format == GL_RGBA16F;
 }
 
 void UploadData(const AHardwareBuffer_Desc& desc, GLenum format, GLenum type, const void* data) {
@@ -117,7 +124,8 @@ void UploadRedPixels(const AHardwareBuffer_Desc& desc) {
             break;
         }
         case AHARDWAREBUFFER_FORMAT_R8G8B8A8_UNORM:
-        case GL_RGBA8: {
+        case GL_RGBA8:
+        case GL_SRGB8_ALPHA8: {
             const int size = desc.width * desc.height * 4;
             std::unique_ptr<uint8_t[]> pixels(new uint8_t[size]);
             for (int i = 0; i < size; i += 4) {
@@ -129,7 +137,8 @@ void UploadRedPixels(const AHardwareBuffer_Desc& desc) {
             UploadData(desc, GL_RGBA, GL_UNSIGNED_BYTE, pixels.get());
             break;
         }
-        case AHARDWAREBUFFER_FORMAT_R16G16B16A16_FLOAT: {
+        case AHARDWAREBUFFER_FORMAT_R16G16B16A16_FLOAT:
+        case GL_RGBA16F: {
             const int size = desc.width * desc.height * 4;
             std::unique_ptr<float[]> pixels(new float[size]);
             for (int i = 0; i < size; i += 4) {
@@ -205,30 +214,32 @@ struct GoldenPixel {
     GoldenColor color;
 };
 
-void CheckGoldenPixel(const GoldenPixel& golden, uint8_t* pixel, bool alpha_format) {
+template <typename T>
+void CheckGoldenPixel(int x, int y, const T* a, const T* b) {
     EXPECT_EQ(GLenum{GL_NO_ERROR}, glGetError());
-    EXPECT_EQ(golden.color == kRed ? 255 : 0, pixel[0])
-        << "Red doesn't match at X=" << golden.x << ", Y=" << golden.y;
-    EXPECT_EQ(0, pixel[1])
-        << "Green doesn't match at X=" << golden.x << ", Y=" << golden.y;
-    EXPECT_EQ(golden.color == kBlue ? 255 : 0, pixel[2])
-        << "Blue doesn't match at X=" << golden.x << ", Y=" << golden.y;
-    // Formats without alpha should be read as opaque.
-    EXPECT_EQ((golden.color != kZero || !alpha_format) ? 255 : 0, pixel[3])
-        << "Alpha doesn't match at X=" << golden.x << ", Y=" << golden.y;
+    EXPECT_EQ(a[0], b[0]) << "Red doesn't match at X=" << x << ", Y=" << y;
+    EXPECT_EQ(a[1], b[1]) << "Green doesn't match at X=" << x << ", Y=" << y;
+    EXPECT_EQ(a[2], b[2]) << "Blue doesn't match at X=" << x << ", Y=" << y;
+    EXPECT_EQ(a[3], b[3]) << "Alpha doesn't match at X=" << x << ", Y=" << y;
 }
 
-void CheckGoldenPixel(const GoldenPixel& golden, float* pixel, bool alpha_format) {
-    EXPECT_EQ(GLenum{GL_NO_ERROR}, glGetError());
-    EXPECT_EQ(golden.color == kRed ? 1.f : 0.f, pixel[0])
-        << "Red doesn't match at X=" << golden.x << ", Y=" << golden.y;
-    EXPECT_EQ(0.f, pixel[1])
-        << "Green doesn't match at X=" << golden.x << ", Y=" << golden.y;
-    EXPECT_EQ(golden.color == kBlue ? 1.f : 0.f, pixel[2])
-        << "Blue doesn't match at X=" << golden.x << ", Y=" << golden.y;
-    // Formats without alpha should be read as opaque.
-    EXPECT_EQ((golden.color != kZero || !alpha_format) ? 1.f : 0.f, pixel[3])
-        << "Alpha doesn't match at X=" << golden.x << ", Y=" << golden.y;
+void CheckGoldenPixel(const GoldenPixel& golden, const uint8_t* pixel, bool alpha_format) {
+    const uint8_t golden_pixel[4] = {
+        static_cast<uint8_t>(golden.color == kRed ? 255 : 0), 0,
+        static_cast<uint8_t>(golden.color == kBlue ? 255 : 0),
+        // Formats without alpha should be read as opaque.
+        static_cast<uint8_t>((golden.color != kZero || !alpha_format) ? 255 : 0),
+    };
+    CheckGoldenPixel(golden.x, golden.y, golden_pixel, pixel);
+}
+
+void CheckGoldenPixel(const GoldenPixel& golden, const float* pixel, bool alpha_format) {
+    const float golden_pixel[4] = {
+        golden.color == kRed ? 1.f : 0.f, 0.f, golden.color == kBlue ? 1.f : 0.f,
+        // Formats without alpha should be read as opaque.
+        (golden.color != kZero || !alpha_format) ? 1.f : 0.f,
+    };
+    CheckGoldenPixel(golden.x, golden.y, golden_pixel, pixel);
 }
 
 void CheckGoldenPixels(const std::vector<GoldenPixel>& goldens, bool float_format, bool alpha_format) {
@@ -390,20 +401,23 @@ public:
     };
 
     void SetUp() override;
-    virtual bool SetUpBuffer(const AHardwareBuffer_Desc& desc);
+    virtual bool SetUpBuffer(const AHardwareBuffer_Desc& desc, bool use_srgb = false);
     void SetUpProgram(const char* vertex_source, const char* fragment_source,
                       const float* mesh, float scale, int texture_unit = 0);
     void SetUpTexture(const AHardwareBuffer_Desc& desc, int unit);
     void SetUpBufferObject(uint32_t size, GLenum target, GLbitfield flags);
     void SetUpFramebuffer(int width, int height, AttachmentType color,
                           AttachmentType depth = kNone, AttachmentType stencil = kNone,
-                          AttachmentType depth_stencil = kNone);
+                          AttachmentType depth_stencil = kNone, int level = 0);
     void TearDown() override;
 
     void MakeCurrent(int which) {
         if (GetParam().stride != 0) return;
         mWhich = which;
         eglMakeCurrent(mDisplay, mSurface, mSurface, mContext[mWhich]);
+    }
+    bool HasEGLExtension(const std::string& s) {
+        return mEGLExtensions.find(s) != mEGLExtensions.end();
     }
     bool HasGLExtension(const std::string& s) {
         return mGLExtensions.find(s) != mGLExtensions.end();
@@ -468,7 +482,7 @@ void AHardwareBufferGLTest::SetUp() {
         std::istream_iterator<std::string>{}
     };
     // Create a 1x1 pbuffer surface if surfaceless contexts are not supported.
-    if (mEGLExtensions.find("EGL_KHR_surfaceless_context") == mEGLExtensions.end()) {
+    if (!HasEGLExtension("EGL_KHR_surfaceless_context")) {
         EGLint const surface_attrib_list[] = {
             EGL_WIDTH, 1,
             EGL_HEIGHT, 1,
@@ -494,9 +508,11 @@ void AHardwareBufferGLTest::SetUp() {
     ASSERT_GE(mGLVersion, 20);
 }
 
-bool AHardwareBufferGLTest::SetUpBuffer(const AHardwareBuffer_Desc& desc) {
+bool AHardwareBufferGLTest::SetUpBuffer(const AHardwareBuffer_Desc& desc, bool use_srgb) {
     mTexTarget = desc.layers > 1 ? GL_TEXTURE_2D_ARRAY : GL_TEXTURE_2D;
     if (desc.layers > 1 && mGLVersion < 30) return false;
+    if (desc.format == GL_SRGB8_ALPHA8 && mGLVersion < 30) return false;
+    if (desc.format == GL_RGBA16F && !HasGLExtension("GL_EXT_color_buffer_float")) return false;
     // Nonzero stride indicates that desc.format should be interpreted as a GL format
     // and the test should be run in a single context, without using AHardwareBuffer.
     // This simplifies verifying that the test behaves as expected even if the
@@ -505,6 +521,7 @@ bool AHardwareBufferGLTest::SetUpBuffer(const AHardwareBuffer_Desc& desc) {
         mContextCount = 1;
         return true;
     }
+    if (use_srgb && !HasEGLExtension("EGL_EXT_image_gl_colorspace")) return false;
 
     int result = AHardwareBuffer_allocate(&desc, &mBuffer);
     // Skip if this format cannot be allocated.
@@ -512,7 +529,11 @@ bool AHardwareBufferGLTest::SetUpBuffer(const AHardwareBuffer_Desc& desc) {
     // Do not create the EGLImage if this is a blob format.
     if (desc.format == AHARDWAREBUFFER_FORMAT_BLOB) return true;
 
-    const EGLint attrib_list[] = { EGL_NONE };
+    EGLint attrib_list[3] = { EGL_NONE, EGL_NONE, EGL_NONE };
+    if (use_srgb) {
+        attrib_list[0] = EGL_GL_COLORSPACE_KHR;
+        attrib_list[1] = EGL_GL_COLORSPACE_SRGB_KHR;
+    }
     mEGLImage = eglCreateImageKHR(
         mDisplay, EGL_NO_CONTEXT, EGL_NATIVE_BUFFER_ANDROID,
         eglGetNativeClientBufferANDROID(mBuffer), attrib_list);
@@ -584,13 +605,22 @@ void AHardwareBufferGLTest::SetUpTexture(const AHardwareBuffer_Desc& desc, int u
     glActiveTexture(GL_TEXTURE0 + unit);
     glBindTexture(mTexTarget, texture);
     if (desc.stride == 0) {
-        glEGLImageTargetTexture2DOES(mTexTarget, static_cast<GLeglImageOES>(mEGLImage));
+        if (HasGLExtension("GL_EXT_EGL_image_storage")) {
+            glEGLImageTargetTexStorageEXT(mTexTarget, static_cast<GLeglImageOES>(mEGLImage),
+                                          nullptr);
+        } else {
+            glEGLImageTargetTexture2DOES(mTexTarget, static_cast<GLeglImageOES>(mEGLImage));
+        }
     } else {
+        int levels = 1;
+        if (desc.usage & AHARDWAREBUFFER_USAGE_GPU_MIPMAP_COMPLETE) {
+            levels = MipLevelCount(desc.width, desc.height);
+        }
         // Stride is nonzero, so interpret desc.format as a GL format.
         if (desc.layers > 1) {
-            glTexStorage3D(mTexTarget, 1, desc.format, desc.width, desc.height, desc.layers);
+            glTexStorage3D(mTexTarget, levels, desc.format, desc.width, desc.height, desc.layers);
         } else if (mGLVersion >= 30) {
-            glTexStorage2D(mTexTarget, 1, desc.format, desc.width, desc.height);
+            glTexStorage2D(mTexTarget, levels, desc.format, desc.width, desc.height);
         } else {
             GLenum format = 0, type = 0;
             switch (desc.format) {
@@ -612,8 +642,10 @@ void AHardwareBufferGLTest::SetUpTexture(const AHardwareBuffer_Desc& desc, int u
                 default:
                     FAIL() << "Unrecognized GL format"; break;
             }
-            glTexImage2D(mTexTarget, 0, desc.format, desc.width, desc.height, 0,
-                         format, type, nullptr);
+            for (int level = 0; level < levels; ++level) {
+                glTexImage2D(mTexTarget, level, desc.format, desc.width, desc.height, 0,
+                             format, type, nullptr);
+            }
         }
     }
     ASSERT_EQ(GLenum{GL_NO_ERROR}, glGetError());
@@ -631,7 +663,8 @@ void AHardwareBufferGLTest::SetUpFramebuffer(int width, int height,
                                              AttachmentType color,
                                              AttachmentType depth,
                                              AttachmentType stencil,
-                                             AttachmentType depth_stencil) {
+                                             AttachmentType depth_stencil,
+                                             int level) {
     AHardwareBuffer_Desc desc = GetParam();
     AttachmentType attachment_types[] = { color, depth, stencil, depth_stencil };
     GLenum attachment_points[] = {
@@ -652,11 +685,11 @@ void AHardwareBufferGLTest::SetUpFramebuffer(int width, int height,
                 ASSERT_NE(0U, mTextures[mWhich]);
                 if (mTexTarget == GL_TEXTURE_2D) {
                     glFramebufferTexture2D(GL_FRAMEBUFFER, attachment_points[i], mTexTarget,
-                                           mTextures[mWhich], 0);
+                                           mTextures[mWhich], level);
                 } else {
                     // desc.layers is never modified in the test body.
                     glFramebufferTextureLayer(GL_FRAMEBUFFER, attachment_points[i],
-                                              mTextures[mWhich], 0, desc.layers - 1);
+                                              mTextures[mWhich], level, desc.layers - 1);
                 }
                 break;
             case kBufferAsRenderbuffer: {
@@ -710,9 +743,9 @@ void AHardwareBufferGLTest::TearDown() {
 
 class AHardwareBufferBlobFormatTest : public AHardwareBufferGLTest {
 public:
-    bool SetUpBuffer(const AHardwareBuffer_Desc& desc) override {
+    bool SetUpBuffer(const AHardwareBuffer_Desc& desc, bool use_srgb = false) override {
         if (!HasGLExtension("GL_EXT_external_buffer")) return false;
-        return AHardwareBufferGLTest::SetUpBuffer(desc);
+        return AHardwareBufferGLTest::SetUpBuffer(desc, use_srgb);
     }
 };
 
@@ -1061,13 +1094,74 @@ TEST_P(AHardwareBufferColorFormatTest, GpuColorOutputAndSampledImage) {
     CheckGoldenPixels(goldens, /*float_format=*/false, /*alpha_format=*/true);
 }
 
+TEST_P(AHardwareBufferColorFormatTest, MipmapComplete) {
+    const int kNumTiles = 8;
+    AHardwareBuffer_Desc desc = GetParam();
+    // Ensure that the checkerboard tiles have equal size. Otherwise the value of the last mipmap
+    // will depend on the size of the buffer.
+    desc.width = (desc.width / kNumTiles) * kNumTiles;
+    desc.height = (desc.width / kNumTiles) * kNumTiles;
+    desc.usage =
+        AHARDWAREBUFFER_USAGE_GPU_COLOR_OUTPUT |
+        AHARDWAREBUFFER_USAGE_GPU_SAMPLED_IMAGE |
+        AHARDWAREBUFFER_USAGE_GPU_MIPMAP_COMPLETE;
+    const bool kUseSrgb = desc.format == GL_SRGB8_ALPHA8 ||
+        desc.format == AHARDWAREBUFFER_FORMAT_R8G8B8A8_UNORM ||
+        desc.format == AHARDWAREBUFFER_FORMAT_R8G8B8_UNORM;
+    if (!SetUpBuffer(desc, kUseSrgb)) return;
+
+    const int kTextureUnit = 7;
+    for (int i = 0; i < mContextCount; ++i) {
+        MakeCurrent(i);
+        SetUpTexture(desc, kTextureUnit);
+        glTexParameteri(mTexTarget, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
+    }
+
+    // Draw checkerboard for mipmapping.
+    const int kTileWidth = desc.width / kNumTiles;
+    const int kTileHeight = desc.height / kNumTiles;
+    SetUpFramebuffer(desc.width, desc.height, kBufferAsTexture);
+    glEnable(GL_SCISSOR_TEST);
+    for (int i = 0; i < kNumTiles; ++i) {
+        for (int j = 0; j < kNumTiles; ++j) {
+            const float v = (i & 1) ^ (j & 1) ? 1.f : 0.f;
+            glClearColor(v, 0.f, 0.f, v);
+            glScissor(i * kTileWidth, j * kTileHeight, kTileWidth, kTileHeight);
+            glClear(GL_COLOR_BUFFER_BIT);
+        }
+    }
+    glDisable(GL_SCISSOR_TEST);
+    glGenerateMipmap(mTexTarget);
+    glFinish();
+
+    MakeCurrent(0);
+    SetUpFramebuffer(1, 1, kBufferAsTexture, kNone, kNone, kNone,
+                     MipLevelCount(desc.width, desc.height) - 1);
+    if (FormatIsFloat(desc.format)) {
+        float golden_pixel[4] = {0.5f, 0.f, 0.f, FormatHasAlpha(desc.format) ? 0.5f : 1.f};
+        float pixel[4];
+        glReadPixels(0, 0, 1, 1, GL_RGBA, GL_FLOAT, pixel);
+        CheckGoldenPixel(0, 0, golden_pixel, pixel);
+    } else {
+        uint8_t golden_pixel[4] = {
+            static_cast<uint8_t>(kUseSrgb ? 188 : 128), 0, 0,
+            static_cast<uint8_t>(FormatHasAlpha(desc.format) ? 128 : 255),
+        };
+        uint8_t pixel[4];
+        glReadPixels(0, 0, 1, 1, GL_RGBA, GL_UNSIGNED_BYTE, pixel);
+        CheckGoldenPixel(0, 0, golden_pixel, pixel);
+    }
+}
+
 INSTANTIATE_TEST_CASE_P(
     SingleLayer,
     AHardwareBufferColorFormatTest,
     ::testing::Values(
         AHardwareBuffer_Desc{75, 33, 1, GL_RGB8, 0, 1, 0, 0},
         AHardwareBuffer_Desc{64, 80, 1, GL_RGBA8, 0, 1, 0, 0},
-        AHardwareBuffer_Desc{10, 20, 1, AHARDWAREBUFFER_FORMAT_R8G8B8A8_UNORM, 0, 0, 0, 0},
+        AHardwareBuffer_Desc{49, 23, 1, GL_SRGB8_ALPHA8, 0, 1, 0, 0},
+        AHardwareBuffer_Desc{42, 41, 1, GL_RGBA16F, 0, 1, 0, 0},
+        AHardwareBuffer_Desc{33, 20, 1, AHARDWAREBUFFER_FORMAT_R8G8B8A8_UNORM, 0, 0, 0, 0},
         AHardwareBuffer_Desc{20, 10, 1, AHARDWAREBUFFER_FORMAT_R8G8B8X8_UNORM, 0, 0, 0, 0},
         AHardwareBuffer_Desc{16, 20, 1, AHARDWAREBUFFER_FORMAT_R8G8B8_UNORM, 0, 0, 0, 0},
         AHardwareBuffer_Desc{10, 20, 1, AHARDWAREBUFFER_FORMAT_R5G6B5_UNORM, 0, 0, 0, 0},
@@ -1080,8 +1174,10 @@ INSTANTIATE_TEST_CASE_P(
     ::testing::Values(
         AHardwareBuffer_Desc{75, 33, 5, GL_RGB8, 0, 1, 0, 0},
         AHardwareBuffer_Desc{64, 80, 6, GL_RGBA8, 0, 1, 0, 0},
+        AHardwareBuffer_Desc{33, 28, 4, GL_SRGB8_ALPHA8, 0, 1, 0, 0},
+        AHardwareBuffer_Desc{42, 41, 3, GL_RGBA16F, 0, 1, 0, 0},
         AHardwareBuffer_Desc{25, 77, 7, AHARDWAREBUFFER_FORMAT_R8G8B8A8_UNORM, 0, 0, 0, 0},
-        //AHardwareBuffer_Desc{32, 32, 4, AHARDWAREBUFFER_FORMAT_R8G8B8A8_UNORM, 0, 0, 0, 0},
+        AHardwareBuffer_Desc{64, 64, 4, AHARDWAREBUFFER_FORMAT_R8G8B8A8_UNORM, 0, 0, 0, 0},
         AHardwareBuffer_Desc{30, 30, 3, AHARDWAREBUFFER_FORMAT_R8G8B8X8_UNORM, 0, 0, 0, 0},
         AHardwareBuffer_Desc{50, 50, 4, AHARDWAREBUFFER_FORMAT_R8G8B8_UNORM, 0, 0, 0, 0},
         AHardwareBuffer_Desc{20, 10, 2, AHARDWAREBUFFER_FORMAT_R5G6B5_UNORM, 0, 0, 0, 0},
