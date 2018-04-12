@@ -16,7 +16,12 @@
 
 package android.admin.cts;
 
+import static org.junit.Assert.assertNotEquals;
+
+import android.app.NotificationManager;
+import android.app.NotificationManager.Policy;
 import android.app.admin.DevicePolicyManager;
+import android.content.BroadcastReceiver;
 import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
@@ -41,6 +46,8 @@ import java.security.cert.CertificateException;
 import java.security.cert.CertificateFactory;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.TimeUnit;
 
 /**
  * TODO: Make sure DO APIs are not called by PO.
@@ -57,6 +64,7 @@ public class DevicePolicyManagerTest extends AndroidTestCase {
     private boolean mDeviceAdmin;
     private boolean mManagedProfiles;
     private PackageManager mPackageManager;
+    private NotificationManager mNotificationManager;
 
     private static final String TEST_CA_STRING1 =
             "-----BEGIN CERTIFICATE-----\n" +
@@ -83,6 +91,8 @@ public class DevicePolicyManagerTest extends AndroidTestCase {
         mDevicePolicyManager = (DevicePolicyManager)
                 mContext.getSystemService(Context.DEVICE_POLICY_SERVICE);
         mComponent = DeviceAdminInfoTest.getReceiverComponent();
+        mNotificationManager =
+                    (NotificationManager) mContext.getSystemService(Context.NOTIFICATION_SERVICE);
         mPackageManager = mContext.getPackageManager();
         mDeviceAdmin = mPackageManager.hasSystemFeature(PackageManager.FEATURE_DEVICE_ADMIN);
         mManagedProfiles = mDeviceAdmin
@@ -959,6 +969,71 @@ public class DevicePolicyManagerTest extends AndroidTestCase {
             fail("did not throw expected SecurityException");
         } catch (SecurityException e) {
             assertProfileOwnerMessage(e.getMessage());
+        }
+    }
+
+    public void testNotificationPolicyAccess() {
+        if (!mDeviceAdmin) {
+            Log.w(TAG, "Skipping testNotificationPolicyAccess_failIfNotProfileOwner");
+            return;
+        }
+        try {
+            NotificationManager notificationManager =
+                    (NotificationManager) mContext.getSystemService(Context.NOTIFICATION_SERVICE);
+
+            assertTrue("Notification policy access was not granted ",
+            mNotificationManager.isNotificationPolicyAccessGranted());
+
+            // Clear out the old policy
+            mNotificationManager.setNotificationPolicy(new Policy(0, 0, 0, -1));
+
+            Policy expected = new Policy(Policy.PRIORITY_CATEGORY_CALLS,
+                    Policy.PRIORITY_SENDERS_STARRED,
+                    Policy.PRIORITY_SENDERS_STARRED,
+                    Policy.SUPPRESSED_EFFECT_STATUS_BAR);
+
+            assertNotEquals(mNotificationManager.getNotificationPolicy(), expected);
+
+            mNotificationManager.setNotificationPolicy(expected);
+            assertEquals(mNotificationManager.getNotificationPolicy(), expected);
+        } catch (SecurityException e) {
+            assertProfileOwnerMessage(e.getMessage());
+        }
+    }
+
+    private void setInterruptionFilter(int interruptionFilter) throws Exception {
+        final CountDownLatch latch = new CountDownLatch(1);
+        final BroadcastReceiver receiver = new BroadcastReceiver() {
+            @Override
+            public void onReceive(Context context, Intent intent) {
+                latch.countDown();
+            }
+        };
+
+        IntentFilter intentFilter = new IntentFilter();
+        intentFilter.addAction(NotificationManager.ACTION_INTERRUPTION_FILTER_CHANGED);
+        mContext.registerReceiver(receiver, intentFilter);
+
+        try {
+            mNotificationManager.setInterruptionFilter(interruptionFilter);
+            latch.await(5, TimeUnit.SECONDS);
+            assertEquals(mNotificationManager.getCurrentInterruptionFilter(), interruptionFilter);
+        } finally {
+            mContext.unregisterReceiver(receiver);
+        }
+    }
+
+    public void testSetInterruptionFilter() {
+        if (!mDeviceAdmin) {
+            Log.w(TAG, "Skipping testNotificationPolicyAccess_failIfNotProfileOwner");
+            return;
+        }
+
+        try {
+            setInterruptionFilter(NotificationManager.INTERRUPTION_FILTER_NONE);
+            setInterruptionFilter(NotificationManager.INTERRUPTION_FILTER_ALL);
+        } catch (Exception tolerated) {
+            assertProfileOwnerMessage(tolerated.getMessage());
         }
     }
 }
