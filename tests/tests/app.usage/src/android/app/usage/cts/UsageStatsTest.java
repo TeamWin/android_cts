@@ -20,6 +20,7 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
+import static org.junit.Assume.assumeTrue;
 
 import android.app.Activity;
 import android.app.AppOpsManager;
@@ -47,6 +48,8 @@ import android.text.format.DateUtils;
 import android.util.Log;
 import android.util.SparseArray;
 import android.util.SparseLongArray;
+
+import com.android.compatibility.common.util.AppStandbyUtils;
 
 import org.junit.Before;
 import org.junit.Ignore;
@@ -247,12 +250,21 @@ public class UsageStatsTest {
 
     @Test
     public void testGetAppStandbyBuckets() throws Exception {
-        mUiDevice.executeShellCommand("am set-standby-bucket " + mTargetPackage + " rare");
-        Map<String, Integer> bucketMap = mUsageStatsManager.getAppStandbyBuckets();
-        assertTrue("No bucket data returned", bucketMap.size() > 0);
-        final int bucket = bucketMap.getOrDefault(mTargetPackage, -1);
-        assertEquals("Incorrect bucket returned for " + mTargetPackage, bucket,
-                UsageStatsManager.STANDBY_BUCKET_RARE);
+        final boolean origValue = AppStandbyUtils.isAppStandbyEnabledAtRuntime();
+        AppStandbyUtils.setAppStandbyEnabledAtRuntime(true);
+        try {
+            assumeTrue("Skip GetAppStandby test: app standby is disabled.",
+                    AppStandbyUtils.isAppStandbyEnabled());
+
+            mUiDevice.executeShellCommand("am set-standby-bucket " + mTargetPackage + " rare");
+            Map<String, Integer> bucketMap = mUsageStatsManager.getAppStandbyBuckets();
+            assertTrue("No bucket data returned", bucketMap.size() > 0);
+            final int bucket = bucketMap.getOrDefault(mTargetPackage, -1);
+            assertEquals("Incorrect bucket returned for " + mTargetPackage, bucket,
+                    UsageStatsManager.STANDBY_BUCKET_RARE);
+        } finally {
+            AppStandbyUtils.setAppStandbyEnabledAtRuntime(origValue);
+        }
     }
 
     @Test
