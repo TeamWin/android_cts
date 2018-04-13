@@ -23,10 +23,13 @@ import android.platform.test.annotations.RequiresDevice;
 import android.test.AndroidTestCase;
 import android.test.suitebuilder.annotation.SmallTest;
 
+import com.android.compatibility.common.util.CddTest;
+
 import java.util.concurrent.Semaphore;
 import java.util.concurrent.TimeUnit;
 
 
+@CddTest(requirement="2.5.3/A-0-3")
 @SmallTest
 @RequiresDevice
 public class CarTest extends AndroidTestCase {

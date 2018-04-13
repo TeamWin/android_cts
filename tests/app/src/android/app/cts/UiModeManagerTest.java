@@ -22,6 +22,8 @@ import android.content.res.Configuration;
 import android.test.AndroidTestCase;
 import android.util.Log;
 
+import com.android.compatibility.common.util.CddTest;
+
 public class UiModeManagerTest extends AndroidTestCase {
     private static final String TAG = "UiModeManagerTest";
 
@@ -34,6 +36,7 @@ public class UiModeManagerTest extends AndroidTestCase {
         assertNotNull(mUiModeManager);
     }
 
+    @CddTest(requirement="2.5.3/A-0-2,W-0-2")
     public void testUiMode() throws Exception {
         if (isAutomotive()) {
             Log.i(TAG, "testUiMode automotive");

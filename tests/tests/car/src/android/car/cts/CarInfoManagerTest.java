@@ -21,7 +21,10 @@ import android.os.Bundle;
 import android.platform.test.annotations.RequiresDevice;
 import android.test.suitebuilder.annotation.SmallTest;
 
+import com.android.compatibility.common.util.CddTest;
 
+
+@CddTest(requirement="2.5.3/A-0-3")
 @SmallTest
 @RequiresDevice
 public class CarInfoManagerTest extends CarApiTestBase {
