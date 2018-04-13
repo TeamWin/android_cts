@@ -326,6 +326,12 @@ public class StagefrightTest extends InstrumentationTestCase {
     }
 
     @SecurityTest
+    public void testBug_38014992() throws Exception {
+        int[] frameSizes = getFrameSizes(R.raw.bug_38014992_framelen);
+        doStagefrightTestRawBlob(R.raw.bug_38014992_avc, "video/avc", 640, 480, frameSizes);
+    }
+
+    @SecurityTest
     public void testStagefright_cve_2017_0599() throws Exception {
         doStagefrightTest(R.raw.cve_2017_0599);
     }
@@ -1073,6 +1079,21 @@ public class StagefrightTest extends InstrumentationTestCase {
         doStagefrightTestRawBlob(R.raw.bug_37712181_hevc, "video/hevc", 320, 240);
     }
 
+    private int[] getFrameSizes(int rid) throws IOException {
+        final Context context = getInstrumentation().getContext();
+        final Resources resources =  context.getResources();
+        AssetFileDescriptor fd = resources.openRawResourceFd(rid);
+        FileInputStream fis = fd.createInputStream();
+        byte[] frameInfo = new byte[(int) fd.getLength()];
+        fis.read(frameInfo);
+        fis.close();
+        String[] valueStr = new String(frameInfo).trim().split("\\s+");
+        int[] frameSizes = new int[valueStr.length];
+        for (int i = 0; i < valueStr.length; i++)
+            frameSizes[i] = Integer.parseInt(valueStr[i]);
+        return frameSizes;
+    }
+
     private void runWithTimeout(Runnable runner, int timeout) {
         Thread t = new Thread(runner);
         t.start();
@@ -1193,6 +1214,136 @@ public class StagefrightTest extends InstrumentationTestCase {
                         codec.releaseOutputBuffer(bufidx, false);
                     } else {
                         Log.i(TAG, "no output buffer");
+                    }
+                }
+            } catch (Exception e) {
+                // ignore, not a security issue
+            } finally {
+                releaseCodec(codec);
+            }
+        }
+
+        String cve = rname.replace("_", "-").toUpperCase();
+        assertFalse("Device *IS* vulnerable to " + cve,
+                    mpcl.waitForError() == MediaPlayer.MEDIA_ERROR_SERVER_DIED);
+        thr.stopLooper();
+        thr.join();
+    }
+
+    private void doStagefrightTestRawBlob(int rid, String mime, int initWidth, int initHeight,
+        int frameSizes[]) throws Exception {
+
+        final MediaPlayerCrashListener mpcl = new MediaPlayerCrashListener();
+        final Context context = getInstrumentation().getContext();
+        final Resources resources =  context.getResources();
+
+        LooperThread thr = new LooperThread(new Runnable() {
+            @Override
+            public void run() {
+
+                MediaPlayer mp = new MediaPlayer();
+                mp.setOnErrorListener(mpcl);
+                AssetFileDescriptor fd = null;
+                try {
+                    fd = resources.openRawResourceFd(R.raw.good);
+
+                    // the onErrorListener won't receive MEDIA_ERROR_SERVER_DIED until
+                    // setDataSource has been called
+                    mp.setDataSource(fd.getFileDescriptor(),
+                                     fd.getStartOffset(),
+                                     fd.getLength());
+                    fd.close();
+                } catch (Exception e) {
+                    // this is a known-good file, so no failure should occur
+                    fail("setDataSource of known-good file failed");
+                }
+
+                synchronized(mpcl) {
+                    mpcl.notify();
+                }
+                Looper.loop();
+                mp.release();
+            }
+        });
+        thr.start();
+        // wait until the thread has initialized the MediaPlayer
+        synchronized(mpcl) {
+            mpcl.wait();
+        }
+
+        AssetFileDescriptor fd = resources.openRawResourceFd(rid);
+        byte [] blob = new byte[(int)fd.getLength()];
+        FileInputStream fis = fd.createInputStream();
+        int numRead = fis.read(blob);
+        fis.close();
+
+        // find all the available decoders for this format
+        ArrayList<String> matchingCodecs = new ArrayList<String>();
+        int numCodecs = MediaCodecList.getCodecCount();
+        for (int i = 0; i < numCodecs; i++) {
+            MediaCodecInfo info = MediaCodecList.getCodecInfoAt(i);
+            if (info.isEncoder()) {
+                continue;
+            }
+            try {
+                MediaCodecInfo.CodecCapabilities caps = info.getCapabilitiesForType(mime);
+                if (caps != null) {
+                    matchingCodecs.add(info.getName());
+                }
+            } catch (IllegalArgumentException e) {
+                // type is not supported
+            }
+        }
+
+        if (matchingCodecs.size() == 0) {
+            Log.w(TAG, "no codecs for mime type " + mime);
+        }
+        String rname = resources.getResourceEntryName(rid);
+        // decode this blob once with each matching codec
+        for (String codecName: matchingCodecs) {
+            Log.i(TAG, "Decoding blob " + rname + " using codec " + codecName);
+            MediaCodec codec = MediaCodec.createByCodecName(codecName);
+            MediaFormat format = MediaFormat.createVideoFormat(mime, initWidth, initHeight);
+            codec.configure(format, null, null, 0);
+            codec.start();
+
+            try {
+                MediaCodec.BufferInfo info = new MediaCodec.BufferInfo();
+                ByteBuffer [] inputBuffers = codec.getInputBuffers();
+                int numFrames = 0;
+                if (frameSizes != null) {
+                    numFrames = frameSizes.length;
+                }
+
+                if (0 == numFrames) {
+                    fail("Improper picture length file");
+                }
+
+                int offset = 0;
+                int bytesToFeed = 0;
+                int flags = 0;
+                byte [] tempBlob = new byte[(int)inputBuffers[0].capacity()];
+                for (int j = 0; j < numFrames; j++) {
+                    int bufidx = codec.dequeueInputBuffer(5000);
+                    if (bufidx >= 0) {
+                        inputBuffers[bufidx].rewind();
+                        bytesToFeed = Math.min((int)(fd.getLength() - offset),
+                                               inputBuffers[bufidx].capacity());
+                        if(j == (numFrames - 1)) {
+                            flags = MediaCodec.BUFFER_FLAG_END_OF_STREAM;
+                        }
+                        System.arraycopy(blob, offset, tempBlob, 0, bytesToFeed);
+                        inputBuffers[bufidx].put(tempBlob, 0, inputBuffers[bufidx].capacity());
+                        codec.queueInputBuffer(bufidx, 0, bytesToFeed, 0, flags);
+                        offset = offset + frameSizes[j];
+                    } else {
+                        Log.i(TAG, "no input buffer");
+                    }
+                    bufidx = codec.dequeueOutputBuffer(info, 5000);
+                    if (bufidx >= 0) {
+                        codec.releaseOutputBuffer(bufidx, false);
+                    } else {
+                      Log.i(TAG, "no output buffer");
                     }
                 }
             } catch (Exception e) {
