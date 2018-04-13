@@ -379,4 +379,12 @@ public class AvailableIntentsTest extends AndroidTestCase {
             assertCanBeHandled(new Intent(Telephony.Sms.Intents.ACTION_CHANGE_DEFAULT));
         }
     }
+
+    public void testLocationScanningSettings() {
+        PackageManager packageManager = mContext.getPackageManager();
+        if (packageManager.hasSystemFeature(PackageManager.FEATURE_WIFI)
+                || packageManager.hasSystemFeature(PackageManager.FEATURE_BLUETOOTH_LE)) {
+            assertCanBeHandled(new Intent("android.settings.LOCATION_SCANNING_SETTINGS"));
+        }
+    }
 }
