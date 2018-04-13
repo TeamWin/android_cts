@@ -17,6 +17,7 @@
 package android.telephony.cts;
 
 import static android.net.NetworkCapabilities.NET_CAPABILITY_INTERNET;
+import static android.net.NetworkCapabilities.NET_CAPABILITY_NOT_CONGESTED;
 import static android.net.NetworkCapabilities.NET_CAPABILITY_NOT_METERED;
 import static android.net.NetworkCapabilities.NET_CAPABILITY_NOT_RESTRICTED;
 import static android.net.NetworkCapabilities.TRANSPORT_CELLULAR;
@@ -46,6 +47,7 @@ import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
+import java.time.Period;
 import java.time.ZonedDateTime;
 import java.util.Arrays;
 import java.util.List;
@@ -124,7 +126,7 @@ public class SubscriptionManagerTest {
         assertEquals(Arrays.asList(), mSm.getSubscriptionPlans(mSubId));
 
         // Push simple plan and get it back
-        final SubscriptionPlan plan = buildSubscriptionPlan();
+        final SubscriptionPlan plan = buildValidSubscriptionPlan();
         mSm.setSubscriptionPlans(mSubId, Arrays.asList(plan));
         assertEquals(Arrays.asList(plan), mSm.getSubscriptionPlans(mSubId));
 
@@ -146,6 +148,11 @@ public class SubscriptionManagerTest {
     public void testSubscriptionPlansOverrideCongested() throws Exception {
         if (!isSupported()) return;
 
+        final ConnectivityManager cm = InstrumentationRegistry.getContext()
+                .getSystemService(ConnectivityManager.class);
+        final Network net = findCellularNetwork();
+        assertNotNull("Active cellular network required", net);
+
         // Make ourselves the owner
         setSubPlanOwner(mSubId, mPackageName);
 
@@ -158,10 +165,28 @@ public class SubscriptionManagerTest {
         }
 
         // Defining plans means we get to override
-        final SubscriptionPlan plan = buildSubscriptionPlan();
-        mSm.setSubscriptionPlans(mSubId, Arrays.asList(plan));
-        mSm.setSubscriptionOverrideCongested(mSubId, true, 0);
-        mSm.setSubscriptionOverrideCongested(mSubId, false, 0);
+        mSm.setSubscriptionPlans(mSubId, Arrays.asList(buildValidSubscriptionPlan()));
+
+        // Cellular is uncongested by default
+        assertTrue(cm.getNetworkCapabilities(net).hasCapability(NET_CAPABILITY_NOT_CONGESTED));
+
+        // Override should make it go congested
+        {
+            final CountDownLatch latch = waitForNetworkCapabilities(net, caps -> {
+                return !caps.hasCapability(NET_CAPABILITY_NOT_CONGESTED);
+            });
+            mSm.setSubscriptionOverrideCongested(mSubId, true, 0);
+            latch.await(10, TimeUnit.SECONDS);
+        }
+
+        // Clearing override should make it go uncongested
+        {
+            final CountDownLatch latch = waitForNetworkCapabilities(net, caps -> {
+                return caps.hasCapability(NET_CAPABILITY_NOT_CONGESTED);
+            });
+            mSm.setSubscriptionOverrideCongested(mSubId, false, 0);
+            latch.await(10, TimeUnit.SECONDS);
+        }
 
         // Now revoke our access
         setSubPlanOwner(mSubId, null);
@@ -183,7 +208,7 @@ public class SubscriptionManagerTest {
 
         // Make ourselves the owner and define some plans
         setSubPlanOwner(mSubId, mPackageName);
-        mSm.setSubscriptionPlans(mSubId, Arrays.asList(buildSubscriptionPlan()));
+        mSm.setSubscriptionPlans(mSubId, Arrays.asList(buildValidSubscriptionPlan()));
 
         // Cellular is metered by default
         assertFalse(cm.getNetworkCapabilities(net).hasCapability(NET_CAPABILITY_NOT_METERED));
@@ -207,6 +232,61 @@ public class SubscriptionManagerTest {
         }
     }
 
+    @Test
+    public void testSubscriptionPlansInvalid() throws Exception {
+        if (!isSupported()) return;
+
+        // Make ourselves the owner
+        setSubPlanOwner(mSubId, mPackageName);
+
+        // Empty plans can't override
+        assertOverrideFails();
+
+        // Nonrecurring plan in the past can't override
+        assertOverrideFails(SubscriptionPlan.Builder
+                .createNonrecurring(ZonedDateTime.now().minusDays(14),
+                        ZonedDateTime.now().minusDays(7))
+                .setTitle("CTS")
+                .setDataLimit(1_000_000_000, SubscriptionPlan.LIMIT_BEHAVIOR_DISABLED)
+                .build());
+
+        // Plan with undefined limit can't override
+        assertOverrideFails(SubscriptionPlan.Builder
+                .createRecurring(ZonedDateTime.parse("2007-03-14T00:00:00.000Z"),
+                        Period.ofMonths(1))
+                .setTitle("CTS")
+                .build());
+
+        // We can override when there is an active plan somewhere
+        final SubscriptionPlan older = SubscriptionPlan.Builder
+                .createNonrecurring(ZonedDateTime.now().minusDays(14),
+                        ZonedDateTime.now().minusDays(7))
+                .setTitle("CTS")
+                .setDataLimit(1_000_000_000, SubscriptionPlan.LIMIT_BEHAVIOR_DISABLED)
+                .build();
+        final SubscriptionPlan newer = SubscriptionPlan.Builder
+                .createNonrecurring(ZonedDateTime.now().minusDays(7),
+                        ZonedDateTime.now().plusDays(7))
+                .setTitle("CTS")
+                .setDataLimit(1_000_000_000, SubscriptionPlan.LIMIT_BEHAVIOR_DISABLED)
+                .build();
+        assertOverrideSuccess(older, newer);
+    }
+
+    private void assertOverrideSuccess(SubscriptionPlan... plans) {
+        mSm.setSubscriptionPlans(mSubId, Arrays.asList(plans));
+        mSm.setSubscriptionOverrideCongested(mSubId, false, 0);
+    }
+
+    private void assertOverrideFails(SubscriptionPlan... plans) {
+        mSm.setSubscriptionPlans(mSubId, Arrays.asList(plans));
+        try {
+            mSm.setSubscriptionOverrideCongested(mSubId, false, 0);
+            fail();
+        } catch (SecurityException | IllegalStateException expected) {
+        }
+    }
+
     public static CountDownLatch waitForNetworkCapabilities(Network network,
             Predicate<NetworkCapabilities> predicate) {
         final CountDownLatch latch = new CountDownLatch(1);
@@ -225,9 +305,10 @@ public class SubscriptionManagerTest {
         return latch;
     }
 
-    private static SubscriptionPlan buildSubscriptionPlan() {
+    private static SubscriptionPlan buildValidSubscriptionPlan() {
         return SubscriptionPlan.Builder
-                .createRecurringMonthly(ZonedDateTime.parse("2007-03-14T00:00:00.000Z"))
+                .createRecurring(ZonedDateTime.parse("2007-03-14T00:00:00.000Z"),
+                        Period.ofMonths(1))
                 .setTitle("CTS")
                 .setDataLimit(1_000_000_000, SubscriptionPlan.LIMIT_BEHAVIOR_DISABLED)
                 .setDataUsage(500_000_000, System.currentTimeMillis())

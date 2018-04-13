@@ -405,7 +405,7 @@ public class CaptureResultTest extends Camera2AndroidTestCase {
                     null/*cameraId*/, i);
             for (String physicalId : requestedPhysicalIds) {
                 validateOneCaptureResult(errorCollector, physicalWaiverKeys.get(physicalId),
-                        allKeys, requestBuilder, physicalCaptureResults.get(physicalId),
+                        allKeys, null/*requestBuilder*/, physicalCaptureResults.get(physicalId),
                         physicalId, i);
             }
         }
@@ -415,10 +415,12 @@ public class CaptureResultTest extends Camera2AndroidTestCase {
             List<CaptureResult.Key<?>> skippedKeys, List<CaptureResult.Key<?>> allKeys,
             CaptureRequest.Builder requestBuilder, CaptureResult result, String cameraId,
             int resultCount) throws Exception {
-        String failMsg = "Failed capture result " + resultCount + " test ";
+        String failMsg = "Failed capture result " + resultCount + " test";
+        String cameraIdString = " ";
         if (cameraId != null) {
-            failMsg += "for camera " + cameraId + " ";
+            cameraIdString += "for physical camera " + cameraId;
         }
+        boolean verifyMatchRequest = (requestBuilder != null);
         for (CaptureResult.Key<?> key : allKeys) {
             if (!skippedKeys.contains(key)) {
                 /**
@@ -427,41 +429,46 @@ public class CaptureResultTest extends Camera2AndroidTestCase {
                  * becomes symmetric (b/14059883). Then below check can be wrapped into
                  * a generic function.
                  */
-                String msg = failMsg + "for key " + key.getName();
-                if (key.equals(CaptureResult.CONTROL_AE_MODE)) {
-                    errorCollector.expectEquals(msg,
-                            requestBuilder.get(CaptureRequest.CONTROL_AE_MODE),
-                            result.get(CaptureResult.CONTROL_AE_MODE));
-                } else if (key.equals(CaptureResult.CONTROL_AF_MODE)) {
-                    errorCollector.expectEquals(msg,
-                            requestBuilder.get(CaptureRequest.CONTROL_AF_MODE),
-                            result.get(CaptureResult.CONTROL_AF_MODE));
-                } else if (key.equals(CaptureResult.CONTROL_AWB_MODE)) {
-                    errorCollector.expectEquals(msg,
-                            requestBuilder.get(CaptureRequest.CONTROL_AWB_MODE),
-                            result.get(CaptureResult.CONTROL_AWB_MODE));
-                } else if (key.equals(CaptureResult.CONTROL_MODE)) {
-                    errorCollector.expectEquals(msg,
-                            requestBuilder.get(CaptureRequest.CONTROL_MODE),
-                            result.get(CaptureResult.CONTROL_MODE));
-                } else if (key.equals(CaptureResult.STATISTICS_FACE_DETECT_MODE)) {
-                    errorCollector.expectEquals(msg,
-                            requestBuilder.get(CaptureRequest.STATISTICS_FACE_DETECT_MODE),
-                            result.get(CaptureResult.STATISTICS_FACE_DETECT_MODE));
-                } else if (key.equals(CaptureResult.NOISE_REDUCTION_MODE)) {
-                    errorCollector.expectEquals(msg,
-                            requestBuilder.get(CaptureRequest.NOISE_REDUCTION_MODE),
-                            result.get(CaptureResult.NOISE_REDUCTION_MODE));
-                } else if (key.equals(CaptureResult.NOISE_REDUCTION_MODE)) {
-                    errorCollector.expectEquals(msg,
-                            requestBuilder.get(CaptureRequest.NOISE_REDUCTION_MODE),
-                            result.get(CaptureResult.NOISE_REDUCTION_MODE));
-                } else if (key.equals(CaptureResult.REQUEST_PIPELINE_DEPTH)) {
+                String msg = failMsg + cameraIdString + "for key " + key.getName();
+                if (verifyMatchRequest) {
+                    if (key.equals(CaptureResult.CONTROL_AE_MODE)) {
+                        errorCollector.expectEquals(msg,
+                                requestBuilder.get(CaptureRequest.CONTROL_AE_MODE),
+                                result.get(CaptureResult.CONTROL_AE_MODE));
+                    } else if (key.equals(CaptureResult.CONTROL_AF_MODE)) {
+                        errorCollector.expectEquals(msg,
+                                requestBuilder.get(CaptureRequest.CONTROL_AF_MODE),
+                                result.get(CaptureResult.CONTROL_AF_MODE));
+                    } else if (key.equals(CaptureResult.CONTROL_AWB_MODE)) {
+                        errorCollector.expectEquals(msg,
+                                requestBuilder.get(CaptureRequest.CONTROL_AWB_MODE),
+                                result.get(CaptureResult.CONTROL_AWB_MODE));
+                    } else if (key.equals(CaptureResult.CONTROL_MODE)) {
+                        errorCollector.expectEquals(msg,
+                                requestBuilder.get(CaptureRequest.CONTROL_MODE),
+                                result.get(CaptureResult.CONTROL_MODE));
+                    } else if (key.equals(CaptureResult.STATISTICS_FACE_DETECT_MODE)) {
+                        errorCollector.expectEquals(msg,
+                                requestBuilder.get(CaptureRequest.STATISTICS_FACE_DETECT_MODE),
+                                result.get(CaptureResult.STATISTICS_FACE_DETECT_MODE));
+                    } else if (key.equals(CaptureResult.NOISE_REDUCTION_MODE)) {
+                        errorCollector.expectEquals(msg,
+                                requestBuilder.get(CaptureRequest.NOISE_REDUCTION_MODE),
+                                result.get(CaptureResult.NOISE_REDUCTION_MODE));
+                    } else if (key.equals(CaptureResult.NOISE_REDUCTION_MODE)) {
+                        errorCollector.expectEquals(msg,
+                                requestBuilder.get(CaptureRequest.NOISE_REDUCTION_MODE),
+                                result.get(CaptureResult.NOISE_REDUCTION_MODE));
+                    } else if (key.equals(CaptureResult.REQUEST_PIPELINE_DEPTH)) {
 
-                } else if (key.equals(CaptureResult.STATISTICS_OIS_DATA_MODE)) {
-                    errorCollector.expectEquals(msg,
-                            requestBuilder.get(CaptureRequest.STATISTICS_OIS_DATA_MODE),
-                            result.get(CaptureResult.STATISTICS_OIS_DATA_MODE));
+                    } else if (key.equals(CaptureResult.STATISTICS_OIS_DATA_MODE)) {
+                        errorCollector.expectEquals(msg,
+                                requestBuilder.get(CaptureRequest.STATISTICS_OIS_DATA_MODE),
+                                result.get(CaptureResult.STATISTICS_OIS_DATA_MODE));
+                    } else {
+                        // Only do non-null check for the rest of keys.
+                        errorCollector.expectKeyValueNotNull(failMsg, result, key);
+                    }
                 } else {
                     // Only do non-null check for the rest of keys.
                     errorCollector.expectKeyValueNotNull(failMsg, result, key);
@@ -470,15 +477,18 @@ public class CaptureResultTest extends Camera2AndroidTestCase {
                 // These keys should always be null
                 if (key.equals(CaptureResult.CONTROL_AE_REGIONS)) {
                     errorCollector.expectNull(
-                            "Capture result contains AE regions but aeMaxRegions is 0",
+                            "Capture result contains AE regions but aeMaxRegions is 0"
+                            + cameraIdString,
                             result.get(CaptureResult.CONTROL_AE_REGIONS));
                 } else if (key.equals(CaptureResult.CONTROL_AWB_REGIONS)) {
                     errorCollector.expectNull(
-                            "Capture result contains AWB regions but awbMaxRegions is 0",
+                            "Capture result contains AWB regions but awbMaxRegions is 0"
+                            + cameraIdString,
                             result.get(CaptureResult.CONTROL_AWB_REGIONS));
                 } else if (key.equals(CaptureResult.CONTROL_AF_REGIONS)) {
                     errorCollector.expectNull(
-                            "Capture result contains AF regions but afMaxRegions is 0",
+                            "Capture result contains AF regions but afMaxRegions is 0"
+                            + cameraIdString,
                             result.get(CaptureResult.CONTROL_AF_REGIONS));
                 }
             }

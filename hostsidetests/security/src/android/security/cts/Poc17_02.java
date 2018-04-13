@@ -1,4 +1,4 @@
-/*
+/**
  * Copyright (C) 2018 The Android Open Source Project
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -11,19 +11,22 @@
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
- * limitations under the License
+ * limitations under the License.
  */
 
-package android.cts.backup.deviceownerapp;
+package android.security.cts;
 
-import android.app.admin.DeviceAdminReceiver;
-import android.content.ComponentName;
-import android.content.Context;
+import android.platform.test.annotations.SecurityTest;
 
-public class BackupDeviceAdminReceiver extends DeviceAdminReceiver {
-
-    public static ComponentName getComponentName(Context context) {
-        return new ComponentName(context, BackupDeviceAdminReceiver.class);
-    }
-
+public class Poc17_02 extends SecurityTestCase {
+  /**
+   *  b/32799236
+   */
+  @SecurityTest
+  public void testPocCVE_2017_0426() throws Exception {
+      AdbUtils.runCommandLine("logcat -c", getDevice());
+      AdbUtils.runPoc("CVE-2017-0426", getDevice(), 60);
+      String logcatOut = AdbUtils.runCommandLine("logcat -d", getDevice());
+      assertNotMatches("[\\s\\n\\S]*Bugreports file in wrong path[\\s\\n\\S]*", logcatOut);
+  }
 }

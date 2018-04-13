@@ -15,21 +15,7 @@
  */
 package com.android.cts.deviceowner;
 
-import android.content.ComponentName;
-
 public class BackupServicePoliciesTest extends BaseDeviceOwnerTest {
-
-    private static final String LOCAL_TRANSPORT_COMPONENT =
-            "android/com.android.internal.backup.LocalTransportService";
-
-    private ComponentName mLocalBackupTransportComponent;
-
-    @Override
-    protected void setUp() throws Exception {
-        super.setUp();
-        mLocalBackupTransportComponent = ComponentName.unflattenFromString(
-                LOCAL_TRANSPORT_COMPONENT);
-    }
 
     /**
      * Test: Test enabling backup service. This test should be executed after installing a device
@@ -44,30 +30,4 @@ public class BackupServicePoliciesTest extends BaseDeviceOwnerTest {
         assertFalse(mDevicePolicyManager.isBackupServiceEnabled(getWho()));
     }
 
-    /**
-     * Test setting mandatory backup transport.
-     *
-     * <p>After setting a mandatory backup transport, the backup service should be enabled and the
-     * mandatory backup transport
-     */
-    public void testGetAndSetMandatoryBackupTransport() throws Exception {
-        assertFalse(mDevicePolicyManager.isBackupServiceEnabled(getWho()));
-
-        // Make backups with the local transport mandatory and verify the operation succeeded.
-        assertTrue(mDevicePolicyManager.setMandatoryBackupTransport(
-                getWho(), mLocalBackupTransportComponent));
-
-        // Verify that the backup service has been enabled.
-        assertTrue(mDevicePolicyManager.isBackupServiceEnabled(getWho()));
-
-        // Verify the local transport should be used.
-        assertEquals(
-                mLocalBackupTransportComponent, mDevicePolicyManager.getMandatoryBackupTransport());
-
-        // Disable the backup service again.
-        mDevicePolicyManager.setBackupServiceEnabled(getWho(), false);
-
-        // And verify no mandatory backup transport is set any more.
-        assertNull(mDevicePolicyManager.getMandatoryBackupTransport());
-    }
 }

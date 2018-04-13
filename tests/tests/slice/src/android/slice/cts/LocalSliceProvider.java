@@ -26,15 +26,12 @@ import android.content.ContextWrapper;
 import android.content.Intent;
 import android.content.pm.ProviderInfo;
 import android.net.Uri;
-import android.util.Log;
 
 import org.mockito.Answers;
-import org.mockito.listeners.InvocationListener;
-import org.mockito.listeners.MethodInvocationReport;
 import org.mockito.stubbing.Answer;
 
 import java.util.Collection;
-import java.util.List;
+import java.util.Set;
 
 public class LocalSliceProvider extends SliceProvider {
     public static SliceProvider sProxy;
@@ -55,7 +52,7 @@ public class LocalSliceProvider extends SliceProvider {
                     Answer s = sAnswer != null ? sAnswer : Answers.CALLS_REAL_METHODS;
                     return s.answer(invocation);
                 }));
-        context = new ContextWrapper(context) {
+        Context wrapped = new ContextWrapper(context) {
             @Override
             public Object getSystemService(String name) {
                 if (getSystemServiceName(SliceManager.class).equals(name)) {
@@ -64,11 +61,11 @@ public class LocalSliceProvider extends SliceProvider {
                 return super.getSystemService(name);
             }
         };
-        super.attachInfo(context, info);
+        super.attachInfo(wrapped, info);
     }
 
     @Override
-    public Slice onBindSlice(Uri sliceUri, List<SliceSpec> specs) {
+    public Slice onBindSlice(Uri sliceUri, Set<SliceSpec> specs) {
         if (sProxy != null) return sProxy.onBindSlice(sliceUri, specs);
         return super.onBindSlice(sliceUri, specs);
     }

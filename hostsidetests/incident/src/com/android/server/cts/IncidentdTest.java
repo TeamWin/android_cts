@@ -71,11 +71,11 @@ public class IncidentdTest extends ProtoDumpTestCase {
 
         // GraphicsStats is expected to be all AUTOMATIC.
 
-        // TODO: create test for WindowManager
+        WindowManagerIncidentTest.verifyWindowManagerServiceDumpProto(dump.getWindow(), filterLevel);
 
         JobSchedulerIncidentTest.verifyJobSchedulerServiceDumpProto(dump.getJobscheduler(), filterLevel);
 
-        // TODO: create test for USB
+        UsbIncidentTest.verifyUsbServiceDumpProto(dump.getUsb(), filterLevel);
     }
 
     // Splitting these into separate methods to make debugging easier.
