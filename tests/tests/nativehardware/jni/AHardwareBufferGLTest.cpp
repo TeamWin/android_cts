@@ -1512,6 +1512,65 @@ TEST_P(AHardwareBufferDepthFormatTest, DepthCanBeSampled) {
     CheckGoldenPixels(goldens, /*float_format=*/false, /*alpha_format=*/true);
 }
 
+TEST_P(AHardwareBufferDepthFormatTest, DepthCubemapSampling) {
+    AHardwareBuffer_Desc desc = GetParam();
+    desc.usage =
+        AHARDWAREBUFFER_USAGE_GPU_COLOR_OUTPUT |
+        AHARDWAREBUFFER_USAGE_GPU_SAMPLED_IMAGE |
+        AHARDWAREBUFFER_USAGE_GPU_CUBE_MAP;
+    desc.height = desc.width;
+    desc.layers *= 6;
+    if (!SetUpBuffer(desc)) return;
+
+    const int kTextureUnit = 9;
+    for (int i = 0; i < mContextCount; ++i) {
+        MakeCurrent(i);
+        SetUpTexture(desc, kTextureUnit);
+        glTexParameteri(mTexTarget, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+        glTexParameteri(mTexTarget, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+    }
+
+    glEnable(GL_SCISSOR_TEST);
+    for (int i = 0; i < 6; ++i) {
+        SetUpFramebuffer(desc.width, desc.height, desc.layers - 6 + i, kNone, kBufferAsTexture);
+        glClearDepthf(0.f);
+        glScissor(0, 0, desc.width, desc.height);
+        glClear(GL_DEPTH_BUFFER_BIT);
+        glClearDepthf(1.f);
+        glScissor(0, 0, desc.width / 2, desc.height / 2);
+        glClear(GL_DEPTH_BUFFER_BIT);
+        glScissor(desc.width / 2, desc.height / 2, desc.width / 2, desc.height / 2);
+        glClear(GL_DEPTH_BUFFER_BIT);
+    }
+    glDisable(GL_SCISSOR_TEST);
+    glFinish();
+
+    MakeCurrent(0);
+    if (desc.layers > 6) {
+        SetUpProgram(std::string("#version 320 es") + kVertexShaderEs3x,
+                     kCubeMapArrayFragmentShaderEs32, kQuadPositions, 0.5f, kTextureUnit);
+    } else {
+        SetUpProgram(kVertexShader, kCubeMapFragmentShader, kQuadPositions, 0.5f, kTextureUnit);
+    }
+    SetUpFramebuffer(40, 40, 0, kRenderbuffer);
+    for (int i = 0; i < 6; ++i) {
+        float face_vector[3] = {0.f, 0.f, 0.f};
+        face_vector[i / 2] = (i % 2) ? -1.f : 1.f;
+        glUniform3fv(mFaceVectorLocation, 1, face_vector);
+        glClearColor(0.f, 0.f, 0.f, 0.f);
+        glClear(GL_COLOR_BUFFER_BIT);
+        glDrawArrays(GL_TRIANGLES, 0, kQuadVertexCount);
+
+        std::vector<GoldenPixel> goldens{
+            {5, 35, kZero}, {15, 35, kZero},  {25, 35, kZero},  {35, 35, kZero},
+            {5, 25, kZero}, {15, 25, kBlack}, {25, 25, kRed},   {35, 25, kZero},
+            {5, 15, kZero}, {15, 15, kRed},   {25, 15, kBlack}, {35, 15, kZero},
+            {5, 5,  kZero}, {15, 5,  kZero},  {25, 5,  kZero},  {35, 5,  kZero},
+        };
+        CheckGoldenPixels(goldens, /*float_format=*/false, /*alpha_format=*/true);
+    }
+}
+
 // See comment in SetUpBuffer for explanation of nonzero stride and GL format.
 INSTANTIATE_TEST_CASE_P(
     SingleLayer,
