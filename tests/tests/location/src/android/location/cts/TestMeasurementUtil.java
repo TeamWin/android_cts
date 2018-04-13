@@ -18,8 +18,6 @@ package android.location.cts;
 
 import com.android.compatibility.common.util.ApiLevelUtil;
 
-import android.content.Context;
-import android.content.pm.PackageManager;
 import android.location.GnssClock;
 import android.location.GnssMeasurement;
 import android.location.GnssNavigationMessage;
@@ -27,8 +25,6 @@ import android.location.GnssStatus;
 import android.location.LocationManager;
 import android.os.Build;
 import android.util.Log;
-
-import junit.framework.Assert;
 
 import java.util.Arrays;
 import java.util.HashSet;
@@ -93,10 +89,8 @@ public final class TestMeasurementUtil {
         }
 
         // If device does not have a GPS, skip the test.
-        PackageManager pm = testLocationManager.getContext().getPackageManager();
-        if (!pm.hasSystemFeature(PackageManager.FEATURE_LOCATION_GPS)) {
-          Log.w(testTag, "GPS feature not present on device, skipping GPS test.");
-          return false;
+        if (!TestUtils.deviceHasGpsFeature(testLocationManager.getContext())) {
+           return false;
         }
 
         // If device has a GPS, but it's turned off in settings, and this is CTS verifier,
