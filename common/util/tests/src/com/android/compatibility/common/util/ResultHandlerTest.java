@@ -55,10 +55,14 @@ public class ResultHandlerTest extends TestCase {
     private static final String ID_A = AbiUtils.createId(ABI, NAME_A);
     private static final String ID_B = AbiUtils.createId(ABI, NAME_B);
 
+    private static final String BUILD_FINGERPRINT = "build_fingerprint";
+    private static final String BUILD_FINGERPRINT_UNALTERED = "build_fingerprint_unaltered";
     private static final String BUILD_ID = "build_id";
     private static final String BUILD_PRODUCT = "build_product";
     private static final String EXAMPLE_BUILD_ID = "XYZ";
     private static final String EXAMPLE_BUILD_PRODUCT = "wolverine";
+    private static final String EXAMPLE_BUILD_FINGERPRINT = "example_build_fingerprint";
+    private static final String EXAMPLE_BUILD_FINGERPRINT_UNALTERED = "example_build_fingerprint_unaltered";
 
     private static final String DEVICE_A = "device123";
     private static final String DEVICE_B = "device456";
@@ -100,8 +104,18 @@ public class ResultHandlerTest extends TestCase {
             "%s%s%s" +
             "</Result>";
     private static final String XML_BUILD_INFO =
-            "  <Build build_fingerprint=\"%s\" " + BUILD_ID + "=\"%s\" " +
-               BUILD_PRODUCT + "=\"%s\" />\n";
+            "  <Build " +
+                    BUILD_FINGERPRINT + "=\"%s\" " +
+                    BUILD_ID + "=\"%s\" " +
+                    BUILD_PRODUCT + "=\"%s\" " +
+            "  />\n";
+    private static final String XML_BUILD_INFO_WITH_UNALTERED_BUILD_FINGERPRINT =
+            "  <Build " +
+                    BUILD_FINGERPRINT + "=\"%s\" " +
+                    BUILD_FINGERPRINT_UNALTERED + "=\"%s\" " +
+                    BUILD_ID + "=\"%s\" " +
+                    BUILD_PRODUCT + "=\"%s\" " +
+            "  />\n";
     private static final String XML_SUMMARY =
             "  <Summary pass=\"%d\" failed=\"%d\" " +
             "modules_done=\"1\" modules_total=\"1\" />\n";
@@ -154,6 +168,7 @@ public class ResultHandlerTest extends TestCase {
         result.setTestPlan(SUITE_PLAN);
         result.addDeviceSerial(DEVICE_A);
         result.addDeviceSerial(DEVICE_B);
+        result.addInvocationInfo(BUILD_FINGERPRINT, EXAMPLE_BUILD_FINGERPRINT);
         result.addInvocationInfo(BUILD_ID, EXAMPLE_BUILD_ID);
         result.addInvocationInfo(BUILD_PRODUCT, EXAMPLE_BUILD_PRODUCT);
         // Module A: test1 passes, test2 not executed
@@ -202,6 +217,21 @@ public class ResultHandlerTest extends TestCase {
         checkResult(ResultHandler.getResultFromDir(resultDir));
     }
 
+    public void testParsing_usesUnalteredBuildFingerprintWhenPresent() throws Exception {
+        String buildInfo = String.format(XML_BUILD_INFO_WITH_UNALTERED_BUILD_FINGERPRINT,
+                EXAMPLE_BUILD_FINGERPRINT, EXAMPLE_BUILD_FINGERPRINT_UNALTERED,
+                EXAMPLE_BUILD_ID, EXAMPLE_BUILD_PRODUCT);
+        File resultDir = writeResultDir(resultsDir, buildInfo);
+        checkResult(ResultHandler.getResultFromDir(resultDir), EXAMPLE_BUILD_FINGERPRINT_UNALTERED);
+    }
+
+    public void testParsing_whenUnalteredBuildFingerprintIsEmpty_usesRegularBuildFingerprint() throws Exception {
+        String buildInfo = String.format(XML_BUILD_INFO_WITH_UNALTERED_BUILD_FINGERPRINT,
+                EXAMPLE_BUILD_FINGERPRINT, "", EXAMPLE_BUILD_ID, EXAMPLE_BUILD_PRODUCT);
+        File resultDir = writeResultDir(resultsDir, buildInfo);
+        checkResult(ResultHandler.getResultFromDir(resultDir), EXAMPLE_BUILD_FINGERPRINT);
+    }
+
     public void testGetLightResults() throws Exception {
         File resultDir = writeResultDir(resultsDir);
         List<IInvocationResult> lightResults = ResultHandler.getLightResults(resultsDir);
@@ -210,11 +240,17 @@ public class ResultHandlerTest extends TestCase {
         checkLightResult(lightResult);
     }
 
+    static File writeResultDir(File resultsDir) throws IOException {
+        String buildInfo = String.format(XML_BUILD_INFO, EXAMPLE_BUILD_FINGERPRINT,
+                EXAMPLE_BUILD_ID, EXAMPLE_BUILD_PRODUCT);
+        return writeResultDir(resultsDir, buildInfo);
+    }
+
     /*
      * Helper to write a result to the results dir, for testing.
      * @return the written resultDir
      */
-    static File writeResultDir(File resultsDir) throws IOException {
+    static File writeResultDir(File resultsDir, String buildInfo) throws IOException {
         File resultDir = null;
         FileWriter writer = null;
         try {
@@ -222,8 +258,6 @@ public class ResultHandlerTest extends TestCase {
             // Create the result file
             File resultFile = new File(resultDir, ResultHandler.TEST_RESULT_FILE_NAME);
             writer = new FileWriter(resultFile);
-            String buildInfo = String.format(XML_BUILD_INFO, DEVICE_A,
-                    EXAMPLE_BUILD_ID, EXAMPLE_BUILD_PRODUCT);
             String summary = String.format(XML_SUMMARY, 2, 1);
             String moduleATest = String.format(XML_TEST_PASS, METHOD_1);
             String moduleACases = String.format(XML_CASE, CLASS_A, moduleATest);
@@ -281,10 +315,15 @@ public class ResultHandlerTest extends TestCase {
     }
 
     static void checkResult(IInvocationResult result) throws Exception {
+        checkResult(result, EXAMPLE_BUILD_FINGERPRINT);
+    }
+
+    static void checkResult(IInvocationResult result, String expectedBuildFingerprint) throws Exception {
         assertEquals("Expected 3 passes", 3, result.countResults(TestStatus.PASS));
         assertEquals("Expected 1 failure", 1, result.countResults(TestStatus.FAIL));
 
         Map<String, String> buildInfo = result.getInvocationInfo();
+        assertEquals("Incorrect Build Fingerprint", expectedBuildFingerprint, result.getBuildFingerprint());
         assertEquals("Incorrect Build ID", EXAMPLE_BUILD_ID, buildInfo.get(BUILD_ID));
         assertEquals("Incorrect Build Product",
             EXAMPLE_BUILD_PRODUCT, buildInfo.get(BUILD_PRODUCT));
