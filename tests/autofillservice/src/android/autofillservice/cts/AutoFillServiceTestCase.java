@@ -112,7 +112,7 @@ public abstract class AutoFillServiceTestCase {
     }
 
     @BeforeClass
-    public static void prepareScreen() {
+    public static void prepareScreen() throws Exception {
         if (!hasAutofillFeature()) return;
 
         // Unlock screen.
@@ -120,6 +120,10 @@ public abstract class AutoFillServiceTestCase {
 
         // Collapse notifications.
         runShellCommand("cmd statusbar collapse");
+
+        // Set orientation as portrait, otherwise some tests might fail due to elements not fitting
+        // in, IME orientation, etc...
+        sDefaultUiBot.setScreenOrientation(UiBot.PORTRAIT);
     }
 
     @Before
