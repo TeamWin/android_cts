@@ -745,6 +745,17 @@ public class PkgInstallSignatureVerificationTest extends DeviceTestCase implemen
         assertInstallFails("v3-rsa-pkcs1-sha256-2048-2-with-por_1_2_2-full-caps.apk");
     }
 
+    public void testInstallV3HasMultipleSigners() throws Exception {
+        // tests that an app can't be signed by multiple signers when using v3 signature scheme
+        assertInstallFails("v3-rsa-pkcs1-sha256-2048-1_and_2.apk");
+    }
+
+    public void testInstallV3HasMultiplePlatformSigners() throws Exception {
+        // tests that an app can be signed by multiple v3 signers if they target different platform
+        // versions
+        assertInstallSucceeds("v3-rsa-pkcs1-sha256-2048-1_P_and_2_Qplus.apk");
+    }
+
     private void assertInstallSucceeds(String apkFilenameInResources) throws Exception {
         String installResult = installPackageFromResource(apkFilenameInResources);
         if (installResult != null) {
