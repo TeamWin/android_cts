@@ -106,7 +106,6 @@ public class HidDeviceActivity extends PassFailButtons.Activity {
         setContentView(R.layout.bt_hid_device);
         setPassFailButtonClickListeners();
         setInfoResources(R.string.bt_hid_device_test_name, R.string.bt_hid_device_test_info, -1);
-        getPassButton().setEnabled(false);
 
         mBluetoothAdapter = BluetoothAdapter.getDefaultAdapter();
         mBluetoothAdapter.getProfileProxy(getApplicationContext(), mProfileListener,
