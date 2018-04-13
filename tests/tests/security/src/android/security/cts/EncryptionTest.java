@@ -21,7 +21,6 @@ import com.android.compatibility.common.util.PropertyUtil;
 import android.test.AndroidTestCase;
 import junit.framework.TestCase;
 
-import android.app.ActivityManager;
 import android.content.pm.PackageManager;
 import android.content.Context;
 import android.util.Log;
@@ -71,16 +70,9 @@ public class EncryptionTest extends AndroidTestCase {
        return false;
     }
 
-    private boolean hasLowRAM() {
-        ActivityManager activityManager =
-            (ActivityManager) getContext().getSystemService(Context.ACTIVITY_SERVICE);
-
-        return activityManager.isLowRamDevice();
-    }
-
     private boolean isRequired() {
-        // Optional before MIN_API_LEVEL or if the device has low RAM
-        return PropertyUtil.getFirstApiLevel() >= MIN_API_LEVEL && !hasLowRAM() && !isTelevision();
+        // Optional before MIN_API_LEVEL
+        return PropertyUtil.getFirstApiLevel() >= MIN_API_LEVEL && !isTelevision();
     }
 
     public void testConfig() throws Exception {
