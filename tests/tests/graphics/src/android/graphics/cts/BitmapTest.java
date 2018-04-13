@@ -30,8 +30,10 @@ import android.graphics.BitmapFactory;
 import android.graphics.Canvas;
 import android.graphics.Color;
 import android.graphics.ColorSpace;
+import android.graphics.ColorSpace.Named;
 import android.graphics.Matrix;
 import android.graphics.Paint;
+import android.graphics.Picture;
 import android.os.Debug;
 import android.os.Parcel;
 import android.os.StrictMode;
@@ -207,8 +209,10 @@ public class BitmapTest {
     public void testCreateBitmap1() {
         int[] colors = createColors(100);
         Bitmap bitmap = Bitmap.createBitmap(colors, 10, 10, Config.RGB_565);
+        assertFalse(bitmap.isMutable());
         Bitmap ret = Bitmap.createBitmap(bitmap);
         assertNotNull(ret);
+        assertFalse(ret.isMutable());
         assertEquals(10, ret.getWidth());
         assertEquals(10, ret.getHeight());
         assertEquals(Config.RGB_565, ret.getConfig());
@@ -223,8 +227,10 @@ public class BitmapTest {
     public void testCreateBitmap2() {
         // special case: output bitmap is equal to the input bitmap
         mBitmap = Bitmap.createBitmap(new int[100 * 100], 100, 100, Config.ARGB_8888);
+        assertFalse(mBitmap.isMutable()); // createBitmap w/ colors should be immutable
         Bitmap ret = Bitmap.createBitmap(mBitmap, 0, 0, 100, 100);
         assertNotNull(ret);
+        assertFalse(ret.isMutable()); // createBitmap from subset should be immutable
         assertTrue(mBitmap.equals(ret));
 
         //normal case
@@ -277,19 +283,33 @@ public class BitmapTest {
         mBitmap = Bitmap.createBitmap(new int[100 * 100], 100, 100, Config.ARGB_8888);
         Bitmap ret = Bitmap.createBitmap(mBitmap, 0, 0, 100, 100, null, false);
         assertNotNull(ret);
+        assertFalse(ret.isMutable()); // subset should be immutable
         assertTrue(mBitmap.equals(ret));
 
         // normal case
         mBitmap = Bitmap.createBitmap(100, 100, Config.ARGB_8888);
         ret = Bitmap.createBitmap(mBitmap, 10, 10, 50, 50, new Matrix(), true);
+        assertTrue(ret.isMutable());
         assertNotNull(ret);
         assertFalse(mBitmap.equals(ret));
+    }
+
+    @Test
+    public void testCreateBitmapFromHardwareBitmap() {
+        Bitmap hardwareBitmap = BitmapFactory.decodeResource(mRes, R.drawable.robot,
+                HARDWARE_OPTIONS);
+        assertEquals(Config.HARDWARE, hardwareBitmap.getConfig());
+
+        Bitmap ret = Bitmap.createBitmap(hardwareBitmap, 0, 0, 100, 100, null, false);
+        assertEquals(Config.HARDWARE, ret.getConfig());
+        assertFalse(ret.isMutable());
     }
 
     @Test
     public void testCreateBitmap4() {
         Bitmap ret = Bitmap.createBitmap(100, 200, Config.RGB_565);
         assertNotNull(ret);
+        assertTrue(ret.isMutable());
         assertEquals(100, ret.getWidth());
         assertEquals(200, ret.getHeight());
         assertEquals(Config.RGB_565, ret.getConfig());
@@ -306,6 +326,7 @@ public class BitmapTest {
     public void testCreateBitmap_matrix() {
         int[] colorArray = new int[] { Color.RED, Color.GREEN, Color.BLUE, Color.BLACK };
         Bitmap src = Bitmap.createBitmap(2, 2, Config.ARGB_8888);
+        assertTrue(src.isMutable());
         src.setPixels(colorArray,0, 2, 0, 0, 2, 2);
 
         // baseline
@@ -313,21 +334,25 @@ public class BitmapTest {
 
         // null
         Bitmap dst = Bitmap.createBitmap(src, 0, 0, 2, 2, null, false);
+        assertTrue(dst.isMutable());
         verify2x2BitmapContents(colorArray, dst);
 
         // identity matrix
         Matrix matrix = new Matrix();
         dst = Bitmap.createBitmap(src, 0, 0, 2, 2, matrix, false);
+        assertTrue(dst.isMutable());
         verify2x2BitmapContents(colorArray, dst);
 
         // big scale - only red visible
         matrix.setScale(10, 10);
         dst = Bitmap.createBitmap(src, 0, 0, 2, 2, matrix, false);
+        assertTrue(dst.isMutable());
         verify2x2BitmapContents(new int[] { Color.RED, Color.RED, Color.RED, Color.RED }, dst);
 
         // rotation
         matrix.setRotate(90);
         dst = Bitmap.createBitmap(src, 0, 0, 2, 2, matrix, false);
+        assertTrue(dst.isMutable());
         verify2x2BitmapContents(
                 new int[] { Color.BLUE, Color.RED, Color.BLACK, Color.GREEN }, dst);
     }
@@ -379,6 +404,7 @@ public class BitmapTest {
         // normal case
         Bitmap ret = Bitmap.createBitmap(colors, 5, 10, 10, 5, Config.RGB_565);
         assertNotNull(ret);
+        assertFalse(ret.isMutable());
         assertEquals(10, ret.getWidth());
         assertEquals(5, ret.getHeight());
         assertEquals(Config.RGB_565, ret.getConfig());
@@ -409,8 +435,26 @@ public class BitmapTest {
         assertEquals(metrics.densityDpi, bitmap.getDensity());
 
         int[] colors = createColors(100);
-        assertNotNull(Bitmap.createBitmap(metrics, colors, 0, 10, 10, 10, Config.ARGB_8888));
-        assertNotNull(Bitmap.createBitmap(metrics, colors, 10, 10, Config.ARGB_8888));
+        bitmap = Bitmap.createBitmap(metrics, colors, 0, 10, 10, 10, Config.ARGB_8888);
+        assertNotNull(bitmap);
+        assertFalse(bitmap.isMutable());
+
+        bitmap = Bitmap.createBitmap(metrics, colors, 10, 10, Config.ARGB_8888);
+        assertNotNull(bitmap);
+        assertFalse(bitmap.isMutable());
+    }
+
+    @Test
+    public void testCreateBitmap_noDisplayMetrics_mutable() {
+        Bitmap bitmap;
+        bitmap = Bitmap.createBitmap(10, 10, Config.ARGB_8888);
+        assertTrue(bitmap.isMutable());
+
+        bitmap = Bitmap.createBitmap(10, 10, Config.ARGB_8888, true);
+        assertTrue(bitmap.isMutable());
+
+        bitmap = Bitmap.createBitmap(10, 10, Config.ARGB_8888, true, ColorSpace.get(Named.SRGB));
+        assertTrue(bitmap.isMutable());
     }
 
     @Test
@@ -430,12 +474,51 @@ public class BitmapTest {
     }
 
     @Test
+    public void testCreateBitmap_noDisplayMetrics_immutable() {
+        int[] colors = createColors(100);
+        Bitmap bitmap;
+        bitmap = Bitmap.createBitmap(colors, 0, 10, 10, 10, Config.ARGB_8888);
+        assertFalse(bitmap.isMutable());
+
+        bitmap = Bitmap.createBitmap(colors, 10, 10, Config.ARGB_8888);
+        assertFalse(bitmap.isMutable());
+    }
+
+    @Test
+    public void testCreateBitmap_Picture_immutable() {
+        Picture picture = new Picture();
+        Canvas canvas = picture.beginRecording(200, 100);
+
+        Paint p = new Paint(Paint.ANTI_ALIAS_FLAG);
+
+        p.setColor(0x88FF0000);
+        canvas.drawCircle(50, 50, 40, p);
+
+        p.setColor(Color.GREEN);
+        p.setTextSize(30);
+        canvas.drawText("Pictures", 60, 60, p);
+        picture.endRecording();
+
+        Bitmap bitmap;
+        bitmap = Bitmap.createBitmap(picture);
+        assertFalse(bitmap.isMutable());
+
+        bitmap = Bitmap.createBitmap(picture, 100, 100, Config.HARDWARE);
+        assertFalse(bitmap.isMutable());
+
+        bitmap = Bitmap.createBitmap(picture, 100, 100, Config.ARGB_8888);
+        assertFalse(bitmap.isMutable());
+    }
+
+    @Test
     public void testCreateScaledBitmap() {
         mBitmap = Bitmap.createBitmap(100, 200, Config.RGB_565);
+        assertTrue(mBitmap.isMutable());
         Bitmap ret = Bitmap.createScaledBitmap(mBitmap, 50, 100, false);
         assertNotNull(ret);
         assertEquals(50, ret.getWidth());
         assertEquals(100, ret.getHeight());
+        assertTrue(ret.isMutable());
     }
 
     @Test
@@ -1455,6 +1538,14 @@ public class BitmapTest {
         bitmap.recycle();
         nValidateBitmapInfo(bitmap, 10, 20, true);
         nValidateNdkAccessAfterRecycle(bitmap);
+    }
+
+    @Test
+    public void bitmapIsMutable() {
+        Bitmap b = Bitmap.createBitmap(10, 10, Config.ARGB_8888);
+        assertTrue("CreateBitmap w/ params should be mutable", b.isMutable());
+        assertTrue("CreateBitmap from bitmap should be mutable",
+                Bitmap.createBitmap(b).isMutable());
     }
 
     private void runGcAndFinalizersSync() {

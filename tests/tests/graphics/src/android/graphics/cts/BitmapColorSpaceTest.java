@@ -30,13 +30,14 @@ import android.graphics.BitmapFactory;
 import android.graphics.ColorSpace;
 import android.graphics.ImageDecoder;
 import android.os.Parcel;
-import androidx.annotation.ColorInt;
-import androidx.annotation.NonNull;
 import android.support.test.InstrumentationRegistry;
 import android.support.test.filters.RequiresDevice;
 import android.support.test.filters.SmallTest;
 import android.support.test.runner.AndroidJUnit4;
 import android.util.Log;
+
+import androidx.annotation.ColorInt;
+import androidx.annotation.NonNull;
 
 import org.junit.Before;
 import org.junit.Test;
@@ -354,13 +355,15 @@ public class BitmapColorSpaceTest {
             ColorSpace cs = b.getColorSpace();
             assertNotNull(cs);
             assertSame(ColorSpace.get(ColorSpace.Named.DISPLAY_P3), cs);
-
+            assertTrue(b.isMutable());
             verifySetPixel(b, newColor, expectedColor);
 
             b = Bitmap.createBitmap(b, 0, 0, b.getWidth() / 2, b.getHeight() / 2);
+            assertTrue(b.isMutable());
             verifySetPixel(b, newColor, expectedColor);
 
             b = Bitmap.createScaledBitmap(b, b.getWidth() / 2, b.getHeight() / 2, true);
+            assertTrue(b.isMutable());
             verifySetPixel(b, newColor, expectedColor);
         } catch (IOException e) {
             fail();
@@ -369,6 +372,7 @@ public class BitmapColorSpaceTest {
 
     private static void verifySetPixel(@NonNull Bitmap b,
             @ColorInt int newColor, @ColorInt int expectedColor) {
+        assertTrue(b.isMutable());
         b.setPixel(0, 0, newColor);
 
         ByteBuffer dst = ByteBuffer.allocate(b.getByteCount());
@@ -398,9 +402,11 @@ public class BitmapColorSpaceTest {
             verifySetPixels(b, newColor, expectedColor);
 
             b = Bitmap.createBitmap(b, 0, 0, b.getWidth() / 2, b.getHeight() / 2);
+            assertTrue(b.isMutable());
             verifySetPixels(b, newColor, expectedColor);
 
             b = Bitmap.createScaledBitmap(b, b.getWidth() / 2, b.getHeight() / 2, true);
+            assertTrue(b.isMutable());
             verifySetPixels(b, newColor, expectedColor);
         } catch (IOException e) {
             fail();
@@ -409,6 +415,7 @@ public class BitmapColorSpaceTest {
 
     private static void verifySetPixels(@NonNull Bitmap b,
             @ColorInt int newColor, @ColorInt int expectedColor) {
+        assertTrue(b.isMutable());
         int[] pixels = new int[b.getWidth() * b.getHeight()];
         Arrays.fill(pixels, newColor);
         b.setPixels(pixels, 0, b.getWidth(), 0, 0, b.getWidth(), b.getHeight());
