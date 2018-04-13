@@ -29,6 +29,8 @@ import android.util.Log;
 public class SecurityPatchTest extends InstrumentationTestCase {
 
     private static final String TAG = SecurityPatchTest.class.getSimpleName();
+    private static final String MISSING_BOOT_SECURITY_PATCH_LEVEL =
+            "ro.boot.security_patch should be defined in the device specific BoardConfig.mk on the BOARD_KERNEL_COMMANDLINE";
     private static final String SECURITY_PATCH_ERROR =
             "security_patch should be in the format \"YYYY-MM-DD\". Found \"%s\"";
     private static final String SECURITY_PATCH_DATE_ERROR =
@@ -39,12 +41,14 @@ public class SecurityPatchTest extends InstrumentationTestCase {
     private boolean mSkipTests = false;
     private String mVendorSecurityPatch;
     private String mBuildSecurityPatch;
+    private String mBootSecurityPatch;
 
     @Override
     protected void setUp() {
         mSkipTests = (ApiLevelUtil.isBefore(Build.VERSION_CODES.M));
         mVendorSecurityPatch = SystemProperties.get("ro.vendor.build.security_patch", "");
         mBuildSecurityPatch = Build.VERSION.SECURITY_PATCH;
+        mBootSecurityPatch = SystemProperties.get("ro.boot.security_patch", "");
     }
 
     /** Security patch string must exist in M or higher **/
@@ -57,12 +61,22 @@ public class SecurityPatchTest extends InstrumentationTestCase {
         assertTrue(error, !mBuildSecurityPatch.isEmpty());
     }
 
+    /** Vendor security patch string must exist in P or higher **/
     public void testVendorSecurityPatchFound() {
         if (Build.VERSION.FIRST_SDK_INT <= Build.VERSION_CODES.O) {
             Log.w(TAG, "Skipping P+ Test");
             return;
         }
         assertTrue(!mVendorSecurityPatch.isEmpty());
+    }
+
+    /** Boot security patch string must exist in P or higher **/
+    public void testBootSecurityPatchFound() {
+        if (Build.VERSION.FIRST_SDK_INT <= Build.VERSION_CODES.O) {
+            Log.w(TAG, "Skipping P+ Test");
+            return;
+        }
+        assertTrue(MISSING_BOOT_SECURITY_PATCH_LEVEL, !mBootSecurityPatch.isEmpty());
     }
 
     public void testSecurityPatchesFormat() {
@@ -79,6 +93,9 @@ public class SecurityPatchTest extends InstrumentationTestCase {
         }
         error = String.format(SECURITY_PATCH_ERROR, mVendorSecurityPatch);
         testSecurityPatchFormat(mVendorSecurityPatch, error);
+
+        error = String.format(SECURITY_PATCH_ERROR, mBootSecurityPatch);
+        testSecurityPatchFormat(mBootSecurityPatch, error);
     }
 
     /** Security patch should be of the form YYYY-MM-DD in M or higher */
@@ -117,7 +134,14 @@ public class SecurityPatchTest extends InstrumentationTestCase {
                                      SECURITY_PATCH_MONTH,
                                      mVendorSecurityPatch);
         testSecurityPatchDate(mVendorSecurityPatch, error);
+
+        error = String.format(SECURITY_PATCH_DATE_ERROR,
+                                     SECURITY_PATCH_YEAR,
+                                     SECURITY_PATCH_MONTH,
+                                     mBootSecurityPatch);
+        testSecurityPatchDate(mBootSecurityPatch, error);
     }
+
     /** Security patch should no older than the month this test was updated in M or higher **/
     private void testSecurityPatchDate(String patch, String error) {
         int declaredYear = 0;
