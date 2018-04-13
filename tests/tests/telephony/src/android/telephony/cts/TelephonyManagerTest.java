@@ -30,7 +30,6 @@ import android.content.pm.PackageManager;
 import android.net.ConnectivityManager;
 import android.net.wifi.WifiInfo;
 import android.net.wifi.WifiManager;
-import android.os.AsyncTask;
 import android.os.Build;
 import android.os.Looper;
 import android.support.test.InstrumentationRegistry;
@@ -38,15 +37,10 @@ import android.support.test.runner.AndroidJUnit4;
 import android.telecom.PhoneAccount;
 import android.telecom.PhoneAccountHandle;
 import android.telecom.TelecomManager;
-import android.telephony.AccessNetworkConstants;
 import android.telephony.CellLocation;
-import android.telephony.NetworkScan;
-import android.telephony.NetworkScanRequest;
 import android.telephony.PhoneStateListener;
-import android.telephony.RadioAccessSpecifier;
 import android.telephony.ServiceState;
 import android.telephony.TelephonyManager;
-import android.telephony.TelephonyScanManager.NetworkScanCallback;
 import android.text.TextUtils;
 import android.util.Log;
 
@@ -57,8 +51,7 @@ import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
-import java.util.concurrent.Semaphore;
-import java.util.concurrent.TimeUnit;
+import java.util.List;
 import java.util.regex.Pattern;
 
 /**
@@ -68,17 +61,15 @@ import java.util.regex.Pattern;
  */
 @RunWith(AndroidJUnit4.class)
 public class TelephonyManagerTest {
-
-    private static final String TAG = "TelephonyManagerTest";
-    private static final int DEFAULT_TIMEOUT_MS = 1000;
-
     private TelephonyManager mTelephonyManager;
     private PackageManager mPackageManager;
     private boolean mOnCellLocationChangedCalled = false;
     private ServiceState mServiceState;
     private final Object mLock = new Object();
+    private static final int TOLERANCE = 1000;
     private PhoneStateListener mListener;
     private static ConnectivityManager mCm;
+    private static final String TAG = "TelephonyManagerTest";
 
     @Before
     public void setUp() throws Exception {
@@ -131,7 +122,7 @@ public class TelephonyManagerTest {
         });
         t.start();
         synchronized (mLock) {
-            mLock.wait(DEFAULT_TIMEOUT_MS);
+            mLock.wait(TOLERANCE);
         }
         assertTrue(mOnCellLocationChangedCalled);
 
@@ -151,7 +142,7 @@ public class TelephonyManagerTest {
 
         t.start();
         synchronized (mLock) {
-            mLock.wait(DEFAULT_TIMEOUT_MS);
+            mLock.wait(TOLERANCE);
         }
         assertFalse(mOnCellLocationChangedCalled);
     }
@@ -187,11 +178,8 @@ public class TelephonyManagerTest {
         mTelephonyManager.getSimOperatorName();
         mTelephonyManager.getNetworkCountryIso();
         mTelephonyManager.getCellLocation();
-        mTelephonyManager.getSimCarrierId();
-        mTelephonyManager.getSimCarrierIdName();
         mTelephonyManager.getSimSerialNumber();
         mTelephonyManager.getSimOperator();
-        mTelephonyManager.getSignalStrength();
         mTelephonyManager.getNetworkOperatorName();
         mTelephonyManager.getSubscriberId();
         mTelephonyManager.getLine1Number();
@@ -485,7 +473,7 @@ public class TelephonyManagerTest {
         });
         t.start();
         synchronized (mLock) {
-            mLock.wait(DEFAULT_TIMEOUT_MS);
+            mLock.wait(TOLERANCE);
         }
 
         assertEquals(mServiceState, mTelephonyManager.getServiceState());
@@ -559,53 +547,6 @@ public class TelephonyManagerTest {
         // Also verify that no exception is thrown for any slot index (including invalid ones)
         mTelephonyManager.getMeid(-1);
         mTelephonyManager.getMeid(mTelephonyManager.getPhoneCount());
-    }
-
-    @Test
-    public void testRequestNetworkScan() {
-        // The Radio Access Specifiers below are meant to scan
-        // all the bands for all the supported technologies.
-        final RadioAccessSpecifier gsm = new RadioAccessSpecifier(
-                AccessNetworkConstants.AccessNetworkType.GERAN,
-                null /* bands */,
-                null /* channels */);
-        final RadioAccessSpecifier lte = new RadioAccessSpecifier(
-                AccessNetworkConstants.AccessNetworkType.EUTRAN,
-                null /* bands */,
-                null /* channels */);
-        final RadioAccessSpecifier wcdma = new RadioAccessSpecifier(
-                AccessNetworkConstants.AccessNetworkType.UTRAN,
-                null /* bands */,
-                null /* channels */);
-        final RadioAccessSpecifier[] radioAccessSpecifier = {gsm, lte, wcdma};
-
-        final NetworkScanRequest networkScanRequest = new NetworkScanRequest(
-                NetworkScanRequest.SCAN_TYPE_ONE_SHOT,
-                radioAccessSpecifier,
-                60 /* search periodicity in second */,
-                60 /* max search time in second */,
-                true /* is incremental result */,
-                5 /* incremental result periodicity in second */,
-                null /* List of PLMN ids (MCC-MNC) */);
-
-        final Semaphore semaphore = new Semaphore(0);
-        final NetworkScan nsr = mTelephonyManager.requestNetworkScan(networkScanRequest,
-                AsyncTask.SERIAL_EXECUTOR,
-                new NetworkScanCallback() {
-                    @Override
-                    public void onComplete() {
-                        semaphore.release();
-                    }
-                });
-
-        // Stop the network scan process. This should trigger onComplete above.
-        nsr.stopScan();
-
-        try {
-            assertTrue("Network scan should be stopped",
-                    semaphore.tryAcquire(DEFAULT_TIMEOUT_MS, TimeUnit.MILLISECONDS));
-        } catch (InterruptedException e) {
-        }
     }
 
     /**
