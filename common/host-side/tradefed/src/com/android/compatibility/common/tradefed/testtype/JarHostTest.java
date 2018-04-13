@@ -15,135 +15,21 @@
  */
 package com.android.compatibility.common.tradefed.testtype;
 
-import com.android.compatibility.common.tradefed.build.CompatibilityBuildHelper;
-import com.android.tradefed.build.IBuildInfo;
-import com.android.tradefed.config.Option;
-import com.android.tradefed.config.Option.Importance;
 import com.android.tradefed.device.DeviceNotAvailableException;
 import com.android.tradefed.log.LogUtil.CLog;
 import com.android.tradefed.metrics.proto.MetricMeasurement.Metric;
 import com.android.tradefed.result.ITestInvocationListener;
 import com.android.tradefed.result.ResultForwarder;
 import com.android.tradefed.testtype.HostTest;
-import com.android.tradefed.testtype.IRemoteTest;
-import com.android.tradefed.util.StreamUtil;
 import com.android.tradefed.util.proto.TfMetricProtoUtil;
 
-import com.google.common.annotations.VisibleForTesting;
-
-import junit.framework.Test;
-
-import java.io.File;
-import java.io.IOException;
-import java.lang.reflect.Modifier;
-import java.net.URL;
-import java.net.URLClassLoader;
-import java.util.Enumeration;
 import java.util.HashMap;
-import java.util.HashSet;
-import java.util.List;
 import java.util.Map;
-import java.util.Set;
-import java.util.jar.JarEntry;
-import java.util.jar.JarFile;
 
 /**
  * Test runner for host-side JUnit tests.
  */
 public class JarHostTest extends HostTest {
-
-    @Option(name="jar", description="The jars containing the JUnit test class to run.",
-            importance = Importance.IF_UNSET)
-    private Set<String> mJars = new HashSet<>();
-
-    /**
-     * {@inheritDoc}
-     */
-    @Override
-    protected HostTest createHostTest(Class<?> classObj) {
-        JarHostTest test = (JarHostTest) super.createHostTest(classObj);
-        // clean the jar option since we are loading directly from classes after.
-        test.mJars = new HashSet<>();
-        return test;
-    }
-
-    /**
-     * Create a {@link CompatibilityBuildHelper} from the build info provided.
-     */
-    @VisibleForTesting
-    CompatibilityBuildHelper createBuildHelper(IBuildInfo info) {
-        return new CompatibilityBuildHelper(info);
-    }
-
-    /**
-     * {@inheritDoc}
-     */
-    @Override
-    protected List<Class<?>> getClasses() throws IllegalArgumentException  {
-        List<Class<?>> classes = super.getClasses();
-        CompatibilityBuildHelper helper = createBuildHelper(getBuild());
-        for (String jarName : mJars) {
-            JarFile jarFile = null;
-            try {
-                File file = helper.getTestFile(jarName);
-                jarFile = new JarFile(file);
-                Enumeration<JarEntry> e = jarFile.entries();
-                URL[] urls = {
-                        new URL(String.format("jar:file:%s!/", file.getAbsolutePath()))
-                };
-                URLClassLoader cl = URLClassLoader.newInstance(urls);
-
-                while (e.hasMoreElements()) {
-                    JarEntry je = e.nextElement();
-                    if (je.isDirectory() || !je.getName().endsWith(".class")
-                            || je.getName().contains("$")) {
-                        continue;
-                    }
-                    String className = getClassName(je.getName());
-                    try {
-                        Class<?> cls = cl.loadClass(className);
-                        int modifiers = cls.getModifiers();
-                        if ((IRemoteTest.class.isAssignableFrom(cls)
-                                || Test.class.isAssignableFrom(cls)
-                                || hasJUnit4Annotation(cls))
-                                && !Modifier.isStatic(modifiers)
-                                && !Modifier.isPrivate(modifiers)
-                                && !Modifier.isProtected(modifiers)
-                                && !Modifier.isInterface(modifiers)
-                                && !Modifier.isAbstract(modifiers)) {
-                            classes.add(cls);
-                        }
-                    } catch (ClassNotFoundException cnfe) {
-                        throw new IllegalArgumentException(
-                                String.format("Cannot find test class %s", className));
-                    } catch (IllegalAccessError | NoClassDefFoundError err) {
-                        // IllegalAccessError can happen when the class or one of its super
-                        // class/interfaces are package-private. We can't load such class from
-                        // here (= outside of the pacakge). Since our intention is not to load
-                        // all classes in the jar, but to find our the main test classes, this
-                        // can be safely skipped.
-                        // NoClassDefFoundErrror is also okay because certain CTS test cases
-                        // might statically link to a jar library (e.g. tools.jar from JDK)
-                        // where certain internal classes in the library are referencing
-                        // classes that are not available in the jar. Again, since our goal here
-                        // is to find test classes, this can be safely skipped.
-                        continue;
-                    }
-                }
-            } catch (IOException e) {
-                CLog.e(e);
-                throw new RuntimeException(e);
-            } finally {
-                StreamUtil.close(jarFile);
-            }
-        }
-        return classes;
-    }
-
-    private static String getClassName(String name) {
-        // -6 because of .class
-        return name.substring(0, name.length() - 6).replace('/', '.');
-    }
 
     /**
      * {@inheritDoc}
