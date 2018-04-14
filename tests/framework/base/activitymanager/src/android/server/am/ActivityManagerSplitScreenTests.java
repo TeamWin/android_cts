@@ -26,6 +26,7 @@ import static android.app.WindowConfiguration.WINDOWING_MODE_FULLSCREEN_OR_SPLIT
 import static android.app.WindowConfiguration.WINDOWING_MODE_SPLIT_SCREEN_PRIMARY;
 import static android.app.WindowConfiguration.WINDOWING_MODE_SPLIT_SCREEN_SECONDARY;
 import static android.app.WindowConfiguration.WINDOWING_MODE_UNDEFINED;
+import static android.server.am.Components.ALT_LAUNCHING_ACTIVITY;
 import static android.server.am.Components.DOCKED_ACTIVITY;
 import static android.server.am.Components.LAUNCHING_ACTIVITY;
 import static android.server.am.Components.NON_RESIZEABLE_ACTIVITY;
@@ -281,6 +282,13 @@ public class ActivityManagerSplitScreenTests extends ActivityManagerTestBase {
                 true /* showRecents */);
         mAmWmState.waitForRecentsActivityVisible();
 
+        // Launch another activity. This forces the any home activity back and allows the primary
+        // stack to gain focus during launch.
+        getLaunchActivityBuilder().setTargetActivity(ALT_LAUNCHING_ACTIVITY)
+                .setUseInstrumentation()
+                .setWaitForLaunched(true)
+                .execute();
+
         // Launch target to side
         final LaunchActivityBuilder targetActivityLauncher = getLaunchActivityBuilder()
                 .setTargetActivity(targetActivityName)
@@ -290,7 +298,7 @@ public class ActivityManagerSplitScreenTests extends ActivityManagerTestBase {
         targetActivityLauncher.execute();
 
         mAmWmState.computeState(targetActivityName, LAUNCHING_ACTIVITY);
-        mAmWmState.assertContainsStack("Must contain fullscreen stack.",
+        mAmWmState.assertContainsStack("Must contain secondary stack.",
                 WINDOWING_MODE_SPLIT_SCREEN_SECONDARY, ACTIVITY_TYPE_STANDARD);
         int taskNumberInitial = mAmWmState.getAmState().getStandardTaskCountByWindowingMode(
                 WINDOWING_MODE_SPLIT_SCREEN_SECONDARY);

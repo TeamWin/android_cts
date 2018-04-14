@@ -481,9 +481,14 @@ public class KeyManagementTest extends ActivityInstrumentationTestCase2<KeyManag
                 Context.TELEPHONY_SERVICE);
         assertNotNull("Need to be able to read device identifiers", telephonyService);
         String imei = telephonyService.getImei(0);
+        String meid = telephonyService.getMeid(0);
         // If the device has a valid IMEI it must support attestation for it.
         if (imei != null) {
             modesToTest.add(ID_TYPE_IMEI);
+        }
+        // Same for MEID
+        if (meid != null) {
+            modesToTest.add(ID_TYPE_MEID);
         }
 
         int numCombinations = 1 << modesToTest.size();
@@ -520,10 +525,10 @@ public class KeyManagementTest extends ActivityInstrumentationTestCase2<KeyManag
                     if ((devIdOpt & ID_TYPE_IMEI) != 0) {
                         expectedImei = imei;
                     }
-                    // Expected MEID is always null for now.
-                    // TODO: Figure out a better way to identify whether MEID attestation on the
-                    // device should work.
                     String expectedMeid = null;
+                    if ((devIdOpt & ID_TYPE_MEID) != 0) {
+                        expectedMeid = meid;
+                    }
                     validateDeviceIdAttestationData(attestation, expectedSerial, expectedImei,
                             expectedMeid);
                 }

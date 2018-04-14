@@ -29,7 +29,6 @@ import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
-import android.content.res.Resources;
 import android.os.BatteryManager;
 import android.os.SystemClock;
 import android.support.test.InstrumentationRegistry;
@@ -38,8 +37,12 @@ import android.support.test.runner.AndroidJUnit4;
 import android.support.test.uiautomator.UiDevice;
 import android.util.Log;
 
+import com.android.compatibility.common.util.AppStandbyUtils;
+
 import org.junit.After;
+import org.junit.AfterClass;
 import org.junit.Before;
+import org.junit.BeforeClass;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
@@ -78,6 +81,9 @@ public class AppStandbyTests {
             "standby_never_delay",
     };
 
+    // Save the state before running tests to restore it after we finish testing.
+    private static boolean sOrigAppStandbyEnabled;
+
     private Context mContext;
     private ComponentName mAlarmScheduler;
     private UiDevice mUiDevice;
@@ -94,6 +100,17 @@ public class AppStandbyTests {
         }
     };
 
+    @BeforeClass
+    public static void setUpTests() throws Exception {
+        sOrigAppStandbyEnabled = AppStandbyUtils.isAppStandbyEnabledAtRuntime();
+        if (!sOrigAppStandbyEnabled) {
+            AppStandbyUtils.setAppStandbyEnabledAtRuntime(true);
+
+            // Give system sometime to initialize itself.
+            Thread.sleep(100);
+        }
+    }
+
     @Before
     public void setUp() throws Exception {
         mContext = InstrumentationRegistry.getTargetContext();
@@ -105,7 +122,7 @@ public class AppStandbyTests {
         final IntentFilter intentFilter = new IntentFilter();
         intentFilter.addAction(TestAlarmReceiver.ACTION_REPORT_ALARM_EXPIRED);
         mContext.registerReceiver(mAlarmStateReceiver, intentFilter);
-        assumeTrue("App Standby not enabled on device", isAppStandbyEnabled());
+        assumeTrue("App Standby not enabled on device", AppStandbyUtils.isAppStandbyEnabled());
         setAppStandbyBucket("active");
         scheduleAlarm(SystemClock.elapsedRealtime(), false, 0);
         Thread.sleep(MIN_FUTURITY);
@@ -245,6 +262,13 @@ public class AppStandbyTests {
         Thread.sleep(500);
     }
 
+    @AfterClass
+    public static void tearDownTests() throws Exception {
+        if (!sOrigAppStandbyEnabled) {
+            AppStandbyUtils.setAppStandbyEnabledAtRuntime(sOrigAppStandbyEnabled);
+        }
+    }
+
     private void updateAlarmManagerConstants() throws IOException {
         final StringBuffer cmd = new StringBuffer("settings put global alarm_manager_constants ");
         cmd.append("min_futurity="); cmd.append(MIN_FUTURITY);
@@ -278,22 +302,6 @@ public class AppStandbyTests {
         if (!charging) {
             assertTrue("Battery could not be unplugged", waitUntil(() -> !bm.isCharging(), 5_000));
         }
-    }
-
-    private boolean isAppStandbyEnabled() throws IOException {
-        boolean powerSaveSupported = false;
-        boolean appStandbySetting = true;
-        try {
-            // check the resource first as if this fails, we evaluate to false anyway.
-            powerSaveSupported = mContext.getResources().getBoolean(Resources.getSystem()
-                    .getIdentifier("config_enableAutoPowerModes", "bool", "android"));
-            final String result = executeAndLog("settings get global app_standby_enabled");
-            appStandbySetting = (Integer.parseInt(result) == 1);
-        } catch (Resources.NotFoundException | NumberFormatException nfe) {
-            Log.i(TAG, "Exception while reading constants. Using powerSaveSupported="
-                    + powerSaveSupported + ", appStandbySetting=" + appStandbySetting, nfe);
-        }
-        return appStandbySetting && powerSaveSupported;
     }
 
     private String executeAndLog(String cmd) throws IOException {

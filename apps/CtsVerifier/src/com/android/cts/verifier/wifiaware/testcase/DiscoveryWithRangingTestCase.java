@@ -20,7 +20,6 @@ import android.content.Context;
 import android.net.wifi.rtt.RangingRequest;
 import android.net.wifi.rtt.RangingResult;
 import android.net.wifi.rtt.WifiRttManager;
-import android.os.HandlerExecutor;
 import android.util.Log;
 import android.util.Pair;
 
@@ -29,6 +28,7 @@ import com.android.cts.verifier.wifiaware.CallbackUtils;
 
 import java.util.Arrays;
 import java.util.List;
+import java.util.concurrent.Executor;
 
 /**
  * Test case for Discovery + Ranging:
@@ -215,7 +215,7 @@ public class DiscoveryWithRangingTestCase extends DiscoveryBaseTestCase {
 
     private boolean executeRanging(RangingRequest request) throws InterruptedException {
         CallbackUtils.RangingCb rangingCb = new CallbackUtils.RangingCb();
-        mWifiRttManager.startRanging(request, new HandlerExecutor(mHandler), rangingCb);
+        mWifiRttManager.startRanging(request, command -> mHandler.post(command), rangingCb);
         Pair<Integer, List<RangingResult>> results = rangingCb.waitForRangingResults();
         switch (results.first) {
             case CallbackUtils.RangingCb.TIMEOUT:
