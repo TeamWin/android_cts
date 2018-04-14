@@ -80,6 +80,8 @@ cts_support_packages := \
     CtsAccelerationTestStubs \
     CtsAlarmClockService \
     CtsAppTestStubs \
+    CtsAppThatRequestsPermissionAandB \
+    CtsAppThatRequestsPermissionAandC \
     CtsAssistService \
     CtsAssistApp \
     CtsAtraceTestApp \

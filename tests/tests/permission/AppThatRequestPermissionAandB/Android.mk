@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2008 The Android Open Source Project
+# Copyright (C) 2018 The Android Open Source Project
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -17,26 +17,14 @@ LOCAL_PATH:= $(call my-dir)
 
 include $(CLEAR_VARS)
 
-LOCAL_MODULE_TAGS := tests
+LOCAL_MODULE_TAGS := optional
+LOCAL_SDK_VERSION := current
 
-# Include both the 32 and 64 bit versions
-LOCAL_MULTILIB := both
-
-LOCAL_JAVA_LIBRARIES := telephony-common
-
-LOCAL_STATIC_JAVA_LIBRARIES := \
-    ctstestrunner guava android-ex-camera2 ub-uiautomator ctsdeviceutil
-
-LOCAL_JNI_SHARED_LIBRARIES := libctspermission_jni
+LOCAL_MODULE_PATH := $(TARGET_OUT_DATA_APPS)
 
 LOCAL_SRC_FILES := $(call all-java-files-under, src)
 
-LOCAL_PACKAGE_NAME := CtsPermissionTestCases
+LOCAL_PACKAGE_NAME := CtsAppThatRequestsPermissionAandB
 
-# uncomment when b/13249777 is fixed
-#LOCAL_SDK_VERSION := current
-LOCAL_JAVA_LIBRARIES += android.test.runner
+include $(BUILD_CTS_SUPPORT_PACKAGE)
 
-include $(BUILD_CTS_PACKAGE)
-
-include $(call all-makefiles-under,$(LOCAL_PATH))
