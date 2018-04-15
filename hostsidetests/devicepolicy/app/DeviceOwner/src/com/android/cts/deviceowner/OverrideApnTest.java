@@ -109,6 +109,7 @@ public class OverrideApnTest extends BaseDeviceOwnerTest {
         assertEquals(TEST_PROTOCOL, apnList.get(0).getRoamingProtocol());
         assertEquals(TEST_ENABLED, apnList.get(0).isEnabled());
         assertEquals(TEST_MVNO_TYPE, apnList.get(0).getMvnoType());
+        assertEquals(TEST_NETWORK_TYPE_BITMASK, apnList.get(0).getNetworkTypeBitmask());
 
         assertTrue(mDevicePolicyManager.removeOverrideApn(getWho(), insertedId));
         apnList = mDevicePolicyManager.getOverrideApns(getWho());
