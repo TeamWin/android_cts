@@ -50,7 +50,8 @@
                 android:maxRecents="1"
                 android:multiArch="true"
                 android:name="android.app.stubs.MockApplication"
-                android:supportsRtl="true">
+                android:supportsRtl="true"
+                android:usesCleartextTraffic="true">
         <uses-library android:name="android.test.runner" />
         <uses-library android:name="org.apache.http.legacy" android:required="false" />
 
