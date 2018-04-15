@@ -31,6 +31,7 @@
         <option name="core-expectation" value="/android/icu/cts/expectations/icu-known-failures.txt" />
         <option name="runtime-hint" value="20s" />
         <option name="include-annotation" value="android.icu.testsharding.HiMemTestShard" />
+        <option name="hidden-api-checks" value="false"/>
     </test>
     <!-- The shard used to run most ICU tests. -->
     <test class="com.android.compatibility.testtype.LibcoreTest" >
@@ -40,5 +41,6 @@
         <option name="core-expectation" value="/android/icu/cts/expectations/icu-known-failures.txt" />
         <option name="runtime-hint" value="18m" />
         <option name="include-annotation" value="android.icu.testsharding.MainTestShard" />
+        <option name="hidden-api-checks" value="false"/>
     </test>
 </configuration>
