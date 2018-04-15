@@ -24,6 +24,9 @@ import static android.view.accessibility.AccessibilityNodeInfo.AccessibilityActi
 import static android.view.accessibility.AccessibilityNodeInfo.AccessibilityAction
         .ACTION_SHOW_TOOLTIP;
 
+import static org.hamcrest.core.IsEqual.equalTo;
+import static org.hamcrest.core.IsNull.nullValue;
+import static org.hamcrest.core.IsNull.notNullValue;
 import static org.hamcrest.Matchers.in;
 import static org.hamcrest.Matchers.not;
 import static org.junit.Assert.assertThat;
@@ -620,6 +623,74 @@ public class AccessibilityEndToEndTest extends
         assertThat(ACTION_HIDE_TOOLTIP, in(buttonNode.getActionList()));
         assertThat(ACTION_SHOW_TOOLTIP, not(in(buttonNode.getActionList())));
         assertTrue(hasTooltipShowing(R.id.buttonWithTooltip));
+    }
+
+    @MediumTest
+    public void testTraversalBeforeReportedToAccessibility() throws Exception {
+        final Instrumentation instrumentation = getInstrumentation();
+        final UiAutomation uiAutomation = instrumentation.getUiAutomation();
+        final AccessibilityNodeInfo buttonNode = uiAutomation.getRootInActiveWindow()
+                .findAccessibilityNodeInfosByViewId(
+                        "android.accessibilityservice.cts:id/buttonWithTooltip")
+                .get(0);
+        final AccessibilityNodeInfo beforeNode = buttonNode.getTraversalBefore();
+        assertThat(beforeNode, notNullValue());
+        assertThat(beforeNode.getViewIdResourceName(),
+                equalTo("android.accessibilityservice.cts:id/edittext"));
+
+        uiAutomation.executeAndWaitForEvent(() -> instrumentation.runOnMainSync(
+                () -> getActivity().findViewById(R.id.buttonWithTooltip)
+                        .setAccessibilityTraversalBefore(View.NO_ID)),
+                filterForEventType(AccessibilityEvent.TYPE_WINDOW_CONTENT_CHANGED),
+                TIMEOUT_ASYNC_PROCESSING);
+
+        buttonNode.refresh();
+        assertThat(buttonNode.getTraversalBefore(), nullValue());
+    }
+
+    @MediumTest
+    public void testTraversalAfterReportedToAccessibility() throws Exception {
+        final Instrumentation instrumentation = getInstrumentation();
+        final UiAutomation uiAutomation = instrumentation.getUiAutomation();
+        final AccessibilityNodeInfo editNode = uiAutomation.getRootInActiveWindow()
+                .findAccessibilityNodeInfosByViewId(
+                        "android.accessibilityservice.cts:id/edittext")
+                .get(0);
+        final AccessibilityNodeInfo afterNode = editNode.getTraversalAfter();
+        assertThat(afterNode, notNullValue());
+        assertThat(afterNode.getViewIdResourceName(),
+                equalTo("android.accessibilityservice.cts:id/buttonWithTooltip"));
+
+        uiAutomation.executeAndWaitForEvent(() -> instrumentation.runOnMainSync(
+                () -> getActivity().findViewById(R.id.edittext)
+                        .setAccessibilityTraversalAfter(View.NO_ID)),
+                filterForEventType(AccessibilityEvent.TYPE_WINDOW_CONTENT_CHANGED),
+                TIMEOUT_ASYNC_PROCESSING);
+
+        editNode.refresh();
+        assertThat(editNode.getTraversalAfter(), nullValue());
+    }
+
+    @MediumTest
+    public void testLabelForReportedToAccessibility() throws Exception {
+        final Instrumentation instrumentation = getInstrumentation();
+        final UiAutomation uiAutomation = instrumentation.getUiAutomation();
+        uiAutomation.executeAndWaitForEvent(() -> instrumentation.runOnMainSync(() -> getActivity()
+                .findViewById(R.id.edittext).setLabelFor(R.id.buttonWithTooltip)),
+                filterForEventType(AccessibilityEvent.TYPE_WINDOW_CONTENT_CHANGED),
+                TIMEOUT_ASYNC_PROCESSING);
+        // TODO: b/78022650: This code should move above the executeAndWait event. It's here because
+        // the a11y cache doesn't get notified when labelFor changes, so the node with the
+        // labledBy isn't updated.
+        final AccessibilityNodeInfo editNode = uiAutomation.getRootInActiveWindow()
+                .findAccessibilityNodeInfosByViewId(
+                        "android.accessibilityservice.cts:id/edittext")
+                .get(0);
+        editNode.refresh();
+        final AccessibilityNodeInfo labelForNode = editNode.getLabelFor();
+        assertThat(labelForNode, notNullValue());
+        // Labeled node should indicate that it is labeled by the other one
+        assertThat(labelForNode.getLabeledBy(), equalTo(editNode));
     }
 
     private static void assertPackageName(AccessibilityNodeInfo node, String packageName) {
