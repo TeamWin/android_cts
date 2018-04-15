@@ -205,7 +205,9 @@ public class ActivityManagerMultiDisplayTests extends ActivityManagerDisplayTest
         assumeTrue(supportsSplitScreenMultiWindow());
 
         // Start launching activity.
-        launchActivityInSplitScreenWithRecents(LAUNCHING_ACTIVITY);
+        launchActivitiesInSplitScreen(
+                getLaunchActivityBuilder().setTargetActivity(LAUNCHING_ACTIVITY),
+                getLaunchActivityBuilder().setTargetActivity(TEST_ACTIVITY));
 
         try (final VirtualDisplaySession virtualDisplaySession = new VirtualDisplaySession()) {
             // Create new virtual display.
@@ -703,7 +705,9 @@ public class ActivityManagerMultiDisplayTests extends ActivityManagerDisplayTest
         assumeTrue(supportsSplitScreenMultiWindow());
 
         // Start launching activity into docked stack.
-        launchActivityInSplitScreenWithRecents(LAUNCHING_ACTIVITY);
+        launchActivitiesInSplitScreen(
+                getLaunchActivityBuilder().setTargetActivity(LAUNCHING_ACTIVITY),
+                getLaunchActivityBuilder().setTargetActivity(TEST_ACTIVITY));
         mAmWmState.assertVisibility(LAUNCHING_ACTIVITY, true /* visible */);
 
         tryCreatingAndRemovingDisplayWithActivity(true /* splitScreen */,
@@ -1168,7 +1172,7 @@ public class ActivityManagerMultiDisplayTests extends ActivityManagerDisplayTest
             final ReportedSizes initialSize = getLastReportedSizesForActivity(
                     RESIZEABLE_ACTIVITY, initialLogSeparator);
 
-            // Resize the docked stack, so that activity with virtual display will also be resized.
+            // Resize the display
             final LogSeparator logSeparator = separateLogs();
             virtualDisplaySession.resizeDisplay();
 

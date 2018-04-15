@@ -194,4 +194,22 @@ public class AdbUtils {
           AdbUtils.runCommandLine( "(" + cmd + ") > /dev/null 2>&1; echo $?",
             device).replaceAll("[^0-9]", ""));
     }
+
+    /**
+     * Pushes and runs a binary to the selected device and checks exit code
+     * Return code 113 is used to indicate the vulnerability
+     *
+     * @param pocName a string path to poc from the /res folder
+     * @param device device to be ran on
+     * @param timeout time to wait for output in seconds
+     */
+    public static boolean runPocCheckExitCode(String pocName, ITestDevice device,
+                                              int timeout) throws Exception {
+      device.executeShellCommand("chmod +x /data/local/tmp/" + pocName);
+      CollectingOutputReceiver receiver = new CollectingOutputReceiver();
+      device.executeShellCommand("/data/local/tmp/" + pocName + " > /dev/null 2>&1; echo $?",
+                                 receiver, timeout, TimeUnit.SECONDS, 0);
+      //Refer to go/asdl-sts-guide Test section for knowing the significance of 113 code
+      return Integer.parseInt(receiver.getOutput().replaceAll("[^0-9]", "")) == 113;
+    }
 }

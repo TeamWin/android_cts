@@ -29,6 +29,10 @@ public class IncidentdTest extends ProtoDumpTestCase {
 
         SystemPropertiesTest.verifySystemPropertiesProto(dump.getSystemProperties(), filterLevel, mCtsBuild);
 
+        StackTraceIncidentTest.verifyBackTraceProto(dump.getNativeTraces(), filterLevel);
+        StackTraceIncidentTest.verifyBackTraceProto(dump.getHalTraces(), filterLevel);
+        StackTraceIncidentTest.verifyBackTraceProto(dump.getJavaTraces(), filterLevel);
+
         if (FingerprintIncidentTest.supportsFingerprint(getDevice())) {
             FingerprintIncidentTest.verifyFingerprintServiceDumpProto(dump.getFingerprint(), filterLevel);
         }

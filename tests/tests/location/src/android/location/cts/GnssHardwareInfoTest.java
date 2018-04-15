@@ -46,6 +46,10 @@ public class GnssHardwareInfoTest extends GnssTestCase {
    * devies did not implement the underlying HAL API, and thus will report 0.
    */
   public void testHardwareYear() throws Exception {
+    if (!TestUtils.deviceHasGpsFeature(getContext())) {
+      return;
+    }
+
     int gnssHardwareYear = mTestLocationManager.getLocationManager().getGnssYearOfHardware();
     // Allow 0 until Q, as older, upgrading devices may report 0.
     assertTrue("Hardware year must be 2015 or higher",
@@ -57,6 +61,10 @@ public class GnssHardwareInfoTest extends GnssTestCase {
    * Descriptive is limited to a character count, and not the older values.
    */
   public void testHardwareModelName() throws Exception {
+    if (!TestUtils.deviceHasGpsFeature(getContext())) {
+      return;
+    }
+
     int gnssHardwareYear = mTestLocationManager.getLocationManager().getGnssYearOfHardware();
     String gnssHardwareModelName =
         mTestLocationManager.getLocationManager().getGnssHardwareModelName();

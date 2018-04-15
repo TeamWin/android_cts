@@ -138,8 +138,8 @@ public class LegacyNotificationManagerTest {
 
         int expected = userPolicy.suppressedVisualEffects
                 | SUPPRESSED_EFFECT_SCREEN_ON | SUPPRESSED_EFFECT_SCREEN_OFF
-                | SUPPRESSED_EFFECT_PEEK | SUPPRESSED_EFFECT_AMBIENT
-                | SUPPRESSED_EFFECT_LIGHTS | SUPPRESSED_EFFECT_FULL_SCREEN_INTENT;
+                | SUPPRESSED_EFFECT_PEEK | SUPPRESSED_EFFECT_LIGHTS
+                | SUPPRESSED_EFFECT_FULL_SCREEN_INTENT;
 
         assertEquals(expected,
                 mNotificationManager.getNotificationPolicy().suppressedVisualEffects);

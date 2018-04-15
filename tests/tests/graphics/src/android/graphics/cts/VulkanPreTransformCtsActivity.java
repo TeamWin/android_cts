@@ -44,19 +44,10 @@ public class VulkanPreTransformCtsActivity extends Activity {
         mSurface = surfaceView.getHolder().getSurface();
     }
 
-    @Override
-    public void onDestroy() {
-        super.onDestroy();
-        Log.d(TAG, "onDestroy!");
-        nDestroyNativeTest();
+    public void testVulkanPreTransform(boolean setPreTransform) {
+        nCreateNativeTest(getAssets(), mSurface, setPreTransform);
     }
 
-    public int testVulkanPreTransform(boolean setPreTransform) {
-        return nCreateNativeTest(getAssets(), mSurface, setPreTransform);
-    }
-
-    private static native int nCreateNativeTest(
+    private static native void nCreateNativeTest(
             AssetManager manager, Surface surface, boolean setPreTransform);
-
-    private static native void nDestroyNativeTest();
 }

@@ -165,7 +165,7 @@ public class ApprovedApis {
             String typeName;
             if (typeParameterType != null) {
                 List<TypeInfo> bounds = typeParameterType.extendsBounds();
-                if (bounds == null || bounds.size() != 1) {
+                if (bounds == null || bounds.size() == 0) {
                     typeName = "java.lang.Object" + type.dimension();
                 } else {
                     typeName = bounds.get(0).qualifiedTypeName() + type.dimension();

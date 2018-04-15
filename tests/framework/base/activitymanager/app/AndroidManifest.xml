@@ -96,7 +96,7 @@
         <activity android:name=".AltLaunchingActivity"
                 android:resizeableActivity="true"
                 android:exported="true"
-                android:taskAffinity="nobody.but.LaunchingActivity"
+                android:taskAffinity="nobody.but.AltLaunchingActivity"
         />
         <activity android:name=".PipActivity"
                 android:resizeableActivity="false"

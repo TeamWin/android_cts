@@ -342,6 +342,9 @@ public abstract class ActivityManagerTestBase {
     /**
      * Launches {@param  activityName} into split-screen primary windowing mode and also makes
      * the recents activity visible to the side of it.
+     * NOTE: Recents view may be combined with home screen on some devices, so using this to wait
+     * for Recents only makes sense when {@link ActivityManagerState#isHomeRecentsComponent()} is
+     * {@code false}.
      */
     protected void launchActivityInSplitScreenWithRecents(ComponentName activityName) {
         launchActivityInSplitScreenWithRecents(activityName, SPLIT_SCREEN_CREATE_MODE_TOP_OR_LEFT);

@@ -31,7 +31,7 @@ import android.os.Parcelable;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
-import java.util.List;
+import java.util.Set;
 
 public class SliceProvider extends android.app.slice.SliceProvider {
 
@@ -51,6 +51,8 @@ public class SliceProvider extends android.app.slice.SliceProvider {
     public static final String SPEC_TYPE = "android.cts.SliceType";
     public static final int SPEC_REV = 4;
 
+    public static final SliceSpec SPEC = new SliceSpec(SPEC_TYPE, SPEC_REV);
+
     @Override
     public boolean onCreate() {
         return true;
@@ -69,35 +71,35 @@ public class SliceProvider extends android.app.slice.SliceProvider {
     }
 
     @Override
-    public Slice onBindSlice(Uri sliceUri, List<SliceSpec> specs) {
+    public Slice onBindSlice(Uri sliceUri, Set<SliceSpec> supportedSpecs) {
         switch (sliceUri.getPath()) {
             case "/set_flag":
                 SliceBindingTest.sFlag = true;
                 break;
             case "/subslice":
-                Builder b = new Builder(sliceUri);
+                Builder b = new Builder(sliceUri, SPEC);
                 return b.addSubSlice(new Slice.Builder(b).build(), "subslice").build();
             case "/text":
-                return new Slice.Builder(sliceUri).addText("Expected text", "text",
+                return new Slice.Builder(sliceUri, SPEC).addText("Expected text", "text",
                         Collections.emptyList()).build();
             case "/icon":
-                return new Slice.Builder(sliceUri).addIcon(
+                return new Slice.Builder(sliceUri, SPEC).addIcon(
                         Icon.createWithResource(getContext(), R.drawable.size_48x48), "icon",
                         Collections.emptyList()).build();
             case "/action":
-                Builder builder = new Builder(sliceUri);
+                Builder builder = new Builder(sliceUri, SPEC);
                 Slice subSlice = new Slice.Builder(builder).build();
                 PendingIntent broadcast = PendingIntent.getBroadcast(getContext(), 0,
                         new Intent(getContext().getPackageName() + ".action"), 0);
                 return builder.addAction(broadcast, subSlice, "action").build();
             case "/int":
-                return new Slice.Builder(sliceUri).addInt(0xff121212, "int",
+                return new Slice.Builder(sliceUri, SPEC).addInt(0xff121212, "int",
                         Collections.emptyList()).build();
             case "/timestamp":
-                return new Slice.Builder(sliceUri).addLong(43, "timestamp",
+                return new Slice.Builder(sliceUri, SPEC).addLong(43, "timestamp",
                         Collections.emptyList()).build();
             case "/hints":
-                return new Slice.Builder(sliceUri)
+                return new Slice.Builder(sliceUri, SPEC)
                         .addHints(Arrays.asList(Slice.HINT_LIST))
                         .addText("Text", null, Arrays.asList(Slice.HINT_TITLE))
                         .addIcon(Icon.createWithResource(getContext(), R.drawable.size_48x48),
@@ -106,14 +108,13 @@ public class SliceProvider extends android.app.slice.SliceProvider {
             case "/bundle":
                 Bundle b1 = new Bundle();
                 b1.putParcelable("a", new TestParcel());
-                return new Slice.Builder(sliceUri).addBundle(b1, "bundle",
+                return new Slice.Builder(sliceUri, SPEC).addBundle(b1, "bundle",
                         Collections.emptyList()).build();
             case "/spec":
-                return new Slice.Builder(sliceUri)
-                        .setSpec(new SliceSpec(SPEC_TYPE, SPEC_REV))
+                return new Slice.Builder(sliceUri, SPEC)
                         .build();
         }
-        return new Slice.Builder(sliceUri).build();
+        return new Slice.Builder(sliceUri, SPEC).build();
     }
 
     public static class TestParcel implements Parcelable {

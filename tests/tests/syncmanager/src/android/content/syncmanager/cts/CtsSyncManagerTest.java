@@ -139,6 +139,8 @@ public class CtsSyncManagerTest {
 
         Thread.sleep(1000);
 
+        AmUtils.waitForBroadcastIdle();
+
         waitUntil("Dumpsys still mentions " + ACCOUNT_1_A,
                 () -> !getSyncDumpsys().contains(ACCOUNT_1_A.name));
 

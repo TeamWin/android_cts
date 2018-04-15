@@ -60,4 +60,9 @@ public class AmUtils {
         SystemUtil.runShellCommandForNoOutput("am set-standby-bucket " + packageName
                 + " " + value);
     }
+
+    /** Wait until all broad queues are idle. */
+    public static void waitForBroadcastIdle() {
+        SystemUtil.runCommandAndPrintOnLogcat(TAG, "am wait-for-broadcast-idle");
+    }
 }

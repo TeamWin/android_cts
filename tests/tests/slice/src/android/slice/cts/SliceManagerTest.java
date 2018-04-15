@@ -45,6 +45,7 @@ import java.io.BufferedReader;
 import java.io.InputStreamReader;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.List;
 
 @RunWith(AndroidJUnit4.class)
 public class SliceManagerTest {
@@ -72,21 +73,39 @@ public class SliceManagerTest {
 
     @Test
     public void testPinSlice() throws Exception {
-        mSliceManager.pinSlice(BASE_URI, Collections.emptyList());
+        mSliceManager.pinSlice(BASE_URI, Collections.emptySet());
 
         verify(LocalSliceProvider.sProxy, timeout(2000)).onSlicePinned(eq(BASE_URI));
     }
 
     @Test
     public void testUnpinSlice() throws Exception {
-
-        mSliceManager.pinSlice(BASE_URI, Collections.emptyList());
+        mSliceManager.pinSlice(BASE_URI, Collections.emptySet());
 
         verify(LocalSliceProvider.sProxy, timeout(2000)).onSlicePinned(eq(BASE_URI));
 
         mSliceManager.unpinSlice(BASE_URI);
 
         verify(LocalSliceProvider.sProxy, timeout(2000)).onSliceUnpinned(eq(BASE_URI));
+    }
+
+    @Test
+    public void testPinList() {
+        Uri uri = BASE_URI;
+        Uri longerUri = uri.buildUpon().appendPath("something").build();
+        try {
+            mSliceManager.pinSlice(uri, Collections.emptySet());
+            mSliceManager.pinSlice(longerUri, Collections.emptySet());
+            verify(LocalSliceProvider.sProxy, timeout(2000)).onSlicePinned(eq(longerUri));
+
+            List<Uri> uris = mSliceManager.getPinnedSlices();
+            assertEquals(2, uris.size());
+            assertTrue(uris.contains(uri));
+            assertTrue(uris.contains(longerUri));
+        } finally {
+            mSliceManager.unpinSlice(uri);
+            mSliceManager.unpinSlice(longerUri);
+        }
     }
 
     @Test
@@ -116,7 +135,7 @@ public class SliceManagerTest {
 
             when(LocalSliceProvider.sProxy.onCreatePermissionRequest(any())).thenReturn(intent);
 
-            Slice s = mSliceManager.bindSlice(uri, Collections.emptyList());
+            Slice s = mSliceManager.bindSlice(uri, Collections.emptySet());
 
             /// Make sure we get a callback for creating the intent.
             verify(LocalSliceProvider.sProxy).onCreatePermissionRequest(eq(uri));

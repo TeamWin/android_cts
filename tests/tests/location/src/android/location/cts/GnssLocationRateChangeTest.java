@@ -66,6 +66,10 @@ public class GnssLocationRateChangeTest extends GnssTestCase {
      * remains responsive after all is done.
      */
     public void testVariedRates() throws Exception {
+        if (!TestUtils.deviceHasGpsFeature(getContext())) {
+            return;
+        }
+
         SoftAssert softAssert = new SoftAssert(TAG);
         mTestLocationManager.requestLocationUpdates(mLocationListenerMain);
         softAssert.assertTrue("Location should be received at test start",
@@ -92,6 +96,10 @@ public class GnssLocationRateChangeTest extends GnssTestCase {
      * after all is done.
      */
     public void testVariedRatesOnOff() throws Exception {
+        if (!TestUtils.deviceHasGpsFeature(getContext())) {
+            return;
+        }
+
         SoftAssert softAssert = new SoftAssert(TAG);
         mTestLocationManager.requestLocationUpdates(mLocationListenerMain);
         softAssert.assertTrue("Location should be received at test start",
@@ -119,6 +127,10 @@ public class GnssLocationRateChangeTest extends GnssTestCase {
      * after all is done.
      */
     public void testVariedRatesRepetitive() throws Exception {
+        if (!TestUtils.deviceHasGpsFeature(getContext())) {
+            return;
+        }
+
         SoftAssert softAssert = new SoftAssert(TAG);
         mTestLocationManager.requestLocationUpdates(mLocationListenerMain);
         softAssert.assertTrue("Location should be received at test start",

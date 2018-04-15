@@ -26,15 +26,12 @@ import android.content.ContextWrapper;
 import android.content.Intent;
 import android.content.pm.ProviderInfo;
 import android.net.Uri;
-import android.util.Log;
 
 import org.mockito.Answers;
-import org.mockito.listeners.InvocationListener;
-import org.mockito.listeners.MethodInvocationReport;
 import org.mockito.stubbing.Answer;
 
 import java.util.Collection;
-import java.util.List;
+import java.util.Set;
 
 public class LocalSliceProvider extends SliceProvider {
     public static SliceProvider sProxy;
@@ -68,7 +65,7 @@ public class LocalSliceProvider extends SliceProvider {
     }
 
     @Override
-    public Slice onBindSlice(Uri sliceUri, List<SliceSpec> specs) {
+    public Slice onBindSlice(Uri sliceUri, Set<SliceSpec> specs) {
         if (sProxy != null) return sProxy.onBindSlice(sliceUri, specs);
         return super.onBindSlice(sliceUri, specs);
     }
