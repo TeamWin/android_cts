@@ -651,6 +651,50 @@
     </string>
     <string name="network_background_test_start">Start</string>
 
+    <!-- Strings for net.MultiNetworkConnectivityTestActivity -->
+    <string name="multinetwork_connectivity_test">Multinetwork connectivity Test</string>
+    <string name="multinetwork_connectivity_test_instructions">
+        This test verifies that, when a phone has internet connectivity via mobile network
+        is connected to a Wi-Fi access point that doesn\'t have internet or loses internet access,
+        it restores the internet activity over the mobile cell network, while connected to the
+        Wi-Fi access point. \n\n
+
+        1. Setup a wireless access point with ability to turn on and off internet access.
+        2. Have SIM or cellular data connectivity on the phone being tested.
+        3. Execute the tests with the instructions outlined in the test
+        4. When the test completes, it will finish and mark it passed. If it fails, it will mark it \n
+           as failed.
+
+    </string>
+    <string name="multinetwork_connectivity_test_pre_requisites">Prerequisite - Setup a Wi-Fi access point with WPA PSK in which we can turn on or off internet access. </string>
+    <string name="multinetwork_connectivity_test_start">Start</string>
+    <string name="multinetwork_connectivity_test_ap_name">Wi-Fi SSID</string>
+    <string name="multinetwork_connectivity_test_ap_passphrase">WPA 2 passphrase</string>
+    <string name="multinetwork_connectivity_test_continue">Confirm and continue with test.</string>
+    <string name="multinetwork_connectivity_test_rerun">Completed. Re-run.</string>
+    <string name="multinetwork_connectivity_test_running">Running.</string>
+    <string name="multinetwork_connectivity_test_connect_cellular">Connecting to cellular network.</string>
+    <string name="multinetwork_connectivity_test_connect_wifi">Connecting to Wi-Fi network.</string>
+    <string name="multinetwork_connectivity_test_complete">Test completed.</string>
+    <string name="multinetwork_connectivity_test_progress_1">Waiting for Wi-Fi to lose connectivity.</string>
+    <string name="multinetwork_connectivity_test_progress_2">Waiting to check connectivity.</string>
+    <string name="multinetwork_connectivity_test_progress_3">Waiting to make sure Wi-Fi has connectivity.</string>
+    <string name="multinetwork_connectivity_test_1_desc">Test 1 - Connect to Wi-Fi with no internet doesnt disable current connectivity</string>
+    <string name="multinetwork_connectivity_test_2_desc">Test 2 - When connected to Wi-Fi, on losing connectivity, restores mobile connectivity</string>
+    <string name="multinetwork_status_wifi_connect_success">Wi-Fi connect success.</string>
+    <string name="multinetwork_status_mobile_connect_success">Mobile net connect success.</string>
+    <string name="multinetwork_status_wifi_connect_timed_out">Wi-Fi connect timed out.</string>
+    <string name="multinetwork_status_wifi_connect_wrong_ap">Wi-Fi connected to wrong access point.</string>
+    <string name="multinetwork_status_mobile_connect_timed_out">Mobile network connect timed out.</string>
+    <string name="multinetwork_status_mobile_restore_success">Mobile restore succeeded.</string>
+    <string name="multinetwork_status_mobile_restore_failed">Mobile restore failed.</string>
+    <string name="multinetwork_connectivity_test_1_prereq">Make sure that the Hotspot does not have internet access.</string>
+    <string name="multinetwork_connectivity_test_2_prereq_1">Make sure that the Hotspot has internet access.</string>
+    <string name="multinetwork_connectivity_test_2_prereq_2">Make sure that the Hotspot does not have internet access. When prompted to go back to using mobile data, choose ok.</string>
+    <string name="multinetwork_connectivity_test_all_prereq_1">Looks like your device does not support telephony or mobile data. If yes, you can mark test passed and proceed.</string>
+    <string name="multinetwork_connectivity_test_all_prereq_2">Need mobile data to proceed. Please insert a mobile data capable sim and repeat the test. By marking test as passed, you acknowledge that the device cannot do mobile data.</string>
+    <string name="multinetwork_status_wifi_connectivity_failed">Wi-Fi connectivity failed.</string>
+
     <!-- Strings for NfcTestActivity -->
     <string name="nfc_test">NFC Test</string>
     <string name="nfc_test_info">The Peer-to-Peer Data Exchange tests require two devices with
