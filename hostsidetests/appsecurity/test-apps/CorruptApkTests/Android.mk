@@ -1,4 +1,4 @@
-# Copyright (C) 2009 The Android Open Source Project
+# Copyright (C) 2018 The Android Open Source Project
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -15,26 +15,17 @@
 LOCAL_PATH := $(call my-dir)
 
 include $(CLEAR_VARS)
-
-# Only compile source java files in this apk.
-LOCAL_SRC_FILES := $(call all-java-files-under, src)
-
-LOCAL_MODULE := CtsAppSecurityHostTestCases
-
-LOCAL_JAVA_LIBRARIES := cts-tradefed tradefed compatibility-host-util
-
-LOCAL_JAVA_RESOURCE_DIRS := res
-
-LOCAL_CTS_TEST_PACKAGE := android.appsecurity
-
-# tag this module as a cts test artifact
+LOCAL_MODULE := CtsCorruptApkTests_b71360999
+LOCAL_MODULE_CLASS := APPS
+LOCAL_SRC_FILES := b71360999.apk
 LOCAL_COMPATIBILITY_SUITE := cts vts general-tests
+LOCAL_CERTIFICATE := PRESIGNED
+include $(BUILD_PREBUILT)
 
-LOCAL_REQUIRED_MODULES := \
-	CtsCorruptApkTests_b71360999 \
-	CtsCorruptApkTests_b71361168
-
-include $(BUILD_CTS_HOST_JAVA_LIBRARY)
-
-# Build the test APKs using their own makefiles
-include $(call all-makefiles-under,$(LOCAL_PATH))
+include $(CLEAR_VARS)
+LOCAL_MODULE := CtsCorruptApkTests_b71361168
+LOCAL_MODULE_CLASS := APPS
+LOCAL_SRC_FILES := b71361168.apk
+LOCAL_COMPATIBILITY_SUITE := cts vts general-tests
+LOCAL_CERTIFICATE := PRESIGNED
+include $(BUILD_PREBUILT)
