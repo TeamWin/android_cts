@@ -211,7 +211,7 @@ public class ActivityAndWindowManagersState {
         logE("***Waiting for debugger window failed");
     }
 
-    boolean waitForHomeActivityVisible() {
+    void waitForHomeActivityVisible() {
         ComponentName homeActivity = mAmState.getHomeActivityName();
         // Sometimes this function is called before we know what Home Activity is
         if (homeActivity == null) {
@@ -221,20 +221,15 @@ public class ActivityAndWindowManagersState {
         }
         assertNotNull("homeActivity should not be null", homeActivity);
         waitForValidState(homeActivity);
-        return mAmState.isHomeActivityVisible();
     }
 
-    /**
-     * @return true if recents activity is visible. Devices without recents will return false
-     */
-    boolean waitForRecentsActivityVisible() {
+    void waitForRecentsActivityVisible() {
         if (mAmState.isHomeRecentsComponent()) {
-            return waitForHomeActivityVisible();
+            waitForHomeActivityVisible();
+        } else {
+            waitForWithAmState(ActivityManagerState::isRecentsActivityVisible,
+                    "***Waiting for recents activity to be visible...");
         }
-
-        waitForWithAmState(ActivityManagerState::isRecentsActivityVisible,
-                "***Waiting for recents activity to be visible...");
-        return mAmState.isRecentsActivityVisible();
     }
 
     void waitForKeyguardShowingAndNotOccluded() {
@@ -573,15 +568,26 @@ public class ActivityAndWindowManagersState {
         assertEquals(msg, windowName, mWmState.getFrontWindow());
     }
 
+    void assertNotExist(final ComponentName activityName) {
+        final String windowName = getWindowName(activityName);
+        assertFalse("Activity=" + getActivityName(activityName) + " must NOT exist.",
+                mAmState.containsActivity(activityName));
+        assertFalse("Window=" + windowName + " must NOT exits.",
+                mWmState.containsWindow(windowName));
+    }
+
     public void assertVisibility(final ComponentName activityName, final boolean visible) {
         final String windowName = getWindowName(activityName);
-        final boolean activityVisible = mAmState.isActivityVisible(activityName);
-        final boolean windowVisible = mWmState.isWindowVisible(windowName);
+        // Check existence of activity and window.
+        assertTrue("Activity=" + getActivityName(activityName) + " must exist.",
+                mAmState.containsActivity(activityName));
+        assertTrue("Window=" + windowName + " must exist.", mWmState.containsWindow(windowName));
 
+        // Check visibility of activity and window.
         assertEquals("Activity=" + getActivityName(activityName) + " must" + (visible ? "" : " NOT")
-                + " be visible.", visible, activityVisible);
+                + " be visible.", visible, mAmState.isActivityVisible(activityName));
         assertEquals("Window=" + windowName + " must" + (visible ? "" : " NOT") + " be visible.",
-                visible, windowVisible);
+                visible, mWmState.isWindowVisible(windowName));
     }
 
     void assertHomeActivityVisible(boolean visible) {
