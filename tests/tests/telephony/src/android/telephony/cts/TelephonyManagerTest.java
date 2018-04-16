@@ -178,8 +178,11 @@ public class TelephonyManagerTest {
         mTelephonyManager.getSimOperatorName();
         mTelephonyManager.getNetworkCountryIso();
         mTelephonyManager.getCellLocation();
+        mTelephonyManager.getSimCarrierId();
+        mTelephonyManager.getSimCarrierIdName();
         mTelephonyManager.getSimSerialNumber();
         mTelephonyManager.getSimOperator();
+        mTelephonyManager.getSignalStrength();
         mTelephonyManager.getNetworkOperatorName();
         mTelephonyManager.getSubscriberId();
         mTelephonyManager.getLine1Number();
