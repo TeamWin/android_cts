@@ -35,6 +35,8 @@ import static android.server.am.StateLogger.log;
 import static android.server.am.StateLogger.logAlways;
 import static android.view.Display.DEFAULT_DISPLAY;
 
+import static org.hamcrest.MatcherAssert.assertThat;
+import static org.hamcrest.Matchers.hasSize;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
@@ -132,7 +134,7 @@ class ActivityManagerDisplayTestBase extends ActivityManagerTestBase {
         final Integer overrideDensity;
 
         /** Get physical and override display metrics from WM. */
-        static ReportedDisplayMetrics getDisplayMetrics() throws Exception {
+        static ReportedDisplayMetrics getDisplayMetrics() {
             return new ReportedDisplayMetrics(
                     executeShellCommand(WM_SIZE) + executeShellCommand(WM_DENSITY));
         }
@@ -173,7 +175,7 @@ class ActivityManagerDisplayTestBase extends ActivityManagerTestBase {
             return overrideDensity != null ? overrideDensity : physicalDensity;
         }
 
-        private ReportedDisplayMetrics(final String lines) throws Exception {
+        private ReportedDisplayMetrics(final String lines) {
             Matcher matcher = PHYSICAL_SIZE.matcher(lines);
             assertTrue("Physical display size must be reported", matcher.find());
             log(matcher.group());
@@ -415,8 +417,8 @@ class ActivityManagerDisplayTestBase extends ActivityManagerTestBase {
 
             // Find the newly added display(s).
             final List<ActivityDisplay> newDisplays = findNewDisplayStates(originalDS, ds);
-            assertTrue("New virtual display must be created",
-                    newDisplayCount == newDisplays.size());
+            assertThat("New virtual display must be created",
+                    newDisplays, hasSize(newDisplayCount));
 
             return newDisplays;
         }
