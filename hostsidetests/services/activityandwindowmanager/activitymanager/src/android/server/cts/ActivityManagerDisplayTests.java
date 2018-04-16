@@ -92,7 +92,14 @@ public class ActivityManagerDisplayTests extends ActivityManagerDisplayTestBase 
         super.tearDown();
     }
 
+    /**
+     * Enables or disables persistent vr mode and the vr virtual display. For standalone vr devices,
+     * calls to enablePersistentVrMode() are ignored, because the device is already in persistent vr
+     * mode whenever it's on, and turning off persistent vr mode on a standalone vr device puts the
+     * device in a bad state.
+     */
     private void enablePersistentVrMode(boolean enabled) throws Exception {
+        if (mVrHeadset) { return; }
         if (enabled) {
             executeShellCommand("setprop vr_virtualdisplay true");
             executeShellCommand("vr set-persistent-vr-mode-enabled true");
@@ -287,6 +294,12 @@ public class ActivityManagerDisplayTests extends ActivityManagerDisplayTestBase 
     public void testActivityLaunchPostVr() throws Exception {
         if (!supportsVrMode() || !supportsMultiDisplay()) {
             // VR Mode is not supported on this device, bail from this test.
+            return;
+        }
+
+        if (mVrHeadset) {
+            // This test doesn't apply to a standalone vr device, since vr is always enabled, and
+            // there is no "post vr" behavior to verify.
             return;
         }
 
