@@ -30,6 +30,7 @@ import android.net.NetworkInfo;
 import android.net.wifi.WifiManager;
 import android.os.SystemClock;
 import android.util.Log;
+import android.content.res.Resources;
 
 import com.android.compatibility.common.util.SystemUtil;
 
@@ -47,11 +48,15 @@ public class BatteryConstraintTest extends ConstraintTest {
     public static final int BATTERY_JOB_ID = BatteryConstraintTest.class.hashCode();
 
     private JobInfo.Builder mBuilder;
+    private int mLowBatteryWarningLevel = 15;
 
     @Override
     public void setUp() throws Exception {
         super.setUp();
 
+        mLowBatteryWarningLevel = Resources.getSystem().getInteger(
+                     Resources.getSystem().getIdentifier(
+                             "config_lowBatteryWarningLevel", "integer", "android"));
         mBuilder = new JobInfo.Builder(BATTERY_JOB_ID, kJobServiceComponent);
         SystemUtil.runShellCommand(getInstrumentation(), "cmd jobscheduler monitor-battery on");
     }
@@ -232,7 +237,7 @@ public class BatteryConstraintTest extends ConstraintTest {
      * the battery level is critical and not on power.
      */
     public void testBatteryNotLowConstraintFails_withoutPower() throws Exception {
-        setBatteryState(false, 15);
+        setBatteryState(false, mLowBatteryWarningLevel);
         verifyChargingState(false);
         verifyBatteryNotLowState(false);
 
@@ -262,8 +267,8 @@ public class BatteryConstraintTest extends ConstraintTest {
                 kTestEnvironment.awaitExecution());
 
         // And check that the job is stopped if battery goes low again.
-        setBatteryState(false, 15);
-        setBatteryState(false, 14);
+        setBatteryState(false, mLowBatteryWarningLevel);
+        setBatteryState(false, mLowBatteryWarningLevel - 1);
         verifyChargingState(false);
         verifyBatteryNotLowState(false);
         assertTrue("Job with not low constraint did not stop when battery went low.",
