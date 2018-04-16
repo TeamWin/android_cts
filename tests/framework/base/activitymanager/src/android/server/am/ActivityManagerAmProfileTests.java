@@ -20,6 +20,8 @@ import static android.server.am.ComponentNameUtils.getActivityName;
 import static android.server.am.UiDeviceUtils.pressHomeButton;
 import static android.server.am.debuggable.Components.DEBUGGABLE_APP_ACTIVITY;
 
+import static org.hamcrest.MatcherAssert.assertThat;
+import static org.hamcrest.Matchers.greaterThanOrEqualTo;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 
@@ -163,7 +165,7 @@ public class ActivityManagerAmProfileTests extends ActivityManagerTestBase {
 
         final String expectedFirstWord = streaming ? FIRST_WORD_STREAMING : FIRST_WORD_NO_STREAMING;
         final byte[] data = readFile(mReadableFilePath);
-        assertTrue("data size=" + data.length, data.length >= expectedFirstWord.length());
+        assertThat("data size", data.length, greaterThanOrEqualTo(expectedFirstWord.length()));
         final String actualFirstWord = new String(data, 0, expectedFirstWord.length());
         assertEquals("Unexpected first word", expectedFirstWord, actualFirstWord);
 
