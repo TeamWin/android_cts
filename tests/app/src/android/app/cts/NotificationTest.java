@@ -33,6 +33,8 @@ import android.os.Build;
 import android.os.Parcel;
 import android.os.Parcelable;
 import androidx.annotation.Nullable;
+
+import android.os.StrictMode;
 import android.test.AndroidTestCase;
 import android.widget.RemoteViews;
 
@@ -468,6 +470,26 @@ public class NotificationTest extends AndroidTestCase {
         assertEquals(
                 Notification.Action.SEMANTIC_ACTION_DELETE,
                 action.clone().getSemanticAction());
+    }
+
+    public void testBuildStrictMode() {
+        try {
+            StrictMode.setThreadPolicy(
+                    new StrictMode.ThreadPolicy.Builder().detectAll().penaltyDeath().build());
+            Notification.Action a = newActionBuilder()
+                    .addRemoteInput(newDataOnlyRemoteInput())
+                    .addRemoteInput(newTextRemoteInput())
+                    .addRemoteInput(newTextAndDataRemoteInput())
+                    .build();
+            Notification.Builder b = new Notification.Builder(mContext, "id")
+                    .setStyle(new Notification.BigTextStyle().setBigContentTitle("Big content"))
+                    .setContentTitle("title")
+                    .setActions(a);
+
+            b.build();
+        } finally {
+            StrictMode.setThreadPolicy(new StrictMode.ThreadPolicy.Builder().permitAll().build());
+        }
     }
 
     private static RemoteInput newDataOnlyRemoteInput() {
