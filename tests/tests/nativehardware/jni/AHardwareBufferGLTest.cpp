@@ -442,6 +442,35 @@ const char* kCubeMapArrayFragmentShaderEs32 = R"glsl(#version 320 es
     }
 )glsl";
 
+const char* kStencilFragmentShaderEs30 = R"glsl(#version 300 es
+    precision mediump float;
+    in mediump vec2 vTexCoords;
+    uniform lowp usampler2D uTexture;
+    out mediump vec4 color;
+    void main() {
+        uvec4 stencil = texture(uTexture, vTexCoords);
+        color.r = stencil.x == 1u ? 1.0 : 0.0;
+        color.g = 0.0;
+        color.b = stencil.x == 2u ? 1.0 : 0.0;
+        color.a = stencil.x == 0u ? 0.0 : 1.0;
+    }
+)glsl";
+
+const char* kStencilArrayFragmentShaderEs30 = R"glsl(#version 300 es
+    precision mediump float;
+    in mediump vec2 vTexCoords;
+    uniform lowp usampler2DArray uTexture;
+    uniform mediump float uLayer;
+    out mediump vec4 color;
+    void main() {
+        uvec4 stencil = texture(uTexture, vec3(vTexCoords, uLayer));
+        color.r = stencil.x == 1u ? 1.0 : 0.0;
+        color.g = 0.0;
+        color.b = stencil.x == 2u ? 1.0 : 0.0;
+        color.a = stencil.x == 0u ? 0.0 : 1.0;
+    }
+)glsl";
+
 // Interleaved X and Y coordinates for 2 triangles forming a quad with CCW
 // orientation.
 const float kQuadPositions[] = {
@@ -784,7 +813,7 @@ void AHardwareBufferGLTest::SetUpFramebuffer(int width, int height, int layer,
     GLuint& fbo = mFramebuffers[mWhich];
     glGenFramebuffers(1, &fbo);
     glBindFramebuffer(GL_FRAMEBUFFER, fbo);
-    for (int i = 0; i < 3; ++i) {
+    for (int i = 0; i < 4; ++i) {
         switch (attachment_types[i]) {
             case kNone:
                 break;
@@ -1498,7 +1527,7 @@ TEST_P(AHardwareBufferDepthFormatTest, DepthCanBeSampled) {
     } else {
         SetUpProgram(kVertexShader, kTextureFragmentShader, kQuadPositions, 0.5f, kTextureUnit);
     }
-    glDrawArrays(GL_TRIANGLES, 0, 12);
+    glDrawArrays(GL_TRIANGLES, 0, kQuadVertexCount);
     EXPECT_EQ(GLenum{GL_NO_ERROR}, glGetError());
     glFinish();
 
@@ -1510,6 +1539,65 @@ TEST_P(AHardwareBufferDepthFormatTest, DepthCanBeSampled) {
         {5,  5, kZero}, {15,  5, kZero}, {25, 5,  kZero}, {35, 5,  kZero},
     };
     CheckGoldenPixels(goldens, /*float_format=*/false, /*alpha_format=*/true);
+}
+
+TEST_P(AHardwareBufferDepthFormatTest, DepthCubemapSampling) {
+    AHardwareBuffer_Desc desc = GetParam();
+    desc.usage =
+        AHARDWAREBUFFER_USAGE_GPU_COLOR_OUTPUT |
+        AHARDWAREBUFFER_USAGE_GPU_SAMPLED_IMAGE |
+        AHARDWAREBUFFER_USAGE_GPU_CUBE_MAP;
+    desc.height = desc.width;
+    desc.layers *= 6;
+    if (!SetUpBuffer(desc)) return;
+
+    const int kTextureUnit = 9;
+    for (int i = 0; i < mContextCount; ++i) {
+        MakeCurrent(i);
+        SetUpTexture(desc, kTextureUnit);
+        glTexParameteri(mTexTarget, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+        glTexParameteri(mTexTarget, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+    }
+
+    glEnable(GL_SCISSOR_TEST);
+    for (int i = 0; i < 6; ++i) {
+        SetUpFramebuffer(desc.width, desc.height, desc.layers - 6 + i, kNone, kBufferAsTexture);
+        glClearDepthf(0.f);
+        glScissor(0, 0, desc.width, desc.height);
+        glClear(GL_DEPTH_BUFFER_BIT);
+        glClearDepthf(1.f);
+        glScissor(0, 0, desc.width / 2, desc.height / 2);
+        glClear(GL_DEPTH_BUFFER_BIT);
+        glScissor(desc.width / 2, desc.height / 2, desc.width / 2, desc.height / 2);
+        glClear(GL_DEPTH_BUFFER_BIT);
+    }
+    glDisable(GL_SCISSOR_TEST);
+    glFinish();
+
+    MakeCurrent(0);
+    if (desc.layers > 6) {
+        SetUpProgram(std::string("#version 320 es") + kVertexShaderEs3x,
+                     kCubeMapArrayFragmentShaderEs32, kQuadPositions, 0.5f, kTextureUnit);
+    } else {
+        SetUpProgram(kVertexShader, kCubeMapFragmentShader, kQuadPositions, 0.5f, kTextureUnit);
+    }
+    SetUpFramebuffer(40, 40, 0, kRenderbuffer);
+    for (int i = 0; i < 6; ++i) {
+        float face_vector[3] = {0.f, 0.f, 0.f};
+        face_vector[i / 2] = (i % 2) ? -1.f : 1.f;
+        glUniform3fv(mFaceVectorLocation, 1, face_vector);
+        glClearColor(0.f, 0.f, 0.f, 0.f);
+        glClear(GL_COLOR_BUFFER_BIT);
+        glDrawArrays(GL_TRIANGLES, 0, kQuadVertexCount);
+
+        std::vector<GoldenPixel> goldens{
+            {5, 35, kZero}, {15, 35, kZero},  {25, 35, kZero},  {35, 35, kZero},
+            {5, 25, kZero}, {15, 25, kBlack}, {25, 25, kRed},   {35, 25, kZero},
+            {5, 15, kZero}, {15, 15, kRed},   {25, 15, kBlack}, {35, 15, kZero},
+            {5, 5,  kZero}, {15, 5,  kZero},  {25, 5,  kZero},  {35, 5,  kZero},
+        };
+        CheckGoldenPixels(goldens, /*float_format=*/false, /*alpha_format=*/true);
+    }
 }
 
 // See comment in SetUpBuffer for explanation of nonzero stride and GL format.
@@ -1569,11 +1657,11 @@ TEST_P(AHardwareBufferStencilFormatTest, StencilAffectsDrawAcrossContexts) {
     glEnable(GL_STENCIL_TEST);
     glStencilFunc(GL_ALWAYS, 0, 0xFF);
     glStencilOp(GL_KEEP, GL_INCR, GL_INCR);
-    glDrawArrays(GL_TRIANGLES, 0, 6);
+    glDrawArrays(GL_TRIANGLES, 0, kQuadVertexCount);
     glClear(GL_COLOR_BUFFER_BIT);
     glStencilFunc(GL_EQUAL, 2, 0xFF);
     glStencilOp(GL_KEEP, GL_KEEP, GL_KEEP);
-    glDrawArrays(GL_TRIANGLES, 0, 6);
+    glDrawArrays(GL_TRIANGLES, 0, kQuadVertexCount);
     EXPECT_EQ(GLenum{GL_NO_ERROR}, glGetError());
 
     // Check golden pixels.
@@ -1586,14 +1674,76 @@ TEST_P(AHardwareBufferStencilFormatTest, StencilAffectsDrawAcrossContexts) {
     CheckGoldenPixels(goldens, /*float_format=*/false, /*alpha_format=*/true);
 }
 
+// Verify that stencil testing against a stencil buffer rendered in another context
+// works correctly.
+TEST_P(AHardwareBufferStencilFormatTest, StencilTexture) {
+    AHardwareBuffer_Desc desc = GetParam();
+    desc.usage = AHARDWAREBUFFER_USAGE_GPU_COLOR_OUTPUT | AHARDWAREBUFFER_USAGE_GPU_SAMPLED_IMAGE;
+    const bool kPureStencil =
+        desc.format == GL_STENCIL_INDEX8 || desc.format == AHARDWAREBUFFER_FORMAT_S8_UINT;
+    // Pure stencil textures are only supported with an extension. Note: we don't exit for the
+    // AHB format here, because we want to ensure that buffer allocation fails with the
+    // GPU_SAMPLED_IMAGE usage flag if the implementation doesn't support pure stencil textures.
+    if (desc.format == GL_STENCIL_INDEX8 && !HasGLExtension("GL_OES_texture_stencil8")) return;
+    // Stencil sampling from depth-stencil textures was introduced in ES 3.1.
+    if (!kPureStencil && mGLVersion < 31) return;
+    if (!SetUpBuffer(desc)) return;
+
+    const int kTextureUnit = 8;
+    for (int i = 0; i < mContextCount; ++i) {
+        MakeCurrent(i);
+        SetUpTexture(desc, kTextureUnit);
+        glTexParameteri(mTexTarget, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+        glTexParameteri(mTexTarget, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+        if (!kPureStencil) {
+            glTexParameteri(mTexTarget, GL_DEPTH_STENCIL_TEXTURE_MODE, GL_STENCIL_INDEX);
+        }
+    }
+
+    // In the second context, clear the stencil buffer to a checkerboard pattern.
+    SetUpFramebuffer(desc.width, desc.height, desc.layers - 1,
+                     kNone, kNone, kBufferAsTexture);
+    DrawCheckerboard(desc.width, desc.height);
+    glFinish();
+
+    // In the first context, reconstruct the checkerboard with a special shader.
+    MakeCurrent(0);
+    SetUpProgram(std::string("#version 300 es") + kVertexShaderEs3x,
+                 desc.layers > 1 ? kStencilArrayFragmentShaderEs30 : kStencilFragmentShaderEs30,
+                 kQuadPositions, 1.f, kTextureUnit);
+    SetUpFramebuffer(40, 40, 0, kRenderbuffer);
+    glDrawArrays(GL_TRIANGLES, 0, kQuadVertexCount);
+    EXPECT_EQ(GLenum{GL_NO_ERROR}, glGetError());
+
+    // Check golden pixels.
+    std::vector<GoldenPixel> goldens{
+        {5, 35, kRed},  {15, 35, kRed},  {25, 35, kBlue}, {35, 35, kBlue},
+        {5, 25, kRed},  {15, 25, kRed},  {25, 25, kBlue}, {35, 25, kBlue},
+        {5, 15, kZero}, {15, 15, kZero}, {25, 15, kRed},  {35, 15, kRed},
+        {5, 5,  kZero}, {15, 5,  kZero}, {25, 5,  kRed},  {35, 5,  kRed},
+    };
+    CheckGoldenPixels(goldens, /*float_format=*/false, /*alpha_format=*/true);
+}
+
 // See comment in SetUpBuffer for explanation of nonzero stride and GL format.
 INSTANTIATE_TEST_CASE_P(
     SingleLayer,
     AHardwareBufferStencilFormatTest,
     ::testing::Values(
         AHardwareBuffer_Desc{49, 57, 1, GL_STENCIL_INDEX8, 0, 1, 0, 0},
-        AHardwareBuffer_Desc{26, 26, 1, AHARDWAREBUFFER_FORMAT_S8_UINT, 0, 0, 0, 0},
+        AHardwareBuffer_Desc{36, 50, 1, GL_DEPTH24_STENCIL8, 0, 1, 0, 0},
+        AHardwareBuffer_Desc{26, 29, 1, AHARDWAREBUFFER_FORMAT_S8_UINT, 0, 0, 0, 0},
         AHardwareBuffer_Desc{57, 33, 1, AHARDWAREBUFFER_FORMAT_D24_UNORM_S8_UINT, 0, 0, 0, 0},
         AHardwareBuffer_Desc{17, 23, 1, AHARDWAREBUFFER_FORMAT_D32_FLOAT_S8_UINT, 0, 0, 0, 0}));
+
+INSTANTIATE_TEST_CASE_P(
+    MultipleLayers,
+    AHardwareBufferStencilFormatTest,
+    ::testing::Values(
+        AHardwareBuffer_Desc{49, 57, 3, GL_STENCIL_INDEX8, 0, 1, 0, 0},
+        AHardwareBuffer_Desc{36, 50, 6, GL_DEPTH24_STENCIL8, 0, 1, 0, 0},
+        AHardwareBuffer_Desc{26, 29, 5, AHARDWAREBUFFER_FORMAT_S8_UINT, 0, 0, 0, 0},
+        AHardwareBuffer_Desc{57, 33, 4, AHARDWAREBUFFER_FORMAT_D24_UNORM_S8_UINT, 0, 0, 0, 0},
+        AHardwareBuffer_Desc{17, 23, 7, AHARDWAREBUFFER_FORMAT_D32_FLOAT_S8_UINT, 0, 0, 0, 0}));
 
 }  // namespace android

@@ -22,8 +22,10 @@ import static android.server.am.Components.SINGLE_TASK_ACTIVITY;
 import static android.server.am.Components.TEST_ACTIVITY;
 import static android.server.am.UiDeviceUtils.pressHomeButton;
 
+import static org.hamcrest.MatcherAssert.assertThat;
+import static org.hamcrest.Matchers.greaterThanOrEqualTo;
 import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.assertNotEquals;
 import static org.junit.Assert.fail;
 
 import android.content.ComponentName;
@@ -40,7 +42,7 @@ import java.util.regex.Pattern;
 public class ActivityManagerAmStartOptionsTests extends ActivityManagerTestBase {
 
     @Test
-    public void testDashD() throws Exception {
+    public void testDashD() {
         // Run at least 2 rounds to verify that -D works with an existing process.
         // -D could fail in this case if the force stop of process is broken.
         int prevProcId = -1;
@@ -50,9 +52,9 @@ public class ActivityManagerAmStartOptionsTests extends ActivityManagerTestBase 
             mAmWmState.waitForDebuggerWindowVisible(TEST_ACTIVITY);
             int procId = mAmWmState.getAmState().getActivityProcId(TEST_ACTIVITY);
 
-            assertTrue("Invalid ProcId.", procId >= 0);
+            assertThat("Invalid ProcId.", procId, greaterThanOrEqualTo(0));
             if (i > 0) {
-                assertTrue("Run " + i + " didn't start new proc.", prevProcId != procId);
+                assertNotEquals("Run " + i + " didn't start new proc.", prevProcId, procId);
             }
             prevProcId = procId;
         }
@@ -82,7 +84,7 @@ public class ActivityManagerAmStartOptionsTests extends ActivityManagerTestBase 
     }
 
     private void startActivityAndVerifyResult(final ComponentName entryActivity,
-            final ComponentName actualActivity, boolean shouldStart) throws Exception {
+            final ComponentName actualActivity, boolean shouldStart) {
         // See TODO below
         // final LogSeparator logSeparator = separateLogs();
 
