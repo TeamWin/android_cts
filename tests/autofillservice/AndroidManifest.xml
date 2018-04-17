@@ -36,6 +36,7 @@
             </intent-filter>
         </activity>
         <activity android:name=".PreFilledLoginActivity" />
+        <activity android:name=".LoginWithCustomHighlightActivity" />
         <activity android:name=".LoginWithStringsActivity" />
         <activity android:name=".WelcomeActivity" android:taskAffinity=".WelcomeActivity"/>
         <activity android:name=".ViewAttributesTestActivity" />
