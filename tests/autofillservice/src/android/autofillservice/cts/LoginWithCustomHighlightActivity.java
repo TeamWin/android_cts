@@ -22,6 +22,6 @@ public class LoginWithCustomHighlightActivity extends LoginActivity {
 
     @Override
     protected int getContentView() {
-        return R.layout.login_with_custom_highlight_activity;
+        return R.layout.login_activity;
     }
 }
