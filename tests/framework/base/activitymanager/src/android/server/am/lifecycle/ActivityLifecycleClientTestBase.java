@@ -20,6 +20,8 @@ import android.util.Pair;
 import org.junit.After;
 import org.junit.Before;
 
+import java.util.List;
+
 /** Base class for device-side tests that verify correct activity lifecycle transitions. */
 public class ActivityLifecycleClientTestBase extends ActivityManagerTestBase {
 
@@ -87,6 +89,16 @@ public class ActivityLifecycleClientTestBase extends ActivityManagerTestBase {
     final void waitAndAssertActivityStates(Pair<Activity, ActivityCallback>... activityCallbacks) {
         log("Start waitAndAssertActivityCallbacks");
         mLifecycleTracker.waitAndAssertActivityStates(activityCallbacks);
+    }
+
+    /**
+     * Blocking call that will wait for activities to perform the expected sequence of transitions.
+     * @see LifecycleTracker#waitForActivityTransitions(Class, List)
+     */
+    final void waitForActivityTransitions(Class<? extends Activity> activityClass,
+            List<ActivityCallback> expectedTransitions) {
+        log("Start waitAndAssertActivityTransition");
+        mLifecycleTracker.waitForActivityTransitions(activityClass, expectedTransitions);
     }
 
     LifecycleLog getLifecycleLog() {

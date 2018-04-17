@@ -12,6 +12,7 @@ import static android.server.am.lifecycle.LifecycleLog.ActivityCallback.ON_STOP;
 import static android.server.am.lifecycle.LifecycleLog.ActivityCallback.PRE_ON_CREATE;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertTrue;
 
 import android.app.Activity;
 import android.server.am.lifecycle.LifecycleLog.ActivityCallback;
@@ -136,6 +137,27 @@ class LifecycleVerifier {
         final String errorMessage = errorDuringTransition(activityClass, transition);
 
         assertEquals(errorMessage, expectedTransitions, observedTransitions);
+    }
+
+    /** Assert that a lifecycle sequence matches one of the possible variants. */
+    static void assertSequenceMatchesOneOf(Class<? extends Activity> activityClass,
+            LifecycleLog lifecycleLog, List<List<ActivityCallback>> expectedTransitions,
+            String transition) {
+        final List<ActivityCallback> observedTransitions =
+                lifecycleLog.getActivityLog(activityClass);
+        log("Observed sequence: " + observedTransitions);
+        final String errorMessage = errorDuringTransition(activityClass, transition);
+
+        boolean oneOfExpectedSequencesObserved = false;
+        for (List<ActivityCallback> transitionVariant : expectedTransitions) {
+            if (transitionVariant.equals(observedTransitions)) {
+                oneOfExpectedSequencesObserved = true;
+                break;
+            }
+        }
+        assertTrue(errorMessage + "\nObserved transitions: " + observedTransitions
+                        + "\nExpected one of: " + expectedTransitions,
+                oneOfExpectedSequencesObserved);
     }
 
     private static Pair<String, ActivityCallback> transition(
