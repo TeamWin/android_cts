@@ -33,6 +33,19 @@ public class LifecycleTracker implements ActivityLifecycleCallback {
         }
     }
 
+    /**
+     * Waits for a specific sequence of events to happen.
+     * When there is a possibility of some lifecycle state happening more than once in a sequence,
+     * it is better to use this method instead of {@link #waitAndAssertActivityStates(Pair[])}.
+     * Otherwise we might stop tracking too early.
+     */
+    void waitForActivityTransitions(Class<? extends Activity> activityClass,
+            List<ActivityCallback> expectedTransitions) {
+        waitForConditionWithTimeout(
+                () -> mLifecycleLog.getActivityLog(activityClass).equals(expectedTransitions),
+                5 * 1000);
+    }
+
     @Override
     synchronized public void onActivityLifecycleChanged(Activity activity, Stage stage) {
         notify();
