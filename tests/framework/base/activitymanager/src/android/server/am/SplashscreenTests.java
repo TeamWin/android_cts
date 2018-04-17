@@ -18,7 +18,8 @@ package android.server.am;
 
 import static android.server.am.Components.SPLASHSCREEN_ACTIVITY;
 
-import static org.junit.Assert.assertTrue;
+import static org.hamcrest.MatcherAssert.assertThat;
+import static org.hamcrest.Matchers.lessThan;
 import static org.junit.Assert.fail;
 
 import android.graphics.Bitmap;
@@ -34,7 +35,7 @@ import org.junit.Test;
 public class SplashscreenTests extends ActivityManagerTestBase {
 
     @Test
-    public void testSplashscreenContent() throws Exception {
+    public void testSplashscreenContent() {
         launchActivityNoWait(SPLASHSCREEN_ACTIVITY);
         mAmWmState.waitForAppTransitionIdle();
         mAmWmState.getWmState().getStableBounds();
@@ -53,8 +54,8 @@ public class SplashscreenTests extends ActivityManagerTestBase {
         int wrongPixels = 0;
         for (int x = bounds.left; x < bounds.right; x++) {
             for (int y = bounds.top; y < bounds.bottom; y++) {
-                assertTrue(x < img.getWidth());
-                assertTrue(y < img.getHeight());
+                assertThat(x, lessThan(img.getWidth()));
+                assertThat(y, lessThan(img.getHeight()));
                 final int color = img.getPixel(x, y);
                 if (primaryColor == color) {
                     primaryPixels++;
