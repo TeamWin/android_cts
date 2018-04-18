@@ -46,6 +46,8 @@ import android.support.test.filters.MediumTest;
 import android.support.test.runner.AndroidJUnit4;
 import android.util.Log;
 
+import com.android.compatibility.common.util.ThreadUtils;
+
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
@@ -125,7 +127,7 @@ public class BatterySaverAlarmTest extends BatterySavingTestBase {
         final SetAlarmRequest areq = SetAlarmRequest.newBuilder()
                 .setIntentAction(ACTION)
                 .setType(type)
-                .setAllowWhileIdle(true)
+                .setAllowWhileIdle(whileIdle)
                 .setTriggerTime(triggerMillis)
                 .build();
         final Payload response = mRpc.sendRequest(targetPackage,
@@ -176,7 +178,7 @@ public class BatterySaverAlarmTest extends BatterySavingTestBase {
         // First alarm shouldn't be throttled.
         final long triggerElapsed1 = SystemClock.elapsedRealtime() + MIN_FUTURITY;
         scheduleAlarm(targetPackage, AlarmManager.ELAPSED_REALTIME_WAKEUP, triggerElapsed1);
-        Thread.sleep(Math.max(0, triggerElapsed1 - SystemClock.elapsedRealtime() + DEFAULT_WAIT));
+        ThreadUtils.sleepUntilRealtime(triggerElapsed1 + DEFAULT_WAIT);
         assertEquals("Allow-while-idle alarm shouldn't be blocked in battery saver",
                 1, mAlarmCount.get());
 
@@ -185,12 +187,12 @@ public class BatterySaverAlarmTest extends BatterySavingTestBase {
 
         final long triggerElapsed2 = triggerElapsed1 + ALLOW_WHILE_IDLE_SHORT_TIME;
         scheduleAlarm(targetPackage, AlarmManager.ELAPSED_REALTIME_WAKEUP, triggerElapsed2);
-        Thread.sleep(Math.max(0, triggerElapsed2 - SystemClock.elapsedRealtime() + DEFAULT_WAIT));
+        ThreadUtils.sleepUntilRealtime(triggerElapsed2 + DEFAULT_WAIT);
         assertEquals("Follow up allow-while-idle alarm shouldn't go off before short time",
                 0, mAlarmCount.get());
 
         final long triggerElapsed3 = triggerElapsed1 + ALLOW_WHILE_IDLE_LONG_TIME;
-        Thread.sleep(Math.max(0, triggerElapsed3 - SystemClock.elapsedRealtime() + DEFAULT_WAIT));
+        ThreadUtils.sleepUntilRealtime(triggerElapsed3 + DEFAULT_WAIT);
         assertEquals("Follow-up allow-while-idle alarm should go off after long time",
                 1, mAlarmCount.get());
 
@@ -201,7 +203,7 @@ public class BatterySaverAlarmTest extends BatterySavingTestBase {
 
         final long triggerElapsed4 = triggerElapsed3 + ALLOW_WHILE_IDLE_SHORT_TIME;
         scheduleAlarm(targetPackage, AlarmManager.ELAPSED_REALTIME_WAKEUP, triggerElapsed4);
-        Thread.sleep(Math.max(0, triggerElapsed4 - SystemClock.elapsedRealtime() + DEFAULT_WAIT));
+        ThreadUtils.sleepUntilRealtime(triggerElapsed4 + DEFAULT_WAIT);
         assertEquals("Allow-while-idle alarm shouldn't be throttled in battery saver"
                 +" after FG service started",
                 1, mAlarmCount.get());
@@ -213,7 +215,7 @@ public class BatterySaverAlarmTest extends BatterySavingTestBase {
 
         final long triggerElapsed5 = triggerElapsed4 + ALLOW_WHILE_IDLE_SHORT_TIME;
         scheduleAlarm(targetPackage, AlarmManager.ELAPSED_REALTIME_WAKEUP, triggerElapsed5);
-        Thread.sleep(Math.max(0, triggerElapsed5 - SystemClock.elapsedRealtime() + DEFAULT_WAIT));
+        ThreadUtils.sleepUntilRealtime(triggerElapsed5 + DEFAULT_WAIT);
         assertEquals("Allow-while-idle alarm shouldn't be throttled in battery saver"
                         +" when BS is off",
                 1, mAlarmCount.get());
@@ -223,7 +225,7 @@ public class BatterySaverAlarmTest extends BatterySavingTestBase {
 
         final long triggerElapsed6 = triggerElapsed5 + ALLOW_WHILE_IDLE_SHORT_TIME;
         scheduleAlarm(targetPackage, AlarmManager.ELAPSED_REALTIME_WAKEUP, triggerElapsed6);
-        Thread.sleep(Math.max(0, triggerElapsed6 - SystemClock.elapsedRealtime() + DEFAULT_WAIT));
+        ThreadUtils.sleepUntilRealtime(triggerElapsed6 + DEFAULT_WAIT);
         assertEquals("Allow-while-idle alarm shouldn't be throttled when BS is off",
                 1, mAlarmCount.get());
     }
@@ -239,18 +241,20 @@ public class BatterySaverAlarmTest extends BatterySavingTestBase {
 
         forcePackageIntoBg(targetPackage);
 
-        // When battery saver is enabled, alarms should be blocked.
-        final long triggerElapsed1 = SystemClock.elapsedRealtime() + MIN_FUTURITY;
-        scheduleAlarm(targetPackage, AlarmManager.ELAPSED_REALTIME_WAKEUP, triggerElapsed1,
-                /* whileIdle=*/ true);
-        Thread.sleep(Math.max(0, triggerElapsed1 - SystemClock.elapsedRealtime() + DEFAULT_WAIT));
-        assertEquals("Allow-while-idle alarm should be blocked in battery saver",
-                0, mAlarmCount.get());
+        {
+            // When battery saver is enabled, alarms should be blocked.
+            final long triggerElapsed = SystemClock.elapsedRealtime() + MIN_FUTURITY;
+            scheduleAlarm(targetPackage, AlarmManager.ELAPSED_REALTIME_WAKEUP, triggerElapsed,
+                    /* whileIdle=*/ false);
+            ThreadUtils.sleepUntilRealtime(triggerElapsed + DEFAULT_WAIT);
+            assertEquals("Non-while-idle alarm should be blocked in battery saver",
+                    0, mAlarmCount.get());
+        }
 
         // Start an FG service -> should unblock the alarm.
         startService(targetPackage, true);
 
-        waitUntil("Allow-while-idle alarm should be blocked in battery saver",
+        waitUntil("Alarm should fire for an FG app",
                 () -> mAlarmCount.get() == 1);
 
         // Try again.
@@ -258,13 +262,16 @@ public class BatterySaverAlarmTest extends BatterySavingTestBase {
 
         forcePackageIntoBg(targetPackage);
 
+        // Try again.
         // When battery saver is enabled, alarms should be blocked.
-        final long triggerElapsed2 = SystemClock.elapsedRealtime() + MIN_FUTURITY;
-        scheduleAlarm(targetPackage, AlarmManager.ELAPSED_REALTIME_WAKEUP, triggerElapsed1,
-                /* whileIdle=*/ true);
-        Thread.sleep(Math.max(0, triggerElapsed1 - SystemClock.elapsedRealtime() + DEFAULT_WAIT));
-        assertEquals("Allow-while-idle alarm should be blocked in battery saver",
-                0, mAlarmCount.get());
+        {
+            final long triggerElapsed = SystemClock.elapsedRealtime() + MIN_FUTURITY;
+            scheduleAlarm(targetPackage, AlarmManager.ELAPSED_REALTIME_WAKEUP, triggerElapsed,
+                    /* whileIdle=*/ false);
+            ThreadUtils.sleepUntilRealtime(triggerElapsed + DEFAULT_WAIT);
+            assertEquals("Non-while-idle alarm should be blocked in battery saver",
+                    0, mAlarmCount.get());
+        }
 
         // This time, disable EBS -> should unblock the alarm.
         enableBatterySaver(false);

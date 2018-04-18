@@ -64,6 +64,12 @@ public class BatteryUtils {
             waitUntil("Location mode still " + getPowerManager().getLocationPowerSaveMode(),
                     () -> (PowerManager.LOCATION_MODE_NO_CHANGE
                             != getPowerManager().getLocationPowerSaveMode()));
+
+            Thread.sleep(500);
+            waitUntil("Force all apps standby still off",
+                    () -> SystemUtil.runShellCommand("dumpsys alarm")
+                            .contains(" Force all apps standby: true\n"));
+
         } else {
             SystemUtil.runShellCommandForNoOutput("cmd power set-mode 0");
             putGlobalSetting(Global.LOW_POWER_MODE_STICKY, "0");
@@ -71,8 +77,14 @@ public class BatteryUtils {
             waitUntil("Location mode still " + getPowerManager().getLocationPowerSaveMode(),
                     () -> (PowerManager.LOCATION_MODE_NO_CHANGE
                             == getPowerManager().getLocationPowerSaveMode()));
+
+            Thread.sleep(500);
+            waitUntil("Force all apps standby still on",
+                    () -> SystemUtil.runShellCommand("dumpsys alarm")
+                            .contains(" Force all apps standby: false\n"));
         }
 
+        AmUtils.waitForBroadcastIdle();
         Log.d(TAG, "Battery saver turned " + (enabled ? "ON" : "OFF"));
     }
 
@@ -88,5 +100,7 @@ public class BatteryUtils {
             SystemUtil.runShellCommandForNoOutput("input keyevent KEYCODE_SLEEP");
             waitUntil("Device still interactive", () -> !getPowerManager().isInteractive());
         }
+        AmUtils.waitForBroadcastIdle();
+        Log.d(TAG, "Screen turned " + (on ? "ON" : "OFF"));
     }
 }
