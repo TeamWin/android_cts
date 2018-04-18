@@ -77,9 +77,10 @@ import android.os.Bundle;
 import android.os.SystemClock;
 import android.provider.Settings;
 import android.server.am.settings.SettingsSession;
+import android.support.test.InstrumentationRegistry;
+
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
-import android.support.test.InstrumentationRegistry;
 
 import com.android.compatibility.common.util.SystemUtil;
 
@@ -661,13 +662,17 @@ public abstract class ActivityManagerTestBase {
             return this;
         }
 
-        public LockScreenSession gotoKeyguard() {
+        public LockScreenSession gotoKeyguard(ComponentName... showWhenLockedActivities) {
             if (DEBUG && isLockDisabled()) {
                 logE("LockScreenSession.gotoKeygurad() is called without lock enabled.");
             }
             sleepDevice();
             wakeUpDevice();
-            mAmWmState.waitForKeyguardShowingAndNotOccluded();
+            if (showWhenLockedActivities.length == 0) {
+                mAmWmState.waitForKeyguardShowingAndNotOccluded();
+            } else {
+                mAmWmState.waitForValidState(showWhenLockedActivities);
+            }
             return this;
         }
 
