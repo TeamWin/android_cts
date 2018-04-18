@@ -573,7 +573,7 @@ void AHardwareBufferGLTest::SetUp() {
         EGL_NONE
     };
     mContext[0] = eglCreateContext(mDisplay, first_config, EGL_NO_CONTEXT, context_attrib_list);
-    if (mContext == EGL_NO_CONTEXT) {
+    if (mContext[0] == EGL_NO_CONTEXT) {
         context_attrib_list[1] = 2;
         mContext[0] = eglCreateContext(mDisplay, first_config, EGL_NO_CONTEXT, context_attrib_list);
         mContext[1] = eglCreateContext(mDisplay, first_config, EGL_NO_CONTEXT, context_attrib_list);
