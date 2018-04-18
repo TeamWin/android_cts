@@ -84,44 +84,6 @@ public class PreferenceActivityLegacyFlowTest {
         assertScreenshotsAreEqual(before, after);
     }
 
-    /**
-     * Scenario: Tests that the activity still shows the preference screen even after multi-window
-     * is entered.
-     */
-    @Test
-    public void legacyActivityMultiWindowTest() {
-        waitForIdle();
-
-        mTestUtils.enterMultiWindow(mActivity);
-        mTestUtils.getMultiWindowFocus(mActivity);
-
-        // Prefs list should be shown.
-        assertTextShown(LEGACY_SCREEN_TEXT);
-
-        mTestUtils.leaveMultiWindow(mActivity);
-
-        // Prefs list should be shown.
-        assertTextShown(LEGACY_SCREEN_TEXT);
-    }
-
-    /**
-     * Scenario: Tests that the activity correctly restores its state after multi-window changes
-     * in legacy mode.
-     */
-    @Test
-    public void legacyActivityMultiWindowToggleTest() {
-        waitForIdle();
-
-        Bitmap before = mTestUtils.takeScreenshot();
-
-        mTestUtils.enterMultiWindow(mActivity);
-        mTestUtils.leaveMultiWindow(mActivity);
-
-        // Compare screenshots
-        Bitmap after = mTestUtils.takeScreenshot();
-        assertScreenshotsAreEqual(before, after);
-    }
-
     private void recreate() {
         runOnUiThread(() -> mActivity.recreate());
         SystemClock.sleep(1000);
@@ -130,9 +92,7 @@ public class PreferenceActivityLegacyFlowTest {
 
     private void runOnUiThread(final Runnable runnable) {
         try {
-            mActivityRule.runOnUiThread(() -> {
-                runnable.run();
-            });
+            mActivityRule.runOnUiThread(() -> runnable.run());
         } catch (Throwable ex) {
             throw new RuntimeException("Failure on the UI thread", ex);
         }
