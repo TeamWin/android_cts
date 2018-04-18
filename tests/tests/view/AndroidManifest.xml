@@ -307,8 +307,7 @@
         </activity>
 
         <activity android:name="android.view.cts.HoverCtsActivity"
-                  android:screenOrientation="locked"
-                  android:theme="@style/WhiteBackgroundTheme">
+                  android:screenOrientation="locked">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
                 <category android:name="android.intent.category.LAUNCHER" />
