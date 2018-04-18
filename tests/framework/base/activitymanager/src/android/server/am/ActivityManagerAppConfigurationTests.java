@@ -341,6 +341,8 @@ public class ActivityManagerAppConfigurationTests extends ActivityManagerTestBas
     @Test
     @FlakyTest(bugId = 71875755)
     public void testFullscreenAppOrientationRequests() {
+        assumeTrue("Skipping test: no rotation support", supportsRotation());
+
         LogSeparator logSeparator = separateLogs();
         launchActivity(PORTRAIT_ORIENTATION_ACTIVITY);
         mAmWmState.assertVisibility(PORTRAIT_ORIENTATION_ACTIVITY, true /* visible */);
@@ -369,6 +371,8 @@ public class ActivityManagerAppConfigurationTests extends ActivityManagerTestBas
 
     @Test
     public void testNonfullscreenAppOrientationRequests() {
+        assumeTrue("Skipping test: no rotation support", supportsRotation());
+
         LogSeparator logSeparator = separateLogs();
         launchActivity(PORTRAIT_ORIENTATION_ACTIVITY, WINDOWING_MODE_FULLSCREEN);
         final ReportedSizes initialReportedSizes =
@@ -421,6 +425,8 @@ public class ActivityManagerAppConfigurationTests extends ActivityManagerTestBas
      */
     @Test
     public void testTaskCloseRestoreOrientation() {
+        assumeTrue("Skipping test: no rotation support", supportsRotation());
+
         // Start landscape activity.
         launchActivity(LANDSCAPE_ORIENTATION_ACTIVITY);
         mAmWmState.assertVisibility(LANDSCAPE_ORIENTATION_ACTIVITY, true /* visible */);
@@ -450,6 +456,8 @@ public class ActivityManagerAppConfigurationTests extends ActivityManagerTestBas
     @Test
     @FlakyTest(bugId = 71792393)
     public void testTaskMoveToBackOrientation() {
+        assumeTrue("Skipping test: no rotation support", supportsRotation());
+
         // Start landscape activity.
         launchActivity(LANDSCAPE_ORIENTATION_ACTIVITY);
         mAmWmState.assertVisibility(LANDSCAPE_ORIENTATION_ACTIVITY, true /* visible */);
