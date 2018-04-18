@@ -58,7 +58,7 @@ public class PrintActivity extends Activity {
     }
 
     public String getErrorMessage() throws InterruptedException {
-        final boolean called = mLatch.await(2, TimeUnit.SECONDS);
+        final boolean called = mLatch.await(4, TimeUnit.SECONDS);
         if (!called) {
             throw new IllegalStateException("PrintActivity didn't finish in time");
         }
