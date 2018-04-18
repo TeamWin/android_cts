@@ -88,7 +88,7 @@ public class SystemUtil {
             return runShellCommand(InstrumentationRegistry.getInstrumentation(), cmd);
         } catch (IOException e) {
             fail("Failed reading command output: " + e);
-            return null;
+            return "";
         }
     }
 
