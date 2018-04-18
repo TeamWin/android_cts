@@ -27,7 +27,6 @@ LOCAL_SRC_FILES := $(call all-java-files-under, src)
 
 LOCAL_JAVA_LIBRARIES := \
     android.test.runner.stubs \
-    conscrypt \
     cts-junit \
     android.test.base.stubs \
 

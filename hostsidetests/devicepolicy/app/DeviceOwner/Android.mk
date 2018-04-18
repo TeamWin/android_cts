@@ -30,7 +30,6 @@ LOCAL_AIDL_INCLUDES := $(LOCAL_PATH)/src
 
 LOCAL_JAVA_LIBRARIES := \
     android.test.runner.stubs \
-    conscrypt \
     cts-junit \
     android.test.base.stubs \
     bouncycastle
