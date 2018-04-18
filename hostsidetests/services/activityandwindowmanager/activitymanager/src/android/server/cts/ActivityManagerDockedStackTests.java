@@ -433,7 +433,7 @@ public class ActivityManagerDockedStackTests extends ActivityManagerTestBase {
             // Go home and check the app transition
             assertNotSame(TRANSIT_WALLPAPER_OPEN, mAmWmState.getWmState().getLastTransition());
             pressHomeButton();
-            mAmWmState.waitForHomeActivityVisible(mDevice);
+            mAmWmState.computeState(mDevice, null);
             assertEquals(TRANSIT_WALLPAPER_OPEN, mAmWmState.getWmState().getLastTransition());
         }
     }
