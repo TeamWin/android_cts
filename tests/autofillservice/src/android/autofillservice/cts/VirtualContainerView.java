@@ -20,9 +20,7 @@ import static android.autofillservice.cts.Timeouts.FILL_TIMEOUT;
 
 import static com.google.common.truth.Truth.assertWithMessage;
 
-import android.app.assist.AssistStructure;
 import android.app.assist.AssistStructure.ViewNode;
-import android.content.ComponentName;
 import android.content.Context;
 import android.graphics.Canvas;
 import android.graphics.Color;
@@ -84,7 +82,6 @@ class VirtualContainerView extends View {
     private int mUnfocusedColor;
     private boolean mSync = true;
     private boolean mOverrideDispatchProvideAutofillStructure = false;
-    private ComponentName mFackedComponentName;
 
     private boolean mCompatMode = false;
     private AccessibilityDelegate mAccessibilityDelegate;
@@ -223,19 +220,6 @@ class VirtualContainerView extends View {
             return;
         }
 
-
-        if (mFackedComponentName != null) {
-            Log.d(TAG, "Faking package name to " + mFackedComponentName);
-            try {
-                final AssistStructure assistStructure = Helper.getField(structure, "mAssist");
-                if (assistStructure != null) {
-                    Helper.setField(assistStructure, "mActivityComponent", mFackedComponentName);
-                }
-            } catch (Exception e) {
-                Log.e(TAG, "Could not fake package name to " + mFackedComponentName, e);
-            }
-        }
-
         final String packageName = getContext().getPackageName();
         structure.setClassName(getClass().getName());
         final int childrenSize = mItems.size();
@@ -366,10 +350,6 @@ class VirtualContainerView extends View {
 
     void setSync(boolean sync) {
         mSync = sync;
-    }
-
-    void fakePackageName(ComponentName name) {
-        mFackedComponentName = name;
     }
 
     void setCompatMode(boolean compatMode) {
