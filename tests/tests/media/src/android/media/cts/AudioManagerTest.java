@@ -1117,7 +1117,7 @@ public class AudioManagerTest extends InstrumentationTestCase {
             mAudioManager.setStreamVolume(AudioManager.STREAM_RING, testRingerVol, 0);
 
             // Turn off zen and make sure stream levels are still the same prior to zen
-            // aside from ringer since ringer could potentially cause exit of dnd
+            // aside from ringer since ringer can exit dnd
             setInterruptionFilter(NotificationManager.INTERRUPTION_FILTER_ALL);
             assertEquals(musicVolume, mAudioManager.getStreamVolume(AudioManager.STREAM_MUSIC));
             assertEquals(alarmVolume, mAudioManager.getStreamVolume(AudioManager.STREAM_ALARM));
@@ -1156,10 +1156,15 @@ public class AudioManagerTest extends InstrumentationTestCase {
                     AudioManager.STREAM_ALARM, AudioManager.ADJUST_RAISE, 0);
 
             // Turn off zen and make sure stream levels are still the same prior to zen
+            // aside from ringer since ringer can exit dnd
             setInterruptionFilter(NotificationManager.INTERRUPTION_FILTER_ALL);
             assertEquals(musicVolume, mAudioManager.getStreamVolume(AudioManager.STREAM_MUSIC));
             assertEquals(alarmVolume, mAudioManager.getStreamVolume(AudioManager.STREAM_ALARM));
-            assertEquals(ringVolume, mAudioManager.getStreamVolume(AudioManager.STREAM_RING));
+
+            int volumeDelta =
+                    getVolumeDelta(mAudioManager.getStreamVolume(AudioManager.STREAM_RING));
+            assertEquals(ringVolume + volumeDelta,
+                    mAudioManager.getStreamVolume(AudioManager.STREAM_RING));
         } finally {
             setInterruptionFilter(NotificationManager.INTERRUPTION_FILTER_ALL);
         }
