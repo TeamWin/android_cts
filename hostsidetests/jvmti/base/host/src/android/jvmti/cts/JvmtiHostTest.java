@@ -94,7 +94,9 @@ public class JvmtiHostTest extends DeviceTestCase implements IBuildReceiver, IAb
         // set a max deadline limit to avoid hanging forever
         runner.setMaxTimeToOutputResponse(2, TimeUnit.MINUTES);
 
-        TestResults tr = new TestResults(new AttachAgent(device, mTestPackageName, mTestApk));
+        AttachAgent aa = new AttachAgent(device, mTestPackageName, mTestApk);
+        aa.prepare();
+        TestResults tr = new TestResults(aa);
 
         device.runInstrumentationTests(runner, tr);
 
@@ -113,14 +115,15 @@ public class JvmtiHostTest extends DeviceTestCase implements IBuildReceiver, IAb
         private String mPkg;
         private String mApk;
 
+        private String mAgentInDataData;
+
         public AttachAgent(ITestDevice device, String pkg, String apk) {
             this.mDevice = device;
             this.mPkg = pkg;
             this.mApk = apk;
         }
 
-        @Override
-        public void run() {
+        public void prepare() {
             try {
                 String pwd = mDevice.executeShellCommand("run-as " + mPkg + " pwd");
                 if (pwd == null) {
@@ -131,9 +134,19 @@ public class JvmtiHostTest extends DeviceTestCase implements IBuildReceiver, IAb
                     throw new RuntimeException("pwd failed");
                 }
 
-                String agentInDataData = installLibToDataData(pwd, "libctsjvmtiagent.so");
+                mAgentInDataData = installLibToDataData(pwd, "libctsjvmtiagent.so");
+            } catch (Exception e) {
+                throw new RuntimeException("Failed installing", e);
+            }
+        }
 
-                String attachCmd = "cmd activity attach-agent " + mPkg + " " + agentInDataData;
+        @Override
+        public void run() {
+            try {
+                if (mAgentInDataData == null) {
+                    throw new IllegalStateException("prepare() has not been called");
+                }
+                String attachCmd = "cmd activity attach-agent " + mPkg + " " + mAgentInDataData;
                 String attachReply = mDevice.executeShellCommand(attachCmd);
                 // Don't try to parse the output. The test will time out anyways if this didn't
                 // work.
@@ -145,7 +158,7 @@ public class JvmtiHostTest extends DeviceTestCase implements IBuildReceiver, IAb
             }
         }
 
-        String installLibToDataData(String dataData, String library) throws Exception {
+        private String installLibToDataData(String dataData, String library) throws Exception {
             ZipFile zf = null;
             File tmpFile = null;
             String libInTmp = null;
