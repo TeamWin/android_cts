@@ -25,6 +25,9 @@ import android.view.Display;
 import android.view.WindowManager;
 
 class AspectRatioTestsBase {
+    // The delta allowed when comparing two floats for equality. We consider them equal if they are
+    // within two significant digits of each other.
+    private static final float FLOAT_EQUALITY_DELTA = .01f;
 
     interface AssertAspectRatioCallback {
         void assertAspectRatio(float actual);
@@ -80,8 +83,10 @@ class AspectRatioTestsBase {
     }
 
     static boolean aspectRatioEqual(float a, float b) {
-        // Aspect ratios are considered equal if they ware within to significant digits.
-        float diff = Math.abs(a - b);
-        return diff < 0.01f;
+        return Math.abs(a - b) < FLOAT_EQUALITY_DELTA;
+    }
+
+    static boolean aspectRatioLessThanEqual(float a, float b) {
+        return a < b || aspectRatioEqual(a, b);
     }
 }
