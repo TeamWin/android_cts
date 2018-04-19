@@ -57,7 +57,7 @@ public class FieldsClassificationTest extends AutoFillServiceTestCase {
 
     @ClassRule
     public static final SettingsStateChangerRule sUserDataMaxUserSizeChanger =
-            new SettingsStateChangerRule(sContext, AUTOFILL_USER_DATA_MAX_USER_DATA_SIZE, "10");
+            new SettingsStateChangerRule(sContext, AUTOFILL_USER_DATA_MAX_USER_DATA_SIZE, "9");
 
     @ClassRule
     public static final SettingsStateChangerRule sUserDataMinValueChanger =
@@ -122,6 +122,16 @@ public class FieldsClassificationTest extends AutoFillServiceTestCase {
         disableService();
         assertThat(mAfm.getUserData()).isNull();
         assertThat(mAfm.getUserDataId()).isNull();
+    }
+
+    @Test
+    public void testUserDataConstraints() throws Exception {
+        // NOTE: values set by the SettingsStateChangerRule @Rules should have unique values to
+        // make sure the getters below are reading the right property.
+        assertThat(UserData.getMaxFieldClassificationIdsSize()).isEqualTo(10);
+        assertThat(UserData.getMaxUserDataSize()).isEqualTo(9);
+        assertThat(UserData.getMinValueLength()).isEqualTo(5);
+        assertThat(UserData.getMaxValueLength()).isEqualTo(50);
     }
 
     @Test
