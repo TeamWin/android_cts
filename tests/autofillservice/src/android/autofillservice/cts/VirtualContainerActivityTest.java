@@ -518,10 +518,7 @@ public class VirtualContainerActivityTest extends AutoFillServiceTestCase {
             case CHILDREN_VIEWS_GONE_NOTIFY_CALLBACK_API:
             case CHILDREN_VIEWS_GONE_IS_VISIBLE_API:
             case PARENT_VIEW_GONE:
-                if (!mCompatMode) {
-                    // Compat mode already set the flag by default
-                    response.setSaveInfoFlags(SaveInfo.FLAG_SAVE_ON_ALL_VIEWS_INVISIBLE);
-                }
+                response.setSaveInfoFlags(SaveInfo.FLAG_SAVE_ON_ALL_VIEWS_INVISIBLE);
                 break;
             case EXPLICIT_COMMIT:
                 // does nothing
