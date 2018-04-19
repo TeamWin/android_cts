@@ -43,6 +43,8 @@ import com.android.compatibility.common.util.PollingCheck;
 
 import java.io.ByteArrayInputStream;
 import java.nio.charset.StandardCharsets;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.TimeUnit;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.List;
@@ -656,6 +658,26 @@ public class WebViewClientTest extends ActivityInstrumentationTestCase2<WebViewC
             return;
         }
         mOnUiThread.loadUrlAndWaitForCompletion("about:blank");
+    }
+
+    public void testOnPageCommitVisibleCalled() throws Exception {
+        // Check that the onPageCommitVisible callback is called
+        // correctly.
+        if (!NullWebViewUtils.isWebViewAvailable()) {
+            return;
+        }
+
+        final CountDownLatch callbackLatch = new CountDownLatch(1);
+
+        mOnUiThread.setWebViewClient(new WebViewClient() {
+                public void onPageCommitVisible(WebView view, String url) {
+                    assertEquals(url, "about:blank");
+                    callbackLatch.countDown();
+                }
+            });
+
+        mOnUiThread.loadUrl("about:blank");
+        assertTrue(callbackLatch.await(TEST_TIMEOUT, TimeUnit.MILLISECONDS));
     }
 
     private class MockWebViewClient extends WaitForLoadedClient {
