@@ -37,6 +37,7 @@ import android.hardware.camera2.cts.testcases.Camera2SurfaceViewTestCase;
 import android.hardware.camera2.params.OutputConfiguration;
 import android.hardware.camera2.params.StreamConfigurationMap;
 import android.media.CamcorderProfile;
+import android.media.Image;
 import android.media.ImageReader;
 import android.util.ArraySet;
 import android.util.Log;
@@ -163,6 +164,118 @@ public final class LogicalCameraDeviceTest extends Camera2SurfaceViewTestCase {
 
                 testBasicPhysicalStreamingForCamera(
                         id, dualPhysicalCameraIds, previewSize);
+            } finally {
+                closeDevice();
+            }
+        }
+    }
+
+    /**
+     * Test for making sure that logical/physical stream requests work when both logical stream
+     * and physical stream are configured.
+     */
+    public void testBasicLogicalPhysicalStreamCombination() throws Exception {
+
+        for (String id : mCameraIds) {
+            try {
+                Log.i(TAG, "Testing Camera " + id);
+                openDevice(id);
+
+                if (!mStaticInfo.isColorOutputSupported()) {
+                    Log.i(TAG, "Camera " + id + " does not support color outputs, skipping");
+                    continue;
+                }
+
+                if (!mStaticInfo.isLogicalMultiCamera()) {
+                    Log.i(TAG, "Camera " + id + " is not a logical multi-camera, skipping");
+                    continue;
+                }
+
+                assertTrue("Logical multi-camera must be LIMITED or higher",
+                        mStaticInfo.isHardwareLevelAtLeastLimited());
+
+                // Figure out yuv size and physical cameras to use.
+                List<String> dualPhysicalCameraIds = new ArrayList<String>();
+                Size yuvSize= findCommonPreviewSize(id, dualPhysicalCameraIds);
+                if (yuvSize == null) {
+                    Log.i(TAG, "Camera " + id + ": No matching physical YUV streams, skipping");
+                    continue;
+                }
+
+                if (VERBOSE) {
+                    Log.v(TAG, "Camera " + id + ": Testing YUV size of " + yuvSize.getWidth() +
+                        " x " + yuvSize.getHeight());
+                }
+
+                List<OutputConfiguration> outputConfigs = new ArrayList<>();
+                List<SimpleImageReaderListener> imageReaderListeners = new ArrayList<>();
+                SimpleImageReaderListener readerListenerPhysical = new SimpleImageReaderListener();
+                ImageReader yuvTargetPhysical = CameraTestUtils.makeImageReader(yuvSize,
+                        ImageFormat.YUV_420_888, MAX_IMAGE_COUNT,
+                        readerListenerPhysical, mHandler);
+                OutputConfiguration config = new OutputConfiguration(yuvTargetPhysical.getSurface());
+                config.setPhysicalCameraId(dualPhysicalCameraIds.get(0));
+                outputConfigs.add(config);
+
+                SimpleImageReaderListener readerListenerLogical = new SimpleImageReaderListener();
+                ImageReader yuvTargetLogical = CameraTestUtils.makeImageReader(yuvSize,
+                        ImageFormat.YUV_420_888, MAX_IMAGE_COUNT,
+                        readerListenerLogical, mHandler);
+                outputConfigs.add(new OutputConfiguration(yuvTargetLogical.getSurface()));
+                imageReaderListeners.add(readerListenerLogical);
+
+                mSessionListener = new BlockingSessionCallback();
+                mSession = configureCameraSessionWithConfig(mCamera, outputConfigs,
+                        mSessionListener, mHandler);
+
+                // Test request logical stream with an idle physical stream.
+                CaptureRequest.Builder requestBuilder =
+                    mCamera.createCaptureRequest(CameraDevice.TEMPLATE_PREVIEW);
+                requestBuilder.addTarget(yuvTargetLogical.getSurface());
+
+                for (int i = 0; i < MAX_IMAGE_COUNT; i++) {
+                    mSession.capture(requestBuilder.build(), new SimpleCaptureCallback(), mHandler);
+                    for (SimpleImageReaderListener readerListener : imageReaderListeners) {
+                        Image image = readerListener.getImage(WAIT_FOR_RESULT_TIMEOUT_MS);
+                        image.close();
+                    }
+                }
+
+                // Test request physical stream with an idle logical stream.
+                imageReaderListeners.clear();
+                imageReaderListeners.add(readerListenerPhysical);
+
+                requestBuilder.removeTarget(yuvTargetLogical.getSurface());
+                requestBuilder.addTarget(yuvTargetPhysical.getSurface());
+
+                for (int i = 0; i < MAX_IMAGE_COUNT; i++) {
+                    mSession.capture(requestBuilder.build(), new SimpleCaptureCallback(), mHandler);
+                    for (SimpleImageReaderListener readerListener : imageReaderListeners) {
+                        Image image = readerListener.getImage(WAIT_FOR_RESULT_TIMEOUT_MS);
+                        image.close();
+                    }
+                }
+
+                // Test request logical and physical streams at the same time
+                imageReaderListeners.clear();
+                readerListenerLogical.drain();
+                imageReaderListeners.add(readerListenerLogical);
+                readerListenerPhysical.drain();
+                imageReaderListeners.add(readerListenerPhysical);
+
+                requestBuilder.addTarget(yuvTargetLogical.getSurface());
+                for (int i = 0; i < MAX_IMAGE_COUNT; i++) {
+                    mSession.capture(requestBuilder.build(), new SimpleCaptureCallback(), mHandler);
+                    for (SimpleImageReaderListener readerListener : imageReaderListeners) {
+                        Image image = readerListener.getImage(WAIT_FOR_RESULT_TIMEOUT_MS);
+                        image.close();
+                    }
+                }
+
+                if (mSession != null) {
+                    mSession.close();
+                }
+
             } finally {
                 closeDevice();
             }
