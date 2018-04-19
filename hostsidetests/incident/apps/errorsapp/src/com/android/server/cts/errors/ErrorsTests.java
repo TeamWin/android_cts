@@ -26,12 +26,12 @@ import android.support.test.InstrumentationRegistry;
 import android.support.test.runner.AndroidJUnit4;
 import android.util.Log;
 
-import java.util.concurrent.CountDownLatch;
-import java.util.concurrent.TimeUnit;
-
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
+
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.TimeUnit;
 
 /**
  * Used by ErrorTest. Spawns misbehaving activities so reports will appear in Dropbox.
@@ -57,6 +57,9 @@ public class ErrorsTests {
         mDropbox = (DropBoxManager) mContext.getSystemService(Context.DROPBOX_SERVICE);
         mResultsReceivedSignal = new CountDownLatch(1);
         mStartMs = System.currentTimeMillis();
+
+        InstrumentationRegistry.getInstrumentation().getUiAutomation().executeShellCommand(
+                "appops set " + mContext.getPackageName() + " android:get_usage_stats allow");
     }
 
     @Test
