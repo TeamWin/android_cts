@@ -18,6 +18,7 @@ package android.security.cts;
 
 import android.platform.test.annotations.SecurityTest;
 
+@SecurityTest
 public class Poc16_08 extends SecurityTestCase {
   /**
    *  b/28026365
