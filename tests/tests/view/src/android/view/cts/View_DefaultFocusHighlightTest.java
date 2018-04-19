@@ -21,6 +21,7 @@ import static org.junit.Assert.assertTrue;
 
 import android.app.Activity;
 import android.content.res.ColorStateList;
+import android.content.res.Resources;
 import android.graphics.Color;
 import android.graphics.drawable.ColorDrawable;
 import android.graphics.drawable.Drawable;
@@ -52,9 +53,7 @@ public class View_DefaultFocusHighlightTest {
     @Test
     public void testSettersAndGetters() {
         Activity activity = mActivityRule.getActivity();
-        if (!activity.getResources().getBoolean(
-                com.android.internal.R.bool.config_useDefaultFocusHighlight)) {
-            // Skip the test when config_useDefaultFocusHighlight is false
+        if (!isDefaultFocusHighlightEnabled(activity)) {
             return;
         }
 
@@ -87,9 +86,7 @@ public class View_DefaultFocusHighlightTest {
     @Test
     public void testInflating() {
         Activity activity = mActivityRule.getActivity();
-        if (!activity.getResources().getBoolean(
-                com.android.internal.R.bool.config_useDefaultFocusHighlight)) {
-            // Skip the test when config_useDefaultFocusHighlight is false
+        if (!isDefaultFocusHighlightEnabled(activity)) {
             return;
         }
 
@@ -111,9 +108,7 @@ public class View_DefaultFocusHighlightTest {
     @Test
     public void testIsDefaultFocusHighlightNeeded() {
         Activity activity = mActivityRule.getActivity();
-        if (!activity.getResources().getBoolean(
-                com.android.internal.R.bool.config_useDefaultFocusHighlight)) {
-            // Skip the test when config_useDefaultFocusHighlight is false
+        if (!isDefaultFocusHighlightEnabled(activity)) {
             return;
         }
 
@@ -121,7 +116,7 @@ public class View_DefaultFocusHighlightTest {
         final ImageView imageView =
                 (ImageView) activity.findViewById(R.id.image_view_to_test_highlight_needed);
 
-        final Drawable[] drawables = new Drawable[] {
+        final Drawable[] drawables = new Drawable[]{
                 null,  // null
                 new ColorDrawable(Color.WHITE), // not stateful
                 new RippleDrawable(ColorStateList.valueOf(Color.WHITE), null, null) // stateful
@@ -166,5 +161,10 @@ public class View_DefaultFocusHighlightTest {
                 }
             }
         }
+    }
+
+    private boolean isDefaultFocusHighlightEnabled(Activity activity) {
+        return activity.getResources().getBoolean(Resources.getSystem().getIdentifier(
+                "config_useDefaultFocusHighlight", "bool", "android"));
     }
 }
