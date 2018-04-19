@@ -288,11 +288,11 @@ public class UsageStatsTest {
             assertEquals("Event for a different package", mTargetPackage, event.getPackageName());
             if (event.getEventType() == Event.STANDBY_BUCKET_CHANGED) {
                 if (event.getAppStandbyBucket() == UsageStatsManager.STANDBY_BUCKET_RARE) {
-                    rareTimeStamp = event.mTimeStamp;
+                    rareTimeStamp = event.getTimeStamp();
                 }
                 else if (event.getAppStandbyBucket() == UsageStatsManager
                         .STANDBY_BUCKET_WORKING_SET) {
-                    workingTimeStamp = event.mTimeStamp;
+                    workingTimeStamp = event.getTimeStamp();
                 }
             }
         }
@@ -801,5 +801,25 @@ public class UsageStatsTest {
             mUiDevice.wakeUp();
             mUiDevice.executeShellCommand("wm dismiss-keyguard");
         }
+    }
+
+    @Test
+    public void testIgnoreNonexistentPackage() throws Exception {
+        final String fakePackageName = "android.fake.package.name";
+        final int defaultValue = -1;
+
+        mUiDevice.executeShellCommand("am set-standby-bucket " + fakePackageName + " rare");
+        // Verify the above does not add a new entry to the App Standby bucket map
+        Map<String, Integer> bucketMap = mUsageStatsManager.getAppStandbyBuckets();
+        int bucket = bucketMap.getOrDefault(fakePackageName, defaultValue);
+        assertFalse("Meaningful bucket value " + bucket + " returned for " + fakePackageName
+                + " after set-standby-bucket", bucket > 0);
+
+        mUiDevice.executeShellCommand("am get-standby-bucket " + fakePackageName);
+        // Verify the above does not add a new entry to the App Standby bucket map
+        bucketMap = mUsageStatsManager.getAppStandbyBuckets();
+        bucket = bucketMap.getOrDefault(fakePackageName, defaultValue);
+        assertFalse("Meaningful bucket value " + bucket + " returned for " + fakePackageName
+                + " after get-standby-bucket", bucket > 0);
     }
 }
