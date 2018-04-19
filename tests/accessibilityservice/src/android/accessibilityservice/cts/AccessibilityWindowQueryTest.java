@@ -26,7 +26,9 @@ import static android.view.accessibility.AccessibilityNodeInfo.ACTION_SELECT;
 
 import android.accessibilityservice.AccessibilityService;
 import android.accessibilityservice.AccessibilityServiceInfo;
+import android.app.ActivityManager;
 import android.app.UiAutomation;
+import android.content.Context;
 import android.content.pm.PackageManager;
 import android.content.res.Resources;
 import android.graphics.Rect;
@@ -599,6 +601,10 @@ public class AccessibilityWindowQueryTest
 
     @MediumTest
     public void testWindowDockAndUndock_dividerWindowAppearsAndDisappears() throws Exception {
+
+        ActivityManager activityManager = (ActivityManager) getInstrumentation().getContext()
+                                            .getSystemService(Context.ACTIVITY_SERVICE);
+
         if (getInstrumentation().getContext().getPackageManager()
                 .hasSystemFeature(PackageManager.FEATURE_LEANBACK)) {
             // Android TV doesn't support the divider window
@@ -617,10 +623,11 @@ public class AccessibilityWindowQueryTest
             // Do nothing, assume split screen multi window is supported.
         }
 
-        // Get com.android.internal.R.bool.config_supportsMultiWindow
+        // ActivityManager determines Multiwindow support based on config config_supportMultiWindow
+        // and isLowRam.
         if (!getInstrumentation().getContext().getResources().getBoolean(
                 Resources.getSystem().getIdentifier("config_supportsMultiWindow", "bool",
-                        "android"))) {
+                        "android")) || activityManager.isLowRamDevice()) {
             // Check if multiWindow is supported.
             return;
         }
