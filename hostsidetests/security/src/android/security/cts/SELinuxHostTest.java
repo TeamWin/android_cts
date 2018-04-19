@@ -51,6 +51,7 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.Scanner;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 /**
  * Host-side SELinux tests.
@@ -798,6 +799,28 @@ public class SELinuxHostTest extends DeviceTestCase implements IBuildReceiver, I
         }
         assertTrue("The policy contained booleans:\n"
                    + errorString, errorString.length() == 0);
+    }
+
+   /**
+     * Tests that taking a bugreport does not produce any dumpstate-related
+     * SELinux denials.
+     *
+     * @throws Exception
+     */
+    public void testNoBugreportDenials() throws Exception {
+        // Take a bugreport and get its logcat output.
+        mDevice.executeAdbCommand("logcat", "-c");
+        mDevice.executeAdbCommand("bugreport");
+        String log = mDevice.executeAdbCommand("logcat", "-d");
+        // Find all the dumpstate-related types and make a regex that will match them.
+        Set<String> types = sepolicyAnalyzeGetTypesAssociatedWithAttribute("hal_dumpstate_server");
+        types.add("dumpstate");
+        String typeRegex = types.stream().collect(Collectors.joining("|"));
+        Pattern p = Pattern.compile("avc: *denied.*scontext=u:(?:r|object_r):(?:" + typeRegex + "):s0.*");
+        // Fail if logcat contains such a denial.
+        Matcher m = p.matcher(log);
+        if (m.find())
+            fail("Found illegal SELinux denial: " + m.group());
     }
 
     /**
