@@ -17,6 +17,7 @@
 package android.appwidget.cts;
 
 import static org.junit.Assume.assumeTrue;
+import org.junit.AssumptionViolatedException;
 
 import android.appwidget.AppWidgetProviderInfo;
 import android.appwidget.cts.provider.FirstAppWidgetProvider;
@@ -25,6 +26,7 @@ import android.content.ComponentName;
 import android.content.pm.PackageManager;
 import android.os.ParcelFileDescriptor;
 import android.test.InstrumentationTestCase;
+import android.util.Log;
 
 import java.io.BufferedReader;
 import java.io.InputStreamReader;
@@ -32,6 +34,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 public abstract class AppWidgetTestCase extends InstrumentationTestCase {
+    private static final String TAG = "AppWidgetTest";
     private static final String FIRST_APP_WIDGET_CONFIGURE_ACTIVITY =
             "android.appwidget.cts.provider.FirstAppWidgetConfigureActivity";
 
@@ -159,5 +162,18 @@ public abstract class AppWidgetTestCase extends InstrumentationTestCase {
             }
         }
         return ret;
+    }
+
+    /**
+     * Supports JUnit4 Assume behavior.
+     */
+    @Override
+    public void runBare() throws Throwable {
+        try {
+            super.runBare();
+        } catch (AssumptionViolatedException ave) {
+            // Assumptions failure. Skipping test
+            Log.i(TAG, "Skipped " + getClass().getName() + "#" + getName());
+        }
     }
 }
