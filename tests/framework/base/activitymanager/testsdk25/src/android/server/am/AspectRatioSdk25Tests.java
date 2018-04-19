@@ -50,7 +50,7 @@ public class AspectRatioSdk25Tests extends AspectRatioTestsBase {
     @Test
     public void testMaxAspectRatioPreOActivity() throws Exception {
         runAspectRatioTest(mSdk25MaxAspectRatioActivity, actual -> {
-            if (MAX_PRE_O_ASPECT_RATIO >= actual) return;
+            if (aspectRatioLessThanEqual(actual, MAX_PRE_O_ASPECT_RATIO)) return;
             fail("actual=" + actual + " is greater than expected=" + MAX_PRE_O_ASPECT_RATIO);
         });
     }
