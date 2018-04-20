@@ -244,17 +244,26 @@ public class NativeDecoderTest extends MediaPlayerTestBase {
     }
 
     public void testDataSource() throws Exception {
-        int testsRun = testDecoder(R.raw.video_176x144_3gp_h263_300kbps_12fps_aac_mono_24kbps_11025hz, true);
+        int testsRun = testDecoder(R.raw.video_176x144_3gp_h263_300kbps_12fps_aac_mono_24kbps_11025hz,
+                /* wrapFd */ true, /* useCallback */ false);
+        if (testsRun == 0) {
+            MediaUtils.skipTest("no decoders found");
+        }
+    }
+
+    public void testDataSourceWithCallback() throws Exception {
+        int testsRun = testDecoder(R.raw.video_176x144_3gp_h263_300kbps_12fps_aac_mono_24kbps_11025hz,
+                /* wrapFd */ true, /* useCallback */ true);
         if (testsRun == 0) {
             MediaUtils.skipTest("no decoders found");
         }
     }
 
     private int testDecoder(int res) throws Exception {
-        return testDecoder(res, /* wrapFd */ false);
+        return testDecoder(res, /* wrapFd */ false, /* useCallback */ false);
     }
 
-    private int testDecoder(int res, boolean wrapFd) throws Exception {
+    private int testDecoder(int res, boolean wrapFd, boolean useCallback) throws Exception {
         if (!MediaUtils.hasCodecsForResource(mContext, res)) {
             return 0; // skip
         }
@@ -264,7 +273,8 @@ public class NativeDecoderTest extends MediaPlayerTestBase {
         int[] jdata = getDecodedData(
                 fd.getFileDescriptor(), fd.getStartOffset(), fd.getLength());
         int[] ndata = getDecodedDataNative(
-                fd.getParcelFileDescriptor().getFd(), fd.getStartOffset(), fd.getLength(), wrapFd);
+                fd.getParcelFileDescriptor().getFd(), fd.getStartOffset(), fd.getLength(), wrapFd,
+                useCallback);
 
         fd.close();
         Log.i("@@@", Arrays.toString(jdata));
@@ -435,7 +445,8 @@ public class NativeDecoderTest extends MediaPlayerTestBase {
         return ret;
     }
 
-    private static native int[] getDecodedDataNative(int fd, long offset, long size, boolean wrapFd)
+    private static native int[] getDecodedDataNative(int fd, long offset, long size, boolean wrapFd,
+            boolean useCallback)
             throws IOException;
 
     public void testVideoPlayback() throws Exception {
