@@ -235,6 +235,8 @@
         paired, unpair it first from system Settings.
         \n\nAfter the remote device completes the \"Send_report\" command, text \"bluetooth\" should
         appear in the EditText. Mark the test as passed.
+        \n\n If the device under test (DUT) does not have Bluetooth HID Host service or HID Device
+        service enabled, mark the test as passed.
     </string>
     <string name="bt_hid_host">Bluetooth HID Host</string>
     <string name="bt_hid_host_select_device">Select device</string>
@@ -249,6 +251,8 @@
         \n\nFinally, click the \"Test send_report\", \"Test reply_report\", \"Test report_error\".
         \n\nIf all the commands are successful, then click \"Unregister app\" and mark the test as
         passed.
+        \n\n If the device under test (DUT) does not have Bluetooth HID Host service or HID Device
+        service enabled, mark the test as passed.
     </string>
 
     <string name="bt_hid_device">Bluetooth HID Device</string>
