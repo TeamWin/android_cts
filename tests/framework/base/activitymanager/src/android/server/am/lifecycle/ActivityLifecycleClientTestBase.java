@@ -9,6 +9,7 @@ import android.annotation.Nullable;
 import android.app.Activity;
 import android.content.Intent;
 import android.os.Bundle;
+import android.os.Handler;
 import android.server.am.ActivityManagerTestBase;
 import android.server.am.lifecycle.LifecycleLog.ActivityCallback;
 import android.support.test.InstrumentationRegistry;
@@ -26,6 +27,8 @@ import java.util.List;
 public class ActivityLifecycleClientTestBase extends ActivityManagerTestBase {
 
     static final String EXTRA_RECREATE = "recreate";
+    static final String EXTRA_FINISH_IN_ON_RESUME = "finish_in_on_resume";
+    static final String EXTRA_FINISH_AFTER_RESUME = "finish_after_resume";
 
     final ActivityTestRule mFirstActivityTestRule = new ActivityTestRule(FirstActivity.class,
             true /* initialTouchMode */, false /* launchActivity */);
@@ -161,6 +164,7 @@ public class ActivityLifecycleClientTestBase extends ActivityManagerTestBase {
 
         private void startForResult() {
             final Intent intent = new Intent(this, ResultActivity.class);
+            intent.putExtras(getIntent());
             startActivityForResult(intent, 1 /* requestCode */);
         }
     }
@@ -171,7 +175,12 @@ public class ActivityLifecycleClientTestBase extends ActivityManagerTestBase {
         protected void onResume() {
             super.onResume();
             setResult(RESULT_OK);
-            finish();
+            final Intent intent = getIntent();
+            if (intent.getBooleanExtra(EXTRA_FINISH_IN_ON_RESUME, false)) {
+                finish();
+            } else if (intent.getBooleanExtra(EXTRA_FINISH_AFTER_RESUME, false)) {
+                new Handler().postDelayed(() -> finish(), 2000);
+            }
         }
     }
 
