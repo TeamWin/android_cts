@@ -40,6 +40,7 @@ import android.app.UiAutomation;
 import android.graphics.Bitmap;
 import android.graphics.Color;
 import android.os.Process;
+import android.platform.test.annotations.Presubmit;
 import androidx.annotation.ColorInt;
 import androidx.annotation.NonNull;
 import android.support.test.InstrumentationRegistry;
@@ -68,6 +69,7 @@ import org.junit.runner.RunWith;
 import java.util.concurrent.TimeUnit;
 
 @MediumTest
+@Presubmit
 @RunWith(AndroidJUnit4.class)
 public class NavigationBarColorTest extends EndToEndImeTestBase {
     private static final long TIMEOUT = TimeUnit.SECONDS.toMillis(5);

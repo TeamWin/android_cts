@@ -31,6 +31,7 @@ import static org.junit.Assert.fail;
 
 import android.app.Instrumentation;
 import android.inputmethodservice.InputMethodService;
+import android.platform.test.annotations.Presubmit;
 import android.support.test.InstrumentationRegistry;
 import android.support.test.filters.MediumTest;
 import android.support.test.runner.AndroidJUnit4;
@@ -59,6 +60,7 @@ import java.util.function.Predicate;
  * Tests for {@link InputMethodService} methods.
  */
 @MediumTest
+@Presubmit
 @RunWith(AndroidJUnit4.class)
 public class InputMethodServiceTest extends EndToEndImeTestBase {
     private static final long TIMEOUT = TimeUnit.SECONDS.toMillis(5);

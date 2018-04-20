@@ -33,6 +33,7 @@ import android.inputmethodservice.cts.common.test.DeviceTestConstants;
 import android.inputmethodservice.cts.common.test.ShellCommandUtils;
 import android.inputmethodservice.cts.common.test.TestInfo;
 
+import android.platform.test.annotations.Presubmit;
 import com.android.tradefed.testtype.DeviceJUnit4ClassRunner;
 import com.android.tradefed.testtype.junit4.BaseHostJUnit4Test;
 
@@ -44,6 +45,7 @@ import org.junit.runner.RunWith;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 
+@Presubmit
 @RunWith(DeviceJUnit4ClassRunner.class)
 public class InputMethodServiceLifecycleTest extends BaseHostJUnit4Test {
 
