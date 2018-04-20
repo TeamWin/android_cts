@@ -2656,26 +2656,6 @@ public class WebViewTest extends ActivityInstrumentationTestCase2<WebViewCtsActi
         assertTrue(callbackLatch.await(TEST_TIMEOUT, TimeUnit.MILLISECONDS));
     }
 
-    public void testOnPageCommitVisibleCalled() throws Exception {
-        // Check that the onPageCommitVisible callback is called
-        // correctly.
-        if (!NullWebViewUtils.isWebViewAvailable()) {
-            return;
-        }
-
-        final CountDownLatch callbackLatch = new CountDownLatch(1);
-
-        mOnUiThread.setWebViewClient(new WebViewClient() {
-                public void onPageCommitVisible(WebView view, String url) {
-                    assertEquals(url, "about:blank");
-                    callbackLatch.countDown();
-                }
-            });
-
-        mOnUiThread.loadUrl("about:blank");
-        assertTrue(callbackLatch.await(TEST_TIMEOUT, TimeUnit.MILLISECONDS));
-    }
-
     public void testSetSafeBrowsingWhitelistWithMalformedList() throws Exception {
         if (!NullWebViewUtils.isWebViewAvailable()) {
             return;
