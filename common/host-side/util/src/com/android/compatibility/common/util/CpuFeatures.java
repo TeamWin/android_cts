@@ -25,14 +25,25 @@ import com.android.tradefed.device.ITestDevice;
  */
 public class CpuFeatures {
 
+    private static String uname(ITestDevice device) throws DeviceNotAvailableException {
+        CollectingOutputReceiver Out = new CollectingOutputReceiver();
+        device.executeShellCommand("uname -m", Out);
+        return Out.getOutput().trim();
+    }
+
     /**
      * Return true if architecture is arm64.
      */
     public static boolean isArm64(ITestDevice device) throws DeviceNotAvailableException {
 
-        CollectingOutputReceiver Out = new CollectingOutputReceiver();
-        device.executeShellCommand("uname -m", Out);
-        String arch = Out.getOutput().trim();
-        return arch.contains("aarch64");
+        return uname(device).contains("aarch64");
+    }
+
+    /**
+     * Return true if architecture is arm32.
+     */
+    public static boolean isArm32(ITestDevice device) throws DeviceNotAvailableException {
+
+        return uname(device).contains("armv7");
     }
 }
