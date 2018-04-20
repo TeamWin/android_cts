@@ -27,6 +27,8 @@ import android.server.am.ActivityManagerTestBase;
 import android.test.AndroidTestCase;
 import android.test.MoreAsserts;
 
+import com.google.common.collect.ObjectArrays;
+
 import java.security.AlgorithmParameters;
 import java.security.InvalidKeyException;
 import java.security.Key;
@@ -67,22 +69,36 @@ public class CipherTest extends AndroidTestCase {
 
     private static final String EXPECTED_PROVIDER_NAME = TestUtils.EXPECTED_CRYPTO_OP_PROVIDER_NAME;
 
-    private static final String[] EXPECTED_ALGORITHMS = {
-        "AES/ECB/NoPadding",
-        "AES/ECB/PKCS7Padding",
-        "AES/CBC/NoPadding",
-        "AES/CBC/PKCS7Padding",
-        "AES/CTR/NoPadding",
-        "AES/GCM/NoPadding",
-        "RSA/ECB/NoPadding",
-        "RSA/ECB/PKCS1Padding",
-        "RSA/ECB/OAEPPadding",
-        "RSA/ECB/OAEPWithSHA-1AndMGF1Padding",
-        "RSA/ECB/OAEPWithSHA-224AndMGF1Padding",
-        "RSA/ECB/OAEPWithSHA-256AndMGF1Padding",
-        "RSA/ECB/OAEPWithSHA-384AndMGF1Padding",
-        "RSA/ECB/OAEPWithSHA-512AndMGF1Padding",
-    };
+  private static String[] EXPECTED_ALGORITHMS = {
+      "AES/ECB/NoPadding",
+      "AES/ECB/PKCS7Padding",
+      "AES/CBC/NoPadding",
+      "AES/CBC/PKCS7Padding",
+      "AES/CTR/NoPadding",
+      "AES/GCM/NoPadding",
+      "RSA/ECB/NoPadding",
+      "RSA/ECB/PKCS1Padding",
+      "RSA/ECB/OAEPPadding",
+      "RSA/ECB/OAEPWithSHA-1AndMGF1Padding",
+      "RSA/ECB/OAEPWithSHA-224AndMGF1Padding",
+      "RSA/ECB/OAEPWithSHA-256AndMGF1Padding",
+      "RSA/ECB/OAEPWithSHA-384AndMGF1Padding",
+      "RSA/ECB/OAEPWithSHA-512AndMGF1Padding"
+  };
+
+  private static final String[] DESEDE_ALGORITHMS = {
+      "DESede/CBC/NoPadding",
+      "DESede/CBC/PKCS7Padding",
+      "DESede/ECB/NoPadding",
+      "DESede/ECB/PKCS7Padding",
+  };
+
+  {
+    if (TestUtils.supports3DES()) {
+      EXPECTED_ALGORITHMS = ObjectArrays
+          .concat(EXPECTED_ALGORITHMS, DESEDE_ALGORITHMS, String.class);
+    }
+  }
 
     private static class KatVector {
         private final byte[] plaintext;
@@ -216,6 +232,22 @@ public class CipherTest extends AndroidTestCase {
                 + "dfe4b1283ab114e517b7b9e4a6e0bf166d5b506e7a3b7328078e12cb23b1d938760767dc9b3c3eb0"
                 + "848ddda101792aca9273ad414314c13fc511ffa0358a8f4c5f38edded3a2dc111fa62c80e6032c32"
                 + "ae04aeac7729f16a6310f1f6785c27"));
+
+
+        KAT_VECTORS.put("DESede/CBC/NoPadding",
+                new KatVector("eac1b7959e1e23c11dc4a0e233eedd99e5bf5dd391a5f107d006133a9af3e385",
+                        new IvParameterSpec(HexEncoding.decode("ecd87bf9c49f37dc")),
+                        "632511c46680d60883a228e62cd31244ad61b987e8df7901dae0eb220c839689"));
+        KAT_VECTORS.put("DESede/CBC/PKCS7Padding",
+                new KatVector("31323334353637383132333435363738",
+                        new IvParameterSpec(HexEncoding.decode("DFCA366848DEA6BB")),
+                        "e70bb5761d796d7b0eb40b5b60deb6a9726f72d97cf2ada4"));
+        KAT_VECTORS.put("DESede/ECB/NoPadding",
+                new KatVector("31323334353637383132333435363738",
+                        "ade119f9e35ab3e9ade119f9e35ab3e9"));
+        KAT_VECTORS.put("DESede/ECB/PKCS7Padding",
+                new KatVector("31323334353637383132333435363738",
+                        "ade119f9e35ab3e9ade119f9e35ab3e94bcb01bbc0d05526"));
     }
 
     private static final long DAY_IN_MILLIS = TestUtils.DAY_IN_MILLIS;
@@ -228,6 +260,9 @@ public class CipherTest extends AndroidTestCase {
 
     private static final byte[] AES256_KAT_KEY_BYTES =
             HexEncoding.decode("cf601cc10aaf434d1f01747136aff222af7fb426d101901712214c3fea18125f");
+
+    private static final byte[] DESede_KAT_KEY_BYTES = HexEncoding.decode(
+            "5EBE2294ECD0E0F08EAB7690D2A6EE6926AE5CC854E36B6B");
 
     private class DeviceLockSession  extends ActivityManagerTestBase implements AutoCloseable {
 
@@ -1482,6 +1517,20 @@ public class CipherTest extends AndroidTestCase {
                             default:
                                 throw new RuntimeException("Unsupported block mode " + blockMode);
                         }
+                    } else if (KeyProperties.KEY_ALGORITHM_3DES.equalsIgnoreCase(keyAlgorithm)) {
+                        String blockMode =
+                                TestUtils.getCipherBlockMode(transformation).toUpperCase(Locale.US);
+                        // Entropy should consumed for IV generation only.
+                        switch (blockMode) {
+                            case "ECB":
+                                expectedEntropyBytesConsumedDuringInit = 0;
+                                break;
+                            case "CBC":
+                                expectedEntropyBytesConsumedDuringInit = 8;
+                                break;
+                            default:
+                                throw new RuntimeException("Unsupported block mode " + blockMode);
+                        }
                     } else if (KeyProperties.KEY_ALGORITHM_RSA.equalsIgnoreCase(keyAlgorithm)) {
                         expectedEntropyBytesConsumedDuringInit = 0;
                     } else {
@@ -1499,7 +1548,8 @@ public class CipherTest extends AndroidTestCase {
                     rng.resetCounters();
                     ciphertext = TestUtils.concat(ciphertext, cipher.doFinal());
                     int expectedEntropyBytesConsumedDuringDoFinal;
-                    if (KeyProperties.KEY_ALGORITHM_AES.equalsIgnoreCase(keyAlgorithm)) {
+                  if (KeyProperties.KEY_ALGORITHM_AES.equalsIgnoreCase(keyAlgorithm)
+                      || KeyProperties.KEY_ALGORITHM_3DES.equalsIgnoreCase(keyAlgorithm)) {
                         expectedEntropyBytesConsumedDuringDoFinal = 0;
                     } else if (KeyProperties.KEY_ALGORITHM_RSA.equalsIgnoreCase(keyAlgorithm)) {
                         // Entropy should not be consumed during Cipher.init.
@@ -1567,11 +1617,21 @@ public class CipherTest extends AndroidTestCase {
             } else if ((KeyProperties.BLOCK_MODE_CBC.equalsIgnoreCase(blockMode))
                     || (KeyProperties.BLOCK_MODE_CTR.equalsIgnoreCase(blockMode))) {
                 return new IvParameterSpec(
-                        new byte[] {1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16});
+                        new byte[]{1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16});
             } else if (KeyProperties.BLOCK_MODE_GCM.equalsIgnoreCase(blockMode)) {
                 return new GCMParameterSpec(
                         128,
-                        new byte[] {1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12});
+                        new byte[]{1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12});
+            } else {
+                throw new IllegalArgumentException("Unsupported block mode: " + blockMode);
+            }
+        } else if (KeyProperties.KEY_ALGORITHM_3DES.equalsIgnoreCase(keyAlgorithm)) {
+            String blockMode = TestUtils.getCipherBlockMode(transformation);
+            if (KeyProperties.BLOCK_MODE_ECB.equalsIgnoreCase(blockMode)) {
+                return null;
+            } else if (KeyProperties.BLOCK_MODE_CBC.equalsIgnoreCase(blockMode)) {
+                return new IvParameterSpec(
+                        new byte[]{1, 2, 3, 4, 5, 6, 7, 8});
             } else {
                 throw new IllegalArgumentException("Unsupported block mode: " + blockMode);
             }
@@ -1629,6 +1689,11 @@ public class CipherTest extends AndroidTestCase {
                     "testAES",
                     new SecretKeySpec(AES128_KAT_KEY_BYTES, "AES"),
                     importParams);
+        } else if (KeyProperties.KEY_ALGORITHM_3DES.equalsIgnoreCase(keyAlgorithm)) {
+            return TestUtils.importIntoAndroidKeyStore(
+                    "test3DES",
+                    new SecretKeySpec(DESede_KAT_KEY_BYTES, "DESede"),
+                    importParams);
         } else if (KeyProperties.KEY_ALGORITHM_RSA.equalsIgnoreCase(keyAlgorithm)) {
             return TestUtils.importIntoAndroidKeyStore(
                     "testRSA",
@@ -1676,7 +1741,13 @@ public class CipherTest extends AndroidTestCase {
                             "testAES256",
                             new SecretKeySpec(AES256_KAT_KEY_BYTES, "AES"),
                             importParams)
-                    );
+            );
+        } else if (KeyProperties.KEY_ALGORITHM_3DES.equalsIgnoreCase(keyAlgorithm)) {
+            return Arrays.asList(TestUtils.importIntoAndroidKeyStore(
+                    "test3DES",
+                    new SecretKeySpec(DESede_KAT_KEY_BYTES, "DESede"),
+                    importParams)
+            );
         } else if (KeyProperties.KEY_ALGORITHM_RSA.equalsIgnoreCase(keyAlgorithm)) {
             return RSASignatureTest.importKatKeyPairs(getContext(), importParams);
         } else {
