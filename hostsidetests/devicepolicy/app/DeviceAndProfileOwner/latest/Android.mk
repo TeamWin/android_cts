@@ -26,7 +26,6 @@ LOCAL_MODULE_PATH := $(TARGET_OUT_DATA_APPS)
 LOCAL_SRC_FILES := $(call all-java-files-under, ../src)
 
 LOCAL_JAVA_LIBRARIES := \
-    conscrypt \
     android.test.runner.stubs \
     android.test.base.stubs \
 

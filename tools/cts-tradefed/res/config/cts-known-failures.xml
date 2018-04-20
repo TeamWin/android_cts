@@ -129,28 +129,8 @@
     <option name="compatibility:exclude-filter" value="CtsVideoTestCases android.video.cts.VideoEncoderDecoderTest#testVp9Goog0Perf1280x0720" />
     <option name="compatibility:exclude-filter" value="CtsVideoTestCases android.video.cts.VideoEncoderDecoderTest#testVp9Goog0Perf1920x1080" />
 
-    <!-- b/37482372 -->
-    <option name="compatibility:exclude-filter" value="CtsPreference2TestCases android.preference2.cts.PreferenceActivityFlowPortraitTest#multiWindowHistoryPreservePortraitTest" />
-    <option name="compatibility:exclude-filter" value="CtsPreference2TestCases android.preference2.cts.PreferenceActivityFlowPortraitTest#multiWindowInOutPortraitTest" />
-    <option name="compatibility:exclude-filter" value="CtsPreference2TestCases android.preference2.cts.PreferenceActivityFlowPortraitTest#multiWindowInitialHeaderOnBackPortraitTest" />
-    <option name="compatibility:exclude-filter" value="CtsPreference2TestCases android.preference2.cts.PreferenceActivityFlowPortraitTest#multiWindowInnerFragmentInOutPortraitTest" />
-    <option name="compatibility:exclude-filter" value="CtsPreference2TestCases android.preference2.cts.PreferenceActivityFlowPortraitTest#startWithFragmentAndInitTitleMultiWindowPortraitTest" />
-    <option name="compatibility:exclude-filter" value="CtsPreference2TestCases android.preference2.cts.PreferenceActivityFlowPortraitTest#startWithFragmentNoHeadersMultiWindowPortraitTest" />
-
     <!-- b/63916274 -->
     <option name="compatibility:exclude-filter" value="CtsTelecomTestCases android.telecom.cts.WiredHeadsetTest" />
-
-    <!-- b/38177396 -->
-    <option name="compatibility:exclude-filter" value="CtsPreference2TestCases android.preference2.cts.PreferenceActivityFlowLandscapeTest#multiWindowHistoryPreserveLandscapeTest" />
-    <option name="compatibility:exclude-filter" value="CtsPreference2TestCases android.preference2.cts.PreferenceActivityFlowLandscapeTest#multiWindowInOutLandscapeTest" />
-    <option name="compatibility:exclude-filter" value="CtsPreference2TestCases android.preference2.cts.PreferenceActivityFlowLandscapeTest#multiWindowInitialHeaderOnBackLandscapeTest" />
-    <option name="compatibility:exclude-filter" value="CtsPreference2TestCases android.preference2.cts.PreferenceActivityFlowLandscapeTest#multiWindowInnerFragmentInOutLandscapeTest" />
-    <option name="compatibility:exclude-filter" value="CtsPreference2TestCases android.preference2.cts.PreferenceActivityFlowLandscapeTest#startWithFragmentAndInitTitleMultiWindowLandscapeTest" />
-    <option name="compatibility:exclude-filter" value="CtsPreference2TestCases android.preference2.cts.PreferenceActivityFlowLandscapeTest#startWithFragmentNoHeadersMultiWindowLandscapeTest" />
-
-    <!-- b/62924649 -->
-    <option name="compatibility:exclude-filter" value="CtsPreference2TestCases android.preference2.cts.PreferenceActivityLegacyFlowTest#legacyActivityMultiWindowTest" />
-    <option name="compatibility:exclude-filter" value="CtsPreference2TestCases android.preference2.cts.PreferenceActivityLegacyFlowTest#legacyActivityMultiWindowToggleTest" />
 
     <!-- b/38224690 -->
     <option name="compatibility:exclude-filter" value="CtsMediaTestCases android.media.cts.NativeEncoderTest" />

@@ -27,7 +27,6 @@ import static org.junit.Assert.assertTrue;
 import android.content.Intent;
 import android.graphics.Bitmap;
 import android.os.SystemClock;
-import android.preference2.cts.R;
 import android.util.Log;
 
 import com.android.compatibility.common.util.BitmapUtils;
@@ -325,36 +324,6 @@ public abstract class PreferenceActivityFlowTest {
     }
 
     /**
-     * For: Large screen (multi-pane).
-     * Scenario: Tests that initial title is displayed or hidden properly when transitioning in and
-     * out of the multi-window mode.
-     */
-    void startWithFragmentAndInitTitleMultiWindowInner() {
-        launchActivityWithExtras(PreferenceWithHeaders.PrefsTwoFragment.class,
-                false /* noHeaders */, INITIAL_TITLE_RES_ID);
-        if (!shouldRunLargeDeviceTest()) {
-            return;
-        }
-
-        assertInitialStateForFragment();
-        String testTitle = mActivity.getResources().getString(INITIAL_TITLE_RES_ID);
-
-        // Title should not be shown (we are in multi-pane).
-        assertFalse(mTestUtils.isTextShown(testTitle));
-
-        mTestUtils.enterMultiWindow(mActivity);
-        mTestUtils.getMultiWindowFocus(mActivity);
-
-        // Title should be shown (we are in single-pane).
-        assertTextShown(testTitle);
-
-        mTestUtils.leaveMultiWindow(mActivity);
-
-        // Title should not be shown (we are back in multi-pane).
-        assertTextHidden(testTitle);
-    }
-
-    /**
      * For: Any screen (single or multi-pane).
      * Scenario: Tests that EXTRA_NO_HEADERS intent arg that prevents showing headers in multi-pane
      * is applied correctly.
@@ -386,34 +355,6 @@ public abstract class PreferenceActivityFlowTest {
         assertPanelPrefs2Shown();
 
         assertTitleShown();
-    }
-
-    /**
-     * For: Any screen (single or multi-pane).
-     * Scenario: Tests that EXTRA_NO_HEADERS intent arg that prevents showing headers survives
-     * correctly multi-window changes. Tested via screenshots.
-     */
-    void startWithFragmentNoHeadersMultiWindowTest() {
-        launchActivityWithExtras(PreferenceWithHeaders.PrefsTwoFragment.class,
-                true /* noHeaders */, -1 /* initialTitle */);
-
-        assertInitialStateForFragment();
-
-        // Workaround for some focus bug in the framework
-        mTestUtils.tapOnViewWithText(PREFS2_PANEL_TITLE);
-
-        // Take screenshot
-        Bitmap before = mTestUtils.takeScreenshot();
-
-        // Enter and leave multi-window.
-        mTestUtils.enterMultiWindow(mActivity);
-        mTestUtils.leaveMultiWindow(mActivity);
-
-        assertInitialStateForFragment();
-
-        // Compare screenshots
-        Bitmap after = mTestUtils.takeScreenshot();
-        assertScreenshotsAreEqual(before, after);
     }
 
     /**
@@ -515,163 +456,6 @@ public abstract class PreferenceActivityFlowTest {
         assertScreenshotsAreEqual(before, after);
     }
 
-    /**
-     * For: Any screen (single or multi-pane).
-     * Scenario: Tests that the PreferenceActivity properly restores its state after going to
-     * multi-window and back. Test done via screenshots.
-     */
-    void multiWindowInOutTest() {
-        launchActivity();
-
-        assertInitialState();
-        // Tap on Prefs2 header.
-        tapOnPrefs2Header();
-
-        assertPanelPrefs2Shown();
-
-        // Take screenshot
-        Bitmap before = mTestUtils.takeScreenshot();
-
-        // Enter and leave multi-window.
-        mTestUtils.enterMultiWindow(mActivity);
-        mTestUtils.leaveMultiWindow(mActivity);
-
-        assertPanelPrefs2Shown();
-
-        // Compare screenshots
-        Bitmap after = mTestUtils.takeScreenshot();
-        assertScreenshotsAreEqual(before, after);
-    }
-
-    /**
-     * For: Any screen (single or multi-pane).
-     * Scenario: Tests that the PreferenceActivity properly restores its state after going to
-     * multi-window and back while an inner fragment is shown. Test done via screenshots.
-     */
-    void multiWindowInnerFragmentInOutTest() {
-        launchActivity();
-
-        assertInitialState();
-        if (!mIsMultiPane) {
-            tapOnPrefs1Header();
-        }
-
-        // Go to preferences inner fragment.
-        mTestUtils.tapOnViewWithText(INNER_FRAGMENT_PREF_BUTTON);
-
-        // We don't need to check that correct panel is displayed that is already covered by
-        // smallScreenGoToFragmentInner and largeScreenGoToFragmentInner
-
-        // Take screenshot
-        Bitmap before = mTestUtils.takeScreenshot();
-
-        // Enter and leave multi-window.
-        mTestUtils.enterMultiWindow(mActivity);
-        mTestUtils.leaveMultiWindow(mActivity);
-
-        // Compare screenshots
-        Bitmap after = mTestUtils.takeScreenshot();
-        assertScreenshotsAreEqual(before, after);
-    }
-
-    /**
-     * For: Large screen (single or multi-pane).
-     * Scenario: Goes to single-pane by entering multi-window and tests that back press ends up with
-     * a list of headers and nothing else. Then leaves multi-window back to single-pane and tests if
-     * the proper default header was opened (screenshot test).
-     */
-    void multiWindowInitialHeaderOnBackTest() {
-        launchActivity();
-        if (!shouldRunLargeDeviceTest()) {
-            return;
-        }
-
-        assertInitialState();
-
-        Bitmap before = mTestUtils.takeScreenshot();
-
-        // Enter multi-window.
-        mTestUtils.enterMultiWindow(mActivity);
-
-        // Get window focus (otherwise back press would close multi-window instead of firing to the
-        // Activity.
-        mTestUtils.getMultiWindowFocus(mActivity);
-
-        pressBack();
-
-        // Only headers should be shown (also checks that we have correct focus).
-        assertHeadersShown();
-        assertPanelPrefs1Hidden();
-        assertPanelPrefs2Hidden();
-
-        // Leave multi-window
-        mTestUtils.leaveMultiWindow(mActivity);
-
-        // Headers and Prefs1 should be shown.
-        assertHeadersShown();
-        assertPanelPrefs1Shown();
-        assertPanelPrefs2Hidden();
-
-        // Compare screenshots
-        Bitmap after = mTestUtils.takeScreenshot();
-        assertScreenshotsAreEqual(before, after);
-    }
-
-    /**
-     * For: Large screen (multi-pane).
-     * Scenario: Tests that history is preserved correctly while transitioning to multi-window.
-     * Navigates to Prefs2 pane and then goes to single-pane mode via multi-window. Test that back
-     * press navigates to the headers list. Then tests that restoring multi-pane by leaving
-     * multi-window opens the same screen with which was the activity started before (screenshot
-     * test).
-     */
-    void multiWindowHistoryPreserveTest() {
-        launchActivity();
-        if (!shouldRunLargeDeviceTest()) {
-            return;
-        }
-
-        assertInitialState();
-        Bitmap before = mTestUtils.takeScreenshot();
-
-        tapOnPrefs2Header();
-
-        // Enter multi-window.
-        mTestUtils.enterMultiWindow(mActivity);
-        mTestUtils.getMultiWindowFocus(mActivity);
-
-        // Only Prefs2 should be shown (also checks that we have correct focus).
-        assertHeadersHidden();
-        assertPanelPrefs1Hidden();
-        assertPanelPrefs2Shown();
-
-        pressBack();
-
-        // Only headers should be shown.
-        assertHeadersShown();
-        assertPanelPrefs1Hidden();
-        assertPanelPrefs2Hidden();
-
-        tapOnPrefs1Header();
-
-        // Only Prefs1 should be shown.
-        assertHeadersHidden();
-        assertPanelPrefs1Shown();
-        assertPanelPrefs2Hidden();
-
-        // Leave multi-window
-        mTestUtils.leaveMultiWindow(mActivity);
-
-        // Headers and Prefs1 should be shown.
-        assertHeadersShown();
-        assertPanelPrefs1Shown();
-        assertPanelPrefs2Hidden();
-
-        // Compare screenshots
-        Bitmap after = mTestUtils.takeScreenshot();
-        assertScreenshotsAreEqual(before, after);
-    }
-
     private void assertScreenshotsAreEqual(Bitmap before, Bitmap after) {
         assertTrue("Screenshots do not match!", BitmapUtils.compareBitmaps(before, after));
     }
@@ -690,7 +474,6 @@ public abstract class PreferenceActivityFlowTest {
             assertPanelPrefs1Hidden();
             assertPanelPrefs2Hidden();
         }
-
         assertHeadersAreLoaded();
     }
 
@@ -708,8 +491,6 @@ public abstract class PreferenceActivityFlowTest {
             assertPanelPrefs1Hidden();
             assertPanelPrefs2Shown();
         }
-
-
     }
 
     public boolean shouldRunLargeDeviceTest() {
@@ -739,12 +520,10 @@ public abstract class PreferenceActivityFlowTest {
     }
 
     private void assertHeadersAreLoaded() {
-        runOnUiThread(() -> {
-            assertEquals(EXPECTED_HEADERS_COUNT,
-                    mActivity.loadedHeaders == null
-                            ? 0
-                            : mActivity.loadedHeaders.size());
-        });
+        runOnUiThread(() -> assertEquals(EXPECTED_HEADERS_COUNT,
+                mActivity.loadedHeaders == null
+                        ? 0
+                        : mActivity.loadedHeaders.size()));
     }
 
     private void assertHeadersShown() {
@@ -822,9 +601,7 @@ public abstract class PreferenceActivityFlowTest {
     private void launchActivity() {
         mActivity = launchActivity(null);
         mTestUtils.device.waitForIdle();
-        runOnUiThread(() -> {
-            mIsMultiPane = mActivity.isMultiPane();
-        });
+        runOnUiThread(() -> mIsMultiPane = mActivity.isMultiPane());
     }
 
     private void launchActivityWithExtras(Class extraFragment, boolean noHeaders,
@@ -843,9 +620,7 @@ public abstract class PreferenceActivityFlowTest {
 
         mActivity = launchActivity(intent);
         mTestUtils.device.waitForIdle();
-        runOnUiThread(() -> {
-            mIsMultiPane = mActivity.isMultiPane();
-        });
+        runOnUiThread(() -> mIsMultiPane = mActivity.isMultiPane());
     }
 
     protected abstract PreferenceWithHeaders launchActivity(Intent intent);

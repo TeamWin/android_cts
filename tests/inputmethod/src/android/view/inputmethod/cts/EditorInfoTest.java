@@ -26,6 +26,7 @@ import static org.mockito.Mockito.verify;
 import android.os.Bundle;
 import android.os.LocaleList;
 import android.os.Parcel;
+import android.platform.test.annotations.Presubmit;
 import android.support.test.filters.SmallTest;
 import android.support.test.runner.AndroidJUnit4;
 import android.test.MoreAsserts;
@@ -37,6 +38,7 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 
 @SmallTest
+@Presubmit
 @RunWith(AndroidJUnit4.class)
 public class EditorInfoTest {
     @Test

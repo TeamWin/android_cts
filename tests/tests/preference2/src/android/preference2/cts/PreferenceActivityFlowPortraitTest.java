@@ -101,14 +101,6 @@ public class PreferenceActivityFlowPortraitTest extends PreferenceActivityFlowTe
     }
 
     /**
-     * Portrait setup of {@link #startWithFragmentAndInitTitleMultiWindowInner}.
-     */
-    @Test
-    public void startWithFragmentAndInitTitleMultiWindowPortraitTest() {
-        startWithFragmentAndInitTitleMultiWindowInner();
-    }
-
-    /**
      * Portrait setup of {@link #startWithFragmentNoHeadersInner}.
      */
     @Test
@@ -122,14 +114,6 @@ public class PreferenceActivityFlowPortraitTest extends PreferenceActivityFlowTe
     @Test
     public void startWithFragmentNoHeadersButInitTitlePortraitTest() {
         startWithFragmentNoHeadersButInitTitleInner();
-    }
-
-    /**
-     * Portrait setup of {@link #startWithFragmentNoHeadersMultiWindowTest}.
-     */
-    @Test
-    public void startWithFragmentNoHeadersMultiWindowPortraitTest() {
-        startWithFragmentNoHeadersMultiWindowTest();
     }
 
     /**
@@ -156,38 +140,6 @@ public class PreferenceActivityFlowPortraitTest extends PreferenceActivityFlowTe
         recreateInnerFragmentTest();
     }
 
-    /**
-     * Portrait setup of {@link #multiWindowInOutTest}.
-     */
-    @Test
-    public void multiWindowInOutPortraitTest() {
-        multiWindowInOutTest();
-    }
-
-    /**
-     * Portrait setup of {@link #multiWindowInnerFragmentInOutTest}.
-     */
-    @Test
-    public void multiWindowInnerFragmentInOutPortraitTest() {
-        multiWindowInnerFragmentInOutTest();
-    }
-
-    /**
-     * Portrait setup of {@link #multiWindowInitialHeaderOnBackTest}.
-     */
-    @Test
-    public void multiWindowInitialHeaderOnBackPortraitTest() {
-        multiWindowInitialHeaderOnBackTest();
-    }
-
-    /**
-     * Portrait setup of {@link #multiWindowHistoryPreserveTest}.
-     */
-    @Test
-    public void multiWindowHistoryPreservePortraitTest() {
-        multiWindowHistoryPreserveTest();
-    }
-
     @Override
     protected PreferenceWithHeaders launchActivity(Intent intent) {
         if (intent != null) {
@@ -200,9 +152,7 @@ public class PreferenceActivityFlowPortraitTest extends PreferenceActivityFlowTe
     @Override
     protected void runOnUiThread(final Runnable runnable) {
         try {
-            mActivityRule.runOnUiThread(() -> {
-                runnable.run();
-            });
+            mActivityRule.runOnUiThread(runnable);
         } catch (Throwable ex) {
             throw new RuntimeException("Failure on the UI thread", ex);
         }

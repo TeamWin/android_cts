@@ -16,6 +16,7 @@
 
 package android.server.am;
 
+import static android.server.am.ActivityManagerState.STATE_STOPPED;
 import static android.server.am.Components.SHOW_WHEN_LOCKED_ACTIVITY;
 import static android.server.am.Components.SHOW_WHEN_LOCKED_ATTR_ACTIVITY;
 import static android.server.am.Components.SHOW_WHEN_LOCKED_ATTR_REMOVE_ATTR_ACTIVITY;
@@ -102,7 +103,7 @@ public class KeyguardTransitionTests extends ActivityManagerTestBase {
     public void testNewActivityDuringOccluded() throws Exception {
         try (final LockScreenSession lockScreenSession = new LockScreenSession()) {
             launchActivity(SHOW_WHEN_LOCKED_ACTIVITY);
-            lockScreenSession.gotoKeyguard();
+            lockScreenSession.gotoKeyguard(SHOW_WHEN_LOCKED_ACTIVITY);
             launchActivity(SHOW_WHEN_LOCKED_WITH_DIALOG_ACTIVITY);
             mAmWmState.computeState(SHOW_WHEN_LOCKED_WITH_DIALOG_ACTIVITY);
             assertEquals("Picked wrong transition", TRANSIT_ACTIVITY_OPEN,
@@ -134,10 +135,16 @@ public class KeyguardTransitionTests extends ActivityManagerTestBase {
                     mAmWmState.getWmState().getLastTransition());
             assertSingleLaunch(SHOW_WHEN_LOCKED_ATTR_REMOVE_ATTR_ACTIVITY, logSeparator);
 
+            // Waiting for the standard keyguard since
+            // {@link SHOW_WHEN_LOCKED_ATTR_REMOVE_ATTR_ACTIVITY} called
+            // {@link Activity#showWhenLocked(boolean)} and removed the attribute.
             lockScreenSession.gotoKeyguard();
             logSeparator = separateLogs();
-            launchActivity(SHOW_WHEN_LOCKED_ATTR_REMOVE_ATTR_ACTIVITY);
-            mAmWmState.computeState(SHOW_WHEN_LOCKED_ATTR_REMOVE_ATTR_ACTIVITY);
+            // Waiting for {@link SHOW_WHEN_LOCKED_ATTR_REMOVE_ATTR_ACTIVITY} stopped since it
+            // already lost show-when-locked attribute.
+            launchActivityNoWait(SHOW_WHEN_LOCKED_ATTR_REMOVE_ATTR_ACTIVITY);
+            mAmWmState.waitForActivityState(
+                    SHOW_WHEN_LOCKED_ATTR_REMOVE_ATTR_ACTIVITY, STATE_STOPPED);
             assertSingleStartAndStop(SHOW_WHEN_LOCKED_ATTR_REMOVE_ATTR_ACTIVITY, logSeparator);
         }
     }
@@ -146,7 +153,7 @@ public class KeyguardTransitionTests extends ActivityManagerTestBase {
     public void testNewActivityDuringOccludedWithAttr() throws Exception {
         try (final LockScreenSession lockScreenSession = new LockScreenSession()) {
             launchActivity(SHOW_WHEN_LOCKED_ATTR_ACTIVITY);
-            lockScreenSession.gotoKeyguard();
+            lockScreenSession.gotoKeyguard(SHOW_WHEN_LOCKED_ATTR_ACTIVITY);
             launchActivity(SHOW_WHEN_LOCKED_WITH_DIALOG_ACTIVITY);
             mAmWmState.computeState(SHOW_WHEN_LOCKED_WITH_DIALOG_ACTIVITY);
             assertEquals("Picked wrong transition", TRANSIT_ACTIVITY_OPEN,

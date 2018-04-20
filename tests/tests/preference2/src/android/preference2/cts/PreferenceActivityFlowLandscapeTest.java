@@ -101,14 +101,6 @@ public class PreferenceActivityFlowLandscapeTest extends PreferenceActivityFlowT
     }
 
     /**
-     * Landscape setup of {@link #startWithFragmentAndInitTitleMultiWindowInner}.
-     */
-    @Test
-    public void startWithFragmentAndInitTitleMultiWindowLandscapeTest() {
-        startWithFragmentAndInitTitleMultiWindowInner();
-    }
-
-    /**
      * Landscape setup of {@link #startWithFragmentNoHeadersInner}.
      */
     @Test
@@ -122,14 +114,6 @@ public class PreferenceActivityFlowLandscapeTest extends PreferenceActivityFlowT
     @Test
     public void startWithFragmentNoHeadersButInitTitleLandscapeTest() {
         startWithFragmentNoHeadersButInitTitleInner();
-    }
-
-    /**
-     * Landscape setup of {@link #startWithFragmentNoHeadersMultiWindowTest}.
-     */
-    @Test
-    public void startWithFragmentNoHeadersMultiWindowLandscapeTest() {
-        startWithFragmentNoHeadersMultiWindowTest();
     }
 
     /**
@@ -156,38 +140,6 @@ public class PreferenceActivityFlowLandscapeTest extends PreferenceActivityFlowT
         recreateInnerFragmentTest();
     }
 
-    /**
-     * Landscape setup of {@link #multiWindowInOutTest}.
-     */
-    @Test
-    public void multiWindowInOutLandscapeTest() {
-        multiWindowInOutTest();
-    }
-
-    /**
-     * Landscape setup of {@link #multiWindowInnerFragmentInOutTest}.
-     */
-    @Test
-    public void multiWindowInnerFragmentInOutLandscapeTest() {
-        multiWindowInnerFragmentInOutTest();
-    }
-
-    /**
-     * Landscape setup of {@link #multiWindowInitialHeaderOnBackTest}.
-     */
-    @Test
-    public void multiWindowInitialHeaderOnBackLandscapeTest() {
-        multiWindowInitialHeaderOnBackTest();
-    }
-
-    /**
-     * Landscape setup of {@link #multiWindowHistoryPreserveTest}.
-     */
-    @Test
-    public void multiWindowHistoryPreserveLandscapeTest() {
-        multiWindowHistoryPreserveTest();
-    }
-
     @Override
     protected PreferenceWithHeaders launchActivity(Intent intent) {
         if (intent != null) {
@@ -200,9 +152,7 @@ public class PreferenceActivityFlowLandscapeTest extends PreferenceActivityFlowT
     @Override
     protected void runOnUiThread(final Runnable runnable) {
         try {
-            mActivityRule.runOnUiThread(() -> {
-                runnable.run();
-            });
+            mActivityRule.runOnUiThread(runnable);
         } catch (Throwable ex) {
             throw new RuntimeException("Failure on the UI thread", ex);
         }

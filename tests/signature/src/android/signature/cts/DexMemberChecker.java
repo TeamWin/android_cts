@@ -17,6 +17,7 @@
 package android.signature.cts;
 
 import java.lang.reflect.Constructor;
+import java.lang.reflect.Field;
 import java.lang.reflect.Method;
 import java.util.List;
 
@@ -94,17 +95,10 @@ public class DexMemberChecker {
     }
 
     private static boolean hasMatchingField_JNI(Class<?> klass, DexField dexField) {
-        try {
-            getField_JNI(klass, dexField.getName(), dexField.getDexType());
-            return true;
-        } catch (NoSuchFieldError ex) {
-        }
-        try {
-            getStaticField_JNI(klass, dexField.getName(), dexField.getDexType());
-            return true;
-        } catch (NoSuchFieldError ex) {
-        }
-        return false;
+        Field ifield = getField_JNI(klass, dexField.getName(), dexField.getDexType());
+        Field sfield = getStaticField_JNI(klass, dexField.getName(), dexField.getDexType());
+        return (ifield != null && ifield.getClass() == klass) ||
+               (sfield != null && sfield.getClass() == klass);
     }
 
     private static boolean hasMatchingMethod_Reflection(Class<?> klass, DexMethod dexMethod) {
@@ -117,8 +111,10 @@ public class DexMemberChecker {
                 }
             }
         } else {
+            String methodReturnType = dexMethod.getJavaType();
             for (Method method : klass.getDeclaredMethods()) {
                 if (method.getName().equals(dexMethod.getName())
+                        && method.getReturnType().getTypeName().equals(methodReturnType)
                         && typesMatch(method.getParameterTypes(), methodParams)) {
                     return true;
                 }
@@ -128,25 +124,17 @@ public class DexMemberChecker {
     }
 
     private static boolean hasMatchingMethod_JNI(Class<?> klass, DexMethod dexMethod) {
-        try {
-            getMethod_JNI(klass, dexMethod.getName(), dexMethod.getDexSignature());
-            return true;
-        } catch (NoSuchMethodError ex) {
-        }
-        if (!dexMethod.isConstructor()) {
-            try {
-                getStaticMethod_JNI(klass, dexMethod.getName(), dexMethod.getDexSignature());
-                return true;
-            } catch (NoSuchMethodError ex) {
-            }
-        }
-        return false;
+        Method imethod = getMethod_JNI(klass, dexMethod.getName(), dexMethod.getDexSignature());
+        Method smethod = dexMethod.isConstructor() ? null :
+             getStaticMethod_JNI(klass, dexMethod.getName(), dexMethod.getDexSignature());
+        return (imethod != null && imethod.getClass() == klass) ||
+               (smethod != null && smethod.getClass() == klass);
     }
 
-    private static native boolean getField_JNI(Class<?> klass, String name, String type);
-    private static native boolean getStaticField_JNI(Class<?> klass, String name, String type);
-    private static native boolean getMethod_JNI(Class<?> klass, String name, String signature);
-    private static native boolean getStaticMethod_JNI(Class<?> klass, String name,
+    private static native Field getField_JNI(Class<?> klass, String name, String type);
+    private static native Field getStaticField_JNI(Class<?> klass, String name, String type);
+    private static native Method getMethod_JNI(Class<?> klass, String name, String signature);
+    private static native Method getStaticMethod_JNI(Class<?> klass, String name,
             String signature);
 
 }

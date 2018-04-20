@@ -207,6 +207,8 @@ enum GoldenColor {
     kBlack,  // opaque black
     kRed,  // opaque red
     kBlue,  // opaque blue
+    kRed50,  // 50% premultiplied red, i.e., (0.5, 0, 0, 0.5)
+    kRed50Srgb,  // 50% premultiplied red under sRGB transfer function
 };
 
 struct GoldenPixel {
@@ -222,28 +224,73 @@ void CheckGoldenPixel(int x, int y, const std::array<T, 4>& golden,
     EXPECT_EQ(golden, actual) << "Pixel doesn't match at X=" << x << ", Y=" << y;
 }
 
-void CheckGoldenPixel(const GoldenPixel& golden, const std::array<uint8_t, 4>& pixel,
-                      bool alpha_format) {
-    const std::array<uint8_t, 4> golden_pixel = {
-        static_cast<uint8_t>(golden.color == kRed ? 255 : 0), 0,
-        static_cast<uint8_t>(golden.color == kBlue ? 255 : 0),
-        // Formats without alpha should be read as opaque.
-        static_cast<uint8_t>((golden.color != kZero || !alpha_format) ? 255 : 0),
-    };
-    CheckGoldenPixel(golden.x, golden.y, golden_pixel, pixel);
+template <typename T>
+void CheckGoldenPixel(int x, int y, const std::array<T, 4>& minimum,
+                      const std::array<T, 4>& maximum, const std::array<T, 4>& actual) {
+    EXPECT_EQ(GLenum{GL_NO_ERROR}, glGetError());
+    bool in_range = true;
+    for (int i = 0; i < 4; ++i) {
+        if (actual[i] < minimum[i] || actual[i] > maximum[i]) {
+            in_range = false;
+            break;
+        }
+    }
+    EXPECT_TRUE(in_range) << "Pixel out of acceptable range at X=" << x << ", Y=" << y;
 }
 
-void CheckGoldenPixel(const GoldenPixel& golden, const std::array<float, 4>& pixel,
+void CheckGoldenPixel(const GoldenPixel& golden, const std::array<uint8_t, 4>& pixel,
                       bool alpha_format) {
-    const std::array<float, 4> golden_pixel = {
-        golden.color == kRed ? 1.f : 0.f, 0.f, golden.color == kBlue ? 1.f : 0.f,
-        // Formats without alpha should be read as opaque.
-        (golden.color != kZero || !alpha_format) ? 1.f : 0.f,
-    };
+    std::array<uint8_t, 4> golden_pixel = {0, 0, 0, 255};
+    std::array<uint8_t, 4> golden_max = {0, 0, 0, 255};
+    bool use_range = false;
+    switch (golden.color) {
+        case kRed: golden_pixel[0] = 255; break;
+        case kRed50:
+            use_range = true;
+            golden_pixel[0] = 127;
+            golden_max[0] = 128;
+            if (alpha_format) {
+                golden_pixel[3] = 127;
+                golden_max[3] = 128;
+            }
+            break;
+        case kRed50Srgb:
+            use_range = true;
+            golden_pixel[0] = 187;
+            golden_max[0] = 188;
+            if (alpha_format) {
+                golden_pixel[3] = 127;
+                golden_max[3] = 128;
+            }
+            break;
+        case kBlue: golden_pixel[2] = 255; break;
+        case kZero: if (alpha_format) golden_pixel[3] = 0; break;
+        case kBlack: break;
+        default: FAIL() << "Unrecognized golden pixel color";
+    }
+    if (use_range) {
+        CheckGoldenPixel(golden.x, golden.y, golden_pixel, golden_max, pixel);
+    } else {
+        CheckGoldenPixel(golden.x, golden.y, golden_pixel, pixel);
+    }
+}
+
+void CheckGoldenPixel(const GoldenPixel& golden, const std::array<float, 4>& pixel) {
+    std::array<float, 4> golden_pixel = {0.f, 0.f, 0.f, 1.f};
+    switch (golden.color) {
+        case kRed: golden_pixel[0] = 1.f; break;
+        case kRed50: golden_pixel[0] = 0.5f; golden_pixel[3] = 0.5f; break;
+        case kBlue: golden_pixel[2] = 1.f; break;
+        case kZero: golden_pixel[3] = 0.f; break;
+        case kBlack: break;
+        default: FAIL() << "Unrecognized golden pixel color";
+    }
     CheckGoldenPixel(golden.x, golden.y, golden_pixel, pixel);
 }
 
 void CheckGoldenPixels(const std::vector<GoldenPixel>& goldens, bool float_format, bool alpha_format) {
+    // There are currently no gralloc float formats without alpha.
+    EXPECT_TRUE(float_format ? alpha_format : true);
     glPixelStorei(GL_PACK_ALIGNMENT, 1);
     // In OpenGL, Y axis grows up, so bottom = minimum Y coordinate.
     int bottom = INT_MAX, left = INT_MAX, right = 0, top = 0;
@@ -255,7 +302,7 @@ void CheckGoldenPixels(const std::vector<GoldenPixel>& goldens, bool float_forma
         if (float_format) {
             std::array<float, 4> pixel = {0.5f, 0.5f, 0.5f, 0.5f};
             glReadPixels(golden.x, golden.y, 1, 1, GL_RGBA, GL_FLOAT, pixel.data());
-            CheckGoldenPixel(golden, pixel, alpha_format);
+            CheckGoldenPixel(golden, pixel);
         } else {
             std::array<uint8_t, 4> pixel = {127, 127, 127, 127};
             glReadPixels(golden.x, golden.y, 1, 1, GL_RGBA, GL_UNSIGNED_BYTE, pixel.data());
@@ -273,7 +320,7 @@ void CheckGoldenPixels(const std::vector<GoldenPixel>& goldens, bool float_forma
             float* pixel = pixels.get() + ((golden.y - bottom) * width + golden.x - left) * 4;
             std::array<float, 4> pixel_array;
             memcpy(pixel_array.data(), pixel, 4 * sizeof(float));
-            CheckGoldenPixel(golden, pixel_array, alpha_format);
+            CheckGoldenPixel(golden, pixel_array);
         }
     } else {
         std::unique_ptr<uint8_t[]> pixels(new uint8_t[width * height * 4]);
@@ -573,7 +620,7 @@ void AHardwareBufferGLTest::SetUp() {
         EGL_NONE
     };
     mContext[0] = eglCreateContext(mDisplay, first_config, EGL_NO_CONTEXT, context_attrib_list);
-    if (mContext == EGL_NO_CONTEXT) {
+    if (mContext[0] == EGL_NO_CONTEXT) {
         context_attrib_list[1] = 2;
         mContext[0] = eglCreateContext(mDisplay, first_config, EGL_NO_CONTEXT, context_attrib_list);
         mContext[1] = eglCreateContext(mDisplay, first_config, EGL_NO_CONTEXT, context_attrib_list);
@@ -1131,7 +1178,7 @@ TEST_P(AHardwareBufferColorFormatTest, GpuColorOutputCpuRead) {
                 for (int i = 0; i < 4; ++i) {
                     pixel_to_check[i] = FloatFromHalf(pixel[i]);
                 }
-                CheckGoldenPixel(golden, pixel_to_check, /*alpha_format=*/true);
+                CheckGoldenPixel(golden, pixel_to_check);
                 break;
             }
             case AHARDWAREBUFFER_FORMAT_R10G10B10A2_UNORM: {
@@ -1285,22 +1332,8 @@ TEST_P(AHardwareBufferColorFormatTest, MipmapComplete) {
     MakeCurrent(0);
     SetUpFramebuffer(1, 1, desc.layers - 1, kBufferAsTexture, kNone, kNone, kNone,
                      MipLevelCount(desc.width, desc.height) - 1);
-    if (FormatIsFloat(desc.format)) {
-        std::array<float, 4> golden_pixel = {
-            0.5f, 0.f, 0.f, FormatHasAlpha(desc.format) ? 0.5f : 1.f,
-        };
-        std::array<float, 4> pixel;
-        glReadPixels(0, 0, 1, 1, GL_RGBA, GL_FLOAT, pixel.data());
-        CheckGoldenPixel(0, 0, golden_pixel, pixel);
-    } else {
-        std::array<uint8_t, 4> golden_pixel = {
-            static_cast<uint8_t>(kUseSrgb ? 188 : 128), 0, 0,
-            static_cast<uint8_t>(FormatHasAlpha(desc.format) ? 128 : 255),
-        };
-        std::array<uint8_t, 4> pixel;
-        glReadPixels(0, 0, 1, 1, GL_RGBA, GL_UNSIGNED_BYTE, pixel.data());
-        CheckGoldenPixel(0, 0, golden_pixel, pixel);
-    }
+    std::vector<GoldenPixel> goldens{{0, 0, kUseSrgb ? kRed50Srgb : kRed50}};
+    CheckGoldenPixels(goldens, FormatIsFloat(desc.format), FormatHasAlpha(desc.format));
 }
 
 TEST_P(AHardwareBufferColorFormatTest, CubemapSampling) {
@@ -1396,22 +1429,8 @@ TEST_P(AHardwareBufferColorFormatTest, CubemapMipmaps) {
     for (int face = 0; face < 6; ++face) {
         SetUpFramebuffer(1, 1, desc.layers - 6 + face, kBufferAsTexture, kNone, kNone, kNone,
                          MipLevelCount(desc.width, desc.height) - 1);
-        if (FormatIsFloat(desc.format)) {
-            std::array<float, 4> golden_pixel = {
-                0.5f, 0.f, 0.f, FormatHasAlpha(desc.format) ? 0.5f : 1.f,
-            };
-            std::array<float, 4> pixel;
-            glReadPixels(0, 0, 1, 1, GL_RGBA, GL_FLOAT, pixel.data());
-            CheckGoldenPixel(0, 0, golden_pixel, pixel);
-        } else {
-            std::array<uint8_t, 4> golden_pixel = {
-                static_cast<uint8_t>(kUseSrgb ? 188 : 128), 0, 0,
-                static_cast<uint8_t>(FormatHasAlpha(desc.format) ? 128 : 255),
-            };
-            std::array<uint8_t, 4> pixel;
-            glReadPixels(0, 0, 1, 1, GL_RGBA, GL_UNSIGNED_BYTE, pixel.data());
-            CheckGoldenPixel(0, 0, golden_pixel, pixel);
-        }
+        std::vector<GoldenPixel> goldens{{0, 0, kUseSrgb ? kRed50Srgb : kRed50}};
+        CheckGoldenPixels(goldens, FormatIsFloat(desc.format), FormatHasAlpha(desc.format));
     }
 }
 
