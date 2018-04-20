@@ -604,20 +604,23 @@ public class WebViewClientTest extends ActivityInstrumentationTestCase2<WebViewC
         assertFalse(webViewClient.didRenderProcessCrash());
     }
 
-    public void testOnSafeBrowsingHit() throws Throwable {
+    public void testOnSafeBrowsingHitBackToSafety() throws Throwable {
         if (!NullWebViewUtils.isWebViewAvailable()) {
             return;
         }
-        final SafeBrowsingBackToSafetyClient backToSafetyWebViewClient =
-                new SafeBrowsingBackToSafetyClient();
-        mOnUiThread.setWebViewClient(backToSafetyWebViewClient);
-        mOnUiThread.getSettings().setSafeBrowsingEnabled(true);
-
         mWebServer = new CtsTestServer(getActivity());
         String url = mWebServer.getAssetUrl(TestHtmlConstants.HELLO_WORLD_URL);
         mOnUiThread.loadUrlAndWaitForCompletion(url);
         final String ORIGINAL_URL = mOnUiThread.getUrl();
 
+        final SafeBrowsingBackToSafetyClient backToSafetyWebViewClient =
+                new SafeBrowsingBackToSafetyClient();
+        mOnUiThread.setWebViewClient(backToSafetyWebViewClient);
+        mOnUiThread.getSettings().setSafeBrowsingEnabled(true);
+
+        // Note: Safe Browsing depends on user opt-in as well, so we can't assume it's actually
+        // enabled. #getSafeBrowsingEnabled will tell us the true state of whether Safe Browsing is
+        // enabled.
         if (mOnUiThread.getSettings().getSafeBrowsingEnabled()) {
             assertEquals(0, backToSafetyWebViewClient.hasOnReceivedErrorCode());
             mOnUiThread.loadUrlAndWaitForCompletion(TEST_SAFE_BROWSING_URL);
@@ -633,11 +636,25 @@ public class WebViewClientTest extends ActivityInstrumentationTestCase2<WebViewC
             // Check that we actually navigated backward
             assertEquals(ORIGINAL_URL, mOnUiThread.getUrl());
         }
+    }
 
-        final SafeBrowsingProceedClient proceedWebViewClient = new SafeBrowsingProceedClient();
+    public void testOnSafeBrowsingHitProceed() throws Throwable {
+        if (!NullWebViewUtils.isWebViewAvailable()) {
+            return;
+        }
+        mWebServer = new CtsTestServer(getActivity());
+        String url = mWebServer.getAssetUrl(TestHtmlConstants.HELLO_WORLD_URL);
+        mOnUiThread.loadUrlAndWaitForCompletion(url);
+        final String ORIGINAL_URL = mOnUiThread.getUrl();
+
+        final SafeBrowsingProceedClient proceedWebViewClient =
+                new SafeBrowsingProceedClient();
         mOnUiThread.setWebViewClient(proceedWebViewClient);
-
         mOnUiThread.getSettings().setSafeBrowsingEnabled(true);
+
+        // Note: Safe Browsing depends on user opt-in as well, so we can't assume it's actually
+        // enabled. #getSafeBrowsingEnabled will tell us the true state of whether Safe Browsing is
+        // enabled.
         if (mOnUiThread.getSettings().getSafeBrowsingEnabled()) {
             assertEquals(0, proceedWebViewClient.hasOnReceivedErrorCode());
             mOnUiThread.loadUrlAndWaitForCompletion(TEST_SAFE_BROWSING_URL);
