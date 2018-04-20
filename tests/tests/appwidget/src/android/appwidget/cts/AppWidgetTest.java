@@ -72,6 +72,8 @@ public class AppWidgetTest extends AppWidgetTestCase {
 
     @Override
     public void setUp() throws Exception {
+        super.setUp();
+
         // Workaround for dexmaker bug: https://code.google.com/p/dexmaker/issues/detail?id=2
         // Dexmaker is used by mockito.
         System.setProperty("dexmaker.dexcache", getInstrumentation()
