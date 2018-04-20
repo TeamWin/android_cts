@@ -52,7 +52,6 @@ public class HidHostActivity extends PassFailButtons.Activity {
         setContentView(R.layout.bt_hid_host);
         setPassFailButtonClickListeners();
         setInfoResources(R.string.bt_hid_host_test_name, R.string.bt_hid_host_test_info, -1);
-        getPassButton().setEnabled(false);
         mBluetoothAdapter = BluetoothAdapter.getDefaultAdapter();
 
         mEditText = (EditText) findViewById(R.id.bt_hid_host_edit_text);
