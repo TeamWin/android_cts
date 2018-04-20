@@ -719,35 +719,6 @@ final class Helper {
     }
 
     /**
-     * Wait until a process starts and returns the process ID of the process.
-     *
-     * @return The pid of the process
-     */
-    public static int getOutOfProcessPid(@NonNull String processName) {
-        long startTime = System.currentTimeMillis();
-
-        while (System.currentTimeMillis() - startTime <= UI_TIMEOUT_MS) {
-            String[] allProcessDescs = runShellCommand("ps -eo PID,ARGS=CMD").split("\n");
-
-            for (String processDesc : allProcessDescs) {
-                String[] pidAndName = processDesc.trim().split(" ");
-
-                if (pidAndName[1].equals(processName)) {
-                    return Integer.parseInt(pidAndName[0]);
-                }
-            }
-
-            try {
-                Thread.sleep(RETRY_MS);
-            } catch (InterruptedException e) {
-                Thread.currentThread().interrupt();
-            }
-        }
-
-        throw new IllegalStateException("process not found");
-    }
-
-    /**
      * Gets the maximum number of partitions per session.
      */
     public static int getMaxPartitions() {

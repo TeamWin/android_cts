@@ -67,6 +67,10 @@
         <activity android:name=".TrampolineWelcomeActivity"/>
         <activity android:name=".AttachedContextActivity"/>
 
+        <receiver android:name=".SelfDestructReceiver"
+            android:exported="true"
+            android:process="android.autofillservice.cts.outside"/>
+
         <service
             android:name=".InstrumentedAutoFillService"
             android:label="InstrumentedAutoFillService"
