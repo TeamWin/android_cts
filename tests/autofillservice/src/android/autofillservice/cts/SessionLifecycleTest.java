@@ -22,7 +22,6 @@ import static android.autofillservice.cts.Helper.ID_USERNAME;
 import static android.autofillservice.cts.Helper.assertTextAndValue;
 import static android.autofillservice.cts.Helper.findNodeByResourceId;
 import static android.autofillservice.cts.Helper.getContext;
-import static android.autofillservice.cts.Helper.getOutOfProcessPid;
 import static android.autofillservice.cts.OutOfProcessLoginActivity.getStartedMarker;
 import static android.autofillservice.cts.OutOfProcessLoginActivity.getStoppedMarker;
 import static android.autofillservice.cts.UiBot.LANDSCAPE;
@@ -104,9 +103,8 @@ public class SessionLifecycleTest extends AutoFillServiceTestCase {
         SystemClock.sleep(WAIT_ACTIVITY_MS);
 
         // Kill activity that is in the background
-        runShellCommand("kill -9 %d",
-                getOutOfProcessPid("android.autofillservice.cts.outside",
-                        SESSION_LIFECYCLE_TIMEOUT));
+        runShellCommand("am broadcast --receiver-foreground "
+                + "-n android.autofillservice.cts/.SelfDestructReceiver");
     }
 
     private void startAndWaitExternalActivity() throws Exception {
