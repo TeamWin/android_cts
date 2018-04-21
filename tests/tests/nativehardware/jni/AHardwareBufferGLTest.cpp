@@ -29,12 +29,35 @@
 #include <vector>
 
 #include <android/hardware_buffer.h>
+#include <android/log.h>
 #include <gtest/gtest.h>
 
 #define NO_ERROR 0
+#define LOG_TAG "AHBGLTest"
+#define ALOGI(...) __android_log_print(ANDROID_LOG_INFO, LOG_TAG, __VA_ARGS__)
 
 namespace android {
 namespace {
+
+#define FORMAT_CASE(x) case x: return #x; break
+const char* AHBFormatAsString(int32_t format) {
+    switch (format) {
+        FORMAT_CASE(AHARDWAREBUFFER_FORMAT_R8G8B8A8_UNORM);
+        FORMAT_CASE(AHARDWAREBUFFER_FORMAT_R8G8B8X8_UNORM);
+        FORMAT_CASE(AHARDWAREBUFFER_FORMAT_R8G8B8_UNORM);
+        FORMAT_CASE(AHARDWAREBUFFER_FORMAT_R5G6B5_UNORM);
+        FORMAT_CASE(AHARDWAREBUFFER_FORMAT_R16G16B16A16_FLOAT);
+        FORMAT_CASE(AHARDWAREBUFFER_FORMAT_R10G10B10A2_UNORM);
+        FORMAT_CASE(AHARDWAREBUFFER_FORMAT_BLOB);
+        FORMAT_CASE(AHARDWAREBUFFER_FORMAT_D16_UNORM);
+        FORMAT_CASE(AHARDWAREBUFFER_FORMAT_D24_UNORM);
+        FORMAT_CASE(AHARDWAREBUFFER_FORMAT_D24_UNORM_S8_UINT);
+        FORMAT_CASE(AHARDWAREBUFFER_FORMAT_D32_FLOAT);
+        FORMAT_CASE(AHARDWAREBUFFER_FORMAT_D32_FLOAT_S8_UINT);
+        FORMAT_CASE(AHARDWAREBUFFER_FORMAT_S8_UINT);
+    }
+    return "";
+}
 
 union IntFloat {
     uint32_t i;
@@ -83,6 +106,7 @@ bool FormatHasAlpha(uint32_t format) {
         // This may look scary, but fortunately AHardwareBuffer formats and GL pixel formats
         // do not overlap.
         case GL_RGBA8:
+        case GL_RGB10_A2:
         case GL_RGBA16F:
         case GL_SRGB8_ALPHA8:
             return true;
@@ -151,7 +175,8 @@ void UploadRedPixels(const AHardwareBuffer_Desc& desc) {
             UploadData(desc, GL_RGBA, GL_FLOAT, pixels.get());
             break;
         }
-        case AHARDWAREBUFFER_FORMAT_R10G10B10A2_UNORM: {
+        case AHARDWAREBUFFER_FORMAT_R10G10B10A2_UNORM:
+        case GL_RGB10_A2: {
             const int size = desc.width * desc.height;
             std::unique_ptr<uint32_t[]> pixels(new uint32_t[size]);
             for (int i = 0; i < size; ++i) {
@@ -235,39 +260,45 @@ void CheckGoldenPixel(int x, int y, const std::array<T, 4>& minimum,
             break;
         }
     }
-    EXPECT_TRUE(in_range) << "Pixel out of acceptable range at X=" << x << ", Y=" << y;
+    if (!in_range) {
+        EXPECT_NE(actual, actual) << "Pixel out of acceptable range at X=" << x << ", Y=" << y;
+    }
 }
 
 void CheckGoldenPixel(const GoldenPixel& golden, const std::array<uint8_t, 4>& pixel,
-                      bool alpha_format) {
+                      uint32_t format) {
     std::array<uint8_t, 4> golden_pixel = {0, 0, 0, 255};
     std::array<uint8_t, 4> golden_max = {0, 0, 0, 255};
     bool use_range = false;
+    // Adjust color values.
     switch (golden.color) {
         case kRed: golden_pixel[0] = 255; break;
         case kRed50:
             use_range = true;
             golden_pixel[0] = 127;
             golden_max[0] = 128;
-            if (alpha_format) {
-                golden_pixel[3] = 127;
-                golden_max[3] = 128;
-            }
             break;
         case kRed50Srgb:
             use_range = true;
             golden_pixel[0] = 187;
             golden_max[0] = 188;
-            if (alpha_format) {
-                golden_pixel[3] = 127;
-                golden_max[3] = 128;
-            }
             break;
         case kBlue: golden_pixel[2] = 255; break;
-        case kZero: if (alpha_format) golden_pixel[3] = 0; break;
+        case kZero: if (FormatHasAlpha(format)) golden_pixel[3] = 0; break;
         case kBlack: break;
         default: FAIL() << "Unrecognized golden pixel color";
     }
+    // Adjust alpha.
+    if (golden.color == kRed50 || golden.color == kRed50Srgb) {
+        if (format == GL_RGB10_A2 || format == AHARDWAREBUFFER_FORMAT_R10G10B10A2_UNORM) {
+            golden_pixel[3] = 85;
+            golden_max[3] = 170;
+        } else if (FormatHasAlpha(format)) {
+            golden_pixel[3] = 127;
+            golden_max[3] = 128;
+        }
+    }
+
     if (use_range) {
         CheckGoldenPixel(golden.x, golden.y, golden_pixel, golden_max, pixel);
     } else {
@@ -288,9 +319,9 @@ void CheckGoldenPixel(const GoldenPixel& golden, const std::array<float, 4>& pix
     CheckGoldenPixel(golden.x, golden.y, golden_pixel, pixel);
 }
 
-void CheckGoldenPixels(const std::vector<GoldenPixel>& goldens, bool float_format, bool alpha_format) {
-    // There are currently no gralloc float formats without alpha.
-    EXPECT_TRUE(float_format ? alpha_format : true);
+void CheckGoldenPixels(const std::vector<GoldenPixel>& goldens, uint32_t format) {
+    // We currently do not test any float formats that don't have alpha.
+    EXPECT_TRUE(FormatIsFloat(format) ? FormatHasAlpha(format) : true);
     glPixelStorei(GL_PACK_ALIGNMENT, 1);
     // In OpenGL, Y axis grows up, so bottom = minimum Y coordinate.
     int bottom = INT_MAX, left = INT_MAX, right = 0, top = 0;
@@ -299,20 +330,20 @@ void CheckGoldenPixels(const std::vector<GoldenPixel>& goldens, bool float_forma
         right = std::max(right, golden.x);
         bottom = std::min(bottom, golden.y);
         top = std::max(top, golden.y);
-        if (float_format) {
+        if (FormatIsFloat(format)) {
             std::array<float, 4> pixel = {0.5f, 0.5f, 0.5f, 0.5f};
             glReadPixels(golden.x, golden.y, 1, 1, GL_RGBA, GL_FLOAT, pixel.data());
             CheckGoldenPixel(golden, pixel);
         } else {
             std::array<uint8_t, 4> pixel = {127, 127, 127, 127};
             glReadPixels(golden.x, golden.y, 1, 1, GL_RGBA, GL_UNSIGNED_BYTE, pixel.data());
-            CheckGoldenPixel(golden, pixel, alpha_format);
+            CheckGoldenPixel(golden, pixel, format);
         }
     }
     // Repeat the test, but read back all the necessary pixels in a single glReadPixels call.
     const int width = right - left + 1;
     const int height = top - bottom + 1;
-    if (float_format) {
+    if (FormatIsFloat(format)) {
         std::unique_ptr<float[]> pixels(new float[width * height * 4]);
         glReadPixels(left, bottom, width, height, GL_RGBA, GL_FLOAT, pixels.get());
         EXPECT_EQ(GLenum{GL_NO_ERROR}, glGetError());
@@ -330,7 +361,7 @@ void CheckGoldenPixels(const std::vector<GoldenPixel>& goldens, bool float_forma
             uint8_t* pixel = pixels.get() + ((golden.y - bottom) * width + golden.x - left) * 4;
             std::array<uint8_t, 4> pixel_array;
             memcpy(pixel_array.data(), pixel, 4);
-            CheckGoldenPixel(golden, pixel_array, alpha_format);
+            CheckGoldenPixel(golden, pixel_array, format);
         }
     }
 }
@@ -666,21 +697,36 @@ void AHardwareBufferGLTest::SetUp() {
 bool AHardwareBufferGLTest::SetUpBuffer(const AHardwareBuffer_Desc& desc, bool use_srgb) {
     if (desc.usage & AHARDWAREBUFFER_USAGE_GPU_CUBE_MAP) {
         if (desc.layers > 6) {
-            if (mGLVersion < 32) return false;
+            if (mGLVersion < 32) {
+                ALOGI("Test skipped: cube map arrays require GL ES 3.2, found %d.%d",
+                      mGLVersion / 10, mGLVersion % 10);
+                return false;
+            }
             mTexTarget = GL_TEXTURE_CUBE_MAP_ARRAY;
         } else {
             mTexTarget = GL_TEXTURE_CUBE_MAP;
         }
     } else {
         if (desc.layers > 1) {
-            if (mGLVersion < 30) return false;
+            if (mGLVersion < 30) {
+                ALOGI("Test skipped: texture arrays require GL ES 3.0, found %d.%d",
+                      mGLVersion / 10, mGLVersion % 10);
+                return false;
+            }
             mTexTarget = GL_TEXTURE_2D_ARRAY;
         } else {
             mTexTarget = GL_TEXTURE_2D;
         }
     }
-    if (desc.format == GL_SRGB8_ALPHA8 && mGLVersion < 30) return false;
-    if (desc.format == GL_RGBA16F && !HasGLExtension("GL_EXT_color_buffer_float")) return false;
+    if (desc.format == GL_SRGB8_ALPHA8 && mGLVersion < 30) {
+        ALOGI("Test skipped: GL_SRGB8_ALPHA8 requires GL ES 3.0, found %d.%d",
+              mGLVersion / 10, mGLVersion % 10);
+        return false;
+    }
+    if (desc.format == GL_RGBA16F && !HasGLExtension("GL_EXT_color_buffer_float")) {
+        ALOGI("Test skipped: GL_RGBA16F requires GL_EXT_color_buffer_float");
+        return false;
+    }
     // Nonzero stride indicates that desc.format should be interpreted as a GL format
     // and the test should be run in a single context, without using AHardwareBuffer.
     // This simplifies verifying that the test behaves as expected even if the
@@ -689,13 +735,24 @@ bool AHardwareBufferGLTest::SetUpBuffer(const AHardwareBuffer_Desc& desc, bool u
         mContextCount = 1;
         return true;
     }
-    if (use_srgb && !HasEGLExtension("EGL_EXT_image_gl_colorspace")) return false;
+    if (use_srgb && !HasEGLExtension("EGL_EXT_image_gl_colorspace")) {
+        ALOGI("Test skipped: sRGB hardware buffers require EGL_EXT_image_gl_colorspace");
+        return false;
+    }
     if (desc.usage & AHARDWAREBUFFER_USAGE_GPU_CUBE_MAP &&
-        !HasGLExtension("GL_EXT_EGL_image_storage")) return false;
+        !HasGLExtension("GL_EXT_EGL_image_storage")) {
+        ALOGI("Test skipped: cube map array hardware buffers require "
+              "GL_EXT_EGL_image_storage");
+        return false;
+    }
 
     int result = AHardwareBuffer_allocate(&desc, &mBuffer);
     // Skip if this format cannot be allocated.
-    if (result != NO_ERROR) return false;
+    if (result != NO_ERROR) {
+        ALOGI("Test skipped: %s not supported",
+              AHBFormatAsString(desc.format));
+        return false;
+    }
     // Do not create the EGLImage if this is a blob format.
     if (desc.format == AHARDWAREBUFFER_FORMAT_BLOB) return true;
 
@@ -972,7 +1029,7 @@ TEST_P(AHardwareBufferBlobFormatTest, GpuDataBufferVertexBuffer) {
         {5, 15, kZero}, {15, 15, kRed},  {25, 15, kRed},  {35, 15, kZero},
         {5,  5, kZero}, {15,  5, kZero}, {25, 5,  kZero}, {35, 5,  kZero},
     };
-    CheckGoldenPixels(goldens, /*float_format=*/false, /*alpha_format=*/true);
+    CheckGoldenPixels(goldens, GL_RGBA8);
 }
 
 // Verifies that a blob buffer can be directly accessed from the CPU.
@@ -1018,7 +1075,7 @@ TEST_P(AHardwareBufferBlobFormatTest, GpuDataBufferCpuWrite) {
         {5, 15, kZero}, {15, 15, kRed},  {25, 15, kRed},  {35, 15, kZero},
         {5,  5, kZero}, {15,  5, kZero}, {25, 5,  kZero}, {35, 5,  kZero},
     };
-    CheckGoldenPixels(goldens, /*float_format=*/false, /*alpha_format=*/true);
+    CheckGoldenPixels(goldens, GL_RGBA8);
 }
 
 // Verifies that data written into a blob buffer from the GPU can be read on the CPU.
@@ -1103,7 +1160,7 @@ TEST_P(AHardwareBufferColorFormatTest, GpuColorOutputIsRenderable) {
         {10, 40, kZero}, {40, 40, kZero}, {60, 40, kRed},  {90, 40, kRed},
         {10, 10, kZero}, {40, 10, kZero}, {60, 10, kRed},  {90, 10, kRed},
     };
-    CheckGoldenPixels(goldens, FormatIsFloat(desc.format), FormatHasAlpha(desc.format));
+    CheckGoldenPixels(goldens, desc.format);
 }
 
 // Verifies that the content of GPU_COLOR_OUTPUT buffers can be read on the CPU.
@@ -1148,7 +1205,7 @@ TEST_P(AHardwareBufferColorFormatTest, GpuColorOutputCpuRead) {
                 if (desc.format == AHARDWAREBUFFER_FORMAT_R8G8B8X8_UNORM) {
                     pixel_to_check[3] = 255;
                 }
-                CheckGoldenPixel(golden, pixel_to_check, FormatHasAlpha(desc.format));
+                CheckGoldenPixel(golden, pixel_to_check, desc.format);
                 break;
             }
             case AHARDWAREBUFFER_FORMAT_R8G8B8_UNORM: {
@@ -1156,7 +1213,7 @@ TEST_P(AHardwareBufferColorFormatTest, GpuColorOutputCpuRead) {
                 std::array<uint8_t, 4> pixel_to_check;
                 memcpy(pixel_to_check.data(), pixel, 3);
                 pixel_to_check[3] = 255;
-                CheckGoldenPixel(golden, pixel_to_check, /*alpha_format=*/false);
+                CheckGoldenPixel(golden, pixel_to_check, desc.format);
                 break;
             }
             case AHARDWAREBUFFER_FORMAT_R5G6B5_UNORM: {
@@ -1168,7 +1225,7 @@ TEST_P(AHardwareBufferColorFormatTest, GpuColorOutputCpuRead) {
                     static_cast<uint8_t>((*pixel & 0x001F) * (255.f/31.f)),
                     255,
                 };
-                CheckGoldenPixel(golden, pixel_to_check, /*alpha_format=*/false);
+                CheckGoldenPixel(golden, pixel_to_check, desc.format);
                 break;
             }
             case AHARDWAREBUFFER_FORMAT_R16G16B16A16_FLOAT: {
@@ -1190,7 +1247,7 @@ TEST_P(AHardwareBufferColorFormatTest, GpuColorOutputCpuRead) {
                     static_cast<uint8_t>(((*pixel & 0x3FF00000) >> 20) * (255.f/1023.f)),
                     static_cast<uint8_t>(((*pixel & 0xC0000000) >> 30) * (255.f/3.f)),
                 };
-                CheckGoldenPixel(golden, pixel_to_check, /*alpha_format=*/true);
+                CheckGoldenPixel(golden, pixel_to_check, desc.format);
                 break;
             }
             default: FAIL() << "Unrecognized AHardwareBuffer format"; break;
@@ -1239,7 +1296,7 @@ TEST_P(AHardwareBufferColorFormatTest, GpuSampledImageCanBeSampled) {
         {5, 15, kZero}, {15, 15, kRed},  {25, 15, kRed},  {35, 15, kZero},
         {5,  5, kZero}, {15,  5, kZero}, {25, 5,  kZero}, {35, 5,  kZero},
     };
-    CheckGoldenPixels(goldens, /*float_format=*/false, /*alpha_format=*/true);
+    CheckGoldenPixels(goldens, GL_RGBA8);
 }
 
 // Verify that buffers which have both GPU_SAMPLED_IMAGE and GPU_COLOR_OUTPUT
@@ -1286,7 +1343,7 @@ TEST_P(AHardwareBufferColorFormatTest, GpuColorOutputAndSampledImage) {
         {5, 15, kZero}, {15, 15, kCBBlack}, {25, 15, kRed},  {35, 15, kZero},
         {5, 5,  kZero}, {15, 5,  kZero},    {25, 5,  kZero}, {35, 5,  kZero},
     };
-    CheckGoldenPixels(goldens, /*float_format=*/false, /*alpha_format=*/true);
+    CheckGoldenPixels(goldens, GL_RGBA8);
 }
 
 TEST_P(AHardwareBufferColorFormatTest, MipmapComplete) {
@@ -1333,7 +1390,7 @@ TEST_P(AHardwareBufferColorFormatTest, MipmapComplete) {
     SetUpFramebuffer(1, 1, desc.layers - 1, kBufferAsTexture, kNone, kNone, kNone,
                      MipLevelCount(desc.width, desc.height) - 1);
     std::vector<GoldenPixel> goldens{{0, 0, kUseSrgb ? kRed50Srgb : kRed50}};
-    CheckGoldenPixels(goldens, FormatIsFloat(desc.format), FormatHasAlpha(desc.format));
+    CheckGoldenPixels(goldens, desc.format);
 }
 
 TEST_P(AHardwareBufferColorFormatTest, CubemapSampling) {
@@ -1381,7 +1438,7 @@ TEST_P(AHardwareBufferColorFormatTest, CubemapSampling) {
             {5, 15, kZero}, {15, 15, kCBBlack}, {25, 15, kRed},  {35, 15, kZero},
             {5, 5,  kZero}, {15, 5,  kZero},    {25, 5,  kZero}, {35, 5,  kZero},
         };
-        CheckGoldenPixels(goldens, /*float_format=*/false, /*alpha_format=*/true);
+        CheckGoldenPixels(goldens, GL_RGBA8);
     }
 }
 
@@ -1430,7 +1487,7 @@ TEST_P(AHardwareBufferColorFormatTest, CubemapMipmaps) {
         SetUpFramebuffer(1, 1, desc.layers - 6 + face, kBufferAsTexture, kNone, kNone, kNone,
                          MipLevelCount(desc.width, desc.height) - 1);
         std::vector<GoldenPixel> goldens{{0, 0, kUseSrgb ? kRed50Srgb : kRed50}};
-        CheckGoldenPixels(goldens, FormatIsFloat(desc.format), FormatHasAlpha(desc.format));
+        CheckGoldenPixels(goldens, desc.format);
     }
 }
 
@@ -1442,6 +1499,7 @@ INSTANTIATE_TEST_CASE_P(
         AHardwareBuffer_Desc{64, 80, 1, GL_RGBA8, 0, 1, 0, 0},
         AHardwareBuffer_Desc{49, 23, 1, GL_SRGB8_ALPHA8, 0, 1, 0, 0},
         AHardwareBuffer_Desc{42, 41, 1, GL_RGBA16F, 0, 1, 0, 0},
+        AHardwareBuffer_Desc{37, 63, 1, GL_RGB10_A2, 0, 1, 0, 0},
         AHardwareBuffer_Desc{33, 20, 1, AHARDWAREBUFFER_FORMAT_R8G8B8A8_UNORM, 0, 0, 0, 0},
         AHardwareBuffer_Desc{20, 10, 1, AHARDWAREBUFFER_FORMAT_R8G8B8X8_UNORM, 0, 0, 0, 0},
         AHardwareBuffer_Desc{16, 20, 1, AHARDWAREBUFFER_FORMAT_R8G8B8_UNORM, 0, 0, 0, 0},
@@ -1457,6 +1515,7 @@ INSTANTIATE_TEST_CASE_P(
         AHardwareBuffer_Desc{64, 80, 6, GL_RGBA8, 0, 1, 0, 0},
         AHardwareBuffer_Desc{33, 28, 4, GL_SRGB8_ALPHA8, 0, 1, 0, 0},
         AHardwareBuffer_Desc{42, 41, 3, GL_RGBA16F, 0, 1, 0, 0},
+        AHardwareBuffer_Desc{37, 63, 4, GL_RGB10_A2, 0, 1, 0, 0},
         AHardwareBuffer_Desc{25, 77, 7, AHARDWAREBUFFER_FORMAT_R8G8B8A8_UNORM, 0, 0, 0, 0},
         AHardwareBuffer_Desc{64, 64, 4, AHARDWAREBUFFER_FORMAT_R8G8B8A8_UNORM, 0, 0, 0, 0},
         AHardwareBuffer_Desc{30, 30, 3, AHARDWAREBUFFER_FORMAT_R8G8B8X8_UNORM, 0, 0, 0, 0},
@@ -1507,7 +1566,7 @@ TEST_P(AHardwareBufferDepthFormatTest, DepthAffectsDrawAcrossContexts) {
         {5, 15, kRed}, {15, 15, kRed},  {25, 15, kZero}, {35, 15, kRed},
         {5, 5,  kRed}, {15, 5,  kRed},  {25, 5,  kRed},  {35, 5,  kRed},
     };
-    CheckGoldenPixels(goldens, /*float_format=*/false, /*alpha_format=*/true);
+    CheckGoldenPixels(goldens, GL_RGBA8);
 }
 
 // Verify that depth buffers with usage GPU_SAMPLED_IMAGE can be used as textures.
@@ -1557,7 +1616,7 @@ TEST_P(AHardwareBufferDepthFormatTest, DepthCanBeSampled) {
         {5, 15, kZero}, {15, 15, kRed},  {25, 15, kRed},  {35, 15, kZero},
         {5,  5, kZero}, {15,  5, kZero}, {25, 5,  kZero}, {35, 5,  kZero},
     };
-    CheckGoldenPixels(goldens, /*float_format=*/false, /*alpha_format=*/true);
+    CheckGoldenPixels(goldens, GL_RGBA8);
 }
 
 TEST_P(AHardwareBufferDepthFormatTest, DepthCubemapSampling) {
@@ -1615,7 +1674,7 @@ TEST_P(AHardwareBufferDepthFormatTest, DepthCubemapSampling) {
             {5, 15, kZero}, {15, 15, kRed},   {25, 15, kBlack}, {35, 15, kZero},
             {5, 5,  kZero}, {15, 5,  kZero},  {25, 5,  kZero},  {35, 5,  kZero},
         };
-        CheckGoldenPixels(goldens, /*float_format=*/false, /*alpha_format=*/true);
+        CheckGoldenPixels(goldens, GL_RGBA8);
     }
 }
 
@@ -1690,7 +1749,7 @@ TEST_P(AHardwareBufferStencilFormatTest, StencilAffectsDrawAcrossContexts) {
         {5, 15, kZero}, {15, 15, kZero}, {25, 15, kRed},  {35, 15, kRed},
         {5, 5,  kZero}, {15, 5,  kZero}, {25, 5,  kRed},  {35, 5,  kRed},
     };
-    CheckGoldenPixels(goldens, /*float_format=*/false, /*alpha_format=*/true);
+    CheckGoldenPixels(goldens, GL_RGBA8);
 }
 
 // Verify that stencil testing against a stencil buffer rendered in another context
@@ -1741,7 +1800,7 @@ TEST_P(AHardwareBufferStencilFormatTest, StencilTexture) {
         {5, 15, kZero}, {15, 15, kZero}, {25, 15, kRed},  {35, 15, kRed},
         {5, 5,  kZero}, {15, 5,  kZero}, {25, 5,  kRed},  {35, 5,  kRed},
     };
-    CheckGoldenPixels(goldens, /*float_format=*/false, /*alpha_format=*/true);
+    CheckGoldenPixels(goldens, GL_RGBA8);
 }
 
 // See comment in SetUpBuffer for explanation of nonzero stride and GL format.
