@@ -357,6 +357,24 @@ public class StagefrightTest extends InstrumentationTestCase {
     }
 
     @SecurityTest
+    public void testBug_31092462() throws Exception {
+        int[] frameSizes = getFrameSizes(R.raw.bug_31092462_framelen);
+        doStagefrightTestRawBlob(R.raw.bug_31092462_avc, "video/avc", 1280, 1024, frameSizes);
+    }
+
+    @SecurityTest
+    public void testBug_34097866() throws Exception {
+        int[] frameSizes = getFrameSizes(R.raw.bug_34097866_frame_len);
+        doStagefrightTestRawBlob(R.raw.bug_34097866_avc, "video/avc", 352, 288, frameSizes);
+    }
+
+    @SecurityTest
+    public void testBug_33862021() throws Exception {
+        int[] frameSizes = getFrameSizes(R.raw.bug_33862021_frame_len);
+        doStagefrightTestRawBlob(R.raw.bug_33862021_hevc, "video/hevc", 160, 96, frameSizes);
+    }
+
+    @SecurityTest
     public void testStagefright_cve_2017_0599() throws Exception {
         doStagefrightTest(R.raw.cve_2017_0599);
     }
