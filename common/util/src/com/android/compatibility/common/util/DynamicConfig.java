@@ -69,11 +69,15 @@ public class DynamicConfig {
 
     public static File getConfigFile(File configFolder, String moduleName)
             throws FileNotFoundException {
-        File config =  new File(configFolder, String.format("%s.dynamic", moduleName));
+        File config = getConfigFileUnchecked(configFolder, moduleName);
         if (!config.exists()) {
             throw new FileNotFoundException(String.format("Cannot find %s.dynamic", moduleName));
         }
         return config;
+    }
+
+    public static File getConfigFileUnchecked(File configFolder, String moduleName) {
+        return new File(configFolder, String.format("%s.dynamic", moduleName));
     }
 
     public static Map<String, List<String>> createConfigMap(File file)

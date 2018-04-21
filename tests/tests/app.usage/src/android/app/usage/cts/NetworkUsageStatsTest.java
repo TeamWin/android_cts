@@ -216,6 +216,7 @@ public class NetworkUsageStatsTest extends InstrumentationTestCase {
         super.setUp();
         mNsm = (NetworkStatsManager) getInstrumentation().getContext()
                 .getSystemService(Context.NETWORK_STATS_SERVICE);
+        mNsm.setPollForce(true);
 
         mCm = (ConnectivityManager) getInstrumentation().getContext()
                 .getSystemService(Context.CONNECTIVITY_SERVICE);

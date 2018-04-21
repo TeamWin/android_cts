@@ -296,7 +296,7 @@ public final class TestMeasurementUtil {
                   GnssMeasurement.ADR_STATE_HALF_CYCLE_REPORTED) != 0) ||
                  (accumulatedDeltaRangeState &
                   GnssMeasurement.ADR_STATE_HALF_CYCLE_RESOLVED) == 0);
-        if (accumulatedDeltaRangeState > 0) {
+        if ((accumulatedDeltaRangeState & GnssMeasurement.ADR_STATE_VALID) != 0) {
             double accumulatedDeltaRangeInMeters =
                     measurement.getAccumulatedDeltaRangeMeters();
             softAssert.assertTrue("accumulated_delta_range_m: " +

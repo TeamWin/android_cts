@@ -387,8 +387,7 @@ public class KeyManagementTest extends ActivityInstrumentationTestCase2<KeyManag
     }
 
     private boolean isDeviceIdAttestationSupported() {
-        PackageManager pm = getActivity().getPackageManager();
-        return pm.hasSystemFeature(PackageManager.FEATURE_DEVICE_ID_ATTESTATION);
+        return mDevicePolicyManager.isDeviceIdAttestationSupported();
     }
 
     private boolean isDeviceIdAttestationRequested(int deviceIdAttestationFlags) {

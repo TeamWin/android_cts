@@ -19,7 +19,6 @@ package com.android.cts.deviceowner;
 import android.app.admin.DevicePolicyManager;
 import android.content.ComponentName;
 
-import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 
 /**
@@ -49,16 +48,12 @@ public class ForceEphemeralUsersTest extends BaseDeviceOwnerTest {
      *
      * <p>To be run on systems without split system user.
      */
-    public void testSetForceEphemeralUsersFails() throws Exception {
-        Method setForceEphemeralUsersMethod = DevicePolicyManager.class.getDeclaredMethod(
-                "setForceEphemeralUsers", ComponentName.class, boolean.class);
+    public void testSetForceEphemeralUsersFails() {
         try {
-            setForceEphemeralUsersMethod.invoke(mDevicePolicyManager, getWho(), true);
-        } catch (InvocationTargetException e) {
-            if (e.getCause() instanceof UnsupportedOperationException) {
-                // Test passed, the exception was thrown as expected.
-                return;
-            }
+            mDevicePolicyManager.setForceEphemeralUsers(getWho(), true);
+        } catch (UnsupportedOperationException e) {
+            // Test passed, the exception was thrown as expected.
+            return;
         }
         fail("UnsupportedOperationException should have been thrown by setForceEphemeralUsers");
     }

@@ -357,6 +357,84 @@ public class StagefrightTest extends InstrumentationTestCase {
     }
 
     @SecurityTest
+    public void testBug_31092462() throws Exception {
+        int[] frameSizes = getFrameSizes(R.raw.bug_31092462_framelen);
+        doStagefrightTestRawBlob(R.raw.bug_31092462_avc, "video/avc", 1280, 1024, frameSizes);
+    }
+
+    @SecurityTest
+    public void testBug_34097866() throws Exception {
+        int[] frameSizes = getFrameSizes(R.raw.bug_34097866_frame_len);
+        doStagefrightTestRawBlob(R.raw.bug_34097866_avc, "video/avc", 352, 288, frameSizes);
+    }
+
+    @SecurityTest
+    public void testBug_33862021() throws Exception {
+        int[] frameSizes = getFrameSizes(R.raw.bug_33862021_frame_len);
+        doStagefrightTestRawBlob(R.raw.bug_33862021_hevc, "video/hevc", 160, 96, frameSizes);
+    }
+
+    @SecurityTest
+    public void testBug_33387820() throws Exception {
+        int[] frameSizes = {45, 3202, 430, 2526};
+        doStagefrightTestRawBlob(R.raw.bug_33387820_avc, "video/avc", 320, 240, frameSizes);
+    }
+
+    @SecurityTest
+    public void testBug_37008096() throws Exception {
+        int[] frameSizes = {245, 12, 33, 140, 164};
+        doStagefrightTestRawBlob(R.raw.bug_37008096_avc, "video/avc", 320, 240, frameSizes);
+    }
+
+    @SecurityTest
+    public void testStagefright_bug_34231163() throws Exception {
+        int[] frameSizes = {22, 357, 217, 293, 175};
+        doStagefrightTestRawBlob(R.raw.bug_34231163_mpeg2, "video/mpeg2", 320, 240, frameSizes);
+    }
+
+    @SecurityTest
+    public void testStagefright_bug_33933140() throws Exception {
+        int[] frameSizes = getFrameSizes(R.raw.bug_33933140_framelen);
+        doStagefrightTestRawBlob(R.raw.bug_33933140_avc, "video/avc", 320, 240, frameSizes);
+    }
+
+    @SecurityTest
+    public void testStagefright_bug_34097915() throws Exception {
+        int[] frameSizes = {4140, 593, 0, 15495};
+        doStagefrightTestRawBlob(R.raw.bug_34097915_avc, "video/avc", 320, 240, frameSizes);
+    }
+
+    @SecurityTest
+    public void testStagefright_bug_34097213() throws Exception {
+        int[] frameSizes = {2571, 210, 33858};
+        doStagefrightTestRawBlob(R.raw.bug_34097213_avc, "video/avc", 320, 240, frameSizes);
+    }
+
+    @SecurityTest
+    public void testBug_28816956() throws Exception {
+        int[] frameSizes = getFrameSizes(R.raw.bug_28816956_framelen);
+        doStagefrightTestRawBlob(R.raw.bug_28816956_hevc, "video/hevc", 352, 288, frameSizes);
+    }
+
+    @SecurityTest
+    public void testBug_33818500() throws Exception {
+        int[] frameSizes = getFrameSizes(R.raw.bug_33818500_framelen);
+        doStagefrightTestRawBlob(R.raw.bug_33818500_avc, "video/avc", 64, 32, frameSizes);
+    }
+
+    @SecurityTest
+    public void testBug_64784973() throws Exception {
+        int[] frameSizes = getFrameSizes(R.raw.bug_64784973_framelen);
+        doStagefrightTestRawBlob(R.raw.bug_64784973_hevc, "video/hevc", 1280, 720, frameSizes);
+    }
+
+    @SecurityTest
+    public void testBug_34231231() throws Exception {
+        int[] frameSizes = getFrameSizes(R.raw.bug_34231231_framelen);
+        doStagefrightTestRawBlob(R.raw.bug_34231231_mpeg2, "video/mpeg2", 352, 288, frameSizes);
+    }
+
+    @SecurityTest
     public void testStagefright_cve_2017_0599() throws Exception {
         doStagefrightTest(R.raw.cve_2017_0599);
     }

@@ -19,7 +19,6 @@ package android.autofillservice.cts;
 import static com.google.common.truth.Truth.assertThat;
 
 import android.support.test.runner.AndroidJUnit4;
-import android.support.test.uiautomator.StaleObjectException;
 
 import org.junit.Test;
 import org.junit.runner.Description;
@@ -33,8 +32,6 @@ public class RetryRuleTest {
 
     private static final RetryableException sRetryableException =
             new RetryableException("Y U NO RETRY?");
-
-    private static final StaleObjectException sStaleObjectException = new StaleObjectException();
 
     private static class RetryableStatement<T extends Exception> extends Statement {
         private final int mNumberFailures;
@@ -87,26 +84,6 @@ public class RetryRuleTest {
             throw new AssertionError("2ND CALL, Y U NO FAIL?");
         } catch (RetryableException e) {
             assertThat(e).isSameAs(sRetryableException);
-        }
-    }
-
-    @Test
-    public void testPassOnStaleObjectException() throws Throwable {
-        final RetryRule rule = new RetryRule(2);
-        rule.apply(new RetryableStatement<StaleObjectException>(1, sStaleObjectException),
-                mDescription)
-                .evaluate();
-    }
-
-    @Test
-    public void testFailOnStaleObjectException() throws Throwable {
-        final RetryRule rule = new RetryRule(2);
-        try {
-            rule.apply(new RetryableStatement<StaleObjectException>(2, sStaleObjectException),
-                    mDescription).evaluate();
-            throw new AssertionError("2ND CALL, Y U NO FAIL?");
-        } catch (StaleObjectException e) {
-            assertThat(e).isSameAs(sStaleObjectException);
         }
     }
 }
