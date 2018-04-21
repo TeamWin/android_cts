@@ -387,6 +387,12 @@ public class StagefrightTest extends InstrumentationTestCase {
     }
 
     @SecurityTest
+    public void testStagefright_bug_34231163() throws Exception {
+        int[] frameSizes = {22, 357, 217, 293, 175};
+        doStagefrightTestRawBlob(R.raw.bug_34231163_mpeg2, "video/mpeg2", 320, 240, frameSizes);
+    }
+
+    @SecurityTest
     public void testStagefright_cve_2017_0599() throws Exception {
         doStagefrightTest(R.raw.cve_2017_0599);
     }
