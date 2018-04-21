@@ -167,8 +167,16 @@ public class ActivityLifecycleTests extends ActivityLifecycleClientTestBase {
             LifecycleVerifier.assertSequence(FirstActivity.class, getLifecycleLog(),
                     Arrays.asList(ON_DESTROY, PRE_ON_CREATE, ON_CREATE, ON_START, ON_RESUME,
                             ON_PAUSE), "becomingVisiblePaused");
-            LifecycleVerifier.assertSequence(TranslucentActivity.class, getLifecycleLog(),
-                    Arrays.asList(ON_DESTROY, PRE_ON_CREATE, ON_CREATE, ON_START, ON_RESUME),
+            // TODO(b/78021523): Local relaunch sequence should always be the same.
+            // It is possible to get another pause-resume now.
+            final List<LifecycleLog.ActivityCallback> expectedSequence =
+                    Arrays.asList(ON_DESTROY, PRE_ON_CREATE, ON_CREATE, ON_START, ON_RESUME);
+            final List<LifecycleLog.ActivityCallback> extraCycleSequence =
+                    Arrays.asList(ON_DESTROY, PRE_ON_CREATE, ON_CREATE, ON_START, ON_RESUME,
+                            ON_PAUSE, ON_RESUME);
+            LifecycleVerifier.assertSequenceMatchesOneOf(TranslucentActivity.class,
+                    getLifecycleLog(),
+                    Arrays.asList(expectedSequence, extraCycleSequence),
                     "becomingVisibleResumed");
         }
     }
@@ -299,11 +307,28 @@ public class ActivityLifecycleTests extends ActivityLifecycleClientTestBase {
 
     @Test
     public void testOnActivityResult() throws Exception {
-        mLaunchForResultActivityTestRule.launchActivity(new Intent());
+        final Intent intent = new Intent();
+        intent.putExtra(EXTRA_FINISH_IN_ON_RESUME, true);
+        mLaunchForResultActivityTestRule.launchActivity(intent);
 
         final List<LifecycleLog.ActivityCallback> expectedSequence =
                 Arrays.asList(PRE_ON_CREATE, ON_CREATE, ON_START, ON_POST_CREATE, ON_RESUME,
                         ON_PAUSE, ON_ACTIVITY_RESULT, ON_RESUME);
+        waitForActivityTransitions(LaunchForResultActivity.class, expectedSequence);
+
+        LifecycleVerifier.assertSequence(LaunchForResultActivity.class,
+                getLifecycleLog(), expectedSequence, "activityResult");
+    }
+
+    @Test
+    public void testOnActivityResultAfterStop() throws Exception {
+        final Intent intent = new Intent();
+        intent.putExtra(EXTRA_FINISH_AFTER_RESUME, true);
+        mLaunchForResultActivityTestRule.launchActivity(intent);
+
+        final List<LifecycleLog.ActivityCallback> expectedSequence =
+                Arrays.asList(PRE_ON_CREATE, ON_CREATE, ON_START, ON_POST_CREATE, ON_RESUME,
+                        ON_PAUSE, ON_STOP, ON_ACTIVITY_RESULT, ON_RESTART, ON_START, ON_RESUME);
         waitForActivityTransitions(LaunchForResultActivity.class, expectedSequence);
 
         LifecycleVerifier.assertSequence(LaunchForResultActivity.class,
