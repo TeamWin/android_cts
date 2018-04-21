@@ -16,7 +16,6 @@
 
 package android.autofillservice.cts;
 
-import android.support.test.uiautomator.StaleObjectException;
 import android.util.Log;
 
 import org.junit.rules.TestRule;
@@ -65,8 +64,6 @@ public class RetryRule implements TestRule {
                             Log.d(TAG, "Increased " + timeout.getName() + " from " + before + "ms"
                                     + " to " + timeout.ms() + "ms");
                         }
-                        caught = e;
-                    } catch (StaleObjectException e) {
                         caught = e;
                     }
                     Log.w(TAG, "Arrrr! " + name + " failed at attempt " + i + "/" + mMaxAttempts
