@@ -39,8 +39,6 @@ import android.content.res.Resources;
 import android.graphics.Bitmap;
 import android.os.SystemClock;
 import android.service.autofill.SaveInfo;
-import androidx.annotation.NonNull;
-import androidx.annotation.Nullable;
 import android.support.test.InstrumentationRegistry;
 import android.support.test.uiautomator.By;
 import android.support.test.uiautomator.BySelector;
@@ -51,6 +49,9 @@ import android.text.Html;
 import android.util.Log;
 import android.view.accessibility.AccessibilityEvent;
 import android.view.accessibility.AccessibilityWindowInfo;
+
+import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
 
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
@@ -145,7 +146,7 @@ final class UiBot {
             throw new IllegalStateException(
                     "Cannot call assertNoDatasets() without calling assertDatasets first");
         }
-        assertNotShowingAnymore("datasets", DATASET_PICKER_SELECTOR, UI_DATASET_PICKER_TIMEOUT);
+        mDevice.wait(Until.gone(DATASET_PICKER_SELECTOR), UI_DATASET_PICKER_TIMEOUT.ms());
         mOkToCallAssertNoDatasets = false;
     }
 
@@ -324,36 +325,6 @@ final class UiBot {
             dumpScreen(message);
             throw new RetryableException(message);
         }
-    }
-
-    /**
-     * Asserts that a {@code selector} is not showing *anymore* after {@code timeout} milliseconds.
-     *
-     * <p><b>Note:</b> this method should only be called when the object was known to be shown
-     * *before*, otherwise it might pass when it should failed. If the object was *never* expected
-     * to be shown, you should use {@link #assertNeverShown(String, BySelector, long)}.
-     */
-    private void assertNotShowingAnymore(String description, BySelector selector, Timeout timeout)
-            throws Exception {
-        final UiObject2 object;
-        try {
-            object = waitForObject(null, selector, timeout, DONT_DUMP_ON_ERROR);
-        } catch (RetryableException t) {
-            // Not found as expected.
-            return;
-        }
-        String childrenText = null;
-        try {
-            childrenText = getChildrenAsText(object).toString();
-        } catch (Throwable t) {
-            // getChildrenAsText() itself could throw an exception (like StateObjectException),
-            // which we should ignore (otherwise it would mask the real issue).
-            if (object != null) {
-                childrenText = object.toString();
-            }
-        }
-        throw new RetryableException(timeout, "Should not be showing %s, but got %s",
-                description, childrenText);
     }
 
     /**
