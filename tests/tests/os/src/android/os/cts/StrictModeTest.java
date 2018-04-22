@@ -446,27 +446,44 @@ public class StrictModeTest {
                 });
     }
 
+    private void checkNonSdkApiUsageViolation(boolean blacklist, String className,
+            String methodName, Class<?>... paramTypes) throws Exception {
+        Class<?> clazz = Class.forName(className);
+        inspectViolation(
+            () -> {
+                try {
+                    java.lang.reflect.Method m = clazz.getDeclaredMethod(methodName, paramTypes);
+                    if (blacklist) {
+                        fail();
+                    }
+                } catch (NoSuchMethodException expected) {
+                  if (!blacklist) {
+                    fail();
+                  }
+                }
+            },
+            violation -> {
+                assertThat(violation).isNotNull();
+                assertPolicy(violation, StrictMode.DETECT_VM_NON_SDK_API_USAGE);
+                assertThat(violation.getViolationDetails()).contains(methodName);
+                assertThat(violation.getStackTrace()).contains("checkNonSdkApiUsageViolation");
+            }
+        );
+    }
+
     @Test
     public void testNonSdkApiUsage() throws Exception {
         StrictMode.VmPolicy oldPolicy = StrictMode.getVmPolicy();
         try {
             StrictMode.setVmPolicy(
                     new StrictMode.VmPolicy.Builder().detectNonSdkApiUsage().build());
-            Class<?> clazz = Class.forName("dalvik.system.VMRuntime");
-            inspectViolation(
-                () -> {
-                    try {
-                        clazz.getDeclaredMethod("setHiddenApiExemptions", String[].class);
-                        fail();
-                    } catch (NoSuchMethodException expected) {
-                    }
-                },
-                violation -> {
-                     assertPolicy(violation, StrictMode.DETECT_VM_NON_SDK_API_USAGE);
-                     assertThat(violation.getViolationDetails()).contains("setHiddenApiExemptions");
-                     assertThat(violation.getStackTrace()).contains("testNonSdkApiUsage");
-                }
-            );
+            checkNonSdkApiUsageViolation(
+                true, "dalvik.system.VMRuntime", "setHiddenApiExemptions", String[].class);
+            // verify that mutliple uses of a light greylist API are detected.
+            Log.i(TAG, "testNonSdkApiUsage: dalvik.system.VMRuntime.getRuntime: first try");
+            checkNonSdkApiUsageViolation(false, "dalvik.system.VMRuntime", "getRuntime");
+            Log.i(TAG, "testNonSdkApiUsage: dalvik.system.VMRuntime.getRuntime: second try");
+            checkNonSdkApiUsageViolation(false, "dalvik.system.VMRuntime", "getRuntime");
         } finally {
             StrictMode.setVmPolicy(oldPolicy);
         }

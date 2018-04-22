@@ -123,17 +123,6 @@ public class DeviceIdleJobsTest {
         setTestPackageStandbyBucket(Bucket.ACTIVE);
     }
 
-
-    @Test
-    public void testAllowWhileIdleJobInForeground() throws Exception {
-        toggleDeviceIdleState(true);
-        sendScheduleJobBroadcast(true);
-        assertFalse("Job started while in background", awaitJobStart(5_000));
-        startAndKeepTestActivity();
-        assertTrue("Job with allow_while_idle flag did not start when the app was in fg",
-                awaitJobStart(DEFAULT_WAIT_TIMEOUT));
-    }
-
     @Test
     public void testAllowWhileIdleJobInTempwhitelist() throws Exception {
         toggleDeviceIdleState(true);
@@ -227,6 +216,7 @@ public class DeviceIdleJobsTest {
 
     private void sendScheduleJobBroadcast(boolean allowWhileIdle) throws Exception {
         final Intent scheduleJobIntent = new Intent(TestJobSchedulerReceiver.ACTION_SCHEDULE_JOB);
+        scheduleJobIntent.addFlags(Intent.FLAG_RECEIVER_FOREGROUND);
         scheduleJobIntent.putExtra(TestJobSchedulerReceiver.EXTRA_JOB_ID_KEY, mTestJobId);
         scheduleJobIntent.putExtra(TestJobSchedulerReceiver.EXTRA_ALLOW_IN_IDLE, allowWhileIdle);
         scheduleJobIntent.setComponent(new ComponentName(TEST_APP_PACKAGE, TEST_APP_RECEIVER));

@@ -93,6 +93,10 @@
             android:taskAffinity="nobody.but.EmptyActivity"
             android:exported="true" />
 
+        <receiver android:name=".SelfDestructReceiver"
+            android:exported="true"
+            android:process="android.autofillservice.cts.outside"/>
+
         <service
             android:name=".InstrumentedAutoFillService"
             android:label="InstrumentedAutoFillService"

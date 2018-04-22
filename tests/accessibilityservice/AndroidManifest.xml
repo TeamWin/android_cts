@@ -28,28 +28,34 @@
 
         <activity
             android:label="@string/accessibility_end_to_end_test_activity"
-            android:name=".activities.AccessibilityEndToEndActivity" />
+            android:name=".activities.AccessibilityEndToEndActivity"
+            android:screenOrientation="portrait"/>
 
         <activity
             android:label="@string/accessibility_query_window_test_activity"
             android:name=".activities.AccessibilityWindowQueryActivity"
-            android:supportsPictureInPicture="true" />
+            android:supportsPictureInPicture="true"
+            android:screenOrientation="portrait"/>
 
         <activity
             android:label="@string/accessibility_view_tree_reporting_test_activity"
-            android:name=".activities.AccessibilityViewTreeReportingActivity" />
+            android:name=".activities.AccessibilityViewTreeReportingActivity"
+            android:screenOrientation="portrait"/>
 
         <activity
             android:label="@string/accessibility_focus_and_input_focus_sync_test_activity"
-            android:name=".activities.AccessibilityFocusAndInputFocusSyncActivity" />
+            android:name=".activities.AccessibilityFocusAndInputFocusSyncActivity"
+            android:screenOrientation="portrait"/>
 
         <activity
             android:label="@string/accessibility_text_traversal_test_activity"
-            android:name=".activities.AccessibilityTextTraversalActivity"/>
+            android:name=".activities.AccessibilityTextTraversalActivity"
+            android:screenOrientation="portrait"/>
 
         <activity android:label="Activity for testing window accessibility reporting"
              android:name=".activities.AccessibilityWindowReportingActivity"
-             android:supportsPictureInPicture="true"/>
+             android:supportsPictureInPicture="true"
+             android:screenOrientation="portrait"/>
 
         <activity
             android:label="Full screen activity for gesture dispatch testing"

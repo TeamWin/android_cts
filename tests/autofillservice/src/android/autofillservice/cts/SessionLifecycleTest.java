@@ -22,7 +22,6 @@ import static android.autofillservice.cts.Helper.ID_USERNAME;
 import static android.autofillservice.cts.Helper.assertTextAndValue;
 import static android.autofillservice.cts.Helper.findNodeByResourceId;
 import static android.autofillservice.cts.Helper.getContext;
-import static android.autofillservice.cts.Helper.getOutOfProcessPid;
 import static android.autofillservice.cts.OutOfProcessLoginActivity.getStartedMarker;
 import static android.autofillservice.cts.OutOfProcessLoginActivity.getStoppedMarker;
 import static android.autofillservice.cts.UiBot.LANDSCAPE;
@@ -41,7 +40,6 @@ import android.content.IntentSender;
 import android.os.Bundle;
 import android.os.SystemClock;
 import android.support.test.uiautomator.UiObject2;
-import android.support.test.uiautomator.Until;
 import android.view.autofill.AutofillValue;
 
 import org.junit.After;
@@ -104,9 +102,8 @@ public class SessionLifecycleTest extends AutoFillServiceTestCase {
         SystemClock.sleep(WAIT_ACTIVITY_MS);
 
         // Kill activity that is in the background
-        runShellCommand("kill -9 %d",
-                getOutOfProcessPid("android.autofillservice.cts.outside",
-                        SESSION_LIFECYCLE_TIMEOUT));
+        runShellCommand("am broadcast --receiver-foreground "
+                + "-n android.autofillservice.cts/.SelfDestructReceiver");
     }
 
     private void startAndWaitExternalActivity() throws Exception {
@@ -411,11 +408,7 @@ public class SessionLifecycleTest extends AutoFillServiceTestCase {
         killOfProcessLoginActivityProcess();
 
         // Make sure dataset is not shown anymore
-        // TODO: calling mUiBot.assertNoDatasets() fails with StaleObjectException because it
-        // takes a while for the UiDevice to return return when searching for
-        // UiBot.DATASET_PICKER_SELECTOR here - must investigate why
-        mUiBot.getDevice().wait(Until.gone(UiBot.DATASET_PICKER_SELECTOR),
-                Timeouts.DATASET_PICKER_NOT_SHOWN_NAPTIME_MS);
+        mUiBot.assertNoDatasetsEver();
 
         // Restart activity an make sure the dataset is still not shown
         startAndWaitExternalActivity();

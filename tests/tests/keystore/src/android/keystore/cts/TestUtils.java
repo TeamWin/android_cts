@@ -17,6 +17,8 @@
 package android.keystore.cts;
 
 import android.content.Context;
+import android.content.pm.PackageManager;
+import android.os.SystemProperties;
 import android.security.keystore.KeyGenParameterSpec;
 import android.security.keystore.KeyInfo;
 import android.security.keystore.KeyProperties;
@@ -37,6 +39,7 @@ import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.security.NoSuchProviderException;
 import java.security.PrivateKey;
+import java.security.ProviderException;
 import java.security.PublicKey;
 import java.security.UnrecoverableEntryException;
 import java.security.cert.Certificate;
@@ -72,6 +75,22 @@ abstract class TestUtils extends Assert {
 
 
     private TestUtils() {}
+
+    /**
+     * Returns whether 3DES KeyStore tests should run on this device. 3DES support was added in
+     * KeyMaster 4.0 and there should be no software fallback on earlier KeyMaster versions.
+     */
+    static boolean supports3DES() {
+        return "true".equals(SystemProperties.get("ro.hardware.keystore_desede"));
+    }
+
+    /**
+     * Returns whether the device has a StrongBox backed KeyStore.
+     */
+    static boolean hasStrongBox(Context context) {
+        return context.getPackageManager()
+            .hasSystemFeature(PackageManager.FEATURE_STRONGBOX_KEYSTORE);
+    }
 
     /**
      * Asserts the the key algorithm and algorithm-specific parameters of the two keys in the
@@ -623,6 +642,8 @@ abstract class TestUtils extends Assert {
         String transformationUpperCase = transformation.toUpperCase(Locale.US);
         if (transformationUpperCase.startsWith("AES/")) {
             return KeyProperties.KEY_ALGORITHM_AES;
+        } else if (transformationUpperCase.startsWith("DESEDE/")) {
+            return KeyProperties.KEY_ALGORITHM_3DES;
         } else if (transformationUpperCase.startsWith("RSA/")) {
             return KeyProperties.KEY_ALGORITHM_RSA;
         } else {
@@ -632,12 +653,13 @@ abstract class TestUtils extends Assert {
 
     static boolean isCipherSymmetric(String transformation) {
         String transformationUpperCase = transformation.toUpperCase(Locale.US);
-        if (transformationUpperCase.startsWith("AES/")) {
+        if (transformationUpperCase.startsWith("AES/") || transformationUpperCase.startsWith(
+                "DESEDE/")) {
             return true;
         } else if (transformationUpperCase.startsWith("RSA/")) {
             return false;
         } else {
-            throw new IllegalArgumentException("Unsupported transformation: " + transformation);
+            throw new IllegalArgumentException("YYZ: Unsupported transformation: " + transformation);
         }
     }
 
@@ -761,7 +783,8 @@ abstract class TestUtils extends Assert {
 
     static int getMaxSupportedPlaintextInputSizeBytes(String transformation, Key key) {
         String keyAlgorithm = getCipherKeyAlgorithm(transformation);
-        if (KeyProperties.KEY_ALGORITHM_AES.equalsIgnoreCase(keyAlgorithm)) {
+        if (KeyProperties.KEY_ALGORITHM_AES.equalsIgnoreCase(keyAlgorithm)
+                || KeyProperties.KEY_ALGORITHM_3DES.equalsIgnoreCase(keyAlgorithm)) {
             return Integer.MAX_VALUE;
         } else if (KeyProperties.KEY_ALGORITHM_RSA.equalsIgnoreCase(keyAlgorithm)) {
             String encryptionPadding = getCipherEncryptionPadding(transformation);
@@ -874,7 +897,8 @@ abstract class TestUtils extends Assert {
             String transformation, int purposes, boolean ivProvidedWhenEncrypting,
             boolean isUnlockedDeviceRequired, boolean isUserAuthRequired) {
         String keyAlgorithm = TestUtils.getCipherKeyAlgorithm(transformation);
-        if (KeyProperties.KEY_ALGORITHM_AES.equalsIgnoreCase(keyAlgorithm)) {
+        if (KeyProperties.KEY_ALGORITHM_AES.equalsIgnoreCase(keyAlgorithm)
+            || KeyProperties.KEY_ALGORITHM_3DES.equalsIgnoreCase(keyAlgorithm)) {
             String encryptionPadding = TestUtils.getCipherEncryptionPadding(transformation);
             String blockMode = TestUtils.getCipherBlockMode(transformation);
             boolean randomizedEncryptionRequired = true;

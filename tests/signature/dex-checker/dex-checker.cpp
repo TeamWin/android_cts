@@ -42,42 +42,54 @@ class ScopedUtfChars {
   const char* utf_chars_;
 };
 
-extern "C" JNIEXPORT void JNICALL
+extern "C" JNIEXPORT jobject JNICALL
 Java_android_signature_cts_DexMemberChecker_getField_1JNI(
     JNIEnv* env, jclass, jclass klass, jstring name, jstring type) {
   ScopedUtfChars utf_name(env, name);
   ScopedUtfChars utf_type(env, type);
-  // Attempt to access the given instance field. It will succeed if it exists,
-  // and throw NoSuchFieldError if not.
-  env->GetFieldID(klass, utf_name.c_str(), utf_type.c_str());
+  jfieldID fid = env->GetFieldID(klass, utf_name.c_str(), utf_type.c_str());
+  if (env->ExceptionCheck()) {
+    env->ExceptionClear();
+    return nullptr;
+  }
+  return env->ToReflectedField(klass, fid, /* static */ false);
 }
 
-extern "C" JNIEXPORT void JNICALL
+extern "C" JNIEXPORT jobject JNICALL
 Java_android_signature_cts_DexMemberChecker_getStaticField_1JNI(
     JNIEnv* env, jclass, jclass klass, jstring name, jstring type) {
   ScopedUtfChars utf_name(env, name);
   ScopedUtfChars utf_type(env, type);
-  // Attempt to access the given static field. It will succeed if it exists,
-  // and throw NoSuchFieldError if not.
-  env->GetStaticFieldID(klass, utf_name.c_str(), utf_type.c_str());
+  jfieldID fid = env->GetStaticFieldID(klass, utf_name.c_str(), utf_type.c_str());
+  if (env->ExceptionCheck()) {
+    env->ExceptionClear();
+    return nullptr;
+  }
+  return env->ToReflectedField(klass, fid, /* static */ true);
 }
 
-extern "C" JNIEXPORT void JNICALL
+extern "C" JNIEXPORT jobject JNICALL
 Java_android_signature_cts_DexMemberChecker_getMethod_1JNI(
     JNIEnv* env, jclass, jclass klass, jstring name, jstring signature) {
   ScopedUtfChars utf_name(env, name);
   ScopedUtfChars utf_signature(env, signature);
-  // Attempt to access the given instance method. It will succeed if it exists,
-  // and throw NoSuchMethodError if not.
-  env->GetMethodID(klass, utf_name.c_str(), utf_signature.c_str());
+  jmethodID mid = env->GetMethodID(klass, utf_name.c_str(), utf_signature.c_str());
+  if (env->ExceptionCheck()) {
+    env->ExceptionClear();
+    return nullptr;
+  }
+  return env->ToReflectedMethod(klass, mid, /* static */ false);
 }
 
-extern "C" JNIEXPORT void JNICALL
+extern "C" JNIEXPORT jobject JNICALL
 Java_android_signature_cts_DexMemberChecker_getStaticMethod_1JNI(
     JNIEnv* env, jclass, jclass klass, jstring name, jstring signature) {
   ScopedUtfChars utf_name(env, name);
   ScopedUtfChars utf_signature(env, signature);
-  // Attempt to access the given static method. It will succeed if it exists,
-  // and throw NoSuchMethodError if not.
-  env->GetStaticMethodID(klass, utf_name.c_str(), utf_signature.c_str());
+  jmethodID mid = env->GetStaticMethodID(klass, utf_name.c_str(), utf_signature.c_str());
+  if (env->ExceptionCheck()) {
+    env->ExceptionClear();
+    return nullptr;
+  }
+  return env->ToReflectedMethod(klass, mid, /* static */ true);
 }

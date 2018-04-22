@@ -41,6 +41,7 @@ import android.autofillservice.cts.common.SettingsHelper;
 import android.autofillservice.cts.common.SettingsStateChangerRule;
 import android.content.Context;
 import android.os.SystemClock;
+import android.service.autofill.SaveInfo;
 import android.support.test.InstrumentationRegistry;
 
 import org.junit.After;
@@ -178,6 +179,7 @@ public class VirtualContainerActivityCompatModeTest extends VirtualContainerActi
 
         // Set expectations.
         sReplier.addResponse(new CannedFillResponse.Builder()
+                .setSaveInfoFlags(SaveInfo.FLAG_SAVE_ON_ALL_VIEWS_INVISIBLE)
                 .setRequiredSavableIds(SAVE_DATA_TYPE_PASSWORD, ID_USERNAME, ID_PASSWORD).build());
 
         // Trigger auto-fill.
