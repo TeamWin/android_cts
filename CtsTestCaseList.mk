@@ -285,7 +285,8 @@ cts_deqp_test_apis := \
 
 cts_device_executables := \
     CVE-2016-2504 \
-    CVE-2016-8430
+    CVE-2016-8430 \
+    Bug-77238656
 
 # All the files that will end up under the repository/testcases
 # directory of the final CTS distribution.
