@@ -15,7 +15,7 @@
  */
 package android.autofillservice.cts;
 
-import static android.app.ActivityManager.SPLIT_SCREEN_CREATE_MODE_TOP_OR_LEFT;
+import static android.app.ActivityTaskManager.SPLIT_SCREEN_CREATE_MODE_TOP_OR_LEFT;
 import static android.autofillservice.cts.Helper.ID_PASSWORD;
 import static android.autofillservice.cts.Helper.ID_USERNAME;
 import static android.autofillservice.cts.common.ShellHelper.runShellCommand;
@@ -27,6 +27,7 @@ import static org.junit.Assume.assumeTrue;
 
 import android.app.Activity;
 import android.app.ActivityManager;
+import android.app.ActivityTaskManager;
 import android.content.Intent;
 import android.platform.test.annotations.AppModeFull;
 import android.view.View;
@@ -42,6 +43,7 @@ public class MultiWindowLoginActivityTest
 
     private LoginActivity mActivity;
     private ActivityManager mAm;
+    private ActivityTaskManager mAtm;
 
     @Override
     protected AutofillActivityTestRule<MultiWindowLoginActivity> getActivityRule() {
@@ -51,6 +53,7 @@ public class MultiWindowLoginActivityTest
             protected void afterActivityLaunched() {
                 mActivity = getActivity();
                 mAm = mContext.getSystemService(ActivityManager.class);
+                mAtm = mContext.getSystemService(ActivityTaskManager.class);
             }
         };
     }
@@ -58,7 +61,7 @@ public class MultiWindowLoginActivityTest
     @Before
     public void setup() {
         assumeTrue("Skipping test: no split multi-window support",
-                ActivityManager.supportsSplitScreenMultiWindow(mContext));
+                ActivityTaskManager.supportsSplitScreenMultiWindow(mContext));
     }
 
     /**
@@ -81,7 +84,7 @@ public class MultiWindowLoginActivityTest
      * Put activity1 in TOP, will be followed by amStartActivity()
      */
     protected void splitWindow(Activity activity1) {
-        mAm.setTaskWindowingModeSplitScreenPrimary(activity1.getTaskId(),
+        mAtm.setTaskWindowingModeSplitScreenPrimary(activity1.getTaskId(),
                 SPLIT_SCREEN_CREATE_MODE_TOP_OR_LEFT, true, false, null, true);
 
     }

@@ -16,7 +16,7 @@
 
 package android.server.am;
 
-import static android.app.ActivityManager.StackId.INVALID_STACK_ID;
+import static android.app.ActivityTaskManager.INVALID_STACK_ID;
 import static android.app.WindowConfiguration.ACTIVITY_TYPE_UNDEFINED;
 import static android.app.WindowConfiguration.WINDOWING_MODE_FREEFORM;
 import static android.app.WindowConfiguration.WINDOWING_MODE_PINNED;
