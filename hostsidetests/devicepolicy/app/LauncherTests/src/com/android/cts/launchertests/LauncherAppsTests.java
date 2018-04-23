@@ -25,6 +25,7 @@ import android.content.ServiceConnection;
 import android.content.pm.ApplicationInfo;
 import android.content.pm.LauncherActivityInfo;
 import android.content.pm.LauncherApps;
+import android.content.pm.PackageManager;
 import android.net.Uri;
 import android.os.Bundle;
 import android.os.Handler;
@@ -119,17 +120,15 @@ public class LauncherAppsTests extends AndroidTestCase {
     }
 
     public void testAccessPrimaryProfileFromManagedProfile() throws Exception {
-        expectSecurityException(() -> mLauncherApps.getActivityList(null, mUser),
-                "getting activity list failed to throw security exception");
-        expectSecurityException(
+        assertTrue(mLauncherApps.getActivityList(null, mUser).isEmpty());
+
+        expectNameNotFoundException(
                 () -> mLauncherApps.getApplicationInfo(SIMPLE_APP_PACKAGE, /* flags= */ 0, mUser),
-                "get applicationInfo failed to throw security exception");
-        expectSecurityException(() -> mLauncherApps.isPackageEnabled(SIMPLE_APP_PACKAGE, mUser),
-                "isPackageEnabled failed to throw security exception");
+                "get applicationInfo failed to throw name not found exception");
+        assertFalse(mLauncherApps.isPackageEnabled(SIMPLE_APP_PACKAGE, mUser));
 
         final Intent intent = new Intent(Intent.ACTION_VIEW, Uri.parse("http://www.android.com/"));
-        expectSecurityException(() -> mLauncherApps.resolveActivity(intent, mUser),
-                "resolveActivity failed to throw security exception");
+        assertNull(mLauncherApps.resolveActivity(intent, mUser));
     }
 
     public void testGetProfiles_fromMainProfile() {
@@ -208,6 +207,16 @@ public class LauncherAppsTests extends AndroidTestCase {
             action.run();
             fail(failMessage);
         } catch (SecurityException e) {
+            // expected
+        }
+    }
+
+    private void expectNameNotFoundException(ExceptionRunnable action, String failMessage)
+            throws Exception {
+        try {
+            action.run();
+            fail(failMessage);
+        } catch (PackageManager.NameNotFoundException e) {
             // expected
         }
     }
