@@ -46,10 +46,11 @@ import android.net.Uri;
 import android.support.test.InstrumentationRegistry;
 import android.support.test.filters.LargeTest;
 import android.support.test.runner.AndroidJUnit4;
-import androidx.core.content.FileProvider;
 import android.util.DisplayMetrics;
 import android.util.Size;
 import android.util.TypedValue;
+
+import androidx.core.content.FileProvider;
 
 import com.android.compatibility.common.util.BitmapUtils;
 
@@ -2188,5 +2189,16 @@ public class ImageDecoderTest {
 
         ImageDecoder.Source src = mCreators[0].apply(R.drawable.animated);
         testReuse(src, "animated.gif");
+    }
+
+    @Test
+    public void testWarpedDng() {
+        String name = "b78120086.dng";
+        ImageDecoder.Source src = ImageDecoder.createSource(mRes.getAssets(), name);
+        try {
+            ImageDecoder.decodeDrawable(src);
+        } catch (IOException e) {
+            fail("Failed to decode " + name + " with exception " + e);
+        }
     }
 }
