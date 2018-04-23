@@ -1311,7 +1311,7 @@ public class WebViewTest extends ActivityInstrumentationTestCase2<WebViewCtsActi
         assertNull(mWebView.getUrl());
         String imgUrl = TestHtmlConstants.SMALL_IMG_URL; // relative
         // Snippet of HTML that will prevent favicon requests to the test server.
-        final String HTML_HEADER = "<html><head><link rel=\"shortcut icon\" href=\"#\" /></head>";
+        final String HTML_HEADER = "<html><head><link rel=\"shortcut icon\" href=\"%23\" /></head>";
 
         // Trying to resolve a relative URL against a data URL without a base URL
         // will fail and we won't make a request to the test web server.
@@ -1918,8 +1918,8 @@ public class WebViewTest extends ActivityInstrumentationTestCase2<WebViewCtsActi
         final String imgUrl = mWebServer.getAssetUrl(TestHtmlConstants.LARGE_IMG_URL);
         mOnUiThread.loadDataAndWaitForCompletion(
                 "<html><head><title>Title</title><style type=\"text/css\">"
-                + "#imgElement { -webkit-transform: translate3d(0,0,1); }"
-                + "#imgElement.finish { -webkit-transform: translate3d(0,0,0);"
+                + "%23imgElement { -webkit-transform: translate3d(0,0,1); }"
+                + "%23imgElement.finish { -webkit-transform: translate3d(0,0,0);"
                 + " -webkit-transition-duration: 1ms; }</style>"
                 + "<script type=\"text/javascript\">function imgLoad() {"
                 + "imgElement = document.getElementById('imgElement');"
