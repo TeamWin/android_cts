@@ -723,8 +723,14 @@ bool AHardwareBufferGLTest::SetUpBuffer(const AHardwareBuffer_Desc& desc, bool u
               mGLVersion / 10, mGLVersion % 10);
         return false;
     }
-    if (desc.format == GL_RGBA16F && !HasGLExtension("GL_EXT_color_buffer_float")) {
-        ALOGI("Test skipped: GL_RGBA16F requires GL_EXT_color_buffer_float");
+    if (desc.format == GL_RGB10_A2 && mGLVersion < 30) {
+        ALOGI("Test skipped: GL_RGB10_A2 requires GL ES 3.0, found %d.%d",
+              mGLVersion / 10, mGLVersion % 10);
+        return false;
+    }
+    if (desc.format == GL_RGBA16F &&
+        (!HasGLExtension("GL_EXT_color_buffer_float") && mGLVersion < 32)) {
+        ALOGI("Test skipped: GL_RGBA16F requires GL_EXT_color_buffer_float or GL ES 3.2");
         return false;
     }
     // Nonzero stride indicates that desc.format should be interpreted as a GL format
