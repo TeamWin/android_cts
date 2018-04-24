@@ -25,6 +25,8 @@ LOCAL_SRC_FILES := \
     $(call all-named-files-under,Components.java, alertwindowapp) \
     $(call all-named-files-under,Components.java, alertwindowappsdk25)
 
+LOCAL_RESOURCE_DIR := $(LOCAL_PATH)/res
+
 LOCAL_PACKAGE_NAME := CtsWindowManagerDeviceTestCases
 
 LOCAL_JAVA_LIBRARIES := android.test.runner.stubs
