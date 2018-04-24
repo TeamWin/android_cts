@@ -30,13 +30,14 @@ import android.graphics.BitmapFactory;
 import android.graphics.ColorSpace;
 import android.graphics.ImageDecoder;
 import android.os.Parcel;
-import androidx.annotation.ColorInt;
-import androidx.annotation.NonNull;
 import android.support.test.InstrumentationRegistry;
 import android.support.test.filters.RequiresDevice;
 import android.support.test.filters.SmallTest;
 import android.support.test.runner.AndroidJUnit4;
 import android.util.Log;
+
+import androidx.annotation.ColorInt;
+import androidx.annotation.NonNull;
 
 import org.junit.Before;
 import org.junit.Test;
@@ -766,6 +767,43 @@ public class BitmapColorSpaceTest {
         }) {
             ByteArrayOutputStream out = new ByteArrayOutputStream();
             assertTrue("Failed to encode F16 to " + format, b.compress(format, 100, out));
+
+            byte[] array = out.toByteArray();
+            src = ImageDecoder.createSource(ByteBuffer.wrap(array));
+
+            try {
+                Bitmap b2 = ImageDecoder.decodeBitmap(src);
+                assertEquals("Wrong color space for " + format,
+                        ColorSpace.get(ColorSpace.Named.DISPLAY_P3), b2.getColorSpace());
+            } catch (IOException e) {
+                fail("Failed with " + e);
+            }
+        }
+    }
+
+    @Test
+    public void testEncodeP3hardware() {
+        Bitmap b = null;
+        ImageDecoder.Source src = ImageDecoder.createSource(mResources.getAssets(),
+                "green-p3.png");
+        try {
+            b = ImageDecoder.decodeBitmap(src, (decoder, info, s) -> {
+                decoder.setAllocator(ImageDecoder.ALLOCATOR_HARDWARE);
+            });
+            assertNotNull(b);
+            assertEquals(Bitmap.Config.HARDWARE, b.getConfig());
+            assertEquals(ColorSpace.get(ColorSpace.Named.DISPLAY_P3), b.getColorSpace());
+        } catch (IOException e) {
+            fail("Failed with " + e);
+        }
+
+        for (Bitmap.CompressFormat format : new Bitmap.CompressFormat[] {
+                Bitmap.CompressFormat.JPEG,
+                Bitmap.CompressFormat.WEBP,
+                Bitmap.CompressFormat.PNG,
+        }) {
+            ByteArrayOutputStream out = new ByteArrayOutputStream();
+            assertTrue("Failed to encode 8888 to " + format, b.compress(format, 100, out));
 
             byte[] array = out.toByteArray();
             src = ImageDecoder.createSource(ByteBuffer.wrap(array));
