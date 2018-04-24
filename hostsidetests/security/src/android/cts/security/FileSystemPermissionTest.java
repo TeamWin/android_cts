@@ -73,8 +73,8 @@ public class FileSystemPermissionTest extends DeviceTestCase {
 
     public void testDevHwRandomPermissions() throws Exception {
         // This test asserts that, if present, /dev/hw_random must:
-        // 1. Be owned by UID root and GID system
-        // 2. Have file permissions 0440 (only readable, and only by owner and group). The reason
+        // 1. Be owned by UID root
+        // 2. Not allow any world read, write, or execute permissions. The reason
         //    for being not readable by all/other is to avoid apps reading from this device.
         //    Firstly, /dev/hw_random is not public API for apps. Secondly, apps might erroneously
         //    use the output of Hardware RNG as trusted random output. Android does not trust output
@@ -96,9 +96,9 @@ public class FileSystemPermissionTest extends DeviceTestCase {
             fail("Unexpected output from " + command + ": \"" + output + "\"");
         }
         String[] outputWords = output.split("\\s");
-        assertEquals("Wrong file mode on " + HW_RNG_DEVICE, "cr--r-----", outputWords[0]);
+        assertEquals("Wrong device type on " + HW_RNG_DEVICE, "c", outputWords[0].substring(0, 1));
+        assertEquals("Wrong world file mode on " + HW_RNG_DEVICE, "---", outputWords[0].substring(7));
         assertEquals("Wrong owner of " + HW_RNG_DEVICE, "root", outputWords[2]);
-        assertEquals("Wrong group of " + HW_RNG_DEVICE, "system", outputWords[3]);
         assertEquals("Wrong device major on " + HW_RNG_DEVICE, "10,", outputWords[4]);
         assertEquals("Wrong device minor on " + HW_RNG_DEVICE, "183", outputWords[5]);
 
