@@ -494,6 +494,13 @@ public class DeviceOwnerTest extends BaseDevicePolicyTest {
         }
     }
 
+    public void testUserSession() throws Exception {
+        if (!mHasFeature) {
+            return;
+        }
+        executeDeviceOwnerTest("UserSessionTest");
+    }
+
     public void testSecurityLoggingWithTwoUsers() throws Exception {
         if (!mHasFeature || !canCreateAdditionalUsers(1)) {
             return;
