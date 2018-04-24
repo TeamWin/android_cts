@@ -992,10 +992,10 @@ public class ContextTest extends AndroidTestCase {
     public void testEnforceCallingPermission() throws Exception {
         bindBinderPermissionTestService();
         try {
-            mBinderPermissionTestService.callEnforceCallingPermissionGranted();
+            mBinderPermissionTestService.doEnforceCallingPermission(GRANTED_PERMISSION);
 
             try {
-                mBinderPermissionTestService.callEnforceCallingPermissionNotGranted();
+                mBinderPermissionTestService.doEnforceCallingPermission(NOT_GRANTED_PERMISSION);
                 fail("Permission shouldn't be granted.");
             } catch (SecurityException expected) {
             }
@@ -1007,10 +1007,12 @@ public class ContextTest extends AndroidTestCase {
     public void testCheckCallingPermission() throws Exception {
         bindBinderPermissionTestService();
         try {
-            int returnValue = mBinderPermissionTestService.callCheckCallingPermissionGranted();
+            int returnValue = mBinderPermissionTestService.doCheckCallingPermission(
+                    GRANTED_PERMISSION);
             assertEquals(PackageManager.PERMISSION_GRANTED, returnValue);
 
-            returnValue = mBinderPermissionTestService.callCheckCallingPermissionNotGranted();
+            returnValue = mBinderPermissionTestService.doCheckCallingPermission(
+                    NOT_GRANTED_PERMISSION);
             assertEquals(PackageManager.PERMISSION_DENIED, returnValue);
         } finally {
             mContext.unbindService(mBinderPermissionTestConnection);
