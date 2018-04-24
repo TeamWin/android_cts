@@ -53,6 +53,11 @@ import java.util.Scanner;
 import java.util.Set;
 import java.util.stream.Collectors;
 
+import javax.xml.parsers.DocumentBuilder;
+import javax.xml.parsers.DocumentBuilderFactory;
+import org.w3c.dom.Document;
+import org.w3c.dom.Element;
+
 /**
  * Host-side SELinux tests.
  *
@@ -65,6 +70,8 @@ public class SELinuxHostTest extends DeviceTestCase implements IBuildReceiver, I
     private static final Map<ITestDevice, File> cachedDevicePolicyFiles = new HashMap<>(1);
     private static final Map<ITestDevice, File> cachedDevicePlatFcFiles = new HashMap<>(1);
     private static final Map<ITestDevice, File> cachedDeviceNonplatFcFiles = new HashMap<>(1);
+    private static final Map<ITestDevice, File> cachedDeviceVendorManifest = new HashMap<>(1);
+    private static final Map<ITestDevice, File> cachedDeviceSystemPolicy = new HashMap<>(1);
 
     private File sepolicyAnalyze;
     private File checkSeapp;
@@ -192,12 +199,91 @@ public class SELinuxHostTest extends DeviceTestCase implements IBuildReceiver, I
         return file;
     }
 
+    private static File buildSystemPolicy(ITestDevice device, Map<ITestDevice, File> cache,
+            String tmpFileName) throws Exception {
+        File builtPolicyFile;
+        synchronized (cache) {
+            builtPolicyFile = cache.get(device);
+        }
+        if (builtPolicyFile != null) {
+            return builtPolicyFile;
+        }
+
+
+        builtPolicyFile = File.createTempFile(tmpFileName, ".tmp");
+        builtPolicyFile.deleteOnExit();
+
+        File secilc = copyResourceToTempFile("/secilc");
+        secilc.setExecutable(true);
+
+        File systemSepolicyCilFile = File.createTempFile("plat_sepolicy", ".cil");
+        systemSepolicyCilFile.deleteOnExit();
+
+        if (!device.pullFile("/system/etc/selinux/plat_sepolicy.cil", systemSepolicyCilFile)) {
+            device.pullFile("/plat_sepolicy.cil", systemSepolicyCilFile);
+        }
+
+        ProcessBuilder pb = new ProcessBuilder(
+            secilc.getAbsolutePath(),
+            "-m", "-M", "true", "-c", "30",
+            "-o", builtPolicyFile.getAbsolutePath(),
+            systemSepolicyCilFile.getAbsolutePath());
+        pb.redirectOutput(ProcessBuilder.Redirect.PIPE);
+        pb.redirectErrorStream(true);
+        Process p = pb.start();
+        p.waitFor();
+        BufferedReader result = new BufferedReader(new InputStreamReader(p.getInputStream()));
+        String line;
+        StringBuilder errorString = new StringBuilder();
+        while ((line = result.readLine()) != null) {
+            errorString.append(line);
+            errorString.append("\n");
+        }
+        assertTrue(errorString.toString(), errorString.length() == 0);
+
+        synchronized (cache) {
+            cache.put(device, builtPolicyFile);
+        }
+        return builtPolicyFile;
+    }
+
     // NOTE: cts/tools/selinux depends on this method. Rename/change with caution.
     /**
      * Returns the host-side file containing the SELinux policy of the device under test.
      */
     public static File getDevicePolicyFile(ITestDevice device) throws Exception {
         return getDeviceFile(device, cachedDevicePolicyFiles, "/sys/fs/selinux/policy", "sepolicy");
+    }
+
+    // NOTE: cts/tools/selinux depends on this method. Rename/change with caution.
+    /**
+     * Returns the host-side file containing the system SELinux policy of the device under test.
+     */
+    public static File getDeviceSystemPolicyFile(ITestDevice device) throws Exception {
+        return buildSystemPolicy(device, cachedDeviceSystemPolicy, "system_sepolicy");
+    }
+
+    // NOTE: cts/tools/selinux depends on this method. Rename/change with caution.
+    /**
+     * Returns the major number of sepolicy version of device's vendor implementation.
+     * TODO(b/37999212): Use VINTF object API instead of parsing vendor manifest.
+     */
+    public static int getVendorSepolicyVersion(ITestDevice device) throws Exception {
+        String deviceManifestPath =
+                (device.doesFileExist("/vendor/etc/vintf/manifest.xml")) ?
+                "/vendor/etc/vintf/manifest.xml" :
+                "/vendor/manifest.xml";
+        File vendorManifestFile = getDeviceFile(device, cachedDeviceVendorManifest,
+                deviceManifestPath, "manifest.xml");
+
+        DocumentBuilderFactory dbf = DocumentBuilderFactory.newInstance();
+        DocumentBuilder db = dbf.newDocumentBuilder();
+        Document doc = db.parse(vendorManifestFile);
+        Element root = doc.getDocumentElement();
+        Element sepolicy = (Element) root.getElementsByTagName("sepolicy").item(0);
+        Element version = (Element) sepolicy.getElementsByTagName("version").item(0);
+        String sepolicyVersion = version.getTextContent().split("\\.")[0];
+        return Integer.parseInt(sepolicyVersion);
     }
 
     /**
