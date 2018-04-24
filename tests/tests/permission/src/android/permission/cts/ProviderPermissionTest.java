@@ -24,6 +24,7 @@ import android.content.pm.ResolveInfo;
 import android.provider.CallLog;
 import android.provider.Contacts;
 import android.provider.Settings;
+import android.provider.Telephony;
 import android.test.AndroidTestCase;
 import android.test.suitebuilder.annotation.MediumTest;
 
@@ -73,6 +74,23 @@ public class ProviderPermissionTest extends AndroidTestCase {
     public void testWriteCallLog() {
         assertWritingContentUriRequiresPermission(CallLog.CONTENT_URI,
                 android.Manifest.permission.WRITE_CALL_LOG);
+    }
+
+    /**
+     * Verify that reading already received SMS messages requires permissions.
+     * <p>Tests Permission:
+     *   {@link android.Manifest.permission#READ_SMS}
+     *
+     * <p>Note: The WRITE_SMS permission has been removed.
+     */
+    public void testReadSms() {
+        if (!mContext.getPackageManager().hasSystemFeature(
+                PackageManager.FEATURE_TELEPHONY)) {
+            return;
+        }
+
+        assertReadingContentUriRequiresPermission(Telephony.Sms.CONTENT_URI,
+                android.Manifest.permission.READ_SMS);
     }
 
     /**
