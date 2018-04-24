@@ -131,6 +131,10 @@ public class NativeMediaDrmClearkeyTest extends MediaPlayerTestBase {
         assertTrue(testQueryKeyStatusNative(uuidByteArray(COMMON_PSSH_SCHEME_UUID)));
     }
 
+    public void testFindSessionId() throws Exception {
+        assertTrue(testFindSessionIdNative(uuidByteArray(COMMON_PSSH_SCHEME_UUID)));
+    }
+
     public void testGetPropertyString() throws Exception {
         StringBuffer value = new StringBuffer();
         testGetPropertyStringNative(uuidByteArray(COMMON_PSSH_SCHEME_UUID), "description", value);
@@ -229,6 +233,8 @@ public class NativeMediaDrmClearkeyTest extends MediaPlayerTestBase {
 
     private static native boolean testClearKeyPlaybackNative(final byte[] uuid,
             PlaybackParams params);
+
+    private static native boolean testFindSessionIdNative(final byte[] uuid);
 
     private static native boolean testGetPropertyStringNative(final byte[] uuid,
             final String name, StringBuffer value);
