@@ -33,6 +33,7 @@ import static org.mockito.Mockito.spy;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 
+import android.annotation.Nullable;
 import android.app.Activity;
 import android.content.Context;
 import android.content.res.ColorStateList;
@@ -42,13 +43,19 @@ import android.graphics.Canvas;
 import android.graphics.Color;
 import android.graphics.ColorFilter;
 import android.graphics.Matrix;
+import android.graphics.PixelFormat;
 import android.graphics.PorterDuff;
+import android.graphics.PorterDuff.Mode;
+import android.graphics.PorterDuffColorFilter;
+import android.graphics.PorterDuffXfermode;
+import android.graphics.Xfermode;
 import android.graphics.drawable.BitmapDrawable;
 import android.graphics.drawable.ColorDrawable;
 import android.graphics.drawable.Drawable;
 import android.graphics.drawable.Icon;
 import android.graphics.drawable.PaintDrawable;
 import android.net.Uri;
+import android.support.test.InstrumentationRegistry;
 import android.support.test.annotation.UiThreadTest;
 import android.support.test.filters.MediumTest;
 import android.support.test.rule.ActivityTestRule;
@@ -500,6 +507,46 @@ public class ImageViewTest {
         verify(mockImageView, times(1)).onSizeChanged(anyInt(), anyInt(), anyInt(), anyInt());
     }
 
+    @Test
+    public void testSetColorFilterPreservesDrawableProperties() {
+        ImageView imageView = new ImageView(InstrumentationRegistry.getTargetContext());
+
+        int colorAlpha = 128;
+        MockDrawable mockDrawable = new MockDrawable();
+        mockDrawable.setAlpha(colorAlpha);
+        mockDrawable.setXfermode(new PorterDuffXfermode(Mode.SRC_IN));
+
+        imageView.setImageDrawable(mockDrawable);
+
+        imageView.setColorFilter(Color.RED);
+        assertEquals(colorAlpha, mockDrawable.getAlpha());
+        assertNotNull(mockDrawable.getXfermode());
+    }
+
+    @Test
+    public void testImageViewSetColorFilterPropagatedToDrawable() {
+        ImageView imageView = new ImageView(InstrumentationRegistry.getTargetContext());
+
+        MockDrawable mockDrawable = new MockDrawable();
+        imageView.setImageDrawable(mockDrawable);
+        imageView.setColorFilter(Color.RED);
+
+        ColorFilter imageViewColorFilter = imageView.getColorFilter();
+        assertTrue(imageViewColorFilter instanceof PorterDuffColorFilter);
+
+        PorterDuffColorFilter imageViewPorterDuffFilter =
+                (PorterDuffColorFilter) imageViewColorFilter;
+        assertEquals(Color.RED, imageViewPorterDuffFilter.getColor());
+        assertEquals(Mode.SRC_ATOP, imageViewPorterDuffFilter.getMode());
+
+        ColorFilter colorFilter = mockDrawable.getColorFilter();
+        assertTrue(colorFilter instanceof PorterDuffColorFilter);
+
+        PorterDuffColorFilter porterDuffColorFilter = (PorterDuffColorFilter) colorFilter;
+        assertEquals(Color.RED, porterDuffColorFilter.getColor());
+        assertEquals(PorterDuff.Mode.SRC_ATOP, porterDuffColorFilter.getMode());
+    }
+
     @UiThreadTest
     @Test
     public void testVerifyDrawable() {
@@ -672,6 +719,51 @@ public class ImageViewTest {
 
         protected void onSizeChanged(int w, int h, int oldw, int oldh) {
             super.onSizeChanged(w, h, oldw, oldh);
+        }
+    }
+
+    public static class MockDrawable extends Drawable {
+
+        private ColorFilter mFilter;
+        private int mAlpha;
+        private Xfermode mXfermode;
+
+        @Override
+        public void draw(Canvas canvas) {
+            // NO-OP
+        }
+
+        @Override
+        public void setAlpha(int alpha) {
+            mAlpha = alpha;
+        }
+
+        public int getAlpha() {
+            return mAlpha;
+        }
+
+        @Override
+        public void setColorFilter(ColorFilter colorFilter) {
+            mFilter = colorFilter;
+        }
+
+        @Override
+        public void setXfermode(Xfermode mode) {
+            mXfermode = mode;
+        }
+
+        public @Nullable Xfermode getXfermode() {
+            return mXfermode;
+        }
+
+        @Override
+        public @Nullable ColorFilter getColorFilter() {
+            return mFilter;
+        }
+
+        @Override
+        public int getOpacity() {
+            return PixelFormat.TRANSLUCENT;
         }
     }
 }
