@@ -358,8 +358,11 @@ public class CameraManagerTest extends AndroidTestCase {
                 blockingListenerList.add(mCameraListener);
             }
         } finally {
-            for (CameraDevice camera : cameraList) {
-                camera.close();
+            for (int i = 0; i < cameraList.size(); i++) {
+                // With conflicting devices, opening of one camera could result in the other camera
+                // being disconnected. To handle such case, reset the mock before close.
+                reset(listenerList.get(i));
+                cameraList.get(i).close();
             }
             for (BlockingStateCallback blockingListener : blockingListenerList) {
                 blockingListener.waitForState(
