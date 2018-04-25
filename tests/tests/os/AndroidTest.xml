@@ -23,5 +23,6 @@
     <test class="com.android.tradefed.testtype.AndroidJUnitTest" >
         <option name="package" value="android.os.cts" />
         <option name="runtime-hint" value="3m15s" />
+        <option name="hidden-api-checks" value="false" />
     </test>
 </configuration>
