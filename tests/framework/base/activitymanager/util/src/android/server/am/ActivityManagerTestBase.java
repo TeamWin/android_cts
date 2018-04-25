@@ -399,7 +399,8 @@ public abstract class ActivityManagerTestBase {
     }
 
     protected void setActivityTaskWindowingMode(ComponentName activityName, int windowingMode) {
-        final int taskId = getActivityTaskId(activityName);
+        mAmWmState.computeState(activityName);
+        final int taskId = mAmWmState.getAmState().getTaskByActivity(activityName).mTaskId;
         mAm.setTaskWindowingMode(taskId, windowingMode, true /* toTop */);
         mAmWmState.waitForValidState(new WaitForValidActivityState.Builder(activityName)
                 .setActivityType(ACTIVITY_TYPE_STANDARD)
@@ -408,7 +409,8 @@ public abstract class ActivityManagerTestBase {
     }
 
     protected void moveActivityToStack(ComponentName activityName, int stackId) {
-        final int taskId = getActivityTaskId(activityName);
+        mAmWmState.computeState(activityName);
+        final int taskId = mAmWmState.getAmState().getTaskByActivity(activityName).mTaskId;
         final String cmd = AM_MOVE_TASK + taskId + " " + stackId + " true";
         executeShellCommand(cmd);
 
@@ -419,7 +421,8 @@ public abstract class ActivityManagerTestBase {
 
     protected void resizeActivityTask(
             ComponentName activityName, int left, int top, int right, int bottom) {
-        final int taskId = getActivityTaskId(activityName);
+        mAmWmState.computeState(activityName);
+        final int taskId = mAmWmState.getAmState().getTaskByActivity(activityName).mTaskId;
         final String cmd = "am task resize "
                 + taskId + " " + left + " " + top + " " + right + " " + bottom;
         executeShellCommand(cmd);
@@ -450,25 +453,6 @@ public abstract class ActivityManagerTestBase {
         for (String line : output.split("\\n")) {
             log(line);
         }
-    }
-
-    @Deprecated
-    protected int getActivityTaskId(final ComponentName activityName) {
-        final String windowName = getWindowName(activityName);
-        final String output = executeShellCommand(AM_STACK_LIST);
-        final Pattern activityPattern = Pattern.compile("(.*) " + windowName + " (.*)");
-        for (final String line : output.split("\\n")) {
-            final Matcher matcher = activityPattern.matcher(line);
-            if (matcher.matches()) {
-                for (String word : line.split("\\s+")) {
-                    if (word.startsWith(TASK_ID_PREFIX)) {
-                        final String withColon = word.split("=")[1];
-                        return Integer.parseInt(withColon.substring(0, withColon.length() - 1));
-                    }
-                }
-            }
-        }
-        return -1;
     }
 
     protected boolean supportsVrMode() {
