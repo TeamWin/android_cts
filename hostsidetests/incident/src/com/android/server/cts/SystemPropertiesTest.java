@@ -24,18 +24,16 @@ import android.os.SystemPropertiesProto;
 public class SystemPropertiesTest extends ProtoDumpTestCase {
     private static final String TAG = "SystemPropertiesTest";
 
-    static void verifySystemPropertiesProto(SystemPropertiesProto properties,
-            final int filterLevel, IBuildInfo ctsBuild) {
+    static void verifySystemPropertiesProto(SystemPropertiesProto properties, final int filterLevel) {
         // check local tagged field
         if (filterLevel == PRIVACY_LOCAL) {
             assertTrue(properties.getExtraPropertiesCount() > 0);
         } else {
             assertEquals(0, properties.getExtraPropertiesCount());
         }
-        // check explicit tagged field
-        assertEquals(filterLevel == PRIVACY_AUTO, properties.getDalvikVm().getHeapmaxfree().isEmpty());
-        // check automatic tagged field
-        assertEquals(ctsBuild.getBuildId(),
-            properties.getRo().getBuild().getVersion().getIncremental());
+        // check explicit tagged field, persist.sys.timezone is public prop.
+        assertEquals(filterLevel == PRIVACY_AUTO, properties.getPersist().getSysTimezone().isEmpty());
+        // check automatic tagged field, ro.build.display.id is public prop.
+        assertFalse(properties.getRo().getBuild().getDisplayId().isEmpty());
     }
 }
