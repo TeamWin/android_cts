@@ -34,7 +34,7 @@ public class IncidentdIsolatedTest extends ProtoDumpTestCase {
         if (execCommandAndFind(CMD_TOP, SYSTEM_SERVER) != null) {
             CLog.logAndDisplay(LogLevel.INFO, "stop server");
             getDevice().executeShellCommand("stop");
-            Thread.sleep(3000); // wait for 3 seconds to stop.
+            Thread.sleep(10000); // wait for 10 seconds to stop.
             assertTrue("system_server failed to stop",
                     !execCommandAndGet(CMD_TOP).contains(SYSTEM_SERVER));
         }
