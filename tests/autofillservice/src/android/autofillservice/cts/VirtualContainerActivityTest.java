@@ -33,6 +33,8 @@ import static android.service.autofill.SaveInfo.SAVE_DATA_TYPE_PASSWORD;
 import static com.google.common.truth.Truth.assertThat;
 import static com.google.common.truth.Truth.assertWithMessage;
 
+import static org.junit.Assume.assumeTrue;
+
 import android.app.assist.AssistStructure.ViewNode;
 import android.autofillservice.cts.CannedFillResponse.CannedDataset;
 import android.autofillservice.cts.InstrumentedAutoFillService.FillRequest;
@@ -107,7 +109,7 @@ public class VirtualContainerActivityTest extends AutoFillServiceTestCase {
 
     @Test
     public void testAutofillAsync() throws Exception {
-        if (mCompatMode) return;
+        skipTestOnCompatMode();
 
         autofillTest(false);
     }
@@ -288,7 +290,7 @@ public class VirtualContainerActivityTest extends AutoFillServiceTestCase {
 
     @Test
     public void testAutofillManuallyOneDataset() throws Exception {
-        if (mCompatMode) return; // TODO(b/73557072): not supported yet
+        skipTestOnCompatMode(); // TODO(b/73557072): not supported yet
 
         // Set service.
         enableService();
@@ -323,7 +325,7 @@ public class VirtualContainerActivityTest extends AutoFillServiceTestCase {
     }
 
     private void autofillManuallyTwoDatasets(boolean pickFirst) throws Exception {
-        if (mCompatMode) return; // TODO(b/73557072): not supported yet
+        skipTestOnCompatMode(); // TODO(b/73557072): not supported yet
 
         // Set service.
         enableService();
@@ -773,5 +775,10 @@ public class VirtualContainerActivityTest extends AutoFillServiceTestCase {
         assertTextIsSanitized(urlBar);
         assertThat(urlBar.getWebDomain()).isNull();
         assertThat(urlBar.getWebScheme()).isNull();
+    }
+
+
+    private void skipTestOnCompatMode() {
+        assumeTrue("test not applicable when on compat mode", !mCompatMode);
     }
 }

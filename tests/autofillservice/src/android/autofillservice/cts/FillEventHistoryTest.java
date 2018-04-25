@@ -412,8 +412,9 @@ public class FillEventHistoryTest extends AutoFillServiceTestCase {
         mUiBot.pressBack(); // dismiss autofill
         mUiBot.pressBack(); // dismiss keyboard
         mUiBot.pressBack(); // dismiss task
-        assertThat(mActivity.getWindow().getDecorView().hasWindowFocus()).isTrue();
         mUiBot.assertShownByRelativeId(ID_USERNAME);
+        assertWithMessage("root window has no focus")
+                .that(mActivity.getWindow().getDecorView().hasWindowFocus()).isTrue();
 
         // ...and trigger save
         // Set credentials...
