@@ -53,6 +53,10 @@
             android:label="MaxAspectRatioUnsetActivity"
             android:resizeableActivity="false" />
 
+        <activity android:name="android.server.am.ActivityManagerTestBase$SideActivity"
+                  android:resizeableActivity="true"
+                  android:taskAffinity="nobody.but.SideActivity"/>
+
         <activity android:name="android.server.am.lifecycle.ActivityLifecycleClientTestBase$FirstActivity" />
 
         <activity android:name="android.server.am.lifecycle.ActivityLifecycleClientTestBase$SecondActivity"/>

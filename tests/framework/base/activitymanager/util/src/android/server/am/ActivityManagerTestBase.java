@@ -45,9 +45,9 @@ import static android.server.am.ActivityLauncher.KEY_TARGET_COMPONENT;
 import static android.server.am.ActivityLauncher.KEY_USE_APPLICATION_CONTEXT;
 import static android.server.am.ActivityLauncher.KEY_USE_INSTRUMENTATION;
 import static android.server.am.ActivityLauncher.launchActivityFromExtras;
+import static android.server.am.ActivityManagerState.STATE_RESUMED;
 import static android.server.am.ComponentNameUtils.getActivityName;
 import static android.server.am.ComponentNameUtils.getLogTag;
-import static android.server.am.ComponentNameUtils.getWindowName;
 import static android.server.am.Components.LAUNCHING_ACTIVITY;
 import static android.server.am.Components.TEST_ACTIVITY;
 import static android.server.am.StateLogger.log;
@@ -70,22 +70,25 @@ import static org.junit.Assert.fail;
 import static java.lang.Integer.toHexString;
 
 import android.accessibilityservice.AccessibilityService;
+import android.app.Activity;
 import android.app.ActivityManager;
 import android.content.ComponentName;
 import android.content.Context;
 import android.graphics.Bitmap;
+import android.content.Intent;
 import android.os.Bundle;
 import android.os.SystemClock;
 import android.provider.Settings;
 import android.server.am.settings.SettingsSession;
-import androidx.annotation.NonNull;
-import androidx.annotation.Nullable;
 import android.support.test.InstrumentationRegistry;
+
+import android.support.test.rule.ActivityTestRule;
 
 import com.android.compatibility.common.util.SystemUtil;
 
 import org.junit.After;
 import org.junit.Before;
+import org.junit.Rule;
 import org.junit.rules.TestRule;
 import org.junit.runner.Description;
 import org.junit.runners.model.Statement;
@@ -102,6 +105,9 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
+
+import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
 
 public abstract class ActivityManagerTestBase {
     private static final boolean PRETEND_DEVICE_SUPPORTS_PIP = false;
@@ -147,6 +153,11 @@ public abstract class ActivityManagerTestBase {
 
     protected Context mContext;
     protected ActivityManager mAm;
+
+    @Rule
+    public final ActivityTestRule<SideActivity> mSideActivityRule =
+            new ActivityTestRule<>(SideActivity.class, true /* initialTouchMode */,
+                    false /* launchActivity */);
 
     /**
      * @return the am command to start the given activity with the following extra key/value pairs.
@@ -367,10 +378,26 @@ public abstract class ActivityManagerTestBase {
     }
 
     public void moveTaskToPrimarySplitScreen(int taskId) {
+        moveTaskToPrimarySplitScreen(taskId, false /* launchSideActivityIfNeeded */);
+    }
+
+    /**
+     * Moves the device into split-screen with the specified task into the primary stack.
+     * @param taskId                        The id of the task to move into the primary stack.
+     * @param launchSideActivityIfNeeded    Whether a placeholder activity should be launched if no
+     *                                      recents activity is available.
+     */
+    public void moveTaskToPrimarySplitScreen(int taskId, boolean launchSideActivityIfNeeded) {
         mAm.setTaskWindowingModeSplitScreenPrimary(taskId, SPLIT_SCREEN_CREATE_MODE_TOP_OR_LEFT,
                 true /* onTop */, false /* animate */, null /* initialBounds */,
                 true /* showRecents */);
         mAmWmState.waitForRecentsActivityVisible();
+
+        if (mAmWmState.getAmState().isHomeRecentsComponent() && launchSideActivityIfNeeded) {
+            // Launch Placeholder Recents
+            final Activity recentsActivity = mSideActivityRule.launchActivity(new Intent());
+            mAmWmState.waitForActivityState(recentsActivity.getComponentName(), STATE_RESUMED);
+        }
     }
 
     /**
@@ -1432,5 +1459,9 @@ public abstract class ActivityManagerTestBase {
             }
             executeShellCommand(commandBuilder.toString());
         }
+    }
+
+    // Activity used in place of recents when home is the recents component.
+    public static class SideActivity extends Activity {
     }
 }
