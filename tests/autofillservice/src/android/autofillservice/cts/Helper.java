@@ -137,6 +137,10 @@ final class Helper {
         return id.equals(node.getText());
     };
 
+    private static final NodeFilter<ViewNode> AUTOFILL_HINT_FILTER = (node, id) -> {
+        return hasHint(node.getAutofillHints(), id);
+    };
+
     private static final NodeFilter<ViewNode> WEBVIEW_FORM_FILTER = (node, id) -> {
         final String className = node.getClassName();
         if (!className.equals("android.webkit.WebView")) return false;
@@ -312,6 +316,14 @@ final class Helper {
      */
     static ViewNode findNodeByHtmlName(ViewNode node, String htmlName) {
         return findNodeByFilter(node, htmlName, HTML_NAME_FILTER);
+    }
+
+    /**
+     * Gets a node given the value of its (single) autofill hint property, or {@code null} if not
+     * found.
+     */
+    static ViewNode findNodeByAutofillHint(ViewNode node, String hint) {
+        return findNodeByFilter(node, hint, AUTOFILL_HINT_FILTER);
     }
 
     /**
@@ -644,7 +656,7 @@ final class Helper {
     }
 
     /**
-     * Gets the total number of nodes in an structure, including all descendants.
+     * Gets the total number of nodes in an structure.
      */
     static int getNumberNodes(AssistStructure structure) {
         int count = 0;
@@ -660,7 +672,7 @@ final class Helper {
     /**
      * Gets the total number of nodes in an node, including all descendants and the node itself.
      */
-    private static int getNumberNodes(ViewNode node) {
+    static int getNumberNodes(ViewNode node) {
         int count = 1;
         final int childrenSize = node.getChildCount();
         if (childrenSize > 0) {

@@ -30,9 +30,11 @@ import static android.autofillservice.cts.FatActivity.ID_NOT_IMPORTANT_CONTAINER
 import static android.autofillservice.cts.FatActivity.ID_NOT_IMPORTANT_CONTAINER_MIXED_DESCENDANTS;
 import static android.autofillservice.cts.FatActivity.ID_NOT_IMPORTANT_CONTAINER_MIXED_DESCENDANTS_CHILD;
 import static android.autofillservice.cts.FatActivity.ID_NOT_IMPORTANT_CONTAINER_MIXED_DESCENDANTS_GRAND_CHILD;
-import static android.autofillservice.cts.Helper.assertNumberOfChildren;
+import static android.autofillservice.cts.FatActivity.ID_ROOT;
+import static android.autofillservice.cts.Helper.findNodeByAutofillHint;
 import static android.autofillservice.cts.Helper.findNodeByResourceId;
 import static android.autofillservice.cts.Helper.findNodeByText;
+import static android.autofillservice.cts.Helper.getNumberNodes;
 import static android.autofillservice.cts.Helper.importantForAutofillAsString;
 import static android.view.View.IMPORTANT_FOR_AUTOFILL_AUTO;
 import static android.view.View.IMPORTANT_FOR_AUTOFILL_NO;
@@ -43,7 +45,6 @@ import static android.view.View.IMPORTANT_FOR_AUTOFILL_YES_EXCLUDE_DESCENDANTS;
 import static com.google.common.truth.Truth.assertThat;
 import static com.google.common.truth.Truth.assertWithMessage;
 
-import android.app.assist.AssistStructure;
 import android.app.assist.AssistStructure.ViewNode;
 import android.autofillservice.cts.InstrumentedAutoFillService.FillRequest;
 
@@ -61,7 +62,7 @@ public class FatActivityTest extends AutoFillServiceTestCase {
         new AutofillActivityTestRule<FatActivity>(FatActivity.class);
 
     private FatActivity mFatActivity;
-    private AssistStructure mStructure;
+    private ViewNode mRoot;
 
     @Before
     public void setActivity() {
@@ -69,7 +70,7 @@ public class FatActivityTest extends AutoFillServiceTestCase {
     }
 
     @Test
-    public void testNoContainers() throws Exception {
+    public void testAutomaticRequest() throws Exception {
         // Set service.
         enableService();
 
@@ -79,13 +80,22 @@ public class FatActivityTest extends AutoFillServiceTestCase {
         // Trigger auto-fill.
         mFatActivity.onInput((v) -> v.requestFocus());
         final FillRequest fillRequest = sReplier.getNextFillRequest();
-        mStructure = fillRequest.structure;
         mUiBot.assertNoDatasetsEver();
 
-        // TODO: should only have X children, but there is an extra
-        // TextView that's probably coming from the title. For now we're just ignoring it, but
-        // ideally we should change the .xml to exclude it.
-        assertNumberOfChildren(fillRequest.structure, 9);
+        mRoot = findNodeByResourceId(fillRequest.structure, ID_ROOT);
+        /*
+         * Should have 8 nodes:
+         *
+         * 1. root
+         * 2. important_image
+         * 3. label without id but marked as important
+         * 4. input_container
+         * 5. input
+         * 6. important_container_excluding_descendants
+         * 7. not_important_container_mixed_descendants_child
+         * 8. view (My View) without id but with hints
+         */
+        assertThat(getNumberNodes(mRoot)).isEqualTo(8);
 
         // Should not have ImageView...
         assertThat(findNodeByResourceId(fillRequest.structure, ID_IMAGE)).isNull();
@@ -108,28 +118,31 @@ public class FatActivityTest extends AutoFillServiceTestCase {
         assertThat(input.getIdEntry()).isEqualTo(ID_INPUT);
 
         // Make sure a non-important container can exclude descendants
-        assertThat(findNodeByResourceId(fillRequest.structure,
+        assertThat(findNodeByResourceId(mRoot,
                 ID_NOT_IMPORTANT_CONTAINER_EXCLUDING_DESCENDANTS)).isNull();
-        assertThat(findNodeByResourceId(fillRequest.structure,
+        assertThat(findNodeByResourceId(mRoot,
                 ID_NOT_IMPORTANT_CONTAINER_EXCLUDING_DESCENDANTS_CHILD)).isNull();
-        assertThat(findNodeByResourceId(fillRequest.structure,
+        assertThat(findNodeByResourceId(mRoot,
                 ID_NOT_IMPORTANT_CONTAINER_EXCLUDING_DESCENDANTS_GRAND_CHILD)).isNull();
 
         // Make sure an important container can exclude descendants
         assertNodeExists(ID_IMPORTANT_CONTAINER_EXCLUDING_DESCENDANTS,
                 IMPORTANT_FOR_AUTOFILL_YES_EXCLUDE_DESCENDANTS);
-        assertThat(findNodeByResourceId(fillRequest.structure,
+        assertThat(findNodeByResourceId(mRoot,
                 ID_IMPORTANT_CONTAINER_EXCLUDING_DESCENDANTS_CHILD)).isNull();
-        assertThat(findNodeByResourceId(fillRequest.structure,
+        assertThat(findNodeByResourceId(mRoot,
                 ID_IMPORTANT_CONTAINER_EXCLUDING_DESCENDANTS_GRAND_CHILD)).isNull();
 
         // Make sure an intermediary descendant can be excluded
-        assertThat(findNodeByResourceId(fillRequest.structure,
+        assertThat(findNodeByResourceId(mRoot,
                 ID_NOT_IMPORTANT_CONTAINER_MIXED_DESCENDANTS)).isNull();
         assertNodeExists(ID_NOT_IMPORTANT_CONTAINER_MIXED_DESCENDANTS_CHILD,
                 IMPORTANT_FOR_AUTOFILL_YES);
-        assertThat(findNodeByResourceId(fillRequest.structure,
+        assertThat(findNodeByResourceId(mRoot,
                 ID_NOT_IMPORTANT_CONTAINER_MIXED_DESCENDANTS_GRAND_CHILD)).isNull();
+
+        // Make sure entry with hints is always shown
+        assertThat(findNodeByAutofillHint(mRoot, "importantAmI")).isNotNull();
     }
 
     @Test
@@ -143,13 +156,31 @@ public class FatActivityTest extends AutoFillServiceTestCase {
         // Trigger autofill.
         mFatActivity.onInput((v) -> mFatActivity.getAutofillManager().requestAutofill(v));
         final FillRequest fillRequest = sReplier.getNextFillRequest();
-        mStructure = fillRequest.structure;
         mUiBot.assertNoDatasetsEver();
 
-        // TODO: should only have X children, but there is an extra
-        // TextView that's probably coming from the title. For now we're just ignoring it, but
-        // ideally we should change the .xml to exclude it.
-        assertNumberOfChildren(fillRequest.structure, 28);
+        mRoot = findNodeByResourceId(fillRequest.structure, ID_ROOT);
+        /*
+         * Should have 18 nodes:
+         * 1. root
+         * 2. layout without id
+         * 3. label without id
+         * 4. input_container
+         * 5. input
+         * 6. captcha
+         * 7. image
+         * 8. important_image
+         * 9. not_important_container_excluding_descendants
+         * 10.not_important_container_excluding_descendants_child
+         * 11.not_important_container_excluding_descendants_grand_child
+         * 12.important_container_excluding_descendants
+         * 13.important_container_excluding_descendants_child
+         * 14.important_container_excluding_descendants_grand_child
+         * 15.not_important_container_mixed_descendants
+         * 16.not_important_container_mixed_descendants_child
+         * 17.not_important_container_mixed_descendants_grand_child
+         * 18.view (My View) without id but with hints
+         */
+        assertThat(getNumberNodes(mRoot)).isEqualTo(18);
 
         // Assert all nodes are present
         assertNodeExists(ID_IMAGE, IMPORTANT_FOR_AUTOFILL_NO);
@@ -186,15 +217,18 @@ public class FatActivityTest extends AutoFillServiceTestCase {
                 IMPORTANT_FOR_AUTOFILL_YES);
         assertNodeExists(ID_NOT_IMPORTANT_CONTAINER_MIXED_DESCENDANTS_GRAND_CHILD,
                 IMPORTANT_FOR_AUTOFILL_NO);
+        assertNode(findNodeByAutofillHint(mRoot, "importantAmI"), IMPORTANT_FOR_AUTOFILL_AUTO);
     }
 
     private ViewNode assertNodeExists(String resourceId, int expectedImportantForAutofill) {
-        final ViewNode node = findNodeByResourceId(mStructure, resourceId);
+        assertWithMessage("root node not set").that(mRoot).isNotNull();
+        final ViewNode node = findNodeByResourceId(mRoot, resourceId);
+        assertWithMessage("no node with resource id '%s'", resourceId).that(node).isNotNull();
         return assertNode(node, resourceId, expectedImportantForAutofill);
     }
 
     private ViewNode assertNodeWithTextExists(String text, int expectedImportantForAutofill) {
-        final ViewNode node = findNodeByText(mStructure, text);
+        final ViewNode node = findNodeByText(mRoot, text);
         return assertNode(node, text, expectedImportantForAutofill);
     }
 
