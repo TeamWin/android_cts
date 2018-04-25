@@ -18,9 +18,6 @@ package com.android.cts;
 interface IBinderPermissionTestService {
     // Methods that, when called, invoke one of the permission check methods
     // to check the caller's permissions.
-    void callEnforceCallingPermissionGranted();
-    void callEnforceCallingPermissionNotGranted();
-
-    int callCheckCallingPermissionGranted();
-    int callCheckCallingPermissionNotGranted();
+    void doEnforceCallingPermission(String permission);
+    int doCheckCallingPermission(String permission);
 }

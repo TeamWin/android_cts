@@ -29,35 +29,17 @@ import android.os.IBinder;
 
 public class BinderPermissionTestService extends Service {
 
-    // Note: keep these constants in sync with GRANTED_PERMISSION and NOT_GRANTED_PERMISSION in
-    // ContextTest.
-    //
-    // A permission that's granted to the content test package (ContextTest).
-    public static final String CALLER_GRANTED_PERMISSION = "android.permission.USE_CREDENTIALS";
-    // A permission that's not granted to the content test package (ContextTest).
-    public static final String CALLER_NOT_GRANTED_PERMISSION = "android.permission.HARDWARE_TEST";
-
     private static String TEST_NOT_ALLOWED_MESSAGE = "Test: you're not allowed to do this.";
 
     private final IBinder mBinder = new IBinderPermissionTestService.Stub() {
         @Override
-        public void callEnforceCallingPermissionGranted() {
-            enforceCallingPermission(CALLER_GRANTED_PERMISSION, TEST_NOT_ALLOWED_MESSAGE);
+        public void doEnforceCallingPermission(String permission) {
+            enforceCallingPermission(permission, TEST_NOT_ALLOWED_MESSAGE);
         }
 
         @Override
-        public void callEnforceCallingPermissionNotGranted() {
-            enforceCallingPermission(CALLER_NOT_GRANTED_PERMISSION, TEST_NOT_ALLOWED_MESSAGE);
-        }
-
-        @Override
-        public int callCheckCallingPermissionGranted() {
-            return checkCallingPermission(CALLER_GRANTED_PERMISSION);
-        }
-
-        @Override
-        public int callCheckCallingPermissionNotGranted() {
-            return checkCallingPermission(CALLER_NOT_GRANTED_PERMISSION);
+        public int doCheckCallingPermission(String permission) {
+            return checkCallingPermission(permission);
         }
     };
 
