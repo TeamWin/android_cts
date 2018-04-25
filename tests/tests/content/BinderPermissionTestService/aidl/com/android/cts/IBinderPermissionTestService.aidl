@@ -20,4 +20,6 @@ interface IBinderPermissionTestService {
     // to check the caller's permissions.
     void doEnforceCallingPermission(String permission);
     int doCheckCallingPermission(String permission);
+    void doEnforceCallingOrSelfPermission(String permission);
+    int doCheckCallingOrSelfPermission(String permission);
 }
