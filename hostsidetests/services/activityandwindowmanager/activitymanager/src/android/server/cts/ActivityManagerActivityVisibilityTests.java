@@ -170,10 +170,6 @@ public class ActivityManagerActivityVisibilityTests extends ActivityManagerTestB
         performFinishActivityWithMoveTaskToBack("on_pause");
     }
 
-    public void testFinishActivityWithMoveTaskToBackAfterStop() throws Exception {
-        performFinishActivityWithMoveTaskToBack("on_stop");
-    }
-
     private void performFinishActivityWithMoveTaskToBack(String finishPoint) throws Exception {
         // Make sure home activity is visible.
         launchHomeActivity();
