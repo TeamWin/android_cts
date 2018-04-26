@@ -23,19 +23,15 @@ import android.content.pm.PackageManager;
 import android.support.test.InstrumentationRegistry;
 
 import org.junit.Before;
-import org.junit.BeforeClass;
 
 public class EndToEndImeTestBase {
-
-    @BeforeClass
-    public static void assumeFeatureInputMethod() {
+    @Before
+    public void showStateInitializeActivity() {
+        // TODO(b/37502066): Move this back to @BeforeClass once b/37502066 is fixed.
         assumeTrue("MockIme cannot be used for devices that do not support installable IMEs",
                 InstrumentationRegistry.getContext().getPackageManager().hasSystemFeature(
                         PackageManager.FEATURE_INPUT_METHODS));
-    }
 
-    @Before
-    public void showStateInitializeActivity() {
         final Intent intent = new Intent()
                 .setAction(Intent.ACTION_MAIN)
                 .setClass(InstrumentationRegistry.getTargetContext(), StateInitializeActivity.class)
