@@ -23,6 +23,11 @@
     <test class="com.android.tradefed.testtype.AndroidJUnitTest" >
         <option name="package" value="android.os.cts" />
         <option name="runtime-hint" value="3m15s" />
+        <!-- Do not disable hidden-api-checks for this test. This test includes
+             StrictModeTest which relies on hidden API checks being enabled in
+             order to function properly. Any APIs used by this test should be
+             added to the light grey list, or made @TestApi instead.
         <option name="hidden-api-checks" value="false" />
+        -->
     </test>
 </configuration>
