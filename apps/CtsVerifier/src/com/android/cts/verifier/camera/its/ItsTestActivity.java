@@ -405,10 +405,10 @@ public class ItsTestActivity extends DialogTestListActivity {
     }
 
     @Override
-    protected void onPause() {
-        super.onPause();
+    public void onDestroy() {
         Log.d(TAG, "unregister ITS result receiver");
         unregisterReceiver(mResultsReceiver);
+        super.onDestroy();
     }
 
     @Override
