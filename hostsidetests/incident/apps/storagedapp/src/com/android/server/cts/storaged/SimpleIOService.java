@@ -24,8 +24,11 @@ import android.os.IBinder;
 import android.os.Looper;
 import android.os.Message;
 import android.os.Process;
+import android.util.Log;
 
+import java.io.BufferedReader;
 import java.io.File;
+import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.IOException;
 
@@ -34,8 +37,40 @@ public class SimpleIOService extends Service {
     private ServiceHandler mServiceHandler;
 
     private final class ServiceHandler extends Handler {
+        private String getCgroupCpuset() {
+            File cgroup = new File("/proc/self/cgroup");
+            try (BufferedReader br = new BufferedReader(new FileReader(cgroup))) {
+                String line;
+                while ((line = br.readLine()) != null) {
+                    String[] parts = line.split(":");
+                    if (parts.length >= 3 && parts[1].equals("cpuset")) {
+                        return parts[2];
+                    }
+                }
+            } catch (IOException e) {
+            }
+            return null;
+        }
+
         public ServiceHandler(Looper looper) {
             super(looper);
+
+            // Spin for 20 seconds until we are not in the foreground. (Note
+            // that UsageStatsService considers "foreground" to be in the
+            // background - only top and persistent processes are reported as
+            // foreground for uid_io).
+            for (int i = 1; i <= 200; i++) {
+                String cpuset = getCgroupCpuset();
+                if (cpuset == null || !cpuset.equals("/top")) {
+                    break;
+                }
+                try {
+                    Thread.sleep(100);
+                } catch (InterruptedException e) {
+                }
+            }
+
+            Log.i("SimpleIOService", "cgroup:" + getCgroupCpuset());
         }
 
         @Override
