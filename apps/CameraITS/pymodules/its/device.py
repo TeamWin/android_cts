@@ -27,8 +27,6 @@ import numpy
 import string
 import unicodedata
 
-CMD_DELAY = 1  # seconds
-
 
 class ItsSession(object):
     """Controls a device over adb to run ITS scripts.
@@ -204,10 +202,6 @@ class ItsSession(object):
 
         # TODO: Figure out why "--user 0" is needed, and fix the problem.
         _run('%s shell am force-stop --user 0 %s' % (self.adb, self.PACKAGE))
-        _run(('%s shell am start --user 0 '
-              'com.android.cts.verifier/.camera.its.ItsTestActivity '
-              '--activity-brought-to-front') % self.adb)
-        time.sleep(CMD_DELAY)
         _run(('%s shell am start-foreground-service --user 0 -t text/plain '
               '-a %s') % (self.adb, self.INTENT_START))
 
@@ -911,11 +905,13 @@ def report_result(device_id, camera_id, results):
     Returns:
         Nothing.
     """
+    ACTIVITY_START_WAIT = 1.5 # seconds
     adb = "adb -s " + device_id
 
-    # Start ItsTestActivity to prevent flaky
+    # Start ItsTestActivity to receive test results
     cmd = "%s shell am start %s --activity-brought-to-front" % (adb, ItsSession.ITS_TEST_ACTIVITY)
     _run(cmd)
+    time.sleep(ACTIVITY_START_WAIT)
 
     # Validate/process results argument
     for scene in results:
@@ -941,6 +937,20 @@ def report_result(device_id, camera_id, results):
             ItsSession.EXTRA_RESULTS, json_results)
     if len(cmd) > 4095:
         print "ITS command string might be too long! len:", len(cmd)
+    _run(cmd)
+
+def adb_log(device_id, msg):
+    """Send a log message to adb logcat
+
+    Args:
+        device_id: The ID string of the adb device
+        msg: the message string to be send to logcat
+
+    Returns:
+        Nothing.
+    """
+    adb = "adb -s " + device_id
+    cmd = "%s shell log -p i -t \"ItsTestHost\" %s" % (adb, msg)
     _run(cmd)
 
 def get_device_fingerprint(device_id):
