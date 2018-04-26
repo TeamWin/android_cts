@@ -30,6 +30,7 @@ import static android.autofillservice.cts.Helper.assertTextOnly;
 import static android.autofillservice.cts.Helper.assertValue;
 import static android.autofillservice.cts.Helper.dumpStructure;
 import static android.autofillservice.cts.Helper.findNodeByResourceId;
+import static android.autofillservice.cts.Helper.isAutofillWindowFullScreen;
 import static android.autofillservice.cts.Helper.setUserComplete;
 import static android.autofillservice.cts.InstrumentedAutoFillService.SERVICE_CLASS;
 import static android.autofillservice.cts.InstrumentedAutoFillService.SERVICE_PACKAGE;
@@ -365,6 +366,7 @@ public class LoginActivityTest extends AbstractLoginActivityTestCase {
         // TODO: currently disabled because the screenshot contains elements external to the
         // activity that can change (for exmaple, clock), which causes flakiness to the test.
         final boolean compareBitmaps = false;
+        final boolean pickerAndViewBoundsMatches = !isAutofillWindowFullScreen(mContext);
 
         // Set service.
         enableService();
@@ -389,8 +391,10 @@ public class LoginActivityTest extends AbstractLoginActivityTestCase {
         Log.v(TAG,
                 "Username1 at " + usernameBoundaries1 + "; picker at " + usernamePickerBoundaries1);
         // TODO(b/37566627): assertions below might be too aggressive - use range instead?
-        assertThat(usernamePickerBoundaries1.top).isEqualTo(usernameBoundaries1.bottom);
-        assertThat(usernamePickerBoundaries1.left).isEqualTo(usernameBoundaries1.left);
+        if (pickerAndViewBoundsMatches) {
+            assertThat(usernamePickerBoundaries1.top).isEqualTo(usernameBoundaries1.bottom);
+            assertThat(usernamePickerBoundaries1.left).isEqualTo(usernameBoundaries1.left);
+        }
 
         // Move to password
         final Rect passwordBoundaries1 = mUiBot.selectByRelativeId(ID_PASSWORD).getVisibleBounds();
@@ -401,8 +405,10 @@ public class LoginActivityTest extends AbstractLoginActivityTestCase {
         Log.v(TAG,
                 "Password1 at " + passwordBoundaries1 + "; picker at " + passwordPickerBoundaries1);
         // TODO(b/37566627): assertions below might be too aggressive - use range instead?
-        assertThat(passwordPickerBoundaries1.top).isEqualTo(passwordBoundaries1.bottom);
-        assertThat(passwordPickerBoundaries1.left).isEqualTo(passwordBoundaries1.left);
+        if (pickerAndViewBoundsMatches) {
+            assertThat(passwordPickerBoundaries1.top).isEqualTo(passwordBoundaries1.bottom);
+            assertThat(passwordPickerBoundaries1.left).isEqualTo(passwordBoundaries1.left);
+        }
 
         // Then back to username
         final Rect usernameBoundaries2 = mUiBot.selectByRelativeId(ID_USERNAME).getVisibleBounds();
@@ -2422,8 +2428,8 @@ public class LoginActivityTest extends AbstractLoginActivityTestCase {
 
         // Make sure all datasets are shown.
         // TODO: improve assertDatasets() so it supports scrolling, and assert all of them are
-        // shown
-        mUiBot.assertDatasets("DS-1", "DS-2", "DS-3");
+        // shown. In fullscreen there are 4 items, otherwise there are 3 items.
+        mUiBot.assertDatasetsContains("DS-1", "DS-2", "DS-3");
 
         // TODO: once it supports scrolling, selects the last dataset and asserts it's filled.
     }
