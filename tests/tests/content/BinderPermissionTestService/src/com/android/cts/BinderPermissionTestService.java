@@ -41,6 +41,16 @@ public class BinderPermissionTestService extends Service {
         public int doCheckCallingPermission(String permission) {
             return checkCallingPermission(permission);
         }
+
+        @Override
+        public void doEnforceCallingOrSelfPermission(String permission) {
+            enforceCallingOrSelfPermission(permission, TEST_NOT_ALLOWED_MESSAGE);
+        }
+
+        @Override
+        public int doCheckCallingOrSelfPermission(String permission) {
+            return checkCallingOrSelfPermission(permission);
+        }
     };
 
     @Override

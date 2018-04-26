@@ -953,17 +953,35 @@ public class ContextTest extends AndroidTestCase {
         }
     }
 
-    public void testCheckCallingOrSelfPermissionGranted() {
+    public void testCheckCallingOrSelfPermission_noIpc() {
+        // There's no ongoing Binder call, so this package's permissions are checked.
         int retValue = mContext.checkCallingOrSelfPermission(GRANTED_PERMISSION);
         assertEquals(PackageManager.PERMISSION_GRANTED, retValue);
+
+        retValue = mContext.checkCallingOrSelfPermission(NOT_GRANTED_PERMISSION);
+        assertEquals(PackageManager.PERMISSION_DENIED, retValue);
     }
 
-    public void testEnforceCallingOrSelfPermissionGranted() {
+    public void testCheckCallingOrSelfPermission_ipc() throws Exception {
+        bindBinderPermissionTestService();
+        try {
+            int retValue = mBinderPermissionTestService.doCheckCallingOrSelfPermission(
+                    GRANTED_PERMISSION);
+            assertEquals(PackageManager.PERMISSION_GRANTED, retValue);
+
+            retValue = mBinderPermissionTestService.doCheckCallingOrSelfPermission(
+                    NOT_GRANTED_PERMISSION);
+            assertEquals(PackageManager.PERMISSION_DENIED, retValue);
+        } finally {
+            mContext.unbindService(mBinderPermissionTestConnection);
+        }
+    }
+
+    public void testEnforceCallingOrSelfPermission_noIpc() {
+        // There's no ongoing Binder call, so this package's permissions are checked.
         mContext.enforceCallingOrSelfPermission(
                 GRANTED_PERMISSION, "permission isn't granted");
-    }
 
-    public void testEnforceCallingOrSelfPermissionNotGranted() {
         try {
             mContext.enforceCallingOrSelfPermission(
                     NOT_GRANTED_PERMISSION, "permission isn't granted");
@@ -972,13 +990,29 @@ public class ContextTest extends AndroidTestCase {
         }
     }
 
-    public void testCheckCallingPermissionNoIpc() {
+    public void testEnforceCallingOrSelfPermission_ipc() throws Exception {
+        bindBinderPermissionTestService();
+        try {
+            mBinderPermissionTestService.doEnforceCallingOrSelfPermission(GRANTED_PERMISSION);
+
+            try {
+                mBinderPermissionTestService.doEnforceCallingOrSelfPermission(
+                        NOT_GRANTED_PERMISSION);
+                fail("Permission shouldn't be granted.");
+            } catch (SecurityException expected) {
+            }
+        } finally {
+            mContext.unbindService(mBinderPermissionTestConnection);
+        }
+    }
+
+    public void testCheckCallingPermission_noIpc() {
         // Denied because no IPC is active.
         int retValue = mContext.checkCallingPermission(GRANTED_PERMISSION);
         assertEquals(PackageManager.PERMISSION_DENIED, retValue);
     }
 
-    public void testEnforceCallingPermissionNoIpc() {
+    public void testEnforceCallingPermission_noIpc() {
         try {
             mContext.enforceCallingPermission(
                     GRANTED_PERMISSION,
@@ -989,7 +1023,7 @@ public class ContextTest extends AndroidTestCase {
         }
     }
 
-    public void testEnforceCallingPermission() throws Exception {
+    public void testEnforceCallingPermission_ipc() throws Exception {
         bindBinderPermissionTestService();
         try {
             mBinderPermissionTestService.doEnforceCallingPermission(GRANTED_PERMISSION);
@@ -1004,7 +1038,7 @@ public class ContextTest extends AndroidTestCase {
         }
     }
 
-    public void testCheckCallingPermission() throws Exception {
+    public void testCheckCallingPermission_ipc() throws Exception {
         bindBinderPermissionTestService();
         try {
             int returnValue = mBinderPermissionTestService.doCheckCallingPermission(
