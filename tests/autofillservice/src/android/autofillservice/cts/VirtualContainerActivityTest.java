@@ -752,12 +752,15 @@ public class VirtualContainerActivityTest extends AutoFillServiceTestCase {
      * Asserts the dataset picker is properly displayed in a give line.
      */
     protected void assertDatasetShown(Line line, String... expectedDatasets) throws Exception {
+        boolean autofillViewBoundsMatches = !Helper.isAutofillWindowFullScreen(mContext);
         final Rect pickerBounds = mUiBot.assertDatasets(expectedDatasets).getVisibleBounds();
         final Rect fieldBounds = line.getAbsCoordinates();
-        assertWithMessage("vertical coordinates don't match; picker=%s, field=%s", pickerBounds,
-                fieldBounds).that(pickerBounds.top).isEqualTo(fieldBounds.bottom);
-        assertWithMessage("horizontal coordinates don't match; picker=%s, field=%s", pickerBounds,
-                fieldBounds).that(pickerBounds.left).isEqualTo(fieldBounds.left);
+        if (autofillViewBoundsMatches) {
+            assertWithMessage("vertical coordinates don't match; picker=%s, field=%s", pickerBounds,
+                    fieldBounds).that(pickerBounds.top).isEqualTo(fieldBounds.bottom);
+            assertWithMessage("horizontal coordinates don't match; picker=%s, field=%s",
+                    pickerBounds, fieldBounds).that(pickerBounds.left).isEqualTo(fieldBounds.left);
+        }
     }
 
     protected void assertLabel(ViewNode node, String expectedValue) {

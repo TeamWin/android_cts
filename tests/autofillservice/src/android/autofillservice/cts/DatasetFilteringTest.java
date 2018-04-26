@@ -21,6 +21,7 @@ import static android.autofillservice.cts.common.ShellHelper.runShellCommand;
 
 import android.autofillservice.cts.CannedFillResponse.CannedDataset;
 import android.content.IntentSender;
+import android.os.SystemClock;
 
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
@@ -41,6 +42,12 @@ public class DatasetFilteringTest extends AbstractLoginActivityTestCase {
     @AfterClass
     public static void restoreMaxDatasets() {
         runShellCommand("cmd autofill set max_visible_datasets %s", sMaxDatasets);
+    }
+
+    private static void sendKeyEvents(String keyCode) {
+        runShellCommand("input keyevent " + keyCode);
+        // TODO wait mechanism for window size change
+        SystemClock.sleep(200);
     }
 
     @Test
@@ -99,10 +106,6 @@ public class DatasetFilteringTest extends AbstractLoginActivityTestCase {
 
     @Test
     public void testFilter_usingKeyboard() throws Exception {
-        if (!mCanPassKeys) {
-            return;
-        }
-
         final String aa = "Two A's";
         final String ab = "A and B";
         final String b = "Only B";
@@ -133,26 +136,26 @@ public class DatasetFilteringTest extends AbstractLoginActivityTestCase {
         mUiBot.assertDatasets(aa, ab, b);
 
         // Only two datasets start with 'a'
-        runShellCommand("input keyevent KEYCODE_A");
+        sendKeyEvents("KEYCODE_A");
         mUiBot.assertDatasets(aa, ab);
 
         // Only one dataset start with 'aa'
-        runShellCommand("input keyevent KEYCODE_A");
+        sendKeyEvents("KEYCODE_A");
         mUiBot.assertDatasets(aa);
 
         // Only two datasets start with 'a'
-        runShellCommand("input keyevent KEYCODE_DEL");
+        sendKeyEvents("KEYCODE_DEL");
         mUiBot.assertDatasets(aa, ab);
 
         // With no filter text all datasets should be shown
-        runShellCommand("input keyevent KEYCODE_DEL");
+        sendKeyEvents("KEYCODE_DEL");
         mUiBot.assertDatasets(aa, ab, b);
 
         // No dataset start with 'aaa'
         final MyAutofillCallback callback = mActivity.registerCallback();
-        runShellCommand("input keyevent KEYCODE_A");
-        runShellCommand("input keyevent KEYCODE_A");
-        runShellCommand("input keyevent KEYCODE_A");
+        sendKeyEvents("KEYCODE_A");
+        sendKeyEvents("KEYCODE_A");
+        sendKeyEvents("KEYCODE_A");
         callback.assertUiHiddenEvent(mActivity.getUsername());
         mUiBot.assertNoDatasets();
     }
@@ -461,11 +464,11 @@ public class DatasetFilteringTest extends AbstractLoginActivityTestCase {
         mUiBot.assertDatasets(plain, regexPlain, authRegex, kitchnSync);
 
         // All datasets start with 'a'
-        runShellCommand("input keyevent KEYCODE_A");
+        sendKeyEvents("KEYCODE_A");
         mUiBot.assertDatasets(plain, regexPlain, authRegex, kitchnSync);
 
         // Only the regex datasets should start with 'ab'
-        runShellCommand("input keyevent KEYCODE_B");
+        sendKeyEvents("KEYCODE_B");
         mUiBot.assertDatasets(regexPlain, authRegex, kitchnSync);
     }
 }

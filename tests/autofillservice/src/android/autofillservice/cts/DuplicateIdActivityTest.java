@@ -22,6 +22,8 @@ import static android.autofillservice.cts.common.ShellHelper.runShellCommand;
 
 import static com.google.common.truth.Truth.assertThat;
 
+import static org.junit.Assume.assumeTrue;
+
 import android.app.assist.AssistStructure;
 import android.util.Log;
 import android.view.autofill.AutofillId;
@@ -77,6 +79,8 @@ public class DuplicateIdActivityTest extends AutoFillServiceTestCase {
 
     @Test
     public void testDoNotRestoreDuplicateAutofillIds() throws Exception {
+        assumeTrue("Rotation is supported", Helper.isRotationSupported(mContext));
+
         enableService();
 
         sReplier.addResponse(new CannedFillResponse.Builder()

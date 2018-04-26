@@ -16,8 +16,6 @@
 
 package android.autofillservice.cts;
 
-import static android.autofillservice.cts.Helper.getContext;
-
 import android.view.View;
 
 import org.junit.Before;
@@ -38,12 +36,10 @@ abstract class AbstractLoginActivityTestCase extends AutoFillServiceTestCase {
             new AutofillActivityTestRule<CheckoutActivity>(CheckoutActivity.class, false);
 
     protected LoginActivity mActivity;
-    protected boolean mCanPassKeys;
 
     @Before
     public void setActivity() {
         mActivity = mActivityRule.getActivity();
-        mCanPassKeys = !Helper.isAutofillWindowFullScreen(getContext());
     }
 
     /**
