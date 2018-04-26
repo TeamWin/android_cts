@@ -23,7 +23,6 @@ import static org.mockito.Mockito.atLeastOnce;
 import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.inOrder;
 import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.spy;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.hamcrest.MockitoHamcrest.argThat;
@@ -204,7 +203,7 @@ public class AppWidgetTest extends AppWidgetTestCase {
         final Bundle secondOptions;
 
         // Create a host and start listening.
-        AppWidgetHost host = spy(new AppWidgetHost(getInstrumentation().getTargetContext(), 0));
+        AppWidgetHost host = new AppWidgetHost(getInstrumentation().getTargetContext(), 0);
         host.deleteHost();
         host.startListening();
 
@@ -314,8 +313,7 @@ public class AppWidgetTest extends AppWidgetTestCase {
         int secondAppWidgetId = 0;
 
         // Create a host and start listening.
-        AppWidgetHost host = spy(new AppWidgetHost(
-                getInstrumentation().getTargetContext(), 0));
+        AppWidgetHost host = new AppWidgetHost(getInstrumentation().getTargetContext(), 0);
         host.deleteHost();
         host.startListening();
 
