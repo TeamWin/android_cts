@@ -62,6 +62,7 @@ import com.android.cts.mockime.ImeSettings;
 import com.android.cts.mockime.MockImeSession;
 
 import org.junit.BeforeClass;
+import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
@@ -84,7 +85,15 @@ public class NavigationBarColorTest extends EndToEndImeTestBase {
     }
 
     @BeforeClass
-    public static void checkNavigationBar() throws Exception {
+    public static void initializeNavigationBarInfo() throws Exception {
+        // Make sure that NavigationBarInfo is initialized before
+        // EndToEndImeTestBase#showStateInitializeActivity().
+        NavigationBarInfo.getInstance();
+    }
+
+    // TODO(b/37502066): Merge this back to initializeNavigationBarInfo() once b/37502066 is fixed.
+    @Before
+    public void checkNavigationBar() throws Exception {
         assumeTrue("This test does not make sense if there is no navigation bar",
                 NavigationBarInfo.getInstance().hasBottomNavigationBar());
 
