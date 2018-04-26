@@ -420,6 +420,7 @@ def main():
 
                 msg = "%s %s/%s [%.1fs]" % (retstr, scene, testname, t1-t0)
                 print msg
+                its.device.adb_log(device_id, msg)
                 msg_short = "%s %s [%.1fs]" % (retstr, testname, t1-t0)
                 if test_failed:
                     summary += msg_short + "\n"
@@ -450,7 +451,9 @@ def main():
                                           else ItsSession.RESULT_FAIL)
             results[scene][ItsSession.SUMMARY_KEY] = summary_path
 
-        print "Reporting ITS result to CtsVerifier"
+        msg = "Reporting ITS result to CtsVerifier"
+        print msg
+        its.device.adb_log(device_id, msg)
         if merge_result_switch:
             # results are modified by report_result
             results_backup = copy.deepcopy(results)
