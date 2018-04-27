@@ -22,7 +22,7 @@ from matplotlib import pylab
 
 NAME = os.path.basename(__file__).split('.')[0]
 BAYER_LIST = ['R', 'GR', 'GB', 'B']
-DIFF_THRESH = 0.0005  # absolute variance delta threshold
+DIFF_THRESH = 0.0012  # absolute variance delta threshold
 FRAC_THRESH = 0.2  # relative variance delta threshold
 NUM_STEPS = 4
 STATS_GRID = 49  # center 2.04% of image for calculations
@@ -128,4 +128,3 @@ def main():
 
 if __name__ == '__main__':
     main()
-
