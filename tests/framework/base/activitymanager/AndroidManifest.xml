@@ -74,6 +74,9 @@
         <activity android:name="android.server.am.lifecycle.ActivityLifecycleClientTestBase$SingleTopActivity"
                   android:launchMode="singleTop" />
 
+        <activity android:name="android.server.am.lifecycle.ActivityLifecycleClientTestBase$ConfigChangeHandlingActivity"
+                  android:configChanges="orientation|screenSize|smallestScreenSize|screenLayout|colorMode|density" />
+
         <activity android:name="android.server.am.StartActivityTests$TestActivity2" />
 
     </application>

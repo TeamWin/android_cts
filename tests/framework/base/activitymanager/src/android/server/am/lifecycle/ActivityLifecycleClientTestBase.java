@@ -2,12 +2,16 @@ package android.server.am.lifecycle;
 
 import static android.server.am.StateLogger.log;
 import static android.server.am.lifecycle.LifecycleLog.ActivityCallback.ON_ACTIVITY_RESULT;
+import static android.server.am.lifecycle.LifecycleLog.ActivityCallback
+        .ON_MULTI_WINDOW_MODE_CHANGED;
 import static android.server.am.lifecycle.LifecycleLog.ActivityCallback.ON_NEW_INTENT;
 import static android.server.am.lifecycle.LifecycleLog.ActivityCallback.ON_POST_CREATE;
 
 import android.annotation.Nullable;
 import android.app.Activity;
+import android.content.ComponentName;
 import android.content.Intent;
+import android.content.res.Configuration;
 import android.os.Bundle;
 import android.os.Handler;
 import android.server.am.ActivityManagerTestBase;
@@ -29,6 +33,12 @@ public class ActivityLifecycleClientTestBase extends ActivityManagerTestBase {
     static final String EXTRA_RECREATE = "recreate";
     static final String EXTRA_FINISH_IN_ON_RESUME = "finish_in_on_resume";
     static final String EXTRA_FINISH_AFTER_RESUME = "finish_after_resume";
+
+    static final ComponentName CALLBACK_TRACKING_ACTIVITY =
+            getComponentName(CallbackTrackingActivity.class);
+
+    static final ComponentName CONFIG_CHANGE_HANDLING_ACTIVITY =
+            getComponentName(ConfigChangeHandlingActivity.class);
 
     final ActivityTestRule mFirstActivityTestRule = new ActivityTestRule(FirstActivity.class,
             true /* initialTouchMode */, false /* launchActivity */);
@@ -52,6 +62,10 @@ public class ActivityLifecycleClientTestBase extends ActivityManagerTestBase {
 
     final ActivityTestRule mSingleTopActivityTestRule = new ActivityTestRule(
             SingleTopActivity.class, true /* initialTouchMode */, false /* launchActivity */);
+
+    final ActivityTestRule mConfigChangeHandlingActivityTestRule = new ActivityTestRule(
+            ConfigChangeHandlingActivity.class, true /* initialTouchMode */,
+            false /* launchActivity */);
 
     private final ActivityLifecycleMonitor mLifecycleMonitor = ActivityLifecycleMonitorRegistry
             .getInstance();
@@ -149,6 +163,11 @@ public class ActivityLifecycleClientTestBase extends ActivityManagerTestBase {
             super.onNewIntent(intent);
             mLifecycleLog.onActivityCallback(this, ON_NEW_INTENT);
         }
+
+        @Override
+        public void onMultiWindowModeChanged(boolean isInMultiWindowMode, Configuration newConfig) {
+            mLifecycleLog.onActivityCallback(this, ON_MULTI_WINDOW_MODE_CHANGED);
+        }
     }
 
     /**
@@ -194,5 +213,13 @@ public class ActivityLifecycleClientTestBase extends ActivityManagerTestBase {
                 recreate();
             }
         }
+    }
+
+    // Config change handling activity
+    public static class ConfigChangeHandlingActivity extends CallbackTrackingActivity {
+    }
+
+    static ComponentName getComponentName(Class<? extends Activity> activity) {
+        return new ComponentName(InstrumentationRegistry.getContext(), activity);
     }
 }

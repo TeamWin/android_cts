@@ -1,8 +1,14 @@
 package android.server.am.lifecycle;
 
+import static android.app.WindowConfiguration.WINDOWING_MODE_FULLSCREEN;
+import static android.app.WindowConfiguration.WINDOWING_MODE_SPLIT_SCREEN_PRIMARY;
+import static android.server.am.ActivityManagerState.STATE_STOPPED;
+import static android.server.am.UiDeviceUtils.pressBackButton;
 import static android.server.am.lifecycle.LifecycleLog.ActivityCallback.ON_ACTIVITY_RESULT;
 import static android.server.am.lifecycle.LifecycleLog.ActivityCallback.ON_CREATE;
 import static android.server.am.lifecycle.LifecycleLog.ActivityCallback.ON_DESTROY;
+import static android.server.am.lifecycle.LifecycleLog.ActivityCallback
+        .ON_MULTI_WINDOW_MODE_CHANGED;
 import static android.server.am.lifecycle.LifecycleLog.ActivityCallback.ON_NEW_INTENT;
 import static android.server.am.lifecycle.LifecycleLog.ActivityCallback.ON_PAUSE;
 import static android.server.am.lifecycle.LifecycleLog.ActivityCallback.ON_POST_CREATE;
@@ -11,8 +17,6 @@ import static android.server.am.lifecycle.LifecycleLog.ActivityCallback.ON_RESUM
 import static android.server.am.lifecycle.LifecycleLog.ActivityCallback.ON_START;
 import static android.server.am.lifecycle.LifecycleLog.ActivityCallback.ON_STOP;
 import static android.server.am.lifecycle.LifecycleLog.ActivityCallback.PRE_ON_CREATE;
-import static android.server.am.ActivityManagerState.STATE_STOPPED;
-import static android.server.am.UiDeviceUtils.pressBackButton;
 import static android.view.Surface.ROTATION_0;
 import static android.view.Surface.ROTATION_180;
 import static android.view.Surface.ROTATION_270;
@@ -597,5 +601,82 @@ public class ActivityLifecycleTests extends ActivityLifecycleClientTestBase {
                 Arrays.asList(ON_NEW_INTENT, ON_RESUME, ON_PAUSE, ON_RESUME);
         LifecycleVerifier.assertSequenceMatchesOneOf(SingleTopActivity.class, getLifecycleLog(),
                 Arrays.asList(expectedSequence, extraPauseSequence), "newIntent");
+    }
+
+    @Test
+    public void testLifecycleOnMoveToFromSplitScreenRelaunch() throws Exception {
+        // Launch a singleTop activity
+        final Activity testActivity =
+                mCallbackTrackingActivityTestRule.launchActivity(new Intent());
+
+        // Wait for the activity to resume
+        waitAndAssertActivityStates(state(testActivity, ON_RESUME));
+        LifecycleVerifier.assertLaunchSequence(CallbackTrackingActivity.class, getLifecycleLog(),
+                true /* includeCallbacks */);
+
+        // Enter split screen
+        getLifecycleLog().clear();
+        setActivityTaskWindowingMode(CALLBACK_TRACKING_ACTIVITY,
+                WINDOWING_MODE_SPLIT_SCREEN_PRIMARY);
+
+        // Wait for the activity to pause
+        final List<LifecycleLog.ActivityCallback> expectedEnterSequence =
+                Arrays.asList(ON_PAUSE, ON_STOP, ON_DESTROY, PRE_ON_CREATE, ON_CREATE, ON_START,
+                        ON_POST_CREATE, ON_RESUME, ON_MULTI_WINDOW_MODE_CHANGED, ON_PAUSE);
+        waitForActivityTransitions(CallbackTrackingActivity.class, expectedEnterSequence);
+
+        // Verify that the activity was relaunched and received multi-window mode change
+        LifecycleVerifier.assertSequence(CallbackTrackingActivity.class, getLifecycleLog(),
+                expectedEnterSequence, "moveToSplitScreen");
+
+        // Exit split-screen
+        getLifecycleLog().clear();
+        setActivityTaskWindowingMode(CALLBACK_TRACKING_ACTIVITY, WINDOWING_MODE_FULLSCREEN);
+
+        // Wait for the activity to resume
+        final List<LifecycleLog.ActivityCallback> expectedExitSequence =
+                Arrays.asList(ON_STOP, ON_DESTROY, PRE_ON_CREATE, ON_CREATE, ON_START,
+                        ON_POST_CREATE, ON_RESUME, ON_PAUSE, ON_MULTI_WINDOW_MODE_CHANGED,
+                        ON_RESUME);
+        waitForActivityTransitions(CallbackTrackingActivity.class, expectedExitSequence);
+
+        // Verify that the activity was relaunched and received multi-window mode change
+        LifecycleVerifier.assertSequence(CallbackTrackingActivity.class, getLifecycleLog(),
+                expectedExitSequence, "moveFromSplitScreen");
+    }
+
+    @Test
+    public void testLifecycleOnMoveToFromSplitScreenNoRelaunch() throws Exception {
+        // Launch a singleTop activity
+        final Activity testActivity =
+                mConfigChangeHandlingActivityTestRule.launchActivity(new Intent());
+
+        // Wait for the activity to resume
+        waitAndAssertActivityStates(state(testActivity, ON_RESUME));
+        LifecycleVerifier.assertLaunchSequence(ConfigChangeHandlingActivity.class,
+                getLifecycleLog(), true /* includeCallbacks */);
+
+        // Enter split screen
+        getLifecycleLog().clear();
+        setActivityTaskWindowingMode(CONFIG_CHANGE_HANDLING_ACTIVITY,
+                WINDOWING_MODE_SPLIT_SCREEN_PRIMARY);
+
+        // Wait for the activity to pause
+        waitAndAssertActivityStates(state(testActivity, ON_PAUSE));
+
+        // Verify that the activity was relaunched and received multi-window mode change
+        LifecycleVerifier.assertSequence(ConfigChangeHandlingActivity.class, getLifecycleLog(),
+                Arrays.asList(ON_MULTI_WINDOW_MODE_CHANGED, ON_PAUSE), "moveToSplitScreen");
+
+        // Exit split-screen
+        getLifecycleLog().clear();
+        setActivityTaskWindowingMode(CONFIG_CHANGE_HANDLING_ACTIVITY, WINDOWING_MODE_FULLSCREEN);
+
+        // Wait for the activity to resume
+        waitAndAssertActivityStates(state(testActivity, ON_RESUME));
+
+        // Verify that the activity was relaunched and received multi-window mode change
+        LifecycleVerifier.assertSequence(ConfigChangeHandlingActivity.class, getLifecycleLog(),
+                Arrays.asList(ON_MULTI_WINDOW_MODE_CHANGED, ON_RESUME), "moveFromSplitScreen");
     }
 }
