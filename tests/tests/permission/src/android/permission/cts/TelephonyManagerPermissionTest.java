@@ -275,48 +275,6 @@ public class TelephonyManagerPermissionTest {
         }
     }
 
-    /**
-     * Verify that TelephonyManager.setAllowedCarriers requires Permission.
-     * <p>
-     * Requires Permission:
-     * {@link android.Manifest.permission#MODIFY_PHONE_STATE}.
-     */
-    @Test
-    public void testSetAllowedCarriers() {
-        if (!mHasTelephony
-                || !getContext().getPackageManager().hasSystemFeature(
-                        PackageManager.FEATURE_TELEPHONY_CARRIERLOCK)) {
-            return;
-        }
-        try {
-            mTelephonyManager.setAllowedCarriers(0, Collections.emptyList());
-            fail("Able to set allowed carriers");
-        } catch (SecurityException e) {
-            // expected
-        }
-    }
-
-    /**
-     * Verify that TelephonyManager.getAllowedCarriers requires Permission.
-     * <p>
-     * Requires Permission:
-     * {@link android.Manifest.permission#READ_PRIVILEGED_PHONE_STATE}.
-     */
-    @Test
-    public void testGetAllowedCarriers() {
-        if (!mHasTelephony
-                || !getContext().getPackageManager().hasSystemFeature(
-                        PackageManager.FEATURE_TELEPHONY_CARRIERLOCK)) {
-            return;
-        }
-        try {
-            mTelephonyManager.getAllowedCarriers(0);
-            fail("Able to get allowed carriers");
-        } catch (SecurityException e) {
-            // expected
-        }
-    }
-
     private static Context getContext() {
         return InstrumentationRegistry.getContext();
     }
