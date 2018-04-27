@@ -2760,7 +2760,7 @@ You should be prompted to select credentials; choose the ones you just installed
             switch off the screen. Then press the power button to switch the screen back on and verify that
             no keyguard was shown.\n
             Next, press the button to reenable the keyguard and repeat the above steps, this time verifying that
-            a keyguard was shown again.\n
+            a keyguard was shown.\n
             Please mark the test accordingly.
     </string>
     <string name="device_owner_disable_keyguard_button">Disable keyguard</string>
