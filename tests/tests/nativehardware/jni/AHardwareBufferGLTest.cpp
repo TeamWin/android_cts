@@ -138,6 +138,7 @@ void UploadData(const AHardwareBuffer_Desc& desc, GLenum format, GLenum type, co
 
 // Uploads opaque red to the currently bound texture.
 void UploadRedPixels(const AHardwareBuffer_Desc& desc) {
+    const bool use_srgb = desc.stride & kUseSrgb;
     glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
     switch (desc.format) {
         case AHARDWAREBUFFER_FORMAT_R5G6B5_UNORM:
@@ -148,7 +149,7 @@ void UploadRedPixels(const AHardwareBuffer_Desc& desc) {
             const int size = desc.width * desc.height * 3;
             std::unique_ptr<uint8_t[]> pixels(new uint8_t[size]);
             for (int i = 0; i < size; i += 3) {
-                pixels[i] = 255;
+                pixels[i] = use_srgb ? 188 : 255;
                 pixels[i + 1] = 0;
                 pixels[i + 2] = 0;
             }
@@ -161,10 +162,10 @@ void UploadRedPixels(const AHardwareBuffer_Desc& desc) {
             const int size = desc.width * desc.height * 4;
             std::unique_ptr<uint8_t[]> pixels(new uint8_t[size]);
             for (int i = 0; i < size; i += 4) {
-                pixels[i] = 255;
+                pixels[i] = use_srgb ? 188 : 255;
                 pixels[i + 1] = 0;
                 pixels[i + 2] = 0;
-                pixels[i + 3] = 255;
+                pixels[i + 3] = use_srgb ? 128 : 255;
             }
             UploadData(desc, GL_RGBA, GL_UNSIGNED_BYTE, pixels.get());
             break;
@@ -249,6 +250,7 @@ enum GoldenColor {
     kBlue,  // opaque blue
     kRed50,  // 50% premultiplied red, i.e., (0.5, 0, 0, 0.5)
     kRed50Srgb,  // 50% premultiplied red under sRGB transfer function
+    kRed50Alpha100,  // Opaque 50% red
 };
 
 struct GoldenPixel {
@@ -289,6 +291,7 @@ void CheckGoldenPixel(const GoldenPixel& golden, const std::array<uint8_t, 4>& p
     switch (golden.color) {
         case kRed: golden_pixel[0] = 255; break;
         case kRed50:
+        case kRed50Alpha100:
             use_range = true;
             golden_pixel[0] = 127;
             golden_max[0] = 128;
@@ -1336,10 +1339,14 @@ TEST_P(AHardwareBufferColorFormatTest, GpuSampledImageCanBeSampled) {
     EXPECT_EQ(GLenum{GL_NO_ERROR}, glGetError());
 
     // Check the rendered pixels. There should be a red square in the middle.
+    GoldenColor color = kRed;
+    if (desc.stride & kUseSrgb) {
+        color = FormatHasAlpha(desc.format) ? kRed50 : kRed50Alpha100;
+    }
     std::vector<GoldenPixel> goldens{
         {5, 35, kZero}, {15, 35, kZero}, {25, 35, kZero}, {35, 35, kZero},
-        {5, 25, kZero}, {15, 25, kRed},  {25, 25, kRed},  {35, 25, kZero},
-        {5, 15, kZero}, {15, 15, kRed},  {25, 15, kRed},  {35, 15, kZero},
+        {5, 25, kZero}, {15, 25, color}, {25, 25, color}, {35, 25, kZero},
+        {5, 15, kZero}, {15, 15, color}, {25, 15, color}, {35, 15, kZero},
         {5,  5, kZero}, {15,  5, kZero}, {25, 5,  kZero}, {35, 5,  kZero},
     };
     CheckGoldenPixels(goldens, GL_RGBA8);
