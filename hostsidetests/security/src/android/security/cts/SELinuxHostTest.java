@@ -155,6 +155,7 @@ public class SELinuxHostTest extends DeviceTestCase implements IBuildReceiver, I
             devicePlatFcFile = getDeviceFile(mDevice, cachedDevicePlatFcFiles,
                     "/system/etc/selinux/plat_file_contexts", "plat_file_contexts");
             if (mDevice.doesFileExist("/vendor/etc/selinux/nonplat_file_contexts")){
+                // Old nonplat_* naming can be present if a framework-only OTA was done.
                 deviceNonplatFcFile = getDeviceFile(mDevice, cachedDeviceNonplatFcFiles,
                         "/vendor/etc/selinux/nonplat_file_contexts", "nonplat_file_contexts");
             } else {
@@ -165,7 +166,7 @@ public class SELinuxHostTest extends DeviceTestCase implements IBuildReceiver, I
             devicePlatFcFile = getDeviceFile(mDevice, cachedDevicePlatFcFiles,
                     "/plat_file_contexts", "plat_file_contexts");
             deviceNonplatFcFile = getDeviceFile(mDevice, cachedDeviceNonplatFcFiles,
-                    "/nonplat_file_contexts", "nonplat_file_contexts");
+                    "/vendor_file_contexts", "vendor_file_contexts");
         }
     }
 
