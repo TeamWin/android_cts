@@ -515,7 +515,7 @@ public class ActivityManagerSplitScreenTests extends ActivityManagerTestBase {
 
         executeShellCommand("am broadcast -a " + TEST_ACTIVITY_ACTION_FINISH_SELF);
         waitForDockNotMinimized();
-        mAmWmState.assertVisibility(TEST_ACTIVITY, false);
+        mAmWmState.assertNotExist(TEST_ACTIVITY);
         assertDockNotMinimized();
     }
 
