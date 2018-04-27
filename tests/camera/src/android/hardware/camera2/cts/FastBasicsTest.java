@@ -102,6 +102,11 @@ public class FastBasicsTest extends Camera2SurfaceViewTestCase {
 
         assertTrue("Bad timestamps", timestamp2 > timestamp);
 
+        // If EnableZsl is supported, disable ZSL in order to compare preview and still timestamps.
+        if (mStaticInfo.isEnableZslSupported()) {
+            stillCaptureRequest.set(CaptureRequest.CONTROL_ENABLE_ZSL, false);
+        }
+
         CaptureRequest capture = stillCaptureRequest.build();
         mSession.capture(capture, resultListener, mHandler);
 

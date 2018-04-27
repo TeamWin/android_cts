@@ -36,7 +36,6 @@ import android.support.test.filters.FlakyTest;
 import android.support.test.filters.SmallTest;
 import android.support.test.rule.ActivityTestRule;
 import android.support.test.runner.AndroidJUnit4;
-import android.util.Log;
 import android.view.Gravity;
 import android.view.View;
 import android.view.ViewGroup;
@@ -53,7 +52,6 @@ import org.junit.Test;
 import org.junit.rules.ErrorCollector;
 import org.junit.runner.RunWith;
 
-import java.util.Arrays;
 import java.util.function.Supplier;
 
 @RunWith(AndroidJUnit4.class)
@@ -80,18 +78,18 @@ public class LocationInWindowTests {
     }
 
     @Test
-    public void testLocationOnDisplay_appWindow() {
+    public void testLocationInWindow_appWindow() {
         runTest(mLayoutParams);
     }
 
     @Test
-    public void testLocationOnDisplay_appWindow_fullscreen() {
+    public void testLocationInWindow_appWindow_fullscreen() {
         mLayoutParams.flags |= LayoutParams.FLAG_FULLSCREEN;
         runTest(mLayoutParams);
     }
 
     @Test
-    public void testLocationOnDisplay_floatingWindow() {
+    public void testLocationInWindow_floatingWindow() {
         mLayoutParams.height = 100;
         mLayoutParams.width = 100;
         mLayoutParams.gravity = Gravity.CENTER;
@@ -100,13 +98,13 @@ public class LocationInWindowTests {
     }
 
     @Test
-    public void testLocationOnDisplay_appWindow_displayCutoutNever() {
+    public void testLocationInWindow_appWindow_displayCutoutNever() {
         mLayoutParams.layoutInDisplayCutoutMode = LAYOUT_IN_DISPLAY_CUTOUT_MODE_NEVER;
         runTest(mLayoutParams);
     }
 
     @Test
-    public void testLocationOnDisplay_appWindow_displayCutoutShortEdges() {
+    public void testLocationInWindow_appWindow_displayCutoutShortEdges() {
         mLayoutParams.layoutInDisplayCutoutMode = LAYOUT_IN_DISPLAY_CUTOUT_MODE_SHORT_EDGES;
         runTest(mLayoutParams);
     }
@@ -116,11 +114,11 @@ public class LocationInWindowTests {
         PollingCheck.waitFor(() -> getOnMainSync(activity::isEnterAnimationComplete));
 
         runOnMainSync(() -> {
-            assertThatViewGetLocationInWindowAndSurfaceIsCorrect(activity.mView);
+            assertThatViewGetLocationInWindowIsCorrect(activity.mView);
         });
     }
 
-    private void assertThatViewGetLocationInWindowAndSurfaceIsCorrect(View v) {
+    private void assertThatViewGetLocationInWindowIsCorrect(View v) {
         final float[] expected = new float[] {0, 0};
 
         v.getMatrix().mapPoints(expected);
@@ -142,12 +140,6 @@ public class LocationInWindowTests {
     }
 
     private Point locationInWindowAsPoint(View v) {
-        final int[] out = new int[2];
-        v.getLocationInWindow(out);
-        return new Point(out[0], out[1]);
-    }
-
-    private Point locationInSurfaceAsPoint(View v) {
         final int[] out = new int[2];
         v.getLocationInWindow(out);
         return new Point(out[0], out[1]);

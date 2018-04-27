@@ -68,6 +68,7 @@ final class UiBot {
     private static final String TAG = "AutoFillCtsUiBot";
 
     private static final String RESOURCE_ID_DATASET_PICKER = "autofill_dataset_picker";
+    private static final String RESOURCE_ID_DATASET_HEADER = "autofill_dataset_header";
     private static final String RESOURCE_ID_SAVE_SNACKBAR = "autofill_save";
     private static final String RESOURCE_ID_SAVE_ICON = "autofill_save_icon";
     private static final String RESOURCE_ID_SAVE_TITLE = "autofill_save_title";
@@ -95,6 +96,8 @@ final class UiBot {
 
     static final BySelector DATASET_PICKER_SELECTOR = By.res("android", RESOURCE_ID_DATASET_PICKER);
     private static final BySelector SAVE_UI_SELECTOR = By.res("android", RESOURCE_ID_SAVE_SNACKBAR);
+    private static final BySelector DATASET_HEADER_SELECTOR =
+            By.res("android", RESOURCE_ID_DATASET_HEADER);
 
     private static final boolean DONT_DUMP_ON_ERROR = false;
     private static final boolean DUMP_ON_ERROR = true;
@@ -162,7 +165,7 @@ final class UiBot {
     }
 
     /**
-     * Asserts the dataset chooser is shown and contains the given datasets.
+     * Asserts the dataset chooser is shown and contains exactly the given datasets.
      *
      * @return the dataset picker object.
      */
@@ -174,7 +177,20 @@ final class UiBot {
     }
 
     /**
+     * Asserts the dataset chooser is shown and contains the given datasets.
+     *
+     * @return the dataset picker object.
+     */
+    UiObject2 assertDatasetsContains(String...names) throws Exception {
+        final UiObject2 picker = findDatasetPicker(UI_DATASET_PICKER_TIMEOUT);
+        assertWithMessage("wrong dataset names").that(getChildrenAsText(picker))
+                .containsAllIn(Arrays.asList(names)).inOrder();
+        return picker;
+    }
+
+    /**
      * Asserts the dataset chooser is shown and contains the given datasets, header, and footer.
+     * <p>In fullscreen, header view is not under R.id.autofill_dataset_picker.
      *
      * @return the dataset picker object.
      */
@@ -183,7 +199,15 @@ final class UiBot {
         final UiObject2 picker = findDatasetPicker(UI_DATASET_PICKER_TIMEOUT);
         final List<String> expectedChild = new ArrayList<>();
         if (header != null) {
-            expectedChild.add(header);
+            if (Helper.isAutofillWindowFullScreen(mContext)) {
+                final UiObject2 headerView = waitForObject(DATASET_HEADER_SELECTOR,
+                        UI_DATASET_PICKER_TIMEOUT);
+                assertWithMessage("fullscreen wrong dataset header")
+                        .that(getChildrenAsText(headerView))
+                        .containsExactlyElementsIn(Arrays.asList(header)).inOrder();
+            } else {
+                expectedChild.add(header);
+            }
         }
         expectedChild.addAll(Arrays.asList(names));
         if (footer != null) {

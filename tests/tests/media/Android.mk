@@ -54,7 +54,8 @@ LOCAL_STATIC_JAVA_LIBRARIES := \
     ndkaudio \
     testng \
     truth-prebuilt \
-    mockito-target-minus-junit4
+    mockito-target-minus-junit4 \
+    androidx.heifwriter_heifwriter \
 
 LOCAL_JNI_SHARED_LIBRARIES := \
     libaudio_jni \

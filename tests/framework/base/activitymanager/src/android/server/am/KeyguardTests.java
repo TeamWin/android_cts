@@ -334,7 +334,8 @@ public class KeyguardTests extends KeyguardTestBase {
             mAmWmState.assertSanity();
             mAmWmState.assertHomeActivityVisible(false);
             mAmWmState.assertKeyguardShowingAndNotOccluded();
-            mAmWmState.assertVisibility(SHOW_WHEN_LOCKED_ACTIVITY, false);
+            // The {@link SHOW_WHEN_LOCKED_ACTIVITY} has gone because of {@link pressBackButton()}.
+            mAmWmState.assertNotExist(SHOW_WHEN_LOCKED_ACTIVITY);
         }
     }
 

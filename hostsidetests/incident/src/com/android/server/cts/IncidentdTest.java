@@ -27,7 +27,7 @@ public class IncidentdTest extends ProtoDumpTestCase {
         final String destArg = dest == null || dest.isEmpty() ? "" : "-p " + dest;
         final IncidentProto dump = getDump(IncidentProto.parser(), "incident " + destArg + " 2>/dev/null");
 
-        SystemPropertiesTest.verifySystemPropertiesProto(dump.getSystemProperties(), filterLevel, mCtsBuild);
+        SystemPropertiesTest.verifySystemPropertiesProto(dump.getSystemProperties(), filterLevel);
 
         StackTraceIncidentTest.verifyBackTraceProto(dump.getNativeTraces(), filterLevel);
         StackTraceIncidentTest.verifyBackTraceProto(dump.getHalTraces(), filterLevel);

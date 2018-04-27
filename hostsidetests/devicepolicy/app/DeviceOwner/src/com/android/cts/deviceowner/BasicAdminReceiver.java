@@ -44,6 +44,7 @@ public class BasicAdminReceiver extends DeviceAdminReceiver {
     @Override
     public String onChoosePrivateKeyAlias(Context context, Intent intent, int uid, Uri uri,
             String suggestedAlias) {
+        super.onChoosePrivateKeyAlias(context, intent, uid, uri, suggestedAlias);
         if (uid != Process.myUid() || uri == null) {
             return null;
         }
@@ -52,32 +53,38 @@ public class BasicAdminReceiver extends DeviceAdminReceiver {
 
     @Override
     public void onUserAdded(Context context, Intent intent, UserHandle userHandle) {
+        super.onUserAdded(context, intent, userHandle);
         sendUserBroadcast(context, ACTION_USER_ADDED, userHandle);
     }
 
     @Override
     public void onUserRemoved(Context context, Intent intent, UserHandle userHandle) {
+        super.onUserRemoved(context, intent, userHandle);
         sendUserBroadcast(context, ACTION_USER_REMOVED, userHandle);
     }
 
     @Override
     public void onUserStarted(Context context, Intent intent, UserHandle userHandle) {
+        super.onUserStarted(context, intent, userHandle);
         sendUserBroadcast(context, ACTION_USER_STARTED, userHandle);
     }
 
     @Override
     public void onUserStopped(Context context, Intent intent, UserHandle userHandle) {
+        super.onUserStopped(context, intent, userHandle);
         sendUserBroadcast(context, ACTION_USER_STOPPED, userHandle);
     }
 
     @Override
     public void onUserSwitched(Context context, Intent intent, UserHandle userHandle) {
+        super.onUserSwitched(context, intent, userHandle);
         sendUserBroadcast(context, ACTION_USER_SWITCHED, userHandle);
     }
 
     @Override
     public void onNetworkLogsAvailable(Context context, Intent intent, long batchToken,
             int networkLogsCount) {
+        super.onNetworkLogsAvailable(context, intent, batchToken, networkLogsCount);
         // send the broadcast, the rest of the test happens in NetworkLoggingTest
         Intent batchIntent = new Intent(ACTION_NETWORK_LOGS_AVAILABLE);
         batchIntent.putExtra(EXTRA_NETWORK_LOGS_BATCH_TOKEN, batchToken);

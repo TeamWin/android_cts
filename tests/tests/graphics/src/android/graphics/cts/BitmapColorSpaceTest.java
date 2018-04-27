@@ -788,6 +788,43 @@ public class BitmapColorSpaceTest {
     }
 
     @Test
+    public void testEncodeP3hardware() {
+        Bitmap b = null;
+        ImageDecoder.Source src = ImageDecoder.createSource(mResources.getAssets(),
+                "green-p3.png");
+        try {
+            b = ImageDecoder.decodeBitmap(src, (decoder, info, s) -> {
+                decoder.setAllocator(ImageDecoder.ALLOCATOR_HARDWARE);
+            });
+            assertNotNull(b);
+            assertEquals(Bitmap.Config.HARDWARE, b.getConfig());
+            assertEquals(ColorSpace.get(ColorSpace.Named.DISPLAY_P3), b.getColorSpace());
+        } catch (IOException e) {
+            fail("Failed with " + e);
+        }
+
+        for (Bitmap.CompressFormat format : new Bitmap.CompressFormat[] {
+                Bitmap.CompressFormat.JPEG,
+                Bitmap.CompressFormat.WEBP,
+                Bitmap.CompressFormat.PNG,
+        }) {
+            ByteArrayOutputStream out = new ByteArrayOutputStream();
+            assertTrue("Failed to encode 8888 to " + format, b.compress(format, 100, out));
+
+            byte[] array = out.toByteArray();
+            src = ImageDecoder.createSource(ByteBuffer.wrap(array));
+
+            try {
+                Bitmap b2 = ImageDecoder.decodeBitmap(src);
+                assertEquals("Wrong color space for " + format,
+                        ColorSpace.get(ColorSpace.Named.DISPLAY_P3), b2.getColorSpace());
+            } catch (IOException e) {
+                fail("Failed with " + e);
+            }
+        }
+    }
+
+    @Test
     @RequiresDevice // SwiftShader does not yet have support for F16 in HARDWARE b/75778024
     public void test16bitHardware() {
         // Decoding to HARDWARE may use LINEAR_EXTENDED_SRGB or SRGB, depending

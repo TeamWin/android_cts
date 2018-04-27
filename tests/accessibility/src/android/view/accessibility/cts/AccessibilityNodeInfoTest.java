@@ -187,6 +187,18 @@ public class AccessibilityNodeInfoTest extends AndroidTestCase {
         assertTrue(TextUtils.equals(originalText, info.getContentDescription()));
     }
 
+    @SmallTest
+    public void testIsHeadingTakesOldApiIntoAccount() {
+        final AccessibilityNodeInfo info = AccessibilityNodeInfo.obtain();
+        assertFalse(info.isHeading());
+        final CollectionItemInfo headingItemInfo = CollectionItemInfo.obtain(0, 1, 0, 1, true);
+        info.setCollectionItemInfo(headingItemInfo);
+        assertTrue(info.isHeading());
+        final CollectionItemInfo nonHeadingItemInfo = CollectionItemInfo.obtain(0, 1, 0, 1, false);
+        info.setCollectionItemInfo(nonHeadingItemInfo);
+        assertFalse(info.isHeading());
+    }
+
     /**
      * Fully populates the {@link AccessibilityNodeInfo} to marshal.
      *
