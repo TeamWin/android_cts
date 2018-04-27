@@ -39,6 +39,13 @@
 namespace android {
 namespace {
 
+// The 'stride' field is ignored by AHardwareBuffer_allocate, so we can use it
+// to pass these flags.
+enum TestFlags {
+    kGlFormat = 0x1,  // The 'format' field specifies a GL format.
+    kUseSrgb = 0x2,  // Whether to use the sRGB transfer function.
+};
+
 #define FORMAT_CASE(x) case x: return #x; break
 const char* AHBFormatAsString(int32_t format) {
     switch (format) {
@@ -193,28 +200,35 @@ void UploadRedPixels(const AHardwareBuffer_Desc& desc) {
 
 // Draws the following checkerboard pattern using glScissor and glClear.
 // The number after the color is the stencil value and the floating point number is the depth value.
+// The pattern is asymmetric to detect coordinate system mixups.
 //        +-----+-----+ (W, H)
-//        | OR1 | Ob2 |
+//        | OR1 | OB2 |
 //        | 0.5 | 0.0 |
-//        +-----+-----+  TB = transparent black
-//        | TB0 | OR1 |  OR = opaque red
-//        | 1.0 | 0.5 |  Ob = opaque blue
-// (0, 0) +-----+-----+
+//        +-----+-----+  Tb = transparent black
+//        | Tb0 | OG3 |  OR = opaque red
+//        | 1.0 | 1.0 |  OG = opaque green
+// (0, 0) +-----+-----+  OB = opaque blue
 //
 void DrawCheckerboard(int width, int height) {
     glEnable(GL_SCISSOR_TEST);
     const GLbitfield all_bits = GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT;
 
-    glClearColor(1.f, 0.f, 0.f, 1.f);
-    glClearDepthf(0.5f);
-    glClearStencil(1);
-    glScissor(0, 0, width, height);
-    glClear(all_bits);
-
     glClearColor(0.f, 0.f, 0.f, 0.f);
     glClearDepthf(1.0f);
     glClearStencil(0);
-    glScissor(0, 0, width / 2, height / 2);
+    glScissor(0, 0, width, height);
+    glClear(all_bits);
+
+    glClearColor(1.f, 0.f, 0.f, 1.f);
+    glClearDepthf(0.5f);
+    glClearStencil(1);
+    glScissor(0, height / 2, width / 2, height / 2);
+    glClear(all_bits);
+
+    glClearColor(0.f, 1.f, 0.f, 1.f);
+    glClearDepthf(1.0f);
+    glClearStencil(3);
+    glScissor(width / 2, 0, width / 2, height / 2);
     glClear(all_bits);
 
     glClearColor(0.f, 0.f, 1.f, 1.f);
@@ -231,6 +245,7 @@ enum GoldenColor {
     kZero,  // all zero, i.e., transparent black
     kBlack,  // opaque black
     kRed,  // opaque red
+    kGreen,  // opaque green
     kBlue,  // opaque blue
     kRed50,  // 50% premultiplied red, i.e., (0.5, 0, 0, 0.5)
     kRed50Srgb,  // 50% premultiplied red under sRGB transfer function
@@ -283,6 +298,7 @@ void CheckGoldenPixel(const GoldenPixel& golden, const std::array<uint8_t, 4>& p
             golden_pixel[0] = 187;
             golden_max[0] = 188;
             break;
+        case kGreen: golden_pixel[1] = 255; break;
         case kBlue: golden_pixel[2] = 255; break;
         case kZero: if (FormatHasAlpha(format)) golden_pixel[3] = 0; break;
         case kBlack: break;
@@ -311,6 +327,7 @@ void CheckGoldenPixel(const GoldenPixel& golden, const std::array<float, 4>& pix
     switch (golden.color) {
         case kRed: golden_pixel[0] = 1.f; break;
         case kRed50: golden_pixel[0] = 0.5f; golden_pixel[3] = 0.5f; break;
+        case kGreen: golden_pixel[1] = 1.f; break;
         case kBlue: golden_pixel[2] = 1.f; break;
         case kZero: golden_pixel[3] = 0.f; break;
         case kBlack: break;
@@ -528,7 +545,7 @@ const char* kStencilFragmentShaderEs30 = R"glsl(#version 300 es
     void main() {
         uvec4 stencil = texture(uTexture, vTexCoords);
         color.r = stencil.x == 1u ? 1.0 : 0.0;
-        color.g = 0.0;
+        color.g = stencil.x == 3u ? 1.0 : 0.0;
         color.b = stencil.x == 2u ? 1.0 : 0.0;
         color.a = stencil.x == 0u ? 0.0 : 1.0;
     }
@@ -543,7 +560,7 @@ const char* kStencilArrayFragmentShaderEs30 = R"glsl(#version 300 es
     void main() {
         uvec4 stencil = texture(uTexture, vec3(vTexCoords, uLayer));
         color.r = stencil.x == 1u ? 1.0 : 0.0;
-        color.g = 0.0;
+        color.g = stencil.x == 3u ? 1.0 : 0.0;
         color.b = stencil.x == 2u ? 1.0 : 0.0;
         color.a = stencil.x == 0u ? 0.0 : 1.0;
     }
@@ -586,7 +603,7 @@ public:
     };
 
     void SetUp() override;
-    virtual bool SetUpBuffer(const AHardwareBuffer_Desc& desc, bool use_srgb = false);
+    virtual bool SetUpBuffer(const AHardwareBuffer_Desc& desc);
     void SetUpProgram(const std::string& vertex_source, const std::string& fragment_source,
                       const float* mesh, float scale, int texture_unit = 0);
     void SetUpTexture(const AHardwareBuffer_Desc& desc, int unit);
@@ -597,7 +614,7 @@ public:
     void TearDown() override;
 
     void MakeCurrent(int which) {
-        if (GetParam().stride != 0) return;
+        if (GetParam().stride & kGlFormat) return;
         mWhich = which;
         eglMakeCurrent(mDisplay, mSurface, mSurface, mContext[mWhich]);
     }
@@ -606,6 +623,17 @@ public:
     }
     bool HasGLExtension(const std::string& s) {
         return mGLExtensions.find(s) != mGLExtensions.end();
+    }
+    bool IsFormatColorRenderable(uint32_t format, bool use_srgb) {
+        if (use_srgb) {
+            // According to the spec, GL_SRGB8 is not color-renderable.
+            return format == AHARDWAREBUFFER_FORMAT_R8G8B8A8_UNORM || format == GL_SRGB8_ALPHA8;
+        } else {
+            if (format == GL_RGBA16F || format == AHARDWAREBUFFER_FORMAT_R16G16B16A16_FLOAT) {
+                return mGLVersion >= 32 || HasGLExtension("GL_EXT_color_buffer_float");
+            }
+            return true;
+        }
     }
 
 protected:
@@ -622,6 +650,7 @@ protected:
     EGLImageKHR mEGLImage = EGL_NO_IMAGE_KHR;
     GLenum mTexTarget = GL_NONE;
     GLuint mProgram = 0;
+    GLint mColorLocation = -1;
     GLint mFaceVectorLocation = -1;
     GLuint mTextures[2] = { 0, 0 };
     GLuint mBufferObjects[2] = { 0, 0 };
@@ -694,7 +723,8 @@ void AHardwareBufferGLTest::SetUp() {
     ASSERT_GE(mGLVersion, 20);
 }
 
-bool AHardwareBufferGLTest::SetUpBuffer(const AHardwareBuffer_Desc& desc, bool use_srgb) {
+bool AHardwareBufferGLTest::SetUpBuffer(const AHardwareBuffer_Desc& desc) {
+    const bool use_srgb = desc.stride & kUseSrgb;
     if (desc.usage & AHARDWAREBUFFER_USAGE_GPU_CUBE_MAP) {
         if (desc.layers > 6) {
             if (mGLVersion < 32) {
@@ -728,16 +758,16 @@ bool AHardwareBufferGLTest::SetUpBuffer(const AHardwareBuffer_Desc& desc, bool u
               mGLVersion / 10, mGLVersion % 10);
         return false;
     }
-    if (desc.format == GL_RGBA16F &&
-        (!HasGLExtension("GL_EXT_color_buffer_float") && mGLVersion < 32)) {
-        ALOGI("Test skipped: GL_RGBA16F requires GL_EXT_color_buffer_float or GL ES 3.2");
+    if (desc.format == GL_RGBA16F && mGLVersion < 30) {
+        ALOGI("Test skipped: GL_RGBA16F requires GL ES 3.0, found %d.%d",
+              mGLVersion / 10, mGLVersion % 10);
         return false;
     }
-    // Nonzero stride indicates that desc.format should be interpreted as a GL format
-    // and the test should be run in a single context, without using AHardwareBuffer.
-    // This simplifies verifying that the test behaves as expected even if the
-    // AHardwareBuffer format under test is not supported.
-    if (desc.stride != 0) {
+    // For control cases using GL formats, the test should be run in a single
+    // context, without using AHardwareBuffer. This simplifies verifying that
+    // the test behaves as expected even if the AHardwareBuffer format under
+    // test is not supported.
+    if (desc.stride & kGlFormat) {
         mContextCount = 1;
         return true;
     }
@@ -821,9 +851,9 @@ void AHardwareBufferGLTest::SetUpProgram(const std::string& vertex_source,
         FAIL() << "Unknown mesh";
     }
     glUniform1f(glGetUniformLocation(mProgram, "uScale"), scale);
-    GLint u_color_location = glGetUniformLocation(mProgram, "uColor");
-    if (u_color_location >= 0) {
-        glUniform4f(u_color_location, 1.f, 0.f, 0.f, 1.f);
+    mColorLocation = glGetUniformLocation(mProgram, "uColor");
+    if (mColorLocation >= 0) {
+        glUniform4f(mColorLocation, 1.f, 0.f, 0.f, 1.f);
     }
     GLint u_texture_location = glGetUniformLocation(mProgram, "uTexture");
     if (u_texture_location >= 0) {
@@ -841,14 +871,7 @@ void AHardwareBufferGLTest::SetUpTexture(const AHardwareBuffer_Desc& desc, int u
     glGenTextures(1, &texture);
     glActiveTexture(GL_TEXTURE0 + unit);
     glBindTexture(mTexTarget, texture);
-    if (desc.stride == 0) {
-        if (HasGLExtension("GL_EXT_EGL_image_storage")) {
-            glEGLImageTargetTexStorageEXT(mTexTarget, static_cast<GLeglImageOES>(mEGLImage),
-                                          nullptr);
-        } else {
-            glEGLImageTargetTexture2DOES(mTexTarget, static_cast<GLeglImageOES>(mEGLImage));
-        }
-    } else {
+    if (desc.stride & kGlFormat) {
         int levels = 1;
         if (desc.usage & AHARDWAREBUFFER_USAGE_GPU_MIPMAP_COMPLETE) {
             levels = MipLevelCount(desc.width, desc.height);
@@ -893,6 +916,13 @@ void AHardwareBufferGLTest::SetUpTexture(const AHardwareBuffer_Desc& desc, int u
                                 format, type, nullptr);
                 }
             }
+        }
+    } else {
+        if (HasGLExtension("GL_EXT_EGL_image_storage")) {
+            glEGLImageTargetTexStorageEXT(mTexTarget, static_cast<GLeglImageOES>(mEGLImage),
+                                          nullptr);
+        } else {
+            glEGLImageTargetTexture2DOES(mTexTarget, static_cast<GLeglImageOES>(mEGLImage));
         }
     }
     ASSERT_EQ(GLenum{GL_NO_ERROR}, glGetError());
@@ -946,11 +976,11 @@ void AHardwareBufferGLTest::SetUpFramebuffer(int width, int height, int layer,
                 GLuint renderbuffer = 0;
                 glGenRenderbuffers(1, &renderbuffer);
                 glBindRenderbuffer(GL_RENDERBUFFER, renderbuffer);
-                if (GetParam().stride == 0) {
+                if (GetParam().stride & kGlFormat) {
+                    glRenderbufferStorage(GL_RENDERBUFFER, GetParam().format, width, height);
+                } else {
                     glEGLImageTargetRenderbufferStorageOES(GL_RENDERBUFFER,
                                                            static_cast<GLeglImageOES>(mEGLImage));
-                } else {
-                    glRenderbufferStorage(GL_RENDERBUFFER, GetParam().format, width, height);
                 }
                 glFramebufferRenderbuffer(GL_FRAMEBUFFER, attachment_points[i],
                                           GL_RENDERBUFFER, renderbuffer);
@@ -994,9 +1024,9 @@ void AHardwareBufferGLTest::TearDown() {
 
 class AHardwareBufferBlobFormatTest : public AHardwareBufferGLTest {
 public:
-    bool SetUpBuffer(const AHardwareBuffer_Desc& desc, bool use_srgb = false) override {
+    bool SetUpBuffer(const AHardwareBuffer_Desc& desc) override {
         if (!HasGLExtension("GL_EXT_external_buffer")) return false;
-        return AHardwareBufferGLTest::SetUpBuffer(desc, use_srgb);
+        return AHardwareBufferGLTest::SetUpBuffer(desc);
     }
 };
 
@@ -1135,7 +1165,17 @@ INSTANTIATE_TEST_CASE_P(
         AHardwareBuffer_Desc{1, 1, 1, AHARDWAREBUFFER_FORMAT_BLOB, 0, 0, 0, 0}));
 
 
-class AHardwareBufferColorFormatTest : public AHardwareBufferGLTest {};
+class AHardwareBufferColorFormatTest : public AHardwareBufferGLTest {
+public:
+    bool SetUpBuffer(const AHardwareBuffer_Desc& desc) override {
+        if ((desc.usage & AHARDWAREBUFFER_USAGE_GPU_COLOR_OUTPUT) &&
+            !IsFormatColorRenderable(desc.format, desc.stride & kUseSrgb)) {
+            ALOGI("Test skipped: requires GPU_COLOR_OUTPUT, but format is not color-renderable");
+            return false;
+        }
+        return AHardwareBufferGLTest::SetUpBuffer(desc);
+    }
+};
 
 // Verify that when allocating an AHardwareBuffer succeeds with GPU_COLOR_OUTPUT,
 // it can be bound as a framebuffer attachment, glClear'ed and then read from
@@ -1161,10 +1201,10 @@ TEST_P(AHardwareBufferColorFormatTest, GpuColorOutputIsRenderable) {
 
     MakeCurrent(0);
     std::vector<GoldenPixel> goldens{
-        {10, 90, kRed},  {40, 90, kRed},  {60, 90, kBlue}, {90, 90, kBlue},
-        {10, 60, kRed},  {40, 60, kRed},  {60, 60, kBlue}, {90, 60, kBlue},
-        {10, 40, kZero}, {40, 40, kZero}, {60, 40, kRed},  {90, 40, kRed},
-        {10, 10, kZero}, {40, 10, kZero}, {60, 10, kRed},  {90, 10, kRed},
+        {10, 90, kRed},  {40, 90, kRed},  {60, 90, kBlue},  {90, 90, kBlue},
+        {10, 60, kRed},  {40, 60, kRed},  {60, 60, kBlue},  {90, 60, kBlue},
+        {10, 40, kZero}, {40, 40, kZero}, {60, 40, kGreen}, {90, 40, kGreen},
+        {10, 10, kZero}, {40, 10, kZero}, {60, 10, kGreen}, {90, 10, kGreen},
     };
     CheckGoldenPixels(goldens, desc.format);
 }
@@ -1176,7 +1216,7 @@ TEST_P(AHardwareBufferColorFormatTest, GpuColorOutputCpuRead) {
     desc.height = 10;
     desc.usage = AHARDWAREBUFFER_USAGE_GPU_COLOR_OUTPUT | AHARDWAREBUFFER_USAGE_CPU_READ_RARELY;
     // This test does not make sense for GL formats. Layered buffers do not support CPU access.
-    if (desc.stride != 0 || desc.layers > 1) return;
+    if ((desc.stride & kGlFormat) || desc.layers > 1) return;
     if (!SetUpBuffer(desc)) return;
 
     MakeCurrent(1);
@@ -1195,10 +1235,10 @@ TEST_P(AHardwareBufferColorFormatTest, GpuColorOutputCpuRead) {
     ASSERT_EQ(NO_ERROR, result);
 
     std::vector<GoldenPixel> goldens{
-        {0, 9, kRed},  {4, 9, kRed},  {5, 9, kBlue}, {9, 9, kBlue},
-        {0, 5, kRed},  {4, 5, kRed},  {5, 5, kBlue}, {9, 5, kBlue},
-        {0, 4, kZero}, {4, 4, kZero}, {5, 4, kRed},  {9, 4, kRed},
-        {0, 0, kZero}, {4, 0, kZero}, {5, 0, kRed},  {9, 0, kRed},
+        {0, 9, kRed},  {4, 9, kRed},  {5, 9, kBlue},  {9, 9, kBlue},
+        {0, 5, kRed},  {4, 5, kRed},  {5, 5, kBlue},  {9, 5, kBlue},
+        {0, 4, kZero}, {4, 4, kZero}, {5, 4, kGreen}, {9, 4, kGreen},
+        {0, 0, kZero}, {4, 0, kZero}, {5, 0, kGreen}, {9, 0, kGreen},
     };
     for (const GoldenPixel& golden : goldens) {
         ptrdiff_t row_offset = golden.y * desc.stride;
@@ -1226,9 +1266,9 @@ TEST_P(AHardwareBufferColorFormatTest, GpuColorOutputCpuRead) {
                 uint16_t* pixel = reinterpret_cast<uint16_t*>(
                     reinterpret_cast<uint8_t*>(data) + (row_offset + golden.x) * 2);
                 std::array<uint8_t, 4> pixel_to_check = {
-                    static_cast<uint8_t>(((*pixel & 0xF800) >> 11) * (255.f/31.f)),
-                    static_cast<uint8_t>(((*pixel & 0x07E0) >> 5) * (255.f/63.f)),
-                    static_cast<uint8_t>((*pixel & 0x001F) * (255.f/31.f)),
+                    static_cast<uint8_t>(((*pixel & 0xF800) >> 11) * (255./31.)),
+                    static_cast<uint8_t>(((*pixel & 0x07E0) >> 5) * (255./63.)),
+                    static_cast<uint8_t>((*pixel & 0x001F) * (255./31.)),
                     255,
                 };
                 CheckGoldenPixel(golden, pixel_to_check, desc.format);
@@ -1248,10 +1288,10 @@ TEST_P(AHardwareBufferColorFormatTest, GpuColorOutputCpuRead) {
                 uint32_t* pixel = reinterpret_cast<uint32_t*>(
                     reinterpret_cast<uint8_t*>(data) + (row_offset + golden.x) * 4);
                 std::array<uint8_t, 4> pixel_to_check = {
-                    static_cast<uint8_t>((*pixel & 0x000003FF) * (255.f/1023.f)),
-                    static_cast<uint8_t>(((*pixel & 0x000FFC00) >> 10) * (255.f/1023.f)),
-                    static_cast<uint8_t>(((*pixel & 0x3FF00000) >> 20) * (255.f/1023.f)),
-                    static_cast<uint8_t>(((*pixel & 0xC0000000) >> 30) * (255.f/3.f)),
+                    static_cast<uint8_t>((*pixel & 0x000003FF) * (255./1023.)),
+                    static_cast<uint8_t>(((*pixel & 0x000FFC00) >> 10) * (255./1023.)),
+                    static_cast<uint8_t>(((*pixel & 0x3FF00000) >> 20) * (255./1023.)),
+                    static_cast<uint8_t>(((*pixel & 0xC0000000) >> 30) * (255./3.)),
                 };
                 CheckGoldenPixel(golden, pixel_to_check, desc.format);
                 break;
@@ -1344,10 +1384,10 @@ TEST_P(AHardwareBufferColorFormatTest, GpuColorOutputAndSampledImage) {
     // format has an alpha channel.
     const GoldenColor kCBBlack = FormatHasAlpha(desc.format) ? kZero : kBlack;
     std::vector<GoldenPixel> goldens{
-        {5, 35, kZero}, {15, 35, kZero},    {25, 35, kZero}, {35, 35, kZero},
-        {5, 25, kZero}, {15, 25, kRed},     {25, 25, kBlue}, {35, 25, kZero},
-        {5, 15, kZero}, {15, 15, kCBBlack}, {25, 15, kRed},  {35, 15, kZero},
-        {5, 5,  kZero}, {15, 5,  kZero},    {25, 5,  kZero}, {35, 5,  kZero},
+        {5, 35, kZero}, {15, 35, kZero},    {25, 35, kZero},  {35, 35, kZero},
+        {5, 25, kZero}, {15, 25, kRed},     {25, 25, kBlue},  {35, 25, kZero},
+        {5, 15, kZero}, {15, 15, kCBBlack}, {25, 15, kGreen}, {35, 15, kZero},
+        {5, 5,  kZero}, {15, 5,  kZero},    {25, 5,  kZero},  {35, 5,  kZero},
     };
     CheckGoldenPixels(goldens, GL_RGBA8);
 }
@@ -1363,10 +1403,7 @@ TEST_P(AHardwareBufferColorFormatTest, MipmapComplete) {
         AHARDWAREBUFFER_USAGE_GPU_COLOR_OUTPUT |
         AHARDWAREBUFFER_USAGE_GPU_SAMPLED_IMAGE |
         AHARDWAREBUFFER_USAGE_GPU_MIPMAP_COMPLETE;
-    const bool kUseSrgb = desc.format == GL_SRGB8_ALPHA8 ||
-        desc.format == AHARDWAREBUFFER_FORMAT_R8G8B8A8_UNORM ||
-        desc.format == AHARDWAREBUFFER_FORMAT_R8G8B8_UNORM;
-    if (!SetUpBuffer(desc, kUseSrgb)) return;
+    if (!SetUpBuffer(desc)) return;
 
     const int kTextureUnit = 7;
     for (int i = 0; i < mContextCount; ++i) {
@@ -1395,7 +1432,7 @@ TEST_P(AHardwareBufferColorFormatTest, MipmapComplete) {
     MakeCurrent(0);
     SetUpFramebuffer(1, 1, desc.layers - 1, kBufferAsTexture, kNone, kNone, kNone,
                      MipLevelCount(desc.width, desc.height) - 1);
-    std::vector<GoldenPixel> goldens{{0, 0, kUseSrgb ? kRed50Srgb : kRed50}};
+    std::vector<GoldenPixel> goldens{{0, 0, (desc.stride & kUseSrgb) ? kRed50Srgb : kRed50}};
     CheckGoldenPixels(goldens, desc.format);
 }
 
@@ -1439,10 +1476,10 @@ TEST_P(AHardwareBufferColorFormatTest, CubemapSampling) {
 
         const GoldenColor kCBBlack = FormatHasAlpha(desc.format) ? kZero : kBlack;
         std::vector<GoldenPixel> goldens{
-            {5, 35, kZero}, {15, 35, kZero},    {25, 35, kZero}, {35, 35, kZero},
-            {5, 25, kZero}, {15, 25, kRed},     {25, 25, kBlue}, {35, 25, kZero},
-            {5, 15, kZero}, {15, 15, kCBBlack}, {25, 15, kRed},  {35, 15, kZero},
-            {5, 5,  kZero}, {15, 5,  kZero},    {25, 5,  kZero}, {35, 5,  kZero},
+            {5, 35, kZero}, {15, 35, kZero},    {25, 35, kZero},  {35, 35, kZero},
+            {5, 25, kZero}, {15, 25, kRed},     {25, 25, kBlue},  {35, 25, kZero},
+            {5, 15, kZero}, {15, 15, kCBBlack}, {25, 15, kGreen}, {35, 15, kZero},
+            {5, 5,  kZero}, {15, 5,  kZero},    {25, 5,  kZero},  {35, 5,  kZero},
         };
         CheckGoldenPixels(goldens, GL_RGBA8);
     }
@@ -1461,10 +1498,7 @@ TEST_P(AHardwareBufferColorFormatTest, CubemapMipmaps) {
     desc.width = (desc.width / kNumTiles) * kNumTiles;
     desc.height = desc.width;
     desc.layers *= 6;
-    const bool kUseSrgb = desc.format == GL_SRGB8_ALPHA8 ||
-        desc.format == AHARDWAREBUFFER_FORMAT_R8G8B8A8_UNORM ||
-        desc.format == AHARDWAREBUFFER_FORMAT_R8G8B8_UNORM;
-    if (!SetUpBuffer(desc, kUseSrgb)) return;
+    if (!SetUpBuffer(desc)) return;
 
     for (int i = 0; i < mContextCount; ++i) {
         MakeCurrent(i);
@@ -1492,23 +1526,27 @@ TEST_P(AHardwareBufferColorFormatTest, CubemapMipmaps) {
     for (int face = 0; face < 6; ++face) {
         SetUpFramebuffer(1, 1, desc.layers - 6 + face, kBufferAsTexture, kNone, kNone, kNone,
                          MipLevelCount(desc.width, desc.height) - 1);
-        std::vector<GoldenPixel> goldens{{0, 0, kUseSrgb ? kRed50Srgb : kRed50}};
+        std::vector<GoldenPixel> goldens{{0, 0, (desc.stride & kUseSrgb) ? kRed50Srgb : kRed50}};
         CheckGoldenPixels(goldens, desc.format);
     }
 }
 
+// The 'stride' field is used to pass a combination of TestFlags.
 INSTANTIATE_TEST_CASE_P(
     SingleLayer,
     AHardwareBufferColorFormatTest,
     ::testing::Values(
-        AHardwareBuffer_Desc{75, 33, 1, GL_RGB8, 0, 1, 0, 0},
-        AHardwareBuffer_Desc{64, 80, 1, GL_RGBA8, 0, 1, 0, 0},
-        AHardwareBuffer_Desc{49, 23, 1, GL_SRGB8_ALPHA8, 0, 1, 0, 0},
-        AHardwareBuffer_Desc{42, 41, 1, GL_RGBA16F, 0, 1, 0, 0},
-        AHardwareBuffer_Desc{37, 63, 1, GL_RGB10_A2, 0, 1, 0, 0},
+        AHardwareBuffer_Desc{75, 33, 1, GL_RGB8, 0, kGlFormat, 0, 0},
+        AHardwareBuffer_Desc{64, 80, 1, GL_RGBA8, 0, kGlFormat, 0, 0},
+        AHardwareBuffer_Desc{49, 23, 1, GL_SRGB8_ALPHA8, 0, kGlFormat | kUseSrgb, 0, 0},
+        AHardwareBuffer_Desc{42, 41, 1, GL_RGBA16F, 0, kGlFormat, 0, 0},
+        AHardwareBuffer_Desc{37, 63, 1, GL_RGB10_A2, 0, kGlFormat, 0, 0},
         AHardwareBuffer_Desc{33, 20, 1, AHARDWAREBUFFER_FORMAT_R8G8B8A8_UNORM, 0, 0, 0, 0},
+        AHardwareBuffer_Desc{33, 20, 1, AHARDWAREBUFFER_FORMAT_R8G8B8A8_UNORM, 0, kUseSrgb, 0, 0},
         AHardwareBuffer_Desc{20, 10, 1, AHARDWAREBUFFER_FORMAT_R8G8B8X8_UNORM, 0, 0, 0, 0},
+        AHardwareBuffer_Desc{20, 10, 1, AHARDWAREBUFFER_FORMAT_R8G8B8X8_UNORM, 0, kUseSrgb, 0, 0},
         AHardwareBuffer_Desc{16, 20, 1, AHARDWAREBUFFER_FORMAT_R8G8B8_UNORM, 0, 0, 0, 0},
+        AHardwareBuffer_Desc{16, 20, 1, AHARDWAREBUFFER_FORMAT_R8G8B8_UNORM, 0, kUseSrgb, 0, 0},
         AHardwareBuffer_Desc{10, 20, 1, AHARDWAREBUFFER_FORMAT_R5G6B5_UNORM, 0, 0, 0, 0},
         AHardwareBuffer_Desc{10, 20, 1, AHARDWAREBUFFER_FORMAT_R16G16B16A16_FLOAT, 0, 0, 0, 0},
         AHardwareBuffer_Desc{10, 20, 1, AHARDWAREBUFFER_FORMAT_R10G10B10A2_UNORM, 0, 0, 0, 0}));
@@ -1517,15 +1555,17 @@ INSTANTIATE_TEST_CASE_P(
     MultipleLayers,
     AHardwareBufferColorFormatTest,
     ::testing::Values(
-        AHardwareBuffer_Desc{75, 33, 5, GL_RGB8, 0, 1, 0, 0},
-        AHardwareBuffer_Desc{64, 80, 6, GL_RGBA8, 0, 1, 0, 0},
-        AHardwareBuffer_Desc{33, 28, 4, GL_SRGB8_ALPHA8, 0, 1, 0, 0},
-        AHardwareBuffer_Desc{42, 41, 3, GL_RGBA16F, 0, 1, 0, 0},
-        AHardwareBuffer_Desc{37, 63, 4, GL_RGB10_A2, 0, 1, 0, 0},
+        AHardwareBuffer_Desc{75, 33, 5, GL_RGB8, 0, kGlFormat, 0, 0},
+        AHardwareBuffer_Desc{64, 80, 6, GL_RGBA8, 0, kGlFormat, 0, 0},
+        AHardwareBuffer_Desc{33, 28, 4, GL_SRGB8_ALPHA8, 0, kGlFormat | kUseSrgb, 0, 0},
+        AHardwareBuffer_Desc{42, 41, 3, GL_RGBA16F, 0, kGlFormat, 0, 0},
+        AHardwareBuffer_Desc{37, 63, 4, GL_RGB10_A2, 0, kGlFormat, 0, 0},
         AHardwareBuffer_Desc{25, 77, 7, AHARDWAREBUFFER_FORMAT_R8G8B8A8_UNORM, 0, 0, 0, 0},
-        AHardwareBuffer_Desc{64, 64, 4, AHARDWAREBUFFER_FORMAT_R8G8B8A8_UNORM, 0, 0, 0, 0},
+        AHardwareBuffer_Desc{25, 77, 7, AHARDWAREBUFFER_FORMAT_R8G8B8A8_UNORM, 0, kUseSrgb, 0, 0},
         AHardwareBuffer_Desc{30, 30, 3, AHARDWAREBUFFER_FORMAT_R8G8B8X8_UNORM, 0, 0, 0, 0},
+        AHardwareBuffer_Desc{30, 30, 3, AHARDWAREBUFFER_FORMAT_R8G8B8X8_UNORM, 0, kUseSrgb, 0, 0},
         AHardwareBuffer_Desc{50, 50, 4, AHARDWAREBUFFER_FORMAT_R8G8B8_UNORM, 0, 0, 0, 0},
+        AHardwareBuffer_Desc{50, 50, 4, AHARDWAREBUFFER_FORMAT_R8G8B8_UNORM, 0, kUseSrgb, 0, 0},
         AHardwareBuffer_Desc{20, 10, 2, AHARDWAREBUFFER_FORMAT_R5G6B5_UNORM, 0, 0, 0, 0},
         AHardwareBuffer_Desc{20, 20, 4, AHARDWAREBUFFER_FORMAT_R16G16B16A16_FLOAT, 0, 0, 0, 0},
         AHardwareBuffer_Desc{30, 20, 16, AHARDWAREBUFFER_FORMAT_R10G10B10A2_UNORM, 0, 0, 0, 0}));
@@ -1569,7 +1609,7 @@ TEST_P(AHardwareBufferDepthFormatTest, DepthAffectsDrawAcrossContexts) {
     std::vector<GoldenPixel> goldens{
         {5, 35, kRed}, {15, 35, kRed},  {25, 35, kZero}, {35, 35, kZero},
         {5, 25, kRed}, {15, 25, kZero}, {25, 25, kZero}, {35, 25, kZero},
-        {5, 15, kRed}, {15, 15, kRed},  {25, 15, kZero}, {35, 15, kRed},
+        {5, 15, kRed}, {15, 15, kRed},  {25, 15, kRed},  {35, 15, kRed},
         {5, 5,  kRed}, {15, 5,  kRed},  {25, 5,  kRed},  {35, 5,  kRed},
     };
     CheckGoldenPixels(goldens, GL_RGBA8);
@@ -1684,12 +1724,12 @@ TEST_P(AHardwareBufferDepthFormatTest, DepthCubemapSampling) {
     }
 }
 
-// See comment in SetUpBuffer for explanation of nonzero stride and GL format.
+// The 'stride' field is used to pass a combination of TestFlags.
 INSTANTIATE_TEST_CASE_P(
     SingleLayer,
     AHardwareBufferDepthFormatTest,
     ::testing::Values(
-        AHardwareBuffer_Desc{16, 24, 1, GL_DEPTH_COMPONENT16, 0, 1, 0, 0},
+        AHardwareBuffer_Desc{16, 24, 1, GL_DEPTH_COMPONENT16, 0, kGlFormat, 0, 0},
         AHardwareBuffer_Desc{16, 24, 1, AHARDWAREBUFFER_FORMAT_D16_UNORM, 0, 0, 0, 0},
         AHardwareBuffer_Desc{44, 21, 1, AHARDWAREBUFFER_FORMAT_D24_UNORM, 0, 0, 0, 0},
         AHardwareBuffer_Desc{57, 33, 1, AHARDWAREBUFFER_FORMAT_D24_UNORM_S8_UINT, 0, 0, 0, 0},
@@ -1701,7 +1741,7 @@ INSTANTIATE_TEST_CASE_P(
     MultipleLayers,
     AHardwareBufferDepthFormatTest,
     ::testing::Values(
-        AHardwareBuffer_Desc{16, 24, 6, GL_DEPTH_COMPONENT16, 0, 1, 0, 0},
+        AHardwareBuffer_Desc{16, 24, 6, GL_DEPTH_COMPONENT16, 0, kGlFormat, 0, 0},
         AHardwareBuffer_Desc{16, 24, 6, AHARDWAREBUFFER_FORMAT_D16_UNORM, 0, 0, 0, 0},
         AHardwareBuffer_Desc{44, 21, 4, AHARDWAREBUFFER_FORMAT_D24_UNORM, 0, 0, 0, 0},
         AHardwareBuffer_Desc{57, 33, 7, AHARDWAREBUFFER_FORMAT_D24_UNORM_S8_UINT, 0, 0, 0, 0},
@@ -1746,14 +1786,18 @@ TEST_P(AHardwareBufferStencilFormatTest, StencilAffectsDrawAcrossContexts) {
     glStencilFunc(GL_EQUAL, 2, 0xFF);
     glStencilOp(GL_KEEP, GL_KEEP, GL_KEEP);
     glDrawArrays(GL_TRIANGLES, 0, kQuadVertexCount);
+    glUniform4f(mColorLocation, 0.f, 1.f, 0.f, 1.f);
+    glStencilFunc(GL_EQUAL, 4, 0xFF);
+    glStencilOp(GL_KEEP, GL_KEEP, GL_KEEP);
+    glDrawArrays(GL_TRIANGLES, 0, kQuadVertexCount);
     EXPECT_EQ(GLenum{GL_NO_ERROR}, glGetError());
 
     // Check golden pixels.
     std::vector<GoldenPixel> goldens{
-        {5, 35, kRed},  {15, 35, kRed},  {25, 35, kZero}, {35, 35, kZero},
-        {5, 25, kRed},  {15, 25, kRed},  {25, 25, kZero}, {35, 25, kZero},
-        {5, 15, kZero}, {15, 15, kZero}, {25, 15, kRed},  {35, 15, kRed},
-        {5, 5,  kZero}, {15, 5,  kZero}, {25, 5,  kRed},  {35, 5,  kRed},
+        {5, 35, kRed},  {15, 35, kRed},  {25, 35, kZero},  {35, 35, kZero},
+        {5, 25, kRed},  {15, 25, kRed},  {25, 25, kZero},  {35, 25, kZero},
+        {5, 15, kZero}, {15, 15, kZero}, {25, 15, kGreen}, {35, 15, kGreen},
+        {5, 5,  kZero}, {15, 5,  kZero}, {25, 5,  kGreen}, {35, 5,  kGreen},
     };
     CheckGoldenPixels(goldens, GL_RGBA8);
 }
@@ -1801,21 +1845,21 @@ TEST_P(AHardwareBufferStencilFormatTest, StencilTexture) {
 
     // Check golden pixels.
     std::vector<GoldenPixel> goldens{
-        {5, 35, kRed},  {15, 35, kRed},  {25, 35, kBlue}, {35, 35, kBlue},
-        {5, 25, kRed},  {15, 25, kRed},  {25, 25, kBlue}, {35, 25, kBlue},
-        {5, 15, kZero}, {15, 15, kZero}, {25, 15, kRed},  {35, 15, kRed},
-        {5, 5,  kZero}, {15, 5,  kZero}, {25, 5,  kRed},  {35, 5,  kRed},
+        {5, 35, kRed},  {15, 35, kRed},  {25, 35, kBlue},  {35, 35, kBlue},
+        {5, 25, kRed},  {15, 25, kRed},  {25, 25, kBlue},  {35, 25, kBlue},
+        {5, 15, kZero}, {15, 15, kZero}, {25, 15, kGreen}, {35, 15, kGreen},
+        {5, 5,  kZero}, {15, 5,  kZero}, {25, 5,  kGreen}, {35, 5,  kGreen},
     };
     CheckGoldenPixels(goldens, GL_RGBA8);
 }
 
-// See comment in SetUpBuffer for explanation of nonzero stride and GL format.
+// The 'stride' field is used to pass a combination of TestFlags.
 INSTANTIATE_TEST_CASE_P(
     SingleLayer,
     AHardwareBufferStencilFormatTest,
     ::testing::Values(
-        AHardwareBuffer_Desc{49, 57, 1, GL_STENCIL_INDEX8, 0, 1, 0, 0},
-        AHardwareBuffer_Desc{36, 50, 1, GL_DEPTH24_STENCIL8, 0, 1, 0, 0},
+        AHardwareBuffer_Desc{49, 57, 1, GL_STENCIL_INDEX8, 0, kGlFormat, 0, 0},
+        AHardwareBuffer_Desc{36, 50, 1, GL_DEPTH24_STENCIL8, 0, kGlFormat, 0, 0},
         AHardwareBuffer_Desc{26, 29, 1, AHARDWAREBUFFER_FORMAT_S8_UINT, 0, 0, 0, 0},
         AHardwareBuffer_Desc{57, 33, 1, AHARDWAREBUFFER_FORMAT_D24_UNORM_S8_UINT, 0, 0, 0, 0},
         AHardwareBuffer_Desc{17, 23, 1, AHARDWAREBUFFER_FORMAT_D32_FLOAT_S8_UINT, 0, 0, 0, 0}));
@@ -1824,8 +1868,8 @@ INSTANTIATE_TEST_CASE_P(
     MultipleLayers,
     AHardwareBufferStencilFormatTest,
     ::testing::Values(
-        AHardwareBuffer_Desc{49, 57, 3, GL_STENCIL_INDEX8, 0, 1, 0, 0},
-        AHardwareBuffer_Desc{36, 50, 6, GL_DEPTH24_STENCIL8, 0, 1, 0, 0},
+        AHardwareBuffer_Desc{49, 57, 3, GL_STENCIL_INDEX8, 0, kGlFormat, 0, 0},
+        AHardwareBuffer_Desc{36, 50, 6, GL_DEPTH24_STENCIL8, 0, kGlFormat, 0, 0},
         AHardwareBuffer_Desc{26, 29, 5, AHARDWAREBUFFER_FORMAT_S8_UINT, 0, 0, 0, 0},
         AHardwareBuffer_Desc{57, 33, 4, AHARDWAREBUFFER_FORMAT_D24_UNORM_S8_UINT, 0, 0, 0, 0},
         AHardwareBuffer_Desc{17, 23, 7, AHARDWAREBUFFER_FORMAT_D32_FLOAT_S8_UINT, 0, 0, 0, 0}));
