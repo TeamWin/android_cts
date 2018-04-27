@@ -38,6 +38,7 @@ import static android.server.am.Components.LAUNCH_PIP_ON_PIP_ACTIVITY;
 import static android.server.am.Components.MOVE_TASK_TO_BACK_ACTIVITY;
 import static android.server.am.Components.MoveTaskToBackActivity.EXTRA_FINISH_POINT;
 import static android.server.am.Components.MoveTaskToBackActivity.FINISH_POINT_ON_PAUSE;
+import static android.server.am.Components.MoveTaskToBackActivity.FINISH_POINT_ON_STOP;
 import static android.server.am.Components.NO_HISTORY_ACTIVITY;
 import static android.server.am.Components.SWIPE_REFRESH_ACTIVITY;
 import static android.server.am.Components.TEST_ACTIVITY;
