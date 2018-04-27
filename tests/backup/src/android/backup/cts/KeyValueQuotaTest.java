@@ -50,6 +50,9 @@ public class KeyValueQuotaTest extends BaseBackupCtsTest {
         if (!isBackupSupported()) {
             return;
         }
+        // Launch the main activity so the app qualifies for backup.
+        createTestFileOfSize(BACKUP_APP_NAME, 1);
+
         String separator = clearLogcat();
         exec("bmgr backupnow " + BACKUP_APP_NAME);
         waitForLogcat(TIMEOUT_SECONDS, separator,
