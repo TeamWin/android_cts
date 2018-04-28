@@ -75,7 +75,7 @@ public class NetworkLoggingTest extends BaseDeviceOwnerTest {
         @Override
         public void onReceive(Context context, Intent intent) {
             if (BasicAdminReceiver.ACTION_NETWORK_LOGS_AVAILABLE.equals(intent.getAction())) {
-                long token =
+                final long token =
                         intent.getLongExtra(BasicAdminReceiver.EXTRA_NETWORK_LOGS_BATCH_TOKEN,
                                 FAKE_BATCH_TOKEN);
                 // Retrieve network logs.
@@ -94,7 +94,7 @@ public class NetworkLoggingTest extends BaseDeviceOwnerTest {
     };
 
     private CountDownLatch mBatchCountDown;
-    private ArrayList<NetworkEvent> mNetworkEvents = new ArrayList<>();
+    private final ArrayList<NetworkEvent> mNetworkEvents = new ArrayList<>();
     private int mBatchesRequested = 1;
 
     @Override
@@ -174,7 +174,7 @@ public class NetworkLoggingTest extends BaseDeviceOwnerTest {
 
         // if DeviceAdminReceiver#onNetworkLogsAvailable() hasn't been triggered yet, wait for up to
         // 3 minutes per batch just in case
-        int timeoutMins = 3 * mBatchesRequested;
+        final int timeoutMins = 3 * mBatchesRequested;
         mBatchCountDown.await(timeoutMins, TimeUnit.MINUTES);
         LocalBroadcastManager.getInstance(mContext).unregisterReceiver(mNetworkLogsReceiver);
         if (mBatchCountDown.getCount() > 0) {
@@ -187,7 +187,7 @@ public class NetworkLoggingTest extends BaseDeviceOwnerTest {
         assertEquals("First event has the wrong id.", 0L, mNetworkEvents.get(0).getId());
         // For each of the real URLs we have two events: one DNS and one connect. Dummy requests
         // don't require DNS queries.
-        int eventsExpected =
+        final int eventsExpected =
                 Math.min(FULL_LOG_BATCH_SIZE * mBatchesRequested,
                         2 * LOGGED_URLS_LIST.length + dummyReqNo);
         verifyNetworkLogs(mNetworkEvents, eventsExpected);
@@ -279,10 +279,10 @@ public class NetworkLoggingTest extends BaseDeviceOwnerTest {
 
     /** Quickly generate loads of events by repeatedly connecting to a local server. */
     private int generateDummyTraffic() throws IOException, InterruptedException {
-        ServerSocket serverSocket = new ServerSocket(0);
-        Thread serverThread = startDummyServer(serverSocket);
+        final ServerSocket serverSocket = new ServerSocket(0);
+        final Thread serverThread = startDummyServer(serverSocket);
 
-        int reqNo = makeDummyRequests(serverSocket.getLocalPort());
+        final int reqNo = makeDummyRequests(serverSocket.getLocalPort());
 
         serverSocket.close();
         serverThread.join();
@@ -306,29 +306,27 @@ public class NetworkLoggingTest extends BaseDeviceOwnerTest {
     }
 
     private Thread startDummyServer(ServerSocket serverSocket) throws InterruptedException {
-        Thread serverThread = new Thread(() -> {
-            while (true) {
+        final Thread serverThread = new Thread(() -> {
+            while (!serverSocket.isClosed()) {
                 try {
-                    Socket socket = serverSocket.accept();
+                    final Socket socket = serverSocket.accept();
                     // Consume input.
-                    BufferedReader input =
+                    final BufferedReader input =
                             new BufferedReader(new InputStreamReader(socket.getInputStream()));
                     String line;
                     do {
                         line = input.readLine();
                     } while (line != null && !line.equals(""));
                     // Return minimum valid response.
-                    PrintStream output = new PrintStream(socket.getOutputStream());
+                    final PrintStream output = new PrintStream(socket.getOutputStream());
                     output.println("HTTP/1.0 200 OK");
                     output.println("Content-Length: 0");
                     output.println();
                     output.flush();
                     output.close();
                 } catch (IOException e) {
-                    if (mBatchCountDown.getCount() > 0) {
+                    if (!serverSocket.isClosed()) {
                         Log.w(TAG, "Failed to serve connection", e);
-                    } else {
-                        break;
                     }
                 }
             }

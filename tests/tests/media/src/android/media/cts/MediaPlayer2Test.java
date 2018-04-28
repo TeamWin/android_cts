@@ -48,6 +48,7 @@ import android.os.ServiceManager;
 import android.os.SystemClock;
 import android.support.test.InstrumentationRegistry;
 import android.support.test.filters.SmallTest;
+import android.support.test.runner.AndroidJUnit4;
 import android.platform.test.annotations.RequiresDevice;
 import android.util.Log;
 
@@ -71,6 +72,9 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import junit.framework.AssertionFailedError;
 
+import org.junit.Ignore;
+import org.junit.runner.RunWith;
+
 /**
  * Tests for the MediaPlayer2 API and local video/audio playback.
  *
@@ -78,8 +82,10 @@ import junit.framework.AssertionFailedError;
  * Blender Foundation / www.bigbuckbunny.org, and are licensed under the Creative Commons
  * Attribution 3.0 License at http://creativecommons.org/licenses/by/3.0/us/.
  */
+@RunWith(AndroidJUnit4.class)
 @SmallTest
 @RequiresDevice
+@Ignore
 public class MediaPlayer2Test extends MediaPlayer2TestBase {
 
     private String RECORDED_FILE;
