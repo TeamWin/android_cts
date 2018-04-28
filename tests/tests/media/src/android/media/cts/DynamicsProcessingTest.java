@@ -60,15 +60,15 @@ public class DynamicsProcessingTest extends PostProcTestBase {
     private static final int TEST_CHANNEL_INDEX = 0;
     private static final int TEST_BAND_INDEX = 0;
 
-    //-----------------------------------------------------------------
+    // -----------------------------------------------------------------
     // DynamicsProcessing tests:
-    //----------------------------------
+    // ----------------------------------
 
-    //-----------------------------------------------------------------
+    // -----------------------------------------------------------------
     // 0 - constructors
-    //----------------------------------
+    // ----------------------------------
 
-    //Test case 0.0: test constructor and release
+    // Test case 0.0: test constructor and release
     public void test0_0ConstructorAndRelease() throws Exception {
         if (!hasAudioOutput()) {
             return;
@@ -98,9 +98,9 @@ public class DynamicsProcessingTest extends PostProcTestBase {
         }
     }
 
-    //-----------------------------------------------------------------
+    // -----------------------------------------------------------------
     // 1 - create with parameters
-    //----------------------------------
+    // ----------------------------------
 
     public void test1_0ParametersEngine() throws Exception {
         if (!hasAudioOutput()) {
@@ -109,10 +109,10 @@ public class DynamicsProcessingTest extends PostProcTestBase {
         try {
             createDefaultEffect();
 
-            //Check Parameters:
+            // Check Parameters:
             DynamicsProcessing.Config engineConfig = mDP.getConfig();
             final float preferredFrameDuration = engineConfig.getPreferredFrameDuration();
-            assertEquals("preferredFrameDuration is different",DEFAULT_FRAME_DURATION,
+            assertEquals("preferredFrameDuration is different", DEFAULT_FRAME_DURATION,
                     preferredFrameDuration, EPSILON);
 
             final int preEqBandCount = engineConfig.getPreEqBandCount();
@@ -136,7 +136,7 @@ public class DynamicsProcessingTest extends PostProcTestBase {
         try {
             createDefaultEffect();
 
-            //Check Parameters:
+            // Check Parameters:
             final int channelCount = mDP.getChannelCount();
             assertTrue("unexpected channel count", channelCount >= MIN_CHANNEL_COUNT);
 
@@ -224,9 +224,299 @@ public class DynamicsProcessingTest extends PostProcTestBase {
         }
     }
 
-    //-----------------------------------------------------------------
+    public void test1_6Channel_perStage() throws Exception {
+        if (!hasAudioOutput()) {
+            return;
+        }
+
+        try {
+            createDefaultEffect();
+
+            Channel channel = mDP.getChannelByChannelIndex(TEST_CHANNEL_INDEX);
+
+            // Per Stage
+            mDP.setInputGainAllChannelsTo(TEST_GAIN1);
+
+            Eq preEq = mDP.getPreEqByChannelIndex(TEST_CHANNEL_INDEX);
+            EqBand preEqBand = preEq.getBand(TEST_BAND_INDEX);
+            preEqBand.setGain(TEST_GAIN1);
+            preEq.setBand(TEST_BAND_INDEX, preEqBand);
+            mDP.setPreEqAllChannelsTo(preEq);
+
+            Mbc mbc = mDP.getMbcByChannelIndex(TEST_CHANNEL_INDEX);
+            MbcBand mbcBand = mbc.getBand(TEST_BAND_INDEX);
+            mbcBand.setPreGain(TEST_GAIN1);
+            mbc.setBand(TEST_BAND_INDEX, mbcBand);
+            mDP.setMbcAllChannelsTo(mbc);
+
+            Eq postEq = mDP.getPostEqByChannelIndex(TEST_CHANNEL_INDEX);
+            EqBand postEqBand = postEq.getBand(TEST_BAND_INDEX);
+            postEqBand.setGain(TEST_GAIN1);
+            postEq.setBand(TEST_BAND_INDEX, postEqBand);
+            mDP.setPostEqAllChannelsTo(postEq);
+
+            Limiter limiter = mDP.getLimiterByChannelIndex(TEST_CHANNEL_INDEX);
+            limiter.setPostGain(TEST_GAIN1);
+            mDP.setLimiterAllChannelsTo(limiter);
+
+            int channelCount = mDP.getChannelCount();
+            for (int i = 0; i < channelCount; i++) {
+                Channel channelTest = mDP.getChannelByChannelIndex(i);
+                assertEquals("inputGain is different in channel " + i, TEST_GAIN1,
+                        channelTest.getInputGain(), EPSILON);
+
+                Eq preEqTest = new Eq(mDP.getPreEqByChannelIndex(i));
+                EqBand preEqBandTest = preEqTest.getBand(TEST_BAND_INDEX);
+                assertEquals("preEQBand gain is different in channel " + i + " band " +
+                        TEST_BAND_INDEX, TEST_GAIN1, preEqBandTest.getGain(), EPSILON);
+
+                Mbc mbcTest = new Mbc(mDP.getMbcByChannelIndex(i));
+                MbcBand mbcBandTest = mbcTest.getBand(TEST_BAND_INDEX);
+                assertEquals("mbcBand preGain is different in channel " + i + " band " +
+                        TEST_BAND_INDEX, TEST_GAIN1, mbcBandTest.getPreGain(), EPSILON);
+
+                Eq postEqTest = new Eq(mDP.getPostEqByChannelIndex(i));
+                EqBand postEqBandTest = postEqTest.getBand(TEST_BAND_INDEX);
+                assertEquals("postEQBand gain is different in channel " + i + " band " +
+                        TEST_BAND_INDEX, TEST_GAIN1, postEqBandTest.getGain(), EPSILON);
+
+                Limiter limiterTest = new Limiter(mDP.getLimiterByChannelIndex(i));
+                assertEquals("limiter gain is different in channel " + i,
+                        TEST_GAIN1, limiterTest.getPostGain(), EPSILON);
+
+                // change by Stage
+                mDP.setInputGainbyChannel(i, TEST_GAIN2);
+                assertEquals("inputGain is different in channel " + i, TEST_GAIN2,
+                        mDP.getInputGainByChannelIndex(i), EPSILON);
+
+                preEqBandTest.setGain(TEST_GAIN2);
+                preEqTest.setBand(TEST_BAND_INDEX, preEqBandTest);
+                mDP.setPreEqByChannelIndex(i, preEqTest);
+                assertEquals("preEQBand gain is different in channel " + i + " band " +
+                        TEST_BAND_INDEX, TEST_GAIN2,
+                        mDP.getPreEqBandByChannelIndex(i, TEST_BAND_INDEX).getGain(), EPSILON);
+
+                mbcBandTest.setPreGain(TEST_GAIN2);
+                mbcTest.setBand(TEST_BAND_INDEX, mbcBandTest);
+                mDP.setMbcByChannelIndex(i, mbcTest);
+                assertEquals("mbcBand preGain is different in channel " + i + " band " +
+                        TEST_BAND_INDEX, TEST_GAIN2,
+                        mDP.getMbcBandByChannelIndex(i, TEST_BAND_INDEX).getPreGain(), EPSILON);
+
+                postEqBandTest.setGain(TEST_GAIN2);
+                postEqTest.setBand(TEST_BAND_INDEX, postEqBandTest);
+                mDP.setPostEqByChannelIndex(i, postEqTest);
+                assertEquals("postEQBand gain is different in channel " + i + " band " +
+                        TEST_BAND_INDEX, TEST_GAIN2,
+                        mDP.getPostEqBandByChannelIndex(i, TEST_BAND_INDEX).getGain(), EPSILON);
+
+                limiterTest.setPostGain(TEST_GAIN2);
+                mDP.setLimiterByChannelIndex(i, limiterTest);
+                assertEquals("limiter gain is different in channel " + i,
+                        TEST_GAIN2, mDP.getLimiterByChannelIndex(i).getPostGain(), EPSILON);
+            }
+        } finally {
+            releaseDynamicsProcessing();
+        }
+
+    }
+
+    public void test1_7Channel_perBand() throws Exception {
+        if (!hasAudioOutput()) {
+            return;
+        }
+        try {
+            createDefaultEffect();
+
+            Channel channel = mDP.getChannelByChannelIndex(TEST_CHANNEL_INDEX);
+
+            // Per Band
+            EqBand preEqBand = mDP.getPreEqBandByChannelIndex(TEST_CHANNEL_INDEX, TEST_BAND_INDEX);
+            preEqBand.setGain(TEST_GAIN1);
+            mDP.setPreEqBandAllChannelsTo(TEST_BAND_INDEX, preEqBand);
+
+            MbcBand mbcBand = mDP.getMbcBandByChannelIndex(TEST_CHANNEL_INDEX, TEST_BAND_INDEX);
+            mbcBand.setPreGain(TEST_GAIN1);
+            mDP.setMbcBandAllChannelsTo(TEST_BAND_INDEX, mbcBand);
+
+            EqBand postEqBand = mDP.getPostEqBandByChannelIndex(TEST_CHANNEL_INDEX,
+                    TEST_BAND_INDEX);
+            postEqBand.setGain(TEST_GAIN1);
+            mDP.setPostEqBandAllChannelsTo(TEST_BAND_INDEX, postEqBand);
+
+            int channelCount = mDP.getChannelCount();
+
+            for (int i = 0; i < channelCount; i++) {
+
+                EqBand preEqBandTest = new EqBand(mDP.getPreEqBandByChannelIndex(i,
+                        TEST_BAND_INDEX));
+                assertEquals("preEQBand gain is different in channel " + i + " band " +
+                        TEST_BAND_INDEX, TEST_GAIN1, preEqBandTest.getGain(), EPSILON);
+
+                MbcBand mbcBandTest = new MbcBand(mDP.getMbcBandByChannelIndex(i, TEST_BAND_INDEX));
+                assertEquals("mbcBand preGain is different in channel " + i + " band " +
+                        TEST_BAND_INDEX, TEST_GAIN1, mbcBandTest.getPreGain(), EPSILON);
+
+                EqBand postEqBandTest = new EqBand(mDP.getPostEqBandByChannelIndex(i,
+                        TEST_BAND_INDEX));
+                assertEquals("postEQBand gain is different in channel " + i + " band " +
+                        TEST_BAND_INDEX, TEST_GAIN1, postEqBandTest.getGain(), EPSILON);
+
+                // change per Band
+                preEqBandTest.setGain(TEST_GAIN2);
+                mDP.setPreEqBandByChannelIndex(i, TEST_BAND_INDEX, preEqBandTest);
+                assertEquals("preEQBand gain is different in channel " + i + " band " +
+                        TEST_BAND_INDEX, TEST_GAIN2,
+                        mDP.getPreEqBandByChannelIndex(i, TEST_BAND_INDEX).getGain(), EPSILON);
+
+                mbcBandTest.setPreGain(TEST_GAIN2);
+                mDP.setMbcBandByChannelIndex(i, TEST_BAND_INDEX, mbcBandTest);
+                assertEquals("mbcBand preGain is different in channel " + i + " band " +
+                        TEST_BAND_INDEX, TEST_GAIN2,
+                        mDP.getMbcBandByChannelIndex(i, TEST_BAND_INDEX).getPreGain(),
+                        EPSILON);
+
+                postEqBandTest.setGain(TEST_GAIN2);
+                mDP.setPostEqBandByChannelIndex(i, TEST_BAND_INDEX, postEqBandTest);
+                assertEquals("postEQBand gain is different in channel " + i + " band " +
+                        TEST_BAND_INDEX, TEST_GAIN2,
+                        mDP.getPostEqBandByChannelIndex(i, TEST_BAND_INDEX).getGain(),
+                        EPSILON);
+            }
+
+        } finally {
+            releaseDynamicsProcessing();
+        }
+    }
+
+    public void test1_8Channel_setAllChannelsTo() throws Exception {
+        if (!hasAudioOutput()) {
+            return;
+        }
+        try {
+            createDefaultEffect();
+
+            Channel channel = mDP.getChannelByChannelIndex(TEST_CHANNEL_INDEX);
+            // get Stages, apply all channels
+            Eq preEq = new Eq(mDP.getPreEqByChannelIndex(TEST_CHANNEL_INDEX));
+            EqBand preEqBand = new EqBand(preEq.getBand(TEST_BAND_INDEX));
+            preEqBand.setGain(TEST_GAIN1);
+            preEq.setBand(TEST_BAND_INDEX, preEqBand);
+            channel.setPreEq(preEq);
+
+            Mbc mbc = new Mbc(mDP.getMbcByChannelIndex(TEST_CHANNEL_INDEX));
+            MbcBand mbcBand = new MbcBand(mbc.getBand(TEST_BAND_INDEX));
+            mbcBand.setPreGain(TEST_GAIN1);
+            mbc.setBand(TEST_BAND_INDEX, mbcBand);
+            channel.setMbc(mbc);
+
+            Eq postEq = new Eq(mDP.getPostEqByChannelIndex(TEST_CHANNEL_INDEX));
+            EqBand postEqBand = new EqBand(postEq.getBand(TEST_BAND_INDEX));
+            postEqBand.setGain(TEST_GAIN1);
+            postEq.setBand(TEST_BAND_INDEX, postEqBand);
+            channel.setPostEq(postEq);
+
+            Limiter limiter = new Limiter(mDP.getLimiterByChannelIndex(TEST_CHANNEL_INDEX));
+            limiter.setPostGain(TEST_GAIN1);
+            channel.setLimiter(limiter);
+
+            mDP.setAllChannelsTo(channel);
+
+            int channelCount = mDP.getChannelCount();
+            for (int i = 0; i < channelCount; i++) {
+                assertEquals("preEQBand gain is different in channel " + i + " band " +
+                        TEST_BAND_INDEX, TEST_GAIN1,
+                        mDP.getPreEqBandByChannelIndex(i, TEST_BAND_INDEX).getGain(), EPSILON);
+
+                assertEquals("mbcBand preGain is different in channel " + i + " band " +
+                        TEST_BAND_INDEX, TEST_GAIN1,
+                        mDP.getMbcBandByChannelIndex(i, TEST_BAND_INDEX).getPreGain(), EPSILON);
+
+                assertEquals("postEQBand gain is different in channel " + i + " band " +
+                        TEST_BAND_INDEX, TEST_GAIN1,
+                        mDP.getPostEqBandByChannelIndex(i, TEST_BAND_INDEX).getGain(), EPSILON);
+
+                assertEquals("limiter gain is different in channel " + i,
+                        TEST_GAIN1, mDP.getLimiterByChannelIndex(i).getPostGain(), EPSILON);
+            }
+
+        } finally {
+            releaseDynamicsProcessing();
+        }
+    }
+
+    public void test1_9Channel_setChannelTo() throws Exception {
+        if (!hasAudioOutput()) {
+            return;
+        }
+        try {
+            createDefaultEffect();
+
+            Channel channel = mDP.getChannelByChannelIndex(TEST_CHANNEL_INDEX);
+
+            Eq preEq = new Eq(mDP.getPreEqByChannelIndex(TEST_CHANNEL_INDEX));
+            EqBand preEqBand = new EqBand(preEq.getBand(TEST_BAND_INDEX));
+
+            Mbc mbc = new Mbc(mDP.getMbcByChannelIndex(TEST_CHANNEL_INDEX));
+            MbcBand mbcBand = new MbcBand(mbc.getBand(TEST_BAND_INDEX));
+
+            Eq postEq = new Eq(mDP.getPostEqByChannelIndex(TEST_CHANNEL_INDEX));
+            EqBand postEqBand = new EqBand(postEq.getBand(TEST_BAND_INDEX));
+
+            Limiter limiter = new Limiter(mDP.getLimiterByChannelIndex(TEST_CHANNEL_INDEX));
+
+            // get Stages, apply per channel
+            int channelCount = mDP.getChannelCount();
+            for (int i = 0; i < channelCount; i++) {
+                float gain = i % 2 == 0 ? TEST_GAIN1 : TEST_GAIN2;
+
+                preEqBand.setGain(gain);
+                preEq.setBand(TEST_BAND_INDEX, preEqBand);
+                channel.setPreEq(preEq);
+
+                mbcBand.setPreGain(gain);
+                mbc.setBand(TEST_BAND_INDEX, mbcBand);
+                channel.setMbc(mbc);
+
+                postEqBand.setGain(gain);
+                postEq.setBand(TEST_BAND_INDEX, postEqBand);
+                channel.setPostEq(postEq);
+
+                limiter.setPostGain(gain);
+                channel.setLimiter(limiter);
+
+                mDP.setChannelTo(i, channel);
+            }
+
+            for (int i = 0; i < channelCount; i++) {
+                float expectedGain = i % 2 == 0 ? TEST_GAIN1 : TEST_GAIN2;
+                assertEquals("preEQBand gain is different in channel " + i + " band " +
+                        TEST_BAND_INDEX, expectedGain,
+                        mDP.getPreEqBandByChannelIndex(i, TEST_BAND_INDEX).getGain(),
+                        EPSILON);
+
+                assertEquals("mbcBand preGain is different in channel " + i + " band " +
+                        TEST_BAND_INDEX, expectedGain,
+                        mDP.getMbcBandByChannelIndex(i, TEST_BAND_INDEX).getPreGain(),
+                        EPSILON);
+
+                assertEquals("postEQBand gain is different in channel " + i + " band " +
+                        TEST_BAND_INDEX, expectedGain,
+                        mDP.getPostEqBandByChannelIndex(i, TEST_BAND_INDEX).getGain(),
+                        EPSILON);
+
+                assertEquals("limiter gain is different in channel " + i,
+                        expectedGain, mDP.getLimiterByChannelIndex(i).getPostGain(), EPSILON);
+            }
+
+        } finally {
+            releaseDynamicsProcessing();
+        }
+    }
+
+    // -----------------------------------------------------------------
     // 2 - config builder tests
-    //----------------------------------
+    // ----------------------------------
 
     public void test2_0ConfigBasic() throws Exception {
         if (!hasAudioOutput()) {
@@ -260,12 +550,12 @@ public class DynamicsProcessingTest extends PostProcTestBase {
         }
         DynamicsProcessing.Config config = getBuilderWithValues(TEST_CHANNEL_COUNT).build();
 
-        //per channel
+        // per channel
         Channel channel = config.getChannelByChannelIndex(TEST_CHANNEL_INDEX);
-        //change some parameters
+        // change some parameters
         channel.setInputGain(TEST_GAIN1);
 
-        //get stages from channel
+        // get stages from channel
         Eq preEq = channel.getPreEq();
         EqBand preEqBand = preEq.getBand(TEST_BAND_INDEX);
         preEqBand.setGain(TEST_GAIN1);
@@ -292,22 +582,22 @@ public class DynamicsProcessingTest extends PostProcTestBase {
                     channelTest.getInputGain(), EPSILON);
 
             EqBand preEqBandTest = new EqBand(channelTest.getPreEqBand(TEST_BAND_INDEX));
-            assertEquals("preEQBand gain is different in channel " + i + " band "+ TEST_BAND_INDEX,
+            assertEquals("preEQBand gain is different in channel " + i + " band " + TEST_BAND_INDEX,
                     TEST_GAIN1, preEqBandTest.getGain(), EPSILON);
 
             MbcBand mbcBandTest = new MbcBand(channelTest.getMbcBand(TEST_BAND_INDEX));
-            assertEquals("mbcBand preGain is different in channel " + i + " band "+ TEST_BAND_INDEX,
-                    TEST_GAIN1, mbcBandTest.getPreGain(), EPSILON);
+            assertEquals("mbcBand preGain is different in channel " + i + " band " +
+                    TEST_BAND_INDEX, TEST_GAIN1, mbcBandTest.getPreGain(), EPSILON);
 
             EqBand postEqBandTest = new EqBand(channelTest.getPostEqBand(TEST_BAND_INDEX));
-            assertEquals("postEQBand gain is different in channel " + i + " band "+ TEST_BAND_INDEX,
-                    TEST_GAIN1, postEqBandTest.getGain(), EPSILON);
+            assertEquals("postEQBand gain is different in channel " + i + " band " +
+                    TEST_BAND_INDEX, TEST_GAIN1, postEqBandTest.getGain(), EPSILON);
 
             Limiter limiterTest = new Limiter(channelTest.getLimiter());
             assertEquals("limiter gain is different in channel " + i,
                     TEST_GAIN1, limiterTest.getPostGain(), EPSILON);
 
-            ///changes per channelIndex
+            /// changes per channelIndex
             channelTest.setInputGain(TEST_GAIN2);
             preEqBandTest.setGain(TEST_GAIN2);
             channelTest.setPreEqBand(TEST_BAND_INDEX, preEqBandTest);
@@ -322,18 +612,20 @@ public class DynamicsProcessingTest extends PostProcTestBase {
             assertEquals("inputGain is different in channel " + i, TEST_GAIN2,
                     config.getInputGainByChannelIndex(i), EPSILON);
 
-            //get by module
+            // get by module
             Eq preEqTest = config.getPreEqByChannelIndex(i);
-            assertEquals("preEQBand gain is different in channel " + i + " band "+ TEST_BAND_INDEX,
+            assertEquals("preEQBand gain is different in channel " + i + " band " + TEST_BAND_INDEX,
                     TEST_GAIN2, preEqTest.getBand(TEST_BAND_INDEX).getGain(), EPSILON);
 
             Mbc mbcTest = config.getMbcByChannelIndex(i);
-            assertEquals("mbcBand preGain is different in channel " + i + " band "+ TEST_BAND_INDEX,
-                    TEST_GAIN2, mbcTest.getBand(TEST_BAND_INDEX).getPreGain(), EPSILON);
+            assertEquals("mbcBand preGain is different in channel " + i + " band " +
+                    TEST_BAND_INDEX, TEST_GAIN2, mbcTest.getBand(TEST_BAND_INDEX).getPreGain(),
+                    EPSILON);
 
             Eq postEqTest = config.getPostEqByChannelIndex(i);
-            assertEquals("postEQBand gain is different in channel " + i + " band "+ TEST_BAND_INDEX,
-                    TEST_GAIN2, postEqTest.getBand(TEST_BAND_INDEX).getGain(), EPSILON);
+            assertEquals("postEQBand gain is different in channel " + i + " band " +
+                    TEST_BAND_INDEX, TEST_GAIN2, postEqTest.getBand(TEST_BAND_INDEX).getGain(),
+                    EPSILON);
 
             limiterTest = config.getLimiterByChannelIndex(i);
             assertEquals("limiter gain is different in channel " + i,
@@ -348,7 +640,7 @@ public class DynamicsProcessingTest extends PostProcTestBase {
 
         DynamicsProcessing.Config config = getBuilderWithValues(TEST_CHANNEL_COUNT).build();
 
-        //Per Stage
+        // Per Stage
         config.setInputGainAllChannelsTo(TEST_GAIN1);
 
         Eq preEq = config.getPreEqByChannelIndex(TEST_CHANNEL_INDEX);
@@ -380,44 +672,48 @@ public class DynamicsProcessingTest extends PostProcTestBase {
 
             Eq preEqTest = new Eq(config.getPreEqByChannelIndex(i));
             EqBand preEqBandTest = preEqTest.getBand(TEST_BAND_INDEX);
-            assertEquals("preEQBand gain is different in channel " + i + " band "+ TEST_BAND_INDEX,
+            assertEquals("preEQBand gain is different in channel " + i + " band " + TEST_BAND_INDEX,
                     TEST_GAIN1, preEqBandTest.getGain(), EPSILON);
 
             Mbc mbcTest = new Mbc(config.getMbcByChannelIndex(i));
             MbcBand mbcBandTest = mbcTest.getBand(TEST_BAND_INDEX);
-            assertEquals("mbcBand preGain is different in channel " + i + " band "+ TEST_BAND_INDEX,
-                    TEST_GAIN1, mbcBandTest.getPreGain(), EPSILON);
+            assertEquals("mbcBand preGain is different in channel " + i + " band " +
+                    TEST_BAND_INDEX, TEST_GAIN1, mbcBandTest.getPreGain(), EPSILON);
 
             Eq postEqTest = new Eq(config.getPostEqByChannelIndex(i));
             EqBand postEqBandTest = postEqTest.getBand(TEST_BAND_INDEX);
-            assertEquals("postEQBand gain is different in channel " + i + " band "+ TEST_BAND_INDEX,
-                    TEST_GAIN1, postEqBandTest.getGain(), EPSILON);
+            assertEquals("postEQBand gain is different in channel " + i + " band " +
+                    TEST_BAND_INDEX, TEST_GAIN1, postEqBandTest.getGain(), EPSILON);
 
             Limiter limiterTest = new Limiter(config.getLimiterByChannelIndex(i));
             assertEquals("limiter gain is different in channel " + i,
                     TEST_GAIN1, limiterTest.getPostGain(), EPSILON);
 
-            //change by Stage
+            // change by Stage
+            config.setInputGainByChannelIndex(i, TEST_GAIN2);
+            assertEquals("inputGain is different in channel " + i, TEST_GAIN2,
+                    config.getInputGainByChannelIndex(i), EPSILON);
+
             preEqBandTest.setGain(TEST_GAIN2);
             preEqTest.setBand(TEST_BAND_INDEX, preEqBandTest);
             config.setPreEqByChannelIndex(i, preEqTest);
-            assertEquals("preEQBand gain is different in channel " + i + " band "+ TEST_BAND_INDEX,
+            assertEquals("preEQBand gain is different in channel " + i + " band " + TEST_BAND_INDEX,
                     TEST_GAIN2, config.getPreEqBandByChannelIndex(i, TEST_BAND_INDEX).getGain(),
                     EPSILON);
 
             mbcBandTest.setPreGain(TEST_GAIN2);
             mbcTest.setBand(TEST_BAND_INDEX, mbcBandTest);
             config.setMbcByChannelIndex(i, mbcTest);
-            assertEquals("mbcBand preGain is different in channel " + i + " band "+ TEST_BAND_INDEX,
-                    TEST_GAIN2, config.getMbcBandByChannelIndex(i, TEST_BAND_INDEX).getPreGain(),
-                    EPSILON);
+            assertEquals("mbcBand preGain is different in channel " + i + " band " +
+                    TEST_BAND_INDEX, TEST_GAIN2,
+                    config.getMbcBandByChannelIndex(i, TEST_BAND_INDEX).getPreGain(), EPSILON);
 
             postEqBandTest.setGain(TEST_GAIN2);
             postEqTest.setBand(TEST_BAND_INDEX, postEqBandTest);
             config.setPostEqByChannelIndex(i, postEqTest);
-            assertEquals("postEQBand gain is different in channel " + i + " band "+ TEST_BAND_INDEX,
-                    TEST_GAIN2, config.getPostEqBandByChannelIndex(i, TEST_BAND_INDEX).getGain(),
-                    EPSILON);
+            assertEquals("postEQBand gain is different in channel " + i + " band " +
+                    TEST_BAND_INDEX, TEST_GAIN2,
+                    config.getPostEqBandByChannelIndex(i, TEST_BAND_INDEX).getGain(), EPSILON);
 
             limiterTest.setPostGain(TEST_GAIN2);
             config.setLimiterByChannelIndex(i, limiterTest);
@@ -432,7 +728,7 @@ public class DynamicsProcessingTest extends PostProcTestBase {
         }
         DynamicsProcessing.Config config = getBuilderWithValues(TEST_CHANNEL_COUNT).build();
 
-        //Per Band
+        // Per Band
         EqBand preEqBand = config.getPreEqBandByChannelIndex(TEST_CHANNEL_INDEX, TEST_BAND_INDEX);
         preEqBand.setGain(TEST_GAIN1);
         config.setPreEqBandAllChannelsTo(TEST_BAND_INDEX, preEqBand);
@@ -449,36 +745,36 @@ public class DynamicsProcessingTest extends PostProcTestBase {
 
             EqBand preEqBandTest = new EqBand(config.getPreEqBandByChannelIndex(i,
                     TEST_BAND_INDEX));
-            assertEquals("preEQBand gain is different in channel " + i + " band "+ TEST_BAND_INDEX,
+            assertEquals("preEQBand gain is different in channel " + i + " band " + TEST_BAND_INDEX,
                     TEST_GAIN1, preEqBandTest.getGain(), EPSILON);
 
             MbcBand mbcBandTest = new MbcBand(config.getMbcBandByChannelIndex(i, TEST_BAND_INDEX));
-            assertEquals("mbcBand preGain is different in channel " + i + " band "+ TEST_BAND_INDEX,
-                    TEST_GAIN1, mbcBandTest.getPreGain(), EPSILON);
+            assertEquals("mbcBand preGain is different in channel " + i + " band " +
+                    TEST_BAND_INDEX, TEST_GAIN1, mbcBandTest.getPreGain(), EPSILON);
 
             EqBand postEqBandTest = new EqBand(config.getPostEqBandByChannelIndex(i,
                     TEST_BAND_INDEX));
-            assertEquals("postEQBand gain is different in channel " + i + " band "+ TEST_BAND_INDEX,
-                    TEST_GAIN1, postEqBandTest.getGain(), EPSILON);
+            assertEquals("postEQBand gain is different in channel " + i + " band " +
+                    TEST_BAND_INDEX, TEST_GAIN1, postEqBandTest.getGain(), EPSILON);
 
-            //change per Band
+            // change per Band
             preEqBandTest.setGain(TEST_GAIN2);
             config.setPreEqBandByChannelIndex(i, TEST_BAND_INDEX, preEqBandTest);
-            assertEquals("preEQBand gain is different in channel " + i + " band "+ TEST_BAND_INDEX,
+            assertEquals("preEQBand gain is different in channel " + i + " band " + TEST_BAND_INDEX,
                     TEST_GAIN2, config.getPreEqBandByChannelIndex(i, TEST_BAND_INDEX).getGain(),
                     EPSILON);
 
             mbcBandTest.setPreGain(TEST_GAIN2);
             config.setMbcBandByChannelIndex(i, TEST_BAND_INDEX, mbcBandTest);
-            assertEquals("mbcBand preGain is different in channel " + i + " band "+ TEST_BAND_INDEX,
-                    TEST_GAIN2, config.getMbcBandByChannelIndex(i, TEST_BAND_INDEX).getPreGain(),
-                    EPSILON);
+            assertEquals("mbcBand preGain is different in channel " + i + " band " +
+                    TEST_BAND_INDEX, TEST_GAIN2,
+                    config.getMbcBandByChannelIndex(i, TEST_BAND_INDEX).getPreGain(), EPSILON);
 
             postEqBandTest.setGain(TEST_GAIN2);
             config.setPostEqBandByChannelIndex(i, TEST_BAND_INDEX, postEqBandTest);
-            assertEquals("postEQBand gain is different in channel " + i + " band "+ TEST_BAND_INDEX,
-                    TEST_GAIN2, config.getPostEqBandByChannelIndex(i, TEST_BAND_INDEX).getGain(),
-                    EPSILON);
+            assertEquals("postEQBand gain is different in channel " + i + " band " +
+                    TEST_BAND_INDEX, TEST_GAIN2,
+                    config.getPostEqBandByChannelIndex(i, TEST_BAND_INDEX).getGain(), EPSILON);
         }
     }
 
@@ -493,18 +789,18 @@ public class DynamicsProcessingTest extends PostProcTestBase {
         channel.setInputGain(TEST_GAIN1);
         assertEquals("channel gain is different", TEST_GAIN1, channel.getInputGain(), EPSILON);
 
-        //set by stage
+        // set by stage
         Eq preEq = new Eq(channel.getPreEq());
         EqBand preEqBand = new EqBand(preEq.getBand(TEST_BAND_INDEX));
         preEqBand.setGain(TEST_GAIN1);
         preEq.setBand(TEST_BAND_INDEX, preEqBand);
         channel.setPreEq(preEq);
-        assertEquals("preEQBand gain is different in band "+ TEST_BAND_INDEX,
+        assertEquals("preEQBand gain is different in band " + TEST_BAND_INDEX,
                 TEST_GAIN1, channel.getPreEq().getBand(TEST_BAND_INDEX).getGain(), EPSILON);
         preEqBand.setGain(TEST_GAIN2);
         preEq.setBand(TEST_BAND_INDEX, preEqBand);
         channel.setPreEq(preEq);
-        assertEquals("preEQBand gain is different in band "+ TEST_BAND_INDEX,
+        assertEquals("preEQBand gain is different in band " + TEST_BAND_INDEX,
                 TEST_GAIN2, channel.getPreEq().getBand(TEST_BAND_INDEX).getGain(), EPSILON);
 
         Mbc mbc = new Mbc(channel.getMbc());
@@ -512,12 +808,12 @@ public class DynamicsProcessingTest extends PostProcTestBase {
         mbcBand.setPreGain(TEST_GAIN1);
         mbc.setBand(TEST_BAND_INDEX, mbcBand);
         channel.setMbc(mbc);
-        assertEquals("mbcBand preGain is different in band "+ TEST_BAND_INDEX,
+        assertEquals("mbcBand preGain is different in band " + TEST_BAND_INDEX,
                 TEST_GAIN1, channel.getMbc().getBand(TEST_BAND_INDEX).getPreGain(), EPSILON);
         mbcBand.setPreGain(TEST_GAIN2);
         mbc.setBand(TEST_BAND_INDEX, mbcBand);
         channel.setMbc(mbc);
-        assertEquals("mbcBand preGain is different in band "+ TEST_BAND_INDEX,
+        assertEquals("mbcBand preGain is different in band " + TEST_BAND_INDEX,
                 TEST_GAIN2, channel.getMbc().getBand(TEST_BAND_INDEX).getPreGain(), EPSILON);
 
         Eq postEq = new Eq(channel.getPostEq());
@@ -525,12 +821,12 @@ public class DynamicsProcessingTest extends PostProcTestBase {
         postEqBand.setGain(TEST_GAIN1);
         postEq.setBand(TEST_BAND_INDEX, postEqBand);
         channel.setPostEq(postEq);
-        assertEquals("postEqBand gain is different in band "+ TEST_BAND_INDEX,
+        assertEquals("postEqBand gain is different in band " + TEST_BAND_INDEX,
                 TEST_GAIN1, channel.getPostEq().getBand(TEST_BAND_INDEX).getGain(), EPSILON);
         postEqBand.setGain(TEST_GAIN2);
         postEq.setBand(TEST_BAND_INDEX, postEqBand);
         channel.setPostEq(postEq);
-        assertEquals("postEQBand gain is different in band "+ TEST_BAND_INDEX,
+        assertEquals("postEQBand gain is different in band " + TEST_BAND_INDEX,
                 TEST_GAIN2, channel.getPostEq().getBand(TEST_BAND_INDEX).getGain(), EPSILON);
 
         Limiter limiter = new Limiter(channel.getLimiter());
@@ -556,35 +852,35 @@ public class DynamicsProcessingTest extends PostProcTestBase {
         channel.setInputGain(TEST_GAIN1);
         assertEquals("channel gain is different", TEST_GAIN1, channel.getInputGain(), EPSILON);
 
-        //set by band
+        // set by band
         EqBand preEqBand = new EqBand(channel.getPreEqBand(TEST_BAND_INDEX));
         preEqBand.setGain(TEST_GAIN1);
         channel.setPreEqBand(TEST_BAND_INDEX, preEqBand);
-        assertEquals("preEQBand gain is different in band "+ TEST_BAND_INDEX,
+        assertEquals("preEQBand gain is different in band " + TEST_BAND_INDEX,
                 TEST_GAIN1, channel.getPreEqBand(TEST_BAND_INDEX).getGain(), EPSILON);
         preEqBand.setGain(TEST_GAIN2);
         channel.setPreEqBand(TEST_BAND_INDEX, preEqBand);
-        assertEquals("preEQBand gain is different in band "+ TEST_BAND_INDEX,
+        assertEquals("preEQBand gain is different in band " + TEST_BAND_INDEX,
                 TEST_GAIN2, channel.getPreEqBand(TEST_BAND_INDEX).getGain(), EPSILON);
 
         MbcBand mbcBand = new MbcBand(channel.getMbcBand(TEST_BAND_INDEX));
         mbcBand.setPreGain(TEST_GAIN1);
         channel.setMbcBand(TEST_BAND_INDEX, mbcBand);
-        assertEquals("mbcBand preGain is different in band "+ TEST_BAND_INDEX,
+        assertEquals("mbcBand preGain is different in band " + TEST_BAND_INDEX,
                 TEST_GAIN1, channel.getMbcBand(TEST_BAND_INDEX).getPreGain(), EPSILON);
         mbcBand.setPreGain(TEST_GAIN2);
         channel.setMbcBand(TEST_BAND_INDEX, mbcBand);
-        assertEquals("mbcBand preGain is different in band "+ TEST_BAND_INDEX,
+        assertEquals("mbcBand preGain is different in band " + TEST_BAND_INDEX,
                 TEST_GAIN2, channel.getMbcBand(TEST_BAND_INDEX).getPreGain(), EPSILON);
 
         EqBand postEqBand = new EqBand(channel.getPostEqBand(TEST_BAND_INDEX));
         postEqBand.setGain(TEST_GAIN1);
         channel.setPostEqBand(TEST_BAND_INDEX, postEqBand);
-        assertEquals("postEqBand gain is different in band "+ TEST_BAND_INDEX,
+        assertEquals("postEqBand gain is different in band " + TEST_BAND_INDEX,
                 TEST_GAIN1, channel.getPostEqBand(TEST_BAND_INDEX).getGain(), EPSILON);
         postEqBand.setGain(TEST_GAIN2);
         channel.setPostEqBand(TEST_BAND_INDEX, postEqBand);
-        assertEquals("postEqBand gain is different in band "+ TEST_BAND_INDEX,
+        assertEquals("postEqBand gain is different in band " + TEST_BAND_INDEX,
                 TEST_GAIN2, channel.getPostEqBand(TEST_BAND_INDEX).getGain(), EPSILON);
     }
 
@@ -601,14 +897,14 @@ public class DynamicsProcessingTest extends PostProcTestBase {
         assertEquals("eq enabled is different", enabled, eq.isEnabled());
         assertEquals("eq bandCount is different", bandCount, eq.getBandCount());
 
-        //changes
+        // changes
         eq.setEnabled(!enabled);
         assertEquals("eq enabled is different", !enabled, eq.isEnabled());
 
-        //bands
+        // bands
         for (int i = 0; i < bandCount; i++) {
             final float frequency = (i + 1) * 100.3f;
-            final float gain = (i+1) * 10.1f;
+            final float gain = (i + 1) * 10.1f;
             EqBand eqBand = new EqBand(eq.getBand(i));
 
             eqBand.setEnabled(enabled);
@@ -617,13 +913,23 @@ public class DynamicsProcessingTest extends PostProcTestBase {
 
             eq.setBand(i, eqBand);
 
-            //compare
+            // compare
             assertEquals("eq enabled is different in band " + i, enabled,
                     eq.getBand(i).isEnabled());
-            assertEquals("eq cutoffFrequency is different in band "+ i,
+            assertEquals("eq cutoffFrequency is different in band " + i,
                     frequency, eq.getBand(i).getCutoffFrequency(), EPSILON);
-            assertEquals("eq eqBand gain is different in band "+ i,
+            assertEquals("eq eqBand gain is different in band " + i,
                     gain, eq.getBand(i).getGain(), EPSILON);
+
+            // EqBand constructor
+            EqBand eqBand2 = new EqBand(enabled, frequency, gain);
+
+            assertEquals("eq enabled is different in band " + i, enabled,
+                    eqBand2.isEnabled());
+            assertEquals("eq cutoffFrequency is different in band " + i,
+                    frequency, eqBand2.getCutoffFrequency(), EPSILON);
+            assertEquals("eq eqBand gain is different in band " + i,
+                    gain, eqBand2.getGain(), EPSILON);
         }
     }
 
@@ -641,13 +947,13 @@ public class DynamicsProcessingTest extends PostProcTestBase {
         assertEquals("mbc enabled is different", enabled, mbc.isEnabled());
         assertEquals("mbc bandCount is different", bandCount, mbc.getBandCount());
 
-        //changes
+        // changes
         mbc.setEnabled(!enabled);
         assertEquals("enabled is different", !enabled, mbc.isEnabled());
 
-        //bands
+        // bands
         for (int i = 0; i < bandCount; i++) {
-            int index = i+1;
+            int index = i + 1;
             final float frequency = index * 100.3f;
             final float attackTime = index * 3.2f;
             final float releaseTime = 2 * attackTime;
@@ -674,28 +980,54 @@ public class DynamicsProcessingTest extends PostProcTestBase {
 
             mbc.setBand(i, mbcBand);
 
-            //compare
+            // compare
             assertEquals("mbc enabled is different", enabled, mbc.getBand(i).isEnabled());
-            assertEquals("mbc cutoffFrequency is different in band "+ i,
+            assertEquals("mbc cutoffFrequency is different in band " + i,
                     frequency, mbc.getBand(i).getCutoffFrequency(), EPSILON);
-            assertEquals("mbc attackTime is different in band "+ i,
+            assertEquals("mbc attackTime is different in band " + i,
                     attackTime, mbc.getBand(i).getAttackTime(), EPSILON);
-            assertEquals("mbc releaseTime is different in band "+ i,
+            assertEquals("mbc releaseTime is different in band " + i,
                     releaseTime, mbc.getBand(i).getReleaseTime(), EPSILON);
-            assertEquals("mbc ratio is different in band "+ i,
+            assertEquals("mbc ratio is different in band " + i,
                     ratio, mbc.getBand(i).getRatio(), EPSILON);
-            assertEquals("mbc threshold is different in band "+ i,
+            assertEquals("mbc threshold is different in band " + i,
                     threshold, mbc.getBand(i).getThreshold(), EPSILON);
-            assertEquals("mbc kneeWidth is different in band "+ i,
+            assertEquals("mbc kneeWidth is different in band " + i,
                     kneeWidth, mbc.getBand(i).getKneeWidth(), EPSILON);
-            assertEquals("mbc noiseGateThreshold is different in band "+ i,
+            assertEquals("mbc noiseGateThreshold is different in band " + i,
                     noiseGateThreshold, mbc.getBand(i).getNoiseGateThreshold(), EPSILON);
-            assertEquals("mbc expanderRatio is different in band "+ i,
+            assertEquals("mbc expanderRatio is different in band " + i,
                     expanderRatio, mbc.getBand(i).getExpanderRatio(), EPSILON);
-            assertEquals("mbc preGain is different in band "+ i,
+            assertEquals("mbc preGain is different in band " + i,
                     preGain, mbc.getBand(i).getPreGain(), EPSILON);
-            assertEquals("mbc postGain is different in band "+ i,
+            assertEquals("mbc postGain is different in band " + i,
                     postGain, mbc.getBand(i).getPostGain(), EPSILON);
+
+            // MbcBand constructor
+            MbcBand mbcBand2 = new MbcBand(enabled, frequency, attackTime, releaseTime, ratio,
+                    threshold, kneeWidth, noiseGateThreshold, expanderRatio, preGain, postGain);
+
+            assertEquals("mbc enabled is different", enabled, mbcBand2.isEnabled());
+            assertEquals("mbc cutoffFrequency is different in band " + i,
+                    frequency, mbcBand2.getCutoffFrequency(), EPSILON);
+            assertEquals("mbc attackTime is different in band " + i,
+                    attackTime, mbcBand2.getAttackTime(), EPSILON);
+            assertEquals("mbc releaseTime is different in band " + i,
+                    releaseTime, mbcBand2.getReleaseTime(), EPSILON);
+            assertEquals("mbc ratio is different in band " + i,
+                    ratio, mbcBand2.getRatio(), EPSILON);
+            assertEquals("mbc threshold is different in band " + i,
+                    threshold, mbcBand2.getThreshold(), EPSILON);
+            assertEquals("mbc kneeWidth is different in band " + i,
+                    kneeWidth, mbcBand2.getKneeWidth(), EPSILON);
+            assertEquals("mbc noiseGateThreshold is different in band " + i,
+                    noiseGateThreshold, mbcBand2.getNoiseGateThreshold(), EPSILON);
+            assertEquals("mbc expanderRatio is different in band " + i,
+                    expanderRatio, mbcBand2.getExpanderRatio(), EPSILON);
+            assertEquals("mbc preGain is different in band " + i,
+                    preGain, mbcBand2.getPreGain(), EPSILON);
+            assertEquals("mbc postGain is different in band " + i,
+                    postGain, mbcBand2.getPostGain(), EPSILON);
         }
     }
 
@@ -719,7 +1051,7 @@ public class DynamicsProcessingTest extends PostProcTestBase {
         assertEquals("limiter enabled is different", enabled, limiter.isEnabled());
         assertEquals("limiter linkGroup is different", linkGroup, limiter.getLinkGroup());
 
-        //defaults
+        // defaults
         assertEquals("limiter attackTime is different",
                 attackTime, limiter.getAttackTime(), EPSILON);
         assertEquals("limiter releaseTime is different",
@@ -731,13 +1063,13 @@ public class DynamicsProcessingTest extends PostProcTestBase {
         assertEquals("limiter postGain is different",
                 postGain, limiter.getPostGain(), EPSILON);
 
-        //changes
+        // changes
         final boolean newEnabled = !enabled;
         final int newLinkGroup = 7;
         final float newAttackTime = attackTime + 10;
         final float newReleaseTime = releaseTime + 10;
         final float newRatio = ratio + 2f;
-        final float newThreshold = threshold -20f;
+        final float newThreshold = threshold - 20f;
         final float newPostGain = postGain + 3f;
 
         limiter.setEnabled(newEnabled);
@@ -776,7 +1108,7 @@ public class DynamicsProcessingTest extends PostProcTestBase {
         assertEquals("bandStage enabled is different", enabled, bandStage.isEnabled());
         assertEquals("bandStage bandCount is different", bandCount, bandStage.getBandCount());
 
-        //change
+        // change
         bandStage.setEnabled(!enabled);
         assertEquals("bandStage enabled is different", !enabled, bandStage.isEnabled());
     }
@@ -794,7 +1126,7 @@ public class DynamicsProcessingTest extends PostProcTestBase {
         assertEquals("stage inUse is different", inUse, stage.isInUse());
         assertEquals("stage enabled is different", enabled, stage.isEnabled());
 
-        //change
+        // change
         stage.setEnabled(!enabled);
         assertEquals("stage enabled is different", !enabled, stage.isEnabled());
     }
@@ -813,7 +1145,7 @@ public class DynamicsProcessingTest extends PostProcTestBase {
         assertEquals("bandBase cutoffFrequency is different",
                 frequency, bandBase.getCutoffFrequency(), EPSILON);
 
-        //change
+        // change
         final float newFrequency = frequency + 10f;
         bandBase.setEnabled(!enabled);
         bandBase.setCutoffFrequency(newFrequency);
@@ -821,9 +1153,42 @@ public class DynamicsProcessingTest extends PostProcTestBase {
         assertEquals("bandBase cutoffFrequency is different",
                 newFrequency, bandBase.getCutoffFrequency(), EPSILON);
     }
-    //-----------------------------------------------------------------
+
+    public void test2_12Channel() throws Exception {
+        if (!hasAudioOutput()) {
+            return;
+        }
+
+        final float inputGain = 3.4f;
+        final boolean preEqInUse = true;
+        final int preEqBandCount = 3;
+        final boolean mbcInUse = true;
+        final int mbcBandCount = 4;
+        final boolean postEqInUse = true;
+        final int postEqBandCount = 5;
+        final boolean limiterInUse = true;
+
+        Channel channel = new Channel(inputGain, preEqInUse, preEqBandCount, mbcInUse,
+                mbcBandCount, postEqInUse, postEqBandCount, limiterInUse);
+
+        assertEquals("channel inputGain is different", inputGain,
+                channel.getInputGain(), EPSILON);
+        assertEquals("channel preEqInUse is different", preEqInUse, channel.getPreEq().isInUse());
+        assertEquals("channel preEqBandCount is different", preEqBandCount,
+                channel.getPreEq().getBandCount());
+        assertEquals("channel mbcInUse is different", mbcInUse, channel.getMbc().isInUse());
+        assertEquals("channel mbcBandCount is different", mbcBandCount,
+                channel.getMbc().getBandCount());
+        assertEquals("channel postEqInUse is different", postEqInUse,
+                channel.getPostEq().isInUse());
+        assertEquals("channel postEqBandCount is different", postEqBandCount,
+                channel.getPostEq().getBandCount());
+        assertEquals("channel limiterInUse is different", limiterInUse,
+                channel.getLimiter().isInUse());
+    }
+    // -----------------------------------------------------------------
     // 3 - Builder
-    //----------------------------------
+    // ----------------------------------
 
     public void test3_0Builder_stagesAllChannels() throws Exception {
         if (!hasAudioOutput()) {
@@ -833,7 +1198,7 @@ public class DynamicsProcessingTest extends PostProcTestBase {
         DynamicsProcessing.Config config = getBuilderWithValues(MIN_CHANNEL_COUNT).build();
         DynamicsProcessing.Config.Builder builder = getBuilderWithValues(TEST_CHANNEL_COUNT);
 
-        //get Stages, apply all channels
+        // get Stages, apply all channels
         Eq preEq = new Eq(config.getPreEqByChannelIndex(TEST_CHANNEL_INDEX));
         EqBand preEqBand = new EqBand(preEq.getBand(TEST_BAND_INDEX));
         preEqBand.setGain(TEST_GAIN1);
@@ -856,19 +1221,21 @@ public class DynamicsProcessingTest extends PostProcTestBase {
         limiter.setPostGain(TEST_GAIN1);
         builder.setLimiterAllChannelsTo(limiter);
 
-        //build and compare
+        // build and compare
         DynamicsProcessing.Config newConfig = builder.build();
         for (int i = 0; i < TEST_CHANNEL_COUNT; i++) {
-            assertEquals("preEQBand gain is different in channel " + i + " band "+ TEST_BAND_INDEX,
+            assertEquals("preEQBand gain is different in channel " + i + " band " + TEST_BAND_INDEX,
                     TEST_GAIN1, newConfig.getPreEqBandByChannelIndex(i, TEST_BAND_INDEX).getGain(),
                     EPSILON);
 
-            assertEquals("mbcBand preGain is different in channel " + i + " band "+ TEST_BAND_INDEX,
-                    TEST_GAIN1, newConfig.getMbcBandByChannelIndex(i, TEST_BAND_INDEX).getPreGain(),
+            assertEquals("mbcBand preGain is different in channel " + i + " band " +
+                    TEST_BAND_INDEX, TEST_GAIN1,
+                    newConfig.getMbcBandByChannelIndex(i, TEST_BAND_INDEX).getPreGain(),
                     EPSILON);
 
-            assertEquals("postEQBand gain is different in channel " + i + " band "+ TEST_BAND_INDEX,
-                    TEST_GAIN1, newConfig.getPostEqBandByChannelIndex(i, TEST_BAND_INDEX).getGain(),
+            assertEquals("postEQBand gain is different in channel " + i + " band " +
+                    TEST_BAND_INDEX, TEST_GAIN1,
+                    newConfig.getPostEqBandByChannelIndex(i, TEST_BAND_INDEX).getGain(),
                     EPSILON);
 
             assertEquals("limiter gain is different in channel " + i,
@@ -895,9 +1262,11 @@ public class DynamicsProcessingTest extends PostProcTestBase {
 
         Limiter limiter = new Limiter(config.getLimiterByChannelIndex(TEST_CHANNEL_INDEX));
 
-        //get Stages, apply per channel
+        // get Stages, apply per channel
         for (int i = 0; i < TEST_CHANNEL_COUNT; i++) {
             float gain = i % 2 == 0 ? TEST_GAIN1 : TEST_GAIN2;
+
+            builder.setInputGainByChannelIndex(i, gain);
 
             preEqBand.setGain(gain);
             preEq.setBand(TEST_BAND_INDEX, preEqBand);
@@ -909,27 +1278,33 @@ public class DynamicsProcessingTest extends PostProcTestBase {
 
             postEqBand.setGain(gain);
             postEq.setBand(TEST_BAND_INDEX, postEqBand);
-            builder.setPostEqByChannelIndex(i,postEq);
+            builder.setPostEqByChannelIndex(i, postEq);
 
             limiter.setPostGain(gain);
             builder.setLimiterByChannelIndex(i, limiter);
         }
-        //build and compare
+        // build and compare
         DynamicsProcessing.Config newConfig = builder.build();
         for (int i = 0; i < TEST_CHANNEL_COUNT; i++) {
             float expectedGain = i % 2 == 0 ? TEST_GAIN1 : TEST_GAIN2;
-            assertEquals("preEQBand gain is different in channel " + i + " band "+ TEST_BAND_INDEX,
+
+            assertEquals("inputGain is different in channel " + i,
+                    expectedGain,
+                    newConfig.getInputGainByChannelIndex(i),
+                    EPSILON);
+
+            assertEquals("preEQBand gain is different in channel " + i + " band " + TEST_BAND_INDEX,
                     expectedGain,
                     newConfig.getPreEqBandByChannelIndex(i, TEST_BAND_INDEX).getGain(),
                     EPSILON);
 
-            assertEquals("mbcBand preGain is different in channel " + i + " band "+ TEST_BAND_INDEX,
-                    expectedGain,
+            assertEquals("mbcBand preGain is different in channel " + i + " band " +
+                    TEST_BAND_INDEX, expectedGain,
                     newConfig.getMbcBandByChannelIndex(i, TEST_BAND_INDEX).getPreGain(),
                     EPSILON);
 
-            assertEquals("postEQBand gain is different in channel " + i + " band "+ TEST_BAND_INDEX,
-                    expectedGain,
+            assertEquals("postEQBand gain is different in channel " + i + " band " +
+                    TEST_BAND_INDEX, expectedGain,
                     newConfig.getPostEqBandByChannelIndex(i, TEST_BAND_INDEX).getGain(),
                     EPSILON);
 
@@ -948,7 +1323,7 @@ public class DynamicsProcessingTest extends PostProcTestBase {
 
         Channel channel = new Channel(config.getChannelByChannelIndex(TEST_CHANNEL_INDEX));
 
-        //get Stages, apply all channels
+        // get Stages, apply all channels
         Eq preEq = new Eq(config.getPreEqByChannelIndex(TEST_CHANNEL_INDEX));
         EqBand preEqBand = new EqBand(preEq.getBand(TEST_BAND_INDEX));
         preEqBand.setGain(TEST_GAIN1);
@@ -972,19 +1347,21 @@ public class DynamicsProcessingTest extends PostProcTestBase {
         channel.setLimiter(limiter);
 
         builder.setAllChannelsTo(channel);
-        //build and compare
+        // build and compare
         DynamicsProcessing.Config newConfig = builder.build();
         for (int i = 0; i < TEST_CHANNEL_COUNT; i++) {
-            assertEquals("preEQBand gain is different in channel " + i + " band "+ TEST_BAND_INDEX,
+            assertEquals("preEQBand gain is different in channel " + i + " band " + TEST_BAND_INDEX,
                     TEST_GAIN1, newConfig.getPreEqBandByChannelIndex(i, TEST_BAND_INDEX).getGain(),
                     EPSILON);
 
-            assertEquals("mbcBand preGain is different in channel " + i + " band "+ TEST_BAND_INDEX,
-                    TEST_GAIN1, newConfig.getMbcBandByChannelIndex(i, TEST_BAND_INDEX).getPreGain(),
+            assertEquals("mbcBand preGain is different in channel " + i + " band " +
+                    TEST_BAND_INDEX, TEST_GAIN1,
+                    newConfig.getMbcBandByChannelIndex(i, TEST_BAND_INDEX).getPreGain(),
                     EPSILON);
 
-            assertEquals("postEQBand gain is different in channel " + i + " band "+ TEST_BAND_INDEX,
-                    TEST_GAIN1, newConfig.getPostEqBandByChannelIndex(i, TEST_BAND_INDEX).getGain(),
+            assertEquals("postEQBand gain is different in channel " + i + " band " +
+                    TEST_BAND_INDEX, TEST_GAIN1,
+                    newConfig.getPostEqBandByChannelIndex(i, TEST_BAND_INDEX).getGain(),
                     EPSILON);
 
             assertEquals("limiter gain is different in channel " + i,
@@ -1013,7 +1390,7 @@ public class DynamicsProcessingTest extends PostProcTestBase {
 
         Limiter limiter = new Limiter(config.getLimiterByChannelIndex(TEST_CHANNEL_INDEX));
 
-        //get Stages, apply per channel
+        // get Stages, apply per channel
         for (int i = 0; i < TEST_CHANNEL_COUNT; i++) {
             float gain = i % 2 == 0 ? TEST_GAIN1 : TEST_GAIN2;
 
@@ -1034,22 +1411,22 @@ public class DynamicsProcessingTest extends PostProcTestBase {
 
             builder.setChannelTo(i, channel);
         }
-        //build and compare
+        // build and compare
         DynamicsProcessing.Config newConfig = builder.build();
         for (int i = 0; i < TEST_CHANNEL_COUNT; i++) {
             float expectedGain = i % 2 == 0 ? TEST_GAIN1 : TEST_GAIN2;
-            assertEquals("preEQBand gain is different in channel " + i + " band "+ TEST_BAND_INDEX,
+            assertEquals("preEQBand gain is different in channel " + i + " band " + TEST_BAND_INDEX,
                     expectedGain,
                     newConfig.getPreEqBandByChannelIndex(i, TEST_BAND_INDEX).getGain(),
                     EPSILON);
 
-            assertEquals("mbcBand preGain is different in channel " + i + " band "+ TEST_BAND_INDEX,
-                    expectedGain,
+            assertEquals("mbcBand preGain is different in channel " + i + " band " +
+                    TEST_BAND_INDEX, expectedGain,
                     newConfig.getMbcBandByChannelIndex(i, TEST_BAND_INDEX).getPreGain(),
                     EPSILON);
 
-            assertEquals("postEQBand gain is different in channel " + i + " band "+ TEST_BAND_INDEX,
-                    expectedGain,
+            assertEquals("postEQBand gain is different in channel " + i + " band " +
+                    TEST_BAND_INDEX, expectedGain,
                     newConfig.getPostEqBandByChannelIndex(i, TEST_BAND_INDEX).getGain(),
                     EPSILON);
 
@@ -1057,9 +1434,9 @@ public class DynamicsProcessingTest extends PostProcTestBase {
                     expectedGain, newConfig.getLimiterByChannelIndex(i).getPostGain(), EPSILON);
         }
     }
-    //-----------------------------------------------------------------
+    // -----------------------------------------------------------------
     // private methods
-    //----------------------------------
+    // ----------------------------------
 
     private void createDynamicsProcessing(int session) {
         createDynamicsProcessingWithConfig(session, null);
@@ -1068,8 +1445,8 @@ public class DynamicsProcessingTest extends PostProcTestBase {
     private void createDynamicsProcessingWithConfig(int session, DynamicsProcessing.Config config) {
         releaseDynamicsProcessing();
         try {
-            mDP = (config == null ? new DynamicsProcessing(session) :
-                new DynamicsProcessing(0 /* priority */, session, config));
+            mDP = (config == null ? new DynamicsProcessing(session)
+                    : new DynamicsProcessing(0 /* priority */, session, config));
         } catch (IllegalArgumentException e) {
             Log.e(TAG, "createDynamicsProcessingWithConfig() DynamicsProcessing not found"
                     + "exception: ", e);
@@ -1086,6 +1463,7 @@ public class DynamicsProcessingTest extends PostProcTestBase {
             mDP = null;
         }
     }
+
     private void createDefaultEffect() {
         DynamicsProcessing.Config config = getBuilderWithValues().build();
         assertNotNull("null config", config);
@@ -1100,26 +1478,26 @@ public class DynamicsProcessingTest extends PostProcTestBase {
     }
 
     private DynamicsProcessing.Config.Builder getBuilder(int channelCount) {
-        //simple config
+        // simple config
         DynamicsProcessing.Config.Builder builder = new DynamicsProcessing.Config.Builder(
                 DEFAULT_VARIANT /* variant */,
                 channelCount/* channels */,
-                DEFAULT_PREEQ_IN_USE /*enable preEQ*/,
-                DEFAULT_PREEQ_BAND_COUNT /*preEq bands*/,
-                DEFAULT_MBC_IN_USE /*enable mbc*/,
-                DEFAULT_MBC_BAND_COUNT /*mbc bands*/,
-                DEFAULT_POSTEQ_IN_USE /*enable postEq*/,
-                DEFAULT_POSTEQ_BAND_COUNT /*postEq bands*/,
-                DEFAULT_LIMITER_IN_USE /*enable limiter*/);
+                DEFAULT_PREEQ_IN_USE /* enable preEQ */,
+                DEFAULT_PREEQ_BAND_COUNT /* preEq bands */,
+                DEFAULT_MBC_IN_USE /* enable mbc */,
+                DEFAULT_MBC_BAND_COUNT /* mbc bands */,
+                DEFAULT_POSTEQ_IN_USE /* enable postEq */,
+                DEFAULT_POSTEQ_BAND_COUNT /* postEq bands */,
+                DEFAULT_LIMITER_IN_USE /* enable limiter */);
 
         return builder;
     }
 
     private DynamicsProcessing.Config.Builder getBuilderWithValues(int channelCount) {
-        //simple config
+        // simple config
         DynamicsProcessing.Config.Builder builder = getBuilder(channelCount);
 
-        //Set Defaults
+        // Set Defaults
         builder.setPreferredFrameDuration(DEFAULT_FRAME_DURATION);
         builder.setInputGainAllChannelsTo(DEFAULT_INPUT_GAIN);
         return builder;
