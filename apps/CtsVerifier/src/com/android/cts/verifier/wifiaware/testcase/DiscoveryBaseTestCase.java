@@ -196,8 +196,15 @@ public abstract class DiscoveryBaseTestCase extends BaseTestCase {
                 return false;
         }
         mPeerHandle = callbackData.peerHandle;
-        mListener.onTestMsgReceived(mContext.getString(R.string.aware_status_discovery));
-        if (DBG) Log.d(TAG, "executeTestSubscriber: discovery");
+        if (!mIsRangingRequired) {
+            mListener.onTestMsgReceived(mContext.getString(R.string.aware_status_discovery));
+            if (DBG) Log.d(TAG, "executeTestSubscriber: discovery");
+        } else {
+            if (DBG) {
+                Log.d(TAG, "executeTestSubscriber: discovery with range="
+                        + callbackData.distanceMm);
+            }
+        }
 
         //    validate discovery parameters match
         if (mIsRangingRequired) {
@@ -209,8 +216,9 @@ public abstract class DiscoveryBaseTestCase extends BaseTestCase {
                         callbackData.serviceSpecificInfo) + "'");
                 return false;
             }
-            mListener.onTestMsgReceived(mResources.getString(R.string.aware_status_received_mac,
-                    mPeerMacAddress));
+            mListener.onTestMsgReceived(
+                    mResources.getString(R.string.aware_status_discovery_with_info,
+                            mPeerMacAddress));
         } else {
             if (!Arrays.equals(PUB_SSI, callbackData.serviceSpecificInfo)) {
                 setFailureReason(mContext.getString(R.string.aware_status_discovery_fail));
