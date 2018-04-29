@@ -34,7 +34,8 @@ class LifecycleLog implements ActivityLifecycleCallback {
         ON_DESTROY,
         ON_ACTIVITY_RESULT,
         ON_POST_CREATE,
-        ON_NEW_INTENT
+        ON_NEW_INTENT,
+        ON_MULTI_WINDOW_MODE_CHANGED
     }
 
     /**

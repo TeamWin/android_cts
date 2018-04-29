@@ -43,6 +43,7 @@
 
 
     <test class="com.android.tradefed.testtype.AndroidJUnitTest" >
+        <option name="hidden-api-checks" value="false" />
         <option name="package" value="android.appwidget.cts" />
         <option name="runtime-hint" value="9m30s" />
     </test>

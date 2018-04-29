@@ -26,6 +26,7 @@ import android.os.Bundle;
 import android.os.Looper;
 import android.os.PowerManager;
 import android.os.SystemClock;
+import android.support.test.runner.AndroidJUnit4;
 import android.test.InstrumentationTestRunner;
 import android.util.Log;
 import android.webkit.cts.CtsTestServer;
@@ -38,9 +39,14 @@ import java.util.concurrent.atomic.AtomicInteger;
 import java.util.HashMap;
 import java.util.List;
 
+import org.junit.Ignore;
+import org.junit.runner.RunWith;
+
 /**
  * Tests of MediaPlayer2 streaming capabilities.
  */
+@RunWith(AndroidJUnit4.class)
+@Ignore
 public class StreamingMediaPlayer2Test extends MediaPlayer2TestBase {
     private static final String TAG = "StreamingMediaPlayer2Test";
 

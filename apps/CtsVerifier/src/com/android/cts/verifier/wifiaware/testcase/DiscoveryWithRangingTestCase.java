@@ -28,7 +28,6 @@ import com.android.cts.verifier.wifiaware.CallbackUtils;
 
 import java.util.Arrays;
 import java.util.List;
-import java.util.concurrent.Executor;
 
 /**
  * Test case for Discovery + Ranging:
@@ -118,62 +117,73 @@ public class DiscoveryWithRangingTestCase extends DiscoveryBaseTestCase {
         }
 
         if (!mIsPublish) {
+            mListener.onTestMsgReceived(
+                    mContext.getString(R.string.aware_status_waiting_for_peer_rtt));
+
             // pausing to let Publisher perform its RTT operations (however long)
-            CallbackUtils.DiscoveryCb.CallbackData callbackData = mDiscoveryCb.waitForCallbacks(
-                    CallbackUtils.DiscoveryCb.ON_MESSAGE_RECEIVED);
+            CallbackUtils.DiscoveryCb.CallbackData callbackData =
+                    mDiscoveryCb.waitForCallbacksNoTimeout(
+                            CallbackUtils.DiscoveryCb.ON_MESSAGE_RECEIVED);
             if (!Arrays.equals(MSG_RTT, callbackData.serviceSpecificInfo)) {
                 setFailureReason(mContext.getString(R.string.aware_status_receive_failure));
-                Log.e(TAG, "executeTest: receive RTT message content mismatch: rx='"
-                        + new String(callbackData.serviceSpecificInfo) + "'");
+                Log.e(TAG, "executeTest: receive RTT message content mismatch: rx=" + (
+                    (callbackData.serviceSpecificInfo == null) ? "<null>"
+                        : ("'" + new String(callbackData.serviceSpecificInfo) + "'")));
                 return false;
             }
 
-            // wait a few seconds to allow the previous RTT session to teardown, arbitrary 3 seconds
-            Thread.sleep(3000);
+            mListener.onTestMsgReceived(
+                    mContext.getString(R.string.aware_status_received_peer_rtt_done));
 
-            mListener.onTestMsgReceived(mContext.getString(R.string.aware_status_received));
+            // wait a few seconds to allow the previous RTT session to teardown, semi-arbitrary
+            Thread.sleep(5000);
+
             if (DBG) Log.d(TAG, "executeTest: subscriber received message - can proceed with RTT");
         }
 
+        mListener.onTestMsgReceived(mContext.getString(R.string.aware_status_starting_rtt));
+
         // Directed range to peer with PeerHandler
-        int numFailures = 0;
+        int numFailuresToPeerHandle = 0;
         RangingRequest rangeToPeerHandle = new RangingRequest.Builder().addWifiAwarePeer(
                 mPeerHandle).build();
         for (int i = 0; i < NUM_RTT_ITERATIONS; ++i) {
             if (!executeRanging(rangeToPeerHandle)) {
-                numFailures++;
+                numFailuresToPeerHandle++;
             }
         }
-        Log.d(TAG, "executeTest: Direct RTT to PeerHandle " + numFailures + " of "
+        Log.d(TAG, "executeTest: Direct RTT to PeerHandle " + numFailuresToPeerHandle + " of "
                 + NUM_RTT_ITERATIONS + " FAIL");
-        if (numFailures > MAX_RTT_RANGING_SUCCESS) {
-            setFailureReason(
-                    mContext.getString(R.string.aware_status_ranging_peer_failure, numFailures,
-                            NUM_RTT_ITERATIONS));
-            return false;
+        if (numFailuresToPeerHandle > MAX_RTT_RANGING_SUCCESS) {
+            mListener.onTestMsgReceived(
+                    mContext.getString(R.string.aware_status_ranging_peer_failure,
+                            numFailuresToPeerHandle, NUM_RTT_ITERATIONS));
+        } else {
+            mListener.onTestMsgReceived(
+                    mContext.getString(R.string.aware_status_ranging_peer_success,
+                            NUM_RTT_ITERATIONS - numFailuresToPeerHandle, NUM_RTT_ITERATIONS));
         }
-        mListener.onTestMsgReceived(mContext.getString(R.string.aware_status_ranging_peer_success,
-                NUM_RTT_ITERATIONS - numFailures, NUM_RTT_ITERATIONS));
 
         // Directed range to peer with MAC address
-        numFailures = 0;
+        int numFailuresToPeerMac = 0;
         RangingRequest rangeToMAC = new RangingRequest.Builder().addWifiAwarePeer(
                 mPeerMacAddress).build();
         for (int i = 0; i < NUM_RTT_ITERATIONS; ++i) {
             if (!executeRanging(rangeToMAC)) {
-                numFailures++;
+                numFailuresToPeerMac++;
             }
         }
-        Log.d(TAG, "executeTest: Direct RTT to MAC " + numFailures + " of " + NUM_RTT_ITERATIONS
-                + " FAIL");
-        if (numFailures > MAX_RTT_RANGING_SUCCESS) {
-            setFailureReason(
-                    mContext.getString(R.string.aware_status_ranging_mac_failure, numFailures,
-                            NUM_RTT_ITERATIONS));
-            return false;
+        Log.e(TAG, "executeTest: Direct RTT to MAC " + numFailuresToPeerMac + " of "
+                + NUM_RTT_ITERATIONS + " FAIL");
+        if (numFailuresToPeerMac > MAX_RTT_RANGING_SUCCESS) {
+            mListener.onTestMsgReceived(
+                    mContext.getString(R.string.aware_status_ranging_mac_failure,
+                            numFailuresToPeerMac, NUM_RTT_ITERATIONS));
+        } else {
+            mListener.onTestMsgReceived(
+                    mContext.getString(R.string.aware_status_ranging_mac_success,
+                            NUM_RTT_ITERATIONS - numFailuresToPeerMac, NUM_RTT_ITERATIONS));
         }
-        mListener.onTestMsgReceived(mContext.getString(R.string.aware_status_ranging_mac_success,
-                NUM_RTT_ITERATIONS - numFailures, NUM_RTT_ITERATIONS));
 
         // let peer know we're done with our RTT
         mWifiAwareDiscoverySession.sendMessage(mPeerHandle, MESSAGE_ID + 2, MSG_RTT);
@@ -195,18 +205,30 @@ public class DiscoveryWithRangingTestCase extends DiscoveryBaseTestCase {
         }
 
         if (mIsPublish) {
+            mListener.onTestMsgReceived(
+                    mContext.getString(R.string.aware_status_waiting_for_peer_rtt));
+
             // then pausing to let Subscriber finish it's RTT (can't terminate our Aware session
             // while we want Aware operations to proceed!).
-            callbackData = mDiscoveryCb.waitForCallbacks(
+            callbackData = mDiscoveryCb.waitForCallbacksNoTimeout(
                     CallbackUtils.DiscoveryCb.ON_MESSAGE_RECEIVED);
             if (!Arrays.equals(MSG_RTT, callbackData.serviceSpecificInfo)) {
                 setFailureReason(mContext.getString(R.string.aware_status_receive_failure));
-                Log.e(TAG, "executeTest: receive RTT message content mismatch: rx='"
-                        + new String(callbackData.serviceSpecificInfo) + "'");
+                Log.e(TAG, "executeTest: receive RTT message content mismatch: rx=" + (
+                    (callbackData.serviceSpecificInfo == null) ? "<null>"
+                        : ("'" + new String(callbackData.serviceSpecificInfo) + "'")));
                 return false;
             }
-            mListener.onTestMsgReceived(mContext.getString(R.string.aware_status_received));
+            mListener.onTestMsgReceived(
+                    mContext.getString(R.string.aware_status_received_peer_rtt_done));
             if (DBG) Log.d(TAG, "executeTest: publisher received message - can proceed (finish)");
+        }
+
+        if (numFailuresToPeerHandle > MAX_RTT_RANGING_SUCCESS
+                || numFailuresToPeerMac > MAX_RTT_RANGING_SUCCESS) {
+            setFailureReason(mContext.getString(R.string.aware_status_lifecycle_failed,
+                    numFailuresToPeerHandle, NUM_RTT_ITERATIONS));
+            return false;
         }
 
         mListener.onTestMsgReceived(mContext.getString(R.string.aware_status_lifecycle_ok));

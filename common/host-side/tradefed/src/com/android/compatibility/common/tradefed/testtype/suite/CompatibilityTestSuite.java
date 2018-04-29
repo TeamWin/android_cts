@@ -73,7 +73,7 @@ public class CompatibilityTestSuite extends BaseTestSuite {
     public CompatibilityTestSuite() {
         try {
             OptionSetter setter = new OptionSetter(this);
-            setter.setOptionValue("config-patterns", ".*.config");
+            setter.setOptionValue("config-patterns", ".*\\.config");
             setter.setOptionValue("skip-loading-config-jar", "true");
         } catch (ConfigurationException e) {
             // Should not happen

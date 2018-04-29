@@ -742,10 +742,17 @@ final class Helper {
     }
 
     /**
-     * Check if autofill window is fullscreen, see com.android.server.autofill.ui.FillUi
+     * Checks if autofill window is fullscreen, see com.android.server.autofill.ui.FillUi.
      */
     public static boolean isAutofillWindowFullScreen(Context context) {
         return context.getPackageManager().hasSystemFeature(PackageManager.FEATURE_LEANBACK);
+    }
+
+    /**
+     * Checks if screen orientation can be changed.
+     */
+    public static boolean isRotationSupported(Context context) {
+        return !context.getPackageManager().hasSystemFeature(PackageManager.FEATURE_LEANBACK);
     }
 
     /**
