@@ -1482,6 +1482,7 @@
     <string name="aware_status_publish_timeout">Publish failure - timed out!</string>
     <string name="aware_status_publish_null_session">Publish failure - null session!</string>
     <string name="aware_status_discovery">Service discovered ...</string>
+    <string name="aware_status_discovery_with_info">Service discovered ... peer MAC : %1$s</string>
     <string name="aware_status_discovery_timeout">Service discovery failure - timed out!</string>
     <string name="aware_status_discovery_fail">Service discovery failure - parameter mismatch!</string>
     <string name="aware_status_send_success">Sent message successfully ...</string>
@@ -1489,6 +1490,9 @@
     <string name="aware_status_send_timeout">Send message failure - timed out!</string>
     <string name="aware_status_send_fail_parameter">Send message failure - mismatched ids!</string>
     <string name="aware_status_received">Received message ...</string>
+    <string name="aware_status_starting_rtt">Starting RTT operations ...</string>
+    <string name="aware_status_waiting_for_peer_rtt">Pausing to let other device perform RTT ...</string>
+    <string name="aware_status_received_peer_rtt_done">Other device done with RTT ...</string>
     <string name="aware_status_received_mac">Received peer MAC address: %1$s ...</string>
     <string name="aware_status_receive_timeout">Receive message failure - timed out!</string>
     <string name="aware_status_receive_failure">Receive message failure - didn\'t receive expected message!</string>
@@ -1500,6 +1504,7 @@
     <string name="aware_status_ranging_mac_failure">Ranging to MAC address failure: %1$d failures of %2$d attempts!</string>
     <string name="aware_status_ranging_peer_success">Ranging to PeerHandle success: %1$d successes of %2$d attempts!</string>
     <string name="aware_status_ranging_mac_success">Ranging to MAC address success: %1$d successes of %2$d attempts!</string>
+    <string name="aware_status_lifecycle_failed">Discovery lifecycle FAILURE!</string>
     <string name="aware_status_lifecycle_ok">Discovery lifecycle validated!</string>
 
     <string name="aware_data_path_open_unsolicited_publish">Data Path: Open: Unsolicited Publish</string>
