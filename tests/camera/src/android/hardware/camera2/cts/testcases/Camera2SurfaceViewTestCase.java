@@ -144,6 +144,14 @@ public class Camera2SurfaceViewTestCase extends
 
     @Override
     protected void tearDown() throws Exception {
+        String[] cameraIdsPostTest = mCameraManager.getCameraIdList();
+        assertNotNull("Camera ids shouldn't be null", cameraIdsPostTest);
+        Log.i(TAG, "Camera ids in setup:" + Arrays.toString(mCameraIds));
+        Log.i(TAG, "Camera ids in tearDown:" + Arrays.toString(cameraIdsPostTest));
+        assertTrue(
+                "Number of cameras changed from " + mCameraIds.length + " to " +
+                cameraIdsPostTest.length,
+                mCameraIds.length == cameraIdsPostTest.length);
         // Teardown the camera preview required environments.
         mHandlerThread.quitSafely();
         mHandler = null;
