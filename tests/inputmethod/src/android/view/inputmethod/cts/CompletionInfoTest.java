@@ -20,7 +20,6 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 
 import android.os.Parcel;
-import android.platform.test.annotations.Presubmit;
 import android.support.test.filters.SmallTest;
 import android.support.test.runner.AndroidJUnit4;
 import android.view.inputmethod.CompletionInfo;
@@ -29,7 +28,6 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 
 @SmallTest
-@Presubmit
 @RunWith(AndroidJUnit4.class)
 public class CompletionInfoTest {
     private static final int ID = 1;

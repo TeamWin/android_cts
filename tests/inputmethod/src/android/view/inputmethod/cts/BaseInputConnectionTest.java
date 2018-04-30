@@ -25,7 +25,6 @@ import static org.junit.Assert.assertTrue;
 import android.content.ClipDescription;
 import android.net.Uri;
 import android.os.Bundle;
-import android.platform.test.annotations.Presubmit;
 import android.support.test.InstrumentationRegistry;
 import android.support.test.filters.MediumTest;
 import android.support.test.runner.AndroidJUnit4;
@@ -47,7 +46,6 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 
 @MediumTest
-@Presubmit
 @RunWith(AndroidJUnit4.class)
 public class BaseInputConnectionTest {
 
