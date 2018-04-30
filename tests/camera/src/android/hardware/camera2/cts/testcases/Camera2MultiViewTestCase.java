@@ -115,6 +115,14 @@ public class Camera2MultiViewTestCase extends
 
     @Override
     protected void tearDown() throws Exception {
+        String[] cameraIdsPostTest = mCameraManager.getCameraIdList();
+        assertNotNull("Camera ids shouldn't be null", cameraIdsPostTest);
+        Log.i(TAG, "Camera ids in setup:" + Arrays.toString(mCameraIds));
+        Log.i(TAG, "Camera ids in tearDown:" + Arrays.toString(cameraIdsPostTest));
+        assertTrue(
+                "Number of cameras changed from " + mCameraIds.length + " to " +
+                cameraIdsPostTest.length,
+                mCameraIds.length == cameraIdsPostTest.length);
         mHandlerThread.quitSafely();
         mHandler = null;
         mCameraListener = null;
