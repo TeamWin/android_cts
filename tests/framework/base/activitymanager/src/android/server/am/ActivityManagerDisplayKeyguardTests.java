@@ -39,7 +39,7 @@ public class ActivityManagerDisplayKeyguardTests extends ActivityManagerDisplayT
         super.setUp();
 
         assumeTrue(supportsMultiDisplay());
-        assumeTrue(isHandheld());
+        assumeTrue(supportsInsecureLock());
     }
 
     /**

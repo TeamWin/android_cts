@@ -47,7 +47,7 @@ public class KeyguardTransitionTests extends ActivityManagerTestBase {
     public void setUp() throws Exception {
         super.setUp();
 
-        assumeTrue(isHandheld());
+        assumeTrue(supportsInsecureLock());
         assumeFalse(isUiModeLockedToVrHeadset());
     }
 
