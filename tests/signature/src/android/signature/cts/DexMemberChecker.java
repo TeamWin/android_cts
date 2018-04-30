@@ -17,6 +17,7 @@
 package android.signature.cts;
 
 import java.lang.reflect.Constructor;
+import java.lang.reflect.Executable;
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
 import java.util.List;
@@ -97,8 +98,8 @@ public class DexMemberChecker {
     private static boolean hasMatchingField_JNI(Class<?> klass, DexField dexField) {
         Field ifield = getField_JNI(klass, dexField.getName(), dexField.getDexType());
         Field sfield = getStaticField_JNI(klass, dexField.getName(), dexField.getDexType());
-        return (ifield != null && ifield.getClass() == klass) ||
-               (sfield != null && sfield.getClass() == klass);
+        return (ifield != null && ifield.getDeclaringClass() == klass) ||
+               (sfield != null && sfield.getDeclaringClass() == klass);
     }
 
     private static boolean hasMatchingMethod_Reflection(Class<?> klass, DexMethod dexMethod) {
@@ -124,17 +125,17 @@ public class DexMemberChecker {
     }
 
     private static boolean hasMatchingMethod_JNI(Class<?> klass, DexMethod dexMethod) {
-        Method imethod = getMethod_JNI(klass, dexMethod.getName(), dexMethod.getDexSignature());
-        Method smethod = dexMethod.isConstructor() ? null :
+        Executable imethod = getMethod_JNI(klass, dexMethod.getName(), dexMethod.getDexSignature());
+        Executable smethod = dexMethod.isConstructor() ? null :
              getStaticMethod_JNI(klass, dexMethod.getName(), dexMethod.getDexSignature());
-        return (imethod != null && imethod.getClass() == klass) ||
-               (smethod != null && smethod.getClass() == klass);
+        return (imethod != null && imethod.getDeclaringClass() == klass) ||
+               (smethod != null && smethod.getDeclaringClass() == klass);
     }
 
     private static native Field getField_JNI(Class<?> klass, String name, String type);
     private static native Field getStaticField_JNI(Class<?> klass, String name, String type);
-    private static native Method getMethod_JNI(Class<?> klass, String name, String signature);
-    private static native Method getStaticMethod_JNI(Class<?> klass, String name,
+    private static native Executable getMethod_JNI(Class<?> klass, String name, String signature);
+    private static native Executable getStaticMethod_JNI(Class<?> klass, String name,
             String signature);
 
 }
