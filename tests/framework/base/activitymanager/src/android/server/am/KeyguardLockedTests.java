@@ -27,6 +27,7 @@ import static android.server.am.Components.PipActivity.ACTION_ENTER_PIP;
 import static android.server.am.Components.PipActivity.EXTRA_ENTER_PIP;
 import static android.server.am.Components.PipActivity.EXTRA_SHOW_OVER_KEYGUARD;
 import static android.server.am.Components.SHOW_WHEN_LOCKED_ACTIVITY;
+import static android.server.am.Components.TURN_SCREEN_ON_ATTR_DISMISS_KEYGUARD_ACTIVITY;
 import static android.server.am.UiDeviceUtils.pressBackButton;
 
 import static org.junit.Assert.assertFalse;
@@ -52,7 +53,7 @@ public class KeyguardLockedTests extends KeyguardTestBase {
     @Override
     public void setUp() throws Exception {
         super.setUp();
-        assumeTrue(isHandheld());
+        assumeTrue(supportsSecureLock());
     }
 
     @Test
@@ -156,6 +157,22 @@ public class KeyguardLockedTests extends KeyguardTestBase {
             mAmWmState.computeState(true);
             mAmWmState.assertVisibility(DISMISS_KEYGUARD_METHOD_ACTIVITY, false);
             assertTrue(mAmWmState.getAmState().getKeyguardControllerState().keyguardShowing);
+        }
+    }
+
+    @Test
+    public void testDismissKeyguardAttrActivity_method_turnScreenOn_withSecureKeyguard()
+            throws Exception {
+        try (final LockScreenSession lockScreenSession = new LockScreenSession()) {
+            lockScreenSession.setLockCredential().sleepDevice();
+
+            mAmWmState.computeState(true);
+            assertTrue(mAmWmState.getAmState().getKeyguardControllerState().keyguardShowing);
+            launchActivity(TURN_SCREEN_ON_ATTR_DISMISS_KEYGUARD_ACTIVITY);
+            mAmWmState.waitForKeyguardShowingAndNotOccluded();
+            mAmWmState.assertVisibility(TURN_SCREEN_ON_ATTR_DISMISS_KEYGUARD_ACTIVITY, false);
+            assertTrue(mAmWmState.getAmState().getKeyguardControllerState().keyguardShowing);
+            assertTrue(isDisplayOn());
         }
     }
 

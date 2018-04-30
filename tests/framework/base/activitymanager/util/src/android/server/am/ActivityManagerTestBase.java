@@ -69,6 +69,7 @@ import static org.junit.Assert.fail;
 
 import static java.lang.Integer.toHexString;
 
+import android.accessibilityservice.AccessibilityService;
 import android.app.ActivityManager;
 import android.content.ComponentName;
 import android.content.Context;
@@ -469,7 +470,14 @@ public abstract class ActivityManagerTestBase {
                 || PRETEND_DEVICE_SUPPORTS_FREEFORM;
     }
 
-    protected boolean isHandheld() {
+    /** Whether or not the device pin/pattern/password lock. */
+    protected boolean supportsSecureLock() {
+        return !hasDeviceFeature(FEATURE_LEANBACK)
+                && !hasDeviceFeature(FEATURE_EMBEDDED);
+    }
+
+    /** Whether or not the device supports "swipe" lock. */
+    protected boolean supportsInsecureLock() {
         return !hasDeviceFeature(FEATURE_LEANBACK)
                 && !hasDeviceFeature(FEATURE_WATCH)
                 && !hasDeviceFeature(FEATURE_EMBEDDED);
@@ -628,6 +636,11 @@ public abstract class ActivityManagerTestBase {
 
         LockScreenSession sleepDevice() {
             pressSleepButton();
+            // Not all device variants lock when we go to sleep, so we need to explicitly lock the
+            // device. Note that pressSleepButton() above is redundant because the action also
+            // puts the device to sleep, but kept around for clarity.
+            InstrumentationRegistry.getInstrumentation().getUiAutomation().performGlobalAction(
+                    AccessibilityService.GLOBAL_ACTION_LOCK_SCREEN);
             for (int retry = 1; isDisplayOn() && retry <= 5; retry++) {
                 logAlways("***Waiting for display to turn off... retry=" + retry);
                 SystemClock.sleep(TimeUnit.SECONDS.toMillis(1));
@@ -647,7 +660,7 @@ public abstract class ActivityManagerTestBase {
 
         public LockScreenSession gotoKeyguard() {
             if (DEBUG && isLockDisabled()) {
-                logE("LockScreenSession.gotoKeygurad() is called without lock enabled.");
+                logE("LockScreenSession.gotoKeyguard() is called without lock enabled.");
             }
             sleepDevice();
             wakeUpDevice();

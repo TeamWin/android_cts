@@ -366,7 +366,7 @@ public class ActivityManagerActivityVisibilityTests extends ActivityManagerTestB
 
     @Test
     public void testTurnScreenOnAttrWithLockScreen() throws Exception {
-        assumeTrue(isHandheld());
+        assumeTrue(supportsSecureLock());
 
         try (final LockScreenSession lockScreenSession = new LockScreenSession()) {
             lockScreenSession.setLockCredential()
