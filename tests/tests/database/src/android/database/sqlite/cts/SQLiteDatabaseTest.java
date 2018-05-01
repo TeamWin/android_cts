@@ -1657,7 +1657,7 @@ public class SQLiteDatabaseTest extends AndroidTestCase {
         String syncMode = DatabaseUtils
                 .stringForQuery(mDatabase, "PRAGMA synchronous", null);
 
-        assertEquals("2" /* FULL */, syncMode);
+        assertEquals("1" /* NORMAL */, syncMode);
     }
 
     /**
