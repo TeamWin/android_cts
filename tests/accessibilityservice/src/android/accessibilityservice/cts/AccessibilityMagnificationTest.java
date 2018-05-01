@@ -29,6 +29,7 @@ import android.accessibilityservice.AccessibilityServiceInfo;
 import android.app.Instrumentation;
 import android.content.Context;
 import android.graphics.Region;
+import android.platform.test.annotations.AppModeFull;
 import android.test.InstrumentationTestCase;
 import android.util.DisplayMetrics;
 import android.view.WindowManager;
@@ -38,6 +39,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
 /**
  * Class for testing {@link AccessibilityServiceInfo}.
  */
+@AppModeFull
 public class AccessibilityMagnificationTest extends InstrumentationTestCase {
 
     /** Maximum timeout when waiting for a magnification callback. */

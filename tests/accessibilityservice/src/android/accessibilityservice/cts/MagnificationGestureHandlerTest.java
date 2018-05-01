@@ -52,6 +52,7 @@ import android.app.Instrumentation;
 import android.content.pm.PackageManager;
 import android.graphics.PointF;
 import android.os.SystemClock;
+import android.platform.test.annotations.AppModeFull;
 import android.provider.Settings;
 import android.support.test.InstrumentationRegistry;
 import android.support.test.rule.ActivityTestRule;
@@ -73,6 +74,7 @@ import java.util.Collection;
  * Class for testing magnification.
  */
 @RunWith(AndroidJUnit4.class)
+@AppModeFull
 public class MagnificationGestureHandlerTest {
 
     private static final double MIN_SCALE = 1.2;
