@@ -16,6 +16,8 @@
 
 package com.android.cts.verifier.managedprovisioning;
 
+import static android.app.admin.DevicePolicyManager.LOCK_TASK_FEATURE_HOME;
+import static android.app.admin.DevicePolicyManager.LOCK_TASK_FEATURE_OVERVIEW;
 import static android.app.admin.DevicePolicyManager.MAKE_USER_EPHEMERAL;
 import static android.app.admin.DevicePolicyManager.SKIP_SETUP_WIZARD;
 
@@ -30,6 +32,7 @@ import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.pm.PackageInstaller;
 import android.content.pm.PackageManager;
+import android.content.pm.ResolveInfo;
 import android.graphics.BitmapFactory;
 import android.net.ProxyInfo;
 import android.os.Bundle;
@@ -238,6 +241,13 @@ public class CommandReceiverActivity extends Activity {
                     int flags = intent.getIntExtra(EXTRA_VALUE,
                             DevicePolicyManager.LOCK_TASK_FEATURE_NONE);
                     mDpm.setLockTaskFeatures(mAdmin, flags);
+                    // If feature HOME is used, we need to whitelist the current launcher
+                    if ((flags & LOCK_TASK_FEATURE_HOME) != 0) {
+                        mDpm.setLockTaskPackages(mAdmin,
+                                new String[] {getPackageName(), getCurrentLauncherPackage()});
+                    } else {
+                        mDpm.setLockTaskPackages(mAdmin, new String[] {getPackageName()});
+                    }
                 } break;
                 case COMMAND_ALLOW_ONLY_SYSTEM_INPUT_METHODS: {
                     boolean enforced = intent.getBooleanExtra(EXTRA_ENFORCED, false);
@@ -663,5 +673,16 @@ public class CommandReceiverActivity extends Activity {
                 extras,
                 SKIP_SETUP_WIZARD | MAKE_USER_EPHEMERAL);
         mDpm.switchUser(mAdmin, userHandle);
+    }
+
+    private String getCurrentLauncherPackage() {
+        ResolveInfo resolveInfo = getPackageManager()
+            .resolveActivity(new Intent(Intent.ACTION_MAIN)
+                .addCategory(Intent.CATEGORY_HOME), PackageManager.MATCH_DEFAULT_ONLY);
+        if (resolveInfo == null || resolveInfo.activityInfo == null) {
+            return null;
+        }
+
+        return resolveInfo.activityInfo.packageName;
     }
 }
