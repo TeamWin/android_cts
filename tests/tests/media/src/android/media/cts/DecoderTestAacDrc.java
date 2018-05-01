@@ -138,6 +138,51 @@ public class DecoderTestAacDrc {
         checkClipping(decSamples, decParams, 248.0f /* Hz */);
     }
 
+    /**
+     * Default decoder target level.
+     * The actual default value used by the decoder can differ between platforms, or even devices,
+     * but tests will measure energy relative to this value.
+     */
+    public static final int DEFAULT_DECODER_TARGET_LEVEL = 64; // -16.0 dBFs
+
+    /**
+     * Test USAC decoder with different target loudness levels
+     */
+    @Test
+    public void testDecodeUsacLoudnessM4a() throws Exception {
+        Log.v(TAG, "START testDecodeUsacLoudnessM4a");
+
+        // test default loudness
+        // decoderTargetLevel = 64 --> target output level = -16.0 dBFs
+        try {
+            checkUsacLoudness(DEFAULT_DECODER_TARGET_LEVEL, 1, 1.0f);
+        } catch (Exception e) {
+            Log.v(TAG, "testDecodeUsacLoudnessM4a for default loudness failed");
+            throw new RuntimeException(e);
+        }
+
+        // test loudness boost
+        // decoderTargetLevel = 40 --> target output level = -10.0 dBFs
+        // normFactor = 1/(10^(-6/10)) = 3.98f
+        //    where "-6" is the difference between the default level (-16), and -10 for this test
+        try {
+            checkUsacLoudness(40, 1, (float)(1.0f/Math.pow(10.0f, -6.0f/10.0f)));
+        } catch (Exception e) {
+            Log.v(TAG, "testDecodeUsacLoudnessM4a for loudness boost failed");
+            throw new RuntimeException(e);
+        }
+
+        // test loudness attenuation
+        // decoderTargetLevel = 96 --> target output level = -24.0 dBFs
+        // normFactor = 1/(10^(8/10)) = 0.15f
+        //     where -8 is the difference between the default level (-16), and -24 for this test
+        try {
+            checkUsacLoudness(96, 0, (float)(1.0f/Math.pow(10.0f, 8.0f/10.0f)));
+        } catch (Exception e) {
+            Log.v(TAG, "testDecodeUsacLoudnessM4a for loudness attenuation failed");
+            throw new RuntimeException(e);
+        }
+    }
 
     /**
      *  Internal utilities
@@ -259,28 +304,81 @@ public class DecoderTestAacDrc {
         }
     }
 
+    /**
+     * USAC test DRC loudness
+     */
+    private void checkUsacLoudness(int decoderTargetLevel, int heavy, float normFactor)
+            throws Exception {
+        AudioParameter decParams = new AudioParameter();
+        DrcParams drcParams_def  = new DrcParams(127, 127, DEFAULT_DECODER_TARGET_LEVEL, 1);
+        DrcParams drcParams_test = new DrcParams(127, 127, decoderTargetLevel, heavy);
+
+        short[] decSamples_def = decodeToMemory(decParams, R.raw.noise_2ch_48khz_aot42_19_lufs_mp4,
+                -1, null, drcParams_def);
+        short[] decSamples_test = decodeToMemory(decParams, R.raw.noise_2ch_48khz_aot42_19_lufs_mp4,
+                -1, null, drcParams_test);
+
+        DecoderTestXheAac decTesterXheAac = new DecoderTestXheAac();
+        float[] nrg_def  = decTesterXheAac.checkEnergyUSAC(decSamples_def, decParams, 2, 1);
+        float[] nrg_test = decTesterXheAac.checkEnergyUSAC(decSamples_test, decParams, 2, 1);
+
+        float[] nrgThreshold = {2602510595620.0f, 2354652443657.0f};
+
+        // Check default loudness behavior
+        if (nrg_def[0] > nrgThreshold[0] || nrg_def[0] < nrgThreshold[1]) {
+            throw new Exception("Default loudness behavior not as expected");
+        }
+
+        float nrgRatio = nrg_def[0]/nrg_test[0];
+
+        // Check for loudness boost/attenuation if decoderTargetLevel deviates from default value
+        // used in these tests (note that the default target level can change from platform
+        // to platform, or device to device)
+        if ((decoderTargetLevel < DEFAULT_DECODER_TARGET_LEVEL) // boosted loudness
+                && (nrg_def[0] > nrg_test[0])) {
+            throw new Exception("Signal not attenuated");
+        } else if ((decoderTargetLevel > DEFAULT_DECODER_TARGET_LEVEL) // attenuated loudness
+                && (nrg_def[0] < nrg_test[0])) {
+            throw new Exception("Signal not boosted");
+        }
+        nrgRatio = nrgRatio * normFactor;
+
+        // Check whether loudness behavior is as expected
+        if (nrgRatio > 1.05f || nrgRatio < 0.95f ){
+            throw new Exception("Loudness behavior not as expected");
+        }
+    }
+
 
     /**
-     *  Class handling all MPEG-4 Dynamic Range Control (DRC) parameter relevant for testing
+     *  Class handling all MPEG-4 and MPEG-D Dynamic Range Control (DRC) parameter relevant for testing
      */
-    private class DrcParams {
-        int boost;                          // scaling of boosting gains
-        int cut;                            // scaling of compressing gains
-        int decoderTargetLevel;             // desired target output level (for normalization)
-        int heavy;                          // en-/disable heavy compression
+    protected static class DrcParams {
+        int mBoost;                          // scaling of boosting gains
+        int mCut;                            // scaling of compressing gains
+        int mDecoderTargetLevel;             // desired target output level (for normalization)
+        int mHeavy;                          // en-/disable heavy compression
+        int mEffectType;                     // MPEG-D DRC Effect Type
 
         public DrcParams() {
-            this.boost = 127;               // no scaling
-            this.cut = 127;                 // no scaling
-            this.decoderTargetLevel = 64;   // -16.0 dBFs
-            this.heavy = 1;                 // enabled
+            mBoost = 127;               // no scaling
+            mCut   = 127;               // no scaling
+            mHeavy = 1;                 // enabled
         }
 
         public DrcParams(int boost, int cut, int decoderTargetLevel, int heavy) {
-            this.boost = boost;
-            this.cut = cut;
-            this.decoderTargetLevel = decoderTargetLevel;
-            this.heavy = heavy;
+            mBoost = boost;
+            mCut = cut;
+            mDecoderTargetLevel = decoderTargetLevel;
+            mHeavy = heavy;
+        }
+
+        public DrcParams(int boost, int cut, int decoderTargetLevel, int heavy, int effectType) {
+            mBoost = boost;
+            mCut = cut;
+            mDecoderTargetLevel = decoderTargetLevel;
+            mHeavy = heavy;
+            mEffectType = effectType;
         }
     }
 
@@ -319,11 +417,13 @@ public class DecoderTestAacDrc {
 
         // set DRC parameters
         if (drcParams != null) {
-            configFormat.setInteger(MediaFormat.KEY_AAC_DRC_BOOST_FACTOR, drcParams.boost);
-            configFormat.setInteger(MediaFormat.KEY_AAC_DRC_ATTENUATION_FACTOR, drcParams.cut);
-            configFormat.setInteger(MediaFormat.KEY_AAC_DRC_TARGET_REFERENCE_LEVEL,
-                    drcParams.decoderTargetLevel);
-            configFormat.setInteger(MediaFormat.KEY_AAC_DRC_HEAVY_COMPRESSION, drcParams.heavy);
+            configFormat.setInteger(MediaFormat.KEY_AAC_DRC_BOOST_FACTOR, drcParams.mBoost);
+            configFormat.setInteger(MediaFormat.KEY_AAC_DRC_ATTENUATION_FACTOR, drcParams.mCut);
+            if (drcParams.mDecoderTargetLevel != 0) {
+                configFormat.setInteger(MediaFormat.KEY_AAC_DRC_TARGET_REFERENCE_LEVEL,
+                        drcParams.mDecoderTargetLevel);
+            }
+            configFormat.setInteger(MediaFormat.KEY_AAC_DRC_HEAVY_COMPRESSION, drcParams.mHeavy);
         }
         Log.v(localTag, "configuring with " + configFormat);
         codec.configure(configFormat, null /* surface */, null /* crypto */, 0 /* flags */);
