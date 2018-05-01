@@ -25,6 +25,7 @@ import android.graphics.Bitmap;
 import android.graphics.Bitmap.Config;
 import android.graphics.BitmapFactory;
 import android.graphics.Canvas;
+import android.graphics.Color;
 import android.support.test.InstrumentationRegistry;
 import android.support.test.filters.SmallTest;
 import android.support.test.runner.AndroidJUnit4;
@@ -107,9 +108,9 @@ public class BitmapRGBAF16Test {
     @Test
     public void testGetPixel() {
         // Opaque pixels from opaque bitmap
-        assertEquals(0xff0f131f, mOpaqueBitmap.getPixel(0, 0));
-        assertEquals(0xff0f1421, mOpaqueBitmap.getPixel(1, 0));
-        assertEquals(0xff101523, mOpaqueBitmap.getPixel(2, 0));
+        validatePixel(0xff0f131f, mOpaqueBitmap.getPixel(0, 0));
+        validatePixel(0xff0f1421, mOpaqueBitmap.getPixel(1, 0));
+        validatePixel(0xff101523, mOpaqueBitmap.getPixel(2, 0));
 
         // Opaque pixels from transparent bitmap
         assertEquals(0xffff0000, mTransparentBitmap.getPixel(0, 0));
@@ -147,5 +148,12 @@ public class BitmapRGBAF16Test {
 
         Bitmap b = mask.copy(Config.RGBA_F16, false);
         assertNotNull(b);
+    }
+
+    private void validatePixel(int expected, int actual) {
+        assertEquals(Color.alpha(expected), Color.alpha(actual));
+        assertEquals(Color.red(expected), Color.red(actual), 1);
+        assertEquals(Color.green(expected), Color.green(actual), 1);
+        assertEquals(Color.blue(expected), Color.blue(actual), 1);
     }
 }
