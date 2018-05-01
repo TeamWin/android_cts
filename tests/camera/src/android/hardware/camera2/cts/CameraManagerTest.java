@@ -144,6 +144,7 @@ public class CameraManagerTest extends AndroidTestCase {
          * Test: that if the device has front or rear facing cameras, then there
          * must be matched system features.
          */
+        boolean externalCameraConnected = false;
         for (int i = 0; i < ids.length; i++) {
             CameraCharacteristics props = mCameraManager.getCameraCharacteristics(ids[i]);
             assertNotNull("Can't get camera characteristics for camera " + ids[i], props);
@@ -156,11 +157,18 @@ public class CameraManagerTest extends AndroidTestCase {
                 assertTrue("System doesn't have back camera feature",
                         mPackageManager.hasSystemFeature(PackageManager.FEATURE_CAMERA));
             } else if (lensFacing == CameraCharacteristics.LENS_FACING_EXTERNAL) {
+                externalCameraConnected = true;
                 assertTrue("System doesn't have external camera feature",
                         mPackageManager.hasSystemFeature(PackageManager.FEATURE_CAMERA_EXTERNAL));
             } else {
                 fail("Unknown camera lens facing " + lensFacing.toString());
             }
+        }
+
+        // Test an external camera is connected if FEATURE_CAMERA_EXTERNAL is advertised
+        if (mPackageManager.hasSystemFeature(PackageManager.FEATURE_CAMERA_EXTERNAL)) {
+            assertTrue("External camera is not connected on device with FEATURE_CAMERA_EXTERNAL",
+                    externalCameraConnected);
         }
 
         /**

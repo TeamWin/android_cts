@@ -23,8 +23,7 @@ public class ActivityLifecycleKeyguardTests extends ActivityLifecycleClientTestB
     @Test
     public void testSingleLaunch() throws Exception {
         try (final LockScreenSession lockScreenSession = new LockScreenSession()) {
-            lockScreenSession.setLockCredential()
-                    .gotoKeyguard();
+            lockScreenSession.setLockCredential().gotoKeyguard();
 
             final Activity activity = mFirstActivityTestRule.launchActivity(new Intent());
             waitAndAssertActivityStates(state(activity, ON_STOP));

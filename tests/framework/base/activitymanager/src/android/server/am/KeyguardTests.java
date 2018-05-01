@@ -74,7 +74,7 @@ public class KeyguardTests extends KeyguardTestBase {
     public void setUp() throws Exception {
         super.setUp();
 
-        assumeTrue(isHandheld());
+        assumeTrue(supportsInsecureLock());
         assertFalse(isUiModeLockedToVrHeadset());
     }
 
@@ -357,23 +357,6 @@ public class KeyguardTests extends KeyguardTestBase {
             mAmWmState.assertVisibility(TURN_SCREEN_ON_ATTR_DISMISS_KEYGUARD_ACTIVITY, true);
             assertFalse(mAmWmState.getAmState().getKeyguardControllerState().keyguardShowing);
             assertOnDismissSucceededInLogcat(logSeparator);
-            assertTrue(isDisplayOn());
-        }
-    }
-
-    @Test
-    public void testDismissKeyguardAttrActivity_method_turnScreenOn_withSecureKeyguard()
-            throws Exception {
-        try (final LockScreenSession lockScreenSession = new LockScreenSession()) {
-            lockScreenSession.setLockCredential()
-                    .sleepDevice();
-
-            mAmWmState.computeState(true);
-            assertTrue(mAmWmState.getAmState().getKeyguardControllerState().keyguardShowing);
-            launchActivity(TURN_SCREEN_ON_ATTR_DISMISS_KEYGUARD_ACTIVITY);
-            mAmWmState.waitForKeyguardShowingAndNotOccluded();
-            mAmWmState.assertVisibility(TURN_SCREEN_ON_ATTR_DISMISS_KEYGUARD_ACTIVITY, false);
-            assertTrue(mAmWmState.getAmState().getKeyguardControllerState().keyguardShowing);
             assertTrue(isDisplayOn());
         }
     }
