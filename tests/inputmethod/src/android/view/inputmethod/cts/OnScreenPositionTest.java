@@ -26,7 +26,6 @@ import static org.junit.Assert.assertTrue;
 
 import android.graphics.Rect;
 import android.os.Process;
-import android.platform.test.annotations.Presubmit;
 import android.support.test.InstrumentationRegistry;
 import android.support.test.filters.MediumTest;
 import android.support.test.runner.AndroidJUnit4;
@@ -50,7 +49,6 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicReference;
 
 @MediumTest
-@Presubmit
 @RunWith(AndroidJUnit4.class)
 public class OnScreenPositionTest extends EndToEndImeTestBase {
     private static final long TIMEOUT = TimeUnit.SECONDS.toMillis(5);
