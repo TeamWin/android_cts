@@ -22,7 +22,6 @@ import static org.junit.Assert.assertNull;
 import android.content.ClipDescription;
 import android.net.Uri;
 import android.os.Parcel;
-import android.platform.test.annotations.Presubmit;
 import android.support.test.filters.SmallTest;
 import android.support.test.runner.AndroidJUnit4;
 import android.view.inputmethod.InputContentInfo;
@@ -33,7 +32,6 @@ import org.junit.runner.RunWith;
 import java.security.InvalidParameterException;
 
 @SmallTest
-@Presubmit
 @RunWith(AndroidJUnit4.class)
 public class InputContentInfoTest {
     @Test

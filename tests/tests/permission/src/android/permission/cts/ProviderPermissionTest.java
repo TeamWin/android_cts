@@ -21,13 +21,17 @@ import android.content.Intent;
 import android.content.pm.PackageInfo;
 import android.content.pm.PackageManager;
 import android.content.pm.ResolveInfo;
+import android.net.Uri;
 import android.provider.CallLog;
 import android.provider.Contacts;
+import android.provider.ContactsContract;
 import android.provider.Settings;
 import android.provider.Telephony;
 import android.test.AndroidTestCase;
 import android.test.suitebuilder.annotation.MediumTest;
+import android.util.Log;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 
@@ -36,18 +40,36 @@ import java.util.Objects;
  */
 @MediumTest
 public class ProviderPermissionTest extends AndroidTestCase {
+
+    private static final String TAG = ProviderPermissionTest.class.getSimpleName();
+
+    private static final List<Uri> CONTACT_URIS = new ArrayList<Uri>() {{
+        add(Contacts.People.CONTENT_URI); // Deprecated.
+        add(ContactsContract.Contacts.CONTENT_FILTER_URI);
+        add(ContactsContract.Contacts.CONTENT_GROUP_URI);
+        add(ContactsContract.Contacts.CONTENT_LOOKUP_URI);
+        add(ContactsContract.CommonDataKinds.Email.CONTENT_URI);
+        add(ContactsContract.CommonDataKinds.Email.CONTENT_FILTER_URI);
+        add(ContactsContract.Directory.CONTENT_URI);
+        add(ContactsContract.Directory.ENTERPRISE_CONTENT_URI);
+        add(ContactsContract.Profile.CONTENT_URI);
+    }};
+
     /**
-     * Verify that read and write to contact requires permissions.
+     * Verify that reading contacts requires permissions.
      * <p>Tests Permission:
      *   {@link android.Manifest.permission#READ_CONTACTS}
      */
     public void testReadContacts() {
-        assertReadingContentUriRequiresPermission(Contacts.People.CONTENT_URI,
-                android.Manifest.permission.READ_CONTACTS);
+        for (Uri uri : CONTACT_URIS) {
+            Log.d(TAG, "Checking contacts URI " + uri);
+            assertReadingContentUriRequiresPermission(uri,
+                    android.Manifest.permission.READ_CONTACTS);
+        }
     }
 
     /**
-     * Verify that write to contact requires permissions.
+     * Verify that writing contacts requires permissions.
      * <p>Tests Permission:
      *   {@link android.Manifest.permission#WRITE_CONTACTS}
      */

@@ -49,6 +49,7 @@ import com.android.ex.camera2.blocking.BlockingStateCallback;
 
 import java.nio.ByteBuffer;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 
@@ -124,6 +125,14 @@ public class Camera2AndroidTestCase extends AndroidTestCase {
 
     @Override
     protected void tearDown() throws Exception {
+        String[] cameraIdsPostTest = mCameraManager.getCameraIdList();
+        assertNotNull("Camera ids shouldn't be null", cameraIdsPostTest);
+        Log.i(TAG, "Camera ids in setup:" + Arrays.toString(mCameraIds));
+        Log.i(TAG, "Camera ids in tearDown:" + Arrays.toString(cameraIdsPostTest));
+        assertTrue(
+                "Number of cameras changed from " + mCameraIds.length + " to " +
+                cameraIdsPostTest.length,
+                mCameraIds.length == cameraIdsPostTest.length);
         mHandlerThread.quitSafely();
         mHandler = null;
         closeDefaultImageReader();

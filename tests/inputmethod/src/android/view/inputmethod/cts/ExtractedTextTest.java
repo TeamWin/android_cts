@@ -20,7 +20,6 @@ import static org.junit.Assert.assertEquals;
 
 import android.graphics.Typeface;
 import android.os.Parcel;
-import android.platform.test.annotations.Presubmit;
 import android.support.test.filters.SmallTest;
 import android.support.test.runner.AndroidJUnit4;
 import android.text.Spannable;
@@ -33,7 +32,6 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 
 @SmallTest
-@Presubmit
 @RunWith(AndroidJUnit4.class)
 public class ExtractedTextTest {
     @Test
