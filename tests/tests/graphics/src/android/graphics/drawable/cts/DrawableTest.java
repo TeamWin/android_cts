@@ -16,44 +16,6 @@
 
 package android.graphics.drawable.cts;
 
-import org.junit.Before;
-import org.junit.Test;
-import org.junit.runner.RunWith;
-import org.xmlpull.v1.XmlPullParser;
-import org.xmlpull.v1.XmlPullParserException;
-
-import android.content.ContentResolver;
-import android.content.Context;
-import android.content.res.Resources;
-import android.content.res.Resources.Theme;
-import android.graphics.BitmapFactory;
-import android.graphics.Canvas;
-import android.graphics.ColorFilter;
-import android.graphics.PixelFormat;
-import android.graphics.PorterDuff;
-import android.graphics.Rect;
-import android.graphics.cts.R;
-import android.graphics.drawable.Drawable;
-import android.graphics.drawable.Drawable.Callback;
-import android.net.Uri;
-import android.support.test.InstrumentationRegistry;
-import android.support.test.filters.SmallTest;
-import android.support.test.runner.AndroidJUnit4;
-import android.test.AndroidTestCase;
-import android.util.AttributeSet;
-import android.util.StateSet;
-import android.util.TypedValue;
-import android.util.Xml;
-import android.view.View;
-
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.FileNotFoundException;
-import java.io.FileOutputStream;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.OutputStream;
-
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
@@ -65,6 +27,43 @@ import static org.mockito.Matchers.eq;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
+
+import android.content.ContentResolver;
+import android.content.Context;
+import android.content.res.Resources;
+import android.content.res.Resources.Theme;
+import android.graphics.BitmapFactory;
+import android.graphics.Canvas;
+import android.graphics.ColorFilter;
+import android.graphics.Insets;
+import android.graphics.PixelFormat;
+import android.graphics.PorterDuff;
+import android.graphics.Rect;
+import android.graphics.cts.R;
+import android.graphics.drawable.Drawable;
+import android.graphics.drawable.Drawable.Callback;
+import android.net.Uri;
+import android.support.test.InstrumentationRegistry;
+import android.support.test.filters.SmallTest;
+import android.support.test.runner.AndroidJUnit4;
+import android.util.AttributeSet;
+import android.util.StateSet;
+import android.util.TypedValue;
+import android.util.Xml;
+import android.view.View;
+
+import org.junit.Before;
+import org.junit.Test;
+import org.junit.runner.RunWith;
+import org.xmlpull.v1.XmlPullParser;
+import org.xmlpull.v1.XmlPullParserException;
+
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
 
 @SmallTest
 @RunWith(AndroidJUnit4.class)
@@ -720,6 +719,12 @@ public class DrawableTest {
     public void testMutate() {
         Drawable mockDrawable = new MockDrawable();
         assertSame(mockDrawable, mockDrawable.mutate());
+    }
+
+    @Test
+    public void testDefaultOpticalInsetsIsNone() {
+        Drawable mockDrawable = new MockDrawable();
+        assertEquals(Insets.NONE, mockDrawable.getOpticalInsets());
     }
 
     // Since Mockito can't mock or spy on protected methods, we have a custom extension

@@ -35,6 +35,7 @@ import static org.mockito.Mockito.verify;
 import android.graphics.Canvas;
 import android.graphics.Color;
 import android.graphics.ColorFilter;
+import android.graphics.Insets;
 import android.graphics.PixelFormat;
 import android.graphics.PorterDuff;
 import android.graphics.PorterDuffColorFilter;
@@ -48,6 +49,8 @@ import android.support.test.InstrumentationRegistry;
 import android.support.test.filters.SmallTest;
 import android.support.test.runner.AndroidJUnit4;
 import android.util.StateSet;
+
+import androidx.annotation.Nullable;
 
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -377,6 +380,21 @@ public class DrawableWrapperTest {
         verify(mockDrawable, times(1)).getIntrinsicHeight();
     }
 
+    @Test
+    public void testGetOpticalInsetsNoInternalDrawable() {
+        DrawableWrapper wrapper = new MockDrawableWrapper(null);
+        assertEquals(Insets.NONE, wrapper.getOpticalInsets());
+    }
+
+    @Test
+    public void testGetOpticalInsetsFromInternalDrawable() {
+        MockDrawable drawable = new MockDrawable();
+        drawable.setInsets(Insets.of(30, 60, 90, 120));
+        DrawableWrapper wrapper = new MockDrawableWrapper(drawable);
+
+        assertEquals(Insets.of(30, 60, 90, 120), wrapper.getOpticalInsets());
+    }
+
     @SuppressWarnings("deprecation")
     @Test
     public void testGetConstantState() {
@@ -390,6 +408,7 @@ public class DrawableWrapperTest {
     private static class MockDrawable extends Drawable {
         private boolean mCalledOnLevelChange = false;
         private ColorFilter mColorFilter;
+        private Insets mInsets = null;
 
         @Override
         public void draw(Canvas canvas) {
@@ -412,6 +431,15 @@ public class DrawableWrapperTest {
         @Override
         public ColorFilter getColorFilter() {
             return mColorFilter;
+        }
+
+        public void setInsets(@Nullable Insets insets) {
+            mInsets = insets;
+        }
+
+        @Override
+        public Insets getOpticalInsets() {
+            return mInsets != null ? mInsets : Insets.NONE;
         }
 
         @Override
