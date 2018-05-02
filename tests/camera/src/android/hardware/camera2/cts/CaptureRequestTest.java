@@ -798,28 +798,6 @@ public class CaptureRequestTest extends Camera2SurfaceViewTestCase {
         }
     }
 
-    /**
-     * Test focal length controls.
-     */
-    public void testFocalLengths() throws Exception {
-        for (String id : mCameraIds) {
-            try {
-                openDevice(id);
-                if (mStaticInfo.isHardwareLevelLegacy()) {
-                    Log.i(TAG, "Camera " + id + " is legacy, skipping");
-                    continue;
-                }
-                if (!mStaticInfo.isColorOutputSupported()) {
-                    Log.i(TAG, "Camera " + id + " does not support color outputs, skipping");
-                    continue;
-                }
-                focalLengthTestByCamera();
-            } finally {
-                closeDevice();
-            }
-        }
-    }
-
     // TODO: add 3A state machine test.
 
     /**
@@ -2495,31 +2473,6 @@ public class CaptureRequestTest extends Camera2SurfaceViewTestCase {
 
             verifyCaptureResultForKey(CaptureResult.CONTROL_EFFECT_MODE,
                     mode, listener, NUM_FRAMES_VERIFIED);
-            // This also serves as purpose of showing preview for NUM_FRAMES_VERIFIED
-            verifyCaptureResultForKey(CaptureResult.CONTROL_MODE,
-                    CaptureRequest.CONTROL_MODE_AUTO, listener, NUM_FRAMES_VERIFIED);
-        }
-    }
-
-    private void focalLengthTestByCamera() throws Exception {
-        float[] focalLengths = mStaticInfo.getAvailableFocalLengthsChecked();
-        Size maxPreviewSize = mOrderedPreviewSizes.get(0);
-        CaptureRequest.Builder requestBuilder =
-                mCamera.createCaptureRequest(CameraDevice.TEMPLATE_PREVIEW);
-        requestBuilder.set(CaptureRequest.CONTROL_MODE, CaptureRequest.CONTROL_MODE_AUTO);
-        SimpleCaptureCallback listener = new SimpleCaptureCallback();
-        startPreview(requestBuilder, maxPreviewSize, listener);
-
-        for(float focalLength : focalLengths) {
-            requestBuilder.set(CaptureRequest.LENS_FOCAL_LENGTH, focalLength);
-            listener = new SimpleCaptureCallback();
-            mSession.setRepeatingRequest(requestBuilder.build(), listener, mHandler);
-            waitForSettingsApplied(listener, NUM_FRAMES_WAITED_FOR_UNKNOWN_LATENCY);
-            waitForResultValue(listener, CaptureResult.LENS_STATE,
-                    CaptureResult.LENS_STATE_STATIONARY, NUM_RESULTS_WAIT_TIMEOUT);
-
-            verifyCaptureResultForKey(CaptureResult.LENS_FOCAL_LENGTH,
-                    focalLength, listener, NUM_FRAMES_VERIFIED);
             // This also serves as purpose of showing preview for NUM_FRAMES_VERIFIED
             verifyCaptureResultForKey(CaptureResult.CONTROL_MODE,
                     CaptureRequest.CONTROL_MODE_AUTO, listener, NUM_FRAMES_VERIFIED);
