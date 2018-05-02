@@ -85,6 +85,17 @@ jstring JNICALL Java_android_jvmti_cts_JvmtiTrackingTest_getAndResetAllocationTr
     std::unique_lock<std::mutex> mu(gLock);
     result.swap(gCollection);
   }
+  // Make sure we give any other threads that might have been waiting to get a last crack time to
+  // run. We will ignore their additions however.
+  bool is_empty = false;
+  do {
+    {
+      std::unique_lock<std::mutex> mu(gLock);
+      is_empty = gCollection.empty();
+      gCollection.clear();
+    }
+    sched_yield();
+  } while (!is_empty);
 
   if (result.empty()) {
     return nullptr;
