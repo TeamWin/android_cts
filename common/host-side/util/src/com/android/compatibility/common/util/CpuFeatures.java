@@ -18,6 +18,7 @@ import com.android.tradefed.device.CollectingOutputReceiver;
 
 import com.android.tradefed.device.DeviceNotAvailableException;
 import com.android.tradefed.device.ITestDevice;
+import java.util.regex.Pattern;
 
 /**
  * Host-side utility class for reading properties and gathering information for testing
@@ -25,9 +26,12 @@ import com.android.tradefed.device.ITestDevice;
  */
 public class CpuFeatures {
 
-    private static String uname(ITestDevice device) throws DeviceNotAvailableException {
+    private static final String UNAME_OPTION_MACHINE_TYPE = "-m";
+    private static final String UNAME_OPTION_KERNEL_RELEASE = "-r";
+
+    private static String uname(ITestDevice device, String option) throws DeviceNotAvailableException {
         CollectingOutputReceiver Out = new CollectingOutputReceiver();
-        device.executeShellCommand("uname -m", Out);
+        device.executeShellCommand("uname " + option, Out);
         return Out.getOutput().trim();
     }
 
@@ -36,7 +40,7 @@ public class CpuFeatures {
      */
     public static boolean isArm64(ITestDevice device) throws DeviceNotAvailableException {
 
-        return uname(device).contains("aarch64");
+        return uname(device, UNAME_OPTION_MACHINE_TYPE).contains("aarch64");
     }
 
     /**
@@ -44,6 +48,27 @@ public class CpuFeatures {
      */
     public static boolean isArm32(ITestDevice device) throws DeviceNotAvailableException {
 
-        return uname(device).contains("armv7");
+        return uname(device, UNAME_OPTION_MACHINE_TYPE).contains("armv7");
+    }
+
+    /**
+     * Return true if architecture is x86.
+     */
+    public static boolean isX86(ITestDevice device) throws DeviceNotAvailableException {
+
+        return uname(device, UNAME_OPTION_MACHINE_TYPE).contains("x86");
+    }
+
+    /**
+     * Return true kernel if version is less than input values.
+     */
+    public static boolean kernelVersionLessThan(ITestDevice device, int major, int minor)
+            throws DeviceNotAvailableException {
+
+        String[] kernelVersion = uname(device, UNAME_OPTION_KERNEL_RELEASE).split(Pattern.quote("."));
+        int deviceMajor = Integer.parseInt(kernelVersion[0]);
+        int deviceMinor = Integer.parseInt(kernelVersion[1]);
+
+        return (major < deviceMajor) || ((major == deviceMajor) && (minor < deviceMinor));
     }
 }
