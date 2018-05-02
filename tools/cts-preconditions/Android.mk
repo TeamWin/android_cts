@@ -38,6 +38,6 @@ LOCAL_COMPATIBILITY_SUITE := cts vts general-tests
 
 LOCAL_PACKAGE_NAME := CtsPreconditions
 
-LOCAL_SDK_VERSION := current
+LOCAL_SDK_VERSION := 26
 
 include $(BUILD_PACKAGE)
