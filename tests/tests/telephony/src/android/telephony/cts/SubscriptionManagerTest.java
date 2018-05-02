@@ -43,7 +43,9 @@ import android.telephony.SubscriptionPlan;
 
 import com.android.compatibility.common.util.SystemUtil;
 
+import org.junit.AfterClass;
 import org.junit.Before;
+import org.junit.BeforeClass;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
@@ -61,6 +63,18 @@ public class SubscriptionManagerTest {
 
     private int mSubId;
     private String mPackageName;
+
+    @BeforeClass
+    public void setUpClass() throws Exception {
+        InstrumentationRegistry.getInstrumentation().getUiAutomation()
+                .executeShellCommand("svc wifi disable");
+    }
+
+    @AfterClass
+    public void tearDownClass() throws Exception {
+        InstrumentationRegistry.getInstrumentation().getUiAutomation()
+                .executeShellCommand("svc wifi enable");
+    }
 
     @Before
     public void setUp() throws Exception {
