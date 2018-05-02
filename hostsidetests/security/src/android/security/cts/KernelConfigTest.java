@@ -164,4 +164,20 @@ public class KernelConfigTest extends DeviceTestCase implements IBuildReceiver, 
                     configSet.contains("CONFIG_CPU_SW_DOMAIN_PAN=y"));
         }
     }
+
+    /**
+     * Test that the kernel has KTPI enabled for architectures and kernel versions that support it.
+     *
+     * @throws Exception
+     */
+    @CddTest(requirement="9.7")
+    public void testConfigKTPI() throws Exception {
+        if (CpuFeatures.isArm64(mDevice) && !CpuFeatures.kernelVersionLessThan(mDevice, 4, 4)) {
+            assertTrue("Linux kernel must have KPTI enabled: CONFIG_UNMAP_KERNEL_AT_EL0=y",
+                    configSet.contains("CONFIG_UNMAP_KERNEL_AT_EL0=y"));
+        } else if (CpuFeatures.isX86(mDevice)) {
+            assertTrue("Linux kernel must have KPTI enabled: CONFIG_PAGE_TABLE_ISOLATION=y",
+                    configSet.contains("CONFIG_PAGE_TABLE_ISOLATION=y"));
+        }
+    }
 }
