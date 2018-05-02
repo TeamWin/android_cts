@@ -44,7 +44,7 @@ $(eval $(call build_xml_api_file,android-test-mock-current.api,frameworks/base/t
 $(eval $(call build_xml_api_file,android-test-runner-current.api,frameworks/base/test-runner/api/android-test-runner-current.txt))
 $(foreach ver,$(PLATFORM_SYSTEMSDK_VERSIONS),\
   $(if $(call math_is_number,$(ver)),\
-    $(eval $(call build_xml_api_file,system-$(ver).api,prebuilts/sdk/system-api/$(ver).txt))\
+    $(eval $(call build_xml_api_file,system-$(ver).api,prebuilts/sdk/$(ver)/system/api/android.txt))\
   )\
 )
 
