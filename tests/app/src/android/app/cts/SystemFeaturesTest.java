@@ -39,6 +39,7 @@ import android.location.LocationManager;
 import android.net.sip.SipManager;
 import android.net.wifi.WifiManager;
 import android.nfc.NfcAdapter;
+import android.os.Build;
 import android.telephony.TelephonyManager;
 import android.test.InstrumentationTestCase;
 
@@ -99,6 +100,11 @@ public class SystemFeaturesTest extends InstrumentationTestCase {
 
         for (String featureName : notOfficialFeatures) {
             if (featureName != null) {
+                if (!Build.VERSION.CODENAME.equals("REL") &&
+                    featureName.equals("android.software.preview_sdk")) {
+                    // Skips preview_sdk in non-release build.
+                    continue;
+                }
                 assertFalse("Use a different namespace than 'android' for " + featureName,
                         featureName.startsWith("android"));
             }
