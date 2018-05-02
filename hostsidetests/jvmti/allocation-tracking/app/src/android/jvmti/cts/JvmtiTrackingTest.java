@@ -14,6 +14,7 @@
 package android.jvmti.cts;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertTrue;
 
 import java.util.ArrayList;
 import org.junit.Before;
@@ -65,10 +66,11 @@ public class JvmtiTrackingTest extends JvmtiTestBase {
 
         enableAllocationTracking(null, false);
 
-        assertEquals(
-                "ObjectAllocated type java.lang.Object/java.lang.Object size 8#"
-                        + "ObjectAllocated type java.lang.Integer/java.lang.Integer size 16#",
-                        getAndResetAllocationTrackingString());
+        String trackingString = getAndResetAllocationTrackingString();
+        String object_line = "ObjectAllocated type java.lang.Object/java.lang.Object size 8#";
+        String integer_line = "ObjectAllocated type java.lang.Integer/java.lang.Integer size 16#";
+        assertTrue("does not contain " + object_line, trackingString.contains(object_line));
+        assertTrue("does not contain " + integer_line, trackingString.contains(integer_line));
 
         l.add(new Float(1.0f));
 
