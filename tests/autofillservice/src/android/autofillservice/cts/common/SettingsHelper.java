@@ -96,7 +96,14 @@ public final class SettingsHelper {
     public static void syncDelete(@NonNull Context context, @NonNull String namespace,
             @NonNull String key) {
 
-        final OneTimeSettingsListener observer = new OneTimeSettingsListener(context, key);
+        final String currentValue = get(namespace, key);
+        if (currentValue == null || currentValue.equals("null")) {
+            // Already set, ignore
+            return;
+        }
+
+        final OneTimeSettingsListener observer = new OneTimeSettingsListener(context, namespace,
+                key);
         delete(namespace, key);
         observer.assertCalled();
 
