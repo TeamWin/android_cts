@@ -14,11 +14,13 @@
 
 import os
 import unittest
+import time
 
 import cv2
 import its.caps
 import its.device
 import its.error
+import its.image
 import numpy
 
 VGA_HEIGHT = 480
@@ -195,6 +197,104 @@ class Chart(object):
             self.ynorm = float(top_left[1]) / scene.shape[0]
 
 
+def get_angle(input_img):
+    """Computes anglular inclination of chessboard in input_img.
+
+    Angle estimation algoritm description:
+        Input: 2D grayscale image of chessboard.
+        Output: Angle of rotation of chessboard perpendicular to
+            chessboard. Assumes chessboard and camera are parallel to
+            each other.
+
+        1) Use adaptive threshold to make image binary
+        2) Find countours
+        3) Filter out small contours
+        4) Filter out all non-square contours
+        5) Compute most common square shape.
+            The assumption here is that the most common square instances
+            are the chessboard squares. We've shown that with our current
+            tuning, we can robustly identify the squares on the sensor fusion
+            chessboard.
+        6) Return median angle of most common square shape.
+
+    USAGE NOTE: This function has been tuned to work for the chessboard used in
+    the sensor_fusion tests. See images in test_images/rotated_chessboard/ for
+    sample captures. If this function is used with other chessboards, it may not
+    work as expected.
+
+    TODO: Make algorithm more robust so it works on any type of
+    chessboard.
+
+    Args:
+        input_img (2D numpy.ndarray): Grayscale image stored as a 2D
+            numpy array.
+
+    Returns:
+        Median angle of squares in degrees identified in the image.
+    """
+    # Tuning parameters
+    min_square_area = (float) (input_img.shape[1] * 0.05)
+
+    # Creates copy of image to avoid modifying original.
+    img = numpy.array(input_img, copy=True)
+
+    # Scale pixel values from 0-1 to 0-255
+    img = img * 255
+    img = img.astype(numpy.uint8)
+
+    thresh = cv2.adaptiveThreshold(
+            img, 255, cv2.ADAPTIVE_THRESH_MEAN_C, cv2.THRESH_BINARY, 201, 2)
+
+    # Find all contours
+    _, contours, _ = cv2.findContours(
+            thresh, cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)
+
+    # Filter contours to squares only.
+    square_contours = []
+
+    for contour in contours:
+        rect = cv2.minAreaRect(contour)
+        _, (width, height), angle = rect
+
+        # Skip non-squares (with 0.1 tolerance)
+        tolerance = 0.1
+        if width < height * (1 - tolerance) or width > height * (1 + tolerance):
+            continue
+
+        # Remove very small contours.
+        # These are usually just tiny dots due to noise.
+        area = cv2.contourArea(contour)
+        if area < min_square_area:
+            continue
+
+        box = cv2.boxPoints(rect)
+        box = numpy.int0(box)
+        square_contours.append(contour)
+
+    areas = []
+    for contour in square_contours:
+        area = cv2.contourArea(contour)
+        areas.append(area)
+
+    median_area = numpy.median(areas)
+
+    filtered_squares = []
+    filtered_angles = []
+    for square in square_contours:
+        area = cv2.contourArea(square)
+        if area < median_area * 0.90 or area > median_area * 1.10:
+            continue
+
+        filtered_squares.append(square)
+        _, (width, height), angle = cv2.minAreaRect(square)
+        filtered_angles.append(angle)
+
+    if len(filtered_angles) < 10:
+        return None
+
+    return numpy.median(filtered_angles)
+
+
 class __UnitTest(unittest.TestCase):
     """Run a suite of unit tests on this module.
     """
@@ -223,6 +323,56 @@ class __UnitTest(unittest.TestCase):
                                       numpy.sqrt(2), atol=0.1))
         self.assertTrue(numpy.isclose(sharpness[4]/sharpness[8],
                                       numpy.sqrt(2), atol=0.1))
+
+    def test_get_angle_identify_unrotated_chessboard_angle(self):
+        basedir = os.path.join(
+                os.path.dirname(__file__), 'test_images/rotated_chessboards/')
+
+        normal_img_path = os.path.join(basedir, 'normal.jpg')
+        wide_img_path = os.path.join(basedir, 'wide.jpg')
+
+        normal_img = cv2.cvtColor(
+                cv2.imread(normal_img_path), cv2.COLOR_BGR2GRAY)
+        wide_img = cv2.cvtColor(
+                cv2.imread(wide_img_path), cv2.COLOR_BGR2GRAY)
+
+        assert get_angle(normal_img) == 0
+        assert get_angle(wide_img) == 0
+
+    def test_get_angle_identify_rotated_chessboard_angle(self):
+        basedir = os.path.join(
+                os.path.dirname(__file__), 'test_images/rotated_chessboards/')
+
+        # Array of the image files and angles containing rotated chessboards.
+        test_cases = [
+                ('_15_ccw', 15),
+                ('_30_ccw', 30),
+                ('_45_ccw', 45),
+                ('_60_ccw', 60),
+                ('_75_ccw', 75),
+                ('_90_ccw', 90)
+        ]
+
+        # For each rotated image pair (normal, wide). Check if angle is
+        # identified as expected.
+        for suffix, angle in test_cases:
+            # Define image paths
+            normal_img_path = os.path.join(
+                    basedir, 'normal{}.jpg'.format(suffix))
+            wide_img_path = os.path.join(
+                    basedir, 'wide{}.jpg'.format(suffix))
+
+            # Load and color convert images
+            normal_img = cv2.cvtColor(
+                    cv2.imread(normal_img_path), cv2.COLOR_BGR2GRAY)
+            wide_img = cv2.cvtColor(
+                    cv2.imread(wide_img_path), cv2.COLOR_BGR2GRAY)
+
+            # Assert angle is as expected up to 2.0 degrees of accuracy.
+            assert numpy.isclose(
+                    abs(get_angle(normal_img)), angle, 2.0)
+            assert numpy.isclose(
+                    abs(get_angle(wide_img)), angle, 2.0)
 
 
 if __name__ == '__main__':
