@@ -16,10 +16,14 @@ LOCAL_PATH := $(call my-dir)
 
 include $(CLEAR_VARS)
 
-LOCAL_SRC_FILES := $(call all-java-files-under, ../../common/host-side/tradefed/src)
+# TODO: Change it to ../../common/host-side/tradefed/res
+# once common/host-side is moved to the dir "harness"
+LOCAL_SRC_FILES := $(call all-java-files-under, ../../../common/host-side/tradefed/src)
 
 LOCAL_JAVA_RESOURCE_DIRS := res
-LOCAL_JAVA_RESOURCE_DIRS += ../../common/host-side/tradefed/res
+# TODO: Change it to ../../common/host-side/tradefed/res
+# once common/host-side is moved to the dir "harness"
+LOCAL_JAVA_RESOURCE_DIRS += ../../../common/host-side/tradefed/res
 LOCAL_MODULE := cts-tradefed-harness
 LOCAL_JAVA_LIBRARIES += tradefed compatibility-host-util
 LOCAL_STATIC_JAVA_LIBRARIES := google-api-java-client-min-repackaged

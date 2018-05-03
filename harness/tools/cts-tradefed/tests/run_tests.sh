@@ -16,7 +16,9 @@
 
 # Helper script for running unit tests for compatibility libraries
 
-CTS_DIR=$(dirname ${0})/../../..
+# TODO: Change it to the new harness repo once harness code is moved
+# to a new repo.
+CTS_DIR=$(dirname ${0})/../../../..
 source ${CTS_DIR}/test_defs.sh
 
 JARS="
