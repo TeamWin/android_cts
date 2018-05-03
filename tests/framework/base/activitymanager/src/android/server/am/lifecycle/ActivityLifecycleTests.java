@@ -283,7 +283,8 @@ public class ActivityLifecycleTests extends ActivityLifecycleClientTestBase {
         waitAndAssertActivityStates(state(firstActivity, ON_RESUME));
 
         // Enter split screen
-        moveTaskToPrimarySplitScreen(firstActivity.getTaskId());
+        moveTaskToPrimarySplitScreen(firstActivity.getTaskId(),
+                true /* launchSideActivityIfNeeded */);
 
         // Launch second activity to pause first
         final Activity secondActivity =
