@@ -1090,10 +1090,10 @@ public class SELinuxHostTest extends DeviceTestCase implements IBuildReceiver, I
         assertDomainOne("u:r:ueventd:s0", "/sbin/ueventd");
     }
 
-    /* Devices always have healthd */
+    /* healthd may or may not exist */
     @CddTest(requirement="9.7")
     public void testHealthdDomain() throws DeviceNotAvailableException {
-        assertDomainOne("u:r:healthd:s0", "/system/bin/healthd");
+        assertDomainZeroOrOne("u:r:healthd:s0", "/system/bin/healthd");
     }
 
     /* Servicemanager is always there */
