@@ -9,7 +9,9 @@
 set -e
 
 WORKDIR='temp'
+TARGETDIR='../assets/'
 
+rm -rf "$WORKDIR"
 mkdir "$WORKDIR"
 cp ca.conf "$WORKDIR/"
 pushd "$WORKDIR"
@@ -26,6 +28,7 @@ openssl req \
     -days 7300 \
     -sha256 \
     -extensions v3_ca \
+    -nodes \
     -keyout private/ca.key.pem \
     -out certs/ca.cert.pem
 popd
@@ -41,6 +44,7 @@ openssl req \
     -config ca.conf \
     -new \
     -sha256 \
+    -nodes \
     -keyout intermediate/private/intermediate.key.pem \
     -out intermediate/csr/intermediate.csr.pem
 
@@ -80,7 +84,7 @@ cat \
     "$WORKDIR"/user.cert.pem \
     "$WORKDIR"/intermediate/certs/intermediate.cert.pem \
     "$WORKDIR"/rootca/certs/ca.cert.pem \
-    > user-cert-chain.crt
+    > "$TARGETDIR"/user-cert-chain.crt
 
 openssl pkcs8 \
     -topk8 \
@@ -88,6 +92,6 @@ openssl pkcs8 \
     -inform PEM \
     -outform DER \
     -in "$WORKDIR"/user.key.pem \
-    -out user-cert-chain.key
+    -out "$TARGETDIR"/user-cert-chain.key
 
 rm -r "$WORKDIR"

@@ -19,8 +19,6 @@ import android.app.admin.DeviceAdminReceiver;
 import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
-import android.net.Uri;
-import android.os.Process;
 import android.os.UserHandle;
 import androidx.localbroadcastmanager.content.LocalBroadcastManager;
 
@@ -39,16 +37,6 @@ public class BasicAdminReceiver extends DeviceAdminReceiver {
 
     public static ComponentName getComponentName(Context context) {
         return new ComponentName(context, BasicAdminReceiver.class);
-    }
-
-    @Override
-    public String onChoosePrivateKeyAlias(Context context, Intent intent, int uid, Uri uri,
-            String suggestedAlias) {
-        super.onChoosePrivateKeyAlias(context, intent, uid, uri, suggestedAlias);
-        if (uid != Process.myUid() || uri == null) {
-            return null;
-        }
-        return uri.getQueryParameter("alias");
     }
 
     @Override
