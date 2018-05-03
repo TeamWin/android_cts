@@ -16,9 +16,12 @@
 package com.android.compatibility.common.tradefed.result.suite;
 
 import com.android.tradefed.build.IBuildInfo;
+import com.android.tradefed.invoker.IInvocationContext;
 import com.android.tradefed.result.suite.SuiteResultHolder;
 import com.android.tradefed.result.suite.XmlSuiteResultFormatter;
 
+import org.xmlpull.v1.XmlPullParser;
+import org.xmlpull.v1.XmlPullParserException;
 import org.xmlpull.v1.XmlSerializer;
 
 import java.io.IOException;
@@ -80,6 +83,18 @@ public class CertificationResultXml extends XmlSuiteResultFormatter {
         if (mLogUrl != null) {
             serializer.attribute(NS, LOG_URL_ATTR, mLogUrl);
         }
+    }
+
+    @Override
+    public void parseSuiteAttributes(XmlPullParser parser, IInvocationContext context)
+            throws XmlPullParserException {
+        mSuiteName = parser.getAttributeValue(NS, SUITE_NAME_ATTR);
+        mSuiteVersion = parser.getAttributeValue(NS, SUITE_VERSION_ATTR);
+        mSuitePlan = parser.getAttributeValue(NS, SUITE_PLAN_ATTR);
+        mSuiteBuild = parser.getAttributeValue(NS, SUITE_BUILD_ATTR);
+
+        mReferenceUrl = parser.getAttributeValue(NS, REFERENCE_URL_ATTR);
+        mLogUrl = parser.getAttributeValue(NS, LOG_URL_ATTR);
     }
 
     /**
