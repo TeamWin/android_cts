@@ -18,6 +18,8 @@ package android.os.cts;
 
 import static com.google.common.truth.Truth.assertThat;
 import static com.google.common.truth.Truth.assertWithMessage;
+
+import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
 import android.content.ComponentName;
@@ -32,12 +34,21 @@ import android.os.RemoteException;
 import android.os.StrictMode;
 import android.os.StrictMode.ThreadPolicy.Builder;
 import android.os.StrictMode.ViolationInfo;
+import android.os.strictmode.CustomViolation;
+import android.os.strictmode.FileUriExposedViolation;
 import android.os.strictmode.UntaggedSocketViolation;
+import android.os.strictmode.Violation;
 import android.support.test.InstrumentationRegistry;
 import android.support.test.runner.AndroidJUnit4;
 import android.system.Os;
 import android.system.OsConstants;
 import android.util.Log;
+
+import org.junit.After;
+import org.junit.Before;
+import org.junit.Test;
+import org.junit.runner.RunWith;
+
 import java.io.File;
 import java.io.FileDescriptor;
 import java.io.FileInputStream;
@@ -56,10 +67,6 @@ import java.util.concurrent.ExecutionException;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Consumer;
-import org.junit.After;
-import org.junit.Before;
-import org.junit.Test;
-import org.junit.runner.RunWith;
 
 /** Tests for {@link StrictMode} */
 @RunWith(AndroidJUnit4.class)
@@ -498,6 +505,39 @@ public class StrictModeTest {
             StrictMode.setVmPolicy(oldVmPolicy);
             StrictMode.setThreadPolicy(oldThreadPolicy);
         }
+    }
+
+    @Test
+    public void testThreadPenaltyListener() throws Exception {
+        final BlockingQueue<Violation> violations = new ArrayBlockingQueue<>(1);
+        StrictMode.setThreadPolicy(
+                new StrictMode.ThreadPolicy.Builder().detectCustomSlowCalls()
+                        .penaltyListener(getContext().getMainExecutor(), (v) -> {
+                            violations.add(v);
+                        }).build());
+
+        StrictMode.noteSlowCall("foo");
+
+        final Violation v = violations.poll(5, TimeUnit.SECONDS);
+        assertTrue(v instanceof CustomViolation);
+    }
+
+    @Test
+    public void testVmPenaltyListener() throws Exception {
+        final BlockingQueue<Violation> violations = new ArrayBlockingQueue<>(1);
+        StrictMode.setVmPolicy(
+                new StrictMode.VmPolicy.Builder().detectFileUriExposure()
+                        .penaltyListener(getContext().getMainExecutor(), (v) -> {
+                            violations.add(v);
+                        }).build());
+
+        Intent intent = new Intent(Intent.ACTION_VIEW);
+        intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+        intent.setDataAndType(Uri.fromFile(new File("/sdcard/meow.jpg")), "image/jpeg");
+        getContext().startActivity(intent);
+
+        final Violation v = violations.poll(5, TimeUnit.SECONDS);
+        assertTrue(v instanceof FileUriExposedViolation);
     }
 
     private static void runWithRemoteServiceBound(Context context, Consumer<ISecondary> consumer)
