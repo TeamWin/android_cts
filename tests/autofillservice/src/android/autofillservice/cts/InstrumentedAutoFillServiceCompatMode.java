@@ -31,6 +31,7 @@ public class InstrumentedAutoFillServiceCompatMode extends InstrumentedAutoFillS
 
     public InstrumentedAutoFillServiceCompatMode() {
         sInstance.set(this);
-        sServiceLabel = SERVICE_CLASS;
+        // TODO(b/79201521): temporarily using short names so tests don't fail because of ...
+        sServiceLabel = "ShortyCM";
     }
 }
