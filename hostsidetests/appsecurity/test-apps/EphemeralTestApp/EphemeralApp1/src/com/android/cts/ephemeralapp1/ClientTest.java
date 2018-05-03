@@ -1234,6 +1234,9 @@ public class ClientTest {
     public void testGetSearchableInfo() throws Throwable {
         final SearchManager searchManager = (SearchManager) InstrumentationRegistry.getContext()
                 .getSystemService(Context.SEARCH_SERVICE);
+        if (searchManager == null) {
+            return;
+        }
         // get searchable info for a component in ourself; pass
         {
             final SearchableInfo info = searchManager.getSearchableInfo(
