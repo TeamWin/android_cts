@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package android.hardware.cts;
+package android.hardware.nativehardware.cts;
 
 import org.junit.runner.RunWith;
 import com.android.gtestrunner.GtestRunner;
