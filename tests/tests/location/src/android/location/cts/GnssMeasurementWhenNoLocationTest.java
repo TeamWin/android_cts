@@ -180,8 +180,8 @@ public class GnssMeasurementWhenNoLocationTest extends GnssTestCase {
 
         // Verify mandatory fields of GnssMeasurement
         for (GnssMeasurement measurement : gpsMeasurements) {
-            TestMeasurementUtil.assertAllGnssMeasurementMandatoryFields(measurement,
-                    softAssert, timeInNs);
+            TestMeasurementUtil.assertAllGnssMeasurementMandatoryFields(mTestLocationManager,
+                    measurement, softAssert, timeInNs);
         }
         softAssert.assertAll();
     }
