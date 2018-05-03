@@ -35,7 +35,7 @@ test-runner/api/android-test-runner-current.txt \
 test-mock/api/android-test-mock-current.txt)
 
 # API 27 is added since some support libraries are using old APIs
-LOCAL_JAVA_RESOURCE_FILES += prebuilts/sdk/api/27.txt
+LOCAL_JAVA_RESOURCE_FILES += prebuilts/sdk/27/public/api/android.txt
 
 include $(BUILD_HOST_JAVA_LIBRARY)
 
