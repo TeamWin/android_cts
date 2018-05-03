@@ -3184,7 +3184,7 @@ You should be prompted to select credentials; choose the ones you just installed
     <string name="disallow_config_date_time">Disallow config date and time settings</string>
     <string name="disallow_config_date_time_action">Configuring auto time, time, auto date or date</string>
     <string name="disallow_config_location">Disallow config location</string>
-    <string name="disallow_config_location_action">Enabling or disabling location in settings or quick settings, changing location accuracy</string>
+    <string name="disallow_config_location_action">Enabling or disabling location in settings or quick settings</string>
     <string name="disallow_airplane_mode">Disallow airplane mode</string>
     <string name="disallow_airplane_mode_action">Toggling airplane mode switch bar or changing airplane mode state in quick settings</string>
     <string name="disallow_config_screen_timeout">Disallow config sleep options settings</string>
