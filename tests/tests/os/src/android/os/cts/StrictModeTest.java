@@ -483,19 +483,30 @@ public class StrictModeTest {
 
     @Test
     public void testNonSdkApiUsage() throws Exception {
-        StrictMode.VmPolicy oldPolicy = StrictMode.getVmPolicy();
+        StrictMode.VmPolicy oldVmPolicy = StrictMode.getVmPolicy();
+        StrictMode.ThreadPolicy oldThreadPolicy = StrictMode.getThreadPolicy();
         try {
             StrictMode.setVmPolicy(
                     new StrictMode.VmPolicy.Builder().detectNonSdkApiUsage().build());
             checkNonSdkApiUsageViolation(
                 true, "dalvik.system.VMRuntime", "setHiddenApiExemptions", String[].class);
             // verify that mutliple uses of a light greylist API are detected.
-            Log.i(TAG, "testNonSdkApiUsage: dalvik.system.VMRuntime.getRuntime: first try");
             checkNonSdkApiUsageViolation(false, "dalvik.system.VMRuntime", "getRuntime");
-            Log.i(TAG, "testNonSdkApiUsage: dalvik.system.VMRuntime.getRuntime: second try");
             checkNonSdkApiUsageViolation(false, "dalvik.system.VMRuntime", "getRuntime");
+
+            // Verify that the VM policy is turned off after a call to permitNonSdkApiUsage.
+            StrictMode.setVmPolicy(
+                new StrictMode.VmPolicy.Builder().permitNonSdkApiUsage().build());
+            assertNoViolation(() -> {
+                  Class<?> clazz = Class.forName("dalvik.system.VMRuntime");
+                  try {
+                      clazz.getDeclaredMethod("getRuntime");
+                  } catch (NoSuchMethodException maybe) {
+                  }
+            });
         } finally {
-            StrictMode.setVmPolicy(oldPolicy);
+            StrictMode.setVmPolicy(oldVmPolicy);
+            StrictMode.setThreadPolicy(oldThreadPolicy);
         }
     }
 
