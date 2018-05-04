@@ -16,7 +16,8 @@
  -->
 
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
-          package="foo.bar.baz">
+          package="foo.bar.baz"
+          android:targetSandboxVersion="2">
 
     <application>
         <receiver android:name="foo.bar.baz.MyAppWidgetProvider" >

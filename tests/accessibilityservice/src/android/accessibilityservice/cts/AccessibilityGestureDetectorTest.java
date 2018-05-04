@@ -27,6 +27,7 @@ import android.content.Context;
 import android.content.pm.PackageManager;
 import android.graphics.Path;
 import android.graphics.Point;
+import android.platform.test.annotations.AppModeFull;
 import android.support.test.InstrumentationRegistry;
 import android.support.test.runner.AndroidJUnit4;
 import android.util.DisplayMetrics;
@@ -103,6 +104,7 @@ public class AccessibilityGestureDetectorTest {
     }
 
     @Test
+    @AppModeFull
     public void testRecognizeGesturePath() {
         if (!mHasTouchScreen || !mScreenBigEnough) {
             return;

@@ -58,6 +58,7 @@ public class AccessibilityManagerTest extends InstrumentationTestCase {
                 getInstrumentation().getContext().getSystemService(Service.ACCESSIBILITY_SERVICE);
         mTargetContext = getInstrumentation().getTargetContext();
         mHandler = new Handler(mTargetContext.getMainLooper());
+        ServiceControlUtils.turnAccessibilityOff(getInstrumentation());
     }
 
     @Override

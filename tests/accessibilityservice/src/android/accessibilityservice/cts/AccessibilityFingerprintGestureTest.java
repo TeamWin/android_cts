@@ -29,6 +29,7 @@ import android.accessibilityservice.cts.activities.AccessibilityEndToEndActivity
 import android.app.Instrumentation;
 import android.hardware.fingerprint.FingerprintManager;
 import android.os.CancellationSignal;
+import android.platform.test.annotations.AppModeFull;
 import android.support.test.InstrumentationRegistry;
 import android.support.test.rule.ActivityTestRule;
 import android.support.test.runner.AndroidJUnit4;
@@ -45,6 +46,7 @@ import org.mockito.MockitoAnnotations;
  * Verify that a service listening for fingerprint gestures gets called back when apps
  * use the fingerprint sensor to authenticate.
  */
+@AppModeFull
 @RunWith(AndroidJUnit4.class)
 public class AccessibilityFingerprintGestureTest {
     private static final int FINGERPRINT_CALLBACK_TIMEOUT = 3000;
