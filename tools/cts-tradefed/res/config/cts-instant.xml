@@ -34,4 +34,8 @@
     <option name="compatibility:module-arg" value="CtsAccessibilityServiceTestCases:install-arg:--instant" />
     <option name="compatibility:include-filter" value="CtsAccessibilityServiceTestCases" />
 
+    <!-- CtsAnimationTestCases -->
+    <option name="compatibility:module-arg" value="CtsAnimationTestCases:install-arg:--instant" />
+    <option name="compatibility:include-filter" value="CtsAnimationTestCases" />
+
 </configuration>
