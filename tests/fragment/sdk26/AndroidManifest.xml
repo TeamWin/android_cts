@@ -14,7 +14,8 @@
      limitations under the License.
 -->
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
-    package="android.fragment.cts.sdk26">
+    package="android.fragment.cts.sdk26"
+    android:targetSandboxVersion="2">
 
     <application>
         <uses-library android:name="android.test.runner" />

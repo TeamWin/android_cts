@@ -46,4 +46,10 @@
     <option name="compatibility:module-arg" value="CtsViewTestCases:install-arg:--instant" />
     <option name="compatibility:include-filter" value="CtsViewTestCases" />
 
+    <!-- CtsFragmentTestCases, CtsFragmentTestCasesSdk26 -->
+    <option name="compatibility:module-arg" value="CtsFragmentTestCases:install-arg:--instant" />
+    <option name="compatibility:include-filter" value="CtsFragmentTestCases" />
+    <option name="compatibility:module-arg" value="CtsFragmentTestCasesSdk26:install-arg:--instant" />
+    <option name="compatibility:include-filter" value="CtsFragmentTestCasesSdk26" />
+
 </configuration>
