@@ -20,6 +20,7 @@ import static org.junit.Assert.assertEquals;
 import android.app.Instrumentation;
 import android.content.pm.PackageManager;
 import android.media.AudioManager;
+import android.platform.test.annotations.AppModeFull;
 import android.platform.test.annotations.Presubmit;
 import android.support.test.InstrumentationRegistry;
 import android.support.test.runner.AndroidJUnit4;
@@ -63,6 +64,7 @@ public class AccessibilityVolumeTest {
     }
 
     @Test
+    @AppModeFull
     public void testChangeAccessibilityVolume_inAccessibilityService_shouldWork() {
         if (mSingleVolume) {
             return;
