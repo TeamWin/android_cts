@@ -28,7 +28,7 @@
 #include <sys/stat.h>
 #include <unistd.h>
 
-#include <list>
+#include <queue>
 #include <string>
 #include <unordered_set>
 #include <vector>
@@ -41,9 +41,11 @@
 #if defined(__LP64__)
 static const std::string kSystemLibraryPath = "/system/lib64";
 static const std::string kVendorLibraryPath = "/vendor/lib64";
+static const std::string kProductLibraryPath = "/product/lib64";
 #else
 static const std::string kSystemLibraryPath = "/system/lib";
 static const std::string kVendorLibraryPath = "/vendor/lib";
+static const std::string kProductLibraryPath = "/product/lib";
 #endif
 
 // This is not the complete list - just a small subset
@@ -67,9 +69,9 @@ static std::vector<std::string> kSystemLibraries = {
     "libvorbisidec.so",
   };
 
-static bool is_directory(const std::string& path) {
+static bool is_directory(const char* path) {
   struct stat sb;
-  if (stat(path.c_str(), &sb) != -1) {
+  if (stat(path, &sb) != -1) {
     return S_ISDIR(sb.st_mode);
   }
 
@@ -93,22 +95,19 @@ static bool wrong_arch(const std::string& library, const std::string& err) {
   return err.find("dlopen failed: \"" + library + "\" has unexpected e_machine: ") == 0;
 }
 
-static bool is_library_on_path(const std::vector<std::string>& library_search_paths,
+static bool is_library_on_path(const std::unordered_set<std::string>& library_search_paths,
                                const std::string& baselib,
                                const std::string& path) {
-  for (const auto& search_path : library_search_paths) {
-    if (search_path + "/" + baselib == path) {
-      return true;
-    }
-  }
-  return false;
+  std::string tail = '/' + baselib;
+  if (!android::base::EndsWith(path, tail)) return false;
+  return library_search_paths.count(path.substr(0, path.size() - tail.size())) > 0;
 }
 
 static bool check_lib(const std::string& path,
-                      const std::vector<std::string>& library_search_paths,
+                      const std::unordered_set<std::string>& library_search_paths,
                       const std::unordered_set<std::string>& libraries,
                       std::vector<std::string>* errors) {
-  std::unique_ptr<void, int (*)(void*)> handle(dlopen(path.c_str(), RTLD_NOW), dlclose);
+  std::unique_ptr<void, decltype(&dlclose)> handle(dlopen(path.c_str(), RTLD_NOW), dlclose);
 
   // The current restrictions on public libraries:
   //  - It must exist only in the top level directory of "library_search_paths".
@@ -139,17 +138,17 @@ static bool check_lib(const std::string& path,
 }
 
 static bool check_path(const std::string& library_path,
-                       const std::vector<std::string>& library_search_paths,
+                       const std::unordered_set<std::string>& library_search_paths,
                        const std::unordered_set<std::string>& libraries,
                        std::vector<std::string>* errors) {
   bool success = true;
-  std::list<std::string> dirs = { library_path };
+  std::queue<std::string> dirs;
+  dirs.push(library_path);
   while (!dirs.empty()) {
     std::string dir = dirs.front();
-    dirs.pop_front();
+    dirs.pop();
 
-    auto dir_deleter = [](DIR* handle) { closedir(handle); };
-    std::unique_ptr<DIR, decltype(dir_deleter)> dirp(opendir(dir.c_str()), dir_deleter);
+    std::unique_ptr<DIR, decltype(&closedir)> dirp(opendir(dir.c_str()), closedir);
     if (dirp == nullptr) {
       errors->push_back("Failed to open " + dir + ": " + strerror(errno));
       success = false;
@@ -164,8 +163,8 @@ static bool check_path(const std::string& library_path,
       }
 
       std::string path = dir + "/" + dp->d_name;
-      if (is_directory(path)) {
-        dirs.push_back(path);
+      if (is_directory(path.c_str())) {
+        dirs.push(path);
       } else if (!check_lib(path, library_search_paths, libraries, errors)) {
         success = false;
       }
@@ -231,7 +230,8 @@ extern "C" JNIEXPORT jstring JNICALL
         JNIEnv* env,
         jclass clazz __attribute__((unused)),
         jobjectArray java_system_public_libraries,
-        jobjectArray java_vendor_public_libraries) {
+        jobjectArray java_vendor_public_libraries,
+        jobjectArray java_product_public_libraries) {
   bool success = true;
   std::vector<std::string> errors;
   std::string error_msg;
@@ -249,6 +249,13 @@ extern "C" JNIEXPORT jstring JNICALL
     errors.push_back("Errors in system public library file:" + error_msg);
   }
 
+  std::unordered_set<std::string> product_public_libraries;
+  if (!jobject_array_to_set(env, java_product_public_libraries, &product_public_libraries,
+                            &error_msg)) {
+    success = false;
+    errors.push_back("Errors in product public library file:" + error_msg);
+  }
+
   // Check the system libraries.
 
   // Check current search path and add the rest of search path configured for
@@ -256,22 +263,22 @@ extern "C" JNIEXPORT jstring JNICALL
   char default_search_paths[PATH_MAX];
   android_get_LD_LIBRARY_PATH(default_search_paths, sizeof(default_search_paths));
 
-
   std::vector<std::string> library_search_paths = android::base::Split(default_search_paths, ":");
+
   // Remove everything pointing outside of /system/lib*
-  library_search_paths.erase(
-      std::remove_if(library_search_paths.begin(),
-                     library_search_paths.end(),
-                     [](const std::string& path) {
-                       return !android::base::StartsWith(path, "/system/lib");
-                     }),
-      library_search_paths.end());
+  std::unordered_set<std::string> system_library_search_paths;
+
+  for (const auto& path : library_search_paths) {
+    if (android::base::StartsWith(path, "/system/lib")) {
+      system_library_search_paths.insert(path);
+    }
+  }
 
   // This path should be tested too - this is because apps may rely on some
   // libraries being available in /system/${LIB}/
-  library_search_paths.push_back(kSystemLibraryPath);
+  system_library_search_paths.insert(kSystemLibraryPath);
 
-  if (!check_path(kSystemLibraryPath, library_search_paths, system_public_libraries, &errors)) {
+  if (!check_path(kSystemLibraryPath, system_library_search_paths, system_public_libraries, &errors)) {
     success = false;
   }
 
@@ -288,6 +295,13 @@ extern "C" JNIEXPORT jstring JNICALL
       }
     } else {
       dlclose(handle);
+    }
+  }
+
+  // Check the product libraries, if /product/lib exists.
+  if (is_directory(kProductLibraryPath.c_str())) {
+    if (!check_path(kProductLibraryPath, { kProductLibraryPath }, product_public_libraries, &errors)) {
+      success = false;
     }
   }
 
