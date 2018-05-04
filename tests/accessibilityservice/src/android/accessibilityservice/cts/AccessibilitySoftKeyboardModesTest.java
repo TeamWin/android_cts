@@ -26,6 +26,7 @@ import android.os.Handler;
 import android.os.IBinder;
 import android.os.ResultReceiver;
 import android.os.SystemClock;
+import android.platform.test.annotations.AppModeFull;
 import android.test.ActivityInstrumentationTestCase2;
 import android.view.View;
 import android.view.accessibility.AccessibilityEvent;
@@ -42,6 +43,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
 /**
  * Test cases for testing the accessibility APIs for interacting with the soft keyboard show mode.
  */
+@AppModeFull
 public class AccessibilitySoftKeyboardModesTest extends ActivityInstrumentationTestCase2
         <AccessibilitySoftKeyboardModesTest.SoftKeyboardModesActivity> {
 

@@ -16,7 +16,8 @@
  -->
 
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
-          package="android.accessibilityservice.cts">
+          package="android.accessibilityservice.cts"
+          android:targetSandboxVersion="2">
 
     <uses-permission android:name="android.permission.DISABLE_KEYGUARD" />
     <uses-permission android:name="android.permission.WRITE_SECURE_SETTINGS" />
@@ -62,9 +63,13 @@
             android:name=".AccessibilityGestureDispatchTest$GestureDispatchActivity"
             android:screenOrientation="portrait" />
 
+        <activity
+            android:label="@string/accessibility_soft_keyboard_modes_activity"
+            android:name=".AccessibilitySoftKeyboardModesTest$SoftKeyboardModesActivity" />
+
         <service
-            android:name=".StubGestureAccessibilityService"
-            android:permission="android.permission.BIND_ACCESSIBILITY_SERVICE">
+                android:name=".StubGestureAccessibilityService"
+                android:permission="android.permission.BIND_ACCESSIBILITY_SERVICE">
             <intent-filter>
                 <action android:name="android.accessibilityservice.AccessibilityService" />
                 <category android:name="android.accessibilityservice.category.FEEDBACK_GENERIC" />
@@ -76,20 +81,16 @@
         </service>
 
         <service
-            android:name=".AccessibilityGestureDetectorTest$StubService"
-            android:permission="android.permission.BIND_ACCESSIBILITY_SERVICE">
+                android:name=".AccessibilityGestureDetectorTest$StubService"
+                android:permission="android.permission.BIND_ACCESSIBILITY_SERVICE">
             <intent-filter>
                 <action android:name="android.accessibilityservice.AccessibilityService" />
                 <category android:name="android.accessibilityservice.category.FEEDBACK_GENERIC" />
             </intent-filter>
             <meta-data
-                android:name="android.accessibilityservice"
-                android:resource="@xml/stub_gesture_detect_a11y_service" />
+                    android:name="android.accessibilityservice"
+                    android:resource="@xml/stub_gesture_detect_a11y_service" />
         </service>
-
-        <activity
-            android:label="@string/accessibility_soft_keyboard_modes_activity"
-            android:name=".AccessibilitySoftKeyboardModesTest$SoftKeyboardModesActivity" />
 
         <service
             android:name=".InstrumentedAccessibilityService"
