@@ -287,6 +287,41 @@ public class ToolbarTest {
     }
 
     @Test
+    public void testCollapseConfiguration() throws Throwable {
+        // Inflate menu and expand action view to display collapse button
+        WidgetTestUtils.runOnMainAndDrawSync(mActivityRule, mMainToolbar,
+                () -> mMainToolbar.inflateMenu(R.menu.toolbar_menu_search));
+        final MenuItem searchMenuItem = mMainToolbar.getMenu().findItem(R.id.action_search);
+        mActivityRule.runOnUiThread(searchMenuItem::expandActionView);
+        mInstrumentation.waitForIdleSync();
+
+        WidgetTestUtils.runOnMainAndDrawSync(mActivityRule, mMainToolbar,
+                () -> mMainToolbar.setCollapseIcon(R.drawable.icon_green));
+        Drawable toolbarCollapseIcon = mMainToolbar.getCollapseIcon();
+        TestUtils.assertAllPixelsOfColor("Collapse icon is green", toolbarCollapseIcon,
+                toolbarCollapseIcon.getIntrinsicWidth(),
+                toolbarCollapseIcon.getIntrinsicHeight(),
+                true, Color.GREEN, 1, false);
+
+        WidgetTestUtils.runOnMainAndDrawSync(mActivityRule, mMainToolbar,
+                () -> mMainToolbar.setCollapseIcon(mActivity.getDrawable(R.drawable.icon_blue)));
+        toolbarCollapseIcon = mMainToolbar.getCollapseIcon();
+        TestUtils.assertAllPixelsOfColor("Collapse icon is blue", toolbarCollapseIcon,
+                toolbarCollapseIcon.getIntrinsicWidth(),
+                toolbarCollapseIcon.getIntrinsicHeight(),
+                true, Color.BLUE, 1, false);
+
+        mActivityRule.runOnUiThread(
+                () -> mMainToolbar.setCollapseContentDescription(R.string.toolbar_collapse));
+        assertEquals(mActivity.getResources().getString(R.string.toolbar_collapse),
+                mMainToolbar.getCollapseContentDescription());
+
+        mActivityRule.runOnUiThread(
+                () -> mMainToolbar.setCollapseContentDescription("Collapse legend"));
+        assertEquals("Collapse legend", mMainToolbar.getCollapseContentDescription());
+    }
+
+    @Test
     public void testLogoConfiguration() throws Throwable {
         WidgetTestUtils.runOnMainAndDrawSync(mActivityRule, mMainToolbar,
                 () -> mMainToolbar.setLogo(R.drawable.icon_yellow));

@@ -54,6 +54,8 @@ public final class TestMeasurementUtil {
             " a full bugreport.";
 
     private static final int YEAR_2016 = 2016;
+    private static final int YEAR_2017 = 2017;
+    private static final int YEAR_2018 = 2018;
 
     // The valid Gnss navigation message type as listed in
     // android/hardware/libhardware/include/hardware/gps.h
@@ -163,17 +165,20 @@ public final class TestMeasurementUtil {
      * Assert all mandatory fields in Gnss Measurement are in expected range.
      * See mandatory fields in {@code gps.h}.
      *
+     * @param testLocationManager TestLocationManager
      * @param measurement GnssMeasurement
      * @param softAssert  custom SoftAssert
      * @param timeInNs    event time in ns
      */
-    public static void assertAllGnssMeasurementMandatoryFields(GnssMeasurement measurement,
+    public static void assertAllGnssMeasurementMandatoryFields(
+        TestLocationManager testLocationManager, GnssMeasurement measurement,
         SoftAssert softAssert, long timeInNs) {
 
         verifySvid(measurement, softAssert, timeInNs);
         verifyReceivedSatelliteVehicleTimeInNs(measurement, softAssert, timeInNs);
         verifyAccumulatedDeltaRanges(measurement, softAssert, timeInNs);
 
+        int gnssYearOfHardware = testLocationManager.getLocationManager().getGnssYearOfHardware();
         int state = measurement.getState();
         softAssert.assertTrue("state: Satellite code sync state",
                 timeInNs,
@@ -213,6 +218,16 @@ public final class TestMeasurementUtil {
                 measurement.getPseudorangeRateUncertaintyMetersPerSecond() > 0.0);
 
         // Check carrier_frequency_hz.
+        // As per CDD 7.3.3 / C-3-3 Year 2107+ should have Carrier Frequency present
+        // Enforcing it only for year 2018+
+        if (gnssYearOfHardware >= YEAR_2018) {
+            softAssert.assertTrue("Carrier Frequency in measurement",
+                    timeInNs,
+                    "X == true",
+                    String.valueOf(measurement.hasCarrierFrequencyHz()),
+                    measurement.hasCarrierFrequencyHz());
+        }
+
         if (measurement.hasCarrierFrequencyHz()) {
             softAssert.assertTrue("carrier_frequency_hz: Carrier frequency in hz",
                     timeInNs,
@@ -259,6 +274,14 @@ public final class TestMeasurementUtil {
         }
 
         // Check Automatic Gain Control level in dB.
+        // As per CDD 7.3.3 / C-3-3 Year 2107+ should have AGC level present
+        if (gnssYearOfHardware >= YEAR_2017) {
+            softAssert.assertTrue("AGC level in measurement",
+                    timeInNs,
+                    "X == true",
+                    String.valueOf(measurement.hasAutomaticGainControlLevelDb()),
+                    measurement.hasAutomaticGainControlLevelDb());
+        }
         if (measurement.hasAutomaticGainControlLevelDb()) {
             softAssert.assertTrue("Automatic Gain Control level in dB",
                 timeInNs,

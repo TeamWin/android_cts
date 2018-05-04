@@ -62,6 +62,7 @@ public class CtsConfigLoadingTest {
             "bionic",
             "bluetooth",
             "camera",
+            "deviceinfo",
             "deqp",
             "devtools",
             "framework",

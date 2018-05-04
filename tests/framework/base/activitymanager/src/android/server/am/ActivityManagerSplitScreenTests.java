@@ -277,17 +277,7 @@ public class ActivityManagerSplitScreenTests extends ActivityManagerTestBase {
 
         // Move to split-screen primary
         final int taskId = mAmWmState.getAmState().getTaskByActivity(LAUNCHING_ACTIVITY).mTaskId;
-        mAm.setTaskWindowingModeSplitScreenPrimary(taskId, SPLIT_SCREEN_CREATE_MODE_TOP_OR_LEFT,
-                true /* onTop */, false /* animate */, null /* initialBounds */,
-                true /* showRecents */);
-        mAmWmState.waitForRecentsActivityVisible();
-
-        // Launch another activity. This forces the any home activity back and allows the primary
-        // stack to gain focus during launch.
-        getLaunchActivityBuilder().setTargetActivity(ALT_LAUNCHING_ACTIVITY)
-                .setUseInstrumentation()
-                .setWaitForLaunched(true)
-                .execute();
+        moveTaskToPrimarySplitScreen(taskId, true /* launchSideActivityIfNeeded */);
 
         // Launch target to side
         final LaunchActivityBuilder targetActivityLauncher = getLaunchActivityBuilder()

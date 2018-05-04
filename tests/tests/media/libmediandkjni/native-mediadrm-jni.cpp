@@ -19,6 +19,7 @@
 #include <utils/Log.h>
 #include <sys/types.h>
 
+#include <list>
 #include <string>
 #include <vector>
 
@@ -741,6 +742,62 @@ extern "C" jboolean Java_android_media_cts_NativeMediaDrmClearkeyTest_testQueryK
     return JNI_TRUE;
 }
 
+extern "C" jboolean Java_android_media_cts_NativeMediaDrmClearkeyTest_testFindSessionIdNative(
+    JNIEnv* env, jclass /*clazz*/, jbyteArray uuid) {
+
+    if (NULL == uuid) {
+        jniThrowException(env, "java/lang/NullPointerException", "null uuid");
+        return JNI_FALSE;
+    }
+
+    Uuid juuid = jbyteArrayToUuid(env, uuid);
+    if (!isUuidSizeValid(juuid)) {
+        jniThrowExceptionFmt(env, "java/lang/IllegalArgumentException",
+                "invalid UUID size, expected %u bytes", kUuidSize);
+        return JNI_FALSE;
+    }
+
+    AMediaObjects aMediaObjects;
+    media_status_t status = AMEDIA_OK;
+    aMediaObjects.setDrm(AMediaDrm_createByUUID(&juuid[0]));
+    if (NULL == aMediaObjects.getDrm()) {
+        jniThrowException(env, "java/lang/RuntimeException", "failed to create drm");
+        return JNI_FALSE;
+    }
+
+    // Stores duplicates of session id.
+    std::vector<std::vector<uint8_t> > sids;
+
+    std::list<AMediaDrmSessionId> sessionIds;
+    AMediaDrmSessionId sessionId;
+    for (int i = 0; i < 5; ++i) {
+        status = AMediaDrm_openSession(aMediaObjects.getDrm(), &sessionId);
+        if (status != AMEDIA_OK) {
+            jniThrowException(env, "java/lang/RuntimeException", "openSession failed");
+            return JNI_FALSE;
+        }
+
+        // Allocates a new pointer to duplicate the session id returned by
+        // AMediaDrm_openSession. These new pointers will be passed to
+        // AMediaDrm_closeSession, which verifies that the ndk
+        // can find the session id even if the pointer has changed.
+        sids.push_back(std::vector<uint8_t>(sessionId.length));
+        memcpy(sids.at(i).data(), sessionId.ptr, sessionId.length);
+        sessionId.ptr = static_cast<uint8_t *>(sids.at(i).data());
+        sessionIds.push_back(sessionId);
+    }
+
+    for (auto sessionId : sessionIds) {
+        status = AMediaDrm_closeSession(aMediaObjects.getDrm(), &sessionId);
+        if (status != AMEDIA_OK) {
+            jniThrowException(env, "java/lang/RuntimeException", "closeSession failed");
+            return JNI_FALSE;
+        }
+    }
+
+    return JNI_TRUE;
+}
+
 static JNINativeMethod gMethods[] = {
     { "isCryptoSchemeSupportedNative", "([B)Z",
             (void *)Java_android_media_cts_NativeMediaDrmClearkeyTest_isCryptoSchemeSupportedNative },
@@ -758,6 +815,9 @@ static JNINativeMethod gMethods[] = {
 
     { "testQueryKeyStatusNative", "([B)Z",
             (void *)Java_android_media_cts_NativeMediaDrmClearkeyTest_testQueryKeyStatusNative },
+
+    { "testFindSessionIdNative", "([B)Z",
+            (void *)Java_android_media_cts_NativeMediaDrmClearkeyTest_testFindSessionIdNative },
 };
 
 int register_android_media_cts_NativeMediaDrmClearkeyTest(JNIEnv* env) {
