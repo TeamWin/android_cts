@@ -113,7 +113,7 @@ public class StubTextToSpeechService extends TextToSpeechService {
     public String onGetDefaultVoiceNameFor(String lang, String country, String variant) {
         Locale locale = new Locale(lang, country);
         if (supportedCountries.contains(locale)) {
-          return TtsEngines.normalizeTTSLocale(locale).toLanguageTag();
+            return locale.toLanguageTag();
         }
         if (lang.equals("eng")) {
             if (GBFallbacks.contains(new Locale(lang, country))) {
