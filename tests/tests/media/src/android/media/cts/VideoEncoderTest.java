@@ -1190,8 +1190,7 @@ public class VideoEncoderTest extends MediaPlayerTestBase {
         ArrayList<Encoder> result = new ArrayList<Encoder>();
 
         for (MediaCodecInfo info : mcl.getCodecInfos()) {
-            if (!info.isEncoder()
-                    || info.getName().toLowerCase().startsWith("omx.google.") != goog) {
+            if (!info.isEncoder() || MediaUtils.isGoogle(info.getName()) != goog) {
                 continue;
             }
             CodecCapabilities caps = null;

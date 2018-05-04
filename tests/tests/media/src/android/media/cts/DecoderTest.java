@@ -2066,18 +2066,14 @@ public class DecoderTest extends MediaPlayerTestBase {
         try {
             if (false) {
                 // change to force testing software codecs
-                if (mime.contains("avc")) {
-                    return MediaCodec.createByCodecName("OMX.google.h264.decoder");
-                } else if (mime.contains("hevc")) {
-                    return MediaCodec.createByCodecName("OMX.google.hevc.decoder");
-                } else if (mime.contains("3gpp")) {
-                    return MediaCodec.createByCodecName("OMX.google.h263.decoder");
-                } else if (mime.contains("mp4v")) {
-                    return MediaCodec.createByCodecName("OMX.google.mpeg4.decoder");
-                } else if (mime.contains("vp8")) {
-                    return MediaCodec.createByCodecName("OMX.google.vp8.decoder");
-                } else if (mime.contains("vp9")) {
-                    return MediaCodec.createByCodecName("OMX.google.vp9.decoder");
+                MediaFormat format = new MediaFormat();
+                format.setString(MediaFormat.KEY_MIME, mime);
+                String[] codecs =
+                    MediaUtils.getDecoderNames(Boolean.TRUE /* isGoog */, format);
+                if (codecs.length > 0) {
+                    return MediaCodec.createByCodecName(codecs[0]);
+                } else {
+                    return null;
                 }
             }
             return MediaCodec.createDecoderByType(mime);
@@ -2950,4 +2946,3 @@ public class DecoderTest extends MediaPlayerTestBase {
         return pm.hasSystemFeature(PackageManager.FEATURE_VR_MODE_HIGH_PERFORMANCE);
     }
 }
-
