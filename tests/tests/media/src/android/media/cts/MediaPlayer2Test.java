@@ -39,6 +39,7 @@ import android.media.SyncParams;
 import android.media.TimedText;
 import android.media.audiofx.AudioEffect;
 import android.media.audiofx.Visualizer;
+import android.media.cts.TestUtils.Monitor;
 import android.net.Uri;
 import android.os.Bundle;
 import android.os.Environment;
