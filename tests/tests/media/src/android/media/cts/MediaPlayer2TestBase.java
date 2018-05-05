@@ -26,6 +26,7 @@ import android.media.MediaPlayer2;
 import android.media.MediaTimestamp;
 import android.media.TimedMetaData;
 import android.media.TimedText;
+import android.media.cts.TestUtils.Monitor;
 import android.net.Uri;
 import android.os.PersistableBundle;
 import android.test.ActivityInstrumentationTestCase2;
@@ -195,58 +196,6 @@ public class MediaPlayer2TestBase extends ActivityInstrumentationTestCase2<Media
             // fall through
         }
         return null;
-    }
-
-    public static class Monitor {
-        private int numSignal;
-
-        public synchronized void reset() {
-            numSignal = 0;
-        }
-
-        public synchronized void signal() {
-            numSignal++;
-            notifyAll();
-        }
-
-        public synchronized boolean waitForSignal() throws InterruptedException {
-            return waitForCountedSignals(1) > 0;
-        }
-
-        public synchronized int waitForCountedSignals(int targetCount) throws InterruptedException {
-            while (numSignal < targetCount) {
-                wait();
-            }
-            return numSignal;
-        }
-
-        public synchronized boolean waitForSignal(long timeoutMs) throws InterruptedException {
-            return waitForCountedSignals(1, timeoutMs) > 0;
-        }
-
-        public synchronized int waitForCountedSignals(int targetCount, long timeoutMs)
-                throws InterruptedException {
-            if (timeoutMs == 0) {
-                return waitForCountedSignals(targetCount);
-            }
-            long deadline = System.currentTimeMillis() + timeoutMs;
-            while (numSignal < targetCount) {
-                long delay = deadline - System.currentTimeMillis();
-                if (delay <= 0) {
-                    break;
-                }
-                wait(delay);
-            }
-            return numSignal;
-        }
-
-        public synchronized boolean isSignalled() {
-            return numSignal >= 1;
-        }
-
-        public synchronized int getNumSignal() {
-            return numSignal;
-        }
     }
 
     public MediaPlayer2TestBase() {
