@@ -63,7 +63,6 @@ NOT_YET_MANDATED = {
                 "test_num_faces",
         ],
         "scene3": [
-                "test_3a_consistency",
                 "test_flip_mirror",
                 "test_lens_movement_reporting",
                 "test_lens_position"

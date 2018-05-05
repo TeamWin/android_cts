@@ -23,7 +23,6 @@ import static com.android.compatibility.common.util.BundleUtils.makeBundle;
 import static com.android.compatibility.common.util.ConnectivityUtils.assertNetworkConnected;
 import static com.android.compatibility.common.util.SettingsUtils.putGlobalSetting;
 import static com.android.compatibility.common.util.SystemUtil.runCommandAndPrintOnLogcat;
-import static com.android.compatibility.common.util.TestUtils.waitUntil;
 
 import static junit.framework.TestCase.assertEquals;
 
@@ -52,6 +51,8 @@ import com.android.compatibility.common.util.BatteryUtils;
 import com.android.compatibility.common.util.OnFailureRule;
 import com.android.compatibility.common.util.ParcelUtils;
 import com.android.compatibility.common.util.SystemUtil;
+import com.android.compatibility.common.util.TestUtils;
+import com.android.compatibility.common.util.TestUtils.BooleanSupplierWithThrow;
 
 import org.junit.After;
 import org.junit.Before;
@@ -72,6 +73,7 @@ public class CtsSyncManagerTest {
     public static final int DEFAULT_TIMEOUT_SECONDS = 30;
 
     public static final boolean DEBUG = false;
+    private static final int TIMEOUT_MS = 10 * 60 * 1000;
 
     @Rule
     public final OnFailureRule mDumpOnFailureRule = new OnFailureRule(TAG) {
@@ -131,6 +133,10 @@ public class CtsSyncManagerTest {
                 "^Active Syncs:.*", false,
                 "^Sync Statistics", false);
         return out;
+    }
+
+    private void waitUntil(String message, BooleanSupplierWithThrow predicate) throws Exception {
+        TestUtils.waitUntil(message, TIMEOUT_MS, predicate);
     }
 
     private void removeAllAccounts() throws Exception {
