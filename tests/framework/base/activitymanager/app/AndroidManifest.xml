@@ -93,10 +93,14 @@
                 android:exported="true"
                 android:taskAffinity="nobody.but.LaunchingActivity"
         />
+        <!--
+         * This activity should have same affinity as LaunchingActivity, because we're using it to
+         * check activities being launched into the same task.
+         -->
         <activity android:name=".AltLaunchingActivity"
                 android:resizeableActivity="true"
                 android:exported="true"
-                android:taskAffinity="nobody.but.AltLaunchingActivity"
+                android:taskAffinity="nobody.but.LaunchingActivity"
         />
         <activity android:name=".PipActivity"
                 android:resizeableActivity="false"

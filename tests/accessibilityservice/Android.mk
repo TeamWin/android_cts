@@ -19,9 +19,10 @@ include $(CLEAR_VARS)
 LOCAL_MODULE_TAGS := optional
 
 LOCAL_STATIC_JAVA_LIBRARIES := \
-	ctstestrunner \
-	mockito-target-minus-junit4 \
-	compatibility-device-util
+    ctstestrunner \
+    mockito-target-minus-junit4 \
+    compatibility-device-util \
+    platform-test-annotations
 
 LOCAL_JAVA_LIBRARIES := android.test.runner.stubs android.test.base.stubs
 

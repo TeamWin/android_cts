@@ -45,6 +45,7 @@ import android.graphics.Path;
 import android.graphics.PointF;
 import android.os.Bundle;
 import android.os.SystemClock;
+import android.platform.test.annotations.AppModeFull;
 import android.test.ActivityInstrumentationTestCase2;
 import android.util.Log;
 import android.view.Display;
@@ -65,6 +66,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
 /**
  * Verify that gestures dispatched from an accessibility service show up in the current UI
  */
+@AppModeFull
 public class AccessibilityGestureDispatchTest extends
         ActivityInstrumentationTestCase2<AccessibilityGestureDispatchTest.GestureDispatchActivity> {
     private static final String TAG = AccessibilityGestureDispatchTest.class.getSimpleName();

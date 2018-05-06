@@ -16,6 +16,7 @@ package android.accessibilityservice.cts;
 
 import android.accessibilityservice.AccessibilityButtonController;
 import android.app.Instrumentation;
+import android.platform.test.annotations.AppModeFull;
 import android.support.test.InstrumentationRegistry;
 import android.support.test.runner.AndroidJUnit4;
 
@@ -62,6 +63,7 @@ public class AccessibilityButtonTest {
     }
 
     @Test
+    @AppModeFull
     public void testCallbackRegistrationUnregistration_serviceDoesNotCrash() {
         mButtonController.registerAccessibilityButtonCallback(mStubCallback);
         mButtonController.unregisterAccessibilityButtonCallback(mStubCallback);

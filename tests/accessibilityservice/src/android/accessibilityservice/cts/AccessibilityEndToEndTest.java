@@ -50,6 +50,7 @@ import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.content.res.Configuration;
 import android.os.Process;
+import android.platform.test.annotations.AppModeFull;
 import android.platform.test.annotations.Presubmit;
 import android.test.suitebuilder.annotation.MediumTest;
 import android.text.TextUtils;
@@ -337,6 +338,7 @@ public class AccessibilityEndToEndTest extends
     }
 
     @MediumTest
+    @AppModeFull
     @SuppressWarnings("deprecation")
     @Presubmit
     public void testTypeNotificationStateChangedAccessibilityEvent() throws Throwable {
@@ -480,6 +482,7 @@ public class AccessibilityEndToEndTest extends
         }
     }
 
+    @AppModeFull
     @MediumTest
     @Presubmit
     public void testPackageNameCannotBeFakedAppWidget() throws Exception {

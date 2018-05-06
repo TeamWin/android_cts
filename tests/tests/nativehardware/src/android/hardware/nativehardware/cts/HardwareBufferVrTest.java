@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package android.hardware.cts;
+package android.hardware.nativehardware.cts;
 
 import android.content.pm.PackageManager;
 import android.hardware.HardwareBuffer;

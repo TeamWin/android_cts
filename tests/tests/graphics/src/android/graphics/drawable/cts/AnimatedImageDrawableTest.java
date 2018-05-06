@@ -249,6 +249,9 @@ public class AnimatedImageDrawableTest {
     public void testLifeCycle() throws Throwable {
         AnimatedImageDrawable drawable = createFromImageDecoder(RES_ID);
 
+        // Only run the animation one time.
+        drawable.setRepeatCount(0);
+
         Callback cb = new Callback(drawable);
         mActivityRule.runOnUiThread(() -> {
             setContentView(drawable);
@@ -267,11 +270,8 @@ public class AnimatedImageDrawableTest {
         cb.waitForStart();
         cb.assertStarted(true);
 
-        // Only run the animation one time.
-        drawable.setRepeatCount(0);
-
         // Extra time, to wait for the message to post.
-        cb.waitForEnd(DURATION * 2);
+        cb.waitForEnd(DURATION * 3);
         cb.assertEnded(true);
         assertFalse(drawable.isRunning());
     }
@@ -333,7 +333,9 @@ public class AnimatedImageDrawableTest {
             drawable.registerAnimationCallback(cb);
         });
 
-        cb.waitForEnd(DURATION * 2);
+        // Add extra duration to wait for the message posted by the end of the
+        // animation. This should help fix flakiness.
+        cb.waitForEnd(DURATION * 3);
         cb.assertEnded(true);
     }
 
@@ -353,9 +355,9 @@ public class AnimatedImageDrawableTest {
             assertFalse(drawable.isRunning());
         });
 
-        // Duration may be overkill, but we need to wait for the message
-        // to post.
-        cb.waitForEnd(DURATION);
+        // This duration may be overkill, but we need to wait for the message
+        // to post. Increasing it should help with flakiness on bots.
+        cb.waitForEnd(DURATION * 3);
         cb.assertStarted(true);
         cb.assertEnded(true);
     }

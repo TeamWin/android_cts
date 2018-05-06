@@ -17,7 +17,7 @@
 package android.media.cts;
 
 import android.content.res.AssetFileDescriptor;
-import android.media.cts.MediaPlayer2TestBase.Monitor;
+import android.media.cts.TestUtils.Monitor;
 import android.media.Media2DataSource;
 import android.util.Log;
 

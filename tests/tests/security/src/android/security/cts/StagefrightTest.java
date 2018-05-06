@@ -731,6 +731,11 @@ public class StagefrightTest extends InstrumentationTestCase {
         bitmap.recycle();
     }
 
+    @SecurityTest
+    public void testStagefright_cve_2016_0824() throws Exception {
+        doStagefrightTest(R.raw.cve_2016_0824);
+    }
+
     private void doStagefrightTest(final int rid) throws Exception {
         doStagefrightTestMediaPlayer(rid);
         doStagefrightTestMediaCodec(rid);

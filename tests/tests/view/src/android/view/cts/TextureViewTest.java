@@ -25,14 +25,17 @@ import static android.opengl.GLES20.glScissor;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.fail;
 
 import android.graphics.Bitmap;
 import android.graphics.Color;
+import android.graphics.ColorSpace;
 import android.graphics.Matrix;
 import android.graphics.Point;
 import android.support.test.filters.MediumTest;
 import android.support.test.rule.ActivityTestRule;
 import android.support.test.runner.AndroidJUnit4;
+import android.util.Half;
 import android.view.PixelCopy;
 import android.view.TextureView;
 import android.view.View;
@@ -45,11 +48,17 @@ import org.junit.Rule;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
+import java.nio.ByteBuffer;
+import java.nio.ByteOrder;
 import java.util.concurrent.TimeoutException;
 
 @MediumTest
 @RunWith(AndroidJUnit4.class)
 public class TextureViewTest {
+
+    static final int EGL_GL_COLORSPACE_SRGB_KHR = 0x3089;
+    static final int EGL_GL_COLORSPACE_DISPLAY_P3_EXT = 0x3363;
+    static final int EGL_GL_COLORSPACE_SCRGB_LINEAR_EXT = 0x3350;
 
     @Rule
     public ActivityTestRule<TextureViewCtsActivity> mActivityRule =
@@ -121,6 +130,133 @@ public class TextureViewTest {
         });
         PixelCopyTest.assertBitmapQuadColor(bitmap,
                 Color.BLACK, Color.BLUE, Color.GREEN, Color.RED);
+    }
+
+    @Test
+    public void testGetBitmap_8888_P3() throws Throwable {
+        testGetBitmap(EGL_GL_COLORSPACE_DISPLAY_P3_EXT, ColorSpace.Named.DISPLAY_P3, false,
+                new FP16Compare(ColorSpace.Named.EXTENDED_SRGB));
+    }
+
+    @Test
+    public void testGetBitmap_FP16_P3() throws Throwable {
+        testGetBitmap(EGL_GL_COLORSPACE_DISPLAY_P3_EXT, ColorSpace.Named.DISPLAY_P3, true,
+                new FP16Compare(ColorSpace.Named.EXTENDED_SRGB));
+    }
+
+    @Test
+    public void testGetBitmap_FP16_LinearExtendedSRGB() throws Throwable {
+        testGetBitmap(EGL_GL_COLORSPACE_SCRGB_LINEAR_EXT, ColorSpace.Named.LINEAR_EXTENDED_SRGB,
+                true, new FP16Compare(ColorSpace.Named.EXTENDED_SRGB));
+    }
+
+    @Test
+    public void testGet565Bitmap_SRGB() throws Throwable {
+        testGetBitmap(EGL_GL_COLORSPACE_SRGB_KHR, ColorSpace.Named.SRGB, true,
+                new SRGBCompare(Bitmap.Config.RGB_565));
+    }
+
+    @Test
+    public void testGetBitmap_SRGB() throws Throwable {
+        testGetBitmap(EGL_GL_COLORSPACE_SRGB_KHR, ColorSpace.Named.SRGB, true,
+                new SRGBCompare(Bitmap.Config.ARGB_8888));
+    }
+
+    interface CompareFunction {
+        Bitmap.Config getConfig();
+        ColorSpace getColorSpace();
+        void verify(float[] srcColor, ColorSpace.Named srcColorSpace, Bitmap dstBitmap);
+    }
+
+    private class FP16Compare implements CompareFunction {
+        private ColorSpace mDstColorSpace;
+
+        FP16Compare(ColorSpace.Named namedCS) {
+            mDstColorSpace = ColorSpace.get(namedCS);
+        }
+
+        public Bitmap.Config getConfig() {
+            return Bitmap.Config.RGBA_F16;
+        }
+
+        public ColorSpace getColorSpace() {
+            return mDstColorSpace;
+        }
+
+        public void verify(float[] srcColor, ColorSpace.Named srcColorSpace, Bitmap dstBitmap) {
+            // read pixels into buffer and compare using colorspace connector
+            ByteBuffer buffer = ByteBuffer.allocate(dstBitmap.getAllocationByteCount());
+            buffer.order(ByteOrder.LITTLE_ENDIAN);
+            dstBitmap.copyPixelsToBuffer(buffer);
+            Half alpha = Half.valueOf(buffer.getShort(6));
+            assertEquals(1.0f, alpha.floatValue(), 0.0f);
+
+            final ColorSpace srcSpace = ColorSpace.get(srcColorSpace);
+            final ColorSpace dstSpace = getColorSpace();
+            float[] expectedColor = ColorSpace.connect(srcSpace, dstSpace).transform(srcColor);
+            float[] outputColor = {
+                    Half.valueOf(buffer.getShort(0)).floatValue(),
+                    Half.valueOf(buffer.getShort(2)).floatValue(),
+                    Half.valueOf(buffer.getShort(4)).floatValue() };
+
+            assertEquals(expectedColor[0], outputColor[0], 0.01f);
+            assertEquals(expectedColor[1], outputColor[1], 0.01f);
+            assertEquals(expectedColor[2], outputColor[2], 0.01f);
+        }
+    }
+
+    private class SRGBCompare implements CompareFunction {
+        private Bitmap.Config mConfig;
+
+        SRGBCompare(Bitmap.Config config) {
+            mConfig = config;
+        }
+
+        public Bitmap.Config getConfig() {
+            return mConfig;
+        }
+
+        public ColorSpace getColorSpace() {
+            return ColorSpace.get(ColorSpace.Named.SRGB);
+        }
+
+        public void verify(float[] srcColor, ColorSpace.Named srcColorSpace, Bitmap dstBitmap) {
+            int color = dstBitmap.getPixel(0, 0);
+            assertEquals(1.0f, Color.alpha(color) / 255.0f, 0.0f);
+            assertEquals(srcColor[0], Color.red(color) / 255.0f, 0.01f);
+            assertEquals(srcColor[1], Color.green(color) / 255.0f, 0.01f);
+            assertEquals(srcColor[2], Color.blue(color) / 255.0f, 0.01f);
+        }
+    }
+
+    private void testGetBitmap(int eglColorSpace, ColorSpace.Named colorSpace,
+            boolean useHalfFloat, CompareFunction compareFunction) throws Throwable {
+        final TextureViewCtsActivity activity = mActivityRule.launchActivity(null);
+        activity.waitForSurface();
+
+        try {
+            activity.initGl(eglColorSpace, useHalfFloat);
+        } catch (RuntimeException e) {
+            // failure to init GL with the right colorspace is not a TextureView failure as some
+            // devices may not support 16-bits
+            if (!useHalfFloat) {
+                fail("Unable to initGL : " + e);
+            }
+            return;
+        }
+
+        final float[] inputColor = { 1.0f, 128 / 255.0f, 0.0f};
+
+        int updatedCount;
+        updatedCount = activity.waitForSurfaceUpdateCount(0);
+        assertEquals(0, updatedCount);
+        activity.drawColor(inputColor[0], inputColor[1], inputColor[2], 1.0f);
+        updatedCount = activity.waitForSurfaceUpdateCount(1);
+        assertEquals(1, updatedCount);
+
+        final Bitmap bitmap = activity.getContents(compareFunction.getConfig(),
+                compareFunction.getColorSpace());
+        compareFunction.verify(inputColor, colorSpace, bitmap);
     }
 
     private static void drawGlQuad(int width, int height) {

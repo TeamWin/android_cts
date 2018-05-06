@@ -47,6 +47,7 @@ import android.content.Context;
 import android.content.pm.PackageManager;
 import android.content.res.Resources;
 import android.graphics.Rect;
+import android.platform.test.annotations.AppModeFull;
 import android.test.suitebuilder.annotation.MediumTest;
 import android.view.Gravity;
 import android.view.View;
@@ -76,6 +77,7 @@ import java.util.function.Function;
  * These APIs allow exploring the screen and requesting an action to be performed
  * on a given view from an AccessibilityService.
  */
+@AppModeFull
 public class AccessibilityWindowQueryTest
         extends AccessibilityActivityTestCase<AccessibilityWindowQueryActivity> {
     private static String CONTENT_VIEW_RES_NAME =

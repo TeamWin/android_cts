@@ -31,6 +31,7 @@
     </target_preparer>
 
     <target_preparer class="com.android.tradefed.targetprep.RunCommandTargetPreparer">
+        <option name="run-command" value="am wait-for-broadcast-idle" />
         <option name="run-command" value="am set-standby-bucket android.content.syncmanager.cts.app1 10" />
         <option name="run-command" value="am set-standby-bucket android.content.syncmanager.cts.app2 10" />
         <option name="run-command" value="setprop log.tag.SyncManager VERBOSE" />
