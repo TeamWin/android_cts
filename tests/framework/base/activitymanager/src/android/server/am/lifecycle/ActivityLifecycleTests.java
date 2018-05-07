@@ -23,6 +23,7 @@ import static android.view.Surface.ROTATION_270;
 import static android.view.Surface.ROTATION_90;
 
 import static org.junit.Assert.fail;
+import static org.junit.Assume.assumeTrue;
 
 import android.app.Activity;
 import android.content.ComponentName;
@@ -241,6 +242,9 @@ public class ActivityLifecycleTests extends ActivityLifecycleClientTestBase {
 
     @Test
     public void testPausedWhenRecreatedFromInNonFocusedStack() throws Exception {
+        assumeTrue("Skipping test: no split multi-window support",
+                supportsSplitScreenMultiWindow());
+
         // Launch first activity
         final Activity firstActivity =
                 mFirstActivityTestRule.launchActivity(new Intent());
@@ -275,6 +279,9 @@ public class ActivityLifecycleTests extends ActivityLifecycleClientTestBase {
 
     @Test
     public void testPausedWhenRestartedFromInNonFocusedStack() throws Exception {
+        assumeTrue("Skipping test: no split multi-window support",
+                supportsSplitScreenMultiWindow());
+
         // Launch first activity
         final Activity firstActivity =
                 mFirstActivityTestRule.launchActivity(new Intent());
@@ -388,11 +395,8 @@ public class ActivityLifecycleTests extends ActivityLifecycleClientTestBase {
         // Wait for activity to resume
         waitAndAssertActivityStates(state(trackingActivity, ON_RESUME));
 
-        // Enter split screen
-        moveTaskToPrimarySplitScreen(trackingActivity.getTaskId());
-
-        // Start an activity in separate task (will be placed in secondary stack)
-        getLaunchActivityBuilder().execute();
+        // Launch translucent activity, which will make the first one paused.
+        mTranslucentActivityTestRule.launchActivity(new Intent());
 
         // Wait for first activity to become paused
         waitAndAssertActivityStates(state(trackingActivity, ON_PAUSE));
@@ -576,11 +580,8 @@ public class ActivityLifecycleTests extends ActivityLifecycleClientTestBase {
         LifecycleVerifier.assertLaunchSequence(SingleTopActivity.class, getLifecycleLog(),
                 true /* includeCallbacks */);
 
-        // Enter split screen
-        moveTaskToPrimarySplitScreen(singleTopActivity.getTaskId());
-
-        // Start an activity in separate task (will be placed in secondary stack)
-        getLaunchActivityBuilder().execute();
+        // Launch translucent activity, which will make the first one paused.
+        mTranslucentActivityTestRule.launchActivity(new Intent());
 
         // Wait for the activity to pause
         waitAndAssertActivityStates(state(singleTopActivity, ON_PAUSE));
@@ -589,7 +590,7 @@ public class ActivityLifecycleTests extends ActivityLifecycleClientTestBase {
         getLifecycleLog().clear();
         final Intent intent = new Intent(InstrumentationRegistry.getContext(),
                 SingleTopActivity.class);
-        intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+        intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TOP);
         InstrumentationRegistry.getTargetContext().startActivity(intent);
 
         // Wait for the activity to resume again
@@ -608,6 +609,9 @@ public class ActivityLifecycleTests extends ActivityLifecycleClientTestBase {
 
     @Test
     public void testLifecycleOnMoveToFromSplitScreenRelaunch() throws Exception {
+        assumeTrue("Skipping test: no split multi-window support",
+                supportsSplitScreenMultiWindow());
+
         // Launch a singleTop activity
         final Activity testActivity =
                 mCallbackTrackingActivityTestRule.launchActivity(new Intent());
@@ -650,6 +654,9 @@ public class ActivityLifecycleTests extends ActivityLifecycleClientTestBase {
 
     @Test
     public void testLifecycleOnMoveToFromSplitScreenNoRelaunch() throws Exception {
+        assumeTrue("Skipping test: no split multi-window support",
+                supportsSplitScreenMultiWindow());
+
         // Launch a singleTop activity
         final Activity testActivity =
                 mConfigChangeHandlingActivityTestRule.launchActivity(new Intent());
