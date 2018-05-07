@@ -34,6 +34,8 @@ import android.content.ComponentName;
 import android.content.IntentSender;
 import android.os.Bundle;
 import android.os.CancellationSignal;
+import android.os.Handler;
+import android.os.HandlerThread;
 import android.os.SystemClock;
 import android.service.autofill.AutofillService;
 import android.service.autofill.Dataset;
@@ -83,10 +85,21 @@ public class InstrumentedAutoFillService extends AutofillService {
 
     protected static String sServiceLabel = SERVICE_CLASS;
 
+    // We must handle all requests in a separate thread as the service's main thread is the also
+    // the UI thread of the test process and we don't want to hose it in case of failures here
+    private static final HandlerThread sMyThread = new HandlerThread("MyServiceThread");
+    private final Handler mHandler;
+
+    static {
+        Log.i(TAG, "Starting thread " + sMyThread);
+        sMyThread.start();
+    }
+
     public InstrumentedAutoFillService() {
         sInstance.set(this);
         // TODO(b/79201521): temporarily using short names so tests don't fail because of ...
         sServiceLabel = "Shorty";
+        mHandler = Handler.createAsync(sMyThread.getLooper());
     }
 
     private static InstrumentedAutoFillService peekInstance() {
@@ -159,24 +172,30 @@ public class InstrumentedAutoFillService extends AutofillService {
         return sServiceLabel;
     }
 
+    private void handleConnected(boolean connected) {
+        synchronized (sLock) {
+            Log.v(TAG, "handleConnected(): from " + sConnected + " to " + connected);
+            sConnected = connected;
+        }
+    }
+
     @Override
     public void onConnected() {
-        synchronized (sLock) {
-            Log.v(TAG, "onConnected(): connected=" + sConnected);
-            sConnected = true;
-        }
+        mHandler.post(()->handleConnected(true));
     }
 
     @Override
     public void onDisconnected() {
-        synchronized (sLock) {
-            Log.v(TAG, "onDisconnected(): connected=" + sConnected);
-            sConnected = false;
-        }
+        mHandler.post(()->handleConnected(false));
     }
 
     @Override
     public void onFillRequest(android.service.autofill.FillRequest request,
+            CancellationSignal cancellationSignal, FillCallback callback) {
+        mHandler.post(()->handleFillRequest(request, cancellationSignal, callback));
+    }
+
+    private void handleFillRequest(android.service.autofill.FillRequest request,
             CancellationSignal cancellationSignal, FillCallback callback) {
         if (DUMP_FILL_REQUESTS) dumpStructure("onFillRequest()", request.getFillContexts());
         synchronized (sLock) {
@@ -190,7 +209,11 @@ public class InstrumentedAutoFillService extends AutofillService {
     }
 
     @Override
-    public void onSaveRequest(android.service.autofill.SaveRequest request,
+    public void onSaveRequest(android.service.autofill.SaveRequest request, SaveCallback callback) {
+        mHandler.post(()->handleSaveRequest(request, callback));
+    }
+
+    private void handleSaveRequest(android.service.autofill.SaveRequest request,
             SaveCallback callback) {
         if (DUMP_SAVE_REQUESTS) dumpStructure("onSaveRequest()", request.getFillContexts());
         synchronized (sLock) {
@@ -582,23 +605,24 @@ public class InstrumentedAutoFillService extends AutofillService {
 
                 Log.v(TAG, "onFillRequest(): fillResponse = " + fillResponse);
                 callback.onSuccess(fillResponse);
+                Helper.offer(mFillRequests,
+                        new FillRequest(contexts, data, cancellationSignal, callback, flags),
+                        CONNECTION_TIMEOUT.ms());
             } catch (Throwable t) {
                 addException(t);
-            } finally {
-                mFillRequests.offer(new FillRequest(contexts, data, cancellationSignal, callback,
-                        flags));
             }
         }
 
         private void onSaveRequest(List<FillContext> contexts, Bundle data, SaveCallback callback,
                 List<String> datasetIds) {
             Log.d(TAG, "onSaveRequest(): sender=" + mOnSaveIntentSender);
-            mSaveRequests.offer(new SaveRequest(contexts, data, callback, datasetIds));
             if (mOnSaveIntentSender != null) {
                 callback.onSuccess(mOnSaveIntentSender);
             } else {
                 callback.onSuccess();
             }
+            Helper.offer(mSaveRequests, new SaveRequest(contexts, data, callback, datasetIds),
+                    CONNECTION_TIMEOUT.ms());
         }
     }
 }

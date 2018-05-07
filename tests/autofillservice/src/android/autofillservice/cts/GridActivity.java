@@ -134,11 +134,12 @@ public class GridActivity extends AbstractAutoFillActivity {
     }
 
     public String getText(int row, int column) throws InterruptedException {
+        final long timeoutMs = 100;
         final BlockingQueue<String> queue = new LinkedBlockingQueue<>(1);
-        onCell(row, column, (c) -> queue.offer(c.getText().toString()));
-        final String text = queue.poll(100, TimeUnit.MILLISECONDS);
+        onCell(row, column, (c) -> Helper.offer(queue, c.getText().toString(), timeoutMs));
+        final String text = queue.poll(timeoutMs, TimeUnit.MILLISECONDS);
         if (text == null) {
-            throw new RetryableException("text not set in 100ms");
+            throw new RetryableException("text not set in " + timeoutMs + "ms");
         }
         return text;
     }
