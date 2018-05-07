@@ -32,6 +32,7 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 
 import java.io.File;
+import java.io.EOFException;
 
 /**
  * Collect device information from host and write to a JSON file.
@@ -44,8 +45,6 @@ public abstract class DeviceInfo extends BaseHostJUnit4Test {
 
     public static final String FILE_SUFFIX = ".deviceinfo.json";
 
-    private HostInfoStore mStore;
-
     @Rule
     public TestLogData mLogger = new TestLogData();
 
@@ -56,10 +55,16 @@ public abstract class DeviceInfo extends BaseHostJUnit4Test {
         FileInputStreamSource source = null;
         try {
             jsonFile = FileUtil.createTempFile(getClass().getSimpleName(), FILE_SUFFIX);
-            mStore = new HostInfoStore(jsonFile);
-            mStore.open();
-            collectDeviceInfo(mStore);
-            mStore.close();
+            try (HostInfoStore store = new HostInfoStore(jsonFile)) {
+                store.open();
+                collectDeviceInfo(store);
+            } finally {
+                // If file is empty throw exception so it is not copied to the results.
+                if (jsonFile != null && jsonFile.exists() &&
+                        jsonFile.length() == 0) {
+                    throw new EOFException(String.format("File is empty: %s", deviceInfoName));
+                }
+            }
             source = new FileInputStreamSource(jsonFile);
             mLogger.addTestLog(deviceInfoName, LogDataType.TEXT, source);
         } catch (Exception e) {

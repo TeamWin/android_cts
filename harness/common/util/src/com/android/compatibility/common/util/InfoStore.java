@@ -16,10 +16,11 @@
 package com.android.compatibility.common.util;
 
 import java.io.IOException;
+import java.lang.AutoCloseable;
 import java.util.Arrays;
 import java.util.List;
 
-public abstract class InfoStore {
+public abstract class InfoStore implements AutoCloseable {
 
     protected static final int MAX_STRING_LENGTH = 1000;
     protected static final int MAX_ARRAY_LENGTH = 1000;
@@ -33,7 +34,8 @@ public abstract class InfoStore {
     /**
      * Closes the writer.
      */
-    abstract void close() throws IOException;
+    @Override
+    public abstract void close() throws Exception;
 
     /**
      * Start a new group of result.
