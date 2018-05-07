@@ -65,13 +65,13 @@ public class SubscriptionManagerTest {
     private String mPackageName;
 
     @BeforeClass
-    public void setUpClass() throws Exception {
+    public static void setUpClass() throws Exception {
         InstrumentationRegistry.getInstrumentation().getUiAutomation()
                 .executeShellCommand("svc wifi disable");
     }
 
     @AfterClass
-    public void tearDownClass() throws Exception {
+    public static void tearDownClass() throws Exception {
         InstrumentationRegistry.getInstrumentation().getUiAutomation()
                 .executeShellCommand("svc wifi enable");
     }
