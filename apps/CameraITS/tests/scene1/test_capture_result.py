@@ -63,9 +63,9 @@ def main():
             "android.colorCorrection.transform": manual_transform,
             "android.colorCorrection.gains": manual_gains,
             "android.tonemap.mode": 0,
-            "android.tonemap.curveRed": manual_tonemap,
-            "android.tonemap.curveGreen": manual_tonemap,
-            "android.tonemap.curveBlue": manual_tonemap,
+            "android.tonemap.curve": {"red": manual_tonemap,
+                                      "green": manual_tonemap,
+                                      "blue": manual_tonemap},
             "android.control.aeRegions": manual_region,
             "android.control.afRegions": manual_region,
             "android.control.awbRegions": manual_region,
@@ -163,9 +163,9 @@ def test_manual(cam, w_map, h_map, lsc_map_auto, props):
 
     gains = cap_res["android.colorCorrection.gains"]
     transform = cap_res["android.colorCorrection.transform"]
-    curves = [cap_res["android.tonemap.curveRed"],
-              cap_res["android.tonemap.curveGreen"],
-              cap_res["android.tonemap.curveBlue"]]
+    curves = [cap_res["android.tonemap.curve"]["red"],
+              cap_res["android.tonemap.curve"]["green"],
+              cap_res["android.tonemap.curve"]["blue"]]
     exp_time = cap_res['android.sensor.exposureTime']
     lsc_map = cap_res["android.statistics.lensShadingMap"]
     ctrl_mode = cap_res["android.control.mode"]
