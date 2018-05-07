@@ -633,8 +633,8 @@ jlong createRenderer(JNIEnv*, jclass) {
 
 bool isCameraReady(JNIEnv*, jclass, jlong renderer) {
     if (renderer == 0) {
-        ALOGE("Invalid renderer.");
-        return -EINVAL;
+        ALOGE("isCameraReady: Invalid renderer: nullptr.");
+        return false;
     }
 
     return native(renderer)->isCameraReady();
