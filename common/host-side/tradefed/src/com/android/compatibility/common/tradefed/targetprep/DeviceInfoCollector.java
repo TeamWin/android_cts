@@ -110,9 +110,9 @@ public class DeviceInfoCollector extends ApkInstrumentationPreparer implements I
             deviceInfoDir = FileUtil.createTempDir(DeviceInfo.RESULT_DIR_NAME);
             if (device.pullDir(mSrcDir, deviceInfoDir)) {
                 for (File deviceInfoFile : deviceInfoDir.listFiles()) {
-                    FileInputStreamSource source = new FileInputStreamSource(deviceInfoFile);
-                    mLogger.testLog(deviceInfoFile.getName(), LogDataType.TEXT, source);
-                    source.close();
+                    try (FileInputStreamSource source = new FileInputStreamSource(deviceInfoFile)) {
+                        mLogger.testLog(deviceInfoFile.getName(), LogDataType.TEXT, source);
+                    }
                 }
             } else {
                 CLog.e("Failed to pull device-info files from device %s", device.getSerialNumber());
