@@ -99,7 +99,6 @@ final class UiBot {
     private static final BySelector DATASET_HEADER_SELECTOR =
             By.res("android", RESOURCE_ID_DATASET_HEADER);
 
-    private static final boolean DONT_DUMP_ON_ERROR = false;
     private static final boolean DUMP_ON_ERROR = true;
 
     /** Pass to {@link #setScreenOrientation(int)} to change the display to portrait mode */
@@ -170,10 +169,20 @@ final class UiBot {
      * @return the dataset picker object.
      */
     UiObject2 assertDatasets(String...names) throws Exception {
-        final UiObject2 picker = findDatasetPicker(UI_DATASET_PICKER_TIMEOUT);
-        assertWithMessage("wrong dataset names").that(getChildrenAsText(picker))
-                .containsExactlyElementsIn(Arrays.asList(names)).inOrder();
-        return picker;
+        // TODO: change run() so it can rethrow the original message
+        return UI_DATASET_PICKER_TIMEOUT.run("assertDatasets: " + Arrays.toString(names), () -> {
+            final UiObject2 picker = findDatasetPicker(UI_DATASET_PICKER_TIMEOUT);
+            try {
+                // TODO: use a library to check it contains, instead of asserThat + catch exception
+                assertWithMessage("wrong dataset names").that(getChildrenAsText(picker))
+                        .containsExactlyElementsIn(Arrays.asList(names)).inOrder();
+                return picker;
+            } catch (AssertionError e) {
+                // Value mismatch - most likely UI didn't change yet, try again
+                Log.w(TAG, "datasets don't match yet: " + e.getMessage());
+                return null;
+            }
+        });
     }
 
     /**
@@ -182,10 +191,20 @@ final class UiBot {
      * @return the dataset picker object.
      */
     UiObject2 assertDatasetsContains(String...names) throws Exception {
-        final UiObject2 picker = findDatasetPicker(UI_DATASET_PICKER_TIMEOUT);
-        assertWithMessage("wrong dataset names").that(getChildrenAsText(picker))
+        // TODO: change run() so it can rethrow the original message
+        return UI_DATASET_PICKER_TIMEOUT.run("assertDatasets: " + Arrays.toString(names), () -> {
+            final UiObject2 picker = findDatasetPicker(UI_DATASET_PICKER_TIMEOUT);
+            try {
+                // TODO: use a library to check it contains, instead of asserThat + catch exception
+                assertWithMessage("wrong dataset names").that(getChildrenAsText(picker))
                 .containsAllIn(Arrays.asList(names)).inOrder();
-        return picker;
+                return picker;
+            } catch (AssertionError e) {
+                // Value mismatch - most likely UI didn't change yet, try again
+                Log.w(TAG, "datasets don't match yet: " + e.getMessage());
+                return null;
+            }
+        });
     }
 
     /**
