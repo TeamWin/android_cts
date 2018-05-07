@@ -352,11 +352,12 @@ public class VirtualContainerActivityTest extends AutoFillServiceTestCase {
 
         // Trigger auto-fill.
         mActivity.getSystemService(AutofillManager.class).requestAutofill(
-                mActivity.mCustomView, mActivity.mUsername.text.id, mActivity.mUsername.bounds);
+                mActivity.mCustomView, mActivity.mUsername.text.id,
+                mActivity.mUsername.getAbsCoordinates());
         sReplier.getNextFillRequest();
 
         // Auto-fill it.
-        final UiObject2 picker = mUiBot.assertDatasets("The Dude", "Jenny");
+        final UiObject2 picker = assertDatasetShown(mActivity.mUsername, "The Dude", "Jenny");
         mUiBot.selectDataset(picker, pickFirst ? "The Dude" : "Jenny");
 
         // Check the results.
@@ -725,23 +726,23 @@ public class VirtualContainerActivityTest extends AutoFillServiceTestCase {
         sReplier.getNextFillRequest();
 
         // With no filter text all datasets should be shown
-        mUiBot.assertDatasets(aa, ab, b);
+        assertDatasetShown(mActivity.mUsername, aa, ab, b);
 
         // Only two datasets start with 'a'
         mActivity.mUsername.setText("a");
-        mUiBot.assertDatasets(aa, ab);
+        assertDatasetShown(mActivity.mUsername, aa, ab);
 
         // Only one dataset start with 'aa'
         mActivity.mUsername.setText("aa");
-        mUiBot.assertDatasets(aa);
+        assertDatasetShown(mActivity.mUsername, aa);
 
         // Only two datasets start with 'a'
         mActivity.mUsername.setText("a");
-        mUiBot.assertDatasets(aa, ab);
+        assertDatasetShown(mActivity.mUsername, aa, ab);
 
         // With no filter text all datasets should be shown
         mActivity.mUsername.setText("");
-        mUiBot.assertDatasets(aa, ab, b);
+        assertDatasetShown(mActivity.mUsername, aa, ab, b);
 
         // No dataset start with 'aaa'
         final MyAutofillCallback callback = mActivity.registerCallback();
@@ -753,9 +754,11 @@ public class VirtualContainerActivityTest extends AutoFillServiceTestCase {
     /**
      * Asserts the dataset picker is properly displayed in a give line.
      */
-    protected void assertDatasetShown(Line line, String... expectedDatasets) throws Exception {
+    protected UiObject2 assertDatasetShown(Line line, String... expectedDatasets)
+            throws Exception {
         boolean autofillViewBoundsMatches = !Helper.isAutofillWindowFullScreen(mContext);
-        final Rect pickerBounds = mUiBot.assertDatasets(expectedDatasets).getVisibleBounds();
+        final UiObject2 datasetPicker = mUiBot.assertDatasets(expectedDatasets);
+        final Rect pickerBounds = datasetPicker.getVisibleBounds();
         final Rect fieldBounds = line.getAbsCoordinates();
         if (autofillViewBoundsMatches) {
             assertWithMessage("vertical coordinates don't match; picker=%s, field=%s", pickerBounds,
@@ -763,6 +766,7 @@ public class VirtualContainerActivityTest extends AutoFillServiceTestCase {
             assertWithMessage("horizontal coordinates don't match; picker=%s, field=%s",
                     pickerBounds, fieldBounds).that(pickerBounds.left).isEqualTo(fieldBounds.left);
         }
+        return datasetPicker;
     }
 
     protected void assertLabel(ViewNode node, String expectedValue) {
