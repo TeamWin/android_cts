@@ -48,7 +48,7 @@ public class DeviceReportLog extends ReportLog {
         super(reportLogName, streamName);
         try {
             // dir value must match the src-dir value configured in ReportLogCollector target
-            // preparer in cts/tools/cts-tradefed/res/config/cts-preconditions.xml
+            // preparer in cts/harness/tools/cts-tradefed/res/config/cts-preconditions.xml
             if (!Environment.getExternalStorageState().equals(Environment.MEDIA_MOUNTED)) {
                 throw new IOException("External storage is not mounted");
             } else if ((!logDirectory.exists() && !logDirectory.mkdirs())
