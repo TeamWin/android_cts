@@ -99,11 +99,9 @@ public class TelephonyManagerTest {
             return;
         }
 
-        // Test register
         TestThread t = new TestThread(new Runnable() {
             public void run() {
                 Looper.prepare();
-
                 mListener = new PhoneStateListener() {
                     @Override
                     public void onCellLocationChanged(CellLocation location) {
@@ -115,36 +113,54 @@ public class TelephonyManagerTest {
                         }
                     }
                 };
-                mTelephonyManager.listen(mListener, PhoneStateListener.LISTEN_CELL_LOCATION);
-                CellLocation.requestLocationUpdate();
+
+                synchronized (mLock) {
+                    mLock.notify(); // mListener is ready
+                }
+
                 Looper.loop();
             }
         });
-        t.start();
+
         synchronized (mLock) {
-            mLock.wait(TOLERANCE);
+            t.start();
+            mLock.wait(TOLERANCE); // wait for mListener
         }
-        assertTrue(mOnCellLocationChangedCalled);
+
+        // Test register
+        synchronized (mLock) {
+            // .listen generates an onCellLocationChanged event
+            mTelephonyManager.listen(mListener, PhoneStateListener.LISTEN_CELL_LOCATION);
+            mLock.wait(TOLERANCE);
+
+            assertTrue("Test register, mOnCellLocationChangedCalled should be true.",
+                mOnCellLocationChangedCalled);
+        }
+
+        synchronized (mLock) {
+            mOnCellLocationChangedCalled = false;
+            CellLocation.requestLocationUpdate();
+            mLock.wait(TOLERANCE);
+
+            assertTrue("Test register, mOnCellLocationChangedCalled should be true.",
+                mOnCellLocationChangedCalled);
+        }
+
+        // unregister the listener
+        mTelephonyManager.listen(mListener, PhoneStateListener.LISTEN_NONE);
+        Thread.sleep(TOLERANCE);
 
         // Test unregister
-        t = new TestThread(new Runnable() {
-            public void run() {
-                Looper.prepare();
-                // unregister the listener
-                mTelephonyManager.listen(mListener, PhoneStateListener.LISTEN_NONE);
-                mOnCellLocationChangedCalled = false;
-                // unregister again, to make sure doing so does not call the listener
-                mTelephonyManager.listen(mListener, PhoneStateListener.LISTEN_NONE);
-                CellLocation.requestLocationUpdate();
-                Looper.loop();
-            }
-        });
-
-        t.start();
         synchronized (mLock) {
+            mOnCellLocationChangedCalled = false;
+            // unregister again, to make sure doing so does not call the listener
+            mTelephonyManager.listen(mListener, PhoneStateListener.LISTEN_NONE);
+            CellLocation.requestLocationUpdate();
             mLock.wait(TOLERANCE);
+
+            assertFalse("Test unregister, mOnCellLocationChangedCalled should be false.",
+                mOnCellLocationChangedCalled);
         }
-        assertFalse(mOnCellLocationChangedCalled);
     }
 
     /**
@@ -474,8 +490,9 @@ public class TelephonyManagerTest {
                 Looper.loop();
             }
         });
-        t.start();
+
         synchronized (mLock) {
+            t.start();
             mLock.wait(TOLERANCE);
         }
 
