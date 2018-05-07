@@ -31,7 +31,7 @@ public final class MetricsReportLog extends ReportLog {
     private final IBuildInfo mBuildInfo;
 
     // Temporary folder must match the temp-dir value configured in ReportLogCollector target
-    // preparer in cts/tools/cts-tradefed/res/config/cts-oreconditions.xml
+    // preparer in cts/harness/tools/cts-tradefed/res/config/cts-oreconditions.xml
     private static final String TEMPORARY_REPORT_FOLDER = "temp-report-logs";
     private ReportLogHostInfoStore store;
 
