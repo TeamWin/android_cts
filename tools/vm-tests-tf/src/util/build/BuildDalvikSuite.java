@@ -260,14 +260,29 @@ public class BuildDalvikSuite {
     }
 
     private HostState openCTSHostFileFor(String pName, String classOnlyName) {
-        String sourceName = "JUnit_" + classOnlyName;
-        String fileName = HOSTJUNIT_SRC_OUTPUT_FOLDER + "/" + pName.replaceAll("\\.","/") + "/" +
-                sourceName + ".java";
+        String sourceName = classOnlyName;
+
+        String modPackage = pName;
+        {
+            // Given a class name of "Test_zzz" and a package of "xxx.yyy.zzz," strip
+            // "zzz" from the package to reduce duplication (and dashboard clutter).
+            int lastDot = modPackage.lastIndexOf('.');
+            if (lastDot > 0) {
+                String lastPackageComponent = modPackage.substring(lastDot + 1);
+                if (classOnlyName.equals("Test_" + lastPackageComponent)) {
+                    // Drop the duplication.
+                    modPackage = modPackage.substring(0, lastDot);
+                }
+            }
+        }
+
+        String fileName = HOSTJUNIT_SRC_OUTPUT_FOLDER + "/" + modPackage.replaceAll("\\.", "/")
+                + "/" + sourceName + ".java";
 
         HostState newState = new HostState(fileName);
 
         newState.append(getWarningMessage());
-        newState.append("package " + pName + ";\n");
+        newState.append("package " + modPackage + ";\n");
         newState.append("import java.io.IOException;\n" +
                 "import java.util.concurrent.TimeUnit;\n\n" +
                 "import com.android.tradefed.device.CollectingOutputReceiver;\n" +
