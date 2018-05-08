@@ -59,6 +59,7 @@ public class DeviceIdleJobsTest {
     private static final long BACKGROUND_JOBS_EXPECTED_DELAY = 3_000;
     private static final long POLL_INTERVAL = 500;
     private static final long DEFAULT_WAIT_TIMEOUT = 1000;
+    private static final long SHELL_TIMEOUT = 3_000;
 
     enum Bucket {
         ACTIVE,
@@ -226,7 +227,7 @@ public class DeviceIdleJobsTest {
     private void toggleDeviceIdleState(final boolean idle) throws Exception {
         mUiDevice.executeShellCommand("cmd deviceidle " + (idle ? "force-idle" : "unforce"));
         assertTrue("Could not change device idle state to " + idle,
-                waitUntilTrue(DEFAULT_WAIT_TIMEOUT, () -> {
+                waitUntilTrue(SHELL_TIMEOUT, () -> {
                     synchronized (DeviceIdleJobsTest.this) {
                         return mDeviceInDoze == idle;
                     }
@@ -279,7 +280,7 @@ public class DeviceIdleJobsTest {
         if (interrupted) {
             Thread.currentThread().interrupt();
         }
-        return waitUntilTrue(DEFAULT_WAIT_TIMEOUT, () -> !isTestAppTempWhitelisted());
+        return waitUntilTrue(SHELL_TIMEOUT, () -> !isTestAppTempWhitelisted());
     }
 
     private boolean awaitJobStart(long maxWait) throws Exception {
