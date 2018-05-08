@@ -717,6 +717,11 @@ public class StagefrightTest extends InstrumentationTestCase {
         doStagefrightTest(R.raw.bug_37093318, (4 * 60 * 1000));
     }
 
+    @SecurityTest
+    public void testStagefright_cve_2016_0824() throws Exception {
+        doStagefrightTest(R.raw.cve_2016_0824);
+    }
+
     private void doStagefrightTest(final int rid) throws Exception {
         doStagefrightTestMediaPlayer(rid);
         doStagefrightTestMediaCodec(rid);
