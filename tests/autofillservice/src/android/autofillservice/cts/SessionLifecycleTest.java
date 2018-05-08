@@ -41,6 +41,7 @@ import android.content.Intent;
 import android.content.IntentSender;
 import android.os.Bundle;
 import android.os.SystemClock;
+import android.platform.test.annotations.AppModeFull;
 import android.support.test.uiautomator.UiObject2;
 import android.view.autofill.AutofillValue;
 
@@ -53,6 +54,7 @@ import java.util.concurrent.Callable;
 /**
  * Test the lifecycle of a autofill session
  */
+@AppModeFull // This test requires android.permission.WRITE_EXTERNAL_STORAGE
 public class SessionLifecycleTest extends AutoFillServiceTestCase {
     private static final String ID_BUTTON = "button";
     private static final String ID_CANCEL = "cancel";
