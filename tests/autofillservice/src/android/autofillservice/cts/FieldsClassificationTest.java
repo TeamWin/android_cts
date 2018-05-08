@@ -18,6 +18,7 @@ package android.autofillservice.cts;
 import static android.autofillservice.cts.Helper.assertFillEventForContextCommitted;
 import static android.autofillservice.cts.Helper.assertFillEventForFieldsClassification;
 import static android.provider.Settings.Secure.AUTOFILL_FEATURE_FIELD_CLASSIFICATION;
+import static android.provider.Settings.Secure.AUTOFILL_USER_DATA_MAX_CATEGORY_COUNT;
 import static android.provider.Settings.Secure.AUTOFILL_USER_DATA_MAX_FIELD_CLASSIFICATION_IDS_SIZE;
 import static android.provider.Settings.Secure.AUTOFILL_USER_DATA_MAX_USER_DATA_SIZE;
 import static android.provider.Settings.Secure.AUTOFILL_USER_DATA_MAX_VALUE_LENGTH;
@@ -66,6 +67,10 @@ public class FieldsClassificationTest extends AutoFillServiceTestCase {
     @ClassRule
     public static final SettingsStateChangerRule sUserDataMaxValueChanger =
             new SettingsStateChangerRule(sContext, AUTOFILL_USER_DATA_MAX_VALUE_LENGTH, "50");
+
+    @ClassRule
+    public static final SettingsStateChangerRule sUserDataMaxCategoryChanger =
+            new SettingsStateChangerRule(sContext, AUTOFILL_USER_DATA_MAX_CATEGORY_COUNT, "42");
 
     @Rule
     public final AutofillActivityTestRule<GridActivity> mActivityRule =
@@ -132,6 +137,7 @@ public class FieldsClassificationTest extends AutoFillServiceTestCase {
         assertThat(UserData.getMaxUserDataSize()).isEqualTo(9);
         assertThat(UserData.getMinValueLength()).isEqualTo(5);
         assertThat(UserData.getMaxValueLength()).isEqualTo(50);
+        assertThat(UserData.getMaxCategoryCount()).isEqualTo(42);
     }
 
     @Test
