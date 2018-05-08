@@ -52,6 +52,7 @@ import java.lang.reflect.Type;
 import java.util.Arrays;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Set;
 
 /**
  * Class to deal with serializing and deserializing between JSON and Camera2 objects.
@@ -472,6 +473,37 @@ public class ItsSerializer {
         Field[] allFields = md.getClass().getDeclaredFields();
         if (md.getClass() == TotalCaptureResult.class) {
             allFields = CaptureResult.class.getDeclaredFields();
+        }
+        if (md.getClass() == CameraCharacteristics.class) {
+            // Special handling for information not stored in metadata keys
+            CameraCharacteristics chars = (CameraCharacteristics) md;
+            List<CameraCharacteristics.Key<?>> charsKeys = chars.getKeys();
+            List<CaptureRequest.Key<?>> requestKeys = chars.getAvailableCaptureRequestKeys();
+            Set<String> physicalCamIds = chars.getPhysicalCameraIds();
+
+            try {
+                JSONArray charKeysArr = new JSONArray();
+                for (CameraCharacteristics.Key<?> k : charsKeys) {
+                    charKeysArr.put(k.getName());
+                }
+                JSONArray reqKeysArr = new JSONArray();
+                for (CaptureRequest.Key<?> k : requestKeys) {
+                    reqKeysArr.put(k.getName());
+                }
+                // Avoid using the hidden metadata key name here to prevent confliction
+                jsonObj.put("camera.characteristics.keys", charKeysArr);
+                jsonObj.put("camera.characteristics.requestKeys", reqKeysArr);
+
+                if (!physicalCamIds.isEmpty()) {
+                    JSONArray physCamIdsArr = new JSONArray();
+                    for (String id : physicalCamIds) {
+                        physCamIdsArr.put(id);
+                    }
+                    jsonObj.put("camera.characteristics.physicalCamIds", physCamIdsArr);
+                }
+            } catch (org.json.JSONException e) {
+                throw new ItsException("JSON error for CameraCharacteristics:", e);
+            }
         }
         for (Field field : allFields) {
             if (Modifier.isPublic(field.getModifiers()) &&
