@@ -243,6 +243,55 @@ public class ExtendedInCallServiceTest extends BaseTelecomTestWithMockServices {
         assertConnectionState(connection, Connection.STATE_ACTIVE);
     }
 
+    /**
+     * Verifies that the {@link TelecomManager#endCall()} API is able to end a ringing call.
+     */
+    public void testEndRingingCall() {
+        if (!mShouldTestTelecom) {
+            return;
+        }
+
+        addAndVerifyNewIncomingCall(createTestNumber(), null);
+        MockConnection connection = verifyConnectionForIncomingCall(0);
+        final MockInCallService inCallService = mInCallCallbacks.getService();
+        final Call call = inCallService.getLastCall();
+
+        assertCallState(call, Call.STATE_RINGING);
+        assertConnectionState(connection, Connection.STATE_RINGING);
+
+        mTelecomManager.endCall();
+
+        assertCallState(call, Call.STATE_DISCONNECTED);
+        assertConnectionState(connection, Connection.STATE_DISCONNECTED);
+    }
+
+    /**
+     * Verifies that the {@link TelecomManager#endCall()} API is able to end an active call.
+     */
+    public void testEndCall() {
+        if (!mShouldTestTelecom) {
+            return;
+        }
+
+        addAndVerifyNewIncomingCall(createTestNumber(), null);
+        MockConnection connection = verifyConnectionForIncomingCall(0);
+        final MockInCallService inCallService = mInCallCallbacks.getService();
+        final Call call = inCallService.getLastCall();
+
+        assertCallState(call, Call.STATE_RINGING);
+        assertConnectionState(connection, Connection.STATE_RINGING);
+
+        mTelecomManager.acceptRingingCall();
+
+        assertCallState(call, Call.STATE_ACTIVE);
+        assertConnectionState(connection, Connection.STATE_ACTIVE);
+
+        mTelecomManager.endCall();
+
+        assertCallState(call, Call.STATE_DISCONNECTED);
+        assertConnectionState(connection, Connection.STATE_DISCONNECTED);
+    }
+
 
     /**
      * Tests that if there is the device is in a call and a second call comes in,
