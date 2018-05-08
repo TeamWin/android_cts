@@ -16,6 +16,10 @@
 package android.media.cts;
 
 import android.media.BufferingParams;
+import android.media.MediaCodecInfo;
+import android.media.MediaCodecInfo.CodecCapabilities;
+import android.media.MediaCodecInfo.VideoCapabilities;
+import android.media.MediaCodecList;
 import android.media.MediaFormat;
 import android.media.MediaPlayer;
 import android.media.MediaPlayer.TrackInfo;
@@ -239,13 +243,40 @@ public class StreamingMediaPlayerTest extends MediaPlayerTestBase {
             return; // skip
         }
 
-        // Play stream for 60 seconds
-        playLiveVideoTest(
-                "http://storage.googleapis.com/wvmedia/cenc/hls/sample_aes/" +
-                "bbb_1080p_30fps_11min/unmuxed_1500k/prog_index.m3u8",
-                60 * 1000);
+        MediaCodecList mcl = new MediaCodecList(MediaCodecList.REGULAR_CODECS);
+        for (MediaCodecInfo info : mcl.getCodecInfos()) {
+            if (info.isEncoder()
+                || info.getName().toLowerCase().startsWith("omx.google.")) {
+                continue;
+            }
+            try {
+                CodecCapabilities caps = info.getCapabilitiesForType(MediaFormat.MIMETYPE_VIDEO_AVC);
+                VideoCapabilities vcaps = caps.getVideoCapabilities();
+
+                // Play 1080p stream for 60 seconds if platform supports.
+                if (vcaps.areSizeAndRateSupported(1920 ,1080, 30)) {
+                    playLiveVideoTest(
+                            "http://storage.googleapis.com/wvmedia/cenc/hls/sample_aes/" +
+                            "bbb_1080p_30fps_11min/unmuxed_1500k/prog_index.m3u8",
+                            60 * 1000);
+                }
+            } catch (IllegalArgumentException e) {
+            }
+        }
     }
 
+
+    public void testHlsSampleAes_bbb_unmuxed_1000k() throws Exception {
+        if (!MediaUtils.checkDecoder(MediaFormat.MIMETYPE_VIDEO_AVC)) {
+            return; // skip
+        }
+
+        // Play 480p stream for 60 seconds
+        playLiveVideoTest(
+                "https://storage.googleapis.com/wvmedia/cenc/hls/sample_aes/" +
+                "bbb_480p_30fps/unmuxed_1000k/bbb_h264_main_480p_30fps_1000.m3u8",
+                60 * 1000);
+    }
 
     // Streaming audio from local HTTP server
     public void testPlayMp3Stream1() throws Throwable {
