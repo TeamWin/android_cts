@@ -33,6 +33,8 @@ import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
 import android.content.pm.ApplicationInfo;
+import android.content.pm.PackageManager;
+import android.content.res.Configuration;
 import android.os.IBinder;
 import android.os.Parcel;
 import android.os.PowerManager;
@@ -1063,11 +1065,33 @@ public class ActivityManagerProcessStateTest extends InstrumentationTestCase {
         }
     }
 
+    private boolean supportsCantSaveState() {
+        if (mContext.getPackageManager().hasSystemFeature(
+                PackageManager.FEATURE_CANT_SAVE_STATE)) {
+            return true;
+        }
+
+        // Most types of devices need to support this.
+        int mode = mContext.getResources().getConfiguration().uiMode
+                & Configuration.UI_MODE_TYPE_MASK;
+        if (mode != Configuration.UI_MODE_TYPE_WATCH
+                && mode != Configuration.UI_MODE_TYPE_APPLIANCE) {
+            // Most devices must support the can't save state feature.
+            throw new IllegalStateException("Devices that are not watches or appliances must "
+                    + "support FEATURE_CANT_SAVE_STATE");
+        }
+        return false;
+    }
+
     /**
      * Test that a single "can't save state" app has the proper process management
      * semantics.
      */
     public void testCantSaveStateLaunchAndBackground() throws Exception {
+        if (!supportsCantSaveState()) {
+            return;
+        }
+
         final Intent activityIntent = new Intent();
         activityIntent.setPackage(CANT_SAVE_STATE_1_PACKAGE_NAME);
         activityIntent.setAction(Intent.ACTION_MAIN);
@@ -1188,6 +1212,10 @@ public class ActivityManagerProcessStateTest extends InstrumentationTestCase {
      * Test that switching between two "can't save state" apps is handled properly.
      */
     public void testCantSaveStateLaunchAndSwitch() throws Exception {
+        if (!supportsCantSaveState()) {
+            return;
+        }
+
         final Intent activity1Intent = new Intent();
         activity1Intent.setPackage(CANT_SAVE_STATE_1_PACKAGE_NAME);
         activity1Intent.setAction(Intent.ACTION_MAIN);
