@@ -102,6 +102,9 @@ public class CorruptApkTests extends DeviceTestCase implements IBuildReceiver {
         // This catches if the device fails to install the app because a segmentation fault
         // or out of bounds read created by the bug occurs
         File tmpTxtFile = null;
+
+        // This isn't a closable in AOSP, so we use cancel instead.
+        @SuppressWarnings("MustBeClosedChecker")
         InputStreamSource source = device.getLogcat(200 * 1024);
         try {
             assertNotNull(source);
@@ -111,7 +114,7 @@ public class CorruptApkTests extends DeviceTestCase implements IBuildReceiver {
             assertFalse(s.contains("SIGSEGV"));
             assertFalse(s.contains("==ERROR"));
         } finally {
-            source.close();
+            source.cancel();
             if (tmpTxtFile != null) {
                 FileUtil.deleteFile(tmpTxtFile);
             }
