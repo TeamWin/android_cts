@@ -242,7 +242,7 @@ public class VirtualContainerActivityCompatModeTest extends VirtualContainerActi
         // Trigger auto-fill.
         focusToUsernameExpectNoWindowEvent();
         sReplier.getNextFillRequest();
-        mUiBot.assertDatasets("The Dude");
+        assertDatasetShown(mActivity.mUsername, "The Dude");
 
         // Fill in some stuff
         mActivity.mUsername.setText("foo");

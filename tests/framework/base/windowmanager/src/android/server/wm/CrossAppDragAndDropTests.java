@@ -148,7 +148,9 @@ public class CrossAppDragAndDropTests {
 
     @After
     public void tearDown() throws Exception {
-        assumeTrue(supportsDragAndDrop());
+        if (!supportsDragAndDrop()) {
+          return;
+        }
 
         executeShellCommand(AM_FORCE_STOP + mSourcePackageName);
         executeShellCommand(AM_FORCE_STOP + mTargetPackageName);

@@ -20,10 +20,11 @@ import android.app.Activity;
 import android.opengl.GLSurfaceView;
 import android.os.Bundle;
 import android.view.Window;
-import android.util.Log;
 
 import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.Semaphore;
 import java.util.concurrent.TimeUnit;
+
 import javax.microedition.khronos.egl.EGLConfig;
 import javax.microedition.khronos.opengles.GL10;
 
@@ -39,6 +40,7 @@ public class CameraGpuCtsActivity extends Activity {
     private static final String TAG = "CameraGpuCtsActivity";
 
     protected GLSurfaceView mView;
+    protected Semaphore mNativeRendererInitialized;
     protected long mNativeRenderer;
     private CountDownLatch mFinishedRendering;
 
@@ -55,12 +57,14 @@ public class CameraGpuCtsActivity extends Activity {
 
         public void onSurfaceCreated(GL10 gl, EGLConfig config) {
             mNativeRenderer = nCreateRenderer();
+            mNativeRendererInitialized.release();
         }
     }
 
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+        mNativeRendererInitialized = new Semaphore(0);
         mView = new GLSurfaceView(this);
         mView.setEGLContextClientVersion(2);
         mView.setRenderer(new Renderer());
@@ -92,6 +96,8 @@ public class CameraGpuCtsActivity extends Activity {
     }
 
     public void waitToFinishRendering() throws InterruptedException {
+        // Wait for renderer initialization
+        mNativeRendererInitialized.acquire();
         // Skip the test if there is no camera on board.
         if (!nIsCameraReady(mNativeRenderer)) {
             return;

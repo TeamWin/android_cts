@@ -21,7 +21,6 @@ import static android.autofillservice.cts.common.ShellHelper.runShellCommand;
 
 import android.autofillservice.cts.CannedFillResponse.CannedDataset;
 import android.content.IntentSender;
-import android.os.SystemClock;
 
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
@@ -46,9 +45,12 @@ public class DatasetFilteringTest extends AbstractLoginActivityTestCase {
 
     private static void sendKeyEvents(String keyCode) {
         runShellCommand("input keyevent " + keyCode);
-        // TODO wait mechanism for window size change
-        SystemClock.sleep(200);
     }
+
+    private void changeUsername(CharSequence username) {
+        mActivity.onUsername((v) -> v.setText(username));
+    }
+
 
     @Test
     public void testFilter() throws Exception {
@@ -82,24 +84,24 @@ public class DatasetFilteringTest extends AbstractLoginActivityTestCase {
         mUiBot.assertDatasets(aa, ab, b);
 
         // Only two datasets start with 'a'
-        mActivity.onUsername((v) -> v.setText("a"));
+        changeUsername("a");
         mUiBot.assertDatasets(aa, ab);
 
         // Only one dataset start with 'aa'
-        mActivity.onUsername((v) -> v.setText("aa"));
+        changeUsername("aa");
         mUiBot.assertDatasets(aa);
 
         // Only two datasets start with 'a'
-        mActivity.onUsername((v) -> v.setText("a"));
+        changeUsername("a");
         mUiBot.assertDatasets(aa, ab);
 
         // With no filter text all datasets should be shown
-        mActivity.onUsername((v) -> v.setText(""));
+        changeUsername("");
         mUiBot.assertDatasets(aa, ab, b);
 
         // No dataset start with 'aaa'
         final MyAutofillCallback callback = mActivity.registerCallback();
-        mActivity.onUsername((v) -> v.setText("aaa"));
+        changeUsername("aaa");
         callback.assertUiHiddenEvent(mActivity.getUsername());
         mUiBot.assertNoDatasets();
     }
@@ -192,23 +194,23 @@ public class DatasetFilteringTest extends AbstractLoginActivityTestCase {
         mUiBot.assertDatasets(aa, ab, b);
 
         // Two datasets start with 'a' and one with null value always shown
-        mActivity.onUsername((v) -> v.setText("a"));
+        changeUsername("a");
         mUiBot.assertDatasets(aa, ab, b);
 
         // One dataset start with 'aa' and one with null value always shown
-        mActivity.onUsername((v) -> v.setText("aa"));
+        changeUsername("aa");
         mUiBot.assertDatasets(aa, b);
 
         // Two datasets start with 'a' and one with null value always shown
-        mActivity.onUsername((v) -> v.setText("a"));
+        changeUsername("a");
         mUiBot.assertDatasets(aa, ab, b);
 
         // With no filter text all datasets should be shown
-        mActivity.onUsername((v) -> v.setText(""));
+        changeUsername("");
         mUiBot.assertDatasets(aa, ab, b);
 
         // No dataset start with 'aaa' and one with null value always shown
-        mActivity.onUsername((v) -> v.setText("aaa"));
+        changeUsername("aaa");
         mUiBot.assertDatasets(b);
     }
 
@@ -243,13 +245,13 @@ public class DatasetFilteringTest extends AbstractLoginActivityTestCase {
         // With no filter text all datasets should be shown
         mUiBot.assertDatasets(a, b, c);
 
-        mActivity.onUsername((v) -> v.setText("a"));
+        changeUsername("a");
         mUiBot.assertDatasets(a);
 
-        mActivity.onUsername((v) -> v.setText("b"));
+        changeUsername("b");
         mUiBot.assertDatasets(b);
 
-        mActivity.onUsername((v) -> v.setText("c"));
+        changeUsername("c");
         mUiBot.assertDatasets(c);
     }
 
@@ -286,24 +288,24 @@ public class DatasetFilteringTest extends AbstractLoginActivityTestCase {
         mUiBot.assertDatasets(aa, ab, b);
 
         // Only two datasets start with 'a'
-        mActivity.onUsername((v) -> v.setText("a"));
+        changeUsername("a");
         mUiBot.assertDatasets(aa, ab);
 
         // Only one dataset start with 'aa'
-        mActivity.onUsername((v) -> v.setText("aa"));
+        changeUsername("aa");
         mUiBot.assertDatasets(aa);
 
         // Only two datasets start with 'a'
-        mActivity.onUsername((v) -> v.setText("a"));
+        changeUsername("a");
         mUiBot.assertDatasets(aa, ab);
 
         // With no filter text all datasets should be shown
-        mActivity.onUsername((v) -> v.setText(""));
+        changeUsername("");
         mUiBot.assertDatasets(aa, ab, b);
 
         // No dataset start with 'aaa'
         final MyAutofillCallback callback = mActivity.registerCallback();
-        mActivity.onUsername((v) -> v.setText("aaa"));
+        changeUsername("aaa");
         callback.assertUiHiddenEvent(mActivity.getUsername());
         mUiBot.assertNoDatasets();
     }
@@ -344,28 +346,28 @@ public class DatasetFilteringTest extends AbstractLoginActivityTestCase {
         mUiBot.assertDatasets(unfilterable, aOrW, w);
 
         // Only one dataset start with 'a'
-        mActivity.onUsername((v) -> v.setText("a"));
+        changeUsername("a");
         mUiBot.assertDatasets(aOrW);
 
         // No dataset starts with 'aa'
-        mActivity.onUsername((v) -> v.setText("aa"));
+        changeUsername("aa");
         mUiBot.assertNoDatasets();
 
         // Only one datasets start with 'a'
-        mActivity.onUsername((v) -> v.setText("a"));
+        changeUsername("a");
         mUiBot.assertDatasets(aOrW);
 
         // With no filter text all datasets should be shown
-        mActivity.onUsername((v) -> v.setText(""));
+        changeUsername("");
         mUiBot.assertDatasets(unfilterable, aOrW, w);
 
         // Only one datasets start with 'w'
-        mActivity.onUsername((v) -> v.setText("w"));
+        changeUsername("w");
         mUiBot.assertDatasets(w);
 
         // No dataset start with 'aaa'
         final MyAutofillCallback callback = mActivity.registerCallback();
-        mActivity.onUsername((v) -> v.setText("aaa"));
+        changeUsername("aaa");
         callback.assertUiHiddenEvent(mActivity.getUsername());
         mUiBot.assertNoDatasets();
     }
@@ -413,11 +415,11 @@ public class DatasetFilteringTest extends AbstractLoginActivityTestCase {
         mUiBot.assertDatasets(plain, regexPlain, authRegex, kitchnSync);
 
         // All datasets start with 'a'
-        mActivity.onUsername((v) -> v.setText("a"));
+        changeUsername("a");
         mUiBot.assertDatasets(plain, regexPlain, authRegex, kitchnSync);
 
         // Only the regex datasets should start with 'ab'
-        mActivity.onUsername((v) -> v.setText("ab"));
+        changeUsername("ab");
         mUiBot.assertDatasets(regexPlain, authRegex, kitchnSync);
     }
 
