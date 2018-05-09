@@ -19,6 +19,10 @@
 <vector xmlns:android="http://schemas.android.com/apk/res/android"
         android:height="64dp"
         android:width="64dp"
+        android:opticalInsetLeft="1px"
+        android:opticalInsetTop="2px"
+        android:opticalInsetRight="3px"
+        android:opticalInsetBottom="4px"
         android:viewportHeight="24"
         android:viewportWidth="24" >
 

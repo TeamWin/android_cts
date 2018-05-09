@@ -30,6 +30,7 @@ import android.content.res.XmlResourceParser;
 import android.graphics.Canvas;
 import android.graphics.Color;
 import android.graphics.ColorFilter;
+import android.graphics.Insets;
 import android.graphics.PixelFormat;
 import android.graphics.Rect;
 import android.graphics.cts.R;
@@ -555,6 +556,13 @@ public class GradientDrawableTest {
         } finally {
             DrawableTestUtils.setResourcesDensity(mResources, densityDpi);
         }
+    }
+
+    @Test
+    public void testOpticalInsets() {
+        GradientDrawable drawable =
+                (GradientDrawable) mResources.getDrawable(R.drawable.gradientdrawable);
+        assertEquals(Insets.of(1, 2, 3, 4), drawable.getOpticalInsets());
     }
 
     private void verifyPreloadDensityInner(Resources res, int densityDpi)
