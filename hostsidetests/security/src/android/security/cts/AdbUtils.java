@@ -209,7 +209,22 @@ public class AdbUtils {
       CollectingOutputReceiver receiver = new CollectingOutputReceiver();
       device.executeShellCommand("/data/local/tmp/" + pocName + " > /dev/null 2>&1; echo $?",
                                  receiver, timeout, TimeUnit.SECONDS, 0);
-      //Refer to go/asdl-sts-guide Test section for knowing the significance of 113 code
-      return Integer.parseInt(receiver.getOutput().replaceAll("[^0-9]", "")) == 113;
+
+      String returnStr = null;
+      int returnNum = 0;
+
+      try{
+           returnStr = receiver.getOutput().replaceAll("[^0-9]", "");
+       }catch(NullPointerException e){
+          return false;
+       }
+       try{
+         returnNum = Integer.parseInt(returnStr);
+       }catch(NumberFormatException e){
+          return false;
+       }
+
+       //Refer to go/asdl-sts-guide Test section for knowing the significance of 113 code
+       return returnNum == 113;
     }
 }
