@@ -16,11 +16,11 @@
  -->
 
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
-          package="android.signature.cts.api.killswitch">
+          package="android.signature.cts.api.killswitch_debug_class">
 
     <application android:debuggable="true"/>
 
     <instrumentation android:name="repackaged.android.test.InstrumentationTestRunner"
-                     android:targetPackage="android.signature.cts.api.killswitch"
-                     android:label="Hidden API Killswitch Test"/>
+                     android:targetPackage="android.signature.cts.api.killswitch_debug_class"
+                     android:label="Hidden API Debuggable Class Killswitch Test"/>
 </manifest>
