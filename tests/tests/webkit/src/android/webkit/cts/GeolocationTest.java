@@ -45,6 +45,7 @@ import java.io.ByteArrayInputStream;
 import java.io.UnsupportedEncodingException;
 import java.util.concurrent.Callable;
 import java.util.Date;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Random;
 import java.util.regex.Matcher;
@@ -207,8 +208,13 @@ public class GeolocationTest extends ActivityInstrumentationTestCase2<WebViewCts
     }
 
     private void addTestProviders() {
+        Set<String> unavailableProviders = new HashSet<>();
         for (String providerName : mProviders) {
             LocationProvider provider = mLocationManager.getProvider(providerName);
+            if (provider == null) {
+                unavailableProviders.add(providerName);
+                continue;
+            }
             mLocationManager.addTestProvider(provider.getName(),
                     provider.requiresNetwork(), //requiresNetwork,
                     provider.requiresSatellite(), // requiresSatellite,
@@ -221,6 +227,7 @@ public class GeolocationTest extends ActivityInstrumentationTestCase2<WebViewCts
                     provider.getAccuracy()); // accuracy
             mLocationManager.setTestProviderEnabled(provider.getName(), true);
         }
+        mProviders.removeAll(unavailableProviders);
     }
 
     private static final String TEST_PROVIDER_NAME = "location_provider_test";
