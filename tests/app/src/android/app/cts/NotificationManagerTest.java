@@ -24,6 +24,7 @@ import static android.app.NotificationManager.Policy.SUPPRESSED_EFFECT_PEEK;
 import static android.app.NotificationManager.Policy.SUPPRESSED_EFFECT_SCREEN_OFF;
 import static android.app.NotificationManager.Policy.SUPPRESSED_EFFECT_SCREEN_ON;
 import static android.app.NotificationManager.Policy.SUPPRESSED_EFFECT_STATUS_BAR;
+import static android.content.pm.PackageManager.FEATURE_WATCH;
 
 import android.app.ActivityManager;
 import android.app.Instrumentation;
@@ -38,6 +39,7 @@ import android.app.stubs.R;
 import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
+import android.content.pm.PackageManager;
 import android.graphics.Bitmap;
 import android.graphics.drawable.Icon;
 import android.media.AudioAttributes;
@@ -70,6 +72,7 @@ public class NotificationManagerTest extends AndroidTestCase {
     final boolean DEBUG = false;
     final String NOTIFICATION_CHANNEL_ID = "NotificationManagerTest";
 
+    private PackageManager mPackageManager;
     private NotificationManager mNotificationManager;
     private ActivityManager mActivityManager;
     private String mId;
@@ -87,6 +90,7 @@ public class NotificationManagerTest extends AndroidTestCase {
         mNotificationManager.createNotificationChannel(new NotificationChannel(
                 NOTIFICATION_CHANNEL_ID, "name", NotificationManager.IMPORTANCE_DEFAULT));
         mActivityManager = (ActivityManager) mContext.getSystemService(Context.ACTIVITY_SERVICE);
+        mPackageManager = mContext.getPackageManager();
         // delay between tests so notifications aren't dropped by the rate limiter
         try {
             Thread.sleep(500);
@@ -466,6 +470,10 @@ public class NotificationManagerTest extends AndroidTestCase {
     }
 
     public void testSuspendPackage() throws Exception {
+        if (mActivityManager.isLowRamDevice() && !mPackageManager.hasSystemFeature(FEATURE_WATCH)) {
+            return;
+        }
+
         toggleListenerAccess(MockNotificationListener.getId(),
                 InstrumentationRegistry.getInstrumentation(), true);
         Thread.sleep(500); // wait for listener to be allowed
