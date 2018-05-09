@@ -1499,6 +1499,7 @@ public class AudioManagerTest extends InstrumentationTestCase {
             Log.i(TAG, "deviceId:" + microphone.getDescription());
             Log.i(TAG, "portId:" + microphone.getId());
             Log.i(TAG, "type:" + microphone.getType());
+            Log.i(TAG, "address:" + microphone.getAddress());
             Log.i(TAG, "deviceLocation:" + microphone.getLocation());
             Log.i(TAG, "deviceGroup:" + microphone.getGroup()
                     + " index:" + microphone.getIndexInTheGroup());
