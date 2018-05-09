@@ -69,8 +69,6 @@ import java.io.IOException;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
-import java.util.concurrent.BlockingQueue;
-import java.util.concurrent.TimeUnit;
 import java.util.function.Function;
 
 /**
@@ -1197,19 +1195,6 @@ final class Helper {
         Log.d(TAG, "Dumping bitmap at " + file);
         BitmapUtils.saveBitmap(bitmap, file.getParent(), file.getName());
         return file;
-    }
-
-    public static <T> boolean offer(BlockingQueue<T> queue, T obj, long timeoutMs) {
-        boolean offered = false;
-        try {
-            offered = queue.offer(obj, timeoutMs, TimeUnit.MILLISECONDS);
-        } catch (InterruptedException e) {
-            Thread.currentThread().interrupt();
-        }
-        if (!offered) {
-            Log.e(TAG, "could not offer " + obj + " in " + timeoutMs + "ms");
-        }
-        return offered;
     }
 
     private Helper() {
