@@ -27,8 +27,10 @@ LOCAL_SRC_FILES := \
      src/TestGenerated.cpp \
      src/TestMemory.cpp \
      src/TestTrivialModel.cpp \
+     src/TestUnknownDimensions.cpp \
      src/TestValidateOperations.cpp \
-     src/TestValidation.cpp
+     src/TestValidation.cpp \
+     src/TestWrapper.cpp
 
 LOCAL_C_INCLUDES := frameworks/ml/nn/runtime/include/
 LOCAL_C_INCLUDES += frameworks/ml/nn/runtime/test/
