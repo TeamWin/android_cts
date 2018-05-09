@@ -25,8 +25,6 @@ import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertSame;
 import static org.junit.Assert.assertTrue;
-import static org.junit.Assume.assumeNotNull;
-import static org.junit.Assume.assumeTrue;
 
 import android.app.PendingIntent;
 import android.content.BroadcastReceiver;
@@ -42,20 +40,18 @@ import android.hardware.usb.UsbInterface;
 import android.hardware.usb.UsbManager;
 import android.hardware.usb.UsbRequest;
 import android.os.Bundle;
-import androidx.annotation.NonNull;
-import androidx.annotation.Nullable;
 import android.util.ArraySet;
 import android.util.Log;
 import android.util.Pair;
 import android.view.View;
 import android.widget.ProgressBar;
 import android.widget.TextView;
-import android.widget.Toast;
+
+import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
 
 import com.android.cts.verifier.PassFailButtons;
 import com.android.cts.verifier.R;
-
-import org.junit.AssumptionViolatedException;
 
 import java.nio.BufferOverflowException;
 import java.nio.ByteBuffer;
@@ -597,7 +593,7 @@ public class UsbDeviceTestActivity extends PassFailButtons.Activity {
             // Should we have gotten a failure?
             if (finished == receive) {
                 // We should have gotten an exception if size > limit
-                assumeTrue(bufferReceivedSliced.limit() >= size);
+                assertTrue(bufferReceivedSliced.limit() >= size);
 
                 assertEquals(size, bufferReceivedSliced.position());
 
@@ -615,7 +611,7 @@ public class UsbDeviceTestActivity extends PassFailButtons.Activity {
                 assertEquals(size, bufferSentSliced.position());
 
                 // We should have gotten an exception if size > limit
-                assumeTrue(bufferSentSliced.limit() >= size);
+                assertTrue(bufferSentSliced.limit() >= size);
                 assertSame(sent, finished);
                 assertSame(sentClientData, finished.getClientData());
                 assertSame(out, finished.getEndpoint());
@@ -898,7 +894,7 @@ public class UsbDeviceTestActivity extends PassFailButtons.Activity {
         }
 
         boolean isQueued = sent.queue(buffer, 0);
-        assumeTrue(isQueued);
+        assertTrue(isQueued);
         UsbRequest finished = connection.requestWait();
         assertSame(finished, sent);
         finished.close();
@@ -925,7 +921,7 @@ public class UsbDeviceTestActivity extends PassFailButtons.Activity {
         }
 
         boolean isQueued = sent.queue(buffer);
-        assumeTrue(isQueued);
+        assertTrue(isQueued);
         UsbRequest finished = connection.requestWait();
         assertSame(finished, sent);
         finished.close();
@@ -944,7 +940,7 @@ public class UsbDeviceTestActivity extends PassFailButtons.Activity {
         assertTrue(isInited);
 
         boolean isQueued = sent.queue(null);
-        assumeTrue(isQueued);
+        assertTrue(isQueued);
         UsbRequest finished = connection.requestWait();
         assertSame(finished, sent);
         finished.close();
@@ -981,9 +977,9 @@ public class UsbDeviceTestActivity extends PassFailButtons.Activity {
         }
 
         boolean isQueued = zeroReceived.queue(buffer);
-        assumeTrue(isQueued);
+        assertTrue(isQueued);
         isQueued = oneReceived.queue(buffer1);
-        assumeTrue(isQueued);
+        assertTrue(isQueued);
 
         // We expect both to be returned after some time
         ArrayList<UsbRequest> finished = new ArrayList<>(2);
@@ -995,8 +991,8 @@ public class UsbDeviceTestActivity extends PassFailButtons.Activity {
         finished.add(connection.requestWait());
         long secondReturned = now();
 
-        assumeTrue(firstReturned - startTime > 100);
-        assumeTrue(secondReturned - firstReturned < 100);
+        assertTrue(firstReturned - startTime > 100);
+        assertTrue(secondReturned - firstReturned < 100);
 
         assertTrue(finished.contains(zeroReceived));
         assertTrue(finished.contains(oneReceived));
@@ -1013,7 +1009,7 @@ public class UsbDeviceTestActivity extends PassFailButtons.Activity {
     private void usbRequestLegacyTests(@NonNull UsbDeviceConnection connection,
             @NonNull UsbInterface iface) throws Throwable {
         // Find bulk in and out endpoints
-        assumeTrue(iface.getEndpointCount() == 2);
+        assertTrue(iface.getEndpointCount() == 2);
         final UsbEndpoint in = getEndpoint(iface, UsbConstants.USB_DIR_IN);
         final UsbEndpoint out = getEndpoint(iface, UsbConstants.USB_DIR_OUT);
         assertNotNull(in);
@@ -1137,7 +1133,7 @@ public class UsbDeviceTestActivity extends PassFailButtons.Activity {
     private void usbRequestTests(@NonNull UsbDeviceConnection connection,
             @NonNull UsbInterface iface) throws Throwable {
         // Find bulk in and out endpoints
-        assumeTrue(iface.getEndpointCount() == 2);
+        assertTrue(iface.getEndpointCount() == 2);
         final UsbEndpoint in = getEndpoint(iface, UsbConstants.USB_DIR_IN);
         final UsbEndpoint out = getEndpoint(iface, UsbConstants.USB_DIR_OUT);
         assertNotNull(in);
@@ -1578,7 +1574,7 @@ public class UsbDeviceTestActivity extends PassFailButtons.Activity {
     private void parallelUsbRequestsTests(@NonNull UsbDeviceConnection connection,
             @NonNull UsbInterface iface) {
         // Find bulk in and out endpoints
-        assumeTrue(iface.getEndpointCount() == 2);
+        assertTrue(iface.getEndpointCount() == 2);
         final UsbEndpoint in = getEndpoint(iface, UsbConstants.USB_DIR_IN);
         final UsbEndpoint out = getEndpoint(iface, UsbConstants.USB_DIR_OUT);
         assertNotNull(in);
@@ -1718,7 +1714,7 @@ public class UsbDeviceTestActivity extends PassFailButtons.Activity {
     private void bulkTransferTests(@NonNull UsbDeviceConnection connection,
             @NonNull UsbInterface iface) throws Throwable {
         // Find bulk in and out endpoints
-        assumeTrue(iface.getEndpointCount() == 2);
+        assertTrue(iface.getEndpointCount() == 2);
         final UsbEndpoint in = getEndpoint(iface, UsbConstants.USB_DIR_IN);
         final UsbEndpoint out = getEndpoint(iface, UsbConstants.USB_DIR_OUT);
         assertNotNull(in);
@@ -1834,7 +1830,7 @@ public class UsbDeviceTestActivity extends PassFailButtons.Activity {
      */
     private void testIfCompanionZeroTerminates(@NonNull UsbDeviceConnection connection,
             @NonNull UsbInterface iface) {
-        assumeTrue(iface.getEndpointCount() == 2);
+        assertTrue(iface.getEndpointCount() == 2);
         final UsbEndpoint in = getEndpoint(iface, UsbConstants.USB_DIR_IN);
         final UsbEndpoint out = getEndpoint(iface, UsbConstants.USB_DIR_OUT);
         assertNotNull(in);
@@ -1947,7 +1943,7 @@ public class UsbDeviceTestActivity extends PassFailButtons.Activity {
      */
     private void setConfigurationTests(@NonNull UsbDevice device,
             @NonNull UsbDeviceConnection connection, @NonNull UsbInterface iface) throws Throwable {
-        assumeTrue(device.getConfigurationCount() == 1);
+        assertTrue(device.getConfigurationCount() == 1);
         boolean wasSet = connection.setConfiguration(device.getConfiguration(0));
         assertTrue(wasSet);
 
@@ -2094,14 +2090,18 @@ public class UsbDeviceTestActivity extends PassFailButtons.Activity {
     private void runTests(@NonNull UsbDevice device) {
         try {
             // Find the AOAP interface
+            ArrayList<String> allInterfaces = new ArrayList<>();
             UsbInterface iface = null;
             for (int i = 0; i < device.getConfigurationCount(); i++) {
+                allInterfaces.add(device.getInterface(i).toString());
+
                 if (device.getInterface(i).getName().equals("Android Accessory Interface")) {
                     iface = device.getInterface(i);
                     break;
                 }
             }
-            assumeNotNull(iface);
+            assertNotNull("No \"Android Accessory Interface\" interface found in " + allInterfaces,
+                    iface);
 
             enumerateDevices();
 
@@ -2157,10 +2157,6 @@ public class UsbDeviceTestActivity extends PassFailButtons.Activity {
             connection.close();
 
             setTestResultAndFinish(true);
-        } catch (AssumptionViolatedException e) {
-            // Assumptions failing means that somehow the device/connection is set up incorrectly
-            Toast.makeText(this, getString(R.string.usb_device_unexpected, e.getLocalizedMessage()),
-                    Toast.LENGTH_LONG).show();
         } catch (Throwable e) {
             fail(null, e);
         }
