@@ -241,7 +241,7 @@ public class AppOpsTest extends InstrumentationTestCase {
             assertNotNull("Each app op must have an operation string defined", opStr);
             opStrs.add(opStr);
         }
-        assertEquals("Not all op strings are unique", AppOpsManager._NUM_OP, opStrs.size());
+        assertEquals("Not all op strings are unique", AppOpsManager.getNumOps(), opStrs.size());
     }
 
     @SmallTest
