@@ -42,7 +42,7 @@ public class ErrorsTests {
 
     private static final String CRASH_TAG = "data_app_crash";
     private static final String ANR_TAG = "data_app_anr";
-    private static final String NATIVE_CRASH_TAG = "SYSTEM_TOMBSTONE";
+    private static final String NATIVE_CRASH_TAG = "data_app_native_crash";
 
     private static final int TIMEOUT_SECS = 60 * 3;
 
