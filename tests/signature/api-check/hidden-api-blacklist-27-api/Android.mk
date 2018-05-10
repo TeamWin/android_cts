@@ -15,16 +15,7 @@
 LOCAL_PATH := $(call my-dir)
 
 include $(CLEAR_VARS)
-LOCAL_MODULE := cts-hidden-api-blacklist
-LOCAL_MODULE_STEM := blacklist.api
-LOCAL_MODULE_CLASS := ETC
-LOCAL_MODULE_PATH = $(TARGET_OUT_DATA_ETC)
-LOCAL_COMPATIBILITY_SUITE := cts vts general-tests
-include $(BUILD_SYSTEM)/base_rules.mk
-$(eval $(call copy-one-file,$(INTERNAL_PLATFORM_HIDDENAPI_BLACKLIST),$(LOCAL_BUILT_MODULE)))
-
-include $(CLEAR_VARS)
-LOCAL_PACKAGE_NAME := CtsHiddenApiDiscoveryTestCases
+LOCAL_PACKAGE_NAME := CtsHiddenApiBlacklistApi27TestCases
 LOCAL_MODULE_PATH := $(TARGET_OUT_DATA_APPS)
 LOCAL_SIGNATURE_API_FILES := blacklist.api
 LOCAL_JNI_SHARED_LIBRARIES := libcts_dexchecker

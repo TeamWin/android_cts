@@ -44,4 +44,26 @@ LOCAL_SDK_VERSION := current
 LOCAL_NDK_STL_VARIANT := c++_static
 include $(BUILD_SHARED_LIBRARY)
 
+# hidden API lists
+# ===================================
+
+include $(CLEAR_VARS)
+LOCAL_MODULE := cts-hidden-api-blacklist
+LOCAL_MODULE_STEM := blacklist.api
+LOCAL_MODULE_CLASS := ETC
+LOCAL_MODULE_PATH = $(TARGET_OUT_DATA_ETC)
+LOCAL_COMPATIBILITY_SUITE := cts vts general-tests
+include $(BUILD_SYSTEM)/base_rules.mk
+$(eval $(call copy-one-file,$(INTERNAL_PLATFORM_HIDDENAPI_BLACKLIST),$(LOCAL_BUILT_MODULE)))
+
+include $(CLEAR_VARS)
+LOCAL_MODULE := cts-hidden-api-dark-greylist
+LOCAL_MODULE_STEM := dark_greylist.api
+LOCAL_MODULE_CLASS := ETC
+LOCAL_MODULE_PATH = $(TARGET_OUT_DATA_ETC)
+LOCAL_COMPATIBILITY_SUITE := cts vts general-tests
+include $(BUILD_SYSTEM)/base_rules.mk
+$(eval $(call copy-one-file,$(INTERNAL_PLATFORM_HIDDENAPI_DARK_GREYLIST),$(LOCAL_BUILT_MODULE)))
+
+
 include $(call all-makefiles-under,$(LOCAL_PATH))

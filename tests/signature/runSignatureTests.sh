@@ -25,7 +25,8 @@ CtsApacheHttpLegacyUsesLibraryApiSignatureTestCases
 
 CtsSystemApiAnnotationTestCases
 
-CtsHiddenApiDiscoveryTestCases
+CtsHiddenApiBlacklistCurrentApiTestCases
+CtsHiddenApiBlacklistApi27TestCases
 CtsHiddenApiKillswitchTestCases
 CtsHiddenApiWhitelistTestCases
 "
