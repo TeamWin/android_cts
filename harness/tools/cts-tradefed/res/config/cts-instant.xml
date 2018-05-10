@@ -56,6 +56,9 @@
     <option name="compatibility:module-arg" value="CtsColorModeTestCases:install-arg:--instant" />
     <option name="compatibility:include-filter" value="CtsColorModeTestCases" />
 
+    <!-- CtsBluetoothTestCases -->
+    <!-- Instant apps cannot hold android.permission.BLUETOOTH which makes BT tests irrelevant-->
+
     <!-- CtsDatabaseTestCases -->
     <option name="compatibility:module-arg" value="CtsDatabaseTestCases:install-arg:--instant" />
     <option name="compatibility:include-filter" value="CtsDatabaseTestCases" />
@@ -95,5 +98,20 @@
     <!-- CtsUiDeviceTestCases -->
     <option name="compatibility:module-arg" value="CtsUiDeviceTestCases:install-arg:--instant" />
     <option name="compatibility:include-filter" value="CtsUiDeviceTestCases" />
+
+    <!-- CtsDpiTestCases -->
+    <option name="compatibility:module-arg" value="CtsDpiTestCases:install-arg:--instant" />
+    <option name="compatibility:include-filter" value="CtsDpiTestCases" />
+
+    <!-- CtsDpiTestCases2 -->
+    <!-- These target Cupcake not applicable to instant apps which target Oreo+ -->
+
+    <!-- CtsFileSystemTestCases -->
+    <option name="compatibility:module-arg" value="CtsFileSystemTestCases:install-arg:--instant" />
+    <option name="compatibility:include-filter" value="CtsFileSystemTestCases" />
+
+    <!-- CtsTextTestCases -->
+    <option name="compatibility:module-arg" value="CtsTextTestCases:install-arg:--instant" />
+    <option name="compatibility:include-filter" value="CtsTextTestCases" />
 
 </configuration>
