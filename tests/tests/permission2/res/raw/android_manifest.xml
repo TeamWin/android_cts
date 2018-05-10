@@ -890,13 +890,21 @@
         android:description="@string/permdesc_callPhone"
         android:protectionLevel="dangerous" />
 
+
+    <!-- Used for permissions that are associated telephony features. -->
+    <permission-group android:name="android.permission-group.CALL_LOG"
+                      android:icon="@drawable/perm_group_phone_calls"
+                      android:label="@string/permgrouplab_calllog"
+                      android:description="@string/permgroupdesc_calllog"
+                      android:request="@string/permgrouprequest_calllog"
+                      android:priority="450" />
+
     <!-- Allows an application to access the IMS call service: making and
          modifying a call
         <p>Protection level: signature|privileged
         @hide
     -->
     <permission android:name="android.permission.ACCESS_IMS_CALL_SERVICE"
-        android:permissionGroup="android.permission-group.PHONE"
         android:label="@string/permlab_accessImsCallService"
         android:description="@string/permdesc_accessImsCallService"
         android:protectionLevel="signature|privileged" />
@@ -914,7 +922,7 @@
          <p>Protection level: dangerous
     -->
     <permission android:name="android.permission.READ_CALL_LOG"
-        android:permissionGroup="android.permission-group.PHONE"
+        android:permissionGroup="android.permission-group.CALL_LOG"
         android:label="@string/permlab_readCallLog"
         android:description="@string/permdesc_readCallLog"
         android:protectionLevel="dangerous" />
@@ -933,7 +941,7 @@
          <p>Protection level: dangerous
     -->
     <permission android:name="android.permission.WRITE_CALL_LOG"
-        android:permissionGroup="android.permission-group.PHONE"
+        android:permissionGroup="android.permission-group.CALL_LOG"
         android:label="@string/permlab_writeCallLog"
         android:description="@string/permdesc_writeCallLog"
         android:protectionLevel="dangerous" />
@@ -962,7 +970,7 @@
          <p>Protection level: dangerous
     -->
     <permission android:name="android.permission.PROCESS_OUTGOING_CALLS"
-        android:permissionGroup="android.permission-group.PHONE"
+        android:permissionGroup="android.permission-group.CALL_LOG"
         android:label="@string/permlab_processOutgoingCalls"
         android:description="@string/permdesc_processOutgoingCalls"
         android:protectionLevel="dangerous" />
