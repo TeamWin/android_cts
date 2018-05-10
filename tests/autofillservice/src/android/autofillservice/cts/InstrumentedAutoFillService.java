@@ -43,9 +43,8 @@ import android.service.autofill.FillEventHistory;
 import android.service.autofill.FillEventHistory.Event;
 import android.service.autofill.FillResponse;
 import android.service.autofill.SaveCallback;
-import android.util.Log;
-
 import androidx.annotation.Nullable;
+import android.util.Log;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -85,8 +84,7 @@ public class InstrumentedAutoFillService extends AutofillService {
 
     public InstrumentedAutoFillService() {
         sInstance.set(this);
-        // TODO(b/79201521): temporarily using short names so tests don't fail because of ...
-        sServiceLabel = "Shorty";
+        sServiceLabel = SERVICE_CLASS;
     }
 
     private static InstrumentedAutoFillService peekInstance() {
