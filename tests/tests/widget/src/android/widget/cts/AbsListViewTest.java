@@ -129,6 +129,7 @@ public class AbsListViewTest {
     public void setup() throws Exception {
         mInstrumentation = InstrumentationRegistry.getInstrumentation();
         final Activity activity = mActivityRule.getActivity();
+        activity.setTurnScreenOn(true);
         // Always use the activity context
         mContext = activity;
 
