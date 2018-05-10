@@ -96,6 +96,11 @@ public class BluetoothLeScanTest extends AndroidTestCase {
 
     @Override
     public void tearDown() {
+        if (!isBleSupported()) {
+          // mBluetoothAdapter == null.
+          return;
+        }
+
         if (!mLocationOn) {
             TestUtils.disableLocation(getContext());
         }
