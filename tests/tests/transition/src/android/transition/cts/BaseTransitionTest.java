@@ -61,6 +61,7 @@ public abstract class BaseTransitionTest {
         mInstrumentation = InstrumentationRegistry.getInstrumentation();
         mInstrumentation.setInTouchMode(false);
         mActivity = mActivityRule.getActivity();
+        mActivity.setTurnScreenOn(true);
         mSceneRoot = (FrameLayout) mActivity.findViewById(R.id.container);
         mTargets.clear();
         mTransition = new TestTransition();
