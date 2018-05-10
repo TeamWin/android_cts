@@ -332,29 +332,4 @@ public class AvailableIntentsTest extends AndroidTestCase {
         assertCanBeHandled(new Intent(StorageManager.ACTION_MANAGE_STORAGE));
     }
 
-    public void testVoiceCommand() {
-        if (FeatureUtil.isLowRam()) {
-            // Low ram devices do not support voice command, skip this test
-            return;
-        }
-        PackageManager packageManager = mContext.getPackageManager();
-        if (packageManager.hasSystemFeature(PackageManager.FEATURE_MICROPHONE)) {
-            Intent intent = new Intent(Intent.ACTION_VOICE_COMMAND);
-            assertCanBeHandled(intent);
-            assertDefaultHandlerValidPriority(intent);
-        }
-    }
-
-    public void testVoiceSearchHandsFree() {
-        if (FeatureUtil.isLowRam()) {
-            // Low ram devices do not support hands-free hot word, skip this test
-            return;
-        }
-        PackageManager packageManager = mContext.getPackageManager();
-        if (packageManager.hasSystemFeature(PackageManager.FEATURE_MICROPHONE)) {
-            Intent intent = new Intent(RecognizerIntent.ACTION_VOICE_SEARCH_HANDS_FREE);
-            assertCanBeHandled(intent);
-            assertDefaultHandlerValidPriority(intent);
-        }
-    }
 }
