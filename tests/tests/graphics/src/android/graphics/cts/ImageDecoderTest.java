@@ -1678,16 +1678,11 @@ public class ImageDecoderTest {
             }
         };
         Listener l = new Listener();
-        int resIds[] = new int[] { R.drawable.png_test, R.raw.basi6a16 };
-        // Though png_test is opaque, using HARDWARE will require 8888, so we
-        // do not decode to 565. basi6a16 will still downconvert from F16 to
-        // 8888.
-        boolean hardwareOverrides[] = new boolean[] { true, false };
         SourceCreator f = mCreators[0];
-        for (int i = 0; i < resIds.length; ++i) {
+        for (int resId : new int[] { R.drawable.png_test, R.raw.basi6a16 }) {
             Bitmap normal = null;
             try {
-                normal = ImageDecoder.decodeBitmap(f.apply(resIds[i]));
+                normal = ImageDecoder.decodeBitmap(f.apply(resId));
             } catch (IOException e) {
                 fail("Failed with exception " + e);
             }
@@ -1697,17 +1692,38 @@ public class ImageDecoderTest {
                 l.allocator = allocator;
                 Bitmap test = null;
                 try {
-                   test = ImageDecoder.decodeBitmap(f.apply(resIds[i]), l);
+                    test = ImageDecoder.decodeBitmap(f.apply(resId), l);
                 } catch (IOException e) {
                     fail("Failed with exception " + e);
                 }
                 assertNotNull(test);
                 int byteCount = test.getAllocationByteCount();
-                if ((allocator == ImageDecoder.ALLOCATOR_HARDWARE ||
-                     allocator == ImageDecoder.ALLOCATOR_DEFAULT)
-                    && hardwareOverrides[i]) {
-                    assertEquals(normalByteCount, byteCount);
+
+                if (allocator == ImageDecoder.ALLOCATOR_HARDWARE
+                        || allocator == ImageDecoder.ALLOCATOR_DEFAULT) {
+                    if (resId == R.drawable.png_test) {
+                        // We do not support 565 in HARDWARE, so no RAM savings
+                        // are possible.
+                        assertEquals(normalByteCount, byteCount);
+                    } else { // R.raw.basi6a16
+                        // This image defaults to F16. MEMORY_POLICY_LOW_RAM
+                        // forces "test" to decode to 8888. But if the device
+                        // does not support F16 in HARDWARE, "normal" is also
+                        // 8888. Its Config is HARDWARE either way, but we can
+                        // detect its underlying pixel format by checking the
+                        // ColorSpace, which is always LINEAR_EXTENDED_SRGB for
+                        // F16.
+                        if (normal.getColorSpace().equals(
+                                    ColorSpace.get(ColorSpace.Named.LINEAR_EXTENDED_SRGB))) {
+                            // F16. "test" should be smaller.
+                            assertTrue(byteCount < normalByteCount);
+                        } else {
+                            // 8888. No RAM savings possible.
+                            assertEquals(normalByteCount, byteCount);
+                        }
+                    }
                 } else {
+                    // Not decoding to HARDWARE, so we can save RAM in either case.
                     assertTrue(byteCount < normalByteCount);
                 }
             }
