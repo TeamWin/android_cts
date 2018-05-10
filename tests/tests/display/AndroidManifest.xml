@@ -16,7 +16,8 @@
  -->
 
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
-    package="android.display.cts">
+    package="android.display.cts"
+    android:targetSandboxVersion="2">
 
     <!-- For special presentation windows when testing mode switches. -->
     <uses-permission android:name="android.permission.SYSTEM_ALERT_WINDOW" />
