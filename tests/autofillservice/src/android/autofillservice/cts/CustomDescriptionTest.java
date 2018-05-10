@@ -24,19 +24,21 @@ import static android.service.autofill.SaveInfo.SAVE_DATA_TYPE_GENERIC;
 import static com.google.common.truth.Truth.assertThat;
 import static com.google.common.truth.Truth.assertWithMessage;
 
+import android.platform.test.annotations.AppModeFull;
 import android.service.autofill.BatchUpdates;
 import android.service.autofill.CharSequenceTransformation;
 import android.service.autofill.CustomDescription;
 import android.service.autofill.ImageTransformation;
 import android.service.autofill.RegexValidator;
 import android.service.autofill.Validator;
-import androidx.annotation.NonNull;
-import androidx.annotation.Nullable;
 import android.support.test.uiautomator.By;
 import android.support.test.uiautomator.UiObject2;
 import android.view.View;
 import android.view.autofill.AutofillId;
 import android.widget.RemoteViews;
+
+import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
 
 import org.junit.Before;
 import org.junit.Rule;
@@ -45,6 +47,7 @@ import org.junit.Test;
 import java.util.function.BiFunction;
 import java.util.regex.Pattern;
 
+@AppModeFull // Service-specific test
 public class CustomDescriptionTest extends AutoFillServiceTestCase {
     @Rule
     public final AutofillActivityTestRule<LoginActivity> mActivityRule =

@@ -64,6 +64,7 @@ import java.util.Set;
 /**
  * Test that uses {@link LoginActivity} to test {@link FillEventHistory}.
  */
+@AppModeFull // Service-specific test
 public class FillEventHistoryTest extends AutoFillServiceTestCase {
 
     @Rule
@@ -78,7 +79,6 @@ public class FillEventHistoryTest extends AutoFillServiceTestCase {
     }
 
     @Test
-    @AppModeFull // TODO(b/79487366): currently not working on Instant Mode
     public void testDatasetAuthenticationSelected() throws Exception {
         enableService();
 
@@ -119,7 +119,6 @@ public class FillEventHistoryTest extends AutoFillServiceTestCase {
     }
 
     @Test
-    @AppModeFull // TODO(b/79487366): currently not working on Instant Mode
     public void testAuthenticationSelected() throws Exception {
         enableService();
 

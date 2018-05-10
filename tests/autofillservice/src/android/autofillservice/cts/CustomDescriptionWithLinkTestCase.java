@@ -22,7 +22,6 @@ import static com.google.common.truth.Truth.assertThat;
 import android.app.Activity;
 import android.app.PendingIntent;
 import android.content.Intent;
-import android.platform.test.annotations.AppModeFull;
 import android.service.autofill.CustomDescription;
 import android.support.test.uiautomator.By;
 import android.support.test.uiautomator.UiObject2;
@@ -57,7 +56,6 @@ abstract class CustomDescriptionWithLinkTestCase extends AutoFillServiceTestCase
      * the Save UI should have been restored.
      */
     @Test
-    @AppModeFull // TODO(b/79487366): currently not working on Instant Mode
     public final void testTapLink_tapBack() throws Exception {
         saveUiRestoredAfterTappingLinkTest(PostSaveLinkTappedAction.TAP_BACK_BUTTON);
     }
@@ -68,7 +66,6 @@ abstract class CustomDescriptionWithLinkTestCase extends AutoFillServiceTestCase
      * the Save UI should have been restored.
      */
     @Test
-    @AppModeFull // TODO(b/79487366): currently not working on Instant Mode
     public final void testTapLink_changeOrientationThenTapBack() throws Exception {
         assumeTrue("Rotation is supported", Helper.isRotationSupported(mContext));
 
@@ -103,7 +100,6 @@ abstract class CustomDescriptionWithLinkTestCase extends AutoFillServiceTestCase
      * the Save UI should have been restored.
      */
     @Test
-    @AppModeFull // TODO(b/79487366): currently not working on Instant Mode
     public final void testTapLink_finishActivity() throws Exception {
         saveUiRestoredAfterTappingLinkTest(PostSaveLinkTappedAction.FINISH_ACTIVITY);
     }
@@ -121,7 +117,6 @@ abstract class CustomDescriptionWithLinkTestCase extends AutoFillServiceTestCase
      * <p>Then user starts a new session by focusing in a field.
      */
     @Test
-    @AppModeFull // TODO(b/79487366): currently not working on Instant Mode
     public final void testTapLink_tapBack_thenStartOverByTouchOutsideAndFocus()
             throws Exception {
         tapLinkThenTapBackThenStartOverTest(PostSaveLinkTappedAction.TOUCH_OUTSIDE, false);
@@ -134,7 +129,6 @@ abstract class CustomDescriptionWithLinkTestCase extends AutoFillServiceTestCase
      * <p>Then user starts a new session by forcing autofill.
      */
     @Test
-    @AppModeFull // TODO(b/79487366): currently not working on Instant Mode
     public void testTapLink_tapBack_thenStartOverByTouchOutsideAndManualRequest()
             throws Exception {
         tapLinkThenTapBackThenStartOverTest(PostSaveLinkTappedAction.TOUCH_OUTSIDE, true);
@@ -147,7 +141,6 @@ abstract class CustomDescriptionWithLinkTestCase extends AutoFillServiceTestCase
      * <p>Then user starts a new session by focusing in a field.
      */
     @Test
-    @AppModeFull // TODO(b/79487366): currently not working on Instant Mode
     public final void testTapLink_tapBack_thenStartOverBySayingNoAndFocus()
             throws Exception {
         tapLinkThenTapBackThenStartOverTest(PostSaveLinkTappedAction.TAP_NO_ON_SAVE_UI,
@@ -161,7 +154,6 @@ abstract class CustomDescriptionWithLinkTestCase extends AutoFillServiceTestCase
      * <p>Then user starts a new session by forcing autofill.
      */
     @Test
-    @AppModeFull // TODO(b/79487366): currently not working on Instant Mode
     public final void testTapLink_tapBack_thenStartOverBySayingNoAndManualRequest()
             throws Exception {
         tapLinkThenTapBackThenStartOverTest(PostSaveLinkTappedAction.TAP_NO_ON_SAVE_UI, true);
@@ -174,7 +166,6 @@ abstract class CustomDescriptionWithLinkTestCase extends AutoFillServiceTestCase
      * <p>Then user starts a new session by focusing in a field.
      */
     @Test
-    @AppModeFull // TODO(b/79487366): currently not working on Instant Mode
     public final void testTapLink_tapBack_thenStartOverBySayingYesAndFocus()
             throws Exception {
         tapLinkThenTapBackThenStartOverTest(PostSaveLinkTappedAction.TAP_YES_ON_SAVE_UI,
@@ -188,7 +179,6 @@ abstract class CustomDescriptionWithLinkTestCase extends AutoFillServiceTestCase
      * <p>Then user starts a new session by forcing autofill.
      */
     @Test
-    @AppModeFull // TODO(b/79487366): currently not working on Instant Mode
     public final void testTapLink_tapBack_thenStartOverBySayingYesAndManualRequest()
             throws Exception {
         tapLinkThenTapBackThenStartOverTest(PostSaveLinkTappedAction.TAP_YES_ON_SAVE_UI, true);
@@ -203,7 +193,6 @@ abstract class CustomDescriptionWithLinkTestCase extends AutoFillServiceTestCase
      * the Save UI should have been canceled.
      */
     @Test
-    @AppModeFull // TODO(b/79487366): currently not working on Instant Mode
     public final void testTapLink_backToPreviousActivityByLaunchingIt()
             throws Exception {
         saveUiCancelledAfterTappingLinkTest(PostSaveLinkTappedAction.LAUNCH_PREVIOUS_ACTIVITY);
@@ -215,7 +204,6 @@ abstract class CustomDescriptionWithLinkTestCase extends AutoFillServiceTestCase
      * the Save UI should have been canceled.
      */
     @Test
-    @AppModeFull // TODO(b/79487366): currently not working on Instant Mode
     public final void testTapLink_launchNewActivityThenTapBack() throws Exception {
         saveUiCancelledAfterTappingLinkTest(PostSaveLinkTappedAction.LAUNCH_NEW_ACTIVITY);
     }
@@ -224,7 +212,6 @@ abstract class CustomDescriptionWithLinkTestCase extends AutoFillServiceTestCase
             throws Exception;
 
     @Test
-    @AppModeFull // TODO(b/79487366): currently not working on Instant Mode
     public final void testTapLink_launchTrampolineActivityThenTapBackAndStartNewSession()
             throws Exception {
         tapLinkLaunchTrampolineActivityThenTapBackAndStartNewSessionTest();
@@ -234,13 +221,11 @@ abstract class CustomDescriptionWithLinkTestCase extends AutoFillServiceTestCase
             throws Exception;
 
     @Test
-    @AppModeFull // TODO(b/79487366): currently not working on Instant Mode
     public final void testTapLinkAfterUpdateAppliedToLinkView() throws Exception {
         tapLinkAfterUpdateAppliedTest(true);
     }
 
     @Test
-    @AppModeFull // TODO(b/79487366): currently not working on Instant Mode
     public final void testTapLinkAfterUpdateAppliedToAnotherView() throws Exception {
         tapLinkAfterUpdateAppliedTest(false);
     }

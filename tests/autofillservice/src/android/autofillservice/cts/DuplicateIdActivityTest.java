@@ -33,10 +33,6 @@ import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
 
-/**
- * This is the test case covering most scenarios - other test cases will cover characteristics
- * specific to that test's activity (for example, custom views).
- */
 public class DuplicateIdActivityTest extends AutoFillServiceTestCase {
     private static final String LOG_TAG = DuplicateIdActivityTest.class.getSimpleName();
     @Rule

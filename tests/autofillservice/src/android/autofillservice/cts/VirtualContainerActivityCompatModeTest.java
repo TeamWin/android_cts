@@ -41,6 +41,7 @@ import android.autofillservice.cts.common.SettingsHelper;
 import android.autofillservice.cts.common.SettingsStateChangerRule;
 import android.content.Context;
 import android.os.SystemClock;
+import android.platform.test.annotations.AppModeFull;
 import android.service.autofill.SaveInfo;
 import android.support.test.InstrumentationRegistry;
 
@@ -126,6 +127,7 @@ public class VirtualContainerActivityCompatModeTest extends VirtualContainerActi
     }
 
     @Test
+    @AppModeFull // testMultipleUrlBars_firstDoesNotExist() is enough to test ephemeral apps support
     public void testMultipleUrlBars_bothExist() throws Exception {
         SettingsHelper.syncSet(sContext, NAMESPACE_GLOBAL, AUTOFILL_COMPAT_MODE_ALLOWED_PACKAGES,
                 SERVICE_PACKAGE + "[my_url_bar,my_url_bar2]");
@@ -152,6 +154,7 @@ public class VirtualContainerActivityCompatModeTest extends VirtualContainerActi
     }
 
     @Test
+    @AppModeFull // testMultipleUrlBars_firstDoesNotExist() is enough to test ephemeral apps support
     public void testFocusOnUrlBarIsIgnored() throws Throwable {
         // Set service.
         enableService();
@@ -173,6 +176,7 @@ public class VirtualContainerActivityCompatModeTest extends VirtualContainerActi
     }
 
     @Test
+    @AppModeFull // testMultipleUrlBars_firstDoesNotExist() is enough to test ephemeral apps support
     public void testUrlBarChangeIgnoredWhenServiceCanSave() throws Throwable {
         // Set service.
         enableService();
@@ -225,6 +229,7 @@ public class VirtualContainerActivityCompatModeTest extends VirtualContainerActi
     }
 
     @Test
+    @AppModeFull // testMultipleUrlBars_firstDoesNotExist() is enough to test ephemeral apps support
     public void testUrlBarChangeCancelSessionWhenServiceCannotSave() throws Throwable {
         // Set service.
         enableService();
@@ -264,6 +269,7 @@ public class VirtualContainerActivityCompatModeTest extends VirtualContainerActi
     }
 
     @Test
+    @AppModeFull // testMultipleUrlBars_firstDoesNotExist() is enough to test ephemeral apps support
     public void testUrlBarChangeCancelSessionWhenServiceReturnsNullResponse() throws Throwable {
         // Set service.
         enableService();
