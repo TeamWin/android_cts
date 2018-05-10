@@ -103,8 +103,14 @@ public class PermissionPolicyTest extends AndroidTestCase {
             // OEMs cannot change permission protection flags
             final int expectedProtectionFlags = expectedPermission.protectionLevel
                     & PermissionInfo.PROTECTION_MASK_FLAGS;
-            final int declaredProtectionFlags = declaredPermission.protectionLevel
+            int declaredProtectionFlags = declaredPermission.protectionLevel
                     & PermissionInfo.PROTECTION_MASK_FLAGS;
+            // Device makers are allowed to backport the framework fix to oreo
+            // https://android-review.googlesource.com/c/platform/frameworks/base/+/653701
+            if (expectedPermissionName.equals("android.permission.RECORD_AUDIO")
+                    && declaredProtectionFlags == 0) {
+                declaredProtectionFlags = PermissionInfo.PROTECTION_FLAG_EPHEMERAL;
+            }
             assertEquals("Permission " + expectedPermissionName + " invalid enforced protection"
                     + " level flags", expectedProtectionFlags, declaredProtectionFlags);
 
