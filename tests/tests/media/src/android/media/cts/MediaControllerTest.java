@@ -15,6 +15,7 @@
  */
 package android.media.cts;
 
+import android.content.Intent;
 import android.media.AudioManager;
 import android.media.Rating;
 import android.media.VolumeProvider;
@@ -29,6 +30,7 @@ import android.os.Looper;
 import android.os.Process;
 import android.os.ResultReceiver;
 import android.test.AndroidTestCase;
+import android.view.KeyEvent;
 
 /**
  * Test {@link android.media.session.MediaController}.
@@ -289,6 +291,16 @@ public class MediaControllerTest extends AndroidTestCase {
             assertEquals(EXTRAS_VALUE, mCallback.mExtras.getString(EXTRAS_KEY));
             assertEquals(mControllerInfo, mCallback.mCallerInfo);
 
+            mCallback.reset();
+            KeyEvent event = new KeyEvent(KeyEvent.ACTION_DOWN, KeyEvent.KEYCODE_MEDIA_STOP);
+            mController.dispatchMediaButtonEvent(event);
+            mWaitLock.wait(TIME_OUT_MS);
+            assertTrue(mCallback.mOnMediaButtonEventCalled);
+            // KeyEvent doesn't override equals.
+            assertEquals(KeyEvent.ACTION_DOWN, mCallback.mKeyEvent.getAction());
+            assertEquals(KeyEvent.KEYCODE_MEDIA_STOP, mCallback.mKeyEvent.getKeyCode());
+            assertEquals(mControllerInfo, mCallback.mCallerInfo);
+
             // just call the callback once directly so it's marked as tested
             try {
                 callback.onPlay();
@@ -310,6 +322,9 @@ public class MediaControllerTest extends AndroidTestCase {
                 callback.onPrepareFromMediaId(mCallback.mMediaId, mCallback.mExtras);
                 callback.onPrepareFromSearch(mCallback.mQuery, mCallback.mExtras);
                 callback.onPrepareFromUri(Uri.parse("http://d.android.com"), mCallback.mExtras);
+                Intent mediaButtonIntent = new Intent(Intent.ACTION_MEDIA_BUTTON);
+                mediaButtonIntent.putExtra(Intent.EXTRA_KEY_EVENT, event);
+                callback.onMediaButtonEvent(mediaButtonIntent);
             } catch (IllegalStateException ex) {
                 // Expected, since the MediaSession.getCurrentControllerInfo() is called in every
                 // callback method, but no controller is sending any command.
@@ -347,6 +362,7 @@ public class MediaControllerTest extends AndroidTestCase {
         private String mCommand;
         private Bundle mExtras;
         private ResultReceiver mCommandCallback;
+        private KeyEvent mKeyEvent;
         private RemoteUserInfo mCallerInfo;
 
         private boolean mOnPlayCalled;
@@ -368,6 +384,7 @@ public class MediaControllerTest extends AndroidTestCase {
         private boolean mOnPrepareFromMediaIdCalled;
         private boolean mOnPrepareFromSearchCalled;
         private boolean mOnPrepareFromUriCalled;
+        private boolean mOnMediaButtonEventCalled;
 
         public void reset() {
             mSeekPosition = -1;
@@ -380,6 +397,7 @@ public class MediaControllerTest extends AndroidTestCase {
             mExtras = null;
             mCommand = null;
             mCommandCallback = null;
+            mKeyEvent = null;
             mCallerInfo = null;
 
             mOnPlayCalled = false;
@@ -401,6 +419,7 @@ public class MediaControllerTest extends AndroidTestCase {
             mOnPrepareFromMediaIdCalled = false;
             mOnPrepareFromSearchCalled = false;
             mOnPrepareFromUriCalled = false;
+            mOnMediaButtonEventCalled = false;
         }
 
         @Override
@@ -592,6 +611,17 @@ public class MediaControllerTest extends AndroidTestCase {
                 mCallerInfo = mSession.getCurrentControllerInfo();
                 mWaitLock.notify();
             }
+        }
+
+        @Override
+        public boolean onMediaButtonEvent(Intent mediaButtonIntent) {
+            synchronized (mWaitLock) {
+                mOnMediaButtonEventCalled = true;
+                mCallerInfo = mSession.getCurrentControllerInfo();
+                mKeyEvent = mediaButtonIntent.getParcelableExtra(Intent.EXTRA_KEY_EVENT);
+                mWaitLock.notify();
+            }
+            return super.onMediaButtonEvent(mediaButtonIntent);
         }
     }
 }
