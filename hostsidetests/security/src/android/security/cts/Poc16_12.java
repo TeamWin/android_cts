@@ -21,6 +21,19 @@ import android.platform.test.annotations.SecurityTest;
 @SecurityTest
 public class Poc16_12 extends SecurityTestCase {
 
+    /**
+     *  b/29982686
+     */
+    @SecurityTest
+    public void testPocCVE_2016_6759() throws Exception {
+        AdbUtils.runCommandLine("logcat -c", getDevice());
+        AdbUtils.runPocNoOutput("CVE-2016-6759", getDevice(), 60);
+        String logcatOut = AdbUtils.runCommandLine("logcat -d", getDevice());
+        assertNotMatches("[\\s\\n\\S]*Fatal signal 11 \\(SIGSEGV\\)" +
+                         "[\\s\\n\\S]*>>> /system/bin/" +
+                         "mediaserver <<<[\\s\\n\\S]*", logcatOut);
+    }
+
     //Criticals
     /**
      *  b/31606947
