@@ -25,10 +25,10 @@
     </target_preparer>
     <target_preparer class="com.android.tradefed.targetprep.suite.SuiteApkInstaller">
         <option name="cleanup-apks" value="true" />
-        <option name="test-file-name" value="CtsHiddenApiDiscoveryTestCases.apk" />
+        <option name="test-file-name" value="CtsHiddenApiBlacklistApi27TestCases.apk" />
     </target_preparer>
     <test class="com.android.tradefed.testtype.AndroidJUnitTest" >
-        <option name="package" value="android.signature.cts.api.hidden" />
+        <option name="package" value="android.signature.cts.api.hiddenapi_blacklist_api_27" />
         <option name="runner" value="repackaged.android.test.InstrumentationTestRunner" />
         <option name="class" value="android.signature.cts.api.HiddenApiTest" />
         <option name="instrumentation-arg" key="hidden-api-files" value="blacklist.api" />
