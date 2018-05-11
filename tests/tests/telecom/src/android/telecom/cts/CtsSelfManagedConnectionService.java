@@ -143,6 +143,7 @@ public class CtsSelfManagedConnectionService extends ConnectionService {
     @Override
     public void onConnectionServiceFocusLost() {
         mLocks[FOCUS_LOST_LOCK].countDown();
+        connectionServiceFocusReleased();
     }
 
     public void tearDown() {

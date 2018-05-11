@@ -160,6 +160,7 @@ public class MockConnectionService extends ConnectionService {
     @Override
     public void onConnectionServiceFocusLost() {
         mEventLock[EVENT_CONNECTION_SERVICE_FOCUS_LOST].release();
+        connectionServiceFocusReleased();
     }
 
     public void setCreateVideoProvider(boolean createVideoProvider) {
