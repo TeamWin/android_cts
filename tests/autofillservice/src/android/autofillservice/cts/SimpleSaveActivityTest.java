@@ -38,6 +38,7 @@ import android.autofillservice.cts.SimpleSaveActivity.FillExpectation;
 import android.content.Intent;
 import android.graphics.Bitmap;
 import android.os.Bundle;
+import android.platform.test.annotations.AppModeFull;
 import android.service.autofill.BatchUpdates;
 import android.service.autofill.CustomDescription;
 import android.service.autofill.FillEventHistory;
@@ -238,6 +239,7 @@ public class SimpleSaveActivityTest extends CustomDescriptionWithLinkTestCase {
     }
 
     @Test
+    @AppModeFull // TODO(b/79487366): currently not working on Instant Mode
     public void testSave_launchIntent() throws Exception {
         startActivity();
 

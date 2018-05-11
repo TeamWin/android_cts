@@ -35,6 +35,7 @@ import android.autofillservice.cts.CannedFillResponse.CannedDataset;
 import android.autofillservice.cts.InstrumentedAutoFillService.SaveRequest;
 import android.content.IntentSender;
 import android.os.Bundle;
+import android.platform.test.annotations.AppModeFull;
 import android.support.test.uiautomator.UiObject2;
 import android.view.View;
 import android.view.autofill.AutofillValue;
@@ -44,6 +45,7 @@ import org.junit.Test;
 import java.util.concurrent.CountDownLatch;
 import java.util.regex.Pattern;
 
+@AppModeFull // TODO(b/79487366): currently not working on Instant Mode
 public class AuthenticationTest extends AbstractLoginActivityTestCase {
 
     @Test
