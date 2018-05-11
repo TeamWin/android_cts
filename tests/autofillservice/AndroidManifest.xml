@@ -66,6 +66,7 @@
         <activity android:name=".WebViewActivity"/>
         <activity android:name=".TrampolineWelcomeActivity"/>
         <activity android:name=".AttachedContextActivity"/>
+        <activity android:name=".TrampolineForResultActivity" />
 
         <service
             android:name=".InstrumentedAutoFillService"
@@ -79,6 +80,14 @@
             android:name=".NoOpAutofillService"
             android:label="NoOpAutofillService"
             android:permission="android.permission.BIND_AUTOFILL_SERVICE" >
+            <intent-filter>
+                <action android:name="android.service.autofill.AutofillService" />
+            </intent-filter>
+        </service>
+        <!--  BadAutofillService does not declare the proper permission -->
+        <service
+            android:name=".BadAutofillService"
+            android:label="BadAutofillService">
             <intent-filter>
                 <action android:name="android.service.autofill.AutofillService" />
             </intent-filter>

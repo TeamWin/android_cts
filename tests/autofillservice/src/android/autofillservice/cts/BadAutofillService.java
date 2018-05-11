@@ -21,22 +21,29 @@ import android.service.autofill.FillCallback;
 import android.service.autofill.FillRequest;
 import android.service.autofill.SaveCallback;
 import android.service.autofill.SaveRequest;
+import android.util.Log;
 
 /**
- * {@link AutofillService} implementation that does not do anything...
+ * An {@link AutofillService} implementation that does fails if called upon.
  */
-public class NoOpAutofillService extends AutofillService {
+public class BadAutofillService extends AutofillService {
 
-    static final String SERVICE_NAME = NoOpAutofillService.class.getPackage().getName()
-            + "/." + NoOpAutofillService.class.getSimpleName();
-    static final String SERVICE_LABEL = "NoOpAutofillService";
+    private static final String TAG = "BadAutofillService";
+
+    static final String SERVICE_NAME = BadAutofillService.class.getPackage().getName()
+            + "/." + BadAutofillService.class.getSimpleName();
+    static final String SERVICE_LABEL = "BadAutofillService";
 
     @Override
     public void onFillRequest(FillRequest request, CancellationSignal cancellationSignal,
             FillCallback callback) {
+        Log.e(TAG, "onFillRequest() should never be called");
+        throw new UnsupportedOperationException("onFillRequest() should never be called");
     }
 
     @Override
     public void onSaveRequest(SaveRequest request, SaveCallback callback) {
+        Log.e(TAG, "onSaveRequest() should never be called");
+        throw new UnsupportedOperationException("onSaveRequest() should never be called");
     }
 }
