@@ -12,5 +12,9 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+cts_out_dir := $(HOST_OUT)/cts/android-cts/testcases
+$(call dist-for-goals,cts,$(cts_out_dir)/CtsSecureElementAccessControlTestCases1.apk)
+$(call dist-for-goals,cts,$(cts_out_dir)/CtsSecureElementAccessControlTestCases2.apk)
+$(call dist-for-goals,cts,$(cts_out_dir)/CtsSecureElementAccessControlTestCases3.apk)
 include $(call all-subdir-makefiles)
 
