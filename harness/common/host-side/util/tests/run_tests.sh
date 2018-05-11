@@ -16,7 +16,7 @@
 
 # Helper script for running unit tests for compatibility libraries
 
-CTS_DIR=$(dirname ${0})/../../../..
+CTS_DIR=$(dirname ${0})/../../../../..
 source ${CTS_DIR}/test_defs.sh
 
 JARS="
