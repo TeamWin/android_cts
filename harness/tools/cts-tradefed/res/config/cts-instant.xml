@@ -38,6 +38,10 @@
     <option name="compatibility:module-arg" value="CtsAnimationTestCases:install-arg:--instant" />
     <option name="compatibility:include-filter" value="CtsAnimationTestCases" />
 
+    <!-- CtsAutoFillServiceTestCases  -->
+    <option name="compatibility:module-arg" value="CtsAutoFillServiceTestCases:install-arg:--instant" />
+    <option name="compatibility:include-filter" value="CtsAutoFillServiceTestCases" />
+
     <!-- CtsPdfTestCases -->
     <option name="compatibility:module-arg" value="CtsPdfTestCases:install-arg:--instant" />
     <option name="compatibility:include-filter" value="CtsPdfTestCases" />
