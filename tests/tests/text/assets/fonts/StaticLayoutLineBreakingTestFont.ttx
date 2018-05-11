@@ -136,6 +136,7 @@
   <cmap>
     <tableVersion version="0"/>
     <cmap_format_12 format="12" reserved="0" length="6" nGroups="1" platformID="3" platEncID="10" language="0">
+      <map code="0x000a" name="0em" />  <!-- \n -->
       <map code="0x0020" name="10em" />
       <map code="0x002e" name="10em" />  <!-- . -->
       <map code="0x0043" name="100em" />  <!-- C -->
