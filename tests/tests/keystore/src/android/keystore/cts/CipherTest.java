@@ -465,6 +465,10 @@ public class CipherTest extends AndroidTestCase {
             assertNotNull(provider);
             final byte[] originalPlaintext = EmptyArray.BYTE;
             for (String algorithm : EXPECTED_ALGORITHMS) {
+                // Normally we would test all combinations of algorithms and key sizes, but the
+                // semi-manual locking and unlocking this requires takes way too long if we try to
+                // go through all of those. Other tests check all the key sizes, so we don't need to
+                // duplicate all that work.
                 for (ImportedKey key : importKatKeys(
                         algorithm,
                         KeyProperties.PURPOSE_ENCRYPT | KeyProperties.PURPOSE_DECRYPT,
@@ -508,6 +512,9 @@ public class CipherTest extends AndroidTestCase {
                               "Failed for " + algorithm + " with key " + key.getAlias(),
                                e);
                     }
+                    // We don't know the underlying type of this collection, so just break out of
+                    // the iterator loop.
+                    break;
                 }
             }
         }
