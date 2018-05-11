@@ -63,7 +63,7 @@
     </target_preparer>
 
     <!-- The following values are used in cts/common/device-side/util/DeviceReportLog.java,
-    cts/common/host-side/util/MetricsReportLog.java and tools/tradefed-host/util/ReportLogUtil.java.
+    cts/harness/common/host-side/util/MetricsReportLog.java and tools/tradefed-host/util/ReportLogUtil.java.
     Any change in these values must also be translated to the stated files.
     -->
     <target_preparer class="com.android.compatibility.common.tradefed.targetprep.ReportLogCollector">

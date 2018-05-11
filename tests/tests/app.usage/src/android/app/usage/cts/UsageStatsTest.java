@@ -36,6 +36,7 @@ import android.app.usage.UsageStats;
 import android.app.usage.UsageStatsManager;
 import android.content.Context;
 import android.content.Intent;
+import android.content.pm.PackageManager;
 import android.os.Parcel;
 import android.os.SystemClock;
 import android.provider.Settings;
@@ -447,6 +448,10 @@ public class UsageStatsTest {
     public void testNotificationSeen() throws Exception {
         final long startTime = System.currentTimeMillis();
         Context context = InstrumentationRegistry.getContext();
+        if (context.getPackageManager().hasSystemFeature(PackageManager.FEATURE_WATCH)) {
+            // Skip the test for wearable device.
+            return;
+        }
         NotificationManager mNotificationManager =
             (NotificationManager) context.getSystemService(Context.NOTIFICATION_SERVICE);
         int importance = NotificationManager.IMPORTANCE_DEFAULT;

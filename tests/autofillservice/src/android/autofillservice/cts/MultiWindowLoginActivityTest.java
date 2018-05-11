@@ -28,6 +28,7 @@ import static org.junit.Assume.assumeTrue;
 import android.app.Activity;
 import android.app.ActivityManager;
 import android.content.Intent;
+import android.platform.test.annotations.AppModeFull;
 import android.view.View;
 
 import org.junit.Before;
@@ -36,6 +37,7 @@ import org.junit.Test;
 
 import java.util.concurrent.TimeoutException;
 
+@AppModeFull // This test requires android.permission.MANAGE_ACTIVITY_STACKS
 public class MultiWindowLoginActivityTest extends AutoFillServiceTestCase {
 
     @Rule

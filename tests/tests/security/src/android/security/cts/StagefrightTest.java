@@ -239,6 +239,11 @@ public class StagefrightTest extends InstrumentationTestCase {
     }
 
     @SecurityTest
+    public void testStagefright_cve_2016_6766() throws Exception {
+        doStagefrightTest(R.raw.cve_2016_6766);
+    }
+
+    @SecurityTest
     public void testStagefright_bug_26366256() throws Exception {
         doStagefrightTest(R.raw.bug_26366256);
     }
@@ -524,6 +529,11 @@ public class StagefrightTest extends InstrumentationTestCase {
     }
 
     @SecurityTest
+    public void testStagefright_bug_23452792() throws Exception {
+        doStagefrightTest(R.raw.bug_23452792);
+    }
+
+    @SecurityTest
     public void testStagefright_bug_36592202() throws Exception {
         Resources resources = getInstrumentation().getContext().getResources();
         AssetFileDescriptor fd = resources.openRawResourceFd(R.raw.bug_36592202);
@@ -739,6 +749,16 @@ public class StagefrightTest extends InstrumentationTestCase {
     @SecurityTest
     public void testStagefright_cve_2016_0815() throws Exception {
         doStagefrightTest(R.raw.cve_2016_0815);
+    }
+
+    @SecurityTest
+    public void testStagefright_cve_2016_2454() throws Exception {
+        doStagefrightTest(R.raw.cve_2016_2454);
+    }
+
+    @SecurityTest
+    public void testStagefright_cve_2016_6765() throws Exception {
+        doStagefrightTest(R.raw.cve_2016_6765);
     }
 
     private void doStagefrightTest(final int rid) throws Exception {

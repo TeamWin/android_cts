@@ -12,19 +12,20 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-import its.image
+import os.path
+
 import its.caps
 import its.device
+import its.image
 import its.objects
-from matplotlib import pylab
-import os.path
 import matplotlib
-import matplotlib.pyplot
+from matplotlib import pylab
+
+NAME = os.path.basename(__file__).split(".")[0]
+
 
 def main():
-    """Test that the device will produce full black+white images.
-    """
-    NAME = os.path.basename(__file__).split(".")[0]
+    """Test that the device will produce full black+white images."""
 
     r_means = []
     g_means = []
@@ -40,16 +41,14 @@ def main():
         if debug:
             fmt = largest_yuv
         else:
-            match_ar = (largest_yuv['width'], largest_yuv['height'])
+            match_ar = (largest_yuv["width"], largest_yuv["height"])
             fmt = its.objects.get_smallest_yuv_format(props, match_ar=match_ar)
 
-        expt_range = props['android.sensor.info.exposureTimeRange']
-        sens_range = props['android.sensor.info.sensitivityRange']
+        expt_range = props["android.sensor.info.exposureTimeRange"]
+        sens_range = props["android.sensor.info.sensitivityRange"]
 
         # Take a shot with very low ISO and exposure time. Expect it to
         # be black.
-        print "Black shot: sens = %d, exp time = %.4fms" % (
-                sens_range[0], expt_range[0]/1000000.0)
         req = its.objects.manual_capture_request(sens_range[0], expt_range[0])
         cap = cam.do_capture(req, fmt)
         img = its.image.convert_capture_to_rgb_image(cap)
@@ -60,11 +59,15 @@ def main():
         g_means.append(black_means[1])
         b_means.append(black_means[2])
         print "Dark pixel means:", black_means
+        r_exp = cap["metadata"]["android.sensor.exposureTime"]
+        r_iso = cap["metadata"]["android.sensor.sensitivity"]
+        print "Black shot write values: sens = %d, exp time = %.4fms" % (
+                sens_range[0], expt_range[0]/1000000.0)
+        print "Black shot read values: sens = %d, exp time = %.4fms\n" % (
+                r_iso, r_exp/1000000.0)
 
         # Take a shot with very high ISO and exposure time. Expect it to
         # be white.
-        print "White shot: sens = %d, exp time = %.2fms" % (
-                sens_range[1], expt_range[1]/1000000.0)
         req = its.objects.manual_capture_request(sens_range[1], expt_range[1])
         cap = cam.do_capture(req, fmt)
         img = its.image.convert_capture_to_rgb_image(cap)
@@ -75,19 +78,28 @@ def main():
         g_means.append(white_means[1])
         b_means.append(white_means[2])
         print "Bright pixel means:", white_means
+        r_exp = cap["metadata"]["android.sensor.exposureTime"]
+        r_iso = cap["metadata"]["android.sensor.sensitivity"]
+        print "White shot write values: sens = %d, exp time = %.2fms" % (
+                sens_range[1], expt_range[1]/1000000.0)
+        print "White shot read values: sens = %d, exp time = %.2fms\n" % (
+                r_iso, r_exp/1000000.0)
 
         # Draw a plot.
-        pylab.plot([0,1], r_means, 'r')
-        pylab.plot([0,1], g_means, 'g')
-        pylab.plot([0,1], b_means, 'b')
-        pylab.ylim([0,1])
+        pylab.title("test_black_white")
+        pylab.plot([0, 1], r_means, "-ro")
+        pylab.plot([0, 1], g_means, "-go")
+        pylab.plot([0, 1], b_means, "-bo")
+        pylab.xlabel("Capture Number")
+        pylab.ylabel("Output Values (Normalized)")
+        pylab.ylim([0, 1])
         matplotlib.pyplot.savefig("%s_plot_means.png" % (NAME))
 
-        for val in black_means:
-            assert(val < 0.025)
-        for val in white_means:
-            assert(val > 0.975)
+        for black_mean in black_means:
+            assert black_mean < 0.025
+        for white_mean in white_means:
+            assert white_mean > 0.975
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     main()
 

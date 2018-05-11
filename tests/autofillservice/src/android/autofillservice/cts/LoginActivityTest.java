@@ -73,6 +73,7 @@ import android.graphics.Color;
 import android.graphics.Rect;
 import android.os.Bundle;
 import android.os.SystemClock;
+import android.platform.test.annotations.AppModeFull;
 import android.service.autofill.SaveInfo;
 import android.support.test.uiautomator.UiObject2;
 import android.util.Log;
@@ -2212,6 +2213,7 @@ public class LoginActivityTest extends AbstractLoginActivityTestCase {
     }
 
     @Test
+    @AppModeFull // TODO(b/79487366): currently not working on Instant Mode
     public void testClickCustomButton() throws Exception {
         // Set service.
         enableService();

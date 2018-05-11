@@ -15,7 +15,8 @@
  * limitations under the License.
 -->
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
-    package="android.autofillservice.cts" >
+    package="android.autofillservice.cts"
+    android:targetSandboxVersion="2">
 
     <uses-permission android:name="android.permission.SYSTEM_ALERT_WINDOW"/>
     <uses-permission android:name="android.permission.MANAGE_ACTIVITY_STACKS"/>
@@ -97,19 +98,17 @@
             android:exported="true"
             android:process="android.autofillservice.cts.outside"/>
 
-        <!-- TODO(b/79201521): temporarily using short names so tests don't fail because of ... -->
         <service
             android:name=".InstrumentedAutoFillService"
-            android:label="Shorty"
+            android:label="InstrumentedAutoFillService"
             android:permission="android.permission.BIND_AUTOFILL_SERVICE" >
             <intent-filter>
                 <action android:name="android.service.autofill.AutofillService" />
             </intent-filter>
         </service>
-        <!-- TODO(b/79201521): temporarily using short names so tests don't fail because of ... -->
         <service
             android:name=".InstrumentedAutoFillServiceCompatMode"
-            android:label="ShortyCM"
+            android:label="InstrumentedAutoFillServiceCompatMode"
             android:permission="android.permission.BIND_AUTOFILL_SERVICE" >
             <intent-filter>
                 <action android:name="android.service.autofill.AutofillService" />

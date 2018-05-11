@@ -41,6 +41,7 @@ import android.content.res.ColorStateList;
 import android.graphics.Canvas;
 import android.graphics.Color;
 import android.graphics.ColorFilter;
+import android.graphics.Insets;
 import android.graphics.PixelFormat;
 import android.graphics.PorterDuff;
 import android.graphics.PorterDuff.Mode;
@@ -52,6 +53,8 @@ import android.graphics.drawable.DrawableContainer.DrawableContainerState;
 import android.graphics.drawable.LevelListDrawable;
 import android.support.test.filters.SmallTest;
 import android.support.test.runner.AndroidJUnit4;
+
+import androidx.annotation.Nullable;
 
 import org.junit.Before;
 import org.junit.Test;
@@ -825,6 +828,22 @@ public class DrawableContainerTest {
         assertEquals(true, mDrawableContainer.isStateful());
     }
 
+    @Test
+    public void testGetOpticalBoundsWithNoInternalDrawable() {
+        DrawableContainer container = new DrawableContainer();
+        assertEquals(Insets.NONE, container.getOpticalInsets());
+    }
+
+    @Test
+    public void testGetOpticalBoundsFromInternalDrawable() {
+        mMockDrawableContainer.setConstantState(mDrawableContainerState);
+        MockDrawable mockDrawable = new MockDrawable();
+        mockDrawable.setInsets(Insets.of(20, 40, 60, 100));
+
+        addAndSelectDrawable(mockDrawable);
+        assertEquals(Insets.of(20, 40, 60, 100), mDrawableContainer.getOpticalInsets());
+    }
+
     private void addAndSelectDrawable(Drawable drawable) {
         int pos = mDrawableContainerState.addChild(drawable);
         mDrawableContainer.selectDrawable(pos);
@@ -861,6 +880,8 @@ public class DrawableContainerTest {
         private boolean mHasCalledOnStateChanged;
         private boolean mHasCalledOnLevelChanged;
 
+        private Insets mInsets = null;
+
         @Override
         public int getOpacity() {
             return PixelFormat.OPAQUE;
@@ -876,6 +897,15 @@ public class DrawableContainerTest {
 
         @Override
         public void setColorFilter(ColorFilter colorFilter) {
+        }
+
+        public void setInsets(@Nullable Insets insets) {
+            mInsets = insets;
+        }
+
+        @Override
+        public Insets getOpticalInsets() {
+            return mInsets != null ? mInsets : Insets.NONE;
         }
 
         public boolean hasOnBoundsChangedCalled() {

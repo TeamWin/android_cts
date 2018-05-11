@@ -28,13 +28,12 @@ import android.content.res.Resources;
 import android.graphics.Bitmap;
 import android.graphics.Canvas;
 import android.graphics.Color;
+import android.graphics.Insets;
 import android.graphics.PixelFormat;
 import android.graphics.PorterDuff;
 import android.graphics.PorterDuffColorFilter;
 import android.graphics.cts.R;
-import android.graphics.drawable.Animatable2;
 import android.graphics.drawable.AnimatedVectorDrawable;
-import android.graphics.drawable.Drawable;
 import android.graphics.drawable.Drawable.ConstantState;
 import android.support.test.filters.LargeTest;
 import android.support.test.filters.SmallTest;
@@ -106,6 +105,17 @@ public class AnimatedVectorDrawableTest {
         if (DBG_DUMP_PNG) {
             DrawableTestUtils.saveAutoNamedVectorDrawableIntoPNG(mActivity, bitmap, mResId, null);
         }
+    }
+
+    @SmallTest
+    @Test
+    public void testGetOpticalInsets() throws Exception {
+        XmlPullParser parser = mResources.getXml(mResId);
+        AttributeSet attrs = Xml.asAttributeSet(parser);
+        AnimatedVectorDrawable drawable = new AnimatedVectorDrawable();
+        drawable.inflate(mResources, parser, attrs);
+
+        assertEquals(Insets.of(10, 20, 30, 40), drawable.getOpticalInsets());
     }
 
     @Test

@@ -38,6 +38,10 @@
     <option name="compatibility:module-arg" value="CtsAnimationTestCases:install-arg:--instant" />
     <option name="compatibility:include-filter" value="CtsAnimationTestCases" />
 
+    <!-- CtsAutoFillServiceTestCases  -->
+    <option name="compatibility:module-arg" value="CtsAutoFillServiceTestCases:install-arg:--instant" />
+    <option name="compatibility:include-filter" value="CtsAutoFillServiceTestCases" />
+
     <!-- CtsPdfTestCases -->
     <option name="compatibility:module-arg" value="CtsPdfTestCases:install-arg:--instant" />
     <option name="compatibility:include-filter" value="CtsPdfTestCases" />
@@ -51,5 +55,67 @@
     <option name="compatibility:include-filter" value="CtsFragmentTestCases" />
     <option name="compatibility:module-arg" value="CtsFragmentTestCasesSdk26:install-arg:--instant" />
     <option name="compatibility:include-filter" value="CtsFragmentTestCasesSdk26" />
+
+    <!-- CtsColorModeTestCases -->
+    <option name="compatibility:module-arg" value="CtsColorModeTestCases:install-arg:--instant" />
+    <option name="compatibility:include-filter" value="CtsColorModeTestCases" />
+
+    <!-- CtsBluetoothTestCases -->
+    <!-- Instant apps cannot hold android.permission.BLUETOOTH which makes BT tests irrelevant-->
+
+    <!-- CtsDatabaseTestCases -->
+    <option name="compatibility:module-arg" value="CtsDatabaseTestCases:install-arg:--instant" />
+    <option name="compatibility:include-filter" value="CtsDatabaseTestCases" />
+
+    <!-- CtsDisplayTestCases -->
+    <option name="compatibility:module-arg" value="CtsDisplayTestCases:install-arg:--instant" />
+    <option name="compatibility:include-filter" value="CtsDisplayTestCases" />
+
+    <!-- CtsDreamsTestCases -->
+    <option name="compatibility:module-arg" value="CtsDreamsTestCases:install-arg:--instant" />
+    <option name="compatibility:include-filter" value="CtsDreamsTestCases" />
+
+    <!-- CtsGestureTestCases -->
+    <option name="compatibility:module-arg" value="CtsGestureTestCases:install-arg:--instant" />
+    <option name="compatibility:include-filter" value="CtsGestureTestCases" />
+
+    <!-- CtsMultiUserTestCases -->
+    <option name="compatibility:module-arg" value="CtsMultiUserTestCases:install-arg:--instant" />
+    <option name="compatibility:include-filter" value="CtsMultiUserTestCases" />
+
+    <!-- CtsPreference2TestCases -->
+    <option name="compatibility:module-arg" value="CtsPreference2TestCases:install-arg:--instant" />
+    <option name="compatibility:include-filter" value="CtsPreference2TestCases" />
+
+    <!-- CtsPreferenceTestCases -->
+    <option name="compatibility:module-arg" value="CtsPreferenceTestCases:install-arg:--instant" />
+    <option name="compatibility:include-filter" value="CtsPreferenceTestCases" />
+
+    <!-- CtsSampleDeviceTestCases -->
+    <option name="compatibility:module-arg" value="CtsSampleDeviceTestCases:install-arg:--instant" />
+    <option name="compatibility:include-filter" value="CtsSampleDeviceTestCases" />
+
+    <!-- CtsToastTestCases -->
+    <option name="compatibility:module-arg" value="CtsToastTestCases:install-arg:--instant" />
+    <option name="compatibility:include-filter" value="CtsToastTestCases" />
+
+    <!-- CtsUiDeviceTestCases -->
+    <option name="compatibility:module-arg" value="CtsUiDeviceTestCases:install-arg:--instant" />
+    <option name="compatibility:include-filter" value="CtsUiDeviceTestCases" />
+
+    <!-- CtsDpiTestCases -->
+    <option name="compatibility:module-arg" value="CtsDpiTestCases:install-arg:--instant" />
+    <option name="compatibility:include-filter" value="CtsDpiTestCases" />
+
+    <!-- CtsDpiTestCases2 -->
+    <!-- These target Cupcake not applicable to instant apps which target Oreo+ -->
+
+    <!-- CtsFileSystemTestCases -->
+    <option name="compatibility:module-arg" value="CtsFileSystemTestCases:install-arg:--instant" />
+    <option name="compatibility:include-filter" value="CtsFileSystemTestCases" />
+
+    <!-- CtsTextTestCases -->
+    <option name="compatibility:module-arg" value="CtsTextTestCases:install-arg:--instant" />
+    <option name="compatibility:include-filter" value="CtsTextTestCases" />
 
 </configuration>

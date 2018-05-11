@@ -419,21 +419,6 @@ public class ClientTest {
         } catch (ActivityNotFoundException expected) {
         }
 
-
-        // start the ephemeral activity; directed component, includes EXTERNAL flag
-        try {
-            final Intent startEphemeralIntent = new Intent(ACTION_START_EPHEMERAL_ACTIVITY)
-                    .setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_MATCH_EXTERNAL);
-            startEphemeralIntent.setComponent(
-                    new ComponentName("com.android.cts.ephemeralapp1",
-                            "com.android.cts.ephemeralapp1.EphemeralActivity"));
-            InstrumentationRegistry.getContext().startActivity(
-                    startEphemeralIntent, null /*options*/);
-            final TestResult testResult = getResult();
-            fail();
-        } catch (ActivityNotFoundException expected) {
-        }
-
         // start the ephemeral activity; using VIEW/BROWSABLE
         {
             final Intent startViewIntent = new Intent(Intent.ACTION_VIEW)

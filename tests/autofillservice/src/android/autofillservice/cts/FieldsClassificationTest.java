@@ -18,6 +18,7 @@ package android.autofillservice.cts;
 import static android.autofillservice.cts.Helper.assertFillEventForContextCommitted;
 import static android.autofillservice.cts.Helper.assertFillEventForFieldsClassification;
 import static android.provider.Settings.Secure.AUTOFILL_FEATURE_FIELD_CLASSIFICATION;
+import static android.provider.Settings.Secure.AUTOFILL_USER_DATA_MAX_CATEGORY_COUNT;
 import static android.provider.Settings.Secure.AUTOFILL_USER_DATA_MAX_FIELD_CLASSIFICATION_IDS_SIZE;
 import static android.provider.Settings.Secure.AUTOFILL_USER_DATA_MAX_USER_DATA_SIZE;
 import static android.provider.Settings.Secure.AUTOFILL_USER_DATA_MAX_VALUE_LENGTH;
@@ -28,6 +29,7 @@ import static com.google.common.truth.Truth.assertThat;
 import android.autofillservice.cts.Helper.FieldClassificationResult;
 import android.autofillservice.cts.common.SettingsStateChangerRule;
 import android.content.Context;
+import android.platform.test.annotations.AppModeFull;
 import android.service.autofill.FillEventHistory.Event;
 import android.service.autofill.UserData;
 import android.support.test.InstrumentationRegistry;
@@ -67,6 +69,10 @@ public class FieldsClassificationTest extends AutoFillServiceTestCase {
     public static final SettingsStateChangerRule sUserDataMaxValueChanger =
             new SettingsStateChangerRule(sContext, AUTOFILL_USER_DATA_MAX_VALUE_LENGTH, "50");
 
+    @ClassRule
+    public static final SettingsStateChangerRule sUserDataMaxCategoryChanger =
+            new SettingsStateChangerRule(sContext, AUTOFILL_USER_DATA_MAX_CATEGORY_COUNT, "42");
+
     @Rule
     public final AutofillActivityTestRule<GridActivity> mActivityRule =
             new AutofillActivityTestRule<GridActivity>(GridActivity.class);
@@ -90,6 +96,7 @@ public class FieldsClassificationTest extends AutoFillServiceTestCase {
         assertThat(mAfm.isFieldClassificationEnabled()).isFalse();
     }
 
+    @AppModeFull // Requires access to metadata of another app (the FC service)
     @Test
     public void testGetAlgorithm() throws Exception {
         enableService();
@@ -132,6 +139,7 @@ public class FieldsClassificationTest extends AutoFillServiceTestCase {
         assertThat(UserData.getMaxUserDataSize()).isEqualTo(9);
         assertThat(UserData.getMinValueLength()).isEqualTo(5);
         assertThat(UserData.getMaxValueLength()).isEqualTo(50);
+        assertThat(UserData.getMaxCategoryCount()).isEqualTo(42);
     }
 
     @Test
