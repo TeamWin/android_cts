@@ -20,6 +20,7 @@ import android.app.ActivityManager;
 import android.app.UiAutomation;
 import android.content.Context;
 import android.content.pm.PackageManager;
+import android.media.AudioAttributes;
 import android.media.AudioManager;
 import android.media.Ringtone;
 import android.media.RingtoneManager;
@@ -159,6 +160,34 @@ public class RingtoneTest extends InstrumentationTestCase {
         assertTrue(mRingtone.getStreamType() == AudioManager.STREAM_RING);
         mRingtone.play();
         assertTrue("couldn't play ringtone " + uri, mRingtone.isPlaying());
+        mRingtone.stop();
+        assertFalse(mRingtone.isPlaying());
+    }
+
+    public void testLoopingVolume() {
+        if (isTV()) {
+            return;
+        }
+        if (!hasAudioOutput()) {
+            Log.i(TAG, "Skipping testRingtone(): device doesn't have audio output.");
+            return;
+        }
+
+        Uri uri = RingtoneManager.getValidRingtoneUri(mContext);
+        assertNotNull("ringtone was unexpectedly null", uri);
+        RingtoneManager.setActualDefaultRingtoneUri(mContext, RingtoneManager.TYPE_RINGTONE, uri);
+        assertNotNull(mRingtone.getTitle(mContext));
+        final AudioAttributes ringtoneAa = new AudioAttributes.Builder()
+                .setUsage(AudioAttributes.USAGE_NOTIFICATION_RINGTONE).
+                build();
+        mRingtone.setAudioAttributes(ringtoneAa);
+        assertEquals(ringtoneAa, mRingtone.getAudioAttributes());
+        mRingtone.setLooping(true);
+        mRingtone.setVolume(0.5f);
+        mRingtone.play();
+        assertTrue("couldn't play ringtone " + uri, mRingtone.isPlaying());
+        assertTrue(mRingtone.isLooping());
+        assertEquals("invalid ringtone player volume", 0.5f, mRingtone.getVolume());
         mRingtone.stop();
         assertFalse(mRingtone.isPlaying());
     }
