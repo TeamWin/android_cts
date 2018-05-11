@@ -31,6 +31,7 @@ import java.io.OutputStream;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.EnumSet;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Locale;
 import java.util.Set;
@@ -77,6 +78,8 @@ public class AdbRootDependentCompilationTest extends DeviceTestCase {
     private File apkFile;
     private boolean mCanEnableDeviceRootAccess;
 
+    private Matcher mAdbLineFilter;
+
     @Override
     protected void setUp() throws Exception {
         super.setUp();
@@ -104,6 +107,9 @@ public class AdbRootDependentCompilationTest extends DeviceTestCase {
         assertTrue("empty profile", profileBytes.length > 0); // sanity check
         textProfileFile = File.createTempFile("compilationtest", "prof.txt");
         Files.write(profileBytes, textProfileFile);
+
+        // Ignore issues in cmd.
+        mAdbLineFilter = Pattern.compile("FORTIFY: pthread_mutex_lock.*").matcher("");
     }
 
     @Override
@@ -355,9 +361,25 @@ public class AdbRootDependentCompilationTest extends DeviceTestCase {
         return propUseJitProfiles;
     }
 
+    private String[] filterAdbLines(String[] lines) {
+        List<String> linesList = Arrays.asList(lines);
+        Iterator<String> it = linesList.iterator();
+        while (it.hasNext()) {
+            String line = it.next();
+            mAdbLineFilter.reset(line);
+            if (mAdbLineFilter.matches()) {
+                it.remove();
+            }
+        }
+        if (linesList.size() != lines.length) {
+            return linesList.toArray(new String[linesList.size()]);
+        }
+        return lines;
+    }
+
     private String[] executeSuShellAdbCommand(int numLinesOutputExpected, String... command)
             throws DeviceNotAvailableException {
-        String[] lines = executeSuShellAdbCommand(command);
+        String[] lines = filterAdbLines(executeSuShellAdbCommand(command));
         assertEquals(
                 String.format(Locale.US, "Expected %d lines output, got %d running %s: %s",
                         numLinesOutputExpected, lines.length, Arrays.toString(command),
@@ -373,7 +395,7 @@ public class AdbRootDependentCompilationTest extends DeviceTestCase {
         String output = mDevice.executeShellCommand("su root " + cmdString);
         // "".split() returns { "" }, but we want an empty array
         String[] lines = output.equals("") ? new String[0] : output.split("\n");
-        return lines;
+        return filterAdbLines(lines);
     }
 
     private String getSelinuxLabel(String path) throws DeviceNotAvailableException {
