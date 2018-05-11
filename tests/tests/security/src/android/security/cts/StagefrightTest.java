@@ -1428,8 +1428,14 @@ public class StagefrightTest extends InstrumentationTestCase {
             Log.i(TAG, "Decoding blob " + rname + " using codec " + codecName);
             MediaCodec codec = MediaCodec.createByCodecName(codecName);
             MediaFormat format = MediaFormat.createVideoFormat(mime, initWidth, initHeight);
-            codec.configure(format, null, null, 0);
-            codec.start();
+            try {
+                codec.configure(format, null, null, 0);
+                codec.start();
+            } catch (Exception e) {
+                Log.i(TAG, "Exception from codec " + codecName);
+                releaseCodec(codec);
+                continue;
+            }
 
             try {
                 MediaCodec.BufferInfo info = new MediaCodec.BufferInfo();
