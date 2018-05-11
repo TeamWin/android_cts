@@ -112,7 +112,7 @@ public class MediaDrmClearkeyTest extends MediaPlayerTestBase {
     private byte[] mSessionId;
     private Looper mLooper;
     private MediaCodecClearKeyPlayer mMediaCodecPlayer;
-    private MediaDrm mDrm;
+    private MediaDrm mDrm = null;
     private final Object mLock = new Object();
     private SurfaceHolder mSurfaceHolder;
 
@@ -242,6 +242,10 @@ public class MediaDrmClearkeyTest extends MediaPlayerTestBase {
         new Thread() {
             @Override
             public void run() {
+                if (mDrm != null) {
+                    Log.e(TAG, "Failed to startDrm: already started");
+                    return;
+                }
                 // Set up a looper to handle events
                 Looper.prepare();
 
@@ -293,6 +297,8 @@ public class MediaDrmClearkeyTest extends MediaPlayerTestBase {
             Log.e(TAG, "invalid drm specified in stopDrm");
         }
         mLooper.quit();
+        mDrm.close();
+        mDrm = null;
     }
 
     private @NonNull byte[] openSession(MediaDrm drm) {
@@ -689,52 +695,49 @@ public class MediaDrmClearkeyTest extends MediaPlayerTestBase {
         }
     }
 
-    public void testGetOpenSessionCount() {
-        byte[] sessionId = null;
-        MediaDrm drm = null;
-        try {
-            drm = new MediaDrm(COMMON_PSSH_SCHEME_UUID);
-
-            if (drm.getOpenSessionCount() != 0) {
-                throw new Error("expected open session count to be 0");
-            }
-            sessionId = drm.openSession();
-            if (drm.getOpenSessionCount() != 1) {
-                throw new Error("expected open session count to be 1");
-            }
-            drm.closeSession(sessionId);
-            sessionId = null;
-
-            if (drm.getOpenSessionCount() != 0) {
-                throw new Error("expected open session count to be 0");
-            }
-        } catch(Exception e) {
-            throw new Error("Unexpected exception requesting open sessions", e);
-        } finally  {
-            if (sessionId != null) {
-                drm.closeSession(sessionId);
-            }
-        }
-    }
-
     private final static int CLEARKEY_MAX_SESSIONS = 10;
 
-    public void testMaxSessionCount() {
-        try {
-            MediaDrm drm = new MediaDrm(COMMON_PSSH_SCHEME_UUID);
+    public void testGetNumberOfSessions() {
+        MediaDrm drm = startDrm(new byte[][] { CLEAR_KEY_CENC },
+                "cenc", COMMON_PSSH_SCHEME_UUID);
 
-            if (drm.getMaxSessionCount() != CLEARKEY_MAX_SESSIONS) {
-                throw new Error("expected open session count to be " +
+        try {
+            if (getClearkeyVersion(drm).equals("1.0")) {
+                Log.i(TAG, "Skipping testGetNumberOfSessions: not supported by clearkey 1.0");
+                return;
+            }
+
+            int maxSessionCount = drm.getMaxSessionCount();
+            if (maxSessionCount != CLEARKEY_MAX_SESSIONS) {
+                throw new Error("expected max session count to be " +
                         CLEARKEY_MAX_SESSIONS);
             }
-        } catch(Exception e) {
-            throw new Error("Unexpected exception requesting open sessions", e);
+            int initialOpenSessionCount = drm.getOpenSessionCount();
+            if (initialOpenSessionCount == maxSessionCount) {
+                throw new Error("all sessions open, can't do increment test");
+            }
+            mSessionId = openSession(drm);
+            try {
+                if (drm.getOpenSessionCount() != initialOpenSessionCount + 1) {
+                    throw new Error("openSessionCount didn't increment");
+                }
+            } finally {
+                closeSession(drm, mSessionId);
+            }
+        } finally {
+            stopDrm(drm);
         }
     }
 
     public void testHdcpLevels() {
+        MediaDrm drm = null;
         try {
-            MediaDrm drm = new MediaDrm(COMMON_PSSH_SCHEME_UUID);
+            drm = new MediaDrm(COMMON_PSSH_SCHEME_UUID);
+
+            if (getClearkeyVersion(drm).equals("1.0")) {
+                Log.i(TAG, "Skipping testHdcpLevels: not supported by clearkey 1.0");
+                return;
+            }
 
             if (drm.getConnectedHdcpLevel() != MediaDrm.HDCP_NONE) {
                 throw new Error("expected connected hdcp level to be HDCP_NONE");
@@ -744,7 +747,11 @@ public class MediaDrmClearkeyTest extends MediaPlayerTestBase {
                 throw new Error("expected max hdcp level to be HDCP_NO_DIGITAL_OUTPUT");
             }
         } catch(Exception e) {
-            throw new Error("Unexpected exception requesting open sessions", e);
+            throw new Error("Unexpected exception", e);
+        } finally {
+            if (drm != null) {
+                drm.close();
+            }
         }
     }
 
@@ -753,6 +760,11 @@ public class MediaDrmClearkeyTest extends MediaPlayerTestBase {
         byte[] sessionId = null;
         try {
             drm = new MediaDrm(COMMON_PSSH_SCHEME_UUID);
+
+            if (getClearkeyVersion(drm).equals("1.0")) {
+                Log.i(TAG, "Skipping testSecurityLevels: not supported by clearkey 1.0");
+                return;
+            }
 
             sessionId = drm.openSession(MediaDrm.SECURITY_LEVEL_SW_SECURE_CRYPTO);
             if (drm.getSecurityLevel(sessionId) != MediaDrm.SECURITY_LEVEL_SW_SECURE_CRYPTO) {
@@ -778,26 +790,35 @@ public class MediaDrmClearkeyTest extends MediaPlayerTestBase {
             } finally  {
                 if (sessionId != null) {
                     drm.closeSession(sessionId);
+                    sessionId = null;
                 }
             }
         } catch(Exception e) {
-            throw new Error("Unexpected exception requesting open sessions", e);
+            throw new Error("Unexpected exception", e);
         } finally  {
             if (sessionId != null) {
                 drm.closeSession(sessionId);
+            }
+            if (drm != null) {
+                drm.close();
             }
         }
      }
 
     public void testSecureStop() {
         MediaDrm drm = startDrm(new byte[][] {CLEAR_KEY_CENC}, "cenc", COMMON_PSSH_SCHEME_UUID);
-        if (!drm.isCryptoSchemeSupported(COMMON_PSSH_SCHEME_UUID)) {
-            stopDrm(drm);
-            throw new Error(ERR_MSG_CRYPTO_SCHEME_NOT_SUPPORTED);
-        }
 
         byte[] sessionId = null;
         try {
+            if (getClearkeyVersion(drm).equals("1.0")) {
+                Log.i(TAG, "Skipping testSecureStop: not supported in ClearKey v1.0");
+                return;
+            }
+
+            if (!drm.isCryptoSchemeSupported(COMMON_PSSH_SCHEME_UUID)) {
+                throw new Error(ERR_MSG_CRYPTO_SCHEME_NOT_SUPPORTED);
+            }
+
             drm.removeAllSecureStops();
             Log.d(TAG, "Test getSecureStops from an empty list.");
             List<byte[]> secureStops = drm.getSecureStops();
@@ -889,12 +910,20 @@ public class MediaDrmClearkeyTest extends MediaPlayerTestBase {
             mMediaCodecPlayer.reset();
             closeSession(drm, mSessionId);
         } catch (Exception e) {
-            throw new Error("Unexpected exception requesting open sessions", e);
+            throw new Error("Unexpected exception", e);
         } finally {
             if (sessionId != null) {
                 drm.closeSession(sessionId);
             }
             stopDrm(drm);
+        }
+    }
+
+    private String getClearkeyVersion(MediaDrm drm) {
+        try {
+            return drm.getPropertyString("version");
+        } catch (Exception e) {
+            return "unavailable";
         }
     }
 }
