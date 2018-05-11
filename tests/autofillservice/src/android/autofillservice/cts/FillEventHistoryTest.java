@@ -43,6 +43,7 @@ import android.autofillservice.cts.CannedFillResponse.CannedDataset;
 import android.content.Intent;
 import android.content.IntentSender;
 import android.os.Bundle;
+import android.platform.test.annotations.AppModeFull;
 import android.service.autofill.FillEventHistory;
 import android.service.autofill.FillEventHistory.Event;
 import android.service.autofill.FillResponse;
@@ -77,6 +78,7 @@ public class FillEventHistoryTest extends AutoFillServiceTestCase {
     }
 
     @Test
+    @AppModeFull // TODO(b/79487366): currently not working on Instant Mode
     public void testDatasetAuthenticationSelected() throws Exception {
         enableService();
 
@@ -117,6 +119,7 @@ public class FillEventHistoryTest extends AutoFillServiceTestCase {
     }
 
     @Test
+    @AppModeFull // TODO(b/79487366): currently not working on Instant Mode
     public void testAuthenticationSelected() throws Exception {
         enableService();
 

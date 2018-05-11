@@ -15,7 +15,8 @@
  * limitations under the License.
 -->
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
-    package="android.autofillservice.cts" >
+    package="android.autofillservice.cts"
+    android:targetSandboxVersion="2">
 
     <uses-permission android:name="android.permission.SYSTEM_ALERT_WINDOW"/>
     <uses-permission android:name="android.permission.MANAGE_ACTIVITY_STACKS"/>

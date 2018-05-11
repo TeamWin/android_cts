@@ -47,6 +47,7 @@ import android.autofillservice.cts.InstrumentedAutoFillService.FillRequest;
 import android.autofillservice.cts.InstrumentedAutoFillService.SaveRequest;
 import android.content.IntentSender;
 import android.os.Bundle;
+import android.platform.test.annotations.AppModeFull;
 import android.service.autofill.FillResponse;
 
 import org.junit.Before;
@@ -1332,6 +1333,7 @@ public class PartitionedActivityTest extends AutoFillServiceTestCase {
     }
 
     @Test
+    @AppModeFull // TODO(b/79487366): currently not working on Instant Mode
     public void testAutofillMultipleAuthDatasetsInSequence() throws Exception {
         // Set service.
         enableService();
@@ -1510,6 +1512,7 @@ public class PartitionedActivityTest extends AutoFillServiceTestCase {
      * partition.
      */
     @Test
+    @AppModeFull // TODO(b/79487366): currently not working on Instant Mode
     public void testAutofillMultipleAuthDatasetsNoOverlap() throws Exception {
         // Set service.
         enableService();
@@ -1689,6 +1692,7 @@ public class PartitionedActivityTest extends AutoFillServiceTestCase {
      * partition.
      */
     @Test
+    @AppModeFull // TODO(b/79487366): currently not working on Instant Mode
     public void testAutofillMultipleDatasetsMixedAuthNoAuthNoOverlap() throws Exception {
         // Set service.
         enableService();
@@ -1857,6 +1861,7 @@ public class PartitionedActivityTest extends AutoFillServiceTestCase {
      * the first.
      */
     @Test
+    @AppModeFull // TODO(b/79487366): currently not working on Instant Mode
     public void testAutofillMultipleAuthDatasetsOverlapPickFirst() throws Exception {
         autofillMultipleAuthDatasetsOverlapping(true);
     }
@@ -1872,6 +1877,7 @@ public class PartitionedActivityTest extends AutoFillServiceTestCase {
      * the second.
      */
     @Test
+    @AppModeFull // TODO(b/79487366): currently not working on Instant Mode
     public void testAutofillMultipleAuthDatasetsOverlapPickSecond() throws Exception {
         autofillMultipleAuthDatasetsOverlapping(false);
     }
@@ -2103,6 +2109,7 @@ public class PartitionedActivityTest extends AutoFillServiceTestCase {
     }
 
     @Test
+    @AppModeFull // TODO(b/79487366): currently not working on Instant Mode
     public void testAutofillAllResponsesAuthenticated() throws Exception {
         // Set service.
         enableService();
