@@ -72,15 +72,12 @@ def main():
             "android.statistics.lensShadingMapMode":1
             }
 
-        w_map = props["android.lens.info.shadingMapSize"]["width"]
-        h_map = props["android.lens.info.shadingMapSize"]["height"]
-
         print "Testing auto capture results"
-        lsc_map_auto = test_auto(cam, w_map, h_map, props)
+        lsc_map_auto = test_auto(cam, props)
         print "Testing manual capture results"
-        test_manual(cam, w_map, h_map, lsc_map_auto, props)
+        test_manual(cam, lsc_map_auto, props)
         print "Testing auto capture results again"
-        test_auto(cam, w_map, h_map, props)
+        test_auto(cam, props)
 
 # A very loose definition for two floats being close to each other;
 # there may be different interpolation and rounding used to get the
@@ -104,7 +101,7 @@ def draw_lsc_plot(w_map, h_map, lsc_map, name):
         ax.plot_wireframe(xs, ys, zs)
         matplotlib.pyplot.savefig("%s_plot_lsc_%s_ch%d.png"%(NAME,name,ch))
 
-def test_auto(cam, w_map, h_map, props):
+def test_auto(cam, props):
     # Get 3A lock first, so the auto values in the capture result are
     # populated properly.
     rect = [[0,0,1,1,1]]
@@ -117,7 +114,10 @@ def test_auto(cam, w_map, h_map, props):
     gains = cap_res["android.colorCorrection.gains"]
     transform = cap_res["android.colorCorrection.transform"]
     exp_time = cap_res['android.sensor.exposureTime']
-    lsc_map = cap_res["android.statistics.lensShadingMap"]
+    lsc_obj = cap_res["android.statistics.lensShadingCorrectionMap"]
+    lsc_map = lsc_obj["map"]
+    w_map = lsc_obj["width"]
+    h_map = lsc_obj["height"]
     ctrl_mode = cap_res["android.control.mode"]
 
     print "Control mode:", ctrl_mode
@@ -157,7 +157,7 @@ def test_auto(cam, w_map, h_map, props):
 
     return lsc_map
 
-def test_manual(cam, w_map, h_map, lsc_map_auto, props):
+def test_manual(cam, lsc_map_auto, props):
     cap = cam.do_capture(manual_req)
     cap_res = cap["metadata"]
 
@@ -167,7 +167,10 @@ def test_manual(cam, w_map, h_map, lsc_map_auto, props):
               cap_res["android.tonemap.curve"]["green"],
               cap_res["android.tonemap.curve"]["blue"]]
     exp_time = cap_res['android.sensor.exposureTime']
-    lsc_map = cap_res["android.statistics.lensShadingMap"]
+    lsc_obj = cap_res["android.statistics.lensShadingCorrectionMap"]
+    lsc_map = lsc_obj["map"]
+    w_map = lsc_obj["width"]
+    h_map = lsc_obj["height"]
     ctrl_mode = cap_res["android.control.mode"]
 
     print "Control mode:", ctrl_mode
