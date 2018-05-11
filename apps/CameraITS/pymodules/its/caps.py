@@ -470,9 +470,7 @@ def logical_multi_camera_physical_ids(props):
     """
     physicalIdsList = []
     if logical_multi_camera(props):
-        physicalIds = props['android.logicalMultiCamera.physicalIds'];
-        physicalIdsString = ''.join(chr(e) for e in physicalIds);
-        physicalIdsList = filter(None, physicalIdsString.split('\x00'));
+        physicalIdsList = props['camera.characteristics.physicalCamIds'];
     return physicalIdsList
 
 def mono_camera(props):
