@@ -24,6 +24,7 @@ import static com.google.common.truth.Truth.assertThat;
 
 import android.autofillservice.cts.CannedFillResponse.CannedDataset;
 import android.icu.text.SimpleDateFormat;
+import android.platform.test.annotations.AppModeFull;
 import android.service.autofill.CustomDescription;
 import android.service.autofill.DateTransformation;
 import android.service.autofill.DateValueSanitizer;
@@ -38,6 +39,7 @@ import org.junit.Test;
 
 import java.util.Calendar;
 
+@AppModeFull // Service-specific test
 public class CustomDescriptionDateTest extends AutoFillServiceTestCase {
 
     @Rule

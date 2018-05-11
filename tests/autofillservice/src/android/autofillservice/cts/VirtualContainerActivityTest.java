@@ -42,6 +42,7 @@ import android.autofillservice.cts.InstrumentedAutoFillService.SaveRequest;
 import android.autofillservice.cts.VirtualContainerView.Line;
 import android.autofillservice.cts.VirtualContainerView.VisibilityIntegrationMode;
 import android.graphics.Rect;
+import android.platform.test.annotations.AppModeFull;
 import android.service.autofill.SaveInfo;
 import android.support.test.uiautomator.UiObject2;
 import android.text.InputType;
@@ -108,6 +109,7 @@ public class VirtualContainerActivityTest extends AutoFillServiceTestCase {
     }
 
     @Test
+    @AppModeFull // testAutofillSync() is enough to test ephemeral apps support
     public void testAutofillAsync() throws Exception {
         skipTestOnCompatMode();
 
@@ -243,6 +245,7 @@ public class VirtualContainerActivityTest extends AutoFillServiceTestCase {
     }
 
     @Test
+    @AppModeFull // testAutofillSync() is enough to test ephemeral apps support
     public void testAutofillTwoDatasets() throws Exception {
         // Set service.
         enableService();
@@ -315,11 +318,13 @@ public class VirtualContainerActivityTest extends AutoFillServiceTestCase {
     }
 
     @Test
+    @AppModeFull // testAutofillManuallyOneDataset() is enough to test ephemeral apps support
     public void testAutofillManuallyTwoDatasetsPickFirst() throws Exception {
         autofillManuallyTwoDatasets(true);
     }
 
     @Test
+    @AppModeFull // testAutofillManuallyOneDataset() is enough to test ephemeral apps support
     public void testAutofillManuallyTwoDatasetsPickSecond() throws Exception {
         autofillManuallyTwoDatasets(false);
     }
@@ -391,6 +396,7 @@ public class VirtualContainerActivityTest extends AutoFillServiceTestCase {
     }
 
     @Test
+    @AppModeFull // testAutofillCallbacks() is enough to test ephemeral apps support
     public void testAutofillCallbackDisabled() throws Throwable {
         // Set service.
         disableService();
@@ -404,6 +410,7 @@ public class VirtualContainerActivityTest extends AutoFillServiceTestCase {
     }
 
     @Test
+    @AppModeFull // testAutofillCallbacks() is enough to test ephemeral apps support
     public void testAutofillCallbackNoDatasets() throws Throwable {
         // Set service.
         enableService();
@@ -424,6 +431,7 @@ public class VirtualContainerActivityTest extends AutoFillServiceTestCase {
     }
 
     @Test
+    @AppModeFull // testAutofillCallbacks() is enough to test ephemeral apps support
     public void testAutofillCallbackNoDatasetsButSaveInfo() throws Throwable {
         // Set service.
         enableService();
@@ -614,6 +622,7 @@ public class VirtualContainerActivityTest extends AutoFillServiceTestCase {
     }
 
     @Test
+    @AppModeFull // testSaveNotShown_noUserInput() is enough to test ephemeral apps support
     public void testSaveNotShown_initialValues_noUserInput() throws Throwable {
         // Prepare activitiy.
         mActivity.mUsername.setText("foo");
@@ -638,6 +647,7 @@ public class VirtualContainerActivityTest extends AutoFillServiceTestCase {
     }
 
     @Test
+    @AppModeFull // testSaveNotShown_noUserInput() is enough to test ephemeral apps support
     public void testSaveNotShown_initialValues_noUserInput_serviceDatasets() throws Throwable {
         // Prepare activitiy.
         mActivity.mUsername.setText("foo");
@@ -668,6 +678,7 @@ public class VirtualContainerActivityTest extends AutoFillServiceTestCase {
     }
 
     @Test
+    @AppModeFull // testSaveNotShown_noUserInput() is enough to test ephemeral apps support
     public void testSaveNotShown_userInputMatchesDatasets() throws Throwable {
         // Prepare activitiy.
         mActivity.mUsername.setText("foo");

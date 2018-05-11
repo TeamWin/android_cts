@@ -42,6 +42,7 @@ import android.app.assist.AssistStructure.ViewNode;
 import android.autofillservice.cts.CannedFillResponse.CannedDataset;
 import android.autofillservice.cts.InstrumentedAutoFillService.FillRequest;
 import android.autofillservice.cts.InstrumentedAutoFillService.SaveRequest;
+import android.platform.test.annotations.AppModeFull;
 import android.service.autofill.CharSequenceTransformation;
 import android.service.autofill.CustomDescription;
 import android.service.autofill.ImageTransformation;
@@ -114,6 +115,7 @@ public class CheckoutActivityTest extends AutoFillServiceTestCase {
     }
 
     @Test
+    @AppModeFull // testAutofill() is enough to test ephemeral apps support
     public void testAutofillDynamicAdapter() throws Exception {
         // Set activity.
         mActivity.onCcExpiration((v) -> v.setAdapter(new ArrayAdapter<String>(getContext(),
@@ -156,6 +158,7 @@ public class CheckoutActivityTest extends AutoFillServiceTestCase {
     // TODO: this should be a pure unit test exercising onProvideAutofillStructure(),
     // but that would require creating a custom ViewStructure.
     @Test
+    @AppModeFull // Unit test
     public void testGetAutofillOptionsSorted() throws Exception {
         // Set service.
         enableService();
@@ -245,11 +248,13 @@ public class CheckoutActivityTest extends AutoFillServiceTestCase {
     }
 
     @Test
+    @AppModeFull // Service-specific test
     public void testCustomizedSaveUi() throws Exception {
         customizedSaveUi(false);
     }
 
     @Test
+    @AppModeFull // Service-specific test
     public void testCustomizedSaveUiWithContentDescription() throws Exception {
         customizedSaveUi(true);
     }

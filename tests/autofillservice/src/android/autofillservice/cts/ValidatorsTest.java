@@ -27,6 +27,7 @@ import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.testng.Assert.assertThrows;
 
+import android.platform.test.annotations.AppModeFull;
 import android.service.autofill.InternalValidator;
 import android.service.autofill.Validator;
 import android.service.autofill.ValueFinder;
@@ -37,6 +38,7 @@ import org.mockito.Mock;
 import org.mockito.junit.MockitoJUnitRunner;
 
 @RunWith(MockitoJUnitRunner.class)
+@AppModeFull // Unit test
 public class ValidatorsTest extends AutoFillServiceTestCase {
 
     @Mock private Validator mInvalidValidator;

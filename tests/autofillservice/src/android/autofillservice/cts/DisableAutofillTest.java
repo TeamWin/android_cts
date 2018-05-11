@@ -19,6 +19,7 @@ package android.autofillservice.cts;
 import android.autofillservice.cts.CannedFillResponse.CannedDataset;
 import android.content.Intent;
 import android.os.SystemClock;
+import android.platform.test.annotations.AppModeFull;
 import android.service.autofill.FillResponse;
 import android.util.Log;
 
@@ -191,6 +192,7 @@ public class DisableAutofillTest extends AutoFillServiceTestCase {
     }
 
     @Test
+    @AppModeFull // testDisableApp() is enough to test ephemeral apps support
     public void testDisableAppThenWaitToReenableIt() throws Exception {
         // Set service.
         enableService();
@@ -216,6 +218,7 @@ public class DisableAutofillTest extends AutoFillServiceTestCase {
     }
 
     @Test
+    @AppModeFull // testDisableApp() is enough to test ephemeral apps support
     public void testDisableAppThenResetServiceToReenableIt() throws Exception {
         enableService();
         sReplier.addResponse(new CannedFillResponse.Builder()
@@ -259,6 +262,7 @@ public class DisableAutofillTest extends AutoFillServiceTestCase {
     }
 
     @Test
+    @AppModeFull // testDisableActivity() is enough to test ephemeral apps support
     public void testDisableActivityThenWaitToReenableIt() throws Exception {
         // Set service.
         enableService();
@@ -287,6 +291,7 @@ public class DisableAutofillTest extends AutoFillServiceTestCase {
     }
 
     @Test
+    @AppModeFull // testDisableActivity() is enough to test ephemeral apps support
     public void testDisableActivityThenResetServiceToReenableIt() throws Exception {
         enableService();
         sReplier.addResponse(new CannedFillResponse.Builder()

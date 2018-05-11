@@ -59,6 +59,7 @@ import java.util.concurrent.TimeoutException;
 /**
  * Test case for an activity containing multiple partitions.
  */
+@AppModeFull // Service-specific test
 public class PartitionedActivityTest extends AutoFillServiceTestCase {
 
     @Rule
@@ -1333,7 +1334,6 @@ public class PartitionedActivityTest extends AutoFillServiceTestCase {
     }
 
     @Test
-    @AppModeFull // TODO(b/79487366): currently not working on Instant Mode
     public void testAutofillMultipleAuthDatasetsInSequence() throws Exception {
         // Set service.
         enableService();
@@ -1512,7 +1512,6 @@ public class PartitionedActivityTest extends AutoFillServiceTestCase {
      * partition.
      */
     @Test
-    @AppModeFull // TODO(b/79487366): currently not working on Instant Mode
     public void testAutofillMultipleAuthDatasetsNoOverlap() throws Exception {
         // Set service.
         enableService();
@@ -1692,7 +1691,6 @@ public class PartitionedActivityTest extends AutoFillServiceTestCase {
      * partition.
      */
     @Test
-    @AppModeFull // TODO(b/79487366): currently not working on Instant Mode
     public void testAutofillMultipleDatasetsMixedAuthNoAuthNoOverlap() throws Exception {
         // Set service.
         enableService();
@@ -1861,7 +1859,6 @@ public class PartitionedActivityTest extends AutoFillServiceTestCase {
      * the first.
      */
     @Test
-    @AppModeFull // TODO(b/79487366): currently not working on Instant Mode
     public void testAutofillMultipleAuthDatasetsOverlapPickFirst() throws Exception {
         autofillMultipleAuthDatasetsOverlapping(true);
     }
@@ -1877,7 +1874,6 @@ public class PartitionedActivityTest extends AutoFillServiceTestCase {
      * the second.
      */
     @Test
-    @AppModeFull // TODO(b/79487366): currently not working on Instant Mode
     public void testAutofillMultipleAuthDatasetsOverlapPickSecond() throws Exception {
         autofillMultipleAuthDatasetsOverlapping(false);
     }
@@ -2109,7 +2105,6 @@ public class PartitionedActivityTest extends AutoFillServiceTestCase {
     }
 
     @Test
-    @AppModeFull // TODO(b/79487366): currently not working on Instant Mode
     public void testAutofillAllResponsesAuthenticated() throws Exception {
         // Set service.
         enableService();
