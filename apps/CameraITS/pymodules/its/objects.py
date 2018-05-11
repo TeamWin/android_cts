@@ -115,9 +115,10 @@ def manual_capture_request(
         #CONTRAST_CURVE mode
         if 0 in props["android.tonemap.availableToneMapModes"]:
             req["android.tonemap.mode"] = 0
-            req["android.tonemap.curveRed"] = [0.0,0.0, 1.0,1.0]
-            req["android.tonemap.curveGreen"] = [0.0,0.0, 1.0,1.0]
-            req["android.tonemap.curveBlue"] = [0.0,0.0, 1.0,1.0]
+            req["android.tonemap.curve"] = {
+                "red": [0.0,0.0, 1.0,1.0],
+                "green": [0.0,0.0, 1.0,1.0],
+                "blue": [0.0,0.0, 1.0,1.0]}
         #GAMMA_VALUE mode
         elif 3 in props["android.tonemap.availableToneMapModes"]:
             req["android.tonemap.mode"] = 3
