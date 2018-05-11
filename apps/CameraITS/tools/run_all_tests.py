@@ -258,16 +258,8 @@ def main():
 
     # user doesn't specify camera id, run through all cameras
     if not camera_ids:
-        camera_ids_path = os.path.join(topdir, "camera_ids.txt")
-        out_arg = "out=" + camera_ids_path
-        cmd = ['python',
-               os.path.join(os.getcwd(), "tools/get_camera_ids.py"), out_arg,
-               device_id_arg]
-        cam_code = subprocess.call(cmd, cwd=topdir)
-        assert cam_code == 0
-        with open(camera_ids_path, "r") as f:
-            for line in f:
-                camera_ids.append(line.replace('\n', ''))
+        with its.device.ItsSession() as cam:
+            camera_ids = cam.get_camera_ids()
 
     print "Running ITS on camera: %s, scene %s" % (camera_ids, scenes)
 
