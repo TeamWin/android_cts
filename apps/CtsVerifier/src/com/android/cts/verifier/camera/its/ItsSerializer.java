@@ -673,6 +673,18 @@ public class ItsSerializer {
                                                 arr.getJSONObject(i).getInt("denominator"));
                                     }
                                     val = new ColorSpaceTransform(a);
+                                } else if (keyType == TonemapCurve.class) {
+                                    JSONObject obj = jsonReq.optJSONObject(keyName);
+                                    String names[] = {"red", "green", "blue"};
+                                    float[][] curves = new float[3][];
+                                    for (int ch = 0; ch < 3; ch++) {
+                                        JSONArray ja = obj.getJSONArray(names[ch]);
+                                        curves[ch] = new float[ja.length()];
+                                        for (int i = 0; i < ja.length(); i++) {
+                                            Array.set(curves[ch], i, (float)ja.getDouble(i));
+                                        }
+                                    }
+                                    val = new TonemapCurve(curves[0], curves[1], curves[2]);
                                 } else if (keyType instanceof ParameterizedType &&
                                         ((ParameterizedType)keyType).getRawType() == Range.class &&
                                         ((ParameterizedType)keyType).getActualTypeArguments().length == 1 &&
