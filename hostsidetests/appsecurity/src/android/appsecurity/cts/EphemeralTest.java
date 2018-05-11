@@ -118,8 +118,13 @@ public class EphemeralTest extends DeviceTestCase
         mBuildInfo = buildInfo;
     }
 
+    @Override
     public void setUp() throws Exception {
         super.setUp();
+
+        if (isDeviceUnsupported()) {
+            return;
+        }
 
         Utils.prepareSingleUser(getDevice());
         assertNotNull(mAbi);
@@ -130,27 +135,45 @@ public class EphemeralTest extends DeviceTestCase
     }
 
     public void tearDown() throws Exception {
+        if (isDeviceUnsupported()) {
+            return;
+        }
         uninstallTestPackages();
         super.tearDown();
     }
 
     public void testNormalQuery() throws Exception {
+        if (isDeviceUnsupported()) {
+            return;
+        }
         runDeviceTests(NORMAL_PKG, TEST_CLASS, "testQuery");
     }
 
     public void testNormalStartNormal() throws Exception {
+        if (isDeviceUnsupported()) {
+            return;
+        }
         runDeviceTests(NORMAL_PKG, TEST_CLASS, "testStartNormal");
     }
 
     public void testNormalStartEphemeral() throws Exception {
+        if (isDeviceUnsupported()) {
+            return;
+        }
         runDeviceTests(NORMAL_PKG, TEST_CLASS, "testStartEphemeral");
     }
 
     public void testEphemeralQuery() throws Exception {
+        if (isDeviceUnsupported()) {
+            return;
+        }
         runDeviceTests(EPHEMERAL_1_PKG, TEST_CLASS, "testQuery");
     }
 
     public void testEphemeralStartNormal() throws Exception {
+        if (isDeviceUnsupported()) {
+            return;
+        }
         runDeviceTests(EPHEMERAL_1_PKG, TEST_CLASS, "testStartNormal");
     }
 
@@ -158,55 +181,100 @@ public class EphemeralTest extends DeviceTestCase
     // avoid sharing state. once an instant app is exposed to a component, it's
     // exposed until the device restarts or the instant app is removed.
     public void testEphemeralStartExposed01() throws Exception {
+        if (isDeviceUnsupported()) {
+            return;
+        }
         runDeviceTests(EPHEMERAL_1_PKG, TEST_CLASS, "testStartExposed01");
     }
     public void testEphemeralStartExposed02() throws Exception {
+        if (isDeviceUnsupported()) {
+            return;
+        }
         runDeviceTests(EPHEMERAL_1_PKG, TEST_CLASS, "testStartExposed02");
     }
     public void testEphemeralStartExposed03() throws Exception {
+        if (isDeviceUnsupported()) {
+            return;
+        }
         runDeviceTests(EPHEMERAL_1_PKG, TEST_CLASS, "testStartExposed03");
     }
     public void testEphemeralStartExposed04() throws Exception {
+        if (isDeviceUnsupported()) {
+            return;
+        }
         runDeviceTests(EPHEMERAL_1_PKG, TEST_CLASS, "testStartExposed04");
     }
     public void testEphemeralStartExposed05() throws Exception {
+        if (isDeviceUnsupported()) {
+            return;
+        }
         runDeviceTests(EPHEMERAL_1_PKG, TEST_CLASS, "testStartExposed05");
     }
     public void testEphemeralStartExposed06() throws Exception {
+        if (isDeviceUnsupported()) {
+            return;
+        }
         runDeviceTests(EPHEMERAL_1_PKG, TEST_CLASS, "testStartExposed06");
     }
     public void testEphemeralStartExposed07() throws Exception {
+        if (isDeviceUnsupported()) {
+            return;
+        }
         runDeviceTests(EPHEMERAL_1_PKG, TEST_CLASS, "testStartExposed07");
     }
     public void testEphemeralStartExposed08() throws Exception {
+        if (isDeviceUnsupported()) {
+            return;
+        }
         runDeviceTests(EPHEMERAL_1_PKG, TEST_CLASS, "testStartExposed08");
     }
     public void testEphemeralStartExposed09() throws Exception {
+        if (isDeviceUnsupported()) {
+            return;
+        }
         runDeviceTests(EPHEMERAL_1_PKG, TEST_CLASS, "testStartExposed09");
     }
     public void testEphemeralStartExposed10() throws Exception {
+        if (isDeviceUnsupported()) {
+            return;
+        }
         runDeviceTests(EPHEMERAL_1_PKG, TEST_CLASS, "testStartExposed10");
     }
 
     public void testEphemeralStartEphemeral() throws Exception {
+        if (isDeviceUnsupported()) {
+            return;
+        }
         runDeviceTests(EPHEMERAL_1_PKG, TEST_CLASS, "testStartEphemeral");
     }
 
     public void testEphemeralGetInstaller01() throws Exception {
+        if (isDeviceUnsupported()) {
+            return;
+        }
         installEphemeralApp(EPHEMERAL_1_APK, "com.android.cts.normalapp");
         runDeviceTests(EPHEMERAL_1_PKG, TEST_CLASS, "testGetInstaller01");
     }
     public void testEphemeralGetInstaller02() throws Exception {
+        if (isDeviceUnsupported()) {
+            return;
+        }
         installApp(NORMAL_APK, "com.android.cts.normalapp");
         installEphemeralApp(EPHEMERAL_1_APK, "com.android.cts.normalapp");
         runDeviceTests(EPHEMERAL_1_PKG, TEST_CLASS, "testGetInstaller02");
     }
     public void testEphemeralGetInstaller03() throws Exception {
+        if (isDeviceUnsupported()) {
+            return;
+        }
         installApp(NORMAL_APK, "com.android.cts.normalapp");
         runDeviceTests(EPHEMERAL_1_PKG, TEST_CLASS, "testGetInstaller03");
     }
 
     public void testExposedSystemActivities() throws Exception {
+        if (isDeviceUnsupported()) {
+            return;
+        }
         for (Map<String, String> testArgs : EXPECTED_EXPOSED_INTENTS) {
             final boolean exposed = isIntentExposed(testArgs);
             if (exposed) {
@@ -218,31 +286,52 @@ public class EphemeralTest extends DeviceTestCase
     }
 
     public void testBuildSerialUnknown() throws Exception {
+        if (isDeviceUnsupported()) {
+            return;
+        }
         runDeviceTests(EPHEMERAL_1_PKG, TEST_CLASS, "testBuildSerialUnknown");
     }
 
     public void testPackageInfo() throws Exception {
+        if (isDeviceUnsupported()) {
+            return;
+        }
         runDeviceTests(EPHEMERAL_1_PKG, TEST_CLASS, "testPackageInfo");
     }
 
     public void testActivityInfo() throws Exception {
+        if (isDeviceUnsupported()) {
+            return;
+        }
         runDeviceTests(EPHEMERAL_1_PKG, TEST_CLASS, "testActivityInfo");
     }
 
     public void testWebViewLoads() throws Exception {
+        if (isDeviceUnsupported()) {
+            return;
+        }
         runDeviceTests(EPHEMERAL_1_PKG, WEBVIEW_TEST_CLASS, "testWebViewLoads");
     }
 
     public void testInstallPermissionNotGranted() throws Exception {
+        if (isDeviceUnsupported()) {
+            return;
+        }
         runDeviceTests(EPHEMERAL_1_PKG, TEST_CLASS, "testInstallPermissionNotGranted");
     }
 
     public void testInstallPermissionGranted() throws Exception {
+        if (isDeviceUnsupported()) {
+            return;
+        }
         runDeviceTests(EPHEMERAL_1_PKG, TEST_CLASS, "testInstallPermissionGranted");
     }
 
     /** Test for android.permission.INSTANT_APP_FOREGROUND_SERVICE */
     public void testStartForegrondService() throws Exception {
+        if (isDeviceUnsupported()) {
+            return;
+        }
         // Make sure the test package does not have INSTANT_APP_FOREGROUND_SERVICE
         getDevice().executeShellCommand("cmd package revoke " + EPHEMERAL_1_PKG
                         + " android.permission.INSTANT_APP_FOREGROUND_SERVICE");
@@ -251,46 +340,73 @@ public class EphemeralTest extends DeviceTestCase
 
     /** Test for android.permission.RECORD_AUDIO */
     public void testRecordAudioPermission() throws Exception {
+        if (isDeviceUnsupported()) {
+            return;
+        }
         runDeviceTests(EPHEMERAL_1_PKG, TEST_CLASS, "testRecordAudioPermission");
     }
 
     /** Test for android.permission.CAMERA */
     public void testCameraPermission() throws Exception {
+        if (isDeviceUnsupported()) {
+            return;
+        }
         runDeviceTests(EPHEMERAL_1_PKG, TEST_CLASS, "testCameraPermission");
     }
 
     /** Test for android.permission.READ_PHONE_NUMBERS */
     public void testReadPhoneNumbersPermission() throws Exception {
+        if (isDeviceUnsupported()) {
+            return;
+        }
         runDeviceTests(EPHEMERAL_1_PKG, TEST_CLASS, "testReadPhoneNumbersPermission");
     }
 
     /** Test for android.permission.ACCESS_COARSE_LOCATION */
     public void testAccessCoarseLocationPermission() throws Throwable {
+        if (isDeviceUnsupported()) {
+            return;
+        }
         runDeviceTests(EPHEMERAL_1_PKG, TEST_CLASS, "testAccessCoarseLocationPermission");
     }
 
     /** Test for android.permission.NETWORK */
     public void testInternetPermission() throws Throwable {
+        if (isDeviceUnsupported()) {
+            return;
+        }
         runDeviceTests(EPHEMERAL_1_PKG, TEST_CLASS, "testInternetPermission");
     }
 
     /** Test for android.permission.VIBRATE */
     public void testVibratePermission() throws Throwable {
+        if (isDeviceUnsupported()) {
+            return;
+        }
         runDeviceTests(EPHEMERAL_1_PKG, TEST_CLASS, "testVibratePermission");
     }
 
     /** Test for android.permission.WAKE_LOCK */
     public void testWakeLockPermission() throws Throwable {
+        if (isDeviceUnsupported()) {
+            return;
+        }
         runDeviceTests(EPHEMERAL_1_PKG, TEST_CLASS, "testWakeLockPermission");
     }
 
     /** Test for search manager */
     public void testGetSearchableInfo() throws Throwable {
+        if (isDeviceUnsupported()) {
+            return;
+        }
         runDeviceTests(EPHEMERAL_1_PKG, TEST_CLASS, "testGetSearchableInfo");
     }
 
     /** Test for upgrade from instant --> full */
     public void testInstantAppUpgrade() throws Throwable {
+        if (isDeviceUnsupported()) {
+            return;
+        }
         installEphemeralApp(UPGRADED_APK);
         runDeviceTests(UPGRADED_PKG, TEST_CLASS, "testInstantApplicationWritePreferences");
         runDeviceTests(UPGRADED_PKG, TEST_CLASS, "testInstantApplicationWriteFile");
@@ -313,6 +429,19 @@ public class EphemeralTest extends DeviceTestCase
             testArgs.put("mime_type", mimeType);
         }
         return testArgs;
+    }
+
+    private static final String[] sUnsupportedFeatures = {
+            "feature:android.hardware.type.watch",
+            "android.hardware.type.embedded",
+    };
+    private boolean isDeviceUnsupported() throws Exception {
+        for (String unsupportedFeature : sUnsupportedFeatures) {
+            if (getDevice().hasFeature(unsupportedFeature)) {
+                return true;
+            }
+        }
+        return false;
     }
 
     private boolean isIntentExposed(Map<String, String> testArgs)
