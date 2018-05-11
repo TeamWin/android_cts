@@ -262,14 +262,18 @@ public class ItsSerializer {
     @SuppressWarnings("unchecked")
     private static Object serializeLensShadingMap(LensShadingMap map)
             throws org.json.JSONException {
-        JSONArray mapObj = new JSONArray();
+        JSONObject mapObj = new JSONObject();
+        JSONArray mapArr = new JSONArray();
         for (int row = 0; row < map.getRowCount(); row++) {
             for (int col = 0; col < map.getColumnCount(); col++) {
                 for (int ch = 0; ch < 4; ch++) {
-                    mapObj.put(map.getGainFactor(ch, col, row));
+                    mapArr.put(map.getGainFactor(ch, col, row));
                 }
             }
         }
+        mapObj.put("width", map.getColumnCount());
+        mapObj.put("height", map.getRowCount());
+        mapObj.put("map", mapArr);
         return mapObj;
     }
 
