@@ -64,12 +64,8 @@
 
     <application android:label="@string/app_name"
             android:icon="@drawable/icon"
-            android:backupAgent="VerifierBackupAgent"
             android:debuggable="true"
             android:largeHeap="true">
-
-        <meta-data android:name="com.google.android.backup.api_key"
-                android:value="AEdPqrEAAAAIbK6ldcOzoeRtQ1u1dFVJ1A7KetRhit-a1Xa82Q" />
 
         <uses-library android:name="android.test.runner"/>
 
@@ -161,15 +157,6 @@
             <meta-data android:name="test_excluded_features" android:value="android.hardware.type.automotive" />
             <meta-data android:name="test_required_features"
                     android:value="android.software.device_admin" />
-        </activity>
-
-        <activity android:name=".backup.BackupTestActivity" android:label="@string/backup_test">
-            <intent-filter>
-                <action android:name="android.intent.action.MAIN" />
-                <category android:name="android.cts.intent.category.MANUAL_TEST" />
-            </intent-filter>
-            <meta-data android:name="test_required_features"
-                    android:value="android.software.backup" />
         </activity>
 
         <activity android:name=".bluetooth.BluetoothTestActivity"
