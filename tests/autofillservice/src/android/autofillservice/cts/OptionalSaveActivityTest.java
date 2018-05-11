@@ -28,6 +28,8 @@ import static com.google.common.truth.Truth.assertWithMessage;
 import android.app.assist.AssistStructure;
 import android.autofillservice.cts.CannedFillResponse.CannedDataset;
 import android.autofillservice.cts.InstrumentedAutoFillService.SaveRequest;
+import android.platform.test.annotations.AppModeFull;
+
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 
@@ -46,6 +48,7 @@ import org.junit.Test;
  *   <li>Favorite Color: don't care - LOL
  * </ul>
  */
+@AppModeFull // Service-specific test
 public class OptionalSaveActivityTest extends AutoFillServiceTestCase {
 
     private static final boolean EXPECT_NO_SAVE_UI = false;

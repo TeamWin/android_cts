@@ -28,6 +28,8 @@ import static org.mockito.Mockito.when;
 import static org.testng.Assert.assertThrows;
 import static org.testng.Assert.expectThrows;
 
+import android.platform.test.annotations.AppModeFull;
+
 import org.junit.Test;
 import org.junit.runner.Description;
 import org.junit.runner.RunWith;
@@ -36,6 +38,7 @@ import org.mockito.Mock;
 import org.mockito.junit.MockitoJUnitRunner;
 
 @RunWith(MockitoJUnitRunner.class)
+@AppModeFull // Unit test
 public class StateChangerRuleTest {
 
     private final RuntimeException mRuntimeException = new RuntimeException("D'OH");

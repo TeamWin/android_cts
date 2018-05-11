@@ -19,6 +19,7 @@ package android.autofillservice.cts;
 import static org.mockito.Mockito.mock;
 import static org.testng.Assert.assertThrows;
 
+import android.platform.test.annotations.AppModeFull;
 import android.service.autofill.BatchUpdates;
 import android.service.autofill.CustomDescription;
 import android.service.autofill.InternalValidator;
@@ -31,6 +32,7 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 
 @RunWith(AndroidJUnit4.class)
+@AppModeFull // Unit test
 public class CustomDescriptionUnitTest {
 
     private final CustomDescription.Builder mBuilder =

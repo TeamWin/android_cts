@@ -19,6 +19,7 @@ package android.autofillservice.cts;
 import static org.mockito.Mockito.mock;
 import static org.testng.Assert.assertThrows;
 
+import android.platform.test.annotations.AppModeFull;
 import android.service.autofill.InternalSanitizer;
 import android.service.autofill.Sanitizer;
 import android.service.autofill.SaveInfo;
@@ -29,6 +30,7 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 
 @RunWith(AndroidJUnit4.class)
+@AppModeFull // Unit test
 public class SaveInfoTest {
 
     private  final AutofillId mId = new AutofillId(42);
