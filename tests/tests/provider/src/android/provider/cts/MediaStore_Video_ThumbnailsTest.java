@@ -125,6 +125,13 @@ public class MediaStore_Video_ThumbnailsTest extends AndroidTestCase {
     }
 
     public void testThumbnailGenerationAndCleanup() throws Exception {
+
+        if (!hasCodec()) {
+            // we don't support video, so no need to run the test
+            Log.i(TAG, "SKIPPING testThumbnailGenerationAndCleanup(): codec not supported");
+            return;
+        }
+
         // insert a video
         Uri uri = insertVideo();
 
