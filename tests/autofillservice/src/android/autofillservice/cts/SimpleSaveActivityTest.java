@@ -184,6 +184,7 @@ public class SimpleSaveActivityTest extends CustomDescriptionWithLinkTestCase {
     }
 
     @Test
+    @AppModeFull // testAutoFillOneDatasetAndSave() is enough to test ephemeral apps support
     public void testSave() throws Exception {
         saveTest(false);
     }
@@ -239,7 +240,6 @@ public class SimpleSaveActivityTest extends CustomDescriptionWithLinkTestCase {
     }
 
     @Test
-    @AppModeFull // TODO(b/79487366): currently not working on Instant Mode
     public void testSave_launchIntent() throws Exception {
         startActivity();
 
@@ -540,13 +540,6 @@ public class SimpleSaveActivityTest extends CustomDescriptionWithLinkTestCase {
         autofillExpecation.assertAutoFilled();
     }
 
-    private void startWelcomeActivityOnNewTask() throws Exception {
-        final Intent intent = new Intent(mContext, WelcomeActivity.class)
-                .setFlags(Intent.FLAG_ACTIVITY_RETAIN_IN_RECENTS | Intent.FLAG_ACTIVITY_NEW_TASK);
-        mWelcomeActivityRule.launchActivity(intent);
-        WelcomeActivity.assertShowingDefaultMessage(mUiBot);
-    }
-
     @Override
     protected void saveUiRestoredAfterTappingLinkTest(PostSaveLinkTappedAction type)
             throws Exception {
@@ -755,6 +748,7 @@ public class SimpleSaveActivityTest extends CustomDescriptionWithLinkTestCase {
     }
 
     @Test
+    @AppModeFull // Service-specific test
     public void testSelectedDatasetsAreSentOnSaveRequest() throws Exception {
         startActivity();
 
@@ -913,6 +907,7 @@ public class SimpleSaveActivityTest extends CustomDescriptionWithLinkTestCase {
     }
 
     @Test
+    @AppModeFull // testSanitizeOnSaveWhenAppChangeValues() is enough to test ephemeral apps support
     public void testSanitizeOnSaveNoChange() throws Exception {
         startActivity();
 
@@ -950,6 +945,7 @@ public class SimpleSaveActivityTest extends CustomDescriptionWithLinkTestCase {
     }
 
     @Test
+    @AppModeFull // testSanitizeOnSaveWhenAppChangeValues() is enough to test ephemeral apps support
     public void testDontSaveWhenSanitizedValueForRequiredFieldDidntChange() throws Exception {
         startActivity();
 
@@ -987,6 +983,7 @@ public class SimpleSaveActivityTest extends CustomDescriptionWithLinkTestCase {
     }
 
     @Test
+    @AppModeFull // testSanitizeOnSaveWhenAppChangeValues() is enough to test ephemeral apps support
     public void testDontSaveWhenSanitizedValueForOptionalFieldDidntChange() throws Exception {
         startActivity();
 
@@ -1019,6 +1016,7 @@ public class SimpleSaveActivityTest extends CustomDescriptionWithLinkTestCase {
     }
 
     @Test
+    @AppModeFull // testSanitizeOnSaveWhenAppChangeValues() is enough to test ephemeral apps support
     public void testDontSaveWhenRequiredFieldFailedSanitization() throws Exception {
         startActivity();
 
@@ -1053,6 +1051,7 @@ public class SimpleSaveActivityTest extends CustomDescriptionWithLinkTestCase {
     }
 
     @Test
+    @AppModeFull // testSanitizeOnSaveWhenAppChangeValues() is enough to test ephemeral apps support
     public void testDontSaveWhenOptionalFieldFailedSanitization() throws Exception {
         startActivity();
 
@@ -1088,6 +1087,7 @@ public class SimpleSaveActivityTest extends CustomDescriptionWithLinkTestCase {
     }
 
     @Test
+    @AppModeFull // testSanitizeOnSaveWhenAppChangeValues() is enough to test ephemeral apps support
     public void testDontSaveWhenInitialValueAndNoUserInputAndServiceDatasets() throws Throwable {
         // Prepare activitiy.
         startActivity();

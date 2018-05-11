@@ -44,6 +44,7 @@ import org.junit.Test;
 
 import java.util.List;
 
+@AppModeFull // Service-specific test
 public class FieldsClassificationTest extends AutoFillServiceTestCase {
 
     private static final Context sContext = InstrumentationRegistry.getContext();
@@ -96,7 +97,6 @@ public class FieldsClassificationTest extends AutoFillServiceTestCase {
         assertThat(mAfm.isFieldClassificationEnabled()).isFalse();
     }
 
-    @AppModeFull // Requires access to metadata of another app (the FC service)
     @Test
     public void testGetAlgorithm() throws Exception {
         enableService();

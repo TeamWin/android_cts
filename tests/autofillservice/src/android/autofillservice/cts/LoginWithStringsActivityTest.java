@@ -37,12 +37,14 @@ import android.autofillservice.cts.CannedFillResponse.CannedDataset;
 import android.autofillservice.cts.InstrumentedAutoFillService.FillRequest;
 import android.autofillservice.cts.InstrumentedAutoFillService.SaveRequest;
 import android.os.Bundle;
+import android.platform.test.annotations.AppModeFull;
 import android.view.View;
 
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
 
+@AppModeFull // LoginActivityTest is enough to test ephemeral apps support
 public class LoginWithStringsActivityTest extends AutoFillServiceTestCase {
 
     @Rule
