@@ -53,8 +53,11 @@ import java.util.concurrent.atomic.AtomicReference;
  */
 public class InstrumentedAutoFillService extends AutofillService {
 
-    static final String SERVICE_NAME = InstrumentedAutoFillService.class.getPackage()
-            .getName() + "/." + InstrumentedAutoFillService.class.getSimpleName();
+    static final String SERVICE_PACKAGE = Helper.MY_PACKAGE;
+    static final String SERVICE_CLASS = "InstrumentedAutoFillService";
+
+    static final String SERVICE_NAME = SERVICE_PACKAGE + "/." + SERVICE_CLASS;
+    protected static final String sServiceLabel = SERVICE_CLASS;
 
     private static final String TAG = "InstrumentedAutoFillService";
 
