@@ -27,6 +27,7 @@ import android.app.assist.AssistStructure.ViewNode;
 import android.autofillservice.cts.CannedFillResponse.CannedDataset;
 import android.autofillservice.cts.InstrumentedAutoFillService.FillRequest;
 import android.autofillservice.cts.InstrumentedAutoFillService.SaveRequest;
+import android.platform.test.annotations.AppModeFull;
 import android.support.test.uiautomator.UiObject2;
 import android.view.KeyEvent;
 import android.view.ViewStructure.HtmlInfo;
@@ -67,6 +68,7 @@ public class WebViewActivityTest extends AutoFillServiceTestCase {
     }
 
     @Test
+    @AppModeFull // testAutofillOneDataset() is enough to test ephemeral apps support
     public void testAutofillNoDatasets() throws Exception {
         // Set service.
         enableService();
@@ -92,6 +94,7 @@ public class WebViewActivityTest extends AutoFillServiceTestCase {
 
     @Ignore("blocked on b/74793485")
     @Test
+    @AppModeFull // testAutofillOneDataset() is enough to test ephemeral apps support
     public void testAutofillOneDataset_usingAppContext() throws Exception {
         autofillOneDatasetTest(true);
     }
@@ -311,6 +314,7 @@ public class WebViewActivityTest extends AutoFillServiceTestCase {
     }
 
     @Test
+    @AppModeFull // testAutofillAndSave() is enough to test ephemeral apps support
     public void testAutofillAndSave_withExternalViews_loadWebViewFirst() throws Exception {
         // Set service.
         enableService();
@@ -435,9 +439,9 @@ public class WebViewActivityTest extends AutoFillServiceTestCase {
 
 
     @Test
+    @Ignore("blocked on b/69461853")
+    @AppModeFull // testAutofillAndSave() is enough to test ephemeral apps support
     public void testAutofillAndSave_withExternalViews_loadExternalViewsFirst() throws Exception {
-        if (true) return; // TODO(b/69461853): re-enable once WebView fixes it
-
         // Set service.
         enableService();
 

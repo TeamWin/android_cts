@@ -21,6 +21,7 @@ import static android.autofillservice.cts.common.ShellHelper.runShellCommand;
 
 import android.autofillservice.cts.CannedFillResponse.CannedDataset;
 import android.content.IntentSender;
+import android.platform.test.annotations.AppModeFull;
 
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
@@ -163,6 +164,7 @@ public class DatasetFilteringTest extends AbstractLoginActivityTestCase {
     }
 
     @Test
+    @AppModeFull // testFilter() is enough to test ephemeral apps support
     public void testFilter_nullValuesAlwaysMatched() throws Exception {
         final String aa = "Two A's";
         final String ab = "A and B";
@@ -215,6 +217,7 @@ public class DatasetFilteringTest extends AbstractLoginActivityTestCase {
     }
 
     @Test
+    @AppModeFull // testFilter() is enough to test ephemeral apps support
     public void testFilter_differentPrefixes() throws Exception {
         final String a = "aaa";
         final String b = "bra";
@@ -256,6 +259,7 @@ public class DatasetFilteringTest extends AbstractLoginActivityTestCase {
     }
 
     @Test
+    @AppModeFull // testFilter() is enough to test ephemeral apps support
     public void testFilter_usingRegex() throws Exception {
         // Dataset presentations.
         final String aa = "Two A's";
@@ -311,6 +315,7 @@ public class DatasetFilteringTest extends AbstractLoginActivityTestCase {
     }
 
     @Test
+    @AppModeFull // testFilter() is enough to test ephemeral apps support
     public void testFilter_disabledUsingNullRegex() throws Exception {
         // Dataset presentations.
         final String unfilterable = "Unfilterabled";
@@ -373,6 +378,7 @@ public class DatasetFilteringTest extends AbstractLoginActivityTestCase {
     }
 
     @Test
+    @AppModeFull // testFilter() is enough to test ephemeral apps support
     public void testFilter_mixPlainAndRegex() throws Exception {
         final String plain = "Plain";
         final String regexPlain = "RegexPlain";
@@ -424,6 +430,7 @@ public class DatasetFilteringTest extends AbstractLoginActivityTestCase {
     }
 
     @Test
+    @AppModeFull // testFilter_usingKeyboard() is enough to test ephemeral apps support
     public void testFilter_mixPlainAndRegex_usingKeyboard() throws Exception {
         final String plain = "Plain";
         final String regexPlain = "RegexPlain";

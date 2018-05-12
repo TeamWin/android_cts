@@ -80,9 +80,8 @@ def main():
         # Manual capture 2: WB + tonemap
         gamma = sum([[i/63.0,math.pow(i/63.0,1/2.2)] for i in xrange(64)],[])
         req["android.tonemap.mode"] = 0
-        req["android.tonemap.curveRed"] = gamma
-        req["android.tonemap.curveGreen"] = gamma
-        req["android.tonemap.curveBlue"] = gamma
+        req["android.tonemap.curve"] = {
+            "red": gamma, "green": gamma, "blue": gamma}
         cap_man2 = cam.do_capture(req, fmt)
         img_man2 = its.image.convert_capture_to_rgb_image(cap_man2)
         its.image.write_image(img_man2, "%s_manual_wb_tm.jpg" % (NAME))

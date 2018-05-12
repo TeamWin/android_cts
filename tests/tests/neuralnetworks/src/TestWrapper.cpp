@@ -13,21 +13,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package android.autofillservice.cts;
 
-import android.platform.test.annotations.AppModeFull;
-
-import org.junit.Rule;
-
-@AppModeFull // Unit test
-public class TimePickerSpinnerActivityTest extends TimePickerTestCase<TimePickerSpinnerActivity> {
-
-    @Rule
-    public final AutofillActivityTestRule<TimePickerSpinnerActivity> mActivityRule =
-        new AutofillActivityTestRule<TimePickerSpinnerActivity>(TimePickerSpinnerActivity.class);
-
-    @Override
-    protected TimePickerSpinnerActivity getTimePickerActivity() {
-        return mActivityRule.getActivity();
-    }
-}
+// Include corresponding NNAPI unit tests in frameworks/ml/nn/runtime/test
+#include "test/TestWrapper.cpp"

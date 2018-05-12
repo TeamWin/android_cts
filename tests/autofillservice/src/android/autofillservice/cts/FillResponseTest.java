@@ -25,6 +25,7 @@ import static org.testng.Assert.assertThrows;
 
 import android.content.IntentSender;
 import android.os.Bundle;
+import android.platform.test.annotations.AppModeFull;
 import android.service.autofill.Dataset;
 import android.service.autofill.FillResponse;
 import android.service.autofill.SaveInfo;
@@ -39,6 +40,7 @@ import org.mockito.Mock;
 import org.mockito.junit.MockitoJUnitRunner;
 
 @RunWith(MockitoJUnitRunner.class)
+@AppModeFull // Unit test
 public class FillResponseTest {
 
     private final AutofillId mAutofillId = new AutofillId(42);
