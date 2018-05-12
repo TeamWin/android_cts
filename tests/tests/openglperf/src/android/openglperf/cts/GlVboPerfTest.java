@@ -28,8 +28,8 @@ public class GlVboPerfTest extends
     private static final long RENDERING_TIMEOUT = 5 * 60;
     // 30% of fps_no_vbo is allowed to compensate variations in measurement
     private static final float FPS_COMPARISON_MARGIN = 0.3f;
-    // the worst case should be above 70% of the best case
-    private static final float FPS_MIN_MAX_COMPARISON_PERCENTILE = 0.7f;
+    // the worst case should be above 30% of the best case
+    private static final float FPS_MIN_MAX_COMPARISON_PERCENTILE = 0.3f;
 
     private float mFps;
     private int mNumTriangles;
