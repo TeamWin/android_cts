@@ -65,8 +65,10 @@ import java.util.List;
 import java.util.StringTokenizer;
 import java.util.UUID;
 import java.util.Vector;
+import java.util.concurrent.BlockingDeque;
 import java.util.concurrent.Callable;
 import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.LinkedBlockingDeque;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -99,7 +101,6 @@ public class MediaPlayerTest extends MediaPlayerTestBase {
     private final Monitor mOnSubtitleDataCalled = new Monitor();
     private int mSelectedSubtitleIndex;
 
-    private final LinkedList<MediaTimestamp> mTimestamps = new LinkedList<>();
     private final Monitor mOnMediaTimeDiscontinuityCalled = new Monitor();
 
     private File mOutFile;
@@ -1369,12 +1370,13 @@ public class MediaPlayerTest extends MediaPlayerTestBase {
                         mOnSeekCompleteCalled.signal();
                     }
                 });
+        final BlockingDeque<MediaTimestamp> timestamps = new LinkedBlockingDeque<>();
         mMediaPlayer.setOnMediaTimeDiscontinuityListener(
                 new MediaPlayer.OnMediaTimeDiscontinuityListener() {
                     @Override
                     public void onMediaTimeDiscontinuity(MediaPlayer mp, MediaTimestamp timestamp) {
                         mOnMediaTimeDiscontinuityCalled.signal();
-                        mTimestamps.add(timestamp);
+                        timestamps.add(timestamp);
                     }
                 });
         mMediaPlayer.setDisplay(mActivity.getSurfaceHolder());
@@ -1383,33 +1385,41 @@ public class MediaPlayerTest extends MediaPlayerTestBase {
         // Timestamp needs to be reported when playback starts.
         mOnMediaTimeDiscontinuityCalled.reset();
         mMediaPlayer.start();
-        mOnMediaTimeDiscontinuityCalled.waitForSignal();
-        assertEquals(1.0f, mTimestamps.getLast().getMediaClockRate());
+        do {
+            assertTrue(mOnMediaTimeDiscontinuityCalled.waitForSignal(1000));
+        } while (timestamps.getLast().getMediaClockRate() != 1.0f);
 
         // Timestamp needs to be reported when seeking is done.
         mOnSeekCompleteCalled.reset();
         mOnMediaTimeDiscontinuityCalled.reset();
         mMediaPlayer.seekTo(3000);
         mOnSeekCompleteCalled.waitForSignal();
-        while (mTimestamps.getLast().getMediaClockRate() != 1.0f) {
-            // During the seeking the clock might be paused temporarily, but player eventually need
-            // to start the playback after seeking.
-            mOnMediaTimeDiscontinuityCalled.waitForSignal();
-        }
+        do {
+            assertTrue(mOnMediaTimeDiscontinuityCalled.waitForSignal(1000));
+        } while (timestamps.getLast().getMediaClockRate() != 1.0f);
 
         // Timestamp needs to be updated when playback rate changes.
         mOnMediaTimeDiscontinuityCalled.reset();
         mMediaPlayer.setPlaybackParams(new PlaybackParams().setSpeed(0.5f));
-        mOnMediaTimeDiscontinuityCalled.waitForSignal();
-        assertEquals(0.5f, mTimestamps.getLast().getMediaClockRate());
+        do {
+            assertTrue(mOnMediaTimeDiscontinuityCalled.waitForSignal(1000));
+        } while (timestamps.getLast().getMediaClockRate() != 0.5f);
 
         // Timestamp needs to be updated when player is paused.
         mOnMediaTimeDiscontinuityCalled.reset();
         mMediaPlayer.pause();
-        mOnMediaTimeDiscontinuityCalled.waitForSignal();
-        assertEquals(0.0f, mTimestamps.getLast().getMediaClockRate());
+        do {
+            assertTrue(mOnMediaTimeDiscontinuityCalled.waitForSignal(1000));
+        } while (timestamps.getLast().getMediaClockRate() != 0.0f);
 
-        mMediaPlayer.stop();
+        // Check if there is no more notification after clearing listener.
+        mMediaPlayer.clearOnMediaTimeDiscontinuityListener();
+        mMediaPlayer.start();
+        mOnMediaTimeDiscontinuityCalled.reset();
+        Thread.sleep(1000);
+        assertEquals(0, mOnMediaTimeDiscontinuityCalled.getNumSignal());
+
+        mMediaPlayer.reset();
     }
 
     public void testLocalVideo_MKV_H265_1280x720_500kbps_25fps_AAC_Stereo_128kbps_44100Hz()
@@ -1756,6 +1766,62 @@ public class MediaPlayerTest extends MediaPlayerTestBase {
         mOnSubtitleDataCalled.reset();
         selectSubtitleTrack(1);
         assertTrue(mOnSubtitleDataCalled.waitForCountedSignals(2, 2500) >= 2);
+
+        mMediaPlayer.stop();
+    }
+
+    public void testOnSubtitleDataListener() throws Throwable {
+        if (!checkLoadResource(R.raw.testvideo_with_2_subtitle_tracks)) {
+            return; // skip;
+        }
+
+        mMediaPlayer.setOnSubtitleDataListener(new MediaPlayer.OnSubtitleDataListener() {
+            @Override
+            public void onSubtitleData(MediaPlayer mp, SubtitleData data) {
+                if (data != null && data.getData() != null
+                        && data.getTrackIndex() == mSubtitleTrackIndex.get(0)) {
+                    mOnSubtitleDataCalled.signal();
+                }
+            }
+        });
+        mMediaPlayer.setOnInfoListener(new MediaPlayer.OnInfoListener() {
+            @Override
+            public boolean onInfo(MediaPlayer mp, int what, int extra) {
+                if (what == MediaPlayer.MEDIA_INFO_METADATA_UPDATE) {
+                    mOnInfoCalled.signal();
+                }
+                return false;
+            }
+        });
+
+        mMediaPlayer.setDisplay(getActivity().getSurfaceHolder());
+        mMediaPlayer.setScreenOnWhilePlaying(true);
+        mMediaPlayer.setWakeMode(mContext, PowerManager.PARTIAL_WAKE_LOCK);
+
+        mMediaPlayer.prepare();
+        mMediaPlayer.start();
+        assertTrue(mMediaPlayer.isPlaying());
+
+        // Closed caption tracks are in-band.
+        // So, those tracks will be found after processing a number of frames.
+        mOnInfoCalled.waitForSignal(1500);
+
+        mOnInfoCalled.reset();
+        mOnInfoCalled.waitForSignal(1500);
+
+        readSubtitleTracks();
+
+        // Waits until at least two captions are fired. Timeout is 2.5 sec.
+        selectSubtitleTrack(0);
+        assertTrue(mOnSubtitleDataCalled.waitForCountedSignals(2, 2500) >= 2);
+
+        // Check if there is no more notification after clearing listener.
+        mMediaPlayer.clearOnSubtitleDataListener();
+        mMediaPlayer.seekTo(0);
+        mMediaPlayer.start();
+        mOnSubtitleDataCalled.reset();
+        Thread.sleep(2500);
+        assertEquals(0, mOnSubtitleDataCalled.getNumSignal());
 
         mMediaPlayer.stop();
     }

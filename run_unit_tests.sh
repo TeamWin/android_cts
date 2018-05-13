@@ -71,8 +71,8 @@ echo
 # code is moved to its own repo. [fix-harness-dir]
 ${CTS_DIR}/harness/common/host-side/tradefed/tests/run_tests.sh
 ${CTS_DIR}/harness/common/host-side/manifest-generator/tests/run_tests.sh
-${CTS_DIR}/common/host-side/util/tests/run_tests.sh
-${CTS_DIR}/common/util/tests/run_tests.sh
+${CTS_DIR}/harness/common/host-side/util/tests/run_tests.sh
+${CTS_DIR}/harness/common/util/tests/run_tests.sh
 
 # TODO: Change it to the new harness repo once harness
 # code is moved to its own repo. [fix-harness-dir]

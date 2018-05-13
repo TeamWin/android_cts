@@ -25,6 +25,7 @@ import static com.google.common.truth.Truth.assertThat;
 import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.mock;
 
+import android.platform.test.annotations.AppModeFull;
 import android.service.autofill.InternalValidator;
 import android.service.autofill.LuhnChecksumValidator;
 import android.service.autofill.ValueFinder;
@@ -38,6 +39,7 @@ import org.junit.Test;
 /**
  * Simple integration test to verify that the UI is only shown if the validator passes.
  */
+@AppModeFull // Service-specific test
 public class ValidatorTest extends AutoFillServiceTestCase {
     @Rule
     public final AutofillActivityTestRule<LoginActivity> mActivityRule =

@@ -13,19 +13,16 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.android.cts.deviceowner;
+package com.android.cts.deviceandprofileowner;
 
-import static android.keystore.cts.CertificateUtils.createCertificate;
-import static com.android.compatibility.common.util.FakeKeys.FAKE_RSA_1;
 import static android.app.admin.DevicePolicyManager.ID_TYPE_BASE_INFO;
 import static android.app.admin.DevicePolicyManager.ID_TYPE_IMEI;
 import static android.app.admin.DevicePolicyManager.ID_TYPE_MEID;
 import static android.app.admin.DevicePolicyManager.ID_TYPE_SERIAL;
+import static android.keystore.cts.CertificateUtils.createCertificate;
 
-import android.app.admin.DevicePolicyManager;
 import android.content.ComponentName;
 import android.content.Context;
-import android.content.pm.PackageManager;
 import android.content.res.AssetManager;
 import android.keystore.cts.Attestation;
 import android.keystore.cts.AuthorizationList;
@@ -37,8 +34,10 @@ import android.security.KeyChainAliasCallback;
 import android.security.KeyChainException;
 import android.security.keystore.KeyGenParameterSpec;
 import android.security.keystore.KeyProperties;
+import android.support.test.uiautomator.UiDevice;
 import android.telephony.TelephonyManager;
-import android.test.ActivityInstrumentationTestCase2;
+
+import com.android.compatibility.common.util.FakeKeys.FAKE_RSA_1;
 
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
@@ -63,18 +62,14 @@ import java.security.spec.PKCS8EncodedKeySpec;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.List;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
-import java.util.HashSet;
-import java.util.List;
-import java.util.LinkedList;
-import java.util.Set;
+
 import javax.security.auth.x500.X500Principal;
 
-public class KeyManagementTest extends ActivityInstrumentationTestCase2<KeyManagementActivity> {
-
+public class KeyManagementTest extends BaseDeviceAdminTest {
     private static final long KEYCHAIN_TIMEOUT_MINS = 6;
-    private DevicePolicyManager mDevicePolicyManager;
 
     private static class SupportedKeyAlgorithm {
         public final String keyAlgorithm;
@@ -88,7 +83,7 @@ public class KeyManagementTest extends ActivityInstrumentationTestCase2<KeyManag
             this.signatureAlgorithm = signatureAlgorithm;
             this.signaturePaddingSchemes = signaturePaddingSchemes;
         }
-    };
+    }
 
     private final SupportedKeyAlgorithm[] SUPPORTED_KEY_ALGORITHMS = new SupportedKeyAlgorithm[] {
         new SupportedKeyAlgorithm(KeyProperties.KEY_ALGORITHM_RSA, "SHA256withRSA",
@@ -97,25 +92,20 @@ public class KeyManagementTest extends ActivityInstrumentationTestCase2<KeyManag
         new SupportedKeyAlgorithm(KeyProperties.KEY_ALGORITHM_EC, "SHA256withECDSA", null)
     };
 
-    public KeyManagementTest() {
-        super(KeyManagementActivity.class);
-    }
+    private KeyManagementActivity mActivity;
 
     @Override
-    protected void setUp() throws Exception {
+    public void setUp() throws Exception {
         super.setUp();
-
-        // Confirm our DeviceOwner is set up
-        mDevicePolicyManager = (DevicePolicyManager)
-                getActivity().getSystemService(Context.DEVICE_POLICY_SERVICE);
-        assertDeviceOwner(mDevicePolicyManager);
-
-        // Hostside test has set a device lockscreen in order to enable credential storage
+        final UiDevice device = UiDevice.getInstance(getInstrumentation());
+        mActivity = launchActivity(getInstrumentation().getTargetContext().getPackageName(),
+                KeyManagementActivity.class, null);
+        device.waitForIdle();
     }
 
     @Override
-    protected void tearDown() throws Exception {
-        // Hostside test will clear device lockscreen which in turn will clear the keystore.
+    public void tearDown() throws Exception {
+        mActivity.finish();
         super.tearDown();
     }
 
@@ -133,7 +123,7 @@ public class KeyManagementTest extends ActivityInstrumentationTestCase2<KeyManag
             assertGranted(alias, true);
 
             // Verify key is at least something like the one we put in.
-            assertEquals(KeyChain.getPrivateKey(getActivity(), alias).getAlgorithm(), "RSA");
+            assertEquals(KeyChain.getPrivateKey(mActivity, alias).getAlgorithm(), "RSA");
         } finally {
             // Delete regardless of whether the test succeeded.
             assertTrue(mDevicePolicyManager.removeKeyPair(getWho(), alias));
@@ -159,7 +149,7 @@ public class KeyManagementTest extends ActivityInstrumentationTestCase2<KeyManag
             assertGranted(withhold, false);
 
             // Verify the granted key is actually obtainable in PrivateKey form.
-            assertEquals(KeyChain.getPrivateKey(getActivity(), grant).getAlgorithm(), "RSA");
+            assertEquals(KeyChain.getPrivateKey(mActivity, grant).getAlgorithm(), "RSA");
         } finally {
             // Delete both keypairs.
             assertTrue(mDevicePolicyManager.removeKeyPair(getWho(), grant));
@@ -195,10 +185,10 @@ public class KeyManagementTest extends ActivityInstrumentationTestCase2<KeyManag
             assertGranted(alias, true);
 
             // Verify the granted key is actually obtainable in PrivateKey form.
-            assertEquals(KeyChain.getPrivateKey(getActivity(), alias).getAlgorithm(), "RSA");
+            assertEquals(KeyChain.getPrivateKey(mActivity, alias).getAlgorithm(), "RSA");
 
             // Verify the certificate chain is correct
-            X509Certificate[] returnedCerts = KeyChain.getCertificateChain(getActivity(), alias);
+            X509Certificate[] returnedCerts = KeyChain.getCertificateChain(mActivity, alias);
             assertTrue(Arrays.equals(certChain, returnedCerts));
         } finally {
             // Delete both keypairs.
@@ -471,25 +461,29 @@ public class KeyManagementTest extends ActivityInstrumentationTestCase2<KeyManag
 
     public void testAllVariationsOfDeviceIdAttestation() throws Exception {
         List<Integer> modesToTest = new ArrayList<Integer>();
+        String imei = null;
+        String meid = null;
         // All devices must support at least basic device information attestation as well as serial
-        // number attestation.
+        // number attestation. Although attestation of unique device ids are only callable by device
+        // owner.
         modesToTest.add(ID_TYPE_BASE_INFO);
-        modesToTest.add(ID_TYPE_SERIAL);
-        // Get IMEI and MEID of the device.
-        TelephonyManager telephonyService = (TelephonyManager) getActivity().getSystemService(
-                Context.TELEPHONY_SERVICE);
-        assertNotNull("Need to be able to read device identifiers", telephonyService);
-        String imei = telephonyService.getImei(0);
-        String meid = telephonyService.getMeid(0);
-        // If the device has a valid IMEI it must support attestation for it.
-        if (imei != null) {
-            modesToTest.add(ID_TYPE_IMEI);
+        if (isDeviceOwner()) {
+            modesToTest.add(ID_TYPE_SERIAL);
+            // Get IMEI and MEID of the device.
+            TelephonyManager telephonyService = (TelephonyManager) mActivity.getSystemService(
+                    Context.TELEPHONY_SERVICE);
+            assertNotNull("Need to be able to read device identifiers", telephonyService);
+            imei = telephonyService.getImei(0);
+            meid = telephonyService.getMeid(0);
+            // If the device has a valid IMEI it must support attestation for it.
+            if (imei != null) {
+                modesToTest.add(ID_TYPE_IMEI);
+            }
+            // Same for MEID
+            if (meid != null) {
+                modesToTest.add(ID_TYPE_MEID);
+            }
         }
-        // Same for MEID
-        if (meid != null) {
-            modesToTest.add(ID_TYPE_MEID);
-        }
-
         int numCombinations = 1 << modesToTest.size();
         for (int i = 1; i < numCombinations; i++) {
             // Set the bits in devIdOpt to be passed into generateKeyPair according to the
@@ -539,6 +533,27 @@ public class KeyManagementTest extends ActivityInstrumentationTestCase2<KeyManag
         }
     }
 
+    public void testProfileOwnerCannotAttestDeviceUniqueIds() throws Exception {
+        if (isDeviceOwner()) {
+            return;
+        }
+        int[] forbiddenModes = new int[] {ID_TYPE_SERIAL, ID_TYPE_IMEI, ID_TYPE_MEID};
+        for (int i = 0; i < forbiddenModes.length; i++) {
+            try {
+                for (SupportedKeyAlgorithm supportedKey: SUPPORTED_KEY_ALGORITHMS) {
+                    generateKeyAndCheckAttestation(supportedKey.keyAlgorithm,
+                            supportedKey.signatureAlgorithm,
+                            supportedKey.signaturePaddingSchemes,
+                            forbiddenModes[i]);
+                    fail("Attestation of device UID (" + forbiddenModes[i] + ") should not be "
+                            + "possible from profile owner");
+                }
+            } catch (SecurityException e) {
+                assertTrue(e.getMessage().contains("does not own the device"));
+            }
+        }
+    }
+
     public void testCanSetKeyPairCert() throws Exception {
         final String alias = "com.android.test.set-ec-1";
         try {
@@ -562,7 +577,7 @@ public class KeyManagementTest extends ActivityInstrumentationTestCase2<KeyManag
             // Make sure that the alias can now be obtained.
             assertEquals(alias, new KeyChainAliasFuture(alias).get());
             // And can be retrieved from KeyChain
-            X509Certificate[] fetchedCerts = KeyChain.getCertificateChain(getActivity(), alias);
+            X509Certificate[] fetchedCerts = KeyChain.getCertificateChain(mActivity, alias);
             assertEquals(fetchedCerts.length, certs.size());
             assertTrue(Arrays.equals(fetchedCerts[0].getEncoded(), certs.get(0).getEncoded()));
         } finally {
@@ -587,7 +602,7 @@ public class KeyManagementTest extends ActivityInstrumentationTestCase2<KeyManag
             // Make sure that the alias can now be obtained.
             assertEquals(alias, new KeyChainAliasFuture(alias).get());
             // And can be retrieved from KeyChain
-            X509Certificate[] fetchedCerts = KeyChain.getCertificateChain(getActivity(), alias);
+            X509Certificate[] fetchedCerts = KeyChain.getCertificateChain(mActivity, alias);
             assertEquals(fetchedCerts.length, chain.size());
             for (int i = 0; i < chain.size(); i++) {
                 assertTrue(Arrays.equals(fetchedCerts[i].getEncoded(), chain.get(i).getEncoded()));
@@ -600,7 +615,7 @@ public class KeyManagementTest extends ActivityInstrumentationTestCase2<KeyManag
     private void assertGranted(String alias, boolean expected) throws InterruptedException {
         boolean granted = false;
         try {
-            granted = (KeyChain.getPrivateKey(getActivity(), alias) != null);
+            granted = (KeyChain.getPrivateKey(mActivity, alias) != null);
         } catch (KeyChainException e) {
             if (expected) {
                 e.printStackTrace();
@@ -623,7 +638,7 @@ public class KeyManagementTest extends ActivityInstrumentationTestCase2<KeyManag
     private Collection<Certificate> loadCertificatesFromAsset(String assetName) {
         try {
             final CertificateFactory certFactory = CertificateFactory.getInstance("X.509");
-            AssetManager am = getActivity().getAssets();
+            AssetManager am = mActivity.getAssets();
             InputStream is = am.open(assetName);
             return (Collection<Certificate>) certFactory.generateCertificates(is);
         } catch (IOException | CertificateException e) {
@@ -634,7 +649,7 @@ public class KeyManagementTest extends ActivityInstrumentationTestCase2<KeyManag
 
     private PrivateKey loadPrivateKeyFromAsset(String assetName) {
         try {
-            AssetManager am = getActivity().getAssets();
+            AssetManager am = mActivity.getAssets();
             InputStream is = am.open(assetName);
             ByteArrayOutputStream output = new ByteArrayOutputStream();
             int length;
@@ -659,13 +674,14 @@ public class KeyManagementTest extends ActivityInstrumentationTestCase2<KeyManag
             mLatch.countDown();
         }
 
-        public KeyChainAliasFuture(String alias) throws UnsupportedEncodingException {
+        public KeyChainAliasFuture(String alias)
+                throws UnsupportedEncodingException {
             /* Pass the alias as a GET to an imaginary server instead of explicitly asking for it,
              * to make sure the DPC actually has to do some work to grant the cert.
              */
             final Uri uri =
                     Uri.parse("https://example.org/?alias=" + URLEncoder.encode(alias, "UTF-8"));
-            KeyChain.choosePrivateKeyAlias(getActivity(), this,
+            KeyChain.choosePrivateKeyAlias(mActivity, this,
                     null /* keyTypes */, null /* issuers */, uri, null /* alias */);
         }
 
@@ -675,14 +691,7 @@ public class KeyManagementTest extends ActivityInstrumentationTestCase2<KeyManag
         }
     }
 
-    private void assertDeviceOwner(DevicePolicyManager devicePolicyManager) {
-        assertNotNull(devicePolicyManager);
-        assertTrue(devicePolicyManager.isAdminActive(getWho()));
-        assertTrue(devicePolicyManager.isDeviceOwnerApp(getActivity().getPackageName()));
-        assertFalse(devicePolicyManager.isManagedProfile(getWho()));
-    }
-
-    private ComponentName getWho() {
-        return BasicAdminReceiver.getComponentName(getActivity());
+    protected ComponentName getWho() {
+        return ADMIN_RECEIVER_COMPONENT;
     }
 }

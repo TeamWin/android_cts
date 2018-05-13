@@ -43,6 +43,7 @@ import android.autofillservice.cts.CannedFillResponse.CannedDataset;
 import android.content.Intent;
 import android.content.IntentSender;
 import android.os.Bundle;
+import android.platform.test.annotations.AppModeFull;
 import android.service.autofill.FillEventHistory;
 import android.service.autofill.FillEventHistory.Event;
 import android.service.autofill.FillResponse;
@@ -63,6 +64,7 @@ import java.util.Set;
 /**
  * Test that uses {@link LoginActivity} to test {@link FillEventHistory}.
  */
+@AppModeFull // Service-specific test
 public class FillEventHistoryTest extends AutoFillServiceTestCase {
 
     @Rule

@@ -73,8 +73,6 @@ import android.os.LocaleList;
 import android.os.Looper;
 import android.os.Parcelable;
 import android.os.SystemClock;
-import androidx.annotation.IntDef;
-import androidx.annotation.Nullable;
 import android.support.test.InstrumentationRegistry;
 import android.support.test.annotation.UiThreadTest;
 import android.support.test.filters.MediumTest;
@@ -150,6 +148,9 @@ import android.widget.TextView;
 import android.widget.TextView.BufferType;
 import android.widget.cts.util.TestUtils;
 
+import androidx.annotation.IntDef;
+import androidx.annotation.Nullable;
+
 import com.android.compatibility.common.util.CtsKeyEventUtil;
 import com.android.compatibility.common.util.CtsTouchUtils;
 import com.android.compatibility.common.util.PollingCheck;
@@ -206,6 +207,7 @@ public class TextViewTest {
     public void setup() {
         mInstrumentation = InstrumentationRegistry.getInstrumentation();
         mActivity = mActivityRule.getActivity();
+        mActivity.setTurnScreenOn(true);
         PollingCheck.waitFor(mActivity::hasWindowFocus);
     }
 

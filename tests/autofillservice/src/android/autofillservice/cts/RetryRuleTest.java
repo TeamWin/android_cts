@@ -18,6 +18,7 @@ package android.autofillservice.cts;
 
 import static com.google.common.truth.Truth.assertThat;
 
+import android.platform.test.annotations.AppModeFull;
 import android.support.test.runner.AndroidJUnit4;
 
 import org.junit.Test;
@@ -26,6 +27,7 @@ import org.junit.runner.RunWith;
 import org.junit.runners.model.Statement;
 
 @RunWith(AndroidJUnit4.class)
+@AppModeFull // Unit test
 public class RetryRuleTest {
 
     private final Description mDescription = Description.createSuiteDescription("Whatever");

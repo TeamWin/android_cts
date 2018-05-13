@@ -35,6 +35,7 @@ import android.autofillservice.cts.CannedFillResponse.CannedDataset;
 import android.autofillservice.cts.InstrumentedAutoFillService.SaveRequest;
 import android.content.IntentSender;
 import android.os.Bundle;
+import android.platform.test.annotations.AppModeFull;
 import android.support.test.uiautomator.UiObject2;
 import android.view.View;
 import android.view.autofill.AutofillValue;
@@ -52,6 +53,7 @@ public class AuthenticationTest extends AbstractLoginActivityTestCase {
     }
 
     @Test
+    @AppModeFull // testDatasetAuthTwoFields() is enough to test ephemeral apps support
     public void testDatasetAuthTwoFieldsUserCancelsFirstAttempt() throws Exception {
         datasetAuthTwoFields(true);
     }
@@ -134,6 +136,7 @@ public class AuthenticationTest extends AbstractLoginActivityTestCase {
     }
 
     @Test
+    @AppModeFull // testDatasetAuthTwoFields() is enough to test ephemeral apps support
     public void testDatasetAuthTwoFieldsReplaceResponse() throws Exception {
         // Set service.
         enableService();
@@ -195,6 +198,7 @@ public class AuthenticationTest extends AbstractLoginActivityTestCase {
     }
 
     @Test
+    @AppModeFull // testDatasetAuthTwoFields() is enough to test ephemeral apps support
     public void testDatasetAuthTwoFieldsNoValues() throws Exception {
         // Set service.
         enableService();
@@ -238,6 +242,7 @@ public class AuthenticationTest extends AbstractLoginActivityTestCase {
     }
 
     @Test
+    @AppModeFull // testDatasetAuthTwoFields() is enough to test ephemeral apps support
     public void testDatasetAuthTwoDatasets() throws Exception {
         // Set service.
         enableService();
@@ -292,11 +297,13 @@ public class AuthenticationTest extends AbstractLoginActivityTestCase {
     }
 
     @Test
+    @AppModeFull // testDatasetAuthTwoFields() is enough to test ephemeral apps support
     public void testDatasetAuthMixedSelectAuth() throws Exception {
         datasetAuthMixedTest(true);
     }
 
     @Test
+    @AppModeFull // testDatasetAuthTwoFields() is enough to test ephemeral apps support
     public void testDatasetAuthMixedSelectNonAuth() throws Exception {
         datasetAuthMixedTest(false);
     }
@@ -356,6 +363,7 @@ public class AuthenticationTest extends AbstractLoginActivityTestCase {
     }
 
     @Test
+    @AppModeFull // testDatasetAuthFilteringUsingRegex() is enough to test ephemeral apps support
     public void testDatasetAuthNoFiltering() throws Exception {
         // Set service.
         enableService();
@@ -413,6 +421,7 @@ public class AuthenticationTest extends AbstractLoginActivityTestCase {
     }
 
     @Test
+    @AppModeFull // testDatasetAuthFilteringUsingRegex() is enough to test ephemeral apps support
     public void testDatasetAuthFilteringUsingAutofillValue() throws Exception {
         // Set service.
         enableService();
@@ -568,11 +577,13 @@ public class AuthenticationTest extends AbstractLoginActivityTestCase {
     }
 
     @Test
+    @AppModeFull // testDatasetAuthFilteringUsingRegex() is enough to test ephemeral apps support
     public void testDatasetAuthMixedFilteringSelectAuth() throws Exception {
         datasetAuthMixedFilteringTest(true);
     }
 
     @Test
+    @AppModeFull // testDatasetAuthFilteringUsingRegex() is enough to test ephemeral apps support
     public void testDatasetAuthMixedFilteringSelectNonAuth() throws Exception {
         datasetAuthMixedFilteringTest(false);
     }
@@ -657,11 +668,13 @@ public class AuthenticationTest extends AbstractLoginActivityTestCase {
     }
 
     @Test
+    @AppModeFull // testDatasetAuthClientStateSetOnIntentOnly() is enough to test ephemeral apps
     public void testDatasetAuthClientStateSetOnFillResponseOnly() throws Exception {
         fillDatasetAuthWithClientState(ClientStateLocation.FILL_RESPONSE_ONLY);
     }
 
     @Test
+    @AppModeFull // testDatasetAuthClientStateSetOnIntentOnly() is enough to test ephemeral apps
     public void testDatasetAuthClientStateSetOnIntentAndFillResponse() throws Exception {
         fillDatasetAuthWithClientState(ClientStateLocation.BOTH);
     }
@@ -730,6 +743,7 @@ public class AuthenticationTest extends AbstractLoginActivityTestCase {
     }
 
     @Test
+    @AppModeFull // testFillResponseAuthBothFields() is enough to test ephemeral apps support
     public void testFillResponseAuthBothFieldsUserCancelsFirstAttempt() throws Exception {
         fillResponseAuthBothFields(true);
     }
@@ -823,6 +837,7 @@ public class AuthenticationTest extends AbstractLoginActivityTestCase {
     }
 
     @Test
+    @AppModeFull // testFillResponseAuthBothFields() is enough to test ephemeral apps support
     public void testFillResponseAuthJustOneField() throws Exception {
         // Set service.
         enableService();
@@ -887,6 +902,7 @@ public class AuthenticationTest extends AbstractLoginActivityTestCase {
     }
 
     @Test
+    @AppModeFull // testFillResponseAuthBothFields() is enough to test ephemeral apps support
     public void testFillResponseAuthWhenAppCallsCancel() throws Exception {
         // Set service.
         enableService();
@@ -939,11 +955,13 @@ public class AuthenticationTest extends AbstractLoginActivityTestCase {
     }
 
     @Test
+    @AppModeFull // testFillResponseAuthBothFields() is enough to test ephemeral apps support
     public void testFillResponseAuthServiceHasNoDataButCanSave() throws Exception {
         fillResponseAuthServiceHasNoDataTest(true);
     }
 
     @Test
+    @AppModeFull // testFillResponseAuthBothFields() is enough to test ephemeral apps support
     public void testFillResponseAuthServiceHasNoData() throws Exception {
         fillResponseAuthServiceHasNoDataTest(false);
     }
@@ -1016,11 +1034,13 @@ public class AuthenticationTest extends AbstractLoginActivityTestCase {
     }
 
     @Test
+    @AppModeFull // testFillResponseAuthClientStateSetOnIntentOnly() is enough to test ephemeral
     public void testFillResponseAuthClientStateSetOnFillResponseOnly() throws Exception {
         fillResponseAuthWithClientState(ClientStateLocation.FILL_RESPONSE_ONLY);
     }
 
     @Test
+    @AppModeFull // testFillResponseAuthClientStateSetOnIntentOnly() is enough to test ephemeral
     public void testFillResponseAuthClientStateSetOnIntentAndFillResponse() throws Exception {
         fillResponseAuthWithClientState(ClientStateLocation.BOTH);
     }

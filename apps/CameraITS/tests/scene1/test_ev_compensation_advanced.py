@@ -71,13 +71,14 @@ def main():
             # Capture a single shot with the same EV comp and locked AE.
             req = its.objects.auto_capture_request()
             req['android.control.aeExposureCompensation'] = ev
-            req["android.control.aeLock"] = True
+            req['android.control.aeLock'] = True
             # Use linear tone curve to avoid brightness being impacted
             # by tone curves.
-            req["android.tonemap.mode"] = 0
-            req["android.tonemap.curveRed"] = [0.0,0.0, 1.0,1.0]
-            req["android.tonemap.curveGreen"] = [0.0,0.0, 1.0,1.0]
-            req["android.tonemap.curveBlue"] = [0.0,0.0, 1.0,1.0]
+            req['android.tonemap.mode'] = 0
+            req['android.tonemap.curve'] = {
+                'red': [0.0,0.0, 1.0,1.0],
+                'green': [0.0,0.0, 1.0,1.0],
+                'blue': [0.0,0.0, 1.0,1.0]}
             caps = cam.do_capture([req]*THREASH_CONVERGE_FOR_EV, fmt)
 
             for cap in caps:

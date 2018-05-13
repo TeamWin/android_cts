@@ -216,7 +216,7 @@ class ItsSession(object):
                 break
         proc.kill()
 
-    def __init__(self):
+    def __enter__(self):
         # Initialize device id and adb command.
         self.device_id = get_device_id()
         self.adb = "adb -s " + self.device_id
@@ -226,16 +226,12 @@ class ItsSession(object):
 
         self.__close_camera()
         self.__open_camera()
-
-    def __del__(self):
-        if hasattr(self, 'sock') and self.sock:
-            self.__close_camera()
-            self.sock.close()
-
-    def __enter__(self):
         return self
 
     def __exit__(self, type, value, traceback):
+        if hasattr(self, 'sock') and self.sock:
+            self.__close_camera()
+            self.sock.close()
         return False
 
     def __read_response_from_socket(self):

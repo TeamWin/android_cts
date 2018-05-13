@@ -534,6 +534,16 @@ public class StagefrightTest extends InstrumentationTestCase {
     }
 
     @SecurityTest
+    public void testStagefright_cve_2016_3820() throws Exception {
+        doStagefrightTest(R.raw.cve_2016_3820);
+    }
+
+    @SecurityTest
+    public void testStagefright_cve_2016_3741() throws Exception {
+        doStagefrightTest(R.raw.cve_2016_3741);
+    }
+
+    @SecurityTest
     public void testStagefright_bug_36592202() throws Exception {
         Resources resources = getInstrumentation().getContext().getResources();
         AssetFileDescriptor fd = resources.openRawResourceFd(R.raw.bug_36592202);
@@ -754,6 +764,11 @@ public class StagefrightTest extends InstrumentationTestCase {
     @SecurityTest
     public void testStagefright_cve_2016_2454() throws Exception {
         doStagefrightTest(R.raw.cve_2016_2454);
+    }
+
+    @SecurityTest
+    public void testStagefright_cve_2016_6765() throws Exception {
+        doStagefrightTest(R.raw.cve_2016_6765);
     }
 
     private void doStagefrightTest(final int rid) throws Exception {
@@ -1496,8 +1511,14 @@ public class StagefrightTest extends InstrumentationTestCase {
             Log.i(TAG, "Decoding blob " + rname + " using codec " + codecName);
             MediaCodec codec = MediaCodec.createByCodecName(codecName);
             MediaFormat format = MediaFormat.createVideoFormat(mime, initWidth, initHeight);
-            codec.configure(format, null, null, 0);
-            codec.start();
+            try {
+                codec.configure(format, null, null, 0);
+                codec.start();
+            } catch (Exception e) {
+                Log.i(TAG, "Exception from codec " + codecName);
+                releaseCodec(codec);
+                continue;
+            }
 
             try {
                 MediaCodec.BufferInfo info = new MediaCodec.BufferInfo();

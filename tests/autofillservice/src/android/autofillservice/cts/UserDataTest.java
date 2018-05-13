@@ -28,6 +28,7 @@ import static org.testng.Assert.assertThrows;
 
 import android.autofillservice.cts.common.SettingsStateChangerRule;
 import android.content.Context;
+import android.platform.test.annotations.AppModeFull;
 import android.service.autofill.UserData;
 import android.support.test.InstrumentationRegistry;
 
@@ -40,6 +41,7 @@ import org.junit.runner.RunWith;
 import org.mockito.junit.MockitoJUnitRunner;
 
 @RunWith(MockitoJUnitRunner.class)
+@AppModeFull // Unit test
 public class UserDataTest {
 
     private static final Context sContext = InstrumentationRegistry.getContext();

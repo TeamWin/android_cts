@@ -29,6 +29,7 @@ import static com.google.common.truth.Truth.assertThat;
 import android.autofillservice.cts.Helper.FieldClassificationResult;
 import android.autofillservice.cts.common.SettingsStateChangerRule;
 import android.content.Context;
+import android.platform.test.annotations.AppModeFull;
 import android.service.autofill.FillEventHistory.Event;
 import android.service.autofill.UserData;
 import android.support.test.InstrumentationRegistry;
@@ -43,6 +44,7 @@ import org.junit.Test;
 
 import java.util.List;
 
+@AppModeFull // Service-specific test
 public class FieldsClassificationTest extends AutoFillServiceTestCase {
 
     private static final Context sContext = InstrumentationRegistry.getContext();

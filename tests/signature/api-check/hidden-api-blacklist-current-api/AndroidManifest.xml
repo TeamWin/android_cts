@@ -16,13 +16,14 @@
  -->
 
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
-          package="android.signature.cts.api.hidden">
+          package="android.signature.cts.api.hiddenapi_blacklist_current">
     <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE" />
     <uses-permission android:name="android.permission.READ_PHONE_STATE"/>
 
     <application/>
 
-    <instrumentation android:name="repackaged.android.test.InstrumentationTestRunner"
-                     android:targetPackage="android.signature.cts.api.hidden"
-                     android:label="Hidden API Signature Test"/>
+    <instrumentation
+        android:name="repackaged.android.test.InstrumentationTestRunner"
+        android:targetPackage="android.signature.cts.api.hiddenapi_blacklist_current"
+        android:label="Hidden API Blacklist Test for current SDK"/>
 </manifest>

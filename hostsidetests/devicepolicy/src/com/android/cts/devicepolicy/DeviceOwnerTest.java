@@ -120,16 +120,6 @@ public class DeviceOwnerTest extends BaseDevicePolicyTest {
         executeDeviceOwnerTest("DeviceOwnerSetupTest");
     }
 
-    public void testKeyManagement() throws Exception {
-        try {
-            changeUserCredential("1234", null, mPrimaryUserId);
-
-            executeDeviceOwnerTest("KeyManagementTest");
-        } finally {
-            changeUserCredential(null, "1234", mPrimaryUserId);
-        }
-    }
-
     public void testLockScreenInfo() throws Exception {
         executeDeviceOwnerTest("LockScreenInfoTest");
     }

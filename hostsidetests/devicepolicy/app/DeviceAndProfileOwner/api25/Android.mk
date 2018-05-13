@@ -31,12 +31,18 @@ LOCAL_JAVA_LIBRARIES := \
 
 LOCAL_USE_AAPT2 := true
 
-LOCAL_STATIC_JAVA_LIBRARIES = compatibility-device-util ctstestrunner ub-uiautomator
+LOCAL_STATIC_JAVA_LIBRARIES := \
+    compatibility-device-util \
+    ctstestrunner \
+    ub-uiautomator \
+    cts-security-test-support-library
 
 LOCAL_STATIC_ANDROID_LIBRARIES := \
     androidx.legacy_legacy-support-v4
 
 LOCAL_RESOURCE_DIR := $(LOCAL_PATH)/../res
+
+LOCAL_ASSET_DIR := $(LOCAL_PATH)/../assets
 
 # tag this module as a cts test artifact
 LOCAL_COMPATIBILITY_SUITE := cts vts general-tests

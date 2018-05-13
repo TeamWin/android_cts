@@ -898,6 +898,23 @@ public abstract class DeviceAndProfileOwnerTest extends BaseDevicePolicyTest {
         runDeviceTestsAsUser(DEVICE_ADMIN_PKG, className, mUserId);
     }
 
+    public void testKeyManagement() throws Exception {
+        if (!mHasFeature) {
+            return;
+        }
+
+        try {
+            // Set a non-empty device lockscreen password, which is a precondition for installing
+            // CA certificates.
+            changeUserCredential("1234", null, mUserId);
+            // Verify the credential immediately to unlock the work profile challenge
+            verifyUserCredential("1234", mUserId);
+            executeDeviceTestClass(".KeyManagementTest");
+        } finally {
+            changeUserCredential(null, "1234", mUserId);
+        }
+    }
+
     /**
      * Executes a test class on device. Prior to running, turn off background data usage
      * restrictions, and restore the original restrictions after the test.

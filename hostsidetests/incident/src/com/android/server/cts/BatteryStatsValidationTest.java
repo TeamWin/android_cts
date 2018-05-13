@@ -272,6 +272,8 @@ public class BatteryStatsValidationTest extends ProtoDumpTestCase {
 
         batteryOnScreenOff();
         installPackage(DEVICE_SIDE_TEST_APK, true);
+        turnScreenOnForReal();
+        assertScreenOn();
 
         // Background test.
         executeBackground(ACTION_BLE_SCAN_UNOPTIMIZED, 40_000);
@@ -293,7 +295,8 @@ public class BatteryStatsValidationTest extends ProtoDumpTestCase {
         }
         batteryOnScreenOff();
         installPackage(DEVICE_SIDE_TEST_APK, true);
-
+        turnScreenOnForReal();
+        assertScreenOn();
         // Ble scan time in BatteryStatsBgVsFgActions is 2 seconds, but be lenient.
         final int minTime = 1500; // min single scan time in ms
         final int maxTime = 3000; // max single scan time in ms
@@ -370,6 +373,8 @@ public class BatteryStatsValidationTest extends ProtoDumpTestCase {
         }
         batteryOnScreenOff();
         installPackage(DEVICE_SIDE_TEST_APK, true);
+        turnScreenOnForReal();
+        assertScreenOn();
         allowImmediateSyncs();
 
         // Background test.
@@ -391,6 +396,8 @@ public class BatteryStatsValidationTest extends ProtoDumpTestCase {
         }
         batteryOnScreenOff();
         installPackage(DEVICE_SIDE_TEST_APK, true);
+        turnScreenOnForReal();
+        assertScreenOn();
         allowImmediateSyncs();
 
         // Background test.
@@ -414,6 +421,8 @@ public class BatteryStatsValidationTest extends ProtoDumpTestCase {
 
         batteryOnScreenOff();
         installPackage(DEVICE_SIDE_TEST_APK, true);
+        turnScreenOnForReal();
+        assertScreenOn();
         // Whitelist this app against background wifi scan throttling
         getDevice().executeShellCommand(String.format(
                 "settings put global wifi_scan_background_throttle_package_whitelist %s",

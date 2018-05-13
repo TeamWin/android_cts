@@ -47,6 +47,7 @@ import android.autofillservice.cts.InstrumentedAutoFillService.FillRequest;
 import android.autofillservice.cts.InstrumentedAutoFillService.SaveRequest;
 import android.content.IntentSender;
 import android.os.Bundle;
+import android.platform.test.annotations.AppModeFull;
 import android.service.autofill.FillResponse;
 
 import org.junit.Before;
@@ -58,6 +59,7 @@ import java.util.concurrent.TimeoutException;
 /**
  * Test case for an activity containing multiple partitions.
  */
+@AppModeFull // Service-specific test
 public class PartitionedActivityTest extends AutoFillServiceTestCase {
 
     @Rule
