@@ -47,6 +47,7 @@ import android.support.test.runner.AndroidJUnit4;
 import android.view.DisplayCutout;
 import android.view.View;
 import android.view.ViewGroup;
+import android.view.Window;
 import android.view.WindowInsets;
 
 import com.android.compatibility.common.util.PollingCheck;
@@ -295,6 +296,7 @@ public class DisplayCutoutTests {
         @Override
         protected void onCreate(Bundle savedInstanceState) {
             super.onCreate(savedInstanceState);
+            getWindow().requestFeature(Window.FEATURE_NO_TITLE);
             if (getIntent() != null) {
                 getWindow().getAttributes().layoutInDisplayCutoutMode = getIntent().getIntExtra(
                         EXTRA_CUTOUT_MODE, LAYOUT_IN_DISPLAY_CUTOUT_MODE_DEFAULT);
