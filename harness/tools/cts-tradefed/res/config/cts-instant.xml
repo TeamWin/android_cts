@@ -42,6 +42,13 @@
     <option name="compatibility:module-arg" value="CtsAutoFillServiceTestCases:install-arg:--instant" />
     <option name="compatibility:include-filter" value="CtsAutoFillServiceTestCases" />
 
+    <!-- CtsBackgroundRestrictionsTestCases -->
+    <option name="compatibility:module-arg" value="CtsBackgroundRestrictionsTestCases:install-arg:--instant" />
+    <option name="compatibility:include-filter" value="CtsBackgroundRestrictionsTestCases" />
+
+    <!-- CtsContactsProviderWipe -->
+    <!-- This is a test for apps with READ/WRITE_CONTACTS, which instant apps don't have -->
+
     <!-- CtsPdfTestCases -->
     <option name="compatibility:module-arg" value="CtsPdfTestCases:install-arg:--instant" />
     <option name="compatibility:include-filter" value="CtsPdfTestCases" />
