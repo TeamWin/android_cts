@@ -72,13 +72,16 @@ public class SELinuxNeverallowRulesTest extends DeviceTestCase implements IBuild
         sepolicyAnalyze.setExecutable(true);
 
         devicePolicyFile = android.security.cts.SELinuxHostTest.getDevicePolicyFile(mDevice);
-        deviceSystemPolicyFile =
-                android.security.cts.SELinuxHostTest.getDeviceSystemPolicyFile(mDevice);
 
-        // Caching this variable to save time.
-        if (mVendorSepolicyVersion == -1) {
-            mVendorSepolicyVersion =
-                    android.security.cts.SELinuxHostTest.getVendorSepolicyVersion(mDevice);
+        if (isSepolicySplit()) {
+            deviceSystemPolicyFile =
+                    android.security.cts.SELinuxHostTest.getDeviceSystemPolicyFile(mDevice);
+
+            // Caching this variable to save time.
+            if (mVendorSepolicyVersion == -1) {
+                mVendorSepolicyVersion =
+                        android.security.cts.SELinuxHostTest.getVendorSepolicyVersion(mDevice);
+            }
         }
     }
 
@@ -88,6 +91,10 @@ public class SELinuxNeverallowRulesTest extends DeviceTestCase implements IBuild
 
     private boolean isCompatiblePropertyEnforcedDevice() throws Exception {
         return android.security.cts.SELinuxHostTest.isCompatiblePropertyEnforcedDevice(mDevice);
+    }
+
+    private boolean isSepolicySplit() throws Exception {
+        return android.security.cts.SELinuxHostTest.isSepolicySplit(mDevice);
     }
 """
 src_body = ""
@@ -111,9 +118,10 @@ src_method = """
             return;
         }
 
-        // If vendor sepolicy version is behind platform's, only test against platform policy.
+        // If sepolicy is split and vendor sepolicy version is behind platform's,
+        // only test against platform policy.
         File policyFile =
-                (mVendorSepolicyVersion < P_SEPOLICY_VERSION) ?
+                (isSepolicySplit() && mVendorSepolicyVersion < P_SEPOLICY_VERSION) ?
                 deviceSystemPolicyFile :
                 devicePolicyFile;
 
