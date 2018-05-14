@@ -276,4 +276,7 @@
 
     <!-- b/63916274 -->
     <option name="compatibility:exclude-filter" value="CtsTelecomTestCases android.telecom.cts.WiredHeadsetTest" />
+
+    <!-- b/79134522 -->
+    <option name="compatibility:exclude-filter" value="CtsPermission2TestCases android.permission2.cts.PrivappPermissionsTest#testPrivappPermissionsEnforcement" />
 </configuration>
