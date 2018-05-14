@@ -50,6 +50,7 @@ public class TestSystemIntents {
     private static final int EXCLUDE_TV = 1 << 0;
     private static final int EXCLUDE_WATCH = 1 << 1;
     private static final int EXCLUDE_NON_TELEPHONY = 1 << 2;
+    private static final int EXCLUDE_NON_INSTALLABLE_IME = 1 << 3;
 
     class IntentEntry {
         public int flags;
@@ -75,7 +76,9 @@ public class TestSystemIntents {
             new IntentEntry(EXCLUDE_NON_TELEPHONY,
                     new Intent(Settings.ACTION_APN_SETTINGS)),
             new IntentEntry(EXCLUDE_TV|EXCLUDE_WATCH,
-                    new Intent(Settings.ACTION_NOTIFICATION_POLICY_ACCESS_SETTINGS))
+                    new Intent(Settings.ACTION_NOTIFICATION_POLICY_ACCESS_SETTINGS)),
+            new IntentEntry(EXCLUDE_NON_INSTALLABLE_IME,
+                    new Intent(Settings.ACTION_INPUT_METHOD_SETTINGS))
     };
 
     @Test
@@ -89,6 +92,10 @@ public class TestSystemIntents {
 
         if (!pm.hasSystemFeature(PackageManager.FEATURE_TELEPHONY)) {
             productFlags |= EXCLUDE_NON_TELEPHONY;
+        }
+
+        if (!pm.hasSystemFeature(PackageManager.FEATURE_INPUT_METHODS)) {
+            productFlags |= EXCLUDE_NON_INSTALLABLE_IME;
         }
 
         final Configuration config = InstrumentationRegistry.getContext().getResources().getConfiguration();
