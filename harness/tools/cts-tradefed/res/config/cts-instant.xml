@@ -26,6 +26,20 @@
     <!-- Exclude tests applicable only to full mode -->
     <option name="compatibility:test-arg" value="com.android.tradefed.testtype.AndroidJUnitTest:exclude-annotation:android.platform.test.annotations.AppModeFull" />
 
+    <!-- CtsSystemUiTestCases -->
+    <option name="compatibility:module-arg" value="CtsSystemUiTestCases:install-arg:--instant" />
+    <option name="compatibility:include-filter" value="CtsSystemUiTestCases" />
+
+    <!-- CtsSampleHostTestCases -->
+    <!-- This is just a sample how to write host side tests. -->
+
+    <!-- CtsDeviceIdleHostTestCases -->
+    <!-- These are tests for the shell command to manage device idle whitelist. -->
+
+    <!-- CtsAppWidgetTestCases -->
+    <option name="compatibility:module-arg" value="CtsAppWidgetTestCases:install-arg:--instant" />
+    <option name="compatibility:include-filter" value="CtsAppWidgetTestCases" />
+
     <!-- CtsAccessibilityTestCases -->
     <option name="compatibility:module-arg" value="CtsAccessibilityTestCases:install-arg:--instant" />
     <option name="compatibility:include-filter" value="CtsAccessibilityTestCases" />
