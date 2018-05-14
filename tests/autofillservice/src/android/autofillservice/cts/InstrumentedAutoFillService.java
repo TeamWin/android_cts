@@ -43,8 +43,9 @@ import android.service.autofill.FillEventHistory;
 import android.service.autofill.FillEventHistory.Event;
 import android.service.autofill.FillResponse;
 import android.service.autofill.SaveCallback;
-import androidx.annotation.Nullable;
 import android.util.Log;
+
+import androidx.annotation.Nullable;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -583,19 +584,24 @@ public class InstrumentedAutoFillService extends AutofillService {
             } catch (Throwable t) {
                 addException(t);
             } finally {
-                mFillRequests.offer(new FillRequest(contexts, data, cancellationSignal, callback,
-                        flags));
+                Helper.offer(mFillRequests, new FillRequest(contexts, data, cancellationSignal,
+                        callback, flags), CONNECTION_TIMEOUT.ms());
             }
         }
 
         private void onSaveRequest(List<FillContext> contexts, Bundle data, SaveCallback callback,
                 List<String> datasetIds) {
             Log.d(TAG, "onSaveRequest(): sender=" + mOnSaveIntentSender);
-            mSaveRequests.offer(new SaveRequest(contexts, data, callback, datasetIds));
-            if (mOnSaveIntentSender != null) {
-                callback.onSuccess(mOnSaveIntentSender);
-            } else {
-                callback.onSuccess();
+
+            try {
+                if (mOnSaveIntentSender != null) {
+                    callback.onSuccess(mOnSaveIntentSender);
+                } else {
+                    callback.onSuccess();
+                }
+            } finally {
+                Helper.offer(mSaveRequests, new SaveRequest(contexts, data, callback, datasetIds),
+                        CONNECTION_TIMEOUT.ms());
             }
         }
     }
