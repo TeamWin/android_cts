@@ -99,6 +99,10 @@ public final class LogicalCameraDeviceTest extends Camera2SurfaceViewTestCase {
             try {
                 Log.i(TAG, "Testing Camera " + id);
                 openDevice(id);
+                if (mStaticInfo.isHardwareLevelLegacy()) {
+                    Log.i(TAG, "Camera " + id + " is legacy, skipping");
+                    continue;
+                }
 
                 Size yuvSize = mOrderedPreviewSizes.get(0);
                 // Create a YUV image reader.
@@ -412,6 +416,10 @@ public final class LogicalCameraDeviceTest extends Camera2SurfaceViewTestCase {
                 Log.i(TAG, "Testing Camera " + id);
                 openDevice(id);
 
+                if (mStaticInfo.isHardwareLevelLegacy()) {
+                    Log.i(TAG, "Camera " + id + " is legacy, skipping");
+                    continue;
+                }
                 if (!mStaticInfo.isColorOutputSupported()) {
                     Log.i(TAG, "Camera " + id + " does not support color outputs, skipping");
                     continue;
