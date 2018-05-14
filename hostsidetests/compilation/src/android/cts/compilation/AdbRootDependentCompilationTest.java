@@ -362,7 +362,7 @@ public class AdbRootDependentCompilationTest extends DeviceTestCase {
     }
 
     private String[] filterAdbLines(String[] lines) {
-        List<String> linesList = Arrays.asList(lines);
+        List<String> linesList = new ArrayList<String>(Arrays.asList(lines));
         Iterator<String> it = linesList.iterator();
         while (it.hasNext()) {
             String line = it.next();
