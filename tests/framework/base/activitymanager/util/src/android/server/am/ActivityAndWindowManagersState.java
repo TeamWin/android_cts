@@ -254,9 +254,19 @@ public class ActivityAndWindowManagersState {
                 "***Waiting for Keyguard gone...");
     }
 
+    /** Wait for specific rotation for the default display. Values are Surface#Rotation */
     void waitForRotation(int rotation) {
         waitForWithWmState(state -> state.getRotation() == rotation,
                 "***Waiting for Rotation: " + rotation);
+    }
+
+    /**
+     * Wait for specific orientation for the default display.
+     * Values are ActivityInfo.ScreenOrientation
+     */
+    void waitForLastOrientation(int orientation) {
+        waitForWithWmState(state -> state.getLastOrientation() == orientation,
+                "***Waiting for LastOrientation: " + orientation);
     }
 
     void waitForDisplayUnfrozen() {
