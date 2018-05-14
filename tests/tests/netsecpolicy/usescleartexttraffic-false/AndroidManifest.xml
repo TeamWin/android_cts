@@ -17,7 +17,7 @@
  -->
 
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
-        package="com.android.cts.netsecpolicy.usescleartext.false">
+        package="com.android.cts.netsecpolicy.usescleartext_false">
 
   <uses-permission android:name="android.permission.DISABLE_KEYGUARD" />
   <application>
@@ -26,7 +26,7 @@
   </application>
 
   <instrumentation android:name="android.support.test.runner.AndroidJUnitRunner"
-                   android:targetPackage="android.netsecpolicy.usescleartext.false.cts"
+                   android:targetPackage="android.netsecpolicy.usescleartext_false.cts"
                    android:label="Tests for NetworkSecurityPolicy cleartext traffic policy when it is set to denied.">
         <meta-data android:name="listener"
             android:value="com.android.cts.runner.CtsTestRunListener" />
