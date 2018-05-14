@@ -16,8 +16,8 @@
 
 # Helper script for running unit tests for compatibility libraries
 
-CTS_DIR=$(dirname ${0})/../../../../..
-source ${CTS_DIR}/test_defs.sh
+HARNESS_DIR=$(dirname ${0})/../../../..
+source ${HARNESS_DIR}/test_defs.sh
 
 JARS="
     compatibility-common-util-hostsidelib\
