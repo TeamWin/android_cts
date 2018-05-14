@@ -798,6 +798,10 @@ public class CaptureRequestTest extends Camera2SurfaceViewTestCase {
         for (String id : mCameraIds) {
             try {
                 openDevice(id);
+                if (mStaticInfo.isHardwareLevelLegacy()) {
+                    Log.i(TAG, "Camera " + id + " is legacy, skipping");
+                    continue;
+                }
                 if (!mStaticInfo.isColorOutputSupported()) {
                     Log.i(TAG, "Camera " + id + " does not support color outputs, skipping");
                     continue;
