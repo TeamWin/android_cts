@@ -83,9 +83,9 @@ public class PackageSignatureTest extends AndroidTestCase {
 
     private static final Set<String> WHITELISTED_PACKAGES = new HashSet<String>(Arrays.asList(
             // APKS are installed before beigning test
-            "android.netsecpolicy.usescleartext.false.cts",
-            "android.netsecpolicy.usescleartext.unspecified.cts",
-            "android.netsecpolicy.usescleartext.true.cts",
+            "android.netsecpolicy.usescleartext_false.cts",
+            "android.netsecpolicy.usescleartext_unspecified.cts",
+            "android.netsecpolicy.usescleartext_true.cts",
 
             // The accessibility APK required to be installed while running CTS
             "android.accessibilityservice.delegate",
