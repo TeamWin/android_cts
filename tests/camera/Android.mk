@@ -46,7 +46,8 @@ LOCAL_STATIC_JAVA_LIBRARIES := compatibility-device-util \
 	mockito-target-minus-junit4 \
 	android-ex-camera2 \
 	CtsCameraUtils \
-	truth-prebuilt
+	truth-prebuilt \
+	androidx.heifwriter_heifwriter
 
 LOCAL_JNI_SHARED_LIBRARIES := \
 	libctscamera2_jni \
