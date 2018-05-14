@@ -75,6 +75,9 @@
     <option name="compatibility:module-arg" value="CtsDreamsTestCases:install-arg:--instant" />
     <option name="compatibility:include-filter" value="CtsDreamsTestCases" />
 
+    <!-- CtsDumpsysHostTestCases -->
+    <!-- This module tests system service dumps, which is irrelevant for Instant Apps. -->
+
     <!-- CtsGestureTestCases -->
     <option name="compatibility:module-arg" value="CtsGestureTestCases:install-arg:--instant" />
     <option name="compatibility:include-filter" value="CtsGestureTestCases" />
