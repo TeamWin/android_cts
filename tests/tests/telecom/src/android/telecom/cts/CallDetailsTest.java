@@ -68,7 +68,7 @@ public class CallDetailsTest extends BaseTelecomTestWithMockServices {
     public static final String TEST_EXTRA_KEY3 = "com.test.extra.TEST3";
     public static final int TEST_EXTRA_VALUE = 10;
     public static final String TEST_EVENT = "com.test.event.TEST";
-
+    public static final Uri TEST_DEFLECT_URI = Uri.fromParts("tel", "+16505551212", null);
     private StatusHints mStatusHints;
     private Bundle mExtras = new Bundle();
 
@@ -612,6 +612,25 @@ public class CallDetailsTest extends BaseTelecomTestWithMockServices {
         assertNotNull(extras);
         assertTrue(extras.containsKey(TEST_EXTRA_KEY));
         assertEquals(TEST_SUBJECT, extras.getString(TEST_EXTRA_KEY));
+    }
+
+    /**
+     * Verifies that a request to deflect a ringing {@link Call} is relayed to a {@link Connection}.
+     */
+    public void testDeflect() {
+        if (!mShouldTestTelecom) {
+            return;
+        }
+        // Only ringing calls support deflection
+        mConnection.setRinging();
+        assertCallState(mCall, Call.STATE_RINGING);
+
+        final InvokeCounter counter = mConnection.getInvokeCounter(MockConnection.ON_DEFLECT);
+        mCall.deflect(TEST_DEFLECT_URI);
+        counter.waitForCount(1, WAIT_FOR_STATE_CHANGE_TIMEOUT_MS);
+        Uri address = (Uri) (counter.getArgs(0)[0]);
+
+        assertEquals(TEST_DEFLECT_URI, address);
     }
 
     /**
