@@ -33,6 +33,7 @@ import java.util.Scanner;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
+import static org.junit.Assume.assumeFalse;
 
 /**
  * Host-side tests for the harmful app launch warning
@@ -52,6 +53,8 @@ import static org.junit.Assert.assertTrue;
  */
 @RunWith(DeviceJUnit4ClassRunner.class)
 public class HarmfulAppWarningTest extends BaseHostJUnit4Test {
+
+    private static final String FEATURE_WEARABLE = "android.hardware.type.watch";
 
     private static final String TEST_APP_PACKAGE_NAME = "android.harmfulappwarning.sampleapp";
     private static final String TEST_APP_ACTIVITY_CLASS_NAME = "SampleDeviceActivity";
@@ -75,6 +78,10 @@ public class HarmfulAppWarningTest extends BaseHostJUnit4Test {
         installPackage("CtsHarmfulAppWarningSampleApp.apk");
         mDevice = getDevice();
         mDevice.clearLogcat();
+
+        // Skip the tests for wearable devices. This feature is not used on wearable
+        // devices, for now (no wearable UI, etc.)
+        assumeFalse(hasFeature(FEATURE_WEARABLE));
     }
 
     private void runDeviceTest(String testName) throws DeviceNotAvailableException {
@@ -147,5 +154,9 @@ public class HarmfulAppWarningTest extends BaseHostJUnit4Test {
         runDeviceTest("testDismissDialog");
         verifyHarmfulAppWarningSet();
         verifySampleAppInstalled();
+    }
+
+    protected boolean hasFeature(String featureName) throws DeviceNotAvailableException {
+        return getDevice().executeShellCommand("pm list features").contains(featureName);
     }
 }
