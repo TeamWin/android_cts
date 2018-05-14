@@ -159,4 +159,9 @@
 
     <!-- CtsUsbTests -->
     <option name="compatibility:include-filter" value="CtsUsbTests" />
+
+    <!-- CtsWindowManagerDeviceTestCases -->
+    <option name="compatibility:module-arg" value="CtsWindowManagerDeviceTestCases:install-arg:--instant" />
+    <option name="compatibility:include-filter" value="CtsWindowManagerDeviceTestCases" />
+
 </configuration>
