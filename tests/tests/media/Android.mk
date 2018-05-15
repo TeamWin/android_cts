@@ -56,6 +56,7 @@ LOCAL_STATIC_JAVA_LIBRARIES := \
     truth-prebuilt \
     mockito-target-minus-junit4 \
     androidx.heifwriter_heifwriter \
+    androidx.media_media \
 
 LOCAL_JNI_SHARED_LIBRARIES := \
     libaudio_jni \
