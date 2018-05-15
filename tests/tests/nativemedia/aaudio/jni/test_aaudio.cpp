@@ -303,18 +303,68 @@ TEST_P(AAudioOutputStreamTest, testWriting) {
     ASSERT_LE(framesWritten, framesPerBurst());
 }
 
+// Make sure the read and write frame counters do not diverge by more than the
+// capacity of the buffer.
+TEST_P(AAudioOutputStreamTest, testWriteStopWrite) {
+    if (!mSetupSuccesful) return;
+
+    int32_t framesWritten = 0;
+    int64_t framesTotal = 0;
+    int64_t timeoutNanos = 0;
+    int32_t writeLoops = 0;
+    int64_t aaudioFramesRead = 0;
+    int64_t aaudioFramesWritten = 0;
+    int32_t frameCapacity = AAudioStream_getBufferCapacityInFrames(stream());
+
+    // Start/write/stop more than once to see if it fails after the first time.
+    for (int numLoops = 0; numLoops < 2; numLoops++) {
+        mHelper->startStream();
+
+        // Write some data while we are running. Read counter should be advancing.
+        writeLoops = 1 * actual().sampleRate / framesPerBurst(); // 1 second
+        ASSERT_LT(2, writeLoops); // detect absurdly high framesPerBurst
+
+        // Calculate a reasonable timeout value.
+        const int32_t timeoutBursts = 20;
+        timeoutNanos = timeoutBursts * (NANOS_PER_SECOND * framesPerBurst() /
+                              actual().sampleRate);
+        // Account for cold start latency.
+        timeoutNanos = std::max(timeoutNanos, 400 * NANOS_PER_MILLISECOND);
+
+        do {
+            framesWritten = AAudioStream_write(
+                    stream(), &mData[0], framesPerBurst(), timeoutNanos);
+            EXPECT_EQ(framesPerBurst(), framesWritten);
+            framesTotal += framesWritten;
+
+            aaudioFramesWritten = AAudioStream_getFramesWritten(stream());
+            EXPECT_EQ(framesTotal, aaudioFramesWritten);
+            aaudioFramesRead = AAudioStream_getFramesRead(stream());
+
+            // How many frames are sitting in the buffer?
+            int32_t writtenButNotRead = (int32_t)(aaudioFramesWritten - aaudioFramesRead);
+            ASSERT_LE(writtenButNotRead, frameCapacity);
+            // It is legal for writtenButNotRead to be negative because
+            // MMAP HW can underrun the FIFO.
+        } while (framesWritten > 0 && writeLoops-- > 0);
+
+        mHelper->stopStream();
+    }
+}
+
 // Note that the test for EXCLUSIVE sharing mode may fail gracefully if
 // this mode isn't supported by the platform.
 INSTANTIATE_TEST_CASE_P(SPM, AAudioOutputStreamTest,
         ::testing::Values(
                 std::make_tuple(AAUDIO_SHARING_MODE_SHARED, AAUDIO_PERFORMANCE_MODE_NONE),
+                std::make_tuple(AAUDIO_SHARING_MODE_SHARED, AAUDIO_PERFORMANCE_MODE_LOW_LATENCY),
                 std::make_tuple(AAUDIO_SHARING_MODE_SHARED, AAUDIO_PERFORMANCE_MODE_POWER_SAVING),
-                // No test for SHARED / LOW_LATENCY, see b/62101041
+
                 std::make_tuple(AAUDIO_SHARING_MODE_EXCLUSIVE, AAUDIO_PERFORMANCE_MODE_NONE),
                 std::make_tuple(
-                        AAUDIO_SHARING_MODE_EXCLUSIVE, AAUDIO_PERFORMANCE_MODE_POWER_SAVING),
+                        AAUDIO_SHARING_MODE_EXCLUSIVE, AAUDIO_PERFORMANCE_MODE_LOW_LATENCY),
                 std::make_tuple(
-                        AAUDIO_SHARING_MODE_EXCLUSIVE, AAUDIO_PERFORMANCE_MODE_LOW_LATENCY)),
+                        AAUDIO_SHARING_MODE_EXCLUSIVE, AAUDIO_PERFORMANCE_MODE_POWER_SAVING)),
         &getTestName);
 
 
