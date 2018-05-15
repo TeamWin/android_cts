@@ -22,7 +22,7 @@
         <option name="test-file-name" value="CtsNetSecPolicyUsesCleartextTrafficFalseTestCases.apk" />
     </target_preparer>
     <test class="com.android.tradefed.testtype.AndroidJUnitTest" >
-        <option name="package" value="com.android.cts.netsecpolicy.usescleartext.false" />
+        <option name="package" value="com.android.cts.netsecpolicy.usescleartext_false" />
         <option name="runtime-hint" value="12m" />
     </test>
 </configuration>
