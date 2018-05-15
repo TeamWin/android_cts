@@ -27,6 +27,7 @@ import android.support.test.InstrumentationRegistry;
 import android.support.test.runner.AndroidJUnit4;
 import android.util.Log;
 
+import com.android.compatibility.common.util.AmUtils;
 import com.android.compatibility.common.util.SystemUtil;
 import com.android.compatibility.common.util.CddTest;
 
@@ -99,6 +100,9 @@ public class BroadcastsTest {
             BiConsumer<IntentFilter, Consumer<Intent>> receiverInitializer,
             Consumer<Intent> intentInitializer,
             Runnable receiverDeinitializer) throws Exception {
+
+        AmUtils.waitForBroadcastIdle();
+
         // This broadcast should be delivered.
         final String[] UNSUPPORTED_BROADCASTS = new String[]{
                 "com.android.launcher.action.INSTALL_SHORTCUT",
