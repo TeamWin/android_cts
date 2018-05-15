@@ -56,6 +56,10 @@
     <option name="compatibility:module-arg" value="CtsFragmentTestCasesSdk26:install-arg:--instant" />
     <option name="compatibility:include-filter" value="CtsFragmentTestCasesSdk26" />
 
+    <!-- CtsPermissionTestCases -->
+    <option name="compatibility:module-arg" value="CtsPermissionTestCases:install-arg:--instant" />
+    <option name="compatibility:include-filter" value="CtsPermissionTestCases" />
+
     <!-- CtsColorModeTestCases -->
     <option name="compatibility:module-arg" value="CtsColorModeTestCases:install-arg:--instant" />
     <option name="compatibility:include-filter" value="CtsColorModeTestCases" />
