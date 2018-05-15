@@ -15,6 +15,7 @@
  * limitations under the License.
  -->
 
-<manifest package="android.appwidget.cts.widgetprovider" >
-
+<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+        package="android.appwidget.cts.widgetprovider"
+        android:targetSandboxVersion="2">
 </manifest>
