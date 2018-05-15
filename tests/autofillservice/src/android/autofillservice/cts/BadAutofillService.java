@@ -32,6 +32,7 @@ public class BadAutofillService extends AutofillService {
 
     static final String SERVICE_NAME = BadAutofillService.class.getPackage().getName()
             + "/." + BadAutofillService.class.getSimpleName();
+    static final String SERVICE_LABEL = "BadAutofillService";
 
     @Override
     public void onFillRequest(FillRequest request, CancellationSignal cancellationSignal,
