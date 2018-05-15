@@ -39,7 +39,6 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.content.pm.ResolveInfo;
-import android.content.res.Resources;
 import android.graphics.pdf.PdfDocument;
 import android.os.Bundle;
 import android.os.CancellationSignal;
@@ -61,8 +60,6 @@ import android.print.test.services.StubbablePrinterDiscoverySession;
 import android.printservice.CustomPrinterIconCallback;
 import android.printservice.PrintJob;
 import android.provider.Settings;
-import androidx.annotation.NonNull;
-import androidx.annotation.Nullable;
 import android.support.test.InstrumentationRegistry;
 import android.support.test.uiautomator.By;
 import android.support.test.uiautomator.UiDevice;
@@ -71,6 +68,9 @@ import android.support.test.uiautomator.UiObjectNotFoundException;
 import android.support.test.uiautomator.UiSelector;
 import android.util.Log;
 import android.util.SparseArray;
+
+import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
 
 import com.android.compatibility.common.util.SystemUtil;
 
@@ -549,8 +549,7 @@ public abstract class BasePrintTest {
      * @throws Exception If anything was unexpected.
      */
     protected void waitForPrinterUnavailable() throws Exception {
-        final String printerUnavailableMessage =
-                getPrintSpoolerString("print_error_printer_unavailable");
+        final String printerUnavailableMessage = "This printer isn\'t available right now.";
 
         UiObject message = getUiDevice().findObject(new UiSelector().resourceId(
                 "com.android.printspooler:id/message"));
@@ -974,8 +973,8 @@ public abstract class BasePrintTest {
                 "com.android.printspooler:id/range_options_spinner"));
         pagesSpinner.click();
 
-        UiObject rangeOption = getUiDevice().findObject(new UiSelector().textContains(
-                getPrintSpoolerStringOneParam("template_page_range", totalPages)));
+        UiObject rangeOption = getUiDevice().findObject(new UiSelector().textContains("Range of "
+                + totalPages));
         rangeOption.click();
 
         UiObject pagesEditText = getUiDevice().findObject(new UiSelector().resourceId(
@@ -1058,78 +1057,6 @@ public abstract class BasePrintTest {
         getActivity().finish();
 
         createActivity();
-    }
-
-    /**
-     * Get a string array from the print spooler's resources.
-     *
-     * @param resourceName The name of the array resource
-     * @return The localized string array
-     *
-     * @throws Exception If anything is unexpected
-     */
-    protected String[] getPrintSpoolerStringArray(String resourceName) throws Exception {
-        PackageManager pm = getActivity().getPackageManager();
-        Resources printSpoolerRes = pm.getResourcesForApplication(PRINTSPOOLER_PACKAGE);
-        int id = printSpoolerRes.getIdentifier(resourceName, "array", PRINTSPOOLER_PACKAGE);
-        return printSpoolerRes.getStringArray(id);
-    }
-
-    /**
-     * Get a string from the print spooler's resources.
-     *
-     * @param resourceName The name of the string resource
-     * @return The localized string
-     *
-     * @throws Exception If anything is unexpected
-     */
-    private String getPrintSpoolerString(String resourceName) throws Exception {
-        PackageManager pm = getActivity().getPackageManager();
-        Resources printSpoolerRes = pm.getResourcesForApplication(PRINTSPOOLER_PACKAGE);
-        int id = printSpoolerRes.getIdentifier(resourceName, "string", PRINTSPOOLER_PACKAGE);
-        return printSpoolerRes.getString(id);
-    }
-
-    /**
-     * Get a string with one parameter from the print spooler's resources.
-     *
-     * @param resourceName The name of the string resource
-     * @return The localized string
-     *
-     * @throws Exception If anything is unexpected
-     */
-    protected String getPrintSpoolerStringOneParam(String resourceName, Object p)
-            throws Exception {
-        PackageManager pm = getActivity().getPackageManager();
-        Resources printSpoolerRes = pm.getResourcesForApplication(PRINTSPOOLER_PACKAGE);
-        int id = printSpoolerRes.getIdentifier(resourceName, "string", PRINTSPOOLER_PACKAGE);
-        return printSpoolerRes.getString(id, p);
-    }
-
-    /**
-     * Get the default media size for the current locale.
-     *
-     * @return The default media size for the current locale
-     *
-     * @throws Exception If anything is unexpected
-     */
-    protected PrintAttributes.MediaSize getDefaultMediaSize() throws Exception {
-        PackageManager pm = getActivity().getPackageManager();
-        Resources printSpoolerRes = pm.getResourcesForApplication(PRINTSPOOLER_PACKAGE);
-        int defaultMediaSizeResId = printSpoolerRes.getIdentifier("mediasize_default", "string",
-                PRINTSPOOLER_PACKAGE);
-        String defaultMediaSizeName = printSpoolerRes.getString(defaultMediaSizeResId);
-
-        switch (defaultMediaSizeName) {
-            case "NA_LETTER":
-                return PrintAttributes.MediaSize.NA_LETTER;
-            case "JIS_B5":
-                return PrintAttributes.MediaSize.JIS_B5;
-            case "ISO_A4":
-                return PrintAttributes.MediaSize.ISO_A4;
-            default:
-                throw new Exception("Unknown default media size " + defaultMediaSizeName);
-        }
     }
 
     /**

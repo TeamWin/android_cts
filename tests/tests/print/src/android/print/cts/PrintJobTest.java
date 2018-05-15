@@ -24,6 +24,7 @@ import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 
+import android.platform.test.annotations.AppModeFull;
 import android.print.PrintAttributes;
 import android.print.PrintAttributes.Margins;
 import android.print.PrintAttributes.MediaSize;
@@ -299,6 +300,7 @@ public class PrintJobTest extends BasePrintTest {
         });
     }
 
+    @AppModeFull(reason = "Print UI cannot resolve custom print options activity in a instant app")
     @Test
     public void advancedOption() throws Exception {
         testSuccess[0] = false;

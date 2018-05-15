@@ -106,6 +106,10 @@
     <option name="compatibility:module-arg" value="CtsToastTestCases:install-arg:--instant" />
     <option name="compatibility:include-filter" value="CtsToastTestCases" />
 
+    <!-- CtsPrintTestCases -->
+    <option name="compatibility:module-arg" value="CtsPrintTestCases:install-arg:--instant" />
+    <option name="compatibility:include-filter" value="CtsPrintTestCases" />
+
     <!-- CtsUiDeviceTestCases -->
     <option name="compatibility:module-arg" value="CtsUiDeviceTestCases:install-arg:--instant" />
     <option name="compatibility:include-filter" value="CtsUiDeviceTestCases" />
