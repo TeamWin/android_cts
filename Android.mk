@@ -13,7 +13,12 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 #
-
 include cts/CtsCoverage.mk
 include $(call all-subdir-makefiles)
 
+# TODO: This is a temporary hack to include harness
+# mk files. Remove after harness code is moved to new repo.
+HARNESS_COMMON_PATH := cts/harness/common
+HARNESS_TOOLS_PATH := cts/harness/tools
+include $(call all-makefiles-under, $(HARNESS_COMMON_PATH))
+include $(call all-makefiles-under, $(HARNESS_TOOLS_PATH))
