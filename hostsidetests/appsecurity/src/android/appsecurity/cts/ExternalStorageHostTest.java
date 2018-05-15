@@ -307,7 +307,7 @@ public class ExternalStorageHostTest extends BaseHostJUnit4Test {
     @Test
     public void testSecondaryUsersInaccessible() throws Exception {
         List<String> mounts = new ArrayList<>();
-        for (String line : getDevice().executeShellCommand("cat /proc/mount").split("\n")) {
+        for (String line : getDevice().executeShellCommand("cat /proc/mounts").split("\n")) {
             String[] split = line.split(" ");
             if (split[1].startsWith("/storage/") || split[1].startsWith("/mnt/")) {
                 mounts.add(split[1]);
