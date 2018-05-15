@@ -217,7 +217,12 @@ public class AudioTrackLatencyTest extends CtsAndroidTestCase {
         // Make sure it finishes playing the data.
         // Wait several times longer than it should take to play the data.
         final int several = 3; // arbitrary
-        Thread.sleep(several * framesWrittenTotal * MILLIS_PER_SECOND / setup.sampleRate);
+        // Even though the read head has advanced, it may stall a while waiting
+        // for the device to "warm up".
+        final int WARM_UP_TIME_MSEC = 300; // arbitrary
+        final long sleepTimeMSec = WARM_UP_TIME_MSEC
+                + (several * framesWrittenTotal * MILLIS_PER_SECOND / setup.sampleRate);
+        Thread.sleep(sleepTimeMSec);
         position2 = track.getPlaybackHeadPosition();
         assertEquals(TEST_NAME + ": did it play all the data?",
                 framesWrittenTotal, position2);
@@ -239,7 +244,7 @@ public class AudioTrackLatencyTest extends CtsAndroidTestCase {
         int position1 = track.getPlaybackHeadPosition();
         assertEquals(TEST_NAME + ": initial position", 0, position1);
         track.play();
-        // try pausing several times to see it if it fails
+        // try pausing several times to see if it fails
         final int several = 4; // arbitrary
         for (int i = 0; i < several; i++) {
             // write data in non-blocking mode for a few seconds
