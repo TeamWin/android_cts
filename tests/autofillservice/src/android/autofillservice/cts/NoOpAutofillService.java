@@ -32,6 +32,7 @@ public class NoOpAutofillService extends AutofillService {
 
     static final String SERVICE_NAME = NoOpAutofillService.class.getPackage().getName()
             + "/." + NoOpAutofillService.class.getSimpleName();
+    static final String SERVICE_LABEL = "NoOpAutofillService";
 
     @Override
     public void onFillRequest(FillRequest request, CancellationSignal cancellationSignal,
