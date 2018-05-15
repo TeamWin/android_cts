@@ -16,6 +16,10 @@
 
 package android.appwidget.cts;
 
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertTrue;
+
 import android.app.PendingIntent;
 import android.appwidget.AppWidgetManager;
 import android.appwidget.cts.common.Constants;
@@ -26,11 +30,17 @@ import android.content.IntentFilter;
 import android.content.pm.LauncherApps;
 import android.os.Bundle;
 import android.os.Handler;
+import android.platform.test.annotations.AppModeFull;
+
+import org.junit.After;
+import org.junit.Before;
+import org.junit.Test;
 
 import java.util.Arrays;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 
+@AppModeFull(reason = "Instant apps cannot provide or host app widgets")
 public class RequestPinAppWidgetTest extends AppWidgetTestCase {
 
     private static final String LAUNCHER_CLASS = "android.appwidget.cts.packages.Launcher";
@@ -38,15 +48,13 @@ public class RequestPinAppWidgetTest extends AppWidgetTestCase {
 
     private String mDefaultLauncher;
 
-    @Override
-    protected void setUp() throws Exception {
-        super.setUp();
+    @Before
+    public void setUpLauncher() throws Exception {
         mDefaultLauncher = getDefaultLauncher();
     }
 
-    @Override
-    protected void tearDown() throws Exception {
-        super.tearDown();
+    @After
+    public void tearDownLauncher() throws Exception {
         // Set the launcher back
         setLauncher(mDefaultLauncher);
     }
@@ -96,10 +104,12 @@ public class RequestPinAppWidgetTest extends AppWidgetTestCase {
         resultReceiver.unregister();
     }
 
+    @Test
     public void testPinWidget_launcher1() throws Exception {
         runPinWidgetTest("android.appwidget.cts.packages.launcher1");
     }
 
+    @Test
     public void testPinWidget_launcher2() throws Exception {
         runPinWidgetTest("android.appwidget.cts.packages.launcher2");
     }
@@ -113,14 +123,17 @@ public class RequestPinAppWidgetTest extends AppWidgetTestCase {
                 AppWidgetManager.getInstance(context).isRequestPinAppWidgetSupported());
     }
 
+    @Test
     public void testIsRequestPinAppWidgetSupported_launcher1() throws Exception {
         verifyIsRequestPinAppWidgetSupported("android.appwidget.cts.packages.launcher1", true);
     }
 
+    @Test
     public void testIsRequestPinAppWidgetSupported_launcher2() throws Exception {
         verifyIsRequestPinAppWidgetSupported("android.appwidget.cts.packages.launcher2", true);
     }
 
+    @Test
     public void testIsRequestPinAppWidgetSupported_launcher3() throws Exception {
         verifyIsRequestPinAppWidgetSupported("android.appwidget.cts.packages.launcher3", false);
     }

@@ -16,18 +16,30 @@
 
 package android.appwidget.cts;
 
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertNull;
+
 import android.appwidget.AppWidgetHost;
 import android.appwidget.AppWidgetManager;
 import android.appwidget.AppWidgetProviderInfo;
 import android.appwidget.cts.common.Constants;
 import android.content.ComponentName;
 import android.content.Intent;
+import android.os.Handler;
+import android.os.Looper;
 import android.os.Process;
+import android.platform.test.annotations.AppModeFull;
+
+import org.junit.After;
+import org.junit.Before;
+import org.junit.Test;
 
 import java.util.List;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 
+@AppModeFull(reason = "Instant apps cannot provide or host app widgets")
 public class UpdateProviderInfoTest extends AppWidgetTestCase {
 
     private static final String PROVIDER_PACKAGE = "android.appwidget.cts.widgetprovider";
@@ -47,17 +59,14 @@ public class UpdateProviderInfoTest extends AppWidgetTestCase {
     private CountDownLatch mProviderChangeNotifier;
     AppWidgetHost mHost;
 
-    @Override
-    protected void setUp() throws Exception {
-        super.setUp();
-
+    @Before
+    public void setUpProvider() throws Exception {
         uninstallProvider();
         createHost();
     }
 
-    @Override
-    protected void tearDown() throws Exception {
-        super.tearDown();
+    @After
+    public void tearDownProvider() throws Exception {
         uninstallProvider();
 
         if (mHost != null) {
@@ -65,6 +74,7 @@ public class UpdateProviderInfoTest extends AppWidgetTestCase {
         }
     }
 
+    @Test
     public void testInfoOverrides() throws Throwable {
         // On first install the provider does not have any config activity.
         installApk(APK_V1);
@@ -79,6 +89,7 @@ public class UpdateProviderInfoTest extends AppWidgetTestCase {
         assertNull(getProviderInfo().configure);
     }
 
+    @Test
     public void testOverridesPersistedOnUpdate() throws Exception {
         installApk(APK_V1);
         assertNull(getProviderInfo().configure);
@@ -98,6 +109,7 @@ public class UpdateProviderInfoTest extends AppWidgetTestCase {
         assertNull(getProviderInfo().configure);
     }
 
+    @Test
     public void testOverrideClearedWhenMissingInfo() throws Exception {
         installApk(APK_V1);
         assertNull(getProviderInfo().configure);
@@ -112,7 +124,7 @@ public class UpdateProviderInfoTest extends AppWidgetTestCase {
 
     private void createHost() throws Exception {
         try {
-            runTestOnUiThread(() -> {
+            (new Handler(Looper.getMainLooper())).post(() -> {
                 mHost = new AppWidgetHost(getInstrumentation().getTargetContext(), HOST_ID) {
 
                     @Override
