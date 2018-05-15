@@ -151,7 +151,7 @@ public class SELinuxHostTest extends DeviceTestCase implements IBuildReceiver, I
         sepolicyAnalyze.setExecutable(true);
 
         devicePolicyFile = getDevicePolicyFile(mDevice);
-        if (mDevice.doesFileExist("/system/etc/selinux/plat_file_contexts")) {
+        if (isSepolicySplit(mDevice)) {
             devicePlatFcFile = getDeviceFile(mDevice, cachedDevicePlatFcFiles,
                     "/system/etc/selinux/plat_file_contexts", "plat_file_contexts");
             if (mDevice.doesFileExist("/vendor/etc/selinux/nonplat_file_contexts")){
@@ -219,9 +219,7 @@ public class SELinuxHostTest extends DeviceTestCase implements IBuildReceiver, I
         File systemSepolicyCilFile = File.createTempFile("plat_sepolicy", ".cil");
         systemSepolicyCilFile.deleteOnExit();
 
-        if (!device.pullFile("/system/etc/selinux/plat_sepolicy.cil", systemSepolicyCilFile)) {
-            device.pullFile("/plat_sepolicy.cil", systemSepolicyCilFile);
-        }
+        assertTrue(device.pullFile("/system/etc/selinux/plat_sepolicy.cil", systemSepolicyCilFile));
 
         ProcessBuilder pb = new ProcessBuilder(
             secilc.getAbsolutePath(),
@@ -404,6 +402,16 @@ public class SELinuxHostTest extends DeviceTestCase implements IBuildReceiver, I
         return PropertyUtil.getFirstApiLevel(device) > 27;
     }
 
+    // NOTE: cts/tools/selinux depends on this method. Rename/change with caution.
+    /**
+     * Returns {@code true} if this device has sepolicy split across different paritions.
+     * This is possible even for devices launched at api level higher than 26.
+     */
+    public static boolean isSepolicySplit(ITestDevice device)
+            throws DeviceNotAvailableException {
+        return device.doesFileExist("/system/etc/selinux/plat_file_contexts");
+    }
+
     /**
      * Asserts that no vendor domains are exempted from the prohibition on Binder use.
      *
@@ -422,6 +430,29 @@ public class SELinuxHostTest extends DeviceTestCase implements IBuildReceiver, I
             List<String> sortedTypes = new ArrayList<>(types);
             Collections.sort(sortedTypes);
             fail("Policy exempts vendor domains from ban on Binder: " + sortedTypes);
+        }
+    }
+
+    /**
+     * Asserts that no HAL server domains are exempted from the prohibition of socket use with the
+     * only exceptions for the automotive device type.
+     */
+    public void testNoExemptionsForSocketsUseWithinHalServer() throws Exception {
+        if (!isFullTrebleDevice()) {
+            return;
+        }
+
+        if (getDevice().hasFeature("android.hardware.type.automotive")) {
+            return;
+        }
+
+        Set<String> types = sepolicyAnalyzeGetTypesAssociatedWithAttribute(
+                "hal_automotive_socket_exemption");
+        if (!types.isEmpty()) {
+            List<String> sortedTypes = new ArrayList<>(types);
+            Collections.sort(sortedTypes);
+            fail("Policy exempts domains from ban on socket usage from HAL servers: "
+                    + sortedTypes);
         }
     }
 

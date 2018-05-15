@@ -436,12 +436,6 @@ public class PackageManagerTest extends AndroidTestCase {
                 mPackageManager.checkPermission(NOT_GRANTED_PERMISSION_NAME, PACKAGE_NAME));
     }
 
-    public void testCheckPermissionSystem() {
-        // Everything will be granted to the system.
-        assertEquals(PackageManager.PERMISSION_GRANTED,
-                mPackageManager.checkPermission(NOT_GRANTED_PERMISSION_NAME, "android"));
-    }
-
     public void testResolveMethods() {
         // Test resolveActivity
         Intent intent = new Intent(ACTIVITY_ACTION_NAME);

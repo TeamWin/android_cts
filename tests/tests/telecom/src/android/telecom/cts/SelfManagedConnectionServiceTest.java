@@ -363,6 +363,9 @@ public class SelfManagedConnectionServiceTest extends BaseTelecomTestWithMockSer
             }
         }, WAIT_FOR_STATE_CHANGE_TIMEOUT_MS);
 
+        // Call requestBluetoothAudio on a dummy device. This will be a noop since no devices are
+        // connected.
+        connection.requestBluetoothAudio(TestUtils.BLUETOOTH_DEVICE1);
         setDisconnectedAndVerify(connection);
     }
 

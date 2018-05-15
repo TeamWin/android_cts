@@ -56,6 +56,10 @@
     <option name="compatibility:module-arg" value="CtsFragmentTestCasesSdk26:install-arg:--instant" />
     <option name="compatibility:include-filter" value="CtsFragmentTestCasesSdk26" />
 
+    <!-- CtsPermissionTestCases -->
+    <option name="compatibility:module-arg" value="CtsPermissionTestCases:install-arg:--instant" />
+    <option name="compatibility:include-filter" value="CtsPermissionTestCases" />
+
     <!-- CtsColorModeTestCases -->
     <option name="compatibility:module-arg" value="CtsColorModeTestCases:install-arg:--instant" />
     <option name="compatibility:include-filter" value="CtsColorModeTestCases" />
@@ -102,11 +106,14 @@
     <option name="compatibility:module-arg" value="CtsToastTestCases:install-arg:--instant" />
     <option name="compatibility:include-filter" value="CtsToastTestCases" />
 
+    <!-- CtsPrintTestCases -->
+    <option name="compatibility:module-arg" value="CtsPrintTestCases:install-arg:--instant" />
+    <option name="compatibility:include-filter" value="CtsPrintTestCases" />
+
     <!-- CtsUiDeviceTestCases -->
     <option name="compatibility:module-arg" value="CtsUiDeviceTestCases:install-arg:--instant" />
     <option name="compatibility:include-filter" value="CtsUiDeviceTestCases" />
 
-    <!-- CtsDpiTestCases -->
     <option name="compatibility:module-arg" value="CtsDpiTestCases:install-arg:--instant" />
     <option name="compatibility:include-filter" value="CtsDpiTestCases" />
 
@@ -125,4 +132,11 @@
     <option name="compatibility:module-arg" value="CtsWidgetTestCases:install-arg:--instant" />
     <option name="compatibility:include-filter" value="CtsWidgetTestCases" />
 
+    <!-- CtsPermission2TestCases -->
+    <option name="compatibility:module-arg" value="CtsPermission2TestCases:install-arg:--instant" />
+    <option name="compatibility:include-filter" value="CtsPermission2TestCases" />
+
+    <!-- CtsUsbTests -->
+    <option name="compatibility:module-arg" value="CtsUsbTests:install-arg:--instant" />
+    <option name="compatibility:include-filter" value="CtsUsbTests" />
 </configuration>
