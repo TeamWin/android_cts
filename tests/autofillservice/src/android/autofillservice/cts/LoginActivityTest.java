@@ -972,13 +972,17 @@ public class LoginActivityTest extends AbstractLoginActivityTestCase {
             final String extraValue = saveRequest.data.getString("numbers");
             assertWithMessage("extras not passed on save").that(extraValue).isEqualTo("4815162342");
         } finally {
-            // Make sure we can no longer add overlays
-            runShellCommand("appops set %s SYSTEM_ALERT_WINDOW ignore", mPackageName);
-            // Make sure the overlay is removed
-            mActivity.runOnUiThread(() -> {
-                WindowManager windowManager = mContext.getSystemService(WindowManager.class);
-                windowManager.removeView(overlay[0]);
-            });
+            try {
+                // Make sure we can no longer add overlays
+                runShellCommand("appops set %s SYSTEM_ALERT_WINDOW ignore", mPackageName);
+                // Make sure the overlay is removed
+                mActivity.runOnUiThread(() -> {
+                    WindowManager windowManager = mContext.getSystemService(WindowManager.class);
+                    windowManager.removeView(overlay[0]);
+                });
+            } catch (Exception e) {
+                mSafeCleanerRule.add(e);
+            }
         }
     }
 

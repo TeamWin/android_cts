@@ -149,6 +149,21 @@ public class SafeCleanerRuleTest {
     }
 
     @Test
+    public void testTestPass_oneExtraExceptionThrownAsCallable() throws Throwable {
+        final SafeCleanerRule rule = new SafeCleanerRule()
+                .run(mGoodGuyRunner1)
+                .add(mRuntimeException)
+                .add(mGoodGuyExtraExceptions1)
+                .run(mGoodGuyRunner2);
+        final Throwable actualException = expectThrows(RuntimeException.class,
+                () -> rule.apply(mGoodGuyStatement, mDescription).evaluate());
+        assertThat(actualException).isSameAs(mRuntimeException);
+        verify(mGoodGuyRunner1).run();
+        verify(mGoodGuyRunner2).run();
+        verify(mGoodGuyExtraExceptions1).call();
+    }
+
+    @Test
     public void testTestPass_oneExtraExceptionThrown() throws Throwable {
         final SafeCleanerRule rule = new SafeCleanerRule()
                 .run(mGoodGuyRunner1)
@@ -193,6 +208,7 @@ public class SafeCleanerRuleTest {
         final SafeCleanerRule rule = new SafeCleanerRule()
                 .run(mGoodGuyRunner1)
                 .add(mGoodGuyExtraExceptions1)
+                .add(mRuntimeException)
                 .add(() -> {
                     return ImmutableList.of(extra1, extra2);
                 })
@@ -212,7 +228,8 @@ public class SafeCleanerRuleTest {
                 SafeCleanerRule.MultipleExceptions.class,
                 () -> rule.apply(new FailureStatement(testException), mDescription).evaluate());
         assertThat(actualException.getThrowables())
-                .containsExactly(testException, error1, error2, extra1, extra2, extra3)
+                .containsExactly(testException, mRuntimeException, error1, error2, extra1, extra2,
+                        extra3)
                 .inOrder();
         verify(mGoodGuyRunner1).run();
         verify(mGoodGuyRunner2).run();
