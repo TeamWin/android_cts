@@ -24,6 +24,7 @@ import android.content.pm.PackageManager;
 import android.content.pm.PackageManager.NameNotFoundException;
 import android.content.pm.PermissionGroupInfo;
 import android.content.pm.PermissionInfo;
+import android.platform.test.annotations.AppModeFull;
 import android.test.AndroidTestCase;
 import android.text.TextUtils;
 import android.util.ArrayMap;
@@ -45,6 +46,7 @@ import java.util.Set;
 /**
  * Tests for permission policy on the platform.
  */
+@AppModeFull(reason = "Instant apps cannot read the system servers permission")
 public class PermissionPolicyTest extends AndroidTestCase {
     private static final Date HIDE_NON_SYSTEM_OVERLAY_WINDOWS_PATCH_DATE = parseDate("2017-11-01");
     private static final String HIDE_NON_SYSTEM_OVERLAY_WINDOWS_PERMISSION
@@ -132,7 +134,9 @@ public class PermissionPolicyTest extends AndroidTestCase {
             if ((declaredPermission.protectionLevel & PermissionInfo.PROTECTION_DANGEROUS) != 0) {
                 if (!expectedPermission.group.equals(declaredPermission.group)) {
                     offendingList.add(
-                            "Permission " + expectedPermissionName + " not in correct group");
+                            "Permission " + expectedPermissionName + " not in correct group "
+                            + "(expected=" + expectedPermission.group + " actual="
+                                    + declaredPermission.group);
                 }
 
                 if (!declaredGroupsSet.contains(declaredPermission.group)) {

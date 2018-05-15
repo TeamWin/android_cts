@@ -134,6 +134,10 @@ public class ExtendedInCallServiceTest extends BaseTelecomTestWithMockServices {
                 WAIT_FOR_STATE_CHANGE_TIMEOUT_MS);
         assertAudioRoute(connection, secondRoute);
         assertAudioRoute(inCallService, secondRoute);
+
+        // Call requestBluetoothAudio on a dummy device. This will be a noop since no devices are
+        // connected.
+        ((InCallService) inCallService).requestBluetoothAudio(TestUtils.BLUETOOTH_DEVICE1);
     }
 
     /**

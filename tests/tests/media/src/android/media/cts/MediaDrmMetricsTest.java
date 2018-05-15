@@ -49,9 +49,23 @@ public class MediaDrmMetricsTest extends AndroidTestCase {
       return joiner.toString();
     }
 
+    private String getClearkeyVersion(MediaDrm drm) {
+        try {
+            return drm.getPropertyString("version");
+        } catch (Exception e) {
+            return "unavailable";
+        }
+    }
+
     public void testGetMetricsEmpty() throws Exception {
         MediaDrm drm = new MediaDrm(CLEARKEY_SCHEME_UUID);
         assertNotNull(drm);
+
+        if (getClearkeyVersion(drm).equals("1.0")) {
+            Log.i(TAG, "Skipping testGetMetricsEmpty: not supported in ClearKey v1.0");
+            drm.close();
+            return;
+        }
 
         PersistableBundle metrics = drm.getMetrics();
         assertNotNull(metrics);
@@ -65,6 +79,13 @@ public class MediaDrmMetricsTest extends AndroidTestCase {
     public void testGetMetricsSession() throws Exception {
         MediaDrm drm = new MediaDrm(CLEARKEY_SCHEME_UUID);
         assertNotNull(drm);
+
+        if (getClearkeyVersion(drm).equals("1.0")) {
+            Log.i(TAG, "Skipping testGetMetricsSession: not supported in ClearKey v1.0");
+            drm.close();
+            return;
+        }
+
         byte[] sid1 = drm.openSession();
         assertNotNull(sid1);
         byte[] sid2 = drm.openSession();
@@ -111,6 +132,13 @@ public class MediaDrmMetricsTest extends AndroidTestCase {
     public void testGetMetricsGetKeyRequest() throws Exception {
         MediaDrm drm = new MediaDrm(CLEARKEY_SCHEME_UUID);
         assertNotNull(drm);
+
+        if (getClearkeyVersion(drm).equals("1.0")) {
+            Log.i(TAG, "Skipping testGetMetricsGetKeyRequest: not supported in ClearKey v1.0");
+            drm.close();
+            return;
+        }
+
         byte[] sid = drm.openSession();
         assertNotNull(sid);
 

@@ -14,7 +14,6 @@
 
 import os
 import unittest
-import time
 
 import cv2
 import its.caps
@@ -233,21 +232,27 @@ def get_angle(input_img):
         Median angle of squares in degrees identified in the image.
     """
     # Tuning parameters
-    min_square_area = (float) (input_img.shape[1] * 0.05)
+    min_square_area = (float)(input_img.shape[1] * 0.05)
 
     # Creates copy of image to avoid modifying original.
     img = numpy.array(input_img, copy=True)
 
     # Scale pixel values from 0-1 to 0-255
-    img = img * 255
+    img *= 255
     img = img.astype(numpy.uint8)
 
     thresh = cv2.adaptiveThreshold(
             img, 255, cv2.ADAPTIVE_THRESH_MEAN_C, cv2.THRESH_BINARY, 201, 2)
 
     # Find all contours
-    _, contours, _ = cv2.findContours(
-            thresh, cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)
+    contours = []
+    cv2_version = cv2.__version__
+    if cv2_version.startswith('2.4.'):
+        contours, _ = cv2.findContours(
+                thresh, cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)
+    elif cv2_version.startswith('3.2.'):
+        _, contours, _ = cv2.findContours(
+                thresh, cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)
 
     # Filter contours to squares only.
     square_contours = []
@@ -267,8 +272,10 @@ def get_angle(input_img):
         if area < min_square_area:
             continue
 
-        box = cv2.boxPoints(rect)
-        box = numpy.int0(box)
+        if cv2_version.startswith('2.4.'):
+            box = numpy.int0(cv2.cv.BoxPoints(rect))
+        elif cv2_version.startswith('3.2.'):
+            box = numpy.int0(cv2.boxPoints(rect))
         square_contours.append(contour)
 
     areas = []

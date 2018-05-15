@@ -167,6 +167,7 @@ public class CaptureRequestTest extends Camera2SurfaceViewTestCase {
                         physicalIds);
                 requestBuilder.addTarget(surface);
                 captureRequestOriginal = requestBuilder.build();
+                p = Parcel.obtain();
                 captureRequestOriginal.writeToParcel(p, 0);
                 p.setDataPosition(0);
                 captureRequestParcelled = CaptureRequest.CREATOR.createFromParcel(p);
@@ -176,6 +177,7 @@ public class CaptureRequestTest extends Camera2SurfaceViewTestCase {
                 p.recycle();
 
                 // Check various invalid cases
+                p = Parcel.obtain();
                 p.writeInt(-1);
                 p.setDataPosition(0);
                 try {
@@ -186,6 +188,7 @@ public class CaptureRequestTest extends Camera2SurfaceViewTestCase {
                 }
                 p.recycle();
 
+                p = Parcel.obtain();
                 p.writeInt(0);
                 p.setDataPosition(0);
                 try {
@@ -196,6 +199,7 @@ public class CaptureRequestTest extends Camera2SurfaceViewTestCase {
                 }
                 p.recycle();
 
+                p = Parcel.obtain();
                 p.writeInt(1);
                 p.setDataPosition(0);
                 try {
@@ -204,6 +208,7 @@ public class CaptureRequestTest extends Camera2SurfaceViewTestCase {
                 } catch (RuntimeException e) {
                     // Expected
                 }
+                p.recycle();
             } finally {
                 closeDevice();
             }
@@ -798,6 +803,10 @@ public class CaptureRequestTest extends Camera2SurfaceViewTestCase {
         for (String id : mCameraIds) {
             try {
                 openDevice(id);
+                if (mStaticInfo.isHardwareLevelLegacy()) {
+                    Log.i(TAG, "Camera " + id + " is legacy, skipping");
+                    continue;
+                }
                 if (!mStaticInfo.isColorOutputSupported()) {
                     Log.i(TAG, "Camera " + id + " does not support color outputs, skipping");
                     continue;

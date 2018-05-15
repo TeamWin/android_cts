@@ -14,8 +14,8 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-CTS_DIR=$(dirname ${0})/../../../..
-source ${CTS_DIR}/test_defs.sh
+HARNESS_DIR=$(dirname ${0})/../../../..
+source ${HARNESS_DIR}/test_defs.sh
 
 JARS="
     compatibility-common-util-hostsidelib\

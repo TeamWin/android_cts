@@ -92,6 +92,12 @@ public class RetryFactoryTest implements IRemoteTest, IDeviceTest, IBuildReceive
             importance = Importance.IF_UNSET)
     protected String mAbiName = null;
 
+    @Option(name = CompatibilityTestSuite.PRIMARY_ABI_RUN,
+            description =
+            "Whether to run tests with only the device primary abi. "
+                  + "This will override the --abi option.")
+    protected boolean mPrimaryAbiRun = false;
+
     @Option(name = CompatibilityTestSuite.MODULE_OPTION,
             shortName = 'm',
             description = "the test module to run.",
@@ -204,6 +210,8 @@ public class RetryFactoryTest implements IRemoteTest, IDeviceTest, IBuildReceive
         test.setExcludeFilter(helper.getExcludeFilters());
         test.setDevice(mDevice);
         test.setBuild(mBuildInfo);
+        test.setAbiName(mAbiName);
+        test.setPrimaryAbiRun(mPrimaryAbiRun);
         test.setSystemStatusChecker(mStatusCheckers);
         test.setInvocationContext(mContext);
         test.setConfiguration(mMainConfiguration);
