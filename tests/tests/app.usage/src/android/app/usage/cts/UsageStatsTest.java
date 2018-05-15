@@ -827,4 +827,15 @@ public class UsageStatsTest {
         assertFalse("Meaningful bucket value " + bucket + " returned for " + fakePackageName
                 + " after get-standby-bucket", bucket > 0);
     }
+
+    @Test
+    public void testObserveUsagePermission() {
+        try {
+            mUsageStatsManager.registerAppUsageObserver(0, new String[] {"com.android.settings"},
+                    1, java.util.concurrent.TimeUnit.HOURS, null);
+        } catch (SecurityException e) {
+            return;
+        }
+        fail("Should throw SecurityException");
+    }
 }
