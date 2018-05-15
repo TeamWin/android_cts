@@ -137,6 +137,5 @@
     <option name="compatibility:include-filter" value="CtsPermission2TestCases" />
 
     <!-- CtsUsbTests -->
-    <option name="compatibility:module-arg" value="CtsUsbTests:install-arg:--instant" />
     <option name="compatibility:include-filter" value="CtsUsbTests" />
 </configuration>
