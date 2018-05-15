@@ -16,7 +16,6 @@
 
 package android.autofillservice.cts;
 
-import static android.autofillservice.cts.InstrumentedAutoFillService.SERVICE_NAME;
 import static android.autofillservice.cts.UiBot.PORTRAIT;
 import static android.autofillservice.cts.common.ShellHelper.runShellCommand;
 import static android.provider.Settings.Secure.AUTOFILL_SERVICE;
@@ -62,7 +61,6 @@ import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 
 import com.android.compatibility.common.util.BitmapUtils;
-import com.android.compatibility.common.util.RequiredFeatureRule;
 
 import java.io.File;
 import java.io.IOException;
@@ -735,13 +733,6 @@ final class Helper {
     }
 
     /**
-     * Checks if device supports the Autofill feature.
-     */
-    public static boolean hasAutofillFeature() {
-        return RequiredFeatureRule.hasFeature(PackageManager.FEATURE_AUTOFILL);
-    }
-
-    /**
      * Checks if autofill window is fullscreen, see com.android.server.autofill.ui.FillUi.
      */
     public static boolean isAutofillWindowFullScreen(Context context) {
@@ -822,21 +813,6 @@ final class Helper {
      */
     public static Context getContext() {
         return InstrumentationRegistry.getInstrumentation().getContext();
-    }
-
-    /**
-     * Cleans up the autofill state; should be called before pretty much any test.
-     */
-    public static void preTestCleanup() {
-        if (!hasAutofillFeature()) return;
-
-        Log.d(TAG, "preTestCleanup()");
-
-        disableAutofillService(getContext(), SERVICE_NAME);
-        InstrumentedAutoFillService.setIgnoreUnexpectedRequests(true);
-
-        InstrumentedAutoFillService.resetStaticState();
-        AuthenticationActivity.resetStaticState();
     }
 
     /**

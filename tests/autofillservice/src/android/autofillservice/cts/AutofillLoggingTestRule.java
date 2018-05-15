@@ -18,8 +18,9 @@ package android.autofillservice.cts;
 
 import static android.autofillservice.cts.common.ShellHelper.runShellCommand;
 
-import androidx.annotation.NonNull;
 import android.util.Log;
+
+import androidx.annotation.NonNull;
 
 import org.junit.AssumptionViolatedException;
 import org.junit.rules.TestRule;
@@ -52,7 +53,6 @@ public class AutofillLoggingTestRule implements TestRule, SafeCleanerRule.Dumper
             @Override
             public void evaluate() throws Throwable {
                 final String testName = description.getDisplayName();
-                Log.v(TAG, "@Before " + testName);
                 final String levelBefore = runShellCommand("cmd autofill get log_level");
                 if (!levelBefore.equals("verbose")) {
                     runShellCommand("cmd autofill set log_level verbose");
