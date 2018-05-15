@@ -435,6 +435,29 @@ public class SELinuxHostTest extends DeviceTestCase implements IBuildReceiver, I
     }
 
     /**
+     * Asserts that no HAL server domains are exempted from the prohibition of socket use with the
+     * only exceptions for the automotive device type.
+     */
+    public void testNoExemptionsForSocketsUseWithinHalServer() throws Exception {
+        if (!isFullTrebleDevice()) {
+            return;
+        }
+
+        if (getDevice().hasFeature("android.hardware.type.automotive")) {
+            return;
+        }
+
+        Set<String> types = sepolicyAnalyzeGetTypesAssociatedWithAttribute(
+                "hal_automotive_socket_exemption");
+        if (!types.isEmpty()) {
+            List<String> sortedTypes = new ArrayList<>(types);
+            Collections.sort(sortedTypes);
+            fail("Policy exempts domains from ban on socket usage from HAL servers: "
+                    + sortedTypes);
+        }
+    }
+
+    /**
      * Asserts that no domains are exempted from the prohibition on initiating socket communications
      * between core and vendor domains.
      *
