@@ -72,8 +72,7 @@ public class UsbDeviceTestActivity extends PassFailButtons.Activity {
             "com.android.cts.verifier.usb.device.USB_PERMISSION";
     private static final String LOG_TAG = UsbDeviceTestActivity.class.getSimpleName();
     private static final int TIMEOUT_MILLIS = 5000;
-    private static final int MAX_BUFFER_SIZE = 16384;
-    private static final int OVERSIZED_BUFFER_SIZE = MAX_BUFFER_SIZE + 100;
+    private static final int LARGE_BUFFER_SIZE = 1305049;
 
     private UsbManager mUsbManager;
     private BroadcastReceiver mUsbDeviceConnectionReceiver;
@@ -98,19 +97,8 @@ public class UsbDeviceTestActivity extends PassFailButtons.Activity {
      *
      * @return {@code true} if a zero sized transfer is expected
      */
-    private boolean isZeroTransferExpected(int transferSize) {
-        if (mDoesCompanionZeroTerminate) {
-            if (transferSize % 1024 == 0) {
-                if (transferSize % 8 != 0) {
-                    throw new IllegalArgumentException("As the transfer speed is unknown the code "
-                            + "has to work for all speeds");
-                }
-
-                return true;
-            }
-        }
-
-        return false;
+    private boolean isZeroTransferExpected(int transferSize, @NonNull UsbEndpoint ep) {
+        return mDoesCompanionZeroTerminate && transferSize % ep.getMaxPacketSize() == 0;
     }
 
     @Override
@@ -304,7 +292,7 @@ public class UsbDeviceTestActivity extends PassFailButtons.Activity {
 
         assertArrayEquals(sentBuffer, receivedBuffer);
 
-        if (isZeroTransferExpected(size)) {
+        if (isZeroTransferExpected(size, in)) {
             receiveZeroSizedTransfer(connection, in);
         }
     }
@@ -338,73 +326,44 @@ public class UsbDeviceTestActivity extends PassFailButtons.Activity {
             }
         }
 
-        if (isZeroTransferExpected(size)) {
+        if (isZeroTransferExpected(size, in)) {
             receiveZeroSizedTransfer(connection, in);
         }
     }
 
     /**
-     * Send a transfer that is larger than MAX_BUFFER_SIZE.
+     * Send a transfer that is large.
      *
      * @param connection Connection to the USB device
      * @param in         The in endpoint
      * @param out        The out endpoint
      */
-    private void echoOversizedBulkTransfer(@NonNull UsbDeviceConnection connection,
+    private void echoLargeBulkTransfer(@NonNull UsbDeviceConnection connection,
             @NonNull UsbEndpoint in, @NonNull UsbEndpoint out) {
-        int totalSize = OVERSIZED_BUFFER_SIZE;
+        int totalSize = LARGE_BUFFER_SIZE;
         byte[] sentBuffer = new byte[totalSize];
         Random r = new Random();
         r.nextBytes(sentBuffer);
 
         int numSent = connection.bulkTransfer(out, sentBuffer, sentBuffer.length, 0);
 
-        // Buffer will only be partially transferred
-        assertEquals(MAX_BUFFER_SIZE, numSent);
+        // Buffer will be completely transferred
+        assertEquals(LARGE_BUFFER_SIZE, numSent);
 
         byte[] receivedBuffer = new byte[totalSize];
         int numReceived = connection.bulkTransfer(in, receivedBuffer, receivedBuffer.length,
                 TIMEOUT_MILLIS);
 
-        // All beyond MAX_BUFFER_SIZE was not send, hence it will not be echoed back
-        assertEquals(MAX_BUFFER_SIZE, numReceived);
+        // All of the buffer will be echoed back
+        assertEquals(LARGE_BUFFER_SIZE, numReceived);
 
         for (int i = 0; i < totalSize; i++) {
-            if (i < MAX_BUFFER_SIZE) {
-                assertEquals(sentBuffer[i], receivedBuffer[i]);
-            } else {
-                assertEquals(0, receivedBuffer[i]);
-            }
+            assertEquals(sentBuffer[i], receivedBuffer[i]);
         }
 
-        if (mDoesCompanionZeroTerminate) {
+        if (isZeroTransferExpected(LARGE_BUFFER_SIZE, in)) {
             receiveZeroSizedTransfer(connection, in);
         }
-    }
-
-    /**
-     * Receive a transfer that is larger than MAX_BUFFER_SIZE
-     *
-     * @param connection Connection to the USB device
-     * @param in         The in endpoint
-     */
-    private void receiveOversizedBulkTransfer(@NonNull UsbDeviceConnection connection,
-            @NonNull UsbEndpoint in) {
-        // Buffer will be received as two transfers
-        byte[] receivedBuffer1 = new byte[OVERSIZED_BUFFER_SIZE];
-        int numReceived = connection.bulkTransfer(in, receivedBuffer1, receivedBuffer1.length,
-                TIMEOUT_MILLIS);
-        assertEquals(MAX_BUFFER_SIZE, numReceived);
-
-        byte[] receivedBuffer2 = new byte[OVERSIZED_BUFFER_SIZE - MAX_BUFFER_SIZE];
-        numReceived = connection.bulkTransfer(in, receivedBuffer2, receivedBuffer2.length,
-                TIMEOUT_MILLIS);
-        assertEquals(OVERSIZED_BUFFER_SIZE - MAX_BUFFER_SIZE, numReceived);
-
-        assertEquals(1, receivedBuffer1[0]);
-        assertEquals(2, receivedBuffer1[MAX_BUFFER_SIZE - 1]);
-        assertEquals(3, receivedBuffer2[0]);
-        assertEquals(4, receivedBuffer2[OVERSIZED_BUFFER_SIZE - MAX_BUFFER_SIZE - 1]);
     }
 
     /**
@@ -619,7 +578,7 @@ public class UsbDeviceTestActivity extends PassFailButtons.Activity {
             finished.close();
         }
 
-        if (isZeroTransferExpected(size)) {
+        if (isZeroTransferExpected(size, in)) {
             receiveZeroSizeRequestLegacy(connection, in);
         }
     }
@@ -743,7 +702,7 @@ public class UsbDeviceTestActivity extends PassFailButtons.Activity {
             finished.close();
         }
 
-        if (isZeroTransferExpected(sliceStart + limitInSlice - (sliceStart + positionInSlice))) {
+        if (isZeroTransferExpected(sliceStart + limitInSlice - (sliceStart + positionInSlice), in)) {
             receiveZeroSizeRequest(connection, in);
         }
     }
@@ -783,10 +742,10 @@ public class UsbDeviceTestActivity extends PassFailButtons.Activity {
      * @param in              The endpoint to receive requests from
      * @param out             The endpoint to send requests to
      */
-    private void echoOversizedUsbRequestLegacy(@NonNull UsbDeviceConnection connection,
+    private void echoLargeUsbRequestLegacy(@NonNull UsbDeviceConnection connection,
             @NonNull UsbEndpoint in, @NonNull UsbEndpoint out) {
         Random random = new Random();
-        int totalSize = OVERSIZED_BUFFER_SIZE;
+        int totalSize = LARGE_BUFFER_SIZE;
 
         UsbRequest sent = new UsbRequest();
         boolean isInited = sent.initialize(connection, out);
@@ -811,13 +770,10 @@ public class UsbDeviceTestActivity extends PassFailButtons.Activity {
         for (int requestNum = 0; requestNum < 2; requestNum++) {
             UsbRequest finished = connection.requestWait();
             if (finished == receive) {
-                // size beyond MAX_BUFFER_SIZE is ignored
+                // Entire buffer is received
+                assertEquals(bufferReceived.position(), totalSize);
                 for (int i = 0; i < totalSize; i++) {
-                    if (i < MAX_BUFFER_SIZE) {
-                        assertEquals(sentBytes[i], receivedBytes[i]);
-                    } else {
-                        assertEquals(0, receivedBytes[i]);
-                    }
+                    assertEquals(sentBytes[i], receivedBytes[i]);
                 }
             } else {
                 assertSame(sent, finished);
@@ -825,8 +781,8 @@ public class UsbDeviceTestActivity extends PassFailButtons.Activity {
             finished.close();
         }
 
-        if (mDoesCompanionZeroTerminate) {
-            receiveZeroSizeRequestLegacy(connection, in);
+        if (isZeroTransferExpected(LARGE_BUFFER_SIZE, in)) {
+            receiveZeroSizedTransfer(connection, in);
         }
     }
 
@@ -1022,14 +978,14 @@ public class UsbDeviceTestActivity extends PassFailButtons.Activity {
         nextTest(connection, in, out, "Echo 1 byte");
         echoUsbRequestLegacy(connection, in, out, 1, false);
 
-        nextTest(connection, in, out, "Echo max bytes");
-        echoUsbRequestLegacy(connection, in, out, MAX_BUFFER_SIZE, true);
+        nextTest(connection, in, out, "Echo 16384 bytes");
+        echoUsbRequestLegacy(connection, in, out, 16384, true);
 
-        nextTest(connection, in, out, "Echo max bytes");
-        echoUsbRequestLegacy(connection, in, out, MAX_BUFFER_SIZE, false);
+        nextTest(connection, in, out, "Echo 16384 bytes");
+        echoUsbRequestLegacy(connection, in, out, 16384, false);
 
-        nextTest(connection, in, out, "Echo oversized buffer");
-        echoOversizedUsbRequestLegacy(connection, in, out);
+        nextTest(connection, in, out, "Echo large buffer");
+        echoLargeUsbRequestLegacy(connection, in, out);
 
         // Send empty requests
         sendZeroLengthRequestLegacy(connection, out, true);
@@ -1146,11 +1102,11 @@ public class UsbDeviceTestActivity extends PassFailButtons.Activity {
         nextTest(connection, in, out, "Echo 1 byte");
         echoUsbRequest(connection, in, out, 1, false);
 
-        nextTest(connection, in, out, "Echo max bytes");
-        echoUsbRequest(connection, in, out, MAX_BUFFER_SIZE, true);
+        nextTest(connection, in, out, "Echo 16384 bytes");
+        echoUsbRequest(connection, in, out, 16384, true);
 
-        nextTest(connection, in, out, "Echo max bytes");
-        echoUsbRequest(connection, in, out, MAX_BUFFER_SIZE, false);
+        nextTest(connection, in, out, "Echo 16384 bytes");
+        echoUsbRequest(connection, in, out, 16384, false);
 
         // Send empty requests
         sendZeroLengthRequest(connection, out, true);
@@ -1727,14 +1683,11 @@ public class UsbDeviceTestActivity extends PassFailButtons.Activity {
         nextTest(connection, in, out, "Echo 42 bytes");
         echoBulkTransferOffset(connection, in, out, 23, 42);
 
-        nextTest(connection, in, out, "Echo max bytes");
-        echoBulkTransfer(connection, in, out, MAX_BUFFER_SIZE);
+        nextTest(connection, in, out, "Echo 16384 bytes");
+        echoBulkTransfer(connection, in, out, 16384);
 
-        nextTest(connection, in, out, "Echo oversized buffer");
-        echoOversizedBulkTransfer(connection, in, out);
-
-        nextTest(connection, in, out, "Receive oversized buffer");
-        receiveOversizedBulkTransfer(connection, in);
+        nextTest(connection, in, out, "Echo large buffer");
+        echoLargeBulkTransfer(connection, in, out);
 
         // Illegal arguments
         runAndAssertException(() -> connection.bulkTransfer(out, new byte[1], 2, 0),
