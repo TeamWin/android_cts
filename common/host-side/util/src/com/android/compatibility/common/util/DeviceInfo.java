@@ -32,6 +32,7 @@ import org.junit.Rule;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
+import java.io.EOFException;
 import java.io.File;
 
 /**
@@ -47,8 +48,6 @@ public abstract class DeviceInfo implements IDeviceTest {
 
     /** A reference to the device under test. */
     protected ITestDevice mDevice;
-
-    private HostInfoStore mStore;
 
     @Rule
     public TestLogData mLogger = new TestLogData();
@@ -76,10 +75,16 @@ public abstract class DeviceInfo implements IDeviceTest {
         FileInputStreamSource source = null;
         try {
             jsonFile = FileUtil.createTempFile(getClass().getSimpleName(), FILE_SUFFIX);
-            mStore = new HostInfoStore(jsonFile);
-            mStore.open();
-            collectDeviceInfo(mStore);
-            mStore.close();
+            try (HostInfoStore store = new HostInfoStore(jsonFile)) {
+                store.open();
+                collectDeviceInfo(store);
+            } finally {
+                // Throw exception if file is empty so it will not be copied.
+                if (jsonFile != null && jsonFile.exists() &&
+                        jsonFile.length() == 0) {
+                    throw new EOFException(String.format("File empty: %s", deviceInfoName));
+                }
+            }
             source = new FileInputStreamSource(jsonFile);
             mLogger.addTestLog(deviceInfoName, LogDataType.TEXT, source);
         } catch (Exception e) {
