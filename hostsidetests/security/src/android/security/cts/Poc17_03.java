@@ -58,4 +58,16 @@ public class Poc17_03 extends SecurityTestCase {
             Thread.sleep(30000);
         }
     }
+
+    /**
+     *  b/33245849
+     */
+    @SecurityTest
+    public void testPocCVE_2017_0334() throws Exception {
+        if (containsDriver(getDevice(), "/dev/dri/renderD129")) {
+           String out = AdbUtils.runPoc("CVE-2017-0334", getDevice());
+           assertNotMatchesMultiLine(".*Leaked ptr is (0x[fF]{6}[cC]0[a-fA-F0-9]{8}"
+               +"|0x[c-fC-F][a-fA-F0-9]{7}).*",out);
+        }
+    }
 }
