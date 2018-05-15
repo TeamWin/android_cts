@@ -19,6 +19,7 @@ package android.print.cts;
 import static android.print.test.Utils.eventually;
 
 import android.os.ParcelFileDescriptor;
+import android.platform.test.annotations.AppModeFull;
 import android.print.PageRange;
 import android.print.PrintAttributes;
 import android.print.PrintAttributes.Margins;
@@ -58,6 +59,7 @@ import java.util.concurrent.TimeoutException;
 /**
  * This test verifies changes to the printer capabilities are applied correctly.
  */
+@AppModeFull(reason = "Print UI cannot resolve custom print options activity in a instant app")
 @RunWith(AndroidJUnit4.class)
 public class CustomPrintOptionsTest extends BasePrintTest {
     private final static String LOG_TAG = "CustomPrintOptionsTest";
@@ -98,8 +100,7 @@ public class CustomPrintOptionsTest extends BasePrintTest {
      * @throws Exception If something was unexpected
      */
     private PageRange[] getPages() throws Exception {
-        if (getUiDevice().hasObject(By.text(getPrintSpoolerStringOneParam("template_all_pages",
-                3)))) {
+        if (getUiDevice().hasObject(By.text("All 3"))) {
             return PAGESS[2];
         }
 

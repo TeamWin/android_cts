@@ -37,9 +37,10 @@ import android.print.test.services.PrintServiceCallbacks;
 import android.print.test.services.PrinterDiscoverySessionCallbacks;
 import android.print.test.services.SecondPrintService;
 import android.print.test.services.StubbablePrinterDiscoverySession;
-import androidx.annotation.NonNull;
 import android.support.test.runner.AndroidJUnit4;
 import android.util.Log;
+
+import androidx.annotation.NonNull;
 
 import org.junit.Before;
 import org.junit.Test;
@@ -365,11 +366,11 @@ public class InterfaceForAppsTest extends BasePrintTest {
         // Set some non default options
         openPrintOptions();
         changeCopies(2);
-        changeColor(getPrintSpoolerStringArray("color_mode_labels")[1]);
+        changeColor("Color");
         // Leave duplex as default to test that defaults are retained
         changeMediaSize(
                 PrintAttributes.MediaSize.ISO_A3.getLabel(getActivity().getPackageManager()));
-        changeOrientation(getPrintSpoolerStringArray("orientation_labels")[1]);
+        changeOrientation("Landscape");
 
         // Print and wait until it is completed
         clickPrintButton();
