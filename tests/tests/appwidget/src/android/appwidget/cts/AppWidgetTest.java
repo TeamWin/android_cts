@@ -16,6 +16,13 @@
 
 package android.appwidget.cts;
 
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertNull;
+import static org.junit.Assert.assertSame;
+import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.fail;
 import static org.mockito.Matchers.any;
 import static org.mockito.Matchers.eq;
 import static org.mockito.Matchers.same;
@@ -47,6 +54,8 @@ import android.os.Process;
 import android.os.SystemClock;
 import android.os.UserHandle;
 import android.os.UserManager;
+import android.platform.test.annotations.AppModeFull;
+import android.platform.test.annotations.AppModeInstant;
 import android.text.TextUtils;
 import android.util.DisplayMetrics;
 import android.widget.RemoteViews;
@@ -54,6 +63,9 @@ import android.widget.RemoteViewsService.RemoteViewsFactory;
 
 import org.hamcrest.BaseMatcher;
 import org.hamcrest.Description;
+import org.junit.Assume;
+import org.junit.Before;
+import org.junit.Test;
 import org.mockito.InOrder;
 import org.mockito.invocation.InvocationOnMock;
 import org.mockito.stubbing.Answer;
@@ -69,10 +81,8 @@ public class AppWidgetTest extends AppWidgetTestCase {
 
     private final Object mLock = new Object();
 
-    @Override
-    public void setUp() throws Exception {
-        super.setUp();
-
+    @Before
+    public void setUpDexmaker() throws Exception {
         // Workaround for dexmaker bug: https://code.google.com/p/dexmaker/issues/detail?id=2
         // Dexmaker is used by mockito.
         System.setProperty("dexmaker.dexcache", getInstrumentation()
@@ -85,7 +95,27 @@ public class AppWidgetTest extends AppWidgetTestCase {
     private static final String REVOKE_BIND_APP_WIDGET_PERMISSION_COMMAND =
             "appwidget revokebind --package android.appwidget.cts --user 0";
 
+    @AppModeInstant(reason = "Instant apps cannot provide or host app widgets")
+    @Test
+    public void testInstantAppsCannotProvideAppWidgets() {
+        Assume.assumeTrue(getInstrumentation().getTargetContext()
+                .getPackageManager().isInstantApp());
+        assertNull(getFirstAppWidgetProviderInfo());
+    }
 
+    @AppModeInstant(reason = "Instant apps cannot provide or host app widgets")
+    @Test
+    public void testInstantAppsCannotHostAppWidgets() {
+        Assume.assumeTrue(getInstrumentation().getTargetContext()
+                .getPackageManager().isInstantApp());
+        // Create a host and start listening.
+        AppWidgetHost host = new AppWidgetHost(getInstrumentation().getTargetContext(), 0);
+        // Allocate an app widget id to bind.
+        assertSame(AppWidgetManager.INVALID_APPWIDGET_ID, host.allocateAppWidgetId());
+    }
+
+    @AppModeFull(reason = "Instant apps cannot provide or host app widgets")
+    @Test
     public void testGetAppInstalledProvidersForCurrentUserLegacy() throws Exception {
         // By default we should get only providers for the current user.
         List<AppWidgetProviderInfo> providers = getAppWidgetManager().getInstalledProviders();
@@ -94,6 +124,8 @@ public class AppWidgetTest extends AppWidgetTestCase {
         assertExpectedInstalledProviders(providers);
     }
 
+    @AppModeFull(reason = "Instant apps cannot provide or host app widgets")
+    @Test
     public void testGetAppInstalledProvidersForCurrentUserNewCurrentProfile() throws Exception {
         // We ask only for providers for the current user.
         List<AppWidgetProviderInfo> providers = getAppWidgetManager()
@@ -103,6 +135,8 @@ public class AppWidgetTest extends AppWidgetTestCase {
         assertExpectedInstalledProviders(providers);
     }
 
+    @AppModeFull(reason = "Instant apps cannot provide or host app widgets")
+    @Test
     public void testGetAppInstalledProvidersForCurrentUserNewAllProfiles() throws Exception {
         // We ask only for providers for all current user's profiles
         UserManager userManager = (UserManager) getInstrumentation()
@@ -123,6 +157,8 @@ public class AppWidgetTest extends AppWidgetTestCase {
         assertExpectedInstalledProviders(allProviders);
     }
 
+    @AppModeFull(reason = "Instant apps cannot provide or host app widgets")
+    @Test
     public void testBindAppWidget() throws Exception {
         // Create a host and start listening.
         AppWidgetHost host = new AppWidgetHost(getInstrumentation().getTargetContext(), 0);
@@ -160,6 +196,8 @@ public class AppWidgetTest extends AppWidgetTestCase {
         }
     }
 
+    @AppModeFull(reason = "Instant apps cannot provide or host app widgets")
+    @Test
     public void testGetAppWidgetIdsForHost() throws Exception {
         AppWidgetHost host1 = new AppWidgetHost(getInstrumentation().getTargetContext(), 1);
         AppWidgetHost host2 = new AppWidgetHost(getInstrumentation().getTargetContext(), 2);
@@ -189,6 +227,8 @@ public class AppWidgetTest extends AppWidgetTestCase {
         host2.deleteHost();
     }
 
+    @AppModeFull(reason = "Instant apps cannot provide or host app widgets")
+    @Test
     public void testAppWidgetProviderCallbacks() throws Exception {
         AtomicInteger invocationCounter = new AtomicInteger();
 
@@ -296,6 +336,8 @@ public class AppWidgetTest extends AppWidgetTestCase {
         }
     }
 
+    @AppModeFull(reason = "Instant apps cannot provide or host app widgets")
+    @Test
     public void testTwoAppWidgetProviderCallbacks() throws Exception {
         AtomicInteger invocationCounter = new AtomicInteger();
 
@@ -386,6 +428,8 @@ public class AppWidgetTest extends AppWidgetTestCase {
         }
     }
 
+    @AppModeFull(reason = "Instant apps cannot provide or host app widgets")
+    @Test
     public void testGetAppWidgetIdsForProvider() throws Exception {
         // We want to bind widgets.
         grantBindAppWidgetPermission();
@@ -433,6 +477,8 @@ public class AppWidgetTest extends AppWidgetTestCase {
         }
     }
 
+    @AppModeFull(reason = "Instant apps cannot provide or host app widgets")
+    @Test
     public void testGetAppWidgetInfo() throws Exception {
         // We want to bind widgets.
         grantBindAppWidgetPermission();
@@ -485,6 +531,8 @@ public class AppWidgetTest extends AppWidgetTestCase {
         }
     }
 
+    @AppModeFull(reason = "Instant apps cannot provide or host app widgets")
+    @Test
     public void testGetAppWidgetOptions() throws Exception {
         // We want to bind widgets.
         grantBindAppWidgetPermission();
@@ -530,6 +578,8 @@ public class AppWidgetTest extends AppWidgetTestCase {
         }
     }
 
+    @AppModeFull(reason = "Instant apps cannot provide or host app widgets")
+    @Test
     public void testDeleteHost() throws Exception {
         // We want to bind widgets.
         grantBindAppWidgetPermission();
@@ -571,6 +621,8 @@ public class AppWidgetTest extends AppWidgetTestCase {
         }
     }
 
+    @AppModeFull(reason = "Instant apps cannot provide or host app widgets")
+    @Test
     public void testDeleteHosts() throws Exception {
         // We want to bind widgets.
         grantBindAppWidgetPermission();
@@ -627,6 +679,8 @@ public class AppWidgetTest extends AppWidgetTestCase {
         }
     }
 
+    @AppModeFull(reason = "Instant apps cannot provide or host app widgets")
+    @Test
     public void testOnProvidersChanged() throws Exception {
         // We want to bind widgets.
         grantBindAppWidgetPermission();
@@ -689,6 +743,8 @@ public class AppWidgetTest extends AppWidgetTestCase {
         }
     }
 
+    @AppModeFull(reason = "Instant apps cannot provide or host app widgets")
+    @Test
     public void testUpdateAppWidgetViaComponentName() throws Exception {
         // We want to bind widgets.
         grantBindAppWidgetPermission();
@@ -779,6 +835,8 @@ public class AppWidgetTest extends AppWidgetTestCase {
         }
     }
 
+    @AppModeFull(reason = "Instant apps cannot provide or host app widgets")
+    @Test
     public void testUpdateAppWidgetViaWidgetId() throws Exception {
         // We want to bind widgets.
         grantBindAppWidgetPermission();
@@ -849,6 +907,8 @@ public class AppWidgetTest extends AppWidgetTestCase {
         }
     }
 
+    @AppModeFull(reason = "Instant apps cannot provide or host app widgets")
+    @Test
     public void testUpdateAppWidgetViaWidgetIds() throws Exception {
         // We want to bind widgets.
         grantBindAppWidgetPermission();
@@ -941,6 +1001,8 @@ public class AppWidgetTest extends AppWidgetTestCase {
         }
     }
 
+    @AppModeFull(reason = "Instant apps cannot provide or host app widgets")
+    @Test
     public void testPartiallyUpdateAppWidgetViaWidgetId() throws Exception {
         // We want to bind widgets.
         grantBindAppWidgetPermission();
@@ -1015,6 +1077,8 @@ public class AppWidgetTest extends AppWidgetTestCase {
         }
     }
 
+    @AppModeFull(reason = "Instant apps cannot provide or host app widgets")
+    @Test
     public void testPartiallyUpdateAppWidgetViaWidgetIds() throws Exception {
         // We want to bind widgets.
         grantBindAppWidgetPermission();
@@ -1125,6 +1189,8 @@ public class AppWidgetTest extends AppWidgetTestCase {
         }
     }
 
+    @AppModeFull(reason = "Instant apps cannot provide or host app widgets")
+    @Test
     public void testCollectionWidgets() throws Exception {
         // We want to bind widgets.
         grantBindAppWidgetPermission();
@@ -1234,6 +1300,8 @@ public class AppWidgetTest extends AppWidgetTestCase {
         }
     }
 
+    @AppModeFull(reason = "Instant apps cannot provide or host app widgets")
+    @Test
     public void testWidgetFeaturesParsed() throws Exception {
         assertEquals(0, getFirstAppWidgetProviderInfo().widgetFeatures);
         String packageName = getInstrumentation().getTargetContext().getPackageName();
