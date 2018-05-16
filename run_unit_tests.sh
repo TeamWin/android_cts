@@ -67,13 +67,9 @@ echo "---- HOST TESTS ---- "
 echo
 
 ############### Run the host side tests ###############
-# TODO: Change it to the new harness repo once harness
-# code is moved to its own repo. [fix-harness-dir]
-${CTS_DIR}/harness/common/host-side/tradefed/tests/run_tests.sh
-${CTS_DIR}/harness/common/host-side/manifest-generator/tests/run_tests.sh
-${CTS_DIR}/harness/common/host-side/util/tests/run_tests.sh
-${CTS_DIR}/harness/common/util/tests/run_tests.sh
+${CTS_DIR}/../test/suite_harness/common/host-side/tradefed/tests/run_tests.sh
+${CTS_DIR}/../test/suite_harness/common/host-side/manifest-generator/tests/run_tests.sh
+${CTS_DIR}/../test/suite_harness/common/host-side/util/tests/run_tests.sh
+${CTS_DIR}/../test/suite_harness/common/util/tests/run_tests.sh
 
-# TODO: Change it to the new harness repo once harness
-# code is moved to its own repo. [fix-harness-dir]
-${CTS_DIR}/harness/tools/cts-tradefed/tests/run_tests.sh
+${CTS_DIR}/../test/suite_harness/tools/cts-tradefed/tests/run_tests.sh

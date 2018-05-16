@@ -190,7 +190,7 @@ public class SubscriptionManagerTest {
                 return !caps.hasCapability(NET_CAPABILITY_NOT_CONGESTED);
             });
             mSm.setSubscriptionOverrideCongested(mSubId, true, 0);
-            latch.await(10, TimeUnit.SECONDS);
+            assertTrue(latch.await(10, TimeUnit.SECONDS));
         }
 
         // Clearing override should make it go uncongested
@@ -199,7 +199,7 @@ public class SubscriptionManagerTest {
                 return caps.hasCapability(NET_CAPABILITY_NOT_CONGESTED);
             });
             mSm.setSubscriptionOverrideCongested(mSubId, false, 0);
-            latch.await(10, TimeUnit.SECONDS);
+            assertTrue(latch.await(10, TimeUnit.SECONDS));
         }
 
         // Now revoke our access
@@ -233,7 +233,7 @@ public class SubscriptionManagerTest {
                 return caps.hasCapability(NET_CAPABILITY_NOT_METERED);
             });
             mSm.setSubscriptionOverrideUnmetered(mSubId, true, 0);
-            latch.await(10, TimeUnit.SECONDS);
+            assertTrue(latch.await(10, TimeUnit.SECONDS));
         }
 
         // Clearing override should make it go metered
@@ -242,7 +242,7 @@ public class SubscriptionManagerTest {
                 return !caps.hasCapability(NET_CAPABILITY_NOT_METERED);
             });
             mSm.setSubscriptionOverrideUnmetered(mSubId, false, 0);
-            latch.await(10, TimeUnit.SECONDS);
+            assertTrue(latch.await(10, TimeUnit.SECONDS));
         }
     }
 

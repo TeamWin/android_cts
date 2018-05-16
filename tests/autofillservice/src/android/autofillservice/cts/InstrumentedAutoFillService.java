@@ -43,8 +43,9 @@ import android.service.autofill.FillEventHistory;
 import android.service.autofill.FillEventHistory.Event;
 import android.service.autofill.FillResponse;
 import android.service.autofill.SaveCallback;
-import androidx.annotation.Nullable;
 import android.util.Log;
+
+import androidx.annotation.Nullable;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -58,7 +59,7 @@ import java.util.concurrent.atomic.AtomicReference;
  */
 public class InstrumentedAutoFillService extends AutofillService {
 
-    static final String SERVICE_PACKAGE = "android.autofillservice.cts";
+    static final String SERVICE_PACKAGE = Helper.MY_PACKAGE;
     static final String SERVICE_CLASS = "InstrumentedAutoFillService";
 
     static final String SERVICE_NAME = SERVICE_PACKAGE + "/." + SERVICE_CLASS;
