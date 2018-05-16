@@ -65,11 +65,11 @@ LOCAL_MODULE_STEM := apache-http-legacy-minus-current.api
 include $(BUILD_SYSTEM)/base_rules.mk
 $(LOCAL_BUILT_MODULE) : \
         frameworks/base/api/current.txt \
-        external/apache-http/api/apache-http-legacy-current.txt \
+        external/apache-http/api/current.txt \
         | $(APICHECK)
 	@echo "Generate unique Apache Http Legacy API file -> $@"
 	@mkdir -p $(dir $@)
 	$(hide) $(APICHECK_COMMAND) -new_api_no_strip \
 	        frameworks/base/api/current.txt \
-            external/apache-http/api/apache-http-legacy-current.txt \
+            external/apache-http/api/current.txt \
             $@
