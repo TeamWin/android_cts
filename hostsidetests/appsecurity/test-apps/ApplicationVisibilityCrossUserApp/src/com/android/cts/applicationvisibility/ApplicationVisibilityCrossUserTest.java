@@ -21,6 +21,7 @@ import static org.junit.Assert.fail;
 import static android.content.pm.PackageManager.MATCH_KNOWN_PACKAGES;
 
 import android.content.Context;
+import android.content.pm.ApplicationInfo;
 import android.content.pm.PackageInfo;
 import android.content.pm.PackageManager;
 import android.os.Bundle;
@@ -92,10 +93,69 @@ public class ApplicationVisibilityCrossUserTest {
         } catch (SecurityException ignore) {}
     }
 
+    /** Tests getting installed applications for the current user */
+    @Test
+    public void testApplicationVisibility_currentUser() throws Exception {
+        final PackageManager pm = mContext.getPackageManager();
+        final List<ApplicationInfo> applicationList =
+                pm.getInstalledApplicationsAsUser(0, mContext.getUserId());
+        assertFalse(isAppInApplicationList(TINY_PKG, applicationList));
+    }
+
+    /** Tests getting installed applications for all users, with cross user permission granted */
+    @Test
+    public void testApplicationVisibility_anyUserCrossUserGrant() throws Exception {
+        final PackageManager pm = mContext.getPackageManager();
+        final List<ApplicationInfo> applicationList =
+                pm.getInstalledApplicationsAsUser(MATCH_KNOWN_PACKAGES, mContext.getUserId());
+        assertTrue(isAppInApplicationList(TINY_PKG, applicationList));
+    }
+
+    /** Tests getting installed applications for all users, with cross user permission revoked */
+    @Test
+    public void testApplicationVisibility_anyUserCrossUserNoGrant() throws Exception {
+        final PackageManager pm = mContext.getPackageManager();
+        try {
+            final List<ApplicationInfo> applicationList =
+                    pm.getInstalledApplicationsAsUser(MATCH_KNOWN_PACKAGES, mContext.getUserId());
+            fail("Should have received a security exception");
+        } catch (SecurityException ignore) {}
+    }
+
+    /** Tests getting installed applications for another user, with cross user permission granted */
+    @Test
+    public void testApplicationVisibility_otherUserGrant() throws Exception {
+        final PackageManager pm = mContext.getPackageManager();
+        final List<ApplicationInfo> applicationList =
+                pm.getInstalledApplicationsAsUser(0, getTestUser());
+        assertTrue(isAppInApplicationList(TINY_PKG, applicationList));
+    }
+
+    /** Tests getting installed applications for another user, with cross user permission revoked */
+    @Test
+    public void testApplicationVisibility_otherUserNoGrant() throws Exception {
+        final PackageManager pm = mContext.getPackageManager();
+        try {
+            final List<ApplicationInfo> applicationList =
+                    pm.getInstalledApplicationsAsUser(0, getTestUser());
+            fail("Should have received a security exception");
+        } catch (SecurityException ignore) {}
+    }
+
     private boolean isAppInPackageList(String packageName,
             List<PackageInfo> packageList) {
         for (PackageInfo pkgInfo : packageList) {
             if (pkgInfo.packageName.equals(packageName)) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    private boolean isAppInApplicationList(
+            String packageName, List<ApplicationInfo> applicationList) {
+        for (ApplicationInfo appInfo : applicationList) {
+            if (appInfo.packageName.equals(packageName)) {
                 return true;
             }
         }
