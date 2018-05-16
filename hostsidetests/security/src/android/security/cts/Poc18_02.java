@@ -52,4 +52,17 @@ public class Poc18_02 extends SecurityTestCase {
                          "[\\s\\n\\S]*>>> /system/bin/" +
                          "mediaserver <<<[\\s\\n\\S]*", logcatOut);
     }
+
+    /**
+     * b/68953950
+     */
+     @SecurityTest
+     public void testPocCVE_2017_13232() throws Exception {
+       AdbUtils.runCommandLine("logcat -c" , getDevice());
+       AdbUtils.runPocNoOutput("CVE-2017-13232", getDevice(), 60);
+       String logcatOutput = AdbUtils.runCommandLine("logcat -d", getDevice());
+       assertNotMatchesMultiLine(".*APM_AudioPolicyManager: getOutputForAttr\\(\\) "+
+                                 "invalid attributes: usage=.{1,} content=.{1,} "+
+                                 "flags=.{1,} tags=\\[.{256,}\\].*", logcatOutput);
+     }
  }
