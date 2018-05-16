@@ -1757,7 +1757,13 @@ public class PrintDocumentAdapterContractTest extends BasePrintTest {
                     // Mark layout called.
                     onLayoutCalled();
                     return null;
-                }, null, invocation -> {
+                }, invocation -> {
+                    WriteResultCallback callback = (WriteResultCallback) invocation
+                            .getArguments()[3];
+                    callback.onWriteFailed(null);
+                    onWriteCalled();
+                    return null;
+                }, invocation -> {
                     // Mark finish was called.
                     onFinishCalled();
                     return null;
@@ -1768,6 +1774,7 @@ public class PrintDocumentAdapterContractTest extends BasePrintTest {
 
         // Wait for layout.
         waitForLayoutAdapterCallbackCount(1);
+        waitForWriteAdapterCallback(1);
 
         // Cancel printing.
         getUiDevice().pressBack(); // wakes up the device.
@@ -1855,6 +1862,7 @@ public class PrintDocumentAdapterContractTest extends BasePrintTest {
 
         // Wait for layout.
         waitForLayoutAdapterCallbackCount(1);
+        waitForWriteAdapterCallback(1);
 
         // Cancel printing.
         getUiDevice().pressBack(); // wakes up the device.
