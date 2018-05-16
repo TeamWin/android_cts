@@ -31,6 +31,8 @@ import android.support.test.rule.ActivityTestRule;
 import android.support.test.runner.AndroidJUnit4;
 import android.util.Log;
 
+import com.android.compatibility.common.util.CddTest;
+
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
@@ -73,6 +75,7 @@ public class OpenGlEsVersionTest {
         mActivity = mActivityRule.getActivity();
     }
 
+    @CddTest(requirement="7.1.4.1/C-0-1")
     @Test
     public void testOpenGlEsVersion() throws InterruptedException {
         int detectedMajorVersion = getDetectedMajorVersion();
@@ -91,6 +94,7 @@ public class OpenGlEsVersionTest {
         }
     }
 
+    @CddTest(requirement="7.1.4.1/C-2-2")
     @Test
     public void testRequiredExtensions() throws InterruptedException {
         int reportedVersion = getVersionFromActivityManager(mActivity);
@@ -116,6 +120,7 @@ public class OpenGlEsVersionTest {
         }
     }
 
+    @CddTest(requirement="7.1.4.1/C-2-1,C-5-1,C-4-1")
     @Test
     public void testExtensionPack() throws InterruptedException {
         // Requirements:
@@ -144,7 +149,7 @@ public class OpenGlEsVersionTest {
             + (hasAepExtension ? "" : "not ") + "in the OpenGL ES extension list.",
             hasAepFeature, hasAepExtension);
     }
-
+    @CddTest(requirement="7.9.2/C-1-4")
     @Test
     public void testOpenGlEsVersionForVrHighPerformance() throws InterruptedException {
         if (!supportsVrHighPerformance())
@@ -160,6 +165,7 @@ public class OpenGlEsVersionTest {
             (major == 3 && minor >= 2) || major > 3);
     }
 
+    @CddTest(requirement="7.9.2/C-1-6,C-1-8")
     @Test
     public void testRequiredExtensionsForVrHighPerformance() throws InterruptedException {
         if (!supportsVrHighPerformance())
@@ -196,7 +202,7 @@ public class OpenGlEsVersionTest {
                 requiredEglList[i], hasExtension(extensions, requiredEglList[i]));
         }
     }
-
+    @CddTest(requirement="7.1.4.1/C-6-1")
     @Test
     public void testRequiredEglExtensions() {
         // See CDD section 7.1.4
@@ -340,6 +346,7 @@ public class OpenGlEsVersionTest {
      * Check that the version string has the form "OpenGL ES(-CM)? (\d+)\.(\d+)", where the two
      * numbers match the major and minor parameters.
      */
+    @CddTest(requirement="7.1.4.1/C-0-1")
     private void verifyGlVersionString(int major, int minor) throws InterruptedException {
         Matcher matcher = Pattern.compile("OpenGL ES(?:-CM)? (\\d+)\\.(\\d+).*")
                                  .matcher(mActivity.getVersionString());
