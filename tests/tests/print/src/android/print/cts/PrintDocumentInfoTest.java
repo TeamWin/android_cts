@@ -107,8 +107,10 @@ public class PrintDocumentInfoTest extends BasePrintTest {
                 invocation -> printerDiscoverySessionCallbacks,
                 invocation -> {
                     PrintJob printJob = (PrintJob) invocation.getArguments()[0];
-                    queuedInfo[0] = printJob.getDocument().getInfo();
-                    queuedData[0] = printJob.getDocument().getData();
+                    synchronized (queuedInfo) {
+                        queuedInfo[0] = printJob.getDocument().getInfo();
+                        queuedData[0] = printJob.getDocument().getData();
+                    }
                     printJob.complete();
                     onPrintJobQueuedCalled();
                     return null;
@@ -152,7 +154,11 @@ public class PrintDocumentInfoTest extends BasePrintTest {
         waitForServiceOnPrintJobQueuedCallbackCalled(1);
 
         // Check that the document name was carried over 1:1
-        eventually(() -> assertEquals(name, queuedInfo[0].getName()));
+        eventually(() -> {
+            synchronized (queuedInfo) {
+                assertEquals(name, queuedInfo[0].getName());
+            }
+        });
 
         // Content type is set to document by default, but is otherwise unrestricted
         if (contentType != null) {
@@ -193,7 +199,7 @@ public class PrintDocumentInfoTest extends BasePrintTest {
      */
     @Test
     public void documentInfoNothingSet() throws Throwable {
-        printDocumentBaseTest(PRINT_JOB_NAME, null, null);
+        printDocumentBaseTest("documentInfoNothingSet", null, null);
     }
 
     /**
@@ -203,7 +209,8 @@ public class PrintDocumentInfoTest extends BasePrintTest {
      */
     @Test
     public void documentInfoUnknownPageCount() throws Throwable {
-        printDocumentBaseTest(PRINT_JOB_NAME, null, PrintDocumentInfo.PAGE_COUNT_UNKNOWN);
+        printDocumentBaseTest("documentInfoUnknownPageCount", null,
+                PrintDocumentInfo.PAGE_COUNT_UNKNOWN);
     }
 
     /**
@@ -213,7 +220,7 @@ public class PrintDocumentInfoTest extends BasePrintTest {
      */
     @Test
     public void documentInfoZeroPageCount() throws Throwable {
-        printDocumentBaseTest(PRINT_JOB_NAME, null, 0);
+        printDocumentBaseTest("documentInfoZeroPageCount", null, 0);
     }
 
     /**
@@ -223,7 +230,7 @@ public class PrintDocumentInfoTest extends BasePrintTest {
      */
     @Test
     public void documentInfoOnePageCount() throws Throwable {
-        printDocumentBaseTest(PRINT_JOB_NAME, null, 1);
+        printDocumentBaseTest("documentInfoOnePageCount", null, 1);
     }
 
     /**
@@ -233,7 +240,7 @@ public class PrintDocumentInfoTest extends BasePrintTest {
      */
     @Test
     public void documentInfoThreePageCount() throws Throwable {
-        printDocumentBaseTest(PRINT_JOB_NAME, null, 3);
+        printDocumentBaseTest("documentInfoThreePageCount", null, 3);
     }
 
     /**
@@ -243,7 +250,8 @@ public class PrintDocumentInfoTest extends BasePrintTest {
      */
     @Test
     public void documentInfoContentTypePhoto() throws Throwable {
-        printDocumentBaseTest(PRINT_JOB_NAME, PrintDocumentInfo.CONTENT_TYPE_PHOTO, null);
+        printDocumentBaseTest("documentInfoContentTypePhoto", PrintDocumentInfo.CONTENT_TYPE_PHOTO,
+                null);
     }
 
     /**
@@ -253,7 +261,8 @@ public class PrintDocumentInfoTest extends BasePrintTest {
      */
     @Test
     public void documentInfoContentTypeUnknown() throws Throwable {
-        printDocumentBaseTest(PRINT_JOB_NAME, PrintDocumentInfo.CONTENT_TYPE_UNKNOWN, null);
+        printDocumentBaseTest("documentInfoContentTypeUnknown",
+                PrintDocumentInfo.CONTENT_TYPE_UNKNOWN, null);
     }
 
     /**
@@ -263,7 +272,7 @@ public class PrintDocumentInfoTest extends BasePrintTest {
      */
     @Test
     public void documentInfoContentTypeNonDefined() throws Throwable {
-        printDocumentBaseTest(PRINT_JOB_NAME, -23, null);
+        printDocumentBaseTest("documentInfoContentTypeNonDefined", -23, null);
     }
 
     private PrinterDiscoverySessionCallbacks createFirstMockDiscoverySessionCallbacks() {
