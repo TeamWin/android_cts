@@ -21,7 +21,6 @@ import static com.android.cts.verifier.managedprovisioning.Utils.createInteracti
 import android.app.Activity;
 import android.app.AlertDialog;
 import android.app.admin.DevicePolicyManager;
-import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
 import android.content.pm.PackageManager;
@@ -29,12 +28,10 @@ import android.database.DataSetObserver;
 import android.os.Bundle;
 import android.os.UserManager;
 import android.provider.Settings;
-import android.util.Log;
 import android.view.View;
 import android.view.View.OnClickListener;
 
 import com.android.cts.verifier.ArrayTestListAdapter;
-import com.android.cts.verifier.IntentDrivenTestActivity;
 import com.android.cts.verifier.IntentDrivenTestActivity.ButtonInfo;
 import com.android.cts.verifier.PassFailButtons;
 import com.android.cts.verifier.R;
@@ -74,6 +71,7 @@ public class DeviceOwnerPositiveTestActivity extends PassFailButtons.TestListAct
     private static final String NETWORK_LOGGING_UI_TEST_ID = "NETWORK_LOGGING_UI";
     public static final String COMP_TEST_ID = "COMP_UI";
     private static final String REMOVE_DEVICE_OWNER_TEST_ID = "REMOVE_DEVICE_OWNER";
+    private DeviceOwnerSkipTestHelper mDeviceOwnerSkipTestHelper;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -97,6 +95,20 @@ public class DeviceOwnerPositiveTestActivity extends PassFailButtons.TestListAct
         }
 
         setContentView(R.layout.positive_device_owner);
+        mDeviceOwnerSkipTestHelper = new DeviceOwnerSkipTestHelper(this, () -> setupTests());
+        mDeviceOwnerSkipTestHelper.setupSkipCheckUi();
+    }
+
+    @Override
+    protected void handleActivityResult(int requestCode, int resultCode, Intent data) {
+        boolean handled = mDeviceOwnerSkipTestHelper.handleSkipCheckActivityResult(
+                requestCode, resultCode, data);
+        if (!handled) {
+            super.handleActivityResult(requestCode, resultCode, data);
+        }
+    }
+
+    private void setupTests() {
         setInfoResources(R.string.device_owner_positive_tests,
                 R.string.device_owner_positive_tests_info, 0);
         setPassFailButtonClickListeners();
@@ -128,7 +140,6 @@ public class DeviceOwnerPositiveTestActivity extends PassFailButtons.TestListAct
                         .show();
             }
         });
-
     }
 
     @Override
