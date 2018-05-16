@@ -80,6 +80,7 @@ include $(LOCAL_PATH)/build_xml_api_file.mk
 include $(CLEAR_VARS)
 LOCAL_MODULE := cts-apache-http-legacy-current-api
 LOCAL_MODULE_STEM := apache-http-legacy-current.api
-LOCAL_SRC_FILES := external/apache-http/api/apache-http-legacy-current.txt
+LOCAL_SRC_FILES := external/apache-http/api/current.txt
 
 include $(LOCAL_PATH)/build_xml_api_file.mk
+
