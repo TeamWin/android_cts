@@ -38,16 +38,18 @@ class TestModuleConfigHandler extends DefaultHandler {
     private static final String VALUE_TAG = "value";
     private static final String MODULE_NAME_TAG = "module-name";
     private static final String GTEST_CLASS_TAG = "com.android.tradefed.testtype.GTest";
+    // com.android.compatibility.common.tradefed.testtype.JarHostTest option
+    private static final String JAR_TAG = "jar";
+    // com.android.tradefed.targetprep.suite.SuiteApkInstaller option
+    private static final String TEST_FILE_NAME_TAG = "test-file-name";
 
-    private FileMetadata.Builder mFileMetadata;
-    private ConfigMetadata.Builder mConfigMetadata;
-    private ConfigMetadata.TestClass.Builder mTestCase;
-    private ConfigMetadata.TargetPreparer.Builder mTargetPreparer;
+    private TestModuleConfig.Builder mTestModuleConfig;
+    private TestModuleConfig.TargetPreparer.Builder mTargetPreparer;
+    private TestModuleConfig.TestClass.Builder mTestCase;
     private String mModuleName = null;
 
     TestModuleConfigHandler(String configFileName) {
-        mFileMetadata = FileMetadata.newBuilder();
-        mConfigMetadata = ConfigMetadata.newBuilder();
+        mTestModuleConfig = TestModuleConfig.newBuilder();
         mTestCase = null;
         mTargetPreparer = null;
         // Default Module Name is the Config File Name
@@ -59,48 +61,65 @@ class TestModuleConfigHandler extends DefaultHandler {
             throws SAXException {
         super.startElement(uri, localName, name, attributes);
 
-        if (CONFIGURATION_TAG.equalsIgnoreCase(localName)) {
-            if (null != attributes.getValue(DESCRIPTION_TAG)) {
-                mFileMetadata.setDescription(attributes.getValue(DESCRIPTION_TAG));
-            } else {
-                mFileMetadata.setDescription("WARNING: no description.");
-            }
-        } else if (TEST_TAG.equalsIgnoreCase(localName)) {
-            mTestCase = ConfigMetadata.TestClass.newBuilder();
-            mTestCase.setTestClass(attributes.getValue(CLASS_TAG));
-        } else if (TARGET_PREPARER_TAG.equalsIgnoreCase(localName)) {
-            mTargetPreparer = ConfigMetadata.TargetPreparer.newBuilder();
-            mTargetPreparer.setTestClass(attributes.getValue(CLASS_TAG));
-        } else if (OPTION_TAG.equalsIgnoreCase(localName)) {
-            Option.Builder option = Option.newBuilder();
-            option.setName(attributes.getValue(NAME_TAG));
-            option.setValue(attributes.getValue(VALUE_TAG));
-            String keyStr = attributes.getValue(KEY_TAG);
-            if (null != keyStr) {
-                option.setKey(keyStr);
-            }
-            if (null != mTestCase) {
-                mTestCase.addOptions(option);
-                if (GTEST_CLASS_TAG.equalsIgnoreCase(option.getName())) {
-                    mModuleName = option.getValue();
+        switch (localName) {
+            case CONFIGURATION_TAG:
+                if (null != attributes.getValue(DESCRIPTION_TAG)) {
+                    mTestModuleConfig.setDescription(attributes.getValue(DESCRIPTION_TAG));
+                } else {
+                    mTestModuleConfig.setDescription("WARNING: no description.");
                 }
-            } else if (null != mTargetPreparer) {
-                mTargetPreparer.addOptions(option);
-            }
+                break;
+            case TEST_TAG:
+                mTestCase = TestModuleConfig.TestClass.newBuilder();
+                mTestCase.setTestClass(attributes.getValue(CLASS_TAG));
+                break;
+            case TARGET_PREPARER_TAG:
+                mTargetPreparer = TestModuleConfig.TargetPreparer.newBuilder();
+                mTargetPreparer.setTestClass(attributes.getValue(CLASS_TAG));
+                break;
+            case OPTION_TAG:
+                Option.Builder option = Option.newBuilder();
+                option.setName(attributes.getValue(NAME_TAG));
+                option.setValue(attributes.getValue(VALUE_TAG));
+                String keyStr = attributes.getValue(KEY_TAG);
+                if (null != keyStr) {
+                    option.setKey(keyStr);
+                }
+                if (null != mTestCase) {
+                    mTestCase.addOptions(option);
+                    switch (option.getName()) {
+                        case JAR_TAG:
+                            mTestModuleConfig.addTestJars(option.getValue());
+                            break;
+                        case GTEST_CLASS_TAG:
+                            mModuleName = option.getValue();
+                            break;
+                    }
+                } else if (null != mTargetPreparer) {
+                    mTargetPreparer.addOptions(option);
+                    if (TEST_FILE_NAME_TAG.equalsIgnoreCase(option.getName())) {
+                        mTestModuleConfig.addTestFileNames(option.getValue());
+                    }
+                }
+                break;
         }
     }
 
     @Override
     public void endElement(String uri, String localName, String name) throws SAXException {
         super.endElement(uri, localName, name);
-        if (TEST_TAG.equalsIgnoreCase(localName)) {
-            mConfigMetadata.addTestClasses(mTestCase);
-            mTestCase = null;
-        } else if (TARGET_PREPARER_TAG.equalsIgnoreCase(localName)) {
-            mConfigMetadata.addTargetPreparers(mTargetPreparer);
-            mTargetPreparer = null;
-        } else if (CONFIGURATION_TAG.equalsIgnoreCase(localName)) {
-            mFileMetadata.setConfigMetadata(mConfigMetadata);
+        switch (localName) {
+            case CONFIGURATION_TAG:
+                mTestModuleConfig.setModuleName(mModuleName);
+                break;
+            case TARGET_PREPARER_TAG:
+                mTestModuleConfig.addTargetPreparers(mTargetPreparer);
+                mTargetPreparer = null;
+                break;
+            case TEST_TAG:
+                mTestModuleConfig.addTestClasses(mTestCase);
+                mTestCase = null;
+                break;
         }
     }
 
@@ -110,10 +129,10 @@ class TestModuleConfigHandler extends DefaultHandler {
 
     public String getTestClassName() {
         //return the 1st Test Class
-        return mFileMetadata.getConfigMetadata().getTestClassesList().get(0).getTestClass();
+        return mTestModuleConfig.getTestClassesList().get(0).getTestClass();
     }
 
-    public FileMetadata getFileMetadata() {
-        return mFileMetadata.build();
+    public TestModuleConfig getTestModuleConfig() {
+        return mTestModuleConfig.build();
     }
 }

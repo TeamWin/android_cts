@@ -27,18 +27,15 @@ LOCAL_PROTOC_FLAGS := --proto_path=$(LOCAL_PATH)/proto/
 
 LOCAL_JAR_MANIFEST := MANIFEST.mf
 
-LOCAL_STATIC_JAVA_LIBRARIES := \
-  compatibility-host-util \
-  dexlib2
-
 LOCAL_MODULE := release-parser
 
 # This tool is not checking any dependencies or metadata, so all of the
 # dependencies of all of the tests must be on its classpath. This is
 # super fragile.
 LOCAL_STATIC_JAVA_LIBRARIES += \
-  tradefed \
+  compatibility-host-util \
   hosttestlib \
-  platformprotos
+  dexlib2 \
+  tradefed
 
 include $(BUILD_HOST_JAVA_LIBRARY)
