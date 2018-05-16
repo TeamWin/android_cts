@@ -30,7 +30,7 @@ LOCAL_SDK_VERSION := current
 LOCAL_PACKAGE_SPLITS := mdpi-v4 hdpi-v4 xhdpi-v4 xxhdpi-v4 v7 fr de
 
 # Tag this module as a cts test artifact
-LOCAL_COMPATIBILITY_SUITE := cts vts general-tests
+LOCAL_COMPATIBILITY_SUITE := cts vts general-tests cts_instant
 
 LOCAL_ASSET_DIR := $(LOCAL_PATH)/assets
 
@@ -39,6 +39,8 @@ LOCAL_AAPT_FLAGS := --version-code 100 --version-name OneHundred --replace-versi
 
 LOCAL_PROGUARD_ENABLED := disabled
 LOCAL_DEX_PREOPT := false
+
+LOCAL_SDK_VERSION := test_current
 
 include $(BUILD_CTS_SUPPORT_PACKAGE)
 
@@ -60,7 +62,7 @@ LOCAL_PACKAGE_NAME := CtsSplitAppDiffRevision
 LOCAL_PACKAGE_SPLITS := v7
 
 # Tag this module as a cts test artifact
-LOCAL_COMPATIBILITY_SUITE := cts vts general-tests
+LOCAL_COMPATIBILITY_SUITE := cts vts general-tests cts_instant
 
 LOCAL_MANIFEST_FILE := revision/AndroidManifest.xml
 LOCAL_CERTIFICATE := cts/hostsidetests/appsecurity/certs/cts-testkey1
@@ -68,6 +70,8 @@ LOCAL_AAPT_FLAGS := --version-code 100 --version-name OneHundredRevisionTwelve -
 
 LOCAL_PROGUARD_ENABLED := disabled
 LOCAL_DEX_PREOPT := false
+
+LOCAL_SDK_VERSION := test_current
 
 include $(BUILD_CTS_SUPPORT_PACKAGE)
 
@@ -89,13 +93,15 @@ LOCAL_PACKAGE_NAME := CtsSplitAppDiffVersion
 LOCAL_PACKAGE_SPLITS := v7
 
 # Tag this module as a cts test artifact
-LOCAL_COMPATIBILITY_SUITE := cts vts general-tests
+LOCAL_COMPATIBILITY_SUITE := cts vts general-tests cts_instant
 
 LOCAL_CERTIFICATE := cts/hostsidetests/appsecurity/certs/cts-testkey1
 LOCAL_AAPT_FLAGS := --version-code 101 --version-name OneHundredOne --replace-version
 
 LOCAL_PROGUARD_ENABLED := disabled
 LOCAL_DEX_PREOPT := false
+
+LOCAL_SDK_VERSION := test_current
 
 include $(BUILD_CTS_SUPPORT_PACKAGE)
 
@@ -117,13 +123,15 @@ LOCAL_PACKAGE_NAME := CtsSplitAppDiffCert
 LOCAL_PACKAGE_SPLITS := v7
 
 # Tag this module as a cts test artifact
-LOCAL_COMPATIBILITY_SUITE := cts vts general-tests
+LOCAL_COMPATIBILITY_SUITE := cts vts general-tests cts_instant
 
 LOCAL_CERTIFICATE := cts/hostsidetests/appsecurity/certs/cts-testkey2
 LOCAL_AAPT_FLAGS := --version-code 100 --version-name OneHundred --replace-version
 
 LOCAL_PROGUARD_ENABLED := disabled
 LOCAL_DEX_PREOPT := false
+
+LOCAL_SDK_VERSION := test_current
 
 include $(BUILD_CTS_SUPPORT_PACKAGE)
 

@@ -19,6 +19,7 @@ package android.appsecurity.cts;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 
+import android.platform.test.annotations.AppModeFull;
 import com.android.ddmlib.AdbCommandRejectedException;
 import com.android.ddmlib.CollectingOutputReceiver;
 import com.android.ddmlib.Log;
@@ -79,6 +80,7 @@ public class DirectBootHostTest extends BaseHostJUnit4Test {
      * Automotive devices MUST support native FBE.
      */
     @Test
+    @AppModeFull // TODO: Needs porting to instant
     public void testAutomotiveNativeFbe() throws Exception {
         if (!isSupportedDevice()) {
             Log.v(TAG, "Device not supported; skipping test");
@@ -96,6 +98,7 @@ public class DirectBootHostTest extends BaseHostJUnit4Test {
      * If device has native FBE, verify lifecycle.
      */
     @Test
+    @AppModeFull // TODO: Needs porting to instant
     public void testDirectBootNative() throws Exception {
         if (!isSupportedDevice()) {
             Log.v(TAG, "Device not supported; skipping test");
@@ -112,6 +115,7 @@ public class DirectBootHostTest extends BaseHostJUnit4Test {
      * If device doesn't have native FBE, enable emulation and verify lifecycle.
      */
     @Test
+    @AppModeFull // TODO: Needs porting to instant
     public void testDirectBootEmulated() throws Exception {
         if (!isSupportedDevice()) {
             Log.v(TAG, "Device not supported; skipping test");
@@ -128,6 +132,7 @@ public class DirectBootHostTest extends BaseHostJUnit4Test {
      * If device doesn't have native FBE, verify normal lifecycle.
      */
     @Test
+    @AppModeFull // TODO: Needs porting to instant
     public void testDirectBootNone() throws Exception {
         if (!isSupportedDevice()) {
             Log.v(TAG, "Device not supported; skipping test");

@@ -15,11 +15,13 @@
  */
 package android.appsecurity.cts;
 
+import android.platform.test.annotations.AppModeFull;
 import com.android.compatibility.common.tradefed.build.CompatibilityBuildHelper;
 import com.android.tradefed.build.IBuildInfo;
 import com.android.tradefed.testtype.DeviceTestCase;
 import com.android.tradefed.testtype.IBuildReceiver;
 
+@AppModeFull // TODO: Needs porting to instant
 public class OverlayHostTest extends DeviceTestCase implements IBuildReceiver {
     private static final String PKG = "com.android.cts.overlayapp";
     private static final String APK = "CtsOverlayApp.apk";

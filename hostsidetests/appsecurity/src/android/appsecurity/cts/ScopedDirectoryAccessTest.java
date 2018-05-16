@@ -16,9 +16,12 @@
 
 package android.appsecurity.cts;
 
+import android.platform.test.annotations.AppModeFull;
+
 /**
  * Set of tests that verify behavior of the Scoped Directory access API.
  */
+@AppModeFull // TODO: Needs porting to instant
 public class ScopedDirectoryAccessTest extends DocumentsTestCase {
 
     public void testInvalidPath() throws Exception {

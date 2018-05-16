@@ -19,6 +19,7 @@ package android.appsecurity.cts;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 
+import android.platform.test.annotations.AppModeFull;
 import com.android.tradefed.device.DeviceNotAvailableException;
 import com.android.tradefed.testtype.DeviceJUnit4ClassRunner;
 
@@ -66,6 +67,7 @@ public class PackageVisibilityTest extends BaseAppSecurityTest {
     }
 
     @Test
+    @AppModeFull // TODO: Needs porting to instant
     public void testUninstalledPackageVisibility() throws Exception {
         if (!mSupportsMultiUser) {
             return;

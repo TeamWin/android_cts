@@ -21,6 +21,7 @@ import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 
+import android.platform.test.annotations.AppModeFull;
 import com.android.compatibility.common.tradefed.build.CompatibilityBuildHelper;
 import com.android.ddmlib.Log;
 import com.android.tradefed.device.DeviceNotAvailableException;
@@ -78,6 +79,7 @@ public class ExternalStorageHostTest extends BaseHostJUnit4Test {
      * Verify that app with no external storage permissions works correctly.
      */
     @Test
+    @AppModeFull // TODO: Needs porting to instant
     public void testExternalStorageNone() throws Exception {
         try {
             wipePrimaryExternalStorage();
@@ -101,6 +103,7 @@ public class ExternalStorageHostTest extends BaseHostJUnit4Test {
      * correctly.
      */
     @Test
+    @AppModeFull // TODO: Needs porting to instant
     public void testExternalStorageRead() throws Exception {
         try {
             wipePrimaryExternalStorage();
@@ -124,6 +127,7 @@ public class ExternalStorageHostTest extends BaseHostJUnit4Test {
      * correctly.
      */
     @Test
+    @AppModeFull // TODO: Needs porting to instant
     public void testExternalStorageWrite() throws Exception {
         try {
             wipePrimaryExternalStorage();
@@ -146,6 +150,7 @@ public class ExternalStorageHostTest extends BaseHostJUnit4Test {
      * directories belonging to other apps, and those apps can read.
      */
     @Test
+    @AppModeFull // TODO: Needs porting to instant
     public void testExternalStorageGifts() throws Exception {
         try {
             wipePrimaryExternalStorage();
@@ -180,6 +185,7 @@ public class ExternalStorageHostTest extends BaseHostJUnit4Test {
      * isolated storage.
      */
     @Test
+    @AppModeFull // TODO: Needs porting to instant
     public void testMultiUserStorageIsolated() throws Exception {
         try {
             if (mUsers.length == 1) {
@@ -226,6 +232,7 @@ public class ExternalStorageHostTest extends BaseHostJUnit4Test {
      * when apps with r/w permission levels move around their files.
      */
     @Test
+    @AppModeFull // TODO: Needs porting to instant
     public void testMultiViewMoveConsistency() throws Exception {
         try {
             wipePrimaryExternalStorage();
@@ -269,6 +276,7 @@ public class ExternalStorageHostTest extends BaseHostJUnit4Test {
 
     /** Verify that app without READ_EXTERNAL can play default URIs in external storage. */
     @Test
+    @AppModeFull // TODO: Needs porting to instant
     public void testExternalStorageReadDefaultUris() throws Exception {
         try {
             wipePrimaryExternalStorage();
@@ -305,6 +313,7 @@ public class ExternalStorageHostTest extends BaseHostJUnit4Test {
      * tool to read/write files in those locations.
      */
     @Test
+    @AppModeFull // TODO: Needs porting to instant
     public void testSecondaryUsersInaccessible() throws Exception {
         List<String> mounts = new ArrayList<>();
         for (String line : getDevice().executeShellCommand("cat /proc/mounts").split("\n")) {
