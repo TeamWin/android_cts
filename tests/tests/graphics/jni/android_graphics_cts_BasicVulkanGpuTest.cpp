@@ -43,7 +43,7 @@ static constexpr uint32_t kTestImageHeight = 64;
 // 5) Reads back the intermediate into a CPU accessible VkBuffer.
 // 6) Validates that the values are as expected.
 static void verifyBasicBufferImport(JNIEnv *env, jclass, jobject assetMgr,
-                                    jint format, jboolean useImmutableSampler) {
+                                    jint format, jboolean useExternalFormat) {
   // Define and chose parameters.
   struct FormatDescription {
     std::string name;
@@ -118,14 +118,14 @@ static void verifyBasicBufferImport(JNIEnv *env, jclass, jobject assetMgr,
 
   // Import the AHardwareBuffer into Vulkan.
   VkAHardwareBufferImage vkImage(&init);
-  ASSERT(vkImage.init(buffer, syncFd),
+  ASSERT(vkImage.init(buffer, useExternalFormat, syncFd),
          "Could not initialize VkAHardwareBufferImage.");
 
   // Render the AHardwareBuffer and read back the result.
   std::vector<uint8_t> framePixels;
   ASSERT(renderer.renderImageAndReadback(vkImage.image(), vkImage.sampler(),
                                          vkImage.view(), vkImage.semaphore(),
-                                         useImmutableSampler, &framePixels),
+                                         vkImage.isSamplerImmutable(), &framePixels),
          "Could not render/read-back image bits.");
   ASSERT(framePixels.size() ==
              kTestImageWidth * kTestImageHeight * formatDesc.pixelWidth,
