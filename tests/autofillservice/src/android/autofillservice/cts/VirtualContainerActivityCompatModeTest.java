@@ -21,7 +21,6 @@ import static android.autofillservice.cts.Helper.assertTextAndValue;
 import static android.autofillservice.cts.Helper.assertTextIsSanitized;
 import static android.autofillservice.cts.Helper.findNodeByResourceId;
 import static android.autofillservice.cts.Helper.getContext;
-import static android.autofillservice.cts.Helper.hasAutofillFeature;
 import static android.autofillservice.cts.InstrumentedAutoFillServiceCompatMode.SERVICE_NAME;
 import static android.autofillservice.cts.InstrumentedAutoFillServiceCompatMode.SERVICE_PACKAGE;
 import static android.autofillservice.cts.VirtualContainerActivity.INITIAL_URL_BAR_VALUE;
@@ -84,15 +83,11 @@ public class VirtualContainerActivityCompatModeTest extends VirtualContainerActi
     @Override
     protected void enableService() {
         Helper.enableAutofillService(getContext(), SERVICE_NAME);
-        InstrumentedAutoFillServiceCompatMode.setIgnoreUnexpectedRequests(false);
     }
 
     @Override
     protected void disableService() {
-        if (!hasAutofillFeature()) return;
-
         Helper.disableAutofillService(getContext(), SERVICE_NAME);
-        InstrumentedAutoFillServiceCompatMode.setIgnoreUnexpectedRequests(true);
     }
 
     @Override

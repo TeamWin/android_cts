@@ -34,6 +34,10 @@ public final class JUnitHelper {
         sCurrentTestNamer = name;
     }
 
+    public static boolean isRunningTest() {
+        return sCurrentTestNamer != null;
+    }
+
     private JUnitHelper() {
         throw new UnsupportedOperationException("contain static methods only");
     }
