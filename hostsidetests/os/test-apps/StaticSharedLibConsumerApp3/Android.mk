@@ -30,4 +30,9 @@ LOCAL_SDK_VERSION := current
 
 LOCAL_COMPATIBILITY_SUITE := cts vts general-tests
 
+# Disable AAPT2 to fix:
+# cts/hostsidetests/os/test-apps/StaticSharedLibConsumerApp3/AndroidManifest.xml:28: error: unexpected element <additional-certificate> found in <manifest><application><uses-static-library>.
+# TODO(b/79755007): Re-enable AAPT2 when it supports the missing features.
+LOCAL_USE_AAPT2 := false
+
 include $(BUILD_CTS_SUPPORT_PACKAGE)

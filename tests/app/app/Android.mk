@@ -42,4 +42,9 @@ LOCAL_COMPATIBILITY_SUITE := cts vts general-tests
 LOCAL_PACKAGE_NAME := CtsAppTestStubs
 LOCAL_PRIVATE_PLATFORM_APIS := true
 
+# Disable AAPT2 to fix:
+# cts/tests/app/app/AndroidManifest.xml:25: error: unexpected element <meta-data> found in <manifest><permission>.
+# TODO(b/79755007): Re-enable AAPT2 when it supports the missing features.
+LOCAL_USE_AAPT2 := false
+
 include $(BUILD_CTS_SUPPORT_PACKAGE)
