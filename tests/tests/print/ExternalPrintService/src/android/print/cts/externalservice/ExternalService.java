@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2014 The Android Open Source Project
+ * Copyright (C) 2018 The Android Open Source Project
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,33 +14,32 @@
  * limitations under the License.
  */
 
-package android.print.test.services;
+package android.print.cts.externalservice;
 
-import android.content.Context;
+import static android.print.PrinterInfo.STATUS_IDLE;
+
+import static org.junit.Assert.fail;
+
 import android.print.PrinterId;
+import android.print.PrinterInfo;
 import android.printservice.PrintJob;
 import android.printservice.PrintService;
 import android.printservice.PrinterDiscoverySession;
-import android.util.Log;
 
+import java.util.Collections;
 import java.util.List;
 
-public abstract class StubbablePrintService extends PrintService {
-    private static final String LOG_TAG = StubbablePrintService.class.getSimpleName();
+public class ExternalService extends PrintService {
+    private static final String PRINTER_NAME = "ExternalServicePrinter";
 
     @Override
-    public PrinterDiscoverySession onCreatePrinterDiscoverySession() {
-        PrintServiceCallbacks callbacks = getCallbacks();
-        if (callbacks != null) {
-            return new StubbablePrinterDiscoverySession(this,
-                    getCallbacks().onCreatePrinterDiscoverySessionCallbacks());
-        }
-
-        Log.w(LOG_TAG, "onCreatePrinterDiscoverySession called but no callbacks are set up");
+    protected PrinterDiscoverySession onCreatePrinterDiscoverySession() {
         return new PrinterDiscoverySession() {
             @Override
             public void onStartPrinterDiscovery(List<PrinterId> priorityList) {
-                // empty
+                addPrinters(Collections.singletonList(
+                        (new PrinterInfo.Builder(generatePrinterId(PRINTER_NAME), PRINTER_NAME,
+                                STATUS_IDLE)).build()));
             }
 
             @Override
@@ -71,29 +70,12 @@ public abstract class StubbablePrintService extends PrintService {
     }
 
     @Override
-    public void onRequestCancelPrintJob(PrintJob printJob) {
-        PrintServiceCallbacks callbacks = getCallbacks();
-        if (callbacks != null) {
-            callbacks.onRequestCancelPrintJob(printJob);
-        }
+    protected void onRequestCancelPrintJob(PrintJob printJob) {
+        fail("This service does not support printing");
     }
 
     @Override
-    public void onPrintJobQueued(PrintJob printJob) {
-        PrintServiceCallbacks callbacks = getCallbacks();
-        if (callbacks != null) {
-            callbacks.onPrintJobQueued(printJob);
-        }
+    protected void onPrintJobQueued(PrintJob printJob) {
+        fail("This service does not support printing");
     }
-
-    protected abstract PrintServiceCallbacks getCallbacks();
-
-    public void callAttachBaseContext(Context base) {
-        attachBaseContext(base);
-    }
-
-    public List<PrintJob> callGetActivePrintJobs() {
-        return getActivePrintJobs();
-    }
-
 }
