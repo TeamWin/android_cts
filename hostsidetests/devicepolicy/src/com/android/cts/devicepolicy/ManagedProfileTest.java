@@ -1175,6 +1175,7 @@ public class ManagedProfileTest extends BaseDevicePolicyTest {
             // Cycle the device screen to flush stale password information from keyguard,
             // otherwise it will still ask for the non-existent password.
             // return screen to be on for cts test runs
+            executeShellCommand("input keyevent KEYCODE_WAKEUP");
             executeShellCommand("input keyevent KEYCODE_SLEEP");
             executeShellCommand("input keyevent KEYCODE_WAKEUP");
         }
