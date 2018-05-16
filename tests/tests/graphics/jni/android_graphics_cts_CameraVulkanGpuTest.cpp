@@ -85,13 +85,13 @@ static void loadCameraAndVerifyFrameImport(JNIEnv *env, jclass,
 
   // Impor the AHardwareBuffer into Vulkan.
   VkAHardwareBufferImage vkImage(&init);
-  ASSERT(vkImage.init(buffer), "Could not initialize VkAHardwareBufferImage.");
+  ASSERT(vkImage.init(buffer, true /* useExternalFormat */), "Could not initialize VkAHardwareBufferImage.");
 
   // Render the AHardwareBuffer using Vulkan and read back the result.
   std::vector<uint32_t> imageData;
   ASSERT(renderer.renderImageAndReadback(
              vkImage.image(), vkImage.sampler(), vkImage.view(),
-             vkImage.semaphore(), true /* useImmutableSampler */, &imageData),
+             vkImage.semaphore(), vkImage.isSamplerImmutable(), &imageData),
          "Could not render/read-back Vulkan pixels.");
 
   // Ensure that we see noise.
