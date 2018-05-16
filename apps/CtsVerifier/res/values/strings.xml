@@ -2606,11 +2606,21 @@ You should be prompted to select credentials; choose the ones you just installed
             be run last so that it does not interfere with other tests.
     </string>
     <string name="device_owner_positive_category">Device Owner Tests</string>
+
+    <string name="device_owner_precondition_button_label">Precondition checks</string>
+    <string name="device_owner_precondition_dialog_title">Precondition checks</string>
+    <string name="device_owner_precondition_dialog_text">
+    This test requires CtsEmptyDeviceOwner.apk to be installed on the device.
+    Please set the device owner by enabling USB debugging on the device and issuing the following command on the host:\n
+    adb shell dpm set-device-owner com.android.cts.emptydeviceowner/.EmptyDeviceAdmin
+    Press \"OK\" when the command is set.
+    </string>
+
     <string name="set_device_owner_button_label">Set up device owner</string>
     <string name="set_device_owner_dialog_title">Set up device owner</string>
     <string name="set_device_owner_dialog_text">
-            Please set the device owner by enabling USB debugging on the device and issuing the following command on the host:\n
-            adb shell dpm set-device-owner \'com.android.cts.verifier/com.android.cts.verifier.managedprovisioning.DeviceAdminTestReceiver\'
+        Please set the device owner by enabling USB debugging on the device and issuing the following command on the host:\n
+        adb shell dpm set-device-owner \'com.android.cts.verifier/com.android.cts.verifier.managedprovisioning.DeviceAdminTestReceiver\'
     </string>
     <string name="device_owner_remove_device_owner_test">Remove device owner</string>
     <string name="device_owner_remove_device_owner_test_info">
@@ -3348,6 +3358,8 @@ You should be prompted to select credentials; choose the ones you just installed
     <string name="comp_test">Corporate Owned Managed Profile</string>
     <string name="comp_provision_profile_dialog_title">Provision work profile</string>
     <string name="comp_provision_profile_dialog_text">Press the OK button to start the managed provisioning flow, and complete the flow to create a work profile</string>
+    <string name="device_owner_skipped_preloaded_accounts">Device owner tests are skipped because of preloaded accounts. Tap back to continue testing.</string>
+    <string name="empty_device_owner_not_configure_properly">Either CtsEmptyDeviceOwner is not installed or set-device-owner is not run properly. Please try it again.</string>
 
     <!-- Strings for JobScheduler Tests -->
     <string name="js_test_description">This test is mostly automated, but requires some user interaction. You can pass this test once the list items below are checked.</string>

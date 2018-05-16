@@ -21,7 +21,6 @@ import static com.android.cts.verifier.managedprovisioning.Utils.createInteracti
 import android.app.Activity;
 import android.app.AlertDialog;
 import android.app.admin.DevicePolicyManager;
-import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
 import android.database.DataSetObserver;
@@ -63,6 +62,8 @@ public class DeviceOwnerRequestingBugreportTestActivity extends PassFailButtons.
             "BUGREPORT_SHARING_ACCEPTED_AFTER_HAVING_BEEN_TAKEN";
     private static final String REMOVE_DEVICE_OWNER_TEST_ID = "REMOVE_DEVICE_OWNER";
 
+    private DeviceOwnerSkipTestHelper mDeviceOwnerSkipTestHelper;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -84,6 +85,11 @@ public class DeviceOwnerRequestingBugreportTestActivity extends PassFailButtons.
         new ByodFlowTestHelper(this).tearDown();
 
         setContentView(R.layout.requesting_bugreport_device_owner);
+        mDeviceOwnerSkipTestHelper = new DeviceOwnerSkipTestHelper(this, () -> setupTests());
+        mDeviceOwnerSkipTestHelper.setupSkipCheckUi();
+    }
+
+    private void setupTests() {
         setInfoResources(R.string.device_owner_requesting_bugreport_tests,
                 R.string.device_owner_requesting_bugreport_tests_info, 0);
         setPassFailButtonClickListeners();
@@ -116,6 +122,15 @@ public class DeviceOwnerRequestingBugreportTestActivity extends PassFailButtons.
                         .show();
             }
         });
+    }
+
+    @Override
+    protected void handleActivityResult(int requestCode, int resultCode, Intent data) {
+        boolean handled = mDeviceOwnerSkipTestHelper.handleSkipCheckActivityResult(
+                requestCode, resultCode, data);
+        if (!handled) {
+            super.handleActivityResult(requestCode, resultCode, data);
+        }
     }
 
     @Override
