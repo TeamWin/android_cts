@@ -138,6 +138,13 @@
     <option name="compatibility:module-arg" value="CtsDpiTestCases:install-arg:--instant" />
     <option name="compatibility:include-filter" value="CtsDpiTestCases" />
 
+    <!-- CtsUidIsolationTestCases -->
+    <option name="compatibility:module-arg" value="CtsUidIsolationTestCases:install-arg:--instant" />
+    <option name="compatibility:include-filter" value="CtsUidIsolationTestCases" />
+
+    <!-- CtsBackupHostTestCases, CtsBackupTestCases -->
+    <!-- Backup of instant apps is not supported. -->
+
     <!-- CtsDpiTestCases2 -->
     <!-- These target Cupcake not applicable to instant apps which target Oreo+ -->
 
