@@ -21,8 +21,11 @@ import android.os.Handler;
 import android.os.Looper;
 import android.print.PrintJob;
 import android.print.PrintManager;
-import androidx.annotation.NonNull;
 import android.util.Log;
+
+import androidx.annotation.NonNull;
+
+import java.util.concurrent.TimeUnit;
 
 /**
  * Utilities for print tests
@@ -97,16 +100,18 @@ public class Utils {
      * Make sure that a {@link Invokable} eventually finishes without throwing a {@link Throwable}.
      *
      * @param r The {@link Invokable} to run.
+     * @param timeout the maximum time to wait
      */
-    public static void eventually(@NonNull Invokable r) throws Throwable {
-        long start = System.currentTimeMillis();
+    public static void eventually(@NonNull Invokable r, long timeout) throws Throwable {
+        long start = System.nanoTime();
 
         while (true) {
             try {
                 r.run();
                 break;
             } catch (Throwable e) {
-                if (System.currentTimeMillis() - start < BasePrintTest.OPERATION_TIMEOUT_MILLIS) {
+                if (System.nanoTime() - start < TimeUnit.NANOSECONDS.convert(timeout,
+                        TimeUnit.MILLISECONDS)) {
                     Log.e(LOG_TAG, "Ignoring exception", e);
 
                     try {
@@ -119,6 +124,15 @@ public class Utils {
                 }
             }
         }
+    }
+
+    /**
+     * Make sure that a {@link Invokable} eventually finishes without throwing a {@link Throwable}.
+     *
+     * @param r The {@link Invokable} to run.
+     */
+    public static void eventually(@NonNull Invokable r) throws Throwable {
+        eventually(r, BasePrintTest.OPERATION_TIMEOUT_MILLIS);
     }
 
     /**
