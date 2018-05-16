@@ -84,9 +84,11 @@ abstract class CustomDescriptionWithLinkTestCase extends AutoFillServiceTestCase
             saveUiRestoredAfterTappingLinkTest(
                     PostSaveLinkTappedAction.ROTATE_THEN_TAP_BACK_BUTTON);
         } finally {
-            mUiBot.setScreenOrientation(UiBot.PORTRAIT);
             try {
+                mUiBot.setScreenOrientation(UiBot.PORTRAIT);
                 cleanUpAfterScreenOrientationIsBackToPortrait();
+            } catch (Exception e) {
+                mSafeCleanerRule.add(e);
             } finally {
                 runShellCommand("wm density reset");
                 runShellCommand("wm size reset");

@@ -195,8 +195,12 @@ public class SimpleSaveActivityTest extends CustomDescriptionWithLinkTestCase {
         try {
             saveTest(true);
         } finally {
-            mUiBot.setScreenOrientation(UiBot.PORTRAIT);
-            cleanUpAfterScreenOrientationIsBackToPortrait();
+            try {
+                mUiBot.setScreenOrientation(UiBot.PORTRAIT);
+                cleanUpAfterScreenOrientationIsBackToPortrait();
+            } catch (Exception e) {
+                mSafeCleanerRule.add(e);
+            }
         }
     }
 
