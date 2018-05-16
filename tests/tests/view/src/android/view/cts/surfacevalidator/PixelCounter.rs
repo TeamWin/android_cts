@@ -18,11 +18,17 @@
 #pragma rs reduce(countBlackishPixels) accumulator(countBlackishPixelsAccum) combiner(countBlackishPixelsCombiner)
 
 uchar THRESHOLD;
+int BOUNDS[4];
 
-static void countBlackishPixelsAccum(int *accum, uchar4 pixel){
+static void countBlackishPixelsAccum(int *accum, uchar4 pixel, uint32_t x, uint32_t y) {
+
     if (pixel.r < THRESHOLD
             && pixel.g < THRESHOLD
-            && pixel.b < THRESHOLD) {
+            && pixel.b < THRESHOLD
+            && x >= BOUNDS[0]
+            && x < BOUNDS[2]
+            && y >= BOUNDS[1]
+            && y < BOUNDS[3]) {
         *accum += 1;
     }
 }
