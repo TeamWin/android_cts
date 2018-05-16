@@ -55,8 +55,6 @@ public class TestListActivity extends PassFailButtons.TestListActivity {
 
         boolean isRttSupported = getPackageManager().hasSystemFeature(
                 PackageManager.FEATURE_WIFI_RTT);
-        // TODO: revert when b/78645795 fixed (underlying cause of b/78568180)
-        isRttSupported = false;
 
         setContentView(R.layout.pass_fail_list);
         setInfoResources(R.string.aware_test, R.string.aware_test_info, 0);
