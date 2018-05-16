@@ -110,6 +110,7 @@ public class PrintDocumentInfoTest extends BasePrintTest {
                     queuedInfo[0] = printJob.getDocument().getInfo();
                     queuedData[0] = printJob.getDocument().getData();
                     printJob.complete();
+                    onPrintJobQueuedCalled();
                     return null;
                 }, null);
 
@@ -148,6 +149,7 @@ public class PrintDocumentInfoTest extends BasePrintTest {
 
         // Wait for the session to be destroyed to isolate tests.
         waitForPrinterDiscoverySessionDestroyCallbackCalled(1);
+        waitForServiceOnPrintJobQueuedCallbackCalled(1);
 
         // Check that the document name was carried over 1:1
         eventually(() -> assertEquals(name, queuedInfo[0].getName()));
