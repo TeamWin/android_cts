@@ -26,12 +26,15 @@ import android.os.LocaleList;
 import android.support.test.InstrumentationRegistry;
 import android.support.test.filters.SmallTest;
 import android.support.test.runner.AndroidJUnit4;
+import android.view.textclassifier.SelectionEvent;
 import android.view.textclassifier.TextClassification;
+import android.view.textclassifier.TextClassificationContext;
 import android.view.textclassifier.TextClassificationManager;
 import android.view.textclassifier.TextClassifier;
 import android.view.textclassifier.TextLinks;
 import android.view.textclassifier.TextSelection;
 
+import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -68,7 +71,16 @@ public class TextClassificationManagerTest {
         mManager = InstrumentationRegistry.getTargetContext()
                 .getSystemService(TextClassificationManager.class);
         mManager.setTextClassifier(null); // Resets the classifier.
-        mClassifier = mManager.getTextClassifier();
+        mClassifier = mManager.createTextClassificationSession(
+                new TextClassificationContext.Builder(
+                        InstrumentationRegistry.getTargetContext().getPackageName(),
+                        TextClassifier.WIDGET_TYPE_TEXTVIEW)
+                        .build());
+    }
+
+    @After
+    public void tearDown() {
+        mClassifier.destroy();
     }
 
     @Test
@@ -146,6 +158,13 @@ public class TextClassificationManagerTest {
         assertEquals(Collections.EMPTY_LIST, entityConfig.getHints());
         assertEquals(new HashSet<String>(Arrays.asList("a", "b")),
                 entityConfig.resolveEntityListModifications(Arrays.asList("w", "x")));
+    }
+
+    @Test
+    public void testOnSelectionEvent() {
+        // Doesn't crash.
+        mClassifier.onSelectionEvent(
+                SelectionEvent.createSelectionStartedEvent(SelectionEvent.INVOCATION_MANUAL, 0));
     }
 
     private static void assertValidResult(TextSelection selection) {
