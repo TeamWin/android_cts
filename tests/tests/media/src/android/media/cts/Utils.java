@@ -41,7 +41,7 @@ import junit.framework.Assert;
 
 public class Utils {
     private static final String TAG = "CtsMediaTestUtil";
-    private static final int TEST_TIMING_TOLERANCE_MS = 50;
+    private static final int TEST_TIMING_TOLERANCE_MS = 500;
 
     public static void enableAppOps(String packageName, String operation,
             Instrumentation instrumentation) {
