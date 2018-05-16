@@ -41,10 +41,11 @@ import android.print.test.services.SecondPrintService;
 import android.print.test.services.StubbablePrinterDiscoverySession;
 import android.printservice.PrintJob;
 import android.printservice.PrinterDiscoverySession;
-import androidx.annotation.NonNull;
 import android.support.test.runner.AndroidJUnit4;
 import android.support.test.uiautomator.UiObject;
 import android.support.test.uiautomator.UiSelector;
+
+import androidx.annotation.NonNull;
 
 import org.junit.Before;
 import org.junit.Test;
@@ -185,8 +186,11 @@ public class PrinterDiscoverySessionLifecycleTest extends BasePrintTest {
 
         // Wait for preview to load and finish print
         waitForWriteAdapterCallback(1);
-        clickPrintButton();
-        waitForPrinterDiscoverySessionDestroyCallbackCalled(1);
+
+        eventually(() -> {
+            clickPrintButton();
+            waitForPrinterDiscoverySessionDestroyCallbackCalled(1);
+        }, OPERATION_TIMEOUT_MILLIS * 2);
     }
 
     @Test
@@ -234,8 +238,11 @@ public class PrinterDiscoverySessionLifecycleTest extends BasePrintTest {
 
         // Wait for preview to load and finish print
         waitForWriteAdapterCallback(1);
-        clickPrintButton();
-        waitForPrinterDiscoverySessionDestroyCallbackCalled(1);
+
+        eventually(() -> {
+            clickPrintButton();
+            waitForPrinterDiscoverySessionDestroyCallbackCalled(1);
+        }, OPERATION_TIMEOUT_MILLIS * 2);
     }
 
     @Test

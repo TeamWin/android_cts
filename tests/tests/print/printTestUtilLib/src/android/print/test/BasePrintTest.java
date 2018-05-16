@@ -101,7 +101,7 @@ import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.concurrent.TimeUnit;
+import java.util.Objects;
 import java.util.concurrent.TimeoutException;
 import java.util.concurrent.atomic.AtomicInteger;
 
@@ -727,14 +727,15 @@ public abstract class BasePrintTest {
     }
 
     public void clickPrintButton() throws UiObjectNotFoundException, IOException {
-        try {
-            UiObject printButton = getUiDevice().findObject(new UiSelector().resourceId(
-                    "com.android.printspooler:id/print_button"));
-            printButton.click();
-        } catch (UiObjectNotFoundException e) {
+        getUiDevice().waitForIdle();
+
+        UiObject2 printButton = getUiDevice().wait(Until.findObject(By.res(
+                "com.android.printspooler:id/print_button")), OPERATION_TIMEOUT_MILLIS);
+        if (printButton == null) {
             dumpWindowHierarchy();
-            throw e;
+            throw new UiObjectNotFoundException("print button not found");
         }
+        printButton.click();
     }
 
     protected void clickRetryButton() throws UiObjectNotFoundException, IOException {
@@ -863,9 +864,7 @@ public abstract class BasePrintTest {
 
                     callback.onLayoutFinished(new PrintDocumentInfo.Builder(PRINT_JOB_NAME)
                             .setPageCount(numPages).build(),
-                            !oldAttributes.equals(printAttributes[0]));
-
-                    oldAttributes = printAttributes[0];
+                            !Objects.equals(oldAttributes, printAttributes[0]));
 
                     onLayoutCalled();
                     return null;
