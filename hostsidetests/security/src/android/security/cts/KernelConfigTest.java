@@ -23,6 +23,7 @@ import com.android.tradefed.testtype.IBuildReceiver;
 import com.android.tradefed.testtype.IDeviceTest;
 import com.android.compatibility.common.util.CddTest;
 import com.android.compatibility.common.util.CpuFeatures;
+import com.android.compatibility.common.util.PropertyUtil;
 
 import java.io.BufferedReader;
 import java.io.File;
@@ -143,6 +144,10 @@ public class KernelConfigTest extends DeviceTestCase implements IBuildReceiver, 
      */
     @CddTest(requirement="9.7")
     public void testConfigHardenedUsercopy() throws Exception {
+        if (PropertyUtil.getFirstApiLevel(mDevice) < 28) {
+            return;
+        }
+
         assertTrue("Linux kernel must have Hardened Usercopy enabled: CONFIG_HARDENED_USERCOPY=y",
                 configSet.contains("CONFIG_HARDENED_USERCOPY=y"));
     }
@@ -154,6 +159,10 @@ public class KernelConfigTest extends DeviceTestCase implements IBuildReceiver, 
      */
     @CddTest(requirement="9.7")
     public void testConfigPAN() throws Exception {
+        if (PropertyUtil.getFirstApiLevel(mDevice) < 28) {
+            return;
+        }
+
         if (CpuFeatures.isArm64(mDevice)) {
             assertTrue("Linux kernel must have PAN emulation enabled: " +
                     "CONFIG_ARM64_SW_TTBR0_PAN=y or CONFIG_ARM64_PAN=y",
@@ -172,6 +181,10 @@ public class KernelConfigTest extends DeviceTestCase implements IBuildReceiver, 
      */
     @CddTest(requirement="9.7")
     public void testConfigKTPI() throws Exception {
+        if (PropertyUtil.getFirstApiLevel(mDevice) < 28) {
+            return;
+        }
+
         if (CpuFeatures.isArm64(mDevice) && !CpuFeatures.kernelVersionLessThan(mDevice, 4, 4)) {
             assertTrue("Linux kernel must have KPTI enabled: CONFIG_UNMAP_KERNEL_AT_EL0=y",
                     configSet.contains("CONFIG_UNMAP_KERNEL_AT_EL0=y"));
