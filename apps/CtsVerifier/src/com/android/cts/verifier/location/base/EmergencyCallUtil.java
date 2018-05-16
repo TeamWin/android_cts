@@ -89,6 +89,15 @@ public class EmergencyCallUtil {
         new Thread(runnable).start();
     }
 
+    public static boolean isPhoneDevice(Activity activity) {
+        TelephonyManager tMgr =
+            (TelephonyManager) activity.getSystemService(Context.TELEPHONY_SERVICE);
+        if(tMgr.getPhoneType() == TelephonyManager.PHONE_TYPE_NONE){
+            return false;
+        }
+        return true;
+    }
+
     private static void endCall(Context context) {
         try {
             TelephonyManager telephonyManager =
@@ -116,5 +125,4 @@ public class EmergencyCallUtil {
             (TelephonyManager)activity.getSystemService(Context.TELEPHONY_SERVICE);
         return tMgr.getLine1Number();
     }
-
 }
