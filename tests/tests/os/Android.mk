@@ -55,6 +55,11 @@ LOCAL_JAVA_LIBRARIES += android.test.runner
 # Do not compress minijail policy files.
 LOCAL_AAPT_FLAGS := -0 .policy
 
+# Disable AAPT2 to fix:
+# cts/tests/tests/os/AndroidManifest.xml:25: error: unexpected element <meta-data> found in <manifest><permission>.
+# TODO(b/79755007): Re-enable AAPT2 when it supports the missing features.
+LOCAL_USE_AAPT2 := false
+
 include $(BUILD_CTS_PACKAGE)
 
 include $(call all-makefiles-under,$(LOCAL_PATH))
