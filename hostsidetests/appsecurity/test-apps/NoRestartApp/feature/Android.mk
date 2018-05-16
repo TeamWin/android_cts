@@ -36,4 +36,9 @@ $(localRStamp): $(featureOfApk)
 LOCAL_APK_LIBRARIES := $(featureOf)
 LOCAL_AAPT_FLAGS += --feature-of $(featureOfApk)
 
+# Disable AAPT2 to fix:
+# unknown option '--feature-of'.
+# TODO(b/79755007): Re-enable AAPT2 when it supports the missing features.
+LOCAL_USE_AAPT2 := false
+
 include $(BUILD_CTS_SUPPORT_PACKAGE)
