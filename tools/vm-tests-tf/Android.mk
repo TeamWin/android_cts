@@ -73,7 +73,8 @@ include $(BUILD_SYSTEM)/base_rules.mk
 vmteststf_dep_jars := \
     $(HOST_JDK_TOOLS_JAR) \
     $(cts-tf-dalvik-lib.jar) \
-    $(addprefix $(HOST_OUT_JAVA_LIBRARIES)/, cts-tf-dalvik-buildutil.jar dasm.jar dx.jar cfassembler.jar junit-host.jar d8.jar)
+    $(addprefix $(HOST_OUT_JAVA_LIBRARIES)/, cts-tf-dalvik-buildutil.jar dasm.jar dx.jar cfassembler.jar junit-host.jar d8.jar) \
+    $(call intermediates-dir-for,JAVA_LIBRARIES,host-cts-vmtests-dot,HOST)/javalib.jar
 
 $(LOCAL_BUILT_MODULE): PRIVATE_SRC_FOLDER := $(LOCAL_PATH)/src
 $(LOCAL_BUILT_MODULE): PRIVATE_INTERMEDIATES_CLASSES := $(call intermediates-dir-for,JAVA_LIBRARIES,cts-tf-dalvik-buildutil,HOST)/classes
