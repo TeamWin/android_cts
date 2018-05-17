@@ -217,24 +217,9 @@ public final class TestMeasurementUtil {
                         measurement.getPseudorangeRateUncertaintyMetersPerSecond()),
                 measurement.getPseudorangeRateUncertaintyMetersPerSecond() > 0.0);
 
-        // Check carrier_frequency_hz.
-        // As per CDD 7.3.3 / C-3-3 Year 2107+ should have Carrier Frequency present
-        // Enforcing it only for year 2018+
-        if (gnssYearOfHardware >= YEAR_2018) {
-            softAssert.assertTrue("Carrier Frequency in measurement",
-                    timeInNs,
-                    "X == true",
-                    String.valueOf(measurement.hasCarrierFrequencyHz()),
-                    measurement.hasCarrierFrequencyHz());
-        }
-
-        if (measurement.hasCarrierFrequencyHz()) {
-            softAssert.assertTrue("carrier_frequency_hz: Carrier frequency in hz",
-                    timeInNs,
-                    "X > 0.0",
-                    String.valueOf(measurement.getCarrierFrequencyHz()),
-                    measurement.getCarrierFrequencyHz() > 0.0);
-        }
+        verifyGnssCarrierFrequency(softAssert, testLocationManager,
+                measurement.hasCarrierFrequencyHz(),
+                measurement.hasCarrierFrequencyHz() ? measurement.getCarrierFrequencyHz() : 0F);
 
         // Check carrier_phase.
         if (measurement.hasCarrierPhase()) {
@@ -761,6 +746,37 @@ public final class TestMeasurementUtil {
             }
         }
         softAssert.assertAll();
+    }
+
+    /**
+     * Asserts presence of CarrierFrequency and the values are in expected range.
+     * As per CDD 7.3.3 / C-3-3 Year 2107+ should have Carrier Frequency present
+     * As of 2018, per http://www.navipedia.net/index.php/GNSS_signal, all known GNSS bands
+     * lie within 2 frequency ranges [1100-1300] & [1500-1700].
+     *
+     * @param softAssert custom SoftAssert
+     * @param testLocationManager TestLocationManager
+     * @param hasCarrierFrequency Whether carrierFrequency is present
+     * @param carrierFrequencyHz Value of carrier frequency in Hz if hasCarrierFrequency is true.
+     *                              It is ignored when hasCarrierFrequency is false.
+     */
+    public static void verifyGnssCarrierFrequency(SoftAssert softAssert,
+        TestLocationManager testLocationManager,
+        boolean hasCarrierFrequency, float carrierFrequencyHz) {
+        // Enforcing CarrierFrequencyHz  check only for year 2018+
+        if (testLocationManager.getLocationManager().getGnssYearOfHardware() >= YEAR_2018) {
+            softAssert.assertTrue("Measurement has Carrier Frequency: " + hasCarrierFrequency,
+                hasCarrierFrequency);
+        }
+
+        if (hasCarrierFrequency) {
+            float frequencyMhz = carrierFrequencyHz/1e6F;
+            softAssert.assertTrue("carrier_frequency_mhz: Carrier frequency in Mhz",
+                "1100 < X < 1300 || 1500 < X < 1700",
+                String.valueOf(frequencyMhz),
+                (frequencyMhz > 1100.0 && frequencyMhz < 1300.0) ||
+                    (frequencyMhz > 1500.0 && frequencyMhz < 1700.0));
+        }
     }
 
     private static String getGnssNavMessageTypes() {
