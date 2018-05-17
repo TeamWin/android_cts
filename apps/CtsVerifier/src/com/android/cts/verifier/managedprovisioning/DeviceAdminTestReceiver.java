@@ -113,7 +113,9 @@ public class DeviceAdminTestReceiver extends DeviceAdminReceiver {
             ComponentName admin = getReceiverComponentName();
             dpm.setAffiliationIds(admin,
                     Collections.singleton(DeviceAdminTestReceiver.AFFILIATION_ID));
-            context.startActivity(new Intent(context, ManagedUserPositiveTestActivity.class));
+            context.startActivity(
+                    new Intent(context, ManagedUserPositiveTestActivity.class).setFlags(
+                            Intent.FLAG_ACTIVITY_NEW_TASK));
 
             bindPrimaryUserService(context, iCrossUserService -> {
                 try {
