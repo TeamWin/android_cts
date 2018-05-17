@@ -56,7 +56,6 @@ public class SuspendAppsPermissionTest {
                 + packagesWithPerm, packagesWithPerm.size() <= 1);
     }
 
-    @Ignore // TODO b/75974141: Remove once com.google.android.apps.wellbeing handles the action
     @Test
     public void testShowSuspendedAppDetailsDeclared() {
         final List<PackageInfo> packagesWithPerm = mPackageManager.getPackagesHoldingPermissions(
