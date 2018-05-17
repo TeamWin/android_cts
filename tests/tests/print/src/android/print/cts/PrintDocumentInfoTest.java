@@ -130,12 +130,15 @@ public class PrintDocumentInfoTest extends BasePrintTest {
                     return null;
                 }, invocation -> {
                     Object[] args = invocation.getArguments();
-                    PageRange[] pages = (PageRange[]) args[0];
                     ParcelFileDescriptor fd = (ParcelFileDescriptor) args[1];
                     WriteResultCallback callback = (WriteResultCallback) args[3];
                     writeBlankPages(printAttributes[0], fd, 0, 1);
                     fd.close();
-                    callback.onWriteFinished(pages);
+                    if (pageCount != null && pageCount > 0) {
+                        callback.onWriteFinished(new PageRange[]{new PageRange(0, pageCount - 1)});
+                    } else {
+                        callback.onWriteFinished(new PageRange[]{new PageRange(0, 1)});
+                    }
                     onWriteCalled();
                     return null;
                 }, invocation -> null);
