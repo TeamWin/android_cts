@@ -22,7 +22,9 @@ import its.target
 
 import numpy as np
 NAME = os.path.basename(__file__).split('.')[0]
-THRESH_DIFF = 0.03
+PATCH_SIZE = 0.0625  # 1/16 x 1/16 in center of image
+PATCH_LOC = (1-PATCH_SIZE)/2
+THRESH_DIFF = 0.06
 THRESH_GAIN = 0.1
 THRESH_EXP = 0.05
 
@@ -67,7 +69,8 @@ def main():
         img_raw = its.image.convert_capture_to_rgb_image(cap_raw, props=props)
         its.image.write_image(img_raw, '%s_raw.jpg' % NAME)
         rgb_means_raw = its.image.compute_image_means(
-                its.image.get_image_patch(img_raw, 0.45, 0.45, 0.1, 0.1))
+                its.image.get_image_patch(img_raw, PATCH_LOC, PATCH_LOC,
+                                          PATCH_SIZE, PATCH_SIZE))
 
         img_yuv1 = its.image.convert_capture_to_rgb_image(
                 cap_yuv1, props=props)
@@ -75,7 +78,8 @@ def main():
         y1, _, _ = its.image.convert_capture_to_planes(
                 cap_yuv1, props=props)
         y1_mean = its.image.compute_image_means(
-                its.image.get_image_patch(y1, 0.45, 0.45, 0.1, 0.1))[0]
+                its.image.get_image_patch(y1, PATCH_LOC, PATCH_LOC,
+                                          PATCH_SIZE, PATCH_SIZE))[0]
 
         img_yuv2 = its.image.convert_capture_to_rgb_image(
                 cap_yuv2, props=props)
@@ -83,12 +87,13 @@ def main():
         y2, _, _ = its.image.convert_capture_to_planes(
                 cap_yuv2, props=props)
         y2_mean = its.image.compute_image_means(
-                its.image.get_image_patch(y2, 0.45, 0.45, 0.1, 0.1))[0]
+                its.image.get_image_patch(y2, PATCH_LOC, PATCH_LOC,
+                                          PATCH_SIZE, PATCH_SIZE))[0]
         print 'rgb_raw:', rgb_means_raw
         print 'y1_mean:', y1_mean
         print 'y2_mean:', y2_mean
 
-        # assert YUV values are near written values
+        # assert gain/exp values are near written values
         s_yuv1 = cap_yuv1['metadata']['android.sensor.sensitivity']
         e_yuv1 = cap_yuv1['metadata']['android.sensor.exposureTime']
         msg = 'yuv_gain(write): %d, (read): %d' % (s, s_yuv1)
@@ -97,7 +102,7 @@ def main():
         assert 0 <= e - e_yuv1 < e * THRESH_EXP, msg
 
         # compare YUVs
-        msg = 'y1: %.2f, y2: %.2f, TOL=%.2f' % (y1_mean, y2_mean, THRESH_DIFF)
+        msg = 'y1: %.3f, y2: %.3f, TOL=%.5f' % (y1_mean, y2_mean, THRESH_DIFF)
         assert np.isclose(y1_mean, y2_mean, rtol=THRESH_DIFF), msg
 
 
