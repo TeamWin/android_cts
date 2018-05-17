@@ -62,10 +62,8 @@ public class BuildCTSHostSources extends BuildUtilBase {
     }
 
     private boolean parseArgs(String[] args) {
-      if (args.length == 2) {
-          JAVASRC_FOLDER = args[0];
-
-          HOSTJUNIT_SRC_OUTPUT_FOLDER = args[1];
+      if (args.length == 1) {
+          HOSTJUNIT_SRC_OUTPUT_FOLDER = args[0];
           return true;
       } else {
           return false;
