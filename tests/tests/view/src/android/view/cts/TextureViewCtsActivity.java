@@ -348,7 +348,8 @@ public class TextureViewCtsActivity extends Activity implements SurfaceTextureLi
             mEglContext = createContext(mEgl, mEglDisplay, mEglConfig);
 
             mEglSurface = mEgl.eglCreateWindowSurface(mEglDisplay, mEglConfig,
-                    mSurface, new int[] { EGL_GL_COLORSPACE_KHR, mEglColorSpace, EGL10.EGL_NONE });
+                    mSurface, (mEglColorSpace == 0) ? null :
+                            new int[] { EGL_GL_COLORSPACE_KHR, mEglColorSpace, EGL10.EGL_NONE });
 
             if (mEglSurface == null || mEglSurface == EGL10.EGL_NO_SURFACE) {
                 int error = mEgl.eglGetError();
