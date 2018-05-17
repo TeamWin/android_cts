@@ -51,6 +51,8 @@ public class BuildDalvikSuite extends BuildUtilBase {
 
     private static final String TARGET_JAR_ROOT_PATH = "/data/local/tmp/vm-tests";
 
+    private String JAVASRC_FOLDER;
+
     /**
      * @param args
      *            args 0 must be the project root folder (where src, lib etc.

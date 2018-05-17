@@ -37,8 +37,7 @@ genrule {
         "vmtests-buildutil",
         "soong_zip",
     ],
-    cmd: "$(location vmtests-buildutil) util.build.BuildCTSHostSources cts/tools/vm-tests-tf/src $(genDir) " +
+    cmd: "$(location vmtests-buildutil) util.build.BuildCTSHostSources $(genDir) " +
          " && $(location soong_zip) -jar -o $(out) -C $(genDir) -D $(genDir)/dot",
-    srcs: ["src/**/*.java"],
     out: ["vmtests.host.generated.srcjar"],
 }
