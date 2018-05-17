@@ -31,6 +31,7 @@ LOCAL_STATIC_JAVA_LIBRARIES := \
     compatibility-device-util \
     ctsdeviceutillegacy \
     ctstestrunner \
+    metrics-helper-lib \
     mockito-target-inline-minus-junit4 \
     platform-test-annotations \
     ub-uiautomator
