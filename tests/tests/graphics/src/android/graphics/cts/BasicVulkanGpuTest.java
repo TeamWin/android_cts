@@ -53,15 +53,15 @@ public class BasicVulkanGpuTest {
     }
 
     @Test
-    public void testBasicBufferImportAndRenderingMutableSampler() throws Exception {
+    public void testBasicBufferImportAndRenderingExplicitFormat() throws Exception {
         verifyBasicBufferImport(InstrumentationRegistry.getContext().getAssets(), mFormat, false);
     }
 
     @Test
-    public void testBasicBufferImportAndRenderingImmutableSampler() throws Exception {
+    public void testBasicBufferImportAndRenderingExternalFormat() throws Exception {
         verifyBasicBufferImport(InstrumentationRegistry.getContext().getAssets(), mFormat, true);
     }
 
     private static native void verifyBasicBufferImport(AssetManager assetManager, int format,
-                                                       boolean useImmutableSampler);
+                                                       boolean useExternalFormat);
 }

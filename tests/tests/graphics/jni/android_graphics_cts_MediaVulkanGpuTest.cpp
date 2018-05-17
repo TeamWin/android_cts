@@ -102,13 +102,13 @@ static void loadMediaAndVerifyFrameImport(JNIEnv *env, jclass, jobject assetMgr,
 
   // Import the AHardwareBuffer into Vulkan.
   VkAHardwareBufferImage vkImage(&init);
-  ASSERT(vkImage.init(buffer), "Could not init VkAHardwareBufferImage.");
+  ASSERT(vkImage.init(buffer, true /* useExternalFormat */), "Could not init VkAHardwareBufferImage.");
 
   // Render the AHardwareBuffer using Vulkan and read back the result.
   std::vector<uint32_t> framePixels;
   ASSERT(renderer.renderImageAndReadback(
              vkImage.image(), vkImage.sampler(), vkImage.view(),
-             vkImage.semaphore(), true /* useImmutableSampler */, &framePixels),
+             vkImage.semaphore(), vkImage.isSamplerImmutable(), &framePixels),
          "Could not get frame pixels from Vulkan.");
   ASSERT(framePixels.size() == kTestImageWidth * kTestImageHeight,
          "Unexpected number of pixels in frame");

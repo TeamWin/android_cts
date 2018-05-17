@@ -76,13 +76,21 @@ bool VkInit::init() {
       .apiVersion = VK_MAKE_VERSION(1, 1, 0),
       .applicationVersion = VK_MAKE_VERSION(1, 0, 0),
       .engineVersion = VK_MAKE_VERSION(1, 0, 0),
-      .pApplicationName = "MediaVulkanGpuTest",
-      .pEngineName = "MediaVulkanGpuTestEngine",
+      .pApplicationName = "VulkanGpuTest",
+      .pEngineName = "VulkanGpuTestEngine",
   };
   std::vector<const char *> instanceExt, deviceExt;
   instanceExt.push_back(VK_EXT_DEBUG_REPORT_EXTENSION_NAME);
-  deviceExt.push_back("VK_ANDROID_external_memory_android_hardware_buffer");
-  deviceExt.push_back("VK_KHR_sampler_ycbcr_conversion");
+  instanceExt.push_back(VK_KHR_EXTERNAL_MEMORY_CAPABILITIES_EXTENSION_NAME);
+  instanceExt.push_back(VK_KHR_EXTERNAL_SEMAPHORE_CAPABILITIES_EXTENSION_NAME);
+  instanceExt.push_back(VK_KHR_GET_PHYSICAL_DEVICE_PROPERTIES_2_EXTENSION_NAME);
+  deviceExt.push_back(VK_KHR_GET_MEMORY_REQUIREMENTS_2_EXTENSION_NAME);
+  deviceExt.push_back(VK_KHR_BIND_MEMORY_2_EXTENSION_NAME);
+  deviceExt.push_back(VK_KHR_EXTERNAL_MEMORY_EXTENSION_NAME);
+  deviceExt.push_back(VK_KHR_EXTERNAL_SEMAPHORE_EXTENSION_NAME);
+  deviceExt.push_back(VK_KHR_EXTERNAL_SEMAPHORE_FD_EXTENSION_NAME);
+  deviceExt.push_back(VK_KHR_SAMPLER_YCBCR_CONVERSION_EXTENSION_NAME);
+  deviceExt.push_back(VK_ANDROID_EXTERNAL_MEMORY_ANDROID_HARDWARE_BUFFER_EXTENSION_NAME);
   VkInstanceCreateInfo createInfo = {
       .sType = VK_STRUCTURE_TYPE_INSTANCE_CREATE_INFO,
       .pNext = nullptr,
@@ -204,7 +212,7 @@ uint32_t VkInit::findMemoryType(uint32_t memoryTypeBitsRequirement,
 
 VkAHardwareBufferImage::VkAHardwareBufferImage(VkInit *init) : mInit(init) {}
 
-bool VkAHardwareBufferImage::init(AHardwareBuffer *buffer, int syncFd) {
+bool VkAHardwareBufferImage::init(AHardwareBuffer *buffer, bool useExternalFormat, int syncFd) {
   AHardwareBuffer_Desc bufferDesc;
   AHardwareBuffer_describe(buffer, &bufferDesc);
   ASSERT(bufferDesc.layers == 1);
@@ -220,6 +228,7 @@ bool VkAHardwareBufferImage::init(AHardwareBuffer *buffer, int syncFd) {
   };
   VK_CALL(mInit->getHardwareBufferPropertiesFn()(mInit->device(), buffer,
                                                  &properties));
+  ASSERT(useExternalFormat || formatInfo.format != VK_FORMAT_UNDEFINED);
   // Create an image to bind to our AHardwareBuffer.
   VkExternalFormatANDROID externalFormat{
       .sType = VK_STRUCTURE_TYPE_EXTERNAL_FORMAT_ANDROID,
@@ -228,7 +237,7 @@ bool VkAHardwareBufferImage::init(AHardwareBuffer *buffer, int syncFd) {
   };
   VkExternalMemoryImageCreateInfo externalCreateInfo{
       .sType = VK_STRUCTURE_TYPE_EXTERNAL_MEMORY_IMAGE_CREATE_INFO,
-      .pNext = &externalFormat,
+      .pNext = useExternalFormat ? &externalFormat : nullptr,
       .handleTypes =
           VK_EXTERNAL_MEMORY_HANDLE_TYPE_ANDROID_HARDWARE_BUFFER_BIT_ANDROID,
   };
@@ -237,7 +246,7 @@ bool VkAHardwareBufferImage::init(AHardwareBuffer *buffer, int syncFd) {
       .pNext = &externalCreateInfo,
       .flags = 0u,
       .imageType = VK_IMAGE_TYPE_2D,
-      .format = formatInfo.format,
+      .format = useExternalFormat ? VK_FORMAT_UNDEFINED : formatInfo.format,
       .extent =
           {
               bufferDesc.width, bufferDesc.height, 1u,
@@ -291,7 +300,7 @@ bool VkAHardwareBufferImage::init(AHardwareBuffer *buffer, int syncFd) {
       .pNext = &memoryAllocateInfo,
       .allocationSize = properties.allocationSize,
       .memoryTypeIndex = mInit->findMemoryType(
-          properties.memoryTypeBits, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT),
+          properties.memoryTypeBits, 0u /* requirementsMask */),
   };
 
   VK_CALL(vkAllocateMemory(mInit->device(), &allocateInfo, nullptr, &mMemory));
@@ -308,12 +317,11 @@ bool VkAHardwareBufferImage::init(AHardwareBuffer *buffer, int syncFd) {
   ASSERT(bindImageMemory);
   VK_CALL(bindImageMemory(mInit->device(), 1, &bindImageInfo));
 
-  if (formatInfo.suggestedYcbcrModel !=
-      VK_SAMPLER_YCBCR_MODEL_CONVERSION_RGB_IDENTITY) {
+  if (useExternalFormat /* TODO: || explicit format requires conversion */) {
     VkSamplerYcbcrConversionCreateInfo conversionCreateInfo{
         .sType = VK_STRUCTURE_TYPE_SAMPLER_YCBCR_CONVERSION_CREATE_INFO,
         .pNext = &externalFormat,
-        .format = formatInfo.format,
+        .format = useExternalFormat ? VK_FORMAT_UNDEFINED : formatInfo.format,
         .ycbcrModel = formatInfo.suggestedYcbcrModel,
         .ycbcrRange = formatInfo.suggestedYcbcrRange,
         .components = formatInfo.samplerYcbcrConversionComponents,
@@ -331,7 +339,7 @@ bool VkAHardwareBufferImage::init(AHardwareBuffer *buffer, int syncFd) {
   }
   VkSamplerYcbcrConversionInfo samplerConversionInfo{
       .sType = VK_STRUCTURE_TYPE_SAMPLER_YCBCR_CONVERSION_INFO,
-      .pNext = nullptr,
+      .pNext = &externalFormat,
       .conversion = mConversion,
   };
 
@@ -364,7 +372,7 @@ bool VkAHardwareBufferImage::init(AHardwareBuffer *buffer, int syncFd) {
           (mConversion == VK_NULL_HANDLE) ? nullptr : &samplerConversionInfo,
       .image = mImage,
       .viewType = VK_IMAGE_VIEW_TYPE_2D,
-      .format = formatInfo.format,
+      .format = useExternalFormat ? VK_FORMAT_UNDEFINED : formatInfo.format,
       .components =
           {
               VK_COMPONENT_SWIZZLE_IDENTITY, VK_COMPONENT_SWIZZLE_IDENTITY,
@@ -413,6 +421,12 @@ VkAHardwareBufferImage::~VkAHardwareBufferImage() {
   if (mSampler != VK_NULL_HANDLE) {
     vkDestroySampler(mInit->device(), mSampler, nullptr);
     mSampler = VK_NULL_HANDLE;
+  }
+  if (mConversion != VK_NULL_HANDLE) {
+    PFN_vkDestroySamplerYcbcrConversionKHR destroySamplerYcbcrConversion =
+        (PFN_vkDestroySamplerYcbcrConversionKHR)vkGetDeviceProcAddr(
+            mInit->device(), "vkDestroySamplerYcbcrConversionKHR");
+    destroySamplerYcbcrConversion(mInit->device(), mConversion, nullptr);
   }
   if (mMemory != VK_NULL_HANDLE) {
     vkFreeMemory(mInit->device(), mMemory, nullptr);
@@ -674,6 +688,16 @@ bool VkImageRenderer::init(JNIEnv *env, jobject assetMgr) {
                                  &mPixelModule));
   }
 
+  VkPipelineCacheCreateInfo pipelineCacheInfo{
+      .sType = VK_STRUCTURE_TYPE_PIPELINE_CACHE_CREATE_INFO,
+      .pNext = nullptr,
+      .initialDataSize = 0,
+      .pInitialData = nullptr,
+      .flags = 0, // reserved, must be 0
+  };
+  VK_CALL(vkCreatePipelineCache(mInit->device(), &pipelineCacheInfo, nullptr,
+                                &mCache));
+
   // Create Descriptor Pool
   {
     const VkDescriptorPoolSize typeCount = {
@@ -763,6 +787,10 @@ VkImageRenderer::~VkImageRenderer() {
     vkDestroyFramebuffer(mInit->device(), mFramebuffer, nullptr);
     mFramebuffer = VK_NULL_HANDLE;
   }
+  if (mCache != VK_NULL_HANDLE) {
+    vkDestroyPipelineCache(mInit->device(), mCache, nullptr);
+    mCache = VK_NULL_HANDLE;
+  }
   if (mVertModule != VK_NULL_HANDLE) {
     vkDestroyShaderModule(mInit->device(), mVertModule, nullptr);
     mVertModule = VK_NULL_HANDLE;
@@ -780,11 +808,11 @@ VkImageRenderer::~VkImageRenderer() {
 bool VkImageRenderer::renderImageAndReadback(VkImage image, VkSampler sampler,
                                              VkImageView view,
                                              VkSemaphore semaphore,
-                                             bool useImmutableSampler,
+                                             bool useExternalFormat,
                                              std::vector<uint32_t> *data) {
   std::vector<uint8_t> unconvertedData;
   ASSERT(renderImageAndReadback(image, sampler, view, semaphore,
-                                useImmutableSampler, &unconvertedData));
+                                useExternalFormat, &unconvertedData));
   if ((unconvertedData.size() % sizeof(uint32_t)) != 0)
     return false;
 
@@ -941,18 +969,6 @@ bool VkImageRenderer::renderImageAndReadback(VkImage image, VkSampler sampler,
         .vertexAttributeDescriptionCount = 2,
         .pVertexAttributeDescriptions = vertex_input_attributes,
     };
-
-    // Create the pipeline cache
-    VkPipelineCacheCreateInfo pipelineCacheInfo{
-        .sType = VK_STRUCTURE_TYPE_PIPELINE_CACHE_CREATE_INFO,
-        .pNext = nullptr,
-        .initialDataSize = 0,
-        .pInitialData = nullptr,
-        .flags = 0, // reserved, must be 0
-    };
-
-    VK_CALL(vkCreatePipelineCache(mInit->device(), &pipelineCacheInfo, nullptr,
-                                  &mCache));
 
     // Create the pipeline
     VkGraphicsPipelineCreateInfo pipelineCreateInfo{
@@ -1156,12 +1172,8 @@ void VkImageRenderer::cleanUpTemporaries() {
     mCmdBuffer = VK_NULL_HANDLE;
   }
   if (mDescriptorSet != VK_NULL_HANDLE) {
-    vkFreeDescriptorSets(mInit->device(), mDescriptorPool, 1, &mDescriptorSet);
+    vkResetDescriptorPool(mInit->device(), mDescriptorPool, 0 /*flags*/);
     mDescriptorSet = VK_NULL_HANDLE;
-  }
-  if (mCache != VK_NULL_HANDLE) {
-    vkDestroyPipelineCache(mInit->device(), mCache, nullptr);
-    mCache = VK_NULL_HANDLE;
   }
   if (mPipeline != VK_NULL_HANDLE) {
     vkDestroyPipeline(mInit->device(), mPipeline, nullptr);

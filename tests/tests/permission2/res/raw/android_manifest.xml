@@ -839,56 +839,17 @@
         android:protectionLevel="dangerous|instant" />
 
     <!-- ====================================================================== -->
-    <!-- Permissions for accessing the device telephony                         -->
+    <!-- Permissions for accessing the call log                                 -->
     <!-- ====================================================================== -->
     <eat-comment />
 
     <!-- Used for permissions that are associated telephony features. -->
-    <permission-group android:name="android.permission-group.PHONE"
+    <permission-group android:name="android.permission-group.CALL_LOG"
         android:icon="@drawable/perm_group_phone_calls"
-        android:label="@string/permgrouplab_phone"
-        android:description="@string/permgroupdesc_phone"
-        android:request="@string/permgrouprequest_phone"
-        android:priority="500" />
-
-    <!-- Allows read only access to phone state, including the phone number of the device,
-         current cellular network information, the status of any ongoing calls, and a list of any
-         {@link android.telecom.PhoneAccount}s registered on the device.
-         <p class="note"><strong>Note:</strong> If <em>both</em> your <a
-         href="{@docRoot}guide/topics/manifest/uses-sdk-element.html#min">{@code
-         minSdkVersion}</a> and <a
-         href="{@docRoot}guide/topics/manifest/uses-sdk-element.html#target">{@code
-         targetSdkVersion}</a> values are set to 3 or lower, the system implicitly
-         grants your app this permission. If you don't need this permission, be sure your <a
-         href="{@docRoot}guide/topics/manifest/uses-sdk-element.html#target">{@code
-         targetSdkVersion}</a> is 4 or higher.
-         <p>Protection level: dangerous
-    -->
-    <permission android:name="android.permission.READ_PHONE_STATE"
-        android:permissionGroup="android.permission-group.PHONE"
-        android:label="@string/permlab_readPhoneState"
-        android:description="@string/permdesc_readPhoneState"
-        android:protectionLevel="dangerous" />
-
-    <!-- Allows read access to the device's phone number(s). This is a subset of the capabilities
-         granted by {@link #READ_PHONE_STATE} but is exposed to instant applications.
-         <p>Protection level: dangerous-->
-    <permission android:name="android.permission.READ_PHONE_NUMBERS"
-        android:permissionGroup="android.permission-group.PHONE"
-        android:label="@string/permlab_readPhoneNumbers"
-        android:description="@string/permdesc_readPhoneNumbers"
-        android:protectionLevel="dangerous|instant" />
-
-    <!-- Allows an application to initiate a phone call without going through
-        the Dialer user interface for the user to confirm the call.
-        <p>Protection level: dangerous
-    -->
-    <permission android:name="android.permission.CALL_PHONE"
-        android:permissionGroup="android.permission-group.PHONE"
-        android:permissionFlags="costsMoney"
-        android:label="@string/permlab_callPhone"
-        android:description="@string/permdesc_callPhone"
-        android:protectionLevel="dangerous" />
+        android:label="@string/permgrouplab_calllog"
+        android:description="@string/permgroupdesc_calllog"
+        android:request="@string/permgrouprequest_calllog"
+        android:priority="450" />
 
 
     <!-- Used for permissions that are associated telephony features. -->
@@ -946,6 +907,69 @@
         android:description="@string/permdesc_writeCallLog"
         android:protectionLevel="dangerous" />
 
+    <!-- Allows an application to see the number being dialed during an outgoing
+         call with the option to redirect the call to a different number or
+         abort the call altogether.
+         <p>Protection level: dangerous
+    -->
+    <permission android:name="android.permission.PROCESS_OUTGOING_CALLS"
+        android:permissionGroup="android.permission-group.CALL_LOG"
+        android:label="@string/permlab_processOutgoingCalls"
+        android:description="@string/permdesc_processOutgoingCalls"
+        android:protectionLevel="dangerous" />
+
+    <!-- ====================================================================== -->
+    <!-- Permissions for accessing the device telephony                         -->
+    <!-- ====================================================================== -->
+    <eat-comment />
+
+    <!-- Used for permissions that are associated telephony features. -->
+    <permission-group android:name="android.permission-group.PHONE"
+        android:icon="@drawable/perm_group_phone_calls"
+        android:label="@string/permgrouplab_phone"
+        android:description="@string/permgroupdesc_phone"
+        android:request="@string/permgrouprequest_phone"
+        android:priority="500" />
+
+    <!-- Allows read only access to phone state, including the phone number of the device,
+         current cellular network information, the status of any ongoing calls, and a list of any
+         {@link android.telecom.PhoneAccount}s registered on the device.
+         <p class="note"><strong>Note:</strong> If <em>both</em> your <a
+         href="{@docRoot}guide/topics/manifest/uses-sdk-element.html#min">{@code
+         minSdkVersion}</a> and <a
+         href="{@docRoot}guide/topics/manifest/uses-sdk-element.html#target">{@code
+         targetSdkVersion}</a> values are set to 3 or lower, the system implicitly
+         grants your app this permission. If you don't need this permission, be sure your <a
+         href="{@docRoot}guide/topics/manifest/uses-sdk-element.html#target">{@code
+         targetSdkVersion}</a> is 4 or higher.
+         <p>Protection level: dangerous
+    -->
+    <permission android:name="android.permission.READ_PHONE_STATE"
+        android:permissionGroup="android.permission-group.PHONE"
+        android:label="@string/permlab_readPhoneState"
+        android:description="@string/permdesc_readPhoneState"
+        android:protectionLevel="dangerous" />
+
+    <!-- Allows read access to the device's phone number(s). This is a subset of the capabilities
+         granted by {@link #READ_PHONE_STATE} but is exposed to instant applications.
+         <p>Protection level: dangerous-->
+    <permission android:name="android.permission.READ_PHONE_NUMBERS"
+        android:permissionGroup="android.permission-group.PHONE"
+        android:label="@string/permlab_readPhoneNumbers"
+        android:description="@string/permdesc_readPhoneNumbers"
+        android:protectionLevel="dangerous|instant" />
+
+    <!-- Allows an application to initiate a phone call without going through
+        the Dialer user interface for the user to confirm the call.
+        <p>Protection level: dangerous
+    -->
+    <permission android:name="android.permission.CALL_PHONE"
+        android:permissionGroup="android.permission-group.PHONE"
+        android:permissionFlags="costsMoney"
+        android:label="@string/permlab_callPhone"
+        android:description="@string/permdesc_callPhone"
+        android:protectionLevel="dangerous" />
+
     <!-- Allows an application to add voicemails into the system.
          <p>Protection level: dangerous
     -->
@@ -963,18 +987,6 @@
         android:description="@string/permdesc_use_sip"
         android:label="@string/permlab_use_sip"
         android:protectionLevel="dangerous"/>
-
-    <!-- Allows an application to see the number being dialed during an outgoing
-         call with the option to redirect the call to a different number or
-         abort the call altogether.
-         <p>Protection level: dangerous
-    -->
-    <permission android:name="android.permission.PROCESS_OUTGOING_CALLS"
-        android:permissionGroup="android.permission-group.CALL_LOG"
-        android:label="@string/permlab_processOutgoingCalls"
-        android:description="@string/permdesc_processOutgoingCalls"
-        android:protectionLevel="dangerous" />
-
 
     <!-- Allows the app to answer an incoming phone call.
          <p>Protection level: dangerous
