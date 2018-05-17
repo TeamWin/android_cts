@@ -38,6 +38,7 @@ import android.util.Log;
 import com.android.compatibility.common.util.ApiLevelUtil;
 import com.android.compatibility.common.util.DynamicConfigDeviceSide;
 import com.android.compatibility.common.util.MediaUtils;
+import com.android.compatibility.common.util.CddTest;
 
 import java.io.IOException;
 import java.util.HashSet;
@@ -363,6 +364,7 @@ public class MediaCodecCapabilitiesTest extends MediaPlayerTestBase {
         return adaptiveFormats;
     }
 
+    @CddTest(requirement="5.3/C-1-1")
     public void testHaveAdaptiveVideoDecoderForAllSupportedFormats() {
         Set<String> supportedFormats = new HashSet<String>();
         boolean skipped = true;

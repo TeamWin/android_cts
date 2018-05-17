@@ -31,6 +31,8 @@ import android.media.MediaFormat;
 import android.util.Log;
 import android.view.Surface;
 
+import com.android.compatibility.common.util.CddTest;
+
 import android.opengl.GLES20;
 import javax.microedition.khronos.opengles.GL10;
 
@@ -235,35 +237,82 @@ public class AdaptivePlaybackTest extends MediaPlayerTestBase {
     public void testMpeg4_adaptiveSkipBack() { ex(Mpeg4(), adaptiveSkipBack); }
     public void testH263_adaptiveSkipBack()  { ex(H263(),  adaptiveSkipBack); }
 
+    @CddTest(requirement="5.3/C-1-1")
     public void testH264_adaptiveReconfigDrc()  { ex(H264(),  adaptiveReconfigDrc); }
+
+    @CddTest(requirement="5.3/C-1-1")
     public void testHEVC_adaptiveReconfigDrc()  { ex(HEVC(),  adaptiveReconfigDrc); }
+
+    @CddTest(requirement="5.3/C-1-1")
     public void testVP8_adaptiveReconfigDrc()   { ex(VP8(),   adaptiveReconfigDrc); }
+
+    @CddTest(requirement="5.3/C-1-1")
     public void testVP9_adaptiveReconfigDrc()   { ex(VP9(),   adaptiveReconfigDrc); }
+
+    @CddTest(requirement="5.3/C-1-1")
     public void testMpeg4_adaptiveReconfigDrc() { ex(Mpeg4(), adaptiveReconfigDrc); }
+
+    @CddTest(requirement="5.3/C-1-1")
     public void testH263_adaptiveReconfigDrc()  { ex(H263(),  adaptiveReconfigDrc); }
 
+    @CddTest(requirement="5.3/C-1-1")
     public void testH264_adaptiveSmallReconfigDrc()  { ex(H264(),  adaptiveSmallReconfigDrc); }
+
+    @CddTest(requirement="5.3/C-1-1")
     public void testHEVC_adaptiveSmallReconfigDrc()  { ex(HEVC(),  adaptiveSmallReconfigDrc); }
+
+    @CddTest(requirement="5.3/C-1-1")
     public void testVP8_adaptiveSmallReconfigDrc()   { ex(VP8(),   adaptiveSmallReconfigDrc); }
+
+    @CddTest(requirement="5.3/C-1-1")
     public void testVP9_adaptiveSmallReconfigDrc()   { ex(VP9(),   adaptiveSmallReconfigDrc); }
+
+    @CddTest(requirement="5.3/C-1-1")
     public void testMpeg4_adaptiveSmallReconfigDrc() { ex(Mpeg4(), adaptiveSmallReconfigDrc); }
+
+    @CddTest(requirement="5.3/C-1-1")
     public void testH263_adaptiveSmallReconfigDrc()  { ex(H263(),  adaptiveSmallReconfigDrc); }
 
+    @CddTest(requirement="5.3/C-1-1")
     public void testH264_adaptiveDrc() { ex(H264(), adaptiveDrc); }
+
+    @CddTest(requirement="5.3/C-1-1")
     public void testHEVC_adaptiveDrc() { ex(HEVC(), adaptiveDrc); }
+
+    @CddTest(requirement="5.3/C-1-1")
     public void testVP8_adaptiveDrc()  { ex(VP8(),  adaptiveDrc); }
+
+    @CddTest(requirement="5.3/C-1-1")
     public void testVP9_adaptiveDrc()  { ex(VP9(),  adaptiveDrc); }
+
+    @CddTest(requirement="5.3.1/C-1-1")
     public void testMpeg4_adaptiveDrc() { ex(Mpeg4(), adaptiveDrc); }
+
+    @CddTest(requirement="5.3.1/C-1-1")
     public void testH263_adaptiveDrc() { ex(H263(), adaptiveDrc); }
 
+    @CddTest(requirement="5.3.1/C-1-1")
     public void testH264_adaptiveDrcEarlyEos() { ex(H264(), new AdaptiveDrcEarlyEosTest()); }
+
+    @CddTest(requirement="5.3.1/C-1-1")
     public void testHEVC_adaptiveDrcEarlyEos() { ex(HEVC(), new AdaptiveDrcEarlyEosTest()); }
+
+    @CddTest(requirement="5.3/C-1-1")
     public void testVP8_adaptiveDrcEarlyEos()  { ex(VP8(),  new AdaptiveDrcEarlyEosTest()); }
+
+    @CddTest(requirement="5.3/C-1-1")
     public void testVP9_adaptiveDrcEarlyEos()  { ex(VP9(),  new AdaptiveDrcEarlyEosTest()); }
 
+    @CddTest(requirement="5.3/C-1-1")
     public void testH264_adaptiveSmallDrc()  { ex(H264(),  adaptiveSmallDrc); }
+
+    @CddTest(requirement="5.3/C-1-1")
     public void testHEVC_adaptiveSmallDrc()  { ex(HEVC(),  adaptiveSmallDrc); }
+
+    @CddTest(requirement="5.3/C-1-1")
     public void testVP8_adaptiveSmallDrc()   { ex(VP8(),   adaptiveSmallDrc); }
+
+    @CddTest(requirement="5.3/C-1-1")
     public void testVP9_adaptiveSmallDrc()   { ex(VP9(),   adaptiveSmallDrc); }
 
     public void testH264_earlyEos()  { ex(H264(),  earlyEos); }
