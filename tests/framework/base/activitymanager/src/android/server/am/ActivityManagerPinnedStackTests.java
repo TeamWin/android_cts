@@ -1032,8 +1032,7 @@ public class ActivityManagerPinnedStackTests extends ActivityManagerTestBase {
 
         // Finish the PiP activity and ensure that there is no pinned stack
         executeShellCommand("am broadcast -a " + ACTION_FINISH);
-        mAmWmState.waitForWithAmState(amState -> getPinnedStack() == null,
-                "Waiting for pinned stack to be removed...");
+        waitForPinnedStackRemoved();
         assertPinnedStackDoesNotExist();
     }
 
@@ -1301,8 +1300,7 @@ public class ActivityManagerPinnedStackTests extends ActivityManagerTestBase {
 
         // Finish the activity
         executeShellCommand("am broadcast -a " + ACTION_FINISH);
-        mAmWmState.waitForWithAmState(amState -> getPinnedStack() == null,
-                "Waiting for pinned stack to be removed...");
+        waitForPinnedStackRemoved();
         assertPinnedStackDoesNotExist();
 
         // Ensure that starting the same PiP activity after it finished will go to the default
@@ -1476,6 +1474,16 @@ public class ActivityManagerPinnedStackTests extends ActivityManagerTestBase {
                 WindowStack stack = wmState.getStandardStackByWindowingMode(WINDOWING_MODE_PINNED);
                 return stack != null && !stack.mAnimatingBounds;
             }, "Waiting for pinned stack bounds animation to finish");
+    }
+
+    /**
+     * Waits until the pinned stack has been removed.
+     */
+    private void waitForPinnedStackRemoved() {
+        mAmWmState.waitFor((amState, wmState) -> {
+            return !amState.containsStack(WINDOWING_MODE_PINNED, ACTIVITY_TYPE_STANDARD)
+                    && !wmState.containsStack(WINDOWING_MODE_PINNED, ACTIVITY_TYPE_STANDARD);
+        }, "Waiting for pinned stack to be removed...");
     }
 
     /**
