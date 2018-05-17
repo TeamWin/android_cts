@@ -229,17 +229,8 @@ def find_avail_camera_ids(device_id_arg, tmpdir):
     Returns:
         list of available cameras
     """
-    avail_camera_ids = []
-    camera_ids_path = os.path.join(tmpdir, 'camera_ids.txt')
-    out_arg = 'out=' + camera_ids_path
-    cmd = ['python',
-           os.path.join(os.getcwd(), 'tools/get_camera_ids.py'), out_arg,
-           device_id_arg]
-    cam_code = subprocess.call(cmd, cwd=tmpdir)
-    assert cam_code == 0
-    with open(camera_ids_path, "r") as f:
-        for line in f:
-            avail_camera_ids.append(line.replace('\n', ''))
+    with its.device.ItsSession() as cam:
+        avail_camera_ids = cam.get_camera_ids()
     return avail_camera_ids
 
 

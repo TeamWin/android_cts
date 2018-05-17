@@ -102,16 +102,18 @@ def main():
     """
 
     print '\nStarting test_lens_movement_reporting.py'
+    # check skip conditions
+    with its.device.ItsSession() as cam:
+        props = cam.get_camera_properties()
+        its.caps.skip_unless(not its.caps.fixed_focus(props))
+        its.caps.skip_unless(its.caps.read_3a(props) and
+                             its.caps.lens_approx_calibrated(props))
     # initialize chart class
     chart = its.cv2image.Chart(CHART_FILE, CHART_HEIGHT, CHART_DISTANCE,
                                CHART_SCALE_START, CHART_SCALE_STOP,
                                CHART_SCALE_STEP)
 
     with its.device.ItsSession() as cam:
-        props = cam.get_camera_properties()
-        its.caps.skip_unless(not its.caps.fixed_focus(props))
-        its.caps.skip_unless(its.caps.read_3a(props) and
-                             its.caps.lens_approx_calibrated(props))
         mono_camera = its.caps.mono_camera(props)
         min_fd = props['android.lens.info.minimumFocusDistance']
         fmt = {'format': 'yuv', 'width': VGA_WIDTH, 'height': VGA_HEIGHT}
