@@ -87,6 +87,11 @@ public class ManagedProfileTest extends BaseDevicePolicyTest {
     // This should be sufficiently larger than ProfileTimeoutTestHelper.TIMEOUT_MS
     private static final int PROFILE_TIMEOUT_DELAY_MS = 40_000;
 
+    //The maximum time to wait for user to be unlocked.
+    private static final long USER_UNLOCK_TIMEOUT_NANO = 30_000_000_000L;
+
+    private static final String USER_UNLOCKED_SHELL_OUTPUT = "RUNNING_UNLOCKED";
+
     private int mParentUserId;
 
     // ID of the profile we'll create. This will always be a profile of the parent.
@@ -107,13 +112,26 @@ public class ManagedProfileTest extends BaseDevicePolicyTest {
             removeTestUsers();
             mParentUserId = mPrimaryUserId;
             mProfileUserId = createManagedProfile(mParentUserId);
+            startUser(mProfileUserId);
 
             installAppAsUser(MANAGED_PROFILE_APK, mParentUserId);
             installAppAsUser(MANAGED_PROFILE_APK, mProfileUserId);
             setProfileOwnerOrFail(MANAGED_PROFILE_PKG + "/" + ADMIN_RECEIVER_TEST_CLASS,
                     mProfileUserId);
-            startUser(mProfileUserId);
+            waitForUserUnlock();
         }
+    }
+
+    private void  waitForUserUnlock() throws Exception {
+        final String command = String.format("am get-started-user-state %d", mProfileUserId);
+        final long deadline = System.nanoTime() + USER_UNLOCK_TIMEOUT_NANO;
+        while (System.nanoTime() <= deadline) {
+            if (getDevice().executeShellCommand(command).startsWith(USER_UNLOCKED_SHELL_OUTPUT)) {
+                return;
+            }
+            Thread.sleep(100);
+        }
+        fail("Profile user is not unlocked.");
     }
 
     @Override
@@ -1174,8 +1192,10 @@ public class ManagedProfileTest extends BaseDevicePolicyTest {
             changeUserCredential(null, devicePassword, mParentUserId);
             // Cycle the device screen to flush stale password information from keyguard,
             // otherwise it will still ask for the non-existent password.
+            // return screen to be on for cts test runs
             executeShellCommand("input keyevent KEYCODE_WAKEUP");
             executeShellCommand("input keyevent KEYCODE_SLEEP");
+            executeShellCommand("input keyevent KEYCODE_WAKEUP");
         }
     }
 

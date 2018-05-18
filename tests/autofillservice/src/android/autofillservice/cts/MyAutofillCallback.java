@@ -41,15 +41,17 @@ final class MyAutofillCallback extends AutofillCallback {
 
     @Override
     public void onAutofillEvent(View view, int event) {
-        Log.v(TAG, "onAutofillEvent: view=" + view + ", event=" + callbackEventAsString(event));
-        mEvents.offer(new MyEvent(view, event));
+        offer(new MyEvent(view, event));
     }
 
     @Override
     public void onAutofillEvent(View view, int childId, int event) {
-        Log.v(TAG, "onAutofillEvent: view=" + view + ", child=" + childId
-                + ", event=" + callbackEventAsString(event));
-        mEvents.offer(new MyEvent(view, childId, event));
+        offer(new MyEvent(view, childId, event));
+    }
+
+    private void offer(MyEvent event) {
+        Log.v(TAG, "offer: " + event);
+        Helper.offer(mEvents, event, MY_TIMEOUT.ms());
     }
 
     /**

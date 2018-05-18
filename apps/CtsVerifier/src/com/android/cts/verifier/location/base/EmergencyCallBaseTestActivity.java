@@ -26,7 +26,9 @@ import android.view.LayoutInflater;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.FrameLayout;
+import android.widget.Toast;
 import com.android.cts.verifier.R;
+import com.android.cts.verifier.TestResult;
 import java.util.concurrent.TimeUnit;
 
 /**
@@ -46,7 +48,7 @@ public abstract class EmergencyCallBaseTestActivity extends GnssCtsTestActivity 
      * @param testClass The test class to execute, it must be a subclass of {@link AndroidTestCase}.
      */
     protected EmergencyCallBaseTestActivity(Class<? extends GnssTestCase> testClass) {
-        super(testClass);
+        super(testClass, R.layout.gnss_emergency_test);
     }
 
     protected abstract long getPhoneCallDurationMs();
@@ -54,9 +56,12 @@ public abstract class EmergencyCallBaseTestActivity extends GnssCtsTestActivity 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+
         // override the test info
         mTextView.setText(R.string.location_emergency_call_test_info);
         EmergencyCallUtil.setDefaultDialer(this, this.getPackageName());
+        setPassFailButtonClickListeners();
+
     }
 
     @Override
@@ -69,6 +74,15 @@ public abstract class EmergencyCallBaseTestActivity extends GnssCtsTestActivity 
 
     @Override
     public void onClick(View target) {
+        // skip current test if device doesn't support cellular
+        if (!EmergencyCallUtil.isPhoneDevice(this)) {
+            String skipInfo = getResources().getString(R.string.emergency_call_skip_info);
+            TestResult.setPassedResult(this, super.getClass().getName(), skipInfo);
+            Toast toast = Toast.makeText(getApplicationContext(), skipInfo, Toast.LENGTH_LONG);
+            toast.show();
+            this.finish();
+            return;
+        }
         AlertDialog.Builder builder = new AlertDialog.Builder(this);
         final FrameLayout frameView = new FrameLayout(this);
         builder.setView(frameView);

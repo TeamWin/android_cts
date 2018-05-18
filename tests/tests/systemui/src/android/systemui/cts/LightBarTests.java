@@ -30,6 +30,7 @@ import android.content.pm.PackageManager;
 import android.graphics.Bitmap;
 import android.graphics.Color;
 import android.os.SystemClock;
+import android.platform.test.annotations.AppModeFull;
 import android.support.test.rule.ActivityTestRule;
 import android.support.test.runner.AndroidJUnit4;
 import android.view.InputDevice;
@@ -61,6 +62,7 @@ public class LightBarTests extends LightBarTestBase {
             LightBarActivity.class);
 
     @Test
+    @AppModeFull // Instant apps cannot create notifications
     public void testLightStatusBarIcons() throws Throwable {
         assumeHasColoredStatusBar();
 

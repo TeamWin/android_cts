@@ -37,9 +37,9 @@ public:
   VkPhysicalDevice gpu() { return mGpu; }
   uint32_t queueFamilyIndex() { return mQueueFamilyIndex; }
   PFN_vkGetAndroidHardwareBufferPropertiesANDROID
-  getHardwareBufferPropertiesFn() {
-    return mPfnGetAndroidHardwareBufferPropertiesANDROID;
-  }
+    getHardwareBufferPropertiesFn() {
+      return mPfnGetAndroidHardwareBufferPropertiesANDROID;
+    }
 
   uint32_t findMemoryType(uint32_t memoryTypeBitsRequirement,
                           VkFlags requirementsMask);
@@ -61,11 +61,12 @@ public:
   VkAHardwareBufferImage(VkInit *init);
   ~VkAHardwareBufferImage();
 
-  bool init(AHardwareBuffer *buffer, int syncFd = -1);
+  bool init(AHardwareBuffer *buffer, bool useExternalFormat, int syncFd = -1);
   VkImage image() { return mImage; }
   VkSampler sampler() { return mSampler; }
   VkImageView view() { return mView; }
   VkSemaphore semaphore() { return mSemaphore; }
+  bool isSamplerImmutable() { return mConversion != VK_NULL_HANDLE; }
 
 private:
   VkInit *const mInit;

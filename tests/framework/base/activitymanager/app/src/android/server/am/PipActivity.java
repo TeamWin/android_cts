@@ -229,8 +229,9 @@ public class PipActivity extends AbstractLifecycleLogActivity {
     }
 
     @Override
-    public void onPictureInPictureModeChanged(boolean isInPictureInPictureMode) {
-        super.onPictureInPictureModeChanged(isInPictureInPictureMode);
+    public void onPictureInPictureModeChanged(boolean isInPictureInPictureMode,
+            Configuration newConfig) {
+        super.onPictureInPictureModeChanged(isInPictureInPictureMode, newConfig);
 
         // Fail early if the activity state does not match the dispatched state
         if (isInPictureInPictureMode() != isInPictureInPictureMode) {

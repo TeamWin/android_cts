@@ -43,8 +43,9 @@ import android.service.autofill.FillEventHistory;
 import android.service.autofill.FillEventHistory.Event;
 import android.service.autofill.FillResponse;
 import android.service.autofill.SaveCallback;
-import androidx.annotation.Nullable;
 import android.util.Log;
+
+import androidx.annotation.Nullable;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -58,7 +59,7 @@ import java.util.concurrent.atomic.AtomicReference;
  */
 public class InstrumentedAutoFillService extends AutofillService {
 
-    static final String SERVICE_PACKAGE = "android.autofillservice.cts";
+    static final String SERVICE_PACKAGE = Helper.MY_PACKAGE;
     static final String SERVICE_CLASS = "InstrumentedAutoFillService";
 
     static final String SERVICE_NAME = SERVICE_PACKAGE + "/." + SERVICE_CLASS;
@@ -73,9 +74,6 @@ public class InstrumentedAutoFillService extends AutofillService {
     private static final Replier sReplier = new Replier();
 
     private static final Object sLock = new Object();
-
-    // @GuardedBy("sLock") // NOTE: not using annotation because of dependencies
-    private static boolean sIgnoreUnexpectedRequests = false;
 
     // @GuardedBy("sLock") // NOTE: not using annotation because of dependencies
     private static boolean sConnected;
@@ -176,12 +174,19 @@ public class InstrumentedAutoFillService extends AutofillService {
     @Override
     public void onFillRequest(android.service.autofill.FillRequest request,
             CancellationSignal cancellationSignal, FillCallback callback) {
-        if (DUMP_FILL_REQUESTS) dumpStructure("onFillRequest()", request.getFillContexts());
-        synchronized (sLock) {
-            if (sIgnoreUnexpectedRequests || !fromSamePackage(request.getFillContexts()))  {
-                Log.w(TAG, "Ignoring onFillRequest()");
-                return;
-            }
+        final ComponentName component = getLastActivityComponent(request.getFillContexts());
+        if (!JUnitHelper.isRunningTest()) {
+            Log.e(TAG, "onFillRequest(" + component + ") called after tests finished");
+            return;
+        }
+        if (!fromSamePackage(component))  {
+            Log.w(TAG, "Ignoring onFillRequest() from different package: " + component);
+            return;
+        }
+        if (DUMP_FILL_REQUESTS) {
+            dumpStructure("onFillRequest()", request.getFillContexts());
+        } else {
+            Log.i(TAG, "onFillRequest() for " + component.toShortString());
         }
         sReplier.onFillRequest(request.getFillContexts(), request.getClientState(),
                 cancellationSignal, callback, request.getFlags());
@@ -190,12 +195,19 @@ public class InstrumentedAutoFillService extends AutofillService {
     @Override
     public void onSaveRequest(android.service.autofill.SaveRequest request,
             SaveCallback callback) {
-        if (DUMP_SAVE_REQUESTS) dumpStructure("onSaveRequest()", request.getFillContexts());
-        synchronized (sLock) {
-            if (sIgnoreUnexpectedRequests || !fromSamePackage(request.getFillContexts())) {
-                Log.w(TAG, "Ignoring onSaveRequest()");
-                return;
-            }
+        final ComponentName component = getLastActivityComponent(request.getFillContexts());
+        if (!JUnitHelper.isRunningTest()) {
+            Log.e(TAG, "onSaveRequest(" + component + ") called after tests finished");
+            return;
+        }
+        if (!fromSamePackage(component)) {
+            Log.w(TAG, "Ignoring onSaveRequest() from different package: " + component);
+            return;
+        }
+        if (DUMP_SAVE_REQUESTS) {
+            dumpStructure("onSaveRequest()", request.getFillContexts());
+        } else {
+            Log.i(TAG, "onSaveRequest() for " + component.toShortString());
         }
         sReplier.onSaveRequest(request.getFillContexts(), request.getClientState(), callback,
                 request.getDatasetIds());
@@ -207,9 +219,7 @@ public class InstrumentedAutoFillService extends AutofillService {
         }
     }
 
-    private boolean fromSamePackage(List<FillContext> contexts) {
-        final ComponentName component = contexts.get(contexts.size() - 1).getStructure()
-                .getActivityComponent();
+    private boolean fromSamePackage(ComponentName component) {
         final String actualPackage = component.getPackageName();
         if (!actualPackage.equals(getPackageName())
                 && !actualPackage.equals(sReplier.mAcceptedPackageName)) {
@@ -219,15 +229,8 @@ public class InstrumentedAutoFillService extends AutofillService {
         return true;
     }
 
-    /**
-     * Sets whether unexpected calls to
-     * {@link #onFillRequest(android.service.autofill.FillRequest, CancellationSignal, FillCallback)}
-     * should throw an exception.
-     */
-    public static void setIgnoreUnexpectedRequests(boolean ignore) {
-        synchronized (sLock) {
-            sIgnoreUnexpectedRequests = ignore;
-        }
+    private ComponentName getLastActivityComponent(List<FillContext> contexts) {
+        return contexts.get(contexts.size() - 1).getStructure().getActivityComponent();
     }
 
     /**
@@ -405,8 +408,9 @@ public class InstrumentedAutoFillService extends AutofillService {
          * Sets the {@link IntentSender} that is passed to
          * {@link SaveCallback#onSuccess(IntentSender)}.
          */
-        void setOnSave(IntentSender intentSender) {
+        Replier setOnSave(IntentSender intentSender) {
             mOnSaveIntentSender = intentSender;
+            return this;
         }
 
         /**
@@ -583,19 +587,24 @@ public class InstrumentedAutoFillService extends AutofillService {
             } catch (Throwable t) {
                 addException(t);
             } finally {
-                mFillRequests.offer(new FillRequest(contexts, data, cancellationSignal, callback,
-                        flags));
+                Helper.offer(mFillRequests, new FillRequest(contexts, data, cancellationSignal,
+                        callback, flags), CONNECTION_TIMEOUT.ms());
             }
         }
 
         private void onSaveRequest(List<FillContext> contexts, Bundle data, SaveCallback callback,
                 List<String> datasetIds) {
             Log.d(TAG, "onSaveRequest(): sender=" + mOnSaveIntentSender);
-            mSaveRequests.offer(new SaveRequest(contexts, data, callback, datasetIds));
-            if (mOnSaveIntentSender != null) {
-                callback.onSuccess(mOnSaveIntentSender);
-            } else {
-                callback.onSuccess();
+
+            try {
+                if (mOnSaveIntentSender != null) {
+                    callback.onSuccess(mOnSaveIntentSender);
+                } else {
+                    callback.onSuccess();
+                }
+            } finally {
+                Helper.offer(mSaveRequests, new SaveRequest(contexts, data, callback, datasetIds),
+                        CONNECTION_TIMEOUT.ms());
             }
         }
     }

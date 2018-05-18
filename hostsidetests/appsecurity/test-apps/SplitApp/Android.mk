@@ -40,6 +40,11 @@ LOCAL_AAPT_FLAGS := --version-code 100 --version-name OneHundred --replace-versi
 LOCAL_PROGUARD_ENABLED := disabled
 LOCAL_DEX_PREOPT := false
 
+# Disable AAPT2 to fix:
+# unknown option '--replace-version'.
+# TODO(b/79755007): Re-enable AAPT2 when it supports the missing features.
+LOCAL_USE_AAPT2 := false
+
 include $(BUILD_CTS_SUPPORT_PACKAGE)
 
 
@@ -69,6 +74,11 @@ LOCAL_AAPT_FLAGS := --version-code 100 --version-name OneHundredRevisionTwelve -
 LOCAL_PROGUARD_ENABLED := disabled
 LOCAL_DEX_PREOPT := false
 
+# Disable AAPT2 to fix:
+# unknown option '--replace-version'.
+# TODO(b/79755007): Re-enable AAPT2 when it supports the missing features.
+LOCAL_USE_AAPT2 := false
+
 include $(BUILD_CTS_SUPPORT_PACKAGE)
 
 
@@ -97,6 +107,11 @@ LOCAL_AAPT_FLAGS := --version-code 101 --version-name OneHundredOne --replace-ve
 LOCAL_PROGUARD_ENABLED := disabled
 LOCAL_DEX_PREOPT := false
 
+# Disable AAPT2 to fix:
+# unknown option '--replace-version'.
+# TODO(b/79755007): Re-enable AAPT2 when it supports the missing features.
+LOCAL_USE_AAPT2 := false
+
 include $(BUILD_CTS_SUPPORT_PACKAGE)
 
 
@@ -124,6 +139,11 @@ LOCAL_AAPT_FLAGS := --version-code 100 --version-name OneHundred --replace-versi
 
 LOCAL_PROGUARD_ENABLED := disabled
 LOCAL_DEX_PREOPT := false
+
+# Disable AAPT2 to fix:
+# unknown option '--replace-version'.
+# TODO(b/79755007): Re-enable AAPT2 when it supports the missing features.
+LOCAL_USE_AAPT2 := false
 
 include $(BUILD_CTS_SUPPORT_PACKAGE)
 

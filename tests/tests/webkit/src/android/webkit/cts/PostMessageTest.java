@@ -16,6 +16,9 @@
 
 package android.webkit.cts;
 
+import android.os.Handler;
+import android.os.HandlerThread;
+import android.os.Looper;
 import android.net.Uri;
 import android.test.ActivityInstrumentationTestCase2;
 import android.test.UiThreadTest;
@@ -166,7 +169,7 @@ public class PostMessageTest extends ActivityInstrumentationTestCase2<WebViewCts
             }
         });
         // Wait for all the responses to arrive.
-        boolean ignore = latch.await(TIMEOUT, java.util.concurrent.TimeUnit.MILLISECONDS);
+        assertTrue(latch.await(TIMEOUT, java.util.concurrent.TimeUnit.MILLISECONDS));
     }
 
     // Test that a message port that is closed cannot used to send a message
@@ -233,5 +236,68 @@ public class PostMessageTest extends ActivityInstrumentationTestCase2<WebViewCts
             }
         });
         waitForTitle(hello);
+    }
+
+    // Ensure the callback is invoked on the correct Handler.
+    public void testWebMessageHandler() throws Throwable {
+        if (!NullWebViewUtils.isWebViewAvailable()) {
+            return;
+        }
+        loadPage(CHANNEL_MESSAGE);
+        final WebMessagePort[] channel = mOnUiThread.createWebMessageChannel();
+        WebMessage message = new WebMessage(WEBVIEW_MESSAGE, new WebMessagePort[]{channel[1]});
+        mOnUiThread.postWebMessage(message, Uri.parse(BASE_URI));
+        final int messageCount = 1;
+        final CountDownLatch latch = new CountDownLatch(messageCount);
+
+        // Create a new thread for the WebMessageCallback.
+        final HandlerThread messageHandlerThread = new HandlerThread("POST_MESSAGE_THREAD");
+        messageHandlerThread.start();
+        final Handler messageHandler = new Handler(messageHandlerThread.getLooper());
+
+        runTestOnUiThread(new Runnable() {
+            @Override
+            public void run() {
+                channel[0].postMessage(new WebMessage(WEBVIEW_MESSAGE));
+                channel[0].setWebMessageCallback(new WebMessagePort.WebMessageCallback() {
+                    @Override
+                    public void onMessage(WebMessagePort port, WebMessage message) {
+                        assertTrue(messageHandlerThread.getLooper().isCurrentThread());
+                        latch.countDown();
+                    }
+                }, messageHandler);
+            }
+        });
+        // Wait for all the responses to arrive.
+        assertTrue(latch.await(TIMEOUT, java.util.concurrent.TimeUnit.MILLISECONDS));
+    }
+
+    // Ensure the callback is invoked on the MainLooper by default.
+    public void testWebMessageDefaultHandler() throws Throwable {
+        if (!NullWebViewUtils.isWebViewAvailable()) {
+            return;
+        }
+        loadPage(CHANNEL_MESSAGE);
+        final WebMessagePort[] channel = mOnUiThread.createWebMessageChannel();
+        WebMessage message = new WebMessage(WEBVIEW_MESSAGE, new WebMessagePort[]{channel[1]});
+        mOnUiThread.postWebMessage(message, Uri.parse(BASE_URI));
+        final int messageCount = 1;
+        final CountDownLatch latch = new CountDownLatch(messageCount);
+
+        runTestOnUiThread(new Runnable() {
+            @Override
+            public void run() {
+                channel[0].postMessage(new WebMessage(WEBVIEW_MESSAGE));
+                channel[0].setWebMessageCallback(new WebMessagePort.WebMessageCallback() {
+                    @Override
+                    public void onMessage(WebMessagePort port, WebMessage message) {
+                        assertTrue(Looper.getMainLooper().isCurrentThread());
+                        latch.countDown();
+                    }
+                });
+            }
+        });
+        // Wait for all the responses to arrive.
+        assertTrue(latch.await(TIMEOUT, java.util.concurrent.TimeUnit.MILLISECONDS));
     }
 }

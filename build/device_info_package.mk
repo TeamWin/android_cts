@@ -23,6 +23,7 @@ DEVICE_INFO_PERMISSIONS += \
   android.permission.READ_PHONE_STATE \
   android.permission.WRITE_EXTERNAL_STORAGE
 DEVICE_INFO_ACTIVITIES += \
+  $(DEVICE_INFO_PACKAGE).AppStandbyDeviceInfo \
   $(DEVICE_INFO_PACKAGE).ConfigurationDeviceInfo \
   $(DEVICE_INFO_PACKAGE).CpuDeviceInfo \
   $(DEVICE_INFO_PACKAGE).FeatureDeviceInfo \

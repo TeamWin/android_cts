@@ -31,6 +31,7 @@ LOCAL_STATIC_JAVA_LIBRARIES := \
     compatibility-device-util \
     ctsdeviceutillegacy \
     ctstestrunner \
+    metrics-helper-lib \
     mockito-target-inline-minus-junit4 \
     platform-test-annotations \
     ub-uiautomator
@@ -44,7 +45,7 @@ LOCAL_JNI_SHARED_LIBRARIES := \
 LOCAL_SRC_FILES := $(call all-java-files-under, src)
 
 LOCAL_PACKAGE_NAME := CtsSliceTestCases
-LOCAL_SDK_VERSION := test_current
+LOCAL_PRIVATE_PLATFORM_APIS := true
 
 include $(BUILD_CTS_PACKAGE)
 

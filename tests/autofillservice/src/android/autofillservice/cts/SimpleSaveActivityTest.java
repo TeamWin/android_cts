@@ -195,8 +195,12 @@ public class SimpleSaveActivityTest extends CustomDescriptionWithLinkTestCase {
         try {
             saveTest(true);
         } finally {
-            mUiBot.setScreenOrientation(UiBot.PORTRAIT);
-            cleanUpAfterScreenOrientationIsBackToPortrait();
+            try {
+                mUiBot.setScreenOrientation(UiBot.PORTRAIT);
+                cleanUpAfterScreenOrientationIsBackToPortrait();
+            } catch (Exception e) {
+                mSafeCleanerRule.add(e);
+            }
         }
     }
 
@@ -247,10 +251,10 @@ public class SimpleSaveActivityTest extends CustomDescriptionWithLinkTestCase {
         enableService();
 
         // Set expectations.
-        sReplier.setOnSave(WelcomeActivity.createSender(mContext, "Saved by the bell"));
-        sReplier.addResponse(new CannedFillResponse.Builder()
-                .setRequiredSavableIds(SAVE_DATA_TYPE_GENERIC, ID_INPUT)
-                .build());
+        sReplier.setOnSave(WelcomeActivity.createSender(mContext, "Saved by the bell"))
+                .addResponse(new CannedFillResponse.Builder()
+                        .setRequiredSavableIds(SAVE_DATA_TYPE_GENERIC, ID_INPUT)
+                        .build());
 
         // Trigger autofill.
         mActivity.syncRunOnUiThread(() -> mActivity.mInput.requestFocus());
@@ -261,11 +265,16 @@ public class SimpleSaveActivityTest extends CustomDescriptionWithLinkTestCase {
         mActivity.syncRunOnUiThread(() -> {
             mActivity.mInput.setText("108");
             mActivity.mCommit.performClick();
+
+            // Disable autofill so it's not triggered again after WelcomeActivity finishes
+            // and mActivity is resumed (with focus on mInput) after the session is closed
+            mActivity.mInput.setImportantForAutofill(View.IMPORTANT_FOR_AUTOFILL_NO);
         });
 
         // Save it...
         mUiBot.saveForAutofill(true, SAVE_DATA_TYPE_GENERIC);
         sReplier.getNextSaveRequest();
+
         // ... and assert activity was launched
         WelcomeActivity.assertShowing(mUiBot, "Saved by the bell");
     }

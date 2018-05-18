@@ -16,8 +16,9 @@
 
 package android.autofillservice.cts;
 
-import androidx.annotation.NonNull;
 import android.util.Log;
+
+import androidx.annotation.NonNull;
 
 import org.junit.rules.TestRule;
 import org.junit.runner.Description;
@@ -55,10 +56,21 @@ public final class SafeCleanerRule implements TestRule {
     /**
      * Adds exceptions directly.
      *
-     * <p>Typically used when exceptions were caught asychronously during the test execution.
+     * <p>Typically used for exceptions caught asychronously during the test execution.
      */
     public SafeCleanerRule add(@NonNull Callable<List<Throwable>> exceptions) {
         mExtraThrowables.add(exceptions);
+        return this;
+    }
+
+    /**
+     * Adds exceptions directly.
+     *
+     * <p>Typically used for exceptions caught during {@code finally} blocks.
+     */
+    public SafeCleanerRule add(Throwable exception) {
+        Log.w(TAG, "Adding exception directly: " + exception);
+        mThrowables.add(exception);
         return this;
     }
 
@@ -79,8 +91,8 @@ public final class SafeCleanerRule implements TestRule {
                 try {
                     base.evaluate();
                 } catch (Throwable t) {
-                    Log.w(TAG, "Adding exception from main test");
-                    mThrowables.add(t);
+                    Log.w(TAG, "Adding exception from main test at index 0: " + t);
+                    mThrowables.add(0, t);
                 }
 
                 // Then the cleanup runners

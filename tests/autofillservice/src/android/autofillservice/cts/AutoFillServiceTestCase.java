@@ -17,9 +17,6 @@
 package android.autofillservice.cts;
 
 import static android.autofillservice.cts.Helper.getContext;
-import static android.autofillservice.cts.Helper.getLoggingLevel;
-import static android.autofillservice.cts.Helper.hasAutofillFeature;
-import static android.autofillservice.cts.Helper.setLoggingLevel;
 import static android.autofillservice.cts.InstrumentedAutoFillService.SERVICE_NAME;
 import static android.autofillservice.cts.common.ShellHelper.runShellCommand;
 
@@ -40,6 +37,7 @@ import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.ClassRule;
 import org.junit.Rule;
+import org.junit.rules.RuleChain;
 import org.junit.rules.TestWatcher;
 import org.junit.runner.Description;
 import org.junit.runner.RunWith;
@@ -62,35 +60,42 @@ public abstract class AutoFillServiceTestCase {
     public static final SettingsStateKeeperRule mServiceSettingsKeeper =
             new SettingsStateKeeperRule(sContext, Settings.Secure.AUTOFILL_SERVICE);
 
-    @Rule
-    public final TestWatcher watcher = new TestWatcher() {
+    private final TestWatcher mTestWatcher = new TestWatcher() {
         @Override
         protected void starting(Description description) {
-            JUnitHelper.setCurrentTestName(description.getDisplayName());
+            final String testName = description.getDisplayName();
+            Log.v(TAG, "Starting " + testName);
+            JUnitHelper.setCurrentTestName(testName);
         }
 
         @Override
         protected void finished(Description description) {
+            final String testName = description.getDisplayName();
+            Log.v(TAG, "Finished " + testName);
             JUnitHelper.setCurrentTestName(null);
         }
     };
 
-    @Rule
-    public final RetryRule mRetryRule = new RetryRule(2);
+    private final RetryRule mRetryRule = new RetryRule(2);
 
-    @Rule
-    public final AutofillLoggingTestRule mLoggingRule = new AutofillLoggingTestRule(TAG);
+    private final AutofillLoggingTestRule mLoggingRule = new AutofillLoggingTestRule(TAG);
 
-    @Rule
-    public final RequiredFeatureRule mRequiredFeatureRule =
+    private final RequiredFeatureRule mRequiredFeatureRule =
             new RequiredFeatureRule(PackageManager.FEATURE_AUTOFILL);
 
-    @Rule
-    public final SafeCleanerRule mSafeCleanerRule = new SafeCleanerRule()
+    protected final SafeCleanerRule mSafeCleanerRule = new SafeCleanerRule()
             .setDumper(mLoggingRule)
             .run(() -> sReplier.assertNoUnhandledFillRequests())
             .run(() -> sReplier.assertNoUnhandledSaveRequests())
             .add(() -> { return sReplier.getExceptions(); });
+
+    @Rule
+    public final RuleChain mLookAllTheseRules = RuleChain
+            .outerRule(mTestWatcher)
+            .around(mRequiredFeatureRule)
+            .around(mLoggingRule)
+            .around(mSafeCleanerRule)
+            .around(mRetryRule);
 
     protected final Context mContext = sContext;
     protected final String mPackageName;
@@ -113,8 +118,6 @@ public abstract class AutoFillServiceTestCase {
 
     @BeforeClass
     public static void prepareScreen() throws Exception {
-        if (!hasAutofillFeature()) return;
-
         // Unlock screen.
         runShellCommand("input keyevent KEYCODE_WAKEUP");
 
@@ -127,24 +130,14 @@ public abstract class AutoFillServiceTestCase {
     }
 
     @Before
-    public void cleanupStaticState() {
-        Helper.preTestCleanup();
-        sReplier.reset();
-    }
+    public void preTestCleanup() {
+        Log.d(TAG, "preTestCleanup()");
 
-    @Before
-    public void setVerboseLogging() {
-        try {
-            mLoggingLevel = getLoggingLevel();
-        } catch (Exception e) {
-            Log.w(TAG, "Could not get previous logging level: " + e);
-            mLoggingLevel = "debug";
-        }
-        try {
-            setLoggingLevel("verbose");
-        } catch (Exception e) {
-            Log.w(TAG, "Could not change logging level to verbose: " + e);
-        }
+        disableService();
+
+        InstrumentedAutoFillService.resetStaticState();
+        AuthenticationActivity.resetStaticState();
+        sReplier.reset();
     }
 
     /**
@@ -156,36 +149,18 @@ public abstract class AutoFillServiceTestCase {
         WelcomeActivity.finishIt(mUiBot);
     }
 
-    @After
-    public void resetVerboseLogging() {
-        try {
-            setLoggingLevel(mLoggingLevel);
-        } catch (Exception e) {
-            Log.w(TAG, "Could not restore logging level to " + mLoggingLevel + ": " + e);
-        }
-    }
-
-    @After
-    public void ignoreFurtherRequests() {
-        InstrumentedAutoFillService.setIgnoreUnexpectedRequests(true);
-    }
-
     /**
      * Enables the {@link InstrumentedAutoFillService} for autofill for the current user.
      */
     protected void enableService() {
         Helper.enableAutofillService(getContext(), SERVICE_NAME);
-        InstrumentedAutoFillService.setIgnoreUnexpectedRequests(false);
     }
 
     /**
      * Disables the {@link InstrumentedAutoFillService} for autofill for the current user.
      */
     protected void disableService() {
-        if (!hasAutofillFeature()) return;
-
         Helper.disableAutofillService(getContext(), SERVICE_NAME);
-        InstrumentedAutoFillService.setIgnoreUnexpectedRequests(true);
     }
 
     /**
