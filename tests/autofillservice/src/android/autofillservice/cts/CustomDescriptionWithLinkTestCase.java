@@ -64,6 +64,10 @@ abstract class CustomDescriptionWithLinkTestCase extends AutoFillServiceTestCase
      */
     @Test
     public final void testTapLink_changeOrientationThenTapBack() throws Exception {
+        // If the screen is too small and the devices shows an IME, it might not have space for all
+        // UI elements after the device is rotated to landscape.
+        sUiBot.assumeMinimumResolution(500);
+
         sUiBot.setScreenOrientation(UiBot.PORTRAIT);
         try {
             runShellCommand("wm density 420");
