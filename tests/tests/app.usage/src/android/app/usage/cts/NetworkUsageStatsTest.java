@@ -180,6 +180,9 @@ public class NetworkUsageStatsTest extends InstrumentationTestCase {
             urlc = (HttpURLConnection) network.openConnection(url);
             urlc.setConnectTimeout(TIMEOUT_MILLIS);
             urlc.setUseCaches(false);
+            // Disable compression so we generate enough traffic that assertWithinPercentage will
+            // not be affected by the small amount of traffic (5-10kB) sent by the test harness.
+            urlc.setRequestProperty("Accept-Encoding", "identity");
             urlc.connect();
             boolean ping = urlc.getResponseCode() == 200;
             if (ping) {
@@ -704,7 +707,8 @@ public class NetworkUsageStatsTest extends InstrumentationTestCase {
                 // Expect that the results are within a few percentage points of each other.
                 // This is ensures that FIN retransmits after the transfer is complete don't cause
                 // the test to be flaky. The test URL currently returns just over 100k so this
-                // should not be too noisy.
+                // should not be too noisy. It also ensures that the traffic sent by the test
+                // harness, which is untagged, won't cause a failure.
                 long firstTotal = resultsWithTraffic.get(0).total;
                 for (QueryResult queryResult : resultsWithTraffic) {
                     assertWithinPercentage(queryResult + "", firstTotal, queryResult.total, 10);
