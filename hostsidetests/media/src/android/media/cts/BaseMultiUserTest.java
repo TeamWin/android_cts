@@ -150,12 +150,17 @@ public class BaseMultiUserTest extends DeviceTestCase implements IBuildReceiver 
      * @param appFileName file name of the app.
      * @param userId user ID to install the app against.
      */
-    protected void installAppAsUser(String appFileName, int userId)
+    protected void installAppAsUser(String appFileName, int userId, boolean asInstantApp)
             throws FileNotFoundException, DeviceNotAvailableException {
         CLog.d("Installing app " + appFileName + " for user " + userId);
         CompatibilityBuildHelper buildHelper = new CompatibilityBuildHelper(mCtsBuild);
         String result = getDevice().installPackageForUser(
-                buildHelper.getTestFile(appFileName), true, true, userId, "-t");
+                buildHelper.getTestFile(appFileName),
+                true,
+                true,
+                userId,
+                "-t",
+                asInstantApp ? "--instant" : "");
         assertNull("Failed to install " + appFileName + " for user " + userId + ": " + result,
                 result);
     }
