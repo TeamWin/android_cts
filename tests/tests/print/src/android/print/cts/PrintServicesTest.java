@@ -60,9 +60,11 @@ import android.printservice.CustomPrinterIconCallback;
 import android.printservice.PrintJob;
 import android.printservice.PrintService;
 import android.support.test.runner.AndroidJUnit4;
+import android.support.test.uiautomator.By;
 import android.support.test.uiautomator.UiDevice;
 import android.support.test.uiautomator.UiObject;
 import android.support.test.uiautomator.UiSelector;
+import android.support.test.uiautomator.Until;
 
 import androidx.annotation.NonNull;
 
@@ -654,35 +656,41 @@ public class PrintServicesTest extends BasePrintTest {
         // Enter select printer activity
         selectPrinter("All printers…");
 
-        InfoActivity.addObserver(activity -> {
-            Intent intent = activity.getIntent();
-
-            assertEquals("Printer2", intent.getStringExtra("PRINTER_NAME"));
-            assertTrue(intent.getBooleanExtra(PrintService.EXTRA_CAN_SELECT_PRINTER,
-                            false));
-
-            activity.setResult(Activity.RESULT_OK,
-                    (new Intent()).putExtra(PrintService.EXTRA_SELECT_PRINTER, true));
-            activity.finish();
-        });
-
         try {
-            // Open info activity which executed the code above
-            UiObject moreInfoButton = getUiDevice().findObject(new UiSelector().resourceId(
-                    "com.android.printspooler:id/more_info"));
-            moreInfoButton.click();
+            InfoActivity.addObserver(activity -> {
+                Intent intent = activity.getIntent();
 
-            // Wait until printer is selected and thereby tracked
-            eventually(() -> {
-                synchronized (trackedPrinters) {
-                    assertTrue(trackedPrinters.contains("Printer2"));
-                }
+                assertEquals("Printer2", intent.getStringExtra("PRINTER_NAME"));
+                assertTrue(intent.getBooleanExtra(PrintService.EXTRA_CAN_SELECT_PRINTER,
+                        false));
+
+                activity.setResult(Activity.RESULT_OK,
+                        (new Intent()).putExtra(PrintService.EXTRA_SELECT_PRINTER, true));
+                activity.finish();
             });
+
+            try {
+                // Wait until printer is selected and thereby tracked
+                eventually(() -> {
+                    getUiDevice().waitForIdle();
+                    // Open info activity which executes the code above
+                    getUiDevice().wait(
+                            Until.findObject(By.res("com.android.printspooler:id/more_info")),
+                            OPERATION_TIMEOUT_MILLIS).click();
+
+                    eventually(() -> {
+                        synchronized (trackedPrinters) {
+                            assertTrue(trackedPrinters.contains("Printer2"));
+                        }
+                    }, OPERATION_TIMEOUT_MILLIS  / 2);
+                }, OPERATION_TIMEOUT_MILLIS * 2);
+            } finally {
+                InfoActivity.clearObservers();
+            }
         } finally {
-            InfoActivity.clearObservers();
+            getUiDevice().pressBack();
         }
 
-        getUiDevice().pressBack();
         getUiDevice().pressBack();
         waitForPrinterDiscoverySessionDestroyCallbackCalled(1);
     }
