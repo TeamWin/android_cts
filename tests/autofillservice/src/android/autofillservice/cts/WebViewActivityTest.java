@@ -74,7 +74,7 @@ public class WebViewActivityTest extends AutoFillServiceTestCase {
         enableService();
 
         // Load WebView
-        mActivity.loadWebView();
+        mActivity.loadWebView(mUiBot);
 
         // Set expectations.
         sReplier.addResponse(CannedFillResponse.NO_RESPONSE);
@@ -104,7 +104,7 @@ public class WebViewActivityTest extends AutoFillServiceTestCase {
         enableService();
 
         // Load WebView
-        final MyWebView myWebView = mActivity.loadWebView(usesAppContext);
+        final MyWebView myWebView = mActivity.loadWebView(mUiBot, usesAppContext);
         // Sanity check to make sure autofill is enabled in the application context
         assertThat(myWebView.getContext().getSystemService(AutofillManager.class).isEnabled())
                 .isTrue();
@@ -186,7 +186,7 @@ public class WebViewActivityTest extends AutoFillServiceTestCase {
         enableService();
 
         // Load WebView
-        mActivity.loadWebView();
+        mActivity.loadWebView(mUiBot);
 
         // Set expectations.
         sReplier.addResponse(new CannedFillResponse.Builder()
@@ -237,7 +237,7 @@ public class WebViewActivityTest extends AutoFillServiceTestCase {
         enableService();
 
         // Load WebView
-        final MyWebView myWebView = mActivity.loadWebView();
+        final MyWebView myWebView = mActivity.loadWebView(mUiBot);
 
         // Set expectations.
         final MyAutofillCallback callback = mActivity.registerCallback();
@@ -320,7 +320,7 @@ public class WebViewActivityTest extends AutoFillServiceTestCase {
         enableService();
 
         // Load views
-        final MyWebView myWebView = mActivity.loadWebView();
+        final MyWebView myWebView = mActivity.loadWebView(mUiBot);
         mActivity.loadOutsideViews();
 
         // Set expectations.
@@ -486,7 +486,7 @@ public class WebViewActivityTest extends AutoFillServiceTestCase {
         Helper.assertTextIsSanitized(outside2FillNode);
 
         // Now load Webiew
-        final MyWebView myWebView = mActivity.loadWebView();
+        final MyWebView myWebView = mActivity.loadWebView(mUiBot);
 
         // Set expectations
         myWebView.expectAutofill("dude", "sweet");
