@@ -15,6 +15,8 @@
  */
 package com.android.cts.dexmetadata;
 
+import static org.junit.Assert.assertArrayEquals;
+import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 
@@ -23,11 +25,18 @@ import com.android.tradefed.testtype.DeviceJUnit4ClassRunner;
 import com.android.tradefed.testtype.junit4.BaseHostJUnit4Test;
 import com.android.tradefed.util.FileUtil;
 
+import java.io.ByteArrayOutputStream;
 import java.io.BufferedOutputStream;
 import java.io.File;
+import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.util.zip.ZipEntry;
+import java.util.zip.ZipInputStream;
 
 import org.junit.After;
 import org.junit.Assume;
@@ -170,6 +179,63 @@ public class InstallDexMetadataHostTest extends BaseHostJUnit4Test {
         assertNotNull(getDevice().getAppPackageInfo(INSTALL_PACKAGE));
 
         assertTrue(runDeviceTests(TEST_PACKAGE, TEST_CLASS, "testDmForBaseButNoSplit"));
+    }
+
+    @Test
+    public void testProfileSnapshotAfterInstall() throws Exception {
+        assumeProfilesAreEnabled();
+
+        // Install the app.
+        new InstallMultiple().addApk(APK_BASE).addDm(mDmBaseFile).run();
+
+        // Take a snapshot of the installed profile.
+        String snapshotCmd = "cmd package snapshot-profile " + INSTALL_PACKAGE;
+        String result = getDevice().executeShellCommand(snapshotCmd);
+        assertTrue(result.trim().isEmpty());
+
+        // Extract the profile bytes from the dex metadata and from the profile snapshot.
+        byte[] snapshotProfileBytes = extractProfileSnapshotFromDevice();
+        byte[] expectedProfileBytes = extractProfileFromDexMetadata(mDmBaseFile);
+
+        // Clean up the snapshot profile.
+        getDevice().executeShellCommand("rm " + INSTALL_PACKAGE + ".prof");
+
+        assertArrayEquals(expectedProfileBytes, snapshotProfileBytes);
+    }
+
+    /** Verify that the use of profiles is enabled on the device. */
+    private void assumeProfilesAreEnabled() throws Exception {
+        String useProfiles = getDevice().executeShellCommand(
+            "getprop dalvik.vm.usejitprofiles").replace("\n", "");
+        Assume.assumeTrue("Skip profile snapshot test: "
+            + "dalvik.vm.usejitprofiles != true", "true".equals(useProfiles));
+    }
+
+    /** Extracts the profile bytes for the snapshot captured with 'cmd package snapshot-profile' */
+    private byte[] extractProfileSnapshotFromDevice() throws Exception {
+        File snapshotFile = File.createTempFile(INSTALL_PACKAGE, "primary.prof");
+        snapshotFile.deleteOnExit();
+        getDevice().pullFile("/data/misc/profman/" + INSTALL_PACKAGE + ".prof", snapshotFile);
+        return Files.readAllBytes(snapshotFile.toPath());
+    }
+
+    /** Extracts the profile bytes from the dex metadata profile. */
+    static private byte[] extractProfileFromDexMetadata(File dmFile) throws Exception {
+        try (ZipInputStream in = new ZipInputStream(new FileInputStream(dmFile))) {
+            for (ZipEntry ze; (ze = in.getNextEntry()) != null; ) {
+                if (!"primary.prof".equals(ze.getName())) {
+                    continue;
+                }
+                ByteArrayOutputStream bos = new ByteArrayOutputStream();
+
+                final byte[] buffer = new byte[128];
+                for (int count; (count = in.read(buffer)) != -1; ) {
+                    bos.write(buffer, 0, count);
+                }
+                return bos.toByteArray();
+            }
+        }
+        throw new IllegalArgumentException("primary.prof not found in the .dm file");
     }
 
     /**
