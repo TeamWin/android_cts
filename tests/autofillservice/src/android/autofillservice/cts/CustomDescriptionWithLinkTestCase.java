@@ -25,7 +25,6 @@ import android.content.Intent;
 import android.service.autofill.CustomDescription;
 import android.support.test.uiautomator.By;
 import android.support.test.uiautomator.UiObject2;
-import android.util.Log;
 import android.widget.RemoteViews;
 
 import static org.junit.Assume.assumeTrue;
@@ -48,7 +47,6 @@ import org.junit.Test;
  */
 abstract class CustomDescriptionWithLinkTestCase extends AutoFillServiceTestCase {
 
-    private static final String TAG = "CustomDescriptionWithLinkTestCase";
     private static final String ID_LINK = "link";
 
     /**
@@ -69,13 +67,9 @@ abstract class CustomDescriptionWithLinkTestCase extends AutoFillServiceTestCase
     public final void testTapLink_changeOrientationThenTapBack() throws Exception {
         assumeTrue("Rotation is supported", Helper.isRotationSupported(mContext));
 
-        final int width = mUiBot.getDevice().getDisplayWidth();
-        final int heigth = mUiBot.getDevice().getDisplayHeight();
-        final int min = Math.min(width, heigth);
-
-        assumeTrue("Screen size is too small (" + width + "x" + heigth + ")", min >= 500);
-        Log.d(TAG, "testTapLink_changeOrientationThenTapBack(): screen size is "
-                + width + "x" + heigth);
+        // If the screen is too small and the devices shows an IME, it might not have space for all
+        // UI elements after the device is rotated to landscape.
+        mUiBot.assumeMinimumResolution(500);
 
         mUiBot.setScreenOrientation(UiBot.PORTRAIT);
         try {
