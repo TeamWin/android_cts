@@ -15,4 +15,4 @@
  */
 
 // Include corresponding NNAPI unit tests in frameworks/ml/nn/runtime/test
-#include "test/TestGenerated.cpp"
+#include "test/for-cts/TestGeneratedOneFile.cpp"
