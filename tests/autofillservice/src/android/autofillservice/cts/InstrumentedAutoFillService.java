@@ -125,8 +125,7 @@ public class InstrumentedAutoFillService extends AutofillService {
         final ComponentName component = contexts.get(contexts.size() - 1).getStructure()
                 .getActivityComponent();
         final String actualPackage = component.getPackageName();
-        if (!actualPackage.equals(getPackageName())
-                && !actualPackage.equals(sReplier.mAcceptedPackageName)) {
+        if (!actualPackage.equals(getPackageName())) {
             Log.w(TAG, "Got request from package " + actualPackage);
             return false;
         }
@@ -247,20 +246,14 @@ public class InstrumentedAutoFillService extends AutofillService {
         private final BlockingQueue<SaveRequest> mSaveRequests = new LinkedBlockingQueue<>();
 
         private List<Exception> mExceptions;
-        private String mAcceptedPackageName;
 
         private Replier() {
         }
-
 
         private IdMode mIdMode = IdMode.RESOURCE_ID;
 
         public void setIdMode(IdMode mode) {
             this.mIdMode = mode;
-        }
-
-        public void acceptRequestsFromPackage(String packageName) {
-            mAcceptedPackageName = packageName;
         }
 
         /**
@@ -363,7 +356,6 @@ public class InstrumentedAutoFillService extends AutofillService {
             mFillRequests.clear();
             mSaveRequests.clear();
             mExceptions = null;
-            mAcceptedPackageName = null;
         }
 
         private void onFillRequest(List<FillContext> contexts, Bundle data,
