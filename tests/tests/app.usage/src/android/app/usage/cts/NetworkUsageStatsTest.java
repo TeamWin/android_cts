@@ -622,10 +622,35 @@ public class NetworkUsageStatsTest extends InstrumentationTestCase {
         }
     }
 
+    class QueryResult {
+        public final int tag;
+        public final int state;
+        public final long total;
+
+        public QueryResult(int tag, int state, NetworkStats stats) {
+            this.tag = tag;
+            this.state = state;
+            total = getTotalAndAssertNotEmpty(stats, tag, state);
+        }
+
+        public String toString() {
+            return String.format("QueryResult(tag=%s state=%s total=%d)",
+                    tagToString(tag), stateToString(state), total);
+        }
+    }
+
     private NetworkStats getNetworkStatsForTagState(int i, int tag, int state) {
         return mNsm.queryDetailsForUidTagState(
                 mNetworkInterfacesToTest[i].getNetworkType(), getSubscriberId(i),
                 mStartTime, mEndTime, Process.myUid(), tag, state);
+    }
+
+    private void assertWithinPercentage(String msg, long expected, long actual, int percentage) {
+        long lowerBound = expected * (100 - percentage) / 100;
+        long upperBound = expected * (100 + percentage) / 100;
+        msg = String.format("%s: %d not within %d%% of %d", msg, actual, percentage, expected);
+        assertTrue(msg, lowerBound <= actual);
+        assertTrue(msg, upperBound >= actual);
     }
 
     private void assertAlmostNoUnexpectedTraffic(NetworkStats result, int expectedTag,
@@ -659,18 +684,18 @@ public class NetworkUsageStatsTest extends InstrumentationTestCase {
 
                 int[] tagsWithTraffic = {NETWORK_TAG, TAG_NONE};
                 int[] statesWithTraffic = {currentState, STATE_ALL};
-                ArrayList<Long> resultsWithTraffic = new ArrayList<>();
+                ArrayList<QueryResult> resultsWithTraffic = new ArrayList<>();
 
                 int[] statesWithNoTraffic = {otherState};
                 int[] tagsWithNoTraffic = {NETWORK_TAG + 1};
-                ArrayList<Long> resultsWithNoTraffic = new ArrayList<>();
+                ArrayList<QueryResult> resultsWithNoTraffic = new ArrayList<>();
 
                 // Expect to see traffic when querying for any combination of a tag in
                 // tagsWithTraffic and a state in statesWithTraffic.
                 for (int tag : tagsWithTraffic) {
                     for (int state : statesWithTraffic) {
                         result = getNetworkStatsForTagState(i, tag, state);
-                        resultsWithTraffic.add(getTotalAndAssertNotEmpty(result, tag, state));
+                        resultsWithTraffic.add(new QueryResult(tag, state, result));
                         result.close();
                         result = null;
                     }
@@ -680,10 +705,9 @@ public class NetworkUsageStatsTest extends InstrumentationTestCase {
                 // This is ensures that FIN retransmits after the transfer is complete don't cause
                 // the test to be flaky. The test URL currently returns just over 100k so this
                 // should not be too noisy.
-                long firstTotal = resultsWithTraffic.get(0);
-                for (long total : resultsWithTraffic) {
-                    assertTrue(total >= firstTotal * 0.9);
-                    assertTrue(total <= firstTotal * 1.1);
+                long firstTotal = resultsWithTraffic.get(0).total;
+                for (QueryResult queryResult : resultsWithTraffic) {
+                    assertWithinPercentage(queryResult + "", firstTotal, queryResult.total, 10);
                 }
 
                 // Expect to see no traffic when querying for any tag in tagsWithNoTraffic or any
