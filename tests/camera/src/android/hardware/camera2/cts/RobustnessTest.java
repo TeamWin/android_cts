@@ -1398,7 +1398,9 @@ public class RobustnessTest extends Camera2AndroidTestCase {
                 maxPrivSizes[VGA] = vgaSize;
                 maxYuvSizes[VGA] = vgaSize;
                 maxJpegSizes[VGA] = vgaSize;
+            }
 
+            if (sm.isColorOutputSupported() && !sm.isHardwareLevelLegacy()) {
                 // VGA resolution, but with aspect ratio matching full res FOV
                 float fullFovAspect = maxYuvSizes[MAXIMUM].getWidth() / (float) maxYuvSizes[MAXIMUM].getHeight();
                 Size vgaFullFovSize = new Size(640, (int) (640 / fullFovAspect));
@@ -1462,7 +1464,6 @@ public class RobustnessTest extends Camera2AndroidTestCase {
                 maxPrivSizes[MAX_30FPS] = maxPriv30fpsSize;
                 maxYuvSizes[MAX_30FPS] = maxYuv30fpsSize;
                 maxJpegSizes[MAX_30FPS] = maxJpeg30fpsSize;
-
             }
 
             Size[] privInputSizes = configs.getInputSizes(ImageFormat.PRIVATE);
