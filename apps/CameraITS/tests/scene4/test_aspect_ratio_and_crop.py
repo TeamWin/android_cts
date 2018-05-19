@@ -28,9 +28,9 @@ LARGE_SIZE = 2000   # Define the size of a large image
 NAME = os.path.basename(__file__).split(".")[0]
 NUM_DISTORT_PARAMS = 5
 THRESH_L_AR = 0.02  # aspect ratio test threshold of large images
-THRESH_XS_AR = 0.05  # aspect ratio test threshold of mini images
+THRESH_XS_AR = 0.075  # aspect ratio test threshold of mini images
 THRESH_L_CP = 0.02  # Crop test threshold of large images
-THRESH_XS_CP = 0.05  # Crop test threshold of mini images
+THRESH_XS_CP = 0.075  # Crop test threshold of mini images
 THRESH_MIN_PIXEL = 4  # Crop test allowed offset
 PREVIEW_SIZE = (1920, 1080)  # preview size
 
@@ -143,7 +143,7 @@ def main():
     If raw capture is unavailable, take a picture of the test image right in
     front to eliminate shooting angle effect. the height vs. width ratio for
     the circle should be close to 1. Considering shooting position error, aspect
-    ratio greater than 1.05 or smaller than 0.95 will fail the test.
+    ratio greater than 1+THRESH_*_AR or less than 1-THRESH_*_AR will FAIL.
     """
     aspect_ratio_gt = 1  # ground truth
     failed_ar = []  # streams failed the aspect ration test
@@ -358,6 +358,7 @@ def main():
                                       "w": w_iter, "h": h_iter,
                                       "ar": aspect_ratio,
                                       "valid_range": thres_range_ar})
+                    its.image.write_image(img/255, img_name, True)
 
                 # check pass/fail for crop
                 if run_crop_test:
@@ -395,6 +396,7 @@ def main():
                                             "ct_vert": cc_ct["vert"],
                                             "valid_range_h": thres_range_h_cp,
                                             "valid_range_v": thres_range_v_cp})
+                        its.image.write_image(img/255, img_name, True)
 
         # Print aspect ratio test results
         failed_image_number_for_aspect_ratio_test = len(failed_ar)
