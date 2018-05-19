@@ -34,6 +34,8 @@ import android.content.ComponentName;
 import android.content.IntentSender;
 import android.os.Bundle;
 import android.os.CancellationSignal;
+import android.os.Handler;
+import android.os.HandlerThread;
 import android.os.SystemClock;
 import android.service.autofill.AutofillService;
 import android.service.autofill.Dataset;
@@ -80,9 +82,20 @@ public class InstrumentedAutoFillService extends AutofillService {
 
     protected static String sServiceLabel = SERVICE_CLASS;
 
+    // We must handle all requests in a separate thread as the service's main thread is the also
+    // the UI thread of the test process and we don't want to hose it in case of failures here
+    private static final HandlerThread sMyThread = new HandlerThread("MyServiceThread");
+    private final Handler mHandler;
+
+    static {
+        Log.i(TAG, "Starting thread " + sMyThread);
+        sMyThread.start();
+    }
+
     public InstrumentedAutoFillService() {
         sInstance.set(this);
         sServiceLabel = SERVICE_CLASS;
+        mHandler = Handler.createAsync(sMyThread.getLooper());
     }
 
     private static InstrumentedAutoFillService peekInstance() {
@@ -155,25 +168,27 @@ public class InstrumentedAutoFillService extends AutofillService {
         return sServiceLabel;
     }
 
-    @Override
-    public void onConnected() {
+    private void handleConnected(boolean connected) {
         synchronized (sLock) {
-            Log.v(TAG, "onConnected(): connected=" + sConnected);
-            sConnected = true;
+            Log.v(TAG, "handleConnected(): from " + sConnected + " to " + connected);
+            sConnected = connected;
         }
     }
 
     @Override
+    public void onConnected() {
+        mHandler.post(()->handleConnected(true));
+    }
+
+    @Override
     public void onDisconnected() {
-        synchronized (sLock) {
-            Log.v(TAG, "onDisconnected(): connected=" + sConnected);
-            sConnected = false;
-        }
+        mHandler.post(()->handleConnected(false));
     }
 
     @Override
     public void onFillRequest(android.service.autofill.FillRequest request,
             CancellationSignal cancellationSignal, FillCallback callback) {
+
         final ComponentName component = getLastActivityComponent(request.getFillContexts());
         if (!JUnitHelper.isRunningTest()) {
             Log.e(TAG, "onFillRequest(" + component + ") called after tests finished");
@@ -194,6 +209,11 @@ public class InstrumentedAutoFillService extends AutofillService {
 
     @Override
     public void onSaveRequest(android.service.autofill.SaveRequest request,
+            SaveCallback callback) {
+        mHandler.post(()->handleSaveRequest(request, callback));
+    }
+
+    private void handleSaveRequest(android.service.autofill.SaveRequest request,
             SaveCallback callback) {
         final ComponentName component = getLastActivityComponent(request.getFillContexts());
         if (!JUnitHelper.isRunningTest()) {
