@@ -1154,14 +1154,16 @@ public class ClientTest {
     public void testAccessCoarseLocationPermission() {
         final Context context = InstrumentationRegistry.getContext();
 
-        LocationManager locationManager =
+        final LocationManager locationManager =
                 (LocationManager) context.getSystemService(Context.LOCATION_SERVICE);
 
-        Criteria criteria = new Criteria();
+        final Criteria criteria = new Criteria();
         criteria.setAccuracy(Criteria.ACCURACY_COARSE);
         final String bestProvider = locationManager.getBestProvider(criteria, false);
         try {
-            locationManager.getLastKnownLocation(bestProvider);
+            final String provider =
+                    bestProvider == null ? LocationManager.NETWORK_PROVIDER : bestProvider;
+            locationManager.getLastKnownLocation(provider);
         } catch (SecurityException e) {
             fail("Permission not granted.");
         }
