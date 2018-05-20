@@ -65,11 +65,11 @@ public class WebViewActivity extends AbstractAutoFillActivity {
         mOutside2 = findViewById(R.id.outside2);
     }
 
-    public MyWebView loadWebView() {
-        return loadWebView(false);
+    public MyWebView loadWebView(UiBot uiBot) throws Exception {
+        return loadWebView(uiBot, false);
     }
 
-    public MyWebView loadWebView(boolean usingAppContext) {
+    public MyWebView loadWebView(UiBot uiBot, boolean usingAppContext) throws Exception {
         syncRunOnUiThread(() -> {
             final Context context = usingAppContext ? getApplicationContext() : this;
             mWebView = new MyWebView(context);
@@ -101,6 +101,11 @@ public class WebViewActivity extends AbstractAutoFillActivity {
             });
             mWebView.loadUrl(FAKE_URL);
         });
+
+        // Wait until it's loaded.
+        // NOTE: we cannot search by resourceId because WebView does not set them...
+        uiBot.assertShownByText("Login"); // Login button
+
         return mWebView;
     }
 
