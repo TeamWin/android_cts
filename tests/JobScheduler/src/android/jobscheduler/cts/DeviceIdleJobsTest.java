@@ -24,6 +24,7 @@ import static android.os.PowerManager.ACTION_LIGHT_DEVICE_IDLE_MODE_CHANGED;
 
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
+import static org.junit.Assume.assumeTrue;
 
 import android.app.job.JobParameters;
 import android.content.BroadcastReceiver;
@@ -40,6 +41,8 @@ import android.support.test.filters.LargeTest;
 import android.support.test.runner.AndroidJUnit4;
 import android.support.test.uiautomator.UiDevice;
 import android.util.Log;
+
+import com.android.compatibility.common.util.AppStandbyUtils;
 
 import org.junit.After;
 import org.junit.Before;
@@ -76,6 +79,9 @@ public class DeviceIdleJobsTest {
     private int mTestJobId;
     private int mTestPackageUid;
     private boolean mDeviceInDoze;
+    private boolean mDeviceIdleEnabled;
+    private boolean mAppStandbyEnabled;
+
     /* accesses must be synchronized on itself */
     private final TestJobStatus mTestJobStatus = new TestJobStatus();
     private final BroadcastReceiver mReceiver = new BroadcastReceiver() {
@@ -103,6 +109,11 @@ public class DeviceIdleJobsTest {
         }
     };
 
+    private static boolean isDeviceIdleEnabled(UiDevice uiDevice) throws Exception {
+        final String output = uiDevice.executeShellCommand("cmd deviceidle enabled deep").trim();
+        return Integer.parseInt(output) != 0;
+    }
+
     @Before
     public void setUp() throws Exception {
         mContext = InstrumentationRegistry.getTargetContext();
@@ -121,11 +132,19 @@ public class DeviceIdleJobsTest {
         mContext.registerReceiver(mReceiver, intentFilter);
         assertFalse("Test package already in temp whitelist", isTestAppTempWhitelisted());
         makeTestPackageIdle();
-        setTestPackageStandbyBucket(Bucket.ACTIVE);
+        mDeviceIdleEnabled = isDeviceIdleEnabled(mUiDevice);
+        mAppStandbyEnabled = AppStandbyUtils.isAppStandbyEnabled();
+        if (mAppStandbyEnabled) {
+            setTestPackageStandbyBucket(Bucket.ACTIVE);
+        } else {
+            Log.w(TAG, "App standby not enabled on test device");
+        }
     }
 
     @Test
     public void testAllowWhileIdleJobInTempwhitelist() throws Exception {
+        assumeTrue("device idle not enabled", mDeviceIdleEnabled);
+
         toggleDeviceIdleState(true);
         Thread.sleep(DEFAULT_WAIT_TIMEOUT);
         sendScheduleJobBroadcast(true);
@@ -137,6 +156,8 @@ public class DeviceIdleJobsTest {
 
     @Test
     public void testForegroundJobsStartImmediately() throws Exception {
+        assumeTrue("device idle not enabled", mDeviceIdleEnabled);
+
         sendScheduleJobBroadcast(false);
         assertTrue("Job did not start after scheduling", awaitJobStart(DEFAULT_WAIT_TIMEOUT));
         toggleDeviceIdleState(true);
@@ -150,6 +171,8 @@ public class DeviceIdleJobsTest {
 
     @Test
     public void testBackgroundJobsDelayed() throws Exception {
+        assumeTrue("device idle not enabled", mDeviceIdleEnabled);
+
         sendScheduleJobBroadcast(false);
         assertTrue("Job did not start after scheduling", awaitJobStart(DEFAULT_WAIT_TIMEOUT));
         toggleDeviceIdleState(true);
@@ -165,8 +188,10 @@ public class DeviceIdleJobsTest {
 
     @Test
     public void testJobsInNeverApp() throws Exception {
-        setTestPackageStandbyBucket(Bucket.NEVER);
+        assumeTrue("app standby not enabled", mAppStandbyEnabled);
+
         enterFakeUnpluggedState();
+        setTestPackageStandbyBucket(Bucket.NEVER);
         Thread.sleep(DEFAULT_WAIT_TIMEOUT);
         sendScheduleJobBroadcast(false);
         assertFalse("New job started in NEVER standby", awaitJobStart(3_000));
@@ -175,8 +200,8 @@ public class DeviceIdleJobsTest {
 
     @Test
     public void testUidActiveBypassesStandby() throws Exception {
-        setTestPackageStandbyBucket(Bucket.NEVER);
         enterFakeUnpluggedState();
+        setTestPackageStandbyBucket(Bucket.NEVER);
         tempWhitelistTestApp(6_000);
         Thread.sleep(DEFAULT_WAIT_TIMEOUT);
         sendScheduleJobBroadcast(false);
@@ -187,7 +212,9 @@ public class DeviceIdleJobsTest {
 
     @After
     public void tearDown() throws Exception {
-        toggleDeviceIdleState(false);
+        if (mDeviceIdleEnabled) {
+            toggleDeviceIdleState(false);
+        }
         final Intent cancelJobsIntent = new Intent(TestJobSchedulerReceiver.ACTION_CANCEL_JOBS);
         cancelJobsIntent.setComponent(new ComponentName(TEST_APP_PACKAGE, TEST_APP_RECEIVER));
         cancelJobsIntent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
