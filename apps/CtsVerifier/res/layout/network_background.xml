@@ -18,7 +18,7 @@
         android:layout_height="match_parent">
 
     <Button android:id="@+id/start_btn"
-            android:text="@string/network_screen_off_test_start"
+            android:text="@string/network_background_test_start"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_centerHorizontal="true"
