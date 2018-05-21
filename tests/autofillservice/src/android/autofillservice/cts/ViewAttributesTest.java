@@ -178,6 +178,9 @@ public class ViewAttributesTest extends AutoFillServiceTestCase {
 
     @Test
     public void checkViewLocationInAssistStructure() throws Exception {
+        // If screen is not large enough to contain child, the height/weight will be the residual
+        // space instead of the specific size.
+        mUiBot.assumeMinimumResolution(500);
         onAssistStructure(false, (structure) -> {
                     // check size of outerView
                     AssistStructure.ViewNode outerView = findNodeByResourceId(structure,

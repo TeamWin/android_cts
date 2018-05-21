@@ -32,6 +32,8 @@ import static android.service.autofill.SaveInfo.SAVE_DATA_TYPE_USERNAME;
 import static com.google.common.truth.Truth.assertThat;
 import static com.google.common.truth.Truth.assertWithMessage;
 
+import static org.junit.Assume.assumeTrue;
+
 import android.app.Instrumentation;
 import android.app.UiAutomation;
 import android.content.Context;
@@ -132,8 +134,18 @@ final class UiBot {
         mOkToCallAssertNoDatasets = false;
     }
 
-    UiDevice getDevice() {
-        return mDevice;
+    /**
+     * Assumes the device has a minimum height and width of {@code minSize}, throwing a
+     * {@code AssumptionViolatedException} if it doesn't (so the test is skiped by the JUnit
+     * Runner).
+     */
+    void assumeMinimumResolution(int minSize) {
+        final int width = mDevice.getDisplayWidth();
+        final int heigth = mDevice.getDisplayHeight();
+        final int min = Math.min(width, heigth);
+        assumeTrue("Screen size is too small (" + width + "x" + heigth + ")", min >= minSize);
+        Log.d(TAG, "assumeMinimumResolution(" + minSize + ") passed: screen size is "
+                + width + "x" + heigth);
     }
 
     /**
