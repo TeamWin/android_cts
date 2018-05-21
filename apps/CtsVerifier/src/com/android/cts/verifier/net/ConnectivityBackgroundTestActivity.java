@@ -30,7 +30,6 @@ import android.net.ConnectivityManager.NetworkCallback;
 import android.net.LinkAddress;
 import android.net.LinkProperties;
 import android.net.Network;
-import android.net.NetworkCapabilities;
 import android.net.NetworkRequest;
 import android.os.BatteryManager;
 import android.os.Bundle;
@@ -59,7 +58,7 @@ import static android.net.NetworkCapabilities.NET_CAPABILITY_INTERNET;
 import static android.net.NetworkCapabilities.TRANSPORT_WIFI;
 
 /**
- * A CTS Verifier test case for testing IPv6 network connectivity while the screen is off.
+ * A CTS Verifier test case for testing IPv6 network background connectivity.
  *
  * This tests that Wi-Fi implementations are compliant with section 7.4.5
  * ("Minimum Network Capability") of the CDD. Specifically, it requires that: "unicast IPv6
@@ -72,15 +71,15 @@ import static android.net.NetworkCapabilities.TRANSPORT_WIFI;
  *     [2] The device must join an IPv6-capable network (basic IPv6 connectivity to an
  *         Internet resource is tested).
  *     [3] If the device has a battery, the device must be disconnected from any power source.
- *     [4] The screen is put to sleep.
+ *     [4] The screen is put to sleep if this feature supported.
  *     [5] After two minutes, another IPv6 connectivity test is performed.
  *
  * Note that devices that would never go into "screen off" status regardless of the reported
  * batter status, are allowed to skip the test.
  */
-public class ConnectivityScreenOffTestActivity extends PassFailButtons.Activity {
+public class ConnectivityBackgroundTestActivity extends PassFailButtons.Activity {
 
-    private static final String TAG = ConnectivityScreenOffTestActivity.class.getSimpleName();
+    private static final String TAG = ConnectivityBackgroundTestActivity.class.getSimpleName();
     private static final String V6CONN_URL = "https://ipv6.google.com/generate_204";
     private static final String V6ADDR_URL = "https://google-ipv6test.appspot.com/ip.js?fmt=text";
 
@@ -105,7 +104,7 @@ public class ConnectivityScreenOffTestActivity extends PassFailButtons.Activity 
     private long mUserActivityTimeout = -1;
 
 
-    public ConnectivityScreenOffTestActivity() {
+    public ConnectivityBackgroundTestActivity() {
         mLock = new Object();
         mState = new AppState();
 
@@ -140,12 +139,12 @@ public class ConnectivityScreenOffTestActivity extends PassFailButtons.Activity 
     }
 
     private void setupUserInterface() {
-        setContentView(R.layout.network_screen_off);
+        setContentView(R.layout.network_background);
         setPassFailButtonClickListeners();
         getPassButton().setEnabled(false);
         setInfoResources(
-                R.string.network_screen_off_test,
-                R.string.network_screen_off_test_instructions,
+                R.string.network_background_test,
+                R.string.network_background_test_instructions,
                 -1);
 
         mScrollView = (ScrollView) findViewById(R.id.scroll);
@@ -169,7 +168,8 @@ public class ConnectivityScreenOffTestActivity extends PassFailButtons.Activity 
 
         // Whether or not this device (currently) has a battery.
         mWaitForPowerDisconnected =
-                batteryInfo.getBooleanExtra(BatteryManager.EXTRA_PRESENT, false) && !isLeanback();
+                batteryInfo.getBooleanExtra(BatteryManager.EXTRA_PRESENT, false)
+                        && !hasPersistentPower();
 
         // Check if the device is already on battery power.
         if (mWaitForPowerDisconnected) {
@@ -318,7 +318,8 @@ public class ConnectivityScreenOffTestActivity extends PassFailButtons.Activity 
 
         void setScreenOn() { mScreenOffTime = 0; }
         void setScreenOff() { mScreenOffTime = SystemClock.elapsedRealtime(); }
-        boolean validScreenStateForTesting() { return (mScreenOffTime > 0); }
+        boolean validScreenStateForTesting() {
+            return ((mScreenOffTime > 0) || !requiresScreenOffSupport()); }
 
         void setPowerConnected() { mPowerDisconnectTime = 0; }
         void setPowerDisconnected() { mPowerDisconnectTime = SystemClock.elapsedRealtime(); }
@@ -464,6 +465,13 @@ public class ConnectivityScreenOffTestActivity extends PassFailButtons.Activity 
                     tryScreenOff();
                     logAndUpdate("waiting for ACTION_SCREEN_OFF");
                     continue;
+                }
+
+                if ((localState.mScreenOffTime == 0) && !requiresScreenOffSupport()) {
+                    // mScreenOffTime may never be initialized on some devices
+                    // so do it now regardless of screen state to let the test start
+                    // on devices where screen-off function support is not required
+                    mState.setScreenOff();
                 }
 
                 if (mWaitForPowerDisconnected) {
@@ -643,8 +651,19 @@ public class ConnectivityScreenOffTestActivity extends PassFailButtons.Activity 
         return new HttpResult(rcode, msg);
     }
 
-    private boolean isLeanback() {
-        final PackageManager pm = this.getPackageManager();
-        return (pm != null && pm.hasSystemFeature(PackageManager.FEATURE_LEANBACK));
+    private boolean hasPersistentPower() {
+        // Cars and TVsets are always connected to the persistent power source
+        final PackageManager pm = getPackageManager();
+        return (pm != null
+                && (pm.hasSystemFeature(PackageManager.FEATURE_LEANBACK)
+                    || pm.hasSystemFeature(PackageManager.FEATURE_AUTOMOTIVE)));
     }
+
+    private boolean requiresScreenOffSupport() {
+        // Cars may not support screen-off function
+        final PackageManager pm = getPackageManager();
+        return (pm != null
+                && !pm.hasSystemFeature(PackageManager.FEATURE_AUTOMOTIVE));
+    }
+
 }
