@@ -19,6 +19,8 @@ package android.webkit.cts;
 import android.content.pm.PackageManager;
 import android.os.Process;
 import android.test.ActivityInstrumentationTestCase2;
+import android.webkit.ServiceWorkerController;
+import android.webkit.ServiceWorkerWebSettings;
 import android.webkit.WebSettings;
 import android.webkit.WebView;
 
@@ -28,7 +30,7 @@ import com.android.compatibility.common.util.NullWebViewUtils;
 public class ServiceWorkerWebSettingsTest extends
         ActivityInstrumentationTestCase2<WebViewCtsActivity> {
 
-    private WebSettings mSettings;
+    private ServiceWorkerWebSettings mSettings;
     private WebViewOnUiThread mOnUiThread;
 
     public ServiceWorkerWebSettingsTest() {
@@ -41,7 +43,7 @@ public class ServiceWorkerWebSettingsTest extends
         WebView webview = getActivity().getWebView();
         if (webview != null) {
             mOnUiThread = new WebViewOnUiThread(this, webview);
-            mSettings = mOnUiThread.getSettings();
+            mSettings = ServiceWorkerController.getInstance().getServiceWorkerWebSettings();
         }
     }
 
@@ -95,9 +97,10 @@ public class ServiceWorkerWebSettingsTest extends
             return;
         }
 
-        boolean hasInternetPermission = getInstrumentation().getTargetContext().checkPermission(
-                android.Manifest.permission.INTERNET, Process.myPid(), Process.myUid())
-                == PackageManager.PERMISSION_GRANTED;
+        // Note: we cannot test this setter unless we provide the INTERNET permission, otherwise we
+        // get a SecurityException when we pass 'false'.
+        final boolean hasInternetPermission = true;
+
         assertEquals(mSettings.getBlockNetworkLoads(), !hasInternetPermission);
         for (boolean b : new boolean[]{false, true}) {
             mSettings.setBlockNetworkLoads(b);
