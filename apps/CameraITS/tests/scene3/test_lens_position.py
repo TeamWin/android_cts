@@ -23,8 +23,8 @@ import numpy as np
 
 NUM_TRYS = 2
 NUM_STEPS = 6
-SHARPNESS_TOL = 10  # percentage
-POSITION_TOL = 10  # percentage
+SHARPNESS_TOL = 0.1
+POSITION_TOL = 0.1
 FRAME_TIME_TOL = 10  # ms
 VGA_WIDTH = 640
 VGA_HEIGHT = 480
@@ -159,14 +159,19 @@ def main():
         print 'Asserting static lens locations/sharpness are similar'
         for i in range(len(d_stat)/2):
             j = 2 * NUM_STEPS - 1 - i
-            print (' lens position: %.3f'
-                   % d_stat[i]['fd'])
+            rw_msg = 'fd_write: %.3f, fd_read: %.3f, RTOL: %.2f' % (
+                    d_stat[i]['fd'], d_stat[i]['loc'], POSITION_TOL)
+            fr_msg = 'loc_fwd: %.3f, loc_rev: %.3f, RTOL: %.2f' % (
+                    d_stat[i]['loc'], d_stat[j]['loc'], POSITION_TOL)
+            s_msg = 'sharpness_fwd: %.3f, sharpness_rev: %.3f, RTOL: %.2f' % (
+                    d_stat[i]['sharpness'], d_stat[j]['sharpness'],
+                    SHARPNESS_TOL)
             assert np.isclose(d_stat[i]['loc'], d_stat[i]['fd'],
-                              rtol=POSITION_TOL/100.0)
+                              rtol=POSITION_TOL), rw_msg
             assert np.isclose(d_stat[i]['loc'], d_stat[j]['loc'],
-                              rtol=POSITION_TOL/100.0)
+                              rtol=POSITION_TOL), fr_msg
             assert np.isclose(d_stat[i]['sharpness'], d_stat[j]['sharpness'],
-                              rtol=SHARPNESS_TOL/100.0)
+                              rtol=SHARPNESS_TOL), s_msg
         # assert moving frames approximately consecutive with even distribution
         print 'Asserting moving frames are consecutive'
         times = [v['timestamp'] for v in d_move.itervalues()]
@@ -175,9 +180,10 @@ def main():
         # assert reported location/sharpness is correct in moving frames
         print 'Asserting moving lens locations/sharpness are similar'
         for i in range(len(d_move)):
-            print ' lens position: %.3f' % d_stat[i]['fd']
+            m_msg = 'static: %.3f, moving: %.3f, RTOL: %.2f' % (
+                    d_stat[i]['loc'], d_move[i]['loc'], POSITION_TOL)
             assert np.isclose(d_stat[i]['loc'], d_move[i]['loc'],
-                              rtol=POSITION_TOL)
+                              rtol=POSITION_TOL), m_msg
             if d_move[i]['lens_moving'] and i > 0:
                 if d_stat[i]['sharpness'] > d_stat[i-1]['sharpness']:
                     assert (d_stat[i]['sharpness']*(1.0+SHARPNESS_TOL) >
@@ -188,8 +194,9 @@ def main():
                             d_move[i]['sharpness'] >
                             d_stat[i]['sharpness']*(1.0-SHARPNESS_TOL))
             elif not d_move[i]['lens_moving']:
-                assert np.isclose(d_stat[i]['sharpness'],
-                                  d_move[i]['sharpness'], rtol=SHARPNESS_TOL)
+                assert np.isclose(
+                        d_stat[i]['sharpness'], d_move[i]['sharpness'],
+                        rtol=SHARPNESS_TOL)
             else:
                 raise its.error.Error('Lens is moving at frame 0!')
 
