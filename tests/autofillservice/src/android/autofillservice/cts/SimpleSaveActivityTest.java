@@ -218,7 +218,6 @@ public class SimpleSaveActivityTest extends CustomDescriptionWithLinkTestCase {
         // Trigger autofill.
         mActivity.syncRunOnUiThread(() -> mActivity.mInput.requestFocus());
         sReplier.getNextFillRequest();
-        Helper.assertHasSessions(mPackageName);
 
         // Trigger save.
         mActivity.syncRunOnUiThread(() -> {
@@ -259,7 +258,6 @@ public class SimpleSaveActivityTest extends CustomDescriptionWithLinkTestCase {
         // Trigger autofill.
         mActivity.syncRunOnUiThread(() -> mActivity.mInput.requestFocus());
         sReplier.getNextFillRequest();
-        Helper.assertHasSessions(mPackageName);
 
         // Trigger save.
         mActivity.syncRunOnUiThread(() -> {
@@ -294,7 +292,6 @@ public class SimpleSaveActivityTest extends CustomDescriptionWithLinkTestCase {
         // Trigger autofill.
         mActivity.syncRunOnUiThread(() -> mActivity.mInput.requestFocus());
         sReplier.getNextFillRequest();
-        Helper.assertHasSessions(mPackageName);
 
         // Trigger save and start a new session right away.
         mActivity.syncRunOnUiThread(() -> {
@@ -377,7 +374,6 @@ public class SimpleSaveActivityTest extends CustomDescriptionWithLinkTestCase {
         // Trigger autofill.
         mActivity.syncRunOnUiThread(() -> mActivity.mInput.requestFocus());
         sReplier.getNextFillRequest();
-        Helper.assertHasSessions(mPackageName);
 
         // Cancel session.
         mActivity.getAutofillManager().cancel();
@@ -428,7 +424,6 @@ public class SimpleSaveActivityTest extends CustomDescriptionWithLinkTestCase {
         // Trigger autofill.
         mActivity.syncRunOnUiThread(() -> mActivity.mInput.requestFocus());
         sReplier.getNextFillRequest();
-        Helper.assertHasSessions(mPackageName);
 
         // Trigger save.
         mActivity.syncRunOnUiThread(() -> {
@@ -565,7 +560,6 @@ public class SimpleSaveActivityTest extends CustomDescriptionWithLinkTestCase {
         // Trigger autofill.
         mActivity.syncRunOnUiThread(() -> mActivity.mInput.requestFocus());
         sReplier.getNextFillRequest();
-        Helper.assertHasSessions(mPackageName);
 
         // Trigger save.
         mActivity.syncRunOnUiThread(() -> {
@@ -634,7 +628,6 @@ public class SimpleSaveActivityTest extends CustomDescriptionWithLinkTestCase {
         // Trigger autofill.
         mActivity.syncRunOnUiThread(() -> mActivity.mInput.requestFocus());
         sReplier.getNextFillRequest();
-        Helper.assertHasSessions(mPackageName);
 
         // Trigger save.
         mActivity.syncRunOnUiThread(() -> {
@@ -689,7 +682,6 @@ public class SimpleSaveActivityTest extends CustomDescriptionWithLinkTestCase {
         }
 
         sReplier.getNextFillRequest();
-        Helper.assertHasSessions(mPackageName);
 
         // Trigger save.
         mActivity.syncRunOnUiThread(() -> {
@@ -721,7 +713,6 @@ public class SimpleSaveActivityTest extends CustomDescriptionWithLinkTestCase {
         // Trigger autofill.
         mActivity.syncRunOnUiThread(() -> mActivity.mInput.requestFocus());
         sReplier.getNextFillRequest();
-        Helper.assertHasSessions(mPackageName);
 
         // Trigger save.
         mActivity.syncRunOnUiThread(() -> {
@@ -835,7 +826,6 @@ public class SimpleSaveActivityTest extends CustomDescriptionWithLinkTestCase {
         // Trigger autofill.
         mActivity.getAutofillManager().requestAutofill(mActivity.mInput);
         sReplier.getNextFillRequest();
-        Helper.assertHasSessions(mPackageName);
 
         // Trigger save.
         mActivity.syncRunOnUiThread(() -> {
@@ -897,7 +887,6 @@ public class SimpleSaveActivityTest extends CustomDescriptionWithLinkTestCase {
         // Trigger autofill.
         mActivity.syncRunOnUiThread(() -> mActivity.mInput.requestFocus());
         sReplier.getNextFillRequest();
-        Helper.assertHasSessions(mPackageName);
 
         // Trigger save.
         mActivity.syncRunOnUiThread(() -> {
@@ -1168,7 +1157,6 @@ public class SimpleSaveActivityTest extends CustomDescriptionWithLinkTestCase {
         // Trigger autofill.
         mActivity.syncRunOnUiThread(() -> mActivity.mInput.requestFocus());
         sReplier.getNextFillRequest();
-        Helper.assertHasSessions(mPackageName);
 
         // Trigger save.
         mActivity.syncRunOnUiThread(() -> mActivity.mInput.setText("108"));
@@ -1229,7 +1217,6 @@ public class SimpleSaveActivityTest extends CustomDescriptionWithLinkTestCase {
         // Trigger autofill.
         mActivity.syncRunOnUiThread(() -> mActivity.mInput.requestFocus());
         sReplier.getNextFillRequest();
-        Helper.assertHasSessions(mPackageName);
         // Trigger save.
         mActivity.syncRunOnUiThread(() -> {
             mActivity.mInput.setText("108");

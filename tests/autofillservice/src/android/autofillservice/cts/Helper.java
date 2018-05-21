@@ -98,8 +98,6 @@ final class Helper {
      */
     public static final String UNUSED_AUTOFILL_VALUE = null;
 
-    private static final String CMD_LIST_SESSIONS = "cmd autofill list sessions";
-
     private static final String ACCELLEROMETER_CHANGE =
             "content insert --uri content://settings/system --bind name:s:accelerometer_rotation "
                     + "--bind value:i:%d";
@@ -802,14 +800,6 @@ final class Helper {
         final String expected = enabled ? serviceName : "null";
         assertWithMessage("Invalid value for secure setting %s", AUTOFILL_SERVICE)
                 .that(actual).isEqualTo(expected);
-    }
-
-    /**
-     * Asserts that there is a pending session for the given package.
-     */
-    public static void assertHasSessions(String packageName) {
-        final String result = runShellCommand(CMD_LIST_SESSIONS);
-        assertThat(result).contains(packageName);
     }
 
     /**
