@@ -106,7 +106,7 @@ public class UsageStatsTest {
         mUsageStatsManager = (UsageStatsManager) InstrumentationRegistry.getInstrumentation()
                 .getContext().getSystemService(Context.USAGE_STATS_SERVICE);
         mTargetPackage = InstrumentationRegistry.getContext().getPackageName();
-
+        assumeTrue("App Standby not enabled on device", AppStandbyUtils.isAppStandbyEnabled());
         setAppOpsMode("allow");
     }
 
