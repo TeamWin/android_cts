@@ -56,10 +56,11 @@ LOCAL_JAVA_LIBRARIES += android.test.base.stubs
 # Do not compress minijail policy files.
 LOCAL_AAPT_FLAGS := -0 .policy
 
-# Disable AAPT2 to fix:
+LOCAL_USE_AAPT2 := true
+# Disable AAPT2 manifest checks to fix:
 # cts/tests/tests/os/AndroidManifest.xml:25: error: unexpected element <meta-data> found in <manifest><permission>.
-# TODO(b/79755007): Re-enable AAPT2 when it supports the missing features.
-LOCAL_USE_AAPT2 := false
+# TODO(b/79755007): Remove when AAPT2 recognizes the manifest elements.
+LOCAL_AAPT_FLAGS += --warn-manifest-validation
 
 include $(BUILD_CTS_PACKAGE)
 
