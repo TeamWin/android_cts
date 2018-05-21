@@ -15,6 +15,7 @@
  */
 package com.android.compatibility.common.deviceinfo;
 
+import com.android.compatibility.common.util.AppStandbyUtils;
 import com.android.compatibility.common.util.DeviceInfoStore;
 import com.android.compatibility.common.util.SystemUtil;
 
@@ -23,16 +24,9 @@ import com.android.compatibility.common.util.SystemUtil;
  */
 public final class AppStandbyDeviceInfo extends DeviceInfo {
     private static final String KEY_APP_STANDBY_ENABLED = "app_standby_enabled";
-    private static final String CMD_IS_APP_STANDBY_ENABLED =
-            "dumpsys usagestats is-app-standby-enabled";
 
     @Override
     protected void collectDeviceInfo(DeviceInfoStore store) throws Exception {
-        store.addResult(KEY_APP_STANDBY_ENABLED, getAppStandbyEnabled());
-    }
-
-    private boolean getAppStandbyEnabled() {
-        final String result = SystemUtil.runShellCommand(CMD_IS_APP_STANDBY_ENABLED).trim();
-        return Boolean.parseBoolean(result);
+        store.addResult(KEY_APP_STANDBY_ENABLED, AppStandbyUtils.isAppStandbyEnabled());
     }
 }
