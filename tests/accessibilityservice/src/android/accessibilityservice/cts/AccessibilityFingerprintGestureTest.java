@@ -51,7 +51,6 @@ import org.mockito.MockitoAnnotations;
 public class AccessibilityFingerprintGestureTest {
     private static final int FINGERPRINT_CALLBACK_TIMEOUT = 3000;
 
-    boolean mIsHardwareAvailable;
     FingerprintManager mFingerprintManager;
     StubFingerprintGestureService mFingerprintGestureService;
     FingerprintGestureController mFingerprintGestureController;
@@ -73,8 +72,6 @@ public class AccessibilityFingerprintGestureTest {
                 .hasSystemFeature(FEATURE_FINGERPRINT)
                 ? instrumentation.getContext().getSystemService(FingerprintManager.class) : null;
         mFingerprintGestureService = StubFingerprintGestureService.enableSelf(instrumentation);
-        mIsHardwareAvailable = (mFingerprintManager == null) ? false :
-                mFingerprintManager.isHardwareDetected();
         mFingerprintGestureController =
                 mFingerprintGestureService.getFingerprintGestureController();
     }
@@ -85,14 +82,8 @@ public class AccessibilityFingerprintGestureTest {
     }
 
     @Test
-    public void testGestureDetectionAvailable_initialState_shouldBeAvailable() {
-        assertEquals(mIsHardwareAvailable,
-                mFingerprintGestureController.isGestureDetectionAvailable());
-    }
-
-    @Test
     public void testGestureDetectionListener_whenAuthenticationStartsAndStops_calledBack() {
-        if (!mIsHardwareAvailable) {
+        if (!mFingerprintGestureController.isGestureDetectionAvailable()) {
             return;
         }
         // Launch an activity to make sure we're in the foreground
