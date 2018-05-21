@@ -284,6 +284,7 @@ cts_deqp_test_apis := \
     gles31
 
 cts_device_executables := \
+    CVE-2015-6626 \
     CVE-2016-2419 \
     CVE-2016-2504 \
     CVE-2016-8430 \
