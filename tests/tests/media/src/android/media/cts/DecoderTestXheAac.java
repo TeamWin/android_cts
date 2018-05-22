@@ -25,6 +25,7 @@ import android.media.cts.DecoderTest.AudioParameter;
 import android.media.cts.DecoderTestAacDrc.DrcParams;
 import android.media.MediaCodec;
 import android.media.MediaCodecInfo;
+import android.media.MediaCodecList;
 import android.media.MediaCodecInfo.CodecCapabilities;
 import android.media.MediaExtractor;
 import android.media.MediaFormat;
@@ -40,6 +41,7 @@ import org.junit.Test;
 
 import java.io.IOException;
 import java.nio.ByteBuffer;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
@@ -48,11 +50,39 @@ public class DecoderTestXheAac {
 
     private Resources mResources;
 
+    // list of all AAC decoders as enumerated through the MediaCodecList
+    // lazy initialization in setUp()
+    private static ArrayList<String> sAacDecoderNames;
+
     @Before
     public void setUp() throws Exception {
         final Instrumentation inst = InstrumentationRegistry.getInstrumentation();
         assertNotNull(inst);
         mResources = inst.getContext().getResources();
+        // build a list of all AAC decoders on which to run the test
+        if (sAacDecoderNames == null) {
+            sAacDecoderNames = initAacDecoderNames();
+        }
+    }
+
+    protected static ArrayList<String> initAacDecoderNames() {
+        // at least 1 AAC decoder expected
+        ArrayList<String> aacDecoderNames = new ArrayList<String>(1);
+        final MediaCodecList mediaCodecList = new MediaCodecList(MediaCodecList.REGULAR_CODECS);
+        final MediaCodecInfo[] mediaCodecInfos = mediaCodecList.getCodecInfos();
+        for (MediaCodecInfo mediaCodecInfo : mediaCodecInfos) {
+            if (mediaCodecInfo.isEncoder()) {
+                continue;
+            }
+            final String[] mimeTypes = mediaCodecInfo.getSupportedTypes();
+            for (String mimeType : mimeTypes) {
+                if (MediaFormat.MIMETYPE_AUDIO_AAC.equalsIgnoreCase(mimeType)) {
+                    aacDecoderNames.add(mediaCodecInfo.getName());
+                    break;
+                }
+            }
+        }
+        return aacDecoderNames;
     }
 
     /**
@@ -62,112 +92,119 @@ public class DecoderTestXheAac {
     public void testDecodeUsacDrcEffectTypeM4a() throws Exception {
         Log.v(TAG, "START testDecodeUsacDrcEffectTypeM4a");
 
-        // test DRC effectTypeID 1 "NIGHT"
-        // L -3dB -> normalization factor = 1/(10^(-3/10)) = 0.5011f
-        // R +3dB -> normalization factor = 1/(10^( 3/10)) = 1.9952f
-        try {
-            checkUsacDrcEffectType(1, 0.5011f, 1.9952f, "Night", 2, 0);
-        } catch (Exception e) {
-            Log.v(TAG, "testDecodeUsacDrcEffectTypeM4a effect type Night failed");
-            throw new RuntimeException(e);
-        }
+        assertTrue("No AAC decoder found", sAacDecoderNames.size() > 0);
 
-        // test DRC effectTypeID 2 "NOISY"
-        // L +3dB -> normalization factor = 1/(10^( 3/10)) = 1.9952f
-        // R -6dB -> normalization factor = 1/(10^(-6/10)) = 0.2511f
-        try {
-            checkUsacDrcEffectType(2, 1.9952f, 0.2511f, "Noisy", 2, 0);
-        } catch (Exception e) {
-            Log.v(TAG, "testDecodeUsacDrcEffectTypeM4a effect type Noisy failed");
-            throw new RuntimeException(e);
-        }
+        for (String aacDecName : sAacDecoderNames) {
+            Log.v(TAG, "testDecodeUsacDrcEffectTypeM4a running for dec=" + aacDecName);
+            // test DRC effectTypeID 1 "NIGHT"
+            // L -3dB -> normalization factor = 1/(10^(-3/10)) = 0.5011f
+            // R +3dB -> normalization factor = 1/(10^( 3/10)) = 1.9952f
+            try {
+                checkUsacDrcEffectType(1, 0.5011f, 1.9952f, "Night", 2, 0, aacDecName);
+            } catch (Exception e) {
+                Log.v(TAG, "testDecodeUsacDrcEffectTypeM4a Night/2/0 failed for dec=" + aacDecName);
+                throw new RuntimeException(e);
+            }
 
-        // test DRC effectTypeID 3 "LIMITED"
-        // L -6dB -> normalization factor = 1/(10^(-6/10)) = 0.2511f
-        // R +6dB -> normalization factor = 1/(10^( 6/10)) = 3.9810f
-        try {
-            checkUsacDrcEffectType(3, 0.2511f, 3.9810f, "Limited", 2, 0);
-        } catch (Exception e) {
-            Log.v(TAG, "testDecodeUsacDrcEffectTypeM4a effect type Limited failed");
-            throw new RuntimeException(e);
-        }
+            // test DRC effectTypeID 2 "NOISY"
+            // L +3dB -> normalization factor = 1/(10^( 3/10)) = 1.9952f
+            // R -6dB -> normalization factor = 1/(10^(-6/10)) = 0.2511f
+            try {
+                checkUsacDrcEffectType(2, 1.9952f, 0.2511f, "Noisy", 2, 0, aacDecName);
+            } catch (Exception e) {
+                Log.v(TAG, "testDecodeUsacDrcEffectTypeM4a Noisy/2/0 failed for dec=" + aacDecName);
+                throw new RuntimeException(e);
+            }
 
-        // test DRC effectTypeID 6 "GENERAL"
-        // L +6dB -> normalization factor = 1/(10^( 6/10)) = 3.9810f
-        // R -3dB -> normalization factor = 1/(10^(-3/10)) = 0.5011f
-        try {
-            checkUsacDrcEffectType(6, 3.9810f, 0.5011f, "General", 2, 0);
-        } catch (Exception e) {
-            Log.v(TAG, "testDecodeUsacDrcEffectTypeM4a effect type General failed");
-            throw new RuntimeException(e);
-        }
+            // test DRC effectTypeID 3 "LIMITED"
+            // L -6dB -> normalization factor = 1/(10^(-6/10)) = 0.2511f
+            // R +6dB -> normalization factor = 1/(10^( 6/10)) = 3.9810f
+            try {
+                checkUsacDrcEffectType(3, 0.2511f, 3.9810f, "Limited", 2, 0, aacDecName);
+            } catch (Exception e) {
+                Log.v(TAG, "testDecodeUsacDrcEffectTypeM4a Limited/2/0 failed for dec="
+                        + aacDecName);
+                throw new RuntimeException(e);
+            }
 
-        // test DRC effectTypeID 1 "NIGHT"
-        // L    -6dB -> normalization factor = 1/(10^(-6/10)) = 0.2511f
-        // R    +6dB -> normalization factor = 1/(10^( 6/10)) = 3.9810f
-        // mono -6dB -> normalization factor = 1/(10^(-6/10)) = 0.2511f
-        try {
-            checkUsacDrcEffectType(1, 0.2511f, 3.9810f, "Night", 2, 1);
-        } catch (Exception e) {
-            Log.v(TAG, "testDecodeUsacDrcEffectTypeM4a FAILED!");
-            throw new RuntimeException(e);
-        }
-        try {
-            checkUsacDrcEffectType(1, 0.2511f, 0.0f, "Night", 1, 1);
-        } catch (Exception e) {
-            Log.v(TAG, "testDecodeUsacDrcEffectTypeM4a FAILED!");
-            throw new RuntimeException(e);
-        }
+            // test DRC effectTypeID 6 "GENERAL"
+            // L +6dB -> normalization factor = 1/(10^( 6/10)) = 3.9810f
+            // R -3dB -> normalization factor = 1/(10^(-3/10)) = 0.5011f
+            try {
+                checkUsacDrcEffectType(6, 3.9810f, 0.5011f, "General", 2, 0, aacDecName);
+            } catch (Exception e) {
+                Log.v(TAG, "testDecodeUsacDrcEffectTypeM4a General/2/0 failed for dec="
+                        + aacDecName);
+                throw new RuntimeException(e);
+            }
 
-        // test DRC effectTypeID 2 "NOISY"
-        // L    +6dB -> normalization factor = 1/(10^( 6/10))   = 3.9810f
-        // R    -9dB -> normalization factor = 1/(10^(-9/10))  = 0.1258f
-        // mono +6dB -> normalization factor = 1/(10^( 6/10))   = 3.9810f
-        try {
-            checkUsacDrcEffectType(2, 3.9810f, 0.1258f, "Noisy", 2, 1);
-        } catch (Exception e) {
-            Log.v(TAG, "testDecodeUsacDrcEffectTypeM4a FAILED!");
-            throw new RuntimeException(e);
-        }
-        try {
-            checkUsacDrcEffectType(2, 3.9810f, 0.0f, "Noisy", 1, 1);
-        } catch (Exception e) {
-            Log.v(TAG, "testDecodeUsacDrcEffectTypeM4a FAILED!");
-            throw new RuntimeException(e);
-        }
+            // test DRC effectTypeID 1 "NIGHT"
+            // L    -6dB -> normalization factor = 1/(10^(-6/10)) = 0.2511f
+            // R    +6dB -> normalization factor = 1/(10^( 6/10)) = 3.9810f
+            // mono -6dB -> normalization factor = 1/(10^(-6/10)) = 0.2511f
+            try {
+                checkUsacDrcEffectType(1, 0.2511f, 3.9810f, "Night", 2, 1, aacDecName);
+            } catch (Exception e) {
+                Log.v(TAG, "testDecodeUsacDrcEffectTypeM4a Night/2/1 for dec=" + aacDecName);
+                throw new RuntimeException(e);
+            }
+            try {
+                checkUsacDrcEffectType(1, 0.2511f, 0.0f, "Night", 1, 1, aacDecName);
+            } catch (Exception e) {
+                Log.v(TAG, "testDecodeUsacDrcEffectTypeM4a Night/1/1 for dec=" + aacDecName);
+                throw new RuntimeException(e);
+            }
 
-        // test DRC effectTypeID 3 "LIMITED"
-        // L    -9dB -> normalization factor = 1/(10^(-9/10)) = 0.1258f
-        // R    +9dB -> normalization factor = 1/(10^( 9/10)) = 7.9432f
-        // mono -9dB -> normalization factor = 1/(10^(-9/10)) = 0.1258f
-        try {
-            checkUsacDrcEffectType(3, 0.1258f, 7.9432f, "Limited", 2, 1);
-        } catch (Exception e) {
-            Log.v(TAG, "testDecodeUsacDrcEffectTypeM4a FAILED!");
-            throw new RuntimeException(e);
-        }
-        try {
-            checkUsacDrcEffectType(3, 0.1258f, 0.0f, "Limited", 1, 1);
-        } catch (Exception e) {
-            Log.v(TAG, "testDecodeUsacDrcEffectTypeM4a FAILED!");
-            throw new RuntimeException(e);
-        }
+            // test DRC effectTypeID 2 "NOISY"
+            // L    +6dB -> normalization factor = 1/(10^( 6/10))   = 3.9810f
+            // R    -9dB -> normalization factor = 1/(10^(-9/10))  = 0.1258f
+            // mono +6dB -> normalization factor = 1/(10^( 6/10))   = 3.9810f
+            try {
+                checkUsacDrcEffectType(2, 3.9810f, 0.1258f, "Noisy", 2, 1, aacDecName);
+            } catch (Exception e) {
+                Log.v(TAG, "testDecodeUsacDrcEffectTypeM4a Noisy/2/1 for dec=" + aacDecName);
+                throw new RuntimeException(e);
+            }
+            try {
+                checkUsacDrcEffectType(2, 3.9810f, 0.0f, "Noisy", 1, 1, aacDecName);
+            } catch (Exception e) {
+                Log.v(TAG, "testDecodeUsacDrcEffectTypeM4a Night/2/1 for dec=" + aacDecName);
+                throw new RuntimeException(e);
+            }
 
-        // test DRC effectTypeID 6 "GENERAL"
-        // L    +9dB -> normalization factor = 1/(10^( 9/10)) = 7.9432f
-        // R    -6dB -> normalization factor = 1/(10^(-6/10))  = 0.2511f
-        // mono +9dB -> normalization factor = 1/(10^( 9/10)) = 7.9432f
-        try {
-            checkUsacDrcEffectType(6, 7.9432f, 0.2511f, "General", 2, 1);
-        } catch (Exception e) {
-            Log.v(TAG, "testDecodeUsacDrcEffectTypeM4a FAILED!");
-            throw new RuntimeException(e);
-        }
-        try {
-            checkUsacDrcEffectType(6, 7.9432f, 0.0f, "General", 1, 1);
-        } catch (Exception e) {
-            Log.v(TAG, "testDecodeUsacDrcEffectTypeM4a FAILED!");
-            throw new RuntimeException(e);
+            // test DRC effectTypeID 3 "LIMITED"
+            // L    -9dB -> normalization factor = 1/(10^(-9/10)) = 0.1258f
+            // R    +9dB -> normalization factor = 1/(10^( 9/10)) = 7.9432f
+            // mono -9dB -> normalization factor = 1/(10^(-9/10)) = 0.1258f
+            try {
+                checkUsacDrcEffectType(3, 0.1258f, 7.9432f, "Limited", 2, 1, aacDecName);
+            } catch (Exception e) {
+                Log.v(TAG, "testDecodeUsacDrcEffectTypeM4a Limited/2/1 for dec=" + aacDecName);
+                throw new RuntimeException(e);
+            }
+            try {
+                checkUsacDrcEffectType(3, 0.1258f, 0.0f, "Limited", 1, 1, aacDecName);
+            } catch (Exception e) {
+                Log.v(TAG, "testDecodeUsacDrcEffectTypeM4a Limited/1/1 for dec=" + aacDecName);
+                throw new RuntimeException(e);
+            }
+
+            // test DRC effectTypeID 6 "GENERAL"
+            // L    +9dB -> normalization factor = 1/(10^( 9/10)) = 7.9432f
+            // R    -6dB -> normalization factor = 1/(10^(-6/10))  = 0.2511f
+            // mono +9dB -> normalization factor = 1/(10^( 9/10)) = 7.9432f
+            try {
+                checkUsacDrcEffectType(6, 7.9432f, 0.2511f, "General", 2, 1, aacDecName);
+            } catch (Exception e) {
+                Log.v(TAG, "testDecodeUsacDrcEffectTypeM4a General/2/1 for dec=" + aacDecName);
+                throw new RuntimeException(e);
+            }
+            try {
+                checkUsacDrcEffectType(6, 7.9432f, 0.0f, "General", 1, 1, aacDecName);
+            } catch (Exception e) {
+                Log.v(TAG, "testDecodeUsacDrcEffectTypeM4a General/1/1 for dec=" + aacDecName);
+                throw new RuntimeException(e);
+            }
         }
     }
 
@@ -178,44 +215,52 @@ public class DecoderTestXheAac {
     public void testDecodeUsacStreamSwitchingM4a() throws Exception {
         Log.v(TAG, "START testDecodeUsacStreamSwitchingM4a");
 
-        // Stereo
-        // switch between SBR ratios and stereo modes
-        try {
-            checkUsacStreamSwitching(2.5459829E12f, 2,
-            R.raw.noise_2ch_44_1khz_aot42_19_lufs_config_change_mp4);
-        } catch (Exception e) {
-            Log.v(TAG, "testDecodeUsacStreamSwitchingM4a FAILED!");
-            throw new RuntimeException(e);
-        }
+        assertTrue("No AAC decoder found", sAacDecoderNames.size() > 0);
 
-        // Mono
-        // switch between SBR ratios and stereo modes
-        try {
-            checkUsacStreamSwitching(2.24669126E12f, 1,
-            R.raw.noise_1ch_38_4khz_aot42_19_lufs_config_change_mp4);
-        } catch (Exception e) {
-            Log.v(TAG, "testDecodeUsacStreamSwitchingM4a FAILED!");
-            throw new RuntimeException(e);
-        }
+        for (String aacDecName : sAacDecoderNames) {
+            // Stereo
+            // switch between SBR ratios and stereo modes
+            try {
+                checkUsacStreamSwitching(2.5459829E12f, 2,
+                        R.raw.noise_2ch_44_1khz_aot42_19_lufs_config_change_mp4, aacDecName);
+            } catch (Exception e) {
+                Log.v(TAG, "testDecodeUsacStreamSwitchingM4a failed 2ch sbr/stereo switch for "
+                        + aacDecName);
+                throw new RuntimeException(e);
+            }
 
-        // Stereo
-        // switch between USAC modes
-        try {
-            checkUsacStreamSwitching(2.1E12f, 2,
-            R.raw.noise_2ch_35_28khz_aot42_19_lufs_drc_config_change_mp4);
-        } catch (Exception e) {
-            Log.v(TAG, "testDecodeUsacStreamSwitchingM4a FAILED!");
-            throw new RuntimeException(e);
-        }
+            // Mono
+            // switch between SBR ratios and stereo modes
+            try {
+                checkUsacStreamSwitching(2.24669126E12f, 1,
+                        R.raw.noise_1ch_38_4khz_aot42_19_lufs_config_change_mp4, aacDecName);
+            } catch (Exception e) {
+                Log.v(TAG, "testDecodeUsacStreamSwitchingM4a failed 1ch sbr/stereo switch for "
+                        + aacDecName);
+                throw new RuntimeException(e);
+            }
 
-        // Mono
-        // switch between USAC modes
-        try {
-            checkUsacStreamSwitching(1.7E12f, 1,
-            R.raw.noise_1ch_29_4khz_aot42_19_lufs_drc_config_change_mp4);
-        } catch (Exception e) {
-            Log.v(TAG, "testDecodeUsacStreamSwitchingM4a FAILED!");
-            throw new RuntimeException(e);
+            // Stereo
+            // switch between USAC modes
+            try {
+                checkUsacStreamSwitching(2.1E12f, 2,
+                        R.raw.noise_2ch_35_28khz_aot42_19_lufs_drc_config_change_mp4, aacDecName);
+            } catch (Exception e) {
+                Log.v(TAG, "testDecodeUsacStreamSwitchingM4a failed 2ch USAC mode switch for "
+                        + aacDecName);
+                throw new RuntimeException(e);
+            }
+
+            // Mono
+            // switch between USAC modes
+            try {
+                checkUsacStreamSwitching(1.7E12f, 1,
+                        R.raw.noise_1ch_29_4khz_aot42_19_lufs_drc_config_change_mp4, aacDecName);
+            } catch (Exception e) {
+                Log.v(TAG, "testDecodeUsacStreamSwitchingM4a failed 1ch USAC mode switch for "
+                        + aacDecName);
+                throw new RuntimeException(e);
+            }
         }
     }
 
@@ -226,16 +271,21 @@ public class DecoderTestXheAac {
     public void testDecodeUsacSamplingRatesM4a() throws Exception {
         Log.v(TAG, "START testDecodeUsacSamplingRatesM4a");
 
-        try {
-            checkUsacSamplingRate(R.raw.noise_2ch_08khz_aot42_19_lufs_mp4);
-            checkUsacSamplingRate(R.raw.noise_2ch_12khz_aot42_19_lufs_mp4);
-            checkUsacSamplingRate(R.raw.noise_2ch_22_05khz_aot42_19_lufs_mp4);
-            checkUsacSamplingRate(R.raw.noise_2ch_64khz_aot42_19_lufs_mp4);
-            checkUsacSamplingRate(R.raw.noise_2ch_88_2khz_aot42_19_lufs_mp4);
-            checkUsacSamplingRateWoLoudness(R.raw.noise_2ch_19_2khz_aot42_no_ludt_mp4);
-        } catch (Exception e) {
-            Log.v(TAG, "testDecodeUsacSamplingRatesM4a FAILED!");
-            throw new RuntimeException(e);
+        assertTrue("No AAC decoder found", sAacDecoderNames.size() > 0);
+
+        for (String aacDecName : sAacDecoderNames) {
+            try {
+                checkUsacSamplingRate(R.raw.noise_2ch_08khz_aot42_19_lufs_mp4, aacDecName);
+                checkUsacSamplingRate(R.raw.noise_2ch_12khz_aot42_19_lufs_mp4, aacDecName);
+                checkUsacSamplingRate(R.raw.noise_2ch_22_05khz_aot42_19_lufs_mp4, aacDecName);
+                checkUsacSamplingRate(R.raw.noise_2ch_64khz_aot42_19_lufs_mp4, aacDecName);
+                checkUsacSamplingRate(R.raw.noise_2ch_88_2khz_aot42_19_lufs_mp4, aacDecName);
+                checkUsacSamplingRateWoLoudness(R.raw.noise_2ch_19_2khz_aot42_no_ludt_mp4,
+                        aacDecName);
+            } catch (Exception e) {
+                Log.v(TAG, "testDecodeUsacSamplingRatesM4a for decoder" + aacDecName);
+                throw new RuntimeException(e);
+            }
         }
     }
 
@@ -248,7 +298,8 @@ public class DecoderTestXheAac {
      * USAC test DRC Effect Type
      */
     private void checkUsacDrcEffectType(int effectTypeID, float normFactor_L, float normFactor_R,
-                 String effectTypeName, int nCh, int aggressiveDrc) throws Exception {
+                 String effectTypeName, int nCh, int aggressiveDrc, String decoderName)
+                         throws Exception {
         int testinput = -1;
         AudioParameter decParams = new AudioParameter();
         DrcParams drcParams_def  = new DrcParams(127, 127, 96, 0, -1);
@@ -265,9 +316,9 @@ public class DecoderTestXheAac {
         }
 
         short[] decSamples_def  = decodeToMemory(decParams, testinput,
-                -1, null, drcParams_def);
+                -1, null, drcParams_def, decoderName);
         short[] decSamples_test = decodeToMemory(decParams, testinput,
-                -1, null, drcParams_test);
+                -1, null, drcParams_test, decoderName);
 
         float[] nrg_def  = checkEnergyUSAC(decSamples_def, decParams, nCh, 1, 0);
         float[] nrg_test = checkEnergyUSAC(decSamples_test, decParams, nCh, 1, 1);
@@ -290,14 +341,15 @@ public class DecoderTestXheAac {
     /**
      * USAC test stream switching
      */
-    private void checkUsacStreamSwitching(float nrg_ref, int encNch, int testinput) throws Exception
+    private void checkUsacStreamSwitching(float nrg_ref, int encNch, int testinput,
+            String decoderName) throws Exception
     {
         AudioParameter decParams = new AudioParameter();
         DrcParams drcParams      = new DrcParams(127, 127, 64, 0, -1);
 
         // Check stereo stream switching
         short[] decSamples = decodeToMemory(decParams, testinput,
-                -1, null, drcParams);
+                -1, null, drcParams, decoderName);
         float[] nrg = checkEnergyUSAC(decSamples, decParams, encNch, 1);
 
         float nrgRatio = nrg[0] / nrg_ref;
@@ -313,15 +365,15 @@ public class DecoderTestXheAac {
     /**
      * USAC test sampling rate
      */
-    private void checkUsacSamplingRate(int testinput) throws Exception {
+    private void checkUsacSamplingRate(int testinput, String decoderName) throws Exception {
         AudioParameter decParams  = new AudioParameter();
         DrcParams drcParams_def   = new DrcParams(127, 127, 64, 0, -1);
         DrcParams drcParams_test  = new DrcParams(127, 127, 96, 0, -1);
 
         short[] decSamples_def  = decodeToMemory(decParams, testinput,
-                -1, null, drcParams_def);
+                -1, null, drcParams_def, decoderName);
         short[] decSamples_test = decodeToMemory(decParams, testinput,
-                -1, null, drcParams_test);
+                -1, null, drcParams_test, decoderName);
 
         float[] nrg_def  = checkEnergyUSAC(decSamples_def, decParams, 2, 1);
         float[] nrg_test = checkEnergyUSAC(decSamples_test, decParams, 2, 1);
@@ -340,12 +392,12 @@ public class DecoderTestXheAac {
     /**
      * USAC test sampling rate for streams without loudness application
      */
-    private void checkUsacSamplingRateWoLoudness(int testinput) throws Exception {
+    private void checkUsacSamplingRateWoLoudness(int testinput, String decoderName) throws Exception
+    {
         AudioParameter decParams  = new AudioParameter();
         DrcParams drcParams       = new DrcParams();
 
-        short[] decSamples = decodeToMemory(decParams, testinput,
-                -1, null, drcParams);
+        short[] decSamples = decodeToMemory(decParams, testinput, -1, null, drcParams, decoderName);
 
         float[] nrg = checkEnergyUSAC(decSamples, decParams, 2, 1);
 
@@ -717,7 +769,7 @@ public class DecoderTestXheAac {
     }
 
     /**
-     * Decodes an compressed bitstream in the ISOBMFF into the RAM of the device.
+     * Decodes a compressed bitstream in the ISOBMFF into the RAM of the device.
      *
      * The decoder decodes compressed audio data as stored in the ISO Base Media File Format
      * (ISOBMFF) aka .mp4/.m4a. The decoder is not reproducing the waveform but stores the decoded
@@ -728,10 +780,12 @@ public class DecoderTestXheAac {
      * @param eossample the End-Of-Stream indicator
      * @param timestamps the time stamps to decode
      * @param drcParams the MPEG-D DRC decoder parameter configuration
+     * @param decoderName if non null, the name of the decoder to use for the decoding, otherwise
+     *     the default decoder for the format will be used
      * @throws RuntimeException
      */
     public short[] decodeToMemory(AudioParameter audioParams, int testinput,
-            int eossample, List<Long> timestamps, DrcParams drcParams)
+            int eossample, List<Long> timestamps, DrcParams drcParams, String decoderName)
             throws IOException
     {
         // TODO: code is the same as in DecoderTest, differences are:
@@ -739,7 +793,7 @@ public class DecoderTestXheAac {
         //          - no need/use of resetMode, configMode
         //       Split method so code can be shared
 
-        String localTag = TAG + "#decodeToMemory";
+        final String localTag = TAG + "#decodeToMemory";
         short [] decoded = new short[0];
         int decodedIdx = 0;
 
@@ -761,7 +815,11 @@ public class DecoderTestXheAac {
         assertTrue("not an audio file", mime.startsWith("audio/"));
 
         MediaFormat configFormat = format;
-        codec = MediaCodec.createDecoderByType(mime);
+        if (decoderName == null) {
+            codec = MediaCodec.createDecoderByType(mime);
+        } else {
+            codec = MediaCodec.createByCodecName(decoderName);
+        }
 
         // set DRC parameters
         if (drcParams != null) {
