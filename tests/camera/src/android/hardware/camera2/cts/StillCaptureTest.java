@@ -39,6 +39,7 @@ import android.hardware.camera2.cts.testcases.Camera2SurfaceViewTestCase;
 import android.hardware.camera2.params.MeteringRectangle;
 import android.media.Image;
 import android.os.ConditionVariable;
+import android.platform.test.annotations.AppModeFull;
 import android.util.Log;
 import android.util.Range;
 import android.util.Rational;
@@ -52,6 +53,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
+@AppModeFull
 public class StillCaptureTest extends Camera2SurfaceViewTestCase {
     private static final String TAG = "StillCaptureTest";
     private static final boolean VERBOSE = Log.isLoggable(TAG, Log.VERBOSE);
