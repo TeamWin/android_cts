@@ -67,15 +67,6 @@ public class DeviceOwnerTest extends BaseDevicePolicyTest {
     /** CreateAndManageUser is available and an additional user can be created. */
     private boolean mHasCreateAndManageUserFeature;
 
-    /** Forcing ephemeral users is implemented and supported on the device. */
-    private boolean mHasForceEphemeralUserFeature;
-
-    /**
-     * Force ephemeral users feature is implemented, but unsupported on the device (because of
-     * missing split system user).
-     */
-    private boolean mHasDisabledForceEphemeralUserFeature;
-
     /**
      * Whether Setup Wizard is disabled.
      */
@@ -95,10 +86,6 @@ public class DeviceOwnerTest extends BaseDevicePolicyTest {
         }
         mHasCreateAndManageUserFeature = mHasFeature && canCreateAdditionalUsers(1)
                 && hasDeviceFeature("android.software.managed_users");
-        mHasForceEphemeralUserFeature = mHasCreateAndManageUserFeature
-                && hasUserSplit();
-        mHasDisabledForceEphemeralUserFeature = mHasCreateAndManageUserFeature
-                && !hasUserSplit();
         mSetupWizardDisabled = NO_SETUP_WIZARD_PROVISIONING_MODE.contains(
                 getDevice().getProperty("ro.setupwizard.mode"));
     }
@@ -142,100 +129,6 @@ public class DeviceOwnerTest extends BaseDevicePolicyTest {
         } finally {
             removeUser(userId);
         }
-    }
-
-    /** Tries to toggle the force-ephemeral-users on and checks it was really set. */
-    public void testSetForceEphemeralUsers() throws Exception {
-        if (!mHasForceEphemeralUserFeature) {
-            return;
-        }
-        // Set force-ephemeral-users policy and verify it was set.
-        executeDeviceTestMethod(".ForceEphemeralUsersTest", "testSetForceEphemeralUsers");
-    }
-
-    /**
-     * Setting force-ephemeral-users policy to true without a split system user should fail.
-     */
-    public void testSetForceEphemeralUsersFailsWithoutSplitSystemUser() throws Exception {
-        if (mHasDisabledForceEphemeralUserFeature) {
-            executeDeviceTestMethod(".ForceEphemeralUsersTest", "testSetForceEphemeralUsersFails");
-        }
-    }
-
-    /**
-     * All users (except of the system user) must be removed after toggling the
-     * force-ephemeral-users policy to true.
-     *
-     * <p>If the current user is the system user, the other users are removed straight away.
-     */
-    public void testRemoveUsersOnSetForceEphemeralUsers() throws Exception {
-        if (!mHasForceEphemeralUserFeature) {
-            return;
-        }
-
-        // Create a user.
-        int userId = createUser();
-        assertTrue("User must have been created", listUsers().contains(userId));
-
-        // Set force-ephemeral-users policy and verify it was set.
-        executeDeviceTestMethod(".ForceEphemeralUsersTest", "testSetForceEphemeralUsers");
-
-        // Users have to be removed when force-ephemeral-users is toggled on.
-        assertFalse("User must have been removed", listUsers().contains(userId));
-    }
-
-    /**
-     * All users (except of the system user) must be removed after toggling the
-     * force-ephemeral-users policy to true.
-     *
-     * <p>If the current user is not the system user, switching to the system user should happen
-     * before all other users are removed.
-     */
-    public void testRemoveUsersOnSetForceEphemeralUsersWithUserSwitch() throws Exception {
-        if (!mHasForceEphemeralUserFeature) {
-            return;
-        }
-
-        // Create a user.
-        int userId = createUser();
-        assertTrue("User must have been created", listUsers().contains(userId));
-
-        // Switch to the new (non-system) user.
-        switchUser(userId);
-
-        // Set force-ephemeral-users policy and verify it was set.
-        executeDeviceTestMethod(".ForceEphemeralUsersTest", "testSetForceEphemeralUsers");
-
-        // Make sure the user has been removed. As it is not a synchronous operation - switching to
-        // the system user must happen first - give the system a little bit of time for finishing
-        // it.
-        final int sleepMs = 500;
-        final int maxSleepMs = 10000;
-        for (int totalSleptMs = 0; totalSleptMs < maxSleepMs; totalSleptMs += sleepMs) {
-            // Wait a little while for the user's removal.
-            Thread.sleep(sleepMs);
-
-            if (!listUsers().contains(userId)) {
-                // Success - the user has been removed.
-                return;
-            }
-        }
-
-        // The user hasn't been removed within the given time.
-        fail("User must have been removed");
-    }
-
-    /** The users created after setting force-ephemeral-users policy to true must be ephemeral. */
-    public void testCreateUserAfterSetForceEphemeralUsers() throws Exception {
-        if (!mHasForceEphemeralUserFeature) {
-            return;
-        }
-
-        // Set force-ephemeral-users policy and verify it was set.
-        executeDeviceTestMethod(".ForceEphemeralUsersTest", "testSetForceEphemeralUsers");
-
-        int userId = createUser();
-        assertTrue("User must be ephemeral", 0 != (getUserFlags(userId) & FLAG_EPHEMERAL));
     }
 
     public void testCreateAndManageUser_LowStorage() throws Exception {
