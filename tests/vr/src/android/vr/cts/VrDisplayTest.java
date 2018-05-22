@@ -24,6 +24,7 @@ import android.util.DisplayMetrics;
 import android.view.WindowManager;
 
 import java.nio.IntBuffer;
+import com.android.compatibility.common.util.CddTest;
 
 public class VrDisplayTest extends ActivityInstrumentationTestCase2<OpenGLESActivity> {
 
@@ -50,6 +51,7 @@ public class VrDisplayTest extends ActivityInstrumentationTestCase2<OpenGLESActi
     /**
      * Tests that the refresh rate is at least 60Hz.
      */
+     @CddTest(requirement="7.9.2/C-1-15")
     public void testRefreshRateIsAtLeast60Hz() throws Throwable {
         final int NUM_FRAMES = 200;
         // Add an extra frame to allow the activity to start up.
@@ -74,6 +76,7 @@ public class VrDisplayTest extends ActivityInstrumentationTestCase2<OpenGLESActi
     /**
      * Tests that the display resolution is at least 1080p.
      */
+    @CddTest(requirement="7.9.2/C-1-14")
     public void testDisplayResolution() {
         mActivity = getGlEsActivity(1, OpenGLESActivity.RENDERER_BASIC);
         if (!mActivity.supportsVrHighPerformance())
