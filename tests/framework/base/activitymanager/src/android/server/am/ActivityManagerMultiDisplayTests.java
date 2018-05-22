@@ -59,6 +59,7 @@ import static org.junit.Assert.fail;
 import static org.junit.Assume.assumeTrue;
 
 import android.content.ComponentName;
+import android.os.SystemClock;
 import android.platform.test.annotations.Presubmit;
 import android.server.am.ActivityManagerState.ActivityDisplay;
 import android.support.test.filters.FlakyTest;
@@ -68,6 +69,7 @@ import androidx.annotation.Nullable;
 import org.junit.Before;
 import org.junit.Test;
 
+import java.util.concurrent.TimeUnit;
 import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -1564,12 +1566,27 @@ public class ActivityManagerMultiDisplayTests extends ActivityManagerDisplayTest
             waitAndAssertActivityResumed(TEST_ACTIVITY, newDisplay.mId,
                     "Activity launched on external display must be resumed");
 
+            final LogSeparator logSeparator = separateLogs();
+
             displayStateSession.turnScreenOff();
 
             // Wait for the fullscreen stack to start sleeping, and then make sure the
             // test activity is still resumed.
-            waitAndAssertActivityStopped(RESIZEABLE_ACTIVITY,
-                    "Activity launched on primary display must be stopped after turning off");
+            int retry = 0;
+            ActivityLifecycleCounts lifecycleCounts;
+            do {
+                lifecycleCounts = new ActivityLifecycleCounts(RESIZEABLE_ACTIVITY, logSeparator);
+                if (lifecycleCounts.mStopCount == 1) {
+                    break;
+                }
+                logAlways("***testExternalDisplayActivityTurnPrimaryOff... retry=" + retry);
+                SystemClock.sleep(TimeUnit.SECONDS.toMillis(1));
+            } while (retry++ < 5);
+
+            if (lifecycleCounts.mStopCount != 1) {
+                fail(RESIZEABLE_ACTIVITY + " has received " + lifecycleCounts.mStopCount
+                        + " onStop() calls, expecting 1");
+            }
             waitAndAssertActivityResumed(TEST_ACTIVITY, newDisplay.mId,
                     "Activity launched on external display must be resumed");
         }

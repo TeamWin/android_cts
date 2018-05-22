@@ -17,16 +17,21 @@
 package android.app.usage.cts;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotEquals;
+import static org.junit.Assume.assumeTrue;
 
 import com.android.tradefed.device.DeviceNotAvailableException;
 import com.android.tradefed.device.ITestDevice;
-import com.android.tradefed.testtype.DeviceTestCase;
+import com.android.tradefed.testtype.DeviceJUnit4ClassRunner;
+import com.android.tradefed.testtype.junit4.BaseHostJUnit4Test;
 
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
+import org.junit.Before;
+import org.junit.Test;
+import org.junit.runner.RunWith;
 
-public class AppIdleHostTest extends DeviceTestCase {
+@RunWith(DeviceJUnit4ClassRunner.class)
+public class AppIdleHostTest extends BaseHostJUnit4Test {
     private static final String SETTINGS_APP_IDLE_CONSTANTS = "app_idle_constants";
 
     private static final String TEST_APP_PACKAGE = "android.app.usage.app";
@@ -38,17 +43,14 @@ public class AppIdleHostTest extends DeviceTestCase {
     private static final int SB_ACTIVE = 10;
     private static final int SB_WORKING_SET = 20;
     private static final int SB_FREQUENT = 30;
-    private static final int SB_RARE = 40;
-    private static final int SB_NEVER = 50;
 
     /**
      * A reference to the device under test.
      */
     private ITestDevice mDevice;
 
-    @Override
-    protected void setUp() throws Exception {
-        super.setUp();
+    @Before
+    public void setUp() {
         // Get the device, this gives a handle to run commands and install APKs.
         mDevice = getDevice();
     }
@@ -105,6 +107,7 @@ public class AppIdleHostTest extends DeviceTestCase {
     /**
      * Tests that the app is not idle right after it is launched.
      */
+    @Test
     public void testAppIsNotIdleAfterBeingLaunched() throws Exception {
         final String previousState = getAppIdleSettings();
         try {
@@ -122,6 +125,12 @@ public class AppIdleHostTest extends DeviceTestCase {
                 String.format("am set-standby-bucket %s %s", packageName, bucket));
     }
 
+    private boolean isAppStandbyEnabled() throws DeviceNotAvailableException {
+        final String result = mDevice.executeShellCommand(
+                "dumpsys usagestats is-app-standby-enabled").trim();
+        return Boolean.parseBoolean(result);
+    }
+
     private int getAppStandbyBucket(String packageName) throws Exception {
         String bucketString = mDevice.executeShellCommand(
                 String.format("am get-standby-bucket %s", packageName));
@@ -132,7 +141,9 @@ public class AppIdleHostTest extends DeviceTestCase {
         return -1;
     }
 
+    @Test
     public void testSetAppStandbyBucket() throws Exception {
+        assumeTrue("App standby not enabled on device", isAppStandbyEnabled());
         // Set to ACTIVE
         setAppStandbyBucket(TEST_APP_PACKAGE, SB_ACTIVE);
         assertEquals(SB_ACTIVE, getAppStandbyBucket(TEST_APP_PACKAGE));
@@ -141,7 +152,9 @@ public class AppIdleHostTest extends DeviceTestCase {
         assertEquals(20, getAppStandbyBucket(TEST_APP_PACKAGE));
     }
 
+    @Test
     public void testSetAppStandbyBuckets() throws Exception {
+        assumeTrue("App standby not enabled on device", isAppStandbyEnabled());
         // Set multiple packages states
         String command = String.format("am set-standby-bucket %s %d %s %d",
                 TEST_APP_PACKAGE, SB_FREQUENT, TEST_APP_PACKAGE2, SB_WORKING_SET);
@@ -150,12 +163,16 @@ public class AppIdleHostTest extends DeviceTestCase {
         assertEquals(SB_WORKING_SET, getAppStandbyBucket(TEST_APP_PACKAGE2));
     }
 
+    @Test
     public void testCantSetOwnStandbyBucket() throws Exception {
+        assumeTrue("App standby not enabled on device", isAppStandbyEnabled());
         setAppStandbyBucket("com.android.shell", 40);
         assertNotEquals(40, getAppStandbyBucket("com.android.shell"));
     }
 
+    @Test
     public void testOutOfBoundsStandbyBucket() throws Exception {
+        assumeTrue("App standby not enabled on device", isAppStandbyEnabled());
         setAppStandbyBucket(TEST_APP_PACKAGE, SB_ACTIVE);
         assertEquals(SB_ACTIVE, getAppStandbyBucket(TEST_APP_PACKAGE));
         // Try lower than min
