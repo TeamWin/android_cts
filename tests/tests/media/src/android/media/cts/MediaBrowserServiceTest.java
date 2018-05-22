@@ -15,6 +15,8 @@
  */
 package android.media.cts;
 
+import static android.media.cts.Utils.compareRemoteUserInfo;
+
 import android.content.ComponentName;
 import android.media.browse.MediaBrowser;
 import android.media.browse.MediaBrowser.MediaItem;
@@ -201,19 +203,19 @@ public class MediaBrowserServiceTest extends InstrumentationTestCase {
     public void testGetBrowserInfo() throws Exception {
         synchronized (mWaitLock) {
             // StubMediaBrowserService stores the browser info in its onGetRoot().
-            assertEquals(mBrowserInfo, StubMediaBrowserService.sBrowserInfo);
+            assertTrue(compareRemoteUserInfo(mBrowserInfo, StubMediaBrowserService.sBrowserInfo));
 
             StubMediaBrowserService.clearBrowserInfo();
             mMediaBrowser.subscribe(StubMediaBrowserService.MEDIA_ID_ROOT, mSubscriptionCallback);
             mWaitLock.wait(TIME_OUT_MS);
             assertTrue(mOnChildrenLoaded);
-            assertEquals(mBrowserInfo, StubMediaBrowserService.sBrowserInfo);
+            assertTrue(compareRemoteUserInfo(mBrowserInfo, StubMediaBrowserService.sBrowserInfo));
 
             StubMediaBrowserService.clearBrowserInfo();
             mMediaBrowser.getItem(StubMediaBrowserService.MEDIA_ID_CHILDREN[0], mItemCallback);
             mWaitLock.wait(TIME_OUT_MS);
             assertTrue(mOnItemLoaded);
-            assertEquals(mBrowserInfo, StubMediaBrowserService.sBrowserInfo);
+            assertTrue(compareRemoteUserInfo(mBrowserInfo, StubMediaBrowserService.sBrowserInfo));
         }
     }
 

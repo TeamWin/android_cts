@@ -89,6 +89,11 @@
                 <category android:name="android.intent.category.DEFAULT"/>
                 <action android:name="com.android.cts.managedprofile.ACTION_TEST_PRIMARY_ACTIVITY" />
             </intent-filter>
+            <!-- Catch ACTION_PICK in case there is no other app handing it -->
+            <intent-filter>
+                <action android:name="android.intent.action.PICK" />
+                <category android:name="android.intent.category.DEFAULT" />
+            </intent-filter>
         </activity>
         <activity android:name=".AllUsersActivity">
             <intent-filter>

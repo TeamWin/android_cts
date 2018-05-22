@@ -15,6 +15,8 @@
  */
 package android.media.cts;
 
+import static android.media.cts.Utils.compareRemoteUserInfo;
+
 import android.content.Intent;
 import android.media.AudioManager;
 import android.media.Rating;
@@ -87,7 +89,7 @@ public class MediaControllerTest extends AndroidTestCase {
             assertNotNull(mCallback.mCommandCallback);
             assertEquals(command, mCallback.mCommand);
             assertEquals(EXTRAS_VALUE, mCallback.mExtras.getString(EXTRAS_KEY));
-            assertEquals(mControllerInfo, mCallback.mCallerInfo);
+            assertTrue(compareRemoteUserInfo(mControllerInfo, mCallback.mCallerInfo));
         }
     }
 
@@ -149,43 +151,43 @@ public class MediaControllerTest extends AndroidTestCase {
             controls.play();
             mWaitLock.wait(TIME_OUT_MS);
             assertTrue(mCallback.mOnPlayCalled);
-            assertEquals(mControllerInfo, mCallback.mCallerInfo);
+            assertTrue(compareRemoteUserInfo(mControllerInfo, mCallback.mCallerInfo));
 
             mCallback.reset();
             controls.pause();
             mWaitLock.wait(TIME_OUT_MS);
             assertTrue(mCallback.mOnPauseCalled);
-            assertEquals(mControllerInfo, mCallback.mCallerInfo);
+            assertTrue(compareRemoteUserInfo(mControllerInfo, mCallback.mCallerInfo));
 
             mCallback.reset();
             controls.stop();
             mWaitLock.wait(TIME_OUT_MS);
             assertTrue(mCallback.mOnStopCalled);
-            assertEquals(mControllerInfo, mCallback.mCallerInfo);
+            assertTrue(compareRemoteUserInfo(mControllerInfo, mCallback.mCallerInfo));
 
             mCallback.reset();
             controls.fastForward();
             mWaitLock.wait(TIME_OUT_MS);
             assertTrue(mCallback.mOnFastForwardCalled);
-            assertEquals(mControllerInfo, mCallback.mCallerInfo);
+            assertTrue(compareRemoteUserInfo(mControllerInfo, mCallback.mCallerInfo));
 
             mCallback.reset();
             controls.rewind();
             mWaitLock.wait(TIME_OUT_MS);
             assertTrue(mCallback.mOnRewindCalled);
-            assertEquals(mControllerInfo, mCallback.mCallerInfo);
+            assertTrue(compareRemoteUserInfo(mControllerInfo, mCallback.mCallerInfo));
 
             mCallback.reset();
             controls.skipToPrevious();
             mWaitLock.wait(TIME_OUT_MS);
             assertTrue(mCallback.mOnSkipToPreviousCalled);
-            assertEquals(mControllerInfo, mCallback.mCallerInfo);
+            assertTrue(compareRemoteUserInfo(mControllerInfo, mCallback.mCallerInfo));
 
             mCallback.reset();
             controls.skipToNext();
             mWaitLock.wait(TIME_OUT_MS);
             assertTrue(mCallback.mOnSkipToNextCalled);
-            assertEquals(mControllerInfo, mCallback.mCallerInfo);
+            assertTrue(compareRemoteUserInfo(mControllerInfo, mCallback.mCallerInfo));
 
             mCallback.reset();
             final long seekPosition = 1000;
@@ -193,7 +195,7 @@ public class MediaControllerTest extends AndroidTestCase {
             mWaitLock.wait(TIME_OUT_MS);
             assertTrue(mCallback.mOnSeekToCalled);
             assertEquals(seekPosition, mCallback.mSeekPosition);
-            assertEquals(mControllerInfo, mCallback.mCallerInfo);
+            assertTrue(compareRemoteUserInfo(mControllerInfo, mCallback.mCallerInfo));
 
             mCallback.reset();
             final Rating rating = Rating.newStarRating(Rating.RATING_5_STARS, 3f);
@@ -202,7 +204,7 @@ public class MediaControllerTest extends AndroidTestCase {
             assertTrue(mCallback.mOnSetRatingCalled);
             assertEquals(rating.getRatingStyle(), mCallback.mRating.getRatingStyle());
             assertEquals(rating.getStarRating(), mCallback.mRating.getStarRating());
-            assertEquals(mControllerInfo, mCallback.mCallerInfo);
+            assertTrue(compareRemoteUserInfo(mControllerInfo, mCallback.mCallerInfo));
 
             mCallback.reset();
             final String mediaId = "test-media-id";
@@ -213,7 +215,7 @@ public class MediaControllerTest extends AndroidTestCase {
             assertTrue(mCallback.mOnPlayFromMediaIdCalled);
             assertEquals(mediaId, mCallback.mMediaId);
             assertEquals(EXTRAS_VALUE, mCallback.mExtras.getString(EXTRAS_KEY));
-            assertEquals(mControllerInfo, mCallback.mCallerInfo);
+            assertTrue(compareRemoteUserInfo(mControllerInfo, mCallback.mCallerInfo));
 
             mCallback.reset();
             final String query = "test-query";
@@ -222,7 +224,7 @@ public class MediaControllerTest extends AndroidTestCase {
             assertTrue(mCallback.mOnPlayFromSearchCalled);
             assertEquals(query, mCallback.mQuery);
             assertEquals(EXTRAS_VALUE, mCallback.mExtras.getString(EXTRAS_KEY));
-            assertEquals(mControllerInfo, mCallback.mCallerInfo);
+            assertTrue(compareRemoteUserInfo(mControllerInfo, mCallback.mCallerInfo));
 
             mCallback.reset();
             final Uri uri = Uri.parse("content://test/popcorn.mod");
@@ -231,7 +233,7 @@ public class MediaControllerTest extends AndroidTestCase {
             assertTrue(mCallback.mOnPlayFromUriCalled);
             assertEquals(uri, mCallback.mUri);
             assertEquals(EXTRAS_VALUE, mCallback.mExtras.getString(EXTRAS_KEY));
-            assertEquals(mControllerInfo, mCallback.mCallerInfo);
+            assertTrue(compareRemoteUserInfo(mControllerInfo, mCallback.mCallerInfo));
 
             mCallback.reset();
             final String action = "test-action";
@@ -240,7 +242,7 @@ public class MediaControllerTest extends AndroidTestCase {
             assertTrue(mCallback.mOnCustomActionCalled);
             assertEquals(action, mCallback.mAction);
             assertEquals(EXTRAS_VALUE, mCallback.mExtras.getString(EXTRAS_KEY));
-            assertEquals(mControllerInfo, mCallback.mCallerInfo);
+            assertTrue(compareRemoteUserInfo(mControllerInfo, mCallback.mCallerInfo));
 
             mCallback.reset();
             mCallback.mOnCustomActionCalled = false;
@@ -251,7 +253,7 @@ public class MediaControllerTest extends AndroidTestCase {
             assertTrue(mCallback.mOnCustomActionCalled);
             assertEquals(action, mCallback.mAction);
             assertEquals(EXTRAS_VALUE, mCallback.mExtras.getString(EXTRAS_KEY));
-            assertEquals(mControllerInfo, mCallback.mCallerInfo);
+            assertTrue(compareRemoteUserInfo(mControllerInfo, mCallback.mCallerInfo));
 
             mCallback.reset();
             final long queueItemId = 1000;
@@ -259,13 +261,13 @@ public class MediaControllerTest extends AndroidTestCase {
             mWaitLock.wait(TIME_OUT_MS);
             assertTrue(mCallback.mOnSkipToQueueItemCalled);
             assertEquals(queueItemId, mCallback.mQueueItemId);
-            assertEquals(mControllerInfo, mCallback.mCallerInfo);
+            assertTrue(compareRemoteUserInfo(mControllerInfo, mCallback.mCallerInfo));
 
             mCallback.reset();
             controls.prepare();
             mWaitLock.wait(TIME_OUT_MS);
             assertTrue(mCallback.mOnPrepareCalled);
-            assertEquals(mControllerInfo, mCallback.mCallerInfo);
+            assertTrue(compareRemoteUserInfo(mControllerInfo, mCallback.mCallerInfo));
 
             mCallback.reset();
             controls.prepareFromMediaId(mediaId, extras);
@@ -273,7 +275,7 @@ public class MediaControllerTest extends AndroidTestCase {
             assertTrue(mCallback.mOnPrepareFromMediaIdCalled);
             assertEquals(mediaId, mCallback.mMediaId);
             assertEquals(EXTRAS_VALUE, mCallback.mExtras.getString(EXTRAS_KEY));
-            assertEquals(mControllerInfo, mCallback.mCallerInfo);
+            assertTrue(compareRemoteUserInfo(mControllerInfo, mCallback.mCallerInfo));
 
             mCallback.reset();
             controls.prepareFromSearch(query, extras);
@@ -281,7 +283,7 @@ public class MediaControllerTest extends AndroidTestCase {
             assertTrue(mCallback.mOnPrepareFromSearchCalled);
             assertEquals(query, mCallback.mQuery);
             assertEquals(EXTRAS_VALUE, mCallback.mExtras.getString(EXTRAS_KEY));
-            assertEquals(mControllerInfo, mCallback.mCallerInfo);
+            assertTrue(compareRemoteUserInfo(mControllerInfo, mCallback.mCallerInfo));
 
             mCallback.reset();
             controls.prepareFromUri(uri, extras);
@@ -289,7 +291,7 @@ public class MediaControllerTest extends AndroidTestCase {
             assertTrue(mCallback.mOnPrepareFromUriCalled);
             assertEquals(uri, mCallback.mUri);
             assertEquals(EXTRAS_VALUE, mCallback.mExtras.getString(EXTRAS_KEY));
-            assertEquals(mControllerInfo, mCallback.mCallerInfo);
+            assertTrue(compareRemoteUserInfo(mControllerInfo, mCallback.mCallerInfo));
 
             mCallback.reset();
             KeyEvent event = new KeyEvent(KeyEvent.ACTION_DOWN, KeyEvent.KEYCODE_MEDIA_STOP);
@@ -299,7 +301,7 @@ public class MediaControllerTest extends AndroidTestCase {
             // KeyEvent doesn't override equals.
             assertEquals(KeyEvent.ACTION_DOWN, mCallback.mKeyEvent.getAction());
             assertEquals(KeyEvent.KEYCODE_MEDIA_STOP, mCallback.mKeyEvent.getKeyCode());
-            assertEquals(mControllerInfo, mCallback.mCallerInfo);
+            assertTrue(compareRemoteUserInfo(mControllerInfo, mCallback.mCallerInfo));
 
             // just call the callback once directly so it's marked as tested
             try {

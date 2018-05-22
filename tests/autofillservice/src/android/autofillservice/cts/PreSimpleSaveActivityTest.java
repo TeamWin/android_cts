@@ -75,7 +75,6 @@ public class PreSimpleSaveActivityTest extends CustomDescriptionWithLinkTestCase
         // Trigger autofill.
         mActivity.syncRunOnUiThread(() -> mActivity.mPreInput.requestFocus());
         sReplier.getNextFillRequest();
-        Helper.assertHasSessions(mPackageName);
 
         // Trigger save.
         mActivity.syncRunOnUiThread(() -> {
@@ -134,7 +133,6 @@ public class PreSimpleSaveActivityTest extends CustomDescriptionWithLinkTestCase
         // Trigger autofill.
         mActivity.syncRunOnUiThread(() -> mActivity.mPreInput.requestFocus());
         sReplier.getNextFillRequest();
-        Helper.assertHasSessions(mPackageName);
 
         // Trigger save.
         mActivity.syncRunOnUiThread(() -> {
@@ -194,7 +192,6 @@ public class PreSimpleSaveActivityTest extends CustomDescriptionWithLinkTestCase
         }
 
         sReplier.getNextFillRequest();
-        Helper.assertHasSessions(mPackageName);
 
         // Trigger save.
         newActivty.syncRunOnUiThread(() -> {
@@ -228,7 +225,6 @@ public class PreSimpleSaveActivityTest extends CustomDescriptionWithLinkTestCase
         // Trigger autofill.
         mActivity.syncRunOnUiThread(() -> mActivity.mPreInput.requestFocus());
         sReplier.getNextFillRequest();
-        Helper.assertHasSessions(mPackageName);
 
         // Trigger save.
         mActivity.syncRunOnUiThread(() -> {
@@ -286,7 +282,6 @@ public class PreSimpleSaveActivityTest extends CustomDescriptionWithLinkTestCase
         // Trigger autofill.
         mActivity.getAutofillManager().requestAutofill(mActivity.mPreInput);
         sReplier.getNextFillRequest();
-        Helper.assertHasSessions(mPackageName);
 
         // Trigger save.
         mActivity.syncRunOnUiThread(() -> {
@@ -321,7 +316,6 @@ public class PreSimpleSaveActivityTest extends CustomDescriptionWithLinkTestCase
         newActivty.getAutofillManager().requestAutofill(newActivty.mInput);
 
         sReplier.getNextFillRequest();
-        Helper.assertHasSessions(mPackageName);
 
         // Trigger save.
         newActivty.syncRunOnUiThread(() -> {
@@ -367,7 +361,6 @@ public class PreSimpleSaveActivityTest extends CustomDescriptionWithLinkTestCase
         // Trigger autofill.
         mActivity.syncRunOnUiThread(() -> mActivity.mPreInput.requestFocus());
         sReplier.getNextFillRequest();
-        Helper.assertHasSessions(mPackageName);
 
         // Trigger save.
         mActivity.syncRunOnUiThread(() -> {

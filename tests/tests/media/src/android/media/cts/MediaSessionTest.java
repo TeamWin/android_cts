@@ -16,6 +16,7 @@
 package android.media.cts;
 
 import static android.media.AudioAttributes.USAGE_GAME;
+import static android.media.cts.Utils.compareRemoteUserInfo;
 
 import android.app.PendingIntent;
 import android.content.ComponentName;
@@ -341,43 +342,43 @@ public class MediaSessionTest extends AndroidTestCase {
         simulateMediaKeyInput(KeyEvent.KEYCODE_MEDIA_PLAY);
         assertTrue(sessionCallback.await(TIME_OUT_MS));
         assertEquals(1, sessionCallback.mOnPlayCalledCount);
-        assertEquals(mKeyDispatcherInfo, sessionCallback.mCallerInfo);
+        assertTrue(compareRemoteUserInfo(mKeyDispatcherInfo, sessionCallback.mCallerInfo));
 
         sessionCallback.reset(1);
         simulateMediaKeyInput(KeyEvent.KEYCODE_MEDIA_PAUSE);
         assertTrue(sessionCallback.await(TIME_OUT_MS));
         assertTrue(sessionCallback.mOnPauseCalled);
-        assertEquals(mKeyDispatcherInfo, sessionCallback.mCallerInfo);
+        assertTrue(compareRemoteUserInfo(mKeyDispatcherInfo, sessionCallback.mCallerInfo));
 
         sessionCallback.reset(1);
         simulateMediaKeyInput(KeyEvent.KEYCODE_MEDIA_NEXT);
         assertTrue(sessionCallback.await(TIME_OUT_MS));
         assertTrue(sessionCallback.mOnSkipToNextCalled);
-        assertEquals(mKeyDispatcherInfo, sessionCallback.mCallerInfo);
+        assertTrue(compareRemoteUserInfo(mKeyDispatcherInfo, sessionCallback.mCallerInfo));
 
         sessionCallback.reset(1);
         simulateMediaKeyInput(KeyEvent.KEYCODE_MEDIA_PREVIOUS);
         assertTrue(sessionCallback.await(TIME_OUT_MS));
         assertTrue(sessionCallback.mOnSkipToPreviousCalled);
-        assertEquals(mKeyDispatcherInfo, sessionCallback.mCallerInfo);
+        assertTrue(compareRemoteUserInfo(mKeyDispatcherInfo, sessionCallback.mCallerInfo));
 
         sessionCallback.reset(1);
         simulateMediaKeyInput(KeyEvent.KEYCODE_MEDIA_STOP);
         assertTrue(sessionCallback.await(TIME_OUT_MS));
         assertTrue(sessionCallback.mOnStopCalled);
-        assertEquals(mKeyDispatcherInfo, sessionCallback.mCallerInfo);
+        assertTrue(compareRemoteUserInfo(mKeyDispatcherInfo, sessionCallback.mCallerInfo));
 
         sessionCallback.reset(1);
         simulateMediaKeyInput(KeyEvent.KEYCODE_MEDIA_FAST_FORWARD);
         assertTrue(sessionCallback.await(TIME_OUT_MS));
         assertTrue(sessionCallback.mOnFastForwardCalled);
-        assertEquals(mKeyDispatcherInfo, sessionCallback.mCallerInfo);
+        assertTrue(compareRemoteUserInfo(mKeyDispatcherInfo, sessionCallback.mCallerInfo));
 
         sessionCallback.reset(1);
         simulateMediaKeyInput(KeyEvent.KEYCODE_MEDIA_REWIND);
         assertTrue(sessionCallback.await(TIME_OUT_MS));
         assertTrue(sessionCallback.mOnRewindCalled);
-        assertEquals(mKeyDispatcherInfo, sessionCallback.mCallerInfo);
+        assertTrue(compareRemoteUserInfo(mKeyDispatcherInfo, sessionCallback.mCallerInfo));
 
         // Test PLAY_PAUSE button twice.
         // First, simulate PLAY_PAUSE button while in STATE_PAUSED.
@@ -386,7 +387,7 @@ public class MediaSessionTest extends AndroidTestCase {
         simulateMediaKeyInput(KeyEvent.KEYCODE_MEDIA_PLAY_PAUSE);
         assertTrue(sessionCallback.await(TIME_OUT_MS));
         assertEquals(1, sessionCallback.mOnPlayCalledCount);
-        assertEquals(mKeyDispatcherInfo, sessionCallback.mCallerInfo);
+        assertTrue(compareRemoteUserInfo(mKeyDispatcherInfo, sessionCallback.mCallerInfo));
 
         // Next, simulate PLAY_PAUSE button while in STATE_PLAYING.
         sessionCallback.reset(1);
@@ -394,7 +395,7 @@ public class MediaSessionTest extends AndroidTestCase {
         simulateMediaKeyInput(KeyEvent.KEYCODE_MEDIA_PLAY_PAUSE);
         assertTrue(sessionCallback.await(TIME_OUT_MS));
         assertTrue(sessionCallback.mOnPauseCalled);
-        assertEquals(mKeyDispatcherInfo, sessionCallback.mCallerInfo);
+        assertTrue(compareRemoteUserInfo(mKeyDispatcherInfo, sessionCallback.mCallerInfo));
 
         // Double tap of PLAY_PAUSE is the next track instead of changing PLAY/PAUSE.
         sessionCallback.reset(2);
@@ -405,7 +406,7 @@ public class MediaSessionTest extends AndroidTestCase {
         assertTrue(sessionCallback.mOnSkipToNextCalled);
         assertEquals(0, sessionCallback.mOnPlayCalledCount);
         assertFalse(sessionCallback.mOnPauseCalled);
-        assertEquals(mKeyDispatcherInfo, sessionCallback.mCallerInfo);
+        assertTrue(compareRemoteUserInfo(mKeyDispatcherInfo, sessionCallback.mCallerInfo));
 
         // Test if PLAY_PAUSE double tap is considered as two single taps when another media
         // key is pressed.
@@ -417,7 +418,7 @@ public class MediaSessionTest extends AndroidTestCase {
         assertTrue(sessionCallback.await(TIME_OUT_MS));
         assertEquals(2, sessionCallback.mOnPlayCalledCount);
         assertTrue(sessionCallback.mOnStopCalled);
-        assertEquals(mKeyDispatcherInfo, sessionCallback.mCallerInfo);
+        assertTrue(compareRemoteUserInfo(mKeyDispatcherInfo, sessionCallback.mCallerInfo));
 
         // Test if media keys are handled in order.
         sessionCallback.reset(2);
@@ -427,7 +428,7 @@ public class MediaSessionTest extends AndroidTestCase {
         assertTrue(sessionCallback.await(TIME_OUT_MS));
         assertEquals(1, sessionCallback.mOnPlayCalledCount);
         assertTrue(sessionCallback.mOnStopCalled);
-        assertEquals(mKeyDispatcherInfo, sessionCallback.mCallerInfo);
+        assertTrue(compareRemoteUserInfo(mKeyDispatcherInfo, sessionCallback.mCallerInfo));
         synchronized (mWaitLock) {
             assertEquals(PlaybackState.STATE_STOPPED,
                     mSession.getController().getPlaybackState().getState());

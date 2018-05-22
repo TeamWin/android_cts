@@ -28,7 +28,7 @@ LOCAL_SRC_FILES := \
 LOCAL_SDK_VERSION := test_current
 
 # Tag this module as a cts test artifact
-LOCAL_COMPATIBILITY_SUITE := cts vts general-tests
+LOCAL_COMPATIBILITY_SUITE := cts vts general-tests cts_instant
 
 LOCAL_PACKAGE_NAME := CtsDeviceAlertWindowTestApp
 

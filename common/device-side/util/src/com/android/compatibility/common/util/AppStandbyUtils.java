@@ -24,24 +24,15 @@ import java.util.regex.Pattern;
 public class AppStandbyUtils {
     private static final String TAG = "CtsAppStandbyUtils";
 
-    private static final Pattern APP_IDLE_ENABLED_PATTERN =
-            Pattern.compile("\\bmAppIdleEnabled=(true|false)\\b");
-
     /**
      * Returns if app standby is enabled.
      *
      * @return true if enabled; or false if disabled.
      */
     public static boolean isAppStandbyEnabled() {
-        final Matcher matcher = APP_IDLE_ENABLED_PATTERN.matcher(
-                SystemUtil.runShellCommand("dumpsys usagestats"));
-        if (!matcher.find()) {
-            throw new IllegalStateException("Couldn't find mAppIdleEnabled in usagestats dump.");
-        }
-        boolean enabled = Boolean.valueOf(matcher.group(1));
-
-        Log.d(TAG, "AppStandby is " + (enabled ? "enabled" : "disabled"));
-        return enabled;
+        final String result = SystemUtil.runShellCommand(
+                "dumpsys usagestats is-app-standby-enabled").trim();
+        return Boolean.parseBoolean(result);
     }
 
     /**

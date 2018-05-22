@@ -21,6 +21,8 @@ import static android.autofillservice.cts.Timeouts.CONNECTION_TIMEOUT;
 
 import static com.google.common.truth.Truth.assertWithMessage;
 
+import android.os.Handler;
+import android.os.HandlerThread;
 import android.util.Log;
 import android.view.View;
 import android.view.autofill.AutofillManager.AutofillCallback;
@@ -39,14 +41,33 @@ final class MyAutofillCallback extends AutofillCallback {
 
     public static final Timeout MY_TIMEOUT = CONNECTION_TIMEOUT;
 
+    // We must handle all requests in a separate thread as the service's main thread is the also
+    // the UI thread of the test process and we don't want to hose it in case of failures here
+    private static final HandlerThread sMyThread = new HandlerThread("MyCallbackThread");
+    private final Handler mHandler;
+
+    static {
+        Log.i(TAG, "Starting thread " + sMyThread);
+        sMyThread.start();
+    }
+
+    MyAutofillCallback() {
+        mHandler = Handler.createAsync(sMyThread.getLooper());
+    }
+
+    private void handleOffer(MyEvent event) {
+        Log.v(TAG, "handleOffer: " + event);
+        Helper.offer(mEvents, event, MY_TIMEOUT.ms());
+    }
+
     @Override
     public void onAutofillEvent(View view, int event) {
-        offer(new MyEvent(view, event));
+        mHandler.post(() -> offer(new MyEvent(view, event)));
     }
 
     @Override
     public void onAutofillEvent(View view, int childId, int event) {
-        offer(new MyEvent(view, childId, event));
+        mHandler.post(() -> offer(new MyEvent(view, childId, event)));
     }
 
     private void offer(MyEvent event) {

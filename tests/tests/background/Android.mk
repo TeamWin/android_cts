@@ -34,7 +34,7 @@ LOCAL_SRC_FILES := $(call all-java-files-under, src)
 
 LOCAL_PACKAGE_NAME := CtsBackgroundRestrictionsTestCases
 
-LOCAL_COMPATIBILITY_SUITE := cts vts
+LOCAL_COMPATIBILITY_SUITE := cts vts cts_instant
 
 LOCAL_SDK_VERSION := test_current
 
