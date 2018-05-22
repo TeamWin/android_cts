@@ -32,4 +32,17 @@ public class Poc16_05 extends SecurityTestCase {
     String logcat =  AdbUtils.runCommandLine("logcat -d", getDevice());
     assertNotMatches("[\\s\\n\\S]*IGraphicBufferProducer_Info is Leaked[\\s\\n\\S]*", logcat);
   }
+
+    /**
+     *  b/27597103
+     */
+    @SecurityTest
+    public void testPocCVE_2016_2451() throws Exception {
+        AdbUtils.runCommandLine("logcat -c", getDevice());
+        AdbUtils.runPoc("CVE-2016-2451", getDevice(), 60);
+        String logcatOut = AdbUtils.runCommandLine("logcat -d", getDevice());
+        assertNotMatches("[\\s\\n\\S]*Fatal signal 11 \\(SIGSEGV\\)" +
+                         "[\\s\\n\\S]*>>> /system/bin/" +
+                         "mediaserver <<<[\\s\\n\\S]*", logcatOut);
+    }
 }
