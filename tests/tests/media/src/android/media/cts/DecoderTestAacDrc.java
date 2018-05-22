@@ -39,6 +39,7 @@ import org.junit.Test;
 
 import java.io.IOException;
 import java.nio.ByteBuffer;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
@@ -63,7 +64,7 @@ public class DecoderTestAacDrc {
         // full boost, full cut, target ref level: -23dBFS, heavy compression: no
         DrcParams drcParams = new DrcParams(127, 127, 92, 0);
         short[] decSamples = decodeToMemory(decParams, R.raw.sine_2ch_48khz_aot5_drclevel_mp4,
-                -1, null, drcParams);
+                -1, null, drcParams, null /*decoderName: use default decoder*/);
         DecoderTest decTester = new DecoderTest();
         decTester.checkEnergy(decSamples, decParams, 2, 0.70f);
     }
@@ -76,7 +77,7 @@ public class DecoderTestAacDrc {
     public void testDecodeAacDrcFullM4a() throws Exception {
         AudioParameter decParams = new AudioParameter();
         short[] decSamples = decodeToMemory(decParams, R.raw.sine_2ch_48khz_aot5_drcfull_mp4,
-                -1, null, null);
+                -1, null, null, null /*decoderName: use default decoder*/);
         DecoderTest decTester = new DecoderTest();
         decTester.checkEnergy(decSamples, decParams, 2, 0.80f);
     }
@@ -91,7 +92,7 @@ public class DecoderTestAacDrc {
         // half boost, half cut, target ref level: -20dBFS, heavy compression: no
         DrcParams drcParams = new DrcParams(63, 63, 80, 0);
         short[] decSamples = decodeToMemory(decParams, R.raw.sine_2ch_48khz_aot2_drchalf_mp4,
-                -1, null, drcParams);
+                -1, null, drcParams, null /*decoderName: use default decoder*/);
         DecoderTest decTester = new DecoderTest();
         decTester.checkEnergy(decSamples, decParams, 2, 0.80f);
     }
@@ -106,7 +107,7 @@ public class DecoderTestAacDrc {
         // no boost, no cut, target ref level: -16dBFS, heavy compression: no
         DrcParams drcParams = new DrcParams(0, 0, 64, 0);       // normalize to -16dBFS
         short[] decSamples = decodeToMemory(decParams, R.raw.sine_2ch_48khz_aot5_drcoff_mp4,
-                -1, null, drcParams);
+                -1, null, drcParams, null /*decoderName: use default decoder*/);
         DecoderTest decTester = new DecoderTest();
         decTester.checkEnergy(decSamples, decParams, 2, 0.80f);
     }
@@ -121,7 +122,7 @@ public class DecoderTestAacDrc {
         // full boost, full cut, target ref level: -16dBFS, heavy compression: yes
         DrcParams drcParams = new DrcParams(127, 127, 64, 1);
         short[] decSamples = decodeToMemory(decParams, R.raw.sine_2ch_48khz_aot2_drcheavy_mp4,
-                -1, null, drcParams);
+                -1, null, drcParams, null /*decoderName: use default decoder*/);
         DecoderTest decTester = new DecoderTest();
         decTester.checkEnergy(decSamples, decParams, 2, 0.80f);
     }
@@ -134,7 +135,7 @@ public class DecoderTestAacDrc {
     public void testDecodeAacDrcClipM4a() throws Exception {
         AudioParameter decParams = new AudioParameter();
         short[] decSamples = decodeToMemory(decParams, R.raw.sine_2ch_48khz_aot5_drcclip_mp4,
-                -1, null, null);
+                -1, null, null, null /*decoderName: use default decoder*/);
         checkClipping(decSamples, decParams, 248.0f /* Hz */);
     }
 
@@ -152,35 +153,42 @@ public class DecoderTestAacDrc {
     public void testDecodeUsacLoudnessM4a() throws Exception {
         Log.v(TAG, "START testDecodeUsacLoudnessM4a");
 
-        // test default loudness
-        // decoderTargetLevel = 64 --> target output level = -16.0 dBFs
-        try {
-            checkUsacLoudness(DEFAULT_DECODER_TARGET_LEVEL, 1, 1.0f);
-        } catch (Exception e) {
-            Log.v(TAG, "testDecodeUsacLoudnessM4a for default loudness failed");
-            throw new RuntimeException(e);
-        }
+        ArrayList<String> aacDecoderNames = DecoderTestXheAac.initAacDecoderNames();
+        assertTrue("No AAC decoder found", aacDecoderNames.size() > 0);
 
-        // test loudness boost
-        // decoderTargetLevel = 40 --> target output level = -10.0 dBFs
-        // normFactor = 1/(10^(-6/10)) = 3.98f
-        //    where "-6" is the difference between the default level (-16), and -10 for this test
-        try {
-            checkUsacLoudness(40, 1, (float)(1.0f/Math.pow(10.0f, -6.0f/10.0f)));
-        } catch (Exception e) {
-            Log.v(TAG, "testDecodeUsacLoudnessM4a for loudness boost failed");
-            throw new RuntimeException(e);
-        }
+        for (String aacDecName : aacDecoderNames) {
+            // test default loudness
+            // decoderTargetLevel = 64 --> target output level = -16.0 dBFs
+            try {
+                checkUsacLoudness(DEFAULT_DECODER_TARGET_LEVEL, 1, 1.0f, aacDecName);
+            } catch (Exception e) {
+                Log.v(TAG, "testDecodeUsacLoudnessM4a for default loudness failed for " +
+                        aacDecName);
+                throw new RuntimeException(e);
+            }
 
-        // test loudness attenuation
-        // decoderTargetLevel = 96 --> target output level = -24.0 dBFs
-        // normFactor = 1/(10^(8/10)) = 0.15f
-        //     where -8 is the difference between the default level (-16), and -24 for this test
-        try {
-            checkUsacLoudness(96, 0, (float)(1.0f/Math.pow(10.0f, 8.0f/10.0f)));
-        } catch (Exception e) {
-            Log.v(TAG, "testDecodeUsacLoudnessM4a for loudness attenuation failed");
-            throw new RuntimeException(e);
+            // test loudness boost
+            // decoderTargetLevel = 40 --> target output level = -10.0 dBFs
+            // normFactor = 1/(10^(-6/10)) = 3.98f
+            //   where "-6" is the difference between the default level (-16), and -10 for this test
+            try {
+                checkUsacLoudness(40, 1, (float)(1.0f/Math.pow(10.0f, -6.0f/10.0f)), aacDecName);
+            } catch (Exception e) {
+                Log.v(TAG, "testDecodeUsacLoudnessM4a for loudness boost failed for " + aacDecName);
+                throw new RuntimeException(e);
+            }
+
+            // test loudness attenuation
+            // decoderTargetLevel = 96 --> target output level = -24.0 dBFs
+            // normFactor = 1/(10^(8/10)) = 0.15f
+            //     where 8 is the difference between the default level (-16), and -24 for this test
+            try {
+                checkUsacLoudness(96, 0, (float)(1.0f/Math.pow(10.0f, 8.0f/10.0f)), aacDecName);
+            } catch (Exception e) {
+                Log.v(TAG, "testDecodeUsacLoudnessM4a for loudness attenuation failed for "
+                        + aacDecName);
+                throw new RuntimeException(e);
+            }
         }
     }
 
@@ -307,16 +315,16 @@ public class DecoderTestAacDrc {
     /**
      * USAC test DRC loudness
      */
-    private void checkUsacLoudness(int decoderTargetLevel, int heavy, float normFactor)
-            throws Exception {
+    private void checkUsacLoudness(int decoderTargetLevel, int heavy, float normFactor,
+            String decoderName) throws Exception {
         AudioParameter decParams = new AudioParameter();
         DrcParams drcParams_def  = new DrcParams(127, 127, DEFAULT_DECODER_TARGET_LEVEL, 1);
         DrcParams drcParams_test = new DrcParams(127, 127, decoderTargetLevel, heavy);
 
         short[] decSamples_def = decodeToMemory(decParams, R.raw.noise_2ch_48khz_aot42_19_lufs_mp4,
-                -1, null, drcParams_def);
+                -1, null, drcParams_def, decoderName);
         short[] decSamples_test = decodeToMemory(decParams, R.raw.noise_2ch_48khz_aot42_19_lufs_mp4,
-                -1, null, drcParams_test);
+                -1, null, drcParams_test, decoderName);
 
         DecoderTestXheAac decTesterXheAac = new DecoderTestXheAac();
         float[] nrg_def  = decTesterXheAac.checkEnergyUSAC(decSamples_def, decParams, 2, 1);
@@ -388,7 +396,7 @@ public class DecoderTestAacDrc {
     //          - no need/use of resetMode, configMode
     //       Split method so code can be shared
     private short[] decodeToMemory(AudioParameter audioParams, int testinput,
-            int eossample, List<Long> timestamps, DrcParams drcParams)
+            int eossample, List<Long> timestamps, DrcParams drcParams, String decoderName)
             throws IOException
     {
         String localTag = TAG + "#decodeToMemory";
@@ -413,7 +421,11 @@ public class DecoderTestAacDrc {
         assertTrue("not an audio file", mime.startsWith("audio/"));
 
         MediaFormat configFormat = format;
-        codec = MediaCodec.createDecoderByType(mime);
+        if (decoderName == null) {
+            codec = MediaCodec.createDecoderByType(mime);
+        } else {
+            codec = MediaCodec.createByCodecName(decoderName);
+        }
 
         // set DRC parameters
         if (drcParams != null) {
