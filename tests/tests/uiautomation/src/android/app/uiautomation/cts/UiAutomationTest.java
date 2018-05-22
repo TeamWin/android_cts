@@ -24,6 +24,7 @@ import android.content.Context;
 import android.content.Intent;
 import android.os.ParcelFileDescriptor;
 import android.os.SystemClock;
+import android.platform.test.annotations.AppModeFull;
 import android.platform.test.annotations.Presubmit;
 import android.provider.Settings;
 import android.test.InstrumentationTestCase;
@@ -278,6 +279,7 @@ public class UiAutomationTest extends InstrumentationTestCase {
         }
     }
 
+    @AppModeFull
     public void testDontSuppressAccessibility_canStartA11yService() throws IOException,
             InterruptedException {
         turnAccessibilityOff();
@@ -291,6 +293,7 @@ public class UiAutomationTest extends InstrumentationTestCase {
         }
     }
 
+    @AppModeFull
     public void testServiceWithNoFlags_shutsDownA11yService() throws IOException {
         turnAccessibilityOff();
         try {
@@ -307,6 +310,7 @@ public class UiAutomationTest extends InstrumentationTestCase {
         }
     }
 
+    @AppModeFull
     public void testServiceSupressingA11yServices_a11yServiceStartsWhenDestroyed()
             throws IOException, InterruptedException {
         turnAccessibilityOff();
@@ -326,6 +330,7 @@ public class UiAutomationTest extends InstrumentationTestCase {
         }
     }
 
+    @AppModeFull
     public void testServiceSupressingA11yServices_a11yServiceStartsWhenFlagsChange()
             throws IOException, InterruptedException {
         turnAccessibilityOff();
