@@ -68,6 +68,7 @@ public class InputMethodServiceLifecycleTest extends BaseHostJUnit4Test {
         final TestInfo testSwitchIme1ToIme2 = new TestInfo(DeviceTestConstants.PACKAGE,
                 DeviceTestConstants.TEST_CLASS, DeviceTestConstants.TEST_SWITCH_IME1_TO_IME2);
         sendTestStartEvent(testSwitchIme1ToIme2);
+        installPackage(EditTextAppConstants.APK, "-r");
         installPackage(Ime1Constants.APK, "-r");
         installPackage(Ime2Constants.APK, "-r");
         shell(ShellCommandUtils.enableIme(Ime1Constants.IME_ID));
@@ -82,6 +83,7 @@ public class InputMethodServiceLifecycleTest extends BaseHostJUnit4Test {
         final TestInfo testCreateIme1 = new TestInfo(DeviceTestConstants.PACKAGE,
                 DeviceTestConstants.TEST_CLASS, DeviceTestConstants.TEST_CREATE_IME1);
         sendTestStartEvent(testCreateIme1);
+        installPackage(EditTextAppConstants.APK, "-r");
         installPackage(Ime1Constants.APK, "-r");
         shell(ShellCommandUtils.enableIme(Ime1Constants.IME_ID));
         shell(ShellCommandUtils.setCurrentIme(Ime1Constants.IME_ID));
@@ -96,6 +98,7 @@ public class InputMethodServiceLifecycleTest extends BaseHostJUnit4Test {
         final TestInfo testCreateIme1 = new TestInfo(DeviceTestConstants.PACKAGE,
                 DeviceTestConstants.TEST_CLASS, DeviceTestConstants.TEST_CREATE_IME1);
         sendTestStartEvent(testCreateIme1);
+        installPackage(EditTextAppConstants.APK, "-r");
         installPackage(Ime1Constants.APK, "-r");
         shell(ShellCommandUtils.enableIme(Ime1Constants.IME_ID));
         shell(ShellCommandUtils.setCurrentIme(Ime1Constants.IME_ID));
@@ -111,6 +114,7 @@ public class InputMethodServiceLifecycleTest extends BaseHostJUnit4Test {
                 DeviceTestConstants.PACKAGE, DeviceTestConstants.TEST_CLASS,
                 DeviceTestConstants.TEST_SWITCH_INPUTMETHOD);
         sendTestStartEvent(testSetInputMethod);
+        installPackage(EditTextAppConstants.APK, "-r");
         installPackage(Ime1Constants.APK, "-r");
         installPackage(Ime2Constants.APK, "-r");
         shell(ShellCommandUtils.enableIme(Ime1Constants.IME_ID));
@@ -126,6 +130,7 @@ public class InputMethodServiceLifecycleTest extends BaseHostJUnit4Test {
                 DeviceTestConstants.PACKAGE, DeviceTestConstants.TEST_CLASS,
                 DeviceTestConstants.TEST_SWITCH_NEXT_INPUT);
         sendTestStartEvent(testSwitchInputs);
+        installPackage(EditTextAppConstants.APK, "-r");
         installPackage(Ime1Constants.APK, "-r");
         installPackage(Ime2Constants.APK, "-r");
         shell(ShellCommandUtils.enableIme(Ime1Constants.IME_ID));
@@ -143,6 +148,7 @@ public class InputMethodServiceLifecycleTest extends BaseHostJUnit4Test {
                 DeviceTestConstants.PACKAGE, DeviceTestConstants.TEST_CLASS,
                 DeviceTestConstants.TEST_SWITCH_PREVIOUS_INPUT);
         sendTestStartEvent(testSwitchInputs);
+        installPackage(EditTextAppConstants.APK, "-r");
         installPackage(Ime1Constants.APK, "-r");
         installPackage(Ime2Constants.APK, "-r");
         shell(ShellCommandUtils.enableIme(Ime1Constants.IME_ID));
@@ -158,6 +164,7 @@ public class InputMethodServiceLifecycleTest extends BaseHostJUnit4Test {
                 DeviceTestConstants.PACKAGE, DeviceTestConstants.TEST_CLASS,
                 DeviceTestConstants.TEST_INPUT_UNBINDS_ON_IME_STOPPED);
         sendTestStartEvent(testUnbind);
+        installPackage(EditTextAppConstants.APK, "-r");
         installPackage(Ime1Constants.APK, "-r");
         installPackage(Ime2Constants.APK, "-r");
         shell(ShellCommandUtils.enableIme(Ime1Constants.IME_ID));
@@ -173,8 +180,8 @@ public class InputMethodServiceLifecycleTest extends BaseHostJUnit4Test {
                 DeviceTestConstants.PACKAGE, DeviceTestConstants.TEST_CLASS,
                 DeviceTestConstants.TEST_INPUT_UNBINDS_ON_APP_STOPPED);
         sendTestStartEvent(testUnbind);
-        installPackage(Ime1Constants.APK, "-r");
         installPackage(EditTextAppConstants.APK, "-r");
+        installPackage(Ime1Constants.APK, "-r");
         shell(ShellCommandUtils.enableIme(Ime1Constants.IME_ID));
         shell(ShellCommandUtils.setCurrentIme(Ime1Constants.IME_ID));
 
