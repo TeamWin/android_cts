@@ -16,6 +16,9 @@
 
 package android.ui.cts;
 
+import android.platform.test.annotations.AppModeFull;
+import android.platform.test.annotations.AppModeInstant;
+
 import com.android.compatibility.common.tradefed.build.CompatibilityBuildHelper;
 import com.android.compatibility.common.util.MeasureRun;
 import com.android.compatibility.common.util.MeasureTime;
@@ -71,7 +74,17 @@ public class InstallTimeTest extends DeviceTestCase implements IAbiReceiver, IBu
         super.tearDown();
     }
 
-    public void testInstallTime() throws Exception {
+    @AppModeInstant
+    public void testInstallTimeInstant() throws Exception {
+        testInstallTime(true);
+    }
+
+    @AppModeFull
+    public void testInstallTimeFull() throws Exception {
+        testInstallTime(false);
+    }
+
+    private void testInstallTime(boolean instant) throws Exception {
         String streamName = "test_install_time";
         MetricsReportLog report = new MetricsReportLog(mBuild, mAbi.getName(),
                 String.format("%s#%s", getClass().getName(), "testInstallTime"), REPORT_LOG_NAME,
@@ -87,7 +100,8 @@ public class InstallTimeTest extends DeviceTestCase implements IAbiReceiver, IBu
             @Override
             public void run(int i) throws Exception {
                 File app = buildHelper.getTestFile(APK);
-                String[] options = {AbiUtils.createAbiFlag(mAbi.getName())};
+                String[] options =
+                        {AbiUtils.createAbiFlag(mAbi.getName()), instant ? "--instant" : ""};
                 device.installPackage(app, false, options);
             }
         });
