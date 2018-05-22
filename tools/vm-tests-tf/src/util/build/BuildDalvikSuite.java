@@ -445,7 +445,8 @@ public class BuildDalvikSuite extends BuildUtilBase {
             return;
         }
 
-        if (new File(sourceFolder, fileName + ".d").exists()) {
+        if (new File(sourceFolder, fileName + ".d").exists() &&
+            !new File(sourceFolder, fileName + ".smali").exists()) {
 
             BuildStep.BuildFile inputFile = new BuildStep.BuildFile(
                     JAVASRC_FOLDER, fileName + ".d");
@@ -463,6 +464,26 @@ public class BuildDalvikSuite extends BuildUtilBase {
             targets.add(jarBuildStep);
             return;
         }
+
+        if (new File(sourceFolder, fileName + ".smali").exists()) {
+
+            BuildStep.BuildFile inputFile = new BuildStep.BuildFile(
+                    JAVASRC_FOLDER, fileName + ".smali");
+            BuildStep.BuildFile dexFile = new BuildStep.BuildFile(
+                    OUTPUT_FOLDER, fileName + ".dex");
+
+            SmaliBuildStep buildStep = new SmaliBuildStep(inputFile, dexFile);
+
+            BuildStep.BuildFile jarFile = new BuildStep.BuildFile(
+                    OUTPUT_FOLDER, fileName + ".jar");
+
+            JarBuildStep jarBuildStep = new JarBuildStep(dexFile,
+                    "classes.dex", jarFile, true);
+            jarBuildStep.addChild(buildStep);
+            targets.add(jarBuildStep);
+            return;
+        }
+
 
         File srcFile = new File(sourceFolder, fileName + ".java");
         if (srcFile.exists()) {
