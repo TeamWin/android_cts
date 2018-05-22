@@ -58,4 +58,16 @@ public class Poc18_06 extends SecurityTestCase {
       assertNotMatchesMultiLine(">>> /system/bin/mediaserver <<<[^\\n]*?\\n" +
                                 "[^\\n]*?signal 11 \\(SIGSEGV\\)", logcat);
   }
+
+    /**
+     *  b/73172817
+     */
+    @SecurityTest
+    public void testPocCVE_2018_9344() throws Exception {
+        AdbUtils.runCommandLine("logcat -c", getDevice());
+        AdbUtils.runPoc("CVE-2018-9344", getDevice(), 30);
+        String output = AdbUtils.runCommandLine("logcat -d", getDevice());
+        assertNotMatchesMultiLine(">>> /vendor/bin/hw/android.hardware.cas@1.0-service <<<" +
+                ".*?signal 11 \\(SIGSEGV\\)", output);
+    }
 }
