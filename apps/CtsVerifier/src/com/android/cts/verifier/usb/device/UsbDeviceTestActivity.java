@@ -72,7 +72,7 @@ public class UsbDeviceTestActivity extends PassFailButtons.Activity {
             "com.android.cts.verifier.usb.device.USB_PERMISSION";
     private static final String LOG_TAG = UsbDeviceTestActivity.class.getSimpleName();
     private static final int TIMEOUT_MILLIS = 5000;
-    private static final int LARGE_BUFFER_SIZE = 1305049;
+    private static final int LARGE_BUFFER_SIZE = 124619;
 
     private UsbManager mUsbManager;
     private BroadcastReceiver mUsbDeviceConnectionReceiver;

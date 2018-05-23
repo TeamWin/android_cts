@@ -49,6 +49,7 @@ import android.text.format.DateUtils;
 import android.util.Log;
 import android.util.SparseArray;
 import android.util.SparseLongArray;
+import android.view.KeyEvent;
 
 import com.android.compatibility.common.util.AppStandbyUtils;
 
@@ -740,7 +741,7 @@ public class UsageStatsTest {
 
         // We need to start out with the screen on.
         if (!mUiDevice.isScreenOn()) {
-            mUiDevice.wakeUp();
+            pressWakeUp();
             SystemClock.sleep(1000);
         }
 
@@ -761,7 +762,7 @@ public class UsageStatsTest {
             SparseArray<AggrAllEventsData> baseAggr = getAggrEventData(0);
 
             // First test -- put device to sleep and make sure we see this event.
-            mUiDevice.sleep();
+            pressSleep();
 
             // Do we have one event, going in to non-interactive mode?
             events = waitForEventCount(INTERACTIVE_EVENTS, startTime, 1);
@@ -773,7 +774,7 @@ public class UsageStatsTest {
             // XXX need to wait a bit so we don't accidentally trigger double-power
             // to launch camera.  (SHOULD FIX HOW WE WAKEUP / SLEEP TO NOT USE POWER KEY)
             SystemClock.sleep(500);
-            mUiDevice.wakeUp();
+            pressWakeUp();
             events = waitForEventCount(INTERACTIVE_EVENTS, startTime, 2);
             assertEquals(Event.SCREEN_NON_INTERACTIVE, events.get(0).getEventType());
             assertEquals(Event.SCREEN_INTERACTIVE, events.get(1).getEventType());
@@ -803,7 +804,7 @@ public class UsageStatsTest {
 
         } finally {
             // Dismiss keyguard to get device back in its normal state.
-            mUiDevice.wakeUp();
+            pressWakeUp();
             mUiDevice.executeShellCommand("wm dismiss-keyguard");
         }
     }
@@ -837,5 +838,13 @@ public class UsageStatsTest {
             return;
         }
         fail("Should throw SecurityException");
+    }
+
+    private void pressWakeUp() {
+        mUiDevice.pressKeyCode(KeyEvent.KEYCODE_WAKEUP);
+    }
+
+    private void pressSleep() {
+        mUiDevice.pressKeyCode(KeyEvent.KEYCODE_SLEEP);
     }
 }

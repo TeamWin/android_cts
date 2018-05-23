@@ -36,6 +36,7 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 
 import java.io.UnsupportedEncodingException;
+import com.android.compatibility.common.util.CddTest;
 
 /**
  * Test that the Vulkan loader is present, supports the required extensions, and that system
@@ -98,7 +99,7 @@ public class VulkanFeaturesTest {
         mVulkanDevices = getVulkanDevices();
         mBestDevice = getBestDevice();
     }
-
+    @CddTest(requirement="7.1.4.2/C-1-1,C-2-1")
     @Test
     public void testVulkanHardwareFeatures() throws JSONException {
         if (DEBUG) {
@@ -167,6 +168,7 @@ public class VulkanFeaturesTest {
         }
     }
 
+    @CddTest(requirement="7.9.2/C-1-5")
     @Test
     public void testVulkan1_1Requirements() throws JSONException {
         if (mVulkanHardwareVersion == null || mVulkanHardwareVersion.version < VULKAN_1_1)
