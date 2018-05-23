@@ -454,6 +454,10 @@ def collect_data(fps, w, h, test_length):
             w, h, s, e*NSEC_TO_MSEC, fps)
         caps = cam.do_capture([req]*int(fps*test_length), fmt)
 
+        # Capture a bit more gyro samples for use in
+        # get_best_alignment_offset
+        time.sleep(0.2)
+
         # Get the gyro events.
         print "Reading out sensor events"
         gyro = cam.get_sensor_events()["gyro"]
