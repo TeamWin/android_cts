@@ -104,9 +104,10 @@ public class MediaSessionManagerTest extends InstrumentationTestCase {
 
     public void testSetOnVolumeKeyLongPressListener() throws Exception {
         Context context = getInstrumentation().getTargetContext();
-        if (context.getPackageManager().hasSystemFeature(PackageManager.FEATURE_LEANBACK) ||
-            context.getResources().getBoolean(Resources.getSystem().getIdentifier(
-               "config_handleVolumeKeysInWindowManager", "bool", "android"))) {
+        if (context.getPackageManager().hasSystemFeature(PackageManager.FEATURE_LEANBACK)
+                || context.getPackageManager().hasSystemFeature(PackageManager.FEATURE_WATCH)
+                || context.getResources().getBoolean(Resources.getSystem().getIdentifier(
+                        "config_handleVolumeKeysInWindowManager", "bool", "android"))) {
             // Skip this test, because the PhoneWindowManager dispatches volume key
             // events directly to the audio service to change the system volume.
             return;
