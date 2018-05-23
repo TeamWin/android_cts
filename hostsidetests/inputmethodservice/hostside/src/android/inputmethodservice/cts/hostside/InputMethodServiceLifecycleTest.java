@@ -32,6 +32,8 @@ import android.inputmethodservice.cts.common.Ime2Constants;
 import android.inputmethodservice.cts.common.test.DeviceTestConstants;
 import android.inputmethodservice.cts.common.test.ShellCommandUtils;
 import android.inputmethodservice.cts.common.test.TestInfo;
+import android.platform.test.annotations.AppModeFull;
+import android.platform.test.annotations.AppModeInstant;
 
 import com.android.tradefed.testtype.DeviceJUnit4ClassRunner;
 import com.android.tradefed.testtype.junit4.BaseHostJUnit4Test;
@@ -63,12 +65,20 @@ public class InputMethodServiceLifecycleTest extends BaseHostJUnit4Test {
         shell(ShellCommandUtils.resetImes());
     }
 
-    @Test
-    public void testSwitchIme() throws Exception {
+    private void installPossibleInstantPackage(String apkFileName, boolean instant)
+            throws Exception {
+        if (instant) {
+            installPackage(apkFileName, "-r", "--instant");
+        } else {
+            installPackage(apkFileName, "-r");
+        }
+    }
+
+    private void testSwitchIme(boolean instant) throws Exception {
         final TestInfo testSwitchIme1ToIme2 = new TestInfo(DeviceTestConstants.PACKAGE,
                 DeviceTestConstants.TEST_CLASS, DeviceTestConstants.TEST_SWITCH_IME1_TO_IME2);
         sendTestStartEvent(testSwitchIme1ToIme2);
-        installPackage(EditTextAppConstants.APK, "-r");
+        installPossibleInstantPackage(EditTextAppConstants.APK, instant);
         installPackage(Ime1Constants.APK, "-r");
         installPackage(Ime2Constants.APK, "-r");
         shell(ShellCommandUtils.enableIme(Ime1Constants.IME_ID));
@@ -78,12 +88,23 @@ public class InputMethodServiceLifecycleTest extends BaseHostJUnit4Test {
         assertTrue(runDeviceTestMethod(testSwitchIme1ToIme2));
     }
 
+    @AppModeFull
     @Test
-    public void testUninstallCurrentIme() throws Exception {
+    public void testSwitchImeull() throws Exception {
+        testSwitchIme(false);
+    }
+
+    @AppModeInstant
+    @Test
+    public void testSwitchImeInstant() throws Exception {
+        testSwitchIme(true);
+    }
+
+    private void testUninstallCurrentIme(boolean instant) throws Exception {
         final TestInfo testCreateIme1 = new TestInfo(DeviceTestConstants.PACKAGE,
                 DeviceTestConstants.TEST_CLASS, DeviceTestConstants.TEST_CREATE_IME1);
         sendTestStartEvent(testCreateIme1);
-        installPackage(EditTextAppConstants.APK, "-r");
+        installPossibleInstantPackage(EditTextAppConstants.APK, instant);
         installPackage(Ime1Constants.APK, "-r");
         shell(ShellCommandUtils.enableIme(Ime1Constants.IME_ID));
         shell(ShellCommandUtils.setCurrentIme(Ime1Constants.IME_ID));
@@ -93,12 +114,23 @@ public class InputMethodServiceLifecycleTest extends BaseHostJUnit4Test {
         assertImeNotSelectedInSecureSettings(Ime1Constants.IME_ID, TIMEOUT);
     }
 
+    @AppModeFull
     @Test
-    public void testDisableCurrentIme() throws Exception {
+    public void testUninstallCurrentImeFull() throws Exception {
+        testUninstallCurrentIme(false);
+    }
+
+    @AppModeInstant
+    @Test
+    public void testUninstallCurrentImeInstant() throws Exception {
+        testUninstallCurrentIme(true);
+    }
+
+    private void testDisableCurrentIme(boolean instant) throws Exception {
         final TestInfo testCreateIme1 = new TestInfo(DeviceTestConstants.PACKAGE,
                 DeviceTestConstants.TEST_CLASS, DeviceTestConstants.TEST_CREATE_IME1);
         sendTestStartEvent(testCreateIme1);
-        installPackage(EditTextAppConstants.APK, "-r");
+        installPossibleInstantPackage(EditTextAppConstants.APK, instant);
         installPackage(Ime1Constants.APK, "-r");
         shell(ShellCommandUtils.enableIme(Ime1Constants.IME_ID));
         shell(ShellCommandUtils.setCurrentIme(Ime1Constants.IME_ID));
@@ -108,13 +140,24 @@ public class InputMethodServiceLifecycleTest extends BaseHostJUnit4Test {
         assertImeNotSelectedInSecureSettings(Ime1Constants.IME_ID, TIMEOUT);
     }
 
+    @AppModeFull
     @Test
-    public void testSwitchInputMethod() throws Exception {
+    public void testDisableCurrentImeFull() throws Exception {
+        testDisableCurrentIme(false);
+    }
+
+    @AppModeInstant
+    @Test
+    public void testDisableCurrentImeInstant() throws Exception {
+        testDisableCurrentIme(true);
+    }
+
+    private void testSwitchInputMethod(boolean instant) throws Exception {
         final TestInfo testSetInputMethod = new TestInfo(
                 DeviceTestConstants.PACKAGE, DeviceTestConstants.TEST_CLASS,
                 DeviceTestConstants.TEST_SWITCH_INPUTMETHOD);
         sendTestStartEvent(testSetInputMethod);
-        installPackage(EditTextAppConstants.APK, "-r");
+        installPossibleInstantPackage(EditTextAppConstants.APK, instant);
         installPackage(Ime1Constants.APK, "-r");
         installPackage(Ime2Constants.APK, "-r");
         shell(ShellCommandUtils.enableIme(Ime1Constants.IME_ID));
@@ -124,13 +167,24 @@ public class InputMethodServiceLifecycleTest extends BaseHostJUnit4Test {
         assertTrue(runDeviceTestMethod(testSetInputMethod));
     }
 
+    @AppModeFull
     @Test
-    public void testSwitchToNextInput() throws Exception {
+    public void testSwitchInputMethodFull() throws Exception {
+        testSwitchInputMethod(false);
+    }
+
+    @AppModeInstant
+    @Test
+    public void testSwitchInputMethodInstant() throws Exception {
+        testSwitchInputMethod(true);
+    }
+
+    private void testSwitchToNextInput(boolean instant) throws Exception {
         final TestInfo testSwitchInputs = new TestInfo(
                 DeviceTestConstants.PACKAGE, DeviceTestConstants.TEST_CLASS,
                 DeviceTestConstants.TEST_SWITCH_NEXT_INPUT);
         sendTestStartEvent(testSwitchInputs);
-        installPackage(EditTextAppConstants.APK, "-r");
+        installPossibleInstantPackage(EditTextAppConstants.APK, instant);
         installPackage(Ime1Constants.APK, "-r");
         installPackage(Ime2Constants.APK, "-r");
         shell(ShellCommandUtils.enableIme(Ime1Constants.IME_ID));
@@ -142,13 +196,24 @@ public class InputMethodServiceLifecycleTest extends BaseHostJUnit4Test {
         assertTrue(runDeviceTestMethod(testSwitchInputs));
     }
 
+    @AppModeFull
     @Test
-    public void testSwitchToPreviousInput() throws Exception {
+    public void testSwitchToNextInputFull() throws Exception {
+        testSwitchToNextInput(false);
+    }
+
+    @AppModeInstant
+    @Test
+    public void testSwitchToNextInputInstant() throws Exception {
+        testSwitchToNextInput(true);
+    }
+
+    private void testSwitchToPreviousInput(boolean instant) throws Exception {
         final TestInfo testSwitchInputs = new TestInfo(
                 DeviceTestConstants.PACKAGE, DeviceTestConstants.TEST_CLASS,
                 DeviceTestConstants.TEST_SWITCH_PREVIOUS_INPUT);
         sendTestStartEvent(testSwitchInputs);
-        installPackage(EditTextAppConstants.APK, "-r");
+        installPossibleInstantPackage(EditTextAppConstants.APK, instant);
         installPackage(Ime1Constants.APK, "-r");
         installPackage(Ime2Constants.APK, "-r");
         shell(ShellCommandUtils.enableIme(Ime1Constants.IME_ID));
@@ -158,13 +223,24 @@ public class InputMethodServiceLifecycleTest extends BaseHostJUnit4Test {
         assertTrue(runDeviceTestMethod(testSwitchInputs));
     }
 
+    @AppModeFull
     @Test
-    public void testInputUnbindsOnImeStopped() throws Exception {
+    public void testSwitchToPreviousInputFull() throws Exception {
+        testSwitchToPreviousInput(false);
+    }
+
+    @AppModeInstant
+    @Test
+    public void testSwitchToPreviousInputInstant() throws Exception {
+        testSwitchToPreviousInput(true);
+    }
+
+    private void testInputUnbindsOnImeStopped(boolean instant) throws Exception {
         final TestInfo testUnbind = new TestInfo(
                 DeviceTestConstants.PACKAGE, DeviceTestConstants.TEST_CLASS,
                 DeviceTestConstants.TEST_INPUT_UNBINDS_ON_IME_STOPPED);
         sendTestStartEvent(testUnbind);
-        installPackage(EditTextAppConstants.APK, "-r");
+        installPossibleInstantPackage(EditTextAppConstants.APK, instant);
         installPackage(Ime1Constants.APK, "-r");
         installPackage(Ime2Constants.APK, "-r");
         shell(ShellCommandUtils.enableIme(Ime1Constants.IME_ID));
@@ -174,18 +250,41 @@ public class InputMethodServiceLifecycleTest extends BaseHostJUnit4Test {
         assertTrue(runDeviceTestMethod(testUnbind));
     }
 
+    @AppModeFull
     @Test
-    public void testInputUnbindsOnAppStop() throws Exception {
+    public void testInputUnbindsOnImeStoppedFull() throws Exception {
+        testInputUnbindsOnImeStopped(false);
+    }
+
+    @AppModeInstant
+    @Test
+    public void testInputUnbindsOnImeStoppedInstant() throws Exception {
+        testInputUnbindsOnImeStopped(true);
+    }
+
+    private void testInputUnbindsOnAppStop(boolean instant) throws Exception {
         final TestInfo testUnbind = new TestInfo(
                 DeviceTestConstants.PACKAGE, DeviceTestConstants.TEST_CLASS,
                 DeviceTestConstants.TEST_INPUT_UNBINDS_ON_APP_STOPPED);
         sendTestStartEvent(testUnbind);
-        installPackage(EditTextAppConstants.APK, "-r");
+        installPossibleInstantPackage(EditTextAppConstants.APK, instant);
         installPackage(Ime1Constants.APK, "-r");
         shell(ShellCommandUtils.enableIme(Ime1Constants.IME_ID));
         shell(ShellCommandUtils.setCurrentIme(Ime1Constants.IME_ID));
 
         assertTrue(runDeviceTestMethod(testUnbind));
+    }
+
+    @AppModeFull
+    @Test
+    public void testInputUnbindsOnAppStopFull() throws Exception {
+        testInputUnbindsOnAppStop(false);
+    }
+
+    @AppModeInstant
+    @Test
+    public void testInputUnbindsOnAppStopInstant() throws Exception {
+        testInputUnbindsOnAppStop(true);
     }
 
     private void sendTestStartEvent(final TestInfo deviceTest) throws Exception {
