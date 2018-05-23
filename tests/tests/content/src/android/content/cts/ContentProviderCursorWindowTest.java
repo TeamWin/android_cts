@@ -17,6 +17,7 @@
 package android.content.cts;
 
 import android.database.Cursor;
+import android.database.CursorWindowAllocationException;
 import android.database.sqlite.SQLiteException;
 import android.net.Uri;
 import android.test.AndroidTestCase;
@@ -37,11 +38,20 @@ public class ContentProviderCursorWindowTest extends AndroidTestCase {
     * test for b/34128677
     */
     @SecurityTest
-    public void testQuery() throws IOException {
-        Cursor cursor = getContext().getContentResolver().query(
-                Uri.parse("content://cursorwindow.provider/hello"),
-                null, null, null, null
-        );
+    public void testQuery() {
+        // First check if the system has a patch for enforcing protected Parcel data
+        Cursor cursor;
+        try {
+            cursor = getContext().getContentResolver().query(
+                    Uri.parse("content://cursorwindow.provider/hello"),
+                    null, null, null, null);
+        } catch (CursorWindowAllocationException expected) {
+            Log.i(TAG, "Expected exception: " + expected);
+            return;
+        }
+
+        // If the system has no patch for protected Parcel data,
+        // it should still fail while reading from the cursor
         try {
             cursor.moveToFirst();
 
