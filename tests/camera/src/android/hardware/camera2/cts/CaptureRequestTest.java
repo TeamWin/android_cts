@@ -39,6 +39,7 @@ import android.hardware.camera2.params.RggbChannelVector;
 import android.hardware.camera2.params.TonemapCurve;
 import android.media.Image;
 import android.os.Parcel;
+import android.platform.test.annotations.AppModeFull;
 import android.util.ArraySet;
 import android.util.Log;
 import android.util.Range;
@@ -60,6 +61,7 @@ import java.util.List;
  * manual ISP control and other per-frame control and synchronization.
  * </p>
  */
+@AppModeFull
 public class CaptureRequestTest extends Camera2SurfaceViewTestCase {
     private static final String TAG = "CaptureRequestTest";
     private static final boolean VERBOSE = Log.isLoggable(TAG, Log.VERBOSE);

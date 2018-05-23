@@ -48,6 +48,7 @@ import android.hardware.camera2.cts.rs.ScriptYuvMeans2dTo1d;
 import android.hardware.camera2.cts.rs.ScriptYuvToRgb;
 import android.os.Handler;
 import android.os.HandlerThread;
+import android.platform.test.annotations.AppModeFull;
 import android.renderscript.Allocation;
 import android.renderscript.Script.LaunchOptions;
 import android.test.AndroidTestCase;
@@ -71,6 +72,7 @@ import java.util.List;
  *
  * <p>YUV_420_888: flexible YUV420, it is a mandatory format for camera.</p>
  */
+@AppModeFull
 public class AllocationTest extends AndroidTestCase {
     private static final String TAG = "AllocationTest";
     private static final boolean VERBOSE = Log.isLoggable(TAG, Log.VERBOSE);

@@ -39,6 +39,7 @@ import android.os.ConditionVariable;
 import android.os.Environment;
 import android.os.Looper;
 import android.os.SystemClock;
+import android.platform.test.annotations.AppModeFull;
 import android.test.ActivityInstrumentationTestCase2;
 import android.test.MoreAsserts;
 import android.test.UiThreadTest;
@@ -64,6 +65,7 @@ import junit.framework.AssertionFailedError;
 /**
  * This test case must run with hardware. It can't be tested in emulator
  */
+@AppModeFull
 @LargeTest
 public class CameraTest extends ActivityInstrumentationTestCase2<CameraCtsActivity> {
     private static final String TAG = "CameraTest";

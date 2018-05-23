@@ -39,6 +39,7 @@ import android.media.Image;
 import android.media.Image.Plane;
 import android.media.ImageReader;
 import android.os.ConditionVariable;
+import android.platform.test.annotations.AppModeFull;
 import android.util.Log;
 import android.util.Size;
 import android.view.Surface;
@@ -66,6 +67,7 @@ import static android.hardware.camera2.cts.CameraTestUtils.getValueNotNull;
  * <p>Some invalid access test. </p>
  * <p>TODO: Add more format tests? </p>
  */
+@AppModeFull
 public class ImageReaderTest extends Camera2AndroidTestCase {
     private static final String TAG = "ImageReaderTest";
     private static final boolean VERBOSE = Log.isLoggable(TAG, Log.VERBOSE);

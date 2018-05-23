@@ -39,6 +39,7 @@ import android.media.MediaFormat;
 import android.media.MediaRecorder;
 import android.os.Environment;
 import android.os.SystemClock;
+import android.platform.test.annotations.AppModeFull;
 import android.test.suitebuilder.annotation.LargeTest;
 import android.util.Log;
 import android.util.Range;
@@ -60,6 +61,7 @@ import java.util.HashMap;
  * CameraDevice video recording use case tests by using MediaRecorder and
  * MediaCodec.
  */
+@AppModeFull
 @LargeTest
 public class RecordingTest extends Camera2SurfaceViewTestCase {
     private static final String TAG = "RecordingTest";
