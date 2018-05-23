@@ -64,6 +64,7 @@ public class TextureViewCtsActivity extends Activity implements SurfaceTextureLi
 
     private int mEglColorSpace = 0;
     private boolean mIsEGLWideGamut = false;
+    private boolean mEGLExtensionUnsupported = false;
 
     static final int EGL_CONTEXT_CLIENT_VERSION = 0x3098;
     static final int EGL_OPENGL_ES2_BIT = 4;
@@ -202,6 +203,10 @@ public class TextureViewCtsActivity extends Activity implements SurfaceTextureLi
         }
     }
 
+    public boolean initGLExtensionUnsupported() {
+        return mEGLExtensionUnsupported;
+    }
+
     public void initGl() throws Throwable {
         initGl(0, false);
     }
@@ -215,6 +220,7 @@ public class TextureViewCtsActivity extends Activity implements SurfaceTextureLi
         }
         mEglColorSpace = eglColorSpace;
         mIsEGLWideGamut = useHalfFloat;
+        mEGLExtensionUnsupported = false;
         runOnGLThread(mDoInitGL);
     }
 
@@ -338,6 +344,32 @@ public class TextureViewCtsActivity extends Activity implements SurfaceTextureLi
             if (!mEgl.eglInitialize(mEglDisplay, version)) {
                 throw new RuntimeException("eglInitialize failed " +
                         GLUtils.getEGLErrorString(mEgl.eglGetError()));
+            }
+
+            // check extensions but still attempt to run the test, if the test fails then we check
+            // mEGLExtensionUnsupported to determine if the failure was expected.
+            String extensions = mEgl.eglQueryString(mEglDisplay, EGL10.EGL_EXTENSIONS);
+            if (mEglColorSpace != 0) {
+                String eglColorSpaceString = null;
+                switch (mEglColorSpace) {
+                    case TextureViewTest.EGL_GL_COLORSPACE_DISPLAY_P3_EXT:
+                        eglColorSpaceString = "EGL_EXT_gl_colorspace_display_p3";
+                        break;
+                    case TextureViewTest.EGL_GL_COLORSPACE_SRGB_KHR:
+                        eglColorSpaceString = "EGL_KHR_gl_colorspace";
+                        break;
+                    case TextureViewTest.EGL_GL_COLORSPACE_SCRGB_LINEAR_EXT:
+                        eglColorSpaceString = "EGL_EXT_gl_colorspace_scrgb_linear";
+                        break;
+                    default:
+                        throw new RuntimeException("Unknown eglColorSpace: " + mEglColorSpace);
+                }
+                if (!extensions.contains(eglColorSpaceString)) {
+                    mEGLExtensionUnsupported = true;
+                }
+            }
+            if (mIsEGLWideGamut && !extensions.contains("EXT_pixel_format_float")) {
+                mEGLExtensionUnsupported = true;
             }
 
             mEglConfig = chooseEglConfig();
