@@ -16,6 +16,7 @@
 
 package android.signature.cts.api;
 
+import android.os.Bundle;
 import android.provider.Settings;
 import android.signature.cts.DexApiDocumentParser;
 import android.signature.cts.DexField;
@@ -23,29 +24,26 @@ import android.signature.cts.DexMember;
 import android.signature.cts.DexMemberChecker;
 import android.signature.cts.DexMethod;
 import android.signature.cts.FailureType;
+import repackaged.android.test.InstrumentationTestRunner;
 
-public class KillswitchTest extends AbstractApiTest {
+public abstract class BaseKillswitchTest extends AbstractApiTest {
 
-    private String mExemptions;
+    protected String mErrorMessageAppendix;
 
     @Override
     protected void setUp() throws Exception {
         super.setUp();
         DexMemberChecker.init();
-        // precondition check: make sure global setting has been configured properly.
-        // This should be done via an adb command, configured in AndroidTest.xml.
-        mExemptions = Settings.Global.getString(
-            getInstrumentation().getContext().getContentResolver(),
-            Settings.Global.HIDDEN_API_BLACKLIST_EXEMPTIONS);
-        assertTrue("Global setting " + Settings.Global.HIDDEN_API_BLACKLIST_EXEMPTIONS,
-                "*".equals(mExemptions) || "L".equals(mExemptions));
     }
 
-    private String errorMessageAppendix() {
-        return " when global setting hidden_api_blacklist_exemptions is set to " + mExemptions;
+    protected String getGlobalExemptions() {
+      return Settings.Global.getString(
+          getInstrumentation().getContext().getContentResolver(),
+          Settings.Global.HIDDEN_API_BLACKLIST_EXEMPTIONS);
     }
 
-    public void testKillswitch() {
+    // Test shared by all the subclasses.
+    public void testKillswitchMechanism() {
         runWithTestResultObserver(resultObserver -> {
             DexMemberChecker.Observer observer = new DexMemberChecker.Observer() {
                 @Override
@@ -55,7 +53,7 @@ public class KillswitchTest extends AbstractApiTest {
                                 FailureType.MISSING_CLASS,
                                 member.toString(),
                                 "Class from boot classpath is not accessible"
-                                        + errorMessageAppendix());
+                                        + mErrorMessageAppendix);
                     }
                 }
 
@@ -66,7 +64,7 @@ public class KillswitchTest extends AbstractApiTest {
                                 FailureType.MISSING_FIELD,
                                 field.toString(),
                                 "Field from boot classpath is not accessible via reflection"
-                                        + errorMessageAppendix());
+                                        + mErrorMessageAppendix);
                     }
                 }
 
@@ -77,7 +75,7 @@ public class KillswitchTest extends AbstractApiTest {
                                 FailureType.MISSING_FIELD,
                                 field.toString(),
                                 "Field from boot classpath is not accessible via JNI"
-                                        + errorMessageAppendix());
+                                        + mErrorMessageAppendix);
                     }
                 }
 
@@ -93,7 +91,7 @@ public class KillswitchTest extends AbstractApiTest {
                                 FailureType.MISSING_METHOD,
                                 method.toString(),
                                 "Method from boot classpath is not accessible via reflection"
-                                        + errorMessageAppendix());
+                                        + mErrorMessageAppendix);
                     }
                 }
 
@@ -104,7 +102,7 @@ public class KillswitchTest extends AbstractApiTest {
                                 FailureType.MISSING_METHOD,
                                 method.toString(),
                                 "Method from boot classpath is not accessible via JNI"
-                                        + errorMessageAppendix());
+                                        + mErrorMessageAppendix);
                     }
                 }
 
