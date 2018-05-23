@@ -28,7 +28,10 @@ def main():
         its.caps.skip_unless(its.caps.sensor_fusion(props))
 
         # Get the timestamp of a captured image.
-        req, fmt = its.objects.get_fastest_manual_capture_settings(props)
+        if its.caps.manual_sensor(props):
+            req, fmt = its.objects.get_fastest_manual_capture_settings(props)
+        else:
+            req, fmt = its.objects.get_fastest_auto_capture_settings(props)
         cap = cam.do_capture(req, fmt)
         ts_image0 = cap['metadata']['android.sensor.timestamp']
 
