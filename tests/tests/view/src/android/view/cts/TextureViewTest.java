@@ -238,8 +238,8 @@ public class TextureViewTest {
             activity.initGl(eglColorSpace, useHalfFloat);
         } catch (RuntimeException e) {
             // failure to init GL with the right colorspace is not a TextureView failure as some
-            // devices may not support 16-bits
-            if (!useHalfFloat) {
+            // devices may not support 16-bits or the colorspace extension
+            if (!activity.initGLExtensionUnsupported()) {
                 fail("Unable to initGL : " + e);
             }
             return;
