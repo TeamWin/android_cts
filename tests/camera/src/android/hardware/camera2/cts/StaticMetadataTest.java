@@ -29,6 +29,7 @@ import android.hardware.camera2.cts.helpers.StaticMetadata;
 import android.hardware.camera2.cts.helpers.StaticMetadata.CheckLevel;
 import android.hardware.camera2.cts.testcases.Camera2AndroidTestCase;
 import android.hardware.camera2.params.StreamConfigurationMap;
+import android.platform.test.annotations.AppModeFull;
 import android.util.Log;
 import android.util.Pair;
 import android.util.Size;
@@ -50,6 +51,7 @@ import java.util.Set;
  * Note that most of the tests in this class don't require camera open.
  * </p>
  */
+@AppModeFull
 public class StaticMetadataTest extends Camera2AndroidTestCase {
     private static final String TAG = "StaticMetadataTest";
     private static final boolean VERBOSE = Log.isLoggable(TAG, Log.VERBOSE);

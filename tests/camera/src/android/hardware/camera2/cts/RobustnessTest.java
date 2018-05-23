@@ -40,6 +40,7 @@ import android.media.CamcorderProfile;
 import android.media.Image;
 import android.media.ImageReader;
 import android.media.ImageWriter;
+import android.platform.test.annotations.AppModeFull;
 import android.util.Log;
 import android.util.Size;
 import android.view.Display;
@@ -61,6 +62,7 @@ import static org.mockito.Mockito.*;
 /**
  * Tests exercising edge cases in camera setup, configuration, and usage.
  */
+@AppModeFull
 public class RobustnessTest extends Camera2AndroidTestCase {
     private static final String TAG = "RobustnessTest";
     private static final boolean VERBOSE = Log.isLoggable(TAG, Log.VERBOSE);

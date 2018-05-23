@@ -18,6 +18,7 @@ package android.hardware.camera2.cts;
 
 import android.graphics.SurfaceTexture;
 import android.hardware.camera2.cts.testcases.Camera2SurfaceViewTestCase;
+import android.platform.test.annotations.AppModeFull;
 import android.util.Log;
 import android.util.Size;
 import android.view.Surface;
@@ -25,6 +26,7 @@ import android.view.Surface;
 /**
  * <p>Basic test for CameraManager class.</p>
  */
+@AppModeFull
 public class NativeCameraDeviceTest extends Camera2SurfaceViewTestCase {
     private static final String TAG = "NativeCameraDeviceTest";
     private static final boolean VERBOSE = Log.isLoggable(TAG, Log.VERBOSE);
