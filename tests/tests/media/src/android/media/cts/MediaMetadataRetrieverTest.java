@@ -38,6 +38,9 @@ import static android.media.MediaMetadataRetriever.OPTION_NEXT_SYNC;
 import static android.media.MediaMetadataRetriever.OPTION_PREVIOUS_SYNC;
 
 import java.io.IOException;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.function.Function;
 
 @SmallTest
 @RequiresDevice
@@ -296,6 +299,63 @@ public class MediaMetadataRetrieverTest extends AndroidTestCase {
     }
 
     private void testGetFrameAtTime(int option, int[][] testCases) {
+        testGetFrameAt(testCases, (r) -> {
+            List<Bitmap> bitmaps = new ArrayList<>();
+            for (int i = 0; i < testCases.length; i++) {
+                bitmaps.add(r.getFrameAtTime(testCases[i][0], option));
+            }
+            return bitmaps;
+        });
+    }
+
+    public void testGetFrameAtIndex() {
+        int[][] testCases = { { 60, 60 }, { 73, 73 }, { 76, 76 }, { 88, 88 }, { 94, 94} };
+
+        testGetFrameAt(testCases, (r) -> {
+            List<Bitmap> bitmaps = new ArrayList<>();
+            for (int i = 0; i < testCases.length; i++) {
+                bitmaps.add(r.getFrameAtIndex(testCases[i][0]));
+            }
+            return bitmaps;
+        });
+
+        MediaMetadataRetriever.BitmapParams params = new MediaMetadataRetriever.BitmapParams();
+        params.setPreferredConfig(Bitmap.Config.RGB_565);
+        assertEquals("Failed to set preferred config",
+                Bitmap.Config.RGB_565, params.getPreferredConfig());
+
+        testGetFrameAt(testCases, (r) -> {
+            List<Bitmap> bitmaps = new ArrayList<>();
+            for (int i = 0; i < testCases.length; i++) {
+                Bitmap bitmap = r.getFrameAtIndex(testCases[i][0], params);
+                assertEquals(Bitmap.Config.RGB_565, params.getActualConfig());
+                bitmaps.add(bitmap);
+            }
+            return bitmaps;
+        });
+    }
+
+    public void testGetFramesAtIndex() {
+        int[][] testCases = { { 27, 27 }, { 28, 28 }, { 29, 29 }, { 30, 30 }, { 31, 31} };
+
+        testGetFrameAt(testCases, (r) -> {
+            return r.getFramesAtIndex(testCases[0][0], testCases.length);
+        });
+
+        MediaMetadataRetriever.BitmapParams params = new MediaMetadataRetriever.BitmapParams();
+        params.setPreferredConfig(Bitmap.Config.RGB_565);
+        assertEquals("Failed to set preferred config",
+                Bitmap.Config.RGB_565, params.getPreferredConfig());
+
+        testGetFrameAt(testCases, (r) -> {
+            List<Bitmap> bitmaps = r.getFramesAtIndex(testCases[0][0], testCases.length, params);
+            assertEquals(Bitmap.Config.RGB_565, params.getActualConfig());
+            return bitmaps;
+        });
+    }
+
+    private void testGetFrameAt(int[][] testCases,
+            Function<MediaMetadataRetriever, List<Bitmap> > bitmapRetriever) {
         int resId = R.raw.binary_counter_320x240_30fps_600frames;
         if (!MediaUtils.hasCodecForResourceAndDomain(getContext(), resId, "video/")
             && mPackageManager.hasSystemFeature(PackageManager.FEATURE_WATCH)) {
@@ -313,24 +373,23 @@ public class MediaMetadataRetrieverTest extends AndroidTestCase {
         } catch (IOException e) {
             fail("Unable to close file");
         }
-        for (int[] testCase : testCases) {
-            getVideoFrameAndVerify(retriever, testCase[0], testCase[1], option);
+
+        List<Bitmap> bitmaps = bitmapRetriever.apply(retriever);
+
+        for (int i = 0; i < testCases.length; i++) {
+            verifyVideoFrame(bitmaps.get(i), testCases[i]);
         }
         retriever.release();
     }
 
-    private void getVideoFrameAndVerify(
-            MediaMetadataRetriever retriever, long timeUs, long expectedCounter, int option) {
+    private void verifyVideoFrame(Bitmap bitmap, int[] testCase) {
         try {
-            Bitmap bitmap = retriever.getFrameAtTime(timeUs, option);
-            if (bitmap == null) {
-                fail("Failed to get bitmap at time " + timeUs + " with option " + option);
-            }
-            assertEquals("Counter value incorrect at time " + timeUs + " with option " + option,
-                    expectedCounter, CodecUtils.readBinaryCounterFromBitmap(bitmap));
+            assertTrue("Failed to get bitmap for " + testCase[0], bitmap != null);
+            assertEquals("Counter value incorrect for " + testCase[0],
+                    testCase[1], CodecUtils.readBinaryCounterFromBitmap(bitmap));
 
             if (SAVE_BITMAP_OUTPUT) {
-                CodecUtils.saveBitmapToFile(bitmap, "test" + timeUs + ".jpg");
+                CodecUtils.saveBitmapToFile(bitmap, "test_" + testCase[0] + ".jpg");
             }
         } catch (Exception e) {
             fail("Exception getting bitmap: " + e);
