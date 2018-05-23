@@ -29,7 +29,6 @@ import android.graphics.Color;
 import android.graphics.Rect;
 import android.graphics.cts.R;
 import android.graphics.drawable.AnimatedVectorDrawable;
-import androidx.annotation.Nullable;
 import android.support.test.InstrumentationRegistry;
 import android.support.test.filters.LargeTest;
 import android.support.test.filters.MediumTest;
@@ -226,7 +225,7 @@ public class AnimatedVectorDrawableParameterizedTest {
         });
     }
 
-    @MediumTest
+    @LargeTest
     @Test
     public void testEmptyAnimatorSet() throws Throwable {
         int resId = R.drawable.avd_empty_animator;
@@ -246,7 +245,7 @@ public class AnimatedVectorDrawableParameterizedTest {
         AnimatedVectorDrawableTest.waitForAVDStop(callback, MAX_TIMEOUT_MS);
         // Check that the AVD with empty AnimatorSet has finished
         callback.assertEnded(true);
-        callback.assertAVDRuntime(0, TimeUnit.MILLISECONDS.toNanos(64)); // 4 frames
+        callback.assertAVDRuntime(0, TimeUnit.MILLISECONDS.toNanos(300));
     }
 
     // Does a fuzzy comparison between two images.
