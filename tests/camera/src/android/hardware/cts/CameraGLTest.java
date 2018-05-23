@@ -32,6 +32,7 @@ import android.os.Environment;
 import android.os.Looper;
 import android.os.PowerManager;
 import android.os.PowerManager.WakeLock;
+import android.platform.test.annotations.AppModeFull;
 
 import android.test.ActivityInstrumentationTestCase2;
 import android.test.MoreAsserts;
@@ -58,6 +59,7 @@ import javax.microedition.khronos.opengles.GL10;
 /**
  * This test case must run with hardware. It can't be tested in emulator
  */
+@AppModeFull
 @LargeTest
 public class CameraGLTest extends ActivityInstrumentationTestCase2<GLSurfaceViewCtsActivity> {
     private static final String TAG = "CameraGLTest";
