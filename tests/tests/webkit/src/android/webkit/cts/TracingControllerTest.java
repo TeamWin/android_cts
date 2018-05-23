@@ -121,10 +121,23 @@ public class TracingControllerTest extends ActivityInstrumentationTestCase2<WebV
 
     @Override
     protected void tearDown() throws Exception {
+        // make sure to stop everything and clean up
+        ensureTracingStopped();
+        singleThreadExecutor.shutdown();
+        if (!singleThreadExecutor.awaitTermination(EXECUTOR_TIMEOUT, TimeUnit.SECONDS)) {
+            fail("Failed to shutdown executor");
+        }
         if (mOnUiThread != null) {
             mOnUiThread.cleanUp();
         }
-        // make sure to stop everything and clean up
+        super.tearDown();
+    }
+
+    private void ensureTracingStopped() throws Exception {
+        if (!NullWebViewUtils.isWebViewAvailable()) {
+            return;
+        }
+
         TracingController.getInstance().stop(null, singleThreadExecutor);
         Callable<Boolean> tracingStopped = new Callable<Boolean>() {
             @Override
@@ -133,12 +146,6 @@ public class TracingControllerTest extends ActivityInstrumentationTestCase2<WebV
             }
         };
         PollingCheck.check("Tracing did not stop", POLLING_TIMEOUT, tracingStopped);
-
-        singleThreadExecutor.shutdown();
-        if (!singleThreadExecutor.awaitTermination(EXECUTOR_TIMEOUT, TimeUnit.SECONDS)) {
-            fail("Failed to shutdown executor");
-        }
-        super.tearDown();
     }
 
     private ThreadFactory getCustomThreadFactory() {
