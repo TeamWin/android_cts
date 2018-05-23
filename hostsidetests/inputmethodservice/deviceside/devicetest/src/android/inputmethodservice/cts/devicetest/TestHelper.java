@@ -83,10 +83,14 @@ final class TestHelper {
      * Launching an Activity for test, and wait for completions of launch.
      * @param packageName activity's app package name.
      * @param className activity's class name.
+     * @param uri uri to be handled.
      */
-    void launchActivity(final String packageName, final String className) {
+    void launchActivity(final String packageName, final String className, final String uri) {
         final Intent intent = new Intent()
-                .setAction(Intent.ACTION_MAIN)
+                .setAction(Intent.ACTION_VIEW)
+                .addCategory(Intent.CATEGORY_BROWSABLE)
+                .addCategory(Intent.CATEGORY_DEFAULT)
+                .setData(Uri.parse(uri))
                 .setClassName(packageName, className)
                 .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
                 .addFlags(Intent.FLAG_ACTIVITY_CLEAR_TASK);
@@ -96,11 +100,10 @@ final class TestHelper {
 
     /**
      * Find an UI element from resource ID.
-     * @param resId id of finding UI element.
+     * @param resourceName name of finding UI element.
      * @return {@link UiObject2} of found UI element.
      */
-    UiObject2 findUiObject(@IdRes int resId) {
-        final String resourceName = mTargetContext.getResources().getResourceName(resId);
+    UiObject2 findUiObject(String resourceName) {
         return mUiDevice.findObject(By.res(resourceName));
     }
 
