@@ -16,11 +16,11 @@
  -->
 
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
-          package="android.signature.cts.api.whitelist">
+          package="android.signature.cts.api.killswitch_whitelist">
 
     <application android:debuggable="true"/>
 
     <instrumentation android:name="repackaged.android.test.InstrumentationTestRunner"
-                     android:targetPackage="android.signature.cts.api.whitelist"
-                     android:label="Hidden API Whitelist Test"/>
+                     android:targetPackage="android.signature.cts.api.killswitch_whitelist"
+                     android:label="Hidden API Killswitch Whitelist Test"/>
 </manifest>

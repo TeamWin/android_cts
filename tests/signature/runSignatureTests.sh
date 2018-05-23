@@ -27,8 +27,11 @@ CtsSystemApiAnnotationTestCases
 
 CtsHiddenApiBlacklistCurrentApiTestCases
 CtsHiddenApiBlacklistApi27TestCases
-CtsHiddenApiKillswitchTestCases
-CtsHiddenApiWhitelistTestCases
+CtsHiddenApiBlacklistDebugClassTestCases
+
+CtsHiddenApiKillswitchWildcardTestCases
+CtsHiddenApiKillswitchWhitelistTestCases
+CtsHiddenApiKillswitchDebugClassTestCases
 "
 else
     PACKAGES=${1+"$@"}
