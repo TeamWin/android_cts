@@ -16,6 +16,9 @@
 
 package android.sample.cts;
 
+import android.platform.test.annotations.AppModeInstant;
+import android.platform.test.annotations.AppModeFull;
+
 import com.android.tradefed.testtype.DeviceJUnit4ClassRunner;
 import com.android.tradefed.testtype.junit4.BaseHostJUnit4Test;
 
@@ -34,7 +37,6 @@ import org.junit.runner.RunWith;
  */
 @RunWith(DeviceJUnit4ClassRunner.class)
 public class SampleHostJUnit4DeviceTest extends BaseHostJUnit4Test {
-
     private static final String TEST_PKG = "android.sample.cts.app2";
     private static final String TEST_CLASS = TEST_PKG + "." + "SampleDeviceTest";
     private static final String TEST_APP = "CtsSampleDeviceApp2.apk";
@@ -45,27 +47,58 @@ public class SampleHostJUnit4DeviceTest extends BaseHostJUnit4Test {
 
     @Before
     public void setUp() throws Exception {
-        installPackage(TEST_APP);
+        uninstallPackage(getDevice(), TEST_PKG);
     }
 
     @Test
-    public void testRunDeviceTestsPasses() throws Exception {
+    @AppModeInstant
+    public void testRunDeviceTestsPassesInstant() throws Exception {
+        installPackage(true);
+        Assert.assertTrue(runDeviceTests(TEST_PKG, TEST_CLASS, TEST_PASSES));
+    }
+
+    @Test
+    @AppModeFull
+    public void testRunDeviceTestsPassesFull() throws Exception {
+        installPackage(false);
         Assert.assertTrue(runDeviceTests(TEST_PKG, TEST_CLASS, TEST_PASSES));
     }
 
     @Test(expected=AssertionError.class)
-    public void testRunDeviceTestsFails() throws Exception {
+    @AppModeInstant
+    public void testRunDeviceTestsFailsInstant() throws Exception {
+        installPackage(true);
+        Assert.assertTrue(runDeviceTests(TEST_PKG, TEST_CLASS, TEST_FAILS));
+    }
+
+    @Test(expected=AssertionError.class)
+    @AppModeFull
+    public void testRunDeviceTestsFailsFull() throws Exception {
+        installPackage(false);
         Assert.assertTrue(runDeviceTests(TEST_PKG, TEST_CLASS, TEST_FAILS));
     }
 
     @Test
-    public void testRunDeviceTestsAssumeFails() throws Exception {
+    @AppModeInstant
+    public void testRunDeviceTestsAssumeFailsInstant() throws Exception {
+        installPackage(true);
+        Assert.assertTrue(runDeviceTests(TEST_PKG, TEST_CLASS, TEST_ASSUME_FAILS));
+    }
+
+    @Test
+    @AppModeFull
+    public void testRunDeviceTestsAssumeFailsFull() throws Exception {
+        installPackage(false);
         Assert.assertTrue(runDeviceTests(TEST_PKG, TEST_CLASS, TEST_ASSUME_FAILS));
     }
 
     @After
     public void tearDown() throws Exception {
         uninstallPackage(getDevice(), TEST_PKG);
+    }
+
+    private void installPackage(boolean instant) throws Exception {
+        installPackage(TEST_APP, instant ? new String[]{"--instant"} : new String[0]);
     }
 
 }
