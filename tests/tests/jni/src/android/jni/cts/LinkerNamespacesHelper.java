@@ -37,8 +37,12 @@ import dalvik.system.PathClassLoader;
 
 class LinkerNamespacesHelper {
     private final static String PUBLIC_CONFIG_DIR = "/system/etc/";
+    private final static String PRODUCT_CONFIG_DIR = "/product/etc/";
     private final static String SYSTEM_CONFIG_FILE = PUBLIC_CONFIG_DIR + "public.libraries.txt";
-    private final static String OEM_CONFIG_FILE_PATTERN = "public\\.libraries-([A-Za-z0-9-_]+)\\.txt";
+    private final static Pattern EXTENSION_CONFIG_FILE_PATTERN = Pattern.compile(
+            "public\\.libraries-([A-Za-z0-9\\-_]+)\\.txt");
+    private final static Pattern EXTENSION_LIBRARY_FILE_PATTERN = Pattern.compile(
+            "lib[^.]+\\.([A-Za-z0-9\\-_]+)\\.so");
     private final static String VENDOR_CONFIG_FILE = "/vendor/etc/public.libraries.txt";
     private final static String[] PUBLIC_SYSTEM_LIBRARIES = {
         "libaaudio.so",
@@ -104,6 +108,37 @@ class LinkerNamespacesHelper {
         return libs;
     }
 
+    private static String readExtensionConfigFiles(String configDir, List<String> libs) throws IOException {
+        File[] configFiles = new File(configDir).listFiles(
+                new FilenameFilter() {
+                    public boolean accept(File dir, String name) {
+                        return EXTENSION_CONFIG_FILE_PATTERN.matcher(name).matches();
+                    }
+                });
+        if (configFiles == null) return null;
+
+        for (File configFile: configFiles) {
+            String fileName = configFile.toPath().getFileName().toString();
+            Matcher configMatcher = EXTENSION_CONFIG_FILE_PATTERN.matcher(fileName);
+            if (configMatcher.matches()) {
+                String companyName = configMatcher.group(1);
+                // a lib in public.libraries-acme.txt should be
+                // libFoo.acme.so
+                List<String> libNames = readPublicLibrariesFile(configFile);
+                for (String lib : libNames) {
+                    Matcher libMatcher = EXTENSION_LIBRARY_FILE_PATTERN.matcher(lib);
+                    if (libMatcher.matches() && libMatcher.group(1).equals(companyName)) {
+                        libs.add(lib);
+                    } else {
+                        return "Library \"" + lib + "\" in " + configFile.toString()
+                                + " must have company name " + companyName + " as suffix.";
+                    }
+                }
+            }
+        }
+        return null;
+    }
+
     public static String runAccessibilityTest() throws IOException {
         List<String> systemLibs = new ArrayList<>();
 
@@ -116,43 +151,17 @@ class LinkerNamespacesHelper {
 
         // Check if public.libraries.txt contains libs other than the
         // public system libs (NDK libs).
-        for (String lib : readPublicLibrariesFile(new File(SYSTEM_CONFIG_FILE))) {
-            if (!systemLibs.contains(lib)) {
-                return "Library \"" + lib + "\" in " + SYSTEM_CONFIG_FILE
-                        + " is not an allowed system lib.";
-            }
-        }
-
-        Pattern oemConfigFilePattern = Pattern.compile(OEM_CONFIG_FILE_PATTERN);
-        File[] oemConfigFiles = new File(PUBLIC_CONFIG_DIR).listFiles(
-                new FilenameFilter() {
-                    public boolean accept(File dir, String name) {
-                        return oemConfigFilePattern.matcher(name).matches();
-                    }
-                });
 
         List<String> oemLibs = new ArrayList<>();
-        for (File configFile : oemConfigFiles) {
-            String fileName = configFile.toPath().getFileName().toString();
-            Matcher matcher = oemConfigFilePattern.matcher(fileName);
-            if (matcher.matches()) {
-                String oemName = matcher.group(1);
-                // a lib in /system/etc/public.libraries-acme.txt should be
-                // libFoo.acme.so
-                Pattern libNamePattern = Pattern.compile("lib.+\\." + oemName + "\\.so");
-                List<String> libs = readPublicLibrariesFile(configFile);
-                for (String lib : libs) {
-                    if (libNamePattern.matcher(lib).matches()) {
-                        oemLibs.add(lib);
-                    } else {
-                        return "OEM library \"" + lib + "\" in " + configFile.toString()
-                                + " must have company name " + oemName + " as suffix.";
-                    }
-                }
-            }
-        }
+        String oemLibsError = readExtensionConfigFiles(PUBLIC_CONFIG_DIR, oemLibs);
+        if (oemLibsError != null) return oemLibsError;
         // OEM libs that passed above tests are available to Android app via JNI
         systemLibs.addAll(oemLibs);
+
+        // PRODUCT libs that passed are also available
+        List<String> productLibs = new ArrayList<>();
+        String productLibsError = readExtensionConfigFiles(PRODUCT_CONFIG_DIR, productLibs);
+        if (productLibsError != null) return productLibsError;
 
         List<String> vendorLibs = readPublicLibrariesFile(new File(VENDOR_CONFIG_FILE));
 
@@ -172,11 +181,13 @@ class LinkerNamespacesHelper {
         }
 
         return runAccessibilityTestImpl(systemLibs.toArray(new String[systemLibs.size()]),
-                                        vendorLibs.toArray(new String[vendorLibs.size()]));
+                                        vendorLibs.toArray(new String[vendorLibs.size()]),
+                                        productLibs.toArray(new String[productLibs.size()]));
     }
 
     private static native String runAccessibilityTestImpl(String[] publicSystemLibs,
-                                                          String[] publicVendorLibs);
+                                                          String[] publicVendorLibs,
+                                                          String[] publicProductLibs);
 
     private static void invokeIncrementGlobal(Class<?> clazz) throws Exception {
         clazz.getMethod("incrementGlobal").invoke(null);
