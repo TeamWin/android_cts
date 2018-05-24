@@ -39,5 +39,6 @@
         <option name="runtime-hint" value="35m"/>
         <!-- 20x default timeout of 600sec -->
         <option name="shell-timeout" value="12000000"/>
+        <option name="hidden-api-checks" value="false"/>
     </test>
 </configuration>
