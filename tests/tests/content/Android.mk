@@ -22,6 +22,9 @@ LOCAL_MODULE_TAGS := optional
 LOCAL_MODULE_PATH := $(TARGET_OUT_DATA_APPS)
 LOCAL_USE_AAPT2 := true
 
+# Include both the 32 and 64 bit versions
+LOCAL_MULTILIB := both
+
 LOCAL_JNI_SHARED_LIBRARIES := libnativecursorwindow_jni libnativehelper_compat_libc++
 
 LOCAL_JAVA_LIBRARIES := android.test.runner
