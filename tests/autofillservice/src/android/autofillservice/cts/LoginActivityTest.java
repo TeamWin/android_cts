@@ -2499,8 +2499,7 @@ public class LoginActivityTest extends AbstractLoginActivityTestCase {
         waitUntilConnected();
         sReplier.getNextFillRequest().cancellationSignal.setOnCancelListener(listener);
 
-        // AssertResults
-        waitUntilDisconnected();
+        // Assert results
         listener.assertOnCancelCalled();
     }
 
