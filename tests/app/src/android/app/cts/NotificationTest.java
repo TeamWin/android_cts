@@ -18,6 +18,7 @@ package android.app.cts;
 
 import android.app.Notification;
 import android.app.Notification.Action.Builder;
+import android.app.Notification.MessagingStyle;
 import android.app.Notification.MessagingStyle.Message;
 import android.app.NotificationChannel;
 import android.app.NotificationManager;
@@ -255,6 +256,15 @@ public class NotificationTest extends AndroidTestCase {
         assertEquals(Notification.GROUP_ALERT_SUMMARY, mNotification.getGroupAlertBehavior());
     }
 
+    public void testBuilder_getStyle() {
+        MessagingStyle ms = new MessagingStyle(new Person.Builder().setName("Test name").build());
+        Notification.Builder builder = new Notification.Builder(mContext, CHANNEL.getId());
+
+        builder.setStyle(ms);
+
+        assertEquals(ms, builder.getStyle());
+    }
+
     public void testActionBuilder() {
         final Intent intent = new Intent();
         final PendingIntent actionIntent = PendingIntent.getBroadcast(mContext, 0, intent, 0);
@@ -398,6 +408,26 @@ public class NotificationTest extends AndroidTestCase {
 
         assertFalse(messagingStyle.isGroupConversation());
         assertTrue(notification.extras.getBoolean(Notification.EXTRA_IS_GROUP_CONVERSATION));
+    }
+
+    public void testMessagingStyle_getUser() {
+        Person user = new Person.Builder().setName("Test name").build();
+
+        MessagingStyle messagingStyle = new MessagingStyle(user);
+
+        assertEquals(user, messagingStyle.getUser());
+    }
+
+    public void testMessage() {
+        Person sender = new Person.Builder().setName("Test name").build();
+        String text = "Test message";
+        long timestamp = 400;
+
+        Message message = new Message(text, timestamp, sender);
+
+        assertEquals(text, message.getText());
+        assertEquals(timestamp, message.getTimestamp());
+        assertEquals(sender, message.getSenderPerson());
     }
 
     public void testToString() {

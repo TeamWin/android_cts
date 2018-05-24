@@ -19,6 +19,7 @@ package android.signature.cts;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.Executable;
 import java.lang.reflect.Field;
+import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.util.List;
 
@@ -34,6 +35,40 @@ public class DexMemberChecker {
 
     public static void init() {
         System.loadLibrary("cts_dexchecker");
+    }
+
+    private static void call_VMDebug_allowHiddenApiReflectionFrom(Class<?> klass) throws Exception {
+      Method method = null;
+
+      try {
+        Class<?> vmdebug = Class.forName("dalvik.system.VMDebug");
+        method = vmdebug.getDeclaredMethod("allowHiddenApiReflectionFrom", Class.class);
+      } catch (Exception ex) {
+        // Could not find the method. Report the problem as a RuntimeException.
+        throw new RuntimeException(ex);
+      }
+
+      try {
+        method.invoke(null, klass);
+      } catch (InvocationTargetException ex) {
+        // Rethrow the original exception.
+        Throwable cause = ex.getCause();
+        // Please the compiler's 'throws' static analysis.
+        if (cause instanceof Exception) {
+          throw (Exception) cause;
+        } else {
+          throw (Error) cause;
+        }
+      }
+    }
+
+    public static boolean requestExemptionFromHiddenApiChecks() throws Exception {
+      try {
+        call_VMDebug_allowHiddenApiReflectionFrom(DexMemberChecker.class);
+        return true;
+      } catch (SecurityException ex) {
+        return false;
+      }
     }
 
     public static void checkSingleMember(DexMember dexMember, DexMemberChecker.Observer observer) {

@@ -22,4 +22,7 @@ public class EditTextAppConstants {
     public static final String PACKAGE = "android.inputmethodservice.cts.edittextapp";
     public static final String CLASS =   PACKAGE + ".MainActivity";
     public static final String APK = "EditTextApp.apk";
+    public static final String EDIT_TEXT_RES_NAME = PACKAGE + ":id/edit_text_entry";
+    public static final String URI =
+            "https://example.com/android/inputmethodservice/cts/edittextapp";
 }
