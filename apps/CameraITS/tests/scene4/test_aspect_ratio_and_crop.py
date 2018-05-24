@@ -202,6 +202,9 @@ def main():
             img_raw = its.image.convert_capture_to_rgb_image(cap_raw,
                                                              props=props)
             if its.caps.distortion_correction(props):
+                # The intrinsics and distortion coefficients are meant for full
+                # size RAW. Resize back to full size here.
+                img_raw = cv2.resize(img_raw, (0,0), fx=2.0, fy=2.0)
                 # Intrinsic cal is of format: [f_x, f_y, c_x, c_y, s]
                 # [f_x, f_y] is the horizontal and vertical focal lengths,
                 # [c_x, c_y] is the position of the optical axis,
