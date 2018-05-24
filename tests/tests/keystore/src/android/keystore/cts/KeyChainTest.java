@@ -81,29 +81,10 @@ public class KeyChainTest extends AndroidTestCase {
         waiter.await();
     }
 
-    /**
-     * Tests whether the required algorithms are backed by a Keymaster HAL that
-     * binds the key material to the specific device it was created or imported
-     * to. For more information on the Keymaster HAL, look at the header file at
-     * hardware/libhardware/include/hardware/keymaster.h and the associated
-     * tests in hardware/libhardware/tests/keymaster/
-     */
     public void testIsBoundKeyAlgorithm_RequiredAlgorithmsSupported() throws Exception {
-        if (isLeanbackOnly()) {
-            KeyChain.isBoundKeyAlgorithm("RSA");
-        }
-        else {
-            assertTrue("RSA must be hardware-backed by a hardware-specific Keymaster HAL",
-                       KeyChain.isBoundKeyAlgorithm("RSA"));
-        }
-
-        // These are not required, but must not throw an exception
+        // These are not required (until Nougat), but must not throw an exception
+        KeyChain.isBoundKeyAlgorithm("RSA");
         KeyChain.isBoundKeyAlgorithm("DSA");
         KeyChain.isBoundKeyAlgorithm("EC");
-    }
-
-    private boolean isLeanbackOnly() {
-        PackageManager pm = getContext().getPackageManager();
-        return (pm != null && pm.hasSystemFeature("android.software.leanback_only"));
     }
 }
