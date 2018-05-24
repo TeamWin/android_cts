@@ -44,6 +44,18 @@ public class StateKeeperRule<T> implements TestRule {
         mStateManager = Preconditions.checkNotNull(stateManager);
     }
 
+    /**
+     * Hook for subclasses.
+     */
+    protected void preEvaluate(@SuppressWarnings("unused") Description description) {
+    }
+
+    /**
+     * Hook for subclasses.
+     */
+    protected void postEvaluate(@SuppressWarnings("unused") Description description) {
+    }
+
     @Override
     public Statement apply(Statement base, Description description) {
         return new Statement() {
@@ -51,6 +63,7 @@ public class StateKeeperRule<T> implements TestRule {
             @Override
             public void evaluate() throws Throwable {
                 final T previousValue = mStateManager.get();
+                preEvaluate(description);
                 try {
                     base.evaluate();
                 } finally {
@@ -59,6 +72,7 @@ public class StateKeeperRule<T> implements TestRule {
                         mStateManager.set(previousValue);
                     }
                 }
+                postEvaluate(description);
             }
         };
     }

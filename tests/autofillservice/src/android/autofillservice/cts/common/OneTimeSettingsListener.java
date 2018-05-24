@@ -19,13 +19,17 @@ package android.autofillservice.cts.common;
 import static android.autofillservice.cts.common.SettingsHelper.NAMESPACE_GLOBAL;
 import static android.autofillservice.cts.common.SettingsHelper.NAMESPACE_SECURE;
 
+import android.autofillservice.cts.JUnitHelper;
+import android.autofillservice.cts.RetryableException;
 import android.content.ContentResolver;
 import android.content.Context;
 import android.database.ContentObserver;
 import android.net.Uri;
 import android.os.Handler;
 import android.os.Looper;
+import android.os.SystemClock;
 import android.provider.Settings;
+import android.util.Log;
 
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
@@ -34,16 +38,18 @@ import java.util.concurrent.TimeUnit;
  * Helper used to block tests until a secure settings value has been updated.
  */
 public final class OneTimeSettingsListener extends ContentObserver {
+
+    private static final String TAG = "OneTimeSettingsListener";
+    private static final long DEFAULT_TIMEOUT_MS = 30_000;
+
     private final CountDownLatch mLatch = new CountDownLatch(1);
     private final ContentResolver mResolver;
     private final String mKey;
-
-    public OneTimeSettingsListener(Context context, String key) {
-        this(context, NAMESPACE_SECURE, key);
-    }
+    private final long mStarted;
 
     public OneTimeSettingsListener(Context context, String namespace, String key) {
         super(new Handler(Looper.getMainLooper()));
+        mStarted = SystemClock.elapsedRealtime();
         mKey = key;
         mResolver = context.getContentResolver();
         final Uri uri;
@@ -73,10 +79,15 @@ public final class OneTimeSettingsListener extends ContentObserver {
      */
     public void assertCalled() {
         try {
-            final boolean updated = mLatch.await(5, TimeUnit.SECONDS);
+            final boolean updated = mLatch.await(DEFAULT_TIMEOUT_MS, TimeUnit.MILLISECONDS);
             if (!updated) {
-                throw new IllegalStateException("Settings " + mKey + " not called in 5s");
+                throw new RetryableException(
+                        "Settings " + mKey + " not called in " + DEFAULT_TIMEOUT_MS + "ms");
             }
+            final long delta = SystemClock.elapsedRealtime() - mStarted;
+            // TODO: usually it's notified in ~50-150ms, but for some reason it takes ~10s
+            // on some ViewAttributesTest methods, hence the 30s limit
+            Log.v(TAG, JUnitHelper.getCurrentTestName() + "/" + mKey + ": " + delta + "ms");
         } catch (InterruptedException e) {
             Thread.currentThread().interrupt();
             throw new IllegalStateException("Interrupted", e);

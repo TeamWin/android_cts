@@ -37,6 +37,7 @@ import org.junit.ClassRule;
 import org.junit.Rule;
 import org.junit.rules.RuleChain;
 import org.junit.rules.TestWatcher;
+import org.junit.runner.Description;
 import org.junit.runner.RunWith;
 
 /**
@@ -55,7 +56,17 @@ public abstract class AutoFillServiceTestCase {
 
     @ClassRule
     public static final SettingsStateKeeperRule mServiceSettingsKeeper =
-            new SettingsStateKeeperRule(sContext, Settings.Secure.AUTOFILL_SERVICE);
+            new SettingsStateKeeperRule(sContext, Settings.Secure.AUTOFILL_SERVICE) {
+        @Override
+        protected void preEvaluate(Description description) {
+            JUnitHelper.setCurrentTestClass(description.getClassName());
+        }
+
+        @Override
+        protected void postEvaluate(Description description) {
+            JUnitHelper.setCurrentTestClass(null);
+        }
+    };
 
     private final TestWatcher mTestWatcher = new AutofillTestWatcher();
 
@@ -74,10 +85,21 @@ public abstract class AutoFillServiceTestCase {
 
     @Rule
     public final RuleChain mLookAllTheseRules = RuleChain
+            // "Pre"-test rules:
+            //
+            // mTestWatcher should always be the first rule, as it defines the name of the test
+            // being run and finishes activities at teh end
             .outerRule(mTestWatcher)
+            // mRequiredFeatureRule should be an early rule so the test can be skipped right away
             .around(mRequiredFeatureRule)
+            // mLoggingRule wraps the test but doesn't interfere with it
             .around(mLoggingRule)
+
+            // "Post"-test rules
+            //
+            // mSafeCleanerRule should be as late as possible
             .around(mSafeCleanerRule)
+            // mRetryRule should always be the latest so it can retry in case of failure
             .around(mRetryRule);
 
     protected final Context mContext = sContext;
@@ -98,7 +120,6 @@ public abstract class AutoFillServiceTestCase {
         mUiBot = uiBot;
         mUiBot.reset();
     }
-
 
     @Before
     public void prepareDevice() throws Exception {

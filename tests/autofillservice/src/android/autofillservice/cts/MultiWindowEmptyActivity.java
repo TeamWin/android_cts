@@ -49,8 +49,11 @@ public class MultiWindowEmptyActivity extends EmptyActivity {
     }
 
     public static MultiWindowEmptyActivity waitNewInstance() throws InterruptedException {
-        sLastInstanceLatch.await(Timeouts.ACTIVITY_RESURRECTION.getMaxValue(),
-                TimeUnit.MILLISECONDS);
+        if (!sLastInstanceLatch.await(Timeouts.ACTIVITY_RESURRECTION.getMaxValue(),
+                TimeUnit.MILLISECONDS)) {
+            throw new RetryableException("New MultiWindowLoginActivity didn't start",
+                    Timeouts.ACTIVITY_RESURRECTION);
+        }
         sLastInstanceLatch = null;
         return sLastInstance;
     }

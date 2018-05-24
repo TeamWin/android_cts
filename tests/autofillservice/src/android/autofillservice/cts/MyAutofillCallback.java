@@ -17,6 +17,7 @@
 package android.autofillservice.cts;
 
 import static android.autofillservice.cts.Helper.callbackEventAsString;
+import static android.autofillservice.cts.Timeouts.CALLBACK_NOT_CALLED_TIMEOUT_MS;
 import static android.autofillservice.cts.Timeouts.CONNECTION_TIMEOUT;
 
 import static com.google.common.truth.Truth.assertWithMessage;
@@ -55,11 +56,6 @@ final class MyAutofillCallback extends AutofillCallback {
         mHandler = Handler.createAsync(sMyThread.getLooper());
     }
 
-    private void handleOffer(MyEvent event) {
-        Log.v(TAG, "handleOffer: " + event);
-        Helper.offer(mEvents, event, MY_TIMEOUT.ms());
-    }
-
     @Override
     public void onAutofillEvent(View view, int event) {
         mHandler.post(() -> offer(new MyEvent(view, event)));
@@ -90,7 +86,7 @@ final class MyAutofillCallback extends AutofillCallback {
      * Assert no more events were received.
      */
     void assertNotCalled() throws InterruptedException {
-        final MyEvent event = mEvents.poll(CONNECTION_TIMEOUT.ms(), TimeUnit.MILLISECONDS);
+        final MyEvent event = mEvents.poll(CALLBACK_NOT_CALLED_TIMEOUT_MS, TimeUnit.MILLISECONDS);
         if (event != null) {
             // Not retryable.
             throw new IllegalStateException("should not have received " + event);
