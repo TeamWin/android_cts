@@ -35,7 +35,10 @@ import java.security.NoSuchAlgorithmException;
 import java.security.MessageDigest;
 import java.util.ArrayList;
 import java.util.Base64;
+import java.util.Collection;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 class ReleaseParser {
     // configuration option
@@ -69,15 +72,18 @@ class ReleaseParser {
     private static final String APK_EXT_TAG = ".apk";
     private static final String SO_EXT_TAG = ".so";
     private static final String TEST_SUITE_TRADEFED_TAG = "-tradefed.jar";
+    private static final String TESTCASES_FOLDER_FORMAT = "testcases/%s";
 
     private final String mFolderPath;
     private Path mRootPath;
     private ReleaseContent.Builder mRelContentBuilder;
+    private Map<String, Entry> mEntries;
 
     ReleaseParser(String folder) {
         mFolderPath = folder;
         File fFile = new File(mFolderPath);
         mRootPath = Paths.get(fFile.getAbsolutePath());
+        mEntries = new HashMap<String, Entry>();
     }
 
     public String getRelNameVer() {
@@ -99,12 +105,14 @@ class ReleaseParser {
                             mRelContentBuilder.getVersion(),
                             mRelContentBuilder.getBuildNumber()));
             fBuilder.setParentFolder(mFolderPath);
-            mRelContentBuilder.addFileEntries(fBuilder);
+            Entry fEntry = fBuilder.build();
+            mEntries.put(fEntry.getRelativePath(), fEntry);
+            mRelContentBuilder.putAllEntries(mEntries);
         }
         return mRelContentBuilder.build();
     }
 
-    // Parse all files in a folder, add them to mRelContentBuilder.fileEntry and return the foler entry builder
+    // Parse all files in a folder and return the foler entry builder
     private Entry.Builder parseFolder(String fPath) {
         Entry.Builder folderEntry = Entry.newBuilder();
         File folder = new File(fPath);
@@ -145,16 +153,18 @@ class ReleaseParser {
                     System.err.println(String.format("Cannot parse %s", file.getAbsolutePath()));
                     ex.printStackTrace();
                 }
-                mRelContentBuilder.addFileEntries(fileEntry);
-                entryList.add(fileEntry.build());
+                Entry fEntry = fileEntry.build();
+                entryList.add(fEntry);
+                mEntries.put(fEntry.getRelativePath(), fEntry);
                 folderSize += file.length();
             } else if (file.isDirectory()) {
                 // Checks subfolders
                 Entry.Builder subFolderEntry = parseFolder(file.getAbsolutePath());
                 subFolderEntry.setParentFolder(folderRelativePath);
-                mRelContentBuilder.addFileEntries(subFolderEntry);
-                entryList.add(subFolderEntry.build());
-                folderSize += subFolderEntry.getSize();
+                Entry sfEntry = subFolderEntry.build();
+                entryList.add(sfEntry);
+                mEntries.put(sfEntry.getRelativePath(), sfEntry);
+                folderSize += sfEntry.getSize();
             }
         }
         folderEntry.setName(folderRelativePath);
@@ -237,13 +247,12 @@ class ReleaseParser {
 
     // writes releaes content to a CSV file
     public void writeRelesaeContentCsvFile(String relNameVer, String csvFile) {
-        ReleaseContent relContent = getReleaseContent();
         try {
             FileWriter fWriter = new FileWriter(csvFile);
             PrintWriter pWriter = new PrintWriter(fWriter);
             //Header
             pWriter.printf("release,type,name,size,relative_path,content_id,parent_folder\n");
-            for (Entry entry : relContent.getFileEntriesList()) {
+            for (Entry entry : getFileEntriesList()) {
                 pWriter.printf(
                         "%s,%s,%s,%d,%s,%s,%s\n",
                         relNameVer,
@@ -253,34 +262,6 @@ class ReleaseParser {
                         entry.getRelativePath(),
                         entry.getContentId(),
                         entry.getParentFolder());
-            }
-            pWriter.flush();
-            pWriter.close();
-        } catch (IOException e) {
-            System.err.println("IOException:" + e.getMessage());
-        }
-    }
-
-    // writes test module config content to a CSV file
-    public void writeTestModuleConfigCsvFile(String relNameVer, String csvFile) {
-        ReleaseContent relContent = getReleaseContent();
-        try {
-            FileWriter fWriter = new FileWriter(csvFile);
-            PrintWriter pWriter = new PrintWriter(fWriter);
-            //Header
-            pWriter.printf("release,component,module,description,test_file_names,test_jars\n");
-            for (Entry entry : relContent.getFileEntriesList()) {
-                if (Entry.EntryType.CONFIG == entry.getType()) {
-                    TestModuleConfig tmConfig = entry.getTestModuleConfig();
-                    pWriter.printf(
-                            "%s,%s,%s,%s,%s,%s\n",
-                            relNameVer,
-                            tmConfig.getComponent(),
-                            tmConfig.getModuleName(),
-                            tmConfig.getDescription(),
-                            String.join(" ", tmConfig.getTestFileNamesList()),
-                            String.join(" ", tmConfig.getTestJarsList()));
-                }
             }
             pWriter.flush();
             pWriter.close();
@@ -305,5 +286,9 @@ class ReleaseParser {
         } catch (IOException e) {
             System.err.println("IOException:" + e.getMessage());
         }
+    }
+
+    public Collection<Entry> getFileEntriesList() {
+        return getReleaseContent().getEntries().values();
     }
 }

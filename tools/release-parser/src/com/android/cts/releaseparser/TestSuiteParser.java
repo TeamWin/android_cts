@@ -38,9 +38,13 @@ import java.io.FileWriter;
 import java.io.IOException;
 import java.io.PrintWriter;
 import java.nio.file.Paths;
+import java.nio.charset.StandardCharsets;
 import java.net.URL;
 import java.net.URLClassLoader;
+import java.security.NoSuchAlgorithmException;
+import java.security.MessageDigest;
 import java.util.ArrayList;
+import java.util.Base64;
 import java.util.Collection;
 import java.util.Enumeration;
 import java.util.List;
@@ -61,7 +65,6 @@ class TestSuiteParser {
     private static final String PARAMETERS_TAG = "Lorg/junit/runners/Parameterized$Parameters";
     private static final String ANDROID_JUNIT4_TEST_TAG = "AndroidJUnit4.class";
     private static final String PARAMETERIZED_TAG = "Parameterized.class";
-    private static final String TESTCASES_FOLDER_TAG = "testcases";
 
     // configuration option
     private static final String NOT_SHARDABLE_TAG = "not-shardable";
@@ -74,6 +77,7 @@ class TestSuiteParser {
     // com.android.tradefed.testtype.GTest option
     private static final String NATIVE_TEST_DEVICE_PATH_TAG = "native-test-device-path";
     private static final String MODULE_TAG = "module-name";
+    private static final String TESTCASES_FOLDER_FORMAT = "testcases/%s";
 
     private static final String SUITE_API_INSTALLER_TAG =
             "com.android.tradefed.targetprep.suite.SuiteApkInstaller";
@@ -128,7 +132,7 @@ class TestSuiteParser {
         tsBuilder.setBuildNumber(mRelContent.getBuildNumber());
 
         // Iterates all file
-        for (Entry entry : mRelContent.getFileEntriesList()) {
+        for (Entry entry : getFileEntriesList(mRelContent)) {
             // Only parses test module config files
             if (Entry.EntryType.CONFIG == entry.getType()) {
                 TestModuleConfig config = entry.getTestModuleConfig();
@@ -193,7 +197,7 @@ class TestSuiteParser {
 
     private Entry getFileEntry(String name) {
         Entry fEntry = null;
-        for (Entry et : mRelContent.getFileEntriesList()) {
+        for (Entry et : getFileEntriesList(mRelContent)) {
             if (name.equals(et.getName())) {
                 fEntry = et;
                 break;
@@ -505,20 +509,21 @@ class TestSuiteParser {
             PrintWriter pWriter = new PrintWriter(fWriter);
             //Header
             pWriter.println(
-                    "release,module,test_class,test,test_package,test_type,known_failure_filter");
+                    "release,module,test_class,test,test_package,test_type,known_failure_filter,package_content_id");
             for (TestSuite.Module module : ts.getModulesList()) {
                 for (TestSuite.Module.Package pkg : module.getPackagesList()) {
                     for (TestSuite.Module.Package.Class cls : pkg.getClassesList()) {
                         for (TestSuite.Module.Package.Class.Method mtd : cls.getMethodsList()) {
                             pWriter.printf(
-                                    "%s,%s,%s,%s,%s,%s,%s\n",
+                                    "%s,%s,%s,%s,%s,%s,%s,%s\n",
                                     relNameVer,
                                     module.getName(),
                                     cls.getName(),
                                     mtd.getName(),
                                     pkg.getPackageFile(),
                                     cls.getTestClassType(),
-                                    mtd.getKnownFailureFilter());
+                                    mtd.getKnownFailureFilter(),
+                                    getTestTargetContentId(pkg.getPackageFile()));
                         }
                     }
                 }
@@ -530,8 +535,8 @@ class TestSuiteParser {
         }
     }
 
-    // Iterates though all test suite content and prints them.
-    public void writeSummaryCsvFile(String relNameVer, String csvFile) {
+    // Iterates though all test module and prints them.
+    public void writeModuleCsvFile(String relNameVer, String csvFile) {
         TestSuite ts = getTestSuite();
         try {
             FileWriter fWriter = new FileWriter(csvFile);
@@ -539,7 +544,7 @@ class TestSuiteParser {
 
             //Header
             pWriter.print(
-                    "release,module,test_no,known_failure_no,test_type,test_class,test_config_file\n");
+                    "release,module,test_no,known_failure_no,test_type,test_class,component,description,test_config_file,test_file_names,test_jars,module_content_id\n");
 
             for (TestSuite.Module module : ts.getModulesList()) {
                 int classCnt = 0;
@@ -558,15 +563,26 @@ class TestSuiteParser {
                         classCnt++;
                     }
                 }
+                String config = module.getConfigFile();
+                Entry entry = mRelContent.getEntries().get(config);
+                TestModuleConfig tmConfig = entry.getTestModuleConfig();
                 pWriter.printf(
-                        "%s,%s,%d,%d,%s,%s,%s\n",
+                        "%s,%s,%d,%d,%s,%s,%s,%s,%s,%s,%s,%s\n",
                         relNameVer,
                         module.getName(),
                         methodCnt,
                         kfCnt,
                         module.getTestType(),
                         module.getTestClass(),
-                        module.getConfigFile());
+                        tmConfig.getComponent(),
+                        tmConfig.getDescription(),
+                        config,
+                        String.join(" ", tmConfig.getTestFileNamesList()),
+                        String.join(" ", tmConfig.getTestJarsList()),
+                        getTestModuleContentId(
+                                entry,
+                                tmConfig.getTestFileNamesList(),
+                                tmConfig.getTestJarsList()));
             }
             pWriter.flush();
             pWriter.close();
@@ -574,4 +590,44 @@ class TestSuiteParser {
             System.err.println("IOException:" + e.getMessage());
         }
     }
+
+    public static Collection<Entry> getFileEntriesList(ReleaseContent relContent) {
+        return relContent.getEntries().values();
+    }
+
+    // get Test Module Content Id = config cid + apk cids + jar cids
+    private String getTestModuleContentId(Entry config, List<String> apks, List<String> jars) {
+        String id = null;
+        //Starts with config file content_id
+        String idStr = config.getContentId();
+        try {
+            MessageDigest md = MessageDigest.getInstance("SHA-256");
+            //Add all apk content_id
+            for (String apk : apks) {
+                idStr += getTestTargetContentId(String.format(TESTCASES_FOLDER_FORMAT, apk));
+            }
+            //Add all jar content_id
+            for (String jar : jars) {
+                idStr += getTestTargetContentId(String.format(TESTCASES_FOLDER_FORMAT, jar));
+            }
+            md.update(idStr.getBytes(StandardCharsets.UTF_8));
+            // Converts to Base64 String
+            id = Base64.getEncoder().encodeToString(md.digest());
+            System.out.println("getTestModuleContentId: " + idStr);
+        } catch (NoSuchAlgorithmException e) {
+            System.err.println("NoSuchAlgorithmException:" + e.getMessage());
+        }
+        return id;
+    }
+
+    private String getTestTargetContentId(String targetFile) {
+        Entry entry = mRelContent.getEntries().get(targetFile);
+        if (entry != null) {
+            return entry.getContentId();
+        } else {
+            System.err.println("No getTestTargetContentId: " + targetFile);
+            return "";
+        }
+    }
+
 }

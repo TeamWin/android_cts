@@ -93,10 +93,6 @@ public class Main {
                 relNameVer,
                 Paths.get(outputPath, String.format("%s-ReleaseContent.csv", relNameVer))
                         .toString());
-        relParser.writeTestModuleConfigCsvFile(
-                relNameVer,
-                Paths.get(outputPath, String.format("%s-TestModuleConfig.csv", relNameVer))
-                        .toString());
         relParser.writeKnownFailureCsvFile(
                 relNameVer,
                 Paths.get(outputPath, String.format("%s-KnownFailure.csv", relNameVer)).toString());
@@ -121,9 +117,9 @@ public class Main {
         tsParser.writeCsvFile(
                 relNameVer,
                 Paths.get(outputPath, String.format("%s-TestCase.csv", relNameVer)).toString());
-        tsParser.writeSummaryCsvFile(
+        tsParser.writeModuleCsvFile(
                 relNameVer,
-                Paths.get(outputPath, String.format("%s-TestSummary.csv", relNameVer)).toString());
+                Paths.get(outputPath, String.format("%s-TestModule.csv", relNameVer)).toString());
 
         // Write test suite content message to disk.
         TestSuite testSuite = tsParser.getTestSuite();
