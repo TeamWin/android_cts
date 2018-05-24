@@ -179,8 +179,8 @@ public class ActivityManagerAppConfigurationTests extends ActivityManagerTestBas
                 final String logSeparator = clearLogcat();
                 Rectangle dockBounds = mAmWmState.getAmState().getStackById(
                         DOCKED_STACK_ID).getBounds();
-                adjustedDockedBounds.setBounds(dockBounds.x, dockBounds.y, dockBounds.width,
-                        (int) (dockBounds.height * 0.7f));
+                adjustedDockedBounds.setBounds(dockBounds.x, dockBounds.y,
+                    (int) (dockBounds.width * 0.5f), (int) (dockBounds.height * 0.7f));
                 resizeDockedStack(adjustedDockedBounds.width, adjustedDockedBounds.height,
                         adjustedDockedBounds.width, adjustedDockedBounds.height);
                 prevSizes = getActivityDisplaySize(RESIZEABLE_ACTIVITY_NAME, logSeparator);
