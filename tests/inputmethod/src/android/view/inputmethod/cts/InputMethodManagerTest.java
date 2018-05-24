@@ -18,7 +18,6 @@ package android.view.inputmethod.cts;
 
 import static android.content.Intent.ACTION_CLOSE_SYSTEM_DIALOGS;
 import static android.content.Intent.FLAG_RECEIVER_FOREGROUND;
-import static android.view.inputmethod.cts.util.TestUtils.runOnMainSync;
 import static android.view.inputmethod.cts.util.TestUtils.waitOnMainUntil;
 
 import static org.junit.Assert.assertFalse;
@@ -30,6 +29,7 @@ import android.app.Instrumentation;
 import android.content.Context;
 import android.content.Intent;
 import androidx.annotation.NonNull;
+import android.platform.test.annotations.AppModeFull;
 import android.support.test.InstrumentationRegistry;
 import android.support.test.filters.MediumTest;
 import android.support.test.runner.AndroidJUnit4;
@@ -165,6 +165,7 @@ public class InputMethodManagerTest {
         }).collect(Collectors.joining(", ")) + "]";
     }
 
+    @AppModeFull(reason = "Instant apps cannot rely on ACTION_CLOSE_SYSTEM_DIALOGS")
     @Test
     public void testShowInputMethodPicker() throws Exception {
         TestActivity.startSync(activity -> {
