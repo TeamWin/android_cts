@@ -61,6 +61,8 @@ public class InstallDexMetadataHostTest extends BaseHostJUnit4Test {
     private static final String DM_FEATURE_A = "CtsDexMetadataSplitAppFeatureA.dm";
 
     private File mTmpDir;
+    private File mApkBaseFile = null;
+    private File mApkFeatureAFile = null;
     private File mDmBaseFile = null;
     private File mDmFeatureAFile = null;
     private boolean mShouldRunTests;
@@ -79,6 +81,8 @@ public class InstallDexMetadataHostTest extends BaseHostJUnit4Test {
 
         if (mShouldRunTests) {
             mTmpDir = FileUtil.createTempDir("InstallDexMetadataHostTest");
+            mApkBaseFile = extractResource(APK_BASE, mTmpDir);
+            mApkFeatureAFile = extractResource(APK_FEATURE_A, mTmpDir);
             mDmBaseFile = extractResource(DM_BASE, mTmpDir);
             mDmFeatureAFile = extractResource(DM_FEATURE_A, mTmpDir);
         }
@@ -98,7 +102,7 @@ public class InstallDexMetadataHostTest extends BaseHostJUnit4Test {
      */
     @Test
     public void testInstallDmForBase() throws Exception {
-        new InstallMultiple().addApk(APK_BASE).addDm(mDmBaseFile).run();
+        new InstallMultiple().addApk(mApkBaseFile).addDm(mDmBaseFile).run();
         assertNotNull(getDevice().getAppPackageInfo(INSTALL_PACKAGE));
 
         assertTrue(runDeviceTests(TEST_PACKAGE, TEST_CLASS, "testDmForBase"));
@@ -109,8 +113,8 @@ public class InstallDexMetadataHostTest extends BaseHostJUnit4Test {
      */
     @Test
     public void testInstallDmForBaseAndSplit() throws Exception {
-        new InstallMultiple().addApk(APK_BASE).addDm(mDmBaseFile)
-                .addApk(APK_FEATURE_A).addDm(mDmFeatureAFile).run();
+        new InstallMultiple().addApk(mApkBaseFile).addDm(mDmBaseFile)
+                .addApk(mApkFeatureAFile).addDm(mDmFeatureAFile).run();
         assertNotNull(getDevice().getAppPackageInfo(INSTALL_PACKAGE));
 
         assertTrue(runDeviceTests(TEST_PACKAGE, TEST_CLASS, "testDmForBaseAndSplit"));
@@ -121,8 +125,8 @@ public class InstallDexMetadataHostTest extends BaseHostJUnit4Test {
      */
     @Test
     public void testInstallDmForBaseButNoSplit() throws Exception {
-        new InstallMultiple().addApk(APK_BASE).addDm(mDmBaseFile)
-                .addApk(APK_FEATURE_A).run();
+        new InstallMultiple().addApk(mApkBaseFile).addDm(mDmBaseFile)
+                .addApk(mApkFeatureAFile).run();
         assertNotNull(getDevice().getAppPackageInfo(INSTALL_PACKAGE));
 
         assertTrue(runDeviceTests(TEST_PACKAGE, TEST_CLASS, "testDmForBaseButNoSplit"));
@@ -133,8 +137,8 @@ public class InstallDexMetadataHostTest extends BaseHostJUnit4Test {
      */
     @Test
     public void testInstallDmForSplitButNoBase() throws Exception {
-        new InstallMultiple().addApk(APK_BASE)
-                .addApk(APK_FEATURE_A).addDm(mDmFeatureAFile).run();
+        new InstallMultiple().addApk(mApkBaseFile)
+                .addApk(mApkFeatureAFile).addDm(mDmFeatureAFile).run();
         assertNotNull(getDevice().getAppPackageInfo(INSTALL_PACKAGE));
 
         assertTrue(runDeviceTests(TEST_PACKAGE, TEST_CLASS, "testDmForSplitButNoBase"));
@@ -145,22 +149,22 @@ public class InstallDexMetadataHostTest extends BaseHostJUnit4Test {
      */
     @Test
     public void testUpdateDm() throws Exception {
-        new InstallMultiple().addApk(APK_BASE).addDm(mDmBaseFile)
-                .addApk(APK_FEATURE_A).addDm(mDmFeatureAFile).run();
+        new InstallMultiple().addApk(mApkBaseFile).addDm(mDmBaseFile)
+                .addApk(mApkFeatureAFile).addDm(mDmFeatureAFile).run();
         assertNotNull(getDevice().getAppPackageInfo(INSTALL_PACKAGE));
 
         assertTrue(runDeviceTests(TEST_PACKAGE, TEST_CLASS, "testDmForBaseAndSplit"));
 
         // Remove .dm files during update.
-        new InstallMultiple().addArg("-r").addApk(APK_BASE)
-                .addApk(APK_FEATURE_A).run();
+        new InstallMultiple().addArg("-r").addApk(mApkBaseFile)
+                .addApk(mApkFeatureAFile).run();
         assertNotNull(getDevice().getAppPackageInfo(INSTALL_PACKAGE));
 
         assertTrue(runDeviceTests(TEST_PACKAGE, TEST_CLASS, "testNoDm"));
 
         // Add only a split .dm file during update.
-        new InstallMultiple().addArg("-r").addApk(APK_BASE)
-                .addApk(APK_FEATURE_A).addDm(mDmFeatureAFile).run();
+        new InstallMultiple().addArg("-r").addApk(mApkBaseFile)
+                .addApk(mApkFeatureAFile).addDm(mDmFeatureAFile).run();
         assertNotNull(getDevice().getAppPackageInfo(INSTALL_PACKAGE));
 
         assertTrue(runDeviceTests(TEST_PACKAGE, TEST_CLASS, "testDmForSplitButNoBase"));
@@ -174,8 +178,8 @@ public class InstallDexMetadataHostTest extends BaseHostJUnit4Test {
         File nonMatchingDm = new File(mDmFeatureAFile.getAbsoluteFile().getAbsolutePath()
                 .replace(".dm", ".not.there.dm"));
         FileUtil.copyFile(mDmFeatureAFile, nonMatchingDm);
-        new InstallMultiple().addApk(APK_BASE).addDm(mDmBaseFile)
-                .addApk(APK_FEATURE_A).addDm(nonMatchingDm).run();
+        new InstallMultiple().addApk(mApkBaseFile).addDm(mDmBaseFile)
+                .addApk(mApkFeatureAFile).addDm(nonMatchingDm).run();
         assertNotNull(getDevice().getAppPackageInfo(INSTALL_PACKAGE));
 
         assertTrue(runDeviceTests(TEST_PACKAGE, TEST_CLASS, "testDmForBaseButNoSplit"));
@@ -186,7 +190,7 @@ public class InstallDexMetadataHostTest extends BaseHostJUnit4Test {
         assumeProfilesAreEnabled();
 
         // Install the app.
-        new InstallMultiple().addApk(APK_BASE).addDm(mDmBaseFile).run();
+        new InstallMultiple().addApk(mApkBaseFile).addDm(mDmBaseFile).run();
 
         // Take a snapshot of the installed profile.
         String snapshotCmd = "cmd package snapshot-profile " + INSTALL_PACKAGE;
@@ -196,9 +200,6 @@ public class InstallDexMetadataHostTest extends BaseHostJUnit4Test {
         // Extract the profile bytes from the dex metadata and from the profile snapshot.
         byte[] snapshotProfileBytes = extractProfileSnapshotFromDevice();
         byte[] expectedProfileBytes = extractProfileFromDexMetadata(mDmBaseFile);
-
-        // Clean up the snapshot profile.
-        getDevice().executeShellCommand("rm " + INSTALL_PACKAGE + ".prof");
 
         assertArrayEquals(expectedProfileBytes, snapshotProfileBytes);
     }
@@ -215,8 +216,12 @@ public class InstallDexMetadataHostTest extends BaseHostJUnit4Test {
     private byte[] extractProfileSnapshotFromDevice() throws Exception {
         File snapshotFile = File.createTempFile(INSTALL_PACKAGE, "primary.prof");
         snapshotFile.deleteOnExit();
-        getDevice().pullFile("/data/misc/profman/" + INSTALL_PACKAGE + ".prof", snapshotFile);
+        getDevice().pullFile(getSnapshotLocation(INSTALL_PACKAGE), snapshotFile);
         return Files.readAllBytes(snapshotFile.toPath());
+    }
+
+    static private String getSnapshotLocation(String pkg) {
+        return "/data/misc/profman/" + pkg + ".prof";
     }
 
     /** Extracts the profile bytes from the dex metadata profile. */
