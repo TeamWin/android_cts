@@ -1,4 +1,4 @@
-# Copyright (C) 2014 The Android Open Source Project
+# Copyright (C) 2018 The Android Open Source Project
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -27,13 +27,15 @@ LOCAL_STATIC_JAVA_LIBRARIES := compatibility-device-util ub-uiautomator android-
 LOCAL_JAVA_LIBRARIES := android.test.base.stubs
 
 LOCAL_SRC_FILES := $(call all-java-files-under, src)
-LOCAL_SRC_FILES += $(call all-java-files-under, JobTestApp/src)
+LOCAL_SRC_FILES += $(call all-java-files-under, JobSharedUidTestApp/src)
+LOCAL_SRC_FILES += $(call all-java-files-under, jobperm/src)
+LOCAL_SRC_FILES += $(call all-java-files-under, shareduid/src)
 
 # Tag this module as a cts test artifact
-LOCAL_COMPATIBILITY_SUITE := cts vts general-tests cts_instant
+LOCAL_COMPATIBILITY_SUITE := cts vts general-tests
 
 # Must match the package name in CtsTestCaseList.mk
-LOCAL_PACKAGE_NAME := CtsJobSchedulerTestCases
+LOCAL_PACKAGE_NAME := CtsJobSchedulerSharedUidTestCases
 
 #LOCAL_SDK_VERSION := current
 LOCAL_PRIVATE_PLATFORM_APIS := true
