@@ -39,6 +39,7 @@ import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.os.Parcel;
 import android.os.SystemClock;
+import android.platform.test.annotations.AppModeFull;
 import android.provider.Settings;
 import android.support.test.InstrumentationRegistry;
 import android.support.test.runner.AndroidJUnit4;
@@ -140,6 +141,7 @@ public class UsageStatsTest {
         }
     }
 
+    @AppModeFull // No usage events access in instant apps
     @Test
     public void testOrderedActivityLaunchSequenceInEventLog() throws Exception {
         @SuppressWarnings("unchecked")
@@ -203,6 +205,7 @@ public class UsageStatsTest {
         }
     }
 
+    @AppModeFull // No usage events access in instant apps
     @Test
     public void testAppLaunchCount() throws Exception {
         long endTime = System.currentTimeMillis();
@@ -229,6 +232,7 @@ public class UsageStatsTest {
         assertEquals(startingCount + 2, stats.getAppLaunchCount());
     }
 
+    @AppModeFull // No usage events access in instant apps
     @Test
     public void testStandbyBucketChangeLog() throws Exception {
         final long startTime = System.currentTimeMillis();
@@ -383,6 +387,7 @@ public class UsageStatsTest {
         assertEquals(events.hasNextEvent(), reparceledEvents.hasNextEvent());
     }
 
+    @AppModeFull // No usage events access in instant apps
     @Test
     public void testPackageUsageStatsIntervals() throws Exception {
         final long beforeTime = System.currentTimeMillis();
@@ -445,6 +450,7 @@ public class UsageStatsTest {
         assertTrue(stats.isEmpty());
     }
 
+    @AppModeFull // No usage events access in instant apps
     @Test
     public void testNotificationSeen() throws Exception {
         final long startTime = System.currentTimeMillis();
@@ -734,6 +740,7 @@ public class UsageStatsTest {
         }
     }
 
+    @AppModeFull // No usage events access in instant apps
     @Test
     public void testInteractiveEvents() throws Exception {
         final KeyguardManager kmgr = InstrumentationRegistry.getInstrumentation()
