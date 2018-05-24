@@ -94,7 +94,7 @@ message ReleaseContent {
     string target_arch = 6;
     string test_suite_tradefed = 7;
     // File Entries
-    repeated Entry file_entries = 8;
+    map<string, Entry> entries = 8;
     repeated string known_failures = 9;
 }
 
