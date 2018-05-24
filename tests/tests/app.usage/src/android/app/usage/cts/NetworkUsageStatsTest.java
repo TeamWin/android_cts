@@ -32,10 +32,10 @@ import android.os.HandlerThread;
 import android.os.ParcelFileDescriptor;
 import android.os.Process;
 import android.os.RemoteException;
+import android.platform.test.annotations.AppModeFull;
 import android.telephony.TelephonyManager;
 import android.test.InstrumentationTestCase;
 import android.util.Log;
-
 import com.android.compatibility.common.util.SystemUtil;
 
 import java.io.FileInputStream;
@@ -342,6 +342,7 @@ public class NetworkUsageStatsTest extends InstrumentationTestCase {
         return "";
     }
 
+    @AppModeFull
     public void testDeviceSummary() throws Exception {
         for (int i = 0; i < mNetworkInterfacesToTest.length; ++i) {
             if (!shouldTestThisNetworkType(i, MINUTE/2)) {
@@ -376,6 +377,7 @@ public class NetworkUsageStatsTest extends InstrumentationTestCase {
         }
     }
 
+    @AppModeFull
     public void testUserSummary() throws Exception {
         for (int i = 0; i < mNetworkInterfacesToTest.length; ++i) {
             if (!shouldTestThisNetworkType(i, MINUTE/2)) {
@@ -410,6 +412,7 @@ public class NetworkUsageStatsTest extends InstrumentationTestCase {
         }
     }
 
+    @AppModeFull
     public void testAppSummary() throws Exception {
         for (int i = 0; i < mNetworkInterfacesToTest.length; ++i) {
             if (!shouldTestThisNetworkType(i, MINUTE/2)) {
@@ -474,6 +477,7 @@ public class NetworkUsageStatsTest extends InstrumentationTestCase {
         }
     }
 
+    @AppModeFull
     public void testAppDetails() throws Exception {
         for (int i = 0; i < mNetworkInterfacesToTest.length; ++i) {
             // Relatively large tolerance to accommodate for history bucket size.
@@ -516,6 +520,7 @@ public class NetworkUsageStatsTest extends InstrumentationTestCase {
         }
     }
 
+    @AppModeFull
     public void testUidDetails() throws Exception {
         for (int i = 0; i < mNetworkInterfacesToTest.length; ++i) {
             // Relatively large tolerance to accommodate for history bucket size.
@@ -673,6 +678,7 @@ public class NetworkUsageStatsTest extends InstrumentationTestCase {
                 bucket.getRxBytes(), bucket.getTxBytes()));
     }
 
+    @AppModeFull
     public void testUidTagStateDetails() throws Exception {
         for (int i = 0; i < mNetworkInterfacesToTest.length; ++i) {
             // Relatively large tolerance to accommodate for history bucket size.
@@ -749,6 +755,7 @@ public class NetworkUsageStatsTest extends InstrumentationTestCase {
         }
     }
 
+    @AppModeFull
     public void testCallback() throws Exception {
         for (int i = 0; i < mNetworkInterfacesToTest.length; ++i) {
             // Relatively large tolerance to accommodate for history bucket size.
