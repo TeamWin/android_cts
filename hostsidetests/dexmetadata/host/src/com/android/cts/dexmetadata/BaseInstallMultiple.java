@@ -52,13 +52,12 @@ import java.util.List;
         return (T) this;
     }
 
-    T addApk(String apk) throws FileNotFoundException {
-        CompatibilityBuildHelper buildHelper = new CompatibilityBuildHelper(mBuild);
-        mFilesToInstall.add(buildHelper.getTestFile(apk));
+    T addApk(File apk) {
+        mFilesToInstall.add(apk);
         return (T) this;
     }
 
-    T addDm(File dma) throws FileNotFoundException {
+    T addDm(File dma) {
         mFilesToInstall.add(dma);
         return (T) this;
     }
