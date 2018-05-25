@@ -31,6 +31,7 @@ public class Main {
             "Usage: java -jar releaseparser.jar [-options] <folder> [args...]\n"
                     + "           to prase a release content in the folder\n"
                     + "Options:\n"
+                    + "\t-a API#\t API Level, e.g. 27 \n"
                     + "\t-i PATH\t path to a release folder \n"
                     + "\t-o PATH\t path to output files \n";
 
@@ -56,6 +57,7 @@ public class Main {
         String relNameVer;
         String relFolder = "";
         String outputPath = "";
+        int apiL = 27;
 
         for (int i = 0; i < args.length; i++) {
             if (args[i].startsWith("-")) {
@@ -73,6 +75,8 @@ public class Main {
                     if (!file.isDirectory()) {
                         printUsage();
                     }
+                } else if ("-a".equals(args[i])) {
+                    apiL = Integer.parseInt(getExpectedArg(args, ++i));
                 } else {
                     printUsage();
                 }
@@ -85,17 +89,20 @@ public class Main {
 
         ReleaseParser relParser = new ReleaseParser(relFolder);
         relNameVer = relParser.getRelNameVer();
-        relParser.writeCsvFile(
-                Paths.get(outputPath, String.format("%s-RC.csv", relNameVer)).toString());
+        relParser.writeRelesaeContentCsvFile(
+                relNameVer,
+                Paths.get(outputPath, String.format("%s-ReleaseContent.csv", relNameVer))
+                        .toString());
         relParser.writeKnownFailureCsvFile(
-                Paths.get(outputPath, String.format("%s-KF.csv", relNameVer)).toString());
+                relNameVer,
+                Paths.get(outputPath, String.format("%s-KnownFailure.csv", relNameVer)).toString());
 
         // Write release content message to disk.
         ReleaseContent relContent = relParser.getReleaseContent();
         try {
             FileOutputStream output =
                     new FileOutputStream(
-                            Paths.get(outputPath, String.format("%s-RC.pb", relNameVer))
+                            Paths.get(outputPath, String.format("%s-ReleaseContent.pb", relNameVer))
                                     .toString());
             try {
                 relContent.writeTo(output);
@@ -106,18 +113,20 @@ public class Main {
             System.err.println("IOException:" + e.getMessage());
         }
 
-        TestSuiteParser tsParser = new TestSuiteParser(relContent, relFolder);
+        TestSuiteParser tsParser = new TestSuiteParser(relContent, relFolder, apiL);
         tsParser.writeCsvFile(
-                Paths.get(outputPath, String.format("%s-TC.csv", relNameVer)).toString());
-        tsParser.writeSummaryCsvFile(
-                Paths.get(outputPath, String.format("%s-TS.csv", relNameVer)).toString());
+                relNameVer,
+                Paths.get(outputPath, String.format("%s-TestCase.csv", relNameVer)).toString());
+        tsParser.writeModuleCsvFile(
+                relNameVer,
+                Paths.get(outputPath, String.format("%s-TestModule.csv", relNameVer)).toString());
 
         // Write test suite content message to disk.
         TestSuite testSuite = tsParser.getTestSuite();
         try {
             FileOutputStream output =
                     new FileOutputStream(
-                            Paths.get(outputPath, String.format("%s-TC.pb", relNameVer))
+                            Paths.get(outputPath, String.format("%s-TestSuite.pb", relNameVer))
                                     .toString());
             try {
                 testSuite.writeTo(output);

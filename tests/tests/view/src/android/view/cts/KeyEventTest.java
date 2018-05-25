@@ -760,4 +760,37 @@ public class KeyEventTest {
                 1, 0, KeyCharacterMap.VIRTUAL_KEYBOARD, 0, 0, InputDevice.SOURCE_TOUCHSCREEN);
         assertFalse(mKeyEvent.isLongPress());
     }
+
+    @Test
+    public void testKeyCodeFromString() {
+        assertEquals(KeyEvent.KEYCODE_A, KeyEvent.keyCodeFromString("KEYCODE_A"));
+        assertEquals(KeyEvent.KEYCODE_A, KeyEvent.keyCodeFromString("A"));
+        assertEquals(KeyEvent.KEYCODE_A,
+                KeyEvent.keyCodeFromString(Integer.toString(KeyEvent.KEYCODE_A)));
+        assertEquals(KeyEvent.KEYCODE_UNKNOWN, KeyEvent.keyCodeFromString("keycode_a"));
+        assertEquals(KeyEvent.KEYCODE_UNKNOWN, KeyEvent.keyCodeFromString("a"));
+        assertEquals(0, KeyEvent.keyCodeFromString("0"));
+        assertEquals(1, KeyEvent.keyCodeFromString("1"));
+        assertEquals(KeyEvent.KEYCODE_HOME, KeyEvent.keyCodeFromString("3"));
+        assertEquals(KeyEvent.KEYCODE_POWER,
+                KeyEvent.keyCodeFromString(Integer.toString(KeyEvent.KEYCODE_POWER)));
+        assertEquals(KeyEvent.KEYCODE_MENU,
+                KeyEvent.keyCodeFromString(Integer.toString(KeyEvent.KEYCODE_MENU)));
+        assertEquals(KeyEvent.KEYCODE_BACK, KeyEvent.keyCodeFromString("BACK"));
+        assertEquals(KeyEvent.KEYCODE_UNKNOWN, KeyEvent.keyCodeFromString("back"));
+
+        assertEquals(KeyEvent.KEYCODE_UNKNOWN,
+                KeyEvent.keyCodeFromString("KEYCODE_NOT_A_REAL_KEYCODE"));
+        assertEquals(KeyEvent.KEYCODE_UNKNOWN, KeyEvent.keyCodeFromString("NOT_A_REAL_KEYCODE"));
+        assertEquals(KeyEvent.KEYCODE_UNKNOWN, KeyEvent.keyCodeFromString("-1"));
+        assertEquals(KeyEvent.KEYCODE_UNKNOWN, KeyEvent.keyCodeFromString("1001"));
+        assertEquals(KeyEvent.KEYCODE_UNKNOWN, KeyEvent.keyCodeFromString("KEYCODE_123"));
+        assertEquals(KeyEvent.KEYCODE_UNKNOWN, KeyEvent.keyCodeFromString("KEYCODE"));
+        assertEquals(KeyEvent.KEYCODE_UNKNOWN, KeyEvent.keyCodeFromString("KEYCODE_"));
+        assertEquals(KeyEvent.KEYCODE_UNKNOWN, KeyEvent.keyCodeFromString(""));
+        assertEquals(KeyEvent.LAST_KEYCODE,
+                KeyEvent.keyCodeFromString(Integer.toString(KeyEvent.LAST_KEYCODE)));
+        assertEquals(KeyEvent.KEYCODE_UNKNOWN,
+                KeyEvent.keyCodeFromString(Integer.toString(KeyEvent.LAST_KEYCODE + 1)));
+    }
 }

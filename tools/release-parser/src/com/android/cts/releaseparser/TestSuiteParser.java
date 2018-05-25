@@ -38,9 +38,13 @@ import java.io.FileWriter;
 import java.io.IOException;
 import java.io.PrintWriter;
 import java.nio.file.Paths;
+import java.nio.charset.StandardCharsets;
 import java.net.URL;
 import java.net.URLClassLoader;
+import java.security.NoSuchAlgorithmException;
+import java.security.MessageDigest;
 import java.util.ArrayList;
+import java.util.Base64;
 import java.util.Collection;
 import java.util.Enumeration;
 import java.util.List;
@@ -49,7 +53,6 @@ import java.util.jar.JarEntry;
 import java.util.jar.JarFile;
 
 class TestSuiteParser {
-    private static final int OPCODE_API = 27;
     // JUNIT3 Test suffix
     private static final String TEST_TAG = "Test;";
     // Some may ends with Tests e.g. cts/tests/tests/accounts/src/android/accounts/cts/AbstractAuthenticatorTests.java
@@ -62,7 +65,6 @@ class TestSuiteParser {
     private static final String PARAMETERS_TAG = "Lorg/junit/runners/Parameterized$Parameters";
     private static final String ANDROID_JUNIT4_TEST_TAG = "AndroidJUnit4.class";
     private static final String PARAMETERIZED_TAG = "Parameterized.class";
-    private static final String TESTCASES_FOLDER_TAG = "testcases";
 
     // configuration option
     private static final String NOT_SHARDABLE_TAG = "not-shardable";
@@ -75,6 +77,7 @@ class TestSuiteParser {
     // com.android.tradefed.testtype.GTest option
     private static final String NATIVE_TEST_DEVICE_PATH_TAG = "native-test-device-path";
     private static final String MODULE_TAG = "module-name";
+    private static final String TESTCASES_FOLDER_FORMAT = "testcases/%s";
 
     private static final String SUITE_API_INSTALLER_TAG =
             "com.android.tradefed.targetprep.suite.SuiteApkInstaller";
@@ -105,14 +108,13 @@ class TestSuiteParser {
 
     private final String mFolderPath;
     private ReleaseContent mRelContent;
+    private final int mApiLevel;
     private TestSuite.Builder mTSBuilder;
-    private List<String> mTestApkList;
-    private List<String> mTestClassList;
-    private List<String> mHostTestJarList;
 
-    TestSuiteParser(ReleaseContent relContent, String folder) {
+    TestSuiteParser(ReleaseContent relContent, String folder, int apiL) {
         mFolderPath = folder;
         mRelContent = relContent;
+        mApiLevel = apiL;
     }
 
     public TestSuite getTestSuite() {
@@ -122,99 +124,99 @@ class TestSuiteParser {
         return mTSBuilder.build();
     }
 
-    // Iterates though all test suite content
     private TestSuite.Builder praseTestSuite() {
         TestSuite.Builder tsBuilder = TestSuite.newBuilder();
 
-        int i = 1;
-        for (Entry entry : mRelContent.getFileEntriesList()) {
+        tsBuilder.setName(mRelContent.getName());
+        tsBuilder.setVersion(mRelContent.getVersion());
+        tsBuilder.setBuildNumber(mRelContent.getBuildNumber());
+
+        // Iterates all file
+        for (Entry entry : getFileEntriesList(mRelContent)) {
+            // Only parses test module config files
             if (Entry.EntryType.CONFIG == entry.getType()) {
-                TestSuite.Package.Type pType = null;
-                ConfigMetadata config = entry.getFileMetadata().getConfigMetadata();
-
-                // getting package/class list from Test Module Configuration
-                mTestClassList = new ArrayList<String>();
-                mTestApkList = new ArrayList<String>();
-                mHostTestJarList = new ArrayList<String>();
-                List<Option> optList;
-                List<ConfigMetadata.TestClass> testClassesList = config.getTestClassesList();
-                for (ConfigMetadata.TestClass tClass : testClassesList) {
-                    boolean isHostTest = false;
-                    boolean isAndroidJunitTest = false;
-                    optList = tClass.getOptionsList();
-                    if (HOST_TEST_CLASS_TAG.equals(tClass.getTestClass())) {
-                        isHostTest = true;
-                        pType = TestSuite.Package.Type.JAVAHOST;
-                    } else if (ANDROID_JUNIT_TEST_TAG.equals(tClass.getTestClass())) {
-                        isAndroidJunitTest = true;
-                    } else if (GTEST_TAG.equals(tClass.getTestClass())) {
-                        pType = TestSuite.Package.Type.GTEST;
-                    } else if (DEQP_TEST_TAG.equals(tClass.getTestClass())) {
-                        pType = TestSuite.Package.Type.DEQP;
-                    } else if (LIBCORE_TEST_TAG.equals(tClass.getTestClass())) {
-                        pType = TestSuite.Package.Type.LIBCORE;
-                    } else if (DALVIK_TEST_TAG.equals(tClass.getTestClass())) {
-                        // cts/tests/jdwp/AndroidTest.xml
-                        pType = TestSuite.Package.Type.DALVIK;
-                    } else {
-                        System.err.printf(
-                                "Unknown Test Type: %s %s\n",
-                                entry.getName(), tClass.getTestClass());
-                    }
-
-                    for (Option opt : optList) {
-                        if (isAndroidJunitTest && PACKAGE_TAG.equalsIgnoreCase(opt.getName())) {
-                            mTestClassList.add(opt.getValue());
-                        } else if (isHostTest && JAR_TAG.equalsIgnoreCase(opt.getName())) {
-                            mHostTestJarList.add(opt.getValue());
-                        }
-                    }
-                }
-
-                // getting apk list from Test Module Configuration
-                List<ConfigMetadata.TargetPreparer> tPrepList = config.getTargetPreparersList();
-                for (ConfigMetadata.TargetPreparer tPrep : tPrepList) {
-                    optList = tPrep.getOptionsList();
-                    for (Option opt : optList) {
-                        if (TEST_FILE_NAME_TAG.equalsIgnoreCase(opt.getName())) {
-                            mTestApkList.add(opt.getValue());
-                        }
-                    }
-                }
-
-                TestSuite.Package.Builder tsPkgBuilder;
-                if (pType == TestSuite.Package.Type.JAVAHOST) {
-                    tsPkgBuilder = parseJarTestCase();
-                } else {
-                    tsPkgBuilder = parseApkTestCase();
-                }
-
-                tsPkgBuilder.setName(entry.getName().replaceAll(CONFIG_REGEX, ""));
-                if (null != pType) {
-                    tsPkgBuilder.setType(pType);
-                }
-
-                tsBuilder.addPackages(tsPkgBuilder);
+                TestModuleConfig config = entry.getTestModuleConfig();
+                TestSuite.Module.Builder moduleBuilder = praseModule(config);
+                moduleBuilder.setConfigFile(entry.getRelativePath());
+                tsBuilder.addModules(moduleBuilder);
             }
         }
         return tsBuilder;
     }
 
-    // Get test case list from an APK
-    private TestSuite.Package.Builder parseApkTestCase() {
-        TestSuite.Package.Builder tsPkgBuilder = TestSuite.Package.newBuilder();
-        for (String apkName : mTestApkList) {
-            DexFile dexFile = null;
-            String apkPath = Paths.get(mFolderPath, TESTCASES_FOLDER_TAG, apkName).toString();
-            try {
-                dexFile = DexFileFactory.loadDexFile(apkPath, Opcodes.forApi(OPCODE_API));
-            } catch (IOException | DexFileFactory.DexFileNotFoundException ex) {
-                System.err.println("Unable to load dex file: " + apkPath);
-                // ex.printStackTrace();
-                continue;
+    private TestSuite.Module.Builder praseModule(TestModuleConfig config) {
+        TestSuite.Module.Builder moduleBuilder = TestSuite.Module.newBuilder();
+        // parse test package and class
+        List<TestModuleConfig.TestClass> testClassesList = config.getTestClassesList();
+        moduleBuilder.setName(config.getModuleName());
+        for (TestModuleConfig.TestClass tClass : testClassesList) {
+            String testClass = tClass.getTestClass();
+            moduleBuilder.setTestClass(testClass);
+            switch (testClass) {
+                case ANDROID_JUNIT_TEST_TAG:
+                    moduleBuilder.setTestType(TestSuite.TestType.ANDROIDJUNIT);
+                    parseAndroidJUnitTest(moduleBuilder, config, tClass.getTestClass());
+                    break;
+                case HOST_TEST_CLASS_TAG:
+                    moduleBuilder.setTestType(TestSuite.TestType.JAVAHOST);
+                    parseJavaHostTest(moduleBuilder, config, tClass.getTestClass());
+                    break;
+                default:
+                    //ToDo
+                    moduleBuilder.setTestType(TestSuite.TestType.UNKNOWN);
+                    TestSuite.Module.Package.Builder pkgBuilder =
+                            TestSuite.Module.Package.newBuilder();
+                    moduleBuilder.addPackages(pkgBuilder);
+                    System.err.printf(
+                            "ToDo Test Type: %s %s\n", tClass.getTestClass(), tClass.getPackage());
             }
+        }
+        return moduleBuilder;
+    }
 
-            tsPkgBuilder.setName(apkName);
+    private void parseAndroidJUnitTest(
+            TestSuite.Module.Builder moduleBuilder, TestModuleConfig config, String tClass) {
+        // getting apk list from Test Module Configuration
+        List<TestModuleConfig.TargetPreparer> tPrepList = config.getTargetPreparersList();
+        for (TestModuleConfig.TargetPreparer tPrep : tPrepList) {
+            for (Option opt : tPrep.getOptionsList()) {
+                if (TEST_FILE_NAME_TAG.equalsIgnoreCase(opt.getName())) {
+                    TestSuite.Module.Package.Builder pkgBuilder =
+                            TestSuite.Module.Package.newBuilder();
+                    String testFileName = opt.getValue();
+                    Entry tEntry = getFileEntry(testFileName);
+                    pkgBuilder.setName(testFileName);
+                    pkgBuilder.setPackageFile(tEntry.getRelativePath());
+                    pkgBuilder.setContentId(tEntry.getContentId());
+                    parseApkTestCase(pkgBuilder, config);
+                    moduleBuilder.addPackages(pkgBuilder);
+                }
+            }
+        }
+    }
+
+    private Entry getFileEntry(String name) {
+        Entry fEntry = null;
+        for (Entry et : getFileEntriesList(mRelContent)) {
+            if (name.equals(et.getName())) {
+                fEntry = et;
+                break;
+            }
+        }
+        return fEntry;
+    }
+    // Parses test case list from an APK
+    private void parseApkTestCase(
+            TestSuite.Module.Package.Builder pkgBuilder, TestModuleConfig config) {
+        DexFile dexFile = null;
+        String apkPath = Paths.get(mFolderPath, pkgBuilder.getPackageFile()).toString();
+        String moduleName = config.getModuleName();
+
+        // Loads a Dex file
+        try {
+            dexFile = DexFileFactory.loadDexFile(apkPath, Opcodes.forApi(mApiLevel));
+
+            // Iterates through all clesses in the Dex file
             for (ClassDef classDef : dexFile.getClasses()) {
                 // adjust the format Lclass/y;
                 String className = classDef.getType().replace('/', '.');
@@ -223,105 +225,138 @@ class TestSuiteParser {
                     className = className.substring(1, className.length() - 1);
                 }
 
-                TestSuite.Package.Class.ClassType cType;
-                cType = chkTestType(classDef);
-                if (TestSuite.Package.Class.ClassType.JUNIT3 == cType) {
-                    TestSuite.Package.Class.Builder tClassBuilder =
-                            TestSuite.Package.Class.newBuilder();
-                    tClassBuilder.setClassType(cType);
-                    tClassBuilder.setApk(apkName);
-                    tClassBuilder.setName(className);
-
-                    for (Method method : classDef.getMethods()) {
-                        if ((method.getAccessFlags() & AccessFlags.PUBLIC.getValue()) != 0) {
-                            String mName = method.getName();
-                            if (hasAnnotationSuffix(
-                                    method.getAnnotations(), SUPPRESS_ANNOTATION_TAG)) {
-                                System.err.printf("%s#%s with Suppress:\n", className, mName);
-                                System.err.println(method.getAnnotations());
-                            } else if (mName.startsWith(TEST_PREFIX_TAG)) {
-                                TestSuite.Package.Class.Method.Builder methodBuilder =
-                                        TestSuite.Package.Class.Method.newBuilder();
+                // Parses test classes
+                TestClassType cType;
+                cType = chkTestClassType(classDef);
+                TestSuite.Module.Package.Class.Builder tClassBuilder =
+                        TestSuite.Module.Package.Class.newBuilder();
+                switch (cType) {
+                    case JUNIT3:
+                        tClassBuilder.setTestClassType(cType);
+                        tClassBuilder.setName(className);
+                        // Checks all test method
+                        for (Method method : classDef.getMethods()) {
+                            // Only care about Public
+                            if ((method.getAccessFlags() & AccessFlags.PUBLIC.getValue()) != 0) {
+                                String mName = method.getName();
+                                // Warn current test result accounting does not work well with Supress
+                                if (hasAnnotationSuffix(
+                                        method.getAnnotations(), SUPPRESS_ANNOTATION_TAG)) {
+                                    System.err.printf("%s#%s with Suppress:\n", className, mName);
+                                    System.err.println(method.getAnnotations());
+                                } else if (mName.startsWith(TEST_PREFIX_TAG)) {
+                                    // Junit3 style test case name starts with test
+                                    TestSuite.Module.Package.Class.Method.Builder methodBuilder =
+                                            TestSuite.Module.Package.Class.Method.newBuilder();
+                                    methodBuilder.setName(mName);
+                                    // Check if it's an known failure
+                                    String nfFilter =
+                                            getKnownFailureFilter(moduleName, className, mName);
+                                    if (null != nfFilter) {
+                                        methodBuilder.setKnownFailureFilter(nfFilter);
+                                    }
+                                    tClassBuilder.addMethods(methodBuilder);
+                                }
+                            }
+                        }
+                        pkgBuilder.addClasses(tClassBuilder);
+                        break;
+                    case JUNIT4:
+                        tClassBuilder.setTestClassType(cType);
+                        tClassBuilder.setName(className);
+                        for (Method method : classDef.getMethods()) {
+                            // Junit4 style test case annotated with @Test
+                            if (hasAnnotation(method.getAnnotations(), TEST_ANNOTATION_TAG)) {
+                                String mName = method.getName();
+                                TestSuite.Module.Package.Class.Method.Builder methodBuilder =
+                                        TestSuite.Module.Package.Class.Method.newBuilder();
                                 methodBuilder.setName(mName);
+                                // Check if it's an known failure
+                                String nfFilter =
+                                        getKnownFailureFilter(moduleName, className, mName);
+                                if (null != nfFilter) {
+                                    methodBuilder.setKnownFailureFilter(nfFilter);
+                                }
                                 tClassBuilder.addMethods(methodBuilder);
                             }
                         }
-                    }
-                    tsPkgBuilder.addClasses(tClassBuilder);
-                } else if (TestSuite.Package.Class.ClassType.JUNIT4 == cType) {
-                    TestSuite.Package.Class.Builder tClassBuilder =
-                            TestSuite.Package.Class.newBuilder();
-                    tClassBuilder.setClassType(cType);
-                    tClassBuilder.setApk(apkName);
-                    tClassBuilder.setName(className);
-
-                    for (Method method : classDef.getMethods()) {
-                        if (hasAnnotation(method.getAnnotations(), TEST_ANNOTATION_TAG)) {
-                            String mName = method.getName();
-                            TestSuite.Package.Class.Method.Builder methodBuilder =
-                                    TestSuite.Package.Class.Method.newBuilder();
-                            methodBuilder.setName(mName);
-                            tClassBuilder.addMethods(methodBuilder);
+                        pkgBuilder.addClasses(tClassBuilder);
+                        break;
+                    case PARAMETERIZED:
+                        // ToDo WIP
+                        tClassBuilder.setTestClassType(cType);
+                        tClassBuilder.setName(className);
+                        for (Method method : classDef.getMethods()) {
+                            if (hasAnnotation(method.getAnnotations(), TEST_ANNOTATION_TAG)) {
+                                String mName = method.getName();
+                                TestSuite.Module.Package.Class.Method.Builder methodBuilder =
+                                        TestSuite.Module.Package.Class.Method.newBuilder();
+                                methodBuilder.setName(mName);
+                                // Check if it's an known failure
+                                String nfFilter =
+                                        getKnownFailureFilter(moduleName, className, mName);
+                                if (null != nfFilter) {
+                                    methodBuilder.setKnownFailureFilter(nfFilter);
+                                }
+                                tClassBuilder.addMethods(methodBuilder);
+                            }
                         }
-                    }
-                    tsPkgBuilder.addClasses(tClassBuilder);
-                } else if (TestSuite.Package.Class.ClassType.PARAMETERIZED == cType) {
-                    TestSuite.Package.Class.Builder tClassBuilder =
-                            TestSuite.Package.Class.newBuilder();
-                    tClassBuilder.setClassType(cType);
-                    tClassBuilder.setApk(apkName);
-                    tClassBuilder.setName(className);
-
-                    for (Method method : classDef.getMethods()) {
-                        if (hasAnnotation(method.getAnnotations(), TEST_ANNOTATION_TAG)) {
-                            String mName = method.getName();
-                            TestSuite.Package.Class.Method.Builder methodBuilder =
-                                    TestSuite.Package.Class.Method.newBuilder();
-                            methodBuilder.setName(mName);
-                            tClassBuilder.addMethods(methodBuilder);
-                        }
-                    }
-                    tsPkgBuilder.addClasses(tClassBuilder);
+                        pkgBuilder.addClasses(tClassBuilder);
+                        break;
+                    default:
+                        // Not a known test class
                 }
             }
+        } catch (IOException | DexFileFactory.DexFileNotFoundException ex) {
+            System.err.println("Unable to load dex file: " + apkPath);
+            // ex.printStackTrace();
         }
-        return tsPkgBuilder;
     }
 
-    private TestSuite.Package.Builder parseJarTestCase() {
-        TestSuite.Package.Builder tsPkgBuilder = TestSuite.Package.newBuilder();
-        for (String jarName : mHostTestJarList) {
-            tsPkgBuilder.setName(jarName);
+    private void parseJavaHostTest(
+            TestSuite.Module.Builder moduleBuilder, TestModuleConfig config, String tClass) {
+        TestSuite.Module.Package.Builder pkgBuilder = TestSuite.Module.Package.newBuilder();
+        //Assuming there is only one test Jar
+        String testFileName = config.getTestJars(0);
+        Entry tEntry = getFileEntry(testFileName);
+        String jarPath = tEntry.getRelativePath();
 
-            // Includes [x]-tradefed.jar for classes such as CompatibilityHostTestBase
-            Collection<Class<?>> classes =
-                    getJarTestClasses(
-                            Paths.get(mFolderPath, TESTCASES_FOLDER_TAG, jarName).toFile(),
-                            Paths.get(mFolderPath, mRelContent.getTestSuiteTradefed()).toFile());
-            for (Class<?> c : classes) {
-                TestSuite.Package.Class.Builder tClassBuilder =
-                        TestSuite.Package.Class.newBuilder();
-                tClassBuilder.setClassType(TestSuite.Package.Class.ClassType.JAVAHOST);
-                tClassBuilder.setApk(jarName);
-                tClassBuilder.setName(c.getName());
+        pkgBuilder.setName(testFileName);
+        pkgBuilder.setPackageFile(jarPath);
+        pkgBuilder.setContentId(tEntry.getContentId());
+        Collection<Class<?>> classes =
+                getJarTestClasses(
+                        Paths.get(mFolderPath, jarPath).toFile(),
+                        // Includes [x]-tradefed.jar for classes such as CompatibilityHostTestBase
+                        Paths.get(mFolderPath, mRelContent.getTestSuiteTradefed()).toFile());
 
-                System.err.printf("class: %s\n", c.getName());
-                for (java.lang.reflect.Method m : c.getMethods()) {
-                    int mdf = m.getModifiers();
-                    if (Modifier.isPublic(mdf) || Modifier.isProtected(mdf)) {
-                        if (m.getName().startsWith(TEST_PREFIX_TAG)) {
-                            System.err.printf("test: %s\n", m.getName());
-                            TestSuite.Package.Class.Method.Builder methodBuilder =
-                                    TestSuite.Package.Class.Method.newBuilder();
-                            methodBuilder.setName(m.getName());
-                            tClassBuilder.addMethods(methodBuilder);
+        for (Class<?> c : classes) {
+            TestSuite.Module.Package.Class.Builder tClassBuilder =
+                    TestSuite.Module.Package.Class.newBuilder();
+            tClassBuilder.setTestClassType(TestClassType.JAVAHOST);
+            tClassBuilder.setName(c.getName());
+
+            for (java.lang.reflect.Method m : c.getMethods()) {
+                int mdf = m.getModifiers();
+                if (Modifier.isPublic(mdf) || Modifier.isProtected(mdf)) {
+                    if (m.getName().startsWith(TEST_PREFIX_TAG)) {
+                        TestSuite.Module.Package.Class.Method.Builder methodBuilder =
+                                TestSuite.Module.Package.Class.Method.newBuilder();
+                        methodBuilder.setName(m.getName());
+                        // Check if it's an known failure
+                        String nfFilter =
+                                getKnownFailureFilter(
+                                        config.getModuleName(), c.getName(), m.getName());
+                        if (null != nfFilter) {
+                            methodBuilder.setKnownFailureFilter(nfFilter);
                         }
+                        tClassBuilder.addMethods(methodBuilder);
                     }
                 }
-                tsPkgBuilder.addClasses(tClassBuilder);
             }
+            pkgBuilder.addClasses(tClassBuilder);
         }
-        return tsPkgBuilder;
+        moduleBuilder.addPackages(pkgBuilder);
     }
 
     private static boolean hasAnnotation(Set<? extends Annotation> annotations, String tag) {
@@ -342,33 +377,33 @@ class TestSuiteParser {
         return false;
     }
 
-    private static TestSuite.Package.Class.ClassType chkTestType(ClassDef classDef) {
+    private static TestClassType chkTestClassType(ClassDef classDef) {
         // Only care about Public Class
         if ((classDef.getAccessFlags() & AccessFlags.PUBLIC.getValue()) == 0) {
-            return TestSuite.Package.Class.ClassType.UNKNOWN;
+            return TestClassType.UNKNOWN;
         }
 
         for (Annotation annotation : classDef.getAnnotations()) {
             if (annotation.getType().equals(DEPRECATED_ANNOTATION_TAG)) {
-                return TestSuite.Package.Class.ClassType.UNKNOWN;
+                return TestClassType.UNKNOWN;
             }
             if (annotation.getType().equals(RUN_WITH_ANNOTATION_TAG)) {
                 for (AnnotationElement annotationEle : annotation.getElements()) {
                     String aName = annotationEle.getName();
                     if (aName.equals(ANDROID_JUNIT4_TEST_TAG)) {
-                        return TestSuite.Package.Class.ClassType.JUNIT4;
+                        return TestClassType.JUNIT4;
                     } else if (aName.equals(PARAMETERIZED_TAG)) {
-                        return TestSuite.Package.Class.ClassType.PARAMETERIZED;
+                        return TestClassType.PARAMETERIZED;
                     }
                 }
-                return TestSuite.Package.Class.ClassType.JUNIT4;
+                return TestClassType.JUNIT4;
             }
         }
 
         if (classDef.getType().endsWith(TEST_TAG) || classDef.getType().endsWith(TESTS_TAG)) {
-            return TestSuite.Package.Class.ClassType.JUNIT3;
+            return TestClassType.JUNIT3;
         } else {
-            return TestSuite.Package.Class.ClassType.UNKNOWN;
+            return TestClassType.UNKNOWN;
         }
     }
 
@@ -455,42 +490,40 @@ class TestSuiteParser {
         return name.substring(0, name.length() - 6).replace('/', '.');
     }
 
-    private static boolean isKnownFailure(String tsName, List<String> knownFailures) {
+    private String getKnownFailureFilter(String tModule, String tClass, String tMethod) {
+        List<String> knownFailures = mRelContent.getKnownFailuresList();
+        String tsName = String.format(TESTCASE_NAME_FORMAT, tModule, tClass, tMethod);
         for (String kf : knownFailures) {
             if (tsName.startsWith(kf)) {
-                return true;
+                return kf;
             }
         }
-        return false;
+        return null;
     }
 
     // Iterates though all test suite content and prints them.
-    public void writeCsvFile(String csvFile) {
+    public void writeCsvFile(String relNameVer, String csvFile) {
         TestSuite ts = getTestSuite();
-        List<String> knownFailures = mRelContent.getKnownFailuresList();
         try {
             FileWriter fWriter = new FileWriter(csvFile);
             PrintWriter pWriter = new PrintWriter(fWriter);
             //Header
-            pWriter.println("Module,Class,Test,Apk,Type");
-            for (TestSuite.Package pkg : ts.getPackagesList()) {
-                for (TestSuite.Package.Class cls : pkg.getClassesList()) {
-                    for (TestSuite.Package.Class.Method mtd : cls.getMethodsList()) {
-                        String testCaseName =
-                                String.format(
-                                        TESTCASE_NAME_FORMAT,
-                                        pkg.getName(),
-                                        cls.getName(),
-                                        mtd.getName());
-                        // Filter out known failures
-                        if (!isKnownFailure(testCaseName, knownFailures)) {
+            pWriter.println(
+                    "release,module,test_class,test,test_package,test_type,known_failure_filter,package_content_id");
+            for (TestSuite.Module module : ts.getModulesList()) {
+                for (TestSuite.Module.Package pkg : module.getPackagesList()) {
+                    for (TestSuite.Module.Package.Class cls : pkg.getClassesList()) {
+                        for (TestSuite.Module.Package.Class.Method mtd : cls.getMethodsList()) {
                             pWriter.printf(
-                                    "%s,%s,%s,%s,%s\n",
-                                    pkg.getName(),
+                                    "%s,%s,%s,%s,%s,%s,%s,%s\n",
+                                    relNameVer,
+                                    module.getName(),
                                     cls.getName(),
                                     mtd.getName(),
-                                    cls.getApk(),
-                                    cls.getClassType());
+                                    pkg.getPackageFile(),
+                                    cls.getTestClassType(),
+                                    mtd.getKnownFailureFilter(),
+                                    getTestTargetContentId(pkg.getPackageFile()));
                         }
                     }
                 }
@@ -502,36 +535,54 @@ class TestSuiteParser {
         }
     }
 
-    // Iterates though all test suite content and prints them.
-    public void writeSummaryCsvFile(String csvFile) {
+    // Iterates though all test module and prints them.
+    public void writeModuleCsvFile(String relNameVer, String csvFile) {
         TestSuite ts = getTestSuite();
-        List<String> knownFailures = mRelContent.getKnownFailuresList();
         try {
             FileWriter fWriter = new FileWriter(csvFile);
             PrintWriter pWriter = new PrintWriter(fWriter);
 
             //Header
-            pWriter.print("Module,Test#,Type,Class#\n");
+            pWriter.print(
+                    "release,module,test_no,known_failure_no,test_type,test_class,component,description,test_config_file,test_file_names,test_jars,module_content_id\n");
 
-            for (TestSuite.Package pkg : ts.getPackagesList()) {
+            for (TestSuite.Module module : ts.getModulesList()) {
                 int classCnt = 0;
                 int methodCnt = 0;
-                for (TestSuite.Package.Class cls : pkg.getClassesList()) {
-                    for (TestSuite.Package.Class.Method mtd : cls.getMethodsList()) {
-                        String testCaseName =
-                                String.format(
-                                        TESTCASE_NAME_FORMAT,
-                                        pkg.getName(),
-                                        cls.getName(),
-                                        mtd.getName());
-                        // Filter out known failures
-                        if (!isKnownFailure(testCaseName, knownFailures)) {
-                            methodCnt++;
+                int kfCnt = 0;
+                for (TestSuite.Module.Package pkg : module.getPackagesList()) {
+                    for (TestSuite.Module.Package.Class cls : pkg.getClassesList()) {
+                        for (TestSuite.Module.Package.Class.Method mtd : cls.getMethodsList()) {
+                            // Filter out known failures
+                            if (mtd.getKnownFailureFilter().isEmpty()) {
+                                methodCnt++;
+                            } else {
+                                kfCnt++;
+                            }
                         }
+                        classCnt++;
                     }
-                    classCnt++;
                 }
-                pWriter.printf("%s,%s,%s,%d\n", pkg.getName(), methodCnt, pkg.getType(), classCnt);
+                String config = module.getConfigFile();
+                Entry entry = mRelContent.getEntries().get(config);
+                TestModuleConfig tmConfig = entry.getTestModuleConfig();
+                pWriter.printf(
+                        "%s,%s,%d,%d,%s,%s,%s,%s,%s,%s,%s,%s\n",
+                        relNameVer,
+                        module.getName(),
+                        methodCnt,
+                        kfCnt,
+                        module.getTestType(),
+                        module.getTestClass(),
+                        tmConfig.getComponent(),
+                        tmConfig.getDescription(),
+                        config,
+                        String.join(" ", tmConfig.getTestFileNamesList()),
+                        String.join(" ", tmConfig.getTestJarsList()),
+                        getTestModuleContentId(
+                                entry,
+                                tmConfig.getTestFileNamesList(),
+                                tmConfig.getTestJarsList()));
             }
             pWriter.flush();
             pWriter.close();
@@ -539,4 +590,44 @@ class TestSuiteParser {
             System.err.println("IOException:" + e.getMessage());
         }
     }
+
+    public static Collection<Entry> getFileEntriesList(ReleaseContent relContent) {
+        return relContent.getEntries().values();
+    }
+
+    // get Test Module Content Id = config cid + apk cids + jar cids
+    private String getTestModuleContentId(Entry config, List<String> apks, List<String> jars) {
+        String id = null;
+        //Starts with config file content_id
+        String idStr = config.getContentId();
+        try {
+            MessageDigest md = MessageDigest.getInstance("SHA-256");
+            //Add all apk content_id
+            for (String apk : apks) {
+                idStr += getTestTargetContentId(String.format(TESTCASES_FOLDER_FORMAT, apk));
+            }
+            //Add all jar content_id
+            for (String jar : jars) {
+                idStr += getTestTargetContentId(String.format(TESTCASES_FOLDER_FORMAT, jar));
+            }
+            md.update(idStr.getBytes(StandardCharsets.UTF_8));
+            // Converts to Base64 String
+            id = Base64.getEncoder().encodeToString(md.digest());
+            System.out.println("getTestModuleContentId: " + idStr);
+        } catch (NoSuchAlgorithmException e) {
+            System.err.println("NoSuchAlgorithmException:" + e.getMessage());
+        }
+        return id;
+    }
+
+    private String getTestTargetContentId(String targetFile) {
+        Entry entry = mRelContent.getEntries().get(targetFile);
+        if (entry != null) {
+            return entry.getContentId();
+        } else {
+            System.err.println("No getTestTargetContentId: " + targetFile);
+            return "";
+        }
+    }
+
 }

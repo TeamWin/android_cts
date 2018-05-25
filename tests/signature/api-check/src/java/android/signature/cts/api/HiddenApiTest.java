@@ -49,6 +49,12 @@ public class HiddenApiTest extends AbstractApiTest {
         hiddenApiFiles = getCommaSeparatedList(instrumentationArgs, "hidden-api-files");
     }
 
+    @Override
+    protected void setUp() throws Exception {
+        super.setUp();
+        DexMemberChecker.init();
+    }
+
     /**
      * Tests that the device does not expose APIs on the provided lists of
      * DEX signatures.
@@ -56,7 +62,6 @@ public class HiddenApiTest extends AbstractApiTest {
      * Will check the entire API, and then report the complete list of failures
      */
     public void testSignature() {
-        DexMemberChecker.init();
         runWithTestResultObserver(resultObserver -> {
             DexMemberChecker.Observer observer = new DexMemberChecker.Observer() {
                 @Override

@@ -19,6 +19,7 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.content.pm.ResolveInfo;
+import android.platform.test.annotations.AppModeFull;
 import android.provider.Settings;
 import android.support.test.InstrumentationRegistry;
 import android.support.test.filters.SmallTest;
@@ -35,6 +36,7 @@ import java.io.IOException;
 
 @RunWith(AndroidJUnit4.class)
 @SmallTest
+@AppModeFull
 public class ExternalSourcesTest {
 
     private Context mContext;

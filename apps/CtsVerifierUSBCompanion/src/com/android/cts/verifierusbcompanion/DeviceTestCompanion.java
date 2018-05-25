@@ -35,7 +35,7 @@ import java.nio.charset.Charset;
  * Companion code for com.android.cts.verifier.usb.device.UsbDeviceTestActivity
  */
 class DeviceTestCompanion extends TestCompanion {
-    private static final int LARGE_BUFFER_SIZE = 1305049;
+    private static final int LARGE_BUFFER_SIZE = 124619;
 
     DeviceTestCompanion(@NonNull Context context, @NonNull TestObserver observer) {
         super(context, observer);

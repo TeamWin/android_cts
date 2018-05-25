@@ -71,7 +71,8 @@ public class InputMethodServiceDeviceTest {
         final TestHelper helper = new TestHelper(getClass(), DeviceTestConstants.TEST_CREATE_IME1);
 
         final long startActivityTime = SystemClock.uptimeMillis();
-        helper.launchActivity(DeviceTestConstants.PACKAGE, DeviceTestConstants.TEST_ACTIVITY_CLASS);
+        helper.launchActivity(EditTextAppConstants.PACKAGE, EditTextAppConstants.CLASS,
+                EditTextAppConstants.URI);
 
         pollingCheck(() -> helper.queryAllEvents()
                         .collect(startingFrom(helper.isStartOfTest()))
@@ -90,7 +91,8 @@ public class InputMethodServiceDeviceTest {
                 getClass(), DeviceTestConstants.TEST_SWITCH_IME1_TO_IME2);
 
         final long startActivityTime = SystemClock.uptimeMillis();
-        helper.launchActivity(DeviceTestConstants.PACKAGE, DeviceTestConstants.TEST_ACTIVITY_CLASS);
+        helper.launchActivity(EditTextAppConstants.PACKAGE, EditTextAppConstants.CLASS,
+                EditTextAppConstants.URI);
 
         pollingCheck(() -> helper.queryAllEvents()
                         .collect(startingFrom(helper.isStartOfTest()))
@@ -101,7 +103,7 @@ public class InputMethodServiceDeviceTest {
                         .anyMatch(isFrom(Ime1Constants.CLASS).and(isType(ON_START_INPUT))),
                 TIMEOUT, "CtsInputMethod1.onStartInput is called");
 
-        helper.findUiObject(R.id.text_entry).click();
+        helper.findUiObject(EditTextAppConstants.EDIT_TEXT_RES_NAME).click();
 
         // Switch IME from CtsInputMethod1 to CtsInputMethod2.
         final long switchImeTime = SystemClock.uptimeMillis();
@@ -132,12 +134,13 @@ public class InputMethodServiceDeviceTest {
         final TestHelper helper = new TestHelper(
                 getClass(), DeviceTestConstants.TEST_SWITCH_INPUTMETHOD);
         final long startActivityTime = SystemClock.uptimeMillis();
-        helper.launchActivity(DeviceTestConstants.PACKAGE, DeviceTestConstants.TEST_ACTIVITY_CLASS);
+        helper.launchActivity(EditTextAppConstants.PACKAGE, EditTextAppConstants.CLASS,
+                EditTextAppConstants.URI);
         pollingCheck(() -> helper.queryAllEvents()
                         .filter(isNewerThan(startActivityTime))
                         .anyMatch(isFrom(Ime1Constants.CLASS).and(isType(ON_START_INPUT))),
                 TIMEOUT, "CtsInputMethod1.onStartInput is called");
-        helper.findUiObject(R.id.text_entry).click();
+        helper.findUiObject(EditTextAppConstants.EDIT_TEXT_RES_NAME).click();
 
         final long setImeTime = SystemClock.uptimeMillis();
         // call setInputMethodAndSubtype(IME2, null)
@@ -159,12 +162,13 @@ public class InputMethodServiceDeviceTest {
         final TestHelper helper = new TestHelper(
                 getClass(), DeviceTestConstants.TEST_SWITCH_NEXT_INPUT);
         final long startActivityTime = SystemClock.uptimeMillis();
-        helper.launchActivity(DeviceTestConstants.PACKAGE, DeviceTestConstants.TEST_ACTIVITY_CLASS);
+        helper.launchActivity(EditTextAppConstants.PACKAGE, EditTextAppConstants.CLASS,
+                EditTextAppConstants.URI);
         pollingCheck(() -> helper.queryAllEvents()
                         .filter(isNewerThan(startActivityTime))
                         .anyMatch(isFrom(Ime1Constants.CLASS).and(isType(ON_START_INPUT))),
                 TIMEOUT, "CtsInputMethod1.onStartInput is called");
-        helper.findUiObject(R.id.text_entry).click();
+        helper.findUiObject(EditTextAppConstants.EDIT_TEXT_RES_NAME).click();
 
         pollingCheck(() -> helper.shell(ShellCommandUtils.getCurrentIme())
                         .equals(Ime1Constants.IME_ID),
@@ -182,8 +186,9 @@ public class InputMethodServiceDeviceTest {
         final TestHelper helper = new TestHelper(
                 getClass(), DeviceTestConstants.TEST_SWITCH_PREVIOUS_INPUT);
         final long startActivityTime = SystemClock.uptimeMillis();
-        helper.launchActivity(DeviceTestConstants.PACKAGE, DeviceTestConstants.TEST_ACTIVITY_CLASS);
-        helper.findUiObject(R.id.text_entry).click();
+        helper.launchActivity(EditTextAppConstants.PACKAGE, EditTextAppConstants.CLASS,
+                EditTextAppConstants.URI);
+        helper.findUiObject(EditTextAppConstants.EDIT_TEXT_RES_NAME).click();
 
         final String initialIme = helper.shell(ShellCommandUtils.getCurrentIme());
         helper.shell(ShellCommandUtils.setCurrentIme(Ime2Constants.IME_ID));
@@ -204,8 +209,9 @@ public class InputMethodServiceDeviceTest {
         final TestHelper helper = new TestHelper(
                 getClass(), DeviceTestConstants.TEST_INPUT_UNBINDS_ON_IME_STOPPED);
         final long startActivityTime = SystemClock.uptimeMillis();
-        helper.launchActivity(DeviceTestConstants.PACKAGE, DeviceTestConstants.TEST_ACTIVITY_CLASS);
-        helper.findUiObject(R.id.text_entry).click();
+        helper.launchActivity(EditTextAppConstants.PACKAGE, EditTextAppConstants.CLASS,
+                EditTextAppConstants.URI);
+        helper.findUiObject(EditTextAppConstants.EDIT_TEXT_RES_NAME).click();
 
         pollingCheck(() -> helper.queryAllEvents()
                         .filter(isNewerThan(startActivityTime))
@@ -220,7 +226,7 @@ public class InputMethodServiceDeviceTest {
         helper.shell(ShellCommandUtils.uninstallPackage(Ime1Constants.PACKAGE));
 
         helper.shell(ShellCommandUtils.setCurrentIme(Ime2Constants.IME_ID));
-        helper.findUiObject(R.id.text_entry).click();
+        helper.findUiObject(EditTextAppConstants.EDIT_TEXT_RES_NAME).click();
         pollingCheck(() -> helper.queryAllEvents()
                         .filter(isNewerThan(imeForceStopTime))
                         .anyMatch(isFrom(Ime2Constants.CLASS).and(isType(ON_START_INPUT))),
@@ -236,7 +242,9 @@ public class InputMethodServiceDeviceTest {
         final TestHelper helper = new TestHelper(
                 getClass(), DeviceTestConstants.TEST_INPUT_UNBINDS_ON_APP_STOPPED);
         final long startActivityTime = SystemClock.uptimeMillis();
-        helper.launchActivity(EditTextAppConstants.PACKAGE, EditTextAppConstants.CLASS);
+        helper.launchActivity(EditTextAppConstants.PACKAGE, EditTextAppConstants.CLASS,
+                EditTextAppConstants.URI);
+        helper.findUiObject(EditTextAppConstants.EDIT_TEXT_RES_NAME).click();
 
         pollingCheck(() -> helper.queryAllEvents()
                         .filter(isNewerThan(startActivityTime))

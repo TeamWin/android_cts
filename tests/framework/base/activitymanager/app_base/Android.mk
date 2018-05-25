@@ -14,9 +14,6 @@ LOCAL_SRC_FILES := \
     $(call all-named-files-under,Components.java, ../app) \
     $(call all-named-files-under,Components.java, ../app27) \
 
-# Tag this module as a cts test artifact
-LOCAL_COMPATIBILITY_SUITE := cts vts general-tests
-
 LOCAL_MODULE := cts-am-app-base
 
 LOCAL_SDK_VERSION := current
