@@ -1329,6 +1329,10 @@ public abstract class ActivityManagerTestBase {
             return mTargetActivity;
         }
 
+        public boolean isTargetActivityTranslucent() {
+            return mAmWmState.getAmState().isActivityTranslucent(mTargetActivity);
+        }
+
         public LaunchActivityBuilder setTargetActivity(ComponentName targetActivity) {
             mTargetActivity = targetActivity;
             return this;
