@@ -27,6 +27,7 @@ import android.util.Log;
 /**
  * Test {@link CursorWindowContentProvider} .
  */
+@SecurityTest
 public class ContentProviderCursorWindowTest extends AndroidTestCase {
     private static final String TAG = "ContentProviderCursorWindowTest";
 
