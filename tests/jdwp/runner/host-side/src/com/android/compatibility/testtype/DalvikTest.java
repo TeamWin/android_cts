@@ -26,6 +26,7 @@ import com.android.tradefed.config.Option;
 import com.android.tradefed.config.OptionCopier;
 import com.android.tradefed.device.DeviceNotAvailableException;
 import com.android.tradefed.device.ITestDevice;
+import com.android.tradefed.log.LogUtil.CLog;
 import com.android.tradefed.result.ITestInvocationListener;
 import com.android.tradefed.result.TestDescription;
 import com.android.tradefed.testtype.IAbi;
@@ -321,6 +322,7 @@ public class DalvikTest implements IAbiReceiver, IBuildReceiver, IDeviceTest, IR
             if (!mDevice.pushFile(tmpExcludeFile, EXCLUDE_FILE)) {
                 Log.logAndDisplay(LogLevel.ERROR, TAG, "Couldn't push file: " + tmpExcludeFile);
             } else {
+                CLog.d("exclude-filter-file: %s", safeReadContentFromFile(tmpExcludeFile));
                 // If sucessfully pushed then add it as a filter.
                 excludeFile = String.format("--exclude-filter-file=%s", EXCLUDE_FILE);
             }
@@ -340,6 +342,7 @@ public class DalvikTest implements IAbiReceiver, IBuildReceiver, IDeviceTest, IR
             if (!mDevice.pushFile(mIncludeTestFile, INCLUDE_FILE)) {
                 Log.logAndDisplay(LogLevel.ERROR, TAG, "Couldn't push file: " + path);
             } else {
+                CLog.d("include-filter-file: %s", safeReadContentFromFile(mIncludeTestFile));
                 // If sucessfully pushed then add it as a filter.
                 includeFile = String.format("--include-filter-file=%s", INCLUDE_FILE);
             }
@@ -398,11 +401,9 @@ public class DalvikTest implements IAbiReceiver, IBuildReceiver, IDeviceTest, IR
                     if (tag.equals(START_RUN)) {
                         listener.testRunStarted(mRunName, Integer.parseInt(parts[1]));
                         Log.logAndDisplay(LogLevel.INFO, TAG, command);
-                        Log.logAndDisplay(LogLevel.INFO, TAG, line);
                     } else if (tag.equals(END_RUN)) {
                         listener.testRunEnded(Integer.parseInt(parts[1]),
                                 Collections.<String, String>emptyMap());
-                        Log.logAndDisplay(LogLevel.INFO, TAG, line);
                     } else if (tag.equals(START_TEST)) {
                         test = getTestDescription(parts[1]);
                         listener.testStarted(test);
@@ -411,9 +412,9 @@ public class DalvikTest implements IAbiReceiver, IBuildReceiver, IDeviceTest, IR
                     } else if (tag.equals(END_TEST)) {
                         listener.testEnded(getTestDescription(parts[1]),
                                 Collections.<String, String>emptyMap());
-                    } else {
-                        Log.logAndDisplay(LogLevel.INFO, TAG, line);
                     }
+                    // Always log the output for debugging
+                    CLog.d(line);
                 }
             }
 
@@ -559,6 +560,15 @@ public class DalvikTest implements IAbiReceiver, IBuildReceiver, IDeviceTest, IR
         @Override
         public boolean accept(File dir, String name) {
             return name.startsWith(mName) && name.endsWith(EXPECTATIONS_EXT);
+        }
+    }
+
+    private String safeReadContentFromFile(File file) {
+        try {
+            return FileUtil.readStringFromFile(file);
+        } catch (IOException e) {
+            CLog.e(e);
+            return null;
         }
     }
 }
