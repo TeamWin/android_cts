@@ -1054,6 +1054,7 @@ TEST_P(AHardwareBufferBlobFormatTest, GpuDataBufferVertexBuffer) {
     float* data = static_cast<float*>(
         glMapBufferRange(GL_ARRAY_BUFFER, 0, desc.width,
                          GL_MAP_WRITE_BIT | GL_MAP_INVALIDATE_BUFFER_BIT));
+    ASSERT_NE(data, nullptr) << "glMapBufferRange on a blob buffer failed";
     memcpy(data, kQuadPositions, desc.width);
     glUnmapBuffer(GL_ARRAY_BUFFER);
     glFinish();
