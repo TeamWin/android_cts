@@ -15,6 +15,8 @@
  */
 package android.autofillservice.cts;
 
+import static android.autofillservice.cts.Timeouts.WEBVIEW_TIMEOUT;
+
 import android.content.Context;
 import android.os.Bundle;
 import android.os.SystemClock;
@@ -30,6 +32,8 @@ import android.widget.EditText;
 import android.widget.LinearLayout;
 
 import java.io.IOException;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.TimeUnit;
 
 public class WebViewActivity extends AbstractAutoFillActivity {
 
@@ -70,6 +74,7 @@ public class WebViewActivity extends AbstractAutoFillActivity {
     }
 
     public MyWebView loadWebView(UiBot uiBot, boolean usingAppContext) throws Exception {
+        final CountDownLatch latch = new CountDownLatch(1);
         syncRunOnUiThread(() -> {
             final Context context = usingAppContext ? getApplicationContext() : this;
             mWebView = new MyWebView(context);
@@ -98,13 +103,23 @@ public class WebViewActivity extends AbstractAutoFillActivity {
                         throw new IllegalArgumentException("Error opening " + rawPath, e);
                     }
                 }
+
+                @Override
+                public void onPageFinished(WebView view, String url) {
+                    Log.v(TAG, "onPageFinished(): " + url);
+                    latch.countDown();
+                }
             });
             mWebView.loadUrl(FAKE_URL);
         });
 
         // Wait until it's loaded.
+        if (!latch.await(WEBVIEW_TIMEOUT.ms(), TimeUnit.MILLISECONDS)) {
+            throw new RetryableException(WEBVIEW_TIMEOUT, "WebView not loaded");
+        }
+
         // NOTE: we cannot search by resourceId because WebView does not set them...
-        uiBot.assertShownByText("Login"); // Login button
+        uiBot.assertShownByText("Login", WEBVIEW_TIMEOUT); // Login button
 
         return mWebView;
     }
@@ -137,7 +152,7 @@ public class WebViewActivity extends AbstractAutoFillActivity {
     }
 
     private UiObject2 getLabel(UiBot uiBot, String label) throws Exception {
-        return uiBot.assertShownByText(label, Timeouts.WEBVIEW_TIMEOUT);
+        return uiBot.assertShownByText(label, WEBVIEW_TIMEOUT);
     }
 
     private UiObject2 getInput(UiBot uiBot, String contentDescription) throws Exception {

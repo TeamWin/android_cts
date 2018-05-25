@@ -1138,10 +1138,8 @@ final class Helper {
             return;
         }
 
-        final File dir = new File(LOCAL_DIRECTORY);
-        dir.mkdirs();
-        if (!dir.exists()) {
-            Log.e(TAG, "Could not create directory " + dir);
+        final File dir = getLocalDirectory();
+        if (dir == null) {
             throw new AssertionError("bitmap comparison failed for " + filename
                     + ", and bitmaps could not be dumped on " + dir);
         }
@@ -1152,19 +1150,61 @@ final class Helper {
     }
 
     @Nullable
-    private static File dumpBitmap(@NonNull Bitmap bitmap, @NonNull File dir,
-            @NonNull String filename) throws IOException {
+    private static File getLocalDirectory() {
+        final File dir = new File(LOCAL_DIRECTORY);
+        dir.mkdirs();
+        if (!dir.exists()) {
+            Log.e(TAG, "Could not create directory " + dir);
+            return null;
+        }
+        return dir;
+    }
+
+    @Nullable
+    private static File createFile(@NonNull File dir, @NonNull String filename) throws IOException {
         final File file = new File(dir, filename);
         if (file.exists()) {
+            Log.v(TAG, "Deleting file " + file);
             file.delete();
         }
         if (!file.createNewFile()) {
             Log.e(TAG, "Could not create file " + file);
             return null;
         }
-        Log.d(TAG, "Dumping bitmap at " + file);
+        return file;
+    }
+
+    @Nullable
+    private static File dumpBitmap(@NonNull Bitmap bitmap, @NonNull File dir,
+            @NonNull String filename) throws IOException {
+        final File file = createFile(dir, filename);
+        if (file != null) {
+            dumpBitmap(bitmap, file);
+
+        }
+        return file;
+    }
+
+    @Nullable
+    public static File dumpBitmap(@NonNull Bitmap bitmap, @NonNull File file) throws IOException {
+        Log.i(TAG, "Dumping bitmap at " + file);
         BitmapUtils.saveBitmap(bitmap, file.getParent(), file.getName());
         return file;
+    }
+
+    /**
+     * Creates a file in the device, using the name of the current test as a prefix.
+     */
+    @Nullable
+    public static File createTestFile(@NonNull String name) throws IOException {
+        final File dir = getLocalDirectory();
+        if (dir == null) return null;
+
+        final String prefix = JUnitHelper.getCurrentTestName().replaceAll("\\.|\\(|\\/", "_")
+                .replaceAll("\\)", "");
+        final String filename = prefix + "-" + name;
+
+        return createFile(dir, filename);
     }
 
     /**

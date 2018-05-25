@@ -16,9 +16,10 @@
 package android.autofillservice.cts;
 
 import android.os.SystemClock;
-import androidx.annotation.NonNull;
 import android.text.TextUtils;
 import android.util.Log;
+
+import androidx.annotation.NonNull;
 
 import java.util.concurrent.Callable;
 
@@ -151,9 +152,9 @@ public final class Timeout {
         if (retryMs < 1) {
             throw new IllegalArgumentException("need to sleep at least 1ms, right?");
         }
-        long startTime = System.currentTimeMillis();
+        long startTime = SystemClock.elapsedRealtime();
         int attempt = 0;
-        while (System.currentTimeMillis() - startTime <= mCurrentValue) {
+        while (SystemClock.elapsedRealtime() - startTime <= mCurrentValue) {
             final T result = job.call();
             if (result != null) {
                 // Good news, everyone: job succeeded on first attempt!
