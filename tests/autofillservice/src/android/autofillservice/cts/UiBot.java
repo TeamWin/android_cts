@@ -30,6 +30,8 @@ import static android.service.autofill.SaveInfo.SAVE_DATA_TYPE_USERNAME;
 import static com.google.common.truth.Truth.assertThat;
 import static com.google.common.truth.Truth.assertWithMessage;
 
+import static org.junit.Assume.assumeTrue;
+
 import android.app.Instrumentation;
 import android.app.UiAutomation;
 import android.content.Context;
@@ -95,6 +97,13 @@ final class UiBot {
         mContext = instrumentation.getContext();
         mPackageName = mContext.getPackageName();
         mAutoman = instrumentation.getUiAutomation();
+    }
+
+    void assumeMinimumResolution(int minSize) {
+        final int width = mDevice.getDisplayWidth();
+        final int heigth = mDevice.getDisplayHeight();
+        final int min = Math.min(width, heigth);
+        assumeTrue("Screen size is too small (" + width + "x" + heigth + ")", min >= minSize);
     }
 
     /**
