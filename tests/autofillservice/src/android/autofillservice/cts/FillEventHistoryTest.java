@@ -108,8 +108,8 @@ public class FillEventHistoryTest extends AutoFillServiceTestCase {
         mActivity.onUsername(View::requestFocus);
 
         // Authenticate
-        mUiBot.selectDataset("authentication");
         sReplier.getNextFillRequest();
+        mUiBot.selectDataset("authentication");
         mActivity.assertAutoFilled();
 
         // Verify fill selection
@@ -145,8 +145,8 @@ public class FillEventHistoryTest extends AutoFillServiceTestCase {
         mActivity.onUsername(View::requestFocus);
 
         // Authenticate
-        mUiBot.selectDataset("authentication");
         sReplier.getNextFillRequest();
+        mUiBot.selectDataset("authentication");
         mUiBot.assertDatasets("dataset");
 
         // Verify fill selection
@@ -177,8 +177,8 @@ public class FillEventHistoryTest extends AutoFillServiceTestCase {
         // Trigger autofill on username
         mActivity.onUsername(View::requestFocus);
         waitUntilConnected();
-        mUiBot.selectDataset("dataset1");
         sReplier.getNextFillRequest();
+        mUiBot.selectDataset("dataset1");
         mActivity.assertAutoFilled();
 
         {
@@ -213,8 +213,8 @@ public class FillEventHistoryTest extends AutoFillServiceTestCase {
 
         // Trigger autofill on password
         mActivity.onPassword(View::requestFocus);
-        mUiBot.selectDataset("dataset3");
         sReplier.getNextFillRequest();
+        mUiBot.selectDataset("dataset3");
         mActivity.assertAutoFilled();
 
         {
