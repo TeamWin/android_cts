@@ -31,4 +31,13 @@ public class Poc17_04 extends SecurityTestCase {
     assertFalse("Segfault found",
         AdbUtils.runCommandGetExitCode("/data/local/tmp/CVE-2017-0553", getDevice())==139);
   }
- }
+
+  /**
+   * b/72460737
+   */
+  @SecurityTest
+  public void testPocCVE_2014_3145() throws Exception {
+    assertFalse("VULNERABLE DEVICE DETECTED",
+                AdbUtils.runPocCheckExitCode("CVE-2014-3145", getDevice(), 60));
+  }
+}
