@@ -510,6 +510,10 @@ public abstract class ActivityManagerTestBase {
                 && !hasDeviceFeature(FEATURE_EMBEDDED);
     }
 
+    protected boolean isWatch() {
+        return hasDeviceFeature(FEATURE_WATCH);
+    }
+
     protected boolean isTablet() {
         // Larger than approx 7" tablets
         return mContext.getResources().getConfiguration().smallestScreenWidthDp >= 600;
