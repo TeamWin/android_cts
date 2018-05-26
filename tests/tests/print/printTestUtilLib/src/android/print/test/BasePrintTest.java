@@ -562,8 +562,13 @@ public abstract class BasePrintTest {
     protected void waitForPrinterUnavailable() throws Exception {
         final String printerUnavailableMessage = "This printer isn\'t available right now.";
 
-        UiObject message = getUiDevice().findObject(new UiSelector().resourceId(
-                "com.android.printspooler:id/message"));
+        UiObject2 message = getUiDevice().wait(Until.findObject(
+                By.res("com.android.printspooler:id/message")), OPERATION_TIMEOUT_MILLIS);
+
+        if (message == null) {
+            dumpWindowHierarchy();
+            throw new UiObjectNotFoundException("Cannot find " + printerUnavailableMessage);
+        }
         if (!message.getText().equals(printerUnavailableMessage)) {
             throw new Exception("Wrong message: " + message.getText() + " instead of "
                     + printerUnavailableMessage);

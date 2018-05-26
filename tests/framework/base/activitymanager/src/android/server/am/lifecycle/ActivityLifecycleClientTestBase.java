@@ -5,12 +5,15 @@ import static android.server.am.lifecycle.LifecycleLog.ActivityCallback.ON_ACTIV
 import static android.server.am.lifecycle.LifecycleLog.ActivityCallback
         .ON_MULTI_WINDOW_MODE_CHANGED;
 import static android.server.am.lifecycle.LifecycleLog.ActivityCallback.ON_NEW_INTENT;
+import static android.server.am.lifecycle.LifecycleLog.ActivityCallback.ON_PAUSE;
 import static android.server.am.lifecycle.LifecycleLog.ActivityCallback.ON_POST_CREATE;
+import static android.server.am.lifecycle.LifecycleLog.ActivityCallback.ON_STOP;
 
 import android.annotation.Nullable;
 import android.app.Activity;
 import android.content.ComponentName;
 import android.content.Intent;
+import android.content.pm.ActivityInfo;
 import android.content.res.Configuration;
 import android.os.Bundle;
 import android.os.Handler;
@@ -124,6 +127,35 @@ public class ActivityLifecycleClientTestBase extends ActivityManagerTestBase {
 
     static Pair<Activity, ActivityCallback> state(Activity activity, ActivityCallback stage) {
         return new Pair<>(activity, stage);
+    }
+
+    /**
+     * Returns a pair of the activity and the state it should be in based on the configuration of
+     * occludingActivity.
+     */
+    static Pair<Activity, ActivityCallback> occludedActivityState(
+            Activity activity, Activity occludingActivity) {
+        return occludedActivityState(activity, isTranslucent(occludingActivity));
+    }
+
+    /**
+     * Returns a pair of the activity and the state it should be in based on
+     * occludingActivityIsTranslucent.
+     */
+    static Pair<Activity, ActivityCallback> occludedActivityState(
+            Activity activity, boolean occludingActivityIsTranslucent) {
+        // Activities behind a translucent activity should be in the paused state since they are
+        // still visible. Otherwise, they should be in the stopped state.
+        return new Pair<>(activity, occludedActivityState(occludingActivityIsTranslucent));
+    }
+
+    static ActivityCallback occludedActivityState(boolean occludingActivityIsTranslucent) {
+        return occludingActivityIsTranslucent ? ON_PAUSE : ON_STOP;
+    }
+
+    /** Returns true if the input activity is translucent. */
+    static boolean isTranslucent(Activity activity) {
+        return ActivityInfo.isTranslucentOrFloating(activity.getWindow().getWindowStyle());
     }
 
     // Test activity

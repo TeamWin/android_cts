@@ -46,8 +46,16 @@ public class SimpleSaveActivity extends AbstractAutoFillActivity {
     private boolean mAutoCommit = true;
     private boolean mClearFieldsOnSubmit = false;
 
-    public static SimpleSaveActivity getInstance() {
+    static SimpleSaveActivity getInstance() {
         return sInstance;
+    }
+
+    static void finishIt(UiBot uiBot) {
+        if (sInstance != null) {
+            Log.d(TAG, "So long and thanks for all the fish!");
+            sInstance.finish();
+            uiBot.assertGoneByRelativeId(ID_LABEL, Timeouts.ACTIVITY_RESURRECTION);
+        }
     }
 
     public SimpleSaveActivity() {

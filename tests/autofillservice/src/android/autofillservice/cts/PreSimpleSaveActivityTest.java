@@ -38,6 +38,7 @@ import android.support.test.uiautomator.UiObject2;
 import android.view.View;
 import android.widget.RemoteViews;
 
+import org.junit.After;
 import org.junit.Rule;
 
 import java.util.regex.Pattern;
@@ -57,6 +58,11 @@ public class PreSimpleSaveActivityTest extends CustomDescriptionWithLinkTestCase
                     Intent.FLAG_ACTIVITY_RETAIN_IN_RECENTS | Intent.FLAG_ACTIVITY_NEW_TASK);
         }
         mActivity = mActivityRule.launchActivity(intent);
+    }
+
+    @After
+    public void finishSimpleSaveActivity() {
+        SimpleSaveActivity.finishIt(mUiBot);
     }
 
     @Override
