@@ -38,18 +38,30 @@ class LifecycleVerifier {
     }
 
     static void assertLaunchSequence(Class<? extends Activity> launchingActivity,
-            Class<? extends Activity> existingActivity, LifecycleLog lifecycleLog) {
+            Class<? extends Activity> existingActivity, LifecycleLog lifecycleLog,
+            boolean launchingIsTranslucent) {
         final List<Pair<String, ActivityCallback>> observedTransitions = lifecycleLog.getLog();
         log("Observed sequence: " + observedTransitions);
         final String errorMessage = errorDuringTransition(launchingActivity, "launch");
 
-        final List<Pair<String, ActivityCallback>> expectedTransitions = Arrays.asList(
-                transition(existingActivity, ON_PAUSE),
-                transition(launchingActivity, PRE_ON_CREATE),
-                transition(launchingActivity, ON_CREATE),
-                transition(launchingActivity, ON_START),
-                transition(launchingActivity, ON_RESUME),
-                transition(existingActivity, ON_STOP));
+        final List<Pair<String, ActivityCallback>> expectedTransitions;
+        if (launchingIsTranslucent) {
+            expectedTransitions = Arrays.asList(
+                    transition(existingActivity, ON_PAUSE),
+                    transition(launchingActivity, PRE_ON_CREATE),
+                    transition(launchingActivity, ON_CREATE),
+                    transition(launchingActivity, ON_START),
+                    transition(launchingActivity, ON_RESUME));
+        } else {
+            expectedTransitions = Arrays.asList(
+                    transition(existingActivity, ON_PAUSE),
+                    transition(launchingActivity, PRE_ON_CREATE),
+                    transition(launchingActivity, ON_CREATE),
+                    transition(launchingActivity, ON_START),
+                    transition(launchingActivity, ON_RESUME),
+                    transition(existingActivity, ON_STOP));
+        }
+
         assertEquals(errorMessage, expectedTransitions, observedTransitions);
     }
 

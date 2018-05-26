@@ -382,6 +382,20 @@ public class ActivityManagerState {
         return false;
     }
 
+    boolean isActivityTranslucent(ComponentName activityName) {
+        final String fullName = getActivityName(activityName);
+        for (ActivityStack stack : mStacks) {
+            for (ActivityTask task : stack.mTasks) {
+                for (Activity activity : task.mActivities) {
+                    if (activity.name.equals(fullName)) {
+                        return activity.translucent;
+                    }
+                }
+            }
+        }
+        return false;
+    }
+
     boolean containsStartedActivities() {
         for (ActivityStack stack : mStacks) {
             for (ActivityTask task : stack.mTasks) {
@@ -623,13 +637,14 @@ public class ActivityManagerState {
         }
     }
 
-    static class Activity extends ActivityContainer {
+    public static class Activity extends ActivityContainer {
 
         String name;
         String state;
         boolean visible;
         boolean frontOfTask;
         int procId = -1;
+        public boolean translucent;
 
         Activity(ActivityRecordProto proto) {
             super(proto.configurationContainer);
@@ -640,6 +655,7 @@ public class ActivityManagerState {
             if (proto.procId != 0) {
                 procId = proto.procId;
             }
+            translucent = proto.translucent;
         }
     }
 

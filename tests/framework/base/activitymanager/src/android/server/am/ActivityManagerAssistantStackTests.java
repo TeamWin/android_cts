@@ -274,7 +274,10 @@ public class ActivityManagerAssistantStackTests extends ActivityManagerTestBase 
                     EXTRA_ASSISTANT_LAUNCH_NEW_TASK, getActivityName(TEST_ACTIVITY));
             waitForValidStateWithActivityTypeAndWindowingMode(
                     TEST_ACTIVITY, ACTIVITY_TYPE_STANDARD, WINDOWING_MODE_FULLSCREEN);
-            mAmWmState.assertHomeActivityVisible(false);
+            boolean isTranslucent = mAmWmState.getAmState().isActivityTranslucent(TEST_ACTIVITY);
+            // Home should be visible if the occluding activity is translucent, else home shouldn't
+            // be visible.
+            mAmWmState.assertHomeActivityVisible(isTranslucent);
             pressBackButton();
             mAmWmState.waitForFocusedStack(WINDOWING_MODE_UNDEFINED, ACTIVITY_TYPE_ASSISTANT);
             assertAssistantStackExists();
