@@ -48,6 +48,11 @@ public class ActivityManagerAssistantStackTests extends ActivityManagerTestBase 
     public void testLaunchingAssistantActivityIntoAssistantStack() throws Exception {
         // Enable the assistant and launch an assistant activity
         enableAssistant();
+        try {
+            Thread.sleep(500);
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        }
         launchActivity(LAUNCH_ASSISTANT_ACTIVITY_FROM_SESSION);
         mAmWmState.waitForValidState(mDevice, ASSISTANT_ACTIVITY, ASSISTANT_STACK_ID);
 
