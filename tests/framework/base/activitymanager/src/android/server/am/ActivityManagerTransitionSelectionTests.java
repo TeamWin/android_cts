@@ -40,6 +40,8 @@ import android.os.SystemClock;
 import android.platform.test.annotations.Presubmit;
 import android.support.test.filters.FlakyTest;
 
+import org.junit.Assume;
+import org.junit.Before;
 import org.junit.Test;
 
 /**
@@ -57,6 +59,17 @@ import org.junit.Test;
 @Presubmit
 @FlakyTest(bugId = 71792333)
 public class ActivityManagerTransitionSelectionTests extends ActivityManagerTestBase {
+
+    @Override
+    @Before
+    public void setUp() throws Exception {
+        super.setUp();
+
+        // Transition selection tests are currently disabled on Wear because
+        // config_windowSwipeToDismiss is set to true, which breaks all kinds of assumptions in the
+        // transition selection logic.
+        Assume.assumeTrue(!isWatch());
+    }
 
     // Test activity open/close under normal timing
     @Test

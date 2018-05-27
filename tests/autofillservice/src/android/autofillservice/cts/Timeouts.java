@@ -29,7 +29,9 @@ final class Timeouts {
     /**
      * Timeout until framework unbinds from a service.
      */
-    static final Timeout IDLE_UNBIND_TIMEOUT = new Timeout("IDLE_UNBIND_TIMEOUT", 5000, 2F, 10000);
+    // TODO: must be higher than RemoteFillService.TIMEOUT_IDLE_BIND_MILLIS, so we should use a
+    // @hidden @Testing constants instead...
+    static final Timeout IDLE_UNBIND_TIMEOUT = new Timeout("IDLE_UNBIND_TIMEOUT", 10000, 2F, 10000);
 
     /**
      * Timeout to get the expected number of fill events.

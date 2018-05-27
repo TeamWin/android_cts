@@ -123,9 +123,11 @@ public class TracingControllerTest extends ActivityInstrumentationTestCase2<WebV
     protected void tearDown() throws Exception {
         // make sure to stop everything and clean up
         ensureTracingStopped();
-        singleThreadExecutor.shutdown();
-        if (!singleThreadExecutor.awaitTermination(EXECUTOR_TIMEOUT, TimeUnit.SECONDS)) {
-            fail("Failed to shutdown executor");
+        if (singleThreadExecutor != null) {
+            singleThreadExecutor.shutdown();
+            if (!singleThreadExecutor.awaitTermination(EXECUTOR_TIMEOUT, TimeUnit.SECONDS)) {
+                fail("Failed to shutdown executor");
+            }
         }
         if (mOnUiThread != null) {
             mOnUiThread.cleanUp();
