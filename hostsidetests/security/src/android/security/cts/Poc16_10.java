@@ -90,4 +90,21 @@ public class Poc16_10 extends SecurityTestCase {
             AdbUtils.runPoc("CVE-2016-6736", getDevice(), 60);
         }
     }
+
+    /**
+     *  b/30741779
+     */
+    @SecurityTest
+    public void testPocCVE_2016_3916() throws Exception {
+        AdbUtils.installApk("/cve_2016_3916.apk", getDevice());
+        AdbUtils.runCommandLine("logcat -c" , getDevice());
+
+         AdbUtils.runCommandLine("am start -n com.trendmicro.wish_wu.camera2/" +
+                                 "com.trendmicro.wish_wu.camera2.Camera2TestActivity", getDevice());
+        Thread.sleep(10000);
+        String logcat =  AdbUtils.runCommandLine("logcat -d", getDevice());
+        assertNotMatches("[\\s\\n\\S]*Fatal signal 11 \\(SIGSEGV\\)" +
+                "[\\s\\n\\S]*>>> /system/bin/" +
+                "mediaserver <<<[\\s\\n\\S]*", logcat);
+    }
 }
