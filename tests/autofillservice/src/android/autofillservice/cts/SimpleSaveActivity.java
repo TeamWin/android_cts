@@ -50,14 +50,6 @@ public class SimpleSaveActivity extends AbstractAutoFillActivity {
         return sInstance;
     }
 
-    static void finishIt(UiBot uiBot) {
-        if (sInstance != null) {
-            Log.d(TAG, "So long and thanks for all the fish!");
-            sInstance.finish();
-            uiBot.assertGoneByRelativeId(ID_LABEL, Timeouts.ACTIVITY_RESURRECTION);
-        }
-    }
-
     public SimpleSaveActivity() {
         sInstance = this;
     }
