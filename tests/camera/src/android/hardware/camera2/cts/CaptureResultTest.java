@@ -308,6 +308,12 @@ public class CaptureResultTest extends Camera2AndroidTestCase {
                 multiBuilder.addTarget(previewReader.getSurface());
                 multiBuilder.addTarget(jpegReader.getSurface());
 
+                if (mStaticInfo.isEnableZslSupported()) {
+                    // Turn off ZSL to ensure timestamps are increasing
+                    previewBuilder.set(CaptureRequest.CONTROL_ENABLE_ZSL, false);
+                    multiBuilder.set(CaptureRequest.CONTROL_ENABLE_ZSL, false);
+                }
+
                 CaptureCallback mockCaptureCallback = getMockCaptureListener();
 
                 // Capture targeting only preview
