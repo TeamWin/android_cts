@@ -16,14 +16,6 @@
 
 package android.backup.cts.backup;
 
-/*import static junit.framework.Assert.assertEquals;
-import static junit.framework.Assert.assertFalse;
-import static junit.framework.Assert.assertNull;
-import static junit.framework.Assert.assertTrue;
-
-import static org.junit.Assume.assumeTrue;
-*/
-
 import com.android.cts.tradefed.build.CtsBuildHelper;
 import com.android.tradefed.build.IBuildInfo;
 import com.android.tradefed.device.DeviceNotAvailableException;
@@ -31,13 +23,6 @@ import com.android.tradefed.device.ITestDevice;
 import com.android.tradefed.testtype.DeviceTestCase;
 import com.android.tradefed.testtype.IBuildReceiver;
 import com.android.tradefed.log.LogUtil.CLog;
-
-/*
-import org.junit.After;
-import org.junit.Before;
-import org.junit.runner.RunWith;
-import org.junit.Test;
-*/
 
 import java.io.FileNotFoundException;
 import java.util.HashMap;
@@ -178,10 +163,9 @@ public class BackupRestoreHostSideTest extends DeviceTestCase implements IBuildR
         assertNotAllValuesAreDefault();
 
         // Run backup
-        // TODO: make this compatible with N-, potentially by replacing 'backupnow' with 'run'.
-        String backupnowOutput = mDevice.executeShellCommand("bmgr run ");
+        mDevice.executeShellCommand("bmgr run");
 
-        assertBackupIsSuccessful(backupnowOutput);
+        assertBackupFinished();
 
         mDevice.uninstallPackage(PACKAGE_UNDER_TEST);
 
@@ -223,24 +207,29 @@ public class BackupRestoreHostSideTest extends DeviceTestCase implements IBuildR
     }
 
     /**
-     * Parsing the output of "bmgr backupnow" command and checking that the package under test
-     * was backed up successfully.
+     * Parsing logcat after "bmgr run" command and checking that the backup pass is finished before
+     * we move on to avoid a race condition.
      *
-     * Expected format: "Package android.backup.cts.backuprestoreapp with result: Success"
+     * Expected format: "BackupManagerService: Backup pass finished"
      */
-    private void assertBackupIsSuccessful(String backupnowOutput) {
-        // Assert backup was successful.
-        Scanner in = new Scanner(backupnowOutput);
-        while (in.hasNextLine()) {
-            String line = in.nextLine();
+    private void assertBackupFinished() throws DeviceNotAvailableException {
+        boolean backupFinished = false;
+        long timeout = System.currentTimeMillis() + TimeUnit.SECONDS.toMillis(10 * 60); // 10 min
+        while (timeout >= System.currentTimeMillis() && !backupFinished) {
+            String logs = getLogcatForClass("BackupManagerService");
 
-            if (line.contains(PACKAGE_UNDER_TEST)) {
-                String result = line.split(":")[1].trim();
-
-                assertEquals(result, "Success");
+            Scanner in = new Scanner(logs);
+            while (in.hasNextLine()) {
+                String line = in.nextLine();
+                if (line.contains("Backup pass finished")) {
+                    backupFinished = true;
+                    break;
+                }
             }
+            in.close();
         }
-        in.close();
+
+        assertTrue("The backup pass never finished.", backupFinished);
     }
 
     /**
