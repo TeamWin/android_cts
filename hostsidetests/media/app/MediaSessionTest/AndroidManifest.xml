@@ -15,7 +15,8 @@
 -->
 
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
-    package="android.media.session.cts">
+    package="android.media.session.cts"
+    android:targetSandboxVersion="2">
 
     <uses-sdk android:minSdkVersion="26"/>
 
