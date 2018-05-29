@@ -121,6 +121,9 @@ public abstract class AutoFillServiceTestCase {
         // Unlock screen.
         runShellCommand("input keyevent KEYCODE_WAKEUP");
 
+        // Dismiss keyguard, in case it's set as "Swipe to unlock".
+        runShellCommand("wm dismiss-keyguard");
+
         // Collapse notifications.
         runShellCommand("cmd statusbar collapse");
 
