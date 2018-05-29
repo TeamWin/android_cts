@@ -17,6 +17,7 @@
 package android.security.cts;
 
 import android.platform.test.annotations.SecurityTest;
+import java.util.concurrent.TimeUnit;
 
 @SecurityTest
 public class Poc17_07 extends SecurityTestCase {
@@ -47,4 +48,15 @@ public class Poc17_07 extends SecurityTestCase {
                          "[\\s\\n\\S]*>>> /system/bin/" +
                          "mediaserver <<<[\\s\\n\\S]*", logcat);
     }
+
+    /**
+     * b/35443725
+     **/
+    @SecurityTest
+    public void testPocCVE_2016_2109() throws Exception {
+      assertFalse("Overallocation detected!",
+          AdbUtils.runPocCheckExitCode("CVE-2016-2109",
+            getDevice(), 60));
+    }
+
 }
