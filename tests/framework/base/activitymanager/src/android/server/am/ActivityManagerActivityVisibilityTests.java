@@ -78,7 +78,9 @@ public class ActivityManagerActivityVisibilityTests extends ActivityManagerTestB
     @Presubmit
     @Test
     public void testTranslucentActivityOnTopOfPinnedStack() throws Exception {
-        assumeTrue(supportsPip());
+        if (!supportsPip()) {
+            return;
+        }
 
         executeShellCommand(getAmStartCmdOverHome(LAUNCH_PIP_ON_PIP_ACTIVITY));
         mAmWmState.waitForValidState(LAUNCH_PIP_ON_PIP_ACTIVITY);
@@ -107,7 +109,9 @@ public class ActivityManagerActivityVisibilityTests extends ActivityManagerTestB
      */
     @Test
     public void testTranslucentActivityOnTopOfHome() throws Exception {
-        assumeTrue(hasHomeScreen());
+        if (!hasHomeScreen()) {
+            return;
+        }
 
         launchHomeActivity();
         launchActivity(ALWAYS_FOCUSABLE_PIP_ACTIVITY);
@@ -125,7 +129,9 @@ public class ActivityManagerActivityVisibilityTests extends ActivityManagerTestB
     @Presubmit
     @Test
     public void testHomeVisibleOnActivityTaskPinned() throws Exception {
-        assumeTrue(supportsPip());
+        if (!supportsPip()) {
+            return;
+        }
 
         launchHomeActivity();
         launchActivity(TEST_ACTIVITY);
@@ -150,7 +156,10 @@ public class ActivityManagerActivityVisibilityTests extends ActivityManagerTestB
     @Presubmit
     @Test
     public void testTranslucentActivityOverDockedStack() throws Exception {
-        assumeTrue("Skipping test: no multi-window support", supportsSplitScreenMultiWindow());
+        if (!supportsSplitScreenMultiWindow()) {
+            // Skipping test: no multi-window support
+            return;
+        }
 
         launchActivitiesInSplitScreen(
                 getLaunchActivityBuilder().setTargetActivity(DOCKED_ACTIVITY),
@@ -184,7 +193,10 @@ public class ActivityManagerActivityVisibilityTests extends ActivityManagerTestB
     @Presubmit
     @Test
     public void testFinishActivityInNonFocusedStack() throws Exception {
-        assumeTrue("Skipping test: no multi-window support", supportsSplitScreenMultiWindow());
+        if (!supportsSplitScreenMultiWindow()) {
+            // Skipping test: no multi-window support
+            return;
+        }
 
         // Launch two activities in docked stack.
         launchActivityInSplitScreenWithRecents(LAUNCHING_ACTIVITY);
@@ -231,7 +243,9 @@ public class ActivityManagerActivityVisibilityTests extends ActivityManagerTestB
         // Launch a different activity on top.
         launchActivity(BROADCAST_RECEIVER_ACTIVITY);
         mAmWmState.waitForActivityState(BROADCAST_RECEIVER_ACTIVITY, STATE_RESUMED);
-        mAmWmState.assertVisibility(MOVE_TASK_TO_BACK_ACTIVITY, false);
+        final boolean shouldBeVisible =
+                !mAmWmState.getAmState().isBehindOpaqueActivities(MOVE_TASK_TO_BACK_ACTIVITY);
+        mAmWmState.assertVisibility(MOVE_TASK_TO_BACK_ACTIVITY, shouldBeVisible);
         mAmWmState.assertVisibility(BROADCAST_RECEIVER_ACTIVITY, true);
 
         // Finish the top-most activity.
@@ -335,7 +349,9 @@ public class ActivityManagerActivityVisibilityTests extends ActivityManagerTestB
      */
     @Test
     public void testNoHistoryActivityFinishedResumedActivityNotIdle() throws Exception {
-        assumeTrue(hasHomeScreen());
+        if (!hasHomeScreen()) {
+            return;
+        }
 
         // Start with home on top
         launchHomeActivity();
@@ -366,7 +382,9 @@ public class ActivityManagerActivityVisibilityTests extends ActivityManagerTestB
 
     @Test
     public void testTurnScreenOnAttrWithLockScreen() throws Exception {
-        assumeTrue(supportsSecureLock());
+        if (!supportsSecureLock()) {
+            return;
+        }
 
         try (final LockScreenSession lockScreenSession = new LockScreenSession()) {
             lockScreenSession.setLockCredential()
