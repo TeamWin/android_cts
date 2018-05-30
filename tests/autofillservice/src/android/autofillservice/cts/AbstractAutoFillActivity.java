@@ -22,6 +22,7 @@ import static com.google.common.truth.Truth.assertWithMessage;
 import android.app.Activity;
 import android.graphics.Bitmap;
 import android.graphics.Rect;
+import android.os.Bundle;
 import android.view.PixelCopy;
 import android.view.View;
 import android.view.autofill.AutofillManager;
@@ -127,7 +128,29 @@ abstract class AbstractAutoFillActivity extends Activity {
     }
 
     @Override
+    protected void onCreate(Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+        AutofillTestWatcher.registerActivity(this);
+    }
+
+    @Override
+    protected void onDestroy() {
+        super.onDestroy();
+        // Activitiy is typically unregistered at finish(), but we need to unregister here too
+        // for the cases where it's destroyed due to a config change (like device rotation).
+        AutofillTestWatcher.unregisterActivity(this);
+    }
+
+    @Override
     public void finish() {
+        finishOnly();
+        AutofillTestWatcher.unregisterActivity(this);
+    }
+
+    /**
+     * Finishes the activity, without unregistering it from {@link AutofillTestWatcher}.
+     */
+    void finishOnly() {
         if (mCallback != null) {
             unregisterNonNullCallback();
         }

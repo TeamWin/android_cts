@@ -32,14 +32,12 @@ import android.widget.RemoteViews;
 
 import com.android.compatibility.common.util.RequiredFeatureRule;
 
-import org.junit.After;
 import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.ClassRule;
 import org.junit.Rule;
 import org.junit.rules.RuleChain;
 import org.junit.rules.TestWatcher;
-import org.junit.runner.Description;
 import org.junit.runner.RunWith;
 
 /**
@@ -60,21 +58,7 @@ public abstract class AutoFillServiceTestCase {
     public static final SettingsStateKeeperRule mServiceSettingsKeeper =
             new SettingsStateKeeperRule(sContext, Settings.Secure.AUTOFILL_SERVICE);
 
-    private final TestWatcher mTestWatcher = new TestWatcher() {
-        @Override
-        protected void starting(Description description) {
-            final String testName = description.getDisplayName();
-            Log.v(TAG, "Starting " + testName);
-            JUnitHelper.setCurrentTestName(testName);
-        }
-
-        @Override
-        protected void finished(Description description) {
-            final String testName = description.getDisplayName();
-            Log.v(TAG, "Finished " + testName);
-            JUnitHelper.setCurrentTestName(null);
-        }
-    };
+    private final TestWatcher mTestWatcher = new AutofillTestWatcher();
 
     private final RetryRule mRetryRule = new RetryRule(2);
 
@@ -141,15 +125,6 @@ public abstract class AutoFillServiceTestCase {
         InstrumentedAutoFillService.resetStaticState();
         AuthenticationActivity.resetStaticState();
         sReplier.reset();
-    }
-
-    /**
-     * Cleans up activities that might have been left over.
-     */
-    @Before
-    @After
-    public void finishActivities() {
-        WelcomeActivity.finishIt(mUiBot);
     }
 
     /**
