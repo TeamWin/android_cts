@@ -573,6 +573,7 @@ public class NetworkUsageStatsTest extends InstrumentationTestCase {
         }
     }
 
+    @AppModeFull
     public void testTagDetails() throws Exception {
         for (int i = 0; i < mNetworkInterfacesToTest.length; ++i) {
             // Relatively large tolerance to accommodate for history bucket size.

@@ -239,7 +239,7 @@ public class UsageStatsTest {
         mUiDevice.executeShellCommand("am set-standby-bucket " + mTargetPackage + " rare");
 
         final long endTime = System.currentTimeMillis();
-        UsageEvents events = mUsageStatsManager.queryEvents(startTime, endTime);
+        UsageEvents events = mUsageStatsManager.queryEvents(startTime - 1_000, endTime + 1_000);
 
         boolean found = false;
         // Check all the events.
