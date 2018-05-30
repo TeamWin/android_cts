@@ -396,6 +396,24 @@ public class ActivityManagerState {
         return false;
     }
 
+    boolean isBehindOpaqueActivities(ComponentName activityName) {
+        final String fullName = getActivityName(activityName);
+        for (ActivityStack stack : mStacks) {
+            for (ActivityTask task : stack.mTasks) {
+                for (Activity activity : task.mActivities) {
+                    if (activity.name.equals(fullName)) {
+                        return false;
+                    }
+                    if (!activity.translucent) {
+                        return true;
+                    }
+                }
+            }
+        }
+
+        return false;
+    }
+
     boolean containsStartedActivities() {
         for (ActivityStack stack : mStacks) {
             for (ActivityTask task : stack.mTasks) {
