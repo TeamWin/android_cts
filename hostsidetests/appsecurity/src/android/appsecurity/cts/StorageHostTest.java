@@ -16,6 +16,7 @@
 
 package android.appsecurity.cts;
 
+import android.platform.test.annotations.AppModeFull;
 import com.android.ddmlib.testrunner.TestResult.TestStatus;
 import com.android.tradefed.device.DeviceNotAvailableException;
 import com.android.tradefed.result.TestDescription;
@@ -73,11 +74,13 @@ public class StorageHostTest extends BaseHostJUnit4Test {
     }
 
     @Test
+    @AppModeFull // TODO: Needs porting to instant
     public void testVerify() throws Exception {
         Utils.runDeviceTests(getDevice(), PKG_STATS, CLASS_STATS, "testVerify");
     }
 
     @Test
+    @AppModeFull // TODO: Needs porting to instant
     public void testVerifyAppStats() throws Exception {
         for (int user : mUsers) {
             runDeviceTests(PKG_A, CLASS, "testAllocate", user);
@@ -96,6 +99,7 @@ public class StorageHostTest extends BaseHostJUnit4Test {
     }
 
     @Test
+    @AppModeFull // TODO: Needs porting to instant
     public void testVerifyAppQuota() throws Exception {
         for (int user : mUsers) {
             runDeviceTests(PKG_A, CLASS, "testVerifyQuotaApi", user);
@@ -103,6 +107,7 @@ public class StorageHostTest extends BaseHostJUnit4Test {
     }
 
     @Test
+    @AppModeFull // TODO: Needs porting to instant
     public void testVerifyAppAllocate() throws Exception {
         for (int user : mUsers) {
             runDeviceTests(PKG_A, CLASS, "testVerifyAllocateApi", user);
@@ -110,6 +115,7 @@ public class StorageHostTest extends BaseHostJUnit4Test {
     }
 
     @Test
+    @AppModeFull // TODO: Needs porting to instant
     public void testVerifySummary() throws Exception {
         for (int user : mUsers) {
             runDeviceTests(PKG_STATS, CLASS_STATS, "testVerifySummary", user);
@@ -117,6 +123,7 @@ public class StorageHostTest extends BaseHostJUnit4Test {
     }
 
     @Test
+    @AppModeFull // TODO: Needs porting to instant
     public void testVerifyStats() throws Exception {
         for (int user : mUsers) {
             runDeviceTests(PKG_STATS, CLASS_STATS, "testVerifyStats", user);
@@ -124,6 +131,7 @@ public class StorageHostTest extends BaseHostJUnit4Test {
     }
 
     @Test
+    @AppModeFull // TODO: Needs porting to instant
     public void testVerifyStatsMultiple() throws Exception {
         for (int user : mUsers) {
             runDeviceTests(PKG_A, CLASS, "testAllocate", user);
@@ -138,6 +146,7 @@ public class StorageHostTest extends BaseHostJUnit4Test {
     }
 
     @Test
+    @AppModeFull // TODO: Needs porting to instant
     public void testVerifyStatsExternal() throws Exception {
         for (int user : mUsers) {
             runDeviceTests(PKG_STATS, CLASS_STATS, "testVerifyStatsExternal", user);
@@ -145,6 +154,7 @@ public class StorageHostTest extends BaseHostJUnit4Test {
     }
 
     @Test
+    @AppModeFull // TODO: Needs porting to instant
     public void testVerifyStatsExternalConsistent() throws Exception {
         for (int user : mUsers) {
             runDeviceTests(PKG_STATS, CLASS_STATS, "testVerifyStatsExternalConsistent", user);
@@ -152,6 +162,7 @@ public class StorageHostTest extends BaseHostJUnit4Test {
     }
 
     @Test
+    @AppModeFull // TODO: Needs porting to instant
     public void testVerifyCategory() throws Exception {
         for (int user : mUsers) {
             runDeviceTests(PKG_STATS, CLASS_STATS, "testVerifyCategory", user);
@@ -159,6 +170,7 @@ public class StorageHostTest extends BaseHostJUnit4Test {
     }
 
     @Test
+    @AppModeFull // TODO: Needs porting to instant
     public void testCache() throws Exception {
         // To make the cache clearing logic easier to verify, ignore any cache
         // and low space reserved space.
@@ -185,6 +197,7 @@ public class StorageHostTest extends BaseHostJUnit4Test {
     }
 
     @Test
+    @AppModeFull // TODO: Needs porting to instant
     public void testFullDisk() throws Exception {
         // Clear all other cached and external storage data to give ourselves a
         // clean slate to test against

@@ -25,6 +25,7 @@ import static android.appsecurity.cts.SplitTests.PKG;
 
 import static org.junit.Assert.fail;
 
+import android.platform.test.annotations.AppModeFull;
 import com.android.tradefed.device.CollectingOutputReceiver;
 import com.android.tradefed.testtype.DeviceJUnit4ClassRunner;
 import com.android.tradefed.testtype.junit4.BaseHostJUnit4Test;
@@ -75,6 +76,7 @@ public class AdoptableHostTest extends BaseHostJUnit4Test {
      * sniffed from the underlying fstab.
      */
     @Test
+    @AppModeFull // TODO: Needs porting to instant
     public void testFeatureConsistent() throws Exception {
         final boolean hasFeature = hasFeature();
         final boolean hasFstab = hasFstab();
@@ -85,6 +87,7 @@ public class AdoptableHostTest extends BaseHostJUnit4Test {
     }
 
     @Test
+    @AppModeFull // TODO: Needs porting to instant
     public void testApps() throws Exception {
         if (!isSupportedDevice()) return;
         final String diskId = getAdoptionDisk();
@@ -136,6 +139,7 @@ public class AdoptableHostTest extends BaseHostJUnit4Test {
     }
 
     @Test
+    @AppModeFull // TODO: Needs porting to instant
     public void testPrimaryStorage() throws Exception {
         if (!isSupportedDevice()) return;
         final String diskId = getAdoptionDisk();
@@ -236,6 +240,7 @@ public class AdoptableHostTest extends BaseHostJUnit4Test {
      * adopted volumes.
      */
     @Test
+    @AppModeFull // TODO: Needs porting to instant
     public void testPackageInstaller() throws Exception {
         if (!isSupportedDevice()) return;
         final String diskId = getAdoptionDisk();
@@ -265,6 +270,7 @@ public class AdoptableHostTest extends BaseHostJUnit4Test {
      * returned at a later time.
      */
     @Test
+    @AppModeFull // TODO: Needs porting to instant
     public void testEjected() throws Exception {
         if (!isSupportedDevice()) return;
         final String diskId = getAdoptionDisk();
