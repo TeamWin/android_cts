@@ -15,6 +15,7 @@
  */
 package android.appsecurity.cts;
 
+import android.platform.test.annotations.AppModeFull;
 import com.android.tradefed.testtype.DeviceJUnit4ClassRunner;
 import com.android.tradefed.testtype.IBuildReceiver;
 import com.android.tradefed.testtype.junit4.BaseHostJUnit4Test;
@@ -57,12 +58,14 @@ public class ClassloaderSplitsTest extends BaseHostJUnit4Test implements IBuildR
     }
 
     @Test
+    @AppModeFull // TODO: Needs porting to instant
     public void testBaseClassLoader() throws Exception {
         new InstallMultiple().addApk(APK_BASE).run();
         runDeviceTests(getDevice(), PKG, TEST_CLASS, "testBaseClassLoader");
     }
 
     @Test
+    @AppModeFull // TODO: Needs porting to instant
     public void testFeatureAClassLoader() throws Exception {
         new InstallMultiple().addApk(APK_BASE).addApk(APK_FEATURE_A).run();
         runDeviceTests(getDevice(), PKG, TEST_CLASS, "testBaseClassLoader");
@@ -70,6 +73,7 @@ public class ClassloaderSplitsTest extends BaseHostJUnit4Test implements IBuildR
     }
 
     @Test
+    @AppModeFull // TODO: Needs porting to instant
     public void testFeatureBClassLoader() throws Exception {
         new InstallMultiple().addApk(APK_BASE).addApk(APK_FEATURE_A).addApk(APK_FEATURE_B).run();
         runDeviceTests(getDevice(), PKG, TEST_CLASS, "testBaseClassLoader");
@@ -78,6 +82,7 @@ public class ClassloaderSplitsTest extends BaseHostJUnit4Test implements IBuildR
     }
 
     @Test
+    @AppModeFull // TODO: Needs porting to instant
     public void testReceiverClassLoaders() throws Exception {
         new InstallMultiple().addApk(APK_BASE).addApk(APK_FEATURE_A).addApk(APK_FEATURE_B).run();
         runDeviceTests(getDevice(), PKG, TEST_CLASS, "testBaseClassLoader");

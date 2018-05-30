@@ -21,6 +21,7 @@ import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 
+import android.platform.test.annotations.AppModeFull;
 import com.android.compatibility.common.tradefed.build.CompatibilityBuildHelper;
 import com.android.ddmlib.Log;
 import com.android.tradefed.device.DeviceNotAvailableException;
@@ -101,6 +102,7 @@ public class AppSecurityTests extends BaseHostJUnit4Test {
      * if it is signed with a different certificate.
      */
     @Test
+    @AppModeFull // TODO: Needs porting to instant
     public void testSharedUidDifferentCerts() throws Exception {
         Log.i(LOG_TAG, "installing apks with shared uid, but different certs");
         try {
@@ -130,6 +132,7 @@ public class AppSecurityTests extends BaseHostJUnit4Test {
      * certificate.
      */
     @Test
+    @AppModeFull // TODO: Needs porting to instant
     public void testAppUpgradeDifferentCerts() throws Exception {
         Log.i(LOG_TAG, "installing app upgrade with different certs");
         try {
@@ -156,6 +159,7 @@ public class AppSecurityTests extends BaseHostJUnit4Test {
      * Test that an app cannot access another app's private data.
      */
     @Test
+    @AppModeFull // TODO: Needs porting to instant
     public void testAppFailAccessPrivateData() throws Exception {
         Log.i(LOG_TAG, "installing app that attempts to access another app's private data");
         try {
@@ -187,6 +191,7 @@ public class AppSecurityTests extends BaseHostJUnit4Test {
      * Test that uninstall of an app removes its private data.
      */
     @Test
+    @AppModeFull // TODO: Needs porting to instant
     public void testUninstallRemovesData() throws Exception {
         Log.i(LOG_TAG, "Uninstalling app, verifying data is removed.");
         try {
@@ -219,6 +224,7 @@ public class AppSecurityTests extends BaseHostJUnit4Test {
      * Test that an app cannot instrument another app that is signed with different certificate.
      */
     @Test
+    @AppModeFull // TODO: Needs porting to instant
     public void testInstrumentationDiffCert() throws Exception {
         Log.i(LOG_TAG, "installing app that attempts to instrument another app");
         try {
@@ -253,6 +259,7 @@ public class AppSecurityTests extends BaseHostJUnit4Test {
      * certificate than the app that declared the permission.
      */
     @Test
+    @AppModeFull // TODO: Needs porting to instant
     public void testPermissionDiffCert() throws Exception {
         Log.i(LOG_TAG, "installing app that attempts to use permission of another app");
         try {
@@ -290,6 +297,7 @@ public class AppSecurityTests extends BaseHostJUnit4Test {
      * Tests that an arbitrary file cannot be installed using the 'cmd' command.
      */
     @Test
+    @AppModeFull // TODO: Needs porting to instant
     public void testAdbInstallFile() throws Exception {
         String output = getDevice().executeShellCommand(
                 "cmd package install -S 1024 /data/local/tmp/foo.apk");

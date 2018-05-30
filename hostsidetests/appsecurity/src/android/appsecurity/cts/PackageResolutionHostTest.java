@@ -19,6 +19,7 @@ package android.appsecurity.cts;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 
+import android.platform.test.annotations.AppModeFull;
 import com.android.compatibility.common.tradefed.build.CompatibilityBuildHelper;
 import com.android.tradefed.device.DeviceNotAvailableException;
 import com.android.tradefed.testtype.DeviceJUnit4ClassRunner;
@@ -52,6 +53,7 @@ public class PackageResolutionHostTest extends BaseAppSecurityTest {
     }
 
     @Test
+    @AppModeFull // TODO: Needs porting to instant
     public void testResolveOrderedActivity() throws Exception {
         getDevice().installPackage(mBuildHelper.getTestFile(TINY_APK), true);
         Utils.runDeviceTests(getDevice(), TINY_PKG,
@@ -60,6 +62,7 @@ public class PackageResolutionHostTest extends BaseAppSecurityTest {
     }
 
     @Test
+    @AppModeFull // TODO: Needs porting to instant
     public void testResolveOrderedService() throws Exception {
         getDevice().installPackage(mBuildHelper.getTestFile(TINY_APK), true);
         Utils.runDeviceTests(getDevice(), TINY_PKG,
@@ -68,6 +71,7 @@ public class PackageResolutionHostTest extends BaseAppSecurityTest {
     }
 
     @Test
+    @AppModeFull // TODO: Needs porting to instant
     public void testResolveOrderedReceiver() throws Exception {
         getDevice().installPackage(mBuildHelper.getTestFile(TINY_APK), true);
         Utils.runDeviceTests(getDevice(), TINY_PKG,

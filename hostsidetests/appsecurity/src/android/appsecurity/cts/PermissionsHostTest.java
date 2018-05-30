@@ -16,6 +16,7 @@
 
 package android.appsecurity.cts;
 
+import android.platform.test.annotations.AppModeFull;
 import android.platform.test.annotations.Presubmit;
 
 import com.android.compatibility.common.tradefed.build.CompatibilityBuildHelper;
@@ -30,6 +31,7 @@ import com.android.tradefed.testtype.IBuildReceiver;
  * Set of tests that verify behavior of runtime permissions, including both
  * dynamic granting and behavior of legacy apps.
  */
+@AppModeFull // TODO: Needs porting to instant
 public class PermissionsHostTest extends DeviceTestCase implements IAbiReceiver, IBuildReceiver {
     private static final String USES_PERMISSION_PKG = "com.android.cts.usepermission";
     private static final String ESCALATE_PERMISSION_PKG = "com.android.cts.escalate.permission";
