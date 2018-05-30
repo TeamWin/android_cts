@@ -134,7 +134,7 @@ public class SelfManagedIncomingCallTestActivity extends PassFailButtons.Activit
 
                         return null;
                     } catch (Throwable t) {
-                        return  t;
+                        return t;
                     }
                 }
 
@@ -156,39 +156,64 @@ public class SelfManagedIncomingCallTestActivity extends PassFailButtons.Activit
         mStep3Status = view.findViewById(R.id.step_3_status);
         mConfirm = view.findViewById(R.id.telecom_incoming_self_mgd_confirm_answer_button);
         mConfirm.setOnClickListener(v -> {
-            CtsSelfManagedConnectionService ctsSelfConnSvr =
-                    CtsSelfManagedConnectionService.waitForAndGetConnectionService();
-            if (ctsSelfConnSvr == null) {
-                mStep3Status.setImageResource(R.drawable.fs_error);
-                return;
-            }
-            List<CtsConnection> connections = ctsSelfConnSvr.getConnections();
-            if (connections.size() != 1) {
-                mStep3Status.setImageResource(R.drawable.fs_error);
-                return;
-            }
+            try {
+                CtsSelfManagedConnectionService ctsSelfConnSvr =
+                        CtsSelfManagedConnectionService.waitForAndGetConnectionService();
+                if (ctsSelfConnSvr == null) {
+                    mStep3Status.setImageResource(R.drawable.fs_error);
+                    return;
+                }
+                List<CtsConnection> connections = ctsSelfConnSvr.getConnections();
+                if (connections.size() != 1) {
+                    mStep3Status.setImageResource(R.drawable.fs_error);
+                    return;
+                }
 
-            if (connections.get(0).getState() == Connection.STATE_ACTIVE) {
-                connections
-                        .stream()
-                        .forEach((c) -> c.onDisconnect());
-                mStep3Status.setImageResource(R.drawable.fs_good);
-                getPassButton().setEnabled(true);
-            } else {
-                mStep3Status.setImageResource(R.drawable.fs_error);
-            }
+                if (connections.get(0).getState() == Connection.STATE_ACTIVE) {
+                    mStep3Status.setImageResource(R.drawable.fs_good);
+                    getPassButton().setEnabled(true);
+                } else {
+                    mStep3Status.setImageResource(R.drawable.fs_error);
+                }
 
-            // The self-managed connection service should be disconnected, because all of the
-            // self-managed connections are disconnected.
-            if (CtsConnectionService.getConnectionService() != null) {
-                mStep3Status.setImageResource(R.drawable.fs_error);
-                return;
-            }
+                // The self-managed connection service should be disconnected, because all of the
+                // self-managed connections are disconnected.
+                if (CtsConnectionService.getConnectionService() != null) {
+                    mStep3Status.setImageResource(R.drawable.fs_error);
+                    return;
+                }
 
-            PhoneAccountUtils.unRegisterTestSelfManagedPhoneAccount(this);
+                mConfirm.setEnabled(false);
+            } finally {
+                // If some step fails, make sure we cleanup any lingering connections.
+                cleanupConnectionServices();
+            }
         });
 
         mShowUi.setEnabled(false);
         mConfirm.setEnabled(false);
+    }
+
+    private void cleanupConnectionServices() {
+        CtsSelfManagedConnectionService ctsSelfConnSvr =
+                CtsSelfManagedConnectionService.getConnectionService();
+        if (ctsSelfConnSvr != null) {
+            ctsSelfConnSvr.getConnections()
+                    .stream()
+                    .forEach((c) -> {
+                        c.onDisconnect();
+                    });
+        }
+
+        CtsConnectionService ctsConnectionService =
+                CtsConnectionService.getConnectionService();
+        if (ctsConnectionService != null) {
+            ctsConnectionService.getConnections()
+                    .stream()
+                    .forEach((c) -> {
+                        c.onDisconnect();
+                    });
+        }
+        PhoneAccountUtils.unRegisterTestSelfManagedPhoneAccount(this);
     }
 }
