@@ -16,6 +16,7 @@
 package android.telecom.cts;
 
 import android.app.Instrumentation;
+import android.bluetooth.BluetoothDevice;
 import android.content.ComponentName;
 import android.content.Context;
 import android.content.pm.PackageManager;
@@ -25,6 +26,7 @@ import android.os.Build;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Looper;
+import android.os.Parcel;
 import android.os.ParcelFileDescriptor;
 import android.os.SystemClock;
 import android.telecom.PhoneAccount;
@@ -52,6 +54,9 @@ public class TestUtils {
     static final long WAIT_FOR_STATE_CHANGE_TIMEOUT_CALLBACK = 50;
     static final long WAIT_FOR_PHONE_STATE_LISTENER_REGISTERED_TIMEOUT_S = 15;
     static final long WAIT_FOR_PHONE_STATE_LISTENER_CALLBACK_TIMEOUT_S = 15;
+
+    static final BluetoothDevice BLUETOOTH_DEVICE1 = makeBluetoothDevice("00:00:00:00:00:01");
+    static final BluetoothDevice BLUETOOTH_DEVICE2 = makeBluetoothDevice("00:00:00:00:00:02");
 
     // Non-final to allow modification by tests not in this package (e.g. permission-related
     // tests in the Telecom2 test package.
@@ -316,6 +321,15 @@ public class TestUtils {
         } catch (Exception e) {
             TestCase.fail("Failed to wait on handlers");
         }
+    }
+
+    public static BluetoothDevice makeBluetoothDevice(String address) {
+        Parcel p1 = Parcel.obtain();
+        p1.writeString(address);
+        p1.setDataPosition(0);
+        BluetoothDevice device = BluetoothDevice.CREATOR.createFromParcel(p1);
+        p1.recycle();
+        return device;
     }
 
     /**

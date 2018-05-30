@@ -214,7 +214,7 @@ public class BaseTelecomTestWithMockServices extends InstrumentationTestCase {
         mContext.startActivity(intent);
     }
 
-    private void sleep(long ms) {
+    void sleep(long ms) {
         try {
             Thread.sleep(ms);
         } catch (InterruptedException e) {
