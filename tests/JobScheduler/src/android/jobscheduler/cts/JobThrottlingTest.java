@@ -43,6 +43,7 @@ import android.support.test.uiautomator.UiDevice;
 import android.util.Log;
 
 import com.android.compatibility.common.util.AppStandbyUtils;
+import com.android.compatibility.common.util.BatteryUtils;
 
 import org.junit.After;
 import org.junit.Before;
@@ -50,12 +51,12 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 
 /**
- * Tests that temp whitelisted apps can run jobs if all the other constraints are met
+ * Tests related to job throttling -- device idle, app standby and battery saver.
  */
 @RunWith(AndroidJUnit4.class)
 @LargeTest
-public class DeviceIdleJobsTest {
-    private static final String TAG = DeviceIdleJobsTest.class.getSimpleName();
+public class JobThrottlingTest {
+    private static final String TAG = JobThrottlingTest.class.getSimpleName();
     private static final String TEST_APP_PACKAGE = "android.jobscheduler.cts.jobtestapp";
     private static final String TEST_APP_RECEIVER = TEST_APP_PACKAGE + ".TestJobSchedulerReceiver";
     private static final String TEST_APP_ACTIVITY = TEST_APP_PACKAGE + ".TestActivity";
@@ -100,7 +101,7 @@ public class DeviceIdleJobsTest {
                     break;
                 case ACTION_DEVICE_IDLE_MODE_CHANGED:
                 case ACTION_LIGHT_DEVICE_IDLE_MODE_CHANGED:
-                    synchronized (DeviceIdleJobsTest.this) {
+                    synchronized (JobThrottlingTest.this) {
                         mDeviceInDoze = mPowerManager.isDeviceIdleMode();
                         Log.d(TAG, "mDeviceInDoze: " + mDeviceInDoze);
                     }
@@ -151,7 +152,7 @@ public class DeviceIdleJobsTest {
         assertFalse("Job started without being tempwhitelisted", awaitJobStart(5_000));
         tempWhitelistTestApp(5_000);
         assertTrue("Job with allow_while_idle flag did not start when the app was tempwhitelisted",
-                awaitJobStart(DEFAULT_WAIT_TIMEOUT));
+                awaitJobStart(5_000));
     }
 
     @Test
@@ -190,24 +191,71 @@ public class DeviceIdleJobsTest {
     public void testJobsInNeverApp() throws Exception {
         assumeTrue("app standby not enabled", mAppStandbyEnabled);
 
-        enterFakeUnpluggedState();
+        BatteryUtils.runDumpsysBatteryUnplug();
         setTestPackageStandbyBucket(Bucket.NEVER);
         Thread.sleep(DEFAULT_WAIT_TIMEOUT);
         sendScheduleJobBroadcast(false);
         assertFalse("New job started in NEVER standby", awaitJobStart(3_000));
-        resetFakeUnpluggedState();
     }
 
     @Test
     public void testUidActiveBypassesStandby() throws Exception {
-        enterFakeUnpluggedState();
+        BatteryUtils.runDumpsysBatteryUnplug();
         setTestPackageStandbyBucket(Bucket.NEVER);
         tempWhitelistTestApp(6_000);
         Thread.sleep(DEFAULT_WAIT_TIMEOUT);
         sendScheduleJobBroadcast(false);
         assertTrue("New job in uid-active app failed to start in NEVER standby",
                 awaitJobStart(4_000));
-        resetFakeUnpluggedState();
+    }
+
+    @Test
+    public void testBatterySaverOff() throws Exception {
+        BatteryUtils.assumeBatterySaverFeature();
+
+        BatteryUtils.runDumpsysBatteryUnplug();
+        BatteryUtils.enableBatterySaver(false);
+        sendScheduleJobBroadcast(false);
+        assertTrue("New job failed to start with battery saver OFF", awaitJobStart(3_000));
+    }
+
+    @Test
+    public void testBatterySaverOn() throws Exception {
+        BatteryUtils.assumeBatterySaverFeature();
+
+        BatteryUtils.runDumpsysBatteryUnplug();
+        BatteryUtils.enableBatterySaver(true);
+        sendScheduleJobBroadcast(false);
+        assertFalse("New job started with battery saver ON", awaitJobStart(3_000));
+    }
+
+    @Test
+    public void testUidActiveBypassesBatterySaverOn() throws Exception {
+        BatteryUtils.assumeBatterySaverFeature();
+
+        BatteryUtils.runDumpsysBatteryUnplug();
+        BatteryUtils.enableBatterySaver(true);
+        tempWhitelistTestApp(6_000);
+        sendScheduleJobBroadcast(false);
+        assertTrue("New job in uid-active app failed to start with battery saver OFF",
+                awaitJobStart(3_000));
+    }
+
+    @Test
+    public void testBatterySaverOnThenUidActive() throws Exception {
+        BatteryUtils.assumeBatterySaverFeature();
+
+        // Enable battery saver, and schedule a job. It shouldn't run.
+        BatteryUtils.runDumpsysBatteryUnplug();
+        BatteryUtils.enableBatterySaver(true);
+        sendScheduleJobBroadcast(false);
+        assertFalse("New job started with battery saver ON", awaitJobStart(3_000));
+
+
+        // Then make the UID active. Now the job should run.
+        tempWhitelistTestApp(120_000);
+        assertTrue("New job in uid-active app failed to start with battery saver OFF",
+                awaitJobStart(120_000));
     }
 
     @After
@@ -221,6 +269,8 @@ public class DeviceIdleJobsTest {
         mContext.sendBroadcast(cancelJobsIntent);
         mContext.sendBroadcast(new Intent(TestActivity.ACTION_FINISH_ACTIVITY));
         mContext.unregisterReceiver(mReceiver);
+        BatteryUtils.runDumpsysBatteryReset();
+
         Thread.sleep(500); // To avoid any race between unregister and the next register in setUp
         waitUntilTestAppNotInTempWhitelist();
     }
@@ -255,7 +305,7 @@ public class DeviceIdleJobsTest {
         mUiDevice.executeShellCommand("cmd deviceidle " + (idle ? "force-idle" : "unforce"));
         assertTrue("Could not change device idle state to " + idle,
                 waitUntilTrue(SHELL_TIMEOUT, () -> {
-                    synchronized (DeviceIdleJobsTest.this) {
+                    synchronized (JobThrottlingTest.this) {
                         return mDeviceInDoze == idle;
                     }
                 }));
@@ -284,14 +334,6 @@ public class DeviceIdleJobsTest {
         }
         mUiDevice.executeShellCommand("am set-standby-bucket " + TEST_APP_PACKAGE
                 + " " + bucketName);
-    }
-
-    private void enterFakeUnpluggedState() throws Exception {
-        mUiDevice.executeShellCommand("dumpsys battery unplug");
-    }
-
-    private void resetFakeUnpluggedState() throws Exception  {
-        mUiDevice.executeShellCommand("dumpsys battery reset");
     }
 
     private boolean waitUntilTestAppNotInTempWhitelist() throws Exception {
