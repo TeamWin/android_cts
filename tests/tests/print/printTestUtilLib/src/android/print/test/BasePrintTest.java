@@ -192,7 +192,7 @@ public abstract class BasePrintTest {
         sEnabledImes = null;
     }
 
-    protected static Instrumentation getInstrumentation() {
+    public static Instrumentation getInstrumentation() {
         return InstrumentationRegistry.getInstrumentation();
     }
 

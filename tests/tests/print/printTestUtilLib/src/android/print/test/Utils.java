@@ -16,15 +16,21 @@
 
 package android.print.test;
 
+import static android.print.test.BasePrintTest.getInstrumentation;
+
 import android.content.Context;
 import android.os.Handler;
 import android.os.Looper;
+import android.os.ParcelFileDescriptor;
 import android.print.PrintJob;
 import android.print.PrintManager;
+import android.service.print.nano.PrintServiceDumpProto;
 import android.util.Log;
 
 import androidx.annotation.NonNull;
 
+import java.io.ByteArrayOutputStream;
+import java.io.FileInputStream;
 import java.util.concurrent.TimeUnit;
 
 /**
@@ -158,5 +164,31 @@ public class Utils {
      */
     public static @NonNull PrintManager getPrintManager(@NonNull Context context) {
         return (PrintManager) context.getSystemService(Context.PRINT_SERVICE);
+    }
+
+    /**
+     * Get the {@link PrintServiceDumpProto}
+     */
+    public static PrintServiceDumpProto getProtoDump() throws Exception {
+        ParcelFileDescriptor pfd = getInstrumentation().getUiAutomation()
+                .executeShellCommand("dumpsys print --proto");
+
+        try (ByteArrayOutputStream os = new ByteArrayOutputStream()) {
+            try (FileInputStream is = new ParcelFileDescriptor.AutoCloseInputStream(pfd)) {
+                byte[] buffer = new byte[16384];
+
+                while (true) {
+                    int numRead = is.read(buffer);
+
+                    if (numRead == -1) {
+                        break;
+                    } else {
+                        os.write(buffer, 0, numRead);
+                    }
+                }
+            }
+
+            return PrintServiceDumpProto.parseFrom(os.toByteArray());
+        }
     }
 }
