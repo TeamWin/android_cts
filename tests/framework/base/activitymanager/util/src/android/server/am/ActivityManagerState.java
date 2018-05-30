@@ -327,6 +327,15 @@ public class ActivityManagerState {
         return -1;
     }
 
+    /** Get display id by activity on it. */
+    int getDisplayByActivity(ComponentName activityComponent) {
+        final ActivityManagerState.ActivityTask task = getTaskByActivity(activityComponent);
+        if (task == null) {
+            return -1;
+        }
+        return getStackById(task.mStackId).mDisplayId;
+    }
+
     List<ActivityDisplay> getDisplays() {
         return new ArrayList<>(mDisplays);
     }

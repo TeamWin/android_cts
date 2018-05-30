@@ -1008,6 +1008,49 @@ public abstract class ActivityManagerTestBase {
         }.assertValidator("***Waiting for activity destroyed");
     }
 
+    void assertLifecycleCounts(ComponentName activityName, LogSeparator logSeparator,
+            int createCount, int startCount, int resumeCount, int pauseCount, int stopCount,
+            int destroyCount, int configurationChangeCount) {
+        new RetryValidator() {
+            @Override
+            protected String validate() {
+                final ActivityLifecycleCounts lifecycleCounts =
+                        new ActivityLifecycleCounts(activityName, logSeparator);
+                final String logTag = getLogTag(activityName);
+                if (createCount != lifecycleCounts.mCreateCount) {
+                    return logTag + " has been created " + lifecycleCounts.mCreateCount
+                            + " time(s), expecting " + createCount;
+                }
+                if (startCount != lifecycleCounts.mStartCount) {
+                    return logTag + " has been started " + lifecycleCounts.mStartCount
+                            + " time(s), expecting " + startCount;
+                }
+                if (resumeCount != lifecycleCounts.mResumeCount) {
+                    return logTag + " has been resumed " + lifecycleCounts.mResumeCount
+                            + " time(s), expecting " + resumeCount;
+                }
+                if (pauseCount != lifecycleCounts.mPauseCount) {
+                    return logTag + " has been paused " + lifecycleCounts.mPauseCount
+                            + " time(s), expecting " + pauseCount;
+                }
+                if (stopCount != lifecycleCounts.mStopCount) {
+                    return logTag + " has been stopped " + lifecycleCounts.mStopCount
+                            + " time(s), expecting " + stopCount;
+                }
+                if (destroyCount != lifecycleCounts.mDestroyCount) {
+                    return logTag + " has been destroyed " + lifecycleCounts.mDestroyCount
+                            + " time(s), expecting " + destroyCount;
+                }
+                if (configurationChangeCount != lifecycleCounts.mConfigurationChangedCount) {
+                    return logTag + " has received config changes "
+                            + lifecycleCounts.mConfigurationChangedCount
+                            + " time(s), expecting " + configurationChangeCount;
+                }
+                return null;
+            }
+        }.assertValidator("***Waiting for activity lifecycle counts");
+    }
+
     void assertSingleLaunch(ComponentName activityName, LogSeparator logSeparator) {
         new ActivityLifecycleCountsValidator(activityName, logSeparator, 1 /* createCount */,
                 1 /* startCount */, 1 /* resumeCount */, 0 /* pauseCount */, 0 /* stopCount */,
