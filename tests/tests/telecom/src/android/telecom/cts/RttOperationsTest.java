@@ -234,6 +234,25 @@ public class RttOperationsTest extends BaseTelecomTestWithMockServices {
         assertNotNull(inCallSideRtt);
 
         verifyRttPipeIntegrity(inCallSideRtt, connectionSideRtt);
+        verifyRttPipeReadBlocking(connectionSideRtt);
+    }
+
+    private void verifyRttPipeReadBlocking(Connection.RttTextStream connectionSide) {
+        // Make sure that nothing gets read from the pipe
+        boolean[] flag = new boolean[1];
+        flag[0] = false;
+        Thread t = new Thread(() -> {
+            try {
+                connectionSide.read();
+                flag[0] = true;
+            } catch (Exception e) {
+                // do nothing
+            }
+        });
+        t.start();
+        sleep(500);
+        t.interrupt();
+        assertFalse(flag[0]);
     }
 
     private void verifyRttPipeIntegrity(Call.RttCall inCallSide, Connection.RttTextStream
