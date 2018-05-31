@@ -279,4 +279,7 @@
 
     <!-- b/79134522 -->
     <option name="compatibility:exclude-filter" value="CtsPermission2TestCases android.permission2.cts.PrivappPermissionsTest#testPrivappPermissionsEnforcement" />
+
+    <!-- b/69277153 -->
+    <option name="compatibility:exclude-filter" value="CtsSecurityHostTestCases android.security.cts.SELinuxHostTest#testNoExemptionsForSocketsBetweenCoreAndVendorBan" />
 </configuration>
