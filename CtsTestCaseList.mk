@@ -78,7 +78,6 @@ cts_account_support_packages := \
 
 cts_support_packages := \
     CtsAccelerationTestStubs \
-    CtsBackupRestoreDeviceApp \
     CtsAlarmClockService \
     CtsAppTestStubs \
     CtsAssistService \
@@ -232,7 +231,6 @@ CTS_COVERAGE_TEST_CASE_LIST := \
 # Host side only tests
 cts_host_libraries := \
     CtsAdbTests \
-    CtsBackupHostTestCases \
     CtsAppSecurityTests \
     CtsAtraceHostTestCases \
     CtsCppToolsTestCases \
