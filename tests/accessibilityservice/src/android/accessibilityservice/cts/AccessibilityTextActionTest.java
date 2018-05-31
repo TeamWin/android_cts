@@ -249,8 +249,12 @@ public class AccessibilityTextActionTest extends
         }
 
         // Scroll down one line
-        final float oneLineDownY = locationsBeforeScroll[0].bottom;
-        getInstrumentation().runOnMainSync(() -> editText.scrollTo(0, (int) oneLineDownY + 1));
+        getInstrumentation().runOnMainSync(() -> {
+            int[] viewPosition = new int[2];
+            editText.getLocationOnScreen(viewPosition);
+            final int oneLineDownY = (int) locationsBeforeScroll[0].bottom - viewPosition[1];
+            editText.scrollTo(0, oneLineDownY + 1);
+        });
 
         assertTrue("Refresh failed", text.refreshWithExtraData(
                 EXTRA_DATA_TEXT_CHARACTER_LOCATION_KEY, getTextArgs));
