@@ -20,7 +20,9 @@ import android.location.GnssMeasurement;
 import android.location.GnssMeasurementsEvent;
 import android.util.Log;
 
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 /**
  * Test the {@link GnssMeasurement} values.
@@ -31,8 +33,8 @@ import java.util.List;
  * 3. Wait for {@link #LOCATION_TO_COLLECT_COUNT} locations.
  *          3.1 Confirm locations have been found.
  * 4. Check {@link GnssMeasurementsEvent} status: if the status is not
- *    {@link GnssMeasurementsEvent#STATUS_READY}, the test will be skipped because one of the
- *    following reasons:
+ *    {@link GnssMeasurementsEvent.Callback#STATUS_READY}, the test will be skipped because
+ *    one of the following reasons:
  *          4.1 the device does not support the GPS feature,
  *          4.2 GPS Location is disabled in the device and this is CTS (non-verifier)
  *  5. Verify {@link GnssMeasurement}s (all mandatory fields), the test will fail if any of the
@@ -42,15 +44,19 @@ public class GnssMeasurementValuesTest extends GnssTestCase {
 
     private static final String TAG = "GnssMeasValuesTest";
     private static final int LOCATION_TO_COLLECT_COUNT = 5;
+    private static final int YEAR_2017 = 2017;
 
     private TestGnssMeasurementListener mMeasurementListener;
     private TestLocationListener mLocationListener;
+    // Store list of Satellites including Gnss Band, constellation & SvId
+    private Set<String> mGnssMeasSvStringIds;
 
     @Override
     protected void setUp() throws Exception {
         super.setUp();
 
         mTestLocationManager = new TestLocationManager(getContext());
+        mGnssMeasSvStringIds = new HashSet<>();
     }
 
     @Override
@@ -73,7 +79,7 @@ public class GnssMeasurementValuesTest extends GnssTestCase {
     public void testListenForGnssMeasurements() throws Exception {
         // Checks if GPS hardware feature is present, skips test (pass) if not,
         // and hard asserts that Location/GPS (Provider) is turned on if is Cts Verifier.
-       if (!TestMeasurementUtil.canTestRunOnCurrentDevice(mTestLocationManager,
+        if (!TestMeasurementUtil.canTestRunOnCurrentDevice(mTestLocationManager,
                 TAG, MIN_HARDWARE_YEAR_MEASUREMENTS_REQUIRED, isCtsVerifierTest())) {
             return;
         }
@@ -84,12 +90,19 @@ public class GnssMeasurementValuesTest extends GnssTestCase {
         mMeasurementListener = new TestGnssMeasurementListener(TAG);
         mTestLocationManager.registerGnssMeasurementCallback(mMeasurementListener);
 
+        // Register a status callback to enable checking Svs across status & measurements.
+        // Count in status callback is not important as this test is pass/fail based on
+        // measurement count, not status count.
+        TestGnssStatusCallback gnssStatusCallback = new TestGnssStatusCallback(TAG, 0);
+        mTestLocationManager.registerGnssStatusCallback(gnssStatusCallback);
+
         boolean success = mLocationListener.await();
         SoftAssert.failOrWarning(isMeasurementTestStrict(),
                 "Time elapsed without getting enough location fixes."
                         + " Possibly, the test has been run deep indoors."
                         + " Consider retrying test outdoors.",
                 success);
+        mTestLocationManager.unregisterGnssStatusCallback(gnssStatusCallback);
 
         Log.i(TAG, "Location status received = " + mLocationListener.isLocationReceived());
 
@@ -123,12 +136,34 @@ public class GnssMeasurementValuesTest extends GnssTestCase {
                         measurement, softAssert, timeInNs);
                 carrierPhaseQualityPrrFound |=
                         TestMeasurementUtil.gnssMeasurementHasCarrierPhasePrr(measurement);
+                if (measurement.hasCarrierFrequencyHz()) {
+                    mGnssMeasSvStringIds.add(
+                        TestMeasurementUtil.getUniqueSvStringId(measurement.getConstellationType(),
+                            measurement.getSvid(), measurement.getCarrierFrequencyHz()));
+                } else {
+                    mGnssMeasSvStringIds.add(
+                        TestMeasurementUtil.getUniqueSvStringId(measurement.getConstellationType(),
+                            measurement.getSvid()));
+                }
             }
         }
         softAssert.assertOrWarnTrue(isMeasurementTestStrict(),
                 "GNSS Measurements PRRs with Carrier Phase "
                         + "level uncertainties.  If failed, retry near window or outdoors?",
                 carrierPhaseQualityPrrFound);
+        Log.i(TAG, "Meas received for:" + mGnssMeasSvStringIds);
+        Log.i(TAG, "Status Received for:" + gnssStatusCallback.getGnssUsedSvStringIds());
+        if (mTestLocationManager.getLocationManager().getGnssYearOfHardware() >= YEAR_2017) {
+            // Get all SVs marked as USED in GnssStatus. Remove any SV for which measurement
+            // is received. The resulting list should ideally be empty (How can you use a SV
+            // with no measurement). To allow for race condition where the last GNSS Status
+            // has 1 SV with used flag set, but the corresponding measurement has not yet been
+            // received, the check is done as <= 1
+            Set<String> svDiff = gnssStatusCallback.getGnssUsedSvStringIds();
+            svDiff.removeAll(mGnssMeasSvStringIds);
+            softAssert.assertTrue("Used Svs with no Meas: " + (svDiff.isEmpty() ? "None" : svDiff),
+                svDiff.size() <= 1);
+        }
         softAssert.assertAll();
     }
 }
