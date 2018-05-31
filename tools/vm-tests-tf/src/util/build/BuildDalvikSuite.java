@@ -427,21 +427,7 @@ public class BuildDalvikSuite extends BuildUtilBase {
         String fileName = dependentTestClassName.replace('.', '/').trim();
 
         if (new File(sourceFolder, fileName + ".dfh").exists()) {
-
-            BuildStep.BuildFile inputFile = new BuildStep.BuildFile(
-                    JAVASRC_FOLDER, fileName + ".dfh");
-            BuildStep.BuildFile dexFile = new BuildStep.BuildFile(
-                    OUTPUT_FOLDER, fileName + ".dex");
-
-            DFHBuildStep buildStep = new DFHBuildStep(inputFile, dexFile);
-
-            BuildStep.BuildFile jarFile = new BuildStep.BuildFile(
-                    OUTPUT_FOLDER, fileName + ".jar");
-            JarBuildStep jarBuildStep = new JarBuildStep(dexFile,
-                    "classes.dex", jarFile, true);
-            jarBuildStep.addChild(buildStep);
-
-            targets.add(jarBuildStep);
+            // Handled in vmtests-dfh-dex-generated build rule.
             return;
         }
 
