@@ -700,8 +700,7 @@ public class LoginActivityTest extends AbstractLoginActivityTestCase {
         mUiBot.assertDatasets("The Dude");
 
         // tapping outside autofill window should close it and raise ui hidden event
-        mUiBot.waitForWindowChange(() -> tap(mActivity.getUsernameLabel()),
-                Timeouts.UI_TIMEOUT.getMaxValue());
+        mUiBot.waitForWindowChange(() -> tap(mActivity.getUsernameLabel()));
         callback.assertUiHiddenEvent(username);
 
         mUiBot.assertNoDatasets();

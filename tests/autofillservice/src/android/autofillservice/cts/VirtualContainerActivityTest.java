@@ -129,15 +129,14 @@ public class VirtualContainerActivityTest extends AutoFillServiceTestCase {
      * Focus to username and expect window event
      */
     void focusToUsername() throws TimeoutException {
-        mUiBot.waitForWindowChange(() -> mActivity.mUsername.changeFocus(true),
-                Timeouts.UI_TIMEOUT.getMaxValue());
+        mUiBot.waitForWindowChange(() -> mActivity.mUsername.changeFocus(true));
     }
 
     /**
      * Focus to username and expect no autofill window event
      */
     void focusToUsernameExpectNoWindowEvent() throws Throwable {
-        // TODO should use waitForWindowChange() if we can filter out event of app Activity itself.
+        // TODO: should use waitForWindowChange() if we can filter out event of app Activity itself.
         mActivityRule.runOnUiThread(() -> mActivity.mUsername.changeFocus(true));
     }
 
@@ -145,8 +144,7 @@ public class VirtualContainerActivityTest extends AutoFillServiceTestCase {
      * Focus to password and expect window event
      */
     void focusToPassword() throws TimeoutException {
-        mUiBot.waitForWindowChange(() -> mActivity.mPassword.changeFocus(true),
-                Timeouts.UI_TIMEOUT.getMaxValue());
+        mUiBot.waitForWindowChange(() -> mActivity.mPassword.changeFocus(true));
     }
 
     /**
