@@ -18,15 +18,21 @@ package android.autofillservice.cts;
 
 import static com.google.common.truth.Truth.assertThat;
 
+import static org.mockito.Mockito.doThrow;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.verify;
+import static org.testng.Assert.assertThrows;
+
 import android.platform.test.annotations.AppModeFull;
-import android.support.test.runner.AndroidJUnit4;
 
 import org.junit.Test;
 import org.junit.runner.Description;
 import org.junit.runner.RunWith;
 import org.junit.runners.model.Statement;
+import org.mockito.Mock;
+import org.mockito.junit.MockitoJUnitRunner;
 
-@RunWith(AndroidJUnit4.class)
+@RunWith(MockitoJUnitRunner.class)
 @AppModeFull // Unit test
 public class RetryRuleTest {
 
@@ -59,9 +65,16 @@ public class RetryRuleTest {
         }
     }
 
+    private @Mock Statement mMockStatement;
+
+    @Test
+    public void testInvalidConstructor() throws Throwable {
+        assertThrows(IllegalArgumentException.class, () -> new RetryRule(-1));
+    }
+
     @Test
     public void testPassOnRetryableException() throws Throwable {
-        final RetryRule rule = new RetryRule(2);
+        final RetryRule rule = new RetryRule(1);
         rule.apply(new RetryableStatement<RetryableException>(1, sRetryableException), mDescription)
                 .evaluate();
     }
@@ -70,7 +83,7 @@ public class RetryRuleTest {
     public void testPassOnRetryableExceptionWithTimeout() throws Throwable {
         final Timeout timeout = new Timeout("YOUR TIME IS GONE", 1, 2, 10);
         final RetryableException exception = new RetryableException(timeout, "Y U NO?");
-        final RetryRule rule = new RetryRule(2);
+        final RetryRule rule = new RetryRule(1);
         rule.apply(new RetryableStatement<RetryableException>(1, exception), mDescription)
                 .evaluate();
         // Assert timeout was increased
@@ -79,7 +92,7 @@ public class RetryRuleTest {
 
     @Test
     public void testFailOnRetryableException() throws Throwable {
-        final RetryRule rule = new RetryRule(2);
+        final RetryRule rule = new RetryRule(1);
         try {
             rule.apply(new RetryableStatement<RetryableException>(2, sRetryableException),
                     mDescription).evaluate();
@@ -87,5 +100,39 @@ public class RetryRuleTest {
         } catch (RetryableException e) {
             assertThat(e).isSameAs(sRetryableException);
         }
+    }
+
+    @Test
+    public void testPassWhenDisabledAndStatementPass() throws Throwable {
+        final RetryRule rule = new RetryRule(0);
+
+        final Statement actualStatement = rule.apply(mMockStatement, mDescription);
+
+        assertThat(actualStatement).isSameAs(mMockStatement);
+        verify(mMockStatement, never()).evaluate();
+    }
+
+    @Test
+    public void testFailWhenDisabledAndStatementThrowsRetryableException() throws Throwable {
+        final RetryableException exception = new RetryableException("Y U NO?");
+        final RetryRule rule = new RetryRule(0);
+        doThrow(exception).when(mMockStatement).evaluate();
+
+        final Statement actualStatement = rule.apply(mMockStatement, mDescription);
+
+        assertThat(actualStatement).isSameAs(mMockStatement);
+        verify(mMockStatement, never()).evaluate();
+    }
+
+    @Test
+    public void testFailWhenDisabledAndStatementThrowsNonRetryableException() throws Throwable {
+        final RuntimeException exception = new RuntimeException("Y U NO?");
+        final RetryRule rule = new RetryRule(0);
+        doThrow(exception).when(mMockStatement).evaluate();
+
+        final Statement actualStatement = rule.apply(mMockStatement, mDescription);
+
+        assertThat(actualStatement).isSameAs(mMockStatement);
+        verify(mMockStatement, never()).evaluate();
     }
 }
