@@ -57,6 +57,13 @@ public final class TestMeasurementUtil {
     private static final int YEAR_2017 = 2017;
     private static final int YEAR_2018 = 2018;
 
+    private enum GnssBand {
+        GNSS_L1,
+        GNSS_L2,
+        GNSS_L5,
+        GNSS_E6
+    }
+
     // The valid Gnss navigation message type as listed in
     // android/hardware/libhardware/include/hardware/gps.h
     public static final Set<Integer> GNSS_NAVIGATION_MESSAGE_TYPE =
@@ -334,7 +341,6 @@ public final class TestMeasurementUtil {
     private static void verifySvid(GnssMeasurement measurement, SoftAssert softAssert,
         long timeInNs) {
 
-        String svidLogMessageFormat = "svid: Space Vehicle ID. Constellation type = %s";
         int constellationType = measurement.getConstellationType();
         int svid = measurement.getSvid();
         validateSvidSub(softAssert, timeInNs, constellationType, svid);
@@ -637,7 +643,7 @@ public final class TestMeasurementUtil {
         }
     }
 
-    private static String getReceivedSvTimeNsLogMessage(String constellationType, String state) {
+    private static String getReceivedSvTimeNsLogMessage(String state, String constellationType) {
         return "received_sv_time_ns: Received SV Time-of-Week in ns. Constellation type = "
                 + constellationType + ". State = " + state;
     }
@@ -698,6 +704,34 @@ public final class TestMeasurementUtil {
                     String.valueOf(sv_time_ms),
                     sv_time_ms >= 0 && sv_time_ms <= 1);
         }
+    }
+
+
+    /**
+     * Get a unique string for the SV including the constellation and the default L1 band.
+     *
+     * @param constellationType Gnss Constellation type
+     * @param svId Gnss Sv Identifier
+     */
+    public static String getUniqueSvStringId(int constellationType, int svId) {
+        return getUniqueSvStringId(constellationType, svId, GnssBand.GNSS_L1);
+    }
+
+    /**
+     * Get a unique string for the SV including the constellation and the band.
+     *
+     * @param constellationType Gnss Constellation type
+     * @param svId Gnss Sv Identifier
+     * @param carrierFrequencyHz Carrier Frequency for Sv in Hz
+     */
+    public static String getUniqueSvStringId(int constellationType, int svId,
+        float carrierFrequencyHz) {
+        return getUniqueSvStringId(constellationType, svId,
+            frequencyToGnssBand(carrierFrequencyHz));
+    }
+
+    private static String getUniqueSvStringId(int constellationType, int svId, GnssBand gnssBand) {
+        return gnssBand.toString() + "." + constellationType + "." + svId;
     }
 
     /**
@@ -787,5 +821,26 @@ public final class TestMeasurementUtil {
         }
 
         return typesStr.length() > 2 ? typesStr.substring(0, typesStr.length() - 2) : "";
+    }
+
+    /**
+     * The band information is as of 2018, per http://www.navipedia.net/index.php/GNSS_signal
+     * Bands are combined for simplicity as the constellation is also tracked.
+     *
+     * @param frequencyHz Frequency in Hz
+     * @return GnssBand where the frequency lies.
+     */
+    private static GnssBand frequencyToGnssBand(float frequencyHz) {
+        float frequencyMhz = frequencyHz/1e6F;
+        if (frequencyMhz >= 1151 && frequencyMhz <= 1214) {
+            return GnssBand.GNSS_L5;
+        }
+        if (frequencyMhz > 1214 && frequencyMhz <= 1255) {
+            return GnssBand.GNSS_L2;
+        }
+        if (frequencyMhz > 1255 && frequencyMhz <= 1300) {
+            return GnssBand.GNSS_E6;
+        }
+        return GnssBand.GNSS_L1; // default to L1 band
     }
 }
