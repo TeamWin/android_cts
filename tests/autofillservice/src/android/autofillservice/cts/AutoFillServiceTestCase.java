@@ -33,7 +33,6 @@ import android.widget.RemoteViews;
 import com.android.compatibility.common.util.RequiredFeatureRule;
 
 import org.junit.Before;
-import org.junit.BeforeClass;
 import org.junit.ClassRule;
 import org.junit.Rule;
 import org.junit.rules.RuleChain;
@@ -100,8 +99,11 @@ public abstract class AutoFillServiceTestCase {
         mUiBot.reset();
     }
 
-    @BeforeClass
-    public static void prepareScreen() throws Exception {
+
+    @Before
+    public void prepareDevice() throws Exception {
+        Log.v(TAG, "@Before: prepareDevice()");
+
         // Unlock screen.
         runShellCommand("input keyevent KEYCODE_WAKEUP");
 
@@ -113,12 +115,15 @@ public abstract class AutoFillServiceTestCase {
 
         // Set orientation as portrait, otherwise some tests might fail due to elements not fitting
         // in, IME orientation, etc...
-        sDefaultUiBot.setScreenOrientation(UiBot.PORTRAIT);
+        mUiBot.setScreenOrientation(UiBot.PORTRAIT);
+
+        // Wait until device is idle to avoid flakiness
+        mUiBot.waitForIdle();
     }
 
     @Before
     public void preTestCleanup() {
-        Log.d(TAG, "preTestCleanup()");
+        Log.v(TAG, "@Before: preTestCleanup()");
 
         disableService();
 

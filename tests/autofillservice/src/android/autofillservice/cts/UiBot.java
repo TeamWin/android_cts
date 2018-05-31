@@ -130,6 +130,13 @@ final class UiBot {
         mAutoman = instrumentation.getUiAutomation();
     }
 
+    void waitForIdle() {
+        final long before = SystemClock.elapsedRealtimeNanos();
+        mDevice.waitForIdle();
+        final float delta = ((float) (SystemClock.elapsedRealtimeNanos() - before)) / 1_000_000;
+        Log.v(TAG, "device idle in " + delta + "ms");
+    }
+
     void reset() {
         mOkToCallAssertNoDatasets = false;
     }
