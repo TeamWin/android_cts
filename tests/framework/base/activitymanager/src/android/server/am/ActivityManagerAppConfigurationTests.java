@@ -20,6 +20,8 @@ import static android.app.WindowConfiguration.ACTIVITY_TYPE_STANDARD;
 import static android.app.WindowConfiguration.WINDOWING_MODE_FULLSCREEN;
 import static android.app.WindowConfiguration.WINDOWING_MODE_FULLSCREEN_OR_SPLIT_SCREEN_SECONDARY;
 import static android.app.WindowConfiguration.WINDOWING_MODE_SPLIT_SCREEN_PRIMARY;
+import static android.content.pm.ActivityInfo.SCREEN_ORIENTATION_LANDSCAPE;
+import static android.content.pm.ActivityInfo.SCREEN_ORIENTATION_PORTRAIT;
 import static android.server.am.ActivityAndWindowManagersState.dpToPx;
 import static android.server.am.ActivityManagerState.STATE_RESUMED;
 import static android.server.am.ComponentNameUtils.getWindowName;
@@ -48,7 +50,10 @@ import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.lessThan;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNotEquals;
 import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertNull;
+import static org.junit.Assert.fail;
 import static org.junit.Assume.assumeTrue;
 
 import android.content.ComponentName;
@@ -77,6 +82,8 @@ public class ActivityManagerAppConfigurationTests extends ActivityManagerTestBas
     // Shell command to request portrait orientation to {@link #BROADCAST_RECEIVER_ACTIVITY}.
     private static final String REQUEST_PORTRAIT_BROADCAST = "am broadcast -a "
             + ACTION_TRIGGER_BROADCAST + " --ei " + EXTRA_BROADCAST_ORIENTATION + " 1";
+    private static final String REQUEST_LANDSCAPE_BROADCAST = "am broadcast -a "
+            + ACTION_TRIGGER_BROADCAST + " --ei " + EXTRA_BROADCAST_ORIENTATION + " 0";
 
     private static final int SMALL_WIDTH_DP = 426;
     private static final int SMALL_HEIGHT_DP = 320;
@@ -392,6 +399,90 @@ public class ActivityManagerAppConfigurationTests extends ActivityManagerTestBas
         //         1 /* portrait */, updatedReportedSizes.orientation);
     }
 
+    /**
+     * Test that device handles consequent requested orientations and will not report a config
+     * change to an invisible activity.
+     */
+    @Test
+    public void testAppOrientationRequestConfigChanges() {
+        assumeTrue("Skipping test: no rotation support", supportsRotation());
+
+        LogSeparator logSeparator = separateLogs();
+        launchActivity(PORTRAIT_ORIENTATION_ACTIVITY);
+        mAmWmState.assertVisibility(PORTRAIT_ORIENTATION_ACTIVITY, true /* visible */);
+
+        assertLifecycleCounts(PORTRAIT_ORIENTATION_ACTIVITY, logSeparator, 1 /* create */,
+                1 /* start */, 1 /* resume */, 0 /* pause */, 0 /* stop */, 0 /* destroy */,
+                0 /* config */);
+
+        launchActivity(LANDSCAPE_ORIENTATION_ACTIVITY);
+        mAmWmState.assertVisibility(LANDSCAPE_ORIENTATION_ACTIVITY, true /* visible */);
+
+        assertLifecycleCounts(PORTRAIT_ORIENTATION_ACTIVITY, logSeparator, 1 /* create */,
+                1 /* start */, 1 /* resume */, 1 /* pause */, 1 /* stop */, 0 /* destroy */,
+                0 /* config */);
+        assertLifecycleCounts(LANDSCAPE_ORIENTATION_ACTIVITY, logSeparator, 1 /* create */,
+                1 /* start */, 1 /* resume */, 0 /* pause */, 0 /* stop */, 0 /* destroy */,
+                0 /* config */);
+
+        launchActivity(PORTRAIT_ORIENTATION_ACTIVITY);
+        mAmWmState.assertVisibility(PORTRAIT_ORIENTATION_ACTIVITY, true /* visible */);
+
+        assertLifecycleCounts(PORTRAIT_ORIENTATION_ACTIVITY, logSeparator, 2 /* create */,
+                2 /* start */, 2 /* resume */, 1 /* pause */, 1 /* stop */, 0 /* destroy */,
+                0 /* config */);
+        assertLifecycleCounts(LANDSCAPE_ORIENTATION_ACTIVITY, logSeparator, 1 /* create */,
+                1 /* start */, 1 /* resume */, 1 /* pause */, 1 /* stop */, 0 /* destroy */,
+                0 /* config */);
+    }
+
+    /**
+     * Test that device orientation is restored when an activity that requests it is no longer
+     * visible.
+     */
+    @Test
+    public void testAppOrientationRequestConfigClears() {
+        assumeTrue("Skipping test: no rotation support", supportsRotation());
+
+        LogSeparator logSeparator = separateLogs();
+        launchActivity(TEST_ACTIVITY);
+        mAmWmState.assertVisibility(TEST_ACTIVITY, true /* visible */);
+        final ReportedSizes initialReportedSizes =
+                getLastReportedSizesForActivity(TEST_ACTIVITY, logSeparator);
+        final int  initialOrientation = initialReportedSizes.orientation;
+
+
+        // Launch an activity that requests different orientation and check that it will be applied
+        final boolean launchingPortrait;
+        if (initialOrientation == 2 /* landscape */) {
+            launchingPortrait = true;
+        } else if (initialOrientation == 1 /* portrait */) {
+            launchingPortrait = false;
+        } else {
+            fail("Unexpected orientation value: " + initialOrientation);
+            return;
+        }
+        final ComponentName differentOrientationActivity = launchingPortrait
+                ? PORTRAIT_ORIENTATION_ACTIVITY : LANDSCAPE_ORIENTATION_ACTIVITY;
+        logSeparator = separateLogs();
+        launchActivity(differentOrientationActivity);
+        mAmWmState.assertVisibility(differentOrientationActivity, true /* visible */);
+        final ReportedSizes rotatedReportedSizes =
+                getLastReportedSizesForActivity(differentOrientationActivity, logSeparator);
+        assertEquals("Applied orientation must correspond to activity request",
+                launchingPortrait ? 1 : 2, rotatedReportedSizes.orientation);
+
+        // Launch another activity on top and check that its orientation is not affected by previous
+        // activity.
+        logSeparator = separateLogs();
+        launchActivity(RESIZEABLE_ACTIVITY);
+        mAmWmState.assertVisibility(RESIZEABLE_ACTIVITY, true /* visible */);
+        final ReportedSizes finalReportedSizes =
+                getLastReportedSizesForActivity(RESIZEABLE_ACTIVITY, logSeparator);
+        assertEquals("Applied orientation must not be influenced by previously visible activity",
+                initialOrientation, finalReportedSizes.orientation);
+    }
+
     // TODO(b/70870253): This test seems malfunction.
     @Ignore("b/70870253")
     @Test
@@ -424,7 +515,7 @@ public class ActivityManagerAppConfigurationTests extends ActivityManagerTestBas
      * Test that device handles moving between two tasks with different orientations.
      */
     @Test
-    public void testTaskCloseRestoreOrientation() {
+    public void testTaskCloseRestoreFixedOrientation() {
         assumeTrue("Skipping test: no rotation support", supportsRotation());
 
         // Start landscape activity.
@@ -438,7 +529,7 @@ public class ActivityManagerAppConfigurationTests extends ActivityManagerTestBas
 
         // Request portrait
         executeShellCommand(REQUEST_PORTRAIT_BROADCAST);
-        mAmWmState.waitForRotation(1);
+        mAmWmState.waitForLastOrientation(SCREEN_ORIENTATION_PORTRAIT);
 
         // Finish activity
         executeShellCommand(FINISH_ACTIVITY_BROADCAST);
@@ -447,6 +538,146 @@ public class ActivityManagerAppConfigurationTests extends ActivityManagerTestBas
         mAmWmState.computeState(LANDSCAPE_ORIENTATION_ACTIVITY);
         assertEquals("Should return to app in landscape orientation",
                 0 /* landscape */, mAmWmState.getWmState().getLastOrientation());
+    }
+
+    /**
+     * Test that device handles moving between two tasks with different orientations.
+     */
+    @Test
+    public void testTaskCloseRestoreFreeOrientation() {
+        assumeTrue("Skipping test: no rotation support", supportsRotation());
+
+        // Start landscape activity.
+        launchActivity(RESIZEABLE_ACTIVITY);
+        mAmWmState.assertVisibility(RESIZEABLE_ACTIVITY, true /* visible */);
+        final int initialServerOrientation = mAmWmState.getWmState().getLastOrientation();
+
+        // Verify fixed-landscape
+        LogSeparator logSeparator = separateLogs();
+        launchActivityInNewTask(BROADCAST_RECEIVER_ACTIVITY);
+        executeShellCommand(REQUEST_LANDSCAPE_BROADCAST);
+        mAmWmState.waitForLastOrientation(SCREEN_ORIENTATION_LANDSCAPE);
+        executeShellCommand(FINISH_ACTIVITY_BROADCAST);
+
+        // Verify that activity brought to front is in originally requested orientation.
+        mAmWmState.waitForActivityState(RESIZEABLE_ACTIVITY, STATE_RESUMED);
+        ReportedSizes reportedSizes = getLastReportedSizesForActivity(RESIZEABLE_ACTIVITY,
+                logSeparator);
+        assertNull("Should come back in original orientation", reportedSizes);
+        assertEquals("Should come back in original server orientation",
+                initialServerOrientation, mAmWmState.getWmState().getLastOrientation());
+        assertRelaunchOrConfigChanged(RESIZEABLE_ACTIVITY, 0 /* numRelaunch */,
+                0 /* numConfigChange */, logSeparator);
+
+        // Verify fixed-portrait
+        logSeparator = separateLogs();
+        launchActivityInNewTask(BROADCAST_RECEIVER_ACTIVITY);
+        executeShellCommand(REQUEST_PORTRAIT_BROADCAST);
+        mAmWmState.waitForLastOrientation(SCREEN_ORIENTATION_PORTRAIT);
+        executeShellCommand(FINISH_ACTIVITY_BROADCAST);
+
+        // Verify that activity brought to front is in originally requested orientation.
+        mAmWmState.waitForActivityState(RESIZEABLE_ACTIVITY, STATE_RESUMED);
+        reportedSizes = getLastReportedSizesForActivity(RESIZEABLE_ACTIVITY, logSeparator);
+        assertNull("Should come back in original orientation", reportedSizes);
+        assertEquals("Should come back in original server orientation",
+                initialServerOrientation, mAmWmState.getWmState().getLastOrientation());
+        assertRelaunchOrConfigChanged(RESIZEABLE_ACTIVITY, 0 /* numRelaunch */,
+                0 /* numConfigChange */, logSeparator);
+    }
+
+    /**
+     * Test that activity orientation will change when device is rotated.
+     * Also verify that occluded activity will not get config changes.
+     */
+    @Test
+    public void testAppOrientationWhenRotating() throws Exception {
+        assumeTrue("Skipping test: no rotation support", supportsRotation());
+
+        // Start resizeable activity that handles configuration changes.
+        LogSeparator logSeparator = separateLogs();
+        launchActivity(TEST_ACTIVITY);
+        launchActivity(RESIZEABLE_ACTIVITY);
+        mAmWmState.assertVisibility(RESIZEABLE_ACTIVITY, true /* visible */);
+
+        final int displayId = mAmWmState.getAmState().getDisplayByActivity(RESIZEABLE_ACTIVITY);
+
+        // Rotate the activity and check that it receives configuration changes with a different
+        // orientation each time.
+        try (final RotationSession rotationSession = new RotationSession()) {
+            rotationSession.set(ROTATION_0);
+            ReportedSizes reportedSizes =
+                    getLastReportedSizesForActivity(RESIZEABLE_ACTIVITY, logSeparator);
+            int prevOrientation = reportedSizes.orientation;
+
+            final int[] rotations = { ROTATION_270, ROTATION_180, ROTATION_90, ROTATION_0 };
+            for (final int rotation : rotations) {
+                logSeparator = separateLogs();
+                rotationSession.set(rotation);
+                final int newDeviceRotation = getDeviceRotation(displayId);
+                if (rotation != newDeviceRotation) {
+                    log("This device doesn't support locked user "
+                            + "rotation mode. Not continuing the rotation checks.");
+                    continue;
+                }
+
+                // Verify lifecycle count and orientation changes.
+                assertRelaunchOrConfigChanged(RESIZEABLE_ACTIVITY, 0 /* numRelaunch */,
+                        1 /* numConfigChange */, logSeparator);
+                reportedSizes =
+                        getLastReportedSizesForActivity(RESIZEABLE_ACTIVITY, logSeparator);
+                assertNotEquals(prevOrientation, reportedSizes.orientation);
+                assertRelaunchOrConfigChanged(TEST_ACTIVITY, 0 /* numRelaunch */,
+                        0 /* numConfigChange */, logSeparator);
+
+                prevOrientation = reportedSizes.orientation;
+            }
+        }
+    }
+
+    /**
+     * Test that activity orientation will not change when trying to rotate fixed-orientation
+     * activity.
+     * Also verify that occluded activity will not get config changes.
+     */
+    @Test
+    public void testFixedOrientationWhenRotating() throws Exception {
+        assumeTrue("Skipping test: no rotation support", supportsRotation());
+
+        // Start portrait-fixed activity
+        LogSeparator logSeparator = separateLogs();
+        launchActivity(RESIZEABLE_ACTIVITY);
+        launchActivity(PORTRAIT_ORIENTATION_ACTIVITY);
+        mAmWmState.assertVisibility(PORTRAIT_ORIENTATION_ACTIVITY, true /* visible */);
+
+        final int displayId = mAmWmState.getAmState()
+                .getDisplayByActivity(PORTRAIT_ORIENTATION_ACTIVITY);
+
+        // Rotate the activity and check that the orientation doesn't change
+        try (final RotationSession rotationSession = new RotationSession()) {
+            rotationSession.set(ROTATION_0);
+
+            final int[] rotations = { ROTATION_270, ROTATION_180, ROTATION_90, ROTATION_0 };
+            for (final int rotation : rotations) {
+                logSeparator = separateLogs();
+                rotationSession.set(rotation);
+                final int newDeviceRotation = getDeviceRotation(displayId);
+                if (rotation != newDeviceRotation) {
+                    log("This device doesn't support locked user "
+                            + "rotation mode. Not continuing the rotation checks.");
+                    continue;
+                }
+
+                // Verify lifecycle count and orientation changes.
+                assertRelaunchOrConfigChanged(PORTRAIT_ORIENTATION_ACTIVITY, 0 /* numRelaunch */,
+                        0 /* numConfigChange */, logSeparator);
+                final ReportedSizes reportedSizes = getLastReportedSizesForActivity(
+                        PORTRAIT_ORIENTATION_ACTIVITY, logSeparator);
+                assertNull("No new sizes must be reported", reportedSizes);
+                assertRelaunchOrConfigChanged(RESIZEABLE_ACTIVITY, 0 /* numRelaunch */,
+                        0 /* numConfigChange */, logSeparator);
+            }
+        }
     }
 
     /**
@@ -469,7 +700,7 @@ public class ActivityManagerAppConfigurationTests extends ActivityManagerTestBas
 
         // Request portrait
         executeShellCommand(REQUEST_PORTRAIT_BROADCAST);
-        mAmWmState.waitForRotation(1);
+        mAmWmState.waitForLastOrientation(SCREEN_ORIENTATION_PORTRAIT);
 
         // Finish activity
         executeShellCommand(MOVE_TASK_TO_BACK_BROADCAST);

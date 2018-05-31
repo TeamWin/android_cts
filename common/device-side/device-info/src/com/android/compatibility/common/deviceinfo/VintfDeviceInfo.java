@@ -69,7 +69,9 @@ public final class VintfDeviceInfo extends DeviceInfo {
         if (Build.VERSION.SDK_INT <= Build.VERSION_CODES.O_MR1) {
            return;
         }
-        store.addResult("target_fcm_version",
-                        VintfObject.getTargetFrameworkCompatibilityMatrixVersion());
+        Long version = VintfObject.getTargetFrameworkCompatibilityMatrixVersion();
+        if (version != null) {
+            store.addResult("target_fcm_version", version);
+        }
     }
 }

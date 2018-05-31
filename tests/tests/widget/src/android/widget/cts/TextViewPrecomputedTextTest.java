@@ -61,15 +61,15 @@ public class TextViewPrecomputedTextTest {
     @Parameterized.Parameter(5)
     public boolean differentTypeface;
     @Parameterized.Parameter(6)
-    public boolean differentFontVariationSettings;
-    @Parameterized.Parameter(7)
     public boolean differentElegantTextHeight;
-    @Parameterized.Parameter(8)
+    @Parameterized.Parameter(7)
     public boolean differentBreakStrategy;
-    @Parameterized.Parameter(9)
+    @Parameterized.Parameter(8)
     public boolean differentHyphenationFrequency;
-    @Parameterized.Parameter(10)
+    @Parameterized.Parameter(9)
     public boolean differentTextDir;
+    @Parameterized.Parameter(10)
+    public boolean differentFontVariationSettings;
 
     // text size from the default value.
     private Pair<Params, String[]> makeDifferentParams(Params params) {
@@ -156,8 +156,12 @@ public class TextViewPrecomputedTextTest {
         ArrayList<Object[]> allParams = new ArrayList<>();
 
         // Compute the powerset except for all false case.
-        int allParameterCount = 11;
-        for (int bits = 1; bits < (1 << allParameterCount); ++bits) {
+        final int allParameterCount = 11;
+        // The 11-th bit is for font variation settings. Don't add test case if the system don't
+        // have variable fonts.
+        final int fullBits = hasVarFont()
+                ? (1 << allParameterCount) - 1 : (1 << (allParameterCount - 1)) - 1;
+        for (int bits = 1; bits <= fullBits; ++bits) {
             Object[] param = new Object[allParameterCount];
             for (int j = 0; j < allParameterCount; ++j) {
                 param[j] = new Boolean((bits & (1 << j)) != 0);
@@ -165,6 +169,12 @@ public class TextViewPrecomputedTextTest {
             allParams.add(param);
         }
         return allParams;
+    }
+
+    private static boolean hasVarFont() {
+        final TextPaint copied = new TextPaint((new TextView(getContext())).getPaint());
+        return copied.setFontVariationSettings("'wght' 400")
+                && copied.setFontVariationSettings("'wdth' 100");
     }
 
     @SmallTest
