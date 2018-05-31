@@ -16,6 +16,7 @@ java_library_host {
     name: "host-cts-vmtests-dot",
     libs: [ "junit" ],
     srcs: [ "src/dot/**/*.java" ],
+    installable: false,
     include_srcs: true,
 }
 
@@ -40,4 +41,24 @@ genrule {
     cmd: "$(location vmtests-buildutil) util.build.BuildCTSHostSources $(genDir) " +
          " && $(location soong_zip) -jar -o $(out) -C $(genDir) -D $(genDir)/dot",
     out: ["vmtests.host.generated.srcjar"],
+}
+
+genrule {
+    name: "vmtests-dfh-dex-generated",
+    tools: [
+        "cfassembler",
+        "soong_zip",
+    ],
+    tool_files: ["etc/vmtests-cfassembler.sh"],
+    srcs: ["src/dot/**/*.dfh"],
+    cmd: "$(location etc/vmtests-cfassembler.sh) $(location cfassembler) $(location soong_zip) $(genDir) $(out) $(in)",
+    out: ["vmtests_dfh_dex_generated.jar"],
+}
+
+java_library_host {
+    name: "vmtests-generated-resources",
+    static_libs: [
+        "vmtests-dfh-dex-generated",
+    ],
+    installable: false,
 }
