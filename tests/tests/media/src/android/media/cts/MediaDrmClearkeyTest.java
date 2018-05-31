@@ -15,44 +15,36 @@
  */
 package android.media.cts;
 
-import com.android.compatibility.common.util.ApiLevelUtil;
-
-import android.content.Context;
 import android.content.pm.PackageManager;
-import android.media.MediaCodec;
-import android.media.MediaCodecInfo;
+import android.media.CamcorderProfile;
 import android.media.MediaCodecInfo.CodecCapabilities;
-import android.media.MediaCodecInfo.CodecProfileLevel;
 import android.media.MediaCodecList;
 import android.media.MediaDrm;
 import android.media.MediaDrmException;
 import android.media.MediaFormat;
-import android.media.CamcorderProfile;
 import android.net.Uri;
-import android.os.Environment;
 import android.os.Looper;
-import androidx.annotation.NonNull;
-import android.test.ActivityInstrumentationTestCase2;
 import android.util.Base64;
 import android.util.Log;
 import android.view.SurfaceHolder;
 
-import java.io.IOException;
-import java.nio.CharBuffer;
-import java.nio.charset.Charset;
-import java.util.Arrays;
-import java.util.ArrayList;
-import java.util.concurrent.TimeUnit;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
-import java.util.UUID;
-import java.util.Vector;
+import com.android.compatibility.common.util.ApiLevelUtil;
 
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
+
+import java.nio.charset.Charset;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Set;
+import java.util.UUID;
+import java.util.Vector;
+import java.util.concurrent.TimeUnit;
+
+import androidx.annotation.NonNull;
 
 /**
  * Tests of MediaPlayer streaming capabilities.
@@ -119,7 +111,8 @@ public class MediaDrmClearkeyTest extends MediaPlayerTestBase {
     @Override
     protected void setUp() throws Exception {
         super.setUp();
-        if (false == deviceHasMediaDrm()) {
+        if (false == deviceHasMediaDrm() || isWearDevice()) {
+            Log.i(TAG, "Skip tests on Wear device or before Android 5 (Lollipop).");
             tearDown();
         }
     }
@@ -129,10 +122,13 @@ public class MediaDrmClearkeyTest extends MediaPlayerTestBase {
         super.tearDown();
     }
 
+    private boolean isWearDevice() {
+        return mContext.getPackageManager().hasSystemFeature(PackageManager.FEATURE_WATCH);
+    }
+
     private boolean deviceHasMediaDrm() {
         // ClearKey is introduced after KitKat.
         if (ApiLevelUtil.isAtMost(android.os.Build.VERSION_CODES.KITKAT)) {
-            Log.i(TAG, "This test is designed to work after Android KitKat.");
             return false;
         }
         return true;
