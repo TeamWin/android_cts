@@ -15,13 +15,10 @@
  */
 package android.media.cts;
 
-import static org.junit.Assert.assertThat;
-import static org.junit.matchers.JUnitMatchers.containsString;
-
+import android.content.pm.PackageManager;
 import android.net.Uri;
 import android.util.Log;
 import android.view.Surface;
-import android.view.SurfaceHolder;
 
 import com.android.compatibility.common.util.ApiLevelUtil;
 import com.android.compatibility.common.util.MediaUtils;
@@ -29,8 +26,10 @@ import com.google.android.collect.Lists;
 
 import java.nio.ByteBuffer;
 import java.util.ArrayList;
-import java.util.Iterator;
 import java.util.UUID;
+
+import static org.junit.Assert.assertThat;
+import static org.junit.matchers.JUnitMatchers.containsString;
 
 /**
  * Tests MediaDrm NDK APIs. ClearKey system uses a subset of NDK APIs,
@@ -86,7 +85,8 @@ public class NativeMediaDrmClearkeyTest extends MediaPlayerTestBase {
     @Override
     protected void setUp() throws Exception {
         super.setUp();
-        if (false == deviceHasMediaDrm()) {
+        if (false == deviceHasMediaDrm() || isWearDevice()) {
+            Log.i(TAG, "Skip tests on Wear device or before Android 5 (Lollipop).");
             tearDown();
         }
     }
@@ -96,10 +96,13 @@ public class NativeMediaDrmClearkeyTest extends MediaPlayerTestBase {
         super.tearDown();
     }
 
+    private boolean isWearDevice() {
+        return mContext.getPackageManager().hasSystemFeature(PackageManager.FEATURE_WATCH);
+    }
+
     private boolean deviceHasMediaDrm() {
         // ClearKey is introduced after KitKat.
         if (ApiLevelUtil.isAtMost(android.os.Build.VERSION_CODES.KITKAT)) {
-            Log.i(TAG, "This test is designed to work after Android KitKat.");
             return false;
         }
         return true;
