@@ -59,7 +59,7 @@ public abstract class AutoFillServiceTestCase {
 
     private final TestWatcher mTestWatcher = new AutofillTestWatcher();
 
-    private final RetryRule mRetryRule = new RetryRule(2);
+    private final RetryRule mRetryRule = new RetryRule(1);
 
     private final AutofillLoggingTestRule mLoggingRule = new AutofillLoggingTestRule(TAG);
 
