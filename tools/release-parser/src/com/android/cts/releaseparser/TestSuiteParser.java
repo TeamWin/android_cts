@@ -29,6 +29,7 @@ import org.jf.dexlib2.iface.AnnotationElement;
 import org.jf.dexlib2.iface.ClassDef;
 import org.jf.dexlib2.iface.DexFile;
 import org.jf.dexlib2.iface.Method;
+import org.jf.dexlib2.iface.value.TypeEncodedValue;
 import org.junit.runners.Suite.SuiteClasses;
 import org.junit.runner.RunWith;
 
@@ -62,9 +63,9 @@ class TestSuiteParser {
     private static final String RUN_WITH_ANNOTATION_TAG = "Lorg/junit/runner/RunWith;";
     private static final String TEST_ANNOTATION_TAG = "Lorg/junit/Test;";
     private static final String SUPPRESS_ANNOTATION_TAG = "/Suppress;";
-    private static final String PARAMETERS_TAG = "Lorg/junit/runners/Parameterized$Parameters";
-    private static final String ANDROID_JUNIT4_TEST_TAG = "AndroidJUnit4.class";
-    private static final String PARAMETERIZED_TAG = "Parameterized.class";
+    private static final String ANDROID_JUNIT4_TEST_TAG =
+            "Landroid/support/test/runner/AndroidJUnit4;";
+    private static final String PARAMETERIZED_TEST_TAG = "Lorg/junit/runners/Parameterized;";
 
     // configuration option
     private static final String NOT_SHARDABLE_TAG = "not-shardable";
@@ -226,8 +227,7 @@ class TestSuiteParser {
                 }
 
                 // Parses test classes
-                TestClassType cType;
-                cType = chkTestClassType(classDef);
+                TestClassType cType = chkTestClassType(classDef);
                 TestSuite.Module.Package.Class.Builder tClassBuilder =
                         TestSuite.Module.Package.Class.newBuilder();
                 switch (cType) {
@@ -243,20 +243,34 @@ class TestSuiteParser {
                                 if (hasAnnotationSuffix(
                                         method.getAnnotations(), SUPPRESS_ANNOTATION_TAG)) {
                                     System.err.printf("%s#%s with Suppress:\n", className, mName);
-                                    System.err.println(method.getAnnotations());
                                 } else if (mName.startsWith(TEST_PREFIX_TAG)) {
                                     // Junit3 style test case name starts with test
-                                    TestSuite.Module.Package.Class.Method.Builder methodBuilder =
-                                            TestSuite.Module.Package.Class.Method.newBuilder();
-                                    methodBuilder.setName(mName);
-                                    // Check if it's an known failure
-                                    String nfFilter =
-                                            getKnownFailureFilter(moduleName, className, mName);
-                                    if (null != nfFilter) {
-                                        methodBuilder.setKnownFailureFilter(nfFilter);
-                                    }
-                                    tClassBuilder.addMethods(methodBuilder);
+                                    tClassBuilder.addMethods(
+                                            newTestBuilder(
+                                                    moduleName, className, method.getName()));
+                                } else if (hasAnnotationSuffix(
+                                        method.getAnnotations(), TEST_ANNOTATION_TAG)) {
+                                    tClassBuilder.addMethods(
+                                            newTestBuilder(
+                                                    moduleName, className, method.getName()));
+                                    System.err.printf(
+                                            "%s#%s JUNIT3 mixes with %s annotation:\n",
+                                            className, mName, TEST_ANNOTATION_TAG);
                                 }
+                            }
+                        }
+                        pkgBuilder.addClasses(tClassBuilder);
+                        break;
+                    case PARAMETERIZED:
+                        // ToDo need to find a way to count Parameterized tests
+                        System.err.printf("To count Parameterized tests: %s\n", className);
+                        tClassBuilder.setTestClassType(cType);
+                        tClassBuilder.setName(className);
+                        for (Method method : classDef.getMethods()) {
+                            // Junit4 style test case annotated with @Test
+                            if (hasAnnotation(method.getAnnotations(), TEST_ANNOTATION_TAG)) {
+                                tClassBuilder.addMethods(
+                                        newTestBuilder(moduleName, className, method.getName()));
                             }
                         }
                         pkgBuilder.addClasses(tClassBuilder);
@@ -267,38 +281,8 @@ class TestSuiteParser {
                         for (Method method : classDef.getMethods()) {
                             // Junit4 style test case annotated with @Test
                             if (hasAnnotation(method.getAnnotations(), TEST_ANNOTATION_TAG)) {
-                                String mName = method.getName();
-                                TestSuite.Module.Package.Class.Method.Builder methodBuilder =
-                                        TestSuite.Module.Package.Class.Method.newBuilder();
-                                methodBuilder.setName(mName);
-                                // Check if it's an known failure
-                                String nfFilter =
-                                        getKnownFailureFilter(moduleName, className, mName);
-                                if (null != nfFilter) {
-                                    methodBuilder.setKnownFailureFilter(nfFilter);
-                                }
-                                tClassBuilder.addMethods(methodBuilder);
-                            }
-                        }
-                        pkgBuilder.addClasses(tClassBuilder);
-                        break;
-                    case PARAMETERIZED:
-                        // ToDo WIP
-                        tClassBuilder.setTestClassType(cType);
-                        tClassBuilder.setName(className);
-                        for (Method method : classDef.getMethods()) {
-                            if (hasAnnotation(method.getAnnotations(), TEST_ANNOTATION_TAG)) {
-                                String mName = method.getName();
-                                TestSuite.Module.Package.Class.Method.Builder methodBuilder =
-                                        TestSuite.Module.Package.Class.Method.newBuilder();
-                                methodBuilder.setName(mName);
-                                // Check if it's an known failure
-                                String nfFilter =
-                                        getKnownFailureFilter(moduleName, className, mName);
-                                if (null != nfFilter) {
-                                    methodBuilder.setKnownFailureFilter(nfFilter);
-                                }
-                                tClassBuilder.addMethods(methodBuilder);
+                                tClassBuilder.addMethods(
+                                        newTestBuilder(moduleName, className, method.getName()));
                             }
                         }
                         pkgBuilder.addClasses(tClassBuilder);
@@ -311,6 +295,19 @@ class TestSuiteParser {
             System.err.println("Unable to load dex file: " + apkPath);
             // ex.printStackTrace();
         }
+    }
+
+    private TestSuite.Module.Package.Class.Method.Builder newTestBuilder(
+            String moduleName, String className, String testName) {
+        TestSuite.Module.Package.Class.Method.Builder testBuilder =
+                TestSuite.Module.Package.Class.Method.newBuilder();
+        testBuilder.setName(testName);
+        // Check if it's an known failure
+        String nfFilter = getKnownFailureFilter(moduleName, className, testName);
+        if (null != nfFilter) {
+            testBuilder.setKnownFailureFilter(nfFilter);
+        }
+        return testBuilder;
     }
 
     private void parseJavaHostTest(
@@ -389,13 +386,16 @@ class TestSuiteParser {
             }
             if (annotation.getType().equals(RUN_WITH_ANNOTATION_TAG)) {
                 for (AnnotationElement annotationEle : annotation.getElements()) {
-                    String aName = annotationEle.getName();
-                    if (aName.equals(ANDROID_JUNIT4_TEST_TAG)) {
-                        return TestClassType.JUNIT4;
-                    } else if (aName.equals(PARAMETERIZED_TAG)) {
-                        return TestClassType.PARAMETERIZED;
+                    if ("value".equals(annotationEle.getName())) {
+                        String aValue = ((TypeEncodedValue) annotationEle.getValue()).getValue();
+                        if (ANDROID_JUNIT4_TEST_TAG.equals(aValue)) {
+                            return TestClassType.JUNIT4;
+                        } else if (PARAMETERIZED_TEST_TAG.equals(aValue)) {
+                            return TestClassType.PARAMETERIZED;
+                        }
                     }
                 }
+                System.err.printf("Unknown test class type: %s\n", classDef.getType());
                 return TestClassType.JUNIT4;
             }
         }
@@ -613,7 +613,7 @@ class TestSuiteParser {
             md.update(idStr.getBytes(StandardCharsets.UTF_8));
             // Converts to Base64 String
             id = Base64.getEncoder().encodeToString(md.digest());
-            System.out.println("getTestModuleContentId: " + idStr);
+            // System.out.println("getTestModuleContentId: " + idStr);
         } catch (NoSuchAlgorithmException e) {
             System.err.println("NoSuchAlgorithmException:" + e.getMessage());
         }
