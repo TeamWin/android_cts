@@ -23,9 +23,11 @@ import static android.view.Surface.ROTATION_180;
 import static android.view.Surface.ROTATION_270;
 import static android.view.Surface.ROTATION_90;
 
+import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.fail;
 
 import android.app.Activity;
+import android.app.Instrumentation.ActivityMonitor;
 import android.content.ComponentName;
 import android.content.Intent;
 import android.content.pm.ActivityInfo;
@@ -203,8 +205,7 @@ public class ActivityLifecycleTests extends ActivityLifecycleClientTestBase {
                 mFirstActivityTestRule.launchActivity(new Intent());
 
         // Launch translucent activity on top
-        final Activity translucentActivity =
-                mTranslucentActivityTestRule.launchActivity(new Intent());
+        mTranslucentActivityTestRule.launchActivity(new Intent());
 
         // Launch another translucent activity on top to make sure the fullscreen activity
         // transitions to final state
@@ -254,10 +255,10 @@ public class ActivityLifecycleTests extends ActivityLifecycleClientTestBase {
         } else {
             // Wait for translucent activity to resume
             waitAndAssertActivityStates(state(translucentActivity, ON_RESUME),
-                    state(firstActivity, ON_PAUSE));
+                    state(firstActivity, ON_START));
 
-            // Verify that the first activity was restarted to pause
-            LifecycleVerifier.assertRestartAndPauseSequence(FirstActivity.class, getLifecycleLog());
+            // Verify that the first activity was restarted
+            LifecycleVerifier.assertRestartSequence(FirstActivity.class, getLifecycleLog());
         }
     }
 
@@ -298,6 +299,66 @@ public class ActivityLifecycleTests extends ActivityLifecycleClientTestBase {
         // Verify that the first activity was recreated to pause as it was created before
         // windowing mode was switched
         LifecycleVerifier.assertRecreateAndPauseSequence(FirstActivity.class, getLifecycleLog());
+    }
+
+    @Test
+    public void testResultInNonFocusedStack() throws Exception {
+        if (!supportsSplitScreenMultiWindow()) {
+            // Skipping test: no split multi-window support
+            return;
+        }
+
+        // Launch first activity
+        final Activity callbackTrackingActivity =
+                mCallbackTrackingActivityTestRule.launchActivity(new Intent());
+
+        // Wait for first activity to resume
+        waitAndAssertActivityStates(state(callbackTrackingActivity, ON_RESUME));
+
+        // Enter split screen
+        moveTaskToPrimarySplitScreen(callbackTrackingActivity.getTaskId(),
+                true /* launchSideActivityIfNeeded */);
+
+        // Launch second activity to pause first
+        // Create an ActivityMonitor that catch ChildActivity and return mock ActivityResult:
+        ActivityMonitor activityMonitor = InstrumentationRegistry.getInstrumentation()
+                .addMonitor(SecondActivity.class.getName(), null /* activityResult */,
+                        false /* block */);
+
+        callbackTrackingActivity.startActivityForResult(
+                new Intent(callbackTrackingActivity, SecondActivity.class), 1 /* requestCode */);
+
+        // Wait for the ActivityMonitor to be hit
+        final Activity secondActivity = InstrumentationRegistry.getInstrumentation()
+                .waitForMonitorWithTimeout(activityMonitor, 5 * 1000);
+
+        // Wait for second activity to resume
+        assertNotNull("Second activity should be started", secondActivity);
+        waitAndAssertActivityStates(state(secondActivity, ON_RESUME));
+
+        // Start an activity in separate task (will be placed in secondary stack)
+        getLaunchActivityBuilder().execute();
+
+        waitAndAssertActivityStates(state(secondActivity, ON_PAUSE));
+
+        // Finish top activity and verify that activity below became focused.
+        getLifecycleLog().clear();
+        secondActivity.setResult(Activity.RESULT_OK);
+        secondActivity.finish();
+
+        waitAndAssertActivityStates(state(callbackTrackingActivity, ON_START));
+        LifecycleVerifier.assertRestartSequence(CallbackTrackingActivity.class, getLifecycleLog());
+
+        // Bring the first activity to front to verify that it receives the result.
+        getLifecycleLog().clear();
+        final Intent singleTopIntent = new Intent(InstrumentationRegistry.getTargetContext(),
+                CallbackTrackingActivity.class);
+        singleTopIntent.setFlags(Intent.FLAG_ACTIVITY_SINGLE_TOP | Intent.FLAG_ACTIVITY_NEW_TASK);
+        InstrumentationRegistry.getTargetContext().startActivity(singleTopIntent);
+
+        waitAndAssertActivityStates(state(callbackTrackingActivity, ON_RESUME));
+        LifecycleVerifier.assertSequence(CallbackTrackingActivity.class, getLifecycleLog(),
+                Arrays.asList(ON_ACTIVITY_RESULT, ON_NEW_INTENT, ON_RESUME), "bring to front");
     }
 
     @Test
