@@ -29,9 +29,4 @@ LOCAL_COMPATIBILITY_SUITE := cts vts general-tests
 LOCAL_CERTIFICATE := cts/hostsidetests/appsecurity/certs/cts-testkey1
 LOCAL_AAPT_FLAGS := --version-code 100 --replace-version
 
-# Disable AAPT2 to fix:
-# unknown option '--replace-version'.
-# TODO(b/79755007): Re-enable AAPT2 when it supports the missing features.
-LOCAL_USE_AAPT2 := false
-
 include $(BUILD_CTS_SUPPORT_PACKAGE)

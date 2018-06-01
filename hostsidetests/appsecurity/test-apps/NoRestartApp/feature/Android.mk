@@ -29,16 +29,9 @@ LOCAL_COMPATIBILITY_SUITE := cts vts general-tests
 LOCAL_PROGUARD_ENABLED := disabled
 LOCAL_DEX_PREOPT := false
 
-localRStamp := $(call intermediates-dir-for,APPS,$(LOCAL_PACKAGE_NAME),,COMMON)/src/R.stamp
-featureOf := CtsNoRestartBase
-featureOfApk := $(call intermediates-dir-for,APPS,$(featureOf))/package.apk
-$(localRStamp): $(featureOfApk)
-LOCAL_APK_LIBRARIES := $(featureOf)
-LOCAL_AAPT_FLAGS += --feature-of $(featureOfApk)
-
-# Disable AAPT2 to fix:
-# unknown option '--feature-of'.
-# TODO(b/79755007): Re-enable AAPT2 when it supports the missing features.
-LOCAL_USE_AAPT2 := false
+LOCAL_USE_AAPT2 := true
+LOCAL_APK_LIBRARIES := CtsNoRestartBase
+LOCAL_RES_LIBRARIES := $(LOCAL_APK_LIBRARIES)
+LOCAL_AAPT_FLAGS += --package-id 0x80 --rename-manifest-package com.android.cts.norestart
 
 include $(BUILD_CTS_SUPPORT_PACKAGE)
