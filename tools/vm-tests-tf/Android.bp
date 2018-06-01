@@ -58,6 +58,18 @@ genrule {
 }
 
 genrule {
+    name: "vmtests-dasm-dex-generated",
+    tools: [
+        "dasm",
+        "soong_zip",
+    ],
+    tool_files: ["etc/vmtests-dasm.sh"],
+    srcs: [ "src/dot/**/*.d" ],
+    cmd: "$(location etc/vmtests-dasm.sh) $(location dasm) $(location soong_zip) $(genDir) $(out) $(in)",
+    out: ["vmtests_dasm_dex_generated.jar"],
+}
+
+genrule {
     name: "vmtests_generated_mains_test_sources",
     tools: [
         "vmtests-buildutil",
@@ -75,10 +87,14 @@ java_library {
     srcs: [":vmtests_generated_mains_test_sources"],
 }
 
+// TODO: Add vmtests-mains' dex jar to vmtests-generated-resources when
+//       it can be addressed.
+
 java_library_host {
     name: "vmtests-generated-resources",
     static_libs: [
         "vmtests-dfh-dex-generated",
+        "vmtests-dasm-dex-generated",
     ],
     installable: false,
 }

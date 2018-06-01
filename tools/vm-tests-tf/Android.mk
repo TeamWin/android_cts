@@ -72,7 +72,7 @@ include $(BUILD_SYSTEM)/base_rules.mk
 vmteststf_dep_jars := \
     $(HOST_JDK_TOOLS_JAR) \
     $(cts-tf-dalvik-lib.jar) \
-    $(addprefix $(HOST_OUT_JAVA_LIBRARIES)/, cts-tf-dalvik-buildutil.jar dasm.jar dx.jar junit-host.jar d8.jar smali.jar) \
+    $(addprefix $(HOST_OUT_JAVA_LIBRARIES)/, cts-tf-dalvik-buildutil.jar dx.jar junit-host.jar d8.jar smali.jar) \
     $(call intermediates-dir-for,JAVA_LIBRARIES,cts-vmtests-dot,HOST,COMMON)/classes.jar
 
 vmtests_generated_resources_jar := \
