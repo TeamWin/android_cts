@@ -89,6 +89,18 @@ class LifecycleVerifier {
         assertEquals(errorMessage, expectedTransitions, observedTransitions);
     }
 
+    static void assertRestartSequence(Class<? extends Activity> activityClass,
+            LifecycleLog lifecycleLog) {
+        final List<ActivityCallback> observedTransitions =
+                lifecycleLog.getActivityLog(activityClass);
+        log("Observed sequence: " + observedTransitions);
+        final String errorMessage = errorDuringTransition(activityClass, "restart");
+
+        final List<ActivityCallback> expectedTransitions =
+                Arrays.asList(ON_RESTART, ON_START);
+        assertEquals(errorMessage, expectedTransitions, observedTransitions);
+    }
+
     static void assertRestartAndPauseSequence(Class<? extends Activity> activityClass,
                                               LifecycleLog lifecycleLog) {
         final List<ActivityCallback> observedTransitions =
