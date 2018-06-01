@@ -60,6 +60,18 @@ final class Timeouts {
     static final Timeout UI_TIMEOUT = new Timeout("UI_TIMEOUT", 5000, 2F, 10000);
 
     /**
+     * Timeout for a11y window change events.
+     */
+    static final long WINDOW_CHANGE_TIMEOUT_MS = 30000;
+
+    /**
+     * Timeout used when an a11y window change events is not expected to be generated - test will
+     * sleep for that amount of time as there is no callback that be received to assert it's not
+     * shown.
+     */
+    static final long WINDOW_CHANGE_NOT_GENERATED_NAPTIME_MS = 2000;
+
+    /**
      * Timeout for webview operations. Typically used by {@link UiBot}.
      */
     static final Timeout WEBVIEW_TIMEOUT = new Timeout("WEBVIEW_TIMEOUT", 8000, 2F, 16000);

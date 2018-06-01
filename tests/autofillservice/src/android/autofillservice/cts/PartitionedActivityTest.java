@@ -49,6 +49,7 @@ import android.content.IntentSender;
 import android.os.Bundle;
 import android.platform.test.annotations.AppModeFull;
 import android.service.autofill.FillResponse;
+import android.view.accessibility.AccessibilityEvent;
 
 import org.junit.Before;
 import org.junit.Rule;
@@ -77,24 +78,23 @@ public class PartitionedActivityTest extends AutoFillServiceTestCase {
      * Focus to a cell and expect window event
      */
     void focusCell(int row, int column) throws TimeoutException {
-        mUiBot.waitForWindowChange(() -> mActivity.focusCell(row, column),
-                Timeouts.UI_TIMEOUT.getMaxValue());
+        mUiBot.waitForWindowChange(() -> mActivity.focusCell(row, column));
     }
 
     /**
      * Focus to a cell and expect no window event.
      */
     void focusCellNoWindowChange(int row, int column) {
+        final AccessibilityEvent event;
         try {
-            // TODO: define a small value in Timeout
-            mUiBot.waitForWindowChange(() -> mActivity.focusCell(row, column),
-                    Timeouts.UI_TIMEOUT.ms());
+            event = mUiBot.waitForWindowChange(() -> mActivity.focusCell(row, column),
+                    Timeouts.WINDOW_CHANGE_NOT_GENERATED_NAPTIME_MS);
         } catch (TimeoutException ex) {
             // no window events! looking good
             return;
         }
         throw new IllegalStateException(String.format("Expect no window event when focusing to"
-                + " column %d row %d, but event happened", row, column));
+                + " column %d row %d, but event happened: %s", row, column, event));
     }
 
     @Test

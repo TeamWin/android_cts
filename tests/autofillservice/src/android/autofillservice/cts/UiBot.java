@@ -721,13 +721,12 @@ final class UiBot {
     }
 
     /**
-     * Execute a Runnable and wait for TYPE_WINDOWS_CHANGED or TYPE_WINDOW_STATE_CHANGED.
-     * TODO: No longer need Retry, Refactoring the Timeout (e.g. we probably need two values:
-     * one large timeout value that expects window event, one small value that expect no window
-     * event)
+     * Execute a Runnable and wait for {@link AccessibilityEvent#TYPE_WINDOWS_CHANGED} or
+     * {@link AccessibilityEvent#TYPE_WINDOW_STATE_CHANGED}.
      */
-    public void waitForWindowChange(Runnable runnable, long timeoutMillis) throws TimeoutException {
-        mAutoman.executeAndWaitForEvent(runnable, (AccessibilityEvent event) -> {
+    public AccessibilityEvent waitForWindowChange(Runnable runnable, long timeoutMillis)
+            throws TimeoutException {
+        return mAutoman.executeAndWaitForEvent(runnable, (AccessibilityEvent event) -> {
             switch (event.getEventType()) {
                 case AccessibilityEvent.TYPE_WINDOWS_CHANGED:
                 case AccessibilityEvent.TYPE_WINDOW_STATE_CHANGED:
@@ -735,6 +734,10 @@ final class UiBot {
             }
             return false;
         }, timeoutMillis);
+    }
+
+    public AccessibilityEvent waitForWindowChange(Runnable runnable) throws TimeoutException {
+        return waitForWindowChange(runnable, Timeouts.WINDOW_CHANGE_TIMEOUT_MS);
     }
 
     /**

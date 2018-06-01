@@ -63,9 +63,8 @@ public class MultiWindowLoginActivityTest extends AutoFillServiceTestCase {
      * Touch a view and exepct autofill window change
      */
     protected void tapViewAndExpectWindowEvent(View view) throws TimeoutException {
-        mUiBot.waitForWindowChange(() -> tap(view), Timeouts.UI_TIMEOUT.getMaxValue());
+        mUiBot.waitForWindowChange(() -> tap(view));
     }
-
 
     protected String runAmStartActivity(Class<? extends Activity> activityClass, int flags) {
         return runAmStartActivity(activityClass.getName(), flags);
