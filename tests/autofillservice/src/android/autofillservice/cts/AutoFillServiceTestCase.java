@@ -32,14 +32,11 @@ import android.widget.RemoteViews;
 
 import com.android.compatibility.common.util.RequiredFeatureRule;
 
-import org.junit.After;
 import org.junit.Before;
-import org.junit.BeforeClass;
 import org.junit.ClassRule;
 import org.junit.Rule;
 import org.junit.rules.RuleChain;
 import org.junit.rules.TestWatcher;
-import org.junit.runner.Description;
 import org.junit.runner.RunWith;
 
 /**
@@ -60,23 +57,9 @@ public abstract class AutoFillServiceTestCase {
     public static final SettingsStateKeeperRule mServiceSettingsKeeper =
             new SettingsStateKeeperRule(sContext, Settings.Secure.AUTOFILL_SERVICE);
 
-    private final TestWatcher mTestWatcher = new TestWatcher() {
-        @Override
-        protected void starting(Description description) {
-            final String testName = description.getDisplayName();
-            Log.v(TAG, "Starting " + testName);
-            JUnitHelper.setCurrentTestName(testName);
-        }
+    private final TestWatcher mTestWatcher = new AutofillTestWatcher();
 
-        @Override
-        protected void finished(Description description) {
-            final String testName = description.getDisplayName();
-            Log.v(TAG, "Finished " + testName);
-            JUnitHelper.setCurrentTestName(null);
-        }
-    };
-
-    private final RetryRule mRetryRule = new RetryRule(2);
+    private final RetryRule mRetryRule = new RetryRule(1);
 
     private final AutofillLoggingTestRule mLoggingRule = new AutofillLoggingTestRule(TAG);
 
@@ -116,37 +99,37 @@ public abstract class AutoFillServiceTestCase {
         mUiBot.reset();
     }
 
-    @BeforeClass
-    public static void prepareScreen() throws Exception {
+
+    @Before
+    public void prepareDevice() throws Exception {
+        Log.v(TAG, "@Before: prepareDevice()");
+
         // Unlock screen.
         runShellCommand("input keyevent KEYCODE_WAKEUP");
+
+        // Dismiss keyguard, in case it's set as "Swipe to unlock".
+        runShellCommand("wm dismiss-keyguard");
 
         // Collapse notifications.
         runShellCommand("cmd statusbar collapse");
 
         // Set orientation as portrait, otherwise some tests might fail due to elements not fitting
         // in, IME orientation, etc...
-        sDefaultUiBot.setScreenOrientation(UiBot.PORTRAIT);
+        mUiBot.setScreenOrientation(UiBot.PORTRAIT);
+
+        // Wait until device is idle to avoid flakiness
+        mUiBot.waitForIdle();
     }
 
     @Before
     public void preTestCleanup() {
-        Log.d(TAG, "preTestCleanup()");
+        Log.v(TAG, "@Before: preTestCleanup()");
 
         disableService();
 
         InstrumentedAutoFillService.resetStaticState();
         AuthenticationActivity.resetStaticState();
         sReplier.reset();
-    }
-
-    /**
-     * Cleans up activities that might have been left over.
-     */
-    @Before
-    @After
-    public void finishActivities() {
-        WelcomeActivity.finishIt(mUiBot);
     }
 
     /**

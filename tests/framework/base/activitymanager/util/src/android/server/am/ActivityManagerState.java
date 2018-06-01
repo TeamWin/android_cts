@@ -327,6 +327,15 @@ public class ActivityManagerState {
         return -1;
     }
 
+    /** Get display id by activity on it. */
+    int getDisplayByActivity(ComponentName activityComponent) {
+        final ActivityManagerState.ActivityTask task = getTaskByActivity(activityComponent);
+        if (task == null) {
+            return -1;
+        }
+        return getStackById(task.mStackId).mDisplayId;
+    }
+
     List<ActivityDisplay> getDisplays() {
         return new ArrayList<>(mDisplays);
     }
@@ -393,6 +402,24 @@ public class ActivityManagerState {
                 }
             }
         }
+        return false;
+    }
+
+    boolean isBehindOpaqueActivities(ComponentName activityName) {
+        final String fullName = getActivityName(activityName);
+        for (ActivityStack stack : mStacks) {
+            for (ActivityTask task : stack.mTasks) {
+                for (Activity activity : task.mActivities) {
+                    if (activity.name.equals(fullName)) {
+                        return false;
+                    }
+                    if (!activity.translucent) {
+                        return true;
+                    }
+                }
+            }
+        }
+
         return false;
     }
 

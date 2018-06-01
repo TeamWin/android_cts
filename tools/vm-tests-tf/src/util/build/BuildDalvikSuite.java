@@ -36,15 +36,12 @@ public class BuildDalvikSuite extends BuildUtilBase {
 
     public static final String TARGET_MAIN_FILE = "mains.jar";
 
-    private static String MAIN_SRC_OUTPUT_FOLDER = "";
-
     // the folder for the generated junit-files for the cts host (which in turn
     // execute the real vm tests using adb push/shell etc)
     private static String HOSTJUNIT_SRC_OUTPUT_FOLDER = "";
     private static String OUTPUT_FOLDER = "";
     private static String COMPILED_CLASSES_FOLDER = "";
 
-    private static String CLASSES_OUTPUT_FOLDER = "";
     private static String HOSTJUNIT_CLASSES_OUTPUT_FOLDER = "";
 
     private static String CLASS_PATH = "";
@@ -74,16 +71,14 @@ public class BuildDalvikSuite extends BuildUtilBase {
     }
 
     private boolean parseArgs(String[] args) {
-      if (args.length == 6) {
+      if (args.length == 5) {
           JAVASRC_FOLDER = args[0];
           OUTPUT_FOLDER = args[1];
           CLASS_PATH = args[2];
-          MAIN_SRC_OUTPUT_FOLDER = args[3];
-          CLASSES_OUTPUT_FOLDER = MAIN_SRC_OUTPUT_FOLDER + "/classes";
 
-          COMPILED_CLASSES_FOLDER = args[4];
+          COMPILED_CLASSES_FOLDER = args[3];
 
-          HOSTJUNIT_SRC_OUTPUT_FOLDER = args[5];
+          HOSTJUNIT_SRC_OUTPUT_FOLDER = args[4];
           HOSTJUNIT_CLASSES_OUTPUT_FOLDER = HOSTJUNIT_SRC_OUTPUT_FOLDER + "/classes";
           return true;
       } else {
@@ -227,7 +222,6 @@ public class BuildDalvikSuite extends BuildUtilBase {
     class MyTestHandler implements TestHandler {
         public String datafileContent = "";
         Set<BuildStep> targets = new TreeSet<BuildStep>();
-        public SourceBuildStep srcBuildStep = new JavacBuildStep(CLASSES_OUTPUT_FOLDER, CLASS_PATH);
 
         @Override
         public void handleTest(String fqcn, List<String> methods) {
@@ -270,24 +264,6 @@ public class BuildDalvikSuite extends BuildUtilBase {
                 if (dependentTestClassNames.isEmpty()) {
                     continue;
                 }
-
-                String content = getWarningMessage() +
-                        "package " + pName + ";\n" +
-                        "import " + pName + ".d.*;\n" +
-                        "import dot.junit.*;\n" +
-                        "public class Main_" + method + " extends DxAbstractMain {\n" +
-                        "    public static void main(String[] args) throws Exception {" +
-                        methodContent + "\n}\n";
-
-                File sourceFile;
-                try {
-                    sourceFile = getFileFromPackage(pName, method);
-                } catch (IOException e) {
-                    throw new RuntimeException(e);
-                }
-
-                writeToFile(sourceFile, content);
-                srcBuildStep.addSourceFile(sourceFile.getAbsolutePath());
 
                 // prepare the entry in the data file for the bash script.
                 // e.g.
@@ -383,24 +359,12 @@ public class BuildDalvikSuite extends BuildUtilBase {
         MyTestHandler handler = new MyTestHandler();
         super.handleTests(tests, handler);
 
-        D8BuildStep dexBuildStep = new D8BuildStep(
-            new BuildStep.BuildFile(new File(CLASSES_OUTPUT_FOLDER)),
-            new BuildStep.BuildFile(new File(OUTPUT_FOLDER + File.separator + TARGET_MAIN_FILE)),
-            false);
-
-        handler.targets.add(dexBuildStep);
-
         File scriptDataDir = new File(OUTPUT_FOLDER + "/data/");
         scriptDataDir.mkdirs();
         writeToFile(new File(scriptDataDir, "scriptdata"), handler.datafileContent);
 
         if (!hostJunitBuildStep.build()) {
             System.out.println("main javac cts-host-hostjunit-classes build step failed");
-            System.exit(1);
-        }
-
-        if (!handler.srcBuildStep.build()) {
-            System.out.println("main src dalvik-cts-buildutil build step failed");
             System.exit(1);
         }
 
@@ -427,21 +391,7 @@ public class BuildDalvikSuite extends BuildUtilBase {
         String fileName = dependentTestClassName.replace('.', '/').trim();
 
         if (new File(sourceFolder, fileName + ".dfh").exists()) {
-
-            BuildStep.BuildFile inputFile = new BuildStep.BuildFile(
-                    JAVASRC_FOLDER, fileName + ".dfh");
-            BuildStep.BuildFile dexFile = new BuildStep.BuildFile(
-                    OUTPUT_FOLDER, fileName + ".dex");
-
-            DFHBuildStep buildStep = new DFHBuildStep(inputFile, dexFile);
-
-            BuildStep.BuildFile jarFile = new BuildStep.BuildFile(
-                    OUTPUT_FOLDER, fileName + ".jar");
-            JarBuildStep jarBuildStep = new JarBuildStep(dexFile,
-                    "classes.dex", jarFile, true);
-            jarBuildStep.addChild(buildStep);
-
-            targets.add(jarBuildStep);
+            // Handled in vmtests-dfh-dex-generated build rule.
             return;
         }
 
@@ -531,24 +481,5 @@ public class BuildDalvikSuite extends BuildUtilBase {
 
         dexBuildStep.addChild(jarBuildStep);
         return dexBuildStep;
-    }
-
-    private File getFileFromPackage(String pname, String methodName)
-    throws IOException {
-        // e.g. dxc.junit.argsreturns.pargsreturn
-        String path = getFileName(pname, methodName, ".java");
-        String absPath = MAIN_SRC_OUTPUT_FOLDER + "/" + path;
-        File dirPath = new File(absPath);
-        File parent = dirPath.getParentFile();
-        if (!parent.exists() && !parent.mkdirs()) {
-            throw new IOException("failed to create directory: " + absPath);
-        }
-        return dirPath;
-    }
-
-    private String getFileName(String pname, String methodName,
-            String extension) {
-        String path = pname.replaceAll("\\.", "/");
-        return new File(path, "Main_" + methodName + extension).getPath();
     }
 }

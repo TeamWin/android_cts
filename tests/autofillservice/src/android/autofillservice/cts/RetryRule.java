@@ -30,16 +30,28 @@ public class RetryRule implements TestRule {
     private static final String TAG = "RetryRule";
     private final int mMaxAttempts;
 
-    public RetryRule(int maxAttempts) {
-        if (maxAttempts < 2) {
-            throw new IllegalArgumentException(
-                    "Must retry at least once; otherwise, what's the point?");
+    /**
+     * Retries the underlying test when it catches a {@link RetryableException}.
+     *
+     * @param retries number of retries. Use {@code 0} to disable rule.
+     *
+     * @throws IllegalArgumentException if {@code retries} is less than {@code 0}.
+     */
+    public RetryRule(int retries) {
+        if (retries < 0) {
+            throw new IllegalArgumentException("retries must be more than 0");
         }
-        mMaxAttempts = maxAttempts;
+        mMaxAttempts = retries + 1;
     }
 
     @Override
     public Statement apply(Statement base, Description description) {
+        if (mMaxAttempts <= 1) {
+            Log.v(TAG, "Executing " + description.getDisplayName()
+                    + " right away because mMaxAttempts is " + mMaxAttempts);
+            return base;
+        }
+
         return new Statement() {
 
             @Override
@@ -53,7 +65,7 @@ public class RetryRule implements TestRule {
                             Log.v(TAG, "Good News, Everyone! " + name + " passed right away");
                         } else {
                             Log.d(TAG,
-                                    "Better late than never: " + name + "passed at attempt #" + i);
+                                    "Better late than never: " + name + " passed at attempt #" + i);
                         }
                         return;
                     } catch (RetryableException e) {

@@ -67,6 +67,7 @@
         <!--__________________-->
         <!-- Bulletin 2017-01 -->
         <!-- Please add tests solely from this bulletin below to avoid merge conflict -->
+        <option name="push" value="CVE-2017-0386->/data/local/tmp/CVE-2017-0386" />
 
         <!--__________________-->
         <!-- Bulletin 2017-02 -->
@@ -98,6 +99,7 @@
         <!--__________________-->
         <!-- Bulletin 2017-07 -->
         <!-- Please add tests solely from this bulletin below to avoid merge conflict -->
+        <option name="push" value="CVE-2016-2109->/data/local/tmp/CVE-2016-2109"/>
 
         <!--__________________-->
         <!-- Bulletin 2017-08 -->

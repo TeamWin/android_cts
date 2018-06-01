@@ -73,6 +73,7 @@ my_bionic_testlib_files := \
   libtest_dlsym_weak_func.so \
   libtest_dt_runpath_d.so \
   libtest_empty.so \
+  libtest_indirect_thread_local_dtor.so \
   libtest_init_fini_order_child.so \
   libtest_init_fini_order_grand_child.so \
   libtest_init_fini_order_root.so \
@@ -86,6 +87,7 @@ my_bionic_testlib_files := \
   libtest_relo_check_dt_needed_order_2.so \
   libtest_simple.so \
   libtest_thread_local_dtor.so \
+  libtest_thread_local_dtor2.so \
   libtest_two_parents_child.so \
   libtest_two_parents_parent1.so \
   libtest_two_parents_parent2.so \

@@ -55,8 +55,8 @@ import android.view.accessibility.AccessibilityWindowInfo;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 
-import java.io.ByteArrayOutputStream;
-import java.io.IOException;
+import java.io.File;
+import java.io.FileInputStream;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -128,6 +128,13 @@ final class UiBot {
         mContext = instrumentation.getContext();
         mPackageName = mContext.getPackageName();
         mAutoman = instrumentation.getUiAutomation();
+    }
+
+    void waitForIdle() {
+        final long before = SystemClock.elapsedRealtimeNanos();
+        mDevice.waitForIdle();
+        final float delta = ((float) (SystemClock.elapsedRealtimeNanos() - before)) / 1_000_000;
+        Log.v(TAG, "device idle in " + delta + "ms");
     }
 
     void reset() {
@@ -324,7 +331,7 @@ final class UiBot {
      */
     public void assertNotShowingForSure(String text) throws Exception {
         final UiObject2 object = mDevice.findObject(By.text(text));
-        assertWithMessage("Find node with text '%s'", text).that(object).isNull();
+        assertWithMessage("Found node with text '%s'", text).that(object).isNull();
     }
 
     /**
@@ -689,13 +696,15 @@ final class UiBot {
             });
         } catch (RetryableException e) {
             if (dumpOnError) {
-                dumpScreen("waitForObject() for " + selector + "failed");
+                dumpScreen("waitForObject() for " + selector + "on "
+                        + (parent == null ? "mDevice" : parent) + " failed");
             }
             throw e;
         }
     }
 
-    private UiObject2 waitForObject(UiObject2 parent, BySelector selector, Timeout timeout)
+    private UiObject2 waitForObject(@Nullable UiObject2 parent, @NonNull BySelector selector,
+            @NonNull Timeout timeout)
             throws Exception {
         return waitForObject(parent, selector, timeout, DUMP_ON_ERROR);
     }
@@ -706,18 +715,18 @@ final class UiBot {
      * @param selector {@link BySelector} that identifies the object.
      * @param timeout timeout in ms
      */
-    private UiObject2 waitForObject(BySelector selector, Timeout timeout) throws Exception {
+    private UiObject2 waitForObject(@NonNull BySelector selector, @NonNull Timeout timeout)
+            throws Exception {
         return waitForObject(null, selector, timeout);
     }
 
     /**
-     * Execute a Runnable and wait for TYPE_WINDOWS_CHANGED or TYPE_WINDOW_STATE_CHANGED.
-     * TODO: No longer need Retry, Refactoring the Timeout (e.g. we probably need two values:
-     * one large timeout value that expects window event, one small value that expect no window
-     * event)
+     * Execute a Runnable and wait for {@link AccessibilityEvent#TYPE_WINDOWS_CHANGED} or
+     * {@link AccessibilityEvent#TYPE_WINDOW_STATE_CHANGED}.
      */
-    public void waitForWindowChange(Runnable runnable, long timeoutMillis) throws TimeoutException {
-        mAutoman.executeAndWaitForEvent(runnable, (AccessibilityEvent event) -> {
+    public AccessibilityEvent waitForWindowChange(Runnable runnable, long timeoutMillis)
+            throws TimeoutException {
+        return mAutoman.executeAndWaitForEvent(runnable, (AccessibilityEvent event) -> {
             switch (event.getEventType()) {
                 case AccessibilityEvent.TYPE_WINDOWS_CHANGED:
                 case AccessibilityEvent.TYPE_WINDOW_STATE_CHANGED:
@@ -725,6 +734,10 @@ final class UiBot {
             }
             return false;
         }, timeoutMillis);
+    }
+
+    public AccessibilityEvent waitForWindowChange(Runnable runnable) throws TimeoutException {
+        return waitForWindowChange(runnable, Timeouts.WINDOW_CHANGE_TIMEOUT_MS);
     }
 
     /**
@@ -804,25 +817,21 @@ final class UiBot {
     }
 
     /**
-     * Dumps the current view hierarchy int the output stream.
+     * Dumps the current view hierarchy and take a screenshot and save both locally so they can be
+     * inspected later.
      */
-    public void dumpScreen(String cause) {
-        new Exception("dumpScreen(cause=" + cause + ") stacktrace").printStackTrace(System.out);
+    public void dumpScreen(@NonNull String cause) {
         try {
-            try (ByteArrayOutputStream os = new ByteArrayOutputStream()) {
-                mDevice.dumpWindowHierarchy(os);
-                os.flush();
-                Log.w(TAG, "Dumping window hierarchy because " + cause);
-                for (String line : os.toString("UTF-8").split("\n")) {
-                    Log.w(TAG, line);
-                    // Sleep a little bit to avoid logs being ignored due to spam
-                    SystemClock.sleep(100);
-                }
+            final File file = Helper.createTestFile("hierarchy.xml");
+            if (file == null) return;
+            Log.w(TAG, "Dumping window hierarchy because " + cause + " on " + file);
+            try (FileInputStream fis = new FileInputStream(file)) {
+                mDevice.dumpWindowHierarchy(file);
             }
-        } catch (IOException e) {
-            // Just ignore it...
-            Log.e(TAG, "exception dumping window hierarchy", e);
-            return;
+        } catch (Exception e) {
+            Log.e(TAG, "error dumping screen on " + cause, e);
+        } finally {
+            takeScreenshotAndSave();
         }
     }
 
@@ -835,6 +844,22 @@ final class UiBot {
         final long delta = SystemClock.elapsedRealtime() - before;
         Log.v(TAG, "Screenshot taken in " + delta + "ms");
         return bitmap;
+    }
+
+    /**
+     * Takes a screenshot and save it in the file system for post-mortem analysis.
+     */
+    public void takeScreenshotAndSave() {
+        File file = null;
+        try {
+            file = Helper.createTestFile("screenshot.png");
+            if (file != null) {
+                final Bitmap screenshot = takeScreenshot();
+                Helper.dumpBitmap(screenshot, file);
+            }
+        } catch (Exception e) {
+            Log.e(TAG, "Error taking screenshot and saving on " + file, e);
+        }
     }
 
     /**

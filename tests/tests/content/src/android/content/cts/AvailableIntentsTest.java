@@ -365,4 +365,11 @@ public class AvailableIntentsTest extends AndroidTestCase {
             assertCanBeHandled(new Intent("android.settings.LOCATION_SCANNING_SETTINGS"));
         }
     }
+
+    public void testChangeDefaultDialer() {
+        PackageManager packageManager = mContext.getPackageManager();
+        if (packageManager.hasSystemFeature(PackageManager.FEATURE_TELEPHONY)) {
+            assertCanBeHandled(new Intent(TelecomManager.ACTION_CHANGE_DEFAULT_DIALER));
+        }
+    }
 }

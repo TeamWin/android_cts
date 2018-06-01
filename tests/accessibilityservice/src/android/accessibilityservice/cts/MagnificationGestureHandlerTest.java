@@ -86,6 +86,7 @@ public class MagnificationGestureHandlerTest {
     PointF mCurrentZoomCenter = null;
     PointF mTapLocation;
     PointF mTapLocation2;
+    float mPan;
     private boolean mHasTouchscreen;
     private boolean mOriginalIsMagnificationEnabled;
 
@@ -127,6 +128,7 @@ public class MagnificationGestureHandlerTest {
             view.getLocationOnScreen(xy);
             mTapLocation = new PointF(xy[0] + view.getWidth() / 2, xy[1] + view.getHeight() / 2);
             mTapLocation2 = add(mTapLocation, 31, 29);
+            mPan = view.getWidth() / 4;
         });
     }
 
@@ -179,17 +181,15 @@ public class MagnificationGestureHandlerTest {
         if (!mHasTouchscreen) return;
         assertFalse(isZoomed());
 
-        float pan = Math.min(mTapLocation.x, mTapLocation2.x) / 2;
-
         setZoomByTripleTapping(true);
         PointF oldCenter = mCurrentZoomCenter;
 
         dispatch(
-                swipe(mTapLocation, add(mTapLocation, -pan, 0)),
-                swipe(mTapLocation2, add(mTapLocation2, -pan, 0)));
+                swipe(mTapLocation, add(mTapLocation, -mPan, 0)),
+                swipe(mTapLocation2, add(mTapLocation2, -mPan, 0)));
 
         waitOn(mZoomLock,
-                () -> (mCurrentZoomCenter.x - oldCenter.x >= pan / mCurrentScale * 0.9));
+                () -> (mCurrentZoomCenter.x - oldCenter.x >= mPan / mCurrentScale * 0.9));
 
         setZoomByTripleTapping(false);
     }
@@ -204,12 +204,11 @@ public class MagnificationGestureHandlerTest {
     private void tripleTapAndDragViewport() {
         StrokeDescription down = tripleTapAndHold();
 
-        float pan = mTapLocation.x / 2;
         PointF oldCenter = mCurrentZoomCenter;
 
-        StrokeDescription drag = drag(down, add(lastPointOf(down), pan, 0f));
+        StrokeDescription drag = drag(down, add(lastPointOf(down), mPan, 0f));
         dispatch(drag);
-        waitOn(mZoomLock, () -> distance(mCurrentZoomCenter, oldCenter) >= pan / 5);
+        waitOn(mZoomLock, () -> distance(mCurrentZoomCenter, oldCenter) >= mPan / 5);
         assertTrue(isZoomed());
         assertNoTouchInputPropagated();
 

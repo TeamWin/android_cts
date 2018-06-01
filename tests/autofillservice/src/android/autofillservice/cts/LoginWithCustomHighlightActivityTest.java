@@ -84,7 +84,6 @@ public class LoginWithCustomHighlightActivityTest extends AutoFillServiceTestCas
      * Requests focus on username and expect Window event happens.
      */
     protected void requestFocusOnUsername() throws TimeoutException {
-        mUiBot.waitForWindowChange(() -> mActivity.onUsername(View::requestFocus),
-                Timeouts.UI_TIMEOUT.getMaxValue());
+        mUiBot.waitForWindowChange(() -> mActivity.onUsername(View::requestFocus));
     }
 }

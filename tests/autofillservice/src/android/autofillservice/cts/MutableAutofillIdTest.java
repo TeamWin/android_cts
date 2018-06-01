@@ -308,7 +308,6 @@ public class MutableAutofillIdTest extends AutoFillServiceTestCase {
      * Focus to a cell and expect window event
      */
     void focusCell(int row, int column) throws TimeoutException {
-        mUiBot.waitForWindowChange(() -> mActivity.focusCell(row, column),
-                Timeouts.UI_TIMEOUT.getMaxValue());
+        mUiBot.waitForWindowChange(() -> mActivity.focusCell(row, column));
     }
 }
