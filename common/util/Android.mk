@@ -13,28 +13,10 @@
 # limitations under the License.
 
 ###############################################################################
-# Build the common utility library for use device-side
+# Build the common utility library for use host-side
 ###############################################################################
 
 LOCAL_PATH:= $(call my-dir)
-
-include $(CLEAR_VARS)
-
-LOCAL_SRC_FILES := $(call all-java-files-under, src)
-
-LOCAL_MODULE_TAGS := optional
-
-LOCAL_MODULE := compatibility-common-util-devicesidelib
-
-LOCAL_STATIC_JAVA_LIBRARIES := guava junit
-
-LOCAL_SDK_VERSION := current
-
-include $(BUILD_STATIC_JAVA_LIBRARY)
-
-###############################################################################
-# Build the common utility library for use host-side
-###############################################################################
 
 include $(CLEAR_VARS)
 

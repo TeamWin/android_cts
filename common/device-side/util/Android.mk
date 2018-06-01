@@ -12,28 +12,4 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-LOCAL_PATH := $(call my-dir)
-
-include $(CLEAR_VARS)
-
-LOCAL_SRC_FILES := $(call all-java-files-under, src) \
-    $(call all-Iaidl-files-under, src)
-
-LOCAL_STATIC_JAVA_LIBRARIES := \
-    compatibility-common-util-devicesidelib \
-    android-support-test \
-    ub-uiautomator \
-    mockito-target-minus-junit4 \
-    legacy-android-test
-
-LOCAL_JAVA_LIBRARIES := android.test.runner
-
-LOCAL_MODULE_TAGS := optional
-
-LOCAL_MODULE := compatibility-device-util
-
-LOCAL_SDK_VERSION := current
-
-include $(BUILD_STATIC_JAVA_LIBRARY)
-
-include $(call all-makefiles-under,$(LOCAL_PATH))
+include $(call all-subdir-makefiles)
