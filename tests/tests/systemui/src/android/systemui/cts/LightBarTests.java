@@ -52,6 +52,12 @@ public class LightBarTests extends LightBarTestBase {
 
     private static final int WAIT_TIME = 2000;
 
+    /**
+     * Color may be slightly off-spec when resources are resized for lower densities. Use this error
+     * margin to accommodate for that when comparing colors.
+     */
+    private static final int COLOR_COMPONENT_ERROR_MARGIN = 10;
+
     private final String NOTIFICATION_TAG = "TEST_TAG";
     private final String NOTIFICATION_CHANNEL_ID = "test_channel";
     private final String NOTIFICATION_GROUP_KEY = "test_group";
@@ -147,7 +153,7 @@ public class LightBarTests extends LightBarTestBase {
                     (float) s.backgroundPixels / s.totalPixels(),
                     "Is the bar background showing correctly (solid red)?");
 
-            assertMoreThan("Not enough pixels colored as in the spec", 0.1f,
+            assertMoreThan("Not enough pixels colored as in the spec", 0.3f,
                     (float) s.iconPixels / s.foregroundPixels(),
                     "Are the bar icons colored according to the spec "
                             + "(60% black and 24% black)?");
@@ -237,7 +243,7 @@ public class LightBarTests extends LightBarTestBase {
             }
 
             // What we expect the icons to be colored according to the spec.
-            if (c == mixedIconColor || c == mixedIconPartialColor) {
+            if (isColorSame(c, mixedIconColor) || isColorSame(c, mixedIconPartialColor)) {
                 s.iconPixels++;
                 continue;
             }
@@ -276,5 +282,16 @@ public class LightBarTests extends LightBarTestBase {
                     fgRed + (255 - fgAlpha) * bgRed / 255,
                     fgGreen + (255 - fgAlpha) * bgGreen / 255,
                     fgBlue + (255 - fgAlpha) * bgBlue / 255);
+    }
+
+    /**
+     * Check if two colors' diff is in the error margin as defined in
+     * {@link #COLOR_COMPONENT_ERROR_MARGIN}.
+     */
+    private boolean isColorSame(int c1, int c2){
+        return Math.abs(Color.alpha(c1) - Color.alpha(c2)) < COLOR_COMPONENT_ERROR_MARGIN
+                && Math.abs(Color.red(c1) - Color.red(c2)) < COLOR_COMPONENT_ERROR_MARGIN
+                && Math.abs(Color.green(c1) - Color.green(c2)) < COLOR_COMPONENT_ERROR_MARGIN
+                && Math.abs(Color.blue(c1) - Color.blue(c2)) < COLOR_COMPONENT_ERROR_MARGIN;
     }
 }
