@@ -12,19 +12,21 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-java_library_host {
-    name: "host-cts-vmtests-dot",
+java_library {
+    name: "cts-vmtests-dot",
     libs: [ "junit" ],
     srcs: [ "src/dot/**/*.java" ],
     installable: false,
     include_srcs: true,
+    host_supported: true,
 }
 
 java_binary_host {
     name: "vmtests-buildutil",
-    static_libs: [ "host-cts-vmtests-dot", "junit" ],
+    static_libs: [ "cts-vmtests-dot", "junit" ],
     srcs: [
         "src/util/build/BuildCTSHostSources.java",
+        "src/util/build/BuildCTSMainsSources.java",
         "src/util/build/BuildUtilBase.java",
         "src/util/build/FileUtil.java",
         "src/util/build/JUnitTestCollector.java",
@@ -53,6 +55,24 @@ genrule {
     srcs: ["src/dot/**/*.dfh"],
     cmd: "$(location etc/vmtests-cfassembler.sh) $(location cfassembler) $(location soong_zip) $(genDir) $(out) $(in)",
     out: ["vmtests_dfh_dex_generated.jar"],
+}
+
+genrule {
+    name: "vmtests_generated_mains_test_sources",
+    tools: [
+        "vmtests-buildutil",
+        "soong_zip",
+    ],
+    cmd: "mkdir $(genDir)/src"
+       + " && $(location vmtests-buildutil) util.build.BuildCTSMainsSources $(genDir)/src "
+       + " && $(location soong_zip) -jar -o $(out) -C $(genDir)/src -D $(genDir)/src",
+    out: ["vmtests.mains.generated.srcjar"],
+}
+
+java_library {
+    name: "vmtests-mains",
+    libs: [ "cts-vmtests-dot" ],
+    srcs: [":vmtests_generated_mains_test_sources"],
 }
 
 java_library_host {

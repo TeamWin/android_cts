@@ -73,31 +73,33 @@ vmteststf_dep_jars := \
     $(HOST_JDK_TOOLS_JAR) \
     $(cts-tf-dalvik-lib.jar) \
     $(addprefix $(HOST_OUT_JAVA_LIBRARIES)/, cts-tf-dalvik-buildutil.jar dasm.jar dx.jar junit-host.jar d8.jar smali.jar) \
-    $(call intermediates-dir-for,JAVA_LIBRARIES,host-cts-vmtests-dot,HOST,COMMON)/classes.jar
+    $(call intermediates-dir-for,JAVA_LIBRARIES,cts-vmtests-dot,HOST,COMMON)/classes.jar
 
 vmtests_generated_resources_jar := \
     $(call intermediates-dir-for,JAVA_LIBRARIES,vmtests-generated-resources,HOST)/javalib.jar
+vmtests_mains_generated_jar := \
+    $(call intermediates-dir-for,JAVA_LIBRARIES,vmtests-mains,,COMMON)/javalib.jar
 
 $(LOCAL_BUILT_MODULE): PRIVATE_SRC_FOLDER := $(LOCAL_PATH)/src
 $(LOCAL_BUILT_MODULE): PRIVATE_INTERMEDIATES_CLASSES := $(call intermediates-dir-for,JAVA_LIBRARIES,cts-tf-dalvik-buildutil,HOST)/classes
 $(LOCAL_BUILT_MODULE): PRIVATE_INTERMEDIATES := $(intermediates)/tests
 $(LOCAL_BUILT_MODULE): PRIVATE_INTERMEDIATES_DEXCORE_JAR := $(intermediates)/tests/dot/junit/dexcore.jar
-$(LOCAL_BUILT_MODULE): PRIVATE_INTERMEDIATES_MAIN_FILES := $(intermediates)/main_files
 $(LOCAL_BUILT_MODULE): PRIVATE_INTERMEDIATES_HOSTJUNIT_FILES := $(intermediates)/hostjunit_files
 $(LOCAL_BUILT_MODULE): PRIVATE_CLASS_PATH := $(call normalize-path-list, $(vmteststf_dep_jars))
 oj_jar := $(call intermediates-dir-for,JAVA_LIBRARIES,core-oj,,COMMON)/classes.jar
 libart_jar := $(call intermediates-dir-for,JAVA_LIBRARIES,core-libart,,COMMON)/classes.jar
 $(LOCAL_BUILT_MODULE): PRIVATE_DALVIK_SUITE_CLASSPATH := $(oj_jar):$(libart_jar):$(cts-tf-dalvik-lib.jar):$(HOST_OUT_JAVA_LIBRARIES)/tradefed.jar:
 $(LOCAL_BUILT_MODULE): PRIVATE_VMTESTS_GENERATED_RESOURCES := $(vmtests_generated_resources_jar)
-$(LOCAL_BUILT_MODULE) : $(vmteststf_dep_jars) $(HOST_OUT_JAVA_LIBRARIES)/tradefed.jar $(DX) $(vmtests_generated_resources_jar)
+$(LOCAL_BUILT_MODULE): PRIVATE_VMTESTS_MAINS_GENERATED := $(vmtests_mains_generated_jar)
+$(LOCAL_BUILT_MODULE) : $(vmteststf_dep_jars) $(HOST_OUT_JAVA_LIBRARIES)/tradefed.jar $(DX) $(vmtests_generated_resources_jar) $(vmtests_mains_generated_jar)
 	$(hide) rm -rf $(dir $@) && mkdir -p $(dir $@)
-	$(hide) mkdir -p $(PRIVATE_INTERMEDIATES_HOSTJUNIT_FILES)/dot/junit $(dir $(PRIVATE_INTERMEDIATES_DEXCORE_JAR))
+	$(hide) mkdir -p $(dir $(PRIVATE_INTERMEDIATES_DEXCORE_JAR))
 	# generated and compile the host side junit tests
-	@echo "Write generated Main_*.java files to $(PRIVATE_INTERMEDIATES_MAIN_FILES)"
+	@echo "Write generated Main_*.java"
 	$(hide) $(JAVA) \
 	    -cp $(PRIVATE_CLASS_PATH) util.build.BuildDalvikSuite $(PRIVATE_SRC_FOLDER) $(PRIVATE_INTERMEDIATES) \
 		$(PRIVATE_DALVIK_SUITE_CLASSPATH) \
-		$(PRIVATE_INTERMEDIATES_MAIN_FILES) $(PRIVATE_INTERMEDIATES_CLASSES) $(PRIVATE_INTERMEDIATES_HOSTJUNIT_FILES)
+		$(PRIVATE_INTERMEDIATES_CLASSES) $(PRIVATE_INTERMEDIATES_HOSTJUNIT_FILES)
 	@echo "Generate $(PRIVATE_INTERMEDIATES_DEXCORE_JAR)"
 	$(hide) $(JAR) -cf $(PRIVATE_INTERMEDIATES_DEXCORE_JAR)-class.jar \
 		$(addprefix -C $(PRIVATE_INTERMEDIATES_CLASSES) , dot/junit/DxUtil.class dot/junit/DxAbstractMain.class dot/junit/AssertionFailedException.class)
@@ -112,6 +114,7 @@ endif
 	$(hide) cd $(PRIVATE_INTERMEDIATES_DEXCORE_JAR).tmp && zip -q -r $(abspath $(PRIVATE_INTERMEDIATES_DEXCORE_JAR)) .
 	$(hide) cp $(PRIVATE_VMTESTS_GENERATED_RESOURCES) $@
 	$(hide) cd $(PRIVATE_INTERMEDIATES_HOSTJUNIT_FILES)/classes && zip -q -r ../../$(notdir $@) .
+	$(hide) cp $(PRIVATE_VMTESTS_MAINS_GENERATED) $(dir $@)/tests/mains.jar
 	$(hide) cd $(dir $@) && zip -q -r $(notdir $@) tests
 oj_jar :=
 libart_jar :=
@@ -120,5 +123,6 @@ libart_jar :=
 intermediates :=
 vmteststf_dep_jars :=
 vmtests_generated_resources_jar :=
+vmtests_mains_generated_jar :=
 
 include $(call all-makefiles-under,$(LOCAL_PATH))
