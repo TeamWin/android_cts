@@ -35,6 +35,7 @@ import static org.junit.Assert.assertTrue;
 import static org.junit.Assume.assumeTrue;
 
 import android.content.ComponentName;
+
 import org.junit.Before;
 import org.junit.Test;
 
@@ -102,8 +103,10 @@ public class KeyguardLockedTests extends KeyguardTestBase {
             lockScreenSession.enterAndConfirmLockCredential();
             mAmWmState.waitForKeyguardGone();
             mAmWmState.assertKeyguardGone();
+            boolean isDismissTranslucent =
+                    mAmWmState.getAmState().isActivityTranslucent(DISMISS_KEYGUARD_ACTIVITY);
             mAmWmState.assertVisibility(DISMISS_KEYGUARD_ACTIVITY, true);
-            mAmWmState.assertVisibility(SHOW_WHEN_LOCKED_ACTIVITY, false);
+            mAmWmState.assertVisibility(SHOW_WHEN_LOCKED_ACTIVITY, isDismissTranslucent);
         }
     }
 
