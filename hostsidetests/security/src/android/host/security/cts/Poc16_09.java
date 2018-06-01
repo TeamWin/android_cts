@@ -14,22 +14,9 @@
  * limitations under the License.
  */
 
-//package android.security.cts;
 package android.host.security.cts;
 
 import com.android.cts.util.SecurityTest;
-import com.android.tradefed.device.CollectingOutputReceiver;
-import com.android.tradefed.device.DeviceNotAvailableException;
-import com.android.tradefed.device.ITestDevice;
-import com.android.tradefed.testtype.DeviceTestCase;
-
-import java.io.BufferedOutputStream;
-import java.io.File;
-import java.io.FileOutputStream;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.OutputStream;
-import java.util.Scanner;
 
 public class Poc16_09 extends SecurityTestCase {
     /**
@@ -47,5 +34,17 @@ public class Poc16_09 extends SecurityTestCase {
         assertNotMatches("[\\s\\n\\S]*Fatal signal 11 \\(SIGSEGV\\)" +
                 "[\\s\\n\\S]*>>> /system/bin/" +
                 "mediaserver <<<[\\s\\n\\S]*", logcat);
+    }
+
+    /**
+     *  b/28760453
+     */
+    @SecurityTest
+    public void testPocCVE_2015_8839() throws Exception {
+        AdbUtils.runCommandLine("logcat -c" , getDevice());
+        AdbUtils.runPoc("CVE-2015-8839", getDevice(), 60);
+
+        String logcat =  AdbUtils.runCommandLine("logcat -d", getDevice());
+        assertMatches("[\\s\\n\\S]*fallocate result EOPNOTSUPP[\\s\\n\\S]*", logcat);
     }
 }
