@@ -170,4 +170,114 @@ public class ApplicationVisibilityTest extends BaseAppSecurityTest {
                 testUserId,
                 testArgs);
     }
+
+    @Test
+    @AppModeFull(reason = "instant applications cannot be granted INTERACT_ACROSS_USERS")
+    public void testApplicationListCrossUserGrant() throws Exception {
+        if (!mSupportsMultiUser) {
+            return;
+        }
+
+        final int installUserId = mUsers[1];
+        final int testUserId = mUsers[2];
+
+        installTestAppForUser(TINY_APK, installUserId);
+        installTestAppForUser(TEST_WITH_PERMISSION_APK, testUserId);
+
+        final String grantCmd = "pm grant"
+                + " com.android.cts.applicationvisibility"
+                + " android.permission.INTERACT_ACROSS_USERS";
+        getDevice().executeShellCommand(grantCmd);
+        Utils.runDeviceTests(
+                getDevice(),
+                TEST_WITH_PERMISSION_PKG,
+                ".ApplicationVisibilityCrossUserTest",
+                "testApplicationVisibility_currentUser",
+                testUserId);
+        Utils.runDeviceTests(
+                getDevice(),
+                TEST_WITH_PERMISSION_PKG,
+                ".ApplicationVisibilityCrossUserTest",
+                "testApplicationVisibility_anyUserCrossUserGrant",
+                testUserId);
+    }
+
+    @Test
+    @AppModeFull(reason = "instant applications cannot see any other application")
+    public void testApplicationListCrossUserNoGrant() throws Exception {
+        if (!mSupportsMultiUser) {
+            return;
+        }
+
+        final int installUserId = mUsers[1];
+        final int testUserId = mUsers[2];
+
+        installTestAppForUser(TINY_APK, installUserId);
+        installTestAppForUser(TEST_WITH_PERMISSION_APK, testUserId);
+
+        Utils.runDeviceTests(
+                getDevice(),
+                TEST_WITH_PERMISSION_PKG,
+                ".ApplicationVisibilityCrossUserTest",
+                "testApplicationVisibility_currentUser",
+                testUserId);
+        Utils.runDeviceTests(
+                getDevice(),
+                TEST_WITH_PERMISSION_PKG,
+                ".ApplicationVisibilityCrossUserTest",
+                "testApplicationVisibility_anyUserCrossUserNoGrant",
+                testUserId);
+    }
+
+    @Test
+    @AppModeFull(reason = "instant applications cannot be granted INTERACT_ACROSS_USERS")
+    public void testApplicationListOtherUserCrossUserGrant() throws Exception {
+        if (!mSupportsMultiUser) {
+            return;
+        }
+
+        final int installUserId = mUsers[1];
+        final int testUserId = mUsers[2];
+        final Map<String, String> testArgs = new HashMap<>();
+        testArgs.put("testUser", Integer.toString(installUserId));
+
+        installTestAppForUser(TINY_APK, installUserId);
+        installTestAppForUser(TEST_WITH_PERMISSION_APK, testUserId);
+
+        final String grantCmd = "pm grant"
+                + " com.android.cts.applicationvisibility"
+                + " android.permission.INTERACT_ACROSS_USERS";
+        getDevice().executeShellCommand(grantCmd);
+        Utils.runDeviceTests(
+                getDevice(),
+                TEST_WITH_PERMISSION_PKG,
+                ".ApplicationVisibilityCrossUserTest",
+                "testApplicationVisibility_otherUserGrant",
+                testUserId,
+                testArgs);
+    }
+
+    @Test
+    @AppModeFull(reason = "instant applications cannot see any other application")
+    public void testApplicationListOtherUserCrossUserNoGrant() throws Exception {
+        if (!mSupportsMultiUser) {
+            return;
+        }
+
+        final int installUserId = mUsers[1];
+        final int testUserId = mUsers[2];
+        final Map<String, String> testArgs = new HashMap<>();
+        testArgs.put("testUser", Integer.toString(installUserId));
+
+        installTestAppForUser(TINY_APK, installUserId);
+        installTestAppForUser(TEST_WITH_PERMISSION_APK, testUserId);
+
+        Utils.runDeviceTests(
+                getDevice(),
+                TEST_WITH_PERMISSION_PKG,
+                ".ApplicationVisibilityCrossUserTest",
+                "testApplicationVisibility_otherUserNoGrant",
+                testUserId,
+                testArgs);
+    }
 }

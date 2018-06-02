@@ -19,29 +19,35 @@ package android.uirendering.cts.testclasses;
 import static org.junit.Assert.assertEquals;
 
 import android.animation.ValueAnimator;
-import android.graphics.Canvas;
+import android.content.pm.PackageManager;
 import android.graphics.Color;
 import android.graphics.ColorMatrix;
 import android.graphics.ColorMatrixColorFilter;
 import android.graphics.Matrix;
 import android.graphics.Paint;
+import android.graphics.Point;
 import android.graphics.PorterDuff;
 import android.graphics.PorterDuffXfermode;
 import android.graphics.Rect;
-import androidx.annotation.ColorInt;
 import android.support.test.filters.LargeTest;
 import android.support.test.filters.MediumTest;
 import android.support.test.runner.AndroidJUnit4;
 import android.uirendering.cts.R;
+import android.uirendering.cts.bitmapcomparers.MSSIMComparer;
 import android.uirendering.cts.bitmapverifiers.ColorCountVerifier;
 import android.uirendering.cts.bitmapverifiers.ColorVerifier;
 import android.uirendering.cts.bitmapverifiers.RectVerifier;
+import android.uirendering.cts.bitmapverifiers.SamplePointVerifier;
 import android.uirendering.cts.testinfrastructure.ActivityTestBase;
 import android.uirendering.cts.testinfrastructure.ViewInitializer;
+import android.uirendering.cts.util.WebViewReadyHelper;
 import android.view.Gravity;
 import android.view.View;
 import android.view.ViewTreeObserver;
+import android.webkit.WebView;
 import android.widget.FrameLayout;
+
+import androidx.annotation.ColorInt;
 
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -384,5 +390,247 @@ public class LayerTests extends ActivityTestBase {
                     canvas.drawColor(Color.RED);
                 })
                 .runWithVerifier(new ColorVerifier(Color.RED));
+    }
+
+    @LargeTest
+    @Test
+    public void testWebViewWithLayer() {
+        if (!getActivity().getPackageManager().hasSystemFeature(PackageManager.FEATURE_WEBVIEW)) {
+            return; // no WebView to run test on
+        }
+        CountDownLatch hwFence = new CountDownLatch(1);
+        createTest()
+                .addLayout(R.layout.test_content_webview, (ViewInitializer) view -> {
+                    WebView webview = view.requireViewById(R.id.webview);
+                    WebViewReadyHelper helper = new WebViewReadyHelper(webview, hwFence);
+                    helper.loadData("<body style=\"background-color:blue\">");
+                    webview.setLayerType(View.LAYER_TYPE_HARDWARE, null);
+                }, true, hwFence)
+                .runWithVerifier(new ColorVerifier(Color.BLUE));
+    }
+
+    @LargeTest
+    @Test
+    public void testWebViewWithOffsetLayer() {
+        if (!getActivity().getPackageManager().hasSystemFeature(PackageManager.FEATURE_WEBVIEW)) {
+            return; // no WebView to run test on
+        }
+        CountDownLatch hwFence = new CountDownLatch(1);
+        createTest()
+                .addLayout(R.layout.frame_layout_webview, (ViewInitializer) view -> {
+                    FrameLayout layout = view.requireViewById(R.id.frame_layout);
+                    layout.setBackgroundColor(Color.RED);
+
+                    WebView webview = view.requireViewById(R.id.webview);
+                    WebViewReadyHelper helper = new WebViewReadyHelper(webview, hwFence);
+                    helper.loadData("<body style=\"background-color:blue\">");
+
+                    webview.setLayerType(View.LAYER_TYPE_HARDWARE, null);
+                    webview.setTranslationX(10);
+                    webview.setTranslationY(10);
+                    webview.getLayoutParams().width = TEST_WIDTH - 20;
+                    webview.getLayoutParams().height = TEST_HEIGHT - 20;
+                }, true, hwFence)
+                .runWithVerifier(new RectVerifier(Color.RED, Color.BLUE,
+                        new Rect(10, 10, TEST_WIDTH - 10, TEST_HEIGHT - 10)));
+    }
+
+    @LargeTest
+    @Test
+    public void testWebViewWithParentLayer() {
+        if (!getActivity().getPackageManager().hasSystemFeature(PackageManager.FEATURE_WEBVIEW)) {
+            return; // no WebView to run test on
+        }
+        CountDownLatch hwFence = new CountDownLatch(1);
+        createTest()
+                .addLayout(R.layout.frame_layout_webview, (ViewInitializer) view -> {
+                    FrameLayout layout = view.requireViewById(R.id.frame_layout);
+                    layout.setBackgroundColor(Color.RED);
+                    layout.setLayerType(View.LAYER_TYPE_HARDWARE, null);
+
+                    WebView webview = view.requireViewById(R.id.webview);
+                    WebViewReadyHelper helper = new WebViewReadyHelper(webview, hwFence);
+                    helper.loadData("<body style=\"background-color:blue\">");
+
+                    webview.setTranslationX(10);
+                    webview.setTranslationY(10);
+                    webview.getLayoutParams().width = TEST_WIDTH - 20;
+                    webview.getLayoutParams().height = TEST_HEIGHT - 20;
+
+                }, true, hwFence)
+                .runWithVerifier(new RectVerifier(Color.RED, Color.BLUE,
+                        new Rect(10, 10, TEST_WIDTH - 10, TEST_HEIGHT - 10)));
+    }
+
+    @LargeTest
+    @Test
+    public void testWebViewScaledWithParentLayer() {
+        if (!getActivity().getPackageManager().hasSystemFeature(PackageManager.FEATURE_WEBVIEW)) {
+            return; // no WebView to run test on
+        }
+        CountDownLatch hwFence = new CountDownLatch(1);
+        createTest()
+                .addLayout(R.layout.frame_layout_webview, (ViewInitializer) view -> {
+                    FrameLayout layout = view.requireViewById(R.id.frame_layout);
+                    layout.setBackgroundColor(Color.RED);
+                    layout.setLayerType(View.LAYER_TYPE_HARDWARE, null);
+
+                    WebView webview = view.requireViewById(R.id.webview);
+                    WebViewReadyHelper helper = new WebViewReadyHelper(webview, hwFence);
+                    helper.loadData("<body style=\"background-color:blue\">");
+
+                    webview.setTranslationX(10);
+                    webview.setTranslationY(10);
+                    webview.setScaleX(0.5f);
+                    webview.getLayoutParams().width = 40;
+                    webview.getLayoutParams().height = 40;
+
+                }, true, hwFence)
+                .runWithVerifier(new RectVerifier(Color.RED, Color.BLUE,
+                        new Rect(20, 10, 40, 50)));
+    }
+
+    @LargeTest
+    @Test
+    public void testWebViewWithAlpha() {
+        if (!getActivity().getPackageManager().hasSystemFeature(PackageManager.FEATURE_WEBVIEW)) {
+            return; // no WebView to run test on
+        }
+        CountDownLatch hwFence = new CountDownLatch(1);
+        createTest()
+                .addLayout(R.layout.test_content_webview, (ViewInitializer) view -> {
+                    WebView webview = view.requireViewById(R.id.webview);
+                    WebViewReadyHelper helper = new WebViewReadyHelper(webview, hwFence);
+                    helper.loadData("<body style=\"background-color:blue\">");
+
+                    // reduce alpha by 50%
+                    webview.setAlpha(0.5f);
+
+                }, true, hwFence)
+                .runWithVerifier(new ColorVerifier(Color.rgb(128, 128, 255)));
+    }
+
+    @LargeTest
+    @Test
+    public void testWebViewWithAlphaLayer() {
+        if (!getActivity().getPackageManager().hasSystemFeature(PackageManager.FEATURE_WEBVIEW)) {
+            return; // no WebView to run test on
+        }
+        CountDownLatch hwFence = new CountDownLatch(1);
+        createTest()
+                .addLayout(R.layout.test_content_webview, (ViewInitializer) view -> {
+                    WebView webview = view.requireViewById(R.id.webview);
+                    WebViewReadyHelper helper = new WebViewReadyHelper(webview, hwFence);
+                    helper.loadData("<body style=\"background-color:blue\">");
+
+                    // reduce alpha by 50%
+                    Paint paint = new Paint();
+                    paint.setAlpha(128);
+                    webview.setLayerType(View.LAYER_TYPE_HARDWARE, paint);
+
+                    // reduce alpha by another 50% (ensuring two alphas combine correctly)
+                    webview.setAlpha(0.5f);
+
+                }, true, hwFence)
+                .runWithVerifier(new ColorVerifier(Color.rgb(191, 191, 255)));
+    }
+
+    @LargeTest
+    @Test
+    public void testWebViewWithUnclippedLayer() {
+        if (!getActivity().getPackageManager().hasSystemFeature(PackageManager.FEATURE_WEBVIEW)) {
+            return; // no WebView to run test on
+        }
+        CountDownLatch hwFence = new CountDownLatch(1);
+        createTest()
+                .addLayout(R.layout.test_content_webview, (ViewInitializer) view -> {
+                    WebView webview = view.requireViewById(R.id.webview);
+                    WebViewReadyHelper helper = new WebViewReadyHelper(webview, hwFence);
+                    helper.loadData("<body style=\"min-height: 120vh; background-color:blue\">");
+                    webview.setVerticalFadingEdgeEnabled(true);
+                    webview.setVerticalScrollBarEnabled(false);
+                    webview.setLayerType(View.LAYER_TYPE_HARDWARE, null);
+
+                }, true, hwFence)
+                .runWithVerifier(new SamplePointVerifier(
+                        new Point[] {
+                                // solid area
+                                new Point(0, 0),
+                                new Point(0, TEST_HEIGHT - 1),
+                                // fade area
+                                new Point(0, TEST_HEIGHT - 10),
+                                new Point(0, TEST_HEIGHT - 5)
+                        },
+                        new int[] {
+                                Color.BLUE,
+                                Color.WHITE,
+                                0xffb3b3ff, // white blended with blue
+                                0xffdbdbff  // white blended with blue
+                        }));
+    }
+
+    @LargeTest
+    @Test
+    public void testWebViewWithUnclippedLayerAndComplexClip() {
+        if (!getActivity().getPackageManager().hasSystemFeature(PackageManager.FEATURE_WEBVIEW)) {
+            return; // no WebView to run test on
+        }
+        CountDownLatch hwFence = new CountDownLatch(1);
+        createTest()
+                .addLayout(R.layout.circle_clipped_webview, (ViewInitializer) view -> {
+                    WebView webview = view.requireViewById(R.id.webview);
+                    WebViewReadyHelper helper = new WebViewReadyHelper(webview, hwFence);
+                    helper.loadData("<body style=\"min-height: 120vh; background-color:blue\">");
+                    webview.setVerticalFadingEdgeEnabled(true);
+                    webview.setVerticalScrollBarEnabled(false);
+                    webview.setLayerType(View.LAYER_TYPE_HARDWARE, null);
+
+                }, true, hwFence)
+                .runWithVerifier(new SamplePointVerifier(
+                        new Point[] {
+                                // solid white area
+                                new Point(0, 0),
+                                new Point(0, TEST_HEIGHT - 1),
+                                // solid blue area
+                                new Point(TEST_WIDTH / 2 , 5),
+                                // fade area
+                                new Point(TEST_WIDTH / 2, TEST_HEIGHT - 10),
+                                new Point(TEST_WIDTH / 2, TEST_HEIGHT - 5)
+                        },
+                        new int[] {
+                                Color.WHITE,
+                                Color.WHITE,
+                                Color.BLUE,
+                                0xffb3b3ff, // white blended with blue
+                                0xffdbdbff  // white blended with blue
+                        }));
+    }
+
+    @LargeTest
+    @Test
+    public void testWebViewWithLayerAndComplexClip() {
+        if (!getActivity().getPackageManager().hasSystemFeature(PackageManager.FEATURE_WEBVIEW)) {
+            return; // no WebView to run test on
+        }
+        CountDownLatch hwFence = new CountDownLatch(1);
+        createTest()
+                // golden client - draw a simple non-AA circle
+                .addCanvasClient((canvas, width, height) -> {
+                    Paint paint = new Paint();
+                    paint.setAntiAlias(false);
+                    paint.setColor(Color.BLUE);
+                    canvas.drawOval(0, 0, width, height, paint);
+                }, false)
+                // verify against solid color webview, clipped to its parent oval
+                .addLayout(R.layout.circle_clipped_webview, (ViewInitializer) view -> {
+                    FrameLayout layout = view.requireViewById(R.id.circle_clip_frame_layout);
+                    layout.setLayerType(View.LAYER_TYPE_HARDWARE, null);
+
+                    WebView webview = view.requireViewById(R.id.webview);
+                    WebViewReadyHelper helper = new WebViewReadyHelper(webview, hwFence);
+                    helper.loadData("<body style=\"background-color:blue\">");
+
+                }, true, hwFence)
+                .runWithComparer(new MSSIMComparer(0.95));
     }
 }

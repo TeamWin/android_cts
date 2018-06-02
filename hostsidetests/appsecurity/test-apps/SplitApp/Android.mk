@@ -40,10 +40,11 @@ LOCAL_AAPT_FLAGS := --version-code 100 --version-name OneHundred --replace-versi
 LOCAL_PROGUARD_ENABLED := disabled
 LOCAL_DEX_PREOPT := false
 
-# Disable AAPT2 to fix:
-# unknown option '--replace-version'.
-# TODO(b/79755007): Re-enable AAPT2 when it supports the missing features.
+# TODO(b/80322746): enable AAPT2 when error linking against this package is fixed:
+# cts/hostsidetests/appsecurity/test-apps/SplitApp/feature/AndroidManifest.xml:31: error: resource xml/my_activity_meta (aka com.android.cts.splitapp:xml/my_activity_meta) not found.
 LOCAL_USE_AAPT2 := false
+
+LOCAL_EXPORT_PACKAGE_RESOURCES := true
 
 include $(BUILD_CTS_SUPPORT_PACKAGE)
 
@@ -74,11 +75,6 @@ LOCAL_AAPT_FLAGS := --version-code 100 --version-name OneHundredRevisionTwelve -
 LOCAL_PROGUARD_ENABLED := disabled
 LOCAL_DEX_PREOPT := false
 
-# Disable AAPT2 to fix:
-# unknown option '--replace-version'.
-# TODO(b/79755007): Re-enable AAPT2 when it supports the missing features.
-LOCAL_USE_AAPT2 := false
-
 include $(BUILD_CTS_SUPPORT_PACKAGE)
 
 
@@ -107,11 +103,6 @@ LOCAL_AAPT_FLAGS := --version-code 101 --version-name OneHundredOne --replace-ve
 LOCAL_PROGUARD_ENABLED := disabled
 LOCAL_DEX_PREOPT := false
 
-# Disable AAPT2 to fix:
-# unknown option '--replace-version'.
-# TODO(b/79755007): Re-enable AAPT2 when it supports the missing features.
-LOCAL_USE_AAPT2 := false
-
 include $(BUILD_CTS_SUPPORT_PACKAGE)
 
 
@@ -139,11 +130,6 @@ LOCAL_AAPT_FLAGS := --version-code 100 --version-name OneHundred --replace-versi
 
 LOCAL_PROGUARD_ENABLED := disabled
 LOCAL_DEX_PREOPT := false
-
-# Disable AAPT2 to fix:
-# unknown option '--replace-version'.
-# TODO(b/79755007): Re-enable AAPT2 when it supports the missing features.
-LOCAL_USE_AAPT2 := false
 
 include $(BUILD_CTS_SUPPORT_PACKAGE)
 
