@@ -24,7 +24,7 @@ LOCAL_PACKAGE_NAME := CtsNoRestartFeature
 LOCAL_SDK_VERSION := current
 
 LOCAL_MODULE_TAGS := tests
-LOCAL_COMPATIBILITY_SUITE := cts vts general-tests
+LOCAL_COMPATIBILITY_SUITE := cts vts general-tests cts_instant
 
 LOCAL_PROGUARD_ENABLED := disabled
 LOCAL_DEX_PREOPT := false

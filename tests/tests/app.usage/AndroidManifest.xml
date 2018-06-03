@@ -29,8 +29,9 @@
     <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
     <uses-permission android:name="android.permission.READ_PHONE_STATE" />
 
-    <application android:usesCleartextTraffic="true">
-        <uses-library android:name="android.test.runner" />
+    <application android:usesCleartextTraffic="true"
+            android:networkSecurityConfig="@xml/network_security_config">
+        <uses-library android:name="android.test.runner"/>
 
         <activity android:name=".Activities$ActivityOne" />
         <activity android:name=".Activities$ActivityTwo" />
@@ -48,4 +49,3 @@
     </instrumentation>
 
 </manifest>
-

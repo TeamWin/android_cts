@@ -17,6 +17,7 @@
 package android.uirendering.cts.testclasses;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
@@ -106,6 +107,7 @@ public class HardwareBitmapTests extends ActivityTestBase {
     public void testReadbackThroughPicture() {
         Bitmap hardwareBitmap = BitmapFactory.decodeResource(mRes, R.drawable.robot,
                 HARDWARE_OPTIONS);
+        assertEquals(Bitmap.Config.HARDWARE, hardwareBitmap.getConfig());
         Picture picture = new Picture();
         {
             Canvas canvas = picture.beginRecording(TEST_WIDTH, TEST_HEIGHT);
@@ -114,6 +116,27 @@ public class HardwareBitmapTests extends ActivityTestBase {
             picture.endRecording();
         }
         assertTrue(picture.requiresHardwareAcceleration());
+        Bitmap result = Bitmap.createBitmap(picture, picture.getWidth(), picture.getHeight(),
+                Bitmap.Config.ARGB_8888);
+        assertTrue(new GoldenImageVerifier(getActivity(),
+                R.drawable.golden_robot, new MSSIMComparer(0.95)).verify(result));
+    }
+
+    @Test
+    public void testReadbackThroughPictureNoEndRecording() {
+        // Exact same test as #testReadbackThroughPicture but with an omitted endRecording
+        Bitmap hardwareBitmap = BitmapFactory.decodeResource(mRes, R.drawable.robot,
+                HARDWARE_OPTIONS);
+        assertEquals(Bitmap.Config.HARDWARE, hardwareBitmap.getConfig());
+        Picture picture = new Picture();
+        {
+            Canvas canvas = picture.beginRecording(TEST_WIDTH, TEST_HEIGHT);
+            canvas.drawColor(Color.WHITE);
+            canvas.drawBitmap(hardwareBitmap, 0, 0, null);
+        }
+        // It will be true, but as endRecording hasn't been called yet it's still in the
+        // "false" state from beginRecording()
+        assertFalse(picture.requiresHardwareAcceleration());
         Bitmap result = Bitmap.createBitmap(picture, picture.getWidth(), picture.getHeight(),
                 Bitmap.Config.ARGB_8888);
         assertTrue(new GoldenImageVerifier(getActivity(),

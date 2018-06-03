@@ -18,20 +18,30 @@
 
 package android.omapi.accesscontrol1.cts;
 
+import static org.junit.Assert.*;
+import static org.junit.Assume.assumeTrue;
+
+import org.junit.After;
+import org.junit.Before;
+import org.junit.Test;
+
 import java.util.Timer;
 import java.util.TimerTask;
 import java.util.concurrent.Executor;
 import java.util.concurrent.TimeoutException;
 
+import android.content.pm.PackageManager;
 import android.os.RemoteException;
 import android.se.omapi.Channel;
 import android.se.omapi.Reader;
 import android.se.omapi.SEService;
 import android.se.omapi.SEService.OnConnectedListener;
 import android.se.omapi.Session;
-import android.test.AndroidTestCase;
+import android.support.test.InstrumentationRegistry;
 
-public class AccessControlTest extends AndroidTestCase {
+import com.android.compatibility.common.util.PropertyUtil;
+
+public class AccessControlTest {
     private final static String UICC_READER_PREFIX = "SIM";
     private final static String ESE_READER_PREFIX = "eSE";
     private final static String SD_READER_PREFIX = "SD";
@@ -144,15 +154,22 @@ public class AccessControlTest extends AndroidTestCase {
         }
     }
 
-    @Override
-    protected void setUp() throws Exception {
-        seService = new SEService(getContext(), new SynchronousExecutor(), mListener);
+    private boolean supportsHardware() {
+        final PackageManager pm = InstrumentationRegistry.getContext().getPackageManager();
+        boolean lowRamDevice = PropertyUtil.propertyEquals("ro.config.low_ram", "true");
+        return !lowRamDevice || (lowRamDevice && pm.hasSystemFeature("android.hardware.type.watch"));
+    }
+
+    @Before
+    public void setUp() throws Exception {
+        assumeTrue(supportsHardware());
+        seService = new SEService(InstrumentationRegistry.getContext(), new SynchronousExecutor(), mListener);
         connectionTimer = new Timer();
         connectionTimer.schedule(mTimerTask, SERVICE_CONNECTION_TIME_OUT);
     }
 
-    @Override
-    protected void tearDown() throws Exception {
+    @After
+    public void tearDown() throws Exception {
         if (seService != null && seService.isConnected()) {
             seService.shutdown();
             connected = false;
@@ -179,36 +196,42 @@ public class AccessControlTest extends AndroidTestCase {
         }
     }
 
+    @Test
     public void testAuthorizedAID() {
         for (byte[] aid : AUTHORIZED_AID) {
             testSelectableAid(aid);
         }
     }
 
+    @Test
     public void testUnauthorizedAID() {
         for (byte[] aid : UNAUTHORIZED_AID) {
             testUnauthorisedAid(aid);
         }
     }
 
+    @Test
     public void testAuthorizedAPDUAID40() {
         for (byte[] apdu : AUTHORIZED_APDU_AID_40) {
             testTransmitAPDU(AID_40, apdu);
         }
     }
 
+    @Test
     public void testUnauthorisedAPDUAID40() {
         for (byte[] apdu : UNAUTHORIZED_APDU_AID_40) {
             testUnauthorisedAPDU(AID_40, apdu);
         }
     }
 
+    @Test
     public void testAuthorizedAPDUAID41() {
         for (byte[] apdu : AUTHORIZED_APDU_AID_41) {
             testTransmitAPDU(AID_41, apdu);
         }
     }
 
+    @Test
     public void testUnauthorisedAPDUAID41() {
         for (byte[] apdu : UNAUTHORIZED_APDU_AID_41) {
             testUnauthorisedAPDU(AID_41, apdu);
