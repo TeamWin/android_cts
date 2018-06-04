@@ -852,7 +852,10 @@ public class StagefrightTest extends InstrumentationTestCase {
 
         Bitmap bitmap = BitmapFactory.decodeResource(
                 getInstrumentation().getContext().getResources(), R.raw.bug_73172046);
-        bitmap.recycle();
+        // OK if the decoding failed, but shouldn't cause crashes
+        if (bitmap != null) {
+            bitmap.recycle();
+        }
     }
 
     @SecurityTest
