@@ -270,6 +270,9 @@ public class AudioManagerTest extends InstrumentationTestCase {
     }
 
     public void testCheckingZenModeBlockDoesNotRequireNotificationPolicyAccess() throws Exception {
+        if (!mSupportNotificationPolicyAccess) {
+            return;
+        }
         try {
             // set zen mode to priority only, so playSoundEffect will check notification policy
             Utils.toggleNotificationPolicyAccess(mContext.getPackageName(), getInstrumentation(),
