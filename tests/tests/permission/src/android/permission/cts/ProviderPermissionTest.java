@@ -22,6 +22,8 @@ import android.content.pm.PackageInfo;
 import android.content.pm.PackageManager;
 import android.content.pm.ResolveInfo;
 import android.net.Uri;
+import android.platform.test.annotations.AppModeFull;
+import android.platform.test.annotations.AppModeInstant;
 import android.provider.CallLog;
 import android.provider.Contacts;
 import android.provider.ContactsContract;
@@ -83,6 +85,7 @@ public class ProviderPermissionTest extends AndroidTestCase {
      * <p>Tests Permission:
      *   {@link android.Manifest.permission#READ_CALL_LOG}
      */
+    @AppModeFull
     public void testReadCallLog() {
         assertReadingContentUriRequiresPermission(CallLog.CONTENT_URI,
                 android.Manifest.permission.READ_CALL_LOG);
@@ -93,9 +96,33 @@ public class ProviderPermissionTest extends AndroidTestCase {
      * <p>Tests Permission:
      *   {@link android.Manifest.permission#WRITE_CALL_LOG}
      */
+    @AppModeFull
     public void testWriteCallLog() {
         assertWritingContentUriRequiresPermission(CallLog.CONTENT_URI,
                 android.Manifest.permission.WRITE_CALL_LOG);
+    }
+
+    /**
+     * Verify that reading from call-log (a content provider that is not accessible to instant apps)
+     * returns null
+     */
+    @AppModeInstant
+    public void testReadCallLogInstant() {
+        assertNull(getContext().getContentResolver().query(CallLog.CONTENT_URI, null, null, null,
+                null));
+    }
+
+    /**
+     * Verify that writing to call-log (a content provider that is not accessible to instant apps)
+     * yields an IAE.
+     */
+    @AppModeInstant
+    public void testWriteCallLogInstant() {
+        try {
+            getContext().getContentResolver().insert(CallLog.CONTENT_URI, new ContentValues());
+            fail("Expected IllegalArgumentException");
+        } catch (IllegalArgumentException expected) {
+        }
     }
 
     /**
@@ -105,6 +132,7 @@ public class ProviderPermissionTest extends AndroidTestCase {
      *
      * <p>Note: The WRITE_SMS permission has been removed.
      */
+    @AppModeFull
     public void testReadSms() {
         if (!mContext.getPackageManager().hasSystemFeature(
                 PackageManager.FEATURE_TELEPHONY)) {
@@ -113,6 +141,21 @@ public class ProviderPermissionTest extends AndroidTestCase {
 
         assertReadingContentUriRequiresPermission(Telephony.Sms.CONTENT_URI,
                 android.Manifest.permission.READ_SMS);
+    }
+
+    /**
+     * Verify that reading from 'sms' (a content provider that is not accessible to instant apps)
+     * returns null
+     */
+    @AppModeInstant
+    public void testReadSmsInstant() {
+        if (!mContext.getPackageManager().hasSystemFeature(
+                PackageManager.FEATURE_TELEPHONY)) {
+            return;
+        }
+
+        assertNull(getContext().getContentResolver().query(Telephony.Sms.CONTENT_URI, null, null,
+                null, null));
     }
 
     /**
