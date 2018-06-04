@@ -130,7 +130,7 @@ abstract class AbstractAutoFillActivity extends Activity {
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        AutofillTestWatcher.registerActivity(this);
+        AutofillTestWatcher.registerActivity("onCreate()", this);
     }
 
     @Override
@@ -138,13 +138,13 @@ abstract class AbstractAutoFillActivity extends Activity {
         super.onDestroy();
         // Activitiy is typically unregistered at finish(), but we need to unregister here too
         // for the cases where it's destroyed due to a config change (like device rotation).
-        AutofillTestWatcher.unregisterActivity(this);
+        AutofillTestWatcher.unregisterActivity("onDestroy()", this);
     }
 
     @Override
     public void finish() {
         finishOnly();
-        AutofillTestWatcher.unregisterActivity(this);
+        AutofillTestWatcher.unregisterActivity("finish()", this);
     }
 
     /**
