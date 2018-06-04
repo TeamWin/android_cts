@@ -32,9 +32,10 @@ public class AutofillActivityTestRule<T extends AbstractAutoFillActivity>
     }
 
     @Override
-    protected void afterActivityLaunched() {
+    protected void afterActivityFinished() {
         // AutofillTestWatcher does not need to watch for this activity as the ActivityTestRule
         // will take care of finishing it...
-        AutofillTestWatcher.unregisterActivity(getActivity());
+        AutofillTestWatcher.unregisterActivity("AutofillActivityTestRule.afterActivityFinished()",
+                getActivity());
     }
 }
