@@ -49,8 +49,11 @@ public class MultiWindowLoginActivity extends LoginActivity {
     }
 
     public static MultiWindowLoginActivity waitNewInstance() throws InterruptedException {
-        sLastInstanceLatch.await(Timeouts.ACTIVITY_RESURRECTION.getMaxValue(),
-                TimeUnit.MILLISECONDS);
+        if (!sLastInstanceLatch.await(Timeouts.ACTIVITY_RESURRECTION.getMaxValue(),
+                TimeUnit.MILLISECONDS)) {
+            throw new RetryableException("New MultiWindowLoginActivity didn't start",
+                    Timeouts.ACTIVITY_RESURRECTION);
+        }
         sLastInstanceLatch = null;
         return sLastInstance;
     }

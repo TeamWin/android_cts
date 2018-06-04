@@ -17,25 +17,33 @@
 package android.autofillservice.cts;
 
 import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
 
 /**
  * Generic helper for JUnit needs.
  */
 public final class JUnitHelper {
 
-    private static String sCurrentTestNamer;
+    private static String sCurrentTestName;
+    private static String sCurrentTestClass;
 
     @NonNull
-    static String getCurrentTestName() {
-        return sCurrentTestNamer != null ? sCurrentTestNamer : "N/A";
+    public static String getCurrentTestName() {
+        if (sCurrentTestName != null) return sCurrentTestName;
+        if (sCurrentTestClass != null) return sCurrentTestClass;
+        return "(Unknown test)";
     }
 
-    public static void setCurrentTestName(String name) {
-        sCurrentTestNamer = name;
+    public static void setCurrentTestName(@Nullable String name) {
+        sCurrentTestName = name;
+    }
+
+    public static void setCurrentTestClass(@Nullable String testClass) {
+        sCurrentTestClass = testClass;
     }
 
     public static boolean isRunningTest() {
-        return sCurrentTestNamer != null;
+        return sCurrentTestName != null;
     }
 
     private JUnitHelper() {

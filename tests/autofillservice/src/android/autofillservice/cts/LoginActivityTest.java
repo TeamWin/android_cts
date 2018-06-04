@@ -86,6 +86,7 @@ import android.view.accessibility.AccessibilityNodeProvider;
 import android.view.autofill.AutofillManager;
 import android.widget.RemoteViews;
 
+import org.junit.Ignore;
 import org.junit.Test;
 
 import java.util.concurrent.CountDownLatch;
@@ -2157,6 +2158,7 @@ public class LoginActivityTest extends AbstractLoginActivityTestCase {
         mActivity.assertAutoFilled();
     }
 
+    @Ignore("blocked on b/4222506") // STOPSHIP: must fix and remove @Ignore before Q is launched
     @Test
     public void testCommitMultipleTimes() throws Throwable {
         // Set service.
@@ -2166,7 +2168,7 @@ public class LoginActivityTest extends AbstractLoginActivityTestCase {
                 .setRequiredSavableIds(SAVE_DATA_TYPE_PASSWORD, ID_USERNAME, ID_PASSWORD)
                 .build();
 
-        for (int i = 1; i <= 3; i++) {
+        for (int i = 1; i <= 10; i++) {
             Log.i(TAG, "testCommitMultipleTimes(): step " + i);
             final String username = "user-" + i;
             final String password = "pass-" + i;
@@ -2222,7 +2224,7 @@ public class LoginActivityTest extends AbstractLoginActivityTestCase {
         // Set service.
         enableService();
 
-        for (int i = 1; i <= 3; i++) {
+        for (int i = 1; i <= 10; i++) {
             Log.i(TAG, "testCancelMultipleTimes(): step " + i);
             final String username = "user-" + i;
             final String password = "pass-" + i;

@@ -291,7 +291,9 @@ public class InstrumentedAutoFillService extends AutofillService {
 
     static void resetStaticState() {
         sInstance.set(null);
-        sConnected = false;
+        synchronized (sLock) {
+            sConnected = false;
+        }
         sServiceLabel = SERVICE_CLASS;
     }
 

@@ -66,7 +66,7 @@ public class SessionLifecycleTest extends AutoFillServiceTestCase {
     private static final long WAIT_ACTIVITY_MS = 1000;
 
     private static final Timeout SESSION_LIFECYCLE_TIMEOUT = new Timeout(
-            "SESSION_LIFECYCLE_TIMEOUT", 2000, 2F, 5000);
+            "SESSION_LIFECYCLE_TIMEOUT", 5000, 2F, 5000);
 
     /**
      * Runs an {@code assertion}, retrying until {@code timeout} is reached.
