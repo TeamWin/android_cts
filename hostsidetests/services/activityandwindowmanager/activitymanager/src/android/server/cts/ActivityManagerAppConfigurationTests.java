@@ -337,6 +337,10 @@ public class ActivityManagerAppConfigurationTests extends ActivityManagerTestBas
      */
     @Presubmit
     public void testFullscreenAppOrientationRequests() throws Exception {
+        if (!supportsRotation()) {
+            CLog.logAndDisplay(LogLevel.INFO, "Skipping test: no rotation support");
+            return;
+        }
         String logSeparator = clearLogcat();
         launchActivity(PORTRAIT_ACTIVITY_NAME);
         mAmWmState.assertVisibility(PORTRAIT_ACTIVITY_NAME, true /* visible */);
@@ -364,6 +368,10 @@ public class ActivityManagerAppConfigurationTests extends ActivityManagerTestBas
     }
 
     public void testNonfullscreenAppOrientationRequests() throws Exception {
+        if (!supportsRotation()) {
+            CLog.logAndDisplay(LogLevel.INFO, "Skipping test: no rotation support");
+            return;
+        }
         String logSeparator = clearLogcat();
         launchActivity(PORTRAIT_ACTIVITY_NAME);
         final ReportedSizes initialReportedSizes =
@@ -411,6 +419,10 @@ public class ActivityManagerAppConfigurationTests extends ActivityManagerTestBas
      * Test that device handles moving between two tasks with different orientations.
      */
     public void testTaskCloseRestoreOrientation() throws Exception {
+        if (!supportsRotation()) {
+            CLog.logAndDisplay(LogLevel.INFO, "Skipping test: no rotation support");
+            return;
+        }
         // Start landscape activity.
         launchActivity(LANDSCAPE_ACTIVITY_NAME);
         mAmWmState.assertVisibility(LANDSCAPE_ACTIVITY_NAME, true /* visible */);
@@ -437,6 +449,10 @@ public class ActivityManagerAppConfigurationTests extends ActivityManagerTestBas
      * Test that device handles moving between two tasks with different orientations.
      */
     public void testTaskMoveToBackOrientation() throws Exception {
+        if (!supportsRotation()) {
+            CLog.logAndDisplay(LogLevel.INFO, "Skipping test: no rotation support");
+            return;
+        }
         // Start landscape activity.
         launchActivity(LANDSCAPE_ACTIVITY_NAME);
         mAmWmState.assertVisibility(LANDSCAPE_ACTIVITY_NAME, true /* visible */);
