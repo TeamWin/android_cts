@@ -28,6 +28,9 @@ import static com.android.server.pm.shortcutmanagertest.ShortcutManagerTestUtils
 
 import android.test.suitebuilder.annotation.SmallTest;
 
+import com.android.compatibility.common.util.CddTest;
+
+@CddTest(requirement="3.8.1/C-2-3")
 @SmallTest
 public class ShortcutManagerMultiLauncherTest extends ShortcutManagerCtsTestsBase {
     /**
