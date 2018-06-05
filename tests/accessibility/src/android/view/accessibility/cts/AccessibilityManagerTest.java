@@ -58,6 +58,8 @@ public class AccessibilityManagerTest extends InstrumentationTestCase {
                 getInstrumentation().getContext().getSystemService(Service.ACCESSIBILITY_SERVICE);
         mTargetContext = getInstrumentation().getTargetContext();
         mHandler = new Handler(mTargetContext.getMainLooper());
+        // In case the test runner started a UiAutomation, destroy it to start with a clean slate.
+        getInstrumentation().getUiAutomation().destroy();
         ServiceControlUtils.turnAccessibilityOff(getInstrumentation());
     }
 
