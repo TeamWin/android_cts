@@ -19,12 +19,14 @@ package android.permission.cts;
 import android.content.Context;
 import android.net.wifi.WifiConfiguration;
 import android.net.wifi.WifiManager;
+import android.platform.test.annotations.AppModeFull;
 import android.test.AndroidTestCase;
 import android.test.suitebuilder.annotation.SmallTest;
 
 /**
  * Verify WifiManager related methods without specific Wifi state permissions.
  */
+@AppModeFull(reason = "Instant apps cannot access the WifiManager")
 @SmallTest
 public class NoWifiStatePermissionTest extends AndroidTestCase {
     private static final int TEST_NET_ID = 1;
