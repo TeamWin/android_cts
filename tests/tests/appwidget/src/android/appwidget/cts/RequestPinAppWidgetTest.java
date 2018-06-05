@@ -31,6 +31,8 @@ import java.util.Arrays;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 
+import com.android.compatibility.common.util.CddTest;
+
 public class RequestPinAppWidgetTest extends AppWidgetTestCase {
 
     private static final String LAUNCHER_CLASS = "android.appwidget.cts.packages.Launcher";
@@ -51,6 +53,7 @@ public class RequestPinAppWidgetTest extends AppWidgetTestCase {
         setLauncher(mDefaultLauncher);
     }
 
+    @CddTest(requirement="3.8.2/C-2-2")
     private void runPinWidgetTest(final String launcherPkg) throws Exception {
         if (!hasAppWidgets()) {
             return;
@@ -107,6 +110,7 @@ public class RequestPinAppWidgetTest extends AppWidgetTestCase {
         runPinWidgetTest("android.appwidget.cts.packages.launcher2");
     }
 
+    @CddTest(requirement="3.8.2/C-2-1")
     public void verifyIsRequestPinAppWidgetSupported(String launcherPkg, boolean expectedSupport)
         throws Exception {
         if (!hasAppWidgets()) {
