@@ -28,12 +28,15 @@ import android.content.pm.cts.shortcutmanager.common.Constants;
 import android.content.pm.cts.shortcutmanager.common.ReplyUtil;
 import android.os.PersistableBundle;
 import android.util.Log;
+import com.android.compatibility.common.util.CddTest;
 
 import java.util.List;
 
+@CddTest(requirement="3.8.1/C-4-1")
 public class ShortcutManagerRequestPinTest extends ShortcutManagerCtsTestsBase {
     private static final String TAG = "ShortcutMRPT";
 
+    @CddTest(requirement="[3.8.1/C-2-1],[3.8.1/C-3-1]")
     public void testIsRequestPinShortcutSupported() {
 
         // Launcher 1 supports it.
