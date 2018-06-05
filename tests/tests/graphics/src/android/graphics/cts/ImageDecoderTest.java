@@ -1723,8 +1723,15 @@ public class ImageDecoderTest {
                         }
                     }
                 } else {
-                    // Not decoding to HARDWARE, so we can save RAM in either case.
-                    assertTrue(byteCount < normalByteCount);
+                    // Not decoding to HARDWARE, but |normal| was. Again, if basi6a16
+                    // was decoded to 8888, which we can detect by looking at the color
+                    // space, no savings are possible.
+                    if (resId == R.raw.basi6a16 && !normal.getColorSpace().equals(
+                                ColorSpace.get(ColorSpace.Named.LINEAR_EXTENDED_SRGB))) {
+                        assertEquals(normalByteCount, byteCount);
+                    } else {
+                        assertTrue(byteCount < normalByteCount);
+                    }
                 }
             }
         }
