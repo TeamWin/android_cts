@@ -29,6 +29,8 @@ import android.graphics.BitmapFactory;
 import android.graphics.drawable.Icon;
 import android.test.suitebuilder.annotation.SmallTest;
 
+import com.android.compatibility.common.util.CddTest;
+
 @SmallTest
 public class ShortcutManagerLauncherApiTest extends ShortcutManagerCtsTestsBase {
     public void testPinShortcuts() {
@@ -342,7 +344,7 @@ public class ShortcutManagerLauncherApiTest extends ShortcutManagerCtsTestsBase 
         assertIconDimensions(icon5, getIconAsLauncher(
                 mLauncherContext1, mPackageContext1.getPackageName(), "ms21", false));
     }
-
+    @CddTest(requirement="3.8.1/C-1-2")
     public void testGetShortcutIconAdaptive() throws Exception {
         final Icon icon1 = Icon.createWithAdaptiveBitmap(BitmapFactory.decodeResource(
             getTestContext().getResources(), R.drawable.black_16x64));
