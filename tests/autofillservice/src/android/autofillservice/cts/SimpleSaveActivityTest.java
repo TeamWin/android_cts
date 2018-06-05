@@ -296,14 +296,22 @@ public class SimpleSaveActivityTest extends CustomDescriptionWithLinkTestCase {
         mActivity.syncRunOnUiThread(() -> mActivity.mInput.requestFocus());
         sReplier.getNextFillRequest();
 
-        // Trigger save and start a new session right away.
+        // Trigger save.
         mActivity.syncRunOnUiThread(() -> {
             mActivity.mInput.setText("108");
             mActivity.mCommit.performClick();
-            mActivity.getAutofillManager().requestAutofill(mActivity.mInput);
         });
 
-        // Make sure Save UI for 1st session was canceled....
+        // Make sure Save UI for 1st session was shown....
+        mUiBot.assertSaveShowing(SAVE_DATA_TYPE_GENERIC);
+
+        // ...then start the new session right away (without finishing the activity).
+        sReplier.addResponse(CannedFillResponse.NO_RESPONSE);
+        mActivity.syncRunOnUiThread(
+                () -> mActivity.getAutofillManager().requestAutofill(mActivity.mInput));
+        sReplier.getNextFillRequest();
+
+        // Make sure Save UI for 1st session was canceled.
         mUiBot.assertSaveNotShowing(SAVE_DATA_TYPE_GENERIC);
     }
 
@@ -593,7 +601,7 @@ public class SimpleSaveActivityTest extends CustomDescriptionWithLinkTestCase {
                 break;
             case FINISH_ACTIVITY:
                 // ..then finishes it.
-                WelcomeActivity.finishIt(mUiBot);
+                WelcomeActivity.finishIt();
                 break;
             default:
                 throw new IllegalArgumentException("invalid type: " + type);

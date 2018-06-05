@@ -372,4 +372,11 @@ public class AvailableIntentsTest extends AndroidTestCase {
             assertCanBeHandled(new Intent(TelecomManager.ACTION_CHANGE_DEFAULT_DIALER));
         }
     }
+
+    public void testTapAnPaySettings() {
+        PackageManager packageManager = mContext.getPackageManager();
+        if (packageManager.hasSystemFeature(PackageManager.FEATURE_NFC_HOST_CARD_EMULATION)) {
+            assertCanBeHandled(new Intent(Settings.ACTION_NFC_PAYMENT_SETTINGS));
+        }
+    }
 }

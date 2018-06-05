@@ -87,10 +87,9 @@ public class WelcomeActivity extends AbstractAutoFillActivity {
         }
     }
 
-    static void finishIt(UiBot uiBot) {
+    static void finishIt() {
         if (sInstance != null) {
             sInstance.finish();
-            uiBot.assertGoneByRelativeId(ID_WELCOME, Timeouts.ACTIVITY_RESURRECTION);
         }
     }
 

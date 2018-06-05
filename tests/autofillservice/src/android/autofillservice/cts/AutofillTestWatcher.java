@@ -53,9 +53,13 @@ public final class AutofillTestWatcher extends TestWatcher {
     /**
      * Registers an activity so it's automatically finished (if necessary) after the test.
      */
-    public static void registerActivity(@NonNull AbstractAutoFillActivity activity) {
-        Log.v(TAG, "registerActivity(): " + activity);
+    public static void registerActivity(@NonNull String where,
+            @NonNull AbstractAutoFillActivity activity) {
         synchronized (sLock) {
+            if (sUnfinishedBusiness.contains(activity)) {
+                throw new IllegalStateException("Already registered " + activity);
+            }
+            Log.v(TAG, "registering activity on " + where + ": " + activity);
             sUnfinishedBusiness.add(activity);
         }
     }
@@ -63,10 +67,15 @@ public final class AutofillTestWatcher extends TestWatcher {
     /**
      * Unregisters an activity so it's not automatically finished after the test.
      */
-    public static void unregisterActivity(@NonNull AbstractAutoFillActivity activity) {
-        Log.v(TAG, "unregisterActivity(): " + activity);
+    public static void unregisterActivity(@NonNull String where,
+            @NonNull AbstractAutoFillActivity activity) {
         synchronized (sLock) {
-            sUnfinishedBusiness.remove(activity);
+            final boolean unregistered = sUnfinishedBusiness.remove(activity);
+            if (unregistered) {
+                Log.d(TAG, "unregistered activity on " + where + ": " + activity);
+            } else {
+                Log.v(TAG, "ignoring already unregistered activity on " + where + ": " + activity);
+            }
         }
     }
 
