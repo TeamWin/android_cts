@@ -27,6 +27,9 @@ import android.content.pm.cts.shortcutmanager.common.Constants;
 import android.test.suitebuilder.annotation.SmallTest;
 import android.text.format.Time;
 
+import com.android.compatibility.common.util.CddTest;
+
+@CddTest(requirement="3.8.1/C-4-1")
 @SmallTest
 public class ShortcutManagerUsageTest extends ShortcutManagerCtsTestsBase {
     private static final String APPOPS_SET_SHELL_COMMAND = "appops set {0} " +
