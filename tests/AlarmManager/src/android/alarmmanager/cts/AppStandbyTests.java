@@ -59,7 +59,7 @@ public class AppStandbyTests {
     private static final String TEST_APP_PACKAGE = "android.alarmmanager.alarmtestapp.cts";
     private static final String TEST_APP_RECEIVER = TEST_APP_PACKAGE + ".TestAlarmScheduler";
 
-    private static final long DEFAULT_WAIT = 1_000;
+    private static final long DEFAULT_WAIT = 4_000;
     private static final long POLL_INTERVAL = 200;
 
     // Tweaked alarm manager constants to facilitate testing
@@ -136,6 +136,7 @@ public class AppStandbyTests {
         setAlarmIntent.putExtra(TestAlarmScheduler.EXTRA_TRIGGER_TIME, triggerMillis);
         setAlarmIntent.putExtra(TestAlarmScheduler.EXTRA_REPEAT_INTERVAL, interval);
         setAlarmIntent.putExtra(TestAlarmScheduler.EXTRA_ALLOW_WHILE_IDLE, allowWhileIdle);
+        setAlarmIntent.addFlags(Intent.FLAG_RECEIVER_FOREGROUND);
         mContext.sendBroadcast(setAlarmIntent);
     }
 

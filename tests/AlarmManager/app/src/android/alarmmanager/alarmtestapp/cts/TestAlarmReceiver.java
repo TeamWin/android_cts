@@ -34,6 +34,7 @@ public class TestAlarmReceiver extends BroadcastReceiver{
         final Intent reportAlarmIntent = new Intent(ACTION_REPORT_ALARM_EXPIRED);
         reportAlarmIntent.putExtra(EXTRA_ALARM_COUNT, count);
         reportAlarmIntent.addFlags(Intent.FLAG_RECEIVER_REGISTERED_ONLY);
+        reportAlarmIntent.addFlags(Intent.FLAG_RECEIVER_FOREGROUND);
         context.sendBroadcast(reportAlarmIntent);
     }
 }
