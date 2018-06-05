@@ -23,6 +23,7 @@ import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
+import android.platform.test.annotations.AppModeFull;
 import android.support.test.InstrumentationRegistry;
 import android.support.test.runner.AndroidJUnit4;
 import android.util.Log;
@@ -96,6 +97,7 @@ public class BroadcastsTest {
                 () -> MyReceiver.clearCallback());
     }
 
+    @AppModeFull(reason = "Instant apps don't get to run in the background.")
     private void testNonSupportedBroadcastsNotDelivered(
             BiConsumer<IntentFilter, Consumer<Intent>> receiverInitializer,
             Consumer<Intent> intentInitializer,
@@ -103,7 +105,7 @@ public class BroadcastsTest {
 
         AmUtils.waitForBroadcastIdle();
 
-        // This broadcast should be delivered.
+        // This broadcast should not be delivered.
         final String[] UNSUPPORTED_BROADCASTS = new String[]{
                 "com.android.launcher.action.INSTALL_SHORTCUT",
         };
