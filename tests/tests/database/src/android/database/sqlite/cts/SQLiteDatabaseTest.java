@@ -1640,10 +1640,10 @@ public class SQLiteDatabaseTest extends AndroidTestCase {
     }
 
     /**
-     * Test that enableWriteAheadLogging is not affected by app's journal mode/synchronous mode
-     * settings
+     * Test that enableWriteAheadLogging is not affected by app's journal mode setting,
+     * but app can still control synchronous mode.
      */
-    public void testEnableWalOverridesJournalModeSynchronousMode() {
+    public void testEnableWalOverridesJournalModeSyncModePreserved() {
         mDatabase.close();
         SQLiteDatabase.OpenParams params = new SQLiteDatabase.OpenParams.Builder()
                 .setJournalMode("DELETE").setSynchronousMode("OFF").build();
@@ -1657,7 +1657,7 @@ public class SQLiteDatabaseTest extends AndroidTestCase {
         String syncMode = DatabaseUtils
                 .stringForQuery(mDatabase, "PRAGMA synchronous", null);
 
-        assertEquals("1" /* NORMAL */, syncMode);
+        assertEquals("0" /* OFF */, syncMode);
     }
 
     /**
