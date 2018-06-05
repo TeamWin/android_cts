@@ -30,24 +30,28 @@ import android.util.Log;
 import android.view.autofill.AutofillValue;
 import android.widget.EditText;
 
-import org.junit.Before;
-import org.junit.Rule;
 import org.junit.Test;
 
-public class MultipleFragmentLoginTest extends AutoFillServiceTestCase {
-    private static final String LOG_TAG = MultipleFragmentLoginTest.class.getSimpleName();
-    @Rule
-    public final AutofillActivityTestRule<FragmentContainerActivity> mActivityRule =
-            new AutofillActivityTestRule<>(FragmentContainerActivity.class);
+public class MultipleFragmentLoginTest
+        extends AutoFillServiceTestCase.AutoActivityLaunch<FragmentContainerActivity> {
+
+    private static final String LOG_TAG = "MultipleFragmentLoginTest";
+
     private FragmentContainerActivity mActivity;
     private EditText mEditText1;
     private EditText mEditText2;
 
-    @Before
-    public void init() {
-        mActivity = mActivityRule.getActivity();
-        mEditText1 = mActivity.findViewById(R.id.editText1);
-        mEditText2 = mActivity.findViewById(R.id.editText2);
+    @Override
+    protected AutofillActivityTestRule<FragmentContainerActivity> getActivityRule() {
+        return new AutofillActivityTestRule<FragmentContainerActivity>(
+                FragmentContainerActivity.class) {
+            @Override
+            protected void afterActivityLaunched() {
+                mActivity = getActivity();
+                mEditText1 = mActivity.findViewById(R.id.editText1);
+                mEditText2 = mActivity.findViewById(R.id.editText2);
+            }
+        };
     }
 
     @Test

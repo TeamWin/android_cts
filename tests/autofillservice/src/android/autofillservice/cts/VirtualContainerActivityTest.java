@@ -49,9 +49,7 @@ import android.text.InputType;
 import android.view.ViewGroup;
 import android.view.autofill.AutofillManager;
 
-import org.junit.Before;
 import org.junit.Ignore;
-import org.junit.Rule;
 import org.junit.Test;
 
 import java.util.concurrent.TimeoutException;
@@ -60,21 +58,14 @@ import java.util.concurrent.TimeoutException;
  * Test case for an activity containing virtual children, either using the explicit Autofill APIs
  * or Compat mode.
  */
-public class VirtualContainerActivityTest extends AutoFillServiceTestCase {
+public class VirtualContainerActivityTest
+        extends AutoFillServiceTestCase.AutoActivityLaunch<VirtualContainerActivity> {
 
     // TODO(b/74256300): remove when fixed it :-)
     private static final boolean BUG_74256300_FIXED = false;
 
-    @Rule
-    public final AutofillActivityTestRule<VirtualContainerActivity> mActivityRule =
-            new AutofillActivityTestRule<VirtualContainerActivity>(VirtualContainerActivity.class) {
-        @Override
-        protected void beforeActivityLaunched() {
-            preActivityCreated();
-        }
-    };
-
     private final boolean mCompatMode;
+    private AutofillActivityTestRule<VirtualContainerActivity> mActivityRule;
     protected VirtualContainerActivity mActivity;
 
     public VirtualContainerActivityTest() {
@@ -85,12 +76,6 @@ public class VirtualContainerActivityTest extends AutoFillServiceTestCase {
         mCompatMode = compatMode;
     }
 
-    @Before
-    public void setActivity() {
-        mActivity = mActivityRule.getActivity();
-        postActivityLaunched(mActivity);
-    }
-
     /**
      * Hook for subclass to customize test before activity is created.
      */
@@ -99,8 +84,27 @@ public class VirtualContainerActivityTest extends AutoFillServiceTestCase {
     /**
      * Hook for subclass to customize activity after it's launched.
      */
-    protected void postActivityLaunched(
-            @SuppressWarnings("unused") VirtualContainerActivity activity) {
+    protected void postActivityLaunched() {}
+
+    @Override
+    protected AutofillActivityTestRule<VirtualContainerActivity> getActivityRule() {
+        if (mActivityRule == null) {
+            mActivityRule = new AutofillActivityTestRule<VirtualContainerActivity>(
+                    VirtualContainerActivity.class) {
+                @Override
+                protected void beforeActivityLaunched() {
+                    preActivityCreated();
+                }
+
+                @Override
+                protected void afterActivityLaunched() {
+                    mActivity = getActivity();
+                    postActivityLaunched();
+                }
+            };
+
+        }
+        return mActivityRule;
     }
 
     @Test

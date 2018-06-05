@@ -31,8 +31,6 @@ import androidx.annotation.IdRes;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 
-import org.junit.Before;
-import org.junit.Rule;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
@@ -40,16 +38,20 @@ import java.util.function.Consumer;
 
 @RunWith(AndroidJUnit4.class)
 @AppModeFull // Unit test
-public class ViewAttributesTest extends AutoFillServiceTestCase {
-    @Rule
-    public final AutofillActivityTestRule<ViewAttributesTestActivity> mActivityRule =
-            new AutofillActivityTestRule<>(ViewAttributesTestActivity.class);
+public class ViewAttributesTest
+        extends AutoFillServiceTestCase.AutoActivityLaunch<ViewAttributesTestActivity> {
 
     private ViewAttributesTestActivity mActivity;
 
-    @Before
-    public void setActivity() {
-        mActivity = mActivityRule.getActivity();
+    @Override
+    protected AutofillActivityTestRule<ViewAttributesTestActivity> getActivityRule() {
+        return new AutofillActivityTestRule<ViewAttributesTestActivity>(
+                ViewAttributesTestActivity.class) {
+            @Override
+            protected void afterActivityLaunched() {
+                mActivity = getActivity();
+            }
+        };
     }
 
     @Nullable private String[] getHintsFromView(@IdRes int resId) {

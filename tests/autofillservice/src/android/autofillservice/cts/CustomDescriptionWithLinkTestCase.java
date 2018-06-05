@@ -27,6 +27,8 @@ import android.support.test.uiautomator.By;
 import android.support.test.uiautomator.UiObject2;
 import android.widget.RemoteViews;
 
+import androidx.annotation.NonNull;
+
 import static org.junit.Assume.assumeTrue;
 
 import org.junit.Test;
@@ -45,9 +47,31 @@ import org.junit.Test;
  * <p>The overall behavior should be the same in both cases, although the implementation of the
  * tests per se will be sligthly different.
  */
-abstract class CustomDescriptionWithLinkTestCase extends AutoFillServiceTestCase {
+abstract class CustomDescriptionWithLinkTestCase<A extends AbstractAutoFillActivity> extends
+        AutoFillServiceTestCase.AutoActivityLaunch<A> {
 
     private static final String ID_LINK = "link";
+
+    private final Class<A> mActivityClass;
+
+    protected A mActivity;
+
+    protected CustomDescriptionWithLinkTestCase(@NonNull Class<A> activityClass) {
+        mActivityClass = activityClass;
+    }
+
+    protected void startActivity() {
+        startActivity(false);
+    }
+
+    protected void startActivity(boolean remainOnRecents) {
+        final Intent intent = new Intent(mContext, mActivityClass);
+        if (remainOnRecents) {
+            intent.setFlags(
+                    Intent.FLAG_ACTIVITY_RETAIN_IN_RECENTS | Intent.FLAG_ACTIVITY_NEW_TASK);
+        }
+        mActivity = launchActivity(intent);
+    }
 
     /**
      * Tests scenarios when user taps a link in the custom description and then taps back:

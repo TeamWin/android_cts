@@ -34,27 +34,27 @@ import android.view.ViewStructure.HtmlInfo;
 import android.view.autofill.AutofillManager;
 
 import org.junit.AfterClass;
-import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Ignore;
-import org.junit.Rule;
 import org.junit.Test;
 
-public class WebViewActivityTest extends AutoFillServiceTestCase {
+public class WebViewActivityTest
+        extends AutoFillServiceTestCase.AutoActivityLaunch<WebViewActivity> {
 
     // TODO(b/64951517): WebView currently does not trigger the autofill callbacks when values are
     // set using accessibility.
     private static final boolean INJECT_EVENTS = true;
 
-    @Rule
-    public final AutofillActivityTestRule<WebViewActivity> mActivityRule =
-            new AutofillActivityTestRule<WebViewActivity>(WebViewActivity.class);
-
     private WebViewActivity mActivity;
 
-    @Before
-    public void setActivity() {
-        mActivity = mActivityRule.getActivity();
+    @Override
+    protected AutofillActivityTestRule<WebViewActivity> getActivityRule() {
+        return new AutofillActivityTestRule<WebViewActivity>(WebViewActivity.class) {
+            @Override
+            protected void afterActivityLaunched() {
+                mActivity = getActivity();
+            }
+        };
     }
 
     @BeforeClass

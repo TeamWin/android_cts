@@ -28,7 +28,6 @@ import static android.service.autofill.SaveInfo.SAVE_DATA_TYPE_PASSWORD;
 import static com.google.common.truth.Truth.assertThat;
 
 import android.autofillservice.cts.InstrumentedAutoFillService.SaveRequest;
-import android.content.Intent;
 import android.service.autofill.BatchUpdates;
 import android.service.autofill.CustomDescription;
 import android.service.autofill.RegexValidator;
@@ -38,25 +37,21 @@ import android.support.test.uiautomator.UiObject2;
 import android.view.View;
 import android.widget.RemoteViews;
 
-import org.junit.Rule;
-
 import java.util.regex.Pattern;
 
-public class PreSimpleSaveActivityTest extends CustomDescriptionWithLinkTestCase {
+public class PreSimpleSaveActivityTest
+        extends CustomDescriptionWithLinkTestCase<PreSimpleSaveActivity> {
 
-    @Rule
-    public final AutofillActivityTestRule<PreSimpleSaveActivity> mActivityRule =
+    private static final AutofillActivityTestRule<PreSimpleSaveActivity> sActivityRule =
             new AutofillActivityTestRule<PreSimpleSaveActivity>(PreSimpleSaveActivity.class, false);
 
-    private PreSimpleSaveActivity mActivity;
+    public PreSimpleSaveActivityTest() {
+        super(PreSimpleSaveActivity.class);
+    }
 
-    private void startActivity(boolean remainOnRecents) {
-        final Intent intent = new Intent(mContext, PreSimpleSaveActivity.class);
-        if (remainOnRecents) {
-            intent.setFlags(
-                    Intent.FLAG_ACTIVITY_RETAIN_IN_RECENTS | Intent.FLAG_ACTIVITY_NEW_TASK);
-        }
-        mActivity = mActivityRule.launchActivity(intent);
+    @Override
+    protected AutofillActivityTestRule<PreSimpleSaveActivity> getActivityRule() {
+        return sActivityRule;
     }
 
     @Override

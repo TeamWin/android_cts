@@ -38,11 +38,9 @@ import android.autofillservice.cts.InstrumentedAutoFillService.FillRequest;
 import android.autofillservice.cts.InstrumentedAutoFillService.SaveRequest;
 import android.autofillservice.cts.common.SettingsHelper;
 import android.autofillservice.cts.common.SettingsStateChangerRule;
-import android.content.Context;
 import android.os.SystemClock;
 import android.platform.test.annotations.AppModeFull;
 import android.service.autofill.SaveInfo;
-import android.support.test.InstrumentationRegistry;
 
 import org.junit.After;
 import org.junit.ClassRule;
@@ -53,7 +51,6 @@ import org.junit.Test;
  * the Autofill APIs.
  */
 public class VirtualContainerActivityCompatModeTest extends VirtualContainerActivityTest {
-    private static final Context sContext = InstrumentationRegistry.getContext();
 
     @ClassRule
     public static final SettingsStateChangerRule sCompatModeChanger = new SettingsStateChangerRule(
@@ -75,9 +72,9 @@ public class VirtualContainerActivityCompatModeTest extends VirtualContainerActi
     }
 
     @Override
-    protected void postActivityLaunched(VirtualContainerActivity activity) {
+    protected void postActivityLaunched() {
         // Set our own compat mode as well..
-        activity.mCustomView.setCompatMode(true);
+        mActivity.mCustomView.setCompatMode(true);
     }
 
     @Override

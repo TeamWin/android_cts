@@ -32,31 +32,33 @@ import android.platform.test.annotations.AppModeFull;
 import android.view.View;
 
 import org.junit.Before;
-import org.junit.Rule;
 import org.junit.Test;
 
 import java.util.concurrent.TimeoutException;
 
 @AppModeFull // This test requires android.permission.MANAGE_ACTIVITY_STACKS
-public class MultiWindowLoginActivityTest extends AutoFillServiceTestCase {
-
-    @Rule
-    public final AutofillActivityTestRule<MultiWindowLoginActivity> mActivityRule =
-            new AutofillActivityTestRule<MultiWindowLoginActivity>(MultiWindowLoginActivity.class);
+public class MultiWindowLoginActivityTest
+        extends AutoFillServiceTestCase.AutoActivityLaunch<MultiWindowLoginActivity> {
 
     private LoginActivity mActivity;
-    protected ActivityManager mAm;
+    private ActivityManager mAm;
 
-    @Before
-    public void setActivity() {
-        mActivity = mActivityRule.getActivity();
+    @Override
+    protected AutofillActivityTestRule<MultiWindowLoginActivity> getActivityRule() {
+        return new AutofillActivityTestRule<MultiWindowLoginActivity>(
+                MultiWindowLoginActivity.class) {
+            @Override
+            protected void afterActivityLaunched() {
+                mActivity = getActivity();
+                mAm = mContext.getSystemService(ActivityManager.class);
+            }
+        };
     }
 
     @Before
     public void setup() {
         assumeTrue("Skipping test: no split multi-window support",
                 ActivityManager.supportsSplitScreenMultiWindow(mContext));
-        mAm = mContext.getSystemService(ActivityManager.class);
     }
 
     /**

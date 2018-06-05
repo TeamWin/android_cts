@@ -53,8 +53,6 @@ import android.view.autofill.AutofillId;
 
 import com.google.common.collect.ImmutableMap;
 
-import org.junit.Before;
-import org.junit.Rule;
 import org.junit.Test;
 
 import java.util.List;
@@ -65,18 +63,7 @@ import java.util.Set;
  * Test that uses {@link LoginActivity} to test {@link FillEventHistory}.
  */
 @AppModeFull // Service-specific test
-public class FillEventHistoryTest extends AutoFillServiceTestCase {
-
-    @Rule
-    public final AutofillActivityTestRule<LoginActivity> mActivityRule =
-            new AutofillActivityTestRule<LoginActivity>(LoginActivity.class);
-
-    private LoginActivity mActivity;
-
-    @Before
-    public void setActivity() {
-        mActivity = mActivityRule.getActivity();
-    }
+public class FillEventHistoryTest extends AbstractLoginActivityTestCase {
 
     @Test
     public void testDatasetAuthenticationSelected() throws Exception {
