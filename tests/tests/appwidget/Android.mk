@@ -30,7 +30,8 @@ LOCAL_STATIC_JAVA_LIBRARIES := \
     mockito-target-minus-junit4 \
     ctstestrunner \
     junit \
-    legacy-android-test
+    legacy-android-test \
+    compatibility-device-util
 
 # Tag this module as a cts test artifact
 LOCAL_COMPATIBILITY_SUITE := cts vts general-tests
