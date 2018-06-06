@@ -31,7 +31,7 @@ import org.junit.Test;
 /**
  * Tests for the {@link android.service.autofill.FillResponse.Builder#disableAutofill(long)} API.
  */
-public class DisableAutofillTest extends AutoFillServiceTestCase {
+public class DisableAutofillTest extends AutoFillServiceTestCase.ManualActivityLaunch {
 
     private static final String TAG = "DisableAutofillTest";
 

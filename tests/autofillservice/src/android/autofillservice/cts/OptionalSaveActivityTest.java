@@ -33,8 +33,6 @@ import android.platform.test.annotations.AppModeFull;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 
-import org.junit.Before;
-import org.junit.Rule;
 import org.junit.Test;
 
 /**
@@ -49,20 +47,22 @@ import org.junit.Test;
  * </ul>
  */
 @AppModeFull // Service-specific test
-public class OptionalSaveActivityTest extends AutoFillServiceTestCase {
+public class OptionalSaveActivityTest
+        extends AutoFillServiceTestCase.AutoActivityLaunch<OptionalSaveActivity> {
 
     private static final boolean EXPECT_NO_SAVE_UI = false;
     private static final boolean EXPECT_SAVE_UI = false;
 
-    @Rule
-    public final AutofillActivityTestRule<OptionalSaveActivity> mActivityRule =
-        new AutofillActivityTestRule<OptionalSaveActivity>(OptionalSaveActivity.class);
-
     private OptionalSaveActivity mActivity;
 
-    @Before
-    public void setActivity() {
-        mActivity = mActivityRule.getActivity();
+    @Override
+    protected AutofillActivityTestRule<OptionalSaveActivity> getActivityRule() {
+        return new AutofillActivityTestRule<OptionalSaveActivity>(OptionalSaveActivity.class) {
+            @Override
+            protected void afterActivityLaunched() {
+                mActivity = getActivity();
+            }
+        };
     }
 
     /**

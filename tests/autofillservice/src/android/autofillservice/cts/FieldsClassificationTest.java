@@ -28,26 +28,20 @@ import static com.google.common.truth.Truth.assertThat;
 
 import android.autofillservice.cts.Helper.FieldClassificationResult;
 import android.autofillservice.cts.common.SettingsStateChangerRule;
-import android.content.Context;
 import android.platform.test.annotations.AppModeFull;
 import android.service.autofill.FillEventHistory.Event;
 import android.service.autofill.UserData;
-import android.support.test.InstrumentationRegistry;
 import android.view.autofill.AutofillId;
 import android.view.autofill.AutofillManager;
 import android.widget.EditText;
 
-import org.junit.Before;
 import org.junit.ClassRule;
-import org.junit.Rule;
 import org.junit.Test;
 
 import java.util.List;
 
 @AppModeFull // Service-specific test
-public class FieldsClassificationTest extends AutoFillServiceTestCase {
-
-    private static final Context sContext = InstrumentationRegistry.getContext();
+public class FieldsClassificationTest extends AbstractGridActivityTestCase {
 
     @ClassRule
     public static final SettingsStateChangerRule sFeatureEnabler =
@@ -74,17 +68,10 @@ public class FieldsClassificationTest extends AutoFillServiceTestCase {
     public static final SettingsStateChangerRule sUserDataMaxCategoryChanger =
             new SettingsStateChangerRule(sContext, AUTOFILL_USER_DATA_MAX_CATEGORY_COUNT, "42");
 
-    @Rule
-    public final AutofillActivityTestRule<GridActivity> mActivityRule =
-            new AutofillActivityTestRule<GridActivity>(GridActivity.class);
-
-
-    private GridActivity mActivity;
     private AutofillManager mAfm;
 
-    @Before
-    public void setFixtures() {
-        mActivity = mActivityRule.getActivity();
+    @Override
+    protected void postActivityLaunched() {
         mAfm = mActivity.getAutofillManager();
     }
 

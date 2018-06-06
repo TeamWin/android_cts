@@ -55,7 +55,7 @@ import java.util.concurrent.Callable;
  * Test the lifecycle of a autofill session
  */
 @AppModeFull // This test requires android.permission.WRITE_EXTERNAL_STORAGE
-public class SessionLifecycleTest extends AutoFillServiceTestCase {
+public class SessionLifecycleTest extends AutoFillServiceTestCase.ManualActivityLaunch {
     private static final String ID_BUTTON = "button";
     private static final String ID_CANCEL = "cancel";
 

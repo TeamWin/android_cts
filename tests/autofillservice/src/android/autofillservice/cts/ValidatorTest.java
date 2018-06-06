@@ -32,25 +32,13 @@ import android.service.autofill.ValueFinder;
 import android.view.View;
 import android.view.autofill.AutofillId;
 
-import org.junit.Before;
-import org.junit.Rule;
 import org.junit.Test;
 
 /**
  * Simple integration test to verify that the UI is only shown if the validator passes.
  */
 @AppModeFull // Service-specific test
-public class ValidatorTest extends AutoFillServiceTestCase {
-    @Rule
-    public final AutofillActivityTestRule<LoginActivity> mActivityRule =
-        new AutofillActivityTestRule<>(LoginActivity.class);
-
-    private LoginActivity mActivity;
-
-    @Before
-    public void setActivity() {
-        mActivity = mActivityRule.getActivity();
-    }
+public class ValidatorTest extends AbstractLoginActivityTestCase {
 
     @Test
     public void testShowUiWhenValidatorPass() throws Exception {

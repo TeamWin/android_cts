@@ -33,24 +33,25 @@ import android.support.test.uiautomator.UiObject2;
 import android.view.autofill.AutofillId;
 import android.widget.RemoteViews;
 
-import org.junit.Before;
-import org.junit.Rule;
 import org.junit.Test;
 
 import java.util.Calendar;
 
 @AppModeFull // Service-specific test
-public class CustomDescriptionDateTest extends AutoFillServiceTestCase {
-
-    @Rule
-    public final AutofillActivityTestRule<DatePickerSpinnerActivity> mActivityRule = new
-            AutofillActivityTestRule<DatePickerSpinnerActivity>(DatePickerSpinnerActivity.class);
+public class CustomDescriptionDateTest
+        extends AutoFillServiceTestCase.AutoActivityLaunch<DatePickerSpinnerActivity> {
 
     private DatePickerSpinnerActivity mActivity;
 
-    @Before
-    public void setActivity() {
-        mActivity = mActivityRule.getActivity();
+    @Override
+    protected AutofillActivityTestRule<DatePickerSpinnerActivity> getActivityRule() {
+        return new AutofillActivityTestRule<DatePickerSpinnerActivity>(
+                DatePickerSpinnerActivity.class) {
+            @Override
+            protected void afterActivityLaunched() {
+                mActivity = getActivity();
+            }
+        };
     }
 
     @Test

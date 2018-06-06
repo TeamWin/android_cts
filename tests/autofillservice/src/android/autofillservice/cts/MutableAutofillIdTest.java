@@ -38,30 +38,16 @@ import android.util.Log;
 import android.view.autofill.AutofillId;
 import android.widget.EditText;
 
-import org.junit.Before;
-import org.junit.Rule;
 import org.junit.Test;
 
 import java.util.List;
-import java.util.concurrent.TimeoutException;
 
 /**
  * Test cases for the cases where the autofill id of a view is changed by the app.
  */
-public class MutableAutofillIdTest extends AutoFillServiceTestCase {
+public class MutableAutofillIdTest extends AbstractGridActivityTestCase {
 
     private static final String TAG = "MutableAutofillIdTest";
-
-    @Rule
-    public final AutofillActivityTestRule<GridActivity> mActivityRule =
-            new AutofillActivityTestRule<GridActivity>(GridActivity.class);
-
-    private GridActivity mActivity;
-
-    @Before
-    public void setActivity() {
-        mActivity = mActivityRule.getActivity();
-    }
 
     @Test
     public void testDatasetPickerIsNotShownAfterViewIsSwappedOut() throws Exception {
@@ -302,12 +288,5 @@ public class MutableAutofillIdTest extends AutoFillServiceTestCase {
         assertThat(node2Context2).isNotNull();
         assertThat(node2Context2.getIdEntry()).isEqualTo(ID_L1C2);
         assertThat(node2Context2.getText().toString()).isEqualTo("NOD2");
-    }
-
-    /**
-     * Focus to a cell and expect window event
-     */
-    void focusCell(int row, int column) throws TimeoutException {
-        mUiBot.waitForWindowChange(() -> mActivity.focusCell(row, column));
     }
 }
