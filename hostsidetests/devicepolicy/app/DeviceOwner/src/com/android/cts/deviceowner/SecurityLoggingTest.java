@@ -76,6 +76,7 @@ import java.security.KeyStore;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
@@ -399,9 +400,14 @@ public class SecurityLoggingTest extends BaseDeviceOwnerTest {
     private void verifyOsStartupEventPresent(List<SecurityEvent> events) {
         final SecurityEvent event = findEvent("os startup", events, TAG_OS_STARTUP);
         // Verified boot state
-        assertTrue(ImmutableSet.of("green", "yellow", "orange").contains(getString(event, 0)));
+        assertOneOf(ImmutableSet.of("green", "yellow", "orange"), getString(event, 0));
         // dm-verity mode
-        assertTrue(ImmutableSet.of("enforcing", "eio").contains(getString(event, 1)));
+        assertOneOf(ImmutableSet.of("enforcing", "eio", "disabled"), getString(event, 1));
+    }
+
+    private void assertOneOf(Set<String> allowed, String s) {
+        assertTrue(String.format("\"%s\" is not one of [%s]", s, String.join(", ", allowed)),
+                allowed.contains(s));
     }
 
     private void verifyCryptoSelfTestEventPresent(List<SecurityEvent> events) {
