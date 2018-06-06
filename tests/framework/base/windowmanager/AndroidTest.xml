@@ -22,10 +22,15 @@
         <option name="test-file-name" value="CtsWindowManagerDeviceTestCases.apk"/>
         <option name="test-file-name" value="CtsDragAndDropSourceApp.apk"/>
         <option name="test-file-name" value="CtsDragAndDropTargetApp.apk"/>
-        <option name="test-file-name" value="CtsDragAndDropTargetAppSdk23.apk"/>
         <option name="test-file-name" value="CtsDeviceAlertWindowTestApp.apk"/>
-        <option name="test-file-name" value="CtsDeviceAlertWindowTestAppSdk25.apk"/>
         <option name="test-file-name" value="CtsAlertWindowService.apk"/>
+    </target_preparer>
+    <!-- Some older apk cannot be installed as instant, so we force them full mode -->
+    <target_preparer class="com.android.tradefed.targetprep.suite.SuiteApkInstaller">
+        <option name="cleanup-apks" value="true"/>
+        <option name="force-install-mode" value="FULL"/>
+        <option name="test-file-name" value="CtsDragAndDropTargetAppSdk23.apk"/>
+        <option name="test-file-name" value="CtsDeviceAlertWindowTestAppSdk25.apk"/>
     </target_preparer>
     <test class="com.android.tradefed.testtype.AndroidJUnitTest">
         <option name="package" value="android.server.cts.wm"/>
