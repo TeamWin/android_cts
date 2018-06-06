@@ -160,8 +160,14 @@ public class ManagedProfileTest extends BaseDevicePolicyTest {
             return;
         }
         changeUserCredential("1234", null, mProfileUserId);
-        runDeviceTestsAsUser(MANAGED_PROFILE_PKG, MANAGED_PROFILE_PKG + ".LockNowTest",
-                "testLockNowWithKeyEviction", mProfileUserId);
+        lockProfile();
+    }
+
+    private void lockProfile() throws Exception {
+        final String cmd = "am broadcast --receiver-foreground --user " + mProfileUserId
+                + " -a com.android.cts.managedprofile.LOCK_PROFILE"
+                + " com.android.cts.managedprofile/.LockProfileReceiver";
+        getDevice().executeShellCommand(cmd);
         waitUntilProfileLocked();
     }
 
@@ -990,8 +996,8 @@ public class ManagedProfileTest extends BaseDevicePolicyTest {
         }
 
         runDeviceTestsAsUser(MANAGED_PROFILE_PKG, ".ResetPasswordWithTokenTest",
-                "testSetupWorkProfileAndLock", mProfileUserId);
-        waitUntilProfileLocked();
+                "testSetupWorkProfile", mProfileUserId);
+        lockProfile();
         runDeviceTestsAsUser(MANAGED_PROFILE_PKG, ".ResetPasswordWithTokenTest",
                 "testResetPasswordBeforeUnlock", mProfileUserId);
         // Password needs to be in sync with ResetPasswordWithTokenTest.PASSWORD1
@@ -1017,10 +1023,7 @@ public class ManagedProfileTest extends BaseDevicePolicyTest {
             changeUserCredential(devicePassword, null, mParentUserId);
             changeUserCredential(null, devicePassword, mParentUserId);
             changeUserCredential(devicePassword, null, mParentUserId);
-
-            runDeviceTestsAsUser(MANAGED_PROFILE_PKG, ".ResetPasswordWithTokenTest",
-                    "testLockWorkProfile", mProfileUserId);
-            waitUntilProfileLocked();
+            lockProfile();
             runDeviceTestsAsUser(MANAGED_PROFILE_PKG, ".ResetPasswordWithTokenTest",
                     "testResetPasswordBeforeUnlock", mProfileUserId);
             verifyUserCredential(RESET_PASSWORD_TEST_DEFAULT_PASSWORD, mProfileUserId);
