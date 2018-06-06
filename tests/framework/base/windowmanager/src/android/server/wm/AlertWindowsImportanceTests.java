@@ -39,6 +39,7 @@ import android.os.Looper;
 import android.os.Message;
 import android.os.Messenger;
 import android.os.SystemClock;
+import android.platform.test.annotations.AppModeFull;
 import android.platform.test.annotations.Presubmit;
 import android.server.wm.alertwindowservice.AlertWindowService;
 import android.support.test.InstrumentationRegistry;
@@ -113,6 +114,7 @@ public final class AlertWindowsImportanceTests {
     }
 
     @Test
+    @AppModeFull(reason = "Uses apps targeting older SDK")
     public void testAlertWindowOomAdj() throws Exception {
         // Alert windows are always hidden when running in VR.
         if (isRunningInVR()) {
