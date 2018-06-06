@@ -43,6 +43,10 @@
                 <action android:name="com.android.cts.ephemeraltest.START_EPHEMERAL" />
                 <category android:name="android.intent.category.DEFAULT" />
             </intent-filter>
+            <intent-filter android:priority="0">
+                <action android:name="com.android.cts.ephemeraltest.START_OTHER_EPHEMERAL" />
+                <category android:name="android.intent.category.DEFAULT" />
+            </intent-filter>
             <intent-filter>
                 <action android:name="android.intent.action.SEARCH" />
             </intent-filter>
