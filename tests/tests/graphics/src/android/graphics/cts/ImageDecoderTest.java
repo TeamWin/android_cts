@@ -24,6 +24,7 @@ import static org.junit.Assert.assertSame;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
+import android.app.ActivityManager;
 import android.content.ContentResolver;
 import android.content.Context;
 import android.content.res.AssetManager;
@@ -2209,6 +2210,18 @@ public class ImageDecoderTest {
 
     @Test
     public void testWarpedDng() {
+        Context context = InstrumentationRegistry.getTargetContext();
+        ActivityManager activityManager = (ActivityManager) context
+                .getSystemService(Context.ACTIVITY_SERVICE);
+        ActivityManager.MemoryInfo info = new ActivityManager.MemoryInfo();
+        activityManager.getMemoryInfo(info);
+
+        // Decoding this image requires a lot of memory. Only attempt if the
+        // device has a total memory of at least 2 Gigs.
+        if (info.totalMem < 2 * 1024 * 1024 * 1024) {
+            return;
+        }
+
         String name = "b78120086.dng";
         ImageDecoder.Source src = ImageDecoder.createSource(mRes.getAssets(), name);
         try {
