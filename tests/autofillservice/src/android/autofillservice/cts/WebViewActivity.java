@@ -118,8 +118,9 @@ public class WebViewActivity extends AbstractAutoFillActivity {
             throw new RetryableException(WEBVIEW_TIMEOUT, "WebView not loaded");
         }
 
+        // TODO(b/80317628): re-add check below
         // NOTE: we cannot search by resourceId because WebView does not set them...
-        uiBot.assertShownByText("Login", WEBVIEW_TIMEOUT); // Login button
+        // uiBot.assertShownByText("Login", WEBVIEW_TIMEOUT); // Login button
 
         return mWebView;
     }
