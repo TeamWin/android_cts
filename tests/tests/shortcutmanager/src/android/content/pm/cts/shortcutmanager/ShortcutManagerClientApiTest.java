@@ -32,6 +32,8 @@ import android.graphics.drawable.Icon;
 import android.net.Uri;
 import android.test.suitebuilder.annotation.SmallTest;
 
+import com.android.compatibility.common.util.CddTest;
+
 import junit.framework.AssertionFailedError;
 
 /**
@@ -39,6 +41,7 @@ import junit.framework.AssertionFailedError;
  *
  * In this test, we tests the main functionalities of those, without throttling.
  */
+@CddTest(requirement="3.8.1/C-4-1")
 @SmallTest
 public class ShortcutManagerClientApiTest extends ShortcutManagerCtsTestsBase {
 
