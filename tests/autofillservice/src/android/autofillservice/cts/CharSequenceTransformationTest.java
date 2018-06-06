@@ -94,7 +94,7 @@ public class CharSequenceTransformationTest {
         when(finder.findByAutofillId(id3)).thenReturn("c");
         when(finder.findByAutofillId(id4)).thenReturn("d");
 
-        assertThrows(ArrayIndexOutOfBoundsException.class, () -> trans.apply(finder, template, 0));
+        assertThrows(IndexOutOfBoundsException.class, () -> trans.apply(finder, template, 0));
 
         // fail one, fail all
         verify(template, never()).setCharSequence(eq(0), any(), any());
