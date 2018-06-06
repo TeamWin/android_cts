@@ -18,6 +18,7 @@ package com.android.cts.webkit;
 
 import android.content.pm.PackageInfo;
 import android.content.pm.PackageManager;
+import android.net.http.SslError;
 import android.os.Handler;
 import android.os.HandlerThread;
 import android.os.Looper;
@@ -27,9 +28,11 @@ import android.test.UiThreadTest;
 import android.util.Log;
 import android.webkit.CookieManager;
 import android.webkit.CookieSyncManager;
+import android.webkit.SslErrorHandler;
 import android.webkit.WebView;
 import android.webkit.cts.CtsTestServer;
 import android.webkit.cts.WebViewOnUiThread;
+import android.webkit.cts.WebViewOnUiThread.WaitForLoadedClient;
 import android.webkit.WebView;
 
 import com.android.compatibility.common.util.NullWebViewUtils;
@@ -67,7 +70,8 @@ public class WebViewDeviceSideStartupTest
 
     @UiThreadTest
     public void testCookieManagerBlockingUiThread() throws Throwable {
-        CtsTestServer server = new CtsTestServer(mActivity, false);
+        // Instant app can only have https connection.
+        CtsTestServer server = new CtsTestServer(mActivity, true);
         final String url = server.getCookieUrl("death.html");
 
         Thread background = new Thread(new Runnable() {
@@ -95,7 +99,15 @@ public class WebViewDeviceSideStartupTest
 
         // Now create WebView and test that setting the cookie beforehand really worked.
         mActivity.createAndAttachWebView();
+        WebView webView = mActivity.getWebView();
         WebViewOnUiThread onUiThread = new WebViewOnUiThread(this, mActivity.getWebView());
+        webView.setWebViewClient(new WaitForLoadedClient(onUiThread) {
+            @Override
+            public void onReceivedSslError(WebView view, SslErrorHandler handler, SslError error) {
+                // Not intended to verify server certificate, ignore the error.
+                if (error.getPrimaryError() == SslError.SSL_IDMISMATCH) handler.proceed();
+            }
+        });
         onUiThread.loadUrlAndWaitForCompletion(url);
         assertEquals("1|count=41", onUiThread.getTitle()); // outgoing cookie
         CookieManager cookieManager = CookieManager.getInstance();
