@@ -34,7 +34,8 @@ LOCAL_COMPATIBILITY_SUITE := cts vts general-tests cts_instant
 
 LOCAL_REQUIRED_MODULES := \
 	CtsCorruptApkTests_b71360999 \
-	CtsCorruptApkTests_b71361168
+	CtsCorruptApkTests_b71361168 \
+	CtsCorruptApkTests_b79488511
 
 include $(BUILD_CTS_HOST_JAVA_LIBRARY)
 
