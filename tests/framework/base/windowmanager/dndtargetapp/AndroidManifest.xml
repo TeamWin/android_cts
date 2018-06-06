@@ -15,7 +15,8 @@
 -->
 
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
-        package="android.server.wm.dndtargetapp">
+        package="android.server.wm.dndtargetapp"
+        android:targetSandboxVersion="2">
     <application android:label="CtsDnDTarget">
         <activity android:name="android.server.wm.dndtargetapp.DropTarget">
             <intent-filter>
