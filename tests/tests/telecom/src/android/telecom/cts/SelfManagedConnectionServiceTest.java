@@ -16,6 +16,8 @@
 
 package android.telecom.cts;
 
+import android.content.Context;
+import android.media.AudioManager;
 import android.net.Uri;
 import android.os.Bundle;
 import android.telecom.Call;
@@ -31,6 +33,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.function.Predicate;
 
+import static android.media.AudioManager.MODE_IN_COMMUNICATION;
 import static android.telecom.cts.TestUtils.WAIT_FOR_STATE_CHANGE_TIMEOUT_MS;
 import static android.telecom.cts.TestUtils.waitOnAllHandlers;
 
@@ -236,6 +239,11 @@ public class SelfManagedConnectionServiceTest extends BaseTelecomTestWithMockSer
         connection.getOnShowIncomingUiInvokeCounter().waitForCount(1);
         setActiveAndVerify(connection);
 
+        // Ensure that the connection defaulted to voip audio mode.
+        assertTrue(connection.getAudioModeIsVoip());
+        // Ensure AudioManager has correct voip mode.
+        verifyAudioMode();
+
         // Expect there to be no managed calls at the moment.
         assertFalse(mTelecomManager.isInManagedCall());
         assertTrue(mTelecomManager.isInCall());
@@ -308,6 +316,11 @@ public class SelfManagedConnectionServiceTest extends BaseTelecomTestWithMockSer
         assertEquals(connection.getOnShowIncomingUiInvokeCounter().getInvokeCount(), 0);
 
         setActiveAndVerify(connection);
+
+        // Ensure that the connection defaulted to voip audio mode.
+        assertTrue(connection.getAudioModeIsVoip());
+        // Ensure AudioManager has correct voip mode.
+        verifyAudioMode();
 
         // Expect there to be no managed calls at the moment.
         assertFalse(mTelecomManager.isInManagedCall());
@@ -559,5 +572,10 @@ public class SelfManagedConnectionServiceTest extends BaseTelecomTestWithMockSer
 
         assertIsInCall(false);
         assertIsInManagedCall(false);
+    }
+
+    private void verifyAudioMode() {
+        AudioManager am = (AudioManager) mContext.getSystemService(Context.AUDIO_SERVICE);
+        assertEquals(MODE_IN_COMMUNICATION, am.getMode());
     }
 }
