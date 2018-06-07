@@ -83,6 +83,7 @@ public class BroadcastsTest {
      * Make sure "com.android.launcher.action.INSTALL_SHORTCUT" won't be delivered to a manifest
      * receiver, even if an intent is targeted to the component.
      */
+    @AppModeFull(reason = "Instant apps don't get to run in the background.")
     @Test
     @CddTest(requirement="3.5/C-0-6")
     public void testNonSupportedBroadcastsNotDelivered_manifestReceiver() throws Exception {
@@ -97,7 +98,6 @@ public class BroadcastsTest {
                 () -> MyReceiver.clearCallback());
     }
 
-    @AppModeFull(reason = "Instant apps don't get to run in the background.")
     private void testNonSupportedBroadcastsNotDelivered(
             BiConsumer<IntentFilter, Consumer<Intent>> receiverInitializer,
             Consumer<Intent> intentInitializer,
