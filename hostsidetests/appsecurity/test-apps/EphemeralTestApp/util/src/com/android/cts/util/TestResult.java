@@ -18,6 +18,7 @@ package com.android.cts.util;
 
 import android.content.Context;
 import android.content.Intent;
+import android.net.Uri;
 import android.os.Parcel;
 import android.os.Parcelable;
 
@@ -73,6 +74,14 @@ public class TestResult implements Parcelable {
         broadcastIntent.addFlags(Intent.FLAG_RECEIVER_VISIBLE_TO_INSTANT_APPS);
         broadcastIntent.putExtra(EXTRA_TEST_RESULT, this);
         context.sendBroadcast(broadcastIntent);
+    }
+
+    public void startActivity(Context context, Uri uri) {
+        final Intent broadcastIntent = new Intent(Intent.ACTION_VIEW);
+        broadcastIntent.addCategory(Intent.CATEGORY_BROWSABLE);
+        broadcastIntent.putExtra(EXTRA_TEST_RESULT, this);
+        broadcastIntent.setData(uri);
+        context.startActivity(broadcastIntent);
     }
 
     private TestResult(String packageName, String componentName, String methodName,
