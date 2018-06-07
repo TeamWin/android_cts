@@ -58,6 +58,7 @@ import org.junit.Test;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 /**
  * Test that uses {@link LoginActivity} to test {@link FillEventHistory}.
@@ -399,8 +400,12 @@ public class FillEventHistoryTest extends AbstractLoginActivityTestCase {
 
         // Now switch back to A...
         mUiBot.pressBack(); // dismiss autofill
-        mUiBot.pressBack(); // dismiss keyboard
-        mUiBot.pressBack(); // dismiss task
+        mUiBot.pressBack(); // dismiss keyboard (or task, if there was no keyboard)
+        final AtomicBoolean focusOnA = new AtomicBoolean();
+        mActivity.syncRunOnUiThread(() -> focusOnA.set(mActivity.hasWindowFocus()));
+        if (!focusOnA.get()) {
+            mUiBot.pressBack(); // dismiss task, if the last pressBack dismissed only the keyboard
+        }
         mUiBot.assertShownByRelativeId(ID_USERNAME);
         assertWithMessage("root window has no focus")
                 .that(mActivity.getWindow().getDecorView().hasWindowFocus()).isTrue();
