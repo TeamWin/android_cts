@@ -26,6 +26,7 @@ import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 
 import android.content.ComponentName;
+import android.platform.test.annotations.AppModeFull;
 import android.platform.test.annotations.Presubmit;
 import android.server.am.ActivityManagerTestBase;
 import android.server.am.WaitForValidActivityState;
@@ -44,6 +45,7 @@ import java.util.List;
  *     atest CtsWindowManagerDeviceTestCases:AlertWindowsTests
  */
 @Presubmit
+@AppModeFull(reason = "Requires android.permission.MANAGE_ACTIVITY_STACKS")
 public class AlertWindowsTests extends ActivityManagerTestBase {
 
     // From WindowManager.java

@@ -37,6 +37,7 @@ import android.app.ActivityManager;
 import android.content.Context;
 import android.graphics.Point;
 import android.os.RemoteException;
+import android.platform.test.annotations.AppModeFull;
 import android.os.SystemClock;
 import android.platform.test.annotations.Presubmit;
 import android.support.test.InstrumentationRegistry;
@@ -54,6 +55,7 @@ import java.util.regex.Pattern;
  * Run: cts/tests/framework/base/activitymanager/util/run-test CtsWindowManagerDeviceTestCases android.server.wm.CrossAppDragAndDropTests
  */
 @Presubmit
+@AppModeFull(reason = "Requires android.permission.MANAGE_ACTIVITY_STACKS")
 public class CrossAppDragAndDropTests {
     private static final String TAG = "CrossAppDragAndDrop";
 

@@ -16,6 +16,7 @@
 package android.media.cts;
 
 import android.content.pm.PackageManager;
+import android.media.MediaDrm;
 import android.net.Uri;
 import android.util.Log;
 import android.view.Surface;
@@ -85,8 +86,7 @@ public class NativeMediaDrmClearkeyTest extends MediaPlayerTestBase {
     @Override
     protected void setUp() throws Exception {
         super.setUp();
-        if (false == deviceHasMediaDrm() || isWearDevice()) {
-            Log.i(TAG, "Skip tests on Wear device or before Android 5 (Lollipop).");
+        if (false == deviceHasMediaDrm()) {
             tearDown();
         }
     }
@@ -96,7 +96,18 @@ public class NativeMediaDrmClearkeyTest extends MediaPlayerTestBase {
         super.tearDown();
     }
 
-    private boolean isWearDevice() {
+    private boolean watchHasNoClearkeySupport() {
+        if (!MediaDrm.isCryptoSchemeSupported(CLEARKEY_SCHEME_UUID)) {
+            if (isWatchDevice()) {
+                return true;
+            } else {
+                throw new Error("Crypto scheme is not supported");
+            }
+        }
+        return false;
+    }
+
+    private boolean isWatchDevice() {
         return mContext.getPackageManager().hasSystemFeature(PackageManager.FEATURE_WATCH);
     }
 
@@ -116,6 +127,10 @@ public class NativeMediaDrmClearkeyTest extends MediaPlayerTestBase {
     }
 
     public void testIsCryptoSchemeSupported() throws Exception {
+        if (watchHasNoClearkeySupport()) {
+            return;
+        }
+
         assertTrue(isCryptoSchemeSupportedNative(uuidByteArray(COMMON_PSSH_SCHEME_UUID)));
         assertTrue(isCryptoSchemeSupportedNative(uuidByteArray(CLEARKEY_SCHEME_UUID)));
     }
@@ -131,16 +146,28 @@ public class NativeMediaDrmClearkeyTest extends MediaPlayerTestBase {
     }
 
     public void testQueryKeyStatus() throws Exception {
-        assertTrue(testQueryKeyStatusNative(uuidByteArray(COMMON_PSSH_SCHEME_UUID)));
+        if (watchHasNoClearkeySupport()) {
+            return;
+        }
+
+        assertTrue(testQueryKeyStatusNative(uuidByteArray(CLEARKEY_SCHEME_UUID)));
     }
 
     public void testFindSessionId() throws Exception {
-        assertTrue(testFindSessionIdNative(uuidByteArray(COMMON_PSSH_SCHEME_UUID)));
+        if (watchHasNoClearkeySupport()) {
+            return;
+        }
+
+        assertTrue(testFindSessionIdNative(uuidByteArray(CLEARKEY_SCHEME_UUID)));
     }
 
     public void testGetPropertyString() throws Exception {
+        if (watchHasNoClearkeySupport()) {
+            return;
+        }
+
         StringBuffer value = new StringBuffer();
-        testGetPropertyStringNative(uuidByteArray(COMMON_PSSH_SCHEME_UUID), "description", value);
+        testGetPropertyStringNative(uuidByteArray(CLEARKEY_SCHEME_UUID), "description", value);
         assertEquals("ClearKey CDM", value.toString());
 
         value.delete(0, value.length());
@@ -152,7 +179,7 @@ public class NativeMediaDrmClearkeyTest extends MediaPlayerTestBase {
         StringBuffer value = new StringBuffer();
 
         try {
-            testGetPropertyStringNative(uuidByteArray(COMMON_PSSH_SCHEME_UUID),
+            testGetPropertyStringNative(uuidByteArray(CLEARKEY_SCHEME_UUID),
                     "unknown-property", value);
             fail("Should have thrown an exception");
         } catch (RuntimeException e) {
@@ -178,8 +205,8 @@ public class NativeMediaDrmClearkeyTest extends MediaPlayerTestBase {
             UUID drmSchemeUuid, String mimeType, /*String initDataType,*/ Uri audioUrl, Uri videoUrl,
             int videoWidth, int videoHeight) throws Exception {
 
-        if (!isCryptoSchemeSupportedNative(uuidByteArray(drmSchemeUuid))) {
-            throw new Error("Crypto scheme is not supported.");
+        if (isWatchDevice()) {
+            return;
         }
 
         IConnectionStatus connectionStatus = new ConnectionStatus(mContext);

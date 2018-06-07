@@ -36,6 +36,7 @@ import static org.junit.Assert.assertEquals;
 
 import android.content.ComponentName;
 import android.graphics.Rect;
+import android.platform.test.annotations.AppModeFull;
 import android.server.am.WaitForValidActivityState;
 import android.server.am.WindowManagerState;
 import android.server.am.WindowManagerState.WindowState;
@@ -54,6 +55,7 @@ import java.util.List;
  *
  * TODO: Consolidate this class with {@link ParentChildTestBase}.
  */
+@AppModeFull(reason = "Requires android.permission.MANAGE_ACTIVITY_STACKS")
 public class DialogFrameTests extends ParentChildTestBase<DialogFrameTestActivity> {
 
     private static final ComponentName DIALOG_FRAME_TEST_ACTIVITY = new ComponentName(

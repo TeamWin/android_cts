@@ -21,6 +21,7 @@ import static android.media.AudioFormat.ENCODING_PCM_16BIT;
 import static android.media.MediaRecorder.AudioSource.MIC;
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.CoreMatchers.equalTo;
+import static org.hamcrest.CoreMatchers.hasItems;
 import static org.hamcrest.CoreMatchers.notNullValue;
 import static org.hamcrest.CoreMatchers.nullValue;
 import static org.junit.Assert.assertSame;
@@ -78,6 +79,7 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 
 import java.io.IOException;
+import java.util.Iterator;
 import java.util.List;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.SynchronousQueue;
@@ -97,6 +99,8 @@ public class ClientTest {
     /** Action to start private ephemeral test activities */
     private static final String ACTION_START_EPHEMERAL_PRIVATE =
             "com.android.cts.ephemeraltest.START_EPHEMERAL_PRIVATE";
+    private static final String ACTION_START_EPHEMERAL_ACTIVITY =
+            "com.android.cts.ephemeraltest.START_OTHER_EPHEMERAL";
     /** Action to query for test activities */
     private static final String ACTION_QUERY =
             "com.android.cts.ephemeraltest.QUERY";
@@ -195,6 +199,52 @@ public class ClientTest {
                     is(false));
         }
 
+        // query own ephemeral application activities with a web URI
+        {
+            final Intent queryIntent = new Intent(Intent.ACTION_VIEW);
+            queryIntent.addCategory(Intent.CATEGORY_BROWSABLE);
+            queryIntent.setData(Uri.parse("https://cts.google.com/ephemeral"));
+            final List<ResolveInfo> resolveInfo = InstrumentationRegistry.getContext()
+                    .getPackageManager().queryIntentActivities(
+                            queryIntent, PackageManager.GET_RESOLVED_FILTER);
+            if (resolveInfo == null || resolveInfo.size() == 0) {
+                fail("didn't resolve any intents");
+            }
+            for (ResolveInfo info: resolveInfo) {
+                assertThat(info.filter, is(notNullValue()));
+                if (handlesAllWebData(info.filter)) {
+                    continue;
+                }
+                assertThat(info.activityInfo.packageName,
+                        is("com.android.cts.ephemeralapp1"));
+                assertThat(info.activityInfo.name,
+                        is("com.android.cts.ephemeralapp1.EphemeralActivity"));
+                assertThat(info.isInstantAppAvailable,
+                        is(true));
+            }
+        }
+
+        // query other ephemeral application activities with a web URI
+        {
+            final Intent queryIntent = new Intent(Intent.ACTION_VIEW);
+            queryIntent.addCategory(Intent.CATEGORY_BROWSABLE);
+            queryIntent.setData(Uri.parse("https://cts.google.com/other"));
+            final List<ResolveInfo> resolveInfo = InstrumentationRegistry.getContext()
+                    .getPackageManager().queryIntentActivities(
+                            queryIntent, PackageManager.GET_RESOLVED_FILTER);
+            if (resolveInfo == null || resolveInfo.size() == 0) {
+                fail("didn't resolve any intents");
+            }
+            for (ResolveInfo info: resolveInfo) {
+                assertThat(info.filter, is(notNullValue()));
+                if (handlesAllWebData(info.filter)) {
+                    continue;
+                }
+                fail("resolution should have only matched browsers");
+            }
+        }
+
+        // query services
         {
             final Intent queryIntent = new Intent(ACTION_QUERY);
             final List<ResolveInfo> resolveInfo = InstrumentationRegistry
@@ -215,6 +265,7 @@ public class ClientTest {
                     is(false));
         }
 
+        // query services; directed package
         {
             final Intent queryIntent = new Intent(ACTION_QUERY);
             queryIntent.setPackage("com.android.cts.ephemeralapp1");
@@ -230,6 +281,7 @@ public class ClientTest {
                     is("com.android.cts.ephemeralapp1.EphemeralService"));
         }
 
+        // query services; directed component
         {
             final Intent queryIntent = new Intent(ACTION_QUERY);
             queryIntent.setComponent(
@@ -790,12 +842,58 @@ public class ClientTest {
                     new ComponentName("com.android.cts.ephemeralapp1",
                             "com.android.cts.ephemeralapp1.EphemeralActivity3"));
             InstrumentationRegistry
-            .getContext().startActivity(startEphemeralIntent, null /*options*/);
+                    .getContext().startActivity(startEphemeralIntent, null /*options*/);
             final TestResult testResult = getResult();
             assertThat(testResult.getPackageName(),
                     is("com.android.cts.ephemeralapp1"));
             assertThat(testResult.getComponentName(),
                     is("EphemeralActivity3"));
+            assertThat(testResult.getStatus(),
+                    is("PASS"));
+            assertThat(testResult.getException(),
+                    is(nullValue()));
+        }
+
+        // start an ephemeral activity; VIEW / BROWSABLE intent
+        {
+            final Intent startEphemeralIntent = new Intent(Intent.ACTION_VIEW)
+                    .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+            startEphemeralIntent.addCategory(Intent.CATEGORY_BROWSABLE);
+            startEphemeralIntent.setData(Uri.parse("https://cts.google.com/other"));
+            InstrumentationRegistry
+                    .getContext().startActivity(startEphemeralIntent, null /*options*/);
+            final TestResult testResult = getResult();
+            assertThat(testResult.getPackageName(),
+                    is("com.android.cts.ephemeralapp2"));
+            assertThat(testResult.getComponentName(),
+                    is("EphemeralActivity"));
+            assertThat(testResult.getIntent().getAction(),
+                    is(Intent.ACTION_VIEW));
+            assertThat(testResult.getIntent().getCategories(),
+                    hasItems(Intent.CATEGORY_BROWSABLE));
+            assertThat(testResult.getIntent().getData().toString(),
+                    is("https://cts.google.com/other"));
+            assertThat(testResult.getStatus(),
+                    is("PASS"));
+            assertThat(testResult.getException(),
+                    is(nullValue()));
+        }
+
+        // start an ephemeral activity; EXTERNAL flag
+        {
+            final Intent startEphemeralIntent = new Intent(ACTION_START_EPHEMERAL_ACTIVITY)
+                    .setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_MATCH_EXTERNAL);
+            InstrumentationRegistry.getContext().startActivity(
+                    startEphemeralIntent, null /*options*/);
+            final TestResult testResult = getResult();
+            assertThat(testResult.getPackageName(),
+                    is("com.android.cts.ephemeralapp2"));
+            assertThat(testResult.getComponentName(),
+                    is("EphemeralActivity"));
+            assertThat(testResult.getIntent().getAction(),
+                    is(ACTION_START_EPHEMERAL_ACTIVITY));
+            assertThat(testResult.getIntent().getData(),
+                    is(nullValue()));
             assertThat(testResult.getStatus(),
                     is("PASS"));
             assertThat(testResult.getException(),
@@ -1278,6 +1376,32 @@ public class ClientTest {
                             "com.android.cts.normalapp.NormalActivity"));
             assertThat(info, is(nullValue()));
         }
+    }
+
+    /** Returns {@code true} if the given filter handles all web URLs, regardless of host. */
+    private boolean handlesAllWebData(IntentFilter filter) {
+        return filter.hasCategory(Intent.CATEGORY_APP_BROWSER) ||
+                (handlesWebUris(filter) && filter.countDataAuthorities() == 0);
+    }
+
+    /** Returns {@code true} if the given filter handles at least one web URL. */
+    private boolean handlesWebUris(IntentFilter filter) {
+        // Require ACTION_VIEW, CATEGORY_BROWSEABLE, and at least one scheme
+        if (!filter.hasAction(Intent.ACTION_VIEW)
+            || !filter.hasCategory(Intent.CATEGORY_BROWSABLE)
+            || filter.countDataSchemes() == 0) {
+            return false;
+        }
+        // Now allow only the schemes "http" and "https"
+        final Iterator<String> schemesIterator = filter.schemesIterator();
+        while (schemesIterator.hasNext()) {
+            final String scheme = schemesIterator.next();
+            final boolean isWebScheme = "http".equals(scheme) || "https".equals(scheme);
+            if (isWebScheme) {
+                return true;
+            }
+        }
+        return false;
     }
 
     private TestResult getResult() {
