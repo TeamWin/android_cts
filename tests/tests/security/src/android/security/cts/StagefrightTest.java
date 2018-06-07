@@ -33,6 +33,8 @@ import android.graphics.SurfaceTexture;
 import android.media.MediaCodec;
 import android.media.MediaCodecInfo;
 import android.media.MediaCodecList;
+import android.media.MediaDrm;
+import android.media.MediaDrm.MediaDrmStateException;
 import android.media.MediaExtractor;
 import android.media.MediaFormat;
 import android.media.MediaMetadataRetriever;
@@ -60,6 +62,7 @@ import java.net.ServerSocket;
 import java.io.File;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.UUID;
 import java.util.concurrent.locks.Condition;
 import java.util.concurrent.locks.ReentrantLock;
 
@@ -454,8 +457,19 @@ public class StagefrightTest extends InstrumentationTestCase {
     }
 
     @SecurityTest
+    public void testBug_33298089() throws Exception {
+        int[] frameSizes = {3247, 430, 221, 2305};
+        doStagefrightTestRawBlob(R.raw.bug_33298089_avc, "video/avc", 32, 64, frameSizes);
+    }
+
+    @SecurityTest
     public void testStagefright_cve_2017_0599() throws Exception {
         doStagefrightTest(R.raw.cve_2017_0599);
+    }
+
+    @SecurityTest
+    public void testStagefright_bug_36492741() throws Exception {
+        doStagefrightTest(R.raw.bug_36492741);
     }
 
     @SecurityTest
@@ -500,6 +514,11 @@ public class StagefrightTest extends InstrumentationTestCase {
     }
 
     @SecurityTest
+    public void testBug_36993291() throws Exception {
+        doStagefrightTestRawBlob(R.raw.bug_36993291_avc, "video/avc", 320, 240);
+    }
+
+    @SecurityTest
     public void testStagefright_bug_33818508() throws Exception {
         doStagefrightTest(R.raw.bug_33818508);
     }
@@ -525,6 +544,11 @@ public class StagefrightTest extends InstrumentationTestCase {
     @SecurityTest
     public void testStagefright_bug_62673179() throws Exception {
         doStagefrightTest(R.raw.bug_62673179_ts, (4 * 60 * 1000));
+    }
+
+    @SecurityTest
+    public void testStagefright_bug_69269702() throws Exception {
+        doStagefrightTest(R.raw.bug_69269702);
     }
 
     @SecurityTest
@@ -628,8 +652,46 @@ public class StagefrightTest extends InstrumentationTestCase {
     }
 
     @SecurityTest
+    public void testStagefright_bug_37710346() throws Exception {
+        UUID CLEARKEY_SCHEME_UUID = new UUID(0x1077efecc0b24d02L, 0xace33c1e52e2fb4bL);
+
+        String drmInitString = "0000003470737368" +
+                               "01000000" +
+                               "1077efecc0b24d02" +
+                               "ace33c1e52e2fb4b" +
+                               "10000001" +
+                               "60061e017e477e87" +
+                               "7e57d00d1ed00d1e" +
+                               "00000000";
+        int len = drmInitString.length();
+        byte[] drmInitData = new byte[len / 2];
+        for (int i = 0; i < len; i += 2) {
+            drmInitData[i / 2] = (byte) ((Character.digit(drmInitString.charAt(i), 16) << 4) +
+                Character.digit(drmInitString.charAt(i + 1), 16));
+        }
+
+        try {
+            MediaDrm drm = new MediaDrm(CLEARKEY_SCHEME_UUID);
+            byte[] sessionId;
+            String initDataType = "video/mp4";
+
+            sessionId = drm.openSession();
+            MediaDrm.KeyRequest drmRequest = drm.getKeyRequest(sessionId, drmInitData,
+                initDataType, MediaDrm.KEY_TYPE_STREAMING, null);
+        } catch (Exception e) {
+            if (!(e instanceof MediaDrmStateException))
+                fail("media drm server died");
+        }
+    }
+
+    @SecurityTest
     public void testStagefright_cve_2015_3873_b_23248776() throws Exception {
         doStagefrightTest(R.raw.cve_2015_3873_b_23248776);
+    }
+
+    @SecurityTest
+    public void testStagefright_bug_35472997() throws Exception {
+        doStagefrightTest(R.raw.bug_35472997);
     }
 
     @SecurityTest
