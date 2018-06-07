@@ -111,13 +111,13 @@
     <value>mime=video/avc,size=327741,width=1280,height=720,frame-rate=50,profile=1,level=2048,bitrate=4084648,package=standard</value>
   </entry>
   <entry key="h264/yuv420/8bit/bp/levels/crowd_128x96p50f32_200kbps_level_2_bp.mp4">
-    <value>mime=video/avc,size=13018,width=128,height=96,frame-rate=50,profile=1,level=32,bitrate=150624,package=standard</value>
+    <value>mime=video/avc,size=13018,width=128,height=96,frame-rate=50,profile=1,level=32,bitrate=150624,package=standard,enforce=true</value>
   </entry>
   <entry key="h264/yuv420/8bit/bp/levels/crowd_16x16p50f32_200kbps_level_1_bp.mp4">
     <value>mime=video/avc,size=5193,width=16,height=16,frame-rate=50,profile=1,level=1,bitrate=52824,package=standard</value>
   </entry>
   <entry key="h264/yuv420/8bit/bp/levels/crowd_176x144p50f32_200kbps_level_2_bp.mp4">
-    <value>mime=video/avc,size=13097,width=176,height=144,frame-rate=50,profile=1,level=32,bitrate=151624,package=standard</value>
+    <value>mime=video/avc,size=13097,width=176,height=144,frame-rate=50,profile=1,level=32,bitrate=151624,package=standard,enforce=true</value>
   </entry>
   <entry key="h264/yuv420/8bit/bp/levels/crowd_1920x1080p50f32_8200kbps_level_4.2_bp.mp4">
     <value>mime=video/avc,size=814724,width=1920,height=1080,frame-rate=50,profile=1,level=8192,bitrate=10171848,package=standard</value>
@@ -126,19 +126,19 @@
     <value>mime=video/avc,size=824354,width=1920,height=1088,frame-rate=50,profile=1,level=16384,bitrate=10292296,package=standard</value>
   </entry>
   <entry key="h264/yuv420/8bit/bp/levels/crowd_352x288p50f32_400kbps_level_2.1_bp.mp4">
-    <value>mime=video/avc,size=28452,width=352,height=288,frame-rate=50,profile=1,level=64,bitrate=343472,package=standard</value>
+    <value>mime=video/avc,size=28452,width=352,height=288,frame-rate=50,profile=1,level=64,bitrate=343472,package=standard,enforce=true</value>
   </entry>
   <entry key="h264/yuv420/8bit/bp/levels/crowd_3840x2160p50f32_24000kbps_level_5.2_bp.mp4">
     <value>mime=video/avc,size=2978730,width=3840,height=2160,frame-rate=50,profile=1,level=65536,bitrate=37221944,package=full</value>
   </entry>
   <entry key="h264/yuv420/8bit/bp/levels/crowd_640x480p50f32_1200kbps_level_3.1_bp.mp4">
-    <value>mime=video/avc,size=96734,width=640,height=480,frame-rate=50,profile=1,level=512,bitrate=1197000,package=standard</value>
+    <value>mime=video/avc,size=96734,width=640,height=480,frame-rate=50,profile=1,level=512,bitrate=1197000,package=standard,enforce=true</value>
   </entry>
   <entry key="h264/yuv420/8bit/bp/levels/crowd_64x64p50f32_200kbps_level_2_bp.mp4">
-    <value>mime=video/avc,size=11979,width=64,height=64,frame-rate=50,profile=1,level=32,bitrate=137632,package=standard</value>
+    <value>mime=video/avc,size=11979,width=64,height=64,frame-rate=50,profile=1,level=32,bitrate=137632,package=standard,enforce=true</value>
   </entry>
   <entry key="h264/yuv420/8bit/bp/levels/crowd_720x480p50f32_1300kbps_level_3_bp.mp4">
-    <value>mime=video/avc,size=105729,width=720,height=480,frame-rate=50,profile=1,level=256,bitrate=1309496,package=standard</value>
+    <value>mime=video/avc,size=105729,width=720,height=480,frame-rate=50,profile=1,level=256,bitrate=1309496,package=standard,enforce=true</value>
   </entry>
   <entry key="h264/yuv420/8bit/bp/levels/crowd_720x576p50f32_1600kbps_level_3.1_bp.mp4">
     <value>mime=video/avc,size=132868,width=720,height=576,frame-rate=50,profile=1,level=512,bitrate=1648680,package=standard</value>
@@ -813,16 +813,16 @@
     <value>mime=video/avc,size=454069,width=1280,height=960,frame-rate=50,profile=1,level=2048,bitrate=5663744,package=standard</value>
   </entry>
   <entry key="h264/yuv420/8bit/bp/resolutions/crowd_128x128p50f32_200kbps_bp.mp4">
-    <value>mime=video/avc,size=13123,width=128,height=128,frame-rate=50,profile=1,level=16,bitrate=151944,package=standard</value>
+    <value>mime=video/avc,size=13123,width=128,height=128,frame-rate=50,profile=1,level=16,bitrate=151944,package=standard,enforce=true</value>
   </entry>
   <entry key="h264/yuv420/8bit/bp/resolutions/crowd_128x192p50f32_200kbps_bp.mp4">
-    <value>mime=video/avc,size=13547,width=128,height=192,frame-rate=50,profile=1,level=16,bitrate=157248,package=standard</value>
+    <value>mime=video/avc,size=13547,width=128,height=192,frame-rate=50,profile=1,level=16,bitrate=157248,package=standard,enforce=true</value>
   </entry>
   <entry key="h264/yuv420/8bit/bp/resolutions/crowd_128x72p50f32_200kbps_bp.mp4">
     <value>mime=video/avc,size=12585,width=128,height=72,frame-rate=50,profile=1,level=16,bitrate=145200,package=standard</value>
   </entry>
   <entry key="h264/yuv420/8bit/bp/resolutions/crowd_128x96p50f32_200kbps_bp.mp4">
-    <value>mime=video/avc,size=13018,width=128,height=96,frame-rate=50,profile=1,level=16,bitrate=150624,package=standard</value>
+    <value>mime=video/avc,size=13018,width=128,height=96,frame-rate=50,profile=1,level=16,bitrate=150624,package=standard,enforce=true</value>
   </entry>
   <entry key="h264/yuv420/8bit/bp/resolutions/crowd_1440x1080p50f32_6200kbps_bp.mp4">
     <value>mime=video/avc,size=591640,width=1440,height=1080,frame-rate=50,profile=1,level=8192,bitrate=7383360,package=standard</value>
@@ -840,25 +840,25 @@
     <value>mime=video/avc,size=518511,width=1440,height=960,frame-rate=50,profile=1,level=8192,bitrate=6469272,package=standard</value>
   </entry>
   <entry key="h264/yuv420/8bit/bp/resolutions/crowd_144x144p50f32_200kbps_bp.mp4">
-    <value>mime=video/avc,size=13183,width=144,height=144,frame-rate=50,profile=1,level=16,bitrate=152696,package=standard</value>
+    <value>mime=video/avc,size=13183,width=144,height=144,frame-rate=50,profile=1,level=16,bitrate=152696,package=standard,enforce=true</value>
   </entry>
   <entry key="h264/yuv420/8bit/bp/resolutions/crowd_144x176p50f32_200kbps_bp.mp4">
-    <value>mime=video/avc,size=13598,width=144,height=176,frame-rate=50,profile=1,level=16,bitrate=157880,package=standard</value>
+    <value>mime=video/avc,size=13598,width=144,height=176,frame-rate=50,profile=1,level=16,bitrate=157880,package=standard,enforce=true</value>
   </entry>
   <entry key="h264/yuv420/8bit/bp/resolutions/crowd_144x192p50f32_200kbps_bp.mp4">
-    <value>mime=video/avc,size=13579,width=144,height=192,frame-rate=50,profile=1,level=16,bitrate=157648,package=standard</value>
+    <value>mime=video/avc,size=13579,width=144,height=192,frame-rate=50,profile=1,level=16,bitrate=157648,package=standard,enforce=true</value>
   </entry>
   <entry key="h264/yuv420/8bit/bp/resolutions/crowd_144x256p50f32_200kbps_bp.mp4">
-    <value>mime=video/avc,size=13643,width=144,height=256,frame-rate=50,profile=1,level=16,bitrate=158432,package=standard</value>
+    <value>mime=video/avc,size=13643,width=144,height=256,frame-rate=50,profile=1,level=16,bitrate=158432,package=standard,enforce=true</value>
   </entry>
   <entry key="h264/yuv420/8bit/bp/resolutions/crowd_144x96p50f32_200kbps_bp.mp4">
-    <value>mime=video/avc,size=13137,width=144,height=96,frame-rate=50,profile=1,level=16,bitrate=152112,package=standard</value>
+    <value>mime=video/avc,size=13137,width=144,height=96,frame-rate=50,profile=1,level=16,bitrate=152112,package=standard,enforce=true</value>
   </entry>
   <entry key="h264/yuv420/8bit/bp/resolutions/crowd_1536x2048p50f32_12500kbps_bp.mp4">
     <value>mime=video/avc,size=1273812,width=1536,height=2048,frame-rate=50,profile=1,level=32768,bitrate=15910520,package=standard</value>
   </entry>
   <entry key="h264/yuv420/8bit/bp/resolutions/crowd_160x240p50f32_200kbps_bp.mp4">
-    <value>mime=video/avc,size=13683,width=160,height=240,frame-rate=50,profile=1,level=16,bitrate=158944,package=standard</value>
+    <value>mime=video/avc,size=13683,width=160,height=240,frame-rate=50,profile=1,level=16,bitrate=158944,package=standard,enforce=true</value>
   </entry>
   <entry key="h264/yuv420/8bit/bp/resolutions/crowd_16x1080p50f32_200kbps_bp.mp4">
     <value>mime=video/avc,size=13341,width=16,height=1080,frame-rate=50,profile=1,level=64,bitrate=154656,package=standard</value>
@@ -876,13 +876,13 @@
     <value>mime=video/avc,size=13311,width=16,height=720,frame-rate=50,profile=1,level=16,bitrate=154280,package=standard</value>
   </entry>
   <entry key="h264/yuv420/8bit/bp/resolutions/crowd_176x144p50f32_200kbps_bp.mp4">
-    <value>mime=video/avc,size=13097,width=176,height=144,frame-rate=50,profile=1,level=16,bitrate=151624,package=standard</value>
+    <value>mime=video/avc,size=13097,width=176,height=144,frame-rate=50,profile=1,level=16,bitrate=151624,package=standard,enforce=true</value>
   </entry>
   <entry key="h264/yuv420/8bit/bp/resolutions/crowd_176x176p50f32_200kbps_bp.mp4">
-    <value>mime=video/avc,size=13645,width=176,height=176,frame-rate=50,profile=1,level=16,bitrate=158472,package=standard</value>
+    <value>mime=video/avc,size=13645,width=176,height=176,frame-rate=50,profile=1,level=16,bitrate=158472,package=standard,enforce=true</value>
   </entry>
   <entry key="h264/yuv420/8bit/bp/resolutions/crowd_176x96p50f32_200kbps_bp.mp4">
-    <value>mime=video/avc,size=12950,width=176,height=96,frame-rate=50,profile=1,level=16,bitrate=149768,package=standard</value>
+    <value>mime=video/avc,size=12950,width=176,height=96,frame-rate=50,profile=1,level=16,bitrate=149768,package=standard,enforce=true</value>
   </entry>
   <entry key="h264/yuv420/8bit/bp/resolutions/crowd_1920x1080p50f32_8200kbps_bp.mp4">
     <value>mime=video/avc,size=814719,width=1920,height=1080,frame-rate=50,profile=1,level=8192,bitrate=10171848,package=standard</value>
@@ -909,19 +909,19 @@
     <value>mime=video/avc,size=27567,width=1920,height=64,frame-rate=50,profile=1,level=512,bitrate=332472,package=standard</value>
   </entry>
   <entry key="h264/yuv420/8bit/bp/resolutions/crowd_192x128p50f32_200kbps_bp.mp4">
-    <value>mime=video/avc,size=13034,width=192,height=128,frame-rate=50,profile=1,level=16,bitrate=150832,package=standard</value>
+    <value>mime=video/avc,size=13034,width=192,height=128,frame-rate=50,profile=1,level=16,bitrate=150832,package=standard,enforce=true</value>
   </entry>
   <entry key="h264/yuv420/8bit/bp/resolutions/crowd_192x144p50f32_200kbps_bp.mp4">
-    <value>mime=video/avc,size=13134,width=192,height=144,frame-rate=50,profile=1,level=16,bitrate=152080,package=standard</value>
+    <value>mime=video/avc,size=13134,width=192,height=144,frame-rate=50,profile=1,level=16,bitrate=152080,package=standard,enforce=true</value>
   </entry>
   <entry key="h264/yuv420/8bit/bp/resolutions/crowd_192x192p50f32_200kbps_bp.mp4">
-    <value>mime=video/avc,size=13553,width=192,height=192,frame-rate=50,profile=1,level=16,bitrate=157320,package=standard</value>
+    <value>mime=video/avc,size=13553,width=192,height=192,frame-rate=50,profile=1,level=16,bitrate=157320,package=standard,enforce=true</value>
   </entry>
   <entry key="h264/yuv420/8bit/bp/resolutions/crowd_192x256p50f32_200kbps_bp.mp4">
-    <value>mime=video/avc,size=13572,width=192,height=256,frame-rate=50,profile=1,level=16,bitrate=157544,package=standard</value>
+    <value>mime=video/avc,size=13572,width=192,height=256,frame-rate=50,profile=1,level=16,bitrate=157544,package=standard,enforce=true</value>
   </entry>
   <entry key="h264/yuv420/8bit/bp/resolutions/crowd_192x288p50f32_200kbps_bp.mp4">
-    <value>mime=video/avc,size=13479,width=192,height=288,frame-rate=50,profile=1,level=16,bitrate=156384,package=standard</value>
+    <value>mime=video/avc,size=13479,width=192,height=288,frame-rate=50,profile=1,level=16,bitrate=156384,package=standard,enforce=true</value>
   </entry>
   <entry key="h264/yuv420/8bit/bp/resolutions/crowd_2048x1152p50f32_9400kbps_bp.mp4">
     <value>mime=video/avc,size=911171,width=2048,height=1152,frame-rate=50,profile=1,level=16384,bitrate=11377512,package=standard</value>
@@ -942,13 +942,13 @@
     <value>mime=video/avc,size=2649479,width=2304,height=4096,frame-rate=50,profile=1,level=65536,bitrate=33106360,package=standard</value>
   </entry>
   <entry key="h264/yuv420/8bit/bp/resolutions/crowd_240x160p50f32_200kbps_bp.mp4">
-    <value>mime=video/avc,size=13592,width=240,height=160,frame-rate=50,profile=1,level=16,bitrate=157808,package=standard</value>
+    <value>mime=video/avc,size=13592,width=240,height=160,frame-rate=50,profile=1,level=16,bitrate=157808,package=standard,enforce=true</value>
   </entry>
   <entry key="h264/yuv420/8bit/bp/resolutions/crowd_240x240p50f32_200kbps_bp.mp4">
-    <value>mime=video/avc,size=13504,width=240,height=240,frame-rate=50,profile=1,level=16,bitrate=156712,package=standard</value>
+    <value>mime=video/avc,size=13504,width=240,height=240,frame-rate=50,profile=1,level=16,bitrate=156712,package=standard,enforce=true</value>
   </entry>
   <entry key="h264/yuv420/8bit/bp/resolutions/crowd_240x320p50f32_300kbps_bp.mp4">
-    <value>mime=video/avc,size=21313,width=240,height=320,frame-rate=50,profile=1,level=64,bitrate=254312,package=standard</value>
+    <value>mime=video/avc,size=21313,width=240,height=320,frame-rate=50,profile=1,level=64,bitrate=254312,package=standard,enforce=true</value>
   </entry>
   <entry key="h264/yuv420/8bit/bp/resolutions/crowd_240x360p50f32_300kbps_bp.mp4">
     <value>mime=video/avc,size=21460,width=240,height=360,frame-rate=50,profile=1,level=64,bitrate=256136,package=standard</value>
@@ -969,13 +969,13 @@
     <value>mime=video/avc,size=2658588,width=2560,height=3840,frame-rate=50,profile=1,level=65536,bitrate=33220232,package=standard</value>
   </entry>
   <entry key="h264/yuv420/8bit/bp/resolutions/crowd_256x144p50f32_200kbps_bp.mp4">
-    <value>mime=video/avc,size=13556,width=256,height=144,frame-rate=50,profile=1,level=16,bitrate=157344,package=standard</value>
+    <value>mime=video/avc,size=13556,width=256,height=144,frame-rate=50,profile=1,level=16,bitrate=157344,package=standard,enforce=true</value>
   </entry>
   <entry key="h264/yuv420/8bit/bp/resolutions/crowd_256x192p50f32_200kbps_bp.mp4">
-    <value>mime=video/avc,size=13510,width=256,height=192,frame-rate=50,profile=1,level=16,bitrate=156768,package=standard</value>
+    <value>mime=video/avc,size=13510,width=256,height=192,frame-rate=50,profile=1,level=16,bitrate=156768,package=standard,enforce=true</value>
   </entry>
   <entry key="h264/yuv420/8bit/bp/resolutions/crowd_256x256p50f32_200kbps_bp.mp4">
-    <value>mime=video/avc,size=13449,width=256,height=256,frame-rate=50,profile=1,level=64,bitrate=156000,package=standard</value>
+    <value>mime=video/avc,size=13449,width=256,height=256,frame-rate=50,profile=1,level=64,bitrate=156000,package=standard,enforce=true</value>
   </entry>
   <entry key="h264/yuv420/8bit/bp/resolutions/crowd_264x352p50f32_300kbps_bp.mp4">
     <value>mime=video/avc,size=21344,width=264,height=352,frame-rate=50,profile=1,level=64,bitrate=254672,package=standard</value>
@@ -984,31 +984,31 @@
     <value>mime=video/avc,size=2716331,width=2880,height=3840,frame-rate=50,profile=1,level=65536,bitrate=33942024,package=standard</value>
   </entry>
   <entry key="h264/yuv420/8bit/bp/resolutions/crowd_288x192p50f32_200kbps_bp.mp4">
-    <value>mime=video/avc,size=13354,width=288,height=192,frame-rate=50,profile=1,level=16,bitrate=154824,package=standard</value>
+    <value>mime=video/avc,size=13354,width=288,height=192,frame-rate=50,profile=1,level=16,bitrate=154824,package=standard,enforce=true</value>
   </entry>
   <entry key="h264/yuv420/8bit/bp/resolutions/crowd_288x216p50f32_200kbps_bp.mp4">
     <value>mime=video/avc,size=13576,width=288,height=216,frame-rate=50,profile=1,level=64,bitrate=157584,package=standard</value>
   </entry>
   <entry key="h264/yuv420/8bit/bp/resolutions/crowd_288x288p50f32_300kbps_bp.mp4">
-    <value>mime=video/avc,size=20762,width=288,height=288,frame-rate=50,profile=1,level=64,bitrate=247408,package=standard</value>
+    <value>mime=video/avc,size=20762,width=288,height=288,frame-rate=50,profile=1,level=64,bitrate=247408,package=standard,enforce=true</value>
   </entry>
   <entry key="h264/yuv420/8bit/bp/resolutions/crowd_288x352p50f32_400kbps_bp.mp4">
-    <value>mime=video/avc,size=28900,width=288,height=352,frame-rate=50,profile=1,level=64,bitrate=349136,package=standard</value>
+    <value>mime=video/avc,size=28900,width=288,height=352,frame-rate=50,profile=1,level=64,bitrate=349136,package=standard,enforce=true</value>
   </entry>
   <entry key="h264/yuv420/8bit/bp/resolutions/crowd_288x512p50f32_500kbps_bp.mp4">
-    <value>mime=video/avc,size=37103,width=288,height=512,frame-rate=50,profile=1,level=256,bitrate=451672,package=standard</value>
+    <value>mime=video/avc,size=37103,width=288,height=512,frame-rate=50,profile=1,level=256,bitrate=451672,package=standard,enforce=true</value>
   </entry>
   <entry key="h264/yuv420/8bit/bp/resolutions/crowd_3072x4096p50f32_24000kbps_bp.mp4">
     <value>mime=video/avc,size=2790761,width=3072,height=4096,frame-rate=50,profile=1,level=65536,bitrate=34872384,package=standard</value>
   </entry>
   <entry key="h264/yuv420/8bit/bp/resolutions/crowd_320x240p50f32_300kbps_bp.mp4">
-    <value>mime=video/avc,size=20979,width=320,height=240,frame-rate=50,profile=1,level=64,bitrate=250136,package=standard</value>
+    <value>mime=video/avc,size=20979,width=320,height=240,frame-rate=50,profile=1,level=64,bitrate=250136,package=standard,enforce=true</value>
   </entry>
   <entry key="h264/yuv420/8bit/bp/resolutions/crowd_320x320p50f32_400kbps_bp.mp4">
-    <value>mime=video/avc,size=29141,width=320,height=320,frame-rate=50,profile=1,level=128,bitrate=352144,package=standard</value>
+    <value>mime=video/avc,size=29141,width=320,height=320,frame-rate=50,profile=1,level=128,bitrate=352144,package=standard,enforce=true</value>
   </entry>
   <entry key="h264/yuv420/8bit/bp/resolutions/crowd_320x480p50f32_600kbps_bp.mp4">
-    <value>mime=video/avc,size=44862,width=320,height=480,frame-rate=50,profile=1,level=256,bitrate=548656,package=standard</value>
+    <value>mime=video/avc,size=44862,width=320,height=480,frame-rate=50,profile=1,level=256,bitrate=548656,package=standard,enforce=true</value>
   </entry>
   <entry key="h264/yuv420/8bit/bp/resolutions/crowd_32x24p50f32_200kbps_bp.mp4">
     <value>mime=video/avc,size=8809,width=32,height=24,frame-rate=50,profile=1,level=16,bitrate=98024,package=standard</value>
@@ -1023,10 +1023,10 @@
     <value>mime=video/avc,size=20950,width=352,height=264,frame-rate=50,profile=1,level=64,bitrate=249744,package=standard</value>
   </entry>
   <entry key="h264/yuv420/8bit/bp/resolutions/crowd_352x288p50f32_400kbps_bp.mp4">
-    <value>mime=video/avc,size=28447,width=352,height=288,frame-rate=50,profile=1,level=64,bitrate=343472,package=standard</value>
+    <value>mime=video/avc,size=28447,width=352,height=288,frame-rate=50,profile=1,level=64,bitrate=343472,package=standard,enforce=true</value>
   </entry>
   <entry key="h264/yuv420/8bit/bp/resolutions/crowd_352x352p50f32_400kbps_bp.mp4">
-    <value>mime=video/avc,size=29170,width=352,height=352,frame-rate=50,profile=1,level=256,bitrate=352512,package=standard</value>
+    <value>mime=video/avc,size=29170,width=352,height=352,frame-rate=50,profile=1,level=256,bitrate=352512,package=standard,enforce=true</value>
   </entry>
   <entry key="h264/yuv420/8bit/bp/resolutions/crowd_356x638p50f32_900kbps_bp.mp4">
     <value>mime=video/avc,size=70522,width=356,height=638,frame-rate=50,profile=1,level=512,bitrate=869408,package=standard</value>
@@ -1071,7 +1071,7 @@
     <value>mime=video/avc,size=2886460,width=3840,height=3840,frame-rate=50,profile=1,level=65536,bitrate=36068632,package=full</value>
   </entry>
   <entry key="h264/yuv420/8bit/bp/resolutions/crowd_384x512p50f32_700kbps_bp.mp4">
-    <value>mime=video/avc,size=53478,width=384,height=512,frame-rate=50,profile=1,level=256,bitrate=656360,package=standard</value>
+    <value>mime=video/avc,size=53478,width=384,height=512,frame-rate=50,profile=1,level=256,bitrate=656360,package=standard,enforce=true</value>
   </entry>
   <entry key="h264/yuv420/8bit/bp/resolutions/crowd_4096x2304p50f32_24000kbps_bp.mp4">
     <value>mime=video/avc,size=2580560,width=4096,height=2304,frame-rate=50,profile=1,level=65536,bitrate=32244872,package=standard</value>
@@ -1083,19 +1083,19 @@
     <value>mime=video/avc,size=62178,width=472,height=472,frame-rate=50,profile=1,level=512,bitrate=765112,package=standard</value>
   </entry>
   <entry key="h264/yuv420/8bit/bp/resolutions/crowd_480x320p50f32_600kbps_bp.mp4">
-    <value>mime=video/avc,size=45288,width=480,height=320,frame-rate=50,profile=1,level=256,bitrate=553984,package=standard</value>
+    <value>mime=video/avc,size=45288,width=480,height=320,frame-rate=50,profile=1,level=256,bitrate=553984,package=standard,enforce=true</value>
   </entry>
   <entry key="h264/yuv420/8bit/bp/resolutions/crowd_480x360p50f32_600kbps_bp.mp4">
     <value>mime=video/avc,size=45502,width=480,height=360,frame-rate=50,profile=1,level=256,bitrate=556648,package=standard</value>
   </entry>
   <entry key="h264/yuv420/8bit/bp/resolutions/crowd_480x480p50f32_900kbps_bp.mp4">
-    <value>mime=video/avc,size=70488,width=480,height=480,frame-rate=50,profile=1,level=512,bitrate=868984,package=standard</value>
+    <value>mime=video/avc,size=70488,width=480,height=480,frame-rate=50,profile=1,level=512,bitrate=868984,package=standard,enforce=true</value>
   </entry>
   <entry key="h264/yuv420/8bit/bp/resolutions/crowd_480x640p50f32_1200kbps_bp.mp4">
-    <value>mime=video/avc,size=96257,width=480,height=640,frame-rate=50,profile=1,level=512,bitrate=1191096,package=standard</value>
+    <value>mime=video/avc,size=96257,width=480,height=640,frame-rate=50,profile=1,level=512,bitrate=1191096,package=standard,enforce=true</value>
   </entry>
   <entry key="h264/yuv420/8bit/bp/resolutions/crowd_480x720p50f32_1300kbps_bp.mp4">
-    <value>mime=video/avc,size=105435,width=480,height=720,frame-rate=50,profile=1,level=512,bitrate=1305824,package=standard</value>
+    <value>mime=video/avc,size=105435,width=480,height=720,frame-rate=50,profile=1,level=512,bitrate=1305824,package=standard,enforce=true</value>
   </entry>
   <entry key="h264/yuv420/8bit/bp/resolutions/crowd_480x848p50f32_1600kbps_bp.mp4">
     <value>mime=video/avc,size=130172,width=480,height=848,frame-rate=50,profile=1,level=512,bitrate=1615032,package=standard</value>
@@ -1104,10 +1104,10 @@
     <value>mime=video/avc,size=11955,width=48,height=64,frame-rate=50,profile=1,level=16,bitrate=137344,package=standard</value>
   </entry>
   <entry key="h264/yuv420/8bit/bp/resolutions/crowd_512x288p50f32_500kbps_bp.mp4">
-    <value>mime=video/avc,size=37248,width=512,height=288,frame-rate=50,profile=1,level=256,bitrate=453480,package=standard</value>
+    <value>mime=video/avc,size=37248,width=512,height=288,frame-rate=50,profile=1,level=256,bitrate=453480,package=standard,enforce=true</value>
   </entry>
   <entry key="h264/yuv420/8bit/bp/resolutions/crowd_512x384p50f32_700kbps_bp.mp4">
-    <value>mime=video/avc,size=53597,width=512,height=384,frame-rate=50,profile=1,level=256,bitrate=657848,package=standard</value>
+    <value>mime=video/avc,size=53597,width=512,height=384,frame-rate=50,profile=1,level=256,bitrate=657848,package=standard,enforce=true</value>
   </entry>
   <entry key="h264/yuv420/8bit/bp/resolutions/crowd_512x512p50f32_1000kbps_bp.mp4">
     <value>mime=video/avc,size=79003,width=512,height=512,frame-rate=50,profile=1,level=512,bitrate=975432,package=standard</value>
@@ -1149,7 +1149,7 @@
     <value>mime=video/avc,size=71029,width=640,height=360,frame-rate=50,profile=1,level=512,bitrate=875736,package=standard</value>
   </entry>
   <entry key="h264/yuv420/8bit/bp/resolutions/crowd_640x480p50f32_1200kbps_bp.mp4">
-    <value>mime=video/avc,size=96729,width=640,height=480,frame-rate=50,profile=1,level=512,bitrate=1197000,package=standard</value>
+    <value>mime=video/avc,size=96729,width=640,height=480,frame-rate=50,profile=1,level=512,bitrate=1197000,package=standard,enforce=true</value>
   </entry>
   <entry key="h264/yuv420/8bit/bp/resolutions/crowd_640x640p50f32_1600kbps_bp.mp4">
     <value>mime=video/avc,size=132674,width=640,height=640,frame-rate=50,profile=1,level=512,bitrate=1646320,package=standard</value>
@@ -1173,13 +1173,13 @@
     <value>mime=video/avc,size=11463,width=64,height=48,frame-rate=50,profile=1,level=16,bitrate=131200,package=standard</value>
   </entry>
   <entry key="h264/yuv420/8bit/bp/resolutions/crowd_64x64p50f32_200kbps_bp.mp4">
-    <value>mime=video/avc,size=11979,width=64,height=64,frame-rate=50,profile=1,level=16,bitrate=137632,package=standard</value>
+    <value>mime=video/avc,size=11979,width=64,height=64,frame-rate=50,profile=1,level=16,bitrate=137632,package=standard,enforce=true</value>
   </entry>
   <entry key="h264/yuv420/8bit/bp/resolutions/crowd_64x720p50f32_200kbps_bp.mp4">
-    <value>mime=video/avc,size=13766,width=64,height=720,frame-rate=50,profile=1,level=16,bitrate=159968,package=standard</value>
+    <value>mime=video/avc,size=13766,width=64,height=720,frame-rate=50,profile=1,level=16,bitrate=159968,package=standard,enforce=true</value>
   </entry>
   <entry key="h264/yuv420/8bit/bp/resolutions/crowd_64x96p50f32_200kbps_bp.mp4">
-    <value>mime=video/avc,size=12767,width=64,height=96,frame-rate=50,profile=1,level=16,bitrate=147480,package=standard</value>
+    <value>mime=video/avc,size=12767,width=64,height=96,frame-rate=50,profile=1,level=16,bitrate=147480,package=standard,enforce=true</value>
   </entry>
   <entry key="h264/yuv420/8bit/bp/resolutions/crowd_704x528p50f32_1400kbps_bp.mp4">
     <value>mime=video/avc,size=114746,width=704,height=528,frame-rate=50,profile=1,level=512,bitrate=1422224,package=standard</value>
@@ -1197,13 +1197,13 @@
     <value>mime=video/avc,size=13146,width=720,height=16,frame-rate=50,profile=1,level=16,bitrate=152224,package=standard</value>
   </entry>
   <entry key="h264/yuv420/8bit/bp/resolutions/crowd_720x480p50f32_1300kbps_bp.mp4">
-    <value>mime=video/avc,size=105729,width=720,height=480,frame-rate=50,profile=1,level=512,bitrate=1309496,package=standard</value>
+    <value>mime=video/avc,size=105729,width=720,height=480,frame-rate=50,profile=1,level=512,bitrate=1309496,package=standard,enforce=true</value>
   </entry>
   <entry key="h264/yuv420/8bit/bp/resolutions/crowd_720x576p50f32_1600kbps_bp.mp4">
     <value>mime=video/avc,size=132863,width=720,height=576,frame-rate=50,profile=1,level=512,bitrate=1648680,package=standard</value>
   </entry>
   <entry key="h264/yuv420/8bit/bp/resolutions/crowd_720x64p50f32_200kbps_bp.mp4">
-    <value>mime=video/avc,size=13556,width=720,height=64,frame-rate=50,profile=1,level=16,bitrate=157344,package=standard</value>
+    <value>mime=video/avc,size=13556,width=720,height=64,frame-rate=50,profile=1,level=16,bitrate=157344,package=standard,enforce=true</value>
   </entry>
   <entry key="h264/yuv420/8bit/bp/resolutions/crowd_720x720p50f32_2000kbps_bp.mp4">
     <value>mime=video/avc,size=170358,width=720,height=720,frame-rate=50,profile=1,level=512,bitrate=2117368,package=standard</value>
@@ -1254,22 +1254,22 @@
     <value>mime=video/avc,size=322999,width=960,height=960,frame-rate=50,profile=1,level=1024,bitrate=4025384,package=standard</value>
   </entry>
   <entry key="h264/yuv420/8bit/bp/resolutions/crowd_96x128p50f32_200kbps_bp.mp4">
-    <value>mime=video/avc,size=13156,width=96,height=128,frame-rate=50,profile=1,level=16,bitrate=152344,package=standard</value>
+    <value>mime=video/avc,size=13156,width=96,height=128,frame-rate=50,profile=1,level=16,bitrate=152344,package=standard,enforce=true</value>
   </entry>
   <entry key="h264/yuv420/8bit/bp/resolutions/crowd_96x144p50f32_200kbps_bp.mp4">
-    <value>mime=video/avc,size=13301,width=96,height=144,frame-rate=50,profile=1,level=16,bitrate=154160,package=standard</value>
+    <value>mime=video/avc,size=13301,width=96,height=144,frame-rate=50,profile=1,level=16,bitrate=154160,package=standard,enforce=true</value>
   </entry>
   <entry key="h264/yuv420/8bit/bp/resolutions/crowd_96x176p50f32_200kbps_bp.mp4">
-    <value>mime=video/avc,size=13579,width=96,height=176,frame-rate=50,profile=1,level=16,bitrate=157632,package=standard</value>
+    <value>mime=video/avc,size=13579,width=96,height=176,frame-rate=50,profile=1,level=16,bitrate=157632,package=standard,enforce=true</value>
   </entry>
   <entry key="h264/yuv420/8bit/bp/resolutions/crowd_96x64p50f32_200kbps_bp.mp4">
-    <value>mime=video/avc,size=12221,width=96,height=64,frame-rate=50,profile=1,level=16,bitrate=140656,package=standard</value>
+    <value>mime=video/avc,size=12221,width=96,height=64,frame-rate=50,profile=1,level=16,bitrate=140656,package=standard,enforce=true</value>
   </entry>
   <entry key="h264/yuv420/8bit/bp/resolutions/crowd_96x72p50f32_200kbps_bp.mp4">
     <value>mime=video/avc,size=12682,width=96,height=72,frame-rate=50,profile=1,level=16,bitrate=146408,package=standard</value>
   </entry>
   <entry key="h264/yuv420/8bit/bp/resolutions/crowd_96x96p50f32_200kbps_bp.mp4">
-    <value>mime=video/avc,size=13050,width=96,height=96,frame-rate=50,profile=1,level=16,bitrate=151024,package=standard</value>
+    <value>mime=video/avc,size=13050,width=96,height=96,frame-rate=50,profile=1,level=16,bitrate=151024,package=standard,enforce=true</value>
   </entry>
   <entry key="h264/yuv420/8bit/bp/slices/crowd_1280x720p50f32/crowd_1280x720p50f32_1024byte_slices_bp.mp4">
     <value>mime=video/avc,size=276000,width=1280,height=720,frame-rate=50,profile=1,level=1024,bitrate=3437880,package=standard</value>
@@ -4341,13 +4341,13 @@
     <value>mime=video/avc,size=319856,width=1280,height=720,frame-rate=50,profile=2,level=2048,bitrate=3982320,package=standard</value>
   </entry>
   <entry key="h264/yuv420/8bit/mp/levels/crowd_128x96p50f32_200kbps_level_2_mp.mp4">
-    <value>mime=video/avc,size=12333,width=128,height=96,frame-rate=50,profile=2,level=32,bitrate=139320,package=standard</value>
+    <value>mime=video/avc,size=12333,width=128,height=96,frame-rate=50,profile=2,level=32,bitrate=139320,package=standard,enforce=true</value>
   </entry>
   <entry key="h264/yuv420/8bit/mp/levels/crowd_16x16p50f32_200kbps_level_1_mp.mp4">
     <value>mime=video/avc,size=5415,width=16,height=16,frame-rate=50,profile=2,level=1,bitrate=54544,package=standard</value>
   </entry>
   <entry key="h264/yuv420/8bit/mp/levels/crowd_176x144p50f32_200kbps_level_2_mp.mp4">
-    <value>mime=video/avc,size=12174,width=176,height=144,frame-rate=50,profile=2,level=32,bitrate=136824,package=standard</value>
+    <value>mime=video/avc,size=12174,width=176,height=144,frame-rate=50,profile=2,level=32,bitrate=136824,package=standard,enforce=true</value>
   </entry>
   <entry key="h264/yuv420/8bit/mp/levels/crowd_1920x1080p50f32_8200kbps_level_4.2_mp.mp4">
     <value>mime=video/avc,size=821392,width=1920,height=1080,frame-rate=50,profile=2,level=8192,bitrate=10251448,package=standard</value>
@@ -4356,19 +4356,19 @@
     <value>mime=video/avc,size=829236,width=1920,height=1088,frame-rate=50,profile=2,level=16384,bitrate=10349568,package=standard</value>
   </entry>
   <entry key="h264/yuv420/8bit/mp/levels/crowd_352x288p50f32_400kbps_level_2.1_mp.mp4">
-    <value>mime=video/avc,size=26857,width=352,height=288,frame-rate=50,profile=2,level=64,bitrate=320680,package=standard</value>
+    <value>mime=video/avc,size=26857,width=352,height=288,frame-rate=50,profile=2,level=64,bitrate=320680,package=standard,enforce=true</value>
   </entry>
   <entry key="h264/yuv420/8bit/mp/levels/crowd_3840x2160p50f32_24000kbps_level_5.2_mp.mp4">
     <value>mime=video/avc,size=3353147,width=3840,height=2160,frame-rate=50,profile=2,level=65536,bitrate=41898400,package=full</value>
   </entry>
   <entry key="h264/yuv420/8bit/mp/levels/crowd_640x480p50f32_1200kbps_level_3.1_mp.mp4">
-    <value>mime=video/avc,size=91490,width=640,height=480,frame-rate=50,profile=2,level=512,bitrate=1127808,package=standard</value>
+    <value>mime=video/avc,size=91490,width=640,height=480,frame-rate=50,profile=2,level=512,bitrate=1127808,package=standard,enforce=true</value>
   </entry>
   <entry key="h264/yuv420/8bit/mp/levels/crowd_64x64p50f32_200kbps_level_2_mp.mp4">
-    <value>mime=video/avc,size=11818,width=64,height=64,frame-rate=50,profile=2,level=32,bitrate=135624,package=standard</value>
+    <value>mime=video/avc,size=11818,width=64,height=64,frame-rate=50,profile=2,level=32,bitrate=135624,package=standard,enforce=true</value>
   </entry>
   <entry key="h264/yuv420/8bit/mp/levels/crowd_720x480p50f32_1300kbps_level_3_mp.mp4">
-    <value>mime=video/avc,size=100078,width=720,height=480,frame-rate=50,profile=2,level=256,bitrate=1235024,package=standard</value>
+    <value>mime=video/avc,size=100078,width=720,height=480,frame-rate=50,profile=2,level=256,bitrate=1235024,package=standard,enforce=true</value>
   </entry>
   <entry key="h264/yuv420/8bit/mp/levels/crowd_720x576p50f32_1600kbps_level_3.1_mp.mp4">
     <value>mime=video/avc,size=125751,width=720,height=576,frame-rate=50,profile=2,level=512,bitrate=1555960,package=standard</value>
@@ -5352,16 +5352,16 @@
     <value>mime=video/avc,size=446270,width=1280,height=960,frame-rate=50,profile=2,level=2048,bitrate=5562496,package=standard</value>
   </entry>
   <entry key="h264/yuv420/8bit/mp/resolutions/crowd_128x128p50f32_200kbps_mp.mp4">
-    <value>mime=video/avc,size=12097,width=128,height=128,frame-rate=50,profile=2,level=16,bitrate=135560,package=standard</value>
+    <value>mime=video/avc,size=12097,width=128,height=128,frame-rate=50,profile=2,level=16,bitrate=135560,package=standard,enforce=true</value>
   </entry>
   <entry key="h264/yuv420/8bit/mp/resolutions/crowd_128x192p50f32_200kbps_mp.mp4">
-    <value>mime=video/avc,size=12424,width=128,height=192,frame-rate=50,profile=2,level=16,bitrate=139648,package=standard</value>
+    <value>mime=video/avc,size=12424,width=128,height=192,frame-rate=50,profile=2,level=16,bitrate=139648,package=standard,enforce=true</value>
   </entry>
   <entry key="h264/yuv420/8bit/mp/resolutions/crowd_128x72p50f32_200kbps_mp.mp4">
     <value>mime=video/avc,size=12180,width=128,height=72,frame-rate=50,profile=2,level=16,bitrate=137200,package=standard</value>
   </entry>
   <entry key="h264/yuv420/8bit/mp/resolutions/crowd_128x96p50f32_200kbps_mp.mp4">
-    <value>mime=video/avc,size=12333,width=128,height=96,frame-rate=50,profile=2,level=16,bitrate=139320,package=standard</value>
+    <value>mime=video/avc,size=12333,width=128,height=96,frame-rate=50,profile=2,level=16,bitrate=139320,package=standard,enforce=true</value>
   </entry>
   <entry key="h264/yuv420/8bit/mp/resolutions/crowd_1440x1080p50f32_6200kbps_mp.mp4">
     <value>mime=video/avc,size=587354,width=1440,height=1080,frame-rate=50,profile=2,level=8192,bitrate=7326032,package=standard</value>
@@ -5379,25 +5379,25 @@
     <value>mime=video/avc,size=512376,width=1440,height=960,frame-rate=50,profile=2,level=8192,bitrate=6388824,package=standard</value>
   </entry>
   <entry key="h264/yuv420/8bit/mp/resolutions/crowd_144x144p50f32_200kbps_mp.mp4">
-    <value>mime=video/avc,size=11994,width=144,height=144,frame-rate=50,profile=2,level=16,bitrate=134672,package=standard</value>
+    <value>mime=video/avc,size=11994,width=144,height=144,frame-rate=50,profile=2,level=16,bitrate=134672,package=standard,enforce=true</value>
   </entry>
   <entry key="h264/yuv420/8bit/mp/resolutions/crowd_144x176p50f32_200kbps_mp.mp4">
-    <value>mime=video/avc,size=12433,width=144,height=176,frame-rate=50,profile=2,level=16,bitrate=139856,package=standard</value>
+    <value>mime=video/avc,size=12433,width=144,height=176,frame-rate=50,profile=2,level=16,bitrate=139856,package=standard,enforce=true</value>
   </entry>
   <entry key="h264/yuv420/8bit/mp/resolutions/crowd_144x192p50f32_200kbps_mp.mp4">
-    <value>mime=video/avc,size=12328,width=144,height=192,frame-rate=50,profile=2,level=16,bitrate=138648,package=standard</value>
+    <value>mime=video/avc,size=12328,width=144,height=192,frame-rate=50,profile=2,level=16,bitrate=138648,package=standard,enforce=true</value>
   </entry>
   <entry key="h264/yuv420/8bit/mp/resolutions/crowd_144x256p50f32_200kbps_mp.mp4">
-    <value>mime=video/avc,size=12710,width=144,height=256,frame-rate=50,profile=2,level=16,bitrate=143512,package=standard</value>
+    <value>mime=video/avc,size=12710,width=144,height=256,frame-rate=50,profile=2,level=16,bitrate=143512,package=standard,enforce=true</value>
   </entry>
   <entry key="h264/yuv420/8bit/mp/resolutions/crowd_144x96p50f32_200kbps_mp.mp4">
-    <value>mime=video/avc,size=12152,width=144,height=96,frame-rate=50,profile=2,level=16,bitrate=137056,package=standard</value>
+    <value>mime=video/avc,size=12152,width=144,height=96,frame-rate=50,profile=2,level=16,bitrate=137056,package=standard,enforce=true</value>
   </entry>
   <entry key="h264/yuv420/8bit/mp/resolutions/crowd_1536x2048p50f32_12500kbps_mp.mp4">
     <value>mime=video/avc,size=1314463,width=1536,height=2048,frame-rate=50,profile=2,level=32768,bitrate=16414920,package=standard</value>
   </entry>
   <entry key="h264/yuv420/8bit/mp/resolutions/crowd_160x240p50f32_200kbps_mp.mp4">
-    <value>mime=video/avc,size=12753,width=160,height=240,frame-rate=50,profile=2,level=16,bitrate=143960,package=standard</value>
+    <value>mime=video/avc,size=12753,width=160,height=240,frame-rate=50,profile=2,level=16,bitrate=143960,package=standard,enforce=true</value>
   </entry>
   <entry key="h264/yuv420/8bit/mp/resolutions/crowd_16x1080p50f32_200kbps_mp.mp4">
     <value>mime=video/avc,size=12347,width=16,height=1080,frame-rate=50,profile=2,level=64,bitrate=138768,package=standard</value>
@@ -5415,13 +5415,13 @@
     <value>mime=video/avc,size=12456,width=16,height=720,frame-rate=50,profile=2,level=16,bitrate=140656,package=standard</value>
   </entry>
   <entry key="h264/yuv420/8bit/mp/resolutions/crowd_176x144p50f32_200kbps_mp.mp4">
-    <value>mime=video/avc,size=12174,width=176,height=144,frame-rate=50,profile=2,level=16,bitrate=136824,package=standard</value>
+    <value>mime=video/avc,size=12174,width=176,height=144,frame-rate=50,profile=2,level=16,bitrate=136824,package=standard,enforce=true</value>
   </entry>
   <entry key="h264/yuv420/8bit/mp/resolutions/crowd_176x176p50f32_200kbps_mp.mp4">
-    <value>mime=video/avc,size=12523,width=176,height=176,frame-rate=50,profile=2,level=16,bitrate=140984,package=standard</value>
+    <value>mime=video/avc,size=12523,width=176,height=176,frame-rate=50,profile=2,level=16,bitrate=140984,package=standard,enforce=true</value>
   </entry>
   <entry key="h264/yuv420/8bit/mp/resolutions/crowd_176x96p50f32_200kbps_mp.mp4">
-    <value>mime=video/avc,size=12373,width=176,height=96,frame-rate=50,profile=2,level=16,bitrate=140120,package=standard</value>
+    <value>mime=video/avc,size=12373,width=176,height=96,frame-rate=50,profile=2,level=16,bitrate=140120,package=standard,enforce=true</value>
   </entry>
   <entry key="h264/yuv420/8bit/mp/resolutions/crowd_1920x1080p50f32_8200kbps_mp.mp4">
     <value>mime=video/avc,size=821387,width=1920,height=1080,frame-rate=50,profile=2,level=8192,bitrate=10251448,package=standard</value>
@@ -5448,19 +5448,19 @@
     <value>mime=video/avc,size=24539,width=1920,height=64,frame-rate=50,profile=2,level=512,bitrate=290872,package=standard</value>
   </entry>
   <entry key="h264/yuv420/8bit/mp/resolutions/crowd_192x128p50f32_200kbps_mp.mp4">
-    <value>mime=video/avc,size=12219,width=192,height=128,frame-rate=50,profile=2,level=16,bitrate=137280,package=standard</value>
+    <value>mime=video/avc,size=12219,width=192,height=128,frame-rate=50,profile=2,level=16,bitrate=137280,package=standard,enforce=true</value>
   </entry>
   <entry key="h264/yuv420/8bit/mp/resolutions/crowd_192x144p50f32_200kbps_mp.mp4">
-    <value>mime=video/avc,size=12593,width=192,height=144,frame-rate=50,profile=2,level=16,bitrate=143256,package=standard</value>
+    <value>mime=video/avc,size=12593,width=192,height=144,frame-rate=50,profile=2,level=16,bitrate=143256,package=standard,enforce=true</value>
   </entry>
   <entry key="h264/yuv420/8bit/mp/resolutions/crowd_192x192p50f32_200kbps_mp.mp4">
-    <value>mime=video/avc,size=12501,width=192,height=192,frame-rate=50,profile=2,level=16,bitrate=140408,package=standard</value>
+    <value>mime=video/avc,size=12501,width=192,height=192,frame-rate=50,profile=2,level=16,bitrate=140408,package=standard,enforce=true</value>
   </entry>
   <entry key="h264/yuv420/8bit/mp/resolutions/crowd_192x256p50f32_200kbps_mp.mp4">
-    <value>mime=video/avc,size=12863,width=192,height=256,frame-rate=50,profile=2,level=16,bitrate=145320,package=standard</value>
+    <value>mime=video/avc,size=12863,width=192,height=256,frame-rate=50,profile=2,level=16,bitrate=145320,package=standard,enforce=true</value>
   </entry>
   <entry key="h264/yuv420/8bit/mp/resolutions/crowd_192x288p50f32_200kbps_mp.mp4">
-    <value>mime=video/avc,size=12650,width=192,height=288,frame-rate=50,profile=2,level=16,bitrate=142456,package=standard</value>
+    <value>mime=video/avc,size=12650,width=192,height=288,frame-rate=50,profile=2,level=16,bitrate=142456,package=standard,enforce=true</value>
   </entry>
   <entry key="h264/yuv420/8bit/mp/resolutions/crowd_2048x1152p50f32_9400kbps_mp.mp4">
     <value>mime=video/avc,size=917154,width=2048,height=1152,frame-rate=50,profile=2,level=16384,bitrate=11448560,package=standard</value>
@@ -5481,13 +5481,13 @@
     <value>mime=video/avc,size=2777432,width=2304,height=4096,frame-rate=50,profile=2,level=65536,bitrate=34702008,package=standard</value>
   </entry>
   <entry key="h264/yuv420/8bit/mp/resolutions/crowd_240x160p50f32_200kbps_mp.mp4">
-    <value>mime=video/avc,size=12596,width=240,height=160,frame-rate=50,profile=2,level=16,bitrate=141696,package=standard</value>
+    <value>mime=video/avc,size=12596,width=240,height=160,frame-rate=50,profile=2,level=16,bitrate=141696,package=standard,enforce=true</value>
   </entry>
   <entry key="h264/yuv420/8bit/mp/resolutions/crowd_240x240p50f32_200kbps_mp.mp4">
-    <value>mime=video/avc,size=12790,width=240,height=240,frame-rate=50,profile=2,level=16,bitrate=144424,package=standard</value>
+    <value>mime=video/avc,size=12790,width=240,height=240,frame-rate=50,profile=2,level=16,bitrate=144424,package=standard,enforce=true</value>
   </entry>
   <entry key="h264/yuv420/8bit/mp/resolutions/crowd_240x320p50f32_300kbps_mp.mp4">
-    <value>mime=video/avc,size=19720,width=240,height=320,frame-rate=50,profile=2,level=64,bitrate=230832,package=standard</value>
+    <value>mime=video/avc,size=19720,width=240,height=320,frame-rate=50,profile=2,level=64,bitrate=230832,package=standard,enforce=true</value>
   </entry>
   <entry key="h264/yuv420/8bit/mp/resolutions/crowd_240x360p50f32_300kbps_mp.mp4">
     <value>mime=video/avc,size=19801,width=240,height=360,frame-rate=50,profile=2,level=64,bitrate=231736,package=standard</value>
@@ -5508,13 +5508,13 @@
     <value>mime=video/avc,size=2796926,width=2560,height=3840,frame-rate=50,profile=2,level=65536,bitrate=34945696,package=standard</value>
   </entry>
   <entry key="h264/yuv420/8bit/mp/resolutions/crowd_256x144p50f32_200kbps_mp.mp4">
-    <value>mime=video/avc,size=12529,width=256,height=144,frame-rate=50,profile=2,level=16,bitrate=140744,package=standard</value>
+    <value>mime=video/avc,size=12529,width=256,height=144,frame-rate=50,profile=2,level=16,bitrate=140744,package=standard,enforce=true</value>
   </entry>
   <entry key="h264/yuv420/8bit/mp/resolutions/crowd_256x192p50f32_200kbps_mp.mp4">
-    <value>mime=video/avc,size=12550,width=256,height=192,frame-rate=50,profile=2,level=16,bitrate=141312,package=standard</value>
+    <value>mime=video/avc,size=12550,width=256,height=192,frame-rate=50,profile=2,level=16,bitrate=141312,package=standard,enforce=true</value>
   </entry>
   <entry key="h264/yuv420/8bit/mp/resolutions/crowd_256x256p50f32_200kbps_mp.mp4">
-    <value>mime=video/avc,size=12620,width=256,height=256,frame-rate=50,profile=2,level=64,bitrate=142384,package=standard</value>
+    <value>mime=video/avc,size=12620,width=256,height=256,frame-rate=50,profile=2,level=64,bitrate=142384,package=standard,enforce=true</value>
   </entry>
   <entry key="h264/yuv420/8bit/mp/resolutions/crowd_264x352p50f32_300kbps_mp.mp4">
     <value>mime=video/avc,size=19625,width=264,height=352,frame-rate=50,profile=2,level=64,bitrate=229536,package=standard</value>
@@ -5523,28 +5523,28 @@
     <value>mime=video/avc,size=2880482,width=2880,height=3840,frame-rate=50,profile=2,level=65536,bitrate=35990144,package=full</value>
   </entry>
   <entry key="h264/yuv420/8bit/mp/resolutions/crowd_288x192p50f32_200kbps_mp.mp4">
-    <value>mime=video/avc,size=12507,width=288,height=192,frame-rate=50,profile=2,level=16,bitrate=140672,package=standard</value>
+    <value>mime=video/avc,size=12507,width=288,height=192,frame-rate=50,profile=2,level=16,bitrate=140672,package=standard,enforce=true</value>
   </entry>
   <entry key="h264/yuv420/8bit/mp/resolutions/crowd_288x216p50f32_200kbps_mp.mp4">
     <value>mime=video/avc,size=12750,width=288,height=216,frame-rate=50,profile=2,level=64,bitrate=144096,package=standard</value>
   </entry>
   <entry key="h264/yuv420/8bit/mp/resolutions/crowd_288x288p50f32_300kbps_mp.mp4">
-    <value>mime=video/avc,size=19640,width=288,height=288,frame-rate=50,profile=2,level=64,bitrate=230232,package=standard</value>
+    <value>mime=video/avc,size=19640,width=288,height=288,frame-rate=50,profile=2,level=64,bitrate=230232,package=standard,enforce=true</value>
   </entry>
   <entry key="h264/yuv420/8bit/mp/resolutions/crowd_288x352p50f32_400kbps_mp.mp4">
-    <value>mime=video/avc,size=26931,width=288,height=352,frame-rate=50,profile=2,level=64,bitrate=321072,package=standard</value>
+    <value>mime=video/avc,size=26931,width=288,height=352,frame-rate=50,profile=2,level=64,bitrate=321072,package=standard,enforce=true</value>
   </entry>
   <entry key="h264/yuv420/8bit/mp/resolutions/crowd_288x512p50f32_500kbps_mp.mp4">
-    <value>mime=video/avc,size=34424,width=288,height=512,frame-rate=50,profile=2,level=256,bitrate=414544,package=standard</value>
+    <value>mime=video/avc,size=34424,width=288,height=512,frame-rate=50,profile=2,level=256,bitrate=414544,package=standard,enforce=true</value>
   </entry>
   <entry key="h264/yuv420/8bit/mp/resolutions/crowd_320x240p50f32_300kbps_mp.mp4">
-    <value>mime=video/avc,size=19675,width=320,height=240,frame-rate=50,profile=2,level=64,bitrate=230272,package=standard</value>
+    <value>mime=video/avc,size=19675,width=320,height=240,frame-rate=50,profile=2,level=64,bitrate=230272,package=standard,enforce=true</value>
   </entry>
   <entry key="h264/yuv420/8bit/mp/resolutions/crowd_320x320p50f32_400kbps_mp.mp4">
-    <value>mime=video/avc,size=27750,width=320,height=320,frame-rate=50,profile=2,level=128,bitrate=331808,package=standard</value>
+    <value>mime=video/avc,size=27750,width=320,height=320,frame-rate=50,profile=2,level=128,bitrate=331808,package=standard,enforce=true</value>
   </entry>
   <entry key="h264/yuv420/8bit/mp/resolutions/crowd_320x480p50f32_600kbps_mp.mp4">
-    <value>mime=video/avc,size=41960,width=320,height=480,frame-rate=50,profile=2,level=256,bitrate=508832,package=standard</value>
+    <value>mime=video/avc,size=41960,width=320,height=480,frame-rate=50,profile=2,level=256,bitrate=508832,package=standard,enforce=true</value>
   </entry>
   <entry key="h264/yuv420/8bit/mp/resolutions/crowd_32x24p50f32_200kbps_mp.mp4">
     <value>mime=video/avc,size=8516,width=32,height=24,frame-rate=50,profile=2,level=16,bitrate=94344,package=standard</value>
@@ -5559,10 +5559,10 @@
     <value>mime=video/avc,size=19489,width=352,height=264,frame-rate=50,profile=2,level=64,bitrate=228432,package=standard</value>
   </entry>
   <entry key="h264/yuv420/8bit/mp/resolutions/crowd_352x288p50f32_400kbps_mp.mp4">
-    <value>mime=video/avc,size=26852,width=352,height=288,frame-rate=50,profile=2,level=64,bitrate=320680,package=standard</value>
+    <value>mime=video/avc,size=26852,width=352,height=288,frame-rate=50,profile=2,level=64,bitrate=320680,package=standard,enforce=true</value>
   </entry>
   <entry key="h264/yuv420/8bit/mp/resolutions/crowd_352x352p50f32_400kbps_mp.mp4">
-    <value>mime=video/avc,size=27834,width=352,height=352,frame-rate=50,profile=2,level=256,bitrate=332560,package=standard</value>
+    <value>mime=video/avc,size=27834,width=352,height=352,frame-rate=50,profile=2,level=256,bitrate=332560,package=standard,enforce=true</value>
   </entry>
   <entry key="h264/yuv420/8bit/mp/resolutions/crowd_356x638p50f32_900kbps_mp.mp4">
     <value>mime=video/avc,size=65821,width=356,height=638,frame-rate=50,profile=2,level=512,bitrate=806880,package=standard</value>
@@ -5604,7 +5604,7 @@
     <value>mime=video/avc,size=2837257,width=3840,height=2880,frame-rate=50,profile=2,level=65536,bitrate=35449832,package=full</value>
   </entry>
   <entry key="h264/yuv420/8bit/mp/resolutions/crowd_384x512p50f32_700kbps_mp.mp4">
-    <value>mime=video/avc,size=50438,width=384,height=512,frame-rate=50,profile=2,level=256,bitrate=614720,package=standard</value>
+    <value>mime=video/avc,size=50438,width=384,height=512,frame-rate=50,profile=2,level=256,bitrate=614720,package=standard,enforce=true</value>
   </entry>
   <entry key="h264/yuv420/8bit/mp/resolutions/crowd_4096x2304p50f32_24000kbps_mp.mp4">
     <value>mime=video/avc,size=2713484,width=4096,height=2304,frame-rate=50,profile=2,level=65536,bitrate=33902656,package=standard</value>
@@ -5613,19 +5613,19 @@
     <value>mime=video/avc,size=58830,width=472,height=472,frame-rate=50,profile=2,level=512,bitrate=719800,package=standard</value>
   </entry>
   <entry key="h264/yuv420/8bit/mp/resolutions/crowd_480x320p50f32_600kbps_mp.mp4">
-    <value>mime=video/avc,size=42865,width=480,height=320,frame-rate=50,profile=2,level=256,bitrate=520344,package=standard</value>
+    <value>mime=video/avc,size=42865,width=480,height=320,frame-rate=50,profile=2,level=256,bitrate=520344,package=standard,enforce=true</value>
   </entry>
   <entry key="h264/yuv420/8bit/mp/resolutions/crowd_480x360p50f32_600kbps_mp.mp4">
     <value>mime=video/avc,size=42938,width=480,height=360,frame-rate=50,profile=2,level=256,bitrate=521144,package=standard</value>
   </entry>
   <entry key="h264/yuv420/8bit/mp/resolutions/crowd_480x480p50f32_900kbps_mp.mp4">
-    <value>mime=video/avc,size=66588,width=480,height=480,frame-rate=50,profile=2,level=512,bitrate=816784,package=standard</value>
+    <value>mime=video/avc,size=66588,width=480,height=480,frame-rate=50,profile=2,level=512,bitrate=816784,package=standard,enforce=true</value>
   </entry>
   <entry key="h264/yuv420/8bit/mp/resolutions/crowd_480x640p50f32_1200kbps_mp.mp4">
-    <value>mime=video/avc,size=90927,width=480,height=640,frame-rate=50,profile=2,level=512,bitrate=1120736,package=standard</value>
+    <value>mime=video/avc,size=90927,width=480,height=640,frame-rate=50,profile=2,level=512,bitrate=1120736,package=standard,enforce=true</value>
   </entry>
   <entry key="h264/yuv420/8bit/mp/resolutions/crowd_480x720p50f32_1300kbps_mp.mp4">
-    <value>mime=video/avc,size=100070,width=480,height=720,frame-rate=50,profile=2,level=512,bitrate=1235024,package=standard</value>
+    <value>mime=video/avc,size=100070,width=480,height=720,frame-rate=50,profile=2,level=512,bitrate=1235024,package=standard,enforce=true</value>
   </entry>
   <entry key="h264/yuv420/8bit/mp/resolutions/crowd_480x848p50f32_1600kbps_mp.mp4">
     <value>mime=video/avc,size=121917,width=480,height=848,frame-rate=50,profile=2,level=512,bitrate=1508112,package=standard</value>
@@ -5634,10 +5634,10 @@
     <value>mime=video/avc,size=11093,width=48,height=64,frame-rate=50,profile=2,level=16,bitrate=124608,package=standard</value>
   </entry>
   <entry key="h264/yuv420/8bit/mp/resolutions/crowd_512x288p50f32_500kbps_mp.mp4">
-    <value>mime=video/avc,size=35423,width=512,height=288,frame-rate=50,profile=2,level=256,bitrate=427632,package=standard</value>
+    <value>mime=video/avc,size=35423,width=512,height=288,frame-rate=50,profile=2,level=256,bitrate=427632,package=standard,enforce=true</value>
   </entry>
   <entry key="h264/yuv420/8bit/mp/resolutions/crowd_512x384p50f32_700kbps_mp.mp4">
-    <value>mime=video/avc,size=50309,width=512,height=384,frame-rate=50,profile=2,level=256,bitrate=613008,package=standard</value>
+    <value>mime=video/avc,size=50309,width=512,height=384,frame-rate=50,profile=2,level=256,bitrate=613008,package=standard,enforce=true</value>
   </entry>
   <entry key="h264/yuv420/8bit/mp/resolutions/crowd_512x512p50f32_1000kbps_mp.mp4">
     <value>mime=video/avc,size=74581,width=512,height=512,frame-rate=50,profile=2,level=512,bitrate=916496,package=standard</value>
@@ -5679,7 +5679,7 @@
     <value>mime=video/avc,size=66239,width=640,height=360,frame-rate=50,profile=2,level=512,bitrate=812224,package=standard</value>
   </entry>
   <entry key="h264/yuv420/8bit/mp/resolutions/crowd_640x480p50f32_1200kbps_mp.mp4">
-    <value>mime=video/avc,size=91485,width=640,height=480,frame-rate=50,profile=2,level=512,bitrate=1127808,package=standard</value>
+    <value>mime=video/avc,size=91485,width=640,height=480,frame-rate=50,profile=2,level=512,bitrate=1127808,package=standard,enforce=true</value>
   </entry>
   <entry key="h264/yuv420/8bit/mp/resolutions/crowd_640x640p50f32_1600kbps_mp.mp4">
     <value>mime=video/avc,size=125839,width=640,height=640,frame-rate=50,profile=2,level=512,bitrate=1557120,package=standard</value>
@@ -5703,13 +5703,13 @@
     <value>mime=video/avc,size=11198,width=64,height=48,frame-rate=50,profile=2,level=16,bitrate=126824,package=standard</value>
   </entry>
   <entry key="h264/yuv420/8bit/mp/resolutions/crowd_64x64p50f32_200kbps_mp.mp4">
-    <value>mime=video/avc,size=11818,width=64,height=64,frame-rate=50,profile=2,level=16,bitrate=135624,package=standard</value>
+    <value>mime=video/avc,size=11818,width=64,height=64,frame-rate=50,profile=2,level=16,bitrate=135624,package=standard,enforce=true</value>
   </entry>
   <entry key="h264/yuv420/8bit/mp/resolutions/crowd_64x720p50f32_200kbps_mp.mp4">
-    <value>mime=video/avc,size=12619,width=64,height=720,frame-rate=50,profile=2,level=16,bitrate=141872,package=standard</value>
+    <value>mime=video/avc,size=12619,width=64,height=720,frame-rate=50,profile=2,level=16,bitrate=141872,package=standard,enforce=true</value>
   </entry>
   <entry key="h264/yuv420/8bit/mp/resolutions/crowd_64x96p50f32_200kbps_mp.mp4">
-    <value>mime=video/avc,size=11987,width=64,height=96,frame-rate=50,profile=2,level=16,bitrate=135280,package=standard</value>
+    <value>mime=video/avc,size=11987,width=64,height=96,frame-rate=50,profile=2,level=16,bitrate=135280,package=standard,enforce=true</value>
   </entry>
   <entry key="h264/yuv420/8bit/mp/resolutions/crowd_704x528p50f32_1400kbps_mp.mp4">
     <value>mime=video/avc,size=108268,width=704,height=528,frame-rate=50,profile=2,level=512,bitrate=1337480,package=standard</value>
@@ -5727,13 +5727,13 @@
     <value>mime=video/avc,size=12892,width=720,height=16,frame-rate=50,profile=2,level=16,bitrate=147208,package=standard</value>
   </entry>
   <entry key="h264/yuv420/8bit/mp/resolutions/crowd_720x480p50f32_1300kbps_mp.mp4">
-    <value>mime=video/avc,size=100078,width=720,height=480,frame-rate=50,profile=2,level=512,bitrate=1235024,package=standard</value>
+    <value>mime=video/avc,size=100078,width=720,height=480,frame-rate=50,profile=2,level=512,bitrate=1235024,package=standard,enforce=true</value>
   </entry>
   <entry key="h264/yuv420/8bit/mp/resolutions/crowd_720x576p50f32_1600kbps_mp.mp4">
     <value>mime=video/avc,size=125746,width=720,height=576,frame-rate=50,profile=2,level=512,bitrate=1555960,package=standard</value>
   </entry>
   <entry key="h264/yuv420/8bit/mp/resolutions/crowd_720x64p50f32_200kbps_mp.mp4">
-    <value>mime=video/avc,size=12764,width=720,height=64,frame-rate=50,profile=2,level=16,bitrate=143880,package=standard</value>
+    <value>mime=video/avc,size=12764,width=720,height=64,frame-rate=50,profile=2,level=16,bitrate=143880,package=standard,enforce=true</value>
   </entry>
   <entry key="h264/yuv420/8bit/mp/resolutions/crowd_720x720p50f32_2000kbps_mp.mp4">
     <value>mime=video/avc,size=162293,width=720,height=720,frame-rate=50,profile=2,level=512,bitrate=2012800,package=standard</value>
@@ -5784,22 +5784,22 @@
     <value>mime=video/avc,size=313704,width=960,height=960,frame-rate=50,profile=2,level=1024,bitrate=3905432,package=standard</value>
   </entry>
   <entry key="h264/yuv420/8bit/mp/resolutions/crowd_96x128p50f32_200kbps_mp.mp4">
-    <value>mime=video/avc,size=12441,width=96,height=128,frame-rate=50,profile=2,level=16,bitrate=140072,package=standard</value>
+    <value>mime=video/avc,size=12441,width=96,height=128,frame-rate=50,profile=2,level=16,bitrate=140072,package=standard,enforce=true</value>
   </entry>
   <entry key="h264/yuv420/8bit/mp/resolutions/crowd_96x144p50f32_200kbps_mp.mp4">
-    <value>mime=video/avc,size=12096,width=96,height=144,frame-rate=50,profile=2,level=16,bitrate=135760,package=standard</value>
+    <value>mime=video/avc,size=12096,width=96,height=144,frame-rate=50,profile=2,level=16,bitrate=135760,package=standard,enforce=true</value>
   </entry>
   <entry key="h264/yuv420/8bit/mp/resolutions/crowd_96x176p50f32_200kbps_mp.mp4">
-    <value>mime=video/avc,size=12277,width=96,height=176,frame-rate=50,profile=2,level=16,bitrate=137920,package=standard</value>
+    <value>mime=video/avc,size=12277,width=96,height=176,frame-rate=50,profile=2,level=16,bitrate=137920,package=standard,enforce=true</value>
   </entry>
   <entry key="h264/yuv420/8bit/mp/resolutions/crowd_96x64p50f32_200kbps_mp.mp4">
-    <value>mime=video/avc,size=11982,width=96,height=64,frame-rate=50,profile=2,level=16,bitrate=137672,package=standard</value>
+    <value>mime=video/avc,size=11982,width=96,height=64,frame-rate=50,profile=2,level=16,bitrate=137672,package=standard,enforce=true</value>
   </entry>
   <entry key="h264/yuv420/8bit/mp/resolutions/crowd_96x72p50f32_200kbps_mp.mp4">
     <value>mime=video/avc,size=12083,width=96,height=72,frame-rate=50,profile=2,level=16,bitrate=136368,package=standard</value>
   </entry>
   <entry key="h264/yuv420/8bit/mp/resolutions/crowd_96x96p50f32_200kbps_mp.mp4">
-    <value>mime=video/avc,size=12293,width=96,height=96,frame-rate=50,profile=2,level=16,bitrate=138912,package=standard</value>
+    <value>mime=video/avc,size=12293,width=96,height=96,frame-rate=50,profile=2,level=16,bitrate=138912,package=standard,enforce=true</value>
   </entry>
   <entry key="h264/yuv420/8bit/mp/slices/crowd_1280x720p50f32/crowd_1280x720p50f32_1024byte_slices_mp.mp4">
     <value>mime=video/avc,size=271360,width=1280,height=720,frame-rate=50,profile=2,level=1024,bitrate=3376120,package=standard</value>
