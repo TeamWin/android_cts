@@ -111,8 +111,7 @@ public class MediaDrmClearkeyTest extends MediaPlayerTestBase {
     @Override
     protected void setUp() throws Exception {
         super.setUp();
-        if (false == deviceHasMediaDrm() || isWearDevice()) {
-            Log.i(TAG, "Skip tests on Wear device or before Android 5 (Lollipop).");
+        if (false == deviceHasMediaDrm()) {
             tearDown();
         }
     }
@@ -122,7 +121,7 @@ public class MediaDrmClearkeyTest extends MediaPlayerTestBase {
         super.tearDown();
     }
 
-    private boolean isWearDevice() {
+    private boolean isWatchDevice() {
         return mContext.getPackageManager().hasSystemFeature(PackageManager.FEATURE_WATCH);
     }
 
@@ -357,6 +356,11 @@ public class MediaDrmClearkeyTest extends MediaPlayerTestBase {
             Uri audioUrl, boolean audioEncrypted,
             Uri videoUrl, boolean videoEncrypted,
             int videoWidth, int videoHeight, boolean scrambled) throws Exception {
+
+        if (isWatchDevice()) {
+            return;
+        }
+
         MediaDrm drm = null;
         mSessionId = null;
         if (!scrambled) {
@@ -447,11 +451,14 @@ public class MediaDrmClearkeyTest extends MediaPlayerTestBase {
     }
 
     public void testQueryKeyStatus() throws Exception {
-        MediaDrm drm = startDrm(new byte[][] { CLEAR_KEY_CENC }, "cenc", COMMON_PSSH_SCHEME_UUID);
-        if (!drm.isCryptoSchemeSupported(COMMON_PSSH_SCHEME_UUID)) {
-            stopDrm(drm);
-            throw new Error(ERR_MSG_CRYPTO_SCHEME_NOT_SUPPORTED);
+        if (isWatchDevice()) {
+            // skip this test on watch because it calls
+            // addTrack that requires codec
+            return;
         }
+
+        MediaDrm drm = startDrm(new byte[][] { CLEAR_KEY_CENC }, "cenc",
+                CLEARKEY_SCHEME_UUID);
 
         mSessionId = openSession(drm);
 
@@ -512,7 +519,7 @@ public class MediaDrmClearkeyTest extends MediaPlayerTestBase {
 
     public void testClearKeyPlaybackWebm() throws Exception {
         testClearKeyPlayback(
-            COMMON_PSSH_SCHEME_UUID,
+            CLEARKEY_SCHEME_UUID,
             MIME_VIDEO_VP8, new String[0],
             "webm", new byte[][] { CLEAR_KEY_WEBM },
             WEBM_URL, true /* audioEncrypted */,
@@ -522,7 +529,7 @@ public class MediaDrmClearkeyTest extends MediaPlayerTestBase {
 
     public void testClearKeyPlaybackMpeg2ts() throws Exception {
         testClearKeyPlayback(
-            COMMON_PSSH_SCHEME_UUID,
+            CLEARKEY_SCHEME_UUID,
             MIME_VIDEO_AVC, new String[0],
             "mpeg2ts", null,
             MPEG2TS_SCRAMBLED_URL, false /* audioEncrypted */,
@@ -532,7 +539,7 @@ public class MediaDrmClearkeyTest extends MediaPlayerTestBase {
 
     public void testPlaybackMpeg2ts() throws Exception {
         testClearKeyPlayback(
-            COMMON_PSSH_SCHEME_UUID,
+            CLEARKEY_SCHEME_UUID,
             MIME_VIDEO_AVC, new String[0],
             "mpeg2ts", null,
             MPEG2TS_CLEAR_URL, false /* audioEncrypted */,
@@ -589,8 +596,12 @@ public class MediaDrmClearkeyTest extends MediaPlayerTestBase {
     }
 
     public void testGetProperties() throws Exception {
+        if (watchHasNoClearkeySupport()) {
+            return;
+        }
+
         MediaDrm drm = startDrm(new byte[][] { CLEAR_KEY_CENC },
-                "cenc", COMMON_PSSH_SCHEME_UUID);
+                "cenc", CLEARKEY_SCHEME_UUID);
 
         try {
             // The following tests will not verify the value we are getting
@@ -624,8 +635,12 @@ public class MediaDrmClearkeyTest extends MediaPlayerTestBase {
     }
 
     public void testSetProperties() throws Exception {
+        if (watchHasNoClearkeySupport()) {
+            return;
+        }
+
         MediaDrm drm = startDrm(new byte[][]{CLEAR_KEY_CENC},
-                "cenc", COMMON_PSSH_SCHEME_UUID);
+                "cenc", CLEARKEY_SCHEME_UUID);
 
         try {
             // Test setting predefined string property
@@ -694,8 +709,12 @@ public class MediaDrmClearkeyTest extends MediaPlayerTestBase {
     private final static int CLEARKEY_MAX_SESSIONS = 10;
 
     public void testGetNumberOfSessions() {
+        if (watchHasNoClearkeySupport()) {
+            return;
+        }
+
         MediaDrm drm = startDrm(new byte[][] { CLEAR_KEY_CENC },
-                "cenc", COMMON_PSSH_SCHEME_UUID);
+                "cenc", CLEARKEY_SCHEME_UUID);
 
         try {
             if (getClearkeyVersion(drm).equals("1.0")) {
@@ -726,9 +745,13 @@ public class MediaDrmClearkeyTest extends MediaPlayerTestBase {
     }
 
     public void testHdcpLevels() {
+        if (watchHasNoClearkeySupport()) {
+            return;
+        }
+
         MediaDrm drm = null;
         try {
-            drm = new MediaDrm(COMMON_PSSH_SCHEME_UUID);
+            drm = new MediaDrm(CLEARKEY_SCHEME_UUID);
 
             if (getClearkeyVersion(drm).equals("1.0")) {
                 Log.i(TAG, "Skipping testHdcpLevels: not supported by clearkey 1.0");
@@ -743,7 +766,7 @@ public class MediaDrmClearkeyTest extends MediaPlayerTestBase {
                 throw new Error("expected max hdcp level to be HDCP_NO_DIGITAL_OUTPUT");
             }
         } catch(Exception e) {
-            throw new Error("Unexpected exception", e);
+            throw new Error("Unexpected exception ", e);
         } finally {
             if (drm != null) {
                 drm.close();
@@ -752,10 +775,14 @@ public class MediaDrmClearkeyTest extends MediaPlayerTestBase {
     }
 
     public void testSecurityLevels() {
+        if (watchHasNoClearkeySupport()) {
+            return;
+        }
+
         MediaDrm drm = null;
         byte[] sessionId = null;
         try {
-            drm = new MediaDrm(COMMON_PSSH_SCHEME_UUID);
+            drm = new MediaDrm(CLEARKEY_SCHEME_UUID);
 
             if (getClearkeyVersion(drm).equals("1.0")) {
                 Log.i(TAG, "Skipping testSecurityLevels: not supported by clearkey 1.0");
@@ -790,7 +817,7 @@ public class MediaDrmClearkeyTest extends MediaPlayerTestBase {
                 }
             }
         } catch(Exception e) {
-            throw new Error("Unexpected exception", e);
+            throw new Error("Unexpected exception ", e);
         } finally  {
             if (sessionId != null) {
                 drm.closeSession(sessionId);
@@ -802,17 +829,17 @@ public class MediaDrmClearkeyTest extends MediaPlayerTestBase {
      }
 
     public void testSecureStop() {
-        MediaDrm drm = startDrm(new byte[][] {CLEAR_KEY_CENC}, "cenc", COMMON_PSSH_SCHEME_UUID);
+        if (watchHasNoClearkeySupport()) {
+            return;
+        }
+
+        MediaDrm drm = startDrm(new byte[][] {CLEAR_KEY_CENC}, "cenc", CLEARKEY_SCHEME_UUID);
 
         byte[] sessionId = null;
         try {
             if (getClearkeyVersion(drm).equals("1.0")) {
                 Log.i(TAG, "Skipping testSecureStop: not supported in ClearKey v1.0");
                 return;
-            }
-
-            if (!drm.isCryptoSchemeSupported(COMMON_PSSH_SCHEME_UUID)) {
-                throw new Error(ERR_MSG_CRYPTO_SCHEME_NOT_SUPPORTED);
             }
 
             drm.removeAllSecureStops();
@@ -921,5 +948,16 @@ public class MediaDrmClearkeyTest extends MediaPlayerTestBase {
         } catch (Exception e) {
             return "unavailable";
         }
+    }
+
+    private boolean watchHasNoClearkeySupport() {
+        if (!MediaDrm.isCryptoSchemeSupported(CLEARKEY_SCHEME_UUID)) {
+            if (isWatchDevice()) {
+                return true;
+            } else {
+                throw new Error(ERR_MSG_CRYPTO_SCHEME_NOT_SUPPORTED);
+            }
+        }
+        return false;
     }
 }
