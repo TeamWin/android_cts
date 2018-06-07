@@ -15,7 +15,6 @@ public final class WebViewReadyHelper {
 
     private final CountDownLatch mLatch;
     private final WebView mWebView;
-    private int mDrawCount = 0;
 
     public WebViewReadyHelper(WebView webview, CountDownLatch latch) {
         mWebView = webview;
