@@ -79,6 +79,14 @@ public class BaseDevicePolicyTest extends DeviceTestCase implements IBuildReceiv
     protected static final int FLAG_EPHEMERAL = 0x00000100;
     protected static final int FLAG_MANAGED_PROFILE = 0x00000020;
 
+    /**
+     * The {@link android.os.BatteryManager} flags value representing all charging types; {@link
+     * android.os.BatteryManager#BATTERY_PLUGGED_AC}, {@link
+     * android.os.BatteryManager#BATTERY_PLUGGED_USB}, and {@link
+     * android.os.BatteryManager#BATTERY_PLUGGED_WIRELESS}.
+     */
+    private static final int STAY_ON_WHILE_PLUGGED_IN_FLAGS = 7;
+
     protected static interface Settings {
         public static final String GLOBAL_NAMESPACE = "global";
         public static interface Global {
@@ -138,6 +146,7 @@ public class BaseDevicePolicyTest extends DeviceTestCase implements IBuildReceiv
         removeTestUsers();
         // Unlock keyguard before test
         wakeupAndDismissKeyguard();
+        stayAwake();
         // Go to home.
         executeShellCommand("input keyevent KEYCODE_HOME");
     }
@@ -806,5 +815,10 @@ public class BaseDevicePolicyTest extends DeviceTestCase implements IBuildReceiv
     protected void wakeupAndDismissKeyguard() throws Exception {
         executeShellCommand("input keyevent KEYCODE_WAKEUP");
         executeShellCommand("wm dismiss-keyguard");
+    }
+
+    private void stayAwake() throws Exception {
+        executeShellCommand(
+            "settings put global stay_on_while_plugged_in " + STAY_ON_WHILE_PLUGGED_IN_FLAGS);
     }
 }
