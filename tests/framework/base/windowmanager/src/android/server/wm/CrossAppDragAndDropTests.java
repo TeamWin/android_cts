@@ -41,6 +41,7 @@ import android.platform.test.annotations.AppModeFull;
 import android.os.SystemClock;
 import android.platform.test.annotations.Presubmit;
 import android.support.test.InstrumentationRegistry;
+import android.support.test.filters.FlakyTest;
 import android.util.Log;
 
 import org.junit.After;
@@ -56,6 +57,7 @@ import java.util.regex.Pattern;
  */
 @Presubmit
 @AppModeFull(reason = "Requires android.permission.MANAGE_ACTIVITY_STACKS")
+@FlakyTest(bugId = 109874623)
 public class CrossAppDragAndDropTests {
     private static final String TAG = "CrossAppDragAndDrop";
 
