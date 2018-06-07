@@ -19,14 +19,15 @@ package android.permission.cts;
 import android.content.pm.ApplicationInfo;
 import android.content.pm.PackageManager;
 import android.os.Environment;
+import android.platform.test.annotations.AppModeFull;
 import android.system.ErrnoException;
-import android.util.Pair;
 import android.system.Os;
 import android.system.OsConstants;
 import android.system.StructStatVfs;
 import android.test.AndroidTestCase;
 import android.test.suitebuilder.annotation.MediumTest;
 import android.test.suitebuilder.annotation.LargeTest;
+import android.util.Pair;
 
 import java.io.BufferedReader;
 import java.io.File;
@@ -424,6 +425,7 @@ public class FileSystemPermissionTest extends AndroidTestCase {
     }
 
     @MediumTest
+    @AppModeFull(reason = "Instant Apps cannot access proc_net labeled files")
     public void testTcpDefaultRwndSane() throws Exception {
         File f = new File("/proc/sys/net/ipv4/tcp_default_init_rwnd");
         assertTrue(f.canRead());
