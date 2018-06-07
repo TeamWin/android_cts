@@ -35,7 +35,7 @@ import java.io.File;
  * Set of tests that verify that corrupt APKs are properly rejected by PackageManager and
  * do not cause the system to crash.
  */
-@AppModeFull // TODO: Needs porting to instant
+@AppModeFull(reason = "the corrupt APKs were provided as-is and we cannot modify them to comply with instant mode")
 public class CorruptApkTests extends DeviceTestCase implements IBuildReceiver {
     private final String B71360999_PKG = "com.android.appsecurity.b71360999";
     private final String B71361168_PKG = "com.android.appsecurity.b71361168";

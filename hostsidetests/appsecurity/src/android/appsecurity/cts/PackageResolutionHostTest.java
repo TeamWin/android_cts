@@ -19,8 +19,8 @@ package android.appsecurity.cts;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 
-import com.android.compatibility.common.tradefed.build.CompatibilityBuildHelper;
-import com.android.tradefed.device.DeviceNotAvailableException;
+import android.platform.test.annotations.AppModeFull;
+import android.platform.test.annotations.AppModeInstant;
 import com.android.tradefed.testtype.DeviceJUnit4ClassRunner;
 
 import org.junit.After;
@@ -38,12 +38,10 @@ public class PackageResolutionHostTest extends BaseAppSecurityTest {
     private static final String TINY_PKG = "android.appsecurity.cts.orderedactivity";
 
     private String mOldVerifierValue;
-    private CompatibilityBuildHelper mBuildHelper;
 
     @Before
     public void setUp() throws Exception {
         getDevice().uninstallPackage(TINY_PKG);
-        mBuildHelper = new CompatibilityBuildHelper(getBuild());
     }
 
     @After
@@ -52,26 +50,56 @@ public class PackageResolutionHostTest extends BaseAppSecurityTest {
     }
 
     @Test
-    public void testResolveOrderedActivity() throws Exception {
-        getDevice().installPackage(mBuildHelper.getTestFile(TINY_APK), true);
+    @AppModeFull
+    public void testResolveOrderedActivity_full() throws Exception {
+        testResolveOrderedActivity(false);
+    }
+    @Test
+    @AppModeInstant
+    public void testResolveOrderedActivity_instant() throws Exception {
+        testResolveOrderedActivity(true);
+    }
+    private void testResolveOrderedActivity(boolean instant) throws Exception {
+        new InstallMultiple(instant)
+                .addApk(TINY_APK)
+                .run();
         Utils.runDeviceTests(getDevice(), TINY_PKG,
                 ".PackageResolutionTest", "queryActivityOrdered");
-        getDevice().uninstallPackage(TINY_PKG);
     }
 
     @Test
-    public void testResolveOrderedService() throws Exception {
-        getDevice().installPackage(mBuildHelper.getTestFile(TINY_APK), true);
+    @AppModeFull
+    public void testResolveOrderedService_full() throws Exception {
+        testResolveOrderedService(false);
+    }
+    @Test
+    @AppModeInstant
+    public void testResolveOrderedService_instant() throws Exception {
+        testResolveOrderedService(true);
+    }
+    private void testResolveOrderedService(boolean instant) throws Exception {
+        new InstallMultiple(instant)
+                .addApk(TINY_APK)
+                .run();
         Utils.runDeviceTests(getDevice(), TINY_PKG,
                 ".PackageResolutionTest", "queryServiceOrdered");
-        getDevice().uninstallPackage(TINY_PKG);
     }
 
     @Test
-    public void testResolveOrderedReceiver() throws Exception {
-        getDevice().installPackage(mBuildHelper.getTestFile(TINY_APK), true);
+    @AppModeFull
+    public void testResolveOrderedReceiver_full() throws Exception {
+        testResolveOrderedReceiver(false);
+    }
+    @Test
+    @AppModeInstant
+    public void testResolveOrderedReceiver_instant() throws Exception {
+        testResolveOrderedReceiver(true);
+    }
+    private void testResolveOrderedReceiver(boolean instant) throws Exception {
+        new InstallMultiple(instant)
+                .addApk(TINY_APK)
+                .run();
         Utils.runDeviceTests(getDevice(), TINY_PKG,
                 ".PackageResolutionTest", "queryReceiverOrdered");
-        getDevice().uninstallPackage(TINY_PKG);
     }
 }

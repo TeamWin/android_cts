@@ -15,6 +15,7 @@
  */
 package android.appsecurity.cts;
 
+import android.platform.test.annotations.AppModeFull;
 import com.android.compatibility.common.tradefed.build.CompatibilityBuildHelper;
 import com.android.tradefed.build.IBuildInfo;
 import com.android.tradefed.testtype.DeviceTestCase;
@@ -42,6 +43,7 @@ public class OverlayHostTest extends DeviceTestCase implements IBuildReceiver {
         mBuildHelper = new CompatibilityBuildHelper(buildInfo);
     }
 
+    @AppModeFull(reason = "Overlays cannot be instant apps")
     public void testInstallingOverlayHasNoEffect() throws Exception {
         assertFalse(getDevice().getInstalledPackageNames().contains(PKG));
 

@@ -15,8 +15,9 @@
  */
 package android.appsecurity.cts;
 
+import android.platform.test.annotations.AppModeFull;
+import android.platform.test.annotations.AppModeInstant;
 import com.android.tradefed.testtype.DeviceJUnit4ClassRunner;
-import com.android.tradefed.testtype.IBuildReceiver;
 import com.android.tradefed.testtype.junit4.BaseHostJUnit4Test;
 
 import org.junit.After;
@@ -25,7 +26,7 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 
 @RunWith(DeviceJUnit4ClassRunner.class)
-public class ClassloaderSplitsTest extends BaseHostJUnit4Test implements IBuildReceiver {
+public class ClassloaderSplitsTest extends BaseAppSecurityTest {
     private static final String PKG = "com.android.cts.classloadersplitapp";
     private static final String TEST_CLASS = PKG + ".SplitAppTest";
 
@@ -57,36 +58,63 @@ public class ClassloaderSplitsTest extends BaseHostJUnit4Test implements IBuildR
     }
 
     @Test
-    public void testBaseClassLoader() throws Exception {
-        new InstallMultiple().addApk(APK_BASE).run();
+    @AppModeFull
+    public void testBaseClassLoader_full() throws Exception {
+        testBaseClassLoader(false);
+    }
+    @Test
+    @AppModeInstant
+    public void testBaseClassLoader_instant() throws Exception {
+        testBaseClassLoader(true);
+    }
+    private void testBaseClassLoader(boolean instant) throws Exception {
+        new InstallMultiple(instant).addApk(APK_BASE).run();
         runDeviceTests(getDevice(), PKG, TEST_CLASS, "testBaseClassLoader");
     }
 
     @Test
-    public void testFeatureAClassLoader() throws Exception {
-        new InstallMultiple().addApk(APK_BASE).addApk(APK_FEATURE_A).run();
+    @AppModeFull
+    public void testFeatureAClassLoader_full() throws Exception {
+        testFeatureAClassLoader(false);
+    }
+    @Test
+    @AppModeInstant
+    public void testFeatureAClassLoader_instant() throws Exception {
+        testFeatureAClassLoader(true);
+    }
+    private void testFeatureAClassLoader(boolean instant) throws Exception {
+        new InstallMultiple(instant).addApk(APK_BASE).addApk(APK_FEATURE_A).run();
         runDeviceTests(getDevice(), PKG, TEST_CLASS, "testBaseClassLoader");
         runDeviceTests(getDevice(), PKG, TEST_CLASS, "testFeatureAClassLoader");
     }
 
     @Test
-    public void testFeatureBClassLoader() throws Exception {
-        new InstallMultiple().addApk(APK_BASE).addApk(APK_FEATURE_A).addApk(APK_FEATURE_B).run();
+    @AppModeFull
+    public void testFeatureBClassLoader_full() throws Exception {
+        testFeatureBClassLoader(false);
+    }
+    @Test
+    @AppModeInstant
+    public void testFeatureBClassLoader_instant() throws Exception {
+        testFeatureBClassLoader(true);
+    }
+    private void testFeatureBClassLoader(boolean instant) throws Exception {
+        new InstallMultiple(instant)
+                .addApk(APK_BASE).addApk(APK_FEATURE_A).addApk(APK_FEATURE_B).run();
         runDeviceTests(getDevice(), PKG, TEST_CLASS, "testBaseClassLoader");
         runDeviceTests(getDevice(), PKG, TEST_CLASS, "testFeatureAClassLoader");
         runDeviceTests(getDevice(), PKG, TEST_CLASS, "testFeatureBClassLoader");
     }
 
     @Test
-    public void testReceiverClassLoaders() throws Exception {
-        new InstallMultiple().addApk(APK_BASE).addApk(APK_FEATURE_A).addApk(APK_FEATURE_B).run();
+    @AppModeFull(reason = "b/109878606; instant applications can't send broadcasts to manifest receivers")
+    public void testReceiverClassLoaders_full() throws Exception {
+        testReceiverClassLoaders(false);
+    }
+    private void testReceiverClassLoaders(boolean instant) throws Exception {
+        new InstallMultiple(instant)
+                .addApk(APK_BASE).addApk(APK_FEATURE_A).addApk(APK_FEATURE_B).run();
         runDeviceTests(getDevice(), PKG, TEST_CLASS, "testBaseClassLoader");
         runDeviceTests(getDevice(), PKG, TEST_CLASS, "testAllReceivers");
-    }
-
-    private class InstallMultiple extends BaseInstallMultiple<InstallMultiple> {
-        public InstallMultiple() {
-            super(getDevice(), getBuild(), null);
-        }
     }
 }
