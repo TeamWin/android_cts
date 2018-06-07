@@ -9567,94 +9567,94 @@
     <value>mime=video/hevc,size=381384,width=3840,height=2160,frame-rate=50,profile=1,level=65536,bitrate=16905776,package=full</value>
   </entry>
   <entry key="hevc/yuv420/8bit/gop/crowd_640x360p50/crowd_640x360p50f10_gop8.mp4">
-    <value>mime=video/hevc,size=27950,width=640,height=360,frame-rate=50,profile=1,level=64,bitrate=1077360,package=standard</value>
+    <value>mime=video/hevc,size=27950,width=640,height=360,frame-rate=50,profile=1,level=64,bitrate=1077360,package=standard,enforce=true</value>
   </entry>
   <entry key="hevc/yuv420/8bit/gop/crowd_640x360p50/crowd_640x360p50f11_gop8.mp4">
-    <value>mime=video/hevc,size=28995,width=640,height=360,frame-rate=50,profile=1,level=64,bitrate=1016976,package=standard</value>
+    <value>mime=video/hevc,size=28995,width=640,height=360,frame-rate=50,profile=1,level=64,bitrate=1016976,package=standard,enforce=true</value>
   </entry>
   <entry key="hevc/yuv420/8bit/gop/crowd_640x360p50/crowd_640x360p50f12_gop8.mp4">
-    <value>mime=video/hevc,size=30142,width=640,height=360,frame-rate=50,profile=1,level=64,bitrate=970064,package=standard</value>
+    <value>mime=video/hevc,size=30142,width=640,height=360,frame-rate=50,profile=1,level=64,bitrate=970064,package=standard,enforce=true</value>
   </entry>
   <entry key="hevc/yuv420/8bit/gop/crowd_640x360p50/crowd_640x360p50f13_gop8.mp4">
-    <value>mime=video/hevc,size=31315,width=640,height=360,frame-rate=50,profile=1,level=64,bitrate=931168,package=standard</value>
+    <value>mime=video/hevc,size=31315,width=640,height=360,frame-rate=50,profile=1,level=64,bitrate=931168,package=standard,enforce=true</value>
   </entry>
   <entry key="hevc/yuv420/8bit/gop/crowd_640x360p50/crowd_640x360p50f14_gop8.mp4">
-    <value>mime=video/hevc,size=31793,width=640,height=360,frame-rate=50,profile=1,level=64,bitrate=878192,package=standard</value>
+    <value>mime=video/hevc,size=31793,width=640,height=360,frame-rate=50,profile=1,level=64,bitrate=878192,package=standard,enforce=true</value>
   </entry>
   <entry key="hevc/yuv420/8bit/gop/crowd_640x360p50/crowd_640x360p50f15_gop8.mp4">
-    <value>mime=video/hevc,size=33475,width=640,height=360,frame-rate=50,profile=1,level=64,bitrate=864400,package=standard</value>
+    <value>mime=video/hevc,size=33475,width=640,height=360,frame-rate=50,profile=1,level=64,bitrate=864400,package=standard,enforce=true</value>
   </entry>
   <entry key="hevc/yuv420/8bit/gop/crowd_640x360p50/crowd_640x360p50f16_gop8.mp4">
-    <value>mime=video/hevc,size=33170,width=640,height=360,frame-rate=50,profile=1,level=64,bitrate=802648,package=standard</value>
+    <value>mime=video/hevc,size=33170,width=640,height=360,frame-rate=50,profile=1,level=64,bitrate=802648,package=standard,enforce=true</value>
   </entry>
   <entry key="hevc/yuv420/8bit/gop/crowd_640x360p50/crowd_640x360p50f1_gop1.mp4">
-    <value>mime=video/hevc,size=13556,width=640,height=360,frame-rate=1,profile=1,level=64,bitrate=101624,package=standard</value>
+    <value>mime=video/hevc,size=13556,width=640,height=360,frame-rate=1,profile=1,level=64,bitrate=101624,package=standard,enforce=true</value>
   </entry>
   <entry key="hevc/yuv420/8bit/gop/crowd_640x360p50/crowd_640x360p50f1_gop2.mp4">
-    <value>mime=video/hevc,size=13567,width=640,height=360,frame-rate=1,profile=1,level=64,bitrate=101704,package=standard</value>
+    <value>mime=video/hevc,size=13567,width=640,height=360,frame-rate=1,profile=1,level=64,bitrate=101704,package=standard,enforce=true</value>
   </entry>
   <entry key="hevc/yuv420/8bit/gop/crowd_640x360p50/crowd_640x360p50f1_gop4.mp4">
-    <value>mime=video/hevc,size=13567,width=640,height=360,frame-rate=1,profile=1,level=64,bitrate=101704,package=standard</value>
+    <value>mime=video/hevc,size=13567,width=640,height=360,frame-rate=1,profile=1,level=64,bitrate=101704,package=standard,enforce=true</value>
   </entry>
   <entry key="hevc/yuv420/8bit/gop/crowd_640x360p50/crowd_640x360p50f1_gop8.mp4">
-    <value>mime=video/hevc,size=13569,width=640,height=360,frame-rate=1,profile=1,level=64,bitrate=101704,package=standard</value>
+    <value>mime=video/hevc,size=13569,width=640,height=360,frame-rate=1,profile=1,level=64,bitrate=101704,package=standard,enforce=true</value>
   </entry>
   <entry key="hevc/yuv420/8bit/gop/crowd_640x360p50/crowd_640x360p50f2_gop1.mp4">
-    <value>mime=video/hevc,size=16317,width=640,height=360,frame-rate=50,profile=1,level=64,bitrate=3087200,package=standard</value>
+    <value>mime=video/hevc,size=16317,width=640,height=360,frame-rate=50,profile=1,level=64,bitrate=3087200,package=standard,enforce=true</value>
   </entry>
   <entry key="hevc/yuv420/8bit/gop/crowd_640x360p50/crowd_640x360p50f2_gop2.mp4">
-    <value>mime=video/hevc,size=16328,width=640,height=360,frame-rate=50,profile=1,level=64,bitrate=3089200,package=standard</value>
+    <value>mime=video/hevc,size=16328,width=640,height=360,frame-rate=50,profile=1,level=64,bitrate=3089200,package=standard,enforce=true</value>
   </entry>
   <entry key="hevc/yuv420/8bit/gop/crowd_640x360p50/crowd_640x360p50f2_gop4.mp4">
-    <value>mime=video/hevc,size=16328,width=640,height=360,frame-rate=50,profile=1,level=64,bitrate=3089200,package=standard</value>
+    <value>mime=video/hevc,size=16328,width=640,height=360,frame-rate=50,profile=1,level=64,bitrate=3089200,package=standard,enforce=true</value>
   </entry>
   <entry key="hevc/yuv420/8bit/gop/crowd_640x360p50/crowd_640x360p50f2_gop8.mp4">
-    <value>mime=video/hevc,size=16330,width=640,height=360,frame-rate=50,profile=1,level=64,bitrate=3089200,package=standard</value>
+    <value>mime=video/hevc,size=16330,width=640,height=360,frame-rate=50,profile=1,level=64,bitrate=3089200,package=standard,enforce=true</value>
   </entry>
   <entry key="hevc/yuv420/8bit/gop/crowd_640x360p50/crowd_640x360p50f3_gop2.mp4">
-    <value>mime=video/hevc,size=18115,width=640,height=360,frame-rate=50,profile=1,level=64,bitrate=2287064,package=standard</value>
+    <value>mime=video/hevc,size=18115,width=640,height=360,frame-rate=50,profile=1,level=64,bitrate=2287064,package=standard,enforce=true</value>
   </entry>
   <entry key="hevc/yuv420/8bit/gop/crowd_640x360p50/crowd_640x360p50f3_gop4.mp4">
-    <value>mime=video/hevc,size=18115,width=640,height=360,frame-rate=50,profile=1,level=64,bitrate=2287064,package=standard</value>
+    <value>mime=video/hevc,size=18115,width=640,height=360,frame-rate=50,profile=1,level=64,bitrate=2287064,package=standard,enforce=true</value>
   </entry>
   <entry key="hevc/yuv420/8bit/gop/crowd_640x360p50/crowd_640x360p50f3_gop8.mp4">
-    <value>mime=video/hevc,size=18117,width=640,height=360,frame-rate=50,profile=1,level=64,bitrate=2287064,package=standard</value>
+    <value>mime=video/hevc,size=18117,width=640,height=360,frame-rate=50,profile=1,level=64,bitrate=2287064,package=standard,enforce=true</value>
   </entry>
   <entry key="hevc/yuv420/8bit/gop/crowd_640x360p50/crowd_640x360p50f4_gop2.mp4">
-    <value>mime=video/hevc,size=19418,width=640,height=360,frame-rate=50,profile=1,level=64,bitrate=1844400,package=standard</value>
+    <value>mime=video/hevc,size=19418,width=640,height=360,frame-rate=50,profile=1,level=64,bitrate=1844400,package=standard,enforce=true</value>
   </entry>
   <entry key="hevc/yuv420/8bit/gop/crowd_640x360p50/crowd_640x360p50f4_gop4.mp4">
-    <value>mime=video/hevc,size=19520,width=640,height=360,frame-rate=50,profile=1,level=64,bitrate=1854600,package=standard</value>
+    <value>mime=video/hevc,size=19520,width=640,height=360,frame-rate=50,profile=1,level=64,bitrate=1854600,package=standard,enforce=true</value>
   </entry>
   <entry key="hevc/yuv420/8bit/gop/crowd_640x360p50/crowd_640x360p50f4_gop8.mp4">
-    <value>mime=video/hevc,size=19522,width=640,height=360,frame-rate=50,profile=1,level=64,bitrate=1854600,package=standard</value>
+    <value>mime=video/hevc,size=19522,width=640,height=360,frame-rate=50,profile=1,level=64,bitrate=1854600,package=standard,enforce=true</value>
   </entry>
   <entry key="hevc/yuv420/8bit/gop/crowd_640x360p50/crowd_640x360p50f5_gop4.mp4">
-    <value>mime=video/hevc,size=20788,width=640,height=360,frame-rate=50,profile=1,level=64,bitrate=1584160,package=standard</value>
+    <value>mime=video/hevc,size=20788,width=640,height=360,frame-rate=50,profile=1,level=64,bitrate=1584160,package=standard,enforce=true</value>
   </entry>
   <entry key="hevc/yuv420/8bit/gop/crowd_640x360p50/crowd_640x360p50f5_gop8.mp4">
-    <value>mime=video/hevc,size=20790,width=640,height=360,frame-rate=50,profile=1,level=64,bitrate=1584160,package=standard</value>
+    <value>mime=video/hevc,size=20790,width=640,height=360,frame-rate=50,profile=1,level=64,bitrate=1584160,package=standard,enforce=true</value>
   </entry>
   <entry key="hevc/yuv420/8bit/gop/crowd_640x360p50/crowd_640x360p50f6_gop4.mp4">
-    <value>mime=video/hevc,size=21940,width=640,height=360,frame-rate=50,profile=1,level=64,bitrate=1396128,package=standard</value>
+    <value>mime=video/hevc,size=21940,width=640,height=360,frame-rate=50,profile=1,level=64,bitrate=1396128,package=standard,enforce=true</value>
   </entry>
   <entry key="hevc/yuv420/8bit/gop/crowd_640x360p50/crowd_640x360p50f6_gop8.mp4">
-    <value>mime=video/hevc,size=21569,width=640,height=360,frame-rate=50,profile=1,level=64,bitrate=1371800,package=standard</value>
+    <value>mime=video/hevc,size=21569,width=640,height=360,frame-rate=50,profile=1,level=64,bitrate=1371800,package=standard,enforce=true</value>
   </entry>
   <entry key="hevc/yuv420/8bit/gop/crowd_640x360p50/crowd_640x360p50f7_gop4.mp4">
-    <value>mime=video/hevc,size=23165,width=640,height=360,frame-rate=50,profile=1,level=64,bitrate=1265992,package=standard</value>
+    <value>mime=video/hevc,size=23165,width=640,height=360,frame-rate=50,profile=1,level=64,bitrate=1265992,package=standard,enforce=true</value>
   </entry>
   <entry key="hevc/yuv420/8bit/gop/crowd_640x360p50/crowd_640x360p50f7_gop8.mp4">
-    <value>mime=video/hevc,size=23213,width=640,height=360,frame-rate=50,profile=1,level=64,bitrate=1269536,package=standard</value>
+    <value>mime=video/hevc,size=23213,width=640,height=360,frame-rate=50,profile=1,level=64,bitrate=1269536,package=standard,enforce=true</value>
   </entry>
   <entry key="hevc/yuv420/8bit/gop/crowd_640x360p50/crowd_640x360p50f8_gop4.mp4">
-    <value>mime=video/hevc,size=23973,width=640,height=360,frame-rate=50,profile=1,level=64,bitrate=1147544,package=standard</value>
+    <value>mime=video/hevc,size=23973,width=640,height=360,frame-rate=50,profile=1,level=64,bitrate=1147544,package=standard,enforce=true</value>
   </entry>
   <entry key="hevc/yuv420/8bit/gop/crowd_640x360p50/crowd_640x360p50f8_gop8.mp4">
-    <value>mime=video/hevc,size=23526,width=640,height=360,frame-rate=50,profile=1,level=64,bitrate=1126296,package=standard</value>
+    <value>mime=video/hevc,size=23526,width=640,height=360,frame-rate=50,profile=1,level=64,bitrate=1126296,package=standard,enforce=true</value>
   </entry>
   <entry key="hevc/yuv420/8bit/gop/crowd_640x360p50/crowd_640x360p50f9_gop8.mp4">
-    <value>mime=video/hevc,size=25228,width=640,height=360,frame-rate=50,profile=1,level=64,bitrate=1076616,package=standard</value>
+    <value>mime=video/hevc,size=25228,width=640,height=360,frame-rate=50,profile=1,level=64,bitrate=1076616,package=standard,enforce=true</value>
   </entry>
   <entry key="hevc/yuv420/8bit/gop/crowd_854x480p50/crowd_854x480p50f10_gop8.mp4">
     <value>mime=video/hevc,size=64778,width=854,height=480,frame-rate=50,profile=1,level=256,bitrate=2550480,package=standard</value>
@@ -9753,10 +9753,10 @@
     <value>mime=video/hevc,size=665558,width=1280,height=720,frame-rate=50,profile=1,level=4096,bitrate=8302872,package=full</value>
   </entry>
   <entry key="hevc/yuv420/8bit/level/crowd_128x96p50f32_200kbps_level_2.0.mp4">
-    <value>mime=video/hevc,size=15635,width=128,height=96,frame-rate=50,profile=1,level=4,bitrate=179048,package=standard</value>
+    <value>mime=video/hevc,size=15635,width=128,height=96,frame-rate=50,profile=1,level=4,bitrate=179048,package=standard,enforce=true</value>
   </entry>
   <entry key="hevc/yuv420/8bit/level/crowd_176x144p50f32_200kbps_level_2.0.mp4">
-    <value>mime=video/hevc,size=16050,width=176,height=144,frame-rate=50,profile=1,level=4,bitrate=184024,package=standard</value>
+    <value>mime=video/hevc,size=16050,width=176,height=144,frame-rate=50,profile=1,level=4,bitrate=184024,package=standard,enforce=true</value>
   </entry>
   <entry key="hevc/yuv420/8bit/level/crowd_1920x1080p50f32_4000kbps_level_4.1.mp4">
     <value>mime=video/hevc,size=302439,width=1920,height=1080,frame-rate=50,profile=1,level=4096,bitrate=3763872,package=standard</value>
@@ -9765,7 +9765,7 @@
     <value>mime=video/hevc,size=726997,width=1920,height=1088,frame-rate=50,profile=1,level=16384,bitrate=9070848,package=full</value>
   </entry>
   <entry key="hevc/yuv420/8bit/level/crowd_352x288p50f32_300kbps_level_2.1.mp4">
-    <value>mime=video/hevc,size=24836,width=352,height=288,frame-rate=50,profile=1,level=16,bitrate=293848,package=standard</value>
+    <value>mime=video/hevc,size=24836,width=352,height=288,frame-rate=50,profile=1,level=16,bitrate=293848,package=standard,enforce=true</value>
   </entry>
   <entry key="hevc/yuv420/8bit/level/crowd_3840x2160p50f32_12000kbps_level_5.1.mp4">
     <value>mime=video/hevc,size=897132,width=3840,height=2160,frame-rate=50,profile=1,level=65536,bitrate=11197824,package=full</value>
@@ -9774,10 +9774,10 @@
     <value>mime=video/hevc,size=1793855,width=3840,height=2160,frame-rate=50,profile=1,level=1048576,bitrate=22406856,package=full</value>
   </entry>
   <entry key="hevc/yuv420/8bit/level/crowd_640x480p50f32_500kbps_level_3.0.mp4">
-    <value>mime=video/hevc,size=43621,width=640,height=480,frame-rate=50,profile=1,level=64,bitrate=528656,package=standard</value>
+    <value>mime=video/hevc,size=43621,width=640,height=480,frame-rate=50,profile=1,level=64,bitrate=528656,package=standard,enforce=true</value>
   </entry>
   <entry key="hevc/yuv420/8bit/level/crowd_64x64p50f32_200kbps_level_2.0.mp4">
-    <value>mime=video/hevc,size=14472,width=64,height=64,frame-rate=50,profile=1,level=4,bitrate=165512,package=standard</value>
+    <value>mime=video/hevc,size=14472,width=64,height=64,frame-rate=50,profile=1,level=4,bitrate=165512,package=standard,enforce=true</value>
   </entry>
   <entry key="hevc/yuv420/8bit/level/crowd_720x480p50f32_600kbps_level_3.1.mp4">
     <value>mime=video/hevc,size=50650,width=720,height=480,frame-rate=50,profile=1,level=256,bitrate=616520,package=standard</value>
@@ -11088,22 +11088,22 @@
     <value>mime=video/hevc,size=2415569,width=3840,height=2160,frame-rate=50,profile=1,level=65536,bitrate=30181872,package=full</value>
   </entry>
   <entry key="hevc/yuv420/8bit/params/crowd_640x360p50f32/crowd_640x360p50f32_100kbps.mp4">
-    <value>mime=video/hevc,size=28874,width=640,height=360,frame-rate=50,profile=1,level=64,bitrate=344344,package=standard</value>
+    <value>mime=video/hevc,size=28874,width=640,height=360,frame-rate=50,profile=1,level=64,bitrate=344344,package=standard,enforce=true</value>
   </entry>
   <entry key="hevc/yuv420/8bit/params/crowd_640x360p50f32/crowd_640x360p50f32_10mbps.mp4">
     <value>mime=video/hevc,size=778226,width=640,height=360,frame-rate=50,profile=1,level=256,bitrate=9711248,package=full</value>
   </entry>
   <entry key="hevc/yuv420/8bit/params/crowd_640x360p50f32/crowd_640x360p50f32_1mbps.mp4">
-    <value>mime=video/hevc,size=74639,width=640,height=360,frame-rate=50,profile=1,level=64,bitrate=916408,package=standard</value>
+    <value>mime=video/hevc,size=74639,width=640,height=360,frame-rate=50,profile=1,level=64,bitrate=916408,package=standard,enforce=true</value>
   </entry>
   <entry key="hevc/yuv420/8bit/params/crowd_640x360p50f32/crowd_640x360p50f32_20mbps.mp4">
     <value>mime=video/hevc,size=1580741,width=640,height=360,frame-rate=50,profile=1,level=2048,bitrate=19742680,package=full</value>
   </entry>
   <entry key="hevc/yuv420/8bit/params/crowd_640x360p50f32/crowd_640x360p50f32_4mbps_adaptiveqp0.mp4">
-    <value>mime=video/hevc,size=327764,width=640,height=360,frame-rate=50,profile=1,level=64,bitrate=4080472,package=standard</value>
+    <value>mime=video/hevc,size=327764,width=640,height=360,frame-rate=50,profile=1,level=64,bitrate=4080472,package=standard,enforce=true</value>
   </entry>
   <entry key="hevc/yuv420/8bit/params/crowd_640x360p50f32/crowd_640x360p50f32_4mbps_adaptiveqp2.mp4">
-    <value>mime=video/hevc,size=324986,width=640,height=360,frame-rate=50,profile=1,level=64,bitrate=4045744,package=standard</value>
+    <value>mime=video/hevc,size=324986,width=640,height=360,frame-rate=50,profile=1,level=64,bitrate=4045744,package=standard,enforce=true</value>
   </entry>
   <entry key="hevc/yuv420/8bit/params/crowd_640x360p50f32/crowd_640x360p50f32_4mbps_deltaqp1.mp4">
     <value>mime=video/hevc,size=323295,width=640,height=360,frame-rate=25,profile=1,level=16777216,bitrate=2011968,package=standard</value>
@@ -11118,16 +11118,16 @@
     <value>mime=video/hevc,size=323295,width=640,height=360,frame-rate=25,profile=1,level=16777216,bitrate=2011968,package=standard</value>
   </entry>
   <entry key="hevc/yuv420/8bit/params/crowd_640x360p50f32/crowd_640x360p50f32_4mbps_qpg16.mp4">
-    <value>mime=video/hevc,size=112854,width=640,height=360,frame-rate=50,profile=1,level=64,bitrate=1394096,package=standard</value>
+    <value>mime=video/hevc,size=112854,width=640,height=360,frame-rate=50,profile=1,level=64,bitrate=1394096,package=standard,enforce=true</value>
   </entry>
   <entry key="hevc/yuv420/8bit/params/crowd_640x360p50f32/crowd_640x360p50f32_4mbps_qpg64.mp4">
-    <value>mime=video/hevc,size=113718,width=640,height=360,frame-rate=50,profile=1,level=64,bitrate=1404912,package=standard</value>
+    <value>mime=video/hevc,size=113718,width=640,height=360,frame-rate=50,profile=1,level=64,bitrate=1404912,package=standard,enforce=true</value>
   </entry>
   <entry key="hevc/yuv420/8bit/params/crowd_640x360p50f32/crowd_640x360p50f32_4mbps_qpg8.mp4">
-    <value>mime=video/hevc,size=113361,width=640,height=360,frame-rate=50,profile=1,level=64,bitrate=1400432,package=standard</value>
+    <value>mime=video/hevc,size=113361,width=640,height=360,frame-rate=50,profile=1,level=64,bitrate=1400432,package=standard,enforce=true</value>
   </entry>
   <entry key="hevc/yuv420/8bit/params/crowd_640x360p50f32/crowd_640x360p50f32_500kbps.mp4">
-    <value>mime=video/hevc,size=41305,width=640,height=360,frame-rate=50,profile=1,level=64,bitrate=499736,package=standard</value>
+    <value>mime=video/hevc,size=41305,width=640,height=360,frame-rate=50,profile=1,level=64,bitrate=499736,package=standard,enforce=true</value>
   </entry>
   <entry key="hevc/yuv420/8bit/params/crowd_640x360p50f32/crowd_640x360p50f32_5mbps.mp4">
     <value>mime=video/hevc,size=383707,width=640,height=360,frame-rate=50,profile=1,level=64,bitrate=4779760,package=full</value>
@@ -11136,91 +11136,91 @@
     <value>mime=video/hevc,size=318227,width=640,height=360,frame-rate=50,profile=,level=,bitrate=3965384,package=standard</value>
   </entry>
   <entry key="hevc/yuv420/8bit/params/crowd_640x360p50f32/crowd_640x360p50f32_altidr.mp4">
-    <value>mime=video/hevc,size=317903,width=640,height=360,frame-rate=50,profile=1,level=64,bitrate=3960312,package=standard</value>
+    <value>mime=video/hevc,size=317903,width=640,height=360,frame-rate=50,profile=1,level=64,bitrate=3960312,package=standard,enforce=true</value>
   </entry>
   <entry key="hevc/yuv420/8bit/params/crowd_640x360p50f32/crowd_640x360p50f32_amp0.mp4">
-    <value>mime=video/hevc,size=111830,width=640,height=360,frame-rate=50,profile=1,level=64,bitrate=1381296,package=standard</value>
+    <value>mime=video/hevc,size=111830,width=640,height=360,frame-rate=50,profile=1,level=64,bitrate=1381296,package=standard,enforce=true</value>
   </entry>
   <entry key="hevc/yuv420/8bit/params/crowd_640x360p50f32/crowd_640x360p50f32_amp1.mp4">
-    <value>mime=video/hevc,size=111830,width=640,height=360,frame-rate=50,profile=1,level=64,bitrate=1381296,package=standard</value>
+    <value>mime=video/hevc,size=111830,width=640,height=360,frame-rate=50,profile=1,level=64,bitrate=1381296,package=standard,enforce=true</value>
   </entry>
   <entry key="hevc/yuv420/8bit/params/crowd_640x360p50f32/crowd_640x360p50f32_aud.mp4">
-    <value>mime=video/hevc,size=111827,width=640,height=360,frame-rate=50,profile=1,level=64,bitrate=1381256,package=standard</value>
+    <value>mime=video/hevc,size=111827,width=640,height=360,frame-rate=50,profile=1,level=64,bitrate=1381256,package=standard,enforce=true</value>
   </entry>
   <entry key="hevc/yuv420/8bit/params/crowd_640x360p50f32/crowd_640x360p50f32_b_adapt_0.mp4">
-    <value>mime=video/hevc,size=101275,width=640,height=360,frame-rate=50,profile=1,level=64,bitrate=1249960,package=standard</value>
+    <value>mime=video/hevc,size=101275,width=640,height=360,frame-rate=50,profile=1,level=64,bitrate=1249960,package=standard,enforce=true</value>
   </entry>
   <entry key="hevc/yuv420/8bit/params/crowd_640x360p50f32/crowd_640x360p50f32_b_adapt_1.mp4">
-    <value>mime=video/hevc,size=125087,width=640,height=360,frame-rate=50,profile=1,level=64,bitrate=1547008,package=standard</value>
+    <value>mime=video/hevc,size=125087,width=640,height=360,frame-rate=50,profile=1,level=64,bitrate=1547008,package=standard,enforce=true</value>
   </entry>
   <entry key="hevc/yuv420/8bit/params/crowd_640x360p50f32/crowd_640x360p50f32_beta0.mp4">
-    <value>mime=video/hevc,size=111830,width=640,height=360,frame-rate=50,profile=1,level=64,bitrate=1381296,package=standard</value>
+    <value>mime=video/hevc,size=111830,width=640,height=360,frame-rate=50,profile=1,level=64,bitrate=1381296,package=standard,enforce=true</value>
   </entry>
   <entry key="hevc/yuv420/8bit/params/crowd_640x360p50f32/crowd_640x360p50f32_beta4.mp4">
-    <value>mime=video/hevc,size=111566,width=640,height=360,frame-rate=50,profile=1,level=64,bitrate=1377984,package=standard</value>
+    <value>mime=video/hevc,size=111566,width=640,height=360,frame-rate=50,profile=1,level=64,bitrate=1377984,package=standard,enforce=true</value>
   </entry>
   <entry key="hevc/yuv420/8bit/params/crowd_640x360p50f32/crowd_640x360p50f32_beta6.mp4">
-    <value>mime=video/hevc,size=111681,width=640,height=360,frame-rate=50,profile=1,level=64,bitrate=1379424,package=standard</value>
+    <value>mime=video/hevc,size=111681,width=640,height=360,frame-rate=50,profile=1,level=64,bitrate=1379424,package=standard,enforce=true</value>
   </entry>
   <entry key="hevc/yuv420/8bit/params/crowd_640x360p50f32/crowd_640x360p50f32_beta6_tcm6.mp4">
-    <value>mime=video/hevc,size=111419,width=640,height=360,frame-rate=50,profile=1,level=64,bitrate=1376136,package=standard</value>
+    <value>mime=video/hevc,size=111419,width=640,height=360,frame-rate=50,profile=1,level=64,bitrate=1376136,package=standard,enforce=true</value>
   </entry>
   <entry key="hevc/yuv420/8bit/params/crowd_640x360p50f32/crowd_640x360p50f32_betam4.mp4">
-    <value>mime=video/hevc,size=111901,width=640,height=360,frame-rate=50,profile=1,level=64,bitrate=1382168,package=standard</value>
+    <value>mime=video/hevc,size=111901,width=640,height=360,frame-rate=50,profile=1,level=64,bitrate=1382168,package=standard,enforce=true</value>
   </entry>
   <entry key="hevc/yuv420/8bit/params/crowd_640x360p50f32/crowd_640x360p50f32_betam6.mp4">
-    <value>mime=video/hevc,size=111653,width=640,height=360,frame-rate=50,profile=1,level=64,bitrate=1379072,package=standard</value>
+    <value>mime=video/hevc,size=111653,width=640,height=360,frame-rate=50,profile=1,level=64,bitrate=1379072,package=standard,enforce=true</value>
   </entry>
   <entry key="hevc/yuv420/8bit/params/crowd_640x360p50f32/crowd_640x360p50f32_betam6_tc6.mp4">
-    <value>mime=video/hevc,size=111690,width=640,height=360,frame-rate=50,profile=1,level=64,bitrate=1379520,package=standard</value>
+    <value>mime=video/hevc,size=111690,width=640,height=360,frame-rate=50,profile=1,level=64,bitrate=1379520,package=standard,enforce=true</value>
   </entry>
   <entry key="hevc/yuv420/8bit/params/crowd_640x360p50f32/crowd_640x360p50f32_cnstrn_intra.mp4">
-    <value>mime=video/hevc,size=112825,width=640,height=360,frame-rate=50,profile=1,level=64,bitrate=1393736,package=standard</value>
+    <value>mime=video/hevc,size=112825,width=640,height=360,frame-rate=50,profile=1,level=64,bitrate=1393736,package=standard,enforce=true</value>
   </entry>
   <entry key="hevc/yuv420/8bit/params/crowd_640x360p50f32/crowd_640x360p50f32_cra16.mp4">
-    <value>mime=video/hevc,size=124228,width=640,height=360,frame-rate=50,profile=1,level=64,bitrate=1535456,package=standard</value>
+    <value>mime=video/hevc,size=124228,width=640,height=360,frame-rate=50,profile=1,level=64,bitrate=1535456,package=standard,enforce=true</value>
   </entry>
   <entry key="hevc/yuv420/8bit/params/crowd_640x360p50f32/crowd_640x360p50f32_crf0.mp4">
     <value>mime=video/hevc,size=3095548,width=640,height=360,frame-rate=50,profile=1,level=64,bitrate=38677768,package=full</value>
   </entry>
   <entry key="hevc/yuv420/8bit/params/crowd_640x360p50f32/crowd_640x360p50f32_crf51.mp4">
-    <value>mime=video/hevc,size=10315,width=640,height=360,frame-rate=50,profile=1,level=64,bitrate=112360,package=standard</value>
+    <value>mime=video/hevc,size=10315,width=640,height=360,frame-rate=50,profile=1,level=64,bitrate=112360,package=standard,enforce=true</value>
   </entry>
   <entry key="hevc/yuv420/8bit/params/crowd_640x360p50f32/crowd_640x360p50f32_ctb16.mp4">
-    <value>mime=video/hevc,size=114030,width=640,height=360,frame-rate=50,profile=1,level=64,bitrate=1408824,package=standard</value>
+    <value>mime=video/hevc,size=114030,width=640,height=360,frame-rate=50,profile=1,level=64,bitrate=1408824,package=standard,enforce=true</value>
   </entry>
   <entry key="hevc/yuv420/8bit/params/crowd_640x360p50f32/crowd_640x360p50f32_ctb32.mp4">
-    <value>mime=video/hevc,size=112985,width=640,height=360,frame-rate=50,profile=1,level=64,bitrate=1395744,package=standard</value>
+    <value>mime=video/hevc,size=112985,width=640,height=360,frame-rate=50,profile=1,level=64,bitrate=1395744,package=standard,enforce=true</value>
   </entry>
   <entry key="hevc/yuv420/8bit/params/crowd_640x360p50f32/crowd_640x360p50f32_fastdecode.mp4">
-    <value>mime=video/hevc,size=112032,width=640,height=360,frame-rate=50,profile=1,level=64,bitrate=1383824,package=standard</value>
+    <value>mime=video/hevc,size=112032,width=640,height=360,frame-rate=50,profile=1,level=64,bitrate=1383824,package=standard,enforce=true</value>
   </entry>
   <entry key="hevc/yuv420/8bit/params/crowd_640x360p50f32/crowd_640x360p50f32_faster.mp4">
-    <value>mime=video/hevc,size=96043,width=640,height=360,frame-rate=50,profile=1,level=64,bitrate=1184560,package=standard</value>
+    <value>mime=video/hevc,size=96043,width=640,height=360,frame-rate=50,profile=1,level=64,bitrate=1184560,package=standard,enforce=true</value>
   </entry>
   <entry key="hevc/yuv420/8bit/params/crowd_640x360p50f32/crowd_640x360p50f32_fast.mp4">
-    <value>mime=video/hevc,size=99525,width=640,height=360,frame-rate=50,profile=1,level=64,bitrate=1228080,package=standard</value>
+    <value>mime=video/hevc,size=99525,width=640,height=360,frame-rate=50,profile=1,level=64,bitrate=1228080,package=standard,enforce=true</value>
   </entry>
   <entry key="hevc/yuv420/8bit/params/crowd_640x360p50f32/crowd_640x360p50f32_grain.mp4">
-    <value>mime=video/hevc,size=177737,width=640,height=360,frame-rate=50,profile=1,level=64,bitrate=2205144,package=standard</value>
+    <value>mime=video/hevc,size=177737,width=640,height=360,frame-rate=50,profile=1,level=64,bitrate=2205144,package=standard,enforce=true</value>
   </entry>
   <entry key="hevc/yuv420/8bit/params/crowd_640x360p50f32/crowd_640x360p50f32_hash_chksum.mp4">
-    <value>mime=video/hevc,size=112534,width=640,height=360,frame-rate=50,profile=1,level=64,bitrate=1390096,package=standard</value>
+    <value>mime=video/hevc,size=112534,width=640,height=360,frame-rate=50,profile=1,level=64,bitrate=1390096,package=standard,enforce=true</value>
   </entry>
   <entry key="hevc/yuv420/8bit/params/crowd_640x360p50f32/crowd_640x360p50f32_hash_crc.mp4">
-    <value>mime=video/hevc,size=112342,width=640,height=360,frame-rate=50,profile=1,level=64,bitrate=1387696,package=standard</value>
+    <value>mime=video/hevc,size=112342,width=640,height=360,frame-rate=50,profile=1,level=64,bitrate=1387696,package=standard,enforce=true</value>
   </entry>
   <entry key="hevc/yuv420/8bit/params/crowd_640x360p50f32/crowd_640x360p50f32_hash_md5.mp4">
-    <value>mime=video/hevc,size=113686,width=640,height=360,frame-rate=50,profile=1,level=64,bitrate=1404496,package=standard</value>
+    <value>mime=video/hevc,size=113686,width=640,height=360,frame-rate=50,profile=1,level=64,bitrate=1404496,package=standard,enforce=true</value>
   </entry>
   <entry key="hevc/yuv420/8bit/params/crowd_640x360p50f32/crowd_640x360p50f32_hrd.mp4">
-    <value>mime=video/hevc,size=111830,width=640,height=360,frame-rate=50,profile=1,level=64,bitrate=1381296,package=standard</value>
+    <value>mime=video/hevc,size=111830,width=640,height=360,frame-rate=50,profile=1,level=64,bitrate=1381296,package=standard,enforce=true</value>
   </entry>
   <entry key="hevc/yuv420/8bit/params/crowd_640x360p50f32/crowd_640x360p50f32_idr16.mp4">
-    <value>mime=video/hevc,size=125520,width=640,height=360,frame-rate=50,profile=1,level=64,bitrate=1552368,package=standard</value>
+    <value>mime=video/hevc,size=125520,width=640,height=360,frame-rate=50,profile=1,level=64,bitrate=1552368,package=standard,enforce=true</value>
   </entry>
   <entry key="hevc/yuv420/8bit/params/crowd_640x360p50f32/crowd_640x360p50f32_intraminus1.mp4">
-    <value>mime=video/hevc,size=111839,width=640,height=360,frame-rate=50,profile=1,level=64,bitrate=1381408,package=standard</value>
+    <value>mime=video/hevc,size=111839,width=640,height=360,frame-rate=50,profile=1,level=64,bitrate=1381408,package=standard,enforce=true</value>
   </entry>
   <entry key="hevc/yuv420/8bit/params/crowd_640x360p50f32/crowd_640x360p50f32_lossless.mp4">
     <value>mime=video/hevc,size=5068113,width=640,height=360,frame-rate=50,profile=1,level=,bitrate=63334848,package=full</value>
@@ -11229,43 +11229,43 @@
     <value>mime=video/hevc,size=124435,width=640,height=360,frame-rate=25,profile=1,level=16777216,bitrate=769096,package=standard</value>
   </entry>
   <entry key="hevc/yuv420/8bit/params/crowd_640x360p50f32/crowd_640x360p50f32_max_log2poc_10.mp4">
-    <value>mime=video/hevc,size=111841,width=640,height=360,frame-rate=50,profile=1,level=64,bitrate=1381432,package=standard</value>
+    <value>mime=video/hevc,size=111841,width=640,height=360,frame-rate=50,profile=1,level=64,bitrate=1381432,package=standard,enforce=true</value>
   </entry>
   <entry key="hevc/yuv420/8bit/params/crowd_640x360p50f32/crowd_640x360p50f32_max_log2poc_16.mp4">
-    <value>mime=video/hevc,size=111863,width=640,height=360,frame-rate=50,profile=1,level=64,bitrate=1381696,package=standard</value>
+    <value>mime=video/hevc,size=111863,width=640,height=360,frame-rate=50,profile=1,level=64,bitrate=1381696,package=standard,enforce=true</value>
   </entry>
   <entry key="hevc/yuv420/8bit/params/crowd_640x360p50f32/crowd_640x360p50f32_max_log2poc_4.mp4">
-    <value>mime=video/hevc,size=111826,width=640,height=360,frame-rate=50,profile=1,level=64,bitrate=1381248,package=standard</value>
+    <value>mime=video/hevc,size=111826,width=640,height=360,frame-rate=50,profile=1,level=64,bitrate=1381248,package=standard,enforce=true</value>
   </entry>
   <entry key="hevc/yuv420/8bit/params/crowd_640x360p50f32/crowd_640x360p50f32_max_log2poc_5.mp4">
-    <value>mime=video/hevc,size=111826,width=640,height=360,frame-rate=50,profile=1,level=64,bitrate=1381248,package=standard</value>
+    <value>mime=video/hevc,size=111826,width=640,height=360,frame-rate=50,profile=1,level=64,bitrate=1381248,package=standard,enforce=true</value>
   </entry>
   <entry key="hevc/yuv420/8bit/params/crowd_640x360p50f32/crowd_640x360p50f32_max_log2poc_6.mp4">
-    <value>mime=video/hevc,size=111826,width=640,height=360,frame-rate=50,profile=1,level=64,bitrate=1381248,package=standard</value>
+    <value>mime=video/hevc,size=111826,width=640,height=360,frame-rate=50,profile=1,level=64,bitrate=1381248,package=standard,enforce=true</value>
   </entry>
   <entry key="hevc/yuv420/8bit/params/crowd_640x360p50f32/crowd_640x360p50f32_maxtu16.mp4">
-    <value>mime=video/hevc,size=112217,width=640,height=360,frame-rate=50,profile=1,level=64,bitrate=1386136,package=standard</value>
+    <value>mime=video/hevc,size=112217,width=640,height=360,frame-rate=50,profile=1,level=64,bitrate=1386136,package=standard,enforce=true</value>
   </entry>
   <entry key="hevc/yuv420/8bit/params/crowd_640x360p50f32/crowd_640x360p50f32_maxtu4.mp4">
-    <value>mime=video/hevc,size=108222,width=640,height=360,frame-rate=50,profile=1,level=64,bitrate=1336208,package=standard</value>
+    <value>mime=video/hevc,size=108222,width=640,height=360,frame-rate=50,profile=1,level=64,bitrate=1336208,package=standard,enforce=true</value>
   </entry>
   <entry key="hevc/yuv420/8bit/params/crowd_640x360p50f32/crowd_640x360p50f32_maxtu8.mp4">
-    <value>mime=video/hevc,size=112711,width=640,height=360,frame-rate=50,profile=1,level=64,bitrate=1392312,package=standard</value>
+    <value>mime=video/hevc,size=112711,width=640,height=360,frame-rate=50,profile=1,level=64,bitrate=1392312,package=standard,enforce=true</value>
   </entry>
   <entry key="hevc/yuv420/8bit/params/crowd_640x360p50f32/crowd_640x360p50f32_medium.mp4">
-    <value>mime=video/hevc,size=111830,width=640,height=360,frame-rate=50,profile=1,level=64,bitrate=1381296,package=standard</value>
+    <value>mime=video/hevc,size=111830,width=640,height=360,frame-rate=50,profile=1,level=64,bitrate=1381296,package=standard,enforce=true</value>
   </entry>
   <entry key="hevc/yuv420/8bit/params/crowd_640x360p50f32/crowd_640x360p50f32_merge1.mp4">
-    <value>mime=video/hevc,size=113883,width=640,height=360,frame-rate=50,profile=1,level=64,bitrate=1406960,package=standard</value>
+    <value>mime=video/hevc,size=113883,width=640,height=360,frame-rate=50,profile=1,level=64,bitrate=1406960,package=standard,enforce=true</value>
   </entry>
   <entry key="hevc/yuv420/8bit/params/crowd_640x360p50f32/crowd_640x360p50f32_merge3.mp4">
-    <value>mime=video/hevc,size=111195,width=640,height=360,frame-rate=50,profile=1,level=64,bitrate=1373360,package=standard</value>
+    <value>mime=video/hevc,size=111195,width=640,height=360,frame-rate=50,profile=1,level=64,bitrate=1373360,package=standard,enforce=true</value>
   </entry>
   <entry key="hevc/yuv420/8bit/params/crowd_640x360p50f32/crowd_640x360p50f32_merge4.mp4">
-    <value>mime=video/hevc,size=110854,width=640,height=360,frame-rate=50,profile=1,level=64,bitrate=1369096,package=standard</value>
+    <value>mime=video/hevc,size=110854,width=640,height=360,frame-rate=50,profile=1,level=64,bitrate=1369096,package=standard,enforce=true</value>
   </entry>
   <entry key="hevc/yuv420/8bit/params/crowd_640x360p50f32/crowd_640x360p50f32_merge5.mp4">
-    <value>mime=video/hevc,size=111457,width=640,height=360,frame-rate=50,profile=1,level=64,bitrate=1376632,package=standard</value>
+    <value>mime=video/hevc,size=111457,width=640,height=360,frame-rate=50,profile=1,level=64,bitrate=1376632,package=standard,enforce=true</value>
   </entry>
   <entry key="hevc/yuv420/8bit/params/crowd_640x360p50f32/crowd_640x360p50f32_mincu16.mp4">
     <value>mime=video/hevc,size=121085,width=640,height=360,frame-rate=50,profile=1,level=64,bitrate=1496968,package=standard</value>
@@ -11274,16 +11274,16 @@
     <value>mime=video/hevc,size=139796,width=640,height=360,frame-rate=50,profile=1,level=64,bitrate=1730848,package=standard</value>
   </entry>
   <entry key="hevc/yuv420/8bit/params/crowd_640x360p50f32/crowd_640x360p50f32_nodblk.mp4">
-    <value>mime=video/hevc,size=112190,width=640,height=360,frame-rate=50,profile=1,level=64,bitrate=1385800,package=standard</value>
+    <value>mime=video/hevc,size=112190,width=640,height=360,frame-rate=50,profile=1,level=64,bitrate=1385800,package=standard,enforce=true</value>
   </entry>
   <entry key="hevc/yuv420/8bit/params/crowd_640x360p50f32/crowd_640x360p50f32_no_pps_qp_opt.mp4">
-    <value>mime=video/hevc,size=111833,width=640,height=360,frame-rate=50,profile=1,level=64,bitrate=1381336,package=standard</value>
+    <value>mime=video/hevc,size=111833,width=640,height=360,frame-rate=50,profile=1,level=64,bitrate=1381336,package=standard,enforce=true</value>
   </entry>
   <entry key="hevc/yuv420/8bit/params/crowd_640x360p50f32/crowd_640x360p50f32_no_pps_reflist_opt.mp4">
-    <value>mime=video/hevc,size=111833,width=640,height=360,frame-rate=50,profile=1,level=64,bitrate=1381336,package=standard</value>
+    <value>mime=video/hevc,size=111833,width=640,height=360,frame-rate=50,profile=1,level=64,bitrate=1381336,package=standard,enforce=true</value>
   </entry>
   <entry key="hevc/yuv420/8bit/params/crowd_640x360p50f32/crowd_640x360p50f32_no_vui_hrd.mp4">
-    <value>mime=video/hevc,size=111833,width=640,height=360,frame-rate=50,profile=1,level=64,bitrate=1381336,package=standard</value>
+    <value>mime=video/hevc,size=111833,width=640,height=360,frame-rate=50,profile=1,level=64,bitrate=1381336,package=standard,enforce=true</value>
   </entry>
   <entry key="hevc/yuv420/8bit/params/crowd_640x360p50f32/crowd_640x360p50f32_pcm1bitdepth0.mp4">
     <value>mime=video/hevc,size=124622,width=640,height=360,frame-rate=25,profile=1,level=16777216,bitrate=770256,package=standard</value>
@@ -11316,7 +11316,7 @@
     <value>mime=video/hevc,size=124511,width=640,height=360,frame-rate=25,profile=1,level=16777216,bitrate=769568,package=standard</value>
   </entry>
   <entry key="hevc/yuv420/8bit/params/crowd_640x360p50f32/crowd_640x360p50f32_placebo.mp4">
-    <value>mime=video/hevc,size=118557,width=640,height=360,frame-rate=50,profile=1,level=64,bitrate=1465344,package=standard</value>
+    <value>mime=video/hevc,size=118557,width=640,height=360,frame-rate=50,profile=1,level=64,bitrate=1465344,package=standard,enforce=true</value>
   </entry>
   <entry key="hevc/yuv420/8bit/params/crowd_640x360p50f32/crowd_640x360p50f32_prllmerge2.mp4">
     <value>mime=video/hevc,size=124435,width=640,height=360,frame-rate=25,profile=1,level=16777216,bitrate=769096,package=standard</value>
@@ -11331,10 +11331,10 @@
     <value>mime=video/hevc,size=126145,width=640,height=360,frame-rate=25,profile=1,level=16777216,bitrate=779784,package=standard</value>
   </entry>
   <entry key="hevc/yuv420/8bit/params/crowd_640x360p50f32/crowd_640x360p50f32_profilenone.mp4">
-    <value>mime=video/hevc,size=111827,width=640,height=360,frame-rate=50,profile=1,level=64,bitrate=1381256,package=standard</value>
+    <value>mime=video/hevc,size=111827,width=640,height=360,frame-rate=50,profile=1,level=64,bitrate=1381256,package=standard,enforce=true</value>
   </entry>
   <entry key="hevc/yuv420/8bit/params/crowd_640x360p50f32/crowd_640x360p50f32_psnr.mp4">
-    <value>mime=video/hevc,size=167247,width=640,height=360,frame-rate=50,profile=1,level=64,bitrate=2074008,package=standard</value>
+    <value>mime=video/hevc,size=167247,width=640,height=360,frame-rate=50,profile=1,level=64,bitrate=2074008,package=standard,enforce=true</value>
   </entry>
   <entry key="hevc/yuv420/8bit/params/crowd_640x360p50f32/crowd_640x360p50f32_qp0cb12cr12.mp4">
     <value>mime=video/hevc,size=5007107,width=640,height=360,frame-rate=50,profile=1,level=64,bitrate=62572248,package=full</value>
@@ -11361,37 +11361,37 @@
     <value>mime=video/hevc,size=378829,width=640,height=360,frame-rate=50,profile=1,level=64,bitrate=4718800,package=full</value>
   </entry>
   <entry key="hevc/yuv420/8bit/params/crowd_640x360p50f32/crowd_640x360p50f32_qp39cbm12cr12.mp4">
-    <value>mime=video/hevc,size=104812,width=640,height=360,frame-rate=50,profile=1,level=64,bitrate=1293560,package=standard</value>
+    <value>mime=video/hevc,size=104812,width=640,height=360,frame-rate=50,profile=1,level=64,bitrate=1293560,package=standard,enforce=true</value>
   </entry>
   <entry key="hevc/yuv420/8bit/params/crowd_640x360p50f32/crowd_640x360p50f32_qp4.mp4">
     <value>mime=video/hevc,size=4725576,width=640,height=360,frame-rate=50,profile=1,level=64,bitrate=59053136,package=full</value>
   </entry>
   <entry key="hevc/yuv420/8bit/params/crowd_640x360p50f32/crowd_640x360p50f32_qp50.mp4">
-    <value>mime=video/hevc,size=10265,width=640,height=360,frame-rate=50,profile=1,level=64,bitrate=111744,package=standard</value>
+    <value>mime=video/hevc,size=10265,width=640,height=360,frame-rate=50,profile=1,level=64,bitrate=111744,package=standard,enforce=true</value>
   </entry>
   <entry key="hevc/yuv420/8bit/params/crowd_640x360p50f32/crowd_640x360p50f32_qp51cb12cr12.mp4">
-    <value>mime=video/hevc,size=8519,width=640,height=360,frame-rate=50,profile=1,level=64,bitrate=89896,package=standard</value>
+    <value>mime=video/hevc,size=8519,width=640,height=360,frame-rate=50,profile=1,level=64,bitrate=89896,package=standard,enforce=true</value>
   </entry>
   <entry key="hevc/yuv420/8bit/params/crowd_640x360p50f32/crowd_640x360p50f32_qp51cb12crm12.mp4">
-    <value>mime=video/hevc,size=9406,width=640,height=360,frame-rate=50,profile=1,level=64,bitrate=100984,package=standard</value>
+    <value>mime=video/hevc,size=9406,width=640,height=360,frame-rate=50,profile=1,level=64,bitrate=100984,package=standard,enforce=true</value>
   </entry>
   <entry key="hevc/yuv420/8bit/params/crowd_640x360p50f32/crowd_640x360p50f32_qp51cbm12cr12.mp4">
-    <value>mime=video/hevc,size=9969,width=640,height=360,frame-rate=50,profile=1,level=64,bitrate=108024,package=standard</value>
+    <value>mime=video/hevc,size=9969,width=640,height=360,frame-rate=50,profile=1,level=64,bitrate=108024,package=standard,enforce=true</value>
   </entry>
   <entry key="hevc/yuv420/8bit/params/crowd_640x360p50f32/crowd_640x360p50f32_qp51cbm12crm12.mp4">
-    <value>mime=video/hevc,size=10799,width=640,height=360,frame-rate=50,profile=1,level=64,bitrate=118400,package=standard</value>
+    <value>mime=video/hevc,size=10799,width=640,height=360,frame-rate=50,profile=1,level=64,bitrate=118400,package=standard,enforce=true</value>
   </entry>
   <entry key="hevc/yuv420/8bit/params/crowd_640x360p50f32/crowd_640x360p50f32_qp51.mp4">
-    <value>mime=video/hevc,size=8627,width=640,height=360,frame-rate=50,profile=1,level=64,bitrate=91272,package=standard</value>
+    <value>mime=video/hevc,size=8627,width=640,height=360,frame-rate=50,profile=1,level=64,bitrate=91272,package=standard,enforce=true</value>
   </entry>
   <entry key="hevc/yuv420/8bit/params/crowd_640x360p50f32/crowd_640x360p50f32_rect0.mp4">
-    <value>mime=video/hevc,size=111830,width=640,height=360,frame-rate=50,profile=1,level=64,bitrate=1381296,package=standard</value>
+    <value>mime=video/hevc,size=111830,width=640,height=360,frame-rate=50,profile=1,level=64,bitrate=1381296,package=standard,enforce=true</value>
   </entry>
   <entry key="hevc/yuv420/8bit/params/crowd_640x360p50f32/crowd_640x360p50f32_rpt_hdrs.mp4">
-    <value>mime=video/hevc,size=111827,width=640,height=360,frame-rate=50,profile=1,level=64,bitrate=1381256,package=standard</value>
+    <value>mime=video/hevc,size=111827,width=640,height=360,frame-rate=50,profile=1,level=64,bitrate=1381256,package=standard,enforce=true</value>
   </entry>
   <entry key="hevc/yuv420/8bit/params/crowd_640x360p50f32/crowd_640x360p50f32_sao0.mp4">
-    <value>mime=video/hevc,size=111659,width=640,height=360,frame-rate=50,profile=1,level=64,bitrate=1379160,package=standard</value>
+    <value>mime=video/hevc,size=111659,width=640,height=360,frame-rate=50,profile=1,level=64,bitrate=1379160,package=standard,enforce=true</value>
   </entry>
   <entry key="hevc/yuv420/8bit/params/crowd_640x360p50f32/crowd_640x360p50f32_saobndry1.mp4">
     <value>mime=video/hevc,size=124612,width=640,height=360,frame-rate=25,profile=1,level=16777216,bitrate=770200,package=standard</value>
@@ -11400,52 +11400,52 @@
     <value>mime=video/hevc,size=126979,width=640,height=360,frame-rate=25,profile=1,level=16777216,bitrate=784992,package=standard</value>
   </entry>
   <entry key="hevc/yuv420/8bit/params/crowd_640x360p50f32/crowd_640x360p50f32_sbh1.mp4">
-    <value>mime=video/hevc,size=111830,width=640,height=360,frame-rate=50,profile=1,level=64,bitrate=1381296,package=standard</value>
+    <value>mime=video/hevc,size=111830,width=640,height=360,frame-rate=50,profile=1,level=64,bitrate=1381296,package=standard,enforce=true</value>
   </entry>
   <entry key="hevc/yuv420/8bit/params/crowd_640x360p50f32/crowd_640x360p50f32_slower.mp4">
-    <value>mime=video/hevc,size=112314,width=640,height=360,frame-rate=50,profile=1,level=64,bitrate=1387320,package=standard</value>
+    <value>mime=video/hevc,size=112314,width=640,height=360,frame-rate=50,profile=1,level=64,bitrate=1387320,package=standard,enforce=true</value>
   </entry>
   <entry key="hevc/yuv420/8bit/params/crowd_640x360p50f32/crowd_640x360p50f32_slow.mp4">
-    <value>mime=video/hevc,size=106931,width=640,height=360,frame-rate=50,profile=1,level=64,bitrate=1320056,package=standard</value>
+    <value>mime=video/hevc,size=106931,width=640,height=360,frame-rate=50,profile=1,level=64,bitrate=1320056,package=standard,enforce=true</value>
   </entry>
   <entry key="hevc/yuv420/8bit/params/crowd_640x360p50f32/crowd_640x360p50f32_srng0.mp4">
-    <value>mime=video/hevc,size=158677,width=640,height=360,frame-rate=50,profile=1,level=64,bitrate=1966880,package=standard</value>
+    <value>mime=video/hevc,size=158677,width=640,height=360,frame-rate=50,profile=1,level=64,bitrate=1966880,package=standard,enforce=true</value>
   </entry>
   <entry key="hevc/yuv420/8bit/params/crowd_640x360p50f32/crowd_640x360p50f32_srng32.mp4">
-    <value>mime=video/hevc,size=111830,width=640,height=360,frame-rate=50,profile=1,level=64,bitrate=1381296,package=standard</value>
+    <value>mime=video/hevc,size=111830,width=640,height=360,frame-rate=50,profile=1,level=64,bitrate=1381296,package=standard,enforce=true</value>
   </entry>
   <entry key="hevc/yuv420/8bit/params/crowd_640x360p50f32/crowd_640x360p50f32_srng64.mp4">
-    <value>mime=video/hevc,size=111830,width=640,height=360,frame-rate=50,profile=1,level=64,bitrate=1381296,package=standard</value>
+    <value>mime=video/hevc,size=111830,width=640,height=360,frame-rate=50,profile=1,level=64,bitrate=1381296,package=standard,enforce=true</value>
   </entry>
   <entry key="hevc/yuv420/8bit/params/crowd_640x360p50f32/crowd_640x360p50f32_srng8.mp4">
-    <value>mime=video/hevc,size=112057,width=640,height=360,frame-rate=50,profile=1,level=64,bitrate=1384136,package=standard</value>
+    <value>mime=video/hevc,size=112057,width=640,height=360,frame-rate=50,profile=1,level=64,bitrate=1384136,package=standard,enforce=true</value>
   </entry>
   <entry key="hevc/yuv420/8bit/params/crowd_640x360p50f32/crowd_640x360p50f32_ssim.mp4">
-    <value>mime=video/hevc,size=154624,width=640,height=360,frame-rate=50,profile=1,level=64,bitrate=1916224,package=standard</value>
+    <value>mime=video/hevc,size=154624,width=640,height=360,frame-rate=50,profile=1,level=64,bitrate=1916224,package=standard,enforce=true</value>
   </entry>
   <entry key="hevc/yuv420/8bit/params/crowd_640x360p50f32/crowd_640x360p50f32_strngintra0.mp4">
-    <value>mime=video/hevc,size=111534,width=640,height=360,frame-rate=50,profile=1,level=64,bitrate=1377600,package=standard</value>
+    <value>mime=video/hevc,size=111534,width=640,height=360,frame-rate=50,profile=1,level=64,bitrate=1377600,package=standard,enforce=true</value>
   </entry>
   <entry key="hevc/yuv420/8bit/params/crowd_640x360p50f32/crowd_640x360p50f32_superfast.mp4">
-    <value>mime=video/hevc,size=171951,width=640,height=360,frame-rate=50,profile=1,level=64,bitrate=2132824,package=standard</value>
+    <value>mime=video/hevc,size=171951,width=640,height=360,frame-rate=50,profile=1,level=64,bitrate=2132824,package=standard,enforce=true</value>
   </entry>
   <entry key="hevc/yuv420/8bit/params/crowd_640x360p50f32/crowd_640x360p50f32_tc4.mp4">
-    <value>mime=video/hevc,size=111708,width=640,height=360,frame-rate=50,profile=1,level=64,bitrate=1379760,package=standard</value>
+    <value>mime=video/hevc,size=111708,width=640,height=360,frame-rate=50,profile=1,level=64,bitrate=1379760,package=standard,enforce=true</value>
   </entry>
   <entry key="hevc/yuv420/8bit/params/crowd_640x360p50f32/crowd_640x360p50f32_tc6.mp4">
-    <value>mime=video/hevc,size=111739,width=640,height=360,frame-rate=50,profile=1,level=64,bitrate=1380144,package=standard</value>
+    <value>mime=video/hevc,size=111739,width=640,height=360,frame-rate=50,profile=1,level=64,bitrate=1380144,package=standard,enforce=true</value>
   </entry>
   <entry key="hevc/yuv420/8bit/params/crowd_640x360p50f32/crowd_640x360p50f32_tcm4.mp4">
-    <value>mime=video/hevc,size=111989,width=640,height=360,frame-rate=50,profile=1,level=64,bitrate=1383272,package=standard</value>
+    <value>mime=video/hevc,size=111989,width=640,height=360,frame-rate=50,profile=1,level=64,bitrate=1383272,package=standard,enforce=true</value>
   </entry>
   <entry key="hevc/yuv420/8bit/params/crowd_640x360p50f32/crowd_640x360p50f32_tcm6.mp4">
-    <value>mime=video/hevc,size=112166,width=640,height=360,frame-rate=50,profile=1,level=64,bitrate=1385480,package=standard</value>
+    <value>mime=video/hevc,size=112166,width=640,height=360,frame-rate=50,profile=1,level=64,bitrate=1385480,package=standard,enforce=true</value>
   </entry>
   <entry key="hevc/yuv420/8bit/params/crowd_640x360p50f32/crowd_640x360p50f32_tmp_lyrs.mp4">
-    <value>mime=video/hevc,size=111834,width=640,height=360,frame-rate=50,profile=1,level=64,bitrate=1381256,package=standard</value>
+    <value>mime=video/hevc,size=111834,width=640,height=360,frame-rate=50,profile=1,level=64,bitrate=1381256,package=standard,enforce=true</value>
   </entry>
   <entry key="hevc/yuv420/8bit/params/crowd_640x360p50f32/crowd_640x360p50f32_tmvp0.mp4">
-    <value>mime=video/hevc,size=112793,width=640,height=360,frame-rate=50,profile=1,level=64,bitrate=1393336,package=standard</value>
+    <value>mime=video/hevc,size=112793,width=640,height=360,frame-rate=50,profile=1,level=64,bitrate=1393336,package=standard,enforce=true</value>
   </entry>
   <entry key="hevc/yuv420/8bit/params/crowd_640x360p50f32/crowd_640x360p50f32_transquant1.mp4">
     <value>mime=video/hevc,size=5023585,width=640,height=360,frame-rate=25,profile=1,level=16777216,bitrate=31388784,package=full</value>
@@ -11457,22 +11457,22 @@
     <value>mime=video/hevc,size=124176,width=640,height=360,frame-rate=25,profile=1,level=16777216,bitrate=767472,package=standard</value>
   </entry>
   <entry key="hevc/yuv420/8bit/params/crowd_640x360p50f32/crowd_640x360p50f32_tuinterdepth2.mp4">
-    <value>mime=video/hevc,size=113824,width=640,height=360,frame-rate=50,profile=1,level=64,bitrate=1406208,package=standard</value>
+    <value>mime=video/hevc,size=113824,width=640,height=360,frame-rate=50,profile=1,level=64,bitrate=1406208,package=standard,enforce=true</value>
   </entry>
   <entry key="hevc/yuv420/8bit/params/crowd_640x360p50f32/crowd_640x360p50f32_tuinterdepth4.mp4">
-    <value>mime=video/hevc,size=113012,width=640,height=360,frame-rate=50,profile=1,level=64,bitrate=1396072,package=standard</value>
+    <value>mime=video/hevc,size=113012,width=640,height=360,frame-rate=50,profile=1,level=64,bitrate=1396072,package=standard,enforce=true</value>
   </entry>
   <entry key="hevc/yuv420/8bit/params/crowd_640x360p50f32/crowd_640x360p50f32_tuintradepth2.mp4">
-    <value>mime=video/hevc,size=111838,width=640,height=360,frame-rate=50,profile=1,level=64,bitrate=1381384,package=standard</value>
+    <value>mime=video/hevc,size=111838,width=640,height=360,frame-rate=50,profile=1,level=64,bitrate=1381384,package=standard,enforce=true</value>
   </entry>
   <entry key="hevc/yuv420/8bit/params/crowd_640x360p50f32/crowd_640x360p50f32_tuintradepth4.mp4">
-    <value>mime=video/hevc,size=111418,width=640,height=360,frame-rate=50,profile=1,level=64,bitrate=1376144,package=standard</value>
+    <value>mime=video/hevc,size=111418,width=640,height=360,frame-rate=50,profile=1,level=64,bitrate=1376144,package=standard,enforce=true</value>
   </entry>
   <entry key="hevc/yuv420/8bit/params/crowd_640x360p50f32/crowd_640x360p50f32_tulimit2.mp4">
-    <value>mime=video/hevc,size=111830,width=640,height=360,frame-rate=50,profile=1,level=64,bitrate=1381296,package=standard</value>
+    <value>mime=video/hevc,size=111830,width=640,height=360,frame-rate=50,profile=1,level=64,bitrate=1381296,package=standard,enforce=true</value>
   </entry>
   <entry key="hevc/yuv420/8bit/params/crowd_640x360p50f32/crowd_640x360p50f32_tulimit4.mp4">
-    <value>mime=video/hevc,size=111830,width=640,height=360,frame-rate=50,profile=1,level=64,bitrate=1381296,package=standard</value>
+    <value>mime=video/hevc,size=111830,width=640,height=360,frame-rate=50,profile=1,level=64,bitrate=1381296,package=standard,enforce=true</value>
   </entry>
   <entry key="hevc/yuv420/8bit/params/crowd_640x360p50f32/crowd_640x360p50f32_tumin4_tumax4.mp4">
     <value>mime=video/hevc,size=134975,width=640,height=360,frame-rate=25,profile=1,level=16777216,bitrate=834968,package=standard</value>
@@ -11487,40 +11487,40 @@
     <value>mime=video/hevc,size=165087,width=640,height=360,frame-rate=50,profile=1,level=64,bitrate=2047008,package=standard</value>
   </entry>
   <entry key="hevc/yuv420/8bit/params/crowd_640x360p50f32/crowd_640x360p50f32_veryfast.mp4">
-    <value>mime=video/hevc,size=96162,width=640,height=360,frame-rate=50,profile=1,level=64,bitrate=1186048,package=standard</value>
+    <value>mime=video/hevc,size=96162,width=640,height=360,frame-rate=50,profile=1,level=64,bitrate=1186048,package=standard,enforce=true</value>
   </entry>
   <entry key="hevc/yuv420/8bit/params/crowd_640x360p50f32/crowd_640x360p50f32_veryslow.mp4">
-    <value>mime=video/hevc,size=112788,width=640,height=360,frame-rate=50,profile=1,level=64,bitrate=1393248,package=standard</value>
+    <value>mime=video/hevc,size=112788,width=640,height=360,frame-rate=50,profile=1,level=64,bitrate=1393248,package=standard,enforce=true</value>
   </entry>
   <entry key="hevc/yuv420/8bit/params/crowd_640x360p50f32/crowd_640x360p50f32_vui_color_matrix.mp4">
-    <value>mime=video/hevc,size=111833,width=640,height=360,frame-rate=50,profile=1,level=64,bitrate=1381296,package=standard</value>
+    <value>mime=video/hevc,size=111833,width=640,height=360,frame-rate=50,profile=1,level=64,bitrate=1381296,package=standard,enforce=true</value>
   </entry>
   <entry key="hevc/yuv420/8bit/params/crowd_640x360p50f32/crowd_640x360p50f32_vui_color_prim_bt2020.mp4">
-    <value>mime=video/hevc,size=111833,width=640,height=360,frame-rate=50,profile=1,level=64,bitrate=1381296,package=standard</value>
+    <value>mime=video/hevc,size=111833,width=640,height=360,frame-rate=50,profile=1,level=64,bitrate=1381296,package=standard,enforce=true</value>
   </entry>
   <entry key="hevc/yuv420/8bit/params/crowd_640x360p50f32/crowd_640x360p50f32_vui_color_prim_bt709.mp4">
-    <value>mime=video/hevc,size=111833,width=640,height=360,frame-rate=50,profile=1,level=64,bitrate=1381296,package=standard</value>
+    <value>mime=video/hevc,size=111833,width=640,height=360,frame-rate=50,profile=1,level=64,bitrate=1381296,package=standard,enforce=true</value>
   </entry>
   <entry key="hevc/yuv420/8bit/params/crowd_640x360p50f32/crowd_640x360p50f32_vui_transfer.mp4">
-    <value>mime=video/hevc,size=111833,width=640,height=360,frame-rate=50,profile=1,level=64,bitrate=1381296,package=standard</value>
+    <value>mime=video/hevc,size=111833,width=640,height=360,frame-rate=50,profile=1,level=64,bitrate=1381296,package=standard,enforce=true</value>
   </entry>
   <entry key="hevc/yuv420/8bit/params/crowd_640x360p50f32/crowd_640x360p50f32_weightb0weightp1.mp4">
-    <value>mime=video/hevc,size=111830,width=640,height=360,frame-rate=50,profile=1,level=64,bitrate=1381296,package=standard</value>
+    <value>mime=video/hevc,size=111830,width=640,height=360,frame-rate=50,profile=1,level=64,bitrate=1381296,package=standard,enforce=true</value>
   </entry>
   <entry key="hevc/yuv420/8bit/params/crowd_640x360p50f32/crowd_640x360p50f32_weightb1.mp4">
-    <value>mime=video/hevc,size=112197,width=640,height=360,frame-rate=50,profile=1,level=64,bitrate=1385880,package=standard</value>
+    <value>mime=video/hevc,size=112197,width=640,height=360,frame-rate=50,profile=1,level=64,bitrate=1385880,package=standard,enforce=true</value>
   </entry>
   <entry key="hevc/yuv420/8bit/params/crowd_640x360p50f32/crowd_640x360p50f32_weightp0.mp4">
-    <value>mime=video/hevc,size=111830,width=640,height=360,frame-rate=50,profile=1,level=64,bitrate=1381296,package=standard</value>
+    <value>mime=video/hevc,size=111830,width=640,height=360,frame-rate=50,profile=1,level=64,bitrate=1381296,package=standard,enforce=true</value>
   </entry>
   <entry key="hevc/yuv420/8bit/params/crowd_640x360p50f32/crowd_640x360p50f32_weightp0weightb1.mp4">
-    <value>mime=video/hevc,size=112004,width=640,height=360,frame-rate=50,profile=1,level=64,bitrate=1383472,package=standard</value>
+    <value>mime=video/hevc,size=112004,width=640,height=360,frame-rate=50,profile=1,level=64,bitrate=1383472,package=standard,enforce=true</value>
   </entry>
   <entry key="hevc/yuv420/8bit/params/crowd_640x360p50f32/crowd_640x360p50f32_wpp1.mp4">
-    <value>mime=video/hevc,size=111754,width=640,height=360,frame-rate=50,profile=1,level=64,bitrate=1380344,package=standard</value>
+    <value>mime=video/hevc,size=111754,width=640,height=360,frame-rate=50,profile=1,level=64,bitrate=1380344,package=standard,enforce=true</value>
   </entry>
   <entry key="hevc/yuv420/8bit/params/crowd_640x360p50f32/crowd_640x360p50f32_zerolatency.mp4">
-    <value>mime=video/hevc,size=131571,width=640,height=360,frame-rate=50,profile=1,level=64,bitrate=1631920,package=standard</value>
+    <value>mime=video/hevc,size=131571,width=640,height=360,frame-rate=50,profile=1,level=64,bitrate=1631920,package=standard,enforce=true</value>
   </entry>
   <entry key="hevc/yuv420/8bit/params/crowd_854x480p50f32/crowd_854x480p50f32_100kbps.mp4">
     <value>mime=video/hevc,size=44809,width=854,height=480,frame-rate=50,profile=1,level=256,bitrate=543520,package=standard</value>
@@ -12003,16 +12003,16 @@
     <value>mime=video/hevc,size=181760,width=1280,height=960,frame-rate=50,profile=1,level=1024,bitrate=2255424,package=standard</value>
   </entry>
   <entry key="hevc/yuv420/8bit/resolution/crowd_128x128p50f32_200kbps.mp4">
-    <value>mime=video/hevc,size=15827,width=128,height=128,frame-rate=50,profile=1,level=4,bitrate=181360,package=standard</value>
+    <value>mime=video/hevc,size=15827,width=128,height=128,frame-rate=50,profile=1,level=4,bitrate=181360,package=standard,enforce=true</value>
   </entry>
   <entry key="hevc/yuv420/8bit/resolution/crowd_128x192p50f32_200kbps.mp4">
-    <value>mime=video/hevc,size=16225,width=128,height=192,frame-rate=50,profile=1,level=4,bitrate=186232,package=standard</value>
+    <value>mime=video/hevc,size=16225,width=128,height=192,frame-rate=50,profile=1,level=4,bitrate=186232,package=standard,enforce=true</value>
   </entry>
   <entry key="hevc/yuv420/8bit/resolution/crowd_128x72p50f32_200kbps.mp4">
-    <value>mime=video/hevc,size=15231,width=128,height=72,frame-rate=50,profile=1,level=4,bitrate=174120,package=standard</value>
+    <value>mime=video/hevc,size=15231,width=128,height=72,frame-rate=50,profile=1,level=4,bitrate=174120,package=standard,enforce=true</value>
   </entry>
   <entry key="hevc/yuv420/8bit/resolution/crowd_128x96p50f32_200kbps.mp4">
-    <value>mime=video/hevc,size=15632,width=128,height=96,frame-rate=50,profile=1,level=4,bitrate=179032,package=standard</value>
+    <value>mime=video/hevc,size=15632,width=128,height=96,frame-rate=50,profile=1,level=4,bitrate=179032,package=standard,enforce=true</value>
   </entry>
   <entry key="hevc/yuv420/8bit/resolution/crowd_1440x1080p50f32_3100kbps.mp4">
     <value>mime=video/hevc,size=234357,width=1440,height=1080,frame-rate=50,profile=1,level=4096,bitrate=2912872,package=standard</value>
@@ -12030,25 +12030,25 @@
     <value>mime=video/hevc,size=204715,width=1440,height=960,frame-rate=50,profile=1,level=4096,bitrate=2542360,package=standard</value>
   </entry>
   <entry key="hevc/yuv420/8bit/resolution/crowd_144x144p50f32_200kbps.mp4">
-    <value>mime=video/hevc,size=15932,width=144,height=144,frame-rate=50,profile=1,level=4,bitrate=182568,package=standard</value>
+    <value>mime=video/hevc,size=15932,width=144,height=144,frame-rate=50,profile=1,level=4,bitrate=182568,package=standard,enforce=true</value>
   </entry>
   <entry key="hevc/yuv420/8bit/resolution/crowd_144x176p50f32_200kbps.mp4">
-    <value>mime=video/hevc,size=16206,width=144,height=176,frame-rate=50,profile=1,level=4,bitrate=186096,package=standard</value>
+    <value>mime=video/hevc,size=16206,width=144,height=176,frame-rate=50,profile=1,level=4,bitrate=186096,package=standard,enforce=true</value>
   </entry>
   <entry key="hevc/yuv420/8bit/resolution/crowd_144x192p50f32_200kbps.mp4">
-    <value>mime=video/hevc,size=16510,width=144,height=192,frame-rate=50,profile=1,level=4,bitrate=189800,package=standard</value>
+    <value>mime=video/hevc,size=16510,width=144,height=192,frame-rate=50,profile=1,level=4,bitrate=189800,package=standard,enforce=true</value>
   </entry>
   <entry key="hevc/yuv420/8bit/resolution/crowd_144x256p50f32_200kbps.mp4">
-    <value>mime=video/hevc,size=16496,width=144,height=256,frame-rate=50,profile=1,level=4,bitrate=189632,package=standard</value>
+    <value>mime=video/hevc,size=16496,width=144,height=256,frame-rate=50,profile=1,level=4,bitrate=189632,package=standard,enforce=true</value>
   </entry>
   <entry key="hevc/yuv420/8bit/resolution/crowd_144x96p50f32_200kbps.mp4">
-    <value>mime=video/hevc,size=15600,width=144,height=96,frame-rate=50,profile=1,level=4,bitrate=178432,package=standard</value>
+    <value>mime=video/hevc,size=15600,width=144,height=96,frame-rate=50,profile=1,level=4,bitrate=178432,package=standard,enforce=true</value>
   </entry>
   <entry key="hevc/yuv420/8bit/resolution/crowd_1536x2048p50f32_6200kbps.mp4">
     <value>mime=video/hevc,size=452944,width=1536,height=2048,frame-rate=50,profile=1,level=16384,bitrate=5645512,package=full</value>
   </entry>
   <entry key="hevc/yuv420/8bit/resolution/crowd_160x240p50f32_200kbps.mp4">
-    <value>mime=video/hevc,size=16904,width=160,height=240,frame-rate=50,profile=1,level=4,bitrate=194720,package=standard</value>
+    <value>mime=video/hevc,size=16904,width=160,height=240,frame-rate=50,profile=1,level=4,bitrate=194720,package=standard,enforce=true</value>
   </entry>
   <entry key="hevc/yuv420/8bit/resolution/crowd_16x1080p50f32_200kbps.mp4">
     <value>mime=video/hevc,size=17424,width=16,height=1080,frame-rate=25,profile=1,level=16777216,bitrate=100424,package=standard</value>
@@ -12069,10 +12069,10 @@
     <value>mime=video/hevc,size=16738,width=172,height=172,frame-rate=50,profile=1,level=4,bitrate=192632,package=standard</value>
   </entry>
   <entry key="hevc/yuv420/8bit/resolution/crowd_176x144p50f32_200kbps.mp4">
-    <value>mime=video/hevc,size=16047,width=176,height=144,frame-rate=50,profile=1,level=4,bitrate=184008,package=standard</value>
+    <value>mime=video/hevc,size=16047,width=176,height=144,frame-rate=50,profile=1,level=4,bitrate=184008,package=standard,enforce=true</value>
   </entry>
   <entry key="hevc/yuv420/8bit/resolution/crowd_176x96p50f32_200kbps.mp4">
-    <value>mime=video/hevc,size=15763,width=176,height=96,frame-rate=50,profile=1,level=4,bitrate=180472,package=standard</value>
+    <value>mime=video/hevc,size=15763,width=176,height=96,frame-rate=50,profile=1,level=4,bitrate=180472,package=standard,enforce=true</value>
   </entry>
   <entry key="hevc/yuv420/8bit/resolution/crowd_1920x1080p50f32_4100kbps.mp4">
     <value>mime=video/hevc,size=309303,width=1920,height=1080,frame-rate=50,profile=1,level=4096,bitrate=3849696,package=standard</value>
@@ -12099,19 +12099,19 @@
     <value>mime=video/hevc,size=17400,width=1920,height=64,frame-rate=50,profile=1,level=64,bitrate=201224,package=standard</value>
   </entry>
   <entry key="hevc/yuv420/8bit/resolution/crowd_192x128p50f32_200kbps.mp4">
-    <value>mime=video/hevc,size=16085,width=192,height=128,frame-rate=50,profile=1,level=4,bitrate=184584,package=standard</value>
+    <value>mime=video/hevc,size=16085,width=192,height=128,frame-rate=50,profile=1,level=4,bitrate=184584,package=standard,enforce=true</value>
   </entry>
   <entry key="hevc/yuv420/8bit/resolution/crowd_192x144p50f32_200kbps.mp4">
-    <value>mime=video/hevc,size=16168,width=192,height=144,frame-rate=50,profile=1,level=4,bitrate=185624,package=standard</value>
+    <value>mime=video/hevc,size=16168,width=192,height=144,frame-rate=50,profile=1,level=4,bitrate=185624,package=standard,enforce=true</value>
   </entry>
   <entry key="hevc/yuv420/8bit/resolution/crowd_192x192p50f32_200kbps.mp4">
-    <value>mime=video/hevc,size=17158,width=192,height=192,frame-rate=50,profile=1,level=4,bitrate=197896,package=standard</value>
+    <value>mime=video/hevc,size=17158,width=192,height=192,frame-rate=50,profile=1,level=4,bitrate=197896,package=standard,enforce=true</value>
   </entry>
   <entry key="hevc/yuv420/8bit/resolution/crowd_192x256p50f32_200kbps.mp4">
-    <value>mime=video/hevc,size=17180,width=192,height=256,frame-rate=50,profile=1,level=4,bitrate=198184,package=standard</value>
+    <value>mime=video/hevc,size=17180,width=192,height=256,frame-rate=50,profile=1,level=4,bitrate=198184,package=standard,enforce=true</value>
   </entry>
   <entry key="hevc/yuv420/8bit/resolution/crowd_192x288p50f32_200kbps.mp4">
-    <value>mime=video/hevc,size=17156,width=192,height=288,frame-rate=50,profile=1,level=4,bitrate=197880,package=standard</value>
+    <value>mime=video/hevc,size=17156,width=192,height=288,frame-rate=50,profile=1,level=4,bitrate=197880,package=standard,enforce=true</value>
   </entry>
   <entry key="hevc/yuv420/8bit/resolution/crowd_2048x1152p50f32_4700kbps.mp4">
     <value>mime=video/hevc,size=342926,width=2048,height=1152,frame-rate=50,profile=1,level=16384,bitrate=4270280,package=standard</value>
@@ -12126,22 +12126,22 @@
     <value>mime=video/hevc,size=1245939,width=2160,height=3840,frame-rate=50,profile=1,level=65536,bitrate=15557936,package=full</value>
   </entry>
   <entry key="hevc/yuv420/8bit/resolution/crowd_216x288p50f32_200kbps.mp4">
-    <value>mime=video/hevc,size=17496,width=216,height=288,frame-rate=50,profile=1,level=4,bitrate=202136,package=standard</value>
+    <value>mime=video/hevc,size=17496,width=216,height=288,frame-rate=50,profile=1,level=4,bitrate=202136,package=standard,enforce=true</value>
   </entry>
   <entry key="hevc/yuv420/8bit/resolution/crowd_2304x4096p50f32_18800kbps.mp4">
     <value>mime=video/hevc,size=1434142,width=2304,height=4096,frame-rate=50,profile=1,level=1048576,bitrate=17910480,package=full</value>
   </entry>
   <entry key="hevc/yuv420/8bit/resolution/crowd_240x160p50f32_200kbps.mp4">
-    <value>mime=video/hevc,size=16760,width=240,height=160,frame-rate=50,profile=1,level=4,bitrate=192920,package=standard</value>
+    <value>mime=video/hevc,size=16760,width=240,height=160,frame-rate=50,profile=1,level=4,bitrate=192920,package=standard,enforce=true</value>
   </entry>
   <entry key="hevc/yuv420/8bit/resolution/crowd_240x240p50f32_200kbps.mp4">
-    <value>mime=video/hevc,size=17554,width=240,height=240,frame-rate=50,profile=1,level=4,bitrate=202848,package=standard</value>
+    <value>mime=video/hevc,size=17554,width=240,height=240,frame-rate=50,profile=1,level=4,bitrate=202848,package=standard,enforce=true</value>
   </entry>
   <entry key="hevc/yuv420/8bit/resolution/crowd_240x320p50f32_200kbps.mp4">
-    <value>mime=video/hevc,size=18207,width=240,height=320,frame-rate=50,profile=1,level=16,bitrate=211024,package=standard</value>
+    <value>mime=video/hevc,size=18207,width=240,height=320,frame-rate=50,profile=1,level=16,bitrate=211024,package=standard,enforce=true</value>
   </entry>
   <entry key="hevc/yuv420/8bit/resolution/crowd_240x360p50f32_200kbps.mp4">
-    <value>mime=video/hevc,size=18466,width=240,height=360,frame-rate=50,profile=1,level=16,bitrate=214256,package=standard</value>
+    <value>mime=video/hevc,size=18466,width=240,height=360,frame-rate=50,profile=1,level=16,bitrate=214256,package=standard,enforce=true</value>
   </entry>
   <entry key="hevc/yuv420/8bit/resolution/crowd_24x32p50f32_200kbps.mp4">
     <value>mime=video/hevc,size=12425,width=24,height=32,frame-rate=25,profile=1,level=16777216,bitrate=69184,package=standard</value>
@@ -12159,34 +12159,34 @@
     <value>mime=video/hevc,size=1495105,width=2560,height=3840,frame-rate=50,profile=1,level=1048576,bitrate=18672512,package=full</value>
   </entry>
   <entry key="hevc/yuv420/8bit/resolution/crowd_256x144p50f32_200kbps.mp4">
-    <value>mime=video/hevc,size=16965,width=256,height=144,frame-rate=50,profile=1,level=4,bitrate=195496,package=standard</value>
+    <value>mime=video/hevc,size=16965,width=256,height=144,frame-rate=50,profile=1,level=4,bitrate=195496,package=standard,enforce=true</value>
   </entry>
   <entry key="hevc/yuv420/8bit/resolution/crowd_256x192p50f32_200kbps.mp4">
-    <value>mime=video/hevc,size=17228,width=256,height=192,frame-rate=50,profile=1,level=4,bitrate=198784,package=standard</value>
+    <value>mime=video/hevc,size=17228,width=256,height=192,frame-rate=50,profile=1,level=4,bitrate=198784,package=standard,enforce=true</value>
   </entry>
   <entry key="hevc/yuv420/8bit/resolution/crowd_256x256p50f32_200kbps.mp4">
-    <value>mime=video/hevc,size=17786,width=256,height=256,frame-rate=50,profile=1,level=4,bitrate=205744,package=standard</value>
+    <value>mime=video/hevc,size=17786,width=256,height=256,frame-rate=50,profile=1,level=4,bitrate=205744,package=standard,enforce=true</value>
   </entry>
   <entry key="hevc/yuv420/8bit/resolution/crowd_264x352p50f32_200kbps.mp4">
-    <value>mime=video/hevc,size=18541,width=264,height=352,frame-rate=50,profile=1,level=16,bitrate=215184,package=standard</value>
+    <value>mime=video/hevc,size=18541,width=264,height=352,frame-rate=50,profile=1,level=16,bitrate=215184,package=standard,enforce=true</value>
   </entry>
   <entry key="hevc/yuv420/8bit/resolution/crowd_2880x3840p50f32_22100kbps.mp4">
     <value>mime=video/hevc,size=1696884,width=2880,height=3840,frame-rate=50,profile=1,level=1048576,bitrate=21194744,package=full</value>
   </entry>
   <entry key="hevc/yuv420/8bit/resolution/crowd_288x192p50f32_200kbps.mp4">
-    <value>mime=video/hevc,size=17425,width=288,height=192,frame-rate=50,profile=1,level=4,bitrate=201248,package=standard</value>
+    <value>mime=video/hevc,size=17425,width=288,height=192,frame-rate=50,profile=1,level=4,bitrate=201248,package=standard,enforce=true</value>
   </entry>
   <entry key="hevc/yuv420/8bit/resolution/crowd_288x216p50f32_200kbps.mp4">
-    <value>mime=video/hevc,size=17635,width=288,height=216,frame-rate=50,profile=1,level=4,bitrate=203872,package=standard</value>
+    <value>mime=video/hevc,size=17635,width=288,height=216,frame-rate=50,profile=1,level=4,bitrate=203872,package=standard,enforce=true</value>
   </entry>
   <entry key="hevc/yuv420/8bit/resolution/crowd_288x288p50f32_200kbps.mp4">
-    <value>mime=video/hevc,size=17956,width=288,height=288,frame-rate=50,profile=1,level=16,bitrate=207872,package=standard</value>
+    <value>mime=video/hevc,size=17956,width=288,height=288,frame-rate=50,profile=1,level=16,bitrate=207872,package=standard,enforce=true</value>
   </entry>
   <entry key="hevc/yuv420/8bit/resolution/crowd_288x352p50f32_200kbps.mp4">
-    <value>mime=video/hevc,size=19148,width=288,height=352,frame-rate=50,profile=1,level=16,bitrate=222768,package=standard</value>
+    <value>mime=video/hevc,size=19148,width=288,height=352,frame-rate=50,profile=1,level=16,bitrate=222768,package=standard,enforce=true</value>
   </entry>
   <entry key="hevc/yuv420/8bit/resolution/crowd_288x512p50f32_200kbps.mp4">
-    <value>mime=video/hevc,size=20690,width=288,height=512,frame-rate=50,profile=1,level=16,bitrate=242048,package=standard</value>
+    <value>mime=video/hevc,size=20690,width=288,height=512,frame-rate=50,profile=1,level=16,bitrate=242048,package=standard,enforce=true</value>
   </entry>
   <entry key="hevc/yuv420/8bit/resolution/crowd_3072x4096p50f32_24000kbps.mp4">
     <value>mime=video/hevc,size=1852683,width=3072,height=4096,frame-rate=50,profile=1,level=1048576,bitrate=23142248,package=full</value>
@@ -12195,13 +12195,13 @@
     <value>mime=video/hevc,size=1853419,width=3120,height=4160,frame-rate=50,profile=1,level=1048576,bitrate=23151448,package=full</value>
   </entry>
   <entry key="hevc/yuv420/8bit/resolution/crowd_320x240p50f32_200kbps.mp4">
-    <value>mime=video/hevc,size=18021,width=320,height=240,frame-rate=50,profile=1,level=16,bitrate=208696,package=standard</value>
+    <value>mime=video/hevc,size=18021,width=320,height=240,frame-rate=50,profile=1,level=16,bitrate=208696,package=standard,enforce=true</value>
   </entry>
   <entry key="hevc/yuv420/8bit/resolution/crowd_320x320p50f32_200kbps.mp4">
-    <value>mime=video/hevc,size=18414,width=320,height=320,frame-rate=50,profile=1,level=16,bitrate=213600,package=standard</value>
+    <value>mime=video/hevc,size=18414,width=320,height=320,frame-rate=50,profile=1,level=16,bitrate=213600,package=standard,enforce=true</value>
   </entry>
   <entry key="hevc/yuv420/8bit/resolution/crowd_320x480p50f32_300kbps.mp4">
-    <value>mime=video/hevc,size=26348,width=320,height=480,frame-rate=50,profile=1,level=64,bitrate=312768,package=standard</value>
+    <value>mime=video/hevc,size=26348,width=320,height=480,frame-rate=50,profile=1,level=64,bitrate=312768,package=standard,enforce=true</value>
   </entry>
   <entry key="hevc/yuv420/8bit/resolution/crowd_32x24p50f32_200kbps.mp4">
     <value>mime=video/hevc,size=10743,width=32,height=24,frame-rate=25,profile=1,level=16777216,bitrate=58672,package=standard</value>
@@ -12213,13 +12213,13 @@
     <value>mime=video/hevc,size=19879,width=350,height=350,frame-rate=50,profile=1,level=16,bitrate=231896,package=standard</value>
   </entry>
   <entry key="hevc/yuv420/8bit/resolution/crowd_352x264p50f32_200kbps.mp4">
-    <value>mime=video/hevc,size=18603,width=352,height=264,frame-rate=50,profile=1,level=16,bitrate=215960,package=standard</value>
+    <value>mime=video/hevc,size=18603,width=352,height=264,frame-rate=50,profile=1,level=16,bitrate=215960,package=standard,enforce=true</value>
   </entry>
   <entry key="hevc/yuv420/8bit/resolution/crowd_352x288p50f32_200kbps.mp4">
-    <value>mime=video/hevc,size=18431,width=352,height=288,frame-rate=50,profile=1,level=16,bitrate=213808,package=standard</value>
+    <value>mime=video/hevc,size=18431,width=352,height=288,frame-rate=50,profile=1,level=16,bitrate=213808,package=standard,enforce=true</value>
   </entry>
   <entry key="hevc/yuv420/8bit/resolution/crowd_352x352p50f32_200kbps.mp4">
-    <value>mime=video/hevc,size=19460,width=352,height=352,frame-rate=50,profile=1,level=16,bitrate=226672,package=standard</value>
+    <value>mime=video/hevc,size=19460,width=352,height=352,frame-rate=50,profile=1,level=16,bitrate=226672,package=standard,enforce=true</value>
   </entry>
   <entry key="hevc/yuv420/8bit/resolution/crowd_356x638p50f32_400kbps.mp4">
     <value>mime=video/hevc,size=35006,width=356,height=638,frame-rate=50,profile=1,level=64,bitrate=420984,package=standard</value>
@@ -12234,13 +12234,13 @@
     <value>mime=video/hevc,size=34998,width=358,height=640,frame-rate=50,profile=1,level=64,bitrate=420880,package=standard</value>
   </entry>
   <entry key="hevc/yuv420/8bit/resolution/crowd_360x240p50f32_200kbps.mp4">
-    <value>mime=video/hevc,size=18425,width=360,height=240,frame-rate=50,profile=1,level=16,bitrate=213744,package=standard</value>
+    <value>mime=video/hevc,size=18425,width=360,height=240,frame-rate=50,profile=1,level=16,bitrate=213744,package=standard,enforce=true</value>
   </entry>
   <entry key="hevc/yuv420/8bit/resolution/crowd_360x360p50f32_200kbps.mp4">
-    <value>mime=video/hevc,size=19725,width=360,height=360,frame-rate=50,profile=1,level=16,bitrate=229984,package=standard</value>
+    <value>mime=video/hevc,size=19725,width=360,height=360,frame-rate=50,profile=1,level=16,bitrate=229984,package=standard,enforce=true</value>
   </entry>
   <entry key="hevc/yuv420/8bit/resolution/crowd_360x480p50f32_300kbps.mp4">
-    <value>mime=video/hevc,size=27201,width=360,height=480,frame-rate=50,profile=1,level=64,bitrate=323432,package=standard</value>
+    <value>mime=video/hevc,size=27201,width=360,height=480,frame-rate=50,profile=1,level=64,bitrate=323432,package=standard,enforce=true</value>
   </entry>
   <entry key="hevc/yuv420/8bit/resolution/crowd_360x636p50f32_400kbps.mp4">
     <value>mime=video/hevc,size=35040,width=360,height=636,frame-rate=50,profile=1,level=64,bitrate=421408,package=standard</value>
@@ -12249,7 +12249,7 @@
     <value>mime=video/hevc,size=35007,width=360,height=638,frame-rate=50,profile=1,level=64,bitrate=421000,package=standard</value>
   </entry>
   <entry key="hevc/yuv420/8bit/resolution/crowd_360x640p50f32_400kbps.mp4">
-    <value>mime=video/hevc,size=34990,width=360,height=640,frame-rate=50,profile=1,level=64,bitrate=420800,package=standard</value>
+    <value>mime=video/hevc,size=34990,width=360,height=640,frame-rate=50,profile=1,level=64,bitrate=420800,package=standard,enforce=true</value>
   </entry>
   <entry key="hevc/yuv420/8bit/resolution/crowd_3840x2160p50f32_16500kbps.mp4">
     <value>mime=video/hevc,size=1224524,width=3840,height=2160,frame-rate=50,profile=1,level=65536,bitrate=15290248,package=full</value>
@@ -12264,7 +12264,7 @@
     <value>mime=video/hevc,size=1846359,width=3840,height=3840,frame-rate=50,profile=1,level=1048576,bitrate=23063184,package=full</value>
   </entry>
   <entry key="hevc/yuv420/8bit/resolution/crowd_384x512p50f32_300kbps.mp4">
-    <value>mime=video/hevc,size=28352,width=384,height=512,frame-rate=50,profile=1,level=64,bitrate=337824,package=standard</value>
+    <value>mime=video/hevc,size=28352,width=384,height=512,frame-rate=50,profile=1,level=64,bitrate=337824,package=standard,enforce=true</value>
   </entry>
   <entry key="hevc/yuv420/8bit/resolution/crowd_4096x2304p50f32_18800kbps.mp4">
     <value>mime=video/hevc,size=1441976,width=4096,height=2304,frame-rate=50,profile=1,level=1048576,bitrate=18008408,package=full</value>
@@ -12285,19 +12285,19 @@
     <value>mime=video/hevc,size=1908628,width=4320,height=7680,frame-rate=50,profile=1,level=4194304,bitrate=23841544,package=full</value>
   </entry>
   <entry key="hevc/yuv420/8bit/resolution/crowd_472x472p50f32_400kbps.mp4">
-    <value>mime=video/hevc,size=35085,width=472,height=472,frame-rate=50,profile=1,level=64,bitrate=421984,package=standard</value>
+    <value>mime=video/hevc,size=35085,width=472,height=472,frame-rate=50,profile=1,level=64,bitrate=421984,package=standard,enforce=true</value>
   </entry>
   <entry key="hevc/yuv420/8bit/resolution/crowd_480x320p50f32_300kbps.mp4">
-    <value>mime=video/hevc,size=26460,width=480,height=320,frame-rate=50,profile=1,level=64,bitrate=314168,package=standard</value>
+    <value>mime=video/hevc,size=26460,width=480,height=320,frame-rate=50,profile=1,level=64,bitrate=314168,package=standard,enforce=true</value>
   </entry>
   <entry key="hevc/yuv420/8bit/resolution/crowd_480x360p50f32_300kbps.mp4">
-    <value>mime=video/hevc,size=27258,width=480,height=360,frame-rate=50,profile=1,level=64,bitrate=324144,package=standard</value>
+    <value>mime=video/hevc,size=27258,width=480,height=360,frame-rate=50,profile=1,level=64,bitrate=324144,package=standard,enforce=true</value>
   </entry>
   <entry key="hevc/yuv420/8bit/resolution/crowd_480x480p50f32_400kbps.mp4">
-    <value>mime=video/hevc,size=35196,width=480,height=480,frame-rate=50,profile=1,level=64,bitrate=423368,package=standard</value>
+    <value>mime=video/hevc,size=35196,width=480,height=480,frame-rate=50,profile=1,level=64,bitrate=423368,package=standard,enforce=true</value>
   </entry>
   <entry key="hevc/yuv420/8bit/resolution/crowd_480x640p50f32_600kbps.mp4">
-    <value>mime=video/hevc,size=49677,width=480,height=640,frame-rate=50,profile=1,level=64,bitrate=604384,package=standard</value>
+    <value>mime=video/hevc,size=49677,width=480,height=640,frame-rate=50,profile=1,level=64,bitrate=604384,package=standard,enforce=true</value>
   </entry>
   <entry key="hevc/yuv420/8bit/resolution/crowd_480x720p50f32_600kbps.mp4">
     <value>mime=video/hevc,size=50681,width=480,height=720,frame-rate=50,profile=1,level=256,bitrate=616936,package=standard</value>
@@ -12309,10 +12309,10 @@
     <value>mime=video/hevc,size=19756,width=48,height=64,frame-rate=25,profile=1,level=16777216,bitrate=115000,package=standard</value>
   </entry>
   <entry key="hevc/yuv420/8bit/resolution/crowd_512x288p50f32_200kbps.mp4">
-    <value>mime=video/hevc,size=20626,width=512,height=288,frame-rate=50,profile=1,level=16,bitrate=241248,package=standard</value>
+    <value>mime=video/hevc,size=20626,width=512,height=288,frame-rate=50,profile=1,level=16,bitrate=241248,package=standard,enforce=true</value>
   </entry>
   <entry key="hevc/yuv420/8bit/resolution/crowd_512x384p50f32_300kbps.mp4">
-    <value>mime=video/hevc,size=28164,width=512,height=384,frame-rate=50,profile=1,level=64,bitrate=335472,package=standard</value>
+    <value>mime=video/hevc,size=28164,width=512,height=384,frame-rate=50,profile=1,level=64,bitrate=335472,package=standard,enforce=true</value>
   </entry>
   <entry key="hevc/yuv420/8bit/resolution/crowd_512x512p50f32_500kbps.mp4">
     <value>mime=video/hevc,size=42386,width=512,height=512,frame-rate=50,profile=1,level=64,bitrate=513232,package=standard</value>
@@ -12351,10 +12351,10 @@
     <value>mime=video/hevc,size=35398,width=640,height=358,frame-rate=50,profile=1,level=64,bitrate=425880,package=standard</value>
   </entry>
   <entry key="hevc/yuv420/8bit/resolution/crowd_640x360p50f32_400kbps.mp4">
-    <value>mime=video/hevc,size=35178,width=640,height=360,frame-rate=50,profile=1,level=64,bitrate=423144,package=standard</value>
+    <value>mime=video/hevc,size=35178,width=640,height=360,frame-rate=50,profile=1,level=64,bitrate=423144,package=standard,enforce=true</value>
   </entry>
   <entry key="hevc/yuv420/8bit/resolution/crowd_640x480p50f32_600kbps.mp4">
-    <value>mime=video/hevc,size=49884,width=640,height=480,frame-rate=50,profile=1,level=64,bitrate=606968,package=standard</value>
+    <value>mime=video/hevc,size=49884,width=640,height=480,frame-rate=50,profile=1,level=64,bitrate=606968,package=standard,enforce=true</value>
   </entry>
   <entry key="hevc/yuv420/8bit/resolution/crowd_640x640p50f32_800kbps.mp4">
     <value>mime=video/hevc,size=65237,width=640,height=640,frame-rate=50,profile=1,level=256,bitrate=798872,package=standard</value>
@@ -12378,13 +12378,13 @@
     <value>mime=video/hevc,size=19475,width=64,height=48,frame-rate=25,profile=1,level=16777216,bitrate=113248,package=standard</value>
   </entry>
   <entry key="hevc/yuv420/8bit/resolution/crowd_64x64p50f32_200kbps.mp4">
-    <value>mime=video/hevc,size=14469,width=64,height=64,frame-rate=50,profile=1,level=4,bitrate=165496,package=standard</value>
+    <value>mime=video/hevc,size=14469,width=64,height=64,frame-rate=50,profile=1,level=4,bitrate=165496,package=standard,enforce=true</value>
   </entry>
   <entry key="hevc/yuv420/8bit/resolution/crowd_64x720p50f32_200kbps.mp4">
-    <value>mime=video/hevc,size=16614,width=64,height=720,frame-rate=50,profile=1,level=4,bitrate=191208,package=standard</value>
+    <value>mime=video/hevc,size=16614,width=64,height=720,frame-rate=50,profile=1,level=4,bitrate=191208,package=standard,enforce=true</value>
   </entry>
   <entry key="hevc/yuv420/8bit/resolution/crowd_64x96p50f32_200kbps.mp4">
-    <value>mime=video/hevc,size=15195,width=64,height=96,frame-rate=50,profile=1,level=4,bitrate=173568,package=standard</value>
+    <value>mime=video/hevc,size=15195,width=64,height=96,frame-rate=50,profile=1,level=4,bitrate=173568,package=standard,enforce=true</value>
   </entry>
   <entry key="hevc/yuv420/8bit/resolution/crowd_704x528p50f32_700kbps.mp4">
     <value>mime=video/hevc,size=57633,width=704,height=528,frame-rate=50,profile=1,level=256,bitrate=703824,package=standard</value>
@@ -12408,7 +12408,7 @@
     <value>mime=video/hevc,size=65161,width=720,height=576,frame-rate=50,profile=1,level=256,bitrate=797920,package=standard</value>
   </entry>
   <entry key="hevc/yuv420/8bit/resolution/crowd_720x64p50f32_200kbps.mp4">
-    <value>mime=video/hevc,size=17403,width=720,height=64,frame-rate=50,profile=1,level=4,bitrate=200968,package=standard</value>
+    <value>mime=video/hevc,size=17403,width=720,height=64,frame-rate=50,profile=1,level=4,bitrate=200968,package=standard,enforce=true</value>
   </entry>
   <entry key="hevc/yuv420/8bit/resolution/crowd_720x720p50f32_1000kbps.mp4">
     <value>mime=video/hevc,size=80695,width=720,height=720,frame-rate=50,profile=1,level=256,bitrate=992096,package=standard</value>
@@ -12417,10 +12417,10 @@
     <value>mime=video/hevc,size=103483,width=720,height=960,frame-rate=50,profile=1,level=1024,bitrate=1277048,package=standard</value>
   </entry>
   <entry key="hevc/yuv420/8bit/resolution/crowd_72x128p50f32_200kbps.mp4">
-    <value>mime=video/hevc,size=15130,width=72,height=128,frame-rate=50,profile=1,level=4,bitrate=172656,package=standard</value>
+    <value>mime=video/hevc,size=15130,width=72,height=128,frame-rate=50,profile=1,level=4,bitrate=172656,package=standard,enforce=true</value>
   </entry>
   <entry key="hevc/yuv420/8bit/resolution/crowd_72x96p50f32_200kbps.mp4">
-    <value>mime=video/hevc,size=15198,width=72,height=96,frame-rate=50,profile=1,level=4,bitrate=173712,package=standard</value>
+    <value>mime=video/hevc,size=15198,width=72,height=96,frame-rate=50,profile=1,level=4,bitrate=173712,package=standard,enforce=true</value>
   </entry>
   <entry key="hevc/yuv420/8bit/resolution/crowd_7680x4320p50f32_24000kbps.mp4">
     <value>mime=video/hevc,size=1916933,width=7680,height=4320,frame-rate=50,profile=1,level=4194304,bitrate=23945360,package=full</value>
@@ -12462,22 +12462,22 @@
     <value>mime=video/hevc,size=141395,width=960,height=960,frame-rate=50,profile=1,level=1024,bitrate=1750944,package=standard</value>
   </entry>
   <entry key="hevc/yuv420/8bit/resolution/crowd_96x128p50f32_200kbps.mp4">
-    <value>mime=video/hevc,size=15331,width=96,height=128,frame-rate=50,profile=1,level=4,bitrate=175168,package=standard</value>
+    <value>mime=video/hevc,size=15331,width=96,height=128,frame-rate=50,profile=1,level=4,bitrate=175168,package=standard,enforce=true</value>
   </entry>
   <entry key="hevc/yuv420/8bit/resolution/crowd_96x144p50f32_200kbps.mp4">
-    <value>mime=video/hevc,size=15320,width=96,height=144,frame-rate=50,profile=1,level=4,bitrate=175032,package=standard</value>
+    <value>mime=video/hevc,size=15320,width=96,height=144,frame-rate=50,profile=1,level=4,bitrate=175032,package=standard,enforce=true</value>
   </entry>
   <entry key="hevc/yuv420/8bit/resolution/crowd_96x176p50f32_200kbps.mp4">
-    <value>mime=video/hevc,size=15983,width=96,height=176,frame-rate=50,profile=1,level=4,bitrate=183320,package=standard</value>
+    <value>mime=video/hevc,size=15983,width=96,height=176,frame-rate=50,profile=1,level=4,bitrate=183320,package=standard,enforce=true</value>
   </entry>
   <entry key="hevc/yuv420/8bit/resolution/crowd_96x64p50f32_200kbps.mp4">
-    <value>mime=video/hevc,size=15189,width=96,height=64,frame-rate=50,profile=1,level=4,bitrate=175400,package=standard</value>
+    <value>mime=video/hevc,size=15189,width=96,height=64,frame-rate=50,profile=1,level=4,bitrate=175400,package=standard,enforce=true</value>
   </entry>
   <entry key="hevc/yuv420/8bit/resolution/crowd_96x72p50f32_200kbps.mp4">
-    <value>mime=video/hevc,size=15172,width=96,height=72,frame-rate=50,profile=1,level=4,bitrate=173384,package=standard</value>
+    <value>mime=video/hevc,size=15172,width=96,height=72,frame-rate=50,profile=1,level=4,bitrate=173384,package=standard,enforce=true</value>
   </entry>
   <entry key="hevc/yuv420/8bit/resolution/crowd_96x96p50f32_200kbps.mp4">
-    <value>mime=video/hevc,size=15713,width=96,height=96,frame-rate=50,profile=1,level=4,bitrate=180344,package=standard</value>
+    <value>mime=video/hevc,size=15713,width=96,height=96,frame-rate=50,profile=1,level=4,bitrate=180344,package=standard,enforce=true</value>
   </entry>
   <entry key="hevc/yuv420/8bit/scaling_list/crowd_1280x720p50f32/crowd_1280x720p50f32_defslist.mp4">
     <value>mime=video/hevc,size=323058,width=1280,height=720,frame-rate=50,profile=1,level=1024,bitrate=4021648,package=standard</value>
@@ -12576,28 +12576,28 @@
     <value>mime=video/hevc,size=3047156,width=3840,height=2160,frame-rate=50,profile=1,level=65536,bitrate=38068208,package=full</value>
   </entry>
   <entry key="hevc/yuv420/8bit/scaling_list/crowd_640x360p50f32/crowd_640x360p50f32_defslist.mp4">
-    <value>mime=video/hevc,size=74176,width=640,height=360,frame-rate=50,profile=1,level=64,bitrate=910624,package=standard</value>
+    <value>mime=video/hevc,size=74176,width=640,height=360,frame-rate=50,profile=1,level=64,bitrate=910624,package=standard,enforce=true</value>
   </entry>
   <entry key="hevc/yuv420/8bit/scaling_list/crowd_640x360p50f32/crowd_640x360p50f32_noslist.mp4">
-    <value>mime=video/hevc,size=74639,width=640,height=360,frame-rate=50,profile=1,level=64,bitrate=916408,package=standard</value>
+    <value>mime=video/hevc,size=74639,width=640,height=360,frame-rate=50,profile=1,level=64,bitrate=916408,package=standard,enforce=true</value>
   </entry>
   <entry key="hevc/yuv420/8bit/scaling_list/crowd_640x360p50f32/crowd_640x360p50f32_slist_flat_127.mp4">
     <value>mime=video/hevc,size=81608,width=640,height=360,frame-rate=25,profile=1,level=,bitrate=501160,package=standard</value>
   </entry>
   <entry key="hevc/yuv420/8bit/scaling_list/crowd_640x360p50f32/crowd_640x360p50f32_slist_flat_16.mp4">
-    <value>mime=video/hevc,size=74674,width=640,height=360,frame-rate=50,profile=1,level=64,bitrate=916408,package=standard</value>
+    <value>mime=video/hevc,size=74674,width=640,height=360,frame-rate=50,profile=1,level=64,bitrate=916408,package=standard,enforce=true</value>
   </entry>
   <entry key="hevc/yuv420/8bit/scaling_list/crowd_640x360p50f32/crowd_640x360p50f32_slist_flat_1.mp4">
-    <value>mime=video/hevc,size=163935,width=640,height=360,frame-rate=50,profile=1,level=64,bitrate=2032136,package=standard</value>
+    <value>mime=video/hevc,size=163935,width=640,height=360,frame-rate=50,profile=1,level=64,bitrate=2032136,package=standard,enforce=true</value>
   </entry>
   <entry key="hevc/yuv420/8bit/scaling_list/crowd_640x360p50f32/crowd_640x360p50f32_slist_flat_255.mp4">
     <value>mime=video/hevc,size=81668,width=640,height=360,frame-rate=25,profile=1,level=,bitrate=501536,package=standard</value>
   </entry>
   <entry key="hevc/yuv420/8bit/scaling_list/crowd_640x360p50f32/crowd_640x360p50f32_slist_rndm_1_16.mp4">
-    <value>mime=video/hevc,size=81484,width=640,height=360,frame-rate=50,profile=1,level=64,bitrate=992208,package=standard</value>
+    <value>mime=video/hevc,size=81484,width=640,height=360,frame-rate=50,profile=1,level=64,bitrate=992208,package=standard,enforce=true</value>
   </entry>
   <entry key="hevc/yuv420/8bit/scaling_list/crowd_640x360p50f32/crowd_640x360p50f32_slist_rndm_120_136.mp4">
-    <value>mime=video/hevc,size=57929,width=640,height=360,frame-rate=50,profile=1,level=64,bitrate=697144,package=standard</value>
+    <value>mime=video/hevc,size=57929,width=640,height=360,frame-rate=50,profile=1,level=64,bitrate=697144,package=standard,enforce=true</value>
   </entry>
   <entry key="hevc/yuv420/8bit/scaling_list/crowd_640x360p50f32/crowd_640x360p50f32_slist_rndm_1_255.mp4">
     <value>mime=video/hevc,size=68980,width=640,height=360,frame-rate=50,profile=1,level=64,bitrate=824120,package=standard</value>
