@@ -794,6 +794,11 @@ public class StagefrightTest extends InstrumentationTestCase {
      ***********************************************************/
 
     @SecurityTest
+    public void testStagefright_cve_2017_0474() throws Exception {
+        doStagefrightTest(R.raw.cve_2017_0474, 120000);
+    }
+
+    @SecurityTest
     public void testStagefright_cve_2017_13279() throws Exception {
       Thread server = new Thread() {
         @Override
