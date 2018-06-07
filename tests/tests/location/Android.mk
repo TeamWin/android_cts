@@ -29,7 +29,7 @@ LOCAL_MODULE_PATH := $(TARGET_OUT_DATA_APPS)
 LOCAL_JAVA_LIBRARIES := telephony-common android.test.base.stubs
 
 LOCAL_STATIC_JAVA_LIBRARIES := \
-    compatibility-device-util ctstestrunner apache-commons-math
+    compatibility-device-util ctstestrunner apache-commons-math platform-test-annotations
 
 LOCAL_SRC_FILES := $(call all-java-files-under, src/android/location/cts) \
    $(call all-proto-files-under, protos)
