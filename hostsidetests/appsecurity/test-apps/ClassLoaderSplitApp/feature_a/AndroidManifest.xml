@@ -16,7 +16,8 @@
 
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
         package="com.android.cts.classloadersplitapp"
-        featureSplit="feature_a">
+        featureSplit="feature_a"
+        android:targetSandboxVersion="2">
 
     <application android:classLoader="dalvik.system.DelegateLastClassLoader">
         <activity android:name=".feature_a.FeatureAActivity">

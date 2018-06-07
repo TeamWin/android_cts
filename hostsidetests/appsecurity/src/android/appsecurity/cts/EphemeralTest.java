@@ -16,6 +16,7 @@
 
 package android.appsecurity.cts;
 
+import android.platform.test.annotations.AppModeFull;
 import com.android.compatibility.common.tradefed.build.CompatibilityBuildHelper;
 import com.android.tradefed.build.IBuildInfo;
 import com.android.tradefed.device.DeviceNotAvailableException;
@@ -33,6 +34,7 @@ import java.util.Map;
 /**
  * Tests for ephemeral packages.
  */
+@AppModeFull(reason = "Already handles instant installs when needed")
 public class EphemeralTest extends DeviceTestCase
         implements IAbiReceiver, IBuildReceiver {
 

@@ -61,12 +61,18 @@ abstract class BaseAppSecurityTest extends BaseHostJUnit4Test {
     }
 
     protected void installTestAppForUser(String apk, int userId) throws Exception {
+        installTestAppForUser(apk, false, userId);
+    }
+
+    protected void installTestAppForUser(String apk, boolean instant, int userId) throws Exception {
         if (userId < 0) {
             userId = mPrimaryUserId;
         }
-        CompatibilityBuildHelper buildHelper = new CompatibilityBuildHelper(getBuild());
-        Assert.assertNull(getDevice().installPackageForUser(
-                buildHelper.getTestFile(apk), true, false, userId, "-t"));
+        new InstallMultiple(instant)
+                .addApk(apk)
+                .allowTest()
+                .forUser(userId)
+                .run();
     }
 
     protected boolean isAppVisibleForUser(String packageName, int userId,
@@ -75,5 +81,15 @@ abstract class BaseAppSecurityTest extends BaseHostJUnit4Test {
         if (matchUninstalled) command += " -u";
         String output = getDevice().executeShellCommand(command);
         return output.contains(packageName);
+    }
+
+    protected class InstallMultiple extends BaseInstallMultiple<InstallMultiple> {
+        public InstallMultiple() {
+            this(false);
+        }
+        public InstallMultiple(boolean instant) {
+            super(getDevice(), getBuild(), getAbi());
+            addArg(instant ? "--instant" : "");
+        }
     }
 }
