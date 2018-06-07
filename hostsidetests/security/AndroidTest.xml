@@ -35,11 +35,6 @@
         <option name="push" value="CVE-2016-2460->/data/local/tmp/CVE-2016-2460" />
 
         <!--__________________-->
-        <!-- Bulletin 2016-09 -->
-        <!-- Please add tests solely from this bulletin below to avoid merge conflict -->
-        <option name="push" value="CVE-2015-8839->/data/local/tmp/CVE-2015-8839" />
-
-        <!--__________________-->
         <!-- Bulletin 2017-01 -->
         <!-- Please add tests solely from this bulletin below to avoid merge conflict -->
         <option name="push" value="CVE-2017-0386->/data/local/tmp/CVE-2017-0386" />
