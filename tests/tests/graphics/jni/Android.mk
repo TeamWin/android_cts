@@ -32,6 +32,7 @@ LOCAL_SRC_FILES := \
 	android_graphics_cts_MediaVulkanGpuTest.cpp \
 	android_graphics_cts_VulkanFeaturesTest.cpp \
 	android_graphics_cts_VulkanPreTransformCtsActivity.cpp \
+	android_graphics_cts_VulkanSurfaceSupportTest.cpp \
 	CameraTestHelpers.cpp \
 	ImageReaderTestHelpers.cpp \
 	MediaTestHelpers.cpp \

@@ -205,6 +205,13 @@ int32_t DeviceInfo::init(JNIEnv* env, jobject jSurface) {
     ASSERT(queueFamilyIndex < queueFamilyCount);
     mQueueFamilyIndex = queueFamilyIndex;
 
+    VkBool32 supported = VK_FALSE;
+    VK_CALL(vkGetPhysicalDeviceSurfaceSupportKHR(mGpu, mQueueFamilyIndex, mSurface, &supported));
+    if (supported == VK_FALSE) {
+        ALOGD("Surface format not supported");
+        return 2;
+    }
+
     const float priority = 1.0f;
     const VkDeviceQueueCreateInfo queueCreateInfo = {
             .sType = VK_STRUCTURE_TYPE_DEVICE_QUEUE_CREATE_INFO,

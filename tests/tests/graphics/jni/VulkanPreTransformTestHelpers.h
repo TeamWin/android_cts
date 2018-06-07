@@ -33,6 +33,10 @@ class DeviceInfo {
 public:
     DeviceInfo();
     ~DeviceInfo();
+    // return -1 for errors
+    // return  0 for success
+    // return  1 for no physical devices exist
+    // return  2 for surface format unsupported
     int32_t init(JNIEnv* env, jobject jSurface);
     VkPhysicalDevice gpu() const { return mGpu; }
     VkSurfaceKHR surface() const { return mSurface; }
