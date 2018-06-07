@@ -19,11 +19,13 @@ import android.content.Context;
 import android.graphics.Bitmap;
 import android.net.http.SslError;
 import android.os.Build;
+import android.os.Message;
 import android.test.ActivityInstrumentationTestCase2;
 import android.util.Base64;
 import android.util.Log;
 import android.webkit.ConsoleMessage;
 import android.webkit.SslErrorHandler;
+import android.webkit.WebChromeClient;
 import android.webkit.WebIconDatabase;
 import android.webkit.WebResourceResponse;
 import android.webkit.WebResourceRequest;
@@ -42,6 +44,8 @@ import java.io.ByteArrayInputStream;
 import java.io.FileOutputStream;
 import java.nio.charset.StandardCharsets;
 import java.util.Locale;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.TimeUnit;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -409,26 +413,38 @@ public class WebSettingsTest extends ActivityInstrumentationTestCase2<WebViewCts
             return;
         }
         mSettings.setJavaScriptEnabled(true);
+        mSettings.setSupportMultipleWindows(true);
+        startWebServer();
+
+        final WebView childWebView = mOnUiThread.createWebView();
+        final CountDownLatch latch = new CountDownLatch(1);
+        mOnUiThread.setWebChromeClient(new WebChromeClient() {
+            @Override
+            public boolean onCreateWindow(
+                WebView view, boolean isDialog, boolean isUserGesture, Message resultMsg) {
+                WebView.WebViewTransport transport = (WebView.WebViewTransport) resultMsg.obj;
+                transport.setWebView(childWebView);
+                resultMsg.sendToTarget();
+                latch.countDown();
+                return true;
+            }
+        });
 
         mSettings.setJavaScriptCanOpenWindowsAutomatically(false);
         assertFalse(mSettings.getJavaScriptCanOpenWindowsAutomatically());
-        loadAssetUrl(TestHtmlConstants.POPUP_URL);
+        mOnUiThread.loadUrl(mWebServer.getAssetUrl(TestHtmlConstants.POPUP_URL));
         new PollingCheck(WEBVIEW_TIMEOUT) {
             @Override
             protected boolean check() {
                 return "Popup blocked".equals(mOnUiThread.getTitle());
             }
         }.run();
+        assertEquals(1, latch.getCount());
 
         mSettings.setJavaScriptCanOpenWindowsAutomatically(true);
         assertTrue(mSettings.getJavaScriptCanOpenWindowsAutomatically());
-        loadAssetUrl(TestHtmlConstants.POPUP_URL);
-        new PollingCheck(WEBVIEW_TIMEOUT) {
-            @Override
-            protected boolean check() {
-                return "Popup allowed".equals(mOnUiThread.getTitle());
-            }
-        }.run();
+        mOnUiThread.loadUrl(mWebServer.getAssetUrl(TestHtmlConstants.POPUP_URL));
+        assertTrue(latch.await(WEBVIEW_TIMEOUT, TimeUnit.MILLISECONDS));
     }
 
     public void testAccessJavaScriptEnabled() throws Exception {
