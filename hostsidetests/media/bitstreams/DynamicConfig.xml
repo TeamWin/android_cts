@@ -30360,7 +30360,7 @@
     <value>mime=video/x-vnd.on2.vp9,size=40409,width=640,height=360,frame-rate=,profile=,level=,bitrate=,package=standard</value>
   </entry>
   <entry key="vp9/yuv420/8bit/params/crowd_640x360p50f32/crowd_640x360p50f32_frmPar_Qp63_1x2.webm">
-    <value>mime=video/x-vnd.on2.vp9,size=9967,width=640,height=360,frame-rate=,profile=,level=,bitrate=,package=standard</value>
+    <value>mime=video/x-vnd.on2.vp9,size=9967,width=640,height=360,frame-rate=,profile=,level=,bitrate=,package=standard,enforce=true</value>
   </entry>
   <entry key="vp9/yuv420/8bit/params/crowd_640x360p50f32/crowd_640x360p50f32_frmPar_sharp0_1x2.webm">
     <value>mime=video/x-vnd.on2.vp9,size=40277,width=640,height=360,frame-rate=,profile=,level=,bitrate=,package=standard</value>
@@ -30387,7 +30387,7 @@
     <value>mime=video/x-vnd.on2.vp9,size=40312,width=640,height=360,frame-rate=,profile=,level=,bitrate=,package=standard</value>
   </entry>
   <entry key="vp9/yuv420/8bit/params/crowd_640x360p50f32/crowd_640x360p50f32_frmPar_skip5frm_1x2.webm">
-    <value>mime=video/x-vnd.on2.vp9,size=34224,width=640,height=360,frame-rate=,profile=,level=,bitrate=,package=standard</value>
+    <value>mime=video/x-vnd.on2.vp9,size=34224,width=640,height=360,frame-rate=,profile=,level=,bitrate=,package=standard,enforce=true</value>
   </entry>
   <entry key="vp9/yuv420/8bit/params/crowd_640x360p50f32/crowd_640x360p50f32_frmPar_upScale_100_1x2.webm">
     <value>mime=video/x-vnd.on2.vp9,size=40277,width=640,height=360,frame-rate=,profile=,level=,bitrate=,package=standard</value>
@@ -30534,7 +30534,7 @@
     <value>mime=video/x-vnd.on2.vp9,size=40457,width=640,height=360,frame-rate=,profile=,level=,bitrate=,package=standard</value>
   </entry>
   <entry key="vp9/yuv420/8bit/params/crowd_640x360p50f32/crowd_640x360p50f32_noFrmPar_Qp63_1x2.webm">
-    <value>mime=video/x-vnd.on2.vp9,size=10122,width=640,height=360,frame-rate=,profile=,level=,bitrate=,package=standard</value>
+    <value>mime=video/x-vnd.on2.vp9,size=10122,width=640,height=360,frame-rate=,profile=,level=,bitrate=,package=standard,enforce=true</value>
   </entry>
   <entry key="vp9/yuv420/8bit/params/crowd_640x360p50f32/crowd_640x360p50f32_noFrmPar_sharp0_1x2.webm">
     <value>mime=video/x-vnd.on2.vp9,size=40149,width=640,height=360,frame-rate=,profile=,level=,bitrate=,package=standard</value>
@@ -30561,7 +30561,7 @@
     <value>mime=video/x-vnd.on2.vp9,size=39969,width=640,height=360,frame-rate=,profile=,level=,bitrate=,package=standard</value>
   </entry>
   <entry key="vp9/yuv420/8bit/params/crowd_640x360p50f32/crowd_640x360p50f32_noFrmPar_skip5frm_1x2.webm">
-    <value>mime=video/x-vnd.on2.vp9,size=34188,width=640,height=360,frame-rate=,profile=,level=,bitrate=,package=standard</value>
+    <value>mime=video/x-vnd.on2.vp9,size=34188,width=640,height=360,frame-rate=,profile=,level=,bitrate=,package=standard,enforce=true</value>
   </entry>
   <entry key="vp9/yuv420/8bit/params/crowd_640x360p50f32/crowd_640x360p50f32_noFrmPar_upScale_100_1x2.webm">
     <value>mime=video/x-vnd.on2.vp9,size=40149,width=640,height=360,frame-rate=,profile=,level=,bitrate=,package=standard</value>
@@ -30978,10 +30978,10 @@
     <value>mime=video/x-vnd.on2.vp9,size=20315,width=128,height=192,frame-rate=,profile=,level=,bitrate=,package=standard</value>
   </entry>
   <entry key="vp9/yuv420/8bit/resolution/crowd_128x72p50f32_200kbps.webm">
-    <value>mime=video/x-vnd.on2.vp9,size=22203,width=128,height=72,frame-rate=,profile=,level=,bitrate=,package=standard</value>
+    <value>mime=video/x-vnd.on2.vp9,size=22203,width=128,height=72,frame-rate=,profile=,level=,bitrate=,package=standard,enforce=true</value>
   </entry>
   <entry key="vp9/yuv420/8bit/resolution/crowd_128x96p50f32_200kbps.webm">
-    <value>mime=video/x-vnd.on2.vp9,size=21764,width=128,height=96,frame-rate=,profile=,level=,bitrate=,package=standard</value>
+    <value>mime=video/x-vnd.on2.vp9,size=21764,width=128,height=96,frame-rate=,profile=,level=,bitrate=,package=standard,enforce=true</value>
   </entry>
   <entry key="vp9/yuv420/8bit/resolution/crowd_1440x1080p50f32_3100kbps.webm">
     <value>mime=video/x-vnd.on2.vp9,size=256607,width=1440,height=1080,frame-rate=,profile=,level=,bitrate=,package=standard</value>
@@ -30999,7 +30999,7 @@
     <value>mime=video/x-vnd.on2.vp9,size=219548,width=1440,height=960,frame-rate=,profile=,level=,bitrate=,package=standard</value>
   </entry>
   <entry key="vp9/yuv420/8bit/resolution/crowd_144x144p50f32_200kbps.webm">
-    <value>mime=video/x-vnd.on2.vp9,size=21401,width=144,height=144,frame-rate=,profile=,level=,bitrate=,package=standard</value>
+    <value>mime=video/x-vnd.on2.vp9,size=21401,width=144,height=144,frame-rate=,profile=,level=,bitrate=,package=standard,enforce=true</value>
   </entry>
   <entry key="vp9/yuv420/8bit/resolution/crowd_144x176p50f32_200kbps.webm">
     <value>mime=video/x-vnd.on2.vp9,size=20035,width=144,height=176,frame-rate=,profile=,level=,bitrate=,package=standard</value>
@@ -31008,10 +31008,10 @@
     <value>mime=video/x-vnd.on2.vp9,size=19508,width=144,height=192,frame-rate=,profile=,level=,bitrate=,package=standard</value>
   </entry>
   <entry key="vp9/yuv420/8bit/resolution/crowd_144x256p50f32_200kbps.webm">
-    <value>mime=video/x-vnd.on2.vp9,size=19277,width=144,height=256,frame-rate=,profile=,level=,bitrate=,package=standard</value>
+    <value>mime=video/x-vnd.on2.vp9,size=19277,width=144,height=256,frame-rate=,profile=,level=,bitrate=,package=standard,enforce=true</value>
   </entry>
   <entry key="vp9/yuv420/8bit/resolution/crowd_144x96p50f32_200kbps.webm">
-    <value>mime=video/x-vnd.on2.vp9,size=21945,width=144,height=96,frame-rate=,profile=,level=,bitrate=,package=standard</value>
+    <value>mime=video/x-vnd.on2.vp9,size=21945,width=144,height=96,frame-rate=,profile=,level=,bitrate=,package=standard,enforce=true</value>
   </entry>
   <entry key="vp9/yuv420/8bit/resolution/crowd_1536x2048p50f32_6200kbps.webm">
     <value>mime=video/x-vnd.on2.vp9,size=491463,width=1536,height=2048,frame-rate=,profile=,level=,bitrate=,package=standard</value>
@@ -31038,10 +31038,10 @@
     <value>mime=video/x-vnd.on2.vp9,size=20623,width=172,height=172,frame-rate=,profile=,level=,bitrate=,package=standard</value>
   </entry>
   <entry key="vp9/yuv420/8bit/resolution/crowd_176x144p50f32_200kbps.webm">
-    <value>mime=video/x-vnd.on2.vp9,size=21221,width=176,height=144,frame-rate=,profile=,level=,bitrate=,package=standard</value>
+    <value>mime=video/x-vnd.on2.vp9,size=21221,width=176,height=144,frame-rate=,profile=,level=,bitrate=,package=standard,enforce=true</value>
   </entry>
   <entry key="vp9/yuv420/8bit/resolution/crowd_176x96p50f32_200kbps.webm">
-    <value>mime=video/x-vnd.on2.vp9,size=21803,width=176,height=96,frame-rate=,profile=,level=,bitrate=,package=standard</value>
+    <value>mime=video/x-vnd.on2.vp9,size=21803,width=176,height=96,frame-rate=,profile=,level=,bitrate=,package=standard,enforce=true</value>
   </entry>
   <entry key="vp9/yuv420/8bit/resolution/crowd_1920x1080p50f32_4100kbps.webm">
     <value>mime=video/x-vnd.on2.vp9,size=347186,width=1920,height=1080,frame-rate=,profile=,level=,bitrate=,package=standard</value>
@@ -31071,13 +31071,13 @@
     <value>mime=video/x-vnd.on2.vp9,size=21688,width=192,height=128,frame-rate=,profile=,level=,bitrate=,package=standard</value>
   </entry>
   <entry key="vp9/yuv420/8bit/resolution/crowd_192x144p50f32_200kbps.webm">
-    <value>mime=video/x-vnd.on2.vp9,size=21404,width=192,height=144,frame-rate=,profile=,level=,bitrate=,package=standard</value>
+    <value>mime=video/x-vnd.on2.vp9,size=21404,width=192,height=144,frame-rate=,profile=,level=,bitrate=,package=standard,enforce=true</value>
   </entry>
   <entry key="vp9/yuv420/8bit/resolution/crowd_192x192p50f32_200kbps.webm">
-    <value>mime=video/x-vnd.on2.vp9,size=19632,width=192,height=192,frame-rate=,profile=,level=,bitrate=,package=standard</value>
+    <value>mime=video/x-vnd.on2.vp9,size=19632,width=192,height=192,frame-rate=,profile=,level=,bitrate=,package=standard,enforce=true</value>
   </entry>
   <entry key="vp9/yuv420/8bit/resolution/crowd_192x256p50f32_200kbps.webm">
-    <value>mime=video/x-vnd.on2.vp9,size=18824,width=192,height=256,frame-rate=,profile=,level=,bitrate=,package=standard</value>
+    <value>mime=video/x-vnd.on2.vp9,size=18824,width=192,height=256,frame-rate=,profile=,level=,bitrate=,package=standard,enforce=true</value>
   </entry>
   <entry key="vp9/yuv420/8bit/resolution/crowd_192x288p50f32_200kbps.webm">
     <value>mime=video/x-vnd.on2.vp9,size=18313,width=192,height=288,frame-rate=,profile=,level=,bitrate=,package=standard</value>
@@ -31095,7 +31095,7 @@
     <value>mime=video/x-vnd.on2.vp9,size=1428214,width=2160,height=3840,frame-rate=,profile=,level=,bitrate=,package=full</value>
   </entry>
   <entry key="vp9/yuv420/8bit/resolution/crowd_216x288p50f32_200kbps.webm">
-    <value>mime=video/x-vnd.on2.vp9,size=17908,width=216,height=288,frame-rate=,profile=,level=,bitrate=,package=standard</value>
+    <value>mime=video/x-vnd.on2.vp9,size=17908,width=216,height=288,frame-rate=,profile=,level=,bitrate=,package=standard,enforce=true</value>
   </entry>
   <entry key="vp9/yuv420/8bit/resolution/crowd_2304x4096p50f32_18800kbps.webm">
     <value>mime=video/x-vnd.on2.vp9,size=1667866,width=2304,height=4096,frame-rate=,profile=,level=,bitrate=,package=full</value>
@@ -31104,13 +31104,13 @@
     <value>mime=video/x-vnd.on2.vp9,size=19372,width=240,height=160,frame-rate=,profile=,level=,bitrate=,package=standard</value>
   </entry>
   <entry key="vp9/yuv420/8bit/resolution/crowd_240x240p50f32_200kbps.webm">
-    <value>mime=video/x-vnd.on2.vp9,size=17984,width=240,height=240,frame-rate=,profile=,level=,bitrate=,package=standard</value>
+    <value>mime=video/x-vnd.on2.vp9,size=17984,width=240,height=240,frame-rate=,profile=,level=,bitrate=,package=standard,enforce=true</value>
   </entry>
   <entry key="vp9/yuv420/8bit/resolution/crowd_240x320p50f32_200kbps.webm">
-    <value>mime=video/x-vnd.on2.vp9,size=16501,width=240,height=320,frame-rate=,profile=,level=,bitrate=,package=standard</value>
+    <value>mime=video/x-vnd.on2.vp9,size=16501,width=240,height=320,frame-rate=,profile=,level=,bitrate=,package=standard,enforce=true</value>
   </entry>
   <entry key="vp9/yuv420/8bit/resolution/crowd_240x360p50f32_200kbps.webm">
-    <value>mime=video/x-vnd.on2.vp9,size=16476,width=240,height=360,frame-rate=,profile=,level=,bitrate=,package=standard</value>
+    <value>mime=video/x-vnd.on2.vp9,size=16476,width=240,height=360,frame-rate=,profile=,level=,bitrate=,package=standard,enforce=true</value>
   </entry>
   <entry key="vp9/yuv420/8bit/resolution/crowd_24x32p50f32_200kbps.webm">
     <value>mime=video/x-vnd.on2.vp9,size=13562,width=24,height=32,frame-rate=,profile=,level=,bitrate=,package=standard</value>
@@ -31131,13 +31131,13 @@
     <value>mime=video/x-vnd.on2.vp9,size=19811,width=256,height=144,frame-rate=,profile=,level=,bitrate=,package=standard</value>
   </entry>
   <entry key="vp9/yuv420/8bit/resolution/crowd_256x192p50f32_200kbps.webm">
-    <value>mime=video/x-vnd.on2.vp9,size=18844,width=256,height=192,frame-rate=,profile=,level=,bitrate=,package=standard</value>
+    <value>mime=video/x-vnd.on2.vp9,size=18844,width=256,height=192,frame-rate=,profile=,level=,bitrate=,package=standard,enforce=true</value>
   </entry>
   <entry key="vp9/yuv420/8bit/resolution/crowd_256x256p50f32_200kbps.webm">
-    <value>mime=video/x-vnd.on2.vp9,size=17692,width=256,height=256,frame-rate=,profile=,level=,bitrate=,package=standard</value>
+    <value>mime=video/x-vnd.on2.vp9,size=17692,width=256,height=256,frame-rate=,profile=,level=,bitrate=,package=standard,enforce=true</value>
   </entry>
   <entry key="vp9/yuv420/8bit/resolution/crowd_264x352p50f32_200kbps.webm">
-    <value>mime=video/x-vnd.on2.vp9,size=16651,width=264,height=352,frame-rate=,profile=,level=,bitrate=,package=standard</value>
+    <value>mime=video/x-vnd.on2.vp9,size=16651,width=264,height=352,frame-rate=,profile=,level=,bitrate=,package=standard,enforce=true</value>
   </entry>
   <entry key="vp9/yuv420/8bit/resolution/crowd_2880x3840p50f32_22100kbps.webm">
     <value>mime=video/x-vnd.on2.vp9,size=1962521,width=2880,height=3840,frame-rate=,profile=,level=,bitrate=,package=full</value>
@@ -31164,7 +31164,7 @@
     <value>mime=video/x-vnd.on2.vp9,size=2135393,width=3120,height=4160,frame-rate=,profile=,level=,bitrate=,package=full</value>
   </entry>
   <entry key="vp9/yuv420/8bit/resolution/crowd_320x240p50f32_200kbps.webm">
-    <value>mime=video/x-vnd.on2.vp9,size=17161,width=320,height=240,frame-rate=,profile=,level=,bitrate=,package=standard</value>
+    <value>mime=video/x-vnd.on2.vp9,size=17161,width=320,height=240,frame-rate=,profile=,level=,bitrate=,package=standard,enforce=true</value>
   </entry>
   <entry key="vp9/yuv420/8bit/resolution/crowd_320x320p50f32_200kbps.webm">
     <value>mime=video/x-vnd.on2.vp9,size=16450,width=320,height=320,frame-rate=,profile=,level=,bitrate=,package=standard</value>
@@ -31188,7 +31188,7 @@
     <value>mime=video/x-vnd.on2.vp9,size=16441,width=352,height=288,frame-rate=,profile=,level=,bitrate=,package=standard</value>
   </entry>
   <entry key="vp9/yuv420/8bit/resolution/crowd_352x352p50f32_200kbps.webm">
-    <value>mime=video/x-vnd.on2.vp9,size=17348,width=352,height=352,frame-rate=,profile=,level=,bitrate=,package=standard</value>
+    <value>mime=video/x-vnd.on2.vp9,size=17348,width=352,height=352,frame-rate=,profile=,level=,bitrate=,package=standard,enforce=true</value>
   </entry>
   <entry key="vp9/yuv420/8bit/resolution/crowd_356x638p50f32_800kbps.webm">
     <value>mime=video/x-vnd.on2.vp9,size=66226,width=356,height=638,frame-rate=,profile=,level=,bitrate=,package=standard</value>
@@ -31203,13 +31203,13 @@
     <value>mime=video/x-vnd.on2.vp9,size=66220,width=358,height=640,frame-rate=,profile=,level=,bitrate=,package=standard</value>
   </entry>
   <entry key="vp9/yuv420/8bit/resolution/crowd_360x240p50f32_200kbps.webm">
-    <value>mime=video/x-vnd.on2.vp9,size=16499,width=360,height=240,frame-rate=,profile=,level=,bitrate=,package=standard</value>
+    <value>mime=video/x-vnd.on2.vp9,size=16499,width=360,height=240,frame-rate=,profile=,level=,bitrate=,package=standard,enforce=true</value>
   </entry>
   <entry key="vp9/yuv420/8bit/resolution/crowd_360x360p50f32_200kbps.webm">
-    <value>mime=video/x-vnd.on2.vp9,size=18134,width=360,height=360,frame-rate=,profile=,level=,bitrate=,package=standard</value>
+    <value>mime=video/x-vnd.on2.vp9,size=18134,width=360,height=360,frame-rate=,profile=,level=,bitrate=,package=standard,enforce=true</value>
   </entry>
   <entry key="vp9/yuv420/8bit/resolution/crowd_360x480p50f32_300kbps.webm">
-    <value>mime=video/x-vnd.on2.vp9,size=24969,width=360,height=480,frame-rate=,profile=,level=,bitrate=,package=standard</value>
+    <value>mime=video/x-vnd.on2.vp9,size=24969,width=360,height=480,frame-rate=,profile=,level=,bitrate=,package=standard,enforce=true</value>
   </entry>
   <entry key="vp9/yuv420/8bit/resolution/crowd_360x636p50f32_800kbps.webm">
     <value>mime=video/x-vnd.on2.vp9,size=66331,width=360,height=636,frame-rate=,profile=,level=,bitrate=,package=standard</value>
@@ -31329,7 +31329,7 @@
     <value>mime=video/x-vnd.on2.vp9,size=75535,width=640,height=356,frame-rate=,profile=,level=,bitrate=,package=standard</value>
   </entry>
   <entry key="vp9/yuv420/8bit/resolution/crowd_640x358p50f32_400kbps.webm">
-    <value>mime=video/x-vnd.on2.vp9,size=32962,width=640,height=358,frame-rate=,profile=,level=,bitrate=,package=standard</value>
+    <value>mime=video/x-vnd.on2.vp9,size=32962,width=640,height=358,frame-rate=,profile=,level=,bitrate=,package=standard,enforce=true</value>
   </entry>
   <entry key="vp9/yuv420/8bit/resolution/crowd_640x360p50f32_400kbps.webm">
     <value>mime=video/x-vnd.on2.vp9,size=33152,width=640,height=360,frame-rate=,profile=,level=,bitrate=,package=standard</value>
@@ -31359,13 +31359,13 @@
     <value>mime=video/x-vnd.on2.vp9,size=19429,width=64,height=48,frame-rate=,profile=,level=,bitrate=,package=standard</value>
   </entry>
   <entry key="vp9/yuv420/8bit/resolution/crowd_64x64p50f32_200kbps.webm">
-    <value>mime=video/x-vnd.on2.vp9,size=20702,width=64,height=64,frame-rate=,profile=,level=,bitrate=,package=standard</value>
+    <value>mime=video/x-vnd.on2.vp9,size=20702,width=64,height=64,frame-rate=,profile=,level=,bitrate=,package=standard,enforce=true</value>
   </entry>
   <entry key="vp9/yuv420/8bit/resolution/crowd_64x720p50f32_200kbps.webm">
     <value>mime=video/x-vnd.on2.vp9,size=18073,width=64,height=720,frame-rate=,profile=,level=,bitrate=,package=standard</value>
   </entry>
   <entry key="vp9/yuv420/8bit/resolution/crowd_64x96p50f32_200kbps.webm">
-    <value>mime=video/x-vnd.on2.vp9,size=22194,width=64,height=96,frame-rate=,profile=,level=,bitrate=,package=standard</value>
+    <value>mime=video/x-vnd.on2.vp9,size=22194,width=64,height=96,frame-rate=,profile=,level=,bitrate=,package=standard,enforce=true</value>
   </entry>
   <entry key="vp9/yuv420/8bit/resolution/crowd_704x528p50f32_700kbps.webm">
     <value>mime=video/x-vnd.on2.vp9,size=56606,width=704,height=528,frame-rate=,profile=,level=,bitrate=,package=standard</value>
@@ -31398,10 +31398,10 @@
     <value>mime=video/x-vnd.on2.vp9,size=104036,width=720,height=960,frame-rate=,profile=,level=,bitrate=,package=standard</value>
   </entry>
   <entry key="vp9/yuv420/8bit/resolution/crowd_72x128p50f32_200kbps.webm">
-    <value>mime=video/x-vnd.on2.vp9,size=21963,width=72,height=128,frame-rate=,profile=,level=,bitrate=,package=standard</value>
+    <value>mime=video/x-vnd.on2.vp9,size=21963,width=72,height=128,frame-rate=,profile=,level=,bitrate=,package=standard,enforce=true</value>
   </entry>
   <entry key="vp9/yuv420/8bit/resolution/crowd_72x96p50f32_200kbps.webm">
-    <value>mime=video/x-vnd.on2.vp9,size=22305,width=72,height=96,frame-rate=,profile=,level=,bitrate=,package=standard</value>
+    <value>mime=video/x-vnd.on2.vp9,size=22305,width=72,height=96,frame-rate=,profile=,level=,bitrate=,package=standard,enforce=true</value>
   </entry>
   <entry key="vp9/yuv420/8bit/resolution/crowd_7680x4320p50f32_24000kbps.webm">
     <value>mime=video/x-vnd.on2.vp9,size=2078023,width=7680,height=4320,frame-rate=,profile=,level=,bitrate=,package=full</value>
@@ -31464,19 +31464,19 @@
     <value>mime=video/x-vnd.on2.vp9,size=21565,width=96,height=128,frame-rate=,profile=,level=,bitrate=,package=standard</value>
   </entry>
   <entry key="vp9/yuv420/8bit/resolution/crowd_96x144p50f32_200kbps.webm">
-    <value>mime=video/x-vnd.on2.vp9,size=21704,width=96,height=144,frame-rate=,profile=,level=,bitrate=,package=standard</value>
+    <value>mime=video/x-vnd.on2.vp9,size=21704,width=96,height=144,frame-rate=,profile=,level=,bitrate=,package=standard,enforce=true</value>
   </entry>
   <entry key="vp9/yuv420/8bit/resolution/crowd_96x176p50f32_200kbps.webm">
-    <value>mime=video/x-vnd.on2.vp9,size=20834,width=96,height=176,frame-rate=,profile=,level=,bitrate=,package=standard</value>
+    <value>mime=video/x-vnd.on2.vp9,size=20834,width=96,height=176,frame-rate=,profile=,level=,bitrate=,package=standard,enforce=true</value>
   </entry>
   <entry key="vp9/yuv420/8bit/resolution/crowd_96x64p50f32_200kbps.webm">
-    <value>mime=video/x-vnd.on2.vp9,size=21980,width=96,height=64,frame-rate=,profile=,level=,bitrate=,package=standard</value>
+    <value>mime=video/x-vnd.on2.vp9,size=21980,width=96,height=64,frame-rate=,profile=,level=,bitrate=,package=standard,enforce=true</value>
   </entry>
   <entry key="vp9/yuv420/8bit/resolution/crowd_96x72p50f32_200kbps.webm">
-    <value>mime=video/x-vnd.on2.vp9,size=21496,width=96,height=72,frame-rate=,profile=,level=,bitrate=,package=standard</value>
+    <value>mime=video/x-vnd.on2.vp9,size=21496,width=96,height=72,frame-rate=,profile=,level=,bitrate=,package=standard,enforce=true</value>
   </entry>
   <entry key="vp9/yuv420/8bit/resolution/crowd_96x96p50f32_200kbps.webm">
-    <value>mime=video/x-vnd.on2.vp9,size=22764,width=96,height=96,frame-rate=,profile=,level=,bitrate=,package=standard</value>
+    <value>mime=video/x-vnd.on2.vp9,size=22764,width=96,height=96,frame-rate=,profile=,level=,bitrate=,package=standard,enforce=true</value>
   </entry>
   <entry key="vp9/yuv422/10bit/bitrate/crowd_1280x720p24f300_3000kbps.webm">
     <value>mime=video/x-vnd.on2.vp9,size=5005326,width=1280,height=720,frame-rate=,profile=,level=,bitrate=,package=full</value>
