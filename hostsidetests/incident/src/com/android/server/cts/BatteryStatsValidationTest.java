@@ -44,7 +44,6 @@ public class BatteryStatsValidationTest extends ProtoDumpTestCase {
     public static final String FEATURE_BLUETOOTH_LE = "android.hardware.bluetooth_le";
     public static final String FEATURE_LEANBACK_ONLY = "android.software.leanback_only";
     public static final String FEATURE_LOCATION_GPS = "android.hardware.location.gps";
-    public static final String FEATURE_WIFI = "android.hardware.wifi";
 
     private static final int STATE_TIME_TOP_INDEX = 4;
     private static final int STATE_TIME_FOREGROUND_SERVICE_INDEX = 5;
@@ -66,7 +65,6 @@ public class BatteryStatsValidationTest extends ProtoDumpTestCase {
     public static final String ACTION_GPS = "action.gps";
     public static final String ACTION_JOB_SCHEDULE = "action.jobs";
     public static final String ACTION_SYNC = "action.sync";
-    public static final String ACTION_WIFI_SCAN = "action.wifi_scan";
     public static final String ACTION_SLEEP_WHILE_BACKGROUND = "action.sleep_background";
     public static final String ACTION_SLEEP_WHILE_TOP = "action.sleep_top";
     public static final String ACTION_SHOW_APPLICATION_OVERLAY = "action.show_application_overlay";
@@ -410,36 +408,6 @@ public class BatteryStatsValidationTest extends ProtoDumpTestCase {
         executeForeground(ACTION_SYNC, 60_000);
         assertValueRange("sy", DEVICE_SIDE_SYNC_COMPONENT, 6, 2, 4); // count
         assertValueRange("sy", DEVICE_SIDE_SYNC_COMPONENT, 8, 1, 2); // background_count
-
-        batteryOffScreenOn();
-    }
-
-    public void testWifiScans() throws Exception {
-        if (isTV() || !hasFeature(FEATURE_WIFI, true)) {
-            return;
-        }
-
-        batteryOnScreenOff();
-        installPackage(DEVICE_SIDE_TEST_APK, true);
-        turnScreenOnForReal();
-        assertScreenOn();
-        // Whitelist this app against background wifi scan throttling
-        getDevice().executeShellCommand(String.format(
-                "settings put global wifi_scan_background_throttle_package_whitelist %s",
-                DEVICE_SIDE_TEST_PACKAGE));
-
-        // Background count test.
-        executeBackground(ACTION_WIFI_SCAN, 120_000);
-        // Allow one or two scans because we try scanning twice and because we allow for the
-        // possibility that, when the test is started, a scan from a different uid was already being
-        // performed (causing the test to 'miss' a scan).
-        assertValueRange("wfl", "", 7, 1, 2); // scan_count
-        assertValueRange("wfl", "", 11, 1, 2); // scan_count_bg
-
-        // Foreground count test.
-        executeForeground(ACTION_WIFI_SCAN, 120_000);
-        assertValueRange("wfl", "", 7, 2, 4); // scan_count
-        assertValueRange("wfl", "", 11, 1, 2); // scan_count_bg
 
         batteryOffScreenOn();
     }
