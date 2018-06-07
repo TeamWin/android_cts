@@ -19,6 +19,7 @@ import android.Manifest;
 import android.net.Uri;
 import android.os.Build;
 import android.os.Environment;
+import android.platform.test.annotations.AppModeFull;
 import android.support.test.filters.LargeTest;
 import android.support.test.filters.SdkSuppress;
 import android.support.test.rule.GrantPermissionRule;
@@ -42,6 +43,7 @@ import java.io.File;
 @LargeTest
 @RunWith(AndroidJUnit4.class)
 @SdkSuppress(minSdkVersion = Build.VERSION_CODES.P)
+@AppModeFull(reason = "Instant apps cannot hold READ/WRITE_EXTERNAL_STORAGE")
 public class MediaPlayer2DrmTest extends MediaPlayer2DrmTestBase {
 
     private static final String LOG_TAG = "MediaPlayer2DrmTest";

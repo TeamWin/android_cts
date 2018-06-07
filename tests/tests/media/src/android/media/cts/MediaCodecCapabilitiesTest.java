@@ -33,6 +33,7 @@ import static android.media.MediaFormat.MIMETYPE_VIDEO_VP8;
 import static android.media.MediaFormat.MIMETYPE_VIDEO_VP9;
 import android.media.MediaPlayer;
 import android.os.Build;
+import android.platform.test.annotations.AppModeFull;
 import android.util.Log;
 
 import com.android.compatibility.common.util.ApiLevelUtil;
@@ -48,6 +49,7 @@ import java.util.Vector;
 /**
  * Basic sanity test of data returned by MediaCodeCapabilities.
  */
+@AppModeFull(reason = "Dynamic config disabled.")
 public class MediaCodecCapabilitiesTest extends MediaPlayerTestBase {
 
     private static final String TAG = "MediaCodecCapabilitiesTest";
