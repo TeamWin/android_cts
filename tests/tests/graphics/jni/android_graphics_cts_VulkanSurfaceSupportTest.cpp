@@ -39,26 +39,27 @@ void createNativeTest(JNIEnv* env, jclass /*clazz*/, jobject jAssetManager, jobj
     ASSERT(jSurface, "jSurface is NULL");
 
     DeviceInfo deviceInfo;
-    int ret = deviceInfo.init(env, jSurface);
-    ASSERT(ret >= 0, "Failed to initialize Vulkan device");
-    if (ret == 1) {
+    VkTestResult ret = deviceInfo.init(env, jSurface);
+    if (ret == VK_TEST_PHYSICAL_DEVICE_NOT_EXISTED) {
         ALOGD("Hardware not supported for this test");
         return;
     }
-    if (ret == 2) {
+    if (ret == VK_TEST_SURFACE_FORMAT_NOT_SUPPORTED) {
         ASSERT(jSupported == false, "Surface format should not be supported");
         return;
     }
+    ASSERT(ret == VK_TEST_SUCCESS, "Failed to initialize Vulkan device");
     ASSERT(jSupported == true, "Surface format should be supported");
 
     SwapchainInfo swapchainInfo(&deviceInfo);
-    ASSERT(!swapchainInfo.init(false), "Failed to initialize Vulkan swapchain");
+    ASSERT(swapchainInfo.init(false) == VK_TEST_SUCCESS, "Failed to initialize Vulkan swapchain");
 
     Renderer renderer(&deviceInfo, &swapchainInfo);
-    ASSERT(!renderer.init(env, jAssetManager), "Failed to initialize Vulkan renderer");
+    ASSERT(renderer.init(env, jAssetManager) == VK_TEST_SUCCESS,
+           "Failed to initialize Vulkan renderer");
 
     for (uint32_t i = 0; i < 3; ++i) {
-        ASSERT(!renderer.drawFrame(), "Failed to draw frame");
+        ASSERT(renderer.drawFrame() == VK_TEST_SUCCESS, "Failed to draw frame");
     }
 }
 
