@@ -28,6 +28,7 @@ LOCAL_SRC_FILES := \
      src/TestMemory.cpp \
      src/TestTrivialModel.cpp \
      src/TestUnknownDimensions.cpp \
+     src/TestValidateOperations.cpp \
      src/TestValidation.cpp \
      src/TestWrapper.cpp
 

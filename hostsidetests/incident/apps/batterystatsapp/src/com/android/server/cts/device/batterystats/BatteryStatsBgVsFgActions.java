@@ -37,7 +37,6 @@ import android.graphics.Point;
 import android.location.Location;
 import android.location.LocationListener;
 import android.location.LocationManager;
-import android.net.wifi.WifiManager;
 import android.os.AsyncTask;
 import android.os.Bundle;
 import android.os.Handler;
@@ -67,7 +66,6 @@ public class BatteryStatsBgVsFgActions {
     public static final String ACTION_GPS = "action.gps";
     public static final String ACTION_JOB_SCHEDULE = "action.jobs";
     public static final String ACTION_SYNC = "action.sync";
-    public static final String ACTION_WIFI_SCAN = "action.wifi_scan";
     public static final String ACTION_SLEEP_WHILE_BACKGROUND = "action.sleep_background";
     public static final String ACTION_SLEEP_WHILE_TOP = "action.sleep_top";
     public static final String ACTION_SHOW_APPLICATION_OVERLAY = "action.show_application_overlay";
@@ -99,9 +97,6 @@ public class BatteryStatsBgVsFgActions {
                 break;
             case ACTION_SYNC:
                 doSync(ctx, requestCode);
-                break;
-            case ACTION_WIFI_SCAN:
-                doWifiScan(ctx, requestCode);
                 break;
             case ACTION_SLEEP_WHILE_BACKGROUND:
                 sleep(DO_NOTHING_TIMEOUT);
@@ -331,24 +326,6 @@ public class BatteryStatsBgVsFgActions {
                 tellHostActionFinished(ACTION_SYNC, requestCode);
             }
         }.execute();
-    }
-
-    private static void doWifiScan(Context ctx, String requestCode) {
-        // Sometimes a scan was already running (from a different uid), so the first scan doesn't
-        // start when requested. Therefore, additionally wait for whatever scan is currently running
-        // to finish, then request a scan again - at least one of these two scans should be
-        // attributed to this app.
-        doWifiScanOnce(ctx);
-        doWifiScanOnce(ctx);
-        tellHostActionFinished(ACTION_WIFI_SCAN, requestCode);
-    }
-
-    private static void doWifiScanOnce(Context ctx) {
-        IntentFilter intentFilter = new IntentFilter(WifiManager.SCAN_RESULTS_AVAILABLE_ACTION);
-        CountDownLatch onReceiveLatch = new CountDownLatch(1);
-        BroadcastReceiver receiver = registerReceiver(ctx, onReceiveLatch, intentFilter);
-        ctx.getSystemService(WifiManager.class).startScan();
-        waitForReceiver(ctx, 60_000, onReceiveLatch, receiver);
     }
 
     /** Register receiver to determine when given action is complete. */

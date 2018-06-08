@@ -15,6 +15,7 @@
  */
 package android.uirendering.cts.testclasses;
 
+import android.app.Activity;
 import android.graphics.Bitmap;
 import android.graphics.Canvas;
 import android.graphics.Color;
@@ -29,6 +30,7 @@ import android.uirendering.cts.bitmapverifiers.SamplePointVerifier;
 import android.uirendering.cts.testinfrastructure.ActivityTestBase;
 import android.uirendering.cts.testinfrastructure.CanvasClient;
 
+import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
@@ -123,12 +125,11 @@ public class ColorFilterAlphaTest extends ActivityTestBase {
     }
 
 
-    @Override
+    @Before
     public void setUp() {
-        super.setUp();
-
         // temporary - ensure test isn't capturing window bg only
-        getInstrumentation().runOnMainSync(() -> getActivity().getWindow().setBackgroundDrawable(
+        final Activity activity = getActivity();
+        getInstrumentation().runOnMainSync(() -> activity.getWindow().setBackgroundDrawable(
                         new ColorDrawable(Color.GREEN)));
 
     }

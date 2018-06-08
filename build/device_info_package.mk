@@ -19,8 +19,11 @@
 DEVICE_INFO_PACKAGE := com.android.compatibility.common.deviceinfo
 DEVICE_INFO_INSTRUMENT := android.support.test.runner.AndroidJUnitRunner
 DEVICE_INFO_USES_LIBRARY := android.test.runner
-DEVICE_INFO_PERMISSIONS += android.permission.WRITE_EXTERNAL_STORAGE
+DEVICE_INFO_PERMISSIONS += \
+  android.permission.READ_PHONE_STATE \
+  android.permission.WRITE_EXTERNAL_STORAGE
 DEVICE_INFO_ACTIVITIES += \
+  $(DEVICE_INFO_PACKAGE).AppStandbyDeviceInfo \
   $(DEVICE_INFO_PACKAGE).ConfigurationDeviceInfo \
   $(DEVICE_INFO_PACKAGE).CpuDeviceInfo \
   $(DEVICE_INFO_PACKAGE).FeatureDeviceInfo \
@@ -42,7 +45,7 @@ DEVICE_INFO_MIN_SDK := 8
 endif
 
 ifeq ($(DEVICE_INFO_TARGET_SDK),)
-DEVICE_INFO_TARGET_SDK := 8
+DEVICE_INFO_TARGET_SDK := 17
 endif
 
 # Add the base device info
@@ -94,6 +97,10 @@ LOCAL_MODULE_TAGS := optional
 # And when built explicitly put it in the data partition
 LOCAL_MODULE_PATH := $(TARGET_OUT_DATA_APPS)
 
+
+#TODO(b/72620511) remove this condition when AtsDeviceInfo can be built with SDK again
+ifneq ($(LOCAL_PRIVATE_PLATFORM_APIS),true)
 LOCAL_SDK_VERSION := current
+endif
 
 include $(BUILD_CTS_SUPPORT_PACKAGE)

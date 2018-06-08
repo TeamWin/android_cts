@@ -29,7 +29,8 @@ LOCAL_SRC_FILES := \
 		android_os_cts_OSFeatures.cpp \
 		android_os_cts_NoExecutePermissionTest.cpp \
 		android_os_cts_SeccompTest.cpp \
-		android_os_cts_SharedMemory.cpp
+		android_os_cts_SharedMemory.cpp \
+		android_os_cts_SPMITest.cpp
 
 LOCAL_C_INCLUDES := $(JNI_H_INCLUDE)
 

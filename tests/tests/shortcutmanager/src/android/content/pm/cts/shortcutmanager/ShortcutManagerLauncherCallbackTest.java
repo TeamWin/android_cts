@@ -90,7 +90,11 @@ public class ShortcutManagerLauncherCallbackTest extends ShortcutManagerCtsTests
                 sb.append(si.getId());
             }
 
-            Log.i(TAG, "package=" + packageName + " shortcuts=" + sb.toString());
+            Log.i(TAG, "onShortcutsChanged: package="
+                    + packageName + " shortcuts=" + sb.toString());
+            for (ShortcutInfo si : shortcuts) {
+                Log.i(TAG, "  " + si);
+            }
             lastPackage = packageName;
             lastShortcuts.clear();
             lastShortcuts.addAll(shortcuts);
@@ -156,6 +160,7 @@ public class ShortcutManagerLauncherCallbackTest extends ShortcutManagerCtsTests
         reset.run();
         try {
             //-----------------------
+            Log.i(TAG, "testCallbacks: setDynamicShortcuts");
             runWithCaller(mPackageContext1, () -> {
                 assertTrue(getManager().setDynamicShortcuts(list(
                         makeShortcut("s1"),
@@ -169,6 +174,7 @@ public class ShortcutManagerLauncherCallbackTest extends ShortcutManagerCtsTests
             reset.run();
 
             //-----------------------
+            Log.i(TAG, "testCallbacks: addDynamicShortcuts");
             runWithCaller(mPackageContext1, () -> {
                 assertTrue(getManager().addDynamicShortcuts(list(
                         makeShortcutWithRank("sx", 1)
@@ -181,6 +187,7 @@ public class ShortcutManagerLauncherCallbackTest extends ShortcutManagerCtsTests
             reset.run();
 
             //-----------------------
+            Log.i(TAG, "testCallbacks: updateShortcuts 1");
             runWithCaller(mPackageContext1, () -> {
                 assertTrue(getManager().updateShortcuts(list(
                         makeShortcut("s2")
@@ -193,6 +200,7 @@ public class ShortcutManagerLauncherCallbackTest extends ShortcutManagerCtsTests
             reset.run();
 
             //-----------------------
+            Log.i(TAG, "testCallbacks: updateShortcuts 2");
             runWithCaller(mPackageContext1, () -> {
                 assertTrue(getManager().updateShortcuts(list(
                         makeShortcut("sx")
@@ -205,6 +213,7 @@ public class ShortcutManagerLauncherCallbackTest extends ShortcutManagerCtsTests
             reset.run();
 
             //-----------------------
+            Log.i(TAG, "testCallbacks: enableManifestActivity 1");
             runWithCaller(mPackageContext1, () -> {
                 enableManifestActivity("Launcher_manifest_1", true);
                 retryUntil(() -> getManager().getManifestShortcuts().size() == 1,
@@ -217,6 +226,7 @@ public class ShortcutManagerLauncherCallbackTest extends ShortcutManagerCtsTests
             reset.run();
 
             //-----------------------
+            Log.i(TAG, "testCallbacks: enableManifestActivity 2");
             runWithCaller(mPackageContext1, () -> {
                 enableManifestActivity("Launcher_manifest_2", true);
                 retryUntil(() -> getManager().getManifestShortcuts().size() == 3,
@@ -230,6 +240,7 @@ public class ShortcutManagerLauncherCallbackTest extends ShortcutManagerCtsTests
 
             //-----------------------
             // Pin some shortcuts.
+            Log.i(TAG, "testCallbacks: pinShortcuts");
             runWithCaller(mLauncherContext1, () -> {
                 getLauncherApps().pinShortcuts(mPackageContext1.getPackageName(),
                         list("s1", "ms1", "ms21"), getUserHandle());
@@ -245,6 +256,7 @@ public class ShortcutManagerLauncherCallbackTest extends ShortcutManagerCtsTests
             reset.run();
 
             //-----------------------
+            Log.i(TAG, "testCallbacks: removeDynamicShortcuts");
             runWithCaller(mPackageContext1, () -> {
                 getManager().removeDynamicShortcuts(list("s1", "s2"));
             });
@@ -257,6 +269,7 @@ public class ShortcutManagerLauncherCallbackTest extends ShortcutManagerCtsTests
             reset.run();
 
             //-----------------------
+            Log.i(TAG, "testCallbacks: enableManifestActivity");
             runWithCaller(mPackageContext1, () -> {
                 enableManifestActivity("Launcher_manifest_2", false);
 
@@ -276,6 +289,7 @@ public class ShortcutManagerLauncherCallbackTest extends ShortcutManagerCtsTests
             reset.run();
 
             //-----------------------
+            Log.i(TAG, "testCallbacks: disableShortcuts");
             runWithCaller(mPackageContext1, () -> {
                 getManager().disableShortcuts(list("s1"));
             });
@@ -294,10 +308,13 @@ public class ShortcutManagerLauncherCallbackTest extends ShortcutManagerCtsTests
             reset.run();
 
             //-----------------------
+            Log.i(TAG, "testCallbacks: enableShortcuts 1");
             runWithCaller(mPackageContext1, () -> {
                 getManager().enableShortcuts(list("s1"));
             });
-            retryUntil(() -> c.isCalled(), "callback not called.");
+            retryUntil(() -> (c.isCalled() && c.isShortcutById("s1", si -> si.isEnabled())),
+                    "s1 not enabled");
+
             c.assertCalled(mPackageContext1)
                     .haveIds("s1", "sx", "ms1", "ms21")
 
@@ -310,6 +327,7 @@ public class ShortcutManagerLauncherCallbackTest extends ShortcutManagerCtsTests
             reset.run();
 
             //-----------------------
+            Log.i(TAG, "testCallbacks: enableShortcuts 2");
             runWithCaller(mPackageContext1, () -> {
                 getManager().enableShortcuts(list("s2"));
             });

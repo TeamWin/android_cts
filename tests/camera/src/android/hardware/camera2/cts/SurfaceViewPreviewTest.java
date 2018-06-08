@@ -35,6 +35,7 @@ import android.util.Size;
 import android.hardware.camera2.cts.CameraTestUtils.SimpleCaptureCallback;
 import android.hardware.camera2.cts.testcases.Camera2SurfaceViewTestCase;
 import android.hardware.camera2.params.OutputConfiguration;
+import android.platform.test.annotations.AppModeFull;
 import android.util.Log;
 import android.util.Pair;
 import android.util.Range;
@@ -53,6 +54,7 @@ import java.util.List;
 /**
  * CameraDevice preview test by using SurfaceView.
  */
+@AppModeFull
 public class SurfaceViewPreviewTest extends Camera2SurfaceViewTestCase {
     private static final String TAG = "SurfaceViewPreviewTest";
     private static final boolean VERBOSE = Log.isLoggable(TAG, Log.VERBOSE);

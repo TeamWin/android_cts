@@ -17,7 +17,7 @@
 package com.android.cts.verifier.audio.peripheralprofile;
 
 import android.media.AudioDeviceInfo;
-import android.support.annotation.NonNull;
+import androidx.annotation.NonNull;
 
 import com.android.cts.verifier.audio.peripheralprofile.ListsHelper;
 
@@ -122,7 +122,12 @@ public class PeripheralProfile extends DefaultHandler {
         String[] strings = intList.split(",");
         int[] ints = new int[strings.length];
         for (int index = 0; index < strings.length; index++) {
-            ints[index] = Integer.parseInt(strings[index]);
+            try {
+                ints[index] = Integer.parseInt(strings[index]);
+            }
+            catch (NumberFormatException ex) {
+                ints[index] = 0;
+            }
         }
         return ints;
     }

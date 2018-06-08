@@ -25,8 +25,6 @@ LOCAL_STATIC_JAVA_LIBRARIES := \
     compatibility-device-util \
     ctstestrunner \
 
-LOCAL_JAVA_LIBRARIES := legacy-android-test
-
 LOCAL_SRC_FILES := $(call all-java-files-under, src)
 
 LOCAL_PACKAGE_NAME := CtsPermissionPolicyTest25

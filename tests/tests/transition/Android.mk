@@ -17,7 +17,6 @@ LOCAL_PATH:= $(call my-dir)
 include $(CLEAR_VARS)
 
 LOCAL_PACKAGE_NAME := CtsTransitionTestCases
-LOCAL_SDK_VERSION := test_current
 
 # Don't include this package in any target.
 LOCAL_MODULE_TAGS := optional
@@ -40,5 +39,8 @@ LOCAL_SRC_FILES := $(call all-java-files-under, src)
 
 # Tag this module as a cts test artifact
 LOCAL_COMPATIBILITY_SUITE := cts vts general-tests
+
+# Enforce public / test api only
+LOCAL_SDK_VERSION := test_current
 
 include $(BUILD_CTS_PACKAGE)

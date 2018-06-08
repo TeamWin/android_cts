@@ -45,6 +45,10 @@
     <dimen name="textview_padding_bottom">4dip</dimen>
     <dimen name="textview_drawable_padding">2dip</dimen>
 
+    <dimen name="textview_firstBaselineToTopHeight">100dp</dimen>
+    <dimen name="textview_lastBaselineToBottomHeight">30dp</dimen>
+    <dimen name="textview_lineHeight">60dp</dimen>
+
     <dimen name="radiogroup_margin">4dip</dimen>
     <dimen name="listrow_height">40dp</dimen>
 

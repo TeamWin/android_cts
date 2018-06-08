@@ -92,13 +92,11 @@ public class USBAudioPeripheralButtonsActivity extends USBAudioPeripheralActivit
             if (match && mButtonAttributes.mHasBtnA != mHasBtnA) {
                 match = false;
             }
-            if (!interceptedVolume) {
-                if (match && mButtonAttributes.mHasBtnB != mHasBtnB) {
-                    match = false;
-                }
-                if (match && mButtonAttributes.mHasBtnC != mHasBtnC) {
-                    match = false;
-                }
+            if (match && mButtonAttributes.mHasBtnB != mHasBtnB && !interceptedVolume) {
+                match = false;
+            }
+            if (match && mButtonAttributes.mHasBtnC != mHasBtnC && !interceptedVolume) {
+                match = false;
             }
             Log.i(TAG, "match:" + match);
             getPassButton().setEnabled(match);

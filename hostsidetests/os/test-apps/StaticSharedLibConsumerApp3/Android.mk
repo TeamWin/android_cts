@@ -28,7 +28,7 @@ LOCAL_RES_LIBRARIES := CtsStaticSharedLibProviderApp7
 LOCAL_PACKAGE_NAME := CtsStaticSharedLibConsumerApp3
 LOCAL_SDK_VERSION := current
 
-LOCAL_COMPATIBILITY_SUITE := cts vts general-tests
+LOCAL_COMPATIBILITY_SUITE := cts vts general-tests cts_instant
 
 LOCAL_USE_AAPT2 := true
 # Disable AAPT2 manifest checks to fix:

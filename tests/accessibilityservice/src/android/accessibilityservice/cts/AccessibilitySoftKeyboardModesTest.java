@@ -14,20 +14,22 @@
 
 package android.accessibilityservice.cts;
 
-import android.accessibilityservice.AccessibilityServiceInfo;
 import android.accessibilityservice.AccessibilityService.SoftKeyboardController;
+import android.accessibilityservice.AccessibilityServiceInfo;
+import android.accessibilityservice.cts.R;
+import android.accessibilityservice.cts.activities.AccessibilityTestActivity;
 import android.app.Activity;
+import android.app.Instrumentation;
 import android.app.UiAutomation;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.IBinder;
 import android.os.ResultReceiver;
 import android.os.SystemClock;
+import android.platform.test.annotations.AppModeFull;
 import android.test.ActivityInstrumentationTestCase2;
 import android.view.View;
 import android.view.accessibility.AccessibilityEvent;
-
-import android.accessibilityservice.cts.R;
 import android.view.accessibility.AccessibilityWindowInfo;
 import android.view.inputmethod.InputMethodManager;
 
@@ -36,10 +38,12 @@ import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 /**
  * Test cases for testing the accessibility APIs for interacting with the soft keyboard show mode.
  */
+@AppModeFull
 public class AccessibilitySoftKeyboardModesTest extends ActivityInstrumentationTestCase2
         <AccessibilitySoftKeyboardModesTest.SoftKeyboardModesActivity> {
 
@@ -70,6 +74,8 @@ public class AccessibilitySoftKeyboardModesTest extends ActivityInstrumentationT
     private InstrumentedAccessibilityService mService;
     private SoftKeyboardController mKeyboardController;
     private UiAutomation mUiAutomation;
+    private Activity mActivity;
+    private View mKeyboardTargetView;
 
     private Object mLock = new Object();
 
@@ -83,7 +89,7 @@ public class AccessibilitySoftKeyboardModesTest extends ActivityInstrumentationT
 
         // If we don't call getActivity(), we get an empty list when requesting the number of
         // windows on screen.
-        getActivity();
+        mActivity = getActivity();
 
         mService = InstrumentedAccessibilityService.enableService(
                 getInstrumentation(), InstrumentedAccessibilityService.class);
@@ -93,6 +99,8 @@ public class AccessibilitySoftKeyboardModesTest extends ActivityInstrumentationT
         AccessibilityServiceInfo info = mUiAutomation.getServiceInfo();
         info.flags |= AccessibilityServiceInfo.FLAG_RETRIEVE_INTERACTIVE_WINDOWS;
         mUiAutomation.setServiceInfo(info);
+        getInstrumentation().runOnMainSync(
+                () -> mKeyboardTargetView = mActivity.findViewById(R.id.edit_text));
     }
 
     @Override
@@ -100,8 +108,11 @@ public class AccessibilitySoftKeyboardModesTest extends ActivityInstrumentationT
         mKeyboardController.setShowMode(SHOW_MODE_AUTO);
         mService.runOnServiceSync(() -> mService.disableSelf());
         Activity activity = getActivity();
-        activity.getSystemService(InputMethodManager.class)
-                .hideSoftInputFromWindow(activity.getCurrentFocus().getWindowToken(), 0);
+        View currentFocus = activity.getCurrentFocus();
+        if (currentFocus != null) {
+            activity.getSystemService(InputMethodManager.class)
+                    .hideSoftInputFromWindow(currentFocus.getWindowToken(), 0);
+        }
     }
 
     public void testApiReturnValues_shouldChangeValueOnRequestAndSendCallback() throws Exception {

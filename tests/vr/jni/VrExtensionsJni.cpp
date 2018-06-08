@@ -177,6 +177,8 @@ Java_android_vr_cts_VrExtensionBehaviorTest_nativeTestEglImageArray(
     const int formats[] = {
       AHARDWAREBUFFER_FORMAT_R5G6B5_UNORM,
       AHARDWAREBUFFER_FORMAT_R8G8B8A8_UNORM,
+      AHARDWAREBUFFER_FORMAT_R10G10B10A2_UNORM,
+      AHARDWAREBUFFER_FORMAT_R16G16B16A16_FLOAT,
       // Do not test AHARDWAREBUFFER_FORMAT_BLOB, it isn't color-renderable.
     };
     const int samples[] = {1, 2, 4};

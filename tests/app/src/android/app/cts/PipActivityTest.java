@@ -57,14 +57,8 @@ public class PipActivityTest extends ActivityInstrumentationTestCase2<PipActivit
                         }
                     });
                 } else {
-                    boolean pipSupportDisabled = false;
-                    try {
-                        pipSupportDisabled = !mActivity.enterPictureInPictureMode(
-                                new PictureInPictureParams.Builder().build());
-                    } catch (IllegalStateException e) {
-                        pipSupportDisabled = true;
-                    }
-                    assertTrue(pipSupportDisabled);
+                    assertTrue(!mActivity.enterPictureInPictureMode(
+                            new PictureInPictureParams.Builder().build()));
 
                     // Entering PIP mode is not synchronous, so waiting for completion of all work
                     // on UI thread.

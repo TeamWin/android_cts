@@ -15,7 +15,8 @@
   ~ limitations under the License.
   -->
 <configuration description="Config for Mockito inline mocking test cases">
-    <option name="config-descriptor:metadata" key="component" value="framework" />
+    <option name="test-suite-tag" value="cts" />
+    <option name="config-descriptor:metadata" key="component" value="mocking" />
 
     <target_preparer class="com.android.tradefed.targetprep.suite.SuiteApkInstaller">
         <option name="cleanup-apks" value="true" />
@@ -26,4 +27,8 @@
         <option name="package" value="android.inline.mocking.cts" />
         <option name="runtime-hint" value="30s" />
     </test>
+
+    <!-- Controller that will skip the module if a native bridge situation is detected -->
+    <!-- For example: module wants to run arm32 and device is x86 -->
+    <object type="module_controller" class="com.android.tradefed.testtype.suite.module.NativeBridgeModuleController" />
 </configuration>

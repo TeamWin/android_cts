@@ -42,7 +42,7 @@ public class ShortcutManagerLauncherApiTest extends ShortcutManagerCtsTestsBase 
     }
 
     public void testPinShortcuts() {
-        runWithCaller(mPackageContext1, () -> {
+        runWithCallerWithStrictMode(mPackageContext1, () -> {
             enableManifestActivity("Launcher_manifest_1", true);
             enableManifestActivity("Launcher_manifest_2", true);
 
@@ -61,7 +61,7 @@ public class ShortcutManagerLauncherApiTest extends ShortcutManagerCtsTestsBase 
                     .areAllDynamic()
                     .areAllEnabled();
         });
-        runWithCaller(mPackageContext2, () -> {
+        runWithCallerWithStrictMode(mPackageContext2, () -> {
             enableManifestActivity("Launcher_manifest_1", true);
             enableManifestActivity("Launcher_manifest_3", true);
 
@@ -83,7 +83,7 @@ public class ShortcutManagerLauncherApiTest extends ShortcutManagerCtsTestsBase 
 
         setDefaultLauncher(getInstrumentation(), mLauncherContext1);
 
-        runWithCaller(mLauncherContext1, () -> {
+        runWithCallerWithStrictMode(mLauncherContext1, () -> {
             getLauncherApps().pinShortcuts(
                     mPackageContext1.getPackageName(),
                     list("s1", "s2", "s3", "ms1", "ms21"), getUserHandle());
@@ -92,11 +92,11 @@ public class ShortcutManagerLauncherApiTest extends ShortcutManagerCtsTestsBase 
                     list("s2", "s3", "ms1", "ms31"), getUserHandle());
         });
 
-        runWithCaller(mPackageContext1, () -> {
+        runWithCallerWithStrictMode(mPackageContext1, () -> {
             getManager().removeDynamicShortcuts(list("s1", "s2"));
         });
 
-        runWithCaller(mPackageContext2, () -> {
+        runWithCallerWithStrictMode(mPackageContext2, () -> {
             enableManifestActivity("Launcher_manifest_3", false);
 
             retryUntil(() -> getManager().getManifestShortcuts().size() == 1,
@@ -106,7 +106,7 @@ public class ShortcutManagerLauncherApiTest extends ShortcutManagerCtsTestsBase 
         });
 
         // Check the result.
-        runWithCaller(mPackageContext1, () -> {
+        runWithCallerWithStrictMode(mPackageContext1, () -> {
             assertWith(getManager().getDynamicShortcuts())
                     .haveIds("s3", "s4", "s5")
                     .areAllEnabled();
@@ -118,7 +118,7 @@ public class ShortcutManagerLauncherApiTest extends ShortcutManagerCtsTestsBase 
                     .areAllEnabled();
         });
 
-        runWithCaller(mPackageContext2, () -> {
+        runWithCallerWithStrictMode(mPackageContext2, () -> {
             assertWith(getManager().getDynamicShortcuts())
                     .haveIds("s3", "s4", "s5")
                     .areAllEnabled();
@@ -144,7 +144,7 @@ public class ShortcutManagerLauncherApiTest extends ShortcutManagerCtsTestsBase 
         Thread.sleep(2);
         final long time1 = System.currentTimeMillis();
 
-        runWithCaller(mPackageContext1, () -> {
+        runWithCallerWithStrictMode(mPackageContext1, () -> {
             assertTrue(getManager().updateShortcuts(list(
                     makeShortcut("s3"))));
 
@@ -158,12 +158,12 @@ public class ShortcutManagerLauncherApiTest extends ShortcutManagerCtsTestsBase 
         Thread.sleep(2);
         final long time2 = System.currentTimeMillis();
 
-        runWithCaller(mPackageContext1, () -> {
+        runWithCallerWithStrictMode(mPackageContext1, () -> {
             assertTrue(getManager().updateShortcuts(list(
                     makeShortcutWithRank("s4", 999))));
         });
 
-        runWithCaller(mPackageContext2, () -> {
+        runWithCallerWithStrictMode(mPackageContext2, () -> {
             setTargetActivityOverride("Launcher_manifest_1");
 
             assertTrue(getManager().updateShortcuts(list(
@@ -173,7 +173,7 @@ public class ShortcutManagerLauncherApiTest extends ShortcutManagerCtsTestsBase 
         Thread.sleep(2);
         final long time3 = System.currentTimeMillis();
 
-        runWithCaller(mLauncherContext1, () -> {
+        runWithCallerWithStrictMode(mLauncherContext1, () -> {
             assertWith(getShortcutsAsLauncher(
                     FLAG_MATCH_DYNAMIC,
                     mPackageContext1.getPackageName(),
@@ -313,7 +313,7 @@ public class ShortcutManagerLauncherApiTest extends ShortcutManagerCtsTestsBase 
 
         final Icon icon5 = loadPackageDrawableIcon(mPackageContext1, "black_16x16");
 
-        runWithCaller(mPackageContext1, () -> {
+        runWithCallerWithStrictMode(mPackageContext1, () -> {
             enableManifestActivity("Launcher_manifest_2", true);
 
             retryUntil(() -> getManager().getManifestShortcuts().size() == 2,
@@ -359,7 +359,7 @@ public class ShortcutManagerLauncherApiTest extends ShortcutManagerCtsTestsBase 
         final Icon icon2 = Icon.createWithAdaptiveBitmap(BitmapFactory.decodeResource(
             getTestContext().getResources(), R.drawable.black_32x32));
 
-        runWithCaller(mPackageContext1, () -> {
+        runWithCallerWithStrictMode(mPackageContext1, () -> {
             enableManifestActivity("Launcher_manifest_2", true);
 
             retryUntil(() -> getManager().getManifestShortcuts().size() == 2,

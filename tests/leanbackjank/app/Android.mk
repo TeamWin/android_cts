@@ -40,9 +40,9 @@ LOCAL_STATIC_JAVA_LIBRARIES := \
     glide
 
 LOCAL_STATIC_ANDROID_LIBRARIES := \
-    android-support-v4 \
-    android-support-v7-recyclerview \
-    android-support-v17-leanback
+    androidx.legacy_legacy-support-v4 \
+    androidx.recyclerview_recyclerview \
+    androidx.leanback_leanback
 
 LOCAL_PROGUARD_FLAG_FILES := proguard.flags
 

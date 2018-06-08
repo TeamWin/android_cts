@@ -53,6 +53,11 @@ import java.util.Scanner;
 import java.util.Set;
 import java.util.stream.Collectors;
 
+import javax.xml.parsers.DocumentBuilder;
+import javax.xml.parsers.DocumentBuilderFactory;
+import org.w3c.dom.Document;
+import org.w3c.dom.Element;
+
 /**
  * Host-side SELinux tests.
  *
@@ -65,6 +70,8 @@ public class SELinuxHostTest extends DeviceTestCase implements IBuildReceiver, I
     private static final Map<ITestDevice, File> cachedDevicePolicyFiles = new HashMap<>(1);
     private static final Map<ITestDevice, File> cachedDevicePlatFcFiles = new HashMap<>(1);
     private static final Map<ITestDevice, File> cachedDeviceNonplatFcFiles = new HashMap<>(1);
+    private static final Map<ITestDevice, File> cachedDeviceVendorManifest = new HashMap<>(1);
+    private static final Map<ITestDevice, File> cachedDeviceSystemPolicy = new HashMap<>(1);
 
     private File sepolicyAnalyze;
     private File checkSeapp;
@@ -109,8 +116,8 @@ public class SELinuxHostTest extends DeviceTestCase implements IBuildReceiver, I
         mDevice = device;
     }
 
-    private File copyResourceToTempFile(String resName) throws IOException {
-        InputStream is = this.getClass().getResourceAsStream(resName);
+    public static File copyResourceToTempFile(String resName) throws IOException {
+        InputStream is = SELinuxHostTest.class.getResourceAsStream(resName);
         File tempFile = File.createTempFile("SELinuxHostTest", ".tmp");
         FileOutputStream os = new FileOutputStream(tempFile);
         byte[] buf = new byte[1024];
@@ -145,10 +152,11 @@ public class SELinuxHostTest extends DeviceTestCase implements IBuildReceiver, I
         sepolicyAnalyze.setExecutable(true);
 
         devicePolicyFile = getDevicePolicyFile(mDevice);
-        if (mDevice.doesFileExist("/system/etc/selinux/plat_file_contexts")) {
+        if (isSepolicySplit(mDevice)) {
             devicePlatFcFile = getDeviceFile(mDevice, cachedDevicePlatFcFiles,
                     "/system/etc/selinux/plat_file_contexts", "plat_file_contexts");
             if (mDevice.doesFileExist("/vendor/etc/selinux/nonplat_file_contexts")){
+                // Old nonplat_* naming can be present if a framework-only OTA was done.
                 deviceNonplatFcFile = getDeviceFile(mDevice, cachedDeviceNonplatFcFiles,
                         "/vendor/etc/selinux/nonplat_file_contexts", "nonplat_file_contexts");
             } else {
@@ -159,7 +167,7 @@ public class SELinuxHostTest extends DeviceTestCase implements IBuildReceiver, I
             devicePlatFcFile = getDeviceFile(mDevice, cachedDevicePlatFcFiles,
                     "/plat_file_contexts", "plat_file_contexts");
             deviceNonplatFcFile = getDeviceFile(mDevice, cachedDeviceNonplatFcFiles,
-                    "/nonplat_file_contexts", "nonplat_file_contexts");
+                    "/vendor_file_contexts", "vendor_file_contexts");
         }
     }
 
@@ -192,12 +200,89 @@ public class SELinuxHostTest extends DeviceTestCase implements IBuildReceiver, I
         return file;
     }
 
+    private static File buildSystemPolicy(ITestDevice device, Map<ITestDevice, File> cache,
+            String tmpFileName) throws Exception {
+        File builtPolicyFile;
+        synchronized (cache) {
+            builtPolicyFile = cache.get(device);
+        }
+        if (builtPolicyFile != null) {
+            return builtPolicyFile;
+        }
+
+
+        builtPolicyFile = File.createTempFile(tmpFileName, ".tmp");
+        builtPolicyFile.deleteOnExit();
+
+        File secilc = copyResourceToTempFile("/secilc");
+        secilc.setExecutable(true);
+
+        File systemSepolicyCilFile = File.createTempFile("plat_sepolicy", ".cil");
+        systemSepolicyCilFile.deleteOnExit();
+
+        assertTrue(device.pullFile("/system/etc/selinux/plat_sepolicy.cil", systemSepolicyCilFile));
+
+        ProcessBuilder pb = new ProcessBuilder(
+            secilc.getAbsolutePath(),
+            "-m", "-M", "true", "-c", "30",
+            "-o", builtPolicyFile.getAbsolutePath(),
+            systemSepolicyCilFile.getAbsolutePath());
+        pb.redirectOutput(ProcessBuilder.Redirect.PIPE);
+        pb.redirectErrorStream(true);
+        Process p = pb.start();
+        p.waitFor();
+        BufferedReader result = new BufferedReader(new InputStreamReader(p.getInputStream()));
+        String line;
+        StringBuilder errorString = new StringBuilder();
+        while ((line = result.readLine()) != null) {
+            errorString.append(line);
+            errorString.append("\n");
+        }
+        assertTrue(errorString.toString(), errorString.length() == 0);
+
+        synchronized (cache) {
+            cache.put(device, builtPolicyFile);
+        }
+        return builtPolicyFile;
+    }
+
     // NOTE: cts/tools/selinux depends on this method. Rename/change with caution.
     /**
      * Returns the host-side file containing the SELinux policy of the device under test.
      */
     public static File getDevicePolicyFile(ITestDevice device) throws Exception {
         return getDeviceFile(device, cachedDevicePolicyFiles, "/sys/fs/selinux/policy", "sepolicy");
+    }
+
+    // NOTE: cts/tools/selinux depends on this method. Rename/change with caution.
+    /**
+     * Returns the host-side file containing the system SELinux policy of the device under test.
+     */
+    public static File getDeviceSystemPolicyFile(ITestDevice device) throws Exception {
+        return buildSystemPolicy(device, cachedDeviceSystemPolicy, "system_sepolicy");
+    }
+
+    // NOTE: cts/tools/selinux depends on this method. Rename/change with caution.
+    /**
+     * Returns the major number of sepolicy version of device's vendor implementation.
+     * TODO(b/37999212): Use VINTF object API instead of parsing vendor manifest.
+     */
+    public static int getVendorSepolicyVersion(ITestDevice device) throws Exception {
+        String deviceManifestPath =
+                (device.doesFileExist("/vendor/etc/vintf/manifest.xml")) ?
+                "/vendor/etc/vintf/manifest.xml" :
+                "/vendor/manifest.xml";
+        File vendorManifestFile = getDeviceFile(device, cachedDeviceVendorManifest,
+                deviceManifestPath, "manifest.xml");
+
+        DocumentBuilderFactory dbf = DocumentBuilderFactory.newInstance();
+        DocumentBuilder db = dbf.newDocumentBuilder();
+        Document doc = db.parse(vendorManifestFile);
+        Element root = doc.getDocumentElement();
+        Element sepolicy = (Element) root.getElementsByTagName("sepolicy").item(0);
+        Element version = (Element) sepolicy.getElementsByTagName("version").item(0);
+        String sepolicyVersion = version.getTextContent().split("\\.")[0];
+        return Integer.parseInt(sepolicyVersion);
     }
 
     /**
@@ -318,6 +403,16 @@ public class SELinuxHostTest extends DeviceTestCase implements IBuildReceiver, I
         return PropertyUtil.getFirstApiLevel(device) > 27;
     }
 
+    // NOTE: cts/tools/selinux depends on this method. Rename/change with caution.
+    /**
+     * Returns {@code true} if this device has sepolicy split across different paritions.
+     * This is possible even for devices launched at api level higher than 26.
+     */
+    public static boolean isSepolicySplit(ITestDevice device)
+            throws DeviceNotAvailableException {
+        return device.doesFileExist("/system/etc/selinux/plat_file_contexts");
+    }
+
     /**
      * Asserts that no vendor domains are exempted from the prohibition on Binder use.
      *
@@ -336,6 +431,29 @@ public class SELinuxHostTest extends DeviceTestCase implements IBuildReceiver, I
             List<String> sortedTypes = new ArrayList<>(types);
             Collections.sort(sortedTypes);
             fail("Policy exempts vendor domains from ban on Binder: " + sortedTypes);
+        }
+    }
+
+    /**
+     * Asserts that no HAL server domains are exempted from the prohibition of socket use with the
+     * only exceptions for the automotive device type.
+     */
+    public void testNoExemptionsForSocketsUseWithinHalServer() throws Exception {
+        if (!isFullTrebleDevice()) {
+            return;
+        }
+
+        if (getDevice().hasFeature("android.hardware.type.automotive")) {
+            return;
+        }
+
+        Set<String> types = sepolicyAnalyzeGetTypesAssociatedWithAttribute(
+                "hal_automotive_socket_exemption");
+        if (!types.isEmpty()) {
+            List<String> sortedTypes = new ArrayList<>(types);
+            Collections.sort(sortedTypes);
+            fail("Policy exempts domains from ban on socket usage from HAL servers: "
+                    + sortedTypes);
         }
     }
 
@@ -676,7 +794,7 @@ public class SELinuxHostTest extends DeviceTestCase implements IBuildReceiver, I
                    + errorString, errorString.length() == 0);
     }
 
-    private boolean isMac() {
+    public static boolean isMac() {
         String os = System.getProperty("os.name").toLowerCase();
         return (os.startsWith("mac") || os.startsWith("darwin"));
     }
@@ -1003,10 +1121,10 @@ public class SELinuxHostTest extends DeviceTestCase implements IBuildReceiver, I
         assertDomainOne("u:r:ueventd:s0", "/sbin/ueventd");
     }
 
-    /* Devices always have healthd */
+    /* healthd may or may not exist */
     @CddTest(requirement="9.7")
     public void testHealthdDomain() throws DeviceNotAvailableException {
-        assertDomainOne("u:r:healthd:s0", "/system/bin/healthd");
+        assertDomainZeroOrOne("u:r:healthd:s0", "/system/bin/healthd");
     }
 
     /* Servicemanager is always there */

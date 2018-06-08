@@ -15,17 +15,13 @@
  */
 package android.uirendering.cts.testclasses;
 
-import com.android.compatibility.common.util.SynchronousPixelCopy;
-
 import android.animation.ObjectAnimator;
 import android.graphics.Bitmap;
 import android.graphics.Bitmap.Config;
 import android.graphics.Canvas;
 import android.graphics.Color;
-import android.graphics.Point;
 import android.graphics.Rect;
 import android.support.test.filters.LargeTest;
-import android.support.test.filters.MediumTest;
 import android.support.test.runner.AndroidJUnit4;
 import android.uirendering.cts.R;
 import android.uirendering.cts.bitmapverifiers.ColorVerifier;
@@ -39,6 +35,8 @@ import android.view.SurfaceView;
 import android.view.View;
 import android.view.animation.LinearInterpolator;
 import android.widget.FrameLayout;
+
+import com.android.compatibility.common.util.SynchronousPixelCopy;
 
 import org.junit.Assert;
 import org.junit.Test;

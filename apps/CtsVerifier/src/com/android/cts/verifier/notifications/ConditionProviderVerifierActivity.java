@@ -25,9 +25,9 @@ import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
 import android.net.Uri;
-import android.os.Parcelable;
 import android.provider.Settings;
 import android.text.TextUtils;
+import android.util.Log;
 import android.view.View;
 import android.view.ViewGroup;
 
@@ -71,6 +71,8 @@ public class ConditionProviderVerifierActivity extends InteractiveVerifierActivi
             tests.add(new SubscribeAutomaticZenRuleTest());
             tests.add(new DeleteAutomaticZenRuleTest());
             tests.add(new UnsubscribeAutomaticZenRuleTest());
+            tests.add(new RequestUnbindTest());
+            tests.add(new RequestBindTest());
             tests.add(new IsDisabledTest());
             tests.add(new ServiceStoppedTest());
         }
@@ -108,6 +110,11 @@ public class ConditionProviderVerifierActivity extends InteractiveVerifierActivi
             // wait for the service to start
             delay();
         }
+
+        @Override
+        protected Intent getIntent() {
+            return new Intent(Settings.ACTION_NOTIFICATION_POLICY_ACCESS_SETTINGS);
+        }
     }
 
     protected class CannotBeEnabledTest extends InteractiveTestCase {
@@ -124,7 +131,7 @@ public class ConditionProviderVerifierActivity extends InteractiveVerifierActivi
         @Override
         protected void test() {
             mNm.cancelAll();
-            Intent settings = new Intent(NOTIFICATION_LISTENER_SETTINGS);
+            Intent settings = new Intent(Settings.ACTION_NOTIFICATION_POLICY_ACCESS_SETTINGS);
             if (settings.resolveActivity(mPackageManager) == null) {
                 logFail("no settings activity");
                 status = FAIL;
@@ -142,9 +149,15 @@ public class ConditionProviderVerifierActivity extends InteractiveVerifierActivi
             // wait for the service to start
             delay();
         }
+
+        @Override
+        protected Intent getIntent() {
+            return new Intent(Settings.ACTION_NOTIFICATION_POLICY_ACCESS_SETTINGS);
+        }
     }
 
     protected class ServiceStartedTest extends InteractiveTestCase {
+        int mRetries = 5;
         @Override
         protected View inflate(ViewGroup parent) {
             return createAutoItem(parent, R.string.cp_service_started);
@@ -152,29 +165,90 @@ public class ConditionProviderVerifierActivity extends InteractiveVerifierActivi
 
         @Override
         protected void test() {
-            MockConditionProvider.probeConnected(mContext,
-                    new MockConditionProvider.BooleanResultCatcher() {
-                        @Override
-                        public void accept(boolean result) {
-                            if (result) {
-                                status = PASS;
-                            } else {
-                                logFail();
-                                status = RETEST;
-                                delay();
-                            }
-                            next();
-                        }
-                    });
-            delay();  // in case the catcher never returns
+            if (MockConditionProvider.getInstance().isConnected()
+                    && MockConditionProvider.getInstance().isBound()) {
+                status = PASS;
+                next();
+            } else {
+                if (--mRetries > 0) {
+                    status = RETEST;
+                    next();
+                } else {
+                    logFail();
+                    status = FAIL;
+                }
+            }
+        }
+    }
+
+    private class RequestUnbindTest extends InteractiveTestCase {
+        int mRetries = 5;
+
+        @Override
+        protected View inflate(ViewGroup parent) {
+            return createAutoItem(parent, R.string.nls_snooze);
+
         }
 
         @Override
-        protected void tearDown() {
-            MockConditionProvider.resetData(mContext);
-            delay();
+        protected void setUp() {
+            status = READY;
+        }
+
+        @Override
+        protected void test() {
+            if (status == READY) {
+                MockConditionProvider.getInstance().requestUnbind();
+                status = RETEST;
+            } else {
+                if (MockConditionProvider.getInstance() == null ||
+                        !MockConditionProvider.getInstance().isConnected()) {
+                    status = PASS;
+                } else {
+                    if (--mRetries > 0) {
+                        status = RETEST;
+                    } else {
+                        logFail();
+                        status = FAIL;
+                    }
+                }
+                next();
+            }
         }
     }
+
+    private class RequestBindTest extends InteractiveTestCase {
+        int mRetries = 5;
+
+        @Override
+        protected View inflate(ViewGroup parent) {
+            return createAutoItem(parent, R.string.nls_unsnooze);
+
+        }
+
+        @Override
+        protected void test() {
+            if (status == READY) {
+                MockConditionProvider.requestRebind(MockConditionProvider.COMPONENT_NAME);
+                status = RETEST;
+            } else {
+                if (MockConditionProvider.getInstance().isConnected()
+                        && MockConditionProvider.getInstance().isBound()) {
+                    status = PASS;
+                    next();
+                } else {
+                    if (--mRetries > 0) {
+                        status = RETEST;
+                        next();
+                    } else {
+                        logFail();
+                        status = FAIL;
+                    }
+                }
+            }
+        }
+    }
+
 
     private class CreateAutomaticZenRuleTest extends InteractiveTestCase {
         private String id = null;
@@ -186,7 +260,6 @@ public class ConditionProviderVerifierActivity extends InteractiveVerifierActivi
 
         @Override
         protected void test() {
-            long now = System.currentTimeMillis();
             AutomaticZenRule ruleToCreate =
                     createRule("Rule", "value", NotificationManager.INTERRUPTION_FILTER_ALARMS);
             id = mNm.addAutomaticZenRule(ruleToCreate);
@@ -205,8 +278,7 @@ public class ConditionProviderVerifierActivity extends InteractiveVerifierActivi
             if (id != null) {
                 mNm.removeAutomaticZenRule(id);
             }
-            MockConditionProvider.resetData(mContext);
-            delay();
+            MockConditionProvider.getInstance().resetData();
         }
     }
 
@@ -253,14 +325,14 @@ public class ConditionProviderVerifierActivity extends InteractiveVerifierActivi
             if (id != null) {
                 mNm.removeAutomaticZenRule(id);
             }
-            MockConditionProvider.resetData(mContext);
-            delay();
+            MockConditionProvider.getInstance().resetData();
         }
     }
 
     private class SubscribeAutomaticZenRuleTest extends InteractiveTestCase {
         private String id = null;
         private AutomaticZenRule ruleToCreate;
+        private int mRetries = 3;
 
         @Override
         protected View inflate(ViewGroup parent) {
@@ -278,29 +350,24 @@ public class ConditionProviderVerifierActivity extends InteractiveVerifierActivi
 
         @Override
         protected void test() {
-
-            MockConditionProvider.probeSubscribe(mContext,
-                    new MockConditionProvider.ParcelableListResultCatcher() {
-                        @Override
-                        public void accept(List<Parcelable> result) {
-                            boolean foundMatch = false;
-                            for (Parcelable p : result) {
-                                Uri uri = (Uri) p;
-                                if (ruleToCreate.getConditionId().equals(uri)) {
-                                    foundMatch = true;
-                                    break;
-                                }
-                            }
-                            if (foundMatch) {
-                                status = PASS;
-                            } else {
-                                logFail();
-                                status = RETEST;
-                            }
-                            next();
-                        }
-                    });
-            delay();  // in case the catcher never returns
+            boolean foundMatch = false;
+            List<Uri> subscriptions = MockConditionProvider.getInstance().getSubscriptions();
+            for (Uri actual : subscriptions) {
+                if (ruleToCreate.getConditionId().equals(actual)) {
+                    status = PASS;
+                    foundMatch = true;
+                    break;
+                }
+            }
+            if (foundMatch) {
+                status = PASS;
+                next();
+            } else if (--mRetries > 0) {
+                setFailed();
+            } else {
+                status = RETEST;
+                next();
+            }
         }
 
         @Override
@@ -308,9 +375,7 @@ public class ConditionProviderVerifierActivity extends InteractiveVerifierActivi
             if (id != null) {
                 mNm.removeAutomaticZenRule(id);
             }
-            MockConditionProvider.resetData(mContext);
-            // wait for intent to move through the system
-            delay();
+            MockConditionProvider.getInstance().resetData();
         }
     }
 
@@ -353,8 +418,7 @@ public class ConditionProviderVerifierActivity extends InteractiveVerifierActivi
             if (id != null) {
                 mNm.removeAutomaticZenRule(id);
             }
-            MockConditionProvider.resetData(mContext);
-            delay();
+            MockConditionProvider.getInstance().resetData();
         }
     }
 
@@ -405,8 +469,7 @@ public class ConditionProviderVerifierActivity extends InteractiveVerifierActivi
             for (String id : ids) {
                 mNm.removeAutomaticZenRule(id);
             }
-            MockConditionProvider.resetData(mContext);
-            delay();
+            MockConditionProvider.getInstance().resetData();
         }
     }
 
@@ -445,7 +508,7 @@ public class ConditionProviderVerifierActivity extends InteractiveVerifierActivi
 
         @Override
         protected void tearDown() {
-            MockConditionProvider.resetData(mContext);
+            MockConditionProvider.getInstance().resetData();
             delay();
         }
     }
@@ -453,6 +516,9 @@ public class ConditionProviderVerifierActivity extends InteractiveVerifierActivi
     private class UnsubscribeAutomaticZenRuleTest extends InteractiveTestCase {
         private String id = null;
         private AutomaticZenRule ruleToCreate;
+        private int mSubscribeRetries = 3;
+        private int mUnsubscribeRetries = 3;
+        private boolean mSubscribing = true;
 
         @Override
         protected View inflate(ViewGroup parent) {
@@ -470,64 +536,60 @@ public class ConditionProviderVerifierActivity extends InteractiveVerifierActivi
 
         @Override
         protected void test() {
-            MockConditionProvider.probeSubscribe(mContext,
-                    new MockConditionProvider.ParcelableListResultCatcher() {
-                        @Override
-                        public void accept(List<Parcelable> result) {
-                            boolean foundMatch = false;
-                            for (Parcelable p : result) {
-                                Uri uri = (Uri) p;
-                                if (ruleToCreate.getConditionId().equals(uri)) {
-                                    foundMatch = true;
-                                    break;
-                                }
-                            }
-                            if (foundMatch) {
-                                // Now that it's subscribed, remove the rule and verify that it
-                                // unsubscribes.
-                                mNm.removeAutomaticZenRule(id);
-                                try {
-                                    Thread.sleep(3000);
-                                } catch (InterruptedException e) {
-                                    logFail("unexpected InterruptedException");
-                                }
-                                MockConditionProvider.probeSubscribe(mContext,
-                                        new MockConditionProvider.ParcelableListResultCatcher() {
-                                            @Override
-                                            public void accept(List<Parcelable> result) {
-                                                boolean foundMatch = false;
-                                                for (Parcelable p : result) {
-                                                    Uri uri = (Uri) p;
-                                                    if (ruleToCreate.getConditionId().equals(uri)) {
-                                                        foundMatch = true;
-                                                        break;
-                                                    }
-                                                }
-                                                if (foundMatch) {
-                                                    logFail();
-                                                    status = RETEST;
-                                                } else {
-                                                    status = PASS;
-                                                }
-                                                next();
-                                            }
-                                        });
-                            } else {
-                                logFail("Couldn't test unsubscribe; subscribe failed.");
-                                status = RETEST;
-                                next();
-                            }
-                        }
-                    });
-            delay();  // in case the catcher never returns
+            if (mSubscribing) {
+                // trying to subscribe
+                boolean foundMatch = false;
+                List<Uri> subscriptions = MockConditionProvider.getInstance().getSubscriptions();
+                for (Uri actual : subscriptions) {
+                    if (ruleToCreate.getConditionId().equals(actual)) {
+                        status = PASS;
+                        foundMatch = true;
+                        break;
+                    }
+                }
+                if (foundMatch) {
+                    // Now that it's subscribed, remove the rule and verify that it
+                    // unsubscribes.
+                    Log.d(MockConditionProvider.TAG, "Found subscription, removing");
+                    mNm.removeAutomaticZenRule(id);
+
+                    mSubscribing = false;
+                    status = RETEST;
+                    next();
+                } else if (--mSubscribeRetries > 0) {
+                    setFailed();
+                } else {
+                    status = RETEST;
+                    next();
+                }
+            } else {
+                // trying to unsubscribe
+                List<Uri> continuingSubscriptions
+                        = MockConditionProvider.getInstance().getSubscriptions();
+                boolean stillFoundMatch = false;
+                for (Uri actual : continuingSubscriptions) {
+                    if (ruleToCreate.getConditionId().equals(actual)) {
+                        stillFoundMatch = true;
+                        break;
+                    }
+                }
+                if (!stillFoundMatch) {
+                    status = PASS;
+                    next();
+                } else if (stillFoundMatch && --mUnsubscribeRetries > 0) {
+                    Log.d(MockConditionProvider.TAG, "Still found subscription, retrying");
+                    status = RETEST;
+                    next();
+                } else {
+                    setFailed();
+                }
+            }
         }
 
         @Override
         protected void tearDown() {
             mNm.removeAutomaticZenRule(id);
-            MockConditionProvider.resetData(mContext);
-            // wait for intent to move through the system
-            delay();
+            MockConditionProvider.getInstance().resetData();
         }
     }
 
@@ -553,13 +615,14 @@ public class ConditionProviderVerifierActivity extends InteractiveVerifierActivi
         }
 
         @Override
-        protected void tearDown() {
-            MockConditionProvider.resetData(mContext);
-            delay();
+        protected Intent getIntent() {
+            return new Intent(Settings.ACTION_NOTIFICATION_POLICY_ACCESS_SETTINGS);
         }
     }
 
     private class ServiceStoppedTest extends InteractiveTestCase {
+        int mRetries = 5;
+
         @Override
         protected View inflate(ViewGroup parent) {
             return createAutoItem(parent, R.string.cp_service_stopped);
@@ -567,28 +630,18 @@ public class ConditionProviderVerifierActivity extends InteractiveVerifierActivi
 
         @Override
         protected void test() {
-            MockConditionProvider.probeConnected(mContext,
-                    new MockConditionProvider.BooleanResultCatcher() {
-                        @Override
-                        public void accept(boolean result) {
-                            if (result) {
-                                logFail();
-                                status = RETEST;
-                                delay();
-                            } else {
-                                status = PASS;
-                            }
-                            next();
-                        }
-                    });
-            delay();  // in case the catcher never returns
-        }
-
-        @Override
-        protected void tearDown() {
-            MockConditionProvider.resetData(mContext);
-            // wait for intent to move through the system
-            delay();
+            if (MockConditionProvider.getInstance() == null ||
+                    !MockConditionProvider.getInstance().isConnected()) {
+                status = PASS;
+            } else {
+                if (--mRetries > 0) {
+                    status = RETEST;
+                } else {
+                    logFail();
+                    status = FAIL;
+                }
+            }
+            next();
         }
     }
 
@@ -610,22 +663,5 @@ public class ConditionProviderVerifierActivity extends InteractiveVerifierActivi
 
     protected View createSettingsItem(ViewGroup parent, int messageId) {
         return createUserItem(parent, R.string.cp_start_settings, messageId);
-    }
-
-    public void launchSettings() {
-        startActivity(new Intent(Settings.ACTION_NOTIFICATION_POLICY_ACCESS_SETTINGS));
-    }
-
-    public void actionPressed(View v) {
-        Object tag = v.getTag();
-        if (tag instanceof Integer) {
-            int id = ((Integer) tag).intValue();
-            if (id == R.string.cp_start_settings) {
-                launchSettings();
-            } else if (id == R.string.attention_ready) {
-                mCurrentTest.status = READY;
-                next();
-            }
-        }
     }
 }

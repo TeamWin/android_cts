@@ -16,13 +16,13 @@
  -->
 
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
-          package="android.signature.cts.api.android_test_base_26">
+          package="android.signature.cts.api.android_test_base_27">
     <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE" />
     <uses-permission android:name="android.permission.READ_PHONE_STATE"/>
 
     <uses-sdk android:minSdkVersion="25" android:targetSdkVersion="27"/>
 
-    <application/>
+    <application android:debuggable="true"/>
 
     <instrumentation android:name="repackaged.android.test.InstrumentationTestRunner"
                      android:targetPackage="android.signature.cts.api.android_test_base_27"

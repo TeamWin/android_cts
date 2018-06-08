@@ -20,7 +20,7 @@
 
     <uses-permission android:name="android.permission.DISABLE_KEYGUARD" />
     <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" />
-    <application android:debuggable="true">
+    <application android:debuggable="false">
         <uses-library android:name="android.test.runner" />
     </application>
 

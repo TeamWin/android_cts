@@ -16,6 +16,7 @@
 package android.view.cts.surfacevalidator;
 
 import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.fail;
 
 import android.app.Activity;
 import android.content.Context;

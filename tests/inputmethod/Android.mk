@@ -22,7 +22,7 @@ LOCAL_MODULE_TAGS := tests
 LOCAL_MODULE_PATH := $(TARGET_OUT_DATA_APPS)
 
 # Tag this module as a cts test artifact
-LOCAL_COMPATIBILITY_SUITE := cts vts general-tests
+LOCAL_COMPATIBILITY_SUITE := cts vts general-tests cts_instant
 
 LOCAL_MULTILIB := both
 
@@ -31,12 +31,18 @@ LOCAL_JAVA_LIBRARIES := android.test.runner.stubs
 LOCAL_STATIC_JAVA_LIBRARIES := \
     android-support-test \
     compatibility-device-util \
-    ctstestrunner
+    ctstestrunner \
+    CtsMockInputMethod
 
-LOCAL_SRC_FILES := $(call all-java-files-under, src)
+LOCAL_SRC_FILES := \
+    $(call all-java-files-under, src) \
+    $(call all-Iaidl-files-under, src)
+
+LOCAL_AIDL_INCLUDES += $(LOCAL_PATH)/src
 
 LOCAL_PACKAGE_NAME := CtsInputMethodTestCases
-LOCAL_PRIVATE_PLATFORM_APIS := true
+
+LOCAL_SDK_VERSION := test_current
 
 include $(BUILD_CTS_PACKAGE)
 

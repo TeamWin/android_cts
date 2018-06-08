@@ -582,7 +582,8 @@ public class BaseTelecomTestWithMockServices extends InstrumentationTestCase {
         assertConferenceState(conference, Connection.STATE_ACTIVE);
     }
 
-    void verifyPhoneStateListenerCallbacksForCall(int expectedCallState) throws Exception {
+    void verifyPhoneStateListenerCallbacksForCall(int expectedCallState, String expectedNumber)
+            throws Exception {
         assertTrue(mPhoneStateListener.mCallbackSemaphore.tryAcquire(
                 TestUtils.WAIT_FOR_PHONE_STATE_LISTENER_CALLBACK_TIMEOUT_S, TimeUnit.SECONDS));
         // At this point we can only be sure that we got AN update, but not necessarily the one we
@@ -598,12 +599,16 @@ public class BaseTelecomTestWithMockServices extends InstrumentationTestCase {
                                                   return mPhoneStateListener.mCallStates
                                                           .stream()
                                                           .filter(p -> p.first.equals(
-                                                                  expectedCallState))
+                                                                  expectedCallState)
+                                                                  && p.second.equals(
+                                                                  expectedNumber))
                                                           .count() > 0;
                                               }
                                           },
                 WAIT_FOR_STATE_CHANGE_TIMEOUT_MS,
-                "Expected call state " + expectedCallState);
+                "Expected call state " + expectedCallState + " and number "
+                        + expectedNumber);
+
 
         // Get the most recent callback; it is possible that there was an initial state reported due
         // to the fact that TelephonyManager will sometimes give an initial state back to the caller
@@ -611,7 +616,10 @@ public class BaseTelecomTestWithMockServices extends InstrumentationTestCase {
         Pair<Integer, String> callState = mPhoneStateListener.mCallStates.get(
                 mPhoneStateListener.mCallStates.size() - 1);
         assertEquals(expectedCallState, (int) callState.first);
-        assertEquals(getTestNumber().getSchemeSpecificPart(), callState.second);
+        // Note: We do NOT check the phone number here.  Due to changes in how the phone state
+        // broadcast is sent, the caller may receive multiple broadcasts, and the number will be
+        // present in one or the other.  We waited for a full matching broadcast above so we can
+        // be sure the number was reported as expected.
     }
 
     /**

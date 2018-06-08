@@ -23,8 +23,8 @@ LOCAL_DEX_PREOPT := false
 LOCAL_PROGUARD_ENABLED := disabled
 LOCAL_STATIC_JAVA_LIBRARIES := \
 	compatibility-device-util \
-	android-support-test \
-	legacy-android-test
+	android-support-test
+LOCAL_JAVA_LIBRARIES := android.test.runner.stubs android.test.base.stubs
 LOCAL_SRC_FILES := $(call all-java-files-under, ../src)
 LOCAL_COMPATIBILITY_SUITE := cts vts general-tests
 LOCAL_SDK_VERSION := current

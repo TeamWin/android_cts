@@ -99,11 +99,9 @@ public class TelephonyManagerTest {
             return;
         }
 
-        // Test register
         TestThread t = new TestThread(new Runnable() {
             public void run() {
                 Looper.prepare();
-
                 mListener = new PhoneStateListener() {
                     @Override
                     public void onCellLocationChanged(CellLocation location) {
@@ -115,36 +113,54 @@ public class TelephonyManagerTest {
                         }
                     }
                 };
-                mTelephonyManager.listen(mListener, PhoneStateListener.LISTEN_CELL_LOCATION);
-                CellLocation.requestLocationUpdate();
+
+                synchronized (mLock) {
+                    mLock.notify(); // mListener is ready
+                }
+
                 Looper.loop();
             }
         });
-        t.start();
+
         synchronized (mLock) {
-            mLock.wait(TOLERANCE);
+            t.start();
+            mLock.wait(TOLERANCE); // wait for mListener
         }
-        assertTrue(mOnCellLocationChangedCalled);
+
+        // Test register
+        synchronized (mLock) {
+            // .listen generates an onCellLocationChanged event
+            mTelephonyManager.listen(mListener, PhoneStateListener.LISTEN_CELL_LOCATION);
+            mLock.wait(TOLERANCE);
+
+            assertTrue("Test register, mOnCellLocationChangedCalled should be true.",
+                mOnCellLocationChangedCalled);
+        }
+
+        synchronized (mLock) {
+            mOnCellLocationChangedCalled = false;
+            CellLocation.requestLocationUpdate();
+            mLock.wait(TOLERANCE);
+
+            assertTrue("Test register, mOnCellLocationChangedCalled should be true.",
+                mOnCellLocationChangedCalled);
+        }
+
+        // unregister the listener
+        mTelephonyManager.listen(mListener, PhoneStateListener.LISTEN_NONE);
+        Thread.sleep(TOLERANCE);
 
         // Test unregister
-        t = new TestThread(new Runnable() {
-            public void run() {
-                Looper.prepare();
-                // unregister the listener
-                mTelephonyManager.listen(mListener, PhoneStateListener.LISTEN_NONE);
-                mOnCellLocationChangedCalled = false;
-                // unregister again, to make sure doing so does not call the listener
-                mTelephonyManager.listen(mListener, PhoneStateListener.LISTEN_NONE);
-                CellLocation.requestLocationUpdate();
-                Looper.loop();
-            }
-        });
-
-        t.start();
         synchronized (mLock) {
+            mOnCellLocationChangedCalled = false;
+            // unregister again, to make sure doing so does not call the listener
+            mTelephonyManager.listen(mListener, PhoneStateListener.LISTEN_NONE);
+            CellLocation.requestLocationUpdate();
             mLock.wait(TOLERANCE);
+
+            assertFalse("Test unregister, mOnCellLocationChangedCalled should be false.",
+                mOnCellLocationChangedCalled);
         }
-        assertFalse(mOnCellLocationChangedCalled);
     }
 
     /**
@@ -178,8 +194,11 @@ public class TelephonyManagerTest {
         mTelephonyManager.getSimOperatorName();
         mTelephonyManager.getNetworkCountryIso();
         mTelephonyManager.getCellLocation();
+        mTelephonyManager.getSimCarrierId();
+        mTelephonyManager.getSimCarrierIdName();
         mTelephonyManager.getSimSerialNumber();
         mTelephonyManager.getSimOperator();
+        mTelephonyManager.getSignalStrength();
         mTelephonyManager.getNetworkOperatorName();
         mTelephonyManager.getSubscriberId();
         mTelephonyManager.getLine1Number();
@@ -376,12 +395,12 @@ public class TelephonyManagerTest {
     }
 
     private void assertSerialNumber() {
-        assertNotNull("Non-telephony devices must have a Build.SERIAL number.",
-                Build.SERIAL);
+        assertNotNull("Non-telephony devices must have a Build.getSerial() number.",
+                Build.getSerial());
         assertTrue("Hardware id must be no longer than 20 characters.",
-                Build.SERIAL.length() <= 20);
+                Build.getSerial().length() <= 20);
         assertTrue("Hardware id must be alphanumeric.",
-                Pattern.matches("[0-9A-Za-z]+", Build.SERIAL));
+                Pattern.matches("[0-9A-Za-z]+", Build.getSerial()));
     }
 
     private void assertMacAddress(String macAddress) {
@@ -471,8 +490,9 @@ public class TelephonyManagerTest {
                 Looper.loop();
             }
         });
-        t.start();
+
         synchronized (mLock) {
+            t.start();
             mLock.wait(TOLERANCE);
         }
 
@@ -619,6 +639,10 @@ public class TelephonyManagerTest {
      */
     @Test
     public void testSetNetworkSelectionModeAutomatic() {
+        if (!mPackageManager.hasSystemFeature(PackageManager.FEATURE_TELEPHONY)) {
+            Log.d(TAG, "Skipping test that requires FEATURE_TELEPHONY");
+            return;
+        }
         try {
             mTelephonyManager.setNetworkSelectionModeAutomatic();
             fail("Expected SecurityException. App does not have carrier privileges.");
@@ -633,6 +657,10 @@ public class TelephonyManagerTest {
      */
     @Test
     public void testSetNetworkSelectionModeManual() {
+        if (!mPackageManager.hasSystemFeature(PackageManager.FEATURE_TELEPHONY)) {
+            Log.d(TAG, "Skipping test that requires FEATURE_TELEPHONY");
+            return;
+        }
         try {
             mTelephonyManager.setNetworkSelectionModeManual(
                     "" /* operatorNumeric */, false /* persistSelection */);

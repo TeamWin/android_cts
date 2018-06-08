@@ -14,6 +14,8 @@
 
 package android.accessibilityservice.cts;
 
+import android.accessibilityservice.cts.R;
+import android.accessibilityservice.cts.activities.AccessibilityTextTraversalActivity;
 import android.app.UiAutomation;
 import android.content.pm.PackageManager;
 import android.os.Bundle;
@@ -25,8 +27,6 @@ import android.view.accessibility.AccessibilityEvent;
 import android.view.accessibility.AccessibilityNodeInfo;
 import android.widget.EditText;
 import android.widget.TextView;
-
-import android.accessibilityservice.cts.R;
 
 /**
  * Test cases for testing the accessibility APIs for traversing the text content of

@@ -113,13 +113,13 @@ public class RingerModeActivity extends InteractiveVerifierActivity {
             return tests;
         }
         tests.add(new SetModeAllTest());
-        tests.add(new SetModeAlarmsTest());
+        tests.add(new SetModePriorityTest());
         tests.add(new TestAccessRingerModeDndOn());
         tests.add(new TestVibrateNotificationDndOn());
         tests.add(new TestVibrateRingerDndOn());
         tests.add(new TestSetRingerModePolicyAccessDndOn());
         tests.add(new TestVolumeDndAffectedStreamDndOn());
-        tests.add(new TestAdjustVolumeInAlarmsOnlyMode());
+        tests.add(new TestAdjustVolumeInPriorityOnlyAllowAlarmsMediaMode());
 
         tests.add(new SetModeAllTest());
         tests.add(new TestAccessRingerMode());
@@ -136,7 +136,8 @@ public class RingerModeActivity extends InteractiveVerifierActivity {
 
     private boolean supportsConditionProviders() {
         ActivityManager am = (ActivityManager) mContext.getSystemService(Context.ACTIVITY_SERVICE);
-        return !am.isLowRamDevice();
+        return !am.isLowRamDevice()
+                || mContext.getPackageManager().hasSystemFeature(PackageManager.FEATURE_WATCH);
     }
 
     private int getVolumeDelta(int volume) {
@@ -148,34 +149,41 @@ public class RingerModeActivity extends InteractiveVerifierActivity {
     }
 
     private void testStreamMuting(int stream) {
-        mAudioManager.adjustStreamVolume(stream, AudioManager.ADJUST_MUTE, 0);
-        assertTrue("Muting stream " + stream + " failed.",
-                mAudioManager.isStreamMute(stream));
+        if (stream == AudioManager.STREAM_VOICE_CALL) {
+            // Voice call requires MODIFY_PHONE_STATE, so we should not be able to mute
+            mAudioManager.adjustStreamVolume(stream, AudioManager.ADJUST_MUTE, 0);
+            assertFalse("Muting stream " + stream + " should require MODIFY_PHONE_STATE permission.",
+                    mAudioManager.isStreamMute(stream));
+        } else {
+            mAudioManager.adjustStreamVolume(stream, AudioManager.ADJUST_MUTE, 0);
+            assertTrue("Muting stream " + stream + " failed.",
+                    mAudioManager.isStreamMute(stream));
 
-        mAudioManager.adjustStreamVolume(stream, AudioManager.ADJUST_UNMUTE, 0);
-        assertFalse("Unmuting stream " + stream + " failed.",
-                mAudioManager.isStreamMute(stream));
+            mAudioManager.adjustStreamVolume(stream, AudioManager.ADJUST_UNMUTE, 0);
+            assertFalse("Unmuting stream " + stream + " failed.",
+                    mAudioManager.isStreamMute(stream));
 
-        mAudioManager.adjustStreamVolume(stream, AudioManager.ADJUST_TOGGLE_MUTE, 0);
-        assertTrue("Toggling mute on stream " + stream + " failed.",
-                mAudioManager.isStreamMute(stream));
+            mAudioManager.adjustStreamVolume(stream, AudioManager.ADJUST_TOGGLE_MUTE, 0);
+            assertTrue("Toggling mute on stream " + stream + " failed.",
+                    mAudioManager.isStreamMute(stream));
 
-        mAudioManager.adjustStreamVolume(stream, AudioManager.ADJUST_TOGGLE_MUTE, 0);
-        assertFalse("Toggling mute on stream " + stream + " failed.",
-                mAudioManager.isStreamMute(stream));
+            mAudioManager.adjustStreamVolume(stream, AudioManager.ADJUST_TOGGLE_MUTE, 0);
+            assertFalse("Toggling mute on stream " + stream + " failed.",
+                    mAudioManager.isStreamMute(stream));
 
-        mAudioManager.setStreamMute(stream, true);
-        assertTrue("Muting stream " + stream + " using setStreamMute failed",
-                mAudioManager.isStreamMute(stream));
+            mAudioManager.setStreamMute(stream, true);
+            assertTrue("Muting stream " + stream + " using setStreamMute failed",
+                    mAudioManager.isStreamMute(stream));
 
-        // mute it three more times to verify the ref counting is gone.
-        mAudioManager.setStreamMute(stream, true);
-        mAudioManager.setStreamMute(stream, true);
-        mAudioManager.setStreamMute(stream, true);
+            // mute it three more times to verify the ref counting is gone.
+            mAudioManager.setStreamMute(stream, true);
+            mAudioManager.setStreamMute(stream, true);
+            mAudioManager.setStreamMute(stream, true);
 
-        mAudioManager.setStreamMute(stream, false);
-        assertFalse("Unmuting stream " + stream + " using setStreamMute failed.",
-                mAudioManager.isStreamMute(stream));
+            mAudioManager.setStreamMute(stream, false);
+            assertFalse("Unmuting stream " + stream + " using setStreamMute failed.",
+                    mAudioManager.isStreamMute(stream));
+        }
     }
 
     // Tests
@@ -215,10 +223,10 @@ public class RingerModeActivity extends InteractiveVerifierActivity {
         }
     }
 
-    protected class SetModeAlarmsTest extends InteractiveTestCase {
+    protected class SetModePriorityTest extends InteractiveTestCase {
         @Override
         protected View inflate(ViewGroup parent) {
-            return createRetryItem(parent, R.string.attention_filter_alarms);
+            return createRetryItem(parent, R.string.attention_filter_priority_mimic_alarms_only);
         }
 
         @Override
@@ -1076,29 +1084,35 @@ public class RingerModeActivity extends InteractiveVerifierActivity {
 
             int muteAffectedStreams = Settings.System.getInt(mContext.getContentResolver(),
                     Settings.System.MUTE_STREAMS_AFFECTED,
-                    // Same defaults as in AudioService. Should be kept in
-                    // sync.
-                    ((1 << AudioManager.STREAM_MUSIC) |
+                    // same defaults as in AudioService. Should be kept in sync.
+                    (1 << STREAM_MUSIC) |
                             (1 << AudioManager.STREAM_RING) |
                             (1 << AudioManager.STREAM_NOTIFICATION) |
-                            (1 << AudioManager.STREAM_SYSTEM)));
+                            (1 << AudioManager.STREAM_SYSTEM) |
+                            (1 << AudioManager.STREAM_VOICE_CALL));
+
             for (int stream : streams) {
                 // ensure each stream is on and turned up.
-                mAudioManager.setStreamVolume(stream,
-                        mAudioManager.getStreamMaxVolume(stream),
-                        0);
+                mAudioManager.setStreamVolume(stream, mAudioManager.getStreamMaxVolume(stream), 0);
                 if (((1 << stream) & muteAffectedStreams) == 0) {
-                    mAudioManager.adjustStreamVolume(stream, AudioManager.ADJUST_MUTE, 0);
-                    assertFalse("Stream " + stream + " should not be affected by mute.",
-                            mAudioManager.isStreamMute(stream));
-                    mAudioManager.setStreamMute(stream, true);
-                    assertFalse("Stream " + stream + " should not be affected by mute.",
-                            mAudioManager.isStreamMute(stream));
-                    mAudioManager.adjustStreamVolume(stream, AudioManager.ADJUST_TOGGLE_MUTE,
-                            0);
-                    assertFalse("Stream " + stream + " should not be affected by mute.",
-                            mAudioManager.isStreamMute(stream));
-                    continue;
+                    if (stream == AudioManager.STREAM_VOICE_CALL) {
+                        // Voice call requires MODIFY_PHONE_STATE, so we should not be able to mute
+                        mAudioManager.adjustStreamVolume(stream, AudioManager.ADJUST_MUTE, 0);
+                        assertTrue("Voice call stream (" + stream + ") should require MODIFY_PHONE_STATE "
+                                + "to mute.", mAudioManager.isStreamMute(stream));
+                    } else {
+                        mAudioManager.adjustStreamVolume(stream, AudioManager.ADJUST_MUTE, 0);
+                        assertFalse("Stream " + stream + " should not be affected by mute.",
+                                mAudioManager.isStreamMute(stream));
+                        mAudioManager.setStreamMute(stream, true);
+                        assertFalse("Stream " + stream + " should not be affected by mute.",
+                                mAudioManager.isStreamMute(stream));
+                        mAudioManager.adjustStreamVolume(stream, AudioManager.ADJUST_TOGGLE_MUTE,
+                                0);
+                        assertFalse("Stream " + stream + " should not be affected by mute.",
+                                mAudioManager.isStreamMute(stream));
+                        continue;
+                    }
                 }
                 testStreamMuting(stream);
             }
@@ -1106,7 +1120,7 @@ public class RingerModeActivity extends InteractiveVerifierActivity {
         }
     }
 
-    protected class TestAdjustVolumeInAlarmsOnlyMode extends InteractiveTestCase {
+    protected class TestAdjustVolumeInPriorityOnlyAllowAlarmsMediaMode extends InteractiveTestCase {
         @Override
         protected View inflate(ViewGroup parent) {
             return createAutoItem(parent, R.string.test_volume_dnd_affected_stream);

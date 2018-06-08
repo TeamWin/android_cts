@@ -60,98 +60,15 @@ public class Poc17_03 extends SecurityTestCase {
     }
 
     /**
-     *  b/33277611
+     *  b/33245849
      */
     @SecurityTest
-    public void testPocCVE_2017_0463() throws Exception {
-        enableAdbRoot(getDevice());
-        AdbUtils.runPocNoOutput("CVE-2017-0463", getDevice(), 30);
-        // CTS begins the next test before device finishes rebooting,
-        // sleep to allow time for device to reboot.
-        Thread.sleep(30000);
-    }
-
-    /**
-     *  b/32372915
-     */
-    @SecurityTest
-    public void testPocCVE_2017_0519() throws Exception {
-        enableAdbRoot(getDevice());
-        if (containsDriver(getDevice(), "/dev/qbt1000")) {
-            AdbUtils.runPocNoOutput("CVE-2017-0519", getDevice(), 30);
+    public void testPocCVE_2017_0334() throws Exception {
+        if (containsDriver(getDevice(), "/dev/dri/renderD129")) {
+           String out = AdbUtils.runPoc("CVE-2017-0334", getDevice());
+           assertNotMatchesMultiLine(".*Leaked ptr is (0x[fF]{6}[cC]0[a-fA-F0-9]{8}"
+               +"|0x[c-fC-F][a-fA-F0-9]{7}).*",out);
         }
     }
 
-    /**
-     *  b/31750232
-     */
-    @SecurityTest
-    public void testPocCVE_2017_0520() throws Exception {
-        enableAdbRoot(getDevice());
-        if (containsDriver(getDevice(), "/dev/qce")) {
-            AdbUtils.runPocNoOutput("CVE-2017-0520", getDevice(), 30);
-            // CTS begins the next test before device finishes rebooting,
-            // sleep to allow time for device to reboot.
-            Thread.sleep(60000);
-        }
-    }
-
-    /**
-     *  b/31695439
-     */
-    @SecurityTest
-    public void testPocCVE_2017_0457() throws Exception {
-        enableAdbRoot(getDevice());
-        if (containsDriver(getDevice(), "/dev/adsprpc-smd")) {
-            AdbUtils.runPocNoOutput("CVE-2017-0457", getDevice(), 30);
-            // CTS begins the next test before device finishes rebooting,
-            // sleep to allow time for device to reboot.
-            Thread.sleep(60000);
-        }
-    }
-
-    /**
-     *  b/31252965
-     */
-    @SecurityTest
-    public void testPocCVE_2017_0460() throws Exception {
-        enableAdbRoot(getDevice());
-        AdbUtils.runPocNoOutput("CVE-2017-0460", getDevice(), 60);
-    }
-
-    /**
-     *  b/33106520
-     */
-    @SecurityTest
-    public void testPocCVE_2017_0456() throws Exception {
-        enableAdbRoot(getDevice());
-        if (containsDriver(getDevice(), "/dev/ipa")) {
-            AdbUtils.runPocNoOutput("CVE-2017-0456", getDevice(), 30);
-            // CTS begins the next test before device finishes rebooting,
-            // sleep to allow time for device to reboot.
-            Thread.sleep(60000);
-        }
-    }
-
-    /**
-     *  b/32919951
-     */
-    @SecurityTest
-    public void testPocCVE_2017_0521() throws Exception {
-        enableAdbRoot(getDevice());
-        if (containsDriver(getDevice(), "/dev/ion")) {
-            AdbUtils.runPocNoOutput("CVE-2017-0521", getDevice(), 30);
-        }
-    }
-
-    /**
-     *  b/33979145
-     */
-    @SecurityTest
-    public void testPocCVE_2017_0453() throws Exception {
-        enableAdbRoot(getDevice());
-        AdbUtils.runPocNoOutput("CVE-2017-0453", getDevice(), 30);
-        // Device takes up to 90 seconds to crash after PoC run.
-        Thread.sleep(90000);
-    }
 }

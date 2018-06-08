@@ -32,6 +32,7 @@ import android.app.UiAutomation;
 import android.content.res.Configuration;
 import android.support.test.InstrumentationRegistry;
 import android.support.test.annotation.UiThreadTest;
+import android.support.test.filters.FlakyTest;
 import android.support.test.filters.SmallTest;
 import android.support.test.rule.ActivityTestRule;
 import android.support.test.runner.AndroidJUnit4;
@@ -47,6 +48,7 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.InOrder;
 
+@FlakyTest
 @SmallTest
 @RunWith(AndroidJUnit4.class)
 public class NumberPickerTest {

@@ -129,6 +129,10 @@
             </intent-filter>
         </activity>
 
+        <activity android:name="android.telephony.euicc.cts.EuiccTestResolutionActivity"/>
+
+        <activity android:name="android.telephony.euicc.cts.EuiccResolutionActivity"/>
+
         <uses-library android:name="android.test.runner" />
 
 

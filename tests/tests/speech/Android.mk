@@ -23,8 +23,9 @@ LOCAL_MODULE_PATH := $(TARGET_OUT_DATA_APPS)
 
 LOCAL_STATIC_JAVA_LIBRARIES := \
     ctstestrunner \
-    android-support-test \
-    legacy-android-test
+    android-support-test
+
+LOCAL_JAVA_LIBRARIES := android.test.base.stubs
 
 LOCAL_SRC_FILES := $(call all-java-files-under, src)
 

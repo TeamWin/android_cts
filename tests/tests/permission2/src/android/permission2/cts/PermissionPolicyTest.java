@@ -24,6 +24,7 @@ import android.content.pm.PackageManager;
 import android.content.pm.PackageManager.NameNotFoundException;
 import android.content.pm.PermissionGroupInfo;
 import android.content.pm.PermissionInfo;
+import android.platform.test.annotations.AppModeFull;
 import android.test.AndroidTestCase;
 import android.text.TextUtils;
 import android.util.ArrayMap;
@@ -45,6 +46,7 @@ import java.util.Set;
 /**
  * Tests for permission policy on the platform.
  */
+@AppModeFull(reason = "Instant apps cannot read the system servers permission")
 public class PermissionPolicyTest extends AndroidTestCase {
     private static final Date HIDE_NON_SYSTEM_OVERLAY_WINDOWS_PATCH_DATE = parseDate("2017-11-01");
     private static final String HIDE_NON_SYSTEM_OVERLAY_WINDOWS_PERMISSION
@@ -117,10 +119,8 @@ public class PermissionPolicyTest extends AndroidTestCase {
             }
 
             // OEMs cannot change permission protection flags
-            final int expectedProtectionFlags = expectedPermission.protectionLevel
-                    & PermissionInfo.PROTECTION_MASK_FLAGS;
-            final int declaredProtectionFlags = declaredPermission.protectionLevel
-                    & PermissionInfo.PROTECTION_MASK_FLAGS;
+            final int expectedProtectionFlags = expectedPermission.getProtectionFlags();
+            final int declaredProtectionFlags = declaredPermission.getProtectionFlags();
             if (expectedProtectionFlags != declaredProtectionFlags) {
                 offendingList.add(
                         String.format(
@@ -134,7 +134,9 @@ public class PermissionPolicyTest extends AndroidTestCase {
             if ((declaredPermission.protectionLevel & PermissionInfo.PROTECTION_DANGEROUS) != 0) {
                 if (!expectedPermission.group.equals(declaredPermission.group)) {
                     offendingList.add(
-                            "Permission " + expectedPermissionName + " not in correct group");
+                            "Permission " + expectedPermissionName + " not in correct group "
+                            + "(expected=" + expectedPermission.group + " actual="
+                                    + declaredPermission.group);
                 }
 
                 if (!declaredGroupsSet.contains(declaredPermission.group)) {
@@ -147,7 +149,11 @@ public class PermissionPolicyTest extends AndroidTestCase {
         // OEMs cannot define permissions in the platform namespace
         for (String permission : declaredPermissionsMap.keySet()) {
             if (permission.startsWith(PLATFORM_ROOT_NAMESPACE)) {
-                offendingList.add("Cannot define permission in android namespace:" + permission);
+                final PermissionInfo permInfo = declaredPermissionsMap.get(permission);
+                offendingList.add(
+                        "Cannot define permission " + permission
+                        + ", package " + permInfo.packageName
+                        + " in android namespace");
             }
         }
 
@@ -158,11 +164,9 @@ public class PermissionPolicyTest extends AndroidTestCase {
                     if (declaredGroup.packageName.equals(PLATFORM_PACKAGE_NAME)
                             && declaredGroup.name.startsWith(PLATFORM_ROOT_NAMESPACE)) {
                         offendingList.add(
-                                "Cannot define group "
-                                        + declaredGroup.name
-                                        + ", package "
-                                        + declaredGroup.packageName
-                                        + " in android namespace");
+                                "Cannot define group " + declaredGroup.name
+                                + ", package " + declaredGroup.packageName
+                                + " in android namespace");
                     }
                 }
             }
@@ -254,8 +258,14 @@ public class PermissionPolicyTest extends AndroidTestCase {
                 case "privileged": {
                     protectionLevel |= PermissionInfo.PROTECTION_FLAG_PRIVILEGED;
                 } break;
+                case "vendorPrivileged": {
+                    protectionLevel |= PermissionInfo.PROTECTION_FLAG_VENDOR_PRIVILEGED;
+                } break;
                 case "setup": {
                     protectionLevel |= PermissionInfo.PROTECTION_FLAG_SETUP;
+                } break;
+                case "textClassifier": {
+                    protectionLevel |= PermissionInfo.PROTECTION_FLAG_SYSTEM_TEXT_CLASSIFIER;
                 } break;
                 case "instant": {
                     protectionLevel |= PermissionInfo.PROTECTION_FLAG_INSTANT;

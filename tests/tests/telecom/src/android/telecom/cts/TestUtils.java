@@ -29,6 +29,7 @@ import android.os.Looper;
 import android.os.Parcel;
 import android.os.ParcelFileDescriptor;
 import android.os.SystemClock;
+import android.support.test.InstrumentationRegistry;
 import android.telecom.PhoneAccount;
 import android.telecom.PhoneAccountHandle;
 import android.telecom.TelecomManager;
@@ -54,7 +55,7 @@ public class TestUtils {
     static final long WAIT_FOR_STATE_CHANGE_TIMEOUT_CALLBACK = 50;
     static final long WAIT_FOR_PHONE_STATE_LISTENER_REGISTERED_TIMEOUT_S = 15;
     static final long WAIT_FOR_PHONE_STATE_LISTENER_CALLBACK_TIMEOUT_S = 15;
-
+    static final boolean HAS_BLUETOOTH = hasBluetoothFeature();
     static final BluetoothDevice BLUETOOTH_DEVICE1 = makeBluetoothDevice("00:00:00:00:00:01");
     static final BluetoothDevice BLUETOOTH_DEVICE2 = makeBluetoothDevice("00:00:00:00:00:02");
 
@@ -82,6 +83,10 @@ public class TestUtils {
     public static final PhoneAccountHandle TEST_SELF_MANAGED_HANDLE_2 =
             new PhoneAccountHandle(new ComponentName(PACKAGE, SELF_MANAGED_COMPONENT),
                     SELF_MANAGED_ACCOUNT_ID_2);
+    public static final String SELF_MANAGED_ACCOUNT_ID_3 = "ctstest_SELF_MANAGED_ID_3";
+    public static final PhoneAccountHandle TEST_SELF_MANAGED_HANDLE_3 =
+            new PhoneAccountHandle(new ComponentName(PACKAGE, SELF_MANAGED_COMPONENT),
+                    SELF_MANAGED_ACCOUNT_ID_3);
 
     public static final String ACCOUNT_LABEL = "CTSConnectionService";
     public static final PhoneAccount TEST_PHONE_ACCOUNT = PhoneAccount.builder(
@@ -127,6 +132,18 @@ public class TestUtils {
             .build();
     public static final String REMOTE_ACCOUNT_LABEL = "CTSRemoteConnectionService";
     public static final String SELF_MANAGED_ACCOUNT_LABEL = "android.telecom.cts";
+    public static final String TEST_URI_SCHEME = "foobuzz";
+    public static final PhoneAccount TEST_SELF_MANAGED_PHONE_ACCOUNT_3 = PhoneAccount.builder(
+            TEST_SELF_MANAGED_HANDLE_3, SELF_MANAGED_ACCOUNT_LABEL)
+            .setAddress(Uri.fromParts(TEST_URI_SCHEME, "test@test.com", null))
+            .setSubscriptionAddress(Uri.fromParts(TEST_URI_SCHEME, "test@test.com", null))
+            .setCapabilities(PhoneAccount.CAPABILITY_SELF_MANAGED |
+                    PhoneAccount.CAPABILITY_SUPPORTS_VIDEO_CALLING |
+                    PhoneAccount.CAPABILITY_VIDEO_CALLING)
+            .setHighlightColor(Color.BLUE)
+            .setShortDescription(SELF_MANAGED_ACCOUNT_LABEL)
+            .addSupportedUriScheme(TEST_URI_SCHEME)
+            .build();
     public static final PhoneAccount TEST_SELF_MANAGED_PHONE_ACCOUNT_2 = PhoneAccount.builder(
             TEST_SELF_MANAGED_HANDLE_2, SELF_MANAGED_ACCOUNT_LABEL)
             .setAddress(Uri.parse("sip:test@test.com"))
@@ -322,8 +339,12 @@ public class TestUtils {
             TestCase.fail("Failed to wait on handlers");
         }
     }
-
+    public static boolean hasBluetoothFeature() {
+        return InstrumentationRegistry.getContext().getPackageManager().
+                hasSystemFeature(PackageManager.FEATURE_BLUETOOTH);
+    }
     public static BluetoothDevice makeBluetoothDevice(String address) {
+        if (!HAS_BLUETOOTH) return null;
         Parcel p1 = Parcel.obtain();
         p1.writeString(address);
         p1.setDataPosition(0);

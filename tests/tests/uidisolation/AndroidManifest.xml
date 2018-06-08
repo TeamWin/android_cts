@@ -16,9 +16,10 @@
  -->
 
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
-    package="android.uidisolation.cts">
+    package="android.uidisolation.cts"
+    android:targetSandboxVersion="2">
 
-    <application android:label="UidIsolationTest">
+    <application android:label="UidIsolationTest" android:usesCleartextTraffic="true">
       <activity android:name="android.uidisolation.cts.ServiceRunnerActivity"
                 android:label="UidIsolationTest"/>
       <service android:name="android.uidisolation.cts.PermissionTestService"
