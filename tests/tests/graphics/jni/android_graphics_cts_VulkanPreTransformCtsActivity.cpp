@@ -47,21 +47,23 @@ void createNativeTest(JNIEnv* env, jclass /*clazz*/, jobject jAssetManager, jobj
     ASSERT(jSurface, "jSurface is NULL");
 
     DeviceInfo deviceInfo;
-    int ret = deviceInfo.init(env, jSurface);
-    ASSERT(ret >= 0, "Failed to initialize Vulkan device");
-    if (ret > 0) {
+    VkTestResult ret = deviceInfo.init(env, jSurface);
+    if (ret == VK_TEST_PHYSICAL_DEVICE_NOT_EXISTED) {
         ALOGD("Hardware not supported for this test");
         return;
     }
+    ASSERT(ret == VK_TEST_SUCCESS, "Failed to initialize Vulkan device");
 
     SwapchainInfo swapchainInfo(&deviceInfo);
-    ASSERT(!swapchainInfo.init(setPreTransform), "Failed to initialize Vulkan swapchain");
+    ASSERT(swapchainInfo.init(setPreTransform) == VK_TEST_SUCCESS,
+           "Failed to initialize Vulkan swapchain");
 
     Renderer renderer(&deviceInfo, &swapchainInfo);
-    ASSERT(!renderer.init(env, jAssetManager), "Failed to initialize Vulkan renderer");
+    ASSERT(renderer.init(env, jAssetManager) == VK_TEST_SUCCESS,
+           "Failed to initialize Vulkan renderer");
 
     for (uint32_t i = 0; i < 120; ++i) {
-        ASSERT(!renderer.drawFrame(), "Failed to draw frame");
+        ASSERT(renderer.drawFrame() == VK_TEST_SUCCESS, "Failed to draw frame");
     }
 
     ASSERT(validatePixelValues(env, setPreTransform), "Not properly rotated");
