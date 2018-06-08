@@ -2895,6 +2895,7 @@ public class CaptureRequestTest extends Camera2SurfaceViewTestCase {
     private void validate3aRegion(
             CaptureResult result, int algoIdx, MeteringRectangle[] expectRegions)
     {
+        final int maxCorrectionDist = 2;
         int maxRegions;
         CaptureResult.Key<MeteringRectangle[]> key;
         MeteringRectangle[] actualRegion;
@@ -2916,13 +2917,41 @@ public class CaptureRequestTest extends Camera2SurfaceViewTestCase {
                 throw new IllegalArgumentException("Unknown 3A Algorithm!");
         }
 
+        Integer distortionCorrectionMode = result.get(CaptureResult.DISTORTION_CORRECTION_MODE);
+        boolean correctionEnabled =
+                distortionCorrectionMode != null &&
+                distortionCorrectionMode != CaptureResult.DISTORTION_CORRECTION_MODE_OFF;
+
         if (maxRegions > 0)
         {
             actualRegion = getValueNotNull(result, key);
-            mCollector.expectEquals(
+            if (correctionEnabled) {
+                for(int i = 0; i < actualRegion.length; i++) {
+                    Rect a = actualRegion[i].getRect();
+                    Rect e = expectRegions[i].getRect();
+                    if (!mCollector.expectLessOrEqual(
+                        "Expected 3A regions: " + Arrays.toString(expectRegions) +
+                        " are not close enough to the actual one: " + Arrays.toString(actualRegion),
+                        maxCorrectionDist, Math.abs(a.left - e.left))) continue;
+                    if (!mCollector.expectLessOrEqual(
+                        "Expected 3A regions: " + Arrays.toString(expectRegions) +
+                        " are not close enough to the actual one: " + Arrays.toString(actualRegion),
+                        maxCorrectionDist, Math.abs(a.right - e.right))) continue;
+                    if (!mCollector.expectLessOrEqual(
+                        "Expected 3A regions: " + Arrays.toString(expectRegions) +
+                        " are not close enough to the actual one: " + Arrays.toString(actualRegion),
+                        maxCorrectionDist, Math.abs(a.top - e.top))) continue;
+                    if (!mCollector.expectLessOrEqual(
+                        "Expected 3A regions: " + Arrays.toString(expectRegions) +
+                        " are not close enough to the actual one: " + Arrays.toString(actualRegion),
+                        maxCorrectionDist, Math.abs(a.bottom - e.bottom))) continue;
+                }
+            } else {
+                mCollector.expectEquals(
                     "Expected 3A regions: " + Arrays.toString(expectRegions) +
                     " does not match actual one: " + Arrays.toString(actualRegion),
                     expectRegions, actualRegion);
+            }
         }
     }
 }
