@@ -15,11 +15,7 @@
  *
  */
 
-#define LOG_TAG "vulkan"
-
-#ifndef VK_USE_PLATFORM_ANDROID_KHR
-#define VK_USE_PLATFORM_ANDROID_KHR
-#endif
+#define LOG_TAG "VulkanPreTransformCtsActivity"
 
 #include <android/log.h>
 #include <jni.h>

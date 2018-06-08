@@ -15,7 +15,7 @@
  *
  */
 
-#define LOG_TAG "vulkan"
+#define LOG_TAG "VulkanSurfaceSupportTest"
 
 #ifndef VK_USE_PLATFORM_ANDROID_KHR
 #define VK_USE_PLATFORM_ANDROID_KHR

@@ -17,12 +17,6 @@
 #ifndef VULKAN_PRE_TRANSFORM_TEST_HELPERS_H
 #define VULKAN_PRE_TRANSFORM_TEST_HELPERS_H
 
-#define LOG_TAG "vulkan"
-
-#ifndef VK_USE_PLATFORM_ANDROID_KHR
-#define VK_USE_PLATFORM_ANDROID_KHR
-#endif
-
 #include <android/asset_manager_jni.h>
 #include <android/native_window_jni.h>
 #include <jni.h>

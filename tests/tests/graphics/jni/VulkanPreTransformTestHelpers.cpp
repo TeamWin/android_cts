@@ -15,6 +15,12 @@
  *
  */
 
+#define LOG_TAG "VulkanPreTransformTestHelpers"
+
+#ifndef VK_USE_PLATFORM_ANDROID_KHR
+#define VK_USE_PLATFORM_ANDROID_KHR
+#endif
+
 #include <android/log.h>
 #include <cstring>
 
