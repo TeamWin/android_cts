@@ -17,12 +17,6 @@
 #ifndef VULKAN_PRE_TRANSFORM_TEST_HELPERS_H
 #define VULKAN_PRE_TRANSFORM_TEST_HELPERS_H
 
-#define LOG_TAG "vulkan"
-
-#ifndef VK_USE_PLATFORM_ANDROID_KHR
-#define VK_USE_PLATFORM_ANDROID_KHR
-#endif
-
 #include <android/asset_manager_jni.h>
 #include <android/native_window_jni.h>
 #include <jni.h>
@@ -33,6 +27,10 @@ class DeviceInfo {
 public:
     DeviceInfo();
     ~DeviceInfo();
+    // return -1 for errors
+    // return  0 for success
+    // return  1 for no physical devices exist
+    // return  2 for surface format unsupported
     int32_t init(JNIEnv* env, jobject jSurface);
     VkPhysicalDevice gpu() const { return mGpu; }
     VkSurfaceKHR surface() const { return mSurface; }

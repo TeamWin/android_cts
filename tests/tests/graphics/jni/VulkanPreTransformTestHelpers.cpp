@@ -15,6 +15,12 @@
  *
  */
 
+#define LOG_TAG "VulkanPreTransformTestHelpers"
+
+#ifndef VK_USE_PLATFORM_ANDROID_KHR
+#define VK_USE_PLATFORM_ANDROID_KHR
+#endif
+
 #include <android/log.h>
 #include <cstring>
 
@@ -204,6 +210,13 @@ int32_t DeviceInfo::init(JNIEnv* env, jobject jSurface) {
     }
     ASSERT(queueFamilyIndex < queueFamilyCount);
     mQueueFamilyIndex = queueFamilyIndex;
+
+    VkBool32 supported = VK_FALSE;
+    VK_CALL(vkGetPhysicalDeviceSurfaceSupportKHR(mGpu, mQueueFamilyIndex, mSurface, &supported));
+    if (supported == VK_FALSE) {
+        ALOGD("Surface format not supported");
+        return 2;
+    }
 
     const float priority = 1.0f;
     const VkDeviceQueueCreateInfo queueCreateInfo = {
