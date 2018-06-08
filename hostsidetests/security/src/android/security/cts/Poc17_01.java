@@ -30,16 +30,4 @@ public class Poc17_01 extends SecurityTestCase {
             AdbUtils.runPoc("CVE-2016-8482", getDevice(), 60);
         }
     }
-
-    /**
-     *  b/32255299
-     */
-    @SecurityTest
-    public void testPocCVE_2017_0386() throws Exception {
-        AdbUtils.runCommandLine("logcat -c" , getDevice());
-        AdbUtils.runPoc("CVE-2017-0386", getDevice(), 60);
-
-        String logcat = AdbUtils.runCommandLine("logcat -d", getDevice());
-        assertMatches("[\\s\\n\\S]*No Integer overflow[\\s\\n\\S]*", logcat);
-    }
 }
