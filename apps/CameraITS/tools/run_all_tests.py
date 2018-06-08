@@ -60,14 +60,16 @@ NOT_YET_MANDATED = {
                 "test_yuv_plus_jpeg"
         ],
         "scene2": [
-                "test_num_faces",
+                "test_num_faces"
         ],
         "scene3": [
                 "test_flip_mirror",
                 "test_lens_movement_reporting",
                 "test_lens_position"
         ],
-        "scene4": [],
+        "scene4": [
+                "test_multi_camera_alignment"
+        ],
         "scene5": [],
         "sensor_fusion": []
 }

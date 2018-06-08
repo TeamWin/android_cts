@@ -49,6 +49,7 @@ import android.os.IBinder;
 import android.os.PowerManager;
 import android.os.ServiceManager;
 import android.os.SystemClock;
+import android.platform.test.annotations.AppModeFull;
 import android.support.test.InstrumentationRegistry;
 import android.support.test.filters.SmallTest;
 import android.platform.test.annotations.RequiresDevice;
@@ -83,6 +84,7 @@ import junit.framework.AssertionFailedError;
  */
 @SmallTest
 @RequiresDevice
+@AppModeFull(reason = "TODO: evaluate and port to instant")
 public class MediaPlayerTest extends MediaPlayerTestBase {
 
     private String RECORDED_FILE;

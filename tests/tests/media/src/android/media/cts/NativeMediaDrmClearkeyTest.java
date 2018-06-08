@@ -18,6 +18,7 @@ package android.media.cts;
 import android.content.pm.PackageManager;
 import android.media.MediaDrm;
 import android.net.Uri;
+import android.platform.test.annotations.AppModeFull;
 import android.util.Log;
 import android.view.Surface;
 
@@ -36,6 +37,7 @@ import static org.junit.matchers.JUnitMatchers.containsString;
  * Tests MediaDrm NDK APIs. ClearKey system uses a subset of NDK APIs,
  * this test only tests the APIs that are supported by ClearKey system.
  */
+@AppModeFull(reason = "TODO: evaluate and port to instant")
 public class NativeMediaDrmClearkeyTest extends MediaPlayerTestBase {
     private static final String TAG = NativeMediaDrmClearkeyTest.class.getSimpleName();
 

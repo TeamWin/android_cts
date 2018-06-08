@@ -28,6 +28,6 @@ LOCAL_RES_LIBRARIES := CtsStaticSharedLibProviderApp4
 LOCAL_PACKAGE_NAME := CtsStaticSharedLibConsumerApp2
 LOCAL_SDK_VERSION := current
 
-LOCAL_COMPATIBILITY_SUITE := cts vts general-tests
+LOCAL_COMPATIBILITY_SUITE := cts vts general-tests cts_instant
 
 include $(BUILD_CTS_SUPPORT_PACKAGE)

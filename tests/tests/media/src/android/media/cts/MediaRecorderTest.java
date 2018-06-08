@@ -41,6 +41,7 @@ import android.os.ConditionVariable;
 import android.os.Environment;
 import android.os.ParcelFileDescriptor;
 import android.os.PersistableBundle;
+import android.platform.test.annotations.AppModeFull;
 import android.support.test.filters.SmallTest;
 import android.platform.test.annotations.RequiresDevice;
 import android.test.ActivityInstrumentationTestCase2;
@@ -68,6 +69,7 @@ import static android.media.MediaCodecInfo.CodecProfileLevel.*;
 
 @SmallTest
 @RequiresDevice
+@AppModeFull(reason = "TODO: evaluate and port to instant")
 public class MediaRecorderTest extends ActivityInstrumentationTestCase2<MediaStubActivity> {
     private final String TAG = "MediaRecorderTest";
     private final String OUTPUT_PATH;
