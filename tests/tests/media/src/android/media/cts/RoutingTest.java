@@ -35,6 +35,7 @@ import android.os.Handler;
 import android.os.Looper;
 import android.os.SystemClock;
 
+import android.platform.test.annotations.AppModeFull;
 import android.test.AndroidTestCase;
 
 import android.util.Log;
@@ -58,6 +59,7 @@ import java.util.concurrent.TimeUnit;
  *  - the deprecated AudioTrack.OnRoutingChangedListener and AudioRecord.OnRoutingChangedListener
  *  - the N AudioRouting.OnRoutingChangedListener
  */
+@AppModeFull(reason = "TODO: evaluate and port to instant")
 public class RoutingTest extends AndroidTestCase {
     private static final String TAG = "RoutingTest";
     private static final int MAX_WAITING_ROUTING_CHANGED_COUNT = 3;

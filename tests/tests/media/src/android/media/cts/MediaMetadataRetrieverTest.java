@@ -29,6 +29,7 @@ import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.graphics.Color;
 import android.graphics.Rect;
+import android.platform.test.annotations.AppModeFull;
 import android.support.test.filters.SmallTest;
 import android.platform.test.annotations.RequiresDevice;
 import android.test.AndroidTestCase;
@@ -50,6 +51,7 @@ import java.util.function.Function;
 
 @SmallTest
 @RequiresDevice
+@AppModeFull(reason = "No interaction with system server")
 public class MediaMetadataRetrieverTest extends AndroidTestCase {
     private static final String TAG = "MediaMetadataRetrieverTest";
     private static final boolean SAVE_BITMAP_OUTPUT = false;

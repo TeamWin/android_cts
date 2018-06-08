@@ -51,6 +51,7 @@ import android.media.AudioManager;
 import android.media.MediaPlayer;
 import android.media.MicrophoneInfo;
 import android.os.Vibrator;
+import android.platform.test.annotations.AppModeFull;
 import android.provider.Settings;
 import android.provider.Settings.System;
 import android.test.InstrumentationTestCase;
@@ -163,6 +164,7 @@ public class AudioManagerTest extends InstrumentationTestCase {
         }
     }
 
+    @AppModeFull(reason = "Instant apps cannot hold android.permission.MODIFY_AUDIO_SETTINGS")
     public void testMicrophoneMute() throws Exception {
         mAudioManager.setMicrophoneMute(true);
         assertTrue(mAudioManager.isMicrophoneMute());
@@ -170,6 +172,7 @@ public class AudioManagerTest extends InstrumentationTestCase {
         assertFalse(mAudioManager.isMicrophoneMute());
     }
 
+    @AppModeFull(reason = "Instant apps cannot hold android.permission.MODIFY_AUDIO_SETTINGS")
     public void testMicrophoneMuteIntent() throws Exception {
         final MyBlockingIntentReceiver receiver = new MyBlockingIntentReceiver();
         final boolean initialMicMute = mAudioManager.isMicrophoneMute();
@@ -312,6 +315,7 @@ public class AudioManagerTest extends InstrumentationTestCase {
         assertFalse(mAudioManager.isMusicActive());
     }
 
+    @AppModeFull(reason = "Instant apps cannot hold android.permission.MODIFY_AUDIO_SETTINGS")
     public void testAccessMode() throws Exception {
         mAudioManager.setMode(MODE_RINGTONE);
         assertEquals(MODE_RINGTONE, mAudioManager.getMode());
@@ -322,6 +326,7 @@ public class AudioManagerTest extends InstrumentationTestCase {
     }
 
     @SuppressWarnings("deprecation")
+    @AppModeFull(reason = "Instant apps cannot hold android.permission.MODIFY_AUDIO_SETTINGS")
     public void testRouting() throws Exception {
         // setBluetoothA2dpOn is a no-op, and getRouting should always return -1
         // AudioManager.MODE_CURRENT
