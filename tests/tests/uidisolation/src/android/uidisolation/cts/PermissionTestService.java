@@ -134,7 +134,8 @@ public class PermissionTestService extends Service {
     }
 
     private void testNetworkAccessDone(boolean success) {
-        if (success != mExpectPermissionsAllowed) {
+        // Instant apps cannot open TCP sockets.
+        if (!getPackageManager().isInstantApp() && success != mExpectPermissionsAllowed) {
             notifyClientOfFailure(NETWORK_ACCESS_TEST);
             return;
         }
