@@ -15,6 +15,7 @@
  */
 package com.android.cts.webkit;
 
+import android.platform.test.annotations.AppModeFull;
 import com.android.ddmlib.testrunner.RemoteAndroidTestRunner;
 import com.android.ddmlib.testrunner.TestResult.TestStatus;
 import com.android.tradefed.device.DeviceNotAvailableException;
@@ -35,6 +36,7 @@ public class WebViewHostSideStartupTest extends DeviceTestCase {
         super.setUp();
     }
 
+    @AppModeFull(reason = "Instant apps cannot open TCP sockets.")
     public void testCookieManager() throws DeviceNotAvailableException {
         assertDeviceTestPasses("testCookieManagerBlockingUiThread");
     }
