@@ -54,34 +54,32 @@ import android.view.View;
 import android.view.autofill.AutofillId;
 import android.widget.RemoteViews;
 
-import org.junit.Rule;
 import org.junit.Test;
+import org.junit.rules.RuleChain;
+import org.junit.rules.TestRule;
 
 import java.util.regex.Pattern;
 
-public class SimpleSaveActivityTest extends CustomDescriptionWithLinkTestCase {
+public class SimpleSaveActivityTest extends CustomDescriptionWithLinkTestCase<SimpleSaveActivity> {
 
-    @Rule
-    public final AutofillActivityTestRule<SimpleSaveActivity> mActivityRule =
+    private static final AutofillActivityTestRule<SimpleSaveActivity> sActivityRule =
             new AutofillActivityTestRule<SimpleSaveActivity>(SimpleSaveActivity.class, false);
 
-    @Rule
-    public final AutofillActivityTestRule<WelcomeActivity> mWelcomeActivityRule =
+    private static final AutofillActivityTestRule<WelcomeActivity> sWelcomeActivityRule =
             new AutofillActivityTestRule<WelcomeActivity>(WelcomeActivity.class, false);
 
-    private SimpleSaveActivity mActivity;
-
-    private void startActivity() {
-        startActivity(false);
+    public SimpleSaveActivityTest() {
+        super(SimpleSaveActivity.class);
     }
 
-    private void startActivity(boolean remainOnRecents) {
-        final Intent intent = new Intent(mContext, SimpleSaveActivity.class);
-        if (remainOnRecents) {
-            intent.setFlags(
-                    Intent.FLAG_ACTIVITY_RETAIN_IN_RECENTS | Intent.FLAG_ACTIVITY_NEW_TASK);
-        }
-        mActivity = mActivityRule.launchActivity(intent);
+    @Override
+    protected AutofillActivityTestRule<SimpleSaveActivity> getActivityRule() {
+        return sActivityRule;
+    }
+
+    @Override
+    protected TestRule getMainTestRule() {
+        return RuleChain.outerRule(sActivityRule).around(sWelcomeActivityRule);
     }
 
     private void restartActivity() {

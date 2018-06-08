@@ -202,13 +202,6 @@ public abstract class BasePrintTest {
 
         Instrumentation instrumentation = getInstrumentation();
 
-        // Prevent rotation
-        getUiDevice().freezeRotation();
-        while (!getUiDevice().isNaturalOrientation()) {
-            getUiDevice().setOrientationNatural();
-            getUiDevice().waitForIdle();
-        }
-
         // Make sure we start with a clean slate.
         Log.d(LOG_TAG, "clearPrintSpoolerData()");
         clearPrintSpoolerData();
@@ -281,6 +274,13 @@ public abstract class BasePrintTest {
         assumeTrue(getInstrumentation().getContext().getPackageManager().hasSystemFeature(
                 PackageManager.FEATURE_PRINTING));
 
+        // Prevent rotation
+        getUiDevice().freezeRotation();
+        while (!getUiDevice().isNaturalOrientation()) {
+            getUiDevice().setOrientationNatural();
+            getUiDevice().waitForIdle();
+        }
+
         // Initialize the latches.
         Log.d(LOG_TAG, "init counters");
         mCancelOperationCounter = new CallCounter();
@@ -313,6 +313,9 @@ public abstract class BasePrintTest {
 
         sIdToTest.remove(mTestId);
 
+        // Allow rotation
+        getUiDevice().unfreezeRotation();
+
         Log.d(LOG_TAG, "tearDown() done");
     }
 
@@ -334,9 +337,6 @@ public abstract class BasePrintTest {
 
         SystemUtil.runShellCommand(instrumentation, "settings put secure "
                     + Settings.Secure.DISABLED_PRINT_SERVICES + " null");
-
-        // Allow rotation
-        getUiDevice().unfreezeRotation();
 
         Log.d(LOG_TAG, "tearDownClass() done");
     }

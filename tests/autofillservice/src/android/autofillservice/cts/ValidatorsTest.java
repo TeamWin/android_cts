@@ -39,7 +39,7 @@ import org.mockito.junit.MockitoJUnitRunner;
 
 @RunWith(MockitoJUnitRunner.class)
 @AppModeFull // Unit test
-public class ValidatorsTest extends AutoFillServiceTestCase {
+public class ValidatorsTest {
 
     @Mock private Validator mInvalidValidator;
     @Mock private ValueFinder mValueFinder;

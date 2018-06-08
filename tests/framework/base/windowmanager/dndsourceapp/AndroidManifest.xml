@@ -15,7 +15,8 @@
 -->
 
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
-        package="android.server.wm.dndsourceapp">
+        package="android.server.wm.dndsourceapp"
+        android:targetSandboxVersion="2">
     <application android:label="CtsDnDSource">
         <activity android:name="android.server.wm.dndsourceapp.DragSource">
             <intent-filter>

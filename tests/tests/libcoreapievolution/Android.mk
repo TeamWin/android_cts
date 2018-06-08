@@ -12,28 +12,25 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-LOCAL_PATH := $(call my-dir)
+LOCAL_PATH:= $(call my-dir)
 
 include $(CLEAR_VARS)
-LOCAL_MODULE := CVE-2017-0386
 
-LOCAL_SHARED_LIBRARIES := libnl \
-                          libc \
-                          liblog
+# don't include this package in any target
+LOCAL_MODULE_TAGS := optional
+# and when built explicitly put it in the data partition
+LOCAL_MODULE_PATH := $(TARGET_OUT_DATA_APPS)
 
-LOCAL_SRC_FILES := poc.c
-LOCAL_C_INCLUDES := external/libnl/include
+LOCAL_STATIC_JAVA_LIBRARIES := ctstestrunner junit
 
-LOCAL_MULTILIB := both
-LOCAL_MODULE_STEM_32 := $(LOCAL_MODULE)32
-LOCAL_MODULE_STEM_64 := $(LOCAL_MODULE)64
+LOCAL_JAVA_LIBRARIES := android.test.base.stubs
+
+LOCAL_SRC_FILES := $(call all-java-files-under, src)
+
+LOCAL_PACKAGE_NAME := CtsLibcoreApiEvolutionTestCases
+LOCAL_SDK_VERSION := current
 
 # Tag this module as a cts test artifact
-LOCAL_COMPATIBILITY_SUITE := cts vts sts
-LOCAL_CTS_TEST_PACKAGE := android.security.cts
+LOCAL_COMPATIBILITY_SUITE := cts vts general-tests
 
-LOCAL_ARM_MODE := arm
-LOCAL_CFLAGS += -Wall -Werror
-LOCAL_LDFLAGS += -fPIE -pie
-LOCAL_LDFLAGS += -rdynamic
-include $(BUILD_CTS_EXECUTABLE)
+include $(BUILD_CTS_PACKAGE)

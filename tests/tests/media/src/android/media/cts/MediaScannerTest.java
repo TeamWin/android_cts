@@ -32,6 +32,7 @@ import android.media.MediaScannerConnection;
 import android.media.MediaScannerConnection.MediaScannerConnectionClient;
 import android.mtp.MtpConstants;
 import android.net.Uri;
+import android.platform.test.annotations.AppModeFull;
 import android.support.test.filters.SmallTest;
 import android.platform.test.annotations.RequiresDevice;
 import android.os.Bundle;
@@ -50,6 +51,7 @@ import java.io.IOException;
 
 @SmallTest
 @RequiresDevice
+@AppModeFull(reason = "TODO: evaluate and port to instant")
 public class MediaScannerTest extends AndroidTestCase {
 
     private static final String MEDIA_TYPE = "audio/mpeg";

@@ -46,16 +46,17 @@ public class RetryRule implements TestRule {
 
     @Override
     public Statement apply(Statement base, Description description) {
-        if (mMaxAttempts <= 1) {
-            Log.v(TAG, "Executing " + description.getDisplayName()
-                    + " right away because mMaxAttempts is " + mMaxAttempts);
-            return base;
-        }
-
         return new Statement() {
 
             @Override
             public void evaluate() throws Throwable {
+                if (mMaxAttempts <= 1) {
+                    Log.v(TAG, "Executing " + description.getDisplayName()
+                            + " right away because mMaxAttempts is " + mMaxAttempts);
+                    base.evaluate();
+                    return;
+                }
+
                 final String name = description.getDisplayName();
                 Throwable caught = null;
                 for (int i = 1; i <= mMaxAttempts; i++) {

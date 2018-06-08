@@ -31,6 +31,7 @@ import android.media.MediaPlayer;
 import android.media.VolumeShaper;
 import android.os.Parcel;
 import android.os.PowerManager;
+import android.platform.test.annotations.AppModeFull;
 import android.support.test.filters.FlakyTest;
 import android.support.test.filters.LargeTest;
 import android.support.test.filters.MediumTest;
@@ -51,6 +52,7 @@ import java.util.Arrays;
  *
  * adb logcat | grep VolumeShaperTest
  */
+@AppModeFull(reason = "TODO: evaluate and port to instant")
 public class VolumeShaperTest extends CtsAndroidTestCase {
     private static final String TAG = "VolumeShaperTest";
 

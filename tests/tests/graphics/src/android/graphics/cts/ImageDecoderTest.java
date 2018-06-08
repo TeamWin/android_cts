@@ -24,6 +24,7 @@ import static org.junit.Assert.assertSame;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
+import android.app.ActivityManager;
 import android.content.ContentResolver;
 import android.content.Context;
 import android.content.res.AssetManager;
@@ -1723,8 +1724,15 @@ public class ImageDecoderTest {
                         }
                     }
                 } else {
-                    // Not decoding to HARDWARE, so we can save RAM in either case.
-                    assertTrue(byteCount < normalByteCount);
+                    // Not decoding to HARDWARE, but |normal| was. Again, if basi6a16
+                    // was decoded to 8888, which we can detect by looking at the color
+                    // space, no savings are possible.
+                    if (resId == R.raw.basi6a16 && !normal.getColorSpace().equals(
+                                ColorSpace.get(ColorSpace.Named.LINEAR_EXTENDED_SRGB))) {
+                        assertEquals(normalByteCount, byteCount);
+                    } else {
+                        assertTrue(byteCount < normalByteCount);
+                    }
                 }
             }
         }
@@ -2209,6 +2217,18 @@ public class ImageDecoderTest {
 
     @Test
     public void testWarpedDng() {
+        Context context = InstrumentationRegistry.getTargetContext();
+        ActivityManager activityManager = (ActivityManager) context
+                .getSystemService(Context.ACTIVITY_SERVICE);
+        ActivityManager.MemoryInfo info = new ActivityManager.MemoryInfo();
+        activityManager.getMemoryInfo(info);
+
+        // Decoding this image requires a lot of memory. Only attempt if the
+        // device has a total memory of at least 2 Gigs.
+        if (info.totalMem < 2 * 1024 * 1024 * 1024) {
+            return;
+        }
+
         String name = "b78120086.dng";
         ImageDecoder.Source src = ImageDecoder.createSource(mRes.getAssets(), name);
         try {

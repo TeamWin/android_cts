@@ -39,6 +39,7 @@ import android.os.Handler;
 import android.os.Looper;
 import android.os.Parcel;
 import android.os.Process;
+import android.platform.test.annotations.AppModeFull;
 import android.test.AndroidTestCase;
 import android.view.KeyEvent;
 
@@ -47,6 +48,7 @@ import java.util.List;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 
+@AppModeFull(reason = "TODO: evaluate and port to instant")
 public class MediaSessionTest extends AndroidTestCase {
     // The maximum time to wait for an operation that is expected to succeed.
     private static final long TIME_OUT_MS = 3000L;

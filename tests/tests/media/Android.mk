@@ -71,6 +71,7 @@ LOCAL_JNI_SHARED_LIBRARIES := \
 # do not compress VP9 video files
 LOCAL_AAPT_FLAGS := -0 .vp9
 LOCAL_AAPT_FLAGS += -0 .ts
+LOCAL_AAPT_FLAGS += -0 .heic
 
 LOCAL_SRC_FILES := $(call all-java-files-under, src)
 
@@ -86,7 +87,7 @@ LOCAL_JAVA_LIBRARIES += \
     android.test.runner.stubs
 
 # Tag this module as a cts test artifact
-LOCAL_COMPATIBILITY_SUITE := cts vts general-tests
+LOCAL_COMPATIBILITY_SUITE := cts vts general-tests cts_instant
 
 include $(BUILD_CTS_PACKAGE)
 

@@ -28,6 +28,7 @@ import android.media.MediaCodecInfo.CodecProfileLevel;
 import android.media.MediaCodecList;
 import android.media.MediaExtractor;
 import android.media.MediaFormat;
+import android.platform.test.annotations.AppModeFull;
 import android.util.Log;
 import android.view.Surface;
 
@@ -46,6 +47,7 @@ import java.util.Locale;
 import java.util.Vector;
 import java.util.zip.CRC32;
 
+@AppModeFull
 public class AdaptivePlaybackTest extends MediaPlayerTestBase {
     private static final String TAG = "AdaptivePlaybackTest";
     private boolean sanity = false;

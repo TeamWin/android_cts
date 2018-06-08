@@ -21,6 +21,7 @@ import static junit.framework.Assert.assertEquals;
 import android.content.Context;
 import android.media.SessionToken2;
 import android.os.Process;
+import android.platform.test.annotations.AppModeFull;
 import android.support.test.filters.SmallTest;
 import android.support.test.runner.AndroidJUnit4;
 import android.support.test.InstrumentationRegistry;
@@ -36,6 +37,7 @@ import org.junit.runner.RunWith;
 @RunWith(AndroidJUnit4.class)
 @SmallTest
 @Ignore
+@AppModeFull(reason = "TODO: evaluate and port to instant")
 public class SessionToken2Test {
     private Context mContext;
 

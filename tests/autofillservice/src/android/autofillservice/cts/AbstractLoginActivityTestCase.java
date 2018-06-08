@@ -19,28 +19,25 @@ package android.autofillservice.cts;
 import android.view.View;
 import android.view.accessibility.AccessibilityEvent;
 
-import org.junit.Before;
-import org.junit.Rule;
-
 import java.util.concurrent.TimeoutException;
 
 /**
  * Base class for test cases using {@link LoginActivity}.
  */
-abstract class AbstractLoginActivityTestCase extends AutoFillServiceTestCase {
-    @Rule
-    public final AutofillActivityTestRule<LoginActivity> mActivityRule =
-            new AutofillActivityTestRule<LoginActivity>(LoginActivity.class);
-
-    @Rule
-    public final AutofillActivityTestRule<CheckoutActivity> mCheckoutActivityRule =
-            new AutofillActivityTestRule<CheckoutActivity>(CheckoutActivity.class, false);
+abstract class AbstractLoginActivityTestCase
+        extends AutoFillServiceTestCase.AutoActivityLaunch<LoginActivity> {
 
     protected LoginActivity mActivity;
 
-    @Before
-    public void setActivity() {
-        mActivity = mActivityRule.getActivity();
+    @Override
+    protected AutofillActivityTestRule<LoginActivity> getActivityRule() {
+        return new AutofillActivityTestRule<LoginActivity>(
+                LoginActivity.class) {
+            @Override
+            protected void afterActivityLaunched() {
+                mActivity = getActivity();
+            }
+        };
     }
 
     /**
@@ -72,5 +69,4 @@ abstract class AbstractLoginActivityTestCase extends AutoFillServiceTestCase {
     protected void requestFocusOnPassword() throws TimeoutException {
         mUiBot.waitForWindowChange(() -> mActivity.onPassword(View::requestFocus));
     }
-
 }

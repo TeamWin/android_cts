@@ -21,10 +21,8 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.net.wifi.ScanResult;
-import android.net.wifi.WifiInfo;
-import android.telephony.TelephonyManager;
 import android.net.wifi.WifiManager;
-import android.test.AndroidTestCase;
+import android.platform.test.annotations.AppModeFull;
 import android.util.Log;
 
 import java.io.IOException;
@@ -63,6 +61,7 @@ public class EmergencyCallWifiTest extends GnssTestCase {
         mWifiScanReceiver = new WifiScanReceiver();
     }
 
+    @AppModeFull(reason = "Requires registering a broadcast receiver")
     public void testWifiScan() throws Exception {
         mContext.registerReceiver(mWifiScanReceiver, new IntentFilter(
                 WifiManager.SCAN_RESULTS_AVAILABLE_ACTION));

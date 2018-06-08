@@ -52,8 +52,6 @@ import android.widget.ArrayAdapter;
 import android.widget.RemoteViews;
 import android.widget.Spinner;
 
-import org.junit.Before;
-import org.junit.Rule;
 import org.junit.Test;
 
 import java.util.Arrays;
@@ -62,17 +60,19 @@ import java.util.regex.Pattern;
 /**
  * Test case for an activity containing non-TextField views.
  */
-public class CheckoutActivityTest extends AutoFillServiceTestCase {
-
-    @Rule
-    public final AutofillActivityTestRule<CheckoutActivity> mActivityRule =
-        new AutofillActivityTestRule<CheckoutActivity>(CheckoutActivity.class);
+public class CheckoutActivityTest
+        extends AutoFillServiceTestCase.AutoActivityLaunch<CheckoutActivity> {
 
     private CheckoutActivity mActivity;
 
-    @Before
-    public void setActivity() {
-        mActivity = mActivityRule.getActivity();
+    @Override
+    protected AutofillActivityTestRule<CheckoutActivity> getActivityRule() {
+        return new AutofillActivityTestRule<CheckoutActivity>(CheckoutActivity.class) {
+            @Override
+            protected void afterActivityLaunched() {
+                mActivity = getActivity();
+            }
+        };
     }
 
     @Test

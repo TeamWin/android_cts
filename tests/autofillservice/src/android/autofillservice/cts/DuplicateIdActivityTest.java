@@ -30,29 +30,26 @@ import android.view.autofill.AutofillId;
 
 import org.junit.After;
 import org.junit.Before;
-import org.junit.Rule;
 import org.junit.Test;
 
-public class DuplicateIdActivityTest extends AutoFillServiceTestCase {
-    private static final String LOG_TAG = DuplicateIdActivityTest.class.getSimpleName();
-    @Rule
-    public final AutofillActivityTestRule<DuplicateIdActivity> mActivityRule = new AutofillActivityTestRule<>(
-            DuplicateIdActivity.class);
+public class DuplicateIdActivityTest
+        extends AutoFillServiceTestCase.AutoActivityLaunch<DuplicateIdActivity> {
 
-    private DuplicateIdActivity mActivity;
+    private static final String TAG = "DuplicateIdActivityTest";
+
+    @Override
+    protected AutofillActivityTestRule<DuplicateIdActivity> getActivityRule() {
+        return new AutofillActivityTestRule<DuplicateIdActivity>(DuplicateIdActivity.class);
+    }
 
     @Before
     public void setup() throws Exception {
         Helper.disableAutoRotation(mUiBot);
         mUiBot.setScreenOrientation(0);
-
-        mActivity = mActivityRule.getActivity();
     }
 
     @After
     public void teardown() {
-        mActivity.finish();
-
         Helper.allowAutoRotation();
     }
 
@@ -97,8 +94,8 @@ public class DuplicateIdActivityTest extends AutoFillServiceTestCase {
         AutofillId id1 = view1.getAutofillId();
         AutofillId id2 = view2.getAutofillId();
 
-        Log.i(LOG_TAG, "view1=" + id1);
-        Log.i(LOG_TAG, "view2=" + id2);
+        Log.v(TAG, "view1=" + id1);
+        Log.v(TAG, "view2=" + id2);
 
         // Both checkboxes use the same id
         assertThat(view1.getId()).isEqualTo(view2.getId());
@@ -128,8 +125,8 @@ public class DuplicateIdActivityTest extends AutoFillServiceTestCase {
         AutofillId recreatedId1 = views[0].getAutofillId();
         AutofillId recreatedId2 = views[1].getAutofillId();
 
-        Log.i(LOG_TAG, "restored view1=" + recreatedId1);
-        Log.i(LOG_TAG, "restored view2=" + recreatedId2);
+        Log.v(TAG, "restored view1=" + recreatedId1);
+        Log.v(TAG, "restored view2=" + recreatedId2);
 
         // For the restoring logic the two views are the same. Hence it might happen that the first
         // view is restored with the id of the second view or the other way round.

@@ -32,7 +32,7 @@ LOCAL_SDK_VERSION := current
 
 LOCAL_MULTILIB := both
 
-LOCAL_COMPATIBILITY_SUITE := cts vts general-tests
+LOCAL_COMPATIBILITY_SUITE := cts vts general-tests cts_instant
 
 include $(BUILD_CTS_SUPPORT_PACKAGE)
 

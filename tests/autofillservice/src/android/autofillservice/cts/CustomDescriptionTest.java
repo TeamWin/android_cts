@@ -40,25 +40,13 @@ import android.widget.RemoteViews;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 
-import org.junit.Before;
-import org.junit.Rule;
 import org.junit.Test;
 
 import java.util.function.BiFunction;
 import java.util.regex.Pattern;
 
 @AppModeFull // Service-specific test
-public class CustomDescriptionTest extends AutoFillServiceTestCase {
-    @Rule
-    public final AutofillActivityTestRule<LoginActivity> mActivityRule =
-            new AutofillActivityTestRule<>(LoginActivity.class);
-
-    private LoginActivity mActivity;
-
-    @Before
-    public void setActivity() {
-        mActivity = mActivityRule.getActivity();
-    }
+public class CustomDescriptionTest extends AbstractLoginActivityTestCase {
 
     /**
      * Base test

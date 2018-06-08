@@ -33,6 +33,8 @@ import android.graphics.SurfaceTexture;
 import android.media.MediaCodec;
 import android.media.MediaCodecInfo;
 import android.media.MediaCodecList;
+import android.media.MediaDrm;
+import android.media.MediaDrm.MediaDrmStateException;
 import android.media.MediaExtractor;
 import android.media.MediaFormat;
 import android.media.MediaMetadataRetriever;
@@ -54,12 +56,10 @@ import java.io.InputStream;
 import java.net.URL;
 import java.nio.ByteBuffer;
 import java.io.FileOutputStream;
-import java.io.OutputStream;
-import java.net.Socket;
-import java.net.ServerSocket;
 import java.io.File;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.UUID;
 import java.util.concurrent.locks.Condition;
 import java.util.concurrent.locks.ReentrantLock;
 
@@ -454,8 +454,19 @@ public class StagefrightTest extends InstrumentationTestCase {
     }
 
     @SecurityTest
+    public void testBug_33298089() throws Exception {
+        int[] frameSizes = {3247, 430, 221, 2305};
+        doStagefrightTestRawBlob(R.raw.bug_33298089_avc, "video/avc", 32, 64, frameSizes);
+    }
+
+    @SecurityTest
     public void testStagefright_cve_2017_0599() throws Exception {
         doStagefrightTest(R.raw.cve_2017_0599);
+    }
+
+    @SecurityTest
+    public void testStagefright_bug_36492741() throws Exception {
+        doStagefrightTest(R.raw.bug_36492741);
     }
 
     @SecurityTest
@@ -500,6 +511,11 @@ public class StagefrightTest extends InstrumentationTestCase {
     }
 
     @SecurityTest
+    public void testBug_36993291() throws Exception {
+        doStagefrightTestRawBlob(R.raw.bug_36993291_avc, "video/avc", 320, 240);
+    }
+
+    @SecurityTest
     public void testStagefright_bug_33818508() throws Exception {
         doStagefrightTest(R.raw.bug_33818508);
     }
@@ -525,6 +541,11 @@ public class StagefrightTest extends InstrumentationTestCase {
     @SecurityTest
     public void testStagefright_bug_62673179() throws Exception {
         doStagefrightTest(R.raw.bug_62673179_ts, (4 * 60 * 1000));
+    }
+
+    @SecurityTest
+    public void testStagefright_bug_69269702() throws Exception {
+        doStagefrightTest(R.raw.bug_69269702);
     }
 
     @SecurityTest
@@ -628,8 +649,46 @@ public class StagefrightTest extends InstrumentationTestCase {
     }
 
     @SecurityTest
+    public void testStagefright_bug_37710346() throws Exception {
+        UUID CLEARKEY_SCHEME_UUID = new UUID(0x1077efecc0b24d02L, 0xace33c1e52e2fb4bL);
+
+        String drmInitString = "0000003470737368" +
+                               "01000000" +
+                               "1077efecc0b24d02" +
+                               "ace33c1e52e2fb4b" +
+                               "10000001" +
+                               "60061e017e477e87" +
+                               "7e57d00d1ed00d1e" +
+                               "00000000";
+        int len = drmInitString.length();
+        byte[] drmInitData = new byte[len / 2];
+        for (int i = 0; i < len; i += 2) {
+            drmInitData[i / 2] = (byte) ((Character.digit(drmInitString.charAt(i), 16) << 4) +
+                Character.digit(drmInitString.charAt(i + 1), 16));
+        }
+
+        try {
+            MediaDrm drm = new MediaDrm(CLEARKEY_SCHEME_UUID);
+            byte[] sessionId;
+            String initDataType = "video/mp4";
+
+            sessionId = drm.openSession();
+            MediaDrm.KeyRequest drmRequest = drm.getKeyRequest(sessionId, drmInitData,
+                initDataType, MediaDrm.KEY_TYPE_STREAMING, null);
+        } catch (Exception e) {
+            if (!(e instanceof MediaDrmStateException))
+                fail("media drm server died");
+        }
+    }
+
+    @SecurityTest
     public void testStagefright_cve_2015_3873_b_23248776() throws Exception {
         doStagefrightTest(R.raw.cve_2015_3873_b_23248776);
+    }
+
+    @SecurityTest
+    public void testStagefright_bug_35472997() throws Exception {
+        doStagefrightTest(R.raw.bug_35472997);
     }
 
     @SecurityTest
@@ -732,83 +791,13 @@ public class StagefrightTest extends InstrumentationTestCase {
      ***********************************************************/
 
     @SecurityTest
-    public void testStagefright_cve_2017_13279() throws Exception {
-      Thread server = new Thread() {
-        @Override
-        public void run(){
-          try (ServerSocket serverSocket = new ServerSocket(8080);
-            Socket conn = serverSocket.accept()){
-              OutputStream stream = conn.getOutputStream();
-              byte http[] = ("HTTP/1.0 200 OK\r\nContent-Type: application/x-mpegURL\r\n\r\n"
-                           + "#EXTM3U\n#EXT-X-STREAM-INF:\n").getBytes();
-              stream.write(http);
-              while(!conn.isClosed())
-                stream.write(("a\na\na\na\na\na\na\na\na\na\na\na\na\na\na\na\na\na\na\na\na\n"
-                    + "a\na\na\na\na\na\na\na\na\na\na\na\na\na\na\na\na\na\na\na\na\na\na\n"
-                    + "a\na\na\na\na\na\na\na\na\na\na\na\na\na\na\na\na\na\na\na\na\na\na\n"
-                    + "a\na\na\na\na\na\na\na\na\na\na\na\na\na\na\na\na\na\na\na\na\na\na\n"
-                    + "a\na\na\na\na\na\na\na\na\na\na\na\na\na\na\na\na\na\na\na\na\na\na\n"
-                    + "a\na\na\na\na\na\na\na\na\na\na\na\na\na\na\na\na\na\na\na\na\na\na\n"
-                    + "a\na\na\na\na\na\na\na\na\na\na\na\na\na\na\na\na\na\na\na\na\na\na\n"
-                    + "a\na\na\na\na\na\na\na\na\na\na\na\na\na\na\na\na\na\na\na\na\na\na\n"
-                    + "a\na\na\na\na\na\na\na\na\na\na\na\na\na\na\na\na\na\na\na\na\na\na\n"
-                    + "a\na\na\na\na\na\na\na\na\na\na\na\na\na\na\na\na\na\na\na\na\na\na\n"
-                    + "a\na\na\na\na\na\na\na\na\na\na\na\na\na\na\na\na\na\na\na\na\na\na\n"
-                    + "a\na\na\na\na\na\na\na\na\na\na\na\na\na\na\na\na\na\na\na\na\na\na\n"
-                    + "a\na\na\na\na\na\na\na\na\na\na\na\na\na\na\na\na\na\na\na\na\na\na\n"
-                    + "a\na\na\na\na\na\na\na\na\na\na\na\na\na\na\na\na\na\na\na\na\na\na\n"
-                    + "a\na\na\na\na\na\na\na\na\na\na\na\na\na\na\na\na\na\na\na\na\na\na\n"
-                    + "a\na\na\na\na\na\na\na\na\na\na\na\na\na\na\na\na\na\na\na\na\na\na\n"
-                    + "a\na\na\na\na\na\na\na\na\na\na\na\na\na\na\na\na\na\na\na\na\na\na\n"
-                    + "a\na\na\na\na\na\na\na\na\na\na\na\na\na\na\na\na\na\na\na\na\na\na\n"
-                    + "a\na\na\na\na\na\na\na\na\na\na\na\na\na\na\na\na\na\na\na\na\na\na\n"
-                    + "a\na\na\na\na\na\na\na\na\na\na\na\na\na\na\na\na\na\na\na\na\na\na\n"
-                    + "a\na\na\na\na\na\na\na\na\na\na\na\na\na\na\na\na\na\na\na\na\na\na\n"
-                    + "a\na\na\na\na\na\na\na\na\na\na\na\na\na\na\na\na\na\na\na\na\na\na\n"
-                    + "a\na\na\na\na\na\na\na\n").getBytes());
-            }
-          catch(IOException e){
-          }
-        }
-      };
-      server.start();
-      String uri = "http://127.0.0.1:8080/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
-                 + "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa/"
-                 + "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa.m3u8";
-      final MediaPlayerCrashListener mpcl = new MediaPlayerCrashListener();
+    public void testStagefright_cve_2017_0474() throws Exception {
+        doStagefrightTest(R.raw.cve_2017_0474, 120000);
+    }
 
-      LooperThread t = new LooperThread(new Runnable() {
-          @Override
-          public void run() {
-
-              MediaPlayer mp = new MediaPlayer();
-              mp.setOnErrorListener(mpcl);
-              mp.setOnPreparedListener(mpcl);
-              mp.setOnCompletionListener(mpcl);
-              Surface surface = getDummySurface();
-              mp.setSurface(surface);
-              AssetFileDescriptor fd = null;
-              try {
-                mp.setDataSource(uri);
-                mp.prepareAsync();
-              } catch (IOException e) {
-                Log.e(TAG, e.toString());
-              } finally {
-                  closeQuietly(fd);
-              }
-
-              Looper.loop();
-              mp.release();
-          }
-      });
-      t.start();
-      Thread.sleep(60000); // Poc takes a while to crash mediaserver, waitForError
-                           // doesn't wait long enough
-      assertFalse("Device *IS* vulnerable to CVE-2017-13279",
-                  mpcl.waitForError() == MediaPlayer.MEDIA_ERROR_SERVER_DIED);
-      t.stopLooper();
-      t.join(); // wait for thread to exit so we're sure the player was released
-      server.join();
+    @SecurityTest
+    public void testStagefright_cve_2017_0765() throws Exception {
+        doStagefrightTest(R.raw.cve_2017_0765);
     }
 
     @SecurityTest

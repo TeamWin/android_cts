@@ -19,9 +19,10 @@ package android.autofillservice.cts;
 import static com.google.common.truth.Truth.assertThat;
 
 import static org.mockito.Mockito.doThrow;
-import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.testng.Assert.assertThrows;
+import static org.testng.Assert.expectThrows;
 
 import android.platform.test.annotations.AppModeFull;
 
@@ -83,9 +84,11 @@ public class RetryRuleTest {
     public void testPassOnRetryableExceptionWithTimeout() throws Throwable {
         final Timeout timeout = new Timeout("YOUR TIME IS GONE", 1, 2, 10);
         final RetryableException exception = new RetryableException(timeout, "Y U NO?");
+
         final RetryRule rule = new RetryRule(1);
         rule.apply(new RetryableStatement<RetryableException>(1, exception), mDescription)
                 .evaluate();
+
         // Assert timeout was increased
         assertThat(timeout.ms()).isEqualTo(2);
     }
@@ -93,23 +96,21 @@ public class RetryRuleTest {
     @Test
     public void testFailOnRetryableException() throws Throwable {
         final RetryRule rule = new RetryRule(1);
-        try {
-            rule.apply(new RetryableStatement<RetryableException>(2, sRetryableException),
-                    mDescription).evaluate();
-            throw new AssertionError("2ND CALL, Y U NO FAIL?");
-        } catch (RetryableException e) {
-            assertThat(e).isSameAs(sRetryableException);
-        }
+
+        final RetryableException actualException = expectThrows(RetryableException.class,
+                () -> rule.apply(new RetryableStatement<RetryableException>(2, sRetryableException),
+                        mDescription).evaluate());
+
+        assertThat(actualException).isSameAs(sRetryableException);
     }
 
     @Test
     public void testPassWhenDisabledAndStatementPass() throws Throwable {
         final RetryRule rule = new RetryRule(0);
 
-        final Statement actualStatement = rule.apply(mMockStatement, mDescription);
+        rule.apply(mMockStatement, mDescription).evaluate();
 
-        assertThat(actualStatement).isSameAs(mMockStatement);
-        verify(mMockStatement, never()).evaluate();
+        verify(mMockStatement, times(1)).evaluate();
     }
 
     @Test
@@ -118,10 +119,11 @@ public class RetryRuleTest {
         final RetryRule rule = new RetryRule(0);
         doThrow(exception).when(mMockStatement).evaluate();
 
-        final Statement actualStatement = rule.apply(mMockStatement, mDescription);
+        final RetryableException actualException = expectThrows(RetryableException.class,
+                () -> rule.apply(mMockStatement, mDescription).evaluate());
 
-        assertThat(actualStatement).isSameAs(mMockStatement);
-        verify(mMockStatement, never()).evaluate();
+        assertThat(actualException).isSameAs(exception);
+        verify(mMockStatement, times(1)).evaluate();
     }
 
     @Test
@@ -130,9 +132,10 @@ public class RetryRuleTest {
         final RetryRule rule = new RetryRule(0);
         doThrow(exception).when(mMockStatement).evaluate();
 
-        final Statement actualStatement = rule.apply(mMockStatement, mDescription);
+        final RuntimeException actualException = expectThrows(RuntimeException.class,
+                () -> rule.apply(mMockStatement, mDescription).evaluate());
 
-        assertThat(actualStatement).isSameAs(mMockStatement);
-        verify(mMockStatement, never()).evaluate();
+        assertThat(actualException).isSameAs(exception);
+        verify(mMockStatement, times(1)).evaluate();
     }
 }

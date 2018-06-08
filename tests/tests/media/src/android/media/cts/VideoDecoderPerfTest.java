@@ -25,6 +25,7 @@ import android.media.MediaCodec;
 import android.media.MediaCodecInfo.VideoCapabilities;
 import android.media.MediaExtractor;
 import android.media.MediaFormat;
+import android.platform.test.annotations.AppModeFull;
 import android.util.Log;
 import android.util.Pair;
 import android.view.Surface;
@@ -39,6 +40,7 @@ import java.nio.ByteBuffer;
 import java.util.Arrays;
 import java.util.LinkedList;
 
+@AppModeFull(reason = "TODO: evaluate and port to instant")
 public class VideoDecoderPerfTest extends MediaPlayerTestBase {
     private static final String TAG = "VideoDecoderPerfTest";
     private static final String REPORT_LOG_NAME = "CtsMediaTestCases";
