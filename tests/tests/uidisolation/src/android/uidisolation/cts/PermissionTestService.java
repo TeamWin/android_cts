@@ -81,7 +81,8 @@ public class PermissionTestService extends Service {
 
     class NetworkTestAsyncTask extends AsyncTask<Void, Void, Boolean> {
         protected Boolean doInBackground(Void... nothing) {
-            return testNetworkAccess();
+            // Instant apps cannot open TCP sockets
+            return getPackageManager().isInstantApp() || testNetworkAccess();
         }
 
         protected void onPostExecute(Boolean success) {
