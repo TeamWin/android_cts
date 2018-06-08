@@ -31,6 +31,7 @@ import android.telecom.ConnectionService;
 import android.telecom.InCallService;
 import android.telecom.TelecomManager;
 import android.telecom.VideoProfile;
+import android.telephony.TelephonyManager;
 
 import java.util.List;
 
@@ -572,6 +573,11 @@ public class ExtendedInCallServiceTest extends BaseTelecomTestWithMockServices {
     public void testOnCannedTextResponsesLoaded() {
         if (!mShouldTestTelecom) {
             return;
+        }
+
+        TelephonyManager tm = (TelephonyManager) mContext.getSystemService(Context.TELEPHONY_SERVICE);
+        if (tm != null && !tm.isSmsCapable()) {
+            return ;
         }
 
         addAndVerifyNewIncomingCall(createTestNumber(), null);
