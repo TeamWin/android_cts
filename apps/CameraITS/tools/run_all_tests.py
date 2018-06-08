@@ -13,8 +13,10 @@
 # limitations under the License.
 
 import copy
+import math
 import os
 import os.path
+import re
 import tempfile
 import subprocess
 import time
@@ -25,9 +27,25 @@ import its.device
 from its.device import ItsSession
 
 CHART_DELAY = 1  # seconds
+CHART_DISTANCE = 30.0  # cm
 FACING_EXTERNAL = 2
 NUM_TRYS = 2
 SKIP_RET_CODE = 101  # note this must be same as tests/scene*/test_*
+
+def calc_camera_fov():
+    """Determine the camera field of view from internal params."""
+    with ItsSession() as cam:
+        props = cam.get_camera_properties()
+    try:
+        focal_l = props['android.lens.info.availableFocalLengths'][0]
+        sensor_size = props['android.sensor.info.physicalSize']
+        diag = math.sqrt(sensor_size['height'] ** 2 +
+                         sensor_size['width'] ** 2)
+        fov = str(round(2 * math.degrees(math.atan(diag / (2 * focal_l))), 2))
+    except ValueError:
+        fov = str(0)
+    print 'Calculated FoV: %s' % fov
+    return fov
 
 
 def evaluate_socket_failure(err_file_path):
@@ -79,6 +97,7 @@ def main():
         tmp_dir: location of temp directory for output files
         skip_scene_validation: force skip scene validation. Used when test scene
                  is setup up front and don't require tester validation.
+        dist:    [Experimental] chart distance in cm.
     """
 
     # Not yet mandated tests
@@ -139,6 +158,8 @@ def main():
     rot_rig_id = None
     tmp_dir = None
     skip_scene_validation = False
+    chart_distance = CHART_DISTANCE
+
     for s in sys.argv[1:]:
         if s[:7] == "camera=" and len(s) > 7:
             camera_ids = s[7:].split(',')
@@ -155,6 +176,8 @@ def main():
             tmp_dir = s[8:]
         elif s == 'skip_scene_validation':
             skip_scene_validation = True
+        elif s[:5] == 'dist=' and len(s) > 5:
+            chart_distance = float(re.sub('cm', '', s[5:]))
 
     auto_scene_switch = chart_host_id is not None
     merge_result_switch = result_device_id is not None
@@ -183,7 +206,7 @@ def main():
                     break
 
         if not valid_scenes:
-            print "Unknown scene specifiied:", s
+            print 'Unknown scene specified:', s
             assert False
         scenes = temp_scenes
 
@@ -245,6 +268,7 @@ def main():
             assert wake_code == 0
 
     for camera_id in camera_ids:
+        camera_fov = calc_camera_fov()
         # Loop capturing images until user confirm test scene is correct
         camera_id_arg = "camera=" + camera_id
         print "Preparing to run ITS on camera", camera_id
@@ -280,9 +304,11 @@ def main():
                     if (not merge_result_switch or
                             (merge_result_switch and camera_ids[0] == '0')):
                         scene_arg = 'scene=' + scene
+                        chart_dist_arg = 'dist= ' + str(chart_distance)
+                        fov_arg = 'fov=' + camera_fov
                         cmd = ['python',
                                os.path.join(os.getcwd(), 'tools/load_scene.py'),
-                               scene_arg, screen_id_arg]
+                               scene_arg, chart_dist_arg, fov_arg, screen_id_arg]
                     else:
                         time.sleep(CHART_DELAY)
                 else:
