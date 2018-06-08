@@ -33,6 +33,7 @@ import android.media.MediaCodecInfo;
 import android.media.MediaCodecInfo.CodecCapabilities;
 import android.media.MediaExtractor;
 import android.media.MediaFormat;
+import android.platform.test.annotations.AppModeFull;
 import android.util.Log;
 import android.view.Surface;
 import android.net.Uri;
@@ -58,6 +59,7 @@ import java.util.regex.Pattern;
 
 import static android.media.MediaCodecInfo.CodecProfileLevel.*;
 
+@AppModeFull(reason = "There should be no instant apps specific behavior related to decoders")
 public class DecoderTest extends MediaPlayerTestBase {
     private static final String TAG = "DecoderTest";
 

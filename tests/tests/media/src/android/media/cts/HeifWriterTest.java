@@ -29,6 +29,7 @@ import android.os.Environment;
 import android.os.Handler;
 import android.os.HandlerThread;
 import android.os.Process;
+import android.platform.test.annotations.AppModeFull;
 import android.support.test.filters.LargeTest;
 import android.support.test.runner.AndroidJUnit4;
 import android.test.AndroidTestCase;
@@ -61,6 +62,7 @@ import java.io.InputStream;
 import java.io.OutputStream;
 import java.util.Arrays;
 
+@AppModeFull(reason = "Instant apps cannot access the SD card")
 public class HeifWriterTest extends AndroidTestCase {
     private static final String TAG = HeifWriterTest.class.getSimpleName();
     private static final boolean DEBUG = false;

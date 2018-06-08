@@ -30,6 +30,7 @@ import android.media.MediaRouter.RouteCategory;
 import android.media.MediaRouter.RouteInfo;
 import android.media.MediaRouter.UserRouteInfo;
 import android.media.RemoteControlClient;
+import android.platform.test.annotations.AppModeFull;
 import android.test.InstrumentationTestCase;
 
 import java.util.List;
@@ -38,6 +39,7 @@ import java.util.ArrayList;
 /**
  * Test {@link android.media.MediaRouter}.
  */
+@AppModeFull(reason = "TODO: evaluate and port to instant")
 public class MediaRouterTest extends InstrumentationTestCase {
 
     private static final int TEST_ROUTE_NAME_RESOURCE_ID = R.string.test_user_route_name;

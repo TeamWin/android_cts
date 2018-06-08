@@ -33,6 +33,7 @@ import android.media.SessionCommandGroup2;
 import android.media.SessionToken2;
 import android.media.session.MediaSessionManager;
 import android.media.session.MediaSessionManager.OnSessionTokensChangedListener;
+import android.platform.test.annotations.AppModeFull;
 import android.support.test.filters.SmallTest;
 import android.support.test.runner.AndroidJUnit4;
 
@@ -53,6 +54,7 @@ import java.util.concurrent.TimeUnit;
 @RunWith(AndroidJUnit4.class)
 @SmallTest
 @Ignore
+@AppModeFull(reason = "TODO: evaluate and port to instant")
 public class MediaSessionManager_MediaSession2Test extends MediaSession2TestBase {
     private static final String TAG = "MediaSessionManager_MediaSession2Test";
 

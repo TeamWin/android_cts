@@ -15,6 +15,7 @@
  */
 package android.media.cts;
 
+import android.platform.test.annotations.AppModeFull;
 import com.android.compatibility.common.util.SystemUtil;
 
 import android.content.Context;
@@ -38,6 +39,7 @@ import java.util.List;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 
+@AppModeFull(reason = "TODO: evaluate and port to instant")
 public class MediaSessionManagerTest extends InstrumentationTestCase {
     private static final String TAG = "MediaSessionManagerTest";
     private static final int TIMEOUT_MS = 3000;
