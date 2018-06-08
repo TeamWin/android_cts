@@ -25,6 +25,7 @@ import android.os.Bundle;
 import android.os.Looper;
 import android.os.PowerManager;
 import android.os.SystemClock;
+import android.platform.test.annotations.AppModeFull;
 import android.test.InstrumentationTestRunner;
 import android.util.Log;
 import android.webkit.cts.CtsTestServer;
@@ -41,6 +42,7 @@ import java.util.List;
 /**
  * Tests of MediaPlayer streaming capabilities.
  */
+@AppModeFull(reason = "TODO: evaluate and port to instant")
 public class StreamingMediaPlayerTest extends MediaPlayerTestBase {
     private static final String TAG = "StreamingMediaPlayerTest";
 

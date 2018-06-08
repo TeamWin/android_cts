@@ -25,10 +25,12 @@ import android.media.AudioManager;
 import android.media.Ringtone;
 import android.media.RingtoneManager;
 import android.net.Uri;
+import android.platform.test.annotations.AppModeFull;
 import android.provider.Settings;
 import android.test.InstrumentationTestCase;
 import android.util.Log;
 
+@AppModeFull(reason = "TODO: evaluate and port to instant")
 public class RingtoneTest extends InstrumentationTestCase {
     private static final String TAG = "RingtoneTest";
 

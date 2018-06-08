@@ -55,6 +55,7 @@ import android.media.SessionCommandGroup2;
 import android.net.Uri;
 import android.os.Bundle;
 import android.os.Process;
+import android.platform.test.annotations.AppModeFull;
 import android.support.test.filters.MediumTest;
 import android.support.test.runner.AndroidJUnit4;
 
@@ -74,6 +75,7 @@ import java.util.concurrent.TimeUnit;
 @RunWith(AndroidJUnit4.class)
 @MediumTest
 @Ignore
+@AppModeFull(reason = "TODO: evaluate and port to instant")
 public class MediaSession2_PermissionTest extends MediaSession2TestBase {
     private static final String SESSION_ID = "MediaSession2Test_permission";
 
