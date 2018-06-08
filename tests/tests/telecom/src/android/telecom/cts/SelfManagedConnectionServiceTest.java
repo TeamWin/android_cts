@@ -362,13 +362,13 @@ public class SelfManagedConnectionServiceTest extends BaseTelecomTestWithMockSer
                 return cas.getRoute() == secondRoute;
             }
         }, WAIT_FOR_STATE_CHANGE_TIMEOUT_MS);
-
-        // Call requestBluetoothAudio on a dummy device. This will be a noop since no devices are
-        // connected.
-        connection.requestBluetoothAudio(TestUtils.BLUETOOTH_DEVICE1);
+        if (TestUtils.HAS_BLUETOOTH) {
+            // Call requestBluetoothAudio on a dummy device. This will be a noop since no devices are
+            // connected.
+            connection.requestBluetoothAudio(TestUtils.BLUETOOTH_DEVICE1);
+        }
         setDisconnectedAndVerify(connection);
     }
-
     /**
      * Tests that Telecom will allow the incoming call while the number of self-managed call is not
      * exceed the limit.
