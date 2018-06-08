@@ -114,6 +114,7 @@ public class CallTest extends AndroidTestCase {
     }
 
     public void testCallAudioState() {
+        if (!TestUtils.HAS_BLUETOOTH) return;
         CallAudioState cas = new CallAudioState(false, CallAudioState.ROUTE_BLUETOOTH,
                 CallAudioState.ROUTE_BLUETOOTH + CallAudioState.ROUTE_SPEAKER
                         + CallAudioState.ROUTE_EARPIECE,

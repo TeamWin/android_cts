@@ -29,6 +29,7 @@ import android.os.Looper;
 import android.os.Parcel;
 import android.os.ParcelFileDescriptor;
 import android.os.SystemClock;
+import android.support.test.InstrumentationRegistry;
 import android.telecom.PhoneAccount;
 import android.telecom.PhoneAccountHandle;
 import android.telecom.TelecomManager;
@@ -54,7 +55,7 @@ public class TestUtils {
     static final long WAIT_FOR_STATE_CHANGE_TIMEOUT_CALLBACK = 50;
     static final long WAIT_FOR_PHONE_STATE_LISTENER_REGISTERED_TIMEOUT_S = 15;
     static final long WAIT_FOR_PHONE_STATE_LISTENER_CALLBACK_TIMEOUT_S = 15;
-
+    static final boolean HAS_BLUETOOTH = hasBluetoothFeature();
     static final BluetoothDevice BLUETOOTH_DEVICE1 = makeBluetoothDevice("00:00:00:00:00:01");
     static final BluetoothDevice BLUETOOTH_DEVICE2 = makeBluetoothDevice("00:00:00:00:00:02");
 
@@ -338,8 +339,12 @@ public class TestUtils {
             TestCase.fail("Failed to wait on handlers");
         }
     }
-
+    public static boolean hasBluetoothFeature() {
+        return InstrumentationRegistry.getContext().getPackageManager().
+                hasSystemFeature(PackageManager.FEATURE_BLUETOOTH);
+    }
     public static BluetoothDevice makeBluetoothDevice(String address) {
+        if (!HAS_BLUETOOTH) return null;
         Parcel p1 = Parcel.obtain();
         p1.writeString(address);
         p1.setDataPosition(0);
