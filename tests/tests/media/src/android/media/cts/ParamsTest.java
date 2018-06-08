@@ -22,6 +22,7 @@ import android.media.BufferingParams;
 import android.media.PlaybackParams;
 import android.media.SyncParams;
 import android.os.Parcel;
+import android.platform.test.annotations.AppModeFull;
 import android.test.AndroidTestCase;
 
 /**
@@ -29,6 +30,7 @@ import android.test.AndroidTestCase;
  *
  * In particular, check Params objects' behavior.
  */
+@AppModeFull(reason = "TODO: evaluate and port to instant")
 public class ParamsTest extends AndroidTestCase {
     private static final String TAG = "ParamsTest";
     private static final float FLOAT_TOLERANCE = .00001f;

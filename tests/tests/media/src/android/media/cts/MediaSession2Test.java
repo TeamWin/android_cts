@@ -48,6 +48,7 @@ import android.media.VolumeProvider2;
 import android.os.Bundle;
 import android.os.Process;
 import android.os.ResultReceiver;
+import android.platform.test.annotations.AppModeFull;
 import androidx.annotation.NonNull;
 import android.support.test.filters.SmallTest;
 import android.support.test.runner.AndroidJUnit4;
@@ -72,6 +73,7 @@ import java.util.concurrent.TimeUnit;
 @RunWith(AndroidJUnit4.class)
 @SmallTest
 @Ignore
+@AppModeFull(reason = "TODO: evaluate and port to instant")
 public class MediaSession2Test extends MediaSession2TestBase {
     private static final String TAG = "MediaSession2Test";
 

@@ -25,6 +25,7 @@ import android.media.AudioManager;
 import android.media.AudioTimestamp;
 import android.media.AudioTrack;
 import android.media.PlaybackParams;
+import android.platform.test.annotations.AppModeFull;
 import android.util.Log;
 
 import com.android.compatibility.common.util.CtsAndroidTestCase;
@@ -48,6 +49,7 @@ import java.nio.ShortBuffer;
 // Warns if not. This can happen if there is no Fast Mixer or if a FastTrack
 // is not available.
 
+@AppModeFull(reason = "The APIs would either work correctly or not at all for instant apps")
 public class AudioTrackLatencyTest extends CtsAndroidTestCase {
     private String TAG = "AudioTrackLatencyTest";
     private final static long NANOS_PER_MILLISECOND = 1000000L;
