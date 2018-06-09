@@ -31,7 +31,7 @@ public class VulkanPreTransformCtsActivity extends Activity {
         System.loadLibrary("ctsgraphics_jni");
     }
 
-    private static final String TAG = "vulkan";
+    private static final String TAG = VulkanPreTransformCtsActivity.class.getSimpleName();
 
     protected Surface mSurface;
 
