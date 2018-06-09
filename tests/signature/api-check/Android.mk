@@ -32,6 +32,7 @@ LOCAL_STATIC_JAVA_LIBRARIES := \
     cts-signature-common \
     repackaged-legacy-test \
     repackaged.android.test.runner \
+    compatibility-device-util
 
 include $(BUILD_STATIC_JAVA_LIBRARY)
 
