@@ -1247,7 +1247,7 @@ public class MediaPlayer2Test extends MediaPlayer2TestBase {
         assertEquals("MediaPlayer2 had error in clockRate " + ts1.getMediaClockRate(),
                 playbackRate, ts1.getMediaClockRate(), 0.001f);
         assertTrue("The nanoTime of Media timestamp should be taken when getTimestamp is called.",
-                nt1 <= ts1.getAnchorSytemNanoTime() && ts1.getAnchorSytemNanoTime() <= nt2);
+                nt1 <= ts1.getAnchorSystemNanoTime() && ts1.getAnchorSystemNanoTime() <= nt2);
 
         onPauseCalled.reset();
         mPlayer.pause();
