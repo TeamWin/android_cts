@@ -40,6 +40,7 @@ import org.junit.Ignore;
 import org.junit.Rule;
 import org.junit.Test;
 
+@AppModeFull(reason = "Flaky in instant mode")
 public class WebViewActivityTest extends AutoFillServiceTestCase {
 
     // TODO(b/64951517): WebView currently does not trigger the autofill callbacks when values are

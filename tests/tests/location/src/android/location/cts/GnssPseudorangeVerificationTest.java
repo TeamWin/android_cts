@@ -21,6 +21,7 @@ import android.location.GnssMeasurement;
 import android.location.GnssMeasurementsEvent;
 import android.location.GnssStatus;
 import android.location.Location;
+import android.platform.test.annotations.AppModeFull;
 import android.util.Log;
 import com.android.compatibility.common.util.CddTest;
 import java.util.ArrayList;
@@ -235,6 +236,7 @@ public class GnssPseudorangeVerificationTest extends GnssTestCase {
      * Location Manager.
      */
     @CddTest(requirement = "7.3.3")
+    @AppModeFull(reason = "Flaky in instant mode")
     public void testPseudoPosition() throws Exception {
         // Checks if Gnss hardware feature is present, skips test (pass) if not,
         // and hard asserts that Location/Gnss (Provider) is turned on if is Cts Verifier.
