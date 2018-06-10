@@ -234,6 +234,10 @@ public class MediaDrmClearkeyTest extends MediaPlayerTestBase {
     }
 
     private @NonNull MediaDrm startDrm(final byte[][] clearKeys, final String initDataType, final UUID drmSchemeUuid) {
+        if (!MediaDrm.isCryptoSchemeSupported(drmSchemeUuid)) {
+            throw new Error(ERR_MSG_CRYPTO_SCHEME_NOT_SUPPORTED);
+        }
+
         new Thread() {
             @Override
             public void run() {
@@ -365,10 +369,6 @@ public class MediaDrmClearkeyTest extends MediaPlayerTestBase {
         mSessionId = null;
         if (!scrambled) {
             drm = startDrm(clearKeys, initDataType, drmSchemeUuid);
-            if (!drm.isCryptoSchemeSupported(drmSchemeUuid)) {
-                stopDrm(drm);
-                throw new Error(ERR_MSG_CRYPTO_SCHEME_NOT_SUPPORTED);
-            }
             mSessionId = openSession(drm);
         }
 
