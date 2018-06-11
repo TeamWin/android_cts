@@ -22,6 +22,7 @@
         <option name="test-file-name" value="CtsFullBackupApp.apk" />
         <option name="test-file-name" value="CtsKeyValueBackupApp.apk" />
         <option name="test-file-name" value="CtsBackupTestCases.apk" />
+        <option name="test-file-name" value="CtsPermissionBackupApp.apk" />
     </target_preparer>
     <target_preparer class="android.cts.backup.BackupPreparer">
         <option name="enable-backup-if-needed" value="true" />
