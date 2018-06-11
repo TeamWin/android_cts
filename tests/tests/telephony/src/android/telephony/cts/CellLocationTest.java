@@ -29,7 +29,9 @@ import android.util.Log;
 
 import com.android.compatibility.common.util.ReadElf;
 import com.android.compatibility.common.util.TestThread;
+import com.android.compatibility.common.util.CddTest;
 
+@CddTest(requirement="7.4.1/C-1-2,C-2-1")
 public class CellLocationTest extends AndroidTestCase{
     private boolean mOnCellLocationChangedCalled;
     private final Object mLock = new Object();

@@ -45,6 +45,8 @@ import com.google.android.mms.pdu.PduPart;
 import com.google.android.mms.pdu.SendConf;
 import com.google.android.mms.pdu.SendReq;
 
+import com.android.compatibility.common.util.CddTest;
+
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
@@ -53,6 +55,7 @@ import java.util.Random;
 /**
  * Test sending MMS using {@link android.telephony.SmsManager}.
  */
+@CddTest(requirement="7.4.1/C-1-2,C-2-1")
 public class MmsTest extends AndroidTestCase {
     private static final String TAG = "MmsTest";
 

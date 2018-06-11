@@ -38,6 +38,8 @@ import android.test.InstrumentationTestCase;
 import android.text.TextUtils;
 import android.util.Log;
 
+import com.android.compatibility.common.util.CddTest;
+
 import java.io.BufferedReader;
 import java.io.FileInputStream;
 import java.io.IOException;
@@ -53,6 +55,7 @@ import java.util.List;
  *
  * Structured so tests can be reused to test {@link android.telephony.gsm.SmsManager}
  */
+@CddTest(requirement="7.4.1/C-1-2,C-2-1")
 public class SmsManagerTest extends InstrumentationTestCase {
 
     private static final String TAG = "SmsManagerTest";

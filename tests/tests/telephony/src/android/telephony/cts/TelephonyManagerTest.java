@@ -45,6 +45,7 @@ import android.text.TextUtils;
 import android.util.Log;
 
 import com.android.compatibility.common.util.TestThread;
+import com.android.compatibility.common.util.CddTest;
 
 import org.junit.After;
 import org.junit.Before;
@@ -53,6 +54,7 @@ import org.junit.runner.RunWith;
 
 import java.util.regex.Pattern;
 
+@CddTest(requirement="7.4.1/C-1-2,C-2-1")
 @RunWith(AndroidJUnit4.class)
 public class TelephonyManagerTest {
     private TelephonyManager mTelephonyManager;
