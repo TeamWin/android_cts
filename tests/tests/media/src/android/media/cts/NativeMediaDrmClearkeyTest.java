@@ -211,6 +211,10 @@ public class NativeMediaDrmClearkeyTest extends MediaPlayerTestBase {
             return;
         }
 
+        if (!isCryptoSchemeSupportedNative(uuidByteArray(drmSchemeUuid))) {
+            throw new Error("Crypto scheme is not supported.");
+        }
+
         IConnectionStatus connectionStatus = new ConnectionStatus(mContext);
         if (!connectionStatus.isAvailable()) {
             throw new Error("Network is not available, reason: " +
