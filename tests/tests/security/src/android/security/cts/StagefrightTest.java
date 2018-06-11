@@ -249,6 +249,11 @@ public class StagefrightTest extends InstrumentationTestCase {
         doStagefrightTest(R.raw.bug_25765591);
     }
 
+    @SecurityTest
+    public void testStagefright_bug_62673179() throws Exception {
+        doStagefrightTest(R.raw.bug_62673179_ts, (4 * 60 * 1000));
+    }
+
     public void testStagefright_cve_2015_3867() throws Exception {
         doStagefrightTest(R.raw.cve_2015_3867);
     }
@@ -372,9 +377,9 @@ public class StagefrightTest extends InstrumentationTestCase {
             @Override
             public void run() {
                 try {
-                    doStagefrightTest(rid);
+                  doStagefrightTest(rid);
                 } catch (Exception e) {
-                    //unhandled exception
+                  fail(e.toString());
                 }
             }
         }, timeout);
