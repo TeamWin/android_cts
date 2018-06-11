@@ -19,6 +19,7 @@ package android.inputmethodservice.cts.devicetest;
 import static android.inputmethodservice.cts.DeviceEvent.isFrom;
 import static android.inputmethodservice.cts.DeviceEvent.isNewerThan;
 import static android.inputmethodservice.cts.DeviceEvent.isType;
+import static android.inputmethodservice.cts.common.BusyWaitUtils.pollingCheck;
 import static android.inputmethodservice.cts.common.DeviceEventConstants.DeviceEventType
         .ON_BIND_INPUT;
 import static android.inputmethodservice.cts.common.DeviceEventConstants.DeviceEventType.ON_CREATE;
@@ -37,7 +38,6 @@ import static android.inputmethodservice.cts.common.ImeCommandConstants
         .COMMAND_SWITCH_TO_NEXT_INPUT;
 import static android.inputmethodservice.cts.common.ImeCommandConstants.EXTRA_ARG_STRING1;
 import static android.inputmethodservice.cts.common.ImeCommandConstants.EXTRA_COMMAND;
-import static android.inputmethodservice.cts.devicetest.BusyWaitUtils.pollingCheck;
 import static android.inputmethodservice.cts.devicetest.MoreCollectors.startingFrom;
 
 import android.inputmethodservice.cts.DeviceEvent;
@@ -191,7 +191,7 @@ public class InputMethodServiceDeviceTest {
         helper.findUiObject(EditTextAppConstants.EDIT_TEXT_RES_NAME).click();
 
         final String initialIme = helper.shell(ShellCommandUtils.getCurrentIme());
-        helper.shell(ShellCommandUtils.setCurrentIme(Ime2Constants.IME_ID));
+        helper.shell(ShellCommandUtils.setCurrentImeSync(Ime2Constants.IME_ID));
         pollingCheck(() -> helper.queryAllEvents()
                         .filter(isNewerThan(startActivityTime))
                         .anyMatch(isFrom(Ime2Constants.CLASS).and(isType(ON_START_INPUT))),
@@ -225,7 +225,7 @@ public class InputMethodServiceDeviceTest {
         final long imeForceStopTime = SystemClock.uptimeMillis();
         helper.shell(ShellCommandUtils.uninstallPackage(Ime1Constants.PACKAGE));
 
-        helper.shell(ShellCommandUtils.setCurrentIme(Ime2Constants.IME_ID));
+        helper.shell(ShellCommandUtils.setCurrentImeSync(Ime2Constants.IME_ID));
         helper.findUiObject(EditTextAppConstants.EDIT_TEXT_RES_NAME).click();
         pollingCheck(() -> helper.queryAllEvents()
                         .filter(isNewerThan(imeForceStopTime))
