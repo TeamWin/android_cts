@@ -22,6 +22,7 @@
     <uses-permission android:name="android.permission.MANAGE_ACTIVITY_STACKS" />
     <uses-permission android:name="android.permission.ACTIVITY_EMBEDDING" />
     <uses-permission android:name="android.permission.PACKAGE_USAGE_STATS" />
+    <uses-permission android:name="android.permission.WRITE_SECURE_SETTINGS"/>
 
     <application android:label="CtsWindowManagerDeviceTestCases">
         <uses-library android:name="android.test.runner"/>
@@ -35,8 +36,10 @@
         <activity android:name="android.server.wm.AlertWindowsAppOpsTestsActivity"/>
         <activity android:name="android.server.wm.DialogFrameTestActivity" />
         <activity android:name="android.server.wm.DisplayCutoutTests$TestActivity" />
+        <activity android:name="android.server.wm.LayoutTestsActivity"
+                  android:theme="@style/no_animation" />
         <activity android:name="android.server.wm.LocationOnScreenTests$TestActivity"
-            android:theme="@style/no_starting_window" />
+                  android:theme="@style/no_starting_window" />
         <activity android:name="android.server.wm.LocationInWindowTests$TestActivity" />
 
     </application>
