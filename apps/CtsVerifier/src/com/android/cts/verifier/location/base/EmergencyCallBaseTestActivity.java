@@ -57,11 +57,19 @@ public abstract class EmergencyCallBaseTestActivity extends GnssCtsTestActivity 
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
 
+        // skip current test if device doesn't support cellular
+        if (!EmergencyCallUtil.isPhoneDevice(this)) {
+          String skipInfo = getResources().getString(R.string.emergency_call_skip_info);
+          TestResult.setPassedResult(this, super.getClass().getName(), skipInfo);
+          Toast toast = Toast.makeText(getApplicationContext(), skipInfo, Toast.LENGTH_LONG);
+          toast.show();
+          this.finish();
+          return;
+        }
         // override the test info
         mTextView.setText(R.string.location_emergency_call_test_info);
         EmergencyCallUtil.setDefaultDialer(this, this.getPackageName());
         setPassFailButtonClickListeners();
-
     }
 
     @Override
@@ -74,15 +82,7 @@ public abstract class EmergencyCallBaseTestActivity extends GnssCtsTestActivity 
 
     @Override
     public void onClick(View target) {
-        // skip current test if device doesn't support cellular
-        if (!EmergencyCallUtil.isPhoneDevice(this)) {
-            String skipInfo = getResources().getString(R.string.emergency_call_skip_info);
-            TestResult.setPassedResult(this, super.getClass().getName(), skipInfo);
-            Toast toast = Toast.makeText(getApplicationContext(), skipInfo, Toast.LENGTH_LONG);
-            toast.show();
-            this.finish();
-            return;
-        }
+
         AlertDialog.Builder builder = new AlertDialog.Builder(this);
         final FrameLayout frameView = new FrameLayout(this);
         builder.setView(frameView);
