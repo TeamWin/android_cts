@@ -15,7 +15,8 @@
 -->
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
         package="com.android.cts.majorversion"
-        android:versionCodeMajor="0x000000ff" android:versionCode="0xffffffff">
+        android:versionCodeMajor="0x000000ff" android:versionCode="0xffffffff"
+        android:targetSandboxVersion="2">
 
     <application/>
 
