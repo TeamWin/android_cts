@@ -108,6 +108,7 @@
         <!--__________________-->
         <!-- Bulletin 2017-09 -->
         <!-- Please add tests solely from this bulletin below to avoid merge conflict -->
+        <option name="push" value="Bug-38195738->/data/local/tmp/Bug-38195738" />
 
         <!--__________________-->
         <!-- Bulletin 2017-10 -->
@@ -135,11 +136,6 @@
         <!-- Bulletin 2018-03 -->
         <!-- Please add tests solely from this bulletin below to avoid merge conflict -->
         <option name="push" value="CVE-2017-13253->/data/local/tmp/CVE-2017-13253" />
-
-
-
-
-
 
         <option name="append-bitness" value="true" />
     </target_preparer>
