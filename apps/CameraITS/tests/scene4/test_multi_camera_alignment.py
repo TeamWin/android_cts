@@ -28,8 +28,8 @@ import numpy as np
 ALIGN_TOL_PERCENT = 1
 CHART_DISTANCE_CM = 22  # cm
 CIRCLE_TOL_PERCENT = 10
+GYRO_REFERENCE = 1
 NAME = os.path.basename(__file__).split('.')[0]
-ROTATE_REF_MATRIX = np.array([0, 0, 0, 1])
 TRANS_REF_MATRIX = np.array([0, 0, 0])
 
 
@@ -75,6 +75,28 @@ def find_circle(gray, name):
     return circle
 
 
+def define_reference_camera(pose_reference, cam_reference):
+    """Determine the reference camera.
+
+    Args:
+        pose_reference: 0 for cameras, 1 for gyro
+        cam_reference:  dict with key of physical camera and value True/False
+    Returns:
+        i_ref:          physical id of reference camera
+        i_2nd:          physical id of secondary camera
+    """
+
+    if pose_reference == GYRO_REFERENCE:
+        print 'pose_reference is GYRO'
+        i_ref = list(cam_reference.keys())[0]  # pick first camera as ref
+        i_2nd = list(cam_reference.keys())[1]
+    else:
+        print 'pose_reference is CAMERA'
+        i_ref = (k for (k, v) in cam_reference.iteritems() if v).next()
+        i_2nd = (k for (k, v) in cam_reference.iteritems() if not v).next()
+    return i_ref, i_2nd
+
+
 def main():
     """Test the multi camera system parameters related to camera spacing."""
     chart_distance = CHART_DISTANCE_CM
@@ -92,6 +114,7 @@ def main():
                              its.caps.manual_sensor(props))
         debug = its.caps.debug_mode()
         avail_fls = props['android.lens.info.availableFocalLengths']
+        pose_reference = props['android.lens.poseReference']
 
         max_raw_size = its.objects.get_available_output_sizes('raw', props)[0]
         w, h = its.objects.get_available_output_sizes(
@@ -117,7 +140,7 @@ def main():
 
     size_raw = {}
     k = {}
-    reference = {}
+    cam_reference = {}
     rotation = {}
     trans = {}
     circle = {}
@@ -156,11 +179,10 @@ def main():
                 props_physical[i]['android.lens.poseTranslation'])
         print ' translation:', trans[i]
         assert len(trans[i]) == 3, 'poseTranslation has wrong # of params.'
-        if ((rotation[i] == ROTATE_REF_MATRIX).all() and
-                    (trans[i] == TRANS_REF_MATRIX).all()):
-            reference[i] = True
+        if (trans[i] == TRANS_REF_MATRIX).all():
+            cam_reference[i] = True
         else:
-            reference[i] = False
+            cam_reference[i] = False
 
         # Apply correction to image (if available)
         if its.caps.distortion_correction(props):
@@ -186,15 +208,14 @@ def main():
                           np.array([circle[i][0],
                                     circle[i][1], 1])) * chart_distance * 1.0E-2
 
-    ref_index = (e for e in reference if e).next()
-    print 'reference camera id:', ref_index
-    ref_rotation = rotation[ref_index]
-    ref_rotation = ref_rotation.astype(np.float32)
-    print 'rotation reference:', ref_rotation
-    r = rotation_matrix(ref_rotation)
+    i_ref, i_2nd = define_reference_camera(pose_reference, cam_reference)
+    print 'reference camera: %s, secondary camera: %s' % (i_ref, i_2nd)
+
+    # TODO(b/90772945): convert to world coordinates for more general purpose
+    r = rotation_matrix(rotation[i_2nd].astype(np.float32))
     if debug:
         print 'r:', r
-    t = -1 * trans[ref_index]
+    t = trans[i_2nd] * -1.0
     print 't:', t
 
     # Estimate ids[0] circle center from ids[1] & params
