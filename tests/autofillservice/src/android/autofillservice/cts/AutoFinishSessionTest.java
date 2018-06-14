@@ -82,15 +82,14 @@ public class AutoFinishSessionTest
                 .setSaveInfoFlags(SaveInfo.FLAG_SAVE_ON_ALL_VIEWS_INVISIBLE)
                 .setRequiredSavableIds(SAVE_DATA_TYPE_GENERIC, viewsToSave).build());
 
-        // Trigger autofill
-        mActivity.syncRunOnUiThread(() -> {
-            mEditText2.requestFocus();
-            mEditText1.requestFocus();
-        });
-
+        // Trigger autofill on editText2
+        mActivity.syncRunOnUiThread(() -> mEditText2.requestFocus());
         sReplier.getNextFillRequest();
-
         mUiBot.assertNoDatasetsEver();
+
+        // Now it's safe to focus on editText1 without triggering a new partition due to race
+        // conditions
+        mActivity.syncRunOnUiThread(() -> mEditText1.requestFocus());
 
         // remove first set of views
         mActivity.syncRunOnUiThread(() -> {
@@ -212,15 +211,15 @@ public class AutoFinishSessionTest
                 .setSaveInfoFlags(SaveInfo.FLAG_SAVE_ON_ALL_VIEWS_INVISIBLE)
                 .setRequiredSavableIds(SAVE_DATA_TYPE_GENERIC, "editText1").build());
 
-        // Trigger autofill
-        mActivity.syncRunOnUiThread(() -> {
-            mEditText2.requestFocus();
-            mEditText1.requestFocus();
-        });
 
+        // Trigger autofill on editText2
+        mActivity.syncRunOnUiThread(() -> mEditText2.requestFocus());
         sReplier.getNextFillRequest();
-
         mUiBot.assertNoDatasetsEver();
+
+        // Now it's safe to focus on editText1 without triggering a new partition due to race
+        // conditions
+        mActivity.syncRunOnUiThread(() -> mEditText1.requestFocus());
 
         mActivity.syncRunOnUiThread(() -> {
             mEditText1.setText("editText1-filled");
