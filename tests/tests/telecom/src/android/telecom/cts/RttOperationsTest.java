@@ -85,6 +85,8 @@ public class RttOperationsTest extends BaseTelecomTestWithMockServices {
         startRttCounter.waitForCount(1, TestUtils.WAIT_FOR_STATE_CHANGE_TIMEOUT_MS);
 
         connection.setRttTextStream((Connection.RttTextStream) startRttCounter.getArgs(0)[0]);
+        connection.setConnectionProperties(
+            connection.getConnectionProperties() | Connection.PROPERTY_IS_RTT);
         connection.sendRttInitiationSuccess();
         TestUtils.waitOnAllHandlers(getInstrumentation());
         verifyRttEnabled(call, connection);
@@ -176,6 +178,8 @@ public class RttOperationsTest extends BaseTelecomTestWithMockServices {
                 connection.getInvokeCounter(MockConnection.ON_STOP_RTT);
         call.stopRtt();
         stopRttCounter.waitForCount(1, TestUtils.WAIT_FOR_STATE_CHANGE_TIMEOUT_MS);
+        connection.setConnectionProperties(
+            connection.getConnectionProperties() & ~Connection.PROPERTY_IS_RTT);
         TestUtils.waitOnAllHandlers(getInstrumentation());
         verifyRttDisabled(call);
     }
@@ -196,6 +200,8 @@ public class RttOperationsTest extends BaseTelecomTestWithMockServices {
                 connection.getInvokeCounter(MockConnection.ON_STOP_RTT);
         call.stopRtt();
         stopRttCounter.waitForCount(1, TestUtils.WAIT_FOR_STATE_CHANGE_TIMEOUT_MS);
+        connection.setConnectionProperties(
+            connection.getConnectionProperties() & ~Connection.PROPERTY_IS_RTT);
         TestUtils.waitOnAllHandlers(getInstrumentation());
         verifyRttDisabled(call);
     }
