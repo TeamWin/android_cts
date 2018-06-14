@@ -49,7 +49,6 @@ import android.widget.FrameLayout;
 
 import androidx.annotation.ColorInt;
 
-import org.junit.Ignore;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
@@ -538,7 +537,6 @@ public class LayerTests extends ActivityTestBase {
 
     @LargeTest
     @Test
-    @Ignore // b/109839751
     public void testWebViewWithUnclippedLayer() {
         if (!getActivity().getPackageManager().hasSystemFeature(PackageManager.FEATURE_WEBVIEW)) {
             return; // no WebView to run test on
@@ -566,14 +564,13 @@ public class LayerTests extends ActivityTestBase {
                         new int[] {
                                 Color.BLUE,
                                 Color.WHITE,
-                                0xffb3b3ff, // white blended with blue
+                                0xffc5c5ff, // white blended with blue
                                 0xffdbdbff  // white blended with blue
-                        }));
+                        }, 50));
     }
 
     @LargeTest
     @Test
-    @Ignore // b/109839751
     public void testWebViewWithUnclippedLayerAndComplexClip() {
         if (!getActivity().getPackageManager().hasSystemFeature(PackageManager.FEATURE_WEBVIEW)) {
             return; // no WebView to run test on
@@ -604,9 +601,9 @@ public class LayerTests extends ActivityTestBase {
                                 Color.WHITE,
                                 Color.WHITE,
                                 Color.BLUE,
-                                0xffb3b3ff, // white blended with blue
+                                0xffc5c5ff, // white blended with blue
                                 0xffdbdbff  // white blended with blue
-                        }));
+                        }, 50));
     }
 
     @LargeTest
