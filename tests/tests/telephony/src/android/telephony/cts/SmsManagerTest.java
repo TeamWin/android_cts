@@ -16,10 +16,24 @@
 
 package android.telephony.cts;
 
+import static org.hamcrest.CoreMatchers.is;
+import static org.hamcrest.Matchers.anyOf;
+import static org.hamcrest.Matchers.emptyString;
+import static org.hamcrest.Matchers.endsWith;
+import static org.hamcrest.Matchers.equalTo;
+import static org.hamcrest.Matchers.greaterThan;
+import static org.hamcrest.Matchers.lessThanOrEqualTo;
+import static org.hamcrest.Matchers.not;
+import static org.hamcrest.Matchers.startsWith;
+import static org.junit.Assert.assertNotEquals;
+import static org.junit.Assert.assertThat;
 
+import android.app.AppOpsManager;
 import android.app.PendingIntent;
 import android.app.UiAutomation;
 import android.content.BroadcastReceiver;
+import android.content.ComponentName;
+import android.content.ContentResolver;
 import android.content.ContentValues;
 import android.content.Context;
 import android.content.Intent;
@@ -28,15 +42,18 @@ import android.content.pm.PackageManager;
 import android.net.Uri;
 import android.os.Bundle;
 import android.os.ParcelFileDescriptor;
+import android.os.RemoteCallback;
 import android.os.SystemClock;
 import android.provider.BlockedNumberContract;
+import android.provider.Settings;
 import android.provider.Telephony;
 import android.telephony.SmsMessage;
 import android.telephony.TelephonyManager;
-import android.test.AndroidTestCase;
 import android.test.InstrumentationTestCase;
 import android.text.TextUtils;
 import android.util.Log;
+
+import com.android.internal.telephony.SmsApplication;
 
 import java.io.BufferedReader;
 import java.io.FileInputStream;
@@ -45,8 +62,11 @@ import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
-import java.util.Arrays;
+import java.util.Date;
 import java.util.List;
+import java.util.concurrent.Callable;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.TimeUnit;
 
 /**
  * Tests for {@link android.telephony.SmsManager}.
@@ -71,6 +91,8 @@ public class SmsManagerTest extends InstrumentationTestCase {
     private static final String SMS_DELIVERY_ACTION = "CTS_SMS_DELIVERY_ACTION";
     private static final String DATA_SMS_RECEIVED_ACTION = "android.intent.action.DATA_SMS_RECEIVED";
     public static final String SMS_DELIVER_DEFAULT_APP_ACTION = "CTS_SMS_DELIVERY_ACTION_DEFAULT_APP";
+    public static final String LEGACY_SMS_APP = "android.telephony.cts.sms23";
+    public static final String MODERN_SMS_APP = "android.telephony.cts.sms";
 
     private TelephonyManager mTelephonyManager;
     private PackageManager mPackageManager;
@@ -299,6 +321,143 @@ public class SmsManagerTest extends InstrumentationTestCase {
         } catch (SecurityException e) {
             // Success
         }
+    }
+
+    public void testContentProviderAccessRestriction() throws Exception {
+        Uri dummySmsUri = null;
+        ContentResolver contentResolver = getInstrumentation().getContext().getContentResolver();
+        try {
+            // Insert some dummy sms
+            dummySmsUri = executeWithShellPermissionIdentity(() -> {
+                ContentValues contentValues = new ContentValues();
+                contentValues.put(Telephony.TextBasedSmsColumns.ADDRESS, "addr");
+                contentValues.put(Telephony.TextBasedSmsColumns.READ, 1);
+                contentValues.put(Telephony.TextBasedSmsColumns.SUBJECT, "subj");
+                contentValues.put(Telephony.TextBasedSmsColumns.BODY, "created_at_" +
+                        new Date().toString().replace(" ", "_"));
+                int originalSmsAccessRestrictionEnabled = getSmsAccessRestrictionEnabled();
+                setSmsAccessRestrictionEnabled(0);
+                try {
+                    return contentResolver.insert(Telephony.Sms.CONTENT_URI, contentValues);
+                } finally {
+                    setSmsAccessRestrictionEnabled(originalSmsAccessRestrictionEnabled);
+                }
+            });
+            assertNotNull("Failed to insert dummy sms", dummySmsUri);
+            assertNotEquals("Failed to insert dummy sms", dummySmsUri.getLastPathSegment(), "0");
+            testContentProviderAccessRestriction(false);
+            testContentProviderAccessRestriction(true);
+        } finally {
+            if (dummySmsUri != null && !"/0".equals(dummySmsUri.getLastPathSegment())) {
+                final Uri finalDummySmsUri = dummySmsUri;
+                executeWithShellPermissionIdentity(() -> contentResolver.delete(finalDummySmsUri,
+                        null, null));
+            }
+        }
+    }
+
+    private void testContentProviderAccessRestriction(boolean accessRestrictionEnabled)
+            throws Exception {
+        int originalSmsAccessRestrictionEnabled = getSmsAccessRestrictionEnabled();
+        setSmsAccessRestrictionEnabled(accessRestrictionEnabled ? 1 : 0);
+        try {
+            testSmsAccessAboutDefaultApp(LEGACY_SMS_APP, accessRestrictionEnabled);
+            testSmsAccessAboutDefaultApp(MODERN_SMS_APP, accessRestrictionEnabled);
+        } finally {
+            setSmsAccessRestrictionEnabled(originalSmsAccessRestrictionEnabled);
+        }
+    }
+
+    private int getSmsAccessRestrictionEnabled() {
+        return Settings.Global.getInt(getInstrumentation().getContext().getContentResolver(),
+                Settings.Global.SMS_ACCESS_RESTRICTION_ENABLED, 0);
+    }
+
+    private void setSmsAccessRestrictionEnabled(int enabled) throws Exception {
+        executeWithShellPermissionIdentity(() ->
+                Settings.Global.putInt(getInstrumentation().getContext().getContentResolver(),
+                        Settings.Global.SMS_ACCESS_RESTRICTION_ENABLED, enabled));
+    }
+
+    private void testSmsAccessAboutDefaultApp(String pkg, boolean accessRestrictionEnabled)
+            throws Exception {
+        String originalSmsApp = Settings.Secure.getString(
+                getInstrumentation().getContext().getContentResolver(),
+                Settings.Secure.SMS_DEFAULT_APPLICATION);
+        assertNotEquals(pkg, originalSmsApp);
+        resetReadWriteSmsAppOps(pkg);
+        assertCanAccessSms(pkg, !accessRestrictionEnabled);
+        try {
+            setSmsApp(pkg);
+            assertCanAccessSms(pkg, true);
+        } finally {
+            setSmsApp(originalSmsApp);
+        }
+    }
+
+    private void resetReadWriteSmsAppOps(String pkg) throws Exception {
+        // We cannot reset these app ops to DEFAULT via current API, so we reset them manually here
+        // temporarily as we will rewrite how the default SMS app is setup later.
+        executeWithShellPermissionIdentity(() -> {
+            Context context = getInstrumentation().getContext();
+            PackageManager packageManager = context.getPackageManager();
+            int uid = packageManager.getPackageUid(pkg, 0);
+            AppOpsManager appOpsManager = context.getSystemService(AppOpsManager.class);
+            appOpsManager.setUidMode(AppOpsManager.OPSTR_READ_SMS, uid, AppOpsManager.MODE_DEFAULT);
+            appOpsManager.setUidMode(AppOpsManager.OPSTR_WRITE_SMS, uid,
+                    AppOpsManager.MODE_DEFAULT);
+        });
+    }
+
+    private void setSmsApp(String pkg) throws Exception {
+        executeWithShellPermissionIdentity(() -> {
+            Context context = getInstrumentation().getContext();
+            Settings.Secure.putString(context.getContentResolver(),
+                    Settings.Secure.SMS_DEFAULT_APPLICATION, pkg);
+            // Modifying settings by-passes SmsApplication, so we try to fix it with this.
+            SmsApplication.getDefaultSmsApplication(context, true);
+            return null;
+        });
+    }
+
+    private <T> T executeWithShellPermissionIdentity(Callable<T> callable) throws Exception {
+        UiAutomation uiAutomation = getInstrumentation().getUiAutomation(
+                UiAutomation.FLAG_DONT_SUPPRESS_ACCESSIBILITY_SERVICES);
+        uiAutomation.adoptShellPermissionIdentity();
+        try {
+            return callable.call();
+        } finally {
+            uiAutomation.dropShellPermissionIdentity();
+        }
+    }
+
+    private void executeWithShellPermissionIdentity(RunnableWithException runnable)
+            throws Exception {
+        executeWithShellPermissionIdentity(() -> {
+            runnable.run();
+            return null;
+        });
+    }
+
+    private interface RunnableWithException {
+        void run() throws Exception;
+    }
+
+    private void assertCanAccessSms(String pkg, boolean expectAccess) throws Exception {
+        CompletableFuture<Bundle> callbackResult = new CompletableFuture<>();
+        mContext.startActivity(new Intent()
+                .setFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+                .setComponent(new ComponentName(pkg, pkg + ".MainActivity"))
+                .putExtra("callback", new RemoteCallback(callbackResult::complete)));
+
+        Bundle bundle = callbackResult.get(20, TimeUnit.SECONDS);
+
+        assertThat(bundle.getString("class"), startsWith(pkg));
+        assertThat(bundle.getString("exceptionMessage"), anyOf(equalTo(null), emptyString()));
+        assertThat(bundle.getInt("queryCount"),
+                expectAccess ? greaterThan(0) : lessThanOrEqualTo(0));
+        assertThat(bundle.getString("insertResult"),
+                expectAccess ? not(endsWith("/0")) : anyOf(is(equalTo("null")), endsWith("/0")));
     }
 
     private void init() {
