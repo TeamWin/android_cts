@@ -15,44 +15,32 @@
  */
 package android.media.cts;
 
-import com.android.compatibility.common.util.ApiLevelUtil;
-
-import android.content.Context;
 import android.content.pm.PackageManager;
-import android.media.MediaCodec;
-import android.media.MediaCodecInfo;
+import android.media.CamcorderProfile;
 import android.media.MediaCodecInfo.CodecCapabilities;
-import android.media.MediaCodecInfo.CodecProfileLevel;
 import android.media.MediaCodecList;
 import android.media.MediaDrm;
 import android.media.MediaDrmException;
 import android.media.MediaFormat;
-import android.media.CamcorderProfile;
 import android.net.Uri;
-import android.os.Environment;
 import android.os.Looper;
 import android.support.annotation.NonNull;
-import android.test.ActivityInstrumentationTestCase2;
 import android.util.Base64;
 import android.util.Log;
 import android.view.SurfaceHolder;
 
-import java.io.IOException;
-import java.nio.ByteBuffer;
-import java.nio.CharBuffer;
-import java.nio.charset.Charset;
-import java.util.ArrayList;
-import java.util.concurrent.TimeUnit;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
-import java.util.UUID;
-import java.util.Vector;
+import com.android.compatibility.common.util.ApiLevelUtil;
 
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
+
+import java.nio.charset.Charset;
+import java.util.HashMap;
+import java.util.Set;
+import java.util.UUID;
+import java.util.Vector;
+import java.util.concurrent.TimeUnit;
 
 /**
  * Tests of MediaPlayer streaming capabilities.
@@ -99,8 +87,8 @@ public class ClearKeySystemTest extends MediaPlayerTestBase {
     private byte[] mSessionId;
     private Looper mLooper;
     private MediaCodecClearKeyPlayer mMediaCodecPlayer;
-    private MediaDrm mDrm;
-    private Object mLock = new Object();
+    private MediaDrm mDrm = null;
+    private final Object mLock = new Object();
     private SurfaceHolder mSurfaceHolder;
 
     @Override
@@ -114,6 +102,10 @@ public class ClearKeySystemTest extends MediaPlayerTestBase {
     @Override
     protected void tearDown() throws Exception {
         super.tearDown();
+    }
+
+    private boolean isWatchDevice() {
+        return mContext.getPackageManager().hasSystemFeature(PackageManager.FEATURE_WATCH);
     }
 
     private boolean deviceHasMediaDrm() {
@@ -226,9 +218,17 @@ public class ClearKeySystemTest extends MediaPlayerTestBase {
     }
 
     private @NonNull MediaDrm startDrm(final byte[][] clearKeys, final String initDataType, final UUID drmSchemeUuid) {
+        if (!MediaDrm.isCryptoSchemeSupported(drmSchemeUuid)) {
+            throw new Error("Crypto scheme is not supported.");
+        }
+
         new Thread() {
             @Override
             public void run() {
+                if (mDrm != null) {
+                    Log.e(TAG, "Failed to startDrm: already started");
+                    return;
+                }
                 // Set up a looper to handle events
                 Looper.prepare();
 
@@ -280,6 +280,8 @@ public class ClearKeySystemTest extends MediaPlayerTestBase {
             Log.e(TAG, "invalid drm specified in stopDrm");
         }
         mLooper.quit();
+        mDrm.release();
+        mDrm = null;
     }
 
     private @NonNull byte[] openSession(MediaDrm drm) {
@@ -342,14 +344,15 @@ public class ClearKeySystemTest extends MediaPlayerTestBase {
             Uri audioUrl, boolean audioEncrypted,
             Uri videoUrl, boolean videoEncrypted,
             int videoWidth, int videoHeight, boolean scrambled) throws Exception {
+
+        if (isWatchDevice()) {
+            return;
+        }
+
         MediaDrm drm = null;
         mSessionId = null;
         if (!scrambled) {
             drm = startDrm(clearKeys, initDataType, drmSchemeUuid);
-            if (!drm.isCryptoSchemeSupported(drmSchemeUuid)) {
-                stopDrm(drm);
-                throw new Error("Crypto scheme is not supported.");
-            }
             mSessionId = openSession(drm);
         }
 
@@ -432,11 +435,14 @@ public class ClearKeySystemTest extends MediaPlayerTestBase {
     }
 
     public void testQueryKeyStatus() throws Exception {
-        MediaDrm drm = startDrm(new byte[][] { CLEAR_KEY_CENC }, "cenc", COMMON_PSSH_SCHEME_UUID);
-        if (!drm.isCryptoSchemeSupported(COMMON_PSSH_SCHEME_UUID)) {
-            stopDrm(drm);
-            throw new Error("Crypto scheme is not supported.");
+        if (isWatchDevice()) {
+            // skip this test on watch because it calls
+            // addTrack that requires codec
+            return;
         }
+
+        MediaDrm drm = startDrm(new byte[][] { CLEAR_KEY_CENC }, "cenc",
+                CLEARKEY_SCHEME_UUID);
 
         mSessionId = openSession(drm);
 
@@ -497,7 +503,7 @@ public class ClearKeySystemTest extends MediaPlayerTestBase {
 
     public void testClearKeyPlaybackWebm() throws Exception {
         testClearKeyPlayback(
-            COMMON_PSSH_SCHEME_UUID,
+            CLEARKEY_SCHEME_UUID,
             MIME_VIDEO_VP8, new String[0],
             "webm", new byte[][] { CLEAR_KEY_WEBM },
             WEBM_URL, true,
@@ -507,7 +513,7 @@ public class ClearKeySystemTest extends MediaPlayerTestBase {
 
     public void testClearKeyPlaybackMpeg2ts() throws Exception {
         testClearKeyPlayback(
-            COMMON_PSSH_SCHEME_UUID,
+            CLEARKEY_SCHEME_UUID,
             MIME_VIDEO_AVC, new String[0],
             "mpeg2ts", null,
             MPEG2TS_SCRAMBLED_URL, false,
@@ -517,7 +523,7 @@ public class ClearKeySystemTest extends MediaPlayerTestBase {
 
     public void testPlaybackMpeg2ts() throws Exception {
         testClearKeyPlayback(
-            COMMON_PSSH_SCHEME_UUID,
+            CLEARKEY_SCHEME_UUID,
             MIME_VIDEO_AVC, new String[0],
             "mpeg2ts", null,
             MPEG2TS_CLEAR_URL, false,
