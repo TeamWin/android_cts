@@ -3979,7 +3979,6 @@ You should be prompted to select credentials; choose the ones you just installed
     <string name="connectedPeripheral">Connected Peripheral</string>
     <string name="audio_uap_attribs_test">USB Audio Peripheral Attributes Test</string>
     <string name="uapPeripheralProfileStatus">Peripheral Profile Status</string>
-
     <string name="audio_uap_play_test">USB Audio Peripheral Play Test</string>
     <string name="uapPlayTestInstructions">Connect the USB Audio Interface Peripheral and press the
         PLAY button below. Verify that a tone is correctly played.</string>
@@ -4003,6 +4002,29 @@ You should be prompted to select credentials; choose the ones you just installed
     <string name="uapButtonsBtnDLbl">Button D - voice assist</string>
     <string name="uapButtonsRecognized">Recognized</string>
     <string name="uapButtonsNotRecognized">Not Recognized</string>
+
+    <!--  Pro Audio Tests -->
+    <string name="pro_audio_latency_test">Pro Audio Test</string>
+
+    <string name="proAudioHasLLAlbl">Has Low-Latency Audio</string>
+    <string name="proAudioInputLbl">Audio Input:</string>
+    <string name="proAudioOutputLbl">Audio Output:</string>
+    <string name="proAudioRoundTripLbl">Round Trip Latency:</string>
+    <string name="proAudioConfidenceLbl">Confidence:</string>
+
+    <string name="proAudioMidiHasMIDILbl">Has MIDI Support</string>
+    <string name="proAudioMIDIInputLbl">MIDI Input:</string>
+    <string name="proAudioMIDIOutputLbl">MIDI Output:</string>
+    <string name="proAudioMidiHasUSBHostLbl">USB Host Mode:</string>
+    <string name="proAudioMidiHasUSBPeripheralLbl">USB Peripheral Mode:</string>
+    <string name="proAudioHDMISupportLbl">HDMI Support:</string>
+    <string name="proAudioHasHDMICheckBox">Has HDMI Support</string>
+
+    <string name="audio_proaudio_loopbackbtn">Start Loopback</string>
+    <string name="audio_proaudio_loopbackInfoBtn">Loopback Instructions</string>
+    <string name="audio_proaudio_roundtrip">Round-Trip Test</string>
+    <string name="audio_proaudio_NA">N/A</string>
+    <string name="audio_proaudio_pending">pending...</string>
 
     <!-- Audio general text -->
     <string name="audio_general_headset_port_exists">Does this device have a headset port?</string>
@@ -4396,6 +4418,23 @@ Follow the instructions on the screen to measure the frequency response for the 
         \"transport\" button and verify that it is recognized by the test.
        </string>
 
+    <!-- Pro Audio Test -->
+    <string name="proaudio_test">Pro Audio Test</string>
+    <string name="proaudio_info">
+       This test requires that you have connected a supported USB Audio Peripheral device
+       (not a headset) and that peripheral\'s audio outputs are connected to the peripherals\'s
+       audio inputs. Alternatively, for devices with an analog audio jack or USB-c Digital
+       to Analog dongle, a Loopback Plug can be used. Also, any if there is an input level
+       control on the peripheral, it must be set to a non-zero value. When the test has
+       verified support for a valid audio peripheral, press the \"Round-Trip Test\" button
+       to complete the test. Note that it may be necessary to run the latency test more than
+       once to get a sufficient confidence value.
+    </string>
+    <string name="proaudio_hdmi_infotitle">HDMI Support</string>
+    <string name="proaudio_hdmi_message">Please connect an HDMI peripheral to validate
+        HDMI output attributes.
+    </string>
+
     <!-- Telecom tests -->
     <string name="telecom_enable_phone_account_test"> Telecom Enable Phone Account Test</string>
     <string name="telecom_enable_phone_account_info">
@@ -4479,4 +4518,5 @@ Follow the instructions on the screen to measure the frequency response for the 
         Click the button below to confirm that the incoming call was answered.
     </string>
     <string name="telecom_incoming_self_mgd_confirm_answer_button">Confirm Answer</string>
+
 </resources>
