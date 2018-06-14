@@ -624,14 +624,9 @@ public class RingerModeActivity extends InteractiveVerifierActivity {
                 return;
             }
 
-            mAudioManager.setRingerMode(RINGER_MODE_VIBRATE);
             if (mHasVibrator) {
+                mAudioManager.setRingerMode(RINGER_MODE_VIBRATE);
                 if (RINGER_MODE_VIBRATE != mAudioManager.getRingerMode()) {
-                    setFailed();
-                    return;
-                }
-            } else {
-                if (RINGER_MODE_SILENT != mAudioManager.getRingerMode()) {
                     setFailed();
                     return;
                 }
