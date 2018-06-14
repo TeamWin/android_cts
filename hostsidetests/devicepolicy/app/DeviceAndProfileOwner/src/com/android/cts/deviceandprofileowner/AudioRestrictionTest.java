@@ -18,6 +18,7 @@ package com.android.cts.deviceandprofileowner;
 
 import android.content.Context;
 import android.content.pm.PackageManager;
+import android.content.res.Configuration;
 import android.media.AudioManager;
 import android.os.SystemClock;
 import android.os.UserManager;
@@ -81,10 +82,12 @@ public class AudioRestrictionTest extends BaseDeviceAdminTest {
         if (!mPackageManager.hasSystemFeature(PackageManager.FEATURE_AUDIO_OUTPUT)) {
             return;
         }
+        // VR Headsets do not support the STREAM_RING, therefore we use STREAM_MUSIC.
+        int streamType = isVrHeadset(mContext) ? AudioManager.STREAM_MUSIC : AudioManager.STREAM_RING;
 
         try {
             // Set volume of ringtone to be 1.
-            mAudioManager.setStreamVolume(AudioManager.STREAM_RING, 1, /* flag= */ 0);
+            mAudioManager.setStreamVolume(streamType, 1, /* flag= */ 0);
 
             // Disallow adjusting volume.
             mDevicePolicyManager.addUserRestriction(ADMIN_RECEIVER_COMPONENT,
@@ -93,7 +96,7 @@ public class AudioRestrictionTest extends BaseDeviceAdminTest {
 
             // Verify that volume can't be changed.
             mAudioManager.adjustVolume(AudioManager.ADJUST_RAISE, /* flag= */ 0);
-            assertEquals(1, mAudioManager.getStreamVolume(AudioManager.STREAM_RING));
+            assertEquals(1, mAudioManager.getStreamVolume(streamType));
 
             // Allowing adjusting volume.
             mDevicePolicyManager.clearUserRestriction(ADMIN_RECEIVER_COMPONENT,
@@ -105,7 +108,7 @@ public class AudioRestrictionTest extends BaseDeviceAdminTest {
             waitUntil(2, new Callable<Integer>() {
                 @Override
                 public Integer call() throws Exception {
-                    return mAudioManager.getStreamVolume(AudioManager.STREAM_RING);
+                    return mAudioManager.getStreamVolume(streamType);
                 }
             });
         } finally {
@@ -162,5 +165,10 @@ public class AudioRestrictionTest extends BaseDeviceAdminTest {
             }
             Thread.sleep(200);
         }
+    }
+
+    private boolean isVrHeadset(Context context) {
+        return (context.getResources().getConfiguration().uiMode
+                & Configuration.UI_MODE_TYPE_MASK) == Configuration.UI_MODE_TYPE_VR_HEADSET;
     }
 }
