@@ -64,7 +64,7 @@ public class AspectRatioTest extends ActivityInstrumentationTestCase2<Orientatio
                 (WindowManager) context.getSystemService(Context.WINDOW_SERVICE);
         Display display = windowManager.getDefaultDisplay();
         DisplayMetrics metrics = new DisplayMetrics();
-        display.getRealMetrics(metrics);
+        display.getMetrics(metrics);
 
         int max = Math.max(metrics.widthPixels, metrics.heightPixels);
         int min = Math.min(metrics.widthPixels, metrics.heightPixels);
