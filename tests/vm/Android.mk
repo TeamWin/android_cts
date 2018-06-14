@@ -16,6 +16,9 @@ LOCAL_PATH:= $(call my-dir)
 
 include $(CLEAR_VARS)
 
+# b/110155920
+LOCAL_ERROR_PRONE_FLAGS := -Xep:ConstantOverflow:OFF
+
 # Don't include this package in any target
 LOCAL_MODULE_TAGS := tests
 # When built, explicitly put it in the data partition.
