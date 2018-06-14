@@ -54,6 +54,7 @@ import java.util.List;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicReference;
 
 /**
@@ -75,10 +76,7 @@ public class InstrumentedAutoFillService extends AutofillService {
             new AtomicReference<>();
     private static final Replier sReplier = new Replier();
 
-    private static final Object sLock = new Object();
-
-    // @GuardedBy("sLock") // NOTE: not using annotation because of dependencies
-    private static boolean sConnected;
+    private static AtomicBoolean sConnected = new AtomicBoolean(false);
 
     protected static String sServiceLabel = SERVICE_CLASS;
 
@@ -169,10 +167,8 @@ public class InstrumentedAutoFillService extends AutofillService {
     }
 
     private void handleConnected(boolean connected) {
-        synchronized (sLock) {
-            Log.v(TAG, "handleConnected(): from " + sConnected + " to " + connected);
-            sConnected = connected;
-        }
+        Log.v(TAG, "handleConnected(): from " + sConnected.get() + " to " + connected);
+        sConnected.set(connected);
     }
 
     @Override
@@ -203,8 +199,9 @@ public class InstrumentedAutoFillService extends AutofillService {
         } else {
             Log.i(TAG, "onFillRequest() for " + component.toShortString());
         }
-        sReplier.onFillRequest(request.getFillContexts(), request.getClientState(),
-                cancellationSignal, callback, request.getFlags());
+        mHandler.post(
+                () -> sReplier.onFillRequest(request.getFillContexts(), request.getClientState(),
+                        cancellationSignal, callback, request.getFlags()));
     }
 
     @Override
@@ -229,14 +226,13 @@ public class InstrumentedAutoFillService extends AutofillService {
         } else {
             Log.i(TAG, "onSaveRequest() for " + component.toShortString());
         }
-        sReplier.onSaveRequest(request.getFillContexts(), request.getClientState(), callback,
-                request.getDatasetIds());
+        mHandler.post(() -> sReplier.onSaveRequest(request.getFillContexts(),
+                request.getClientState(), callback,
+                request.getDatasetIds()));
     }
 
     private static boolean isConnected() {
-        synchronized (sLock) {
-            return sConnected;
-        }
+        return sConnected.get();
     }
 
     private boolean fromSamePackage(ComponentName component) {
@@ -291,9 +287,7 @@ public class InstrumentedAutoFillService extends AutofillService {
 
     static void resetStaticState() {
         sInstance.set(null);
-        synchronized (sLock) {
-            sConnected = false;
-        }
+        sConnected.set(false);
         sServiceLabel = SERVICE_CLASS;
     }
 
