@@ -34,6 +34,7 @@ import static org.junit.Assert.fail;
 import static org.junit.Assume.assumeTrue;
 
 import android.app.ActivityManager;
+import android.app.ActivityTaskManager;
 import android.content.Context;
 import android.graphics.Point;
 import android.os.RemoteException;
@@ -122,6 +123,7 @@ public class CrossAppDragAndDropTests {
 
     protected Context mContext;
     protected ActivityManager mAm;
+    protected ActivityTaskManager mAtm;
 
     private Map<String, String> mSourceResults;
     private Map<String, String> mTargetResults;
@@ -144,6 +146,7 @@ public class CrossAppDragAndDropTests {
 
         mContext = InstrumentationRegistry.getContext();
         mAm = mContext.getSystemService(ActivityManager.class);
+        mAtm = mContext.getSystemService(ActivityTaskManager.class);
 
         mSourcePackageName = SOURCE_PACKAGE_NAME;
         mTargetPackageName = TARGET_PACKAGE_NAME;
@@ -194,7 +197,7 @@ public class CrossAppDragAndDropTests {
         clearLogs();
 
         // Remove special stacks.
-        mAm.removeStacksInWindowingModes(new int[] {
+        mAtm.removeStacksInWindowingModes(new int[] {
                 WINDOWING_MODE_PINNED,
                 WINDOWING_MODE_SPLIT_SCREEN_PRIMARY,
                 WINDOWING_MODE_FREEFORM
@@ -429,11 +432,11 @@ public class CrossAppDragAndDropTests {
     }
 
     private static boolean supportsDragAndDrop() {
-        return ActivityManager.supportsMultiWindow(InstrumentationRegistry.getContext());
+        return ActivityTaskManager.supportsMultiWindow(InstrumentationRegistry.getContext());
     }
 
     private static boolean supportsSplitScreenMultiWindow() {
-        return ActivityManager.supportsSplitScreenMultiWindow(InstrumentationRegistry.getContext());
+        return ActivityTaskManager.supportsSplitScreenMultiWindow(InstrumentationRegistry.getContext());
     }
 
     private static boolean supportsFreeformMultiWindow() {

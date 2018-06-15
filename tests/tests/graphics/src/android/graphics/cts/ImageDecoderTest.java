@@ -2225,7 +2225,7 @@ public class ImageDecoderTest {
 
         // Decoding this image requires a lot of memory. Only attempt if the
         // device has a total memory of at least 2 Gigs.
-        if (info.totalMem < 2 * 1024 * 1024 * 1024) {
+        if (info.totalMem < 2L * 1024 * 1024 * 1024) {
             return;
         }
 

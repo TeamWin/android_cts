@@ -21,7 +21,7 @@ LOCAL_COMPATIBILITY_SUITE := cts vts general-tests
 
 LOCAL_MODULE_TAGS := tests
 LOCAL_SRC_FILES := $(call all-java-files-under, src)
-LOCAL_SDK_VERSION := 23
+LOCAL_SDK_VERSION := current
 LOCAL_PACKAGE_NAME := CtsPkgInstallTinyApp
 LOCAL_DEX_PREOPT := false
 

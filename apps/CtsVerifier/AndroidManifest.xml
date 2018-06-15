@@ -83,7 +83,8 @@
     <!-- Needed for Telecom self-managed ConnectionService tests. -->
     <uses-permission android:name="android.permission.MANAGE_OWN_CALLS" />
 
-    <application android:label="@string/app_name"
+    <application android:networkSecurityConfig="@xml/network_security_config"
+            android:label="@string/app_name"
             android:icon="@drawable/icon"
             android:debuggable="true"
             android:largeHeap="true"
@@ -3062,6 +3063,19 @@
             <meta-data android:name="test_excluded_features"
                 android:value="android.hardware.type.television:android.software.leanback:android.hardware.type.watch:android.hardware.type.automotive" />
         </activity>
+
+        <activity android:name=".audio.ProAudioActivity"
+                  android:label="@string/pro_audio_latency_test">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.cts.intent.category.MANUAL_TEST" />
+            </intent-filter>
+            <meta-data android:name="test_category" android:value="@string/test_category_audio" />
+            <meta-data android:name="test_required_features" android:value="android.hardware.usb.host" />
+        </activity>
+
+        <!-- ProAudio test invokes the "Loopback" App -->
+        <activity android:name="org.drrickorang.loopback"/>
 
         <activity android:name=".audio.AudioLoopbackActivity"
                   android:label="@string/audio_loopback_test">

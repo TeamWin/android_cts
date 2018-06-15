@@ -16,13 +16,22 @@
 
 package android.telephony.cts;
 
+import static android.app.AppOpsManager.MODE_ALLOWED;
+import static android.app.AppOpsManager.MODE_IGNORED;
+import static android.app.AppOpsManager.OPSTR_READ_PHONE_STATE;
+
+import static com.android.compatibility.common.util.AppOpsUtils.setOpMode;
+
 import android.content.Context;
 import android.net.ConnectivityManager;
 import android.os.PersistableBundle;
+import android.platform.test.annotations.SecurityTest;
 import android.telephony.CarrierConfigManager;
 import android.telephony.SubscriptionManager;
 import android.telephony.TelephonyManager;
 import android.test.AndroidTestCase;
+
+import java.io.IOException;
 
 public class CarrierConfigManagerTest extends AndroidTestCase {
     private CarrierConfigManager mConfigManager;
@@ -35,6 +44,16 @@ public class CarrierConfigManagerTest extends AndroidTestCase {
                 getContext().getSystemService(Context.TELEPHONY_SERVICE);
         mConfigManager = (CarrierConfigManager)
                 getContext().getSystemService(Context.CARRIER_CONFIG_SERVICE);
+    }
+
+    @Override
+    protected void tearDown() throws Exception {
+        try {
+            setOpMode("android.telephony.cts", OPSTR_READ_PHONE_STATE, MODE_ALLOWED);
+        } catch (IOException e) {
+            fail();
+        }
+        super.tearDown();
     }
 
     /**
@@ -84,6 +103,29 @@ public class CarrierConfigManagerTest extends AndroidTestCase {
 
     public void testGetConfig() {
         PersistableBundle config = mConfigManager.getConfig();
+        checkConfig(config);
+    }
+
+    @SecurityTest
+    public void testRevokePermission() {
+        PersistableBundle config;
+
+        try {
+            setOpMode("android.telephony.cts", OPSTR_READ_PHONE_STATE, MODE_IGNORED);
+        } catch (IOException e) {
+            fail();
+        }
+
+        config = mConfigManager.getConfig();
+        assertTrue(config.isEmptyParcel());
+
+        try {
+            setOpMode("android.telephony.cts", OPSTR_READ_PHONE_STATE, MODE_ALLOWED);
+        } catch (IOException e) {
+            fail();
+        }
+
+        config = mConfigManager.getConfig();
         checkConfig(config);
     }
 

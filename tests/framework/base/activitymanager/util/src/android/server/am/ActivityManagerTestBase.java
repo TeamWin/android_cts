@@ -16,8 +16,8 @@
 
 package android.server.am;
 
-import static android.app.ActivityManager.SPLIT_SCREEN_CREATE_MODE_TOP_OR_LEFT;
-import static android.app.ActivityManager.StackId.INVALID_STACK_ID;
+import static android.app.ActivityTaskManager.SPLIT_SCREEN_CREATE_MODE_TOP_OR_LEFT;
+import static android.app.ActivityTaskManager.INVALID_STACK_ID;
 import static android.app.WindowConfiguration.ACTIVITY_TYPE_ASSISTANT;
 import static android.app.WindowConfiguration.ACTIVITY_TYPE_RECENTS;
 import static android.app.WindowConfiguration.ACTIVITY_TYPE_STANDARD;
@@ -72,6 +72,7 @@ import static java.lang.Integer.toHexString;
 import android.accessibilityservice.AccessibilityService;
 import android.app.Activity;
 import android.app.ActivityManager;
+import android.app.ActivityTaskManager;
 import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
@@ -152,6 +153,7 @@ public abstract class ActivityManagerTestBase {
 
     protected Context mContext;
     protected ActivityManager mAm;
+    protected ActivityTaskManager mAtm;
 
     @Rule
     public final ActivityTestRule<SideActivity> mSideActivityRule =
@@ -226,6 +228,7 @@ public abstract class ActivityManagerTestBase {
     public void setUp() throws Exception {
         mContext = InstrumentationRegistry.getContext();
         mAm = mContext.getSystemService(ActivityManager.class);
+        mAtm = mContext.getSystemService(ActivityTaskManager.class);
 
         InstrumentationRegistry.getInstrumentation().getUiAutomation().grantRuntimePermission(
                 mContext.getPackageName(), android.Manifest.permission.MANAGE_ACTIVITY_STACKS);
@@ -251,12 +254,12 @@ public abstract class ActivityManagerTestBase {
     }
 
     protected void removeStacksWithActivityTypes(int... activityTypes) {
-        mAm.removeStacksWithActivityTypes(activityTypes);
+        mAtm.removeStacksWithActivityTypes(activityTypes);
         waitForIdle();
     }
 
     protected void removeStacksInWindowingModes(int... windowingModes) {
-        mAm.removeStacksInWindowingModes(windowingModes);
+        mAtm.removeStacksInWindowingModes(windowingModes);
         waitForIdle();
     }
 
@@ -365,7 +368,7 @@ public abstract class ActivityManagerTestBase {
             int createMode) {
         launchActivity(activityName);
         final int taskId = mAmWmState.getAmState().getTaskByActivity(activityName).mTaskId;
-        mAm.setTaskWindowingModeSplitScreenPrimary(taskId, createMode, true /* onTop */,
+        mAtm.setTaskWindowingModeSplitScreenPrimary(taskId, createMode, true /* onTop */,
                 false /* animate */, null /* initialBounds */, true /* showRecents */);
 
         mAmWmState.waitForValidState(
@@ -387,7 +390,7 @@ public abstract class ActivityManagerTestBase {
      *                                      recents activity is available.
      */
     public void moveTaskToPrimarySplitScreen(int taskId, boolean launchSideActivityIfNeeded) {
-        mAm.setTaskWindowingModeSplitScreenPrimary(taskId, SPLIT_SCREEN_CREATE_MODE_TOP_OR_LEFT,
+        mAtm.setTaskWindowingModeSplitScreenPrimary(taskId, SPLIT_SCREEN_CREATE_MODE_TOP_OR_LEFT,
                 true /* onTop */, false /* animate */, null /* initialBounds */,
                 true /* showRecents */);
         mAmWmState.waitForRecentsActivityVisible();
@@ -428,7 +431,7 @@ public abstract class ActivityManagerTestBase {
     protected void setActivityTaskWindowingMode(ComponentName activityName, int windowingMode) {
         mAmWmState.computeState(activityName);
         final int taskId = mAmWmState.getAmState().getTaskByActivity(activityName).mTaskId;
-        mAm.setTaskWindowingMode(taskId, windowingMode, true /* toTop */);
+        mAtm.setTaskWindowingMode(taskId, windowingMode, true /* toTop */);
         mAmWmState.waitForValidState(new WaitForValidActivityState.Builder(activityName)
                 .setActivityType(ACTIVITY_TYPE_STANDARD)
                 .setWindowingMode(windowingMode)
@@ -547,7 +550,7 @@ public abstract class ActivityManagerTestBase {
     }
 
     protected boolean supportsSplitScreenMultiWindow() {
-        return ActivityManager.supportsSplitScreenMultiWindow(mContext);
+        return ActivityTaskManager.supportsSplitScreenMultiWindow(mContext);
     }
 
     protected boolean hasHomeScreen() {
