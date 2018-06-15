@@ -456,11 +456,12 @@ public class SystemFeaturesTest extends InstrumentationTestCase {
     }
 
     public void testUsbAccessory() {
-        // USB accessory mode is only a requirement for devices with USB ports supporting
-        // peripheral mode. As there is no public API to distinguish a device with only host
-        // mode support from having both peripheral and host support, the test may have
-        // false negatives.
-        assertAvailable(PackageManager.FEATURE_USB_ACCESSORY);
+        // Per CDD requirement all handheld Android devices must support AOA
+        if (!mPackageManager.hasSystemFeature(PackageManager.FEATURE_AUTOMOTIVE)
+               && !mPackageManager.hasSystemFeature(PackageManager.FEATURE_WATCH)
+               && !mPackageManager.hasSystemFeature(PackageManager.FEATURE_LEANBACK)) {
+            assertAvailable(PackageManager.FEATURE_USB_ACCESSORY);
+        }
     }
 
     public void testWifiFeature() throws Exception {
