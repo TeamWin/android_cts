@@ -4002,6 +4002,10 @@ You should be prompted to select credentials; choose the ones you just installed
     <string name="uapButtonsBtnDLbl">Button D - voice assist</string>
     <string name="uapButtonsRecognized">Recognized</string>
     <string name="uapButtonsNotRecognized">Not Recognized</string>
+    <string name="uapButtonsDisableAssistantTitle">Disable Google Assistant</string>
+    <string name="uapButtonsDisableAssistant">For this test to succeed it may be necessary
+        to disable the Google Assistant (Settings / Google / Search / Google Assistant Settings /
+        Devices / &lt;device name&gt; / Google Assistant)</string>
 
     <!--  Pro Audio Tests -->
     <string name="pro_audio_latency_test">Pro Audio Test</string>
