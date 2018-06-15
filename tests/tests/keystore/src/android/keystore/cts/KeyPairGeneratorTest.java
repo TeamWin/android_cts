@@ -824,8 +824,8 @@ public class KeyPairGeneratorTest extends AndroidTestCase {
         Date keyValidityEndDateForOrigination = new Date(System.currentTimeMillis() + 1000000);
         Date keyValidityEndDateForConsumption = new Date(System.currentTimeMillis() + 10000000);
 
-        Date certNotBefore = new Date(System.currentTimeMillis() - 1000 * 60 * 60 * 24 * 210);
-        Date certNotAfter = new Date(System.currentTimeMillis() + 1000 * 60 * 60 * 24 * 210);
+        Date certNotBefore = new Date(System.currentTimeMillis() - 1000L * 60 * 60 * 24 * 210);
+        Date certNotAfter = new Date(System.currentTimeMillis() + 1000L * 60 * 60 * 24 * 210);
         BigInteger certSerialNumber = new BigInteger("1234567890");
         X500Principal certSubject = new X500Principal("cn=hello2");
         generator.initialize(new KeyGenParameterSpec.Builder(
