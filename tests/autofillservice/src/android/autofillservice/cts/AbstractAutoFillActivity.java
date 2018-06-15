@@ -27,6 +27,8 @@ import android.view.PixelCopy;
 import android.view.View;
 import android.view.autofill.AutofillManager;
 
+import androidx.annotation.NonNull;
+
 import com.android.compatibility.common.util.SynchronousPixelCopy;
 
 import java.util.concurrent.CountDownLatch;
@@ -37,6 +39,7 @@ import java.util.concurrent.TimeUnit;
   */
 abstract class AbstractAutoFillActivity extends Activity {
 
+    private final CountDownLatch mDestroyedLatch = new CountDownLatch(1);
     private MyAutofillCallback mCallback;
 
     /**
@@ -122,6 +125,15 @@ abstract class AbstractAutoFillActivity extends Activity {
         unregisterNonNullCallback();
     }
 
+    /**
+     * Waits until {@link #onDestroy()} is called.
+     */
+    public void waintUntilDestroyed(@NonNull Timeout timeout) throws InterruptedException {
+        if (!mDestroyedLatch.await(timeout.ms(), TimeUnit.MILLISECONDS)) {
+            throw new RetryableException(timeout, "activity %s not destroyed", this);
+        }
+    }
+
     private void unregisterNonNullCallback() {
         getAutofillManager().unregisterCallback(mCallback);
         mCallback = null;
@@ -136,9 +148,11 @@ abstract class AbstractAutoFillActivity extends Activity {
     @Override
     protected void onDestroy() {
         super.onDestroy();
+
         // Activitiy is typically unregistered at finish(), but we need to unregister here too
         // for the cases where it's destroyed due to a config change (like device rotation).
         AutofillTestWatcher.unregisterActivity("onDestroy()", this);
+        mDestroyedLatch.countDown();
     }
 
     @Override
