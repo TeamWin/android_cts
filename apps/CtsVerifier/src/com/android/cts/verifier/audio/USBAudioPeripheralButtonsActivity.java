@@ -16,6 +16,8 @@
 
 package com.android.cts.verifier.audio;
 
+import android.app.AlertDialog;
+import android.content.DialogInterface;
 import android.content.res.Resources;
 import android.graphics.Color;
 import android.os.Bundle;
@@ -45,6 +47,19 @@ public class USBAudioPeripheralButtonsActivity extends USBAudioPeripheralActivit
     private TextView mBtnBStatusTxt;
     private TextView mBtnCStatusTxt;
 
+    private void showDisableAssistantDialog() {
+        AlertDialog.Builder builder =
+                new AlertDialog.Builder(this, android.R.style.Theme_Material_Dialog_Alert);
+        builder.setTitle(getResources().getString(R.string.uapButtonsDisableAssistantTitle));
+        builder.setMessage(getResources().getString(R.string.uapButtonsDisableAssistant));
+        builder.setPositiveButton(android.R.string.yes,
+            new DialogInterface.OnClickListener() {
+                public void onClick(DialogInterface dialog, int which) {}
+         });
+        builder.setIcon(android.R.drawable.ic_dialog_alert);
+        builder.show();
+    }
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -62,6 +77,8 @@ public class USBAudioPeripheralButtonsActivity extends USBAudioPeripheralActivit
 
         setPassFailButtonClickListeners();
         setInfoResources(R.string.usbaudio_buttons_test, R.string.usbaudio_buttons_info, -1);
+
+        showDisableAssistantDialog();
     }
 
     private void showButtonsState() {
