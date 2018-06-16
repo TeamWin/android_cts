@@ -105,9 +105,11 @@ public class ListeningPortsTest extends AndroidTestCase {
      * unauthorized access to computers systems without user knowledge or
      * awareness.
      */
+    /* Disabling this test due to ims_rtp_daemon listening on a random UDP6 port per b/110264058.
     public void testNoRemotelyAccessibleListeningUdp6Ports() throws Exception {
         assertNoRemotelyAccessibleListeningUdpPorts("/proc/net/udp6", false);
     }
+    */
 
     /**
      * Locally accessible ports are often targeted by malicious locally
