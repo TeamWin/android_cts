@@ -18,6 +18,7 @@ package android.autofillservice.cts;
 import android.util.ArraySet;
 import android.util.Log;
 
+import androidx.annotation.GuardedBy;
 import androidx.annotation.NonNull;
 
 import org.junit.rules.TestWatcher;
@@ -27,16 +28,22 @@ import java.util.Set;
 
 /**
  * Custom {@link TestWatcher} that's the outer rule of all {@link AutoFillServiceTestCase} tests.
+ *
+ * <p>This class is not thread safe, but should be fine...
  */
 public final class AutofillTestWatcher extends TestWatcher {
 
     private static final String TAG = "AutofillTestWatcher";
 
+    @GuardedBy("sUnfinishedBusiness")
     private static final Set<AbstractAutoFillActivity> sUnfinishedBusiness = new ArraySet<>();
-    private static final Object sLock = new Object();
+
+    @GuardedBy("sAllActivities")
+    private static final Set<AbstractAutoFillActivity> sAllActivities = new ArraySet<>();
 
     @Override
     protected void starting(Description description) {
+        resetStaticState();
         final String testName = description.getDisplayName();
         Log.i(TAG, "Starting " + testName);
         JUnitHelper.setCurrentTestName(testName);
@@ -45,9 +52,23 @@ public final class AutofillTestWatcher extends TestWatcher {
     @Override
     protected void finished(Description description) {
         final String testName = description.getDisplayName();
-        finishActivities();
+        try {
+            finishActivities();
+            waitUntilAllDestroyed();
+        } finally {
+            resetStaticState();
+        }
         Log.i(TAG, "Finished " + testName);
         JUnitHelper.setCurrentTestName(null);
+    }
+
+    private void resetStaticState() {
+        synchronized (sUnfinishedBusiness) {
+            sUnfinishedBusiness.clear();
+        }
+        synchronized (sAllActivities) {
+            sAllActivities.clear();
+        }
     }
 
     /**
@@ -55,12 +76,17 @@ public final class AutofillTestWatcher extends TestWatcher {
      */
     public static void registerActivity(@NonNull String where,
             @NonNull AbstractAutoFillActivity activity) {
-        synchronized (sLock) {
+        synchronized (sUnfinishedBusiness) {
             if (sUnfinishedBusiness.contains(activity)) {
                 throw new IllegalStateException("Already registered " + activity);
             }
             Log.v(TAG, "registering activity on " + where + ": " + activity);
             sUnfinishedBusiness.add(activity);
+            sAllActivities.add(activity);
+        }
+        synchronized (sAllActivities) {
+            sAllActivities.add(activity);
+
         }
     }
 
@@ -69,7 +95,7 @@ public final class AutofillTestWatcher extends TestWatcher {
      */
     public static void unregisterActivity(@NonNull String where,
             @NonNull AbstractAutoFillActivity activity) {
-        synchronized (sLock) {
+        synchronized (sUnfinishedBusiness) {
             final boolean unregistered = sUnfinishedBusiness.remove(activity);
             if (unregistered) {
                 Log.d(TAG, "unregistered activity on " + where + ": " + activity);
@@ -80,21 +106,35 @@ public final class AutofillTestWatcher extends TestWatcher {
     }
 
     private void finishActivities() {
-        synchronized (sLock) {
+        synchronized (sUnfinishedBusiness) {
             if (sUnfinishedBusiness.isEmpty()) {
                 return;
             }
-            try {
-                for (AbstractAutoFillActivity activity : sUnfinishedBusiness) {
-                    if (activity.isFinishing()) {
-                        Log.v(TAG, "Ignoring activity that isFinishing(): " + activity);
-                    } else {
-                        Log.d(TAG, "Finishing activity: " + activity);
-                        activity.finishOnly();
-                    }
+            Log.d(TAG, "Manually finishing " + sUnfinishedBusiness.size() + " activities");
+            for (AbstractAutoFillActivity activity : sUnfinishedBusiness) {
+                if (activity.isFinishing()) {
+                    Log.v(TAG, "Ignoring activity that isFinishing(): " + activity);
+                } else {
+                    Log.d(TAG, "Finishing activity: " + activity);
+                    activity.finishOnly();
                 }
-            } finally {
-                sUnfinishedBusiness.clear();
+            }
+        }
+    }
+
+    private void waitUntilAllDestroyed() {
+        synchronized (sAllActivities) {
+            if (sAllActivities.isEmpty()) return;
+
+            Log.d(TAG, "Waiting until " + sAllActivities.size() + " activities are destroyed");
+            for (AbstractAutoFillActivity activity : sAllActivities) {
+                Log.d(TAG, "Waiting for " + activity);
+                try {
+                    activity.waintUntilDestroyed(Timeouts.ACTIVITY_RESURRECTION);
+                } catch (InterruptedException e) {
+                    Log.e(TAG, "interrupted waiting for " + activity + " to be destroyed");
+                    Thread.currentThread().interrupt();
+                }
             }
         }
     }
