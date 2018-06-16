@@ -22,6 +22,7 @@ import java.io.FileReader;
 import java.io.FilenameFilter;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
@@ -220,6 +221,33 @@ class LinkerNamespacesHelper {
             throw new IllegalStateException("No native path path found for " + packageName);
         }
         return nativePath;
+    }
+
+    private static boolean loadSharedLibrary(String libFilePath) {
+        String baseName = new File(libFilePath).getName();
+        if (baseName.equals(WEBVIEW_PLAT_SUPPORT_LIB)) {
+          // Don't try to load this library from Java. Otherwise, the lib is initialized via
+          // JNI_OnLoad and it fails since WebView is not loaded in this test process.
+          return true;
+        }
+        try {
+            System.load(libFilePath);
+            // Also ensure that the lib is also accessible via its libname.
+            // Drop 'lib' and '.so' from the name
+            System.loadLibrary(baseName.substring(3, baseName.length()-3));
+            return true;
+        } catch (UnsatisfiedLinkError e) {
+            // all other exceptions are just thrown
+            if (e.getMessage().contains("Shared library \"" + libFilePath +
+                    "\" already opened by ClassLoader") &&
+                    Arrays.asList(PUBLIC_SYSTEM_LIBRARIES).contains(baseName)) {
+                // If one of the public system libraries are already opened in the
+                // bootclassloader, consider this try as success, because dlopen to the lib
+                // is successful.
+                return true;
+            }
+            return false;
+        }
     }
 
     // Verify the behaviour of native library loading in class loaders.

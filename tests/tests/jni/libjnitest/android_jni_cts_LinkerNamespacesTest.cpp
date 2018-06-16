@@ -103,11 +103,53 @@ static bool is_library_on_path(const std::unordered_set<std::string>& library_se
   return library_search_paths.count(path.substr(0, path.size() - tail.size())) > 0;
 }
 
-static bool check_lib(const std::string& path,
+// Tests if a file can be loaded or not. Returns empty string on success. On any failure
+// returns the error message from dlerror().
+static std::string load_library(JNIEnv* env, jclass clazz, const std::string& path) {
+  // try to load the lib using dlopen().
+  void *handle = dlopen(path.c_str(), RTLD_NOW);
+  std::string error;
+
+  bool loaded_in_native = handle != nullptr;
+  if (loaded_in_native) {
+    dlclose(handle);
+  } else {
+    error = dlerror();
+  }
+
+  // try to load the same lib using System.load() in Java to see if it gives consistent
+  // result with dlopen.
+  static jmethodID load_library = env->GetStaticMethodID(clazz, "loadSharedLibrary",
+                                            "(Ljava/lang/String;)Z");
+  jstring jpath = env->NewStringUTF(path.c_str());
+  bool loaded_in_java = env->CallStaticBooleanMethod(clazz, load_library, jpath) == JNI_TRUE;
+  env->DeleteLocalRef(jpath);
+  if (loaded_in_native != loaded_in_java) {
+    error = "Inconsistent result for library \"" + path + "\":" +
+                      " dlopen() was " + (loaded_in_native ? "success" : "failure") +
+                      ", System.loadLibrary() was " + (loaded_in_java ? "success" : "failure");
+  } else if (loaded_in_java) {
+    // Unload the shared lib loaded in Java. Since we don't have a method in Java for unloading a
+    // lib other than destroying the classloader, here comes a trick; we open the same library
+    // again with dlopen to get the handle for the lib and then calls dlclose twice (since we have
+    // opened the lib twice; once in Java, once in here). This works because dlopen returns the
+    // the same handle for the same shared lib object.
+    handle = dlopen(path.c_str(), RTLD_NOW);
+    dlclose(handle);
+    dlclose(handle); // don't delete this line. it's not a mistake.
+  }
+
+  return error;
+}
+
+static bool check_lib(JNIEnv* env,
+                      jclass clazz,
+                      const std::string& path,
                       const std::unordered_set<std::string>& library_search_paths,
                       const std::unordered_set<std::string>& libraries,
                       std::vector<std::string>* errors) {
-  std::unique_ptr<void, decltype(&dlclose)> handle(dlopen(path.c_str(), RTLD_NOW), dlclose);
+  std::string err = load_library(env, clazz, path);
+  bool loaded = err.empty();
 
   // The current restrictions on public libraries:
   //  - It must exist only in the top level directory of "library_search_paths".
@@ -118,17 +160,15 @@ static bool check_lib(const std::string& path,
   std::string baselib = basename(path.c_str());
   if (libraries.find(baselib) != libraries.end() &&
       is_library_on_path(library_search_paths, baselib, path)) {
-    if (handle.get() == nullptr) {
+    if (!loaded) {
       errors->push_back("The library \"" + path +
-                        "\" is a public library but it cannot be loaded: " + dlerror());
+                        "\" is a public library but it cannot be loaded: " + err);
       return false;
     }
-  } else if (handle.get() != nullptr) {
+  } else if (loaded) {
     errors->push_back("The library \"" + path + "\" is not a public library but it loaded.");
     return false;
-  } else { // (handle == nullptr && !shouldBeAccessible(path))
-    // Check the error message
-    std::string err = dlerror();
+  } else { // (!loaded && !shouldBeAccessible(path))
     if (!not_accessible(err) && !not_found(err) && !wrong_arch(path, err)) {
       errors->push_back("unexpected dlerror: " + err);
       return false;
@@ -137,7 +177,9 @@ static bool check_lib(const std::string& path,
   return true;
 }
 
-static bool check_path(const std::string& library_path,
+static bool check_path(JNIEnv* env,
+                       jclass clazz,
+                       const std::string& library_path,
                        const std::unordered_set<std::string>& library_search_paths,
                        const std::unordered_set<std::string>& libraries,
                        std::vector<std::string>* errors) {
@@ -165,7 +207,7 @@ static bool check_path(const std::string& library_path,
       std::string path = dir + "/" + dp->d_name;
       if (is_directory(path.c_str())) {
         dirs.push(path);
-      } else if (!check_lib(path, library_search_paths, libraries, errors)) {
+      } else if (!check_lib(env, clazz, path, library_search_paths, libraries, errors)) {
         success = false;
       }
     }
@@ -228,7 +270,7 @@ extern "C" void android_get_LD_LIBRARY_PATH(char*, size_t) __attribute__((__weak
 extern "C" JNIEXPORT jstring JNICALL
     Java_android_jni_cts_LinkerNamespacesHelper_runAccessibilityTestImpl(
         JNIEnv* env,
-        jclass clazz __attribute__((unused)),
+        jclass clazz,
         jobjectArray java_system_public_libraries,
         jobjectArray java_vendor_public_libraries,
         jobjectArray java_product_public_libraries) {
@@ -278,35 +320,35 @@ extern "C" JNIEXPORT jstring JNICALL
   // libraries being available in /system/${LIB}/
   system_library_search_paths.insert(kSystemLibraryPath);
 
-  if (!check_path(kSystemLibraryPath, system_library_search_paths, system_public_libraries, &errors)) {
+  if (!check_path(env, clazz, kSystemLibraryPath, system_library_search_paths,
+                  system_public_libraries, &errors)) {
     success = false;
   }
 
   // Check that the mandatory system libraries are present - the grey list
   for (const auto& name : kSystemLibraries) {
     std::string library = kSystemLibraryPath + "/" + name;
-    void* handle = dlopen(library.c_str(), RTLD_NOW);
-    if (handle == nullptr) {
-      std::string err = dlerror();
+    std::string err = load_library(env, clazz, library);
+    if (!err.empty()) {
       // The libraries should be present and produce specific dlerror when inaccessible.
       if (!not_accessible(err)) {
           errors.push_back("Mandatory system library \"" + library + "\" failed to load with unexpected error: " + err);
           success = false;
       }
-    } else {
-      dlclose(handle);
     }
   }
 
   // Check the product libraries, if /product/lib exists.
   if (is_directory(kProductLibraryPath.c_str())) {
-    if (!check_path(kProductLibraryPath, { kProductLibraryPath }, product_public_libraries, &errors)) {
+    if (!check_path(env, clazz, kProductLibraryPath, { kProductLibraryPath },
+                    product_public_libraries, &errors)) {
       success = false;
     }
   }
 
   // Check the vendor libraries.
-  if (!check_path(kVendorLibraryPath, { kVendorLibraryPath }, vendor_public_libraries, &errors)) {
+  if (!check_path(env, clazz, kVendorLibraryPath, { kVendorLibraryPath },
+                  vendor_public_libraries, &errors)) {
     success = false;
   }
 
