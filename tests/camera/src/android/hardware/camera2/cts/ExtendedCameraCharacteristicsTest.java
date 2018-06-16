@@ -885,8 +885,34 @@ public class ExtendedCameraCharacteristicsTest extends AndroidTestCase {
             Integer poseReference = c.get(CameraCharacteristics.LENS_POSE_REFERENCE);
             float[] cameraIntrinsics = c.get(CameraCharacteristics.LENS_INTRINSIC_CALIBRATION);
             float[] distortion = getLensDistortion(c);
+            Size pixelArraySize = c.get(CameraCharacteristics.SENSOR_INFO_PIXEL_ARRAY_SIZE);
             Rect precorrectionArray = c.get(
                 CameraCharacteristics.SENSOR_INFO_PRE_CORRECTION_ACTIVE_ARRAY_SIZE);
+            Rect activeArray = c.get(
+                CameraCharacteristics.SENSOR_INFO_ACTIVE_ARRAY_SIZE);
+
+            // Verify pre-correction array encloses active array
+            mCollector.expectTrue("preCorrectionArray [" + precorrectionArray.left + ", " +
+                    precorrectionArray.top + ", " + precorrectionArray.right + ", " +
+                    precorrectionArray.bottom + "] does not enclose activeArray[" +
+                    activeArray.left + ", " + activeArray.top + ", " + activeArray.right +
+                    ", " + activeArray.bottom,
+                    precorrectionArray.contains(activeArray.left, activeArray.top) &&
+                    precorrectionArray.contains(activeArray.right-1, activeArray.bottom-1));
+
+            // Verify pixel array encloses pre-correction array
+            mCollector.expectTrue("preCorrectionArray [" + precorrectionArray.left + ", " +
+                    precorrectionArray.top + ", " + precorrectionArray.right + ", " +
+                    precorrectionArray.bottom + "] isn't enclosed by pixelArray[" +
+                    pixelArraySize.getWidth() + ", " + pixelArraySize.getHeight() + "]",
+                    precorrectionArray.left >= 0 &&
+                    precorrectionArray.left < pixelArraySize.getWidth() &&
+                    precorrectionArray.right > 0 &&
+                    precorrectionArray.right <= pixelArraySize.getWidth() &&
+                    precorrectionArray.top >= 0 &&
+                    precorrectionArray.top < pixelArraySize.getHeight() &&
+                    precorrectionArray.bottom > 0 &&
+                    precorrectionArray.bottom <= pixelArraySize.getHeight());
 
             if (supportDepth) {
                 mCollector.expectTrue("Supports DEPTH_OUTPUT but does not support DEPTH16",

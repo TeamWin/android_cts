@@ -2476,6 +2476,12 @@ public class CameraDeviceTest extends Camera2AndroidTestCase {
                 // Skip unknown templates here
         }
 
+        // Check distortion correction mode
+        if (mStaticInfo.isDistortionCorrectionSupported()) {
+            mCollector.expectKeyValueNotEquals(request, DISTORTION_CORRECTION_MODE,
+                    CaptureRequest.DISTORTION_CORRECTION_MODE_OFF);
+        }
+
         // TODO: use the list of keys from CameraCharacteristics to avoid expecting
         //       keys which are not available by this CameraDevice.
     }
