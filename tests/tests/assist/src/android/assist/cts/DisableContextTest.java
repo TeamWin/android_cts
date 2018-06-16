@@ -49,8 +49,8 @@ public class DisableContextTest extends AssistTestBase {
     }
 
     public void testContextAndScreenshotOff() throws Exception {
-        if (mActivityManager.isLowRamDevice()) {
-            Log.d(TAG, "Not running assist tests on low-RAM device.");
+        if (!mContext.getPackageManager().hasSystemFeature(FEATURE_VOICE_RECOGNIZERS)) {
+            Log.d(TAG, "Not running assist tests - voice_recognizers feature is not supported");
             return;
         }
         // Both settings off
