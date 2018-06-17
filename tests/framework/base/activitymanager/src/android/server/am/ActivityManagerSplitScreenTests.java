@@ -547,6 +547,7 @@ public class ActivityManagerSplitScreenTests extends ActivityManagerTestBase {
 
     @Test
     @Presubmit
+    @FlakyTest(bugId = 110276714)
     public void testResizeDockedStack() throws Exception {
         launchActivitiesInSplitScreen(
                 getLaunchActivityBuilder().setTargetActivity(DOCKED_ACTIVITY),
