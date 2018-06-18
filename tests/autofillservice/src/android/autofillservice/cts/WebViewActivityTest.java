@@ -138,14 +138,6 @@ public class WebViewActivityTest
         mUiBot.assertNoDatasets();
         callback.assertUiHiddenEvent(myWebView, passwordChildId);
 
-        // Make sure screen was autofilled.
-        assertThat(mActivity.getUsernameInput(mUiBot).getText()).isEqualTo("dude");
-        // TODO: proper way to verify text (which is ..... because it's a password) - ideally it
-        // should call passwordInput.isPassword(), but that's not exposed
-        final String password = mActivity.getPasswordInput(mUiBot).getText();
-        assertThat(password).isNotEqualTo("sweet");
-        assertThat(password).hasLength(5);
-
         // Assert structure passed to service.
         try {
             final ViewNode webViewNode =
@@ -274,14 +266,6 @@ public class WebViewActivityTest
         mUiBot.selectDataset("The Dude");
         myWebView.assertAutofilled();
         callback.assertUiHiddenEvent(myWebView, usernameChildId);
-
-        // Make sure screen was autofilled.
-        assertThat(mActivity.getUsernameInput(mUiBot).getText()).isEqualTo("dude");
-        // TODO: proper way to verify text (which is ..... because it's a password) - ideally it
-        // should call passwordInput.isPassword(), but that's not exposed
-        final String password = mActivity.getPasswordInput(mUiBot).getText();
-        assertThat(password).isNotEqualTo("sweet");
-        assertThat(password).hasLength(5);
 
         // Now trigger save.
         if (INJECT_EVENTS) {
