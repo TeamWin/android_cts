@@ -77,11 +77,11 @@ public class MediaPlayer2TestBase extends ActivityInstrumentationTestCase2<Media
     protected MediaStubActivity mActivity;
 
     protected final Object mEventCbLock = new Object();
-    protected List<MediaPlayer2.MediaPlayer2EventCallback> mEventCallbacks =
-            new ArrayList<MediaPlayer2.MediaPlayer2EventCallback>();
+    protected List<MediaPlayer2.EventCallback> mEventCallbacks =
+            new ArrayList<MediaPlayer2.EventCallback>();
     protected final Object mEventCbLock2 = new Object();
-    protected List<MediaPlayer2.MediaPlayer2EventCallback> mEventCallbacks2 =
-            new ArrayList<MediaPlayer2.MediaPlayer2EventCallback>();
+    protected List<MediaPlayer2.EventCallback> mEventCallbacks2 =
+            new ArrayList<MediaPlayer2.EventCallback>();
 
     // convenience functions to create MediaPlayer2
     protected static MediaPlayer2 createMediaPlayer2(Context context, Uri uri) {
@@ -111,8 +111,8 @@ public class MediaPlayer2TestBase extends ActivityInstrumentationTestCase2<Media
             }
             Monitor onPrepareCalled = new Monitor();
             ExecutorService executor = Executors.newFixedThreadPool(1);
-            MediaPlayer2.MediaPlayer2EventCallback ecb =
-                new MediaPlayer2.MediaPlayer2EventCallback() {
+            MediaPlayer2.EventCallback ecb =
+                new MediaPlayer2.EventCallback() {
                     @Override
                     public void onInfo(MediaPlayer2 mp, DataSourceDesc dsd, int what, int extra) {
                         if (what == MediaPlayer2.MEDIA_INFO_PREPARED) {
@@ -120,10 +120,10 @@ public class MediaPlayer2TestBase extends ActivityInstrumentationTestCase2<Media
                         }
                     }
                 };
-            mp.setMediaPlayer2EventCallback(executor, ecb);
+            mp.setEventCallback(executor, ecb);
             mp.prepare();
             onPrepareCalled.waitForSignal();
-            mp.clearMediaPlayer2EventCallback();
+            mp.clearEventCallback();
             executor.shutdown();
             return mp;
         } catch (IllegalArgumentException ex) {
@@ -166,8 +166,8 @@ public class MediaPlayer2TestBase extends ActivityInstrumentationTestCase2<Media
 
             Monitor onPrepareCalled = new Monitor();
             ExecutorService executor = Executors.newFixedThreadPool(1);
-            MediaPlayer2.MediaPlayer2EventCallback ecb =
-                new MediaPlayer2.MediaPlayer2EventCallback() {
+            MediaPlayer2.EventCallback ecb =
+                new MediaPlayer2.EventCallback() {
                     @Override
                     public void onInfo(MediaPlayer2 mp, DataSourceDesc dsd, int what, int extra) {
                         if (what == MediaPlayer2.MEDIA_INFO_PREPARED) {
@@ -175,10 +175,10 @@ public class MediaPlayer2TestBase extends ActivityInstrumentationTestCase2<Media
                         }
                     }
                 };
-            mp.setMediaPlayer2EventCallback(executor, ecb);
+            mp.setEventCallback(executor, ecb);
             mp.prepare();
             onPrepareCalled.waitForSignal();
-            mp.clearMediaPlayer2EventCallback();
+            mp.clearEventCallback();
             afd.close();
             executor.shutdown();
             return mp;
@@ -242,12 +242,12 @@ public class MediaPlayer2TestBase extends ActivityInstrumentationTestCase2<Media
     }
 
     protected void setUpMP2ECb(MediaPlayer2 mp, Object cbLock,
-            List<MediaPlayer2.MediaPlayer2EventCallback> ecbs) {
-        mp.setMediaPlayer2EventCallback(mExecutor, new MediaPlayer2.MediaPlayer2EventCallback() {
+            List<MediaPlayer2.EventCallback> ecbs) {
+        mp.setEventCallback(mExecutor, new MediaPlayer2.EventCallback() {
             @Override
             public void onVideoSizeChanged(MediaPlayer2 mp, DataSourceDesc dsd, int w, int h) {
                 synchronized (cbLock) {
-                    for (MediaPlayer2.MediaPlayer2EventCallback ecb : ecbs) {
+                    for (MediaPlayer2.EventCallback ecb : ecbs) {
                         ecb.onVideoSizeChanged(mp, dsd, w, h);
                     }
                 }
@@ -256,7 +256,7 @@ public class MediaPlayer2TestBase extends ActivityInstrumentationTestCase2<Media
             @Override
             public void onTimedText(MediaPlayer2 mp, DataSourceDesc dsd, TimedText text) {
                 synchronized (cbLock) {
-                    for (MediaPlayer2.MediaPlayer2EventCallback ecb : ecbs) {
+                    for (MediaPlayer2.EventCallback ecb : ecbs) {
                         ecb.onTimedText(mp, dsd, text);
                     }
                 }
@@ -266,7 +266,7 @@ public class MediaPlayer2TestBase extends ActivityInstrumentationTestCase2<Media
             public void onTimedMetaDataAvailable(MediaPlayer2 mp, DataSourceDesc dsd,
                     TimedMetaData data) {
                 synchronized (cbLock) {
-                    for (MediaPlayer2.MediaPlayer2EventCallback ecb : ecbs) {
+                    for (MediaPlayer2.EventCallback ecb : ecbs) {
                         ecb.onTimedMetaDataAvailable(mp, dsd, data);
                     }
                 }
@@ -275,7 +275,7 @@ public class MediaPlayer2TestBase extends ActivityInstrumentationTestCase2<Media
             @Override
             public void onError(MediaPlayer2 mp, DataSourceDesc dsd, int what, int extra) {
                 synchronized (cbLock) {
-                    for (MediaPlayer2.MediaPlayer2EventCallback ecb : ecbs) {
+                    for (MediaPlayer2.EventCallback ecb : ecbs) {
                         ecb.onError(mp, dsd, what, extra);
                     }
                 }
@@ -284,7 +284,7 @@ public class MediaPlayer2TestBase extends ActivityInstrumentationTestCase2<Media
             @Override
             public void onInfo(MediaPlayer2 mp, DataSourceDesc dsd, int what, int extra) {
                 synchronized (cbLock) {
-                    for (MediaPlayer2.MediaPlayer2EventCallback ecb : ecbs) {
+                    for (MediaPlayer2.EventCallback ecb : ecbs) {
                         ecb.onInfo(mp, dsd, what, extra);
                     }
                 }
@@ -293,7 +293,7 @@ public class MediaPlayer2TestBase extends ActivityInstrumentationTestCase2<Media
             @Override
             public void onCallCompleted(MediaPlayer2 mp, DataSourceDesc dsd, int what, int status) {
                 synchronized (cbLock) {
-                    for (MediaPlayer2.MediaPlayer2EventCallback ecb : ecbs) {
+                    for (MediaPlayer2.EventCallback ecb : ecbs) {
                         ecb.onCallCompleted(mp, dsd, what, status);
                     }
                 }
@@ -303,7 +303,7 @@ public class MediaPlayer2TestBase extends ActivityInstrumentationTestCase2<Media
             public void onMediaTimeChanged(MediaPlayer2 mp, DataSourceDesc dsd,
                     MediaTimestamp timestamp) {
                 synchronized (cbLock) {
-                    for (MediaPlayer2.MediaPlayer2EventCallback ecb : ecbs) {
+                    for (MediaPlayer2.EventCallback ecb : ecbs) {
                         ecb.onMediaTimeChanged(mp, dsd, timestamp);
                     }
                 }
@@ -312,7 +312,7 @@ public class MediaPlayer2TestBase extends ActivityInstrumentationTestCase2<Media
             @Override
             public void onCommandLabelReached(MediaPlayer2 mp, Object label) {
                 synchronized (cbLock) {
-                    for (MediaPlayer2.MediaPlayer2EventCallback ecb : ecbs) {
+                    for (MediaPlayer2.EventCallback ecb : ecbs) {
                         ecb.onCommandLabelReached(mp, label);
                     }
                 }
@@ -462,7 +462,7 @@ public class MediaPlayer2TestBase extends ActivityInstrumentationTestCase2<Media
         mPlayer.setScreenOnWhilePlaying(true);
 
         synchronized (mEventCbLock) {
-            mEventCallbacks.add(new MediaPlayer2.MediaPlayer2EventCallback() {
+            mEventCallbacks.add(new MediaPlayer2.EventCallback() {
                 @Override
                 public void onVideoSizeChanged(MediaPlayer2 mp, DataSourceDesc dsd, int w, int h) {
                     if (w == 0 && h == 0) {
@@ -585,7 +585,7 @@ public class MediaPlayer2TestBase extends ActivityInstrumentationTestCase2<Media
 
     protected void setOnErrorListener() {
         synchronized (mEventCbLock) {
-            mEventCallbacks.add(new MediaPlayer2.MediaPlayer2EventCallback() {
+            mEventCallbacks.add(new MediaPlayer2.EventCallback() {
                 @Override
                 public void onError(MediaPlayer2 mp, DataSourceDesc dsd, int what, int extra) {
                     mOnErrorCalled.signal();

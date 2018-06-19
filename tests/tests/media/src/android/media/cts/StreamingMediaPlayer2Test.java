@@ -364,8 +364,8 @@ public class StreamingMediaPlayer2Test extends MediaPlayer2TestBase {
             mPlayer.setScreenOnWhilePlaying(true);
 
             mOnBufferingUpdateCalled.reset();
-            MediaPlayer2.MediaPlayer2EventCallback ecb =
-                new MediaPlayer2.MediaPlayer2EventCallback() {
+            MediaPlayer2.EventCallback ecb =
+                new MediaPlayer2.EventCallback() {
                     @Override
                     public void onError(MediaPlayer2 mp, DataSourceDesc dsd, int what, int extra) {
                         fail("Media player had error " + what + " playing " + name);
@@ -380,7 +380,7 @@ public class StreamingMediaPlayer2Test extends MediaPlayer2TestBase {
                         }
                     }
                 };
-            mPlayer.setMediaPlayer2EventCallback(mExecutor, ecb);
+            mPlayer.setEventCallback(mExecutor, ecb);
 
             assertFalse(mOnBufferingUpdateCalled.isSignalled());
 
@@ -428,8 +428,8 @@ public class StreamingMediaPlayer2Test extends MediaPlayer2TestBase {
 
             mOnBufferingUpdateCalled.reset();
 
-            MediaPlayer2.MediaPlayer2EventCallback ecb =
-                new MediaPlayer2.MediaPlayer2EventCallback() {
+            MediaPlayer2.EventCallback ecb =
+                new MediaPlayer2.EventCallback() {
                     @Override
                     public void onError(MediaPlayer2 mp, DataSourceDesc dsd, int what, int extra) {
                         mOnErrorCalled.signal();
@@ -444,7 +444,7 @@ public class StreamingMediaPlayer2Test extends MediaPlayer2TestBase {
                         }
                     }
                 };
-            mPlayer.setMediaPlayer2EventCallback(mExecutor, ecb);
+            mPlayer.setEventCallback(mExecutor, ecb);
 
             assertFalse(mOnBufferingUpdateCalled.isSignalled());
             try {
@@ -471,8 +471,8 @@ public class StreamingMediaPlayer2Test extends MediaPlayer2TestBase {
             }
 
             Monitor onSetBufferingParamsCalled = new Monitor();
-            MediaPlayer2.MediaPlayer2EventCallback ecb =
-                new MediaPlayer2.MediaPlayer2EventCallback() {
+            MediaPlayer2.EventCallback ecb =
+                new MediaPlayer2.EventCallback() {
                     @Override
                     public void onError(MediaPlayer2 mp, DataSourceDesc dsd, int what, int extra) {
                         fail("Media player had error " + what + " playing " + name);
@@ -492,7 +492,7 @@ public class StreamingMediaPlayer2Test extends MediaPlayer2TestBase {
                         }
                     }
                 };
-            mPlayer.setMediaPlayer2EventCallback(mExecutor, ecb);
+            mPlayer.setEventCallback(mExecutor, ecb);
 
             // getBufferingParams should be called after setDataSource.
             try {
@@ -602,8 +602,8 @@ public class StreamingMediaPlayer2Test extends MediaPlayer2TestBase {
             mPlayer.setWakeMode(mContext, PowerManager.PARTIAL_WAKE_LOCK);
 
             final Object completion = new Object();
-            MediaPlayer2.MediaPlayer2EventCallback ecb =
-                new MediaPlayer2.MediaPlayer2EventCallback() {
+            MediaPlayer2.EventCallback ecb =
+                new MediaPlayer2.EventCallback() {
                     int run;
                     @Override
                     public void onInfo(MediaPlayer2 mp, DataSourceDesc dsd, int what, int extra) {
@@ -662,7 +662,7 @@ public class StreamingMediaPlayer2Test extends MediaPlayer2TestBase {
                     }
                 }
             };
-            mPlayer.setMediaPlayer2EventCallback(mExecutor, ecb);
+            mPlayer.setEventCallback(mExecutor, ecb);
 
             mPlayer.prepare();
             mOnPrepareCalled.waitForSignal();
@@ -757,8 +757,8 @@ public class StreamingMediaPlayer2Test extends MediaPlayer2TestBase {
                     .setDataSource(mContext, uri)
                     .build());
 
-            MediaPlayer2.MediaPlayer2EventCallback ecb =
-                new MediaPlayer2.MediaPlayer2EventCallback() {
+            MediaPlayer2.EventCallback ecb =
+                new MediaPlayer2.EventCallback() {
                     @Override
                     public void onInfo(MediaPlayer2 mp, DataSourceDesc dsd, int what, int extra) {
                         if (what == MediaPlayer2.MEDIA_INFO_PREPARED) {
@@ -766,7 +766,7 @@ public class StreamingMediaPlayer2Test extends MediaPlayer2TestBase {
                         }
                     }
                 };
-            mp.setMediaPlayer2EventCallback(mExecutor, ecb);
+            mp.setEventCallback(mExecutor, ecb);
 
             mp.prepare();
             Thread.sleep(1000);
