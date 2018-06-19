@@ -67,11 +67,6 @@ import org.junit.Test;
  */
 public class ActivityManagerActivityVisibilityTests extends ActivityManagerTestBase {
 
-    // TODO(b/70247058): Use {@link Context#sendBroadcast(Intent).
-    // Shell command to finish {@link #BROADCAST_RECEIVER_ACTIVITY}.
-    private static final String FINISH_ACTIVITY_BROADCAST = "am broadcast -a "
-            + ACTION_TRIGGER_BROADCAST + " --ez " + EXTRA_FINISH_BROADCAST + " true";
-
     @Rule
     public final DisableScreenDozeRule mDisableScreenDozeRule = new DisableScreenDozeRule();
 

@@ -28,7 +28,6 @@ import static android.server.am.ComponentNameUtils.getWindowName;
 import static android.server.am.Components.BROADCAST_RECEIVER_ACTIVITY;
 import static android.server.am.Components.BroadcastReceiverActivity.ACTION_TRIGGER_BROADCAST;
 import static android.server.am.Components.BroadcastReceiverActivity.EXTRA_BROADCAST_ORIENTATION;
-import static android.server.am.Components.BroadcastReceiverActivity.EXTRA_FINISH_BROADCAST;
 import static android.server.am.Components.BroadcastReceiverActivity.EXTRA_MOVE_BROADCAST_TO_BACK;
 import static android.server.am.Components.DIALOG_WHEN_LARGE_ACTIVITY;
 import static android.server.am.Components.LANDSCAPE_ORIENTATION_ACTIVITY;
@@ -54,6 +53,7 @@ import static org.junit.Assert.assertNotEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.fail;
+import static org.junit.Assume.assumeFalse;
 import static org.junit.Assume.assumeTrue;
 
 import android.content.ComponentName;
@@ -73,9 +73,6 @@ import java.util.List;
 public class ActivityManagerAppConfigurationTests extends ActivityManagerTestBase {
 
     // TODO(b/70247058): Use {@link Context#sendBroadcast(Intent).
-    // Shell command to finish {@link #BROADCAST_RECEIVER_ACTIVITY}.
-    private static final String FINISH_ACTIVITY_BROADCAST = "am broadcast -a "
-            + ACTION_TRIGGER_BROADCAST + " --ez " + EXTRA_FINISH_BROADCAST + " true";
     // Shell command to move {@link #BROADCAST_RECEIVER_ACTIVITY} task to back.
     private static final String MOVE_TASK_TO_BACK_BROADCAST = "am broadcast -a "
             + ACTION_TRIGGER_BROADCAST + " --ez " + EXTRA_MOVE_BROADCAST_TO_BACK + " true";
@@ -643,6 +640,9 @@ public class ActivityManagerAppConfigurationTests extends ActivityManagerTestBas
     @Test
     public void testFixedOrientationWhenRotating() throws Exception {
         assumeTrue("Skipping test: no rotation support", supportsRotation());
+        // TODO(b/110533226): Fix test on devices with display cutout
+        assumeFalse("Skipping test: display cutout present, can't predict exact lifecycle",
+                hasDisplayCutout());
 
         // Start portrait-fixed activity
         LogSeparator logSeparator = separateLogs();

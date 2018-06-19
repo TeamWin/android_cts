@@ -83,9 +83,6 @@ import java.util.regex.Pattern;
 public class ActivityManagerMultiDisplayTests extends ActivityManagerDisplayTestBase {
 
     // TODO(b/70247058): Use {@link Context#sendBroadcast(Intent).
-    // Shell command to finish {@link #BROADCAST_RECEIVER_ACTIVITY}.
-    private static final String FINISH_ACTIVITY_BROADCAST = "am broadcast -a "
-            + ACTION_TRIGGER_BROADCAST + " --ez " + EXTRA_FINISH_BROADCAST + " true";
     // Shell command to launch activity via {@link #BROADCAST_RECEIVER_ACTIVITY}.
     private static final String LAUNCH_ACTIVITY_BROADCAST = "am broadcast -a "
             + ACTION_TRIGGER_BROADCAST + " --ez " + KEY_LAUNCH_ACTIVITY + " true --ez "
