@@ -932,6 +932,10 @@ void AHardwareBufferGLTest::SetUpTexture(const AHardwareBuffer_Desc& desc, int u
             glEGLImageTargetTexture2DOES(mTexTarget, static_cast<GLeglImageOES>(mEGLImage));
         }
     }
+    // If the texture does not have mipmaps, set the max level accordingly.
+    if (!(desc.usage & AHARDWAREBUFFER_USAGE_GPU_MIPMAP_COMPLETE)) {
+        glTexParameteri(mTexTarget, GL_TEXTURE_MAX_LEVEL, 0);
+    }
     ASSERT_EQ(GLenum{GL_NO_ERROR}, glGetError());
 }
 
