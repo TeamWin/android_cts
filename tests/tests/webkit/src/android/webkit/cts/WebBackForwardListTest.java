@@ -108,7 +108,4 @@ public class WebBackForwardListTest extends ActivityInstrumentationTestCase2<Web
         }.run();
     }
 
-    public void testClone() {
-    }
-
 }
