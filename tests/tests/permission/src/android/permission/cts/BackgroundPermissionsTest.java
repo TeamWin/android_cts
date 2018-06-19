@@ -23,6 +23,7 @@ import static org.junit.Assert.assertNotEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 
+import android.app.AppOpsManager;
 import android.content.pm.PackageInfo;
 import android.content.pm.PackageManager;
 import android.content.pm.PermissionInfo;
@@ -68,6 +69,9 @@ public class BackgroundPermissionsTest {
 
                 // foreground permissions must be in a group
                 assertNotNull(permission.group);
+
+                // All foreground permissions need an app op
+                assertNotNull(AppOpsManager.permissionToOp(permission.name));
 
                 // the background permission must exist
                 assertTrue(potentialBackgroundPermissionsToGroup
