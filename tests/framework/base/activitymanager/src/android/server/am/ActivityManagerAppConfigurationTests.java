@@ -321,6 +321,7 @@ public class ActivityManagerAppConfigurationTests extends ActivityManagerTestBas
      */
     @Presubmit
     @Test
+    @FlakyTest(bugId = 110276714)
     public void testDialogWhenLargeSplitSmall() {
         assumeTrue("Skipping test: no multi-window support", supportsSplitScreenMultiWindow());
 

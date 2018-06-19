@@ -48,6 +48,7 @@ import static org.junit.Assume.assumeTrue;
 
 import android.platform.test.annotations.Presubmit;
 import android.server.am.WindowManagerState.WindowState;
+import android.support.test.filters.FlakyTest;
 
 import org.junit.Before;
 import org.junit.Test;
@@ -94,6 +95,7 @@ public class KeyguardTests extends KeyguardTestBase {
     }
 
     @Test
+    @FlakyTest(bugId = 110276714)
     public void testShowWhenLockedActivity() throws Exception {
         try (final LockScreenSession lockScreenSession = new LockScreenSession()) {
             launchActivity(SHOW_WHEN_LOCKED_ACTIVITY);

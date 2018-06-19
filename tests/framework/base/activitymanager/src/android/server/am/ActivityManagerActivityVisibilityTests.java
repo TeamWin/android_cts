@@ -57,6 +57,7 @@ import static org.junit.Assert.assertTrue;
 import static org.junit.Assume.assumeTrue;
 
 import android.platform.test.annotations.Presubmit;
+import android.support.test.filters.FlakyTest;
 
 import org.junit.Rule;
 import org.junit.Test;
@@ -77,6 +78,7 @@ public class ActivityManagerActivityVisibilityTests extends ActivityManagerTestB
 
     @Presubmit
     @Test
+    @FlakyTest(bugId = 110276714)
     public void testTranslucentActivityOnTopOfPinnedStack() throws Exception {
         if (!supportsPip()) {
             return;
@@ -180,6 +182,7 @@ public class ActivityManagerActivityVisibilityTests extends ActivityManagerTestB
 
     @Presubmit
     @Test
+    @FlakyTest(bugId = 110276714)
     public void testTurnScreenOnActivity() throws Exception {
         try (final LockScreenSession lockScreenSession = new LockScreenSession()) {
             lockScreenSession.sleepDevice();
@@ -192,6 +195,7 @@ public class ActivityManagerActivityVisibilityTests extends ActivityManagerTestB
 
     @Presubmit
     @Test
+    @FlakyTest(bugId = 110276714)
     public void testFinishActivityInNonFocusedStack() throws Exception {
         if (!supportsSplitScreenMultiWindow()) {
             // Skipping test: no multi-window support
