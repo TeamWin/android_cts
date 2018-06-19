@@ -3,6 +3,7 @@ package com.android.cts.devicepolicy;
 import com.android.tradefed.device.DeviceNotAvailableException;
 
 public abstract class DeviceAndProfileOwnerHostSideTransferTest extends BaseDevicePolicyTest {
+
     protected static final String TRANSFER_OWNER_OUTGOING_PKG =
             "com.android.cts.transferowneroutgoing";
     protected static final String TRANSFER_OWNER_OUTGOING_APK = "CtsTransferOwnerOutgoingApp.apk";
@@ -191,9 +192,20 @@ public abstract class DeviceAndProfileOwnerHostSideTransferTest extends BaseDevi
                 mPrimaryUserId);
     }
 
+    public void testTargetDeviceAdminServiceBound() throws Exception {
+        if (!mHasFeature) {
+            return;
+        }
+        runDeviceTestsAsUser(TRANSFER_OWNER_OUTGOING_PKG,
+            mOutgoingTestClassName,
+            "testTransferOwnership", mUserId);
+        runDeviceTestsAsUser(TRANSFER_OWNER_INCOMING_PKG,
+            mIncomingTestClassName,
+            "testAdminServiceIsBound", mUserId);
+    }
+
     /* TODO: Add tests for:
-    * 1. startServiceForOwner
-    * 2. passwordOwner
+    * 1. passwordOwner
     *
     * */
 }
