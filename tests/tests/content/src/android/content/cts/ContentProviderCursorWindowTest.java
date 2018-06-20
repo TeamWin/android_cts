@@ -24,8 +24,6 @@ import android.platform.test.annotations.SecurityTest;
 import android.test.AndroidTestCase;
 import android.util.Log;
 
-import java.io.IOException;
-
 /**
  * Test {@link CursorWindowContentProvider} .
  */
