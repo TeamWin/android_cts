@@ -160,11 +160,7 @@ public class ManagedProfileTest extends BaseDevicePolicyTest {
             return;
         }
         assertTrue(listUsers().contains(mProfileUserId));
-        runDeviceTestsAsUser(
-                MANAGED_PROFILE_PKG,
-                ".WipeDataTest",
-                "testWipeDataWithReason",
-                mProfileUserId);
+        sendWipeProfileBroadcast("com.android.cts.managedprofile.WIPE_DATA_WITH_REASON");
         // Note: the managed profile is removed by this test, which will make removeUserCommand in
         // tearDown() to complain, but that should be OK since its result is not asserted.
         assertUserGetsRemoved(mProfileUserId);
@@ -186,12 +182,17 @@ public class ManagedProfileTest extends BaseDevicePolicyTest {
             return;
         }
         assertTrue(listUsers().contains(mProfileUserId));
-        runDeviceTestsAsUser(
-                MANAGED_PROFILE_PKG, ".WipeDataTest",
-                "testWipeData", mProfileUserId);
+        sendWipeProfileBroadcast("com.android.cts.managedprofile.WIPE_DATA");
         // Note: the managed profile is removed by this test, which will make removeUserCommand in
         // tearDown() to complain, but that should be OK since its result is not asserted.
         assertUserGetsRemoved(mProfileUserId);
+    }
+
+    private void sendWipeProfileBroadcast(String action) throws Exception {
+        final String cmd = "am broadcast --receiver-foreground --user " + mProfileUserId
+            + " -a " + action
+            + " com.android.cts.managedprofile/.WipeDataReceiver";
+        getDevice().executeShellCommand(cmd);
     }
 
     public void testLockNowWithKeyEviction() throws Exception {
