@@ -224,11 +224,6 @@ class LinkerNamespacesHelper {
 
     private static boolean loadSharedLibrary(String libFilePath) {
         String baseName = new File(libFilePath).getName();
-        if (baseName.equals(WEBVIEW_PLAT_SUPPORT_LIB)) {
-          // Don't try to load this library from Java. Otherwise, the lib is initialized via
-          // JNI_OnLoad and it fails since WebView is not loaded in this test process.
-          return true;
-        }
         try {
             System.load(libFilePath);
             // Also ensure that the lib is also accessible via its libname.

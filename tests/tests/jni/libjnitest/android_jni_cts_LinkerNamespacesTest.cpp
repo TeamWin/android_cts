@@ -48,6 +48,8 @@ static const std::string kVendorLibraryPath = "/vendor/lib";
 static const std::string kProductLibraryPath = "/product/lib";
 #endif
 
+static const std::string kWebViewPlatSupportLib = "libwebviewchromium_plat_support.so";
+
 // This is not the complete list - just a small subset
 // of the libraries that should reside in /system/lib
 // for app-compatibility reasons.
@@ -115,6 +117,12 @@ static std::string load_library(JNIEnv* env, jclass clazz, const std::string& pa
     dlclose(handle);
   } else {
     error = dlerror();
+  }
+
+  if (android::base::EndsWith(path, '/' + kWebViewPlatSupportLib)) {
+    // Don't try to load this library from Java. Otherwise, the lib is initialized via
+    // JNI_OnLoad and it fails since WebView is not loaded in this test process.
+    return error;
   }
 
   // try to load the same lib using System.load() in Java to see if it gives consistent
