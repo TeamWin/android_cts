@@ -56,7 +56,7 @@ public class LightBarTests extends LightBarTestBase {
      * Color may be slightly off-spec when resources are resized for lower densities. Use this error
      * margin to accommodate for that when comparing colors.
      */
-    private static final int COLOR_COMPONENT_ERROR_MARGIN = 10;
+    private static final int COLOR_COMPONENT_ERROR_MARGIN = 20;
 
     private final String NOTIFICATION_TAG = "TEST_TAG";
     private final String NOTIFICATION_CHANNEL_ID = "test_channel";
