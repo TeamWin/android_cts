@@ -22,7 +22,7 @@ import its.objects
 import numpy as np
 
 FMT_ATOL = 0.01  # Absolute tolerance on format ratio
-AR_CHECKED = ["4:3", "16:9"]  # Aspect ratios checked
+AR_CHECKED = ["4:3", "16:9", "18:9"]  # Aspect ratios checked
 FOV_PERCENT_RTOL = 0.15  # Relative tolerance on circle FoV % to expected
 LARGE_SIZE = 2000   # Define the size of a large image
 NAME = os.path.basename(__file__).split(".")[0]
@@ -83,11 +83,14 @@ def aspect_ratio_scale_factors(ref_ar_string, props):
     width_max = 0
     for ar_string in AR_CHECKED:
         match_ar = [float(x) for x in ar_string.split(":")]
-        f = its.objects.get_largest_yuv_format(props, match_ar=match_ar)
-        if f["height"] > height_max:
-            height_max = f["height"]
-        if f["width"] > width_max:
-            width_max = f["width"]
+        try:
+            f = its.objects.get_largest_yuv_format(props, match_ar=match_ar)
+            if f["height"] > height_max:
+                height_max = f["height"]
+            if f["width"] > width_max:
+                width_max = f["width"]
+        except IndexError:
+            continue
     sensor_ar = float(width_max) / height_max
 
     # apply scaling
@@ -122,20 +125,22 @@ def find_yuv_fov_reference(cam, req, props):
         ref_fov:    dict with [fmt, % coverage, w, h]
     """
     ref_fov = {}
-    pixels = []
-    fmt_list = []
+    fmt_dict = {}
+
     # find number of pixels in different formats
     for ar in AR_CHECKED:
         match_ar = [float(x) for x in ar.split(":")]
-        f = its.objects.get_largest_yuv_format(props, match_ar=match_ar)
-        pixels.append(f["height"] * f["width"])
-        fmt_list.append(f)
+        try:
+            f = its.objects.get_largest_yuv_format(props, match_ar=match_ar)
+            fmt_dict[f["height"]*f["width"]] = {"fmt": f, "ar": ar}
+        except IndexError:
+            continue
 
     # use image with largest coverage as reference
-    ar_max_pixels = np.argmax(pixels)
+    ar_max_pixels = max(fmt_dict, key=int)
 
     # capture and determine circle area in image
-    cap = cam.do_capture(req, fmt_list[ar_max_pixels])
+    cap = cam.do_capture(req, fmt_dict[ar_max_pixels]["fmt"])
     w = cap["width"]
     h = cap["height"]
     img = its.image.convert_capture_to_rgb_image(cap, props=props)
@@ -143,7 +148,7 @@ def find_yuv_fov_reference(cam, req, props):
     img_name = "%s_%s_w%d_h%d.png" % (NAME, "yuv", w, h)
     _, _, circle_size = measure_aspect_ratio(img, False, img_name, True)
     fov_percent = calc_circle_image_ratio(circle_size[1], circle_size[0], w, h)
-    ref_fov["fmt"] = AR_CHECKED[ar_max_pixels]
+    ref_fov["fmt"] = fmt_dict[ar_max_pixels]["ar"]
     ref_fov["percent"] = fov_percent
     ref_fov["w"] = w
     ref_fov["h"] = h
