@@ -15,7 +15,9 @@
  */
 package android.media.cts;
 
+import android.app.ActivityManager;
 import android.content.pm.PackageManager;
+import android.content.Context;
 import android.media.CamcorderProfile;
 import android.media.MediaCodecInfo.CodecCapabilities;
 import android.media.MediaCodecList;
@@ -512,6 +514,11 @@ public class ClearKeySystemTest extends MediaPlayerTestBase {
     }
 
     public void testClearKeyPlaybackMpeg2ts() throws Exception {
+		if (isLowRam() && !isTV()) {
+            Log.d(TAG, "Skipping testClearKeyPlaybackMpeg2ts.");
+            return;
+        }
+
         testClearKeyPlayback(
             CLEARKEY_SCHEME_UUID,
             MIME_VIDEO_AVC, new String[0],
@@ -529,5 +536,14 @@ public class ClearKeySystemTest extends MediaPlayerTestBase {
             MPEG2TS_CLEAR_URL, false,
             MPEG2TS_CLEAR_URL, false,
             VIDEO_WIDTH_MPEG2TS, VIDEO_HEIGHT_MPEG2TS, false);
+    }
+
+    private boolean isTV() {
+        return mContext.getPackageManager().hasSystemFeature(PackageManager.FEATURE_LEANBACK_ONLY);
+    }
+
+    private boolean isLowRam() {
+        ActivityManager am = (ActivityManager) mContext.getSystemService(Context.ACTIVITY_SERVICE);
+        return am.isLowRamDevice();
     }
 }
