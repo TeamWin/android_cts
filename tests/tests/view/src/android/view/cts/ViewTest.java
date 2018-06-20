@@ -1885,14 +1885,14 @@ public class ViewTest {
         final MockView view = (MockView) mActivity.findViewById(R.id.mock_view);
         assertTrue(view.hasCalledOnMeasure());
         assertEquals(100, view.getMeasuredWidth());
-        assertEquals(200, view.getMeasuredHeight());
+        assertEquals(100, view.getMeasuredHeight());
 
         view.reset();
         mActivityRule.runOnUiThread(view::requestLayout);
         mInstrumentation.waitForIdleSync();
         assertTrue(view.hasCalledOnMeasure());
         assertEquals(100, view.getMeasuredWidth());
-        assertEquals(200, view.getMeasuredHeight());
+        assertEquals(100, view.getMeasuredHeight());
 
         view.reset();
         final LinearLayout.LayoutParams layoutParams = new LinearLayout.LayoutParams(200, 100);
@@ -2589,7 +2589,7 @@ public class ViewTest {
         assertEquals(0, rect.left);
         assertEquals(0, rect.top);
         assertEquals(100, rect.right);
-        assertEquals(200, rect.bottom);
+        assertEquals(100, rect.bottom);
 
         final LinearLayout.LayoutParams layoutParams1 = new LinearLayout.LayoutParams(0, 300);
         mActivityRule.runOnUiThread(() -> view.setLayoutParams(layoutParams1));
