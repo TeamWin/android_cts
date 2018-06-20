@@ -478,7 +478,9 @@ public abstract class BasePermissionsTest {
                     return result;
                 }
                 try {
-                    while (child.getActionList().contains(AccessibilityAction.ACTION_SCROLL_FORWARD)) {
+                    while (child.getActionList().contains(
+                            AccessibilityAction.ACTION_SCROLL_FORWARD) || child.getActionList()
+                            .contains(AccessibilityAction.ACTION_SCROLL_DOWN)) {
                         scrollForward(child);
                         result = getNodeTimed(() -> findByText(child, text), false);
                         if (result != null) {
