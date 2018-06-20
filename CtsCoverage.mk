@@ -94,7 +94,7 @@ cts-combined-coverage : $(cts-combined-coverage-report)
 .PHONY: cts-combined-xml-coverage
 cts-combined-xml-coverage : $(cts-combined-xml-coverage-report)
 
-.PHONY: cts-api-coverage
+.PHONY: cts-coverage-report-all cts-api-coverage
 cts-coverage-report-all: cts-test-coverage cts-verifier-coverage cts-combined-coverage cts-combined-xml-coverage
 
 # Put the test coverage report in the dist dir if "cts-api-coverage" is among the build goals.
