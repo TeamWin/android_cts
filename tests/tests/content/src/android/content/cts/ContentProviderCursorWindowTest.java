@@ -17,13 +17,12 @@
 package android.content.cts;
 
 import android.database.Cursor;
+import android.database.CursorWindowAllocationException;
 import android.database.sqlite.SQLiteException;
 import android.net.Uri;
 import android.platform.test.annotations.SecurityTest;
 import android.test.AndroidTestCase;
 import android.util.Log;
-
-import java.io.IOException;
 
 /**
  * Test {@link CursorWindowContentProvider} .
@@ -32,11 +31,20 @@ import java.io.IOException;
 public class ContentProviderCursorWindowTest extends AndroidTestCase {
     private static final String TAG = "ContentProviderCursorWindowTest";
 
-    public void testQuery() throws IOException {
-        Cursor cursor = getContext().getContentResolver().query(
-                Uri.parse("content://cursorwindow.provider/hello"),
-                null, null, null, null
-        );
+    public void testQuery() {
+        // First check if the system has a patch for enforcing protected Parcel data
+        Cursor cursor;
+        try {
+            cursor = getContext().getContentResolver().query(
+                    Uri.parse("content://cursorwindow.provider/hello"),
+                    null, null, null, null);
+        } catch (CursorWindowAllocationException expected) {
+            Log.i(TAG, "Expected exception: " + expected);
+            return;
+        }
+
+        // If the system has no patch for protected Parcel data,
+        // it should still fail while reading from the cursor
         try {
             cursor.moveToFirst();
 
