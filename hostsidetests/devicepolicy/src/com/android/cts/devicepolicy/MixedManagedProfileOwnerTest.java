@@ -22,7 +22,7 @@ package com.android.cts.devicepolicy;
  */
 public class MixedManagedProfileOwnerTest extends DeviceAndProfileOwnerTest {
 
-    protected static final String CLEAR_PROFILE_OWNER_NEGATIVE_TEST_CLASS =
+    private static final String CLEAR_PROFILE_OWNER_NEGATIVE_TEST_CLASS =
             DEVICE_ADMIN_PKG + ".ClearProfileOwnerNegativeTest";
 
     private int mParentUserId = -1;
@@ -169,5 +169,12 @@ public class MixedManagedProfileOwnerTest extends DeviceAndProfileOwnerTest {
     @Override
     public void testSetSystemSetting() {
         // Managed profile owner cannot set currently whitelisted system settings.
+    }
+
+    public void testCannotClearProfileOwner() throws Exception {
+        if (!mHasFeature) {
+            return;
+        }
+        runDeviceTestsAsUser(DEVICE_ADMIN_PKG, CLEAR_PROFILE_OWNER_NEGATIVE_TEST_CLASS, mUserId);
     }
 }
