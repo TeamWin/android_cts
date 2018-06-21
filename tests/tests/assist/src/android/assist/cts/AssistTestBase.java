@@ -48,6 +48,7 @@ import java.util.concurrent.TimeUnit;
 public class AssistTestBase extends ActivityInstrumentationTestCase2<TestStartActivity> {
     private static final String TAG = "AssistTestBase";
 
+    protected static final String FEATURE_VOICE_RECOGNIZERS = "android.software.voice_recognizers";
     protected ActivityManager mActivityManager;
     protected TestStartActivity mTestActivity;
     protected AssistContent mAssistContent;
