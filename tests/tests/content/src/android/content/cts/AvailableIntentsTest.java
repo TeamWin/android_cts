@@ -379,4 +379,8 @@ public class AvailableIntentsTest extends AndroidTestCase {
             assertCanBeHandled(new Intent(Settings.ACTION_NFC_PAYMENT_SETTINGS));
         }
     }
+
+    public void testPowerUsageSummarySettings() {
+        assertCanBeHandled(new Intent(Intent.ACTION_POWER_USAGE_SUMMARY));
+    }
 }
