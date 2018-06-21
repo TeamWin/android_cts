@@ -194,6 +194,13 @@ public class CameraTest extends ActivityInstrumentationTestCase2<CameraCtsActivi
      * Terminates the message looper thread.
      */
     private void terminateMessageLooper() throws Exception {
+        terminateMessageLooper(false);
+    }
+
+    /*
+     * Terminates the message looper thread, optionally allowing evict error
+     */
+    private void terminateMessageLooper(boolean allowEvict) throws Exception {
         mLooper.quit();
         // Looper.quit() is asynchronous. The looper may still has some
         // preview callbacks in the queue after quit is called. The preview
@@ -203,7 +210,13 @@ public class CameraTest extends ActivityInstrumentationTestCase2<CameraCtsActivi
         mLooper.getThread().join();
         mCamera.release();
         mCamera = null;
-        assertEquals("Got camera error callback.", NO_ERROR, mCameraErrorCode);
+        if (allowEvict) {
+            assertTrue("Got unexpected camera error callback.",
+                    (NO_ERROR == mCameraErrorCode ||
+                    Camera.CAMERA_ERROR_EVICTED == mCameraErrorCode));
+        } else {
+            assertEquals("Got camera error callback.", NO_ERROR, mCameraErrorCode);
+        }
     }
 
     // Align 'x' to 'to', which should be a power of 2
@@ -2501,7 +2514,7 @@ public class CameraTest extends ActivityInstrumentationTestCase2<CameraCtsActivi
         mCamera.stopPreview();
 
         firstLooper.quit();
-        terminateMessageLooper();
+        terminateMessageLooper(true/*allowEvict*/);
     }
 
     // This callback just signals on the condition variable, making it useful for checking that
