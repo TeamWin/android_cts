@@ -16,6 +16,8 @@
 
 package android.backup.cts;
 
+import static com.android.compatibility.common.util.BackupUtils.LOCAL_TRANSPORT_TOKEN;
+
 /**
  * Verifies that key methods are called in expected order during backup / restore.
  */
@@ -37,7 +39,7 @@ public class FullBackupLifecycleTest extends BaseBackupCtsTest {
         createTestFileOfSize(BACKUP_APP_NAME, LOCAL_TRANSPORT_CONFORMING_FILE_SIZE);
 
         // Request backup and wait for it to complete
-        exec("bmgr backupnow " + BACKUP_APP_NAME);
+        getBackupUtils().backupNowSync(BACKUP_APP_NAME);
 
         waitForLogcat(TIMEOUT_SECONDS,
             backupSeparator,
@@ -48,7 +50,7 @@ public class FullBackupLifecycleTest extends BaseBackupCtsTest {
         String restoreSeparator = markLogcat();
 
         // Now request restore and wait for it to complete
-        exec("bmgr restore " + BACKUP_APP_NAME);
+        getBackupUtils().restoreSync(LOCAL_TRANSPORT_TOKEN, BACKUP_APP_NAME);
 
         waitForLogcat(TIMEOUT_SECONDS,
             restoreSeparator,

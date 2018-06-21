@@ -41,7 +41,7 @@ public class KeyValueQuotaTest extends BaseBackupCtsTest {
         createTestFileOfSize(BACKUP_APP_NAME, LOCAL_TRANSPORT_EXCEEDING_FILE_SIZE);
 
         // Request backup and wait for quota exceeded event in logcat
-        exec("bmgr backupnow " + BACKUP_APP_NAME);
+        getBackupUtils().backupNowSync(BACKUP_APP_NAME);
         waitForLogcat(TIMEOUT_SECONDS, separator,
             "Quota exceeded!");
     }
@@ -54,7 +54,7 @@ public class KeyValueQuotaTest extends BaseBackupCtsTest {
         createTestFileOfSize(BACKUP_APP_NAME, 1);
 
         String separator = markLogcat();
-        exec("bmgr backupnow " + BACKUP_APP_NAME);
+        getBackupUtils().backupNowSync(BACKUP_APP_NAME);
         waitForLogcat(TIMEOUT_SECONDS, separator,
             "quota is " + LOCAL_TRANSPORT_BACKUP_QUOTA);
     }

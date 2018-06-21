@@ -136,7 +136,7 @@ public class SuccessNotificationHostSideTest extends BaseBackupHostSideTest {
 
         checkDeviceTest(KEY_VALUE_BACKUP_APP_PACKAGE, KEY_VALUE_BACKUP_DEVICE_TEST_NAME,
                 "saveSharedPreferencesAndNotifyBackupManager");
-        backupNowAndAssertSuccess(KEY_VALUE_BACKUP_APP_PACKAGE);
+        getBackupUtils().backupNowAndAssertSuccess(KEY_VALUE_BACKUP_APP_PACKAGE);
 
         checkDeviceTest("verifyBackupSuccessNotificationReceivedForKeyValueApp");
     }
@@ -155,7 +155,7 @@ public class SuccessNotificationHostSideTest extends BaseBackupHostSideTest {
         }
 
         checkDeviceTest(FULL_BACKUP_APP_PACKAGE, FULL_BACKUP_DEVICE_TEST_CLASS_NAME, "createFiles");
-        backupNowAndAssertSuccess(FULL_BACKUP_APP_PACKAGE);
+        getBackupUtils().backupNowAndAssertSuccess(FULL_BACKUP_APP_PACKAGE);
 
         checkDeviceTest("verifyBackupSuccessNotificationReceivedForFullBackupApp");
     }

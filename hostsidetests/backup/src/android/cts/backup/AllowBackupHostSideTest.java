@@ -87,10 +87,7 @@ public class AllowBackupHostSideTest extends BaseBackupHostSideTest {
         // Generate the files that are going to be backed up.
         checkAllowBackupDeviceTest("createFiles");
 
-        // Do a backup
-        String backupnowOutput = backupNow(ALLOWBACKUP_APP_NAME);
-
-        assertBackupIsNotAllowed(ALLOWBACKUP_APP_NAME, backupnowOutput);
+        getBackupUtils().backupNowAndAssertBackupNotAllowed(ALLOWBACKUP_APP_NAME);
 
         assertNull(uninstallPackage(ALLOWBACKUP_APP_NAME));
 
@@ -112,9 +109,7 @@ public class AllowBackupHostSideTest extends BaseBackupHostSideTest {
         checkAllowBackupDeviceTest("createFiles");
 
         // Do a backup
-        String backupnowOutput = backupNow(ALLOWBACKUP_APP_NAME);
-
-        assertBackupIsSuccessful(ALLOWBACKUP_APP_NAME, backupnowOutput);
+        getBackupUtils().backupNowAndAssertSuccess(ALLOWBACKUP_APP_NAME);
 
         assertNull(uninstallPackage(ALLOWBACKUP_APP_NAME));
 
