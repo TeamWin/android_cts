@@ -542,6 +542,14 @@ public class LayerTests extends ActivityTestBase {
             return; // no WebView to run test on
         }
         CountDownLatch hwFence = new CountDownLatch(1);
+        Point[] testPoints = new Point[] {
+            // solid area
+            new Point(0, 0),
+            new Point(0, TEST_HEIGHT - 1),
+            // fade area
+            new Point(0, TEST_HEIGHT - 10),
+            new Point(0, TEST_HEIGHT - 5)
+        };
         createTest()
                 .addLayout(R.layout.test_content_webview, (ViewInitializer) view -> {
                     WebView webview = view.requireViewById(R.id.webview);
@@ -551,16 +559,14 @@ public class LayerTests extends ActivityTestBase {
                     webview.setVerticalScrollBarEnabled(false);
                     webview.setLayerType(View.LAYER_TYPE_HARDWARE, null);
 
+                    // Adjust Y to match the same gradient percentage, regardless of vertical
+                    // fading edge length.
+                    int verticalFadingEdgeLength = webview.getVerticalFadingEdgeLength();
+                    testPoints[2].y = TEST_HEIGHT - verticalFadingEdgeLength * 10 / 42;
+                    testPoints[3].y = TEST_HEIGHT - verticalFadingEdgeLength * 5 / 42;
                 }, true, hwFence)
                 .runWithVerifier(new SamplePointVerifier(
-                        new Point[] {
-                                // solid area
-                                new Point(0, 0),
-                                new Point(0, TEST_HEIGHT - 1),
-                                // fade area
-                                new Point(0, TEST_HEIGHT - 10),
-                                new Point(0, TEST_HEIGHT - 5)
-                        },
+                        testPoints,
                         new int[] {
                                 Color.BLUE,
                                 Color.WHITE,
@@ -576,6 +582,16 @@ public class LayerTests extends ActivityTestBase {
             return; // no WebView to run test on
         }
         CountDownLatch hwFence = new CountDownLatch(1);
+        Point[] testPoints = new Point[] {
+            // solid white area
+            new Point(0, 0),
+            new Point(0, TEST_HEIGHT - 1),
+            // solid blue area
+            new Point(TEST_WIDTH / 2 , 5),
+            // fade area
+            new Point(TEST_WIDTH / 2, TEST_HEIGHT - 10),
+            new Point(TEST_WIDTH / 2, TEST_HEIGHT - 5)
+        };
         createTest()
                 .addLayout(R.layout.circle_clipped_webview, (ViewInitializer) view -> {
                     WebView webview = view.requireViewById(R.id.webview);
@@ -584,19 +600,14 @@ public class LayerTests extends ActivityTestBase {
                     webview.setVerticalFadingEdgeEnabled(true);
                     webview.setVerticalScrollBarEnabled(false);
                     webview.setLayerType(View.LAYER_TYPE_HARDWARE, null);
-
+                    // Adjust Y to match the same gradient percentage, regardless of vertical
+                    // fading edge length.
+                    int verticalFadingEdgeLength = webview.getVerticalFadingEdgeLength();
+                    testPoints[3].y = TEST_HEIGHT - verticalFadingEdgeLength * 10 / 42;
+                    testPoints[4].y = TEST_HEIGHT - verticalFadingEdgeLength * 5 / 42;
                 }, true, hwFence)
                 .runWithVerifier(new SamplePointVerifier(
-                        new Point[] {
-                                // solid white area
-                                new Point(0, 0),
-                                new Point(0, TEST_HEIGHT - 1),
-                                // solid blue area
-                                new Point(TEST_WIDTH / 2 , 5),
-                                // fade area
-                                new Point(TEST_WIDTH / 2, TEST_HEIGHT - 10),
-                                new Point(TEST_WIDTH / 2, TEST_HEIGHT - 5)
-                        },
+                        testPoints,
                         new int[] {
                                 Color.WHITE,
                                 Color.WHITE,
