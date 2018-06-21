@@ -844,6 +844,38 @@ public abstract class DeviceAndProfileOwnerTest extends BaseDevicePolicyTest {
         executeDeviceTestClass(".PasswordSufficientInitiallyTest");
     }
 
+    public void testGetCurrentFailedPasswordAttempts() throws Exception {
+        if (!mHasFeature) {
+            return;
+        }
+        final String testPassword = "1234";
+        final String wrongPassword = "12345";
+
+        changeUserCredential(testPassword, null /*oldCredential*/, mUserId);
+        try {
+            // Test that before trying an incorrect password there are 0 failed attempts.
+            executeDeviceTestMethod(".GetCurrentFailedPasswordAttemptsTest",
+                "testNoFailedPasswordAttempts");
+            // Try an incorrect password.
+            assertFalse(verifyUserCredentialIsCorrect(wrongPassword, mUserId));
+            // Test that now there is one failed attempt.
+            executeDeviceTestMethod(".GetCurrentFailedPasswordAttemptsTest",
+                "testOneFailedPasswordAttempt");
+            // Try an incorrect password.
+            assertFalse(verifyUserCredentialIsCorrect(wrongPassword, mUserId));
+            // Test that now there are two failed attempts.
+            executeDeviceTestMethod(".GetCurrentFailedPasswordAttemptsTest",
+                "testTwoFailedPasswordAttempts");
+            // TODO: re-enable the test below when b/110945754 is fixed.
+            // Try the correct password and check the failed attempts number has been reset to 0.
+            // assertTrue(verifyUserCredentialIsCorrect(testPassword, mUserId));
+            // executeDeviceTestMethod(".GetCurrentFailedPasswordAttemptsTest",
+            //     "testNoFailedPasswordAttempts");
+        } finally {
+            changeUserCredential(null /*newCredential*/, testPassword, mUserId);
+        }
+    }
+
     public void testSetSystemSetting() throws Exception {
         if (!mHasFeature) {
             return;

@@ -130,6 +130,8 @@ public class BaseDevicePolicyTest extends DeviceTestCase implements IBuildReceiv
     /** Users we shouldn't delete in the tests */
     private ArrayList<Integer> mFixedUsers;
 
+    private static final String VERIFY_CREDENTIAL_CONFIRMATION = "Lock credential verified";
+
     @Override
     public void setBuild(IBuildInfo buildInfo) {
         mCtsBuild = buildInfo;
@@ -875,20 +877,47 @@ public class BaseDevicePolicyTest extends DeviceTestCase implements IBuildReceiv
     }
 
     /**
-     * Verifies the lock credential for the given user, which unlocks the user.
+     * Verifies the lock credential for the given user.
      *
      * @param credential The credential to verify.
      * @param userId The id of the user.
      */
     protected void verifyUserCredential(String credential, int userId)
             throws DeviceNotAvailableException {
-        final String credentialArgument = (credential == null || credential.isEmpty())
-                ? "" : ("--old " + credential);
-        String commandOutput = getDevice().executeShellCommand(String.format(
-                "cmd lock_settings verify --user %d %s", userId, credentialArgument));
-        if (!commandOutput.startsWith("Lock credential verified")) {
+        String commandOutput = verifyUserCredentialCommandOutput(credential, userId);
+        if (!commandOutput.startsWith(VERIFY_CREDENTIAL_CONFIRMATION)) {
             fail("Failed to verify user credential: " + commandOutput);
         }
+     }
+
+    /**
+     * Verifies the lock credential for the given user, which unlocks the user, and returns
+     * whether it was successful or not.
+     *
+     * @param credential The credential to verify.
+     * @param userId The id of the user.
+     */
+    protected boolean verifyUserCredentialIsCorrect(String credential, int userId)
+        throws DeviceNotAvailableException {
+        String commandOutput = verifyUserCredentialCommandOutput(credential, userId);
+        return commandOutput.startsWith(VERIFY_CREDENTIAL_CONFIRMATION);
+    }
+
+    /**
+     * Verifies the lock credential for the given user, which unlocks the user. Returns the
+     * commandline output, which includes whether the verification was successful.
+     *
+     * @param credential The credential to verify.
+     * @param userId The id of the user.
+     * @return The command line output.
+     */
+    protected String verifyUserCredentialCommandOutput(String credential, int userId)
+        throws DeviceNotAvailableException {
+        final String credentialArgument = (credential == null || credential.isEmpty())
+            ? "" : ("--old " + credential);
+        String commandOutput = getDevice().executeShellCommand(String.format(
+            "cmd lock_settings verify --user %d %s", userId, credentialArgument));
+        return commandOutput;
     }
 
     protected void wakeupAndDismissKeyguard() throws Exception {
