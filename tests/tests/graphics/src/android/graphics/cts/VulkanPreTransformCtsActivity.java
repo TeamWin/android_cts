@@ -17,11 +17,15 @@
 package android.graphics.cts;
 
 import android.app.Activity;
+import android.content.Context;
+import android.content.pm.ActivityInfo;
 import android.content.res.AssetManager;
+import android.content.res.Configuration;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.Surface;
 import android.view.SurfaceView;
+import android.view.WindowManager;
 
 /**
  * Activity for VulkanPreTransformTest.
@@ -33,19 +37,51 @@ public class VulkanPreTransformCtsActivity extends Activity {
 
     private static final String TAG = "vulkan";
 
+    private static boolean sOrientationRequested = false;
+    private static boolean sClockwiseRotation = false;
+
     protected Surface mSurface;
 
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         Log.d(TAG, "onCreate!");
+        setActivityOrientation();
         setContentView(R.layout.vulkan_pretransform_layout);
         SurfaceView surfaceView = (SurfaceView) findViewById(R.id.surfaceview);
         mSurface = surfaceView.getHolder().getSurface();
     }
 
+    private void setActivityOrientation() {
+        if (sOrientationRequested) {
+            // it might be called again because changing the orientation kicks off onCreate again!.
+            return;
+        }
+
+        if (((WindowManager) getSystemService(Context.WINDOW_SERVICE))
+                        .getDefaultDisplay()
+                        .getRotation()
+                != Surface.ROTATION_0) {
+            throw new RuntimeException("Display not in natural orientation");
+        }
+
+        if (getResources().getConfiguration().orientation == Configuration.ORIENTATION_LANDSCAPE) {
+            setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_PORTRAIT);
+            sClockwiseRotation = true;
+        } else {
+            setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_LANDSCAPE);
+        }
+        sOrientationRequested = true;
+    }
+
+    public boolean getRotation() {
+        return sClockwiseRotation;
+    }
+
     public void testVulkanPreTransform(boolean setPreTransform) {
         nCreateNativeTest(getAssets(), mSurface, setPreTransform);
+        sOrientationRequested = false;
+        sClockwiseRotation = false;
     }
 
     private static native void nCreateNativeTest(
