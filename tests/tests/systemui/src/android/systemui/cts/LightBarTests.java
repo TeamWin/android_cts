@@ -116,8 +116,10 @@ public class LightBarTests extends LightBarTestBase {
         PackageManager pm = getInstrumentation().getContext().getPackageManager();
         if (pm.hasSystemFeature(PackageManager.FEATURE_WATCH)
                 || pm.hasSystemFeature(PackageManager.FEATURE_TELEVISION)
-                || pm.hasSystemFeature(PackageManager.FEATURE_LEANBACK)) {
+                || pm.hasSystemFeature(PackageManager.FEATURE_LEANBACK)
+                || pm.hasSystemFeature(PackageManager.FEATURE_AUTOMOTIVE)) {
             // No navigation bar on TVs and watches.
+            // Car navigation is not transparent.
             return;
         }
 
