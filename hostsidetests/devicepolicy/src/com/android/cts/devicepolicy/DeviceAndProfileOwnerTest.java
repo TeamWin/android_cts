@@ -922,6 +922,14 @@ public abstract class DeviceAndProfileOwnerTest extends BaseDevicePolicyTest {
         executeDeviceTestClass(".AccessibilityServicesTest");
     }
 
+    public void testPermittedInputMethods() throws Exception {
+        if (!mHasFeature) {
+            return;
+        }
+
+        executeDeviceTestClass(".InputMethodsTest");
+    }
+
     /**
      * Executes a test class on device. Prior to running, turn off background data usage
      * restrictions, and restore the original restrictions after the test.
