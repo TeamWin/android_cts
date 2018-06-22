@@ -3,6 +3,7 @@ package com.android.cts.devicepolicy;
 import com.android.tradefed.device.DeviceNotAvailableException;
 
 public abstract class DeviceAndProfileOwnerHostSideTransferTest extends BaseDevicePolicyTest {
+
     protected static final String TRANSFER_OWNER_OUTGOING_PKG =
             "com.android.cts.transferowneroutgoing";
     protected static final String TRANSFER_OWNER_OUTGOING_APK = "CtsTransferOwnerOutgoingApp.apk";
@@ -14,6 +15,10 @@ public abstract class DeviceAndProfileOwnerHostSideTransferTest extends BaseDevi
             "com.android.cts.transferownerincoming";
     protected static final String TRANSFER_OWNER_INCOMING_APK = "CtsTransferOwnerIncomingApp.apk";
     protected static final String INVALID_TARGET_APK = "CtsIntentReceiverApp.apk";
+    protected static final String TRANSFER_PROFILE_OWNER_OUTGOING_TEST =
+        "com.android.cts.transferowner.TransferProfileOwnerOutgoingTest";
+    protected static final String TRANSFER_PROFILE_OWNER_INCOMING_TEST =
+        "com.android.cts.transferowner.TransferProfileOwnerIncomingTest";
 
     protected int mUserId;
     protected String mOutgoingTestClassName;
@@ -191,9 +196,40 @@ public abstract class DeviceAndProfileOwnerHostSideTransferTest extends BaseDevi
                 mPrimaryUserId);
     }
 
+    public void testTargetDeviceAdminServiceBound() throws Exception {
+        if (!mHasFeature) {
+            return;
+        }
+        runDeviceTestsAsUser(TRANSFER_OWNER_OUTGOING_PKG,
+            mOutgoingTestClassName,
+            "testTransferOwnership", mUserId);
+        runDeviceTestsAsUser(TRANSFER_OWNER_INCOMING_PKG,
+            mIncomingTestClassName,
+            "testAdminServiceIsBound", mUserId);
+    }
+
+    protected void setSameAffiliationId(int profileUserId, String testClassName)
+        throws Exception {
+        runDeviceTestsAsUser(TRANSFER_OWNER_OUTGOING_PKG,
+            testClassName,
+            "testSetAffiliationId1", mPrimaryUserId);
+        runDeviceTestsAsUser(TRANSFER_OWNER_OUTGOING_PKG,
+            testClassName,
+            "testSetAffiliationId1", profileUserId);
+    }
+
+    protected void assertAffiliationIdsAreIntact(int profileUserId,
+        String testClassName) throws Exception {
+        runDeviceTestsAsUser(TRANSFER_OWNER_INCOMING_PKG,
+            testClassName,
+            "testIsAffiliationId1", mPrimaryUserId);
+        runDeviceTestsAsUser(TRANSFER_OWNER_INCOMING_PKG,
+            testClassName,
+            "testIsAffiliationId1", profileUserId);
+    }
+
     /* TODO: Add tests for:
-    * 1. startServiceForOwner
-    * 2. passwordOwner
+    * 1. passwordOwner
     *
     * */
 }

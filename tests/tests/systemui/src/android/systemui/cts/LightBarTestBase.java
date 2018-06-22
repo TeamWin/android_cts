@@ -92,9 +92,11 @@ public class LightBarTestBase {
                 PackageManager.FEATURE_EMBEDDED));
 
         // No bars on TVs and watches.
+        // Automotive navigation bar is not transparent
         assumeFalse(pm.hasSystemFeature(PackageManager.FEATURE_WATCH)
                 || pm.hasSystemFeature(PackageManager.FEATURE_TELEVISION)
-                || pm.hasSystemFeature(PackageManager.FEATURE_LEANBACK));
+                || pm.hasSystemFeature(PackageManager.FEATURE_LEANBACK)
+                || pm.hasSystemFeature(PackageManager.FEATURE_AUTOMOTIVE));
 
 
         // Non-highEndGfx devices don't do colored system bars.
