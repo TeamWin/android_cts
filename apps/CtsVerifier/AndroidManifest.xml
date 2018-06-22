@@ -1908,6 +1908,10 @@
 
         <activity android:name=".managedprovisioning.RecentsRedactionActivity"
                 android:label="@string/provisioning_byod_recents" >
+        </activity>
+        <activity android:name=".managedprovisioning.IntermediateRecentActivity"
+                  android:label="@string/provisioning_byod_recents"
+                  android:theme="@android:style/Theme.NoDisplay">
             <intent-filter>
                 <action android:name="com.android.cts.verifier.managedprovisioning.RECENTS" />
                 <category android:name="android.intent.category.DEFAULT"></category>
