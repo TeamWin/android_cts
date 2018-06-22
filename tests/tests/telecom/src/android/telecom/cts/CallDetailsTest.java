@@ -21,7 +21,9 @@ import static android.telecom.cts.TestUtils.*;
 import static org.hamcrest.CoreMatchers.instanceOf;
 import static org.junit.Assert.assertThat;
 
+import android.content.Context;
 import android.graphics.drawable.Icon;
+import android.media.AudioManager;
 import android.os.Bundle;
 import android.net.Uri;
 import android.telecom.Call;
@@ -655,6 +657,24 @@ public class CallDetailsTest extends BaseTelecomTestWithMockServices {
         assertNotNull(extras);
         assertTrue(extras.containsKey(TEST_EXTRA_KEY));
         assertEquals(TEST_SUBJECT, extras.getString(TEST_EXTRA_KEY));
+    }
+
+    /**
+     * Verifies that the AudioManager audio mode changes as expected based on whether a connection
+     * is using voip audio mode or not.
+     */
+    public void testSetVoipAudioMode() {
+        if (!mShouldTestTelecom) {
+            return;
+        }
+        mConnection.setAudioModeIsVoip(true);
+        assertCallProperties(mCall, Call.Details.PROPERTY_VOIP_AUDIO_MODE);
+        AudioManager audioManager = (AudioManager) mContext.getSystemService(Context.AUDIO_SERVICE);
+        assertAudioMode(audioManager, AudioManager.MODE_IN_COMMUNICATION);
+
+        mConnection.setAudioModeIsVoip(false);
+        assertDoesNotHaveCallProperties(mCall, Call.Details.PROPERTY_VOIP_AUDIO_MODE);
+        assertAudioMode(audioManager, AudioManager.MODE_IN_CALL);
     }
 
     /**

@@ -26,6 +26,7 @@ import static org.junit.Assert.assertThat;
 
 import android.content.Context;
 import android.content.Intent;
+import android.media.AudioManager;
 import android.net.Uri;
 import android.os.Bundle;
 import android.os.Handler;
@@ -1128,6 +1129,54 @@ public class BaseTelecomTestWithMockServices extends InstrumentationTestCase {
                 },
                 TestUtils.WAIT_FOR_STATE_CHANGE_TIMEOUT_MS,
                 "Call should have properties " + properties
+        );
+    }
+
+    /**
+     * Asserts that a call does not have any of the specified call property bits specified.
+     *
+     * @param call The call.
+     * @param properties The property or properties which are not expected.
+     */
+    public void assertDoesNotHaveCallProperties(final Call call, final int properties) {
+        waitUntilConditionIsTrueOrTimeout(
+                new Condition() {
+                    @Override
+                    public Object expected() {
+                        return true;
+                    }
+
+                    @Override
+                    public Object actual() {
+                        return !call.getDetails().hasProperty(properties);
+                    }
+                },
+                TestUtils.WAIT_FOR_STATE_CHANGE_TIMEOUT_MS,
+                "Call should not have properties " + properties
+        );
+    }
+
+    /**
+     * Asserts that the audio manager reports the specified audio mode.
+     *
+     * @param audioManager The audio manager to check.
+     * @param expectedMode The expected audio mode.
+     */
+    public void assertAudioMode(final AudioManager audioManager, final int expectedMode) {
+        waitUntilConditionIsTrueOrTimeout(
+                new Condition() {
+                    @Override
+                    public Object expected() {
+                        return true;
+                    }
+
+                    @Override
+                    public Object actual() {
+                        return audioManager.getMode() == expectedMode;
+                    }
+                },
+                TestUtils.WAIT_FOR_STATE_CHANGE_TIMEOUT_MS,
+                "Audio mode was expected to be " + expectedMode
         );
     }
 
