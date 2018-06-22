@@ -128,7 +128,7 @@ def find_yuv_fov_reference(cam, req, props):
     for ar in AR_CHECKED:
         match_ar = [float(x) for x in ar.split(":")]
         f = its.objects.get_largest_yuv_format(props, match_ar=match_ar)
-        pixels.append(f["height"] * f["height"])
+        pixels.append(f["height"] * f["width"])
         fmt_list.append(f)
 
     # use image with largest coverage as reference
@@ -383,9 +383,8 @@ def main():
                         msg += "img: %dx%d, ref: %dx%d" % (w_iter, h_iter,
                                                            ref_fov["w"],
                                                            ref_fov["h"])
-                        print msg
-                        # assert np.isclose(fov_percent, chk_percent,
-                                          # rtol=FOV_PERCENT_RTOL), msg
+                        assert np.isclose(fov_percent, chk_percent,
+                                          rtol=FOV_PERCENT_RTOL), msg
                 # check pass/fail for aspect ratio
                 # image size >= LARGE_SIZE: use THRESH_L_AR
                 # image size == 0 (extreme case): THRESH_XS_AR
