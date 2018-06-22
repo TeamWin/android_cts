@@ -24,4 +24,101 @@
         <item>com.android.cts.verifier.notifications.ShortcutThrottlingResetActivity</item>
         <item>com.android.cts.verifier.vr.VrListenerVerifierActivity</item>
     </string-array>
+
+    <!-- Override default strings for features that non-handheld devices may not support. -->
+
+    <!-- This specific test is disabling tethering, non-handheld devices may not support tethering and this may effectively be a no-op. -->
+    <string name="disallow_config_tethering_action">
+        Configuring tethering and portable hotspots.\n
+        NOTE: If the device does not support tethering please pass the test using the green check mark.\n
+    </string>
+
+    <!-- This specific test is disallowing usb file transfers. non-handheld devices may not support usb file transfer features and this may effectively be a no-op. -->
+    <string name="device_owner_disallow_usb_file_transfer_test_info">
+            Please press below button to set the \"disallow USB file transfer\" restriction.\n
+            If a USB notification appears, open the notification and check that the
+            \"Transfer files (MTP)\" and \"Transfer photos (PTP)\" cannot be selected and trigger a
+            support message when trying to select them.\n
+            NOTE: If the device does not support MTP or PTP please pass the test using the green check mark.\n
+            Check if you can mount the device as a USB drive on your desktop computer. The test is
+            successful if you cannot mount the device, and files from your phone cannot be
+            downloaded through USB.\n
+            Please mark the test accordingly.
+    </string>
+
+    <!-- This specific test is disabling the keyguard, non-handheld devices may not support keyguard and this may effectively be a no-op. -->
+    <string name="device_owner_disable_keyguard_test_info">
+        NOTE: If the device does not support keyguard please pass the test using the green check mark.\n
+        Before running this test, please make sure you have not set any device lockscreen password.\n
+        Please press the below button to disable the keyguard. Press the power button on your device to
+        switch off the screen. Then press the power button to switch the screen back on and verify that
+        no keyguard was shown.\n
+        Next, press the button to reenable the keyguard and repeat the above steps, this time verifying that
+        a keyguard was shown.\n
+        Please mark the test accordingly.
+    </string>
+
+    <!-- This specific test is disabling the status bar, non-handheld devices may not support a status bar and this may effectively be a no-op. -->
+    <string name="device_owner_disable_statusbar_test_info">
+        NOTE: If the device does not support a status bar, please pass the test using the green check mark. \n
+        Please press the below button to disable the status bar and verify that quick settings, notifications
+        and the assist gesture are no longer available.\n
+        Next, press the button to reenable the status bar and verify that quick settings, notification
+        and the assist gesture are available again.\n
+        Please mark the test accordingly.
+    </string>
+
+    <!-- This specific test is disabling keyguard/lock screen notifications, non-handheld devices may not support
+    keyguard/lock screen notifciations and this may effectively be a no-op. -->
+    <string name="disallow_keyguard_unredacted_notifications_set_step">
+        NOTE: If the device does not support a keyguard or lock screen notifications, please pass the test
+        using the green checkmark.\n
+        Disallow unredacted notifications when device is locked by turning on the switch below
+    </string>
+
+    <!-- This specific test is disabling trust agents, non-handheld devices may not support trust agents and this may effectively be a no-op. -->
+    <string name="provisioning_byod_disable_trust_agents_instruction">
+        NOTE: If the device does not support trust agents, please mark the test as \"Pass\".\n
+        Please press the Go button to go to Settings > Security. Then go to Trusted agents and\n
+        check if the agents are shown as disabled by the administrator.
+        Then please press Back and mark the test as \"Pass\" or \"Fail\".
+    </string>
+
+     <!-- This specific test is disabling keyguard notifications, non-handheld devices may not support keyguard and this may effectively be a no-op. -->
+    <string name="device_admin_disable_notifications_instruction">
+        NOTE: If the device does not support a keyguard, please mark the test as \"Pass\".\n
+        Please press the Go button to lock the screen. Wait a few seconds to see
+        if a notification appears. Expected result is no notifications appear.
+        You should be able to see one after unlocking.
+    </string>
+
+    <!-- This specific test is disabling keyguard notifications, non-handheld devices may not support keyguard and this may effectively be a no-op. -->
+    <string name="device_admin_disable_unredacted_notifications_instruction">
+        Note: If the device does not support a keyguard, please mark the test as \"Pass"\.\n
+        Please press the Go button to lock the screen. Wait a few seconds to see
+        if a notification appears. Expected result is a notification appear with
+        its content hidden. You should be able to see the content after unlocking.
+    </string>
+
+    <!-- This specific test is setting a lock screen message, non-handheld devices may not support lock scren messages
+    and this may effectively be a no-op. -->
+    <string name="lock_screen_info_set_step">
+        NOTE: If the device does not support lock screen messages, pass the test using the green checkmark. \n
+        Select a lock screen info by setting a non-empty message in the edittext below.
+    </string>
+
+    <!-- This specific test is setting permitted accessibilty features, non-handheld devices may not support accessibility features and this may effectively be a no-op. -->
+    <string name="permitted_accessibility_services_set_step">
+        NOTE: If the device does not support accessibility features, please pass the test using the green check mark.\n
+        Check that \'Dummy Accessibility service\' is not enabled in Settings and disallow \'Dummy Accessibility service\' from permitted accessibility services by turning on
+        the switch below.
+    </string>
+
+    <!-- This specific test is disabling volume changes via audio settings.
+    Non-handheld devices may not support an audio settings page and this may effectively be a no-op. -->
+    <string name="disallow_adjust_volume_action">
+        NOTE: If the device does not support an audio settings page, please pass the test using the green checkmark.\n
+        Adjusting the volume
+    </string>
+
 </resources>
