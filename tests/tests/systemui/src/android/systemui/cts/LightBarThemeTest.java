@@ -26,6 +26,7 @@ import android.graphics.Bitmap;
 import android.support.test.rule.ActivityTestRule;
 import android.support.test.runner.AndroidJUnit4;
 import android.support.test.uiautomator.UiDevice;
+import android.content.pm.PackageManager;
 import android.view.View;
 
 import org.junit.Before;
@@ -64,6 +65,11 @@ public class LightBarThemeTest extends LightBarTestBase {
 
     @Test
     public void testNavigationBarDivider() throws Exception {
+        PackageManager pm = getInstrumentation().getContext().getPackageManager();
+        if (pm.hasSystemFeature(PackageManager.FEATURE_AUTOMOTIVE)) {
+            // Car navigation is not transparent
+            return;
+        }
 
         if (!hasVirtualNavigationBar()) {
             // No virtual navigation bar, so no effect.
