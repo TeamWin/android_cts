@@ -41,7 +41,8 @@ LOCAL_STATIC_JAVA_LIBRARIES := \
     compatibility-device-util \
     android-support-test \
     cts-security-test-support-library \
-    testng
+    testng \
+    truth-prebuilt
 
 LOCAL_STATIC_ANDROID_LIBRARIES := \
     androidx.legacy_legacy-support-v4
