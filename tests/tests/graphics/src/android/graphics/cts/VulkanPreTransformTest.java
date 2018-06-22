@@ -38,9 +38,10 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 
 /*
- * This test case runs in landscape mode
- *
  * testVulkanPreTransformSetToMatchCurrentTransform()
+ *
+ *   This test case runs in landscape mode for portrait device (default orientation is portrait),
+ *   the result is 90 degree CCW rotation.
  *
  *      Buffer          ExpectedScreen
  *      ---------       ---------------
@@ -48,6 +49,18 @@ import org.junit.runner.RunWith;
  *      ---------       ---------------
  *      | B | Y |       | RRRR | BBBB |
  *      ---------       ---------------
+ *
+ *   This test case runs in portrait mode for landscape device (default orientation is landscape),
+ *   the result is 90 degree CW rotation.
+ *
+ *      Buffer          ExpectedScreen
+ *      ---------       -----------
+ *      | R | G |       | BB | RR |
+ *      ---------       | BB | RR |
+ *      | B | Y |       -----------
+ *      ---------       | YY | GG |
+ *                      | YY | GG |
+ *                      -----------
  *
  * testVulkanPreTransformNotSetToMatchCurrentTransform()
  *
@@ -126,11 +139,19 @@ public class VulkanPreTransformTest {
         int width = bitmap.getWidth();
         int height = bitmap.getHeight();
         int diff = 0;
-        if (setPreTransform) {
+        boolean clockwiseRotation = sActivity.getRotation();
+        if (setPreTransform && !clockwiseRotation) {
+            // app orientation landscape
             diff += pixelDiff(bitmap.getPixel(0, 0), 0, 255, 0);
             diff += pixelDiff(bitmap.getPixel(width - 1, 0), 255, 255, 0);
             diff += pixelDiff(bitmap.getPixel(0, height - 1), 255, 0, 0);
             diff += pixelDiff(bitmap.getPixel(width - 1, height - 1), 0, 0, 255);
+        } else if (setPreTransform && clockwiseRotation) {
+            // app orientation portrait
+            diff += pixelDiff(bitmap.getPixel(0, 0), 0, 0, 255);
+            diff += pixelDiff(bitmap.getPixel(width - 1, 0), 255, 0, 0);
+            diff += pixelDiff(bitmap.getPixel(0, height - 1), 255, 255, 0);
+            diff += pixelDiff(bitmap.getPixel(width - 1, height - 1), 0, 255, 0);
         } else {
             diff += pixelDiff(bitmap.getPixel(0, 0), 255, 0, 0);
             diff += pixelDiff(bitmap.getPixel(width - 1, 0), 0, 255, 0);
