@@ -28,7 +28,6 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
-import java.util.Map;
 
 /**
  * Set of tests for use cases that apply to profile and device owner.
@@ -913,6 +912,22 @@ public abstract class DeviceAndProfileOwnerTest extends BaseDevicePolicyTest {
         } finally {
             changeUserCredential(null, "1234", mUserId);
         }
+    }
+
+    public void testPermittedAccessibilityServices() throws Exception {
+        if (!mHasFeature) {
+            return;
+        }
+
+        executeDeviceTestClass(".AccessibilityServicesTest");
+    }
+
+    public void testPermittedInputMethods() throws Exception {
+        if (!mHasFeature) {
+            return;
+        }
+
+        executeDeviceTestClass(".InputMethodsTest");
     }
 
     /**

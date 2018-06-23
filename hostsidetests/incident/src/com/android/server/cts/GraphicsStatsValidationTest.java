@@ -169,7 +169,7 @@ public class GraphicsStatsValidationTest extends ProtoDumpTestCase {
         // valid ranges.
         assertTrue(summary.getJankyFrames() <= summary.getTotalFrames());
         assertTrue(summary.getMissedVsyncCount() <= summary.getJankyFrames());
-        assertTrue(summary.getHighInputLatencyCount() <= summary.getJankyFrames());
+        assertTrue(summary.getHighInputLatencyCount() <= summary.getTotalFrames());
         assertTrue(summary.getSlowUiThreadCount() <= summary.getJankyFrames());
         assertTrue(summary.getSlowBitmapUploadCount() <= summary.getJankyFrames());
         assertTrue(summary.getSlowDrawCount() <= summary.getJankyFrames());

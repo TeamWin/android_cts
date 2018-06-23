@@ -16,6 +16,8 @@
 package com.android.cts.deviceowner;
 
 
+import static com.google.common.truth.Truth.assertThat;
+
 import android.app.admin.DevicePolicyManager;
 import android.app.admin.FreezePeriod;
 import android.app.admin.SystemUpdatePolicy;
@@ -25,14 +27,15 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.icu.util.Calendar;
+import android.os.Parcel;
 import android.provider.Settings;
 import android.provider.Settings.Global;
-import android.util.Pair;
 
 import java.time.LocalDate;
 import java.time.MonthDay;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 import java.util.concurrent.Semaphore;
 import java.util.concurrent.TimeUnit;
 
@@ -233,6 +236,89 @@ public class SystemUpdatePolicyTest extends BaseDeviceOwnerTest {
             setSystemDate(LocalDate.ofYearDay(2019, i).plusDays(2));
             testFreezePeriodCanBeSetAndChanged();
         }
+    }
+
+    public void testWriteSystemUpdatePolicyToParcel() {
+        final Parcel parcel1 = Parcel.obtain();
+        try {
+            final SystemUpdatePolicy policy1 = SystemUpdatePolicy.createAutomaticInstallPolicy();
+            policy1.writeToParcel(parcel1, 0);
+            parcel1.setDataPosition(0);
+            final SystemUpdatePolicy copy1 = SystemUpdatePolicy.CREATOR.createFromParcel(parcel1);
+            assertThat(copy1).isNotNull();
+            assertSystemUpdatePoliciesEqual(policy1, copy1);
+        } finally {
+            parcel1.recycle();
+        }
+
+        final Parcel parcel2 = Parcel.obtain();
+        try {
+            final SystemUpdatePolicy policy2 = SystemUpdatePolicy
+                .createWindowedInstallPolicy(0, 720);
+            policy2.writeToParcel(parcel2, 0);
+            parcel2.setDataPosition(0);
+            final SystemUpdatePolicy copy2 = SystemUpdatePolicy.CREATOR.createFromParcel(parcel2);
+            assertThat(copy2).isNotNull();
+            assertSystemUpdatePoliciesEqual(policy2, copy2);
+        } finally {
+            parcel2.recycle();
+        }
+
+        final Parcel parcel3 = Parcel.obtain();
+        try {
+            final SystemUpdatePolicy policy3 = SystemUpdatePolicy.createPostponeInstallPolicy();
+            policy3.writeToParcel(parcel3, 0);
+            parcel3.setDataPosition(0);
+            final SystemUpdatePolicy copy3 = SystemUpdatePolicy.CREATOR.createFromParcel(parcel3);
+            assertThat(copy3).isNotNull();
+            assertSystemUpdatePoliciesEqual(policy3, copy3);
+        } finally {
+            parcel3.recycle();
+        }
+    }
+
+    private void assertSystemUpdatePoliciesEqual(SystemUpdatePolicy policy,
+            SystemUpdatePolicy copy) {
+        assertThat(policy.getInstallWindowStart()).isEqualTo(copy.getInstallWindowStart());
+        assertThat(policy.getInstallWindowEnd()).isEqualTo(copy.getInstallWindowEnd());
+        assertFreezePeriodListsEqual(policy.getFreezePeriods(), copy.getFreezePeriods());
+        assertThat(policy.getPolicyType()).isEqualTo(copy.getPolicyType());
+    }
+
+    private void assertFreezePeriodListsEqual(List<FreezePeriod> original,
+            List<FreezePeriod> copy) {
+        assertThat(original).isNotNull();
+        assertThat(copy).isNotNull();
+        assertThat(original.size()).isEqualTo(copy.size());
+        for (FreezePeriod period1 : original) {
+            assertThat(period1).isNotNull();
+            assertFreezePeriodListContains(copy, period1);
+        }
+        for (FreezePeriod period1 : copy) {
+            assertThat(period1).isNotNull();
+            assertFreezePeriodListContains(original, period1);
+        }
+    }
+
+    private void assertFreezePeriodListContains(List<FreezePeriod> list, FreezePeriod period) {
+        for (FreezePeriod other : list) {
+            assertThat(other).isNotNull();
+            if (areFreezePeriodsEqual(period, other)) {
+                return;
+            }
+        }
+        final List<String> printablePeriods = new ArrayList<>();
+        for (FreezePeriod printablePeriod : list) {
+            printablePeriods.add(printablePeriod.toString());
+        }
+        fail(String.format("FreezePeriod list [%s] does not contain the specified period %s.",
+            String.join(", ", printablePeriods), period));
+    }
+
+    private boolean areFreezePeriodsEqual(FreezePeriod period1, FreezePeriod period2) {
+        return period1 != null && period2 != null
+            && Objects.equals(period1.getStart(), period2.getStart())
+            && Objects.equals(period1.getEnd(), period2.getEnd());
     }
 
     private void testPolicy(SystemUpdatePolicy policy) {
