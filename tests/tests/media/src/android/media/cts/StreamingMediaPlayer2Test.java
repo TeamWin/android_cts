@@ -380,7 +380,7 @@ public class StreamingMediaPlayer2Test extends MediaPlayer2TestBase {
                         }
                     }
                 };
-            mPlayer.setEventCallback(mExecutor, ecb);
+            mPlayer.registerEventCallback(mExecutor, ecb);
 
             assertFalse(mOnBufferingUpdateCalled.isSignalled());
 
@@ -396,7 +396,7 @@ public class StreamingMediaPlayer2Test extends MediaPlayer2TestBase {
                 mPlayer.play();
                 Thread.sleep(SLEEP_TIME);
             }
-            mPlayer.stop();
+            mPlayer.pause();
             mPlayer.reset();
         } finally {
             mServer.shutdown();
@@ -444,7 +444,7 @@ public class StreamingMediaPlayer2Test extends MediaPlayer2TestBase {
                         }
                     }
                 };
-            mPlayer.setEventCallback(mExecutor, ecb);
+            mPlayer.registerEventCallback(mExecutor, ecb);
 
             assertFalse(mOnBufferingUpdateCalled.isSignalled());
             try {
@@ -492,7 +492,7 @@ public class StreamingMediaPlayer2Test extends MediaPlayer2TestBase {
                         }
                     }
                 };
-            mPlayer.setEventCallback(mExecutor, ecb);
+            mPlayer.registerEventCallback(mExecutor, ecb);
 
             // getBufferingParams should be called after setDataSource.
             try {
@@ -614,7 +614,7 @@ public class StreamingMediaPlayer2Test extends MediaPlayer2TestBase {
                                 mPlayer.seekTo(0, MediaPlayer2.SEEK_PREVIOUS_SYNC);
                                 mPlayer.play();
                             } else {
-                                mPlayer.stop();
+                                mPlayer.pause();
                                 synchronized (completion) {
                                     completion.notify();
                                 }
@@ -662,7 +662,7 @@ public class StreamingMediaPlayer2Test extends MediaPlayer2TestBase {
                     }
                 }
             };
-            mPlayer.setEventCallback(mExecutor, ecb);
+            mPlayer.registerEventCallback(mExecutor, ecb);
 
             mPlayer.prepare();
             mOnPrepareCalled.waitForSignal();
@@ -766,7 +766,7 @@ public class StreamingMediaPlayer2Test extends MediaPlayer2TestBase {
                         }
                     }
                 };
-            mp.setEventCallback(mExecutor, ecb);
+            mp.registerEventCallback(mExecutor, ecb);
 
             mp.prepare();
             Thread.sleep(1000);

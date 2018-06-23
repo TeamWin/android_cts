@@ -120,10 +120,10 @@ public class MediaPlayer2TestBase extends ActivityInstrumentationTestCase2<Media
                         }
                     }
                 };
-            mp.setEventCallback(executor, ecb);
+            mp.registerEventCallback(executor, ecb);
             mp.prepare();
             onPrepareCalled.waitForSignal();
-            mp.clearEventCallback();
+            mp.unregisterEventCallback(ecb);
             executor.shutdown();
             return mp;
         } catch (IllegalArgumentException ex) {
@@ -175,10 +175,10 @@ public class MediaPlayer2TestBase extends ActivityInstrumentationTestCase2<Media
                         }
                     }
                 };
-            mp.setEventCallback(executor, ecb);
+            mp.registerEventCallback(executor, ecb);
             mp.prepare();
             onPrepareCalled.waitForSignal();
-            mp.clearEventCallback();
+            mp.unregisterEventCallback(ecb);
             afd.close();
             executor.shutdown();
             return mp;
@@ -243,7 +243,7 @@ public class MediaPlayer2TestBase extends ActivityInstrumentationTestCase2<Media
 
     protected void setUpMP2ECb(MediaPlayer2 mp, Object cbLock,
             List<MediaPlayer2.EventCallback> ecbs) {
-        mp.setEventCallback(mExecutor, new MediaPlayer2.EventCallback() {
+        mp.registerEventCallback(mExecutor, new MediaPlayer2.EventCallback() {
             @Override
             public void onVideoSizeChanged(MediaPlayer2 mp, DataSourceDesc dsd, int w, int h) {
                 synchronized (cbLock) {
@@ -300,11 +300,11 @@ public class MediaPlayer2TestBase extends ActivityInstrumentationTestCase2<Media
             }
 
             @Override
-            public void onMediaTimeChanged(MediaPlayer2 mp, DataSourceDesc dsd,
+            public void onMediaTimeDiscontinuity(MediaPlayer2 mp, DataSourceDesc dsd,
                     MediaTimestamp timestamp) {
                 synchronized (cbLock) {
                     for (MediaPlayer2.EventCallback ecb : ecbs) {
-                        ecb.onMediaTimeChanged(mp, dsd, timestamp);
+                        ecb.onMediaTimeDiscontinuity(mp, dsd, timestamp);
                     }
                 }
             }
@@ -568,7 +568,7 @@ public class MediaPlayer2TestBase extends ActivityInstrumentationTestCase2<Media
             }
         }
 
-        mPlayer.stop();
+        mPlayer.pause();
     }
 
     private static class PrepareFailedException extends Exception {}
