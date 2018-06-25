@@ -18,5 +18,6 @@
          <limit-password />
          <disable-keyguard-features />
          <disable-camera />
+         <encrypted-storage />
     </uses-policies>
 </device-admin>
