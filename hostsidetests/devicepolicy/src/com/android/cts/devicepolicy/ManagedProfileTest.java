@@ -850,6 +850,14 @@ public class ManagedProfileTest extends BaseDevicePolicyTest {
                 mProfileUserId);
     }
 
+    public void testDevicePolicyManagerParentSupport() throws Exception {
+        if (!mHasFeature) {
+            return;
+        }
+        runDeviceTestsAsUser(
+                MANAGED_PROFILE_PKG, ".DevicePolicyManagerParentSupportTest", mProfileUserId);
+    }
+
     public void testBluetoothContactSharingDisabled() throws Exception {
         if (!mHasFeature) {
             return;
