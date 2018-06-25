@@ -38,7 +38,6 @@ public class VulkanPreTransformCtsActivity extends Activity {
     private static final String TAG = "vulkan";
 
     private static boolean sOrientationRequested = false;
-    private static boolean sClockwiseRotation = false;
 
     protected Surface mSurface;
 
@@ -67,21 +66,21 @@ public class VulkanPreTransformCtsActivity extends Activity {
 
         if (getResources().getConfiguration().orientation == Configuration.ORIENTATION_LANDSCAPE) {
             setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_PORTRAIT);
-            sClockwiseRotation = true;
         } else {
             setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_LANDSCAPE);
         }
         sOrientationRequested = true;
     }
 
-    public boolean getRotation() {
-        return sClockwiseRotation;
+    public int getRotation() {
+        return ((WindowManager) getSystemService(Context.WINDOW_SERVICE))
+                .getDefaultDisplay()
+                .getRotation();
     }
 
     public void testVulkanPreTransform(boolean setPreTransform) {
         nCreateNativeTest(getAssets(), mSurface, setPreTransform);
         sOrientationRequested = false;
-        sClockwiseRotation = false;
     }
 
     private static native void nCreateNativeTest(
