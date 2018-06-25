@@ -21,6 +21,7 @@ import static org.junit.Assert.assertNotNull;
 
 import android.app.Instrumentation;
 import android.content.Context;
+import android.content.pm.PackageManager;
 import android.hardware.input.InputManager;
 import android.support.test.InstrumentationRegistry;
 import android.support.test.filters.MediumTest;
@@ -73,6 +74,10 @@ public class SearchEventTest {
 
     @Test
     public void testBasics() {
+        // Only run for non-watch devices
+        if (mActivity.getPackageManager().hasSystemFeature(PackageManager.FEATURE_WATCH)) {
+            return;
+        }
         mInstrumentation.sendKeyDownUpSync(KeyEvent.KEYCODE_SEARCH);
         SearchEvent se = mActivity.getTestSearchEvent();
         assertNotNull(se);
