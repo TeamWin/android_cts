@@ -279,6 +279,8 @@
             <meta-data
                 android:name="test_parent"
                 android:value="com.android.cts.verifier.bluetooth.BluetoothTestActivity" />
+            <meta-data android:name="test_excluded_features"
+                android:value="android.hardware.type.watch" />
         </activity>
 
         <!--
@@ -302,6 +304,8 @@
             <meta-data
                 android:name="test_parent"
                 android:value="com.android.cts.verifier.bluetooth.BluetoothTestActivity" />
+            <meta-data android:name="test_excluded_features"
+                android:value="android.hardware.type.watch" />
         </activity>
 
         <!--
@@ -325,6 +329,8 @@
             <meta-data
                 android:name="test_parent"
                 android:value="com.android.cts.verifier.bluetooth.BluetoothTestActivity" />
+            <meta-data android:name="test_excluded_features"
+                android:value="android.hardware.type.watch" />
         </activity>
 
         <!--
@@ -348,6 +354,8 @@
             <meta-data
                 android:name="test_parent"
                 android:value="com.android.cts.verifier.bluetooth.BluetoothTestActivity" />
+            <meta-data android:name="test_excluded_features"
+                android:value="android.hardware.type.watch" />
         </activity>
 
         <!--
