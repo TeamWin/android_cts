@@ -50,8 +50,17 @@ import static android.server.am.ComponentNameUtils.getActivityName;
 import static android.server.am.ComponentNameUtils.getLogTag;
 import static android.server.am.Components.BROADCAST_RECEIVER_ACTIVITY;
 import static android.server.am.Components.BroadcastReceiverActivity.ACTION_TRIGGER_BROADCAST;
+import static android.server.am.Components.BroadcastReceiverActivity.EXTRA_BROADCAST_ORIENTATION;
+import static android.server.am.Components.BroadcastReceiverActivity.EXTRA_DISMISS_KEYGUARD;
+import static android.server.am.Components.BroadcastReceiverActivity.EXTRA_DISMISS_KEYGUARD_METHOD;
 import static android.server.am.Components.BroadcastReceiverActivity.EXTRA_FINISH_BROADCAST;
+import static android.server.am.Components.BroadcastReceiverActivity.EXTRA_MOVE_BROADCAST_TO_BACK;
 import static android.server.am.Components.LAUNCHING_ACTIVITY;
+import static android.server.am.Components.PipActivity.ACTION_EXPAND_PIP;
+import static android.server.am.Components.PipActivity.ACTION_SET_REQUESTED_ORIENTATION;
+import static android.server.am.Components.PipActivity.EXTRA_PIP_ORIENTATION;
+import static android.server.am.Components.PipActivity.EXTRA_SET_ASPECT_RATIO_WITH_DELAY_DENOMINATOR;
+import static android.server.am.Components.PipActivity.EXTRA_SET_ASPECT_RATIO_WITH_DELAY_NUMERATOR;
 import static android.server.am.Components.TEST_ACTIVITY;
 import static android.server.am.StateLogger.log;
 import static android.server.am.StateLogger.logAlways;
@@ -148,11 +157,6 @@ public abstract class ActivityManagerTestBase {
 
     private static final String LOCK_CREDENTIAL = "1234";
 
-    // TODO(b/70247058): Use {@link Context#sendBroadcast(Intent).
-    // Shell command to finish {@link #BROADCAST_RECEIVER_ACTIVITY}.
-    static final String FINISH_ACTIVITY_BROADCAST = "am broadcast -a "
-            + ACTION_TRIGGER_BROADCAST + " --ez " + EXTRA_FINISH_BROADCAST + " true";
-
     private static final int UI_MODE_TYPE_MASK = 0x0f;
     private static final int UI_MODE_TYPE_VR_HEADSET = 0x07;
 
@@ -232,6 +236,66 @@ public abstract class ActivityManagerTestBase {
     }
 
     protected ActivityAndWindowManagersState mAmWmState = new ActivityAndWindowManagersState();
+
+    protected BroadcastActionTrigger mBroadcastActionTrigger = new BroadcastActionTrigger();
+
+    /**
+     * Helper class to process test actions by broadcast.
+     */
+    protected class BroadcastActionTrigger {
+
+        private Intent createIntentWithAction(String broadcastAction) {
+            return new Intent(broadcastAction)
+                    .setFlags(Intent.FLAG_RECEIVER_FOREGROUND);
+        }
+
+        void doAction(String broadcastAction) {
+            mContext.sendBroadcast(createIntentWithAction(broadcastAction));
+        }
+
+        void finishBroadcastReceiverActivity() {
+            mContext.sendBroadcast(createIntentWithAction(ACTION_TRIGGER_BROADCAST)
+                    .putExtra(EXTRA_FINISH_BROADCAST, true));
+        }
+
+        void launchActivityNewTask(String launchComponent) {
+            mContext.sendBroadcast(createIntentWithAction(ACTION_TRIGGER_BROADCAST)
+                    .putExtra(KEY_LAUNCH_ACTIVITY, true)
+                    .putExtra(KEY_NEW_TASK, true)
+                    .putExtra(KEY_TARGET_COMPONENT, launchComponent));
+        }
+
+        void moveTopTaskToBack() {
+            mContext.sendBroadcast(createIntentWithAction(ACTION_TRIGGER_BROADCAST)
+                    .putExtra(EXTRA_MOVE_BROADCAST_TO_BACK, true));
+        }
+
+        void requestOrientation(int orientation) {
+            mContext.sendBroadcast(createIntentWithAction(ACTION_TRIGGER_BROADCAST)
+                    .putExtra(EXTRA_BROADCAST_ORIENTATION, orientation));
+        }
+
+        void dismissKeyguardByFlag() {
+            mContext.sendBroadcast(createIntentWithAction(ACTION_TRIGGER_BROADCAST)
+                    .putExtra(EXTRA_DISMISS_KEYGUARD, true));
+        }
+
+        void dismissKeyguardByMethod() {
+            mContext.sendBroadcast(createIntentWithAction(ACTION_TRIGGER_BROADCAST)
+                    .putExtra(EXTRA_DISMISS_KEYGUARD_METHOD, true));
+        }
+
+        void expandPipWithAspectRatio(String extraNum, String extraDenom) {
+            mContext.sendBroadcast(createIntentWithAction(ACTION_EXPAND_PIP)
+                    .putExtra(EXTRA_SET_ASPECT_RATIO_WITH_DELAY_NUMERATOR, extraNum)
+                    .putExtra(EXTRA_SET_ASPECT_RATIO_WITH_DELAY_DENOMINATOR, extraDenom));
+        }
+
+        void requestOrientationForPip(int orientation) {
+            mContext.sendBroadcast(createIntentWithAction(ACTION_SET_REQUESTED_ORIENTATION)
+                    .putExtra(EXTRA_PIP_ORIENTATION, String.valueOf(orientation)));
+        }
+    }
 
     @Before
     public void setUp() throws Exception {
@@ -1209,7 +1273,7 @@ public abstract class ActivityManagerTestBase {
         assertNotNull("The activity should report cutout state", displayCutoutPresent);
 
         // Finish activity
-        executeShellCommand(FINISH_ACTIVITY_BROADCAST);
+        mBroadcastActionTrigger.finishBroadcastReceiverActivity();
         mAmWmState.waitForWithAmState(
                 (state) -> !state.containsActivity(BROADCAST_RECEIVER_ACTIVITY),
                 "Waiting for activity to be removed");

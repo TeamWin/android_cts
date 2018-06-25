@@ -26,9 +26,6 @@ import static android.server.am.ActivityAndWindowManagersState.dpToPx;
 import static android.server.am.ActivityManagerState.STATE_RESUMED;
 import static android.server.am.ComponentNameUtils.getWindowName;
 import static android.server.am.Components.BROADCAST_RECEIVER_ACTIVITY;
-import static android.server.am.Components.BroadcastReceiverActivity.ACTION_TRIGGER_BROADCAST;
-import static android.server.am.Components.BroadcastReceiverActivity.EXTRA_BROADCAST_ORIENTATION;
-import static android.server.am.Components.BroadcastReceiverActivity.EXTRA_MOVE_BROADCAST_TO_BACK;
 import static android.server.am.Components.DIALOG_WHEN_LARGE_ACTIVITY;
 import static android.server.am.Components.LANDSCAPE_ORIENTATION_ACTIVITY;
 import static android.server.am.Components.LAUNCHING_ACTIVITY;
@@ -71,16 +68,6 @@ import java.util.List;
  *     atest CtsActivityManagerDeviceTestCases:ActivityManagerAppConfigurationTests
  */
 public class ActivityManagerAppConfigurationTests extends ActivityManagerTestBase {
-
-    // TODO(b/70247058): Use {@link Context#sendBroadcast(Intent).
-    // Shell command to move {@link #BROADCAST_RECEIVER_ACTIVITY} task to back.
-    private static final String MOVE_TASK_TO_BACK_BROADCAST = "am broadcast -a "
-            + ACTION_TRIGGER_BROADCAST + " --ez " + EXTRA_MOVE_BROADCAST_TO_BACK + " true";
-    // Shell command to request portrait orientation to {@link #BROADCAST_RECEIVER_ACTIVITY}.
-    private static final String REQUEST_PORTRAIT_BROADCAST = "am broadcast -a "
-            + ACTION_TRIGGER_BROADCAST + " --ei " + EXTRA_BROADCAST_ORIENTATION + " 1";
-    private static final String REQUEST_LANDSCAPE_BROADCAST = "am broadcast -a "
-            + ACTION_TRIGGER_BROADCAST + " --ei " + EXTRA_BROADCAST_ORIENTATION + " 0";
 
     private static final int SMALL_WIDTH_DP = 426;
     private static final int SMALL_HEIGHT_DP = 320;
@@ -526,11 +513,11 @@ public class ActivityManagerAppConfigurationTests extends ActivityManagerTestBas
         launchActivityInNewTask(BROADCAST_RECEIVER_ACTIVITY);
 
         // Request portrait
-        executeShellCommand(REQUEST_PORTRAIT_BROADCAST);
+        mBroadcastActionTrigger.requestOrientation(SCREEN_ORIENTATION_PORTRAIT);
         mAmWmState.waitForLastOrientation(SCREEN_ORIENTATION_PORTRAIT);
 
         // Finish activity
-        executeShellCommand(FINISH_ACTIVITY_BROADCAST);
+        mBroadcastActionTrigger.finishBroadcastReceiverActivity();
 
         // Verify that activity brought to front is in originally requested orientation.
         mAmWmState.computeState(LANDSCAPE_ORIENTATION_ACTIVITY);
@@ -553,9 +540,9 @@ public class ActivityManagerAppConfigurationTests extends ActivityManagerTestBas
         // Verify fixed-landscape
         LogSeparator logSeparator = separateLogs();
         launchActivityInNewTask(BROADCAST_RECEIVER_ACTIVITY);
-        executeShellCommand(REQUEST_LANDSCAPE_BROADCAST);
+        mBroadcastActionTrigger.requestOrientation(SCREEN_ORIENTATION_LANDSCAPE);
         mAmWmState.waitForLastOrientation(SCREEN_ORIENTATION_LANDSCAPE);
-        executeShellCommand(FINISH_ACTIVITY_BROADCAST);
+        mBroadcastActionTrigger.finishBroadcastReceiverActivity();
 
         // Verify that activity brought to front is in originally requested orientation.
         mAmWmState.waitForActivityState(RESIZEABLE_ACTIVITY, STATE_RESUMED);
@@ -570,9 +557,9 @@ public class ActivityManagerAppConfigurationTests extends ActivityManagerTestBas
         // Verify fixed-portrait
         logSeparator = separateLogs();
         launchActivityInNewTask(BROADCAST_RECEIVER_ACTIVITY);
-        executeShellCommand(REQUEST_PORTRAIT_BROADCAST);
+        mBroadcastActionTrigger.requestOrientation(SCREEN_ORIENTATION_PORTRAIT);
         mAmWmState.waitForLastOrientation(SCREEN_ORIENTATION_PORTRAIT);
-        executeShellCommand(FINISH_ACTIVITY_BROADCAST);
+        mBroadcastActionTrigger.finishBroadcastReceiverActivity();
 
         // Verify that activity brought to front is in originally requested orientation.
         mAmWmState.waitForActivityState(RESIZEABLE_ACTIVITY, STATE_RESUMED);
@@ -700,11 +687,11 @@ public class ActivityManagerAppConfigurationTests extends ActivityManagerTestBas
         launchActivityInNewTask(BROADCAST_RECEIVER_ACTIVITY);
 
         // Request portrait
-        executeShellCommand(REQUEST_PORTRAIT_BROADCAST);
+        mBroadcastActionTrigger.requestOrientation(SCREEN_ORIENTATION_PORTRAIT);
         mAmWmState.waitForLastOrientation(SCREEN_ORIENTATION_PORTRAIT);
 
         // Finish activity
-        executeShellCommand(MOVE_TASK_TO_BACK_BROADCAST);
+        mBroadcastActionTrigger.moveTopTaskToBack();
 
         // Verify that activity brought to front is in originally requested orientation.
         mAmWmState.waitForValidState(LANDSCAPE_ORIENTATION_ACTIVITY);
