@@ -20,6 +20,8 @@
     <uses-sdk android:minSdkVersion="22"/>
 
     <application>
+        <uses-library android:name="android.test.runner" />
+
         <receiver android:name=".CertInstallerReceiver">
             <intent-filter>
                 <action android:name="com.android.cts.certinstaller.install_cert" />
@@ -30,5 +32,14 @@
             </intent-filter>
         </receiver>
     </application>
+
+    <instrumentation
+        android:name="android.support.test.runner.AndroidJUnitRunner"
+        android:label="Delegated Cert Installer CTS test"
+        android:targetPackage="com.android.cts.certinstaller">
+        <meta-data
+            android:name="listener"
+            android:value="com.android.cts.runner.CtsTestRunListener"/>
+    </instrumentation>
 
 </manifest>
