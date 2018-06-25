@@ -50,8 +50,9 @@ import java.util.concurrent.TimeoutException;
 @RunWith(DeviceJUnit4ClassRunner.class)
 public class InputMethodServiceLifecycleTest extends BaseHostJUnit4Test {
 
-    private static final long TIMEOUT = TimeUnit.MICROSECONDS.toMillis(20000);
-    private static final long POLLING_INTERVAL = TimeUnit.MICROSECONDS.toMillis(200);
+    private static final long WAIT_TIMEOUT = TimeUnit.SECONDS.toMillis(1);
+    private static final long PACKAGE_OP_TIMEOUT = TimeUnit.SECONDS.toMillis(7);
+    private static final long POLLING_INTERVAL = 100;
 
     @Before
     public void setUp() throws Exception {
@@ -83,7 +84,7 @@ public class InputMethodServiceLifecycleTest extends BaseHostJUnit4Test {
         installPackage(apkFileName, options);
         pollingCheck(() ->
             shell(ShellCommandUtils.listPackage(packageName)).contains(packageName),
-            TIMEOUT,
+            PACKAGE_OP_TIMEOUT,
             packageName + " should be installed.");
     }
 
@@ -151,7 +152,7 @@ public class InputMethodServiceLifecycleTest extends BaseHostJUnit4Test {
         assertTrue(runDeviceTestMethod(testCreateIme1));
 
         uninstallPackageSyncIfExists(Ime1Constants.PACKAGE);
-        assertImeNotSelectedInSecureSettings(Ime1Constants.IME_ID, TIMEOUT);
+        assertImeNotSelectedInSecureSettings(Ime1Constants.IME_ID, WAIT_TIMEOUT);
     }
 
     @AppModeFull
@@ -179,7 +180,7 @@ public class InputMethodServiceLifecycleTest extends BaseHostJUnit4Test {
         assertTrue(runDeviceTestMethod(testCreateIme1));
 
         shell(ShellCommandUtils.disableIme(Ime1Constants.IME_ID));
-        assertImeNotSelectedInSecureSettings(Ime1Constants.IME_ID, TIMEOUT);
+        assertImeNotSelectedInSecureSettings(Ime1Constants.IME_ID, WAIT_TIMEOUT);
     }
 
     @AppModeFull
@@ -365,7 +366,7 @@ public class InputMethodServiceLifecycleTest extends BaseHostJUnit4Test {
         if (isPackageInstalled(getDevice(), packageName)) {
             uninstallPackage(getDevice(), packageName);
             pollingCheck(()-> !isPackageInstalled(getDevice(), packageName),
-                TIMEOUT,
+                PACKAGE_OP_TIMEOUT,
                 packageName + " should be uninstalled.");
         }
     }
@@ -413,7 +414,7 @@ public class InputMethodServiceLifecycleTest extends BaseHostJUnit4Test {
         for (String imeId : imeIds) {
             pollingCheck(() ->
                     shell(cmd).contains(imeId),
-                    TIMEOUT,
+                    PACKAGE_OP_TIMEOUT,
                     imeId + " should be " + (shouldBeEnabled? "enabled." : "available."));
         }
     }
