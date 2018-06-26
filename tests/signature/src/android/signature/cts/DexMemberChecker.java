@@ -41,7 +41,10 @@ public class DexMemberChecker {
       Method method = null;
 
       try {
-        Class<?> vmdebug = Class.forName("dalvik.system.VMDebug");
+        // Try to find the class. Do not initialize it - we do not want to run
+        // static initializers.
+        Class<?> vmdebug = Class.forName("dalvik.system.VMDebug", /* initialize */ false,
+            DexMemberChecker.class.getClassLoader());
         method = vmdebug.getDeclaredMethod("allowHiddenApiReflectionFrom", Class.class);
       } catch (Exception ex) {
         // Could not find the method. Report the problem as a RuntimeException.
