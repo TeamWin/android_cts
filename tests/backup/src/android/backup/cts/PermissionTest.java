@@ -16,7 +16,10 @@
 
 package android.backup.cts;
 
+import static com.android.compatibility.common.util.BackupUtils.LOCAL_TRANSPORT_TOKEN;
+
 import android.Manifest;
+import android.app.Instrumentation;
 import android.content.pm.PackageManager;
 import android.os.ParcelFileDescriptor;
 
@@ -65,7 +68,7 @@ public class PermissionTest extends BaseBackupCtsTest {
         mBackupUtils.backupNowAndAssertSuccess(ANDROID_PACKAGE);
         revokeRuntimePermission(Manifest.permission.SEND_SMS);
         revokeRuntimePermission(Manifest.permission.WRITE_CONTACTS);
-        mBackupUtils.restoreAndAssertSuccess(ANDROID_PACKAGE);
+        mBackupUtils.restoreAndAssertSuccess(LOCAL_TRANSPORT_TOKEN, ANDROID_PACKAGE);
 
         assertEquals(PackageManager.PERMISSION_GRANTED,
                 checkPermission(Manifest.permission.SEND_SMS));

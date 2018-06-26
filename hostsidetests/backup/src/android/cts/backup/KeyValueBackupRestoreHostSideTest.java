@@ -16,6 +16,8 @@
 
 package android.cts.backup;
 
+import static com.android.compatibility.common.util.BackupUtils.LOCAL_TRANSPORT_TOKEN;
+
 import static org.junit.Assert.assertNull;
 
 import com.android.tradefed.device.DeviceNotAvailableException;
@@ -103,7 +105,7 @@ public class KeyValueBackupRestoreHostSideTest extends BaseBackupHostSideTest {
 
         checkDeviceTest("saveSharedPreferencesAndNotifyBackupManager");
 
-        backupNowAndAssertSuccess(KEY_VALUE_RESTORE_APP_PACKAGE);
+        getBackupUtils().backupNowAndAssertSuccess(KEY_VALUE_RESTORE_APP_PACKAGE);
 
         assertNull(uninstallPackage(KEY_VALUE_RESTORE_APP_PACKAGE));
 
@@ -145,11 +147,12 @@ public class KeyValueBackupRestoreHostSideTest extends BaseBackupHostSideTest {
 
         checkDeviceTest("launchSharedPrefActivity");
 
-        backupNowAndAssertSuccess(SHARED_PREFERENCES_RESTORE_APP_PACKAGE);
+        getBackupUtils().backupNowAndAssertSuccess(SHARED_PREFERENCES_RESTORE_APP_PACKAGE);
 
         checkDeviceTest("updateSharedPrefActivity");
 
-        restoreAndAssertSuccess(SHARED_PREFERENCES_RESTORE_APP_PACKAGE);
+        getBackupUtils().restoreAndAssertSuccess(LOCAL_TRANSPORT_TOKEN,
+                SHARED_PREFERENCES_RESTORE_APP_PACKAGE);
 
         checkDeviceTest("checkSharedPrefActivity");
     }

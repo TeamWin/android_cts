@@ -15,6 +15,8 @@
  */
 package android.cts.backup.syncadaptersettingsapp;
 
+import static com.android.compatibility.common.util.BackupUtils.LOCAL_TRANSPORT_TOKEN;
+
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
@@ -29,18 +31,14 @@ import android.os.ParcelFileDescriptor;
 import android.support.test.InstrumentationRegistry;
 import android.support.test.runner.AndroidJUnit4;
 
-import java.io.BufferedReader;
-import java.io.FileInputStream;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.InputStreamReader;
-import java.nio.charset.StandardCharsets;
-import java.util.Arrays;
-import java.util.Scanner;
+import com.android.compatibility.common.util.BackupUtils;
 
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
+
+import java.io.InputStream;
+import java.util.Arrays;
 
 /**
  * Device side routines to be invoked by the host side SyncAdapterSettingsHostSideTest. These
@@ -58,10 +56,21 @@ public class SyncAdapterSettingsTest {
 
     private Context mContext;
     private Account mAccount;
+    private BackupUtils mBackupUtils =
+            new BackupUtils() {
+                @Override
+                protected InputStream executeShellCommand(String command) {
+                    Instrumentation instrumentation = InstrumentationRegistry.getInstrumentation();
+                    ParcelFileDescriptor pfd =
+                            instrumentation.getUiAutomation().executeShellCommand(command);
+                    return new ParcelFileDescriptor.AutoCloseInputStream(pfd);
+                }
+            };
 
     @Before
     public void setUp() {
-        mContext = getInstrumentation().getTargetContext();
+        Instrumentation instrumentation = InstrumentationRegistry.getInstrumentation();
+        mContext = instrumentation.getTargetContext();
         mAccount = getAccount();
     }
 
@@ -77,9 +86,9 @@ public class SyncAdapterSettingsTest {
     public void testMasterSyncAutomatically_whenOn_isRestored() throws Exception {
         ContentResolver.setMasterSyncAutomatically(true);
 
-        backupNowAndAssertSuccess(ANDROID_PACKAGE);
+        mBackupUtils.backupNowAndAssertSuccess(ANDROID_PACKAGE);
         ContentResolver.setMasterSyncAutomatically(false);
-        restoreAndAssertSuccess(ANDROID_PACKAGE);
+        mBackupUtils.restoreAndAssertSuccess(LOCAL_TRANSPORT_TOKEN, ANDROID_PACKAGE);
 
         assertTrue(ContentResolver.getMasterSyncAutomatically());
     }
@@ -96,9 +105,9 @@ public class SyncAdapterSettingsTest {
     public void testMasterSyncAutomatically_whenOff_isRestored() throws Exception {
         ContentResolver.setMasterSyncAutomatically(false);
 
-        backupNowAndAssertSuccess(ANDROID_PACKAGE);
+        mBackupUtils.backupNowAndAssertSuccess(ANDROID_PACKAGE);
         ContentResolver.setMasterSyncAutomatically(true);
-        restoreAndAssertSuccess(ANDROID_PACKAGE);
+        mBackupUtils.restoreAndAssertSuccess(LOCAL_TRANSPORT_TOKEN, ANDROID_PACKAGE);
 
         assertFalse(ContentResolver.getMasterSyncAutomatically());
     }
@@ -121,9 +130,9 @@ public class SyncAdapterSettingsTest {
         initSettings(/* masterSyncAutomatically= */true, /* syncAutomatically= */
                 true, /* isSyncable= */1);
 
-        backupNowAndAssertSuccess(ANDROID_PACKAGE);
+        mBackupUtils.backupNowAndAssertSuccess(ANDROID_PACKAGE);
         setSyncAutomaticallyAndIsSyncable(false, 0);
-        restoreAndAssertSuccess(ANDROID_PACKAGE);
+        mBackupUtils.restoreAndAssertSuccess(LOCAL_TRANSPORT_TOKEN, ANDROID_PACKAGE);
 
         assertSettings(/* syncAutomatically= */true, /* isSyncable= */0);
         removeAccount(mContext);
@@ -147,9 +156,9 @@ public class SyncAdapterSettingsTest {
         initSettings(/* masterSyncAutomatically= */true, /* syncAutomatically= */
                 false, /* isSyncable= */0);
 
-        backupNowAndAssertSuccess(ANDROID_PACKAGE);
+        mBackupUtils.backupNowAndAssertSuccess(ANDROID_PACKAGE);
         setSyncAutomaticallyAndIsSyncable(true, 1);
-        restoreAndAssertSuccess(ANDROID_PACKAGE);
+        mBackupUtils.restoreAndAssertSuccess(LOCAL_TRANSPORT_TOKEN, ANDROID_PACKAGE);
 
         assertSettings(/* syncAutomatically= */false, /* isSyncable= */0);
         removeAccount(mContext);
@@ -176,9 +185,9 @@ public class SyncAdapterSettingsTest {
         initSettings(/* masterSyncAutomatically= */true, /* syncAutomatically= */
                 false, /* isSyncable= */1);
 
-        backupNowAndAssertSuccess(ANDROID_PACKAGE);
+        mBackupUtils.backupNowAndAssertSuccess(ANDROID_PACKAGE);
         setSyncAutomaticallyAndIsSyncable(true, 0);
-        restoreAndAssertSuccess(ANDROID_PACKAGE);
+        mBackupUtils.restoreAndAssertSuccess(LOCAL_TRANSPORT_TOKEN, ANDROID_PACKAGE);
 
         assertSettings(/* syncAutomatically= */false, /* isSyncable= */1);
         removeAccount(mContext);
@@ -236,106 +245,5 @@ public class SyncAdapterSettingsTest {
             Account account = accounts[i];
             am.removeAccountExplicitly(account);
         }
-    }
-
-    private static Instrumentation getInstrumentation() {
-        return InstrumentationRegistry.getInstrumentation();
-    }
-
-    // TODO: Unify these methods with BaseBackupCtsTest
-    private static FileInputStream executeStreamedShellCommand(
-            Instrumentation instrumentation, String command) throws IOException {
-        final ParcelFileDescriptor pfd =
-                instrumentation.getUiAutomation().executeShellCommand(command);
-        return new ParcelFileDescriptor.AutoCloseInputStream(pfd);
-    }
-
-    // TODO: Unify these methods with BaseBackupCtsTest
-    private String exec(String command) throws Exception {
-        try (InputStream in = executeStreamedShellCommand(getInstrumentation(), command)) {
-            BufferedReader br = new BufferedReader(
-                    new InputStreamReader(in, StandardCharsets.UTF_8));
-            String str;
-            StringBuilder out = new StringBuilder();
-            while ((str = br.readLine()) != null) {
-                out.append(str).append("\n");
-            }
-            return out.toString();
-        }
-    }
-
-    /**
-     * Execute shell command "bmgr backupnow <packageName>" and assert success.
-     *
-     * TODO: Unify these methods with BaseBackupCtsTest
-     */
-    private void backupNowAndAssertSuccess(String packageName) throws Exception {
-        String backupnowOutput = backupNow(packageName);
-        assertBackupIsSuccessful(packageName, backupnowOutput);
-    }
-
-    /**
-     * Execute shell command "bmgr backupnow <packageName>" and return output from this command.
-     *
-     * TODO: Unify these methods with BaseBackupCtsTest
-     */
-    private String backupNow(String packageName) throws Exception {
-        return exec("bmgr backupnow " + packageName);
-    }
-
-    /**
-     * Parsing the output of "bmgr backupnow" command and checking that the package under test
-     * was backed up successfully.
-     *
-     * Expected format: "Package <packageName> with result: Success"
-     *
-     * TODO: Unify these methods with BaseBackupCtsTest
-     */
-    private void assertBackupIsSuccessful(String packageName, String backupnowOutput) {
-        Scanner in = new Scanner(backupnowOutput);
-        boolean success = false;
-        while (in.hasNextLine()) {
-            String line = in.nextLine();
-
-            if (line.contains(packageName)) {
-                String result = line.split(":")[1].trim();
-                if ("Success".equals(result)) {
-                    success = true;
-                }
-            }
-        }
-        in.close();
-        assertTrue(success);
-    }
-
-    /**
-     * Execute shell command "bmgr restore <packageName>" and assert success.
-     *
-     * TODO: Unify these methods with BaseBackupCtsTest
-     */
-    private void restoreAndAssertSuccess(String packageName) throws Exception {
-        String restoreOutput = restore(packageName);
-        assertRestoreIsSuccessful(restoreOutput);
-    }
-
-    /**
-     * Execute shell command "bmgr restore <packageName>" and return output from this command.
-     *
-     * TODO: Unify these methods with BaseBackupCtsTest
-     */
-    private String restore(String packageName) throws Exception {
-        return exec("bmgr restore " + packageName);
-    }
-
-    /**
-     * Parsing the output of "bmgr restore" command and checking that the package under test
-     * was restored successfully.
-     *
-     * Expected format: "restoreFinished: 0"
-     *
-     * TODO: Unify these methods with BaseBackupCtsTest
-     */
-    private void assertRestoreIsSuccessful(String restoreOutput) {
-        assertTrue("Restore not successful", restoreOutput.contains("restoreFinished: 0"));
     }
 }

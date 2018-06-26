@@ -85,7 +85,7 @@ public class RestoreAnyVersionHostSideTest extends BaseBackupHostSideTest {
         saveSharedPreferenceValue();
         checkRestoreAnyVersionDeviceTest("checkSharedPrefIsNew");
 
-        backupNowAndAssertSuccess(RESTORE_ANY_VERSION_APP_PACKAGE);
+        getBackupUtils().backupNowAndAssertSuccess(RESTORE_ANY_VERSION_APP_PACKAGE);
 
         assertNull(uninstallPackage(RESTORE_ANY_VERSION_APP_PACKAGE));
 
@@ -111,7 +111,7 @@ public class RestoreAnyVersionHostSideTest extends BaseBackupHostSideTest {
         saveSharedPreferenceValue();
         checkRestoreAnyVersionDeviceTest("checkSharedPrefIsNew");
 
-        backupNowAndAssertSuccess(RESTORE_ANY_VERSION_APP_PACKAGE);
+        getBackupUtils().backupNowAndAssertSuccess(RESTORE_ANY_VERSION_APP_PACKAGE);
 
         assertNull(uninstallPackage(RESTORE_ANY_VERSION_APP_PACKAGE));
 
@@ -137,7 +137,7 @@ public class RestoreAnyVersionHostSideTest extends BaseBackupHostSideTest {
         saveSharedPreferenceValue();
         checkRestoreAnyVersionDeviceTest("checkSharedPrefIsOld");
 
-        backupNowAndAssertSuccess(RESTORE_ANY_VERSION_APP_PACKAGE);
+        getBackupUtils().backupNowAndAssertSuccess(RESTORE_ANY_VERSION_APP_PACKAGE);
 
         assertNull(uninstallPackage(RESTORE_ANY_VERSION_APP_PACKAGE));
 

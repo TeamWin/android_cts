@@ -19,7 +19,9 @@ package android.cts.backup;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 
+import com.android.compatibility.common.util.BackupUtils;
 import com.android.tradefed.device.DeviceNotAvailableException;
+import com.android.tradefed.device.ITestDevice;
 import com.android.tradefed.log.LogUtil.CLog;
 import com.android.tradefed.testtype.DeviceJUnit4ClassRunner;
 import com.android.tradefed.testtype.junit4.BaseHostJUnit4Test;
@@ -28,7 +30,10 @@ import org.junit.After;
 import org.junit.Before;
 import org.junit.runner.RunWith;
 
-import java.util.Scanner;
+import java.io.ByteArrayInputStream;
+import java.io.IOException;
+import java.io.InputStream;
+import java.nio.charset.StandardCharsets;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -45,8 +50,15 @@ public abstract class BaseBackupHostSideTest extends BaseHostJUnit4Test {
     protected static final String LOCAL_TRANSPORT =
             "android/com.android.internal.backup.LocalTransport";
 
+    private BackupUtils mBackupUtils = new BackupUtils() {
+        @Override
+        protected InputStream executeShellCommand(String command) throws IOException {
+            return executeDeviceShellCommand(getDevice(), command);
+        }
+    };
+
     @Before
-    public void setUp() throws DeviceNotAvailableException, Exception {
+    public void setUp() throws Exception {
         mIsBackupSupported = getDevice().hasFeature("feature:" + FEATURE_BACKUP);
         if (!mIsBackupSupported) {
             CLog.i("android.software.backup feature is not supported on this device");
@@ -55,7 +67,7 @@ public abstract class BaseBackupHostSideTest extends BaseHostJUnit4Test {
 
         // Check that the backup wasn't disabled and the transport wasn't switched unexpectedly.
         assertTrue("Backup was unexpectedly disabled during the module test run",
-                isBackupEnabled());
+                getBackupUtils().isBackupEnabled());
         assertEquals("LocalTransport should be selected at this point", LOCAL_TRANSPORT,
                 getCurrentTransport());
     }
@@ -65,36 +77,8 @@ public abstract class BaseBackupHostSideTest extends BaseHostJUnit4Test {
         // Not deleting to avoid breaking the tests calling super.tearDown()
     }
 
-    /**
-     * Execute shell command "bmgr backupnow <packageName>" and return output from this command.
-     */
-    protected String backupNow(String packageName) throws DeviceNotAvailableException {
-        return getDevice().executeShellCommand("bmgr backupnow " + packageName);
-    }
-
-    /**
-     * Execute shell command "bmgr backupnow <packageName>" and assert success.
-     */
-    protected void backupNowAndAssertSuccess(String packageName)
-            throws DeviceNotAvailableException {
-        String backupnowOutput = backupNow(packageName);
-
-        assertBackupIsSuccessful(packageName, backupnowOutput);
-    }
-
-    /**
-     * Execute shell command "bmgr restore <packageName>" and assert success.
-     */
-    protected void restoreAndAssertSuccess(String packageName) throws DeviceNotAvailableException {
-        String restoreOutput = restore(packageName);
-        assertRestoreIsSuccessful(restoreOutput);
-    }
-
-    /**
-     * Execute shell command "bmgr restore <packageName>" and return output from this command.
-     */
-    protected String restore(String packageName) throws DeviceNotAvailableException {
-        return getDevice().executeShellCommand("bmgr restore " + packageName);
+    protected BackupUtils getBackupUtils() {
+        return mBackupUtils;
     }
 
     /**
@@ -112,62 +96,6 @@ public abstract class BaseBackupHostSideTest extends BaseHostJUnit4Test {
             throws DeviceNotAvailableException {
         boolean result = runDeviceTests(packageName, className, testName);
         assertTrue("Device test failed: " + testName, result);
-    }
-
-    /**
-     * Parsing the output of "bmgr backupnow" command and checking that the package under test
-     * was backed up successfully.
-     *
-     * Expected format: "Package <packageName> with result: Success"
-     */
-    protected void assertBackupIsSuccessful(String packageName, String backupnowOutput) {
-        Scanner in = new Scanner(backupnowOutput);
-        boolean success = false;
-        while (in.hasNextLine()) {
-            String line = in.nextLine();
-
-            if (line.contains(packageName)) {
-                String result = line.split(":")[1].trim();
-                if ("Success".equals(result)) {
-                    success = true;
-                }
-            }
-        }
-        in.close();
-        assertTrue(success);
-    }
-
-    /**
-     * Parsing the output of "bmgr backupnow" command and checking that the package under test
-     * wasn't backed up because backup is not allowed
-     *
-     * Expected format: "Package <packageName> with result:  Backup is not allowed"
-     */
-    protected void assertBackupIsNotAllowed(String packageName, String backupnowOutput) {
-        Scanner in = new Scanner(backupnowOutput);
-        boolean found = false;
-        while (in.hasNextLine()) {
-            String line = in.nextLine();
-
-            if (line.contains(packageName)) {
-                String result = line.split(":")[1].trim();
-                if ("Backup is not allowed".equals(result)) {
-                    found = true;
-                }
-            }
-        }
-        in.close();
-        assertTrue("Didn't find \'Backup not allowed\' in the output", found);
-    }
-
-    /**
-     * Parsing the output of "bmgr restore" command and checking that the package under test
-     * was restored successfully.
-     *
-     * Expected format: "restoreFinished: 0"
-     */
-    protected void assertRestoreIsSuccessful(String restoreOutput) {
-        assertTrue("Restore not successful", restoreOutput.contains("restoreFinished: 0"));
     }
 
     protected void startActivityInPackageAndWait(String packageName, String className)
@@ -195,19 +123,6 @@ public abstract class BaseBackupHostSideTest extends BaseHostJUnit4Test {
         getDevice().executeShellCommand(String.format("pm clear %s", packageName));
     }
 
-    protected boolean isBackupEnabled() throws DeviceNotAvailableException {
-        boolean isEnabled;
-        String output = getDevice().executeShellCommand("bmgr enabled");
-        Pattern pattern = Pattern.compile("^Backup Manager currently (enabled|disabled)$");
-        Matcher matcher = pattern.matcher(output.trim());
-        if (matcher.find()) {
-            isEnabled = "enabled".equals(matcher.group(1));
-        } else {
-            throw new RuntimeException("non-parsable output setting bmgr enabled: " + output);
-        }
-        return isEnabled;
-    }
-
     protected String getCurrentTransport() throws DeviceNotAvailableException {
         String output = getDevice().executeShellCommand("bmgr list transports");
         Pattern pattern = Pattern.compile("\\* (.*)");
@@ -230,5 +145,15 @@ public abstract class BaseBackupHostSideTest extends BaseHostJUnit4Test {
 
     protected void disableFakeEncryptionOnTransport() throws Exception {
         setLocalTransportParameters("fake_encryption_flag=false");
+    }
+
+    private static InputStream executeDeviceShellCommand(
+            ITestDevice device, String command) throws IOException {
+        try {
+            String result = device.executeShellCommand(command);
+            return new ByteArrayInputStream(result.getBytes(StandardCharsets.UTF_8));
+        } catch (DeviceNotAvailableException e) {
+            throw new IOException(e);
+        }
     }
 }
