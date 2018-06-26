@@ -193,9 +193,14 @@ public class ResultHandler {
             invocation.addInvocationInfo(BUILD_PRODUCT, parser.getAttributeValue(NS,
                     BUILD_PRODUCT));
 
+            // The build fingerprint needs to reflect the true fingerprint of the device under test,
+            // ignoring potential overrides made by test suites (namely STS) for APFE build
+            // association.
+            String reportFingerprint = parser.getAttributeValue(NS, BUILD_FINGERPRINT);
             String unalteredFingerprint = parser.getAttributeValue(NS, BUILD_FINGERPRINT_UNALTERED);
-            invocation.setBuildFingerprint(Strings.isNullOrEmpty(unalteredFingerprint) ?
-                    parser.getAttributeValue(NS, BUILD_FINGERPRINT) : unalteredFingerprint);
+            Boolean fingerprintWasAltered = !Strings.isNullOrEmpty(unalteredFingerprint);
+            invocation.setBuildFingerprint(fingerprintWasAltered ? unalteredFingerprint :
+                reportFingerprint );
 
             // TODO(stuartscott): may want to reload these incase the retry was done with
             // --skip-device-info flag
@@ -257,9 +262,10 @@ public class ResultHandler {
                             }
                         }
                         parser.require(XmlPullParser.END_TAG, NS, TEST_TAG);
-                        Boolean checksumMismatch = invocationUseChecksum
-                            && !checksumReporter.containsTestResult(
-                                test, module, invocation.getBuildFingerprint());
+                        // If the fingerprint was altered, then checksum against the fingerprint
+                        // originally reported
+                        Boolean checksumMismatch = invocationUseChecksum &&
+                             !checksumReporter.containsTestResult(test, module, reportFingerprint);
                         if (checksumMismatch) {
                             test.removeResult();
                         }
@@ -267,9 +273,10 @@ public class ResultHandler {
                     parser.require(XmlPullParser.END_TAG, NS, CASE_TAG);
                 }
                 parser.require(XmlPullParser.END_TAG, NS, MODULE_TAG);
-                Boolean checksumMismatch = invocationUseChecksum
-                    && !checksumReporter.containsModuleResult(
-                            module, invocation.getBuildFingerprint());
+                // If the fingerprint was altered, then checksum against the fingerprint
+                // originally reported
+                Boolean checksumMismatch = invocationUseChecksum &&
+                     !checksumReporter.containsModuleResult(module, reportFingerprint);
                 if (checksumMismatch) {
                     module.initializeDone(false);
                 }
