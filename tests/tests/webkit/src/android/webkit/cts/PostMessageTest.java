@@ -102,16 +102,31 @@ public class PostMessageTest extends ActivityInstrumentationTestCase2<WebViewCts
         }.run();
     }
 
+    /**
+     * This should remain functionally equivalent to
+     * androidx.webkit.PostMessageTest#testSimpleMessageToMainFrame. Modifications to this test
+     * should be reflected in that test as necessary. See http://go/modifying-webview-cts.
+     */
     // Post a string message to main frame and make sure it is received.
     public void testSimpleMessageToMainFrame() throws Throwable {
         verifyPostMessageToOrigin(Uri.parse(BASE_URI));
     }
 
+    /**
+     * This should remain functionally equivalent to
+     * androidx.webkit.PostMessageTest#testWildcardOriginMatchesAnything. Modifications to this
+     * test should be reflected in that test as necessary. See http://go/modifying-webview-cts.
+     */
     // Post a string message to main frame passing a wildcard as target origin
     public void testWildcardOriginMatchesAnything() throws Throwable {
         verifyPostMessageToOrigin(Uri.parse("*"));
     }
 
+    /**
+     * This should remain functionally equivalent to
+     * androidx.webkit.PostMessageTest#testEmptyStringOriginMatchesAnything. Modifications to
+     * this test should be reflected in that test as necessary. See http://go/modifying-webview-cts.
+     */
     // Post a string message to main frame passing an empty string as target origin
     public void testEmptyStringOriginMatchesAnything() throws Throwable {
         verifyPostMessageToOrigin(Uri.parse(""));
@@ -127,6 +142,11 @@ public class PostMessageTest extends ActivityInstrumentationTestCase2<WebViewCts
         waitForTitle(WEBVIEW_MESSAGE);
     }
 
+    /**
+     * This should remain functionally equivalent to
+     * androidx.webkit.PostMessageTest#testMultipleMessagesToMainFrame. Modifications to this
+     * test should be reflected in that test as necessary. See http://go/modifying-webview-cts.
+     */
     // Post multiple messages to main frame and make sure they are received in
     // correct order.
     public void testMultipleMessagesToMainFrame() throws Throwable {
@@ -141,6 +161,11 @@ public class PostMessageTest extends ActivityInstrumentationTestCase2<WebViewCts
         waitForTitle("0123456789");
     }
 
+    /**
+     * This should remain functionally equivalent to
+     * androidx.webkit.PostMessageTest#testMessageChannel. Modifications to this test should be
+     * reflected in that test as necessary. See http://go/modifying-webview-cts.
+     */
     // Create a message channel and make sure it can be used for data transfer to/from js.
     public void testMessageChannel() throws Throwable {
         if (!NullWebViewUtils.isWebViewAvailable()) {
@@ -172,6 +197,11 @@ public class PostMessageTest extends ActivityInstrumentationTestCase2<WebViewCts
         assertTrue(latch.await(TIMEOUT, java.util.concurrent.TimeUnit.MILLISECONDS));
     }
 
+    /**
+     * This should remain functionally equivalent to
+     * androidx.webkit.PostMessageTest#testClose. Modifications to this test should be reflected in
+     * that test as necessary. See http://go/modifying-webview-cts.
+     */
     // Test that a message port that is closed cannot used to send a message
     public void testClose() throws Throwable {
         if (!NullWebViewUtils.isWebViewAvailable()) {
@@ -214,6 +244,11 @@ public class PostMessageTest extends ActivityInstrumentationTestCase2<WebViewCts
             + "   </script>"
             + "</body></html>";
 
+    /**
+     * This should remain functionally equivalent to
+     * androidx.webkit.PostMessageTest#testReceiveMessagePort. Modifications to this test should
+     * be reflected in that test as necessary. See http://go/modifying-webview-cts.
+     */
     // Test a message port created in JS can be received and used for message transfer.
     public void testReceiveMessagePort() throws Throwable {
         final String hello = "HELLO";
@@ -238,6 +273,11 @@ public class PostMessageTest extends ActivityInstrumentationTestCase2<WebViewCts
         waitForTitle(hello);
     }
 
+    /**
+     * This should remain functionally equivalent to
+     * androidx.webkit.PostMessageTest#testWebMessageHandler. Modifications to this test should
+     * be reflected in that test as necessary. See http://go/modifying-webview-cts.
+     */
     // Ensure the callback is invoked on the correct Handler.
     public void testWebMessageHandler() throws Throwable {
         if (!NullWebViewUtils.isWebViewAvailable()) {
@@ -272,6 +312,11 @@ public class PostMessageTest extends ActivityInstrumentationTestCase2<WebViewCts
         assertTrue(latch.await(TIMEOUT, java.util.concurrent.TimeUnit.MILLISECONDS));
     }
 
+    /**
+     * This should remain functionally equivalent to
+     * androidx.webkit.PostMessageTest#testWebMessageDefaultHandler. Modifications to this test
+     * should be reflected in that test as necessary. See http://go/modifying-webview-cts.
+     */
     // Ensure the callback is invoked on the MainLooper by default.
     public void testWebMessageDefaultHandler() throws Throwable {
         if (!NullWebViewUtils.isWebViewAvailable()) {

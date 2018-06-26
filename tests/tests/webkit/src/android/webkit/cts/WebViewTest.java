@@ -2635,6 +2635,11 @@ public class WebViewTest extends ActivityInstrumentationTestCase2<WebViewCtsActi
         }
     }
 
+    /**
+     * This should remain functionally equivalent to
+     * androidx.webkit.WebViewCompatTest#testVisualStateCallbackCalled. Modifications to this test
+     * should be reflected in that test as necessary. See http://go/modifying-webview-cts.
+     */
     public void testVisualStateCallbackCalled() throws Exception {
         // Check that the visual state callback is called correctly.
         if (!NullWebViewUtils.isWebViewAvailable()) {
@@ -2656,6 +2661,12 @@ public class WebViewTest extends ActivityInstrumentationTestCase2<WebViewCtsActi
         assertTrue(callbackLatch.await(TEST_TIMEOUT, TimeUnit.MILLISECONDS));
     }
 
+    /**
+     * This should remain functionally equivalent to
+     * androidx.webkit.WebViewCompatTest#testSetSafeBrowsingWhitelistWithMalformedList.
+     * Modifications to this test should be reflected in that test as necessary. See
+     * http://go/modifying-webview-cts.
+     */
     public void testSetSafeBrowsingWhitelistWithMalformedList() throws Exception {
         if (!NullWebViewUtils.isWebViewAvailable()) {
             return;
@@ -2675,6 +2686,12 @@ public class WebViewTest extends ActivityInstrumentationTestCase2<WebViewCtsActi
         assertTrue(resultLatch.await(TEST_TIMEOUT, TimeUnit.MILLISECONDS));
     }
 
+    /**
+     * This should remain functionally equivalent to
+     * androidx.webkit.WebViewCompatTest#testSetSafeBrowsingWhitelistWithValidList. Modifications
+     * to this test should be reflected in that test as necessary. See
+     * http://go/modifying-webview-cts.
+     */
     public void testSetSafeBrowsingWhitelistWithValidList() throws Exception {
         if (!NullWebViewUtils.isWebViewAvailable()) {
             return;
@@ -2712,6 +2729,11 @@ public class WebViewTest extends ActivityInstrumentationTestCase2<WebViewCtsActi
         assertTrue(resultLatch2.await(TEST_TIMEOUT, TimeUnit.MILLISECONDS));
     }
 
+    /**
+     * This should remain functionally equivalent to
+     * androidx.webkit.WebViewCompatTest#testGetWebViewClient. Modifications to this test should be
+     * reflected in that test as necessary. See http://go/modifying-webview-cts.
+     */
     @UiThreadTest
     public void testGetWebViewClient() throws Exception {
         if (!NullWebViewUtils.isWebViewAvailable()) {
@@ -2731,6 +2753,11 @@ public class WebViewTest extends ActivityInstrumentationTestCase2<WebViewCtsActi
         assertSame(client2, webView.getWebViewClient());
     }
 
+    /**
+     * This should remain functionally equivalent to
+     * androidx.webkit.WebViewCompatTest#testGetWebChromeClient. Modifications to this test should
+     * be reflected in that test as necessary. See http://go/modifying-webview-cts.
+     */
     @UiThreadTest
     public void testGetWebChromeClient() throws Exception {
         if (!NullWebViewUtils.isWebViewAvailable()) {
@@ -2798,6 +2825,11 @@ public class WebViewTest extends ActivityInstrumentationTestCase2<WebViewCtsActi
         }
     }
 
+    /**
+     * This should remain functionally equivalent to
+     * androidx.webkit.WebViewCompatTest#testStartSafeBrowsingUseApplicationContext. Modifications to
+     * this test should be reflected in that test as necessary. See http://go/modifying-webview-cts.
+     */
     public void testStartSafeBrowsingUseApplicationContext() throws Exception {
         if (!NullWebViewUtils.isWebViewAvailable()) {
             return;
@@ -2816,6 +2848,12 @@ public class WebViewTest extends ActivityInstrumentationTestCase2<WebViewCtsActi
         assertTrue(resultLatch.await(TEST_TIMEOUT, TimeUnit.MILLISECONDS));
     }
 
+    /**
+     * This should remain functionally equivalent to
+     * androidx.webkit.WebViewCompatTest#testStartSafeBrowsingWithNullCallbackDoesntCrash.
+     * Modifications to this test should be reflected in that test as necessary. See
+     * http://go/modifying-webview-cts.
+     */
     public void testStartSafeBrowsingWithNullCallbackDoesntCrash() throws Exception {
         if (!NullWebViewUtils.isWebViewAvailable()) {
             return;
@@ -2824,6 +2862,11 @@ public class WebViewTest extends ActivityInstrumentationTestCase2<WebViewCtsActi
         WebView.startSafeBrowsing(getActivity().getApplicationContext(), null);
     }
 
+    /**
+     * This should remain functionally equivalent to
+     * androidx.webkit.WebViewCompatTest#testStartSafeBrowsingInvokesCallback. Modifications to
+     * this test should be reflected in that test as necessary. See http://go/modifying-webview-cts.
+     */
     public void testStartSafeBrowsingInvokesCallback() throws Exception {
         if (!NullWebViewUtils.isWebViewAvailable()) {
             return;
@@ -3040,6 +3083,11 @@ public class WebViewTest extends ActivityInstrumentationTestCase2<WebViewCtsActi
         }
     }
 
+    /**
+     * This should remain functionally equivalent to
+     * androidx.webkit.WebViewCompatTest#testGetSafeBrowsingPrivacyPolicyUrl. Modifications to this
+     * test should be reflected in that test as necessary. See http://go/modifying-webview-cts.
+     */
     public void testGetSafeBrowsingPrivacyPolicyUrl() throws Exception {
         if (!NullWebViewUtils.isWebViewAvailable()) {
             return;
