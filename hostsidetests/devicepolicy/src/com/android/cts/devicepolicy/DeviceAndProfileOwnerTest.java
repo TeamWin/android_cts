@@ -167,6 +167,19 @@ public abstract class DeviceAndProfileOwnerTest extends BaseDevicePolicyTest {
         executeDeviceTestClass(".CaCertManagementTest");
     }
 
+    public void testApplicationRestrictionIsRestricted() throws Exception {
+        if (!mHasFeature) {
+            return;
+        }
+        installAppAsUser(DELEGATE_APP_APK, mUserId);
+        runDeviceTestsAsUser(DELEGATE_APP_PKG, ".AppRestrictionsIsCallerDelegateHelper",
+            "testAssertCallerIsNotApplicationRestrictionsManagingPackage", mUserId);
+        runDeviceTestsAsUser(DEVICE_ADMIN_PKG, ".ApplicationRestrictionsIsCallerDelegateHelper",
+            "testSetApplicationRestrictionsManagingPackageToDelegate", mUserId);
+        runDeviceTestsAsUser(DELEGATE_APP_PKG, ".AppRestrictionsIsCallerDelegateHelper",
+            "testAssertCallerIsApplicationRestrictionsManagingPackage", mUserId);
+    }
+
     public void testApplicationRestrictions() throws Exception {
         if (!mHasFeature) {
             return;
