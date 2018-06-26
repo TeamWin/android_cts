@@ -15,6 +15,7 @@
  */
 package android.security.cts;
 
+import com.android.compatibility.common.util.CddTest;
 import com.android.compatibility.common.util.CpuFeatures;
 import com.android.compatibility.common.util.PropertyUtil;
 import com.android.tradefed.device.CollectingOutputReceiver;
@@ -115,10 +116,12 @@ public class ProcessMustUseSeccompTest extends DeviceTestCase {
         }
     }
 
+    @CddTest(requirement="9.7/C-0-6")
     public void testMediaextractorHasSeccompFilter() throws DeviceNotAvailableException {
         assertSeccompFilter("media.extractor", PS_CMD, false);
     }
 
+    @CddTest(requirement="9.7/C-0-6")
     public void testOmxHalHasSeccompFilter() throws DeviceNotAvailableException {
         assertSeccompFilter("media.codec", PS_CMD, false);
     }

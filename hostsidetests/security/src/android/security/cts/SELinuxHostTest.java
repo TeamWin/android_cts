@@ -59,6 +59,7 @@ import java.util.Set;
  * run as the shell user to evaluate aspects of the state of SELinux on the test
  * device which otherwise would not be available to a normal apk.
  */
+@CddTest(requirement="9.7/C-1-1")
 public class SELinuxHostTest extends DeviceTestCase implements IBuildReceiver, IDeviceTest {
 
     private static final Map<ITestDevice, File> cachedDevicePolicyFiles = new HashMap<>(1);
@@ -170,7 +171,7 @@ public class SELinuxHostTest extends DeviceTestCase implements IBuildReceiver, I
      *
      * @throws Exception
      */
-    @CddTest(requirement="9.7")
+    @CddTest(requirement="9.7/C-1-2")
     public void testGlobalEnforcing() throws Exception {
         CollectingOutputReceiver out = new CollectingOutputReceiver();
         mDevice.executeShellCommand("cat /sys/fs/selinux/enforce", out);
@@ -182,7 +183,7 @@ public class SELinuxHostTest extends DeviceTestCase implements IBuildReceiver, I
      *
      * @throws Exception
      */
-    @CddTest(requirement="9.7")
+    @CddTest(requirement="9.7/C-1-3")
     @RestrictedBuildTest
     public void testAllDomainsEnforcing() throws Exception {
 
@@ -348,7 +349,7 @@ public class SELinuxHostTest extends DeviceTestCase implements IBuildReceiver, I
      *
      * @throws Exception
      */
-    @CddTest(requirement="9.7")
+    @CddTest(requirement="9.7/C-1-4")
     public void testMLSAttributes() throws Exception {
         assertNotInAttribute("mlstrustedsubject", "untrusted_app");
         assertNotInAttribute("mlstrustedobject", "app_data_file");
@@ -359,7 +360,7 @@ public class SELinuxHostTest extends DeviceTestCase implements IBuildReceiver, I
      *
      * @throws Exception
      */
-    @CddTest(requirement="9.7")
+    @CddTest(requirement="9.7/C-1-4")
     public void testValidSeappContexts() throws Exception {
 
         /* obtain seapp_contexts file from running device */
@@ -427,7 +428,7 @@ public class SELinuxHostTest extends DeviceTestCase implements IBuildReceiver, I
      *
      * @throws Exception
      */
-    @CddTest(requirement="9.7")
+    @CddTest(requirement="9.7/C-1-4")
     public void testAospSeappContexts() throws Exception {
 
         /* obtain seapp_contexts file from running device */
@@ -448,7 +449,7 @@ public class SELinuxHostTest extends DeviceTestCase implements IBuildReceiver, I
      *
      * @throws Exception
      */
-    @CddTest(requirement="9.7")
+    @CddTest(requirement="9.7/C-1-4")
     public void testAospFileContexts() throws Exception {
 
         /* retrieve the checkfc executable from jar */
@@ -486,7 +487,7 @@ public class SELinuxHostTest extends DeviceTestCase implements IBuildReceiver, I
      *
      * @throws Exception
      */
-    @CddTest(requirement="9.7")
+    @CddTest(requirement="9.7/C-1-4")
     public void testAospPropertyContexts() throws Exception {
 
         /* obtain property_contexts file from running device */
@@ -511,7 +512,7 @@ public class SELinuxHostTest extends DeviceTestCase implements IBuildReceiver, I
      *
      * @throws Exception
      */
-    @CddTest(requirement="9.7")
+    @CddTest(requirement="9.7/C-1-4")
     public void testAospServiceContexts() throws Exception {
 
         /* obtain service_contexts file from running device */
@@ -532,7 +533,7 @@ public class SELinuxHostTest extends DeviceTestCase implements IBuildReceiver, I
      *
      * @throws Exception
      */
-    @CddTest(requirement="9.7")
+    @CddTest(requirement="9.7/C-1-4")
     public void testValidFileContexts() throws Exception {
 
         /* retrieve the checkfc executable from jar */
@@ -577,7 +578,7 @@ public class SELinuxHostTest extends DeviceTestCase implements IBuildReceiver, I
      *
      * @throws Exception
      */
-    @CddTest(requirement="9.7")
+    @CddTest(requirement="9.7/C-1-4")
     public void testValidPropertyContexts() throws Exception {
 
         /* retrieve the checkfc executable from jar */
@@ -613,7 +614,7 @@ public class SELinuxHostTest extends DeviceTestCase implements IBuildReceiver, I
      *
      * @throws Exception
      */
-    @CddTest(requirement="9.7")
+    @CddTest(requirement="9.7/C-1-4")
     public void testValidServiceContexts() throws Exception {
 
         /* retrieve the checkfc executable from jar */
@@ -649,7 +650,7 @@ public class SELinuxHostTest extends DeviceTestCase implements IBuildReceiver, I
      *
      * @throws Exception
      */
-    @CddTest(requirement="9.7")
+    @CddTest(requirement="9.7/C-1-4")
     public void testNoBooleans() throws Exception {
 
         /* run sepolicy-analyze booleans check on policy file */
