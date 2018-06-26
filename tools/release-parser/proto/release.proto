@@ -59,11 +59,18 @@ message Entry {
     enum EntryType {
         FOLDER = 0;
         FILE = 1;
-        CONFIG = 2;
+        TEST_MODULE_CONFIG = 2;
         JAR = 3;
         APK = 4;
         EXE = 5;
         SO = 6;
+        OAT = 7;
+        ODEX = 8;
+        VDEX = 9;
+        TEST_SUITE_TRADEFED = 10;
+        BUILD_PROP = 11;
+        SYMBOLIC_LINK = 12;
+        RC = 13;
     }
     // Type
     EntryType type = 2;
@@ -77,8 +84,15 @@ message Entry {
     // Relative path
     string relative_path = 6;
 
+    // code_id
+    string code_id = 7;
+
     // TestModule.config message
-    TestModuleConfig test_module_config = 7;
+    TestModuleConfig test_module_config = 8;
+    repeated string dependencies = 9;
+    string abi_architecture = 10;
+    int32 abi_bits = 11;
+    repeated Service services = 12;
 }
 
 message ReleaseContent {
@@ -93,7 +107,7 @@ message ReleaseContent {
     string fullname = 5;
     string target_arch = 6;
     string test_suite_tradefed = 7;
-    // File Entries
+    // File Entries (relative_path, entry)
     map<string, Entry> entries = 8;
     repeated string known_failures = 9;
 }
@@ -182,6 +196,48 @@ message TestSuite {
         repeated Package packages = 5;
     }
     repeated Module modules = 5;
+}
+
+message Service {
+    string name = 1;
+    string file = 2;
+    repeated string arguments = 3;
+    string clazz = 4;
+    string user = 5;
+    string group = 6;
+    string writepid = 7;
+    repeated string options = 8;
+}
+
+message Api {
+    string name = 1;
+    string version = 2;
+
+    message Package {
+        string name = 1;
+
+        message Clazz {
+            string name = 1;
+            bool deprecated = 2;
+            bool abstract = 3;
+
+            message Method {
+                string name = 1;
+                string visibility = 2;
+                repeated string parameter_types = 3;
+                string return_type = 4;
+                bool deprecated = 5;
+                bool static = 6;
+                bool final = 7;
+                bool abstract = 8;
+            }
+            repeated Method constructors = 4;
+            repeated Method methods = 5;
+            Clazz super_class = 6;
+        }
+        map<string, Clazz> clazzez = 3;
+    }
+    map<string, Package> packages = 3;
 }
 
 // [END messages]
