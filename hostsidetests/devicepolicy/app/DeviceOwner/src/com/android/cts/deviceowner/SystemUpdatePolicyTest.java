@@ -31,6 +31,7 @@ import android.os.Parcel;
 import android.provider.Settings;
 import android.provider.Settings.Global;
 
+import com.google.common.collect.ImmutableList;
 import java.time.LocalDate;
 import java.time.MonthDay;
 import java.util.ArrayList;
@@ -274,6 +275,26 @@ public class SystemUpdatePolicyTest extends BaseDeviceOwnerTest {
             assertSystemUpdatePoliciesEqual(policy3, copy3);
         } finally {
             parcel3.recycle();
+        }
+    }
+
+    public void testWriteValidationFailedExceptionToParcel() {
+        final List<FreezePeriod> freezePeriods =
+            ImmutableList.of(new FreezePeriod(MonthDay.of(1, 10), MonthDay.of(1, 9)));
+        try {
+            SystemUpdatePolicy.createAutomaticInstallPolicy().setFreezePeriods(freezePeriods);
+            fail("ValidationFailedException not thrown for invalid freeze period.");
+        } catch (ValidationFailedException e) {
+            final Parcel parcel = Parcel.obtain();
+            e.writeToParcel(parcel, 0);
+            parcel.setDataPosition(0);
+
+            final ValidationFailedException copy =
+                ValidationFailedException.CREATOR.createFromParcel(parcel);
+
+            assertThat(copy).isNotNull();
+            assertThat(e.getErrorCode()).isEqualTo(copy.getErrorCode());
+            assertThat(e.getMessage()).isEqualTo(copy.getMessage());
         }
     }
 

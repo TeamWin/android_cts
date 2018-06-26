@@ -17,6 +17,7 @@
 package android.admin.cts;
 
 import static org.junit.Assert.assertNotEquals;
+import static org.testng.Assert.assertThrows;
 
 import android.app.NotificationManager;
 import android.app.NotificationManager.Policy;
@@ -1035,5 +1036,17 @@ public class DevicePolicyManagerTest extends AndroidTestCase {
         } catch (Exception tolerated) {
             assertProfileOwnerMessage(tolerated.getMessage());
         }
+    }
+
+    public void testSetStorageEncryption_noAdmin() {
+        if (!mDeviceAdmin) {
+            Log.w(TAG, "Skipping testSetStorageEncryption_noAdmin");
+            return;
+        }
+        final ComponentName notAdmin = new ComponentName("com.test.foo", ".bar");
+        assertThrows(SecurityException.class,
+            () -> mDevicePolicyManager.setStorageEncryption(notAdmin, true));
+        assertThrows(SecurityException.class,
+            () -> mDevicePolicyManager.setStorageEncryption(notAdmin, false));
     }
 }

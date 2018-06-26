@@ -600,6 +600,18 @@ public class ManagedProfileTest extends BaseDevicePolicyTest {
                 Collections.singletonMap(PARAM_PROFILE_ID, Integer.toString(mProfileUserId)));
     }
 
+    public void testCrossProfileNotificationListeners_setAndGet() throws Exception {
+        if (!mHasFeature) {
+            return;
+        }
+        installAppAsUser(NOTIFICATION_APK, mProfileUserId);
+        installAppAsUser(NOTIFICATION_APK, mParentUserId);
+
+        runDeviceTestsAsUser(MANAGED_PROFILE_PKG, ".NotificationListenerTest",
+                "testSetAndGetPermittedCrossProfileNotificationListeners", mProfileUserId,
+                Collections.singletonMap(PARAM_PROFILE_ID, Integer.toString(mProfileUserId)));
+    }
+
     public void testCrossProfileCopyPaste() throws Exception {
         if (!mHasFeature) {
             return;
@@ -836,6 +848,14 @@ public class ManagedProfileTest extends BaseDevicePolicyTest {
         }
         runDeviceTestsAsUser(MANAGED_PROFILE_PKG, ".PasswordMinimumRestrictionsTest",
                 mProfileUserId);
+    }
+
+    public void testDevicePolicyManagerParentSupport() throws Exception {
+        if (!mHasFeature) {
+            return;
+        }
+        runDeviceTestsAsUser(
+                MANAGED_PROFILE_PKG, ".DevicePolicyManagerParentSupportTest", mProfileUserId);
     }
 
     public void testBluetoothContactSharingDisabled() throws Exception {

@@ -399,10 +399,10 @@ public class SecurityLoggingTest extends BaseDeviceOwnerTest {
 
     private void verifyOsStartupEventPresent(List<SecurityEvent> events) {
         final SecurityEvent event = findEvent("os startup", events, TAG_OS_STARTUP);
-        // Verified boot state
-        assertOneOf(ImmutableSet.of("green", "yellow", "orange"), getString(event, 0));
-        // dm-verity mode
-        assertOneOf(ImmutableSet.of("enforcing", "eio", "disabled"), getString(event, 1));
+        // Verified boot state, empty if running on emulator
+        assertOneOf(ImmutableSet.of("", "green", "yellow", "orange"), getString(event, 0));
+        // dm-verity mode, empty if it is disabled
+        assertOneOf(ImmutableSet.of("", "enforcing", "eio", "disabled"), getString(event, 1));
     }
 
     private void assertOneOf(Set<String> allowed, String s) {

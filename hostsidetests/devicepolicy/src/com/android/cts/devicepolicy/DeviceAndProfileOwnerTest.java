@@ -930,6 +930,13 @@ public abstract class DeviceAndProfileOwnerTest extends BaseDevicePolicyTest {
         executeDeviceTestClass(".InputMethodsTest");
     }
 
+    public void testSetStorageEncryption() throws Exception {
+        if (!mHasFeature) {
+            return;
+        }
+        executeDeviceTestClass(".StorageEncryptionTest");
+    }
+
     /**
      * Executes a test class on device. Prior to running, turn off background data usage
      * restrictions, and restore the original restrictions after the test.
