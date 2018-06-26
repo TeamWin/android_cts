@@ -101,6 +101,9 @@ public class OutgoingCallTest extends BaseTelecomTestWithMockServices {
 
         placeAndVerifyCall();
         verifyConnectionForOutgoingCall();
-        verifyPhoneStateListenerCallbacksForCall(TelephonyManager.CALL_STATE_OFFHOOK);
+        String expectedNumber = connectionService.outgoingConnections.get(0)
+                .getAddress().getSchemeSpecificPart();
+        verifyPhoneStateListenerCallbacksForCall(TelephonyManager.CALL_STATE_OFFHOOK,
+                expectedNumber);
     }
 }

@@ -20,6 +20,7 @@ import static android.telecom.cts.TestUtils.COMPONENT;
 import static android.telecom.cts.TestUtils.PACKAGE;
 
 import android.content.ComponentName;
+import android.net.Uri;
 import android.os.Bundle;
 import android.telecom.Connection;
 import android.telecom.PhoneAccountHandle;
@@ -54,9 +55,11 @@ public class IncomingCallTest extends BaseTelecomTestWithMockServices {
             return;
         }
         setupConnectionService(null, FLAG_REGISTER | FLAG_ENABLE);
-        addAndVerifyNewIncomingCall(createTestNumber(), null);
+        Uri testNumber = createTestNumber();
+        addAndVerifyNewIncomingCall(testNumber, null);
         verifyConnectionForIncomingCall();
-        verifyPhoneStateListenerCallbacksForCall(TelephonyManager.CALL_STATE_RINGING);
+        verifyPhoneStateListenerCallbacksForCall(TelephonyManager.CALL_STATE_RINGING,
+                testNumber.getSchemeSpecificPart());
     }
 
     /**
