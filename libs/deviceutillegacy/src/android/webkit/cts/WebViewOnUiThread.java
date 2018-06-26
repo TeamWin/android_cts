@@ -59,6 +59,10 @@ import java.util.Map;
  * wraps a WebView so that calls are ensured to arrive on the UI thread.
  *
  * All methods may be run on either the UI thread or test thread.
+ *
+ * This should remain functionally equivalent to androidx.webkit.WebViewOnUiThread.
+ * Modifications to this class should be reflected in that class as necessary. See
+ * http://go/modifying-webview-cts.
  */
 public class WebViewOnUiThread {
     /**

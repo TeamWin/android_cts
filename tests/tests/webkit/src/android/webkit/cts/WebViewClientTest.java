@@ -92,6 +92,12 @@ public class WebViewClientTest extends ActivityInstrumentationTestCase2<WebViewC
         super.tearDown();
     }
 
+    /**
+     * This should remain functionally equivalent to
+     * androidx.webkit.WebViewClientCompatTest#testShouldOverrideUrlLoadingDefault. Modifications
+     * to this test should be reflected in that test as necessary. See
+     * http://go/modifying-webview-cts.
+     */
     // Verify that the shouldoverrideurlloading is false by default
     public void testShouldOverrideUrlLoadingDefault() {
         if (!NullWebViewUtils.isWebViewAvailable()) {
@@ -101,6 +107,11 @@ public class WebViewClientTest extends ActivityInstrumentationTestCase2<WebViewC
         assertFalse(webViewClient.shouldOverrideUrlLoading(mOnUiThread.getWebView(), new String()));
     }
 
+    /**
+     * This should remain functionally equivalent to
+     * androidx.webkit.WebViewClientCompatTest#testShouldOverrideUrlLoading. Modifications to this
+     * test should be reflected in that test as necessary. See http://go/modifying-webview-cts.
+     */
     // Verify shouldoverrideurlloading called on top level navigation
     public void testShouldOverrideUrlLoading() {
         if (!NullWebViewUtils.isWebViewAvailable()) {
@@ -261,6 +272,11 @@ public class WebViewClientTest extends ActivityInstrumentationTestCase2<WebViewC
             testServer.shutdown();
         }
     }
+    /**
+     * This should remain functionally equivalent to
+     * androidx.webkit.WebViewClientCompatTest#testOnReceivedError. Modifications to this test
+     * should be reflected in that test as necessary. See http://go/modifying-webview-cts.
+     */
     public void testOnReceivedError() throws Exception {
         if (!NullWebViewUtils.isWebViewAvailable()) {
             return;
@@ -275,6 +291,11 @@ public class WebViewClientTest extends ActivityInstrumentationTestCase2<WebViewC
                 webViewClient.hasOnReceivedErrorCode());
     }
 
+    /**
+     * This should remain functionally equivalent to
+     * androidx.webkit.WebViewClientCompatTest#testOnReceivedErrorForSubresource. Modifications to
+     * this test should be reflected in that test as necessary. See http://go/modifying-webview-cts.
+     */
     public void testOnReceivedErrorForSubresource() throws Exception {
         if (!NullWebViewUtils.isWebViewAvailable()) {
             return;
@@ -606,6 +627,12 @@ public class WebViewClientTest extends ActivityInstrumentationTestCase2<WebViewC
         assertFalse(webViewClient.didRenderProcessCrash());
     }
 
+    /**
+     * This should remain functionally equivalent to
+     * androidx.webkit.WebViewClientCompatTest#testOnSafeBrowsingHitBackToSafety.
+     * Modifications to this test should be reflected in that test as necessary. See
+     * http://go/modifying-webview-cts.
+     */
     public void testOnSafeBrowsingHitBackToSafety() throws Throwable {
         if (!NullWebViewUtils.isWebViewAvailable()) {
             return;
@@ -640,6 +667,12 @@ public class WebViewClientTest extends ActivityInstrumentationTestCase2<WebViewC
         }
     }
 
+    /**
+     * This should remain functionally equivalent to
+     * androidx.webkit.WebViewClientCompatTest#testOnSafeBrowsingHitProceed.
+     * Modifications to this test should be reflected in that test as necessary. See
+     * http://go/modifying-webview-cts.
+     */
     public void testOnSafeBrowsingHitProceed() throws Throwable {
         if (!NullWebViewUtils.isWebViewAvailable()) {
             return;
@@ -677,6 +710,12 @@ public class WebViewClientTest extends ActivityInstrumentationTestCase2<WebViewC
         mOnUiThread.loadUrlAndWaitForCompletion("about:blank");
     }
 
+    /**
+     * This should remain functionally equivalent to
+     * androidx.webkit.WebViewClientCompatTest#testOnPageCommitVisibleCalled.
+     * Modifications to this test should be reflected in that test as necessary. See
+     * http://go/modifying-webview-cts.
+     */
     public void testOnPageCommitVisibleCalled() throws Exception {
         // Check that the onPageCommitVisible callback is called
         // correctly.
