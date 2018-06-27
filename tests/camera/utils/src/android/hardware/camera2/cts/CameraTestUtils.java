@@ -110,7 +110,7 @@ public class CameraTestUtils extends Assert {
 
     public static final int SESSION_CONFIGURE_TIMEOUT_MS = 3000;
     public static final int SESSION_CLOSE_TIMEOUT_MS = 3000;
-    public static final int SESSION_READY_TIMEOUT_MS = 3000;
+    public static final int SESSION_READY_TIMEOUT_MS = 5000;
     public static final int SESSION_ACTIVE_TIMEOUT_MS = 1000;
 
     public static final int MAX_READER_IMAGES = 5;
