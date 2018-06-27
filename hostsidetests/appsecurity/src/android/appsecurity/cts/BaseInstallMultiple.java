@@ -181,7 +181,7 @@ public class BaseInstallMultiple<T extends BaseInstallMultiple<?>> {
                 TestCase.assertFalse(result, result.startsWith("Success"));
             }
         } else {
-            TestCase.assertTrue(result, result.startsWith(failure));
+            TestCase.assertTrue(result, result.contains(failure));
         }
     }
 }

@@ -50,12 +50,12 @@ public class MajorVersionTest extends BaseAppSecurityTest {
     }
 
     @Test
-    @AppModeFull
+    @AppModeFull(reason = "'full' portion of the hostside test")
     public void testInstallMinorVersion_full() throws Exception {
         testInstallMinorVersion(false);
     }
     @Test
-    @AppModeInstant
+    @AppModeInstant(reason = "'instant' portion of the hostside test")
     public void testInstallMinorVersion_instant() throws Exception {
         testInstallMinorVersion(true);
     }
@@ -66,12 +66,12 @@ public class MajorVersionTest extends BaseAppSecurityTest {
     }
 
     @Test
-    @AppModeFull
+    @AppModeFull(reason = "'full' portion of the hostside test")
     public void testInstallMajorVersion_full() throws Exception {
         testInstallMajorVersion(false);
     }
     @Test
-    @AppModeInstant
+    @AppModeInstant(reason = "'instant' portion of the hostside test")
     public void testInstallMajorVersion_instant() throws Exception {
         testInstallMajorVersion(true);
     }
@@ -82,12 +82,12 @@ public class MajorVersionTest extends BaseAppSecurityTest {
     }
 
     @Test
-    @AppModeFull
+    @AppModeFull(reason = "'full' portion of the hostside test")
     public void testInstallUpdateAcrossMinorMajorVersion_full() throws Exception {
         testInstallUpdateAcrossMinorMajorVersion(false);
     }
     @Test
-    @AppModeInstant
+    @AppModeInstant(reason = "'instant' portion of the hostside test")
     public void testInstallUpdateAcrossMinorMajorVersion_instant() throws Exception {
         testInstallUpdateAcrossMinorMajorVersion(true);
     }
@@ -107,12 +107,12 @@ public class MajorVersionTest extends BaseAppSecurityTest {
     }
 
     @Test
-    @AppModeFull
+    @AppModeFull(reason = "'full' portion of the hostside test")
     public void testInstallDowngradeAcrossMajorMinorVersion_full() throws Exception {
         testInstallDowngradeAcrossMajorMinorVersion(false);
     }
     @Test
-    @AppModeInstant
+    @AppModeInstant(reason = "'instant' portion of the hostside test")
     public void testInstallDowngradeAcrossMajorMinorVersion_instant() throws Exception {
         testInstallDowngradeAcrossMajorMinorVersion(true);
     }
@@ -121,15 +121,15 @@ public class MajorVersionTest extends BaseAppSecurityTest {
         assertTrue(getDevice().getInstalledPackageNames().contains(PKG));
         runVersionDeviceTests("testCheckVersion");
         new InstallMultiple(instant).addApk(APK_00000000ffffffff)
-                .runExpectingFailure("Failure [INSTALL_FAILED_VERSION_DOWNGRADE]");
+                .runExpectingFailure("INSTALL_FAILED_VERSION_DOWNGRADE");
         assertTrue(getDevice().getInstalledPackageNames().contains(PKG));
         runVersionDeviceTests("testCheckVersion");
         new InstallMultiple(instant).addApk(APK_000000ff00000000)
-                .runExpectingFailure("Failure [INSTALL_FAILED_VERSION_DOWNGRADE]");
+                .runExpectingFailure("INSTALL_FAILED_VERSION_DOWNGRADE");
         assertTrue(getDevice().getInstalledPackageNames().contains(PKG));
         runVersionDeviceTests("testCheckVersion");
         new InstallMultiple(instant).addApk(APK_000000000000ffff)
-                .runExpectingFailure("Failure [INSTALL_FAILED_VERSION_DOWNGRADE]");
+                .runExpectingFailure("INSTALL_FAILED_VERSION_DOWNGRADE");
         assertTrue(getDevice().getInstalledPackageNames().contains(PKG));
         runVersionDeviceTests("testCheckVersion");
     }
