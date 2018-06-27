@@ -21,7 +21,6 @@ import static org.junit.Assert.assertTrue;
 
 import android.platform.test.annotations.AppModeFull;
 import android.platform.test.annotations.AppModeInstant;
-
 import com.android.tradefed.testtype.DeviceJUnit4ClassRunner;
 
 import org.junit.After;
@@ -68,12 +67,12 @@ public class PackageVisibilityTest extends BaseAppSecurityTest {
     }
 
     @Test
-    @AppModeFull
+    @AppModeFull(reason = "'full' portion of the hostside test")
     public void testUninstalledPackageVisibility_full() throws Exception {
         testUninstalledPackageVisibility(false);
     }
     @Test
-    @AppModeInstant
+    @AppModeInstant(reason = "'instant' portion of the hostside test")
     public void testUninstalledPackageVisibility_instant() throws Exception {
         testUninstalledPackageVisibility(true);
     }

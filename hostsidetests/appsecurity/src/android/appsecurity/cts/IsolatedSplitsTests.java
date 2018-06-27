@@ -17,7 +17,6 @@ package android.appsecurity.cts;
 
 import android.platform.test.annotations.AppModeFull;
 import android.platform.test.annotations.AppModeInstant;
-
 import com.android.tradefed.testtype.DeviceJUnit4ClassRunner;
 
 import org.junit.After;
@@ -57,12 +56,12 @@ public class IsolatedSplitsTests extends BaseAppSecurityTest {
     }
 
     @Test
-    @AppModeFull
+    @AppModeFull(reason = "'full' portion of the hostside test")
     public void testInstallBase_full() throws Exception {
         testInstallBase(false);
     }
     @Test
-    @AppModeInstant
+    @AppModeInstant(reason = "'instant' portion of the hostside test")
     public void testInstallBase_instant() throws Exception {
         testInstallBase(true);
     }
@@ -72,12 +71,12 @@ public class IsolatedSplitsTests extends BaseAppSecurityTest {
     }
 
     @Test
-    @AppModeFull
+    @AppModeFull(reason = "'full' portion of the hostside test")
     public void testInstallBaseAndConfigSplit_full() throws Exception {
         testInstallBaseAndConfigSplit(false);
     }
     @Test
-    @AppModeInstant
+    @AppModeInstant(reason = "'instant' portion of the hostside test")
     public void testInstallBaseAndConfigSplit_instant() throws Exception {
         testInstallBaseAndConfigSplit(true);
     }
@@ -87,12 +86,12 @@ public class IsolatedSplitsTests extends BaseAppSecurityTest {
     }
 
     @Test
-    @AppModeFull
+    @AppModeFull(reason = "'full' portion of the hostside test")
     public void testInstallMissingDependency_full() throws Exception {
         testInstallMissingDependency(false);
     }
     @Test
-    @AppModeInstant
+    @AppModeInstant(reason = "'instant' portion of the hostside test")
     public void testInstallMissingDependency_instant() throws Exception {
         testInstallMissingDependency(true);
     }
@@ -113,12 +112,12 @@ public class IsolatedSplitsTests extends BaseAppSecurityTest {
     }
 
     @Test
-    @AppModeFull
+    @AppModeFull(reason = "'full' portion of the hostside test")
     public void testInstallOneFeatureSplitAndConfigSplits_full() throws Exception {
         testInstallOneFeatureSplitAndConfigSplits(false);
     }
     @Test
-    @AppModeInstant
+    @AppModeInstant(reason = "'instant' portion of the hostside test")
     public void testInstallOneFeatureSplitAndConfigSplits_instant() throws Exception {
         testInstallOneFeatureSplitAndConfigSplits(true);
     }
@@ -144,12 +143,12 @@ public class IsolatedSplitsTests extends BaseAppSecurityTest {
     }
 
     @Test
-    @AppModeFull
+    @AppModeFull(reason = "'full' portion of the hostside test")
     public void testInstallDependentFeatureSplitsAndConfigSplits_full() throws Exception {
         testInstallDependentFeatureSplitsAndConfigSplits(false);
     }
     @Test
-    @AppModeInstant
+    @AppModeInstant(reason = "'instant' portion of the hostside test")
     public void testInstallDependentFeatureSplitsAndConfigSplits_instant() throws Exception {
         testInstallDependentFeatureSplitsAndConfigSplits(true);
     }
@@ -177,12 +176,12 @@ public class IsolatedSplitsTests extends BaseAppSecurityTest {
     }
 
     @Test
-    @AppModeFull
+    @AppModeFull(reason = "'full' portion of the hostside test")
     public void testInstallAllFeatureSplitsAndConfigSplits_full() throws Exception {
         testInstallAllFeatureSplitsAndConfigSplits(false);
     }
     @Test
-    @AppModeInstant
+    @AppModeInstant(reason = "'instant' portion of the hostside test")
     public void testInstallAllFeatureSplitsAndConfigSplits_instant() throws Exception {
         testInstallAllFeatureSplitsAndConfigSplits(true);
     }

@@ -16,9 +16,6 @@
 
 package android.appsecurity.cts;
 
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertTrue;
-
 import android.platform.test.annotations.AppModeFull;
 import android.platform.test.annotations.AppModeInstant;
 import com.android.tradefed.testtype.DeviceJUnit4ClassRunner;
@@ -50,12 +47,12 @@ public class PackageResolutionHostTest extends BaseAppSecurityTest {
     }
 
     @Test
-    @AppModeFull
+    @AppModeFull(reason = "'full' portion of the hostside test")
     public void testResolveOrderedActivity_full() throws Exception {
         testResolveOrderedActivity(false);
     }
     @Test
-    @AppModeInstant
+    @AppModeInstant(reason = "'instant' portion of the hostside test")
     public void testResolveOrderedActivity_instant() throws Exception {
         testResolveOrderedActivity(true);
     }
@@ -68,12 +65,12 @@ public class PackageResolutionHostTest extends BaseAppSecurityTest {
     }
 
     @Test
-    @AppModeFull
+    @AppModeFull(reason = "'full' portion of the hostside test")
     public void testResolveOrderedService_full() throws Exception {
         testResolveOrderedService(false);
     }
     @Test
-    @AppModeInstant
+    @AppModeInstant(reason = "'instant' portion of the hostside test")
     public void testResolveOrderedService_instant() throws Exception {
         testResolveOrderedService(true);
     }
@@ -86,12 +83,12 @@ public class PackageResolutionHostTest extends BaseAppSecurityTest {
     }
 
     @Test
-    @AppModeFull
+    @AppModeFull(reason = "'full' portion of the hostside test")
     public void testResolveOrderedReceiver_full() throws Exception {
         testResolveOrderedReceiver(false);
     }
     @Test
-    @AppModeInstant
+    @AppModeInstant(reason = "'instant' portion of the hostside test")
     public void testResolveOrderedReceiver_instant() throws Exception {
         testResolveOrderedReceiver(true);
     }

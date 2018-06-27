@@ -18,7 +18,6 @@ package android.appsecurity.cts;
 import android.platform.test.annotations.AppModeFull;
 import android.platform.test.annotations.AppModeInstant;
 import com.android.tradefed.testtype.DeviceJUnit4ClassRunner;
-import com.android.tradefed.testtype.junit4.BaseHostJUnit4Test;
 
 import org.junit.After;
 import org.junit.Before;
@@ -58,12 +57,12 @@ public class ClassloaderSplitsTest extends BaseAppSecurityTest {
     }
 
     @Test
-    @AppModeFull
+    @AppModeFull(reason = "'full' portion of the hostside test")
     public void testBaseClassLoader_full() throws Exception {
         testBaseClassLoader(false);
     }
     @Test
-    @AppModeInstant
+    @AppModeInstant(reason = "'instant' portion of the hostside test")
     public void testBaseClassLoader_instant() throws Exception {
         testBaseClassLoader(true);
     }
@@ -73,12 +72,12 @@ public class ClassloaderSplitsTest extends BaseAppSecurityTest {
     }
 
     @Test
-    @AppModeFull
+    @AppModeFull(reason = "'full' portion of the hostside test")
     public void testFeatureAClassLoader_full() throws Exception {
         testFeatureAClassLoader(false);
     }
     @Test
-    @AppModeInstant
+    @AppModeInstant(reason = "'instant' portion of the hostside test")
     public void testFeatureAClassLoader_instant() throws Exception {
         testFeatureAClassLoader(true);
     }
@@ -89,12 +88,12 @@ public class ClassloaderSplitsTest extends BaseAppSecurityTest {
     }
 
     @Test
-    @AppModeFull
+    @AppModeFull(reason = "'full' portion of the hostside test")
     public void testFeatureBClassLoader_full() throws Exception {
         testFeatureBClassLoader(false);
     }
     @Test
-    @AppModeInstant
+    @AppModeInstant(reason = "'instant' portion of the hostside test")
     public void testFeatureBClassLoader_instant() throws Exception {
         testFeatureBClassLoader(true);
     }
