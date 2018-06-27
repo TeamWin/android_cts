@@ -24,6 +24,7 @@ import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.graphics.Bitmap;
 import android.graphics.Point;
+import android.graphics.Rect;
 import android.hardware.display.DisplayManager;
 import android.hardware.display.VirtualDisplay;
 import android.media.MediaPlayer;
@@ -106,6 +107,7 @@ public class CapturedActivity extends Activity {
 
         mMediaPlayer = MediaPlayer.create(this, R.raw.colors_video);
         mMediaPlayer.setLooping(true);
+
     }
 
     public void dismissPermissionDialog() {
@@ -210,11 +212,20 @@ public class CapturedActivity extends Activity {
             display.getRealSize(size);
             display.getMetrics(metrics);
 
+            View decorView = getWindow().getDecorView();
+            Rect boundsToCheck = new Rect(0, 0, decorView.getWidth(), decorView.getHeight());
+            int[] topLeft = decorView.getLocationOnScreen();
+            boundsToCheck.offset(topLeft[0], topLeft[1]);
+
+            if (boundsToCheck.width() < 90 || boundsToCheck.height() < 90) {
+                fail("capture bounds too small to be a fullscreen activity: " + boundsToCheck);
+            }
 
             mSurfacePixelValidator = new SurfacePixelValidator(CapturedActivity.this,
-                    size, animationTestCase.getChecker());
-            Log.d("MediaProjection", "Size is " + size.toString());
-            mVirtualDisplay = mMediaProjection.createVirtualDisplay("ScreenSharingDemo",
+                    size, boundsToCheck, animationTestCase.getChecker());
+            Log.d("MediaProjection", "Size is " + size.toString()
+                    + ", bounds are " + boundsToCheck.toShortString());
+            mVirtualDisplay = mMediaProjection.createVirtualDisplay("CtsCapturedActivity",
                     size.x, size.y,
                     metrics.densityDpi,
                     DisplayManager.VIRTUAL_DISPLAY_FLAG_AUTO_MIRROR,
