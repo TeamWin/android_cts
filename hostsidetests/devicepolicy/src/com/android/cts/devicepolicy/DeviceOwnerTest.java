@@ -20,7 +20,6 @@ import com.android.compatibility.common.tradefed.build.CompatibilityBuildHelper;
 import com.android.tradefed.device.DeviceNotAvailableException;
 
 import java.io.File;
-import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
@@ -61,16 +60,8 @@ public class DeviceOwnerTest extends BaseDevicePolicyTest {
 
     private static final String ARG_NETWORK_LOGGING_BATCH_COUNT = "batchCount";
 
-    private final List<String> NO_SETUP_WIZARD_PROVISIONING_MODE =
-            Arrays.asList("DISABLED", "EMULATOR");
-
     /** CreateAndManageUser is available and an additional user can be created. */
     private boolean mHasCreateAndManageUserFeature;
-
-    /**
-     * Whether Setup Wizard is disabled.
-     */
-    private boolean mSetupWizardDisabled;
 
     @Override
     protected void setUp() throws Exception {
@@ -86,8 +77,6 @@ public class DeviceOwnerTest extends BaseDevicePolicyTest {
         }
         mHasCreateAndManageUserFeature = mHasFeature && canCreateAdditionalUsers(1)
                 && hasDeviceFeature("android.software.managed_users");
-        mSetupWizardDisabled = NO_SETUP_WIZARD_PROVISIONING_MODE.contains(
-                getDevice().getProperty("ro.setupwizard.mode"));
     }
 
     @Override
@@ -341,19 +330,10 @@ public class DeviceOwnerTest extends BaseDevicePolicyTest {
     }
 
     public void testCreateAndManageUser_SkipSetupWizard() throws Exception {
-        if (mSetupWizardDisabled || !mHasCreateAndManageUserFeature) {
-            return;
-        }
-        executeDeviceTestMethod(".CreateAndManageUserTest",
-                "testCreateAndManageUser_SkipSetupWizard");
-    }
-
-    public void testCreateAndManageUser_DontSkipSetupWizard() throws Exception {
-        if (mSetupWizardDisabled || !mHasCreateAndManageUserFeature) {
-            return;
-        }
-        executeDeviceTestMethod(".CreateAndManageUserTest",
-                "testCreateAndManageUser_DontSkipSetupWizard");
+        if (mHasCreateAndManageUserFeature) {
+            executeDeviceTestMethod(".CreateAndManageUserTest",
+                    "testCreateAndManageUser_SkipSetupWizard");
+       }
     }
 
     public void testCreateAndManageUser_AddRestrictionSet() throws Exception {
