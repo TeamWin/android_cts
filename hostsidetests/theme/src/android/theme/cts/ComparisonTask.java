@@ -34,10 +34,13 @@ import javax.imageio.ImageIO;
 public class ComparisonTask implements Callable<File> {
     private static final String TAG = "ComparisonTask";
 
-    private static final int IMAGE_THRESHOLD = 2;
+    private static final int IMAGE_THRESHOLD = 8;
+
+    /** Neutral gray for blending colors. */
+    private static final int GRAY = 0xFF808080;
 
     /** Maximum allowable number of consecutive failed pixels. */
-    private static final int MAX_CONSECUTIVE_FAILURES = 1;
+    private static final int MAX_CONSECUTIVE_FAILURES = 2;
 
     private final File mExpected;
     private final File mActual;
@@ -90,7 +93,47 @@ public class ComparisonTask implements Callable<File> {
         return (color & 0xFF000000) >>> 24;
     }
 
-    private static boolean compare(BufferedImage reference, BufferedImage generated, int threshold) {
+    private static boolean checkNeighbors(int x, int y, BufferedImage reference,
+            BufferedImage generated, int threshold) {
+        final int w = generated.getWidth();
+        final int h = generated.getHeight();
+        for (int i = x - MAX_CONSECUTIVE_FAILURES; i <= x + MAX_CONSECUTIVE_FAILURES; i++) {
+            if (i >= 0 && i != x && i < w) {
+                for (int j = y - MAX_CONSECUTIVE_FAILURES; j <= y + MAX_CONSECUTIVE_FAILURES; j++) {
+                    if (j >= 0 && j != y && j < h) {
+                        final int p1 = reference.getRGB(i, j);
+                        final int p2 = generated.getRGB(i, j);
+
+                        final int dr = getAlphaScaledRed(p1) - getAlphaScaledRed(p2);
+                        final int dg = getAlphaScaledGreen(p1) - getAlphaScaledGreen(p2);
+                        final int db = getAlphaScaledBlue(p1) - getAlphaScaledBlue(p2);
+
+                        if (Math.abs(db) <= threshold &&
+                            Math.abs(dg) <= threshold &&
+                            Math.abs(dr) <= threshold) {
+                            // If we find at least one matching neighbor, we assume the difference
+                            // is in antialiasing.
+                            return true;
+                        }
+                    }
+                }
+            }
+        }
+        return false;
+    }
+
+
+    /**
+     * Verifies that the pixels of reference and generated images are similar
+     * within a specified threshold.
+     *
+     * @param reference expected image
+     * @param generated actual image
+     * @param threshold maximum difference per channel
+     * @return {@code true} if the images are similar, false otherwise
+     */
+    private static boolean compare(BufferedImage reference, BufferedImage generated,
+            int threshold) {
         final int w = generated.getWidth();
         final int h = generated.getHeight();
         if (w != reference.getWidth() || h != reference.getHeight()) {
@@ -98,7 +141,6 @@ public class ComparisonTask implements Callable<File> {
         }
 
         for (int i = 0; i < w; i++) {
-            int consecutive = 0;
 
             for (int j = 0; j < h; j++) {
                 final int p1 = reference.getRGB(i, j);
@@ -109,15 +151,13 @@ public class ComparisonTask implements Callable<File> {
                 final int db = getAlphaScaledBlue(p1) - getAlphaScaledBlue(p2);
 
                 if (Math.abs(db) > threshold ||
-                        Math.abs(dg) > threshold ||
-                        Math.abs(dr) > threshold) {
-                    consecutive++;
-
-                    if (consecutive > MAX_CONSECUTIVE_FAILURES) {
+                    Math.abs(dg) > threshold ||
+                    Math.abs(dr) > threshold) {
+                    System.err.println("fail dr=" + dr+ " dg=" + dg+ " db=" + db);
+                    if (!checkNeighbors(i, j, reference, generated, threshold)) {
+                        System.err.println("consecutive fail");
                         return false;
                     }
-                } else {
-                    consecutive = 0;
                 }
             }
         }
