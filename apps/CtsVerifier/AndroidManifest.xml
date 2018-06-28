@@ -577,7 +577,8 @@
            CTS Verifier BLE Insecure Client Encrypted Test Screen
                test category : bt_le
                test parent : BleInsecureClientTestListActivity
-        -->
+	-->
+        <!-- TODO(b/78538657)
         <activity
             android:name=".bluetooth.BleInsecureEncryptedClientTestActivity"
             android:configChanges="keyboardHidden|orientation|screenSize"
@@ -598,7 +599,8 @@
             <meta-data
                 android:name="test_required_features"
                 android:value="android.hardware.bluetooth_le" />
-        </activity>
+	</activity>
+        -->
 
         <!--
               =================================================================================
@@ -688,6 +690,7 @@
                test category : bt_le
                test parent : BleInsecureServerTestListActivity
         -->
+        <!-- TODO(b/78538657)
         <activity
             android:name=".bluetooth.BleInsecureEncryptedServerTestActivity"
             android:configChanges="keyboardHidden|orientation|screenSize"
@@ -709,6 +712,7 @@
                 android:name="test_required_features"
                 android:value="android.hardware.bluetooth_le" />
         </activity>
+        -->
 
         <!--
              =================================================================================
