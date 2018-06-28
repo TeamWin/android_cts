@@ -277,7 +277,7 @@ public class ActivityManagerSplitScreenTests extends ActivityManagerTestBase {
 
         // Move to split-screen primary
         final int taskId = mAmWmState.getAmState().getTaskByActivity(LAUNCHING_ACTIVITY).mTaskId;
-        moveTaskToPrimarySplitScreen(taskId, true /* launchSideActivityIfNeeded */);
+        moveTaskToPrimarySplitScreen(taskId, true /* showRecents */);
 
         // Launch target to side
         final LaunchActivityBuilder targetActivityLauncher = getLaunchActivityBuilder()

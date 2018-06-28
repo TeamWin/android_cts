@@ -380,22 +380,21 @@ public abstract class ActivityManagerTestBase {
     }
 
     public void moveTaskToPrimarySplitScreen(int taskId) {
-        moveTaskToPrimarySplitScreen(taskId, false /* launchSideActivityIfNeeded */);
+        moveTaskToPrimarySplitScreen(taskId, false /* showRecents */);
     }
 
     /**
      * Moves the device into split-screen with the specified task into the primary stack.
-     * @param taskId                        The id of the task to move into the primary stack.
-     * @param launchSideActivityIfNeeded    Whether a placeholder activity should be launched if no
-     *                                      recents activity is available.
+     * @param taskId        The id of the task to move into the primary stack.
+     * @param showRecents   Whether to show the recents activity (or a placeholder activity in
+     *                      place of the Recents activity if home is the recents component)
      */
-    public void moveTaskToPrimarySplitScreen(int taskId, boolean launchSideActivityIfNeeded) {
+    public void moveTaskToPrimarySplitScreen(int taskId, boolean showRecents) {
         mAtm.setTaskWindowingModeSplitScreenPrimary(taskId, SPLIT_SCREEN_CREATE_MODE_TOP_OR_LEFT,
-                true /* onTop */, false /* animate */, null /* initialBounds */,
-                true /* showRecents */);
+                true /* onTop */, false /* animate */, null /* initialBounds */, showRecents);
         mAmWmState.waitForRecentsActivityVisible();
 
-        if (mAmWmState.getAmState().isHomeRecentsComponent() && launchSideActivityIfNeeded) {
+        if (mAmWmState.getAmState().isHomeRecentsComponent() && showRecents) {
             // Launch Placeholder Recents
             final Activity recentsActivity = mSideActivityRule.launchActivity(new Intent());
             mAmWmState.waitForActivityState(recentsActivity.getComponentName(), STATE_RESUMED);
