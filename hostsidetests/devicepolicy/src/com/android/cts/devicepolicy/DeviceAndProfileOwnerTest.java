@@ -621,6 +621,32 @@ public abstract class DeviceAndProfileOwnerTest extends BaseDevicePolicyTest {
         }
     }
 
+    // This test currently duplicates the testDelegatedCertInstaller, with one difference:
+    // The Delegated cert installer app is called directly rather than via intents from
+    // the DelegatedCertinstallerTest.
+    public void testDelegatedCertInstallerDirectly() throws Exception {
+        if (!mHasFeature) {
+            return;
+        }
+
+        installAppAsUser(CERT_INSTALLER_APK, mUserId);
+
+        try {
+            // Set a non-empty device lockscreen password, which is a precondition for installing
+            // private key pairs.
+            changeUserCredential("1234", null, mUserId);
+
+            runDeviceTestsAsUser(DEVICE_ADMIN_PKG, ".DelegatedCertInstallerHelper",
+                    "testManualSetCertInstallerDelegate", mUserId);
+            runDeviceTestsAsUser("com.android.cts.certinstaller",
+                    ".DirectDelegatedCertInstallerTest", mUserId);
+            runDeviceTestsAsUser(DEVICE_ADMIN_PKG, ".DelegatedCertInstallerHelper",
+                    "testManualClearCertInstallerDelegate", mUserId);
+        } finally {
+            changeUserCredential(null, "1234", mUserId);
+        }
+    }
+
     // Sets restrictions and launches non-admin app, that tries to set wallpaper.
     // Non-admin apps must not violate any user restriction.
     public void testSetWallpaper_disallowed() throws Exception {
