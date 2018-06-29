@@ -16,27 +16,20 @@
 
 package android.os.cts;
 
-import android.content.Context;
-import android.hardware.vibrator.V1_0.EffectStrength;
-import android.media.AudioAttributes;
+import static org.junit.Assert.assertArrayEquals;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotEquals;
+import static org.junit.Assert.fail;
+
 import android.os.Parcel;
 import android.os.VibrationEffect;
-import android.os.Vibrator;
-import android.support.test.InstrumentationRegistry;
 import android.support.test.filters.SmallTest;
 import android.support.test.runner.AndroidJUnit4;
-import android.util.Log;
 
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
 import java.util.Arrays;
-
-import static org.junit.Assert.assertArrayEquals;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNotEquals;
-import static org.junit.Assert.assertTrue;
-import static org.junit.Assert.fail;
 
 @SmallTest
 @RunWith(AndroidJUnit4.class)
@@ -365,7 +358,11 @@ public class VibrationEffectTest {
     public void testSetStrength() {
         VibrationEffect.Prebaked effect = (VibrationEffect.Prebaked)VibrationEffect.get(
                 VibrationEffect.EFFECT_CLICK, true);
-        int[] strengths = { EffectStrength.LIGHT, EffectStrength.MEDIUM, EffectStrength.STRONG};
+        int[] strengths = {
+                VibrationEffect.EFFECT_STRENGTH_LIGHT,
+                VibrationEffect.EFFECT_STRENGTH_MEDIUM,
+                VibrationEffect.EFFECT_STRENGTH_STRONG
+        };
         for (int strength : strengths) {
             effect.setEffectStrength(strength);
             assertEquals(strength, effect.getEffectStrength());
