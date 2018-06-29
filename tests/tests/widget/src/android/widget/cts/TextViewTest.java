@@ -3288,6 +3288,19 @@ public class TextViewTest {
 
     @UiThreadTest
     @Test
+    public void testTextAttr_zeroTextSize() {
+        mTextView = findTextView(R.id.textview_textAttr_zeroTextSize);
+        // text size should be 0 as set in xml, rather than the text view default (15.0)
+        assertEquals(0f, mTextView.getTextSize(), 0.01f);
+        // text size can be set programmatically to non-negative values
+        mTextView.setTextSize(20f);
+        assertTrue(mTextView.getTextSize() > 0.0f);
+        mTextView.setTextSize(0f);
+        assertEquals(0f, mTextView.getTextSize(), 0.01f);
+    }
+
+    @UiThreadTest
+    @Test
     public void testAppend() {
         mTextView = new TextView(mActivity);
 
