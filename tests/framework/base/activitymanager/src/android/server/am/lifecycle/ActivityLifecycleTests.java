@@ -316,8 +316,7 @@ public class ActivityLifecycleTests extends ActivityLifecycleClientTestBase {
         waitAndAssertActivityStates(state(callbackTrackingActivity, ON_RESUME));
 
         // Enter split screen
-        moveTaskToPrimarySplitScreen(callbackTrackingActivity.getTaskId(),
-                true /* launchSideActivityIfNeeded */);
+        moveTaskToPrimarySplitScreen(callbackTrackingActivity.getTaskId(), true /* showRecents */);
 
         // Launch second activity to pause first
         // Create an ActivityMonitor that catch ChildActivity and return mock ActivityResult:
@@ -376,8 +375,7 @@ public class ActivityLifecycleTests extends ActivityLifecycleClientTestBase {
         waitAndAssertActivityStates(state(firstActivity, ON_RESUME));
 
         // Enter split screen
-        moveTaskToPrimarySplitScreen(firstActivity.getTaskId(),
-                true /* launchSideActivityIfNeeded */);
+        moveTaskToPrimarySplitScreen(firstActivity.getTaskId(), true /* showRecents */);
 
         // Launch second activity to pause first
         final Activity secondActivity =

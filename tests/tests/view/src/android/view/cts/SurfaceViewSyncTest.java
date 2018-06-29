@@ -28,6 +28,7 @@ import android.graphics.Paint;
 import android.media.MediaPlayer;
 import android.os.Environment;
 import android.support.test.filters.LargeTest;
+import android.support.test.filters.RequiresDevice;
 import android.support.test.rule.ActivityTestRule;
 import android.support.test.runner.AndroidJUnit4;
 import android.support.test.uiautomator.UiObjectNotFoundException;
@@ -60,6 +61,7 @@ import java.util.concurrent.TimeUnit;
 @RunWith(AndroidJUnit4.class)
 @LargeTest
 @SuppressLint("RtlHardcoded")
+@RequiresDevice
 public class SurfaceViewSyncTest {
     private static final String TAG = "SurfaceViewSyncTests";
 

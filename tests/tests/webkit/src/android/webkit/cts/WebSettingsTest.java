@@ -528,6 +528,11 @@ public class WebSettingsTest extends ActivityInstrumentationTestCase2<WebViewCts
         assertTrue(mSettings.getPluginsEnabled());
     }
 
+    /**
+     * This should remain functionally equivalent to
+     * androidx.webkit.WebSettingsCompatTest#testOffscreenPreRaster. Modifications to this test
+     * should be reflected in that test as necessary. See http://go/modifying-webview-cts.
+     */
     public void testOffscreenPreRaster() {
         if (!NullWebViewUtils.isWebViewAvailable()) {
             return;
@@ -741,6 +746,11 @@ public class WebSettingsTest extends ActivityInstrumentationTestCase2<WebViewCts
         assertEquals("No database", mOnUiThread.getTitle());
     }
 
+    /**
+     * This should remain functionally equivalent to
+     * androidx.webkit.WebSettingsCompatTest#testDisabledActionModeMenuItems. Modifications to this
+     * test should be reflected in that test as necessary. See http://go/modifying-webview-cts.
+     */
     public void testDisabledActionModeMenuItems() throws Throwable {
         if (!NullWebViewUtils.isWebViewAvailable()) {
             return;
@@ -1057,6 +1067,11 @@ public class WebSettingsTest extends ActivityInstrumentationTestCase2<WebViewCts
         }
     }
 
+    /**
+     * This should remain functionally equivalent to
+     * androidx.webkit.WebSettingsCompatTest#testEnableSafeBrowsing. Modifications to this test
+     * should be reflected in that test as necessary. See http://go/modifying-webview-cts.
+     */
     public void testEnableSafeBrowsing() throws Throwable {
         if (!NullWebViewUtils.isWebViewAvailable()) {
             return;

@@ -105,7 +105,7 @@ public class FullBackupOnlyHostSideTest extends BaseBackupHostSideTest {
 
         checkFullBackupOnlyDeviceTest("createFiles");
 
-        backupNowAndAssertSuccess(FULLBACKUPONLY_APP_PACKAGE);
+        getBackupUtils().backupNowAndAssertSuccess(FULLBACKUPONLY_APP_PACKAGE);
 
         assertNull(uninstallPackage(FULLBACKUPONLY_APP_PACKAGE));
 
@@ -131,7 +131,7 @@ public class FullBackupOnlyHostSideTest extends BaseBackupHostSideTest {
 
         checkFullBackupOnlyDeviceTest("createFiles");
 
-        backupNowAndAssertSuccess(FULLBACKUPONLY_APP_PACKAGE);
+        getBackupUtils().backupNowAndAssertSuccess(FULLBACKUPONLY_APP_PACKAGE);
 
         assertNull(uninstallPackage(FULLBACKUPONLY_APP_PACKAGE));
 
@@ -157,7 +157,7 @@ public class FullBackupOnlyHostSideTest extends BaseBackupHostSideTest {
 
         checkFullBackupOnlyDeviceTest("createFiles");
 
-        backupNowAndAssertSuccess(FULLBACKUPONLY_APP_PACKAGE);
+        getBackupUtils().backupNowAndAssertSuccess(FULLBACKUPONLY_APP_PACKAGE);
 
         assertNull(uninstallPackage(FULLBACKUPONLY_APP_PACKAGE));
 

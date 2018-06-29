@@ -521,6 +521,10 @@ public class StillCaptureTest extends Camera2SurfaceViewTestCase {
                     Log.i(TAG, "Camera " + id + " does not support color outputs, skipping");
                     continue;
                 }
+                if (mStaticInfo.isExternalCamera()) {
+                    Log.i(TAG, "Camera " + id + " is external, skipping");
+                    continue;
+                }
                 focalLengthTestByCamera();
             } finally {
                 closeDevice();

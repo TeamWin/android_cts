@@ -55,6 +55,11 @@ public class ServiceWorkerWebSettingsTest extends
         super.tearDown();
     }
 
+    /**
+     * This should remain functionally equivalent to
+     * androidx.webkit.ServiceWorkerWebSettingsCompatTest#testCacheMode. Modifications to this test
+     * should be reflected in that test as necessary. See http://go/modifying-webview-cts.
+     */
     public void testCacheMode() {
         if (!NullWebViewUtils.isWebViewAvailable()) {
             return;
@@ -68,6 +73,11 @@ public class ServiceWorkerWebSettingsTest extends
         }
     }
 
+    /**
+     * This should remain functionally equivalent to
+     * androidx.webkit.ServiceWorkerWebSettingsCompatTest#testAllowContentAccess. Modifications to
+     * this test should be reflected in that test as necessary. See http://go/modifying-webview-cts.
+     */
     public void testAllowContentAccess() {
         if (!NullWebViewUtils.isWebViewAvailable()) {
             return;
@@ -80,6 +90,11 @@ public class ServiceWorkerWebSettingsTest extends
         }
     }
 
+    /**
+     * This should remain functionally equivalent to
+     * androidx.webkit.ServiceWorkerWebSettingsCompatTest#testAllowFileAccess. Modifications to
+     * this test should be reflected in that test as necessary. See http://go/modifying-webview-cts.
+     */
     public void testAllowFileAccess() {
         if (!NullWebViewUtils.isWebViewAvailable()) {
             return;
@@ -92,6 +107,11 @@ public class ServiceWorkerWebSettingsTest extends
         }
     }
 
+    /**
+     * This should remain functionally equivalent to
+     * androidx.webkit.ServiceWorkerWebSettingsCompatTest#testBlockNetworkLoads. Modifications to
+     * this test should be reflected in that test as necessary. See http://go/modifying-webview-cts.
+     */
     public void testBlockNetworkLoads() {
         if (!NullWebViewUtils.isWebViewAvailable()) {
             return;

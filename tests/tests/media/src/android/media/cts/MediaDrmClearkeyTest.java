@@ -618,6 +618,12 @@ public class MediaDrmClearkeyTest extends MediaPlayerTestBase {
                 }
             }
 
+            if (cannotHandleGetPropertyByteArray(drm)) {
+                Log.i(TAG, "Skipping testGetProperties: byte array properties not implemented "
+                        + "on devices launched before P");
+                return;
+            }
+
             byte[] bytes = getByteArrayProperty(drm, DEVICEID_PROPERTY_KEY);
             if (0 == bytes.length) {
                 throw new Error("Failed to get property for: " + DEVICEID_PROPERTY_KEY);
@@ -643,6 +649,12 @@ public class MediaDrmClearkeyTest extends MediaPlayerTestBase {
                 "cenc", CLEARKEY_SCHEME_UUID);
 
         try {
+            if (cannotHandleSetPropertyString(drm)) {
+                Log.i(TAG, "Skipping testSetProperties: set property string not implemented "
+                        + "on devices launched before P");
+                return;
+            }
+
             // Test setting predefined string property
             // - Save the value to be restored later
             // - Set the property value
@@ -948,6 +960,30 @@ public class MediaDrmClearkeyTest extends MediaPlayerTestBase {
         } catch (Exception e) {
             return "unavailable";
         }
+    }
+
+    private boolean cannotHandleGetPropertyByteArray(MediaDrm drm) {
+        boolean apiNotSupported = false;
+        byte[] bytes = new byte[0];
+        try {
+            bytes = drm.getPropertyByteArray(DEVICEID_PROPERTY_KEY);
+        } catch (IllegalArgumentException e) {
+            // Expected exception for invalid key or api not implemented
+            apiNotSupported = true;
+        }
+        return apiNotSupported;
+    }
+
+    private boolean cannotHandleSetPropertyString(MediaDrm drm) {
+        boolean apiNotSupported = false;
+        final byte[] bytes = new byte[0];
+        try {
+            drm.setPropertyString(LISTENER_TEST_SUPPORT_PROPERTY_KEY, "testing");
+        } catch (IllegalArgumentException e) {
+            // Expected exception for invalid key or api not implemented
+            apiNotSupported = true;
+        }
+        return apiNotSupported;
     }
 
     private boolean watchHasNoClearkeySupport() {

@@ -1873,6 +1873,9 @@ public class TextUtilsTest  {
 
     @Test
     public void testSplitPattern() {
+        assertEquals(0, TextUtils.split("", Pattern.compile("")).length);
+        assertEquals(0, TextUtils.split("", Pattern.compile("not found")).length);
+
         String testString = "abccbadecdebz";
         assertEquals(calculateCharsCount(testString, "c") + 1,
                 TextUtils.split(testString, Pattern.compile("c")).length);
@@ -1888,8 +1891,9 @@ public class TextUtilsTest  {
                 TextUtils.split(testString, Pattern.compile("[a-c]")).length);
         assertEquals(0, TextUtils.split("", Pattern.compile("a")).length);
         // issue 1695243, not clear what is supposed result if the pattern string is empty.
-        assertEquals(testString.length() + 2,
-                TextUtils.split(testString, Pattern.compile("")).length);
+        assertEquals(
+                Arrays.asList("a", "b", "c", "c", "b", "a", "d", "e", "c", "d", "e", "b", "z", ""),
+                Arrays.asList(TextUtils.split(testString, Pattern.compile(""))));
     }
 
     @Test(expected=NullPointerException.class)
@@ -1918,6 +1922,12 @@ public class TextUtilsTest  {
 
     @Test
     public void testSplitString() {
+        assertEquals(0, TextUtils.split("", "").length);
+        assertEquals(0, TextUtils.split("", "not found").length);
+
+        // The case mentioned in the documentation.
+        assertEquals(Arrays.asList("a", ""), Arrays.asList(TextUtils.split("a,", ",")));
+
         String testString = "abccbadecdebz";
         assertEquals(calculateCharsCount(testString, "c") + 1,
                 TextUtils.split("abccbadecdebz", "c").length);
@@ -1929,8 +1939,9 @@ public class TextUtilsTest  {
                 TextUtils.split("abccbadecdebz", "de").length);
         assertEquals(0, TextUtils.split("", "a").length);
         // issue 1695243, not clear what is supposed result if the pattern string is empty.
-        assertEquals(testString.length() + 2,
-                TextUtils.split("abccbadecdebz", "").length);
+        assertEquals(
+                Arrays.asList("a", "b", "c", "c", "b", "a", "d", "e", "c", "d", "e", "b", "z", ""),
+                Arrays.asList(TextUtils.split("abccbadecdebz", "")));
     }
 
     @Test(expected=NullPointerException.class)

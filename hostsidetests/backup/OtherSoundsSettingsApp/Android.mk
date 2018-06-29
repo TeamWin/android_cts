@@ -1,4 +1,4 @@
-# Copyright (C) 2015 The Android Open Source Project
+# Copyright (C) 2018 The Android Open Source Project
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -16,26 +16,28 @@ LOCAL_PATH:= $(call my-dir)
 
 include $(CLEAR_VARS)
 
-LOCAL_PACKAGE_NAME := CtsCertInstallerApp
-
-LOCAL_MODULE_TAGS := optional
-
+# Don't include this package in any target
+LOCAL_MODULE_TAGS := tests
+# When built, explicitly put it in the data partition.
 LOCAL_MODULE_PATH := $(TARGET_OUT_DATA_APPS)
 
-LOCAL_SRC_FILES := $(call all-java-files-under, src)
+LOCAL_DEX_PREOPT := false
 
-LOCAL_JAVA_LIBRARIES := android.test.runner.stubs \
-    android.test.base.stubs \
-
-LOCAL_SDK_VERSION := current
+LOCAL_PROGUARD_ENABLED := disabled
 
 LOCAL_STATIC_JAVA_LIBRARIES := \
-    compatibility-device-util \
-    ctstestrunner \
-    truth-prebuilt
+    android-support-test \
+    compatibility-device-util
 
+LOCAL_SRC_FILES := $(call all-java-files-under, src)
 
 # tag this module as a cts test artifact
 LOCAL_COMPATIBILITY_SUITE := cts vts general-tests
 
-include $(BUILD_CTS_PACKAGE)
+LOCAL_PACKAGE_NAME := CtsBackupOtherSoundsSettingsApp
+
+LOCAL_SDK_VERSION := current
+
+include $(BUILD_PACKAGE)
+
+
