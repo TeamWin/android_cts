@@ -123,10 +123,37 @@ public class ConnectionServiceTest extends BaseTelecomTestWithMockServices {
         waitOnAllHandlers(getInstrumentation());
 
         AudioManager audioManager = (AudioManager) mContext.getSystemService(Context.AUDIO_SERVICE);
-        assertEquals(AudioManager.MODE_IN_COMMUNICATION, audioManager.getMode());
+        waitUntilConditionIsTrueOrTimeout(
+                new Condition() {
+                    @Override
+                    public Object expected() {
+                        return AudioManager.MODE_IN_COMMUNICATION;
+                    }
+
+                    @Override
+                    public Object actual() {
+                        return audioManager.getMode();
+                    }
+                },
+                WAIT_FOR_STATE_CHANGE_TIMEOUT_MS, "wait for mode in-communication"
+        );
+
         connection.setAudioModeIsVoip(false);
         waitOnAllHandlers(getInstrumentation());
-        assertEquals(AudioManager.MODE_IN_CALL, audioManager.getMode());
+        waitUntilConditionIsTrueOrTimeout(
+                new Condition() {
+                    @Override
+                    public Object expected() {
+                        return AudioManager.MODE_IN_CALL;
+                    }
+
+                    @Override
+                    public Object actual() {
+                        return audioManager.getMode();
+                    }
+                },
+                WAIT_FOR_STATE_CHANGE_TIMEOUT_MS, "wait for mode in-call"
+        );
     }
 
     public void testConnectionServiceFocusGainedWithNoConnectionService() {
