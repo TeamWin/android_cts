@@ -1285,7 +1285,6 @@ public class ActivityManagerDisplayTests extends ActivityManagerDisplayTestBase 
 
         executeShellCommand("am start -n " + getActivityComponentName(LAUNCHING_ACTIVITY));
         final int stackId = mVrHeadset ? defaultDisplayFrontStackId : frontStackId;
-        final int focusedStackTaskCount = mVrHeadset ? 3 : 1;
         mAmWmState.waitForFocusedStack(mDevice, stackId);
 
         // Check that the third intent is redirected to the first task
@@ -1294,8 +1293,10 @@ public class ActivityManagerDisplayTests extends ActivityManagerDisplayTestBase 
         assertEquals("Activity launched on default display must be resumed",
                 getActivityComponentName(LAUNCHING_ACTIVITY), secondFrontStack.mResumedActivity);
         mAmWmState.assertFocusedStack("Focus must be on primary display", stackId);
-        assertEquals("Focused stack must contain correct tasks",
-                focusedStackTaskCount, secondFrontStack.getTasks().size());
+        if (!mVrHeadset) {
+            assertEquals("Focused stack must contain correct tasks",
+                1, secondFrontStack.getTasks().size());
+        }
         assertEquals("Focused task must only contain 1 activity",
                 1, secondFrontStack.getTasks().get(0).mActivities.size());
     }
@@ -1357,9 +1358,10 @@ public class ActivityManagerDisplayTests extends ActivityManagerDisplayTestBase 
         assertEquals("Activity must be launched on secondary display",
                 getActivityComponentName(LAUNCHING_ACTIVITY),
                 secondFrontStack.mResumedActivity);
-        final int taskCount = mVrHeadset ? 3 : 2;
-        assertEquals("Secondary display must contain correct tasks",
-                taskCount, secondFrontStack.getTasks().size());
+        if (!mVrHeadset) {
+            assertEquals("Secondary display must contain correct tasks",
+                2, secondFrontStack.getTasks().size());
+        }
     }
 
     /**
