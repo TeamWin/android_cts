@@ -74,7 +74,6 @@ public class NfcTestActivity extends PassFailButtons.TestListActivity {
                     MIFARE_ULTRALIGHT_ID, getTagIntent(MifareUltralight.class), null));
         }
 
-        /*
         if (getPackageManager().hasSystemFeature(PackageManager.FEATURE_NFC_HOST_CARD_EMULATION)) {
             adapter.add(TestListItem.newCategory(this, R.string.nfc_hce));
             adapter.add(TestListItem.newTest(this, R.string.nfc_hce_reader_tests,
@@ -83,7 +82,7 @@ public class NfcTestActivity extends PassFailButtons.TestListActivity {
             adapter.add(TestListItem.newTest(this, R.string.nfc_hce_emulator_tests,
                     HceEmulatorTestActivity.class.getName(),
                     new Intent(this, HceEmulatorTestActivity.class), null));
-        }*/
+        }
 
         if (getPackageManager().hasSystemFeature(PackageManager.FEATURE_NFC_HOST_CARD_EMULATION_NFCF)) {
             adapter.add(TestListItem.newCategory(this, R.string.nfc_hce_f));
