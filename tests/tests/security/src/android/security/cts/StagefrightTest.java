@@ -328,6 +328,11 @@ public class StagefrightTest extends InstrumentationTestCase {
     }
 
     @SecurityTest
+    public void testStagefright_cve_2016_3742_b_28165659() throws Exception {
+        doStagefrightTest(R.raw.cve_2016_3742_b_28165659);
+    }
+
+    @SecurityTest
     public void testStagefright_bug_35039946() throws Exception {
         doStagefrightTestRawBlob(R.raw.bug_35039946_hevc, "video/hevc", 320, 420);
     }
