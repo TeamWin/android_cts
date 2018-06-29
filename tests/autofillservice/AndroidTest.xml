@@ -16,6 +16,7 @@
 <configuration description="Config for AutoFill Framework CTS tests.">
   <option name="test-suite-tag" value="cts" />
   <option name="config-descriptor:metadata" key="component" value="autofill" />
+  <option name="config-descriptor:metadata" key="parameter" value="instant_app" />
 
   <target_preparer class="com.android.tradefed.targetprep.suite.SuiteApkInstaller">
     <option name="cleanup-apks" value="true" />
