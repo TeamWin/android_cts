@@ -139,8 +139,11 @@ public class JarHostTest extends HostTest {
         int numTests = countTestCases();
         long startTime = System.currentTimeMillis();
         listener.testRunStarted(getClass().getName(), numTests);
-        super.run(new HostTestListener(listener));
-        listener.testRunEnded(System.currentTimeMillis() - startTime, Collections.emptyMap());
+        try {
+            super.run(new HostTestListener(listener));
+        } finally {
+            listener.testRunEnded(System.currentTimeMillis() - startTime, Collections.emptyMap());
+        }
     }
 
     /**
