@@ -366,10 +366,3 @@ INSTANTIATE_TEST_CASE_P(SPM, AAudioOutputStreamTest,
                 std::make_tuple(
                         AAUDIO_SHARING_MODE_EXCLUSIVE, AAUDIO_PERFORMANCE_MODE_POWER_SAVING)),
         &getTestName);
-
-
-int main(int argc, char **argv) {
-    testing::InitGoogleTest(&argc, argv);
-
-    return RUN_ALL_TESTS();
-}
