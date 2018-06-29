@@ -16,6 +16,10 @@
 
 package com.android.cts.appaccessdata;
 
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.fail;
+
 import android.content.pm.ApplicationInfo;
 import android.content.pm.PackageManager;
 import android.content.pm.PackageManager.NameNotFoundException;
@@ -24,7 +28,11 @@ import android.net.Uri;
 import android.os.Bundle;
 import android.os.ParcelFileDescriptor;
 import android.os.SystemClock;
-import android.test.AndroidTestCase;
+import android.support.test.InstrumentationRegistry;
+import android.support.test.runner.AndroidJUnit4;
+
+import org.junit.Test;
+import org.junit.runner.RunWith;
 
 import java.io.BufferedReader;
 import java.io.File;
@@ -41,7 +49,8 @@ import java.net.SocketAddress;
  *
  * Assumes that {@link #APP_WITH_DATA_PKG} has already created the private and public data.
  */
-public class AccessPrivateDataTest extends AndroidTestCase {
+@RunWith(AndroidJUnit4.class)
+public class AccessPrivateDataTest {
 
     /**
      * The Android package name of the application that owns the data
@@ -68,6 +77,7 @@ public class AccessPrivateDataTest extends AndroidTestCase {
      * and detailed traffic stats.
      * @throws IOException
      */
+    @Test
     public void testAccessPrivateData() throws IOException {
         try {
             // construct the absolute file path to the app's private file
@@ -84,7 +94,7 @@ public class AccessPrivateDataTest extends AndroidTestCase {
 
     private ApplicationInfo getApplicationInfo(String packageName) {
         try {
-            return mContext.getPackageManager().getApplicationInfo(packageName, 0);
+            return InstrumentationRegistry.getContext().getPackageManager().getApplicationInfo(packageName, 0);
         } catch (PackageManager.NameNotFoundException e) {
             throw new IllegalStateException("Expected package not found: " + e);
         }
@@ -94,6 +104,7 @@ public class AccessPrivateDataTest extends AndroidTestCase {
      * Tests that another app's public file can be accessed
      * @throws IOException
      */
+    @Test
     public void testAccessPublicData() throws IOException {
         try {
             // construct the absolute file path to the other app's public file
@@ -108,6 +119,7 @@ public class AccessPrivateDataTest extends AndroidTestCase {
         }
     }
 
+    @Test
     public void testAccessProcQtaguidTrafficStatsFailed() {
         // For untrusted app with SDK P or above, proc/net/xt_qtaguid files are no long readable.
         // They can only read their own stats from TrafficStats API. The test for TrafficStats API
@@ -116,10 +128,11 @@ public class AccessPrivateDataTest extends AndroidTestCase {
             new File(QTAGUID_STATS_FILE).canRead());
     }
 
+    @Test
     public void testAccessPrivateTrafficStats() {
         int otherAppUid = -1;
         try {
-            otherAppUid = getContext()
+            otherAppUid = InstrumentationRegistry.getContext()
                     .createPackageContext(APP_WITH_DATA_PKG, 0 /*flags*/)
                     .getApplicationInfo().uid;
         } catch (NameNotFoundException e) {
@@ -133,7 +146,14 @@ public class AccessPrivateDataTest extends AndroidTestCase {
         assertEquals(UNSUPPORTED, TrafficStats.getUidTxPackets(otherAppUid));
     }
 
+    @Test
     public void testTrafficStatsStatsUidSelf() throws Exception {
+        final boolean isInstant = Boolean.parseBoolean(
+                InstrumentationRegistry.getArguments().getString("is_instant"));
+        // test not applicable for instant applications; they cannot shift blame
+        if (isInstant) {
+            return;
+        }
         final int uid = android.os.Process.myUid();
         final long rxb = TrafficStats.getUidRxBytes(uid);
         final long rxp = TrafficStats.getUidRxPackets(uid);
@@ -141,7 +161,7 @@ public class AccessPrivateDataTest extends AndroidTestCase {
         final long txp = TrafficStats.getUidTxPackets(uid);
 
         // Start remote server
-        final int port = getContext().getContentResolver().call(PRIVATE_TARGET, "start", null, null)
+        final int port = InstrumentationRegistry.getContext().getContentResolver().call(PRIVATE_TARGET, "start", null, null)
                 .getInt("port");
 
         // Try talking to them, but shift blame
@@ -151,7 +171,7 @@ public class AccessPrivateDataTest extends AndroidTestCase {
 
             Bundle extras = new Bundle();
             extras.putParcelable("fd", ParcelFileDescriptor.fromSocket(socket));
-            getContext().getContentResolver().call(PRIVATE_TARGET, "tag", null, extras);
+            InstrumentationRegistry.getContext().getContentResolver().call(PRIVATE_TARGET, "tag", null, extras);
 
             socket.connect(new InetSocketAddress("localhost", port));
 
@@ -163,7 +183,7 @@ public class AccessPrivateDataTest extends AndroidTestCase {
         } catch (IOException e) {
             throw new RuntimeException(e);
         } finally {
-            getContext().getContentResolver().call(PRIVATE_TARGET, "stop", null, null);
+            InstrumentationRegistry.getContext().getContentResolver().call(PRIVATE_TARGET, "stop", null, null);
         }
 
         SystemClock.sleep(1000);
