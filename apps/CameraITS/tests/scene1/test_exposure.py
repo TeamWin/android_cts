@@ -36,10 +36,10 @@ THRESH_ROUND_DOWN_EXP = 0.05
 
 def get_raw_active_array_size(props):
     """Return the active array w, h from props."""
-    aaw = (props['android.sensor.info.activeArraySize']['right'] -
-           props['android.sensor.info.activeArraySize']['left'])
-    aah = (props['android.sensor.info.activeArraySize']['bottom'] -
-           props['android.sensor.info.activeArraySize']['top'])
+    aaw = (props['android.sensor.info.preCorrectionActiveArraySize']['right'] -
+           props['android.sensor.info.preCorrectionActiveArraySize']['left'])
+    aah = (props['android.sensor.info.preCorrectionActiveArraySize']['bottom'] -
+           props['android.sensor.info.preCorrectionActiveArraySize']['top'])
     return aaw, aah
 
 
