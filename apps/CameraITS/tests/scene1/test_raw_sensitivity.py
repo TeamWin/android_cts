@@ -68,10 +68,10 @@ def main():
                                       (NAME, s, var))
             else:
                 # Get the active array width and height.
-                aax = props["android.sensor.info.activeArraySize"]["left"]
-                aay = props["android.sensor.info.activeArraySize"]["top"]
-                aaw = props["android.sensor.info.activeArraySize"]["right"]-aax
-                aah = props["android.sensor.info.activeArraySize"]["bottom"]-aay
+                aax = props["android.sensor.info.preCorrectionActiveArraySize"]["left"]
+                aay = props["android.sensor.info.preCorrectionActiveArraySize"]["top"]
+                aaw = props["android.sensor.info.preCorrectionActiveArraySize"]["right"]-aax
+                aah = props["android.sensor.info.preCorrectionActiveArraySize"]["bottom"]-aay
                 white_level = float(props["android.sensor.info.whiteLevel"])
                 cap = cam.do_capture(req,
                                      {"format": "rawStats",
