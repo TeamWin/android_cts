@@ -121,4 +121,54 @@
         Adjusting the volume
     </string>
 
+    <!-- Non-handheld devices may not support a keyguard and this test may effectively be a no-op. -->
+    <string name="enterprise_privacy_keyguard_info">
+        NOTE: If the device does not support a keyguard, please pass the test using the green checkmark.\n
+        Please do the following:\n
+        1) Press the Go button to open Settings.\n
+        2) Navigate to \"Security\" &gt; \"Screen lock\" and select the first screen lock type that is not \"None\".\n
+        3) Use the Back button to return to this page.\n
+        4) Lock the device.\n
+        5) Verify that on the lock screen, you are not told the device is managed.\n
+        6) Unlock the device.\n
+        7) Repeat steps (1) through (6) for each screen lock type other than \"None\".
+    </string>
+
+    <!-- Non-handheld devices may not support quicksettings and this test may effectively be a no-op. -->
+    <string name="enterprise_privacy_quick_settings_info">
+        NOTE: If the device does not support quick settings, please pass the test using the green check mark. \n
+        Please do the following:\n
+        1) Press the Clear Org button.\n
+        2) Open and fully expand Quick Settings.\n
+        3) Verify that at the bottom of Quick Settings, you are told the device is managed.\n
+        4) Close Quick Settings.\n
+        5) Press the Set Org button.\n
+        6) Open and fully expand Quick Settings.\n
+        7) Verify that at the bottom of Quick Settings, you are told the device is managed by \"Foo, Inc.\".\n
+        8) Tap on the information.\n
+        9) Verify that a dialog informing you about device monitoring opens.\n
+        10) Tap the \"Learn more\" link.\n
+        11) Verify that a screen informing you what your managing organization can do is shown.\n
+        \n
+        Use the Back button to return to this page.
+    </string>
+
+    <!-- Non-handheld devices may not support quicksettings but still should be able to validate the API via
+    the notification section. -->
+    <string name="device_owner_network_logging_ui_info">
+        Please do the following:\n
+        NOTE: If the device does not support quick settings, please only check the notifications section.\n
+        1) Open and fully expand Quick Settings.\n
+        2) Check that you are told that your device is managed.\n
+        3) Close Quick Settings.\n
+        4) Enable network logging by tapping on the left button below.\n
+        5) Open Quick Settings again. Check that an icon appeared next to the text about device management.\n
+        6) Verify that a notification including the same icon popped up, informing you that network logging has been enabled.\n
+        7) Tap the notification.\n
+        8) Verify that a dialog about device monitoring opens, and informs you about: the name of the app that manages this device, details about the device owner\'s capabilities, and information that the admin has activated network logging and can see all network traffic.\n
+        9) Close the dialog.\n
+        10) Tap the right button below to disable network logging.\n
+        11) Verify that the notification disappeared.\n
+    </string>
+
 </resources>
