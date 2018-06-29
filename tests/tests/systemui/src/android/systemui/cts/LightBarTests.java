@@ -68,7 +68,7 @@ public class LightBarTests extends LightBarTestBase {
     @Test
     @AppModeFull // Instant apps cannot create notifications
     public void testLightStatusBarIcons() throws Throwable {
-        assumeHasColoredStatusBar();
+        assumeHasColoredStatusBar(mActivityRule);
 
         mNm = (NotificationManager) getInstrumentation().getContext()
                 .getSystemService(Context.NOTIFICATION_SERVICE);
@@ -100,7 +100,7 @@ public class LightBarTests extends LightBarTestBase {
 
     @Test
     public void testLightNavigationBar() throws Throwable {
-        assumeHasColorNavigationBar();
+        assumeHasColoredNavigationBar(mActivityRule);
 
         requestLightBars(Color.RED /* background */);
         Thread.sleep(WAIT_TIME);
@@ -118,7 +118,7 @@ public class LightBarTests extends LightBarTestBase {
 
     @Test
     public void testNavigationBarDivider() throws Throwable {
-        assumeHasColorNavigationBar();
+        assumeHasColoredNavigationBar(mActivityRule);
 
         mActivityRule.runOnUiThread(() -> {
             mActivityRule.getActivity().getWindow().setNavigationBarColor(Color.RED);
@@ -126,7 +126,7 @@ public class LightBarTests extends LightBarTestBase {
         });
         Thread.sleep(WAIT_TIME);
 
-        checkNavigationBarDivider(mActivityRule.getActivity(), Color.WHITE);
+        checkNavigationBarDivider(mActivityRule.getActivity(), Color.WHITE, Color.RED);
     }
 
     private void injectCanceledTap(int x, int y) {
@@ -147,9 +147,7 @@ public class LightBarTests extends LightBarTestBase {
     private void assertLightStats(Bitmap bitmap, Stats s) {
         boolean success = false;
         try {
-            assertMoreThan("Not enough background pixels", 0.3f,
-                    (float) s.backgroundPixels / s.totalPixels(),
-                    "Is the bar background showing correctly (solid red)?");
+            assumeNavigationBarChangesColor(s.backgroundPixels, s.totalPixels());
 
             assertMoreThan("Not enough pixels colored as in the spec", 0.3f,
                     (float) s.iconPixels / s.foregroundPixels(),
