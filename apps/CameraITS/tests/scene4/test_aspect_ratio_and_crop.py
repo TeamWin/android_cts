@@ -56,7 +56,7 @@ def determine_sensor_aspect_ratio(props):
         matched entry in AR_CHECKED
     """
     match_ar = None
-    sensor_size = props["android.sensor.info.activeArraySize"]
+    sensor_size = props["android.sensor.info.preCorrectionActiveArraySize"]
     sensor_ar = (float(abs(sensor_size["right"] - sensor_size["left"])) /
                  abs(sensor_size["bottom"] - sensor_size["top"]))
     for ar_string in AR_CHECKED:

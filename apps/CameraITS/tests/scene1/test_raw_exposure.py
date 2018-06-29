@@ -56,10 +56,10 @@ def main():
         white_level = float(props["android.sensor.info.whiteLevel"])
         black_levels = [its.image.get_black_level(i, props) for i in range(4)]
         # Get the active array width and height.
-        aax = props["android.sensor.info.activeArraySize"]["left"]
-        aay = props["android.sensor.info.activeArraySize"]["top"]
-        aaw = props["android.sensor.info.activeArraySize"]["right"]-aax
-        aah = props["android.sensor.info.activeArraySize"]["bottom"]-aay
+        aax = props["android.sensor.info.preCorrectionActiveArraySize"]["left"]
+        aay = props["android.sensor.info.preCorrectionActiveArraySize"]["top"]
+        aaw = props["android.sensor.info.preCorrectionActiveArraySize"]["right"]-aax
+        aah = props["android.sensor.info.preCorrectionActiveArraySize"]["bottom"]-aay
         raw_stat_fmt = {"format": "rawStats",
                         "gridWidth": aaw/IMG_STATS_GRID,
                         "gridHeight": aah/IMG_STATS_GRID}
