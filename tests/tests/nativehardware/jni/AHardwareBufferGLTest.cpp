@@ -801,24 +801,37 @@ bool AHardwareBufferGLTest::SetUpBuffer(const AHardwareBuffer_Desc& desc) {
         mContextCount = 1;
         return true;
     }
+
+    // The code below will only execute if we are allocating a real AHardwareBuffer.
     if (use_srgb && !HasEGLExtension("EGL_EXT_image_gl_colorspace")) {
         ALOGI("Test skipped: sRGB hardware buffers require EGL_EXT_image_gl_colorspace");
-        return false;
-    }
-    if (desc.usage & AHARDWAREBUFFER_USAGE_GPU_CUBE_MAP &&
-        !HasGLExtension("GL_EXT_EGL_image_storage")) {
-        ALOGI("Test skipped: cube map array hardware buffers require "
-              "GL_EXT_EGL_image_storage");
         return false;
     }
 
     int result = AHardwareBuffer_allocate(&desc, &mBuffer);
     // Skip if this format cannot be allocated.
     if (result != NO_ERROR) {
-        ALOGI("Test skipped: %s not supported",
+        ALOGI("Test skipped: format %s not supported",
               AHBFormatAsString(desc.format));
         return false;
     }
+
+    // The code below will only execute if allocating an AHardwareBuffer succeeded.
+    // Fail early if the buffer is mipmapped or a cube map, but the GL extension required
+    // to actually access it from GL is not present.
+    if (desc.usage & AHARDWAREBUFFER_USAGE_GPU_CUBE_MAP &&
+        !HasGLExtension("GL_EXT_EGL_image_storage")) {
+        ADD_FAILURE() << "Cube map AHardwareBuffer allocation succeeded, but the extension "
+            "GL_EXT_EGL_image_storage is not present";
+        return false;
+    }
+    if (desc.usage & AHARDWAREBUFFER_USAGE_GPU_MIPMAP_COMPLETE &&
+            !HasGLExtension("GL_EXT_EGL_image_storage")) {
+        ADD_FAILURE() << "Mipmapped AHardwareBuffer allocation succeeded, but the extension "
+            "GL_EXT_EGL_image_storage is not present";
+        return false;
+    }
+
     // Do not create the EGLImage if this is a blob format.
     if (desc.format == AHARDWAREBUFFER_FORMAT_BLOB) return true;
 
@@ -830,7 +843,10 @@ bool AHardwareBufferGLTest::SetUpBuffer(const AHardwareBuffer_Desc& desc) {
     mEGLImage = eglCreateImageKHR(
         mDisplay, EGL_NO_CONTEXT, EGL_NATIVE_BUFFER_ANDROID,
         eglGetNativeClientBufferANDROID(mBuffer), attrib_list);
-    EXPECT_NE(EGL_NO_IMAGE_KHR, mEGLImage);
+    EXPECT_NE(EGL_NO_IMAGE_KHR, mEGLImage) <<
+        "AHardwareBuffer allocation succeeded, but binding it to an EGLImage failed. "
+        "This is usually caused by a version mismatch between the gralloc implementation and "
+        "the OpenGL/EGL driver. Please contact your GPU vendor to resolve this problem.";
     return mEGLImage != EGL_NO_IMAGE_KHR;
 }
 
