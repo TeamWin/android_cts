@@ -18,7 +18,6 @@ package android.os.cts;
 
 import android.content.Context;
 import android.os.PowerManager;
-import android.os.SystemClock;
 import android.os.PowerManager.WakeLock;
 import android.test.AndroidTestCase;
 
@@ -43,35 +42,10 @@ public class PowerManagerTest extends AndroidTestCase {
         assertFalse(wl.isHeld());
 
         try {
-            pm.goToSleep(SystemClock.uptimeMillis());
-            fail("goToSleep should throw SecurityException");
-        } catch (SecurityException e) {
-            // expected
-        }
-
-        try {
-            pm.wakeUp(SystemClock.uptimeMillis());
-            fail("wakeUp should throw SecurityException");
-        } catch (SecurityException e) {
-            // expected
-        }
-
-        try {
-            pm.nap(SystemClock.uptimeMillis());
-            fail("nap should throw SecurityException");
-        } catch (SecurityException e) {
-            // expected
-        }
-
-        try {
             pm.reboot("Testing");
             fail("reboot should throw SecurityException");
         } catch (SecurityException e) {
             // expected
         }
-
-        // This method requires DEVICE_POWER but does not throw a SecurityException
-        // for historical reasons.  So this call should be a no-op.
-        pm.userActivity(SystemClock.uptimeMillis(), false);
     }
 }

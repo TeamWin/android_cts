@@ -21,14 +21,12 @@ import android.test.AndroidTestCase;
 
 import com.android.compatibility.common.util.TestThread;
 
-import dalvik.system.VMDebug;
-
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
+import java.util.Map;
 import java.util.logging.Level;
 import java.util.logging.Logger;
-import java.util.Map;
 
 public class DebugTest extends AndroidTestCase {
     private static final Logger Log = Logger.getLogger(DebugTest.class.getName());
@@ -51,7 +49,7 @@ public class DebugTest extends AndroidTestCase {
         final String traceName = getFileName();
 
         final int bufSize = 1024 * 1024 * 2;
-        final int debug_flag = VMDebug.TRACE_COUNT_ALLOCS;
+        final int debug_flag = Debug.TRACE_COUNT_ALLOCS;
 
         Debug.startMethodTracing();
         Thread.sleep(debugTime);
