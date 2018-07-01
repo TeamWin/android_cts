@@ -22,8 +22,6 @@ import static android.os.Build.VERSION_CODES.CUR_DEVELOPMENT;
 import android.os.Build;
 import android.platform.test.annotations.RestrictedBuildTest;
 
-import dalvik.system.VMRuntime;
-
 import junit.framework.TestCase;
 
 import java.io.IOException;
@@ -43,7 +41,7 @@ public class BuildTest extends TestCase {
     /** Tests that check the values of {@link Build#CPU_ABI} and {@link Build#CPU_ABI2}. */
     public void testCpuAbi() throws Exception {
         runTestCpuAbiCommon();
-        if (VMRuntime.getRuntime().is64Bit()) {
+        if (android.os.Process.is64Bit()) {
             runTestCpuAbi64();
         } else {
             runTestCpuAbi32();
@@ -63,13 +61,13 @@ public class BuildTest extends TestCase {
         // Every supported 32 bit ABI must be present in Build.SUPPORTED_ABIS.
         for (String abi : Build.SUPPORTED_32_BIT_ABIS) {
             assertTrue(abiList.contains(abi));
-            assertFalse(VMRuntime.is64BitAbi(abi));
+            assertFalse(Build.is64BitAbi(abi));
         }
 
         // Every supported 64 bit ABI must be present in Build.SUPPORTED_ABIS.
         for (String abi : Build.SUPPORTED_64_BIT_ABIS) {
             assertTrue(abiList.contains(abi));
-            assertTrue(VMRuntime.is64BitAbi(abi));
+            assertTrue(Build.is64BitAbi(abi));
         }
 
         // Build.CPU_ABI and Build.CPU_ABI2 must be present in Build.SUPPORTED_ABIS.

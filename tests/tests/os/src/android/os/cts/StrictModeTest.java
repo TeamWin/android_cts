@@ -193,14 +193,8 @@ public class StrictModeTest {
                 () ->
                         ((HttpURLConnection) new URL("http://example.com/").openConnection())
                                 .getResponseCode(),
-                info -> {
-                    assertThat(info.getViolationDetails())
-                            .contains("Detected cleartext network traffic from UID");
-                    assertThat(info.getViolationDetails())
-                            .startsWith(StrictMode.CLEARTEXT_DETECTED_MSG);
-                    assertThat(info.getViolationClass())
-                            .isAssignableTo(CleartextNetworkViolation.class);
-                });
+                info -> assertThat(info.getViolationClass())
+                        .isAssignableTo(CleartextNetworkViolation.class));
     }
 
     /** Secure connection should be ignored */
@@ -291,9 +285,8 @@ public class StrictModeTest {
                 () ->
                         ((HttpURLConnection) new URL("http://example.com/").openConnection())
                                 .getResponseCode(),
-                info ->
-                        assertThat(info.getStackTrace())
-                                .contains(UntaggedSocketViolation.MESSAGE));
+                info -> assertThat(info.getViolationClass())
+                        .isAssignableTo(UntaggedSocketViolation.class));
 
         assertNoViolation(
                 () -> {
@@ -333,9 +326,8 @@ public class StrictModeTest {
                         socket.getOutputStream().close();
                     }
                 },
-                info ->
-                        assertThat(info.getStackTrace())
-                                .contains(UntaggedSocketViolation.MESSAGE));
+                info -> assertThat(info.getViolationClass())
+                        .isAssignableTo(UntaggedSocketViolation.class));
     }
 
     private static final int PERMISSION_USER_ONLY = 0600;
@@ -435,7 +427,6 @@ public class StrictModeTest {
     }
 
     @Test
-    @Ignore("Not public API")
     public void testExplicitGc() throws Exception {
         StrictMode.setThreadPolicy(
                 new StrictMode.ThreadPolicy.Builder().detectExplicitGc().penaltyLog().build());

@@ -16,17 +16,16 @@
 
 package android.os.storage.cts;
 
-import android.os.cts.R;
-
 import android.content.Context;
 import android.content.res.Resources;
 import android.content.res.Resources.NotFoundException;
 import android.os.Environment;
 import android.os.Handler;
 import android.os.Looper;
-import android.os.ProxyFileDescriptorCallback;
 import android.os.Parcel;
 import android.os.ParcelFileDescriptor;
+import android.os.ProxyFileDescriptorCallback;
+import android.os.cts.R;
 import android.os.storage.OnObbStateChangeListener;
 import android.os.storage.StorageManager;
 import android.os.storage.StorageVolume;
@@ -39,24 +38,22 @@ import android.util.Log;
 
 import com.android.compatibility.common.util.FileUtils;
 
-import libcore.io.Streams;
+import junit.framework.AssertionFailedError;
 
+import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.FileInputStream;
-import java.io.FileNotFoundException;
+import java.io.IOException;
 import java.io.InputStream;
 import java.io.InterruptedIOException;
 import java.io.SyncFailedException;
-import java.io.IOException;
 import java.lang.reflect.Field;
 import java.lang.reflect.Modifier;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 import java.util.UUID;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.SynchronousQueue;
-import junit.framework.AssertionFailedError;
 
 public class StorageManagerTest extends AndroidTestCase {
 
@@ -236,7 +233,7 @@ public class StorageManagerTest extends AndroidTestCase {
             }
         }
         assertNotNull("No primary volume on  " + volumes, primary);
-        assertStorageVolumesEquals(primary, mStorageManager.getPrimaryVolume());
+        assertStorageVolumesEquals(primary, mStorageManager.getPrimaryStorageVolume());
     }
 
     public void testGetStorageVolume() throws Exception {
@@ -706,7 +703,7 @@ public class StorageManagerTest extends AndroidTestCase {
     }
 
     private static void assertFileContains(File file, String contents) throws IOException {
-        byte[] actual = Streams.readFully(new FileInputStream(file));
+        byte[] actual = readFully(new FileInputStream(file));
         byte[] expected = contents.getBytes("UTF-8");
         assertEquals("unexpected size", expected.length, actual.length);
         for (int i = 0; i < expected.length; i++) {
@@ -859,5 +856,25 @@ public class StorageManagerTest extends AndroidTestCase {
         if (expectedState == OnObbStateChangeListener.UNMOUNTED) {
             assertFalse("OBB should not be mounted", mStorageManager.isObbMounted(file.getPath()));
         }
+    }
+
+    public static byte[] readFully(InputStream in) throws IOException {
+        // Shamelessly borrowed from libcore.io.Streams
+        try {
+            return readFullyNoClose(in);
+        } finally {
+            in.close();
+        }
+    }
+
+    public static byte[] readFullyNoClose(InputStream in) throws IOException {
+        // Shamelessly borrowed from libcore.io.Streams
+        ByteArrayOutputStream bytes = new ByteArrayOutputStream();
+        byte[] buffer = new byte[1024];
+        int count;
+        while ((count = in.read(buffer)) != -1) {
+            bytes.write(buffer, 0, count);
+        }
+        return bytes.toByteArray();
     }
 }
