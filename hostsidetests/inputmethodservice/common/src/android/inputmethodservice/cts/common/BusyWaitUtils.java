@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package android.inputmethodservice.cts.devicetest;
+package android.inputmethodservice.cts.common;
 
 import static org.junit.Assert.fail;
 
@@ -23,12 +23,12 @@ import java.util.concurrent.TimeUnit;
 /**
  * Utility class for busy waiting.
  */
-final class BusyWaitUtils {
+public final class BusyWaitUtils {
 
     private static final long POLLING_INTERVAL = TimeUnit.MILLISECONDS.toMillis(50);
 
     @FunctionalInterface
-    interface PollingCondition {
+    public interface PollingCondition {
         boolean check() throws Exception;
     }
 
@@ -43,7 +43,7 @@ final class BusyWaitUtils {
      *                this message.
      * @throws Exception
      */
-    static void pollingCheck(final PollingCondition condition, final long timeout,
+    public static void pollingCheck(final PollingCondition condition, final long timeout,
             final String message) throws Exception {
         if (waitFor(condition, timeout)) {
             return;
