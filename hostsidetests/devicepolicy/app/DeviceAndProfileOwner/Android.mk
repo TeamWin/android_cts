@@ -16,5 +16,7 @@ LOCAL_PATH := $(call my-dir)
 
 include $(CLEAR_VARS)
 
+LOCAL_STATIC_JAVA_LIBRARIES := truth-prebuilt
+
 # Build the test APKs using their own makefiles
 include $(call all-makefiles-under,$(LOCAL_PATH))

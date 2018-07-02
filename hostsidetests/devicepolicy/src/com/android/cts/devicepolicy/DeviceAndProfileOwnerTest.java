@@ -921,6 +921,25 @@ public abstract class DeviceAndProfileOwnerTest extends BaseDevicePolicyTest {
         executeDeviceTestClass(".PasswordExpirationTest");
     }
 
+    public void testGetPasswordExpiration() throws Exception {
+        if (!mHasFeature) {
+            return;
+        }
+        executeDeviceTestMethod(".GetPasswordExpirationTest",
+                "testGetPasswordExpiration");
+        try {
+            executeDeviceTestMethod(".GetPasswordExpirationTest",
+                    "testGetPasswordExpirationUpdatedAfterPasswordReset_beforeReset");
+            // Wait for 20 seconds so we can make sure that the expiration date is refreshed later.
+            Thread.sleep(20000);
+            changeUserCredential("1234", null, mUserId);
+            executeDeviceTestMethod(".GetPasswordExpirationTest",
+                    "testGetPasswordExpirationUpdatedAfterPasswordReset_afterReset");
+        } finally {
+            changeUserCredential(null, "1234", mUserId);
+        }
+    }
+
     public void testSetSystemSetting() throws Exception {
         if (!mHasFeature) {
             return;
