@@ -893,22 +893,22 @@ public abstract class DeviceAndProfileOwnerTest extends BaseDevicePolicyTest {
         try {
             // Test that before trying an incorrect password there are 0 failed attempts.
             executeDeviceTestMethod(".GetCurrentFailedPasswordAttemptsTest",
-                "testNoFailedPasswordAttempts");
+                    "testNoFailedPasswordAttempts");
             // Try an incorrect password.
             assertFalse(verifyUserCredentialIsCorrect(wrongPassword, mUserId));
             // Test that now there is one failed attempt.
             executeDeviceTestMethod(".GetCurrentFailedPasswordAttemptsTest",
-                "testOneFailedPasswordAttempt");
+                    "testOneFailedPasswordAttempt");
             // Try an incorrect password.
             assertFalse(verifyUserCredentialIsCorrect(wrongPassword, mUserId));
             // Test that now there are two failed attempts.
             executeDeviceTestMethod(".GetCurrentFailedPasswordAttemptsTest",
-                "testTwoFailedPasswordAttempts");
+                    "testTwoFailedPasswordAttempts");
             // TODO: re-enable the test below when b/110945754 is fixed.
             // Try the correct password and check the failed attempts number has been reset to 0.
             // assertTrue(verifyUserCredentialIsCorrect(testPassword, mUserId));
             // executeDeviceTestMethod(".GetCurrentFailedPasswordAttemptsTest",
-            //     "testNoFailedPasswordAttempts");
+            //         "testNoFailedPasswordAttempts");
         } finally {
             changeUserCredential(null /*newCredential*/, testPassword, mUserId);
         }
