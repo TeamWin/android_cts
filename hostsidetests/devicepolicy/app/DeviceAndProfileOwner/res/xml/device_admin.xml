@@ -17,6 +17,7 @@
          <watch-login />
          <reset-password />
          <limit-password />
+         <expire-password />
          <disable-keyguard-features />
          <disable-camera />
          <encrypted-storage />

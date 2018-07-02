@@ -914,6 +914,13 @@ public abstract class DeviceAndProfileOwnerTest extends BaseDevicePolicyTest {
         }
     }
 
+    public void testPasswordExpiration() throws Exception {
+        if (!mHasFeature) {
+            return;
+        }
+        executeDeviceTestClass(".PasswordExpirationTest");
+    }
+
     public void testSetSystemSetting() throws Exception {
         if (!mHasFeature) {
             return;
