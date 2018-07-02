@@ -185,7 +185,7 @@ public class ActivityManagerAssistantStackTests extends ActivityManagerTestBase 
                 expectedWindowingMode, ACTIVITY_TYPE_STANDARD);
 
         // Now, tell it to finish itself and ensure that the assistant stack is brought back forward
-        executeShellCommand("am broadcast -a " + TEST_ACTIVITY_ACTION_FINISH_SELF);
+        mBroadcastActionTrigger.doAction(TEST_ACTIVITY_ACTION_FINISH_SELF);
         mAmWmState.waitForFocusedStack(WINDOWING_MODE_UNDEFINED, ACTIVITY_TYPE_ASSISTANT);
         mAmWmState.assertFrontStackActivityType(
                 "Assistant stack should be on top.", ACTIVITY_TYPE_ASSISTANT);

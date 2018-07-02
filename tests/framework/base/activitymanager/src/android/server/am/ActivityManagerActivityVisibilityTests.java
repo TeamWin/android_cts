@@ -30,8 +30,6 @@ import static android.server.am.ComponentNameUtils.getActivityName;
 import static android.server.am.Components.ALT_LAUNCHING_ACTIVITY;
 import static android.server.am.Components.ALWAYS_FOCUSABLE_PIP_ACTIVITY;
 import static android.server.am.Components.BROADCAST_RECEIVER_ACTIVITY;
-import static android.server.am.Components.BroadcastReceiverActivity.ACTION_TRIGGER_BROADCAST;
-import static android.server.am.Components.BroadcastReceiverActivity.EXTRA_FINISH_BROADCAST;
 import static android.server.am.Components.DOCKED_ACTIVITY;
 import static android.server.am.Components.LAUNCHING_ACTIVITY;
 import static android.server.am.Components.LAUNCH_PIP_ON_PIP_ACTIVITY;
@@ -54,7 +52,6 @@ import static android.server.am.UiDeviceUtils.pressBackButton;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotEquals;
 import static org.junit.Assert.assertTrue;
-import static org.junit.Assume.assumeTrue;
 
 import android.platform.test.annotations.Presubmit;
 import android.support.test.filters.FlakyTest;
@@ -208,7 +205,7 @@ public class ActivityManagerActivityVisibilityTests extends ActivityManagerTestB
         launchActivity(TEST_ACTIVITY, WINDOWING_MODE_FULLSCREEN_OR_SPLIT_SCREEN_SECONDARY);
         mAmWmState.assertVisibility(TEST_ACTIVITY, true);
         // Finish activity in non-focused (docked) stack.
-        executeShellCommand(FINISH_ACTIVITY_BROADCAST);
+        mBroadcastActionTrigger.finishBroadcastReceiverActivity();
 
         mAmWmState.waitForActivityState(LAUNCHING_ACTIVITY, STATE_PAUSED);
         mAmWmState.waitForAllExitingWindows();
@@ -248,7 +245,7 @@ public class ActivityManagerActivityVisibilityTests extends ActivityManagerTestB
         mAmWmState.assertVisibility(BROADCAST_RECEIVER_ACTIVITY, true);
 
         // Finish the top-most activity.
-        executeShellCommand(FINISH_ACTIVITY_BROADCAST);
+        mBroadcastActionTrigger.finishBroadcastReceiverActivity();
         //TODO: BUG: MoveTaskToBackActivity returns to the top of the stack when
         // BroadcastActivity finishes, so homeActivity is not visible afterwards
 

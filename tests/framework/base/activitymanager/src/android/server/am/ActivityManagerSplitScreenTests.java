@@ -26,7 +26,6 @@ import static android.app.WindowConfiguration.WINDOWING_MODE_FULLSCREEN_OR_SPLIT
 import static android.app.WindowConfiguration.WINDOWING_MODE_SPLIT_SCREEN_PRIMARY;
 import static android.app.WindowConfiguration.WINDOWING_MODE_SPLIT_SCREEN_SECONDARY;
 import static android.app.WindowConfiguration.WINDOWING_MODE_UNDEFINED;
-import static android.server.am.Components.ALT_LAUNCHING_ACTIVITY;
 import static android.server.am.Components.DOCKED_ACTIVITY;
 import static android.server.am.Components.LAUNCHING_ACTIVITY;
 import static android.server.am.Components.NON_RESIZEABLE_ACTIVITY;
@@ -504,7 +503,7 @@ public class ActivityManagerSplitScreenTests extends ActivityManagerTestBase {
     public void testFinishDockActivityWhileMinimized() throws Exception {
         launchActivityInDockStackAndMinimize(TEST_ACTIVITY);
 
-        executeShellCommand("am broadcast -a " + TEST_ACTIVITY_ACTION_FINISH_SELF);
+        mBroadcastActionTrigger.doAction(TEST_ACTIVITY_ACTION_FINISH_SELF);
         waitForDockNotMinimized();
         mAmWmState.assertNotExist(TEST_ACTIVITY);
         assertDockNotMinimized();
@@ -545,6 +544,9 @@ public class ActivityManagerSplitScreenTests extends ActivityManagerTestBase {
         }
     }
 
+    /**
+     * Verify split screen mode visibility after stack resize occurs.
+     */
     @Test
     @Presubmit
     @FlakyTest(bugId = 110276714)
@@ -560,10 +562,6 @@ public class ActivityManagerSplitScreenTests extends ActivityManagerTestBase {
                 WINDOWING_MODE_SPLIT_SCREEN_SECONDARY, ACTIVITY_TYPE_STANDARD);
         mAmWmState.assertContainsStack("Must contain primary split-screen stack.",
                 WINDOWING_MODE_SPLIT_SCREEN_PRIMARY, ACTIVITY_TYPE_STANDARD);
-        assertEquals(new Rect(0, 0, STACK_SIZE, STACK_SIZE),
-                mAmWmState.getAmState().getStandardStackByWindowingMode(
-                        WINDOWING_MODE_SPLIT_SCREEN_PRIMARY).getBounds());
-        mAmWmState.assertDockedTaskBounds(TASK_SIZE, TASK_SIZE, DOCKED_ACTIVITY);
         mAmWmState.assertVisibility(DOCKED_ACTIVITY, true);
         mAmWmState.assertVisibility(TEST_ACTIVITY, true);
     }
