@@ -23,10 +23,15 @@ import com.android.tradefed.testtype.DeviceTestCase;
 import com.android.tradefed.log.LogUtil.CLog;
 
 import java.util.regex.Pattern;
+import com.android.ddmlib.MultiLineReceiver;
+import com.android.ddmlib.Log;
 
 public class SecurityTestCase extends DeviceTestCase {
 
+    private static final String LOG_TAG = "SecurityTestCase";
+
     private long kernelStartTime;
+    private static Thread checkOom = null;
 
     /**
      * Waits for device to be online, marks the most recent boottime of the device
@@ -40,6 +45,12 @@ public class SecurityTestCase extends DeviceTestCase {
             Integer.parseInt(uptime.substring(0, uptime.indexOf('.')));
         //TODO:(badash@): Watch for other things to track.
         //     Specifically time when app framework starts
+
+        // Start Out of Memory detection in separate thread
+        //if (checkOom == null || !checkOom.isAlive()) {
+        //    checkOom = new Thread(new OomChecker());
+        //    checkOom.start();
+        //}
     }
 
     /**
@@ -105,5 +116,43 @@ public class SecurityTestCase extends DeviceTestCase {
        assertFalse("Pattern found",
                    Pattern.compile(pattern,
                    Pattern.DOTALL).matcher(input).matches());
+    }
+
+    class OomChecker implements Runnable {
+
+        @Override
+        public void run() {
+            MultiLineReceiver rcvr = new MultiLineReceiver() {
+                private boolean isCancelled = false;
+
+                public void processNewLines(String[] lines) {
+                    for (String line : lines) {
+                        if (Pattern.matches(".*lowmemorykiller.*", line)) {
+                            // low memory detected, reboot device to clear memory and pass test
+                            isCancelled = true;
+                            Log.i(LOG_TAG, "lowmemorykiller detected; rebooting device and passing test");
+                            try {
+                                getDevice().rebootUntilOnline();
+                                updateKernelStartTime();
+                            } catch (Exception e) {
+                                Log.e(LOG_TAG, e.toString());
+                            }
+                            return; // we don't need to process remaining lines in the array
+                        }
+                    }
+                }
+
+                public boolean isCancelled() {
+                    return isCancelled;
+                }
+            };
+
+            try {
+                AdbUtils.runCommandLine("logcat -c", getDevice());
+                getDevice().executeShellCommand("logcat", rcvr);
+            } catch (Exception e) {
+                Log.e(LOG_TAG, e.toString());
+            }
+        }
     }
 }
