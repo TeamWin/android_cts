@@ -29,7 +29,7 @@ import java.util.Set;
 public class CreateUsersNoAppCrashesTest extends BaseMultiUserTest {
     private int mInitialUserId;
     private static final long LOGCAT_POLL_INTERVAL_MS = 5000;
-    private static final long BOOT_COMPLETED_TIMEOUT_MS = 120000;
+    private static final long BOOT_COMPLETED_TIMEOUT_MS = 180000;
 
     @Override
     protected void setUp() throws Exception {
