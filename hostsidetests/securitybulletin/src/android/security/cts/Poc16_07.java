@@ -37,4 +37,16 @@ public class Poc16_07 extends SecurityTestCase {
         String logcat = AdbUtils.runCommandLine("logcat -d", getDevice());
         assertNotMatches("[\\s\\n\\S]*CVE-2016-3809 test case failed[\\s\\n\\S]*", logcat);
     }
+
+    /**
+     *  b/27890802
+     */
+    @SecurityTest(minPatchLevel = "2016-07")
+    public void testPocCVE_2016_3746() throws Exception {
+        AdbUtils.runCommandLine("logcat -c" , getDevice());
+        AdbUtils.runPoc("CVE-2016-3746", getDevice(), 60);
+        String logcat = AdbUtils.runCommandLine("logcat -d", getDevice());
+        assertNotMatchesMultiLine("Fatal signal[\\s\\S]*>>> /system/bin/mediaserver <<<",
+                logcat);
+    }
 }
