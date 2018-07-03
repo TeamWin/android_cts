@@ -16,6 +16,10 @@
 
 package com.android.cts.deviceandprofileowner;
 
+import static android.app.admin.DevicePolicyManager.DELEGATION_CERT_INSTALL;
+
+import static com.google.common.truth.Truth.assertThat;
+
 import android.app.KeyguardManager;
 import android.app.admin.DevicePolicyManager;
 import android.content.BroadcastReceiver;
@@ -25,7 +29,6 @@ import android.content.Intent;
 import android.content.IntentFilter;
 import android.os.Build;
 import android.os.Process;
-import android.os.UserHandle;
 import android.security.KeyChainException;
 import android.test.MoreAsserts;
 
@@ -35,8 +38,8 @@ import java.security.GeneralSecurityException;
 import java.security.KeyStore;
 import java.security.KeyStoreException;
 import java.security.cert.Certificate;
-import java.security.cert.CertificateException;
 import java.security.cert.CertificateFactory;
+import java.util.Arrays;
 import java.util.List;
 import java.util.concurrent.Semaphore;
 import java.util.concurrent.TimeUnit;
@@ -68,6 +71,8 @@ public class DelegatedCertInstallerTest extends BaseDeviceAdminTest {
     // manifest
     private static final ComponentName CERT_INSTALLER_COMPONENT = new ComponentName(
             CERT_INSTALLER_PACKAGE, "com.android.cts.certinstaller.CertInstallerReceiver");
+
+    private static final List<String> CERT_INSTALL_SCOPES = Arrays.asList(DELEGATION_CERT_INSTALL);
 
     /*
      * The CA and keypair below are generated with:
@@ -273,6 +278,41 @@ public class DelegatedCertInstallerTest extends BaseDeviceAdminTest {
                     NOT_EXIST_CERT_INSTALLER_PACKAGE.equals(
                             mDpm.getCertInstallerPackage(ADMIN_RECEIVER_COMPONENT)));
         }
+    }
+
+    public void testSettingDelegatedCertInstallerAPICompatibility_oldSetNewGet() {
+        // Set a delegated cert installer using the deprecated API and verify that the same
+        // package is considered as the delegated cert installer using the new API.
+        mDpm.setCertInstallerPackage(ADMIN_RECEIVER_COMPONENT, CERT_INSTALLER_PACKAGE);
+        assertThat(mDpm.getCertInstallerPackage(ADMIN_RECEIVER_COMPONENT)).isEqualTo(
+                CERT_INSTALLER_PACKAGE);
+        assertThat(mDpm.getDelegatePackages(ADMIN_RECEIVER_COMPONENT,
+                DELEGATION_CERT_INSTALL)).containsExactly(CERT_INSTALLER_PACKAGE);
+
+        // Remove a delegate using the old API, make sure no delegates are found using
+        // the new API.
+        mDpm.setCertInstallerPackage(ADMIN_RECEIVER_COMPONENT, null);
+        assertThat(mDpm.getCertInstallerPackage(ADMIN_RECEIVER_COMPONENT)).isNull();
+        assertThat(mDpm.getDelegatePackages(ADMIN_RECEIVER_COMPONENT,
+                DELEGATION_CERT_INSTALL)).isEmpty();
+    }
+
+    public void testSettingDelegatedCertInstallerAPICompatibility_newSetOldGet() {
+        // Set a delegate using the new API, verify that the deprecated API returns the same
+        // delegate.
+        mDpm.setDelegatedScopes(ADMIN_RECEIVER_COMPONENT, CERT_INSTALLER_PACKAGE,
+                CERT_INSTALL_SCOPES);
+        assertThat(mDpm.getDelegatePackages(ADMIN_RECEIVER_COMPONENT,
+                DELEGATION_CERT_INSTALL)).containsExactly(CERT_INSTALLER_PACKAGE);
+        assertThat(mDpm.getCertInstallerPackage(ADMIN_RECEIVER_COMPONENT)).isEqualTo(
+                CERT_INSTALLER_PACKAGE);
+
+        // Remove the delegate using the new API, verify that the deprecated API returns null
+        // as the current delegated cert installer.
+        mDpm.setDelegatedScopes(ADMIN_RECEIVER_COMPONENT, CERT_INSTALLER_PACKAGE, Arrays.asList());
+        assertThat(mDpm.getDelegatePackages(ADMIN_RECEIVER_COMPONENT,
+                DELEGATION_CERT_INSTALL)).isEmpty();
+        assertThat(mDpm.getCertInstallerPackage(ADMIN_RECEIVER_COMPONENT)).isNull();
     }
 
     /**
