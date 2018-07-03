@@ -13,12 +13,13 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
-package android.widget.cts.appwidget;
+package android.appwidget.cts.provider;
 
 import android.app.PendingIntent;
 import android.appwidget.AppWidgetManager;
 import android.appwidget.AppWidgetProvider;
+import android.appwidget.cts.R;
+import android.appwidget.cts.service.MyAppWidgetService;
 import android.content.Context;
 import android.content.Intent;
 import android.net.Uri;
@@ -26,13 +27,12 @@ import android.os.Handler;
 import android.os.Looper;
 import android.view.View;
 import android.widget.RemoteViews;
-import android.widget.cts.R;
 
 import com.android.compatibility.common.util.PollingCheck;
 
 import java.util.concurrent.CountDownLatch;
 
-public final class MyAppWidgetProvider extends AppWidgetProvider {
+public class CollectionAppWidgetProvider  extends AppWidgetProvider {
     private static final long TIME_SLICE = 100;
 
     public static final String KEY_DISPLAYED_CHILD_INDEX =
@@ -42,6 +42,7 @@ public final class MyAppWidgetProvider extends AppWidgetProvider {
     public static final String KEY_SWITCH_TO_LIST = "MyAppWidgetProvider.switchToList";
     public static final String KEY_SCROLL_POSITION = "MyAppWidgetProvider.scrollPosition";
     public static final String KEY_SCROLL_OFFSET = "MyAppWidgetProvider.scrollOffset";
+    public static final String BROADCAST_ACTION = CollectionAppWidgetProvider.class.getName();
 
     // This latch will be notified when onEnabled is called on our provider.
     private static CountDownLatch sCountDownLatch;
@@ -104,9 +105,8 @@ public final class MyAppWidgetProvider extends AppWidgetProvider {
         // cannot setup their own pending intents, instead, the collection as a whole can
         // setup a pending intent template, and the individual items can set a fillInIntent
         // to create unique before on an item to item basis.
-        Intent viewIntent = new Intent(Intent.ACTION_VIEW,
-                Uri.parse("ctstest://RemoteView/testWidget"));
-        PendingIntent pendingIntent = PendingIntent.getActivity(context, 0, viewIntent,
+        Intent viewIntent = new Intent(BROADCAST_ACTION);
+        PendingIntent pendingIntent = PendingIntent.getBroadcast(context, 0, viewIntent,
                 PendingIntent.FLAG_UPDATE_CURRENT);
 
         widgetAdapterView.setPendingIntentTemplate(R.id.remoteViews_stack, pendingIntent);

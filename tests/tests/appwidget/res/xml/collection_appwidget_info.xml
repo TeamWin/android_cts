@@ -24,6 +24,5 @@
     android:updatePeriodMillis="86400000"
     android:initialLayout="@layout/remoteviews_adapter"
     android:resizeMode="horizontal|vertical"
-    android:widgetCategory="home_screen|keyguard"
-    android:previewImage="@drawable/icon_red">
+    android:widgetCategory="home_screen|keyguard">
 </appwidget-provider>
