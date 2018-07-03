@@ -155,24 +155,11 @@ public class MediaRouterTest extends InstrumentationTestCase {
         Object tag = new Object();
         route.setTag(tag);
         assertEquals(tag, route.getTag());
-
         assertEquals(AudioManager.STREAM_MUSIC, route.getPlaybackStream());
-        if (RouteInfo.PLAYBACK_VOLUME_VARIABLE == route.getVolumeHandling()) {
-            int curVolume = route.getVolume();
-            int maxVolume = route.getVolumeMax();
-            assertTrue(curVolume <= maxVolume);
-            if (!mContext.getResources().getBoolean(
-                    com.android.internal.R.bool.config_safe_media_volume_enabled)) {
-                route.requestSetVolume(maxVolume);
-                assertEquals(maxVolume, route.getVolume());
-                route.requestUpdateVolume(-maxVolume);
-            } else {
-                route.requestSetVolume(0);
-            }
-            assertEquals(0, route.getVolume());
-            route.requestUpdateVolume(curVolume);
-            assertEquals(curVolume, route.getVolume());
-        }
+
+        int curVolume = route.getVolume();
+        int maxVolume = route.getVolumeMax();
+        assertTrue(curVolume <= maxVolume);
     }
 
     /**
