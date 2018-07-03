@@ -46,6 +46,12 @@ public abstract class AppWidgetTestCase {
     private static final String SECOND_APP_WIDGET_CONFIGURE_ACTIVITY =
             "android.appwidget.cts.provider.SecondAppWidgetConfigureActivity";
 
+    private static final String GRANT_BIND_APP_WIDGET_PERMISSION_COMMAND =
+            "appwidget grantbind --package android.appwidget.cts --user 0";
+
+    private static final String REVOKE_BIND_APP_WIDGET_PERMISSION_COMMAND =
+            "appwidget revokebind --package android.appwidget.cts --user 0";
+
     @Before
     public void assumeHasWidgets() {
         assumeTrue(hasAppWidgets());
@@ -170,5 +176,13 @@ public abstract class AppWidgetTestCase {
             }
         }
         return ret;
+    }
+
+    protected void grantBindAppWidgetPermission() throws Exception {
+        runShellCommand(GRANT_BIND_APP_WIDGET_PERMISSION_COMMAND);
+    }
+
+    protected void revokeBindAppWidgetPermission() throws Exception {
+        runShellCommand(REVOKE_BIND_APP_WIDGET_PERMISSION_COMMAND);
     }
 }

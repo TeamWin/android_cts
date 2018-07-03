@@ -89,12 +89,6 @@ public class AppWidgetTest extends AppWidgetTestCase {
                 .getTargetContext().getCacheDir().getPath());
     }
 
-    private static final String GRANT_BIND_APP_WIDGET_PERMISSION_COMMAND =
-            "appwidget grantbind --package android.appwidget.cts --user 0";
-
-    private static final String REVOKE_BIND_APP_WIDGET_PERMISSION_COMMAND =
-            "appwidget revokebind --package android.appwidget.cts --user 0";
-
     @AppModeInstant(reason = "Instant apps cannot provide or host app widgets")
     @Test
     public void testInstantAppsCannotProvideAppWidgets() {
@@ -1341,14 +1335,6 @@ public class AppWidgetTest extends AppWidgetTestCase {
         boolean[] verifiedWidgets = verifyInstalledProviders(providers);
         assertTrue(verifiedWidgets[0]);
         assertTrue(verifiedWidgets[1]);
-    }
-
-    private void grantBindAppWidgetPermission() throws Exception {
-        runShellCommand(GRANT_BIND_APP_WIDGET_PERMISSION_COMMAND);
-    }
-
-    private void revokeBindAppWidgetPermission() throws Exception {
-        runShellCommand(REVOKE_BIND_APP_WIDGET_PERMISSION_COMMAND);
     }
 
     private AppWidgetProviderInfo getFirstAppWidgetProviderInfo() {

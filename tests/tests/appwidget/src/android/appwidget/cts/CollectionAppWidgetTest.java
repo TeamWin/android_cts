@@ -13,28 +13,29 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
-package android.widget.cts;
+package android.appwidget.cts;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
-import static org.mockito.Matchers.any;
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
-import android.app.Activity;
 import android.app.Instrumentation;
 import android.appwidget.AppWidgetHost;
 import android.appwidget.AppWidgetHostView;
 import android.appwidget.AppWidgetManager;
 import android.appwidget.AppWidgetProviderInfo;
+import android.appwidget.cts.provider.CollectionAppWidgetProvider;
+import android.appwidget.cts.service.MyAppWidgetService;
+import android.content.BroadcastReceiver;
 import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
-import android.content.pm.PackageManager;
+import android.content.IntentFilter;
 import android.os.Bundle;
 import android.os.Process;
 import android.platform.test.annotations.AppModeFull;
@@ -43,18 +44,13 @@ import android.support.test.filters.LargeTest;
 import android.support.test.rule.ActivityTestRule;
 import android.support.test.runner.AndroidJUnit4;
 import android.view.View;
-import android.view.ViewGroup;
 import android.widget.AbsListView;
-import android.widget.FrameLayout;
 import android.widget.ListView;
 import android.widget.RemoteViews;
 import android.widget.RemoteViewsService;
 import android.widget.StackView;
-import android.widget.cts.appwidget.MyAppWidgetProvider;
-import android.widget.cts.appwidget.MyAppWidgetService;
 
 import com.android.compatibility.common.util.PollingCheck;
-import com.android.compatibility.common.util.SystemUtil;
 
 import org.junit.After;
 import org.junit.Before;
@@ -64,19 +60,18 @@ import org.junit.runner.RunWith;
 import org.mockito.invocation.InvocationOnMock;
 import org.mockito.stubbing.Answer;
 
-import java.io.IOException;
 import java.util.List;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 /**
- * Test {@link RemoteViews} that expect to operate within a {@link AppWidgetHostView} root.
+ * Test AppWidgets which host collection widgets.
  */
 @LargeTest
 @AppModeFull
 @RunWith(AndroidJUnit4.class)
-public class RemoteViewsWidgetTest {
+public class CollectionAppWidgetTest extends AppWidgetTestCase {
     public static final String[] COUNTRY_LIST = new String[] {
         "Argentina", "Australia", "Belize", "Botswana", "Brazil", "Cameroon", "China", "Cyprus",
         "Denmark", "Djibouti", "Ethiopia", "Fiji", "Finland", "France", "Gabon", "Germany",
@@ -87,17 +82,11 @@ public class RemoteViewsWidgetTest {
         "Uganda", "Ukraine", "United States", "Vanuatu", "Venezuela", "Zimbabwe"
     };
 
-    private static final String GRANT_BIND_APP_WIDGET_PERMISSION_COMMAND =
-        "appwidget grantbind --package android.widget.cts --user 0";
-
-    private static final String REVOKE_BIND_APP_WIDGET_PERMISSION_COMMAND =
-        "appwidget revokebind --package android.widget.cts --user 0";
-
     private static final long TEST_TIMEOUT_MS = 5000;
 
     @Rule
-    public ActivityTestRule<RemoteViewsCtsActivity> mActivityRule =
-            new ActivityTestRule<>(RemoteViewsCtsActivity.class);
+    public ActivityTestRule<EmptyActivity> mActivityRule =
+            new ActivityTestRule<>(EmptyActivity.class);
 
     private Instrumentation mInstrumentation;
 
@@ -136,7 +125,7 @@ public class RemoteViewsWidgetTest {
 
         // Configure the app widget provider behavior
         final CountDownLatch providerCountDownLatch = new CountDownLatch(2);
-        MyAppWidgetProvider.configure(providerCountDownLatch, null, null);
+        CollectionAppWidgetProvider.configure(providerCountDownLatch, null, null);
 
         // Grab the provider to be bound
         final AppWidgetProviderInfo providerInfo = getAppWidgetProviderInfo();
@@ -170,9 +159,9 @@ public class RemoteViewsWidgetTest {
                 remoteViews.setTextViewText(R.id.item, COUNTRY_LIST[position]);
 
                 // Set a fill-intent which will be used to fill-in the pending intent template
-                // which is set on the collection view in MyAppWidgetProvider.
+                // which is set on the collection view in CollectionAppWidgetProvider.
                 Bundle extras = new Bundle();
-                extras.putString(MockURLSpanTestActivity.KEY_PARAM, COUNTRY_LIST[position]);
+                extras.putString(ClickBroadcastReceiver.KEY_PARAM, COUNTRY_LIST[position]);
                 Intent fillInIntent = new Intent();
                 fillInIntent.putExtras(extras);
                 remoteViews.setOnClickFillInIntent(R.id.item, fillInIntent);
@@ -199,47 +188,19 @@ public class RemoteViewsWidgetTest {
 
         // Add our host view to the activity behind this test. This is similar to how launchers
         // add widgets to the on-screen UI.
-        ViewGroup root = (ViewGroup) mActivityRule.getActivity().findViewById(R.id.remoteView_host);
-        FrameLayout.MarginLayoutParams lp = new FrameLayout.MarginLayoutParams(
-                ViewGroup.LayoutParams.MATCH_PARENT,
-                ViewGroup.LayoutParams.MATCH_PARENT);
-        mAppWidgetHostView.setLayoutParams(lp);
-
-        mActivityRule.runOnUiThread(() -> root.addView(mAppWidgetHostView));
+        mActivityRule.runOnUiThread(() -> {
+            EmptyActivity activity = mActivityRule.getActivity();
+            activity.setContentView(mAppWidgetHostView);
+        });
     }
 
     @After
-    public void teardown() {
+    public void teardown() throws Exception {
         if (!mHasAppWidgets) {
             return;
         }
         mAppWidgetHost.deleteHost();
         revokeBindAppWidgetPermission();
-    }
-
-    private void grantBindAppWidgetPermission() {
-        try {
-            SystemUtil.runShellCommand(mInstrumentation, GRANT_BIND_APP_WIDGET_PERMISSION_COMMAND);
-        } catch (IOException e) {
-            fail("Error granting app widget permission. Command: "
-                    + GRANT_BIND_APP_WIDGET_PERMISSION_COMMAND + ": ["
-                    + e.getMessage() + "]");
-        }
-    }
-
-    private void revokeBindAppWidgetPermission() {
-        try {
-            SystemUtil.runShellCommand(mInstrumentation, REVOKE_BIND_APP_WIDGET_PERMISSION_COMMAND);
-        } catch (IOException e) {
-            fail("Error revoking app widget permission. Command: "
-                    + REVOKE_BIND_APP_WIDGET_PERMISSION_COMMAND + ": ["
-                    + e.getMessage() + "]");
-        }
-    }
-
-    private boolean hasAppWidgets() {
-        return mInstrumentation.getTargetContext().getPackageManager()
-                .hasSystemFeature(PackageManager.FEATURE_APP_WIDGETS);
     }
 
     private AppWidgetManager getAppWidgetManager() {
@@ -248,7 +209,7 @@ public class RemoteViewsWidgetTest {
 
     private AppWidgetProviderInfo getAppWidgetProviderInfo() {
         ComponentName firstComponentName = new ComponentName(mContext.getPackageName(),
-                MyAppWidgetProvider.class.getName());
+                CollectionAppWidgetProvider.class.getName());
 
         return getProviderInfo(firstComponentName);
     }
@@ -286,14 +247,14 @@ public class RemoteViewsWidgetTest {
 
     private void verifySetDisplayedChild(int displayedChildIndex) {
         final CountDownLatch updateLatch = new CountDownLatch(1);
-        MyAppWidgetProvider.configure(updateLatch, null, null);
+        CollectionAppWidgetProvider.configure(updateLatch, null, null);
 
         // Create the intent to update the widget. Note that we're passing the value
         // for displayed child index in the intent
-        Intent intent = new Intent(mContext, MyAppWidgetProvider.class);
+        Intent intent = new Intent(mContext, CollectionAppWidgetProvider.class);
         intent.setAction(AppWidgetManager.ACTION_APPWIDGET_UPDATE);
         intent.putExtra(AppWidgetManager.EXTRA_APPWIDGET_IDS, new  int[] { mAppWidgetId });
-        intent.putExtra(MyAppWidgetProvider.KEY_DISPLAYED_CHILD_INDEX, displayedChildIndex);
+        intent.putExtra(CollectionAppWidgetProvider.KEY_DISPLAYED_CHILD_INDEX, displayedChildIndex);
         mContext.sendBroadcast(intent);
 
         // Wait until the update request has been processed
@@ -323,12 +284,12 @@ public class RemoteViewsWidgetTest {
 
     private void verifyShowCommand(String intentShowKey, int expectedDisplayedChild) {
         final CountDownLatch updateLatch = new CountDownLatch(1);
-        MyAppWidgetProvider.configure(updateLatch, null, null);
+        CollectionAppWidgetProvider.configure(updateLatch, null, null);
 
         // Create the intent to update the widget. Note that we're passing the "indication"
         // which one of showNext / showPrevious APIs to execute in the intent that we're
         // creating.
-        Intent intent = new Intent(mContext, MyAppWidgetProvider.class);
+        Intent intent = new Intent(mContext, CollectionAppWidgetProvider.class);
         intent.setAction(AppWidgetManager.ACTION_APPWIDGET_UPDATE);
         intent.putExtra(AppWidgetManager.EXTRA_APPWIDGET_IDS, new  int[] { mAppWidgetId });
         intent.putExtra(intentShowKey, true);
@@ -355,34 +316,30 @@ public class RemoteViewsWidgetTest {
         mStackView = (StackView) mAppWidgetHostView.findViewById(R.id.remoteViews_stack);
 
         // Two forward
-        verifyShowCommand(MyAppWidgetProvider.KEY_SHOW_NEXT, 1);
-        verifyShowCommand(MyAppWidgetProvider.KEY_SHOW_NEXT, 2);
+        verifyShowCommand(CollectionAppWidgetProvider.KEY_SHOW_NEXT, 1);
+        verifyShowCommand(CollectionAppWidgetProvider.KEY_SHOW_NEXT, 2);
         // Four back (looping to the end of the adapter data)
-        verifyShowCommand(MyAppWidgetProvider.KEY_SHOW_PREVIOUS, 1);
-        verifyShowCommand(MyAppWidgetProvider.KEY_SHOW_PREVIOUS, 0);
-        verifyShowCommand(MyAppWidgetProvider.KEY_SHOW_PREVIOUS, COUNTRY_LIST.length - 1);
-        verifyShowCommand(MyAppWidgetProvider.KEY_SHOW_PREVIOUS, COUNTRY_LIST.length - 2);
+        verifyShowCommand(CollectionAppWidgetProvider.KEY_SHOW_PREVIOUS, 1);
+        verifyShowCommand(CollectionAppWidgetProvider.KEY_SHOW_PREVIOUS, 0);
+        verifyShowCommand(CollectionAppWidgetProvider.KEY_SHOW_PREVIOUS, COUNTRY_LIST.length - 1);
+        verifyShowCommand(CollectionAppWidgetProvider.KEY_SHOW_PREVIOUS, COUNTRY_LIST.length - 2);
         // And three forward (looping to the start of the adapter data)
-        verifyShowCommand(MyAppWidgetProvider.KEY_SHOW_NEXT, COUNTRY_LIST.length - 1);
-        verifyShowCommand(MyAppWidgetProvider.KEY_SHOW_NEXT, 0);
-        verifyShowCommand(MyAppWidgetProvider.KEY_SHOW_NEXT, 1);
+        verifyShowCommand(CollectionAppWidgetProvider.KEY_SHOW_NEXT, COUNTRY_LIST.length - 1);
+        verifyShowCommand(CollectionAppWidgetProvider.KEY_SHOW_NEXT, 0);
+        verifyShowCommand(CollectionAppWidgetProvider.KEY_SHOW_NEXT, 1);
     }
 
     private void verifyItemClickIntents(int indexToClick) throws Throwable {
-        Instrumentation.ActivityMonitor am = mInstrumentation.addMonitor(
-                MockURLSpanTestActivity.class.getName(), null, false);
+        ClickBroadcastReceiver receiver = new ClickBroadcastReceiver();
+        mActivityRule.runOnUiThread(receiver::register);
 
         mStackView = (StackView) mAppWidgetHostView.findViewById(R.id.remoteViews_stack);
         PollingCheck.waitFor(() -> mStackView.getCurrentView() != null);
         final View initialView = mStackView.getCurrentView();
         mActivityRule.runOnUiThread(
                 () -> mStackView.performItemClick(initialView, indexToClick, 0L));
-
-        Activity newActivity = am.waitForActivityWithTimeout(TEST_TIMEOUT_MS);
-        assertNotNull(newActivity);
-        assertTrue(newActivity instanceof MockURLSpanTestActivity);
-        assertEquals(COUNTRY_LIST[indexToClick], ((MockURLSpanTestActivity) newActivity).getParam());
-        newActivity.finish();
+        assertEquals(COUNTRY_LIST[indexToClick],
+                receiver.getParam(TEST_TIMEOUT_MS, TimeUnit.MILLISECONDS));
     }
 
     @Test
@@ -398,7 +355,7 @@ public class RemoteViewsWidgetTest {
         verifyItemClickIntents(2);
 
         // And one more
-        verifyShowCommand(MyAppWidgetProvider.KEY_SHOW_NEXT, 3);
+        verifyShowCommand(CollectionAppWidgetProvider.KEY_SHOW_NEXT, 3);
         verifyItemClickIntents(3);
     }
 
@@ -443,7 +400,7 @@ public class RemoteViewsWidgetTest {
         // 3. The gating condition that waits until the setScrollPosition has completed
         //    its processing / scrolling so that we can proceed to call
         //    setRelativeScrollPosition on it
-        MyAppWidgetProvider.configure(updateLatch, () -> mListView.getChildCount() > 0,
+        CollectionAppWidgetProvider.configure(updateLatch, () -> mListView.getChildCount() > 0,
                 scrollToPositionIsComplete::get);
 
         final int positionToScrollTo = COUNTRY_LIST.length - 10;
@@ -459,12 +416,12 @@ public class RemoteViewsWidgetTest {
 
         // Create the intent to update the widget. Note that we're passing the "indication"
         // to switch to our ListView in the intent that we're creating.
-        Intent intent = new Intent(mContext, MyAppWidgetProvider.class);
+        Intent intent = new Intent(mContext, CollectionAppWidgetProvider.class);
         intent.setAction(AppWidgetManager.ACTION_APPWIDGET_UPDATE);
         intent.putExtra(AppWidgetManager.EXTRA_APPWIDGET_IDS, new  int[] { mAppWidgetId });
-        intent.putExtra(MyAppWidgetProvider.KEY_SWITCH_TO_LIST, true);
-        intent.putExtra(MyAppWidgetProvider.KEY_SCROLL_POSITION, positionToScrollTo);
-        intent.putExtra(MyAppWidgetProvider.KEY_SCROLL_OFFSET, -scrollByAmount);
+        intent.putExtra(CollectionAppWidgetProvider.KEY_SWITCH_TO_LIST, true);
+        intent.putExtra(CollectionAppWidgetProvider.KEY_SCROLL_POSITION, positionToScrollTo);
+        intent.putExtra(CollectionAppWidgetProvider.KEY_SCROLL_OFFSET, -scrollByAmount);
         mContext.sendBroadcast(intent);
 
         // Wait until the update request has been processed
@@ -519,5 +476,31 @@ public class RemoteViewsWidgetTest {
             // ignore
         }
         assertTrue("Timed out while waiting for the target view to be scrolled into view", result);
+    }
+
+    private static final class ClickBroadcastReceiver extends BroadcastReceiver {
+
+        public static final String KEY_PARAM = "ClickBroadcastReceiver.param";
+
+        private final CountDownLatch latch = new CountDownLatch(1);
+
+        private String mParams;
+
+        @Override
+        public void onReceive(Context context, Intent intent) {
+            mParams = intent.getStringExtra(KEY_PARAM);
+            InstrumentationRegistry.getTargetContext().unregisterReceiver(this);
+            latch.countDown();
+        }
+
+        public String getParam(long timeout, TimeUnit unit) throws InterruptedException {
+            latch.await(timeout, unit);
+            return mParams;
+        }
+
+        public void register() {
+            InstrumentationRegistry.getTargetContext().registerReceiver(this,
+                    new IntentFilter(CollectionAppWidgetProvider.BROADCAST_ACTION));
+        }
     }
 }

@@ -599,17 +599,6 @@
             </intent-filter>
         </activity>
 
-        <receiver android:name="android.widget.cts.appwidget.MyAppWidgetProvider" >
-            <intent-filter>
-                <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
-            </intent-filter>
-            <meta-data android:name="android.appwidget.provider"
-                       android:resource="@xml/remoteviews_appwidget_info" />
-        </receiver>
-
-        <service android:name="android.widget.cts.appwidget.MyAppWidgetService"
-                 android:permission="android.permission.BIND_REMOTEVIEWS"
-                 android:exported="false" />
     </application>
 
     <instrumentation android:name="android.support.test.runner.AndroidJUnitRunner"
