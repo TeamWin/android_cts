@@ -199,8 +199,9 @@ public class ResultHandler {
             // association.
             String reportFingerprint = parser.getAttributeValue(NS, BUILD_FINGERPRINT);
             String unalteredFingerprint = parser.getAttributeValue(NS, BUILD_FINGERPRINT_UNALTERED);
-            result.setBuildFingerprint(Strings.isNullOrEmpty(unalteredFingerprint) ?
-                    reportFingerprint : unalteredFingerprint);
+            Boolean fingerprintWasAltered = !Strings.isNullOrEmpty(unalteredFingerprint);
+            result.setBuildFingerprint(fingerprintWasAltered ? unalteredFingerprint :
+                reportFingerprint);
 
             // TODO(stuartscott): may want to reload these incase the retry was done with
             // --skip-device-info flag
@@ -258,7 +259,9 @@ public class ResultHandler {
                         // If the fingerprint was altered, then checksum against the fingerprint
                         // originally reported
                         Boolean checksumMismatch = invocationUseChecksum &&
-                             !checksumReporter.containsTestResult(test, module, reportFingerprint);
+                             !checksumReporter.containsTestResult(test, module, reportFingerprint)
+                             && (fingerprintWasAltered ? !checksumReporter.containsTestResult(
+                                 test, module, unalteredFingerprint) : true);
                         if (checksumMismatch) {
                             test.removeResult();
                         }
@@ -269,7 +272,9 @@ public class ResultHandler {
                 // If the fingerprint was altered, then checksum against the fingerprint
                 // originally reported
                 Boolean checksumMismatch = invocationUseChecksum &&
-                     !checksumReporter.containsModuleResult(module, reportFingerprint);
+                     !checksumReporter.containsModuleResult(module, reportFingerprint) &&
+                     (fingerprintWasAltered ? !checksumReporter.containsModuleResult(
+                         module, unalteredFingerprint) : true);
                 if (checksumMismatch) {
                     module.initializeDone(false);
                 }
