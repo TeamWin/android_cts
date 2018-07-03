@@ -932,7 +932,9 @@ public class ActivityManagerPinnedStackTests extends ActivityManagerTestBase {
 
         // Launch a PiP activity
         launchActivity(PIP_ACTIVITY, EXTRA_ENTER_PIP, "true");
-        waitForEnterPip(PIP_ACTIVITY);
+        // Wait for animation complete so that system has reported pip mode change event to
+        // client and the last reported pip mode has updated.
+        waitForEnterPipAnimationComplete(PIP_ACTIVITY);
         assertPinnedStackExists();
 
         // Dismiss it
