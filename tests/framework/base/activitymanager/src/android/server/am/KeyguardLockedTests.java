@@ -18,8 +18,6 @@ package android.server.am;
 
 import static android.app.WindowConfiguration.ACTIVITY_TYPE_STANDARD;
 import static android.app.WindowConfiguration.WINDOWING_MODE_PINNED;
-import static android.server.am.Components.BroadcastReceiverActivity.ACTION_TRIGGER_BROADCAST;
-import static android.server.am.Components.BroadcastReceiverActivity.EXTRA_DISMISS_KEYGUARD;
 import static android.server.am.Components.DISMISS_KEYGUARD_ACTIVITY;
 import static android.server.am.Components.DISMISS_KEYGUARD_METHOD_ACTIVITY;
 import static android.server.am.Components.PIP_ACTIVITY;
@@ -44,12 +42,6 @@ import org.junit.Test;
  *     atest CtsActivityManagerDeviceTestCases:KeyguardLockedTests
  */
 public class KeyguardLockedTests extends KeyguardTestBase {
-
-    // TODO(b/70247058): Use {@link Context#sendBroadcast(Intent).
-    // Shell command to dismiss keyguard via {@link #BROADCAST_RECEIVER_ACTIVITY}.
-    private static final String DISMISS_KEYGUARD_BROADCAST = "am broadcast -a "
-            + ACTION_TRIGGER_BROADCAST + " --ez " + EXTRA_DISMISS_KEYGUARD + " true";
-
     @Before
     @Override
     public void setUp() throws Exception {
@@ -119,7 +111,7 @@ public class KeyguardLockedTests extends KeyguardTestBase {
             launchActivity(SHOW_WHEN_LOCKED_ACTIVITY);
             mAmWmState.computeState(SHOW_WHEN_LOCKED_ACTIVITY);
             mAmWmState.assertVisibility(SHOW_WHEN_LOCKED_ACTIVITY, true);
-            executeShellCommand(DISMISS_KEYGUARD_BROADCAST);
+            mBroadcastActionTrigger.dismissKeyguardByFlag();
             lockScreenSession.enterAndConfirmLockCredential();
 
             // Make sure we stay on Keyguard.
@@ -195,7 +187,7 @@ public class KeyguardLockedTests extends KeyguardTestBase {
             mAmWmState.assertKeyguardShowingAndOccluded();
 
             // Request that the PiP activity enter picture-in-picture mode (ensure it does not)
-            executeShellCommand("am broadcast -a " + ACTION_ENTER_PIP);
+            mBroadcastActionTrigger.doAction(ACTION_ENTER_PIP);
             waitForEnterPip(PIP_ACTIVITY);
             mAmWmState.assertDoesNotContainStack("Must not contain pinned stack.",
                     WINDOWING_MODE_PINNED, ACTIVITY_TYPE_STANDARD);

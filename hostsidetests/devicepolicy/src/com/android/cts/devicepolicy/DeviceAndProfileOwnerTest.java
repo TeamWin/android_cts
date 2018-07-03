@@ -893,24 +893,50 @@ public abstract class DeviceAndProfileOwnerTest extends BaseDevicePolicyTest {
         try {
             // Test that before trying an incorrect password there are 0 failed attempts.
             executeDeviceTestMethod(".GetCurrentFailedPasswordAttemptsTest",
-                "testNoFailedPasswordAttempts");
+                    "testNoFailedPasswordAttempts");
             // Try an incorrect password.
             assertFalse(verifyUserCredentialIsCorrect(wrongPassword, mUserId));
             // Test that now there is one failed attempt.
             executeDeviceTestMethod(".GetCurrentFailedPasswordAttemptsTest",
-                "testOneFailedPasswordAttempt");
+                    "testOneFailedPasswordAttempt");
             // Try an incorrect password.
             assertFalse(verifyUserCredentialIsCorrect(wrongPassword, mUserId));
             // Test that now there are two failed attempts.
             executeDeviceTestMethod(".GetCurrentFailedPasswordAttemptsTest",
-                "testTwoFailedPasswordAttempts");
+                    "testTwoFailedPasswordAttempts");
             // TODO: re-enable the test below when b/110945754 is fixed.
             // Try the correct password and check the failed attempts number has been reset to 0.
             // assertTrue(verifyUserCredentialIsCorrect(testPassword, mUserId));
             // executeDeviceTestMethod(".GetCurrentFailedPasswordAttemptsTest",
-            //     "testNoFailedPasswordAttempts");
+            //         "testNoFailedPasswordAttempts");
         } finally {
             changeUserCredential(null /*newCredential*/, testPassword, mUserId);
+        }
+    }
+
+    public void testPasswordExpiration() throws Exception {
+        if (!mHasFeature) {
+            return;
+        }
+        executeDeviceTestClass(".PasswordExpirationTest");
+    }
+
+    public void testGetPasswordExpiration() throws Exception {
+        if (!mHasFeature) {
+            return;
+        }
+        executeDeviceTestMethod(".GetPasswordExpirationTest",
+                "testGetPasswordExpiration");
+        try {
+            executeDeviceTestMethod(".GetPasswordExpirationTest",
+                    "testGetPasswordExpirationUpdatedAfterPasswordReset_beforeReset");
+            // Wait for 20 seconds so we can make sure that the expiration date is refreshed later.
+            Thread.sleep(20000);
+            changeUserCredential("1234", null, mUserId);
+            executeDeviceTestMethod(".GetPasswordExpirationTest",
+                    "testGetPasswordExpirationUpdatedAfterPasswordReset_afterReset");
+        } finally {
+            changeUserCredential(null, "1234", mUserId);
         }
     }
 

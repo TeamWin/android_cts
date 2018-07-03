@@ -41,7 +41,6 @@ import static android.server.am.Components.PipActivity.ACTION_ENTER_PIP;
 import static android.server.am.Components.PipActivity.ACTION_EXPAND_PIP;
 import static android.server.am.Components.PipActivity.ACTION_FINISH;
 import static android.server.am.Components.PipActivity.ACTION_MOVE_TO_BACK;
-import static android.server.am.Components.PipActivity.ACTION_SET_REQUESTED_ORIENTATION;
 import static android.server.am.Components.PipActivity.EXTRA_ASSERT_NO_ON_STOP_BEFORE_PIP;
 import static android.server.am.Components.PipActivity.EXTRA_ENTER_PIP;
 import static android.server.am.Components.PipActivity.EXTRA_ENTER_PIP_ASPECT_RATIO_DENOMINATOR;
@@ -53,8 +52,6 @@ import static android.server.am.Components.PipActivity.EXTRA_PIP_ORIENTATION;
 import static android.server.am.Components.PipActivity.EXTRA_REENTER_PIP_ON_EXIT;
 import static android.server.am.Components.PipActivity.EXTRA_SET_ASPECT_RATIO_DENOMINATOR;
 import static android.server.am.Components.PipActivity.EXTRA_SET_ASPECT_RATIO_NUMERATOR;
-import static android.server.am.Components.PipActivity.EXTRA_SET_ASPECT_RATIO_WITH_DELAY_DENOMINATOR;
-import static android.server.am.Components.PipActivity.EXTRA_SET_ASPECT_RATIO_WITH_DELAY_NUMERATOR;
 import static android.server.am.Components.PipActivity.EXTRA_START_ACTIVITY;
 import static android.server.am.Components.PipActivity.EXTRA_TAP_TO_FINISH;
 import static android.server.am.Components.RESUME_WHILE_PAUSING_ACTIVITY;
@@ -322,7 +319,7 @@ public class ActivityManagerPinnedStackTests extends ActivityManagerTestBase {
                 EXTRA_PIP_ORIENTATION, String.valueOf(ORIENTATION_LANDSCAPE));
         // Enter PiP, and assert that the PiP is within bounds now that the device is back in
         // portrait
-        executeShellCommand("am broadcast -a " + ACTION_ENTER_PIP);
+        mBroadcastActionTrigger.doAction(ACTION_ENTER_PIP);
         // Wait for animation complete since we are comparing bounds
         waitForEnterPipAnimationComplete(PIP_ACTIVITY);
         assertPinnedStackExists();
@@ -695,7 +692,7 @@ public class ActivityManagerPinnedStackTests extends ActivityManagerTestBase {
 
         // Remove the stack and ensure that the task is now in the fullscreen stack (when no
         // fullscreen stack existed before)
-        executeShellCommand("am broadcast -a " + ACTION_MOVE_TO_BACK);
+        mBroadcastActionTrigger.doAction(ACTION_MOVE_TO_BACK);
         assertPinnedStackStateOnMoveToFullscreen(PIP_ACTIVITY,
                 WINDOWING_MODE_UNDEFINED, ACTIVITY_TYPE_HOME);
     }
@@ -714,7 +711,7 @@ public class ActivityManagerPinnedStackTests extends ActivityManagerTestBase {
 
         // Remove the stack and ensure that the task is placed in the fullscreen stack, behind the
         // top fullscreen activity
-        executeShellCommand("am broadcast -a " + ACTION_MOVE_TO_BACK);
+        mBroadcastActionTrigger.doAction(ACTION_MOVE_TO_BACK);
         assertPinnedStackStateOnMoveToFullscreen(PIP_ACTIVITY,
                 WINDOWING_MODE_FULLSCREEN, ACTIVITY_TYPE_STANDARD);
     }
@@ -735,7 +732,7 @@ public class ActivityManagerPinnedStackTests extends ActivityManagerTestBase {
 
         // Remove the stack and ensure that the task is placed on top of the hidden fullscreen
         // stack, but that the home stack is still focused
-        executeShellCommand("am broadcast -a " + ACTION_MOVE_TO_BACK);
+        mBroadcastActionTrigger.doAction(ACTION_MOVE_TO_BACK);
         assertPinnedStackStateOnMoveToFullscreen(
                 PIP_ACTIVITY, WINDOWING_MODE_UNDEFINED, ACTIVITY_TYPE_HOME);
     }
@@ -833,7 +830,7 @@ public class ActivityManagerPinnedStackTests extends ActivityManagerTestBase {
         // Lock the task and ensure that we can't enter picture-in-picture both explicitly and
         // when paused
         executeShellCommand("am task lock " + task.mTaskId);
-        executeShellCommand("am broadcast -a " + ACTION_ENTER_PIP);
+        mBroadcastActionTrigger.doAction(ACTION_ENTER_PIP);
         waitForEnterPip(PIP_ACTIVITY);
         assertPinnedStackDoesNotExist();
         launchHomeActivity();
@@ -851,7 +848,7 @@ public class ActivityManagerPinnedStackTests extends ActivityManagerTestBase {
         // configuration change happened after the picture-in-picture and multi-window callbacks
         launchActivity(PIP_ACTIVITY);
         LogSeparator logSeparator = separateLogs();
-        executeShellCommand("am broadcast -a " + ACTION_ENTER_PIP);
+        mBroadcastActionTrigger.doAction(ACTION_ENTER_PIP);
         waitForEnterPip(PIP_ACTIVITY);
         assertPinnedStackExists();
         waitForValidPictureInPictureCallbacks(PIP_ACTIVITY, logSeparator);
@@ -970,9 +967,7 @@ public class ActivityManagerPinnedStackTests extends ActivityManagerTestBase {
 
         // Trigger it to go back to fullscreen and try to set the aspect ratio, and ensure that the
         // call to set the aspect ratio did not prevent the PiP from returning to fullscreen
-        executeShellCommand("am broadcast -a " + ACTION_EXPAND_PIP
-                + " -e " + EXTRA_SET_ASPECT_RATIO_WITH_DELAY_NUMERATOR + " 123456789"
-                + " -e " + EXTRA_SET_ASPECT_RATIO_WITH_DELAY_DENOMINATOR + " 100000000");
+        mBroadcastActionTrigger.expandPipWithAspectRatio("123456789", "100000000");
         waitForExitPipToFullscreen(PIP_ACTIVITY);
         assertPinnedStackDoesNotExist();
     }
@@ -989,10 +984,7 @@ public class ActivityManagerPinnedStackTests extends ActivityManagerTestBase {
         assertPinnedStackExists();
 
         // Request that the orientation is set to landscape
-        executeShellCommand("am broadcast -a "
-                + ACTION_SET_REQUESTED_ORIENTATION + " -e "
-                + EXTRA_PIP_ORIENTATION + " "
-                + String.valueOf(ORIENTATION_LANDSCAPE));
+        mBroadcastActionTrigger.requestOrientationForPip(ORIENTATION_LANDSCAPE);
 
         // Launch the activity back into fullscreen and ensure that it is now in landscape
         launchActivity(PIP_ACTIVITY);
@@ -1031,7 +1023,7 @@ public class ActivityManagerPinnedStackTests extends ActivityManagerTestBase {
         launchPinnedActivityAsTaskOverlay(TRANSLUCENT_TEST_ACTIVITY, taskId);
 
         // Finish the PiP activity and ensure that there is no pinned stack
-        executeShellCommand("am broadcast -a " + ACTION_FINISH);
+        mBroadcastActionTrigger.doAction(ACTION_FINISH);
         waitForPinnedStackRemoved();
         assertPinnedStackDoesNotExist();
     }
@@ -1056,7 +1048,7 @@ public class ActivityManagerPinnedStackTests extends ActivityManagerTestBase {
         // got resumed
         LogSeparator logSeparator = separateLogs();
         executeShellCommand("am stack resize-animated " + stackId + " 20 20 500 500");
-        executeShellCommand("am broadcast -a " + TEST_ACTIVITY_ACTION_FINISH_SELF);
+        mBroadcastActionTrigger.doAction(TEST_ACTIVITY_ACTION_FINISH_SELF);
         mAmWmState.waitFor((amState, wmState) ->
                         !amState.containsActivity(TRANSLUCENT_TEST_ACTIVITY),
                 "Waiting for test activity to finish...");
@@ -1249,9 +1241,9 @@ public class ActivityManagerPinnedStackTests extends ActivityManagerTestBase {
 
         // Expand the PiP back to fullscreen and back into PiP and ensure that it is in the same
         // position as before we expanded (and that the default bounds reflect that)
-        executeShellCommand("am broadcast -a " + ACTION_EXPAND_PIP);
+        mBroadcastActionTrigger.doAction(ACTION_EXPAND_PIP);
         waitForExitPipToFullscreen(PIP_ACTIVITY);
-        executeShellCommand("am broadcast -a " + ACTION_ENTER_PIP);
+        mBroadcastActionTrigger.doAction(ACTION_ENTER_PIP);
         waitForEnterPipAnimationComplete(PIP_ACTIVITY);
         mAmWmState.computeState(true);
         // Due to rounding in how we save and apply the snap fraction we may be a pixel off, so just
@@ -1262,13 +1254,13 @@ public class ActivityManagerPinnedStackTests extends ActivityManagerTestBase {
 
         // Expand the PiP, then launch an activity in a new task, and ensure that the PiP goes back
         // to the default position (and not the saved position) the next time it is launched
-        executeShellCommand("am broadcast -a " + ACTION_EXPAND_PIP);
+        mBroadcastActionTrigger.doAction(ACTION_EXPAND_PIP);
         waitForExitPipToFullscreen(PIP_ACTIVITY);
         launchActivity(TEST_ACTIVITY);
-        executeShellCommand("am broadcast -a " + TEST_ACTIVITY_ACTION_FINISH_SELF);
+        mBroadcastActionTrigger.doAction(TEST_ACTIVITY_ACTION_FINISH_SELF);
         mAmWmState.waitForActivityState(PIP_ACTIVITY, STATE_RESUMED);
         mAmWmState.waitForAppTransitionIdle();
-        executeShellCommand("am broadcast -a " + ACTION_ENTER_PIP);
+        mBroadcastActionTrigger.doAction(ACTION_ENTER_PIP);
         waitForEnterPipAnimationComplete(PIP_ACTIVITY);
         assertPinnedStackExists();
         assertTrue("Expected initialBounds=" + initialBounds + " to equal bounds="
@@ -1299,7 +1291,7 @@ public class ActivityManagerPinnedStackTests extends ActivityManagerTestBase {
         offsetPipWithinMovementBounds(100 /* offsetY */, initialBounds, offsetBounds);
 
         // Finish the activity
-        executeShellCommand("am broadcast -a " + ACTION_FINISH);
+        mBroadcastActionTrigger.doAction(ACTION_FINISH);
         waitForPinnedStackRemoved();
         assertPinnedStackDoesNotExist();
 

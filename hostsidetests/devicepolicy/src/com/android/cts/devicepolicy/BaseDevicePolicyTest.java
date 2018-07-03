@@ -898,7 +898,7 @@ public class BaseDevicePolicyTest extends DeviceTestCase implements IBuildReceiv
      * @param userId The id of the user.
      */
     protected boolean verifyUserCredentialIsCorrect(String credential, int userId)
-        throws DeviceNotAvailableException {
+            throws DeviceNotAvailableException {
         String commandOutput = verifyUserCredentialCommandOutput(credential, userId);
         return commandOutput.startsWith(VERIFY_CREDENTIAL_CONFIRMATION);
     }
@@ -912,11 +912,11 @@ public class BaseDevicePolicyTest extends DeviceTestCase implements IBuildReceiv
      * @return The command line output.
      */
     protected String verifyUserCredentialCommandOutput(String credential, int userId)
-        throws DeviceNotAvailableException {
+            throws DeviceNotAvailableException {
         final String credentialArgument = (credential == null || credential.isEmpty())
-            ? "" : ("--old " + credential);
+                ? "" : ("--old " + credential);
         String commandOutput = getDevice().executeShellCommand(String.format(
-            "cmd lock_settings verify --user %d %s", userId, credentialArgument));
+                "cmd lock_settings verify --user %d %s", userId, credentialArgument));
         return commandOutput;
     }
 

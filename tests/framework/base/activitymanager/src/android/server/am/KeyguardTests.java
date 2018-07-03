@@ -20,10 +20,6 @@ import static android.app.WindowConfiguration.ACTIVITY_TYPE_STANDARD;
 import static android.app.WindowConfiguration.WINDOWING_MODE_SPLIT_SCREEN_PRIMARY;
 import static android.server.am.ComponentNameUtils.getWindowName;
 import static android.server.am.Components.BROADCAST_RECEIVER_ACTIVITY;
-import static android.server.am.Components.BroadcastReceiverActivity.ACTION_TRIGGER_BROADCAST;
-import static android.server.am.Components.BroadcastReceiverActivity.EXTRA_DISMISS_KEYGUARD;
-import static android.server.am.Components.BroadcastReceiverActivity.EXTRA_DISMISS_KEYGUARD_METHOD;
-import static android.server.am.Components.BroadcastReceiverActivity.EXTRA_FINISH_BROADCAST;
 import static android.server.am.Components.DISMISS_KEYGUARD_ACTIVITY;
 import static android.server.am.Components.DISMISS_KEYGUARD_METHOD_ACTIVITY;
 import static android.server.am.Components.KEYGUARD_LOCK_ACTIVITY;
@@ -58,15 +54,6 @@ import org.junit.Test;
  *     atest CtsActivityManagerDeviceTestCases:KeyguardTests
  */
 public class KeyguardTests extends KeyguardTestBase {
-
-    // TODO(b/70247058): Use {@link Context#sendBroadcast(Intent).
-    // Shell command to dismiss keyguard via {@link #BROADCAST_RECEIVER_ACTIVITY}.
-    private static final String DISMISS_KEYGUARD_BROADCAST = "am broadcast -a "
-            + ACTION_TRIGGER_BROADCAST + " --ez " + EXTRA_DISMISS_KEYGUARD + " true";
-    // Shell command to dismiss keyguard via {@link #BROADCAST_RECEIVER_ACTIVITY} method.
-    private static final String DISMISS_KEYGUARD_METHOD_BROADCAST = "am broadcast -a "
-            + ACTION_TRIGGER_BROADCAST + " --ez " + EXTRA_DISMISS_KEYGUARD_METHOD + " true";
-
     @Before
     @Override
     public void setUp() throws Exception {
@@ -262,7 +249,7 @@ public class KeyguardTests extends KeyguardTestBase {
             assertTrue(mAmWmState.getAmState().getKeyguardControllerState().keyguardShowing);
             launchActivity(BROADCAST_RECEIVER_ACTIVITY);
             launchActivity(TEST_ACTIVITY);
-            executeShellCommand(DISMISS_KEYGUARD_METHOD_BROADCAST);
+            mBroadcastActionTrigger.dismissKeyguardByMethod();
             assertOnDismissErrorInLogcat(logSeparator);
         }
     }
@@ -293,7 +280,7 @@ public class KeyguardTests extends KeyguardTestBase {
             mAmWmState.computeState(SHOW_WHEN_LOCKED_ACTIVITY);
             mAmWmState.assertVisibility(SHOW_WHEN_LOCKED_ACTIVITY, true);
             mAmWmState.assertKeyguardShowingAndOccluded();
-            executeShellCommand(DISMISS_KEYGUARD_BROADCAST);
+            mBroadcastActionTrigger.dismissKeyguardByFlag();
             mAmWmState.assertKeyguardShowingAndOccluded();
             mAmWmState.assertVisibility(SHOW_WHEN_LOCKED_ACTIVITY, true);
         }
@@ -307,7 +294,7 @@ public class KeyguardTests extends KeyguardTestBase {
             launchActivity(KEYGUARD_LOCK_ACTIVITY);
             mAmWmState.computeState(KEYGUARD_LOCK_ACTIVITY);
             mAmWmState.assertVisibility(KEYGUARD_LOCK_ACTIVITY, true);
-            executeShellCommand(FINISH_ACTIVITY_BROADCAST);
+            mBroadcastActionTrigger.finishBroadcastReceiverActivity();
             mAmWmState.waitForKeyguardShowingAndNotOccluded();
             mAmWmState.assertKeyguardShowingAndNotOccluded();
         }

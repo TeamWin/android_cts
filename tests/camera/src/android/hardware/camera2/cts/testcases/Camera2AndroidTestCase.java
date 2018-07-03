@@ -394,6 +394,22 @@ public class Camera2AndroidTestCase extends AndroidTestCase {
         return captureBuilder;
     }
 
+    protected CaptureRequest.Builder prepareCaptureRequestForConfigs(
+            List<OutputConfiguration> outputConfigs, int template) throws Exception {
+        createSessionByConfigs(outputConfigs);
+
+        CaptureRequest.Builder captureBuilder =
+                mCamera.createCaptureRequest(template);
+        assertNotNull("Fail to get captureRequest", captureBuilder);
+        for (OutputConfiguration config : outputConfigs) {
+            for (Surface s : config.getSurfaces()) {
+                captureBuilder.addTarget(s);
+            }
+        }
+
+        return captureBuilder;
+    }
+
     /**
      * Test the invalid Image access: accessing a closed image must result in
      * {@link IllegalStateException}.

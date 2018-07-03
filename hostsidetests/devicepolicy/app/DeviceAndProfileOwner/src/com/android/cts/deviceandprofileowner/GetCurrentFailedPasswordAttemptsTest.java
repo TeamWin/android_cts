@@ -18,15 +18,15 @@ package com.android.cts.deviceandprofileowner;
 
 public class GetCurrentFailedPasswordAttemptsTest extends BaseDeviceAdminTest {
 
-  public void testNoFailedPasswordAttempts() {
-    assertEquals(0, mDevicePolicyManager.getCurrentFailedPasswordAttempts());
-  }
+    public void testNoFailedPasswordAttempts() {
+        assertEquals(0, mDevicePolicyManager.getCurrentFailedPasswordAttempts());
+    }
 
-  public void testOneFailedPasswordAttempt() {
-    assertEquals(1, mDevicePolicyManager.getCurrentFailedPasswordAttempts());
-  }
+    public void testOneFailedPasswordAttempt() {
+        assertEquals(1, mDevicePolicyManager.getCurrentFailedPasswordAttempts());
+    }
 
-  public void testTwoFailedPasswordAttempts() {
-    assertEquals(2, mDevicePolicyManager.getCurrentFailedPasswordAttempts());
-  }
+    public void testTwoFailedPasswordAttempts() {
+        assertEquals(2, mDevicePolicyManager.getCurrentFailedPasswordAttempts());
+    }
 }
