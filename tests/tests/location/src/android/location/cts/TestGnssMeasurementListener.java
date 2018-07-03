@@ -25,7 +25,6 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.concurrent.CountDownLatch;
-import java.util.concurrent.TimeUnit;
 
 /**
  * Used for receiving GPS satellite measurements from the GPS engine.
@@ -39,7 +38,6 @@ class TestGnssMeasurementListener extends GnssMeasurementsEvent.Callback {
     // Timeout in sec for count down latch wait
     private static final int STATUS_TIMEOUT_IN_SEC = 10;
     private static final int MEAS_TIMEOUT_IN_SEC = 60;
-    private static final int TOW_DECODED_MEASUREMENT_STATE_BIT = 3;
     private static final int C_TO_N0_THRESHOLD_DB_HZ = 18;
     private volatile int mStatus = -1;
 
@@ -89,15 +87,15 @@ class TestGnssMeasurementListener extends GnssMeasurementsEvent.Callback {
                 HashMap<Integer, Integer> constellationEventCount = new HashMap<>();
                 GnssClock gnssClock = event.getClock();
                 if (!gnssClock.hasFullBiasNanos()) {
-                    // If devices does not have FullBiasNanos yet, it will be difficult to check the quality, so await 
-                    // this flag as well.
+                    // If devices does not have FullBiasNanos yet, it will be difficult to check
+                    // the quality, so await this flag as well.
                     return;
                 }
                 for (GnssMeasurement gnssMeasurement : event.getMeasurements()){
                     int constellationType = gnssMeasurement.getConstellationType();
                     // if the measurement's signal level is too small ignore
                     if (gnssMeasurement.getCn0DbHz() < C_TO_N0_THRESHOLD_DB_HZ ||
-                        (gnssMeasurement.getState() & (1L << TOW_DECODED_MEASUREMENT_STATE_BIT)) == 0) {
+                        (gnssMeasurement.getState() & GnssMeasurement.STATE_TOW_DECODED) == 0) {
                         continue;
                     }
                     if (constellationEventCount.containsKey(constellationType)) {
