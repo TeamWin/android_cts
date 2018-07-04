@@ -38,9 +38,9 @@ abstract class BuildStep implements Comparable<BuildStep> {
             this.fileName = new File(this.folder, fileName);
         }
         BuildFile(File file) {
-          this.folder = file.getParentFile();
-          this.fileName = file;
-      }
+            this.folder = file.getParentFile();
+            this.fileName = file;
+        }
 
         String getPath() {
             return fileName.getAbsolutePath();

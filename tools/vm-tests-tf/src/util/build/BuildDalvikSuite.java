@@ -18,6 +18,7 @@ package util.build;
 
 import java.io.File;
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Comparator;
@@ -400,25 +401,37 @@ public class BuildDalvikSuite extends BuildUtilBase {
             return;
         }
 
-        if (new File(sourceFolder, fileName + ".smali").exists()) {
+        {
+            // Build dex from a single '*.smali' file or a *.smalis' dir
+            // containing multiple smali files.
+            File dexFile = null;
+            SmaliBuildStep buildStep = null;
+            File smaliFile = new File(sourceFolder, fileName + ".smali");
+            File smalisDir = new File(sourceFolder, fileName + ".smalis");
 
-            BuildStep.BuildFile inputFile = new BuildStep.BuildFile(
-                    JAVASRC_FOLDER, fileName + ".smali");
-            BuildStep.BuildFile dexFile = new BuildStep.BuildFile(
-                    OUTPUT_FOLDER, fileName + ".dex");
+            if (smaliFile.exists()) {
+                dexFile = new File(OUTPUT_FOLDER, fileName + ".dex");
+                buildStep = new SmaliBuildStep(
+                    Collections.singletonList(smaliFile.getAbsolutePath()), dexFile);
+            } else if (smalisDir.exists() && smalisDir.isDirectory()) {
+                List<String> inputFiles = new ArrayList<>();
+                for (File f: smalisDir.listFiles()) {
+                    inputFiles.add(f.getAbsolutePath());
+                }
+                dexFile = new File(OUTPUT_FOLDER, fileName + ".dex");
+                buildStep = new SmaliBuildStep(inputFiles, dexFile);
+            }
 
-            SmaliBuildStep buildStep = new SmaliBuildStep(inputFile, dexFile);
-
-            BuildStep.BuildFile jarFile = new BuildStep.BuildFile(
-                    OUTPUT_FOLDER, fileName + ".jar");
-
-            JarBuildStep jarBuildStep = new JarBuildStep(dexFile,
-                    "classes.dex", jarFile, true);
-            jarBuildStep.addChild(buildStep);
-            targets.add(jarBuildStep);
-            return;
+            if (buildStep != null) {
+                BuildStep.BuildFile jarFile = new BuildStep.BuildFile(
+                        OUTPUT_FOLDER, fileName + ".jar");
+                JarBuildStep jarBuildStep = new JarBuildStep(new BuildStep.BuildFile(dexFile),
+                        "classes.dex", jarFile, true);
+                jarBuildStep.addChild(buildStep);
+                targets.add(jarBuildStep);
+                return;
+            }
         }
-
 
         File srcFile = new File(sourceFolder, fileName + ".java");
         if (srcFile.exists()) {

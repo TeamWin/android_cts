@@ -20,6 +20,7 @@ import org.jf.smali.Smali;
 import org.jf.smali.SmaliOptions;
 
 import java.io.File;
+import java.util.List;
 
 /**
  * BuildStep that invokes the Smali Java API to
@@ -27,28 +28,24 @@ import java.io.File;
  */
 class SmaliBuildStep extends BuildStep {
 
-    SmaliBuildStep(BuildFile inputFile, BuildFile outputFile) {
-        super(inputFile, outputFile);
+    List<String> inputFiles;
+
+    SmaliBuildStep(List<String> inputFiles, File outputFile) {
+        super(outputFile);
+        this.inputFiles = inputFiles;
     }
 
     @Override
     boolean build() {
-        if (super.build()) {
-            return assemble(inputFile.fileName, outputFile.fileName);
-        }
-        return false;
-    }
-
-    private boolean assemble(File input, File output) {
         SmaliOptions options = new SmaliOptions();
         options.verboseErrors = true;
-        options.outputDexFile = output.getAbsolutePath();
+        options.outputDexFile = outputFile.fileName.getAbsolutePath();
         try {
-            File destDir = output.getParentFile();
+            File destDir = outputFile.folder;
             if (!destDir.exists()) {
                 destDir.mkdirs();
             }
-            return Smali.assemble(options, input.getAbsolutePath());
+            return Smali.assemble(options, inputFiles);
         } catch(Exception e) {
              if(BuildDalvikSuite.DEBUG)
                  e.printStackTrace();
@@ -61,7 +58,7 @@ class SmaliBuildStep extends BuildStep {
     public boolean equals(Object obj) {
         if (super.equals(obj)) {
             SmaliBuildStep other = (SmaliBuildStep) obj;
-            return inputFile.equals(other.inputFile)
+            return inputFiles.equals(other.inputFiles)
                     && outputFile.equals(other.outputFile);
         }
         return false;
@@ -69,6 +66,6 @@ class SmaliBuildStep extends BuildStep {
 
     @Override
     public int hashCode() {
-        return inputFile.hashCode() ^ outputFile.hashCode();
+        return inputFiles.hashCode() ^ outputFile.hashCode();
     }
 }
