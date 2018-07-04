@@ -415,7 +415,8 @@ public class ByodFlowTestActivity extends DialogTestListActivity {
         mRecentsTest = TestListItem.newTest(this,
                 R.string.provisioning_byod_recents,
                 RecentsRedactionActivity.class.getName(),
-                new Intent(RecentsRedactionActivity.ACTION_RECENTS),
+                new Intent(RecentsRedactionActivity.ACTION_RECENTS).setFlags(
+                        Intent.FLAG_ACTIVITY_NEW_TASK),
                 null);
 
         mOrganizationInfoTest = TestListItem.newTest(this,
