@@ -145,6 +145,10 @@ public class UsePermissionTest22 extends BasePermissionsTest {
                 .checkSelfPermission(Manifest.permission.CAMERA));
         assertEquals(PackageManager.PERMISSION_GRANTED, getInstrumentation().getContext()
                 .checkSelfPermission(Manifest.permission.BODY_SENSORS));
+
+        // Split permissions
+        assertEquals(PackageManager.PERMISSION_GRANTED, getInstrumentation().getContext()
+                .checkSelfPermission(Manifest.permission.ACCESS_BACKGROUND_LOCATION));
     }
 
     @Test

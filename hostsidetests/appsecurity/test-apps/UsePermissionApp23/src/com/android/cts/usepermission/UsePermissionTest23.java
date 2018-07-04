@@ -29,6 +29,7 @@ import static com.android.cts.externalstorageapp.CommonExternalStorageTest.logCo
 import android.Manifest;
 import android.content.pm.PackageManager;
 import android.os.Environment;
+import android.support.test.InstrumentationRegistry;
 
 import org.junit.Before;
 import org.junit.Test;
@@ -497,9 +498,17 @@ public class UsePermissionTest23 extends BasePermissionsTest {
                 Manifest.permission.CALL_PHONE,
                 Manifest.permission.RECORD_AUDIO,
                 Manifest.permission.BODY_SENSORS,
-                Manifest.permission.ACCESS_COARSE_LOCATION,
                 Manifest.permission.CAMERA
         });
+
+        // Don't use UI for granting location permission as this shows another dialog
+        String packageName = InstrumentationRegistry.getTargetContext().getPackageName();
+        getInstrumentation().getUiAutomation().grantRuntimePermission(packageName,
+                Manifest.permission.ACCESS_FINE_LOCATION);
+        getInstrumentation().getUiAutomation().grantRuntimePermission(packageName,
+                Manifest.permission.ACCESS_COARSE_LOCATION);
+        getInstrumentation().getUiAutomation().grantRuntimePermission(packageName,
+                Manifest.permission.ACCESS_BACKGROUND_LOCATION);
     }
 
     @Test
@@ -650,7 +659,10 @@ public class UsePermissionTest23 extends BasePermissionsTest {
                 Manifest.permission.ACCESS_COARSE_LOCATION,
                 Manifest.permission.CAMERA,
                 Manifest.permission.BODY_SENSORS,
-                "android.permission.READ_CELL_BROADCASTS"
+                Manifest.permission.READ_CELL_BROADCASTS,
+
+                // Split permissions
+                Manifest.permission.ACCESS_BACKGROUND_LOCATION
         }, grantState);
     }
 

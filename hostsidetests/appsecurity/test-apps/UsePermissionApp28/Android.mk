@@ -25,13 +25,12 @@ LOCAL_STATIC_JAVA_LIBRARIES := \
     ctstestrunner \
     ub-uiautomator
 
-LOCAL_JAVA_LIBRARIES := android.test.base.stubs
-
-LOCAL_SRC_FILES := $(call all-java-files-under, ../UsePermissionApp23/src) \
-    ../ExternalStorageApp/src/com/android/cts/externalstorageapp/CommonExternalStorageTest.java
+LOCAL_SRC_FILES := $(call all-java-files-under, src) \
+    ../UsePermissionApp23/src/com/android/cts/usepermission/BasePermissionActivity.java \
+    ../UsePermissionApp23/src/com/android/cts/usepermission/BasePermissionsTest.java
 LOCAL_RESOURCE_DIR := cts/hostsidetests/appsecurity/test-apps/UsePermissionApp23/res
 
-LOCAL_PACKAGE_NAME := CtsUsePermissionApp25
+LOCAL_PACKAGE_NAME := CtsUsePermissionApp28
 
 # For ACCESS_BACKGROUND_LOCATION
 LOCAL_PRIVATE_PLATFORM_APIS := true

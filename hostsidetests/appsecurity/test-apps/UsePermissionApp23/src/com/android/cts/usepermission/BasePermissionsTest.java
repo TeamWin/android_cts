@@ -286,6 +286,21 @@ public abstract class BasePermissionsTest {
         return result;
     }
 
+    protected void selectForegroundOnlyOption() {
+        getUiDevice().findObject(By.res(
+                "com.android.packageinstaller:id/foreground_only_radio_button")).click();
+    }
+
+    protected void selectAlwaysOption() {
+        getUiDevice().findObject(By.res(
+                "com.android.packageinstaller:id/always_radio_button")).click();
+    }
+
+    protected void selectDenyAndDontAskAgainOption() {
+        getUiDevice().findObject(By.res(
+                "com.android.packageinstaller:id/deny_dont_ask_again_radio_button")).click();
+    }
+
     protected void clickAllowButton() throws Exception {
         scrollToBottomIfWatch();
         getUiDevice().findObject(new UiSelector().resourceId(
