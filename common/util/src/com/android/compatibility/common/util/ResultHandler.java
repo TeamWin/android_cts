@@ -265,7 +265,9 @@ public class ResultHandler {
                         // If the fingerprint was altered, then checksum against the fingerprint
                         // originally reported
                         Boolean checksumMismatch = invocationUseChecksum &&
-                             !checksumReporter.containsTestResult(test, module, reportFingerprint);
+                             !checksumReporter.containsTestResult(test, module, reportFingerprint)
+                             && (fingerprintWasAltered ? !checksumReporter.containsTestResult(
+                                 test, module, unalteredFingerprint) : true);
                         if (checksumMismatch) {
                             test.removeResult();
                         }
@@ -276,7 +278,9 @@ public class ResultHandler {
                 // If the fingerprint was altered, then checksum against the fingerprint
                 // originally reported
                 Boolean checksumMismatch = invocationUseChecksum &&
-                     !checksumReporter.containsModuleResult(module, reportFingerprint);
+                     !checksumReporter.containsModuleResult(module, reportFingerprint) &&
+                     (fingerprintWasAltered ? !checksumReporter.containsModuleResult(
+                         module, unalteredFingerprint) : true);
                 if (checksumMismatch) {
                     module.initializeDone(false);
                 }
