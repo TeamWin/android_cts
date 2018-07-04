@@ -64,9 +64,8 @@ public class VpxCodecTestBase extends AndroidTestCase {
     protected static final long DEFAULT_DEQUEUE_TIMEOUT_US = 200000;
     // Default timeout for MediaEncoderAsync - 30 sec.
     protected static final long DEFAULT_ENCODE_TIMEOUT_MS = 30000;
-    // Default sync frame interval in frames (zero means allow the encoder to auto-select
-    // key frame interval).
-    private static final int SYNC_FRAME_INTERVAL = 0;
+    // Default sync frame interval in frames
+    private static final int SYNC_FRAME_INTERVAL = 30;
     // Video bitrate type - should be set to OMX_Video_ControlRateConstant from OMX_Video.h
     protected static final int VIDEO_ControlRateVariable = 1;
     protected static final int VIDEO_ControlRateConstant = 2;
