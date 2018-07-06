@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2008 The Android Open Source Project
+ * Copyright (C) 2018 The Android Open Source Project
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -96,6 +96,7 @@ import android.view.ViewTreeObserver;
 import android.view.accessibility.AccessibilityEvent;
 import android.view.animation.AlphaAnimation;
 import android.view.animation.Animation;
+import android.view.cts.util.EventUtils;
 import android.view.inputmethod.EditorInfo;
 import android.view.inputmethod.InputConnection;
 import android.view.inputmethod.InputMethodManager;
@@ -107,6 +108,7 @@ import android.widget.TextView;
 import com.android.compatibility.common.util.CtsMouseUtil;
 import com.android.compatibility.common.util.CtsTouchUtils;
 import com.android.compatibility.common.util.PollingCheck;
+import com.android.internal.widget.ScrollBarUtils;
 
 import org.junit.Before;
 import org.junit.Rule;
@@ -412,6 +414,62 @@ public class ViewTest {
     }
 
     @Test
+    public void onHoverEvent_verticalCanScroll_awakenScrollBarsCalled() {
+        onHoverEvent_awakensScrollBars(true, true, true);
+    }
+
+    @Test
+    public void onHoverEvent_verticalCantScroll_awakenScrollBarsNotCalled() {
+        onHoverEvent_awakensScrollBars(true, false, false);
+    }
+
+    @Test
+    public void onHoverEvent_horizontalCanScroll_awakenScrollBarsCalled() {
+        onHoverEvent_awakensScrollBars(false, true, true);
+    }
+
+    @Test
+    public void onHoverEvent_horizontalCantScroll_awakenScrollBarsNotCalled() {
+        onHoverEvent_awakensScrollBars(false, false, false);
+    }
+
+    private void onHoverEvent_awakensScrollBars(boolean vertical, boolean canScroll,
+            boolean awakenScrollBarsCalled) {
+
+        // Arrange
+
+        final ScrollTestView view = spy(new ScrollTestView(mContext));
+        view.setVerticalScrollbarPosition(View.SCROLLBAR_POSITION_RIGHT);
+        view.setHorizontalScrollBarEnabled(true);
+        view.setVerticalScrollBarEnabled(true);
+        view.setScrollBarSize(10);
+        view.layout(0, 0, 100, 100);
+
+        when(view.computeVerticalScrollExtent()).thenReturn(100);
+        when(view.computeVerticalScrollRange()).thenReturn(canScroll ? 101 : 100);
+        when(view.computeHorizontalScrollExtent()).thenReturn(100);
+        when(view.computeHorizontalScrollRange()).thenReturn(canScroll ? 101 : 100);
+
+        int x = vertical ? 95 : 50;
+        int y = vertical ? 50 : 95;
+
+        MotionEvent event = EventUtils.generateMouseEvent(x, y, MotionEvent.ACTION_HOVER_ENTER, 0);
+
+        // Act
+
+        view.onHoverEvent(event);
+        event.recycle();
+
+        // Assert
+
+        if (awakenScrollBarsCalled) {
+            verify(view).awakenScrollBars();
+        } else {
+            verify(view, never()).awakenScrollBars();
+        }
+    }
+
+    @Test
     public void testMouseEventCallsGetPointerIcon() {
         final MockView view = (MockView) mActivity.findViewById(R.id.mock_view);
 
@@ -507,6 +565,69 @@ public class ViewTest {
         assertEquals(iconParent, parent.onResolvePointerIcon(event, 0));
 
         event.recycle();
+    }
+
+    @Test
+    public void onResolvePointerIcon_verticalCanScroll_pointerIsArrow() {
+        onResolvePointerIcon_scrollabilityAffectsPointerIcon(true, true, true);
+    }
+
+    @Test
+    public void onResolvePointerIcon_verticalCantScroll_pointerIsProperty() {
+        onResolvePointerIcon_scrollabilityAffectsPointerIcon(true, false, false);
+    }
+
+    @Test
+    public void onResolvePointerIcon_horizontalCanScroll_pointerIsArrow() {
+        onResolvePointerIcon_scrollabilityAffectsPointerIcon(false, true, true);
+    }
+
+    @Test
+    public void onResolvePointerIcon_horizontalCantScroll_pointerIsProperty() {
+        onResolvePointerIcon_scrollabilityAffectsPointerIcon(false, false, false);
+    }
+
+    private void onResolvePointerIcon_scrollabilityAffectsPointerIcon(boolean vertical,
+            boolean canScroll, boolean pointerIsSystemArrow) {
+
+        // Arrange
+
+        int range = canScroll ? 101 : 100;
+        int thumbLength = ScrollBarUtils.getThumbLength(1, 10, 100, range);
+
+        PointerIcon expectedPointerIcon = PointerIcon.getSystemIcon(mContext,
+                PointerIcon.TYPE_HAND);
+
+        final ScrollTestView view = spy(new ScrollTestView(mContext));
+        view.setVerticalScrollbarPosition(View.SCROLLBAR_POSITION_RIGHT);
+        view.setHorizontalScrollBarEnabled(true);
+        view.setVerticalScrollBarEnabled(true);
+        view.setScrollBarSize(10);
+        view.setPointerIcon(expectedPointerIcon);
+        view.layout(0, 0, 100, 100);
+
+        when(view.computeVerticalScrollExtent()).thenReturn(100);
+        when(view.computeVerticalScrollRange()).thenReturn(range);
+        when(view.computeHorizontalScrollExtent()).thenReturn(100);
+        when(view.computeHorizontalScrollRange()).thenReturn(range);
+
+        int touchX = vertical ? 95 : thumbLength / 2;
+        int touchY = vertical ? thumbLength / 2 : 95;
+        MotionEvent event =
+                EventUtils.generateMouseEvent(touchX, touchY, MotionEvent.ACTION_HOVER_ENTER, 0);
+
+        // Act
+
+        PointerIcon actualResult = view.onResolvePointerIcon(event, 0);
+        event.recycle();
+
+        // Assert
+
+        if (pointerIsSystemArrow) {
+            assertEquals(PointerIcon.getSystemIcon(mContext, PointerIcon.TYPE_ARROW), actualResult);
+        } else {
+            assertEquals(expectedPointerIcon, actualResult);
+        }
     }
 
     @Test
@@ -5009,6 +5130,42 @@ public class ViewTest {
         }
         public boolean fired() {
             return mLastView != null && mGotUp;
+        }
+    }
+
+    public static class ScrollTestView extends View {
+        public ScrollTestView(Context context) {
+            super(context);
+        }
+
+        @Override
+        public boolean awakenScrollBars() {
+            return super.awakenScrollBars();
+        }
+
+        @Override
+        public int computeHorizontalScrollRange() {
+            return super.computeHorizontalScrollRange();
+        }
+
+        @Override
+        public int computeHorizontalScrollExtent() {
+            return super.computeHorizontalScrollExtent();
+        }
+
+        @Override
+        public int computeVerticalScrollRange() {
+            return super.computeVerticalScrollRange();
+        }
+
+        @Override
+        public int computeVerticalScrollExtent() {
+            return super.computeVerticalScrollExtent();
+        }
+
+        @Override
+        protected int getHorizontalScrollbarHeight() {
+            return super.getHorizontalScrollbarHeight();
         }
     }
 
