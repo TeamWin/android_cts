@@ -15,8 +15,6 @@
  */
 package android.autofillservice.cts;
 
-import static android.autofillservice.cts.Helper.runShellCommand;
-
 import static com.google.common.truth.Truth.assertThat;
 
 import android.app.Activity;
@@ -64,13 +62,9 @@ abstract class CustomDescriptionWithLinkTestCase extends AutoFillServiceTestCase
      */
     @Test
     public final void testTapLink_changeOrientationThenTapBack() throws Exception {
-        // If the screen is too small and the devices shows an IME, it might not have space for all
-        // UI elements after the device is rotated to landscape.
-        sUiBot.assumeMinimumResolution(500);
-
+        sUiBot.setScreenResolution();
         sUiBot.setScreenOrientation(UiBot.PORTRAIT);
         try {
-            runShellCommand("wm density 420");
             saveUiRestoredAfterTappingLinkTest(
                     PostSaveLinkTappedAction.ROTATE_THEN_TAP_BACK_BUTTON);
         } finally {
@@ -78,7 +72,7 @@ abstract class CustomDescriptionWithLinkTestCase extends AutoFillServiceTestCase
             try {
                 cleanUpAfterScreenOrientationIsBackToPortrait();
             } finally {
-                runShellCommand("wm density reset");
+                sUiBot.resetScreenResolution();
             }
         }
     }
