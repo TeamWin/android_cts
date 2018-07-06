@@ -20,6 +20,7 @@ import static android.autofillservice.cts.Helper.NOT_SHOWING_TIMEOUT_MS;
 import static android.autofillservice.cts.Helper.SAVE_TIMEOUT_MS;
 import static android.autofillservice.cts.Helper.UI_RECENTS_SWITCH_TIMEOUT_MS;
 import static android.autofillservice.cts.Helper.UI_TIMEOUT_MS;
+import static android.autofillservice.cts.Helper.runShellCommand;
 import static android.service.autofill.SaveInfo.SAVE_DATA_TYPE_ADDRESS;
 import static android.service.autofill.SaveInfo.SAVE_DATA_TYPE_CREDIT_CARD;
 import static android.service.autofill.SaveInfo.SAVE_DATA_TYPE_EMAIL_ADDRESS;
@@ -675,5 +676,28 @@ final class UiBot {
      */
     public void dumpScreen() throws IOException {
         mDevice.dumpWindowHierarchy(System.out);
+    }
+
+    /**
+     * Sets screen resolution.
+     *
+     * <p>If the screen is too small and the devices shows an IME, it might not have space for all
+     * UI elements after the device is rotated to landscape.
+     *
+     * <p>{@link #resetScreenResolution()} should always be called too.
+     */
+    void setScreenResolution() {
+        assumeMinimumResolution(500);
+
+        runShellCommand("wm size 1080x1920");
+        runShellCommand("wm density 420");
+    }
+
+    /**
+     * Resets screen resolution.
+     */
+    void resetScreenResolution() {
+        runShellCommand("wm density reset");
+        runShellCommand("wm size reset");
     }
 }
