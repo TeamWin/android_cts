@@ -149,11 +149,11 @@ public class MediaPlayer2Test extends MediaPlayer2TestBase {
                 onErrorCalled.signal();
             }
         };
-        mp2.setEventCallback(mExecutor, ecb);
+        mp2.registerEventCallback(mExecutor, ecb);
         mp2.prepare();
         onPrepareCalled.waitForSignal();
         afd2.close();
-        mp2.clearEventCallback();
+        mp2.unregisterEventCallback(ecb);
 
         mp2.loopCurrent(true);
         mp2.play();
@@ -165,7 +165,7 @@ public class MediaPlayer2Test extends MediaPlayer2TestBase {
                         .setDataSource(afd.getFileDescriptor(), afd.getStartOffset(),
                             afd.getLength())
                         .build());
-                mp.setEventCallback(mExecutor, ecb);
+                mp.registerEventCallback(mExecutor, ecb);
                 onPrepareCalled.reset();
                 mp.prepare();
                 onErrorCalled.waitForSignal();
@@ -247,7 +247,7 @@ public class MediaPlayer2Test extends MediaPlayer2TestBase {
                 }
             }
         };
-        mp.setEventCallback(mExecutor, ecb);
+        mp.registerEventCallback(mExecutor, ecb);
 
         try {
             AudioAttributes attributes = new AudioAttributes.Builder()
@@ -289,7 +289,7 @@ public class MediaPlayer2Test extends MediaPlayer2TestBase {
 
             // test stop and restart
             mp.reset();
-            mp.setEventCallback(mExecutor, ecb);
+            mp.registerEventCallback(mExecutor, ecb);
             mp.setDataSource(new DataSourceDesc.Builder()
                     .setDataSource(mContext, uri)
                     .build());
@@ -346,7 +346,7 @@ public class MediaPlayer2Test extends MediaPlayer2TestBase {
                 }
             }
         };
-        mp.setEventCallback(mExecutor, ecb);
+        mp.registerEventCallback(mExecutor, ecb);
 
         try {
             AudioAttributes attributes = new AudioAttributes.Builder()
@@ -393,7 +393,7 @@ public class MediaPlayer2Test extends MediaPlayer2TestBase {
                     .setDataSource(afd.getFileDescriptor(), afd.getStartOffset(), afd.getLength())
                     .build());
 
-            mp.setEventCallback(mExecutor, ecb);
+            mp.registerEventCallback(mExecutor, ecb);
             onPrepareCalled.reset();
             mp.prepare();
             onPrepareCalled.waitForSignal();
@@ -440,7 +440,7 @@ public class MediaPlayer2Test extends MediaPlayer2TestBase {
                             }
                         }
                     };
-                mp.setEventCallback(mExecutor, ecb);
+                mp.registerEventCallback(mExecutor, ecb);
 
                 AudioAttributes attributes = new AudioAttributes.Builder()
                         .setInternalLegacyStreamType(AudioManager.STREAM_MUSIC)
@@ -509,7 +509,7 @@ public class MediaPlayer2Test extends MediaPlayer2TestBase {
                         }
                     }
                 };
-            mp.setEventCallback(mExecutor, ecb);
+            mp.registerEventCallback(mExecutor, ecb);
 
             assertFalse(mp.isPlaying());
             onPlayCalled.reset();
@@ -568,7 +568,7 @@ public class MediaPlayer2Test extends MediaPlayer2TestBase {
                     }
                 }
             };
-        mp.setEventCallback(mExecutor, ecb);
+        mp.registerEventCallback(mExecutor, ecb);
 
         try {
             AudioAttributes attributes = new AudioAttributes.Builder()
@@ -602,7 +602,7 @@ public class MediaPlayer2Test extends MediaPlayer2TestBase {
                     .setDataSource(afd.getFileDescriptor(), afd.getStartOffset(), afd.getLength())
                     .build());
 
-            mp.setEventCallback(mExecutor, ecb);
+            mp.registerEventCallback(mExecutor, ecb);
             onPrepareCalled.reset();
             mp.prepare();
             onPrepareCalled.waitForSignal();
@@ -1639,19 +1639,17 @@ public class MediaPlayer2Test extends MediaPlayer2TestBase {
                     mOnDeselectTrackCalled.signal();
                 }
             }
-        };
-        synchronized (mEventCbLock) {
-            mEventCallbacks.add(ecb);
-        }
 
-        mPlayer.setOnSubtitleDataListener(new MediaPlayer2.OnSubtitleDataListener() {
             @Override
-            public void onSubtitleData(MediaPlayer2 mp, SubtitleData data) {
+            public void onSubtitleData(MediaPlayer2 mp, DataSourceDesc dsd, SubtitleData data) {
                 if (data != null && data.getData() != null) {
                     mOnSubtitleDataCalled.signal();
                 }
             }
-        });
+        };
+        synchronized (mEventCbLock) {
+            mEventCallbacks.add(ecb);
+        }
 
         mPlayer.setDisplay(getActivity().getSurfaceHolder());
         mPlayer.setScreenOnWhilePlaying(true);
@@ -1704,15 +1702,6 @@ public class MediaPlayer2Test extends MediaPlayer2TestBase {
             return; // skip;
         }
 
-        mPlayer.setOnSubtitleDataListener(new MediaPlayer2.OnSubtitleDataListener() {
-            @Override
-            public void onSubtitleData(MediaPlayer2 mp, SubtitleData data) {
-                if (data != null && data.getData() != null) {
-                    mOnSubtitleDataCalled.signal();
-                }
-            }
-        });
-
         MediaPlayer2.EventCallback ecb = new MediaPlayer2.EventCallback() {
             @Override
             public void onInfo(MediaPlayer2 mp, DataSourceDesc dsd, int what, int extra) {
@@ -1727,6 +1716,13 @@ public class MediaPlayer2Test extends MediaPlayer2TestBase {
             public void onCallCompleted(MediaPlayer2 mp, DataSourceDesc dsd, int what, int status) {
                 if (what == MediaPlayer2.CALL_COMPLETED_PLAY) {
                     mOnPlayCalled.signal();
+                }
+            }
+
+            @Override
+            public void onSubtitleData(MediaPlayer2 mp, DataSourceDesc dsd, SubtitleData data) {
+                if (data != null && data.getData() != null) {
+                    mOnSubtitleDataCalled.signal();
                 }
             }
         };
@@ -1865,7 +1861,7 @@ public class MediaPlayer2Test extends MediaPlayer2TestBase {
                 }
             }
         };
-        mPlayer.setEventCallback(mExecutor, ecb);
+        mPlayer.registerEventCallback(mExecutor, ecb);
 
         mOnPrepareCalled.reset();
         mPlayer.prepare();
@@ -1929,7 +1925,7 @@ public class MediaPlayer2Test extends MediaPlayer2TestBase {
                 }
             }
         };
-        mPlayer.setEventCallback(mExecutor, ecb);
+        mPlayer.registerEventCallback(mExecutor, ecb);
 
         mOnPrepareCalled.reset();
         mPlayer.prepare();
@@ -2146,7 +2142,7 @@ public class MediaPlayer2Test extends MediaPlayer2TestBase {
                 }
             }
         };
-        mPlayer.setEventCallback(mExecutor, ecb);
+        mPlayer.registerEventCallback(mExecutor, ecb);
 
         mOnPlayCalled.reset();
         mPlayer.play();
@@ -2159,7 +2155,7 @@ public class MediaPlayer2Test extends MediaPlayer2TestBase {
                 .setDataSource(dataSource)
                 .build());
 
-        mPlayer.setEventCallback(mExecutor, ecb);
+        mPlayer.registerEventCallback(mExecutor, ecb);
 
         mOnPrepareCalled.reset();
         mPlayer.prepare();
@@ -2191,7 +2187,7 @@ public class MediaPlayer2Test extends MediaPlayer2TestBase {
                 }
             }
         };
-        mPlayer.setEventCallback(mExecutor, ecb);
+        mPlayer.registerEventCallback(mExecutor, ecb);
 
         mCallStatus = MediaPlayer2.CALL_STATUS_NO_ERROR;
         mPlayer.setDataSource((DataSourceDesc)null);
@@ -2212,7 +2208,7 @@ public class MediaPlayer2Test extends MediaPlayer2TestBase {
                 }
             }
         };
-        mPlayer.setEventCallback(mExecutor, ecb);
+        mPlayer.registerEventCallback(mExecutor, ecb);
 
         TestMedia2DataSource dataSource = new TestMedia2DataSource(new byte[0]);
         mPlayer.setDataSource(new DataSourceDesc.Builder()

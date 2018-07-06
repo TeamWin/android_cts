@@ -1199,7 +1199,8 @@
                 <category android:name="android.cts.intent.category.MANUAL_TEST"/>
             </intent-filter>
             <meta-data android:name="test_category" android:value="@string/test_category_hardware"/>
-            <meta-data android:name="test_required_features" android:value="android.hardware.location.gps:android.hardware.wifi" />
+            <meta-data android:name="test_required_features"
+                       android:value="android.hardware.location.gps:android.hardware.wifi:android.hardware.telephony"/>
         </activity>
 
         <activity android:name=".location.EmergencyCallMessageTestsActivity"
@@ -1221,7 +1222,8 @@
                 <category android:name="android.cts.intent.category.MANUAL_TEST"/>
             </intent-filter>
             <meta-data android:name="test_category" android:value="@string/test_category_hardware"/>
-            <meta-data android:name="test_required_features" android:value="android.hardware.location.gps:android.hardware.wifi" />
+            <meta-data android:name="test_required_features"
+                       android:value="android.hardware.location.gps:android.hardware.wifi:android.hardware.telephony"/>
         </activity>
 
         <activity android:name=".location.GnssMeasurementWhenNoLocationTestsActivity"
@@ -1896,6 +1898,10 @@
 
         <activity android:name=".managedprovisioning.RecentsRedactionActivity"
                 android:label="@string/provisioning_byod_recents" >
+        </activity>
+        <activity android:name=".managedprovisioning.IntermediateRecentActivity"
+                  android:label="@string/provisioning_byod_recents"
+                  android:theme="@android:style/Theme.NoDisplay">
             <intent-filter>
                 <action android:name="com.android.cts.verifier.managedprovisioning.RECENTS" />
                 <category android:name="android.intent.category.DEFAULT"></category>

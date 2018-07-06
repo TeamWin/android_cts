@@ -39,6 +39,8 @@ public class PermissionsHostTest extends DeviceTestCase implements IAbiReceiver,
     private static final String APK_23 = "CtsUsePermissionApp23.apk";
     private static final String APK_25 = "CtsUsePermissionApp25.apk";
     private static final String APK_26 = "CtsUsePermissionApp26.apk";
+    private static final String APK_28 = "CtsUsePermissionApp28.apk";
+    private static final String APK_P0 = "CtsUsePermissionAppP0.apk";
     private static final String APK_Latest = "CtsUsePermissionAppLatest.apk";
 
     private static final String APK_PERMISSION_POLICY_25 = "CtsPermissionPolicyTest25.apk";
@@ -401,6 +403,54 @@ public class PermissionsHostTest extends DeviceTestCase implements IAbiReceiver,
         runDeviceTests(ACCESS_SERIAL_PKG,
                 "android.os.cts.AccessSerialModernTest",
                 "testAccessSerialPermissionNeeded");
+    }
+
+    public void testPermissionSplit28() throws Exception {
+        assertNull(getDevice().installPackage(mBuildHelper.getTestFile(APK_28), false, false));
+        runDeviceTests(USES_PERMISSION_PKG, "com.android.cts.usepermission.UsePermissionTest28",
+                "testLocationPermissionWasSplit");
+    }
+
+    public void testPermissionNotSplitP0() throws Exception {
+        assertNull(getDevice().installPackage(mBuildHelper.getTestFile(APK_P0), false, false));
+        runDeviceTests(USES_PERMISSION_PKG, "com.android.cts.usepermission.UsePermissionTestP0",
+                "locationPermissionIsNotSplit");
+    }
+
+    public void testRequestOnlyBackgroundNotPossible() throws Exception {
+        assertNull(getDevice().installPackage(mBuildHelper.getTestFile(APK_P0), false, false));
+        runDeviceTests(USES_PERMISSION_PKG, "com.android.cts.usepermission.UsePermissionTestP0",
+                "requestOnlyBackgroundNotPossible");
+    }
+
+    public void testRequestBoth() throws Exception {
+        assertNull(getDevice().installPackage(mBuildHelper.getTestFile(APK_P0), false, false));
+        runDeviceTests(USES_PERMISSION_PKG, "com.android.cts.usepermission.UsePermissionTestP0",
+                "requestBoth");
+    }
+
+    public void testRequestBothInSequence() throws Exception {
+        assertNull(getDevice().installPackage(mBuildHelper.getTestFile(APK_P0), false, false));
+        runDeviceTests(USES_PERMISSION_PKG, "com.android.cts.usepermission.UsePermissionTestP0",
+                "requestBothInSequence");
+    }
+
+    public void testRequestBothButGrantInSequence() throws Exception {
+        assertNull(getDevice().installPackage(mBuildHelper.getTestFile(APK_P0), false, false));
+        runDeviceTests(USES_PERMISSION_PKG, "com.android.cts.usepermission.UsePermissionTestP0",
+                "requestBothButGrantInSequence");
+    }
+
+    public void testDenyBackgroundWithPrejudice() throws Exception {
+        assertNull(getDevice().installPackage(mBuildHelper.getTestFile(APK_P0), false, false));
+        runDeviceTests(USES_PERMISSION_PKG, "com.android.cts.usepermission.UsePermissionTestP0",
+                "denyBackgroundWithPrejudice");
+    }
+
+    public void testPermissionNotSplitLatest() throws Exception {
+        assertNull(getDevice().installPackage(mBuildHelper.getTestFile(APK_Latest), false, false));
+        runDeviceTests(USES_PERMISSION_PKG, "com.android.cts.usepermission.UsePermissionTestP0",
+                "locationPermissionIsNotSplit");
     }
 
     private void runDeviceTests(String packageName, String testClassName, String testMethodName)
