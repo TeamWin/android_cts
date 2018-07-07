@@ -18,18 +18,26 @@ import static android.accessibilityservice.cts.AccessibilityActivityTestCase
         .TIMEOUT_ASYNC_PROCESSING;
 
 import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.fail;
 
+import android.accessibilityservice.AccessibilityService;
 import android.accessibilityservice.AccessibilityServiceInfo;
 import android.app.Activity;
 import android.app.Instrumentation;
 import android.app.UiAutomation;
+import android.content.Context;
+import android.content.Intent;
+import android.content.pm.PackageManager;
+import android.content.pm.ResolveInfo;
 import android.graphics.Rect;
 import android.support.test.rule.ActivityTestRule;
 import android.text.TextUtils;
 import android.view.accessibility.AccessibilityEvent;
+import android.view.accessibility.AccessibilityNodeInfo;
 import android.view.accessibility.AccessibilityWindowInfo;
 
 import java.util.List;
+import java.util.concurrent.TimeoutException;
 
 /**
  * Utilities useful when launching an activity to make sure it's all the way on the screen
@@ -49,6 +57,7 @@ public class ActivityLaunchUtils {
         AccessibilityServiceInfo info = uiAutomation.getServiceInfo();
         info.flags |= AccessibilityServiceInfo.FLAG_RETRIEVE_INTERACTIVE_WINDOWS;
         uiAutomation.setServiceInfo(info);
+        homeScreenOrBust(instrumentation.getContext(), uiAutomation);
         final AccessibilityEvent awaitedEvent = uiAutomation.executeAndWaitForEvent(
                 () -> {
                     mTempActivity = rule.launchActivity(null);
@@ -96,5 +105,42 @@ public class ActivityLaunchUtils {
             }
         }
         return returnValue;
+    }
+
+    public static void homeScreenOrBust(Context context, UiAutomation uiAutomation) {
+        if (isHomeScreenShowing(context, uiAutomation)) return;
+        try {
+            uiAutomation.executeAndWaitForEvent(
+                    () -> uiAutomation.performGlobalAction(AccessibilityService.GLOBAL_ACTION_HOME),
+                    (event) -> isHomeScreenShowing(context, uiAutomation),
+                    TIMEOUT_ASYNC_PROCESSING);
+        } catch (TimeoutException te) {
+            fail("Unable to reach home screen");
+        }
+    }
+
+    private static boolean isHomeScreenShowing(Context context, UiAutomation uiAutomation) {
+        final List<AccessibilityWindowInfo> windows = uiAutomation.getWindows();
+        final PackageManager packageManager = context.getPackageManager();
+        final List<ResolveInfo> resolveInfos = packageManager.queryIntentActivities(
+                new Intent(Intent.ACTION_MAIN).addCategory(Intent.CATEGORY_HOME),
+                PackageManager.MATCH_DEFAULT_ONLY);
+
+        // Look for a window with a package name that matches the default home screen
+        for (AccessibilityWindowInfo window : windows) {
+            final AccessibilityNodeInfo root = window.getRoot();
+            if (root != null) {
+                final CharSequence packageName = root.getPackageName();
+                if (packageName != null) {
+                    for (ResolveInfo resolveInfo : resolveInfos) {
+                        if ((resolveInfo.activityInfo != null)
+                                && packageName.equals(resolveInfo.activityInfo.packageName)) {
+                            return true;
+                        }
+                    }
+                }
+            }
+        }
+        return false;
     }
 }

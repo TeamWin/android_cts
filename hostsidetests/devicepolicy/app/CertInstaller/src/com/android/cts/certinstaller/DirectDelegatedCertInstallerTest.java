@@ -17,17 +17,28 @@
 package com.android.cts.certinstaller;
 
 import static com.google.common.truth.Truth.assertWithMessage;
+import static com.google.common.truth.Truth.assertThat;
 
+import android.app.KeyguardManager;
 import android.app.admin.DevicePolicyManager;
+import android.content.Context;
+import android.security.KeyChain;
+import android.security.KeyChainException;
 import android.test.InstrumentationTestCase;
+import android.util.Base64;
+import android.util.Base64InputStream;
 
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.security.GeneralSecurityException;
+import java.security.KeyFactory;
 import java.security.KeyStore;
+import java.security.NoSuchAlgorithmException;
+import java.security.PrivateKey;
 import java.security.cert.Certificate;
 import java.security.cert.CertificateException;
 import java.security.cert.CertificateFactory;
+import java.security.spec.PKCS8EncodedKeySpec;
 import java.util.List;
 
 /*
@@ -106,7 +117,7 @@ public class DirectDelegatedCertInstallerTest extends InstrumentationTestCase {
     @Override
     public void setUp() throws Exception {
         super.setUp();
-        mDpm = getInstrumentation().getContext().getSystemService(DevicePolicyManager.class);
+        mDpm = getContext().getSystemService(DevicePolicyManager.class);
     }
 
     @Override
@@ -147,6 +158,27 @@ public class DirectDelegatedCertInstallerTest extends InstrumentationTestCase {
                 mDpm.hasCaCertInstalled(null, cert)).isFalse();
     }
 
+    public void testInstallKeyPair()
+            throws GeneralSecurityException, KeyChainException, InterruptedException {
+        final String alias = "delegated-cert-installer-test-key";
+
+        PKCS8EncodedKeySpec keySpec = new PKCS8EncodedKeySpec(
+                Base64.decode(TEST_KEY, Base64.DEFAULT));
+        PrivateKey privatekey = KeyFactory.getInstance("RSA").generatePrivate(keySpec);
+
+        Certificate certificate = CertificateFactory.getInstance("X.509")
+                .generateCertificate(
+                        new Base64InputStream(new ByteArrayInputStream(TEST_CERT.getBytes()),
+                                Base64.DEFAULT));
+        assertThat(mDpm.installKeyPair(null, privatekey, new Certificate[]{certificate}, alias,
+                true)).isTrue();
+
+        // Test that the installed private key can be obtained.
+        PrivateKey obtainedKey = KeyChain.getPrivateKey(getContext(), alias);
+        assertThat(obtainedKey).isNotNull();
+        assertThat(obtainedKey.getAlgorithm()).isEqualTo("RSA");
+    }
+
     private static boolean containsCertificate(List<byte[]> certificates, byte[] toMatch)
             throws CertificateException {
         Certificate certificateToMatch = readCertificate(toMatch);
@@ -162,5 +194,9 @@ public class DirectDelegatedCertInstallerTest extends InstrumentationTestCase {
     private static Certificate readCertificate(byte[] certBuffer) throws CertificateException {
         final CertificateFactory certFactory = CertificateFactory.getInstance("X.509");
         return certFactory.generateCertificate(new ByteArrayInputStream(certBuffer));
+    }
+
+    private Context getContext() {
+        return getInstrumentation().getContext();
     }
 }

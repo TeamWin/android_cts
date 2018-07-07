@@ -15,8 +15,11 @@
  */
 package android.location.cts;
 
+import android.os.Build;
 import android.test.AndroidTestCase;
 import android.util.Log;
+
+import com.android.compatibility.common.util.PropertyUtil;
 
 /**
  * Base Test Case class for all Gnss Tests.
@@ -32,14 +35,15 @@ public abstract class GnssTestCase extends AndroidTestCase {
     protected GnssTestCase() {
     }
 
-    // When CTS testing is run in Verifier mode access to GNSS signals is expected
     // On devices using newer hardware, GNSS measurement support is required.
-    // Hence when both conditions are true, we can verify stricter tests of functionality
-    // availability.
     protected boolean isMeasurementTestStrict() {
-        return ((mTestLocationManager.getLocationManager().getGnssYearOfHardware() >=
-                 MIN_HARDWARE_YEAR_MEASUREMENTS_REQUIRED) &&
-                isCtsVerifierTest());
+        // Enforce strict measurement test on devices with first API level at least P.
+        if (PropertyUtil.getFirstApiLevel() >= Build.VERSION_CODES.P) {
+            return true;
+        }
+
+        return (mTestLocationManager.getLocationManager().getGnssYearOfHardware() >=
+                MIN_HARDWARE_YEAR_MEASUREMENTS_REQUIRED);
     }
 
     public void setTestAsCtsVerifierTest(boolean value) {
