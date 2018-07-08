@@ -16,15 +16,9 @@
 
 package android.text.util.cts;
 
-import static org.junit.Assert.assertArrayEquals;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
-import static org.mockito.ArgumentMatchers.anyString;
-import static org.mockito.Mockito.spy;
-import static org.mockito.Mockito.times;
-import static org.mockito.Mockito.verify;
 
 import android.content.Context;
 import android.support.test.InstrumentationRegistry;
@@ -456,70 +450,6 @@ public class LinkifyTest {
         URLSpan[] spans = textView.getUrls();
         assertEquals("android.com should be linkified", 1, spans.length);
         assertEquals("https://android.com", spans[0].getURL());
-    }
-
-    public class MyUrlSpan extends URLSpan {
-        public MyUrlSpan(String url) {
-            super(url);
-        }
-    }
-
-    public class MyUrlSpanFactory extends Linkify.UrlSpanFactory {
-        @Override
-        public URLSpan create(String url) {
-            return new MyUrlSpan(url);
-        }
-    }
-
-    @Test
-    public void testAddLinks_UrlSpanFactory_withSpannable() {
-        final String text = "a https://android.com a +1 123 456 7878 a android@android.com a";
-        final Spannable spannable = new SpannableString(text);
-        final int mask = Linkify.WEB_URLS | Linkify.PHONE_NUMBERS | Linkify.EMAIL_ADDRESSES;
-        final Context context = InstrumentationRegistry.getContext();
-        final Linkify.UrlSpanFactory urlSpanFactory = spy(new MyUrlSpanFactory());
-
-        Linkify.addLinks(spannable, mask, context, urlSpanFactory);
-
-        verify(urlSpanFactory, times(3)).create(anyString());
-        final MyUrlSpan[] myUrlSpans = spannable.getSpans(0, spannable.length(), MyUrlSpan.class);
-        assertNotNull(myUrlSpans);
-        assertEquals(3, myUrlSpans.length);
-        assertEquals(3, myUrlSpans.length);
-        assertEquals("https://android.com", myUrlSpans[0].getURL());
-        assertEquals("tel:+11234567878", myUrlSpans[1].getURL());
-        assertEquals("mailto:android@android.com", myUrlSpans[2].getURL());
-
-        final URLSpan[] urlSpans = spannable.getSpans(0, spannable.length(), URLSpan.class);
-        assertArrayEquals(myUrlSpans, urlSpans);
-    }
-
-    @Test
-    public void testAddLinks_UrlSpanFactory_withSpannableAndFilter() {
-        final String text = "google.pattern, test:AZ0101.pattern";
-        final SpannableString spannable = new SpannableString(text);
-        final Linkify.UrlSpanFactory urlSpanFactory = spy(new MyUrlSpanFactory());
-
-        Linkify.addLinks(spannable, LINKIFY_TEST_PATTERN, "test:", null /*schemes*/,
-                null /*matchFilter*/, null /*transformFilter*/, urlSpanFactory);
-
-        verify(urlSpanFactory, times(2)).create(anyString());
-
-        final MyUrlSpan[] myUrlSpans = spannable.getSpans(0, spannable.length(), MyUrlSpan.class);
-        assertNotNull(myUrlSpans);
-        assertEquals(2, myUrlSpans.length);
-        assertEquals("test:google.pattern", myUrlSpans[0].getURL());
-        assertEquals("test:AZ0101.pattern", myUrlSpans[1].getURL());
-
-        final URLSpan[] urlSpans = spannable.getSpans(0, spannable.length(), URLSpan.class);
-        assertArrayEquals(myUrlSpans, urlSpans);
-    }
-
-    @Test
-    public void testDefaultUrlSpanFactory() {
-        URLSpan urlSpan = new Linkify.UrlSpanFactory().create("some url");
-        assertNotNull(urlSpan);
-        assertEquals("some url", urlSpan.getURL());
     }
 
     // WEB_URLS Related Tests
