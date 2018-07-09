@@ -171,4 +171,28 @@
         11) Verify that the notification disappeared.\n
     </string>
 
-</resources>
+    <!-- This specific test is disabling keyguard's managed device message, 
+    non-handheld devices may not support keyguard and this may effectively be a no-op. -->
+    <string name="enterprise_privacy_keyguard_negative_info">
+        NOTE: If the device does not support a keyguard, please pass the test using the green checkmark.\n
+        Please do the following:\n
+        1) Press the Go button to open Settings.\n
+        2) Navigate to \"Security\" &gt; \"Screen lock\" and select the first screen lock type that is not \"None\".\n
+        3) Use the Back button to return to this page.\n
+        4) Lock the device.\n
+        5) Verify that on the lock screen, you are not told the device is managed.\n
+        6) Unlock the device.\n
+        7) Repeat steps (1) through (6) for each screen lock type other than \"None\".
+    </string>
+
+    <!-- This specific test is disabling quicksetting's managed device message, 
+        non-handheld devices may not support quicksettings and this may effectively be a no-op. -->
+    <string name="enterprise_privacy_quick_settings_negative_info">
+        NOTE: If the device does not support a Quick Settings, please pass the test using the green checkmark.\n
+        Please do the following:\n
+        1) Open and fully expand Quick Settings.\n
+        2) Verify that at the bottom of Quick Settings, you are not told the device is managed.\n
+        3) Close Quick Settings.
+    </string>
+
+    </resources>
