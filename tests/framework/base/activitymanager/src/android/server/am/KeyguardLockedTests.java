@@ -181,8 +181,8 @@ public class KeyguardLockedTests extends KeyguardTestBase {
             // Show the PiP activity in fullscreen
             launchActivity(PIP_ACTIVITY, EXTRA_SHOW_OVER_KEYGUARD, "true");
 
-            // Go to the lockscreen
-            lockScreenSession.gotoKeyguard();
+            // Lock the screen and ensure that the PiP activity showing over the LockScreen.
+            lockScreenSession.gotoKeyguard(PIP_ACTIVITY);
             mAmWmState.waitForKeyguardShowingAndOccluded();
             mAmWmState.assertKeyguardShowingAndOccluded();
 

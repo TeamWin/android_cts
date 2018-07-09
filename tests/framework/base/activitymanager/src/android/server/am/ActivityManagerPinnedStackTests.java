@@ -87,6 +87,11 @@ import android.support.test.filters.FlakyTest;
 import android.support.test.InstrumentationRegistry;
 import android.util.Log;
 import android.util.Size;
+
+import com.android.compatibility.common.util.AppOpsUtils;
+import com.android.compatibility.common.util.SystemUtil;
+
+import java.io.IOException;
 import java.util.List;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
@@ -827,13 +832,18 @@ public class ActivityManagerPinnedStackTests extends ActivityManagerTestBase {
 
         // Lock the task and ensure that we can't enter picture-in-picture both explicitly and
         // when paused
-        executeShellCommand("am task lock " + task.mTaskId);
-        mBroadcastActionTrigger.doAction(ACTION_ENTER_PIP);
-        waitForEnterPip(PIP_ACTIVITY);
-        assertPinnedStackDoesNotExist();
-        launchHomeActivity();
-        assertPinnedStackDoesNotExist();
-        executeShellCommand("am task lock stop");
+        SystemUtil.runWithShellPermissionIdentity(() -> {
+            try {
+                mAtm.startSystemLockTaskMode(task.mTaskId);
+                mBroadcastActionTrigger.doAction(ACTION_ENTER_PIP);
+                waitForEnterPip(PIP_ACTIVITY);
+                assertPinnedStackDoesNotExist();
+                launchHomeActivity();
+                assertPinnedStackDoesNotExist();
+            } finally {
+                mAtm.stopSystemLockTaskMode();
+            }
+        });
     }
 
     @FlakyTest(bugId = 70328524)
@@ -1045,9 +1055,10 @@ public class ActivityManagerPinnedStackTests extends ActivityManagerTestBase {
         launchPinnedActivityAsTaskOverlay(TRANSLUCENT_TEST_ACTIVITY, taskId);
 
         // Finish the task overlay activity while animating and ensure that the PiP activity never
-        // got resumed
+        // got resumed.
         LogSeparator logSeparator = separateLogs();
-        executeShellCommand("am stack resize-animated " + stackId + " 20 20 500 500");
+        SystemUtil.runWithShellPermissionIdentity(
+                () -> mAtm.resizeStack(stackId, new Rect(20, 20, 500, 500), true /* animate */));
         mBroadcastActionTrigger.doAction(TEST_ACTIVITY_ACTION_FINISH_SELF);
         mAmWmState.waitFor((amState, wmState) ->
                         !amState.containsActivity(TRANSLUCENT_TEST_ACTIVITY),
@@ -1556,7 +1567,7 @@ public class ActivityManagerPinnedStackTests extends ActivityManagerTestBase {
         Rect pinnedStackBounds = getPinnedStackBounds();
         int tapX = pinnedStackBounds.left + pinnedStackBounds.width() - 100;
         int tapY = pinnedStackBounds.top + pinnedStackBounds.height() - 100;
-        executeShellCommand(String.format("input tap %d %d", tapX, tapY));
+        tapOnDisplay(tapX, tapY, DEFAULT_DISPLAY);
     }
 
     /**
@@ -1579,20 +1590,24 @@ public class ActivityManagerPinnedStackTests extends ActivityManagerTestBase {
             mPackageName = activityName.getPackageName();
         }
 
+        /**
+         * Sets an app-ops op for a given package to a given mode.
+         */
         void setOpToMode(String op, int mode) {
-            setAppOpsOpToMode(mPackageName, op, mode);
+            try {
+                AppOpsUtils.setOpMode(mPackageName, op, mode);
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
         }
 
         @Override
         public void close() {
-            executeShellCommand("appops reset " + mPackageName);
-        }
-
-        /**
-         * Sets an app-ops op for a given package to a given mode.
-         */
-        private void setAppOpsOpToMode(String packageName, String op, int mode) {
-            executeShellCommand(String.format("appops set %s %s %d", packageName, op, mode));
+            try {
+                AppOpsUtils.reset(mPackageName);
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
         }
     }
 
@@ -1609,7 +1624,7 @@ public class ActivityManagerPinnedStackTests extends ActivityManagerTestBase {
             final int stackId = mAmWmState.getAmState().getStackIdByActivity(topActivityName);
 
             assertNotEquals(stackId, INVALID_STACK_ID);
-            executeShellCommand(getMoveToPinnedStackCommand(stackId));
+            moveTopActivityToPinnedStack(stackId);
         }
 
         mAmWmState.waitForValidState(new WaitForValidActivityState.Builder(topActivityName)

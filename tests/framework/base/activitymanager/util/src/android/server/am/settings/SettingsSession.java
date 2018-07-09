@@ -7,6 +7,8 @@ import androidx.annotation.NonNull;
 import android.support.test.InstrumentationRegistry;
 import android.util.Log;
 
+import com.android.compatibility.common.util.SystemUtil;
+
 import java.util.HashMap;
 import java.util.Map;
 
@@ -122,7 +124,9 @@ public class SettingsSession<T> implements AutoCloseable {
 
     private static <T> void put(final Uri uri, final SettingsSetter<T> setter, T value)
             throws SettingNotFoundException {
-        setter.set(getContentResolver(), uri.getLastPathSegment(), value);
+        SystemUtil.runWithShellPermissionIdentity(() -> {
+            setter.set(getContentResolver(), uri.getLastPathSegment(), value);
+        });
     }
 
     private static <T> T get(final Uri uri, final SettingsGetter<T> getter)
@@ -131,7 +135,9 @@ public class SettingsSession<T> implements AutoCloseable {
     }
 
     private static void delete(final Uri uri) throws IllegalArgumentException {
-        getContentResolver().delete(uri, null, null);
+        SystemUtil.runWithShellPermissionIdentity(() -> {
+            getContentResolver().delete(uri, null, null);
+        });
     }
 
     private static ContentResolver getContentResolver() {
