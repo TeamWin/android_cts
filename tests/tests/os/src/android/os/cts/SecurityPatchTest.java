@@ -91,7 +91,6 @@ public class SecurityPatchTest extends InstrumentationTestCase {
                                      mBuildSecurityPatch);
         testSecurityPatchDate(mBuildSecurityPatch, error);
     }
-
     /** Security patch should no older than the month this test was updated in M or higher **/
     private void testSecurityPatchDate(String patch, String error) {
         int declaredYear = 0;
