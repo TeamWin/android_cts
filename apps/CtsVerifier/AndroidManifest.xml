@@ -1207,8 +1207,8 @@
                 <category android:name="android.cts.intent.category.MANUAL_TEST"/>
             </intent-filter>
             <meta-data android:name="test_category" android:value="@string/test_category_hardware"/>
-            <meta-data android:name="test_required_features" android:value="android.hardware.location.gps" />
-            <meta-data android:name="test_required_features" android:value="android.hardware.wifi" />
+            <meta-data android:name="test_required_features"
+                       android:value="android.hardware.location.gps:android.hardware.wifi:android.hardware.telephony"/>
         </activity>
 
         <activity android:name=".location.EmergencyCallMessageTestsActivity"
@@ -1219,9 +1219,8 @@
                 <category android:name="android.cts.intent.category.MANUAL_TEST"/>
             </intent-filter>
             <meta-data android:name="test_category" android:value="@string/test_category_hardware"/>
-            <meta-data android:name="test_required_features" android:value="android.hardware.location.gps" />
-            <meta-data android:name="test_required_features" android:value="android.hardware.wifi" />
-            <meta-data android:name="test_required_features" android:value="android.hardware.telephony"/>
+            <meta-data android:name="test_required_features"
+                       android:value="android.hardware.location.gps:android.hardware.wifi:android.hardware.telephony"/>
         </activity>
 
         <activity android:name=".location.EmergencyCallGNSSTestsActivity"
@@ -1232,8 +1231,8 @@
                 <category android:name="android.cts.intent.category.MANUAL_TEST"/>
             </intent-filter>
             <meta-data android:name="test_category" android:value="@string/test_category_hardware"/>
-            <meta-data android:name="test_required_features" android:value="android.hardware.location.gps" />
-            <meta-data android:name="test_required_features" android:value="android.hardware.wifi" />
+            <meta-data android:name="test_required_features"
+                       android:value="android.hardware.location.gps:android.hardware.wifi:android.hardware.telephony"/>
         </activity>
 
         <activity android:name=".location.GnssMeasurementWhenNoLocationTestsActivity"
