@@ -246,7 +246,7 @@ public class BatteryConstraintTest extends ConstraintTest {
      * the battery level is critical and not on power.
      */
     public void testBatteryNotLowConstraintFails_withoutPower() throws Exception {
-        setBatteryState(false, 15);
+        setBatteryState(false, 5);
         // setBatteryState() waited for the charging/not-charging state to formally settle,
         // but battery level reporting lags behind that.  wait a moment to let that happen
         // before proceeding.
@@ -281,8 +281,8 @@ public class BatteryConstraintTest extends ConstraintTest {
                 kTestEnvironment.awaitExecution());
 
         // And check that the job is stopped if battery goes low again.
-        setBatteryState(false, 15);
-        setBatteryState(false, 14);
+        setBatteryState(false, 5);
+        setBatteryState(false, 4);
         waitFor(2_000);
         verifyChargingState(false);
         verifyBatteryNotLowState(false);
