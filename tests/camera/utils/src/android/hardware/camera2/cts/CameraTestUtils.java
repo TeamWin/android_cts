@@ -788,15 +788,12 @@ public class CameraTestUtils extends Assert {
      * @param camera The CameraDevice to be configured.
      * @param outputSurfaces The surface list that used for camera output.
      * @param listener The callback CameraDevice will notify when capture results are available.
+     * @param initialRequest Initial request settings to use as session parameters.
      */
     public static CameraCaptureSession buildConstrainedCameraSession(CameraDevice camera,
-            List<Surface> outputSurfaces, boolean isHighSpeed,
-            CameraCaptureSession.StateCallback listener, Handler handler)
-            throws CameraAccessException {
+            List<Surface> outputSurfaces, CameraCaptureSession.StateCallback listener,
+            Handler handler, CaptureRequest initialRequest) throws CameraAccessException {
         BlockingSessionCallback sessionListener = new BlockingSessionCallback(listener);
-
-        CaptureRequest.Builder builder = camera.createCaptureRequest(CameraDevice.TEMPLATE_RECORD);
-        CaptureRequest recordSessionParams = builder.build();
 
         List<OutputConfiguration> outConfigurations = new ArrayList<>(outputSurfaces.size());
         for (Surface surface : outputSurfaces) {
@@ -805,7 +802,7 @@ public class CameraTestUtils extends Assert {
         SessionConfiguration sessionConfig = new SessionConfiguration(
                 SessionConfiguration.SESSION_HIGH_SPEED, outConfigurations,
                 new HandlerExecutor(handler), sessionListener);
-        sessionConfig.setSessionParameters(recordSessionParams);
+        sessionConfig.setSessionParameters(initialRequest);
         camera.createCaptureSession(sessionConfig);
 
         CameraCaptureSession session =
@@ -867,6 +864,37 @@ public class CameraTestUtils extends Assert {
         return session;
     }
 
+    /**
+     * Configure a new camera session with output surfaces and initial session parameters.
+     *
+     * @param camera The CameraDevice to be configured.
+     * @param outputSurfaces The surface list that used for camera output.
+     * @param listener The callback CameraDevice will notify when session is available.
+     * @param handler The handler used to notify callbacks.
+     * @param initialRequest Initial request settings to use as session parameters.
+     */
+    public static CameraCaptureSession configureCameraSessionWithParameters(CameraDevice camera,
+            List<Surface> outputSurfaces, BlockingSessionCallback listener,
+            Handler handler, CaptureRequest initialRequest) throws CameraAccessException {
+        List<OutputConfiguration> outConfigurations = new ArrayList<>(outputSurfaces.size());
+        for (Surface surface : outputSurfaces) {
+            outConfigurations.add(new OutputConfiguration(surface));
+        }
+        SessionConfiguration sessionConfig = new SessionConfiguration(
+                SessionConfiguration.SESSION_REGULAR, outConfigurations,
+                new HandlerExecutor(handler), listener);
+        sessionConfig.setSessionParameters(initialRequest);
+        camera.createCaptureSession(sessionConfig);
+
+        CameraCaptureSession session = listener.waitAndGetSession(SESSION_CONFIGURE_TIMEOUT_MS);
+        assertFalse("Camera session should not be a reprocessable session",
+                session.isReprocessable());
+        assertFalse("Capture session type must be regular",
+                CameraConstrainedHighSpeedCaptureSession.class.isAssignableFrom(
+                        session.getClass()));
+
+        return session;
+    }
 
     /**
      * Configure a new camera session with output surfaces.
