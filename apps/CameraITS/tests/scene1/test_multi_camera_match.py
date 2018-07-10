@@ -41,8 +41,7 @@ def main():
                              its.caps.raw16(props) and
                              its.caps.manual_sensor(props))
         ids = its.caps.logical_multi_camera_physical_ids(props)
-        s, e, _, _, f = cam.do_3a(get_results=True)
-        req = its.objects.manual_capture_request(s, e, f)
+        req = its.objects.auto_capture_request()
         max_raw_size = its.objects.get_available_output_sizes('raw', props)[0]
         for i in ids:
             physical_props = cam.get_camera_properties_by_id(i)
@@ -92,14 +91,6 @@ def main():
         print 'rgb_raw:', rgb_means_raw
         print 'y1_mean:', y1_mean
         print 'y2_mean:', y2_mean
-
-        # assert gain/exp values are near written values
-        s_yuv1 = cap_yuv1['metadata']['android.sensor.sensitivity']
-        e_yuv1 = cap_yuv1['metadata']['android.sensor.exposureTime']
-        msg = 'yuv_gain(write): %d, (read): %d' % (s, s_yuv1)
-        assert 0 <= s - s_yuv1 < s * THRESH_GAIN, msg
-        msg = 'yuv_exp(write): %.3fms, (read): %.3fms' % (e*1E6, e_yuv1*1E6)
-        assert 0 <= e - e_yuv1 < e * THRESH_EXP, msg
 
         # compare YUVs
         msg = 'y1: %.3f, y2: %.3f, TOL=%.5f' % (y1_mean, y2_mean, THRESH_DIFF)
