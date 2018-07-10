@@ -83,6 +83,7 @@ genrule {
 
 java_library {
     name: "vmtests-mains",
+    installable: true,
     libs: [ "cts-vmtests-dot" ],
     srcs: [":vmtests_generated_mains_test_sources"],
 }
