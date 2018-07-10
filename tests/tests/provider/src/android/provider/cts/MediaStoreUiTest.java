@@ -16,6 +16,7 @@
 
 package android.provider.cts;
 
+import static android.Manifest.permission.ACCESS_BACKGROUND_LOCATION;
 import static android.Manifest.permission.ACCESS_COARSE_LOCATION;
 import static android.Manifest.permission.ACCESS_FINE_LOCATION;
 import static android.Manifest.permission.CAMERA;
@@ -194,6 +195,7 @@ public class MediaStoreUiTest extends InstrumentationTestCase {
         maybeGrantRuntimePermission(pkg, req, CAMERA);
         maybeGrantRuntimePermission(pkg, req, ACCESS_COARSE_LOCATION);
         maybeGrantRuntimePermission(pkg, req, ACCESS_FINE_LOCATION);
+        maybeGrantRuntimePermission(pkg, req, ACCESS_BACKGROUND_LOCATION);
         maybeGrantRuntimePermission(pkg, req, RECORD_AUDIO);
         maybeGrantRuntimePermission(pkg, req, READ_EXTERNAL_STORAGE);
         maybeGrantRuntimePermission(pkg, req, WRITE_EXTERNAL_STORAGE);
