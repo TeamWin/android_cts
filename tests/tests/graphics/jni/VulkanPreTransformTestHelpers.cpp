@@ -290,6 +290,13 @@ int32_t SwapchainInfo::init(bool setPreTransform) {
           static_cast<uint32_t>(surfaceCapabilities.currentTransform),
           static_cast<uint32_t>(preTransform));
 
+    if ((preTransform &
+         (VK_SURFACE_TRANSFORM_ROTATE_90_BIT_KHR | VK_SURFACE_TRANSFORM_ROTATE_270_BIT_KHR |
+          VK_SURFACE_TRANSFORM_HORIZONTAL_MIRROR_ROTATE_90_BIT_KHR |
+          VK_SURFACE_TRANSFORM_HORIZONTAL_MIRROR_ROTATE_270_BIT_KHR)) != 0) {
+        std::swap(mDisplaySize.width, mDisplaySize.height);
+    }
+
     const uint32_t queueFamilyIndex = mDeviceInfo->queueFamilyIndex();
     const VkSwapchainCreateInfoKHR swapchainCreateInfo = {
             .sType = VK_STRUCTURE_TYPE_SWAPCHAIN_CREATE_INFO_KHR,
