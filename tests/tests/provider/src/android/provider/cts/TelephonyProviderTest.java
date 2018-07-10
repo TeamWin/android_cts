@@ -38,10 +38,12 @@ import java.io.FileDescriptor;
 public class TelephonyProviderTest extends InstrumentationTestCase {
     private ContentResolver mContentResolver;
     private static final String[] APN_PROJECTION = {
-        Carriers.TYPE,            // 0
-        Carriers.MMSC,            // 1
-        Carriers.MMSPROXY,        // 2
-        Carriers.MMSPORT          // 3
+        Carriers.TYPE,
+        Carriers.MMSC,
+        Carriers.MMSPROXY,
+        Carriers.MMSPORT,
+        Carriers.MVNO_TYPE,
+        Carriers.MVNO_MATCH_DATA
     };
 
     @Override
