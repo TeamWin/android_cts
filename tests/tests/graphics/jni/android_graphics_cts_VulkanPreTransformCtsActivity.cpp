@@ -33,7 +33,6 @@
 
 namespace {
 
-
 jboolean validatePixelValues(JNIEnv* env, jboolean setPreTransform) {
     jclass clazz = env->FindClass("android/graphics/cts/VulkanPreTransformTest");
     jmethodID mid = env->GetStaticMethodID(clazz, "validatePixelValuesAfterRotation", "(Z)Z");
