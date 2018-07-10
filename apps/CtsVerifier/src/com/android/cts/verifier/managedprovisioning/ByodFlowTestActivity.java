@@ -647,12 +647,14 @@ public class ByodFlowTestActivity extends DialogTestListActivity {
                     .show();
         }
 
-        mWidgetTest = TestListItem.newTest(this,
-                R.string.provisioning_byod_work_profile_widget,
-                WorkProfileWidgetActivity.class.getName(),
-                new Intent(WorkProfileWidgetActivity.ACTION_TEST_WORK_PROFILE_WIDGET),
-                new String[] {PackageManager.FEATURE_APP_WIDGETS});
-        adapter.add(mWidgetTest);
+        if (getPackageManager().hasSystemFeature(PackageManager.FEATURE_APP_WIDGETS)) {
+            mWidgetTest = TestListItem.newTest(this,
+                    R.string.provisioning_byod_work_profile_widget,
+                    WorkProfileWidgetActivity.class.getName(),
+                    new Intent(WorkProfileWidgetActivity.ACTION_TEST_WORK_PROFILE_WIDGET),
+                    new String[]{PackageManager.FEATURE_APP_WIDGETS});
+            adapter.add(mWidgetTest);
+        }
 
     }
 
