@@ -303,6 +303,12 @@ public class StagefrightTest extends InstrumentationTestCase {
      ***********************************************************/
 
     @SecurityTest
+    public void testBug_73965890() throws Exception {
+        int[] frameSizes = getFrameSizes(R.raw.bug_73965890_framelen);
+        doStagefrightTestRawBlob(R.raw.bug_73965890_hevc, "video/hevc", 320, 240, frameSizes);
+    }
+
+    @SecurityTest
     public void testStagefright_cve_2016_3920() throws Exception {
         doStagefrightTest(R.raw.cve_2016_3920);
     }
@@ -854,6 +860,12 @@ public class StagefrightTest extends InstrumentationTestCase {
      to prevent merge conflicts, add O tests below this comment,
      before any existing test methods
      ***********************************************************/
+
+    @SecurityTest
+    public void testBug_65186291() throws Exception {
+        int[] frameSizes = getFrameSizes(R.raw.bug_65186291_framelen);
+        doStagefrightTestRawBlob(R.raw.bug_65186291_hevc, "video/hevc", 1920, 1080, frameSizes);
+    }
 
     @SecurityTest
     public void testBug_67737022() throws Exception {

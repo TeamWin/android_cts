@@ -193,9 +193,9 @@ public class BitmapFilterTests extends ActivityTestBase {
                 }))
                 .runWithVerifier(new RegionVerifier()
                         // We're filtering, so... BLACK-ish and WHITE-ish it is.
-                        .addVerifier(blackArea, new ColorVerifier(Color.BLACK, 6))
+                        .addVerifier(blackArea, new ColorVerifier(Color.BLACK, 16))
                         .addVerifier(greyArea1, GREY_ONLY_VERIFIER)
                         .addVerifier(greyArea2, GREY_ONLY_VERIFIER)
-                        .addVerifier(whiteArea, new ColorVerifier(Color.WHITE, 6)));
+                        .addVerifier(whiteArea, new ColorVerifier(Color.WHITE, 16)));
     }
 }

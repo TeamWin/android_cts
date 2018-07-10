@@ -1,5 +1,5 @@
-/*
- * Copyright (C) 2016 Google Inc.
+/**
+ * Copyright (C) 2018 The Android Open Source Project
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,20 +14,14 @@
  * limitations under the License.
  */
 
-package android.os.cts;
+package android.security.cts;
 
 import com.android.compatibility.common.util.ApiLevelUtil;
 
-import android.os.Build;
-import android.os.SystemProperties;
-import android.test.InstrumentationTestCase;
-import android.util.Log;
+import android.platform.test.annotations.SecurityTest;
 
-/**
- * Tests for Security Patch String settings
- */
-public class SecurityPatchTest extends InstrumentationTestCase {
-
+@SecurityTest
+public class SecurityPatchTest extends SecurityTestCase {
     private static final String TAG = SecurityPatchTest.class.getSimpleName();
     private static final String SECURITY_PATCH_ERROR =
             "security_patch should be in the format \"YYYY-MM-DD\". Found \"%s\"";
@@ -36,35 +30,20 @@ public class SecurityPatchTest extends InstrumentationTestCase {
     private static final int SECURITY_PATCH_YEAR = 2016;
     private static final int SECURITY_PATCH_MONTH = 12;
 
-    private boolean mSkipTests = false;
-    private String mBuildSecurityPatch;
+    private int first_api_level;
+    private int o_api_level;
+    private String mVendorSecurityPatch;
 
     @Override
-    protected void setUp() {
-        mSkipTests = (ApiLevelUtil.isBefore(Build.VERSION_CODES.M));
-        mBuildSecurityPatch = Build.VERSION.SECURITY_PATCH;
-    }
-
-    /** Security patch string must exist in M or higher **/
-    public void testSecurityPatchFound() {
-        if (mSkipTests) {
-            Log.w(TAG, "Skipping M+ Test.");
-            return;
-        }
-        String error = String.format(SECURITY_PATCH_ERROR, mBuildSecurityPatch);
-        assertTrue(error, !mBuildSecurityPatch.isEmpty());
-    }
-
-    public void testSecurityPatchesFormat() {
-        if (mSkipTests) {
-            Log.w(TAG, "Skipping M+ Test.");
-            return;
-        }
-        String error = String.format(SECURITY_PATCH_ERROR, mBuildSecurityPatch);
-        testSecurityPatchFormat(mBuildSecurityPatch, error);
+    public void setUp() throws Exception {
+        super.setUp();
+        first_api_level = Integer.parseInt(getDevice().executeShellCommand("getprop ro.product.first_api_level").trim());
+        o_api_level = 27;
+        mVendorSecurityPatch = getDevice().executeShellCommand("getprop ro.vendor.build.security_patch").trim();
     }
 
     /** Security patch should be of the form YYYY-MM-DD in M or higher */
+    @SecurityTest
     private void testSecurityPatchFormat(String patch, String error) {
         assertEquals(error, 10, patch.length());
         assertTrue(error, Character.isDigit(patch.charAt(0)));
@@ -79,20 +58,8 @@ public class SecurityPatchTest extends InstrumentationTestCase {
         assertTrue(error, Character.isDigit(patch.charAt(9)));
     }
 
-    public void testSecurityPatchDates() {
-        if (mSkipTests) {
-            Log.w(TAG, "Skipping M+ Test.");
-            return;
-        }
-
-        String error = String.format(SECURITY_PATCH_DATE_ERROR,
-                                     SECURITY_PATCH_YEAR,
-                                     SECURITY_PATCH_MONTH,
-                                     mBuildSecurityPatch);
-        testSecurityPatchDate(mBuildSecurityPatch, error);
-    }
-
     /** Security patch should no older than the month this test was updated in M or higher **/
+    @SecurityTest
     private void testSecurityPatchDate(String patch, String error) {
         int declaredYear = 0;
         int declaredMonth = 0;
@@ -107,5 +74,36 @@ public class SecurityPatchTest extends InstrumentationTestCase {
         assertTrue(error, declaredYear >= SECURITY_PATCH_YEAR);
         assertTrue(error, (declaredYear > SECURITY_PATCH_YEAR) ||
                           (declaredMonth >= SECURITY_PATCH_MONTH));
+    }
+
+    @SecurityTest
+    public void testVendorSecurityPatchFound() throws Exception {
+        if (first_api_level <= o_api_level) {
+            // Skip P+ Test"
+            return;
+        }
+        assertTrue(!mVendorSecurityPatch.isEmpty());
+    }
+
+    @SecurityTest
+    public void testSecurityPatchesFormat() throws Exception {
+        if (first_api_level <= o_api_level) {
+            // Skip P+ Test"
+            return;
+        }
+        String error = String.format(SECURITY_PATCH_ERROR, mVendorSecurityPatch);
+        testSecurityPatchFormat(mVendorSecurityPatch, error);
+    }
+
+    public void testSecurityPatchDates() {
+        if (first_api_level <= o_api_level) {
+            // Skip P+ Test"
+            return;
+        }
+        String error = String.format(SECURITY_PATCH_DATE_ERROR,
+                                     SECURITY_PATCH_YEAR,
+                                     SECURITY_PATCH_MONTH,
+                                     mVendorSecurityPatch);
+        testSecurityPatchDate(mVendorSecurityPatch, error);
     }
 }
