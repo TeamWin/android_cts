@@ -2653,7 +2653,7 @@
             </intent-filter>
             <meta-data android:name="test_category" android:value="@string/test_category_jobscheduler" />
             <meta-data android:name="test_excluded_features"
-                    android:value="android.hardware.type.television:android.software.leanback" />
+                    android:value="android.hardware.type.television:android.software.leanback:android.hardware.type.automotive" />
         </activity>
 
         <activity android:name=".jobscheduler.ConnectivityConstraintTestActivity" android:label="@string/js_connectivity_test">
