@@ -274,6 +274,13 @@ public class UsageStatsTest {
     }
 
     @Test
+    public void testGetAppStandbyBucket() throws Exception {
+        // App should be at least active, since it's running instrumentation tests
+        assertLessThanOrEqual(UsageStatsManager.STANDBY_BUCKET_ACTIVE,
+                mUsageStatsManager.getAppStandbyBucket());
+    }
+
+    @Test
     public void testQueryEventsForSelf() throws Exception {
         setAppOpsMode("ignore"); // To ensure permission is not required
         // Time drifts of 2s are expected inside usage stats
