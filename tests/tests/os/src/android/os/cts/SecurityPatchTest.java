@@ -29,10 +29,6 @@ public class SecurityPatchTest extends InstrumentationTestCase {
     private static final String TAG = SecurityPatchTest.class.getSimpleName();
     private static final String SECURITY_PATCH_ERROR =
             "ro.build.version.security_patch should be in the format \"YYYY-MM-DD\". Found \"%s\"";
-    private static final String SECURITY_PATCH_DATE_ERROR =
-            "ro.build.version.security_patch should be \"%d-%02d\" or later. Found \"%s\"";
-    private static final int SECURITY_PATCH_YEAR = 2017;
-    private static final int SECURITY_PATCH_MONTH = 03;
 
     private boolean mSkipTests = false;
 
@@ -74,33 +70,5 @@ public class SecurityPatchTest extends InstrumentationTestCase {
         assertEquals(error, '-', buildSecurityPatch.charAt(7));
         assertTrue(error, Character.isDigit(buildSecurityPatch.charAt(8)));
         assertTrue(error, Character.isDigit(buildSecurityPatch.charAt(9)));
-    }
-
-    /** Security patch should no older than the month this test was updated in M or higher **/
-    public void testSecurityPatchDate() {
-        if (mSkipTests) {
-            Log.w(TAG, "Skipping M+ Test.");
-            return;
-        }
-
-        String buildSecurityPatch = Build.VERSION.SECURITY_PATCH;
-        String error = String.format(SECURITY_PATCH_DATE_ERROR,
-                                     SECURITY_PATCH_YEAR,
-                                     SECURITY_PATCH_MONTH,
-                                     buildSecurityPatch);
-
-        int declaredYear = 0;
-        int declaredMonth = 0;
-
-        try {
-            declaredYear = Integer.parseInt(buildSecurityPatch.substring(0,4));
-            declaredMonth = Integer.parseInt(buildSecurityPatch.substring(5,7));
-        } catch (Exception e) {
-            assertTrue(error, false);
-        }
-
-        assertTrue(error, declaredYear >= SECURITY_PATCH_YEAR);
-        assertTrue(error, (declaredYear > SECURITY_PATCH_YEAR) ||
-                          (declaredMonth >= SECURITY_PATCH_MONTH));
     }
 }
