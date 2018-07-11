@@ -130,6 +130,9 @@
         </service>
 
         <service android:name="android.app.stubs.LocalForegroundService">
+            <intent-filter>
+                <action android:name="android.app.stubs.FOREGROUND_SERVICE" />
+            </intent-filter>
         </service>
 
         <service android:name="android.app.stubs.LocalGrantedService"
@@ -353,6 +356,9 @@
                 <action android:name="android.service.notification.NotificationListenerService" />
             </intent-filter>
         </service>
+
+        <receiver android:name="android.app.stubs.CommandReceiver"
+                  android:exported="true" />
     </application>
 
 </manifest>

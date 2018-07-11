@@ -20,8 +20,10 @@
     <target_preparer class="com.android.tradefed.targetprep.suite.SuiteApkInstaller">
         <option name="cleanup-apks" value="true" />
         <option name="test-file-name" value="CtsSimpleApp.apk" />
-        <option name="test-file-name" value="CtsAppTestStubs.apk" />
-        <option name="test-file-name" value="CtsAppTestStubsDifferentUid.apk" />
+	<option name="test-file-name" value="CtsAppTestStubs.apk" />
+	<option name="test-file-name" value="CtsAppTestStubsApp1.apk" />
+        <option name="test-file-name" value="CtsAppTestStubsApp3.apk" />
+        <option name="test-file-name" value="CtsAppTestStubsApp2.apk" />
         <option name="test-file-name" value="CtsAppTestCases.apk" />
         <option name="test-file-name" value="CtsCantSaveState1.apk" />
         <option name="test-file-name" value="CtsCantSaveState2.apk" />

@@ -17,6 +17,7 @@
 package android.app.stubs;
 
 import android.app.Service;
+import android.content.Context;
 import android.content.Intent;
 import android.os.Binder;
 import android.os.IBinder;
@@ -40,6 +41,8 @@ public class LocalService extends Service {
     public static final int SET_REPORTER_CODE = 3;
     public static final int UNBIND_CODE = 4;
     public static final int REBIND_CODE = 5;
+
+    public static Context sServiceContext = null;
 
     private IBinder mReportObject;
     private int mStartCount = 1;
@@ -72,6 +75,9 @@ public class LocalService extends Service {
                 bindAction(STARTED_CODE);
             }
         }
+        if (sServiceContext == null) {
+            sServiceContext = this;
+        }
     }
 
     @Override
@@ -83,6 +89,9 @@ public class LocalService extends Service {
 
     @Override
     public IBinder onBind(Intent intent) {
+        if (sServiceContext == null) {
+            sServiceContext = this;
+        }
         return mBinder;
     }
 

@@ -47,8 +47,8 @@ LOCAL_USE_AAPT2 := false
 # Tag this module as a cts test artifact
 LOCAL_COMPATIBILITY_SUITE := cts vts general-tests
 
-LOCAL_PACKAGE_NAME := CtsAppTestStubsApp2
+LOCAL_PACKAGE_NAME := CtsAppTestStubsApp3
 LOCAL_PRIVATE_PLATFORM_APIS := true
-LOCAL_AAPT_FLAGS += --rename-manifest-package com.android.app2
+LOCAL_AAPT_FLAGS += --rename-manifest-package com.android.app3
 
 include $(BUILD_CTS_SUPPORT_PACKAGE)
