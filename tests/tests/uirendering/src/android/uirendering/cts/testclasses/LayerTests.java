@@ -226,7 +226,8 @@ public class LayerTests extends ActivityTestBase {
 
         createTest()
                 .addLayout(R.layout.frame_layout, initializer, true)
-                .runWithAnimationVerifier(new ColorCountVerifier(Color.WHITE, 90 * 90 - 50 * 50));
+                .runWithAnimationVerifier(new ColorCountVerifier(
+                        Color.WHITE, 90 * 90 - 50 * 50, 10));
     }
 
     @Test

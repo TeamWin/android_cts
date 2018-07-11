@@ -978,6 +978,9 @@ public class MediaCodecTest extends AndroidTestCase {
             // re-configure, this time without an input surface
             if (VERBOSE) Log.d(TAG, "reconfiguring");
             encoder.stop();
+            // Use non-opaque color format for byte buffer mode.
+            format.setInteger(MediaFormat.KEY_COLOR_FORMAT,
+                    MediaCodecInfo.CodecCapabilities.COLOR_FormatYUV420Flexible);
             encoder.configure(format, null, null, MediaCodec.CONFIGURE_FLAG_ENCODE);
             encoder.start();
             if (VERBOSE) Log.d(TAG, "reconfigured");

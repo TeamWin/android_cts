@@ -16,12 +16,20 @@
 
 package android.provider.cts;
 
+import static android.Manifest.permission.ACCESS_BACKGROUND_LOCATION;
+import static android.Manifest.permission.ACCESS_COARSE_LOCATION;
+import static android.Manifest.permission.ACCESS_FINE_LOCATION;
+import static android.Manifest.permission.CAMERA;
+import static android.Manifest.permission.READ_EXTERNAL_STORAGE;
+import static android.Manifest.permission.RECORD_AUDIO;
+import static android.Manifest.permission.WRITE_EXTERNAL_STORAGE;
+
 import android.app.Activity;
-import android.app.UiAutomation;
 import android.content.ContentResolver;
 import android.content.Context;
 import android.content.Intent;
 import android.content.UriPermission;
+import android.content.pm.PackageInfo;
 import android.content.pm.PackageManager;
 import android.content.pm.ResolveInfo;
 import android.media.ExifInterface;
@@ -41,7 +49,6 @@ import android.support.test.uiautomator.UiDevice;
 import android.support.test.uiautomator.UiObject2;
 import android.support.test.uiautomator.UiSelector;
 import android.support.test.uiautomator.Until;
-import androidx.core.content.FileProvider;
 import android.test.InstrumentationTestCase;
 import android.text.format.DateUtils;
 import android.util.Log;
@@ -53,8 +60,13 @@ import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.FileReader;
 import java.io.OutputStream;
+import java.util.Arrays;
+import java.util.HashSet;
+import java.util.Set;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
+
+import androidx.core.content.FileProvider;
 
 public class MediaStoreUiTest extends InstrumentationTestCase {
     private static final String TAG = "MediaStoreUiTest";
@@ -141,6 +153,13 @@ public class MediaStoreUiTest extends InstrumentationTestCase {
         try { mDevice.findObject(sel).click(); } catch (Throwable ignored) { }
     }
 
+    private void maybeGrantRuntimePermission(String pkg, Set<String> requested, String permission) {
+        if (requested.contains(permission)) {
+            InstrumentationRegistry.getInstrumentation().getUiAutomation()
+                    .grantRuntimePermission(pkg, permission);
+        }
+    }
+
     /**
      * Verify that whoever handles {@link MediaStore#ACTION_IMAGE_CAPTURE} can
      * correctly write the contents into a passed {@code content://} Uri.
@@ -167,14 +186,19 @@ public class MediaStoreUiTest extends InstrumentationTestCase {
         final String pkg = ri.activityInfo.packageName;
         Log.d(TAG, "We're probably launching " + ri);
 
+        final PackageInfo pi = context.getPackageManager().getPackageInfo(pkg,
+                PackageManager.GET_PERMISSIONS);
+        final Set<String> req = new HashSet<>();
+        req.addAll(Arrays.asList(pi.requestedPermissions));
+
         // Grant them all the permissions they might want
-        final UiAutomation ui = InstrumentationRegistry.getInstrumentation().getUiAutomation();
-        ui.grantRuntimePermission(pkg, android.Manifest.permission.CAMERA);
-        ui.grantRuntimePermission(pkg, android.Manifest.permission.ACCESS_COARSE_LOCATION);
-        ui.grantRuntimePermission(pkg, android.Manifest.permission.ACCESS_FINE_LOCATION);
-        ui.grantRuntimePermission(pkg, android.Manifest.permission.RECORD_AUDIO);
-        ui.grantRuntimePermission(pkg, android.Manifest.permission.READ_EXTERNAL_STORAGE);
-        ui.grantRuntimePermission(pkg, android.Manifest.permission.WRITE_EXTERNAL_STORAGE);
+        maybeGrantRuntimePermission(pkg, req, CAMERA);
+        maybeGrantRuntimePermission(pkg, req, ACCESS_COARSE_LOCATION);
+        maybeGrantRuntimePermission(pkg, req, ACCESS_FINE_LOCATION);
+        maybeGrantRuntimePermission(pkg, req, ACCESS_BACKGROUND_LOCATION);
+        maybeGrantRuntimePermission(pkg, req, RECORD_AUDIO);
+        maybeGrantRuntimePermission(pkg, req, READ_EXTERNAL_STORAGE);
+        maybeGrantRuntimePermission(pkg, req, WRITE_EXTERNAL_STORAGE);
         SystemClock.sleep(DateUtils.SECOND_IN_MILLIS);
 
         mActivity.startActivityForResult(intent, REQUEST_CODE);
