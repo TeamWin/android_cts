@@ -26,6 +26,8 @@ import android.support.test.filters.MediumTest;
 import android.test.AndroidTestCase;
 import android.util.Log;
 
+import com.android.compatibility.common.util.CddTest;
+
 import org.junit.Rule;
 import org.junit.Test;
 
@@ -74,6 +76,7 @@ public class TestSystemIntents extends AndroidTestCase {
                     new Intent(Settings.ACTION_NOTIFICATION_POLICY_ACCESS_SETTINGS))
     };
 
+    @CddTest(requirement="3.8.3.3/C-1-1")
     @Test
     public void testSystemIntents() {
         final PackageManager pm = getContext().getPackageManager();
