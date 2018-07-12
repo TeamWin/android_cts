@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2008 The Android Open Source Project
+ * Copyright (C) 2018 The Android Open Source Project
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -28,6 +28,7 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.spy;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
 
 import android.app.Activity;
 import android.content.Context;
@@ -43,7 +44,6 @@ import android.graphics.Region;
 import android.graphics.drawable.BitmapDrawable;
 import android.os.Parcelable;
 import android.os.SystemClock;
-import androidx.annotation.NonNull;
 import android.support.test.InstrumentationRegistry;
 import android.support.test.annotation.UiThreadTest;
 import android.support.test.filters.LargeTest;
@@ -60,6 +60,7 @@ import android.view.Menu;
 import android.view.MenuInflater;
 import android.view.MenuItem;
 import android.view.MotionEvent;
+import android.view.PointerIcon;
 import android.view.View;
 import android.view.View.BaseSavedState;
 import android.view.View.MeasureSpec;
@@ -72,11 +73,15 @@ import android.view.animation.Animation.AnimationListener;
 import android.view.animation.LayoutAnimationController;
 import android.view.animation.RotateAnimation;
 import android.view.animation.Transformation;
+import android.view.cts.util.EventUtils;
 import android.view.cts.util.XmlUtils;
 import android.widget.Button;
 import android.widget.TextView;
 
+import androidx.annotation.NonNull;
+
 import com.android.compatibility.common.util.CTSResult;
+import com.android.internal.widget.ScrollBarUtils;
 
 import org.junit.Before;
 import org.junit.Rule;
@@ -1004,6 +1009,180 @@ public class ViewGroupTest implements CTSResult {
         waitForResult();
         assertEquals(CTSResult.RESULT_OK, mResultCode);
     }
+
+    @Test
+    public void onInterceptHoverEvent_verticalCanScroll_intercepts() {
+        onInterceptHoverEvent_scrollabilityAffectsResult(true, true, true);
+    }
+
+    @Test
+    public void onInterceptHoverEvent_verticalCantScroll_doesntIntercept() {
+        onInterceptHoverEvent_scrollabilityAffectsResult(true, false, false);
+    }
+
+    @Test
+    public void onInterceptHoverEvent_horizontalCanScroll_intercepts() {
+        onInterceptHoverEvent_scrollabilityAffectsResult(false, true, true);
+    }
+
+    @Test
+    public void onInterceptHoverEvent_horizontalCantScroll_doesntIntercept() {
+        onInterceptHoverEvent_scrollabilityAffectsResult(false, false, false);
+    }
+
+    private void onInterceptHoverEvent_scrollabilityAffectsResult(boolean vertical,
+            boolean canScroll, boolean intercepts) {
+
+        // Arrange
+
+        int range = canScroll ? 101 : 100;
+
+        final ScrollTestView viewGroup = spy(new ScrollTestView(mContext));
+        viewGroup.setVerticalScrollbarPosition(View.SCROLLBAR_POSITION_RIGHT);
+        viewGroup.setHorizontalScrollBarEnabled(true);
+        viewGroup.setVerticalScrollBarEnabled(true);
+        viewGroup.setScrollBarSize(10);
+        viewGroup.layout(0, 0, 100, 100);
+
+        when(viewGroup.computeVerticalScrollExtent()).thenReturn(100);
+        when(viewGroup.computeVerticalScrollRange()).thenReturn(range);
+        when(viewGroup.computeHorizontalScrollExtent()).thenReturn(100);
+        when(viewGroup.computeHorizontalScrollRange()).thenReturn(range);
+
+        int touchX = vertical ? 95 : 50;
+        int touchY = vertical ? 50 : 95;
+        MotionEvent event =
+                EventUtils.generateMouseEvent(touchX, touchY, MotionEvent.ACTION_HOVER_ENTER, 0);
+
+        // Act
+
+        boolean actualResult = viewGroup.onInterceptHoverEvent(event);
+        event.recycle();
+
+        // Assert
+
+        assertEquals(actualResult, intercepts);
+    }
+
+    @Test
+    public void onInterceptTouchEvent_verticalCanScroll_intercepts() {
+        onInterceptTouchEvent_scrollabilityAffectsResult(true, true, true);
+    }
+
+    @Test
+    public void onInterceptTouchEvent_verticalCantScroll_doesntIntercept() {
+        onInterceptTouchEvent_scrollabilityAffectsResult(true, false, false);
+    }
+
+    @Test
+    public void onInterceptTouchEvent_horizontalCanScroll_intercepts() {
+        onInterceptTouchEvent_scrollabilityAffectsResult(false, true, true);
+    }
+
+    @Test
+    public void onInterceptTouchEvent_horizontalCantScroll_doesntIntercept() {
+        onInterceptTouchEvent_scrollabilityAffectsResult(false, false, false);
+    }
+
+    private void onInterceptTouchEvent_scrollabilityAffectsResult(boolean vertical,
+            boolean canScroll, boolean intercepts) {
+        int range = canScroll ? 101 : 100;
+        int thumbLength = ScrollBarUtils.getThumbLength(1, 10, 100, range);
+
+        PointerIcon expectedPointerIcon = PointerIcon.getSystemIcon(mContext,
+                PointerIcon.TYPE_HAND);
+
+        final ScrollTestView viewGroup = spy(new ScrollTestView(mContext));
+        viewGroup.setVerticalScrollbarPosition(View.SCROLLBAR_POSITION_RIGHT);
+        viewGroup.setHorizontalScrollBarEnabled(true);
+        viewGroup.setVerticalScrollBarEnabled(true);
+        viewGroup.setScrollBarSize(10);
+        viewGroup.setPointerIcon(expectedPointerIcon);
+        viewGroup.layout(0, 0, 100, 100);
+
+        when(viewGroup.computeVerticalScrollExtent()).thenReturn(100);
+        when(viewGroup.computeVerticalScrollRange()).thenReturn(range);
+        when(viewGroup.computeHorizontalScrollExtent()).thenReturn(100);
+        when(viewGroup.computeHorizontalScrollRange()).thenReturn(range);
+
+        int touchX = vertical ? 95 : thumbLength / 2;
+        int touchY = vertical ? thumbLength / 2 : 95;
+        MotionEvent event = EventUtils.generateMouseEvent(touchX, touchY, MotionEvent.ACTION_DOWN,
+                MotionEvent.BUTTON_PRIMARY);
+
+        // Act
+
+        boolean actualResult = viewGroup.onInterceptTouchEvent(event);
+        event.recycle();
+
+        // Assert
+
+        assertEquals(intercepts, actualResult);
+    }
+
+    @Test
+    public void onResolvePointerIcon_verticalCanScroll_pointerIsArrow() {
+        onResolvePointerIcon_scrollabilityAffectsPointerIcon(true, true, true);
+    }
+
+    @Test
+    public void onResolvePointerIcon_verticalCantScroll_pointerIsProperty() {
+        onResolvePointerIcon_scrollabilityAffectsPointerIcon(true, false, false);
+    }
+
+    @Test
+    public void onResolvePointerIcon_horizontalCanScroll_pointerIsArrow() {
+        onResolvePointerIcon_scrollabilityAffectsPointerIcon(false, true, true);
+    }
+
+    @Test
+    public void onResolvePointerIcon_horizontalCantScroll_pointerIsProperty() {
+        onResolvePointerIcon_scrollabilityAffectsPointerIcon(false, false, false);
+    }
+
+    private void onResolvePointerIcon_scrollabilityAffectsPointerIcon(boolean vertical,
+            boolean canScroll, boolean pointerIsSystemArrow) {
+
+        // Arrange
+
+        int range = canScroll ? 101 : 100;
+        int thumbLength = ScrollBarUtils.getThumbLength(1, 10, 100, range);
+
+        PointerIcon expectedPointerIcon = PointerIcon.getSystemIcon(mContext,
+                PointerIcon.TYPE_HAND);
+
+        final ScrollTestView viewGroup = spy(new ScrollTestView(mContext));
+        viewGroup.setVerticalScrollbarPosition(View.SCROLLBAR_POSITION_RIGHT);
+        viewGroup.setHorizontalScrollBarEnabled(true);
+        viewGroup.setVerticalScrollBarEnabled(true);
+        viewGroup.setScrollBarSize(10);
+        viewGroup.setPointerIcon(expectedPointerIcon);
+        viewGroup.layout(0, 0, 100, 100);
+
+        when(viewGroup.computeVerticalScrollExtent()).thenReturn(100);
+        when(viewGroup.computeVerticalScrollRange()).thenReturn(range);
+        when(viewGroup.computeHorizontalScrollExtent()).thenReturn(100);
+        when(viewGroup.computeHorizontalScrollRange()).thenReturn(range);
+
+        int touchX = vertical ? 95 : thumbLength / 2;
+        int touchY = vertical ? thumbLength / 2 : 95;
+        MotionEvent event =
+                EventUtils.generateMouseEvent(touchX, touchY, MotionEvent.ACTION_HOVER_ENTER, 0);
+
+        // Act
+
+        PointerIcon actualResult = viewGroup.onResolvePointerIcon(event, 0);
+        event.recycle();
+
+        // Assert
+
+        if (pointerIsSystemArrow) {
+            assertEquals(PointerIcon.getSystemIcon(mContext, PointerIcon.TYPE_ARROW), actualResult);
+        } else {
+            assertEquals(expectedPointerIcon, actualResult);
+        }
+    }
+
 
     @Test
     public void testOnDescendantInvalidated() throws Throwable {
@@ -3182,6 +3361,47 @@ public class ViewGroupTest implements CTSResult {
 
         public int getOnFinishTemporaryDetachCount() {
             return mOnFinishTemporaryDetachCount;
+        }
+    }
+
+    public static class ScrollTestView extends ViewGroup {
+        public ScrollTestView(Context context) {
+            super(context);
+        }
+
+        @Override
+        protected void onLayout(boolean changed, int l, int t, int r, int b) {
+
+        }
+
+        @Override
+        public boolean awakenScrollBars() {
+            return super.awakenScrollBars();
+        }
+
+        @Override
+        public int computeHorizontalScrollRange() {
+            return super.computeHorizontalScrollRange();
+        }
+
+        @Override
+        public int computeHorizontalScrollExtent() {
+            return super.computeHorizontalScrollExtent();
+        }
+
+        @Override
+        public int computeVerticalScrollRange() {
+            return super.computeVerticalScrollRange();
+        }
+
+        @Override
+        public int computeVerticalScrollExtent() {
+            return super.computeVerticalScrollExtent();
+        }
+
+        @Override
+        protected int getHorizontalScrollbarHeight() {
+            return super.getHorizontalScrollbarHeight();
         }
     }
 

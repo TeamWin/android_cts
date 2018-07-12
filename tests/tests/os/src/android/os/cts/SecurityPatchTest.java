@@ -31,10 +31,6 @@ public class SecurityPatchTest extends InstrumentationTestCase {
     private static final String TAG = SecurityPatchTest.class.getSimpleName();
     private static final String SECURITY_PATCH_ERROR =
             "security_patch should be in the format \"YYYY-MM-DD\". Found \"%s\"";
-    private static final String SECURITY_PATCH_DATE_ERROR =
-            "security_patch should be \"%d-%02d\" or later. Found \"%s\"";
-    private static final int SECURITY_PATCH_YEAR = 2016;
-    private static final int SECURITY_PATCH_MONTH = 12;
 
     private boolean mSkipTests = false;
     private String mBuildSecurityPatch;
@@ -77,35 +73,5 @@ public class SecurityPatchTest extends InstrumentationTestCase {
         assertEquals(error, '-', patch.charAt(7));
         assertTrue(error, Character.isDigit(patch.charAt(8)));
         assertTrue(error, Character.isDigit(patch.charAt(9)));
-    }
-
-    public void testSecurityPatchDates() {
-        if (mSkipTests) {
-            Log.w(TAG, "Skipping M+ Test.");
-            return;
-        }
-
-        String error = String.format(SECURITY_PATCH_DATE_ERROR,
-                                     SECURITY_PATCH_YEAR,
-                                     SECURITY_PATCH_MONTH,
-                                     mBuildSecurityPatch);
-        testSecurityPatchDate(mBuildSecurityPatch, error);
-    }
-
-    /** Security patch should no older than the month this test was updated in M or higher **/
-    private void testSecurityPatchDate(String patch, String error) {
-        int declaredYear = 0;
-        int declaredMonth = 0;
-
-        try {
-            declaredYear = Integer.parseInt(patch.substring(0,4));
-            declaredMonth = Integer.parseInt(patch.substring(5,7));
-        } catch (Exception e) {
-            assertTrue(error, false);
-        }
-
-        assertTrue(error, declaredYear >= SECURITY_PATCH_YEAR);
-        assertTrue(error, (declaredYear > SECURITY_PATCH_YEAR) ||
-                          (declaredMonth >= SECURITY_PATCH_MONTH));
     }
 }
