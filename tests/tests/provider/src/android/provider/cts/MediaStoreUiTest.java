@@ -257,7 +257,7 @@ public class MediaStoreUiTest extends InstrumentationTestCase {
         documents.mkdirs();
         assertTrue(documents.isDirectory());
 
-        mFile = new File(documents, "test.txt");
+        mFile = new File(documents, "test.jpg");
         try (OutputStream os = new FileOutputStream(mFile)) {
             os.write(CONTENT.getBytes());
         }
@@ -266,7 +266,7 @@ public class MediaStoreUiTest extends InstrumentationTestCase {
         MediaScannerConnection.scanFile(
                 mActivity,
                 new String[]{ mFile.getAbsolutePath() },
-                new String[]{ "plain/text" },
+                new String[]{ "image/jpeg" },
                 (String path, Uri uri) -> onScanCompleted(uri, latch)
         );
         assertTrue(
