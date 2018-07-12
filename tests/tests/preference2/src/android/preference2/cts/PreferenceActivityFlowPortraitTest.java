@@ -16,7 +16,11 @@
 
 package android.preference2.cts;
 
+import static android.content.pm.PackageManager.FEATURE_LEANBACK;
+import static org.junit.Assume.assumeFalse;
+
 import android.content.Intent;
+import android.content.pm.PackageManager;
 import android.support.test.InstrumentationRegistry;
 import android.support.test.filters.LargeTest;
 import android.support.test.rule.ActivityTestRule;
@@ -40,6 +44,9 @@ public class PreferenceActivityFlowPortraitTest extends PreferenceActivityFlowTe
 
     @Before
     public void setup() {
+        PackageManager pm = InstrumentationRegistry.getTargetContext().getPackageManager();
+        // Ignore this test on Leanback since Leanback doesn't support portrait orientation
+        assumeFalse(pm.hasSystemFeature(FEATURE_LEANBACK));
         mTestUtils = new TestUtils();
     }
 
