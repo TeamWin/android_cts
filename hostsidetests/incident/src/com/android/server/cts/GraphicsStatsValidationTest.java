@@ -65,7 +65,7 @@ public class GraphicsStatsValidationTest extends ProtoDumpTestCase {
         int frameDelta = summaryAfter.getTotalFrames() - summaryBefore.getTotalFrames();
         int jankyDelta = summaryAfter.getJankyFrames() - summaryBefore.getJankyFrames();
         // We expect 11 frames to have been drawn (first frame + the 10 more explicitly requested)
-        assertEquals(11, frameDelta);
+        assertTrue(frameDelta < 15);
         assertTrue(jankyDelta < 5);
         int veryJankyDelta = countFramesAbove(statsAfter, 40) - countFramesAbove(statsBefore, 40);
         // The 1st frame could be >40ms, but nothing after that should be
@@ -84,7 +84,7 @@ public class GraphicsStatsValidationTest extends ProtoDumpTestCase {
         int jankyDelta = summaryAfter.getJankyFrames() - summaryBefore.getJankyFrames();
         // Test draws 50 frames + 1 initial frame. We expect 40 of them to be janky,
         // 10 of each of ANIMATION, LAYOUT, RECORD_DRAW, and MISSED_VSYNC
-        assertEquals(51, frameDelta);
+        assertTrue(frameDelta < 55);
         assertTrue(jankyDelta >= 40);
         assertTrue(jankyDelta < 45);
 
@@ -114,7 +114,7 @@ public class GraphicsStatsValidationTest extends ProtoDumpTestCase {
         int jankyDelta = summaryAfter.getJankyFrames() - summaryBefore.getJankyFrames();
         // Test draws 40 frames + 1 initial frame. We expect 10 of them to be daveys,
         // 10 of them to be daveyjrs, and 20 to jank from missed vsync (from the davey/daveyjr prior to it)
-        assertEquals(41, frameDelta);
+        assertTrue(frameDelta < 45);
         assertTrue(jankyDelta >= 20);
         assertTrue(jankyDelta < 25);
 
