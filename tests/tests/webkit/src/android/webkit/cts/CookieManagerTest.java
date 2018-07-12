@@ -22,6 +22,7 @@ import android.webkit.CookieSyncManager;
 import android.webkit.WebView;
 import android.webkit.ValueCallback;
 
+import com.android.compatibility.common.util.CddTest;
 import com.android.compatibility.common.util.NullWebViewUtils;
 import com.android.compatibility.common.util.PollingCheck;
 
@@ -33,6 +34,7 @@ import java.util.Date;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+@CddTest(requirement="3.4.1/H-0-1,A-0-1,T-0-1")
 public class CookieManagerTest extends
         ActivityInstrumentationTestCase2<CookieSyncManagerCtsActivity> {
 

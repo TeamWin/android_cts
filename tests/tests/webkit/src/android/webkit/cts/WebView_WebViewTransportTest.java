@@ -21,8 +21,10 @@ import android.test.UiThreadTest;
 import android.webkit.WebView;
 import android.webkit.WebView.WebViewTransport;
 
+import com.android.compatibility.common.util.CddTest;
 import com.android.compatibility.common.util.NullWebViewUtils;
 
+@CddTest(requirement="3.4.1/H-0-1,A-0-1,T-0-1")
 public class WebView_WebViewTransportTest
         extends ActivityInstrumentationTestCase2<WebViewCtsActivity> {
 

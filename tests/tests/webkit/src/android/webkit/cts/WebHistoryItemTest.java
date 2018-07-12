@@ -24,9 +24,11 @@ import android.webkit.WebHistoryItem;
 import android.webkit.WebIconDatabase;
 import android.webkit.WebView;
 
+import com.android.compatibility.common.util.CddTest;
 import com.android.compatibility.common.util.NullWebViewUtils;
 import com.android.compatibility.common.util.PollingCheck;
 
+@CddTest(requirement="3.4.1/H-0-1,A-0-1,T-0-1")
 public class WebHistoryItemTest extends ActivityInstrumentationTestCase2<WebViewCtsActivity> {
     private final static long TEST_TIMEOUT = 10000;
     private CtsTestServer mWebServer;
