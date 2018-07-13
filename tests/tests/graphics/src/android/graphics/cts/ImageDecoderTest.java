@@ -1997,16 +1997,31 @@ public class ImageDecoderTest {
                 assertTrue(drawable.getIntrinsicHeight() > record.height);
 
                 // Set a low density. This will result in a smaller drawable and
-                // Bitmap.
+                // Bitmap, unless the true density is DENSITY_MEDIUM, which matches
+                // the density of the asset.
                 mRes.getDisplayMetrics().densityDpi = DisplayMetrics.DENSITY_LOW;
                 drawable = decodeBitmapDrawable(resId);
-
                 bm = drawable.getBitmap();
-                assertTrue(bm.getWidth() < record.width);
-                assertTrue(bm.getHeight() < record.height);
 
-                assertEquals(bm.getWidth(), drawable.getIntrinsicWidth());
-                assertEquals(bm.getHeight(), drawable.getIntrinsicHeight());
+                if (originalDensity == DisplayMetrics.DENSITY_MEDIUM) {
+                    // Although we've modified |densityDpi|, ImageDecoder knows the
+                    // true density matches the asset, so it will not downscale at
+                    // decode time.
+                    assertEquals(bm.getWidth(), record.width);
+                    assertEquals(bm.getHeight(), record.height);
+
+                    // The drawable should still be smaller.
+                    assertTrue(bm.getWidth() > drawable.getIntrinsicWidth());
+                    assertTrue(bm.getHeight() > drawable.getIntrinsicHeight());
+                } else {
+                    // The bitmap is scaled down at decode time, so it matches the
+                    // drawable size, and is smaller than the original.
+                    assertTrue(bm.getWidth() < record.width);
+                    assertTrue(bm.getHeight() < record.height);
+
+                    assertEquals(bm.getWidth(), drawable.getIntrinsicWidth());
+                    assertEquals(bm.getHeight(), drawable.getIntrinsicHeight());
+                }
             }
         } finally {
             mRes.getDisplayMetrics().densityDpi = originalDensity;
