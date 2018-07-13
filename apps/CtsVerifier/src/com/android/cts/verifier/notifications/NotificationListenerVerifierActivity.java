@@ -32,6 +32,8 @@ import android.view.ViewGroup;
 
 import com.android.cts.verifier.R;
 
+import com.android.compatibility.common.util.CddTest;
+
 import org.json.JSONException;
 import org.json.JSONObject;
 
@@ -45,6 +47,7 @@ import static com.android.cts.verifier.notifications.MockListener.*;
 
 import static junit.framework.Assert.assertNotNull;
 
+@CddTest(requirement="3.8.3.2/C-1-1,C-1-2,C-2-1")
 public class NotificationListenerVerifierActivity extends InteractiveVerifierActivity
         implements Runnable {
     private static final String TAG = "NoListenerVerifier";

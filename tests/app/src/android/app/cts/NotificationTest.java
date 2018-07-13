@@ -29,8 +29,11 @@ import android.os.Parcel;
 import android.test.AndroidTestCase;
 import android.widget.RemoteViews;
 
+import com.android.compatibility.common.util.CddTest;
+
 import org.mockito.internal.matchers.Not;
 
+@CddTest(requirement="3.8.3/H-0-1,3.8.3.1/C-1-4")
 public class NotificationTest extends AndroidTestCase {
     private static final String TEXT_RESULT_KEY = "text";
     private static final String DATA_RESULT_KEY = "data";

@@ -36,6 +36,8 @@ import android.service.notification.StatusBarNotification;
 import android.test.AndroidTestCase;
 import android.util.Log;
 
+import com.android.compatibility.common.util.CddTest;
+
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
@@ -43,6 +45,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 
+@CddTest(requirement="3.8.3.1/C-1-3,C-1-4")
 public class NotificationManagerTest extends AndroidTestCase {
     final String TAG = NotificationManagerTest.class.getSimpleName();
     final boolean DEBUG = false;
@@ -173,6 +176,7 @@ public class NotificationManagerTest extends AndroidTestCase {
         compareChannels(channel, mNotificationManager.getNotificationChannel(channel.getId()));
     }
 
+    @CddTest(requirement="3.8.3.1/C-1-3")
     public void testCreateChannelWithGroup() throws Exception {
         NotificationChannelGroup ncg = new NotificationChannelGroup("g", "n");
         mNotificationManager.createNotificationChannelGroup(ncg);
@@ -387,6 +391,7 @@ public class NotificationManagerTest extends AndroidTestCase {
         checkNotificationExistence(id, false);
     }
 
+    @CddTest(requirement="3.8.3/H-0-2,3.8.3.1/C-2-1")
     public void testMediaStyle() throws Exception {
         mNotificationManager.cancelAll();
         final int id = 99;
@@ -438,6 +443,7 @@ public class NotificationManagerTest extends AndroidTestCase {
         }
     }
 
+    @CddTest(requirement="3.8.3/H-0-2,3.8.3.1/C-2-1")
     public void testBigTextStyle() throws Exception {
         final int id = 101;
 
@@ -464,6 +470,7 @@ public class NotificationManagerTest extends AndroidTestCase {
         }
     }
 
+    @CddTest(requirement="3.8.3/H-0-2,3.8.3.1/C-2-1")
     public void testBigPictureStyle() throws Exception {
         final int id = 102;
 
@@ -491,6 +498,7 @@ public class NotificationManagerTest extends AndroidTestCase {
         }
     }
 
+    @CddTest(requirement="3.8.3.1/C-1-3")
     public void testAutogrouping() throws Exception {
         sendNotification(1, R.drawable.black);
         sendNotification(2, R.drawable.blue);
@@ -501,6 +509,7 @@ public class NotificationManagerTest extends AndroidTestCase {
         assertAllPostedNotificationsAutogrouped();
     }
 
+    @CddTest(requirement="3.8.3.1/C-1-3")
     public void testAutogrouping_autogroupStaysUntilAllNotificationsCanceled() throws Exception {
         sendNotification(1, R.drawable.black);
         sendNotification(2, R.drawable.blue);
