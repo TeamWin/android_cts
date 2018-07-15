@@ -582,15 +582,18 @@ public class ExtendedInCallServiceTest extends BaseTelecomTestWithMockServices {
         if (!mShouldTestTelecom) {
             return;
         }
-
         addAndVerifyNewIncomingCall(createTestNumber(), null);
         final MockConnection connection = verifyConnectionForIncomingCall();
+        final InvokeCounter counter = connection.getInvokeCounter(MockConnection.ON_SILENCE);
         final MockInCallService inCallService = mInCallCallbacks.getService();
 
         final TelecomManager telecomManager =
             (TelecomManager) mContext.getSystemService(Context.TELECOM_SERVICE);
         telecomManager.silenceRinger();
+
+        // Both the InCallService and Connection will be notified of a request to silence:
         mOnSilenceRingerCounter.waitForCount(1);
+        counter.waitForCount(1);
     }
 
     public void testOnPostDialWaitAndContinue() {
