@@ -51,6 +51,8 @@ import com.android.ex.camera2.blocking.BlockingSessionCallback;
 
 import junit.framework.AssertionFailedError;
 
+import org.junit.Test;
+
 import java.io.File;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -105,12 +107,12 @@ public class RecordingTest extends Camera2SurfaceViewTestCase {
     private long mRecordingStartTime;
 
     @Override
-    protected void setUp() throws Exception {
+    public void setUp() throws Exception {
         super.setUp();
     }
 
     @Override
-    protected void tearDown() throws Exception {
+    public void tearDown() throws Exception {
         super.tearDown();
     }
 
@@ -165,6 +167,7 @@ public class RecordingTest extends Camera2SurfaceViewTestCase {
      * recorded video. Preview is set to the video size.
      * </p>
      */
+    @Test
     public void testBasicVideoStabilizationRecording() throws Exception {
         doBasicRecording(/*useVideoStab*/true);
     }
@@ -181,6 +184,7 @@ public class RecordingTest extends Camera2SurfaceViewTestCase {
      * recorded video. Preview is set to the video size.
      * </p>
      */
+    @Test
     public void testBasicRecording() throws Exception {
         doBasicRecording(/*useVideoStab*/false);
     }
@@ -194,6 +198,7 @@ public class RecordingTest extends Camera2SurfaceViewTestCase {
      * from a persistent input surface that's used across multiple recording sessions.
      * </p>
      */
+    @Test
     public void testRecordingFromPersistentSurface() throws Exception {
         if (!MediaUtils.checkCodecForDomain(true /* encoder */, "video")) {
             return; // skipped
@@ -219,6 +224,7 @@ public class RecordingTest extends Camera2SurfaceViewTestCase {
      * validated according to the recording configuration.
      * </p>
      */
+    @Test
     public void testSupportedVideoSizes() throws Exception {
         for (int i = 0; i < mCameraIds.length; i++) {
             try {
@@ -247,6 +253,7 @@ public class RecordingTest extends Camera2SurfaceViewTestCase {
      *
      * <p>The recording should be working fine for any kind of start/stop orders.</p>
      */
+    @Test
     public void testCameraRecorderOrdering() {
         // TODO: need implement
     }
@@ -261,6 +268,7 @@ public class RecordingTest extends Camera2SurfaceViewTestCase {
      * validated according to the recording configuration.
      * </p>
      */
+    @Test
     public void testMediaCodecRecording() throws Exception {
         // TODO. Need implement.
     }
@@ -277,6 +285,7 @@ public class RecordingTest extends Camera2SurfaceViewTestCase {
      * checked to make sure no frame drop caused by video snapshot.
      * </p>
      */
+    @Test
     public void testVideoSnapshot() throws Exception {
         videoSnapshotHelper(/*burstTest*/false);
     }
@@ -293,6 +302,7 @@ public class RecordingTest extends Camera2SurfaceViewTestCase {
      * configuration.
      * </p>
      */
+    @Test
     public void testBurstVideoSnapshot() throws Exception {
         videoSnapshotHelper(/*burstTest*/true);
     }
@@ -300,18 +310,22 @@ public class RecordingTest extends Camera2SurfaceViewTestCase {
     /**
      * Test timelapse recording, where capture rate is slower than video (playback) frame rate.
      */
+    @Test
     public void testTimelapseRecording() throws Exception {
         // TODO. Need implement.
     }
 
+    @Test
     public void testSlowMotionRecording() throws Exception {
         slowMotionRecording();
     }
 
+    @Test
     public void testConstrainedHighSpeedRecording() throws Exception {
         constrainedHighSpeedRecording();
     }
 
+    @Test
     public void testAbandonedHighSpeedRequest() throws Exception {
         for (String id : mCameraIds) {
             try {
@@ -433,6 +447,7 @@ public class RecordingTest extends Camera2SurfaceViewTestCase {
      * profile of highest framerate. Make sure that the video framerate are still accurate.
      * </p>
      */
+    @Test
     public void testRecordingFramerateLowToHigh() throws Exception {
         for (int i = 0; i < mCameraIds.length; i++) {
             try {
@@ -487,6 +502,7 @@ public class RecordingTest extends Camera2SurfaceViewTestCase {
      * Test preview and video surfaces sharing the same camera stream.
      * </p>
      */
+    @Test
     public void testVideoPreviewSurfaceSharing() throws Exception {
         for (int i = 0; i < mCameraIds.length; i++) {
             try {

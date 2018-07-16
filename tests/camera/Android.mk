@@ -47,7 +47,8 @@ LOCAL_STATIC_JAVA_LIBRARIES := compatibility-device-util \
 	android-ex-camera2 \
 	CtsCameraUtils \
 	truth-prebuilt \
-	androidx.heifwriter_heifwriter
+	androidx.heifwriter_heifwriter \
+	android-support-test
 
 LOCAL_JNI_SHARED_LIBRARIES := \
 	libctscamera2_jni \
