@@ -40,7 +40,7 @@ import android.os.Environment;
 import android.os.Looper;
 import android.os.SystemClock;
 import android.platform.test.annotations.AppModeFull;
-import android.test.ActivityInstrumentationTestCase2;
+import android.support.test.rule.ActivityTestRule;
 import android.test.MoreAsserts;
 import android.test.UiThreadTest;
 import android.test.suitebuilder.annotation.LargeTest;
@@ -60,6 +60,13 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.TimeZone;
 
+import junit.framework.Assert;
+
+import org.junit.After;
+import org.junit.Before;
+import org.junit.Test;
+import org.junit.Rule;
+
 import junit.framework.AssertionFailedError;
 
 /**
@@ -67,7 +74,7 @@ import junit.framework.AssertionFailedError;
  */
 @AppModeFull
 @LargeTest
-public class CameraTest extends ActivityInstrumentationTestCase2<CameraCtsActivity> {
+public class CameraTest extends Assert {
     private static final String TAG = "CameraTest";
     private static final String PACKAGE = "android.hardware.cts";
     private static final boolean VERBOSE = Log.isLoggable(TAG, Log.VERBOSE);
@@ -125,25 +132,20 @@ public class CameraTest extends ActivityInstrumentationTestCase2<CameraCtsActivi
     Camera mCamera;
     boolean mIsExternalCamera;
 
-    public CameraTest() {
-        super(PACKAGE, CameraCtsActivity.class);
-        if (VERBOSE) Log.v(TAG, "Camera Constructor");
+    @Rule
+    public ActivityTestRule<CameraCtsActivity> mActivityRule =
+            new ActivityTestRule<>(CameraCtsActivity.class);
+
+    @Before
+    public void setUp() throws Exception {
     }
 
-    @Override
-    protected void setUp() throws Exception {
-        super.setUp();
-        // to starCtsActivity.
-        getActivity();
-    }
-
-    @Override
-    protected void tearDown() throws Exception {
+    @After
+    public void tearDown() throws Exception {
         if (mCamera != null) {
             mCamera.release();
             mCamera = null;
         }
-        super.tearDown();
     }
 
     /*
@@ -163,7 +165,7 @@ public class CameraTest extends ActivityInstrumentationTestCase2<CameraCtsActivi
                 mLooper = Looper.myLooper();
                 try {
                     mIsExternalCamera = CameraUtils.isExternal(
-                            getInstrumentation().getContext(), cameraId);
+                            mActivityRule.getActivity().getApplicationContext(), cameraId);
                 } catch (Exception e) {
                     Log.e(TAG, "Unable to query external camera!" + e);
                 }
@@ -187,7 +189,7 @@ public class CameraTest extends ActivityInstrumentationTestCase2<CameraCtsActivi
             fail("initializeMessageLooper: start timeout");
         }
         assertNotNull("Fail to open camera.", mCamera);
-        mCamera.setPreviewDisplay(getActivity().getSurfaceView().getHolder());
+        mCamera.setPreviewDisplay(mActivityRule.getActivity().getSurfaceView().getHolder());
     }
 
     /*
@@ -401,6 +403,7 @@ public class CameraTest extends ActivityInstrumentationTestCase2<CameraCtsActivi
      * functions are called properly.
      */
     @UiThreadTest
+    @Test
     public void testTakePicture() throws Exception {
         int nCameras = Camera.getNumberOfCameras();
         for (int id = 0; id < nCameras; id++) {
@@ -446,6 +449,7 @@ public class CameraTest extends ActivityInstrumentationTestCase2<CameraCtsActivi
     }
 
     @UiThreadTest
+    @Test
     public void testPreviewCallback() throws Exception {
         int nCameras = Camera.getNumberOfCameras();
         for (int id = 0; id < nCameras; id++) {
@@ -490,6 +494,7 @@ public class CameraTest extends ActivityInstrumentationTestCase2<CameraCtsActivi
     }
 
     @UiThreadTest
+    @Test
     public void testStabilizationOneShotPreviewCallback() throws Exception {
         int nCameras = Camera.getNumberOfCameras();
         for (int id = 0; id < nCameras; id++) {
@@ -514,6 +519,7 @@ public class CameraTest extends ActivityInstrumentationTestCase2<CameraCtsActivi
     }
 
     @UiThreadTest
+    @Test
     public void testSetOneShotPreviewCallback() throws Exception {
         int nCameras = Camera.getNumberOfCameras();
         for (int id = 0; id < nCameras; id++) {
@@ -537,6 +543,7 @@ public class CameraTest extends ActivityInstrumentationTestCase2<CameraCtsActivi
     }
 
     @UiThreadTest
+    @Test
     public void testSetPreviewDisplay() throws Exception {
         int nCameras = Camera.getNumberOfCameras();
         for (int id = 0; id < nCameras; id++) {
@@ -546,7 +553,7 @@ public class CameraTest extends ActivityInstrumentationTestCase2<CameraCtsActivi
     }
 
     private void testSetPreviewDisplayByCamera(int cameraId) throws Exception {
-        SurfaceHolder holder = getActivity().getSurfaceView().getHolder();
+        SurfaceHolder holder = mActivityRule.getActivity().getSurfaceView().getHolder();
         initializeMessageLooper(cameraId);
 
         // Check the order: startPreview->setPreviewDisplay.
@@ -580,6 +587,7 @@ public class CameraTest extends ActivityInstrumentationTestCase2<CameraCtsActivi
     }
 
     @UiThreadTest
+    @Test
     public void testDisplayOrientation() throws Exception {
         int nCameras = Camera.getNumberOfCameras();
         for (int id = 0; id < nCameras; id++) {
@@ -618,6 +626,7 @@ public class CameraTest extends ActivityInstrumentationTestCase2<CameraCtsActivi
     }
 
     @UiThreadTest
+    @Test
     public void testParameters() throws Exception {
         int nCameras = Camera.getNumberOfCameras();
         for (int id = 0; id < nCameras; id++) {
@@ -841,6 +850,7 @@ public class CameraTest extends ActivityInstrumentationTestCase2<CameraCtsActivi
     }
 
     @UiThreadTest
+    @Test
     public void testJpegThumbnailSize() throws Exception {
         int nCameras = Camera.getNumberOfCameras();
         for (int id = 0; id < nCameras; id++) {
@@ -914,6 +924,7 @@ public class CameraTest extends ActivityInstrumentationTestCase2<CameraCtsActivi
     }
 
     @UiThreadTest
+    @Test
     public void testJpegExif() throws Exception {
         int nCameras = Camera.getNumberOfCameras();
         for (int id = 0; id < nCameras; id++) {
@@ -1206,6 +1217,7 @@ public class CameraTest extends ActivityInstrumentationTestCase2<CameraCtsActivi
     }
 
     @UiThreadTest
+    @Test
     public void testLockUnlock() throws Exception {
         int nCameras = Camera.getNumberOfCameras();
         for (int id = 0; id < nCameras; id++) {
@@ -1218,7 +1230,7 @@ public class CameraTest extends ActivityInstrumentationTestCase2<CameraCtsActivi
         initializeMessageLooper(cameraId);
         Camera.Parameters parameters = mCamera.getParameters();
         SurfaceHolder surfaceHolder;
-        surfaceHolder = getActivity().getSurfaceView().getHolder();
+        surfaceHolder = mActivityRule.getActivity().getSurfaceView().getHolder();
         CamcorderProfile profile = CamcorderProfile.get(cameraId,
                 CamcorderProfile.QUALITY_LOW);
         Camera.Size videoSize = null; // Used for external camera
@@ -1398,6 +1410,7 @@ public class CameraTest extends ActivityInstrumentationTestCase2<CameraCtsActivi
     }
 
     @UiThreadTest
+    @Test
     public void testPreviewCallbackWithBuffer() throws Exception {
         int nCameras = Camera.getNumberOfCameras();
         for (int id = 0; id < nCameras; id++) {
@@ -1409,7 +1422,7 @@ public class CameraTest extends ActivityInstrumentationTestCase2<CameraCtsActivi
     private void testPreviewCallbackWithBufferByCamera(int cameraId) throws Exception {
         initializeMessageLooper(cameraId);
         SurfaceHolder surfaceHolder;
-        surfaceHolder = getActivity().getSurfaceView().getHolder();
+        surfaceHolder = mActivityRule.getActivity().getSurfaceView().getHolder();
         mCamera.setPreviewDisplay(surfaceHolder);
         Parameters parameters = mCamera.getParameters();
         PreviewCallbackWithBuffer callback = new PreviewCallbackWithBuffer();
@@ -1486,6 +1499,7 @@ public class CameraTest extends ActivityInstrumentationTestCase2<CameraCtsActivi
     }
 
     @UiThreadTest
+    @Test
     public void testImmediateZoom() throws Exception {
         int nCameras = Camera.getNumberOfCameras();
         for (int id = 0; id < nCameras; id++) {
@@ -1548,6 +1562,7 @@ public class CameraTest extends ActivityInstrumentationTestCase2<CameraCtsActivi
     }
 
     @UiThreadTest
+    @Test
     public void testSmoothZoom() throws Exception {
         int nCameras = Camera.getNumberOfCameras();
         for (int id = 0; id < nCameras; id++) {
@@ -1673,6 +1688,7 @@ public class CameraTest extends ActivityInstrumentationTestCase2<CameraCtsActivi
     }
 
     @UiThreadTest
+    @Test
     public void testFocusDistances() throws Exception {
         int nCameras = Camera.getNumberOfCameras();
         for (int id = 0; id < nCameras; id++) {
@@ -1781,6 +1797,7 @@ public class CameraTest extends ActivityInstrumentationTestCase2<CameraCtsActivi
     }
 
     @UiThreadTest
+    @Test
     public void testCancelAutofocus() throws Exception {
         int nCameras = Camera.getNumberOfCameras();
         for (int id = 0; id < nCameras; id++) {
@@ -1837,7 +1854,7 @@ public class CameraTest extends ActivityInstrumentationTestCase2<CameraCtsActivi
 
         // Ensure the camera can be opened if release is called right after AF.
         mCamera = Camera.open(cameraId);
-        mCamera.setPreviewDisplay(getActivity().getSurfaceView().getHolder());
+        mCamera.setPreviewDisplay(mActivityRule.getActivity().getSurfaceView().getHolder());
         mCamera.startPreview();
         mCamera.autoFocus(mAutoFocusCallback);
         mCamera.release();
@@ -1862,6 +1879,7 @@ public class CameraTest extends ActivityInstrumentationTestCase2<CameraCtsActivi
     }
 
     @UiThreadTest
+    @Test
     public void testMultipleCameras() throws Exception {
         int nCameras = Camera.getNumberOfCameras();
         Log.v(TAG, "total " + nCameras + " cameras");
@@ -1924,6 +1942,7 @@ public class CameraTest extends ActivityInstrumentationTestCase2<CameraCtsActivi
     }
 
     @UiThreadTest
+    @Test
     public void testPreviewPictureSizesCombination() throws Exception {
         int nCameras = Camera.getNumberOfCameras();
         for (int id = 0; id < nCameras; id++) {
@@ -2003,6 +2022,7 @@ public class CameraTest extends ActivityInstrumentationTestCase2<CameraCtsActivi
     }
 
     @UiThreadTest
+    @Test
     public void testPreviewFpsRange() throws Exception {
         int nCameras = Camera.getNumberOfCameras();
         for (int id = 0; id < nCameras; id++) {
@@ -2231,6 +2251,7 @@ public class CameraTest extends ActivityInstrumentationTestCase2<CameraCtsActivi
     }
 
     @UiThreadTest
+    @Test
     public void testSceneMode() throws Exception {
         int nCameras = Camera.getNumberOfCameras();
         for (int id = 0; id < nCameras; id++) {
@@ -2331,6 +2352,7 @@ public class CameraTest extends ActivityInstrumentationTestCase2<CameraCtsActivi
     }
 
     @UiThreadTest
+    @Test
     public void testInvalidParameters() throws Exception {
         int nCameras = Camera.getNumberOfCameras();
         for (int id = 0; id < nCameras; id++) {
@@ -2385,6 +2407,7 @@ public class CameraTest extends ActivityInstrumentationTestCase2<CameraCtsActivi
     }
 
     @UiThreadTest
+    @Test
     public void testGetParameterDuringFocus() throws Exception {
         int nCameras = Camera.getNumberOfCameras();
         for (int id = 0; id < nCameras; id++) {
@@ -2420,6 +2443,7 @@ public class CameraTest extends ActivityInstrumentationTestCase2<CameraCtsActivi
     }
 
     @UiThreadTest
+    @Test
     public void testPreviewFormats() throws Exception {
         int nCameras = Camera.getNumberOfCameras();
         for (int id = 0; id < nCameras; id++) {
@@ -2444,6 +2468,7 @@ public class CameraTest extends ActivityInstrumentationTestCase2<CameraCtsActivi
     }
 
     @UiThreadTest
+    @Test
     public void testMultiCameraRelease() throws Exception {
         // Verify that multiple cameras exist, and that they can be opened at the same time
         if (VERBOSE) Log.v(TAG, "testMultiCameraRelease: Checking pre-conditions.");
@@ -2532,6 +2557,7 @@ public class CameraTest extends ActivityInstrumentationTestCase2<CameraCtsActivi
     }
 
     @UiThreadTest
+    @Test
     public void testFocusAreas() throws Exception {
         int nCameras = Camera.getNumberOfCameras();
         for (int id = 0; id < nCameras; id++) {
@@ -2551,6 +2577,7 @@ public class CameraTest extends ActivityInstrumentationTestCase2<CameraCtsActivi
     }
 
     @UiThreadTest
+    @Test
     public void testMeteringAreas() throws Exception {
         int nCameras = Camera.getNumberOfCameras();
         for (int id = 0; id < nCameras; id++) {
@@ -2687,6 +2714,7 @@ public class CameraTest extends ActivityInstrumentationTestCase2<CameraCtsActivi
 
     // Apps should be able to call startPreview in jpeg callback.
     @UiThreadTest
+    @Test
     public void testJpegCallbackStartPreview() throws Exception {
         int nCameras = Camera.getNumberOfCameras();
         for (int id = 0; id < nCameras; id++) {
@@ -2716,6 +2744,7 @@ public class CameraTest extends ActivityInstrumentationTestCase2<CameraCtsActivi
     }
 
     @UiThreadTest
+    @Test
     public void testRecordingHint() throws Exception {
         int nCameras = Camera.getNumberOfCameras();
         for (int id = 0; id < nCameras; id++) {
@@ -2728,7 +2757,7 @@ public class CameraTest extends ActivityInstrumentationTestCase2<CameraCtsActivi
         initializeMessageLooper(cameraId);
         Parameters parameters = mCamera.getParameters();
 
-        SurfaceHolder holder = getActivity().getSurfaceView().getHolder();
+        SurfaceHolder holder = mActivityRule.getActivity().getSurfaceView().getHolder();
         CamcorderProfile profile = CamcorderProfile.get(cameraId,
                 CamcorderProfile.QUALITY_LOW);
         Camera.Size videoSize = null; // for external camera
@@ -2811,6 +2840,7 @@ public class CameraTest extends ActivityInstrumentationTestCase2<CameraCtsActivi
     }
 
     @UiThreadTest
+    @Test
     public void testAutoExposureLock() throws Exception {
         int nCameras = Camera.getNumberOfCameras();
         for (int id = 0; id < nCameras; id++) {
@@ -2827,6 +2857,7 @@ public class CameraTest extends ActivityInstrumentationTestCase2<CameraCtsActivi
     }
 
     @UiThreadTest
+    @Test
     public void testAutoWhiteBalanceLock() throws Exception {
         int nCameras = Camera.getNumberOfCameras();
         for (int id = 0; id < nCameras; id++) {
@@ -2843,6 +2874,7 @@ public class CameraTest extends ActivityInstrumentationTestCase2<CameraCtsActivi
     }
 
     @UiThreadTest
+    @Test
     public void test3ALockInteraction() throws Exception {
         int nCameras = Camera.getNumberOfCameras();
         for (int id = 0; id < nCameras; id++) {
@@ -3067,6 +3099,7 @@ public class CameraTest extends ActivityInstrumentationTestCase2<CameraCtsActivi
     }
 
     @UiThreadTest
+    @Test
     public void testFaceDetection() throws Exception {
         int nCameras = Camera.getNumberOfCameras();
         for (int id = 0; id < nCameras; id++) {
@@ -3193,6 +3226,7 @@ public class CameraTest extends ActivityInstrumentationTestCase2<CameraCtsActivi
     }
 
     @UiThreadTest
+    @Test
     public void testVideoSnapshot() throws Exception {
         int nCameras = Camera.getNumberOfCameras();
         for (int id = 0; id < nCameras; id++) {
@@ -3221,7 +3255,7 @@ public class CameraTest extends ActivityInstrumentationTestCase2<CameraCtsActivi
             return;
         }
 
-        SurfaceHolder holder = getActivity().getSurfaceView().getHolder();
+        SurfaceHolder holder = mActivityRule.getActivity().getSurfaceView().getHolder();
 
         for (int profileId: mCamcorderProfileList) {
             if (!CamcorderProfile.hasProfile(cameraId, profileId)) {
@@ -3271,6 +3305,7 @@ public class CameraTest extends ActivityInstrumentationTestCase2<CameraCtsActivi
         }
     }
 
+    @Test
     public void testPreviewCallbackWithPicture() throws Exception {
         int nCameras = Camera.getNumberOfCameras();
         for (int id = 0; id < nCameras; id++) {
@@ -3330,6 +3365,7 @@ public class CameraTest extends ActivityInstrumentationTestCase2<CameraCtsActivi
         terminateMessageLooper();
     }
 
+    @Test
     public void testEnableShutterSound() throws Exception {
         int nCameras = Camera.getNumberOfCameras();
         for (int id = 0; id < nCameras; id++) {
@@ -3356,8 +3392,9 @@ public class CameraTest extends ActivityInstrumentationTestCase2<CameraCtsActivi
         terminateMessageLooper();
     }
 
+    @Test
     public void testCameraExternalConnected() {
-        if (getActivity().getPackageManager().
+        if (mActivityRule.getActivity().getPackageManager().
                 hasSystemFeature(PackageManager.FEATURE_CAMERA_EXTERNAL) ) {
             int nCameras = Camera.getNumberOfCameras();
             assertTrue("Devices with external camera support must have a camera connected for " +
