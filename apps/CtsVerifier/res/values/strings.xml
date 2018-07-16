@@ -4031,6 +4031,42 @@ You should be prompted to select credentials; choose the ones you just installed
     <string name="audio_proaudio_NA">N/A</string>
     <string name="audio_proaudio_pending">pending...</string>
 
+    <!--  MIDI Test -->
+    <string name="midi_test">MIDI Test</string>
+    <string name="midi_info">
+       For the USB MIDI interface test it is required that you have connected a supported USB
+       Audio Peripheral device with standard MIDI 5-pin, DIN (round) connectors and a standard
+       MIDI cable. The cable must be connected to the MIDI input and output plugs on the
+       peripheral.
+       \nFor the USB Bluetooth test it is required that you connect a Yamaha MT-BT301 to the
+       correct MIDI plugs on the USB peripheral, the BT301 output jack to the USB interface
+       input jack and BT301 input plug to the USB interface output jack.
+       \nThe Virtual MIDI test does not require any MIDI interface hardware.
+    </string>
+
+    <string name="midiHasMIDILbl">Has MIDI Support</string>
+
+    <string name="midiUSBTestLbl">USB MIDI Loopback Test:</string>
+    <string name="usbMidiInputLbl">USB Input:</string>
+    <string name="usbMidiOutputLbl">USB Output:</string>
+    <string name="midiTestUSBInterfaceBtn">Test USB MIDI Interface</string>
+
+    <string name="midiVirtTestLbl">Virtual MIDI Loopback Test:</string>
+    <string name="midiVirtInputLbl">Virtual Input:</string>
+    <string name="midiVirtOutputLbl">Virtual Output:</string>
+    <string name="midiTestVirtInterfaceBtn">Test Virtual MIDI Interface</string>
+
+    <string name="midiBTTestLbl">Bluetooth MIDI Loopback Test:</string>
+    <string name="midiBTInputLbl">Bluetooth Input:</string>
+    <string name="midiBTOutputLbl">Bluetooth Output:</string>
+    <string name="midiTestBTInterfaceBtn">Test Bluetooth MIDI Interface</string>
+
+    <string name="midiStatusLbl">Status</string>
+    <string name="midiNotRunLbl">Not Run.</string>
+    <string name="midiPassedLbl">Passed.</string>
+    <string name="midiFailedMismatchLbl">Failed - Data Mismatch.</string>
+    <string name="midiFailedTimeoutLbl">Failed - Timeout.</string>
+
     <!-- Audio general text -->
     <string name="audio_general_headset_port_exists">Does this device have a headset port?</string>
     <string name="audio_general_headset_no">No</string>
