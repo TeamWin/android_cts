@@ -16,10 +16,18 @@
 
 package android.app.uiautomation.cts;
 
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertSame;
+import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.fail;
+
 import android.Manifest;
 import android.accessibilityservice.AccessibilityServiceInfo;
 import android.app.Activity;
 import android.app.ActivityManager;
+import android.app.Instrumentation;
 import android.app.UiAutomation;
 import android.content.ContentResolver;
 import android.content.Context;
@@ -30,7 +38,8 @@ import android.os.SystemClock;
 import android.platform.test.annotations.AppModeFull;
 import android.platform.test.annotations.Presubmit;
 import android.provider.Settings;
-import android.test.InstrumentationTestCase;
+import android.support.test.InstrumentationRegistry;
+import android.support.test.runner.AndroidJUnit4;
 import android.view.FrameStats;
 import android.view.WindowAnimationFrameStats;
 import android.view.WindowContentFrameStats;
@@ -39,6 +48,10 @@ import android.view.accessibility.AccessibilityManager;
 import android.view.accessibility.AccessibilityWindowInfo;
 import android.widget.ListView;
 
+import org.junit.Before;
+import org.junit.Test;
+import org.junit.runner.RunWith;
+
 import java.io.IOException;
 import java.util.List;
 import java.util.concurrent.TimeoutException;
@@ -46,7 +59,8 @@ import java.util.concurrent.TimeoutException;
 /**
  * Tests for the UiAutomation APIs.
  */
-public class UiAutomationTest extends InstrumentationTestCase {
+@RunWith(AndroidJUnit4.class)
+public class UiAutomationTest {
     private static final long QUIET_TIME_TO_BE_CONSIDERED_IDLE_STATE = 1000;//ms
 
     private static final long TOTAL_TIME_TO_WAIT_FOR_IDLE_STATE = 1000 * 10;//ms
@@ -55,9 +69,8 @@ public class UiAutomationTest extends InstrumentationTestCase {
     private static final String COMPONENT_NAME_SEPARATOR = ":";
     private static final int TIMEOUT_FOR_SERVICE_ENABLE = 10000; // millis; 10s
 
-    @Override
+    @Before
     public void setUp() throws Exception {
-        super.setUp();
         UiAutomation uiAutomation = getInstrumentation().getUiAutomation();
         AccessibilityServiceInfo info = uiAutomation.getServiceInfo();
         info.flags |= AccessibilityServiceInfo.FLAG_RETRIEVE_INTERACTIVE_WINDOWS;
@@ -65,6 +78,7 @@ public class UiAutomationTest extends InstrumentationTestCase {
         grantWriteSecureSettingsPermission(uiAutomation);
     }
 
+    @Test
     public void testAdoptShellPermissions() {
         final Context context = getInstrumentation().getContext();
         final ActivityManager activityManager = context.getSystemService(ActivityManager.class);
@@ -123,6 +137,7 @@ public class UiAutomationTest extends InstrumentationTestCase {
         }
     }
 
+    @Test
     public void testWindowContentFrameStats() throws Exception {
         Activity activity = null;
         try {
@@ -181,6 +196,7 @@ public class UiAutomationTest extends InstrumentationTestCase {
         }
     }
 
+    @Test
     public void testWindowContentFrameStatsNoAnimation() throws Exception {
         Activity activity = null;
         try {
@@ -232,6 +248,7 @@ public class UiAutomationTest extends InstrumentationTestCase {
     }
 
     @Presubmit
+    @Test
     public void testWindowAnimationFrameStats() throws Exception {
         Activity firstActivity = null;
         Activity secondActivity = null;
@@ -299,6 +316,7 @@ public class UiAutomationTest extends InstrumentationTestCase {
         }
     }
 
+    @Test
     public void testWindowAnimationFrameStatsNoAnimation() throws Exception {
         UiAutomation uiAutomation = getInstrumentation().getUiAutomation();
 
@@ -329,6 +347,7 @@ public class UiAutomationTest extends InstrumentationTestCase {
     }
 
     @Presubmit
+    @Test
     public void testUsingUiAutomationAfterDestroy_shouldThrowException() {
         UiAutomation uiAutomation = getInstrumentation().getUiAutomation();
         uiAutomation.destroy();
@@ -340,8 +359,8 @@ public class UiAutomationTest extends InstrumentationTestCase {
     }
 
     @AppModeFull
-    public void testDontSuppressAccessibility_canStartA11yService() throws IOException,
-            InterruptedException {
+    @Test
+    public void testDontSuppressAccessibility_canStartA11yService() throws Exception {
         turnAccessibilityOff();
         try {
             getInstrumentation()
@@ -354,7 +373,8 @@ public class UiAutomationTest extends InstrumentationTestCase {
     }
 
     @AppModeFull
-    public void testServiceWithNoFlags_shutsDownA11yService() throws IOException {
+    @Test
+    public void testServiceWithNoFlags_shutsDownA11yService() throws Exception {
         turnAccessibilityOff();
         try {
             UiAutomation uiAutomation = getInstrumentation()
@@ -371,8 +391,9 @@ public class UiAutomationTest extends InstrumentationTestCase {
     }
 
     @AppModeFull
+    @Test
     public void testServiceSupressingA11yServices_a11yServiceStartsWhenDestroyed()
-            throws IOException, InterruptedException {
+            throws Exception {
         turnAccessibilityOff();
         try {
             UiAutomation uiAutomation = getInstrumentation()
@@ -391,8 +412,9 @@ public class UiAutomationTest extends InstrumentationTestCase {
     }
 
     @AppModeFull
+    @Test
     public void testServiceSupressingA11yServices_a11yServiceStartsWhenFlagsChange()
-            throws IOException, InterruptedException {
+            throws Exception {
         turnAccessibilityOff();
         try {
             getInstrumentation()
@@ -437,7 +459,7 @@ public class UiAutomationTest extends InstrumentationTestCase {
                 QUIET_TIME_TO_BE_CONSIDERED_IDLE_STATE, TOTAL_TIME_TO_WAIT_FOR_IDLE_STATE);
     }
 
-    private void grantWriteSecureSettingsPermission(UiAutomation uiAutomation) throws IOException {
+    private void grantWriteSecureSettingsPermission(UiAutomation uiAutomation) {
         uiAutomation.grantRuntimePermission(getInstrumentation().getContext().getPackageName(),
                 android.Manifest.permission.WRITE_SECURE_SETTINGS);
     }
@@ -571,5 +593,9 @@ public class UiAutomationTest extends InstrumentationTestCase {
             }
         }
         return -1;
+    }
+
+    private Instrumentation getInstrumentation() {
+        return InstrumentationRegistry.getInstrumentation();
     }
 }
