@@ -22,14 +22,18 @@ import static org.junit.Assert.fail;
 import android.app.ActivityManager;
 import android.app.ActivityManager.MemoryInfo;
 import android.app.Instrumentation;
+import android.app.UiAutomation;
 import android.content.Context;
 import android.os.ParcelFileDescriptor;
 import android.os.StatFs;
 import android.support.test.InstrumentationRegistry;
 import android.util.Log;
 
+import androidx.annotation.NonNull;
+
 import java.io.FileInputStream;
 import java.io.IOException;
+import java.util.concurrent.Callable;
 import java.util.function.Predicate;
 
 public class SystemUtil {
@@ -118,7 +122,7 @@ public class SystemUtil {
     }
 
     /**
-     * Run a command and print the result on logcat.
+     * Runs a command and print the result on logcat.
      */
     public static void runCommandAndPrintOnLogcat(String logtag, String cmd) {
         Log.i(logtag, "Executing: " + cmd);
@@ -129,7 +133,7 @@ public class SystemUtil {
     }
 
     /**
-     * Run a command and return the section matching the patterns.
+     * Runs a command and return the section matching the patterns.
      *
      * @see TextUtils#extractSection
      */
@@ -138,5 +142,31 @@ public class SystemUtil {
             String extractionEndRegex, boolean endInclusive) {
         return TextUtils.extractSection(runShellCommand(cmd), extractionStartRegex, startInclusive,
                 extractionEndRegex, endInclusive);
+    }
+
+    /**
+     * Runs a {@link Runnable} adopting Shell's permissions.
+     */
+    public static void runWithShellPermissions(@NonNull Runnable runnable) {
+        final UiAutomation automan = InstrumentationRegistry.getInstrumentation().getUiAutomation();
+        automan.adoptShellPermissionIdentity();
+        try {
+            runnable.run();
+        } finally {
+            automan.dropShellPermissionIdentity();
+        }
+    }
+
+    /**
+     * Calls a {@link Callable} adopting Shell's permissions.
+     */
+    public static <T> T callWithShellPermissions(@NonNull Callable<T> callable) throws Exception {
+        final UiAutomation automan = InstrumentationRegistry.getInstrumentation().getUiAutomation();
+        automan.adoptShellPermissionIdentity();
+        try {
+            return callable.call();
+        } finally {
+            automan.dropShellPermissionIdentity();
+        }
     }
 }
