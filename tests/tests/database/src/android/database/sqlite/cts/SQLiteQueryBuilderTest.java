@@ -16,7 +16,6 @@
 
 package android.database.sqlite.cts;
 
-
 import android.content.Context;
 import android.database.Cursor;
 import android.database.sqlite.SQLiteCursor;
@@ -458,6 +457,39 @@ public class SQLiteQueryBuilderTest extends AndroidTestCase {
         // environment, but if after several trials we still couldn't demonstrate
         // that the query was canceled, then the test must be broken.
         fail("Could not prove that the query actually canceled midway during execution.");
+    }
+
+    public void testStrict() throws Exception {
+        createEmployeeTable();
+
+        final SQLiteQueryBuilder qb = new SQLiteQueryBuilder();
+        qb.setTables("employee");
+        qb.setStrict(true);
+        qb.appendWhere("month=2");
+
+        // Should normally only be able to see one row
+        try (Cursor c = qb.query(mDatabase, null, null, null, null, null)) {
+            assertEquals(1, c.getCount());
+        }
+
+        // Trying sneaky queries should fail; even if they somehow succeed, we
+        // shouldn't get to see any other data.
+        try (Cursor c = qb.query(mDatabase, null, "1=1", null, null, null)) {
+            assertEquals(1, c.getCount());
+        } catch (Exception tolerated) {
+        }
+        try (Cursor c = qb.query(mDatabase, null, "1=1 --", null, null, null)) {
+            assertEquals(1, c.getCount());
+        } catch (Exception tolerated) {
+        }
+        try (Cursor c = qb.query(mDatabase, null, "1=1) OR (1=1", null, null, null)) {
+            assertEquals(1, c.getCount());
+        } catch (Exception tolerated) {
+        }
+        try (Cursor c = qb.query(mDatabase, null, "1=1)) OR ((1=1", null, null, null)) {
+            assertEquals(1, c.getCount());
+        } catch (Exception tolerated) {
+        }
     }
 
     private void createEmployeeTable() {
