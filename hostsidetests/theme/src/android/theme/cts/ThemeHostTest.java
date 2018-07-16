@@ -273,7 +273,8 @@ public class ThemeHostTest extends DeviceTestCase {
         final Pattern p = Pattern.compile("Override density: (\\d+)");
         final Matcher m = p.matcher(output);
         if (m.find()) {
-            return Integer.parseInt(m.group(1));
+            throw new RuntimeException("Cannot test device running at non-default density: "
+                    + Integer.parseInt(m.group(1)));
         }
 
         final String densityProp;
