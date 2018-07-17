@@ -46,8 +46,6 @@ public class CpuFeatures {
 
     public static native boolean isArmCpu();
 
-    public static native boolean isArm7Compatible();
-
     public static native boolean isMipsCpu();
 
     public static native boolean isX86Cpu();
