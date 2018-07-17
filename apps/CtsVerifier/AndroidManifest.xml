@@ -3088,6 +3088,26 @@
                        android:value="android.hardware.type.watch:android.hardware.type.television" />
         </activity>
 
+        <activity android:name=".audio.MidiActivity"
+                  android:label="@string/midi_test">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.cts.intent.category.MANUAL_TEST" />
+            </intent-filter>
+            <meta-data android:name="test_category" android:value="@string/test_category_audio" />
+            <meta-data android:name="test_required_features"
+                android:value="android.hardware.usb.host:android.software.midi" />
+        </activity>
+
+        <service android:name="com.android.cts.verifier.midilib.MidiEchoTestService"
+                android:permission="android.permission.BIND_MIDI_DEVICE_SERVICE">
+            <intent-filter>
+                <action android:name="android.media.midi.MidiDeviceService" />
+            </intent-filter>
+            <meta-data android:name="android.media.midi.MidiDeviceService"
+                android:resource="@xml/echo_device_info" />
+        </service>
+
         <activity android:name=".audio.AudioFrequencyLineActivity"
                   android:label="@string/audio_frequency_line_test">
             <intent-filter>
