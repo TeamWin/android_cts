@@ -17,6 +17,7 @@ package android.autofillservice.cts;
 
 import static android.autofillservice.cts.AntiTrimmerTextWatcher.TRIMMER_PATTERN;
 import static android.autofillservice.cts.Helper.ID_STATIC_TEXT;
+import static android.autofillservice.cts.Helper.LARGE_STRING;
 import static android.autofillservice.cts.Helper.assertTextAndValue;
 import static android.autofillservice.cts.Helper.assertTextValue;
 import static android.autofillservice.cts.Helper.findNodeByResourceId;
@@ -34,7 +35,9 @@ import static com.google.common.truth.Truth.assertWithMessage;
 
 import static org.junit.Assume.assumeTrue;
 
+import android.app.assist.AssistStructure.ViewNode;
 import android.autofillservice.cts.CannedFillResponse.CannedDataset;
+import android.autofillservice.cts.InstrumentedAutoFillService.FillRequest;
 import android.autofillservice.cts.InstrumentedAutoFillService.SaveRequest;
 import android.autofillservice.cts.SimpleSaveActivity.FillExpectation;
 import android.content.Intent;
@@ -129,6 +132,66 @@ public class SimpleSaveActivityTest extends CustomDescriptionWithLinkTestCase<Si
         final SaveRequest saveRequest = sReplier.getNextSaveRequest();
         assertTextAndValue(findNodeByResourceId(saveRequest.structure, ID_INPUT), "ID");
         assertTextAndValue(findNodeByResourceId(saveRequest.structure, ID_PASSWORD), "PASS");
+    }
+
+    @Test
+    public void testAutoFillOneDatasetAndSave_largeAssistStructure() throws Exception {
+        startActivity();
+
+        mActivity.syncRunOnUiThread(
+                () -> mActivity.mInput.setAutofillHints(LARGE_STRING, LARGE_STRING, LARGE_STRING));
+
+        // Set service.
+        enableService();
+
+        // Set expectations.
+        sReplier.addResponse(new CannedFillResponse.Builder()
+                .setRequiredSavableIds(SAVE_DATA_TYPE_GENERIC, ID_INPUT, ID_PASSWORD)
+                .addDataset(new CannedDataset.Builder()
+                        .setField(ID_INPUT, "id")
+                        .setField(ID_PASSWORD, "pass")
+                        .setPresentation(createPresentation("YO"))
+                        .build())
+                .build());
+
+        // Trigger autofill.
+        mActivity.syncRunOnUiThread(() -> mActivity.mInput.requestFocus());
+        final FillRequest fillRequest = sReplier.getNextFillRequest();
+        final ViewNode inputOnFill = findNodeByResourceId(fillRequest.structure, ID_INPUT);
+        final String[] hintsOnFill = inputOnFill.getAutofillHints();
+        // Cannot compare these large strings directly becauise it could cause ANR
+        assertThat(hintsOnFill).hasLength(3);
+        Helper.assertEqualsToLargeString(hintsOnFill[0]);
+        Helper.assertEqualsToLargeString(hintsOnFill[1]);
+        Helper.assertEqualsToLargeString(hintsOnFill[2]);
+
+        // Select dataset.
+        final FillExpectation autofillExpecation = mActivity.expectAutoFill("id", "pass");
+        mUiBot.selectDataset("YO");
+        autofillExpecation.assertAutoFilled();
+
+        mActivity.syncRunOnUiThread(() -> {
+            mActivity.mInput.setText("ID");
+            mActivity.mPassword.setText("PASS");
+            mActivity.mCommit.performClick();
+        });
+        final UiObject2 saveUi = mUiBot.assertSaveShowing(SAVE_DATA_TYPE_GENERIC);
+
+        // Save it...
+        mUiBot.saveForAutofill(saveUi, true);
+
+        // ... and assert results
+        final SaveRequest saveRequest = sReplier.getNextSaveRequest();
+        final ViewNode inputOnSave = findNodeByResourceId(saveRequest.structure, ID_INPUT);
+        assertTextAndValue(inputOnSave, "ID");
+        assertTextAndValue(findNodeByResourceId(saveRequest.structure, ID_PASSWORD), "PASS");
+
+        final String[] hintsOnSave = inputOnSave.getAutofillHints();
+        // Cannot compare these large strings directly becauise it could cause ANR
+        assertThat(hintsOnSave).hasLength(3);
+        Helper.assertEqualsToLargeString(hintsOnSave[0]);
+        Helper.assertEqualsToLargeString(hintsOnSave[1]);
+        Helper.assertEqualsToLargeString(hintsOnSave[2]);
     }
 
     /**
