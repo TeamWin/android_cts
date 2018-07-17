@@ -23,7 +23,18 @@ public class AtraceTestAppActivity extends Activity {
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         Trace.beginSection("traceable-app-test-section");
+        Trace.setCounter("mycounter", Trace.isEnabled() ? 1 : 0);
+        Trace.beginAsyncSection("traceable-async-section", 100);
         super.onCreate(savedInstanceState);
         Trace.endSection();
+
+        Thread t = new Thread(() ->
+                Trace.endAsyncSection("traceable-async-section", 100));
+        t.start();
+        try {
+            t.join();
+        } catch (InterruptedException e) {
+            throw new RuntimeException(e);
+        }
     }
 }
