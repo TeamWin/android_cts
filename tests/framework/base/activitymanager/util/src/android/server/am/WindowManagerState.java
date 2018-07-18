@@ -775,7 +775,7 @@ public class WindowManagerState {
         private Rect mContainingFrame;
         private Rect mParentFrame;
         private Rect mContentFrame;
-        private Rect mFrame = new Rect();
+        private Rect mFrame;
         private Rect mSurfaceInsets = new Rect();
         private Rect mContentInsets = new Rect();
         private Rect mGivenContentInsets = new Rect();
@@ -801,9 +801,9 @@ public class WindowManagerState {
                 mCrop = extract(animatorProto.lastClipRect);
             }
             mGivenContentInsets = extract(proto.givenContentInsets);
-            mFrame = extract(proto.frame);
             WindowFramesProto windowFramesProto = proto.windowFrames;
             if (windowFramesProto != null) {
+                mFrame = extract(windowFramesProto.frame);
                 mContainingFrame = extract(windowFramesProto.containingFrame);
                 mParentFrame = extract(windowFramesProto.parentFrame);
                 mContentFrame = extract(windowFramesProto.contentFrame);
