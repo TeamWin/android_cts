@@ -32,6 +32,7 @@ import android.graphics.Color;
 import android.graphics.ColorSpace;
 import android.graphics.Matrix;
 import android.graphics.Point;
+import android.graphics.Rect;
 import android.support.test.filters.MediumTest;
 import android.support.test.rule.ActivityTestRule;
 import android.support.test.runner.AndroidJUnit4;
@@ -128,8 +129,90 @@ public class TextureViewTest {
         mActivityRule.runOnUiThread(() -> {
             activity.getTextureView().getBitmap(bitmap);
         });
+        // Verify the matrix did not rotate content of getTextureView.getBitmap().
         PixelCopyTest.assertBitmapQuadColor(bitmap,
+                Color.RED, Color.GREEN, Color.BLUE, Color.BLACK);
+
+        // Remove cover and calculate TextureView position on the screen.
+        WidgetTestUtils.runOnMainAndDrawSync(mActivityRule,
+                activity.findViewById(android.R.id.content), () -> activity.removeCover());
+        final Rect viewPos = new Rect();
+        mActivityRule.runOnUiThread(() -> {
+            int[] outLocation = new int[2];
+            textureView.getLocationOnScreen(outLocation);
+            viewPos.left = outLocation[0];
+            viewPos.top = outLocation[1];
+            viewPos.right = viewPos.left + textureView.getWidth();
+            viewPos.bottom = viewPos.top + textureView.getHeight();
+        });
+
+        // Capture the portion of the screen that contains the texture view only.
+        Window window = activity.getWindow();
+        Bitmap screenshot = Bitmap.createBitmap(100, 100, Bitmap.Config.ARGB_8888);
+        int result = new SynchronousPixelCopy().request(window, viewPos, screenshot);
+        assertEquals("Copy request failed", PixelCopy.SUCCESS, result);
+        // Verify the matrix rotated the TextureView content drawn on the screen.
+        PixelCopyTest.assertBitmapQuadColor(screenshot,
                 Color.BLACK, Color.BLUE, Color.GREEN, Color.RED);
+    }
+
+    @Test
+    public void testTransformScale() throws Throwable {
+        final TextureViewCtsActivity activity = mActivityRule.launchActivity(null);
+        final TextureView textureView = activity.getTextureView();
+        WidgetTestUtils.runOnMainAndDrawSync(mActivityRule, activity.getTextureView(), null);
+        Matrix transform = new Matrix();
+        final float translateY = 100.0f;
+        final float scaleY = 0.25f;
+        float[] values = {1, 0, 0, 0, scaleY, translateY, 0, 0, 1};
+        transform.setValues(values);
+        activity.drawFrame(transform, TextureViewTest::drawGlQuad);
+        final Bitmap bitmap = Bitmap.createBitmap(10, 10, Bitmap.Config.ARGB_8888);
+        mActivityRule.runOnUiThread(() -> {
+            activity.getTextureView().getBitmap(bitmap);
+        });
+        // Verify the matrix did not affect the content of getTextureView.getBitmap().
+        PixelCopyTest.assertBitmapQuadColor(bitmap,
+                Color.RED, Color.GREEN, Color.BLUE, Color.BLACK);
+
+        // Remove cover and calculate TextureView position on the screen.
+        WidgetTestUtils.runOnMainAndDrawSync(mActivityRule,
+                activity.findViewById(android.R.id.content), () -> activity.removeCover());
+        final Rect viewPos = new Rect();
+        mActivityRule.runOnUiThread(() -> {
+            int[] outLocation = new int[2];
+            textureView.getLocationOnScreen(outLocation);
+            viewPos.left = outLocation[0];
+            viewPos.top = outLocation[1];
+            viewPos.right = viewPos.left + textureView.getWidth();
+            viewPos.bottom = viewPos.top + textureView.getHeight();
+        });
+
+        // Capture the portion of the screen that contains the texture view only.
+        Window window = activity.getWindow();
+        Bitmap screenshot = Bitmap.createBitmap(viewPos.width(), viewPos.height(),
+                Bitmap.Config.ARGB_8888);
+        int result = new SynchronousPixelCopy().request(window, viewPos, screenshot);
+        assertEquals("Copy request failed", PixelCopy.SUCCESS, result);
+        // Verify the matrix scaled and translated the TextureView content drawn on the screen.
+        // "texturePos" has SurfaceTexture position inside the TextureView.
+        final Rect texturePos = new Rect(0, (int) translateY, viewPos.width(),
+                (int) (viewPos.height() * scaleY + translateY));
+
+        // Areas not covered by the texture are black, because FrameLayout background is set to
+        // Color.BLACK in TextureViewCtsActivity.onCreate.
+        assertEquals("above texture", Color.BLACK,
+                screenshot.getPixel(10, texturePos.top - 10));
+        assertEquals("below texture", Color.BLACK,
+                screenshot.getPixel(10, texturePos.bottom + 10));
+        assertEquals("top left", Color.RED,
+                screenshot.getPixel(texturePos.left + 10, texturePos.top + 10));
+        assertEquals("top right", Color.GREEN,
+                screenshot.getPixel(texturePos.right - 10, texturePos.top + 10));
+        assertEquals("Bottom left", Color.BLUE,
+                screenshot.getPixel(texturePos.left + 10, texturePos.bottom - 10));
+        assertEquals("Bottom right", Color.BLACK,
+                screenshot.getPixel(texturePos.right - 10, texturePos.bottom - 10));
     }
 
     @Test
