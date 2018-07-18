@@ -22,6 +22,7 @@ import static android.autofillservice.cts.Timeouts.SAVE_TIMEOUT;
 import static android.autofillservice.cts.Timeouts.UI_DATASET_PICKER_TIMEOUT;
 import static android.autofillservice.cts.Timeouts.UI_SCREEN_ORIENTATION_TIMEOUT;
 import static android.autofillservice.cts.Timeouts.UI_TIMEOUT;
+import static android.autofillservice.cts.common.ShellHelper.runShellCommand;
 import static android.service.autofill.SaveInfo.SAVE_DATA_TYPE_ADDRESS;
 import static android.service.autofill.SaveInfo.SAVE_DATA_TYPE_CREDIT_CARD;
 import static android.service.autofill.SaveInfo.SAVE_DATA_TYPE_EMAIL_ADDRESS;
@@ -153,6 +154,29 @@ final class UiBot {
         assumeTrue("Screen size is too small (" + width + "x" + heigth + ")", min >= minSize);
         Log.d(TAG, "assumeMinimumResolution(" + minSize + ") passed: screen size is "
                 + width + "x" + heigth);
+    }
+
+    /**
+     * Sets the screen resolution in a way that the IME doesn't interfere with the Autofill UI
+     * when the device is rotated to landscape.
+     *
+     * When called, test must call <p>{@link #resetScreenResolution()} in a {@code finally} block.
+     */
+    void setScreenResolution() {
+        assumeMinimumResolution(500);
+
+        runShellCommand("wm size 1080x1920");
+        runShellCommand("wm density 420");
+    }
+
+    /**
+     * Resets the screen resolution.
+     *
+     * <p>Should always be called after {@link #setScreenResolution()}.
+     */
+    void resetScreenResolution() {
+        runShellCommand("wm density reset");
+        runShellCommand("wm size reset");
     }
 
     /**

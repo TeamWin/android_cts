@@ -52,26 +52,12 @@ public class AtraceHostTest extends DeviceTestCase implements IBuildReceiver {
      * Regexs copied from (and should be kept in sync with) ftrace importer in catapult.
      */
     private static class FtraceParser {
-        // Matches the trace record in 3.2 and later with the print-tgid option:
-        //          <idle>-0    0 [001] d...  1.23: sched_switch
-        private static final Pattern sLineWithTgid = Pattern.compile(
-                "^\\s*(.+)-(\\d+)\\s+\\(\\s*(\\d+|-+)\\)\\s\\[(\\d+)\\]"
-                + "\\s+[dX.][N.][Hhs.][0-9a-f.]"
-                + "\\s+(\\d+\\.\\d+):\\s+(\\S+):\\s(.*)");
+        private static final Pattern sFtraceLine = Pattern.compile(
+                "^ *(.{1,16})-(\\d+) +(?:\\( *(\\d+)?-*\\) )?\\[(\\d+)] (?:[dX.]...)? *([\\d.]*): *"
+                + "([^:]*): *(.*) *$");
 
-        // Matches the default trace record in 3.2 and later (includes irq-info):
-        //          <idle>-0     [001] d...  1.23: sched_switch
-        private static final Pattern sLineWithIrqInfo = Pattern.compile(
-                "^\\s*(.+)-(\\d+)\\s+\\[(\\d+)\\]"
-                + "\\s+[dX.][N.][Hhs.][0-9a-f.]"
-                + "\\s+(\\d+\\.\\d+):\\s+(\\S+):\\s(.*)$");
-
-        // Matches the default trace record pre-3.2:
-        //          <idle>-0     [001]  1.23: sched_switch
-        private static final Pattern sLineLegacy = Pattern.compile(
-                "^\\s*(.+)-(\\d+)\\s+\\[(\\d+)\\]\\s*(\\d+\\.\\d+):\\s+(\\S+):\\s(.*)");
         private static void parseLine(String line, FtraceEntryCallback callback) {
-            Matcher m = sLineWithTgid.matcher(line);
+            Matcher m = sFtraceLine.matcher(line);
             if (m.matches()) {
                 callback.onTraceEntry(
                         /*threadname*/ m.group(1),
@@ -82,27 +68,6 @@ public class AtraceHostTest extends DeviceTestCase implements IBuildReceiver {
                 return;
             }
 
-            m = sLineWithIrqInfo.matcher(line);
-            if (m.matches()) {
-                callback.onTraceEntry(
-                        /*threadname*/ m.group(1),
-                        /*pid*/ -1,
-                        /*tid*/ Integer.parseInt(m.group(2)),
-                        /*eventName*/ m.group(5),
-                        /*details*/ m.group(6));
-                return;
-            }
-
-            m = sLineLegacy.matcher(line);
-            if (m.matches()) {
-                callback.onTraceEntry(
-                        /*threadname*/ m.group(1),
-                        /*pid*/ -1,
-                        /*tid*/ Integer.parseInt(m.group(2)),
-                        /*eventName*/ m.group(5),
-                        /*details*/ m.group(6));
-                return;
-            }
             CLog.i("line doesn't match: " + line);
         }
 
@@ -234,6 +199,10 @@ public class AtraceHostTest extends DeviceTestCase implements IBuildReceiver {
             private int nextSectionIndex = -1;
             private int appTid = -1;
 
+            private boolean foundCounter = false;
+            private boolean foundAsyncStart = false;
+            private int asyncEndTid = -1;
+
 
             private final String initialSection = "traceable-app-test-section";
             // list of tags expected to be seen on app launch, in order, after the initial.
@@ -250,7 +219,7 @@ public class AtraceHostTest extends DeviceTestCase implements IBuildReceiver {
             @Override
             public void onTraceEntry(String truncatedThreadName, int pid, int tid,
                     String eventName, String details) {
-                if (!"tracing_mark_write".equals(eventName)) {
+                if (!"tracing_mark_write".equals(eventName) || details == null) {
                     // not userspace trace, ignore
                     return;
                 }
@@ -259,7 +228,24 @@ public class AtraceHostTest extends DeviceTestCase implements IBuildReceiver {
                 assertTrue(tid > 0);
                 userSpaceMatches++;
 
-                if (details == null || !details.startsWith("B|")) {
+                if (details.startsWith("S|") && details.endsWith("traceable-async-section|100")) {
+                    assertFalse("Found more async starts than expected", foundAsyncStart);
+                    foundAsyncStart = true;
+                    return;
+                }
+                if (details.startsWith("F|") && details.endsWith("traceable-async-section|100")) {
+                    assertEquals(-1, asyncEndTid);
+                    asyncEndTid = tid;
+                    return;
+                }
+
+                if (details.startsWith("C|") && details.endsWith("mycounter|1")) {
+                    assertFalse("Found too many counter entires", foundCounter);
+                    foundCounter = true;
+                    return;
+                }
+
+                if (!details.startsWith("B|")) {
                     // not a begin event
                     return;
                 }
@@ -292,6 +278,10 @@ public class AtraceHostTest extends DeviceTestCase implements IBuildReceiver {
                         nextSectionIndex >= 0);
                 assertEquals("Didn't see required list of traced sections, in order",
                         requiredSectionList.length, nextSectionIndex);
+                assertTrue("Didn't find async start", foundAsyncStart);
+                assertTrue("Didn't find counter", foundCounter);
+                assertTrue("Didn't find async end", asyncEndTid != -1);
+                assertTrue("Async end wasn't on a different thread", asyncEndTid != appTid);
             }
         };
 

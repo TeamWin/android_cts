@@ -91,9 +91,7 @@ abstract class CustomDescriptionWithLinkTestCase<A extends AbstractAutoFillActiv
     public final void testTapLink_changeOrientationThenTapBack() throws Exception {
         assumeTrue("Rotation is supported", Helper.isRotationSupported(mContext));
 
-        // If the screen is too small and the devices shows an IME, it might not have space for all
-        // UI elements after the device is rotated to landscape.
-        mUiBot.assumeMinimumResolution(500);
+        mUiBot.setScreenResolution();
 
         mUiBot.setScreenOrientation(UiBot.PORTRAIT);
         try {
@@ -108,8 +106,7 @@ abstract class CustomDescriptionWithLinkTestCase<A extends AbstractAutoFillActiv
             } catch (Exception e) {
                 mSafeCleanerRule.add(e);
             } finally {
-                runShellCommand("wm density reset");
-                runShellCommand("wm size reset");
+                mUiBot.resetScreenResolution();
             }
         }
     }

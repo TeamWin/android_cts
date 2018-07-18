@@ -90,13 +90,19 @@ final class Helper {
     static final String ID_OUTPUT = "output";
     static final String ID_STATIC_TEXT = "static_text";
 
-    public static final String NULL_DATASET_ID = null;
+    static final String NULL_DATASET_ID = null;
+
+    static final char LARGE_STRING_CHAR = '6';
+    // NOTE: cannot be much large as it could ANR and fail the test.
+    static final int LARGE_STRING_SIZE = 100_000;
+    static final String LARGE_STRING = com.android.compatibility.common.util.TextUtils
+            .repeat(LARGE_STRING_CHAR, LARGE_STRING_SIZE);
 
     /**
      * Can be used in cases where the autofill values is required by irrelevant (like adding a
      * value to an authenticated dataset).
      */
-    public static final String UNUSED_AUTOFILL_VALUE = null;
+    static final String UNUSED_AUTOFILL_VALUE = null;
 
     private static final String ACCELLEROMETER_CHANGE =
             "content insert --uri content://settings/system --bind name:s:accelerometer_rotation "
@@ -1273,6 +1279,17 @@ final class Helper {
             Log.e(TAG, "could not offer " + obj + " in " + timeoutMs + "ms");
         }
         return offered;
+    }
+
+    /**
+     * Calls this method to assert given {@code string} is equal to {@link #LARGE_STRING}, as
+     * comparing its value using standard assertions might ANR.
+     */
+    public static void assertEqualsToLargeString(@NonNull String string) {
+        assertThat(string).isNotNull();
+        assertThat(string).hasLength(LARGE_STRING_SIZE);
+        assertThat(string.charAt(0)).isEqualTo(LARGE_STRING_CHAR);
+        assertThat(string.charAt(LARGE_STRING_SIZE - 1)).isEqualTo(LARGE_STRING_CHAR);
     }
 
     private Helper() {

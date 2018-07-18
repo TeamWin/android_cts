@@ -16,10 +16,8 @@
 
 package com.android.compatibility.common.util;
 
-import android.app.Instrumentation;
 import android.app.UiAutomation;
 import android.support.test.InstrumentationRegistry;
-import android.util.Log;
 
 import androidx.annotation.NonNull;
 
@@ -31,8 +29,8 @@ import org.junit.runners.model.Statement;
  * Custom JUnit4 rule that runs a test adopting Shell's permissions, revoking them at the end.
  *
  * <p>NOTE: should only be used in the cases where *every* test in a class requires the permission.
- * For a more fine-grained access, use {@link SystemUtil#runWithShellPermissions(Runnable)} or
- * {@link SystemUtil#callWithShellPermissions(java.util.concurrent.Callable)} instead.
+ * For a more fine-grained access, use {@link SystemUtil#runWithShellPermissionIdentity(Runnable)}
+ * or {@link SystemUtil#callWithShellPermissionIdentity(java.util.concurrent.Callable)} instead.
  */
 public class AdoptShellPermissionsRule implements TestRule {
 
