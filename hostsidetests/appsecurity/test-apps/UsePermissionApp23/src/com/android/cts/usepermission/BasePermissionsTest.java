@@ -252,7 +252,7 @@ public abstract class BasePermissionsTest {
 
         PackageManager packageManager = mContext.getPackageManager();
         mWatch = packageManager.hasSystemFeature(PackageManager.FEATURE_WATCH);
-        initPermissionToLabelMap(packageManager.isPermissionReviewModeEnabled());
+        initPermissionToLabelMap(packageManager.arePermissionsIndividuallyControlled());
 
         UiObject2 button = getUiDevice().findObject(By.text("Close"));
         if (button != null) {
