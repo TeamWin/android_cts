@@ -23,7 +23,6 @@ import android.signature.cts.FailureType;
 import android.signature.cts.JDiffClassDescription;
 import android.signature.cts.ReflectionHelper;
 import android.signature.cts.ResultObserver;
-import com.android.compatibility.common.util.CddTest;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
@@ -40,7 +39,6 @@ import static android.signature.cts.CurrentApi.API_FILE_DIRECTORY;
 /**
  * Performs the signature check via a JUnit test.
  */
-@CddTest(requirement="3.6/C-0-1,C-0-2")
 public class SignatureTest extends InstrumentationTestCase {
 
     private static final String TAG = SignatureTest.class.getSimpleName();
