@@ -140,15 +140,14 @@ public class DngCreatorTest extends Camera2AndroidTestCase {
             FileOutputStream fileStream = null;
             ByteArrayOutputStream outputStream = null;
             try {
-                openDevice(deviceId);
-
-                if (!mStaticInfo.isCapabilitySupported(
+                if (!mAllStaticInfo.get(deviceId).isCapabilitySupported(
                         CameraCharacteristics.REQUEST_AVAILABLE_CAPABILITIES_RAW)) {
                     Log.i(TAG, "RAW capability is not supported in camera " + mCameraIds[i] +
                             ". Skip the test.");
                     continue;
                 }
 
+                openDevice(deviceId);
                 Size activeArraySize = mStaticInfo.getRawDimensChecked();
 
                 // Create capture image reader
@@ -217,15 +216,14 @@ public class DngCreatorTest extends Camera2AndroidTestCase {
             FileOutputStream fileStream = null;
             ByteArrayOutputStream outputStream = null;
             try {
-                openDevice(deviceId);
-
-                if (!mStaticInfo.isCapabilitySupported(
+                if (!mAllStaticInfo.get(deviceId).isCapabilitySupported(
                         CameraCharacteristics.REQUEST_AVAILABLE_CAPABILITIES_RAW)) {
                     Log.i(TAG, "RAW capability is not supported in camera " + mCameraIds[i] +
                             ". Skip the test.");
                     continue;
                 }
 
+                openDevice(deviceId);
                 Size activeArraySize = mStaticInfo.getRawDimensChecked();
 
                 Size[] targetPreviewSizes =
@@ -509,15 +507,14 @@ public class DngCreatorTest extends Camera2AndroidTestCase {
         CapturedData data = new CapturedData();
         List<CameraTestUtils.SimpleImageReaderListener> captureListeners = new ArrayList<>();
         try {
-            openDevice(deviceId);
-
-            if (!mStaticInfo.isCapabilitySupported(
+            if (!mAllStaticInfo.get(deviceId).isCapabilitySupported(
                     CameraCharacteristics.REQUEST_AVAILABLE_CAPABILITIES_RAW)) {
                 Log.i(TAG, "RAW capability is not supported in camera " + deviceId
                         + ". Skip the test.");
                 return null;
             }
 
+            openDevice(deviceId);
             Size activeArraySize = mStaticInfo.getRawDimensChecked();
 
             // Get largest jpeg size

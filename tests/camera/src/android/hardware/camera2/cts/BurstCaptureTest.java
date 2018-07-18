@@ -23,6 +23,7 @@ import android.hardware.camera2.CameraDevice;
 import android.hardware.camera2.CaptureRequest;
 import android.hardware.camera2.CaptureResult;
 import android.hardware.camera2.CameraCharacteristics;
+import android.hardware.camera2.cts.helpers.StaticMetadata;
 import android.hardware.camera2.cts.testcases.Camera2SurfaceViewTestCase;
 import android.hardware.camera2.params.StreamConfigurationMap;
 import android.media.Image;
@@ -49,23 +50,24 @@ public class BurstCaptureTest extends Camera2SurfaceViewTestCase {
             try {
                 String id = mCameraIds[i];
                 Log.i(TAG, "Testing YUV Burst for camera " + id);
-                openDevice(id);
 
-                if (!mStaticInfo.isColorOutputSupported()) {
+                StaticMetadata staticInfo = mAllStaticInfo.get(id);
+                if (!staticInfo.isColorOutputSupported()) {
                     Log.i(TAG, "Camera " + id + " does not support color outputs, skipping");
                 }
-                if (!mStaticInfo.isAeLockSupported() || !mStaticInfo.isAwbLockSupported()) {
+                if (!staticInfo.isAeLockSupported() || !staticInfo.isAwbLockSupported()) {
                     Log.i(TAG, "AE/AWB lock is not supported in camera " + id +
                             ". Skip the test");
                     continue;
                 }
 
-                if (mStaticInfo.isHardwareLevelLegacy()) {
+                if (staticInfo.isHardwareLevelLegacy()) {
                     Log.i(TAG, "Legacy camera doesn't report min frame duration" +
                             ". Skip the test");
                     continue;
                 }
 
+                openDevice(id);
                 yuvBurstTestByCamera(id);
             } finally {
                 closeDevice();

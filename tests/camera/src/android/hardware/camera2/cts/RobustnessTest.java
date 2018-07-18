@@ -443,19 +443,20 @@ public class RobustnessTest extends Camera2AndroidTestCase {
         for (String id : mCameraIds) {
             Log.i(TAG, String.format("Testing Camera %s", id));
 
-            openDevice(id);
             try {
                 // Legacy devices do not support precapture trigger; don't test devices that
                 // can't focus
-                if (mStaticInfo.isHardwareLevelLegacy() || !mStaticInfo.hasFocuser()) {
+                StaticMetadata staticInfo = mAllStaticInfo.get(id);
+                if (staticInfo.isHardwareLevelLegacy() || !staticInfo.hasFocuser()) {
                     continue;
                 }
                 // Depth-only devices won't support AE
-                if (!mStaticInfo.isColorOutputSupported()) {
+                if (!staticInfo.isColorOutputSupported()) {
                     Log.i(TAG, "Camera " + id + " does not support color outputs, skipping");
                     continue;
                 }
 
+                openDevice(id);
                 int[] availableAfModes = mStaticInfo.getAfAvailableModesChecked();
                 int[] availableAeModes = mStaticInfo.getAeAvailableModesChecked();
 
@@ -581,19 +582,20 @@ public class RobustnessTest extends Camera2AndroidTestCase {
         for (String id : mCameraIds) {
             Log.i(TAG, String.format("Testing Camera %s", id));
 
-            openDevice(id);
             try {
                 // Legacy devices do not support precapture trigger; don't test devices that
                 // can't focus
-                if (mStaticInfo.isHardwareLevelLegacy() || !mStaticInfo.hasFocuser()) {
+                StaticMetadata staticInfo = mAllStaticInfo.get(id);
+                if (staticInfo.isHardwareLevelLegacy() || !staticInfo.hasFocuser()) {
                     continue;
                 }
                 // Depth-only devices won't support AE
-                if (!mStaticInfo.isColorOutputSupported()) {
+                if (!staticInfo.isColorOutputSupported()) {
                     Log.i(TAG, "Camera " + id + " does not support color outputs, skipping");
                     continue;
                 }
 
+                openDevice(id);
                 int[] availableAfModes = mStaticInfo.getAfAvailableModesChecked();
                 int[] availableAeModes = mStaticInfo.getAeAvailableModesChecked();
 
@@ -682,19 +684,20 @@ public class RobustnessTest extends Camera2AndroidTestCase {
         for (String id : mCameraIds) {
             Log.i(TAG, String.format("Testing Camera %s", id));
 
-            openDevice(id);
             try {
                 // Legacy devices do not support precapture trigger; don't test devices that
                 // can't focus
-                if (mStaticInfo.isHardwareLevelLegacy() || !mStaticInfo.hasFocuser()) {
+                StaticMetadata staticInfo = mAllStaticInfo.get(id);
+                if (staticInfo.isHardwareLevelLegacy() || !staticInfo.hasFocuser()) {
                     continue;
                 }
                 // Depth-only devices won't support AE
-                if (!mStaticInfo.isColorOutputSupported()) {
+                if (!staticInfo.isColorOutputSupported()) {
                     Log.i(TAG, "Camera " + id + " does not support color outputs, skipping");
                     continue;
                 }
 
+                openDevice(id);
                 int[] availableAfModes = mStaticInfo.getAfAvailableModesChecked();
                 int[] availableAeModes = mStaticInfo.getAeAvailableModesChecked();
 
@@ -797,19 +800,20 @@ public class RobustnessTest extends Camera2AndroidTestCase {
         for (String id : mCameraIds) {
             Log.i(TAG, String.format("Testing Camera %s", id));
 
-            openDevice(id);
             try {
                 // Legacy devices do not support precapture trigger; don't test devices that
                 // can't focus
-                if (mStaticInfo.isHardwareLevelLegacy() || !mStaticInfo.hasFocuser()) {
+                StaticMetadata staticInfo = mAllStaticInfo.get(id);
+                if (staticInfo.isHardwareLevelLegacy() || !staticInfo.hasFocuser()) {
                     continue;
                 }
                 // Depth-only devices won't support AE
-                if (!mStaticInfo.isColorOutputSupported()) {
+                if (!staticInfo.isColorOutputSupported()) {
                     Log.i(TAG, "Camera " + id + " does not support color outputs, skipping");
                     continue;
                 }
 
+                openDevice(id);
                 int[] availableAfModes = mStaticInfo.getAfAvailableModesChecked();
                 int[] availableAeModes = mStaticInfo.getAeAvailableModesChecked();
 
