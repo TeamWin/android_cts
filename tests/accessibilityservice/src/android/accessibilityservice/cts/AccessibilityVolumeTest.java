@@ -44,10 +44,11 @@ public class AccessibilityVolumeTest {
         mInstrumentation = InstrumentationRegistry.getInstrumentation();
         mAudioManager =
                 (AudioManager) mInstrumentation.getContext().getSystemService(AUDIO_SERVICE);
-        // TVs have a single volume
+        // TVs and fixed volume devices have a single volume
         PackageManager pm = mInstrumentation.getContext().getPackageManager();
         mSingleVolume = (pm != null) && (pm.hasSystemFeature(PackageManager.FEATURE_LEANBACK)
-                || pm.hasSystemFeature(PackageManager.FEATURE_TELEVISION));
+                || pm.hasSystemFeature(PackageManager.FEATURE_TELEVISION))
+                || mAudioManager.isVolumeFixed();
     }
 
     @Test
