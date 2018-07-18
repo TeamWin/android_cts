@@ -147,7 +147,7 @@ public class SystemUtil {
     /**
      * Runs a {@link Runnable} adopting Shell's permissions.
      */
-    public static void runWithShellPermissions(@NonNull Runnable runnable) {
+    public static void runWithShellPermissionIdentity(@NonNull Runnable runnable) {
         final UiAutomation automan = InstrumentationRegistry.getInstrumentation().getUiAutomation();
         automan.adoptShellPermissionIdentity();
         try {
@@ -160,7 +160,8 @@ public class SystemUtil {
     /**
      * Calls a {@link Callable} adopting Shell's permissions.
      */
-    public static <T> T callWithShellPermissions(@NonNull Callable<T> callable) throws Exception {
+    public static <T> T callWithShellPermissionIdentity(@NonNull Callable<T> callable)
+            throws Exception {
         final UiAutomation automan = InstrumentationRegistry.getInstrumentation().getUiAutomation();
         automan.adoptShellPermissionIdentity();
         try {
