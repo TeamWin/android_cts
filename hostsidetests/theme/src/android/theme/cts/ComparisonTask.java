@@ -40,7 +40,7 @@ public class ComparisonTask implements Callable<File> {
     private static final int GRAY = 0xFF808080;
 
     /** Maximum allowable number of consecutive failed pixels. */
-    private static final int MAX_CONSECUTIVE_FAILURES = 2;
+    private static final int MAX_CONSECUTIVE_FAILURES = 3;
 
     private final File mExpected;
     private final File mActual;
