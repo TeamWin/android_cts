@@ -495,7 +495,7 @@ public class WindowManagerState {
         private Rect mContainingFrame;
         private Rect mParentFrame;
         private Rect mContentFrame;
-        private Rect mFrame = new Rect();
+        private Rect mFrame;
         private Rect mCrop = new Rect();
 
         WindowState(WindowStateProto proto) {
@@ -516,9 +516,9 @@ public class WindowManagerState {
                 }
                 mCrop = extract(animatorProto.lastClipRect);
             }
-            mFrame = extract(proto.frame);
             WindowFramesProto windowFramesProto = proto.windowFrames;
             if (windowFramesProto != null) {
+                mFrame = extract(windowFramesProto.frame);
                 mContainingFrame = extract(windowFramesProto.containingFrame);
                 mParentFrame = extract(windowFramesProto.parentFrame);
                 mContentFrame = extract(windowFramesProto.contentFrame);
