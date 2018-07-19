@@ -28,7 +28,6 @@ import android.support.test.InstrumentationRegistry;
 import android.support.test.runner.AndroidJUnit4;
 import android.util.Log;
 
-import com.android.compatibility.common.util.CddTest;
 import com.android.compatibility.common.util.DynamicConfigDeviceSide;
 
 import org.junit.Assert;
@@ -50,7 +49,6 @@ import java.util.Set;
  * Validate that the android intents used by APKs on this device are part of the
  * platform.
  */
-@CddTest(requirement="3.2.3.3/C-0-1,C-0-2")
 @RunWith(AndroidJUnit4.class)
 public class IntentTest {
     private static final String TAG = IntentTest.class.getSimpleName();
