@@ -113,6 +113,20 @@ public class StaticMetadata {
         "AF_STATE_PASSIVE_UNFOCUSED"
     };
 
+    // Index with android.control.aePrecaptureTrigger
+    public static final String[] AE_TRIGGER_NAMES = new String[] {
+        "AE_TRIGGER_IDLE",
+        "AE_TRIGGER_START",
+        "AE_TRIGGER_CANCEL"
+    };
+
+    // Index with android.control.afTrigger
+    public static final String[] AF_TRIGGER_NAMES = new String[] {
+        "AF_TRIGGER_IDLE",
+        "AF_TRIGGER_START",
+        "AF_TRIGGER_CANCEL"
+    };
+
     public enum CheckLevel {
         /** Only log warnings for metadata check failures. Execution continues. */
         WARN,
