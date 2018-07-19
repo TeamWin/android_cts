@@ -129,6 +129,8 @@ public class ShortcutManagerClientApiTest extends ShortcutManagerCtsTestsBase {
         assertExpectException(NullPointerException.class, "action must be set",
                 () -> new ShortcutInfo.Builder(getTestContext(), "id").setIntent(new Intent()));
 
+        setCurrentCaller(getTestContext());
+
         assertExpectException(
                 IllegalArgumentException.class, "Short label must be provided", () -> {
                     ShortcutInfo si = new ShortcutInfo.Builder(getTestContext(), "id")

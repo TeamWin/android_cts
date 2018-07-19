@@ -28,6 +28,7 @@ import static org.mockito.Mockito.verifyNoMoreInteractions;
 
 import android.app.Activity;
 import android.app.Instrumentation;
+import android.content.res.Resources;
 import android.support.test.InstrumentationRegistry;
 import android.support.test.annotation.UiThreadTest;
 import android.support.test.filters.MediumTest;
@@ -323,7 +324,9 @@ public class PopupMenuTest {
             final int prevGroupId =
                     i - 1 >= 0 ? menu.getItem(i - 1).getGroupId() : currGroupId;
             View itemView = menuItemList.getChildAt(i);
-            ImageView groupDivider = itemView.findViewById(com.android.internal.R.id.group_divider);
+            // Find com.android.internal.R.id.group_divider
+            ImageView groupDivider = itemView.findViewById(
+                    Resources.getSystem().getIdentifier("group_divider", "id", "android"));
 
             assertNotNull(groupDivider);
             if (!groupDividerEnabled || currGroupId == prevGroupId) {

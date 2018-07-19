@@ -48,6 +48,9 @@ import static android.server.am.ActivityLauncher.launchActivityFromExtras;
 import static android.server.am.ActivityManagerState.STATE_RESUMED;
 import static android.server.am.ComponentNameUtils.getActivityName;
 import static android.server.am.ComponentNameUtils.getLogTag;
+import static android.server.am.Components.BROADCAST_RECEIVER_ACTIVITY;
+import static android.server.am.Components.BroadcastReceiverActivity.ACTION_TRIGGER_BROADCAST;
+import static android.server.am.Components.BroadcastReceiverActivity.EXTRA_FINISH_BROADCAST;
 import static android.server.am.Components.LAUNCHING_ACTIVITY;
 import static android.server.am.Components.TEST_ACTIVITY;
 import static android.server.am.StateLogger.log;
@@ -64,6 +67,7 @@ import static android.server.am.UiDeviceUtils.waitForDeviceIdle;
 import static android.view.Display.DEFAULT_DISPLAY;
 import static android.view.Display.INVALID_DISPLAY;
 
+import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
@@ -143,6 +147,11 @@ public abstract class ActivityManagerTestBase {
     private static final String AM_NO_HOME_SCREEN = "am no-home-screen";
 
     private static final String LOCK_CREDENTIAL = "1234";
+
+    // TODO(b/70247058): Use {@link Context#sendBroadcast(Intent).
+    // Shell command to finish {@link #BROADCAST_RECEIVER_ACTIVITY}.
+    static final String FINISH_ACTIVITY_BROADCAST = "am broadcast -a "
+            + ACTION_TRIGGER_BROADCAST + " --ez " + EXTRA_FINISH_BROADCAST + " true";
 
     private static final int UI_MODE_TYPE_MASK = 0x0f;
     private static final int UI_MODE_TYPE_VR_HEADSET = 0x07;
@@ -1100,6 +1109,8 @@ public abstract class ActivityManagerTestBase {
             "(.+): config size=\\((\\d+),(\\d+)\\) displaySize=\\((\\d+),(\\d+)\\)"
             + " metricsSize=\\((\\d+),(\\d+)\\) smallestScreenWidth=(\\d+) densityDpi=(\\d+)"
             + " orientation=(\\d+)");
+    private static final Pattern sDisplayCutoutPattern = Pattern.compile(
+            "(.+): cutout=(true|false)");
     private static final Pattern sDisplayStatePattern =
             Pattern.compile("Display Power: state=(.+)");
     private static final Pattern sCurrentUiModePattern = Pattern.compile("mCurUiMode=0x(\\d+)");
@@ -1176,6 +1187,59 @@ public abstract class ActivityManagerTestBase {
                 details.densityDpi = Integer.parseInt(matcher.group(9));
                 details.orientation = Integer.parseInt(matcher.group(10));
                 return details;
+            }
+        }
+        return null;
+    }
+
+    /** Check if a device has display cutout. */
+    boolean hasDisplayCutout() {
+        // Launch an activity to report cutout state
+        final LogSeparator logSeparator = separateLogs();
+        launchActivity(BROADCAST_RECEIVER_ACTIVITY);
+
+        // Read the logs to check if cutout is present
+        final Boolean displayCutoutPresent =
+                getCutoutStateForActivity(BROADCAST_RECEIVER_ACTIVITY, logSeparator);
+        assertNotNull("The activity should report cutout state", displayCutoutPresent);
+
+        // Finish activity
+        executeShellCommand(FINISH_ACTIVITY_BROADCAST);
+        mAmWmState.waitForWithAmState(
+                (state) -> !state.containsActivity(BROADCAST_RECEIVER_ACTIVITY),
+                "Waiting for activity to be removed");
+
+        return displayCutoutPresent;
+    }
+
+    /**
+     * Wait for activity to report cutout state in logs and return it. Will return {@code null}
+     * after timeout.
+     */
+    @Nullable
+    private Boolean getCutoutStateForActivity(ComponentName activityName,
+            LogSeparator logSeparator) {
+        final String logTag = getLogTag(activityName);
+        for (int retry = 1; retry <= 5; retry++ ) {
+            final Boolean result = readLastReportedCutoutState(logSeparator, logTag);
+            if (result != null) {
+                return result;
+            }
+            logAlways("***Waiting for cutout state to be reported... retry=" + retry);
+            SystemClock.sleep(1000);
+        }
+        logE("***Waiting for activity cutout state failed: activityName=" + logTag);
+        return null;
+    }
+
+    /** Read display cutout state from device logs. */
+    private Boolean readLastReportedCutoutState(LogSeparator logSeparator, String logTag) {
+        final String[] lines = getDeviceLogsForComponents(logSeparator, logTag);
+        for (int i = lines.length - 1; i >= 0; i--) {
+            final String line = lines[i].trim();
+            final Matcher matcher = sDisplayCutoutPattern.matcher(line);
+            if (matcher.matches()) {
+                return "true".equals(matcher.group(2));
             }
         }
         return null;

@@ -303,6 +303,17 @@ public class StagefrightTest extends InstrumentationTestCase {
      ***********************************************************/
 
     @SecurityTest
+    public void testBug_73965890() throws Exception {
+        int[] frameSizes = getFrameSizes(R.raw.bug_73965890_framelen);
+        doStagefrightTestRawBlob(R.raw.bug_73965890_hevc, "video/hevc", 320, 240, frameSizes);
+    }
+
+    @SecurityTest
+    public void testStagefright_cve_2016_3920() throws Exception {
+        doStagefrightTest(R.raw.cve_2016_3920);
+    }
+
+    @SecurityTest
     public void testStagefright_bug_68953854() throws Exception {
         doStagefrightTest(R.raw.bug_68953854, 1 * 60 * 1000);
     }
@@ -320,6 +331,16 @@ public class StagefrightTest extends InstrumentationTestCase {
     @SecurityTest
     public void testStagefright_bug_70897454() throws Exception {
         doStagefrightTestRawBlob(R.raw.b70897454_avc, "video/avc", 320, 420);
+    }
+
+    @SecurityTest
+    public void testStagefright_cve_2016_3742_b_28165659() throws Exception {
+        doStagefrightTest(R.raw.cve_2016_3742_b_28165659);
+    }
+
+    @SecurityTest
+    public void testStagefright_bug_35039946() throws Exception {
+        doStagefrightTestRawBlob(R.raw.bug_35039946_hevc, "video/hevc", 320, 420);
     }
 
     @SecurityTest
@@ -702,6 +723,11 @@ public class StagefrightTest extends InstrumentationTestCase {
     }
 
     @SecurityTest
+    public void testBug_33641588() throws Exception {
+        doStagefrightTestRawBlob(R.raw.bug_33641588_avc, "video/avc", 320, 240);
+    }
+
+    @SecurityTest
     public void testStagefright_cve_2015_3862_b_22954006() throws Exception {
         doStagefrightTest(R.raw.cve_2015_3862_b_22954006);
     }
@@ -772,8 +798,18 @@ public class StagefrightTest extends InstrumentationTestCase {
     }
 
     @SecurityTest
+    public void testBug_36819262() throws Exception {
+        doStagefrightTestRawBlob(R.raw.bug_36819262_mpeg2, "video/mpeg2", 640, 480);
+    }
+
+    @SecurityTest
     public void testStagefright_cve_2015_6608_b_23680780() throws Exception {
         doStagefrightTest(R.raw.cve_2015_6608_b_23680780);
+    }
+
+    @SecurityTest
+    public void testStagefright_bug_36715268() throws Exception {
+        doStagefrightTest(R.raw.bug_36715268);
     }
 
     @SecurityTest
@@ -789,6 +825,16 @@ public class StagefrightTest extends InstrumentationTestCase {
      to prevent merge conflicts, add N tests below this comment,
      before any existing test methods
      ***********************************************************/
+
+    @SecurityTest
+    public void testStagefright_bug_68664359() throws Exception {
+        doStagefrightTest(R.raw.bug_68664359, 60000);
+    }
+
+    @SecurityTest
+    public void testStagefright_bug_110435401() throws Exception {
+        doStagefrightTest(R.raw.bug_110435401, 60000);
+    }
 
     @SecurityTest
     public void testStagefright_cve_2017_0474() throws Exception {
@@ -824,6 +870,12 @@ public class StagefrightTest extends InstrumentationTestCase {
      to prevent merge conflicts, add O tests below this comment,
      before any existing test methods
      ***********************************************************/
+
+    @SecurityTest
+    public void testBug_65186291() throws Exception {
+        int[] frameSizes = getFrameSizes(R.raw.bug_65186291_framelen);
+        doStagefrightTestRawBlob(R.raw.bug_65186291_hevc, "video/hevc", 1920, 1080, frameSizes);
+    }
 
     @SecurityTest
     public void testBug_67737022() throws Exception {
@@ -875,6 +927,11 @@ public class StagefrightTest extends InstrumentationTestCase {
     @SecurityTest
     public void testStagefright_cve_2016_6699() throws Exception {
         doStagefrightTest(R.raw.cve_2016_6699);
+    }
+
+    @SecurityTest
+    public void testStagefright_bug_65484460() throws Exception {
+        doStagefrightTest(R.raw.bug_65484460);
     }
 
     private void doStagefrightTest(final int rid) throws Exception {

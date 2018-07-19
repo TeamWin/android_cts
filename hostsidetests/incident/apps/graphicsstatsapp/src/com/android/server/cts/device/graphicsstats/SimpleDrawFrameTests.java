@@ -23,6 +23,7 @@ import org.junit.Rule;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertTrue;
 
 /**
  * Used by GraphicsStatsTest.
@@ -40,10 +41,11 @@ public class SimpleDrawFrameTests {
     public void testDrawTenFrames() throws Throwable {
         DrawFramesActivity activity = mActivityRule.getActivity();
         activity.waitForReady();
-        assertEquals(1, activity.getRenderedFramesCount());
+        int initialFrames = activity.getRenderedFramesCount();
+        assertTrue(initialFrames < 5);
         assertEquals(0, activity.getDroppedReportsCount());
         activity.drawFrames(10);
-        assertEquals(11, activity.getRenderedFramesCount());
+        assertEquals(initialFrames + 10, activity.getRenderedFramesCount());
         assertEquals(0, activity.getDroppedReportsCount());
     }
 
@@ -51,7 +53,8 @@ public class SimpleDrawFrameTests {
     public void testDrawJankyFrames() throws Throwable {
         DrawFramesActivity activity = mActivityRule.getActivity();
         activity.waitForReady();
-        assertEquals(1, activity.getRenderedFramesCount());
+        int initialFrames = activity.getRenderedFramesCount();
+        assertTrue(initialFrames < 5);
         assertEquals(0, activity.getDroppedReportsCount());
         int[] frames = new int[50];
         for (int i = 0; i < 10; i++) {
@@ -62,7 +65,7 @@ public class SimpleDrawFrameTests {
             frames[indx + 3] = DrawFramesActivity.FRAME_JANK_MISS_VSYNC;
         }
         activity.drawFrames(frames);
-        assertEquals(51, activity.getRenderedFramesCount());
+        assertEquals(initialFrames + 50, activity.getRenderedFramesCount());
         assertEquals(0, activity.getDroppedReportsCount());
     }
 
@@ -70,7 +73,8 @@ public class SimpleDrawFrameTests {
     public void testDrawDaveyFrames() throws Throwable {
         DrawFramesActivity activity = mActivityRule.getActivity();
         activity.waitForReady();
-        assertEquals(1, activity.getRenderedFramesCount());
+        int initialFrames = activity.getRenderedFramesCount();
+        assertTrue(initialFrames < 5);
         assertEquals(0, activity.getDroppedReportsCount());
         int[] frames = new int[40];
         for (int i = 0; i < 10; i++) {
@@ -79,7 +83,7 @@ public class SimpleDrawFrameTests {
             frames[indx + 2] = DrawFramesActivity.FRAME_JANK_DAVEY_JR;
         }
         activity.drawFrames(frames);
-        assertEquals(41, activity.getRenderedFramesCount());
+        assertEquals(initialFrames + 40, activity.getRenderedFramesCount());
         assertEquals(0, activity.getDroppedReportsCount());
     }
 }

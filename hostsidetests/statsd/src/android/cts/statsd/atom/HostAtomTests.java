@@ -75,9 +75,15 @@ public class HostAtomTests extends AtomTestCase {
         if (statsdDisabled()) {
             return;
         }
-        // Setup, make sure the screen is off.
+        // Setup, make sure the screen is off and turn off AoD if it is on.
+        // AoD needs to be turned off because the screen should go into an off state. But, if AoD is
+        // on and the device doesn't support STATE_DOZE, the screen sadly goes back to STATE_ON.
+        String aodState = getAodState();
+        setAodState("0");
+        turnScreenOn();
+        Thread.sleep(WAIT_TIME_SHORT);
         turnScreenOff();
-        Thread.sleep(WAIT_TIME_LONG);
+        Thread.sleep(WAIT_TIME_SHORT);
 
         final int atomTag = Atom.SCREEN_STATE_CHANGED_FIELD_NUMBER;
 
@@ -107,7 +113,8 @@ public class HostAtomTests extends AtomTestCase {
         List<EventMetricData> data = getEventMetricDataList();
         // reset screen to on
         turnScreenOn();
-
+        // Restores AoD to initial state.
+        setAodState(aodState);
         // Assert that the events happened in the expected order.
         assertStatesOccurred(stateSet, data, WAIT_TIME_LONG,
                 atom -> atom.getScreenStateChanged().getState().getNumber());
@@ -351,12 +358,10 @@ public class HostAtomTests extends AtomTestCase {
                 .setField(RemainingBatteryCapacity.CHARGE_UAH_FIELD_NUMBER));
         addGaugeAtom(config, Atom.REMAINING_BATTERY_CAPACITY_FIELD_NUMBER, dimension);
 
-        turnScreenOff();
-
         uploadConfig(config);
 
         Thread.sleep(WAIT_TIME_LONG);
-        turnScreenOn();
+        setAppBreadcrumbPredicate();
         Thread.sleep(WAIT_TIME_LONG);
 
         List<Atom> data = getGaugeMetricDataList();
@@ -380,12 +385,10 @@ public class HostAtomTests extends AtomTestCase {
                         .setField(FullBatteryCapacity.CAPACITY_UAH_FIELD_NUMBER));
         addGaugeAtom(config, Atom.FULL_BATTERY_CAPACITY_FIELD_NUMBER, dimension);
 
-        turnScreenOff();
-
         uploadConfig(config);
 
         Thread.sleep(WAIT_TIME_LONG);
-        turnScreenOn();
+        setAppBreadcrumbPredicate();
         Thread.sleep(WAIT_TIME_LONG);
 
         List<Atom> data = getGaugeMetricDataList();
@@ -411,12 +414,10 @@ public class HostAtomTests extends AtomTestCase {
                         .setField(Temperature.SENSOR_NAME_FIELD_NUMBER));
         addGaugeAtom(config, Atom.TEMPERATURE_FIELD_NUMBER, dimension);
 
-        turnScreenOff();
-
         uploadConfig(config);
 
         Thread.sleep(WAIT_TIME_LONG);
-        turnScreenOn();
+        setAppBreadcrumbPredicate();
         Thread.sleep(WAIT_TIME_LONG);
 
         List<Atom> data = getGaugeMetricDataList();
@@ -447,12 +448,10 @@ public class HostAtomTests extends AtomTestCase {
                         .setField(KernelWakelock.NAME_FIELD_NUMBER));
         addGaugeAtom(config, Atom.KERNEL_WAKELOCK_FIELD_NUMBER, dimension);
 
-        turnScreenOff();
-
         uploadConfig(config);
 
         Thread.sleep(WAIT_TIME_LONG);
-        turnScreenOn();
+        setAppBreadcrumbPredicate();
         Thread.sleep(WAIT_TIME_LONG);
 
         List<Atom> data = getGaugeMetricDataList();
@@ -477,13 +476,11 @@ public class HostAtomTests extends AtomTestCase {
                         .setField(CpuTimePerFreq.CLUSTER_FIELD_NUMBER));
         addGaugeAtom(config, Atom.CPU_TIME_PER_FREQ_FIELD_NUMBER, dimension);
 
-        turnScreenOff();
-
         uploadConfig(config);
 
-        Thread.sleep(2000);
-        turnScreenOn();
-        Thread.sleep(2000);
+        Thread.sleep(WAIT_TIME_LONG);
+        setAppBreadcrumbPredicate();
+        Thread.sleep(WAIT_TIME_LONG);
 
         List<Atom> data = getGaugeMetricDataList();
 
@@ -504,12 +501,10 @@ public class HostAtomTests extends AtomTestCase {
                         .setField(SubsystemSleepState.SUBSYSTEM_NAME_FIELD_NUMBER));
         addGaugeAtom(config, Atom.SUBSYSTEM_SLEEP_STATE_FIELD_NUMBER, dimension);
 
-        turnScreenOff();
-
         uploadConfig(config);
 
         Thread.sleep(WAIT_TIME_LONG);
-        turnScreenOn();
+        setAppBreadcrumbPredicate();
         Thread.sleep(WAIT_TIME_LONG);
 
         List<Atom> dataList = getGaugeMetricDataList();
@@ -518,30 +513,6 @@ public class HostAtomTests extends AtomTestCase {
             assertTrue(!atom.getSubsystemSleepState().getSubsystemName().equals(""));
             assertTrue(atom.getSubsystemSleepState().getCount() >= 0);
             assertTrue(atom.getSubsystemSleepState().getTimeMillis() >= 0);
-        }
-    }
-
-    public void testModemActivityInfo() throws Exception {
-        if (statsdDisabled()) {
-            return;
-        }
-        if (!hasFeature(FEATURE_TELEPHONY, true)) return;
-        StatsdConfig.Builder config = getPulledConfig();
-        addGaugeAtom(config, Atom.MODEM_ACTIVITY_INFO_FIELD_NUMBER, null);
-
-        turnScreenOff();
-
-        uploadConfig(config);
-
-        Thread.sleep(WAIT_TIME_LONG);
-        turnScreenOn();
-        Thread.sleep(WAIT_TIME_LONG);
-
-        List<Atom> dataList = getGaugeMetricDataList();
-
-        for (Atom atom: dataList) {
-            assertTrue(atom.getModemActivityInfo().getTimestampMillis() > 0);
-            assertTrue(atom.getModemActivityInfo().getSleepTimeMillis() > 0);
         }
     }
 
@@ -554,12 +525,10 @@ public class HostAtomTests extends AtomTestCase {
         StatsdConfig.Builder config = getPulledConfig();
         addGaugeAtom(config, Atom.WIFI_ACTIVITY_INFO_FIELD_NUMBER, null);
 
-        turnScreenOff();
-
         uploadConfig(config);
 
         Thread.sleep(WAIT_TIME_LONG);
-        turnScreenOn();
+        setAppBreadcrumbPredicate();
         Thread.sleep(WAIT_TIME_LONG);
 
         List<Atom> dataList = getGaugeMetricDataList();
@@ -571,34 +540,6 @@ public class HostAtomTests extends AtomTestCase {
             assertTrue(atom.getWifiActivityInfo().getControllerTxTimeMillis() >= 0);
             assertTrue(atom.getWifiActivityInfo().getControllerRxTimeMillis() >= 0);
             assertTrue(atom.getWifiActivityInfo().getControllerEnergyUsed() >= 0);
-        }
-    }
-
-    public void testBluetoothActivityInfo() throws Exception {
-        if (statsdDisabled()) {
-            return;
-        }
-        if (!hasFeature(FEATURE_BLUETOOTH, true)) return;
-        StatsdConfig.Builder config = getPulledConfig();
-        addGaugeAtom(config, Atom.BLUETOOTH_ACTIVITY_INFO_FIELD_NUMBER, null);
-
-        turnScreenOff();
-
-        uploadConfig(config);
-
-        Thread.sleep(WAIT_TIME_LONG);
-        turnScreenOn();
-        Thread.sleep(WAIT_TIME_LONG);
-
-        List<Atom> dataList = getGaugeMetricDataList();
-
-        for (Atom atom: dataList) {
-            assertTrue(atom.getBluetoothActivityInfo().getTimestampMillis() > 0);
-            assertTrue(atom.getBluetoothActivityInfo().getBluetoothStackState() >= 0);
-            assertTrue(atom.getBluetoothActivityInfo().getControllerIdleTimeMillis() > 0);
-            assertTrue(atom.getBluetoothActivityInfo().getControllerTxTimeMillis() >= 0);
-            assertTrue(atom.getBluetoothActivityInfo().getControllerRxTimeMillis() >= 0);
-            assertTrue(atom.getBluetoothActivityInfo().getEnergyUsed() >= 0);
         }
     }
 

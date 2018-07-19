@@ -77,7 +77,7 @@ public class BurstCaptureTest extends Camera2SurfaceViewTestCase {
     private void yuvBurstTestByCamera(String cameraId) throws Exception {
         // Parameters
         final int MAX_CONVERGENCE_FRAMES = 150; // 5 sec at 30fps
-        final long MAX_PREVIEW_RESULT_TIMEOUT_MS = 1000;
+        final long MAX_PREVIEW_RESULT_TIMEOUT_MS = 2000;
         final int BURST_SIZE = 100;
         final float FRAME_DURATION_MARGIN_FRACTION = 0.1f;
 
