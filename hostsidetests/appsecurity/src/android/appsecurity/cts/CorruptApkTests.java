@@ -34,7 +34,8 @@ import java.io.File;
  */
 public class CorruptApkTests extends DeviceTestCase implements IBuildReceiver {
     private final String B71360999_PKG = "com.android.appsecurity.b71360999";
-    private final String B71361168_PKG = "com.example.helloworld";
+    private final String B71361168_PKG = "com.android.appsecurity.b71361168";
+    private final String B79488511_PKG = "com.android.appsecurity.b79488511";
 
     private IBuildInfo mBuildInfo;
 
@@ -49,6 +50,7 @@ public class CorruptApkTests extends DeviceTestCase implements IBuildReceiver {
         super.setUp();
         uninstall(B71360999_PKG);
         uninstall(B71361168_PKG);
+        uninstall(B79488511_PKG);
     }
 
     @After
@@ -57,6 +59,7 @@ public class CorruptApkTests extends DeviceTestCase implements IBuildReceiver {
         super.tearDown();
         uninstall(B71360999_PKG);
         uninstall(B71361168_PKG);
+        uninstall(B79488511_PKG);
     }
 
     /** Uninstall the apk if the test failed previously. */
@@ -72,7 +75,7 @@ public class CorruptApkTests extends DeviceTestCase implements IBuildReceiver {
      */
     public void testFailToInstallCorruptStringPoolHeader_b71360999() throws Exception {
         final String APK_PATH = "CtsCorruptApkTests_b71360999.apk";
-        assertFailsToInstall(APK_PATH, B71360999_PKG);
+        assertInstallNoFatalError(APK_PATH, B71360999_PKG);
     }
 
     /**
@@ -80,24 +83,34 @@ public class CorruptApkTests extends DeviceTestCase implements IBuildReceiver {
      */
     public void testFailToInstallCorruptStringPoolHeader_b71361168() throws Exception {
         final String APK_PATH = "CtsCorruptApkTests_b71361168.apk";
-        assertFailsToInstall(APK_PATH, B71361168_PKG);
+        assertInstallNoFatalError(APK_PATH, B71361168_PKG);
     }
 
     /**
-     * Assert that the app fails to install and the reason for failing is not caused by a buffer
-     * overflow nor a out of bounds read.
+     * Tests that apks described in b/79488511 do not install successfully.
+     */
+    public void testFailToInstallCorruptStringPoolHeader_b79488511() throws Exception {
+        final String APK_PATH = "CtsCorruptApkTests_b79488511.apk";
+        assertInstallNoFatalError(APK_PATH, B79488511_PKG);
+    }
+
+    /**
+     * Assert that installing the app does not cause a native error caused by a buffer overflow
+     * or an out-of-bounds read.
      **/
-    private void assertFailsToInstall(String filename, String pkg) throws Exception {
+    private void assertInstallNoFatalError(String filename, String pkg) throws Exception {
         ITestDevice device = getDevice();
         device.clearLogcat();
-
         final String result = device.installPackage(
                 new CompatibilityBuildHelper(mBuildInfo).getTestFile(filename),
                 true /*reinstall*/);
 
-        assertNotNull(result);
-        assertFalse(result.isEmpty());
-        assertFalse(device.getInstalledPackageNames().contains(pkg));
+        // Starting from P, corrupt apks should always fail to install
+        if (device.getApiLevel() >= 28) {
+            assertNotNull(result);
+            assertFalse(result.isEmpty());
+            assertFalse(device.getInstalledPackageNames().contains(pkg));
+        }
 
         // This catches if the device fails to install the app because a segmentation fault
         // or out of bounds read created by the bug occurs
