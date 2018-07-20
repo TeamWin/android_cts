@@ -35,6 +35,7 @@ LOCAL_STATIC_JAVA_LIBRARIES = \
 	testng
 
 LOCAL_SDK_VERSION := current
+LOCAL_MIN_SDK_VERSION := 21
 
 # tag this module as a cts test artifact
 LOCAL_COMPATIBILITY_SUITE := cts vts general-tests

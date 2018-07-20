@@ -36,5 +36,6 @@ LOCAL_STATIC_JAVA_LIBRARIES := \
 LOCAL_JAVA_LIBRARIES := android.test.base.stubs
 
 LOCAL_SDK_VERSION := test_current
+LOCAL_MIN_SDK_VERSION := 25
 
 include $(BUILD_CTS_PACKAGE)
