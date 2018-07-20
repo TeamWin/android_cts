@@ -36,6 +36,7 @@ LOCAL_JNI_SHARED_LIBRARIES := libctsvrextensions_jni libnativehelper_compat_libc
 LOCAL_SRC_FILES := $(call all-java-files-under, src) ../../apps/CtsVerifier/src/com/android/cts/verifier/vr/MockVrListenerService.java
 
 LOCAL_SDK_VERSION := test_current
+LOCAL_MIN_SDK_VERSION := 14
 
 # Tag this module as a cts test artifact
 LOCAL_COMPATIBILITY_SUITE := cts vts general-tests

@@ -41,5 +41,6 @@ LOCAL_COMPATIBILITY_SUITE := cts vts general-tests cts_instant
 LOCAL_PACKAGE_NAME := CtsInputMethodServiceDeviceTests
 
 LOCAL_SDK_VERSION := test_current
+LOCAL_MIN_SDK_VERSION := 19
 
 include $(BUILD_CTS_PACKAGE)

@@ -32,6 +32,7 @@ LOCAL_STATIC_JAVA_LIBRARIES := \
     androidx.legacy_legacy-support-v4
 
 LOCAL_SDK_VERSION := test_current
+LOCAL_MIN_SDK_VERSION := 24
 
 # tag this module as a cts test artifact
 LOCAL_COMPATIBILITY_SUITE := cts vts general-tests
