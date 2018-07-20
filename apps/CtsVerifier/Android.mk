@@ -81,6 +81,7 @@ endef
 LOCAL_MODULE := cts-verifier-framework
 LOCAL_AAPT_FLAGS := --auto-add-overlay --extra-packages android.support.v4
 LOCAL_SDK_VERSION := current
+LOCAL_MIN_SDK_VERSION := 19
 LOCAL_RESOURCE_DIR := $(LOCAL_PATH)/res
 LOCAL_SRC_FILES := \
     $(call java-files-in, src/com/android/cts/verifier) \
