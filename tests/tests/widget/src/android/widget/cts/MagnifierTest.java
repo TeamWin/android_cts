@@ -484,6 +484,50 @@ public class MagnifierTest {
         new Magnifier.Builder(view).setCornerRadius(-1f);
     }
 
+    @Test
+    public void testZoomChange() throws Throwable {
+        // Setup.
+        final View view = new View(mActivity);
+        final int width = 300;
+        final int height = 270;
+        final Magnifier.Builder builder = new Magnifier.Builder(view)
+                .setSize(width, height)
+                .setZoom(1.0f);
+        mMagnifier = builder.build();
+        final float newZoom = 1.5f;
+        WidgetTestUtils.runOnMainAndDrawSync(mActivityRule, view, () -> {
+            mLayout.addView(view, new LayoutParams(200, 200));
+            mMagnifier.setZoom(newZoom);
+        });
+        assertEquals((int) (width / newZoom), mMagnifier.getSourceWidth());
+        assertEquals((int) (height / newZoom), mMagnifier.getSourceHeight());
+
+        // Show.
+        final CountDownLatch latch = new CountDownLatch(1);
+        mMagnifier.setOnOperationCompleteCallback(latch::countDown);
+        mActivityRule.runOnUiThread(() -> {
+            mMagnifier.show(200, 200);
+        });
+        assertTrue(TIME_LIMIT_EXCEEDED, latch.await(1, TimeUnit.SECONDS));
+
+        // Check bitmap size.
+        assertNotNull(mMagnifier.getOriginalContent());
+        assertEquals((int) (width / newZoom), mMagnifier.getOriginalContent().getWidth());
+        assertEquals((int) (height / newZoom), mMagnifier.getOriginalContent().getHeight());
+    }
+
+    @Test(expected = IllegalArgumentException.class)
+    public void testZoomChange_throwsException_whenZoomIsZero() {
+        final View view = new View(mActivity);
+        new Magnifier(view).setZoom(0f);
+    }
+
+    @Test(expected = IllegalArgumentException.class)
+    public void testZoomChange_throwsException_whenZoomIsNegative() {
+        final View view = new View(mActivity);
+        new Magnifier(view).setZoom(-1f);
+    }
+
     /**
      * Sets the activity to contain four equal quadrants coloured differently and
      * instantiates a magnifier. This method should not be called on the UI thread.
