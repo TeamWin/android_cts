@@ -350,21 +350,33 @@ public class BatteryStatsValidationTest extends ProtoDumpTestCase {
         batteryOnScreenOff();
         installPackage(DEVICE_SIDE_TEST_APK, true);
         // Whitelist this app against background location request throttling
+        String origWhitelist = getDevice().executeShellCommand(
+                "settings get global location_background_throttle_package_whitelist").trim();
         getDevice().executeShellCommand(String.format(
                 "settings put global location_background_throttle_package_whitelist %s",
                 DEVICE_SIDE_TEST_PACKAGE));
 
-        // Background test.
-        executeBackground(ACTION_GPS, 60_000);
-        assertValueRange("sr", gpsSensorNumber, 6, 1, 1); // count
-        assertValueRange("sr", gpsSensorNumber, 7, 1, 1); // background_count
+        try {
+            // Background test.
+            executeBackground(ACTION_GPS, 60_000);
+            assertValueRange("sr", gpsSensorNumber, 6, 1, 1); // count
+            assertValueRange("sr", gpsSensorNumber, 7, 1, 1); // background_count
 
-        // Foreground test.
-        executeForeground(ACTION_GPS, 60_000);
-        assertValueRange("sr", gpsSensorNumber, 6, 2, 2); // count
-        assertValueRange("sr", gpsSensorNumber, 7, 1, 1); // background_count
-
-        batteryOffScreenOn();
+            // Foreground test.
+            executeForeground(ACTION_GPS, 60_000);
+            assertValueRange("sr", gpsSensorNumber, 6, 2, 2); // count
+            assertValueRange("sr", gpsSensorNumber, 7, 1, 1); // background_count
+        } finally {
+            if ("null".equals(origWhitelist) || "".equals(origWhitelist)) {
+                getDevice().executeShellCommand(
+                        "settings delete global location_background_throttle_package_whitelist");
+            } else {
+                getDevice().executeShellCommand(String.format(
+                        "settings put global location_background_throttle_package_whitelist %s",
+                        origWhitelist));
+            }
+            batteryOffScreenOn();
+        }
     }
 
     public void testJobBgVsFg() throws Exception {
