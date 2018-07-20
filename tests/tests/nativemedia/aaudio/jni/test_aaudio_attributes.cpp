@@ -132,10 +132,15 @@ static const aaudio_input_preset_t sInputPresets[] = {
     AAUDIO_INPUT_PRESET_UNPROCESSED,
 };
 
+
 static void checkAttributesUsage(aaudio_performance_mode_t perfMode) {
     for (aaudio_usage_t usage : sUsages) {
+        // There can be a race condition when switching between devices,
+        // which can cause an unexpected disconnection of the stream.
+        usleep(500 * 1000); // wait for previous stream to completely close
         checkAttributes(perfMode, usage, DONT_SET);
     }
+    usleep(500 * 1000); // wait for previous stream to completely close
 }
 
 static void checkAttributesContentType(aaudio_input_preset_t perfMode) {

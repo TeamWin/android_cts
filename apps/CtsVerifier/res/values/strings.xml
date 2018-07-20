@@ -1085,12 +1085,13 @@
     <string name="usb_tapjacking_test_instructions">
         1. Connect device via usb to computer.\n
         2. Click \"Show overlay\" button.  Settings may appear if the CTS Verifier app doesn\'t have display over apps permission.  Enable this permission and then click back to navigate back to the app.\n
-        3. Trigger USB debugging dialog (from computer terminal): \"adb shell am start -e fingerprints placeholder -e key placeholder com.android.systemui/.UsbDebuggingActivityAlias\"\n
-        4. USB debugging dialog should appear with the overlay on top saying \"This message covers the USB debugging RSA prompt\" to appear.\n
+        3. Trigger USB debugging dialog (from computer terminal): \"adb shell am start -e fingerprints placeholder -e key placeholder %s\"\n
+        4. USB debugging dialog should appear.  If the overlay cannot be seen above the USB debugging dialog, PASS this test (no need to proceed to Step 5).  Else, if the overlay does appear on top saying \"This message covers the USB debugging RSA prompt\", continue to Step 5.\n
         5. Try clicking OK. \n
         Test pass if you cannot click OK when the text quoted above is on top of the USB debugging dialog.  Toast should appear saying there is an overlay so Settings cannot verify your response. \n
         Note: Fake message overlay may remain on screen until you leave the test. This is working as intended. \n
     </string>
+    <string name="usb_tapjacking_usb_debugging_component">com.android.systemui/.UsbDebuggingActivityAlias</string>
     <string name="usb_tapjacking_overlay_message">This message covers the USB debugging RSA prompt</string>
     <string name="usb_tapjacking_error_toast">Please restart the application and try again.</string>
     <string name="usb_tapjacking_error_toast2">Please enable display over apps permission for this application before proceeding.</string>

@@ -582,46 +582,6 @@ public class AudioManagerTest extends InstrumentationTestCase {
         }
     }
 
-    public void testVolumeDndAffectedStream() throws Exception {
-        if (mHasVibrator || mSkipRingerTests || !mSupportNotificationPolicyAccess) {
-            return;
-        }
-        Utils.toggleNotificationPolicyAccess(
-                mContext.getPackageName(), getInstrumentation(), true);
-        mAudioManager.setStreamVolume(
-                AudioManager.STREAM_SYSTEM, 7, AudioManager.FLAG_ALLOW_RINGER_MODES);
-        mAudioManager.setRingerMode(AudioManager.RINGER_MODE_NORMAL);
-        Utils.toggleNotificationPolicyAccess(
-                mContext.getPackageName(), getInstrumentation(), false);
-        // 7 to 0, fail.
-        try {
-            mAudioManager.setStreamVolume(
-                    AudioManager.STREAM_SYSTEM, 0, AudioManager.FLAG_ALLOW_RINGER_MODES);
-            fail("Apps without notification policy access cannot change ringer mode");
-        } catch (SecurityException e) {}
-
-        // 7 to 1: success
-        mAudioManager.setStreamVolume(
-                AudioManager.STREAM_SYSTEM, 1, AudioManager.FLAG_ALLOW_RINGER_MODES);
-        assertEquals("setStreamVolume did not change volume",
-                1, mAudioManager.getStreamVolume(AudioManager.STREAM_SYSTEM));
-
-        // 0 to non-zero: fail.
-        Utils.toggleNotificationPolicyAccess(
-                mContext.getPackageName(), getInstrumentation(), true);
-        mAudioManager.setRingerMode(AudioManager.RINGER_MODE_SILENT);
-        mAudioManager.setStreamVolume(
-                AudioManager.STREAM_SYSTEM, 0, AudioManager.FLAG_ALLOW_RINGER_MODES);
-        Utils.toggleNotificationPolicyAccess(
-                mContext.getPackageName(), getInstrumentation(), false);
-
-        try {
-            mAudioManager.setStreamVolume(
-                    AudioManager.STREAM_SYSTEM, 6, AudioManager.FLAG_ALLOW_RINGER_MODES);
-            fail("Apps without notification policy access cannot change ringer mode");
-        } catch (SecurityException e) {}
-    }
-
     public void testVolume() throws Exception {
         if (!mSupportNotificationPolicyAccess) {
             return;

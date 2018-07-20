@@ -83,11 +83,11 @@ public class FeatureUtil {
     }
 
     /** Returns true if the device is a low ram device:
-     *  1. API level &gt;= O
+     *  1. API level &gt;= O_MR1
      *  2. device has feature LOW_RAM_FEATURE
      */
     public static boolean isLowRam() {
-        return ApiLevelUtil.isAtLeast(Build.VERSION_CODES.O) &&
+        return ApiLevelUtil.isAtLeast(Build.VERSION_CODES.O_MR1) &&
                 hasSystemFeature(LOW_RAM_FEATURE);
     }
 

@@ -16,7 +16,6 @@
 
 package android.app.cts;
 
-import android.Manifest;
 import android.accessibilityservice.AccessibilityService;
 import android.app.Activity;
 import android.app.ActivityManager;
@@ -1019,7 +1018,6 @@ public class ActivityManagerProcessStateTest extends InstrumentationTestCase {
 
             // We don't want to wait for the uid to actually go idle, we can force it now.
             controller.makeUidIdle();
-            uidWatcher.expect(WatchUidRunner.CMD_IDLE, null);
 
             // Make sure the process is gone so we start over fresh.
             controller.ensureProcessGone();

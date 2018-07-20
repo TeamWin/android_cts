@@ -46,24 +46,47 @@ enum TestFlags {
     kUseSrgb = 0x2,  // Whether to use the sRGB transfer function.
 };
 
-#define FORMAT_CASE(x) case x: return #x; break
+#define FORMAT_CASE(x) case AHARDWAREBUFFER_FORMAT_##x: return #x; break
+#define GL_FORMAT_CASE(x) case x: return #x; break;
 const char* AHBFormatAsString(int32_t format) {
     switch (format) {
-        FORMAT_CASE(AHARDWAREBUFFER_FORMAT_R8G8B8A8_UNORM);
-        FORMAT_CASE(AHARDWAREBUFFER_FORMAT_R8G8B8X8_UNORM);
-        FORMAT_CASE(AHARDWAREBUFFER_FORMAT_R8G8B8_UNORM);
-        FORMAT_CASE(AHARDWAREBUFFER_FORMAT_R5G6B5_UNORM);
-        FORMAT_CASE(AHARDWAREBUFFER_FORMAT_R16G16B16A16_FLOAT);
-        FORMAT_CASE(AHARDWAREBUFFER_FORMAT_R10G10B10A2_UNORM);
-        FORMAT_CASE(AHARDWAREBUFFER_FORMAT_BLOB);
-        FORMAT_CASE(AHARDWAREBUFFER_FORMAT_D16_UNORM);
-        FORMAT_CASE(AHARDWAREBUFFER_FORMAT_D24_UNORM);
-        FORMAT_CASE(AHARDWAREBUFFER_FORMAT_D24_UNORM_S8_UINT);
-        FORMAT_CASE(AHARDWAREBUFFER_FORMAT_D32_FLOAT);
-        FORMAT_CASE(AHARDWAREBUFFER_FORMAT_D32_FLOAT_S8_UINT);
-        FORMAT_CASE(AHARDWAREBUFFER_FORMAT_S8_UINT);
+        FORMAT_CASE(R8G8B8A8_UNORM);
+        FORMAT_CASE(R8G8B8X8_UNORM);
+        FORMAT_CASE(R8G8B8_UNORM);
+        FORMAT_CASE(R5G6B5_UNORM);
+        FORMAT_CASE(R16G16B16A16_FLOAT);
+        FORMAT_CASE(R10G10B10A2_UNORM);
+        FORMAT_CASE(BLOB);
+        FORMAT_CASE(D16_UNORM);
+        FORMAT_CASE(D24_UNORM);
+        FORMAT_CASE(D24_UNORM_S8_UINT);
+        FORMAT_CASE(D32_FLOAT);
+        FORMAT_CASE(D32_FLOAT_S8_UINT);
+        FORMAT_CASE(S8_UINT);
+        GL_FORMAT_CASE(GL_RGB8);
+        GL_FORMAT_CASE(GL_RGBA8);
+        GL_FORMAT_CASE(GL_RGB565);
+        GL_FORMAT_CASE(GL_SRGB8_ALPHA8);
+        GL_FORMAT_CASE(GL_RGBA16F);
+        GL_FORMAT_CASE(GL_RGB10_A2);
+        GL_FORMAT_CASE(GL_STENCIL_INDEX8);
+        GL_FORMAT_CASE(GL_DEPTH24_STENCIL8);
     }
     return "";
+}
+
+std::string GetTestName(const ::testing::TestParamInfo<AHardwareBuffer_Desc>& info) {
+    std::ostringstream name;
+    const char* format_string = AHBFormatAsString(info.param.format);
+    if (strlen(format_string) == 0) {
+        name << info.index;
+    } else {
+        name << format_string;
+        if (info.param.stride & kUseSrgb) {
+            name << "_sRGB";
+        }
+    }
+    return name.str();
 }
 
 union IntFloat {
@@ -932,6 +955,11 @@ void AHardwareBufferGLTest::SetUpTexture(const AHardwareBuffer_Desc& desc, int u
             glEGLImageTargetTexture2DOES(mTexTarget, static_cast<GLeglImageOES>(mEGLImage));
         }
     }
+    // If the texture does not have mipmaps, set a filter that does not require them.
+    if (!(desc.usage & AHARDWAREBUFFER_USAGE_GPU_MIPMAP_COMPLETE)) {
+        glTexParameteri(mTexTarget, GL_TEXTURE_MAX_LEVEL, 0);
+        glTexParameteri(mTexTarget, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+    }
     ASSERT_EQ(GLenum{GL_NO_ERROR}, glGetError());
 }
 
@@ -1029,7 +1057,7 @@ void AHardwareBufferGLTest::TearDown() {
 }
 
 
-class AHardwareBufferBlobFormatTest : public AHardwareBufferGLTest {
+class BlobTest : public AHardwareBufferGLTest {
 public:
     bool SetUpBuffer(const AHardwareBuffer_Desc& desc) override {
         if (!HasGLExtension("GL_EXT_external_buffer")) return false;
@@ -1038,7 +1066,7 @@ public:
 };
 
 // Verifies that a blob buffer can be used to supply vertex attributes to a shader.
-TEST_P(AHardwareBufferBlobFormatTest, GpuDataBufferVertexBuffer) {
+TEST_P(BlobTest, GpuDataBufferVertexBuffer) {
     AHardwareBuffer_Desc desc = GetParam();
     desc.width = sizeof kQuadPositions;
     desc.usage = AHARDWAREBUFFER_USAGE_GPU_DATA_BUFFER;
@@ -1077,7 +1105,7 @@ TEST_P(AHardwareBufferBlobFormatTest, GpuDataBufferVertexBuffer) {
 }
 
 // Verifies that a blob buffer can be directly accessed from the CPU.
-TEST_P(AHardwareBufferBlobFormatTest, GpuDataBufferCpuWrite) {
+TEST_P(BlobTest, GpuDataBufferCpuWrite) {
     AHardwareBuffer_Desc desc = GetParam();
     desc.width = sizeof kQuadPositions;
     desc.usage = AHARDWAREBUFFER_USAGE_CPU_WRITE_RARELY | AHARDWAREBUFFER_USAGE_GPU_DATA_BUFFER;
@@ -1123,7 +1151,7 @@ TEST_P(AHardwareBufferBlobFormatTest, GpuDataBufferCpuWrite) {
 }
 
 // Verifies that data written into a blob buffer from the GPU can be read on the CPU.
-TEST_P(AHardwareBufferBlobFormatTest, GpuDataBufferCpuRead) {
+TEST_P(BlobTest, GpuDataBufferCpuRead) {
     AHardwareBuffer_Desc desc = GetParam();
     desc.width = sizeof kQuadPositions;
     desc.usage = AHARDWAREBUFFER_USAGE_CPU_READ_RARELY | AHARDWAREBUFFER_USAGE_GPU_DATA_BUFFER;
@@ -1167,13 +1195,13 @@ TEST_P(AHardwareBufferBlobFormatTest, GpuDataBufferCpuRead) {
 
 // The first case tests an ordinary GL buffer, while the second one tests an AHB-backed buffer.
 INSTANTIATE_TEST_CASE_P(
-    BlobBuffer,
-    AHardwareBufferBlobFormatTest,
+    Blob, BlobTest,
     ::testing::Values(
-        AHardwareBuffer_Desc{1, 1, 1, AHARDWAREBUFFER_FORMAT_BLOB, 0, 0, 0, 0}));
+        AHardwareBuffer_Desc{1, 1, 1, AHARDWAREBUFFER_FORMAT_BLOB, 0, 0, 0, 0}),
+    &GetTestName);
 
 
-class AHardwareBufferColorFormatTest : public AHardwareBufferGLTest {
+class ColorTest : public AHardwareBufferGLTest {
 public:
     bool SetUpBuffer(const AHardwareBuffer_Desc& desc) override {
         if ((desc.usage & AHARDWAREBUFFER_USAGE_GPU_COLOR_OUTPUT) &&
@@ -1188,7 +1216,7 @@ public:
 // Verify that when allocating an AHardwareBuffer succeeds with GPU_COLOR_OUTPUT,
 // it can be bound as a framebuffer attachment, glClear'ed and then read from
 // another context using glReadPixels.
-TEST_P(AHardwareBufferColorFormatTest, GpuColorOutputIsRenderable) {
+TEST_P(ColorTest, GpuColorOutputIsRenderable) {
     AHardwareBuffer_Desc desc = GetParam();
     desc.width = 100;
     desc.height = 100;
@@ -1218,7 +1246,7 @@ TEST_P(AHardwareBufferColorFormatTest, GpuColorOutputIsRenderable) {
 }
 
 // Verifies that the content of GPU_COLOR_OUTPUT buffers can be read on the CPU.
-TEST_P(AHardwareBufferColorFormatTest, GpuColorOutputCpuRead) {
+TEST_P(ColorTest, GpuColorOutputCpuRead) {
     AHardwareBuffer_Desc desc = GetParam();
     desc.width = 10;
     desc.height = 10;
@@ -1313,7 +1341,7 @@ TEST_P(AHardwareBufferColorFormatTest, GpuColorOutputCpuRead) {
 // Verify that when allocating an AHardwareBuffer succeeds with GPU_SAMPLED_IMAGE,
 // it can be bound as a texture, set to a color with glTexSubImage2D and sampled
 // from in a fragment shader.
-TEST_P(AHardwareBufferColorFormatTest, GpuSampledImageCanBeSampled) {
+TEST_P(ColorTest, GpuSampledImageCanBeSampled) {
     AHardwareBuffer_Desc desc = GetParam();
     desc.usage = AHARDWAREBUFFER_USAGE_GPU_SAMPLED_IMAGE;
     if (!SetUpBuffer(desc)) return;
@@ -1359,7 +1387,7 @@ TEST_P(AHardwareBufferColorFormatTest, GpuSampledImageCanBeSampled) {
 
 // Verify that buffers which have both GPU_SAMPLED_IMAGE and GPU_COLOR_OUTPUT
 // can be both rendered and sampled as a texture.
-TEST_P(AHardwareBufferColorFormatTest, GpuColorOutputAndSampledImage) {
+TEST_P(ColorTest, GpuColorOutputAndSampledImage) {
     AHardwareBuffer_Desc desc = GetParam();
     desc.usage = AHARDWAREBUFFER_USAGE_GPU_COLOR_OUTPUT | AHARDWAREBUFFER_USAGE_GPU_SAMPLED_IMAGE;
     if (!SetUpBuffer(desc)) return;
@@ -1404,7 +1432,7 @@ TEST_P(AHardwareBufferColorFormatTest, GpuColorOutputAndSampledImage) {
     CheckGoldenPixels(goldens, GL_RGBA8);
 }
 
-TEST_P(AHardwareBufferColorFormatTest, MipmapComplete) {
+TEST_P(ColorTest, MipmapComplete) {
     const int kNumTiles = 8;
     AHardwareBuffer_Desc desc = GetParam();
     // Ensure that the checkerboard tiles have equal size at every level of the mipmap.
@@ -1447,7 +1475,7 @@ TEST_P(AHardwareBufferColorFormatTest, MipmapComplete) {
     CheckGoldenPixels(goldens, desc.format);
 }
 
-TEST_P(AHardwareBufferColorFormatTest, CubemapSampling) {
+TEST_P(ColorTest, CubemapSampling) {
     AHardwareBuffer_Desc desc = GetParam();
     desc.usage =
         AHARDWAREBUFFER_USAGE_GPU_COLOR_OUTPUT |
@@ -1496,7 +1524,7 @@ TEST_P(AHardwareBufferColorFormatTest, CubemapSampling) {
     }
 }
 
-TEST_P(AHardwareBufferColorFormatTest, CubemapMipmaps) {
+TEST_P(ColorTest, CubemapMipmaps) {
     const int kNumTiles = 8;
     AHardwareBuffer_Desc desc = GetParam();
     desc.usage =
@@ -1543,49 +1571,49 @@ TEST_P(AHardwareBufferColorFormatTest, CubemapMipmaps) {
 
 // The 'stride' field is used to pass a combination of TestFlags.
 INSTANTIATE_TEST_CASE_P(
-    SingleLayer,
-    AHardwareBufferColorFormatTest,
+    SingleLayer, ColorTest,
     ::testing::Values(
-        /* 0*/ AHardwareBuffer_Desc{75, 33, 1, GL_RGB8, 0, kGlFormat, 0, 0},
-        /* 1*/ AHardwareBuffer_Desc{64, 80, 1, GL_RGBA8, 0, kGlFormat, 0, 0},
-        /* 2*/ AHardwareBuffer_Desc{49, 23, 1, GL_SRGB8_ALPHA8, 0, kGlFormat | kUseSrgb, 0, 0},
-        /* 3*/ AHardwareBuffer_Desc{42, 41, 1, GL_RGBA16F, 0, kGlFormat, 0, 0},
-        /* 4*/ AHardwareBuffer_Desc{37, 63, 1, GL_RGB10_A2, 0, kGlFormat, 0, 0},
-        /* 5*/ AHardwareBuffer_Desc{33, 20, 1, AHARDWAREBUFFER_FORMAT_R8G8B8A8_UNORM, 0, 0, 0, 0},
-        /* 6*/ AHardwareBuffer_Desc{33, 20, 1, AHARDWAREBUFFER_FORMAT_R8G8B8A8_UNORM, 0, kUseSrgb, 0, 0},
-        /* 7*/ AHardwareBuffer_Desc{20, 10, 1, AHARDWAREBUFFER_FORMAT_R8G8B8X8_UNORM, 0, 0, 0, 0},
-        /* 8*/ AHardwareBuffer_Desc{20, 10, 1, AHARDWAREBUFFER_FORMAT_R8G8B8X8_UNORM, 0, kUseSrgb, 0, 0},
-        /* 9*/ AHardwareBuffer_Desc{16, 20, 1, AHARDWAREBUFFER_FORMAT_R8G8B8_UNORM, 0, 0, 0, 0},
-        /*10*/ AHardwareBuffer_Desc{16, 20, 1, AHARDWAREBUFFER_FORMAT_R8G8B8_UNORM, 0, kUseSrgb, 0, 0},
-        /*11*/ AHardwareBuffer_Desc{10, 20, 1, AHARDWAREBUFFER_FORMAT_R5G6B5_UNORM, 0, 0, 0, 0},
-        /*12*/ AHardwareBuffer_Desc{10, 20, 1, AHARDWAREBUFFER_FORMAT_R16G16B16A16_FLOAT, 0, 0, 0, 0},
-        /*13*/ AHardwareBuffer_Desc{10, 20, 1, AHARDWAREBUFFER_FORMAT_R10G10B10A2_UNORM, 0, 0, 0, 0}));
+        AHardwareBuffer_Desc{75, 33, 1, GL_RGB8, 0, kGlFormat, 0, 0},
+        AHardwareBuffer_Desc{64, 80, 1, GL_RGBA8, 0, kGlFormat, 0, 0},
+        AHardwareBuffer_Desc{49, 23, 1, GL_SRGB8_ALPHA8, 0, kGlFormat | kUseSrgb, 0, 0},
+        AHardwareBuffer_Desc{42, 41, 1, GL_RGBA16F, 0, kGlFormat, 0, 0},
+        AHardwareBuffer_Desc{37, 63, 1, GL_RGB10_A2, 0, kGlFormat, 0, 0},
+        AHardwareBuffer_Desc{33, 20, 1, AHARDWAREBUFFER_FORMAT_R8G8B8A8_UNORM, 0, 0, 0, 0},
+        AHardwareBuffer_Desc{33, 20, 1, AHARDWAREBUFFER_FORMAT_R8G8B8A8_UNORM, 0, kUseSrgb, 0, 0},
+        AHardwareBuffer_Desc{20, 10, 1, AHARDWAREBUFFER_FORMAT_R8G8B8X8_UNORM, 0, 0, 0, 0},
+        AHardwareBuffer_Desc{20, 10, 1, AHARDWAREBUFFER_FORMAT_R8G8B8X8_UNORM, 0, kUseSrgb, 0, 0},
+        AHardwareBuffer_Desc{16, 20, 1, AHARDWAREBUFFER_FORMAT_R8G8B8_UNORM, 0, 0, 0, 0},
+        AHardwareBuffer_Desc{16, 20, 1, AHARDWAREBUFFER_FORMAT_R8G8B8_UNORM, 0, kUseSrgb, 0, 0},
+        AHardwareBuffer_Desc{10, 20, 1, AHARDWAREBUFFER_FORMAT_R5G6B5_UNORM, 0, 0, 0, 0},
+        AHardwareBuffer_Desc{10, 20, 1, AHARDWAREBUFFER_FORMAT_R16G16B16A16_FLOAT, 0, 0, 0, 0},
+        AHardwareBuffer_Desc{10, 20, 1, AHARDWAREBUFFER_FORMAT_R10G10B10A2_UNORM, 0, 0, 0, 0}),
+    &GetTestName);
 
 INSTANTIATE_TEST_CASE_P(
-    MultipleLayers,
-    AHardwareBufferColorFormatTest,
+    MultipleLayers, ColorTest,
     ::testing::Values(
-        /* 0*/ AHardwareBuffer_Desc{75, 33, 5, GL_RGB8, 0, kGlFormat, 0, 0},
-        /* 1*/ AHardwareBuffer_Desc{64, 80, 6, GL_RGBA8, 0, kGlFormat, 0, 0},
-        /* 2*/ AHardwareBuffer_Desc{33, 28, 4, GL_SRGB8_ALPHA8, 0, kGlFormat | kUseSrgb, 0, 0},
-        /* 3*/ AHardwareBuffer_Desc{42, 41, 3, GL_RGBA16F, 0, kGlFormat, 0, 0},
-        /* 4*/ AHardwareBuffer_Desc{37, 63, 4, GL_RGB10_A2, 0, kGlFormat, 0, 0},
-        /* 5*/ AHardwareBuffer_Desc{25, 77, 7, AHARDWAREBUFFER_FORMAT_R8G8B8A8_UNORM, 0, 0, 0, 0},
-        /* 6*/ AHardwareBuffer_Desc{25, 77, 7, AHARDWAREBUFFER_FORMAT_R8G8B8A8_UNORM, 0, kUseSrgb, 0, 0},
-        /* 7*/ AHardwareBuffer_Desc{30, 30, 3, AHARDWAREBUFFER_FORMAT_R8G8B8X8_UNORM, 0, 0, 0, 0},
-        /* 8*/ AHardwareBuffer_Desc{30, 30, 3, AHARDWAREBUFFER_FORMAT_R8G8B8X8_UNORM, 0, kUseSrgb, 0, 0},
-        /* 9*/ AHardwareBuffer_Desc{50, 50, 4, AHARDWAREBUFFER_FORMAT_R8G8B8_UNORM, 0, 0, 0, 0},
-        /*10*/ AHardwareBuffer_Desc{50, 50, 4, AHARDWAREBUFFER_FORMAT_R8G8B8_UNORM, 0, kUseSrgb, 0, 0},
-        /*11*/ AHardwareBuffer_Desc{20, 10, 2, AHARDWAREBUFFER_FORMAT_R5G6B5_UNORM, 0, 0, 0, 0},
-        /*12*/ AHardwareBuffer_Desc{20, 20, 4, AHARDWAREBUFFER_FORMAT_R16G16B16A16_FLOAT, 0, 0, 0, 0},
-        /*13*/ AHardwareBuffer_Desc{30, 20, 16, AHARDWAREBUFFER_FORMAT_R10G10B10A2_UNORM, 0, 0, 0, 0}));
+        AHardwareBuffer_Desc{75, 33, 5, GL_RGB8, 0, kGlFormat, 0, 0},
+        AHardwareBuffer_Desc{64, 80, 6, GL_RGBA8, 0, kGlFormat, 0, 0},
+        AHardwareBuffer_Desc{33, 28, 4, GL_SRGB8_ALPHA8, 0, kGlFormat | kUseSrgb, 0, 0},
+        AHardwareBuffer_Desc{42, 41, 3, GL_RGBA16F, 0, kGlFormat, 0, 0},
+        AHardwareBuffer_Desc{37, 63, 4, GL_RGB10_A2, 0, kGlFormat, 0, 0},
+        AHardwareBuffer_Desc{25, 77, 7, AHARDWAREBUFFER_FORMAT_R8G8B8A8_UNORM, 0, 0, 0, 0},
+        AHardwareBuffer_Desc{25, 77, 7, AHARDWAREBUFFER_FORMAT_R8G8B8A8_UNORM, 0, kUseSrgb, 0, 0},
+        AHardwareBuffer_Desc{30, 30, 3, AHARDWAREBUFFER_FORMAT_R8G8B8X8_UNORM, 0, 0, 0, 0},
+        AHardwareBuffer_Desc{30, 30, 3, AHARDWAREBUFFER_FORMAT_R8G8B8X8_UNORM, 0, kUseSrgb, 0, 0},
+        AHardwareBuffer_Desc{50, 50, 4, AHARDWAREBUFFER_FORMAT_R8G8B8_UNORM, 0, 0, 0, 0},
+        AHardwareBuffer_Desc{50, 50, 4, AHARDWAREBUFFER_FORMAT_R8G8B8_UNORM, 0, kUseSrgb, 0, 0},
+        AHardwareBuffer_Desc{20, 10, 2, AHARDWAREBUFFER_FORMAT_R5G6B5_UNORM, 0, 0, 0, 0},
+        AHardwareBuffer_Desc{20, 20, 4, AHARDWAREBUFFER_FORMAT_R16G16B16A16_FLOAT, 0, 0, 0, 0},
+        AHardwareBuffer_Desc{30, 20, 16, AHARDWAREBUFFER_FORMAT_R10G10B10A2_UNORM, 0, 0, 0, 0}),
+    &GetTestName);
 
 
-class AHardwareBufferDepthFormatTest : public AHardwareBufferGLTest {};
+class DepthTest : public AHardwareBufferGLTest {};
 
 // Verify that depth testing against a depth buffer rendered in another context
 // works correctly.
-TEST_P(AHardwareBufferDepthFormatTest, DepthAffectsDrawAcrossContexts) {
+TEST_P(DepthTest, DepthAffectsDrawAcrossContexts) {
     AHardwareBuffer_Desc desc = GetParam();
     desc.width = 40;
     desc.height = 40;
@@ -1626,7 +1654,7 @@ TEST_P(AHardwareBufferDepthFormatTest, DepthAffectsDrawAcrossContexts) {
 }
 
 // Verify that depth buffers with usage GPU_SAMPLED_IMAGE can be used as textures.
-TEST_P(AHardwareBufferDepthFormatTest, DepthCanBeSampled) {
+TEST_P(DepthTest, DepthCanBeSampled) {
     AHardwareBuffer_Desc desc = GetParam();
     desc.usage = AHARDWAREBUFFER_USAGE_GPU_COLOR_OUTPUT | AHARDWAREBUFFER_USAGE_GPU_SAMPLED_IMAGE;
     // ES 2.0 does not support depth textures. There is an extension OES_depth_texture, but it is
@@ -1675,7 +1703,7 @@ TEST_P(AHardwareBufferDepthFormatTest, DepthCanBeSampled) {
     CheckGoldenPixels(goldens, GL_RGBA8);
 }
 
-TEST_P(AHardwareBufferDepthFormatTest, DepthCubemapSampling) {
+TEST_P(DepthTest, DepthCubemapSampling) {
     AHardwareBuffer_Desc desc = GetParam();
     desc.usage =
         AHARDWAREBUFFER_USAGE_GPU_COLOR_OUTPUT |
@@ -1736,34 +1764,34 @@ TEST_P(AHardwareBufferDepthFormatTest, DepthCubemapSampling) {
 
 // The 'stride' field is used to pass a combination of TestFlags.
 INSTANTIATE_TEST_CASE_P(
-    SingleLayer,
-    AHardwareBufferDepthFormatTest,
+    SingleLayer, DepthTest,
     ::testing::Values(
-        /*0*/ AHardwareBuffer_Desc{16, 24, 1, GL_DEPTH_COMPONENT16, 0, kGlFormat, 0, 0},
-        /*1*/ AHardwareBuffer_Desc{16, 24, 1, AHARDWAREBUFFER_FORMAT_D16_UNORM, 0, 0, 0, 0},
-        /*2*/ AHardwareBuffer_Desc{44, 21, 1, AHARDWAREBUFFER_FORMAT_D24_UNORM, 0, 0, 0, 0},
-        /*3*/ AHardwareBuffer_Desc{57, 33, 1, AHARDWAREBUFFER_FORMAT_D24_UNORM_S8_UINT, 0, 0, 0, 0},
-        /*4*/ AHardwareBuffer_Desc{20, 10, 1, AHARDWAREBUFFER_FORMAT_D32_FLOAT, 0, 0, 0, 0},
-        /*5*/ AHardwareBuffer_Desc{57, 33, 1, AHARDWAREBUFFER_FORMAT_D32_FLOAT_S8_UINT, 0, 0, 0, 0}));
+        AHardwareBuffer_Desc{16, 24, 1, GL_DEPTH_COMPONENT16, 0, kGlFormat, 0, 0},
+        AHardwareBuffer_Desc{16, 24, 1, AHARDWAREBUFFER_FORMAT_D16_UNORM, 0, 0, 0, 0},
+        AHardwareBuffer_Desc{44, 21, 1, AHARDWAREBUFFER_FORMAT_D24_UNORM, 0, 0, 0, 0},
+        AHardwareBuffer_Desc{57, 33, 1, AHARDWAREBUFFER_FORMAT_D24_UNORM_S8_UINT, 0, 0, 0, 0},
+        AHardwareBuffer_Desc{20, 10, 1, AHARDWAREBUFFER_FORMAT_D32_FLOAT, 0, 0, 0, 0},
+        AHardwareBuffer_Desc{57, 33, 1, AHARDWAREBUFFER_FORMAT_D32_FLOAT_S8_UINT, 0, 0, 0, 0}),
+    &GetTestName);
 
 
 INSTANTIATE_TEST_CASE_P(
-    MultipleLayers,
-    AHardwareBufferDepthFormatTest,
+    MultipleLayers, DepthTest,
     ::testing::Values(
-        /*0*/ AHardwareBuffer_Desc{16, 24, 6, GL_DEPTH_COMPONENT16, 0, kGlFormat, 0, 0},
-        /*1*/ AHardwareBuffer_Desc{16, 24, 6, AHARDWAREBUFFER_FORMAT_D16_UNORM, 0, 0, 0, 0},
-        /*2*/ AHardwareBuffer_Desc{44, 21, 4, AHARDWAREBUFFER_FORMAT_D24_UNORM, 0, 0, 0, 0},
-        /*3*/ AHardwareBuffer_Desc{57, 33, 7, AHARDWAREBUFFER_FORMAT_D24_UNORM_S8_UINT, 0, 0, 0, 0},
-        /*4*/ AHardwareBuffer_Desc{20, 10, 5, AHARDWAREBUFFER_FORMAT_D32_FLOAT, 0, 0, 0, 0},
-        /*5*/ AHardwareBuffer_Desc{57, 33, 3, AHARDWAREBUFFER_FORMAT_D32_FLOAT_S8_UINT, 0, 0, 0, 0}));
+        AHardwareBuffer_Desc{16, 24, 6, GL_DEPTH_COMPONENT16, 0, kGlFormat, 0, 0},
+        AHardwareBuffer_Desc{16, 24, 6, AHARDWAREBUFFER_FORMAT_D16_UNORM, 0, 0, 0, 0},
+        AHardwareBuffer_Desc{44, 21, 4, AHARDWAREBUFFER_FORMAT_D24_UNORM, 0, 0, 0, 0},
+        AHardwareBuffer_Desc{57, 33, 7, AHARDWAREBUFFER_FORMAT_D24_UNORM_S8_UINT, 0, 0, 0, 0},
+        AHardwareBuffer_Desc{20, 10, 5, AHARDWAREBUFFER_FORMAT_D32_FLOAT, 0, 0, 0, 0},
+        AHardwareBuffer_Desc{57, 33, 3, AHARDWAREBUFFER_FORMAT_D32_FLOAT_S8_UINT, 0, 0, 0, 0}),
+    &GetTestName);
 
 
-class AHardwareBufferStencilFormatTest : public AHardwareBufferGLTest {};
+class StencilTest : public AHardwareBufferGLTest {};
 
 // Verify that stencil testing against a stencil buffer rendered in another context
 // works correctly.
-TEST_P(AHardwareBufferStencilFormatTest, StencilAffectsDrawAcrossContexts) {
+TEST_P(StencilTest, StencilAffectsDrawAcrossContexts) {
     AHardwareBuffer_Desc desc = GetParam();
     desc.width = 40;
     desc.height = 40;
@@ -1814,7 +1842,7 @@ TEST_P(AHardwareBufferStencilFormatTest, StencilAffectsDrawAcrossContexts) {
 
 // Verify that stencil testing against a stencil buffer rendered in another context
 // works correctly.
-TEST_P(AHardwareBufferStencilFormatTest, StencilTexture) {
+TEST_P(StencilTest, StencilTexture) {
     AHardwareBuffer_Desc desc = GetParam();
     desc.usage = AHARDWAREBUFFER_USAGE_GPU_COLOR_OUTPUT | AHARDWAREBUFFER_USAGE_GPU_SAMPLED_IMAGE;
     const bool kPureStencil =
@@ -1865,23 +1893,23 @@ TEST_P(AHardwareBufferStencilFormatTest, StencilTexture) {
 
 // The 'stride' field is used to pass a combination of TestFlags.
 INSTANTIATE_TEST_CASE_P(
-    SingleLayer,
-    AHardwareBufferStencilFormatTest,
+    SingleLayer, StencilTest,
     ::testing::Values(
-        /*0*/ AHardwareBuffer_Desc{49, 57, 1, GL_STENCIL_INDEX8, 0, kGlFormat, 0, 0},
-        /*1*/ AHardwareBuffer_Desc{36, 50, 1, GL_DEPTH24_STENCIL8, 0, kGlFormat, 0, 0},
-        /*2*/ AHardwareBuffer_Desc{26, 29, 1, AHARDWAREBUFFER_FORMAT_S8_UINT, 0, 0, 0, 0},
-        /*3*/ AHardwareBuffer_Desc{57, 33, 1, AHARDWAREBUFFER_FORMAT_D24_UNORM_S8_UINT, 0, 0, 0, 0},
-        /*4*/ AHardwareBuffer_Desc{17, 23, 1, AHARDWAREBUFFER_FORMAT_D32_FLOAT_S8_UINT, 0, 0, 0, 0}));
+        AHardwareBuffer_Desc{49, 57, 1, GL_STENCIL_INDEX8, 0, kGlFormat, 0, 0},
+        AHardwareBuffer_Desc{36, 50, 1, GL_DEPTH24_STENCIL8, 0, kGlFormat, 0, 0},
+        AHardwareBuffer_Desc{26, 29, 1, AHARDWAREBUFFER_FORMAT_S8_UINT, 0, 0, 0, 0},
+        AHardwareBuffer_Desc{57, 33, 1, AHARDWAREBUFFER_FORMAT_D24_UNORM_S8_UINT, 0, 0, 0, 0},
+        AHardwareBuffer_Desc{17, 23, 1, AHARDWAREBUFFER_FORMAT_D32_FLOAT_S8_UINT, 0, 0, 0, 0}),
+    &GetTestName);
 
 INSTANTIATE_TEST_CASE_P(
-    MultipleLayers,
-    AHardwareBufferStencilFormatTest,
+    MultipleLayers, StencilTest,
     ::testing::Values(
-        /*0*/ AHardwareBuffer_Desc{49, 57, 3, GL_STENCIL_INDEX8, 0, kGlFormat, 0, 0},
-        /*1*/ AHardwareBuffer_Desc{36, 50, 6, GL_DEPTH24_STENCIL8, 0, kGlFormat, 0, 0},
-        /*2*/ AHardwareBuffer_Desc{26, 29, 5, AHARDWAREBUFFER_FORMAT_S8_UINT, 0, 0, 0, 0},
-        /*3*/ AHardwareBuffer_Desc{57, 33, 4, AHARDWAREBUFFER_FORMAT_D24_UNORM_S8_UINT, 0, 0, 0, 0},
-        /*4*/ AHardwareBuffer_Desc{17, 23, 7, AHARDWAREBUFFER_FORMAT_D32_FLOAT_S8_UINT, 0, 0, 0, 0}));
+        AHardwareBuffer_Desc{49, 57, 3, GL_STENCIL_INDEX8, 0, kGlFormat, 0, 0},
+        AHardwareBuffer_Desc{36, 50, 6, GL_DEPTH24_STENCIL8, 0, kGlFormat, 0, 0},
+        AHardwareBuffer_Desc{26, 29, 5, AHARDWAREBUFFER_FORMAT_S8_UINT, 0, 0, 0, 0},
+        AHardwareBuffer_Desc{57, 33, 4, AHARDWAREBUFFER_FORMAT_D24_UNORM_S8_UINT, 0, 0, 0, 0},
+        AHardwareBuffer_Desc{17, 23, 7, AHARDWAREBUFFER_FORMAT_D32_FLOAT_S8_UINT, 0, 0, 0, 0}),
+    &GetTestName);
 
 }  // namespace android
