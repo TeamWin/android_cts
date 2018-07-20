@@ -27,6 +27,7 @@ import android.hardware.camera2.CaptureRequest.Builder;
 import android.hardware.camera2.CaptureResult;
 import android.hardware.camera2.cts.CameraTestUtils.SimpleCaptureCallback;
 import android.hardware.camera2.cts.CameraTestUtils.SimpleImageReaderListener;
+import android.hardware.camera2.cts.helpers.StaticMetadata;
 import android.hardware.camera2.cts.testcases.Camera2SurfaceViewTestCase;
 import android.hardware.camera2.params.StreamConfigurationMap;
 import android.media.Image;
@@ -71,15 +72,14 @@ public class BurstCaptureRawTest extends Camera2SurfaceViewTestCase {
         Log.i(TAG, "Begin testRawSensorSize");
         for (String id : mCameraIds) {
             try {
-                openDevice(id);
-
                 ArrayList<Integer> supportedRawList = new ArrayList<Integer>(RAW_FORMATS.length);
-                if (!checkCapability(supportedRawList, RAW_FORMATS)) {
+                if (!checkCapability(id, supportedRawList, RAW_FORMATS)) {
                     Log.i(TAG, "Capability is not supported on camera " + id
                             + ". Skip the test.");
                     continue;
                 }
 
+                openDevice(id);
                 Size[] rawSizes = mStaticInfo.getRawOutputSizesChecked();
                 assertTrue("No capture sizes available for RAW format!", rawSizes.length != 0);
 
@@ -437,15 +437,17 @@ public class BurstCaptureRawTest extends Camera2SurfaceViewTestCase {
      *
      * @return true if the it is has the capability to execute the test.
      */
-    private boolean checkCapability(ArrayList<Integer> supportedRawList, int[] testedFormats) {
+    private boolean checkCapability(String id, ArrayList<Integer> supportedRawList,
+            int[] testedFormats) {
+        StaticMetadata staticInfo = mAllStaticInfo.get(id);
         // make sure the sensor has manual support
-        if (!mStaticInfo.isHardwareLevelAtLeastFull()) {
+        if (!staticInfo.isHardwareLevelAtLeastFull()) {
             Log.w(TAG, "Full hardware level is not supported");
             return false;
         }
 
         // get the list of supported RAW format
-        StreamConfigurationMap config = mStaticInfo.getValueFromKeyNonNull(
+        StreamConfigurationMap config = staticInfo.getValueFromKeyNonNull(
                 CameraCharacteristics.SCALER_STREAM_CONFIGURATION_MAP);
 
         // check for the RAW support
@@ -671,15 +673,14 @@ public class BurstCaptureRawTest extends Camera2SurfaceViewTestCase {
         final int PREPARE_TIMEOUT_MS = 10000;
         for (String id : mCameraIds) {
             try {
-                openDevice(id);
-
                 ArrayList<Integer> supportedRawList = new ArrayList<Integer>(RAW_FORMATS.length);
-                if (!checkCapability(supportedRawList, testedFormats)) {
+                if (!checkCapability(id, supportedRawList, testedFormats)) {
                     Log.i(TAG, "Capability is not supported on camera " + id
                             + ". Skip the test.");
                     continue;
                 }
 
+                openDevice(id);
                 // test each supported RAW format
                 for (int rawFormat : supportedRawList) {
                     Log.i(TAG, "Testing format " + imageFormatToString(rawFormat) + ".");

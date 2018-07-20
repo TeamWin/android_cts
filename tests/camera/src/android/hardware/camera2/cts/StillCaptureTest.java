@@ -37,6 +37,7 @@ import android.util.Size;
 import android.hardware.camera2.cts.CameraTestUtils.SimpleCaptureCallback;
 import android.hardware.camera2.cts.CameraTestUtils.SimpleImageReaderListener;
 import android.hardware.camera2.cts.helpers.Camera2Focuser;
+import android.hardware.camera2.cts.helpers.StaticMetadata;
 import android.hardware.camera2.cts.testcases.Camera2SurfaceViewTestCase;
 import android.hardware.camera2.params.MeteringRectangle;
 import android.media.Image;
@@ -90,12 +91,12 @@ public class StillCaptureTest extends Camera2SurfaceViewTestCase {
         for (int i = 0; i < mCameraIds.length; i++) {
             try {
                 Log.i(TAG, "Testing JPEG exif for Camera " + mCameraIds[i]);
-                openDevice(mCameraIds[i]);
-                if (!mStaticInfo.isColorOutputSupported()) {
+                if (!mAllStaticInfo.get(mCameraIds[i]).isColorOutputSupported()) {
                     Log.i(TAG, "Camera " + mCameraIds[i] +
                             " does not support color outputs, skipping");
                     continue;
                 }
+                openDevice(mCameraIds[i]);
                 jpegExifTestByCamera();
             } finally {
                 closeDevice();
@@ -118,11 +119,11 @@ public class StillCaptureTest extends Camera2SurfaceViewTestCase {
         for (String id : mCameraIds) {
             try {
                 Log.i(TAG, "Testing basic take picture for Camera " + id);
-                openDevice(id);
-                if (!mStaticInfo.isColorOutputSupported()) {
+                if (!mAllStaticInfo.get(id).isColorOutputSupported()) {
                     Log.i(TAG, "Camera " + id + " does not support color outputs, skipping");
                     continue;
                 }
+                openDevice(id);
                 takePictureTestByCamera(/*aeRegions*/null, /*awbRegions*/null, /*afRegions*/null);
             } finally {
                 closeDevice();
@@ -145,11 +146,11 @@ public class StillCaptureTest extends Camera2SurfaceViewTestCase {
         for (String id : mCameraIds) {
             try {
                 Log.i(TAG, "Testing basic ZSL take picture for Camera " + id);
-                openDevice(id);
-                if (!mStaticInfo.isColorOutputSupported()) {
+                if (!mAllStaticInfo.get(id).isColorOutputSupported()) {
                     Log.i(TAG, "Camera " + id + " does not support color outputs, skipping");
                     continue;
                 }
+                openDevice(id);
                 CaptureRequest.Builder stillRequest =
                         mCamera.createCaptureRequest(CameraDevice.TEMPLATE_STILL_CAPTURE);
                 stillRequest.set(CaptureRequest.CONTROL_ENABLE_ZSL, true);
@@ -170,15 +171,15 @@ public class StillCaptureTest extends Camera2SurfaceViewTestCase {
        for (int i = 0; i < mCameraIds.length; i++) {
            try {
                Log.i(TAG, "Testing raw capture for Camera " + mCameraIds[i]);
-               openDevice(mCameraIds[i]);
 
-               if (!mStaticInfo.isCapabilitySupported(
+               if (!mAllStaticInfo.get(mCameraIds[i]).isCapabilitySupported(
                        CameraCharacteristics.REQUEST_AVAILABLE_CAPABILITIES_RAW)) {
                    Log.i(TAG, "RAW capability is not supported in camera " + mCameraIds[i] +
                            ". Skip the test.");
                    continue;
                }
 
+               openDevice(mCameraIds[i]);
                rawCaptureTestByCamera(/*stillRequest*/null);
            } finally {
                closeDevice();
@@ -194,14 +195,14 @@ public class StillCaptureTest extends Camera2SurfaceViewTestCase {
        for (int i = 0; i < mCameraIds.length; i++) {
            try {
                Log.i(TAG, "Testing raw ZSL capture for Camera " + mCameraIds[i]);
-               openDevice(mCameraIds[i]);
 
-               if (!mStaticInfo.isCapabilitySupported(
+               if (!mAllStaticInfo.get(mCameraIds[i]).isCapabilitySupported(
                        CameraCharacteristics.REQUEST_AVAILABLE_CAPABILITIES_RAW)) {
                    Log.i(TAG, "RAW capability is not supported in camera " + mCameraIds[i] +
                            ". Skip the test.");
                    continue;
                }
+               openDevice(mCameraIds[i]);
                CaptureRequest.Builder stillRequest =
                        mCamera.createCaptureRequest(CameraDevice.TEMPLATE_STILL_CAPTURE);
                stillRequest.set(CaptureRequest.CONTROL_ENABLE_ZSL, true);
@@ -226,14 +227,14 @@ public class StillCaptureTest extends Camera2SurfaceViewTestCase {
         for (int i = 0; i < mCameraIds.length; i++) {
             try {
                 Log.i(TAG, "Testing raw+JPEG capture for Camera " + mCameraIds[i]);
-                openDevice(mCameraIds[i]);
-                if (!mStaticInfo.isCapabilitySupported(
+                if (!mAllStaticInfo.get(mCameraIds[i]).isCapabilitySupported(
                         CameraCharacteristics.REQUEST_AVAILABLE_CAPABILITIES_RAW)) {
                     Log.i(TAG, "RAW capability is not supported in camera " + mCameraIds[i] +
                             ". Skip the test.");
                     continue;
                 }
 
+                openDevice(mCameraIds[i]);
                 fullRawCaptureTestByCamera(/*stillRequest*/null);
             } finally {
                 closeDevice();
@@ -254,13 +255,13 @@ public class StillCaptureTest extends Camera2SurfaceViewTestCase {
         for (int i = 0; i < mCameraIds.length; i++) {
             try {
                 Log.i(TAG, "Testing raw+JPEG ZSL capture for Camera " + mCameraIds[i]);
-                openDevice(mCameraIds[i]);
-                if (!mStaticInfo.isCapabilitySupported(
+                if (!mAllStaticInfo.get(mCameraIds[i]).isCapabilitySupported(
                         CameraCharacteristics.REQUEST_AVAILABLE_CAPABILITIES_RAW)) {
                     Log.i(TAG, "RAW capability is not supported in camera " + mCameraIds[i] +
                             ". Skip the test.");
                     continue;
                 }
+                openDevice(mCameraIds[i]);
                 CaptureRequest.Builder stillRequest =
                         mCamera.createCaptureRequest(CameraDevice.TEMPLATE_STILL_CAPTURE);
                 stillRequest.set(CaptureRequest.CONTROL_ENABLE_ZSL, true);
@@ -284,16 +285,17 @@ public class StillCaptureTest extends Camera2SurfaceViewTestCase {
         for (String id : mCameraIds) {
             try {
                 Log.i(TAG, "Testing touch for focus for Camera " + id);
-                openDevice(id);
-                int maxAfRegions = mStaticInfo.getAfMaxRegionsChecked();
-                if (!(mStaticInfo.hasFocuser() && maxAfRegions > 0)) {
+                StaticMetadata staticInfo = mAllStaticInfo.get(id);
+                int maxAfRegions = staticInfo.getAfMaxRegionsChecked();
+                if (!(staticInfo.hasFocuser() && maxAfRegions > 0)) {
                     continue;
                 }
                 // TODO: Relax test to use non-SurfaceView output for depth cases
-                if (!mStaticInfo.isColorOutputSupported()) {
+                if (!staticInfo.isColorOutputSupported()) {
                     Log.i(TAG, "Camera " + id + " does not support color outputs, skipping");
                     continue;
                 }
+                openDevice(id);
                 touchForFocusTestByCamera();
             } finally {
                 closeDevice();
@@ -313,11 +315,11 @@ public class StillCaptureTest extends Camera2SurfaceViewTestCase {
         for (String id : mCameraIds) {
             try {
                 Log.i(TAG, "Testing Still preview capture combination for Camera " + id);
-                openDevice(id);
-                if (!mStaticInfo.isColorOutputSupported()) {
+                if (!mAllStaticInfo.get(id).isColorOutputSupported()) {
                     Log.i(TAG, "Camera " + id + " does not support color outputs, skipping");
                     continue;
                 }
+                openDevice(id);
                 previewStillCombinationTestByCamera();
             } finally {
                 closeDevice();
@@ -340,16 +342,17 @@ public class StillCaptureTest extends Camera2SurfaceViewTestCase {
         for (String id : mCameraIds) {
             try {
                 Log.i(TAG, "Testing AE compensation for Camera " + id);
-                openDevice(id);
 
-                if (mStaticInfo.isHardwareLevelLegacy()) {
+                StaticMetadata staticInfo = mAllStaticInfo.get(id);
+                if (staticInfo.isHardwareLevelLegacy()) {
                     Log.i(TAG, "Skipping test on legacy devices");
                     continue;
                 }
-                if (!mStaticInfo.isColorOutputSupported()) {
+                if (!staticInfo.isColorOutputSupported()) {
                     Log.i(TAG, "Camera " + id + " does not support color outputs, skipping");
                     continue;
                 }
+                openDevice(id);
                 aeCompensationTestByCamera();
             } finally {
                 closeDevice();
@@ -440,11 +443,11 @@ public class StillCaptureTest extends Camera2SurfaceViewTestCase {
         for (String id : mCameraIds) {
             try {
                 Log.i(TAG, "Testing preview persistence for Camera " + id);
-                openDevice(id);
-                if (!mStaticInfo.isColorOutputSupported()) {
+                if (!mAllStaticInfo.get(id).isColorOutputSupported()) {
                     Log.i(TAG, "Camera " + id + " does not support color outputs, skipping");
                     continue;
                 }
+                openDevice(id);
                 previewPersistenceTestByCamera();
             } finally {
                 closeDevice();
@@ -457,17 +460,18 @@ public class StillCaptureTest extends Camera2SurfaceViewTestCase {
         for (String id : mCameraIds) {
             try {
                 Log.i(TAG, "Testing AE precapture cancel for jpeg capture for Camera " + id);
-                openDevice(id);
 
+                StaticMetadata staticInfo = mAllStaticInfo.get(id);
                 // Legacy device doesn't support AE precapture trigger
-                if (mStaticInfo.isHardwareLevelLegacy()) {
+                if (staticInfo.isHardwareLevelLegacy()) {
                     Log.i(TAG, "Skipping AE precapture trigger cancel test on legacy devices");
                     continue;
                 }
-                if (!mStaticInfo.isColorOutputSupported()) {
+                if (!staticInfo.isColorOutputSupported()) {
                     Log.i(TAG, "Camera " + id + " does not support color outputs, skipping");
                     continue;
                 }
+                openDevice(id);
                 takePictureTestByCamera(/*aeRegions*/null, /*awbRegions*/null, /*afRegions*/null,
                         /*addAeTriggerCancel*/true, /*allocateBitmap*/false,
                         /*previewRequest*/null, /*stillRequest*/null);
@@ -490,11 +494,11 @@ public class StillCaptureTest extends Camera2SurfaceViewTestCase {
         for (String id : mCameraIds) {
             try {
                 Log.i(TAG, "Testing bitmap allocations for Camera " + id);
-                openDevice(id);
-                if (!mStaticInfo.isColorOutputSupported()) {
+                if (!mAllStaticInfo.get(id).isColorOutputSupported()) {
                     Log.i(TAG, "Camera " + id + " does not support color outputs, skipping");
                     continue;
                 }
+                openDevice(id);
                 takePictureTestByCamera(/*aeRegions*/null, /*awbRegions*/null, /*afRegions*/null,
                         /*addAeTriggerCancel*/false, /*allocateBitmap*/true,
                         /*previewRequest*/null, /*stillRequest*/null);
@@ -512,19 +516,20 @@ public class StillCaptureTest extends Camera2SurfaceViewTestCase {
     public void testFocalLengths() throws Exception {
         for (String id : mCameraIds) {
             try {
-                openDevice(id);
-                if (mStaticInfo.isHardwareLevelLegacy()) {
+                StaticMetadata staticInfo = mAllStaticInfo.get(id);
+                if (staticInfo.isHardwareLevelLegacy()) {
                     Log.i(TAG, "Camera " + id + " is legacy, skipping");
                     continue;
                 }
-                if (!mStaticInfo.isColorOutputSupported()) {
+                if (!staticInfo.isColorOutputSupported()) {
                     Log.i(TAG, "Camera " + id + " does not support color outputs, skipping");
                     continue;
                 }
-                if (mStaticInfo.isExternalCamera()) {
+                if (staticInfo.isExternalCamera()) {
                     Log.i(TAG, "Camera " + id + " is external, skipping");
                     continue;
                 }
+                openDevice(id);
                 focalLengthTestByCamera();
             } finally {
                 closeDevice();

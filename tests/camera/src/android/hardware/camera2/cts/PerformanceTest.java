@@ -277,13 +277,12 @@ public class PerformanceTest extends Camera2SurfaceViewTestCase {
             double[] getPartialTimes = new double[NUM_TEST_LOOPS];
             double[] getResultTimes = new double[NUM_TEST_LOOPS];
             try {
-                openDevice(id);
-
-                if (!mStaticInfo.isColorOutputSupported()) {
+                if (!mAllStaticInfo.get(id).isColorOutputSupported()) {
                     Log.i(TAG, "Camera " + id + " does not support color outputs, skipping");
                     continue;
                 }
 
+                openDevice(id);
 
                 boolean partialsExpected = mStaticInfo.getPartialResultCount() > 1;
                 long startTimeMs;
@@ -445,13 +444,12 @@ public class PerformanceTest extends Camera2SurfaceViewTestCase {
             double[] getResultTimes = new double[NUM_MAX_IMAGES];
             double[] frameDurationMs = new double[NUM_MAX_IMAGES-1];
             try {
-                openDevice(id);
-
-                if (!mStaticInfo.isColorOutputSupported()) {
+                if (!mAllStaticInfo.get(id).isColorOutputSupported()) {
                     Log.i(TAG, "Camera " + id + " does not support color outputs, skipping");
                     continue;
                 }
 
+                openDevice(id);
                 for (int i = 0; i < NUM_TEST_LOOPS; i++) {
 
                     // setup builders and listeners

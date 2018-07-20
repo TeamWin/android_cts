@@ -210,8 +210,7 @@ public class Camera2AndroidTestCase extends AndroidTestCase {
         mCamera = CameraTestUtils.openCamera(
                 mCameraManager, cameraId, listener, mHandler);
         mCollector.setCameraId(cameraId);
-        mStaticInfo = new StaticMetadata(mCameraManager.getCameraCharacteristics(cameraId),
-                CheckLevel.ASSERT, /*collector*/null);
+        mStaticInfo = mAllStaticInfo.get(cameraId);
         if (mStaticInfo.isColorOutputSupported()) {
             mOrderedPreviewSizes = getSupportedPreviewSizes(
                     cameraId, mCameraManager,

@@ -155,14 +155,13 @@ public class CaptureResultTest extends Camera2AndroidTestCase {
         final int WAIT_FOR_RESULT_TIMOUT_MS = 2000;
         for (String id : mCameraIds) {
             try {
-                openDevice(id);
-
                 // Skip the test if partial result is not supported
-                int partialResultCount = mStaticInfo.getPartialResultCount();
+                int partialResultCount = mAllStaticInfo.get(id).getPartialResultCount();
                 if (partialResultCount == 1) {
                     continue;
                 }
 
+                openDevice(id);
                 // Create image reader and surface.
                 if (mStaticInfo.isColorOutputSupported()) {
                     Size size = mOrderedPreviewSizes.get(0);
@@ -274,12 +273,12 @@ public class CaptureResultTest extends Camera2AndroidTestCase {
             SimpleImageReaderListener jpegListener = new SimpleImageReaderListener();
             SimpleImageReaderListener prevListener = new SimpleImageReaderListener();
             try {
-                openDevice(id);
-                if (!mStaticInfo.isColorOutputSupported()) {
+                if (!mAllStaticInfo.get(id).isColorOutputSupported()) {
                     Log.i(TAG, "Camera " + id + " does not support color outputs, skipping");
                     continue;
                 }
 
+                openDevice(id);
                 CaptureRequest.Builder previewBuilder =
                         mCamera.createCaptureRequest(CameraDevice.TEMPLATE_PREVIEW);
                 CaptureRequest.Builder multiBuilder =

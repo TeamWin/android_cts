@@ -77,19 +77,9 @@ public final class LogicalCameraDeviceTest extends Camera2SurfaceViewTestCase {
 
     private static final double FRAME_DURATION_THRESHOLD = 0.03;
 
-    private HashMap<String, StaticMetadata> mAllStaticInfo;
-
     @Override
     protected void setUp() throws Exception {
         super.setUp();
-
-        mAllStaticInfo = new HashMap<String, StaticMetadata>();
-        for (String cameraId : mCameraIds) {
-            StaticMetadata staticMetadata = new StaticMetadata(
-                    mCameraManager.getCameraCharacteristics(cameraId),
-                    CheckLevel.ASSERT, /*collector*/null);
-            mAllStaticInfo.put(cameraId, staticMetadata);
-        }
     }
 
     /**
@@ -100,12 +90,12 @@ public final class LogicalCameraDeviceTest extends Camera2SurfaceViewTestCase {
         for (String id : mCameraIds) {
             try {
                 Log.i(TAG, "Testing Camera " + id);
-                openDevice(id);
-                if (mStaticInfo.isHardwareLevelLegacy()) {
+                if (mAllStaticInfo.get(id).isHardwareLevelLegacy()) {
                     Log.i(TAG, "Camera " + id + " is legacy, skipping");
                     continue;
                 }
 
+                openDevice(id);
                 Size yuvSize = mOrderedPreviewSizes.get(0);
                 // Create a YUV image reader.
                 ImageReader imageReader = ImageReader.newInstance(yuvSize.getWidth(),
@@ -146,18 +136,19 @@ public final class LogicalCameraDeviceTest extends Camera2SurfaceViewTestCase {
         for (String id : mCameraIds) {
             try {
                 Log.i(TAG, "Testing Camera " + id);
-                openDevice(id);
 
-                if (!mStaticInfo.isColorOutputSupported()) {
+                StaticMetadata staticInfo = mAllStaticInfo.get(id);
+                if (!staticInfo.isColorOutputSupported()) {
                     Log.i(TAG, "Camera " + id + " does not support color outputs, skipping");
                     continue;
                 }
 
-                if (!mStaticInfo.isLogicalMultiCamera()) {
+                if (!staticInfo.isLogicalMultiCamera()) {
                     Log.i(TAG, "Camera " + id + " is not a logical multi-camera, skipping");
                     continue;
                 }
 
+                openDevice(id);
                 assertTrue("Logical multi-camera must be LIMITED or higher",
                         mStaticInfo.isHardwareLevelAtLeastLimited());
 
@@ -185,18 +176,19 @@ public final class LogicalCameraDeviceTest extends Camera2SurfaceViewTestCase {
         for (String id : mCameraIds) {
             try {
                 Log.i(TAG, "Testing Camera " + id);
-                openDevice(id);
 
-                if (!mStaticInfo.isColorOutputSupported()) {
+                StaticMetadata staticInfo = mAllStaticInfo.get(id);
+                if (!staticInfo.isColorOutputSupported()) {
                     Log.i(TAG, "Camera " + id + " does not support color outputs, skipping");
                     continue;
                 }
 
-                if (!mStaticInfo.isLogicalMultiCamera()) {
+                if (!staticInfo.isLogicalMultiCamera()) {
                     Log.i(TAG, "Camera " + id + " is not a logical multi-camera, skipping");
                     continue;
                 }
 
+                openDevice(id);
                 assertTrue("Logical multi-camera must be LIMITED or higher",
                         mStaticInfo.isHardwareLevelAtLeastLimited());
 
@@ -296,18 +288,19 @@ public final class LogicalCameraDeviceTest extends Camera2SurfaceViewTestCase {
         for (String id : mCameraIds) {
             try {
                 Log.i(TAG, "Testing Camera " + id);
-                openDevice(id);
 
-                if (!mStaticInfo.isColorOutputSupported()) {
+                StaticMetadata staticInfo = mAllStaticInfo.get(id);
+                if (!staticInfo.isColorOutputSupported()) {
                     Log.i(TAG, "Camera " + id + " does not support color outputs, skipping");
                     continue;
                 }
 
-                if (!mStaticInfo.isLogicalMultiCamera()) {
+                if (!staticInfo.isLogicalMultiCamera()) {
                     Log.i(TAG, "Camera " + id + " is not a logical multi-camera, skipping");
                     continue;
                 }
 
+                openDevice(id);
                 assertTrue("Logical multi-camera must be LIMITED or higher",
                         mStaticInfo.isHardwareLevelAtLeastLimited());
 
@@ -416,17 +409,18 @@ public final class LogicalCameraDeviceTest extends Camera2SurfaceViewTestCase {
         for (String id : mCameraIds) {
             try {
                 Log.i(TAG, "Testing Camera " + id);
-                openDevice(id);
 
-                if (mStaticInfo.isHardwareLevelLegacy()) {
+                StaticMetadata staticInfo = mAllStaticInfo.get(id);
+                if (staticInfo.isHardwareLevelLegacy()) {
                     Log.i(TAG, "Camera " + id + " is legacy, skipping");
                     continue;
                 }
-                if (!mStaticInfo.isColorOutputSupported()) {
+                if (!staticInfo.isColorOutputSupported()) {
                     Log.i(TAG, "Camera " + id + " does not support color outputs, skipping");
                     continue;
                 }
 
+                openDevice(id);
                 Size yuvSize = mOrderedPreviewSizes.get(0);
                 List<OutputConfiguration> outputConfigs = new ArrayList<>();
                 List<ImageReader> imageReaders = new ArrayList<>();
