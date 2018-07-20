@@ -58,7 +58,14 @@ public class DisplayTest extends ActivityInstrumentationTestCase2<DisplayTestAct
         // Change orientation
         mActivity.configurationChangeObserver.startObserving();
         OrientationTestUtils.switchOrientation(mActivity);
-        mActivity.configurationChangeObserver.await();
+
+        final boolean squareDisplay = (origSize.x == origSize.y);
+      
+        // Don't wait for the configuration to change if the
+        // the display is square. In many cases it won't.
+        if (!squareDisplay) {
+            mActivity.configurationChangeObserver.await();
+        }
 
         final Point newOrigSize = new Point();
         origDisplay.getSize(newOrigSize);
@@ -69,7 +76,7 @@ public class DisplayTest extends ActivityInstrumentationTestCase2<DisplayTestAct
         updatedDisplay.getSize(updatedSize);
 
         // For square screens the following assertions do not make sense and will always fail.
-        if (origSize.x != origSize.y) {
+        if (!squareDisplay) {
             // Ensure that the width and height of the original instance no longer are the same. Note
             // that this will be false if the device width and height are identical.
             // Note there are cases where width and height may not all be updated, such as on docked
