@@ -40,6 +40,9 @@ LOCAL_SRC_FILES := $(call all-java-files-under, src common)
 LOCAL_PACKAGE_NAME := CtsSelinuxTargetSdk27TestCases
 LOCAL_PRIVATE_PLATFORM_APIS := true
 LOCAL_COMPATIBILITY_SUITE := cts vts general-tests
+
+LOCAL_MIN_SDK_VERSION := 21
+
 include $(BUILD_CTS_PACKAGE)
 
 include $(call all-makefiles-under,$(LOCAL_PATH))

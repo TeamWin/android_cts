@@ -30,5 +30,6 @@ LOCAL_SRC_FILES := $(call all-java-files-under, src)
 LOCAL_STATIC_JAVA_LIBRARIES := androidx.legacy_legacy-support-v4 ctstestrunner ub-uiautomator android-support-test
 
 LOCAL_SDK_VERSION := test_current
+LOCAL_MIN_SDK_VERSION := 25
 
 include $(BUILD_CTS_PACKAGE)
