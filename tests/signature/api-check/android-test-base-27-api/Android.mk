@@ -21,4 +21,6 @@ LOCAL_PACKAGE_NAME := CtsAndroidTestBase27ApiSignatureTestCases
 LOCAL_SIGNATURE_API_FILES := \
     android-test-base-current.api \
 
+LOCAL_MIN_SDK_VERSION := 25
+
 include $(LOCAL_PATH)/../build_signature_apk.mk
