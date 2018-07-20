@@ -40,6 +40,8 @@ public class LightBarTestBase {
 
     public static final String DUMP_PATH = "/sdcard/lightstatustest.png";
 
+    public static final int WAIT_TIME = 2000;
+
     protected Bitmap takeStatusBarScreenshot(LightBarBaseActivity activity) {
         Bitmap fullBitmap = getInstrumentation().getUiAutomation().takeScreenshot();
         return Bitmap.createBitmap(fullBitmap, 0, 0, activity.getWidth(), activity.getTop());
