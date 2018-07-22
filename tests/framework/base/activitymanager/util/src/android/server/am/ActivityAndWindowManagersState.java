@@ -41,6 +41,7 @@ import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertThat;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
+import static org.junit.Assume.assumeTrue;
 
 import android.content.ComponentName;
 import android.graphics.Rect;
@@ -287,6 +288,11 @@ public class ActivityAndWindowManagersState {
                         && (windowingMode == WINDOWING_MODE_UNDEFINED
                                 || state.getFocusedStackWindowingMode() == windowingMode),
                 "***Waiting for focused stack...");
+    }
+
+    void waitForPendingActivityContain(ComponentName activity) {
+        waitForWithAmState(state -> state.pendingActivityContain(activity),
+                "***Waiting for activity in pending list...");
     }
 
     void waitForAppTransitionIdle() {
@@ -636,6 +642,10 @@ public class ActivityAndWindowManagersState {
     public void assertKeyguardGone() {
         assertFalse("Keyguard is not shown",
                 getAmState().getKeyguardControllerState().keyguardShowing);
+    }
+
+    public void assumePendingActivityContain(ComponentName activity) {
+        assumeTrue(getAmState().pendingActivityContain(activity));
     }
 
     boolean taskListsInAmAndWmAreEqual() {

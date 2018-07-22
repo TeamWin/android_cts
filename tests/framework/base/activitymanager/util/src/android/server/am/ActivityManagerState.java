@@ -67,6 +67,7 @@ public class ActivityManagerState {
     // Stacks in z-order with the top most at the front of the list, starting with primary display.
     private final List<ActivityStack> mStacks = new ArrayList<>();
     private KeyguardControllerState mKeyguardControllerState;
+    private final List<String> mPendingActivities = new ArrayList<>();
     private int mFocusedStackId = -1;
     private Boolean mIsHomeRecentsComponent;
     private String mResumedActivityRecord = null;
@@ -161,6 +162,10 @@ public class ActivityManagerState {
             mResumedActivityRecord = state.resumedActivity.title;
         }
         mIsHomeRecentsComponent = new Boolean(state.isHomeRecentsComponent);
+
+        for (int i = 0; i < state.pendingActivities.length; i++) {
+            mPendingActivities.add(state.pendingActivities[i].title);
+        }
     }
 
     private void reset() {
@@ -171,6 +176,7 @@ public class ActivityManagerState {
         mResumedActivities.clear();
         mKeyguardControllerState = null;
         mIsHomeRecentsComponent = null;
+        mPendingActivities.clear();
     }
 
     /**
@@ -537,6 +543,10 @@ public class ActivityManagerState {
             }
         }
         return null;
+    }
+
+    boolean pendingActivityContain(ComponentName activityName) {
+        return mPendingActivities.contains(getActivityName(activityName));
     }
 
     static class ActivityDisplay extends ActivityContainer {

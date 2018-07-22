@@ -30,6 +30,7 @@ import android.net.NetworkInfo;
 import android.net.wifi.WifiManager;
 import android.os.BatteryManager;
 import android.os.SystemClock;
+import android.provider.Settings;
 import android.util.Log;
 
 import com.android.compatibility.common.util.SystemUtil;
@@ -48,10 +49,22 @@ public class BatteryConstraintTest extends ConstraintTest {
     public static final int BATTERY_JOB_ID = BatteryConstraintTest.class.hashCode();
 
     private JobInfo.Builder mBuilder;
+    /**
+     * Record of the previous state of power save mode trigger level to reset it after the test
+     * finishes.
+     */
+    private int mPreviousLowPowerTriggerLevel;
 
     @Override
     public void setUp() throws Exception {
         super.setUp();
+
+        // Disable power save mode as some devices may turn off Android when power save mode is
+        // enabled, causing the test to fail.
+        mPreviousLowPowerTriggerLevel = Settings.Global.getInt(getContext().getContentResolver(),
+                Settings.Global.LOW_POWER_MODE_TRIGGER_LEVEL, -1);
+        Settings.Global.putInt(getContext().getContentResolver(),
+                Settings.Global.LOW_POWER_MODE_TRIGGER_LEVEL, 0);
 
         mBuilder = new JobInfo.Builder(BATTERY_JOB_ID, kJobServiceComponent);
         SystemUtil.runShellCommand(getInstrumentation(), "cmd jobscheduler monitor-battery on");
@@ -63,6 +76,15 @@ public class BatteryConstraintTest extends ConstraintTest {
         // Put battery service back in to normal operation.
         SystemUtil.runShellCommand(getInstrumentation(), "cmd jobscheduler monitor-battery off");
         SystemUtil.runShellCommand(getInstrumentation(), "cmd battery reset");
+
+        // Reset power save mode to its previous state.
+        if (mPreviousLowPowerTriggerLevel == -1) {
+            Settings.Global.putString(getContext().getContentResolver(),
+                    Settings.Global.LOW_POWER_MODE_TRIGGER_LEVEL, null);
+        } else {
+            Settings.Global.putInt(getContext().getContentResolver(),
+                    Settings.Global.LOW_POWER_MODE_TRIGGER_LEVEL, mPreviousLowPowerTriggerLevel);
+        }
     }
 
     void setBatteryState(boolean plugged, int level) throws Exception {
@@ -91,7 +113,7 @@ public class BatteryConstraintTest extends ConstraintTest {
             if (curSeq == seq && curCharging == plugged) {
                 return;
             }
-        } while ((SystemClock.elapsedRealtime()-startTime) < 5000);
+        } while ((SystemClock.elapsedRealtime() - startTime) < 5000);
 
         fail("Timed out waiting for job scheduler: expected seq=" + seq + ", cur=" + curSeq
                 + ", plugged=" + plugged + " curCharging=" + curCharging);

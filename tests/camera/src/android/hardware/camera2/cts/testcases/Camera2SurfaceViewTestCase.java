@@ -93,6 +93,7 @@ public class Camera2SurfaceViewTestCase extends
     protected BlockingStateCallback mCameraListener;
     protected BlockingSessionCallback mSessionListener;
     protected CameraErrorCollector mCollector;
+    protected HashMap<String, StaticMetadata> mAllStaticInfo;
     // Per device fields:
     protected StaticMetadata mStaticInfo;
     protected CameraDevice mCamera;
@@ -138,6 +139,14 @@ public class Camera2SurfaceViewTestCase extends
         mHandler = new Handler(mHandlerThread.getLooper());
         mCameraListener = new BlockingStateCallback();
         mCollector = new CameraErrorCollector();
+
+        mAllStaticInfo = new HashMap<String, StaticMetadata>();
+        for (String cameraId : mCameraIds) {
+            StaticMetadata staticMetadata = new StaticMetadata(
+                    mCameraManager.getCameraCharacteristics(cameraId),
+                    CheckLevel.ASSERT, /*collector*/null);
+            mAllStaticInfo.put(cameraId, staticMetadata);
+        }
 
         mWindowManager = (WindowManager) mContext.getSystemService(Context.WINDOW_SERVICE);
     }

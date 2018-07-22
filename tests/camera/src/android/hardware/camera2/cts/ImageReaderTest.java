@@ -223,12 +223,12 @@ public class ImageReaderTest extends Camera2AndroidTestCase {
         for (String id : mCameraIds) {
             try {
                 Log.v(TAG, "Testing long processing on repeating raw for camera " + id);
-                openDevice(id);
 
-                if (!mStaticInfo.isCapabilitySupported(
+                if (!mAllStaticInfo.get(id).isCapabilitySupported(
                         CameraCharacteristics.REQUEST_AVAILABLE_CAPABILITIES_MANUAL_SENSOR)) {
                     continue;
                 }
+                openDevice(id);
 
                 bufferFormatLongProcessingTimeTestByCamera(ImageFormat.RAW_SENSOR);
             } finally {
@@ -241,13 +241,13 @@ public class ImageReaderTest extends Camera2AndroidTestCase {
         for (String id : mCameraIds) {
             try {
                 Log.v(TAG, "Testing long processing on repeating YUV for camera " + id);
-                openDevice(id);
 
-                if (!mStaticInfo.isCapabilitySupported(
+                if (!mAllStaticInfo.get(id).isCapabilitySupported(
                         CameraCharacteristics.REQUEST_AVAILABLE_CAPABILITIES_MANUAL_SENSOR)) {
                     continue;
                 }
 
+                openDevice(id);
                 bufferFormatLongProcessingTimeTestByCamera(ImageFormat.YUV_420_888);
             } finally {
                 closeDevice(id);
@@ -285,12 +285,12 @@ public class ImageReaderTest extends Camera2AndroidTestCase {
         for (String id : mCameraIds) {
             try {
                 Log.v(TAG, "YUV and JPEG testing for camera " + id);
-                openDevice(id);
-                if (!mStaticInfo.isColorOutputSupported()) {
+                if (!mAllStaticInfo.get(id).isColorOutputSupported()) {
                     Log.i(TAG, "Camera " + id +
                             " does not support color outputs, skipping");
                     continue;
                 }
+                openDevice(id);
                 bufferFormatWithYuvTestByCamera(ImageFormat.JPEG);
             } finally {
                 closeDevice(id);
@@ -306,12 +306,12 @@ public class ImageReaderTest extends Camera2AndroidTestCase {
         for (String id : mCameraIds) {
             try {
                 Log.v(TAG, "YUV and RAW testing for camera " + id);
-                openDevice(id);
-                if (!mStaticInfo.isColorOutputSupported()) {
+                if (!mAllStaticInfo.get(id).isColorOutputSupported()) {
                     Log.i(TAG, "Camera " + id +
                             " does not support color outputs, skipping");
                     continue;
                 }
+                openDevice(id);
                 bufferFormatWithYuvTestByCamera(ImageFormat.RAW_SENSOR);
             } finally {
                 closeDevice(id);
@@ -329,13 +329,13 @@ public class ImageReaderTest extends Camera2AndroidTestCase {
         for (String id : mCameraIds) {
             try {
                 Log.v(TAG, "Testing all YUV image resolutions for camera " + id);
-                openDevice(id);
 
-                if (!mStaticInfo.isColorOutputSupported()) {
+                if (!mAllStaticInfo.get(id).isColorOutputSupported()) {
                     Log.i(TAG, "Camera " + id + " does not support color outputs, skipping");
                     continue;
                 }
 
+                openDevice(id);
                 // Skip warmup on FULL mode devices.
                 int warmupCaptureNumber = (mStaticInfo.isHardwareLevelLegacy()) ?
                         MAX_NUM_IMAGES - 1 : 0;

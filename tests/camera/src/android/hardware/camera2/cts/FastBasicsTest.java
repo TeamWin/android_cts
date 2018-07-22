@@ -62,14 +62,14 @@ public class FastBasicsTest extends Camera2SurfaceViewTestCase {
         for (int i = 0; i < mCameraIds.length; i++) {
             try {
                 Log.i(TAG, "Testing camera2 API for camera device " + mCameraIds[i]);
-                openDevice(mCameraIds[i]);
 
-                if (!mStaticInfo.isColorOutputSupported()) {
+                if (!mAllStaticInfo.get(mCameraIds[i]).isColorOutputSupported()) {
                     Log.i(TAG, "Camera " + mCameraIds[i] +
                             " does not support color outputs, skipping");
                     continue;
                 }
 
+                openDevice(mCameraIds[i]);
                 camera2TestByCamera();
             } finally {
                 closeDevice();

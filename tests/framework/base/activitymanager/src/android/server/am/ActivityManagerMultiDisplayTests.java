@@ -19,6 +19,11 @@ package android.server.am;
 import static android.app.WindowConfiguration.ACTIVITY_TYPE_STANDARD;
 import static android.app.WindowConfiguration.WINDOWING_MODE_SPLIT_SCREEN_PRIMARY;
 import static android.app.WindowConfiguration.WINDOWING_MODE_SPLIT_SCREEN_SECONDARY;
+import static android.content.Intent.FLAG_ACTIVITY_MULTIPLE_TASK;
+import static android.content.Intent.FLAG_ACTIVITY_NEW_TASK;
+import static android.server.am.ActivityLauncher.KEY_LAUNCH_ACTIVITY;
+import static android.server.am.ActivityLauncher.KEY_NEW_TASK;
+import static android.server.am.ActivityLauncher.KEY_TARGET_COMPONENT;
 import static android.server.am.ActivityManagerDisplayTestBase.ReportedDisplayMetrics.getDisplayMetrics;
 import static android.server.am.ActivityManagerState.STATE_RESUMED;
 import static android.server.am.ActivityManagerState.STATE_STOPPED;
@@ -53,7 +58,10 @@ import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 import static org.junit.Assume.assumeTrue;
 
+import android.app.ActivityOptions;
 import android.content.ComponentName;
+import android.content.Intent;
+import android.os.Bundle;
 import android.os.SystemClock;
 import android.platform.test.annotations.Presubmit;
 import android.server.am.ActivityManagerState.ActivityDisplay;
@@ -886,6 +894,47 @@ public class ActivityManagerMultiDisplayTests extends ActivityManagerDisplayTest
                     "Focus must be on newly launched app", SECOND_ACTIVITY);
             assertEquals("Activity launched by system must be on external display",
                     externalFocusedStackId, mAmWmState.getAmState().getFocusedStackId());
+        }
+    }
+
+    /** Test that launching app from pending activity queue on external display is allowed. */
+    @Test
+    public void testLaunchPendingActivityOnSecondaryDisplay() throws Exception {
+        try (final VirtualDisplaySession virtualDisplaySession = new VirtualDisplaySession()) {
+            // Create new simulated display.
+            final ActivityDisplay newDisplay = virtualDisplaySession.setSimulateDisplay(true)
+                    .createDisplay();
+            final Bundle bundle = ActivityOptions.makeBasic().
+                    setLaunchDisplayId(newDisplay.mId).toBundle();
+            final Intent intent = new Intent(Intent.ACTION_VIEW)
+                    .setComponent(SECOND_ACTIVITY)
+                    .setFlags(FLAG_ACTIVITY_NEW_TASK | FLAG_ACTIVITY_MULTIPLE_TASK)
+                    .putExtra(KEY_LAUNCH_ACTIVITY, true)
+                    .putExtra(KEY_NEW_TASK, true);
+            mContext.startActivity(intent, bundle);
+
+            // ActivityManagerTestBase.setup would press home key event, which would cause
+            // PhoneWindowManager.startDockOrHome to call AMS.stopAppSwitches.
+            // Since this test case is not start activity from shell, it won't grant
+            // STOP_APP_SWITCHES and this activity should be put into pending activity queue
+            // and this activity should been launched after
+            // ActivityTaskManagerService.APP_SWITCH_DELAY_TIME
+            mAmWmState.waitForPendingActivityContain(SECOND_ACTIVITY);
+            // If the activity is not pending, skip this test.
+            mAmWmState.assumePendingActivityContain(SECOND_ACTIVITY);
+            // In order to speed up test case without waiting for APP_SWITCH_DELAY_TIME, we launch
+            // another activity with LaunchActivityBuilder, in this way the activity can be start
+            // directly and also trigger pending activity to be launched.
+            getLaunchActivityBuilder()
+                    .setTargetActivity(THIRD_ACTIVITY)
+                    .execute();
+            mAmWmState.waitForValidState(SECOND_ACTIVITY);
+            mAmWmState.waitForValidState(THIRD_ACTIVITY);
+            mAmWmState.assertFocusedActivity(
+                    "Focus must be on newly launched app", THIRD_ACTIVITY);
+            mAmWmState.assertVisibility(SECOND_ACTIVITY, true);
+            assertEquals("Activity launched by app on secondary display must be on that display",
+                    newDisplay.mId, mAmWmState.getAmState().getDisplayByActivity(SECOND_ACTIVITY));
         }
     }
 

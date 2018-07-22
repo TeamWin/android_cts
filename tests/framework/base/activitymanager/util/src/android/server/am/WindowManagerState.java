@@ -45,6 +45,7 @@ import com.android.server.wm.nano.PinnedStackControllerProto;
 import com.android.server.wm.nano.StackProto;
 import com.android.server.wm.nano.TaskProto;
 import com.android.server.wm.nano.WindowContainerProto;
+import com.android.server.wm.nano.WindowFramesProto;
 import com.android.server.wm.nano.WindowManagerServiceDumpProto;
 import com.android.server.wm.nano.WindowStateAnimatorProto;
 import com.android.server.wm.nano.WindowStateProto;
@@ -771,10 +772,10 @@ public class WindowManagerState {
         private int mStackId;
         private int mLayer;
         private boolean mShown;
-        private Rect mContainingFrame = new Rect();
-        private Rect mParentFrame = new Rect();
-        private Rect mContentFrame = new Rect();
-        private Rect mFrame = new Rect();
+        private Rect mContainingFrame;
+        private Rect mParentFrame;
+        private Rect mContentFrame;
+        private Rect mFrame;
         private Rect mSurfaceInsets = new Rect();
         private Rect mContentInsets = new Rect();
         private Rect mGivenContentInsets = new Rect();
@@ -800,10 +801,13 @@ public class WindowManagerState {
                 mCrop = extract(animatorProto.lastClipRect);
             }
             mGivenContentInsets = extract(proto.givenContentInsets);
-            mFrame = extract(proto.frame);
-            mContainingFrame = extract(proto.containingFrame);
-            mParentFrame = extract(proto.parentFrame);
-            mContentFrame = extract(proto.contentFrame);
+            WindowFramesProto windowFramesProto = proto.windowFrames;
+            if (windowFramesProto != null) {
+                mFrame = extract(windowFramesProto.frame);
+                mContainingFrame = extract(windowFramesProto.containingFrame);
+                mParentFrame = extract(windowFramesProto.parentFrame);
+                mContentFrame = extract(windowFramesProto.contentFrame);
+            }
             mContentInsets = extract(proto.contentInsets);
             mSurfaceInsets = extract(proto.surfaceInsets);
             if (mName.startsWith(STARTING_WINDOW_PREFIX)) {

@@ -94,11 +94,11 @@ public class ImageWriterTest extends Camera2AndroidTestCase {
         for (String id : mCameraIds) {
             try {
                 Log.i(TAG, "Testing Camera " + id);
-                openDevice(id);
-                if (!mStaticInfo.isColorOutputSupported()) {
+                if (!mAllStaticInfo.get(id).isColorOutputSupported()) {
                     Log.i(TAG, "Camera " + id + " does not support color outputs, skipping");
                     continue;
                 }
+                openDevice(id);
                 readerWriterFormatTestByCamera(ImageFormat.YUV_420_888);
             } finally {
                 closeDevice(id);

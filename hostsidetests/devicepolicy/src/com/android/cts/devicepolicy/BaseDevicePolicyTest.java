@@ -448,7 +448,7 @@ public class BaseDevicePolicyTest extends DeviceTestCase implements IBuildReceiv
 
     /** Reboots the device and block until the boot complete flag is set. */
     protected void rebootAndWaitUntilReady() throws DeviceNotAvailableException {
-        getDevice().executeShellCommand("reboot");
+        getDevice().rebootUntilOnline();
         assertTrue("Device failed to boot", getDevice().waitForBootComplete(120000));
     }
 
