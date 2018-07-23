@@ -367,25 +367,6 @@ public abstract class ActivityManagerTestBase {
         mAmWmState.waitForValidState(activityName);
     }
 
-    /**
-     * Starts an activity in a new stack.
-     * @return the stack id of the newly created stack.
-     */
-    @Deprecated
-    protected int launchActivityInNewDynamicStack(ComponentName activityName) {
-        HashSet<Integer> stackIds = getStackIds();
-        executeShellCommand("am stack start " + DEFAULT_DISPLAY + " "
-                + getActivityName(activityName));
-        HashSet<Integer> newStackIds = getStackIds();
-        newStackIds.removeAll(stackIds);
-        if (newStackIds.isEmpty()) {
-            return INVALID_STACK_ID;
-        } else {
-            assertTrue(newStackIds.size() == 1);
-            return newStackIds.iterator().next();
-        }
-    }
-
     private static void waitForIdle() {
         InstrumentationRegistry.getInstrumentation().waitForIdleSync();
     }
