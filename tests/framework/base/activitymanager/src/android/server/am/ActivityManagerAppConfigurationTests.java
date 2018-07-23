@@ -193,21 +193,20 @@ public class ActivityManagerAppConfigurationTests extends ActivityManagerTestBas
 
     private void rotateAndCheckSizes(RotationSession rotationSession, ReportedSizes prevSizes)
             throws Exception {
+        final ActivityManagerState.ActivityTask task =
+                mAmWmState.getAmState().getTaskByActivity(RESIZEABLE_ACTIVITY);
+        final int displayId = mAmWmState.getAmState().getStackById(task.mStackId).mDisplayId;
+
+        assumeTrue(supportsLockedUserRotation(rotationSession, displayId));
+
         final int[] rotations = { ROTATION_270, ROTATION_180, ROTATION_90, ROTATION_0 };
         for (final int rotation : rotations) {
             final LogSeparator logSeparator = separateLogs();
-            final ActivityManagerState.ActivityTask task =
-                    mAmWmState.getAmState().getTaskByActivity(RESIZEABLE_ACTIVITY);
-            final int displayId = mAmWmState.getAmState().getStackById(task.mStackId).mDisplayId;
             rotationSession.set(rotation);
             final int newDeviceRotation = getDeviceRotation(displayId);
             if (newDeviceRotation == INVALID_DEVICE_ROTATION) {
                 logE("Got an invalid device rotation value. "
                         + "Continuing the test despite of that, but it is likely to fail.");
-            } else if (rotation != newDeviceRotation) {
-                log("This device doesn't support locked user "
-                        + "rotation mode. Not continuing the rotation checks.");
-                return;
             }
 
             final ReportedSizes rotatedSizes = getActivityDisplaySize(RESIZEABLE_ACTIVITY,
@@ -590,6 +589,9 @@ public class ActivityManagerAppConfigurationTests extends ActivityManagerTestBas
         // Rotate the activity and check that it receives configuration changes with a different
         // orientation each time.
         try (final RotationSession rotationSession = new RotationSession()) {
+            assumeTrue("Skipping test: no locked user rotation mode support.",
+                    supportsLockedUserRotation(rotationSession, displayId));
+
             rotationSession.set(ROTATION_0);
             ReportedSizes reportedSizes =
                     getLastReportedSizesForActivity(RESIZEABLE_ACTIVITY, logSeparator);
@@ -599,12 +601,6 @@ public class ActivityManagerAppConfigurationTests extends ActivityManagerTestBas
             for (final int rotation : rotations) {
                 logSeparator = separateLogs();
                 rotationSession.set(rotation);
-                final int newDeviceRotation = getDeviceRotation(displayId);
-                if (rotation != newDeviceRotation) {
-                    log("This device doesn't support locked user "
-                            + "rotation mode. Not continuing the rotation checks.");
-                    continue;
-                }
 
                 // Verify lifecycle count and orientation changes.
                 assertRelaunchOrConfigChanged(RESIZEABLE_ACTIVITY, 0 /* numRelaunch */,
@@ -643,18 +639,15 @@ public class ActivityManagerAppConfigurationTests extends ActivityManagerTestBas
 
         // Rotate the activity and check that the orientation doesn't change
         try (final RotationSession rotationSession = new RotationSession()) {
+            assumeTrue("Skipping test: no user locked rotation support.",
+                    supportsLockedUserRotation(rotationSession, displayId));
+
             rotationSession.set(ROTATION_0);
 
             final int[] rotations = { ROTATION_270, ROTATION_180, ROTATION_90, ROTATION_0 };
             for (final int rotation : rotations) {
                 logSeparator = separateLogs();
                 rotationSession.set(rotation);
-                final int newDeviceRotation = getDeviceRotation(displayId);
-                if (rotation != newDeviceRotation) {
-                    log("This device doesn't support locked user "
-                            + "rotation mode. Not continuing the rotation checks.");
-                    continue;
-                }
 
                 // Verify lifecycle count and orientation changes.
                 assertRelaunchOrConfigChanged(PORTRAIT_ORIENTATION_ACTIVITY, 0 /* numRelaunch */,
