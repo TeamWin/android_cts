@@ -32,7 +32,6 @@ import android.hardware.camera2.cts.helpers.StaticMetadata;
 import android.hardware.camera2.cts.helpers.StaticMetadata.CheckLevel;
 import android.hardware.camera2.cts.testcases.Camera2SurfaceViewTestCase;
 import android.hardware.camera2.params.InputConfiguration;
-import android.platform.test.annotations.AppModeFull;
 import android.util.Log;
 import android.util.Size;
 import android.view.Surface;
@@ -49,7 +48,6 @@ import org.junit.Test;
 /**
  * <p>Tests for Reprocess API.</p>
  */
-@AppModeFull
 public class ReprocessCaptureTest extends Camera2SurfaceViewTestCase  {
     private static final String TAG = "ReprocessCaptureTest";
     private static final boolean VERBOSE = Log.isLoggable(TAG, Log.VERBOSE);
@@ -979,7 +977,8 @@ public class ReprocessCaptureTest extends Camera2SurfaceViewTestCase  {
                 // Verify output image's and result's JPEG EXIF data.
                 Image image = getReprocessOutputImageReaderListener().getImage(CAPTURE_TIMEOUT_MS);
                 verifyJpegKeys(image, reprocessResults[i], reprocessOutputSize,
-                        testThumbnailSizes[i], EXIF_TEST_DATA[i], mStaticInfo, mCollector);
+                        testThumbnailSizes[i], EXIF_TEST_DATA[i], mStaticInfo, mCollector,
+                        mDebugFileNameBase);
                 image.close();
 
             }
@@ -1387,7 +1386,7 @@ public class ReprocessCaptureTest extends Camera2SurfaceViewTestCase  {
     }
 
     private void dumpImage(Image image, String name) {
-        String filename = DEBUG_FILE_NAME_BASE + name;
+        String filename = mDebugFileNameBase + name;
         switch(image.getFormat()) {
             case ImageFormat.JPEG:
                 filename += ".jpg";

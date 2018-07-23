@@ -32,7 +32,6 @@ import android.hardware.camera2.cts.CameraTestUtils.MockStateCallback;
 import android.hardware.camera2.cts.helpers.CameraErrorCollector;
 import android.os.Handler;
 import android.os.HandlerThread;
-import android.platform.test.annotations.AppModeFull;
 import android.test.AndroidTestCase;
 import android.util.Log;
 
@@ -51,7 +50,6 @@ import java.util.concurrent.LinkedBlockingQueue;
 /**
  * <p>Basic test for CameraManager class.</p>
  */
-@AppModeFull
 public class CameraManagerTest extends AndroidTestCase {
     private static final String TAG = "CameraManagerTest";
     private static final boolean VERBOSE = Log.isLoggable(TAG, Log.VERBOSE);

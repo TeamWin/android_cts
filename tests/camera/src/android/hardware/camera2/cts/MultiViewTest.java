@@ -34,7 +34,6 @@ import android.media.Image;
 import android.media.ImageReader;
 import android.os.SystemClock;
 import android.os.ConditionVariable;
-import android.platform.test.annotations.AppModeFull;
 import android.util.Log;
 import android.util.Size;
 import android.view.Surface;
@@ -51,7 +50,6 @@ import org.junit.Test;
 /**
  * CameraDevice test by using combination of SurfaceView, TextureView and ImageReader
  */
-@AppModeFull
 public class MultiViewTest extends Camera2MultiViewTestCase {
     private static final String TAG = "MultiViewTest";
     private final static long WAIT_FOR_COMMAND_TO_COMPLETE = 5000; //ms

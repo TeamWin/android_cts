@@ -47,7 +47,6 @@ import android.media.ImageReader;
 import android.media.ImageWriter;
 import android.media.Image.Plane;
 import android.os.Build;
-import android.os.Environment;
 import android.os.Handler;
 import android.util.Log;
 import android.util.Pair;
@@ -125,9 +124,6 @@ public class CameraTestUtils extends Assert {
     private static final Location sTestLocation0 = new Location(LocationManager.GPS_PROVIDER);
     private static final Location sTestLocation1 = new Location(LocationManager.GPS_PROVIDER);
     private static final Location sTestLocation2 = new Location(LocationManager.NETWORK_PROVIDER);
-
-    protected static final String DEBUG_FILE_NAME_BASE =
-            Environment.getExternalStorageDirectory().getPath();
 
     static {
         sTestLocation0.setTime(1199145600000L);
@@ -2048,13 +2044,13 @@ public class CameraTestUtils extends Assert {
      */
     public static void verifyJpegKeys(Image image, CaptureResult captureResult, Size expectedSize,
             Size expectedThumbnailSize, ExifTestData expectedExifData, StaticMetadata staticInfo,
-            CameraErrorCollector collector) throws Exception {
+            CameraErrorCollector collector, String debugFileNameBase) throws Exception {
 
         basicValidateJpegImage(image, expectedSize);
 
         byte[] jpegBuffer = getDataFromImage(image);
         // Have to dump into a file to be able to use ExifInterface
-        String jpegFilename = DEBUG_FILE_NAME_BASE + "/verifyJpegKeys.jpeg";
+        String jpegFilename = debugFileNameBase + "/verifyJpegKeys.jpeg";
         dumpFile(jpegFilename, jpegBuffer);
         ExifInterface exif = new ExifInterface(jpegFilename);
 

@@ -17,13 +17,11 @@
 package android.hardware.camera2.cts;
 
 import android.hardware.camera2.cts.testcases.Camera2AndroidTestCase;
-import android.platform.test.annotations.AppModeFull;
 import android.util.Log;
 
 /**
  * <p>Basic test for CameraManager class.</p>
  */
-@AppModeFull
 public class NativeImageReaderTest extends Camera2AndroidTestCase {
     private static final String TAG = "NativeImageReaderTest";
     private static final boolean VERBOSE = Log.isLoggable(TAG, Log.VERBOSE);
@@ -37,7 +35,7 @@ public class NativeImageReaderTest extends Camera2AndroidTestCase {
 
     public void testJpeg() {
         assertTrue("testJpeg fail, see log for details",
-                testJpegNative(DEBUG_FILE_NAME_BASE));
+                testJpegNative(mDebugFileNameBase));
     }
 
     public void testImageReaderCloseAcquiredImages() {

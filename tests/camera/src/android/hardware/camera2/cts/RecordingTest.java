@@ -40,7 +40,6 @@ import android.media.MediaFormat;
 import android.media.MediaRecorder;
 import android.os.Environment;
 import android.os.SystemClock;
-import android.platform.test.annotations.AppModeFull;
 import android.test.suitebuilder.annotation.LargeTest;
 import android.util.Log;
 import android.util.Range;
@@ -64,7 +63,6 @@ import java.util.HashMap;
  * CameraDevice video recording use case tests by using MediaRecorder and
  * MediaCodec.
  */
-@AppModeFull
 @LargeTest
 public class RecordingTest extends Camera2SurfaceViewTestCase {
     private static final String TAG = "RecordingTest";
@@ -81,7 +79,6 @@ public class RecordingTest extends Camera2SurfaceViewTestCase {
     private static final int BIT_RATE_MIN = 64000;
     private static final int BIT_RATE_MAX = 40000000;
     private static final int VIDEO_FRAME_RATE = 30;
-    private final String VIDEO_FILE_PATH = Environment.getExternalStorageDirectory().getPath();
     private static final int[] mCamcorderProfileList = {
             CamcorderProfile.QUALITY_HIGH,
             CamcorderProfile.QUALITY_2160P,
@@ -367,7 +364,7 @@ public class RecordingTest extends Camera2SurfaceViewTestCase {
                     continue;
                 }
 
-                mOutMediaFileName = VIDEO_FILE_PATH + "/test_video.mp4";
+                mOutMediaFileName = mDebugFileNameBase + "/test_video.mp4";
                 prepareRecording(size, videoFramerate, captureRate);
                 updatePreviewSurfaceWithVideo(size, captureRate);
 
@@ -544,10 +541,10 @@ public class RecordingTest extends Camera2SurfaceViewTestCase {
             }
 
             // Configure preview and recording surfaces.
-            mOutMediaFileName = VIDEO_FILE_PATH + "/test_video_share.mp4";
+            mOutMediaFileName = mDebugFileNameBase + "/test_video_share.mp4";
             if (DEBUG_DUMP) {
-                mOutMediaFileName = VIDEO_FILE_PATH + "/test_video_share_" + mCamera.getId() + "_"
-                        + sz.toString() + ".mp4";
+                mOutMediaFileName = mDebugFileNameBase + "/test_video_share_" + mCamera.getId() +
+                    "_" + sz.toString() + ".mp4";
             }
 
             // Allow external camera to use variable fps range
@@ -660,9 +657,9 @@ public class RecordingTest extends Camera2SurfaceViewTestCase {
                         continue;
                     }
 
-                    mOutMediaFileName = VIDEO_FILE_PATH + "/test_slowMo_video.mp4";
+                    mOutMediaFileName = mDebugFileNameBase + "/test_slowMo_video.mp4";
                     if (DEBUG_DUMP) {
-                        mOutMediaFileName = VIDEO_FILE_PATH + "/test_slowMo_video_" + id + "_"
+                        mOutMediaFileName = mDebugFileNameBase + "/test_slowMo_video_" + id + "_"
                                 + size.toString() + ".mp4";
                     }
 
@@ -737,8 +734,8 @@ public class RecordingTest extends Camera2SurfaceViewTestCase {
 
                         startConstrainedPreview(fpsRange, previewResultListener);
 
-                        mOutMediaFileName = VIDEO_FILE_PATH + "/test_cslowMo_video_" + captureRate +
-                                "fps_" + id + "_" + size.toString() + ".mp4";
+                        mOutMediaFileName = mDebugFileNameBase + "/test_cslowMo_video_" +
+                            captureRate + "fps_" + id + "_" + size.toString() + ".mp4";
 
                         prepareRecording(size, VIDEO_FRAME_RATE, captureRate);
 
@@ -969,9 +966,9 @@ public class RecordingTest extends Camera2SurfaceViewTestCase {
             }
 
             // Configure preview and recording surfaces.
-            mOutMediaFileName = VIDEO_FILE_PATH + "/test_video.mp4";
+            mOutMediaFileName = mDebugFileNameBase + "/test_video.mp4";
             if (DEBUG_DUMP) {
-                mOutMediaFileName = VIDEO_FILE_PATH + "/test_video_" + cameraId + "_"
+                mOutMediaFileName = mDebugFileNameBase + "/test_video_" + cameraId + "_"
                         + videoSz.toString() + ".mp4";
             }
 
@@ -1023,9 +1020,9 @@ public class RecordingTest extends Camera2SurfaceViewTestCase {
             }
 
             // Configure preview and recording surfaces.
-            mOutMediaFileName = VIDEO_FILE_PATH + "/test_video.mp4";
+            mOutMediaFileName = mDebugFileNameBase + "/test_video.mp4";
             if (DEBUG_DUMP) {
-                mOutMediaFileName = VIDEO_FILE_PATH + "/test_video_" + mCamera.getId() + "_"
+                mOutMediaFileName = mDebugFileNameBase + "/test_video_" + mCamera.getId() + "_"
                         + sz.toString() + ".mp4";
             }
 
@@ -1287,9 +1284,9 @@ public class RecordingTest extends Camera2SurfaceViewTestCase {
             }
 
             // Configure preview and recording surfaces.
-            mOutMediaFileName = VIDEO_FILE_PATH + "/test_video.mp4";
+            mOutMediaFileName = mDebugFileNameBase + "/test_video.mp4";
             if (DEBUG_DUMP) {
-                mOutMediaFileName = VIDEO_FILE_PATH + "/test_video_" + cameraId + "_"
+                mOutMediaFileName = mDebugFileNameBase + "/test_video_" + cameraId + "_"
                         + videoSz.toString() + ".mp4";
             }
 

@@ -32,7 +32,6 @@ import android.os.Environment;
 import android.os.Looper;
 import android.os.PowerManager;
 import android.os.PowerManager.WakeLock;
-import android.platform.test.annotations.AppModeFull;
 
 import android.support.test.rule.ActivityTestRule;
 import android.test.MoreAsserts;
@@ -70,7 +69,6 @@ import static org.junit.Assert.fail;
 /**
  * This test case must run with hardware. It can't be tested in emulator
  */
-@AppModeFull
 @LargeTest
 public class CameraGLTest {
     private static final String TAG = "CameraGLTest";

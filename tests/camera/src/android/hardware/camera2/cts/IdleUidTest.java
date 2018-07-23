@@ -32,7 +32,6 @@ import android.hardware.camera2.CameraDevice;
 import android.hardware.camera2.CameraManager;
 import android.os.Handler;
 import android.os.HandlerThread;
-import android.platform.test.annotations.AppModeFull;
 import android.support.test.InstrumentationRegistry;
 import android.support.test.runner.AndroidJUnit4;
 
@@ -52,7 +51,6 @@ import java.io.IOException;
  * get an error callback losing the camera handle. Similarly if the UID is
  * already idle it cannot obtain a camera handle.
  */
-@AppModeFull
 @RunWith(AndroidJUnit4.class)
 public final class IdleUidTest {
     private static final long CAMERA_OPERATION_TIMEOUT_MILLIS = 5000; // 5 sec

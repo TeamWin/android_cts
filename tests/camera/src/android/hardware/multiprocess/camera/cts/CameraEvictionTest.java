@@ -26,7 +26,6 @@ import android.hardware.camera2.CameraDevice;
 import android.hardware.camera2.CameraManager;
 import android.hardware.cts.CameraCtsActivity;
 import android.os.Handler;
-import android.platform.test.annotations.AppModeFull;
 import android.test.ActivityInstrumentationTestCase2;
 import android.util.Log;
 
@@ -41,7 +40,6 @@ import static org.mockito.Mockito.*;
 /**
  * Tests for multi-process camera usage behavior.
  */
-@AppModeFull
 public class CameraEvictionTest extends ActivityInstrumentationTestCase2<CameraCtsActivity> {
 
     public static final String TAG = "CameraEvictionTest";

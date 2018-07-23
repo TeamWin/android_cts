@@ -42,7 +42,6 @@ import android.hardware.camera2.cts.testcases.Camera2SurfaceViewTestCase;
 import android.hardware.camera2.params.MeteringRectangle;
 import android.media.Image;
 import android.os.ConditionVariable;
-import android.platform.test.annotations.AppModeFull;
 import android.util.Log;
 import android.util.Range;
 import android.util.Rational;
@@ -58,7 +57,6 @@ import java.util.List;
 
 import org.junit.Test;
 
-@AppModeFull
 public class StillCaptureTest extends Camera2SurfaceViewTestCase {
     private static final String TAG = "StillCaptureTest";
     private static final boolean VERBOSE = Log.isLoggable(TAG, Log.VERBOSE);
@@ -613,7 +611,7 @@ public class StillCaptureTest extends Camera2SurfaceViewTestCase {
 
             validateJpegCapture(image, maxStillSz);
             verifyJpegKeys(image, result, maxStillSz, thumbnailSize, exifTestData,
-                    mStaticInfo, mCollector);
+                    mStaticInfo, mCollector, mDebugFileNameBase);
         }
     }
 
@@ -974,7 +972,7 @@ public class StillCaptureTest extends Camera2SurfaceViewTestCase {
         validateRaw16Image(image, size);
         if (DEBUG) {
             byte[] rawBuffer = getDataFromImage(image);
-            String rawFileName = DEBUG_FILE_NAME_BASE + "/test" + "_" + size.toString() + "_cam" +
+            String rawFileName = mDebugFileNameBase + "/test" + "_" + size.toString() + "_cam" +
                     mCamera.getId() + ".raw16";
             Log.d(TAG, "Dump raw file into " + rawFileName);
             dumpFile(rawFileName, rawBuffer);
@@ -1062,13 +1060,13 @@ public class StillCaptureTest extends Camera2SurfaceViewTestCase {
 
             if (DEBUG) {
                 byte[] rawBuffer = outputStream.toByteArray();
-                String rawFileName = DEBUG_FILE_NAME_BASE + "/raw16_" + TAG + size.toString() +
+                String rawFileName = mDebugFileNameBase + "/raw16_" + TAG + size.toString() +
                         "_cam_" + mCamera.getId() + ".dng";
                 Log.d(TAG, "Dump raw file into " + rawFileName);
                 dumpFile(rawFileName, rawBuffer);
 
                 byte[] jpegBuffer = getDataFromImage(jpegImage);
-                String jpegFileName = DEBUG_FILE_NAME_BASE + "/jpeg_" + TAG + size.toString() +
+                String jpegFileName = mDebugFileNameBase + "/jpeg_" + TAG + size.toString() +
                         "_cam_" + mCamera.getId() + ".jpg";
                 Log.d(TAG, "Dump jpeg file into " + rawFileName);
                 dumpFile(jpegFileName, jpegBuffer);
@@ -1212,7 +1210,7 @@ public class StillCaptureTest extends Camera2SurfaceViewTestCase {
             Image image = imageListener.getImage(CAPTURE_IMAGE_TIMEOUT_MS);
 
             verifyJpegKeys(image, stillResult, maxStillSz, testThumbnailSizes[i], EXIF_TEST_DATA[i],
-                    mStaticInfo, mCollector);
+                    mStaticInfo, mCollector, mDebugFileNameBase);
 
             // Free image resources
             image.close();
