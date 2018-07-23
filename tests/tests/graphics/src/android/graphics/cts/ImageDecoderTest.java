@@ -24,7 +24,6 @@ import static org.junit.Assert.assertSame;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
-import android.app.ActivityManager;
 import android.content.ContentResolver;
 import android.content.Context;
 import android.content.res.AssetManager;
@@ -2228,28 +2227,5 @@ public class ImageDecoderTest {
 
         ImageDecoder.Source src = mCreators[0].apply(R.drawable.animated);
         testReuse(src, "animated.gif");
-    }
-
-    @Test
-    public void testWarpedDng() {
-        Context context = InstrumentationRegistry.getTargetContext();
-        ActivityManager activityManager = (ActivityManager) context
-                .getSystemService(Context.ACTIVITY_SERVICE);
-        ActivityManager.MemoryInfo info = new ActivityManager.MemoryInfo();
-        activityManager.getMemoryInfo(info);
-
-        // Decoding this image requires a lot of memory. Only attempt if the
-        // device has a total memory of at least 2 Gigs.
-        if (info.totalMem < 2L * 1024 * 1024 * 1024) {
-            return;
-        }
-
-        String name = "b78120086.dng";
-        ImageDecoder.Source src = ImageDecoder.createSource(mRes.getAssets(), name);
-        try {
-            ImageDecoder.decodeDrawable(src);
-        } catch (IOException e) {
-            fail("Failed to decode " + name + " with exception " + e);
-        }
     }
 }
