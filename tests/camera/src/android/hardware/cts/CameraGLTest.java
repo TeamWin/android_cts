@@ -34,7 +34,7 @@ import android.os.PowerManager;
 import android.os.PowerManager.WakeLock;
 import android.platform.test.annotations.AppModeFull;
 
-import android.test.ActivityInstrumentationTestCase2;
+import android.support.test.rule.ActivityTestRule;
 import android.test.MoreAsserts;
 import android.test.UiThreadTest;
 import android.test.suitebuilder.annotation.LargeTest;
@@ -56,12 +56,23 @@ import javax.microedition.khronos.egl.EGLContext;
 import javax.microedition.khronos.egl.EGLDisplay;
 import javax.microedition.khronos.opengles.GL10;
 
+import org.junit.After;
+import org.junit.Before;
+import org.junit.Rule;
+import org.junit.Test;
+
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.fail;
+
+
 /**
  * This test case must run with hardware. It can't be tested in emulator
  */
 @AppModeFull
 @LargeTest
-public class CameraGLTest extends ActivityInstrumentationTestCase2<GLSurfaceViewCtsActivity> {
+public class CameraGLTest {
     private static final String TAG = "CameraGLTest";
     private static final String PACKAGE = "android.hardware.cts";
     private static final boolean LOGV = false;
@@ -89,27 +100,29 @@ public class CameraGLTest extends ActivityInstrumentationTestCase2<GLSurfaceView
     Renderer mRenderer;
     GLSurfaceView mGLView;
 
-    public CameraGLTest() {
-        super(PACKAGE, GLSurfaceViewCtsActivity.class);
-        if (LOGV) Log.v(TAG, "CameraGLTest Constructor");
-    }
+    @Rule
+    public ActivityTestRule<GLSurfaceViewCtsActivity> mActivityRule =
+            new ActivityTestRule<GLSurfaceViewCtsActivity>(GLSurfaceViewCtsActivity.class) {
+                @Override
+                protected void beforeActivityLaunched() {
+                    // Set up renderer instance
+                    mRenderer = new Renderer();
+                    GLSurfaceViewCtsActivity.setRenderer(mRenderer);
+                    GLSurfaceViewCtsActivity.setRenderMode(GLSurfaceView.RENDERMODE_WHEN_DIRTY);
+                    GLSurfaceViewCtsActivity.setGlVersion(2);
+                }
+            };
 
-    @Override
-    protected void setUp() throws Exception {
-        super.setUp();
-        // Set up renderer instance
-        mRenderer = this.new Renderer();
-        GLSurfaceViewCtsActivity.setRenderer(mRenderer);
-        GLSurfaceViewCtsActivity.setRenderMode(GLSurfaceView.RENDERMODE_WHEN_DIRTY);
-        GLSurfaceViewCtsActivity.setGlVersion(2);
+    @Before
+    public void setUp() throws Exception {
         // Start CameraCtsActivity.
-        GLSurfaceViewCtsActivity ctsActivity = getActivity();
+        GLSurfaceViewCtsActivity ctsActivity = mActivityRule.getActivity();
         // Store a link to the view so we can redraw it when needed
         mGLView = ctsActivity.getView();
     }
 
-    @Override
-    protected void tearDown() throws Exception {
+    @After
+    public void tearDown() throws Exception {
         if (mCamera != null) {
             terminateMessageLooper();
         }
@@ -117,8 +130,6 @@ public class CameraGLTest extends ActivityInstrumentationTestCase2<GLSurfaceView
         GLSurfaceViewCtsActivity.resetRenderMode();
         GLSurfaceViewCtsActivity.resetRenderer();
         GLSurfaceViewCtsActivity.resetGlVersion();
-
-        super.tearDown();
     }
 
     /**
@@ -141,7 +152,7 @@ public class CameraGLTest extends ActivityInstrumentationTestCase2<GLSurfaceView
                 mCamera = Camera.open(cameraId);
                 try {
                     mIsExternalCamera = CameraUtils.isExternal(
-                            getInstrumentation().getContext(), cameraId);
+                            mActivityRule.getActivity().getApplicationContext(), cameraId);
                 } catch (Exception e) {
                     Log.e(TAG, "Unable to query external camera!" + e);
                 }
@@ -321,7 +332,8 @@ public class CameraGLTest extends ActivityInstrumentationTestCase2<GLSurfaceView
         }
 
         /* Make sure the screen stays on while testing - otherwise the OpenGL context may disappear */
-        PowerManager pm = (PowerManager) getActivity().getSystemService(Context.POWER_SERVICE);
+        PowerManager pm = (PowerManager) mActivityRule.getActivity().getSystemService(
+                Context.POWER_SERVICE);
         PowerManager.WakeLock wl = pm.newWakeLock(PowerManager.SCREEN_DIM_WAKE_LOCK, "CameraGLTest");
         wl.acquire();
         try {
@@ -342,6 +354,7 @@ public class CameraGLTest extends ActivityInstrumentationTestCase2<GLSurfaceView
 
     /** Test Camera.setPreviewTexture in conjunction with the standard Camera preview callback */
     @UiThreadTest
+    @Test
     public void testSetPreviewTexturePreviewCallback() throws Exception {
         runForAllCameras(testSetPreviewTexturePreviewCallbackByCamera);
     }
@@ -385,6 +398,7 @@ public class CameraGLTest extends ActivityInstrumentationTestCase2<GLSurfaceView
     /** Test Camera.setPreviewTexture in conjunction with both the standard Camera preview callback,
         and the SurfaceTexture onFrameAvailable callback */
     @UiThreadTest
+    @Test
     public void testSetPreviewTextureBothCallbacks() throws Exception {
         runForAllCameras(testSetPreviewTextureBothCallbacksByCamera);
     }
@@ -443,6 +457,7 @@ public class CameraGLTest extends ActivityInstrumentationTestCase2<GLSurfaceView
 
     /** Test Camera.setPreviewTexture in conjunction with just the SurfaceTexture onFrameAvailable callback */
     @UiThreadTest
+    @Test
     public void testSetPreviewTextureTextureCallback() throws Exception {
         runForAllCameras(testSetPreviewTextureTextureCallbackByCamera);
     }
@@ -510,6 +525,7 @@ public class CameraGLTest extends ActivityInstrumentationTestCase2<GLSurfaceView
      * TODO: This should be made stricter once SurfaceTexture timestamps are generated by the drivers.
      */
     @UiThreadTest
+    @Test
     public void testCameraToSurfaceTextureMetadata() throws Exception {
         runForAllCameras(testCameraToSurfaceTextureMetadataByCamera);
     }

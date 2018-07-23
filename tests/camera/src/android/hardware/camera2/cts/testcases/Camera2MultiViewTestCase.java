@@ -47,7 +47,6 @@ import android.view.Surface;
 import android.view.TextureView;
 import android.view.WindowManager;
 
-
 import com.android.ex.camera2.blocking.BlockingCameraManager;
 import com.android.ex.camera2.blocking.BlockingSessionCallback;
 import com.android.ex.camera2.blocking.BlockingStateCallback;
