@@ -774,6 +774,32 @@ public abstract class ActivityManagerTestBase {
         }
     }
 
+    /**
+     * Returns whether the test device respects settings of locked user rotation mode.
+     *
+     * The method sets the locked user rotation settings to the rotation that rotates the display by
+     * 180 degrees and checks if the actual display rotation changes after that.
+     *
+     * This is a necessary assumption check before leveraging user rotation mode to force display
+     * rotation, because there is no requirement that an Android device that supports both
+     * orientations needs to support user rotation mode.
+     *
+     * @param session the rotation session used to set user rotation
+     * @param displayId the display ID to check rotation against
+     * @return {@code true} if test device respects settings of locked user rotation mode;
+     *      {@code false} if not.
+     */
+    protected boolean supportsLockedUserRotation(RotationSession session, int displayId)
+            throws Exception {
+        final int origRotation = getDeviceRotation(displayId);
+        // Use the same orientation as target rotation to avoid affect of app-requested orientation.
+        final int targetRotation = (origRotation + 2) % 4;
+        session.set(targetRotation);
+        final boolean result = (getDeviceRotation(displayId) == targetRotation);
+        session.set(origRotation);
+        return result;
+    }
+
     protected int getDeviceRotation(int displayId) {
         final String displays = runCommandAndPrintOutput("dumpsys display displays").trim();
         Pattern pattern = Pattern.compile(
