@@ -18,6 +18,7 @@ package android.hardware.camera2.cts;
 
 import static com.android.ex.camera2.blocking.BlockingSessionCallback.SESSION_CLOSED;
 
+import android.app.Instrumentation;
 import android.graphics.ImageFormat;
 import android.hardware.camera2.CameraAccessException;
 import android.hardware.camera2.CameraCaptureSession;
@@ -40,6 +41,7 @@ import android.media.ImageWriter;
 import android.os.ConditionVariable;
 import android.os.SystemClock;
 import android.platform.test.annotations.AppModeFull;
+import android.support.test.InstrumentationRegistry;
 import android.util.Log;
 import android.util.Pair;
 import android.util.Range;
@@ -58,6 +60,11 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.TimeUnit;
+
+import org.junit.Test;
+
+import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.assertNotNull;
 
 /**
  * Test camera2 API use case performance KPIs, such as camera open time, session creation time,
@@ -92,13 +99,16 @@ public class PerformanceTest extends Camera2SurfaceViewTestCase {
     private ImageWriter mWriter;
     private SimpleCaptureCallback mZslResultListener;
 
+    private Instrumentation mInstrumentation;
+
     @Override
-    protected void setUp() throws Exception {
+    public void setUp() throws Exception {
         super.setUp();
+        mInstrumentation = InstrumentationRegistry.getInstrumentation();
     }
 
     @Override
-    protected void tearDown() throws Exception {
+    public void tearDown() throws Exception {
         super.tearDown();
     }
 
@@ -116,6 +126,7 @@ public class PerformanceTest extends Camera2SurfaceViewTestCase {
      * For depth-only devices, timing is done with the DEPTH16 format instead.
      * </p>
      */
+    @Test
     public void testCameraLaunch() throws Exception {
         double[] avgCameraLaunchTimes = new double[mCameraIds.length];
 
@@ -206,7 +217,7 @@ public class PerformanceTest extends Camera2SurfaceViewTestCase {
                 closeImageReader();
             }
             counter++;
-            mReportLog.submit(getInstrumentation());
+            mReportLog.submit(mInstrumentation);
 
             if (VERBOSE) {
                 Log.v(TAG, "Camera " + id + " device open times(ms): "
@@ -246,7 +257,7 @@ public class PerformanceTest extends Camera2SurfaceViewTestCase {
             mReportLog = new DeviceReportLog(REPORT_LOG_NAME, streamName);
             mReportLog.setSummary("camera_launch_average_time_for_all_cameras",
                     Stat.getAverage(avgCameraLaunchTimes), ResultType.LOWER_BETTER, ResultUnit.MS);
-            mReportLog.submit(getInstrumentation());
+            mReportLog.submit(mInstrumentation);
         }
     }
 
@@ -263,6 +274,7 @@ public class PerformanceTest extends Camera2SurfaceViewTestCase {
      * out the capture request and getting the full capture result.
      * </p>
      */
+    @Test
     public void testSingleCapture() throws Exception {
         double[] avgResultTimes = new double[mCameraIds.length];
 
@@ -361,7 +373,7 @@ public class PerformanceTest extends Camera2SurfaceViewTestCase {
                 closeDevice();
             }
             counter++;
-            mReportLog.submit(getInstrumentation());
+            mReportLog.submit(mInstrumentation);
         }
 
         // Result will not be reported in CTS report if no summary is printed.
@@ -370,7 +382,7 @@ public class PerformanceTest extends Camera2SurfaceViewTestCase {
             mReportLog = new DeviceReportLog(REPORT_LOG_NAME, streamName);
             mReportLog.setSummary("camera_capture_result_average_latency_for_all_cameras",
                     Stat.getAverage(avgResultTimes), ResultType.LOWER_BETTER, ResultUnit.MS);
-            mReportLog.submit(getInstrumentation());
+            mReportLog.submit(mInstrumentation);
         }
     }
 
@@ -383,6 +395,7 @@ public class PerformanceTest extends Camera2SurfaceViewTestCase {
      * gap between results.
      * </p>
      */
+    @Test
     public void testMultipleCapture() throws Exception {
         double[] avgResultTimes = new double[mCameraIds.length];
         double[] avgDurationMs = new double[mCameraIds.length];
@@ -560,7 +573,7 @@ public class PerformanceTest extends Camera2SurfaceViewTestCase {
                 closeDevice();
             }
             counter++;
-            mReportLog.submit(getInstrumentation());
+            mReportLog.submit(mInstrumentation);
         }
 
         // Result will not be reported in CTS report if no summary is printed.
@@ -569,11 +582,11 @@ public class PerformanceTest extends Camera2SurfaceViewTestCase {
             mReportLog = new DeviceReportLog(REPORT_LOG_NAME, streamName);
             mReportLog.setSummary("camera_multiple_capture_result_average_latency_for_all_cameras",
                     Stat.getAverage(avgResultTimes), ResultType.LOWER_BETTER, ResultUnit.MS);
-            mReportLog.submit(getInstrumentation());
+            mReportLog.submit(mInstrumentation);
             mReportLog = new DeviceReportLog(REPORT_LOG_NAME, streamName);
             mReportLog.setSummary("camera_multiple_capture_frame_duration_average_for_all_cameras",
                     Stat.getAverage(avgDurationMs), ResultType.LOWER_BETTER, ResultUnit.MS);
-            mReportLog.submit(getInstrumentation());
+            mReportLog.submit(mInstrumentation);
         }
     }
 
@@ -581,6 +594,7 @@ public class PerformanceTest extends Camera2SurfaceViewTestCase {
      * Test reprocessing shot-to-shot latency with default NR and edge options, i.e., from the time
      * a reprocess request is issued to the time the reprocess image is returned.
      */
+    @Test
     public void testReprocessingLatency() throws Exception {
         for (String id : mCameraIds) {
             for (int format : REPROCESS_FORMATS) {
@@ -599,7 +613,7 @@ public class PerformanceTest extends Camera2SurfaceViewTestCase {
                 } finally {
                     closeReaderWriters();
                     closeDevice();
-                    mReportLog.submit(getInstrumentation());
+                    mReportLog.submit(mInstrumentation);
                 }
             }
         }
@@ -610,6 +624,7 @@ public class PerformanceTest extends Camera2SurfaceViewTestCase {
      * during a given amount of time.
      *
      */
+    @Test
     public void testReprocessingThroughput() throws Exception {
         for (String id : mCameraIds) {
             for (int format : REPROCESS_FORMATS) {
@@ -628,7 +643,7 @@ public class PerformanceTest extends Camera2SurfaceViewTestCase {
                 } finally {
                     closeReaderWriters();
                     closeDevice();
-                    mReportLog.submit(getInstrumentation());
+                    mReportLog.submit(mInstrumentation);
                 }
             }
         }
@@ -638,6 +653,7 @@ public class PerformanceTest extends Camera2SurfaceViewTestCase {
      * Test reprocessing shot-to-shot latency with High Quality NR and edge options, i.e., from the
      * time a reprocess request is issued to the time the reprocess image is returned.
      */
+    @Test
     public void testHighQualityReprocessingLatency() throws Exception {
         for (String id : mCameraIds) {
             for (int format : REPROCESS_FORMATS) {
@@ -656,7 +672,7 @@ public class PerformanceTest extends Camera2SurfaceViewTestCase {
                 } finally {
                     closeReaderWriters();
                     closeDevice();
-                    mReportLog.submit(getInstrumentation());
+                    mReportLog.submit(mInstrumentation);
                 }
             }
         }
@@ -667,6 +683,7 @@ public class PerformanceTest extends Camera2SurfaceViewTestCase {
      * be reprocessed during a given amount of time.
      *
      */
+    @Test
     public void testHighQualityReprocessingThroughput() throws Exception {
         for (String id : mCameraIds) {
             for (int format : REPROCESS_FORMATS) {
@@ -685,7 +702,7 @@ public class PerformanceTest extends Camera2SurfaceViewTestCase {
                 } finally {
                     closeReaderWriters();
                     closeDevice();
-                    mReportLog.submit(getInstrumentation());
+                    mReportLog.submit(mInstrumentation);
                 }
             }
         }
@@ -694,6 +711,7 @@ public class PerformanceTest extends Camera2SurfaceViewTestCase {
     /**
      * Testing reprocessing caused preview stall (frame drops)
      */
+    @Test
     public void testReprocessingCaptureStall() throws Exception {
         for (String id : mCameraIds) {
             for (int format : REPROCESS_FORMATS) {
@@ -711,7 +729,7 @@ public class PerformanceTest extends Camera2SurfaceViewTestCase {
                 } finally {
                     closeReaderWriters();
                     closeDevice();
-                    mReportLog.submit(getInstrumentation());
+                    mReportLog.submit(mInstrumentation);
                 }
             }
         }

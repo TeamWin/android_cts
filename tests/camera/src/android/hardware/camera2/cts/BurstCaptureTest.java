@@ -35,6 +35,8 @@ import android.util.Size;
 import java.util.List;
 import java.util.ArrayList;
 
+import org.junit.Test;
+
 @AppModeFull
 public class BurstCaptureTest extends Camera2SurfaceViewTestCase {
     private static final String TAG = "BurstCaptureTest";
@@ -45,6 +47,7 @@ public class BurstCaptureTest extends Camera2SurfaceViewTestCase {
      * Test YUV burst capture with full-AUTO control.
      * Also verifies sensor settings operation if READ_SENSOR_SETTINGS is available.
      */
+    @Test
     public void testYuvBurst() throws Exception {
         for (int i = 0; i < mCameraIds.length; i++) {
             try {

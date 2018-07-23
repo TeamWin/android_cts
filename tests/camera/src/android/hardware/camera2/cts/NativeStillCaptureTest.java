@@ -22,6 +22,10 @@ import android.util.Log;
 import android.util.Size;
 import android.view.Surface;
 
+import org.junit.Test;
+
+import static org.junit.Assert.assertTrue;
+
 /**
  * <p>Basic test for CameraManager class.</p>
  */
@@ -37,6 +41,7 @@ public class NativeStillCaptureTest extends Camera2SurfaceViewTestCase {
         Log.i("NativeStillCaptureTest", "after loadlibrary");
     }
 
+    @Test
     public void testStillCapture() {
         // Init preview surface to a guaranteed working size
         updatePreviewSurface(new Size(640, 480));

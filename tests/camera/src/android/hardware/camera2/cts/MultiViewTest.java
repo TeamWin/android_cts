@@ -46,6 +46,8 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
+import org.junit.Test;
+
 /**
  * CameraDevice test by using combination of SurfaceView, TextureView and ImageReader
  */
@@ -58,6 +60,7 @@ public class MultiViewTest extends Camera2MultiViewTestCase {
     private final static int IMG_READER_COUNT = 2;
     private final static int YUV_IMG_READER_COUNT = 3;
 
+    @Test
     public void testTextureViewPreview() throws Exception {
         for (String cameraId : mCameraIds) {
             Exception prior = null;
@@ -86,6 +89,7 @@ public class MultiViewTest extends Camera2MultiViewTestCase {
         }
     }
 
+    @Test
     public void testTextureViewPreviewWithImageReader() throws Exception {
         for (String cameraId : mCameraIds) {
             Exception prior = null;
@@ -133,6 +137,7 @@ public class MultiViewTest extends Camera2MultiViewTestCase {
         }
     }
 
+    @Test
     public void testDualTextureViewPreview() throws Exception {
         for (String cameraId : mCameraIds) {
             Exception prior = null;
@@ -165,6 +170,7 @@ public class MultiViewTest extends Camera2MultiViewTestCase {
         }
     }
 
+    @Test
     public void testDualTextureViewAndImageReaderPreview() throws Exception {
         for (String cameraId : mCameraIds) {
             Exception prior = null;
@@ -209,6 +215,7 @@ public class MultiViewTest extends Camera2MultiViewTestCase {
         }
     }
 
+    @Test
     public void testDualCameraPreview() throws Exception {
         final int NUM_CAMERAS_TESTED = 2;
         if (mCameraIds.length < NUM_CAMERAS_TESTED) {
@@ -248,6 +255,7 @@ public class MultiViewTest extends Camera2MultiViewTestCase {
     /*
      * Verify dynamic shared surface behavior.
      */
+    @Test
     public void testSharedSurfaceBasic() throws Exception {
         for (String cameraId : mCameraIds) {
             try {
@@ -389,6 +397,7 @@ public class MultiViewTest extends Camera2MultiViewTestCase {
     /*
      * Verify dynamic shared surface behavior using multiple ImageReaders.
      */
+    @Test
     public void testSharedSurfaceImageReaderSwitch() throws Exception {
         for (String cameraId : mCameraIds) {
             try {
@@ -477,6 +486,7 @@ public class MultiViewTest extends Camera2MultiViewTestCase {
     /*
      * Verify dynamic shared surface behavior using YUV ImageReaders.
      */
+    @Test
     public void testSharedSurfaceYUVImageReaderSwitch() throws Exception {
         int YUVFormats[] = {ImageFormat.YUV_420_888, ImageFormat.YUV_422_888,
             ImageFormat.YUV_444_888, ImageFormat.YUY2, ImageFormat.YV12,
@@ -583,6 +593,7 @@ public class MultiViewTest extends Camera2MultiViewTestCase {
     /*
      * Test the dynamic shared surface limit.
      */
+    @Test
     public void testSharedSurfaceLimit() throws Exception {
         for (String cameraId : mCameraIds) {
             try {
@@ -697,6 +708,7 @@ public class MultiViewTest extends Camera2MultiViewTestCase {
     /*
      * Test dynamic shared surface switch behavior.
      */
+    @Test
     public void testSharedSurfaceSwitch() throws Exception {
         for (String cameraId : mCameraIds) {
             try {
@@ -821,6 +833,7 @@ public class MultiViewTest extends Camera2MultiViewTestCase {
     /*
      * Verify behavior of sharing surfaces within one OutputConfiguration
      */
+    @Test
     public void testSharedSurfaces() throws Exception {
         for (String cameraId : mCameraIds) {
             try {

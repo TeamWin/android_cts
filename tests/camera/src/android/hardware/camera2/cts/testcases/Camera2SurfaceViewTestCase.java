@@ -25,7 +25,6 @@ import android.os.Environment;
 import android.os.Handler;
 import android.os.HandlerThread;
 import android.os.Looper;
-import android.test.ActivityInstrumentationTestCase2;
 import android.util.Log;
 import android.view.Surface;
 import android.view.SurfaceHolder;
@@ -50,6 +49,7 @@ import android.hardware.camera2.cts.CameraTestUtils.SimpleCaptureCallback;
 import android.hardware.camera2.cts.helpers.CameraErrorCollector;
 import android.hardware.camera2.cts.helpers.StaticMetadata;
 import android.hardware.camera2.cts.helpers.StaticMetadata.CheckLevel;
+import android.support.test.rule.ActivityTestRule;
 
 import com.android.ex.camera2.blocking.BlockingSessionCallback;
 import com.android.ex.camera2.blocking.BlockingStateCallback;
@@ -59,6 +59,10 @@ import java.util.Arrays;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
+
+import org.junit.After;
+import org.junit.Before;
+import org.junit.Rule;
 
 /**
  * Camera2 Preview test case base class by using SurfaceView as rendering target.
@@ -70,8 +74,7 @@ import java.util.List;
  * </p>
  */
 
-public class Camera2SurfaceViewTestCase extends
-        ActivityInstrumentationTestCase2<Camera2SurfaceViewCtsActivity> {
+public class Camera2SurfaceViewTestCase {
     private static final String TAG = "SurfaceViewTestCase";
     private static final boolean VERBOSE = Log.isLoggable(TAG, Log.VERBOSE);
     private static final int WAIT_FOR_SURFACE_CHANGE_TIMEOUT_MS = 1000;
@@ -111,18 +114,13 @@ public class Camera2SurfaceViewTestCase extends
 
     protected WindowManager mWindowManager;
 
-    public Camera2SurfaceViewTestCase() {
-        super(Camera2SurfaceViewCtsActivity.class);
-    }
+    @Rule
+    public ActivityTestRule<Camera2SurfaceViewCtsActivity> mActivityRule =
+            new ActivityTestRule<>(Camera2SurfaceViewCtsActivity.class);
 
-    @Override
-    protected void setUp() throws Exception {
-        /**
-         * Set up the camera preview required environments, including activity,
-         * CameraManager, HandlerThread, Camera IDs, and CameraStateCallback.
-         */
-        super.setUp();
-        mContext = getActivity();
+    @Before
+    public void setUp() throws Exception {
+        mContext = mActivityRule.getActivity().getApplicationContext();
         /**
          * Workaround for mockito and JB-MR2 incompatibility
          *
@@ -151,8 +149,8 @@ public class Camera2SurfaceViewTestCase extends
         mWindowManager = (WindowManager) mContext.getSystemService(Context.WINDOW_SERVICE);
     }
 
-    @Override
-    protected void tearDown() throws Exception {
+    @After
+    public void tearDown() throws Exception {
         String[] cameraIdsPostTest = mCameraManager.getCameraIdList();
         assertNotNull("Camera ids shouldn't be null", cameraIdsPostTest);
         Log.i(TAG, "Camera ids in setup:" + Arrays.toString(mCameraIds));
@@ -171,8 +169,6 @@ public class Camera2SurfaceViewTestCase extends
         } catch (Throwable e) {
             // When new Exception(e) is used, exception info will be printed twice.
             throw new Exception(e.getMessage());
-        } finally {
-            super.tearDown();
         }
     }
 
@@ -645,7 +641,7 @@ public class Camera2SurfaceViewTestCase extends
         }
 
         mPreviewSize = size;
-        Camera2SurfaceViewCtsActivity ctsActivity = getActivity();
+        Camera2SurfaceViewCtsActivity ctsActivity = mActivityRule.getActivity();
         final SurfaceHolder holder = ctsActivity.getSurfaceView().getHolder();
         Handler handler = new Handler(Looper.getMainLooper());
         handler.post(new Runnable() {
@@ -672,7 +668,7 @@ public class Camera2SurfaceViewTestCase extends
      * recreated
      */
     protected void recreatePreviewSurface() {
-        Camera2SurfaceViewCtsActivity ctsActivity = getActivity();
+        Camera2SurfaceViewCtsActivity ctsActivity = mActivityRule.getActivity();
         setPreviewVisibility(View.GONE);
         boolean res = ctsActivity.waitForSurfaceState(
             WAIT_FOR_SURFACE_CHANGE_TIMEOUT_MS, /*valid*/ false);
@@ -690,7 +686,7 @@ public class Camera2SurfaceViewTestCase extends
      * @param visibility the new new visibility to set, one of View.VISIBLE / INVISIBLE / GONE
      */
     protected void setPreviewVisibility(int visibility) {
-        final Camera2SurfaceViewCtsActivity ctsActivity = getActivity();
+        final Camera2SurfaceViewCtsActivity ctsActivity = mActivityRule.getActivity();
         Handler handler = new Handler(Looper.getMainLooper());
         handler.post(new Runnable() {
             @Override

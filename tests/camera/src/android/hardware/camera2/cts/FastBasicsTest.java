@@ -41,6 +41,8 @@ import android.hardware.camera2.cts.CameraTestUtils.SimpleCaptureCallback;
 import android.hardware.camera2.cts.CameraTestUtils.SimpleImageReaderListener;
 import android.hardware.camera2.cts.testcases.Camera2SurfaceViewTestCase;
 
+import org.junit.Test;
+
 /**
  * Quick-running test for very basic camera operation for all cameras
  * and both camera APIs.
@@ -58,6 +60,7 @@ public class FastBasicsTest extends Camera2SurfaceViewTestCase {
     private static final int FRAMES_TO_WAIT_FOR_CAPTURE = 100;
 
     @Presubmit
+    @Test
     public void testCamera2() throws Exception {
         for (int i = 0; i < mCameraIds.length; i++) {
             try {
@@ -184,6 +187,7 @@ public class FastBasicsTest extends Camera2SurfaceViewTestCase {
     }
 
     @Presubmit
+    @Test
     public void testCamera1() throws Exception {
         for (int i = 0; i < Camera.getNumberOfCameras(); i++) {
             Camera camera = null;
