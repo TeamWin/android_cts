@@ -801,13 +801,11 @@ public class ActivityManagerPinnedStackTests extends ActivityManagerTestBase {
          * but since we can't launch into the home stack directly, we have a workaround.
          *
          * 1) Launch an activity in a new dynamic stack
-         * 2) Resize the dynamic stack to non-fullscreen bounds
-         * 3) Start the PiP activity that will enter picture-in-picture when paused in the
+         * 2) Start the PiP activity that will enter picture-in-picture when paused in the
          *    fullscreen stack
-         * 4) Bring the activity in the dynamic stack forward to trigger PiP
+         * 3) Bring the activity in the dynamic stack forward to trigger PiP
          */
-        int stackId = launchActivityInNewDynamicStack(RESUME_WHILE_PAUSING_ACTIVITY);
-        resizeStack(stackId, 0, 0, 500, 500);
+        launchActivity(RESUME_WHILE_PAUSING_ACTIVITY);
         // Launch an activity that will enter PiP when it is paused with a delay that is long enough
         // for the next resumeWhilePausing activity to finish resuming, but slow enough to not
         // trigger the current system pause timeout (currently 500ms)
