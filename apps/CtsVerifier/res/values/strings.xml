@@ -1896,7 +1896,8 @@ You should be prompted to select credentials; choose the ones you just installed
         This test verifies that if a work profile is locked with a separate password, Recents views
         for applications in the work profile are redacted.\n
         Some devices may not lock as soon as the screen is turned off by default. On such devices,
-        use the button below when requested to lock the work profile.
+        use the button below when requested to lock the work profile. Please skip these tests if
+        "Recents" is absent.
     </string>
     <string name="provisioning_byod_recents_lock_now">Lock now</string>
 
