@@ -103,7 +103,7 @@ public class ActivityManagerAmProfileTests extends ActivityManagerTestBase {
         // Sleep for 0.1 second (100 milliseconds) so the generation of the profiling
         // file is complete.
         try {
-            Thread.sleep(100);
+            Thread.sleep(300);
         } catch (InterruptedException e) {
             //ignored
         }
