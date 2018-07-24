@@ -99,9 +99,9 @@ public class LowRamDeviceTest {
                 lessThanDpi(density, DENSITY_LOW, screenSize, SCREENLAYOUT_SIZE_XLARGE)) {
 
             if (supports64Bit) {
-                assertMinMemoryMb(704);
+                assertMinMemoryMb(816);
             } else {
-                assertMinMemoryMb(424);
+                assertMinMemoryMb(416);
             }
         } else if (greaterThanDpi(density, DENSITY_560, screenSize,
                 SCREENLAYOUT_SIZE_NORMAL, SCREENLAYOUT_SIZE_SMALL) ||
@@ -129,9 +129,9 @@ public class LowRamDeviceTest {
                 greaterThanDpi(density, DENSITY_MEDIUM, screenSize, SCREENLAYOUT_SIZE_XLARGE)) {
 
             if (supports64Bit) {
-                assertMinMemoryMb(832);
+                assertMinMemoryMb(944);
             } else {
-                assertMinMemoryMb(512);
+                assertMinMemoryMb(592);
             }
         }
     }
