@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package com.android.cts.verifier.midilib;
+package com.android.cts.verifier.audio.midilib;
 
 import android.media.midi.MidiDeviceService;
 import android.media.midi.MidiDeviceStatus;
