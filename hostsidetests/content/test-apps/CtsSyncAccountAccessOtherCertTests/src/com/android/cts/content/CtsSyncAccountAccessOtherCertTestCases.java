@@ -49,6 +49,7 @@ import org.junit.runner.RunWith;
 import java.io.IOException;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
+import java.util.regex.Pattern;
 
 import static junit.framework.Assert.assertFalse;
 import static junit.framework.Assert.assertTrue;
@@ -62,6 +63,7 @@ import com.android.compatibility.common.util.SystemUtil;
 public class CtsSyncAccountAccessOtherCertTestCases {
     private static final long SYNC_TIMEOUT_MILLIS = 20000; // 20 sec
     private static final long UI_TIMEOUT_MILLIS = 5000; // 5 sec
+    private static final Pattern PERMISSION_REQUESTED = Pattern.compile("^Permission requested.*");
 
     public static final String TOKEN_TYPE_REMOVE_ACCOUNTS = "TOKEN_TYPE_REMOVE_ACCOUNTS";
 
@@ -125,10 +127,10 @@ public class CtsSyncAccountAccessOtherCertTestCases {
                 notification.click();
             } else {
                 uiDevice.openNotification();
-                uiDevice.wait(Until.hasObject(By.text("Permission requested")),
+                uiDevice.wait(Until.hasObject(By.text(PERMISSION_REQUESTED)),
                         UI_TIMEOUT_MILLIS);
 
-                uiDevice.findObject(By.text("Permission requested")).click();
+                uiDevice.findObject(By.text(PERMISSION_REQUESTED)).click();
             }
 
             uiDevice.wait(Until.hasObject(By.text("ALLOW")),
