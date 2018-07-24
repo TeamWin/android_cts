@@ -31,11 +31,14 @@ import android.test.InstrumentationTestCase;
 import android.test.suitebuilder.annotation.SmallTest;
 import android.test.UiThreadTest;
 
+import com.android.compatibility.common.util.CddTest;
+
 import java.util.List;
 
 /**
  * Verify the location access without specific permissions.
  */
+@CddTest(requirement="3.2.1/C-0-1,9/C-0-1,9.1/C-0-1")
 public class NoLocationPermissionTest extends InstrumentationTestCase {
     private static final String TEST_PROVIDER_NAME = "testProvider";
 
@@ -127,7 +130,7 @@ public class NoLocationPermissionTest extends InstrumentationTestCase {
     /**
      * Helper method to verify that calling requestLocationUpdates with given
      * provider throws SecurityException.
-     * 
+     *
      * @param provider the String provider name.
      */
     private void checkRequestLocationUpdates(String provider) {
@@ -198,7 +201,7 @@ public class NoLocationPermissionTest extends InstrumentationTestCase {
     /**
      * Helper method to verify that calling getLastKnownLocation with given
      * provider throws SecurityException.
-     * 
+     *
      * @param provider the String provider name.
      */
     private void checkGetLastKnownLocation(String provider) {
@@ -241,7 +244,7 @@ public class NoLocationPermissionTest extends InstrumentationTestCase {
     /**
      * Helper method to verify that calling getProvider with given provider
      * throws SecurityException.
-     * 
+     *
      * @param provider the String provider name.
      */
     private void checkGetProvider(String provider) {

@@ -22,9 +22,12 @@ import android.net.wifi.WifiManager;
 import android.test.AndroidTestCase;
 import android.test.suitebuilder.annotation.SmallTest;
 
+import com.android.compatibility.common.util.CddTest;
+
 /**
  * Verify WifiManager related methods without specific Wifi state permissions.
  */
+@CddTest(requirement="3.2.1/C-0-1,9/C-0-1,9.1/C-0-1")
 @SmallTest
 public class NoWifiStatePermissionTest extends AndroidTestCase {
     private static final int TEST_NET_ID = 1;

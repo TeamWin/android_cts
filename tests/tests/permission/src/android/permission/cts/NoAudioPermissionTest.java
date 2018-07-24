@@ -21,9 +21,12 @@ import android.media.AudioManager;
 import android.test.AndroidTestCase;
 import android.test.suitebuilder.annotation.SmallTest;
 
+import com.android.compatibility.common.util.CddTest;
+
 /**
  * Verify the audio related operations require specific permissions.
  */
+@CddTest(requirement="3.2.1/C-0-1,9.1/C-0-1")
 public class NoAudioPermissionTest extends AndroidTestCase {
     private AudioManager mAudioManager;
     private static final int MODE_COUNT = 3;

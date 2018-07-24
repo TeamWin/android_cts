@@ -18,6 +18,9 @@ package android.widget.toast.cts;
 
 import android.support.test.runner.AndroidJUnit4;
 import android.view.WindowManager;
+
+import com.android.compatibility.common.util.CddTest;
+
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
@@ -28,6 +31,7 @@ import static org.junit.Assert.fail;
  * like this app the only way to add toast windows is via the dedicated
  * toast APIs.
  */
+@CddTest(requirement="3.8.5/C-1-2")
 @RunWith(AndroidJUnit4.class)
 public class LegacyToastTest extends BaseToastTest {
     @Test

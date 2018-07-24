@@ -27,6 +27,8 @@ import android.platform.test.annotations.Presubmit;
 import android.test.AndroidTestCase;
 import android.util.Log;
 
+import com.android.compatibility.common.util.CddTest;
+
 import com.android.ex.camera2.blocking.BlockingCameraManager;
 import com.android.ex.camera2.blocking.BlockingStateCallback;
 
@@ -34,6 +36,7 @@ import com.android.ex.camera2.blocking.BlockingStateCallback;
  * Tests for Camera2 API related Permissions. Currently, this means
  * android.permission.CAMERA.
  */
+@CddTest(requirement="3.2.1/C-0-1,9.1/C-0-1")
 public class Camera2PermissionTest extends AndroidTestCase {
     private static final String TAG = "CameraDeviceTest";
     private static final boolean VERBOSE = Log.isLoggable(TAG, Log.VERBOSE);

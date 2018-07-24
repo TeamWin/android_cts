@@ -17,6 +17,7 @@
 package android.permission2.cts;
 
 import com.android.compatibility.common.util.SystemUtil;
+import com.android.compatibility.common.util.CddTest;
 
 import android.content.pm.ApplicationInfo;
 import android.content.pm.PackageInfo;
@@ -51,6 +52,7 @@ public class PrivappPermissionsTest extends AndroidTestCase {
 
     private static final String PLATFORM_PACKAGE_NAME = "android";
 
+    @CddTest(requirement="9.1/C-0-2")
     public void testPrivappPermissionsEnforcement() throws Exception {
         Set<String> platformPrivPermissions = new HashSet<>();
         PackageManager pm = getContext().getPackageManager();
