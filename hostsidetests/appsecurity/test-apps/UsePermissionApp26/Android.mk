@@ -32,6 +32,7 @@ LOCAL_RESOURCE_DIR := cts/hostsidetests/appsecurity/test-apps/UsePermissionApp23
 
 LOCAL_PACKAGE_NAME := CtsUsePermissionApp26
 LOCAL_SDK_VERSION := test_current
+LOCAL_MIN_SDK_VERSION := 26
 
 # tag this module as a cts test artifact
 LOCAL_COMPATIBILITY_SUITE := cts vts general-tests

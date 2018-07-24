@@ -48,6 +48,7 @@ LOCAL_AAPT_FLAGS := \
     --rename-manifest-package android.telecom2.cts \
 
 LOCAL_SDK_VERSION := current
+LOCAL_MIN_SDK_VERSION := 21
 
 # Tag this module as a cts test artifact
 LOCAL_COMPATIBILITY_SUITE := cts vts general-tests
