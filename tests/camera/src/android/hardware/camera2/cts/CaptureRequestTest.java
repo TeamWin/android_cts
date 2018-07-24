@@ -53,6 +53,8 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
+import org.junit.Test;
+
 /**
  * <p>
  * Basic test for camera CaptureRequest key controls.
@@ -126,18 +128,19 @@ public class CaptureRequestTest extends Camera2SurfaceViewTestCase {
     }
 
     @Override
-    protected void setUp() throws Exception {
+    public void setUp() throws Exception {
         super.setUp();
     }
 
     @Override
-    protected void tearDown() throws Exception {
+    public void tearDown() throws Exception {
         super.tearDown();
     }
 
     /**
      * Test CaptureRequest settings parcelling.
      */
+    @Test
     public void testSettingsBinderParcel() throws Exception {
         SurfaceTexture outputTexture = new SurfaceTexture(/* random texture ID */ 5);
         Surface surface = new Surface(outputTexture);
@@ -229,6 +232,7 @@ public class CaptureRequestTest extends Camera2SurfaceViewTestCase {
      * value changes (when requests have lock ON).
      * </p>
      */
+    @Test
     public void testBlackLevelLock() throws Exception {
         for (int i = 0; i < mCameraIds.length; i++) {
             try {
@@ -282,6 +286,7 @@ public class CaptureRequestTest extends Camera2SurfaceViewTestCase {
      *   close enough to the optical black level values.
      * </p>
      */
+    @Test
     public void testDynamicBlackWhiteLevel() throws Exception {
         for (String id : mCameraIds) {
             try {
@@ -309,6 +314,7 @@ public class CaptureRequestTest extends Camera2SurfaceViewTestCase {
      * requested by setting {@link CaptureRequest#STATISTICS_LENS_SHADING_MAP_MODE} to ON.
      * </p>
      */
+    @Test
     public void testLensShadingMap() throws Exception {
         for (int i = 0; i < mCameraIds.length; i++) {
             try {
@@ -386,6 +392,7 @@ public class CaptureRequestTest extends Camera2SurfaceViewTestCase {
      * correct.
      * </p>
      */
+    @Test
     public void testAntiBandingModes() throws Exception {
         for (int i = 0; i < mCameraIds.length; i++) {
             try {
@@ -421,6 +428,7 @@ public class CaptureRequestTest extends Camera2SurfaceViewTestCase {
      * API specifications.
      * </p>
      */
+    @Test
     public void testAeModeAndLock() throws Exception {
         for (int i = 0; i < mCameraIds.length; i++) {
             try {
@@ -453,6 +461,7 @@ public class CaptureRequestTest extends Camera2SurfaceViewTestCase {
      * and {@link CaptureResult#FLASH_STATE} result.
      * </p>
      */
+    @Test
     public void testFlashControl() throws Exception {
         for (int i = 0; i < mCameraIds.length; i++) {
             try {
@@ -495,6 +504,7 @@ public class CaptureRequestTest extends Camera2SurfaceViewTestCase {
     /**
      * Test face detection modes and results.
      */
+    @Test
     public void testFaceDetection() throws Exception {
         for (int i = 0; i < mCameraIds.length; i++) {
             try {
@@ -514,6 +524,7 @@ public class CaptureRequestTest extends Camera2SurfaceViewTestCase {
     /**
      * Test tone map modes and controls.
      */
+    @Test
     public void testToneMapControl() throws Exception {
         for (String id : mCameraIds) {
             try {
@@ -533,6 +544,7 @@ public class CaptureRequestTest extends Camera2SurfaceViewTestCase {
     /**
      * Test color correction modes and controls.
      */
+    @Test
     public void testColorCorrectionControl() throws Exception {
         for (String id : mCameraIds) {
             try {
@@ -552,6 +564,7 @@ public class CaptureRequestTest extends Camera2SurfaceViewTestCase {
     /**
      * Test edge mode control for Fps not exceeding 30.
      */
+    @Test
     public void testEdgeModeControl() throws Exception {
         for (String id : mCameraIds) {
             try {
@@ -573,6 +586,7 @@ public class CaptureRequestTest extends Camera2SurfaceViewTestCase {
     /**
      * Test edge mode control for Fps greater than 30.
      */
+    @Test
     public void testEdgeModeControlFastFps() throws Exception {
         for (String id : mCameraIds) {
             try {
@@ -595,6 +609,7 @@ public class CaptureRequestTest extends Camera2SurfaceViewTestCase {
     /**
      * Test focus distance control.
      */
+    @Test
     public void testFocusDistanceControl() throws Exception {
         for (String id : mCameraIds) {
             try {
@@ -622,6 +637,7 @@ public class CaptureRequestTest extends Camera2SurfaceViewTestCase {
     /**
      * Test noise reduction mode for fps ranges not exceeding 30
      */
+    @Test
     public void testNoiseReductionModeControl() throws Exception {
         for (String id : mCameraIds) {
             try {
@@ -643,6 +659,7 @@ public class CaptureRequestTest extends Camera2SurfaceViewTestCase {
     /**
      * Test noise reduction mode for fps ranges greater than 30
      */
+    @Test
     public void testNoiseReductionModeControlFastFps() throws Exception {
         for (String id : mCameraIds) {
             try {
@@ -666,6 +683,7 @@ public class CaptureRequestTest extends Camera2SurfaceViewTestCase {
      *
      * <p>The color correction gain and transform shouldn't be changed when AWB is locked.</p>
      */
+    @Test
     public void testAwbModeAndLock() throws Exception {
         for (String id : mCameraIds) {
             try {
@@ -684,6 +702,7 @@ public class CaptureRequestTest extends Camera2SurfaceViewTestCase {
     /**
      * Test different AF modes.
      */
+    @Test
     public void testAfModes() throws Exception {
         for (String id : mCameraIds) {
             try {
@@ -702,6 +721,7 @@ public class CaptureRequestTest extends Camera2SurfaceViewTestCase {
     /**
      * Test video and optical stabilizations.
      */
+    @Test
     public void testCameraStabilizations() throws Exception {
         for (String id : mCameraIds) {
             try {
@@ -730,6 +750,7 @@ public class CaptureRequestTest extends Camera2SurfaceViewTestCase {
      * Test digitalZoom (center wise and non-center wise), validate the returned crop regions.
      * The max preview size is used for each camera.
      */
+    @Test
     public void testDigitalZoom() throws Exception {
         for (String id : mCameraIds) {
             try {
@@ -750,6 +771,7 @@ public class CaptureRequestTest extends Camera2SurfaceViewTestCase {
      * Test digital zoom and all preview size combinations.
      * TODO: this and above test should all be moved to preview test class.
      */
+    @Test
     public void testDigitalZoomPreviewCombinations() throws Exception {
         for (String id : mCameraIds) {
             try {
@@ -768,6 +790,7 @@ public class CaptureRequestTest extends Camera2SurfaceViewTestCase {
     /**
      * Test scene mode controls.
      */
+    @Test
     public void testSceneModes() throws Exception {
         for (String id : mCameraIds) {
             try {
@@ -784,6 +807,7 @@ public class CaptureRequestTest extends Camera2SurfaceViewTestCase {
     /**
      * Test effect mode controls.
      */
+    @Test
     public void testEffectModes() throws Exception {
         for (String id : mCameraIds) {
             try {

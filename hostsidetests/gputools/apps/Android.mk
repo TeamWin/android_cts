@@ -19,7 +19,7 @@ LOCAL_MODULE := libctsgputools_jni
 LOCAL_SRC_FILES := \
     jni/CtsGpuToolsJniOnLoad.cpp \
     jni/android_gputools_cts_RootlessGpuDebug.cpp
-LOCAL_CFLAGS += -std=c++14 -Wall -Werror
+LOCAL_CFLAGS += -Wall -Werror
 LOCAL_SHARED_LIBRARIES := libandroid libvulkan liblog
 LOCAL_NDK_STL_VARIANT := c++_static
 LOCAL_SDK_VERSION := current

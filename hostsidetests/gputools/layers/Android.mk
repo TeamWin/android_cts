@@ -19,7 +19,7 @@ include $(CLEAR_VARS)
 LOCAL_MODULE := libVkLayer_nullLayerA
 LOCAL_MODULE_TAGS := tests
 LOCAL_SRC_FILES := jni/nullLayer.cpp
-LOCAL_CFLAGS += -std=c++14 -Wall -Werror -fvisibility=hidden -DLAYERNAME="A"
+LOCAL_CFLAGS += -Wall -Werror -fvisibility=hidden -DLAYERNAME="A"
 LOCAL_SHARED_LIBRARIES := libandroid libvulkan liblog
 LOCAL_NDK_STL_VARIANT := c++_static
 LOCAL_SDK_VERSION := current
@@ -30,7 +30,7 @@ include $(CLEAR_VARS)
 LOCAL_MODULE := libVkLayer_nullLayerB
 LOCAL_MODULE_TAGS := tests
 LOCAL_SRC_FILES := jni/nullLayer.cpp
-LOCAL_CFLAGS += -std=c++14 -Wall -Werror -fvisibility=hidden -DLAYERNAME="B"
+LOCAL_CFLAGS += -Wall -Werror -fvisibility=hidden -DLAYERNAME="B"
 LOCAL_SHARED_LIBRARIES := libandroid libvulkan liblog
 LOCAL_NDK_STL_VARIANT := c++_static
 LOCAL_SDK_VERSION := current
@@ -41,7 +41,7 @@ include $(CLEAR_VARS)
 LOCAL_MODULE := libVkLayer_nullLayerC
 LOCAL_MODULE_TAGS := tests
 LOCAL_SRC_FILES := jni/nullLayer.cpp
-LOCAL_CFLAGS += -std=c++14 -Wall -Werror -fvisibility=hidden -DLAYERNAME="C"
+LOCAL_CFLAGS += -Wall -Werror -fvisibility=hidden -DLAYERNAME="C"
 LOCAL_SHARED_LIBRARIES := libandroid libvulkan liblog
 LOCAL_NDK_STL_VARIANT := c++_static
 LOCAL_SDK_VERSION := current

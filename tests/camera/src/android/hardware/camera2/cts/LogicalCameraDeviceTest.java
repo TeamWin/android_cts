@@ -59,6 +59,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
+import org.junit.Test;
+
 import static org.mockito.Mockito.*;
 
 /**
@@ -78,7 +80,7 @@ public final class LogicalCameraDeviceTest extends Camera2SurfaceViewTestCase {
     private static final double FRAME_DURATION_THRESHOLD = 0.03;
 
     @Override
-    protected void setUp() throws Exception {
+    public void setUp() throws Exception {
         super.setUp();
     }
 
@@ -86,6 +88,7 @@ public final class LogicalCameraDeviceTest extends Camera2SurfaceViewTestCase {
      * Test that passing in invalid physical camera ids in OutputConfiguragtion behaves as expected
      * for logical multi-camera and non-logical multi-camera.
      */
+    @Test
     public void testInvalidPhysicalCameraIdInOutputConfiguration() throws Exception {
         for (String id : mCameraIds) {
             try {
@@ -131,6 +134,7 @@ public final class LogicalCameraDeviceTest extends Camera2SurfaceViewTestCase {
      * Test for making sure that streaming from physical streams work as expected, and
      * FPS isn't slowed down.
      */
+    @Test
     public void testBasicPhysicalStreaming() throws Exception {
 
         for (String id : mCameraIds) {
@@ -171,6 +175,7 @@ public final class LogicalCameraDeviceTest extends Camera2SurfaceViewTestCase {
      * Test for making sure that logical/physical stream requests work when both logical stream
      * and physical stream are configured.
      */
+    @Test
     public void testBasicLogicalPhysicalStreamCombination() throws Exception {
 
         for (String id : mCameraIds) {
@@ -283,6 +288,7 @@ public final class LogicalCameraDeviceTest extends Camera2SurfaceViewTestCase {
     /**
      * Test for making sure that multiple requests for physical cameras work as expected.
      */
+    @Test
     public void testBasicPhysicalRequests() throws Exception {
 
         for (String id : mCameraIds) {
@@ -404,6 +410,7 @@ public final class LogicalCameraDeviceTest extends Camera2SurfaceViewTestCase {
     /**
      * Tests invalid/incorrect multiple physical capture request cases.
      */
+    @Test
     public void testInvalidPhysicalCameraRequests() throws Exception {
 
         for (String id : mCameraIds) {
@@ -530,7 +537,7 @@ public final class LogicalCameraDeviceTest extends Camera2SurfaceViewTestCase {
         }
 
         // Find display size from window service.
-        Context context = getInstrumentation().getTargetContext();
+        Context context = mActivityRule.getActivity().getApplicationContext();
         WindowManager windowManager =
                 (WindowManager) context.getSystemService(Context.WINDOW_SERVICE);
         Display display = windowManager.getDefaultDisplay();

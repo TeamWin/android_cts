@@ -25,6 +25,7 @@ import static org.junit.Assert.assertTrue;
 
 import android.app.Instrumentation;
 import android.content.Context;
+import android.content.pm.PackageManager;
 import android.graphics.drawable.Drawable;
 import android.os.SystemClock;
 import android.support.test.InstrumentationRegistry;
@@ -223,6 +224,7 @@ public class ToastTest {
         assertEquals(horizontal1, params1.horizontalMargin, 0.0f);
         assertEquals(vertical1, params1.verticalMargin, 0.0f);
         assertLayoutDone(view);
+
         int[] xy1 = new int[2];
         view.getLocationOnScreen(xy1);
         assertShowAndHide(view);
@@ -248,8 +250,19 @@ public class ToastTest {
         view.getLocationOnScreen(xy2);
         assertShowAndHide(view);
 
-        assertTrue(xy1[0] > xy2[0]);
-        assertTrue(xy1[1] < xy2[1]);
+        /** Check if the test is being run on a watch.
+         *
+         * Change I8180e5080e0a6860b40dbb2faa791f0ede926ca7 updated how toast are displayed on the
+         * watch. Unlike the phone, which displays toast centered horizontally at the bottom of the
+         * screen, the watch now displays toast in the center of the screen.
+         */
+        if (mContext.getPackageManager().hasSystemFeature(PackageManager.FEATURE_WATCH)) {
+            assertTrue(xy1[0] > xy2[0]);
+            assertTrue(xy1[1] > xy2[1]);
+        } else {
+            assertTrue(xy1[0] > xy2[0]);
+            assertTrue(xy1[1] < xy2[1]);
+        }
     }
 
     @Test

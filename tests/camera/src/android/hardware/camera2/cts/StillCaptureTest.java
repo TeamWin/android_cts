@@ -56,6 +56,8 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
+import org.junit.Test;
+
 @AppModeFull
 public class StillCaptureTest extends Camera2SurfaceViewTestCase {
     private static final String TAG = "StillCaptureTest";
@@ -75,18 +77,19 @@ public class StillCaptureTest extends Camera2SurfaceViewTestCase {
     private static final int MAX_ALLOCATED_BITMAPS = 3;
 
     @Override
-    protected void setUp() throws Exception {
+    public void setUp() throws Exception {
         super.setUp();
     }
 
     @Override
-    protected void tearDown() throws Exception {
+    public void tearDown() throws Exception {
         super.tearDown();
     }
 
     /**
      * Test JPEG capture exif fields for each camera.
      */
+    @Test
     public void testJpegExif() throws Exception {
         for (int i = 0; i < mCameraIds.length; i++) {
             try {
@@ -115,6 +118,7 @@ public class StillCaptureTest extends Camera2SurfaceViewTestCase {
      * is CONTINUOUS_PICTURE.
      * </p>
      */
+    @Test
     public void testTakePicture() throws Exception{
         for (String id : mCameraIds) {
             try {
@@ -142,6 +146,7 @@ public class StillCaptureTest extends Camera2SurfaceViewTestCase {
      * is CONTINUOUS_PICTURE. Same as testTakePicture, but with enableZSL set.
      * </p>
      */
+    @Test
     public void testTakePictureZsl() throws Exception{
         for (String id : mCameraIds) {
             try {
@@ -167,6 +172,7 @@ public class StillCaptureTest extends Camera2SurfaceViewTestCase {
     /**
      * Test basic Raw capture. Raw buffer avaiablility is checked, but raw buffer data is not.
      */
+    @Test
     public void testBasicRawCapture()  throws Exception {
        for (int i = 0; i < mCameraIds.length; i++) {
            try {
@@ -191,6 +197,7 @@ public class StillCaptureTest extends Camera2SurfaceViewTestCase {
     /**
      * Test basic Raw ZSL capture. Raw buffer avaiablility is checked, but raw buffer data is not.
      */
+    @Test
     public void testBasicRawZslCapture()  throws Exception {
        for (int i = 0; i < mCameraIds.length; i++) {
            try {
@@ -223,6 +230,7 @@ public class StillCaptureTest extends Camera2SurfaceViewTestCase {
      * - Running preview until AE/AF can settle.
      * - Capturing with a request targeting all three output streams.
      */
+    @Test
     public void testFullRawCapture() throws Exception {
         for (int i = 0; i < mCameraIds.length; i++) {
             try {
@@ -251,6 +259,7 @@ public class StillCaptureTest extends Camera2SurfaceViewTestCase {
      * - Running preview until AE/AF can settle.
      * - Capturing with a request targeting all three output streams.
      */
+    @Test
     public void testFullRawZSLCapture() throws Exception {
         for (int i = 0; i < mCameraIds.length; i++) {
             try {
@@ -281,6 +290,7 @@ public class StillCaptureTest extends Camera2SurfaceViewTestCase {
      * converges in reasonable time.
      * </p>
      */
+    @Test
     public void testTouchForFocus() throws Exception {
         for (String id : mCameraIds) {
             try {
@@ -311,6 +321,7 @@ public class StillCaptureTest extends Camera2SurfaceViewTestCase {
      * result validation is covered by {@link #jpegExifTestByCamera} test.
      * </p>
      */
+    @Test
     public void testStillPreviewCombination() throws Exception {
         for (String id : mCameraIds) {
             try {
@@ -338,6 +349,7 @@ public class StillCaptureTest extends Camera2SurfaceViewTestCase {
      * compensation settings is changed, even when AE lock is ON.
      * </p>
      */
+    @Test
     public void testAeCompensation() throws Exception {
         for (String id : mCameraIds) {
             try {
@@ -364,6 +376,7 @@ public class StillCaptureTest extends Camera2SurfaceViewTestCase {
     /**
      * Test Ae region for still capture.
      */
+    @Test
     public void testAeRegions() throws Exception {
         for (String id : mCameraIds) {
             try {
@@ -389,6 +402,7 @@ public class StillCaptureTest extends Camera2SurfaceViewTestCase {
     /**
      * Test AWB region for still capture.
      */
+    @Test
     public void testAwbRegions() throws Exception {
         for (String id : mCameraIds) {
             try {
@@ -414,6 +428,7 @@ public class StillCaptureTest extends Camera2SurfaceViewTestCase {
     /**
      * Test Af region for still capture.
      */
+    @Test
     public void testAfRegions() throws Exception {
         for (String id : mCameraIds) {
             try {
@@ -439,6 +454,7 @@ public class StillCaptureTest extends Camera2SurfaceViewTestCase {
     /**
      * Test preview is still running after a still request
      */
+    @Test
     public void testPreviewPersistence() throws Exception {
         for (String id : mCameraIds) {
             try {
@@ -456,6 +472,7 @@ public class StillCaptureTest extends Camera2SurfaceViewTestCase {
         }
     }
 
+    @Test
     public void testAePrecaptureTriggerCancelJpegCapture() throws Exception {
         for (String id : mCameraIds) {
             try {
@@ -490,6 +507,7 @@ public class StillCaptureTest extends Camera2SurfaceViewTestCase {
      * the devices.
      * </p>
      */
+    @Test
     public void testAllocateBitmap() throws Exception {
         for (String id : mCameraIds) {
             try {
@@ -513,6 +531,7 @@ public class StillCaptureTest extends Camera2SurfaceViewTestCase {
     /**
      * Test focal length controls.
      */
+    @Test
     public void testFocalLengths() throws Exception {
         for (String id : mCameraIds) {
             try {

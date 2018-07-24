@@ -38,6 +38,8 @@ import android.util.Size;
 
 import java.util.ArrayList;
 
+import org.junit.Test;
+
 /**
  * Basic tests for burst capture in RAW formats.
  */
@@ -56,18 +58,19 @@ public class BurstCaptureRawTest extends Camera2SurfaceViewTestCase {
             EXPOSURE_MULTIPLIERS.length * SENSITIVITY_MLTIPLIERS.length;
 
     @Override
-    protected void setUp() throws Exception {
+    public void setUp() throws Exception {
         super.setUp();
     }
 
     @Override
-    protected void tearDown() throws Exception {
+    public void tearDown() throws Exception {
         super.tearDown();
     }
 
     /**
      * Verify raw sensor size information is correctly configured.
      */
+    @Test
     public void testRawSensorSize() throws Exception {
         Log.i(TAG, "Begin testRawSensorSize");
         for (String id : mCameraIds) {
@@ -99,6 +102,7 @@ public class BurstCaptureRawTest extends Camera2SurfaceViewTestCase {
      * be honored.
      * </p>
      */
+    @Test
     public void testMetadataRoundDown() throws Exception {
         Log.i(TAG, "Begin testMetadataRoundDown");
 
@@ -114,6 +118,7 @@ public class BurstCaptureRawTest extends Camera2SurfaceViewTestCase {
      * sync.
      * </p>
      */
+    @Test
     public void testManualAutoSwitch() throws Exception {
         Log.i(TAG, "Begin testManualAutoSwitch");
 
@@ -125,6 +130,7 @@ public class BurstCaptureRawTest extends Camera2SurfaceViewTestCase {
     /**
      * Per frame timestamp test in non-stalled RAW formats
      */
+    @Test
     public void testTimestamp() throws Exception {
         Log.i(TAG, "Begin testTimestamp");
 

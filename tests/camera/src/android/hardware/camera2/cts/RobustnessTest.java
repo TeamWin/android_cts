@@ -912,6 +912,188 @@ public class RobustnessTest extends Camera2AndroidTestCase {
         }
     }
 
+    public void testAeAndAfCausality() throws Exception {
+
+        for (String id : mCameraIds) {
+            Log.i(TAG, String.format("Testing Camera %s", id));
+
+            try {
+                // Legacy devices do not support precapture trigger; don't test devices that
+                // can't focus
+                StaticMetadata staticInfo = mAllStaticInfo.get(id);
+                if (staticInfo.isHardwareLevelLegacy() || !staticInfo.hasFocuser()) {
+                    continue;
+                }
+                // Depth-only devices won't support AE
+                if (!staticInfo.isColorOutputSupported()) {
+                    Log.i(TAG, "Camera " + id + " does not support color outputs, skipping");
+                    continue;
+                }
+
+                openDevice(id);
+                int[] availableAfModes = mStaticInfo.getAfAvailableModesChecked();
+                int[] availableAeModes = mStaticInfo.getAeAvailableModesChecked();
+                final int maxPipelineDepth = mStaticInfo.getCharacteristics().get(
+                        CameraCharacteristics.REQUEST_PIPELINE_MAX_DEPTH);
+
+                for (int afMode : availableAfModes) {
+                    if (afMode == CameraCharacteristics.CONTROL_AF_MODE_OFF ||
+                            afMode == CameraCharacteristics.CONTROL_AF_MODE_EDOF) {
+                        // Only test AF modes that have meaningful trigger behavior
+                        continue;
+                    }
+                    for (int aeMode : availableAeModes) {
+                        if (aeMode ==  CameraCharacteristics.CONTROL_AE_MODE_OFF) {
+                            // Only test AE modes that have meaningful trigger behavior
+                            continue;
+                        }
+
+                        SurfaceTexture preview = new SurfaceTexture(/*random int*/ 1);
+
+                        CaptureRequest.Builder previewRequest =
+                                prepareTriggerTestSession(preview, aeMode, afMode);
+
+                        SimpleCaptureCallback captureListener =
+                                new CameraTestUtils.SimpleCaptureCallback();
+
+                        mCameraSession.setRepeatingRequest(previewRequest.build(), captureListener,
+                                mHandler);
+
+                        List<CaptureRequest> triggerRequests =
+                                new ArrayList<CaptureRequest>(maxPipelineDepth+1);
+                        for (int i = 0; i < maxPipelineDepth; i++) {
+                            triggerRequests.add(previewRequest.build());
+                        }
+
+                        // Cancel triggers
+                        cancelTriggersAndWait(previewRequest, captureListener, afMode);
+
+                        //
+                        // Standard sequence - Part 1 AF trigger
+
+                        if (VERBOSE) {
+                            Log.v(TAG, String.format("Triggering AF"));
+                        }
+
+                        previewRequest.set(CaptureRequest.CONTROL_AF_TRIGGER,
+                                CaptureRequest.CONTROL_AF_TRIGGER_START);
+                        previewRequest.set(CaptureRequest.CONTROL_AE_PRECAPTURE_TRIGGER,
+                                CaptureRequest.CONTROL_AE_PRECAPTURE_TRIGGER_IDLE);
+                        triggerRequests.add(previewRequest.build());
+
+                        mCameraSession.captureBurst(triggerRequests, captureListener, mHandler);
+
+                        TotalCaptureResult[] triggerResults =
+                                captureListener.getTotalCaptureResultsForRequests(
+                                triggerRequests, MAX_RESULT_STATE_CHANGE_WAIT_FRAMES);
+                        for (int i = 0; i < maxPipelineDepth; i++) {
+                            TotalCaptureResult triggerResult = triggerResults[i];
+                            int afState = triggerResult.get(CaptureResult.CONTROL_AF_STATE);
+                            int afTrigger = triggerResult.get(CaptureResult.CONTROL_AF_TRIGGER);
+
+                            verifyStartingAfState(afMode, afState);
+                            assertTrue(String.format("In AF mode %s, previous AF_TRIGGER must not "
+                                    + "be START before TRIGGER_START",
+                                    StaticMetadata.getAfModeName(afMode)),
+                                    afTrigger != CaptureResult.CONTROL_AF_TRIGGER_START);
+                        }
+
+                        int afState =
+                                triggerResults[maxPipelineDepth].get(CaptureResult.CONTROL_AF_STATE);
+                        boolean focusComplete = false;
+                        for (int i = 0;
+                             i < MAX_TRIGGER_SEQUENCE_FRAMES && !focusComplete;
+                             i++) {
+
+                            focusComplete = verifyAfSequence(afMode, afState, focusComplete);
+
+                            CaptureResult focusResult = captureListener.getCaptureResult(
+                                    CameraTestUtils.CAPTURE_RESULT_TIMEOUT_MS);
+                            afState = focusResult.get(CaptureResult.CONTROL_AF_STATE);
+                        }
+
+                        assertTrue("Focusing never completed!", focusComplete);
+
+                        // Standard sequence - Part 2 AE trigger
+
+                        if (VERBOSE) {
+                            Log.v(TAG, String.format("Triggering AE"));
+                        }
+                        // Remove AF trigger request
+                        triggerRequests.remove(maxPipelineDepth);
+
+                        previewRequest.set(CaptureRequest.CONTROL_AF_TRIGGER,
+                                CaptureRequest.CONTROL_AF_TRIGGER_IDLE);
+                        previewRequest.set(CaptureRequest.CONTROL_AE_PRECAPTURE_TRIGGER,
+                                CaptureRequest.CONTROL_AE_PRECAPTURE_TRIGGER_START);
+                        triggerRequests.add(previewRequest.build());
+
+                        mCameraSession.captureBurst(triggerRequests, captureListener, mHandler);
+
+                        triggerResults = captureListener.getTotalCaptureResultsForRequests(
+                                triggerRequests, MAX_RESULT_STATE_CHANGE_WAIT_FRAMES);
+
+                        for (int i = 0; i < maxPipelineDepth; i++) {
+                            TotalCaptureResult triggerResult = triggerResults[i];
+                            int aeState = triggerResult.get(CaptureResult.CONTROL_AE_STATE);
+                            int aeTrigger = triggerResult.get(
+                                    CaptureResult.CONTROL_AE_PRECAPTURE_TRIGGER);
+
+                            assertTrue(String.format("In AE mode %s, previous AE_TRIGGER must not "
+                                    + "be START before TRIGGER_START",
+                                    StaticMetadata.getAeModeName(aeMode)),
+                                    aeTrigger != CaptureResult.CONTROL_AE_PRECAPTURE_TRIGGER_START);
+                            assertTrue(String.format("In AE mode %s, previous AE_STATE must not be"
+                                    + " PRECAPTURE_TRIGGER before TRIGGER_START",
+                                    StaticMetadata.getAeModeName(aeMode)),
+                                    aeState != CaptureResult.CONTROL_AE_STATE_PRECAPTURE);
+                        }
+
+                        // Stand sequence - Part 3 Cancel AF trigger
+                        if (VERBOSE) {
+                            Log.v(TAG, String.format("Cancel AF trigger"));
+                        }
+                        // Remove AE trigger request
+                        triggerRequests.remove(maxPipelineDepth);
+                        previewRequest.set(CaptureRequest.CONTROL_AF_TRIGGER,
+                                CaptureRequest.CONTROL_AF_TRIGGER_CANCEL);
+                        triggerRequests.add(previewRequest.build());
+
+                        mCameraSession.captureBurst(triggerRequests, captureListener, mHandler);
+                        triggerResults = captureListener.getTotalCaptureResultsForRequests(
+                                triggerRequests, MAX_RESULT_STATE_CHANGE_WAIT_FRAMES);
+                        for (int i = 0; i < maxPipelineDepth; i++) {
+                            TotalCaptureResult triggerResult = triggerResults[i];
+                            afState = triggerResult.get(CaptureResult.CONTROL_AF_STATE);
+                            int afTrigger = triggerResult.get(CaptureResult.CONTROL_AF_TRIGGER);
+
+                            assertTrue(
+                                    String.format("In AF mode %s, previous AF_TRIGGER must not " +
+                                    "be CANCEL before TRIGGER_CANCEL",
+                                    StaticMetadata.getAfModeName(afMode)),
+                                    afTrigger != CaptureResult.CONTROL_AF_TRIGGER_CANCEL);
+                            assertTrue(
+                                    String.format("In AF mode %s, previous AF_STATE must be LOCKED"
+                                    + " before CANCEL, but is %s",
+                                    StaticMetadata.getAfModeName(afMode),
+                                    StaticMetadata.AF_STATE_NAMES[afState]),
+                                    afState == CaptureResult.CONTROL_AF_STATE_FOCUSED_LOCKED ||
+                                    afState == CaptureResult.CONTROL_AF_STATE_NOT_FOCUSED_LOCKED);
+                        }
+
+                        stopCapture(/*fast*/ false);
+                        preview.release();
+                    }
+
+                }
+
+            } finally {
+                closeDevice(id);
+            }
+        }
+
+    }
+
     public void testAbandonRepeatingRequestSurface() throws Exception {
         for (String id : mCameraIds) {
             Log.i(TAG, String.format(
@@ -1211,6 +1393,17 @@ public class RobustnessTest extends Camera2AndroidTestCase {
         afState = previewResult.get(CaptureResult.CONTROL_AF_STATE);
         aeState = previewResult.get(CaptureResult.CONTROL_AE_STATE);
 
+        verifyStartingAfState(afMode, afState);
+
+        // After several frames, AE must no longer be in INACTIVE state
+        assertTrue(String.format("AE state must be SEARCHING, CONVERGED, " +
+                        "or FLASH_REQUIRED, is %s", StaticMetadata.AE_STATE_NAMES[aeState]),
+                aeState == CaptureResult.CONTROL_AE_STATE_SEARCHING ||
+                aeState == CaptureResult.CONTROL_AE_STATE_CONVERGED ||
+                aeState == CaptureResult.CONTROL_AE_STATE_FLASH_REQUIRED);
+    }
+
+    private void verifyStartingAfState(int afMode, int afState) {
         switch (afMode) {
             case CaptureResult.CONTROL_AF_MODE_AUTO:
             case CaptureResult.CONTROL_AF_MODE_MACRO:
@@ -1232,13 +1425,6 @@ public class RobustnessTest extends Camera2AndroidTestCase {
             default:
                 fail("unexpected af mode");
         }
-
-        // After several frames, AE must no longer be in INACTIVE state
-        assertTrue(String.format("AE state must be SEARCHING, CONVERGED, " +
-                        "or FLASH_REQUIRED, is %s", StaticMetadata.AE_STATE_NAMES[aeState]),
-                aeState == CaptureResult.CONTROL_AE_STATE_SEARCHING ||
-                aeState == CaptureResult.CONTROL_AE_STATE_CONVERGED ||
-                aeState == CaptureResult.CONTROL_AE_STATE_FLASH_REQUIRED);
     }
 
     private boolean verifyAfSequence(int afMode, int afState, boolean focusComplete) {

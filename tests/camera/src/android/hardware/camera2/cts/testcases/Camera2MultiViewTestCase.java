@@ -20,6 +20,7 @@ import static android.hardware.camera2.cts.CameraTestUtils.*;
 import static com.android.ex.camera2.blocking.BlockingSessionCallback.*;
 import static com.android.ex.camera2.blocking.BlockingStateCallback.*;
 
+import android.app.Activity;
 import android.content.Context;
 import android.content.res.Configuration;
 import android.graphics.Matrix;
@@ -39,7 +40,7 @@ import android.os.Handler;
 import android.os.HandlerThread;
 import android.os.Looper;
 import android.os.SystemClock;
-import android.test.ActivityInstrumentationTestCase2;
+import android.support.test.rule.ActivityTestRule;
 import android.util.Log;
 import android.util.Size;
 import android.view.Surface;
@@ -56,11 +57,14 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.HashMap;
 
+import org.junit.After;
+import org.junit.Before;
+import org.junit.Rule;
+
 /**
  * Camera2 test case base class by using mixed SurfaceView and TextureView as rendering target.
  */
-public class Camera2MultiViewTestCase extends
-        ActivityInstrumentationTestCase2<Camera2MultiViewCtsActivity> {
+public class Camera2MultiViewTestCase {
     private static final String TAG = "MultiViewTestCase";
     private static final boolean VERBOSE = Log.isLoggable(TAG, Log.VERBOSE);
 
@@ -73,6 +77,7 @@ public class Camera2MultiViewTestCase extends
 
     private CameraManager mCameraManager;
     private HandlerThread mHandlerThread;
+    private Activity mActivity;
     private Context mContext;
 
     private CameraHolder[] mCameraHolders;
@@ -80,14 +85,14 @@ public class Camera2MultiViewTestCase extends
 
     protected WindowManager mWindowManager;
 
-    public Camera2MultiViewTestCase() {
-        super(Camera2MultiViewCtsActivity.class);
-    }
+    @Rule
+    public ActivityTestRule<Camera2MultiViewCtsActivity> mActivityRule =
+            new ActivityTestRule<>(Camera2MultiViewCtsActivity.class);
 
-    @Override
-    protected void setUp() throws Exception {
-        super.setUp();
-        mContext = getActivity();
+    @Before
+    public void setUp() throws Exception {
+        mActivity = mActivityRule.getActivity();
+        mContext = mActivity.getApplicationContext();
         assertNotNull("Unable to get activity", mContext);
         mCameraManager = (CameraManager) mContext.getSystemService(Context.CAMERA_SERVICE);
         assertNotNull("Unable to get CameraManager", mCameraManager);
@@ -96,7 +101,7 @@ public class Camera2MultiViewTestCase extends
         mHandlerThread = new HandlerThread(TAG);
         mHandlerThread.start();
         mHandler = new Handler(mHandlerThread.getLooper());
-        Camera2MultiViewCtsActivity activity = (Camera2MultiViewCtsActivity) mContext;
+        Camera2MultiViewCtsActivity activity = (Camera2MultiViewCtsActivity) mActivity;
         for (int i = 0; i < Camera2MultiViewCtsActivity.MAX_TEXTURE_VIEWS; i++) {
             mTextureView[i] = activity.getTextureView(i);
         }
@@ -111,8 +116,8 @@ public class Camera2MultiViewTestCase extends
         mWindowManager = (WindowManager) mContext.getSystemService(Context.WINDOW_SERVICE);
     }
 
-    @Override
-    protected void tearDown() throws Exception {
+    @After
+    public void tearDown() throws Exception {
         String[] cameraIdsPostTest = mCameraManager.getCameraIdList();
         assertNotNull("Camera ids shouldn't be null", cameraIdsPostTest);
         Log.i(TAG, "Camera ids in setup:" + Arrays.toString(mCameraIds));
@@ -129,7 +134,6 @@ public class Camera2MultiViewTestCase extends
                 camera = null;
             }
         }
-        super.tearDown();
     }
 
     /**
@@ -146,7 +150,7 @@ public class Camera2MultiViewTestCase extends
      */
     protected void updatePreviewDisplayRotation(Size previewSize, TextureView textureView) {
         int rotationDegrees = 0;
-        Camera2MultiViewCtsActivity activity = (Camera2MultiViewCtsActivity) mContext;
+        Camera2MultiViewCtsActivity activity = (Camera2MultiViewCtsActivity) mActivity;
         int displayRotation = activity.getWindowManager().getDefaultDisplay().getRotation();
         Configuration config = activity.getResources().getConfiguration();
 

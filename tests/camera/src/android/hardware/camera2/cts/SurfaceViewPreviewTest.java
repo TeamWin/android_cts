@@ -52,6 +52,8 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
+import org.junit.Test;
+
 /**
  * CameraDevice preview test by using SurfaceView.
  */
@@ -66,12 +68,12 @@ public class SurfaceViewPreviewTest extends Camera2SurfaceViewTestCase {
     private static final int PREPARE_TIMEOUT_MS = 10000; // 10 s
 
     @Override
-    protected void setUp() throws Exception {
+    public void setUp() throws Exception {
         super.setUp();
     }
 
     @Override
-    protected void tearDown() throws Exception {
+    public void tearDown() throws Exception {
         super.tearDown();
     }
 
@@ -83,6 +85,7 @@ public class SurfaceViewPreviewTest extends Camera2SurfaceViewTestCase {
      * (monotonically increasing) ordering are verified.
      * </p>
      */
+    @Test
     public void testCameraPreview() throws Exception {
         for (int i = 0; i < mCameraIds.length; i++) {
             try {
@@ -107,6 +110,7 @@ public class SurfaceViewPreviewTest extends Camera2SurfaceViewTestCase {
      * is not validated.
      * </p>
      */
+    @Test
     public void testBasicTestPatternPreview() throws Exception{
         for (int i = 0; i < mCameraIds.length; i++) {
             try {
@@ -128,6 +132,7 @@ public class SurfaceViewPreviewTest extends Camera2SurfaceViewTestCase {
      * Test {@link CaptureRequest#CONTROL_AE_TARGET_FPS_RANGE} for preview, validate the preview
      * frame duration and exposure time.
      */
+    @Test
     public void testPreviewFpsRange() throws Exception {
         for (String id : mCameraIds) {
             try {
@@ -153,6 +158,7 @@ public class SurfaceViewPreviewTest extends Camera2SurfaceViewTestCase {
      * also exercises the prepare API.
      * </p>
      */
+    @Test
     public void testSurfaceSet() throws Exception {
         for (String id : mCameraIds) {
             try {
@@ -177,6 +183,7 @@ public class SurfaceViewPreviewTest extends Camera2SurfaceViewTestCase {
      * - Ensure that starting to use a newly-prepared output does not cause additional
      *   preview glitches to occur
      */
+    @Test
     public void testPreparePerformance() throws Throwable {
         for (int i = 0; i < mCameraIds.length; i++) {
             try {
@@ -336,6 +343,7 @@ public class SurfaceViewPreviewTest extends Camera2SurfaceViewTestCase {
      * Test to verify correct behavior with the same Surface object being used repeatedly with
      * different native internals, and multiple Surfaces pointing to the same actual consumer object
      */
+    @Test
     public void testSurfaceEquality() throws Exception {
         for (int i = 0; i < mCameraIds.length; i++) {
             try {
@@ -426,6 +434,7 @@ public class SurfaceViewPreviewTest extends Camera2SurfaceViewTestCase {
     /*
      * Verify creation of deferred surface capture sessions
      */
+    @Test
     public void testDeferredSurfaces() throws Exception {
         for (int i = 0; i < mCameraIds.length; i++) {
             try {
