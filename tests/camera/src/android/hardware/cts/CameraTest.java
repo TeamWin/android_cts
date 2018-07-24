@@ -44,7 +44,7 @@ import android.test.UiThreadTest;
 import android.test.suitebuilder.annotation.LargeTest;
 import android.util.Log;
 import android.view.SurfaceHolder;
-
+import com.android.compatibility.common.util.CddTest;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
@@ -57,7 +57,6 @@ import java.util.Date;
 import java.util.Iterator;
 import java.util.List;
 import java.util.TimeZone;
-
 import junit.framework.AssertionFailedError;
 
 /**
@@ -383,7 +382,7 @@ public class CameraTest extends ActivityInstrumentationTestCase2<CameraCtsActivi
             terminateMessageLooper();
         }
     }
-
+    @CddTest(requirement="7.5.4/C-0-5")
     private void subtestTakePictureByCamera(boolean isVideoSnapshot,
             int videoWidth, int videoHeight) throws Exception {
         int videoSnapshotMinArea =
@@ -583,6 +582,7 @@ public class CameraTest extends ActivityInstrumentationTestCase2<CameraCtsActivi
     }
 
     // Also test Camera.Parameters
+    @CddTest(requirement="[7.5.4/C-0-1,C-0-2,C-0-3,C-0-6")
     private void assertParameters(Parameters parameters) {
         // Parameters constants
         final int PICTURE_FORMAT = ImageFormat.JPEG;
@@ -1716,6 +1716,7 @@ public class CameraTest extends ActivityInstrumentationTestCase2<CameraCtsActivi
                      distances2[Parameters.FOCUS_DISTANCE_FAR_INDEX]);
     }
 
+    @CddTest(requirement="7.5.2/C-1-3")
     @UiThreadTest
     public void testMultipleCameras() throws Exception {
         int nCameras = Camera.getNumberOfCameras();

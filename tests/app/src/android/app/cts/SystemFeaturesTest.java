@@ -41,13 +41,12 @@ import android.net.wifi.WifiManager;
 import android.nfc.NfcAdapter;
 import android.telephony.TelephonyManager;
 import android.test.InstrumentationTestCase;
-
+import com.android.compatibility.common.util.CddTest;
 import java.lang.reflect.Field;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
-
 import junit.framework.AssertionFailedError;
 
 /**
@@ -113,6 +112,7 @@ public class SystemFeaturesTest extends InstrumentationTestCase {
         }
     }
 
+    @CddTest(requirement="7.5/C-1-1,7.5.1/C-1-1,7.5.2/C-1-1,7.5.3/C-1-1")
     public void testCameraFeatures() throws Exception {
         int numCameras = Camera.getNumberOfCameras();
         if (numCameras == 0) {

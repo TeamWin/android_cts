@@ -45,6 +45,8 @@ import java.util.Objects;
 
 import static android.hardware.camera2.cts.helpers.AssertHelpers.*;
 
+import com.android.compatibility.common.util.CddTest;
+
 /**
  * Extended tests for static camera characteristics.
  */
@@ -139,6 +141,7 @@ public class ExtendedCameraCharacteristicsTest extends AndroidTestCase {
     /**
      * Test that the available stream configurations contain a few required formats and sizes.
      */
+    @CddTest(requirement="7.5.4/C-0-4,7.5.2/C-1-2,7.5.1/C-1-2")
     public void testAvailableStreamConfigs() {
         int counter = 0;
         for (CameraCharacteristics c : mCharacteristics) {
@@ -941,6 +944,7 @@ public class ExtendedCameraCharacteristicsTest extends AndroidTestCase {
     /**
      * Cross-check StreamConfigurationMap output
      */
+   @CddTest(requirement="7.5.4/C-0-4")
     public void testStreamConfigurationMap() throws Exception {
         int counter = 0;
         for (CameraCharacteristics c : mCharacteristics) {
@@ -1325,6 +1329,7 @@ public class ExtendedCameraCharacteristicsTest extends AndroidTestCase {
      *
      * @return value of the {@code key} from {@code c}
      */
+    @CddTest(requirement="7.5.4/C-0-7,C-0-8")
     private <T> T expectKeyAvailable(CameraCharacteristics c, CameraCharacteristics.Key<T> key,
             int hwLevel, int... capabilities) {
 

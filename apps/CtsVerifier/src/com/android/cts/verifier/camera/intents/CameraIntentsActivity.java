@@ -40,6 +40,8 @@ import com.android.cts.verifier.PassFailButtons;
 import com.android.cts.verifier.R;
 import com.android.cts.verifier.TestResult;
 
+import com.android.compatibility.common.util.CddTest;
+
 import java.util.TreeSet;
 
 /**
@@ -61,6 +63,7 @@ import java.util.TreeSet;
  *  (e.g. social network apps that upload a photo after you take a picture)
  *  rely on this functionality present and correctly working.
  */
+@CddTest(requirement="7.5.4/C-0-9,C-0-10")
 public class CameraIntentsActivity extends PassFailButtons.Activity
 implements OnClickListener, SurfaceHolder.Callback {
 
