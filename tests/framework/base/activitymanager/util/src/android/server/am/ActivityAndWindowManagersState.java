@@ -32,6 +32,7 @@ import static android.util.DisplayMetrics.DENSITY_DEFAULT;
 import static android.view.Display.DEFAULT_DISPLAY;
 
 import static org.hamcrest.Matchers.greaterThan;
+import static org.hamcrest.Matchers.greaterThanOrEqualTo;
 import static org.hamcrest.Matchers.lessThan;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
@@ -52,6 +53,7 @@ import android.server.am.WindowManagerState.Display;
 import android.server.am.WindowManagerState.WindowStack;
 import android.server.am.WindowManagerState.WindowState;
 import android.server.am.WindowManagerState.WindowTask;
+import android.util.SparseArray;
 
 import java.util.Arrays;
 import java.util.List;
@@ -491,9 +493,10 @@ public class ActivityAndWindowManagersState {
 
     void assertSanity() {
         assertThat("Must have stacks", mAmState.getStackCount(), greaterThan(0));
+        // TODO: Update when keyguard will be shown on multiple displays
         if (!mAmState.getKeyguardControllerState().keyguardShowing) {
-            assertEquals("There should be one and only one resumed activity in the system.",
-                    1, mAmState.getResumedActivitiesCount());
+            assertThat("There should be at least one resumed activity in the system.",
+                    mAmState.getResumedActivitiesCount(), greaterThanOrEqualTo(1));
         }
         assertNotNull("Must have focus activity.", mAmState.getFocusedActivity());
 
@@ -519,11 +522,6 @@ public class ActivityAndWindowManagersState {
         assertFalse(msg, mWmState.containsStack(windowingMode, activityType));
     }
 
-    void assertFrontStack(String msg, int stackId) {
-        assertEquals(msg, stackId, mAmState.getFrontStackId(DEFAULT_DISPLAY));
-        assertEquals(msg, stackId, mWmState.getFrontStackId(DEFAULT_DISPLAY));
-    }
-
     void assertFrontStack(String msg, int windowingMode, int activityType) {
         if (windowingMode != WINDOWING_MODE_UNDEFINED) {
             assertEquals(msg, windowingMode,
@@ -539,7 +537,6 @@ public class ActivityAndWindowManagersState {
         assertEquals(msg, activityType, mWmState.getFrontStackActivityType(DEFAULT_DISPLAY));
     }
 
-    @Deprecated
     void assertFocusedStack(String msg, int stackId) {
         assertEquals(msg, stackId, mAmState.getFocusedStackId());
     }
@@ -565,11 +562,24 @@ public class ActivityAndWindowManagersState {
     }
 
     public void assertResumedActivity(final String msg, final ComponentName activityName) {
-        assertEquals(msg, getActivityName(activityName), mAmState.getResumedActivity());
+        assertEquals(msg, getActivityName(activityName),
+                mAmState.getFocusedActivity());
+    }
+
+    /** Asserts that each display has correct resumed activity. */
+    public void assertResumedActivities(final String msg,
+            SparseArray<ComponentName> resumedActivities) {
+        for (int i = 0; i < resumedActivities.size(); i++) {
+            final int displayId = resumedActivities.keyAt(i);
+            final ComponentName activityComponent = resumedActivities.valueAt(i);
+            assertEquals("Error asserting resumed activity on display " + displayId + ": " + msg,
+                    activityComponent != null ? getActivityName(activityComponent) : null,
+                    mAmState.getResumedActivityOnDisplay(displayId));
+        }
     }
 
     void assertNotResumedActivity(String msg, ComponentName activityName) {
-        assertNotEquals(msg, mAmState.getResumedActivity(), getActivityName(activityName));
+        assertNotEquals(msg, mAmState.getFocusedActivity(), getActivityName(activityName));
     }
 
     void assertFocusedWindow(String msg, String windowName) {
@@ -578,10 +588,6 @@ public class ActivityAndWindowManagersState {
 
     void assertNotFocusedWindow(String msg, String windowName) {
         assertNotEquals(msg, mWmState.getFocusedWindow(), windowName);
-    }
-
-    void assertFrontWindow(String msg, String windowName) {
-        assertEquals(msg, windowName, mWmState.getFrontWindow());
     }
 
     void assertNotExist(final ComponentName activityName) {
