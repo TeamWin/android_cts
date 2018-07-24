@@ -261,6 +261,7 @@ public class ByodFlowTestActivity extends DialogTestListActivity {
                 workStatusIcon,
                 R.drawable.stat_sys_managed_profile_status);
 
+        /* Disable due to b/111734436.
         Intent workStatusToast = new Intent(WorkStatusTestActivity.ACTION_WORK_STATUS_TOAST);
         workStatusToast.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
         mWorkStatusBarToastTest = new DialogTestListItem(this,
@@ -268,6 +269,7 @@ public class ByodFlowTestActivity extends DialogTestListActivity {
                 "BYOD_WorkStatusBarToastTest",
                 R.string.provisioning_byod_work_status_toast_instruction,
                 workStatusToast);
+        */
 
         mDisableNonMarketTest = new DialogTestListItem(this,
                 R.string.provisioning_byod_nonmarket_deny,
@@ -459,7 +461,10 @@ public class ByodFlowTestActivity extends DialogTestListActivity {
 
         adapter.add(mWorkNotificationBadgedTest);
         adapter.add(mWorkStatusBarIconTest);
+
+        /* Disable due to b/111734436.
         adapter.add(mWorkStatusBarToastTest);
+        */
 
         // Settings related tests.
         adapter.add(mProfileAccountVisibleTest);
