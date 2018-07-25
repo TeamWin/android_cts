@@ -16,9 +16,13 @@
 
 package android.server.am;
 
+import static android.app.WindowConfiguration.ACTIVITY_TYPE_ASSISTANT;
+import static android.app.WindowConfiguration.ACTIVITY_TYPE_HOME;
+import static android.app.WindowConfiguration.ACTIVITY_TYPE_RECENTS;
 import static android.app.WindowConfiguration.ACTIVITY_TYPE_STANDARD;
 import static android.app.WindowConfiguration.WINDOWING_MODE_SPLIT_SCREEN_PRIMARY;
 import static android.app.WindowConfiguration.WINDOWING_MODE_SPLIT_SCREEN_SECONDARY;
+import static android.app.WindowConfiguration.WINDOWING_MODE_UNDEFINED;
 import static android.content.Intent.FLAG_ACTIVITY_MULTIPLE_TASK;
 import static android.content.Intent.FLAG_ACTIVITY_NEW_TASK;
 import static android.server.am.ActivityLauncher.KEY_LAUNCH_ACTIVITY;
@@ -69,6 +73,8 @@ import android.support.test.filters.FlakyTest;
 
 import androidx.annotation.Nullable;
 
+import com.android.compatibility.common.util.SystemUtil;
+
 import org.junit.Before;
 import org.junit.Test;
 
@@ -97,13 +103,24 @@ public class ActivityManagerMultiDisplayTests extends ActivityManagerDisplayTest
      */
     @Test
     public void testLaunchActivityOnSecondaryDisplay() throws Exception {
+        validateActivityLaunchOnNewDisplay(ACTIVITY_TYPE_STANDARD);
+        validateActivityLaunchOnNewDisplay(ACTIVITY_TYPE_HOME);
+        validateActivityLaunchOnNewDisplay(ACTIVITY_TYPE_RECENTS);
+        validateActivityLaunchOnNewDisplay(ACTIVITY_TYPE_ASSISTANT);
+    }
+
+    private void validateActivityLaunchOnNewDisplay(int activityType) throws Exception {
         try (final VirtualDisplaySession virtualDisplaySession = new VirtualDisplaySession()) {
             // Create new virtual display.
             final ActivityDisplay newDisplay = virtualDisplaySession.createDisplay();
 
             // Launch activity on new secondary display.
             final LogSeparator logSeparator = separateLogs();
-            launchActivityOnDisplay(TEST_ACTIVITY, newDisplay.mId);
+            SystemUtil.runWithShellPermissionIdentity(
+                    () -> getLaunchActivityBuilder().setUseInstrumentation()
+                            .setTargetActivity(TEST_ACTIVITY).setNewTask(true)
+                            .setMultipleTask(true).setActivityType(activityType)
+                            .setDisplayId(newDisplay.mId).execute());
             mAmWmState.computeState(TEST_ACTIVITY);
 
             mAmWmState.assertFocusedActivity(
@@ -116,7 +133,8 @@ public class ActivityManagerMultiDisplayTests extends ActivityManagerDisplayTest
                     mAmWmState.getAmState().getStackById(frontStackId);
             assertEquals("Launched activity must be on the secondary display and resumed",
                     getActivityName(TEST_ACTIVITY), frontStack.mResumedActivity);
-            mAmWmState.assertFocusedStack("Focus must be on secondary display", frontStackId);
+            mAmWmState.assertFocusedStack("Focus must be the activity type",
+                    WINDOWING_MODE_UNDEFINED, activityType);
 
             // Check that activity config corresponds to display config.
             final ReportedSizes reportedSizes = getLastReportedSizesForActivity(TEST_ACTIVITY,
