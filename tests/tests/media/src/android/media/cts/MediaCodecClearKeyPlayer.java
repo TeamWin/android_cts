@@ -78,7 +78,8 @@ public class MediaCodecClearKeyPlayer implements MediaTimeProvider {
     private Map<UUID, byte[]> mPsshInitData;
     private MediaCrypto mCrypto;
     private MediaCas mMediaCas;
-    private MediaDescrambler mDescrambler;
+    private MediaDescrambler mAudioDescrambler;
+    private MediaDescrambler mVideoDescrambler;
     private MediaExtractor mAudioExtractor;
     private MediaExtractor mVideoExtractor;
     private SurfaceHolder mSurfaceHolder;
@@ -193,7 +194,7 @@ public class MediaCodecClearKeyPlayer implements MediaTimeProvider {
         return PSSH;
     }
 
-    private void prepareAudio() throws IOException {
+    private void prepareAudio() throws IOException, MediaCasException {
         boolean hasAudio = false;
         for (int i = mAudioExtractor.getTrackCount(); i-- > 0;) {
             MediaFormat format = mAudioExtractor.getTrackFormat(i);
@@ -207,6 +208,14 @@ public class MediaCodecClearKeyPlayer implements MediaTimeProvider {
                   " Sample rate:" + getMediaFormatInteger(format, MediaFormat.KEY_SAMPLE_RATE) +
                   " Channel count:" +
                   getMediaFormatInteger(format, MediaFormat.KEY_CHANNEL_COUNT));
+
+            if (mScrambled) {
+                MediaExtractor.CasInfo casInfo = mAudioExtractor.getCasInfo(i);
+                if (casInfo != null && casInfo.getSession() != null) {
+                    mAudioDescrambler = new MediaDescrambler(casInfo.getSystemId());
+                    mAudioDescrambler.setMediaCasSession(casInfo.getSession());
+                }
+            }
 
             if (!hasAudio) {
                 mAudioExtractor.selectTrack(i);
@@ -230,7 +239,7 @@ public class MediaCodecClearKeyPlayer implements MediaTimeProvider {
         }
     }
 
-    private void prepareVideo() throws IOException {
+    private void prepareVideo() throws IOException, MediaCasException {
         boolean hasVideo = false;
 
         for (int i = mVideoExtractor.getTrackCount(); i-- > 0;) {
@@ -245,10 +254,11 @@ public class MediaCodecClearKeyPlayer implements MediaTimeProvider {
             Log.d(TAG, "video track #" + i + " " + format + " " + mime +
                   " Width:" + mMediaFormatWidth + ", Height:" + mMediaFormatHeight);
 
-            if (mScrambled && mime.startsWith("video/")) {
+            if (mScrambled) {
                 MediaExtractor.CasInfo casInfo = mVideoExtractor.getCasInfo(i);
                 if (casInfo != null && casInfo.getSession() != null) {
-                    mDescrambler.setMediaCasSession(casInfo.getSession());
+                    mVideoDescrambler = new MediaDescrambler(casInfo.getSystemId());
+                    mVideoDescrambler.setMediaCasSession(casInfo.getSession());
                 }
             }
 
@@ -295,13 +305,14 @@ public class MediaCodecClearKeyPlayer implements MediaTimeProvider {
             android.media.MediaFormat format = extractor.getTrackFormat(trackId);
             String mime = format.getString(android.media.MediaFormat.KEY_MIME);
             Log.d(TAG, "track "+ trackId + ": " + mime);
-            if ("video/scrambled".equals(mime) || "audio/scrambled".equals(mime)) {
+            if (MediaFormat.MIMETYPE_VIDEO_SCRAMBLED.equals(mime) ||
+                    MediaFormat.MIMETYPE_AUDIO_SCRAMBLED.equals(mime)) {
                 MediaExtractor.CasInfo casInfo = extractor.getCasInfo(trackId);
                 if (casInfo != null) {
                     mMediaCas = new MediaCas(casInfo.getSystemId());
-                    mDescrambler = new MediaDescrambler(casInfo.getSystemId());
                     mMediaCas.provision(sProvisionStr);
                     extractor.setMediaCas(mMediaCas);
+                    break;
                 }
             }
         }
@@ -389,7 +400,7 @@ public class MediaCodecClearKeyPlayer implements MediaTimeProvider {
                     format,
                     isVideo ? mSurfaceHolder.getSurface() : null,
                     0,
-                    isVideo ? mDescrambler : null);
+                    isVideo ? mVideoDescrambler : mAudioDescrambler);
         }
 
         CodecState state;
@@ -549,9 +560,14 @@ public class MediaCodecClearKeyPlayer implements MediaTimeProvider {
             mMediaCas = null;
         }
 
-        if (mDescrambler != null) {
-            mDescrambler.close();
-            mDescrambler = null;
+        if (mAudioDescrambler != null) {
+            mAudioDescrambler.close();
+            mAudioDescrambler = null;
+        }
+
+        if (mVideoDescrambler != null) {
+            mVideoDescrambler.close();
+            mVideoDescrambler = null;
         }
 
         mDurationUs = -1;
@@ -596,7 +612,6 @@ public class MediaCodecClearKeyPlayer implements MediaTimeProvider {
         } catch (IllegalStateException e) {
             throw new Error("Aduio CodecState.feedInputBuffer IllegalStateException " + e);
         }
-
     }
 
     public long getNowUs() {

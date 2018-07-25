@@ -82,7 +82,7 @@ public class CodecState {
         mPresentationTimeUs = 0;
 
         String mime = mFormat.getString(MediaFormat.KEY_MIME);
-        Log.d(TAG, "CodecState::onOutputFormatChanged " + mime);
+        Log.d(TAG, "CodecState::CodecState " + mime);
         mIsAudio = mime.startsWith("audio/");
     }
 
