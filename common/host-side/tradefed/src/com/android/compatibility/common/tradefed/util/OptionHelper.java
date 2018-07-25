@@ -122,6 +122,11 @@ public final class OptionHelper {
             // remove initial hyphens and any starting double quote from option args
             String keyName = keyNameTokens[0].replaceFirst("^\"?--?", "");
 
+            // Convert "option=value a b" back into option="value a b"
+            if (optionInput.charAt(0) == '"') {
+              optionInput = keyNameTokens[0].substring(1) + " \"" + keyNameTokens[1];
+            }
+
             // add substrings only when the options are recognized
             if (optionShortNames.contains(keyName) || optionNames.contains(keyName)) {
                 // add values separated by spaces or in quotes separately to the return array
