@@ -28,6 +28,7 @@ LOCAL_JAVA_LIBRARIES := android.test.runner.stubs \
     android.test.base.stubs \
 
 LOCAL_SDK_VERSION := current
+LOCAL_MIN_SDK_VERSION := 22
 
 LOCAL_STATIC_JAVA_LIBRARIES := \
     compatibility-device-util \

@@ -45,6 +45,8 @@ LOCAL_RESOURCE_DIR := $(LOCAL_PATH)/../res
 
 LOCAL_ASSET_DIR := $(LOCAL_PATH)/../assets
 
+LOCAL_MIN_SDK_VERSION := 23
+
 # tag this module as a cts test artifact
 LOCAL_COMPATIBILITY_SUITE := arcts cts vts general-tests
 
