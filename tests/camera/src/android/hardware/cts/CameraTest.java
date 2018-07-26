@@ -16,6 +16,7 @@
 
 package android.hardware.cts;
 
+import android.app.Activity;
 import android.content.pm.PackageManager;
 import android.graphics.BitmapFactory;
 import android.graphics.ImageFormat;
@@ -36,10 +37,8 @@ import android.media.ExifInterface;
 import android.media.MediaRecorder;
 import android.os.Build;
 import android.os.ConditionVariable;
-import android.os.Environment;
 import android.os.Looper;
 import android.os.SystemClock;
-import android.platform.test.annotations.AppModeFull;
 import android.support.test.rule.ActivityTestRule;
 import android.test.MoreAsserts;
 import android.test.UiThreadTest;
@@ -72,14 +71,12 @@ import junit.framework.AssertionFailedError;
 /**
  * This test case must run with hardware. It can't be tested in emulator
  */
-@AppModeFull
 @LargeTest
 public class CameraTest extends Assert {
     private static final String TAG = "CameraTest";
     private static final String PACKAGE = "android.hardware.cts";
     private static final boolean VERBOSE = Log.isLoggable(TAG, Log.VERBOSE);
-    private final String JPEG_PATH = Environment.getExternalStorageDirectory().getPath() +
-            "/test.jpg";
+    private String mJpegPath = null;
     private byte[] mJpegData;
 
     private static final int PREVIEW_CALLBACK_NOT_RECEIVED = 0;
@@ -190,6 +187,7 @@ public class CameraTest extends Assert {
         }
         assertNotNull("Fail to open camera.", mCamera);
         mCamera.setPreviewDisplay(mActivityRule.getActivity().getSurfaceView().getHolder());
+        mJpegPath = mActivityRule.getActivity().getExternalFilesDir(null).getPath() + "/test.jpg";
     }
 
     /*
@@ -308,7 +306,7 @@ public class CameraTest extends Assert {
                 mJpegData = rawData;
                 if (rawData != null) {
                     // try to store the picture on the SD card
-                    File rawoutput = new File(JPEG_PATH);
+                    File rawoutput = new File(mJpegPath);
                     FileOutputStream outStream = new FileOutputStream(rawoutput);
                     outStream.write(rawData);
                     outStream.close();
@@ -878,7 +876,7 @@ public class CameraTest extends Assert {
         mCamera.takePicture(mShutterCallback, mRawPictureCallback, mJpegPictureCallback);
         waitForSnapshotDone();
         assertTrue(mJpegPictureCallbackResult);
-        ExifInterface exif = new ExifInterface(JPEG_PATH);
+        ExifInterface exif = new ExifInterface(mJpegPath);
         assertTrue(exif.hasThumbnail());
         byte[] thumb = exif.getThumbnail();
         BitmapFactory.Options bmpOptions = new BitmapFactory.Options();
@@ -904,10 +902,10 @@ public class CameraTest extends Assert {
         mCamera.takePicture(mShutterCallback, mRawPictureCallback, mJpegPictureCallback);
         waitForSnapshotDone();
         assertTrue(mJpegPictureCallbackResult);
-        exif = new ExifInterface(JPEG_PATH);
+        exif = new ExifInterface(mJpegPath);
         assertFalse(exif.hasThumbnail());
         // Primary image should still be valid for no thumbnail capture.
-        BitmapFactory.decodeFile(JPEG_PATH, bmpOptions);
+        BitmapFactory.decodeFile(mJpegPath, bmpOptions);
         if (!recording) {
             assertTrue("Jpeg primary image size should match requested size",
                     bmpOptions.outWidth == pictureSize.width &&
@@ -920,7 +918,7 @@ public class CameraTest extends Assert {
         }
 
         assertNotNull("Jpeg primary image data should be decodable",
-                BitmapFactory.decodeFile(JPEG_PATH));
+                BitmapFactory.decodeFile(mJpegPath));
     }
 
     @UiThreadTest
@@ -946,7 +944,7 @@ public class CameraTest extends Assert {
         double focalLength = parameters.getFocalLength();
 
         // Test various exif tags.
-        ExifInterface exif = new ExifInterface(JPEG_PATH);
+        ExifInterface exif = new ExifInterface(mJpegPath);
         StringBuffer failedCause = new StringBuffer("Jpeg exif test failed:\n");
         boolean extraExiftestPassed = checkExtraExifTagsSucceeds(failedCause, exif);
 
@@ -988,7 +986,7 @@ public class CameraTest extends Assert {
         mCamera.setParameters(parameters);
         mCamera.takePicture(mShutterCallback, mRawPictureCallback, mJpegPictureCallback);
         waitForSnapshotDone();
-        exif = new ExifInterface(JPEG_PATH);
+        exif = new ExifInterface(mJpegPath);
         checkGpsDataNull(exif);
         assertBitmapAndJpegSizeEqual(mJpegData, exif);
         // Reset the rotation to prevent from affecting other tests.
@@ -1171,7 +1169,7 @@ public class CameraTest extends Assert {
         mCamera.setParameters(parameters);
         mCamera.takePicture(mShutterCallback, mRawPictureCallback, mJpegPictureCallback);
         waitForSnapshotDone();
-        ExifInterface exif = new ExifInterface(JPEG_PATH);
+        ExifInterface exif = new ExifInterface(mJpegPath);
         assertNotNull(exif.getAttribute(ExifInterface.TAG_GPS_LATITUDE));
         assertNotNull(exif.getAttribute(ExifInterface.TAG_GPS_LONGITUDE));
         assertNotNull(exif.getAttribute(ExifInterface.TAG_GPS_LATITUDE_REF));

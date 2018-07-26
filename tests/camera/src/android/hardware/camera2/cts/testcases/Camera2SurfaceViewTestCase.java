@@ -21,7 +21,6 @@ import static com.android.ex.camera2.blocking.BlockingStateCallback.STATE_CLOSED
 
 import android.hardware.camera2.params.StreamConfigurationMap;
 import android.media.ImageReader;
-import android.os.Environment;
 import android.os.Handler;
 import android.os.HandlerThread;
 import android.os.Looper;
@@ -79,9 +78,6 @@ public class Camera2SurfaceViewTestCase {
     private static final boolean VERBOSE = Log.isLoggable(TAG, Log.VERBOSE);
     private static final int WAIT_FOR_SURFACE_CHANGE_TIMEOUT_MS = 1000;
 
-    // TODO: Use internal storage for this to make sure the file is only visible to test.
-    protected static final String DEBUG_FILE_NAME_BASE =
-            Environment.getExternalStorageDirectory().getPath();
     protected static final int WAIT_FOR_RESULT_TIMEOUT_MS = 3000;
     protected static final float FRAME_DURATION_ERROR_MARGIN = 0.01f; // 1 percent error margin.
     protected static final int NUM_RESULTS_WAIT_TIMEOUT = 100;
@@ -111,6 +107,7 @@ public class Camera2SurfaceViewTestCase {
     protected List<Size> mOrderedVideoSizes; // In descending order.
     protected List<Size> mOrderedStillSizes; // In descending order.
     protected HashMap<Size, Long> mMinPreviewFrameDurationMap;
+    protected String mDebugFileNameBase;
 
     protected WindowManager mWindowManager;
 
@@ -137,6 +134,7 @@ public class Camera2SurfaceViewTestCase {
         mHandler = new Handler(mHandlerThread.getLooper());
         mCameraListener = new BlockingStateCallback();
         mCollector = new CameraErrorCollector();
+        mDebugFileNameBase = mContext.getExternalFilesDir(null).getPath();
 
         mAllStaticInfo = new HashMap<String, StaticMetadata>();
         for (String cameraId : mCameraIds) {

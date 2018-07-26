@@ -39,7 +39,6 @@ import android.media.Image;
 import android.media.Image.Plane;
 import android.media.ImageReader;
 import android.os.ConditionVariable;
-import android.platform.test.annotations.AppModeFull;
 import android.util.Log;
 import android.util.Size;
 import android.view.Surface;
@@ -67,7 +66,6 @@ import static android.hardware.camera2.cts.CameraTestUtils.getValueNotNull;
  * <p>Some invalid access test. </p>
  * <p>TODO: Add more format tests? </p>
  */
-@AppModeFull
 public class ImageReaderTest extends Camera2AndroidTestCase {
     private static final String TAG = "ImageReaderTest";
     private static final boolean VERBOSE = Log.isLoggable(TAG, Log.VERBOSE);
@@ -510,16 +508,16 @@ public class ImageReaderTest extends Camera2AndroidTestCase {
                             if (difference > tolerance) {
                                 // Dump files if running in verbose mode
                                 if (DEBUG) {
-                                    String jpegFileName = DEBUG_FILE_NAME_BASE + "/" + captureSz +
+                                    String jpegFileName = mDebugFileNameBase + "/" + captureSz +
                                             "_jpeg.jpg";
                                     dumpFile(jpegFileName, jpegBmap);
-                                    String fullSizeJpegFileName = DEBUG_FILE_NAME_BASE + "/" +
+                                    String fullSizeJpegFileName = mDebugFileNameBase + "/" +
                                             captureSz + "_full_jpeg.jpg";
                                     dumpFile(fullSizeJpegFileName, compressedJpegData);
-                                    String yuvFileName = DEBUG_FILE_NAME_BASE + "/" + captureSz +
+                                    String yuvFileName = mDebugFileNameBase + "/" + captureSz +
                                             "_yuv.jpg";
                                     dumpFile(yuvFileName, yuvBmap);
-                                    String fullSizeYuvFileName = DEBUG_FILE_NAME_BASE + "/" +
+                                    String fullSizeYuvFileName = mDebugFileNameBase + "/" +
                                             captureSz + "_full_yuv.jpg";
                                     int[] fullYUVColors = convertPixelYuvToRgba(yuvImage.getWidth(),
                                             yuvImage.getHeight(), 0, 0, yuvImage);
@@ -901,7 +899,7 @@ public class ImageReaderTest extends Camera2AndroidTestCase {
                     Image img = mReader.acquireNextImage();
                     assertNotNull("Unable to acquire next image", img);
                     CameraTestUtils.validateImage(img, sz.getWidth(), sz.getHeight(), format,
-                            DEBUG_FILE_NAME_BASE);
+                            mDebugFileNameBase);
 
                     // Verify the exposure time and iso match the requested values.
                     CaptureResult result = listener.getCaptureResult(CAPTURE_RESULT_TIMEOUT_MS);
@@ -1044,7 +1042,7 @@ public class ImageReaderTest extends Camera2AndroidTestCase {
             assertNotNull("Unable to acquire the latest image", img);
             if (VERBOSE) Log.v(TAG, "Got the latest image");
             CameraTestUtils.validateImage(img, sz.getWidth(), sz.getHeight(), format,
-                    DEBUG_FILE_NAME_BASE);
+                    mDebugFileNameBase);
             HardwareBuffer hwb = img.getHardwareBuffer();
             assertNotNull("Unable to retrieve the Image's HardwareBuffer", hwb);
             if (VERBOSE) Log.v(TAG, "finish validation of image " + numImageVerified);

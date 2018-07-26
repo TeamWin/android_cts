@@ -28,7 +28,6 @@ import android.media.Image;
 import android.media.ImageReader;
 import android.os.Build;
 import android.os.SystemClock;
-import android.platform.test.annotations.AppModeFull;
 import android.util.Pair;
 import android.util.Size;
 import android.hardware.camera2.cts.helpers.CameraErrorCollector;
@@ -51,7 +50,6 @@ import java.util.Set;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.TimeUnit;
 
-@AppModeFull
 public class CaptureResultTest extends Camera2AndroidTestCase {
     private static final String TAG = "CaptureResultTest";
     private static final boolean VERBOSE = Log.isLoggable(TAG, Log.VERBOSE);

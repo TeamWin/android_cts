@@ -17,7 +17,6 @@
 package android.hardware.camera2.cts;
 
 import android.hardware.camera2.cts.testcases.Camera2SurfaceViewTestCase;
-import android.platform.test.annotations.AppModeFull;
 import android.util.Log;
 import android.util.Size;
 import android.view.Surface;
@@ -29,7 +28,6 @@ import static org.junit.Assert.assertTrue;
 /**
  * <p>Basic test for CameraManager class.</p>
  */
-@AppModeFull
 public class NativeStillCaptureTest extends Camera2SurfaceViewTestCase {
     private static final String TAG = "NativeStillCaptureTest";
     private static final boolean VERBOSE = Log.isLoggable(TAG, Log.VERBOSE);
@@ -46,7 +44,7 @@ public class NativeStillCaptureTest extends Camera2SurfaceViewTestCase {
         // Init preview surface to a guaranteed working size
         updatePreviewSurface(new Size(640, 480));
         assertTrue("testStillCapture fail, see log for details",
-                testStillCaptureNative(DEBUG_FILE_NAME_BASE, mPreviewSurface));
+                testStillCaptureNative(mDebugFileNameBase, mPreviewSurface));
     }
 
     private static native boolean testStillCaptureNative(
