@@ -18,8 +18,8 @@ package com.android.cts.certinstaller;
 
 import static com.google.common.truth.Truth.assertWithMessage;
 import static com.google.common.truth.Truth.assertThat;
+import static org.testng.Assert.assertThrows;
 
-import android.app.KeyguardManager;
 import android.app.admin.DevicePolicyManager;
 import android.content.Context;
 import android.security.KeyChain;
@@ -33,7 +33,6 @@ import java.io.IOException;
 import java.security.GeneralSecurityException;
 import java.security.KeyFactory;
 import java.security.KeyStore;
-import java.security.NoSuchAlgorithmException;
 import java.security.PrivateKey;
 import java.security.cert.Certificate;
 import java.security.cert.CertificateException;
@@ -177,6 +176,11 @@ public class DirectDelegatedCertInstallerTest extends InstrumentationTestCase {
         PrivateKey obtainedKey = KeyChain.getPrivateKey(getContext(), alias);
         assertThat(obtainedKey).isNotNull();
         assertThat(obtainedKey.getAlgorithm()).isEqualTo("RSA");
+
+        // Test cleaning up the key.
+        assertThat(mDpm.removeKeyPair(null, alias)).isTrue();
+        assertThrows(
+                KeyChainException.class, () -> KeyChain.getPrivateKey(getContext(), alias));
     }
 
     private static boolean containsCertificate(List<byte[]> certificates, byte[] toMatch)

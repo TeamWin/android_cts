@@ -33,7 +33,8 @@ LOCAL_MIN_SDK_VERSION := 22
 LOCAL_STATIC_JAVA_LIBRARIES := \
     compatibility-device-util \
     ctstestrunner \
-    truth-prebuilt
+    truth-prebuilt \
+    testng
 
 
 # tag this module as a cts test artifact
