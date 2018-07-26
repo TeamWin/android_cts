@@ -171,6 +171,7 @@ void UploadRedPixels(const AHardwareBuffer_Desc& desc) {
         case AHARDWAREBUFFER_FORMAT_R5G6B5_UNORM:
         case AHARDWAREBUFFER_FORMAT_R8G8B8_UNORM:
         case AHARDWAREBUFFER_FORMAT_R8G8B8X8_UNORM:
+        case GL_RGB565:
         case GL_RGB8: {
             // GL_RGB565 supports uploading GL_UNSIGNED_BYTE data.
             const int size = desc.width * desc.height * 3;
@@ -343,6 +344,12 @@ void CheckGoldenPixel(const GoldenPixel& golden, const std::array<uint8_t, 4>& p
             golden_pixel[3] = 127;
             golden_max[3] = 128;
         }
+    }
+    // Adjust color range for RGB565.
+    if ((golden.color == kRed50 || golden.color == kRed50Alpha100) &&
+        (format == GL_RGB565 || format == AHARDWAREBUFFER_FORMAT_R5G6B5_UNORM)) {
+        golden_pixel[0] = 123;
+        golden_max[0] = 132;
     }
 
     if (use_range) {
@@ -1592,6 +1599,8 @@ INSTANTIATE_TEST_CASE_P(
         AHardwareBuffer_Desc{75, 33, 1, GL_RGB8, 0, kGlFormat, 0, 0},
         AHardwareBuffer_Desc{64, 80, 1, GL_RGBA8, 0, kGlFormat, 0, 0},
         AHardwareBuffer_Desc{49, 23, 1, GL_SRGB8_ALPHA8, 0, kGlFormat | kUseSrgb, 0, 0},
+        // TODO: enable for Android Q.
+        // AHardwareBuffer_Desc{63, 78, 1, GL_RGB565, 0, kGlFormat, 0, 0},
         AHardwareBuffer_Desc{42, 41, 1, GL_RGBA16F, 0, kGlFormat, 0, 0},
         AHardwareBuffer_Desc{37, 63, 1, GL_RGB10_A2, 0, kGlFormat, 0, 0},
         AHardwareBuffer_Desc{33, 20, 1, AHARDWAREBUFFER_FORMAT_R8G8B8A8_UNORM, 0, 0, 0, 0},
@@ -1612,6 +1621,8 @@ INSTANTIATE_TEST_CASE_P(
         AHardwareBuffer_Desc{64, 80, 6, GL_RGBA8, 0, kGlFormat, 0, 0},
         AHardwareBuffer_Desc{33, 28, 4, GL_SRGB8_ALPHA8, 0, kGlFormat | kUseSrgb, 0, 0},
         AHardwareBuffer_Desc{42, 41, 3, GL_RGBA16F, 0, kGlFormat, 0, 0},
+        // TODO: enable for Android Q.
+        // AHardwareBuffer_Desc{63, 78, 3, GL_RGB565, 0, kGlFormat, 0, 0},
         AHardwareBuffer_Desc{37, 63, 4, GL_RGB10_A2, 0, kGlFormat, 0, 0},
         AHardwareBuffer_Desc{25, 77, 7, AHARDWAREBUFFER_FORMAT_R8G8B8A8_UNORM, 0, 0, 0, 0},
         AHardwareBuffer_Desc{25, 77, 7, AHARDWAREBUFFER_FORMAT_R8G8B8A8_UNORM, 0, kUseSrgb, 0, 0},
