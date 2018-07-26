@@ -29,6 +29,7 @@ import android.content.Context;
 import android.content.res.Resources;
 import android.content.res.TypedArray;
 import android.graphics.Bitmap;
+import android.graphics.Insets;
 import android.graphics.Point;
 import android.graphics.PointF;
 import android.graphics.Rect;
@@ -243,7 +244,7 @@ public class MagnifierTest {
 
         // The window should have been positioned to the top left of the activity,
         // such that it does not overlap system insets.
-        final Rect systemInsets = mLayout.getRootWindowInsets().getSystemWindowInsets();
+        final Insets systemInsets = mLayout.getRootWindowInsets().getSystemWindowInsets();
         final Rect surfaceInsets = mLayout.getViewRootImpl().mWindowAttributes.surfaceInsets;
         final Point magnifierCoords = mMagnifier.getPosition();
         assertEquals(systemInsets.left + surfaceInsets.left, magnifierCoords.x);
@@ -266,7 +267,7 @@ public class MagnifierTest {
         assertTrue(TIME_LIMIT_EXCEEDED, latch.await(1, TimeUnit.SECONDS));
 
         // The window should have been positioned to the bottom right of the activity.
-        final Rect systemInsets = mLayout.getRootWindowInsets().getSystemWindowInsets();
+        final Insets systemInsets = mLayout.getRootWindowInsets().getSystemWindowInsets();
         final Rect surfaceInsets = mLayout.getViewRootImpl().mWindowAttributes.surfaceInsets;
         final Point magnifierCoords = mMagnifier.getPosition();
         assertEquals(mLayout.getViewRootImpl().getWidth()
