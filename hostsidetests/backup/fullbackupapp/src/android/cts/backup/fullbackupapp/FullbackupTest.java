@@ -22,6 +22,7 @@ import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.assertFalse;
 
 import android.content.Context;
+import android.platform.test.annotations.AppModeFull;
 import android.support.test.runner.AndroidJUnit4;
 import android.util.Log;
 
@@ -40,6 +41,7 @@ import java.util.Random;
  * designed to be called in any other way, as they rely on state set up by the host side test.
  */
 @RunWith(AndroidJUnit4.class)
+@AppModeFull
 public class FullbackupTest {
     public static final String TAG = "FullbackupCTSApp";
     private static final int FILE_SIZE_BYTES = 1024 * 1024;

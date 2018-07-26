@@ -18,6 +18,8 @@ package android.cts.backup;
 
 import static org.junit.Assert.assertNull;
 
+import android.platform.test.annotations.AppModeFull;
+
 import com.android.tradefed.device.DeviceNotAvailableException;
 import com.android.tradefed.log.LogUtil;
 import com.android.tradefed.testtype.DeviceJUnit4ClassRunner;
@@ -35,6 +37,7 @@ import org.junit.runner.RunWith;
  * {@link android.cts.backup.othersoundssettingsapp.OtherSoundsSettingsTest}.
  */
 @RunWith(DeviceJUnit4ClassRunner.class)
+@AppModeFull
 public class OtherSoundsSettingsHostSideTest extends BaseBackupHostSideTest {
 
     /** The name of the APK that a other sounds settings test will be run for */

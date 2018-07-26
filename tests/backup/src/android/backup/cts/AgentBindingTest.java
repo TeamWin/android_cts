@@ -24,9 +24,11 @@ import static org.testng.Assert.expectThrows;
 import android.content.Context;
 import android.content.pm.ApplicationInfo;
 import android.os.IBinder;
+import android.platform.test.annotations.AppModeFull;
 
 import java.lang.reflect.Method;
 
+@AppModeFull
 public class AgentBindingTest extends BaseBackupCtsTest {
     private Context mContext;
 

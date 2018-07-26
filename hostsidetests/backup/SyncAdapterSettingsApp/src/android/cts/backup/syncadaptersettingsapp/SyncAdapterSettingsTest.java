@@ -28,6 +28,7 @@ import android.content.ContentResolver;
 import android.content.Context;
 import android.os.Bundle;
 import android.os.ParcelFileDescriptor;
+import android.platform.test.annotations.AppModeFull;
 import android.support.test.InstrumentationRegistry;
 import android.support.test.runner.AndroidJUnit4;
 
@@ -46,6 +47,7 @@ import java.util.Arrays;
  * test.
  */
 @RunWith(AndroidJUnit4.class)
+@AppModeFull
 public class SyncAdapterSettingsTest {
 
     /** The name of the package for backup */

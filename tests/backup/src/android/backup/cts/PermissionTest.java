@@ -22,6 +22,7 @@ import android.Manifest;
 import android.app.Instrumentation;
 import android.content.pm.PackageManager;
 import android.os.ParcelFileDescriptor;
+import android.platform.test.annotations.AppModeFull;
 
 import com.android.compatibility.common.util.BackupUtils;
 
@@ -31,6 +32,7 @@ import java.io.InputStream;
 /**
  * Verifies that restored permissions are the same with backup value.
  */
+@AppModeFull
 public class PermissionTest extends BaseBackupCtsTest {
 
     /** The name of the package of the app under test */
