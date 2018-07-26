@@ -46,12 +46,6 @@ public class OtherSoundsSettingsTest {
     /** The name of the package for backup */
     private static final String SETTINGS_PACKAGE_NAME = "com.android.providers.settings";
 
-    /** This is refer Settings.System.LOCKSCREEN_SOUNDS_ENABLED */
-    private static final String SETTING_LOCKSCREEN_SOUNDS_ENABLED = "lockscreen_sounds_enabled";
-
-    /** This is refer Settings.Global.CHARGING_SOUNDS_ENABLED */
-    private static final String SETTING_CHARGING_SOUNDS_ENABLED = "charging_sounds_enabled";
-
     private ContentResolver mContentResolver;
     private BackupUtils mBackupUtils;
 
@@ -100,83 +94,6 @@ public class OtherSoundsSettingsTest {
                 Settings.System.getInt(
                         mContentResolver, Settings.System.DTMF_TONE_WHEN_DIALING, -1);
         assertTrue("Dial pad tones restore fail.", originalValue == restoreValue);
-    }
-
-    /**
-     * Test backup and restore of Lock screen sounds.
-     *
-     * Test logic:
-     * 1. Check Lock screen sounds exists.
-     * 2. Backup Settings.
-     * 3. Toggle Lock screen sounds.
-     * 4. Restore Settings.
-     * 5. Check restored Lock screen sounds is the same with backup value.
-     *
-     * Note:
-     * 1. Because Settings.System.LOCKSCREEN_SOUNDS_ENABLED is @hide,
-     * so we use SETTING_LOCKSCREEN_SOUNDS_ENABLED here.
-     * 2. Settings.System.LOCKSCREEN_SOUNDS_ENABLE is in private secure settings,
-     * we can't use Settings.System.putInt() to modify it, so we use shell-invocation method.
-     */
-    @Test
-    public void testOtherSoundsSettings_lockScreenSounds() throws Exception {
-        int originalValue =
-                Settings.System.getInt(
-                        mContentResolver, SETTING_LOCKSCREEN_SOUNDS_ENABLED, -1);
-        assertTrue("Lock screen sounds does not exist.", originalValue != -1);
-
-        mBackupUtils.backupNowAndAssertSuccess(SETTINGS_PACKAGE_NAME);
-
-        String command = String.format("settings put system %s %d",
-                SETTING_LOCKSCREEN_SOUNDS_ENABLED, (1 - originalValue));
-        mBackupUtils.executeShellCommandAndReturnOutput(command);
-
-        int toggleValue =
-                Settings.System.getInt(
-                        mContentResolver, SETTING_LOCKSCREEN_SOUNDS_ENABLED, -1);
-        assertTrue("Toggle Lock screen sounds fail.", toggleValue == (1 - originalValue));
-
-        mBackupUtils.restoreAndAssertSuccess(LOCAL_TRANSPORT_TOKEN, SETTINGS_PACKAGE_NAME);
-
-        int restoreValue =
-                Settings.System.getInt(
-                        mContentResolver, SETTING_LOCKSCREEN_SOUNDS_ENABLED, -1);
-        assertTrue("Lock screen sounds restore fail.", originalValue == restoreValue);
-    }
-
-    /**
-     * Test backup and restore of Charging sounds.
-     *
-     * Test logic:
-     * 1. Check Charging sounds exists.
-     * 2. Backup Settings.
-     * 3. Toggle Charging sounds.
-     * 4. Restore Settings.
-     * 5. Check restored Charging sounds is the same with backup value.
-     *
-     * Note: Because Settings.Global.CHARGING_SOUNDS_ENABLED is @hide,
-     * so we use SETTING_CHARGING_SOUNDS_ENABLED here.
-     */
-    @Test
-    public void testOtherSoundsSettings_chargingSounds() throws Exception {
-        int originalValue =
-                Settings.Global.getInt(
-                        mContentResolver, SETTING_CHARGING_SOUNDS_ENABLED, -1);
-        assertTrue("Charging sounds does not exist.", originalValue != -1);
-
-        mBackupUtils.backupNowAndAssertSuccess(SETTINGS_PACKAGE_NAME);
-
-        boolean ret =
-                Settings.Global.putInt(
-                        mContentResolver, SETTING_CHARGING_SOUNDS_ENABLED, 1 - originalValue);
-        assertTrue("Toggle Charging sounds fail.", ret);
-
-        mBackupUtils.restoreAndAssertSuccess(LOCAL_TRANSPORT_TOKEN, SETTINGS_PACKAGE_NAME);
-
-        int restoreValue =
-                Settings.Global.getInt(
-                        mContentResolver, SETTING_CHARGING_SOUNDS_ENABLED, -1);
-        assertTrue("Charging sounds restore fail.", originalValue == restoreValue);
     }
 
     /**

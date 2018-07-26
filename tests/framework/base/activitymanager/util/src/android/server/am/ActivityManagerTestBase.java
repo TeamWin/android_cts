@@ -33,6 +33,7 @@ import static android.content.pm.PackageManager.FEATURE_SCREEN_LANDSCAPE;
 import static android.content.pm.PackageManager.FEATURE_SCREEN_PORTRAIT;
 import static android.content.pm.PackageManager.FEATURE_VR_MODE_HIGH_PERFORMANCE;
 import static android.content.pm.PackageManager.FEATURE_WATCH;
+import static android.server.am.ActivityLauncher.KEY_ACTIVITY_TYPE;
 import static android.server.am.ActivityLauncher.KEY_DISPLAY_ID;
 import static android.server.am.ActivityLauncher.KEY_LAUNCH_ACTIVITY;
 import static android.server.am.ActivityLauncher.KEY_LAUNCH_TO_SIDE;
@@ -1462,6 +1463,7 @@ public abstract class ActivityManagerTestBase {
         private boolean mNewTask;
         private boolean mMultipleTask;
         private int mDisplayId = INVALID_DISPLAY;
+        private int mActivityType = ACTIVITY_TYPE_UNDEFINED;
         // A proxy activity that launches other activities including mTargetActivityName
         private ComponentName mLaunchingActivity = LAUNCHING_ACTIVITY;
         private boolean mReorderToFront;
@@ -1530,6 +1532,11 @@ public abstract class ActivityManagerTestBase {
             return this;
         }
 
+        public LaunchActivityBuilder setActivityType(int type) {
+            mActivityType = type;
+            return this;
+        }
+
         public LaunchActivityBuilder setLaunchingActivity(ComponentName launchingActivity) {
             mLaunchingActivity = launchingActivity;
             mLauncherType = LauncherType.LAUNCHING_ACTIVITY;
@@ -1590,6 +1597,7 @@ public abstract class ActivityManagerTestBase {
             b.putBoolean(KEY_MULTIPLE_TASK, mMultipleTask);
             b.putBoolean(KEY_REORDER_TO_FRONT, mReorderToFront);
             b.putInt(KEY_DISPLAY_ID, mDisplayId);
+            b.putInt(KEY_ACTIVITY_TYPE, mActivityType);
             b.putBoolean(KEY_USE_APPLICATION_CONTEXT, mUseApplicationContext);
             b.putString(KEY_TARGET_COMPONENT, getActivityName(mTargetActivity));
             b.putBoolean(KEY_SUPPRESS_EXCEPTIONS, mSuppressExceptions);
@@ -1632,6 +1640,9 @@ public abstract class ActivityManagerTestBase {
             }
             if (mDisplayId != INVALID_DISPLAY) {
                 commandBuilder.append(" --ei " + KEY_DISPLAY_ID + " ").append(mDisplayId);
+            }
+            if (mActivityType != ACTIVITY_TYPE_UNDEFINED) {
+                commandBuilder.append(" --ei " + KEY_ACTIVITY_TYPE + " ").append(mActivityType);
             }
 
             if (mUseApplicationContext) {

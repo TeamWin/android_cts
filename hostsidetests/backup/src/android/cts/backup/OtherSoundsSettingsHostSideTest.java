@@ -86,32 +86,6 @@ public class OtherSoundsSettingsHostSideTest extends BaseBackupHostSideTest {
     }
 
     /**
-     * Test backup and restore of Lock screen sounds
-     */
-    @Test
-    public void testOtherSoundsSettings_lockScreenSounds() throws Exception {
-        if (!mIsBackupSupported) {
-            LogUtil.CLog.i("android.software.backup feature is not supported on this device");
-            return;
-        }
-
-        checkDeviceTest("testOtherSoundsSettings_lockScreenSounds");
-    }
-
-    /**
-     * Test backup and restore of Charging sounds
-     */
-    @Test
-    public void testOtherSoundsSettings_chargingSounds() throws Exception {
-        if (!mIsBackupSupported) {
-            LogUtil.CLog.i("android.software.backup feature is not supported on this device");
-            return;
-        }
-
-        checkDeviceTest("testOtherSoundsSettings_chargingSounds");
-    }
-
-    /**
      * Test backup and restore of Touch sounds
      */
     @Test

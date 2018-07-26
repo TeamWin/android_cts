@@ -90,6 +90,10 @@ public class ActivityLauncher {
      * it's always written to logs.
      */
     public static final String KEY_SUPPRESS_EXCEPTIONS = "suppress_exceptions";
+    /**
+     * Key for int extra with target activity type where activity should be launched as.
+     */
+    public static final String KEY_ACTIVITY_TYPE = "activity_type";
 
 
     /** Perform an activity launch configured by provided extras. */
@@ -131,6 +135,13 @@ public class ActivityLauncher {
             options.setLaunchDisplayId(displayId);
             newIntent.addFlags(FLAG_ACTIVITY_NEW_TASK | FLAG_ACTIVITY_MULTIPLE_TASK);
         }
+        final int activityType = extras.getInt(KEY_ACTIVITY_TYPE, -1);
+        if (activityType != -1) {
+            if (options == null) {
+                options = ActivityOptions.makeBasic();
+            }
+            options.setLaunchActivityType(activityType);
+        }
         final Bundle optionsBundle = options != null ? options.toBundle() : null;
 
         final Context launchContext = extras.getBoolean(KEY_USE_APPLICATION_CONTEXT) ?
@@ -141,8 +152,12 @@ public class ActivityLauncher {
                 // Using PendingIntent for Instrumentation launches, because otherwise we won't
                 // be allowed to switch the current activity with ours with different uid.
                 // android.permission.STOP_APP_SWITCHES is needed to do this directly.
+                // PendingIntent.FLAG_CANCEL_CURRENT is needed here, or we may get an existing
+                // PendingIntent if it is same kind of PendingIntent request to previous one.
+                // Note: optionsBundle is not taking into account for PendingIntentRecord.Key
+                // hashcode calculation.
                 final PendingIntent pendingIntent = PendingIntent.getActivity(launchContext, 0,
-                        newIntent, 0, optionsBundle);
+                        newIntent, PendingIntent.FLAG_CANCEL_CURRENT, optionsBundle);
                 pendingIntent.send();
             } else {
                 launchContext.startActivity(newIntent, optionsBundle);
