@@ -2436,7 +2436,7 @@ You should be prompted to select credentials; choose the ones you just installed
     <string name="provisioning_byod_user_settings_instruction">
         Please press the Go button to open the Settings page.
         (If this device has a separate app for work settings, ignore the Go button and open that app manually from the launcher.)\n
-        Navigate to Users (or \"Multiple Users\") and confirm that:\n
+        Navigate to Accounts and confirm that:\n
         - There are two auto-sync options present, one for personal and one for work data (either on the screen or in the overflow menu).\n
         - De-selecting either option prompts a warning dialog.\n
         \n
