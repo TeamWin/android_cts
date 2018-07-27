@@ -192,7 +192,7 @@ public class LayerTests extends ActivityTestBase {
     @Test
     public void testLayerClear() {
         ViewInitializer initializer = new ViewInitializer() {
-            ValueAnimator mAnimator;
+            ValueAnimator mAnimator = ValueAnimator.ofInt(0, 20);
             @Override
             public void initializeView(View view) {
                 FrameLayout root = (FrameLayout) view.findViewById(R.id.frame_layout);
@@ -206,7 +206,6 @@ public class LayerTests extends ActivityTestBase {
                 child.setLayerType(View.LAYER_TYPE_HARDWARE, null);
                 root.addView(child);
 
-                mAnimator = ValueAnimator.ofInt(0, 20);
                 mAnimator.setRepeatMode(ValueAnimator.REVERSE);
                 mAnimator.setRepeatCount(ValueAnimator.INFINITE);
                 mAnimator.setDuration(200);
