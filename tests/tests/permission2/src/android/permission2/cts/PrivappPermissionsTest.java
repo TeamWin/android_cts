@@ -16,6 +16,7 @@
 
 package android.permission2.cts;
 
+import com.android.compatibility.common.util.PropertyUtil;
 import com.android.compatibility.common.util.SystemUtil;
 
 import android.content.pm.PackageInfo;
@@ -52,6 +53,9 @@ public class PrivappPermissionsTest extends AndroidTestCase {
     private static final String PLATFORM_PACKAGE_NAME = "android";
 
     public void testPrivappPermissionsEnforcement() throws Exception {
+        assertEquals("ro.control_privapp_permissions is not set to enforce",
+                "enforce", PropertyUtil.getProperty("ro.control_privapp_permissions"));
+
         Set<String> platformPrivPermissions = new HashSet<>();
         PackageManager pm = getContext().getPackageManager();
         PackageInfo platformPackage = pm.getPackageInfo(PLATFORM_PACKAGE_NAME,
