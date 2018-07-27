@@ -711,6 +711,7 @@ public class ActivityManagerAppConfigurationTests extends ActivityManagerTestBas
     @FlakyTest(bugId = 71918731)
     @Test
     public void testSplitscreenPortraitAppOrientationRequests() throws Exception {
+        assumeTrue("Skipping test: no rotation support", supportsRotation());
         assumeTrue("Skipping test: no multi-window support", supportsSplitScreenMultiWindow());
 
         try (final RotationSession rotationSession = new RotationSession()) {
