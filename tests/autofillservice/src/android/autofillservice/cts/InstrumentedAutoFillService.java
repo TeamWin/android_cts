@@ -293,12 +293,13 @@ public class InstrumentedAutoFillService extends AutofillService {
             this.cancellationSignal = cancellationSignal;
             this.callback = callback;
             this.flags = flags;
-            structure = contexts.get(contexts.size() - 1).getStructure();
+            this.structure = contexts.get(contexts.size() - 1).getStructure();
         }
 
         @Override
         public String toString() {
-            return "FillRequest:" + getActivityName(contexts);
+            return "FillRequest[activity=" + getActivityName(contexts) + ", flags=" + flags
+                    + ", bundle=" + data + ", structure=" + Helper.toString(structure) + "]";
         }
     }
 
