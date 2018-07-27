@@ -2696,7 +2696,9 @@ You should be prompted to select credentials; choose the ones you just installed
         Please do the following:\n
         1) Open and fully expand Quick Settings.\n
         2) Verify that at the bottom of Quick Settings, you are not told the device is managed.\n
-        3) Close Quick Settings.
+        3) Close Quick Settings.\n
+        \n
+        If this device does not have quick settings, please skip this test and mark it passing
     </string>
     <string name="enterprise_privacy_keyguard_negative">Keyguard disclosure</string>
     <string name="enterprise_privacy_keyguard_negative_info">
@@ -3577,7 +3579,7 @@ You should be prompted to select credentials; choose the ones you just installed
         10) Tap the \"Learn more\" link.\n
         11) Verify that a screen informing you what your managing organization can do is shown.\n
         \n
-        Use the Back button to return to this page.
+        Use the Back button to return to this page. If this device does not have quick settings, please skip this test and mark it passing.
     </string>
     <string name="enterprise_privacy_keyguard">Keyguard disclosure</string>
     <string name="enterprise_privacy_keyguard_info">
@@ -3625,6 +3627,8 @@ You should be prompted to select credentials; choose the ones you just installed
         9) Close the dialog.\n
         10) Tap the right button below to disable network logging.\n
         11) Verify that the notification disappeared.\n
+        \n
+        If this device does not have quick settings, please skip this test and mark it passing.
     </string>
     <string name="device_owner_enable_network_logging_button">Enable Network Logging</string>
     <string name="device_owner_disable_network_logging_button">Disable Network Logging</string>
