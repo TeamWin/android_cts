@@ -97,7 +97,7 @@ public class PermissionGroupChange {
 
     protected void clickAllowButton() throws Exception {
         mUiDevice.findObject(new UiSelector().resourceId(
-                "com.android.packageinstaller:id/permission_allow_button")).click();
+                "com.android.permissioncontroller:id/permission_allow_button")).click();
     }
 
     private void grantPermissionViaUi() throws Throwable {
