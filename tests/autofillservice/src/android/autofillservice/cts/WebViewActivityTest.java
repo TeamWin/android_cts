@@ -29,6 +29,7 @@ import android.autofillservice.cts.InstrumentedAutoFillService.FillRequest;
 import android.autofillservice.cts.InstrumentedAutoFillService.SaveRequest;
 import android.platform.test.annotations.AppModeFull;
 import android.support.test.uiautomator.UiObject2;
+import android.util.Log;
 import android.view.KeyEvent;
 import android.view.ViewStructure.HtmlInfo;
 import android.view.autofill.AutofillManager;
@@ -43,19 +44,34 @@ import org.junit.Test;
 @AppModeFull(reason = "Flaky in instant mode")
 public class WebViewActivityTest extends AutoFillServiceTestCase {
 
+    private static final String TAG = "WebViewActivityTest";
+
     // TODO(b/64951517): WebView currently does not trigger the autofill callbacks when values are
     // set using accessibility.
     private static final boolean INJECT_EVENTS = true;
 
     @Rule
     public final AutofillActivityTestRule<WebViewActivity> mActivityRule =
-            new AutofillActivityTestRule<WebViewActivity>(WebViewActivity.class);
+            new AutofillActivityTestRule<WebViewActivity>(WebViewActivity.class) {
+    // TODO(b/111838239): latest WebView implementation calls AutofillManager.isEnabled() to
+    // disable autofill for optimization when it returns false, and unfortunately the value
+    // returned by that method does not change when the service is enabled / disabled, so we
+    // need to start enable the service before launching the activity.
+    // Once that's fixed, remove this overridden method.
+                @Override
+                protected void beforeActivityLaunched() {
+                    super.beforeActivityLaunched();
+                    Log.i(TAG, "Setting service before launching the activity");
+                    enableService();
+                }
+            };
 
     private WebViewActivity mActivity;
 
     @Before
     public void setActivity() {
         mActivity = mActivityRule.getActivity();
+        assertAutofillEnabledOnWebView();
     }
 
     @BeforeClass
@@ -594,5 +610,9 @@ public class WebViewActivityTest extends AutoFillServiceTestCase {
         final ViewNode outside2SaveNode = Helper.findNodeByResourceId(saveRequest.structure,
                 ID_OUTSIDE2);
         Helper.assertTextAndValue(outside2SaveNode, "SWEETER");
+    }
+
+    private void assertAutofillEnabledOnWebView() {
+        assertThat(mActivity.mWebView.isAutofillEnabled()).isTrue();
     }
 }
