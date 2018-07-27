@@ -17,6 +17,8 @@ package android.autofillservice.cts;
 
 import static android.autofillservice.cts.Timeouts.WEBVIEW_TIMEOUT;
 
+import static com.google.common.truth.Truth.assertThat;
+
 import android.content.Context;
 import android.os.Bundle;
 import android.os.SystemClock;
@@ -112,6 +114,7 @@ public class WebViewActivity extends AbstractAutoFillActivity {
 
             });
             mWebView.loadUrl(FAKE_URL);
+            assertThat(mWebView.isAutofillEnabled()).isTrue();
         });
 
         // Wait until it's loaded.
