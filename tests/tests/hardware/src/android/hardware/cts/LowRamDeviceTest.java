@@ -29,45 +29,49 @@ import static android.util.DisplayMetrics.DENSITY_MEDIUM;
 import static android.util.DisplayMetrics.DENSITY_TV;
 import static android.util.DisplayMetrics.DENSITY_XHIGH;
 
+import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.assertFalse;
+
 import android.app.ActivityManager;
 import android.content.Context;
 import android.content.pm.PackageManager;
 import android.content.res.Configuration;
 import android.os.Build;
-import android.test.AndroidTestCase;
+import android.support.test.runner.AndroidJUnit4;
+import android.support.test.InstrumentationRegistry;
 import android.util.DisplayMetrics;
 import android.view.WindowManager;
 import android.util.Log;
 
-import java.io.FileInputStream;
-import java.io.IOException;
-import java.io.InputStream;
-import java.util.Scanner;
-import java.util.StringTokenizer;
+import org.junit.runner.RunWith;
+import org.junit.Before;
+import org.junit.Test;
 
 /**
  * Tests that devices with low RAM specify themselves as Low RAM devices
  */
-public class LowRamDeviceTest extends AndroidTestCase {
+@RunWith(AndroidJUnit4.class)
+public class LowRamDeviceTest {
 
     private static final long ONE_MEGABYTE = 1048576L;
     private static final String TAG = "LowRamDeviceTest";
     private static final long LOW_RAM_MAX = 1024;
 
+    private Context mContext;
     private PackageManager mPackageManager;
     private ActivityManager mActivityManager;
     private DisplayMetrics mDisplayMetrics;
 
-    @Override
-    protected void setUp() throws Exception {
-        super.setUp();
-        mPackageManager = getContext().getPackageManager();
+    @Before
+    public void setUp() throws Exception {
+        mContext = InstrumentationRegistry.getTargetContext();
+        mPackageManager = mContext.getPackageManager();
         mActivityManager =
-                (ActivityManager) getContext().getSystemService(Context.ACTIVITY_SERVICE);
+                (ActivityManager) mContext.getSystemService(Context.ACTIVITY_SERVICE);
 
         mDisplayMetrics = new DisplayMetrics();
         WindowManager windowManager =
-                (WindowManager) getContext().getSystemService(Context.WINDOW_SERVICE);
+                (WindowManager) mContext.getSystemService(Context.WINDOW_SERVICE);
         windowManager.getDefaultDisplay().getMetrics(mDisplayMetrics);
     }
 
@@ -75,6 +79,7 @@ public class LowRamDeviceTest extends AndroidTestCase {
      * Test the devices reported memory to ensure it meets the minimum values described
      * in CDD 7.6.1.
      */
+    @Test
     public void testMinimumMemory() {
         int density = mDisplayMetrics.densityDpi;
         Boolean supports64Bit = supportsSixtyFourBit();
@@ -143,7 +148,7 @@ public class LowRamDeviceTest extends AndroidTestCase {
 
     /** @return the screen size as defined in {@Configuration}. */
     private int getScreenSize() {
-        Configuration config = getContext().getResources().getConfiguration();
+        Configuration config = mContext.getResources().getConfiguration();
         return config.screenLayout & Configuration.SCREENLAYOUT_SIZE_MASK;
     }
 
