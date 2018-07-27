@@ -22,6 +22,7 @@ import static android.service.notification.NotificationListenerService.INTERRUPT
 
 import static junit.framework.Assert.assertEquals;
 import static junit.framework.Assert.assertNull;
+import static junit.framework.TestCase.fail;
 
 import android.app.ActivityManager;
 import android.app.AutomaticZenRule;
@@ -180,6 +181,37 @@ public class ConditionProviderServiceTest {
 
         // verify that the unbound service maintains it's DND vote
         assertEquals(INTERRUPTION_FILTER_ALARMS, mNm.getCurrentInterruptionFilter());
+    }
+
+    @Test
+    public void testRequestRebindWhenLostAccess() throws Exception {
+        if (mActivityManager.isLowRamDevice()) {
+            return;
+        }
+
+        // make sure it gets bound
+        pollForConnection(LegacyConditionProviderService.class, true);
+
+        // request unbind
+        LegacyConditionProviderService.getInstance().requestUnbind();
+
+        // make sure it unbinds
+        pollForConnection(LegacyConditionProviderService.class, false);
+
+        // lose dnd access
+        toggleNotificationPolicyAccess(mContext.getPackageName(),
+                InstrumentationRegistry.getInstrumentation(), false);
+
+        // try to rebind
+        LegacyConditionProviderService.requestRebind(LegacyConditionProviderService.getId());
+
+        // make sure it isn't rebound
+        try {
+            pollForConnection(LegacyConditionProviderService.class, true);
+            fail("Service got rebound after permission lost");
+        } catch (Exception e) {
+            // pass
+        }
     }
 
     private void addRule(ComponentName cn, int filter, boolean enabled) {
