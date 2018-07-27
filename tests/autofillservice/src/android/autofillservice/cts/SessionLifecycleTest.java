@@ -96,6 +96,13 @@ public class SessionLifecycleTest extends AutoFillServiceTestCase.ManualActivity
         Helper.allowAutoRotation();
     }
 
+    @After
+    public void finishLoginActivityOnAnotherProcess() throws Exception {
+        runShellCommand("am broadcast --receiver-foreground "
+                + "-n android.autofillservice.cts/.OutOfProcessLoginActivityFinisherReceiver");
+        mUiBot.assertGoneByRelativeId(ID_USERNAME, Timeouts.ACTIVITY_RESURRECTION);
+    }
+
     private void killOfProcessLoginActivityProcess() throws Exception {
         // Waiting for activity to stop (stop marker appears)
         eventually("getStoppedMarker()", () -> {
