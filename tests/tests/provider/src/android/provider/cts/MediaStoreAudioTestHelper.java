@@ -22,8 +22,12 @@ import android.net.Uri;
 import android.os.Environment;
 import android.provider.MediaStore;
 import android.provider.MediaStore.Audio.Media;
+import android.support.test.runner.AndroidJUnit4;
 
 import junit.framework.Assert;
+
+import org.junit.Test;
+import org.junit.runner.RunWith;
 
 /**
  * This class contains fake data and convenient methods for testing:
@@ -45,6 +49,7 @@ import junit.framework.Assert;
  * @see MediaStore_Audio_Artists_AlbumsTest
  * @see MediaStore_Audio_AlbumsTest
  */
+@RunWith(AndroidJUnit4.class)
 public class MediaStoreAudioTestHelper {
     public static abstract class MockAudioMediaInfo {
         public abstract ContentValues getContentValues(boolean isInternal);
@@ -273,6 +278,11 @@ public class MediaStoreAudioTestHelper {
             values.put(Media.DATA, values.getAsString(Media.DATA) + "_5");
             return values;
         }
+    }
+
+    @Test
+    public void testStub() {
+        // No-op test here to keep atest happy
     }
 
     // These constants are not part of the public API

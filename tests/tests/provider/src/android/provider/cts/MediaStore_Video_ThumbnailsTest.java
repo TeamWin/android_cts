@@ -215,7 +215,7 @@ public class MediaStore_Video_ThumbnailsTest extends AndroidTestCase {
         c.close();
 
         // clean up
-        mResolver.delete(uri, null /* where */, null /* where args */);
+        mResolver.delete(fileUri, null /* where */, null /* where args */);
         new File(sourcePath).delete();
     }
 
