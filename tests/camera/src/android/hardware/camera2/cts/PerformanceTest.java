@@ -40,7 +40,6 @@ import android.media.ImageReader;
 import android.media.ImageWriter;
 import android.os.ConditionVariable;
 import android.os.SystemClock;
-import android.platform.test.annotations.AppModeFull;
 import android.support.test.InstrumentationRegistry;
 import android.util.Log;
 import android.util.Pair;
@@ -70,7 +69,6 @@ import static org.junit.Assert.assertNotNull;
  * Test camera2 API use case performance KPIs, such as camera open time, session creation time,
  * shutter lag etc. The KPI data will be reported in cts results.
  */
-@AppModeFull
 public class PerformanceTest extends Camera2SurfaceViewTestCase {
     private static final String TAG = "PerformanceTest";
     private static final String REPORT_LOG_NAME = "CtsCameraTestCases";

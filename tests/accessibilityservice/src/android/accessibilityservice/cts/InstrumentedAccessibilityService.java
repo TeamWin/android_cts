@@ -31,8 +31,10 @@ import android.view.accessibility.AccessibilityManager;
 import java.lang.ref.WeakReference;
 import java.util.HashMap;
 import java.util.List;
+import java.util.concurrent.Callable;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicReference;
 
 import static junit.framework.Assert.assertFalse;
 import static junit.framework.Assert.assertTrue;
@@ -97,6 +99,22 @@ public class InstrumentedAccessibilityService extends AccessibilityService {
         final SyncRunnable sr = new SyncRunnable(runner, TIMEOUT_SERVICE_PERFORM_SYNC);
         mHandler.post(sr);
         assertTrue("Timed out waiting for runOnServiceSync()", sr.waitForComplete());
+    }
+
+    public <T extends Object> T getOnService(Callable<T> callable) {
+        AtomicReference<T> returnValue = new AtomicReference<>(null);
+        AtomicReference<Throwable> throwable = new AtomicReference<>(null);
+        runOnServiceSync(() -> {
+            try {
+                returnValue.set(callable.call());
+            } catch (Throwable e) {
+                throwable.set(e);
+            }
+        });
+        if (throwable.get() != null) {
+            throw new RuntimeException(throwable.get());
+        }
+        return returnValue.get();
     }
 
     public boolean wasOnInterruptCalled() {

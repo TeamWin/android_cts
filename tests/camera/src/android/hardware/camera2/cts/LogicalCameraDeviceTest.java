@@ -39,7 +39,6 @@ import android.hardware.camera2.params.StreamConfigurationMap;
 import android.media.CamcorderProfile;
 import android.media.Image;
 import android.media.ImageReader;
-import android.platform.test.annotations.AppModeFull;
 import android.util.ArraySet;
 import android.util.Log;
 import android.util.Range;
@@ -66,7 +65,6 @@ import static org.mockito.Mockito.*;
 /**
  * Tests exercising logical camera setup, configuration, and usage.
  */
-@AppModeFull
 public final class LogicalCameraDeviceTest extends Camera2SurfaceViewTestCase {
     private static final String TAG = "LogicalCameraTest";
     private static final boolean VERBOSE = Log.isLoggable(TAG, Log.VERBOSE);

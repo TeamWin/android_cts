@@ -32,7 +32,6 @@ import android.hardware.camera2.params.StreamConfigurationMap;
 import android.media.CamcorderProfile;
 import android.media.ImageReader;
 import android.os.Build;
-import android.platform.test.annotations.AppModeFull;
 import android.test.AndroidTestCase;
 import android.util.Log;
 import android.util.Rational;
@@ -55,7 +54,6 @@ import static android.hardware.camera2.cts.helpers.AssertHelpers.*;
 /**
  * Extended tests for static camera characteristics.
  */
-@AppModeFull
 public class ExtendedCameraCharacteristicsTest extends AndroidTestCase {
     private static final String TAG = "ExChrsTest"; // must be short so next line doesn't throw
     private static final boolean VERBOSE = Log.isLoggable(TAG, Log.VERBOSE);

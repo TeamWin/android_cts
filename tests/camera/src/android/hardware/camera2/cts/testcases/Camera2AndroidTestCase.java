@@ -36,7 +36,6 @@ import android.hardware.camera2.cts.helpers.StaticMetadata.CheckLevel;
 import android.media.Image;
 import android.media.Image.Plane;
 import android.media.ImageReader;
-import android.os.Environment;
 import android.os.Handler;
 import android.os.HandlerThread;
 import android.test.AndroidTestCase;
@@ -57,8 +56,6 @@ public class Camera2AndroidTestCase extends AndroidTestCase {
     private static final String TAG = "Camera2AndroidTestCase";
     private static final boolean VERBOSE = Log.isLoggable(TAG, Log.VERBOSE);
 
-    protected static final String DEBUG_FILE_NAME_BASE =
-            Environment.getExternalStorageDirectory().getPath();
     // Default capture size: VGA size is required by CDD.
     protected static final Size DEFAULT_CAPTURE_SIZE = new Size(640, 480);
     protected static final int CAPTURE_WAIT_TIMEOUT_MS = 5000;
@@ -79,6 +76,7 @@ public class Camera2AndroidTestCase extends AndroidTestCase {
     protected List<Size> mOrderedPreviewSizes; // In descending order.
     protected List<Size> mOrderedVideoSizes; // In descending order.
     protected List<Size> mOrderedStillSizes; // In descending order.
+    protected String mDebugFileNameBase;
 
     protected WindowManager mWindowManager;
 
@@ -113,6 +111,7 @@ public class Camera2AndroidTestCase extends AndroidTestCase {
         mHandler = new Handler(mHandlerThread.getLooper());
         mCameraListener = new BlockingStateCallback();
         mCollector = new CameraErrorCollector();
+        mDebugFileNameBase = getContext().getExternalFilesDir(null).getPath();
 
         mAllStaticInfo = new HashMap<String, StaticMetadata>();
         for (String cameraId : mCameraIds) {

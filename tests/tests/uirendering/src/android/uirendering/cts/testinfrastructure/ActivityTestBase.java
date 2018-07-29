@@ -21,13 +21,14 @@ import android.graphics.Bitmap;
 import android.graphics.Bitmap.Config;
 import android.graphics.Point;
 import android.graphics.Rect;
-import androidx.annotation.Nullable;
 import android.support.test.InstrumentationRegistry;
 import android.uirendering.cts.bitmapcomparers.BitmapComparer;
 import android.uirendering.cts.bitmapverifiers.BitmapVerifier;
 import android.uirendering.cts.util.BitmapAsserter;
 import android.util.Log;
 import android.view.PixelCopy;
+
+import androidx.annotation.Nullable;
 
 import com.android.compatibility.common.util.SynchronousPixelCopy;
 
@@ -118,7 +119,7 @@ public abstract class ActivityTestBase {
         }
     }
 
-    public Bitmap takeScreenshot(TestPositionInfo testPositionInfo) {
+    private Bitmap takeScreenshot(TestPositionInfo testPositionInfo) {
         if (mScreenshotter == null) {
             SynchronousPixelCopy copy = new SynchronousPixelCopy();
             Bitmap dest = Bitmap.createBitmap(
@@ -135,7 +136,8 @@ public abstract class ActivityTestBase {
             return mScreenshotter.takeScreenshot(testPositionInfo);
         }
     }
-    protected TestPositionInfo runRenderSpec(TestCase testCase) {
+
+    private TestPositionInfo runRenderSpec(TestCase testCase) {
         TestPositionInfo testPositionInfo = getActivity().enqueueRenderSpecAndWait(
                 testCase.layoutID, testCase.canvasClient,
                 testCase.viewInitializer, testCase.useHardware, testCase.usePicture);
@@ -146,6 +148,9 @@ public abstract class ActivityTestBase {
             } catch (InterruptedException e) {
                 throw new RuntimeException("readyFence didn't signal within 5 seconds");
             }
+            // The fence setup may have (and probably did) changed things that we need to wait
+            // have been drawn. So force an invalidate() and wait for it to finish
+            getActivity().waitForRedraw();
         }
         return testPositionInfo;
     }
@@ -153,7 +158,7 @@ public abstract class ActivityTestBase {
     /**
      * Used to execute a specific part of a test and get the resultant bitmap
      */
-    protected Bitmap captureRenderSpec(TestCase testCase) {
+    private Bitmap captureRenderSpec(TestCase testCase) {
         return takeScreenshot(runRenderSpec(testCase));
     }
 
