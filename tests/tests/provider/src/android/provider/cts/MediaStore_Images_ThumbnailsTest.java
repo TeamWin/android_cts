@@ -16,8 +16,6 @@
 
 package android.provider.cts;
 
-import android.provider.cts.R;
-
 import android.content.ContentResolver;
 import android.content.ContentUris;
 import android.content.ContentValues;
@@ -32,12 +30,14 @@ import android.provider.MediaStore.Images.Media;
 import android.provider.MediaStore.Images.Thumbnails;
 import android.provider.MediaStore.MediaColumns;
 import android.test.InstrumentationTestCase;
+import android.util.DisplayMetrics;
 
 import com.android.compatibility.common.util.FileCopyHelper;
 
+import junit.framework.AssertionFailedError;
+
 import java.io.File;
 import java.util.ArrayList;
-import android.util.DisplayMetrics;
 
 public class MediaStore_Images_ThumbnailsTest extends InstrumentationTestCase {
     private ArrayList<Uri> mRowsAdded;
@@ -72,6 +72,12 @@ public class MediaStore_Images_ThumbnailsTest extends InstrumentationTestCase {
 
         mHelper = new FileCopyHelper(mContext);
         mRowsAdded = new ArrayList<Uri>();
+    }
+
+    public static void assertMostlyEquals(long expected, long actual, long delta) {
+        if (Math.abs(expected - actual) > delta) {
+            throw new AssertionFailedError("Expected roughly " + expected + " but was " + actual);
+        }
     }
 
     public void testQueryInternalThumbnails() throws Exception {
@@ -143,15 +149,15 @@ public class MediaStore_Images_ThumbnailsTest extends InstrumentationTestCase {
                 sizeProjection);
         assertEquals(1, c.getCount());
         assertTrue(c.moveToFirst());
-        assertTrue(c.getLong(c.getColumnIndex(Thumbnails.WIDTH)) >= Math.min(src.getWidth(), 240));
-        assertTrue(c.getLong(c.getColumnIndex(Thumbnails.HEIGHT)) >= Math.min(src.getHeight(), 240));
+        assertMostlyEquals(320, c.getInt(c.getColumnIndex(Thumbnails.WIDTH)), 128);
+        assertMostlyEquals(320, c.getInt(c.getColumnIndex(Thumbnails.HEIGHT)), 128);
         c.close();
         c = Thumbnails.queryMiniThumbnail(mContentResolver, imageId, Thumbnails.MICRO_KIND,
                 sizeProjection);
         assertEquals(1, c.getCount());
         assertTrue(c.moveToFirst());
-        assertEquals(50, c.getLong(c.getColumnIndex(Thumbnails.WIDTH)));
-        assertEquals(50, c.getLong(c.getColumnIndex(Thumbnails.HEIGHT)));
+        assertMostlyEquals(96, c.getInt(c.getColumnIndex(Thumbnails.WIDTH)), 64);
+        assertMostlyEquals(96, c.getInt(c.getColumnIndex(Thumbnails.HEIGHT)), 64);
         c.close();
 
         c = Thumbnails.queryMiniThumbnail(mContentResolver, imageId, Thumbnails.MINI_KIND,
@@ -351,7 +357,7 @@ public class MediaStore_Images_ThumbnailsTest extends InstrumentationTestCase {
         c.close();
 
         // clean up
-        mContentResolver.delete(uri, null /* where */, null /* where args */);
+        mContentResolver.delete(fileUri, null /* where */, null /* where args */);
         new File(sourcePath).delete();
     }
 
