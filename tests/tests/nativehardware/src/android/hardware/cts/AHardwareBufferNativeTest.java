@@ -19,11 +19,14 @@ package android.hardware.cts;
 import android.content.pm.PackageManager;
 import android.test.AndroidTestCase;
 
+import com.android.compatibility.common.util.CddTest;
+
 /**
  * Check AHardwareBuffer functionality.
  *
  * This is the place to implement AHardwareBuffer NDK CTS tests.
  */
+@CddTest(requirement="7.9.2/C-1-10")
 public class AHardwareBufferNativeTest extends AndroidTestCase {
     protected native long nativeSetUp();
     protected native void nativeTearDown(long instance);

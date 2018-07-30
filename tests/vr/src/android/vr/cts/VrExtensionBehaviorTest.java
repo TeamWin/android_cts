@@ -20,6 +20,8 @@ import android.opengl.EGL14;
 import android.opengl.GLES32;
 import android.test.ActivityInstrumentationTestCase2;
 
+import com.android.compatibility.common.util.CddTest;
+
 public class VrExtensionBehaviorTest extends ActivityInstrumentationTestCase2<OpenGLESActivity> {
     static {
         System.loadLibrary("ctsvrextensions_jni");
@@ -53,6 +55,7 @@ public class VrExtensionBehaviorTest extends ActivityInstrumentationTestCase2<Op
     /**
      * Tests that protected content contexts and surfaces can be created.
      */
+    @CddTest(requirement="7.9.2/C-1-6")
     public void testProtectedContent() throws Throwable {
         mActivity = getGlEsActivity(OpenGLESActivity.RENDERER_BASIC, 1, 0, 0);
         if (!mActivity.supportsVrHighPerformance())
@@ -77,6 +80,7 @@ public class VrExtensionBehaviorTest extends ActivityInstrumentationTestCase2<Op
     /**
      * Tests that textures can be marked as protected.
      */
+    @CddTest(requirement="7.9.2/C-1-8")
     public void testProtectedTextures() throws Throwable {
         mActivity = getGlEsActivity(OpenGLESActivity.RENDERER_PROTECTEDTEXTURES, 1, 0, 0);
         if (!mActivity.supportsVrHighPerformance())
@@ -104,6 +108,7 @@ public class VrExtensionBehaviorTest extends ActivityInstrumentationTestCase2<Op
     /**
      * Tests that context priority can be set to high.
      */
+    @CddTest(requirement="7.9.2/C-1-6")
     public void testContextPriorityHigh() throws Throwable {
         runContextPriorityTest(EGL_CONTEXT_PRIORITY_HIGH_IMG);
     }
@@ -111,6 +116,7 @@ public class VrExtensionBehaviorTest extends ActivityInstrumentationTestCase2<Op
     /**
      * Tests that context priority can be set to medium.
      */
+    @CddTest(requirement="7.9.2/C-1-6")
     public void testContextPriorityMedium() throws Throwable {
         runContextPriorityTest(EGL_CONTEXT_PRIORITY_MEDIUM_IMG);
     }
@@ -118,6 +124,7 @@ public class VrExtensionBehaviorTest extends ActivityInstrumentationTestCase2<Op
     /**
      * Tests that context priority can be set to low.
      */
+    @CddTest(requirement="7.9.2/C-1-6")
     public void testContextPriorityLow() throws Throwable {
         runContextPriorityTest(EGL_CONTEXT_PRIORITY_LOW_IMG);
     }
@@ -125,6 +132,7 @@ public class VrExtensionBehaviorTest extends ActivityInstrumentationTestCase2<Op
     /**
      * Tests that context priority can be set to low.
      */
+    @CddTest(requirement="7.9.2/C-1-6")
     public void testMutableRenderBuffer() throws Throwable {
 
         mActivity = getGlEsActivity(OpenGLESActivity.RENDERER_BASIC, 0, 0, 1);
@@ -160,6 +168,7 @@ public class VrExtensionBehaviorTest extends ActivityInstrumentationTestCase2<Op
      * For more information, see the EGL_image_array spec:
      * https://www.khronos.org/registry/OpenGL/extensions/EXT/EXT_EGL_image_array.txt
      */
+    @CddTest(requirement="7.9.2/C-1-8,C-1-10")
     public void testEglImageArray() throws Throwable {
         mActivity = getGlEsActivity(OpenGLESActivity.RENDERER_BASIC, 0, 0, 0);
         if (!mActivity.supportsVrHighPerformance())
@@ -179,6 +188,7 @@ public class VrExtensionBehaviorTest extends ActivityInstrumentationTestCase2<Op
      * For more information, see the GL_EXT_external_buffer spec:
      * https://www.khronos.org/registry/OpenGL/extensions/EXT/EXT_external_buffer.txt
      */
+    @CddTest(requirement="7.9.2/C-1-8")
     public void testExternalBuffer() throws Throwable {
         mActivity = getGlEsActivity(OpenGLESActivity.RENDERER_BASIC, 0, 0, 0);
         if (!mActivity.supportsVrHighPerformance())

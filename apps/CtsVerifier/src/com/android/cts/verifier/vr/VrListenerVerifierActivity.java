@@ -31,6 +31,8 @@ import android.widget.ImageView;
 import android.widget.TextView;
 
 
+import com.android.compatibility.common.util.CddTest;
+
 import com.android.cts.verifier.PassFailButtons;
 import com.android.cts.verifier.R;
 
@@ -41,6 +43,7 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 
+@CddTest(requirement="7.9.1/H-2-1")
 public class VrListenerVerifierActivity extends PassFailButtons.Activity {
 
     private static final String TAG = "VrListenerActivity";
