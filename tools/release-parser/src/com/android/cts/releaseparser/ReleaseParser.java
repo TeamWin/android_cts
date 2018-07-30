@@ -18,21 +18,15 @@ package com.android.cts.releaseparser;
 
 import com.android.cts.releaseparser.ReleaseProto.*;
 
-import org.xml.sax.InputSource;
-import org.xml.sax.XMLReader;
-import org.xml.sax.helpers.XMLReaderFactory;
-
 import java.io.File;
-import java.io.FileReader;
-import java.io.FileInputStream;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.io.PrintWriter;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.security.NoSuchAlgorithmException;
 import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
 import java.util.ArrayList;
 import java.util.Base64;
 import java.util.Collection;
@@ -66,12 +60,6 @@ class ReleaseParser {
     private static final String ANDROID_JUNIT_TEST_TAG =
             "com.android.tradefed.testtype.AndroidJUnitTest";
 
-    // Target File Extensions
-    private static final String CONFIG_EXT_TAG = ".config";
-    private static final String JAR_EXT_TAG = ".jar";
-    private static final String APK_EXT_TAG = ".apk";
-    private static final String SO_EXT_TAG = ".so";
-    private static final String TEST_SUITE_TRADEFED_TAG = "-tradefed.jar";
     private static final String TESTCASES_FOLDER_FORMAT = "testcases/%s";
 
     private final String mFolderPath;
@@ -98,6 +86,10 @@ class ReleaseParser {
             mRelContentBuilder = ReleaseContent.newBuilder();
             // also add the root folder entry
             Entry.Builder fBuilder = parseFolder(mFolderPath);
+            if (mRelContentBuilder.getName().equals("")) {
+                System.err.println("Release Name unknown!");
+                mRelContentBuilder.setName(mFolderPath);
+            }
             fBuilder.setName(
                     String.format(
                             "%s-%s-%s",
@@ -130,29 +122,58 @@ class ReleaseParser {
                 Entry.Builder fileEntry = Entry.newBuilder();
                 fileEntry.setName(file.getName());
                 fileEntry.setSize(file.length());
-                fileEntry.setContentId(getFileContentId(file));
                 fileEntry.setRelativePath(fileRelativePath);
                 fileEntry.setParentFolder(folderRelativePath);
-                try {
-                    TestModuleConfig tmConfig = parseTestModuleConfig(fileEntry, file);
-                    if (null != tmConfig) {
-                        fileEntry.setTestModuleConfig(tmConfig);
-                    }
-                    // get [cts]-known-failures.xml
-                    if (file.getName().endsWith(TEST_SUITE_TRADEFED_TAG)) {
+
+                FileParser fParser = FileParser.getParser(file);
+                fileEntry.setContentId(fParser.getFileContentId());
+                fileEntry.setCodeId(fParser.getCodeId());
+
+                Entry.EntryType eType = fParser.getType();
+
+                fileEntry.setType(eType);
+                switch (eType) {
+                    case TEST_MODULE_CONFIG:
+                        TestModuleConfigParser tmcParser = (TestModuleConfigParser) fParser;
+                        fileEntry.setTestModuleConfig(tmcParser.getTestModuleConfig());
+                        break;
+                    case TEST_SUITE_TRADEFED:
                         mRelContentBuilder.setTestSuiteTradefed(fileRelativePath);
-                        TestSuiteTradefedParser tstParser = new TestSuiteTradefedParser(file);
+                        TestSuiteTradefedParser tstParser = (TestSuiteTradefedParser) fParser;
+                        // get [cts]-known-failures.xml
                         mRelContentBuilder.addAllKnownFailures(tstParser.getKnownFailureList());
                         mRelContentBuilder.setName(tstParser.getName());
-                        mRelContentBuilder.setFullname(tstParser.getFullname());
+                        mRelContentBuilder.setFullname(tstParser.getFullName());
                         mRelContentBuilder.setBuildNumber(tstParser.getBuildNumber());
                         mRelContentBuilder.setTargetArch(tstParser.getTargetArch());
                         mRelContentBuilder.setVersion(tstParser.getVersion());
-                    }
-                } catch (Exception ex) {
-                    System.err.println(String.format("Cannot parse %s", file.getAbsolutePath()));
-                    ex.printStackTrace();
+                        break;
+                    case BUILD_PROP:
+                        BuildPropParser bpParser = (BuildPropParser) fParser;
+                        try {
+                            mRelContentBuilder.setName(bpParser.getName());
+                            mRelContentBuilder.setFullname(bpParser.getFullName());
+                            mRelContentBuilder.setBuildNumber(bpParser.getBuildNumber());
+                            mRelContentBuilder.setVersion(bpParser.getVersion());
+                        } catch (Exception e) {
+                            System.err.println(
+                                    "No product name, version & etc. in "
+                                            + file.getAbsoluteFile()
+                                            + ", err:"
+                                            + e.getMessage());
+                        }
+                        break;
+                    case RC:
+                        RcParser rcParser = (RcParser) fParser;
+                        fileEntry.addAllServices(rcParser.getServiceList());
+                        break;
+                    default:
                 }
+                // System.err.println("File:" + file.getAbsoluteFile());
+                fileEntry.addAllDependencies(fParser.getDependencies());
+                fileEntry.setAbiBits(fParser.getAbiBits());
+                fileEntry.setAbiArchitecture(fParser.getAbiArchitecture());
+
                 Entry fEntry = fileEntry.build();
                 entryList.add(fEntry);
                 mEntries.put(fEntry.getRelativePath(), fEntry);
@@ -175,61 +196,6 @@ class ReleaseParser {
         return folderEntry;
     }
 
-    // Parse a file
-    private static TestModuleConfig parseTestModuleConfig(Entry.Builder fEntry, File file)
-            throws Exception {
-        if (file.getName().endsWith(CONFIG_EXT_TAG)) {
-            fEntry.setType(Entry.EntryType.CONFIG);
-            return parseConfigFile(file);
-        } else if (file.getName().endsWith(APK_EXT_TAG)) {
-            fEntry.setType(Entry.EntryType.APK);
-        } else if (file.getName().endsWith(JAR_EXT_TAG)) {
-            fEntry.setType(Entry.EntryType.JAR);
-        } else if (file.getName().endsWith(SO_EXT_TAG)) {
-            fEntry.setType(Entry.EntryType.SO);
-        } else {
-            // Just file in general
-            fEntry.setType(Entry.EntryType.FILE);
-        }
-        return null;
-    }
-
-    private static TestModuleConfig parseConfigFile(File file) throws Exception {
-        XMLReader xmlReader = XMLReaderFactory.createXMLReader();
-        TestModuleConfigHandler testModuleXmlHandler = new TestModuleConfigHandler(file.getName());
-        xmlReader.setContentHandler(testModuleXmlHandler);
-        FileReader fileReader = null;
-        try {
-            fileReader = new FileReader(file);
-            xmlReader.parse(new InputSource(fileReader));
-            return testModuleXmlHandler.getTestModuleConfig();
-        } finally {
-            if (null != fileReader) {
-                fileReader.close();
-            }
-        }
-    }
-
-    private static String getFileContentId(File file) {
-        String id = null;
-        try {
-            MessageDigest md = MessageDigest.getInstance("SHA-256");
-            FileInputStream fis = new FileInputStream(file);
-            byte[] dataBytes = new byte[10240];
-            int nread = 0;
-            while ((nread = fis.read(dataBytes)) != -1) {
-                md.update(dataBytes, 0, nread);
-            }
-            // Converts to Base64 String
-            id = Base64.getEncoder().encodeToString(md.digest());
-        } catch (IOException e) {
-            System.err.println("IOException:" + e.getMessage());
-        } catch (NoSuchAlgorithmException e) {
-            System.err.println("NoSuchAlgorithmException:" + e.getMessage());
-        }
-        return id;
-    }
-
     private static String getFolderContentId(Entry.Builder folderEntry, List<Entry> entryList) {
         String id = null;
         try {
@@ -250,18 +216,24 @@ class ReleaseParser {
         try {
             FileWriter fWriter = new FileWriter(csvFile);
             PrintWriter pWriter = new PrintWriter(fWriter);
-            //Header
-            pWriter.printf("release,type,name,size,relative_path,content_id,parent_folder\n");
+            // Header
+            pWriter.printf(
+                    "release,type,name,size,relative_path,content_id,parent_folder,code_id,architecture,bits,dependencies,services\n");
             for (Entry entry : getFileEntriesList()) {
                 pWriter.printf(
-                        "%s,%s,%s,%d,%s,%s,%s\n",
+                        "%s,%s,%s,%d,%s,%s,%s,%s,%s,%d,%s,%s\n",
                         relNameVer,
                         entry.getType(),
                         entry.getName(),
                         entry.getSize(),
                         entry.getRelativePath(),
                         entry.getContentId(),
-                        entry.getParentFolder());
+                        entry.getParentFolder(),
+                        entry.getCodeId(),
+                        entry.getAbiArchitecture(),
+                        entry.getAbiBits(),
+                        String.join(" ", entry.getDependenciesList()),
+                        RcParser.toString(entry.getServicesList()));
             }
             pWriter.flush();
             pWriter.close();
@@ -273,6 +245,11 @@ class ReleaseParser {
     // writes known failures to a CSV file
     public void writeKnownFailureCsvFile(String relNameVer, String csvFile) {
         ReleaseContent relContent = getReleaseContent();
+        if (relContent.getKnownFailuresList().size() == 0) {
+            // Skip if no Known Failures
+            return;
+        }
+
         try {
             FileWriter fWriter = new FileWriter(csvFile);
             PrintWriter pWriter = new PrintWriter(fWriter);

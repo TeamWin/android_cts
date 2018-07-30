@@ -21,7 +21,6 @@ import com.android.cts.releaseparser.ReleaseProto.*;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
-
 import java.nio.file.Paths;
 
 /** Main of release parser */
@@ -89,16 +88,19 @@ public class Main {
 
         ReleaseParser relParser = new ReleaseParser(relFolder);
         relNameVer = relParser.getRelNameVer();
+
         relParser.writeRelesaeContentCsvFile(
                 relNameVer,
                 Paths.get(outputPath, String.format("%s-ReleaseContent.csv", relNameVer))
                         .toString());
+
         relParser.writeKnownFailureCsvFile(
                 relNameVer,
                 Paths.get(outputPath, String.format("%s-KnownFailure.csv", relNameVer)).toString());
 
-        // Write release content message to disk.
         ReleaseContent relContent = relParser.getReleaseContent();
+
+        // Write release content message to disk.
         try {
             FileOutputStream output =
                     new FileOutputStream(
@@ -114,6 +116,11 @@ public class Main {
         }
 
         TestSuiteParser tsParser = new TestSuiteParser(relContent, relFolder, apiL);
+        if (tsParser.getTestSuite().getModulesList().size() == 0) {
+            // skip if no test module
+            return;
+        }
+
         tsParser.writeCsvFile(
                 relNameVer,
                 Paths.get(outputPath, String.format("%s-TestCase.csv", relNameVer)).toString());

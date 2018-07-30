@@ -30,20 +30,20 @@ import org.jf.dexlib2.iface.ClassDef;
 import org.jf.dexlib2.iface.DexFile;
 import org.jf.dexlib2.iface.Method;
 import org.jf.dexlib2.iface.value.TypeEncodedValue;
-import org.junit.runners.Suite.SuiteClasses;
 import org.junit.runner.RunWith;
+import org.junit.runners.Suite.SuiteClasses;
 
-import java.lang.reflect.Modifier;
 import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.io.PrintWriter;
-import java.nio.file.Paths;
-import java.nio.charset.StandardCharsets;
+import java.lang.reflect.Modifier;
 import java.net.URL;
 import java.net.URLClassLoader;
-import java.security.NoSuchAlgorithmException;
+import java.nio.charset.StandardCharsets;
+import java.nio.file.Paths;
 import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
 import java.util.ArrayList;
 import java.util.Base64;
 import java.util.Collection;
@@ -135,7 +135,7 @@ class TestSuiteParser {
         // Iterates all file
         for (Entry entry : getFileEntriesList(mRelContent)) {
             // Only parses test module config files
-            if (Entry.EntryType.CONFIG == entry.getType()) {
+            if (Entry.EntryType.TEST_MODULE_CONFIG == entry.getType()) {
                 TestModuleConfig config = entry.getTestModuleConfig();
                 TestSuite.Module.Builder moduleBuilder = praseModule(config);
                 moduleBuilder.setConfigFile(entry.getRelativePath());
