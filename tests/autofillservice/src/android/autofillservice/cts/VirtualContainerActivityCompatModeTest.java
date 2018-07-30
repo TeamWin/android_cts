@@ -84,7 +84,7 @@ public class VirtualContainerActivityCompatModeTest extends VirtualContainerActi
 
     @Override
     protected void disableService() {
-        Helper.disableAutofillService(getContext(), SERVICE_NAME);
+        Helper.disableAutofillService(getContext());
     }
 
     @Override

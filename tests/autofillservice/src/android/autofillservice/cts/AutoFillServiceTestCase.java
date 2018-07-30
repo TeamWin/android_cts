@@ -245,11 +245,19 @@ final class AutoFillServiceTestCase {
         public void preTestCleanup() {
             Log.v(TAG, "@Before: preTestCleanup()");
 
-            disableService();
+            prepareServicePreTest();
 
             InstrumentedAutoFillService.resetStaticState();
             AuthenticationActivity.resetStaticState();
             sReplier.reset();
+        }
+
+        /**
+         * Prepares the service before each test - by default, disables it
+         */
+        protected void prepareServicePreTest() {
+            Log.v(TAG, "prepareServicePreTest(): calling disableService()");
+            disableService();
         }
 
         /**
@@ -263,7 +271,7 @@ final class AutoFillServiceTestCase {
          * Disables the {@link InstrumentedAutoFillService} for autofill for the current user.
          */
         protected void disableService() {
-            Helper.disableAutofillService(getContext(), SERVICE_NAME);
+            Helper.disableAutofillService(getContext());
         }
 
         /**

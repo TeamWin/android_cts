@@ -97,7 +97,7 @@ public final class SettingsHelper {
             @NonNull String key) {
 
         final String currentValue = get(namespace, key);
-        if (currentValue == null || currentValue.equals("null")) {
+        if (currentValue == null) {
             // Already set, ignore
             return;
         }
@@ -108,7 +108,7 @@ public final class SettingsHelper {
         observer.assertCalled();
 
         final String newValue = get(namespace, key);
-        assertWithMessage("invalid value for '%s' settings", key).that(newValue).isEqualTo("null");
+        assertWithMessage("invalid value for '%s' settings", key).that(newValue).isNull();
     }
 
     public static void syncDelete(@NonNull Context context, @NonNull String key) {
@@ -118,9 +118,14 @@ public final class SettingsHelper {
     /**
      * Gets the value of a given preference using Shell command.
      */
-    @NonNull
+    @Nullable
     public static String get(@NonNull String namespace, @NonNull String key) {
-        return runShellCommand("settings get %s %s", namespace, key);
+        final String value = runShellCommand("settings get %s %s", namespace, key);
+        if (value == null || value.equals("null")) {
+            return null;
+        } else {
+            return value;
+        }
     }
 
     @NonNull

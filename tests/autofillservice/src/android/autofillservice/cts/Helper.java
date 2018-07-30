@@ -828,22 +828,32 @@ final class Helper {
     }
 
     /**
-     * Uses Settings to disable the given autofill service for the default user, and checks the
-     * value was properly check, throwing an exception if it was not.
+     * Uses Settings to disable the given autofill service for the default user, and waits until
+     * the setting is deleted.
      */
-    public static void disableAutofillService(@NonNull Context context,
-            @NonNull String serviceName) {
-        if (!isAutofillServiceEnabled(serviceName)) return;
-
+    public static void disableAutofillService(@NonNull Context context) {
+        final String currentService = SettingsHelper.get(AUTOFILL_SERVICE);
+        if (currentService == null) {
+            Log.v(TAG, "disableAutofillService(): already disabled");
+            return;
+        }
+        Log.v(TAG, "Disabling " + currentService);
         SettingsHelper.syncDelete(context, AUTOFILL_SERVICE);
     }
 
     /**
      * Checks whether the given service is set as the autofill service for the default user.
      */
-    private static boolean isAutofillServiceEnabled(@NonNull String serviceName) {
-        final String actualName = SettingsHelper.get(AUTOFILL_SERVICE);
+    public static boolean isAutofillServiceEnabled(@NonNull String serviceName) {
+        final String actualName = getAutofillServiceName();
         return serviceName.equals(actualName);
+    }
+
+    /**
+     * Gets then name of the autofill service for the default user.
+     */
+    public static String getAutofillServiceName() {
+        return SettingsHelper.get(AUTOFILL_SERVICE);
     }
 
     /**
@@ -851,7 +861,7 @@ final class Helper {
      */
     public static void assertAutofillServiceStatus(@NonNull String serviceName, boolean enabled) {
         final String actual = SettingsHelper.get(AUTOFILL_SERVICE);
-        final String expected = enabled ? serviceName : "null";
+        final String expected = enabled ? serviceName : null;
         assertWithMessage("Invalid value for secure setting %s", AUTOFILL_SERVICE)
                 .that(actual).isEqualTo(expected);
     }
