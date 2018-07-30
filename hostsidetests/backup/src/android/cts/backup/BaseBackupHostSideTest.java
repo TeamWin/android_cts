@@ -19,6 +19,8 @@ package android.cts.backup;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 
+import android.platform.test.annotations.AppModeFull;
+
 import com.android.compatibility.common.util.BackupUtils;
 import com.android.tradefed.device.DeviceNotAvailableException;
 import com.android.tradefed.device.ITestDevice;
@@ -41,6 +43,7 @@ import java.util.regex.Pattern;
  * Base class for CTS backup/restore hostside tests
  */
 @RunWith(DeviceJUnit4ClassRunner.class)
+@AppModeFull
 public abstract class BaseBackupHostSideTest extends BaseHostJUnit4Test {
     protected boolean mIsBackupSupported;
 

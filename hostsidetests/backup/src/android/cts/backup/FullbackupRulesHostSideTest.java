@@ -18,6 +18,8 @@ package android.cts.backup;
 
 import static com.android.compatibility.common.util.BackupUtils.LOCAL_TRANSPORT_TOKEN;
 
+import android.platform.test.annotations.AppModeFull;
+
 import com.android.compatibility.common.util.BackupUtils;
 import com.android.tradefed.log.LogUtil.CLog;
 import com.android.tradefed.testtype.DeviceJUnit4ClassRunner;
@@ -36,6 +38,7 @@ import org.junit.runner.RunWith;
  * android.cts.backup.includeexcludeapp.IncludeExcludeTest.
  */
 @RunWith(DeviceJUnit4ClassRunner.class)
+@AppModeFull
 public class FullbackupRulesHostSideTest extends BaseBackupHostSideTest {
 
     private static final String FULLBACKUP_TESTS_APP_NAME = "android.cts.backup.fullbackupapp";

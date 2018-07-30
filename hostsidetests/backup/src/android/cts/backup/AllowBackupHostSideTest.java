@@ -18,6 +18,8 @@ package android.cts.backup;
 
 import static org.junit.Assert.assertNull;
 
+import android.platform.test.annotations.AppModeFull;
+
 import com.android.tradefed.device.DeviceNotAvailableException;
 import com.android.tradefed.log.LogUtil.CLog;
 import com.android.tradefed.testtype.DeviceJUnit4ClassRunner;
@@ -48,6 +50,7 @@ import org.junit.runner.RunWith;
  * android.cts.backup.backupnotallowedapp.AllowBackupTest.
  */
 @RunWith(DeviceJUnit4ClassRunner.class)
+@AppModeFull
 public class AllowBackupHostSideTest extends BaseBackupHostSideTest {
 
     private static final String ALLOWBACKUP_APP_NAME = "android.cts.backup.backupnotallowedapp";

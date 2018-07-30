@@ -18,9 +18,12 @@ package android.backup.cts;
 
 import static com.android.compatibility.common.util.BackupUtils.LOCAL_TRANSPORT_TOKEN;
 
+import android.platform.test.annotations.AppModeFull;
+
 /**
  * Verifies that key methods are called in expected order during backup / restore.
  */
+@AppModeFull
 public class KeyValueLifecycleTest extends BaseBackupCtsTest {
 
     private static final String BACKUP_APP_NAME = "android.backup.kvapp";
