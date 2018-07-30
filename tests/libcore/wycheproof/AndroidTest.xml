@@ -31,5 +31,6 @@
                 value="com.android.cts.core.runner.ExpectationBasedFilter" />
         <option name="core-expectation" value="/knownfailures.txt" />
         <option name="runtime-hint" value="10m"/>
+        <option name="hidden-api-checks" value="false" />
     </test>
 </configuration>

@@ -25,5 +25,6 @@
         <option name="runtime-hint" value="16m39s" />
         <!-- test-timeout unit is ms, value = 10 min -->
         <option name="test-timeout" value="600000" />
+        <option name="hidden-api-checks" value="false" />
     </test>
 </configuration>
