@@ -181,7 +181,7 @@ public class RecordingTest extends Camera2SurfaceViewTestCase {
      * recorded video. Preview is set to the video size.
      * </p>
      */
-    @Test
+    @Test(timeout=60*60*1000) // timeout = 60 mins for long running tests
     public void testBasicRecording() throws Exception {
         doBasicRecording(/*useVideoStab*/false);
     }
@@ -195,7 +195,7 @@ public class RecordingTest extends Camera2SurfaceViewTestCase {
      * from a persistent input surface that's used across multiple recording sessions.
      * </p>
      */
-    @Test
+    @Test(timeout=60*60*1000) // timeout = 60 mins for long running tests
     public void testRecordingFromPersistentSurface() throws Exception {
         if (!MediaUtils.checkCodecForDomain(true /* encoder */, "video")) {
             return; // skipped
@@ -221,7 +221,7 @@ public class RecordingTest extends Camera2SurfaceViewTestCase {
      * validated according to the recording configuration.
      * </p>
      */
-    @Test
+    @Test(timeout=60*60*1000) // timeout = 60 mins for long running tests
     public void testSupportedVideoSizes() throws Exception {
         for (int i = 0; i < mCameraIds.length; i++) {
             try {
@@ -282,7 +282,7 @@ public class RecordingTest extends Camera2SurfaceViewTestCase {
      * checked to make sure no frame drop caused by video snapshot.
      * </p>
      */
-    @Test
+    @Test(timeout=60*60*1000) // timeout = 60 mins for long running tests
     public void testVideoSnapshot() throws Exception {
         videoSnapshotHelper(/*burstTest*/false);
     }
@@ -299,7 +299,7 @@ public class RecordingTest extends Camera2SurfaceViewTestCase {
      * configuration.
      * </p>
      */
-    @Test
+    @Test(timeout=60*60*1000) // timeout = 60 mins for long running tests
     public void testBurstVideoSnapshot() throws Exception {
         videoSnapshotHelper(/*burstTest*/true);
     }
@@ -317,7 +317,7 @@ public class RecordingTest extends Camera2SurfaceViewTestCase {
         slowMotionRecording();
     }
 
-    @Test
+    @Test(timeout=60*60*1000) // timeout = 60 mins for long running tests
     public void testConstrainedHighSpeedRecording() throws Exception {
         constrainedHighSpeedRecording();
     }
