@@ -498,6 +498,10 @@ final class UiBot {
         assertNeverShown("save UI for type " + type, SAVE_UI_SELECTOR, SAVE_NOT_SHOWN_NAPTIME_MS);
     }
 
+    void assertSaveNotShowing() throws Exception {
+        assertNeverShown("save UI", SAVE_UI_SELECTOR, SAVE_NOT_SHOWN_NAPTIME_MS);
+    }
+
     private String getSaveTypeString(int type) {
         final String typeResourceName;
         switch (type) {

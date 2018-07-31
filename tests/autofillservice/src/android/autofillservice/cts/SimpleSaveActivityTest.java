@@ -29,12 +29,14 @@ import static android.autofillservice.cts.SimpleSaveActivity.ID_PASSWORD;
 import static android.autofillservice.cts.SimpleSaveActivity.TEXT_LABEL;
 import static android.service.autofill.SaveInfo.SAVE_DATA_TYPE_GENERIC;
 import static android.service.autofill.SaveInfo.SAVE_DATA_TYPE_PASSWORD;
+import static android.service.autofill.SaveInfo.SAVE_DATA_TYPE_USERNAME;
 
 import static com.google.common.truth.Truth.assertThat;
 import static com.google.common.truth.Truth.assertWithMessage;
 
 import static org.junit.Assume.assumeTrue;
 
+import android.app.assist.AssistStructure;
 import android.app.assist.AssistStructure.ViewNode;
 import android.autofillservice.cts.CannedFillResponse.CannedDataset;
 import android.autofillservice.cts.InstrumentedAutoFillService.FillRequest;
@@ -304,6 +306,125 @@ public class SimpleSaveActivityTest extends CustomDescriptionWithLinkTestCase<Si
         // ... and assert results
         final SaveRequest saveRequest = sReplier.getNextSaveRequest();
         assertTextAndValue(findNodeByResourceId(saveRequest.structure, ID_INPUT), "108");
+    }
+
+    /**
+     * Emulates an app dyanmically adding the password field after username is typed.
+     */
+    @Test
+    @AppModeFull // testAutoFillOneDatasetAndSave() is enough to test ephemeral apps support
+    public void testPartitionedSave() throws Exception {
+        startActivity();
+
+        // Set service.
+        enableService();
+
+        // 1st request
+
+        // Set expectations.
+        sReplier.addResponse(new CannedFillResponse.Builder()
+                .setRequiredSavableIds(SAVE_DATA_TYPE_USERNAME, ID_INPUT)
+                .build());
+
+        // Trigger autofill.
+        mActivity.syncRunOnUiThread(() -> mActivity.mInput.requestFocus());
+        sReplier.getNextFillRequest();
+
+        // Set 1st field but don't commit session
+        mActivity.syncRunOnUiThread(() -> mActivity.mInput.setText("108"));
+        mUiBot.assertSaveNotShowing();
+
+        // 2nd request
+
+        // Set expectations.
+        sReplier.addResponse(new CannedFillResponse.Builder()
+                .setRequiredSavableIds(SAVE_DATA_TYPE_USERNAME | SAVE_DATA_TYPE_PASSWORD,
+                        ID_INPUT, ID_PASSWORD)
+                .build());
+
+        // Trigger autofill.
+        mActivity.syncRunOnUiThread(() -> mActivity.mPassword.requestFocus());
+        sReplier.getNextFillRequest();
+
+        // Trigger save.
+        mActivity.syncRunOnUiThread(() -> {
+            mActivity.mPassword.setText("42");
+            mActivity.mCommit.performClick();
+        });
+        final UiObject2 saveUi = mUiBot.assertSaveShowing(null, SAVE_DATA_TYPE_USERNAME,
+                SAVE_DATA_TYPE_PASSWORD);
+
+        // Save it...
+        mUiBot.saveForAutofill(saveUi, true);
+
+        // ... and assert results
+        final SaveRequest saveRequest = sReplier.getNextSaveRequest();
+        assertThat(saveRequest.contexts.size()).isEqualTo(2);
+
+        assertTextAndValue(findNodeByResourceId(saveRequest.structure, ID_INPUT), "108");
+        assertTextAndValue(findNodeByResourceId(saveRequest.structure, ID_PASSWORD), "42");
+    }
+
+    /**
+     * Emulates an app using fragments to display username and password in 2 steps.
+     */
+    @Test
+    @AppModeFull // testAutoFillOneDatasetAndSave() is enough to test ephemeral apps support
+    public void testDelayedSave() throws Exception {
+        startActivity();
+
+        // Set service.
+        enableService();
+
+        // 1st fragment.
+
+        // Set expectations.
+        sReplier.addResponse(new CannedFillResponse.Builder()
+                .setSaveInfoFlags(SaveInfo.FLAG_DELAY_SAVE).build());
+
+        // Trigger autofill.
+        mActivity.syncRunOnUiThread(() -> mActivity.mInput.requestFocus());
+        sReplier.getNextFillRequest();
+
+        // Trigger delayed save.
+        mActivity.syncRunOnUiThread(() -> {
+            mActivity.mInput.setText("108");
+            mActivity.mCommit.performClick();
+        });
+        mUiBot.assertSaveNotShowing();
+
+        // 2nd fragment.
+
+        // Set expectations.
+        sReplier.addResponse(new CannedFillResponse.Builder()
+                .setRequiredSavableIds(SAVE_DATA_TYPE_USERNAME | SAVE_DATA_TYPE_PASSWORD,
+                        ID_PASSWORD)
+                .build());
+
+        // Trigger autofill on second "fragment"
+        mActivity.syncRunOnUiThread(() -> mActivity.mPassword.requestFocus());
+        sReplier.getNextFillRequest();
+
+        // Trigger delayed save.
+        mActivity.syncRunOnUiThread(() -> {
+            mActivity.mPassword.setText("42");
+            mActivity.mCommit.performClick();
+        });
+
+        // Save it...
+        mUiBot.saveForAutofill(true, SAVE_DATA_TYPE_USERNAME, SAVE_DATA_TYPE_PASSWORD);
+
+        // ... and assert results
+        final SaveRequest saveRequest = sReplier.getNextSaveRequest();
+        assertThat(saveRequest.contexts.size()).isEqualTo(2);
+
+        // Get username from 1st request.
+        final AssistStructure structure1 = saveRequest.contexts.get(0).getStructure();
+        assertTextAndValue(findNodeByResourceId(structure1, ID_INPUT), "108");
+
+        // Get password from 2nd request.
+        final AssistStructure structure2 = saveRequest.contexts.get(1).getStructure();
+        assertTextAndValue(findNodeByResourceId(structure2, ID_PASSWORD), "42");
     }
 
     @Test
