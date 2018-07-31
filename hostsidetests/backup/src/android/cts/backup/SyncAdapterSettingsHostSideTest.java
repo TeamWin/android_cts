@@ -18,6 +18,8 @@ package android.cts.backup;
 
 import static org.junit.Assert.assertNull;
 
+import android.platform.test.annotations.AppModeFull;
+
 import com.android.tradefed.device.DeviceNotAvailableException;
 import com.android.tradefed.log.LogUtil.CLog;
 import com.android.tradefed.testtype.DeviceJUnit4ClassRunner;
@@ -36,6 +38,7 @@ import org.junit.runner.RunWith;
  * {@link android.cts.backup.syncadaptersettingsapp.SyncAdapterSettingsTest}.
  */
 @RunWith(DeviceJUnit4ClassRunner.class)
+@AppModeFull
 public class SyncAdapterSettingsHostSideTest extends BaseBackupHostSideTest {
 
     /** The name of the APK that a sync adapter settings will be run for */

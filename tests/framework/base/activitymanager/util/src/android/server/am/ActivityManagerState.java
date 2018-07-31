@@ -68,10 +68,11 @@ public class ActivityManagerState {
     private final List<ActivityStack> mStacks = new ArrayList<>();
     private KeyguardControllerState mKeyguardControllerState;
     private final List<String> mPendingActivities = new ArrayList<>();
-    private int mFocusedStackId = -1;
+    private int mTopFocusedStackId = -1;
     private Boolean mIsHomeRecentsComponent;
-    private String mResumedActivityRecord = null;
-    private final List<String> mResumedActivities = new ArrayList<>();
+    private String mTopResumedActivityRecord = null;
+    final List<String> mResumedActivitiesInStacks = new ArrayList<>();
+    final List<String> mResumedActivitiesInDisplays = new ArrayList<>();
 
     void computeState() {
         computeState(DUMP_MODE_ACTIVITIES);
@@ -110,20 +111,21 @@ public class ActivityManagerState {
                         + new String(dump, StandardCharsets.UTF_8), ex);
             }
 
-            retry = mStacks.isEmpty() || mFocusedStackId == -1 || (mResumedActivityRecord == null
-                    || mResumedActivities.isEmpty()) && !mKeyguardControllerState.keyguardShowing;
+            retry = mStacks.isEmpty() || mTopFocusedStackId == -1
+                    || (mTopResumedActivityRecord == null || mResumedActivitiesInStacks.isEmpty())
+                    && !mKeyguardControllerState.keyguardShowing;
         } while (retry && retriesLeft-- > 0);
 
         if (mStacks.isEmpty()) {
             logE("No stacks found...");
         }
-        if (mFocusedStackId == -1) {
+        if (mTopFocusedStackId == -1) {
             logE("No focused stack found...");
         }
-        if (mResumedActivityRecord == null) {
+        if (mTopResumedActivityRecord == null) {
             logE("No focused activity found...");
         }
-        if (mResumedActivities.isEmpty()) {
+        if (mResumedActivitiesInStacks.isEmpty()) {
             logE("No resumed activities found...");
         }
     }
@@ -157,9 +159,9 @@ public class ActivityManagerState {
             mDisplays.add(new ActivityDisplay(activityDisplay, this));
         }
         mKeyguardControllerState = new KeyguardControllerState(state.keyguardController);
-        mFocusedStackId = state.focusedStackId;
+        mTopFocusedStackId = state.focusedStackId;
         if (state.resumedActivity != null) {
-            mResumedActivityRecord = state.resumedActivity.title;
+            mTopResumedActivityRecord = state.resumedActivity.title;
         }
         mIsHomeRecentsComponent = new Boolean(state.isHomeRecentsComponent);
 
@@ -171,9 +173,10 @@ public class ActivityManagerState {
     private void reset() {
         mDisplays.clear();
         mStacks.clear();
-        mFocusedStackId = -1;
-        mResumedActivityRecord = null;
-        mResumedActivities.clear();
+        mTopFocusedStackId = -1;
+        mTopResumedActivityRecord = null;
+        mResumedActivitiesInStacks.clear();
+        mResumedActivitiesInDisplays.clear();
         mKeyguardControllerState = null;
         mIsHomeRecentsComponent = null;
         mPendingActivities.clear();
@@ -211,29 +214,29 @@ public class ActivityManagerState {
     }
 
     int getFocusedStackId() {
-        return mFocusedStackId;
+        return mTopFocusedStackId;
     }
 
     int getFocusedStackActivityType() {
-        final ActivityStack stack = getStackById(mFocusedStackId);
+        final ActivityStack stack = getStackById(mTopFocusedStackId);
         return stack != null ? stack.getActivityType() : ACTIVITY_TYPE_UNDEFINED;
     }
 
     int getFocusedStackWindowingMode() {
-        final ActivityStack stack = getStackById(mFocusedStackId);
+        final ActivityStack stack = getStackById(mTopFocusedStackId);
         return stack != null ? stack.getWindowingMode() : WINDOWING_MODE_UNDEFINED;
     }
 
     String getFocusedActivity() {
-        return mResumedActivityRecord;
-    }
-
-    String getResumedActivity() {
-        return mResumedActivities.get(0);
+        return mTopResumedActivityRecord;
     }
 
     int getResumedActivitiesCount() {
-        return mResumedActivities.size();
+        return mResumedActivitiesInStacks.size();
+    }
+
+    String getResumedActivityOnDisplay(int displayId) {
+        return getDisplay(displayId).mResumedActivity;
     }
 
     public KeyguardControllerState getKeyguardControllerState() {
@@ -553,17 +556,24 @@ public class ActivityManagerState {
 
         int mId;
         ArrayList<ActivityStack> mStacks = new ArrayList<>();
+        int mFocusedStackId;
+        String mResumedActivity;
 
         ActivityDisplay(ActivityDisplayProto proto, ActivityManagerState amState) {
             super(proto.configurationContainer);
             mId = proto.id;
+            mFocusedStackId = proto.focusedStackId;
+            if (proto.resumedActivity != null) {
+                mResumedActivity = proto.resumedActivity.title;
+                amState.mResumedActivitiesInDisplays.add(mResumedActivity);
+            }
             for (int i = 0; i < proto.stacks.length; i++) {
                 ActivityStack activityStack = new ActivityStack(proto.stacks[i]);
                 mStacks.add(activityStack);
                 // Also update activity manager state
                 amState.mStacks.add(activityStack);
                 if (activityStack.mResumedActivity != null) {
-                    amState.mResumedActivities.add(activityStack.mResumedActivity);
+                    amState.mResumedActivitiesInStacks.add(activityStack.mResumedActivity);
                 }
             }
         }

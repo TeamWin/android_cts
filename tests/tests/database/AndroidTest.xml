@@ -24,6 +24,5 @@
     <test class="com.android.tradefed.testtype.AndroidJUnitTest" >
         <option name="package" value="android.database.cts" />
         <option name="runtime-hint" value="11m" />
-        <option name="hidden-api-checks" value="true"/>
     </test>
 </configuration>

@@ -22,6 +22,7 @@ import static com.google.common.truth.Truth.assertWithMessage;
 import android.content.Context;
 import android.util.AttributeSet;
 import android.util.Log;
+import android.view.autofill.AutofillManager;
 import android.webkit.JavascriptInterface;
 import android.webkit.WebView;
 
@@ -40,11 +41,13 @@ public class MyWebView extends WebView {
     public MyWebView(Context context) {
         super(context);
         setJsHandler();
+        Log.d(TAG, "isAutofillEnabled() on constructor? " + isAutofillEnabled());
     }
 
     public MyWebView(Context context, AttributeSet attrs) {
         super(context, attrs);
         setJsHandler();
+        Log.d(TAG, "isAutofillEnabled() on constructor? " + isAutofillEnabled());
     }
 
     public void expectAutofill(String username, String password) {
@@ -60,6 +63,10 @@ public class MyWebView extends WebView {
     private void setJsHandler() {
         getSettings().setJavaScriptEnabled(true);
         addJavascriptInterface(new JavascriptHandler(), "JsHandler");
+    }
+
+    boolean isAutofillEnabled() {
+        return getContext().getSystemService(AutofillManager.class).isEnabled();
     }
 
     private class FillExpectation {

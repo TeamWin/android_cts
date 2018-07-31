@@ -16,44 +16,33 @@
 
 package com.android.cts.releaseparser;
 
-import com.android.tradefed.testtype.IRemoteTest;
+import com.android.cts.releaseparser.ReleaseProto.*;
 
-import java.lang.reflect.Modifier;
-import java.io.*;
-import java.nio.file.Paths;
-import java.net.URL;
-import java.net.URLClassLoader;
-import java.util.*;
+import org.xml.sax.Attributes;
+import org.xml.sax.SAXException;
+import org.xml.sax.helpers.DefaultHandler;
+
+import java.io.BufferedReader;
+import java.io.File;
+import java.io.InputStream;
+import java.io.InputStreamReader;
+import java.util.ArrayList;
+import java.util.Enumeration;
+import java.util.List;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipFile;
 
 import javax.xml.parsers.SAXParser;
 import javax.xml.parsers.SAXParserFactory;
 
-import junit.framework.Test;
-
-import org.jf.dexlib2.AccessFlags;
-import org.jf.dexlib2.DexFileFactory;
-import org.jf.dexlib2.Opcodes;
-import org.jf.dexlib2.iface.Annotation;
-import org.jf.dexlib2.iface.AnnotationElement;
-import org.jf.dexlib2.iface.ClassDef;
-import org.jf.dexlib2.iface.DexFile;
-import org.jf.dexlib2.iface.Method;
-import org.junit.runners.Suite.SuiteClasses;
-import org.junit.runner.RunWith;
-import org.xml.sax.Attributes;
-import org.xml.sax.SAXException;
-import org.xml.sax.helpers.DefaultHandler;
-
-class TestSuiteTradefedParser {
+public class TestSuiteTradefedParser extends JarParser {
     private static final String TEST_SUITE_INFO_PROPERTIES_FILE = "test-suite-info.properties";
     private static final String KNOWN_FAILURES_XML_FILE = "-known-failures.xml";
     private static final String EXCLUDE_FILTER_TAG = "compatibility:exclude-filter";
     private static final String NAME_TAG = "name";
     private static final String VALUE_TAG = "value";
 
-    private File mTfFile;
+    private Entry.EntryType mType;
     private List<String> mKnownFailureList;
     private String mName;
     private String mFullname;
@@ -61,8 +50,51 @@ class TestSuiteTradefedParser {
     private String mTargetArch;
     private String mVersion;
 
-    TestSuiteTradefedParser(File tfFile) {
-        mTfFile = tfFile;
+    public TestSuiteTradefedParser(File file) {
+        super(file);
+    }
+
+    @Override
+    public Entry.EntryType getType() {
+        if (mType == null) {
+            parseFile();
+        }
+        return mType;
+    }
+
+    public String getName() {
+        if (mType == null) {
+            parseFile();
+        }
+        return mName;
+    }
+
+    public String getFullName() {
+        if (mType == null) {
+            parseFile();
+        }
+        return mFullname;
+    }
+
+    public String getBuildNumber() {
+        if (mType == null) {
+            parseFile();
+        }
+        return mBuildNumber;
+    }
+
+    public String getTargetArch() {
+        if (mType == null) {
+            parseFile();
+        }
+        return mTargetArch;
+    }
+
+    public String getVersion() {
+        if (mType == null) {
+            parseFile();
+        }
+        return mVersion;
     }
 
     public List<String> getKnownFailureList() {
@@ -73,44 +105,9 @@ class TestSuiteTradefedParser {
         return mKnownFailureList;
     }
 
-    public String getName() {
-        if (mName == null) {
-            praseTestSuiteInfo();
-        }
-        return mName;
-    }
-
-    public String getFullname() {
-        if (mFullname == null) {
-            praseTestSuiteInfo();
-        }
-        return mFullname;
-    }
-
-    public String getBuildNumber() {
-        if (mBuildNumber == null) {
-            praseTestSuiteInfo();
-        }
-        return mBuildNumber;
-    }
-
-    public String getTargetArch() {
-        if (mTargetArch == null) {
-            praseTestSuiteInfo();
-        }
-        return mTargetArch;
-    }
-
-    public String getVersion() {
-        if (mVersion == null) {
-            praseTestSuiteInfo();
-        }
-        return mVersion;
-    }
-
     private void praseKnownFailure() {
         try {
-            ZipFile zip = new ZipFile(mTfFile);
+            ZipFile zip = new ZipFile(getFile());
             try {
                 Enumeration<? extends ZipEntry> entries = zip.entries();
                 while (entries.hasMoreElements()) {
@@ -147,9 +144,9 @@ class TestSuiteTradefedParser {
         }
     }
 
-    private void praseTestSuiteInfo() {
+    private void parseFile() {
         try {
-            ZipFile zip = new ZipFile(mTfFile);
+            ZipFile zip = new ZipFile(getFile());
             try {
                 Enumeration<? extends ZipEntry> entries = zip.entries();
                 while (entries.hasMoreElements()) {
@@ -185,12 +182,14 @@ class TestSuiteTradefedParser {
                         bfReader.close();
                     }
                 }
+                mType = Entry.EntryType.TEST_SUITE_TRADEFED;
             } finally {
                 zip.close();
             }
         } catch (Exception e) {
-            System.err.println(String.format("Cannot %s %s", TEST_SUITE_INFO_PROPERTIES_FILE, e.getMessage()));
+            System.err.println(
+                    String.format("Cannot %s %s", TEST_SUITE_INFO_PROPERTIES_FILE, e.getMessage()));
+            mType = super.getType();
         }
     }
-
 }

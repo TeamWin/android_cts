@@ -19,6 +19,7 @@ package android.backup.cts;
 import android.app.Instrumentation;
 import android.content.pm.PackageManager;
 import android.os.ParcelFileDescriptor;
+import android.platform.test.annotations.AppModeFull;
 import android.test.InstrumentationTestCase;
 
 import com.android.compatibility.common.util.BackupUtils;
@@ -31,6 +32,7 @@ import java.io.InputStream;
  *
  * Ensures that backup is enabled and local transport selected, and provides some utility methods.
  */
+@AppModeFull
 public class BaseBackupCtsTest extends InstrumentationTestCase {
     private static final String APP_LOG_TAG = "BackupCTSApp";
 

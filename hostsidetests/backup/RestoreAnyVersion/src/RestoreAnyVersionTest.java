@@ -22,6 +22,7 @@ import static android.support.test.InstrumentationRegistry.getTargetContext;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 
+import android.platform.test.annotations.AppModeFull;
 import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
@@ -45,6 +46,7 @@ import java.util.concurrent.TimeUnit;
  * test.
  */
 @RunWith(AndroidJUnit4.class)
+@AppModeFull
 public class RestoreAnyVersionTest {
     private static final String TAG = "BackupTestRestoreAnyVer";
 

@@ -22,6 +22,7 @@ import static com.android.compatibility.common.util.BackupUtils.LOCAL_TRANSPORT_
 
 import static org.junit.Assert.assertTrue;
 
+import android.platform.test.annotations.AppModeFull;
 import android.content.ContentResolver;
 import android.os.ParcelFileDescriptor;
 import android.provider.Settings;
@@ -42,6 +43,7 @@ import java.io.InputStream;
  * test.
  */
 @RunWith(AndroidJUnit4.class)
+@AppModeFull
 public class OtherSoundsSettingsTest {
     /** The name of the package for backup */
     private static final String SETTINGS_PACKAGE_NAME = "com.android.providers.settings";

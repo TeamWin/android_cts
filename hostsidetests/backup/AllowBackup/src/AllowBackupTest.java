@@ -21,6 +21,7 @@ import static android.support.test.InstrumentationRegistry.getTargetContext;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 
+import android.platform.test.annotations.AppModeFull;
 import android.content.Context;
 import android.support.test.runner.AndroidJUnit4;
 import android.util.Log;
@@ -41,6 +42,7 @@ import java.util.Random;
  *
  */
 @RunWith(AndroidJUnit4.class)
+@AppModeFull
 public class AllowBackupTest {
     public static final String TAG = "AllowBackupCTSApp";
     private static final int FILE_SIZE_BYTES = 1024 * 1024;

@@ -924,18 +924,31 @@ public class MediaPlayer2Test extends MediaPlayer2TestBase {
                 R.raw.video_480x360_mp4_h264_1000kbps_30fps_aac_stereo_128kbps_44100hz)) {
             return; // skip
         }
-        DataSourceDesc dsd1 = createDataSourceDesc(
-                R.raw.video_480x360_mp4_h264_1000kbps_30fps_aac_stereo_128kbps_44100hz);
-        DataSourceDesc dsd2 = createDataSourceDesc(
-                R.raw.testvideo);
+
+        int resid = R.raw.testvideo;
+        if (!MediaUtils.hasCodecsForResource(mContext, resid)) {
+            return;  // skip
+        }
+
+        AssetFileDescriptor afd2 = mResources.openRawResourceFd(resid);
+        DataSourceDesc dsd2 = new DataSourceDesc.Builder()
+                .setDataSource(afd2.getFileDescriptor(), afd2.getStartOffset(), afd2.getLength())
+                .build();
+
+        resid = R.raw.video_480x360_mp4_h264_1000kbps_30fps_aac_stereo_128kbps_44100hz;
+        AssetFileDescriptor afd3 = mResources.openRawResourceFd(resid);
+        DataSourceDesc dsd3 = new DataSourceDesc.Builder()
+                .setDataSource(afd3.getFileDescriptor(), afd3.getStartOffset(), afd3.getLength())
+                .build();
+
         ArrayList<DataSourceDesc> nextDSDs = new ArrayList<DataSourceDesc>(2);
         nextDSDs.add(dsd2);
-        nextDSDs.add(dsd1);
+        nextDSDs.add(dsd3);
 
         mPlayer.setNextDataSources(nextDSDs);
 
-        Monitor onCompletion1Called = new Monitor();
         Monitor onCompletion2Called = new Monitor();
+        Monitor onCompletion3Called = new Monitor();
         MediaPlayer2.EventCallback ecb = new MediaPlayer2.EventCallback() {
             @Override
             public void onInfo(MediaPlayer2 mp, DataSourceDesc dsd, int what, int extra) {
@@ -943,11 +956,14 @@ public class MediaPlayer2Test extends MediaPlayer2TestBase {
                     Log.i(LOG_TAG, "testPlaylist: prepared dsd MediaId=" + dsd.getMediaId());
                     mOnPrepareCalled.signal();
                 } else if (what == MediaPlayer2.MEDIA_INFO_PLAYBACK_COMPLETE) {
-                    if (dsd == dsd1) {
-                        onCompletion1Called.signal();
-                    } else if (dsd == dsd2) {
+                    if (dsd == dsd2) {
+                        Log.i(LOG_TAG, "testPlaylist: MEDIA_INFO_PLAYBACK_COMPLETE dsd2");
                         onCompletion2Called.signal();
+                    } else if (dsd == dsd3) {
+                        Log.i(LOG_TAG, "testPlaylist: MEDIA_INFO_PLAYBACK_COMPLETE dsd3");
+                        onCompletion3Called.signal();
                     } else {
+                        Log.i(LOG_TAG, "testPlaylist: MEDIA_INFO_PLAYBACK_COMPLETE other");
                         mOnCompletionCalled.signal();
                     }
                 }
@@ -958,8 +974,8 @@ public class MediaPlayer2Test extends MediaPlayer2TestBase {
         }
 
         mOnCompletionCalled.reset();
-        onCompletion1Called.reset();
         onCompletion2Called.reset();
+        onCompletion3Called.reset();
 
         mPlayer.setDisplay(mActivity.getSurfaceHolder());
 
@@ -969,7 +985,7 @@ public class MediaPlayer2Test extends MediaPlayer2TestBase {
 
         mOnCompletionCalled.waitForSignal();
         onCompletion2Called.waitForSignal();
-        onCompletion1Called.waitForSignal();
+        onCompletion3Called.waitForSignal();
 
         mPlayer.reset();
     }

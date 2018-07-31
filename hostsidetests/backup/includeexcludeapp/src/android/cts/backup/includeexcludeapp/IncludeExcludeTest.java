@@ -25,6 +25,7 @@ import static org.junit.Assert.fail;
 
 import android.content.Context;
 import android.content.SharedPreferences;
+import android.platform.test.annotations.AppModeFull;
 import android.support.test.runner.AndroidJUnit4;
 
 import org.junit.Before;
@@ -44,6 +45,7 @@ import java.util.Random;
  * designed to be called in any other way, as they rely on state set up by the host side test.
  */
 @RunWith(AndroidJUnit4.class)
+@AppModeFull
 public class IncludeExcludeTest {
     public static final String TAG = "IncludeExcludeCTSApp";
     private static final int FILE_SIZE_BYTES = 1024 * 1024;
