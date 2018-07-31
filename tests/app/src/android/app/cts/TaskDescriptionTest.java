@@ -27,8 +27,10 @@ import android.app.ActivityManager.RecentTaskInfo;
 import android.app.ActivityManager.TaskDescription;
 import android.graphics.Bitmap;
 import android.graphics.Color;
+import android.os.SystemClock;
 import android.platform.test.annotations.Presubmit;
 import java.util.List;
+import java.util.function.BooleanSupplier;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Rule;
@@ -42,8 +44,7 @@ import android.support.test.rule.ActivityTestRule;
 import android.support.test.runner.AndroidJUnit4;
 
 /**
- * Build: mmma -j32 cts/tests/app
- * Run: cts/tests/framework/base/activitymanager/util/run-test CtsAppTestCases android.app.cts.TaskDescriptionTest
+ * Build & Run: atest android.app.cts.TaskDescriptionTest
  */
 @RunWith(AndroidJUnit4.class)
 @Presubmit
@@ -52,6 +53,8 @@ public class TaskDescriptionTest {
     private static final int TEST_NO_DATA = 0;
     private static final int TEST_RES_DATA = 777;
     private static final int TEST_COLOR = Color.BLACK;
+    private static final int WAIT_TIMEOUT_MS = 1000;
+    private static final int WAIT_RETRIES = 5;
 
     @Rule
     public ActivityTestRule<MockActivity> mTaskDescriptionActivity =
@@ -83,17 +86,32 @@ public class TaskDescriptionTest {
                 final TaskDescription td = info.taskDescription;
                 assertNotNull(td);
                 if (resId == TEST_NO_DATA) {
-                    assertNotNull(td.getIcon());
-                    assertNotNull(td.getIconFilename());
+                    // TaskPersister at the worst case scenario waits 3 secs (PRE_TASK_DELAY_MS) to
+                    // write the image to disk if its write time has ended
+                    waitFor("TaskDescription's icon is null", () -> td.getIcon() != null);
+                    waitFor("TaskDescription's icon filename is null",
+                            () -> td.getIconFilename() != null);
                 } else {
-                    assertNull(td.getIconFilename());
-                    assertNull(td.getIcon());
+                    waitFor("TaskDescription's icon is not null", () -> td.getIcon() == null);
+                    waitFor("TaskDescription's icon filename is not null",
+                            () -> td.getIconFilename() == null);
                 }
+
                 assertEquals(resId, td.getIconResource());
                 assertEquals(label, td.getLabel());
                 return;
             }
         }
         fail("Did not find activity (id=" + activity.getTaskId() + ") in recent tasks list");
+    }
+
+    private void waitFor(String message, BooleanSupplier waitCondition) {
+        for (int retry = 0; retry < WAIT_RETRIES; retry++) {
+            if (waitCondition.getAsBoolean()) {
+                return;
+            }
+            SystemClock.sleep(WAIT_TIMEOUT_MS);
+        }
+        fail(message);
     }
 }
