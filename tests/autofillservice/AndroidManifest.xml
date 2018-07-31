@@ -95,6 +95,7 @@
             android:exported="true" />
 
         <activity android:name=".TrampolineForResultActivity" />
+        <activity android:name=".OnCreateServiceStatusVerifierActivity"/>
 
         <receiver android:name=".SelfDestructReceiver"
             android:exported="true"
