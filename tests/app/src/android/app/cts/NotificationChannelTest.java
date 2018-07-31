@@ -28,6 +28,9 @@ import android.os.Parcel;
 import android.provider.Settings;
 import android.test.AndroidTestCase;
 
+import com.android.compatibility.common.util.CddTest;
+
+@CddTest(requirement="3.8.3.1/C-1-1,C-1-4")
 public class NotificationChannelTest extends AndroidTestCase {
 
     @Override
