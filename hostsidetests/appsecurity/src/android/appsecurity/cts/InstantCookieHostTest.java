@@ -97,7 +97,7 @@ public class InstantCookieHostTest extends DeviceTestCase implements IBuildRecei
                 "testCookieResetOnNonInstantReinstall2");
     }
 
-    public void testCookieValidWhenSingedWithTwoCerts() throws Exception {
+    public void testCookieValidWhenSignedWithTwoCerts() throws Exception {
         assertNull(installPackage(INSTANT_COOKIE_APP_APK, false, true));
         runDeviceTests(INSTANT_COOKIE_APP_PKG, "test.instant.cookie.CookieTest",
                 "testCookiePersistedAcrossInstantInstalls1");
