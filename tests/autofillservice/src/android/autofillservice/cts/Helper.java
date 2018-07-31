@@ -58,6 +58,8 @@ final class Helper {
 
     static final boolean VERBOSE = false;
 
+    static final String MY_PACKAGE = "android.autofillservice.cts";
+
     static final String ID_USERNAME_LABEL = "username_label";
     static final String ID_USERNAME = "username";
     static final String ID_PASSWORD_LABEL = "password_label";

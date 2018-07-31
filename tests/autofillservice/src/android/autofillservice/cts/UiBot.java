@@ -209,6 +209,17 @@ final class UiBot {
     }
 
     /**
+     * Asserts that the text is not showing for sure in the screen "as is", i.e., without waiting
+     * for it.
+     *
+     * <p>Typically called after another assertion that waits for a condition to be shown.
+     */
+    public void assertNotShowingForSure(String text) throws Exception {
+        final UiObject2 object = mDevice.findObject(By.text(text));
+        assertWithMessage("Find node with text '%s'", text).that(object).isNull();
+    }
+
+    /**
      * Asserts a node with the given content description is shown.
      *
      */
@@ -241,8 +252,10 @@ final class UiBot {
     /**
      * Asserts the id is shown on the screen.
      */
-    void assertShownById(String id) {
-        assertThat(waitForObject(By.res(id))).isNotNull();
+    UiObject2 assertShownById(String id) throws Exception {
+        final UiObject2 object = waitForObject(By.res(id));
+        assertThat(object).isNotNull();
+        return object;
     }
 
     /**
