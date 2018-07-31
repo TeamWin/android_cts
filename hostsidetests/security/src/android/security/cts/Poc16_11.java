@@ -13,7 +13,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package android.security.cts;
 
 import android.platform.test.annotations.SecurityTest;
@@ -31,4 +30,14 @@ public class Poc16_11 extends SecurityTestCase {
         }
     }
 
+    /**
+     *  b/29149404
+     */
+    @SecurityTest
+    public void testPocCVE_2012_6702() throws Exception {
+        AdbUtils.runCommandLine("logcat -c", getDevice());
+        AdbUtils.runPoc("CVE-2012-6702", getDevice(), 60);
+        String logcat = AdbUtils.runCommandLine("logcat -d", getDevice());
+        assertNotMatches("[\\s\\n\\S]*fail: encountered same random values![\\s\\n\\S]*", logcat);
+    }
 }
