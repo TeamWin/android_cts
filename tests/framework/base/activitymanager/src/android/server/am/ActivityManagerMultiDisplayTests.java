@@ -723,34 +723,56 @@ public class ActivityManagerMultiDisplayTests extends ActivityManagerDisplayTest
      * is moved correctly.
      */
     @Test
-    public void testStackFocusSwitchOnStackEmptied() throws Exception {
+    public void testStackFocusSwitchOnStackEmptiedInSleeping() throws Exception {
         try (final VirtualDisplaySession virtualDisplaySession = new VirtualDisplaySession();
              final LockScreenSession lockScreenSession = new LockScreenSession()) {
-            // Create new virtual display.
-            final ActivityDisplay newDisplay = virtualDisplaySession.createDisplay();
-            mAmWmState.assertVisibility(VIRTUAL_DISPLAY_ACTIVITY, true /* visible */);
-            final int focusedStackId = mAmWmState.getAmState().getFrontStackId(DEFAULT_DISPLAY);
+            validateStackFocusSwitchOnStackEmptied(virtualDisplaySession, lockScreenSession);
+        }
+    }
 
-            // Launch activity on new secondary display.
-            launchActivityOnDisplay(BROADCAST_RECEIVER_ACTIVITY, newDisplay.mId);
-            waitAndAssertTopResumedActivity(BROADCAST_RECEIVER_ACTIVITY, newDisplay.mId,
-                    "Top activity must be on secondary display");
+    /**
+     * Tests launching activities on secondary display and then finishing it to see if stack focus
+     * is moved correctly.
+     */
+    @Test
+    public void testStackFocusSwitchOnStackEmptied() throws Exception {
+        try (final VirtualDisplaySession virtualDisplaySession = new VirtualDisplaySession()) {
+            validateStackFocusSwitchOnStackEmptied(virtualDisplaySession,
+                    null /* lockScreenSession */);
+        }
+    }
 
+    private void validateStackFocusSwitchOnStackEmptied(VirtualDisplaySession virtualDisplaySession,
+            LockScreenSession lockScreenSession) throws Exception {
+        // Create new virtual display.
+        final ActivityDisplay newDisplay = virtualDisplaySession.createDisplay();
+        mAmWmState.assertVisibility(VIRTUAL_DISPLAY_ACTIVITY, true /* visible */);
+        final int focusedStackId = mAmWmState.getAmState().getFrontStackId(DEFAULT_DISPLAY);
+
+        // Launch activity on new secondary display.
+        launchActivityOnDisplay(BROADCAST_RECEIVER_ACTIVITY, newDisplay.mId);
+        waitAndAssertTopResumedActivity(BROADCAST_RECEIVER_ACTIVITY, newDisplay.mId,
+                "Top activity must be on secondary display");
+
+        if (lockScreenSession != null) {
             // Lock the device, so that activity containers will be detached.
             lockScreenSession.sleepDevice();
+        }
 
-            // Finish activity on secondary display.
-            mBroadcastActionTrigger.finishBroadcastReceiverActivity();
+        // Finish activity on secondary display.
+        mBroadcastActionTrigger.finishBroadcastReceiverActivity();
 
+        if (lockScreenSession != null) {
             // Unlock and check if the focus is switched back to primary display.
             lockScreenSession.wakeUpDevice().unlockDevice();
-            mAmWmState.waitForFocusedStack(focusedStackId);
-            mAmWmState.waitForValidState(VIRTUAL_DISPLAY_ACTIVITY);
-            mAmWmState.assertVisibility(VIRTUAL_DISPLAY_ACTIVITY, true /* visible */);
-            mAmWmState.assertFocusedActivity(
-                    "Top activity must be switched back to primary display",
-                    VIRTUAL_DISPLAY_ACTIVITY);
         }
+
+        mAmWmState.waitForFocusedStack(focusedStackId);
+        mAmWmState.waitForValidState(VIRTUAL_DISPLAY_ACTIVITY);
+        mAmWmState.assertVisibility(VIRTUAL_DISPLAY_ACTIVITY, true /* visible */);
+        mAmWmState.assertFocusedActivity(
+                "Top activity must be switched back to primary display",
+                VIRTUAL_DISPLAY_ACTIVITY);
     }
 
     /**
