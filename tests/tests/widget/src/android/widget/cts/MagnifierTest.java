@@ -211,14 +211,9 @@ public class MagnifierTest {
     @Test
     public void testWindowPosition() throws Throwable {
         prepareFourQuadrantsScenario();
-        final CountDownLatch latch = new CountDownLatch(1);
-        mMagnifier.setOnOperationCompleteCallback(latch::countDown);
 
         // Show the magnifier at the center of the activity.
-        mActivityRule.runOnUiThread(() -> {
-            mMagnifier.show(mLayout.getWidth() / 2, mLayout.getHeight() / 2);
-        });
-        assertTrue(TIME_LIMIT_EXCEEDED, latch.await(1, TimeUnit.SECONDS));
+        showMagnifier(mLayout.getWidth() / 2, mLayout.getHeight() / 2);
 
         // Assert that the magnifier position represents a valid rectangle on screen.
         final Point topLeft = mMagnifier.getPosition();
@@ -233,14 +228,9 @@ public class MagnifierTest {
     public void testWindowPosition_isClampedInsideMainApplicationWindow_topLeft() throws Throwable {
         prepareFourQuadrantsScenario();
 
-        final CountDownLatch latch = new CountDownLatch(1);
-        mMagnifier.setOnOperationCompleteCallback(latch::countDown);
         // Magnify the center of the activity in a magnifier outside bounds.
-        mActivityRule.runOnUiThread(() -> {
-            mMagnifier.show(mLayout.getWidth() / 2, mLayout.getHeight() / 2,
-                    -mMagnifier.getWidth(), -mMagnifier.getHeight());
-        });
-        assertTrue(TIME_LIMIT_EXCEEDED, latch.await(1, TimeUnit.SECONDS));
+        showMagnifier(mLayout.getWidth() / 2, mLayout.getHeight() / 2,
+                -mMagnifier.getWidth(), -mMagnifier.getHeight());
 
         // The window should have been positioned to the top left of the activity,
         // such that it does not overlap system insets.
@@ -256,15 +246,10 @@ public class MagnifierTest {
             throws Throwable {
         prepareFourQuadrantsScenario();
 
-        final CountDownLatch latch = new CountDownLatch(1);
-        mMagnifier.setOnOperationCompleteCallback(latch::countDown);
         // Magnify the center of the activity in a magnifier outside bounds.
-        mActivityRule.runOnUiThread(() -> {
-            mMagnifier.show(mLayout.getWidth() / 2, mLayout.getHeight() / 2,
-                    mLayout.getViewRootImpl().getWidth() + mMagnifier.getWidth(),
-                    mLayout.getViewRootImpl().getHeight() + mMagnifier.getHeight());
-        });
-        assertTrue(TIME_LIMIT_EXCEEDED, latch.await(1, TimeUnit.SECONDS));
+        showMagnifier(mLayout.getWidth() / 2, mLayout.getHeight() / 2,
+                mLayout.getViewRootImpl().getWidth() + mMagnifier.getWidth(),
+                mLayout.getViewRootImpl().getHeight() + mMagnifier.getHeight());
 
         // The window should have been positioned to the bottom right of the activity.
         final Insets systemInsets = mLayout.getRootWindowInsets().getSystemWindowInsets();
@@ -279,6 +264,50 @@ public class MagnifierTest {
     }
 
     @Test
+    public void testWindowPosition_isNotClamped_whenClampingFlagIsOff_topLeft() throws Throwable {
+        prepareFourQuadrantsScenario();
+        mMagnifier = new Magnifier.Builder(mLayout)
+                .setForcePositionWithinWindowSystemInsetsBounds(false)
+                .build();
+
+        // Magnify the center of the activity in a magnifier outside bounds.
+        showMagnifier(mLayout.getWidth() / 2, mLayout.getHeight() / 2,
+                -mMagnifier.getWidth(), -mMagnifier.getHeight());
+
+        // The window should have not been clamped.
+        final Point magnifierCoords = mMagnifier.getPosition();
+        final int[] magnifiedViewPosition = new int[2];
+        mLayout.getLocationInSurface(magnifiedViewPosition);
+        assertEquals(magnifiedViewPosition[0] - 3 * mMagnifier.getWidth() / 2, magnifierCoords.x);
+        assertEquals(magnifiedViewPosition[1] - 3 * mMagnifier.getHeight() / 2, magnifierCoords.y);
+    }
+
+    @Test
+    public void testWindowPosition_isNotClamped_whenClampingFlagIsOff_bottomRight()
+            throws Throwable {
+        prepareFourQuadrantsScenario();
+        mMagnifier = new Magnifier.Builder(mLayout)
+                .setForcePositionWithinWindowSystemInsetsBounds(false)
+                .build();
+
+        // Magnify the center of the activity in a magnifier outside bounds.
+        showMagnifier(mLayout.getWidth() / 2, mLayout.getHeight() / 2,
+                mLayout.getViewRootImpl().getWidth() + mMagnifier.getWidth(),
+                mLayout.getViewRootImpl().getHeight() + mMagnifier.getHeight());
+
+        // The window should have not been clamped.
+        final Point magnifierCoords = mMagnifier.getPosition();
+        final int[] magnifiedViewPosition = new int[2];
+        mLayout.getLocationInSurface(magnifiedViewPosition);
+        assertEquals(magnifiedViewPosition[0] + mLayout.getViewRootImpl().getWidth()
+                        + mMagnifier.getWidth() / 2,
+                magnifierCoords.x);
+        assertEquals(magnifiedViewPosition[1] + mLayout.getViewRootImpl().getHeight()
+                        + mMagnifier.getHeight() / 2,
+                magnifierCoords.y);
+    }
+
+    @Test
     public void testWindowPosition_isCorrect_whenADefaultContentToMagnifierOffsetIsUsed()
             throws Throwable {
         prepareFourQuadrantsScenario();
@@ -289,13 +318,8 @@ public class MagnifierTest {
                 .setDefaultSourceToMagnifierOffset(horizontalOffset, verticalOffset)
                 .build();
 
-        final CountDownLatch latch = new CountDownLatch(1);
-        mMagnifier.setOnOperationCompleteCallback(latch::countDown);
         // Magnify the center of the activity in a magnifier outside bounds.
-        mActivityRule.runOnUiThread(() -> {
-            mMagnifier.show(mLayout.getWidth() / 2, mLayout.getHeight() / 2);
-        });
-        assertTrue(TIME_LIMIT_EXCEEDED, latch.await(1, TimeUnit.SECONDS));
+        showMagnifier(mLayout.getWidth() / 2, mLayout.getHeight() / 2);
 
         final Point magnifierCoords = mMagnifier.getPosition();
         final Point sourceCoords = mMagnifier.getSourcePosition();
@@ -344,12 +368,7 @@ public class MagnifierTest {
         prepareFourQuadrantsScenario();
 
         // Show the magnifier at the center of the activity.
-        final CountDownLatch latchForShow = new CountDownLatch(1);
-        mMagnifier.setOnOperationCompleteCallback(latchForShow::countDown);
-        mActivityRule.runOnUiThread(() -> {
-            mMagnifier.show(mLayout.getWidth() / 2, mLayout.getHeight() / 2);
-        });
-        assertTrue(TIME_LIMIT_EXCEEDED, latchForShow.await(1, TimeUnit.SECONDS));
+        showMagnifier(mLayout.getWidth() / 2, mLayout.getHeight() / 2);
 
         final Bitmap initialBitmap = mMagnifier.getContent()
                 .copy(mMagnifier.getContent().getConfig(), true);
@@ -363,10 +382,7 @@ public class MagnifierTest {
         });
 
         // Update the magnifier.
-        final CountDownLatch latchForUpdate = new CountDownLatch(1);
-        mMagnifier.setOnOperationCompleteCallback(latchForUpdate::countDown);
-        mActivityRule.runOnUiThread(mMagnifier::update);
-        assertTrue(TIME_LIMIT_EXCEEDED, latchForUpdate.await(1, TimeUnit.SECONDS));
+        runAndWaitForMagnifierOperationComplete(mMagnifier::update);
 
         final Bitmap newBitmap = mMagnifier.getContent();
         assertFourQuadrants(newBitmap);
@@ -407,6 +423,9 @@ public class MagnifierTest {
             final float dialogCornerRadius = ta.getDimension(0, 0);
             ta.recycle();
             assertEquals(dialogCornerRadius, magnifier.getCornerRadius(), 0.01f);
+            final boolean forcePositionWithinBounds = true;
+            assertEquals(forcePositionWithinBounds,
+                    magnifier.isForcePositionWithinWindowSystemInsetsBounds());
         }
     }
 
@@ -420,6 +439,7 @@ public class MagnifierTest {
         final int sourceToMagnifierVerticalOffset = -100;
         final float cornerRadius = 20.0f;
         final float elevation = 15.0f;
+        final boolean forcePositionWithinBounds = false;
 
         final Magnifier.Builder builder = new Magnifier.Builder(view)
                 .setSize(magnifierWidth, magnifierHeight)
@@ -428,7 +448,8 @@ public class MagnifierTest {
                         sourceToMagnifierVerticalOffset)
                 .setCornerRadius(cornerRadius)
                 .setZoom(zoom)
-                .setElevation(elevation);
+                .setElevation(elevation)
+                .setForcePositionWithinWindowSystemInsetsBounds(forcePositionWithinBounds);
         final Magnifier magnifier = builder.build();
 
         assertEquals(magnifierWidth, magnifier.getWidth());
@@ -442,6 +463,8 @@ public class MagnifierTest {
                 magnifier.getDefaultVerticalSourceToMagnifierOffset());
         assertEquals(cornerRadius, magnifier.getCornerRadius(), 0f);
         assertEquals(elevation, magnifier.getElevation(), 0f);
+        assertEquals(forcePositionWithinBounds,
+                magnifier.isForcePositionWithinWindowSystemInsetsBounds());
     }
 
     @Test(expected = NullPointerException.class)
@@ -504,12 +527,7 @@ public class MagnifierTest {
         assertEquals((int) (height / newZoom), mMagnifier.getSourceHeight());
 
         // Show.
-        final CountDownLatch latch = new CountDownLatch(1);
-        mMagnifier.setOnOperationCompleteCallback(latch::countDown);
-        mActivityRule.runOnUiThread(() -> {
-            mMagnifier.show(200, 200);
-        });
-        assertTrue(TIME_LIMIT_EXCEEDED, latch.await(1, TimeUnit.SECONDS));
+        showMagnifier(200, 200);
 
         // Check bitmap size.
         assertNotNull(mMagnifier.getOriginalContent());
@@ -527,6 +545,23 @@ public class MagnifierTest {
     public void testZoomChange_throwsException_whenZoomIsNegative() {
         final View view = new View(mActivity);
         new Magnifier(view).setZoom(-1f);
+    }
+
+    private void showMagnifier(float sourceX, float sourceY) throws Throwable {
+        runAndWaitForMagnifierOperationComplete(() -> mMagnifier.show(sourceX, sourceY));
+    }
+
+    private void showMagnifier(float sourceX, float sourceY, float magnifierX, float magnifierY)
+            throws Throwable {
+        runAndWaitForMagnifierOperationComplete(() -> mMagnifier.show(sourceX, sourceY,
+                magnifierX, magnifierY));
+    }
+
+    private void runAndWaitForMagnifierOperationComplete(Runnable lambda) throws Throwable {
+        final CountDownLatch latch = new CountDownLatch(1);
+        mMagnifier.setOnOperationCompleteCallback(latch::countDown);
+        mActivityRule.runOnUiThread(lambda);
+        assertTrue(TIME_LIMIT_EXCEEDED, latch.await(1, TimeUnit.SECONDS));
     }
 
     /**
