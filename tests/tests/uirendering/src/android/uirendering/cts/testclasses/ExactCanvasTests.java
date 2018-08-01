@@ -253,4 +253,23 @@ public class ExactCanvasTests extends ActivityTestBase {
                 .runWithVerifier(new RectVerifier(Color.WHITE, Color.BLACK,
                         new Rect(20, 20, 70, 70)));
     }
+
+    @Test
+    public void testBlackTriangleVertices() {
+        createTest()
+                .addCanvasClient((canvas, width, height) -> {
+                    float[] vertices = new float[6];
+                    vertices[0] = width / 2.0f;
+                    vertices[1] = 0;
+                    vertices[2] = width;
+                    vertices[3] = height;
+                    vertices[4] = 0;
+                    vertices[5] = height;
+                    int[] colors = new int[] { Color.BLACK, Color.BLACK, Color.BLACK };
+                    canvas.drawVertices(Canvas.VertexMode.TRIANGLES, vertices.length, vertices, 0,
+                            null, 0, colors, 0, null, 0, 0,
+                            new Paint());
+                })
+                .runWithComparer(mExactComparer);
+    }
 }
