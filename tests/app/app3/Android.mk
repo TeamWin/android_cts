@@ -41,14 +41,16 @@ LOCAL_STATIC_JAVA_LIBRARIES := \
 LOCAL_SRC_FILES := $(call all-java-files-under, src) \
               src/android/app/stubs/ISecondary.aidl
 
-# Disable for now due to the ../app in the LOCAL_PATH confusing AAPT2
-LOCAL_USE_AAPT2 := false
-
 # Tag this module as a cts test artifact
 LOCAL_COMPATIBILITY_SUITE := cts vts general-tests
 
 LOCAL_PACKAGE_NAME := CtsAppTestStubsApp3
 LOCAL_PRIVATE_PLATFORM_APIS := true
 LOCAL_AAPT_FLAGS += --rename-manifest-package com.android.app3
+
+# Disable AAPT2 manifest checks to fix:
+# cts/tests/app/app/AndroidManifest.xml:25: error: unexpected element <meta-data> found in <manifest><permission>.
+# TODO(b/79755007): Remove when AAPT2 recognizes the manifest elements.
+LOCAL_AAPT_FLAGS += --warn-manifest-validation
 
 include $(BUILD_CTS_SUPPORT_PACKAGE)
