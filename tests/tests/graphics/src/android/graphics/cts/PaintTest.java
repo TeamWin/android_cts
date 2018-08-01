@@ -51,6 +51,8 @@ import org.junit.runner.RunWith;
 
 import java.util.Locale;
 
+import com.android.compatibility.common.util.CddTest;
+
 @SmallTest
 @RunWith(AndroidJUnit4.class)
 public class PaintTest {
@@ -1226,6 +1228,7 @@ public class PaintTest {
         new Paint().getTextPath("HIJKLMN", 3, 9, 0, 0, new Path());
     }
 
+    @CddTest(requirement="3.8.13/C-1-2")
     @Test
     public void testHasGlyph() {
         Paint p = new Paint();
