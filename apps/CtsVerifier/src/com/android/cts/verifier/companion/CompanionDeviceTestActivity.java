@@ -31,10 +31,13 @@ import com.android.cts.verifier.R;
 
 import java.util.List;
 
+import com.android.compatibility.common.util.CddTest;
+
 
 /**
  * Test that checks that the {@link CompanionDeviceManager} API is functional
  */
+@CddTest(requirement="3.16/C-1-2,C-1-3,H-1-1")
 public class CompanionDeviceTestActivity extends PassFailButtons.Activity {
 
     private static final String LOG_TAG = "CompanionDeviceTestActi";
