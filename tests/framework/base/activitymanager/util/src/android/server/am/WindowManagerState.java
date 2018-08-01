@@ -807,8 +807,8 @@ public class WindowManagerState {
                 mContainingFrame = extract(windowFramesProto.containingFrame);
                 mParentFrame = extract(windowFramesProto.parentFrame);
                 mContentFrame = extract(windowFramesProto.contentFrame);
+                mContentInsets = extract(windowFramesProto.contentInsets);
             }
-            mContentInsets = extract(proto.contentInsets);
             mSurfaceInsets = extract(proto.surfaceInsets);
             if (mName.startsWith(STARTING_WINDOW_PREFIX)) {
                 mWindowType = WINDOW_TYPE_STARTING;
