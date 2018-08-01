@@ -976,6 +976,23 @@ public class ExtendedCameraCharacteristicsTest extends AndroidTestCase {
                 mCollector.expectTrue(
                         "All necessary depth fields defined, but DEPTH_OUTPUT capability is not listed",
                         !hasFields);
+
+                boolean reportCalibration = poseTranslation != null || 
+                        poseRotation != null || cameraIntrinsics !=null;                        
+                // Verify calibration keys are co-existing
+                if (reportCalibration) {
+                    mCollector.expectTrue(
+                            "Calibration keys must be co-existing",
+                            poseTranslation != null && poseRotation != null && 
+                            cameraIntrinsics !=null);
+                }
+
+                boolean reportDistortion = distortion != null;
+                if (reportDistortion) {
+                    mCollector.expectTrue(
+                            "Calibration keys must present where distortion is reported",
+                            reportCalibration);                    
+                }
             }
             counter++;
         }
