@@ -41,6 +41,6 @@ class ReviewPermissionsTest {
         instrumentation.targetContext.startActivity(startAutoClosingActivity)
 
         UiDevice.getInstance(instrumentation).wait(Until.findObject(
-                By.res("com.android.packageinstaller:id/continue_button")), UI_TIMEOUT).click()
+                By.res("com.android.permissioncontroller:id/continue_button")), UI_TIMEOUT).click()
     }
 }
