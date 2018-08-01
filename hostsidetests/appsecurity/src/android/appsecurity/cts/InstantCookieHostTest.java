@@ -34,9 +34,6 @@ public class InstantCookieHostTest extends DeviceTestCase implements IBuildRecei
     private static final String INSTANT_COOKIE_APP_APK_2 = "CtsInstantCookieApp2.apk";
     private static final String INSTANT_COOKIE_APP_PKG_2 = "test.instant.cookie";
 
-    // Wait time in msec to make sure the cookie is stored on disk.
-    private static final int WAIT_COOKIE_STORED = 1000;
-
     private CompatibilityBuildHelper mBuildHelper;
 
     @Override
@@ -71,7 +68,6 @@ public class InstantCookieHostTest extends DeviceTestCase implements IBuildRecei
                 "testCookiePersistedAcrossInstantInstalls1");
         uninstallPackage(INSTANT_COOKIE_APP_PKG);
         assertNull(installPackage(INSTANT_COOKIE_APP_APK, false, true));
-        Thread.sleep(WAIT_COOKIE_STORED);
         runDeviceTests(INSTANT_COOKIE_APP_PKG, "test.instant.cookie.CookieTest",
                 "testCookiePersistedAcrossInstantInstalls2");
     }
@@ -81,7 +77,6 @@ public class InstantCookieHostTest extends DeviceTestCase implements IBuildRecei
         runDeviceTests(INSTANT_COOKIE_APP_PKG, "test.instant.cookie.CookieTest",
                 "testCookiePersistedUpgradeFromInstant1");
         assertNull(installPackage(INSTANT_COOKIE_APP_APK, true, false));
-        Thread.sleep(WAIT_COOKIE_STORED);
         runDeviceTests(INSTANT_COOKIE_APP_PKG, "test.instant.cookie.CookieTest",
                 "testCookiePersistedUpgradeFromInstant2");
     }
@@ -92,7 +87,6 @@ public class InstantCookieHostTest extends DeviceTestCase implements IBuildRecei
                 "testCookieResetOnNonInstantReinstall1");
         uninstallPackage(INSTANT_COOKIE_APP_PKG);
         assertNull(installPackage(INSTANT_COOKIE_APP_APK, true, false));
-        Thread.sleep(WAIT_COOKIE_STORED);
         runDeviceTests(INSTANT_COOKIE_APP_PKG, "test.instant.cookie.CookieTest",
                 "testCookieResetOnNonInstantReinstall2");
     }
@@ -103,7 +97,6 @@ public class InstantCookieHostTest extends DeviceTestCase implements IBuildRecei
                 "testCookiePersistedAcrossInstantInstalls1");
         uninstallPackage(INSTANT_COOKIE_APP_PKG);
         assertNull(installPackage(INSTANT_COOKIE_APP_APK_2, true, true));
-        Thread.sleep(WAIT_COOKIE_STORED);
         runDeviceTests(INSTANT_COOKIE_APP_PKG_2, "test.instant.cookie.CookieTest",
                 "testCookiePersistedAcrossInstantInstalls2");
     }
