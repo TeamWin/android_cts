@@ -48,6 +48,7 @@ import android.support.test.uiautomator.UiDevice;
 import android.support.test.uiautomator.UiObject2;
 import android.support.test.uiautomator.Until;
 import android.util.Log;
+import android.view.KeyEvent;
 
 import org.junit.After;
 import org.junit.Before;
@@ -71,6 +72,7 @@ public class CtsSyncAccountAccessOtherCertTestCases {
     private static final Pattern PERMISSION_REQUESTED = Pattern.compile(
             "Permission Requested|Permission requested");
     private static final Pattern ALLOW_SYNC = Pattern.compile("ALLOW|Allow");
+    private static final String OPEN_NOTIFICATION_WATCH = "Open";
 
     @Rule
     public final TestRule mFlakyTestRule = new FlakyTestRule(3);
@@ -113,6 +115,12 @@ public class CtsSyncAccountAccessOtherCertTestCases {
             if (isWatch()) {
                 UiObject2 notification = findPermissionNotificationInStream(uiDevice);
                 notification.click();
+                UiObject2 openButton = uiDevice.wait(
+                        Until.findObject(By.text(OPEN_NOTIFICATION_WATCH)), UI_TIMEOUT_MILLIS);
+                if (openButton != null) {
+                    // older sysui may not have the "open" button
+                    openButton.click();
+                }
             } else {
                 uiDevice.openNotification();
                 try {
