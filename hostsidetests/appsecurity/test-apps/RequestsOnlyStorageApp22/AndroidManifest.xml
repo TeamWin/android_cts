@@ -16,15 +16,21 @@
   -->
 
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
-        package="com.android.cts.reviewpermissionhelper">
+        package="com.android.cts.usepermission">
+
+    <uses-sdk android:minSdkVersion="22" android:targetSdkVersion="22" />
+
+    <!-- Storage -->
+    <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE"/>
 
     <application>
-        <activity android:name=".ActivityStarter" />
         <uses-library android:name="android.test.runner" />
+        <activity android:name=".BasePermissionActivity" />
+        <activity android:name=".AutoClosingActivity" android:exported="true" />
     </application>
 
     <instrumentation
-            android:name="android.support.test.runner.AndroidJUnitRunner"
-            android:targetPackage="com.android.cts.reviewpermissionhelper" />
+        android:name="android.support.test.runner.AndroidJUnitRunner"
+        android:targetPackage="com.android.cts.usepermission" />
 
 </manifest>

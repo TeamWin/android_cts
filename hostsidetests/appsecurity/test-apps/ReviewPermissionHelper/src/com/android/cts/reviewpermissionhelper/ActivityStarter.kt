@@ -14,17 +14,23 @@
  * limitations under the License.
  */
 
-package com.android.cts.usepermission;
+package com.android.cts.reviewpermissionhelper
 
-import android.app.Activity;
-import android.os.Bundle;
+import android.app.Activity
+import android.content.Intent
+import android.os.Bundle
+import java.util.concurrent.LinkedBlockingQueue
 
-public class AutoClosingActivity extends Activity {
-    @Override
-    protected void onCreate(Bundle savedInstanceState) {
-        super.onCreate(savedInstanceState);
+val installDialogResults = LinkedBlockingQueue<Int>()
 
-        setResult(RESULT_OK);
-        finish();
+class ActivityStarter : Activity() {
+    override fun onCreate(savedInstanceState: Bundle?) {
+        super.onCreate(savedInstanceState)
+
+        savedInstanceState ?: installDialogResults.clear()
+    }
+
+    override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
+        installDialogResults.offer(resultCode)
     }
 }
