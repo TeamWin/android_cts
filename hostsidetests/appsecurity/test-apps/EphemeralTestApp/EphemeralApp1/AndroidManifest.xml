@@ -18,7 +18,7 @@
     package="com.android.cts.ephemeralapp1"
     android:targetSandboxVersion="2">
     <uses-sdk
-        android:minSdkVersion="25" />
+        android:minSdkVersion="24" android:targetSdkVersion="26" />
 
     <uses-permission android:name="com.android.alarm.permission.SET_ALARM" />
     <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION"/>
