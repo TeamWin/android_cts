@@ -47,9 +47,14 @@ LOCAL_STATIC_JAVA_LIBRARIES := \
 LOCAL_STATIC_ANDROID_LIBRARIES := \
     androidx.legacy_legacy-support-v4
 
-LOCAL_MIN_SDK_VERSION := 20
+LOCAL_MIN_SDK_VERSION := 21
 
 # tag this module as a cts test artifact
 LOCAL_COMPATIBILITY_SUITE := arcts cts vts general-tests
+
+# Code coverage puts us over the dex limit, so enable multi-dex for coverage-enabled builds
+ifeq (true,$(EMMA_INSTRUMENT))
+LOCAL_DX_FLAGS := --multi-dex
+endif # EMMA_INSTRUMENT
 
 include $(BUILD_CTS_PACKAGE)
