@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2016 The Android Open Source Project
+ * Copyright (C) 2018 The Android Open Source Project
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,7 +16,7 @@
 
 package android.wifibroadcasts.cts;
 
-import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
 
 import com.android.tradefed.device.ITestDevice;
@@ -31,9 +31,10 @@ import java.util.Scanner;
 /**
  * Test to check the APK logs to Logcat.
  *
- * When this test builds, it also builds {@link android.wifibroadcasts.app.WifiBroadcastsDeviceActivity} into an
- * APK which it then installed at runtime and started. The activity simply prints a message to
- * Logcat and then gets uninstalled.
+ * When this test builds, it also builds
+ * {@link android.wifibroadcasts.app.WifiBroadcastsDeviceActivity} into an
+ * APK which is then installed at runtime and started. That activity prints a message to
+ * Logcat if an unexpected broadcast is received.
  *
  * Instead of extending DeviceTestCase, this JUnit4 test extends IDeviceTest and is run with
  * tradefed's DeviceJUnit4ClassRunner
@@ -63,9 +64,9 @@ public class WifiBroadcastsHostJUnit4Test implements IDeviceTest {
     private static final String CLEAR_COMMAND = String.format("pm clear %s", PACKAGE);
 
     /**
-     * The test string to look for.
+     * The prohibited string to look for.
      */
-    private static final String TEST_STRING = "WifiBroadcastsTestString";
+    private static final String PROHIBITED_STRING = "UNEXPECTED WIFI BROADCAST RECEIVED";
 
     private ITestDevice mDevice;
 
@@ -90,23 +91,28 @@ public class WifiBroadcastsHostJUnit4Test implements IDeviceTest {
         assertNotNull("Device not set", device);
         // Clear activity
         device.executeShellCommand(CLEAR_COMMAND);
+        // No mobile data or wifi to start with
+        device.executeShellCommand("svc data disable; svc wifi disable");
         // Clear logcat.
         device.executeAdbCommand("logcat", "-c");
         // Start the APK and wait for it to complete.
         device.executeShellCommand(START_COMMAND);
+        // Bring up wifi for a while
+        device.executeShellCommand("svc wifi enable; sleep 10; svc wifi disable");
         // Dump logcat.
         String logs = device.executeAdbCommand("logcat", "-v", "brief", "-d", CLASS + ":I", "*:S");
-        // Search for string.
-        String testString = "";
+        // Search for prohibited string.
         Scanner in = new Scanner(logs);
-        while (in.hasNextLine()) {
-            String line = in.nextLine();
-            if(line.startsWith("I/"+CLASS)) {
-                testString = line.split(":")[1].trim();
+        try {
+            while (in.hasNextLine()) {
+                String line = in.nextLine();
+                if (line.startsWith("I/" + CLASS)) {
+                    String payload = line.split(":")[1].trim();
+                    assertFalse(payload, payload.contains(PROHIBITED_STRING));
+                }
             }
+        } finally {
+            in.close();
         }
-        in.close();
-        // Assert the logged string matches the test string.
-        assertEquals("Incorrect test string", TEST_STRING, testString);
     }
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2014 The Android Open Source Project
+ * Copyright (C) 2018 The Android Open Source Project
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,28 +17,44 @@
 package android.wifibroadcasts.app;
 
 import android.app.Activity;
+import android.content.BroadcastReceiver;
+import android.content.Context;
+import android.content.Intent;
+import android.content.IntentFilter;
+import android.net.wifi.WifiManager;
 import android.os.Bundle;
 import android.util.Log;
-
-import java.lang.Override;
+import android.widget.Toast;
 
 /**
- * A simple activity which logs to Logcat.
+ * Logs to Logcat when unexpected broadcasts are received
  */
 public class WifiBroadcastsDeviceActivity extends Activity {
 
     private static final String TAG = WifiBroadcastsDeviceActivity.class.getSimpleName();
 
-    /**
-     * The test string to log.
-     */
-    private static final String TEST_STRING = "WifiBroadcastsTestString";
+    private final Context mContext = this;
+
+    private final BroadcastReceiver mReceiver = new BroadcastReceiver() {
+        @Override
+        public void onReceive(Context context, Intent intent) {
+            String action = intent.getAction();
+            Toast.makeText(mContext, action, Toast.LENGTH_SHORT).show();
+            if (WifiManager.RSSI_CHANGED_ACTION.equals(action)) {
+                Log.i(TAG, "UNEXPECTED WIFI BROADCAST RECEIVED - " + action);
+            }
+        }
+    };
 
     @Override
     public void onCreate(Bundle icicle) {
         super.onCreate(icicle);
-        // Log the test string to Logcat.
-        Log.i(TAG, TEST_STRING);
+        final IntentFilter filter = new IntentFilter();
+        String action = WifiManager.RSSI_CHANGED_ACTION;
+        filter.addAction(action);
+        mContext.registerReceiver(mReceiver, filter);
+        Log.i(TAG, "Registered " + action);
+        Toast.makeText(mContext, "Started", Toast.LENGTH_SHORT).show();
     }
 
 }
