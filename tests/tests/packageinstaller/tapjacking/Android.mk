@@ -1,4 +1,4 @@
-# Copyright (C) 2017 Google Inc.
+# Copyright (C) 2018 The Android Open Source Project
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -20,14 +20,13 @@ LOCAL_MODULE_TAGS := tests
 
 LOCAL_MODULE_PATH := $(TARGET_OUT_DATA_APPS)
 
-LOCAL_PACKAGE_NAME := GtsPackageInstallerTapjackingTestCases
+LOCAL_PACKAGE_NAME := CtsPackageInstallerTapjackingTestCases
 
 LOCAL_STATIC_JAVA_LIBRARIES := \
     ub-uiautomator \
     android-support-test \
     compatibility-device-util \
-    xts-device-util \
-
+    platform-test-annotations \
 
 LOCAL_RESOURCE_DIR := $(LOCAL_PATH)/res
 
@@ -35,9 +34,7 @@ LOCAL_SRC_FILES := $(call all-java-files-under, src)
 
 LOCAL_SDK_VERSION := current
 
-LOCAL_MIN_SDK_VERSION := 4
+# Tag this module as test artifact for cts
+LOCAL_COMPATIBILITY_SUITE := cts vts general-tests
 
-# Tag this module as test artifact for gts, ats
-LOCAL_COMPATIBILITY_SUITE := gts ats
-
-include $(BUILD_XTS_PACKAGE)
+include $(BUILD_CTS_PACKAGE)

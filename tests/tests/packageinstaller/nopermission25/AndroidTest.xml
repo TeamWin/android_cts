@@ -15,27 +15,27 @@
   limitations under the License.
   -->
 
-<configuration description="Config for GTS External Sources negative test cases">
-    <option name="test-suite-tag" value="gts" />
+<configuration description="Config for CTS External Sources negative test cases">
+    <option name="test-suite-tag" value="cts" />
     <option name="config-descriptor:metadata" key="component" value="package-installer" />
 
     <target_preparer class="com.android.tradefed.targetprep.RunCommandTargetPreparer">
-        <option name="run-command" value="mkdir -p /data/local/tmp/gts/nopermission" />
-        <option name="teardown-command" value="rm -rf /data/local/tmp/gts"/>
+        <option name="run-command" value="mkdir -p /data/local/tmp/cts/nopermission" />
+        <option name="teardown-command" value="rm -rf /data/local/tmp/cts"/>
     </target_preparer>
 
     <target_preparer class="com.android.compatibility.common.tradefed.targetprep.FilePusher">
         <option name="cleanup" value="true" />
-        <option name="push" value="GtsEmptyTestApp.apk->/data/local/tmp/gts/nopermission/GtsEmptyTestApp.apk" />
+        <option name="push" value="CtsEmptyTestApp.apk->/data/local/tmp/cts/nopermission/CtsEmptyTestApp.apk" />
     </target_preparer>
 
     <target_preparer class="com.android.tradefed.targetprep.suite.SuiteApkInstaller">
         <option name="cleanup-apks" value="true" />
-        <option name="test-file-name" value="GtsNoPermissionTestCases25.apk" />
+        <option name="test-file-name" value="CtsNoPermissionTestCases25.apk" />
     </target_preparer>
 
     <test class="com.android.tradefed.testtype.AndroidJUnitTest" >
-        <option name="package" value="com.google.android.packageinstaller.nopermission.gts" />
+        <option name="package" value="android.packageinstaller.nopermission.cts" />
         <option name="runtime-hint" value="1m" />
     </test>
 

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017 Google Inc.
+ * Copyright (C) 2018 The Android Open Source Project
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,12 +13,14 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.google.android.packageinstaller.install.gts
+package android.packageinstaller.install.cts
 
 import android.app.AppOpsManager.MODE_ALLOWED
+import android.app.AppOpsManager.MODE_DEFAULT
 import android.app.AppOpsManager.MODE_ERRORED
 import android.content.Intent
-import android.os.Build
+import android.platform.test.annotations.AppModeFull
+import android.provider.Settings
 import android.support.test.InstrumentationRegistry
 import android.support.test.filters.MediumTest
 import android.support.test.runner.AndroidJUnit4
@@ -27,36 +29,29 @@ import android.support.test.uiautomator.BySelector
 import android.support.test.uiautomator.UiDevice
 import android.support.test.uiautomator.Until
 import androidx.core.content.FileProvider
-import com.android.compatibility.common.util.ApiLevelUtil
 import com.android.compatibility.common.util.AppOpsUtils
+import org.junit.After
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNotNull
 import org.junit.Assert.assertTrue
-import org.junit.Assume.assumeTrue
 import org.junit.Before
 import org.junit.Test
 import org.junit.runner.RunWith
 import java.io.File
 
-private const val CONTENT_AUTHORITY = "com.google.android.packageinstaller.install.gts.fileprovider"
+private const val CONTENT_AUTHORITY = "android.packageinstaller.install.cts.fileprovider"
 private const val INSTALL_CONFIRM_TEXT_ID = "install_confirm_question"
 private const val ALERT_DIALOG_TITLE_ID = "android:id/alertTitle"
 
 @RunWith(AndroidJUnit4::class)
 @MediumTest
+@AppModeFull
 class ExternalSourcesTest : PackageInstallerTestBase() {
-    private val isAtLeastP = ApiLevelUtil.isAtLeast(Build.VERSION_CODES.P)
-
     private val context = InstrumentationRegistry.getTargetContext()
     private val pm = context.packageManager
     private val packageName = context.packageName
     private val apkFile = File(context.filesDir, TEST_APK_NAME)
     private val uiDevice = UiDevice.getInstance(InstrumentationRegistry.getInstrumentation())
-
-    @Before
-    fun onlyRunOnO() {
-        assumeTrue(ApiLevelUtil.isAtLeast(Build.VERSION_CODES.O))
-    }
 
     @Before
     fun copyTestApk() {
@@ -97,10 +92,8 @@ class ExternalSourcesTest : PackageInstallerTestBase() {
         startInstallation()
         assertInstallBlocked("Install blocking dialog not shown when app op set to errored")
 
-        if (isAtLeastP) {
-            assertTrue("Operation not logged", AppOpsUtils.rejectedOperationLogged(packageName,
-                    APP_OP_STR))
-        }
+        assertTrue("Operation not logged", AppOpsUtils.rejectedOperationLogged(packageName,
+                APP_OP_STR))
     }
 
     @Test
@@ -121,10 +114,8 @@ class ExternalSourcesTest : PackageInstallerTestBase() {
         startInstallation()
         assertInstallAllowed("Install confirmation not shown when app op set to allowed")
 
-        if (isAtLeastP) {
-            assertTrue("Operation not logged", AppOpsUtils.allowedOperationLogged(packageName,
-                    APP_OP_STR))
-        }
+        assertTrue("Operation not logged", AppOpsUtils.allowedOperationLogged(packageName,
+                APP_OP_STR))
     }
 
     @Test
@@ -144,10 +135,8 @@ class ExternalSourcesTest : PackageInstallerTestBase() {
         startInstallation()
         assertInstallBlocked("Install blocking dialog not shown when app op set to default")
 
-        if (isAtLeastP) {
-            assertTrue("Operation not logged", AppOpsUtils.rejectedOperationLogged(packageName,
-                    APP_OP_STR))
-        }
+        assertTrue("Operation not logged", AppOpsUtils.rejectedOperationLogged(packageName,
+                APP_OP_STR))
     }
 
     @Test
@@ -158,5 +147,38 @@ class ExternalSourcesTest : PackageInstallerTestBase() {
     @Test
     fun defaultSourceTestViaSession() {
         defaultSourceTest { startInstallationViaSession() }
+    }
+
+    @Test
+    fun blockedSourceTest() {
+        setAppOpsMode(MODE_ERRORED)
+        assertFalse("Package $packageName allowed to install packages after setting app op to "
+                + "errored", pm.canRequestPackageInstalls())
+    }
+
+    @Test
+    fun allowedSourceTest() {
+        setAppOpsMode(MODE_ALLOWED)
+        assertTrue("Package $packageName blocked from installing packages after setting app op to "
+                + "allowed", pm.canRequestPackageInstalls())
+    }
+
+    @Test
+    fun defaultSourceTest() {
+        setAppOpsMode(MODE_DEFAULT)
+        assertFalse("Package $packageName with default app ops state allowed to install packages",
+                pm.canRequestPackageInstalls())
+    }
+
+    @Test
+    fun testManageUnknownSourcesExists() {
+        val manageUnknownSources = Intent(Settings.ACTION_MANAGE_UNKNOWN_APP_SOURCES)
+        assertNotNull("No activity found for ${manageUnknownSources.action}",
+                pm.resolveActivity(manageUnknownSources, 0))
+    }
+
+    @After
+    fun resetAppOpsMode() {
+        setAppOpsMode(MODE_DEFAULT)
     }
 }

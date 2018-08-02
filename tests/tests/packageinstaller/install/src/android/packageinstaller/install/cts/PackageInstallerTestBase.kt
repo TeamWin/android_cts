@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018 Google Inc.
+ * Copyright (C) 2018 The Android Open Source Project
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package com.google.android.packageinstaller.install.gts
+package android.packageinstaller.install.cts
 
 import android.app.PendingIntent
 import android.app.PendingIntent.FLAG_UPDATE_CURRENT
@@ -35,10 +35,8 @@ import android.support.test.InstrumentationRegistry
 import android.support.test.rule.ActivityTestRule
 import android.support.test.uiautomator.UiDevice
 import com.android.compatibility.common.util.AppOpsUtils
-import com.android.xts.common.util.GmsUtil
 import org.junit.After
 import org.junit.Assert
-import org.junit.Assume
 import org.junit.Before
 import org.junit.Rule
 import java.io.File
@@ -46,9 +44,9 @@ import java.lang.IllegalArgumentException
 import java.util.concurrent.LinkedBlockingQueue
 import java.util.concurrent.TimeUnit
 
-const val TEST_APK_NAME = "GtsEmptyTestApp.apk"
-const val TEST_APK_PACKAGE_NAME = "com.google.android.packageinstaller.emptytestapp.gts"
-const val TEST_APK_EXTERNAL_LOCATION = "/data/local/tmp/gts/packageinstaller"
+const val TEST_APK_NAME = "CtsEmptyTestApp.apk"
+const val TEST_APK_PACKAGE_NAME = "android.packageinstaller.emptytestapp.cts"
+const val TEST_APK_EXTERNAL_LOCATION = "/data/local/tmp/cts/packageinstaller"
 const val INSTALL_ACTION_CB = "PackageInstallerTestBase.install_cb"
 
 const val PACKAGE_INSTALLER_PACKAGE_NAME = "com.android.packageinstaller"
@@ -80,13 +78,6 @@ open class PackageInstallerTestBase {
 
             installSessionResult.offer(status)
         }
-    }
-
-    @Before
-    fun requireGoogleBuiltPackageInstallerApp() {
-        // hasPlayStore && !isCnGmsBuild mean GMS build with Google built package installer app
-        Assume.assumeTrue(GmsUtil.hasPlayStore())
-        Assume.assumeFalse(GmsUtil.isCnGmsBuild())
     }
 
     @Before

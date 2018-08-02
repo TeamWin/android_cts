@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018 Google Inc.
+ * Copyright (C) 2018 The Android Open Source Project
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.google.android.packageinstaller.install.gts
+package android.packageinstaller.install.cts
 
 import android.app.Activity.RESULT_CANCELED
 import android.app.AppOpsManager.MODE_ALLOWED
@@ -26,19 +26,16 @@ import android.content.pm.PackageInstaller.STATUS_FAILURE_ABORTED
 import android.content.pm.PackageInstaller.STATUS_PENDING_USER_ACTION
 import android.content.pm.PackageInstaller.STATUS_SUCCESS
 import android.content.pm.PackageManager
-import android.os.Build
 import android.support.test.InstrumentationRegistry
 import android.support.test.runner.AndroidJUnit4
 import android.support.test.uiautomator.By
 import android.support.test.uiautomator.UiDevice
 import android.support.test.uiautomator.Until
-import com.android.compatibility.common.util.ApiLevelUtil
 import com.android.compatibility.common.util.AppOpsUtils
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Assert.fail
-import org.junit.Assume.assumeTrue
 import org.junit.Before
 import org.junit.Test
 import org.junit.runner.RunWith
@@ -49,16 +46,9 @@ private const val CANCEL_BUTTON_ID = "cancel_button"
 
 @RunWith(AndroidJUnit4::class)
 class SessionTest : PackageInstallerTestBase() {
-    private val isAtLeastP = ApiLevelUtil.isAtLeast(Build.VERSION_CODES.P)
-
     private val context = InstrumentationRegistry.getTargetContext()
     private val pm = context.packageManager
     private val uiDevice = UiDevice.getInstance(InstrumentationRegistry.getInstrumentation())
-
-    @Before
-    fun onlyRunOnO() {
-        assumeTrue(ApiLevelUtil.isAtLeast(Build.VERSION_CODES.O))
-    }
 
     @Before
     fun allowToInstallPackages() {
@@ -120,9 +110,7 @@ class SessionTest : PackageInstallerTestBase() {
 
         assertNoMoreInstallResults()
 
-        if (isAtLeastP) {
-            assertTrue(AppOpsUtils.allowedOperationLogged(context.packageName, APP_OP_STR))
-        }
+        assertTrue(AppOpsUtils.allowedOperationLogged(context.packageName, APP_OP_STR))
     }
 
     /**

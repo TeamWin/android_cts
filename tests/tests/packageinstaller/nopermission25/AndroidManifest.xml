@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!--
-  Copyright (C) 2018 Google Inc.
+  Copyright (C) 2018 The Android Open Source Project
 
   Licensed under the Apache License, Version 2.0 (the "License");
   you may not use this file except in compliance with the License.
@@ -16,14 +16,14 @@
   -->
 
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
-          package="com.google.android.packageinstaller.nopermission.gts" >
+          package="android.packageinstaller.nopermission.cts" >
 
-    <uses-sdk android:minSdkVersion="4" android:targetSdkVersion="25"/>
+    <uses-sdk android:targetSdkVersion="25"/>
 
     <application>
         <uses-library android:name="android.test.runner" />
 
-        <provider android:authorities="com.google.android.packageinstaller.nopermission.gts.fileprovider"
+        <provider android:authorities="android.packageinstaller.nopermission.cts.fileprovider"
                   android:name="androidx.core.content.FileProvider"
                   android:grantUriPermissions="true">
             <meta-data
@@ -34,6 +34,6 @@
 
     <instrumentation android:name="android.support.test.runner.AndroidJUnitRunner"
                      android:functionalTest="true"
-                     android:targetPackage="com.google.android.packageinstaller.nopermission.gts"
+                     android:targetPackage="android.packageinstaller.nopermission.cts"
                      android:label="Install with no permission Tests (API 25)"/>
 </manifest>

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017 Google Inc.
+ * Copyright (C) 2018 The Android Open Source Project
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.google.android.packageinstaller.nopermission.gts
+package android.packageinstaller.nopermission.cts
 
 import android.app.AppOpsManager.MODE_ALLOWED
 import android.app.PendingIntent
@@ -25,6 +25,7 @@ import android.content.pm.PackageInstaller
 import android.content.pm.PackageInstaller.EXTRA_STATUS
 import android.content.pm.PackageInstaller.STATUS_FAILURE_INVALID
 import android.os.Build
+import android.platform.test.annotations.AppModeFull
 import android.support.test.InstrumentationRegistry
 import android.support.test.filters.MediumTest
 import android.support.test.runner.AndroidJUnit4
@@ -32,25 +33,20 @@ import android.support.test.uiautomator.By
 import android.support.test.uiautomator.UiDevice
 import android.support.test.uiautomator.Until
 import androidx.core.content.FileProvider
-import com.android.compatibility.common.util.ApiLevelUtil
 import com.android.compatibility.common.util.AppOpsUtils
-import com.android.xts.common.util.GmsUtil
 import org.junit.After
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
-import org.junit.Assume.assumeFalse
-import org.junit.Assume.assumeTrue
 import org.junit.Before
 import org.junit.Test
 import org.junit.runner.RunWith
 import java.io.File
 import java.lang.IllegalArgumentException
 
-private const val TEST_APK_NAME = "GtsEmptyTestApp.apk"
-private const val TEST_APK_PACKAGE_NAME = "com.google.android.packageinstaller.emptytestapp.gts"
-private const val TEST_APK_EXTERNAL_LOCATION = "/data/local/tmp/gts/nopermission"
-private const val CONTENT_AUTHORITY =
-        "com.google.android.packageinstaller.nopermission.gts.fileprovider"
+private const val TEST_APK_NAME = "CtsEmptyTestApp.apk"
+private const val TEST_APK_PACKAGE_NAME = "android.packageinstaller.emptytestapp.cts"
+private const val TEST_APK_EXTERNAL_LOCATION = "/data/local/tmp/cts/nopermission"
+private const val CONTENT_AUTHORITY = "android.packageinstaller.nopermission.cts.fileprovider"
 private const val PACKAGE_INSTALLER_PACKAGE_NAME = "com.android.packageinstaller"
 private const val INSTALL_CONFIRM_TEXT_ID = "install_confirm_question"
 private const val WM_DISMISS_KEYGUARD_COMMAND = "wm dismiss-keyguard"
@@ -62,6 +58,7 @@ private const val APP_OP_STR = "REQUEST_INSTALL_PACKAGES"
 
 @RunWith(AndroidJUnit4::class)
 @MediumTest
+@AppModeFull
 class NoPermissionTests {
     private var context = InstrumentationRegistry.getTargetContext()
     private var pm = context.packageManager
@@ -75,21 +72,10 @@ class NoPermissionTests {
 
             if (status == PackageInstaller.STATUS_PENDING_USER_ACTION) {
                 val activityIntent = intent.getParcelableExtra<Intent>(Intent.EXTRA_INTENT)
+                activityIntent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
                 context.startActivity(activityIntent)
             }
         }
-    }
-
-    @Before
-    fun onlyRunOnO() {
-        assumeTrue(ApiLevelUtil.isAtLeast(Build.VERSION_CODES.O))
-    }
-
-    @Before
-    fun requireGoogleBuiltPackageInstallerApp() {
-        // hasPlayStore && !isCnGmsBuild mean GMS build with Google built package installer app
-        assumeTrue(GmsUtil.hasPlayStore())
-        assumeFalse(GmsUtil.isCnGmsBuild())
     }
 
     @Before
@@ -119,7 +105,7 @@ class NoPermissionTests {
     private fun launchPackageInstallerViaIntent() {
         val intent = Intent(Intent.ACTION_INSTALL_PACKAGE)
         intent.data = FileProvider.getUriForFile(context, CONTENT_AUTHORITY, apkFile)
-        intent.flags = Intent.FLAG_GRANT_READ_URI_PERMISSION
+        intent.flags = Intent.FLAG_GRANT_READ_URI_PERMISSION or Intent.FLAG_ACTIVITY_NEW_TASK
         context.startActivity(intent)
     }
 
