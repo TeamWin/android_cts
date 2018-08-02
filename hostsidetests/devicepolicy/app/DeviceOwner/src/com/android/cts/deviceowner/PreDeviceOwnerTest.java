@@ -19,6 +19,8 @@ import android.app.admin.DevicePolicyManager;
 import android.content.Context;
 import android.test.AndroidTestCase;
 
+import com.android.compatibility.common.util.CddTest;
+
 /**
  * The following test can run in DeviceOwner mode or non-DeviceOwner mode.
  * Don't inherit {@link BaseDeviceOwnerTest}
@@ -35,6 +37,7 @@ public class PreDeviceOwnerTest extends AndroidTestCase {
                 mContext.getSystemService(Context.DEVICE_POLICY_SERVICE);
     }
 
+    @CddTest(requirement="3.9.1.1/C-1-6")
     public void testIsProvisioningAllowedFalse() {
         assertFalse(mDevicePolicyManager.isProvisioningAllowed(DevicePolicyManager.ACTION_PROVISION_MANAGED_DEVICE));
     }

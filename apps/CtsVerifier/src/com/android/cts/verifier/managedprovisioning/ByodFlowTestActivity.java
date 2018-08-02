@@ -31,6 +31,8 @@ import android.view.View;
 import android.view.View.OnClickListener;
 import android.widget.Toast;
 
+import com.android.compatibility.common.util.CddTest;
+
 import com.android.cts.verifier.ArrayTestListAdapter;
 import com.android.cts.verifier.DialogTestListActivity;
 import com.android.cts.verifier.R;
@@ -51,6 +53,7 @@ import com.android.cts.verifier.location.LocationListenerActivity;
  * The first two verifications are performed automatically, by interacting with profile owner using
  * cross-profile intents, while the last two are carried out manually by the user.
  */
+@CddTest(requirement="3.9/H-1-1,3.9.1.2/C-1-1,C-1-2,C-1-3,3.9.2/C-1-1,C-1-3,C-1-4,C-1-5,C-1-6,C-1-7,C-1-10")
 public class ByodFlowTestActivity extends DialogTestListActivity {
 
     private static final String TAG = "ByodFlowTestActivity";

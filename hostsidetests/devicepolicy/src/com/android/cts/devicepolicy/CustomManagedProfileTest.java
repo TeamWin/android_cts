@@ -17,6 +17,8 @@ package com.android.cts.devicepolicy;
 
 import com.android.tradefed.device.DeviceNotAvailableException;
 
+import com.android.compatibility.common.util.CddTest;
+
 public class CustomManagedProfileTest extends BaseDevicePolicyTest {
 
     private static final String MANAGED_PROFILE_PKG = "com.android.cts.managedprofile";
@@ -30,6 +32,7 @@ public class CustomManagedProfileTest extends BaseDevicePolicyTest {
         mHasFeature = mHasFeature && hasDeviceFeature("android.software.managed_users");
     }
 
+    @CddTest(requirement="3.9/C-1-3")
     public void testIsProvisioningAllowed() throws Exception {
         final int primaryUserId = getPrimaryUser();
         // Must install the apk since the test runs in the ManagedProfile apk.
