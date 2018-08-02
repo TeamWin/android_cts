@@ -1066,7 +1066,7 @@ public class SELinuxHostTest extends DeviceTestCase implements IBuildReceiver, I
     /* Watchdogd may or may not be there */
     @CddTest(requirement="9.7")
     public void testWatchdogdDomain() throws DeviceNotAvailableException {
-        assertDomainZeroOrOne("u:r:watchdogd:s0", "/sbin/watchdogd");
+        assertDomainZeroOrOne("u:r:watchdogd:s0", "/system/bin/watchdogd");
     }
 
     /* logd may or may not be there */
