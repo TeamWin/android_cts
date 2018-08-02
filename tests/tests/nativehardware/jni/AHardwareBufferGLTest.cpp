@@ -273,6 +273,7 @@ void DrawCheckerboard(int width, int height) {
 enum GoldenColor {
     kZero,  // all zero, i.e., transparent black
     kBlack,  // opaque black
+    kWhite,  // opaque white
     kRed,  // opaque red
     kGreen,  // opaque green
     kBlue,  // opaque blue
@@ -332,6 +333,7 @@ void CheckGoldenPixel(const GoldenPixel& golden, const std::array<uint8_t, 4>& p
         case kGreen: golden_pixel[1] = 255; break;
         case kBlue: golden_pixel[2] = 255; break;
         case kZero: if (FormatHasAlpha(format)) golden_pixel[3] = 0; break;
+        case kWhite: golden_pixel[0] = 255; golden_pixel[1] = 255; golden_pixel[2] = 255; break;
         case kBlack: break;
         default: FAIL() << "Unrecognized golden pixel color";
     }
@@ -367,6 +369,7 @@ void CheckGoldenPixel(const GoldenPixel& golden, const std::array<float, 4>& pix
         case kGreen: golden_pixel[1] = 1.f; break;
         case kBlue: golden_pixel[2] = 1.f; break;
         case kZero: golden_pixel[3] = 0.f; break;
+        case kWhite: golden_pixel[0] = 1.f; golden_pixel[1] = 1.f; golden_pixel[2] = 1.f; break;
         case kBlack: break;
         default: FAIL() << "Unrecognized golden pixel color";
     }
@@ -692,6 +695,7 @@ protected:
     GLuint mTextures[2] = { 0, 0 };
     GLuint mBufferObjects[2] = { 0, 0 };
     GLuint mFramebuffers[2] = { 0, 0 };
+    GLint mMaxTextureUnits = 0;
 };
 
 void AHardwareBufferGLTest::SetUp() {
@@ -758,6 +762,7 @@ void AHardwareBufferGLTest::SetUp() {
     ASSERT_TRUE(dot_pos > 0 && dot_pos < version.size() - 1);
     mGLVersion = (version[dot_pos - 1] - '0') * 10 + (version[dot_pos + 1] - '0');
     ASSERT_GE(mGLVersion, 20);
+    glGetIntegerv(GL_MAX_COMBINED_TEXTURE_IMAGE_UNITS, &mMaxTextureUnits);
 }
 
 bool AHardwareBufferGLTest::SetUpBuffer(const AHardwareBuffer_Desc& desc) {
@@ -785,9 +790,17 @@ bool AHardwareBufferGLTest::SetUpBuffer(const AHardwareBuffer_Desc& desc) {
             mTexTarget = GL_TEXTURE_2D;
         }
     }
-    if (desc.format == GL_SRGB8_ALPHA8 && mGLVersion < 30) {
-        ALOGI("Test skipped: GL_SRGB8_ALPHA8 requires GL ES 3.0, found %d.%d",
-              mGLVersion / 10, mGLVersion % 10);
+    if ((desc.format == GL_RGB8 || desc.format == GL_RGBA8) &&
+        (desc.usage & AHARDWAREBUFFER_USAGE_GPU_COLOR_OUTPUT) &&
+        mGLVersion < 30 && !HasGLExtension("GL_OES_rgb8_rgba8")) {
+        ALOGI("Test skipped: GL_RGB8/GL_RGBA8 renderbuffers require GL ES 3.0 or "
+              "GL_OES_rgb8_rgba8, but neither were found.");
+        return false;
+    }
+    if (desc.format == GL_SRGB8_ALPHA8 && mGLVersion < 30 &&
+        !HasGLExtension("GL_EXT_sRGB")) {
+        ALOGI("Test skipped: GL_SRGB8_ALPHA8 requires GL ES 3.0 or GL_EXT_sRGB, "
+              "but neither were found.");
         return false;
     }
     if (desc.format == GL_RGB10_A2 && mGLVersion < 30) {
@@ -800,6 +813,20 @@ bool AHardwareBufferGLTest::SetUpBuffer(const AHardwareBuffer_Desc& desc) {
               mGLVersion / 10, mGLVersion % 10);
         return false;
     }
+    if (desc.format == GL_DEPTH_COMPONENT16 &&
+        (desc.usage & AHARDWAREBUFFER_USAGE_GPU_SAMPLED_IMAGE) &&
+        mGLVersion < 30 && !HasGLExtension("GL_OES_depth_texture")) {
+        ALOGI("Test skipped: depth textures require GL ES 3.0 or "
+              "GL_OES_depth_texture, but neither were found.");
+        return false;
+    }
+    if (desc.format == GL_DEPTH24_STENCIL8 &&
+        (desc.usage & AHARDWAREBUFFER_USAGE_GPU_SAMPLED_IMAGE) &&
+        mGLVersion < 30 && !HasGLExtension("GL_OES_packed_depth_stencil")) {
+        ALOGI("Test skipped: depth-stencil textures require GL ES 3.0 or "
+              "GL_OES_packed_depth_stencil, but neither were found.");
+        return false;
+    }
     // For control cases using GL formats, the test should be run in a single
     // context, without using AHardwareBuffer. This simplifies verifying that
     // the test behaves as expected even if the AHardwareBuffer format under
@@ -808,6 +835,8 @@ bool AHardwareBufferGLTest::SetUpBuffer(const AHardwareBuffer_Desc& desc) {
         mContextCount = 1;
         return true;
     }
+
+    // The code below will only execute if we are allocating a real AHardwareBuffer.
     if (use_srgb && !HasEGLExtension("EGL_EXT_image_gl_colorspace")) {
         ALOGI("Test skipped: sRGB hardware buffers require EGL_EXT_image_gl_colorspace");
         return false;
@@ -908,33 +937,50 @@ void AHardwareBufferGLTest::SetUpTexture(const AHardwareBuffer_Desc& desc, int u
     glGenTextures(1, &texture);
     glActiveTexture(GL_TEXTURE0 + unit);
     glBindTexture(mTexTarget, texture);
+    // If the texture does not have mipmaps, set a filter that does not require them.
+    if (!(desc.usage & AHARDWAREBUFFER_USAGE_GPU_MIPMAP_COMPLETE)) {
+        glTexParameteri(mTexTarget, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+    }
     if (desc.stride & kGlFormat) {
         int levels = 1;
         if (desc.usage & AHARDWAREBUFFER_USAGE_GPU_MIPMAP_COMPLETE) {
             levels = MipLevelCount(desc.width, desc.height);
         }
-        // Stride is nonzero, so interpret desc.format as a GL format.
+        // kGlFormat is set in the stride field, so interpret desc.format as a GL format.
         if ((desc.usage & AHARDWAREBUFFER_USAGE_GPU_CUBE_MAP) ? desc.layers > 6 : desc.layers > 1) {
             glTexStorage3D(mTexTarget, levels, desc.format, desc.width, desc.height, desc.layers);
         } else if (mGLVersion >= 30) {
             glTexStorage2D(mTexTarget, levels, desc.format, desc.width, desc.height);
         } else {
-            GLenum format = 0, type = 0;
+            // Compatibility code for ES 2.0 goes here.
+            GLenum internal_format = 0, format = 0, type = 0;
             switch (desc.format) {
                 case GL_RGB8:
+                    internal_format = GL_RGB;
                     format = GL_RGB;
                     type = GL_UNSIGNED_BYTE;
                     break;
                 case GL_RGBA8:
+                    internal_format = GL_RGBA;
+                    format = GL_RGBA;
+                    type = GL_UNSIGNED_BYTE;
+                    break;
                 case GL_SRGB8_ALPHA8:
+                    // Available through GL_EXT_sRGB.
+                    internal_format = GL_SRGB_ALPHA_EXT;
                     format = GL_RGBA;
                     type = GL_UNSIGNED_BYTE;
                     break;
                 case GL_DEPTH_COMPONENT16:
+                    // Available through GL_OES_depth_texture.
+                    // Note that these are treated as luminance textures, not as red textures.
+                    internal_format = GL_DEPTH_COMPONENT;
                     format = GL_DEPTH_COMPONENT;
                     type = GL_UNSIGNED_SHORT;
                     break;
                 case GL_DEPTH24_STENCIL8:
+                    // Available through GL_OES_packed_depth_stencil.
+                    internal_format = GL_DEPTH_STENCIL_OES;
                     format = GL_DEPTH_STENCIL;
                     type = GL_UNSIGNED_INT_24_8;
                 default:
@@ -942,15 +988,23 @@ void AHardwareBufferGLTest::SetUpTexture(const AHardwareBuffer_Desc& desc, int u
             }
             if (desc.usage & AHARDWAREBUFFER_USAGE_GPU_CUBE_MAP) {
                 for (int face = 0; face < 6; ++face) {
+                    uint32_t width = desc.width;
+                    uint32_t height = desc.height;
                     for (int level = 0; level < levels; ++level) {
-                        glTexImage2D(GL_TEXTURE_CUBE_MAP_POSITIVE_X + face, level, desc.format,
-                                     desc.width, desc.height, 0, format, type, nullptr);
+                        glTexImage2D(GL_TEXTURE_CUBE_MAP_POSITIVE_X + face, level, internal_format,
+                                     width, height, 0, format, type, nullptr);
+                        width /= 2;
+                        height /= 2;
                     }
                 }
             } else {
+                uint32_t width = desc.width;
+                uint32_t height = desc.height;
                 for (int level = 0; level < levels; ++level) {
-                    glTexImage2D(mTexTarget, level, desc.format, desc.width, desc.height, 0,
-                                format, type, nullptr);
+                    glTexImage2D(mTexTarget, level, internal_format, width, height, 0, format,
+                                 type, nullptr);
+                    width /= 2;
+                    height /= 2;
                 }
             }
         }
@@ -961,11 +1015,6 @@ void AHardwareBufferGLTest::SetUpTexture(const AHardwareBuffer_Desc& desc, int u
         } else {
             glEGLImageTargetTexture2DOES(mTexTarget, static_cast<GLeglImageOES>(mEGLImage));
         }
-    }
-    // If the texture does not have mipmaps, set a filter that does not require them.
-    if (!(desc.usage & AHARDWAREBUFFER_USAGE_GPU_MIPMAP_COMPLETE)) {
-        glTexParameteri(mTexTarget, GL_TEXTURE_MAX_LEVEL, 0);
-        glTexParameteri(mTexTarget, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
     }
     ASSERT_EQ(GLenum{GL_NO_ERROR}, glGetError());
 }
@@ -1067,7 +1116,10 @@ void AHardwareBufferGLTest::TearDown() {
 class BlobTest : public AHardwareBufferGLTest {
 public:
     bool SetUpBuffer(const AHardwareBuffer_Desc& desc) override {
-        if (!HasGLExtension("GL_EXT_external_buffer")) return false;
+        if (!HasGLExtension("GL_EXT_external_buffer")) {
+            ALOGI("Test skipped: GL_EXT_external_buffer not present");
+            return false;
+        }
         return AHardwareBufferGLTest::SetUpBuffer(desc);
     }
 };
@@ -1159,11 +1211,14 @@ TEST_P(BlobTest, GpuDataBufferCpuWrite) {
 
 // Verifies that data written into a blob buffer from the GPU can be read on the CPU.
 TEST_P(BlobTest, GpuDataBufferCpuRead) {
+    if (mGLVersion < 31) {
+        ALOGI("Test skipped: shader storage buffer objects require ES 3.1+, found %d.%d",
+              mGLVersion / 10, mGLVersion % 10);
+        return;
+    }
     AHardwareBuffer_Desc desc = GetParam();
     desc.width = sizeof kQuadPositions;
     desc.usage = AHARDWAREBUFFER_USAGE_CPU_READ_RARELY | AHARDWAREBUFFER_USAGE_GPU_DATA_BUFFER;
-    // Shader storage buffer objects are only supported in OpenGL ES 3.1+
-    if (mGLVersion < 31) return;
     if (!SetUpBuffer(desc)) return;
 
     for (int i = 0; i < mContextCount; ++i) {
@@ -1354,7 +1409,7 @@ TEST_P(ColorTest, GpuSampledImageCanBeSampled) {
     if (!SetUpBuffer(desc)) return;
 
     // Bind the EGLImage to textures in both contexts.
-    const int kTextureUnit = 6;
+    const int kTextureUnit = 6 % mMaxTextureUnits;
     for (int i = 0; i < mContextCount; ++i) {
         MakeCurrent(i);
         SetUpTexture(desc, kTextureUnit);
@@ -1400,7 +1455,7 @@ TEST_P(ColorTest, GpuColorOutputAndSampledImage) {
     if (!SetUpBuffer(desc)) return;
 
     // Bind the EGLImage to textures in both contexts.
-    const int kTextureUnit = 1;
+    const int kTextureUnit = 1 % mMaxTextureUnits;
     for (int i = 0; i < mContextCount; ++i) {
         MakeCurrent(i);
         SetUpTexture(desc, kTextureUnit);
@@ -1440,6 +1495,11 @@ TEST_P(ColorTest, GpuColorOutputAndSampledImage) {
 }
 
 TEST_P(ColorTest, MipmapComplete) {
+    if (mGLVersion < 30) {
+        ALOGI("Test skipped: reading from nonzero level of a mipmap requires ES 3.0+, "
+              "found %d.%d", mGLVersion / 10, mGLVersion % 10);
+        return;
+    }
     const int kNumTiles = 8;
     AHardwareBuffer_Desc desc = GetParam();
     // Ensure that the checkerboard tiles have equal size at every level of the mipmap.
@@ -1451,7 +1511,7 @@ TEST_P(ColorTest, MipmapComplete) {
         AHARDWAREBUFFER_USAGE_GPU_MIPMAP_COMPLETE;
     if (!SetUpBuffer(desc)) return;
 
-    const int kTextureUnit = 7;
+    const int kTextureUnit = 7 % mMaxTextureUnits;
     for (int i = 0; i < mContextCount; ++i) {
         MakeCurrent(i);
         SetUpTexture(desc, kTextureUnit);
@@ -1492,7 +1552,7 @@ TEST_P(ColorTest, CubemapSampling) {
     desc.layers *= 6;
     if (!SetUpBuffer(desc)) return;
 
-    const int kTextureUnit = 4;
+    const int kTextureUnit = 4 % mMaxTextureUnits;
     for (int i = 0; i < mContextCount; ++i) {
         MakeCurrent(i);
         SetUpTexture(desc, kTextureUnit);
@@ -1532,6 +1592,11 @@ TEST_P(ColorTest, CubemapSampling) {
 }
 
 TEST_P(ColorTest, CubemapMipmaps) {
+    if (mGLVersion < 30) {
+        ALOGI("Test skipped: reading from nonzero level of a mipmap requires ES 3.0+, "
+              "found %d.%d", mGLVersion / 10, mGLVersion % 10);
+        return;
+    }
     const int kNumTiles = 8;
     AHardwareBuffer_Desc desc = GetParam();
     desc.usage =
@@ -1668,14 +1733,11 @@ TEST_P(DepthTest, DepthAffectsDrawAcrossContexts) {
 TEST_P(DepthTest, DepthCanBeSampled) {
     AHardwareBuffer_Desc desc = GetParam();
     desc.usage = AHARDWAREBUFFER_USAGE_GPU_COLOR_OUTPUT | AHARDWAREBUFFER_USAGE_GPU_SAMPLED_IMAGE;
-    // ES 2.0 does not support depth textures. There is an extension OES_depth_texture, but it is
-    // incompatible with ES 3.x depth texture support.
-    if (mGLVersion < 30) return;
     if (!SetUpBuffer(desc)) return;
 
     // Bind the EGLImage to renderbuffers and framebuffers in both contexts.
     // The depth buffer is shared, but the color buffer is not.
-    const int kTextureUnit = 3;
+    const int kTextureUnit = 3 % mMaxTextureUnits;
     for (int i = 0; i < 2; ++i) {
         MakeCurrent(i);
         SetUpTexture(desc, kTextureUnit);
@@ -1704,12 +1766,13 @@ TEST_P(DepthTest, DepthCanBeSampled) {
     EXPECT_EQ(GLenum{GL_NO_ERROR}, glGetError());
     glFinish();
 
-    // Check the rendered pixels. There should be a red square in the middle.
+    // Check the rendered pixels. There should be a square in the middle.
+    const GoldenColor kDepth = mGLVersion > 30 ? kRed : kWhite;
     std::vector<GoldenPixel> goldens{
-        {5, 35, kZero}, {15, 35, kZero}, {25, 35, kZero}, {35, 35, kZero},
-        {5, 25, kZero}, {15, 25, kRed},  {25, 25, kRed},  {35, 25, kZero},
-        {5, 15, kZero}, {15, 15, kRed},  {25, 15, kRed},  {35, 15, kZero},
-        {5,  5, kZero}, {15,  5, kZero}, {25, 5,  kZero}, {35, 5,  kZero},
+        {5, 35, kZero}, {15, 35, kZero},  {25, 35, kZero},  {35, 35, kZero},
+        {5, 25, kZero}, {15, 25, kDepth}, {25, 25, kDepth}, {35, 25, kZero},
+        {5, 15, kZero}, {15, 15, kDepth}, {25, 15, kDepth}, {35, 15, kZero},
+        {5,  5, kZero}, {15,  5, kZero},  {25, 5,  kZero},  {35, 5,  kZero},
     };
     CheckGoldenPixels(goldens, GL_RGBA8);
 }
@@ -1724,7 +1787,7 @@ TEST_P(DepthTest, DepthCubemapSampling) {
     desc.layers *= 6;
     if (!SetUpBuffer(desc)) return;
 
-    const int kTextureUnit = 9;
+    const int kTextureUnit = 9 % mMaxTextureUnits;
     for (int i = 0; i < mContextCount; ++i) {
         MakeCurrent(i);
         SetUpTexture(desc, kTextureUnit);
@@ -1755,6 +1818,7 @@ TEST_P(DepthTest, DepthCubemapSampling) {
         SetUpProgram(kVertexShader, kCubeMapFragmentShader, kQuadPositions, 0.5f, kTextureUnit);
     }
     SetUpFramebuffer(40, 40, 0, kRenderbuffer);
+    const GoldenColor kDepth = mGLVersion > 30 ? kRed : kWhite;
     for (int i = 0; i < 6; ++i) {
         float face_vector[3] = {0.f, 0.f, 0.f};
         face_vector[i / 2] = (i % 2) ? -1.f : 1.f;
@@ -1765,8 +1829,8 @@ TEST_P(DepthTest, DepthCubemapSampling) {
 
         std::vector<GoldenPixel> goldens{
             {5, 35, kZero}, {15, 35, kZero},  {25, 35, kZero},  {35, 35, kZero},
-            {5, 25, kZero}, {15, 25, kBlack}, {25, 25, kRed},   {35, 25, kZero},
-            {5, 15, kZero}, {15, 15, kRed},   {25, 15, kBlack}, {35, 15, kZero},
+            {5, 25, kZero}, {15, 25, kBlack}, {25, 25, kDepth}, {35, 25, kZero},
+            {5, 15, kZero}, {15, 15, kDepth}, {25, 15, kBlack}, {35, 15, kZero},
             {5, 5,  kZero}, {15, 5,  kZero},  {25, 5,  kZero},  {35, 5,  kZero},
         };
         CheckGoldenPixels(goldens, GL_RGBA8);
@@ -1866,7 +1930,7 @@ TEST_P(StencilTest, StencilTexture) {
     if (!kPureStencil && mGLVersion < 31) return;
     if (!SetUpBuffer(desc)) return;
 
-    const int kTextureUnit = 8;
+    const int kTextureUnit = 8 % mMaxTextureUnits;
     for (int i = 0; i < mContextCount; ++i) {
         MakeCurrent(i);
         SetUpTexture(desc, kTextureUnit);
