@@ -296,7 +296,7 @@ public class WebViewActivityTest
         mActivity.getLoginButton(mUiBot).click();
 
         // Assert save UI shown.
-        mUiBot.saveForAutofill(true, SAVE_DATA_TYPE_PASSWORD);
+        mUiBot.updateForAutofill(true, SAVE_DATA_TYPE_PASSWORD);
 
         // Assert results
         final SaveRequest saveRequest = sReplier.getNextSaveRequest();
@@ -413,7 +413,7 @@ public class WebViewActivityTest
         mActivity.getLoginButton(mUiBot).click();
 
         // Assert save UI shown.
-        mUiBot.saveForAutofill(true, SAVE_DATA_TYPE_PASSWORD);
+        mUiBot.updateForAutofill(true, SAVE_DATA_TYPE_PASSWORD);
 
         // Assert results
         final SaveRequest saveRequest = sReplier.getNextSaveRequest();
