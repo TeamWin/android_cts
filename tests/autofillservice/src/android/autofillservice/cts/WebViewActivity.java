@@ -17,6 +17,8 @@ package android.autofillservice.cts;
 
 import static android.autofillservice.cts.Timeouts.WEBVIEW_TIMEOUT;
 
+import static com.google.common.truth.Truth.assertThat;
+
 import android.content.Context;
 import android.os.Bundle;
 import android.os.SystemClock;
@@ -117,6 +119,9 @@ public class WebViewActivity extends AbstractAutoFillActivity {
         if (!latch.await(WEBVIEW_TIMEOUT.ms(), TimeUnit.MILLISECONDS)) {
             throw new RetryableException(WEBVIEW_TIMEOUT, "WebView not loaded");
         }
+
+        // Sanity check to make sure autofill was enabled when the WebView was created
+        assertThat(mWebView.isAutofillEnabled()).isTrue();
 
         // TODO(b/80317628): re-add check below
         // NOTE: we cannot search by resourceId because WebView does not set them...

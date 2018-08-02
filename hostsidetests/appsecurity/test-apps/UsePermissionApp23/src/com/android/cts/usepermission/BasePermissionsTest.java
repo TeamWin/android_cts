@@ -289,40 +289,41 @@ public abstract class BasePermissionsTest {
 
     protected void selectForegroundOnlyOption() {
         getUiDevice().findObject(By.res(
-                "com.android.packageinstaller:id/foreground_only_radio_button")).click();
+                "com.android.permissioncontroller:id/foreground_only_radio_button")).click();
     }
 
     protected void selectAlwaysOption() {
         getUiDevice().findObject(By.res(
-                "com.android.packageinstaller:id/always_radio_button")).click();
+                "com.android.permissioncontroller:id/always_radio_button")).click();
     }
 
     protected void selectDenyAndDontAskAgainOption() {
         getUiDevice().findObject(By.res(
-                "com.android.packageinstaller:id/deny_dont_ask_again_radio_button")).click();
+                "com.android.permissioncontroller:id/deny_dont_ask_again_radio_button")).click();
     }
 
     protected void clickAllowButton() throws Exception {
         scrollToBottomIfWatch();
         getUiDevice().findObject(new UiSelector().resourceId(
-                "com.android.packageinstaller:id/permission_allow_button")).click();
+                "com.android.permissioncontroller:id/permission_allow_button")).click();
     }
 
     protected void clickDenyButton() throws Exception {
         scrollToBottomIfWatch();
         getUiDevice().findObject(new UiSelector().resourceId(
-                "com.android.packageinstaller:id/permission_deny_button")).click();
+                "com.android.permissioncontroller:id/permission_deny_button")).click();
     }
 
     protected void clickDontAskAgainCheckbox() throws Exception {
         getUiDevice().findObject(new UiSelector().resourceId(
-                "com.android.packageinstaller:id/do_not_ask_checkbox")).click();
+                "com.android.permissioncontroller:id/do_not_ask_checkbox")).click();
     }
 
     protected void clickDontAskAgainButton() throws Exception {
         scrollToBottomIfWatch();
         getUiDevice().findObject(new UiSelector().resourceId(
-                "com.android.packageinstaller:id/permission_deny_dont_ask_again_button")).click();
+                "com.android.permissioncontroller:id/permission_deny_dont_ask_again_button"))
+                .click();
     }
 
     protected void grantPermission(String permission) throws Exception {
@@ -416,7 +417,7 @@ public abstract class BasePermissionsTest {
                     scrollToBottomIfWatch();
                     String packageName = getInstrumentation().getContext().getPackageManager()
                             .getPermissionControllerPackageName();
-                    String resIdName = "com.android.packageinstaller"
+                    String resIdName = "com.android.permissioncontroller"
                             + ":string/grant_dialog_button_deny_anyway";
                     Resources resources = getInstrumentation().getContext()
                             .createPackageContext(packageName, 0).getResources();

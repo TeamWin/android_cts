@@ -609,7 +609,7 @@ public class StreamingMediaPlayer2Test extends MediaPlayer2TestBase {
                     public void onInfo(MediaPlayer2 mp, DataSourceDesc dsd, int what, int extra) {
                         if (what == MediaPlayer2.MEDIA_INFO_PREPARED) {
                             mOnPrepareCalled.signal();
-                        } else if (what == MediaPlayer2.MEDIA_INFO_PLAYBACK_COMPLETE) {
+                        } else if (what == MediaPlayer2.MEDIA_INFO_DATA_SOURCE_END) {
                             if (run++ == 0) {
                                 mPlayer.seekTo(0, MediaPlayer2.SEEK_PREVIOUS_SYNC);
                                 mPlayer.play();
