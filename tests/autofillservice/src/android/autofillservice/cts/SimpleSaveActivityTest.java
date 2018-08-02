@@ -1075,6 +1075,7 @@ public class SimpleSaveActivityTest extends CustomDescriptionWithLinkTestCase<Si
 
         // Trigger autofill.
         mActivity.syncRunOnUiThread(() -> mActivity.mInput.requestFocus());
+        sReplier.getNextFillRequest();
 
         mActivity.syncRunOnUiThread(() -> {
             mActivity.mInput.setText("id");
