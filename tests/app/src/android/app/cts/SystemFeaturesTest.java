@@ -42,6 +42,8 @@ import android.nfc.NfcAdapter;
 import android.telephony.TelephonyManager;
 import android.test.InstrumentationTestCase;
 
+import com.android.compatibility.common.util.CddTest;
+
 import java.lang.reflect.Field;
 import java.util.ArrayList;
 import java.util.HashSet;
@@ -231,6 +233,7 @@ public class SystemFeaturesTest extends InstrumentationTestCase {
         }
     }
 
+    @CddTest(requirement="3.8.7/C-1-1")
     public void testLiveWallpaperFeature() {
         try {
             Intent intent = new Intent(WallpaperManager.ACTION_LIVE_WALLPAPER_CHOOSER);
@@ -283,6 +286,7 @@ public class SystemFeaturesTest extends InstrumentationTestCase {
         }
     }
 
+    @CddTest(requirement="7.1.3/C-0-1")
     public void testScreenFeatures() {
         assertTrue(mPackageManager.hasSystemFeature(PackageManager.FEATURE_SCREEN_LANDSCAPE)
                 || mPackageManager.hasSystemFeature(PackageManager.FEATURE_SCREEN_PORTRAIT));
