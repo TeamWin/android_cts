@@ -889,32 +889,28 @@ public class ExtendedCameraCharacteristicsTest extends AndroidTestCase {
             Rect activeArray = c.get(
                 CameraCharacteristics.SENSOR_INFO_ACTIVE_ARRAY_SIZE);
 
-            // Legacy device doesn't have preCorrectionActiveArraySize metadata.
-            Integer hwLevel = c.get(CameraCharacteristics.INFO_SUPPORTED_HARDWARE_LEVEL);
-            if (hwLevel != LEGACY) {
-                // Verify pre-correction array encloses active array
-                mCollector.expectTrue("preCorrectionArray [" + precorrectionArray.left + ", " +
-                        precorrectionArray.top + ", " + precorrectionArray.right + ", " +
-                        precorrectionArray.bottom + "] does not enclose activeArray[" +
-                        activeArray.left + ", " + activeArray.top + ", " + activeArray.right +
-                        ", " + activeArray.bottom,
-                        precorrectionArray.contains(activeArray.left, activeArray.top) &&
-                        precorrectionArray.contains(activeArray.right-1, activeArray.bottom-1));
+            // Verify pre-correction array encloses active array
+            mCollector.expectTrue("preCorrectionArray [" + precorrectionArray.left + ", " +
+                    precorrectionArray.top + ", " + precorrectionArray.right + ", " +
+                    precorrectionArray.bottom + "] does not enclose activeArray[" +
+                    activeArray.left + ", " + activeArray.top + ", " + activeArray.right +
+                    ", " + activeArray.bottom,
+                    precorrectionArray.contains(activeArray.left, activeArray.top) &&
+                    precorrectionArray.contains(activeArray.right-1, activeArray.bottom-1));
 
-                // Verify pixel array encloses pre-correction array
-                mCollector.expectTrue("preCorrectionArray [" + precorrectionArray.left + ", " +
-                        precorrectionArray.top + ", " + precorrectionArray.right + ", " +
-                        precorrectionArray.bottom + "] isn't enclosed by pixelArray[" +
-                        pixelArraySize.getWidth() + ", " + pixelArraySize.getHeight() + "]",
-                        precorrectionArray.left >= 0 &&
-                        precorrectionArray.left < pixelArraySize.getWidth() &&
-                        precorrectionArray.right > 0 &&
-                        precorrectionArray.right <= pixelArraySize.getWidth() &&
-                        precorrectionArray.top >= 0 &&
-                        precorrectionArray.top < pixelArraySize.getHeight() &&
-                        precorrectionArray.bottom > 0 &&
-                        precorrectionArray.bottom <= pixelArraySize.getHeight());
-            }
+            // Verify pixel array encloses pre-correction array
+            mCollector.expectTrue("preCorrectionArray [" + precorrectionArray.left + ", " +
+                    precorrectionArray.top + ", " + precorrectionArray.right + ", " +
+                    precorrectionArray.bottom + "] isn't enclosed by pixelArray[" +
+                    pixelArraySize.getWidth() + ", " + pixelArraySize.getHeight() + "]",
+                    precorrectionArray.left >= 0 &&
+                    precorrectionArray.left < pixelArraySize.getWidth() &&
+                    precorrectionArray.right > 0 &&
+                    precorrectionArray.right <= pixelArraySize.getWidth() &&
+                    precorrectionArray.top >= 0 &&
+                    precorrectionArray.top < pixelArraySize.getHeight() &&
+                    precorrectionArray.bottom > 0 &&
+                    precorrectionArray.bottom <= pixelArraySize.getHeight());
 
             if (supportDepth) {
                 mCollector.expectTrue("Supports DEPTH_OUTPUT but does not support DEPTH16",
