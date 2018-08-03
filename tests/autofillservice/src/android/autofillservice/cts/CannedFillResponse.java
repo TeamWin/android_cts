@@ -153,7 +153,8 @@ final class CannedFillResponse {
                 builder.addDataset(dataset);
             }
         }
-        if (mRequiredSavableIds != null || mRequiredSavableAutofillIds != null) {
+        if (mRequiredSavableIds != null || mOptionalSavableIds != null
+                || mRequiredSavableAutofillIds != null) {
             final SaveInfo.Builder saveInfo;
             if (mRequiredSavableAutofillIds != null) {
                 saveInfo = new SaveInfo.Builder(mSaveType, mRequiredSavableAutofillIds);
@@ -312,10 +313,6 @@ final class CannedFillResponse {
          * Sets the required savable ids based on their {@code resourceId}.
          */
         public Builder setRequiredSavableIds(int type, String... ids) {
-            if (mRequiredSavableAutofillIds != null) {
-                throw new IllegalStateException("Already set required autofill ids: "
-                        + Arrays.toString(mRequiredSavableAutofillIds));
-            }
             mSaveType = type;
             mRequiredSavableIds = ids;
             return this;
@@ -325,10 +322,6 @@ final class CannedFillResponse {
          * Sets the required savable ids based on their {@code autofillId}.
          */
         public Builder setRequiredSavableAutofillIds(int type, AutofillId... ids) {
-            if (mRequiredSavableIds != null) {
-                throw new IllegalStateException("Already set required resource ids: "
-                        + Arrays.toString(mRequiredSavableIds));
-            }
             mSaveType = type;
             mRequiredSavableAutofillIds = ids;
             return this;

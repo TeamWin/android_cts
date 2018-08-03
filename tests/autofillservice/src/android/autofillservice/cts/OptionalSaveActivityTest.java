@@ -51,7 +51,7 @@ public class OptionalSaveActivityTest
         extends AutoFillServiceTestCase.AutoActivityLaunch<OptionalSaveActivity> {
 
     private static final boolean EXPECT_NO_SAVE_UI = false;
-    private static final boolean EXPECT_SAVE_UI = false;
+    private static final boolean EXPECT_SAVE_UI = true;
 
     private OptionalSaveActivity mActivity;
 
@@ -422,7 +422,7 @@ public class OptionalSaveActivityTest
     }
 
     @Test
-    public void testDontShowSaveUiWhenUserManuallyFilled_oneDatasetAllRequiredFields()
+    public void testDontShowSaveUiWhenUserManuallyFilledSameValue_oneDatasetAllRequiredFields()
             throws Exception {
         saveWhenUserFilledDatasetFields(
                 new String[] {ID_ADDRESS1, ID_ADDRESS2},
@@ -441,7 +441,7 @@ public class OptionalSaveActivityTest
     }
 
     @Test
-    public void testDontShowSaveUiWhenUserManuallyFilled_oneDatasetRequiredAndOptionalFields()
+    public void testDontShowSaveUiWhenUserManuallyFilledSameValue_oneDatasetRequiredAndOptionalFields()
             throws Exception {
         saveWhenUserFilledDatasetFields(
                 new String[] {ID_ADDRESS1},
@@ -460,7 +460,7 @@ public class OptionalSaveActivityTest
     }
 
     @Test
-    public void testDontShowSaveUiWhenUserManuallyFilled_multipleDatasetsDataOnFirst()
+    public void testDontShowSaveUiWhenUserManuallyFilledSameValue_multipleDatasetsDataOnFirst()
             throws Exception {
         saveWhenUserFilledDatasetFields(
                 new String[] {ID_ADDRESS1},
@@ -484,7 +484,7 @@ public class OptionalSaveActivityTest
     }
 
     @Test
-    public void testDontShowSaveUiWhenUserManuallyFilled_multipleDatasetsDataOnSecond()
+    public void testDontShowSaveUiWhenUserManuallyFilledSameValue_multipleDatasetsDataOnSecond()
             throws Exception {
         saveWhenUserFilledDatasetFields(
                 new String[] {ID_ADDRESS1},
@@ -508,13 +508,49 @@ public class OptionalSaveActivityTest
     }
 
     @Test
-    public void testShowSaveUiWhenUserManuallyFilled_requiredOnly()
+    public void testDontShowSaveUiWhenUserManuallyFilledSameValue_requiredOnly()
             throws Exception {
         saveWhenUserFilledDatasetFields(
                 new String[] {ID_ADDRESS1},
                 new String[] {ID_ADDRESS2},
                 () -> {
                     mActivity.mAddress1.setText("742 Evergreen Terrace");
+                },
+                EXPECT_NO_SAVE_UI,
+                new CannedDataset.Builder()
+                    .setPresentation(createPresentation("SF"))
+                    .setField(ID_ADDRESS1, "742 Evergreen Terrace")
+                    .setField(ID_ADDRESS2, "Simpsons House")
+                    .build()
+        );
+    }
+
+    @Test
+    public void testDontShowSaveUiWhenUserManuallyFilledSameValue_optionalOnly()
+            throws Exception {
+        saveWhenUserFilledDatasetFields(
+                new String[] {ID_ADDRESS1},
+                new String[] {ID_ADDRESS2},
+                () -> {
+                    mActivity.mAddress2.setText("Simpsons House");
+                },
+                EXPECT_NO_SAVE_UI,
+                new CannedDataset.Builder()
+                    .setPresentation(createPresentation("SF"))
+                    .setField(ID_ADDRESS1, "742 Evergreen Terrace")
+                    .setField(ID_ADDRESS2, "Simpsons House")
+                    .build()
+        );
+    }
+
+    @Test
+    public void testShowSaveUiWhenUserManuallyFilledDifferentValue_requiredOnly()
+            throws Exception {
+        saveWhenUserFilledDatasetFields(
+                new String[] {ID_ADDRESS1},
+                new String[] {ID_ADDRESS2},
+                () -> {
+                    mActivity.mAddress1.setText("Shelbyville Nuclear Power Plant");
                 },
                 EXPECT_SAVE_UI,
                 new CannedDataset.Builder()
@@ -526,13 +562,13 @@ public class OptionalSaveActivityTest
     }
 
     @Test
-    public void testShowSaveUiWhenUserManuallyFilled_optionalOnly()
+    public void testShowSaveUiWhenUserManuallyFilledDifferentValue_optionalOnly()
             throws Exception {
         saveWhenUserFilledDatasetFields(
-                new String[] {ID_ADDRESS1},
+                null,
                 new String[] {ID_ADDRESS2},
                 () -> {
-                    mActivity.mAddress2.setText("Simpsons House");
+                    mActivity.mAddress2.setText("Shelbyville Bluffs");
                 },
                 EXPECT_SAVE_UI,
                 new CannedDataset.Builder()
@@ -543,7 +579,7 @@ public class OptionalSaveActivityTest
         );
     }
 
-    private void saveWhenUserFilledDatasetFields(@NonNull String[] requiredIds,
+    private void saveWhenUserFilledDatasetFields(@Nullable String[] requiredIds,
             @Nullable String[] optionalIds, @NonNull Runnable changes, boolean expectSaveUi,
             @NonNull CannedDataset...datasets) throws Exception {
         // Set service.
@@ -567,18 +603,15 @@ public class OptionalSaveActivityTest
         // Manually fill it.
         mActivity.syncRunOnUiThread(changes);
 
-        // Make sure the snack bar is not shown.
+        // ...then tap save.
+        mActivity.save();
+
+        // Make sure the snack bar is shown as expected.
         if (expectSaveUi) {
             mUiBot.assertSaveShowing(SAVE_DATA_TYPE_ADDRESS);
         } else {
             mUiBot.assertSaveNotShowing(SAVE_DATA_TYPE_ADDRESS);
         }
-
-        // ...then tap save.
-        mActivity.save();
-
-        // Assert the snack bar is not shown.
-        mUiBot.assertSaveNotShowing(SAVE_DATA_TYPE_ADDRESS);
     }
 
     @Test
