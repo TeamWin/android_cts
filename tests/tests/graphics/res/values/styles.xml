@@ -164,6 +164,7 @@
         <item name="themeGravity">48</item>
         <item name="themeTileMode">2</item>
         <item name="themeType">0</item>
+        <item name="themeVectorDrawableFillColor">#F00F</item>
     </style>
 
     <style name="WhiteBackgroundNoWindowAnimation"
