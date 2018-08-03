@@ -48,8 +48,8 @@ import java.io.IOException;
 public class TapjackingTest {
 
     private static final String LOG_TAG = TapjackingTest.class.getSimpleName();
-    private static final String PACKAGE_INSTALLER_PACKAGE_NAME = "com.android.packageinstaller";
-    private static final String INSTALL_BUTTON_ID = "ok_button";
+    private static final String SYSTEM_PACKAGE_NAME = "android";
+    private static final String INSTALL_BUTTON_ID = "button1";
     private static final String OVERLAY_ACTIVITY_TEXT_VIEW_ID = "overlay_description";
     private static final String WM_DISMISS_KEYGUARD_COMMAND = "wm dismiss-keyguard";
     private static final String TEST_APP_PACKAGE_NAME = "android.packageinstaller.emptytestapp.cts";
@@ -106,18 +106,18 @@ public class TapjackingTest {
     public void testTapsDroppedWhenObscured() throws Exception {
         Log.i(LOG_TAG, "launchPackageInstaller");
         launchPackageInstaller();
-        UiObject2 installButton = waitForView(PACKAGE_INSTALLER_PACKAGE_NAME, INSTALL_BUTTON_ID);
+        UiObject2 installButton = waitForView(SYSTEM_PACKAGE_NAME, INSTALL_BUTTON_ID);
         assertNotNull("Install button not shown", installButton);
         Log.i(LOG_TAG, "launchOverlayingActivity");
         launchOverlayingActivity();
         assertNotNull("Overlaying activity not started",
                 waitForView(mPackageName, OVERLAY_ACTIVITY_TEXT_VIEW_ID));
-        installButton = waitForView(PACKAGE_INSTALLER_PACKAGE_NAME, INSTALL_BUTTON_ID);
+        installButton = waitForView(SYSTEM_PACKAGE_NAME, INSTALL_BUTTON_ID);
         assertNotNull("Cannot find install button below overlay activity", installButton);
         Log.i(LOG_TAG, "installButton.click");
         installButton.click();
         assertFalse("Tap on install button succeeded", mUiDevice.wait(
-                Until.gone(By.res(PACKAGE_INSTALLER_PACKAGE_NAME, INSTALL_BUTTON_ID)),
+                Until.gone(By.res(SYSTEM_PACKAGE_NAME, INSTALL_BUTTON_ID)),
                 WAIT_FOR_UI_TIMEOUT));
         mUiDevice.pressBack();
     }

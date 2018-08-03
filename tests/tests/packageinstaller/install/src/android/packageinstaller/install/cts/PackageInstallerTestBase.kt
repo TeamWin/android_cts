@@ -50,6 +50,7 @@ const val TEST_APK_EXTERNAL_LOCATION = "/data/local/tmp/cts/packageinstaller"
 const val INSTALL_ACTION_CB = "PackageInstallerTestBase.install_cb"
 
 const val PACKAGE_INSTALLER_PACKAGE_NAME = "com.android.packageinstaller"
+const val SYSTEM_PACKAGE_NAME = "android"
 
 const val TIMEOUT = 60000L
 const val TIMEOUT_EXPECTED = 2000L
@@ -100,6 +101,11 @@ open class PackageInstallerTestBase {
     @Before
     fun registerInstallResultReceiver() {
         context.registerReceiver(receiver, IntentFilter(INSTALL_ACTION_CB))
+    }
+
+    @Before
+    fun waitForUIIdle() {
+        uiDevice.waitForIdle()
     }
 
     /**

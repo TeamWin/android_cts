@@ -102,6 +102,11 @@ class NoPermissionTests {
         context.registerReceiver(receiver, IntentFilter(ACTION))
     }
 
+    @Before
+    fun waitForUIIdle() {
+        uiDevice.waitForIdle()
+    }
+
     private fun launchPackageInstallerViaIntent() {
         val intent = Intent(Intent.ACTION_INSTALL_PACKAGE)
         intent.data = FileProvider.getUriForFile(context, CONTENT_AUTHORITY, apkFile)

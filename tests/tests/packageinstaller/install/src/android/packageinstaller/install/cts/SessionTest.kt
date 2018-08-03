@@ -41,8 +41,8 @@ import org.junit.Test
 import org.junit.runner.RunWith
 import java.util.concurrent.TimeUnit
 
-private const val INSTALL_BUTTON_ID = "ok_button"
-private const val CANCEL_BUTTON_ID = "cancel_button"
+private const val INSTALL_BUTTON_ID = "button1"
+private const val CANCEL_BUTTON_ID = "button2"
 
 @RunWith(AndroidJUnit4::class)
 class SessionTest : PackageInstallerTestBase() {
@@ -81,7 +81,7 @@ class SessionTest : PackageInstallerTestBase() {
      * @param resId The resource ID of the button to click
      */
     private fun clickInstallerUIButton(resId: String) {
-        uiDevice.wait(Until.findObject(By.res(PACKAGE_INSTALLER_PACKAGE_NAME, resId)), TIMEOUT)
+        uiDevice.wait(Until.findObject(By.res(SYSTEM_PACKAGE_NAME, resId)), TIMEOUT)
                 .click()
     }
 
@@ -145,39 +145,6 @@ class SessionTest : PackageInstallerTestBase() {
         assertEquals(STATUS_FAILURE_ABORTED, getInstallSessionResult())
         assertEquals(RESULT_CANCELED, getInstallDialogResult())
         assertNotInstalled()
-
-        assertNoMoreInstallResults()
-    }
-
-    /**
-     * Commit the same session twice.
-     */
-    @Test
-    fun commitTwice() {
-        // Create session and commit it. Then wait until install confirm dialog is launched
-        val session = startInstallationViaSession()
-
-        // Commit session the second time
-        val pendingIntent = PendingIntent.getBroadcast(context, 0, Intent(INSTALL_ACTION_CB),
-                FLAG_UPDATE_CURRENT)
-        session.commit(pendingIntent.intentSender)
-
-        // The system should have asked us to launch the install confirm dialog a second time
-        assertEquals(STATUS_PENDING_USER_ACTION, getInstallSessionResult())
-
-        // Confirm one dialog
-        clickInstallerUIButton(INSTALL_BUTTON_ID)
-
-        // Install should have succeeded
-        assertEquals(STATUS_SUCCESS, getInstallSessionResult())
-        assertInstalled()
-
-        // The session should not have called back again
-        assertNull(getInstallSessionResult(TIMEOUT_EXPECTED))
-
-        // Both dialogs finish
-        assertEquals(RESULT_CANCELED, getInstallDialogResult())
-        assertEquals(RESULT_CANCELED, getInstallDialogResult())
 
         assertNoMoreInstallResults()
     }
