@@ -544,6 +544,25 @@ public class OptionalSaveActivityTest
     }
 
     @Test
+    public void testDontShowSaveUiWhenUserManuallyFilledSameValue_optionalsOnlyNoRequired()
+            throws Exception {
+        saveWhenUserFilledDatasetFields(
+                null,
+                new String[] {ID_ADDRESS2, ID_CITY},
+                () -> {
+                    mActivity.mCity.setText("Springfield");
+                },
+                EXPECT_NO_SAVE_UI,
+                new CannedDataset.Builder()
+                    .setPresentation(createPresentation("SF"))
+                    .setField(ID_ADDRESS1, "742 Evergreen Terrace")
+                    .setField(ID_ADDRESS2, "Simpsons House")
+                    .setField(ID_CITY, "Springfield")
+                    .build()
+        );
+    }
+
+    @Test
     public void testShowSaveUiWhenUserManuallyFilledDifferentValue_requiredOnly()
             throws Exception {
         saveWhenUserFilledDatasetFields(
