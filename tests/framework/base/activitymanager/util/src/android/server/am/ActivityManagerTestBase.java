@@ -768,7 +768,15 @@ public abstract class ActivityManagerTestBase {
 
             // Dismiss active keyguard after credential is cleared, so keyguard doesn't ask for
             // the stale credential.
+            // TODO (b/112015010) If keyguard is occluded, credential cannot be removed as expected.
+            // LockScreenSession#close is always calls before stop all test activities,
+            // which could cause keyguard stay at occluded after wakeup.
+            // If Keyguard is occluded, press back key can close ShowWhenLocked activity.
             pressBackButton();
+
+            // If device is unlocked, there might have ShowWhenLocked activity runs on,
+            // use home key to clear all activity at foreground.
+            pressHomeButton();
             sleepDevice();
             wakeUpDevice();
             unlockDevice();

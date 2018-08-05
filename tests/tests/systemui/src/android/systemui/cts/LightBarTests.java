@@ -233,7 +233,7 @@ public class LightBarTests extends LightBarTestBase {
         float eps = 0.005f;
 
         for (int c : pixels) {
-            if (c == background) {
+            if (isColorSame(c, background)) {
                 s.backgroundPixels++;
                 continue;
             }
