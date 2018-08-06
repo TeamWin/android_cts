@@ -767,12 +767,8 @@ public class ActivityManagerMultiDisplayTests extends ActivityManagerDisplayTest
             lockScreenSession.wakeUpDevice().unlockDevice();
         }
 
-        mAmWmState.waitForFocusedStack(focusedStackId);
-        mAmWmState.waitForValidState(VIRTUAL_DISPLAY_ACTIVITY);
-        mAmWmState.assertVisibility(VIRTUAL_DISPLAY_ACTIVITY, true /* visible */);
-        mAmWmState.assertFocusedActivity(
-                "Top activity must be switched back to primary display",
-                VIRTUAL_DISPLAY_ACTIVITY);
+        waitAndAssertTopResumedActivity(VIRTUAL_DISPLAY_ACTIVITY, DEFAULT_DISPLAY,
+                "Top activity must be switched back to primary display");
     }
 
     /**
