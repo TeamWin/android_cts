@@ -56,7 +56,7 @@ public class ShortcutManagerStartShortcutTest extends ShortcutManagerCtsTestsBas
 
         ShortcutLaunchedActivity.setExpectedOrder(expectedActions);
 
-        runWithCaller(launcher, () -> {
+        runWithCallerWithStrictMode(launcher, () -> {
             getLauncherApps().startShortcut(client.getPackageName(), id, rect, options,
                     getUserHandle());
         });
@@ -76,7 +76,7 @@ public class ShortcutManagerStartShortcutTest extends ShortcutManagerCtsTestsBas
 
     private void assertShortcutCantStart(Context launcher, Context client, String id,
             Class<? extends Throwable> exceptionClass) {
-        runWithCaller(launcher, () -> {
+        runWithCallerWithStrictMode(launcher, () -> {
             assertExpectException(exceptionClass, "", () -> {
 
                 getLauncherApps().startShortcut(client.getPackageName(), id, null, null,
@@ -99,7 +99,7 @@ public class ShortcutManagerStartShortcutTest extends ShortcutManagerCtsTestsBas
                 .setFlags(Intent.FLAG_ACTIVITY_NO_ANIMATION)
                 .putExtra("k1", "v1");
 
-        runWithCaller(mPackageContext1, () -> {
+        runWithCallerWithStrictMode(mPackageContext1, () -> {
             assertTrue(getManager().addDynamicShortcuts(list(
                     makeShortcutBuilder("s1").setShortLabel("abc")
                             .setIntent(i).build()
@@ -131,7 +131,7 @@ public class ShortcutManagerStartShortcutTest extends ShortcutManagerCtsTestsBas
                 .setComponent(mLaunchedActivity)
                 .putExtra("kx", "vx");
 
-        runWithCaller(mPackageContext1, () -> {
+        runWithCallerWithStrictMode(mPackageContext1, () -> {
             assertTrue(getManager().addDynamicShortcuts(list(
                     makeShortcutBuilder("s1").setShortLabel("abc")
                             .setIntents(new Intent[]{i1, i2, i3}).build()
@@ -185,7 +185,7 @@ public class ShortcutManagerStartShortcutTest extends ShortcutManagerCtsTestsBas
         testStartMultiple();
 
         // then remove it.
-        runWithCaller(mPackageContext1, () -> {
+        runWithCallerWithStrictMode(mPackageContext1, () -> {
             getManager().removeAllDynamicShortcuts();
         });
 
@@ -201,7 +201,7 @@ public class ShortcutManagerStartShortcutTest extends ShortcutManagerCtsTestsBas
                 .setFlags(Intent.FLAG_ACTIVITY_NO_ANIMATION)
                 .putExtra("k1", "v1");
 
-        runWithCaller(mPackageContext1, () -> {
+        runWithCallerWithStrictMode(mPackageContext1, () -> {
             assertTrue(getManager().addDynamicShortcuts(list(
                     makeShortcutBuilder("s1").setShortLabel("abc")
                             .setIntent(i).build()
@@ -222,13 +222,13 @@ public class ShortcutManagerStartShortcutTest extends ShortcutManagerCtsTestsBas
         setDefaultLauncher(getInstrumentation(), mLauncherContext1);
 
         // then pin it.
-        runWithCaller(mLauncherContext1, () -> {
+        runWithCallerWithStrictMode(mLauncherContext1, () -> {
             getLauncherApps().pinShortcuts(mPackageContext1.getPackageName(),
                     list("s1"), getUserHandle());
         });
 
         // Then remove it.
-        runWithCaller(mPackageContext1, () -> {
+        runWithCallerWithStrictMode(mPackageContext1, () -> {
             getManager().removeAllDynamicShortcuts();
         });
 
@@ -244,7 +244,7 @@ public class ShortcutManagerStartShortcutTest extends ShortcutManagerCtsTestsBas
         setDefaultLauncher(getInstrumentation(), mLauncherContext1);
 
         // then pin it.
-        runWithCaller(mLauncherContext1, () -> {
+        runWithCallerWithStrictMode(mLauncherContext1, () -> {
             getLauncherApps().pinShortcuts(mPackageContext1.getPackageName(),
                     list("s1"), getUserHandle());
         });
@@ -260,7 +260,7 @@ public class ShortcutManagerStartShortcutTest extends ShortcutManagerCtsTestsBas
         assertShortcutStarts(mLauncherContext2, mPackageContext1, "s1", EXPECTED_ACTIONS_SINGLE);
 
         // Then remove it.
-        runWithCaller(mPackageContext1, () -> {
+        runWithCallerWithStrictMode(mPackageContext1, () -> {
             getManager().removeAllDynamicShortcuts();
         });
 
@@ -307,7 +307,7 @@ public class ShortcutManagerStartShortcutTest extends ShortcutManagerCtsTestsBas
         Intent i = new Intent(Intent.ACTION_MAIN)
                 .setComponent(new ComponentName("abc", "def"));
 
-        runWithCaller(mPackageContext1, () -> {
+        runWithCallerWithStrictMode(mPackageContext1, () -> {
             assertTrue(getManager().addDynamicShortcuts(list(
                     makeShortcutBuilder("s1").setShortLabel("abc")
                             .setIntent(i).build()
@@ -332,7 +332,7 @@ public class ShortcutManagerStartShortcutTest extends ShortcutManagerCtsTestsBas
                         "android.content.pm.cts.shortcutmanager.packages.package4",
                         "android.content.pm.cts.shortcutmanager.packages.Launcher"));
 
-        runWithCaller(mPackageContext1, () -> {
+        runWithCallerWithStrictMode(mPackageContext1, () -> {
             assertTrue(getManager().addDynamicShortcuts(list(
                     makeShortcutBuilder("s1").setShortLabel("abc")
                             .setIntent(i).build()

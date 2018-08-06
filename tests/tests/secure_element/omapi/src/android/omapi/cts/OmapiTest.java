@@ -18,6 +18,13 @@
 
 package android.omapi.cts;
 
+import static org.junit.Assert.*;
+import static org.junit.Assume.assumeTrue;
+
+import org.junit.After;
+import org.junit.Before;
+import org.junit.Test;
+
 import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.util.ArrayList;
@@ -28,14 +35,17 @@ import java.util.TimerTask;
 import java.util.concurrent.Executor;
 import java.util.concurrent.TimeoutException;
 
+import android.content.pm.PackageManager;
 import android.se.omapi.Channel;
 import android.se.omapi.Reader;
 import android.se.omapi.SEService;
 import android.se.omapi.SEService.OnConnectedListener;
 import android.se.omapi.Session;
-import android.test.AndroidTestCase;
+import android.support.test.InstrumentationRegistry;
 
-public class OmapiTest extends AndroidTestCase {
+import com.android.compatibility.common.util.PropertyUtil;
+
+public class OmapiTest {
 
     private final static String UICC_READER_PREFIX = "SIM";
     private final static String ESE_READER_PREFIX = "eSE";
@@ -136,20 +146,27 @@ public class OmapiTest extends AndroidTestCase {
         }
     }
 
+    private boolean supportsHardware() {
+        final PackageManager pm = InstrumentationRegistry.getContext().getPackageManager();
+        boolean lowRamDevice = PropertyUtil.propertyEquals("ro.config.low_ram", "true");
+        return !lowRamDevice || (lowRamDevice && pm.hasSystemFeature("android.hardware.type.watch"));
+    }
+
     private void assertGreaterOrEqual(long greater, long lesser) {
         assertTrue("" + greater + " expected to be greater than or equal to " + lesser,
                 greater >= lesser);
     }
 
-    @Override
-    protected void setUp() throws Exception {
-        seService = new SEService(getContext(), new SynchronousExecutor(), mListener);
+    @Before
+    public void setUp() throws Exception {
+        assumeTrue(supportsHardware());
+        seService = new SEService(InstrumentationRegistry.getContext(), new SynchronousExecutor(), mListener);
         connectionTimer = new Timer();
         connectionTimer.schedule(mTimerTask, SERVICE_CONNECTION_TIME_OUT);
     }
 
-    @Override
-    protected void tearDown() throws Exception {
+    @After
+    public void tearDown() throws Exception {
         if (seService != null && seService.isConnected()) {
             seService.shutdown();
             connected = false;
@@ -177,6 +194,7 @@ public class OmapiTest extends AndroidTestCase {
     }
 
     /** Tests getReaders API */
+    @Test
     public void testGetReaders() {
         try {
             waitForConnection();
@@ -197,6 +215,7 @@ public class OmapiTest extends AndroidTestCase {
     }
 
     /** Tests getATR API */
+    @Test
     public void testATR() {
         try {
             waitForConnection();
@@ -228,6 +247,7 @@ public class OmapiTest extends AndroidTestCase {
     }
 
     /** Tests OpenBasicChannel API when aid is null */
+    @Test
     public void testOpenBasicChannelNullAid() {
         try {
             waitForConnection();
@@ -253,6 +273,7 @@ public class OmapiTest extends AndroidTestCase {
     }
 
     /** Tests OpenBasicChannel API when aid is provided */
+    @Test
     public void testOpenBasicChannelNonNullAid() {
         try {
             waitForConnection();
@@ -278,10 +299,12 @@ public class OmapiTest extends AndroidTestCase {
     }
 
     /** Tests Select API */
+    @Test
     public void testSelectableAid() {
         testSelectableAid(SELECTABLE_AID);
     }
 
+    @Test
     public void testLongSelectResponse() {
         byte[] selectResponse = testSelectableAid(LONG_SELECT_RESPONSE_AID);
         if (selectResponse == null) {
@@ -318,6 +341,7 @@ public class OmapiTest extends AndroidTestCase {
     }
 
     /** Tests if NoSuchElementException in Select */
+    @Test
     public void testWrongAid() {
         try {
             waitForConnection();
@@ -330,7 +354,7 @@ public class OmapiTest extends AndroidTestCase {
         }
     }
 
-    public void testNonSelectableAid(Reader reader, byte[] aid) {
+    private void testNonSelectableAid(Reader reader, byte[] aid) {
         boolean exception = false;
         Session session = null;
         try {
@@ -350,6 +374,7 @@ public class OmapiTest extends AndroidTestCase {
     }
 
     /** Tests if Security Exception in Transmit */
+    @Test
     public void testSecurityExceptionInTransmit() {
         boolean exception = false;
         Session session;
@@ -412,6 +437,7 @@ public class OmapiTest extends AndroidTestCase {
      * Checks the return status and verifies the size of the
      * response.
      */
+    @Test
     public void testTransmitApdu() {
         try {
             waitForConnection();
@@ -446,6 +472,7 @@ public class OmapiTest extends AndroidTestCase {
      * - the warning code is properly received by the application layer as SW answer
      * - the verify that the application layer can fetch the additionnal data (when present)
      */
+    @Test
     public void testStatusWordTransmit() {
         try {
             waitForConnection();
@@ -491,6 +518,7 @@ public class OmapiTest extends AndroidTestCase {
     }
 
     /** Test if the responses are segmented by the underlying implementation */
+    @Test
     public void testSegmentedResponseTransmit() {
         try {
             waitForConnection();
@@ -514,6 +542,7 @@ public class OmapiTest extends AndroidTestCase {
     }
 
     /** Test the P2 value of the select command sent by the underlying implementation */
+    @Test
     public void testP2Value() {
         try {
             waitForConnection();

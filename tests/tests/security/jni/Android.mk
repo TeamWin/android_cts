@@ -28,7 +28,6 @@ LOCAL_SRC_FILES := \
 		android_security_cts_LinuxRngTest.cpp \
 		android_security_cts_NativeCodeTest.cpp \
 		android_security_cts_SELinuxTest.cpp \
-		android_security_cts_SeccompTest.cpp \
 		android_security_cts_MMapExecutableTest.cpp \
 		android_security_cts_EncryptionTest.cpp \
 
@@ -40,8 +39,7 @@ LOCAL_SHARED_LIBRARIES := \
 		libselinux \
 		libc++ \
 		libpcre2 \
-		libpackagelistparser \
-
+		libpackagelistparser
 
 LOCAL_C_INCLUDES += ndk/sources/cpufeatures
 LOCAL_STATIC_LIBRARIES := cpufeatures

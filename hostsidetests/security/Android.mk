@@ -23,7 +23,7 @@ LOCAL_JAVA_RESOURCE_DIRS := res
 LOCAL_MODULE_TAGS := optional
 
 # tag this module as a cts test artifact
-LOCAL_COMPATIBILITY_SUITE := cts vts general-tests
+LOCAL_COMPATIBILITY_SUITE := cts vts general-tests sts
 
 # Must match the package name in CtsTestCaseList.mk
 LOCAL_MODULE := CtsSecurityHostTestCases
@@ -54,6 +54,8 @@ LOCAL_JAVA_RESOURCE_FILES := \
     $(HOST_OUT_EXECUTABLES)/checkseapp \
     $(HOST_OUT_EXECUTABLES)/checkfc \
     $(HOST_OUT_EXECUTABLES)/property_info_checker \
+    $(HOST_OUT_EXECUTABLES)/searchpolicy \
+    $(HOST_OUT_EXECUTABLES)/secilc \
     $(HOST_OUT_EXECUTABLES)/sepolicy_tests \
     $(HOST_OUT_EXECUTABLES)/treble_sepolicy_tests \
     $(HOST_OUT)/lib64/libsepolwrap.$(SHAREDLIB_EXT) \

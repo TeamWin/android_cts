@@ -44,6 +44,7 @@ import android.os.IBinder;
 import android.os.PowerManager;
 import android.os.ServiceManager;
 import android.os.SystemClock;
+import android.platform.test.annotations.AppModeFull;
 import android.support.test.filters.SmallTest;
 import android.platform.test.annotations.RequiresDevice;
 import android.util.Log;
@@ -71,6 +72,7 @@ import junit.framework.AssertionFailedError;
  */
 @SmallTest
 @RequiresDevice
+@AppModeFull(reason = "TODO: evaluate and port to instant")
 public class MediaPlayerDrmTest extends MediaPlayerDrmTestBase {
 
     private static final String LOG_TAG = "MediaPlayerDrmTest";

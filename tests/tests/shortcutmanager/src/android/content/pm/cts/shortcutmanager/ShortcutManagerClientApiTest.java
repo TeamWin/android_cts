@@ -237,14 +237,14 @@ public class ShortcutManagerClientApiTest extends ShortcutManagerCtsTestsBase {
     }
 
     public void testSetDynamicShortcuts() {
-        runWithCaller(mPackageContext1, () -> {
+        runWithCallerWithStrictMode(mPackageContext1, () -> {
             assertTrue(getManager().setDynamicShortcuts(list(
                     makeShortcut("s1", "title1"),
                     makeShortcut("s2", "title2"),
                     makeShortcut("s3", "title3"))));
         });
 
-        runWithCaller(mPackageContext1, () -> {
+        runWithCallerWithStrictMode(mPackageContext1, () -> {
             assertWith(getManager().getDynamicShortcuts())
                     .areAllEnabled()
                     .areAllDynamic()
@@ -265,12 +265,12 @@ public class ShortcutManagerClientApiTest extends ShortcutManagerCtsTestsBase {
         });
 
         // Publish from different package.
-        runWithCaller(mPackageContext2, () -> {
+        runWithCallerWithStrictMode(mPackageContext2, () -> {
             assertTrue(getManager().setDynamicShortcuts(list(
                     makeShortcut("s1x", "title1x"))));
         });
 
-        runWithCaller(mPackageContext2, () -> {
+        runWithCallerWithStrictMode(mPackageContext2, () -> {
             assertWith(getManager().getDynamicShortcuts())
                     .areAllEnabled()
                     .areAllDynamic()
@@ -285,7 +285,7 @@ public class ShortcutManagerClientApiTest extends ShortcutManagerCtsTestsBase {
         });
 
         // Package 1 still has the same shortcuts.
-        runWithCaller(mPackageContext1, () -> {
+        runWithCallerWithStrictMode(mPackageContext1, () -> {
             assertWith(getManager().getDynamicShortcuts())
                     .areAllEnabled()
                     .areAllDynamic()
@@ -305,12 +305,12 @@ public class ShortcutManagerClientApiTest extends ShortcutManagerCtsTestsBase {
                     .isEmpty();
         });
 
-        runWithCaller(mPackageContext1, () -> {
+        runWithCallerWithStrictMode(mPackageContext1, () -> {
             assertTrue(getManager().setDynamicShortcuts(list(
                     makeShortcut("s2", "title2-updated"))));
         });
 
-        runWithCaller(mPackageContext1, () -> {
+        runWithCallerWithStrictMode(mPackageContext1, () -> {
             assertWith(getManager().getDynamicShortcuts())
                     .areAllEnabled()
                     .areAllDynamic()
@@ -324,11 +324,11 @@ public class ShortcutManagerClientApiTest extends ShortcutManagerCtsTestsBase {
                     .isEmpty();
         });
 
-        runWithCaller(mPackageContext1, () -> {
+        runWithCallerWithStrictMode(mPackageContext1, () -> {
             assertTrue(getManager().setDynamicShortcuts(list()));
         });
 
-        runWithCaller(mPackageContext1, () -> {
+        runWithCallerWithStrictMode(mPackageContext1, () -> {
             assertWith(getManager().getDynamicShortcuts())
                     .isEmpty();
             assertWith(getManager().getPinnedShortcuts())
@@ -338,7 +338,7 @@ public class ShortcutManagerClientApiTest extends ShortcutManagerCtsTestsBase {
         });
 
         // Package2 still has the same shortcuts.
-        runWithCaller(mPackageContext2, () -> {
+        runWithCallerWithStrictMode(mPackageContext2, () -> {
             assertWith(getManager().getDynamicShortcuts())
                     .areAllEnabled()
                     .areAllDynamic()
@@ -364,7 +364,7 @@ public class ShortcutManagerClientApiTest extends ShortcutManagerCtsTestsBase {
                 getTestContext().getResources(), R.drawable.black_16x64));
         final Icon icon6 = Icon.createWithAdaptiveBitmap(BitmapFactory.decodeResource(
                 getTestContext().getResources(), R.drawable.black_32x32));
-        runWithCaller(mPackageContext1, () -> {
+        runWithCallerWithStrictMode(mPackageContext1, () -> {
             final ShortcutInfo source = makeShortcutBuilder("s1")
                     .setShortLabel("shortlabel")
                     .setLongLabel("longlabel")
@@ -395,7 +395,7 @@ public class ShortcutManagerClientApiTest extends ShortcutManagerCtsTestsBase {
                     icon1);
         });
 
-        runWithCaller(mPackageContext1, () -> {
+        runWithCallerWithStrictMode(mPackageContext1, () -> {
             // No fields updated.
             final ShortcutInfo updated = makeShortcutBuilder("s1")
                     .setShortLabel("xxx")
@@ -421,7 +421,7 @@ public class ShortcutManagerClientApiTest extends ShortcutManagerCtsTestsBase {
                     getIconAsLauncher(mLauncherContext1, mPackageContext1.getPackageName(), "s1"));
         });
 
-        runWithCaller(mPackageContext1, () -> {
+        runWithCallerWithStrictMode(mPackageContext1, () -> {
             final ShortcutInfo source = makeShortcutBuilder("s1")
                     .setShortLabel("shortlabel")
                     .setLongLabel("longlabel")
@@ -453,7 +453,7 @@ public class ShortcutManagerClientApiTest extends ShortcutManagerCtsTestsBase {
         });
 
         // paranoid icon check
-        runWithCaller(mPackageContext1, () -> {
+        runWithCallerWithStrictMode(mPackageContext1, () -> {
             // No fields updated.
             final ShortcutInfo updated = makeShortcutBuilder("s1")
                     .setShortLabel("xxx")
@@ -472,7 +472,7 @@ public class ShortcutManagerClientApiTest extends ShortcutManagerCtsTestsBase {
                     icon2);
         });
 
-        runWithCaller(mPackageContext1, () -> {
+        runWithCallerWithStrictMode(mPackageContext1, () -> {
             // No fields updated.
             final ShortcutInfo updated = makeShortcutBuilder("s1")
                     .setShortLabel("xxx")
@@ -492,7 +492,7 @@ public class ShortcutManagerClientApiTest extends ShortcutManagerCtsTestsBase {
         });
 
 
-        runWithCaller(mPackageContext1, () -> {
+        runWithCallerWithStrictMode(mPackageContext1, () -> {
             // No fields updated.
             final ShortcutInfo updated = makeShortcutBuilder("s1")
                     .setShortLabel("xxx")
@@ -510,7 +510,7 @@ public class ShortcutManagerClientApiTest extends ShortcutManagerCtsTestsBase {
             assertIconDimensions(mLauncherContext1, mPackageContext1.getPackageName(), "s1",
                     icon4);
         });
-        runWithCaller(mPackageContext1, () -> {
+        runWithCallerWithStrictMode(mPackageContext1, () -> {
             // No fields updated.
             final ShortcutInfo updated = makeShortcutBuilder("s1")
                     .setShortLabel("xxx")
@@ -528,7 +528,7 @@ public class ShortcutManagerClientApiTest extends ShortcutManagerCtsTestsBase {
             assertIconDimensions(mLauncherContext1, mPackageContext1.getPackageName(), "s1",
                     icon5);
         });
-        runWithCaller(mPackageContext1, () -> {
+        runWithCallerWithStrictMode(mPackageContext1, () -> {
             // No fields updated.
             final ShortcutInfo updated = makeShortcutBuilder("s1")
                     .setShortLabel("xxx")
@@ -550,18 +550,18 @@ public class ShortcutManagerClientApiTest extends ShortcutManagerCtsTestsBase {
 
     public void testSetDynamicShortcuts_wasPinned() throws Exception {
         // Create s1 as a floating pinned shortcut.
-        runWithCaller(mPackageContext1, () -> {
+        runWithCallerWithStrictMode(mPackageContext1, () -> {
             assertTrue(getManager().setDynamicShortcuts(list(
                     makeShortcut("s1"))));
         });
 
         setDefaultLauncher(getInstrumentation(), mLauncherContext1);
 
-        runWithCaller(mLauncherContext1, () -> {
+        runWithCallerWithStrictMode(mLauncherContext1, () -> {
             getLauncherApps().pinShortcuts(mPackageContext1.getPackageName(),
                     list("s1"), getUserHandle());
         });
-        runWithCaller(mPackageContext1, () -> {
+        runWithCallerWithStrictMode(mPackageContext1, () -> {
             getManager().removeDynamicShortcuts(list("s1"));
 
             assertWith(getManager().getDynamicShortcuts())
@@ -575,14 +575,14 @@ public class ShortcutManagerClientApiTest extends ShortcutManagerCtsTestsBase {
     }
 
     public void testAddDynamicShortcuts() {
-        runWithCaller(mPackageContext1, () -> {
+        runWithCallerWithStrictMode(mPackageContext1, () -> {
             assertTrue(getManager().addDynamicShortcuts(list(
                     makeShortcut("s1", "title1"),
                     makeShortcut("s2", "title2"),
                     makeShortcut("s3", "title3"))));
         });
 
-        runWithCaller(mPackageContext1, () -> {
+        runWithCallerWithStrictMode(mPackageContext1, () -> {
             assertWith(getManager().getDynamicShortcuts())
                     .areAllEnabled()
                     .areAllDynamic()
@@ -603,12 +603,12 @@ public class ShortcutManagerClientApiTest extends ShortcutManagerCtsTestsBase {
         });
 
         // Publish from different package.
-        runWithCaller(mPackageContext2, () -> {
+        runWithCallerWithStrictMode(mPackageContext2, () -> {
             assertTrue(getManager().addDynamicShortcuts(list(
                     makeShortcut("s1x", "title1x"))));
         });
 
-        runWithCaller(mPackageContext2, () -> {
+        runWithCallerWithStrictMode(mPackageContext2, () -> {
             assertWith(getManager().getDynamicShortcuts())
                     .areAllEnabled()
                     .areAllDynamic()
@@ -623,7 +623,7 @@ public class ShortcutManagerClientApiTest extends ShortcutManagerCtsTestsBase {
         });
 
         // Package 1 still has the same shortcuts.
-        runWithCaller(mPackageContext1, () -> {
+        runWithCallerWithStrictMode(mPackageContext1, () -> {
             assertWith(getManager().getDynamicShortcuts())
                     .areAllEnabled()
                     .areAllDynamic()
@@ -643,12 +643,12 @@ public class ShortcutManagerClientApiTest extends ShortcutManagerCtsTestsBase {
                     .isEmpty();
         });
 
-        runWithCaller(mPackageContext1, () -> {
+        runWithCallerWithStrictMode(mPackageContext1, () -> {
             assertTrue(getManager().addDynamicShortcuts(list(
                     makeShortcut("s2", "title2-updated"))));
         });
 
-        runWithCaller(mPackageContext1, () -> {
+        runWithCallerWithStrictMode(mPackageContext1, () -> {
             assertWith(getManager().getDynamicShortcuts())
                     .areAllEnabled()
                     .areAllDynamic()
@@ -668,11 +668,11 @@ public class ShortcutManagerClientApiTest extends ShortcutManagerCtsTestsBase {
                     .isEmpty();
         });
 
-        runWithCaller(mPackageContext1, () -> {
+        runWithCallerWithStrictMode(mPackageContext1, () -> {
             assertTrue(getManager().addDynamicShortcuts(list()));
         });
 
-        runWithCaller(mPackageContext1, () -> {
+        runWithCallerWithStrictMode(mPackageContext1, () -> {
             assertWith(getManager().getDynamicShortcuts())
                     .areAllEnabled()
                     .areAllDynamic()
@@ -693,7 +693,7 @@ public class ShortcutManagerClientApiTest extends ShortcutManagerCtsTestsBase {
         });
 
         // Package2 still has the same shortcuts.
-        runWithCaller(mPackageContext2, () -> {
+        runWithCallerWithStrictMode(mPackageContext2, () -> {
             assertWith(getManager().getDynamicShortcuts())
                     .areAllEnabled()
                     .areAllDynamic()
@@ -716,7 +716,7 @@ public class ShortcutManagerClientApiTest extends ShortcutManagerCtsTestsBase {
         final Icon icon3 = loadPackageDrawableIcon(mPackageContext1, "black_64x16");
         final Icon icon4 = loadPackageDrawableIcon(mPackageContext1, "black_64x64");
 
-        runWithCaller(mPackageContext1, () -> {
+        runWithCallerWithStrictMode(mPackageContext1, () -> {
             final ShortcutInfo source = makeShortcutBuilder("s1")
                     .setShortLabel("shortlabel")
                     .setLongLabel("longlabel")
@@ -747,7 +747,7 @@ public class ShortcutManagerClientApiTest extends ShortcutManagerCtsTestsBase {
                     icon1);
         });
 
-        runWithCaller(mPackageContext1, () -> {
+        runWithCallerWithStrictMode(mPackageContext1, () -> {
             // No fields updated.
             final ShortcutInfo updated = makeShortcutBuilder("s1")
                     .setShortLabel("xxx")
@@ -773,7 +773,7 @@ public class ShortcutManagerClientApiTest extends ShortcutManagerCtsTestsBase {
                     getIconAsLauncher(mLauncherContext1, mPackageContext1.getPackageName(), "s1"));
         });
 
-        runWithCaller(mPackageContext1, () -> {
+        runWithCallerWithStrictMode(mPackageContext1, () -> {
             final ShortcutInfo source = makeShortcutBuilder("s1")
                     .setShortLabel("shortlabel")
                     .setLongLabel("longlabel")
@@ -805,7 +805,7 @@ public class ShortcutManagerClientApiTest extends ShortcutManagerCtsTestsBase {
         });
 
         // paranoid icon check
-        runWithCaller(mPackageContext1, () -> {
+        runWithCallerWithStrictMode(mPackageContext1, () -> {
             // No fields updated.
             final ShortcutInfo updated = makeShortcutBuilder("s1")
                     .setShortLabel("xxx")
@@ -824,7 +824,7 @@ public class ShortcutManagerClientApiTest extends ShortcutManagerCtsTestsBase {
                     icon2);
         });
 
-        runWithCaller(mPackageContext1, () -> {
+        runWithCallerWithStrictMode(mPackageContext1, () -> {
             // No fields updated.
             final ShortcutInfo updated = makeShortcutBuilder("s1")
                     .setShortLabel("xxx")
@@ -844,7 +844,7 @@ public class ShortcutManagerClientApiTest extends ShortcutManagerCtsTestsBase {
         });
 
 
-        runWithCaller(mPackageContext1, () -> {
+        runWithCallerWithStrictMode(mPackageContext1, () -> {
             // No fields updated.
             final ShortcutInfo updated = makeShortcutBuilder("s1")
                     .setShortLabel("xxx")
@@ -866,18 +866,18 @@ public class ShortcutManagerClientApiTest extends ShortcutManagerCtsTestsBase {
 
     public void testAddDynamicShortcuts_wasPinned() throws Exception {
         // Create s1 as a floating pinned shortcut.
-        runWithCaller(mPackageContext1, () -> {
+        runWithCallerWithStrictMode(mPackageContext1, () -> {
             assertTrue(getManager().setDynamicShortcuts(list(
                     makeShortcut("s1"))));
         });
 
         setDefaultLauncher(getInstrumentation(), mLauncherContext1);
 
-        runWithCaller(mLauncherContext1, () -> {
+        runWithCallerWithStrictMode(mLauncherContext1, () -> {
             getLauncherApps().pinShortcuts(mPackageContext1.getPackageName(),
                     list("s1"), getUserHandle());
         });
-        runWithCaller(mPackageContext1, () -> {
+        runWithCallerWithStrictMode(mPackageContext1, () -> {
             getManager().removeDynamicShortcuts(list("s1"));
 
             assertWith(getManager().getDynamicShortcuts())
@@ -891,13 +891,13 @@ public class ShortcutManagerClientApiTest extends ShortcutManagerCtsTestsBase {
     }
 
     public void testUpdateShortcut() {
-        runWithCaller(mPackageContext1, () -> {
+        runWithCallerWithStrictMode(mPackageContext1, () -> {
             assertTrue(getManager().setDynamicShortcuts(list(
                     makeShortcut("s1", "1a"),
                     makeShortcut("s2", "2a"),
                     makeShortcut("s3", "3a"))));
         });
-        runWithCaller(mPackageContext2, () -> {
+        runWithCallerWithStrictMode(mPackageContext2, () -> {
             assertTrue(getManager().setDynamicShortcuts(list(
                     makeShortcut("s1", "1b"),
                     makeShortcut("s2", "2b"),
@@ -906,21 +906,21 @@ public class ShortcutManagerClientApiTest extends ShortcutManagerCtsTestsBase {
 
         setDefaultLauncher(getInstrumentation(), mLauncherContext1);
 
-        runWithCaller(mLauncherContext1, () -> {
+        runWithCallerWithStrictMode(mLauncherContext1, () -> {
             getLauncherApps().pinShortcuts(mPackageContext1.getPackageName(),
                     list("s2", "s3"), getUserHandle());
             getLauncherApps().pinShortcuts(mPackageContext2.getPackageName(),
                     list("s1", "s2"), getUserHandle());
         });
-        runWithCaller(mPackageContext1, () -> {
+        runWithCallerWithStrictMode(mPackageContext1, () -> {
             getManager().removeDynamicShortcuts(list("s3"));
         });
-        runWithCaller(mPackageContext2, () -> {
+        runWithCallerWithStrictMode(mPackageContext2, () -> {
             getManager().removeDynamicShortcuts(list("s1"));
         });
 
         // Check the current status.
-        runWithCaller(mPackageContext1, () -> {
+        runWithCallerWithStrictMode(mPackageContext1, () -> {
             assertWith(getManager().getDynamicShortcuts())
                     .areAllEnabled()
                     .areAllDynamic()
@@ -946,7 +946,7 @@ public class ShortcutManagerClientApiTest extends ShortcutManagerCtsTestsBase {
             assertWith(getManager().getManifestShortcuts())
                     .isEmpty();
         });
-        runWithCaller(mPackageContext2, () -> {
+        runWithCallerWithStrictMode(mPackageContext2, () -> {
             assertWith(getManager().getDynamicShortcuts())
                     .areAllEnabled()
                     .areAllDynamic()
@@ -974,21 +974,21 @@ public class ShortcutManagerClientApiTest extends ShortcutManagerCtsTestsBase {
         });
 
         // finally, call update.
-        runWithCaller(mPackageContext1, () -> {
+        runWithCallerWithStrictMode(mPackageContext1, () -> {
             assertTrue(getManager().updateShortcuts(list(
                     makeShortcut("s1", "upd1a"),
                     makeShortcut("s2", "upd2a"),
                     makeShortcut("xxx") // doen't exist -> ignored.
                     )));
         });
-        runWithCaller(mPackageContext2, () -> {
+        runWithCallerWithStrictMode(mPackageContext2, () -> {
             assertTrue(getManager().updateShortcuts(list(
                     makeShortcut("s1", "upd1b"),
                     makeShortcut("s2", "upd2b"))));
         });
 
         // check.
-        runWithCaller(mPackageContext1, () -> {
+        runWithCallerWithStrictMode(mPackageContext1, () -> {
             assertWith(getManager().getDynamicShortcuts())
                     .areAllEnabled()
                     .areAllDynamic()
@@ -1014,7 +1014,7 @@ public class ShortcutManagerClientApiTest extends ShortcutManagerCtsTestsBase {
             assertWith(getManager().getManifestShortcuts())
                     .isEmpty();
         });
-        runWithCaller(mPackageContext2, () -> {
+        runWithCallerWithStrictMode(mPackageContext2, () -> {
             assertWith(getManager().getDynamicShortcuts())
                     .areAllEnabled()
                     .areAllDynamic()
@@ -1050,7 +1050,7 @@ public class ShortcutManagerClientApiTest extends ShortcutManagerCtsTestsBase {
         final Icon icon3 = loadPackageDrawableIcon(mPackageContext1, "black_64x16");
         final Icon icon4 = loadPackageDrawableIcon(mPackageContext1, "black_64x64");
 
-        runWithCaller(mPackageContext1, () -> {
+        runWithCallerWithStrictMode(mPackageContext1, () -> {
             final ShortcutInfo source = makeShortcutBuilder("s1")
                     .setShortLabel("shortlabel")
                     .setLongLabel("longlabel")
@@ -1081,7 +1081,7 @@ public class ShortcutManagerClientApiTest extends ShortcutManagerCtsTestsBase {
                     icon1);
         });
 
-        runWithCaller(mPackageContext1, () -> {
+        runWithCallerWithStrictMode(mPackageContext1, () -> {
             // No fields updated.
             final ShortcutInfo updated = makeShortcutBuilder("s1")
                     .build();
@@ -1105,7 +1105,7 @@ public class ShortcutManagerClientApiTest extends ShortcutManagerCtsTestsBase {
                     icon1);
         });
 
-        runWithCaller(mPackageContext1, () -> {
+        runWithCallerWithStrictMode(mPackageContext1, () -> {
             final ShortcutInfo updated = makeShortcutBuilder("s1")
                     .setShortLabel("x")
                     .build();
@@ -1129,7 +1129,7 @@ public class ShortcutManagerClientApiTest extends ShortcutManagerCtsTestsBase {
                     icon1);
         });
 
-        runWithCaller(mPackageContext1, () -> {
+        runWithCallerWithStrictMode(mPackageContext1, () -> {
             final ShortcutInfo updated = makeShortcutBuilder("s1")
                     .setLongLabel("y")
                     .build();
@@ -1153,7 +1153,7 @@ public class ShortcutManagerClientApiTest extends ShortcutManagerCtsTestsBase {
                     icon1);
         });
 
-        runWithCaller(mPackageContext1, () -> {
+        runWithCallerWithStrictMode(mPackageContext1, () -> {
             final ShortcutInfo updated = makeShortcutBuilder("s1")
                     .setActivity(getActivity("Launcher2"))
                     .build();
@@ -1177,7 +1177,7 @@ public class ShortcutManagerClientApiTest extends ShortcutManagerCtsTestsBase {
                     icon1);
         });
 
-        runWithCaller(mPackageContext1, () -> {
+        runWithCallerWithStrictMode(mPackageContext1, () -> {
             final ShortcutInfo updated = makeShortcutBuilder("s1")
                     .setDisabledMessage("z")
                     .build();
@@ -1201,7 +1201,7 @@ public class ShortcutManagerClientApiTest extends ShortcutManagerCtsTestsBase {
                     icon1);
         });
 
-        runWithCaller(mPackageContext1, () -> {
+        runWithCallerWithStrictMode(mPackageContext1, () -> {
             final ShortcutInfo updated = makeShortcutBuilder("s1")
                     .setIntents(new Intent[]{new Intent("main")})
                     .build();
@@ -1225,7 +1225,7 @@ public class ShortcutManagerClientApiTest extends ShortcutManagerCtsTestsBase {
                     icon1);
         });
 
-        runWithCaller(mPackageContext1, () -> {
+        runWithCallerWithStrictMode(mPackageContext1, () -> {
             final ShortcutInfo updated = makeShortcutBuilder("s1")
                     .setExtras(makePersistableBundle("ek1", "X"))
                     .build();
@@ -1249,7 +1249,7 @@ public class ShortcutManagerClientApiTest extends ShortcutManagerCtsTestsBase {
                     icon1);
         });
 
-        runWithCaller(mPackageContext1, () -> {
+        runWithCallerWithStrictMode(mPackageContext1, () -> {
             final ShortcutInfo updated = makeShortcutBuilder("s1")
                     .setCategories(set("dog"))
                     .build();
@@ -1273,7 +1273,7 @@ public class ShortcutManagerClientApiTest extends ShortcutManagerCtsTestsBase {
                     icon1);
         });
 
-        runWithCaller(mPackageContext1, () -> {
+        runWithCallerWithStrictMode(mPackageContext1, () -> {
             final ShortcutInfo updated = makeShortcutBuilder("s1")
                     .setIcon(icon2)
                     .build();
@@ -1298,7 +1298,7 @@ public class ShortcutManagerClientApiTest extends ShortcutManagerCtsTestsBase {
         });
 
         // More paranoid tests with icons.
-        runWithCaller(mPackageContext1, () -> {
+        runWithCallerWithStrictMode(mPackageContext1, () -> {
             final ShortcutInfo updated = makeShortcutBuilder("s1")
                     .setIcon(icon1)
                     .build();
@@ -1310,7 +1310,7 @@ public class ShortcutManagerClientApiTest extends ShortcutManagerCtsTestsBase {
         });
 
         // More paranoid tests with icons.
-        runWithCaller(mPackageContext1, () -> {
+        runWithCallerWithStrictMode(mPackageContext1, () -> {
             final ShortcutInfo updated = makeShortcutBuilder("s1")
                     .setIcon(icon3)
                     .build();
@@ -1321,7 +1321,7 @@ public class ShortcutManagerClientApiTest extends ShortcutManagerCtsTestsBase {
                     icon3);
         });
 
-        runWithCaller(mPackageContext1, () -> {
+        runWithCallerWithStrictMode(mPackageContext1, () -> {
             final ShortcutInfo updated = makeShortcutBuilder("s1")
                     .setIcon(icon4)
                     .build();
@@ -1332,7 +1332,7 @@ public class ShortcutManagerClientApiTest extends ShortcutManagerCtsTestsBase {
                     icon4);
         });
 
-        runWithCaller(mPackageContext1, () -> {
+        runWithCallerWithStrictMode(mPackageContext1, () -> {
             final ShortcutInfo updated = makeShortcutBuilder("s1")
                     .setIcon(icon1)
                     .build();
@@ -1355,13 +1355,13 @@ public class ShortcutManagerClientApiTest extends ShortcutManagerCtsTestsBase {
     }
 
     public void testDisableAndEnableShortcut() {
-        runWithCaller(mPackageContext1, () -> {
+        runWithCallerWithStrictMode(mPackageContext1, () -> {
             assertTrue(getManager().setDynamicShortcuts(list(
                     makeShortcut("s1", "1a"),
                     makeShortcut("s2", "2a"),
                     makeShortcut("s3", "3a"))));
         });
-        runWithCaller(mPackageContext2, () -> {
+        runWithCallerWithStrictMode(mPackageContext2, () -> {
             assertTrue(getManager().setDynamicShortcuts(list(
                     makeShortcut("s1", "1b"),
                     makeShortcut("s2", "2b"),
@@ -1370,21 +1370,21 @@ public class ShortcutManagerClientApiTest extends ShortcutManagerCtsTestsBase {
 
         setDefaultLauncher(getInstrumentation(), mLauncherContext1);
 
-        runWithCaller(mLauncherContext1, () -> {
+        runWithCallerWithStrictMode(mLauncherContext1, () -> {
             getLauncherApps().pinShortcuts(mPackageContext1.getPackageName(),
                     list("s2", "s3"), getUserHandle());
             getLauncherApps().pinShortcuts(mPackageContext2.getPackageName(),
                     list("s1", "s2"), getUserHandle());
         });
-        runWithCaller(mPackageContext1, () -> {
+        runWithCallerWithStrictMode(mPackageContext1, () -> {
             getManager().removeDynamicShortcuts(list("s3"));
         });
-        runWithCaller(mPackageContext2, () -> {
+        runWithCallerWithStrictMode(mPackageContext2, () -> {
             getManager().removeDynamicShortcuts(list("s1"));
         });
 
         // Check the current status.
-        runWithCaller(mPackageContext1, () -> {
+        runWithCallerWithStrictMode(mPackageContext1, () -> {
             assertWith(getManager().getDynamicShortcuts())
                     .areAllEnabled()
                     .areAllDynamic()
@@ -1410,7 +1410,7 @@ public class ShortcutManagerClientApiTest extends ShortcutManagerCtsTestsBase {
             assertWith(getManager().getManifestShortcuts())
                     .isEmpty();
         });
-        runWithCaller(mPackageContext2, () -> {
+        runWithCallerWithStrictMode(mPackageContext2, () -> {
             assertWith(getManager().getDynamicShortcuts())
                     .areAllEnabled()
                     .areAllDynamic()
@@ -1438,15 +1438,15 @@ public class ShortcutManagerClientApiTest extends ShortcutManagerCtsTestsBase {
         });
 
         // finally, call disable.
-        runWithCaller(mPackageContext1, () -> {
+        runWithCallerWithStrictMode(mPackageContext1, () -> {
             getManager().disableShortcuts(list("s1", "s3"));
         });
-        runWithCaller(mPackageContext2, () -> {
+        runWithCallerWithStrictMode(mPackageContext2, () -> {
             getManager().disableShortcuts(list("s1", "s2"), "custom message");
         });
 
         // check
-        runWithCaller(mPackageContext1, () -> {
+        runWithCallerWithStrictMode(mPackageContext1, () -> {
             assertWith(getManager().getDynamicShortcuts())
                     .areAllEnabled()
                     .areAllDynamic()
@@ -1472,7 +1472,7 @@ public class ShortcutManagerClientApiTest extends ShortcutManagerCtsTestsBase {
                     .isEmpty();
         });
 
-        runWithCaller(mPackageContext2, () -> {
+        runWithCallerWithStrictMode(mPackageContext2, () -> {
             assertWith(getManager().getDynamicShortcuts())
                     .areAllEnabled()
                     .areAllDynamic()
@@ -1499,10 +1499,10 @@ public class ShortcutManagerClientApiTest extends ShortcutManagerCtsTestsBase {
         });
 
         // try re-enable
-        runWithCaller(mPackageContext1, () -> {
+        runWithCallerWithStrictMode(mPackageContext1, () -> {
             getManager().enableShortcuts(list("s3"));
         });
-        runWithCaller(mPackageContext1, () -> {
+        runWithCallerWithStrictMode(mPackageContext1, () -> {
             assertWith(getManager().getDynamicShortcuts())
                     .areAllEnabled()
                     .areAllDynamic()
@@ -1527,11 +1527,11 @@ public class ShortcutManagerClientApiTest extends ShortcutManagerCtsTestsBase {
         });
 
         // Re-publish will implicitly re-enable.
-        runWithCaller(mPackageContext2, () -> {
+        runWithCallerWithStrictMode(mPackageContext2, () -> {
             getManager().addDynamicShortcuts(list(makeShortcut("s2", "re-published")));
         });
 
-        runWithCaller(mPackageContext2, () -> {
+        runWithCallerWithStrictMode(mPackageContext2, () -> {
             assertWith(getManager().getDynamicShortcuts())
                     .areAllEnabled()
                     .areAllDynamic()
@@ -1553,7 +1553,7 @@ public class ShortcutManagerClientApiTest extends ShortcutManagerCtsTestsBase {
     }
 
     public void testImmutableShortcuts() {
-        runWithCaller(mPackageContext1, () -> {
+        runWithCallerWithStrictMode(mPackageContext1, () -> {
             enableManifestActivity("Launcher_manifest_2", true);
 
             retryUntil(() -> getManager().getManifestShortcuts().size() == 2,
@@ -1561,11 +1561,11 @@ public class ShortcutManagerClientApiTest extends ShortcutManagerCtsTestsBase {
         });
         setDefaultLauncher(getInstrumentation(), mLauncherContext1);
 
-        runWithCaller(mLauncherContext1, () -> {
+        runWithCallerWithStrictMode(mLauncherContext1, () -> {
             getLauncherApps().pinShortcuts(mPackageContext1.getPackageName(),
                     list("ms21"), getUserHandle());
         });
-        runWithCaller(mPackageContext1, () -> {
+        runWithCallerWithStrictMode(mPackageContext1, () -> {
             enableManifestActivity("Launcher_manifest_1", true);
             enableManifestActivity("Launcher_manifest_2", false);
 
@@ -1573,7 +1573,7 @@ public class ShortcutManagerClientApiTest extends ShortcutManagerCtsTestsBase {
                     "Manifest shortcuts didn't show up");
         });
         setDefaultLauncher(getInstrumentation(), mLauncherContext1);
-        runWithCaller(mPackageContext1, () -> {
+        runWithCallerWithStrictMode(mPackageContext1, () -> {
             assertWith(getManager().getDynamicShortcuts())
                     .isEmpty();
             assertWith(getManager().getPinnedShortcuts())
@@ -1613,7 +1613,7 @@ public class ShortcutManagerClientApiTest extends ShortcutManagerCtsTestsBase {
     public void testManifestDefinition() throws Exception {
         final Icon iconMs21 = loadPackageDrawableIcon(mPackageContext1, "black_16x16");
 
-        runWithCaller(mPackageContext1, () -> {
+        runWithCallerWithStrictMode(mPackageContext1, () -> {
             enableManifestActivity("Launcher_manifest_2", true);
 
             retryUntil(() -> getManager().getManifestShortcuts().size() > 0,
@@ -1690,7 +1690,7 @@ public class ShortcutManagerClientApiTest extends ShortcutManagerCtsTestsBase {
     }
 
     public void testDynamicIntents() {
-        runWithCaller(mPackageContext1, () -> {
+        runWithCallerWithStrictMode(mPackageContext1, () -> {
 
             final ShortcutInfo s1 = makeShortcutBuilder("s1")
                     .setShortLabel("shortlabel")
@@ -1757,7 +1757,7 @@ public class ShortcutManagerClientApiTest extends ShortcutManagerCtsTestsBase {
     }
 
     public void testManifestWithErrors() {
-        runWithCaller(mPackageContext1, () -> {
+        runWithCallerWithStrictMode(mPackageContext1, () -> {
             enableManifestActivity("Launcher_manifest_error_1", true);
             enableManifestActivity("Launcher_manifest_error_2", true);
             enableManifestActivity("Launcher_manifest_error_3", true);
@@ -1775,7 +1775,7 @@ public class ShortcutManagerClientApiTest extends ShortcutManagerCtsTestsBase {
     }
 
     public void testManifestDisabled() {
-        runWithCaller(mPackageContext1, () -> {
+        runWithCallerWithStrictMode(mPackageContext1, () -> {
             enableManifestActivity("Launcher_manifest_4a", true);
 
             retryUntil(() -> getManager().getManifestShortcuts().size() > 0,
@@ -1789,11 +1789,11 @@ public class ShortcutManagerClientApiTest extends ShortcutManagerCtsTestsBase {
         });
         setDefaultLauncher(getInstrumentation(), mLauncherContext1);
 
-        runWithCaller(mLauncherContext1, () -> {
+        runWithCallerWithStrictMode(mLauncherContext1, () -> {
             getLauncherApps().pinShortcuts(mPackageContext1.getPackageName(),
                     list("ms41", "ms42"), getUserHandle());
         });
-        runWithCaller(mPackageContext1, () -> {
+        runWithCallerWithStrictMode(mPackageContext1, () -> {
             enableManifestActivity("Launcher_manifest_4b", true);
             enableManifestActivity("Launcher_manifest_4a", false);
 

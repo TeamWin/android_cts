@@ -19,12 +19,15 @@ LOCAL_PATH := $(call my-dir)
 include $(CLEAR_VARS)
 
 LOCAL_MODULE_TAGS := tests
-LOCAL_SDK_VERSION := current
-LOCAL_STATIC_JAVA_LIBRARIES := android-support-test legacy-android-test
+LOCAL_STATIC_JAVA_LIBRARIES := android-support-test
+
+LOCAL_JAVA_LIBRARIES := android.test.runner.stubs android.test.base.stubs
 
 LOCAL_SRC_FILES := $(call all-java-files-under, src)
 
 LOCAL_PACKAGE_NAME := CtsSplitApp
+LOCAL_SDK_VERSION := current
+LOCAL_MIN_SDK_VERSION := 4
 LOCAL_PACKAGE_SPLITS := mdpi-v4 hdpi-v4 xhdpi-v4 xxhdpi-v4 v7 fr de
 
 # Tag this module as a cts test artifact
@@ -38,10 +41,6 @@ LOCAL_AAPT_FLAGS := --version-code 100 --version-name OneHundred --replace-versi
 LOCAL_PROGUARD_ENABLED := disabled
 LOCAL_DEX_PREOPT := false
 
-# TODO(b/80322746): enable AAPT2 when error linking against this package is fixed:
-# cts/hostsidetests/appsecurity/test-apps/SplitApp/feature/AndroidManifest.xml:31: error: resource xml/my_activity_meta (aka com.android.cts.splitapp:xml/my_activity_meta) not found.
-LOCAL_USE_AAPT2 := false
-
 LOCAL_EXPORT_PACKAGE_RESOURCES := true
 
 include $(BUILD_CTS_SUPPORT_PACKAGE)
@@ -54,7 +53,9 @@ include $(CLEAR_VARS)
 
 LOCAL_MODULE_TAGS := tests
 LOCAL_SDK_VERSION := current
-LOCAL_STATIC_JAVA_LIBRARIES := android-support-test legacy-android-test
+LOCAL_STATIC_JAVA_LIBRARIES := android-support-test
+
+LOCAL_JAVA_LIBRARIES := android.test.runner.stubs android.test.base.stubs
 
 LOCAL_SRC_FILES := $(call all-java-files-under, src)
 
@@ -81,7 +82,9 @@ include $(CLEAR_VARS)
 
 LOCAL_MODULE_TAGS := tests
 LOCAL_SDK_VERSION := current
-LOCAL_STATIC_JAVA_LIBRARIES := android-support-test legacy-android-test
+LOCAL_STATIC_JAVA_LIBRARIES := android-support-test
+
+LOCAL_JAVA_LIBRARIES := android.test.runner.stubs android.test.base.stubs
 
 LOCAL_SRC_FILES := $(call all-java-files-under, src)
 
@@ -107,7 +110,9 @@ include $(CLEAR_VARS)
 
 LOCAL_MODULE_TAGS := tests
 LOCAL_SDK_VERSION := current
-LOCAL_STATIC_JAVA_LIBRARIES := android-support-test legacy-android-test
+LOCAL_STATIC_JAVA_LIBRARIES := android-support-test
+
+LOCAL_JAVA_LIBRARIES := android.test.runner.stubs android.test.base.stubs
 
 LOCAL_SRC_FILES := $(call all-java-files-under, src)
 

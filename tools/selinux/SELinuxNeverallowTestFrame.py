@@ -35,10 +35,13 @@ import java.io.InputStreamReader;
  * Neverallow Rules SELinux tests.
  */
 public class SELinuxNeverallowRulesTest extends DeviceTestCase implements IBuildReceiver, IDeviceTest {
+    private static final int P_SEPOLICY_VERSION = 28;
     private File sepolicyAnalyze;
     private File devicePolicyFile;
+    private File deviceSystemPolicyFile;
 
     private IBuildInfo mBuild;
+    private int mVendorSepolicyVersion = -1;
 
     /**
      * A reference to the device under test.
@@ -69,6 +72,17 @@ public class SELinuxNeverallowRulesTest extends DeviceTestCase implements IBuild
         sepolicyAnalyze.setExecutable(true);
 
         devicePolicyFile = android.security.cts.SELinuxHostTest.getDevicePolicyFile(mDevice);
+
+        if (isSepolicySplit()) {
+            deviceSystemPolicyFile =
+                    android.security.cts.SELinuxHostTest.getDeviceSystemPolicyFile(mDevice);
+
+            // Caching this variable to save time.
+            if (mVendorSepolicyVersion == -1) {
+                mVendorSepolicyVersion =
+                        android.security.cts.SELinuxHostTest.getVendorSepolicyVersion(mDevice);
+            }
+        }
     }
 
     private boolean isFullTrebleDevice() throws Exception {
@@ -77,6 +91,10 @@ public class SELinuxNeverallowRulesTest extends DeviceTestCase implements IBuild
 
     private boolean isCompatiblePropertyEnforcedDevice() throws Exception {
         return android.security.cts.SELinuxHostTest.isCompatiblePropertyEnforcedDevice(mDevice);
+    }
+
+    private boolean isSepolicySplit() throws Exception {
+        return android.security.cts.SELinuxHostTest.isSepolicySplit(mDevice);
     }
 """
 src_body = ""
@@ -100,9 +118,16 @@ src_method = """
             return;
         }
 
+        // If sepolicy is split and vendor sepolicy version is behind platform's,
+        // only test against platform policy.
+        File policyFile =
+                (isSepolicySplit() && mVendorSepolicyVersion < P_SEPOLICY_VERSION) ?
+                deviceSystemPolicyFile :
+                devicePolicyFile;
+
         /* run sepolicy-analyze neverallow check on policy file using given neverallow rules */
         ProcessBuilder pb = new ProcessBuilder(sepolicyAnalyze.getAbsolutePath(),
-                devicePolicyFile.getAbsolutePath(), "neverallow", "-w", "-n",
+                policyFile.getAbsolutePath(), "neverallow", "-w", "-n",
                 neverallowRule);
         pb.redirectOutput(ProcessBuilder.Redirect.PIPE);
         pb.redirectErrorStream(true);

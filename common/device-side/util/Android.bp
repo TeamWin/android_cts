@@ -17,7 +17,7 @@ java_library_static {
     sdk_version: "test_current",
 
     srcs: [
-        "src/**/*.java",
+       "src/**/*.java",
         "src/**/*.aidl",
     ],
 
@@ -26,8 +26,11 @@ java_library_static {
         "android-support-test",
         "ub-uiautomator",
         "mockito-target-minus-junit4",
-        "legacy-android-test",
+        "androidx.annotation_annotation",
     ],
 
-    libs: ["android.test.runner"],
+    libs: [
+        "android.test.runner.stubs",
+        "android.test.base.stubs",
+    ],
 }

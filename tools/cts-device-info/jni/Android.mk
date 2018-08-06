@@ -30,7 +30,6 @@ LOCAL_NDK_STL_VARIANT := c++_static
 
 LOCAL_CFLAGS := -Wall -Werror
 
-# Would be "current" if that was supported for native code.
-LOCAL_SDK_VERSION := 24
+LOCAL_SDK_VERSION := current
 
 include $(BUILD_SHARED_LIBRARY)

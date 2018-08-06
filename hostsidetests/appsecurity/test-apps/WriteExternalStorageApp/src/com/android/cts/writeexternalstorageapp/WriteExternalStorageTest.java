@@ -168,6 +168,7 @@ public class WriteExternalStorageTest extends AndroidTestCase {
         final File otherCache = new File(ourCache.getAbsolutePath()
                 .replace(getContext().getPackageName(), PACKAGE_NONE));
         deleteContents(otherCache);
+        otherCache.delete();
 
         assertTrue(otherCache.mkdirs());
         assertDirReadWriteAccess(otherCache);

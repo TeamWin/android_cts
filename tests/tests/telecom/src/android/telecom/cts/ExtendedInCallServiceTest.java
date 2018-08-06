@@ -138,7 +138,9 @@ public class ExtendedInCallServiceTest extends BaseTelecomTestWithMockServices {
 
         // Call requestBluetoothAudio on a dummy device. This will be a noop since no devices are
         // connected.
-        ((InCallService) inCallService).requestBluetoothAudio(TestUtils.BLUETOOTH_DEVICE1);
+        if(TestUtils.HAS_BLUETOOTH) {
+            ((InCallService) inCallService).requestBluetoothAudio(TestUtils.BLUETOOTH_DEVICE1);
+        }
     }
 
     /**

@@ -174,11 +174,13 @@ public class OpenGlEsVersionTest {
 
         String extensions = mActivity.getExtensionsString();
         final String requiredList[] = {
-            "EXT_protected_textures",
-            "EXT_multisampled_render_to_texture",
-            "OVR_multiview",
-            "OVR_multiview_multisampled_render_to_texture",
-            "OVR_multiview2",
+            "GL_EXT_EGL_image_array",
+            "GL_EXT_external_buffer",
+            "GL_EXT_multisampled_render_to_texture2",
+            "GL_EXT_protected_textures",
+            "GL_OVR_multiview",
+            "GL_OVR_multiview2",
+            "GL_OVR_multiview_multisampled_render_to_texture",
         };
 
         for (int i = 0; i < requiredList.length; ++i) {
@@ -190,14 +192,17 @@ public class OpenGlEsVersionTest {
         EGLDisplay display = egl.eglGetDisplay(EGL10.EGL_DEFAULT_DISPLAY);
         extensions = egl.eglQueryString(display, EGL10.EGL_EXTENSIONS);
         final String requiredEglList[] = {
-            "EGL_ANDROID_get_native_client_buffer",
             "EGL_ANDROID_front_buffer_auto_refresh",
+            "EGL_ANDROID_get_native_client_buffer",
+            "EGL_EXT_image_gl_colorspace",
             "EGL_EXT_protected_content",
+            "EGL_IMG_context_priority",
+            "EGL_KHR_fence_sync",
             "EGL_KHR_mutable_render_buffer",
             "EGL_KHR_wait_sync",
         };
 
-        for (int i = 0; i < requiredList.length; ++i) {
+        for (int i = 0; i < requiredEglList.length; ++i) {
             assertTrue("Required EGL extension for VR high-performance is missing: " +
                 requiredEglList[i], hasExtension(extensions, requiredEglList[i]));
         }
@@ -370,8 +375,8 @@ public class OpenGlEsVersionTest {
     }
 
     /**
-     * Return whether the system supports FEATURE_VR_MODE and
-     * FEATURE_VR_MODE_HIGH_PERFORMANCE. This is used to skip some tests.
+     * Return whether the system supports FEATURE_VR_MODE_HIGH_PERFORMANCE.
+     * This is used to skip some tests.
      */
     private boolean supportsVrHighPerformance() {
         PackageManager pm = mActivity.getPackageManager();

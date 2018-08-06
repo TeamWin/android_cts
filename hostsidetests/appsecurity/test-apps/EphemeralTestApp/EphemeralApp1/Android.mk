@@ -17,14 +17,13 @@
 LOCAL_PATH := $(call my-dir)
 include $(CLEAR_VARS)
 
-LOCAL_JAVA_LIBRARIES := android.test.runner
+LOCAL_JAVA_LIBRARIES := android.test.runner.stubs android.test.base.stubs
 LOCAL_MODULE_TAGS := tests
 LOCAL_STATIC_JAVA_LIBRARIES := \
     cts-aia-util \
     android-support-test \
-    legacy-android-test \
-	ctsdeviceutillegacy \
-	ctstestrunner
+    ctsdeviceutillegacy \
+    ctstestrunner
 
 # tag this module as a cts test artifact
 LOCAL_COMPATIBILITY_SUITE := cts vts general-tests

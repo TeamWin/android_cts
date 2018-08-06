@@ -29,7 +29,7 @@ LOCAL_CERTIFICATE := cts/hostsidetests/appsecurity/certs/keysets/cts-keyset-test
 
 LOCAL_ADDITIONAL_CERTIFICATES := cts/hostsidetests/appsecurity/certs/keysets/cts-keyset-test-a
 
-LOCAL_COMPATIBILITY_SUITE := cts vts general-tests
+LOCAL_COMPATIBILITY_SUITE := cts vts general-tests cts_instant
 
 LOCAL_PROGUARD_ENABLED := disabled
 

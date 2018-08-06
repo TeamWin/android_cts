@@ -33,7 +33,8 @@ LOCAL_STATIC_JAVA_LIBRARIES := \
     ctstestrunner \
     ub-uiautomator \
     ub-janktesthelper \
-    junit \
-    legacy-android-test
+    junit
+
+LOCAL_JAVA_LIBRARIES := android.test.base.stubs
 
 include $(BUILD_CTS_PACKAGE)

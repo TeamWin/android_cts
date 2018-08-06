@@ -41,6 +41,7 @@ CTS_THEME_dict = {
     360: "360dpi",
     400: "400dpi",
     420: "420dpi",
+    440: "440dpi",
     480: "xxhdpi",
     560: "560dpi",
     640: "xxxhdpi",
@@ -181,7 +182,10 @@ def get_emulator_path():
 
 
 def start_emulator(name, density):
-    emu_path = get_emulator_path()
+    if name == "local":
+        emu_path = ""
+    else:
+        emu_path = get_emulator_path()
 
     # Start emulator for 560dpi, normal screen size.
     test_avd = AVD(name, emu_path)
@@ -228,16 +232,19 @@ def main(argv):
 
         devices = enumerate_android_devices()
 
-        device_queue = Queue()
-        for device in devices:
-            device_queue.put(device)
+        if len(devices) > 0:
+            device_queue = Queue()
+            for device in devices:
+                device_queue.put(device)
 
-        result = execute_parallel(tasks, setup, device_queue, len(devices))
+            result = execute_parallel(tasks, setup, device_queue, len(devices))
 
-        if result > 0:
-            print('Generated reference images for %(count)d devices' % {"count": result})
+            if result > 0:
+                print('Generated reference images for %(count)d devices' % {"count": result})
+            else:
+                print('Failed to generate reference images')
         else:
-            print('Failed to generate reference images')
+            print('No devices found')
 
 
 if __name__ == '__main__':

@@ -30,6 +30,7 @@ import android.content.pm.PackageManager;
 import android.graphics.Bitmap;
 import android.graphics.Color;
 import android.os.SystemClock;
+import android.platform.test.annotations.AppModeFull;
 import android.support.test.rule.ActivityTestRule;
 import android.support.test.runner.AndroidJUnit4;
 import android.view.InputDevice;
@@ -42,8 +43,7 @@ import org.junit.runner.RunWith;
 /**
  * Test for light status bar.
  *
- * mmma cts/tests/tests/systemui
- * cts-tradefed run commandAndExit cts-dev --module CtsSystemUiTestCases --test android.systemui.cts.LightBarTests --disable-reboot --skip-device-info --skip-all-system-status-check --skip-preconditions
+ * atest CtsSystemUiTestCases:LightBarTests
  */
 @RunWith(AndroidJUnit4.class)
 public class LightBarTests extends LightBarTestBase {
@@ -68,26 +68,15 @@ public class LightBarTests extends LightBarTestBase {
             LightBarActivity.class);
 
     @Test
+    @AppModeFull // Instant apps cannot create notifications
     public void testLightStatusBarIcons() throws Throwable {
+        assumeHasColoredStatusBar();
+
         mNm = (NotificationManager) getInstrumentation().getContext()
                 .getSystemService(Context.NOTIFICATION_SERVICE);
         NotificationChannel channel1 = new NotificationChannel(NOTIFICATION_CHANNEL_ID,
                 NOTIFICATION_CHANNEL_ID, NotificationManager.IMPORTANCE_LOW);
         mNm.createNotificationChannel(channel1);
-
-        PackageManager pm = getInstrumentation().getContext().getPackageManager();
-        if (pm.hasSystemFeature(PackageManager.FEATURE_WATCH)
-                || pm.hasSystemFeature(PackageManager.FEATURE_TELEVISION)
-                || pm.hasSystemFeature(PackageManager.FEATURE_LEANBACK)
-                || isRunningInVR()) {
-            // No status bar on TVs, watches and when running in VR.
-            return;
-        }
-
-        if (!ActivityManager.isHighEndGfx()) {
-            // non-highEndGfx devices don't do colored system bars.
-            return;
-        }
 
         // post 10 notifications to ensure enough icons in the status bar
         for (int i = 0; i < 10; i++) {
@@ -113,25 +102,7 @@ public class LightBarTests extends LightBarTestBase {
 
     @Test
     public void testLightNavigationBar() throws Throwable {
-        PackageManager pm = getInstrumentation().getContext().getPackageManager();
-        if (pm.hasSystemFeature(PackageManager.FEATURE_WATCH)
-                || pm.hasSystemFeature(PackageManager.FEATURE_TELEVISION)
-                || pm.hasSystemFeature(PackageManager.FEATURE_LEANBACK)
-                || pm.hasSystemFeature(PackageManager.FEATURE_AUTOMOTIVE)) {
-            // No navigation bar on TVs and watches.
-            // Car navigation is not transparent.
-            return;
-        }
-
-        if (!ActivityManager.isHighEndGfx()) {
-            // non-highEndGfx devices don't do colored system bars.
-            return;
-        }
-
-        if (!hasVirtualNavigationBar()) {
-            // No virtual navigation bar, so no effect.
-            return;
-        }
+        assumeHasColorNavigationBar();
 
         requestLightBars(Color.RED /* background */);
         Thread.sleep(WAIT_TIME);
@@ -145,6 +116,19 @@ public class LightBarTests extends LightBarTestBase {
         Bitmap bitmap = takeNavigationBarScreenshot(mActivityRule.getActivity());
         Stats s = evaluateLightBarBitmap(bitmap, Color.RED /* background */);
         assertLightStats(bitmap, s);
+    }
+
+    @Test
+    public void testNavigationBarDivider() throws Throwable {
+        assumeHasColorNavigationBar();
+
+        mActivityRule.runOnUiThread(() -> {
+            mActivityRule.getActivity().getWindow().setNavigationBarColor(Color.RED);
+            mActivityRule.getActivity().getWindow().setNavigationBarDividerColor(Color.WHITE);
+        });
+        Thread.sleep(WAIT_TIME);
+
+        checkNavigationBarDivider(mActivityRule.getActivity(), Color.WHITE);
     }
 
     private void injectCanceledTap(int x, int y) {
@@ -188,14 +172,6 @@ public class LightBarTests extends LightBarTestBase {
                 dumpBitmap(bitmap);
             }
         }
-    }
-
-    private boolean isRunningInVR() {
-        final android.content.Context context =
-            android.support.test.InstrumentationRegistry.getContext();
-        android.content.res.Configuration config = context.getResources().getConfiguration();
-        return (config.uiMode & android.content.res.Configuration.UI_MODE_TYPE_MASK)
-        == android.content.res.Configuration.UI_MODE_TYPE_VR_HEADSET;
     }
 
     private void assertMoreThan(String what, float expected, float actual, String hint) {

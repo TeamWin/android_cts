@@ -25,7 +25,6 @@ LOCAL_MODULE := cts-tf-dalvik-lib
 LOCAL_MODULE_CLASS := JAVA_LIBRARIES
 LOCAL_MODULE_TAGS := optional
 LOCAL_JAVA_LIBRARIES := junit
--include cts/error_prone_rules_tests.mk
 include $(BUILD_JAVA_LIBRARY)
 
 cts-tf-dalvik-lib.jar := $(full_classes_jar)
