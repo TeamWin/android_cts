@@ -34,6 +34,7 @@ import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import android.support.test.InstrumentationRegistry;
 import android.view.nano.DisplayInfoProto;
+import android.view.nano.ViewProtoEnums;
 
 import com.android.server.wm.nano.AppTransitionProto;
 import com.android.server.wm.nano.AppWindowTokenProto;
@@ -256,68 +257,71 @@ public class WindowManagerState {
 
     static String appTransitionToString(int transition) {
         switch (transition) {
-            case AppTransitionProto.TRANSIT_UNSET: {
+            case ViewProtoEnums.TRANSIT_UNSET: {
                 return "TRANSIT_UNSET";
             }
-            case AppTransitionProto.TRANSIT_NONE: {
+            case ViewProtoEnums.TRANSIT_NONE: {
                 return "TRANSIT_NONE";
             }
-            case AppTransitionProto.TRANSIT_ACTIVITY_OPEN: {
+            case ViewProtoEnums.TRANSIT_ACTIVITY_OPEN: {
                 return TRANSIT_ACTIVITY_OPEN;
             }
-            case AppTransitionProto.TRANSIT_ACTIVITY_CLOSE: {
+            case ViewProtoEnums.TRANSIT_ACTIVITY_CLOSE: {
                 return TRANSIT_ACTIVITY_CLOSE;
             }
-            case AppTransitionProto.TRANSIT_TASK_OPEN: {
+            case ViewProtoEnums.TRANSIT_TASK_OPEN: {
                 return TRANSIT_TASK_OPEN;
             }
-            case AppTransitionProto.TRANSIT_TASK_CLOSE: {
+            case ViewProtoEnums.TRANSIT_TASK_CLOSE: {
                 return TRANSIT_TASK_CLOSE;
             }
-            case AppTransitionProto.TRANSIT_TASK_TO_FRONT: {
+            case ViewProtoEnums.TRANSIT_TASK_TO_FRONT: {
                 return "TRANSIT_TASK_TO_FRONT";
             }
-            case AppTransitionProto.TRANSIT_TASK_TO_BACK: {
+            case ViewProtoEnums.TRANSIT_TASK_TO_BACK: {
                 return "TRANSIT_TASK_TO_BACK";
             }
-            case AppTransitionProto.TRANSIT_WALLPAPER_CLOSE: {
+            case ViewProtoEnums.TRANSIT_WALLPAPER_CLOSE: {
                 return TRANSIT_WALLPAPER_CLOSE;
             }
-            case AppTransitionProto.TRANSIT_WALLPAPER_OPEN: {
+            case ViewProtoEnums.TRANSIT_WALLPAPER_OPEN: {
                 return TRANSIT_WALLPAPER_OPEN;
             }
-            case AppTransitionProto.TRANSIT_WALLPAPER_INTRA_OPEN: {
+            case ViewProtoEnums.TRANSIT_WALLPAPER_INTRA_OPEN: {
                 return TRANSIT_WALLPAPER_INTRA_OPEN;
             }
-            case AppTransitionProto.TRANSIT_WALLPAPER_INTRA_CLOSE: {
+            case ViewProtoEnums.TRANSIT_WALLPAPER_INTRA_CLOSE: {
                 return TRANSIT_WALLPAPER_INTRA_CLOSE;
             }
-            case AppTransitionProto.TRANSIT_TASK_OPEN_BEHIND: {
+            case ViewProtoEnums.TRANSIT_TASK_OPEN_BEHIND: {
                 return "TRANSIT_TASK_OPEN_BEHIND";
             }
-            case AppTransitionProto.TRANSIT_ACTIVITY_RELAUNCH: {
+            case ViewProtoEnums.TRANSIT_ACTIVITY_RELAUNCH: {
                 return "TRANSIT_ACTIVITY_RELAUNCH";
             }
-            case AppTransitionProto.TRANSIT_DOCK_TASK_FROM_RECENTS: {
+            case ViewProtoEnums.TRANSIT_DOCK_TASK_FROM_RECENTS: {
                 return "TRANSIT_DOCK_TASK_FROM_RECENTS";
             }
-            case AppTransitionProto.TRANSIT_KEYGUARD_GOING_AWAY: {
+            case ViewProtoEnums.TRANSIT_KEYGUARD_GOING_AWAY: {
                 return TRANSIT_KEYGUARD_GOING_AWAY;
             }
-            case AppTransitionProto.TRANSIT_KEYGUARD_GOING_AWAY_ON_WALLPAPER: {
+            case ViewProtoEnums.TRANSIT_KEYGUARD_GOING_AWAY_ON_WALLPAPER: {
                 return TRANSIT_KEYGUARD_GOING_AWAY_ON_WALLPAPER;
             }
-            case AppTransitionProto.TRANSIT_KEYGUARD_OCCLUDE: {
+            case ViewProtoEnums.TRANSIT_KEYGUARD_OCCLUDE: {
                 return TRANSIT_KEYGUARD_OCCLUDE;
             }
-            case AppTransitionProto.TRANSIT_KEYGUARD_UNOCCLUDE: {
+            case ViewProtoEnums.TRANSIT_KEYGUARD_UNOCCLUDE: {
                 return TRANSIT_KEYGUARD_UNOCCLUDE;
             }
-            case AppTransitionProto.TRANSIT_TRANSLUCENT_ACTIVITY_OPEN: {
+            case ViewProtoEnums.TRANSIT_TRANSLUCENT_ACTIVITY_OPEN: {
                 return TRANSIT_TRANSLUCENT_ACTIVITY_OPEN;
             }
-            case AppTransitionProto.TRANSIT_TRANSLUCENT_ACTIVITY_CLOSE: {
+            case ViewProtoEnums.TRANSIT_TRANSLUCENT_ACTIVITY_CLOSE: {
                 return TRANSIT_TRANSLUCENT_ACTIVITY_CLOSE;
+            }
+            case ViewProtoEnums.TRANSIT_CRASHING_ACTIVITY_CLOSE: {
+                return "TRANSIT_CRASHING_ACTIVITY_CLOSE";
             }
             default: {
                 fail("Invalid lastUsedAppTransition");
