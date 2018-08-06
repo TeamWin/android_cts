@@ -86,6 +86,11 @@ public class ProfileManager {
                 "<InputDevInfo ChanCounts=\"1\" ChanPosMasks=\"16\" ChanIndexMasks=\"1\" Encodings=\"2\" SampleRates=\"44100,48000\" />" +
                 "<ButtonInfo HasBtnA=\"1\" HasBtnB=\"1\" HasBtnC=\"1\" />" +
             "</PeripheralProfile>" +
+            "<PeripheralProfile ProfileName=\"Libratone Q Adapt\" ProfileDescription=\"Libratone Q Adapt Headset\" ProductName=\"USB-Audio - Libratone_INEAR\">" +
+                "<OutputDevInfo ChanCounts=\"2\" ChanPosMasks=\"12\" ChanIndexMasks=\"3\" Encodings=\"2\" SampleRates=\"48000\" />" +
+                "<InputDevInfo ChanCounts=\"1,2\" ChanPosMasks=\"12,16\" ChanIndexMasks=\"1\" Encodings=\"2\" SampleRates=\"48000\" />"+
+                "<ButtonInfo HasBtnA=\"1\" HasBtnB=\"1\" HasBtnC=\"1\" />" +
+            "</PeripheralProfile>" +
         "</ProfileList>";
 
     // XML Tags and Attributes
