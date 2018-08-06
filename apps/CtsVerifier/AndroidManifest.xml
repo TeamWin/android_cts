@@ -2110,7 +2110,7 @@
             </intent-filter>
             <meta-data android:name="test_category" android:value="@string/test_category_deskclock" />
             <meta-data android:name="test_excluded_features"
-                    android:value="android.hardware.type.television:android.software.leanback" />
+                    android:value="android.hardware.type.television:android.software.leanback:android.hardware.type.automotive" />
         </activity>
 
 <!-- TODO: enable when not requiring to tap the screen and timeouts are tuned -->
