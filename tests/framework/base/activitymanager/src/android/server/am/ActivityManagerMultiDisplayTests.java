@@ -91,7 +91,6 @@ import java.util.regex.Pattern;
  *     atest CtsActivityManagerDeviceTestCases:ActivityManagerMultiDisplayTests
  */
 @Presubmit
-@FlakyTest(bugId = 77652261)
 public class ActivityManagerMultiDisplayTests extends ActivityManagerDisplayTestBase {
     @Before
     @Override
@@ -105,6 +104,7 @@ public class ActivityManagerMultiDisplayTests extends ActivityManagerDisplayTest
      * Tests launching an activity on virtual display.
      */
     @Test
+    @FlakyTest(bugId = 77270929)
     public void testLaunchActivityOnSecondaryDisplay() throws Exception {
         validateActivityLaunchOnNewDisplay(ACTIVITY_TYPE_STANDARD);
         // TODO(b/111363427) Enable the tests cases once we have properly handled non-standard
@@ -245,6 +245,7 @@ public class ActivityManagerMultiDisplayTests extends ActivityManagerDisplayTest
      * land on the secondary display based on the resizeability of the root activity of the task.
      */
     @Test
+    @FlakyTest(bugId = 112055644)
     public void testLaunchNonResizeableActivityFromSecondaryDisplaySameTask() throws Exception {
         try (final VirtualDisplaySession virtualDisplaySession = new VirtualDisplaySession()) {
             // Create new simulated display.
@@ -268,6 +269,7 @@ public class ActivityManagerMultiDisplayTests extends ActivityManagerDisplayTest
      * there. It must land on some different suitable display (usually - on the default one).
      */
     @Test
+    @FlakyTest(bugId = 112055644)
     public void testLaunchNonResizeableActivityFromSecondaryDisplayNewTask() throws Exception {
         try (final VirtualDisplaySession virtualDisplaySession = new VirtualDisplaySession()) {
             // Create new virtual display.
@@ -336,6 +338,7 @@ public class ActivityManagerMultiDisplayTests extends ActivityManagerDisplayTest
      * for activities with same UID.
      */
     @Test
+    @FlakyTest(bugId = 112055644)
     public void testLaunchWithoutPermissionOnVirtualDisplayByOwner() throws Exception {
         try (final VirtualDisplaySession virtualDisplaySession = new VirtualDisplaySession()) {
             // Create new virtual display.
@@ -369,6 +372,7 @@ public class ActivityManagerMultiDisplayTests extends ActivityManagerDisplayTest
      * primary display.
      */
     @Test
+    @FlakyTest(bugId = 77469851)
     public void testConsequentLaunchActivity() throws Exception {
         try (final VirtualDisplaySession virtualDisplaySession = new VirtualDisplaySession()) {
             // Create new virtual display.
@@ -400,6 +404,7 @@ public class ActivityManagerMultiDisplayTests extends ActivityManagerDisplayTest
      * first one - it must appear on the secondary display, because it was launched from there.
      */
     @Test
+    @FlakyTest(bugId = 112055644)
     public void testConsequentLaunchActivityFromSecondaryDisplay() throws Exception {
         try (final VirtualDisplaySession virtualDisplaySession = new VirtualDisplaySession()) {
             // Create new simulated display.
@@ -452,6 +457,7 @@ public class ActivityManagerMultiDisplayTests extends ActivityManagerDisplayTest
      * first one with specifying the target display - it must appear on the secondary display.
      */
     @Test
+    @FlakyTest(bugId = 112055644)
     public void testConsequentLaunchActivityFromVirtualDisplayToTargetDisplay() throws Exception {
         try (final VirtualDisplaySession virtualDisplaySession = new VirtualDisplaySession()) {
             // Create new virtual display.
@@ -492,6 +498,7 @@ public class ActivityManagerMultiDisplayTests extends ActivityManagerDisplayTest
      * doesn't allow embedding - it should fail with security exception.
      */
     @Test
+    @FlakyTest(bugId = 112055644)
     public void testConsequentLaunchActivityFromVirtualDisplayNoEmbedding() throws Exception {
         try (final VirtualDisplaySession virtualDisplaySession = new VirtualDisplaySession()) {
             // Create new virtual display.
@@ -519,6 +526,7 @@ public class ActivityManagerMultiDisplayTests extends ActivityManagerDisplayTest
      * Tests launching an activity to secondary display from activity on primary display.
      */
     @Test
+    @FlakyTest(bugId = 112055644)
     public void testLaunchActivityFromAppToSecondaryDisplay() throws Exception {
         // Start launching activity.
         launchActivity(LAUNCHING_ACTIVITY);
@@ -620,6 +628,7 @@ public class ActivityManagerMultiDisplayTests extends ActivityManagerDisplayTest
      * This version launches virtual display creator to fullscreen stack in split-screen.
      */
     @Test
+    @FlakyTest(bugId = 77207453)
     public void testStackFocusSwitchOnDisplayRemoved() throws Exception {
         assumeTrue(supportsSplitScreenMultiWindow());
 
@@ -639,6 +648,7 @@ public class ActivityManagerMultiDisplayTests extends ActivityManagerDisplayTest
      * This version launches virtual display creator to docked stack in split-screen.
      */
     @Test
+    @FlakyTest(bugId = 77207453)
     public void testStackFocusSwitchOnDisplayRemoved2() throws Exception {
         assumeTrue(supportsSplitScreenMultiWindow());
 
@@ -723,6 +733,7 @@ public class ActivityManagerMultiDisplayTests extends ActivityManagerDisplayTest
      * is moved correctly.
      */
     @Test
+    @FlakyTest(bugId = 112055644)
     public void testStackFocusSwitchOnStackEmptiedInSleeping() throws Exception {
         try (final VirtualDisplaySession virtualDisplaySession = new VirtualDisplaySession();
              final LockScreenSession lockScreenSession = new LockScreenSession()) {
@@ -735,6 +746,7 @@ public class ActivityManagerMultiDisplayTests extends ActivityManagerDisplayTest
      * is moved correctly.
      */
     @Test
+    @FlakyTest(bugId = 112055644)
     public void testStackFocusSwitchOnStackEmptied() throws Exception {
         try (final VirtualDisplaySession virtualDisplaySession = new VirtualDisplaySession()) {
             validateStackFocusSwitchOnStackEmptied(virtualDisplaySession,
@@ -775,6 +787,7 @@ public class ActivityManagerMultiDisplayTests extends ActivityManagerDisplayTest
      * Tests that input events on the primary display take focus from the virtual display.
      */
     @Test
+    @FlakyTest(bugId = 112055644)
     public void testStackFocusSwitchOnTouchEvent() throws Exception {
         try (final VirtualDisplaySession virtualDisplaySession = new VirtualDisplaySession()) {
             // Create new virtual display.
@@ -954,6 +967,7 @@ public class ActivityManagerMultiDisplayTests extends ActivityManagerDisplayTest
      * doesn't have anything on the display.
      */
     @Test
+    @FlakyTest(bugId = 112055644)
     public void testPermissionLaunchFromOwner() throws Exception {
         try (final VirtualDisplaySession virtualDisplaySession = new VirtualDisplaySession()) {
             // Create new virtual display.
@@ -1053,6 +1067,7 @@ public class ActivityManagerMultiDisplayTests extends ActivityManagerDisplayTest
      * Test that only private virtual display can show content with insecure keyguard.
      */
     @Test
+    @FlakyTest(bugId = 112055644)
     public void testFlagShowWithInsecureKeyguardOnPublicVirtualDisplay() throws Exception {
         try (final VirtualDisplaySession virtualDisplaySession = new VirtualDisplaySession()) {
             // Try to create new show-with-insecure-keyguard public virtual display.
@@ -1179,6 +1194,7 @@ public class ActivityManagerMultiDisplayTests extends ActivityManagerDisplayTest
      * matching task on some other display - that task will moved to the target display.
      */
     @Test
+    @FlakyTest(bugId = 112055644)
     public void testMoveToDisplayOnLaunch() throws Exception {
         // Launch activity with unique affinity, so it will the only one in its task.
         launchActivity(LAUNCHING_ACTIVITY);
@@ -1373,6 +1389,7 @@ public class ActivityManagerMultiDisplayTests extends ActivityManagerDisplayTest
      * Tests that the task affinity search respects the launch display id.
      */
     @Test
+    @FlakyTest(bugId = 112055644)
     public void testLaunchDisplayAffinityMatch() throws Exception {
         try (final VirtualDisplaySession virtualDisplaySession = new VirtualDisplaySession()) {
             final ActivityDisplay newDisplay = virtualDisplaySession.createDisplay();
@@ -1416,6 +1433,7 @@ public class ActivityManagerMultiDisplayTests extends ActivityManagerDisplayTest
      * even if the focused stack is not on that activity's display.
      */
     @Test
+    @FlakyTest(bugId = 112055644)
     public void testNewTaskSameDisplay() throws Exception {
         try (final VirtualDisplaySession virtualDisplaySession = new VirtualDisplaySession()) {
             final ActivityDisplay newDisplay = virtualDisplaySession.setSimulateDisplay(true)
@@ -1549,6 +1567,7 @@ public class ActivityManagerMultiDisplayTests extends ActivityManagerDisplayTest
      * display is off.
      */
     @Test
+    @FlakyTest(bugId = 112055644)
     public void testLaunchExternalDisplayActivityWhilePrimaryOff() throws Exception {
         // Launch something on the primary display so we know there is a resumed activity there
         launchActivity(RESIZEABLE_ACTIVITY);
@@ -1611,6 +1630,7 @@ public class ActivityManagerMultiDisplayTests extends ActivityManagerDisplayTest
      * activity on the primary display.
      */
     @Test
+    @FlakyTest(bugId = 112055644)
     public void testStackFocusSwitchOnTouchEventAfterKeyguard() throws Exception {
         // Launch something on the primary display so we know there is a resumed activity there
         launchActivity(RESIZEABLE_ACTIVITY);
