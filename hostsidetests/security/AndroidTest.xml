@@ -156,6 +156,11 @@
         <!-- Please add tests solely from this bulletin below to avoid merge conflict -->
         <option name="push" value="CVE-2017-13253->/data/local/tmp/CVE-2017-13253" />
 
+        <!--__________________-->
+        <!-- Bulletin 2018-07 -->
+        <!-- Please add tests solely from this bulletin below to avoid merge conflict -->
+        <option name="push" value="CVE-2018-9424->/data/local/tmp/CVE-2018-9424" />
+
         <option name="append-bitness" value="true" />
     </target_preparer>
     <test class="com.android.compatibility.common.tradefed.testtype.JarHostTest" >
