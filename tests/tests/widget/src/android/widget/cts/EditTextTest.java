@@ -31,6 +31,7 @@ import android.support.test.filters.SmallTest;
 import android.support.test.rule.ActivityTestRule;
 import android.support.test.runner.AndroidJUnit4;
 import android.text.Editable;
+import android.text.Layout;
 import android.text.TextUtils;
 import android.text.method.ArrowKeyMovementMethod;
 import android.text.method.MovementMethod;
@@ -336,6 +337,20 @@ public class EditTextTest {
 
         assertEquals(mEditText1.getSelectionStart(), mEditText2.getSelectionStart());
         assertEquals(mEditText1.getSelectionEnd(), mEditText2.getSelectionEnd());
+    }
+
+    @Test
+    public void testHyphenationFrequencyDefaultValue() {
+        final Context context = InstrumentationRegistry.getTargetContext();
+        final EditText editText = new EditText(context);
+        assertEquals(Layout.HYPHENATION_FREQUENCY_NONE, editText.getHyphenationFrequency());
+    }
+
+    @Test
+    public void testBreakStrategyDefaultValue() {
+        final Context context = InstrumentationRegistry.getTargetContext();
+        final EditText editText = new EditText(context);
+        assertEquals(Layout.BREAK_STRATEGY_SIMPLE, editText.getBreakStrategy());
     }
 
     private class MockEditText extends EditText {
