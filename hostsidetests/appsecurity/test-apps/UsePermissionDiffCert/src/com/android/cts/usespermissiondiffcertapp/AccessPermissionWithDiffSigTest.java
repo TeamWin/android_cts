@@ -487,10 +487,18 @@ public class AccessPermissionWithDiffSigTest extends AndroidTestCase {
     }
 
     private void doTestGrantUriPermissionFail(Uri uri) {
-        grantUriPermissionFail(uri, Intent.FLAG_GRANT_READ_URI_PERMISSION, false);
-        grantUriPermissionFail(uri, Intent.FLAG_GRANT_WRITE_URI_PERMISSION, false);
-        grantUriPermissionFail(uri, Intent.FLAG_GRANT_READ_URI_PERMISSION, true);
-        grantUriPermissionFail(uri, Intent.FLAG_GRANT_WRITE_URI_PERMISSION, true);
+        for (boolean service : new boolean[] { false, true }) {
+            for (int flags : new int[] {
+                    Intent.FLAG_GRANT_READ_URI_PERMISSION, Intent.FLAG_GRANT_WRITE_URI_PERMISSION
+            }) {
+                grantUriPermissionFail(uri,
+                        flags, service);
+                grantUriPermissionFail(uri,
+                        flags | Intent.FLAG_GRANT_PERSISTABLE_URI_PERMISSION, service);
+                grantUriPermissionFail(uri,
+                        flags | Intent.FLAG_GRANT_PREFIX_URI_PERMISSION, service);
+            }
+        }
     }
     
     /**
