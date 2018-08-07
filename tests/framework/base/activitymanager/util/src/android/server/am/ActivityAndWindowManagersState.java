@@ -361,7 +361,7 @@ public class ActivityAndWindowManagersState {
             return true;
         }
         final int resumedActivitiesCount = mAmState.getResumedActivitiesCount();
-        if (!mAmState.getKeyguardControllerState().keyguardShowing && resumedActivitiesCount != 1) {
+        if (!mAmState.getKeyguardControllerState().keyguardShowing && resumedActivitiesCount < 1) {
             logAlways("***resumedActivitiesCount=" + resumedActivitiesCount);
             return true;
         }

@@ -231,18 +231,6 @@ public class MediaStore_Audio_Genres_MembersTest extends InstrumentationTestCase
             assertEquals(1, jamcnt2);
             c.close();
 
-
-            // update the member
-            values.clear();
-            values.put(Members.AUDIO_ID, mAudioIdOfJamLive);
-            try {
-                mContentResolver.update(membersUri, values, null, null);
-                fail("Should throw SQLException because there is no column with name "
-                        + "\"Members.AUDIO_ID\" in the table");
-            } catch (SQLException e) {
-                // expected
-            }
-
             // Delete the members, note that this does not delete the genre itself
             assertEquals(1, mContentResolver.delete(membersUri, null, null)); // check number of rows deleted
 
