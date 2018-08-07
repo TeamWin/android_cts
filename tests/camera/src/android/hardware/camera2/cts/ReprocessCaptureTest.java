@@ -148,7 +148,7 @@ public class ReprocessCaptureTest extends Camera2SurfaceViewTestCase  {
     /**
      * Test all supported size and format combinations.
      */
-    @Test
+    @Test(timeout=60*60*1000) // timeout = 60 mins for long running tests
     public void testReprocessingSizeFormat() throws Exception {
         for (String id : mCameraIds) {
             if (!isYuvReprocessSupported(id) && !isOpaqueReprocessSupported(id)) {
@@ -170,7 +170,7 @@ public class ReprocessCaptureTest extends Camera2SurfaceViewTestCase  {
     /**
      * Test all supported size and format combinations with preview.
      */
-    @Test
+    @Test(timeout=60*60*1000) // timeout = 60 mins for long running tests
     public void testReprocessingSizeFormatWithPreview() throws Exception {
         for (String id : mCameraIds) {
             if (!isYuvReprocessSupported(id) && !isOpaqueReprocessSupported(id)) {
@@ -299,7 +299,7 @@ public class ReprocessCaptureTest extends Camera2SurfaceViewTestCase  {
     /**
      * Test burst reprocessing captures with and without preview.
      */
-    @Test
+    @Test(timeout=60*60*1000) // timeout = 60 mins for long running tests
     public void testBurstReprocessing() throws Exception {
         for (String id : mCameraIds) {
             if (!isYuvReprocessSupported(id) && !isOpaqueReprocessSupported(id)) {
@@ -323,7 +323,7 @@ public class ReprocessCaptureTest extends Camera2SurfaceViewTestCase  {
     /**
      * Test burst captures mixed with regular and reprocess captures with and without preview.
      */
-    @Test
+    @Test(timeout=60*60*1000) // timeout = 60 mins for long running tests
     public void testMixedBurstReprocessing() throws Exception {
         for (String id : mCameraIds) {
             if (!isYuvReprocessSupported(id) && !isOpaqueReprocessSupported(id)) {
