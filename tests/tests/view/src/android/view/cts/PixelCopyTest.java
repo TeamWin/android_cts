@@ -272,7 +272,7 @@ public class PixelCopyTest {
     private Window waitForWindowProducerActivity() {
         PixelCopyViewProducerActivity activity =
                 mWindowSourceActivityRule.launchActivity(null);
-        activity.waitForFirstDrawCompleted(3, TimeUnit.SECONDS);
+        activity.waitForFirstDrawCompleted(10, TimeUnit.SECONDS);
         return activity.getWindow();
     }
 
@@ -382,7 +382,7 @@ public class PixelCopyTest {
     private Window waitForWideGamutWindowProducerActivity() {
         PixelCopyWideGamutViewProducerActivity activity =
                 mWideGamutWindowSourceActivityRule.launchActivity(null);
-        activity.waitForFirstDrawCompleted(3, TimeUnit.SECONDS);
+        activity.waitForFirstDrawCompleted(10, TimeUnit.SECONDS);
         return activity.getWindow();
     }
 
@@ -465,7 +465,7 @@ public class PixelCopyTest {
     private Window waitForDialogProducerActivity() {
         PixelCopyViewProducerActivity activity =
                 mDialogSourceActivityRule.launchActivity(null);
-        activity.waitForFirstDrawCompleted(3, TimeUnit.SECONDS);
+        activity.waitForFirstDrawCompleted(10, TimeUnit.SECONDS);
         return activity.getWindow();
     }
 
