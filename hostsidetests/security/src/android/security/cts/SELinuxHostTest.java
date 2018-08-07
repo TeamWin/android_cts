@@ -1118,7 +1118,7 @@ public class SELinuxHostTest extends DeviceTestCase implements IBuildReceiver, I
     /* Ueventd is always there */
     @CddTest(requirement="9.7")
     public void testUeventdDomain() throws DeviceNotAvailableException {
-        assertDomainOne("u:r:ueventd:s0", "/sbin/ueventd");
+        assertDomainOne("u:r:ueventd:s0", "/system/bin/ueventd");
     }
 
     /* healthd may or may not exist */
