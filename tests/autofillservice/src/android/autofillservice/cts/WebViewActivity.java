@@ -58,6 +58,12 @@ public class WebViewActivity extends AbstractAutoFillActivity {
     EditText mOutside1;
     EditText mOutside2;
 
+    private UiObject2 mUsernameLabel;
+    private UiObject2 mUsernameInput;
+    private UiObject2 mPasswordLabel;
+    private UiObject2 mPasswordInput;
+    private UiObject2 mLoginButton;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -123,9 +129,20 @@ public class WebViewActivity extends AbstractAutoFillActivity {
         // Sanity check to make sure autofill was enabled when the WebView was created
         assertThat(mWebView.isAutofillEnabled()).isTrue();
 
-        // TODO(b/80317628): re-add check below
+        // WebView builds its accessibility tree asynchronously and only after being queried the
+        // first time, so we should first find the WebView and query some of its properties,
+        // wait for its accessibility tree to be populated (by blocking until a known element
+        // appears), then cache the objects for further use.
+
         // NOTE: we cannot search by resourceId because WebView does not set them...
-        // uiBot.assertShownByText("Login", WEBVIEW_TIMEOUT); // Login button
+
+        // Wait for known element...
+        mUsernameLabel = uiBot.assertShownByText("Username: ", WEBVIEW_TIMEOUT);
+        // ...then cache the others
+        mUsernameInput = getInput(uiBot, mUsernameLabel);
+        mPasswordLabel = uiBot.findRightAwayByText("Password: ");
+        mPasswordInput = getInput(uiBot, mPasswordLabel);
+        mLoginButton = uiBot.findRightAwayByText("Login");
 
         return mWebView;
     }
@@ -137,33 +154,27 @@ public class WebViewActivity extends AbstractAutoFillActivity {
         });
     }
 
-    public UiObject2 getUsernameLabel(UiBot uiBot) throws Exception {
-        return getLabel(uiBot, "Username: ");
+    public UiObject2 getUsernameLabel() throws Exception {
+        return mUsernameLabel;
     }
 
-    public UiObject2 getPasswordLabel(UiBot uiBot) throws Exception {
-        return getLabel(uiBot, "Password: ");
+    public UiObject2 getPasswordLabel() throws Exception {
+        return mPasswordLabel;
     }
 
-    public UiObject2 getUsernameInput(UiBot uiBot) throws Exception {
-        return getInput(uiBot, "Username: ");
+    public UiObject2 getUsernameInput() throws Exception {
+        return mUsernameInput;
     }
 
-    public UiObject2 getPasswordInput(UiBot uiBot) throws Exception {
-        return getInput(uiBot, "Password: ");
+    public UiObject2 getPasswordInput() throws Exception {
+        return mPasswordInput;
     }
 
-    public UiObject2 getLoginButton(UiBot uiBot) throws Exception {
-        return getLabel(uiBot, "Login");
+    public UiObject2 getLoginButton() throws Exception {
+        return mLoginButton;
     }
 
-    private UiObject2 getLabel(UiBot uiBot, String label) throws Exception {
-        return uiBot.assertShownByText(label, WEBVIEW_TIMEOUT);
-    }
-
-    private UiObject2 getInput(UiBot uiBot, String contentDescription) throws Exception {
-        // First get the label..
-        final UiObject2 label = getLabel(uiBot, contentDescription);
+    private UiObject2 getInput(UiBot uiBot, UiObject2 label) throws Exception {
 
         // Then the input is next.
         final UiObject2 parent = label.getParent();
