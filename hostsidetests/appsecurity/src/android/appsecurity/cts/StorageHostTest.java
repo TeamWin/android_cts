@@ -16,9 +16,13 @@
 
 package android.appsecurity.cts;
 
-import com.android.compatibility.common.tradefed.testtype.CompatibilityHostTestBase;
+import com.android.ddmlib.testrunner.TestResult.TestStatus;
 import com.android.tradefed.device.DeviceNotAvailableException;
+import com.android.tradefed.result.TestDescription;
+import com.android.tradefed.result.TestResult;
+import com.android.tradefed.result.TestRunResult;
 import com.android.tradefed.testtype.DeviceJUnit4ClassRunner;
+import com.android.tradefed.testtype.junit4.BaseHostJUnit4Test;
 
 import junit.framework.AssertionFailedError;
 
@@ -27,13 +31,13 @@ import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
-import java.util.concurrent.TimeUnit;
+import java.util.Map;
 
 /**
  * Tests that exercise various storage APIs.
  */
 @RunWith(DeviceJUnit4ClassRunner.class)
-public class StorageHostTest extends CompatibilityHostTestBase {
+public class StorageHostTest extends BaseHostJUnit4Test {
     private static final String PKG_STATS = "com.android.cts.storagestatsapp";
     private static final String PKG_A = "com.android.cts.storageapp_a";
     private static final String PKG_B = "com.android.cts.storageapp_b";
@@ -69,8 +73,8 @@ public class StorageHostTest extends CompatibilityHostTestBase {
     }
 
     @Test
-    public void testVerifyQuota() throws Exception {
-        Utils.runDeviceTests(getDevice(), PKG_STATS, CLASS_STATS, "testVerifyQuota");
+    public void testVerify() throws Exception {
+        Utils.runDeviceTests(getDevice(), PKG_STATS, CLASS_STATS, "testVerify");
     }
 
     @Test
@@ -239,7 +243,22 @@ public class StorageHostTest extends CompatibilityHostTestBase {
 
     public void runDeviceTests(String packageName, String testClassName, String testMethodName,
             int userId) throws DeviceNotAvailableException {
-        Utils.runDeviceTests(getDevice(), packageName, testClassName, testMethodName, userId, null,
-                20L, TimeUnit.MINUTES);
+        if (!runDeviceTests(getDevice(), packageName, testClassName, testMethodName, userId, 20 * 60 * 1000L)) {
+            TestRunResult res = getLastDeviceRunResults();
+            if (res != null) {
+                StringBuilder errorBuilder = new StringBuilder("on-device tests failed:\n");
+                for (Map.Entry<TestDescription, TestResult> resultEntry :
+                    res.getTestResults().entrySet()) {
+                    if (!resultEntry.getValue().getStatus().equals(TestStatus.PASSED)) {
+                        errorBuilder.append(resultEntry.getKey().toString());
+                        errorBuilder.append(":\n");
+                        errorBuilder.append(resultEntry.getValue().getStackTrace());
+                    }
+                }
+                throw new AssertionError(errorBuilder.toString());
+            } else {
+                throw new AssertionFailedError("Error when running device tests.");
+            }
+        }
     }
 }

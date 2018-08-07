@@ -15,7 +15,10 @@
 -->
 
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
-        package="com.android.cts.splitapp">
+    package="com.android.cts.splitapp">
+    <!-- TODO(b/73365611) Remove targetSdkVersion once EncryptionApp tests
+         are fixed to no longer access SplitApp's data by path. -->
+    <uses-sdk android:minSdkVersion="4" android:targetSdkVersion="27" />
 
     <uses-permission android:name="android.permission.CAMERA" />
     <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED" />

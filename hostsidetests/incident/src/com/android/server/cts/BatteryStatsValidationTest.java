@@ -15,14 +15,9 @@
  */
 package com.android.server.cts;
 
-import com.android.ddmlib.IShellOutputReceiver;
 import com.android.tradefed.log.LogUtil;
 
-import com.google.common.base.Charsets;
-
 import java.util.Random;
-import java.util.concurrent.TimeUnit;
-import java.util.concurrent.atomic.AtomicBoolean;
 
 /**
  * Test for "dumpsys batterystats -c
@@ -49,13 +44,12 @@ public class BatteryStatsValidationTest extends ProtoDumpTestCase {
     public static final String FEATURE_BLUETOOTH_LE = "android.hardware.bluetooth_le";
     public static final String FEATURE_LEANBACK_ONLY = "android.software.leanback_only";
     public static final String FEATURE_LOCATION_GPS = "android.hardware.location.gps";
-    public static final String FEATURE_WIFI = "android.hardware.wifi";
 
     private static final int STATE_TIME_TOP_INDEX = 4;
     private static final int STATE_TIME_FOREGROUND_SERVICE_INDEX = 5;
-    private static final int STATE_TIME_FOREGROUND_INDEX = 7;
-    private static final int STATE_TIME_BACKGROUND_INDEX = 8;
-    private static final int STATE_TIME_CACHED_INDEX = 9;
+    private static final int STATE_TIME_FOREGROUND_INDEX = 6;
+    private static final int STATE_TIME_BACKGROUND_INDEX = 7;
+    private static final int STATE_TIME_CACHED_INDEX = 10;
 
     private static final long TIME_SPENT_IN_TOP = 2000;
     private static final long TIME_SPENT_IN_FOREGROUND = 2000;
@@ -71,7 +65,6 @@ public class BatteryStatsValidationTest extends ProtoDumpTestCase {
     public static final String ACTION_GPS = "action.gps";
     public static final String ACTION_JOB_SCHEDULE = "action.jobs";
     public static final String ACTION_SYNC = "action.sync";
-    public static final String ACTION_WIFI_SCAN = "action.wifi_scan";
     public static final String ACTION_SLEEP_WHILE_BACKGROUND = "action.sleep_background";
     public static final String ACTION_SLEEP_WHILE_TOP = "action.sleep_top";
     public static final String ACTION_SHOW_APPLICATION_OVERLAY = "action.show_application_overlay";
@@ -264,7 +257,7 @@ public class BatteryStatsValidationTest extends ProtoDumpTestCase {
                 } else if (keyguardStateLines && line.contains("showing=")) {
                     screenAwake &= line.trim().endsWith("false");
                 } else if (keyguardStateLines && line.contains("screenState=")) {
-                    screenAwake &= line.trim().endsWith("2");
+                    screenAwake &= line.trim().endsWith("SCREEN_STATE_ON");
                 }
             }
             Thread.sleep(SCREEN_STATE_POLLING_INTERVAL);
@@ -279,6 +272,8 @@ public class BatteryStatsValidationTest extends ProtoDumpTestCase {
 
         batteryOnScreenOff();
         installPackage(DEVICE_SIDE_TEST_APK, true);
+        turnScreenOnForReal();
+        assertScreenOn();
 
         // Background test.
         executeBackground(ACTION_BLE_SCAN_UNOPTIMIZED, 40_000);
@@ -300,7 +295,8 @@ public class BatteryStatsValidationTest extends ProtoDumpTestCase {
         }
         batteryOnScreenOff();
         installPackage(DEVICE_SIDE_TEST_APK, true);
-
+        turnScreenOnForReal();
+        assertScreenOn();
         // Ble scan time in BatteryStatsBgVsFgActions is 2 seconds, but be lenient.
         final int minTime = 1500; // min single scan time in ms
         final int maxTime = 3000; // max single scan time in ms
@@ -377,6 +373,9 @@ public class BatteryStatsValidationTest extends ProtoDumpTestCase {
         }
         batteryOnScreenOff();
         installPackage(DEVICE_SIDE_TEST_APK, true);
+        turnScreenOnForReal();
+        assertScreenOn();
+        allowImmediateSyncs();
 
         // Background test.
         executeBackground(ACTION_JOB_SCHEDULE, 60_000);
@@ -397,6 +396,9 @@ public class BatteryStatsValidationTest extends ProtoDumpTestCase {
         }
         batteryOnScreenOff();
         installPackage(DEVICE_SIDE_TEST_APK, true);
+        turnScreenOnForReal();
+        assertScreenOn();
+        allowImmediateSyncs();
 
         // Background test.
         executeBackground(ACTION_SYNC, 60_000);
@@ -408,34 +410,6 @@ public class BatteryStatsValidationTest extends ProtoDumpTestCase {
         executeForeground(ACTION_SYNC, 60_000);
         assertValueRange("sy", DEVICE_SIDE_SYNC_COMPONENT, 6, 2, 4); // count
         assertValueRange("sy", DEVICE_SIDE_SYNC_COMPONENT, 8, 1, 2); // background_count
-
-        batteryOffScreenOn();
-    }
-
-    public void testWifiScans() throws Exception {
-        if (isTV() || !hasFeature(FEATURE_WIFI, true)) {
-            return;
-        }
-
-        batteryOnScreenOff();
-        installPackage(DEVICE_SIDE_TEST_APK, true);
-        // Whitelist this app against background wifi scan throttling
-        getDevice().executeShellCommand(String.format(
-                "settings put global wifi_scan_background_throttle_package_whitelist %s",
-                DEVICE_SIDE_TEST_PACKAGE));
-
-        // Background count test.
-        executeBackground(ACTION_WIFI_SCAN, 120_000);
-        // Allow one or two scans because we try scanning twice and because we allow for the
-        // possibility that, when the test is started, a scan from a different uid was already being
-        // performed (causing the test to 'miss' a scan).
-        assertValueRange("wfl", "", 7, 1, 2); // scan_count
-        assertValueRange("wfl", "", 11, 1, 2); // scan_count_bg
-
-        // Foreground count test.
-        executeForeground(ACTION_WIFI_SCAN, 120_000);
-        assertValueRange("wfl", "", 7, 2, 4); // scan_count
-        assertValueRange("wfl", "", 11, 1, 2); // scan_count_bg
 
         batteryOffScreenOn();
     }
@@ -473,6 +447,7 @@ public class BatteryStatsValidationTest extends ProtoDumpTestCase {
         batteryOnScreenOff();
 
         installPackage(DEVICE_SIDE_TEST_APK, true);
+        allowImmediateSyncs();
 
         runDeviceTests(DEVICE_SIDE_TEST_PACKAGE, ".BatteryStatsJobDurationTests",
                 "testJobDuration");
@@ -490,6 +465,7 @@ public class BatteryStatsValidationTest extends ProtoDumpTestCase {
         batteryOnScreenOff();
 
         installPackage(DEVICE_SIDE_TEST_APK, true);
+        allowImmediateSyncs();
 
         runDeviceTests(DEVICE_SIDE_TEST_PACKAGE, ".BatteryStatsSyncTest", "testRunSyncs");
 
@@ -594,6 +570,12 @@ public class BatteryStatsValidationTest extends ProtoDumpTestCase {
                 "cmd deviceidle tempwhitelist %s", DEVICE_SIDE_TEST_PACKAGE));
     }
 
+    /** Make the test-app standby-active so it can run syncs and jobs immediately. */
+    protected void allowImmediateSyncs() throws Exception {
+        getDevice().executeShellCommand("am set-standby-bucket "
+                + DEVICE_SIDE_TEST_PACKAGE + " active");
+    }
+
     /**
      * Runs an activity (in the foreground) to perform the given action, and waits
      * for the device to report that the action has finished (via a logcat message) before returning.
@@ -635,64 +617,6 @@ public class BatteryStatsValidationTest extends ProtoDumpTestCase {
      */
     private String getCompletedActionString(String actionValue, String requestCode) {
         return String.format("Completed performing %s for request %s", actionValue, requestCode);
-    }
-
-    /**
-    * Runs logcat and waits (for a maximumum of maxTimeMs) until the desired text is displayed with
-    * the given tag.
-    * Logcat is not cleared, so make sure that text is unique (won't get false hits from old data).
-    * Note that, in practice, the actual max wait time seems to be about 10s longer than maxTimeMs.
-    */
-    private void checkLogcatForText(String logcatTag, String text, int maxTimeMs) {
-        IShellOutputReceiver receiver = new IShellOutputReceiver() {
-            private final StringBuilder mOutputBuffer = new StringBuilder();
-            private final AtomicBoolean mIsCanceled = new AtomicBoolean(false);
-
-            @Override
-            public void addOutput(byte[] data, int offset, int length) {
-                if (!isCancelled()) {
-                    synchronized (mOutputBuffer) {
-                        String s = new String(data, offset, length, Charsets.UTF_8);
-                        mOutputBuffer.append(s);
-                        if (checkBufferForText()) {
-                            mIsCanceled.set(true);
-                        }
-                    }
-                }
-            }
-
-            private boolean checkBufferForText() {
-                if (mOutputBuffer.indexOf(text) > -1) {
-                    return true;
-                } else {
-                    // delete all old data (except the last few chars) since they don't contain text
-                    // (presumably large chunks of data will be added at a time, so this is
-                    // sufficiently efficient.)
-                    int newStart = mOutputBuffer.length() - text.length();
-                    if (newStart > 0) {
-                        mOutputBuffer.delete(0, newStart);
-                    }
-                    return false;
-                }
-            }
-
-            @Override
-            public boolean isCancelled() {
-                return mIsCanceled.get();
-            }
-
-            @Override
-            public void flush() {
-            }
-        };
-
-        try {
-            // Wait for at most maxTimeMs for logcat to display the desired text.
-            getDevice().executeShellCommand(String.format("logcat -s %s -e '%s'", logcatTag, text),
-                    receiver, maxTimeMs, TimeUnit.MILLISECONDS, 0);
-        } catch (com.android.tradefed.device.DeviceNotAvailableException e) {
-            System.err.println(e);
-        }
     }
 
     /** Determine if device is just a TV and is not expected to have proper batterystats. */

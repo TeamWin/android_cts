@@ -45,7 +45,8 @@ def main():
                              its.caps.raw16(props) and
                              its.caps.manual_sensor(props) and
                              its.caps.read_3a(props) and
-                             its.caps.per_frame_control(props))
+                             its.caps.per_frame_control(props) and
+                             not its.caps.mono_camera(props))
         debug = its.caps.debug_mode()
 
         white_level = float(props['android.sensor.info.whiteLevel'])

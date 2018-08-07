@@ -38,6 +38,10 @@ LOCAL_DEX_PREOPT := false
 LOCAL_JACK_FLAGS := --multi-dex native
 LOCAL_DX_FLAGS := --multi-dex
 
+# Exclude apache harmony tests from coverage instrumentation, since it breaks
+# the tests of reflection APIs by adding fields and methods to the test classes.
+LOCAL_JACK_COVERAGE_EXCLUDE_FILTER := org.apache.harmony.tests.*
+
 LOCAL_PROGUARD_ENABLED := disabled
 # Keep META-INF/ resources from LOCAL_STATIC_JAVA_LIBRARIES. http://b/62341677
 LOCAL_DONT_DELETE_JAR_META_INF := true

@@ -13,22 +13,23 @@
 # limitations under the License.
 
 # Set of error prone rules to ensure code quality
-LOCAL_ERROR_PRONE_FLAGS:= -Xep:ArrayToString:ERROR \
-                          -Xep:BoxedPrimitiveConstructor:ERROR \
-                          -Xep:ConstantField:ERROR \
-                          -Xep:EqualsIncompatibleType:ERROR \
-                          -Xep:FormatString:ERROR \
-                          -Xep:GetClassOnClass:ERROR \
-                          -Xep:IdentityBinaryExpression:ERROR \
-                          -Xep:JUnit3TestNotRun:ERROR \
-                          -Xep:JUnitAmbiguousTestClass:ERROR \
-                          -Xep:MissingFail:ERROR \
-                          -Xep:MissingOverride:ERROR \
-                          -Xep:Overrides:ERROR \
-                          -Xep:ReferenceEquality:ERROR \
-                          -Xep:RemoveUnusedImports:ERROR \
-                          -Xep:ReturnValueIgnored:ERROR \
-                          -Xep:SelfEquals:ERROR \
-                          -Xep:SizeGreaterThanOrEqualsZero:ERROR \
-                          -Xep:TryFailThrowable:ERROR
+LOCAL_ERROR_PRONE_FLAGS += -Xep:ArrayToString:ERROR \
+                           -Xep:BoxedPrimitiveConstructor:ERROR \
+                           -Xep:ConstantField:ERROR \
+                           -Xep:EqualsIncompatibleType:ERROR \
+                           -Xep:FormatString:ERROR \
+                           -Xep:GetClassOnClass:ERROR \
+                           -Xep:IdentityBinaryExpression:ERROR \
+                           -Xep:JUnit3TestNotRun:ERROR \
+                           -Xep:JUnit4ClassUsedInJUnit3:ERROR \
+                           -Xep:JUnitAmbiguousTestClass:ERROR \
+                           -Xep:MissingFail:ERROR \
+                           -Xep:MissingOverride:ERROR \
+                           -Xep:Overrides:ERROR \
+                           -Xep:ReferenceEquality:ERROR \
+                           -Xep:RemoveUnusedImports:ERROR \
+                           -Xep:ReturnValueIgnored:ERROR \
+                           -Xep:SelfEquals:ERROR \
+                           -Xep:SizeGreaterThanOrEqualsZero:ERROR \
+                           -Xep:TryFailThrowable:ERROR \
 

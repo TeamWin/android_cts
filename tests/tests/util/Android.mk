@@ -24,11 +24,12 @@ LOCAL_MODULE_PATH := $(TARGET_OUT_DATA_APPS)
 # Tag this module as a cts test artifact
 LOCAL_COMPATIBILITY_SUITE := cts vts general-tests
 
+LOCAL_JAVA_LIBRARIES += android.test.runner.stubs
+
 LOCAL_STATIC_JAVA_LIBRARIES := \
-    android-support-annotations \
+    androidx.annotation_annotation \
     android-support-test \
-    ctstestrunner \
-    legacy-android-test
+    ctstestrunner
 
 LOCAL_SRC_FILES := $(call all-java-files-under, src)
 

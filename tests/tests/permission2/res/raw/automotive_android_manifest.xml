@@ -23,35 +23,74 @@
     <original-package android:name="com.android.car" />
 
     <permission-group
-        android:name="android.car.permission-group.CAR_INFORMATION"
+        android:name="android.car.permission-group.CAR_MONITORING"
         android:icon="@drawable/car_ic_mode"
         android:description="@string/car_permission_desc"
         android:label="@string/car_permission_label" />
     <permission
-        android:name="android.car.permission.CAR_CABIN"
+        android:name="android.car.permission.ADJUST_CAR_CABIN"
         android:protectionLevel="system|signature"
         android:label="@string/car_permission_label_cabin"
         android:description="@string/car_permission_desc_cabin" />
     <permission
-        android:name="android.car.permission.CAR_CAMERA"
-        android:protectionLevel="system|signature"
-        android:label="@string/car_permission_label_camera"
-        android:description="@string/car_permission_desc_camera" />
-    <permission
-        android:name="android.car.permission.CAR_FUEL"
-        android:permissionGroup="android.car.permission-group.CAR_INFORMATION"
+        android:name="android.car.permission.CAR_ENERGY"
+        android:permissionGroup="android.car.permission-group.CAR_MONITORING"
         android:protectionLevel="dangerous"
-        android:label="@string/car_permission_label_fuel"
-        android:description="@string/car_permission_desc_fuel" />
+        android:label="@string/car_permission_label_energy"
+        android:description="@string/car_permission_desc_energy" />
     <permission
-        android:name="android.car.permission.CAR_HVAC"
+        android:name="android.car.permission.CAR_EXTERIOR_ENVIRONMENT"
+        android:protectionLevel="normal"
+        android:label="@string/car_permission_label_car_exterior_environment"
+        android:description="@string/car_permission_desc_car_exterior_environment" />
+    <permission
+        android:name="android.car.permission.CAR_ENERGY_PORTS"
+        android:protectionLevel="normal"
+        android:label="@string/car_permission_label_car_energy_ports"
+        android:description="@string/car_permission_desc_car_energy_ports" />
+    <permission
+        android:name="android.car.permission.CAR_POWERTRAIN"
+        android:protectionLevel="normal"
+        android:label="@string/car_permission_label_car_powertrain"
+        android:description="@string/car_permission_desc_car_powertrain" />
+    <permission
+        android:name="android.car.permission.CAR_EXTERIOR_LIGHTS"
+        android:protectionLevel="system|signature"
+        android:label="@string/car_permission_label_car_exterior_lights"
+        android:description="@string/car_permission_desc_car_exterior_lights" />
+    <permission
+        android:name="android.car.permission.CONTROL_CAR_EXTERIOR_LIGHTS"
+        android:protectionLevel="system|signature"
+        android:label="@string/car_permission_label_control_car_exterior_lights"
+        android:description="@string/car_permission_desc_control_car_exterior_lights" />
+    <permission
+        android:name="android.car.permission.CONTROL_CAR_CLIMATE"
         android:protectionLevel="system|signature"
         android:label="@string/car_permission_label_hvac"
         android:description="@string/car_permission_desc_hvac" />
     <permission
+        android:name="android.car.permission.CONTROL_CAR_DOORS"
+        android:protectionLevel="system|signature"
+        android:label="@string/car_permission_label_control_car_doors"
+        android:description="@string/car_permission_desc_control_car_doors" />
+    <permission
+        android:name="android.car.permission.CONTROL_CAR_WINDOWS"
+        android:protectionLevel="system|signature"
+        android:label="@string/car_permission_label_control_car_windows"
+        android:description="@string/car_permission_desc_control_car_windows" />
+    <permission
+        android:name="android.car.permission.CONTROL_CAR_MIRRORS"
+        android:protectionLevel="system|signature"
+        android:label="@string/car_permission_label_control_car_mirrors"
+        android:description="@string/car_permission_desc_control_car_mirrors" />
+    <permission
+        android:name="android.car.permission.CONTROL_CAR_SEATS"
+        android:protectionLevel="system|signature"
+        android:label="@string/car_permission_label_control_car_seats"
+        android:description="@string/car_permission_desc_control_car_seats" />
+    <permission
         android:name="android.car.permission.CAR_MILEAGE"
-        android:permissionGroup="android.car.permission-group.CAR_INFORMATION"
-        android:protectionLevel="dangerous"
+        android:protectionLevel="system|signature"
         android:label="@string/car_permission_label_mileage"
         android:description="@string/car_permission_desc_mileage" />
     <permission
@@ -61,9 +100,28 @@
         android:label="@string/car_permission_label_speed"
         android:description="@string/car_permission_desc_speed" />
     <permission
-        android:name="android.car.permission.VEHICLE_DYNAMICS_STATE"
-        android:permissionGroup="android.car.permission-group.CAR_INFORMATION"
-        android:protectionLevel="dangerous"
+        android:name="android.car.permission.CAR_ENGINE_DETAILED"
+        android:protectionLevel="system|signature"
+        android:label="@string/car_permission_label_car_engine_detailed"
+        android:description="@string/car_permission_desc_car_engine_detailed" />
+    <permission
+        android:name="android.car.permission.CAR_TIRES"
+        android:protectionLevel="system|signature"
+        android:label="@string/car_permission_label_car_tires"
+        android:description="@string/car_permission_desc_car_tires" />
+    <permission
+        android:name="android.car.permission.CAR_IDENTIFICATION"
+        android:protectionLevel="system|signature"
+        android:label="@string/car_permission_label_car_identification"
+        android:description="@string/car_permission_desc_car_identification" />
+    <permission
+        android:name="android.car.permission.CAR_INFO"
+        android:protectionLevel="normal"
+        android:label="@string/car_permission_label_car_info"
+        android:description="@string/car_permission_desc_car_info" />
+    <permission
+        android:name="android.car.permission.CAR_DYNAMICS_STATE"
+        android:protectionLevel="system|signature"
         android:label="@string/car_permission_label_vehicle_dynamics_state"
         android:description="@string/car_permission_desc_vehicle_dynamics_state" />
     <permission
@@ -71,11 +129,6 @@
         android:protectionLevel="system|signature"
         android:label="@string/car_permission_label_vendor_extension"
         android:description="@string/car_permission_desc_vendor_extension" />
-    <permission
-        android:name="android.car.permission.CAR_RADIO"
-        android:protectionLevel="system|signature"
-        android:label="@string/car_permission_label_radio"
-        android:description="@string/car_permission_desc_radio" />
     <permission
         android:name="android.car.permission.CAR_PROJECTION"
         android:protectionLevel="system|signature"
@@ -92,15 +145,15 @@
         android:label="@string/car_permission_car_navigation_manager"
         android:description="@string/car_permission_desc_car_navigation_manager" />
     <permission
-      android:name="android.car.permission.DIAGNOSTIC_READ_ALL"
-      android:protectionLevel="system|signature"
-      android:label="@string/car_permission_label_diag_read"
-      android:description="@string/car_permission_desc_diag_read" />
+        android:name="android.car.permission.CAR_DIAGNOSTICS"
+        android:protectionLevel="system|signature"
+        android:label="@string/car_permission_label_diag_read"
+        android:description="@string/car_permission_desc_diag_read" />
     <permission
-      android:name="android.car.permission.DIAGNOSTIC_CLEAR"
-      android:protectionLevel="system|signature"
-      android:label="@string/car_permission_label_diag_clear"
-      android:description="@string/car_permission_desc_diag_clear" />
+        android:name="android.car.permission.CLEAR_CAR_DIAGNOSTICS"
+        android:protectionLevel="system|signature"
+        android:label="@string/car_permission_label_diag_clear"
+        android:description="@string/car_permission_desc_diag_clear" />
     <permission
         android:name="android.car.permission.VMS_PUBLISHER"
         android:protectionLevel="system|signature"
@@ -111,7 +164,11 @@
         android:protectionLevel="system|signature"
         android:label="@string/car_permission_label_vms_subscriber"
         android:description="@string/car_permission_desc_vms_subscriber" />
-
+    <permission
+        android:name="android.car.permission.CAR_DRIVING_STATE"
+        android:protectionLevel="system|signature"
+        android:label="@string/car_permission_label_driving_state"
+        android:description="@string/car_permission_desc_driving_state" />
     <!--  may replace this with system permission if proper one is defined. -->
     <permission
         android:name="android.car.permission.CONTROL_APP_BLOCKING"
@@ -177,15 +234,16 @@
     <uses-permission android:name="android.permission.WRITE_SECURE_SETTINGS" />
     <uses-permission android:name="android.permission.BLUETOOTH" />
     <uses-permission android:name="android.permission.MANAGE_USERS" />
+    <uses-permission android:name="android.permission.LOCATION_HARDWARE" />
+    <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />
 
     <application android:label="Car service"
                  android:directBootAware="true"
                  android:allowBackup="false"
                  android:persistent="true">
 
-       
         <uses-library android:name="android.test.runner" />
- <service android:name=".CarService"
+        <service android:name=".CarService"
                 android:singleUser="true">
             <intent-filter>
                 <action android:name="android.car.ICar" />

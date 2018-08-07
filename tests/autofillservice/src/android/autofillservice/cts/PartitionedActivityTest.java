@@ -23,6 +23,8 @@ import static android.autofillservice.cts.GridActivity.ID_L3C1;
 import static android.autofillservice.cts.GridActivity.ID_L3C2;
 import static android.autofillservice.cts.GridActivity.ID_L4C1;
 import static android.autofillservice.cts.GridActivity.ID_L4C2;
+import static android.autofillservice.cts.Helper.UNUSED_AUTOFILL_VALUE;
+import static android.autofillservice.cts.Helper.assertHasFlags;
 import static android.autofillservice.cts.Helper.assertTextIsSanitized;
 import static android.autofillservice.cts.Helper.assertValue;
 import static android.autofillservice.cts.Helper.getContext;
@@ -45,8 +47,8 @@ import android.autofillservice.cts.InstrumentedAutoFillService.FillRequest;
 import android.autofillservice.cts.InstrumentedAutoFillService.SaveRequest;
 import android.content.IntentSender;
 import android.os.Bundle;
+import android.platform.test.annotations.AppModeFull;
 import android.service.autofill.FillResponse;
-import android.widget.RemoteViews;
 
 import org.junit.Before;
 import org.junit.Rule;
@@ -57,6 +59,7 @@ import java.util.concurrent.TimeoutException;
 /**
  * Test case for an activity containing multiple partitions.
  */
+@AppModeFull // Service-specific test
 public class PartitionedActivityTest extends AutoFillServiceTestCase {
 
     @Rule
@@ -74,8 +77,8 @@ public class PartitionedActivityTest extends AutoFillServiceTestCase {
      * Focus to a cell and expect window event
      */
     void focusCell(int row, int column) throws TimeoutException {
-        sUiBot.waitForWindowChange(() -> mActivity.focusCell(row, column),
-                Helper.UI_TIMEOUT_MS);
+        mUiBot.waitForWindowChange(() -> mActivity.focusCell(row, column),
+                Timeouts.UI_TIMEOUT.getMaxValue());
     }
 
     /**
@@ -84,8 +87,8 @@ public class PartitionedActivityTest extends AutoFillServiceTestCase {
     void focusCellNoWindowChange(int row, int column) {
         try {
             // TODO: define a small value in Timeout
-            sUiBot.waitForWindowChange(() -> mActivity.focusCell(row, column),
-                    Helper.UI_TIMEOUT_MS);
+            mUiBot.waitForWindowChange(() -> mActivity.focusCell(row, column),
+                    Timeouts.UI_TIMEOUT.ms());
         } catch (TimeoutException ex) {
             // no window events! looking good
             return;
@@ -118,9 +121,9 @@ public class PartitionedActivityTest extends AutoFillServiceTestCase {
         assertWithMessage("Focus on p1l1c2").that(p1l1c2.isFocused()).isFalse();
 
         // Make sure UI is shown, but don't tap it.
-        sUiBot.assertDatasets("l1c1");
+        mUiBot.assertDatasets("l1c1");
         focusCell(1, 2);
-        sUiBot.assertDatasets("l1c2");
+        mUiBot.assertDatasets("l1c2");
 
         // Now tap a field in a different partition
         final CannedFillResponse response2 = new CannedFillResponse.Builder()
@@ -144,16 +147,16 @@ public class PartitionedActivityTest extends AutoFillServiceTestCase {
         assertWithMessage("Focus on p2l2c1").that(p2l2c1.isFocused()).isTrue();
         assertWithMessage("Focus on p2l2c2").that(p2l2c2.isFocused()).isFalse();
         // Make sure UI is shown, but don't tap it.
-        sUiBot.assertDatasets("l2c1");
+        mUiBot.assertDatasets("l2c1");
         focusCell(2, 2);
-        sUiBot.assertDatasets("l2c2");
+        mUiBot.assertDatasets("l2c2");
 
         // Now fill them
         final FillExpectation expectation1 = mActivity.expectAutofill()
               .onCell(1, 1, "l1c1")
               .onCell(1, 2, "l1c2");
         focusCell(1, 1);
-        sUiBot.selectDataset("l1c1");
+        mUiBot.selectDataset("l1c1");
         expectation1.assertAutoFilled();
 
         // Change previous values to make sure they are not filled again
@@ -164,7 +167,7 @@ public class PartitionedActivityTest extends AutoFillServiceTestCase {
                 .onCell(2, 1, "l2c1")
                 .onCell(2, 2, "l2c2");
         focusCell(2, 2);
-        sUiBot.selectDataset("l2c2");
+        mUiBot.selectDataset("l2c2");
         expectation2.assertAutoFilled();
 
         // Make sure previous partition didn't change
@@ -200,7 +203,7 @@ public class PartitionedActivityTest extends AutoFillServiceTestCase {
         assertTextIsSanitized(fillRequest1.structure, ID_L1C2);
 
         // Auto-fill it.
-        sUiBot.selectDataset("Partition 1");
+        mUiBot.selectDataset("Partition 1");
 
         // Check the results.
         expectation1.assertAutoFilled();
@@ -230,7 +233,7 @@ public class PartitionedActivityTest extends AutoFillServiceTestCase {
         assertTextIsSanitized(fillRequest2.structure, ID_L2C2);
 
         // Auto-fill it.
-        sUiBot.selectDataset("Partition 2");
+        mUiBot.selectDataset("Partition 2");
 
         // Check the results.
         expectation2.assertAutoFilled();
@@ -279,7 +282,7 @@ public class PartitionedActivityTest extends AutoFillServiceTestCase {
         assertTextIsSanitized(fillRequest1.structure, ID_L1C2);
 
         // Auto-fill it.
-        sUiBot.selectDataset("Partition 1");
+        mUiBot.selectDataset("Partition 1");
 
         // Check the results.
         expectation1.assertAutoFilled();
@@ -313,7 +316,7 @@ public class PartitionedActivityTest extends AutoFillServiceTestCase {
         assertTextIsSanitized(fillRequest2.structure, ID_L2C2);
 
         // Auto-fill it.
-        sUiBot.selectDataset("Partition 2");
+        mUiBot.selectDataset("Partition 2");
 
         // Check the results.
         expectation2.assertAutoFilled();
@@ -349,7 +352,7 @@ public class PartitionedActivityTest extends AutoFillServiceTestCase {
         assertTextIsSanitized(fillRequest3.structure, ID_L3C2);
 
         // Auto-fill it.
-        sUiBot.selectDataset("Partition 3");
+        mUiBot.selectDataset("Partition 3");
 
         // Check the results.
         expectation3.assertAutoFilled();
@@ -387,7 +390,7 @@ public class PartitionedActivityTest extends AutoFillServiceTestCase {
         assertTextIsSanitized(fillRequest4.structure, ID_L4C2);
 
         // Auto-fill it.
-        sUiBot.selectDataset("Partition 4");
+        mUiBot.selectDataset("Partition 4");
 
         // Check the results.
         expectation4.assertAutoFilled();
@@ -421,7 +424,7 @@ public class PartitionedActivityTest extends AutoFillServiceTestCase {
         assertTextIsSanitized(fillRequest1.structure, ID_L1C2);
 
         // Auto-fill it.
-        sUiBot.selectDataset("Partition 1");
+        mUiBot.selectDataset("Partition 1");
 
         // Check the results.
         expectation1.assertAutoFilled();
@@ -446,7 +449,7 @@ public class PartitionedActivityTest extends AutoFillServiceTestCase {
         // Trigger auto-fill.
         mActivity.forceAutofill(2, 1);
         final FillRequest fillRequest2 = sReplier.getNextFillRequest();
-        assertThat(fillRequest2.flags).isEqualTo(FLAG_MANUAL_REQUEST);
+        assertHasFlags(fillRequest2.flags, FLAG_MANUAL_REQUEST);
 
         assertValue(fillRequest2.structure, ID_L1C1, "l1c1");
         assertValue(fillRequest2.structure, ID_L1C2, "l1c2");
@@ -454,7 +457,7 @@ public class PartitionedActivityTest extends AutoFillServiceTestCase {
         assertTextIsSanitized(fillRequest2.structure, ID_L2C2);
 
         // Auto-fill it.
-        sUiBot.selectDataset("Partition 2");
+        mUiBot.selectDataset("Partition 2");
 
         // Check the results.
         expectation2.assertAutoFilled();
@@ -486,7 +489,7 @@ public class PartitionedActivityTest extends AutoFillServiceTestCase {
         assertTextIsSanitized(fillRequest3.structure, ID_L3C2);
 
         // Auto-fill it.
-        sUiBot.selectDataset("Partition 3");
+        mUiBot.selectDataset("Partition 3");
 
         // Check the results.
         expectation3.assertAutoFilled();
@@ -510,7 +513,7 @@ public class PartitionedActivityTest extends AutoFillServiceTestCase {
         // Trigger auto-fill.
         mActivity.forceAutofill(4, 1);
         final FillRequest fillRequest4 = sReplier.getNextFillRequest();
-        assertThat(fillRequest4.flags).isEqualTo(FLAG_MANUAL_REQUEST);
+        assertHasFlags(fillRequest4.flags, FLAG_MANUAL_REQUEST);
 
         assertValue(fillRequest4.structure, ID_L1C1, "l1c1");
         assertValue(fillRequest4.structure, ID_L1C2, "l1c2");
@@ -522,7 +525,7 @@ public class PartitionedActivityTest extends AutoFillServiceTestCase {
         assertTextIsSanitized(fillRequest4.structure, ID_L4C2);
 
         // Auto-fill it.
-        sUiBot.selectDataset("Partition 4");
+        mUiBot.selectDataset("Partition 4");
 
         // Check the results.
         expectation4.assertAutoFilled();
@@ -551,7 +554,7 @@ public class PartitionedActivityTest extends AutoFillServiceTestCase {
         final FillRequest fillRequest1 = sReplier.getNextFillRequest();
         assertThat(fillRequest1.flags).isEqualTo(0);
         assertThat(fillRequest1.data).isNull();
-        sUiBot.assertDatasets("l1c1");
+        mUiBot.assertDatasets("l1c1");
 
         // Prepare 2nd partition; it replaces 'number' and adds 'numbers2'
         extras.clear();
@@ -621,7 +624,7 @@ public class PartitionedActivityTest extends AutoFillServiceTestCase {
         mActivity.setText(1, 1, "L1C1");
         mActivity.save();
 
-        sUiBot.saveForAutofill(true, SAVE_DATA_TYPE_PASSWORD);
+        mUiBot.saveForAutofill(true, SAVE_DATA_TYPE_PASSWORD);
         final SaveRequest saveRequest = sReplier.getNextSaveRequest();
 
         assertWithMessage("wrong number of extras on save request bundle")
@@ -661,7 +664,7 @@ public class PartitionedActivityTest extends AutoFillServiceTestCase {
         mActivity.setText(2, 1, "L2C1");
         mActivity.save();
 
-        sUiBot.saveForAutofill(true, SAVE_DATA_TYPE_PASSWORD);
+        mUiBot.saveForAutofill(true, SAVE_DATA_TYPE_PASSWORD);
         final SaveRequest saveRequest = sReplier.getNextSaveRequest();
         assertValue(saveRequest.structure, ID_L2C1, "L2C1");
     }
@@ -698,7 +701,7 @@ public class PartitionedActivityTest extends AutoFillServiceTestCase {
         mActivity.setText(1, 1, "L1C1");
         mActivity.save();
 
-        sUiBot.saveForAutofill(true, SAVE_DATA_TYPE_PASSWORD);
+        mUiBot.saveForAutofill(true, SAVE_DATA_TYPE_PASSWORD);
         final SaveRequest saveRequest = sReplier.getNextSaveRequest();
         assertValue(saveRequest.structure, ID_L1C1, "L1C1");
     }
@@ -738,7 +741,7 @@ public class PartitionedActivityTest extends AutoFillServiceTestCase {
         mActivity.setText(2, 1, "L2C1");
         mActivity.save();
 
-        sUiBot.saveForAutofill(true, SAVE_DATA_TYPE_PASSWORD, SAVE_DATA_TYPE_CREDIT_CARD);
+        mUiBot.saveForAutofill(true, SAVE_DATA_TYPE_PASSWORD, SAVE_DATA_TYPE_CREDIT_CARD);
         final SaveRequest saveRequest = sReplier.getNextSaveRequest();
         assertValue(saveRequest.structure, ID_L1C1, "L1C1");
         assertValue(saveRequest.structure, ID_L2C1, "L2C1");
@@ -793,7 +796,7 @@ public class PartitionedActivityTest extends AutoFillServiceTestCase {
         mActivity.setText(3, 1, "L3C1");
         mActivity.save();
 
-        sUiBot.saveForAutofill(true, SAVE_DATA_TYPE_PASSWORD, SAVE_DATA_TYPE_CREDIT_CARD,
+        mUiBot.saveForAutofill(true, SAVE_DATA_TYPE_PASSWORD, SAVE_DATA_TYPE_CREDIT_CARD,
                 SAVE_DATA_TYPE_USERNAME);
         final SaveRequest saveRequest = sReplier.getNextSaveRequest();
         assertValue(saveRequest.structure, ID_L1C1, "L1C1");
@@ -852,7 +855,7 @@ public class PartitionedActivityTest extends AutoFillServiceTestCase {
         mActivity.save();
 
         // Make sure GENERIC type is not shown on snackbar
-        sUiBot.saveForAutofill(true, SAVE_DATA_TYPE_PASSWORD, SAVE_DATA_TYPE_USERNAME);
+        mUiBot.saveForAutofill(true, SAVE_DATA_TYPE_PASSWORD, SAVE_DATA_TYPE_USERNAME);
         final SaveRequest saveRequest = sReplier.getNextSaveRequest();
         assertValue(saveRequest.structure, ID_L1C1, "L1C1");
         assertValue(saveRequest.structure, ID_L2C1, "L2C1");
@@ -923,7 +926,7 @@ public class PartitionedActivityTest extends AutoFillServiceTestCase {
         mActivity.setText(4, 1, "L4C1");
         mActivity.save();
 
-        sUiBot.saveForAutofill(true, SAVE_DATA_TYPE_GENERIC);
+        mUiBot.saveForAutofill(true, SAVE_DATA_TYPE_GENERIC);
         final SaveRequest saveRequest = sReplier.getNextSaveRequest();
         assertValue(saveRequest.structure, ID_L1C1, "L1C1");
         assertValue(saveRequest.structure, ID_L2C1, "L2C1");
@@ -956,15 +959,15 @@ public class PartitionedActivityTest extends AutoFillServiceTestCase {
         assertWithMessage("Focus on p1l1c2").that(p1l1c2.isFocused()).isFalse();
 
         // Make sure UI is shown on 1st partition
-        sUiBot.assertDatasets("l1c1");
+        mUiBot.assertDatasets("l1c1");
         focusCell(1, 2);
-        sUiBot.assertDatasets("l1c2");
+        mUiBot.assertDatasets("l1c2");
 
         // Make sure UI is not shown on ignored partition
         focusCell(2, 1);
-        sUiBot.assertNoDatasets();
+        mUiBot.assertNoDatasets();
         focusCellNoWindowChange(2, 2);
-        sUiBot.assertNoDatasets();
+        mUiBot.assertNoDatasetsEver();
     }
 
     /**
@@ -1076,42 +1079,42 @@ public class PartitionedActivityTest extends AutoFillServiceTestCase {
          *  Now move focus around to make sure the proper values are displayed each time.
          */
         focusCell(1, 1);
-        sUiBot.assertDatasets("P1D1", "P1D2");
+        mUiBot.assertDatasets("P1D1", "P1D2");
         focusCell(1, 2);
-        sUiBot.assertDatasets("P1D1");
+        mUiBot.assertDatasets("P1D1");
 
         focusCell(2, 1);
-        sUiBot.assertDatasets("P2D1");
+        mUiBot.assertDatasets("P2D1");
         focusCell(2, 2);
-        sUiBot.assertDatasets("P2D1", "P2D2");
+        mUiBot.assertDatasets("P2D1", "P2D2");
 
         focusCell(4, 1);
-        sUiBot.assertDatasets("P4D1", "P4D2");
+        mUiBot.assertDatasets("P4D1", "P4D2");
         focusCell(4, 2);
-        sUiBot.assertDatasets("P4D2");
+        mUiBot.assertDatasets("P4D2");
 
         focusCell(3, 2);
-        sUiBot.assertDatasets("P3D1", "P3D2");
+        mUiBot.assertDatasets("P3D1", "P3D2");
         focusCell(3, 1);
-        sUiBot.assertDatasets("P3D1", "P3D2");
+        mUiBot.assertDatasets("P3D1", "P3D2");
 
         /*
          *  Finally, autofill and check results.
          */
         focusCell(4, 1);
-        sUiBot.selectDataset("P4D1");
+        mUiBot.selectDataset("P4D1");
         expectation4.assertAutoFilled();
 
         focusCell(1, 1);
-        sUiBot.selectDataset("P1D1");
+        mUiBot.selectDataset("P1D1");
         expectation1.assertAutoFilled();
 
         focusCell(3, 1);
-        sUiBot.selectDataset("P3D2");
+        mUiBot.selectDataset("P3D2");
         expectation3.assertAutoFilled();
 
         focusCell(2, 2);
-        sUiBot.selectDataset("P2D2");
+        mUiBot.selectDataset("P2D2");
         expectation2.assertAutoFilled();
     }
 
@@ -1171,9 +1174,9 @@ public class PartitionedActivityTest extends AutoFillServiceTestCase {
         sReplier.getNextFillRequest();
 
         // Asserts proper datasets are shown on each field defined so far.
-        sUiBot.assertDatasets("P1D1", "P1D2");
+        mUiBot.assertDatasets("P1D1", "P1D2");
         focusCell(1, 2);
-        sUiBot.assertDatasets("P1D1");
+        mUiBot.assertDatasets("P1D1");
 
         /**
          * 2nd partition.
@@ -1199,13 +1202,13 @@ public class PartitionedActivityTest extends AutoFillServiceTestCase {
 
         // Asserts proper datasets are shown on each field defined so far.
         focusCell(1, 1);
-        sUiBot.assertDatasets("P2D1"); // changed
+        mUiBot.assertDatasets("P2D1"); // changed
         focusCell(1, 2);
-        sUiBot.assertDatasets("P1D1");
+        mUiBot.assertDatasets("P1D1");
         focusCell(2, 1);
-        sUiBot.assertDatasets("P2D1");
+        mUiBot.assertDatasets("P2D1");
         focusCell(2, 2);
-        sUiBot.assertDatasets("P2D1", "P2D2");
+        mUiBot.assertDatasets("P2D1", "P2D2");
 
         /**
          * 3rd partition.
@@ -1233,17 +1236,17 @@ public class PartitionedActivityTest extends AutoFillServiceTestCase {
 
         // Asserts proper datasets are shown on each field defined so far.
         focusCell(1, 1);
-        sUiBot.assertDatasets("P2D1");
+        mUiBot.assertDatasets("P2D1");
         focusCell(1, 2);
-        sUiBot.assertDatasets("P3D1"); // changed
+        mUiBot.assertDatasets("P3D1"); // changed
         focusCell(2, 1);
-        sUiBot.assertDatasets("P2D1");
+        mUiBot.assertDatasets("P2D1");
         focusCell(2, 2);
-        sUiBot.assertDatasets("P3D2"); // changed
+        mUiBot.assertDatasets("P3D2"); // changed
         focusCell(3, 2);
-        sUiBot.assertDatasets("P3D1", "P3D2");
+        mUiBot.assertDatasets("P3D1", "P3D2");
         focusCell(3, 1);
-        sUiBot.assertDatasets("P3D1", "P3D2");
+        mUiBot.assertDatasets("P3D1", "P3D2");
 
         /**
          * 4th partition.
@@ -1281,21 +1284,21 @@ public class PartitionedActivityTest extends AutoFillServiceTestCase {
 
         // Asserts proper datasets are shown on each field defined so far.
         focusCell(1, 1);
-        sUiBot.assertDatasets("P4D1", "P4D2");
+        mUiBot.assertDatasets("P4D1", "P4D2");
         focusCell(1, 2);
-        sUiBot.assertDatasets("P4D1", "P4D2");
+        mUiBot.assertDatasets("P4D1", "P4D2");
         focusCell(2, 1);
-        sUiBot.assertDatasets("P4D1", "P4D2");
+        mUiBot.assertDatasets("P4D1", "P4D2");
         focusCell(2, 2);
-        sUiBot.assertDatasets("P4D1", "P4D2");
+        mUiBot.assertDatasets("P4D1", "P4D2");
         focusCell(3, 2);
-        sUiBot.assertDatasets("P4D1", "P4D2");
+        mUiBot.assertDatasets("P4D1", "P4D2");
         focusCell(3, 1);
-        sUiBot.assertDatasets("P4D1", "P4D2");
+        mUiBot.assertDatasets("P4D1", "P4D2");
         focusCell(4, 1);
-        sUiBot.assertDatasets("P4D1", "P4D2");
+        mUiBot.assertDatasets("P4D1", "P4D2");
         focusCell(4, 2);
-        sUiBot.assertDatasets("P4D2");
+        mUiBot.assertDatasets("P4D2");
 
         /*
          * Finally, autofill and check results.
@@ -1326,7 +1329,7 @@ public class PartitionedActivityTest extends AutoFillServiceTestCase {
         }
 
         focusCell(4, 1);
-        sUiBot.selectDataset(chosenOne);
+        mUiBot.selectDataset(chosenOne);
         expectation.assertAutoFilled();
     }
 
@@ -1334,10 +1337,6 @@ public class PartitionedActivityTest extends AutoFillServiceTestCase {
     public void testAutofillMultipleAuthDatasetsInSequence() throws Exception {
         // Set service.
         enableService();
-
-        // TODO: current API requires these fields...
-        final RemoteViews bogusPresentation = createPresentation("Whatever man, I'm not used...");
-        final String bogusValue = "Y U REQUIRE IT?";
 
         /**
          * 1st partition.
@@ -1347,19 +1346,18 @@ public class PartitionedActivityTest extends AutoFillServiceTestCase {
                 new CannedDataset.Builder()
                         .setField(ID_L1C1, "l1c1")
                         .setField(ID_L1C2, "l1c2")
-                        .setPresentation(bogusPresentation)
                         .build());
         final IntentSender auth12 = AuthenticationActivity.createSender(getContext(), 12);
         final CannedFillResponse response1 = new CannedFillResponse.Builder()
                 .addDataset(new CannedDataset.Builder()
                         .setAuthentication(auth11)
-                        .setField(ID_L1C1, bogusValue)
-                        .setField(ID_L1C2, bogusValue)
+                        .setField(ID_L1C1, UNUSED_AUTOFILL_VALUE)
+                        .setField(ID_L1C2, UNUSED_AUTOFILL_VALUE)
                         .setPresentation(createPresentation("P1D1"))
                         .build())
                 .addDataset(new CannedDataset.Builder()
                         .setAuthentication(auth12)
-                        .setField(ID_L1C1, bogusValue)
+                        .setField(ID_L1C1, UNUSED_AUTOFILL_VALUE)
                         .setPresentation(createPresentation("P1D2"))
                         .build())
                 .build();
@@ -1373,12 +1371,12 @@ public class PartitionedActivityTest extends AutoFillServiceTestCase {
         sReplier.getNextFillRequest();
 
         // Focus around different fields in the partition.
-        sUiBot.assertDatasets("P1D1", "P1D2");
+        mUiBot.assertDatasets("P1D1", "P1D2");
         focusCell(1, 2);
-        sUiBot.assertDatasets("P1D1");
+        mUiBot.assertDatasets("P1D1");
 
         // Autofill it...
-        sUiBot.selectDataset("P1D1");
+        mUiBot.selectDataset("P1D1");
         // ... and assert result
         expectation1.assertAutoFilled();
 
@@ -1390,19 +1388,18 @@ public class PartitionedActivityTest extends AutoFillServiceTestCase {
         final IntentSender auth22 = AuthenticationActivity.createSender(getContext(), 22,
                 new CannedDataset.Builder()
                     .setField(ID_L2C2, "L2C2")
-                    .setPresentation(bogusPresentation)
                     .build());
         final CannedFillResponse response2 = new CannedFillResponse.Builder()
                 .addDataset(new CannedDataset.Builder()
                         .setAuthentication(auth21)
                         .setPresentation(createPresentation("P2D1"))
-                        .setField(ID_L2C1, bogusValue)
-                        .setField(ID_L2C2, bogusValue)
+                        .setField(ID_L2C1, UNUSED_AUTOFILL_VALUE)
+                        .setField(ID_L2C2, UNUSED_AUTOFILL_VALUE)
                         .build())
                 .addDataset(new CannedDataset.Builder()
                         .setAuthentication(auth22)
                         .setPresentation(createPresentation("P2D2"))
-                        .setField(ID_L2C2, bogusValue)
+                        .setField(ID_L2C2, UNUSED_AUTOFILL_VALUE)
                         .build())
                 .build();
         sReplier.addResponse(response2);
@@ -1414,12 +1411,12 @@ public class PartitionedActivityTest extends AutoFillServiceTestCase {
         sReplier.getNextFillRequest();
 
         // Focus around different fields in the partition.
-        sUiBot.assertDatasets("P2D1");
+        mUiBot.assertDatasets("P2D1");
         focusCell(2, 2);
-        sUiBot.assertDatasets("P2D1", "P2D2");
+        mUiBot.assertDatasets("P2D1", "P2D2");
 
         // Autofill it...
-        sUiBot.selectDataset("P2D2");
+        mUiBot.selectDataset("P2D2");
         // ... and assert result
         expectation2.assertAutoFilled();
 
@@ -1431,21 +1428,20 @@ public class PartitionedActivityTest extends AutoFillServiceTestCase {
                 new CannedDataset.Builder()
                         .setField(ID_L3C1, "l3c1")
                         .setField(ID_L3C2, "l3c2")
-                        .setPresentation(bogusPresentation)
                         .build());
         final IntentSender auth32 = AuthenticationActivity.createSender(getContext(), 32);
         final CannedFillResponse response3 = new CannedFillResponse.Builder()
                 .addDataset(new CannedDataset.Builder()
                         .setAuthentication(auth31)
                         .setPresentation(createPresentation("P3D1"))
-                        .setField(ID_L3C1, bogusValue)
-                        .setField(ID_L3C2, bogusValue)
+                        .setField(ID_L3C1, UNUSED_AUTOFILL_VALUE)
+                        .setField(ID_L3C2, UNUSED_AUTOFILL_VALUE)
                         .build())
                 .addDataset(new CannedDataset.Builder()
                         .setAuthentication(auth32)
                         .setPresentation(createPresentation("P3D2"))
-                        .setField(ID_L3C1, bogusValue)
-                        .setField(ID_L3C2, bogusValue)
+                        .setField(ID_L3C1, UNUSED_AUTOFILL_VALUE)
+                        .setField(ID_L3C2, UNUSED_AUTOFILL_VALUE)
                         .build())
                 .build();
         sReplier.addResponse(response3);
@@ -1458,12 +1454,12 @@ public class PartitionedActivityTest extends AutoFillServiceTestCase {
         sReplier.getNextFillRequest();
 
         // Focus around different fields in the partition.
-        sUiBot.assertDatasets("P3D1", "P3D2");
+        mUiBot.assertDatasets("P3D1", "P3D2");
         focusCell(3, 1);
-        sUiBot.assertDatasets("P3D1", "P3D2");
+        mUiBot.assertDatasets("P3D1", "P3D2");
 
         // Autofill it...
-        sUiBot.selectDataset("P3D1");
+        mUiBot.selectDataset("P3D1");
         // ... and assert result
         expectation3.assertAutoFilled();
 
@@ -1476,19 +1472,18 @@ public class PartitionedActivityTest extends AutoFillServiceTestCase {
                 new CannedDataset.Builder()
                     .setField(ID_L4C1, "L4C1")
                     .setField(ID_L4C2, "L4C2")
-                    .setPresentation(bogusPresentation)
                     .build());
         final CannedFillResponse response4 = new CannedFillResponse.Builder()
                 .addDataset(new CannedDataset.Builder()
                         .setAuthentication(auth41)
                         .setPresentation(createPresentation("P4D1"))
-                        .setField(ID_L4C1, bogusValue)
+                        .setField(ID_L4C1, UNUSED_AUTOFILL_VALUE)
                         .build())
                 .addDataset(new CannedDataset.Builder()
                         .setAuthentication(auth42)
                         .setPresentation(createPresentation("P4D2"))
-                        .setField(ID_L4C1, bogusValue)
-                        .setField(ID_L4C2, bogusValue)
+                        .setField(ID_L4C1, UNUSED_AUTOFILL_VALUE)
+                        .setField(ID_L4C2, UNUSED_AUTOFILL_VALUE)
                         .build())
                 .build();
         sReplier.addResponse(response4);
@@ -1501,12 +1496,12 @@ public class PartitionedActivityTest extends AutoFillServiceTestCase {
         sReplier.getNextFillRequest();
 
         // Focus around different fields in the partition.
-        sUiBot.assertDatasets("P4D1", "P4D2");
+        mUiBot.assertDatasets("P4D1", "P4D2");
         focusCell(4, 2);
-        sUiBot.assertDatasets("P4D2");
+        mUiBot.assertDatasets("P4D2");
 
         // Autofill it...
-        sUiBot.selectDataset("P4D2");
+        mUiBot.selectDataset("P4D2");
         // ... and assert result
         expectation4.assertAutoFilled();
     }
@@ -1521,10 +1516,6 @@ public class PartitionedActivityTest extends AutoFillServiceTestCase {
         // Set service.
         enableService();
 
-        // TODO: current API requires these fields...
-        final RemoteViews bogusPresentation = createPresentation("Whatever man, I'm not used...");
-        final String bogusValue = "Y U REQUIRE IT?";
-
         /**
          * 1st partition.
          */
@@ -1533,19 +1524,18 @@ public class PartitionedActivityTest extends AutoFillServiceTestCase {
                 new CannedDataset.Builder()
                         .setField(ID_L1C1, "l1c1")
                         .setField(ID_L1C2, "l1c2")
-                        .setPresentation(bogusPresentation)
                         .build());
         final IntentSender auth12 = AuthenticationActivity.createSender(getContext(), 12);
         final CannedFillResponse response1 = new CannedFillResponse.Builder()
                 .addDataset(new CannedDataset.Builder()
                         .setAuthentication(auth11)
-                        .setField(ID_L1C1, bogusValue)
-                        .setField(ID_L1C2, bogusValue)
+                        .setField(ID_L1C1, UNUSED_AUTOFILL_VALUE)
+                        .setField(ID_L1C2, UNUSED_AUTOFILL_VALUE)
                         .setPresentation(createPresentation("P1D1"))
                         .build())
                 .addDataset(new CannedDataset.Builder()
                         .setAuthentication(auth12)
-                        .setField(ID_L1C1, bogusValue)
+                        .setField(ID_L1C1, UNUSED_AUTOFILL_VALUE)
                         .setPresentation(createPresentation("P1D2"))
                         .build())
                 .build();
@@ -1566,19 +1556,18 @@ public class PartitionedActivityTest extends AutoFillServiceTestCase {
         final IntentSender auth22 = AuthenticationActivity.createSender(getContext(), 22,
                 new CannedDataset.Builder()
                     .setField(ID_L2C2, "L2C2")
-                    .setPresentation(bogusPresentation)
                     .build());
         final CannedFillResponse response2 = new CannedFillResponse.Builder()
                 .addDataset(new CannedDataset.Builder()
                         .setAuthentication(auth21)
                         .setPresentation(createPresentation("P2D1"))
-                        .setField(ID_L2C1, bogusValue)
-                        .setField(ID_L2C2, bogusValue)
+                        .setField(ID_L2C1, UNUSED_AUTOFILL_VALUE)
+                        .setField(ID_L2C2, UNUSED_AUTOFILL_VALUE)
                         .build())
                 .addDataset(new CannedDataset.Builder()
                         .setAuthentication(auth22)
                         .setPresentation(createPresentation("P2D2"))
-                        .setField(ID_L2C2, bogusValue)
+                        .setField(ID_L2C2, UNUSED_AUTOFILL_VALUE)
                         .build())
                 .build();
         sReplier.addResponse(response2);
@@ -1597,21 +1586,20 @@ public class PartitionedActivityTest extends AutoFillServiceTestCase {
                 new CannedDataset.Builder()
                         .setField(ID_L3C1, "l3c1")
                         .setField(ID_L3C2, "l3c2")
-                        .setPresentation(bogusPresentation)
                         .build());
         final IntentSender auth32 = AuthenticationActivity.createSender(getContext(), 32);
         final CannedFillResponse response3 = new CannedFillResponse.Builder()
                 .addDataset(new CannedDataset.Builder()
                         .setAuthentication(auth31)
                         .setPresentation(createPresentation("P3D1"))
-                        .setField(ID_L3C1, bogusValue)
-                        .setField(ID_L3C2, bogusValue)
+                        .setField(ID_L3C1, UNUSED_AUTOFILL_VALUE)
+                        .setField(ID_L3C2, UNUSED_AUTOFILL_VALUE)
                         .build())
                 .addDataset(new CannedDataset.Builder()
                         .setAuthentication(auth32)
                         .setPresentation(createPresentation("P3D2"))
-                        .setField(ID_L3C1, bogusValue)
-                        .setField(ID_L3C2, bogusValue)
+                        .setField(ID_L3C1, UNUSED_AUTOFILL_VALUE)
+                        .setField(ID_L3C2, UNUSED_AUTOFILL_VALUE)
                         .build())
                 .build();
         sReplier.addResponse(response3);
@@ -1632,19 +1620,18 @@ public class PartitionedActivityTest extends AutoFillServiceTestCase {
                 new CannedDataset.Builder()
                     .setField(ID_L4C1, "L4C1")
                     .setField(ID_L4C2, "L4C2")
-                    .setPresentation(bogusPresentation)
                     .build());
         final CannedFillResponse response4 = new CannedFillResponse.Builder()
                 .addDataset(new CannedDataset.Builder()
                         .setAuthentication(auth41)
                         .setPresentation(createPresentation("P4D1"))
-                        .setField(ID_L4C1, bogusValue)
+                        .setField(ID_L4C1, UNUSED_AUTOFILL_VALUE)
                         .build())
                 .addDataset(new CannedDataset.Builder()
                         .setAuthentication(auth42)
                         .setPresentation(createPresentation("P4D2"))
-                        .setField(ID_L4C1, bogusValue)
-                        .setField(ID_L4C2, bogusValue)
+                        .setField(ID_L4C1, UNUSED_AUTOFILL_VALUE)
+                        .setField(ID_L4C2, UNUSED_AUTOFILL_VALUE)
                         .build())
                 .build();
         sReplier.addResponse(response4);
@@ -1659,42 +1646,42 @@ public class PartitionedActivityTest extends AutoFillServiceTestCase {
          *  Now move focus around to make sure the proper values are displayed each time.
          */
         focusCell(1, 1);
-        sUiBot.assertDatasets("P1D1", "P1D2");
+        mUiBot.assertDatasets("P1D1", "P1D2");
         focusCell(1, 2);
-        sUiBot.assertDatasets("P1D1");
+        mUiBot.assertDatasets("P1D1");
 
         focusCell(2, 1);
-        sUiBot.assertDatasets("P2D1");
+        mUiBot.assertDatasets("P2D1");
         focusCell(2, 2);
-        sUiBot.assertDatasets("P2D1", "P2D2");
+        mUiBot.assertDatasets("P2D1", "P2D2");
 
         focusCell(4, 1);
-        sUiBot.assertDatasets("P4D1", "P4D2");
+        mUiBot.assertDatasets("P4D1", "P4D2");
         focusCell(4, 2);
-        sUiBot.assertDatasets("P4D2");
+        mUiBot.assertDatasets("P4D2");
 
         focusCell(3, 2);
-        sUiBot.assertDatasets("P3D1", "P3D2");
+        mUiBot.assertDatasets("P3D1", "P3D2");
         focusCell(3, 1);
-        sUiBot.assertDatasets("P3D1", "P3D2");
+        mUiBot.assertDatasets("P3D1", "P3D2");
 
         /*
          *  Finally, autofill and check results.
          */
         focusCell(4, 1);
-        sUiBot.selectDataset("P4D2");
+        mUiBot.selectDataset("P4D2");
         expectation4.assertAutoFilled();
 
         focusCell(1, 1);
-        sUiBot.selectDataset("P1D1");
+        mUiBot.selectDataset("P1D1");
         expectation1.assertAutoFilled();
 
         focusCell(3, 1);
-        sUiBot.selectDataset("P3D1");
+        mUiBot.selectDataset("P3D1");
         expectation3.assertAutoFilled();
 
         focusCell(2, 2);
-        sUiBot.selectDataset("P2D2");
+        mUiBot.selectDataset("P2D2");
         expectation2.assertAutoFilled();
     }
 
@@ -1707,10 +1694,6 @@ public class PartitionedActivityTest extends AutoFillServiceTestCase {
     public void testAutofillMultipleDatasetsMixedAuthNoAuthNoOverlap() throws Exception {
         // Set service.
         enableService();
-
-        // TODO: current API requires these fields...
-        final RemoteViews bogusPresentation = createPresentation("Whatever man, I'm not used...");
-        final String bogusValue = "Y U REQUIRE IT?";
 
         /**
          * 1st partition.
@@ -1725,7 +1708,7 @@ public class PartitionedActivityTest extends AutoFillServiceTestCase {
                         .build())
                 .addDataset(new CannedDataset.Builder()
                         .setAuthentication(auth12)
-                        .setField(ID_L1C1, bogusValue)
+                        .setField(ID_L1C1, UNUSED_AUTOFILL_VALUE)
                         .setPresentation(createPresentation("P1D2"))
                         .build())
                 .build();
@@ -1745,7 +1728,6 @@ public class PartitionedActivityTest extends AutoFillServiceTestCase {
         final IntentSender auth22 = AuthenticationActivity.createSender(getContext(), 22,
                 new CannedDataset.Builder()
                     .setField(ID_L2C2, "L2C2")
-                    .setPresentation(bogusPresentation)
                     .build());
         final CannedFillResponse response2 = new CannedFillResponse.Builder()
                 .addDataset(new CannedDataset.Builder()
@@ -1756,7 +1738,7 @@ public class PartitionedActivityTest extends AutoFillServiceTestCase {
                 .addDataset(new CannedDataset.Builder()
                         .setAuthentication(auth22)
                         .setPresentation(createPresentation("P2D2"))
-                        .setField(ID_L2C2, bogusValue)
+                        .setField(ID_L2C2, UNUSED_AUTOFILL_VALUE)
                         .build())
                 .build();
         sReplier.addResponse(response2);
@@ -1775,14 +1757,13 @@ public class PartitionedActivityTest extends AutoFillServiceTestCase {
                 new CannedDataset.Builder()
                         .setField(ID_L3C1, "l3c1")
                         .setField(ID_L3C2, "l3c2")
-                        .setPresentation(bogusPresentation)
                         .build());
         final CannedFillResponse response3 = new CannedFillResponse.Builder()
                 .addDataset(new CannedDataset.Builder()
                         .setAuthentication(auth31)
                         .setPresentation(createPresentation("P3D1"))
-                        .setField(ID_L3C1, bogusValue)
-                        .setField(ID_L3C2, bogusValue)
+                        .setField(ID_L3C1, UNUSED_AUTOFILL_VALUE)
+                        .setField(ID_L3C2, UNUSED_AUTOFILL_VALUE)
                         .build())
                 .addDataset(new CannedDataset.Builder()
                         .setPresentation(createPresentation("P3D2"))
@@ -1808,7 +1789,7 @@ public class PartitionedActivityTest extends AutoFillServiceTestCase {
                 .addDataset(new CannedDataset.Builder()
                         .setAuthentication(auth41)
                         .setPresentation(createPresentation("P4D1"))
-                        .setField(ID_L4C1, bogusValue)
+                        .setField(ID_L4C1, UNUSED_AUTOFILL_VALUE)
                         .build())
                 .addDataset(new CannedDataset.Builder()
                         .setPresentation(createPresentation("P4D2"))
@@ -1828,42 +1809,42 @@ public class PartitionedActivityTest extends AutoFillServiceTestCase {
          *  Now move focus around to make sure the proper values are displayed each time.
          */
         focusCell(1, 1);
-        sUiBot.assertDatasets("P1D1", "P1D2");
+        mUiBot.assertDatasets("P1D1", "P1D2");
         focusCell(1, 2);
-        sUiBot.assertDatasets("P1D1");
+        mUiBot.assertDatasets("P1D1");
 
         focusCell(2, 1);
-        sUiBot.assertDatasets("P2D1");
+        mUiBot.assertDatasets("P2D1");
         focusCell(2, 2);
-        sUiBot.assertDatasets("P2D1", "P2D2");
+        mUiBot.assertDatasets("P2D1", "P2D2");
 
         focusCell(4, 1);
-        sUiBot.assertDatasets("P4D1", "P4D2");
+        mUiBot.assertDatasets("P4D1", "P4D2");
         focusCell(4, 2);
-        sUiBot.assertDatasets("P4D2");
+        mUiBot.assertDatasets("P4D2");
 
         focusCell(3, 2);
-        sUiBot.assertDatasets("P3D1", "P3D2");
+        mUiBot.assertDatasets("P3D1", "P3D2");
         focusCell(3, 1);
-        sUiBot.assertDatasets("P3D1", "P3D2");
+        mUiBot.assertDatasets("P3D1", "P3D2");
 
         /*
          *  Finally, autofill and check results.
          */
         focusCell(4, 1);
-        sUiBot.selectDataset("P4D2");
+        mUiBot.selectDataset("P4D2");
         expectation4.assertAutoFilled();
 
         focusCell(1, 1);
-        sUiBot.selectDataset("P1D1");
+        mUiBot.selectDataset("P1D1");
         expectation1.assertAutoFilled();
 
         focusCell(3, 1);
-        sUiBot.selectDataset("P3D1");
+        mUiBot.selectDataset("P3D1");
         expectation3.assertAutoFilled();
 
         focusCell(2, 2);
-        sUiBot.selectDataset("P2D2");
+        mUiBot.selectDataset("P2D2");
         expectation2.assertAutoFilled();
     }
 
@@ -1901,10 +1882,6 @@ public class PartitionedActivityTest extends AutoFillServiceTestCase {
         // Set service.
         enableService();
 
-        // TODO: current API requires these fields...
-        final RemoteViews bogusPresentation = createPresentation("Whatever man, I'm not used...");
-        final String bogusValue = "Y U REQUIRE IT?";
-
         /**
          * 1st partition.
          */
@@ -1918,7 +1895,7 @@ public class PartitionedActivityTest extends AutoFillServiceTestCase {
                         .build())
                 .addDataset(new CannedDataset.Builder()
                         .setAuthentication(auth12)
-                        .setField(ID_L1C1, bogusValue)
+                        .setField(ID_L1C1, UNUSED_AUTOFILL_VALUE)
                         .setPresentation(createPresentation("P1D2"))
                         .build())
                 .build();
@@ -1928,9 +1905,9 @@ public class PartitionedActivityTest extends AutoFillServiceTestCase {
         sReplier.getNextFillRequest();
 
         // Asserts proper datasets are shown on each field defined so far.
-        sUiBot.assertDatasets("P1D1", "P1D2");
+        mUiBot.assertDatasets("P1D1", "P1D2");
         focusCell(1, 2);
-        sUiBot.assertDatasets("P1D1");
+        mUiBot.assertDatasets("P1D1");
 
         /**
          * 2nd partition.
@@ -1941,15 +1918,14 @@ public class PartitionedActivityTest extends AutoFillServiceTestCase {
                     .setField(ID_L1C1, "2l1c1") // from previous partition
                     .setField(ID_L2C1, "2l2c1")
                     .setField(ID_L2C2, "2l2c2")
-                    .setPresentation(bogusPresentation)
                     .build());
         final CannedFillResponse response2 = new CannedFillResponse.Builder()
                 .addDataset(new CannedDataset.Builder()
                         .setAuthentication(auth21)
                         .setPresentation(createPresentation("P2D1"))
-                        .setField(ID_L1C1, bogusValue) // from previous partition
-                        .setField(ID_L2C1, bogusValue)
-                        .setField(ID_L2C2, bogusValue)
+                        .setField(ID_L1C1, UNUSED_AUTOFILL_VALUE) // from previous partition
+                        .setField(ID_L2C1, UNUSED_AUTOFILL_VALUE)
+                        .setField(ID_L2C2, UNUSED_AUTOFILL_VALUE)
                         .build())
                 .addDataset(new CannedDataset.Builder()
                         .setPresentation(createPresentation("P2D2"))
@@ -1964,13 +1940,13 @@ public class PartitionedActivityTest extends AutoFillServiceTestCase {
 
         // Asserts proper datasets are shown on each field defined so far.
         focusCell(1, 1);
-        sUiBot.assertDatasets("P2D1"); // changed
+        mUiBot.assertDatasets("P2D1"); // changed
         focusCell(1, 2);
-        sUiBot.assertDatasets("P1D1");
+        mUiBot.assertDatasets("P1D1");
         focusCell(2, 1);
-        sUiBot.assertDatasets("P2D1");
+        mUiBot.assertDatasets("P2D1");
         focusCell(2, 2);
-        sUiBot.assertDatasets("P2D1", "P2D2");
+        mUiBot.assertDatasets("P2D1", "P2D2");
 
         /**
          * 3rd partition.
@@ -1981,23 +1957,22 @@ public class PartitionedActivityTest extends AutoFillServiceTestCase {
                         .setField(ID_L1C2, "3l1c2") // from previous partition
                         .setField(ID_L3C1, "3l3c1")
                         .setField(ID_L3C2, "3l3c2")
-                        .setPresentation(bogusPresentation)
                         .build());
         final IntentSender auth32 = AuthenticationActivity.createSender(getContext(), 32);
         final CannedFillResponse response3 = new CannedFillResponse.Builder()
                 .addDataset(new CannedDataset.Builder()
                         .setAuthentication(auth31)
                         .setPresentation(createPresentation("P3D1"))
-                        .setField(ID_L1C2, bogusValue) // from previous partition
-                        .setField(ID_L3C1, bogusValue)
-                        .setField(ID_L3C2, bogusValue)
+                        .setField(ID_L1C2, UNUSED_AUTOFILL_VALUE) // from previous partition
+                        .setField(ID_L3C1, UNUSED_AUTOFILL_VALUE)
+                        .setField(ID_L3C2, UNUSED_AUTOFILL_VALUE)
                         .build())
                 .addDataset(new CannedDataset.Builder()
                         .setAuthentication(auth32)
                         .setPresentation(createPresentation("P3D2"))
-                        .setField(ID_L2C2, bogusValue) // from previous partition
-                        .setField(ID_L3C1, bogusValue)
-                        .setField(ID_L3C2, bogusValue)
+                        .setField(ID_L2C2, UNUSED_AUTOFILL_VALUE) // from previous partition
+                        .setField(ID_L3C1, UNUSED_AUTOFILL_VALUE)
+                        .setField(ID_L3C2, UNUSED_AUTOFILL_VALUE)
                         .build())
                 .build();
         sReplier.addResponse(response3);
@@ -2008,17 +1983,17 @@ public class PartitionedActivityTest extends AutoFillServiceTestCase {
 
         // Asserts proper datasets are shown on each field defined so far.
         focusCell(1, 1);
-        sUiBot.assertDatasets("P2D1");
+        mUiBot.assertDatasets("P2D1");
         focusCell(1, 2);
-        sUiBot.assertDatasets("P3D1"); // changed
+        mUiBot.assertDatasets("P3D1"); // changed
         focusCell(2, 1);
-        sUiBot.assertDatasets("P2D1");
+        mUiBot.assertDatasets("P2D1");
         focusCell(2, 2);
-        sUiBot.assertDatasets("P3D2"); // changed
+        mUiBot.assertDatasets("P3D2"); // changed
         focusCell(3, 2);
-        sUiBot.assertDatasets("P3D1", "P3D2");
+        mUiBot.assertDatasets("P3D1", "P3D2");
         focusCell(3, 1);
-        sUiBot.assertDatasets("P3D1", "P3D2");
+        mUiBot.assertDatasets("P3D1", "P3D2");
 
         /**
          * 4th partition.
@@ -2033,7 +2008,6 @@ public class PartitionedActivityTest extends AutoFillServiceTestCase {
                         .setField(ID_L3C1, "4l3c1") // from previous partition
                         .setField(ID_L3C2, "4l3c2") // from previous partition
                         .setField(ID_L4C1, "4l4c1")
-                        .setPresentation(bogusPresentation)
                         .build());
         final IntentSender auth42 = AuthenticationActivity.createSender(getContext(), 42,
                 new CannedDataset.Builder()
@@ -2046,32 +2020,31 @@ public class PartitionedActivityTest extends AutoFillServiceTestCase {
                         .setField(ID_L1C1, "4L1C1") // from previous partition
                         .setField(ID_L4C1, "4L4C1")
                         .setField(ID_L4C2, "4L4C2")
-                        .setPresentation(bogusPresentation)
                         .build());
         final CannedFillResponse response4 = new CannedFillResponse.Builder()
                 .addDataset(new CannedDataset.Builder()
                         .setAuthentication(auth41)
                         .setPresentation(createPresentation("P4D1"))
-                        .setField(ID_L1C1, bogusValue) // from previous partition
-                        .setField(ID_L1C2, bogusValue) // from previous partition
-                        .setField(ID_L2C1, bogusValue) // from previous partition
-                        .setField(ID_L2C2, bogusValue) // from previous partition
-                        .setField(ID_L3C1, bogusValue) // from previous partition
-                        .setField(ID_L3C2, bogusValue) // from previous partition
-                        .setField(ID_L4C1, bogusValue)
+                        .setField(ID_L1C1, UNUSED_AUTOFILL_VALUE) // from previous partition
+                        .setField(ID_L1C2, UNUSED_AUTOFILL_VALUE) // from previous partition
+                        .setField(ID_L2C1, UNUSED_AUTOFILL_VALUE) // from previous partition
+                        .setField(ID_L2C2, UNUSED_AUTOFILL_VALUE) // from previous partition
+                        .setField(ID_L3C1, UNUSED_AUTOFILL_VALUE) // from previous partition
+                        .setField(ID_L3C2, UNUSED_AUTOFILL_VALUE) // from previous partition
+                        .setField(ID_L4C1, UNUSED_AUTOFILL_VALUE)
                         .build())
                 .addDataset(new CannedDataset.Builder()
                         .setAuthentication(auth42)
                         .setPresentation(createPresentation("P4D2"))
-                        .setField(ID_L1C1, bogusValue) // from previous partition
-                        .setField(ID_L1C2, bogusValue) // from previous partition
-                        .setField(ID_L2C1, bogusValue) // from previous partition
-                        .setField(ID_L2C2, bogusValue) // from previous partition
-                        .setField(ID_L3C1, bogusValue) // from previous partition
-                        .setField(ID_L3C2, bogusValue) // from previous partition
-                        .setField(ID_L1C1, bogusValue) // from previous partition
-                        .setField(ID_L4C1, bogusValue)
-                        .setField(ID_L4C2, bogusValue)
+                        .setField(ID_L1C1, UNUSED_AUTOFILL_VALUE) // from previous partition
+                        .setField(ID_L1C2, UNUSED_AUTOFILL_VALUE) // from previous partition
+                        .setField(ID_L2C1, UNUSED_AUTOFILL_VALUE) // from previous partition
+                        .setField(ID_L2C2, UNUSED_AUTOFILL_VALUE) // from previous partition
+                        .setField(ID_L3C1, UNUSED_AUTOFILL_VALUE) // from previous partition
+                        .setField(ID_L3C2, UNUSED_AUTOFILL_VALUE) // from previous partition
+                        .setField(ID_L1C1, UNUSED_AUTOFILL_VALUE) // from previous partition
+                        .setField(ID_L4C1, UNUSED_AUTOFILL_VALUE)
+                        .setField(ID_L4C2, UNUSED_AUTOFILL_VALUE)
                         .build())
                 .build();
         sReplier.addResponse(response4);
@@ -2082,21 +2055,21 @@ public class PartitionedActivityTest extends AutoFillServiceTestCase {
 
         // Asserts proper datasets are shown on each field defined so far.
         focusCell(1, 1);
-        sUiBot.assertDatasets("P4D1", "P4D2");
+        mUiBot.assertDatasets("P4D1", "P4D2");
         focusCell(1, 2);
-        sUiBot.assertDatasets("P4D1", "P4D2");
+        mUiBot.assertDatasets("P4D1", "P4D2");
         focusCell(2, 1);
-        sUiBot.assertDatasets("P4D1", "P4D2");
+        mUiBot.assertDatasets("P4D1", "P4D2");
         focusCell(2, 2);
-        sUiBot.assertDatasets("P4D1", "P4D2");
+        mUiBot.assertDatasets("P4D1", "P4D2");
         focusCell(3, 2);
-        sUiBot.assertDatasets("P4D1", "P4D2");
+        mUiBot.assertDatasets("P4D1", "P4D2");
         focusCell(3, 1);
-        sUiBot.assertDatasets("P4D1", "P4D2");
+        mUiBot.assertDatasets("P4D1", "P4D2");
         focusCell(4, 1);
-        sUiBot.assertDatasets("P4D1", "P4D2");
+        mUiBot.assertDatasets("P4D1", "P4D2");
         focusCell(4, 2);
-        sUiBot.assertDatasets("P4D2");
+        mUiBot.assertDatasets("P4D2");
 
         /*
          * Finally, autofill and check results.
@@ -2127,7 +2100,7 @@ public class PartitionedActivityTest extends AutoFillServiceTestCase {
         }
 
         focusCell(4, 1);
-        sUiBot.selectDataset(chosenOne);
+        mUiBot.selectDataset(chosenOne);
         expectation.assertAutoFilled();
     }
 
@@ -2156,7 +2129,7 @@ public class PartitionedActivityTest extends AutoFillServiceTestCase {
         focusCell(1, 1);
         sReplier.getNextFillRequest();
 
-        sUiBot.assertDatasets("Auth 1");
+        mUiBot.assertDatasets("Auth 1");
 
         // Prepare 2nd partition.
         final IntentSender auth2 = AuthenticationActivity.createSender(getContext(), 2,
@@ -2178,7 +2151,7 @@ public class PartitionedActivityTest extends AutoFillServiceTestCase {
         focusCell(2, 1);
         sReplier.getNextFillRequest();
 
-        sUiBot.assertDatasets("Auth 2");
+        mUiBot.assertDatasets("Auth 2");
 
         // Prepare 3rd partition.
         final IntentSender auth3 = AuthenticationActivity.createSender(getContext(), 3,
@@ -2200,7 +2173,7 @@ public class PartitionedActivityTest extends AutoFillServiceTestCase {
         focusCell(3, 1);
         sReplier.getNextFillRequest();
 
-        sUiBot.assertDatasets("Auth 3");
+        mUiBot.assertDatasets("Auth 3");
 
         // Prepare 4th partition.
         final IntentSender auth4 = AuthenticationActivity.createSender(getContext(), 4,
@@ -2222,49 +2195,49 @@ public class PartitionedActivityTest extends AutoFillServiceTestCase {
         focusCell(4, 1);
         sReplier.getNextFillRequest();
 
-        sUiBot.assertDatasets("Auth 4");
+        mUiBot.assertDatasets("Auth 4");
 
         // Now play around the focus to make sure they still display the right values.
 
         focusCell(1, 2);
-        sUiBot.assertDatasets("Auth 1");
+        mUiBot.assertDatasets("Auth 1");
         focusCell(1, 1);
-        sUiBot.assertDatasets("Auth 1");
+        mUiBot.assertDatasets("Auth 1");
 
         focusCell(3, 1);
-        sUiBot.assertDatasets("Auth 3");
+        mUiBot.assertDatasets("Auth 3");
         focusCell(3, 2);
-        sUiBot.assertDatasets("Auth 3");
+        mUiBot.assertDatasets("Auth 3");
 
         focusCell(2, 1);
-        sUiBot.assertDatasets("Auth 2");
+        mUiBot.assertDatasets("Auth 2");
         focusCell(4, 2);
-        sUiBot.assertDatasets("Auth 4");
+        mUiBot.assertDatasets("Auth 4");
 
         focusCell(2, 2);
-        sUiBot.assertDatasets("Auth 2");
+        mUiBot.assertDatasets("Auth 2");
         focusCell(4, 1);
-        sUiBot.assertDatasets("Auth 4");
+        mUiBot.assertDatasets("Auth 4");
 
         // Finally, autofill and check them.
         focusCell(2, 1);
-        sUiBot.selectDataset("Auth 2");
-        sUiBot.selectDataset("Partition 2");
+        mUiBot.selectDataset("Auth 2");
+        mUiBot.selectDataset("Partition 2");
         expectation2.assertAutoFilled();
 
         focusCell(4, 1);
-        sUiBot.selectDataset("Auth 4");
-        sUiBot.selectDataset("Partition 4");
+        mUiBot.selectDataset("Auth 4");
+        mUiBot.selectDataset("Partition 4");
         expectation4.assertAutoFilled();
 
         focusCell(3, 1);
-        sUiBot.selectDataset("Auth 3");
-        sUiBot.selectDataset("Partition 3");
+        mUiBot.selectDataset("Auth 3");
+        mUiBot.selectDataset("Partition 3");
         expectation3.assertAutoFilled();
 
         focusCell(1, 1);
-        sUiBot.selectDataset("Auth 1");
-        sUiBot.selectDataset("Partition 1");
+        mUiBot.selectDataset("Auth 1");
+        mUiBot.selectDataset("Partition 1");
         expectation1.assertAutoFilled();
     }
 
@@ -2290,9 +2263,9 @@ public class PartitionedActivityTest extends AutoFillServiceTestCase {
             sReplier.getNextFillRequest();
 
             // Make sure UI is shown, but don't tap it.
-            sUiBot.assertDatasets("l1c1");
+            mUiBot.assertDatasets("l1c1");
             focusCell(1, 2);
-            sUiBot.assertDatasets("l1c2");
+            mUiBot.assertDatasets("l1c2");
 
             // Prepare 2nd partition.
             final CannedFillResponse response2 = new CannedFillResponse.Builder()
@@ -2306,13 +2279,13 @@ public class PartitionedActivityTest extends AutoFillServiceTestCase {
             focusCell(2, 1);
 
             // Make sure it was ignored.
-            sUiBot.assertNoDatasets();
+            mUiBot.assertNoDatasets();
 
             // Make sure 1st partition is still working.
             focusCell(1, 2);
-            sUiBot.assertDatasets("l1c2");
+            mUiBot.assertDatasets("l1c2");
             focusCell(1, 1);
-            sUiBot.assertDatasets("l1c1");
+            mUiBot.assertDatasets("l1c1");
 
             // Prepare 3rd partition.
             final CannedFillResponse response3 = new CannedFillResponse.Builder()
@@ -2325,18 +2298,18 @@ public class PartitionedActivityTest extends AutoFillServiceTestCase {
             focusCell(3, 2);
 
             // Make sure it was ignored.
-            sUiBot.assertNoDatasets();
+            mUiBot.assertNoDatasets();
 
             // Make sure 1st partition is still working...
             focusCell(1, 2);
-            sUiBot.assertDatasets("l1c2");
+            mUiBot.assertDatasets("l1c2");
             focusCell(1, 1);
-            sUiBot.assertDatasets("l1c1");
+            mUiBot.assertDatasets("l1c1");
 
             //...and can be autofilled.
             final FillExpectation expectation = mActivity.expectAutofill()
                     .onCell(1, 1, "l1c1");
-            sUiBot.selectDataset("l1c1");
+            mUiBot.selectDataset("l1c1");
             expectation.assertAutoFilled();
         } finally {
             setMaxPartitions(maxBefore);

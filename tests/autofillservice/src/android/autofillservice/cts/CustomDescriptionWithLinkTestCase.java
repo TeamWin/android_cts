@@ -15,6 +15,8 @@
  */
 package android.autofillservice.cts;
 
+import static android.autofillservice.cts.common.ShellHelper.runShellCommand;
+
 import static com.google.common.truth.Truth.assertThat;
 
 import android.app.Activity;
@@ -23,9 +25,11 @@ import android.content.Intent;
 import android.service.autofill.CustomDescription;
 import android.support.test.uiautomator.By;
 import android.support.test.uiautomator.UiObject2;
+import android.util.Log;
 import android.widget.RemoteViews;
 
-import org.junit.Ignore;
+import static org.junit.Assume.assumeTrue;
+
 import org.junit.Test;
 
 /**
@@ -44,6 +48,7 @@ import org.junit.Test;
  */
 abstract class CustomDescriptionWithLinkTestCase extends AutoFillServiceTestCase {
 
+    private static final String TAG = "CustomDescriptionWithLinkTestCase";
     private static final String ID_LINK = "link";
 
     /**
@@ -62,18 +67,29 @@ abstract class CustomDescriptionWithLinkTestCase extends AutoFillServiceTestCase
      */
     @Test
     public final void testTapLink_changeOrientationThenTapBack() throws Exception {
-        sUiBot.setScreenResolution();
+        assumeTrue("Rotation is supported", Helper.isRotationSupported(mContext));
 
-        sUiBot.setScreenOrientation(UiBot.PORTRAIT);
+        final int width = mUiBot.getDevice().getDisplayWidth();
+        final int heigth = mUiBot.getDevice().getDisplayHeight();
+        final int min = Math.min(width, heigth);
+
+        assumeTrue("Screen size is too small (" + width + "x" + heigth + ")", min >= 500);
+        Log.d(TAG, "testTapLink_changeOrientationThenTapBack(): screen size is "
+                + width + "x" + heigth);
+
+        mUiBot.setScreenOrientation(UiBot.PORTRAIT);
         try {
+            runShellCommand("wm size 1080x1920");
+            runShellCommand("wm density 420");
             saveUiRestoredAfterTappingLinkTest(
                     PostSaveLinkTappedAction.ROTATE_THEN_TAP_BACK_BUTTON);
         } finally {
-            sUiBot.setScreenOrientation(UiBot.PORTRAIT);
+            mUiBot.setScreenOrientation(UiBot.PORTRAIT);
             try {
                 cleanUpAfterScreenOrientationIsBackToPortrait();
             } finally {
-                sUiBot.resetScreenResolution();
+                runShellCommand("wm density reset");
+                runShellCommand("wm size reset");
             }
         }
     }
@@ -172,18 +188,6 @@ abstract class CustomDescriptionWithLinkTestCase extends AutoFillServiceTestCase
             PostSaveLinkTappedAction action, boolean manualRequest) throws Exception;
 
     /**
-     * Tests scenarios when user taps a link in the custom description, then double-tap recents
-     * to go back to the original activity:
-     * the Save UI should have been canceled.
-     */
-    @Test
-    @Ignore("Test fail on some devices because Recents UI is not well defined: b/72044685")
-    public final void testTapLink_backToPreviousActivityByTappingRecents()
-            throws Exception {
-        saveUiCancelledAfterTappingLinkTest(PostSaveLinkTappedAction.TAP_RECENTS);
-    }
-
-    /**
      * Tests scenarios when user taps a link in the custom description, then re-launches the
      * original activity:
      * the Save UI should have been canceled.
@@ -204,6 +208,9 @@ abstract class CustomDescriptionWithLinkTestCase extends AutoFillServiceTestCase
         saveUiCancelledAfterTappingLinkTest(PostSaveLinkTappedAction.LAUNCH_NEW_ACTIVITY);
     }
 
+    protected abstract void saveUiCancelledAfterTappingLinkTest(PostSaveLinkTappedAction type)
+            throws Exception;
+
     @Test
     public final void testTapLink_launchTrampolineActivityThenTapBackAndStartNewSession()
             throws Exception {
@@ -213,10 +220,21 @@ abstract class CustomDescriptionWithLinkTestCase extends AutoFillServiceTestCase
     protected abstract void tapLinkLaunchTrampolineActivityThenTapBackAndStartNewSessionTest()
             throws Exception;
 
+    @Test
+    public final void testTapLinkAfterUpdateAppliedToLinkView() throws Exception {
+        tapLinkAfterUpdateAppliedTest(true);
+    }
+
+    @Test
+    public final void testTapLinkAfterUpdateAppliedToAnotherView() throws Exception {
+        tapLinkAfterUpdateAppliedTest(false);
+    }
+
+    protected abstract void tapLinkAfterUpdateAppliedTest(boolean updateLinkView) throws Exception;
+
     enum PostSaveLinkTappedAction {
         TAP_BACK_BUTTON,
         ROTATE_THEN_TAP_BACK_BUTTON,
-        TAP_RECENTS,
         FINISH_ACTIVITY,
         LAUNCH_NEW_ACTIVITY,
         LAUNCH_PREVIOUS_ACTIVITY,
@@ -225,41 +243,59 @@ abstract class CustomDescriptionWithLinkTestCase extends AutoFillServiceTestCase
         TAP_YES_ON_SAVE_UI
     }
 
-    protected abstract void saveUiCancelledAfterTappingLinkTest(PostSaveLinkTappedAction type)
-            throws Exception;
+    protected final void startActivityOnNewTask(Class<?> clazz) {
+        final Intent intent = new Intent(mContext, clazz);
+        intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+        mContext.startActivity(intent);
+    }
 
-    protected final void startActivity(Class<?> clazz) {
-        mContext.startActivity(new Intent(mContext, clazz));
+    protected RemoteViews newTemplate() {
+        final RemoteViews presentation = new RemoteViews(mPackageName,
+                R.layout.custom_description_with_link);
+        return presentation;
+    }
+
+    protected final CustomDescription.Builder newCustomDescriptionBuilder(
+            Class<? extends Activity> activityClass) {
+        final Intent intent = new Intent(mContext, activityClass);
+        intent.setFlags(Intent.FLAG_ACTIVITY_RETAIN_IN_RECENTS | Intent.FLAG_ACTIVITY_NEW_DOCUMENT);
+        return newCustomDescriptionBuilder(intent);
     }
 
     protected final CustomDescription newCustomDescription(
             Class<? extends Activity> activityClass) {
-        final Intent intent = new Intent(mContext, activityClass);
-        intent.setFlags(Intent.FLAG_ACTIVITY_RETAIN_IN_RECENTS | Intent.FLAG_ACTIVITY_NEW_DOCUMENT);
-        return newCustomDescription(intent);
+        return newCustomDescriptionBuilder(activityClass).build();
+    }
+
+    protected final CustomDescription.Builder newCustomDescriptionBuilder(Intent intent) {
+        final RemoteViews presentation = newTemplate();
+        final PendingIntent pendingIntent = PendingIntent.getActivity(mContext, 0, intent, 0);
+        presentation.setOnClickPendingIntent(R.id.link, pendingIntent);
+        return new CustomDescription.Builder(presentation);
     }
 
     protected final CustomDescription newCustomDescription(Intent intent) {
-        final RemoteViews presentation = new RemoteViews(mPackageName,
-                R.layout.custom_description_with_link);
-        final PendingIntent pendingIntent = PendingIntent.getActivity(mContext, 0, intent, 0);
-        presentation.setOnClickPendingIntent(R.id.link, pendingIntent);
-        return new CustomDescription.Builder(presentation).build();
+        return newCustomDescriptionBuilder(intent).build();
     }
 
-    protected final UiObject2 assertSaveUiWithLinkIsShown(int saveType) {
+    protected final UiObject2 assertSaveUiWithLinkIsShown(int saveType) throws Exception {
+        return assertSaveUiWithLinkIsShown(saveType, "DON'T TAP ME!");
+    }
+
+    protected final UiObject2 assertSaveUiWithLinkIsShown(int saveType, String expectedText)
+            throws Exception {
         // First make sure the UI is shown...
-        final UiObject2 saveUi = sUiBot.assertSaveShowing(saveType);
+        final UiObject2 saveUi = mUiBot.assertSaveShowing(saveType);
         // Then make sure it does have the custom view with link on it...
-        getLink(saveUi);
+        final UiObject2 link = getLink(saveUi);
+        assertThat(link.getText()).isEqualTo(expectedText);
         return saveUi;
     }
 
     protected final UiObject2 getLink(final UiObject2 container) {
-        final UiObject2 button = container.findObject(By.res(mPackageName, ID_LINK));
-        assertThat(button).isNotNull();
-        assertThat(button.getText()).isEqualTo("DON'T TAP ME!");
-        return button;
+        final UiObject2 link = container.findObject(By.res(mPackageName, ID_LINK));
+        assertThat(link).isNotNull();
+        return link;
     }
 
     protected final void tapSaveUiLink(UiObject2 saveUi) {

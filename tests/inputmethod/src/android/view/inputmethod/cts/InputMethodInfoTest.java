@@ -31,7 +31,6 @@ import android.content.pm.ApplicationInfo;
 import android.content.pm.PackageManager;
 import android.content.pm.ResolveInfo;
 import android.content.pm.ServiceInfo;
-import android.content.res.Resources;
 import android.os.Parcel;
 import android.os.ParcelFileDescriptor;
 import android.support.test.InstrumentationRegistry;
@@ -53,8 +52,6 @@ import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.nio.charset.StandardCharsets;
-import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 
 @SmallTest
@@ -72,8 +69,8 @@ public class InputMethodInfoTest {
     private int mSubtypeIconResId;
     private String mSubtypeLocale;
     private String mSubtypeMode;
-    private String mSubtypeExtraValue_key;
-    private String mSubtypeExtraValue_value;
+    private String mSubtypeExtraValueKey;
+    private String mSubtypeExtraValueValue;
     private String mSubtypeExtraValue;
     private boolean mSubtypeIsAuxiliary;
     private boolean mSubtypeOverridesImplicitlyEnabledSubtype;
@@ -93,9 +90,9 @@ public class InputMethodInfoTest {
         mSubtypeIconResId = 0;
         mSubtypeLocale = "en_US";
         mSubtypeMode = "keyboard";
-        mSubtypeExtraValue_key = "key1";
-        mSubtypeExtraValue_value = "value1";
-        mSubtypeExtraValue = "tag," + mSubtypeExtraValue_key + "=" + mSubtypeExtraValue_value;
+        mSubtypeExtraValueKey = "key1";
+        mSubtypeExtraValueValue = "value1";
+        mSubtypeExtraValue = "tag," + mSubtypeExtraValueKey + "=" + mSubtypeExtraValueValue;
         mSubtypeIsAuxiliary = false;
         mSubtypeOverridesImplicitlyEnabledSubtype = false;
         mSubtypeId = 99;
@@ -132,9 +129,9 @@ public class InputMethodInfoTest {
         assertEquals(mSubtypeLocale, mInputMethodSubtype.getLocale());
         assertEquals(mSubtypeMode, mInputMethodSubtype.getMode());
         assertEquals(mSubtypeExtraValue, mInputMethodSubtype.getExtraValue());
-        assertTrue(mInputMethodSubtype.containsExtraValueKey(mSubtypeExtraValue_key));
-        assertEquals(mSubtypeExtraValue_value,
-                mInputMethodSubtype.getExtraValueOf(mSubtypeExtraValue_key));
+        assertTrue(mInputMethodSubtype.containsExtraValueKey(mSubtypeExtraValueKey));
+        assertEquals(mSubtypeExtraValueValue,
+                mInputMethodSubtype.getExtraValueOf(mSubtypeExtraValueKey));
         assertEquals(mSubtypeIsAuxiliary, mInputMethodSubtype.isAuxiliary());
         assertEquals(mSubtypeOverridesImplicitlyEnabledSubtype,
                 mInputMethodSubtype.overridesImplicitlyEnabledSubtype());
@@ -211,11 +208,11 @@ public class InputMethodInfoTest {
         final InputMethodSubtype subtype = InputMethodSubtype.CREATOR.createFromParcel(p);
         p.recycle();
 
-        assertEquals(mInputMethodSubtype.containsExtraValueKey(mSubtypeExtraValue_key),
-                subtype.containsExtraValueKey(mSubtypeExtraValue_key));
+        assertEquals(mInputMethodSubtype.containsExtraValueKey(mSubtypeExtraValueKey),
+                subtype.containsExtraValueKey(mSubtypeExtraValueKey));
         assertEquals(mInputMethodSubtype.getExtraValue(), subtype.getExtraValue());
-        assertEquals(mInputMethodSubtype.getExtraValueOf(mSubtypeExtraValue_key),
-                subtype.getExtraValueOf(mSubtypeExtraValue_key));
+        assertEquals(mInputMethodSubtype.getExtraValueOf(mSubtypeExtraValueKey),
+                subtype.getExtraValueOf(mSubtypeExtraValueKey));
         assertEquals(mInputMethodSubtype.getIconResId(), subtype.getIconResId());
         assertEquals(mInputMethodSubtype.getLocale(), subtype.getLocale());
         assertEquals(mInputMethodSubtype.getMode(), subtype.getMode());
@@ -246,11 +243,11 @@ public class InputMethodInfoTest {
             if (serviceInfo == null) {
                 continue;
             }
-            if ((serviceInfo.applicationInfo.flags & ApplicationInfo.FLAG_SYSTEM) !=
-                    ApplicationInfo.FLAG_SYSTEM) {
+            if ((serviceInfo.applicationInfo.flags & ApplicationInfo.FLAG_SYSTEM)
+                    != ApplicationInfo.FLAG_SYSTEM) {
                 continue;
             }
-            if (serviceInfo.encryptionAware) {
+            if (serviceInfo.directBootAware) {
                 hasEncryptionAwareInputMethod = true;
                 break;
             }

@@ -25,6 +25,7 @@ import android.annotation.TargetApi;
 import android.content.Context;
 import android.graphics.Bitmap;
 import android.media.MediaFormat;
+import android.platform.test.annotations.AppModeFull;
 import android.util.Log;
 import android.view.View;
 
@@ -48,6 +49,7 @@ import org.junit.Test;
 
 @TargetApi(24)
 @RunWith(Parameterized.class)
+@AppModeFull(reason = "There should be no instant apps specific behavior related to accuracy")
 public class DecodeAccuracyTest extends DecodeAccuracyTestBase {
 
     private static final String TAG = DecodeAccuracyTest.class.getSimpleName();

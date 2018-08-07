@@ -25,13 +25,13 @@ import android.content.Context;
 import android.content.pm.PackageManager;
 import android.media.AudioAttributes;
 import android.media.AudioFormat;
-import android.media.AudioSystem;
+import android.media.AudioManager;
 import android.media.AudioTrack;
 import android.media.MediaPlayer;
-import android.media.PlaybackParams;
 import android.media.VolumeShaper;
 import android.os.Parcel;
 import android.os.PowerManager;
+import android.platform.test.annotations.AppModeFull;
 import android.support.test.filters.FlakyTest;
 import android.support.test.filters.LargeTest;
 import android.support.test.filters.MediumTest;
@@ -52,6 +52,7 @@ import java.util.Arrays;
  *
  * adb logcat | grep VolumeShaperTest
  */
+@AppModeFull(reason = "TODO: evaluate and port to instant")
 public class VolumeShaperTest extends CtsAndroidTestCase {
     private static final String TAG = "VolumeShaperTest";
 
@@ -204,7 +205,7 @@ public class VolumeShaperTest extends CtsAndroidTestCase {
                             AudioAttributes.USAGE_MEDIA  // offload allowed
                             : AudioAttributes.USAGE_NOTIFICATION) // offload not allowed
                     .build(),
-                AudioSystem.newAudioSessionId());
+                new AudioManager(getContext()).generateAudioSessionId());
         mediaPlayer.setWakeMode(getContext(), PowerManager.PARTIAL_WAKE_LOCK);
         mediaPlayer.setLooping(true);
         return mediaPlayer;
