@@ -34,6 +34,7 @@ LOCAL_SRC_FILES := \
     $(call all-named-files-under,Components.java, appThirdUid) \
     $(call all-named-files-under,Components.java, translucentapp) \
     $(call all-named-files-under,Components.java, translucentappsdk26) \
+    ../../../../apps/CtsVerifier/src/com/android/cts/verifier/vr/MockVrListenerService.java \
 
 LOCAL_STATIC_JAVA_LIBRARIES := \
     android-support-test \
