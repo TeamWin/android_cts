@@ -1662,8 +1662,7 @@ INSTANTIATE_TEST_CASE_P(
         AHardwareBuffer_Desc{75, 33, 1, GL_RGB8, 0, kGlFormat, 0, 0},
         AHardwareBuffer_Desc{64, 80, 1, GL_RGBA8, 0, kGlFormat, 0, 0},
         AHardwareBuffer_Desc{49, 23, 1, GL_SRGB8_ALPHA8, 0, kGlFormat | kUseSrgb, 0, 0},
-        // TODO: enable for Android Q.
-        // AHardwareBuffer_Desc{63, 78, 1, GL_RGB565, 0, kGlFormat, 0, 0},
+        AHardwareBuffer_Desc{63, 78, 1, GL_RGB565, 0, kGlFormat, 0, 0},
         AHardwareBuffer_Desc{42, 41, 1, GL_RGBA16F, 0, kGlFormat, 0, 0},
         AHardwareBuffer_Desc{37, 63, 1, GL_RGB10_A2, 0, kGlFormat, 0, 0},
         AHardwareBuffer_Desc{33, 20, 1, AHARDWAREBUFFER_FORMAT_R8G8B8A8_UNORM, 0, 0, 0, 0},
@@ -1684,8 +1683,7 @@ INSTANTIATE_TEST_CASE_P(
         AHardwareBuffer_Desc{64, 80, 6, GL_RGBA8, 0, kGlFormat, 0, 0},
         AHardwareBuffer_Desc{33, 28, 4, GL_SRGB8_ALPHA8, 0, kGlFormat | kUseSrgb, 0, 0},
         AHardwareBuffer_Desc{42, 41, 3, GL_RGBA16F, 0, kGlFormat, 0, 0},
-        // TODO: enable for Android Q.
-        // AHardwareBuffer_Desc{63, 78, 3, GL_RGB565, 0, kGlFormat, 0, 0},
+        AHardwareBuffer_Desc{63, 78, 3, GL_RGB565, 0, kGlFormat, 0, 0},
         AHardwareBuffer_Desc{37, 63, 4, GL_RGB10_A2, 0, kGlFormat, 0, 0},
         AHardwareBuffer_Desc{25, 77, 7, AHARDWAREBUFFER_FORMAT_R8G8B8A8_UNORM, 0, 0, 0, 0},
         AHardwareBuffer_Desc{25, 77, 7, AHARDWAREBUFFER_FORMAT_R8G8B8A8_UNORM, 0, kUseSrgb, 0, 0},
