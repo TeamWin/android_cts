@@ -136,6 +136,10 @@ public class FileParser {
         return new ArrayList<String>();
     }
 
+    public List<String> getDynamicLoadingDependencies() {
+        return new ArrayList<String>();
+    }
+
     private static boolean isSymbolicLink(File f) {
         // Assumes 0b files are Symbolic Link
         return (f.length() == 0);

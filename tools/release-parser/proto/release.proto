@@ -93,6 +93,7 @@ message Entry {
     string abi_architecture = 10;
     int32 abi_bits = 11;
     repeated Service services = 12;
+    repeated string dynamic_loading_dependencies = 13;
 }
 
 message ReleaseContent {

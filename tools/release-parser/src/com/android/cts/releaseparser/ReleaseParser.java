@@ -171,6 +171,7 @@ class ReleaseParser {
                 }
                 // System.err.println("File:" + file.getAbsoluteFile());
                 fileEntry.addAllDependencies(fParser.getDependencies());
+                fileEntry.addAllDynamicLoadingDependencies(fParser.getDynamicLoadingDependencies());
                 fileEntry.setAbiBits(fParser.getAbiBits());
                 fileEntry.setAbiArchitecture(fParser.getAbiArchitecture());
 
@@ -218,10 +219,10 @@ class ReleaseParser {
             PrintWriter pWriter = new PrintWriter(fWriter);
             // Header
             pWriter.printf(
-                    "release,type,name,size,relative_path,content_id,parent_folder,code_id,architecture,bits,dependencies,services\n");
+                    "release,type,name,size,relative_path,content_id,parent_folder,code_id,architecture,bits,dependencies,dynamic_loading_dependencies,services\n");
             for (Entry entry : getFileEntriesList()) {
                 pWriter.printf(
-                        "%s,%s,%s,%d,%s,%s,%s,%s,%s,%d,%s,%s\n",
+                        "%s,%s,%s,%d,%s,%s,%s,%s,%s,%d,%s,%s,%s\n",
                         relNameVer,
                         entry.getType(),
                         entry.getName(),
@@ -233,6 +234,7 @@ class ReleaseParser {
                         entry.getAbiArchitecture(),
                         entry.getAbiBits(),
                         String.join(" ", entry.getDependenciesList()),
+                        String.join(" ", entry.getDynamicLoadingDependenciesList()),
                         RcParser.toString(entry.getServicesList()));
             }
             pWriter.flush();
