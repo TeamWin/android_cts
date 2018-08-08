@@ -306,7 +306,8 @@
                   android:label="PipActivity"
                   android:resizeableActivity="true"
                   android:supportsPictureInPicture="true"
-                  android:configChanges="smallestScreenSize|orientation|screenSize|screenLayout">
+                  android:configChanges="smallestScreenSize|orientation|screenSize|screenLayout"
+                  android:exported="true">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
                 <category android:name="android.intent.category.FRAMEWORK_INSTRUMENTATION_TEST" />
