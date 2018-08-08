@@ -190,11 +190,12 @@ final class AutoFillServiceTestCase {
                 // mLoggingRule wraps the test but doesn't interfere with it
                 .around(mLoggingRule)
                 //
-                // mRetryRule will retry test in case of failure
+                // mSafeCleanerRule will catch errors
+                .around(mSafeCleanerRule)
+                //
+                // mRetryRule should be closest to the main test as possible
                 .around(mRetryRule)
                 //
-                // mSafeCleanerRule should be closest to the main test as possible.
-                .around(mSafeCleanerRule)
                 //
                 // Finally, let subclasses add their own rules (like ActivityTestRule)
                 .around(getMainTestRule());
