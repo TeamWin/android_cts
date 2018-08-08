@@ -23,8 +23,8 @@ import java.io.FileInputStream;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.io.PrintWriter;
+import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.TreeMap;
 
 public class DepPrinter {
     private ReleaseContent mRelContent;
@@ -98,22 +98,6 @@ public class DepPrinter {
 
             mCurLevel = 0;
             printDep(entry, sourceNode);
-            TreeMap<Integer, StringBuilder> rankMap = new TreeMap<>();
-            mLibMap.forEach(
-                    (binary, maxLevel) -> {
-                        StringBuilder strBld;
-                        if ((strBld = rankMap.get(maxLevel)) != null) {
-                            rankMap.put(maxLevel, strBld.append(binary + ";"));
-                        } else {
-                            strBld = new StringBuilder(binary + ";");
-                            rankMap.put(maxLevel, strBld);
-                        }
-                    });
-
-            rankMap.forEach(
-                    (maxLevel, strBld) -> {
-                        mPWriter.println(String.format("{ rank = same; %s }", strBld));
-                    });
 
             mPWriter.println("}");
             mPWriter.flush();
@@ -212,51 +196,95 @@ public class DepPrinter {
 
     private void printDep(Entry srcEntry, String sourceNode) {
         mCurLevel += 1;
-        for (String dep : srcEntry.getDependenciesList()) {
+        ArrayList<String> allDepList = new ArrayList<>();
+        allDepList.addAll(srcEntry.getDependenciesList());
+        int depCnt = allDepList.size();
+        allDepList.addAll(srcEntry.getDynamicLoadingDependenciesList());
+        int no = 0;
+        for (String dep : allDepList) {
+            boolean goFurther = false;
             String targetNode = getNodeName(dep);
 
-            if (mLibMap.get(targetNode) == null) {
-                // Print Entry node once only
-                mLibMap.put(targetNode, 1);
-                mPWriter.printf(String.format("%s [label=\"%s\"", targetNode, dep));
-                checkDelta(srcEntry);
-                mPWriter.println("]");
+            String depPath = String.format("%s -> %s", sourceNode, targetNode);
+            if (no < depCnt) {
+                depPath = String.format("%s -> %s", sourceNode, targetNode);
             } else {
-                // Record max Level for a target
-                int i = mLibMap.get(targetNode);
-                mLibMap.put(targetNode, Math.max(i, mCurLevel));
+                // This is Dyanmic Loading
+                depPath = String.format("%s -> %s [color=\"blue\"]", sourceNode, targetNode);
             }
 
-            String depPath = String.format("%s -> %s", sourceNode, targetNode);
             if (mDepPathMap.get(depPath) == null) {
                 // Print path once only
                 mDepPathMap.put(depPath, 1);
                 mPWriter.println(depPath);
             }
 
-            String filePath;
-            if (mBits == 32) {
-                filePath = String.format("SYSTEM/lib/%s", dep);
+            Entry depEntry;
+            String filePath = dep;
+            if (dep.startsWith("/system")) {
+                depEntry = mRelContent.getEntries().get(dep.replace("/system/", "SYSTEM/"));
+            } else if (dep.startsWith("/vendor")) {
+                depEntry = mRelContent.getEntries().get(dep.replace("/vendor/", "VENDOR/"));
             } else {
-                filePath = String.format("SYSTEM/lib64/%s", dep);
+                if (mBits == 32) {
+                    filePath = String.format("SYSTEM/lib/%s", dep);
+                } else {
+                    filePath = String.format("SYSTEM/lib64/%s", dep);
+                }
+
+                depEntry = mRelContent.getEntries().get(filePath);
+                if (depEntry == null) {
+                    // try Vendor
+                    if (mBits == 32) {
+                        filePath = String.format("VENDOR/lib/%s", dep);
+                    } else {
+                        filePath = String.format("VENDOR/lib64/%s", dep);
+                    }
+                    depEntry = mRelContent.getEntries().get(filePath);
+                }
+                if (depEntry == null) {
+                    // try Vendor
+                    if (mBits == 32) {
+                        filePath = String.format("VENDOR/lib/%s", dep);
+                    } else {
+                        filePath = String.format("VENDOR/lib64/%s", dep);
+                    }
+                    depEntry = mRelContent.getEntries().get(filePath);
+                }
             }
 
-            Entry depEntry = mRelContent.getEntries().get(filePath);
-            if (depEntry == null) {
+            if (depEntry == null && dep.endsWith("libGLES_android.so")) {
                 // try Vendor
                 if (mBits == 32) {
-                    filePath = String.format("VENDOR/lib/%s", dep);
+                    filePath = "SYSTEM/lib/egl/libGLES_android.so";
                 } else {
-                    filePath = String.format("VENDOR/lib64/%s", dep);
+                    filePath = "SYSTEM/lib64/egl/libGLES_android.so";
                 }
                 depEntry = mRelContent.getEntries().get(filePath);
             }
 
             if (depEntry != null) {
-                printDep(depEntry, targetNode);
+                if (mLibMap.get(targetNode) == null) {
+                    // Print Entry node once only
+                    mLibMap.put(targetNode, 1);
+                    mPWriter.printf(String.format("%s [label=\"%s\"", targetNode, dep));
+                    checkDelta(depEntry);
+                    mPWriter.println("]");
+                    // Only visit once
+                    goFurther = true;
+                } else {
+                    // Record max Level for a target
+                    int i = mLibMap.get(targetNode);
+                    mLibMap.put(targetNode, Math.max(i, mCurLevel));
+                }
+
+                if (goFurther) {
+                    printDep(depEntry, targetNode);
+                }
             } else {
                 System.err.println("cannot find: " + filePath);
             }
+            no++;
         }
         mCurLevel -= 1;
     }

@@ -20,11 +20,15 @@ import com.android.compatibility.common.util.ReadElf;
 import com.android.cts.releaseparser.ReleaseProto.*;
 
 import java.io.File;
+import java.io.IOException;
+import java.util.ArrayList;
 import java.util.List;
 
 public class SoParser extends FileParser {
     private int mBits;
     private String mArch;
+    private List<String> mDependencies;
+    private List<String> mDynamicLoadingDependencies;
 
     public SoParser(File file) {
         super(file);
@@ -44,20 +48,36 @@ public class SoParser extends FileParser {
 
     @Override
     public List<String> getDependencies() {
-        try {
-            ReadElf elf = ReadElf.read(getFile());
-            mBits = elf.getBits();
-            mArch = elf.getArchitecture();
-            List<String> depList = elf.getDynamicDependencies();
+        if (mDependencies == null) {
+            try {
+                ReadElf elf = ReadElf.read(getFile());
+                mBits = elf.getBits();
+                mArch = elf.getArchitecture();
+                mDependencies = elf.getDynamicDependencies();
 
-            // System.out.println(String.format("SoParser: %s, %s", getFileName(),
-            // depList.toString()));
-            return depList;
-        } catch (Exception ex) {
-            System.err.println(
-                    String.format("err: SoParser can not getDependencies from %s.", getFileName()));
-            return super.getDependencies();
+                // System.out.println(String.format("SoParser: %s, %s", getFileName(),
+                // depList.toString()));
+
+                // Check Dynamic Loading dependencies
+                mDynamicLoadingDependencies = getDynamicLoadingDependencies(elf);
+            } catch (Exception ex) {
+                System.err.println(
+                        String.format(
+                                "err: SoParser can not getDependencies from %s.", getFileName()));
+                mDependencies = super.getDependencies();
+                mDynamicLoadingDependencies = super.getDynamicLoadingDependencies();
+            }
         }
+        return mDependencies;
+    }
+
+    @Override
+    public List<String> getDynamicLoadingDependencies() {
+        if (mDynamicLoadingDependencies == null) {
+            // This also parses DynamicLoadingDependencies
+            getDependencies();
+        }
+        return mDynamicLoadingDependencies;
     }
 
     @Override
@@ -79,5 +99,42 @@ public class SoParser extends FileParser {
     public String getAbiArchitecture() {
         getAbiBits();
         return mArch;
+    }
+
+    private List<String> getDynamicLoadingDependencies(ReadElf elf) throws IOException {
+        List<String> depList = new ArrayList<>();
+        // check if it does refer to dlopen
+        if (elf.getDynamicSymbol("dlopen") != null) {
+            List<String> roStrings = elf.getRoStrings();
+            for (String str : roStrings) {
+                // skip ".so" or less
+                if (str.length() < 4) {
+                    continue;
+                }
+
+                if (str.endsWith(".so")) {
+                    // skip itself
+                    if (str.contains(getFileName())) {
+                        continue;
+                    }
+                    if (str.contains(" ")) {
+                        continue;
+                    }
+                    if (str.contains("?")) {
+                        continue;
+                    }
+                    if (str.contains("%")) {
+                        System.err.println("ToDo getDynamicLoadingDependencies: " + str);
+                        continue;
+                    }
+                    if (str.startsWith("_")) {
+                        System.err.println("ToDo getDynamicLoadingDependencies: " + str);
+                        continue;
+                    }
+                    depList.add(str);
+                }
+            }
+        }
+        return depList;
     }
 }
