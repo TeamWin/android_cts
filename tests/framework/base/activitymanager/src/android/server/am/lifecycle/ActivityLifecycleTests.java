@@ -715,15 +715,15 @@ public class ActivityLifecycleTests extends ActivityLifecycleClientTestBase {
         InstrumentationRegistry.getTargetContext().startActivity(intent);
 
         // Wait for the activity to resume again
-        final List<LifecycleLog.ActivityCallback> expectedSequence =
-                Arrays.asList(ON_NEW_INTENT, ON_RESUME);
-        waitForActivityTransitions(SingleTopActivity.class, expectedSequence);
-
-        // Verify that the new intent was delivered and resumed again
         // TODO(b/77974794): New intent handling sequence should always be the same.
         // It is possible to get an extra pause and resume now.
         final List<LifecycleLog.ActivityCallback> extraPauseSequence =
                 Arrays.asList(ON_NEW_INTENT, ON_RESUME, ON_PAUSE, ON_RESUME);
+        waitForActivityTransitions(SingleTopActivity.class, extraPauseSequence);
+
+        // Verify that the new intent was delivered and resumed again
+        final List<LifecycleLog.ActivityCallback> expectedSequence =
+                Arrays.asList(ON_NEW_INTENT, ON_RESUME);
         LifecycleVerifier.assertSequenceMatchesOneOf(SingleTopActivity.class, getLifecycleLog(),
                 Arrays.asList(expectedSequence, extraPauseSequence), "newIntent");
     }

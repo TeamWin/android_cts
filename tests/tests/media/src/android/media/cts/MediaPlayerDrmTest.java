@@ -123,11 +123,11 @@ public class MediaPlayerDrmTest extends MediaPlayerDrmTestBase {
     // Assets
 
     private static final Uri CENC_AUDIO_URL = Uri.parse(
-            "http://storage.googleapis.com/wvmedia/cenc/clearkey/car_cenc-20120827-8c-pssh.mp4");
+            "https://storage.googleapis.com/wvmedia/cenc/clearkey/car_cenc-20120827-8c-pssh.mp4");
     private static final Uri CENC_AUDIO_URL_DOWNLOADED = getUriFromFile("car_cenc-20120827-8c.mp4");
 
     private static final Uri CENC_VIDEO_URL = Uri.parse(
-            "http://storage.googleapis.com/wvmedia/cenc/clearkey/car_cenc-20120827-88-pssh.mp4");
+            "https://storage.googleapis.com/wvmedia/cenc/clearkey/car_cenc-20120827-88-pssh.mp4");
     private static final Uri CENC_VIDEO_URL_DOWNLOADED = getUriFromFile("car_cenc-20120827-88.mp4");
 
 

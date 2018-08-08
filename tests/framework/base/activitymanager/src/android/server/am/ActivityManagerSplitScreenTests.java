@@ -468,8 +468,8 @@ public class ActivityManagerSplitScreenTests extends ActivityManagerTestBase {
         // Rotate the screen to check that minimize, unminimize, dismiss the docked stack and then
         // going home has the correct app transition
         try (final RotationSession rotationSession = new RotationSession()) {
-            for (int i = 0; i < 4; i++) {
-                rotationSession.set(i);
+            for (int rotation = ROTATION_0; rotation <= ROTATION_270; rotation++) {
+                rotationSession.set(rotation);
                 launchActivityInDockStackAndMinimize(DOCKED_ACTIVITY);
 
                 if (mIsHomeRecentsComponent) {
@@ -491,7 +491,8 @@ public class ActivityManagerSplitScreenTests extends ActivityManagerTestBase {
                 assertNotEquals(
                         TRANSIT_WALLPAPER_OPEN, mAmWmState.getWmState().getLastTransition());
                 pressHomeButton();
-                mAmWmState.computeState(true);
+                mAmWmState.waitForHomeActivityVisible();
+
                 assertEquals(TRANSIT_WALLPAPER_OPEN, mAmWmState.getWmState().getLastTransition());
             }
         }
