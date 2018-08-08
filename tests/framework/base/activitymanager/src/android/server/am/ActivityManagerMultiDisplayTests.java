@@ -162,6 +162,7 @@ public class ActivityManagerMultiDisplayTests extends ActivityManagerDisplayTest
      * default display.
      */
     @Test
+    @FlakyTest(bugId = 112055644)
     public void testLaunchNonResizeableActivityOnSecondaryDisplay() throws Exception {
         try (final VirtualDisplaySession virtualDisplaySession = new VirtualDisplaySession()) {
             // Create new virtual display.
@@ -180,6 +181,7 @@ public class ActivityManagerMultiDisplayTests extends ActivityManagerDisplayTest
      * on the primary display. It should land on the primary display and dismiss docked stack.
      */
     @Test
+    @FlakyTest(bugId = 112055644)
     public void testLaunchNonResizeableActivityWithSplitScreen() throws Exception {
         assumeTrue(supportsSplitScreenMultiWindow());
 
@@ -904,6 +906,7 @@ public class ActivityManagerMultiDisplayTests extends ActivityManagerDisplayTest
 
     /** Test that launching from app that is on external display is allowed. */
     @Test
+    @FlakyTest(bugId = 112055644)
     public void testPermissionLaunchFromAppOnSecondary() throws Exception {
         try (final VirtualDisplaySession virtualDisplaySession = new VirtualDisplaySession()) {
             // Create new simulated display.
@@ -1337,6 +1340,7 @@ public class ActivityManagerMultiDisplayTests extends ActivityManagerDisplayTest
      * matching the task component root does.
      */
     @Test
+    @FlakyTest(bugId = 112055644)
     public void testTaskMatchAcrossDisplays() throws Exception {
         try (final VirtualDisplaySession virtualDisplaySession = new VirtualDisplaySession()) {
             final ActivityDisplay newDisplay = virtualDisplaySession.createDisplay();

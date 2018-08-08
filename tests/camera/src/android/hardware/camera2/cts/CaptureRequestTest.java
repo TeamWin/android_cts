@@ -426,7 +426,7 @@ public class CaptureRequestTest extends Camera2SurfaceViewTestCase {
      * API specifications.
      * </p>
      */
-    @Test
+    @Test(timeout=60*60*1000) // timeout = 60 mins for long running tests
     public void testAeModeAndLock() throws Exception {
         for (int i = 0; i < mCameraIds.length; i++) {
             try {

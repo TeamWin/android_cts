@@ -73,8 +73,6 @@ import android.os.LocaleList;
 import android.os.Looper;
 import android.os.Parcelable;
 import android.os.SystemClock;
-import androidx.annotation.IntDef;
-import androidx.annotation.Nullable;
 import android.support.test.InstrumentationRegistry;
 import android.support.test.annotation.UiThreadTest;
 import android.support.test.filters.MediumTest;
@@ -149,6 +147,9 @@ import android.widget.Scroller;
 import android.widget.TextView;
 import android.widget.TextView.BufferType;
 import android.widget.cts.util.TestUtils;
+
+import androidx.annotation.IntDef;
+import androidx.annotation.Nullable;
 
 import com.android.compatibility.common.util.CtsKeyEventUtil;
 import com.android.compatibility.common.util.CtsTouchUtils;
@@ -6273,9 +6274,6 @@ public class TextViewTest {
     public void testSetGetHyphenationFrequency() {
         TextView tv = new TextView(mActivity);
 
-        assertEquals(Layout.HYPHENATION_FREQUENCY_NORMAL, tv.getHyphenationFrequency());
-
-        tv.setHyphenationFrequency(Layout.HYPHENATION_FREQUENCY_NONE);
         assertEquals(Layout.HYPHENATION_FREQUENCY_NONE, tv.getHyphenationFrequency());
 
         tv.setHyphenationFrequency(Layout.HYPHENATION_FREQUENCY_NORMAL);
@@ -6283,6 +6281,9 @@ public class TextViewTest {
 
         tv.setHyphenationFrequency(Layout.HYPHENATION_FREQUENCY_FULL);
         assertEquals(Layout.HYPHENATION_FREQUENCY_FULL, tv.getHyphenationFrequency());
+
+        tv.setHyphenationFrequency(Layout.HYPHENATION_FREQUENCY_NONE);
+        assertEquals(Layout.HYPHENATION_FREQUENCY_NONE, tv.getHyphenationFrequency());
     }
 
     @UiThreadTest
@@ -7998,6 +7999,20 @@ public class TextViewTest {
             ssb.setSpan(new UnderlineSpan(), 0, 1, Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
             editable.replace(5, 5, ssb);
         });
+    }
+
+    @Test
+    public void testBreakStrategyDefaultValue() {
+        final Context context = InstrumentationRegistry.getTargetContext();
+        final TextView textView = new TextView(context);
+        assertEquals(Layout.BREAK_STRATEGY_HIGH_QUALITY, textView.getBreakStrategy());
+    }
+
+    @Test
+    public void testHyphenationFrequencyDefaultValue() {
+        final Context context = InstrumentationRegistry.getTargetContext();
+        final TextView textView = new TextView(context);
+        assertEquals(Layout.HYPHENATION_FREQUENCY_NONE, textView.getHyphenationFrequency());
     }
 
     private void initializeTextForSmartSelection(CharSequence text) throws Throwable {

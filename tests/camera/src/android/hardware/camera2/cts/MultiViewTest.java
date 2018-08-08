@@ -706,7 +706,7 @@ public class MultiViewTest extends Camera2MultiViewTestCase {
     /*
      * Test dynamic shared surface switch behavior.
      */
-    @Test
+    @Test(timeout=60*60*1000) // timeout = 60 mins for long running tests
     public void testSharedSurfaceSwitch() throws Exception {
         for (String cameraId : mCameraIds) {
             try {
