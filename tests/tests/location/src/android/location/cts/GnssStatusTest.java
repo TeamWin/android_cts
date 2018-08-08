@@ -8,7 +8,6 @@ public class GnssStatusTest extends GnssTestCase  {
     private static final String TAG = "GnssStatusTest";
     private static final int LOCATION_TO_COLLECT_COUNT = 1;
     private static final int STATUS_TO_COLLECT_COUNT = 3;
-    private static final int YEAR_2018 = 2018;
 
   @Override
   protected void setUp() throws Exception {
@@ -108,7 +107,7 @@ public class GnssStatusTest extends GnssTestCase  {
       TestMeasurementUtil.validateSvidSub(softAssert, null,
           status.getConstellationType(i),status.getSvid(i));
 
-      // For those function with boolean type return, just simplly call the function
+      // For those function with boolean type return, just simply call the function
       // to make sure those function won't crash, also increase the test coverage.
       Log.i(TAG, "hasAlmanacData: " + status.hasAlmanacData(i));
       Log.i(TAG, "hasEphemerisData: " + status.hasEphemerisData(i));

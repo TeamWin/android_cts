@@ -27,9 +27,11 @@ import android.content.pm.PackageManager;
 import android.content.res.Configuration;
 import android.graphics.Bitmap;
 import android.support.test.InstrumentationRegistry;
+import android.support.test.rule.ActivityTestRule;
 import android.util.Log;
 import android.view.KeyCharacterMap;
 import android.view.KeyEvent;
+import android.view.WindowInsets;
 
 import java.io.FileOutputStream;
 import java.io.IOException;
@@ -71,10 +73,15 @@ public class LightBarTestBase {
         }
     }
 
-    private boolean hasVirtualNavigationBar() {
+    private boolean hasVirtualNavigationBar(ActivityTestRule<? extends LightBarBaseActivity> rule)
+            throws Throwable {
         boolean hasBackKey = KeyCharacterMap.deviceHasKey(KeyEvent.KEYCODE_BACK);
         boolean hasHomeKey = KeyCharacterMap.deviceHasKey(KeyEvent.KEYCODE_HOME);
-        return !hasBackKey || !hasHomeKey;
+        final WindowInsets[] inset = new WindowInsets[1];
+        rule.runOnUiThread(()-> {
+            inset[0] = rule.getActivity().getRootWindowInsets();
+        });
+        return !hasBackKey || !hasHomeKey || inset[0].getStableInsetBottom() == 0;
     }
 
     private boolean isRunningInVr() {
@@ -101,29 +108,53 @@ public class LightBarTestBase {
         assumeTrue(ActivityManager.isHighEndGfx());
     }
 
-    protected void assumeHasColoredStatusBar() {
+    protected void assumeHasColoredStatusBar(ActivityTestRule<? extends LightBarBaseActivity> rule)
+            throws Throwable {
         assumeBasics();
 
         // No status bar when running in Vr
         assumeFalse(isRunningInVr());
+
+        // Status bar exists only when top stable inset is positive
+        final WindowInsets[] inset = new WindowInsets[1];
+        rule.runOnUiThread(()-> {
+            inset[0] = rule.getActivity().getRootWindowInsets();
+        });
+        assumeTrue("Top stable inset is non-positive.", inset[0].getStableInsetTop() > 0);
     }
 
-    protected void assumeHasColorNavigationBar() {
+    protected void assumeHasColoredNavigationBar(
+            ActivityTestRule<? extends LightBarBaseActivity> rule) throws Throwable {
         assumeBasics();
 
         // No virtual navigation bar, so no effect.
-        assumeTrue(hasVirtualNavigationBar());
+        assumeTrue(hasVirtualNavigationBar(rule));
     }
 
-    protected void checkNavigationBarDivider(LightBarBaseActivity activity, int dividerColor) {
+    protected void checkNavigationBarDivider(LightBarBaseActivity activity, int dividerColor,
+            int backgroundColor) {
         final Bitmap bitmap = takeNavigationBarScreenshot(activity);
         int[] pixels = new int[bitmap.getHeight() * bitmap.getWidth()];
         bitmap.getPixels(pixels, 0, bitmap.getWidth(), 0, 0, bitmap.getWidth(), bitmap.getHeight());
+
+        int backgroundColorPixelCount = 0;
+        for (int i = 0; i < pixels.length; i++) {
+            if (pixels[i] == backgroundColor) {
+                backgroundColorPixelCount++;
+            }
+        }
+        assumeNavigationBarChangesColor(backgroundColorPixelCount, pixels.length);
+
         for (int col = 0; col < bitmap.getWidth(); col++) {
             if (dividerColor != pixels[col]) {
                 dumpBitmap(bitmap);
                 fail("Invalid color exptected=" + dividerColor + " actual=" + pixels[col]);
             }
         }
+    }
+
+    protected void assumeNavigationBarChangesColor(int backgroundColorPixelCount, int totalPixel) {
+        assumeTrue("Not enough background pixels. The navigation bar may not be able to change "
+                + "color.", backgroundColorPixelCount > 0.3f * totalPixel);
     }
 }

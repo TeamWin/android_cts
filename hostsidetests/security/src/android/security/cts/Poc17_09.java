@@ -52,4 +52,15 @@ public class Poc17_09 extends SecurityTestCase {
                                       , getDevice()
                                       )==139);
     }
- }
+
+  /**
+   * b/38195738
+   * b/36590192
+   */
+  @SecurityTest
+  public void testPocBug_38195738() throws Exception {
+    if(containsDriver(getDevice(), "/dev/kgsl-3d0")) {
+      AdbUtils.runPocNoOutput("Bug-38195738", getDevice(), 60);
+    }
+  }
+}

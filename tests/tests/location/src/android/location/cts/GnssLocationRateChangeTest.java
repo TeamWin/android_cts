@@ -16,6 +16,8 @@
 
 package android.location.cts;
 
+import android.platform.test.annotations.AppModeFull;
+
 /**
  * Test the "gps" location output works through various rate changes
  *
@@ -65,6 +67,7 @@ public class GnssLocationRateChangeTest extends GnssTestCase {
      * and firmware state machine layers, ensuring Location output
      * remains responsive after all is done.
      */
+    @AppModeFull(reason = "Flaky in instant mode.")
     public void testVariedRates() throws Exception {
         if (!TestUtils.deviceHasGpsFeature(getContext())) {
             return;
