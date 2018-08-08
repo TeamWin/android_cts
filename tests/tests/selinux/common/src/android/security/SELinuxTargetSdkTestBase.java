@@ -52,7 +52,7 @@ abstract class SELinuxTargetSdkTestBase extends AndroidTestCase
         for(int i = 0; i < dnsProps.length; i++) {
             String dns = getProperty(dnsProps[i]);
             assertEquals("DNS properties may not be readable by apps past " +
-                    "targetSdkVersion 26", dns, "");
+                    "targetSdkVersion 26", "", dns);
         }
     }
 
