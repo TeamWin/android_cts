@@ -175,7 +175,9 @@ final class CannedFillResponse {
             if (mSaveDescription != null) {
                 saveInfo.setDescription(mSaveDescription);
             }
-            saveInfo.setNegativeAction(mNegativeActionStyle, mNegativeActionListener);
+            if (mNegativeActionListener != null) {
+                saveInfo.setNegativeAction(mNegativeActionStyle, mNegativeActionListener);
+            }
 
             if (mCustomDescription != null) {
                 saveInfo.setCustomDescription(mCustomDescription);
@@ -189,6 +191,8 @@ final class CannedFillResponse {
                 saveInfo.setTriggerId(mSaveTriggerId);
             }
             builder.setSaveInfo(saveInfo.build());
+        } else if (mSaveInfoFlags != 0) {
+            builder.setSaveInfo(new SaveInfo.Builder(mSaveType).setFlags(mSaveInfoFlags).build());
         }
         if (mIgnoredIds != null) {
             builder.setIgnoredIds(getAutofillIds(nodeResolver, mIgnoredIds));

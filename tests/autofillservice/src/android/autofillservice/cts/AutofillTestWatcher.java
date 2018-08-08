@@ -20,6 +20,7 @@ import android.util.Log;
 
 import androidx.annotation.GuardedBy;
 import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
 
 import org.junit.rules.TestWatcher;
 import org.junit.runner.Description;
@@ -103,6 +104,18 @@ public final class AutofillTestWatcher extends TestWatcher {
                 Log.v(TAG, "ignoring already unregistered activity on " + where + ": " + activity);
             }
         }
+    }
+
+    /**
+     * Gets the instance of a previously registered activity.
+     */
+    @Nullable
+    public static <A extends AbstractAutoFillActivity> A getActivity(@NonNull Class<A> clazz) {
+        @SuppressWarnings("unchecked")
+        final A activity = (A) sAllActivities.stream().filter(a -> a.getClass().equals(clazz))
+                .findFirst()
+                .get();
+        return activity;
     }
 
     private void finishActivities() {
