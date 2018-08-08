@@ -17,6 +17,7 @@
 package android.dumpsys.cts;
 
 import com.android.compatibility.common.tradefed.build.CompatibilityBuildHelper;
+import com.android.compatibility.common.util.CddTest;
 
 import java.io.BufferedReader;
 import java.io.File;
@@ -37,6 +38,7 @@ public class BatteryStatsDumpsysTest extends BaseDumpsysTest {
      *
      * @throws Exception
      */
+    @CddTest(requirement="8.4/T-0-1,T-0-2,T-0-4,H-0-1,H-0-2,H-0-4,A-0-1,A-0-2,A-0-4")
     public void testBatterystatsOutput() throws Exception {
         String batterystats = mDevice.executeShellCommand("dumpsys batterystats --checkin");
         assertNotNull(batterystats);
