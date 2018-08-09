@@ -91,6 +91,7 @@ def main():
             assert caps[THRESH_CONVERGE_FOR_EV-1]['metadata']['android.control.aeState'] == LOCKED
 
         pylab.plot(evs, lumas, '-ro')
+        pylab.title(NAME)
         pylab.xlabel('EV Compensation')
         pylab.ylabel('Mean Luma (Normalized)')
         matplotlib.pyplot.savefig('%s_plot_means.png' % (NAME))
