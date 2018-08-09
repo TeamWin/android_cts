@@ -3225,4 +3225,29 @@ public class ParcelTest extends AndroidTestCase {
         assertEquals(42, list.get(0).getValue());
         assertEquals(56, list.get(1).getValue());
     }
+
+    // http://b/35384981
+    public void testCreateArrayWithTruncatedParcel() {
+        Parcel parcel = Parcel.obtain();
+        parcel.writeByteArray(new byte[] { 'a', 'b' });
+        byte[] marshalled = parcel.marshall();
+
+        // Test that createByteArray returns null with a truncated parcel.
+        parcel = Parcel.obtain();
+        parcel.unmarshall(marshalled, 0, marshalled.length);
+        parcel.setDataPosition(0);
+        // Shorten the data size by 2 to remove padding at the end of the array.
+        parcel.setDataSize(marshalled.length - 2);
+        assertNull(parcel.createByteArray());
+
+        // Test that readByteArray returns null with a truncated parcel.
+        parcel = Parcel.obtain();
+        parcel.unmarshall(marshalled, 0, marshalled.length);
+        parcel.setDataSize(marshalled.length - 2);
+        try {
+            parcel.readByteArray(new byte[2]);
+            fail();
+        } catch (RuntimeException expected) {
+        }
+    }
 }
