@@ -713,6 +713,7 @@ public class WindowManagerState {
         private Rect mStableBounds;
         private String mName;
         private int mSurfaceSize;
+        private String mFocusedApp;
 
         public Display(DisplayContentProto proto) {
             super(proto.windowContainer);
@@ -738,6 +739,7 @@ public class WindowManagerState {
                 mStableBounds = extract(displayFramesProto.stableBounds);
             }
             mSurfaceSize = proto.surfaceSize;
+            mFocusedApp = proto.focusedApp;
         }
 
         private void addWindowsFromTokenProto(WindowTokenProto proto) {
@@ -771,6 +773,10 @@ public class WindowManagerState {
 
         int getSurfaceSize() {
             return mSurfaceSize;
+        }
+
+        String getFocusedApp() {
+            return mFocusedApp;
         }
 
         @Override

@@ -80,7 +80,6 @@ import android.server.am.CommandSession.SizeInfo;
 import android.support.test.InstrumentationRegistry;
 import android.support.test.filters.FlakyTest;
 import android.util.SparseArray;
-import android.view.View;
 import android.view.WindowManager;
 import android.view.inputmethod.InputMethodManager;
 import android.widget.EditText;
@@ -822,6 +821,8 @@ public class ActivityManagerMultiDisplayTests extends ActivityManagerDisplayTest
                         put(newDisplay.mId, TEST_ACTIVITY);
                     }}
             );
+            mAmWmState.assertFocusedAppOnDisplay("App on secondary display must still be focused",
+                    TEST_ACTIVITY, newDisplay.mId);
         }
     }
 
@@ -1583,6 +1584,8 @@ public class ActivityManagerMultiDisplayTests extends ActivityManagerDisplayTest
             // Check that the activity is launched onto the external display
             waitAndAssertTopResumedActivity(TEST_ACTIVITY, newDisplay.mId,
                     "Activity launched on external display must be resumed");
+            mAmWmState.assertFocusedAppOnDisplay("App on default display must still be focused",
+                    RESIZEABLE_ACTIVITY, DEFAULT_DISPLAY);
 
             final LogSeparator logSeparator = separateLogs();
 
@@ -1641,6 +1644,8 @@ public class ActivityManagerMultiDisplayTests extends ActivityManagerDisplayTest
             // Check that the test activity is resumed on the external display
             waitAndAssertTopResumedActivity(TEST_ACTIVITY, newDisplay.mId,
                     "Activity launched on external display must be resumed");
+            mAmWmState.assertFocusedAppOnDisplay("App on default display must still be focused",
+                    RESIZEABLE_ACTIVITY, DEFAULT_DISPLAY);
         }
     }
 
@@ -1700,6 +1705,12 @@ public class ActivityManagerMultiDisplayTests extends ActivityManagerDisplayTest
 
             launchActivityOnDisplay(TEST_ACTIVITY, newDisplay.mId);
 
+            // Unlock the device and tap on the middle of the primary display
+            lockScreenSession.wakeUpDevice();
+            executeShellCommand("wm dismiss-keyguard");
+            mAmWmState.waitForKeyguardGone();
+            mAmWmState.waitForValidState(RESIZEABLE_ACTIVITY, TEST_ACTIVITY);
+
             // Check that the test activity is resumed on the external display and is on top
             waitAndAssertTopResumedActivity(TEST_ACTIVITY, newDisplay.mId,
                     "Activity on external display must be resumed and on top");
@@ -1710,11 +1721,6 @@ public class ActivityManagerMultiDisplayTests extends ActivityManagerDisplayTest
                     }}
             );
 
-            // Unlock the device and tap on the middle of the primary display
-            lockScreenSession.wakeUpDevice();
-            executeShellCommand("wm dismiss-keyguard");
-            mAmWmState.waitForKeyguardGone();
-            mAmWmState.waitForValidState(TEST_ACTIVITY);
             final ReportedDisplayMetrics displayMetrics = getDisplayMetrics();
             final int width = displayMetrics.getSize().getWidth();
             final int height = displayMetrics.getSize().getHeight();
@@ -1729,6 +1735,8 @@ public class ActivityManagerMultiDisplayTests extends ActivityManagerDisplayTest
                         put(newDisplay.mId, TEST_ACTIVITY);
                     }}
             );
+            mAmWmState.assertFocusedAppOnDisplay("App on external display must still be focused",
+                    TEST_ACTIVITY, newDisplay.mId);
         }
     }
 
@@ -1758,7 +1766,6 @@ public class ActivityManagerMultiDisplayTests extends ActivityManagerDisplayTest
 
     /**
      * Tests tap and set focus between displays.
-     * TODO(b/111361570): focus tracking between multi-display may change to check focus display.
      */
     @Test
     public void testSecondaryDisplayFocus() throws Exception {
@@ -1771,6 +1778,8 @@ public class ActivityManagerMultiDisplayTests extends ActivityManagerDisplayTest
             launchActivityOnDisplay(VIRTUAL_DISPLAY_ACTIVITY, newDisplay.mId);
             waitAndAssertTopResumedActivity(VIRTUAL_DISPLAY_ACTIVITY, newDisplay.mId,
                     "Virtual activity should be Top Resumed Activity.");
+            mAmWmState.assertFocusedAppOnDisplay("Activity on second display must be focused.",
+                    VIRTUAL_DISPLAY_ACTIVITY, newDisplay.mId);
 
             final ReportedDisplayMetrics displayMetrics = getDisplayMetrics();
             final int width = displayMetrics.getSize().getWidth();
@@ -1779,61 +1788,73 @@ public class ActivityManagerMultiDisplayTests extends ActivityManagerDisplayTest
 
             waitAndAssertTopResumedActivity(TEST_ACTIVITY, DEFAULT_DISPLAY,
                     "Activity should be top resumed when tapped.");
-            mAmWmState.assertFocusedActivity("Activity on default display must be focused.",
+            mAmWmState.assertFocusedActivity("Activity on default display must be top focused.",
                     TEST_ACTIVITY);
 
             tapOnDisplay(VirtualDisplayHelper.WIDTH / 2, VirtualDisplayHelper.HEIGHT / 2,
                     newDisplay.mId);
             waitAndAssertTopResumedActivity(VIRTUAL_DISPLAY_ACTIVITY, newDisplay.mId,
                     "Virtual display activity should be top resumed when tapped.");
-            mAmWmState.assertFocusedActivity("Activity on second display must be focused.",
+            mAmWmState.assertFocusedActivity("Activity on second display must be top focused.",
                     VIRTUAL_DISPLAY_ACTIVITY);
+            mAmWmState.assertFocusedAppOnDisplay(
+                    "Activity on default display must be still focused.",
+                    TEST_ACTIVITY, DEFAULT_DISPLAY);
         }
     }
 
     @Test
-    public void testImeWindowVisibilityForVirtualDisplay() throws Exception {
+    public void testImeWindowCanSwitchToDifferentDisplays() throws Exception {
         final long TIMEOUT_SOFT_INPUT = TimeUnit.SECONDS.toMillis(5);
 
         try (final VirtualDisplaySession virtualDisplaySession = new VirtualDisplaySession();
-             final TestActivitySession<EditTestActivity> imeTestActivitySession = new
+             final TestActivitySession<ImeTestActivity> imeTestActivitySession = new
                      TestActivitySession<>();
-             // Leverage MockImeSession to ensure at least a test Ime exists as default.
+             final TestActivitySession<ImeTestActivity2> imeTestActivitySession2 = new
+                     TestActivitySession<>();
+
+             // Leverage MockImeSession to ensure at least an IME exists as default.
              final MockImeSession mockImeSession = MockImeSession.create(
                      mContext, InstrumentationRegistry.getInstrumentation().getUiAutomation(),
                      new ImeSettings.Builder())) {
-            // Create virtual display & launch test activity.
+
+            // Create a virtual display and launch an activity on it.
             final ActivityDisplay newDisplay =
                     virtualDisplaySession.setPublicDisplay(true).createDisplay();
-            imeTestActivitySession.launchTestActivityOnDisplaySync(EditTestActivity.class,
+            imeTestActivitySession.launchTestActivityOnDisplaySync(ImeTestActivity.class,
                     newDisplay.mId);
-            // Focus EditText to show soft input.
-            final EditText editText = imeTestActivitySession.getActivity().getEditText();
+
+            // Make the activity to show soft input.
             final ImeEventStream stream = mockImeSession.openEventStream();
-            imeTestActivitySession.runOnMainSyncAndWait(() -> {
-                editText.setFocusable(true);
-                editText.requestFocus();
-                showSoftInputForView(editText);
-            });
+            imeTestActivitySession.runOnMainSyncAndWait(
+                    imeTestActivitySession.getActivity()::showSoftInput);
             expectEvent(stream, event -> "showSoftInput".equals(event.getEventName()),
                     TIMEOUT_SOFT_INPUT);
 
-            // Ensure that the IME is visible & shown in virtual display.
-            testImeWindowVisibilityForVirtualDisplay(true /* visible */,
-                    newDisplay.mId /* displayId */);
+            // Assert the IME is shown on the virtual display.
+            waitAndAssertImeWindowShownOnDisplay(newDisplay.mId);
 
-            // Check Ime window's display configuration if same as virtual display.
+            // Assert the configuration of the IME window is the same as the configuration of the
+            // virtual display.
             assertImeWindowAndDisplayConfiguration(getImeWindowState(), newDisplay);
 
-            // Tap on default display, assert Ime window will hide as expected.
-            final ReportedDisplayMetrics displayMetrics = getDisplayMetrics();
-            final int width = displayMetrics.getSize().getWidth();
-            final int height = displayMetrics.getSize().getHeight();
-            tapOnDisplay(width / 2, height / 2, DEFAULT_DISPLAY);
+            // Launch another activity on the default display.
+            imeTestActivitySession2.launchTestActivityOnDisplaySync(ImeTestActivity2.class,
+                    DEFAULT_DISPLAY);
 
-            // Ensure that the IME is hidden in virtual display.
-            testImeWindowVisibilityForVirtualDisplay(false /* visible */,
-                    newDisplay.mId /* displayId */);
+            // Make the activity to show soft input.
+            imeTestActivitySession2.runOnMainSyncAndWait(
+                    imeTestActivitySession2.getActivity()::showSoftInput);
+            expectEvent(stream, event -> "showSoftInput".equals(event.getEventName()),
+                    TIMEOUT_SOFT_INPUT);
+
+            // Assert the IME is shown on the default display.
+            waitAndAssertImeWindowShownOnDisplay(DEFAULT_DISPLAY);
+
+            // Assert the configuration of the IME window is the same as the configuration of the
+            // default display.
+            assertImeWindowAndDisplayConfiguration(getImeWindowState(),
+                    mAmWmState.getAmState().getDisplay(DEFAULT_DISPLAY));
         }
     }
 
@@ -1968,40 +1989,38 @@ public class ActivityManagerMultiDisplayTests extends ActivityManagerDisplayTest
         }
     }
 
-    public static class EditTestActivity extends Activity {
+    public static class ImeTestActivity extends Activity {
         private EditText mEditText;
+
         @Override
         protected void onCreate(Bundle icicle) {
             super.onCreate(icicle);
+            mEditText = new EditText(this);
             final LinearLayout layout = new LinearLayout(this);
             layout.setOrientation(LinearLayout.VERTICAL);
-            mEditText = new EditText(this);
             layout.addView(mEditText);
-            getWindow().setSoftInputMode(WindowManager.LayoutParams.SOFT_INPUT_ADJUST_RESIZE);
             setContentView(layout);
         }
 
-        EditText getEditText() {
-            return mEditText;
+        void showSoftInput() {
+            mEditText.setFocusable(true);
+            mEditText.requestFocus();
+            SystemUtil.runWithShellPermissionIdentity(() -> {
+                getSystemService(InputMethodManager.class).showSoftInput(mEditText, 0);
+            });
         }
     }
 
-    void showSoftInputForView(View view) {
-        SystemUtil.runWithShellPermissionIdentity(() -> {
-            mContext.getSystemService(InputMethodManager.class).showSoftInput(view, 0);
-        });
-    }
+    public static class ImeTestActivity2 extends ImeTestActivity { }
 
-    void testImeWindowVisibilityForVirtualDisplay(boolean visible, int displayId) {
-        final WindowManagerState.WindowState imeWinState =
-                mAmWmState.waitForWindowWithVisibility(this::getImeWindowState,
-                        "IME" /* winName */, visible);
-        if (imeWinState != null) {
-            assertEquals("IME window display", displayId, imeWinState.getDisplayId());
-            assertEquals("IME window visibility", visible, imeWinState.isShown());
-        } else {
-            assertFalse("IME window not exist", visible);
-        }
+    void waitAndAssertImeWindowShownOnDisplay(int displayId) {
+        final WindowManagerState.WindowState imeWinState = mAmWmState.waitForValidProduct(
+                this::getImeWindowState, "IME window",
+                w -> w.isShown() && w.getDisplayId() == displayId);
+        assertNotNull("IME window must exist", imeWinState);
+        assertTrue("IME window must be shown", imeWinState.isShown());
+        assertEquals("IME window must be on the given display", displayId,
+                imeWinState.getDisplayId());
     }
 
     void assertImeWindowAndDisplayConfiguration(
