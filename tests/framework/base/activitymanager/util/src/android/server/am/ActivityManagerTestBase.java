@@ -34,6 +34,7 @@ import static android.content.pm.PackageManager.FEATURE_VR_MODE_HIGH_PERFORMANCE
 import static android.content.pm.PackageManager.FEATURE_WATCH;
 import static android.server.am.ActivityLauncher.KEY_ACTIVITY_TYPE;
 import static android.server.am.ActivityLauncher.KEY_DISPLAY_ID;
+import static android.server.am.ActivityLauncher.KEY_INTENT_FLAGS;
 import static android.server.am.ActivityLauncher.KEY_LAUNCH_ACTIVITY;
 import static android.server.am.ActivityLauncher.KEY_LAUNCH_TO_SIDE;
 import static android.server.am.ActivityLauncher.KEY_MULTIPLE_TASK;
@@ -1551,6 +1552,7 @@ public abstract class ActivityManagerTestBase {
         // of a launching activity;
         private ComponentName mBroadcastReceiver;
         private String mBroadcastReceiverAction;
+        private int mIntentFlags;
         private LaunchInjector mLaunchInjector;
 
         private enum LauncherType {
@@ -1655,6 +1657,11 @@ public abstract class ActivityManagerTestBase {
             return mWaitForLaunched;
         }
 
+        public LaunchActivityBuilder setIntentFlags(int flags) {
+            mIntentFlags = flags;
+            return this;
+        }
+
         @Override
         public void setLaunchInjector(LaunchInjector injector) {
             mLaunchInjector = injector;
@@ -1691,6 +1698,7 @@ public abstract class ActivityManagerTestBase {
             b.putBoolean(KEY_USE_APPLICATION_CONTEXT, mUseApplicationContext);
             b.putString(KEY_TARGET_COMPONENT, getActivityName(mTargetActivity));
             b.putBoolean(KEY_SUPPRESS_EXCEPTIONS, mSuppressExceptions);
+            b.putInt(KEY_INTENT_FLAGS, mIntentFlags);
             final Context context = InstrumentationRegistry.getContext();
             launchActivityFromExtras(context, b, mLaunchInjector);
         }
@@ -1748,6 +1756,10 @@ public abstract class ActivityManagerTestBase {
 
             if (mSuppressExceptions) {
                 commandBuilder.append(" --ez " + KEY_SUPPRESS_EXCEPTIONS + " true");
+            }
+
+            if (mIntentFlags != 0) {
+                commandBuilder.append(" --ei " + KEY_INTENT_FLAGS + " ").append(mIntentFlags);
             }
 
             if (mLaunchInjector != null) {

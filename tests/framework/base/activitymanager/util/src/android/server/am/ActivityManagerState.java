@@ -32,6 +32,7 @@ import android.graphics.Rect;
 import android.os.ParcelFileDescriptor;
 import android.os.SystemClock;
 import android.support.test.InstrumentationRegistry;
+import androidx.annotation.Nullable;
 
 import com.android.server.am.nano.ActivityDisplayProto;
 import com.android.server.am.nano.ActivityManagerServiceDumpActivitiesProto;
@@ -213,6 +214,19 @@ public class ActivityManagerState {
         return getDisplay(displayId).mStacks.get(0).getWindowingMode();
     }
 
+    public String getTopActivityName(int displayId) {
+        if (!getDisplay(displayId).mStacks.isEmpty()) {
+            final ActivityStack topStack = getDisplay(displayId).mStacks.get(0);
+            if (!topStack.mTasks.isEmpty()) {
+                final ActivityTask topTask = topStack.mTasks.get(0);
+                if (!topTask.mActivities.isEmpty()) {
+                    return topTask.mActivities.get(0).name;
+                }
+            }
+        }
+        return null;
+    }
+
     int getFocusedStackId() {
         return mTopFocusedStackId;
     }
@@ -292,7 +306,7 @@ public class ActivityManagerState {
         return null;
     }
 
-    int getStandardTaskCountByWindowingMode(int windowingMode) {
+    public int getStandardTaskCountByWindowingMode(int windowingMode) {
         int count = 0;
         for (ActivityStack stack : mStacks) {
             if (stack.getActivityType() != ACTIVITY_TYPE_STANDARD) {
@@ -519,12 +533,12 @@ public class ActivityManagerState {
                 : null;
     }
 
-    int getStackIdByActivity(ComponentName activityName) {
+    public int getStackIdByActivity(ComponentName activityName) {
         final ActivityTask task = getTaskByActivity(activityName);
         return  (task == null) ? INVALID_STACK_ID : task.mStackId;
     }
 
-    ActivityTask getTaskByActivity(ComponentName activityName) {
+    public ActivityTask getTaskByActivity(ComponentName activityName) {
         return getTaskByActivityInternal(getActivityName(activityName), WINDOWING_MODE_UNDEFINED);
     }
 
@@ -546,6 +560,37 @@ public class ActivityManagerState {
             }
         }
         return null;
+    }
+
+    /**
+     * Get the number of activities in the task, with the option to count only activities with
+     * specific name.
+     * @param taskId Id of the task where we're looking for the number of activities.
+     * @param activityName Optional name of the activity we're interested in.
+     * @return Number of all activities in the task if activityName is {@code null}, otherwise will
+     *         report number of activities that have specified name.
+     */
+    public int getActivityCountInTask(int taskId, @Nullable ComponentName activityName) {
+        // If activityName is null, count all activities in the task.
+        // Otherwise count activities that have specified name.
+        for (ActivityStack stack : mStacks) {
+            for (ActivityTask task : stack.mTasks) {
+                if (task.mTaskId == taskId) {
+                    if (activityName == null) {
+                        return task.mActivities.size();
+                    }
+                    final String fullName = getActivityName(activityName);
+                    int count = 0;
+                    for (Activity activity : task.mActivities) {
+                        if (activity.name.equals(fullName)) {
+                            count++;
+                        }
+                    }
+                    return count;
+                }
+            }
+        }
+        return 0;
     }
 
     boolean pendingActivityContain(ComponentName activityName) {
@@ -638,7 +683,7 @@ public class ActivityManagerState {
         }
     }
 
-    static class ActivityTask extends ActivityContainer {
+    public static class ActivityTask extends ActivityContainer {
 
         int mTaskId;
         int mStackId;
@@ -671,16 +716,8 @@ public class ActivityManagerState {
             return mResizeMode;
         }
 
-        /**
-         * @return whether this task contains the given activity.
-         */
-        public boolean containsActivity(String activityName) {
-            for (Activity activity : mActivities) {
-                if (activity.name.equals(activityName)) {
-                    return true;
-                }
-            }
-            return false;
+        public int getTaskId() {
+            return mTaskId;
         }
     }
 

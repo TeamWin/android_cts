@@ -515,7 +515,7 @@ public class ActivityAndWindowManagersState {
         return false;
     }
 
-    ActivityManagerState getAmState() {
+    public ActivityManagerState getAmState() {
         return mAmState;
     }
 
@@ -554,7 +554,7 @@ public class ActivityAndWindowManagersState {
         assertFalse(msg, mWmState.containsStack(windowingMode, activityType));
     }
 
-    void assertFrontStack(String msg, int windowingMode, int activityType) {
+    public void assertFrontStack(String msg, int windowingMode, int activityType) {
         if (windowingMode != WINDOWING_MODE_UNDEFINED) {
             assertEquals(msg, windowingMode,
                     mAmState.getFrontStackWindowingMode(DEFAULT_DISPLAY));
@@ -582,7 +582,7 @@ public class ActivityAndWindowManagersState {
         }
     }
 
-    void assertFocusedActivity(final String msg, final ComponentName activityName) {
+    public void assertFocusedActivity(final String msg, final ComponentName activityName) {
         final String activityComponentName = getActivityName(activityName);
         assertEquals(msg, activityComponentName, mAmState.getFocusedActivity());
         assertEquals(msg, activityComponentName, mWmState.getFocusedApp());
