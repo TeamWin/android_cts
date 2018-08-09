@@ -1565,7 +1565,7 @@ public class SQLiteDatabaseTest extends AndroidTestCase {
     public void testCloseIdleConnection() throws Exception {
         mDatabase.close();
         SQLiteDatabase.OpenParams params = new SQLiteDatabase.OpenParams.Builder()
-                .setIdleConnectionTimeout(1000).build();
+                .setIdleConnectionTimeout(5000).build();
         mDatabase = SQLiteDatabase.openDatabase(mDatabaseFile, params);
         // Wait a bit and check that connection is still open
         Thread.sleep(600);
@@ -1574,9 +1574,9 @@ public class SQLiteDatabaseTest extends AndroidTestCase {
                 output.contains("Connection #0:"));
 
         // Now cause idle timeout and check that connection is closed
-        // We wait up to 5 seconds, which is longer than required 1 s to accommodate for delays in
+        // We wait up to 10 seconds, which is longer than required 1 s to accommodate for delays in
         // message processing when system is busy
-        boolean connectionWasClosed = waitForConnectionToClose(10, 500);
+        boolean connectionWasClosed = waitForConnectionToClose(20, 500);
         assertTrue("Connection #0 should be closed", connectionWasClosed);
     }
 

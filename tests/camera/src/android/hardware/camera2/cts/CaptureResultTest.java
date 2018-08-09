@@ -26,6 +26,7 @@ import android.hardware.camera2.CaptureResult;
 import android.hardware.camera2.TotalCaptureResult;
 import android.media.Image;
 import android.media.ImageReader;
+import android.os.Build;
 import android.os.SystemClock;
 import android.platform.test.annotations.AppModeFull;
 import android.util.Pair;
@@ -473,6 +474,10 @@ public class CaptureResultTest extends Camera2AndroidTestCase {
                         errorCollector.expectEquals(msg,
                                 requestBuilder.get(CaptureRequest.STATISTICS_OIS_DATA_MODE),
                                 result.get(CaptureResult.STATISTICS_OIS_DATA_MODE));
+                    } else if (key.equals(CaptureResult.DISTORTION_CORRECTION_MODE)) {
+                         errorCollector.expectEquals(msg,
+                                requestBuilder.get(CaptureRequest.DISTORTION_CORRECTION_MODE),
+                                result.get(CaptureResult.DISTORTION_CORRECTION_MODE));
                     } else {
                         // Only do non-null check for the rest of keys.
                         errorCollector.expectKeyValueNotNull(failMsg, result, key);
@@ -549,26 +554,28 @@ public class CaptureResultTest extends Camera2AndroidTestCase {
                 CameraCharacteristics.REQUEST_AVAILABLE_CAPABILITIES_DEPTH_OUTPUT)) {
             waiverKeys.add(CaptureResult.LENS_POSE_ROTATION);
             waiverKeys.add(CaptureResult.LENS_POSE_TRANSLATION);
-            waiverKeys.add(CaptureResult.LENS_INTRINSIC_CALIBRATION);
-            waiverKeys.add(CaptureResult.LENS_RADIAL_DISTORTION);
-            waiverKeys.add(CaptureResult.LENS_DISTORTION);
         }
 
         //Keys for lens distortion correction
-        int[] distortionModes = staticInfo.getCharacteristics().get(
-                CameraCharacteristics.DISTORTION_CORRECTION_AVAILABLE_MODES);
-        if (distortionModes == null) {
+        boolean distortionCorrectionSupported = staticInfo.isDistortionCorrectionSupported();
+        if (!distortionCorrectionSupported) {
             waiverKeys.add(CaptureResult.DISTORTION_CORRECTION_MODE);
+        }
+
+        // These keys must present on either DEPTH or distortion correction devices
+        if (!staticInfo.isCapabilitySupported(
+                CameraCharacteristics.REQUEST_AVAILABLE_CAPABILITIES_DEPTH_OUTPUT) &&
+                !distortionCorrectionSupported) {
+            waiverKeys.add(CaptureResult.LENS_INTRINSIC_CALIBRATION);
+            waiverKeys.add(CaptureResult.LENS_RADIAL_DISTORTION);
+            waiverKeys.add(CaptureResult.LENS_DISTORTION);
         } else {
-            boolean gotNonOff = false;
-            for (int mode : distortionModes) {
-                if (mode != CaptureRequest.DISTORTION_CORRECTION_MODE_OFF) {
-                    gotNonOff = true;
-                    break;
-                }
-            }
-            if (!gotNonOff) {
-                waiverKeys.add(CaptureResult.DISTORTION_CORRECTION_MODE);
+            // Radial distortion doesn't need to be present for new devices, or old devices that
+            // opt in the new lens distortion tag.
+            CameraCharacteristics c = staticInfo.getCharacteristics();
+            if (Build.VERSION.FIRST_SDK_INT > Build.VERSION_CODES.O_MR1 ||
+                    c.get(CameraCharacteristics.LENS_DISTORTION) != null) {
+                waiverKeys.add(CaptureResult.LENS_RADIAL_DISTORTION);
             }
         }
 

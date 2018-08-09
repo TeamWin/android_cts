@@ -63,10 +63,10 @@ def main():
             caps = cam.do_capture(reqs, cam.CAP_RAW)
         else:
             # Get the active array width and height.
-            aax = props["android.sensor.info.activeArraySize"]["left"]
-            aay = props["android.sensor.info.activeArraySize"]["top"]
-            aaw = props["android.sensor.info.activeArraySize"]["right"]-aax
-            aah = props["android.sensor.info.activeArraySize"]["bottom"]-aay
+            aax = props["android.sensor.info.preCorrectionActiveArraySize"]["left"]
+            aay = props["android.sensor.info.preCorrectionActiveArraySize"]["top"]
+            aaw = props["android.sensor.info.preCorrectionActiveArraySize"]["right"]-aax
+            aah = props["android.sensor.info.preCorrectionActiveArraySize"]["bottom"]-aay
             # Compute stats on a grid across each image.
             caps = cam.do_capture(reqs,
                                   {"format": "rawStats",

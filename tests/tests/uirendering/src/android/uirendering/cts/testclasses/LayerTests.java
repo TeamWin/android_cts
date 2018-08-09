@@ -49,6 +49,7 @@ import android.widget.FrameLayout;
 
 import androidx.annotation.ColorInt;
 
+import org.junit.Ignore;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
@@ -226,7 +227,8 @@ public class LayerTests extends ActivityTestBase {
 
         createTest()
                 .addLayout(R.layout.frame_layout, initializer, true)
-                .runWithAnimationVerifier(new ColorCountVerifier(Color.WHITE, 90 * 90 - 50 * 50));
+                .runWithAnimationVerifier(new ColorCountVerifier(
+                        Color.WHITE, 90 * 90 - 50 * 50, 10));
     }
 
     @Test
@@ -537,6 +539,7 @@ public class LayerTests extends ActivityTestBase {
 
     @LargeTest
     @Test
+    @Ignore // b/109839751
     public void testWebViewWithUnclippedLayer() {
         if (!getActivity().getPackageManager().hasSystemFeature(PackageManager.FEATURE_WEBVIEW)) {
             return; // no WebView to run test on
@@ -571,6 +574,7 @@ public class LayerTests extends ActivityTestBase {
 
     @LargeTest
     @Test
+    @Ignore // b/109839751
     public void testWebViewWithUnclippedLayerAndComplexClip() {
         if (!getActivity().getPackageManager().hasSystemFeature(PackageManager.FEATURE_WEBVIEW)) {
             return; // no WebView to run test on

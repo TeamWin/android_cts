@@ -12,14 +12,14 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-import its.device
-import its.caps
-import its.objects
-import its.image
 import os.path
-import numpy as np
+import its.caps
+import its.device
+import its.image
+import its.objects
 from matplotlib import pylab
 import matplotlib.pyplot
+import numpy as np
 
 IMG_STATS_GRID = 9  # find used to find the center 11.11%
 NAME = os.path.basename(__file__).split(".")[0]
@@ -31,6 +31,7 @@ EXP_MULT = pow(2, 1.0/3)
 INCREASING_THR = 0.99
 # slice captures into burst of SLICE_LEN requests
 SLICE_LEN = 10
+
 
 def main():
     """Capture a set of raw images with increasing exposure time and measure the pixel values.
@@ -53,12 +54,12 @@ def main():
         sens_max = props["android.sensor.maxAnalogSensitivity"]
         sens_step = (sens_max - sens_min) / NUM_ISO_STEPS
         white_level = float(props["android.sensor.info.whiteLevel"])
-        black_levels = [its.image.get_black_level(i,props) for i in range(4)]
+        black_levels = [its.image.get_black_level(i, props) for i in range(4)]
         # Get the active array width and height.
-        aax = props["android.sensor.info.activeArraySize"]["left"]
-        aay = props["android.sensor.info.activeArraySize"]["top"]
-        aaw = props["android.sensor.info.activeArraySize"]["right"]-aax
-        aah = props["android.sensor.info.activeArraySize"]["bottom"]-aay
+        aax = props["android.sensor.info.preCorrectionActiveArraySize"]["left"]
+        aay = props["android.sensor.info.preCorrectionActiveArraySize"]["top"]
+        aaw = props["android.sensor.info.preCorrectionActiveArraySize"]["right"]-aax
+        aah = props["android.sensor.info.preCorrectionActiveArraySize"]["bottom"]-aay
         raw_stat_fmt = {"format": "rawStats",
                         "gridWidth": aaw/IMG_STATS_GRID,
                         "gridHeight": aah/IMG_STATS_GRID}
@@ -97,14 +98,15 @@ def main():
 
             # Measure the mean of each channel.
             # Each shot should be brighter (except underexposed/overexposed scene)
-            for i,cap in enumerate(caps):
+            for i, cap in enumerate(caps):
                 if debug:
                     planes = its.image.convert_capture_to_planes(cap, props)
                     tiles = [its.image.get_image_patch(p, 0.445, 0.445, 0.11, 0.11) for p in planes]
                     mean = [m * white_level for tile in tiles
                             for m in its.image.compute_image_means(tile)]
                     img = its.image.convert_capture_to_rgb_image(cap, props=props)
-                    its.image.write_image(img, "%s_s=%d_e=%05d.jpg" % (NAME, s, e_test))
+                    its.image.write_image(img, "%s_s=%d_e=%05d.jpg"
+                                          % (NAME, s, e_test[i]))
                 else:
                     mean_image, _ = its.image.unpack_rawstats_capture(cap)
                     mean = mean_image[IMG_STATS_GRID/2, IMG_STATS_GRID/2]
@@ -112,7 +114,6 @@ def main():
                 print "ISO=%d, exposure time=%.3fms, mean=%s" % (
                         s, e_test[i] / 1000000.0, str(mean))
                 means.append(mean)
-
 
             # means[0] is black level value
             r = [m[0] for m in means[1:]]
@@ -124,8 +125,8 @@ def main():
             pylab.plot(e_test_ms, b, "b.-")
             pylab.plot(e_test_ms, gr, "g.-")
             pylab.plot(e_test_ms, gb, "k.-")
-            pylab.xscale('log')
-            pylab.yscale('log')
+            pylab.xscale("log")
+            pylab.yscale("log")
             pylab.title("%s ISO=%d" % (NAME, s))
             pylab.xlabel("Exposure time (ms)")
             pylab.ylabel("Center patch pixel mean")
@@ -139,7 +140,7 @@ def main():
 
                 if np.isclose(max(mean), white_level, rtol=SATURATION_TOL):
                     print "Saturated: white_level %f, max_mean %f"% (white_level, max(mean))
-                    break;
+                    break
 
                 if allow_under_saturated and np.allclose(mean, black_levels, rtol=BLK_LVL_TOL):
                     # All channel means are close to black level

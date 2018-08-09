@@ -24,7 +24,6 @@ import static org.junit.Assert.assertSame;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
-import android.app.ActivityManager;
 import android.content.ContentResolver;
 import android.content.Context;
 import android.content.res.AssetManager;
@@ -1997,16 +1996,31 @@ public class ImageDecoderTest {
                 assertTrue(drawable.getIntrinsicHeight() > record.height);
 
                 // Set a low density. This will result in a smaller drawable and
-                // Bitmap.
+                // Bitmap, unless the true density is DENSITY_MEDIUM, which matches
+                // the density of the asset.
                 mRes.getDisplayMetrics().densityDpi = DisplayMetrics.DENSITY_LOW;
                 drawable = decodeBitmapDrawable(resId);
-
                 bm = drawable.getBitmap();
-                assertTrue(bm.getWidth() < record.width);
-                assertTrue(bm.getHeight() < record.height);
 
-                assertEquals(bm.getWidth(), drawable.getIntrinsicWidth());
-                assertEquals(bm.getHeight(), drawable.getIntrinsicHeight());
+                if (originalDensity == DisplayMetrics.DENSITY_MEDIUM) {
+                    // Although we've modified |densityDpi|, ImageDecoder knows the
+                    // true density matches the asset, so it will not downscale at
+                    // decode time.
+                    assertEquals(bm.getWidth(), record.width);
+                    assertEquals(bm.getHeight(), record.height);
+
+                    // The drawable should still be smaller.
+                    assertTrue(bm.getWidth() > drawable.getIntrinsicWidth());
+                    assertTrue(bm.getHeight() > drawable.getIntrinsicHeight());
+                } else {
+                    // The bitmap is scaled down at decode time, so it matches the
+                    // drawable size, and is smaller than the original.
+                    assertTrue(bm.getWidth() < record.width);
+                    assertTrue(bm.getHeight() < record.height);
+
+                    assertEquals(bm.getWidth(), drawable.getIntrinsicWidth());
+                    assertEquals(bm.getHeight(), drawable.getIntrinsicHeight());
+                }
             }
         } finally {
             mRes.getDisplayMetrics().densityDpi = originalDensity;
@@ -2213,28 +2227,5 @@ public class ImageDecoderTest {
 
         ImageDecoder.Source src = mCreators[0].apply(R.drawable.animated);
         testReuse(src, "animated.gif");
-    }
-
-    @Test
-    public void testWarpedDng() {
-        Context context = InstrumentationRegistry.getTargetContext();
-        ActivityManager activityManager = (ActivityManager) context
-                .getSystemService(Context.ACTIVITY_SERVICE);
-        ActivityManager.MemoryInfo info = new ActivityManager.MemoryInfo();
-        activityManager.getMemoryInfo(info);
-
-        // Decoding this image requires a lot of memory. Only attempt if the
-        // device has a total memory of at least 2 Gigs.
-        if (info.totalMem < 2L * 1024 * 1024 * 1024) {
-            return;
-        }
-
-        String name = "b78120086.dng";
-        ImageDecoder.Source src = ImageDecoder.createSource(mRes.getAssets(), name);
-        try {
-            ImageDecoder.decodeDrawable(src);
-        } catch (IOException e) {
-            fail("Failed to decode " + name + " with exception " + e);
-        }
     }
 }
