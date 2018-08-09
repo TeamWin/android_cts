@@ -29,10 +29,13 @@ import android.content.Context;
 import android.content.res.Resources;
 import android.content.res.TypedArray;
 import android.graphics.Bitmap;
+import android.graphics.Color;
 import android.graphics.Insets;
 import android.graphics.Point;
 import android.graphics.PointF;
 import android.graphics.Rect;
+import android.graphics.drawable.ColorDrawable;
+import android.graphics.drawable.Drawable;
 import android.support.test.annotation.UiThreadTest;
 import android.support.test.filters.SmallTest;
 import android.support.test.rule.ActivityTestRule;
@@ -429,6 +432,9 @@ public class MagnifierTest {
             final boolean forcePositionWithinBounds = true;
             assertEquals(forcePositionWithinBounds,
                     magnifier.isForcePositionWithinWindowSystemInsetsBounds());
+            final int overlayColor = resources.getColor(
+                    com.android.internal.R.color.magnifier_color_overlay, null);
+            assertEquals(overlayColor, ((ColorDrawable) magnifier.getOverlay()).getColor());
         }
     }
 
@@ -443,6 +449,7 @@ public class MagnifierTest {
         final float cornerRadius = 20.0f;
         final float elevation = 15.0f;
         final boolean forcePositionWithinBounds = false;
+        final Drawable overlay = new ColorDrawable(Color.BLUE);
 
         final Magnifier.Builder builder = new Magnifier.Builder(view)
                 .setSize(magnifierWidth, magnifierHeight)
@@ -452,6 +459,7 @@ public class MagnifierTest {
                 .setCornerRadius(cornerRadius)
                 .setZoom(zoom)
                 .setElevation(elevation)
+                .setOverlay(overlay)
                 .setForcePositionWithinWindowSystemInsetsBounds(forcePositionWithinBounds);
         final Magnifier magnifier = builder.build();
 
@@ -468,6 +476,7 @@ public class MagnifierTest {
         assertEquals(elevation, magnifier.getElevation(), 0f);
         assertEquals(forcePositionWithinBounds,
                 magnifier.isForcePositionWithinWindowSystemInsetsBounds());
+        assertEquals(overlay, magnifier.getOverlay());
     }
 
     @Test(expected = NullPointerException.class)
@@ -831,6 +840,89 @@ public class MagnifierTest {
         sourcePosition = mMagnifier.getSourcePosition();
         assertEquals(viewPosition[0] - view.getWidth(), sourcePosition.x);
         assertEquals(viewPosition[1] - view.getHeight(), sourcePosition.y);
+    }
+
+    @Test
+    public void testOverlay_isDrawn() throws Throwable {
+        WidgetTestUtils.runOnMainAndLayoutSync(mActivityRule, () -> {
+            mActivity.setContentView(R.layout.magnifier_activity_centered_view_layout);
+        }, false /*forceLayout*/);
+        final View view = mActivity.findViewById(R.id.magnifier_centered_view);
+        final Magnifier.Builder builder = new Magnifier.Builder(view)
+                .setSize(50, 50)
+                .setOverlay(new ColorDrawable(Color.BLUE));
+
+        mActivityRule.runOnUiThread(() -> mMagnifier = builder.build());
+        WidgetTestUtils.runOnMainAndDrawSync(mActivityRule, view, null);
+
+        showMagnifier(0, 0);
+        // Assert that the content has the correct size and is all blue.
+        final Bitmap content = mMagnifier.getContent();
+        assertNotNull(content);
+        assertEquals(mMagnifier.getWidth(), content.getWidth());
+        assertEquals(mMagnifier.getHeight(), content.getHeight());
+        for (int i = 0; i < content.getWidth(); ++i) {
+            for (int j = 0; j < content.getHeight(); ++j) {
+                assertEquals(Color.BLUE, content.getPixel(i, j));
+            }
+        }
+    }
+
+    @Test
+    public void testOverlay_redrawsOnInvalidation() throws Throwable {
+        WidgetTestUtils.runOnMainAndLayoutSync(mActivityRule, () -> {
+            mActivity.setContentView(R.layout.magnifier_activity_centered_view_layout);
+        }, false /*forceLayout*/);
+        final View view = mActivity.findViewById(R.id.magnifier_centered_view);
+        final ColorDrawable overlay = new ColorDrawable(Color.BLUE);
+        final Magnifier.Builder builder = new Magnifier.Builder(view)
+                .setSize(50, 50)
+                .setOverlay(overlay);
+
+        mActivityRule.runOnUiThread(() -> mMagnifier = builder.build());
+        WidgetTestUtils.runOnMainAndDrawSync(mActivityRule, view, null);
+
+        showMagnifier(0, 0);
+        overlay.setColor(Color.WHITE);
+        // Assert that the content has the correct size and is all blue.
+        final Bitmap content = mMagnifier.getContent();
+        assertNotNull(content);
+        assertEquals(mMagnifier.getWidth(), content.getWidth());
+        assertEquals(mMagnifier.getHeight(), content.getHeight());
+        for (int i = 0; i < content.getWidth(); ++i) {
+            for (int j = 0; j < content.getHeight(); ++j) {
+                assertEquals(Color.WHITE, content.getPixel(i, j));
+            }
+        }
+    }
+
+    @Test
+    public void testOverlay_isNotVisible_whenSetToNull() throws Throwable {
+        WidgetTestUtils.runOnMainAndLayoutSync(mActivityRule, () -> {
+            mActivity.setContentView(R.layout.magnifier_activity_centered_view_layout);
+        }, false /*forceLayout*/);
+        final View view = mActivity.findViewById(R.id.magnifier_centered_view);
+        final Magnifier.Builder builder = new Magnifier.Builder(view)
+                .setSize(50, 50)
+                .setZoom(10f) /* 5x5 source size */
+                .setOverlay(null);
+
+        mActivityRule.runOnUiThread(() -> mMagnifier = builder.build());
+        WidgetTestUtils.runOnMainAndDrawSync(mActivityRule, view, null);
+
+        showMagnifier(view.getWidth() / 2, view.getHeight() / 2);
+        // Assert that the content has the correct size and is all the view color.
+        final Bitmap content = mMagnifier.getContent();
+        assertNotNull(content);
+        assertEquals(mMagnifier.getWidth(), content.getWidth());
+        assertEquals(mMagnifier.getHeight(), content.getHeight());
+        final int viewColor = view.getContext().getResources().getColor(
+                android.R.color.holo_blue_bright, null);
+        for (int i = 0; i < content.getWidth(); ++i) {
+            for (int j = 0; j < content.getHeight(); ++j) {
+                assertEquals(viewColor, content.getPixel(i, j));
+            }
+        }
     }
 
     private void showMagnifier(float sourceX, float sourceY) throws Throwable {
