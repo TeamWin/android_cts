@@ -19,6 +19,8 @@ package com.android.cts.deviceandprofileowner;
 import android.content.Context;
 import android.content.pm.PackageManager;
 import android.media.AudioManager;
+import android.media.MediaPlayer;
+import android.provider.Settings;
 import android.os.SystemClock;
 import android.os.UserManager;
 
@@ -82,9 +84,16 @@ public class AudioRestrictionTest extends BaseDeviceAdminTest {
             return;
         }
 
+        MediaPlayer mediaPlayer = new MediaPlayer();
+        mediaPlayer.setDataSource(mContext, Settings.System.DEFAULT_RINGTONE_URI);
+        mediaPlayer.setAudioStreamType(AudioManager.STREAM_MUSIC);
+        mediaPlayer.prepare();
+        mediaPlayer.setLooping(true);
+        mediaPlayer.start();
+
         try {
-            // Set volume of ringtone to be 1.
-            mAudioManager.setStreamVolume(AudioManager.STREAM_RING, 1, /* flag= */ 0);
+            // Set volume of music to be 1.
+            mAudioManager.setStreamVolume(AudioManager.STREAM_MUSIC, 1, /* flag= */ 0);
 
             // Disallow adjusting volume.
             mDevicePolicyManager.addUserRestriction(ADMIN_RECEIVER_COMPONENT,
@@ -93,7 +102,7 @@ public class AudioRestrictionTest extends BaseDeviceAdminTest {
 
             // Verify that volume can't be changed.
             mAudioManager.adjustVolume(AudioManager.ADJUST_RAISE, /* flag= */ 0);
-            assertEquals(1, mAudioManager.getStreamVolume(AudioManager.STREAM_RING));
+            assertEquals(1, mAudioManager.getStreamVolume(AudioManager.STREAM_MUSIC));
 
             // Allowing adjusting volume.
             mDevicePolicyManager.clearUserRestriction(ADMIN_RECEIVER_COMPONENT,
@@ -105,7 +114,7 @@ public class AudioRestrictionTest extends BaseDeviceAdminTest {
             waitUntil(2, new Callable<Integer>() {
                 @Override
                 public Integer call() throws Exception {
-                    return mAudioManager.getStreamVolume(AudioManager.STREAM_RING);
+                    return mAudioManager.getStreamVolume(AudioManager.STREAM_MUSIC);
                 }
             });
         } finally {
@@ -114,6 +123,10 @@ public class AudioRestrictionTest extends BaseDeviceAdminTest {
                     UserManager.DISALLOW_ADJUST_VOLUME);
             waitUntil(false, mCheckIfMasterVolumeMuted);
         }
+
+        mediaPlayer.stop();
+        mediaPlayer.release();
+        mediaPlayer = null;
     }
 
     public void testDisallowUnmuteMicrophone() throws Exception {
