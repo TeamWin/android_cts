@@ -16,6 +16,7 @@
 
 package com.android.server.cts;
 
+import android.view.TransitionTypeEnum;
 import com.android.server.wm.AppTransitionProto;
 import com.android.server.wm.IdentifierProto;
 import com.android.server.wm.RootWindowContainerProto;
@@ -57,7 +58,7 @@ public class WindowManagerIncidentTest extends ProtoDumpTestCase {
     private static void verifyAppTransitionProto(AppTransitionProto atp, final int filterLevel) throws Exception {
         assertTrue(AppTransitionProto.AppState.getDescriptor().getValues()
                 .contains(atp.getAppTransitionState().getValueDescriptor()));
-        assertTrue(AppTransitionProto.TransitionType.getDescriptor().getValues()
+        assertTrue(TransitionTypeEnum.getDescriptor().getValues()
                 .contains(atp.getLastUsedAppTransition().getValueDescriptor()));
     }
 }
