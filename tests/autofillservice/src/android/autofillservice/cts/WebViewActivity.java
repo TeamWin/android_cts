@@ -48,7 +48,7 @@ public class WebViewActivity extends AbstractAutoFillActivity {
     static final String ID_OUTSIDE1 = "outside1";
     static final String ID_OUTSIDE2 = "outside2";
 
-    private MyWebView mWebView;
+    MyWebView mWebView;
 
     private LinearLayout mParent;
     private LinearLayout mOutsideContainer1;

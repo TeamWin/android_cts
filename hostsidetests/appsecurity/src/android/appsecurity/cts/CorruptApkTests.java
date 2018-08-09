@@ -17,6 +17,7 @@ package android.appsecurity.cts;
 
 import static com.google.common.truth.Truth.assertThat;
 
+import android.platform.test.annotations.AppModeFull;
 import com.android.compatibility.common.tradefed.build.CompatibilityBuildHelper;
 import com.android.tradefed.build.IBuildInfo;
 import com.android.tradefed.device.ITestDevice;
@@ -34,6 +35,7 @@ import java.io.File;
  * Set of tests that verify that corrupt APKs are properly rejected by PackageManager and
  * do not cause the system to crash.
  */
+@AppModeFull // TODO: Needs porting to instant
 public class CorruptApkTests extends DeviceTestCase implements IBuildReceiver {
     private final String B71360999_PKG = "com.android.appsecurity.b71360999";
     private final String B71361168_PKG = "com.android.appsecurity.b71361168";

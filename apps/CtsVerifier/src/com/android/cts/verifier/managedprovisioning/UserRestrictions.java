@@ -56,7 +56,6 @@ public class UserRestrictions {
         UserManager.DISALLOW_AIRPLANE_MODE,
         UserManager.DISALLOW_CONFIG_SCREEN_TIMEOUT,
         UserManager.DISALLOW_CONFIG_BRIGHTNESS,
-        UserManager.DISALLOW_AMBIENT_DISPLAY,
     };
 
     private static final ArrayMap<String, UserRestrictionItem> USER_RESTRICTION_ITEMS;
@@ -86,8 +85,7 @@ public class UserRestrictions {
             R.string.disallow_config_location,
             R.string.disallow_airplane_mode,
             R.string.disallow_config_screen_timeout,
-            R.string.disallow_config_brightness,
-            R.string.disallow_ambient_display
+            R.string.disallow_config_brightness
         };
 
         final int[] restrictionActions = new int[] {
@@ -115,8 +113,7 @@ public class UserRestrictions {
             R.string.disallow_config_location_action,
             R.string.disallow_airplane_mode_action,
             R.string.disallow_config_screen_timeout_action,
-            R.string.disallow_config_brightness_action,
-            R.string.disallow_ambient_display_action
+            R.string.disallow_config_brightness_action
         };
 
         final String[] settingsIntentActions = new String[] {
@@ -143,7 +140,6 @@ public class UserRestrictions {
             Settings.ACTION_DATE_SETTINGS,
             Settings.ACTION_LOCATION_SOURCE_SETTINGS,
             Settings.ACTION_AIRPLANE_MODE_SETTINGS,
-            Settings.ACTION_DISPLAY_SETTINGS,
             Settings.ACTION_DISPLAY_SETTINGS,
             Settings.ACTION_DISPLAY_SETTINGS,
         };

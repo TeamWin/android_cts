@@ -732,7 +732,7 @@ public class KeyAttestationTest extends AndroidTestCase {
                 assertThat("TEE attestation can only come from TEE keymaster",
                         attestation.getKeymasterSecurityLevel(),
                         is(KM_SECURITY_LEVEL_TRUSTED_ENVIRONMENT));
-                assertThat(attestation.getKeymasterVersion(), either(is(2)).or(is(3)));
+                assertThat(attestation.getKeymasterVersion(), either(is(2)).or(is(3)).or(is(4)));
 
                 checkRootOfTrust(attestation);
                 assertThat(teeEnforced.getOsVersion(), is(systemOsVersion));
