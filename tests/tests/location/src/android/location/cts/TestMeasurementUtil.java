@@ -576,6 +576,15 @@ public final class TestMeasurementUtil {
                             "0 >= X <= 7 days",
                             String.valueOf(sv_time_days),
                             sv_time_days >= 0 && sv_time_days <= 7);
+                } else if ((state & GnssMeasurement.STATE_TOW_KNOWN)
+                        == GnssMeasurement.STATE_TOW_KNOWN) {
+                    softAssert.assertTrue(getReceivedSvTimeNsLogMessage(
+                                    "GNSS_MEASUREMENT_STATE_TOW_KNOWN",
+                                    "GnssStatus.CONSTELLATION_BEIDOU"),
+                            timeInNs,
+                            "0 >= X <= 7 days",
+                            String.valueOf(sv_time_days),
+                            sv_time_days >= 0 && sv_time_days <= 7);
                 } else if ((state & GnssMeasurement.STATE_SUBFRAME_SYNC)
                         == GnssMeasurement.STATE_SUBFRAME_SYNC) {
                     softAssert.assertTrue(getReceivedSvTimeNsLogMessage(
@@ -653,6 +662,15 @@ public final class TestMeasurementUtil {
                 == GnssMeasurement.STATE_TOW_DECODED) {
             softAssert.assertTrue(getReceivedSvTimeNsLogMessage(
                             "GNSS_MEASUREMENT_STATE_TOW_DECODED",
+                            constellationType),
+                    timeInNs,
+                    "0 >= X <= 7 days",
+                    String.valueOf(sv_time_days),
+                    sv_time_days >= 0 && sv_time_days <= 7);
+        } else if ((state & GnssMeasurement.STATE_TOW_KNOWN)
+                == GnssMeasurement.STATE_TOW_KNOWN) {
+            softAssert.assertTrue(getReceivedSvTimeNsLogMessage(
+                            "GNSS_MEASUREMENT_STATE_TOW_KNOWN",
                             constellationType),
                     timeInNs,
                     "0 >= X <= 7 days",
