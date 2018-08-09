@@ -94,8 +94,12 @@ def main():
         luma_normal = lumas[imid] / shift_mid
         expected_lumas = [min(1.0, luma_normal * ev_shift) for ev_shift in ev_shifts]
 
-        pylab.plot(ev_steps, lumas, 'r')
-        pylab.plot(ev_steps, expected_lumas, 'b')
+        pylab.plot(ev_steps, lumas, '-ro')
+        pylab.plot(ev_steps, expected_lumas, '-bo')
+        pylab.title(NAME)
+        pylab.xlabel('EV Compensation')
+        pylab.ylabel('Mean Luma (Normalized)')
+
         matplotlib.pyplot.savefig("%s_plot_means.png" % (NAME))
 
         luma_diffs = [expected_lumas[i] - lumas[i] for i in range(len(ev_steps))]
