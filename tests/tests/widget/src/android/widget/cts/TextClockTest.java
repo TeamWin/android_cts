@@ -30,13 +30,13 @@ import android.support.test.InstrumentationRegistry;
 import android.support.test.filters.MediumTest;
 import android.support.test.rule.ActivityTestRule;
 import android.support.test.runner.AndroidJUnit4;
+import android.text.format.DateFormat;
 import android.util.MutableBoolean;
 import android.widget.TextClock;
 
 import com.android.compatibility.common.util.PollingCheck;
 import com.android.compatibility.common.util.SystemUtil;
 
-import org.junit.After;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
@@ -56,7 +56,7 @@ import java.util.concurrent.TimeUnit;
 public class TextClockTest {
     private Activity mActivity;
     private TextClock mTextClock;
-    private String mDefaultTime1224;
+    private boolean mStartedAs24;
 
     @Rule
     public ActivityTestRule<TextClockCtsActivity> mActivityRule =
@@ -66,14 +66,12 @@ public class TextClockTest {
     public void setup() throws Throwable {
         mActivity = mActivityRule.getActivity();
         mTextClock = mActivity.findViewById(R.id.textclock);
-        mDefaultTime1224 = Settings.System.getString(mActivity.getContentResolver(),
-                Settings.System.TIME_12_24);
+        mStartedAs24 = DateFormat.is24HourFormat(mActivity);
     }
 
-    @After
     public void teardown() throws Throwable {
-        Settings.System.putString(mActivity.getContentResolver(), Settings.System.TIME_12_24,
-                mDefaultTime1224);
+        int base = mStartedAs24 ? 24 : 12;
+        Settings.System.putInt(mActivity.getContentResolver(), Settings.System.TIME_12_24, base);
     }
 
     @Test

@@ -29,58 +29,45 @@ import static android.util.DisplayMetrics.DENSITY_MEDIUM;
 import static android.util.DisplayMetrics.DENSITY_TV;
 import static android.util.DisplayMetrics.DENSITY_XHIGH;
 
-import static org.junit.Assert.assertTrue;
-import static org.junit.Assert.assertFalse;
-
 import android.app.ActivityManager;
 import android.content.Context;
 import android.content.pm.PackageManager;
 import android.content.res.Configuration;
 import android.os.Build;
-import android.os.StatFs;
-import android.support.test.runner.AndroidJUnit4;
-import android.support.test.InstrumentationRegistry;
+import android.test.AndroidTestCase;
 import android.util.DisplayMetrics;
 import android.view.WindowManager;
 import android.util.Log;
 
-import com.android.compatibility.common.util.CddTest;
-
-import org.junit.runner.RunWith;
-import org.junit.Before;
-import org.junit.Test;
-
-import java.io.File;
+import java.io.FileInputStream;
+import java.io.IOException;
+import java.io.InputStream;
+import java.util.Scanner;
+import java.util.StringTokenizer;
 
 /**
  * Tests that devices with low RAM specify themselves as Low RAM devices
  */
-@RunWith(AndroidJUnit4.class)
-public class LowRamDeviceTest {
+public class LowRamDeviceTest extends AndroidTestCase {
 
     private static final long ONE_MEGABYTE = 1048576L;
     private static final String TAG = "LowRamDeviceTest";
     private static final long LOW_RAM_MAX = 1024;
-    private static final float MIN_APP_DATA_PARTITION_SIZE_GB = 4f;
-    private static final float MIN_APP_DATA_PARTITION_SIZE_LOW_RAM_GB = 1.1f;
-    private static final float MIN_SHARED_DATA_PARTITION_SIZE_GB = 1f;
-    private static final long GB_TO_BYTES_MULTIPLIER = 1024 * 1024 * 1024;
 
-    private Context mContext;
     private PackageManager mPackageManager;
     private ActivityManager mActivityManager;
     private DisplayMetrics mDisplayMetrics;
 
-    @Before
-    public void setUp() throws Exception {
-        mContext = InstrumentationRegistry.getTargetContext();
-        mPackageManager = mContext.getPackageManager();
+    @Override
+    protected void setUp() throws Exception {
+        super.setUp();
+        mPackageManager = getContext().getPackageManager();
         mActivityManager =
-                (ActivityManager) mContext.getSystemService(Context.ACTIVITY_SERVICE);
+                (ActivityManager) getContext().getSystemService(Context.ACTIVITY_SERVICE);
 
         mDisplayMetrics = new DisplayMetrics();
         WindowManager windowManager =
-                (WindowManager) mContext.getSystemService(Context.WINDOW_SERVICE);
+                (WindowManager) getContext().getSystemService(Context.WINDOW_SERVICE);
         windowManager.getDefaultDisplay().getMetrics(mDisplayMetrics);
     }
 
@@ -88,8 +75,6 @@ public class LowRamDeviceTest {
      * Test the devices reported memory to ensure it meets the minimum values described
      * in CDD 7.6.1.
      */
-    @Test
-    @CddTest(requirement="7.6.1")
     public void testMinimumMemory() {
         int density = mDisplayMetrics.densityDpi;
         Boolean supports64Bit = supportsSixtyFourBit();
@@ -109,9 +94,9 @@ public class LowRamDeviceTest {
                 lessThanDpi(density, DENSITY_LOW, screenSize, SCREENLAYOUT_SIZE_XLARGE)) {
 
             if (supports64Bit) {
-                assertMinMemoryMb(816);
+                assertMinMemoryMb(704);
             } else {
-                assertMinMemoryMb(416);
+                assertMinMemoryMb(424);
             }
         } else if (greaterThanDpi(density, DENSITY_560, screenSize,
                 SCREENLAYOUT_SIZE_NORMAL, SCREENLAYOUT_SIZE_SMALL) ||
@@ -139,36 +124,10 @@ public class LowRamDeviceTest {
                 greaterThanDpi(density, DENSITY_MEDIUM, screenSize, SCREENLAYOUT_SIZE_XLARGE)) {
 
             if (supports64Bit) {
-                assertMinMemoryMb(944);
+                assertMinMemoryMb(832);
             } else {
-                assertMinMemoryMb(592);
+                assertMinMemoryMb(512);
             }
-        }
-    }
-
-    @Test
-    @CddTest(requirement="7.6.2")
-    public void testMinSharedDataPartitionSize() {
-        assertDataPartitionMinimumSize(
-                "Shared data",
-                mContext.getExternalFilesDir(null),
-                MIN_SHARED_DATA_PARTITION_SIZE_GB);
-    }
-
-    @Test
-    @CddTest(requirement="7.6.1/H-9-2,7.6.1/H-10-1")
-    public void testMinDataPartitionSize() {
-        long totalMemoryMb = getTotalMemory() / ONE_MEGABYTE;
-        boolean lowRam = totalMemoryMb <= LOW_RAM_MAX;
-
-        if (lowRam) {
-            assertDataPartitionMinimumSize(
-                    "Application data",
-                    mContext.getFilesDir(),
-                    MIN_APP_DATA_PARTITION_SIZE_LOW_RAM_GB);
-        } else {
-            assertDataPartitionMinimumSize(
-                    "Application data", mContext.getFilesDir(), MIN_APP_DATA_PARTITION_SIZE_GB);
         }
     }
 
@@ -184,7 +143,7 @@ public class LowRamDeviceTest {
 
     /** @return the screen size as defined in {@Configuration}. */
     private int getScreenSize() {
-        Configuration config = mContext.getResources().getConfiguration();
+        Configuration config = getContext().getResources().getConfiguration();
         return config.screenLayout & Configuration.SCREENLAYOUT_SIZE_MASK;
     }
 
@@ -232,17 +191,5 @@ public class LowRamDeviceTest {
             }
         }
         return false;
-    }
-
-    private void assertDataPartitionMinimumSize(
-            String partitionName, File fileInPartition, float minPartitionSizeGb) {
-        StatFs statFs = new StatFs(fileInPartition.getAbsolutePath());
-        long size = statFs.getTotalBytes();
-        long minSizeBytes = (long) minPartitionSizeGb * GB_TO_BYTES_MULTIPLIER;
-
-        assertTrue(
-                String.format("%s partition size does not meet requirement. "
-                        + "Found = %d, Minimum = %d", partitionName, size, minSizeBytes),
-                size > minSizeBytes);
     }
 }

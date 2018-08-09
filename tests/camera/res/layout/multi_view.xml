@@ -15,66 +15,40 @@
      limitations under the License.
 -->
 
-<GridLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:orientation="horizontal"
     android:layout_width="match_parent"
-    android:layout_height="match_parent"
-    android:columnCount="3">
+    android:layout_height="match_parent">
 
-    <!-- Using relative width/height below.
-         Image might not have correct aspect ratio -->
-    <!-- Row 0 -->
     <TextureView
         android:id="@+id/texture_view_1"
-        android:layout_columnWeight="1"
-        android:layout_rowWeight="1"
-        android:layout_width="0dp"
-        android:layout_height="0dp"/>
+        android:layout_width="160dp"
+        android:layout_height="120dp"/>
+
     <TextureView
         android:id="@+id/texture_view_2"
-        android:layout_columnWeight="1"
-        android:layout_rowWeight="1"
-        android:layout_width="0dp"
-        android:layout_height="0dp"/>
+        android:layout_width="160dp"
+        android:layout_height="120dp"/>
     <TextureView
         android:id="@+id/texture_view_3"
-        android:layout_columnWeight="1"
-        android:layout_rowWeight="1"
-        android:layout_width="0dp"
-        android:layout_height="0dp"/>
-
-    <!-- Row 1 -->
+        android:layout_width="160dp"
+        android:layout_height="120dp"/>
     <TextureView
         android:id="@+id/texture_view_4"
-        android:layout_columnWeight="1"
-        android:layout_rowWeight="1"
-        android:layout_width="0dp"
-        android:layout_height="0dp"/>
+        android:layout_width="160dp"
+        android:layout_height="120dp"/>
     <TextureView
         android:id="@+id/texture_view_5"
-        android:layout_columnWeight="1"
-        android:layout_rowWeight="1"
-        android:layout_width="0dp"
-        android:layout_height="0dp"/>
-    <!-- space filler -->
-    <Space
-        android:layout_columnSpan="1"
-        android:layout_columnWeight="1"
-        android:layout_rowWeight="1"
-        android:layout_width="0dp"
-        android:layout_height="0dp"/>
-
-    <!-- Row 2 -->
+        android:layout_width="160dp"
+        android:layout_height="120dp"/>
     <SurfaceView
         android:id="@+id/surface_view_1"
-        android:layout_columnWeight="1"
-        android:layout_rowWeight="1"
-        android:layout_width="0dp"
-        android:layout_height="0dp"/>
+        android:layout_width="160dp"
+        android:layout_height="120dp"/>
 
     <SurfaceView
         android:id="@+id/surface_view_2"
-        android:layout_columnWeight="1"
-        android:layout_rowWeight="1"
-        android:layout_width="0dp"
-        android:layout_height="0dp"/>
-</GridLayout>
+        android:layout_width="160dp"
+        android:layout_height="120dp"/>
+
+</LinearLayout>

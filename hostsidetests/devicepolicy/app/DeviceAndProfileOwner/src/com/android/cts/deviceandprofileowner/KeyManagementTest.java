@@ -23,7 +23,6 @@ import static android.keystore.cts.CertificateUtils.createCertificate;
 
 import android.content.ComponentName;
 import android.content.Context;
-import android.content.pm.PackageManager;
 import android.content.res.AssetManager;
 import android.keystore.cts.Attestation;
 import android.keystore.cts.AuthorizationList;
@@ -294,24 +293,20 @@ public class KeyManagementTest extends BaseDeviceAdminTest {
                 signDataWithKey(algoIdentifier, keyPair.getPrivate()));
     }
 
-    private KeyGenParameterSpec buildRsaKeySpec(String alias, boolean useStrongBox) {
-        return new KeyGenParameterSpec.Builder(
-                alias,
-                KeyProperties.PURPOSE_SIGN | KeyProperties.PURPOSE_VERIFY)
-            .setKeySize(2048)
-            .setDigests(KeyProperties.DIGEST_SHA256)
-            .setSignaturePaddings(KeyProperties.SIGNATURE_PADDING_RSA_PSS,
-                    KeyProperties.SIGNATURE_PADDING_RSA_PKCS1)
-            .setIsStrongBoxBacked(useStrongBox)
-            .build();
-    }
-
     public void testCanGenerateRSAKeyPair() throws Exception {
         final String alias = "com.android.test.generated-rsa-1";
         try {
+            KeyGenParameterSpec spec = new KeyGenParameterSpec.Builder(
+                    alias,
+                    KeyProperties.PURPOSE_SIGN | KeyProperties.PURPOSE_VERIFY)
+                    .setKeySize(2048)
+                    .setDigests(KeyProperties.DIGEST_SHA256)
+                    .setSignaturePaddings(KeyProperties.SIGNATURE_PADDING_RSA_PSS,
+                        KeyProperties.SIGNATURE_PADDING_RSA_PKCS1)
+                    .build();
+
             AttestedKeyPair generated = mDevicePolicyManager.generateKeyPair(
-                    getWho(), "RSA", buildRsaKeySpec(alias, false /* useStrongBox */),
-                    0 /* idAttestationFlags */);
+                    getWho(), "RSA", spec, 0);
             assertNotNull(generated);
             verifySignatureOverData("SHA256withRSA", generated.getKeyPair());
         } finally {
@@ -319,51 +314,22 @@ public class KeyManagementTest extends BaseDeviceAdminTest {
         }
     }
 
-    public void testCanGenerateRSAKeyPairUsingStrongBox() throws Exception {
-        final String alias = "com.android.test.generated-rsa-sb-1";
-        AttestedKeyPair generated = mDevicePolicyManager.generateKeyPair(
-                getWho(), "RSA", buildRsaKeySpec(alias, true /* useStrongBox */),
-                0 /* idAttestationFlags */);
-        if (generated == null) {
-            assertFalse(hasStrongBox());
-            return;
-        }
-        verifySignatureOverData("SHA256withRSA", generated.getKeyPair());
-        assertTrue(mDevicePolicyManager.removeKeyPair(getWho(), alias));
-    }
-
-    private KeyGenParameterSpec buildEcKeySpec(String alias, boolean useStrongBox) {
-        return new KeyGenParameterSpec.Builder(
-                alias,
-                KeyProperties.PURPOSE_SIGN | KeyProperties.PURPOSE_VERIFY)
-            .setDigests(KeyProperties.DIGEST_SHA256)
-            .setIsStrongBoxBacked(useStrongBox)
-            .build();
-    }
-
     public void testCanGenerateECKeyPair() throws Exception {
         final String alias = "com.android.test.generated-ec-1";
         try {
+            KeyGenParameterSpec spec = new KeyGenParameterSpec.Builder(
+                    alias,
+                    KeyProperties.PURPOSE_SIGN | KeyProperties.PURPOSE_VERIFY)
+                    .setDigests(KeyProperties.DIGEST_SHA256)
+                    .build();
+
             AttestedKeyPair generated = mDevicePolicyManager.generateKeyPair(
-                    getWho(), "EC", buildEcKeySpec(alias, false /* useStrongBox */),
-                    0 /* idAttestationFlags */);
+                    getWho(), "EC", spec, 0);
             assertNotNull(generated);
             verifySignatureOverData("SHA256withECDSA", generated.getKeyPair());
         } finally {
             assertTrue(mDevicePolicyManager.removeKeyPair(getWho(), alias));
         }
-    }
-
-    public void testCanGenerateECKeyPairUsingStrongBox() throws Exception {
-        final String alias = "com.android.test.generated-ec-sb-1";
-        AttestedKeyPair generated = mDevicePolicyManager.generateKeyPair(
-                getWho(), "EC", buildEcKeySpec(alias, true /* useStrongBox */), 0);
-        if (generated == null) {
-            assertFalse(hasStrongBox());
-            return;
-        }
-        verifySignatureOverData("SHA256withECDSA", generated.getKeyPair());
-        assertTrue(mDevicePolicyManager.removeKeyPair(getWho(), alias));
     }
 
     private void validateDeviceIdAttestationData(Certificate leaf,
@@ -426,8 +392,8 @@ public class KeyManagementTest extends BaseDeviceAdminTest {
      */
     private Certificate generateKeyAndCheckAttestation(
             String keyAlgorithm, String signatureAlgorithm,
-            String[] signaturePaddings, boolean useStrongBox,
-            int deviceIdAttestationFlags) throws Exception {
+            String[] signaturePaddings, int deviceIdAttestationFlags)
+            throws Exception {
         final String alias =
                 String.format("com.android.test.attested-%s", keyAlgorithm.toLowerCase());
         byte[] attestationChallenge = new byte[] {0x01, 0x02, 0x03};
@@ -436,8 +402,7 @@ public class KeyManagementTest extends BaseDeviceAdminTest {
                     alias,
                     KeyProperties.PURPOSE_SIGN | KeyProperties.PURPOSE_VERIFY)
                     .setDigests(KeyProperties.DIGEST_SHA256)
-                    .setAttestationChallenge(attestationChallenge)
-                    .setIsStrongBoxBacked(useStrongBox);
+                    .setAttestationChallenge(attestationChallenge);
             if (signaturePaddings != null) {
                 specBuilder.setSignaturePaddings(signaturePaddings);
             }
@@ -490,24 +455,11 @@ public class KeyManagementTest extends BaseDeviceAdminTest {
         for (SupportedKeyAlgorithm supportedKey: SUPPORTED_KEY_ALGORITHMS) {
             assertNotNull(generateKeyAndCheckAttestation(
                     supportedKey.keyAlgorithm, supportedKey.signatureAlgorithm,
-                    supportedKey.signaturePaddingSchemes, false /* useStrongBox */, 0));
+                    supportedKey.signaturePaddingSchemes, 0));
         }
     }
 
-    public void testCanGenerateKeyPairWithKeyAttestationUsingStrongBox() throws Exception {
-        for (SupportedKeyAlgorithm supportedKey: SUPPORTED_KEY_ALGORITHMS) {
-            Certificate attestation = generateKeyAndCheckAttestation(
-                    supportedKey.keyAlgorithm, supportedKey.signatureAlgorithm,
-                    supportedKey.signaturePaddingSchemes, true /* useStrongBox */,
-                    0 /* idAttestationFlags */);
-            if (attestation == null) {
-                assertFalse("StrongBox-backed key attestation must not fail if the device " +
-                        "declares support for StrongBox", hasStrongBox());
-            }
-        }
-    }
-
-    public void assertAllVariantsOfDeviceIdAttestation(boolean useStrongBox) throws Exception {
+    public void testAllVariationsOfDeviceIdAttestation() throws Exception {
         List<Integer> modesToTest = new ArrayList<Integer>();
         String imei = null;
         String meid = null;
@@ -547,16 +499,11 @@ public class KeyManagementTest extends BaseDeviceAdminTest {
                 for (SupportedKeyAlgorithm supportedKey: SUPPORTED_KEY_ALGORITHMS) {
                     Certificate attestation = generateKeyAndCheckAttestation(
                             supportedKey.keyAlgorithm, supportedKey.signatureAlgorithm,
-                            supportedKey.signaturePaddingSchemes, useStrongBox, devIdOpt);
+                            supportedKey.signaturePaddingSchemes, devIdOpt);
                     // generateKeyAndCheckAttestation should return null if device ID attestation
                     // is not supported. Simply continue to test the next combination.
                     if (attestation == null && !isDeviceIdAttestationSupported()) {
                         continue;
-                    }
-                    // The attestation must only be null if StrongBox attestation was requested,
-                    // but StrongBox is not available on the device.
-                    if (attestation == null && useStrongBox) {
-                        assertFalse(hasStrongBox());
                     }
                     assertNotNull(String.format(
                             "Attestation should be valid for key %s with attestation modes %s",
@@ -586,14 +533,6 @@ public class KeyManagementTest extends BaseDeviceAdminTest {
         }
     }
 
-    public void testAllVariationsOfDeviceIdAttestation() throws Exception {
-        assertAllVariantsOfDeviceIdAttestation(false /* useStrongBox */);
-    }
-
-    public void testAllVariationsOfDeviceIdAttestationUsingStrongBox() throws Exception {
-        assertAllVariantsOfDeviceIdAttestation(true /* useStrongBox */);
-    }
-
     public void testProfileOwnerCannotAttestDeviceUniqueIds() throws Exception {
         if (isDeviceOwner()) {
             return;
@@ -605,7 +544,6 @@ public class KeyManagementTest extends BaseDeviceAdminTest {
                     generateKeyAndCheckAttestation(supportedKey.keyAlgorithm,
                             supportedKey.signatureAlgorithm,
                             supportedKey.signaturePaddingSchemes,
-                            false /* useStrongBox */,
                             forbiddenModes[i]);
                     fail("Attestation of device UID (" + forbiddenModes[i] + ") should not be "
                             + "possible from profile owner");
@@ -755,10 +693,5 @@ public class KeyManagementTest extends BaseDeviceAdminTest {
 
     protected ComponentName getWho() {
         return ADMIN_RECEIVER_COMPONENT;
-    }
-
-    boolean hasStrongBox() {
-        return mActivity.getPackageManager()
-            .hasSystemFeature(PackageManager.FEATURE_STRONGBOX_KEYSTORE);
     }
 }

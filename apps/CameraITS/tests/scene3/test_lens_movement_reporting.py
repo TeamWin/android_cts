@@ -163,8 +163,7 @@ def main():
         assert np.isclose(min_sharp, max_sharp, rtol=SHARPNESS_TOL)
         # assert reported location is close to assign location for af_fd
         print 'Asserting lens location close to assigned fd for af_fd data'
-        first_key = min(d_af_fd.keys())  # finds 1st non-moving frame
-        assert np.isclose(d_af_fd[first_key]['loc'], d_af_fd[first_key]['fd'],
+        assert np.isclose(d_af_fd[0]['loc'], d_af_fd[0]['fd'],
                           rtol=POSITION_TOL)
 
         # assert reported location is close for min_fd captures
