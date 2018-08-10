@@ -26,6 +26,7 @@ import android.content.pm.ApplicationInfo;
 import android.content.pm.PackageManager;
 import android.util.Log;
 
+import com.android.compatibility.common.util.CddTest;
 import com.android.compatibility.common.util.devicepolicy.provisioning.SilentProvisioningTestManager;
 import java.util.ArrayList;
 import java.util.List;
@@ -53,6 +54,7 @@ public class DeviceOwnerProvisioningTest extends BaseDeviceOwnerTest {
         super.tearDown();
     }
 
+    @CddTest(requirement="3.9.1.1/C-1-4")
     public void testProvisionDeviceOwner() throws Exception {
         deviceOwnerProvision(getBaseProvisioningIntent());
     }

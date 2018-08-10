@@ -20,6 +20,8 @@ import com.android.ddmlib.Log.LogLevel;
 import com.android.tradefed.device.DeviceNotAvailableException;
 import com.android.tradefed.log.LogUtil.CLog;
 
+import com.android.compatibility.common.util.CddTest;
+
 import junit.framework.AssertionFailedError;
 
 import java.util.Collections;
@@ -178,6 +180,7 @@ public class ManagedProfileTest extends BaseDevicePolicyTest {
                 TIMEOUT_USER_LOCKED_MILLIS);
     }
 
+    @CddTest(requirement="3.9.2/C-1-2")
     public void testMaxOneManagedProfile() throws Exception {
         int newUserId = -1;
         try {
@@ -609,6 +612,7 @@ public class ManagedProfileTest extends BaseDevicePolicyTest {
         });
     }
 
+    @CddTest(requirement="3.9.2/C-1-8")
     public void testManagedContactsPolicies() throws Exception {
         runManagedContactsTest(new Callable<Void>() {
             @Override
@@ -685,6 +689,7 @@ public class ManagedProfileTest extends BaseDevicePolicyTest {
                 /*expectFailure*/ true));
     }
 
+    @CddTest(requirement="3.9.1.1/C-1-7")
     public void testCannotSetDeviceOwnerWhenProfilePresent() throws Exception {
         if (!mHasFeature) {
             return;

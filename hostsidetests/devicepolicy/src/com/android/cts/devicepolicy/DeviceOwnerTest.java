@@ -16,6 +16,8 @@
 
 package com.android.cts.devicepolicy;
 
+import com.android.compatibility.common.util.CddTest;
+
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 
@@ -555,6 +557,7 @@ public class DeviceOwnerTest extends BaseDevicePolicyTest {
         executeDeviceOwnerTest("BluetoothRestrictionTest");
     }
 
+    @CddTest(requirement="3.9.1.1/C-1-4")
     public void testDeviceOwnerProvisioning() throws Exception {
         if (!mHasFeature) {
             return;

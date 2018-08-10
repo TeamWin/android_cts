@@ -16,6 +16,7 @@
 
 package com.android.cts.devicepolicy;
 
+import com.android.compatibility.common.util.CddTest;
 import com.android.compatibility.common.tradefed.build.CompatibilityBuildHelper;
 import com.android.cts.devicepolicy.BaseDevicePolicyTest.Settings;
 
@@ -103,6 +104,7 @@ public class CustomDeviceOwnerTest extends BaseDevicePolicyTest {
         }
     }
 
+    @CddTest(requirement="3.9.1.1/C-1-7")
     public void testCannotSetDeviceOwnerWhenAccountPresent() throws Exception {
         if (!mHasFeature) {
             return;
@@ -122,6 +124,7 @@ public class CustomDeviceOwnerTest extends BaseDevicePolicyTest {
         }
     }
 
+    @CddTest(requirement="3.9.1.1/C-1-6")
     public void testIsProvisioningAllowed() throws Exception {
         // Must install the apk since the test runs in the DO apk.
         installAppAsUser(DEVICE_OWNER_APK, mPrimaryUserId);
