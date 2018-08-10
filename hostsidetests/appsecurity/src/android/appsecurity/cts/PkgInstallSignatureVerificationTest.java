@@ -16,6 +16,8 @@
 
 package android.appsecurity.cts;
 
+import com.android.compatibility.common.util.CddTest;
+
 import com.android.tradefed.build.IBuildInfo;
 import com.android.tradefed.device.DeviceNotAvailableException;
 import com.android.tradefed.testtype.DeviceTestCase;
@@ -33,6 +35,7 @@ import java.util.Locale;
 /**
  * Tests for APK signature verification during installation.
  */
+@CddTest(requirement="4/C-0-2")
 public class PkgInstallSignatureVerificationTest extends DeviceTestCase implements IBuildReceiver {
 
     private static final String TEST_PKG = "android.appsecurity.cts.tinyapp";
