@@ -71,7 +71,6 @@ public class WebViewActivityTest extends AutoFillServiceTestCase {
     @Before
     public void setActivity() {
         mActivity = mActivityRule.getActivity();
-        assertAutofillEnabledOnWebView();
     }
 
     @BeforeClass
@@ -610,9 +609,5 @@ public class WebViewActivityTest extends AutoFillServiceTestCase {
         final ViewNode outside2SaveNode = Helper.findNodeByResourceId(saveRequest.structure,
                 ID_OUTSIDE2);
         Helper.assertTextAndValue(outside2SaveNode, "SWEETER");
-    }
-
-    private void assertAutofillEnabledOnWebView() {
-        assertThat(mActivity.mWebView.isAutofillEnabled()).isTrue();
     }
 }
