@@ -33,6 +33,7 @@ import numpy as np
 CHART_DELAY = 1  # seconds
 CHART_DISTANCE = 30.0  # cm
 CHART_HEIGHT = 13.5  # cm
+CHART_LEVEL = 96
 CHART_SCALE_START = 0.65
 CHART_SCALE_STOP = 1.35
 CHART_SCALE_STEP = 0.025
@@ -175,6 +176,7 @@ def main():
     skip_scene_validation = False
     chart_distance = CHART_DISTANCE
     chart_height = CHART_HEIGHT
+    chart_level = CHART_LEVEL
 
     for s in sys.argv[1:]:
         if s[:7] == "camera=" and len(s) > 7:
@@ -194,8 +196,11 @@ def main():
             skip_scene_validation = True
         elif s[:5] == 'dist=' and len(s) > 5:
             chart_distance = float(re.sub('cm', '', s[5:]))
+        elif s[:11] == 'brightness=' and len(s) > 11:
+            chart_level = s[11:]
 
     chart_dist_arg = 'dist= ' + str(chart_distance)
+    chart_level_arg = 'brightness=' + str(chart_level)
     auto_scene_switch = chart_host_id is not None
     merge_result_switch = result_device_id is not None
 
@@ -265,14 +270,15 @@ def main():
 
     if auto_scene_switch:
         # merge_result only supports run_parallel_tests
-        if merge_result_switch and camera_ids[0] == '1':
-            print 'Skip chart screen'
+        if merge_result_switch and camera_ids[0] == "1":
+            print "Skip chart screen"
             time.sleep(1)
         else:
-            print 'Waking up chart screen: ', chart_host_id
-            screen_id_arg = ('screen=%s' % chart_host_id)
-            cmd = ['python', os.path.join(os.environ['CAMERA_ITS_TOP'], 'tools',
-                                          'wake_up_screen.py'), screen_id_arg]
+            print "Waking up chart screen: ", chart_host_id
+            screen_id_arg = ("screen=%s" % chart_host_id)
+            cmd = ["python", os.path.join(os.environ["CAMERA_ITS_TOP"], "tools",
+                                          "wake_up_screen.py"), screen_id_arg,
+                   chart_level_arg]
             wake_code = subprocess.call(cmd)
             assert wake_code == 0
 
