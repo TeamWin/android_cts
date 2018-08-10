@@ -14,6 +14,11 @@
 
 package android.accessibilityservice.cts;
 
+import static android.accessibilityservice.cts.utils.GestureUtils.click;
+import static android.accessibilityservice.cts.utils.GestureUtils.endTimeOf;
+import static android.accessibilityservice.cts.utils.GestureUtils.longClick;
+import static android.accessibilityservice.cts.utils.GestureUtils.startingAt;
+
 import static org.junit.Assert.assertEquals;
 import static org.mockito.Mockito.any;
 import static org.mockito.Mockito.timeout;
@@ -27,11 +32,13 @@ import android.content.Context;
 import android.content.pm.PackageManager;
 import android.graphics.Path;
 import android.graphics.Point;
+import android.graphics.PointF;
 import android.platform.test.annotations.AppModeFull;
 import android.support.test.InstrumentationRegistry;
 import android.support.test.runner.AndroidJUnit4;
 import android.util.DisplayMetrics;
 import android.view.WindowManager;
+import android.view.accessibility.AccessibilityEvent;
 
 import org.junit.After;
 import org.junit.Before;
@@ -53,6 +60,8 @@ public class AccessibilityGestureDetectorTest {
     static final long STROKE_MS = 400;
     static final long GESTURE_DISPATCH_TIMEOUT_MS = 3000;
     static final long GESTURE_RECOGNIZE_TIMEOUT_MS = 3000;
+    static final long EVENT_DISPATCH_TIMEOUT_MS = 3000;
+    static final long EVENT_RECOGNIZE_TIMEOUT_MS = 3000;
 
     // Member variables
     StubService mService;  // Test AccessibilityService that collects gestures.
@@ -61,6 +70,7 @@ public class AccessibilityGestureDetectorTest {
     int mStrokeLenPxX;  // Gesture stroke size, in pixels
     int mStrokeLenPxY;
     Point mCenter;  // Center of screen. Gestures all start from this point.
+    PointF mTapLocation;
     @Mock AccessibilityService.GestureResultCallback mGestureDispatchCallback;
 
     @Before
@@ -83,6 +93,7 @@ public class AccessibilityGestureDetectorTest {
         final DisplayMetrics metrics = new DisplayMetrics();
         windowManager.getDefaultDisplay().getRealMetrics(metrics);
         mCenter = new Point((int) metrics.widthPixels / 2, (int) metrics.heightPixels / 2);
+        mTapLocation = new PointF(mCenter);
         mStrokeLenPxX = (int)(GESTURE_LENGTH_INCHES * metrics.xdpi);
         mStrokeLenPxY = (int)(GESTURE_LENGTH_INCHES * metrics.ydpi);
         mScreenBigEnough = (metrics.widthPixels / (2 * metrics.xdpi) > GESTURE_LENGTH_INCHES)
@@ -185,10 +196,86 @@ public class AccessibilityGestureDetectorTest {
         return path;
     }
 
+    @Test
+    @AppModeFull
+    public void testVerifyGestureTouchEvent() {
+        if (!mHasTouchScreen || !mScreenBigEnough) {
+            return;
+        }
+
+        assertEventAfterGesture(swipe(),
+                AccessibilityEvent.TYPE_TOUCH_INTERACTION_START,
+                AccessibilityEvent.TYPE_TOUCH_INTERACTION_END);
+
+        assertEventAfterGesture(tap(),
+                AccessibilityEvent.TYPE_TOUCH_INTERACTION_START,
+                AccessibilityEvent.TYPE_TOUCH_EXPLORATION_GESTURE_START,
+                AccessibilityEvent.TYPE_TOUCH_EXPLORATION_GESTURE_END,
+                AccessibilityEvent.TYPE_TOUCH_INTERACTION_END);
+
+        assertEventAfterGesture(doubleTap(),
+                AccessibilityEvent.TYPE_TOUCH_INTERACTION_START,
+                AccessibilityEvent.TYPE_TOUCH_INTERACTION_END);
+
+        assertEventAfterGesture(doubleTapAndHold(),
+                AccessibilityEvent.TYPE_TOUCH_INTERACTION_START,
+                AccessibilityEvent.TYPE_TOUCH_INTERACTION_END);
+    }
+
+    /** Test touch for accessibility events */
+    private void assertEventAfterGesture(GestureDescription gesture, int... events) {
+        mService.clearEvents();
+        mService.runOnServiceSync(() ->
+                mService.dispatchGesture(gesture, mGestureDispatchCallback, null));
+        verify(mGestureDispatchCallback,
+                timeout(EVENT_DISPATCH_TIMEOUT_MS).atLeastOnce())
+                .onCompleted(any());
+
+        mService.waitUntilEvent(events.length);
+        assertEquals(events.length, mService.getEventsSize());
+        for (int i = 0 ; i < events.length ; i++) {
+            assertEquals(events[i], mService.getEvent(i));
+        }
+    }
+
+    private GestureDescription swipe() {
+        GestureDescription.Builder builder = new GestureDescription.Builder();
+        StrokeDescription swipe = new StrokeDescription(
+                linePath(mCenter, p(0, mStrokeLenPxY), null), 0, STROKE_MS, false);
+        builder.addStroke(swipe);
+        return builder.build();
+    }
+
+    private GestureDescription tap() {
+        GestureDescription.Builder builder = new GestureDescription.Builder();
+        StrokeDescription tap = click(mTapLocation);
+        builder.addStroke(tap);
+        return builder.build();
+    }
+
+    private GestureDescription doubleTap() {
+        GestureDescription.Builder builder = new GestureDescription.Builder();
+        StrokeDescription tap1 = click(mTapLocation);
+        StrokeDescription tap2 = startingAt(endTimeOf(tap1) + 20, click(mTapLocation));
+        builder.addStroke(tap1);
+        builder.addStroke(tap2);
+        return builder.build();
+    }
+
+    private GestureDescription doubleTapAndHold() {
+        GestureDescription.Builder builder = new GestureDescription.Builder();
+        StrokeDescription tap1 = click(mTapLocation);
+        StrokeDescription tap2 = startingAt(endTimeOf(tap1) + 20, longClick(mTapLocation));
+        builder.addStroke(tap1);
+        builder.addStroke(tap2);
+        return builder.build();
+    }
+
     /** Acessibility service stub, which will collect recognized gestures. */
     public static class StubService extends InstrumentedAccessibilityService {
-
+        private final Object mLock = new Object();
         private ArrayList<Integer> mCollectedGestures = new ArrayList();
+        private ArrayList<Integer> mCollectedEvents = new ArrayList();
 
         public static StubService enableSelf(Instrumentation instrumentation) {
             return InstrumentedAccessibilityService.enableService(
@@ -230,6 +317,55 @@ public class AccessibilityGestureDetectorTest {
                 }
                 try {
                     mCollectedGestures.wait(GESTURE_RECOGNIZE_TIMEOUT_MS);
+                } catch (InterruptedException e) {
+                    throw new RuntimeException(e);
+                }
+            }
+        }
+
+        @Override
+        public void onAccessibilityEvent(AccessibilityEvent event) {
+            synchronized (mLock) {
+                switch (event.getEventType()) {
+                    case AccessibilityEvent.TYPE_TOUCH_INTERACTION_END:
+                        mCollectedEvents.add(event.getEventType());
+                        mLock.notifyAll();
+                        break;
+                    case AccessibilityEvent.TYPE_TOUCH_INTERACTION_START:
+                    case AccessibilityEvent.TYPE_TOUCH_EXPLORATION_GESTURE_START:
+                    case AccessibilityEvent.TYPE_TOUCH_EXPLORATION_GESTURE_END:
+                        mCollectedEvents.add(event.getEventType());
+                }
+            }
+            super.onAccessibilityEvent(event);
+        }
+
+        public void clearEvents() {
+            synchronized (mLock) {
+                mCollectedEvents.clear();
+            }
+        }
+
+        public int getEventsSize() {
+            synchronized (mLock) {
+                return mCollectedEvents.size();
+            }
+        }
+
+        public int getEvent(int index) {
+            synchronized (mLock) {
+                return mCollectedEvents.get(index);
+            }
+        }
+
+        /** Wait for onAccessibilityEvent() to collect next gesture. */
+        public void waitUntilEvent(int count) {
+            synchronized (mLock) {
+                if (mCollectedEvents.size() >= count) {
+                    return;
+                }
+                try {
+                    mLock.wait(EVENT_RECOGNIZE_TIMEOUT_MS);
                 } catch (InterruptedException e) {
                     throw new RuntimeException(e);
                 }
