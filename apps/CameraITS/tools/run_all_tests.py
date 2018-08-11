@@ -47,30 +47,17 @@ VGA_WIDTH = 640
 
 # Not yet mandated tests
 NOT_YET_MANDATED = {
-        "scene0": [
-                "test_jitter",
-                "test_burst_capture",
-                "test_test_patterns"
+        'scene0': [
+                'test_test_patterns'
         ],
-        "scene1": [
-                "test_ae_af",
-                "test_ae_precapture_trigger",
-                "test_crop_region_raw",
-                "test_ev_compensation_advanced",
-                "test_ev_compensation_basic",
-                "test_yuv_plus_jpeg"
+        'scene1': [
+                'test_ae_precapture_trigger'
         ],
-        "scene2": [
-                "test_num_faces"
-        ],
-        "scene3": [
-                "test_flip_mirror",
-                "test_lens_movement_reporting",
-                "test_lens_position"
-        ],
-        "scene4": [],
-        "scene5": [],
-        "sensor_fusion": []
+        'scene2': [],
+        'scene3': [],
+        'scene4': [],
+        'scene5': [],
+        'sensor_fusion': []
 }
 
 
