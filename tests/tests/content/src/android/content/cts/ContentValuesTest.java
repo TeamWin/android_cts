@@ -16,24 +16,36 @@
 
 package android.content.cts;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.Set;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertNull;
+import static org.junit.Assert.assertSame;
+import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.fail;
 
 import android.content.ContentValues;
 import android.os.Parcel;
-import android.test.AndroidTestCase;
+import android.support.test.runner.AndroidJUnit4;
 
-public class ContentValuesTest extends AndroidTestCase {
+import org.junit.Before;
+import org.junit.Test;
+import org.junit.runner.RunWith;
+
+import java.util.ArrayList;
+import java.util.Map;
+import java.util.Set;
+
+@RunWith(AndroidJUnit4.class)
+public class ContentValuesTest {
     ContentValues mContentValues;
 
-    @Override
-    protected void setUp() throws Exception {
-        super.setUp();
+    @Before
+    public void setUp() throws Exception {
         mContentValues = new ContentValues();
     }
 
+    @Test
     public void testConstructor() {
         new ContentValues();
         new ContentValues(5);
@@ -54,6 +66,7 @@ public class ContentValuesTest extends AndroidTestCase {
         }
     }
 
+    @Test
     public void testValueSet() {
         Set<Map.Entry<String, Object>> map;
         assertNotNull(map = mContentValues.valueSet());
@@ -67,6 +80,7 @@ public class ContentValuesTest extends AndroidTestCase {
         assertEquals(2, map.size());
     }
 
+    @Test
     public void testPutNull() {
         mContentValues.putNull("key");
         assertNull(mContentValues.get("key"));
@@ -81,6 +95,7 @@ public class ContentValuesTest extends AndroidTestCase {
         mContentValues.putNull(null);
     }
 
+    @Test
     public void testGetAsLong() {
         Long expected = 10L;
         mContentValues.put("Long", expected);
@@ -94,6 +109,7 @@ public class ContentValuesTest extends AndroidTestCase {
         assertNull(mContentValues.getAsLong(null));
     }
 
+    @Test
     public void testGetAsByte() {
         Byte expected = 'a';
         mContentValues.put("Byte", expected);
@@ -107,6 +123,7 @@ public class ContentValuesTest extends AndroidTestCase {
         assertNull(mContentValues.getAsByte(null));
     }
 
+    @Test
     public void testGetAsInteger() {
         Integer expected = 20;
         mContentValues.put("Integer", expected);
@@ -120,6 +137,7 @@ public class ContentValuesTest extends AndroidTestCase {
         assertNull(mContentValues.getAsInteger(null));
     }
 
+    @Test
     public void testSize() {
         assertEquals(0, mContentValues.size());
 
@@ -135,6 +153,7 @@ public class ContentValuesTest extends AndroidTestCase {
         assertEquals(0, mContentValues.size());
     }
 
+    @Test
     public void testGetAsShort() {
         Short expected = 20;
         mContentValues.put("Short", expected);
@@ -148,6 +167,7 @@ public class ContentValuesTest extends AndroidTestCase {
         assertNull(mContentValues.getAsShort(null));
     }
 
+    @Test
     public void testHashCode() {
         assertEquals(0, mContentValues.hashCode());
 
@@ -166,6 +186,7 @@ public class ContentValuesTest extends AndroidTestCase {
         assertEquals(0, mContentValues.hashCode());
     }
 
+    @Test
     public void testGetAsFloat() {
         Float expected = 1.0F;
         mContentValues.put("Float", expected);
@@ -179,6 +200,7 @@ public class ContentValuesTest extends AndroidTestCase {
         assertNull(mContentValues.getAsFloat(null));
     }
 
+    @Test
     public void testGetAsBoolean() {
         mContentValues.put("Boolean", true);
         assertTrue(mContentValues.getAsBoolean("Boolean"));
@@ -190,6 +212,7 @@ public class ContentValuesTest extends AndroidTestCase {
         assertNull(mContentValues.getAsBoolean(null));
     }
 
+    @Test
     public void testToString() {
         assertNotNull(mContentValues.toString());
 
@@ -198,6 +221,7 @@ public class ContentValuesTest extends AndroidTestCase {
         assertTrue(mContentValues.toString().length() > 0);
     }
 
+    @Test
     public void testGet() {
         Object expected = "android";
         mContentValues.put("Object", "android");
@@ -211,6 +235,7 @@ public class ContentValuesTest extends AndroidTestCase {
         assertNull(mContentValues.get(null));
     }
 
+    @Test
     public void testEquals() {
         mContentValues.put("Boolean", false);
         mContentValues.put("String", "string");
@@ -222,6 +247,7 @@ public class ContentValuesTest extends AndroidTestCase {
         assertTrue(mContentValues.equals(cv));
     }
 
+    @Test
     public void testEqualsFailure() {
         // the target object is not an instance of ContentValues.
         assertFalse(mContentValues.equals(new String()));
@@ -237,6 +263,7 @@ public class ContentValuesTest extends AndroidTestCase {
         assertFalse(mContentValues.equals(cv));
     }
 
+    @Test
     public void testGetAsDouble() {
         Double expected = 10.2;
         mContentValues.put("Double", expected);
@@ -250,6 +277,7 @@ public class ContentValuesTest extends AndroidTestCase {
         assertNull(mContentValues.getAsDouble(null));
     }
 
+    @Test
     public void testPutString() {
         String expected = "cts";
         mContentValues.put("String", expected);
@@ -263,6 +291,7 @@ public class ContentValuesTest extends AndroidTestCase {
         mContentValues.put(null, (String)null);
     }
 
+    @Test
     public void testPutByte() {
         Byte expected = 'a';
         mContentValues.put("Byte", expected);
@@ -276,6 +305,7 @@ public class ContentValuesTest extends AndroidTestCase {
         mContentValues.put(null, (Byte)null);
     }
 
+    @Test
     public void testPutShort() {
         Short expected = 20;
         mContentValues.put("Short", expected);
@@ -289,6 +319,7 @@ public class ContentValuesTest extends AndroidTestCase {
         mContentValues.put(null, (Short)null);
     }
 
+    @Test
     public void testPutInteger() {
         Integer expected = 20;
         mContentValues.put("Integer", expected);
@@ -302,6 +333,7 @@ public class ContentValuesTest extends AndroidTestCase {
         mContentValues.put(null, (Integer)null);
     }
 
+    @Test
     public void testPutLong() {
         Long expected = 10L;
         mContentValues.put("Long", expected);
@@ -315,6 +347,7 @@ public class ContentValuesTest extends AndroidTestCase {
         mContentValues.put(null, (Long)null);
     }
 
+    @Test
     public void testPutFloat() {
         Float expected = 1.0F;
         mContentValues.put("Float", expected);
@@ -328,6 +361,7 @@ public class ContentValuesTest extends AndroidTestCase {
         mContentValues.put(null, (Float)null);
     }
 
+    @Test
     public void testPutDouble() {
         Double expected = 10.2;
         mContentValues.put("Double", expected);
@@ -341,6 +375,7 @@ public class ContentValuesTest extends AndroidTestCase {
         mContentValues.put(null, (Double)null);
     }
 
+    @Test
     public void testPutBoolean() {
         // set the expected value
         mContentValues.put("Boolean", true);
@@ -353,6 +388,7 @@ public class ContentValuesTest extends AndroidTestCase {
         mContentValues.put(null, (Boolean)null);
     }
 
+    @Test
     public void testPutByteArray() {
         byte[] expected = new byte[] {'1', '2', '3', '4'};
         mContentValues.put("byte[]", expected);
@@ -362,6 +398,7 @@ public class ContentValuesTest extends AndroidTestCase {
         mContentValues.put(null, (byte[])null);
     }
 
+    @Test
     public void testContainsKey() {
         mContentValues.put("Double", 10.2);
         mContentValues.put("Float", 1.0F);
@@ -376,6 +413,7 @@ public class ContentValuesTest extends AndroidTestCase {
         assertFalse(mContentValues.containsKey(null));
     }
 
+    @Test
     public void testClear() {
         assertEquals(0, mContentValues.size());
 
@@ -387,6 +425,7 @@ public class ContentValuesTest extends AndroidTestCase {
         assertEquals(0, mContentValues.size());
     }
 
+    @Test
     @SuppressWarnings("deprecation")
     public void testAccessStringArrayList() {
         // set the expected value
@@ -402,6 +441,7 @@ public class ContentValuesTest extends AndroidTestCase {
         assertNull(mContentValues.getStringArrayList(null));
     }
 
+    @Test
     public void testRemove() {
         assertEquals(0, mContentValues.size());
 
@@ -427,6 +467,7 @@ public class ContentValuesTest extends AndroidTestCase {
         mContentValues.remove(null);
     }
 
+    @Test
     public void testGetAsString() {
         String expected = "cts";
         mContentValues.put("String", expected);
@@ -440,6 +481,7 @@ public class ContentValuesTest extends AndroidTestCase {
         assertNull(mContentValues.getAsString(null));
     }
 
+    @Test
     public void testGetAsByteArray() {
         byte[] expected = new byte[] {'1', '2', '3', '4'};
         mContentValues.put("byte[]", expected);
@@ -449,26 +491,26 @@ public class ContentValuesTest extends AndroidTestCase {
         assertNull(mContentValues.getAsByteArray(null));
     }
 
+    @Test
     @SuppressWarnings({ "unchecked" })
     public void testWriteToParcel() {
+        final ContentValues before = new ContentValues();
+        before.put("Integer", -110);
+        before.put("String", "cts");
+        before.put("Boolean", false);
+
         Parcel p = Parcel.obtain();
-
-        mContentValues.put("Integer", -110);
-        mContentValues.put("String", "cts");
-        mContentValues.put("Boolean", false);
-
-        mContentValues.writeToParcel(p, 0);
-
+        before.writeToParcel(p, 0);
         p.setDataPosition(0);
-        HashMap<String, Object> values = p.readHashMap(ClassLoader.getSystemClassLoader());
-        assertNotNull(values);
-        assertEquals(3, values.size());
 
-        assertEquals(-110, values.get("Integer"));
-        assertEquals("cts", values.get("String"));
-        assertEquals(false, values.get("Boolean"));
+        final ContentValues after = ContentValues.CREATOR.createFromParcel(p);
+        assertEquals(3, after.size());
+        assertEquals(-110, after.get("Integer"));
+        assertEquals("cts", after.get("String"));
+        assertEquals(false, after.get("Boolean"));
     }
 
+    @Test
     public void testWriteToParcelFailure() {
         try {
             mContentValues.writeToParcel(null, -1);
@@ -478,10 +520,12 @@ public class ContentValuesTest extends AndroidTestCase {
         }
     }
 
+    @Test
     public void testDescribeContents() {
         assertEquals(0, mContentValues.describeContents());
     }
 
+    @Test
     public void testPutAll() {
         assertEquals(0, mContentValues.size());
 
@@ -497,6 +541,7 @@ public class ContentValuesTest extends AndroidTestCase {
         assertEquals(3, mContentValues.size());
     }
 
+    @Test
     public void testPutAllFailure() {
         try {
             mContentValues.putAll(null);
