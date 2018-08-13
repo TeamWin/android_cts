@@ -22,6 +22,14 @@ import its.error
 import its.image
 import numpy
 
+CHART_FILE = os.path.join(os.environ['CAMERA_ITS_TOP'], 'pymodules', 'its',
+                          'test_images', 'ISO12233.png')
+CHART_HEIGHT = 13.5  # cm
+CHART_DISTANCE = 30.0  # cm
+CHART_SCALE_START = 0.65
+CHART_SCALE_STOP = 1.35
+CHART_SCALE_STEP = 0.025
+
 VGA_HEIGHT = 480
 VGA_WIDTH = 640
 
@@ -50,8 +58,8 @@ class Chart(object):
     Defines PNG reference file, chart size and distance, and scaling range.
     """
 
-    def __init__(self, chart_file, height, distance, scale_start, scale_stop,
-                 scale_step):
+    def __init__(self, chart_file=None, height=None, distance=None,
+                 scale_start=None, scale_stop=None, scale_step=None):
         """Initial constructor for class.
 
         Args:
@@ -62,12 +70,12 @@ class Chart(object):
             scale_stop:     float; stop value for scaling for chart search
             scale_step:     float; step value for scaling for chart search
         """
-        self._file = chart_file
-        self._height = height
-        self._distance = distance
-        self._scale_start = scale_start
-        self._scale_stop = scale_stop
-        self._scale_step = scale_step
+        self._file = chart_file or CHART_FILE
+        self._height = height or CHART_HEIGHT
+        self._distance = distance or CHART_DISTANCE
+        self._scale_start = scale_start or CHART_SCALE_START
+        self._scale_stop = scale_stop or CHART_SCALE_STOP
+        self._scale_step = scale_step or CHART_SCALE_STEP
         self.xnorm, self.ynorm, self.wnorm, self.hnorm, self.scale = its.image.chart_located_per_argv()
         if not self.xnorm:
             with its.device.ItsSession() as cam:

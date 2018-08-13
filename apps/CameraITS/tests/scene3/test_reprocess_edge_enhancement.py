@@ -15,6 +15,7 @@
 import os.path
 
 import its.caps
+import its.cv2image
 import its.device
 import its.image
 import its.objects
@@ -47,7 +48,7 @@ def check_edge_modes(sharpness):
     assert sharpness[2] > sharpness[1] * (1.0 - THRESH_REL_SHARPNESS_DIFF)
 
 
-def test_edge_mode(cam, edge_mode, sensitivity, exp, fd, out_surface,
+def test_edge_mode(cam, edge_mode, sensitivity, exp, fd, out_surface, chart,
                    reprocess_format=None):
     """Return sharpness of the output images and the capture result metadata.
 
@@ -65,6 +66,7 @@ def test_edge_mode(cam, edge_mode, sensitivity, exp, fd, out_surface,
         fd: Focus distance for the request as defined in
             android.lens.focusDistance
         out_surface: Specifications of the output image format and size.
+        chart: object containing chart information
         reprocess_format: (Optional) The reprocessing format. If not None,
                 reprocessing will be enabled.
 
@@ -84,13 +86,14 @@ def test_edge_mode(cam, edge_mode, sensitivity, exp, fd, out_surface,
     sharpness_list = []
     caps = cam.do_capture([req]*NUM_SAMPLES, [out_surface], reprocess_format)
     for n in range(NUM_SAMPLES):
-        img = its.image.convert_capture_to_rgb_image(caps[n])
+        y, _, _ = its.image.convert_capture_to_planes(caps[n])
+        chart.img = its.image.normalize_img(its.image.get_image_patch(
+                y, chart.xnorm, chart.ynorm, chart.wnorm, chart.hnorm))
         if n == 0:
-            its.image.write_image(img, "%s_reprocess_fmt_%s_edge=%d.jpg" %
+            its.image.write_image(chart.img, "%s_reprocess_fmt_%s_edge=%d.jpg" %
                                   (NAME, reprocess_format, edge_mode))
             res_edge_mode = caps[n]["metadata"]["android.edge.mode"]
-        tile = its.image.get_image_patch(img, 0.45, 0.45, 0.1, 0.1)
-        sharpness_list.append(its.image.compute_image_sharpness(tile))
+        sharpness_list.append(its.image.compute_image_sharpness(chart.img))
 
     ret = {}
     ret["edge_mode"] = res_edge_mode
@@ -119,6 +122,10 @@ def main():
                              (its.caps.yuv_reprocess(props) or
                               its.caps.private_reprocess(props)))
 
+    # initialize chart class and locate chart in scene
+    chart = its.cv2image.Chart()
+
+    with its.device.ItsSession() as cam:
         mono_camera = its.caps.mono_camera(props)
         # If reprocessing is supported, ZSL EE mode must be avaiable.
         assert its.caps.edge_mode(props, 3), "EE mode not available!"
@@ -148,7 +155,7 @@ def main():
                 edge_mode_reported_regular.append(edge_mode)
                 sharpness_regular.append(0)
                 continue
-            ret = test_edge_mode(cam, edge_mode, s, e, fd, out_surface)
+            ret = test_edge_mode(cam, edge_mode, s, e, fd, out_surface, chart)
             edge_mode_reported_regular.append(ret["edge_mode"])
             sharpness_regular.append(ret["sharpness"])
 
@@ -175,7 +182,7 @@ def main():
                     continue
 
                 ret = test_edge_mode(cam, edge_mode, s, e, fd, out_surface,
-                                     reprocess_format)
+                                     chart, reprocess_format)
                 edge_mode_reported.append(ret["edge_mode"])
                 sharpnesses.append(ret["sharpness"])
 
