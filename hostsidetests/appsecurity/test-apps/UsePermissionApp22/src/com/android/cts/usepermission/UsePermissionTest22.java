@@ -42,26 +42,27 @@ import java.util.Arrays;
 public class UsePermissionTest22 extends BasePermissionsTest {
     private static final int REQUEST_CODE_PERMISSIONS = 42;
 
+    private final Context mContext = getInstrumentation().getContext();
+
     @Test
     public void testCompatDefault() throws Exception {
-        final Context context = getInstrumentation().getContext();
         logCommand("/system/bin/cat", "/proc/self/mountinfo");
 
         // Legacy permission model is granted by default
         assertEquals(PackageManager.PERMISSION_GRANTED,
-                context.checkPermission(android.Manifest.permission.READ_EXTERNAL_STORAGE,
+                mContext.checkPermission(android.Manifest.permission.READ_EXTERNAL_STORAGE,
                         Process.myPid(), Process.myUid()));
         assertEquals(PackageManager.PERMISSION_GRANTED,
-                context.checkPermission(android.Manifest.permission.WRITE_EXTERNAL_STORAGE,
+                mContext.checkPermission(android.Manifest.permission.WRITE_EXTERNAL_STORAGE,
                         Process.myPid(), Process.myUid()));
         assertEquals(Environment.MEDIA_MOUNTED, Environment.getExternalStorageState());
         assertDirReadWriteAccess(Environment.getExternalStorageDirectory());
-        for (File path : getAllPackageSpecificPaths(context)) {
+        for (File path : getAllPackageSpecificPaths(mContext)) {
             if (path != null) {
                 assertDirReadWriteAccess(path);
             }
         }
-        assertMediaReadWriteAccess(getInstrumentation().getContext().getContentResolver());
+        assertMediaReadWriteAccess(mContext.getContentResolver());
     }
 
     @Test
@@ -70,84 +71,88 @@ public class UsePermissionTest22 extends BasePermissionsTest {
         revokePermissions(new String[]{android.Manifest.permission.READ_EXTERNAL_STORAGE}, true);
     }
 
+    private void assertNoStorageAccess() throws Exception {
+        assertEquals(Environment.MEDIA_UNMOUNTED, Environment.getExternalStorageState());
+
+        assertDirNoAccess(Environment.getExternalStorageDirectory());
+        for (File dir : getAllPackageSpecificPaths(mContext)) {
+            if (dir != null) {
+                assertDirNoAccess(dir);
+            }
+        }
+        assertMediaNoAccess(mContext.getContentResolver(), true);
+
+        // Just to be sure, poke explicit path
+        assertDirNoAccess(new File(Environment.getExternalStorageDirectory(),
+                "/Android/data/" + mContext.getPackageName()));
+    }
+
     @Test
     public void testCompatRevoked_part2() throws Exception {
-        final Context context = getInstrumentation().getContext();
         logCommand("/system/bin/cat", "/proc/self/mountinfo");
 
         // Legacy permission model appears granted, but storage looks and
         // behaves like it's ejected
         assertEquals(PackageManager.PERMISSION_GRANTED,
-                context.checkPermission(android.Manifest.permission.READ_EXTERNAL_STORAGE,
+                mContext.checkPermission(android.Manifest.permission.READ_EXTERNAL_STORAGE,
                         Process.myPid(), Process.myUid()));
         assertEquals(PackageManager.PERMISSION_GRANTED,
-                context.checkPermission(android.Manifest.permission.WRITE_EXTERNAL_STORAGE,
+                mContext.checkPermission(android.Manifest.permission.WRITE_EXTERNAL_STORAGE,
                         Process.myPid(), Process.myUid()));
-        assertEquals(Environment.MEDIA_UNMOUNTED, Environment.getExternalStorageState());
 
-        assertDirNoAccess(Environment.getExternalStorageDirectory());
-        for (File dir : getAllPackageSpecificPaths(context)) {
-            if (dir != null) {
-                assertDirNoAccess(dir);
-            }
-        }
-        assertMediaNoAccess(getInstrumentation().getContext().getContentResolver(), true);
-
-        // Just to be sure, poke explicit path
-        assertDirNoAccess(new File(Environment.getExternalStorageDirectory(),
-                "/Android/data/" + getInstrumentation().getContext().getPackageName()));
+        assertNoStorageAccess();
     }
 
     @Test
     public void testAllPermissionsGrantedByDefault() throws Exception {
-        assertEquals(PackageManager.PERMISSION_GRANTED, getInstrumentation().getContext()
+        assertEquals(PackageManager.PERMISSION_GRANTED, mContext
                 .checkSelfPermission(Manifest.permission.SEND_SMS));
-        assertEquals(PackageManager.PERMISSION_GRANTED, getInstrumentation().getContext()
+        assertEquals(PackageManager.PERMISSION_GRANTED, mContext
                 .checkSelfPermission(Manifest.permission.RECEIVE_SMS));
         // The APK does not request because of other tests Manifest.permission.READ_CONTACTS
-        assertEquals(PackageManager.PERMISSION_GRANTED, getInstrumentation().getContext()
+        assertEquals(PackageManager.PERMISSION_GRANTED, mContext
                 .checkSelfPermission(Manifest.permission.WRITE_CONTACTS));
-        assertEquals(PackageManager.PERMISSION_GRANTED, getInstrumentation().getContext()
+        assertEquals(PackageManager.PERMISSION_GRANTED, mContext
                 .checkSelfPermission(Manifest.permission.READ_CALENDAR));
-        assertEquals(PackageManager.PERMISSION_GRANTED, getInstrumentation().getContext()
+        assertEquals(PackageManager.PERMISSION_GRANTED, mContext
                 .checkSelfPermission(Manifest.permission.WRITE_CALENDAR));
-        assertEquals(PackageManager.PERMISSION_GRANTED, getInstrumentation().getContext()
+        assertEquals(PackageManager.PERMISSION_GRANTED, mContext
                 .checkSelfPermission(Manifest.permission.READ_SMS));
-        assertEquals(PackageManager.PERMISSION_GRANTED, getInstrumentation().getContext()
+        assertEquals(PackageManager.PERMISSION_GRANTED, mContext
                 .checkSelfPermission(Manifest.permission.RECEIVE_WAP_PUSH));
-        assertEquals(PackageManager.PERMISSION_GRANTED, getInstrumentation().getContext()
+        assertEquals(PackageManager.PERMISSION_GRANTED, mContext
                 .checkSelfPermission(Manifest.permission.RECEIVE_MMS));
-        assertEquals(PackageManager.PERMISSION_GRANTED, getInstrumentation().getContext()
+        assertEquals(PackageManager.PERMISSION_GRANTED, mContext
                 .checkSelfPermission("android.permission.READ_CELL_BROADCASTS"));
-        assertEquals(PackageManager.PERMISSION_GRANTED, getInstrumentation().getContext()
+        assertEquals(PackageManager.PERMISSION_GRANTED, mContext
                 .checkSelfPermission(Manifest.permission.READ_EXTERNAL_STORAGE));
-        assertEquals(PackageManager.PERMISSION_GRANTED, getInstrumentation().getContext()
+        assertEquals(PackageManager.PERMISSION_GRANTED, mContext
                 .checkSelfPermission(Manifest.permission.WRITE_EXTERNAL_STORAGE));
-        assertEquals(PackageManager.PERMISSION_GRANTED, getInstrumentation().getContext()
+        assertEquals(PackageManager.PERMISSION_GRANTED, mContext
                 .checkSelfPermission(Manifest.permission.ACCESS_FINE_LOCATION));
-        assertEquals(PackageManager.PERMISSION_GRANTED, getInstrumentation().getContext()
+        assertEquals(PackageManager.PERMISSION_GRANTED, mContext
                 .checkSelfPermission(Manifest.permission.ACCESS_COARSE_LOCATION));
-        assertEquals(PackageManager.PERMISSION_GRANTED, getInstrumentation().getContext()
+        assertEquals(PackageManager.PERMISSION_GRANTED, mContext
                 .checkSelfPermission(Manifest.permission.READ_PHONE_STATE));
-        assertEquals(PackageManager.PERMISSION_GRANTED, getInstrumentation().getContext()
+        assertEquals(PackageManager.PERMISSION_GRANTED, mContext
                 .checkSelfPermission(Manifest.permission.CALL_PHONE));
-        assertEquals(PackageManager.PERMISSION_GRANTED, getInstrumentation().getContext()
+        assertEquals(PackageManager.PERMISSION_GRANTED, mContext
                 .checkSelfPermission(Manifest.permission.READ_CALL_LOG));
-        assertEquals(PackageManager.PERMISSION_GRANTED, getInstrumentation().getContext()
+        assertEquals(PackageManager.PERMISSION_GRANTED, mContext
                 .checkSelfPermission(Manifest.permission.WRITE_CALL_LOG));
-        assertEquals(PackageManager.PERMISSION_GRANTED, getInstrumentation().getContext()
+        assertEquals(PackageManager.PERMISSION_GRANTED, mContext
                 .checkSelfPermission(Manifest.permission.ADD_VOICEMAIL));
-        assertEquals(PackageManager.PERMISSION_GRANTED, getInstrumentation().getContext()
+        assertEquals(PackageManager.PERMISSION_GRANTED, mContext
                 .checkSelfPermission(Manifest.permission.USE_SIP));
-        assertEquals(PackageManager.PERMISSION_GRANTED, getInstrumentation().getContext()
+        assertEquals(PackageManager.PERMISSION_GRANTED, mContext
                 .checkSelfPermission(Manifest.permission.PROCESS_OUTGOING_CALLS));
-        assertEquals(PackageManager.PERMISSION_GRANTED, getInstrumentation().getContext()
+        assertEquals(PackageManager.PERMISSION_GRANTED, mContext
                 .checkSelfPermission(Manifest.permission.CAMERA));
-        assertEquals(PackageManager.PERMISSION_GRANTED, getInstrumentation().getContext()
+        assertEquals(PackageManager.PERMISSION_GRANTED, mContext
                 .checkSelfPermission(Manifest.permission.BODY_SENSORS));
 
         // Split permissions
-        assertEquals(PackageManager.PERMISSION_GRANTED, getInstrumentation().getContext()
+        assertEquals(PackageManager.PERMISSION_GRANTED, mContext
                 .checkSelfPermission(Manifest.permission.ACCESS_BACKGROUND_LOCATION));
     }
 
@@ -168,5 +173,15 @@ public class UsePermissionTest22 extends BasePermissionsTest {
     public void testRevokePropagatedOnUpgradeOldToNewModel_part1() throws Exception {
         // Revoke a permission
         revokePermissions(new String[] {Manifest.permission.WRITE_CALENDAR}, true);
+    }
+
+    @Test
+    public void testAssertNoStorageAccess() throws Exception {
+        assertNoStorageAccess();
+    }
+
+    @Test
+    public void testAssertStorageAccess() {
+        assertEquals(Environment.MEDIA_MOUNTED, Environment.getExternalStorageState());
     }
 }

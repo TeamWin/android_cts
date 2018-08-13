@@ -36,6 +36,7 @@ public class PermissionsHostTest extends DeviceTestCase implements IAbiReceiver,
     private static final String ESCALATE_PERMISSION_PKG = "com.android.cts.escalate.permission";
 
     private static final String APK_22 = "CtsUsePermissionApp22.apk";
+    private static final String APK_22_ONLY_STORAGE = "RequestsOnlyStorageApp22.apk";
     private static final String APK_23 = "CtsUsePermissionApp23.apk";
     private static final String APK_25 = "CtsUsePermissionApp25.apk";
     private static final String APK_26 = "CtsUsePermissionApp26.apk";
@@ -54,6 +55,11 @@ public class PermissionsHostTest extends DeviceTestCase implements IAbiReceiver,
     private static final String APK_ACCESS_SERIAL_LEGACY = "CtsAccessSerialLegacy.apk";
     private static final String APK_ACCESS_SERIAL_MODERN = "CtsAccessSerialModern.apk";
     private static final String ACCESS_SERIAL_PKG = "android.os.cts";
+
+    private static final String REVIEW_HELPER_APK = "ReviewPermissionHelper.apk";
+    private static final String REVIEW_HELPER_PKG = "com.android.cts.reviewpermissionhelper";
+    private static final String REVIEW_HELPER_TEST_CLASS = REVIEW_HELPER_PKG
+            + ".ReviewPermissionsTest";
 
     private static final String SCREEN_OFF_TIMEOUT_NS = "system";
     private static final String SCREEN_OFF_TIMEOUT_KEY = "screen_off_timeout";
@@ -76,12 +82,10 @@ public class PermissionsHostTest extends DeviceTestCase implements IAbiReceiver,
      * Approve the review permission prompt
      */
     private void approveReviewPermissionDialog() throws Exception {
-        assertNull(getDevice().installPackage(
-                mBuildHelper.getTestFile("ReviewPermissionHelper.apk"), true, true));
+        assertNull(getDevice().installPackage(mBuildHelper.getTestFile(REVIEW_HELPER_APK), true,
+                true));
 
-        runDeviceTests("com.android.cts.reviewpermissionhelper",
-                "com.android.cts.reviewpermissionhelper.ReviewPermissionsTest",
-                "approveReviewPermissions");
+        runDeviceTests(REVIEW_HELPER_PKG, REVIEW_HELPER_TEST_CLASS, "approveReviewPermissions");
     }
 
     @Override
@@ -478,6 +482,60 @@ public class PermissionsHostTest extends DeviceTestCase implements IAbiReceiver,
         assertNull(getDevice().installPackage(mBuildHelper.getTestFile(APK_Latest), false, false));
         runDeviceTests(USES_PERMISSION_PKG, "com.android.cts.usepermission.UsePermissionTestP0",
                 "locationPermissionIsNotSplit");
+    }
+
+    public void testDenyStorageDuringReview() throws Exception {
+        assertNull(getDevice().installPackage(mBuildHelper.getTestFile(APK_22_ONLY_STORAGE), false,
+                false));
+        assertNull(getDevice().installPackage(mBuildHelper.getTestFile(REVIEW_HELPER_APK), true,
+                true));
+
+        runDeviceTests(REVIEW_HELPER_PKG, REVIEW_HELPER_TEST_CLASS, "denyStoragePermissions");
+
+        runDeviceTests(USES_PERMISSION_PKG, "com.android.cts.usepermission.UsePermissionTest22",
+                "testAssertNoStorageAccess");
+    }
+
+    public void testDenyGrantStorageDuringReview() throws Exception {
+        assertNull(getDevice().installPackage(mBuildHelper.getTestFile(APK_22_ONLY_STORAGE), false,
+                false));
+        assertNull(getDevice().installPackage(mBuildHelper.getTestFile(REVIEW_HELPER_APK), true,
+                true));
+
+        runDeviceTests(REVIEW_HELPER_PKG, REVIEW_HELPER_TEST_CLASS, "denyGrantStoragePermissions");
+
+        runDeviceTests(USES_PERMISSION_PKG, "com.android.cts.usepermission.UsePermissionTest22",
+                "testAssertStorageAccess");
+    }
+
+    public void testDenyGrantDenyStorageDuringReview() throws Exception {
+        assertNull(getDevice().installPackage(mBuildHelper.getTestFile(APK_22_ONLY_STORAGE), false,
+                false));
+        assertNull(getDevice().installPackage(mBuildHelper.getTestFile(REVIEW_HELPER_APK), true,
+                true));
+
+        runDeviceTests(REVIEW_HELPER_PKG, REVIEW_HELPER_TEST_CLASS,
+                "denyGrantDenyStoragePermissions");
+
+        runDeviceTests(USES_PERMISSION_PKG, "com.android.cts.usepermission.UsePermissionTest22",
+                "testAssertNoStorageAccess");
+    }
+
+    public void testCancelReview() throws Exception {
+        assertNull(getDevice().installPackage(mBuildHelper.getTestFile(APK_22_ONLY_STORAGE), false,
+                false));
+        assertNull(getDevice().installPackage(mBuildHelper.getTestFile(REVIEW_HELPER_APK), true,
+                true));
+
+        // Start APK_22_ONLY_STORAGE, but cancel review
+        runDeviceTests(REVIEW_HELPER_PKG, REVIEW_HELPER_TEST_CLASS,
+                "cancelReviewPermissions");
+
+        // Start APK_22_ONLY_STORAGE again, now approve review
+        runDeviceTests(REVIEW_HELPER_PKG, REVIEW_HELPER_TEST_CLASS, "approveReviewPermissions");
+
+        runDeviceTests(REVIEW_HELPER_PKG, REVIEW_HELPER_TEST_CLASS,
+                "assertNoReviewPermissionsNeeded");
     }
 
     private void runDeviceTests(String packageName, String testClassName, String testMethodName)
