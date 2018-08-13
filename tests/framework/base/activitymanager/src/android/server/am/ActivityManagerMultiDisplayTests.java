@@ -53,6 +53,8 @@ import static android.server.am.second.Components.SECOND_NO_EMBEDDING_ACTIVITY;
 import static android.server.am.third.Components.THIRD_ACTIVITY;
 import static android.view.Display.DEFAULT_DISPLAY;
 
+import static com.android.cts.mockime.ImeEventStreamTestUtils.expectEvent;
+
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotEquals;
@@ -62,9 +64,12 @@ import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 import static org.junit.Assume.assumeTrue;
 
+import android.app.Activity;
 import android.app.ActivityOptions;
 import android.content.ComponentName;
 import android.content.Intent;
+import android.content.res.Configuration;
+import android.graphics.Rect;
 import android.os.Bundle;
 import android.os.SystemClock;
 import android.platform.test.annotations.Presubmit;
@@ -72,12 +77,21 @@ import android.server.am.ActivityManagerState.ActivityDisplay;
 import android.server.am.ActivityManagerState.ActivityStack;
 import android.server.am.CommandSession.ActivitySession;
 import android.server.am.CommandSession.SizeInfo;
+import android.support.test.InstrumentationRegistry;
 import android.support.test.filters.FlakyTest;
 import android.util.SparseArray;
+import android.view.View;
+import android.view.WindowManager;
+import android.view.inputmethod.InputMethodManager;
+import android.widget.EditText;
+import android.widget.LinearLayout;
 
 import androidx.annotation.Nullable;
 
 import com.android.compatibility.common.util.SystemUtil;
+import com.android.cts.mockime.ImeEventStream;
+import com.android.cts.mockime.ImeSettings;
+import com.android.cts.mockime.MockImeSession;
 
 import org.junit.Before;
 import org.junit.Test;
@@ -1801,7 +1815,6 @@ public class ActivityManagerMultiDisplayTests extends ActivityManagerDisplayTest
         }
     }
 
-
     /**
      * Tests tap and set focus between displays.
      * TODO(b/111361570): focus tracking between multi-display may change to check focus display.
@@ -1822,6 +1835,7 @@ public class ActivityManagerMultiDisplayTests extends ActivityManagerDisplayTest
             final int width = displayMetrics.getSize().getWidth();
             final int height = displayMetrics.getSize().getHeight();
             tapOnDisplay(width / 2, height / 2, DEFAULT_DISPLAY);
+
             waitAndAssertTopResumedActivity(TEST_ACTIVITY, DEFAULT_DISPLAY,
                     "Activity should be top resumed when tapped.");
             mAmWmState.assertFocusedActivity("Activity on default display must be focused.",
@@ -1833,6 +1847,52 @@ public class ActivityManagerMultiDisplayTests extends ActivityManagerDisplayTest
                 "Virtual display activity should be top resumed when tapped.");
             mAmWmState.assertFocusedActivity("Activity on second display must be focused.",
                     VIRTUAL_DISPLAY_ACTIVITY);
+        }
+    }
+
+    @Test
+    public void testImeWindowVisibilityForVirtualDisplay() throws Exception {
+        final long TIMEOUT_SOFT_INPUT = TimeUnit.SECONDS.toMillis(5);
+
+        try (final VirtualDisplaySession virtualDisplaySession = new VirtualDisplaySession();
+             final TestActivitySession<EditTestActivity> imeTestActivitySession = new
+                     TestActivitySession<>();
+             // Leverage MockImeSession to ensure at least a test Ime exists as default.
+             final MockImeSession mockImeSession = MockImeSession.create(
+                     mContext, InstrumentationRegistry.getInstrumentation().getUiAutomation(),
+                     new ImeSettings.Builder())) {
+            // Create virtual display & launch test activity.
+            final ActivityDisplay newDisplay =
+                    virtualDisplaySession.setPublicDisplay(true).createDisplay();
+            imeTestActivitySession.launchTestActivityOnDisplaySync(EditTestActivity.class,
+                    newDisplay.mId);
+            // Focus EditText to show soft input.
+            final EditText editText = imeTestActivitySession.getActivity().getEditText();
+            final ImeEventStream stream = mockImeSession.openEventStream();
+            imeTestActivitySession.runOnMainSyncAndWait(() -> {
+                editText.setFocusable(true);
+                editText.requestFocus();
+                showSoftInputForView(editText);
+            });
+            expectEvent(stream, event -> "showSoftInput".equals(event.getEventName()),
+                    TIMEOUT_SOFT_INPUT);
+
+            // Ensure that the IME is visible & shown in virtual display.
+            testImeWindowVisibilityForVirtualDisplay(true /* visible */,
+                    newDisplay.mId /* displayId */);
+
+            // Check Ime window's display configuration if same as virtual display.
+            assertImeWindowAndDisplayConfiguration(getImeWindowState(), newDisplay);
+
+            // Tap on default display, assert Ime window will hide as expected.
+            final ReportedDisplayMetrics displayMetrics = getDisplayMetrics();
+            final int width = displayMetrics.getSize().getWidth();
+            final int height = displayMetrics.getSize().getHeight();
+            tapOnDisplay(width / 2, height / 2, DEFAULT_DISPLAY);
+
+            // Ensure that the IME is hidden in virtual display.
+            testImeWindowVisibilityForVirtualDisplay(false /* visible */,
+                    newDisplay.mId /* displayId */);
         }
     }
 
@@ -1906,5 +1966,60 @@ public class ActivityManagerMultiDisplayTests extends ActivityManagerDisplayTest
             }
             VirtualDisplayHelper.waitForDefaultDisplayState(wantOn);
         }
+    }
+
+    public static class EditTestActivity extends Activity {
+        private EditText mEditText;
+        @Override
+        protected void onCreate(Bundle icicle) {
+            super.onCreate(icicle);
+            final LinearLayout layout = new LinearLayout(this);
+            layout.setOrientation(LinearLayout.VERTICAL);
+            mEditText = new EditText(this);
+            layout.addView(mEditText);
+            getWindow().setSoftInputMode(WindowManager.LayoutParams.SOFT_INPUT_ADJUST_RESIZE);
+            setContentView(layout);
+        }
+
+        EditText getEditText() {
+            return mEditText;
+        }
+    }
+
+    void showSoftInputForView(View view) {
+        SystemUtil.runWithShellPermissionIdentity(() -> {
+            mContext.getSystemService(InputMethodManager.class).showSoftInput(view, 0);
+        });
+    }
+
+    void testImeWindowVisibilityForVirtualDisplay(boolean visible, int displayId) {
+        final WindowManagerState.WindowState imeWinState =
+                mAmWmState.waitForWindowWithVisibility(this::getImeWindowState,
+                        "IME" /* winName */, visible);
+        if (imeWinState != null) {
+            assertEquals("IME window display", displayId, imeWinState.getDisplayId());
+            assertEquals("IME window visibility", visible, imeWinState.isShown());
+        } else {
+            assertFalse("IME window not exist", visible);
+        }
+    }
+
+    void assertImeWindowAndDisplayConfiguration(
+            WindowManagerState.WindowState imeWinState, ActivityDisplay display) {
+        final Configuration configurationForIme = imeWinState.mMergedOverrideConfiguration;
+        final Configuration configurationForDisplay =  display.mMergedOverrideConfiguration;
+        final int displayDensityDpiForIme = configurationForIme.densityDpi;
+        final int displayDensityDpi = configurationForDisplay.densityDpi;
+        final Rect displayBoundsForIme = configurationForIme.windowConfiguration.getBounds();
+        final Rect displayBounds = configurationForDisplay.windowConfiguration.getBounds();
+
+        assertEquals("Display density not the same", displayDensityDpi, displayDensityDpiForIme);
+        assertEquals("Display bounds not the same", displayBounds, displayBoundsForIme);
+    }
+
+    WindowManagerState.WindowState getImeWindowState() {
+        final WindowManagerState wmState = mAmWmState.getWmState();
+        wmState.computeState();
+        return wmState.getInputMethodWindowState();
     }
 }

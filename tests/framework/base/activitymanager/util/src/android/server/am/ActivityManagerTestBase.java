@@ -286,6 +286,42 @@ public abstract class ActivityManagerTestBase {
         }
     }
 
+    /**
+     * Helper class to launch / close test activity by instrumentation way.
+     */
+    protected class TestActivitySession<T extends Activity> implements AutoCloseable {
+        private T mTestActivity;
+        void launchTestActivityOnDisplaySync(Class<T> activityClass, int displayId) {
+            SystemUtil.runWithShellPermissionIdentity(() -> {
+                final Bundle bundle = ActivityOptions.makeBasic()
+                        .setLaunchDisplayId(displayId).toBundle();
+                mTestActivity = (T) InstrumentationRegistry.getInstrumentation()
+                        .startActivitySync(new Intent(mContext, activityClass)
+                                .addFlags(FLAG_ACTIVITY_NEW_TASK), bundle);
+                // Check activity is launched and resumed.
+                final ComponentName testActivityName = mTestActivity.getComponentName();
+                mAmWmState.waitForActivityState(testActivityName, STATE_RESUMED);
+                mAmWmState.assertResumedActivity("Activity must be resumed", testActivityName);
+            });
+        }
+
+        void runOnMainSyncAndWait(Runnable runnable) {
+            InstrumentationRegistry.getInstrumentation().runOnMainSync(runnable);
+            InstrumentationRegistry.getInstrumentation().waitForIdleSync();
+        }
+
+        T getActivity() {
+            return mTestActivity;
+        }
+
+        @Override
+        public void close() throws Exception {
+            if (mTestActivity != null) {
+                mTestActivity.finishAndRemoveTask();
+            }
+        }
+    }
+
     @Before
     public void setUp() throws Exception {
         mContext = InstrumentationRegistry.getContext();
