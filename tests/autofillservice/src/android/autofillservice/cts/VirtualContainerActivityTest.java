@@ -217,11 +217,15 @@ public class VirtualContainerActivityTest
         assertThat(passwordLabel.getInputType()).isEqualTo(0);
 
         final String[] autofillHints = username.getAutofillHints();
+        final boolean hasCompatModeFlag = (request.flags
+                & android.service.autofill.FillRequest.FLAG_COMPATIBILITY_MODE_REQUEST) != 0;
         if (mCompatMode) {
+            assertThat(hasCompatModeFlag).isTrue();
             assertThat(autofillHints).isNull();
             assertThat(username.getHtmlInfo()).isNull();
             assertThat(password.getHtmlInfo()).isNull();
         } else {
+            assertThat(hasCompatModeFlag).isFalse();
             // Make sure order is preserved and dupes not removed.
             assertThat(autofillHints).asList()
                     .containsExactly("c", "a", "a", "b", "a", "a")
