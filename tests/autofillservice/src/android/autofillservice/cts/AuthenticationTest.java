@@ -725,7 +725,7 @@ public class AuthenticationTest extends AbstractLoginActivityTestCase {
         final String expectedMessage = getWelcomeMessage("malkovich");
         final String actualMessage = mActivity.tapLogin();
         assertWithMessage("Wrong welcome msg").that(actualMessage).isEqualTo(expectedMessage);
-        mUiBot.saveForAutofill(true, SAVE_DATA_TYPE_PASSWORD);
+        mUiBot.updateForAutofill(true, SAVE_DATA_TYPE_PASSWORD);
 
         // Assert client state on authentication activity.
         assertClientState("auth activity", AuthenticationActivity.getData(), "CSI", "FromResponse");
@@ -1105,7 +1105,7 @@ public class AuthenticationTest extends AbstractLoginActivityTestCase {
         final String expectedMessage = getWelcomeMessage("malkovich");
         final String actualMessage = mActivity.tapLogin();
         assertWithMessage("Wrong welcome msg").that(actualMessage).isEqualTo(expectedMessage);
-        mUiBot.saveForAutofill(true, SAVE_DATA_TYPE_PASSWORD);
+        mUiBot.updateForAutofill(true, SAVE_DATA_TYPE_PASSWORD);
 
         // Assert client state on authentication activity.
         assertClientState("auth activity", AuthenticationActivity.getData(), "CSI", "FromResponse");

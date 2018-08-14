@@ -854,7 +854,7 @@ public class LoginActivityTest extends AbstractLoginActivityTestCase {
         assertWithMessage("Wrong welcome msg").that(actualMessage).isEqualTo(expectedMessage);
 
         // Assert the snack bar is shown and tap "Save".
-        mUiBot.saveForAutofill(true, SAVE_DATA_TYPE_PASSWORD);
+        mUiBot.updateForAutofill(true, SAVE_DATA_TYPE_PASSWORD);
 
         final SaveRequest saveRequest = sReplier.getNextSaveRequest();
 
@@ -957,7 +957,7 @@ public class LoginActivityTest extends AbstractLoginActivityTestCase {
             assertWithMessage("Wrong welcome msg").that(actualMessage).isEqualTo(expectedMessage);
 
             // Assert the snack bar is shown and tap "Save".
-            mUiBot.saveForAutofill(true, SAVE_DATA_TYPE_PASSWORD);
+            mUiBot.updateForAutofill(true, SAVE_DATA_TYPE_PASSWORD);
 
             final SaveRequest saveRequest = sReplier.getNextSaveRequest();
 
