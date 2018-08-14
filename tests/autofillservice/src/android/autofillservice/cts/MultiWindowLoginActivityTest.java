@@ -79,10 +79,10 @@ public class MultiWindowLoginActivityTest extends AutoFillServiceTestCase {
     /**
      * Put activity1 in TOP, will be followed by amStartActivity()
      */
-    protected void splitWindow(Activity activity1) {
-        mAm.setTaskWindowingModeSplitScreenPrimary(activity1.getTaskId(),
+    protected void splitWindow(Activity activity) throws Exception {
+        mAm.setTaskWindowingModeSplitScreenPrimary(activity.getTaskId(),
                 SPLIT_SCREEN_CREATE_MODE_TOP_OR_LEFT, true, false, null, true);
-
+        mUiBot.waitForWindowSplit();
     }
 
     protected void amStartActivity(Class<? extends Activity> activity2) {
@@ -115,6 +115,10 @@ public class MultiWindowLoginActivityTest extends AutoFillServiceTestCase {
 
         amStartActivity(MultiWindowEmptyActivity.class);
         MultiWindowEmptyActivity emptyActivity = MultiWindowEmptyActivity.waitNewInstance();
+
+        // Make sure both activities are showing
+        mUiBot.assertShownByRelativeId(Helper.ID_USERNAME);  // MultiWindowLoginActivity
+        mUiBot.assertShownByRelativeId(MultiWindowEmptyActivity.ID_EMPTY);
 
         // No dataset as LoginActivity loses window focus
         mUiBot.assertNoDatasets();
