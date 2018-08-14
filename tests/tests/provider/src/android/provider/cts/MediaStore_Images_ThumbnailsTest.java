@@ -80,9 +80,9 @@ public class MediaStore_Images_ThumbnailsTest extends InstrumentationTestCase {
         }
     }
 
-    public void testQueryInternalThumbnails() throws Exception {
+    public void testQueryExternalThumbnails() throws Exception {
         Cursor c = Thumbnails.queryMiniThumbnails(mContentResolver,
-                Thumbnails.INTERNAL_CONTENT_URI, Thumbnails.MICRO_KIND, null);
+                Thumbnails.EXTERNAL_CONTENT_URI, Thumbnails.MICRO_KIND, null);
         int previousMicroKindCount = c.getCount();
         c.close();
 
@@ -91,7 +91,8 @@ public class MediaStore_Images_ThumbnailsTest extends InstrumentationTestCase {
         ContentValues values = new ContentValues();
         values.put(Thumbnails.KIND, Thumbnails.MINI_KIND);
         values.put(Thumbnails.DATA, path);
-        Uri uri = mContentResolver.insert(Thumbnails.INTERNAL_CONTENT_URI, values);
+        values.put(Thumbnails.IMAGE_ID, 0);
+        Uri uri = mContentResolver.insert(Thumbnails.EXTERNAL_CONTENT_URI, values);
         if (uri != null) {
             mRowsAdded.add(uri);
         }
@@ -104,7 +105,7 @@ public class MediaStore_Images_ThumbnailsTest extends InstrumentationTestCase {
         assertEquals(path, c.getString(c.getColumnIndex(Thumbnails.DATA)));
 
         // query all thumbnails with other kind
-        c = Thumbnails.queryMiniThumbnails(mContentResolver, Thumbnails.INTERNAL_CONTENT_URI,
+        c = Thumbnails.queryMiniThumbnails(mContentResolver, Thumbnails.EXTERNAL_CONTENT_URI,
                 Thumbnails.MICRO_KIND, null);
         assertEquals(previousMicroKindCount, c.getCount());
         c.close();
