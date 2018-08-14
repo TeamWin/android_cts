@@ -1388,6 +1388,36 @@ public class ActivityManagerMultiDisplayTests extends ActivityManagerDisplayTest
     }
 
     /**
+     * Tests that an activity is launched on the preferred display when both displays have
+     * matching task.
+     */
+    @Test
+    public void testTaskMatchOrderAcrossDisplays() throws Exception {
+        getLaunchActivityBuilder().setUseInstrumentation()
+                .setTargetActivity(TEST_ACTIVITY).setNewTask(true)
+                .setDisplayId(DEFAULT_DISPLAY).execute();
+        final int defaultDisplayStackId = mAmWmState.getAmState().getFrontStackId(DEFAULT_DISPLAY);
+
+        try (final VirtualDisplaySession virtualDisplaySession = new VirtualDisplaySession()) {
+            final ActivityDisplay newDisplay = virtualDisplaySession.createDisplay();
+            SystemUtil.runWithShellPermissionIdentity(
+                    () -> getLaunchActivityBuilder().setUseInstrumentation()
+                            .setTargetActivity(TEST_ACTIVITY).setNewTask(true)
+                            .setDisplayId(newDisplay.mId).execute());
+            assertNotEquals("Top focus stack should not be on default display",
+                    defaultDisplayStackId, mAmWmState.getAmState().getFocusedStackId());
+
+            // Launch activity without specified display id to avoid adding
+            // FLAG_ACTIVITY_MULTIPLE_TASK flag to this launch. And without specify display id,
+            // AM should search a matching task on default display prior than other displays.
+            getLaunchActivityBuilder().setUseInstrumentation()
+                    .setTargetActivity(TEST_ACTIVITY).setNewTask(true).execute();
+            mAmWmState.assertFocusedStack("Top focus stack must be on the default display",
+                    defaultDisplayStackId);
+        }
+    }
+
+    /**
      * Tests that the task affinity search respects the launch display id.
      */
     @Test
