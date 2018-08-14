@@ -71,6 +71,9 @@
         <receiver android:name=".SelfDestructReceiver"
             android:exported="true"
             android:process="android.autofillservice.cts.outside"/>
+        <receiver android:name=".OutOfProcessLoginActivityFinisherReceiver"
+            android:exported="true"
+            android:process="android.autofillservice.cts.outside"/>
 
         <service
             android:name=".InstrumentedAutoFillService"
