@@ -295,12 +295,12 @@ public class AppWidgetTest extends AppWidgetTestCase {
             inOrder.verify(callbacks).onUpdate(any(Context.class),
                     any(AppWidgetManager.class), eq(new int[] {firstAppWidgetId}));
             inOrder.verify(callbacks).onAppWidgetOptionsChanged(any(Context.class),
-                    any(AppWidgetManager.class), same(firstAppWidgetId), argThat(
+                    any(AppWidgetManager.class), eq(firstAppWidgetId), argThat(
                             new OptionsMatcher(firstOptions)));
             inOrder.verify(callbacks).onUpdate(any(Context.class),
                     any(AppWidgetManager.class), eq(new int[] {secondAppWidgetId}));
             inOrder.verify(callbacks).onAppWidgetOptionsChanged(any(Context.class),
-                    any(AppWidgetManager.class), same(secondAppWidgetId), argThat(
+                    any(AppWidgetManager.class), eq(secondAppWidgetId), argThat(
                             new OptionsMatcher(secondOptions)));
             inOrder.verify(callbacks).onDeleted(any(Context.class),
                     argThat(new WidgetIdsMatcher(new int[]{firstAppWidgetId})));
