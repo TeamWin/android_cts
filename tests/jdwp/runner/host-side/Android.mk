@@ -22,7 +22,7 @@ LOCAL_MODULE := cts-dalvik-host-test-runner
 
 LOCAL_JAVA_LIBRARIES := cts-tradefed tradefed compatibility-host-util
 
-LOCAL_STATIC_JAVA_LIBRARIES := vogarexpectlib
+LOCAL_STATIC_JAVA_LIBRARIES := vogarexpect
 
 # don't include these packages in any target
 LOCAL_MODULE_TAGS := optional

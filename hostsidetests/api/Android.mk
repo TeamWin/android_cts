@@ -23,7 +23,7 @@ LOCAL_COMPATIBILITY_SUITE := cts vts general-tests
 LOCAL_SRC_FILES := $(call all-java-files-under, src)
 LOCAL_SDK_VERSION := current
 LOCAL_JAVA_LIBRARIES := cts-tradefed tradefed compatibility-host-util
-LOCAL_STATIC_JAVA_LIBRARIES := dexlib2 doclava jsilver guavalib antlr-runtime host-jdk-tools-prebuilt \
+LOCAL_STATIC_JAVA_LIBRARIES := dexlib2 doclava jsilver guava antlr-runtime host-jdk-tools-prebuilt \
     compatibility-host-util
 
 # These are list of api txt files that are considered as approved APIs

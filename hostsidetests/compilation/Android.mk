@@ -29,7 +29,7 @@ LOCAL_MODULE := CtsCompilationTestCases
 
 LOCAL_JAVA_LIBRARIES := cts-tradefed tradefed compatibility-host-util
 
-LOCAL_STATIC_JAVA_LIBRARIES := guavalib
+LOCAL_STATIC_JAVA_LIBRARIES := guava
 
 include $(BUILD_HOST_JAVA_LIBRARY)
 
