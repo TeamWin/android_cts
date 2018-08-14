@@ -25,12 +25,15 @@ import android.platform.test.annotations.RequiresDevice;
 import android.test.suitebuilder.annotation.SmallTest;
 import android.util.Log;
 
+import com.android.compatibility.common.util.CddTest;
+
 import java.util.concurrent.Semaphore;
 import java.util.concurrent.TimeUnit;
 
 import org.junit.Assert;
 
 
+@CddTest(requirement="2.5.3/A-0-3")
 @SmallTest
 @RequiresDevice
 public class CarAppFocusManagerTest extends CarApiTestBase {
