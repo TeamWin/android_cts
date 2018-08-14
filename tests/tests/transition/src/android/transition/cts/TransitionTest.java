@@ -305,8 +305,10 @@ public class TransitionTest extends BaseTransitionTest {
         View holder2 = layout2.findViewById(R.id.holder);
         mTransition.excludeChildren(holder2, true);
         startTransition(scene2);
-        // Should already be ended, since no children are transitioning
-        verify(mListener, times(1)).onTransitionEnd(any());
+        mActivityRule.runOnUiThread(() -> {
+            // Should already be ended, since no children are transitioning
+            verify(mListener, times(1)).onTransitionEnd(any());
+        });
 
         mTransition.excludeChildren(holder1, false); // remove it
         mTransition.excludeChildren(holder2, false); // remove it
@@ -321,8 +323,10 @@ public class TransitionTest extends BaseTransitionTest {
         enterScene(R.layout.scene1);
         mTransition.excludeChildren(R.id.holder, true);
         startTransition(R.layout.scene2);
-        // Should already be ended, since no children are transitioning
-        verify(mListener, times(1)).onTransitionEnd(any());
+        mActivityRule.runOnUiThread(() -> {
+            // Should already be ended, since no children are transitioning
+            verify(mListener, times(1)).onTransitionEnd(any());
+        });
 
         resetListener();
         mTransition.excludeChildren(R.id.holder, false); // remove it
@@ -336,8 +340,10 @@ public class TransitionTest extends BaseTransitionTest {
         enterScene(R.layout.scene1);
         mTransition.excludeChildren(RelativeLayout.class, true);
         startTransition(R.layout.scene2);
-        // Should already be ended, since no children are transitioning
-        verify(mListener, times(1)).onTransitionEnd(any());
+        mActivityRule.runOnUiThread(() -> {
+            // Should already be ended, since no children are transitioning
+            verify(mListener, times(1)).onTransitionEnd(any());
+        });
 
         resetListener();
         mTransition.excludeChildren(RelativeLayout.class, false); // remove it
@@ -368,8 +374,10 @@ public class TransitionTest extends BaseTransitionTest {
         enterScene(R.layout.scene1);
         mTransition.excludeTarget(R.id.redSquare, true);
         startTransition(R.layout.scene7);
-        // Should already be ended, since no children are transitioning
-        verify(mListener, times(1)).onTransitionEnd(any());
+        mActivityRule.runOnUiThread(() -> {
+            // Should already be ended, since no children are transitioning
+            verify(mListener, times(1)).onTransitionEnd(any());
+        });
 
         resetListener();
         mTransition.excludeTarget(R.id.redSquare, false); // remove it
@@ -383,8 +391,10 @@ public class TransitionTest extends BaseTransitionTest {
         enterScene(R.layout.scene1);
         mTransition.excludeTarget(TextView.class, true);
         startTransition(R.layout.scene3);
-        // Should already be ended, since no children are transitioning
-        verify(mListener, times(1)).onTransitionEnd(any());
+        mActivityRule.runOnUiThread(() -> {
+            // Should already be ended, since no children are transitioning
+            verify(mListener, times(1)).onTransitionEnd(any());
+        });
 
         resetListener();
         mTransition.excludeTarget(TextView.class, false); // remove it
@@ -398,8 +408,10 @@ public class TransitionTest extends BaseTransitionTest {
         enterScene(R.layout.scene1);
         mTransition.excludeTarget("hello", true);
         startTransition(R.layout.scene3);
-        // Should already be ended, since no children are transitioning
-        verify(mListener, times(1)).onTransitionEnd(any());
+        mActivityRule.runOnUiThread(() -> {
+            // Should already be ended, since no children are transitioning
+            verify(mListener, times(1)).onTransitionEnd(any());
+        });
 
         resetListener();
         mTransition.excludeTarget("hello", false); // remove it
