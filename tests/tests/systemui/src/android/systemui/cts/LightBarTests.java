@@ -37,6 +37,7 @@ import android.view.MotionEvent;
 
 import org.junit.Rule;
 import org.junit.Test;
+import org.junit.rules.TestName;
 import org.junit.runner.RunWith;
 
 /**
@@ -66,6 +67,8 @@ public class LightBarTests extends LightBarTestBase {
     @Rule
     public ActivityTestRule<LightBarActivity> mActivityRule = new ActivityTestRule<>(
             LightBarActivity.class);
+    @Rule
+    public TestName mTestName = new TestName();
 
     @Test
     public void testLightStatusBarIcons() throws Throwable {
@@ -185,7 +188,7 @@ public class LightBarTests extends LightBarTestBase {
             success = true;
         } finally {
             if (!success) {
-                dumpBitmap(bitmap);
+                dumpBitmap(bitmap, mTestName.getMethodName());
             }
         }
     }

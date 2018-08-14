@@ -30,6 +30,7 @@ import android.view.View;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
+import org.junit.rules.TestName;
 import org.junit.runner.RunWith;
 
 /**
@@ -46,6 +47,9 @@ public class LightBarThemeTest extends LightBarTestBase {
     @Rule
     public ActivityTestRule<LightBarThemeActivity> mActivityRule = new ActivityTestRule<>(
             LightBarThemeActivity.class);
+
+    @Rule
+    public TestName mTestName = new TestName();
 
     @Before
     public void setUp() {
@@ -82,7 +86,7 @@ public class LightBarThemeTest extends LightBarTestBase {
         bitmap.getPixels(pixels, 0, bitmap.getWidth(), 0, 0, bitmap.getWidth(), bitmap.getHeight());
         for (int col = 0; col < bitmap.getWidth(); col++) {
             if (dividerColor != pixels[col]) {
-                dumpBitmap(bitmap);
+                dumpBitmap(bitmap, mTestName.getMethodName());
                 fail("Invalid color exptected=" + dividerColor + " actual=" + pixels[col]);
             }
         }
