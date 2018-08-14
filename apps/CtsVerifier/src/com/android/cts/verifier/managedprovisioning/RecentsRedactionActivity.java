@@ -28,6 +28,7 @@ import android.view.View;
 import com.android.cts.verifier.ArrayTestListAdapter;
 import com.android.cts.verifier.DialogTestListActivity;
 import com.android.cts.verifier.R;
+import com.android.cts.verifier.TestResult;
 
 /**
  * This test verifies that if a work profile is locked with a separate password, Recents views for
@@ -52,9 +53,32 @@ public class RecentsRedactionActivity extends DialogTestListActivity {
                 /* instructions */ R.string.provisioning_byod_recents_instructions);
     }
 
+    // Default listener will use setResult(), which won't work due to activity being in a new task.
+    private View.OnClickListener clickListener = target -> {
+        final int resultCode;
+        switch (target.getId()) {
+            case R.id.pass_button:
+                resultCode = TestResult.TEST_RESULT_PASSED;
+                break;
+            case R.id.fail_button:
+                resultCode = TestResult.TEST_RESULT_FAILED;
+                break;
+            default:
+                throw new IllegalArgumentException("Unknown id: " + target.getId());
+        }
+        Intent resultIntent = TestResult.createResult(RecentsRedactionActivity.this, resultCode,
+                getTestId(), getTestDetails(), getReportLog());
+
+        new ByodFlowTestHelper(this).sendResultToPrimary(resultIntent);
+        finish();
+    };
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+
+        findViewById(R.id.pass_button).setOnClickListener(clickListener);
+        findViewById(R.id.fail_button).setOnClickListener(clickListener);
 
         mPrepareTestButton.setText(R.string.provisioning_byod_recents_lock_now);
         mPrepareTestButton.setOnClickListener((View view) -> {

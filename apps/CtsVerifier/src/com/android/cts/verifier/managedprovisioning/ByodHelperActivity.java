@@ -219,7 +219,7 @@ public class ByodHelperActivity extends LocationListenerActivity
             // Jump back to CTS verifier with result.
             Intent response = new Intent(ACTION_PROFILE_OWNER_STATUS);
             response.putExtra(EXTRA_PROVISIONED, isProfileOwner());
-            startActivityInPrimary(response);
+            new ByodFlowTestHelper(this).startActivityInPrimary(response);
             // Queried by CtsVerifier in the primary side using startActivityForResult.
         } else if (action.equals(ACTION_QUERY_PROFILE_OWNER)) {
             Intent response = new Intent();
@@ -512,16 +512,6 @@ public class ByodHelperActivity extends LocationListenerActivity
             mDevicePolicyManager.clearUserRestriction(mAdminReceiverComponent,
                     DISALLOW_INSTALL_UNKNOWN_SOURCES);
         }
-    }
-
-    private void startActivityInPrimary(Intent intent) {
-        // Disable app components in the current profile, so only the counterpart in the other
-        // profile can respond (via cross-profile intent filter)
-        getPackageManager().setComponentEnabledSetting(new ComponentName(
-                this, ByodFlowTestActivity.class),
-                PackageManager.COMPONENT_ENABLED_STATE_DISABLED,
-                PackageManager.DONT_KILL_APP);
-        startActivity(intent);
     }
 
     private void grantCameraPermissionToSelf() {

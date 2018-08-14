@@ -53,6 +53,12 @@ import com.android.cts.verifier.location.LocationListenerActivity;
  */
 public class ByodFlowTestActivity extends DialogTestListActivity {
 
+    // Action for delivering sub-test result from the profile.
+    public static final String ACTION_TEST_RESULT =
+            "com.android.cts.verifier.managedprovisioning.BYOD_TEST_RESULT";
+    // Extra for ACTION_TEST_RESULT containing test result.
+    public static final String EXTRA_RESULT = "extra-result";
+
     private static final String TAG = "ByodFlowTestActivity";
     private static ConnectivityManager mCm;
     private static final int REQUEST_MANAGED_PROVISIONING = 0;
@@ -151,10 +157,13 @@ public class ByodFlowTestActivity extends DialogTestListActivity {
 
     @Override
     protected void onNewIntent(Intent intent) {
-        // This is called when managed provisioning completes successfully without reboot.
         super.onNewIntent(intent);
         if (ByodHelperActivity.ACTION_PROFILE_OWNER_STATUS.equals(intent.getAction())) {
+            // This is called when managed provisioning completes successfully without reboot.
             handleStatusUpdate(RESULT_OK, intent);
+        } else if (ACTION_TEST_RESULT.equals(intent.getAction())) {
+            // Called when subtest cannot communicate test result from the profile via setResult().
+            handleLaunchTestResult(RESULT_OK, intent.getParcelableExtra(EXTRA_RESULT));
         }
     }
 
