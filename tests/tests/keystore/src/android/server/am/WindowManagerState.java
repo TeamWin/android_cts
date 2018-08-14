@@ -37,7 +37,7 @@ import com.android.server.wm.nano.AppTransitionProto;
 import com.android.server.wm.nano.AppWindowTokenProto;
 import com.android.server.wm.nano.ConfigurationContainerProto;
 import com.android.server.wm.nano.DisplayFramesProto;
-import com.android.server.wm.nano.DisplayProto;
+import com.android.server.wm.nano.DisplayContentProto;
 import com.android.server.wm.nano.IdentifierProto;
 import com.android.server.wm.nano.PinnedStackControllerProto;
 import com.android.server.wm.nano.StackProto;
@@ -153,7 +153,7 @@ public class WindowManagerState {
         }
         mFocusedApp = state.focusedApp;
         for (int i = 0; i < state.rootWindowContainer.displays.length; i++) {
-            DisplayProto displayProto = state.rootWindowContainer.displays[i];
+            DisplayContentProto displayProto = state.rootWindowContainer.displays[i];
             final Display display = new Display(displayProto);
             mDisplays.add(display);
             allWindows.addAll(display.getWindows());
@@ -426,7 +426,7 @@ public class WindowManagerState {
         private int mDpi;
         private String mName;
 
-        public Display(DisplayProto proto) {
+        public Display(DisplayContentProto proto) {
             super(proto.windowContainer);
             mDisplayId = proto.id;
             for (int i = 0; i < proto.aboveAppWindows.length; i++) {
