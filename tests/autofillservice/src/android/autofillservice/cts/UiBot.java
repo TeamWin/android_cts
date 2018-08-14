@@ -348,6 +348,16 @@ final class UiBot {
     }
 
     /**
+     * Finds a node by text, without waiting for it to be shown (but failing if it isn't).
+     */
+    @NonNull
+    public UiObject2 findRightAwayByText(@NonNull String text) throws Exception {
+        final UiObject2 object = mDevice.findObject(By.text(text));
+        assertWithMessage("no UIObject for text '%s'", text).that(object).isNotNull();
+        return object;
+    }
+
+    /**
      * Asserts that the text is not showing for sure in the screen "as is", i.e., without waiting
      * for it.
      *
@@ -745,7 +755,7 @@ final class UiBot {
      */
     private UiObject2 waitForObject(@NonNull BySelector selector, @NonNull Timeout timeout)
             throws Exception {
-        return waitForObject(null, selector, timeout);
+        return waitForObject(/* parent= */ null, selector, timeout);
     }
 
     /**
