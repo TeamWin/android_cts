@@ -651,6 +651,7 @@ public class ValueAnimatorTest {
     }
 
     private void testAnimatorsEnabledImpl(boolean enabled) throws Throwable {
+        final CountDownLatch startLatch = new CountDownLatch(1);
         final CountDownLatch endLatch = new CountDownLatch(1);
         final ValueAnimator animator = ValueAnimator.ofFloat(0, 1);
         animator.setDuration(1000);
@@ -662,7 +663,10 @@ public class ValueAnimatorTest {
         });
         mActivityRule.runOnUiThread(() -> {
             animator.start();
+            startLatch.countDown();
         });
+
+        assertTrue(startLatch.await(200, TimeUnit.MILLISECONDS));
 
         float durationScale = enabled ? 1 : 0;
         ValueAnimator.setDurationScale(durationScale);
@@ -671,12 +675,12 @@ public class ValueAnimatorTest {
             assertTrue("Animators not enabled with duration scale 1",
                     ValueAnimator.areAnimatorsEnabled());
             assertFalse("Animator ended too early when animators enabled = ",
-                    endLatch.await(50, TimeUnit.MILLISECONDS));
+                    endLatch.await(100, TimeUnit.MILLISECONDS));
         } else {
             assertFalse("Animators enabled with duration scale 0",
                     ValueAnimator.areAnimatorsEnabled());
             assertTrue("Animator did not end when animators enabled = ",
-                    endLatch.await(50, TimeUnit.MILLISECONDS));
+                    endLatch.await(100, TimeUnit.MILLISECONDS));
         }
         mActivityRule.runOnUiThread(() -> {
             animator.end();
