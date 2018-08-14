@@ -130,6 +130,8 @@ public class Components extends ComponentsBase {
             component("VirtualDisplayActivity");
     public static final ComponentName VR_TEST_ACTIVITY = component("VrTestActivity");
     public static final ComponentName WALLPAPAER_ACTIVITY = component("WallpaperActivity");
+    public static final ComponentName LAUNCH_TEST_ON_DESTROY_ACTIVITY = component(
+            "LaunchTestOnDestroyActivity");
 
     public static final ComponentName ASSISTANT_VOICE_INTERACTION_SERVICE =
             component("AssistantVoiceInteractionService");
