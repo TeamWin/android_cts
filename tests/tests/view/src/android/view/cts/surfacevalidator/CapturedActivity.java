@@ -214,7 +214,8 @@ public class CapturedActivity extends Activity {
 
             View decorView = getWindow().getDecorView();
             Rect boundsToCheck = new Rect(0, 0, decorView.getWidth(), decorView.getHeight());
-            int[] topLeft = decorView.getLocationOnScreen();
+            int[] topLeft = new int[2];
+            decorView.getLocationOnScreen(topLeft);
             boundsToCheck.offset(topLeft[0], topLeft[1]);
 
             if (boundsToCheck.width() < 90 || boundsToCheck.height() < 90) {

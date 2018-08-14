@@ -74,6 +74,7 @@ import android.view.animation.LayoutAnimationController;
 import android.view.animation.RotateAnimation;
 import android.view.animation.Transformation;
 import android.view.cts.util.EventUtils;
+import android.view.cts.util.ScrollBarUtils;
 import android.view.cts.util.XmlUtils;
 import android.widget.Button;
 import android.widget.TextView;
@@ -81,7 +82,6 @@ import android.widget.TextView;
 import androidx.annotation.NonNull;
 
 import com.android.compatibility.common.util.CTSResult;
-import com.android.internal.widget.ScrollBarUtils;
 
 import org.junit.Before;
 import org.junit.Rule;
@@ -2105,7 +2105,6 @@ public class ViewGroupTest implements CTSResult {
 
     class MockCanvas extends Canvas {
 
-        public boolean mIsSaveCalled;
         public int mLeft;
         public int mTop;
         public int mRight;
@@ -2124,18 +2123,6 @@ public class ViewGroupTest implements CTSResult {
                 float bottom, EdgeType type) {
             super.quickReject(left, top, right, bottom, type);
             return false;
-        }
-
-        @Override
-        public int save() {
-            mIsSaveCalled = true;
-            return super.save();
-        }
-
-        @Override
-        public int save(int saveFlags) {
-            mIsSaveCalled = true;
-            return super.save(saveFlags);
         }
 
         @Override
@@ -2166,7 +2153,6 @@ public class ViewGroupTest implements CTSResult {
         mMockViewGroup.setPadding(paddingLeft, paddingTop, paddingRight, paddingBottom);
         mMockViewGroup.dispatchDraw(canvas);
         //check that the clip region does not contain the padding area
-        assertTrue(canvas.mIsSaveCalled);
         assertEquals(10, canvas.mLeft);
         assertEquals(20, canvas.mTop);
         assertEquals(-frameLeft, canvas.mRight);
@@ -2175,7 +2161,6 @@ public class ViewGroupTest implements CTSResult {
         mMockViewGroup.setClipToPadding(false);
         canvas = new MockCanvas();
         mMockViewGroup.dispatchDraw(canvas);
-        assertFalse(canvas.mIsSaveCalled);
         assertEquals(0, canvas.mLeft);
         assertEquals(0, canvas.mTop);
         assertEquals(0, canvas.mRight);
@@ -3241,8 +3226,9 @@ public class ViewGroupTest implements CTSResult {
         }
 
         @Override
-        public boolean setFrame(int left, int top, int right, int bottom) {
-            return super.setFrame(left, top, right, bottom);
+        public void onDescendantInvalidated(@NonNull View child, @NonNull View target) {
+            isOnDescendantInvalidatedCalled = true;
+            super.onDescendantInvalidated(child, target);
         }
 
         @Override
@@ -3253,12 +3239,6 @@ public class ViewGroupTest implements CTSResult {
         @Override
         public boolean isChildrenDrawnWithCacheEnabled() {
             return super.isChildrenDrawnWithCacheEnabled();
-        }
-
-        @Override
-        public void onDescendantInvalidated(@NonNull View child, @NonNull View target) {
-            isOnDescendantInvalidatedCalled = true;
-            super.onDescendantInvalidated(child, target);
         }
     }
 

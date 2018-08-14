@@ -42,7 +42,7 @@ LOCAL_JNI_SHARED_LIBRARIES := libctsview_jni libnativehelper_compat_libc++
 LOCAL_SRC_FILES := $(call all-java-files-under, src) $(call all-renderscript-files-under, src)
 
 LOCAL_PACKAGE_NAME := CtsViewTestCases
-LOCAL_PRIVATE_PLATFORM_APIS := true
+LOCAL_SDK_VERSION := test_current
 
 include $(BUILD_CTS_PACKAGE)
 
