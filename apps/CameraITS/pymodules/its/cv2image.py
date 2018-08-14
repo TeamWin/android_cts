@@ -158,6 +158,9 @@ class Chart(object):
         print 'Finding chart in scene...'
         for scale in numpy.arange(scale_start, scale_stop, scale_step):
             scene_scaled = scale_img(scene_gray, scale)
+            if (scene_scaled.shape[0] < chart.shape[0] or
+                scene_scaled.shape[1] < chart.shape[1]):
+                continue
             result = cv2.matchTemplate(scene_scaled, chart, cv2.TM_CCOEFF)
             _, opt_val, _, top_left_scaled = cv2.minMaxLoc(result)
             # print out scale and match
