@@ -35,7 +35,7 @@
     </target_preparer>
 
     <test class="com.android.tradefed.testtype.AndroidJUnitTest" >
-        <option name="package" value="android.packageinstaller.nopermission.cts" />
+        <option name="package" value="android.packageinstaller.nopermission25.cts" />
         <option name="runtime-hint" value="1m" />
     </test>
 

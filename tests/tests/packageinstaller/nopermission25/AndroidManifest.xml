@@ -16,7 +16,7 @@
   -->
 
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
-          package="android.packageinstaller.nopermission.cts" >
+          package="android.packageinstaller.nopermission25.cts" >
 
     <uses-sdk android:targetSdkVersion="25"/>
 
@@ -34,6 +34,6 @@
 
     <instrumentation android:name="android.support.test.runner.AndroidJUnitRunner"
                      android:functionalTest="true"
-                     android:targetPackage="android.packageinstaller.nopermission.cts"
+                     android:targetPackage="android.packageinstaller.nopermission25.cts"
                      android:label="Install with no permission Tests (API 25)"/>
 </manifest>
