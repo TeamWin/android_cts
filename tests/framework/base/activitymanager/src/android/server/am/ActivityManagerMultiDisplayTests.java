@@ -1444,29 +1444,16 @@ public class ActivityManagerMultiDisplayTests extends ActivityManagerDisplayTest
                     .createDisplay();
 
             launchActivityOnDisplay(BROADCAST_RECEIVER_ACTIVITY, newDisplay.mId);
-            mAmWmState.computeState(BROADCAST_RECEIVER_ACTIVITY);
 
             // Check that the first activity is launched onto the secondary display
-            final int frontStackId = mAmWmState.getAmState().getFrontStackId(newDisplay.mId);
-            final ActivityStack firstFrontStack =
-                    mAmWmState.getAmState().getStackById(frontStackId);
-            assertEquals("Activity launched on secondary display must be resumed",
-                    getActivityName(BROADCAST_RECEIVER_ACTIVITY),
-                    firstFrontStack.mResumedActivity);
-            mAmWmState.assertFocusedStack("Top stack must be on secondary display",
-                    frontStackId);
+            waitAndAssertTopResumedActivity(BROADCAST_RECEIVER_ACTIVITY, newDisplay.mId,
+                    "Activity launched on secondary display must be resumed");
 
             executeShellCommand("am start -n " + getActivityName(TEST_ACTIVITY));
-            mAmWmState.waitForValidState(TEST_ACTIVITY);
 
             // Check that the second activity is launched on the default display
-            final int focusedStackId = mAmWmState.getAmState().getFocusedStackId();
-            final ActivityStack focusedStack =
-                    mAmWmState.getAmState().getStackById(focusedStackId);
-            assertEquals("Activity launched on default display must be resumed",
-                    getActivityName(TEST_ACTIVITY), focusedStack.mResumedActivity);
-            assertEquals("Top stack must be on primary display",
-                    DEFAULT_DISPLAY, focusedStack.mDisplayId);
+            waitAndAssertTopResumedActivity(TEST_ACTIVITY, DEFAULT_DISPLAY,
+                    "Activity launched on default display must be resumed");
             mAmWmState.assertResumedActivities("Both displays should have resumed activities",
                     new SparseArray<ComponentName>(){{
                         put(DEFAULT_DISPLAY, TEST_ACTIVITY);
@@ -1478,10 +1465,8 @@ public class ActivityManagerMultiDisplayTests extends ActivityManagerDisplayTest
 
             // Check that the third activity ends up in a new stack in the same display where the
             // first activity lands
-            mAmWmState.waitForValidState(LAUNCHING_ACTIVITY);
-            assertEquals("Activity must be launched on secondary display",
-                    getActivityName(LAUNCHING_ACTIVITY),
-                    mAmWmState.getAmState().getResumedActivityOnDisplay(newDisplay.mId));
+            waitAndAssertTopResumedActivity(LAUNCHING_ACTIVITY, newDisplay.mId,
+                    "Activity must be launched on secondary display");
             assertEquals("Secondary display must contain 2 stacks", 2,
                     mAmWmState.getAmState().getDisplay(newDisplay.mId).mStacks.size());
             mAmWmState.assertResumedActivities("Both displays should have resumed activities",
