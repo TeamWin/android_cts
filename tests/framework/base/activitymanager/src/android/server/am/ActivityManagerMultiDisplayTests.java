@@ -1727,6 +1727,41 @@ public class ActivityManagerMultiDisplayTests extends ActivityManagerDisplayTest
         }
     }
 
+
+    /**
+     * Tests tap and set focus between displays.
+     * TODO(b/111361570): focus tracking between multi-display may change to check focus display.
+     */
+    @Test
+    public void testSecondaryDisplayFocus() throws Exception {
+        try (final ExternalDisplaySession externalDisplaySession = new ExternalDisplaySession()) {
+            launchActivity(TEST_ACTIVITY);
+            mAmWmState.waitForActivityState(TEST_ACTIVITY, STATE_RESUMED);
+
+            final ActivityDisplay newDisplay =
+                    externalDisplaySession.createVirtualDisplay(false /* showContentWhenLocked */);
+            launchActivityOnDisplay(VIRTUAL_DISPLAY_ACTIVITY, newDisplay.mId);
+            waitAndAssertTopResumedActivity(VIRTUAL_DISPLAY_ACTIVITY, newDisplay.mId,
+                    "Virtual activity should be Top Resumed Activity.");
+
+            final ReportedDisplayMetrics displayMetrics = getDisplayMetrics();
+            final int width = displayMetrics.getSize().getWidth();
+            final int height = displayMetrics.getSize().getHeight();
+            tapOnDisplay(width / 2, height / 2, DEFAULT_DISPLAY);
+            waitAndAssertTopResumedActivity(TEST_ACTIVITY, DEFAULT_DISPLAY,
+                    "Activity should be top resumed when tapped.");
+            mAmWmState.assertFocusedActivity("Activity on default display must be focused.",
+                    TEST_ACTIVITY);
+
+            tapOnDisplay(VirtualDisplayHelper.WIDTH / 2, VirtualDisplayHelper.HEIGHT / 2,
+                    newDisplay.mId);
+            waitAndAssertTopResumedActivity(VIRTUAL_DISPLAY_ACTIVITY, newDisplay.mId,
+                "Virtual display activity should be top resumed when tapped.");
+            mAmWmState.assertFocusedActivity("Activity on second display must be focused.",
+                    VIRTUAL_DISPLAY_ACTIVITY);
+        }
+    }
+
     private class ExternalDisplaySession implements AutoCloseable {
 
         @Nullable

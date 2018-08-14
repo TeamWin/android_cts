@@ -46,8 +46,8 @@ class VirtualDisplayHelper {
     private static final int VIRTUAL_DISPLAY_FLAG_CAN_SHOW_WITH_INSECURE_KEYGUARD = 1 << 5;
 
     private static final int DENSITY = 160;
-    private static final int HEIGHT = 480;
-    private static final int WIDTH = 800;
+    static final int HEIGHT = 480;
+    static final int WIDTH = 800;
 
     private ImageReader mReader;
     private VirtualDisplay mVirtualDisplay;
