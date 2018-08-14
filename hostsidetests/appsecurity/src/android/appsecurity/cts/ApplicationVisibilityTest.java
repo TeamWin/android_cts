@@ -47,7 +47,7 @@ public class ApplicationVisibilityTest extends BaseAppSecurityTest {
 
     @Before
     public void setUpPackage() throws Exception {
-        mUsers = Utils.prepareMultipleUsers(getDevice(), 3);
+        mUsers = Utils.prepareMultipleUsers(getDevice(), 2);
         mOldVerifierValue =
                 getDevice().executeShellCommand("settings get global package_verifier_enable");
         getDevice().executeShellCommand("settings put global package_verifier_enable 0");
@@ -68,8 +68,8 @@ public class ApplicationVisibilityTest extends BaseAppSecurityTest {
             return;
         }
 
-        final int installUserId = mUsers[1];
-        final int testUserId = mUsers[2];
+        final int installUserId = getInstallUserId();
+        final int testUserId = getTestUserId();
 
         installTestAppForUser(TINY_APK, installUserId);
         installTestAppForUser(TEST_WITH_PERMISSION_APK, testUserId);
@@ -99,8 +99,8 @@ public class ApplicationVisibilityTest extends BaseAppSecurityTest {
             return;
         }
 
-        final int installUserId = mUsers[1];
-        final int testUserId = mUsers[2];
+        final int installUserId = getInstallUserId();
+        final int testUserId = getTestUserId();
 
         installTestAppForUser(TINY_APK, installUserId);
         installTestAppForUser(TEST_WITH_PERMISSION_APK, testUserId);
@@ -126,8 +126,8 @@ public class ApplicationVisibilityTest extends BaseAppSecurityTest {
             return;
         }
 
-        final int installUserId = mUsers[1];
-        final int testUserId = mUsers[2];
+        final int installUserId = getInstallUserId();
+        final int testUserId = getTestUserId();
         final Map<String, String> testArgs = new HashMap<>();
         testArgs.put("testUser", Integer.toString(installUserId));
 
@@ -154,8 +154,8 @@ public class ApplicationVisibilityTest extends BaseAppSecurityTest {
             return;
         }
 
-        final int installUserId = mUsers[1];
-        final int testUserId = mUsers[2];
+        final int installUserId = getInstallUserId();
+        final int testUserId = getTestUserId();
         final Map<String, String> testArgs = new HashMap<>();
         testArgs.put("testUser", Integer.toString(installUserId));
 
@@ -178,8 +178,8 @@ public class ApplicationVisibilityTest extends BaseAppSecurityTest {
             return;
         }
 
-        final int installUserId = mUsers[1];
-        final int testUserId = mUsers[2];
+        final int installUserId = getInstallUserId();
+        final int testUserId = getTestUserId();
 
         installTestAppForUser(TINY_APK, installUserId);
         installTestAppForUser(TEST_WITH_PERMISSION_APK, testUserId);
@@ -209,8 +209,8 @@ public class ApplicationVisibilityTest extends BaseAppSecurityTest {
             return;
         }
 
-        final int installUserId = mUsers[1];
-        final int testUserId = mUsers[2];
+        final int installUserId = getInstallUserId();
+        final int testUserId = getTestUserId();
 
         installTestAppForUser(TINY_APK, installUserId);
         installTestAppForUser(TEST_WITH_PERMISSION_APK, testUserId);
@@ -236,8 +236,8 @@ public class ApplicationVisibilityTest extends BaseAppSecurityTest {
             return;
         }
 
-        final int installUserId = mUsers[1];
-        final int testUserId = mUsers[2];
+        final int installUserId = getInstallUserId();
+        final int testUserId = getTestUserId();
         final Map<String, String> testArgs = new HashMap<>();
         testArgs.put("testUser", Integer.toString(installUserId));
 
@@ -264,8 +264,8 @@ public class ApplicationVisibilityTest extends BaseAppSecurityTest {
             return;
         }
 
-        final int installUserId = mUsers[1];
-        final int testUserId = mUsers[2];
+        final int installUserId = getInstallUserId();
+        final int testUserId = getTestUserId();
         final Map<String, String> testArgs = new HashMap<>();
         testArgs.put("testUser", Integer.toString(installUserId));
 
@@ -279,5 +279,13 @@ public class ApplicationVisibilityTest extends BaseAppSecurityTest {
                 "testApplicationVisibility_otherUserNoGrant",
                 testUserId,
                 testArgs);
+    }
+
+    private int getInstallUserId() {
+        return mUsers[0];
+    }
+
+    private int getTestUserId() {
+        return mUsers[1];
     }
 }
