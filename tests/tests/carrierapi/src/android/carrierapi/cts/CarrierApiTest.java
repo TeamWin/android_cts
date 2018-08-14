@@ -25,11 +25,11 @@ import android.content.IntentFilter;
 import android.content.pm.PackageInfo;
 import android.content.pm.PackageManager;
 import android.database.Cursor;
-import android.net.ConnectivityManager;
 import android.net.Uri;
 import android.os.Handler;
 import android.os.HandlerThread;
 import android.os.PersistableBundle;
+import android.provider.Telephony;
 import android.provider.VoicemailContract;
 import android.telephony.CarrierConfigManager;
 import android.telephony.PhoneStateListener;
@@ -38,9 +38,6 @@ import android.telephony.SubscriptionManager;
 import android.telephony.TelephonyManager;
 import android.test.AndroidTestCase;
 import android.util.Log;
-
-import com.android.internal.telephony.TelephonyIntents;
-import com.android.internal.telephony.uicc.IccUtils;
 
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
@@ -108,10 +105,8 @@ public class CarrierApiTest extends AndroidTestCase {
      * Checks whether the cellular stack should be running on this device.
      */
     private boolean hasCellular() {
-        ConnectivityManager mgr =
-                (ConnectivityManager) getContext().getSystemService(Context.CONNECTIVITY_SERVICE);
-        return mgr.isNetworkSupported(ConnectivityManager.TYPE_MOBILE) &&
-               mTelephonyManager.isVoiceCapable();
+        return mPackageManager.hasSystemFeature(PackageManager.FEATURE_TELEPHONY) &&
+                mTelephonyManager.getPhoneCount() > 0;
     }
 
     private boolean isSimCardPresent() {
@@ -124,7 +119,7 @@ public class CarrierApiTest extends AndroidTestCase {
             PackageInfo pInfo = mPackageManager.getPackageInfo(pkgName,
                     PackageManager.GET_SIGNATURES | PackageManager.GET_DISABLED_UNTIL_USED_COMPONENTS);
             MessageDigest md = MessageDigest.getInstance("SHA-1");
-            return IccUtils.bytesToHexString(md.digest(pInfo.signatures[0].toByteArray()));
+            return bytesToHexString(md.digest(pInfo.signatures[0].toByteArray()));
         } catch (PackageManager.NameNotFoundException ex) {
             Log.e(TAG, pkgName + " not found", ex);
         } catch (NoSuchAlgorithmException ex) {
@@ -184,12 +179,13 @@ public class CarrierApiTest extends AndroidTestCase {
         try {
             IntentReceiver intentReceiver = new IntentReceiver();
             final IntentFilter intentFilter = new IntentFilter();
-            intentFilter.addAction(TelephonyIntents.SECRET_CODE_ACTION);
+            intentFilter.addAction(Telephony.Sms.Intents.SECRET_CODE_ACTION);
             intentFilter.addDataScheme("android_secret_code");
             getContext().registerReceiver(intentReceiver, intentFilter);
 
             mTelephonyManager.sendDialerSpecialCode("4636");
-            assertTrue("Did not receive expected Intent: " + TelephonyIntents.SECRET_CODE_ACTION,
+            assertTrue("Did not receive expected Intent: " +
+                    Telephony.Sms.Intents.SECRET_CODE_ACTION,
                     intentReceiver.waitForReceive());
         } catch (SecurityException e) {
             failMessage();
@@ -212,7 +208,7 @@ public class CarrierApiTest extends AndroidTestCase {
                 TelephonyManager tm =
                         mTelephonyManager.createForSubscriptionId(info.getSubscriptionId());
                 assertTrue("getActiveSubscriptionInfoList() returned an inaccessible subscription",
-                        tm.hasCarrierPrivileges(info.getSubscriptionId()));
+                        tm.hasCarrierPrivileges());
 
                 // Check other APIs to make sure they are accessible and return consistent info.
                 SubscriptionInfo infoForSlot =
@@ -259,11 +255,8 @@ public class CarrierApiTest extends AndroidTestCase {
         try {
             mTelephonyManager.getDeviceSoftwareVersion();
             mTelephonyManager.getDeviceId();
-            mTelephonyManager.getDeviceId(mTelephonyManager.getSlotIndex());
             mTelephonyManager.getImei();
-            mTelephonyManager.getImei(mTelephonyManager.getSlotIndex());
             mTelephonyManager.getMeid();
-            mTelephonyManager.getMeid(mTelephonyManager.getSlotIndex());
             mTelephonyManager.getNai();
             mTelephonyManager.getDataNetworkType();
             mTelephonyManager.getVoiceNetworkType();
@@ -279,6 +272,22 @@ public class CarrierApiTest extends AndroidTestCase {
         } catch (SecurityException e) {
             failMessage();
         }
+        // For APIs which take a slot ID, we should be able to call them without getting a
+        // SecurityException for at last one valid slot ID.
+        // TODO(b/112441100): Simplify this test once slot ID APIs are cleaned up.
+        boolean hasReadableSlot = false;
+        for (int slotIndex = 0; slotIndex < mTelephonyManager.getPhoneCount(); slotIndex++) {
+            try {
+                mTelephonyManager.getDeviceId(slotIndex);
+                mTelephonyManager.getImei(slotIndex);
+                mTelephonyManager.getMeid(slotIndex);
+                hasReadableSlot = true;
+                break;
+            } catch (SecurityException e) {
+                // Move on to the next slot.
+            }
+        }
+        assertTrue("Unable to read device identifiers for any slot index", hasReadableSlot);
     }
 
     public void testVoicemailTableIsAccessible() throws Exception {
@@ -386,5 +395,23 @@ public class CarrierApiTest extends AndroidTestCase {
         public boolean waitForReceive() throws InterruptedException {
             return mReceiveLatch.await(30, TimeUnit.SECONDS);
         }
+    }
+
+
+    // A table mapping from a number to a hex character for fast encoding hex strings.
+    private static final char[] HEX_CHARS = {
+            '0', '1', '2', '3', '4', '5', '6', '7', '8', '9', 'A', 'B', 'C', 'D', 'E', 'F'
+    };
+
+    private static String bytesToHexString(byte[] bytes) {
+        StringBuilder ret = new StringBuilder(2 * bytes.length);
+        for (int i = 0 ; i < bytes.length ; i++) {
+            int b;
+            b = 0x0f & (bytes[i] >> 4);
+            ret.append(HEX_CHARS[b]);
+            b = 0x0f & bytes[i];
+            ret.append(HEX_CHARS[b]);
+        }
+        return ret.toString();
     }
 }

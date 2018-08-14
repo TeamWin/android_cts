@@ -25,12 +25,14 @@ import java.io.IOException;
 import java.io.PrintWriter;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.TreeMap;
 
 public class DepPrinter {
     private ReleaseContent mRelContent;
     private PrintWriter mPWriter;
     private HashMap<String, Integer> mLibMap;
     private HashMap<String, Integer> mDepPathMap;
+    private TreeMap<String, Entry> mTreeEntryMap;
     private ReleaseContent mBRelContent;
     private int mBits;
     private String mTitle;
@@ -44,6 +46,7 @@ public class DepPrinter {
         mRelContent = relContent;
         mTitle = getTitle(relContent);
         mBRelContent = null;
+        mTreeEntryMap = new TreeMap<String, Entry>(mRelContent.getEntries());
     }
 
     public void writeDeltaDigraphs(ReleaseContent bRelContent, String dirName) {
@@ -201,9 +204,25 @@ public class DepPrinter {
         int depCnt = allDepList.size();
         allDepList.addAll(srcEntry.getDynamicLoadingDependenciesList());
         int no = 0;
+
         for (String dep : allDepList) {
             boolean goFurther = false;
-            String targetNode = getNodeName(dep);
+            String targetNode;
+            Entry depEntry = null;
+            String filePath = dep;
+
+            // libEGL*.so to VENDOR/lib64/egl/libEGL_adreno.so
+            int idx = dep.indexOf("*.so");
+            if (idx > -1) {
+                if (mBits == 32) {
+                    filePath = "VENDOR/lib/egl/" + dep.substring(0, idx);
+                } else {
+                    filePath = "VENDOR/lib64/egl/" + dep.substring(0, idx);
+                }
+                depEntry = mTreeEntryMap.tailMap(filePath, false).firstEntry().getValue();
+                dep = depEntry.getName();
+            }
+            targetNode = getNodeName(dep);
 
             String depPath = String.format("%s -> %s", sourceNode, targetNode);
             if (no < depCnt) {
@@ -219,37 +238,39 @@ public class DepPrinter {
                 mPWriter.println(depPath);
             }
 
-            Entry depEntry;
-            String filePath = dep;
-            if (dep.startsWith("/system")) {
-                depEntry = mRelContent.getEntries().get(dep.replace("/system/", "SYSTEM/"));
-            } else if (dep.startsWith("/vendor")) {
-                depEntry = mRelContent.getEntries().get(dep.replace("/vendor/", "VENDOR/"));
-            } else {
-                if (mBits == 32) {
-                    filePath = String.format("SYSTEM/lib/%s", dep);
+            if (depEntry == null) {
+                if (dep.startsWith("/system")) {
+                    depEntry = mRelContent.getEntries().get(dep.replace("/system/", "SYSTEM/"));
+                } else if (dep.startsWith("/vendor")) {
+                    depEntry = mRelContent.getEntries().get(dep.replace("/vendor/", "VENDOR/"));
                 } else {
-                    filePath = String.format("SYSTEM/lib64/%s", dep);
-                }
+                    if (mBits == 32) {
+                        filePath = String.format("SYSTEM/lib/%s", dep);
+                    } else {
+                        filePath = String.format("SYSTEM/lib64/%s", dep);
+                    }
 
-                depEntry = mRelContent.getEntries().get(filePath);
-                if (depEntry == null) {
-                    // try Vendor
-                    if (mBits == 32) {
-                        filePath = String.format("VENDOR/lib/%s", dep);
-                    } else {
-                        filePath = String.format("VENDOR/lib64/%s", dep);
-                    }
                     depEntry = mRelContent.getEntries().get(filePath);
-                }
-                if (depEntry == null) {
-                    // try Vendor
-                    if (mBits == 32) {
-                        filePath = String.format("VENDOR/lib/%s", dep);
-                    } else {
-                        filePath = String.format("VENDOR/lib64/%s", dep);
+
+                    if (depEntry == null) {
+                        // try Vendor
+                        if (mBits == 32) {
+                            filePath = String.format("VENDOR/lib/%s", dep);
+                        } else {
+                            filePath = String.format("VENDOR/lib64/%s", dep);
+                        }
+                        depEntry = mRelContent.getEntries().get(filePath);
                     }
-                    depEntry = mRelContent.getEntries().get(filePath);
+
+                    if (depEntry == null) {
+                        // try Vendor
+                        if (mBits == 32) {
+                            filePath = String.format("VENDOR/lib/%s", dep);
+                        } else {
+                            filePath = String.format("VENDOR/lib64/%s", dep);
+                        }
+                        depEntry = mRelContent.getEntries().get(filePath);
+                    }
                 }
             }
 
@@ -269,6 +290,20 @@ public class DepPrinter {
                     mLibMap.put(targetNode, 1);
                     mPWriter.printf(String.format("%s [label=\"%s\"", targetNode, dep));
                     checkDelta(depEntry);
+
+                    // Try to patch symbolic link to the target file
+                    if (depEntry.getType() == Entry.EntryType.SYMBOLIC_LINK) {
+                        mPWriter.printf(", shape=diamond");
+                        filePath = depEntry.getParentFolder() + "/egl/" + depEntry.getName();
+                        Entry sDepEntry = mRelContent.getEntries().get(filePath);
+                        if (sDepEntry == null) {
+                            System.err.println(
+                                    "cannot find a target file for symbolic link: "
+                                            + depEntry.getRelativePath());
+                        } else {
+                            depEntry = sDepEntry;
+                        }
+                    }
                     mPWriter.println("]");
                     // Only visit once
                     goFurther = true;

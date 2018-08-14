@@ -135,6 +135,14 @@ public class SoParser extends FileParser {
                 }
             }
         }
+
+        // specific for frameworks/native/opengl/libs/EGL/Loader.cpp load_system_driver()
+        if ("libEGL.so".equals(getFileName())) {
+            depList.add("libEGL*.so");
+            depList.add("libGLESv1_CM*.so");
+            depList.add("GLESv2*.so");
+        }
+
         return depList;
     }
 }

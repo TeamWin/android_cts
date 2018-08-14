@@ -491,14 +491,19 @@ public class MediaPlayer2Test extends MediaPlayer2TestBase {
             mp.setWakeMode(mContext, PowerManager.PARTIAL_WAKE_LOCK);
             mp.loopCurrent(true);
             Monitor onCompletionCalled = new Monitor();
+            Monitor onRepeatCalled = new Monitor();
             Monitor onPlayCalled = new Monitor();
             MediaPlayer2.EventCallback ecb =
                 new MediaPlayer2.EventCallback() {
                     @Override
                     public void onInfo(MediaPlayer2 mp, DataSourceDesc dsd,
                             int what, int extra) {
-                        Log.i("@@@", "got oncompletion");
-                        onCompletionCalled.signal();
+                        if (what == MediaPlayer2.MEDIA_INFO_DATA_SOURCE_REPEAT) {
+                            onRepeatCalled.signal();
+                        } else if (what == MediaPlayer2.MEDIA_INFO_DATA_SOURCE_END) {
+                            Log.i("@@@", "got oncompletion");
+                            onCompletionCalled.signal();
+                        }
                     }
 
                     @Override
@@ -522,6 +527,7 @@ public class MediaPlayer2Test extends MediaPlayer2TestBase {
             assertTrue(mp.isPlaying());
             assertEquals("wrong number of completion signals", 0,
                     onCompletionCalled.getNumSignal());
+            assertTrue(onRepeatCalled.getNumSignal() > 0);
             mp.loopCurrent(false);
 
             // wait for playback to finish
