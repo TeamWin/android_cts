@@ -1,3 +1,4 @@
+
 # Copyright (C) 2017 The Android Open Source Project
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -13,6 +14,7 @@
 # limitations under the License.
 
 # Set of error prone rules to ensure code quality
+# When updating this list, also update cts_error_prone_rules in Android.bp
 LOCAL_ERROR_PRONE_FLAGS += -Xep:ArrayToString:ERROR \
                            -Xep:BoxedPrimitiveConstructor:ERROR \
                            -Xep:ConstantField:ERROR \
