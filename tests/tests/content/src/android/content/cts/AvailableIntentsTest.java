@@ -32,6 +32,7 @@ import android.speech.RecognizerIntent;
 import android.telecom.TelecomManager;
 import android.test.AndroidTestCase;
 
+import com.android.compatibility.common.util.CddTest;
 import com.android.compatibility.common.util.FeatureUtil;
 
 import java.util.List;
@@ -161,6 +162,7 @@ public class AvailableIntentsTest extends AndroidTestCase {
     /**
      * Test ACTION_CHANGE_PHONE_ACCOUNTS, it will display the phone account preferences.
      */
+    @CddTest(requirement="3.2.3.5/C-2-3")
     public void testChangePhoneAccounts() {
         PackageManager packageManager = mContext.getPackageManager();
         if (packageManager.hasSystemFeature(PackageManager.FEATURE_TELEPHONY)) {

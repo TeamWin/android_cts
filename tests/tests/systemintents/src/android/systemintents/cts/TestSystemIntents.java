@@ -76,7 +76,7 @@ public class TestSystemIntents extends AndroidTestCase {
                     new Intent(Settings.ACTION_NOTIFICATION_POLICY_ACCESS_SETTINGS))
     };
 
-    @CddTest(requirement="3.8.3.3/C-1-1")
+    @CddTest(requirement="3.8.3.3/C-1-1,3.2.3.5/C-1-1,7.4.7/C-1-2,C-2-3")
     @Test
     public void testSystemIntents() {
         final PackageManager pm = getContext().getPackageManager();
