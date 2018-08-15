@@ -27,12 +27,12 @@ import com.google.common.collect.Lists;
 import android.security.keystore.KeyProperties;
 import android.util.Log;
 
-import com.android.org.bouncycastle.asn1.ASN1Encodable;
-import com.android.org.bouncycastle.asn1.ASN1Primitive;
-import com.android.org.bouncycastle.asn1.ASN1Sequence;
-import com.android.org.bouncycastle.asn1.ASN1SequenceParser;
-import com.android.org.bouncycastle.asn1.ASN1TaggedObject;
-import com.android.org.bouncycastle.asn1.ASN1InputStream;
+import org.bouncycastle.asn1.ASN1Encodable;
+import org.bouncycastle.asn1.ASN1Primitive;
+import org.bouncycastle.asn1.ASN1Sequence;
+import org.bouncycastle.asn1.ASN1SequenceParser;
+import org.bouncycastle.asn1.ASN1TaggedObject;
+import org.bouncycastle.asn1.ASN1InputStream;
 
 import java.io.IOException;
 import java.io.UnsupportedEncodingException;
