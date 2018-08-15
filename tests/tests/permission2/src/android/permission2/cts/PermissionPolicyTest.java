@@ -126,6 +126,9 @@ public class PermissionPolicyTest extends AndroidTestCase {
 
         // OEMs cannot define permissions in the platform namespace
         for (String permission : declaredPermissionsMap.keySet()) {
+            if (shouldSkipPermission(permission)) {
+                continue;
+            }
             assertFalse("Cannot define permission " + permission + " in android namespace",
                     permission.startsWith(PLATFORM_ROOT_NAMESPACE));
         }
