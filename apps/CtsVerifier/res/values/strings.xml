@@ -2459,6 +2459,7 @@ You should be prompted to select credentials; choose the ones you just installed
         \n
         - A new set of work apps including CTS Verifier appear in the list.\n
         - Work badge overlay appears on work app\'s icon (see example icon below, color and style may vary).\n
+        - The work badge overlay has the same size and position on each work app\'s icon.
         \n
         Then navigate back to this screen using Recents button.
     </string>
@@ -3264,7 +3265,7 @@ You should be prompted to select credentials; choose the ones you just installed
     <string name="disallow_install_unknown_sources">Disallow install unknown sources</string>
     <string name="disallow_install_unknown_sources_action">Enabling \'Cts Verifier\' to install apps</string>
     <string name="disallow_modify_accounts">Disallow modify accounts</string>
-    <string name="disallow_modify_accounts_action">Adding an account or removing an account (if you have already added one)</string>
+    <string name="disallow_modify_accounts_action">Adding an account, and also removing an account (after you have previously added one)</string>
     <string name="disallow_network_reset">Disallow network reset</string>
     <string name="disallow_network_reset_action">Resetting network settings</string>
     <string name="disallow_outgoing_beam">Disallow outgoing beam</string>
