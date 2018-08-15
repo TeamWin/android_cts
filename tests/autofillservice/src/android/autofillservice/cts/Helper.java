@@ -33,6 +33,7 @@ import android.app.Activity;
 import android.app.assist.AssistStructure;
 import android.app.assist.AssistStructure.ViewNode;
 import android.app.assist.AssistStructure.WindowNode;
+import android.autofillservice.cts.common.OneTimeSettingsListener;
 import android.autofillservice.cts.common.SettingsHelper;
 import android.content.ComponentName;
 import android.content.Context;
@@ -110,6 +111,10 @@ final class Helper {
 
     private static final String LOCAL_DIRECTORY = Environment.getExternalStorageDirectory()
             + "/CtsAutoFillServiceTestCases";
+
+    private static final Timeout SETTINGS_BASED_SHELL_CMD_TIMEOUT = new Timeout(
+            "SETTINGS_SHELL_CMD_TIMEOUT", OneTimeSettingsListener.DEFAULT_TIMEOUT_MS / 2, 2,
+            OneTimeSettingsListener.DEFAULT_TIMEOUT_MS);
 
     /**
      * Helper interface used to filter nodes.
@@ -783,9 +788,28 @@ final class Helper {
     /**
      * Sets the maximum number of partitions per session.
      */
-    public static void setMaxPartitions(int value) {
+    public static void setMaxPartitions(int value) throws Exception {
         runShellCommand("cmd autofill set max_partitions %d", value);
-        assertThat(getMaxPartitions()).isEqualTo(value);
+        SETTINGS_BASED_SHELL_CMD_TIMEOUT.run("get max_partitions", () -> {
+            return getMaxPartitions() == value ? Boolean.TRUE : null;
+        });
+    }
+
+    /**
+     * Gets the maximum number of visible datasets.
+     */
+    public static int getMaxVisibleDatasets() {
+        return Integer.parseInt(runShellCommand("cmd autofill get max_visible_datasets"));
+    }
+
+    /**
+     * Sets the maximum number of visible datasets.
+     */
+    public static void setMaxVisibleDatasets(int value) throws Exception {
+        runShellCommand("cmd autofill set max_visible_datasets %d", value);
+        SETTINGS_BASED_SHELL_CMD_TIMEOUT.run("get max_visible_datasets", () -> {
+            return getMaxVisibleDatasets() == value ? Boolean.TRUE : null;
+        });
     }
 
     /**

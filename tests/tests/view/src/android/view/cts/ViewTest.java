@@ -97,6 +97,7 @@ import android.view.accessibility.AccessibilityEvent;
 import android.view.animation.AlphaAnimation;
 import android.view.animation.Animation;
 import android.view.cts.util.EventUtils;
+import android.view.cts.util.ScrollBarUtils;
 import android.view.inputmethod.EditorInfo;
 import android.view.inputmethod.InputConnection;
 import android.view.inputmethod.InputMethodManager;
@@ -108,7 +109,6 @@ import android.widget.TextView;
 import com.android.compatibility.common.util.CtsMouseUtil;
 import com.android.compatibility.common.util.CtsTouchUtils;
 import com.android.compatibility.common.util.PollingCheck;
-import com.android.internal.widget.ScrollBarUtils;
 
 import org.junit.Before;
 import org.junit.Rule;
@@ -4419,7 +4419,7 @@ public class ViewTest {
 
     private boolean startDragAndDrop(View view, View.DragShadowBuilder shadowBuilder) {
         final Point size = new Point();
-        mActivity.getDisplay().getSize(size);
+        mActivity.getWindowManager().getDefaultDisplay().getSize(size);
         final MotionEvent event = MotionEvent.obtain(
                 SystemClock.uptimeMillis(), SystemClock.uptimeMillis(),
                 MotionEvent.ACTION_DOWN, size.x / 2, size.y / 2, 1);

@@ -140,7 +140,6 @@ public class KeyEventInterceptTest {
     private void injectEvent(KeyEvent event) {
         final UiAutomation automation = mInstrumentation.getUiAutomation();
         automation.injectInputEvent(event, true);
-        event.recycle();
     }
 
     private void assertKeyNotReceived() {

@@ -571,6 +571,9 @@
             <meta-data
                 android:name="test_required_features"
                 android:value="android.hardware.bluetooth_le" />
+            <meta-data
+                android:name="test_excluded_features"
+                android:value="android.hardware.type.watch"  />
         </activity>
 
         <!--
@@ -683,6 +686,9 @@
             <meta-data
                 android:name="test_required_features"
                 android:value="android.hardware.bluetooth_le" />
+            <meta-data
+                android:name="test_excluded_features"
+                android:value="android.hardware.type.watch"  />
         </activity>
 
         <!--
@@ -796,6 +802,9 @@
             <meta-data
                 android:name="test_required_features"
                 android:value="android.hardware.bluetooth_le" />
+            <meta-data
+                android:name="test_excluded_features"
+                android:value="android.hardware.type.watch"  />
         </activity>
 
         <!--
@@ -906,6 +915,9 @@
             <meta-data
                 android:name="test_required_features"
                 android:value="android.hardware.bluetooth_le" />
+            <meta-data
+                android:name="test_excluded_features"
+                android:value="android.hardware.type.watch"  />
         </activity>
 
         <!--
@@ -2616,11 +2628,15 @@
             </intent-filter>
             <intent-filter>
                 <action android:name="com.android.cts.verifier.managedprovisioning.BYOD_STATUS" />
-                <category android:name="android.intent.category.DEFAULT"></category>
+                <category android:name="android.intent.category.DEFAULT" />
+            </intent-filter>
+            <intent-filter>
+            <action android:name="com.android.cts.verifier.managedprovisioning.BYOD_TEST_RESULT" />
+                <category android:name="android.intent.category.DEFAULT" />
             </intent-filter>
             <intent-filter>
                 <action android:name="com.android.cts.verifier.managedprovisioning.action.BYOD_DISK_ENCRYPTION_STATUS" />
-                <category android:name="android.intent.category.DEFAULT"></category>
+                <category android:name="android.intent.category.DEFAULT" />
             </intent-filter>
             <meta-data android:name="test_category" android:value="@string/test_category_managed_provisioning" />
             <meta-data android:name="test_required_features" android:value="android.software.managed_users:android.software.device_admin" />

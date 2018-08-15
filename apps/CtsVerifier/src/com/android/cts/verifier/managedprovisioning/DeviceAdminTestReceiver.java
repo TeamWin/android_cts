@@ -184,6 +184,7 @@ public class DeviceAdminTestReceiver extends DeviceAdminReceiver {
         filter = new IntentFilter();
         filter.addAction(ByodHelperActivity.ACTION_PROFILE_OWNER_STATUS);
         filter.addAction(ByodHelperActivity.ACTION_DISK_ENCRYPTION_STATUS);
+        filter.addAction(ByodFlowTestActivity.ACTION_TEST_RESULT);
         filter.addAction(CrossProfileTestActivity.ACTION_CROSS_PROFILE_TO_PERSONAL);
         filter.addAction(LocationListenerActivity.ACTION_SET_LOCATION_AND_CHECK_UPDATES);
         dpm.addCrossProfileIntentFilter(getWho(context), filter,

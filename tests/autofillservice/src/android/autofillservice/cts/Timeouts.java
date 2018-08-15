@@ -89,8 +89,8 @@ final class Timeouts {
     /**
      * Timeout for webview operations. Typically used by {@link UiBot}.
      */
-    static final Timeout WEBVIEW_TIMEOUT = new Timeout("WEBVIEW_TIMEOUT",
-            ONE_TIMEOUT_TO_RULE_THEN_ALL_MS, 2F, ONE_TIMEOUT_TO_RULE_THEN_ALL_MS);
+    // TODO(b/80317628): switch back to ONE_TIMEOUT_TO_RULE_THEN_ALL_MS once fixed...
+    static final Timeout WEBVIEW_TIMEOUT = new Timeout("WEBVIEW_TIMEOUT", 2_000, 2F, 30_000);
 
     /**
      * Timeout for showing the autofill dataset picker UI.

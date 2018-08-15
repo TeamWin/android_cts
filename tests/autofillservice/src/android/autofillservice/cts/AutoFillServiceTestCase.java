@@ -164,7 +164,7 @@ final class AutoFillServiceTestCase {
 
         private final TestWatcher mTestWatcher = new AutofillTestWatcher();
 
-        private final RetryRule mRetryRule = new RetryRule(1);
+        private final RetryRule mRetryRule = new RetryRule(getNumberRetries());
 
         private final AutofillLoggingTestRule mLoggingRule = new AutofillLoggingTestRule(TAG);
 
@@ -209,6 +209,13 @@ final class AutoFillServiceTestCase {
             mPackageName = mContext.getPackageName();
             mUiBot = uiBot;
             mUiBot.reset();
+        }
+
+        /**
+         * Gets how many times a test should be retried.
+         */
+        protected int getNumberRetries() {
+            return 1;
         }
 
         /**

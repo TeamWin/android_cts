@@ -31,17 +31,14 @@ import java.util.regex.Pattern;
 
 public class DatasetFilteringTest extends AbstractLoginActivityTestCase {
 
-    private static String sMaxDatasets;
-
     @BeforeClass
-    public static void setMaxDatasets() {
-        sMaxDatasets = runShellCommand("cmd autofill get max_visible_datasets");
-        runShellCommand("cmd autofill set max_visible_datasets 4");
+    public static void setMaxDatasets() throws Exception {
+        Helper.setMaxVisibleDatasets(4);
     }
 
     @AfterClass
-    public static void restoreMaxDatasets() {
-        runShellCommand("cmd autofill set max_visible_datasets %s", sMaxDatasets);
+    public static void restoreMaxDatasets() throws Exception {
+        Helper.setMaxVisibleDatasets(0);
     }
 
     private static void sendKeyEvents(String keyCode) {

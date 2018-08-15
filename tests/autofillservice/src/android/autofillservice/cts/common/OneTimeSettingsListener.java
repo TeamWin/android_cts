@@ -40,7 +40,7 @@ import java.util.concurrent.TimeUnit;
 public final class OneTimeSettingsListener extends ContentObserver {
 
     private static final String TAG = "OneTimeSettingsListener";
-    private static final long DEFAULT_TIMEOUT_MS = 30_000;
+    public static final long DEFAULT_TIMEOUT_MS = 30_000;
 
     private final CountDownLatch mLatch = new CountDownLatch(1);
     private final ContentResolver mResolver;

@@ -77,6 +77,7 @@ final class UiBot {
     private static final String RESOURCE_ID_SAVE_TITLE = "autofill_save_title";
     private static final String RESOURCE_ID_CONTEXT_MENUITEM = "floating_toolbar_menu_item_text";
     private static final String RESOURCE_ID_SAVE_BUTTON_NO = "autofill_save_no";
+    private static final String RESOURCE_ID_SAVE_BUTTON_YES = "autofill_save_yes";
 
     private static final String RESOURCE_STRING_SAVE_TITLE = "autofill_save_title";
     private static final String RESOURCE_STRING_SAVE_TITLE_WITH_TYPE =
@@ -90,6 +91,11 @@ final class UiBot {
             "autofill_save_type_email_address";
     private static final String RESOURCE_STRING_SAVE_BUTTON_NOT_NOW = "save_password_notnow";
     private static final String RESOURCE_STRING_SAVE_BUTTON_NO_THANKS = "autofill_save_no";
+    private static final String RESOURCE_STRING_SAVE_BUTTON_YES = "autofill_save_yes";
+    private static final String RESOURCE_STRING_UPDATE_BUTTON_YES = "autofill_update_yes";
+    private static final String RESOURCE_STRING_UPDATE_TITLE = "autofill_update_title";
+    private static final String RESOURCE_STRING_UPDATE_TITLE_WITH_TYPE =
+            "autofill_update_title_with_type";
 
     private static final String RESOURCE_STRING_AUTOFILL = "autofill";
     private static final String RESOURCE_STRING_DATASET_PICKER_ACCESSIBILITY_TITLE =
@@ -348,6 +354,16 @@ final class UiBot {
     }
 
     /**
+     * Finds a node by text, without waiting for it to be shown (but failing if it isn't).
+     */
+    @NonNull
+    public UiObject2 findRightAwayByText(@NonNull String text) throws Exception {
+        final UiObject2 object = mDevice.findObject(By.text(text));
+        assertWithMessage("no UIObject for text '%s'", text).that(object).isNotNull();
+        return object;
+    }
+
+    /**
      * Asserts that the text is not showing for sure in the screen "as is", i.e., without waiting
      * for it.
      *
@@ -476,6 +492,14 @@ final class UiBot {
     }
 
     /**
+     * Asserts the save snackbar is showing with the Update message and returns it.
+     */
+    UiObject2 assertUpdateShowing(int... types) throws Exception {
+        return assertSaveOrUpdateShowing(/* update= */ true, SaveInfo.NEGATIVE_BUTTON_STYLE_CANCEL,
+                null, SAVE_TIMEOUT, types);
+    }
+
+    /**
      * Presses the Back button.
      */
     void pressBack() {
@@ -527,23 +551,25 @@ final class UiBot {
     }
 
     UiObject2 assertSaveShowing(String description, int... types) throws Exception {
-        return assertSaveShowing(SaveInfo.NEGATIVE_BUTTON_STYLE_CANCEL, description,
-                SAVE_TIMEOUT, types);
+        return assertSaveOrUpdateShowing(/* update= */ false, SaveInfo.NEGATIVE_BUTTON_STYLE_CANCEL,
+                description, SAVE_TIMEOUT, types);
     }
 
     UiObject2 assertSaveShowing(String description, Timeout timeout, int... types)
             throws Exception {
-        return assertSaveShowing(SaveInfo.NEGATIVE_BUTTON_STYLE_CANCEL, description, timeout,
-                types);
+        return assertSaveOrUpdateShowing(/* update= */ false, SaveInfo.NEGATIVE_BUTTON_STYLE_CANCEL,
+                description, timeout, types);
     }
 
     UiObject2 assertSaveShowing(int negativeButtonStyle, String description,
             int... types) throws Exception {
-        return assertSaveShowing(negativeButtonStyle, description, SAVE_TIMEOUT, types);
+        return assertSaveOrUpdateShowing(/* update= */ false, negativeButtonStyle, description,
+                SAVE_TIMEOUT, types);
     }
 
-    UiObject2 assertSaveShowing(int negativeButtonStyle, String description, Timeout timeout,
-            int... types) throws Exception {
+
+    UiObject2 assertSaveOrUpdateShowing(boolean update, int negativeButtonStyle, String description,
+            Timeout timeout, int... types) throws Exception {
         final UiObject2 snackbar = waitForObject(SAVE_UI_SELECTOR, timeout);
 
         final UiObject2 titleView =
@@ -559,13 +585,21 @@ final class UiBot {
         final String actualTitle = titleView.getText();
         Log.d(TAG, "save title: " + actualTitle);
 
+        final String titleId, titleWithTypeId;
+        if (update) {
+            titleId = RESOURCE_STRING_UPDATE_TITLE;
+            titleWithTypeId = RESOURCE_STRING_UPDATE_TITLE_WITH_TYPE;
+        } else {
+            titleId = RESOURCE_STRING_SAVE_TITLE;
+            titleWithTypeId = RESOURCE_STRING_SAVE_TITLE_WITH_TYPE;
+        }
+
         final String serviceLabel = InstrumentedAutoFillService.getServiceLabel();
         switch (types.length) {
             case 1:
                 final String expectedTitle = (types[0] == SAVE_DATA_TYPE_GENERIC)
-                        ? Html.fromHtml(getString(RESOURCE_STRING_SAVE_TITLE,
-                                serviceLabel), 0).toString()
-                        : Html.fromHtml(getString(RESOURCE_STRING_SAVE_TITLE_WITH_TYPE,
+                        ? Html.fromHtml(getString(titleId, serviceLabel), 0).toString()
+                        : Html.fromHtml(getString(titleWithTypeId,
                                 getSaveTypeString(types[0]), serviceLabel), 0).toString();
                 assertThat(actualTitle).isEqualTo(expectedTitle);
                 break;
@@ -588,6 +622,14 @@ final class UiBot {
             final UiObject2 saveSubTitle = snackbar.findObject(By.text(description));
             assertWithMessage("save subtitle(%s)", description).that(saveSubTitle).isNotNull();
         }
+
+        final String positiveButtonStringId = update ? RESOURCE_STRING_UPDATE_BUTTON_YES
+                : RESOURCE_STRING_SAVE_BUTTON_YES;
+        final String expectedPositiveButtonText = getString(positiveButtonStringId).toUpperCase();
+        final UiObject2 positiveButton = waitForObject(snackbar,
+                By.res("android", RESOURCE_ID_SAVE_BUTTON_YES), timeout);
+        assertWithMessage("wrong text on positive button")
+                .that(positiveButton.getText().toUpperCase()).isEqualTo(expectedPositiveButtonText);
 
         final String negativeButtonStringId =
                 (negativeButtonStyle == SaveInfo.NEGATIVE_BUTTON_STYLE_REJECT)
@@ -616,6 +658,11 @@ final class UiBot {
         final UiObject2 saveSnackBar = assertSaveShowing(
                 SaveInfo.NEGATIVE_BUTTON_STYLE_CANCEL, null, types);
         saveForAutofill(saveSnackBar, yesDoIt);
+    }
+
+    public void updateForAutofill(boolean yesDoIt, int... types) throws Exception {
+        final UiObject2 saveUi = assertUpdateShowing(types);
+        saveForAutofill(saveUi, yesDoIt);
     }
 
     /**
@@ -745,7 +792,7 @@ final class UiBot {
      */
     private UiObject2 waitForObject(@NonNull BySelector selector, @NonNull Timeout timeout)
             throws Exception {
-        return waitForObject(null, selector, timeout);
+        return waitForObject(/* parent= */ null, selector, timeout);
     }
 
     /**
