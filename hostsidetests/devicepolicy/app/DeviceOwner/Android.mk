@@ -32,7 +32,7 @@ LOCAL_JAVA_LIBRARIES := \
     android.test.runner.stubs \
     cts-junit \
     android.test.base.stubs \
-    bouncycastle
+    bouncycastle-unbundled
 
 LOCAL_USE_AAPT2 := true
 
