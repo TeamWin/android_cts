@@ -1,4 +1,4 @@
-# Copyright (C) 2017 The Android Open Source Project
+# Copyright (C) 2018 The Android Open Source Project
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -12,21 +12,6 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-LOCAL_PATH := $(call my-dir)
-
-include $(CLEAR_VARS)
-
-LOCAL_SRC_FILES := $(call all-java-files-under, src)
-
-LOCAL_MODULE_TAGS := tests
-
-# tag this module as a cts test artifact
-LOCAL_COMPATIBILITY_SUITE := cts vts general-tests cts-instant
-
-LOCAL_MODULE := CtsEdiHostTestCases
-
-LOCAL_JAVA_LIBRARIES := cts-tradefed tradefed compatibility-host-util
-
-include $(BUILD_HOST_JAVA_LIBRARY)
+LOCAL_PATH:= $(call my-dir)
 
 include $(call all-makefiles-under,$(LOCAL_PATH))
