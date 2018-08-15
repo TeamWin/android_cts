@@ -13,6 +13,7 @@
 # limitations under the License.
 
 # Set of error prone rules to ensure code quality of tests
+# When updating this list, also update cts_error_prone_rules_tests in Android.bp
 
 # Goal is to eventually merge with error_prone_rules.mk
 LOCAL_ERROR_PRONE_FLAGS += -Xep:ArrayToString:ERROR \
