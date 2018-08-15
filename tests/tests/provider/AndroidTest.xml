@@ -21,6 +21,7 @@
         <option name="test-file-name" value="CtsProviderTestCases.apk" />
     </target_preparer>
     <test class="com.android.tradefed.testtype.AndroidJUnitTest" >
+        <option name="runner" value="android.support.test.runner.AndroidJUnitRunner" />
         <option name="package" value="android.provider.cts" />
         <option name="runtime-hint" value="7m19s" />
         <option name="hidden-api-checks" value="false" />
