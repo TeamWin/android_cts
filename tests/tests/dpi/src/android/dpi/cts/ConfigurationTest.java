@@ -24,6 +24,8 @@ import android.util.DisplayMetrics;
 import android.view.Display;
 import android.view.WindowManager;
 
+import com.android.compatibility.common.util.CddTest;
+
 import java.util.HashSet;
 import java.util.Set;
 
@@ -32,6 +34,7 @@ import java.util.Set;
  */
 public class ConfigurationTest extends AndroidTestCase {
 
+    @CddTest(requirement="7.1.1.1/H-0-1,W-0-1,7.1.1.3/C-0-1,7.1.2/C-1-1")
     @Presubmit
     public void testScreenConfiguration() {
         WindowManager windowManager =

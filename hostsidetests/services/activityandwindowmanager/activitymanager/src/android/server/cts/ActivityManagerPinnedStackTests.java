@@ -22,6 +22,8 @@ import static android.server.cts.ActivityManagerState.STATE_STOPPED;
 import android.server.cts.ActivityManagerState.ActivityStack;
 import android.server.cts.ActivityManagerState.ActivityTask;
 
+import com.android.compatibility.common.util.CddTest;
+
 import java.awt.Rectangle;
 import java.lang.Exception;
 import java.lang.String;
@@ -270,10 +272,12 @@ public class ActivityManagerPinnedStackTests extends ActivityManagerTestBase {
         assertPinnedStackActivityIsInDisplayBounds(PIP_ACTIVITY);
     }
 
+    @CddTest(requirement="3.8.14/C-3-3")
     public void testEnterPipAspectRatioMin() throws Exception {
         testEnterPipAspectRatio(MIN_ASPECT_RATIO_NUMERATOR, MIN_ASPECT_RATIO_DENOMINATOR);
     }
 
+    @CddTest(requirement="3.8.14/C-3-3")
     public void testEnterPipAspectRatioMax() throws Exception {
         testEnterPipAspectRatio(MAX_ASPECT_RATIO_NUMERATOR, MAX_ASPECT_RATIO_DENOMINATOR);
     }
@@ -883,6 +887,7 @@ public class ActivityManagerPinnedStackTests extends ActivityManagerTestBase {
         assertTrue(mAmWmState.getWmState().getLastOrientation() == ORIENTATION_LANDSCAPE);
     }
 
+    @CddTest(requirement="3.8.14/C-3-4")
     public void testWindowButtonEntersPip() throws Exception {
         if (!supportsPip()) return;
 
