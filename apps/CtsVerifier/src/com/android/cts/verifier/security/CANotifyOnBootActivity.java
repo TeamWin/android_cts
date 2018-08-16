@@ -13,11 +13,14 @@ import android.widget.Toast;
 import com.android.cts.verifier.PassFailButtons;
 import com.android.cts.verifier.R;
 
+import com.android.compatibility.common.util.CddTest;
+
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 
+@CddTest(requirement="9.8.4/C-0-3")
 public class CANotifyOnBootActivity extends PassFailButtons.Activity {
 
     private static final String TAG = CANotifyOnBootActivity.class.getSimpleName();

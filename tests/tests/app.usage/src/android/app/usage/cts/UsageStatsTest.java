@@ -31,6 +31,8 @@ import android.support.test.uiautomator.Until;
 import android.test.InstrumentationTestCase;
 import android.util.SparseLongArray;
 
+import com.android.compatibility.common.util.CddTest;
+
 import junit.framework.AssertionFailedError;
 
 import org.junit.Ignore;
@@ -55,6 +57,7 @@ import java.util.concurrent.TimeUnit;
  *   along with the new time.
  * - Proper eviction of old data.
  */
+@CddTest(requirement="9.8.1/C-1-1")
 public class UsageStatsTest extends InstrumentationTestCase {
     private static final String APPOPS_SET_SHELL_COMMAND = "appops set {0} " +
             AppOpsManager.OPSTR_GET_USAGE_STATS + " {1}";
