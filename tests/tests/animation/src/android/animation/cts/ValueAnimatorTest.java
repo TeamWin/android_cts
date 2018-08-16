@@ -481,10 +481,11 @@ public class ValueAnimatorTest {
     @Test
     public void testGetAnimatedFraction() throws Throwable {
         ValueAnimator objAnimator = getAnimator();
+        objAnimator.setRepeatCount(0);
         startAnimation(objAnimator);
         assertNotNull(objAnimator);
-        float[] fractions = getValue(objAnimator, 10, "getAnimatedFraction()", 200l, null);
-        for(int j = 0; j < 9; j++){
+        float[] fractions = getValue(objAnimator, 5, "getAnimatedFraction()", 100L, null);
+        for (int j = 0; j < fractions.length - 1; j++) {
             assertTrue(fractions[j] >= 0.0);
             assertTrue(fractions[j] <= 1.0);
             assertTrue(errorMessage(fractions), fractions[j + 1] >= fractions[j]);
@@ -494,11 +495,12 @@ public class ValueAnimatorTest {
     @Test
     public void testGetAnimatedValue() throws Throwable {
         ValueAnimator objAnimator = getAnimator();
+        objAnimator.setRepeatCount(0);
         startAnimation(objAnimator);
         assertNotNull(objAnimator);
-        float[] animatedValues = getValue(objAnimator, 10, "getAnimatedValue()", 200l, null);
+        float[] animatedValues = getValue(objAnimator, 5, "getAnimatedValue()", 100L, null);
 
-        for(int j = 0; j < 9; j++){
+        for (int j = 0; j < animatedValues.length - 1; j++) {
             assertTrue(errorMessage(animatedValues), animatedValues[j + 1] >= animatedValues[j]);
         }
     }
@@ -508,11 +510,12 @@ public class ValueAnimatorTest {
         String property = "y";
 
         ValueAnimator objAnimator = getAnimator();
+        objAnimator.setRepeatCount(0);
         startAnimation(objAnimator);
         assertNotNull(objAnimator);
-        float[] animatedValues = getValue(objAnimator, 10, "getAnimatedValue(property)", 200l,
+        float[] animatedValues = getValue(objAnimator, 5, "getAnimatedValue(property)", 100L,
             property);
-        for(int j = 0; j < 9; j++){
+        for (int j = 0; j < animatedValues.length - 1; j++) {
             assertTrue(errorMessage(animatedValues), animatedValues[j + 1] >= animatedValues[j]);
         }
     }
