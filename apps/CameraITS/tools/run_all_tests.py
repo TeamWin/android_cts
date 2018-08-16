@@ -48,7 +48,8 @@ VGA_WIDTH = 640
 # Not yet mandated tests
 NOT_YET_MANDATED = {
         'scene0': [
-                'test_test_patterns'
+                'test_test_patterns',
+                'test_tonemap_curve'
         ],
         'scene1': [
                 'test_ae_precapture_trigger'
