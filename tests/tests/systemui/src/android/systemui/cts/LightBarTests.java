@@ -99,16 +99,55 @@ public class LightBarTests extends LightBarTestBase {
                     .setGroup(NOTIFICATION_GROUP_KEY);
             mNm.notify(NOTIFICATION_TAG, i, noti1.build());
         }
+        Thread.sleep(WAIT_TIME);
+        Bitmap beforeBitmap = takeStatusBarScreenshot(mActivityRule.getActivity());
 
         requestLightBars(Color.RED /* background */);
         Thread.sleep(WAIT_TIME);
 
         Bitmap bitmap = takeStatusBarScreenshot(mActivityRule.getActivity());
-        Stats s = evaluateLightBarBitmap(bitmap, Color.RED /* background */);
-        assertLightStats(bitmap, s);
+        Bitmap result = treatCutoutAsBackground(beforeBitmap, bitmap);
+        if (beforeBitmap != null) {
+            beforeBitmap.recycle();
+        }
+        if (bitmap != null && bitmap != result) {
+            bitmap.recycle();
+        }
+
+        Stats s = evaluateLightBarBitmap(result, Color.RED /* background */);
+        assertLightStats(result, s);
 
         mNm.cancelAll();
         mNm.deleteNotificationChannel(NOTIFICATION_CHANNEL_ID);
+    }
+
+    private Bitmap treatCutoutAsBackground(Bitmap before, Bitmap after) {
+        if (before == null || after == null || before.getWidth() != after.getWidth()
+                || before.getHeight() != after.getHeight()) {
+            return after;
+        }
+
+        Bitmap result = after.copy(Bitmap.Config.ARGB_8888, true);
+
+        final int width = before.getWidth();
+        final int height = after.getHeight();
+        int[] beforePixels = new int[height * width];
+        before.getPixels(beforePixels, 0, width, 0, 0, width, height);
+        int[] afterPixels = new int[height * width];
+        after.getPixels(afterPixels, 0, width, 0, 0, width, height);
+
+        for (int i = 0; i < height; i++) {
+            for (int j = 0; j < width; j++) {
+                int cBefore = beforePixels[i * width + j];
+                int cAfter = afterPixels[i * width + j];
+
+                if (cBefore == cAfter && Color.luminance(cAfter) < 0.01f) {
+                    result.setPixel(j, i, Color.RED);
+                }
+            }
+        }
+
+        return result;
     }
 
     @Test
