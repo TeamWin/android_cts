@@ -54,6 +54,7 @@ LOCAL_JAVA_LIBRARIES += android.test.runner.stubs
 LOCAL_JAVA_LIBRARIES += android.test.base.stubs
 LOCAL_JAVA_LIBRARIES += android.test.mock.stubs
 LOCAL_JAVA_LIBRARIES += voip-common
+LOCAL_JAVA_LIBRARIES += bouncycastle
 
 LOCAL_PACKAGE_NAME := CtsVerifier
 LOCAL_PRIVATE_PLATFORM_APIS := true
@@ -89,7 +90,7 @@ LOCAL_SRC_FILES := \
 
 LOCAL_STATIC_JAVA_LIBRARIES := androidx.legacy_legacy-support-v4 \
                                compatibility-common-util-devicesidelib \
-                               compatibility-device-util \
+                               compatibility-device-util
 
 include $(BUILD_STATIC_JAVA_LIBRARY)
 
