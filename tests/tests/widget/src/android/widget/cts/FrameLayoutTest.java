@@ -297,15 +297,18 @@ public class FrameLayoutTest {
         final ArgumentCaptor<ColorStateList> colorStateListCaptor =
                 ArgumentCaptor.forClass(ColorStateList.class);
         verify(foreground, times(1)).setTintList(colorStateListCaptor.capture());
-        assertEquals(1, colorStateListCaptor.getValue().getColors().length);
-        assertEquals(Color.RED, colorStateListCaptor.getValue().getColors()[0]);
+        assertEquals(1, colorStateListCaptor.getValue().getStates().length);
+        int[] emptyState = new int[0];
+        assertEquals(Color.RED,
+                colorStateListCaptor.getValue().getColorForState(emptyState, Color.BLUE));
 
         reset(foreground);
         view.setForeground(null);
         view.setForeground(foreground);
         verify(foreground, times(1)).setTintList(colorStateListCaptor.capture());
-        assertEquals(1, colorStateListCaptor.getValue().getColors().length);
-        assertEquals(Color.RED, colorStateListCaptor.getValue().getColors()[0]);
+        assertEquals(1, colorStateListCaptor.getValue().getStates().length);
+        assertEquals(Color.RED,
+                colorStateListCaptor.getValue().getColorForState(emptyState, Color.BLUE));
     }
 
     private static void assertCenterAligned(View container, Drawable drawable) {
