@@ -26,7 +26,8 @@ LOCAL_SRC_FILES := $(call all-java-files-under, src)
 LOCAL_JAVA_LIBRARIES := cts-tradefed tradefed
 LOCAL_STATIC_JAVA_LIBRARIES := cts-amwm-util  \
     cts-display-service-app-util \
-    platform-test-annotations-host
+    platform-test-annotations-host \
+    compatibility-host-util
 
 LOCAL_CTS_TEST_PACKAGE := android.server
 

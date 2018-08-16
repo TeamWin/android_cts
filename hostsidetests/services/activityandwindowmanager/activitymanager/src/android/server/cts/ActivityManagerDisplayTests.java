@@ -21,6 +21,8 @@ import android.server.displayservice.DisplayHelper;
 import com.android.tradefed.device.CollectingOutputReceiver;
 import com.android.tradefed.device.DeviceNotAvailableException;
 
+import com.android.compatibility.common.util.CddTest;
+
 import java.util.Collections;
 import java.util.LinkedList;
 import java.util.List;
@@ -38,6 +40,7 @@ import static android.server.cts.StateLogger.logE;
  * Build: mmma -j32 cts/hostsidetests/services
  * Run: cts/hostsidetests/services/activityandwindowmanager/util/run-test CtsServicesHostTestCases android.server.cts.ActivityManagerDisplayTests
  */
+@CddTest(requirement="3.2.4/C-1-2")
 public class ActivityManagerDisplayTests extends ActivityManagerDisplayTestBase {
     private static final String WM_SIZE = "wm size";
     private static final String WM_DENSITY = "wm density";
@@ -413,6 +416,7 @@ public class ActivityManagerDisplayTests extends ActivityManagerDisplayTestBase 
      * Tests launching a non-resizeable activity on virtual display. It should land on the
      * default display.
      */
+    @CddTest(requirement="3.2.4/C-2-1")
     public void testLaunchNonResizeableActivityOnSecondaryDisplay() throws Exception {
         if (!supportsMultiDisplay()) { return; }
 
@@ -471,6 +475,7 @@ public class ActivityManagerDisplayTests extends ActivityManagerDisplayTestBase 
      * Tests moving a non-resizeable activity to a virtual display. It should land on the default
      * display.
      */
+    @CddTest(requirement="3.2.4/C-2-1")
     public void testMoveNonResizeableActivityToSecondaryDisplay() throws Exception {
         if (!supportsMultiDisplay()) { return; }
 
@@ -643,6 +648,7 @@ public class ActivityManagerDisplayTests extends ActivityManagerDisplayTestBase 
      * command and without specifying the display id - the second activity must appear on the
      * primary display.
      */
+    @CddTest(requirement="3.2.4/C-1-3")
     @Presubmit
     public void testConsequentLaunchActivity() throws Exception {
         if (!supportsMultiDisplay()) { return; }
@@ -679,6 +685,7 @@ public class ActivityManagerDisplayTests extends ActivityManagerDisplayTestBase 
      * Tests launching an activity on simulated display and then launching another activity from the
      * first one - it must appear on the secondary display, because it was launched from there.
      */
+    @CddTest(requirement="3.2.4/C-1-3")
     @Presubmit
     public void testConsequentLaunchActivityFromSecondaryDisplay() throws Exception {
         if (!supportsMultiDisplay()) { return; }
@@ -1223,6 +1230,7 @@ public class ActivityManagerDisplayTests extends ActivityManagerDisplayTestBase 
      * Test that launching from app that is not present on external display and doesn't own it to
      * that external display is not allowed.
      */
+    @CddTest(requirement="3.2.4/C-3-1")
     public void testPermissionLaunchFromDifferentApp() throws Exception {
         if (!supportsMultiDisplay()) { return; }
 
@@ -1312,6 +1320,7 @@ public class ActivityManagerDisplayTests extends ActivityManagerDisplayTestBase 
      * Test that all activities that were on the private display are destroyed on display removal.
      */
     // TODO: Flaky, add to presubmit when b/63404575 is fixed.
+    @CddTest(requirement="3.2.4/C-1-4")
     public void testContentDestroyOnDisplayRemoved() throws Exception {
         if (!supportsMultiDisplay()) { return; }
 
@@ -1366,6 +1375,7 @@ public class ActivityManagerDisplayTests extends ActivityManagerDisplayTestBase 
     /**
      * Test that the update of display metrics updates all its content.
      */
+    @CddTest(requirement="3.2.4/C-1-5")
     @Presubmit
     public void testDisplayResize() throws Exception {
         if (!supportsMultiDisplay()) { return; }
