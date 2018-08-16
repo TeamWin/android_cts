@@ -26,7 +26,12 @@ STOP_AT_FIRST_FAILURE = False  # change to True to have test break @ 1st FAIL
 
 
 def main():
-    """Test different combinations of output formats."""
+    """Test different combinations of output formats.
+    
+    Note the test does not require a specific target but does perform
+    both automatic and manual captures so it requires a fixed scene
+    where 3A can converge.
+    """
 
     with its.device.ItsSession() as cam:
 
