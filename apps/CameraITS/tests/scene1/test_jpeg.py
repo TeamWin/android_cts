@@ -12,20 +12,22 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-import its.image
+import math
+import os.path
+
 import its.caps
 import its.device
+import its.image
 import its.objects
 import its.target
-import os.path
-import math
+
+NAME = os.path.basename(__file__).split(".")[0]
+THRESHOLD_MAX_RMS_DIFF = 0.01
+
 
 def main():
     """Test that converted YUV images and device JPEG images look the same.
     """
-    NAME = os.path.basename(__file__).split(".")[0]
-
-    THRESHOLD_MAX_RMS_DIFF = 0.01
 
     with its.device.ItsSession() as cam:
         props = cam.get_camera_properties()
@@ -37,7 +39,7 @@ def main():
 
         # YUV
         size = its.objects.get_available_output_sizes("yuv", props)[0]
-        out_surface = {"width":size[0], "height":size[1], "format":"yuv"}
+        out_surface = {"width": size[0], "height": size[1], "format": "yuv"}
         cap = cam.do_capture(req, out_surface)
         img = its.image.convert_capture_to_rgb_image(cap)
         its.image.write_image(img, "%s_fmt=yuv.jpg" % (NAME))
@@ -46,7 +48,7 @@ def main():
 
         # JPEG
         size = its.objects.get_available_output_sizes("jpg", props)[0]
-        out_surface = {"width":size[0], "height":size[1], "format":"jpg"}
+        out_surface = {"width": size[0], "height": size[1], "format": "jpg"}
         cap = cam.do_capture(req, out_surface)
         img = its.image.decompress_jpeg_to_rgb_image(cap["data"])
         its.image.write_image(img, "%s_fmt=jpg.jpg" % (NAME))
@@ -56,7 +58,9 @@ def main():
         rms_diff = math.sqrt(
                 sum([pow(rgb0[i] - rgb1[i], 2.0) for i in range(3)]) / 3.0)
         print "RMS difference:", rms_diff
-        assert(rms_diff < THRESHOLD_MAX_RMS_DIFF)
+        msg = "RMS difference: %.4f, spec: %.3f" % (rms_diff,
+                                                    THRESHOLD_MAX_RMS_DIFF)
+        assert rms_diff < THRESHOLD_MAX_RMS_DIFF, msg
 
 if __name__ == '__main__':
     main()
