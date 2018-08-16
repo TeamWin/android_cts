@@ -63,7 +63,7 @@ public class ChangeBoundsTest extends BaseTransitionTest {
     private void resetChangeBoundsTransition() {
         mListener = mock(Transition.TransitionListener.class);
         mChangeBounds = new MyChangeBounds();
-        mChangeBounds.setDuration(400);
+        mChangeBounds.setDuration(500);
         mChangeBounds.addListener(mListener);
         mChangeBounds.setInterpolator(new LinearInterpolator());
         mTransition = mChangeBounds;
@@ -79,7 +79,7 @@ public class ChangeBoundsTest extends BaseTransitionTest {
 
         startTransition(R.layout.scene6);
         // The update listener will validate that it is changing throughout the animation
-        waitForEnd(800);
+        waitForEnd(5000);
 
         validateInScene6();
     }
@@ -98,7 +98,7 @@ public class ChangeBoundsTest extends BaseTransitionTest {
         startTransition(R.layout.scene6);
 
         // The update listener will validate that it is changing throughout the animation
-        waitForEnd(800);
+        waitForEnd(5000);
 
         validateInScene6();
     }
@@ -114,7 +114,7 @@ public class ChangeBoundsTest extends BaseTransitionTest {
         startTransition(R.layout.scene1);
 
         // The update listener will validate that it is changing throughout the animation
-        waitForEnd(800);
+        waitForEnd(5000);
 
         validateInScene1();
     }
@@ -127,12 +127,12 @@ public class ChangeBoundsTest extends BaseTransitionTest {
 
         startTransition(R.layout.scene6);
 
-        waitForMiddleOfTransition();
+        waitForSizeIsMiddle();
         resetChangeBoundsTransition();
         startTransition(R.layout.scene6);
 
         assertFalse(isRestartingAnimation());
-        waitForEnd(1000);
+        waitForEnd(5000);
         validateInScene6();
     }
 
@@ -145,7 +145,7 @@ public class ChangeBoundsTest extends BaseTransitionTest {
 
         startTransition(R.layout.scene6);
 
-        waitForMiddleOfTransition();
+        waitForClipIsMiddle();
 
         resetChangeBoundsTransition();
         mChangeBounds.setResizeClip(true);
@@ -153,7 +153,7 @@ public class ChangeBoundsTest extends BaseTransitionTest {
 
         assertFalse(isRestartingAnimation());
         assertFalse(isRestartingClip());
-        waitForEnd(1000);
+        waitForEnd(5000);
         validateInScene6();
     }
 
@@ -165,13 +165,13 @@ public class ChangeBoundsTest extends BaseTransitionTest {
 
         startTransition(R.layout.scene6);
 
-        waitForMiddleOfTransition();
+        waitForSizeIsMiddle();
         // reverse the transition back to scene1
         resetChangeBoundsTransition();
         startTransition(R.layout.scene1);
 
         assertFalse(isRestartingAnimation());
-        waitForEnd(1000);
+        waitForEnd(5000);
         validateInScene1();
     }
 
@@ -183,7 +183,7 @@ public class ChangeBoundsTest extends BaseTransitionTest {
         validateInScene1();
 
         startTransition(R.layout.scene6);
-        waitForMiddleOfTransition();
+        waitForClipIsMiddle();
 
         // reverse the transition back to scene1
         resetChangeBoundsTransition();
@@ -192,23 +192,38 @@ public class ChangeBoundsTest extends BaseTransitionTest {
 
         assertFalse(isRestartingAnimation());
         assertFalse(isRestartingClip());
-        waitForEnd(1000);
+        waitForEnd(5000);
         validateInScene1();
     }
 
-    private void waitForMiddleOfTransition() throws Throwable {
+    private void waitForSizeIsMiddle() throws Throwable {
         Resources resources = mActivity.getResources();
-        float closestDistance = TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP,
-                SMALL_SQUARE_SIZE_DP / 2, resources.getDisplayMetrics());
+        float middleSize = TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP,
+                (SMALL_SQUARE_SIZE_DP + LARGE_SQUARE_SIZE_DP) / 2, resources.getDisplayMetrics());
 
         final View red = mActivity.findViewById(R.id.redSquare);
         final View green = mActivity.findViewById(R.id.greenSquare);
 
         PollingCheck.waitFor(
-                () -> red.getTop() > closestDistance && green.getTop() > closestDistance);
+                () -> red.getWidth() > middleSize && green.getWidth() > middleSize);
 
-        assertTrue(red.getTop() > closestDistance);
-        assertTrue(green.getTop() > closestDistance);
+        assertTrue(red.getHeight() > middleSize);
+        assertTrue(green.getHeight() > middleSize);
+    }
+
+    private void waitForClipIsMiddle() throws Throwable {
+        Resources resources = mActivity.getResources();
+        float middleSize = TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP,
+                (SMALL_SQUARE_SIZE_DP + LARGE_SQUARE_SIZE_DP) / 2, resources.getDisplayMetrics());
+
+        final View red = mActivity.findViewById(R.id.redSquare);
+        final View green = mActivity.findViewById(R.id.greenSquare);
+
+        PollingCheck.waitFor(() -> red.getClipBounds().width() > middleSize
+                && green.getClipBounds().width() > middleSize);
+
+        assertTrue(red.getClipBounds().height() > middleSize);
+        assertTrue(green.getClipBounds().height() > middleSize);
     }
 
     private boolean isRestartingAnimation() {
@@ -277,11 +292,6 @@ public class ChangeBoundsTest extends BaseTransitionTest {
     private static void assertWithinAPixel(float expectedDim, int dim) {
         assertTrue("Expected dimension to be within one pixel of "
                 + expectedDim + ", but was " + dim, isWithinAPixel(expectedDim, dim));
-    }
-
-    private static void assertNotWithinAPixel(float expectedDim, int dim) {
-        assertTrue("Expected dimension to not be within one pixel of "
-                + expectedDim + ", but was " + dim, !isWithinAPixel(expectedDim, dim));
     }
 
     private class MyChangeBounds extends ChangeBounds {

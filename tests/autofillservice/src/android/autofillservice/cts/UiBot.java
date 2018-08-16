@@ -108,6 +108,10 @@ final class UiBot {
     private static final BySelector DATASET_HEADER_SELECTOR =
             By.res("android", RESOURCE_ID_DATASET_HEADER);
 
+    // TODO: figure out a more reliable solution that does not depend on SystemUI resources.
+    private static final String SPLIT_WINDOW_DIVIDER_ID =
+            "com.android.systemui:id/docked_divider_background";
+
     private static final boolean DUMP_ON_ERROR = true;
 
     /** Pass to {@link #setScreenOrientation(int)} to change the display to portrait mode */
@@ -957,6 +961,20 @@ final class UiBot {
             }
         } else {
             assertWithMessage("Shouldn't find child with id '%s'", childId).that(child).isNull();
+        }
+    }
+
+    /**
+     * Waits until the window was split to show multiple activities.
+     */
+    public void waitForWindowSplit() throws Exception {
+        try {
+            assertShownById(SPLIT_WINDOW_DIVIDER_ID);
+        } catch (Exception e) {
+            final long timeout = Timeouts.ACTIVITY_RESURRECTION.ms();
+            Log.e(TAG, "Did not find window divider " + SPLIT_WINDOW_DIVIDER_ID + "; waiting "
+                    + timeout + "ms instead");
+            SystemClock.sleep(timeout);
         }
     }
 }

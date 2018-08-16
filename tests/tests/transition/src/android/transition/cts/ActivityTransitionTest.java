@@ -71,6 +71,7 @@ public class ActivityTransitionTest extends BaseTransitionTest {
     @Override
     public void setup() {
         super.setup();
+        TargetActivity.sLastCreated = null;
         setTransitions(new TrackingVisibility(), new TrackingVisibility(),
                 new TrackingTransition());
     }
@@ -139,7 +140,8 @@ public class ActivityTransitionTest extends BaseTransitionTest {
         });
 
         TargetActivity targetActivity = waitForTargetActivity();
-        verify(targetActivity.enterListener, within(3000)).onTransitionEnd(any());
+        verify(targetActivity.enterListener, within(5000)).onTransitionStart(any());
+        verify(targetActivity.enterListener, within(5000)).onTransitionEnd(any());
         verify(mExitListener, times(1)).onTransitionEnd(any());
 
         // Now check the targets... they should all be there
@@ -163,8 +165,11 @@ public class ActivityTransitionTest extends BaseTransitionTest {
         assertEquals(1, targetActivity.findViewById(R.id.holder).getAlpha(), 0.01f);
 
         mActivityRule.runOnUiThread(() -> targetActivity.finishAfterTransition());
-        verify(mReenterListener, within(3000)).onTransitionEnd(any());
-        verify(mSharedElementReenterListener, within(3000)).onTransitionEnd(any());
+        verify(mReenterListener, within(5000)).onTransitionStart(any());
+        verify(mReenterListener, within(5000)).onTransitionEnd(any());
+        verify(mSharedElementReenterListener, within(5000)).onTransitionStart(any());
+        verify(mSharedElementReenterListener, within(5000)).onTransitionEnd(any());
+        verify(targetActivity.returnListener, times(1)).onTransitionStart(any());
         verify(targetActivity.returnListener, times(1)).onTransitionEnd(any());
 
         // return targets are stripped also
@@ -211,7 +216,8 @@ public class ActivityTransitionTest extends BaseTransitionTest {
         });
 
         TargetActivity targetActivity = waitForTargetActivity();
-        verify(targetActivity.enterListener, within(3000)).onTransitionEnd(any());
+        verify(targetActivity.enterListener, within(5000)).onTransitionStart(any());
+        verify(targetActivity.enterListener, within(5000)).onTransitionEnd(any());
         verify(mExitListener, times(1)).onTransitionEnd(any());
 
         // Now check the targets... they should all be stripped
@@ -234,8 +240,11 @@ public class ActivityTransitionTest extends BaseTransitionTest {
         assertEquals(1, targetActivity.findViewById(R.id.holder).getAlpha(), 0.01f);
 
         mActivityRule.runOnUiThread(() -> targetActivity.finishAfterTransition());
-        verify(mReenterListener, within(3000)).onTransitionEnd(any());
-        verify(mSharedElementReenterListener, within(3000)).onTransitionEnd(any());
+        verify(mReenterListener, within(5000)).onTransitionStart(any());
+        verify(mReenterListener, within(5000)).onTransitionEnd(any());
+        verify(mSharedElementReenterListener, within(5000)).onTransitionStart(any());
+        verify(mSharedElementReenterListener, within(5000)).onTransitionEnd(any());
+        verify(targetActivity.returnListener, times(1)).onTransitionStart(any());
         verify(targetActivity.returnListener, times(1)).onTransitionEnd(any());
 
         // return targets are stripped also
@@ -285,8 +294,9 @@ public class ActivityTransitionTest extends BaseTransitionTest {
         });
 
         TargetActivity targetActivity = waitForTargetActivity();
-        verify(targetActivity.enterListener, within(3000)).onTransitionEnd(any());
-        verify(mExitListener, within(3000)).onTransitionEnd(any());
+        verify(targetActivity.enterListener, within(5000)).onTransitionStart(any());
+        verify(targetActivity.enterListener, within(5000)).onTransitionEnd(any());
+        verify(mExitListener, within(5000)).onTransitionEnd(any());
 
         mActivityRule.runOnUiThread(() -> {
             // Verify that the exited views have an alpha of 1 and are visible
@@ -318,7 +328,7 @@ public class ActivityTransitionTest extends BaseTransitionTest {
         TargetActivity targetActivity = waitForTargetActivity();
         assertTrue(targetActivity.isActivityTransitionRunning());
         mActivityRule.runOnUiThread(() -> { });
-        PollingCheck.waitFor(() -> !targetActivity.isActivityTransitionRunning());
+        PollingCheck.waitFor(5000, () -> !targetActivity.isActivityTransitionRunning());
 
         assertFalse(mActivity.isActivityTransitionRunning());
         mActivityRule.runOnUiThread(() -> {
@@ -367,7 +377,8 @@ public class ActivityTransitionTest extends BaseTransitionTest {
             mActivity.startActivity(intent, options);
         });
 
-        verify(mExitListener, within(3000)).onTransitionEnd(any());
+        verify(mExitListener, within(5000)).onTransitionStart(any());
+        verify(mExitListener, within(5000)).onTransitionEnd(any());
 
         TargetActivity targetActivity = waitForTargetActivity();
 
@@ -389,7 +400,8 @@ public class ActivityTransitionTest extends BaseTransitionTest {
         assertEquals(View.VISIBLE, targetActivity.endVisibility);
 
         assertTrue(targetActivity.transitionComplete.await(1, TimeUnit.SECONDS));
-        verify(mReenterListener, within(3000)).onTransitionEnd(any());
+        verify(mReenterListener, within(5000)).onTransitionStart(any());
+        verify(mReenterListener, within(5000)).onTransitionEnd(any());
 
         TargetActivity.sLastCreated = null;
     }
@@ -414,11 +426,13 @@ public class ActivityTransitionTest extends BaseTransitionTest {
 
 
         TargetActivity targetActivity = waitForTargetActivity();
-        verify(targetActivity.enterListener, within(3000)).onTransitionEnd(any());
+        verify(targetActivity.enterListener, within(5000)).onTransitionStart(any());
+        verify(targetActivity.enterListener, within(5000)).onTransitionEnd(any());
 
         mActivityRule.runOnUiThread(() -> targetActivity.finishAfterTransition());
         mActivityRule.runOnUiThread(() -> parent.removeAllViews());
 
+        verify(targetActivity.returnListener, times(1)).onTransitionStart(any());
         verify(targetActivity.returnListener, times(1)).onTransitionEnd(any());
         TargetActivity.sLastCreated = null;
     }
@@ -439,7 +453,8 @@ public class ActivityTransitionTest extends BaseTransitionTest {
         });
 
         TargetActivity targetActivity = waitForTargetActivity();
-        verify(targetActivity.enterListener, within(3000)).onTransitionEnd(any());
+        verify(targetActivity.enterListener, within(5000)).onTransitionStart(any());
+        verify(targetActivity.enterListener, within(5000)).onTransitionEnd(any());
         verify(mExitListener, times(1)).onTransitionEnd(any());
 
         final CountDownLatch startCalled = new CountDownLatch(1);

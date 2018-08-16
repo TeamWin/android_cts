@@ -16,20 +16,30 @@
 package android.transition.cts;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotEquals;
 import static org.junit.Assert.assertTrue;
 import static org.mockito.Matchers.any;
 import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.timeout;
 import static org.mockito.Mockito.verify;
 
+import android.graphics.PointF;
 import android.support.test.filters.MediumTest;
 import android.support.test.runner.AndroidJUnit4;
 import android.transition.Explode;
 import android.transition.TransitionManager;
 import android.view.View;
+import android.view.ViewTreeObserver;
+
+import com.android.compatibility.common.util.PollingCheck;
 
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
+import org.mockito.Mockito;
+
+import java.util.ArrayList;
+import java.util.List;
 
 @MediumTest
 @RunWith(AndroidJUnit4.class)
@@ -45,6 +55,7 @@ public class ExplodeTest extends BaseTransitionTest {
 
     private void resetTransition() {
         mExplode = new Explode();
+        mExplode.setDuration(500);
         mTransition = mExplode;
         resetListener();
     }
@@ -56,6 +67,11 @@ public class ExplodeTest extends BaseTransitionTest {
         final View greenSquare = mActivity.findViewById(R.id.greenSquare);
         final View blueSquare = mActivity.findViewById(R.id.blueSquare);
         final View yellowSquare = mActivity.findViewById(R.id.yellowSquare);
+
+        final List<PointF> redPoints = captureTranslations(redSquare);
+        final List<PointF> greenPoints = captureTranslations(greenSquare);
+        final List<PointF> bluePoints = captureTranslations(blueSquare);
+        final List<PointF> yellowPoints = captureTranslations(yellowSquare);
 
         mActivityRule.runOnUiThread(() -> {
             TransitionManager.beginDelayedTransition(mSceneRoot, mTransition);
@@ -70,17 +86,12 @@ public class ExplodeTest extends BaseTransitionTest {
         assertEquals(View.VISIBLE, greenSquare.getVisibility());
         assertEquals(View.VISIBLE, blueSquare.getVisibility());
         assertEquals(View.VISIBLE, yellowSquare.getVisibility());
-        float redStartX = redSquare.getTranslationX();
-        float redStartY = redSquare.getTranslationY();
 
-        Thread.sleep(100);
-        verifyTranslation(redSquare, true, true);
-        verifyTranslation(greenSquare, false, true);
-        verifyTranslation(blueSquare, false, false);
-        verifyTranslation(yellowSquare, true, false);
-        assertTrue(redStartX > redSquare.getTranslationX()); // moving left
-        assertTrue(redStartY > redSquare.getTranslationY()); // moving up
-        waitForEnd(400);
+        waitForEnd(5000);
+        verifyMovement(redPoints, false, false, true);
+        verifyMovement(greenPoints, true, false, true);
+        verifyMovement(bluePoints, true, true, true);
+        verifyMovement(yellowPoints, false, true, true);
 
         verifyNoTranslation(redSquare);
         verifyNoTranslation(greenSquare);
@@ -99,6 +110,11 @@ public class ExplodeTest extends BaseTransitionTest {
         final View greenSquare = mActivity.findViewById(R.id.greenSquare);
         final View blueSquare = mActivity.findViewById(R.id.blueSquare);
         final View yellowSquare = mActivity.findViewById(R.id.yellowSquare);
+
+        final List<PointF> redPoints = captureTranslations(redSquare);
+        final List<PointF> greenPoints = captureTranslations(greenSquare);
+        final List<PointF> bluePoints = captureTranslations(blueSquare);
+        final List<PointF> yellowPoints = captureTranslations(yellowSquare);
 
         mActivityRule.runOnUiThread(() -> {
             redSquare.setVisibility(View.INVISIBLE);
@@ -121,17 +137,12 @@ public class ExplodeTest extends BaseTransitionTest {
         assertEquals(View.VISIBLE, greenSquare.getVisibility());
         assertEquals(View.VISIBLE, blueSquare.getVisibility());
         assertEquals(View.VISIBLE, yellowSquare.getVisibility());
-        float redStartX = redSquare.getTranslationX();
-        float redStartY = redSquare.getTranslationY();
 
-        Thread.sleep(100);
-        verifyTranslation(redSquare, true, true);
-        verifyTranslation(greenSquare, false, true);
-        verifyTranslation(blueSquare, false, false);
-        verifyTranslation(yellowSquare, true, false);
-        assertTrue(redStartX < redSquare.getTranslationX()); // moving right
-        assertTrue(redStartY < redSquare.getTranslationY()); // moving down
-        waitForEnd(400);
+        waitForEnd(5000);
+        verifyMovement(redPoints, true, true, false);
+        verifyMovement(greenPoints, false, true, false);
+        verifyMovement(bluePoints, false, false, false);
+        verifyMovement(yellowPoints, true, false, false);
 
         verifyNoTranslation(redSquare);
         verifyNoTranslation(greenSquare);
@@ -143,26 +154,63 @@ public class ExplodeTest extends BaseTransitionTest {
         assertEquals(View.VISIBLE, yellowSquare.getVisibility());
     }
 
-    private void verifyTranslation(View view, boolean goLeft, boolean goUp) {
-        float translationX = view.getTranslationX();
-        float translationY = view.getTranslationY();
+    private void verifyMovement(List<PointF> points, boolean moveRight, boolean moveDown,
+            boolean explode) {
+        int numPoints = points.size();
+        assertTrue(numPoints > 3);
 
-        if (goLeft) {
-            assertTrue(translationX < 0);
-        } else {
-            assertTrue(translationX > 0);
-        }
+        // skip the first point -- it is the value before the change
+        PointF firstPoint = points.get(1);
 
-        if (goUp) {
-            assertTrue(translationY < 0);
-        } else {
-            assertTrue(translationY > 0);
-        }
+        // Skip the last point -- it may be the settled value after the change
+        PointF lastPoint = points.get(numPoints - 2);
+
+        assertNotEquals(lastPoint.x, firstPoint.x);
+        assertNotEquals(lastPoint.y, firstPoint.y);
+        assertEquals(moveRight, firstPoint.x < lastPoint.x);
+        assertEquals(moveDown, firstPoint.y < lastPoint.y);
+
+        assertEquals(explode, Math.abs(firstPoint.x) < Math.abs(lastPoint.x));
+        assertEquals(explode, Math.abs(firstPoint.y) < Math.abs(lastPoint.y));
+    }
+
+    private void waitForMovement(View view, float startX, float startY) {
+        PollingCheck.waitFor(5000, () -> hasMoved(view, startX, startY));
+    }
+
+    private boolean hasMoved(View view, float x, float y) {
+        return Math.abs(view.getTranslationX() - x) > 2f
+                || Math.abs(view.getTranslationY() - y) > 2f;
     }
 
     private void verifyNoTranslation(View view) {
         assertEquals(0f, view.getTranslationX(), 0.0f);
         assertEquals(0f, view.getTranslationY(), 0.0f);
+    }
+
+    private List<PointF> captureTranslations(View view) throws Throwable {
+        final ArrayList<PointF> points = Mockito.spy(new ArrayList<>());
+        mActivityRule.runOnUiThread(() -> {
+            ViewTreeObserver.OnDrawListener listener = new ViewTreeObserver.OnDrawListener() {
+                @Override
+                public void onDraw() {
+                    float x = view.getTranslationX();
+                    float y = view.getTranslationY();
+                    if (points.isEmpty() || !points.get(points.size() - 1).equals(x, y)) {
+                        points.add(new PointF(x, y));
+                    }
+                    if (points.size() > 3 && x == 0f && y == 0f) {
+                        view.post(() -> {
+                            view.getViewTreeObserver().removeOnDrawListener(this);
+                        });
+                    }
+                }
+            };
+            view.getViewTreeObserver().addOnDrawListener(listener);
+            view.invalidate();
+        });
+        verify(points, timeout(1000).times(1)).add(any());
+        return points;
     }
 }
 

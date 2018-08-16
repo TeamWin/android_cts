@@ -15,23 +15,22 @@
  */
 package android.transition.cts;
 
+import static com.android.compatibility.common.util.CtsMockitoUtils.within;
+
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
 import static org.mockito.Matchers.any;
-import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.timeout;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 
-import android.animation.Animator;
-import android.animation.AnimatorListenerAdapter;
 import android.graphics.Matrix;
 import android.graphics.drawable.Drawable;
 import android.support.test.filters.MediumTest;
 import android.support.test.runner.AndroidJUnit4;
 import android.transition.ChangeImageTransform;
 import android.transition.TransitionManager;
-import android.transition.TransitionValues;
 import android.util.DisplayMetrics;
 import android.util.TypedValue;
 import android.view.ViewGroup;
@@ -42,6 +41,11 @@ import android.widget.ImageView.ScaleType;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
+import org.mockito.Mockito;
+
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Objects;
 
 @MediumTest
 @RunWith(AndroidJUnit4.class)
@@ -64,8 +68,8 @@ public class ChangeImageTransformTest extends BaseTransitionTest {
     }
 
     private void resetTransition() {
-        mChangeImageTransform = new CaptureMatrix();
-        mChangeImageTransform.setDuration(100);
+        mChangeImageTransform = new ChangeImageTransform();
+        mChangeImageTransform.setDuration(500);
         mTransition = mChangeImageTransform;
         resetListener();
     }
@@ -96,6 +100,13 @@ public class ChangeImageTransformTest extends BaseTransitionTest {
     public void testFitStartToCenter() throws Throwable {
         transformImage(ScaleType.FIT_START, ScaleType.CENTER);
         verifyMatrixMatches(fitStartMatrix(), mStartMatrix);
+        verifyMatrixMatches(centerMatrix(), mEndMatrix);
+    }
+
+    @Test
+    public void testNoChange() throws Throwable {
+        transformImage(ScaleType.CENTER, ScaleType.CENTER);
+        verifyMatrixMatches(centerMatrix(), mStartMatrix);
         verifyMatrixMatches(centerMatrix(), mEndMatrix);
     }
 
@@ -230,18 +241,53 @@ public class ChangeImageTransformTest extends BaseTransitionTest {
 
     private void transformImage(ScaleType startScale, final ScaleType endScale) throws Throwable {
         final ImageView imageView = enterImageViewScene(startScale);
+        final List<Matrix> matrices = watchImageMatrix(imageView);
+
+        mActivityRule.runOnUiThread(() -> {
+            imageView.invalidate();
+        });
+
+        // Wait for one draw() call
+        verify(matrices, within(5000)).add(any());
+
         mActivityRule.runOnUiThread(() -> {
             TransitionManager.beginDelayedTransition(mSceneRoot, mChangeImageTransform);
             imageView.setScaleType(endScale);
+            imageView.invalidate();
         });
         waitForStart();
-        verify(mListener, (startScale == endScale) ? times(1) : never()).onTransitionEnd(any());
-        waitForEnd(1000);
+        waitForEnd(5000);
+        if (startScale == endScale) {
+            verify(matrices, times(1)).add(any());
+            assertEquals(1, matrices.size());
+        } else {
+            verify(matrices, timeout(5000).atLeast(3)).add(any());
+        }
+        mStartMatrix = matrices.get(0);
+        mEndMatrix = matrices.get(matrices.size() - 1);
+    }
+
+    private List<Matrix> watchImageMatrix(ImageView view) throws Throwable {
+        final List<Matrix> matrices = Mockito.spy(new ArrayList<>());
+        mActivityRule.runOnUiThread(() -> {
+            mActivity.getWindow().getDecorView().getViewTreeObserver().addOnDrawListener(() -> {
+                Matrix matrix = view.getImageMatrix();
+                if (matrices.isEmpty()
+                        || !Objects.equals(matrix, matrices.get(matrices.size() - 1))) {
+                    if (matrix == null) {
+                        matrices.add(matrix);
+                    } else {
+                        matrices.add(new Matrix(matrix));
+                    }
+                }
+            });
+        });
+        return matrices;
     }
 
     private ImageView enterImageViewScene(final ScaleType scaleType) throws Throwable {
         enterScene(R.layout.scene4);
-        final ViewGroup container = (ViewGroup) mActivity.findViewById(R.id.holder);
+        final ViewGroup container = mActivity.findViewById(R.id.holder);
         final ImageView[] imageViews = new ImageView[1];
         mActivityRule.runOnUiThread(() -> {
             mImageView = new ImageView(mActivity);
@@ -259,42 +305,6 @@ public class ChangeImageTransformTest extends BaseTransitionTest {
         });
         mInstrumentation.waitForIdleSync();
         return imageViews[0];
-    }
-
-    private class CaptureMatrix extends ChangeImageTransform {
-        @Override
-        public Animator createAnimator(ViewGroup sceneRoot, TransitionValues startValues,
-                TransitionValues endValues) {
-            Animator animator = super.createAnimator(sceneRoot, startValues, endValues);
-            animator.addListener(new CaptureMatrixListener((ImageView) endValues.view));
-            return animator;
-        }
-    }
-
-    private class CaptureMatrixListener extends AnimatorListenerAdapter {
-        private final ImageView mImageView;
-
-        public CaptureMatrixListener(ImageView view) {
-            mImageView = view;
-        }
-
-        @Override
-        public void onAnimationStart(Animator animation) {
-            mStartMatrix = copyMatrix();
-        }
-
-        @Override
-        public void onAnimationEnd(Animator animation) {
-            mEndMatrix = copyMatrix();
-        }
-
-        private Matrix copyMatrix() {
-            Matrix matrix = mImageView.getImageMatrix();
-            if (matrix != null) {
-                matrix = new Matrix(matrix);
-            }
-            return matrix;
-        }
     }
 }
 
