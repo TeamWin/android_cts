@@ -22,9 +22,11 @@
     <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" />
     <application>
         <activity android:name=".LightBarActivity"
-                android:theme="@android:style/Theme.Material.NoActionBar"></activity>
+                android:theme="@android:style/Theme.Material.NoActionBar"
+                android:screenOrientation="portrait"></activity>
         <activity android:name=".LightBarThemeActivity"
-            android:theme="@style/LightBarTheme"></activity>
+                android:theme="@style/LightBarTheme"
+                android:screenOrientation="portrait"></activity>
         <uses-library android:name="android.test.runner" />
     </application>
 
