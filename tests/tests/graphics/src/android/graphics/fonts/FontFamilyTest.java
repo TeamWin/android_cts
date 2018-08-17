@@ -44,7 +44,7 @@ public class FontFamilyTest {
         Font font = new Font.Builder(am, FONT_DIR + "ascii_g3em_weight400_upright.ttf").build();
         FontFamily family = new FontFamily.Builder(font).build();
         assertNotNull(family);
-        assertEquals(1, family.getFontCount());
+        assertEquals(1, family.getSize());
         assertSame(font, family.getFont(0));
     }
 
@@ -57,7 +57,7 @@ public class FontFamilyTest {
                 am, FONT_DIR + "ascii_m3em_weight700_upright.ttf").build();
         FontFamily family = new FontFamily.Builder(regularFont).addFont(boldFont).build();
         assertNotNull(family);
-        assertEquals(2, family.getFontCount());
+        assertEquals(2, family.getSize());
         assertNotSame(family.getFont(0), family.getFont(1));
         assertTrue(family.getFont(0) == regularFont || family.getFont(0) == boldFont);
         assertTrue(family.getFont(1) == regularFont || family.getFont(1) == boldFont);
@@ -72,7 +72,7 @@ public class FontFamilyTest {
                 .setWeight(700).build();
         FontFamily family = new FontFamily.Builder(regularFont).addFont(boldFont).build();
         assertNotNull(family);
-        assertEquals(2, family.getFontCount());
+        assertEquals(2, family.getSize());
         assertNotSame(family.getFont(0), family.getFont(1));
         assertTrue(family.getFont(0) == regularFont || family.getFont(0) == boldFont);
         assertTrue(family.getFont(1) == regularFont || family.getFont(1) == boldFont);
@@ -87,7 +87,7 @@ public class FontFamilyTest {
                 .setItalic(true).build();
         FontFamily family = new FontFamily.Builder(regularFont).addFont(italicFont).build();
         assertNotNull(family);
-        assertEquals(2, family.getFontCount());
+        assertEquals(2, family.getSize());
         assertNotSame(family.getFont(0), family.getFont(1));
         assertTrue(family.getFont(0) == regularFont || family.getFont(0) == italicFont);
         assertTrue(family.getFont(1) == regularFont || family.getFont(1) == italicFont);
