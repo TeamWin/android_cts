@@ -23,18 +23,14 @@ import android.util.Log;
 import android.view.KeyCharacterMap;
 import android.view.KeyEvent;
 
-import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
-import java.nio.file.FileSystems;
-import java.nio.file.Path;
 
 public class LightBarTestBase {
 
     private static final String TAG = "LightBarTestBase";
 
-    public static final Path DUMP_PATH = FileSystems.getDefault()
-            .getPath("/sdcard/LightBarTestBase/");
+    public static final String DUMP_PATH = "/sdcard/lightstatustest.png";
 
     protected Bitmap takeStatusBarScreenshot(LightBarBaseActivity activity) {
         Bitmap fullBitmap = getInstrumentation().getUiAutomation().takeScreenshot();
@@ -47,17 +43,11 @@ public class LightBarTestBase {
                 fullBitmap.getHeight() - activity.getBottom());
     }
 
-    protected void dumpBitmap(Bitmap bitmap, String name) {
-        File dumpDir = DUMP_PATH.toFile();
-        if (!dumpDir.exists()) {
-            dumpDir.mkdirs();
-        }
-
-        Path filePath = DUMP_PATH.resolve(name + ".png");
-        Log.e(TAG, "Dumping failed bitmap to " + filePath);
+    protected void dumpBitmap(Bitmap bitmap) {
+        Log.e(TAG, "Dumping failed bitmap to " + DUMP_PATH);
         FileOutputStream fileStream = null;
         try {
-            fileStream = new FileOutputStream(filePath.toFile());
+            fileStream = new FileOutputStream(DUMP_PATH);
             bitmap.compress(Bitmap.CompressFormat.PNG, 85, fileStream);
             fileStream.flush();
         } catch (Exception e) {
