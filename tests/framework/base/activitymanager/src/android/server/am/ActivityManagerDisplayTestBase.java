@@ -59,6 +59,7 @@ import android.util.Size;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.function.Consumer;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -435,15 +436,21 @@ class ActivityManagerDisplayTestBase extends ActivityManagerTestBase {
 
         ActivitySession launchActivityOnDisplay(ComponentName activityName,
                 ActivityDisplay display) {
-            try {
-                return SystemUtil.callWithShellPermissionIdentity(
-                        () -> mActivitySessionClient.startActivity(getLaunchActivityBuilder()
-                                .setUseInstrumentation()
-                                .setTargetActivity(activityName)
-                                .setDisplayId(display.mId)));
-            } catch (Exception e) {
-                throw new RuntimeException(e);
-            }
+            return launchActivity(builder -> builder
+                    // TODO(b/112837428): Use public display if possible.
+                    // VirtualDisplayActivity is in different package. If the display is not public,
+                    // it requires shell permission to launch activity ({@see com.android.server.am.
+                    // ActivityStackSupervisor#isCallerAllowedToLaunchOnDisplay}).
+                    .setWithShellPermission(true)
+                    .setTargetActivity(activityName)
+                    .setDisplayId(display.mId));
+        }
+
+        ActivitySession launchActivity(Consumer<LaunchActivityBuilder> setupBuilder) {
+            final LaunchActivityBuilder builder = getLaunchActivityBuilder()
+                    .setUseInstrumentation();
+            setupBuilder.accept(builder);
+            return mActivitySessionClient.startActivity(builder);
         }
 
         @Override

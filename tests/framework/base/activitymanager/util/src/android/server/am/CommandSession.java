@@ -18,6 +18,7 @@ package android.server.am;
 
 import android.app.Activity;
 import android.content.BroadcastReceiver;
+import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
@@ -208,6 +209,18 @@ public final class CommandSession {
         /** Get the intent that launches the activity. Null if launch from shell command. */
         public Intent getOriginalLaunchIntent() {
             return mOriginalLaunchIntent;
+        }
+
+        /** Get a name to represent this session by the original launch intent if possible. */
+        public String getName() {
+            if (mOriginalLaunchIntent != null) {
+                final ComponentName componentName = mOriginalLaunchIntent.getComponent();
+                if (componentName != null) {
+                    return componentName.flattenToShortString();
+                }
+                return mOriginalLaunchIntent.toString();
+            }
+            return "Activity";
         }
 
         /** Send command to the associated activity. */
@@ -877,6 +890,7 @@ public final class CommandSession {
         ON_PICTURE_IN_PICTURE_MODE_CHANGED;
 
         private static final ActivityCallback[] sValues = ActivityCallback.values();
+        public static final int SIZE = sValues.length;
 
         @Override
         public int describeContents() {
