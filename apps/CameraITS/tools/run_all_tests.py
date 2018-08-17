@@ -57,7 +57,9 @@ NOT_YET_MANDATED = {
         'scene1': [
                 'test_ae_precapture_trigger'
         ],
-        'scene2': [],
+        'scene2': [
+                'test_auto_per_frame_control'
+        ],
         'scene3': [],
         'scene4': [],
         'scene5': [],
