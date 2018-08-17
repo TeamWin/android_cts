@@ -27,12 +27,26 @@ LOCAL_STATIC_JAVA_LIBRARIES := dexlib2 doclava jsilver guava antlr-runtime host-
     compatibility-host-util
 
 # These are list of api txt files that are considered as approved APIs
-LOCAL_JAVA_RESOURCE_FILES := $(addprefix frameworks/base/,\
-api/current.txt \
-api/system-current.txt \
-test-base/api/android-test-base-current.txt \
-test-runner/api/android-test-runner-current.txt \
-test-mock/api/android-test-mock-current.txt)
+api_files := $(addprefix frameworks/base/,\
+  api/current.txt:current.txt \
+  api/system-current.txt:system-current.txt \
+  test-base/api/current.txt:android-test-base-current.txt \
+  test-runner/api/current.txt:android-test-runner-current.txt \
+  test-mock/api/current.txt:android-test-mock-current.txt)
+
+define define-api-files
+  $(eval tw := $(subst :, ,$(strip $(1)))) \
+  $(eval $(call copy-one-file,$(word 1,$(tw)),$(2)/$(word 2,$(tw)))) \
+  $(eval LOCAL_JAVA_RESOURCE_FILES += $(2)/$(word 2,$(tw)))
+endef
+
+dest := $(call intermediates-dir-for,JAVA_LIBRARIES,$(LOCAL_MODULE),true,COMMON)
+
+$(foreach f,$(api_files),\
+  $(call define-api-files,$(f),$(dest)))
+
+api_files :=
+dest :=
 
 # API 27 is added since some support libraries are using old APIs
 LOCAL_JAVA_RESOURCE_FILES += prebuilts/sdk/27/public/api/android.txt
