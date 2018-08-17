@@ -24,7 +24,6 @@ import android.opengl.EGLDisplay;
 import android.opengl.EGLSurface;
 import android.support.test.filters.SmallTest;
 import android.support.test.runner.AndroidJUnit4;
-import android.util.Pair;
 import org.junit.BeforeClass;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -71,10 +70,8 @@ public class HardwareBufferTest {
             }, 0);
             EGL14.eglMakeCurrent(eglDisplay, eglSurface, eglSurface, eglContext);
 
-            Pair<Integer, Integer> version = GlUtils.getVersion();
-            sHasFloatBuffers = (version.first >= 3 && version.second >= 2) ||
-                    GlUtils.hasExtensions(
-                            "GL_OES_texture_half_float",
+            sHasFloatBuffers = GlUtils.getMajorVersion() >= 3 ||
+                    GlUtils.hasExtensions("GL_OES_texture_half_float",
                             "GL_OES_texture_half_float_linear");
 
             EGL14.eglMakeCurrent(eglDisplay, EGL_NO_SURFACE, EGL_NO_SURFACE, EGL_NO_CONTEXT);
