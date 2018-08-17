@@ -29,7 +29,6 @@ import android.graphics.Bitmap;
 import android.support.test.InstrumentationRegistry;
 import android.support.test.rule.ActivityTestRule;
 import android.util.Log;
-import android.view.KeyCharacterMap;
 import android.view.KeyEvent;
 import android.view.WindowInsets;
 
@@ -75,13 +74,11 @@ public class LightBarTestBase {
 
     private boolean hasVirtualNavigationBar(ActivityTestRule<? extends LightBarBaseActivity> rule)
             throws Throwable {
-        boolean hasBackKey = KeyCharacterMap.deviceHasKey(KeyEvent.KEYCODE_BACK);
-        boolean hasHomeKey = KeyCharacterMap.deviceHasKey(KeyEvent.KEYCODE_HOME);
         final WindowInsets[] inset = new WindowInsets[1];
         rule.runOnUiThread(()-> {
             inset[0] = rule.getActivity().getRootWindowInsets();
         });
-        return !hasBackKey || !hasHomeKey || inset[0].getStableInsetBottom() == 0;
+        return inset[0].getStableInsetBottom() > 0;
     }
 
     private boolean isRunningInVr() {
