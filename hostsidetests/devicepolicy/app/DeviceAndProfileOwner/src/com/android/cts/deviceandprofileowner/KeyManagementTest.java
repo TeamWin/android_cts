@@ -445,6 +445,18 @@ public class KeyManagementTest extends BaseDeviceAdminTest {
             KeyGenParameterSpec spec = specBuilder.build();
             AttestedKeyPair generated = mDevicePolicyManager.generateKeyPair(
                     getWho(), keyAlgorithm, spec, deviceIdAttestationFlags);
+            // Bail out early if StrongBox was requested and generation failed.
+            // Note the underlying assumption that StrongBox supports key attestation _and_
+            // Device ID attestation (i.e. no StrongBox implementations that do not implement
+            // Device ID attestation).
+            // If generation has failed and StrongBox was requested, it is then a failure
+            // regardless of the kind of attestation requested.
+            if (useStrongBox && generated == null) {
+                assertFalse("StrongBox-backed key attestation must not fail if the device " +
+                        "declares support for StrongBox", hasStrongBox());
+                return null;
+            }
+
             // If Device ID attestation was requested, check it succeeded if and only if device ID
             // attestation is supported.
             if (isDeviceIdAttestationRequested(deviceIdAttestationFlags)) {
@@ -496,14 +508,10 @@ public class KeyManagementTest extends BaseDeviceAdminTest {
 
     public void testCanGenerateKeyPairWithKeyAttestationUsingStrongBox() throws Exception {
         for (SupportedKeyAlgorithm supportedKey: SUPPORTED_KEY_ALGORITHMS) {
-            Certificate attestation = generateKeyAndCheckAttestation(
+            generateKeyAndCheckAttestation(
                     supportedKey.keyAlgorithm, supportedKey.signatureAlgorithm,
                     supportedKey.signaturePaddingSchemes, true /* useStrongBox */,
                     0 /* idAttestationFlags */);
-            if (attestation == null) {
-                assertFalse("StrongBox-backed key attestation must not fail if the device " +
-                        "declares support for StrongBox", hasStrongBox());
-            }
         }
     }
 
@@ -557,6 +565,7 @@ public class KeyManagementTest extends BaseDeviceAdminTest {
                     // but StrongBox is not available on the device.
                     if (attestation == null && useStrongBox) {
                         assertFalse(hasStrongBox());
+                        continue;
                     }
                     assertNotNull(String.format(
                             "Attestation should be valid for key %s with attestation modes %s",
