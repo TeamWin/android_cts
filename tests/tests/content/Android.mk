@@ -39,7 +39,8 @@ LOCAL_STATIC_JAVA_LIBRARIES :=  \
     services.core \
     junit \
     truth-prebuilt \
-    accountaccesslib
+    accountaccesslib \
+	ub-uiautomator
 
 LOCAL_STATIC_ANDROID_LIBRARIES := androidx.legacy_legacy-support-v4
 

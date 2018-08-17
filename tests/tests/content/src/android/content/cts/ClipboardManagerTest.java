@@ -22,6 +22,7 @@ import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 
+import android.app.Activity;
 import android.content.ClipData;
 import android.content.ClipData.Item;
 import android.content.ClipDescription;
@@ -33,6 +34,9 @@ import android.content.Intent;
 import android.net.Uri;
 import android.support.test.InstrumentationRegistry;
 import android.support.test.runner.AndroidJUnit4;
+import android.support.test.uiautomator.By;
+import android.support.test.uiautomator.UiDevice;
+import android.support.test.uiautomator.Until;
 
 import org.junit.Before;
 import org.junit.Test;
@@ -45,11 +49,14 @@ import java.util.concurrent.TimeUnit;
 public class ClipboardManagerTest {
     private Context mContext;
     private ClipboardManager mClipboardManager;
+    private UiDevice mUiDevice;
 
     @Before
     public void setUp() throws Exception {
         mContext = InstrumentationRegistry.getTargetContext();
         mClipboardManager = mContext.getSystemService(ClipboardManager.class);
+        mUiDevice = UiDevice.getInstance(InstrumentationRegistry.getInstrumentation());
+        launchActivity(MockActivity.class);
     }
 
     @Test
@@ -230,6 +237,53 @@ public class ClipboardManagerTest {
         assertFalse(mClipboardManager.hasText());
         assertNull(mClipboardManager.getPrimaryClip());
         assertNull(mClipboardManager.getPrimaryClipDescription());
+    }
+
+    @Test
+    public void testPrimaryClipNotAvailableWithoutFocus() throws Exception {
+        ClipData textData = ClipData.newPlainText("TextLabel", "Text");
+        assertSetPrimaryClip(textData, "TextLabel",
+                new String[] {ClipDescription.MIMETYPE_TEXT_PLAIN},
+                new ExpectedClipItem("Text", null, null));
+
+        // Press the home button to unfocus the app.
+        mUiDevice.pressHome();
+
+        // We should see an empty clipboard now.
+        assertFalse(mClipboardManager.hasPrimaryClip());
+        assertFalse(mClipboardManager.hasText());
+        assertNull(mClipboardManager.getPrimaryClip());
+        assertNull(mClipboardManager.getPrimaryClipDescription());
+
+        // Attempts to set the clipdata should be ignored.
+        ClipData badData = ClipData.newPlainText("TextLabel", "BadText");
+        mClipboardManager.setPrimaryClip(badData);
+        assertFalse(mClipboardManager.hasPrimaryClip());
+        assertFalse(mClipboardManager.hasText());
+        assertNull(mClipboardManager.getPrimaryClip());
+        assertNull(mClipboardManager.getPrimaryClipDescription());
+
+        // Launch an activity to get back in focus.
+        launchActivity(MockActivity.class);
+
+
+        // Verify clipboard access is restored.
+        assertNotNull(mClipboardManager.getPrimaryClip());
+        assertNotNull(mClipboardManager.getPrimaryClipDescription());
+
+        // Verify we were unable to change the clipboard while out of focus.
+        assertClipData(mClipboardManager.getPrimaryClip(),
+                "TextLabel",
+                new String[] {ClipDescription.MIMETYPE_TEXT_PLAIN},
+                new ExpectedClipItem("Text", null, null));
+    }
+
+    private void launchActivity(Class<? extends Activity> clazz) {
+        Intent intent = new Intent(Intent.ACTION_MAIN);
+        intent.setClassName(mContext.getPackageName(), clazz.getName());
+        intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+        mContext.startActivity(intent);
+        mUiDevice.wait(Until.hasObject(By.clazz(clazz)), 5000);
     }
 
     private class ExpectedClipItem {
