@@ -1772,7 +1772,7 @@ TEST_P(DepthTest, DepthCanBeSampled) {
     glFinish();
 
     // Check the rendered pixels. There should be a square in the middle.
-    const GoldenColor kDepth = mGLVersion > 30 ? kRed : kWhite;
+    const GoldenColor kDepth = mGLVersion < 30 ? kWhite : kRed;
     std::vector<GoldenPixel> goldens{
         {5, 35, kZero}, {15, 35, kZero},  {25, 35, kZero},  {35, 35, kZero},
         {5, 25, kZero}, {15, 25, kDepth}, {25, 25, kDepth}, {35, 25, kZero},
@@ -1823,7 +1823,7 @@ TEST_P(DepthTest, DepthCubemapSampling) {
         SetUpProgram(kVertexShader, kCubeMapFragmentShader, kQuadPositions, 0.5f, kTextureUnit);
     }
     SetUpFramebuffer(40, 40, 0, kRenderbuffer);
-    const GoldenColor kDepth = mGLVersion > 30 ? kRed : kWhite;
+    const GoldenColor kDepth = mGLVersion < 30 ? kWhite: kRed;
     for (int i = 0; i < 6; ++i) {
         float face_vector[3] = {0.f, 0.f, 0.f};
         face_vector[i / 2] = (i % 2) ? -1.f : 1.f;
