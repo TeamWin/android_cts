@@ -106,7 +106,7 @@ def main():
                         (THRESH_EXP_KNEE - e_test) / THRESH_EXP_KNEE)
             s_msg = 's_write: %d, s_read: %d, TOL=%.f%%' % (
                     s_test, s_res, THRESH_ROUND_DOWN_GAIN*100)
-            e_msg = 'e_write: %.2fms, e_read: %.2fms, TOL=%.f%%' % (
+            e_msg = 'e_write: %.3fms, e_read: %.3fms, TOL=%.f%%' % (
                     e_test/1.0E6, e_res/1.0E6, thresh_round_down_exp*100)
             assert 0 <= s_test - s_res < s_test * THRESH_ROUND_DOWN_GAIN, s_msg
             assert 0 <= e_test - e_res < e_test * thresh_round_down_exp, e_msg
