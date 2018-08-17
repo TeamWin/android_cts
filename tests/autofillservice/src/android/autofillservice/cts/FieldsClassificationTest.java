@@ -183,6 +183,46 @@ public class FieldsClassificationTest extends AbstractGridActivityTestCase {
     }
 
     @Test
+    public void testHit_sameValueForMultipleCategories() throws Exception {
+        // Set service.
+        enableService();
+
+        // Set expectations.
+        mAfm.setUserData(new UserData
+                .Builder("id", "FULLY", "cat1")
+                .add("FULLY", "cat2")
+                .build());
+        final MyAutofillCallback callback = mActivity.registerCallback();
+        final EditText field = mActivity.getCell(1, 1);
+        final AutofillId fieldId = field.getAutofillId();
+        sReplier.addResponse(new CannedFillResponse.Builder()
+                .setFieldClassificationIds(fieldId)
+                .build());
+
+        // Trigger autofill
+        mActivity.focusCell(1, 1);
+        sReplier.getNextFillRequest();
+
+        mUiBot.assertNoDatasetsEver();
+        callback.assertUiUnavailableEvent(field);
+
+        // Simulate user input
+        mActivity.setText(1, 1, "fully");
+
+        // Finish context.
+        mAfm.commit();
+
+        // Assert results
+        final List<Event> events = InstrumentedAutoFillService.getFillEvents(1);
+        assertFillEventForFieldsClassification(events.get(0),
+                new FieldClassificationResult[] {
+                        new FieldClassificationResult(fieldId,
+                                new String[] { "cat1", "cat2"},
+                                new float[] {1, 1})
+                });
+    }
+
+    @Test
     public void testHit_manyUserData_oneDetectableField_bestMatchIsFirst() throws Exception {
         manyUserData_oneDetectableField(true);
     }
