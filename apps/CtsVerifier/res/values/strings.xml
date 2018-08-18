@@ -1999,7 +1999,7 @@ You should be prompted to select credentials; choose the ones you just installed
     <string name="provisioning_byod_recents_verify_redacted_instruction">
         1) Follow the instructions on-screen to set a work password.\n
         2) Turn the screen off and on again, or use the "lock now" button, to lock the work profile.\n
-        3) Open Recents.\n
+        3) Go to home screen and then open Recents.\n
         4) Confirm that this "CTS Verifier" activity is shown in Recents.\n
         5) Confirm that the contents of the activity <b>are</b> hidden.\n
         6) Return to this page and pass the test.
