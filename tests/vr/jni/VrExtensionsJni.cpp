@@ -97,9 +97,13 @@ void fail(JNIEnv* env, const char* format, ...) {
     vasprintf(&msg, format, args);
     va_end(args);
     jclass exClass;
-    const char* className = "java/lang/AssertionError";
-    exClass = env->FindClass(className);
-    env->ThrowNew(exClass, msg);
+    exClass = env->FindClass("java/lang/AssertionError");
+    jmethodID constructor =
+        env->GetMethodID(exClass, "<init>",
+                         "(Ljava/lang/String;Ljava/lang/Throwable;)V");
+    jstring msgStr = env->NewStringUTF(msg);
+    jobject exception = env->NewObject(exClass, constructor, msgStr, nullptr);
+    env->Throw(static_cast<jthrowable>(exception));
     free(msg);
 }
 
