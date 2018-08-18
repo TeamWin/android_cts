@@ -1067,6 +1067,7 @@ void AHardwareBufferGLTest::SetUpFramebuffer(int width, int height, int layer,
                 GLuint renderbuffer = 0;
                 glGenRenderbuffers(1, &renderbuffer);
                 glBindRenderbuffer(GL_RENDERBUFFER, renderbuffer);
+                ASSERT_EQ(GLenum{GL_NO_ERROR}, glGetError());
                 if (GetParam().stride & kGlFormat) {
                     glRenderbufferStorage(GL_RENDERBUFFER, GetParam().format, width, height);
                 } else {
@@ -1413,6 +1414,8 @@ TEST_P(ColorTest, GpuSampledImageCanBeSampled) {
     for (int i = 0; i < mContextCount; ++i) {
         MakeCurrent(i);
         SetUpTexture(desc, kTextureUnit);
+        glTexParameteri(mTexTarget, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+        glTexParameteri(mTexTarget, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
     }
     // In the second context, upload opaque red to the texture.
     UploadRedPixels(desc);
@@ -1459,6 +1462,8 @@ TEST_P(ColorTest, GpuColorOutputAndSampledImage) {
     for (int i = 0; i < mContextCount; ++i) {
         MakeCurrent(i);
         SetUpTexture(desc, kTextureUnit);
+        glTexParameteri(mTexTarget, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+        glTexParameteri(mTexTarget, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
     }
 
     // In the second context, draw a checkerboard pattern.
