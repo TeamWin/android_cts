@@ -17,10 +17,12 @@
 package com.android.cts.releaseparser;
 
 import com.android.cts.releaseparser.ReleaseProto.*;
+import com.google.protobuf.TextFormat;
 
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
+import java.nio.charset.Charset;
 import java.nio.file.Paths;
 
 /** Main of release parser */
@@ -87,12 +89,18 @@ public class Main {
         }
 
         ReleaseParser relParser = new ReleaseParser(relFolder);
-        relNameVer = relParser.getRelNameVer();
+        relNameVer = relParser.getReleaseId();
 
         relParser.writeRelesaeContentCsvFile(
                 relNameVer,
                 Paths.get(outputPath, String.format("%s-ReleaseContent.csv", relNameVer))
                         .toString());
+
+        JsonPrinter jPrinter =
+                new JsonPrinter(
+                        relParser.getReleaseContent(),
+                        Paths.get(outputPath, relNameVer).toString());
+        jPrinter.write();
 
         relParser.writeKnownFailureCsvFile(
                 relNameVer,
@@ -108,6 +116,20 @@ public class Main {
                                     .toString());
             try {
                 relContent.writeTo(output);
+            } finally {
+                output.close();
+            }
+
+            FileOutputStream txtOutput =
+                    new FileOutputStream(
+                            Paths.get(
+                                            outputPath,
+                                            String.format("%s-ReleaseContent.txt", relNameVer))
+                                    .toString());
+            try {
+                txtOutput.write(
+                        TextFormat.printToString(relContent).getBytes(Charset.forName("UTF-8")));
+                txtOutput.flush();
             } finally {
                 output.close();
             }

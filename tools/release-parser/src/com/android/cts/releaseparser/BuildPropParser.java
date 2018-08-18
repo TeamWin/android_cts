@@ -23,6 +23,7 @@ import java.io.File;
 import java.io.FileReader;
 import java.io.IOException;
 import java.util.HashMap;
+import java.util.Map;
 
 public class BuildPropParser extends FileParser {
     private Entry.EntryType mType;
@@ -41,31 +42,33 @@ public class BuildPropParser extends FileParser {
     }
 
     public String getBuildNumber() {
-        if (mType == null) {
-            parseFile();
-        }
-        return mProp.get("ro.build.version.incremental");
+        return getProperty("ro.build.version.incremental");
     }
 
     public String getVersion() {
-        if (mType == null) {
-            parseFile();
-        }
-        return mProp.get("ro.build.id");
+        return getProperty("ro.build.id");
     }
 
     public String getName() {
-        if (mType == null) {
-            parseFile();
-        }
-        return mProp.get("ro.product.device");
+        return getProperty("ro.product.device");
     }
 
     public String getFullName() {
+        return getProperty("ro.build.flavor");
+    }
+
+    public Map<String, String> getProperties() {
         if (mType == null) {
             parseFile();
         }
-        return mProp.get("ro.build.flavor");
+        return mProp;
+    }
+
+    public String getProperty(String propertyName) {
+        if (mType == null) {
+            parseFile();
+        }
+        return mProp.get(propertyName);
     }
 
     private void parseFile() {
@@ -76,7 +79,9 @@ public class BuildPropParser extends FileParser {
             mProp = new HashMap<>();
             while ((line = buffReader.readLine()) != null) {
                 String trimLine = line.trim();
-                if (!trimLine.startsWith("#")) {
+                // skips blank lines or comments e.g. # begin build properties
+                if (trimLine.length() > 0 && !trimLine.startsWith("#")) {
+                    // gets name=value pair, e.g. ro.build.id=PPR1.180610.011
                     String[] phases = trimLine.split("=");
                     if (phases.length > 1) {
                         mProp.put(phases[0], phases[1]);

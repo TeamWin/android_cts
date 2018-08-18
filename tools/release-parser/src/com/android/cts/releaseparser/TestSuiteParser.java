@@ -165,8 +165,7 @@ class TestSuiteParser {
                 default:
                     //ToDo
                     moduleBuilder.setTestType(TestSuite.TestType.UNKNOWN);
-                    TestSuite.Module.Package.Builder pkgBuilder =
-                            TestSuite.Module.Package.newBuilder();
+                    ApiPackage.Builder pkgBuilder = ApiPackage.newBuilder();
                     moduleBuilder.addPackages(pkgBuilder);
                     System.err.printf(
                             "ToDo Test Type: %s %s\n", tClass.getTestClass(), tClass.getPackage());
@@ -182,8 +181,7 @@ class TestSuiteParser {
         for (TestModuleConfig.TargetPreparer tPrep : tPrepList) {
             for (Option opt : tPrep.getOptionsList()) {
                 if (TEST_FILE_NAME_TAG.equalsIgnoreCase(opt.getName())) {
-                    TestSuite.Module.Package.Builder pkgBuilder =
-                            TestSuite.Module.Package.newBuilder();
+                    ApiPackage.Builder pkgBuilder = ApiPackage.newBuilder();
                     String testFileName = opt.getValue();
                     Entry tEntry = getFileEntry(testFileName);
                     pkgBuilder.setName(testFileName);
@@ -207,8 +205,7 @@ class TestSuiteParser {
         return fEntry;
     }
     // Parses test case list from an APK
-    private void parseApkTestCase(
-            TestSuite.Module.Package.Builder pkgBuilder, TestModuleConfig config) {
+    private void parseApkTestCase(ApiPackage.Builder pkgBuilder, TestModuleConfig config) {
         DexFile dexFile = null;
         String apkPath = Paths.get(mFolderPath, pkgBuilder.getPackageFile()).toString();
         String moduleName = config.getModuleName();
@@ -228,8 +225,7 @@ class TestSuiteParser {
 
                 // Parses test classes
                 TestClassType cType = chkTestClassType(classDef);
-                TestSuite.Module.Package.Class.Builder tClassBuilder =
-                        TestSuite.Module.Package.Class.newBuilder();
+                ApiClass.Builder tClassBuilder = ApiClass.newBuilder();
                 switch (cType) {
                     case JUNIT3:
                         tClassBuilder.setTestClassType(cType);
@@ -297,10 +293,8 @@ class TestSuiteParser {
         }
     }
 
-    private TestSuite.Module.Package.Class.Method.Builder newTestBuilder(
-            String moduleName, String className, String testName) {
-        TestSuite.Module.Package.Class.Method.Builder testBuilder =
-                TestSuite.Module.Package.Class.Method.newBuilder();
+    private ApiMethod.Builder newTestBuilder(String moduleName, String className, String testName) {
+        ApiMethod.Builder testBuilder = ApiMethod.newBuilder();
         testBuilder.setName(testName);
         // Check if it's an known failure
         String nfFilter = getKnownFailureFilter(moduleName, className, testName);
@@ -312,7 +306,7 @@ class TestSuiteParser {
 
     private void parseJavaHostTest(
             TestSuite.Module.Builder moduleBuilder, TestModuleConfig config, String tClass) {
-        TestSuite.Module.Package.Builder pkgBuilder = TestSuite.Module.Package.newBuilder();
+        ApiPackage.Builder pkgBuilder = ApiPackage.newBuilder();
         //Assuming there is only one test Jar
         String testFileName = config.getTestJars(0);
         Entry tEntry = getFileEntry(testFileName);
@@ -328,8 +322,7 @@ class TestSuiteParser {
                         Paths.get(mFolderPath, mRelContent.getTestSuiteTradefed()).toFile());
 
         for (Class<?> c : classes) {
-            TestSuite.Module.Package.Class.Builder tClassBuilder =
-                    TestSuite.Module.Package.Class.newBuilder();
+            ApiClass.Builder tClassBuilder = ApiClass.newBuilder();
             tClassBuilder.setTestClassType(TestClassType.JAVAHOST);
             tClassBuilder.setName(c.getName());
 
@@ -337,8 +330,7 @@ class TestSuiteParser {
                 int mdf = m.getModifiers();
                 if (Modifier.isPublic(mdf) || Modifier.isProtected(mdf)) {
                     if (m.getName().startsWith(TEST_PREFIX_TAG)) {
-                        TestSuite.Module.Package.Class.Method.Builder methodBuilder =
-                                TestSuite.Module.Package.Class.Method.newBuilder();
+                        ApiMethod.Builder methodBuilder = ApiMethod.newBuilder();
                         methodBuilder.setName(m.getName());
                         // Check if it's an known failure
                         String nfFilter =
@@ -511,9 +503,9 @@ class TestSuiteParser {
             pWriter.println(
                     "release,module,test_class,test,test_package,test_type,known_failure_filter,package_content_id");
             for (TestSuite.Module module : ts.getModulesList()) {
-                for (TestSuite.Module.Package pkg : module.getPackagesList()) {
-                    for (TestSuite.Module.Package.Class cls : pkg.getClassesList()) {
-                        for (TestSuite.Module.Package.Class.Method mtd : cls.getMethodsList()) {
+                for (ApiPackage pkg : module.getPackagesList()) {
+                    for (ApiClass cls : pkg.getClassesList()) {
+                        for (ApiMethod mtd : cls.getMethodsList()) {
                             pWriter.printf(
                                     "%s,%s,%s,%s,%s,%s,%s,%s\n",
                                     relNameVer,
@@ -550,9 +542,9 @@ class TestSuiteParser {
                 int classCnt = 0;
                 int methodCnt = 0;
                 int kfCnt = 0;
-                for (TestSuite.Module.Package pkg : module.getPackagesList()) {
-                    for (TestSuite.Module.Package.Class cls : pkg.getClassesList()) {
-                        for (TestSuite.Module.Package.Class.Method mtd : cls.getMethodsList()) {
+                for (ApiPackage pkg : module.getPackagesList()) {
+                    for (ApiClass cls : pkg.getClassesList()) {
+                        for (ApiMethod mtd : cls.getMethodsList()) {
                             // Filter out known failures
                             if (mtd.getKnownFailureFilter().isEmpty()) {
                                 methodCnt++;
