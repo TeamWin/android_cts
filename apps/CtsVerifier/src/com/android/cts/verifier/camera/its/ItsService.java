@@ -101,6 +101,11 @@ import java.util.concurrent.atomic.AtomicInteger;
 public class ItsService extends Service implements SensorEventListener {
     public static final String TAG = ItsService.class.getSimpleName();
 
+    // Version number to keep host/server communication in sync
+    // This string must be in sync with python side device.py
+    // Updated when interface between script and ItsService is changed
+    private final String ITS_SERVICE_VERSION = "1.0";
+
     private final int SERVICE_NOTIFICATION_ID = 37; // random int that is unique within app
     private NotificationChannel mChannel;
 
@@ -669,6 +674,8 @@ public class ItsService extends Service implements SensorEventListener {
                     doGetCameraIds();
                 } else if ("doReprocessCapture".equals(cmdObj.getString("cmdName"))) {
                     doReprocessCapture(cmdObj);
+                } else if ("getItsVersion".equals(cmdObj.getString("cmdName"))) {
+                    mSocketRunnableObj.sendResponse("ItsVersion", ITS_SERVICE_VERSION);
                 } else {
                     throw new ItsException("Unknown command: " + cmd);
                 }

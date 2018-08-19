@@ -30,6 +30,9 @@ import its.image
 
 import numpy as np
 
+# For sanity checking the installed APK's target SDK version
+MIN_SUPPORTED_SDK_VERSION = 28 # P
+
 CHART_DELAY = 1  # seconds
 CHART_DISTANCE = 30.0  # cm
 CHART_HEIGHT = 13.5  # cm
@@ -48,12 +51,15 @@ VGA_WIDTH = 640
 # Not yet mandated tests
 NOT_YET_MANDATED = {
         'scene0': [
-                'test_test_patterns'
+                'test_test_patterns',
+                'test_tonemap_curve'
         ],
         'scene1': [
                 'test_ae_precapture_trigger'
         ],
-        'scene2': [],
+        'scene2': [
+                'test_auto_per_frame_control'
+        ],
         'scene3': [],
         'scene4': [],
         'scene5': [],
@@ -233,6 +239,50 @@ def main():
     device_id = its.device.get_device_id()
     device_id_arg = "device=" + device_id
     print "Testing device " + device_id
+
+    # Sanity check CtsVerifier SDK level
+    # Here we only do warning as there is no guarantee on pm dump output formt not changed
+    # Also sometimes it's intentional to run mismatched versions
+    cmd = "adb -s %s shell pm dump com.android.cts.verifier" % (device_id)
+    dump_path = os.path.join(topdir, 'CtsVerifier.txt')
+    with open(dump_path, 'w') as fout:
+        fout.write('ITS minimum supported SDK version is %d\n--\n' % (MIN_SUPPORTED_SDK_VERSION))
+        fout.flush()
+        ret_code = subprocess.call(cmd.split(), stdout=fout)
+
+    if ret_code != 0:
+        print "Warning: cannot get CtsVerifier SDK version. Is CtsVerifier installed?"
+
+    ctsv_version = None
+    ctsv_version_name = None
+    with open(dump_path, 'r') as f:
+        target_sdk_found = False
+        version_name_found = False
+        for line in f:
+            match = re.search('targetSdk=([0-9]+)', line)
+            if match:
+                ctsv_version = int(match.group(1))
+                target_sdk_found = True
+            match = re.search('versionName=([\S]+)$', line)
+            if match:
+                ctsv_version_name = match.group(1)
+                version_name_found = True
+            if target_sdk_found and version_name_found:
+                break
+
+    if ctsv_version is None:
+        print "Warning: cannot get CtsVerifier SDK version. Is CtsVerifier installed?"
+    elif ctsv_version < MIN_SUPPORTED_SDK_VERSION:
+        print "Warning: CtsVerifier version (%d) < ITS version (%d), is this intentional?" % (
+                ctsv_version, MIN_SUPPORTED_SDK_VERSION)
+    else:
+        print "CtsVerifier targetSdk is", ctsv_version
+        if ctsv_version_name:
+            print "CtsVerifier version name is", ctsv_version_name
+
+    # Hard check on ItsService/host script version that should catch incompatible APK/script
+    with ItsSession() as cam:
+        cam.check_its_version_compatible()
 
     # Sanity Check for devices
     device_bfp = its.device.get_device_fingerprint(device_id)

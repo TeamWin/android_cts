@@ -39,9 +39,9 @@ endef
 $(eval $(call build_xml_api_file,current.api,frameworks/base/api/current.txt))
 $(eval $(call build_xml_api_file,system-current.api,frameworks/base/api/system-current.txt))
 $(eval $(call build_xml_api_file,system-removed.api,frameworks/base/api/system-removed.txt))
-$(eval $(call build_xml_api_file,android-test-base-current.api,frameworks/base/test-base/api/android-test-base-current.txt))
-$(eval $(call build_xml_api_file,android-test-mock-current.api,frameworks/base/test-mock/api/android-test-mock-current.txt))
-$(eval $(call build_xml_api_file,android-test-runner-current.api,frameworks/base/test-runner/api/android-test-runner-current.txt))
+$(eval $(call build_xml_api_file,android-test-base-current.api,frameworks/base/test-base/api/current.txt))
+$(eval $(call build_xml_api_file,android-test-mock-current.api,frameworks/base/test-mock/api/current.txt))
+$(eval $(call build_xml_api_file,android-test-runner-current.api,frameworks/base/test-runner/api/current.txt))
 $(foreach ver,$(PLATFORM_SYSTEMSDK_VERSIONS),\
   $(if $(call math_is_number,$(ver)),\
     $(eval $(call build_xml_api_file,system-$(ver).api,prebuilts/sdk/$(ver)/system/api/android.txt))\

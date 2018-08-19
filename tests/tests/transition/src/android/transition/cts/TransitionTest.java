@@ -429,9 +429,14 @@ public class TransitionTest extends BaseTransitionTest {
         DurationListener durationListener = new DurationListener();
         mTransition.addListener(durationListener);
         startTransition(R.layout.scene3);
-        waitForEnd(800);
+        waitForEnd(5000);
+        // We can't be certain that the onTransitionStart() and onTransitionEnd()
+        // are going to be called exactly 500ms apart. There could be more of a
+        // delay at the beginning than the end. So, we give it some room at the
+        // minimum. It can also take a lot longer on the larger side because of
+        // slow devices.
         assertThat(durationListener.getDuration(),
-                allOf(greaterThanOrEqualTo(500L), lessThan(900L)));
+                allOf(greaterThanOrEqualTo(400L), lessThan(900L)));
     }
 
     @Test
@@ -743,17 +748,17 @@ public class TransitionTest extends BaseTransitionTest {
 
     private static class DurationListener extends TransitionListenerAdapter {
 
-        private long mUptimeMillisStart = -1;
+        private long mElapsedMillisStart = -1;
         private long mDuration = -1;
 
         @Override
         public void onTransitionStart(Transition transition) {
-            mUptimeMillisStart = SystemClock.uptimeMillis();
+            mElapsedMillisStart = SystemClock.elapsedRealtime();
         }
 
         @Override
         public void onTransitionEnd(Transition transition) {
-            mDuration = SystemClock.uptimeMillis() - mUptimeMillisStart;
+            mDuration = SystemClock.elapsedRealtime() - mElapsedMillisStart;
         }
 
         public long getDuration() {

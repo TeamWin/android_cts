@@ -16,26 +16,16 @@
 
 package android.hardware.cts;
 
-import android.hardware.HardwareBuffer;
-import android.opengl.EGL14;
-import android.opengl.EGLConfig;
-import android.opengl.EGLContext;
-import android.opengl.EGLDisplay;
-import android.opengl.EGLSurface;
-import android.support.test.filters.SmallTest;
-import android.support.test.runner.AndroidJUnit4;
-import android.util.Pair;
-import org.junit.BeforeClass;
-import org.junit.Test;
-import org.junit.runner.RunWith;
-
-import static android.opengl.EGL14.EGL_HEIGHT;
-import static android.opengl.EGL14.EGL_NONE;
-import static android.opengl.EGL14.EGL_NO_CONTEXT;
-import static android.opengl.EGL14.EGL_NO_SURFACE;
-import static android.opengl.EGL14.EGL_WIDTH;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
+
+import android.graphics.PixelFormat;
+import android.hardware.HardwareBuffer;
+import android.support.test.filters.SmallTest;
+import android.support.test.runner.AndroidJUnit4;
+
+import org.junit.Test;
+import org.junit.runner.RunWith;
 
 /**
  * Test {@link HardwareBuffer}.
@@ -43,60 +33,12 @@ import static org.junit.Assert.assertTrue;
 @SmallTest
 @RunWith(AndroidJUnit4.class)
 public class HardwareBufferTest {
-    private static boolean sHasFloatBuffers;
-
-    @SuppressWarnings("SameParameterValue")
     private static native HardwareBuffer nativeCreateHardwareBuffer(int width, int height,
             int format, int layers, long usage);
     private static native void nativeReleaseHardwareBuffer(HardwareBuffer hardwareBufferObj);
 
     static {
         System.loadLibrary("ctshardware_jni");
-    }
-
-    @BeforeClass
-    public static void hasFloatBuffers() {
-        EGLDisplay eglDisplay = null;
-        EGLContext eglContext = null;
-        EGLSurface eglSurface = null;
-        try {
-            eglDisplay = Egl14Utils.createEglDisplay();
-            EGLConfig eglConfig = Egl14Utils.getEglConfig(eglDisplay, 2);
-            eglContext = Egl14Utils.createEglContext(eglDisplay, eglConfig, 2);
-
-            eglSurface = EGL14.eglCreatePbufferSurface(eglDisplay, eglConfig, new int[] {
-                    EGL_WIDTH, 1,
-                    EGL_HEIGHT, 1,
-                    EGL_NONE
-            }, 0);
-            EGL14.eglMakeCurrent(eglDisplay, eglSurface, eglSurface, eglContext);
-
-            Pair<Integer, Integer> version = GlUtils.getVersion();
-            sHasFloatBuffers = (version.first >= 3 && version.second >= 2) ||
-                    GlUtils.hasExtensions(
-                            "GL_OES_texture_half_float",
-                            "GL_OES_texture_half_float_linear");
-
-            EGL14.eglMakeCurrent(eglDisplay, EGL_NO_SURFACE, EGL_NO_SURFACE, EGL_NO_CONTEXT);
-            EGL14.eglDestroySurface(eglDisplay, eglSurface);
-
-            Egl14Utils.destroyEglContext(eglDisplay, eglContext);
-            Egl14Utils.releaseAndTerminate(eglDisplay);
-
-            eglDisplay = null;
-            eglContext = null;
-            eglSurface = null;
-        } finally {
-            if (eglDisplay != null) {
-                if (eglContext != null) {
-                    EGL14.eglDestroyContext(eglDisplay, eglContext);
-                }
-                if (eglSurface != null) {
-                    EGL14.eglDestroySurface(eglDisplay, eglSurface);
-                }
-                EGL14.eglTerminate(eglDisplay);
-            }
-        }
     }
 
     @Test
@@ -122,21 +64,12 @@ public class HardwareBufferTest {
         buffer = HardwareBuffer.create(2, 1, HardwareBuffer.BLOB, 1,
                 HardwareBuffer.USAGE_CPU_READ_RARELY);
         assertEquals(HardwareBuffer.BLOB, buffer.getFormat());
-
-        if (sHasFloatBuffers) {
-            buffer = HardwareBuffer.create(2, 4, HardwareBuffer.RGBA_FP16, 1,
-                    HardwareBuffer.USAGE_CPU_READ_RARELY);
-            assertEquals(HardwareBuffer.RGBA_FP16, buffer.getFormat());
-            buffer = HardwareBuffer.create(2, 4, HardwareBuffer.RGBA_1010102, 1,
-                    HardwareBuffer.USAGE_CPU_READ_RARELY);
-            assertEquals(HardwareBuffer.RGBA_1010102, buffer.getFormat());
-        }
     }
 
-    @SuppressWarnings("EmptyCatchBlock")
     @Test
     public void testCreateFailsWithInvalidArguments() {
         HardwareBuffer buffer = null;
+        assertEquals(null, buffer);
         try {
             buffer = HardwareBuffer.create(0, 4, HardwareBuffer.RGB_888, 1,
                     HardwareBuffer.USAGE_CPU_READ_RARELY);
@@ -163,20 +96,6 @@ public class HardwareBufferTest {
         } catch (IllegalArgumentException e) {}
         assertEquals(null, buffer);
 
-        if (sHasFloatBuffers) {
-            try {
-                buffer = HardwareBuffer.create(0, 4, HardwareBuffer.RGBA_FP16, 1,
-                        HardwareBuffer.USAGE_CPU_READ_RARELY);
-            } catch (IllegalArgumentException e) {
-            }
-            assertEquals(null, buffer);
-            try {
-                buffer = HardwareBuffer.create(0, 4, HardwareBuffer.RGBA_1010102, 1,
-                        HardwareBuffer.USAGE_CPU_READ_RARELY);
-            } catch (IllegalArgumentException e) {
-            }
-            assertEquals(null, buffer);
-        }
     }
 
     @Test

@@ -17,6 +17,7 @@
 package android.graphics.fonts;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 
@@ -42,6 +43,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.nio.ByteBuffer;
 import java.nio.channels.FileChannel;
+import java.util.ArrayList;
 
 @SmallTest
 @RunWith(AndroidJUnit4.class)
@@ -345,7 +347,7 @@ public class FontTest {
     @Test(expected = IOException.class)
     public void testBuilder_file_invalid_not_found_file() throws IOException {
         File file = new File("/no/such/file");
-        new Font.Builder(file);
+        new Font.Builder(file).build();
     }
 
     @Test
@@ -634,7 +636,7 @@ public class FontTest {
         try (InputStream is = am.open(path)) {
             assertTrue(copyToFile(file, is));
             try (FileInputStream fis = new FileInputStream(file)) {
-                new Font.Builder(fis.getFD(), 0, Integer.MAX_VALUE);
+                new Font.Builder(fis.getFD(), 0, Integer.MAX_VALUE).build();
             }
         }
     }
@@ -648,7 +650,7 @@ public class FontTest {
         try (InputStream is = am.open(path)) {
             assertTrue(copyToFile(file, is));
             try (FileInputStream fis = new FileInputStream(file)) {
-                new Font.Builder(fis.getFD(), Integer.MAX_VALUE, file.length());
+                new Font.Builder(fis.getFD(), Integer.MAX_VALUE, file.length()).build();
             }
         }
     }
@@ -742,7 +744,7 @@ public class FontTest {
     @Test(expected = IOException.class)
     public void testBuilder_asset_invalid_not_found() throws IOException {
         AssetManager am = InstrumentationRegistry.getTargetContext().getAssets();
-        new Font.Builder(am, "/no/such/file");
+        new Font.Builder(am, "/no/such/file").build();
     }
 
     @Test
@@ -835,13 +837,60 @@ public class FontTest {
     @Test(expected = NotFoundException.class)
     public void testBuilder_resource_invalid_res_id() throws IOException {
         Resources res = InstrumentationRegistry.getTargetContext().getResources();
-        new Font.Builder(res, -1);
+        new Font.Builder(res, -1).build();
     }
 
     @Test(expected = IOException.class)
     public void testBuilder_asset_invalid_xml_font() throws IOException {
         Resources res = InstrumentationRegistry.getTargetContext().getResources();
-        new Font.Builder(res, R.font.multiweight_family /* XML font */);
+        new Font.Builder(res, R.font.multiweight_family /* XML font */).build();
     }
 
+    @Test
+    public void testEquals() throws IOException {
+        Resources res = InstrumentationRegistry.getTargetContext().getResources();
+        ArrayList<Font> fonts1 = new ArrayList<>();
+        ArrayList<Font> fonts2 = new ArrayList<>();
+        for (Pair<Integer, Boolean> style : FontTestUtil.getAllStyles()) {
+            int weight = style.first.intValue();
+            boolean italic = style.second.booleanValue();
+            int resId = FontTestUtil.getFontResourceIdFromStyle(weight, italic);
+
+            fonts1.add(new Font.Builder(res, resId).build());
+            fonts2.add(new Font.Builder(res, resId).build());
+        }
+
+        for (int i = 0; i < fonts1.size(); ++i) {
+            assertTrue(fonts1.get(i).equals(fonts1.get(i)));
+            assertTrue(fonts1.get(i).equals(fonts2.get(i)));
+            assertTrue(fonts2.get(i).equals(fonts1.get(i)));
+        }
+
+        for (int i = 0; i < fonts1.size(); ++i) {
+            for (int j = i + 1; j < fonts1.size(); ++j) {
+                assertFalse(fonts1.get(i).equals(fonts1.get(j)));
+                assertFalse(fonts1.get(j).equals(fonts1.get(i)));
+            }
+        }
+    }
+
+    @Test
+    public void testHashCode() throws IOException {
+        Resources res = InstrumentationRegistry.getTargetContext().getResources();
+        ArrayList<Font> fonts1 = new ArrayList<>();
+        ArrayList<Font> fonts2 = new ArrayList<>();
+        for (Pair<Integer, Boolean> style : FontTestUtil.getAllStyles()) {
+            int weight = style.first.intValue();
+            boolean italic = style.second.booleanValue();
+            int resId = FontTestUtil.getFontResourceIdFromStyle(weight, italic);
+
+            fonts1.add(new Font.Builder(res, resId).build());
+            fonts2.add(new Font.Builder(res, resId).build());
+        }
+
+        for (int i = 0; i < fonts1.size(); ++i) {
+            assertEquals(fonts1.get(i).hashCode(), fonts1.get(i).hashCode());
+            assertEquals(fonts1.get(i).hashCode(), fonts2.get(i).hashCode());
+        }
+    }
 }

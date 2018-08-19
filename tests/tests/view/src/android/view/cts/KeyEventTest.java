@@ -96,6 +96,10 @@ public class KeyEventTest {
         assertEquals(KeyEvent.KEYCODE_UNKNOWN, mKeyEvent.getKeyCode());
         assertEquals(characters, mKeyEvent.getCharacters());
 
+        // Make sure mCharacters survives after serialization / deserialization
+        KeyEvent keyEvent = parcelUnparcel(mKeyEvent);
+        assertEquals(mKeyEvent.getCharacters(), keyEvent.getCharacters());
+
         mKeyEvent = new KeyEvent(KeyEvent.ACTION_DOWN, KeyEvent.KEYCODE_0);
         assertNull(mKeyEvent.getCharacters());
     }
@@ -618,12 +622,7 @@ public class KeyEventTest {
 
     @Test
     public void testWriteToParcel() {
-        Parcel parcel = Parcel.obtain();
-        mKeyEvent.writeToParcel(parcel, Parcelable.PARCELABLE_WRITE_RETURN_VALUE);
-        parcel.setDataPosition(0);
-
-        KeyEvent keyEvent = KeyEvent.CREATOR.createFromParcel(parcel);
-        parcel.recycle();
+        KeyEvent keyEvent = parcelUnparcel(mKeyEvent);
 
         assertEquals(mKeyEvent.getAction(), keyEvent.getAction());
         assertEquals(mKeyEvent.getKeyCode(), keyEvent.getKeyCode());
@@ -634,6 +633,7 @@ public class KeyEventTest {
         assertEquals(mKeyEvent.getFlags(), keyEvent.getFlags());
         assertEquals(mKeyEvent.getDownTime(), keyEvent.getDownTime());
         assertEquals(mKeyEvent.getEventTime(), keyEvent.getEventTime());
+        assertEquals(mKeyEvent.getCharacters(), keyEvent.getCharacters());
     }
 
     @Test
@@ -792,5 +792,16 @@ public class KeyEventTest {
                 KeyEvent.keyCodeFromString(Integer.toString(KeyEvent.LAST_KEYCODE)));
         assertEquals(KeyEvent.KEYCODE_UNKNOWN,
                 KeyEvent.keyCodeFromString(Integer.toString(KeyEvent.LAST_KEYCODE + 1)));
+    }
+
+    // Parcel a KeyEvent, then create a new KeyEvent from this parcel. Return the new KeyEvent
+    public KeyEvent parcelUnparcel(KeyEvent keyEvent) {
+        Parcel parcel = Parcel.obtain();
+        keyEvent.writeToParcel(parcel, Parcelable.PARCELABLE_WRITE_RETURN_VALUE);
+        parcel.setDataPosition(0);
+
+        KeyEvent keyEventFromParcel = KeyEvent.CREATOR.createFromParcel(parcel);
+        parcel.recycle();
+        return keyEventFromParcel;
     }
 }

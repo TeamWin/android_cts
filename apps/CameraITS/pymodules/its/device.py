@@ -76,6 +76,10 @@ class ItsSession(object):
     EXTRA_RESULTS = 'camera.its.extra.RESULTS'
     ITS_TEST_ACTIVITY = 'com.android.cts.verifier/.camera.its.ItsTestActivity'
 
+    # This string must be in sync with ItsService. Updated when interface
+    # between script and ItsService is changed.
+    ITS_SERVICE_VERSION = "1.0"
+
     RESULT_PASS = 'PASS'
     RESULT_FAIL = 'FAIL'
     RESULT_NOT_EXECUTED = 'NOT_EXECUTED'
@@ -374,6 +378,23 @@ class ItsSession(object):
         if data['tag'] != 'cameraIds':
             raise its.error.Error('Invalid command response')
         return data['objValue']['cameraIdArray']
+
+    def check_its_version_compatible(self):
+        """Check the java side ItsService is compatible with current host script.
+           Raise ItsException if versions are incompatible
+
+        Returns: None
+        """
+        cmd = {}
+        cmd["cmdName"] = "getItsVersion"
+        self.sock.send(json.dumps(cmd) + "\n")
+        data,_ = self.__read_response_from_socket()
+        if data['tag'] != 'ItsVersion':
+            raise its.error.Error('ItsService is incompatible with host python script')
+        server_version = data['strValue']
+        if self.ITS_SERVICE_VERSION != server_version:
+            raise its.error.Error('Version mismatch ItsService(%s) vs host script(%s)' % (
+                    server_version, ITS_SERVICE_VERSION))
 
     def get_camera_properties(self):
         """Get the camera properties object for the device.

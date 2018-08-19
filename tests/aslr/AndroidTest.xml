@@ -25,7 +25,7 @@
         <option name="native-test-device-path" value="/data/local/tmp" />
         <option name="module-name" value="CtsAslrMallocTestCases" />
         <option name="runtime-hint" value="10m30s" />
-        <!-- test-timeout unit is ms, value = 10 min -->
-        <option name="native-test-timeout" value="600000" />
+        <!-- test-timeout unit is ms, value = 20 min -->
+        <option name="native-test-timeout" value="1200000" />
     </test>
 </configuration>

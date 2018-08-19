@@ -259,7 +259,6 @@ public class ObjectAnimatorTest {
         animator.addUpdateListener(updateListener);
 
         mActivityRule.runOnUiThread(animator::start);
-        assertTrue(animator.isRunning());
 
         verify(mockListener, timeout(400)).onAnimationEnd(animator, false);
     }
