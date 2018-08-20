@@ -46,10 +46,10 @@ public class DexApiDocumentParser {
         private final BufferedReader mReader;
         private int mLineNum;
 
-        private static final Pattern REGEX_CLASS = Pattern.compile("^L[^->]*;$");
-        private static final Pattern REGEX_FIELD = Pattern.compile("^(L[^->]*;)->(.*):(.*)$");
+        private static final Pattern REGEX_CLASS = Pattern.compile("^L[^>]*;$");
+        private static final Pattern REGEX_FIELD = Pattern.compile("^(L[^>]*;)->(.*):(.*)$");
         private static final Pattern REGEX_METHOD =
-                Pattern.compile("^(L[^->]*;)->(.*)(\\(.*\\).*)$");
+                Pattern.compile("^(L[^>]*;)->(.*)(\\(.*\\).*)$");
 
         DexApiSpliterator(BufferedReader reader) {
             mReader = reader;
