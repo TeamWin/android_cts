@@ -17,7 +17,6 @@
 package android.server.am;
 
 import static android.app.ActivityTaskManager.SPLIT_SCREEN_CREATE_MODE_TOP_OR_LEFT;
-import static android.app.ActivityTaskManager.INVALID_STACK_ID;
 import static android.app.WindowConfiguration.ACTIVITY_TYPE_ASSISTANT;
 import static android.app.WindowConfiguration.ACTIVITY_TYPE_RECENTS;
 import static android.app.WindowConfiguration.ACTIVITY_TYPE_STANDARD;
@@ -78,7 +77,6 @@ import static android.view.Display.DEFAULT_DISPLAY;
 import static android.view.Display.INVALID_DISPLAY;
 
 import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
 import static java.lang.Integer.toHexString;
@@ -86,17 +84,23 @@ import static java.lang.Integer.toHexString;
 import android.accessibilityservice.AccessibilityService;
 import android.app.Activity;
 import android.app.ActivityManager;
+import android.app.ActivityOptions;
 import android.app.ActivityTaskManager;
+import android.app.Instrumentation;
 import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
+import android.content.res.Resources;
 import android.graphics.Bitmap;
+import android.graphics.Rect;
 import android.os.Bundle;
 import android.os.SystemClock;
 import android.provider.Settings;
 import android.server.am.settings.SettingsSession;
 import android.support.test.InstrumentationRegistry;
 import android.support.test.rule.ActivityTestRule;
+import android.view.InputDevice;
+import android.view.MotionEvent;
 
 import com.android.compatibility.common.util.SystemUtil;
 
@@ -133,28 +137,12 @@ public abstract class ActivityManagerTestBase {
             ACTIVITY_TYPE_UNDEFINED
     };
 
-    private static final String TASK_ID_PREFIX = "taskId";
-
-    private static final String AM_STACK_LIST = "am stack list";
-
-    private static final String AM_FORCE_STOP_TEST_PACKAGE = "am force-stop android.server.am";
-    private static final String AM_FORCE_STOP_SECOND_TEST_PACKAGE
-            = "am force-stop android.server.am.second";
-    private static final String AM_FORCE_STOP_THIRD_TEST_PACKAGE
-            = "am force-stop android.server.am.third";
+    private static final String TEST_PACKAGE = "android.server.am";
+    private static final String SECOND_TEST_PACKAGE = "android.server.am.second";
+    private static final String THIRD_TEST_PACKAGE = "android.server.am.third";
 
     protected static final String AM_START_HOME_ACTIVITY_COMMAND =
             "am start -a android.intent.action.MAIN -c android.intent.category.HOME";
-
-    private static final String AM_MOVE_TOP_ACTIVITY_TO_PINNED_STACK_COMMAND_FORMAT =
-            "am stack move-top-activity-to-pinned-stack %1d 0 0 500 500";
-
-    private static final String AM_RESIZE_DOCKED_STACK = "am stack resize-docked-stack ";
-    private static final String AM_RESIZE_STACK = "am stack resize ";
-
-    static final String AM_MOVE_TASK = "am stack move-task ";
-
-    private static final String AM_NO_HOME_SCREEN = "am no-home-screen";
 
     private static final String LOCK_CREDENTIAL = "1234";
 
@@ -232,10 +220,6 @@ public abstract class ActivityManagerTestBase {
         return "am start --activity-task-on-home -n " + getActivityName(activityName);
     }
 
-    protected static String getMoveToPinnedStackCommand(int stackId) {
-        return String.format(AM_MOVE_TOP_ACTIVITY_TO_PINNED_STACK_COMMAND_FORMAT, stackId);
-    }
-
     protected ActivityAndWindowManagersState mAmWmState = new ActivityAndWindowManagersState();
 
     protected BroadcastActionTrigger mBroadcastActionTrigger = new BroadcastActionTrigger();
@@ -304,11 +288,6 @@ public abstract class ActivityManagerTestBase {
         mAm = mContext.getSystemService(ActivityManager.class);
         mAtm = mContext.getSystemService(ActivityTaskManager.class);
 
-        InstrumentationRegistry.getInstrumentation().getUiAutomation().grantRuntimePermission(
-                mContext.getPackageName(), android.Manifest.permission.MANAGE_ACTIVITY_STACKS);
-        InstrumentationRegistry.getInstrumentation().getUiAutomation().grantRuntimePermission(
-                mContext.getPackageName(), android.Manifest.permission.ACTIVITY_EMBEDDING);
-
         pressWakeupButton();
         pressUnlockButton();
         pressHomeButton();
@@ -321,19 +300,66 @@ public abstract class ActivityManagerTestBase {
         // home are cleaned up from the stack at the end of each test. Am force stop shell commands
         // might be asynchronous and could interrupt the stack cleanup process if executed first.
         removeStacksWithActivityTypes(ALL_ACTIVITY_TYPE_BUT_HOME);
-        executeShellCommand(AM_FORCE_STOP_TEST_PACKAGE);
-        executeShellCommand(AM_FORCE_STOP_SECOND_TEST_PACKAGE);
-        executeShellCommand(AM_FORCE_STOP_THIRD_TEST_PACKAGE);
+        stopTestPackage(TEST_PACKAGE);
+        stopTestPackage(SECOND_TEST_PACKAGE);
+        stopTestPackage(THIRD_TEST_PACKAGE);
         pressHomeButton();
+
+    }
+
+    protected void moveTopActivityToPinnedStack(int stackId) {
+        SystemUtil.runWithShellPermissionIdentity(
+                () -> mAtm.moveTopActivityToPinnedStack(stackId, new Rect(0, 0, 500, 500))
+        );
+    }
+
+    protected void startActivityOnDisplay(int displayId, ComponentName component) {
+        final ActivityOptions options = ActivityOptions.makeBasic();
+        options.setLaunchDisplayId(displayId);
+
+        mContext.startActivity(new Intent().addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+                .setComponent(component), options.toBundle());
+    }
+
+    protected boolean noHomeScreen() {
+        try {
+            return mContext.getResources().getBoolean(
+                    Resources.getSystem().getIdentifier("config_noHomeScreen", "bool",
+                            "android"));
+        } catch (Resources.NotFoundException e) {
+            // Assume there's a home screen.
+            return false;
+        }
+    }
+
+    protected void tapOnDisplay(int x, int y, int displayId) {
+        final long downTime = SystemClock.uptimeMillis();
+        injectMotion(downTime, downTime, MotionEvent.ACTION_DOWN, x, y, displayId);
+
+        final long upTime = SystemClock.uptimeMillis();
+        injectMotion(downTime, upTime, MotionEvent.ACTION_UP, x, y, displayId);
+    }
+
+    private static void injectMotion(long downTime, long eventTime, int action,
+            int x, int y, int displayId) {
+        final MotionEvent event = MotionEvent.obtain(downTime, eventTime, action,
+                x, y, 0 /* metaState */);
+        event.setSource(InputDevice.SOURCE_TOUCHSCREEN);
+        event.setDisplayId(displayId);
+        InstrumentationRegistry.getInstrumentation().getUiAutomation().injectInputEvent(
+                event, true /* sync */);
     }
 
     protected void removeStacksWithActivityTypes(int... activityTypes) {
-        mAtm.removeStacksWithActivityTypes(activityTypes);
+        SystemUtil.runWithShellPermissionIdentity(
+                () -> mAtm.removeStacksWithActivityTypes(activityTypes));
         waitForIdle();
     }
 
     protected void removeStacksInWindowingModes(int... windowingModes) {
-        mAtm.removeStacksInWindowingModes(windowingModes);
+        SystemUtil.runWithShellPermissionIdentity(
+                () -> mAtm.removeStacksInWindowingModes(windowingModes)
+        );
         waitForIdle();
     }
 
@@ -421,17 +447,20 @@ public abstract class ActivityManagerTestBase {
 
     protected void launchActivityInSplitScreenWithRecents(ComponentName activityName,
             int createMode) {
-        launchActivity(activityName);
-        final int taskId = mAmWmState.getAmState().getTaskByActivity(activityName).mTaskId;
-        mAtm.setTaskWindowingModeSplitScreenPrimary(taskId, createMode, true /* onTop */,
-                false /* animate */, null /* initialBounds */, true /* showRecents */);
+        SystemUtil.runWithShellPermissionIdentity(() -> {
+            launchActivity(activityName);
+            final int taskId = mAmWmState.getAmState().getTaskByActivity(activityName).mTaskId;
+            mAtm.setTaskWindowingModeSplitScreenPrimary(taskId, createMode,
+                    true /* onTop */, false /* animate */,
+                    null /* initialBounds */, true /* showRecents */);
 
-        mAmWmState.waitForValidState(
-                new WaitForValidActivityState.Builder(activityName)
-                        .setWindowingMode(WINDOWING_MODE_SPLIT_SCREEN_PRIMARY)
-                        .setActivityType(ACTIVITY_TYPE_STANDARD)
-                        .build());
-        mAmWmState.waitForRecentsActivityVisible();
+            mAmWmState.waitForValidState(
+                    new WaitForValidActivityState.Builder(activityName)
+                            .setWindowingMode(WINDOWING_MODE_SPLIT_SCREEN_PRIMARY)
+                            .setActivityType(ACTIVITY_TYPE_STANDARD)
+                            .build());
+            mAmWmState.waitForRecentsActivityVisible();
+        });
     }
 
     public void moveTaskToPrimarySplitScreen(int taskId) {
@@ -445,15 +474,20 @@ public abstract class ActivityManagerTestBase {
      *                      place of the Recents activity if home is the recents component)
      */
     public void moveTaskToPrimarySplitScreen(int taskId, boolean showRecents) {
-        mAtm.setTaskWindowingModeSplitScreenPrimary(taskId, SPLIT_SCREEN_CREATE_MODE_TOP_OR_LEFT,
-                true /* onTop */, false /* animate */, null /* initialBounds */, showRecents);
-        mAmWmState.waitForRecentsActivityVisible();
+        SystemUtil.runWithShellPermissionIdentity(() -> {
+            mAtm.setTaskWindowingModeSplitScreenPrimary(taskId,
+                    SPLIT_SCREEN_CREATE_MODE_TOP_OR_LEFT, true /* onTop */,
+                    false /* animate */,
+                    null /* initialBounds */, showRecents);
+            mAmWmState.waitForRecentsActivityVisible();
 
-        if (mAmWmState.getAmState().isHomeRecentsComponent() && showRecents) {
-            // Launch Placeholder Recents
-            final Activity recentsActivity = mSideActivityRule.launchActivity(new Intent());
-            mAmWmState.waitForActivityState(recentsActivity.getComponentName(), STATE_RESUMED);
-        }
+            if (mAmWmState.getAmState().isHomeRecentsComponent() && showRecents) {
+                // Launch Placeholder Recents
+                final Activity recentsActivity = mSideActivityRule.launchActivity(
+                        new Intent());
+                mAmWmState.waitForActivityState(recentsActivity.getComponentName(), STATE_RESUMED);
+            }
+        });
     }
 
     /**
@@ -485,7 +519,8 @@ public abstract class ActivityManagerTestBase {
     protected void setActivityTaskWindowingMode(ComponentName activityName, int windowingMode) {
         mAmWmState.computeState(activityName);
         final int taskId = mAmWmState.getAmState().getTaskByActivity(activityName).mTaskId;
-        mAtm.setTaskWindowingMode(taskId, windowingMode, true /* toTop */);
+        SystemUtil.runWithShellPermissionIdentity(
+                () -> mAtm.setTaskWindowingMode(taskId, windowingMode, true /* toTop */));
         mAmWmState.waitForValidState(new WaitForValidActivityState.Builder(activityName)
                 .setActivityType(ACTIVITY_TYPE_STANDARD)
                 .setWindowingMode(windowingMode)
@@ -495,8 +530,8 @@ public abstract class ActivityManagerTestBase {
     protected void moveActivityToStack(ComponentName activityName, int stackId) {
         mAmWmState.computeState(activityName);
         final int taskId = mAmWmState.getAmState().getTaskByActivity(activityName).mTaskId;
-        final String cmd = AM_MOVE_TASK + taskId + " " + stackId + " true";
-        executeShellCommand(cmd);
+        SystemUtil.runWithShellPermissionIdentity(
+                () -> mAtm.moveTaskToStack(taskId, stackId, true));
 
         mAmWmState.waitForValidState(new WaitForValidActivityState.Builder(activityName)
                 .setStackId(stackId)
@@ -507,22 +542,21 @@ public abstract class ActivityManagerTestBase {
             ComponentName activityName, int left, int top, int right, int bottom) {
         mAmWmState.computeState(activityName);
         final int taskId = mAmWmState.getAmState().getTaskByActivity(activityName).mTaskId;
-        final String cmd = "am task resize "
-                + taskId + " " + left + " " + top + " " + right + " " + bottom;
-        executeShellCommand(cmd);
+        SystemUtil.runWithShellPermissionIdentity(
+                () -> mAtm.resizeTask(taskId, new Rect(left, top, right, bottom)));
     }
 
     protected void resizeDockedStack(
             int stackWidth, int stackHeight, int taskWidth, int taskHeight) {
-        executeShellCommand(AM_RESIZE_DOCKED_STACK
-                + "0 0 " + stackWidth + " " + stackHeight
-                + " 0 0 " + taskWidth + " " + taskHeight);
+        SystemUtil.runWithShellPermissionIdentity(() ->
+                mAtm.resizeDockedStack(new Rect(0, 0, stackWidth, stackHeight),
+                        new Rect(0, 0, taskWidth, taskHeight)));
     }
 
     protected void resizeStack(int stackId, int stackLeft, int stackTop, int stackWidth,
             int stackHeight) {
-        executeShellCommand(AM_RESIZE_STACK + String.format("%d %d %d %d %d", stackId, stackLeft,
-                stackTop, stackWidth, stackHeight));
+        SystemUtil.runWithShellPermissionIdentity(() -> mAtm.resizeStack(stackId,
+                new Rect(stackLeft, stackTop, stackWidth, stackHeight)));
     }
 
     protected void pressAppSwitchButtonAndWaitForRecents() {
@@ -533,10 +567,12 @@ public abstract class ActivityManagerTestBase {
 
     // Utility method for debugging, not used directly here, but useful, so kept around.
     protected void printStacksAndTasks() {
-        String output = executeShellCommand(AM_STACK_LIST);
-        for (String line : output.split("\\n")) {
-            log(line);
-        }
+        SystemUtil.runWithShellPermissionIdentity(() -> {
+            final String output = mAtm.listAllStacks();
+            for (String line : output.split("\\n")) {
+                log(line);
+            }
+        });
     }
 
     protected boolean supportsVrMode() {
@@ -609,7 +645,7 @@ public abstract class ActivityManagerTestBase {
 
     protected boolean hasHomeScreen() {
         if (sHasHomeScreen == null) {
-            sHasHomeScreen = !executeShellCommand(AM_NO_HOME_SCREEN).startsWith("true");
+            sHasHomeScreen = !noHomeScreen();
         }
         return sHasHomeScreen;
     }
@@ -705,8 +741,8 @@ public abstract class ActivityManagerTestBase {
 
         public LockScreenSession enterAndConfirmLockCredential() {
             waitForDeviceIdle(3000);
-
-            runCommandAndPrintOutput("input text " + LOCK_CREDENTIAL);
+            SystemUtil.runWithShellPermissionIdentity(() ->
+                    InstrumentationRegistry.getInstrumentation().sendStringSync(LOCK_CREDENTIAL));
             pressEnterButton();
             return this;
         }
@@ -1452,8 +1488,8 @@ public abstract class ActivityManagerTestBase {
         }
     }
 
-    protected void stopTestPackage(final ComponentName activityName) {
-        executeShellCommand("am force-stop " + activityName.getPackageName());
+    protected void stopTestPackage(final String packageName) {
+        SystemUtil.runWithShellPermissionIdentity(() -> mAm.forceStopPackage(packageName));
     }
 
     protected LaunchActivityBuilder getLaunchActivityBuilder() {

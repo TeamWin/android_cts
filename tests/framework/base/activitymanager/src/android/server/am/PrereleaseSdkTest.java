@@ -19,6 +19,8 @@ package android.server.am;
 import static android.server.am.UiDeviceUtils.pressBackButton;
 import static android.server.am.prerelease.Components.MAIN_ACTIVITY;
 
+import com.android.compatibility.common.util.SystemUtil;
+
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
@@ -38,7 +40,8 @@ public class PrereleaseSdkTest extends ActivityManagerTestBase {
     @Override
     public void setUp() throws Exception {
         super.setUp();
-        mAm.alwaysShowUnsupportedCompileSdkWarning(MAIN_ACTIVITY);
+        SystemUtil.runWithShellPermissionIdentity(
+                () -> mAm.alwaysShowUnsupportedCompileSdkWarning(MAIN_ACTIVITY));
     }
 
     @After
@@ -47,7 +50,7 @@ public class PrereleaseSdkTest extends ActivityManagerTestBase {
         super.tearDown();
 
         // Ensure app process is stopped.
-        stopTestPackage(MAIN_ACTIVITY);
+        stopTestPackage(MAIN_ACTIVITY.getPackageName());
     }
 
     @Test

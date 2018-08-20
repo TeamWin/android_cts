@@ -44,7 +44,7 @@ public class DeprecatedTargetSdkTest extends ActivityManagerTestBase {
         super.tearDown();
 
         // Ensure app process is stopped.
-        stopTestPackage(MAIN_ACTIVITY);
+        stopTestPackage(MAIN_ACTIVITY.getPackageName());
     }
 
     @Test

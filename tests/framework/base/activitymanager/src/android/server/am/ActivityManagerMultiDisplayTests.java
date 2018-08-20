@@ -807,7 +807,7 @@ public class ActivityManagerMultiDisplayTests extends ActivityManagerDisplayTest
             final ReportedDisplayMetrics displayMetrics = getDisplayMetrics();
             final int width = displayMetrics.getSize().getWidth();
             final int height = displayMetrics.getSize().getHeight();
-            executeShellCommand("input tap " + (width / 2) + " " + (height / 2));
+            tapOnDisplay(width / 2, height / 2, DEFAULT_DISPLAY);
 
             waitAndAssertTopResumedActivity(VIRTUAL_DISPLAY_ACTIVITY, DEFAULT_DISPLAY,
                     "Top activity must be on the primary display");
@@ -1659,7 +1659,7 @@ public class ActivityManagerMultiDisplayTests extends ActivityManagerDisplayTest
             final ReportedDisplayMetrics displayMetrics = getDisplayMetrics();
             final int width = displayMetrics.getSize().getWidth();
             final int height = displayMetrics.getSize().getHeight();
-            executeShellCommand("input tap " + (width / 2) + " " + (height / 2));
+            tapOnDisplay(width / 2, height / 2, DEFAULT_DISPLAY);
 
             // Check that the activity on the primary display is the topmost resumed
             waitAndAssertTopResumedActivity(RESIZEABLE_ACTIVITY, DEFAULT_DISPLAY,

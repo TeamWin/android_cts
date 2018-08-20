@@ -42,8 +42,12 @@ import android.provider.Settings;
 import android.server.am.settings.SettingsSession;
 import android.support.test.filters.FlakyTest;
 
+import com.android.compatibility.common.util.SystemUtil;
+
 import org.junit.Test;
 
+import java.util.Arrays;
+import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -240,7 +244,7 @@ public class ActivityManagerConfigChangeTests extends ActivityManagerTestBase {
 
         final LogSeparator logSeparator = separateLogs();
         // Update package info.
-        executeShellCommand("am update-appinfo all " + TEST_ACTIVITY.getPackageName());
+        updateApplicationInfo(Arrays.asList(TEST_ACTIVITY.getPackageName()));
         mAmWmState.waitForWithAmState((amState) -> {
             // Wait for activity to be resumed and asset seq number to be updated.
             try {
@@ -320,5 +324,12 @@ public class ActivityManagerConfigChangeTests extends ActivityManagerTestBase {
             }
         }
         fail("No fontPixelSize reported from activity " + activityName);
+    }
+
+    private void updateApplicationInfo(List<String> packages) {
+        SystemUtil.runWithShellPermissionIdentity(
+                () -> mAm.scheduleApplicationInfoChanged(packages,
+                        android.os.Process.myUserHandle().getIdentifier())
+        );
     }
 }
