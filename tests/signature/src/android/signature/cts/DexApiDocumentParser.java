@@ -46,6 +46,8 @@ public class DexApiDocumentParser {
         private final BufferedReader mReader;
         private int mLineNum;
 
+        // Regex patterns which match DEX signatures of methods and fields.
+        // See comment by next() for more details.
         private static final Pattern REGEX_FIELD = Pattern.compile("^(L[^>]*;)->(.*):(.*)$");
         private static final Pattern REGEX_METHOD =
                 Pattern.compile("^(L[^>]*;)->(.*)(\\(.*\\).*)$");
@@ -86,7 +88,7 @@ public class DexApiDocumentParser {
         }
 
         /**
-         * Parses lines of DEX signatures from `mReader`. The following three
+         * Parses lines of DEX signatures from `mReader`. The following two
          * line formats are supported:
          * 1) [class descriptor]->[field name]:[field type]
          *      - e.g. Lcom/example/MyClass;->myField:I
