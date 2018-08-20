@@ -16,7 +16,7 @@
 
 <configuration description="Config for CTS Packageinstaller Tapjacking test cases">
     <option name="test-suite-tag" value="cts" />
-    <option name="config-descriptor:metadata" key="component" value="package-installer" />
+    <option name="config-descriptor:metadata" key="component" value="framework" />
 
     <target_preparer class="com.android.tradefed.targetprep.suite.SuiteApkInstaller">
         <option name="cleanup-apks" value="true" />
