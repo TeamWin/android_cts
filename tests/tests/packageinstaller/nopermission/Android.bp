@@ -13,15 +13,31 @@
 // limitations under the License.
 
 java_library_static {
-    name: "CtsExternalSourcesTestCases-lib",
+    name: "CtsNoPermissionTestCasesBase",
     sdk_version: "test_current",
 
     srcs: ["src/**/*.kt"],
 
     static_libs: [
-        "junit",
+        "ub-uiautomator",
         "android-support-test",
-        "platform-test-annotations",
         "compatibility-device-util",
-    ]
+        "androidx.legacy_legacy-support-v4",
+        "platform-test-annotations",
+    ],
+}
+
+android_test {
+    name: "CtsNoPermissionTestCases",
+    sdk_version: "test_current",
+
+    static_libs: [
+        "CtsNoPermissionTestCasesBase",
+    ],
+
+    test_suites: [
+        "cts",
+        "vts",
+        "general-tests",
+    ],
 }

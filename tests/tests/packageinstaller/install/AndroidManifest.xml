@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- Copyright (C) 2017 The Android Open Source Project
+<!-- Copyright (C) 2018 The Android Open Source Project
 
      Licensed under the Apache License, Version 2.0 (the "License");
      you may not use this file except in compliance with the License.
@@ -15,17 +15,27 @@
 -->
 
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
-          package="android.packageinstaller.externalsources.cts"
-          android:targetSandboxVersion="2">
+          package="android.packageinstaller.install.cts" >
 
     <uses-permission android:name="android.permission.REQUEST_INSTALL_PACKAGES" />
 
-    <application android:label="Cts External Sources Test">
-        <uses-library android:name="android.test.runner"/>
+    <application android:label="Cts Package Installer Tests">
+        <uses-library android:name="android.test.runner" />
+
+        <activity android:name=".InstallConfirmDialogStarter" />
+
+        <provider android:authorities="android.packageinstaller.install.cts.fileprovider"
+                  android:name="androidx.core.content.FileProvider"
+                  android:grantUriPermissions="true">
+            <meta-data
+                android:name="android.support.FILE_PROVIDER_PATHS"
+                android:resource="@xml/file_paths" />
+        </provider>
     </application>
 
     <instrumentation android:name="android.support.test.runner.AndroidJUnitRunner"
                      android:functionalTest="true"
-                     android:targetPackage="android.packageinstaller.externalsources.cts"
-                     android:label="External App Sources Tests"/>
+                     android:targetPackage="android.packageinstaller.install.cts"
+                     android:label="Package Installer Tests"/>
+
 </manifest>
