@@ -33,4 +33,23 @@ public class Poc18_02 extends SecurityTestCase {
                                  "invalid attributes: usage=.{1,} content=.{1,} "+
                                  "flags=.{1,} tags=\\[.{256,}\\].*", logcatOutput);
      }
+
+    /**
+     *  b/65853158
+     */
+    @SecurityTest
+    public void testPocCVE_2017_13273() throws Exception {
+        AdbUtils.runCommandLine("dmesg -c" ,getDevice());
+        AdbUtils.runCommandLine("setenforce 0",getDevice());
+        if(containsDriver(getDevice(), "/dev/xt_qtaguid") &&
+           containsDriver(getDevice(), "/proc/net/xt_qtaguid/ctrl")) {
+            AdbUtils.runPoc("CVE-2017-13273", getDevice(), 60);
+            String dmesgOut = AdbUtils.runCommandLine("cat /sys/fs/pstore/console-ramoops",
+                              getDevice());
+            assertNotMatches("[\\s\\n\\S]*CVE-2017-132736 Tainted:" + "[\\s\\n\\S]*" +
+                 "Kernel panic - not syncing: Fatal exception in interrupt", dmesgOut);
+        }
+        AdbUtils.runCommandLine("setenforce 1",getDevice());
+    }
 }
+
