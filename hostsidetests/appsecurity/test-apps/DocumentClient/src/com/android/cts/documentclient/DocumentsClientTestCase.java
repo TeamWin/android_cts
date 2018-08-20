@@ -152,6 +152,11 @@ abstract class DocumentsClientTestCase extends InstrumentationTestCase {
         return true;
     }
 
+    protected boolean isTelevision() {
+        final PackageManager pm = getInstrumentation().getContext().getPackageManager();
+        return pm.hasSystemFeature("android.hardware.type.television");
+    }
+
     protected void assertActivityFailed() {
         final Result result = mActivity.getResult();
         assertEquals(REQUEST_CODE, result.requestCode);
