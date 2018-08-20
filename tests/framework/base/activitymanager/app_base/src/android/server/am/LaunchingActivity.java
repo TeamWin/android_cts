@@ -16,9 +16,9 @@
 
 package android.server.am;
 
-import android.os.Bundle;
 import android.app.Activity;
 import android.content.Intent;
+import android.os.Bundle;
 
 /**
  * Activity that launches another activities when new intent is received.
@@ -30,14 +30,19 @@ public class LaunchingActivity extends Activity {
 
         final Intent intent = getIntent();
         if (savedInstanceState == null && intent != null) {
-            ActivityLauncher.launchActivityFromExtras(this, intent.getExtras());
+            launchActivityFromExtras(intent.getExtras());
         }
     }
 
     @Override
     protected void onNewIntent(Intent intent) {
         super.onNewIntent(intent);
-        ActivityLauncher.launchActivityFromExtras(this, intent.getExtras());
+        launchActivityFromExtras(intent.getExtras());
+    }
+
+    private void launchActivityFromExtras(Bundle extras) {
+        ActivityLauncher.launchActivityFromExtras(
+                this, extras, CommandSession.handleForward(extras));
     }
 }
 

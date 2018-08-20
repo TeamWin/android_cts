@@ -29,6 +29,7 @@ import android.content.Context;
 import android.content.Intent;
 import android.net.Uri;
 import android.os.Bundle;
+import android.server.am.CommandSession.LaunchInjector;
 import android.text.TextUtils;
 import android.util.Log;
 
@@ -98,6 +99,11 @@ public class ActivityLauncher {
 
     /** Perform an activity launch configured by provided extras. */
     public static void launchActivityFromExtras(final Context context, Bundle extras) {
+        launchActivityFromExtras(context, extras, null /* launchInjector */);
+    }
+
+    public static void launchActivityFromExtras(final Context context, Bundle extras,
+            LaunchInjector launchInjector) {
         if (extras == null || !extras.getBoolean(KEY_LAUNCH_ACTIVITY)) {
             return;
         }
@@ -134,6 +140,9 @@ public class ActivityLauncher {
             options = ActivityOptions.makeBasic();
             options.setLaunchDisplayId(displayId);
             newIntent.addFlags(FLAG_ACTIVITY_NEW_TASK | FLAG_ACTIVITY_MULTIPLE_TASK);
+        }
+        if (launchInjector != null) {
+            launchInjector.setupIntent(newIntent);
         }
         final int activityType = extras.getInt(KEY_ACTIVITY_TYPE, -1);
         if (activityType != -1) {
