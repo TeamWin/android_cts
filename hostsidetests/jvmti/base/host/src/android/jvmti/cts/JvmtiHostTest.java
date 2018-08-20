@@ -57,6 +57,12 @@ public class JvmtiHostTest extends DeviceTestCase implements IBuildReceiver, IAb
             mandatory = true)
     private String mTestApk = null;
 
+    @Option(name = "hidden-api-checks",
+            description = "If we should enable hidden api checks. Default 'true'. Set to 'false' " +
+            "to disable hiddenapi.",
+            mandatory = false)
+    private String mHiddenApiChecksEnabled = null;
+
     private CompatibilityBuildHelper mBuildHelper;
     private IAbi mAbi;
 
@@ -90,6 +96,23 @@ public class JvmtiHostTest extends DeviceTestCase implements IBuildReceiver, IAb
             throw new IllegalStateException("Incorrect configuration");
         }
 
+        if (null != mHiddenApiChecksEnabled &&
+            !"false".equals(mHiddenApiChecksEnabled) &&
+            !"true".equals(mHiddenApiChecksEnabled)) {
+          throw new IllegalStateException(
+              "option hidden-api-checks must be 'true' or 'false' if present.");
+        }
+        boolean disable_hidden_api =
+            mHiddenApiChecksEnabled != null && "false".equals(mHiddenApiChecksEnabled);
+        String old_p_apps_setting = null;
+        String old_pre_p_apps_setting = null;
+        if (disable_hidden_api) {
+            old_p_apps_setting = device.getSetting("global", "hidden_api_policy_p_apps");
+            old_pre_p_apps_setting = device.getSetting("global", "hidden_api_policy_pre_p_apps");
+            device.setSetting("global", "hidden_api_policy_p_apps", "1");
+            device.setSetting("global", "hidden_api_policy_pre_p_apps", "1");
+        }
+
         RemoteAndroidTestRunner runner = new RemoteAndroidTestRunner(mTestPackageName, RUNNER,
                 device.getIDevice());
         // set a max deadline limit to avoid hanging forever
@@ -103,6 +126,11 @@ public class JvmtiHostTest extends DeviceTestCase implements IBuildReceiver, IAb
 
         assertTrue(tr.getErrors(), tr.hasStarted());
         assertFalse(tr.getErrors(), tr.hasFailed());
+
+        if (disable_hidden_api) {
+            device.setSetting("global", "hidden_api_policy_p_apps", old_p_apps_setting);
+            device.setSetting("global", "hidden_api_policy_pre_p_apps", old_pre_p_apps_setting);
+        }
     }
 
     private String getDeviceBaseArch(ITestDevice device) throws Exception {
