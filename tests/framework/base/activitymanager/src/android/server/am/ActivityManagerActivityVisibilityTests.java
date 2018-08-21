@@ -238,6 +238,8 @@ public class ActivityManagerActivityVisibilityTests extends ActivityManagerTestB
         // Launch a different activity on top.
         launchActivity(BROADCAST_RECEIVER_ACTIVITY);
         mAmWmState.waitForActivityState(BROADCAST_RECEIVER_ACTIVITY, STATE_RESUMED);
+        // Wait for transition complete.
+        mAmWmState.waitForValidState(MOVE_TASK_TO_BACK_ACTIVITY);
         final boolean shouldBeVisible =
                 !mAmWmState.getAmState().isBehindOpaqueActivities(MOVE_TASK_TO_BACK_ACTIVITY);
         mAmWmState.assertVisibility(MOVE_TASK_TO_BACK_ACTIVITY, shouldBeVisible);
