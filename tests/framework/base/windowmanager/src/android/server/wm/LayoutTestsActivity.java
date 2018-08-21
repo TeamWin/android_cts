@@ -18,9 +18,13 @@ package android.server.wm;
 
 import android.app.Activity;
 import android.graphics.Rect;
+import android.os.Bundle;
 import android.view.View;
 import android.view.WindowManager.LayoutParams;
 
+import static android.view.WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON;
+import static android.view.WindowManager.LayoutParams.FLAG_SHOW_WHEN_LOCKED;
+import static android.view.WindowManager.LayoutParams.FLAG_TURN_SCREEN_ON;
 import static android.view.WindowManager.LayoutParams.TYPE_APPLICATION_PANEL;
 
 public class LayoutTestsActivity extends Activity {
@@ -52,7 +56,18 @@ public class LayoutTestsActivity extends Activity {
         getWindow().getDecorView().getWindowVisibleDisplayFrame(outRect);
     }
 
-    public void addWindow(View view) {
-        getWindowManager().addView(view, new LayoutParams(TYPE_APPLICATION_PANEL));
+    public void addWindow(View view, LayoutParams attrs) {
+        mChild = view;
+        getWindowManager().addView(view, attrs);
+    }
+
+    public void updateLayoutForAddedWindow(LayoutParams attrs) {
+        getWindowManager().updateViewLayout(mChild, attrs);
+    }
+
+    @Override
+    protected void onCreate(Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+        getWindow().addFlags(FLAG_SHOW_WHEN_LOCKED | FLAG_TURN_SCREEN_ON | FLAG_KEEP_SCREEN_ON);
     }
 }
