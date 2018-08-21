@@ -26,6 +26,7 @@ import android.content.Intent;
 import android.content.IntentFilter;
 
 import com.android.compatibility.common.util.CtsAndroidTestCase;
+import com.android.compatibility.common.util.CddTest;
 
 import com.android.compatibility.common.util.DeviceReportLog;
 import com.android.compatibility.common.util.MeasureRun;
@@ -69,6 +70,7 @@ public class TaskSwitchingDeviceTest extends CtsAndroidTestCase {
         super.tearDown();
     }
 
+    @CddTest(requirement="8.1/H-0-3")
     public void testMeasureTaskSwitching() throws Exception {
         final int NUMBER_REPEAT = 10;
         final int SWITCHING_PER_ONE_TRY = 10;
