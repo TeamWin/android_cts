@@ -16,6 +16,8 @@
 
 package android.security.cts;
 
+import com.android.compatibility.common.util.CddTest;
+
 import java.io.IOException;
 import android.platform.test.annotations.SecurityTest;
 import java.security.KeyStore;
@@ -36,6 +38,7 @@ import junit.framework.TestCase;
 @SecurityTest
 public class CertificateTest extends TestCase {
 
+    @CddTest(requirement="9.8.4/C-0-1")
     public void testNoRemovedCertificates() throws Exception {
         Set<String> expectedCertificates = new HashSet<String>(
                 Arrays.asList(CertificateData.CERTIFICATE_DATA));
@@ -62,6 +65,7 @@ public class CertificateTest extends TestCase {
      *
      * <p>For questions, comments, and code reviews please contact security@android.com.
      */
+    @CddTest(requirement="9.8.4/C-0-1")
     public void testNoAddedCertificates() throws Exception {
         Set<String> expectedCertificates = new HashSet<String>(
                 Arrays.asList(CertificateData.CERTIFICATE_DATA));

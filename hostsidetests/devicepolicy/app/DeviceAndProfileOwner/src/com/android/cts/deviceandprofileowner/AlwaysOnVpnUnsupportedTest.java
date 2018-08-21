@@ -18,6 +18,8 @@ package com.android.cts.deviceandprofileowner;
 
 import static com.android.cts.deviceandprofileowner.vpn.VpnTestHelper.VPN_PACKAGE;
 
+import com.android.compatibility.common.util.CddTest;
+
 /**
  * Validates that a device owner or profile owner cannot enable the always-on feature for
  * unsupported VPN apps.
@@ -29,6 +31,7 @@ import static com.android.cts.deviceandprofileowner.vpn.VpnTestHelper.VPN_PACKAG
  *         {@link android.net.VpnService#SERVICE_META_DATA_SUPPORTS_ALWAYS_ON}</li>
  * </ul>
  */
+@CddTest(requirement="9.8.4/C-3-1")
 public class AlwaysOnVpnUnsupportedTest extends BaseDeviceAdminTest {
 
     public void testAssertNoAlwaysOnVpn() throws Exception {
