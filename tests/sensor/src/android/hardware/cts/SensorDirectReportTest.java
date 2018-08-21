@@ -41,6 +41,8 @@ import java.util.List;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 
+import com.android.compatibility.common.util.CddTest;
+
 /**
  * Checks Sensor Direct Report functionality
  *
@@ -76,6 +78,7 @@ import java.util.concurrent.TimeUnit;
  *   - testCloseWithoutConfigStop
  *     test a common mistake in API usage and make sure no negative effect is made to system.
  */
+@CddTest(requirement="7.3.9/C-3-1,C-3-2")
 public class SensorDirectReportTest extends SensorTestCase {
     private static final String TAG = "SensorDirectReportTest";
     // nominal rates of each rate level supported

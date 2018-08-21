@@ -22,7 +22,7 @@ import android.hardware.Sensor;
 import android.hardware.SensorManager;
 import android.hardware.cts.helpers.SensorCtsHelper;
 import android.text.TextUtils;
-
+import com.android.compatibility.common.util.CddTest;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
@@ -75,6 +75,7 @@ public class SensorParameterRangeTest extends SensorTestCase {
         mVrModeHighPerformance = pm.hasSystemFeature(PackageManager.FEATURE_VR_MODE_HIGH_PERFORMANCE);
     }
 
+    @CddTest(requirement="7.3.9/C-2-1")
     public void testAccelerometerRange() {
         checkSensorRangeAndFrequency(
                 mSensorManager.getDefaultSensor(Sensor.TYPE_ACCELEROMETER),
@@ -83,6 +84,7 @@ public class SensorParameterRangeTest extends SensorTestCase {
                 ACCELEROMETER_MAX_FREQUENCY);
   }
 
+  @CddTest(requirement="7.3.9/C-2-3")
   public void testGyroscopeRange() {
         checkSensorRangeAndFrequency(
                 mSensorManager.getDefaultSensor(Sensor.TYPE_GYROSCOPE),
@@ -90,7 +92,7 @@ public class SensorParameterRangeTest extends SensorTestCase {
                 GYRO_MIN_FREQUENCY,
                 GYRO_MAX_FREQUENCY);
   }
-
+    @CddTest(requirement="7.3.9/C-2-5")
     public void testMagnetometerRange() {
         checkSensorRangeAndFrequency(
                 mSensorManager.getDefaultSensor(Sensor.TYPE_MAGNETIC_FIELD),
@@ -99,6 +101,7 @@ public class SensorParameterRangeTest extends SensorTestCase {
                 MAGNETOMETER_MAX_FREQUENCY);
     }
 
+    @CddTest(requirement="7.3.9/C-2-7")
     public void testPressureRange() {
         if (mHasHifiSensors) {
             checkSensorRangeAndFrequency(
@@ -129,11 +132,13 @@ public class SensorParameterRangeTest extends SensorTestCase {
                 maxFrequency - 0.1);
     }
 
+    @CddTest(requirement="7.3.9/C-2-1")
     public void testAccelerometerFifoLength() throws Throwable {
         if (!mHasHifiSensors) return;
         checkMinFifoLength(Sensor.TYPE_ACCELEROMETER, ACCELEROMETER_MIN_FIFO_LENGTH);
     }
 
+    @CddTest(requirement="7.3.9/C-2-6")
     public void testUncalMagnetometerFifoLength() throws Throwable {
         if (!mHasHifiSensors) return;
         checkMinFifoLength(
@@ -141,21 +146,25 @@ public class SensorParameterRangeTest extends SensorTestCase {
                 UNCAL_MAGNETOMETER_MIN_FIFO_LENGTH);
     }
 
+    @CddTest(requirement="7.3.9/C-2-7")
     public void testPressureFifoLength() throws Throwable {
         if (!mHasHifiSensors) return;
         checkMinFifoLength(Sensor.TYPE_PRESSURE, PRESSURE_MIN_FIFO_LENGTH);
     }
 
+    @CddTest(requirement="7.3.9/C-2-8")
     public void testGameRotationVectorFifoLength() throws Throwable {
         if (!mHasHifiSensors) return;
         checkMinFifoLength(Sensor.TYPE_GAME_ROTATION_VECTOR, GAME_ROTATION_VECTOR_MIN_FIFO_LENGTH);
     }
 
+    @CddTest(requirement="7.3.9/C-2-17")
     public void testProximityFifoLength() throws Throwable {
         if (!mHasHifiSensors) return;
         checkMinFifoLength(Sensor.TYPE_PROXIMITY, PROXIMITY_SENSOR_MIN_FIFO_LENGTH);
     }
 
+    @CddTest(requirement="7.3.9/C-2-10")
     public void testStepDetectorFifoLength() throws Throwable {
         if (!mHasHifiSensors) return;
         checkMinFifoLength(Sensor.TYPE_STEP_DETECTOR, STEP_DETECTOR_MIN_FIFO_LENGTH);

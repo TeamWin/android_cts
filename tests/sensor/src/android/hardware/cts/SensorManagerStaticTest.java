@@ -22,8 +22,11 @@ import android.content.Context;
 import android.hardware.SensorManager;
 import android.os.PowerManager;
 
+import com.android.compatibility.common.util.CddTest;
+
 import java.util.Random;
 
+@CddTest(requirement="7.3.1/C-1-3")
 public class SensorManagerStaticTest extends SensorTestCase {
     private static final String TAG = "SensorManagerTest";
 

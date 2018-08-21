@@ -40,7 +40,7 @@ public class GnssTtffTests extends GnssTestCase {
    * connection should not matter hence one threshold is used.
    * @throws Exception
    */
-  @CddTest(requirement="7.3.3")
+  @CddTest(requirement="7.3.3/C-1-2")
   public void testTtffWithNetwork() throws Exception {
     ensureNetworkStatus();
     if (hasCellularData()) {

@@ -20,6 +20,7 @@ import android.content.Context;
 import android.content.pm.PackageManager;
 import android.hardware.Sensor;
 import android.hardware.SensorManager;
+import com.android.compatibility.common.util.CddTest;
 
 /**
  * Checks if Hifi sensors  or VR High performance mode sensors
@@ -34,6 +35,7 @@ import android.hardware.SensorManager;
  *     -w android.hardware.cts/android.test.AndroidJUnitRunner
  * </pre>
  */
+@CddTest(requirement="7.3.9")
 public class SensorSupportTest extends SensorTestCase {
     private SensorManager mSensorManager;
     private boolean mAreHifiSensorsSupported;
@@ -51,46 +53,57 @@ public class SensorSupportTest extends SensorTestCase {
         }
     }
 
+    @CddTest(requirement="7.3.9/C-2-1")
     public void testSupportsAccelerometer() {
         checkSupportsSensor(Sensor.TYPE_ACCELEROMETER);
     }
 
+    @CddTest(requirement="7.3.9/C-2-3")
     public void testSupportsGyroscope() {
         checkSupportsSensor(Sensor.TYPE_GYROSCOPE);
     }
 
+    @CddTest(requirement="7.3.9/C-2-4")
     public void testSupportsGyroscopeUncalibrated() {
         checkSupportsSensor(Sensor.TYPE_GYROSCOPE_UNCALIBRATED);
     }
 
+    @CddTest(requirement="7.3.9/C-2-5")
     public void testSupportsGeoMagneticField() {
         checkSupportsSensor(Sensor.TYPE_MAGNETIC_FIELD);
     }
 
+    @CddTest(requirement="7.3.9/C-2-6")
     public void testSupportsMagneticFieldUncalibrated() {
         checkSupportsSensor(Sensor.TYPE_MAGNETIC_FIELD_UNCALIBRATED);
     }
 
+    @CddTest(requirement="7.3.9/C-2-7")
     public void testSupportsPressure() {
         checkSupportsSensor(Sensor.TYPE_PRESSURE);
     }
 
+    @CddTest(requirement="7.3.9/C-2-8")
     public void testSupportsRotationVector() {
         checkSupportsSensor(Sensor.TYPE_ROTATION_VECTOR);
     }
 
+    @CddTest(requirement="7.3.9/C-2-9")
     public void testSupportsSignificantMotion() {
         checkSupportsSensor(Sensor.TYPE_SIGNIFICANT_MOTION);
     }
 
+    @CddTest(requirement="7.3.9/C-2-10")
     public void testSupportsStepDetector() {
         checkSupportsSensor(Sensor.TYPE_STEP_DETECTOR);
     }
 
+    @CddTest(requirement="7.3.9/C-2-11")
     public void testSupportsStepCounter() {
         checkSupportsSensor(Sensor.TYPE_STEP_COUNTER);
     }
 
+    @CddTest(requirement="7.3.9/C-2-12")
     public void testSupportsTiltDetector() {
         final int TYPE_TILT_DETECTOR = 22;
         checkSupportsSensor(TYPE_TILT_DETECTOR);
