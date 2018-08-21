@@ -20,6 +20,7 @@ package android.os.cts;
 import android.os.cts.CpuInstructions;
 
 import com.android.compatibility.common.util.CpuFeatures;
+import com.android.compatibility.common.util.CddTest;
 
 import junit.framework.TestCase;
 
@@ -34,6 +35,7 @@ public class CpuInstructionsTest extends TestCase {
                 CpuInstructions.canReadCntvct());
     }
 
+    @CddTest(requirement="3.3.2/C-1-1")
     public void testEmulatedArmCpuFeatures() {
         if (!CpuFeatures.isArm64CpuIn32BitMode()) {
             return;
