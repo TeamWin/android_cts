@@ -20,9 +20,14 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 
+import android.app.Activity;
 import android.content.Context;
+import android.content.Intent;
 import android.support.test.InstrumentationRegistry;
 import android.support.test.runner.AndroidJUnit4;
+import android.support.test.uiautomator.By;
+import android.support.test.uiautomator.UiDevice;
+import android.support.test.uiautomator.Until;
 import android.text.ClipboardManager;
 
 import org.junit.Before;
@@ -35,11 +40,15 @@ import org.junit.runner.RunWith;
 @RunWith(AndroidJUnit4.class)
 public class ClipboardManagerTest {
     private ClipboardManager mClipboardManager;
+    private UiDevice mUiDevice;
+    private Context mContext;
 
     @Before
     public void setup() {
-        final Context context = InstrumentationRegistry.getTargetContext();
-        mClipboardManager = (ClipboardManager) context.getSystemService(Context.CLIPBOARD_SERVICE);
+        mContext = InstrumentationRegistry.getTargetContext();
+        mClipboardManager = (ClipboardManager) mContext.getSystemService(Context.CLIPBOARD_SERVICE);
+        mUiDevice = UiDevice.getInstance(InstrumentationRegistry.getInstrumentation());
+        launchActivity(MockActivity.class);
     }
 
     @Test
@@ -61,4 +70,13 @@ public class ClipboardManagerTest {
         mClipboardManager.setText(null);
         assertFalse(mClipboardManager.hasText());
     }
+
+    private void launchActivity(Class<? extends Activity> clazz) {
+        Intent intent = new Intent(Intent.ACTION_MAIN);
+        intent.setClassName(mContext.getPackageName(), clazz.getName());
+        intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+        mContext.startActivity(intent);
+        mUiDevice.wait(Until.hasObject(By.clazz(clazz)), 5000);
+    }
+
 }
