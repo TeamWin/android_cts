@@ -207,8 +207,11 @@ public class ChangeBoundsTest extends BaseTransitionTest {
         PollingCheck.waitFor(
                 () -> red.getWidth() > middleSize && green.getWidth() > middleSize);
 
-        assertTrue(red.getHeight() > middleSize);
-        assertTrue(green.getHeight() > middleSize);
+        // Width may be set prior to height on the UI thread, so let's test height on the UI thread
+        mActivityRule.runOnUiThread(() -> {
+            assertTrue(red.getHeight() > middleSize);
+            assertTrue(green.getHeight() > middleSize);
+        });
     }
 
     private void waitForClipIsMiddle() throws Throwable {
@@ -222,8 +225,11 @@ public class ChangeBoundsTest extends BaseTransitionTest {
         PollingCheck.waitFor(() -> red.getClipBounds().width() > middleSize
                 && green.getClipBounds().width() > middleSize);
 
-        assertTrue(red.getClipBounds().height() > middleSize);
-        assertTrue(green.getClipBounds().height() > middleSize);
+        // Width may be set prior to height on the UI thread, so let's test height on the UI thread
+        mActivityRule.runOnUiThread(() -> {
+            assertTrue(red.getClipBounds().height() > middleSize);
+            assertTrue(green.getClipBounds().height() > middleSize);
+        });
     }
 
     private boolean isRestartingAnimation() {
