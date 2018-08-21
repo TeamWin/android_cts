@@ -19,6 +19,7 @@ package com.android.cts.verifier.audio;
 import com.android.cts.verifier.PassFailButtons;
 import com.android.cts.verifier.R;
 import com.android.cts.verifier.audio.wavelib.*;
+import com.android.compatibility.common.util.CddTest;
 import com.android.compatibility.common.util.ReportLog;
 import com.android.compatibility.common.util.ResultType;
 import com.android.compatibility.common.util.ResultUnit;
@@ -50,6 +51,7 @@ import android.widget.ProgressBar;
 /**
  * Tests Audio built in Microphone response for Unprocessed audio source feature.
  */
+@CddTest(requirement="5.11/C-1-1,C-1-2,C-1-3,C-1-4,C-1-5,C-1-6")
 public class AudioFrequencyUnprocessedActivity extends AudioFrequencyActivity implements Runnable,
     AudioRecord.OnRecordPositionUpdateListener {
     private static final String TAG = "AudioFrequencyUnprocessedActivity";
