@@ -84,7 +84,7 @@ public class ActivityManagerActivityVisibilityTests extends ActivityManagerTestB
                 LAUNCH_PIP_ON_PIP_ACTIVITY);
 
         assertNotEquals(stackId, INVALID_STACK_ID);
-        executeShellCommand(getMoveToPinnedStackCommand(stackId));
+        moveTopActivityToPinnedStack(stackId);
         mAmWmState.waitForValidState(
                 new WaitForValidActivityState.Builder(ALWAYS_FOCUSABLE_PIP_ACTIVITY)
                         .setWindowingMode(WINDOWING_MODE_PINNED)
@@ -135,7 +135,7 @@ public class ActivityManagerActivityVisibilityTests extends ActivityManagerTestB
                 ALWAYS_FOCUSABLE_PIP_ACTIVITY);
 
         assertNotEquals(stackId, INVALID_STACK_ID);
-        executeShellCommand(getMoveToPinnedStackCommand(stackId));
+        moveTopActivityToPinnedStack(stackId);
         mAmWmState.waitForValidState(
                 new WaitForValidActivityState.Builder(ALWAYS_FOCUSABLE_PIP_ACTIVITY)
                         .setWindowingMode(WINDOWING_MODE_PINNED)

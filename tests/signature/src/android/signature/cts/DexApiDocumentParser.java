@@ -46,10 +46,11 @@ public class DexApiDocumentParser {
         private final BufferedReader mReader;
         private int mLineNum;
 
-        private static final Pattern REGEX_CLASS = Pattern.compile("^L[^->]*;$");
-        private static final Pattern REGEX_FIELD = Pattern.compile("^(L[^->]*;)->(.*):(.*)$");
+        // Regex patterns which match DEX signatures of methods and fields.
+        // See comment by next() for more details.
+        private static final Pattern REGEX_FIELD = Pattern.compile("^(L[^>]*;)->(.*):(.*)$");
         private static final Pattern REGEX_METHOD =
-                Pattern.compile("^(L[^->]*;)->(.*)(\\(.*\\).*)$");
+                Pattern.compile("^(L[^>]*;)->(.*)(\\(.*\\).*)$");
 
         DexApiSpliterator(BufferedReader reader) {
             mReader = reader;
@@ -87,15 +88,12 @@ public class DexApiDocumentParser {
         }
 
         /**
-         * Parses lines of DEX signatures from `mReader`. The following three
+         * Parses lines of DEX signatures from `mReader`. The following two
          * line formats are supported:
-         * 1) [class descriptor]
-         *      - e.g. Lcom/example/MyClass;
-         *      - these lines are ignored
-         * 2) [class descriptor]->[field name]:[field type]
+         * 1) [class descriptor]->[field name]:[field type]
          *      - e.g. Lcom/example/MyClass;->myField:I
          *      - these lines are parsed as field signatures
-         * 3) [class descriptor]->[method name]([method parameter types])[method return type]
+         * 2) [class descriptor]->[method name]([method parameter types])[method return type]
          *      - e.g. Lcom/example/MyClass;->myMethod(Lfoo;Lbar;)J
          *      - these lines are parsed as method signatures
          */
@@ -112,13 +110,11 @@ public class DexApiDocumentParser {
                 mLineNum = mLineNum + 1;
 
                 // Match line against regex patterns.
-                Matcher matchClass = REGEX_CLASS.matcher(line);
                 Matcher matchField = REGEX_FIELD.matcher(line);
                 Matcher matchMethod = REGEX_METHOD.matcher(line);
 
                 // Check that *exactly* one pattern matches.
-                int matchCount = (matchClass.matches() ? 1 : 0) + (matchField.matches() ? 1 : 0) +
-                        (matchMethod.matches() ? 1 : 0);
+                int matchCount = (matchField.matches() ? 1 : 0) + (matchMethod.matches() ? 1 : 0);
                 if (matchCount == 0) {
                     throw new ParseException("Could not parse: \"" + line + "\"", mLineNum);
                 } else if (matchCount > 1) {
@@ -126,10 +122,7 @@ public class DexApiDocumentParser {
                 }
 
                 // Extract information from the line.
-                if (matchClass.matches()) {
-                    // We ignore lines describing a class because classes are
-                    // not being hidden.
-                } else if (matchField.matches()) {
+                if (matchField.matches()) {
                     return new DexField(
                             matchField.group(1), matchField.group(2), matchField.group(3));
                 } else if (matchMethod.matches()) {

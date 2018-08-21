@@ -26,14 +26,17 @@ import static com.google.common.truth.Truth.assertThat;
 import static org.junit.Assume.assumeTrue;
 
 import android.app.Activity;
-import android.app.ActivityManager;
 import android.app.ActivityTaskManager;
 import android.content.Intent;
 import android.platform.test.annotations.AppModeFull;
 import android.view.View;
 
+import com.android.compatibility.common.util.AdoptShellPermissionsRule;
+
 import org.junit.Before;
 import org.junit.Test;
+import org.junit.rules.RuleChain;
+import org.junit.rules.TestRule;
 
 import java.util.concurrent.TimeoutException;
 
@@ -42,7 +45,6 @@ public class MultiWindowLoginActivityTest
         extends AutoFillServiceTestCase.AutoActivityLaunch<MultiWindowLoginActivity> {
 
     private LoginActivity mActivity;
-    private ActivityManager mAm;
     private ActivityTaskManager mAtm;
 
     @Override
@@ -52,10 +54,14 @@ public class MultiWindowLoginActivityTest
             @Override
             protected void afterActivityLaunched() {
                 mActivity = getActivity();
-                mAm = mContext.getSystemService(ActivityManager.class);
                 mAtm = mContext.getSystemService(ActivityTaskManager.class);
             }
         };
+    }
+
+    @Override
+    protected TestRule getMainTestRule() {
+        return RuleChain.outerRule(new AdoptShellPermissionsRule()).around(getActivityRule());
     }
 
     @Before

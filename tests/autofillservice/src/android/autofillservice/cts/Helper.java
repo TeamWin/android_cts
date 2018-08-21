@@ -1036,11 +1036,11 @@ final class Helper {
                 .isEqualTo(expectedResult.id);
         final List<Match> matches = actualResult.getValue().getMatches();
         assertWithMessage("Wrong number of matches: " + matches).that(matches.size())
-                .isEqualTo(expectedResult.remoteIds.length);
+                .isEqualTo(expectedResult.categoryIds.length);
         for (int j = 0; j < matches.size(); j++) {
             final Match match = matches.get(j);
             assertWithMessage("Wrong categoryId at (%s, %s): %s", i, j, match)
-                .that(match.getCategoryId()).isEqualTo(expectedResult.remoteIds[j]);
+                .that(match.getCategoryId()).isEqualTo(expectedResult.categoryIds[j]);
             assertWithMessage("Wrong score at (%s, %s): %s", i, j, match)
                 .that(match.getScore()).isWithin(0.01f).of(expectedResult.scores[j]);
         }
@@ -1130,10 +1130,10 @@ final class Helper {
     }
 
     public static void assertFillEventForFieldsClassification(@NonNull FillEventHistory.Event event,
-            @NonNull AutofillId fieldId, @NonNull String remoteId, float score) {
+            @NonNull AutofillId fieldId, @NonNull String categoryId, float score) {
         assertFillEvent(event, TYPE_CONTEXT_COMMITTED, null, null, null,
                 new FieldClassificationResult[] {
-                        new FieldClassificationResult(fieldId, remoteId, score)
+                        new FieldClassificationResult(fieldId, categoryId, score)
                 });
     }
 
@@ -1332,17 +1332,17 @@ final class Helper {
 
     static class FieldClassificationResult {
         public final AutofillId id;
-        public final String[] remoteIds;
+        public final String[] categoryIds;
         public final float[] scores;
 
-        FieldClassificationResult(@NonNull AutofillId id, @NonNull String remoteId, float score) {
-            this(id, new String[] { remoteId }, new float[] { score });
+        FieldClassificationResult(@NonNull AutofillId id, @NonNull String categoryId, float score) {
+            this(id, new String[] { categoryId }, new float[] { score });
         }
 
-        FieldClassificationResult(@NonNull AutofillId id, @NonNull String[] remoteIds,
+        FieldClassificationResult(@NonNull AutofillId id, @NonNull String[] categoryIds,
                 float[] scores) {
             this.id = id;
-            this.remoteIds = remoteIds;
+            this.categoryIds = categoryIds;
             this.scores = scores;
         }
     }

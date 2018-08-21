@@ -118,8 +118,10 @@ public class UserDataTest {
 
     @Test
     public void testAdd_duplicatedValue() {
-        assertThrows(IllegalStateException.class, () -> mBuilder.add(mValue, mCategoryId));
-        assertThrows(IllegalStateException.class, () -> mBuilder.add(mValue, mCategoryId2));
+        assertThat(new UserData.Builder(mId, mValue, mCategoryId).add(mValue, mCategoryId).build())
+                .isNotNull();
+        assertThat(new UserData.Builder(mId, mValue, mCategoryId).add(mValue, mCategoryId2).build())
+                .isNotNull();
     }
 
     @Test

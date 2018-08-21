@@ -33,23 +33,32 @@ import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 import static org.junit.Assume.assumeTrue;
 
+import android.app.Activity;
 import android.app.ActivityManager;
 import android.app.ActivityTaskManager;
+import android.content.ComponentName;
 import android.content.Context;
 import android.graphics.Point;
+import android.graphics.Rect;
 import android.os.RemoteException;
 import android.platform.test.annotations.AppModeFull;
 import android.os.SystemClock;
 import android.platform.test.annotations.Presubmit;
 import android.support.test.InstrumentationRegistry;
 import android.support.test.filters.FlakyTest;
+import android.support.test.runner.lifecycle.ActivityLifecycleCallback;
+import android.support.test.runner.lifecycle.ActivityLifecycleMonitorRegistry;
+import android.support.test.runner.lifecycle.Stage;
 import android.util.Log;
+
+import com.android.compatibility.common.util.SystemUtil;
 
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 
 import java.util.Map;
+import java.util.function.BooleanSupplier;
 import java.util.regex.Pattern;
 
 /**
@@ -62,12 +71,7 @@ import java.util.regex.Pattern;
 public class CrossAppDragAndDropTests {
     private static final String TAG = "CrossAppDragAndDrop";
 
-    private static final String AM_FORCE_STOP = "am force-stop ";
-    private static final String AM_MOVE_TASK = "am stack move-task ";
-    private static final String AM_RESIZE_TASK = "am task resize ";
-    private static final String AM_REMOVE_STACK = "am stack remove ";
     private static final String AM_START_N = "am start -n ";
-    private static final String AM_STACK_LIST = "am stack list";
     private static final String TASK_ID_PREFIX = "taskId";
 
     // Regex pattern to match adb shell am stack list output of the form:
@@ -135,6 +139,49 @@ public class CrossAppDragAndDropTests {
     private String mSourceLogTag;
     private String mTargetLogTag;
 
+    private LifecycleMonitor mLifecycleMonitor = new LifecycleMonitor();
+
+    private static class LifecycleMonitor implements ActivityLifecycleCallback {
+        Stage mCurrentStage;
+        Activity mCurrentActivity;
+
+        @Override
+        synchronized public void onActivityLifecycleChanged(Activity activity, Stage stage) {
+            mCurrentStage = stage;
+            mCurrentActivity = activity;
+        }
+
+        public void waitForStage(String packageName, String activityName, Stage stage) {
+            final ComponentName component = new ComponentName(packageName, activityName);
+            waitForConditionWithTimeout(() -> {
+                if (mCurrentActivity == null || mCurrentStage == null) {
+                    return false;
+                }
+                return mCurrentActivity.getComponentName().equals(component)
+                        && mCurrentStage.equals(stage);
+            }, 3000);
+        }
+
+        /** Blocking call to wait for a condition to become true with max timeout. */
+        synchronized private boolean waitForConditionWithTimeout(BooleanSupplier waitCondition,
+                long timeoutMs) {
+            final long timeout = System.currentTimeMillis() + timeoutMs;
+            while (!waitCondition.getAsBoolean()) {
+                final long waitMs = timeout - System.currentTimeMillis();
+                if (waitMs <= 0) {
+                    // Timeout expired.
+                    return false;
+                }
+                try {
+                    wait(500);
+                } catch (InterruptedException e) {
+                    // Weird, let's retry.
+                }
+            }
+            return true;
+        }
+    }
+
     @Before
     public void setUp() throws Exception {
         assumeTrue(supportsDragAndDrop());
@@ -151,6 +198,8 @@ public class CrossAppDragAndDropTests {
         mSourcePackageName = SOURCE_PACKAGE_NAME;
         mTargetPackageName = TARGET_PACKAGE_NAME;
         cleanupState();
+
+        ActivityLifecycleMonitorRegistry.getInstance().addLifecycleCallback(mLifecycleMonitor);
     }
 
     @After
@@ -159,26 +208,15 @@ public class CrossAppDragAndDropTests {
           return;
         }
 
-        executeShellCommand(AM_FORCE_STOP + mSourcePackageName);
-        executeShellCommand(AM_FORCE_STOP + mTargetPackageName);
-    }
-
-    private void clearLogs() {
-        executeShellCommand("logcat -c");
+        ActivityLifecycleMonitorRegistry.getInstance().removeLifecycleCallback(mLifecycleMonitor);
+        SystemUtil.runWithShellPermissionIdentity(() -> {
+            mAm.forceStopPackage(mSourcePackageName);
+            mAm.forceStopPackage(mTargetPackageName);
+        });
     }
 
     private String getStartCommand(String componentName, String modeExtra, String logtag) {
         return AM_START_N + componentName + " -e mode " + modeExtra + " -e logtag " + logtag;
-    }
-
-    private String getMoveTaskCommand(int taskId, int stackId) {
-        return AM_MOVE_TASK + taskId + " " + stackId + " true";
-    }
-
-    private String getResizeTaskCommand(int taskId, Point topLeft, Point bottomRight)
-            throws Exception {
-        return AM_RESIZE_TASK + taskId + " " + topLeft.x + " " + topLeft.y + " " + bottomRight.x
-                + " " + bottomRight.y;
     }
 
     private String getComponentName(String packageName, String activityName) {
@@ -190,23 +228,23 @@ public class CrossAppDragAndDropTests {
      * is in a good state.
      */
     private void cleanupState() throws Exception {
-        executeShellCommand(AM_FORCE_STOP + SOURCE_PACKAGE_NAME);
-        executeShellCommand(AM_FORCE_STOP + TARGET_PACKAGE_NAME);
-        executeShellCommand(AM_FORCE_STOP + TARGET_23_PACKAGE_NAME);
-        unlockDevice();
-        clearLogs();
+        SystemUtil.runWithShellPermissionIdentity(() -> {
+            mAm.forceStopPackage(SOURCE_PACKAGE_NAME);
+            mAm.forceStopPackage(TARGET_PACKAGE_NAME);
+            mAm.forceStopPackage(TARGET_23_PACKAGE_NAME);
+            unlockDevice();
 
-        // Remove special stacks.
-        mAtm.removeStacksInWindowingModes(new int[] {
-                WINDOWING_MODE_PINNED,
-                WINDOWING_MODE_SPLIT_SCREEN_PRIMARY,
-                WINDOWING_MODE_FREEFORM
+            // Remove special stacks.
+            mAtm.removeStacksInWindowingModes(new int[]{
+                    WINDOWING_MODE_PINNED,
+                    WINDOWING_MODE_SPLIT_SCREEN_PRIMARY,
+                    WINDOWING_MODE_FREEFORM
+            });
         });
     }
 
     private void launchDockedActivity(String packageName, String activityName, String mode,
             String logtag) throws Exception {
-        clearLogs();
         final String componentName = getComponentName(packageName, activityName);
         executeShellCommand(getStartCommand(componentName, mode, logtag) + " --windowingMode "
                 + WINDOWING_MODE_SPLIT_SCREEN_PRIMARY);
@@ -215,7 +253,6 @@ public class CrossAppDragAndDropTests {
 
     private void launchFullscreenActivity(String packageName, String activityName, String mode,
             String logtag) throws Exception {
-        clearLogs();
         final String componentName = getComponentName(packageName, activityName);
         executeShellCommand(getStartCommand(componentName, mode, logtag) + " --windowingMode "
                 + WINDOWING_MODE_FULLSCREEN_OR_SPLIT_SCREEN_SECONDARY);
@@ -229,31 +266,19 @@ public class CrossAppDragAndDropTests {
      */
     private void launchFreeformActivity(String packageName, String activityName, String mode,
             String logtag, Point displaySize, boolean leftSide) throws Exception {
-        clearLogs();
         final String componentName = getComponentName(packageName, activityName);
         executeShellCommand(getStartCommand(componentName, mode, logtag) + " --windowingMode "
                 + WINDOWING_MODE_FREEFORM);
         waitForResume(packageName, activityName);
         Point topLeft = new Point(leftSide ? 0 : displaySize.x / 2, 0);
         Point bottomRight = new Point(leftSide ? displaySize.x / 2 : displaySize.x, displaySize.y);
-        executeShellCommand(getResizeTaskCommand(getActivityTaskId(componentName), topLeft,
-                bottomRight));
+        SystemUtil.runWithShellPermissionIdentity(
+                () -> mAtm.resizeTask(getActivityTaskId(componentName),
+                        new Rect(topLeft.x, topLeft.y, bottomRight.x, bottomRight.y)));
     }
 
     private void waitForResume(String packageName, String activityName) throws Exception {
-        final String fullActivityName = packageName + "." + activityName;
-        int retryCount = 3;
-        do {
-            Thread.sleep(500);
-            String logs = executeShellCommand("logcat -d -b events");
-            for (String line : logs.split("\\n")) {
-                if (line.contains("am_on_resume_called") && line.contains(fullActivityName)) {
-                    return;
-                }
-            }
-        } while (retryCount-- > 0);
-
-        throw new Exception(fullActivityName + " has failed to start");
+        mLifecycleMonitor.waitForStage(packageName, activityName, Stage.RESUMED);
     }
 
     private void injectInput(Point from, Point to, int steps) throws Exception {
@@ -261,28 +286,36 @@ public class CrossAppDragAndDropTests {
     }
 
     private String findTaskInfo(String name) {
-        final String output = executeShellCommand(AM_STACK_LIST);
-        final StringBuilder builder = new StringBuilder();
-        builder.append("Finding task info for task: ");
-        builder.append(name);
-        builder.append("\nParsing adb shell am output: ");
-        builder.append(output);
-        log(builder.toString());
-        final Pattern pattern = Pattern.compile(String.format(TASK_REGEX_PATTERN_STRING, name));
-        for (String line : output.split("\\n")) {
-            final String truncatedLine;
-            // Only look for the activity name before the "topActivity" string.
-            final int pos = line.indexOf("topActivity");
-            if (pos > 0) {
-                truncatedLine = line.substring(0, pos);
-            } else {
-                truncatedLine = line;
+        try {
+            InstrumentationRegistry.getInstrumentation().getUiAutomation()
+                    .adoptShellPermissionIdentity();
+
+            final String output = mAtm.listAllStacks();
+            final StringBuilder builder = new StringBuilder();
+            builder.append("Finding task info for task: ");
+            builder.append(name);
+            builder.append("\nParsing adb shell am output: ");
+            builder.append(output);
+            log(builder.toString());
+            final Pattern pattern = Pattern.compile(String.format(TASK_REGEX_PATTERN_STRING, name));
+            for (String line : output.split("\\n")) {
+                final String truncatedLine;
+                // Only look for the activity name before the "topActivity" string.
+                final int pos = line.indexOf("topActivity");
+                if (pos > 0) {
+                    truncatedLine = line.substring(0, pos);
+                } else {
+                    truncatedLine = line;
+                }
+                if (pattern.matcher(truncatedLine).find()) {
+                    return truncatedLine;
+                }
             }
-            if (pattern.matcher(truncatedLine).find()) {
-                return truncatedLine;
-            }
+            return "";
+        } finally {
+            InstrumentationRegistry.getInstrumentation().getUiAutomation()
+                    .dropShellPermissionIdentity();
         }
-        return "";
     }
 
     private boolean getWindowBounds(String name, Point from, Point to) throws Exception {

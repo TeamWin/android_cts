@@ -20,24 +20,21 @@ import static android.hardware.display.DisplayManager.VIRTUAL_DISPLAY_FLAG_OWN_C
 import static android.hardware.display.DisplayManager.VIRTUAL_DISPLAY_FLAG_PRESENTATION;
 import static android.server.am.StateLogger.logAlways;
 import static android.support.test.InstrumentationRegistry.getContext;
-import static android.support.test.InstrumentationRegistry.getInstrumentation;
+import static android.view.Display.DEFAULT_DISPLAY;
 
 import static org.junit.Assert.fail;
 
+import android.content.Context;
 import android.graphics.PixelFormat;
 import android.hardware.display.DisplayManager;
 import android.hardware.display.VirtualDisplay;
 import android.media.ImageReader;
 import android.os.SystemClock;
-import androidx.annotation.Nullable;
+import android.view.Display;
 
 import com.android.compatibility.common.util.SystemUtil;
 
-import java.io.IOException;
-import java.util.Objects;
 import java.util.function.Predicate;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 
 /**
  * Helper class to create virtual display.
@@ -48,8 +45,6 @@ class VirtualDisplayHelper {
     /** See {@link DisplayManager#VIRTUAL_DISPLAY_FLAG_CAN_SHOW_WITH_INSECURE_KEYGUARD}. */
     private static final int VIRTUAL_DISPLAY_FLAG_CAN_SHOW_WITH_INSECURE_KEYGUARD = 1 << 5;
 
-    private static final Pattern DISPLAY_DEVICE_PATTERN = Pattern.compile(
-            ".*DisplayDeviceInfo\\{\"([^\"]+)\":.*, state (\\S+),.*\\}.*");
     private static final int DENSITY = 160;
     private static final int HEIGHT = 480;
     private static final int WIDTH = 800;
@@ -59,29 +54,41 @@ class VirtualDisplayHelper {
     private boolean mCreated;
 
     void createAndWaitForDisplay(boolean requestShowWhenLocked) {
-        createVirtualDisplay(requestShowWhenLocked);
-        waitForDisplayState(false /* default */, true /* on */);
-        mCreated = true;
+        SystemUtil.runWithShellPermissionIdentity(() -> {
+            createVirtualDisplay(requestShowWhenLocked);
+            waitForDisplayState(mVirtualDisplay.getDisplay().getDisplayId() /* default */,
+                    true /* on */);
+            mCreated = true;
+        });
     }
 
     void turnDisplayOff() {
-        mVirtualDisplay.setSurface(null);
-        waitForDisplayState(false /* default */, false /* on */);
+        SystemUtil.runWithShellPermissionIdentity(() -> {
+            mVirtualDisplay.setSurface(null);
+            waitForDisplayState(mVirtualDisplay.getDisplay().getDisplayId() /* displayId */,
+                    false /* on */);
+        });
     }
 
     void turnDisplayOn() {
-        mVirtualDisplay.setSurface(mReader.getSurface());
-        waitForDisplayState(false /* default */, true /* on */);
+        SystemUtil.runWithShellPermissionIdentity(() -> {
+            mVirtualDisplay.setSurface(mReader.getSurface());
+            waitForDisplayState(mVirtualDisplay.getDisplay().getDisplayId() /* displayId */,
+                    true /* on */);
+        });
     }
 
     void releaseDisplay() {
-        if (mCreated) {
-            mVirtualDisplay.release();
-            mReader.close();
-            waitForDisplayCondition(false /* defaultDisplay */, Objects::isNull,
-                    "Waiting for virtual display destroy");
-        }
-        mCreated = false;
+        SystemUtil.runWithShellPermissionIdentity(() -> {
+            if (mCreated) {
+                mVirtualDisplay.release();
+                mReader.close();
+                waitForDisplayCondition(mVirtualDisplay.getDisplay().getDisplayId() /* displayId */,
+                        onState -> onState != null && onState == false,
+                        "Waiting for virtual display destroy");
+            }
+            mCreated = false;
+        });
     }
 
     private void createVirtualDisplay(boolean requestShowWhenLocked) {
@@ -98,19 +105,20 @@ class VirtualDisplayHelper {
     }
 
     static void waitForDefaultDisplayState(boolean wantOn) {
-        waitForDisplayState(true /* default */, wantOn);
+        waitForDisplayState(DEFAULT_DISPLAY /* default */, wantOn);
     }
 
-    private static void waitForDisplayState(boolean defaultDisplay, boolean wantOn) {
-        waitForDisplayCondition(defaultDisplay, state -> state != null && state == wantOn,
-                "Waiting for " + (defaultDisplay ? "default" : "virtual") + " display "
+    private static void waitForDisplayState(int displayId, boolean wantOn) {
+        waitForDisplayCondition(displayId, state -> state != null && state == wantOn,
+                "Waiting for " + ((displayId == DEFAULT_DISPLAY) ? "default" : "virtual")
+                        + " display "
                         + (wantOn ? "on" : "off"));
     }
 
-    private static void waitForDisplayCondition(boolean defaultDisplay,
+    private static void waitForDisplayCondition(int displayId,
             Predicate<Boolean> condition, String message) {
         for (int retry = 1; retry <= 10; retry++) {
-            if (condition.test(getDisplayState(defaultDisplay))) {
+            if (condition.test(isDisplayOn(displayId))) {
                 return;
             }
             logAlways(message + "... retry=" + retry);
@@ -119,27 +127,10 @@ class VirtualDisplayHelper {
         fail(message + " failed");
     }
 
-    @Nullable
-    private static Boolean getDisplayState(boolean defaultDisplay) {
-        final String dump = executeShellCommand("dumpsys display");
-        final Predicate<Matcher> displayNameMatcher = defaultDisplay
-                ? m -> m.group(0).contains("FLAG_DEFAULT_DISPLAY")
-                : m -> m.group(1).equals(VIRTUAL_DISPLAY_NAME);
-        for (final String line : dump.split("\\n")) {
-            final Matcher matcher = DISPLAY_DEVICE_PATTERN.matcher(line);
-            if (matcher.matches() && displayNameMatcher.test(matcher)) {
-                return "ON".equals(matcher.group(2));
-            }
-        }
-        return null;
-    }
-
-    private static String executeShellCommand(String command) {
-        try {
-            return SystemUtil.runShellCommand(getInstrumentation(), command);
-        } catch (IOException e) {
-            //bubble it up
-            throw new RuntimeException(e);
-        }
+    private static boolean isDisplayOn(int displayId) {
+        final DisplayManager displayManager = (DisplayManager) getContext().getSystemService(
+                Context.DISPLAY_SERVICE);
+        final Display display = displayManager.getDisplay(displayId);
+        return (display != null) ? display.getState() == Display.STATE_ON : false;
     }
 }

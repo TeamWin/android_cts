@@ -40,6 +40,8 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertFalse;
 
+import com.android.compatibility.common.util.SystemUtil;
+
 /**
  * Test whether WindowManager performs the correct layout after we make some changes to it.
  *
@@ -71,16 +73,21 @@ public class LayoutTests {
         mInstrumentation = InstrumentationRegistry.getInstrumentation();
         mResolver = mInstrumentation.getContext().getContentResolver();
 
-        // The layout will be performed at the end of the animation of hiding status/navigation bar,
-        // which will recover the possible issue, so we disable the animation during the test.
-        mWindowAnimationScale = Settings.Global.getFloat(mResolver, WINDOW_ANIMATION_SCALE, 1f);
-        Settings.Global.putFloat(mResolver, WINDOW_ANIMATION_SCALE, 0);
+        SystemUtil.runWithShellPermissionIdentity(() -> {
+            // The layout will be performed at the end of the animation of hiding
+            // status/navigation bar, which will recover the possible issue, so we disable the
+            // animation during the test.
+            mWindowAnimationScale = Settings.Global.getFloat(mResolver, WINDOW_ANIMATION_SCALE, 1f);
+            Settings.Global.putFloat(mResolver, WINDOW_ANIMATION_SCALE, 0);
+        });
     }
 
     @After
     public void tearDown() {
-        // Restore the animation we disabled previously.
-        Settings.Global.putFloat(mResolver, WINDOW_ANIMATION_SCALE, mWindowAnimationScale);
+        SystemUtil.runWithShellPermissionIdentity(() -> {
+            // Restore the animation we disabled previously.
+            Settings.Global.putFloat(mResolver, WINDOW_ANIMATION_SCALE, mWindowAnimationScale);
+        });
     }
 
     @Test

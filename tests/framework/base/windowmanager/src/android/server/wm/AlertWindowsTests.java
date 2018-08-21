@@ -97,8 +97,8 @@ public class AlertWindowsTests extends ActivityManagerTestBase {
         super.tearDown();
         resetPermissionState(ALERT_WINDOW_TEST_ACTIVITY);
         resetPermissionState(SDK25_ALERT_WINDOW_TEST_ACTIVITY);
-        stopTestPackage(ALERT_WINDOW_TEST_ACTIVITY);
-        stopTestPackage(SDK25_ALERT_WINDOW_TEST_ACTIVITY);
+        stopTestPackage(ALERT_WINDOW_TEST_ACTIVITY.getPackageName());
+        stopTestPackage(SDK25_ALERT_WINDOW_TEST_ACTIVITY.getPackageName());
     }
 
     @Test

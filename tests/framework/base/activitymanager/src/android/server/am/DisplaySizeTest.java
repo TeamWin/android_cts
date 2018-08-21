@@ -50,8 +50,8 @@ public class DisplaySizeTest extends ActivityManagerTestBase {
         super.tearDown();
 
         // Ensure app process is stopped.
-        stopTestPackage(SMALLEST_WIDTH_ACTIVITY);
-        stopTestPackage(TEST_ACTIVITY);
+        stopTestPackage(SMALLEST_WIDTH_ACTIVITY.getPackageName());
+        stopTestPackage(TEST_ACTIVITY.getPackageName());
     }
 
     @Test
