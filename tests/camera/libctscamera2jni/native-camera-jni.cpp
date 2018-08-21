@@ -273,6 +273,21 @@ class CaptureResultListener {
             return;
         }
 
+        ACameraMetadata* copy = ACameraMetadata_copy(result);
+        ACameraMetadata_const_entry entryCopy;
+        ret = ACameraMetadata_getConstEntry(copy, ACAMERA_SYNC_FRAME_NUMBER, &entryCopy);
+        if (ret != ACAMERA_OK) {
+            ALOGE("Error: Sync frame number missing from result copy!");
+            return;
+        }
+
+        if (entry.data.i64[0] != entryCopy.data.i64[0]) {
+            ALOGE("Error: Sync frame number %" PRId64 " mismatch result copy %" PRId64,
+                    entry.data.i64[0], entryCopy.data.i64[0]);
+            return;
+        }
+        ACameraMetadata_free(copy);
+
         if (thiz->mSaveCompletedRequests) {
             thiz->mCompletedRequests.push_back(ACaptureRequest_copy(request));
         }
@@ -1282,6 +1297,7 @@ testCameraManagerCharacteristicsNative(
     ACameraManager* mgr = ACameraManager_create();
     ACameraIdList *cameraIdList = nullptr;
     ACameraMetadata* chars = nullptr;
+    ACameraMetadata* copy = nullptr;
     int numCameras = 0;
     camera_status_t ret = ACameraManager_getCameraIdList(mgr, &cameraIdList);
     if (ret != ACAMERA_OK || cameraIdList == nullptr) {
@@ -1309,7 +1325,7 @@ testCameraManagerCharacteristicsNative(
 
         for (int tid = 0; tid < numTags; tid++) {
             uint32_t tagId = tags[tid];
-            ALOGV("%s capture request contains key %u", __FUNCTION__, tagId);
+            ALOGV("%s camera characteristics contains key %u", __FUNCTION__, tagId);
             uint32_t sectionId = tagId >> 16;
             if (sectionId >= ACAMERA_SECTION_COUNT && sectionId < ACAMERA_VENDOR) {
                 LOG_ERROR(errorString, "Unknown tagId %u, sectionId %u", tagId, sectionId);
@@ -1350,6 +1366,26 @@ testCameraManagerCharacteristicsNative(
             goto cleanup;
         }
 
+        // Check copy works
+        copy = ACameraMetadata_copy(chars);
+
+        // Compare copy with original
+        ACameraMetadata_const_entry entryCopy;
+        ret = ACameraMetadata_getConstEntry(
+                copy, ACAMERA_REQUEST_AVAILABLE_CAPABILITIES, &entryCopy);
+        if (ret != ACAMERA_OK) {
+            LOG_ERROR(errorString, "Get const available capabilities key failed. ret %d", ret);
+            goto cleanup;
+        }
+        for (uint32_t i = 0; i < entry.count; i++) {
+            if (entry.data.u8[i] != entryCopy.data.u8[i]) {
+                LOG_ERROR(errorString,
+                    "Copy of available capability key[%d]: %d mismatches original %d",
+                    i, entryCopy.data.u8[i], entry.data.u8[i]);
+                goto cleanup;
+            }
+        }
+
         // Check get unknown value fails
         uint32_t badTag = (uint32_t) ACAMERA_VENDOR_START - 1;
         ret = ACameraMetadata_getConstEntry(chars, badTag, &entry);
@@ -1359,13 +1395,18 @@ testCameraManagerCharacteristicsNative(
         }
 
         ACameraMetadata_free(chars);
+        ACameraMetadata_free(copy);
         chars = nullptr;
+        copy = nullptr;
     }
 
     pass = true;
 cleanup:
     if (chars) {
         ACameraMetadata_free(chars);
+    }
+    if (copy) {
+        ACameraMetadata_free(copy);
     }
     ACameraManager_deleteCameraIdList(cameraIdList);
     ACameraManager_delete(mgr);
