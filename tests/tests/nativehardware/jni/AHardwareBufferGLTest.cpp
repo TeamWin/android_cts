@@ -69,8 +69,9 @@ const char* AHBFormatAsString(int32_t format) {
         GL_FORMAT_CASE(GL_SRGB8_ALPHA8);
         GL_FORMAT_CASE(GL_RGBA16F);
         GL_FORMAT_CASE(GL_RGB10_A2);
-        GL_FORMAT_CASE(GL_STENCIL_INDEX8);
+        GL_FORMAT_CASE(GL_DEPTH_COMPONENT16);
         GL_FORMAT_CASE(GL_DEPTH24_STENCIL8);
+        GL_FORMAT_CASE(GL_STENCIL_INDEX8);
     }
     return "";
 }
