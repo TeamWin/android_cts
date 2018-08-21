@@ -28,7 +28,7 @@ public class BatteryIncidentTest extends ProtoDumpTestCase {
     private static final String LEANBACK_FEATURE = "android.software.leanback";
 
     public void testBatteryServiceDump() throws Exception {
-        if (hasBattery(getDevice())) {
+        if (!hasBattery(getDevice())) {
             return;
         }
 
