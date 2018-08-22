@@ -18,13 +18,15 @@ package android.wifibroadcasts.cts;
 
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertTrue;
 
 import com.android.tradefed.device.ITestDevice;
 import com.android.tradefed.testtype.DeviceJUnit4ClassRunner;
 import com.android.tradefed.testtype.IDeviceTest;
+import com.android.tradefed.util.CommandResult;
 
-import org.junit.runner.RunWith;
 import org.junit.Test;
+import org.junit.runner.RunWith;
 
 import java.util.Scanner;
 
@@ -68,6 +70,16 @@ public class WifiBroadcastsHostJUnit4Test implements IDeviceTest {
      */
     private static final String PROHIBITED_STRING = "UNEXPECTED WIFI BROADCAST RECEIVED";
 
+    /**
+     * The maximim number of times to attempt a ping
+     */
+    private static final int MAXIMUM_PING_TRIES = 30;
+
+    /**
+     * Name for wifi feature test
+     */
+    private static final String FEATURE_WIFI = "android.hardware.wifi";
+
     private ITestDevice mDevice;
 
     @Override
@@ -81,24 +93,51 @@ public class WifiBroadcastsHostJUnit4Test implements IDeviceTest {
     }
 
     /**
-     * Tests the string was successfully logged to Logcat from the activity.
+     * Tests the string was not logged to Logcat from the activity.
      *
      * @throws Exception
      */
     @Test
-    public void testLogcat() throws Exception {
+    public void testCleanLogcat() throws Exception {
         ITestDevice device = getDevice();
         assertNotNull("Device not set", device);
+        if (!device.hasFeature(FEATURE_WIFI)) {
+            return;
+        }
         // Clear activity
         device.executeShellCommand(CLEAR_COMMAND);
-        // No mobile data or wifi to start with
-        device.executeShellCommand("svc data disable; svc wifi disable");
+        // No mobile data or wifi or bluetooth to start with
+        device.executeShellCommand("svc data disable; svc wifi disable; svc bluetooth disable");
         // Clear logcat.
         device.executeAdbCommand("logcat", "-c");
-        // Start the APK and wait for it to complete.
+        // Ensure the screen is on, so that rssi polling happens
+        device.executeShellCommand("input keyevent KEYCODE_WAKEUP");
+        // Start the APK
         device.executeShellCommand(START_COMMAND);
-        // Bring up wifi for a while
-        device.executeShellCommand("svc wifi enable; sleep 10; svc wifi disable");
+        // Bring up wifi
+        device.executeShellCommand("svc wifi enable; sleep 1");
+        // Make sure wifi comes up
+        String pingResult = "";
+        CommandResult pingCommandResult = null;
+        boolean pingSucceeded = false;
+        for (int tries = 0; tries < MAXIMUM_PING_TRIES; tries++) {
+            // We don't require internet connectivity, just a configured address
+            pingCommandResult = device.executeShellV2Command("ping -c 4 -W 2 -t 1 8.8.8.8");
+            pingResult = String.join("/", pingCommandResult.getStdout(),
+                                          pingCommandResult.getStderr(),
+                                          pingCommandResult.getStatus().toString());
+            if (pingResult.contains("4 packets transmitted")) {
+                pingSucceeded = true;
+                break;
+            }
+            Thread.sleep(1000);
+        }
+        // Stop wifi
+        device.executeShellCommand("svc wifi disable");
+
+        assertTrue("Wi-Fi network unavailable - test could not complete " + pingResult,
+                pingSucceeded);
+
         // Dump logcat.
         String logs = device.executeAdbCommand("logcat", "-v", "brief", "-d", CLASS + ":I", "*:S");
         // Search for prohibited string.
