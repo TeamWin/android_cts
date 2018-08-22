@@ -60,11 +60,12 @@ public class AccessibilityServiceInfoTest  extends InstrumentationTestCase {
         AccessibilityServiceInfo speakingService = enabledServices.get(0);
         assertSame(AccessibilityEvent.TYPES_ALL_MASK, speakingService.eventTypes);
         assertSame(AccessibilityServiceInfo.FEEDBACK_SPOKEN, speakingService.feedbackType);
-        assertSame(AccessibilityServiceInfo.DEFAULT
+        assertEquals(AccessibilityServiceInfo.DEFAULT
                 | AccessibilityServiceInfo.FLAG_INCLUDE_NOT_IMPORTANT_VIEWS
                 | AccessibilityServiceInfo.FLAG_REQUEST_TOUCH_EXPLORATION_MODE
                 | AccessibilityServiceInfo.FLAG_REQUEST_FILTER_KEY_EVENTS
-                | AccessibilityServiceInfo.FLAG_REPORT_VIEW_IDS,
+                | AccessibilityServiceInfo.FLAG_REPORT_VIEW_IDS
+                | AccessibilityServiceInfo.FLAG_REQUEST_SHORTCUT_WARNING_DIALOG_SPOKEN_FEEDBACK,
                 speakingService.flags);
         assertSame(0l, speakingService.notificationTimeout);
         assertEquals("Some description", speakingService.getDescription());
