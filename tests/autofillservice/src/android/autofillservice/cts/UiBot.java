@@ -45,6 +45,7 @@ import android.service.autofill.SaveInfo;
 import android.support.test.InstrumentationRegistry;
 import android.support.test.uiautomator.By;
 import android.support.test.uiautomator.BySelector;
+import android.support.test.uiautomator.SearchCondition;
 import android.support.test.uiautomator.UiDevice;
 import android.support.test.uiautomator.UiObject2;
 import android.support.test.uiautomator.Until;
@@ -436,8 +437,22 @@ final class UiBot {
      * <p><b>Note:</b> this method should only called AFTER the id was previously shown, otherwise
      * it might pass without really asserting anything.
      */
-    void assertGoneByRelativeId(String id, Timeout timeout) {
-        boolean gone = mDevice.wait(Until.gone(By.res(mPackageName, id)), timeout.ms());
+    void assertGoneByRelativeId(@NonNull String id, @NonNull Timeout timeout) {
+        assertGoneByRelativeId(/* parent = */ null, id, timeout);
+    }
+
+    /**
+     * Asserts the id is not shown on the parent anymore, using a resource id from the test package.
+     *
+     * <p><b>Note:</b> this method should only called AFTER the id was previously shown, otherwise
+     * it might pass without really asserting anything.
+     */
+    void assertGoneByRelativeId(@Nullable UiObject2 parent, @NonNull String id,
+            @NonNull Timeout timeout) {
+        final SearchCondition<Boolean> condition = Until.gone(By.res(mPackageName, id));
+        final boolean gone = parent != null
+                ? parent.wait(condition, timeout.ms())
+                : mDevice.wait(condition, timeout.ms());
         if (!gone) {
             final String message = "Object with id '" + id + "' should be gone after "
                     + timeout + " ms";
@@ -782,7 +797,7 @@ final class UiBot {
         }
     }
 
-    private UiObject2 waitForObject(@Nullable UiObject2 parent, @NonNull BySelector selector,
+    public UiObject2 waitForObject(@Nullable UiObject2 parent, @NonNull BySelector selector,
             @NonNull Timeout timeout)
             throws Exception {
         return waitForObject(parent, selector, timeout, DUMP_ON_ERROR);

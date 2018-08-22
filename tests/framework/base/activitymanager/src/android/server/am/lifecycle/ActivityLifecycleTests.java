@@ -339,6 +339,9 @@ public class ActivityLifecycleTests extends ActivityLifecycleClientTestBase {
         assertNotNull("Second activity should be started", secondActivity);
         waitAndAssertActivityStates(state(secondActivity, ON_RESUME));
 
+        // Verify if the first activity stopped (since it is not currently visible)
+        waitAndAssertActivityStates(state(callbackTrackingActivity, ON_STOP));
+
         // Start an activity in separate task (will be placed in secondary stack)
         getLaunchActivityBuilder().execute();
 
