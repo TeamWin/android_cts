@@ -25,6 +25,7 @@ import static android.autofillservice.cts.Helper.eventually;
 import static android.autofillservice.cts.Helper.findNodeByResourceId;
 import static android.autofillservice.cts.Helper.getContext;
 import static android.autofillservice.cts.Helper.runShellCommand;
+import static android.autofillservice.cts.OutOfProcessLoginActivity.getDestroyedMarker;
 import static android.autofillservice.cts.OutOfProcessLoginActivity.getStoppedMarker;
 import static android.autofillservice.cts.UiBot.LANDSCAPE;
 import static android.autofillservice.cts.UiBot.PORTRAIT;
@@ -81,6 +82,9 @@ public class SessionLifecycleTest extends AutoFillServiceTestCase {
         runShellCommand("am broadcast --receiver-foreground "
                 + "-n android.autofillservice.cts/.OutOfProcessLoginActivityFinisherReceiver");
         sUiBot.assertGoneByRelativeId(ID_USERNAME, Helper.ACTIVITY_RESURRECTION_MS);
+
+        // Waiting for activity to be destroyed (destroy marker appears)
+        eventually(() -> assertThat(getDestroyedMarker(getContext()).exists()).isTrue());
     }
 
     private void killOfProcessLoginActivityProcess() throws Exception {
