@@ -39,6 +39,8 @@ import android.util.DisplayMetrics;
 import android.view.WindowManager;
 import android.util.Log;
 
+import com.android.compatibility.common.util.CddTest;
+
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
@@ -75,6 +77,7 @@ public class LowRamDeviceTest extends AndroidTestCase {
      * Test the devices reported memory to ensure it meets the minimum values described
      * in CDD 7.6.1.
      */
+    @CddTest(requirement="7.6.1/H-3-1,H-4-1,H-7-1,H-8-1,H-9-1,W-0-2,T-0-2")
     public void testMinimumMemory() {
         int density = mDisplayMetrics.densityDpi;
         Boolean supports64Bit = supportsSixtyFourBit();

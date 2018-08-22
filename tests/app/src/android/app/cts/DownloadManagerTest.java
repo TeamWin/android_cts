@@ -183,7 +183,7 @@ public class DownloadManagerTest extends AndroidTestCase {
         }
     }
 
-    @CddTest(requirement="7.6.1")
+    @CddTest(requirement="7.6.1/C-0-1")
     public void testMinimumDownload() throws Exception {
         final DownloadCompleteReceiver receiver = new DownloadCompleteReceiver();
         try {

@@ -18,9 +18,12 @@ package android.acceleration.cts;
 
 import android.acceleration.WindowFlagHardwareAcceleratedActivity;
 
+import com.android.compatibility.common.util.CddTest;
+
 /**
  * Test that uses an Activity with hardware acceleration enabled.
  */
+@CddTest(requirement="7.1.4.4/C-0-1/C-0-2")
 public class WindowFlagHardwareAccelerationTest
         extends BaseAccelerationTest<WindowFlagHardwareAcceleratedActivity> {
 
