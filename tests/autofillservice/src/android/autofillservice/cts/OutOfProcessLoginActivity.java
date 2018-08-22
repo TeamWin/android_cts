@@ -66,15 +66,28 @@ public class OutOfProcessLoginActivity extends Activity {
         super.onStop();
 
         try {
-            getStoppedMarker(this).createNewFile();
+            if (!getStoppedMarker(this).createNewFile()) {
+                Log.e(TAG, "could not write stopped marker");
+            } else {
+                Log.v(TAG, "wrote stopped marker");
+            }
         } catch (IOException e) {
-            Log.e(TAG, "cannot write stopped file: " + e);
+            Log.e(TAG, "could write stopped marker: " + e);
         }
     }
 
     @Override
     protected void onDestroy() {
         Log.i(TAG, "onDestroy()");
+        try {
+            if (!getDestroyedMarker(this).createNewFile()) {
+                Log.e(TAG, "could not write destroyed marker");
+            } else {
+                Log.v(TAG, "wrote destroyed marker");
+            }
+        } catch (IOException e) {
+            Log.e(TAG, "could write destroyed marker: " + e);
+        }
         super.onDestroy();
     }
 
@@ -96,6 +109,16 @@ public class OutOfProcessLoginActivity extends Activity {
      */
     @NonNull public static File getStartedMarker(@NonNull Context context) {
         return new File(context.getFilesDir(), "started");
+    }
+
+   /**
+     * Get the file that signals that the activity has entered {@link Activity#onDestroy()}.
+     *
+     * @param context Context of the app
+     * @return The marker file that is written onDestroy()
+     */
+    @NonNull public static File getDestroyedMarker(@NonNull Context context) {
+        return new File(context.getFilesDir(), "destroyed");
     }
 
     public static void finishIt() {
