@@ -170,7 +170,11 @@ public class KeyguardLockedTests extends KeyguardTestBase {
             lockScreenSession.setLockCredential().sleepDevice();
 
             mAmWmState.computeState(true);
-            assertTrue(mAmWmState.getAmState().getKeyguardControllerState().keyguardShowing);
+            if (!isWatch()) {
+                // On P watches, keyguard windows are only shown while in interactive to allow
+                // SysUI implementation to show in ambient mode.
+                assertTrue(mAmWmState.getAmState().getKeyguardControllerState().keyguardShowing);
+            }
             launchActivity(TURN_SCREEN_ON_ATTR_DISMISS_KEYGUARD_ACTIVITY);
             mAmWmState.waitForKeyguardShowingAndNotOccluded();
             mAmWmState.assertVisibility(TURN_SCREEN_ON_ATTR_DISMISS_KEYGUARD_ACTIVITY, false);
