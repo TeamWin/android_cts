@@ -342,7 +342,7 @@ public class BitmapColorSpaceTest {
     @Test
     public void setPixel() {
         verifySetPixel("green-p3.png", 0xffff0000, 0xea3323ff);
-        verifySetPixel("translucent-green-p3.png", 0x7fff0000, 0x7519117f);
+        verifySetPixel("translucent-green-p3.png", 0x7fff0000, 0x7519127f);
     }
 
     private void verifySetPixel(@NonNull String fileName,
@@ -385,7 +385,7 @@ public class BitmapColorSpaceTest {
     @Test
     public void setPixels() {
         verifySetPixels("green-p3.png", 0xffff0000, 0xea3323ff);
-        verifySetPixels("translucent-green-p3.png", 0x7fff0000, 0x7519117f);
+        verifySetPixels("translucent-green-p3.png", 0x7fff0000, 0x7519127f);
     }
 
     private void verifySetPixels(@NonNull String fileName,
