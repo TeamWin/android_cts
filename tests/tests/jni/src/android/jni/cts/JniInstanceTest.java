@@ -16,12 +16,14 @@
 
 package android.jni.cts;
 
+import com.android.compatibility.common.util.CddTest;
 
 /**
  * Basic native instance method tests. The "nonce" class being tested
  * by this class is a class defined in this package that declares the
  * bulk of its methods as native.
  */
+@CddTest(requirement="3.3.1/C-0-2")
 public class JniInstanceTest extends JniTestCase {
     /** instance to use for all the tests */
     private InstanceNonce target;

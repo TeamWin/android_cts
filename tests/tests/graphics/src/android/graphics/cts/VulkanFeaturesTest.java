@@ -90,7 +90,7 @@ public class VulkanFeaturesTest {
 
         mVulkanDevices = getVulkanDevices();
     }
-    @CddTest(requirement="7.1.4.2/C-1-1,C-2-1")
+    @CddTest(requirement="7.1.4.2/C-1-1,C-2-1,C-2-2")
     @Test
     public void testVulkanHardwareFeatures() throws JSONException {
         if (DEBUG) {

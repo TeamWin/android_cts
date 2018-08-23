@@ -16,12 +16,15 @@
 
 package android.jni.cts;
 
+import com.android.compatibility.common.util.CddTest;
+
 
 /**
  * Basic tests of calling the C++ functions that make up the JNI. This
  * class merely calls into native code and reports back if there was
  * a problem.
  */
+@CddTest(requirement="3.3.1/C-0-2")
 public class JniCppTest extends JniTestCase {
     static {
         if (!JniTestCase.isCpuAbiNone()) {
