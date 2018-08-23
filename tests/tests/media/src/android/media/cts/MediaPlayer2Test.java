@@ -1043,6 +1043,7 @@ public class MediaPlayer2Test extends MediaPlayer2TestBase {
         Monitor onStart2Called = new Monitor();
         Monitor onCompletion2Called = new Monitor();
         Monitor onListCompletionCalled = new Monitor();
+        Monitor onClearNextDataSourcesCalled = new Monitor();
         MediaPlayer2.EventCallback ecb = new MediaPlayer2.EventCallback() {
             @Override
             public void onInfo(MediaPlayer2 mp, DataSourceDesc dsd, int what, int extra) {
@@ -1067,6 +1068,13 @@ public class MediaPlayer2Test extends MediaPlayer2TestBase {
                     onListCompletionCalled.signal();
                 }
             }
+
+            @Override
+            public void onCallCompleted(MediaPlayer2 mp, DataSourceDesc dsd, int what, int status) {
+                if (what == MediaPlayer2.CALL_COMPLETED_CLEAR_NEXT_DATA_SOURCES) {
+                    onClearNextDataSourcesCalled.signal();
+                }
+            }
         };
         synchronized (mEventCbLock) {
             mEventCallbacks.add(ecb);
@@ -1087,6 +1095,8 @@ public class MediaPlayer2Test extends MediaPlayer2TestBase {
         onStartCalled.waitForSignal();
         mOnCompletionCalled.waitForSignal();
         onListCompletionCalled.waitForSignal();
+        assertEquals("clearNextDataSources is confirmed none or more than once",
+                1, onClearNextDataSourcesCalled.getNumSignal());
         assertEquals("next dsd was mistakenly started", 0, onStart2Called.getNumSignal());
         assertEquals("next dsd was mistakenly played", 0, onCompletion2Called.getNumSignal());
 
