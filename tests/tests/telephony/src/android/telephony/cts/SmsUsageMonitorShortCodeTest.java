@@ -502,6 +502,13 @@ public class SmsUsageMonitorShortCodeTest extends InstrumentationTestCase {
 
         SmsUsageMonitor monitor = new SmsUsageMonitor(mContext);
         for (ShortCodeTest test : sShortCodeTests) {
+            // It is intended that a short code number in country A may be an emergency number
+            // in country B. It is intended that the destination will be changed because of this
+            // reason. checkDestination() returns CATEGORY_NOT_SHORT_CODE for emergency numbers.
+            if (test.category != CATEGORY_NOT_SHORT_CODE
+                    && PhoneNumberUtils.isEmergencyNumber(test.address, test.countryIso)) {
+                continue;
+            }
             assertEquals("country: " + test.countryIso + " number: " + test.address,
                     test.category, monitor.checkDestination(test.address, test.countryIso));
         }
