@@ -38,6 +38,7 @@ import android.view.MotionEvent;
 
 import org.junit.Rule;
 import org.junit.Test;
+import org.junit.rules.TestName;
 import org.junit.runner.RunWith;
 
 /**
@@ -66,6 +67,8 @@ public class LightBarTests extends LightBarTestBase {
     @Rule
     public ActivityTestRule<LightBarActivity> mActivityRule = new ActivityTestRule<>(
             LightBarActivity.class);
+    @Rule
+    public TestName mTestName = new TestName();
 
     @Test
     @AppModeFull // Instant apps cannot create notifications
@@ -128,7 +131,8 @@ public class LightBarTests extends LightBarTestBase {
         });
         Thread.sleep(WAIT_TIME);
 
-        checkNavigationBarDivider(mActivityRule.getActivity(), Color.WHITE, Color.RED);
+        checkNavigationBarDivider(mActivityRule.getActivity(), Color.WHITE, Color.RED,
+                mTestName.getMethodName());
     }
 
     private void injectCanceledTap(int x, int y) {
@@ -167,7 +171,7 @@ public class LightBarTests extends LightBarTestBase {
             success = true;
         } finally {
             if (!success) {
-                dumpBitmap(bitmap);
+                dumpBitmap(bitmap, mTestName.getMethodName());
             }
         }
     }

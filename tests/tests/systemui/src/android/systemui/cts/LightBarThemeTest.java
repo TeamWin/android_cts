@@ -33,6 +33,7 @@ import android.view.View;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
+import org.junit.rules.TestName;
 import org.junit.runner.RunWith;
 
 /**
@@ -48,6 +49,9 @@ public class LightBarThemeTest extends LightBarTestBase {
     @Rule
     public ActivityTestRule<LightBarThemeActivity> mActivityRule = new ActivityTestRule<>(
             LightBarThemeActivity.class);
+
+    @Rule
+    public TestName mTestName = new TestName();
 
     @Before
     public void setUp() {
@@ -79,6 +83,7 @@ public class LightBarThemeTest extends LightBarTestBase {
         final Context instrumentationContext = getInstrumentation().getContext();
         checkNavigationBarDivider(mActivityRule.getActivity(),
                 instrumentationContext.getColor(R.color.navigationBarDividerColor),
-                instrumentationContext.getColor(R.color.navigationBarColor));
+                instrumentationContext.getColor(R.color.navigationBarColor),
+                mTestName.getMethodName());
     }
 }
