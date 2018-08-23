@@ -79,6 +79,9 @@ final class UiBot {
             "autofill_picker_accessibility_title";
     private static final String RESOURCE_STRING_SAVE_SNACKBAR_ACCESSIBILITY_TITLE =
             "autofill_save_accessibility_title";
+    private static final String RESOURCE_BOOLEAN_CONFIG_FORCE_DEFAULT_ORIENTATION =
+            "config_forceDefaultOrientation";
+
 
     private static final String TAG = "AutoFillCtsUiBot";
 
@@ -716,5 +719,25 @@ final class UiBot {
     void resetScreenResolution() {
         runShellCommand("wm density reset");
         runShellCommand("wm size reset");
+    }
+
+    private boolean getBoolean(String id) {
+        final Resources resources = mContext.getResources();
+        final int booleanId = resources.getIdentifier(id, "bool", "android");
+        return resources.getBoolean(booleanId);
+    }
+
+    /**
+     * Returns {@code true} if display rotation is supported, {@code false} otherwise.
+     */
+    public boolean isScreenRotationSupported() {
+        try {
+            return !getBoolean(RESOURCE_BOOLEAN_CONFIG_FORCE_DEFAULT_ORIENTATION);
+        } catch (Resources.NotFoundException e) {
+            Log.d(TAG, "Resource not found: "
+                    + RESOURCE_BOOLEAN_CONFIG_FORCE_DEFAULT_ORIENTATION
+                    + ". Assume rotation supported");
+            return true;
+        }
     }
 }
