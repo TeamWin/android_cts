@@ -46,9 +46,14 @@ import android.content.res.Configuration;
 import android.os.SystemClock;
 import android.provider.Settings;
 import android.server.am.ActivityManagerState.ActivityDisplay;
+import android.server.am.CommandSession.ActivitySession;
+import android.server.am.CommandSession.ActivitySessionClient;
 import android.server.am.settings.SettingsSession;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
+
+import com.android.compatibility.common.util.SystemUtil;
+
 import android.util.Size;
 
 import java.util.ArrayList;
@@ -421,6 +426,30 @@ class ActivityManagerDisplayTestBase extends ActivityManagerTestBase {
                     newDisplays, hasSize(newDisplayCount));
 
             return newDisplays;
+        }
+    }
+
+    // TODO(b/112837428): Merge into VirtualDisplaySession when all usages are migrated.
+    protected class VirtualDisplayLauncher extends VirtualDisplaySession {
+        private final ActivitySessionClient mActivitySessionClient = new ActivitySessionClient();
+
+        ActivitySession launchActivityOnDisplay(ComponentName activityName,
+                ActivityDisplay display) {
+            try {
+                return SystemUtil.callWithShellPermissionIdentity(
+                        () -> mActivitySessionClient.startActivity(getLaunchActivityBuilder()
+                                .setUseInstrumentation()
+                                .setTargetActivity(activityName)
+                                .setDisplayId(display.mId)));
+            } catch (Exception e) {
+                throw new RuntimeException(e);
+            }
+        }
+
+        @Override
+        public void close() throws Exception {
+            super.close();
+            mActivitySessionClient.close();
         }
     }
 
