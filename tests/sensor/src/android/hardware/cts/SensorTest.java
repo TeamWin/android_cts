@@ -177,6 +177,17 @@ public class SensorTest extends SensorTestCase {
             assertNull(sensor);
         }
 
+        sensor = mSensorManager.getDefaultSensor(Sensor.TYPE_GYROSCOPE);
+        boolean hasGyroscope = getContext().getPackageManager().hasSystemFeature(
+                PackageManager.FEATURE_SENSOR_GYROSCOPE);
+        // gyroscope sensor is optional
+        if (hasGyroscope) {
+            assertEquals(Sensor.TYPE_GYROSCOPE, sensor.getType());
+            assertSensorValues(sensor);
+        } else {
+            assertNull(sensor);
+        }
+
         sensor = mSensorManager.getDefaultSensor(Sensor.TYPE_ORIENTATION);
         // Note: orientation sensor is deprecated.
         if (sensor != null) {
@@ -509,6 +520,12 @@ public class SensorTest extends SensorTestCase {
                 sensor.getName(), sensor.getPower() >= 0);
         assertTrue("Max resolution must be positive. Resolution=" + sensor.getResolution() +
                 " " + sensor.getName(), sensor.getResolution() >= 0);
+        if (SensorCtsHelper.hasResolutionRequirement(sensor)) {
+            float requiredResolution = SensorCtsHelper.getRequiredResolutionForSensor(sensor);
+            assertTrue("Resolution must be <= " + requiredResolution + ". Resolution=" +
+                    sensor.getResolution() + " " + sensor.getName(),
+                    sensor.getResolution() <= requiredResolution);
+        }
         assertNotNull("Vendor name must not be null " + sensor.getName(), sensor.getVendor());
         assertTrue("Version must be positive version=" + sensor.getVersion() + " " +
                 sensor.getName(), sensor.getVersion() > 0);
