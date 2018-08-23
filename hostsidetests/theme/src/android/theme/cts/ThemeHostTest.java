@@ -44,6 +44,8 @@ import java.util.regex.Pattern;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipInputStream;
 
+import com.android.compatibility.common.util.CddTest;
+
 /**
  * Test to check non-modifiable themes have not been changed.
  */
@@ -187,7 +189,7 @@ public class ThemeHostTest extends DeviceTestCase {
 
         super.tearDown();
     }
-
+    @CddTest(requirement="3.8.6/C-1-1,C-1-2")
     public void testThemes() throws Exception {
         if (checkHardwareTypeSkipTest(mHardwareType)) {
             Log.logAndDisplay(LogLevel.INFO, LOG_TAG,

@@ -29,6 +29,8 @@ import android.view.KeyEvent;
 import java.io.FileOutputStream;
 import java.io.IOException;
 
+import com.android.compatibility.common.util.CddTest;
+
 /**
  * Test for light status bar.
  *
@@ -53,7 +55,7 @@ public class LightBarTests extends ActivityInstrumentationTestCase2<LightBarActi
         // be marked as deprecated and replaced with ActivityTestRule.
         injectInstrumentation(InstrumentationRegistry.getInstrumentation());
     }
-
+    @CddTest(requirement="3.8.6/C-2-2")
     public void testLightStatusBarIcons() throws Throwable {
         PackageManager pm = getInstrumentation().getContext().getPackageManager();
         if (pm.hasSystemFeature(PackageManager.FEATURE_WATCH)
