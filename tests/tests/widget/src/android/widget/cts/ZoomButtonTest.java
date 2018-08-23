@@ -43,10 +43,6 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.xmlpull.v1.XmlPullParser;
 
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
-
 @SmallTest
 @RunWith(AndroidJUnit4.class)
 public class ZoomButtonTest {
@@ -127,87 +123,62 @@ public class ZoomButtonTest {
         assertFalse(mZoomButton.dispatchUnhandledMove(null, View.FOCUS_DOWN));
     }
 
-    private void verifyZoomSpeed(ZoomClickListener zoomClickListener, long zoomSpeedMs) {
-        mZoomButton.setZoomSpeed(zoomSpeedMs);
-
-        final long startTime = System.nanoTime();
-        // Emulate long click that "lasts" for ten seconds
-        CtsTouchUtils.emulateLongPressOnViewCenter(mInstrumentation, mZoomButton, 10000);
-
-        final List<Long> callbackInvocations = zoomClickListener.getClickTimes();
-        assertFalse("Expecting at least one callback", callbackInvocations.isEmpty());
-
-        // Verify that the first callback is fired after the system-level long press timeout.
-        final long minTimeUntilFirstInvocationMs = ViewConfiguration.getLongPressTimeout();
-        final long actualTimeUntilFirstInvocationNs = callbackInvocations.get(0) - startTime;
-        assertTrue("First callback not during long press timeout was " +
-                        actualTimeUntilFirstInvocationNs / NANOS_IN_MILLI +
-                        " while long press timeout is " + minTimeUntilFirstInvocationMs,
-                (callbackInvocations.get(0) - startTime) >
-                        minTimeUntilFirstInvocationMs * NANOS_IN_MILLI);
-
-        // Verify that subsequent callbacks are at least zoom-speed milliseconds apart. Note that
-        // we do not have any hard guarantee about the max limit on the time between successive
-        // callbacks.
-        final long minTimeBetweenInvocationsNs = zoomSpeedMs * NANOS_IN_MILLI;
-        if (callbackInvocations.size() > 1) {
-            for (int i = 0; i < callbackInvocations.size() - 1; i++) {
-                final long actualTimeBetweenInvocationsNs =
-                        (callbackInvocations.get(i + 1) - callbackInvocations.get(i)) *
-                                NANOS_IN_MILLI;
-                assertTrue("Callback " + (i + 1) + " happened " +
-                                actualTimeBetweenInvocationsNs / NANOS_IN_MILLI +
-                                " after the previous one, while zoom speed is " + zoomSpeedMs,
-                        actualTimeBetweenInvocationsNs > minTimeBetweenInvocationsNs);
-            }
-        }
-    }
-
-    @LargeTest
-    @Test
-    public void testOnLongClick() {
-        // Since Mockito doesn't have utilities to track the timestamps of method invocations,
-        // we're using our own custom click listener for that. We want to verify that the
-        // first listener invocation was after long press timeout, and the rest were spaced
-        // by at least our zoom speed milliseconds
-
-        mZoomButton.setEnabled(true);
-        ZoomClickListener zoomClickListener = new ZoomClickListener();
-        mZoomButton.setOnClickListener(zoomClickListener);
-
-        verifyZoomSpeed(zoomClickListener, 2000);
-    }
-
     @LargeTest
     @Test
     public void testSetZoomSpeed() {
-        final long[] zoomSpeeds = { 100, -1, 5000, 1000, 2500 };
+        final long[] zoomSpeeds = { 0, 100 };
         mZoomButton.setEnabled(true);
         ZoomClickListener zoomClickListener = new ZoomClickListener();
         mZoomButton.setOnClickListener(zoomClickListener);
 
         for (long zoomSpeed : zoomSpeeds) {
-            // Reset the tracker list of our listener, but continue using it for testing
+            // Reset the tracking state of our listener, but continue using it for testing
             // various zoom speeds on the same ZoomButton
             zoomClickListener.reset();
-            verifyZoomSpeed(zoomClickListener, zoomSpeed);
+
+            mZoomButton.setZoomSpeed(zoomSpeed);
+
+            final long startTime = System.nanoTime();
+            // Emulate long click
+            long longPressWait = ViewConfiguration.getLongPressTimeout()
+                    + zoomSpeed + 100;
+            CtsTouchUtils.emulateLongPressOnViewCenter(mInstrumentation, mZoomButton,
+                    longPressWait);
+
+            final Long callbackFirstInvocationTime = zoomClickListener.getTimeOfFirstClick();
+            assertNotNull("Expecting at least one callback", callbackFirstInvocationTime);
+
+            // Verify that the first callback is fired after the system-level long press timeout.
+            final long minTimeUntilFirstInvocationMs = ViewConfiguration.getLongPressTimeout();
+            final long actualTimeUntilFirstInvocationNs = callbackFirstInvocationTime - startTime;
+            assertTrue("First callback not during long press timeout was "
+                            + actualTimeUntilFirstInvocationNs / NANOS_IN_MILLI
+                            + " while long press timeout is " + minTimeUntilFirstInvocationMs,
+                    (callbackFirstInvocationTime - startTime)
+                            > minTimeUntilFirstInvocationMs * NANOS_IN_MILLI);
+            assertTrue("First callback should have happened sooner than "
+                            + actualTimeUntilFirstInvocationNs / NANOS_IN_MILLI,
+                    (callbackFirstInvocationTime - startTime)
+                            <= (minTimeUntilFirstInvocationMs + 100) * NANOS_IN_MILLI);
         }
     }
 
     private static class ZoomClickListener implements View.OnClickListener {
-        private List<Long> mClickTimes = new ArrayList<>();
+        private Long mTimeOfFirstClick = null;
 
         public void reset() {
-            mClickTimes.clear();
+            mTimeOfFirstClick = null;
         }
 
-        public List<Long> getClickTimes() {
-            return Collections.unmodifiableList(mClickTimes);
+        public Long getTimeOfFirstClick() {
+            return mTimeOfFirstClick;
         }
 
         public void onClick(View v) {
-            // Add the current system time to the tracker list
-            mClickTimes.add(System.nanoTime());
+            if (mTimeOfFirstClick == null) {
+                // Mark the current system time as the time of first click
+                mTimeOfFirstClick = System.nanoTime();
+            }
         }
     }
 }
