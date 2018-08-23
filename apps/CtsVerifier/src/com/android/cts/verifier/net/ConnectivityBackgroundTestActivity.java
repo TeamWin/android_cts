@@ -42,6 +42,8 @@ import android.widget.Button;
 import android.widget.ScrollView;
 import android.widget.TextView;
 
+import com.android.compatibility.common.util.CddTest;
+
 import java.io.BufferedReader;
 import java.io.InputStreamReader;
 import java.io.IOException;
@@ -74,6 +76,7 @@ import static android.net.NetworkCapabilities.TRANSPORT_WIFI;
  *     [4] The screen is put to sleep if this feature supported.
  *     [5] After two minutes, another IPv6 connectivity test is performed.
  */
+@CddTest(requirement="7.4.5/C-0-1,C-0-2,C-0-3,C-0-4")
 public class ConnectivityBackgroundTestActivity extends PassFailButtons.Activity {
 
     private static final String TAG = ConnectivityBackgroundTestActivity.class.getSimpleName();
