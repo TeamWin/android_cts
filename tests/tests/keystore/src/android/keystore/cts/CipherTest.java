@@ -18,6 +18,7 @@ package android.keystore.cts;
 
 import android.app.KeyguardManager;
 import android.content.Context;
+import android.content.pm.PackageManager;
 import android.os.SystemClock;
 import android.platform.test.annotations.Presubmit;
 import android.security.keystore.KeyGenParameterSpec;
@@ -439,9 +440,18 @@ public class CipherTest extends AndroidTestCase {
         }
     }
 
+    private boolean isLeanbackOnly() {
+        PackageManager pm = getContext().getPackageManager();
+        return (pm != null && pm.hasSystemFeature("android.software.leanback_only"));
+    }
+
     @Presubmit
     public void testKeyguardLockAndUnlock()
             throws Exception {
+        if (isLeanbackOnly()) {
+            return;
+        }
+
         try (DeviceLockSession dl = new DeviceLockSession()) {
             KeyguardManager keyguardManager = (KeyguardManager)getContext()
                     .getSystemService(Context.KEYGUARD_SERVICE);
@@ -458,6 +468,10 @@ public class CipherTest extends AndroidTestCase {
             throws Exception {
         final boolean isUnlockedDeviceRequired = true;
         final boolean isUserAuthRequired = false;
+
+        if (isLeanbackOnly()) {
+            return;
+        }
 
         try (DeviceLockSession dl = new DeviceLockSession()) {
             KeyguardManager keyguardManager = (KeyguardManager)getContext()
@@ -947,6 +961,10 @@ public class CipherTest extends AndroidTestCase {
         final boolean isUnlockedDeviceRequired = false;
         final boolean isUserAuthRequired = true;
 
+        if (isLeanbackOnly()) {
+            return;
+        }
+
         try (DeviceLockSession dl = new DeviceLockSession()) {
             KeyguardManager keyguardManager = (KeyguardManager)getContext().getSystemService(Context.KEYGUARD_SERVICE);
 
@@ -969,6 +987,10 @@ public class CipherTest extends AndroidTestCase {
     public void testCannotCreateAuthBoundKeyWhenDevicePinNotSet() throws Exception {
         final boolean isUserAuthRequired = true;
         final boolean isUnlockedDeviceRequired = false;
+
+        if (isLeanbackOnly()) {
+            return;
+        }
 
         KeyguardManager keyguardManager = (KeyguardManager)getContext().getSystemService(Context.KEYGUARD_SERVICE);
         assertFalse(keyguardManager.isDeviceLocked());
