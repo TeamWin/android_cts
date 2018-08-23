@@ -71,7 +71,6 @@ public class ActivityTransitionTest extends BaseTransitionTest {
     @Override
     public void setup() {
         super.setup();
-        TargetActivity.sLastCreated = null;
         setTransitions(new TrackingVisibility(), new TrackingVisibility(),
                 new TrackingTransition());
     }
@@ -96,10 +95,12 @@ public class ActivityTransitionTest extends BaseTransitionTest {
 
     @After
     public void cleanup() throws Throwable {
-        if (TargetActivity.sLastCreated != null) {
-            mActivityRule.runOnUiThread(() -> TargetActivity.sLastCreated.finish());
-        }
-        TargetActivity.sLastCreated = null;
+        mActivityRule.runOnUiThread(() -> {
+            for (TargetActivity activity : TargetActivity.sCreated) {
+                activity.finish();
+            }
+        });
+        TargetActivity.clearCreated();
     }
 
     // When using ActivityOptions.makeBasic(), no transitions should run
@@ -197,8 +198,6 @@ public class ActivityTransitionTest extends BaseTransitionTest {
         assertEquals(1, mActivity.findViewById(R.id.redSquare).getAlpha(), 0.01f);
         assertEquals(1, mActivity.findViewById(R.id.greenSquare).getAlpha(), 0.01f);
         assertEquals(1, mActivity.findViewById(R.id.holder).getAlpha(), 0.01f);
-
-        TargetActivity.sLastCreated = null;
     }
 
     // Views that are outside the visible area during initial layout should be stripped from
@@ -270,8 +269,6 @@ public class ActivityTransitionTest extends BaseTransitionTest {
         assertEquals(1, mActivity.findViewById(R.id.redSquare).getAlpha(), 0.01f);
         assertEquals(1, mActivity.findViewById(R.id.greenSquare).getAlpha(), 0.01f);
         assertEquals(1, mActivity.findViewById(R.id.holder).getAlpha(), 0.01f);
-
-        TargetActivity.sLastCreated = null;
     }
 
     // When an exit transition takes longer than it takes the activity to cover it (and onStop
@@ -402,8 +399,6 @@ public class ActivityTransitionTest extends BaseTransitionTest {
         assertTrue(targetActivity.transitionComplete.await(1, TimeUnit.SECONDS));
         verify(mReenterListener, within(5000)).onTransitionStart(any());
         verify(mReenterListener, within(5000)).onTransitionEnd(any());
-
-        TargetActivity.sLastCreated = null;
     }
 
     // Starting a shared element transition and then removing the view shouldn't cause problems.
@@ -434,7 +429,6 @@ public class ActivityTransitionTest extends BaseTransitionTest {
 
         verify(targetActivity.returnListener, times(1)).onTransitionStart(any());
         verify(targetActivity.returnListener, times(1)).onTransitionEnd(any());
-        TargetActivity.sLastCreated = null;
     }
 
     // Ensure that the shared element view copy is the correct image of the shared element view
@@ -481,15 +475,23 @@ public class ActivityTransitionTest extends BaseTransitionTest {
 
         // Should only take a short time, but there's no need to rush it on failure.
         assertTrue(startCalled.await(5, TimeUnit.SECONDS));
-
-        TargetActivity.sLastCreated = null;
     }
 
     private TargetActivity waitForTargetActivity() throws Throwable {
-        PollingCheck.waitFor(() -> TargetActivity.sLastCreated != null);
-        // Just make sure that we're not in the middle of running on the UI thread.
-        mActivityRule.runOnUiThread(() -> { });
-        return TargetActivity.sLastCreated;
+        verify(TargetActivity.sCreated, within(3000)).add(any());
+        TargetActivity[] activity = new TargetActivity[1];
+        mActivityRule.runOnUiThread(() -> {
+            assertEquals(1, TargetActivity.sCreated.size());
+            activity[0] = TargetActivity.sCreated.get(0);
+        });
+        assertTrue("There was no draw call", activity[0].drawnOnce.await(3, TimeUnit.SECONDS));
+        mActivityRule.runOnUiThread(() -> {
+            activity[0].getWindow().getDecorView().invalidate();
+        });
+        mActivityRule.runOnUiThread(() -> {
+            assertTrue(activity[0].preDrawCalls > 1);
+        });
+        return activity[0];
     }
 
     private Set<Integer> getTargetViewIds(TargetTracking transition) {

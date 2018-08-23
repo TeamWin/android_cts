@@ -28,7 +28,12 @@ import static org.junit.Assert.assertNotNull;
 import static org.junit.Assume.assumeFalse;
 import static org.junit.Assume.assumeTrue;
 
+import android.annotation.NonNull;
+import android.content.ComponentName;
+import android.provider.Settings;
 import android.server.am.ActivityManagerState.ActivityDisplay;
+import android.server.am.settings.SettingsSession;
+import com.android.cts.verifier.vr.MockVrListenerService;
 
 import org.junit.Before;
 import org.junit.Test;
@@ -77,15 +82,37 @@ public class ActivityManagerVrDisplayTests extends ActivityManagerDisplayTestBas
     }
 
     /**
+     * Helper class to enable vr listener.
+     * VrManagerService uses SettingChangeListener to monitor ENABLED_VR_LISTENERS changed.
+     * We need to update Settings to let Vr service know if MockVrListenerService is enabled.
+     */
+    private static class EnableVrListenerSession extends SettingsSession<String> {
+        public EnableVrListenerSession() {
+            super(Settings.Secure.getUriFor(Settings.Secure.ENABLED_VR_LISTENERS),
+                    Settings.Secure::getString,
+                    Settings.Secure::putString);
+        }
+
+        public void enableVrListener(@NonNull ComponentName targetVrComponent) throws Exception {
+            ComponentName component = new ComponentName(targetVrComponent.getPackageName(),
+                    MockVrListenerService.class.getName());
+            set(component.flattenToString());
+        }
+    }
+
+    /**
      * Tests that any new activity launch in Vr mode is in Vr display.
      */
     @Test
     public void testVrActivityLaunch() throws Exception {
         assumeTrue(supportsMultiDisplay());
 
-        try (final VrModeSession vrModeSession = new VrModeSession()) {
+        try (final VrModeSession vrModeSession = new VrModeSession();
+             final EnableVrListenerSession enableVrListenerSession =
+                     new EnableVrListenerSession()) {
             // Put the device in persistent vr mode.
             vrModeSession.enablePersistentVrMode();
+            enableVrListenerSession.enableVrListener(VR_TEST_ACTIVITY);
 
             // Launch the VR activity.
             launchActivity(VR_TEST_ACTIVITY);
@@ -130,9 +157,12 @@ public class ActivityManagerVrDisplayTests extends ActivityManagerDisplayTestBas
         // Launch a 2D activity.
         launchActivity(LAUNCHING_ACTIVITY);
 
-        try (final VrModeSession vrModeSession = new VrModeSession()) {
+        try (final VrModeSession vrModeSession = new VrModeSession();
+             final EnableVrListenerSession enableVrListenerSession =
+                     new EnableVrListenerSession()) {
             // Put the device in persistent vr mode.
             vrModeSession.enablePersistentVrMode();
+            enableVrListenerSession.enableVrListener(VR_TEST_ACTIVITY);
 
             // Launch the VR activity.
             launchActivity(VR_TEST_ACTIVITY);
@@ -177,9 +207,12 @@ public class ActivityManagerVrDisplayTests extends ActivityManagerDisplayTestBas
         // there is no "post vr" behavior to verify.
         assumeFalse(isUiModeLockedToVrHeadset());
 
-        try (final VrModeSession vrModeSession = new VrModeSession()) {
+        try (final VrModeSession vrModeSession = new VrModeSession();
+             final EnableVrListenerSession enableVrListenerSession =
+                     new EnableVrListenerSession()) {
             // Put the device in persistent vr mode.
             vrModeSession.enablePersistentVrMode();
+            enableVrListenerSession.enableVrListener(VR_TEST_ACTIVITY);
 
             // Launch the VR activity.
             launchActivity(VR_TEST_ACTIVITY);

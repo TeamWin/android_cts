@@ -1018,6 +1018,81 @@ public class MediaPlayer2Test extends MediaPlayer2TestBase {
         mPlayer.reset();
     }
 
+    public void testClearNextDataSources() throws Exception {
+        if (IGNORE_TESTS) {
+            return;
+        }
+        if (!checkLoadResource(
+                R.raw.video_480x360_mp4_h264_1000kbps_30fps_aac_stereo_128kbps_44100hz)) {
+            return; // skip
+        }
+
+        int resid = R.raw.testvideo;
+        if (!MediaUtils.hasCodecsForResource(mContext, resid)) {
+            return;  // skip
+        }
+
+        AssetFileDescriptor afd2 = mResources.openRawResourceFd(resid);
+        DataSourceDesc dsd2 = new DataSourceDesc.Builder()
+                .setDataSource(afd2.getFileDescriptor(), afd2.getStartOffset(), afd2.getLength())
+                .build();
+
+        mPlayer.setNextDataSource(dsd2);
+
+        Monitor onStartCalled = new Monitor();
+        Monitor onStart2Called = new Monitor();
+        Monitor onCompletion2Called = new Monitor();
+        Monitor onListCompletionCalled = new Monitor();
+        MediaPlayer2.EventCallback ecb = new MediaPlayer2.EventCallback() {
+            @Override
+            public void onInfo(MediaPlayer2 mp, DataSourceDesc dsd, int what, int extra) {
+                if (what == MediaPlayer2.MEDIA_INFO_DATA_SOURCE_START) {
+                    if (dsd == dsd2) {
+                        Log.i(LOG_TAG, "testPlaylist: MEDIA_INFO_DATA_SOURCE_START dsd2");
+                        onStart2Called.signal();
+                    } else {
+                        Log.i(LOG_TAG, "testPlaylist: MEDIA_INFO_DATA_SOURCE_START other");
+                        onStartCalled.signal();
+                    }
+                } else if (what == MediaPlayer2.MEDIA_INFO_DATA_SOURCE_END) {
+                    if (dsd == dsd2) {
+                        Log.i(LOG_TAG, "testPlaylist: MEDIA_INFO_DATA_SOURCE_END dsd2");
+                        onCompletion2Called.signal();
+                    } else {
+                        Log.i(LOG_TAG, "testPlaylist: MEDIA_INFO_DATA_SOURCE_END other");
+                        mOnCompletionCalled.signal();
+                    }
+                } else if (what == MediaPlayer2.MEDIA_INFO_DATA_SOURCE_LIST_END) {
+                    Log.i(LOG_TAG, "testPlaylist: MEDIA_INFO_DATA_SOURCE_LIST_END");
+                    onListCompletionCalled.signal();
+                }
+            }
+        };
+        synchronized (mEventCbLock) {
+            mEventCallbacks.add(ecb);
+        }
+
+        mOnCompletionCalled.reset();
+        onCompletion2Called.reset();
+
+        mPlayer.setDisplay(mActivity.getSurfaceHolder());
+
+        mPlayer.prepare();
+
+        mPlayer.play();
+
+        Thread.sleep(1000);  // sleep 1 second
+        mPlayer.clearNextDataSources();
+
+        onStartCalled.waitForSignal();
+        mOnCompletionCalled.waitForSignal();
+        onListCompletionCalled.waitForSignal();
+        assertEquals("next dsd was mistakenly started", 0, onStart2Called.getNumSignal());
+        assertEquals("next dsd was mistakenly played", 0, onCompletion2Called.getNumSignal());
+
+        mPlayer.reset();
+    }
+
     // setPlaybackParams() with non-zero speed should NOT start playback.
     // TODO: enable this test when MediaPlayer2.setPlaybackParams() is fixed
     /*
