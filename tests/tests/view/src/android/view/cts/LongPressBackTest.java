@@ -29,6 +29,8 @@ import android.support.test.runner.AndroidJUnit4;
 import android.view.KeyEvent;
 import android.view.ViewConfiguration;
 
+import com.android.compatibility.common.util.CddTest;
+
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
@@ -52,6 +54,7 @@ public class LongPressBackTest {
      * Tests to ensure that the foregrounded app can handle a long-press on the back button on
      * non-watch devices
      */
+    @CddTest(requirement="7.2.3/H-0-2,T-0-2")
     @Test
     public void testAppIsNotDismissed() {
         // Only run for non-watch devices

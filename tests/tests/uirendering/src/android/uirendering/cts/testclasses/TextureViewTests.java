@@ -38,6 +38,8 @@ import android.view.TextureView;
 import android.view.TextureView.SurfaceTextureListener;
 import android.view.ViewGroup;
 
+import com.android.compatibility.common.util.CddTest;
+
 import org.junit.After;
 import org.junit.AfterClass;
 import org.junit.Assert;
@@ -47,6 +49,7 @@ import org.junit.runner.RunWith;
 
 import java.util.concurrent.CountDownLatch;
 
+@CddTest(requirement="7.1.4.4/C-0-3")
 @MediumTest
 @RunWith(AndroidJUnit4.class)
 public class TextureViewTests extends ActivityTestBase {

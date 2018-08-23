@@ -36,6 +36,7 @@ import android.inputmethodservice.cts.common.test.DeviceTestConstants;
 import android.inputmethodservice.cts.common.test.ShellCommandUtils;
 import android.inputmethodservice.cts.common.test.TestInfo;
 
+import com.android.compatibility.common.util.CddTest;
 import com.android.compatibility.common.tradefed.testtype.CompatibilityHostTestBase;
 import com.android.tradefed.testtype.DeviceJUnit4ClassRunner;
 
@@ -44,6 +45,7 @@ import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
+@CddTest(requirement="7.2.1/H-0-1,C-1-2")
 @RunWith(DeviceJUnit4ClassRunner.class)
 public class InputMethodServiceLifecycleTest extends CompatibilityHostTestBase {
 

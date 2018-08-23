@@ -18,11 +18,13 @@ package android.acceleration.cts;
 
 import android.acceleration.HardwareAcceleratedActivity;
 
+import com.android.compatibility.common.util.CddTest;
 import com.android.compatibility.common.util.VendorInterfaceTest;
 
 /**
  * Test that uses an Activity with hardware acceleration enabled.
  */
+@CddTest(requirement="7.1.4.4/C-0-1,C-0-2")
 public class HardwareAccelerationTest
         extends BaseAccelerationTest<HardwareAcceleratedActivity> {
 

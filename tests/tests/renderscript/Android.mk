@@ -31,7 +31,8 @@ LOCAL_MODULE_PATH := $(TARGET_OUT_DATA_APPS)
 LOCAL_STATIC_JAVA_LIBRARIES := \
     ctstestrunner \
     xmp_toolkit \
-    legacy-android-test
+    legacy-android-test \
+    compatibility-device-util
 LOCAL_JNI_SHARED_LIBRARIES := libcoremathtestcpp_jni
 
 LOCAL_SRC_FILES := $(call all-java-files-under, src) $(call all-renderscript-files-under, src)

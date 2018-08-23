@@ -37,6 +37,8 @@ import android.view.ViewGroup;
 
 import com.android.internal.util.ArrayUtils;
 
+import com.android.compatibility.common.util.CddTest;
+
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Rule;
@@ -48,6 +50,7 @@ import java.util.Objects;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 
+@CddTest(requirement="7.2.5/C-1-5")
 @RunWith(AndroidJUnit4.class)
 public class DragDropTest {
     static final String TAG = "DragDropTest";

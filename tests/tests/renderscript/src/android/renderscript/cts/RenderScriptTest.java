@@ -19,6 +19,9 @@ package android.renderscript.cts;
 import android.renderscript.RenderScript;
 import android.test.AndroidTestCase;
 
+import com.android.compatibility.common.util.CddTest;
+
+@CddTest(requirement="7.1.4.3/C-0-1")
 public class RenderScriptTest extends AndroidTestCase {
 
     /**
