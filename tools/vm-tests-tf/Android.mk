@@ -88,7 +88,8 @@ $(LOCAL_BUILT_MODULE): PRIVATE_INTERMEDIATES_HOSTJUNIT_FILES := $(intermediates)
 $(LOCAL_BUILT_MODULE): PRIVATE_CLASS_PATH := $(call normalize-path-list, $(vmteststf_dep_jars))
 oj_jar := $(call intermediates-dir-for,JAVA_LIBRARIES,core-oj,,COMMON)/classes.jar
 libart_jar := $(call intermediates-dir-for,JAVA_LIBRARIES,core-libart,,COMMON)/classes.jar
-$(LOCAL_BUILT_MODULE): PRIVATE_DALVIK_SUITE_CLASSPATH := $(oj_jar):$(libart_jar):$(cts-tf-dalvik-lib.jar):$(HOST_OUT_JAVA_LIBRARIES)/tradefed.jar:
+simple_jar := $(call intermediates-dir-for,JAVA_LIBRARIES,core-simple,,COMMON)/classes.jar
+$(LOCAL_BUILT_MODULE): PRIVATE_DALVIK_SUITE_CLASSPATH := $(oj_jar):$(libart_jar):$(simple_jar):$(cts-tf-dalvik-lib.jar):$(HOST_OUT_JAVA_LIBRARIES)/tradefed.jar:
 $(LOCAL_BUILT_MODULE): PRIVATE_VMTESTS_GENERATED_RESOURCES := $(vmtests_generated_resources_jar)
 $(LOCAL_BUILT_MODULE): PRIVATE_VMTESTS_MAINS_GENERATED := $(vmtests_mains_generated_jar)
 $(LOCAL_BUILT_MODULE) : $(vmteststf_dep_jars) $(HOST_OUT_JAVA_LIBRARIES)/tradefed.jar $(DX) $(vmtests_generated_resources_jar) $(vmtests_mains_generated_jar)
