@@ -3000,6 +3000,7 @@
             </intent-filter>
             <meta-data android:name="test_category" android:value="@string/test_category_audio" />
             <meta-data android:name="test_required_features" android:value="android.hardware.audio.output" />
+            <meta-data android:name="test_excluded_features" android:value="android.software.leanback" />
         </activity>
 
         <activity android:name=".audio.AudioInputDeviceNotificationsActivity"
@@ -3010,6 +3011,7 @@
             </intent-filter>
             <meta-data android:name="test_category" android:value="@string/test_category_audio" />
             <meta-data android:name="test_required_features" android:value="android.hardware.microphone" />
+            <meta-data android:name="test_excluded_features" android:value="android.software.leanback" />
         </activity>
 
         <activity android:name=".audio.AudioOutputRoutingNotificationsActivity"
@@ -3020,7 +3022,8 @@
             </intent-filter>
             <meta-data android:name="test_category" android:value="@string/test_category_audio" />
             <meta-data android:name="test_required_features" android:value="android.hardware.audio.output" />
-            </activity>
+            <meta-data android:name="test_excluded_features" android:value="android.software.leanback" />
+        </activity>
 
         <activity android:name=".audio.AudioInputRoutingNotificationsActivity"
                   android:label="@string/audio_input_routingnotifications_test">
@@ -3030,7 +3033,8 @@
             </intent-filter>
             <meta-data android:name="test_category" android:value="@string/test_category_audio" />
             <meta-data android:name="test_required_features" android:value="android.hardware.microphone" />
-            </activity>
+            <meta-data android:name="test_excluded_features" android:value="android.software.leanback" />
+        </activity>
 
         <activity android:name=".audio.USBAudioPeripheralAttributesActivity"
                   android:label="@string/audio_uap_attribs_test">
