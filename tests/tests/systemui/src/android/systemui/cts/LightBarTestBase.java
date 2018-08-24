@@ -32,14 +32,18 @@ import android.util.Log;
 import android.view.KeyEvent;
 import android.view.WindowInsets;
 
+import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
+import java.nio.file.FileSystems;
+import java.nio.file.Path;
 
 public class LightBarTestBase {
 
     private static final String TAG = "LightBarTestBase";
 
-    public static final String DUMP_PATH = "/sdcard/lightstatustest.png";
+    public static final Path DUMP_PATH = FileSystems.getDefault()
+            .getPath("/sdcard/LightBarTestBase/");
 
     public static final int WAIT_TIME = 2000;
 
@@ -54,11 +58,17 @@ public class LightBarTestBase {
                 fullBitmap.getHeight() - activity.getBottom());
     }
 
-    protected void dumpBitmap(Bitmap bitmap) {
-        Log.e(TAG, "Dumping failed bitmap to " + DUMP_PATH);
+    protected void dumpBitmap(Bitmap bitmap, String name) {
+        File dumpDir = DUMP_PATH.toFile();
+        if (!dumpDir.exists()) {
+            dumpDir.mkdirs();
+        }
+
+        Path filePath = DUMP_PATH.resolve(name + ".png");
+        Log.e(TAG, "Dumping failed bitmap to " + filePath);
         FileOutputStream fileStream = null;
         try {
-            fileStream = new FileOutputStream(DUMP_PATH);
+            fileStream = new FileOutputStream(filePath.toFile());
             bitmap.compress(Bitmap.CompressFormat.PNG, 85, fileStream);
             fileStream.flush();
         } catch (Exception e) {
@@ -133,7 +143,7 @@ public class LightBarTestBase {
     }
 
     protected void checkNavigationBarDivider(LightBarBaseActivity activity, int dividerColor,
-            int backgroundColor) {
+            int backgroundColor, String methodName) {
         final Bitmap bitmap = takeNavigationBarScreenshot(activity);
         int[] pixels = new int[bitmap.getHeight() * bitmap.getWidth()];
         bitmap.getPixels(pixels, 0, bitmap.getWidth(), 0, 0, bitmap.getWidth(), bitmap.getHeight());
@@ -148,7 +158,7 @@ public class LightBarTestBase {
 
         for (int col = 0; col < bitmap.getWidth(); col++) {
             if (dividerColor != pixels[col]) {
-                dumpBitmap(bitmap);
+                dumpBitmap(bitmap, methodName);
                 fail("Invalid color exptected=" + dividerColor + " actual=" + pixels[col]);
             }
         }
