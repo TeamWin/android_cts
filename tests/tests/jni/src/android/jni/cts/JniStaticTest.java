@@ -16,6 +16,8 @@
 
 package android.jni.cts;
 
+import com.android.compatibility.common.util.CddTest;
+
 import java.io.IOException;
 
 /**
@@ -23,6 +25,7 @@ import java.io.IOException;
  * class is a class defined in this package that declares the bulk of
  * its methods as native.
  */
+@CddTest(requirement="3.3.1/C-0-2")
 public class JniStaticTest extends JniTestCase {
 
     static {
