@@ -24,6 +24,9 @@ import android.telephony.SubscriptionManager;
 import android.telephony.TelephonyManager;
 import android.test.AndroidTestCase;
 
+import com.android.compatibility.common.util.CddTest;
+
+@CddTest(requirement="7.4.1/C-1-2")
 public class CarrierConfigManagerTest extends AndroidTestCase {
     private CarrierConfigManager mConfigManager;
     private TelephonyManager mTelephonyManager;

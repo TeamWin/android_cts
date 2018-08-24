@@ -442,6 +442,8 @@ public class SystemFeaturesTest extends InstrumentationTestCase {
     /**
      * Check that the {@link TelephonyManager#getPhoneType()} matches the reported features.
      */
+
+    @CddTest(requirement="7.4.1/C-1-1")
     public void testTelephonyFeatures() {
         if (!mPackageManager.hasSystemFeature(PackageManager.FEATURE_TELEPHONY)) {
             return;

@@ -23,6 +23,9 @@ import android.telephony.SmsMessage;
 import android.telephony.TelephonyManager;
 import android.test.AndroidTestCase;
 
+import com.android.compatibility.common.util.CddTest;
+
+@CddTest(requirement="7.4.1/C-1-2,C-2-1")
 public class SmsMessageTest extends AndroidTestCase{
 
     private TelephonyManager mTelephonyManager;
