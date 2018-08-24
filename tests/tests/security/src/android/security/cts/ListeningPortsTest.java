@@ -232,13 +232,11 @@ public class ListeningPortsTest extends AndroidTestCase {
                 if (isTcp && !isTcpConnectable(entry.localAddress, entry.port)) {
                     continue;
                 }
-                // allow non-system processes to listen on a device with TV capabilities
-                if (mIsTelevision) {
-                    int appId = UserHandle.getAppId(entry.uid);
-                    if (appId >= Process.FIRST_APPLICATION_UID
-                            && appId <= Process.LAST_APPLICATION_UID) {
-                        continue;
-                    }
+                // allow non-system processes to listen
+                int appId = UserHandle.getAppId(entry.uid);
+                if (appId >= Process.FIRST_APPLICATION_UID
+                        && appId <= Process.LAST_APPLICATION_UID) {
+                    continue;
                 }
 
                 errors += "\nFound port listening on addr="

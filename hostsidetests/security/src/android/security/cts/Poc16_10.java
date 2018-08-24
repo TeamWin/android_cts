@@ -106,5 +106,8 @@ public class Poc16_10 extends SecurityTestCase {
         assertNotMatches("[\\s\\n\\S]*Fatal signal 11 \\(SIGSEGV\\)" +
                 "[\\s\\n\\S]*>>> /system/bin/" +
                 "mediaserver <<<[\\s\\n\\S]*", logcat);
+
+        //make sure the app is uninstalled after the test
+        AdbUtils.runCommandLine("pm uninstall com.trendmicro.wish_wu.camera2" , getDevice());
     }
 }
