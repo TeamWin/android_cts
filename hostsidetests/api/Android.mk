@@ -37,6 +37,9 @@ test-mock/api/android-test-mock-current.txt)
 # API 27 is added since some support libraries are using old APIs
 LOCAL_JAVA_RESOURCE_FILES += prebuilts/sdk/api/27.txt
 
+# org.apache.http.legacy is considered as approved APIs
+LOCAL_JAVA_RESOURCE_FILES += external/apache-http/api/apache-http-legacy-current.txt
+
 include $(BUILD_HOST_JAVA_LIBRARY)
 
 include $(CLEAR_VARS)
