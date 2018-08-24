@@ -1358,8 +1358,8 @@ public class ActivityManagerPinnedStackTests extends ActivityManagerTestBase {
             int windowingMode, int activityType) {
         mAmWmState.waitForFocusedStack(windowingMode, activityType);
         mAmWmState.assertFocusedStack("Wrong focused stack", windowingMode, activityType);
-        mAmWmState.waitForActivityState(activityName, STATE_STOPPED);
-        assertTrue(mAmWmState.getAmState().hasActivityState(activityName, STATE_STOPPED));
+        waitAndAssertActivityState(activityName, STATE_STOPPED,
+                "Activity should go to STOPPED");
         assertTrue(mAmWmState.getAmState().containsActivityInWindowingMode(
                 activityName, WINDOWING_MODE_FULLSCREEN));
         assertPinnedStackDoesNotExist();

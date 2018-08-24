@@ -461,12 +461,8 @@ public class ActivityManagerActivityVisibilityTests extends ActivityManagerTestB
             mAmWmState.assertVisibility(TURN_SCREEN_ON_WITH_RELAYOUT_ACTIVITY, true);
 
             lockScreenSession.sleepDevice();
-            mAmWmState.waitForActivityState(TURN_SCREEN_ON_WITH_RELAYOUT_ACTIVITY, STATE_STOPPED);
-
-            // Ensure there was an actual stop if the waitFor timed out.
-            assertTrue(getActivityName(TURN_SCREEN_ON_WITH_RELAYOUT_ACTIVITY) + " stopped",
-                    mAmWmState.getAmState().hasActivityState(
-                            TURN_SCREEN_ON_WITH_RELAYOUT_ACTIVITY, STATE_STOPPED));
+            waitAndAssertActivityState(TURN_SCREEN_ON_WITH_RELAYOUT_ACTIVITY, STATE_STOPPED,
+                    "Activity should be stopped");
             assertFalse("Display keeps off", isDisplayOn(DEFAULT_DISPLAY));
         }
     }

@@ -66,14 +66,16 @@ public class ActivityManagerDisplayLockedKeyguardTests extends ActivityManagerDi
 
             // Lock the device.
             lockScreenSession.gotoKeyguard();
-            mAmWmState.waitForActivityState(TEST_ACTIVITY, STATE_STOPPED);
+            waitAndAssertActivityState(TEST_ACTIVITY, STATE_STOPPED,
+                    "Expected stopped activity on secondary display ");
             mAmWmState.assertVisibility(TEST_ACTIVITY, false /* visible */);
 
             // Unlock and check if visibility is back.
             lockScreenSession.unlockDevice()
                     .enterAndConfirmLockCredential();
             mAmWmState.waitForKeyguardGone();
-            mAmWmState.waitForActivityState(TEST_ACTIVITY, STATE_RESUMED);
+            waitAndAssertActivityState(TEST_ACTIVITY, STATE_RESUMED,
+                    "Expected resumed activity on secondary display");
             mAmWmState.assertVisibility(TEST_ACTIVITY, true /* visible */);
         }
     }
@@ -86,11 +88,17 @@ public class ActivityManagerDisplayLockedKeyguardTests extends ActivityManagerDi
         try (final VirtualDisplaySession virtualDisplaySession = new VirtualDisplaySession();
              final LockScreenSession lockScreenSession = new LockScreenSession()) {
             lockScreenSession.setLockCredential();
-            final ActivityDisplay newDisplay = virtualDisplaySession.createDisplay();
+            final ActivityDisplay newDisplay = virtualDisplaySession.setPublicDisplay(true).
+                    createDisplay();
 
             lockScreenSession.gotoKeyguard();
             mAmWmState.assertKeyguardShowingAndNotOccluded();
-            launchActivityOnDisplay(DISMISS_KEYGUARD_ACTIVITY, newDisplay.mId);
+            getLaunchActivityBuilder().setUseInstrumentation()
+                    .setTargetActivity(DISMISS_KEYGUARD_ACTIVITY).setNewTask(true)
+                    .setMultipleTask(true).setDisplayId(newDisplay.mId)
+                    .setWaitForLaunched(false).execute();
+            waitAndAssertActivityState(DISMISS_KEYGUARD_ACTIVITY, STATE_STOPPED,
+                    "Expected stopped activity on secondary display");
             lockScreenSession.enterAndConfirmLockCredential();
             mAmWmState.waitForKeyguardGone();
             mAmWmState.assertKeyguardGone();
@@ -103,14 +111,20 @@ public class ActivityManagerDisplayLockedKeyguardTests extends ActivityManagerDi
         try (final VirtualDisplaySession virtualDisplaySession = new VirtualDisplaySession();
              final LockScreenSession lockScreenSession = new LockScreenSession()) {
             lockScreenSession.setLockCredential();
-            final ActivityDisplay newDisplay = virtualDisplaySession.createDisplay();
+            final ActivityDisplay newDisplay = virtualDisplaySession.setPublicDisplay(true).
+                    createDisplay();
 
             lockScreenSession.gotoKeyguard();
             mAmWmState.assertKeyguardShowingAndNotOccluded();
             launchActivity(SHOW_WHEN_LOCKED_ACTIVITY);
             mAmWmState.computeState(SHOW_WHEN_LOCKED_ACTIVITY);
             mAmWmState.assertVisibility(SHOW_WHEN_LOCKED_ACTIVITY, true);
-            launchActivityOnDisplay(DISMISS_KEYGUARD_ACTIVITY, newDisplay.mId);
+            getLaunchActivityBuilder().setUseInstrumentation()
+                    .setTargetActivity(DISMISS_KEYGUARD_ACTIVITY).setNewTask(true)
+                    .setMultipleTask(true).setDisplayId(newDisplay.mId)
+                    .setWaitForLaunched(false).execute();
+            waitAndAssertActivityState(DISMISS_KEYGUARD_ACTIVITY, STATE_STOPPED,
+                    "Expected stopped activity on secondary display");
             lockScreenSession.enterAndConfirmLockCredential();
             mAmWmState.waitForKeyguardGone();
             mAmWmState.assertKeyguardGone();
