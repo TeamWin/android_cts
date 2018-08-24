@@ -686,5 +686,11 @@ public class NativeDecoderTest extends MediaPlayerTestBase {
     }
 
     private static native boolean testCryptoInfoNative();
+
+    public void testMediaFormat() throws Exception {
+        assertTrue("native mediaformat failed, see log for details", testMediaFormatNative());
+    }
+
+    private static native boolean testMediaFormatNative();
 }
 
