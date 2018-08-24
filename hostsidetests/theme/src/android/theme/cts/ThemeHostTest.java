@@ -89,7 +89,7 @@ public class ThemeHostTest extends DeviceTestCase {
         super.setUp();
 
         mDevice = getDevice();
-
+        mDevice.executeShellCommand("settings put system font_scale 1.0");
         final String density = getDensityBucketForDevice(mDevice);
         final String referenceZipAssetPath = String.format("/%s.zip", density);
         mReferences = extractReferenceImages(referenceZipAssetPath);

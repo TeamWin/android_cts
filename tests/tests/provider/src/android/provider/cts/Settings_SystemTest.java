@@ -149,6 +149,11 @@ public class Settings_SystemTest extends InstrumentationTestCase {
             c.close();
 
             // restore the fontScale
+            try {
+                // Delay helps ActivityManager in completing its previous font-change processing.
+                Thread.sleep(1000);
+            } catch (Exception e){}
+
             cfg.fontScale = store;
             assertTrue(System.putConfiguration(cr, cfg));
         }
