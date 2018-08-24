@@ -28,6 +28,7 @@ import android.media.MediaCodecList;
 import android.media.MediaFormat;
 import android.test.AndroidTestCase;
 import android.util.Log;
+import com.android.compatibility.common.util.CddTest;
 
 import java.io.File;
 import java.io.IOException;
@@ -267,7 +268,7 @@ public class MediaCodecListTest extends AndroidTestCase {
         assertEquals(
                 "some regular codecs are not listed in all codecs", ix, mRegularInfos.length);
     }
-
+   @CddTest(requirement="5/C-0-1,5.2/C-1-1,H-0-1,H-0-2,A-0-1,A-0-2,T-0-1,T-0-2,5.1.2/H-0-1,H-0-2,C-1-6,C-1-8,C-1-9,5.1.1/H-0-1,H-0-2,5.3/H-0-1,H-0-2,H-0-3,H-0-4,H-0-5,A-0-1,A-0-2,A-0-3,A-0-4,T-0-1,T-0-2,T-0-3,T-0-4,T-0-5")
     public void testRequiredMediaCodecList() {
         List<CodecType> requiredList = getRequiredCodecTypes();
         List<CodecType> supportedList = getSupportedCodecTypes();
@@ -406,6 +407,7 @@ public class MediaCodecListTest extends AndroidTestCase {
         return list;
     }
 
+    @CddTest(requirement="5.1.2/C-1-1,C-1-2,C-1-3,C-1-4")
     public void testFindDecoderWithAacProfile() throws Exception {
         Log.d(TAG, "testFindDecoderWithAacProfile");
         MediaFormat format = MediaFormat.createAudioFormat(
@@ -423,6 +425,7 @@ public class MediaCodecListTest extends AndroidTestCase {
         }
     }
 
+    @CddTest(requirement="[5.1.1/H-0-3,H-0-4,H-0-5],[5.1/T-0-1,T-0-2,T-0-3,A-1-1,A-1-2,A-1-3]")
     public void testFindEncoderWithAacProfile() throws Exception {
         Log.d(TAG, "testFindEncoderWithAacProfile");
         MediaFormat format = MediaFormat.createAudioFormat(
