@@ -1316,9 +1316,9 @@
         1. Install the Cts Verifier USB Companion app on a separate helper device.
         \n\n2. Start the device test companion in the Cts Verifier USB Companion.
         \n\n3. Connect the two devices. If using a OTG adapter make sure the adapter is directly connected to this device. If using an Type-C cable make sure that this device is set as "supply power to the attached device".
-        \n\n4. Confirm access to the USB device on this device.
+        \n\n4. Confirm access to the USB device on this device. Do <u>not</u> make this app the default app for the device.
         \n\n5. Confirm access to the USB accessory on the helper device.
-        \n\n6. Confirm access to the USB device on this device again.
+        \n\n6. Confirm access to the USB device on this device again. Do <u>not</u> make this app the default app for the device.
         \n\n7. Test will run and complete automatically in less than 30 seconds.
         \n\n8. Cancel all further dialogs on the helper device.
     </string>
@@ -1330,12 +1330,12 @@
         \n\nResult: A dialog should show up on this device asking for access to a USB device.
     </string>
     <string name="usb_device_test_step2">
-        Confirm access to the USB device on this device.
+        Confirm access to the USB device on this device. Do <u>not</u> make this app the default app for the device.
         \n\nResult: Dialogs should show up on this device and on the helper device asking for access to a USB device/accessory.
     </string>
     <string name="usb_device_test_step3">
         1. Confirm access to the USB accessory on the helper device.
-        \n2. Confirm access to the USB device on this device again.
+        \n2. Confirm access to the USB device on this device again. Do <u>not</u> make this app the default app for the device.
         \n\nResult: A progress indicator should appear or test will finish.
     </string>
     <string name="usb_device_test_step4">
