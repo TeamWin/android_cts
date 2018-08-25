@@ -184,7 +184,7 @@ public class SecurityTestCase extends DeviceTestCase {
 
     public void assertMatchesMultiLine(String pattern, String input) throws Exception {
         assertTrue("Pattern not found: " + pattern,
-                    Pattern.compile(pattern).matcher(input).find());
+          Pattern.compile(pattern, Pattern.DOTALL|Pattern.MULTILINE).matcher(input).find());
     }
 
     public void assertNotMatches(String pattern, String input) throws Exception {
@@ -193,7 +193,7 @@ public class SecurityTestCase extends DeviceTestCase {
 
     public void assertNotMatchesMultiLine(String pattern, String input) throws Exception {
         assertFalse("Pattern found: " + pattern,
-                    Pattern.compile(pattern).matcher(input).find());
+          Pattern.compile(pattern, Pattern.DOTALL|Pattern.MULTILINE).matcher(input).find());
     }
 
     // Flag meaning the test will likely fail on devices with low memory.
