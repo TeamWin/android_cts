@@ -74,6 +74,8 @@
             </intent-filter>
         </activity>
 
+        <activity android:name="android.text.cts.MockActivity" />
+
     </application>
 
     <instrumentation android:name="android.support.test.runner.AndroidJUnitRunner"

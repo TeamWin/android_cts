@@ -16,16 +16,16 @@
 
 package android.server.am;
 
-import android.app.Activity;
 import android.content.res.Configuration;
 import android.graphics.Point;
 import android.os.Bundle;
+import android.server.am.CommandSession.BasicTestActivity;
 import android.util.DisplayMetrics;
 import android.util.Log;
 import android.view.Display;
 import android.view.WindowManager;
 
-public abstract class AbstractLifecycleLogActivity extends Activity {
+public abstract class AbstractLifecycleLogActivity extends BasicTestActivity {
 
     @Override
     protected void onCreate(Bundle icicle) {

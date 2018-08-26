@@ -96,6 +96,8 @@ import android.graphics.Rect;
 import android.os.Bundle;
 import android.os.SystemClock;
 import android.provider.Settings;
+import android.server.am.CommandSession.LaunchInjector;
+import android.server.am.CommandSession.LaunchProxy;
 import android.server.am.settings.SettingsSession;
 import android.support.test.InstrumentationRegistry;
 import android.support.test.rule.ActivityTestRule;
@@ -1496,7 +1498,7 @@ public abstract class ActivityManagerTestBase {
         return new LaunchActivityBuilder(mAmWmState);
     }
 
-    protected static class LaunchActivityBuilder {
+    protected static class LaunchActivityBuilder implements LaunchProxy {
         private final ActivityAndWindowManagersState mAmWmState;
 
         // The activity to be launched
@@ -1517,6 +1519,7 @@ public abstract class ActivityManagerTestBase {
         // of a launching activity;
         private ComponentName mBroadcastReceiver;
         private String mBroadcastReceiverAction;
+        private LaunchInjector mLaunchInjector;
 
         private enum LauncherType {
             INSTRUMENTATION, LAUNCHING_ACTIVITY, BROADCAST_RECEIVER
@@ -1615,6 +1618,17 @@ public abstract class ActivityManagerTestBase {
             return this;
         }
 
+        @Override
+        public boolean shouldWaitForLaunched() {
+            return mWaitForLaunched;
+        }
+
+        @Override
+        public void setLaunchInjector(LaunchInjector injector) {
+            mLaunchInjector = injector;
+        }
+
+        @Override
         public void execute() {
             switch (mLauncherType) {
                 case INSTRUMENTATION:
@@ -1646,7 +1660,7 @@ public abstract class ActivityManagerTestBase {
             b.putString(KEY_TARGET_COMPONENT, getActivityName(mTargetActivity));
             b.putBoolean(KEY_SUPPRESS_EXCEPTIONS, mSuppressExceptions);
             final Context context = InstrumentationRegistry.getContext();
-            launchActivityFromExtras(context, b);
+            launchActivityFromExtras(context, b, mLaunchInjector);
         }
 
         /** Build and execute a shell command to launch an activity. */
@@ -1702,6 +1716,10 @@ public abstract class ActivityManagerTestBase {
 
             if (mSuppressExceptions) {
                 commandBuilder.append(" --ez " + KEY_SUPPRESS_EXCEPTIONS + " true");
+            }
+
+            if (mLaunchInjector != null) {
+                mLaunchInjector.setupShellCommand(commandBuilder);
             }
             executeShellCommand(commandBuilder.toString());
         }

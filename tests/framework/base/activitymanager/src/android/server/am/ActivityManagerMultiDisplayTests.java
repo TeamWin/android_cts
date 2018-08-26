@@ -71,6 +71,8 @@ import android.os.SystemClock;
 import android.platform.test.annotations.Presubmit;
 import android.server.am.ActivityManagerState.ActivityDisplay;
 import android.server.am.ActivityManagerState.ActivityStack;
+import android.server.am.CommandSession.ActivitySession;
+import android.server.am.CommandSession.SizeInfo;
 import android.support.test.filters.FlakyTest;
 import android.util.SparseArray;
 
@@ -1285,53 +1287,49 @@ public class ActivityManagerMultiDisplayTests extends ActivityManagerDisplayTest
      */
     @Test
     public void testRotationNotAffectingSecondaryScreen() throws Exception {
-        try (final VirtualDisplaySession virtualDisplaySession = new VirtualDisplaySession()) {
+        try (final VirtualDisplayLauncher virtualLauncher = new VirtualDisplayLauncher()) {
             // Create new virtual display.
-            final ActivityDisplay newDisplay = virtualDisplaySession.setResizeDisplay(false)
+            final ActivityDisplay newDisplay = virtualLauncher.setResizeDisplay(false)
                     .createDisplay();
             mAmWmState.assertVisibility(VIRTUAL_DISPLAY_ACTIVITY, true /* visible */);
 
             // Launch activity on new secondary display.
-            LogSeparator logSeparator = separateLogs();
-            launchActivityOnDisplay(RESIZEABLE_ACTIVITY, newDisplay.mId);
+            final ActivitySession resizeableActivitySession =
+                    virtualLauncher.launchActivityOnDisplay(RESIZEABLE_ACTIVITY, newDisplay);
             waitAndAssertTopResumedActivity(RESIZEABLE_ACTIVITY, newDisplay.mId,
                     "Top activity must be on secondary display");
-            final ReportedSizes initialSizes = getLastReportedSizesForActivity(
-                    RESIZEABLE_ACTIVITY, logSeparator);
-            assertNotNull("Test activity must have reported initial sizes on launch", initialSizes);
+            final SizeInfo initialSize = resizeableActivitySession.getConfigInfo().sizeInfo;
+
+            assertNotNull("Test activity must have reported initial size on launch", initialSize);
 
             try (final RotationSession rotationSession = new RotationSession()) {
                 // Rotate primary display and check that activity on secondary display is not
                 // affected.
-
-                rotateAndCheckSameSizes(rotationSession, RESIZEABLE_ACTIVITY);
+                rotateAndCheckSameSizes(rotationSession, resizeableActivitySession, initialSize);
 
                 // Launch activity to secondary display when primary one is rotated.
                 final int initialRotation = mAmWmState.getWmState().getRotation();
                 rotationSession.set((initialRotation + 1) % 4);
 
-                logSeparator = separateLogs();
-                launchActivityOnDisplay(TEST_ACTIVITY, newDisplay.mId);
+                final ActivitySession testActivitySession =
+                        virtualLauncher.launchActivityOnDisplay(TEST_ACTIVITY, newDisplay);
                 waitAndAssertTopResumedActivity(TEST_ACTIVITY, newDisplay.mId,
                         "Top activity must be on secondary display");
-                final ReportedSizes testActivitySizes = getLastReportedSizesForActivity(
-                        TEST_ACTIVITY, logSeparator);
-                assertEquals(
-                        "Sizes of secondary display must not change after rotation of primary "
-                                + "display",
-                        initialSizes, testActivitySizes);
+                final SizeInfo testActivitySize = testActivitySession.getConfigInfo().sizeInfo;
+
+                assertEquals("Sizes of secondary display must not change after rotation of primary"
+                        + " display", initialSize, testActivitySize);
             }
         }
     }
 
-    private void rotateAndCheckSameSizes(
-            RotationSession rotationSession, ComponentName activityName) throws Exception {
+    private void rotateAndCheckSameSizes(RotationSession rotationSession,
+            ActivitySession activitySession, SizeInfo initialSize) throws Exception {
         for (int rotation = 3; rotation >= 0; --rotation) {
-            final LogSeparator logSeparator = separateLogs();
             rotationSession.set(rotation);
-            final ReportedSizes rotatedSizes = getLastReportedSizesForActivity(activityName,
-                    logSeparator);
-            assertNull("Sizes must not change after rotation", rotatedSizes);
+            final SizeInfo rotatedSize = activitySession.getConfigInfo().sizeInfo;
+
+            assertEquals("Sizes must not change after rotation", initialSize, rotatedSize);
         }
     }
 
