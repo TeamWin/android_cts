@@ -353,11 +353,10 @@ public class ScopedDirectoryAccessClientTest extends DocumentsClientTestCase {
         final boolean gotIt = mDevice.wait(Until.hasObject(By.text(dir)), TIMEOUT);
         assertTrue("object with text'(" + dir + "') not visible yet", gotIt);
         // TODO: find a better way to get the toggle rather then getting all
-        final List<UiObject2> toggles = mDevice.findObjects(By.res("android:id/switch_widget"));
-        assertEquals("should have just one toggle: " + toggles, 1, toggles.size());
-        final UiObject2 toggle = toggles.get(0);
+        UiObject2 toggle = getUniqueToggle();
         assertFalse("toggle for '" + dir + "' should not be checked", toggle.isChecked());
         toggle.click();
+        toggle = getUniqueToggle();
         assertTrue("toggle for '" + dir + "' should be checked", toggle.isChecked());
 
         // Close app screen.
@@ -395,11 +394,10 @@ public class ScopedDirectoryAccessClientTest extends DocumentsClientTestCase {
         final boolean gotIt = mDevice.wait(Until.hasObject(By.text(dir)), TIMEOUT);
         assertTrue("object with text'(" + dir + "') not visible yet", gotIt);
         // TODO: find a better way to get the toggle rather then getting all
-        final List<UiObject2> toggles = mDevice.findObjects(By.res("android:id/switch_widget"));
-        assertEquals("should have just one toggle: " + toggles, 1, toggles.size());
-        final UiObject2 toggle = toggles.get(0);
+        UiObject2 toggle = getUniqueToggle();
         assertTrue("toggle for '" + dir + "' should be checked", toggle.isChecked());
         toggle.click();
+        toggle = getUniqueToggle();
         assertFalse("toggle for '" + dir + "' should not be checked", toggle.isChecked());
 
         // Close app screen.
@@ -412,6 +410,12 @@ public class ScopedDirectoryAccessClientTest extends DocumentsClientTestCase {
         // Then tries again - should be denied.
         sendOpenExternalDirectoryIntent(volume, dir);
         assertActivityFailed();
+    }
+
+    private UiObject2 getUniqueToggle() {
+        List<UiObject2> toggles = mDevice.findObjects(By.res("android:id/switch_widget"));
+        assertEquals("should have just one toggle: " + toggles, 1, toggles.size());
+        return toggles.get(0);
     }
 
     private void launchDirectoryAccessSettingsScreenAndSelectApp() {
