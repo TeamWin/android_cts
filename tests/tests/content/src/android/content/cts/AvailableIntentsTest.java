@@ -366,6 +366,13 @@ public class AvailableIntentsTest extends AndroidTestCase {
         }
     }
 
+    public void testSettingsSearchIntent() {
+        if (FeatureUtil.isTV() || FeatureUtil.isAutomotive() || FeatureUtil.isWatch()) {
+            return;
+        }
+        assertCanBeHandled(new Intent(Settings.ACTION_APP_SEARCH_SETTINGS));
+    }
+
     public void testChangeDefaultDialer() {
         PackageManager packageManager = mContext.getPackageManager();
         if (packageManager.hasSystemFeature(PackageManager.FEATURE_TELEPHONY)) {
