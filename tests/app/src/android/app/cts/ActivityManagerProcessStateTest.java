@@ -36,6 +36,7 @@ import android.content.Intent;
 import android.content.pm.ApplicationInfo;
 import android.content.pm.PackageManager;
 import android.content.res.Configuration;
+import android.os.Build;
 import android.os.IBinder;
 import android.os.Parcel;
 import android.os.PowerManager;
@@ -110,7 +111,13 @@ public class ActivityManagerProcessStateTest extends InstrumentationTestCase {
         mAllProcesses[1] = mService2Intent;
         mContext.stopService(mServiceIntent);
         mContext.stopService(mService2Intent);
+        turnScreenOn();
         removeTestAppFromWhitelists();
+    }
+
+    private void turnScreenOn() throws Exception {
+        executeShellCmd("input keyevent KEYCODE_WAKEUP");
+        executeShellCmd("wm dismiss-keyguard");
     }
 
     private void removeTestAppFromWhitelists() throws Exception {
@@ -1153,11 +1160,13 @@ public class ActivityManagerProcessStateTest extends InstrumentationTestCase {
             // Now go to home, leaving the app.  It should be put in the heavy weight state.
             mContext.startActivity(homeIntent);
 
+            final int expectedImportance =
+                    (mContext.getApplicationInfo().targetSdkVersion >= Build.VERSION_CODES.O)
+                            ? ActivityManager.RunningAppProcessInfo.IMPORTANCE_CANT_SAVE_STATE
+                            : ActivityManager.RunningAppProcessInfo.IMPORTANCE_CANT_SAVE_STATE_PRE_26;
             // Wait for process to go down to background heavy-weight.
-            uidBackgroundListener.waitForValue(
-                    ActivityManager.RunningAppProcessInfo.IMPORTANCE_CANT_SAVE_STATE,
-                    ActivityManager.RunningAppProcessInfo.IMPORTANCE_CANT_SAVE_STATE);
-            assertEquals(ActivityManager.RunningAppProcessInfo.IMPORTANCE_CANT_SAVE_STATE,
+            uidBackgroundListener.waitForValue(expectedImportance, expectedImportance);
+            assertEquals(expectedImportance,
                     am.getPackageImportance(CANT_SAVE_STATE_1_PACKAGE_NAME));
 
             uidWatcher.expect(WatchUidRunner.CMD_CACHED, null);
