@@ -1382,3 +1382,40 @@ extern "C" void Java_android_media_cts_NdkInputSurface_nativeRelease(
     ANativeWindow_release(reinterpret_cast<ANativeWindow *>(nativeWindow));
 
 }
+
+extern "C" jboolean Java_android_media_cts_NativeDecoderTest_testMediaFormatNative(
+        JNIEnv * /*env*/, jclass /*clazz*/) {
+
+    AMediaFormat *original = AMediaFormat_new();
+    AMediaFormat *copy = AMediaFormat_new();
+    jboolean ret = false;
+    while (true) {
+        AMediaFormat_setInt64(original, AMEDIAFORMAT_KEY_DURATION, 1234ll);
+        int64_t value = 0;
+        if (!AMediaFormat_getInt64(original, AMEDIAFORMAT_KEY_DURATION, &value) || value != 1234) {
+            ALOGE("format missing expected entry");
+            break;
+        }
+        AMediaFormat_copy(copy, original);
+        value = 0;
+        if (!AMediaFormat_getInt64(copy, AMEDIAFORMAT_KEY_DURATION, &value) || value != 1234) {
+            ALOGE("copied format missing expected entry");
+            break;
+        }
+        AMediaFormat_clear(original);
+        if (AMediaFormat_getInt64(original, AMEDIAFORMAT_KEY_DURATION, &value)) {
+            ALOGE("format still has entry after clear");
+            break;
+        }
+        value = 0;
+        if (!AMediaFormat_getInt64(copy, AMEDIAFORMAT_KEY_DURATION, &value) || value != 1234) {
+            ALOGE("copied format missing expected entry");
+            break;
+        }
+        ret = true;
+        break;
+    }
+    AMediaFormat_delete(original);
+    AMediaFormat_delete(copy);
+    return ret;
+}
