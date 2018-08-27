@@ -109,7 +109,12 @@ public class StorageManagerTest extends AndroidTestCase {
     }
 
     private void doAttemptMountNonObb(File outFile) {
-        mountObb(R.raw.test1_nosig, outFile, OnObbStateChangeListener.ERROR_INTERNAL);
+        try {
+            mountObb(R.raw.test1_nosig, outFile, OnObbStateChangeListener.ERROR_INTERNAL);
+            fail("mountObb should've failed with an exception");
+        } catch (IllegalArgumentException e) {
+            // Expected
+        }
 
         assertFalse("OBB should not be mounted",
                 mStorageManager.isObbMounted(outFile.getPath()));
