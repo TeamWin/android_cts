@@ -46,6 +46,7 @@ import android.content.pm.ResolveInfo;
 import android.content.pm.PackageManager.NameNotFoundException;
 import android.content.pm.ServiceInfo;
 import android.test.AndroidTestCase;
+import android.text.TextUtils;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -424,7 +425,7 @@ public class PackageManagerTest extends AndroidTestCase {
         assertNotNull(mPackageManager.getDrawable(PACKAGE_NAME, iconRes, appInfo));
     }
 
-    public void testCheckSignaturesMatch() {
+    public void testCheckSignaturesMatch_byPackageName() {
         // Compare the signature of this package to another package installed by this test suite
         // (see AndroidTest.xml). Their signatures must match.
         assertEquals(PackageManager.SIGNATURE_MATCH, mPackageManager.checkSignatures(PACKAGE_NAME,
@@ -434,10 +435,29 @@ public class PackageManagerTest extends AndroidTestCase {
                 PACKAGE_NAME));
     }
 
-    public void testCheckSignaturesNoMatch() {
+    public void testCheckSignaturesMatch_byUid() throws NameNotFoundException {
+        // Compare the signature of this package to another package installed by this test suite
+        // (see AndroidTest.xml). Their signatures must match.
+        int uid1 = mPackageManager.getPackageInfo(PACKAGE_NAME, 0).applicationInfo.uid;
+        int uid2 = mPackageManager.getPackageInfo("com.android.cts.stub", 0).applicationInfo.uid;
+        assertEquals(PackageManager.SIGNATURE_MATCH, mPackageManager.checkSignatures(uid1, uid2));
+
+        // A UID's signature should match its own signature.
+        assertEquals(PackageManager.SIGNATURE_MATCH, mPackageManager.checkSignatures(uid1, uid1));
+    }
+
+    public void testCheckSignaturesNoMatch_byPackageName() {
         // This test package's signature shouldn't match the system's signature.
         assertEquals(PackageManager.SIGNATURE_NO_MATCH, mPackageManager.checkSignatures(
                 PACKAGE_NAME, "android"));
+    }
+
+    public void testCheckSignaturesNoMatch_byUid() throws NameNotFoundException {
+        // This test package's signature shouldn't match the system's signature.
+        int uid1 = mPackageManager.getPackageInfo(PACKAGE_NAME, 0).applicationInfo.uid;
+        int uid2 = mPackageManager.getPackageInfo("android", 0).applicationInfo.uid;
+        assertEquals(PackageManager.SIGNATURE_NO_MATCH,
+                mPackageManager.checkSignatures(uid1, uid2));
     }
 
     public void testCheckSignaturesUnknownPackage() {
@@ -529,12 +549,39 @@ public class PackageManagerTest extends AndroidTestCase {
         assertEquals("com.android.cts.ctsshim", result[2]);
     }
 
+    public void testGetPackageUid() throws NameNotFoundException {
+        assertEquals(1000, mPackageManager.getPackageUid("android", 0));
+
+        int uid = mPackageManager.getApplicationInfo("com.android.cts.ctsshim", 0 /*flags*/).uid;
+        assertEquals(uid, mPackageManager.getPackageUid("com.android.cts.ctsshim", 0));
+    }
+
+    public void testGetPackageInfo() throws NameNotFoundException {
+        PackageInfo pkgInfo = mPackageManager.getPackageInfo(PACKAGE_NAME, GET_META_DATA
+                | GET_PERMISSIONS | GET_ACTIVITIES | GET_PROVIDERS | GET_SERVICES | GET_RECEIVERS);
+        assertTestPackageInfo(pkgInfo);
+    }
+
+    public void testGetPackageInfo_notFound() {
+        try {
+            mPackageManager.getPackageInfo("this.package.does.not.exist", 0);
+            fail("Exception expected");
+        } catch (NameNotFoundException expected) {
+        }
+    }
+
     public void testGetInstalledPackages() throws Exception {
         List<PackageInfo> pkgs = mPackageManager.getInstalledPackages(GET_META_DATA
                 | GET_PERMISSIONS | GET_ACTIVITIES | GET_PROVIDERS | GET_SERVICES | GET_RECEIVERS);
 
         PackageInfo pkgInfo = findPackageOrFail(pkgs, PACKAGE_NAME);
+        assertTestPackageInfo(pkgInfo);
+    }
 
+    /**
+     * Asserts that the pkgInfo object correctly describes the {@link #PACKAGE_NAME} package.
+     */
+    private void assertTestPackageInfo(PackageInfo pkgInfo) {
         // Check metadata
         ApplicationInfo appInfo = pkgInfo.applicationInfo;
         assertEquals(APPLICATION_NAME, appInfo.name);
@@ -634,5 +681,72 @@ public class PackageManagerTest extends AndroidTestCase {
         }
         fail("Package item not found with name " + name);
         return null;
+    }
+
+    public void testGetPackagesHoldingPermissions() {
+        List<PackageInfo> pkgInfos = mPackageManager.getPackagesHoldingPermissions(
+                new String[] { GRANTED_PERMISSION_NAME }, 0);
+        findPackageOrFail(pkgInfos, PACKAGE_NAME);
+
+        pkgInfos = mPackageManager.getPackagesHoldingPermissions(
+                new String[] { NOT_GRANTED_PERMISSION_NAME }, 0);
+        for (PackageInfo pkgInfo : pkgInfos) {
+            if (PACKAGE_NAME.equals(pkgInfo.packageName)) {
+                fail("Must not return package " + PACKAGE_NAME);
+            }
+        }
+    }
+
+    public void testGetPermissionInfo() throws NameNotFoundException {
+        // Check a normal permission.
+        String permissionName = "android.permission.INTERNET";
+        PermissionInfo permissionInfo = mPackageManager.getPermissionInfo(permissionName, 0);
+        assertEquals(permissionName, permissionInfo.name);
+        assertEquals(PermissionInfo.PROTECTION_NORMAL, permissionInfo.getProtection());
+
+        // Check a dangerous (runtime) permission.
+        permissionName = "android.permission.SEND_SMS";
+        permissionInfo = mPackageManager.getPermissionInfo(permissionName, 0);
+        assertEquals(permissionName, permissionInfo.name);
+        assertEquals(PermissionInfo.PROTECTION_DANGEROUS, permissionInfo.getProtection());
+        assertEquals("android.permission-group.SMS", permissionInfo.group);
+
+        // Check a signature permission.
+        permissionName = "android.permission.MODIFY_PHONE_STATE";
+        permissionInfo = mPackageManager.getPermissionInfo(permissionName, 0);
+        assertEquals(permissionName, permissionInfo.name);
+        assertEquals(PermissionInfo.PROTECTION_SIGNATURE, permissionInfo.getProtection());
+
+        // Check a special access (appop) permission.
+        permissionName = "android.permission.SYSTEM_ALERT_WINDOW";
+        permissionInfo = mPackageManager.getPermissionInfo(permissionName, 0);
+        assertEquals(permissionName, permissionInfo.name);
+        assertEquals(PermissionInfo.PROTECTION_SIGNATURE, permissionInfo.getProtection());
+        assertEquals(PermissionInfo.PROTECTION_FLAG_APPOP,
+                permissionInfo.getProtectionFlags() & PermissionInfo.PROTECTION_FLAG_APPOP);
+    }
+
+    public void testGetPermissionInfo_notFound() {
+        try {
+            mPackageManager.getPermissionInfo("android.permission.nonexistent.permission", 0);
+            fail("Exception expected");
+        } catch (NameNotFoundException expected) {
+        }
+    }
+
+    public void testGetPermissionGroupInfo() throws NameNotFoundException {
+        PermissionGroupInfo groupInfo = mPackageManager.getPermissionGroupInfo(
+                PERMISSIONGROUP_NAME, 0);
+        assertEquals(PERMISSIONGROUP_NAME, groupInfo.name);
+        assertEquals(PACKAGE_NAME, groupInfo.packageName);
+        assertFalse(TextUtils.isEmpty(groupInfo.loadDescription(mPackageManager)));
+    }
+
+    public void testGetPermissionGroupInfo_notFound() throws NameNotFoundException {
+        try {
+            mPackageManager.getPermissionGroupInfo("this.group.does.not.exist", 0);
+            fail("Exception expected");
+        } catch (NameNotFoundException expected) {
+        }
     }
 }
