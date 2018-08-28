@@ -21,16 +21,24 @@ LOCAL_MODULE_TAGS := \
 LOCAL_JAVA_LIBRARIES := \
     android.test.runner.stubs
 LOCAL_STATIC_JAVA_LIBRARIES = \
-    mockito-target \
+    mockito-target-extended \
     android-support-test \
     ctstestrunner \
-    dexmaker-mockmaker-tests
+    dexmaker-mockmaker-tests \
+    dexmaker-inline-mockmaker-tests \
+    dexmaker-extended-mockmaker-tests \
+    android-support-v4
+LOCAL_MULTILIB := \
+    both
+LOCAL_JNI_SHARED_LIBRARIES := \
+    libdexmakerjvmtiagent \
+    libmultiplejvmtiagentsinterferenceagent \
+    libstaticjvmtiagent
 LOCAL_COMPATIBILITY_SUITE := \
     cts vts general-tests
 LOCAL_PACKAGE_NAME := \
-    CtsMockingTestCases
+    CtsExtendedMockingTestCases
 LOCAL_SDK_VERSION := \
     current
 include $(BUILD_CTS_PACKAGE)
 
-include $(call all-makefiles-under,$(LOCAL_PATH))
