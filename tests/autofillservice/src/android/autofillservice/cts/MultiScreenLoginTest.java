@@ -29,6 +29,7 @@ import android.app.assist.AssistStructure;
 import android.autofillservice.cts.InstrumentedAutoFillService.FillRequest;
 import android.autofillservice.cts.InstrumentedAutoFillService.SaveRequest;
 import android.content.ComponentName;
+import android.os.Bundle;
 import android.service.autofill.SaveInfo;
 
 import org.junit.Test;
@@ -63,13 +64,18 @@ public class MultiScreenLoginTest
         // First handle username...
 
         // Set expectations.
+        final Bundle clientState1 = new Bundle();
+        clientState1.putString("first", "one");
+        clientState1.putString("last", "one");
         sReplier.addResponse(new CannedFillResponse.Builder()
                 .setRequiredSavableIds(SAVE_DATA_TYPE_USERNAME, ID_USERNAME)
+                .setExtras(clientState1)
                 .build());
 
         // Trigger autofill
         mActivity.focusOnUsername();
-        sReplier.getNextFillRequest();
+        final FillRequest fillRequest1 = sReplier.getNextFillRequest();
+        assertThat(fillRequest1.contexts.size()).isEqualTo(1);
         mUiBot.assertNoDatasetsEver();
 
         // Trigger save...
@@ -80,6 +86,8 @@ public class MultiScreenLoginTest
         // ..and assert results
         final SaveRequest saveRequest1 = sReplier.getNextSaveRequest();
         assertTextAndValue(findNodeByResourceId(saveRequest1.structure, ID_USERNAME), "dude");
+        assertThat(saveRequest1.data.getString("first")).isEqualTo("one");
+        assertThat(saveRequest1.data.getString("last")).isEqualTo("one");
 
         // ...now rinse and repeat for password
 
@@ -88,13 +96,18 @@ public class MultiScreenLoginTest
                 .getActivity(PasswordOnlyActivity.class);
 
         // Set expectations.
+        final Bundle clientState2 = new Bundle();
+        clientState2.putString("second", "two");
+        clientState2.putString("last", "two");
         sReplier.addResponse(new CannedFillResponse.Builder()
                 .setRequiredSavableIds(SAVE_DATA_TYPE_PASSWORD, ID_PASSWORD)
+                .setExtras(clientState2)
                 .build());
 
         // Trigger autofill
         activity2.focusOnPassword();
-        sReplier.getNextFillRequest();
+        final FillRequest fillRequest2 = sReplier.getNextFillRequest();
+        assertThat(fillRequest2.contexts.size()).isEqualTo(1);
         mUiBot.assertNoDatasetsEver();
 
         // Trigger save...
@@ -104,26 +117,37 @@ public class MultiScreenLoginTest
 
         // ..and assert results
         final SaveRequest saveRequest2 = sReplier.getNextSaveRequest();
+        assertThat(saveRequest2.data.getString("first")).isNull();
+        assertThat(saveRequest2.data.getString("second")).isEqualTo("two");
+        assertThat(saveRequest2.data.getString("last")).isEqualTo("two");
         assertTextAndValue(findNodeByResourceId(saveRequest2.structure, ID_PASSWORD), "sweet");
     }
 
     /**
-     * Tests the new scenario introudced on Q where the service can set a multi-screen session.
+     * Tests the new scenario introudced on Q where the service can set a multi-screen session,
+     * with the service setting the client state just in the first request (so its passed to both
+     * the second fill request and the save request.
      */
     @Test
-    public void testSaveBothFieldsAtOnce() throws Exception {
+    public void testSaveBothFieldsAtOnceNoClientStateOnSecondRequest() throws Exception {
         // Set service
         enableService();
 
         // First handle username...
 
         // Set expectations.
+        final Bundle clientState1 = new Bundle();
+        clientState1.putString("first", "one");
+        clientState1.putString("last", "one");
         sReplier.addResponse(new CannedFillResponse.Builder()
-                .setSaveInfoFlags(SaveInfo.FLAG_DELAY_SAVE).build());
+                .setSaveInfoFlags(SaveInfo.FLAG_DELAY_SAVE)
+                .setExtras(clientState1)
+                .build());
 
         // Trigger autofill
         mActivity.focusOnUsername();
         final FillRequest fillRequest1 = sReplier.getNextFillRequest();
+        assertThat(fillRequest1.contexts.size()).isEqualTo(1);
         final ComponentName component1 = fillRequest1.structure.getActivityComponent();
         assertThat(component1).isEqualTo(mActivity.getComponentName());
         mUiBot.assertNoDatasetsEver();
@@ -148,6 +172,11 @@ public class MultiScreenLoginTest
         // Trigger autofill
         passwordActivity.focusOnPassword();
         final FillRequest fillRequest2 = sReplier.getNextFillRequest();
+        assertThat(fillRequest2.contexts.size()).isEqualTo(2);
+        // Client state should come from 1st request
+        assertThat(fillRequest2.data.getString("first")).isEqualTo("one");
+        assertThat(fillRequest2.data.getString("last")).isEqualTo("one");
+
         final ComponentName component2 = fillRequest2.structure.getActivityComponent();
         assertThat(component2).isEqualTo(passwordActivity.getComponentName());
         mUiBot.assertNoDatasetsEver();
@@ -159,6 +188,10 @@ public class MultiScreenLoginTest
 
         // ..and assert results
         final SaveRequest saveRequest = sReplier.getNextSaveRequest();
+        // Client state should come from 1st request
+        assertThat(fillRequest2.data.getString("first")).isEqualTo("one");
+        assertThat(fillRequest2.data.getString("last")).isEqualTo("one");
+
         assertThat(saveRequest.contexts.size()).isEqualTo(2);
 
         // Username is set in the 1st context
@@ -176,9 +209,100 @@ public class MultiScreenLoginTest
         assertThat(componentCurrent).isEqualTo(passwordActivity.getComponentName());
     }
 
-    // TODO(b/112051762): add test cases for more scenarios such as:
+    /**
+     * Tests the new scenario introudced on Q where the service can set a multi-screen session,
+     * with the service setting the client state just on both requests (so the 1st client state is
+     * passed to the 2nd request, and the 2nd client state is passed to the save request).
+     */
+    @Test
+    public void testSaveBothFieldsAtOnceWithClientStateOnBothRequests() throws Exception {
+        // Set service
+        enableService();
+
+        // First handle username...
+
+        // Set expectations.
+        final Bundle clientState1 = new Bundle();
+        clientState1.putString("first", "one");
+        clientState1.putString("last", "one");
+        sReplier.addResponse(new CannedFillResponse.Builder()
+                .setSaveInfoFlags(SaveInfo.FLAG_DELAY_SAVE)
+                .setExtras(clientState1)
+                .build());
+
+        // Trigger autofill
+        mActivity.focusOnUsername();
+        final FillRequest fillRequest1 = sReplier.getNextFillRequest();
+        assertThat(fillRequest1.contexts.size()).isEqualTo(1);
+        final ComponentName component1 = fillRequest1.structure.getActivityComponent();
+        assertThat(component1).isEqualTo(mActivity.getComponentName());
+        mUiBot.assertNoDatasetsEver();
+
+        // Trigger what would be save...
+        mActivity.setUsername("dude");
+        mActivity.next();
+        mUiBot.assertSaveNotShowing();
+
+        // ...now rinse and repeat for password
+
+        // Get the activity
+        final PasswordOnlyActivity passwordActivity = AutofillTestWatcher
+                .getActivity(PasswordOnlyActivity.class);
+
+        // Set expectations.
+        final Bundle clientState2 = new Bundle();
+        clientState2.putString("second", "two");
+        clientState2.putString("last", "two");
+        sReplier.addResponse(new CannedFillResponse.Builder()
+                .setRequiredSavableIds(SAVE_DATA_TYPE_USERNAME | SAVE_DATA_TYPE_PASSWORD,
+                        ID_PASSWORD)
+                .setExtras(clientState2)
+                .build());
+
+        // Trigger autofill
+        passwordActivity.focusOnPassword();
+        final FillRequest fillRequest2 = sReplier.getNextFillRequest();
+        assertThat(fillRequest2.contexts.size()).isEqualTo(2);
+        // Client state on 2nd request should come from previous (1st) request
+        assertThat(fillRequest2.data.getString("first")).isEqualTo("one");
+        assertThat(fillRequest2.data.getString("second")).isNull();
+        assertThat(fillRequest2.data.getString("last")).isEqualTo("one");
+
+        final ComponentName component2 = fillRequest2.structure.getActivityComponent();
+        assertThat(component2).isEqualTo(passwordActivity.getComponentName());
+        mUiBot.assertNoDatasetsEver();
+
+        // Trigger save...
+        passwordActivity.setPassword("sweet");
+        passwordActivity.login();
+        mUiBot.saveForAutofill(true, SAVE_DATA_TYPE_USERNAME, SAVE_DATA_TYPE_PASSWORD);
+
+        // ..and assert results
+        final SaveRequest saveRequest = sReplier.getNextSaveRequest();
+        // Client state on save request should come from last (2nd) request
+        assertThat(saveRequest.data.getString("first")).isNull();
+        assertThat(saveRequest.data.getString("second")).isEqualTo("two");
+        assertThat(saveRequest.data.getString("last")).isEqualTo("two");
+
+        assertThat(saveRequest.contexts.size()).isEqualTo(2);
+
+        // Username is set in the 1st context
+        final AssistStructure previousStructure = saveRequest.contexts.get(0).getStructure();
+        assertWithMessage("no structure for 1st activity").that(previousStructure).isNotNull();
+        assertTextAndValue(findNodeByResourceId(previousStructure, ID_USERNAME), "dude");
+        final ComponentName componentPrevious = previousStructure.getActivityComponent();
+        assertThat(componentPrevious).isEqualTo(mActivity.getComponentName());
+
+        // Password is set in the 2nd context
+        final AssistStructure currentStructure = saveRequest.contexts.get(1).getStructure();
+        assertWithMessage("no structure for 2nd activity").that(currentStructure).isNotNull();
+        assertTextAndValue(findNodeByResourceId(currentStructure, ID_PASSWORD), "sweet");
+        final ComponentName componentCurrent = currentStructure.getActivityComponent();
+        assertThat(componentCurrent).isEqualTo(passwordActivity.getComponentName());
+    }
+
+    // TODO(b/113281366): add test cases for more scenarios such as:
     // - make sure that activity not marked with keepAlive is not sent in the 2nd request
     // - somehow verify that the first activity's session is gone
-    // - test client state
     // - WebView
 }
