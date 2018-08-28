@@ -1331,4 +1331,39 @@ public class ContextTest extends AndroidTestCase {
         public void onServiceDisconnected(ComponentName name) {
         }
     }
+
+    public void testOpenFileOutput_mustNotCreateWorldReadableFile() throws Exception {
+        try {
+            mContext.openFileOutput("test.txt", Context.MODE_WORLD_READABLE);
+            fail("Exception expected");
+        } catch (SecurityException expected) {
+        }
+    }
+
+    public void testOpenFileOutput_mustNotCreateWorldWriteableFile() throws Exception {
+        try {
+            mContext.openFileOutput("test.txt", Context.MODE_WORLD_WRITEABLE);
+            fail("Exception expected");
+        } catch (SecurityException expected) {
+        }
+    }
+
+    public void testOpenFileOutput_mustNotWriteToParentDirectory() throws Exception {
+        try {
+            // Created files must be under the application's private directory.
+            mContext.openFileOutput("../test.txt", Context.MODE_PRIVATE);
+            fail("Exception expected");
+        } catch (IllegalArgumentException expected) {
+        }
+    }
+
+    public void testOpenFileOutput_mustNotUseAbsolutePath() throws Exception {
+        try {
+            // Created files must be under the application's private directory.
+            mContext.openFileOutput("/tmp/test.txt", Context.MODE_PRIVATE);
+            fail("Exception expected");
+        } catch (IllegalArgumentException expected) {
+        }
+    }
+
 }
