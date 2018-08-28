@@ -2192,6 +2192,18 @@ public class ImageDecoderTest {
     }
 
     @Test
+    public void testJpegInfiniteLoop() {
+        ImageDecoder.Source src = mCreators[0].apply(R.raw.b78329453);
+        try {
+            ImageDecoder.decodeDrawable(src, (decoder, info, s) -> {
+                decoder.setTargetSampleSize(19);
+            });
+        } catch (IOException e) {
+            fail();
+        }
+    }
+
+    @Test
     @LargeTest
     public void testReuse() {
         for (Record record : RECORDS) {
