@@ -26,6 +26,6 @@
 
     <test class="com.android.tradefed.testtype.AndroidJUnitTest" >
         <option name="package" value="android.mocking.cts.debuggable" />
-        <option name="runtime-hint" value="120s" />
+        <option name="runtime-hint" value="5s" />
     </test>
 </configuration>
