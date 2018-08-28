@@ -134,10 +134,13 @@ public class DecoderTest extends MediaPlayerTestBase {
     // errors with the standard decoders, plus 10%.
     // This should allow for some variation in decoders, while still detecting
     // phase and delay errors, channel swap, etc.
+    @CddTest(requirement="5.1.2/C-1-6")
     public void testDecodeMp3Lame() throws Exception {
         decode(R.raw.sinesweepmp3lame, 804.f);
         testTimeStampOrdering(R.raw.sinesweepmp3lame);
     }
+
+    @CddTest(requirement="5.1.2/C-1-6")
     public void testDecodeMp3Smpb() throws Exception {
         decode(R.raw.sinesweepmp3smpb, 413.f);
         testTimeStampOrdering(R.raw.sinesweepmp3smpb);
@@ -150,15 +153,20 @@ public class DecoderTest extends MediaPlayerTestBase {
         decode(R.raw.sinesweepogg, 168.f);
         testTimeStampOrdering(R.raw.sinesweepogg);
     }
+
+    @CddTest(requirement="5.1.2/C-1-9")
     public void testDecodeWav() throws Exception {
         decode(R.raw.sinesweepwav, 0.0f);
         testTimeStampOrdering(R.raw.sinesweepwav);
     }
+
+    @CddTest(requirement="5.1.2/C-1-5")
     public void testDecodeFlac() throws Exception {
         decode(R.raw.sinesweepflac, 0.0f);
         testTimeStampOrdering(R.raw.sinesweepflac);
     }
 
+    @CddTest(requirement="5.1.2/C-1-6")
     public void testDecodeMonoMp3() throws Exception {
         monoTest(R.raw.monotestmp3, 44100);
         testTimeStampOrdering(R.raw.monotestmp3);
@@ -187,10 +195,12 @@ public class DecoderTest extends MediaPlayerTestBase {
         testTimeStampOrdering(R.raw.sinesweeptsaac);
     }
 
+    @CddTest(requirement="5.1.2/C-1-8")
     public void testDecodeVorbis() throws Exception {
         testTimeStampOrdering(R.raw.sinesweepvorbis);
     }
 
+    @CddTest(requirement="5.1.2/C-1-10")
     public void testDecodeOpus() throws Exception {
         testTimeStampOrdering(R.raw.sinesweepopus);
     }
@@ -772,6 +782,7 @@ public class DecoderTest extends MediaPlayerTestBase {
     /**
      * Verify correct decoding of MPEG-4 AAC-LC 5.0 and 5.1 channel streams
      */
+    @CddTest(requirement="5.1.2/C-2-1")
     public void testDecodeAacLcMcM4a() throws Exception {
         AudioParameter decParams = new AudioParameter();
         short[] decSamples = decodeToMemory(decParams, R.raw.noise_6ch_48khz_aot2_mp4,
@@ -841,6 +852,7 @@ public class DecoderTest extends MediaPlayerTestBase {
     /**
      * Verify correct decoding of MPEG-4 HE-AAC 5.0 and 5.1 channel streams
      */
+    @CddTest(requirement="5.1.2/C-2-1")
     public void testDecodeHeAacMcM4a() throws Exception {
         AudioParameter decParams = new AudioParameter();
         short[] decSamples = decodeToMemory(decParams, R.raw.noise_5ch_48khz_aot5_dr_sbr_sig1_mp4,
@@ -1785,7 +1797,7 @@ public class DecoderTest extends MediaPlayerTestBase {
         testDecode(R.raw.bbb_s4_1280x720_webm_vp8_8mbps_30fps_opus_mono_64kbps_48000hz, 300);
     }
 
-    @CddTest(requirement="5.3.6/C-2-1/T-2-1")
+    @CddTest(requirement="5.3.6/C-2-1,T-2-1")
     public void testVP8Decode60fps1280x720Tv() throws Exception {
         if (checkTv()) {
             assertTrue(MediaUtils.canDecodeVideo(MediaFormat.MIMETYPE_VIDEO_VP8, 1280, 720, 60));
@@ -2917,6 +2929,7 @@ public class DecoderTest extends MediaPlayerTestBase {
         return false;
     }
 
+    @CddTest(requirement="7.9.2/C-1-11")
     public void testVrHighPerformanceH264() throws Exception {
         if (!supportsVrHighPerformance()) {
             MediaUtils.skipTest(TAG, "FEATURE_VR_MODE_HIGH_PERFORMANCE not present");
@@ -2927,6 +2940,7 @@ public class DecoderTest extends MediaPlayerTestBase {
         assertTrue("Did not find a VR ready H.264 decoder", h264IsReady);
     }
 
+    @CddTest(requirement="7.9.2/C-1-12")
     public void testVrHighPerformanceHEVC() throws Exception {
         if (!supportsVrHighPerformance()) {
             MediaUtils.skipTest(TAG, "FEATURE_VR_MODE_HIGH_PERFORMANCE not present");
@@ -2943,6 +2957,7 @@ public class DecoderTest extends MediaPlayerTestBase {
         }
     }
 
+    @CddTest(requirement="7.9.2/C-1-12")
     public void testVrHighPerformanceVP9() throws Exception {
         if (!supportsVrHighPerformance()) {
             MediaUtils.skipTest(TAG, "FEATURE_VR_MODE_HIGH_PERFORMANCE not present");

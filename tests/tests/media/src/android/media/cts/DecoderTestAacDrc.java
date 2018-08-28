@@ -30,6 +30,7 @@ import android.media.MediaFormat;
 import android.support.test.InstrumentationRegistry;
 import android.util.Log;
 
+import com.android.compatibility.common.util.CddTest;
 import com.android.compatibility.common.util.CtsAndroidTestCase;
 
 import static org.junit.Assert.*;
@@ -72,6 +73,7 @@ public class DecoderTestAacDrc {
      * Verify correct decoding of MPEG-4 AAC with Dynamic Range Control (DRC) metadata.
      * Fully apply light compression DRC (default settings).
      */
+    @CddTest(requirement="5.1.2/C-2-2")
     @Test
     public void testDecodeAacDrcFullM4a() throws Exception {
         AudioParameter decParams = new AudioParameter();
@@ -85,6 +87,7 @@ public class DecoderTestAacDrc {
      * Verify correct decoding of MPEG-4 AAC with Dynamic Range Control (DRC) metadata.
      * Apply only half of the light compression DRC and normalize to -20dBFS output level.
      */
+    @CddTest(requirement="5.1.2/C-2-2")
     @Test
     public void testDecodeAacDrcHalfM4a() throws Exception {
         AudioParameter decParams = new AudioParameter();
@@ -100,6 +103,7 @@ public class DecoderTestAacDrc {
      * Verify correct decoding of MPEG-4 AAC with Dynamic Range Control (DRC) metadata.
      * Disable light compression DRC to test if MediaFormat keys reach the decoder.
      */
+    @CddTest(requirement="5.1.2/C-2-2")
     @Test
     public void testDecodeAacDrcOffM4a() throws Exception {
         AudioParameter decParams = new AudioParameter();
@@ -115,6 +119,7 @@ public class DecoderTestAacDrc {
      * Verify correct decoding of MPEG-4 AAC with Dynamic Range Control (DRC) metadata.
      * Apply heavy compression gains and normalize to -16dBFS output level.
      */
+    @CddTest(requirement="5.1.2/C-2-2")
     @Test
     public void testDecodeAacDrcHeavyM4a() throws Exception {
         AudioParameter decParams = new AudioParameter();
@@ -130,6 +135,7 @@ public class DecoderTestAacDrc {
      * Test signal limiting (without clipping) of MPEG-4 AAC decoder with the help of DRC metadata.
      * Uses a two channel 248 Hz sine tone at 48 kHz sampling rate for input.
      */
+    @CddTest(requirement="5.1.2/C-2-2")
     @Test
     public void testDecodeAacDrcClipM4a() throws Exception {
         AudioParameter decParams = new AudioParameter();

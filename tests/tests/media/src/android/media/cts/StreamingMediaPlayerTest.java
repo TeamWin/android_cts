@@ -29,6 +29,7 @@ import android.test.InstrumentationTestRunner;
 import android.util.Log;
 import android.webkit.cts.CtsTestServer;
 
+import com.android.compatibility.common.util.CddTest;
 import com.android.compatibility.common.util.DynamicConfigDeviceSide;
 import com.android.compatibility.common.util.MediaUtils;
 
@@ -41,6 +42,7 @@ import java.util.List;
 /**
  * Tests of MediaPlayer streaming capabilities.
  */
+@CddTest(requirement="5.7/C-1-1,C-1-2")
 public class StreamingMediaPlayerTest extends MediaPlayerTestBase {
     private static final String TAG = "StreamingMediaPlayerTest";
 

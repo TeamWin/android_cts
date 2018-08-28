@@ -1574,42 +1574,52 @@ public class VideoEncoderTest extends MediaPlayerTestBase {
     public void testOtherVP9Flex1080p()   { specific(otherVP9(),   1920, 1080, true /* flex */); }
     public void testOtherVP9Surf1080p()   { specific(otherVP9(),   1920, 1080, false /* flex */); }
 
+    @CddTest(requirement="5.1.7/C-3-1")
     public void testGoogH265Flex360pWithIntraRefresh() {
         intraRefresh(googH265(), 480, 360);
     }
 
+    @CddTest(requirement="5.1.7/C-3-1")
     public void testGoogH264Flex360pWithIntraRefresh() {
         intraRefresh(googH264(), 480, 360);
     }
 
+    @CddTest(requirement="5.1.7/C-3-1")
     public void testGoogH263Flex360pWithIntraRefresh() {
         intraRefresh(googH263(), 480, 360);
     }
 
+    @CddTest(requirement="5.1.7/C-3-1")
     public void testGoogMpeg4Flex360pWithIntraRefresh() {
         intraRefresh(googMpeg4(), 480, 360);
     }
 
+    @CddTest(requirement="5.1.7/C-3-1")
     public void testGoogVP8Flex360pWithIntraRefresh() {
         intraRefresh(googVP8(), 480, 360);
     }
 
+    @CddTest(requirement="5.1.7/C-3-1")
     public void testOtherH265Flex360pWithIntraRefresh() {
         intraRefresh(otherH265(), 480, 360);
     }
 
+    @CddTest(requirement="5.1.7/C-3-1")
     public void testOtherH264Flex360pWithIntraRefresh() {
         intraRefresh(otherH264(), 480, 360);
     }
 
+    @CddTest(requirement="5.1.7/C-3-1")
     public void testOtherH263FlexQCIFWithIntraRefresh() {
         intraRefresh(otherH263(), 176, 120);
     }
 
+    @CddTest(requirement="5.1.7/C-3-1")
     public void testOtherMpeg4Flex360pWithIntraRefresh() {
         intraRefresh(otherMpeg4(), 480, 360);
     }
 
+    @CddTest(requirement="5.1.7/C-3-1")
     public void testOtherVP8Flex360pWithIntraRefresh() {
         intraRefresh(otherVP8(), 480, 360);
     }
