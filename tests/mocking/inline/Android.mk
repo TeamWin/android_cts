@@ -23,15 +23,15 @@ LOCAL_JAVA_LIBRARIES := \
 LOCAL_STATIC_JAVA_LIBRARIES = \
     mockito-target-inline \
     android-support-test \
-    ctstestrunner \
-    dexmaker-mockmaker-tests \
-    dexmaker-inline-mockmaker-tests \
-    android-support-v4
+    ctstestrunner
 LOCAL_MULTILIB := \
     both
 LOCAL_JNI_SHARED_LIBRARIES := \
     libdexmakerjvmtiagent \
     libmultiplejvmtiagentsinterferenceagent
+LOCAL_SRC_FILES := \
+    $(call all-java-files-under, \
+            ../../../../external/dexmaker/dexmaker-mockito-inline-tests/src/androidTest/java)
 LOCAL_COMPATIBILITY_SUITE := \
     cts vts general-tests
 LOCAL_PACKAGE_NAME := \
