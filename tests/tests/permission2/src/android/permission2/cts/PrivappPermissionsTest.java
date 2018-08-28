@@ -30,10 +30,13 @@ import java.io.IOException;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashSet;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Set;
 import java.util.TreeSet;
+import java.lang.StringBuilder;
 
 import static android.content.pm.PackageManager.GET_PERMISSIONS;
 import static android.content.pm.PackageManager.MATCH_FACTORY_ONLY;
@@ -71,6 +74,8 @@ public class PrivappPermissionsTest extends AndroidTestCase {
         List<PackageInfo> installedPackages = pm
                 .getInstalledPackages(PackageManager.MATCH_UNINSTALLED_PACKAGES);
 
+        Map<String, Set<String>> packagesGrantedNotInWhitelist = new HashMap<>();
+        Map<String, Set<String>> packagesNotGrantedNotInDenylist = new HashMap<>();
         for (PackageInfo pkg : installedPackages) {
             String packageName = pkg.packageName;
             if (!pkg.applicationInfo.isPrivilegedApp()
@@ -120,14 +125,30 @@ public class PrivappPermissionsTest extends AndroidTestCase {
                 Set<String> notGrantedNotInDenylist = new TreeSet<>(notGranted);
                 notGrantedNotInDenylist.removeAll(denylist);
 
-                assertTrue("Not whitelisted permissions are granted for package "
-                                + packageName + ": " + grantedNotInWhitelist,
-                        grantedNotInWhitelist.isEmpty());
+                if (!grantedNotInWhitelist.isEmpty()) {
+                    packagesGrantedNotInWhitelist.put(packageName, grantedNotInWhitelist);
+                }
 
-                assertTrue("Requested permissions not granted for package "
-                                + packageName + ": " + notGrantedNotInDenylist,
-                        notGrantedNotInDenylist.isEmpty());
+                if (!notGrantedNotInDenylist.isEmpty()) {
+                    packagesNotGrantedNotInDenylist.put(packageName, notGrantedNotInDenylist);
+                }
             }
+        }
+        StringBuilder message = new StringBuilder();
+        if (!packagesGrantedNotInWhitelist.isEmpty()) {
+            message.append("Not whitelisted permissions are granted: "
+                    + packagesGrantedNotInWhitelist.toString());
+        }
+        if (!packagesNotGrantedNotInDenylist.isEmpty()) {
+            if (message.length() != 0) {
+                message.append(", ");
+            }
+            message.append("Requested permissions not granted: "
+                    + packagesNotGrantedNotInDenylist.toString());
+        }
+        if (!packagesGrantedNotInWhitelist.isEmpty()
+                || !packagesNotGrantedNotInDenylist.isEmpty()) {
+            fail(message.toString());
         }
     }
 
