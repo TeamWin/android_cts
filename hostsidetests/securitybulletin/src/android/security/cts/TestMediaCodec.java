@@ -37,6 +37,14 @@ public class TestMediaCodec extends SecurityTestCase {
     ***********************************************************/
 
     @SecurityTest
+    public void testPocBug_64380202() throws Exception {
+        String inputFiles[] = {"bug_64380202.hevc"};
+        runHevcDecodeTest(inputFiles, "--input " + TMP_FILE_PATH
+                + "bug_64380202.hevc --num_frames -1 --num_cores 4",
+                getDevice(), null);
+    }
+
+    @SecurityTest
     public void testPocBug_64380403() throws Exception {
         String inputFiles[] = {"bug_64380403.hevc"};
         runHevcDecodeTest(inputFiles, "--input " + TMP_FILE_PATH
