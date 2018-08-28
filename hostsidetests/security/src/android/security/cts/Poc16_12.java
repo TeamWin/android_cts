@@ -172,4 +172,14 @@ public class Poc16_12 extends SecurityTestCase {
                          "[\\s\\n\\S]*>>> /system/bin/" +
                          "mediaserver <<<[\\s\\n\\S]*", logcatOut);
     }
+
+    /**
+     *  b/31796940
+     */
+    @SecurityTest
+    public void testPocCVE_2016_8406() throws Exception {
+        String cmd ="ls -l /sys/kernel/slab 2>/dev/null | grep nf_conn";
+        String result =  AdbUtils.runCommandLine(cmd ,getDevice());
+        assertNotMatchesMultiLine("nf_conntrack_(?!0{8})[A-Fa-f0-9]{8}", result);
+    }
 }
