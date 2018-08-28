@@ -32,7 +32,6 @@ import static android.server.am.Components.PipActivity.EXTRA_ENTER_PIP_ON_PAUSE;
 import static android.server.am.Components.PipActivity.EXTRA_FINISH_SELF_ON_RESUME;
 import static android.server.am.Components.PipActivity.EXTRA_ON_PAUSE_DELAY;
 import static android.server.am.Components.PipActivity.EXTRA_PIP_ORIENTATION;
-import static android.server.am.Components.PipActivity.EXTRA_REENTER_PIP_ON_EXIT;
 import static android.server.am.Components.PipActivity.EXTRA_SET_ASPECT_RATIO_DENOMINATOR;
 import static android.server.am.Components.PipActivity.EXTRA_SET_ASPECT_RATIO_NUMERATOR;
 import static android.server.am.Components.PipActivity.EXTRA_SET_ASPECT_RATIO_WITH_DELAY_DENOMINATOR;
@@ -244,15 +243,6 @@ public class PipActivity extends AbstractLifecycleLogActivity {
         // EXTRA_ASSERT_NO_ON_STOP_BEFORE_PIP
         if (isInPictureInPictureMode) {
             mEnteredPictureInPicture = true;
-        }
-
-        if (!isInPictureInPictureMode && getIntent().hasExtra(EXTRA_REENTER_PIP_ON_EXIT)) {
-            // This call to re-enter PIP can happen too quickly (host side tests can have difficulty
-            // checking that the stacks ever changed). Therefor, we need to delay here slightly to
-            // allow the tests to verify that the stacks have changed before re-entering.
-            mHandler.postDelayed(() -> {
-                enterPictureInPictureMode(new PictureInPictureParams.Builder().build());
-            }, 1000);
         }
     }
 
