@@ -19,6 +19,8 @@
         android:targetSandboxVersion="2"
         android:revisionCode="12">
 
+    <uses-sdk android:targetSdkVersion="27" />
+
     <uses-permission android:name="android.permission.CAMERA" />
 
     <application android:label="SplitApp">

@@ -20,6 +20,7 @@ include $(CLEAR_VARS)
 LOCAL_SRC_FILES := $(call all-subdir-java-files)
 LOCAL_PACKAGE_NAME := CtsSplitAppFeature
 LOCAL_SDK_VERSION := current
+LOCAL_MIN_SDK_VERSION := 4
 LOCAL_PACKAGE_SPLITS := v7
 
 LOCAL_ASSET_DIR := $(LOCAL_PATH)/assets
