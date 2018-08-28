@@ -55,6 +55,14 @@ public class TestMediaCodec extends SecurityTestCase {
     below this comment, before any existing test methods
     ***********************************************************/
 
+    @SecurityTest
+    public void testPocBug_33621215() throws Exception {
+        String inputFiles[] = {"bug_33621215.h264"};
+        runAvcDecodeTest(inputFiles,
+                "--input " + TMP_FILE_PATH
+                        + "bug_33621215.h264 --output /dev/null",
+                getDevice(), null);
+    }
 
     /***********************************************************
     To prevent merge conflicts, add AVC decoder tests for O
