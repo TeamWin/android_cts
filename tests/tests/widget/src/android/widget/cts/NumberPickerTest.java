@@ -20,6 +20,10 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.argThat;
+import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.atLeastOnce;
 import static org.mockito.Mockito.inOrder;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.times;
@@ -28,7 +32,6 @@ import static org.mockito.Mockito.verifyNoMoreInteractions;
 import static org.mockito.Mockito.verifyZeroInteractions;
 
 import android.app.Instrumentation;
-import android.app.UiAutomation;
 import android.content.res.Configuration;
 import android.support.test.InstrumentationRegistry;
 import android.support.test.annotation.UiThreadTest;
@@ -37,6 +40,7 @@ import android.support.test.filters.SmallTest;
 import android.support.test.rule.ActivityTestRule;
 import android.support.test.runner.AndroidJUnit4;
 import android.text.TextUtils;
+import android.view.View;
 import android.view.accessibility.AccessibilityEvent;
 import android.widget.NumberPicker;
 
@@ -47,6 +51,8 @@ import org.junit.Rule;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.InOrder;
+import org.mockito.Mock;
+import org.mockito.MockitoAnnotations;
 
 @FlakyTest
 @SmallTest
@@ -58,9 +64,9 @@ public class NumberPickerTest {
     private static final long TIMEOUT_ACCESSIBILITY_EVENT = 5 * 1000;
 
     private Instrumentation mInstrumentation;
-    private UiAutomation mUiAutomation;
     private NumberPickerCtsActivity mActivity;
     private NumberPicker mNumberPicker;
+    @Mock private View.AccessibilityDelegate mMockA11yDelegate;
 
     @Rule
     public ActivityTestRule<NumberPickerCtsActivity> mActivityRule =
@@ -68,8 +74,10 @@ public class NumberPickerTest {
 
     @Before
     public void setup() {
+        MockitoAnnotations.initMocks(this);
         mInstrumentation = InstrumentationRegistry.getInstrumentation();
-        mUiAutomation = mInstrumentation.getUiAutomation();
+        // Create a UiAutomation, which will enable accessibility and allow us to test a11y events.
+        mInstrumentation.getUiAutomation();
         mActivity = mActivityRule.getActivity();
         mNumberPicker = (NumberPicker) mActivity.findViewById(R.id.number_picker);
     }
@@ -279,21 +287,17 @@ public class NumberPickerTest {
             mNumberPicker.setDisplayedValues(NUMBER_NAMES3);
 
             mNumberPicker.setOnValueChangedListener(mockValueChangeListener);
-        });
 
-        mInstrumentation.runOnMainSync(() -> {
             mNumberPicker.setValue(21);
             assertEquals(21, mNumberPicker.getValue());
-        });
 
-        mUiAutomation.executeAndWaitForEvent(() ->
-                        mInstrumentation.runOnMainSync(() -> mNumberPicker.setValue(20)),
-                (AccessibilityEvent event) ->
-                        event.getEventType() == AccessibilityEvent.TYPE_VIEW_TEXT_CHANGED,
-                TIMEOUT_ACCESSIBILITY_EVENT);
-
-        mInstrumentation.runOnMainSync(() -> {
+            ((View) mNumberPicker.getParent()).setAccessibilityDelegate(mMockA11yDelegate);
+            mNumberPicker.setValue(20);
             assertEquals(20, mNumberPicker.getValue());
+            verify(mMockA11yDelegate, atLeastOnce()).onRequestSendAccessibilityEvent(
+                    any(), eq(mNumberPicker), argThat(event -> event.getEventType()
+                            == AccessibilityEvent.TYPE_VIEW_TEXT_CHANGED));
+            ((View) mNumberPicker.getParent()).setAccessibilityDelegate(null);
 
             mNumberPicker.setValue(22);
             assertEquals(22, mNumberPicker.getValue());
@@ -388,15 +392,16 @@ public class NumberPickerTest {
         final int[] numberPickerLocationOnScreen = new int[2];
         mNumberPicker.getLocationOnScreen(numberPickerLocationOnScreen);
 
-        mUiAutomation.executeAndWaitForEvent(() ->
-                        CtsTouchUtils.emulateDragGesture(mInstrumentation,
-                                numberPickerLocationOnScreen[0] + mNumberPicker.getWidth() / 2,
-                                numberPickerLocationOnScreen[1] + mNumberPicker.getHeight() - 1,
-                                0,
-                                -(mNumberPicker.getHeight() - 2)),
-                (AccessibilityEvent event) ->
-                        event.getEventType() == AccessibilityEvent.TYPE_VIEW_SCROLLED,
-                TIMEOUT_ACCESSIBILITY_EVENT);
+        ((View) mNumberPicker.getParent()).setAccessibilityDelegate(mMockA11yDelegate);
+        CtsTouchUtils.emulateDragGesture(mInstrumentation,
+                numberPickerLocationOnScreen[0] + mNumberPicker.getWidth() / 2,
+                numberPickerLocationOnScreen[1] + mNumberPicker.getHeight() - 1,
+                0,
+                -(mNumberPicker.getHeight() - 2));
+        verify(mMockA11yDelegate, atLeastOnce()).onRequestSendAccessibilityEvent(
+                any(), eq(mNumberPicker),
+                argThat(event -> event.getEventType() == AccessibilityEvent.TYPE_VIEW_SCROLLED));
+        ((View) mNumberPicker.getParent()).setAccessibilityDelegate(null);
 
         // At this point we expect that the drag-up gesture has selected the value
         // that was "below" the previously selected one, and that our value change listener
