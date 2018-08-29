@@ -928,7 +928,7 @@ public class SELinuxHostTest extends DeviceTestCase implements IBuildReceiver, I
     public void testNoBugreportDenials() throws Exception {
         // Take a bugreport and get its logcat output.
         mDevice.executeAdbCommand("logcat", "-c");
-        mDevice.executeAdbCommand("bugreport");
+        mDevice.getBugreport();
         String log = mDevice.executeAdbCommand("logcat", "-d");
         // Find all the dumpstate-related types and make a regex that will match them.
         Set<String> types = sepolicyAnalyzeGetTypesAssociatedWithAttribute("hal_dumpstate_server");
