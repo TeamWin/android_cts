@@ -144,4 +144,14 @@ public class Poc16_12 extends SecurityTestCase {
             "echo 18014398509481980 > /sys/kernel/debug/tracing/buffer_size_kb";
         AdbUtils.runCommandLine(command, getDevice());
     }
+
+    /**
+     *  b/31796940
+     */
+    @SecurityTest
+    public void testPocCVE_2016_8406() throws Exception {
+        String cmd ="ls -l /sys/kernel/slab 2>/dev/null | grep nf_conn";
+        String result =  AdbUtils.runCommandLine(cmd ,getDevice());
+        assertNotMatchesMultiLine("nf_conntrack_(?!0{8})[A-Fa-f0-9]{8}", result);
+    }
 }
