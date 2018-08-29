@@ -703,32 +703,41 @@ void AHardwareBufferGLTest::SetUp() {
     mDisplay = eglGetDisplay(EGL_DEFAULT_DISPLAY);
     eglInitialize(mDisplay, NULL, NULL);
 
+    // Try creating an OpenGL ES 3.x context and fall back to 2.x if that fails.
+    // Create two contexts for cross-context image sharing tests.
     EGLConfig first_config;
-    EGLint const config_attrib_list[] = {
+    EGLint config_attrib_list[] = {
         EGL_RED_SIZE, 8,
         EGL_GREEN_SIZE, 8,
         EGL_BLUE_SIZE, 8,
         EGL_ALPHA_SIZE, 8,
+        EGL_RENDERABLE_TYPE, EGL_OPENGL_ES3_BIT_KHR,
         EGL_NONE
     };
     EGLint num_config = 0;
     eglChooseConfig(mDisplay, config_attrib_list, &first_config, 1, &num_config);
-    ASSERT_LT(0, num_config);
+    if (num_config == 0) {
+        // There are no configs with the ES 3.0 bit, fall back to ES 2.0.
+        config_attrib_list[8] = EGL_NONE;
+        config_attrib_list[9] = EGL_NONE;
+        eglChooseConfig(mDisplay, config_attrib_list, &first_config, 1, &num_config);
+    }
+    ASSERT_GT(num_config, 0);
 
-    // Try creating an OpenGL ES 3.x context and fall back to 2.x if that fails.
-    // Create two contexts for cross-context image sharing tests.
     EGLint context_attrib_list[] = {
         EGL_CONTEXT_CLIENT_VERSION, 3,
         EGL_NONE
     };
-    mContext[0] = eglCreateContext(mDisplay, first_config, EGL_NO_CONTEXT, context_attrib_list);
+    // Try creating an ES 3.0 context, but don't bother if there were no ES 3.0 compatible configs.
+    if (config_attrib_list[9] != EGL_NONE) {
+        mContext[0] = eglCreateContext(mDisplay, first_config, EGL_NO_CONTEXT, context_attrib_list);
+    }
+    // If we don't have a context yet, fall back to ES 2.0.
     if (mContext[0] == EGL_NO_CONTEXT) {
         context_attrib_list[1] = 2;
         mContext[0] = eglCreateContext(mDisplay, first_config, EGL_NO_CONTEXT, context_attrib_list);
-        mContext[1] = eglCreateContext(mDisplay, first_config, EGL_NO_CONTEXT, context_attrib_list);
-    } else {
-        mContext[1] = eglCreateContext(mDisplay, first_config, EGL_NO_CONTEXT, context_attrib_list);
     }
+    mContext[1] = eglCreateContext(mDisplay, first_config, EGL_NO_CONTEXT, context_attrib_list);
     ASSERT_NE(EGL_NO_CONTEXT, mContext[0]);
     ASSERT_NE(EGL_NO_CONTEXT, mContext[1]);
 
@@ -840,6 +849,18 @@ bool AHardwareBufferGLTest::SetUpBuffer(const AHardwareBuffer_Desc& desc) {
     // The code below will only execute if we are allocating a real AHardwareBuffer.
     if (use_srgb && !HasEGLExtension("EGL_EXT_image_gl_colorspace")) {
         ALOGI("Test skipped: sRGB hardware buffers require EGL_EXT_image_gl_colorspace");
+        return false;
+    }
+    if (desc.usage & AHARDWAREBUFFER_USAGE_GPU_CUBE_MAP &&
+        !HasGLExtension("GL_EXT_EGL_image_storage")) {
+        ALOGI("Test skipped: cube map array hardware buffers require "
+              "GL_EXT_EGL_image_storage");
+        return false;
+    }
+    if (desc.usage & AHARDWAREBUFFER_USAGE_GPU_MIPMAP_COMPLETE &&
+        !HasGLExtension("GL_EXT_EGL_image_storage")) {
+        ALOGI("Test skipped: mipmapped hardware buffers require "
+              "GL_EXT_EGL_image_storage");
         return false;
     }
 
