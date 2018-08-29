@@ -21,7 +21,7 @@ import its.objects
 
 NAME = os.path.basename(__file__).split('.')[0]
 RTOL_EXP_GAIN = 0.97
-TEST_EXP_RANGE = [1E6, 1E9]  # ns [1ms, 1s]
+TEST_EXP_RANGE = [6E6, 1E9]  # ns [6ms, 1s]
 
 
 def main():
