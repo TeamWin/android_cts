@@ -49,7 +49,6 @@ import static android.server.am.Components.PipActivity.EXTRA_ENTER_PIP_ON_PAUSE;
 import static android.server.am.Components.PipActivity.EXTRA_FINISH_SELF_ON_RESUME;
 import static android.server.am.Components.PipActivity.EXTRA_ON_PAUSE_DELAY;
 import static android.server.am.Components.PipActivity.EXTRA_PIP_ORIENTATION;
-import static android.server.am.Components.PipActivity.EXTRA_REENTER_PIP_ON_EXIT;
 import static android.server.am.Components.PipActivity.EXTRA_SET_ASPECT_RATIO_DENOMINATOR;
 import static android.server.am.Components.PipActivity.EXTRA_SET_ASPECT_RATIO_NUMERATOR;
 import static android.server.am.Components.PipActivity.EXTRA_START_ACTIVITY;
@@ -587,20 +586,15 @@ public class ActivityManagerPinnedStackTests extends ActivityManagerTestBase {
         // Go home
         launchHomeActivity();
         // Launch an auto pip activity
-        launchActivity(PIP_ACTIVITY,
-                EXTRA_ENTER_PIP, "true",
-                EXTRA_REENTER_PIP_ON_EXIT, "true");
+        launchActivity(PIP_ACTIVITY, EXTRA_ENTER_PIP, "true");
         waitForEnterPip(PIP_ACTIVITY);
         assertPinnedStackExists();
 
         // Relaunch the activity to fullscreen to trigger the activity to exit and re-enter pip
         launchActivity(PIP_ACTIVITY);
-        mAmWmState.waitForWithAmState(amState ->
-                amState.getFrontStackWindowingMode(DEFAULT_DISPLAY) == WINDOWING_MODE_FULLSCREEN,
-                "Waiting for PIP to exit to fullscreen");
-        mAmWmState.waitForWithAmState(amState ->
-                amState.getFrontStackWindowingMode(DEFAULT_DISPLAY) == WINDOWING_MODE_PINNED,
-                "Waiting to re-enter PIP");
+        waitForExitPipToFullscreen(PIP_ACTIVITY);
+        mBroadcastActionTrigger.doAction(ACTION_ENTER_PIP);
+        waitForEnterPipAnimationComplete(PIP_ACTIVITY);
         mAmWmState.assertHomeActivityVisible(true);
     }
 
@@ -612,17 +606,14 @@ public class ActivityManagerPinnedStackTests extends ActivityManagerTestBase {
         launchActivity(TEST_ACTIVITY);
 
         // Launch an auto pip activity
-        launchActivity(PIP_ACTIVITY,
-                EXTRA_ENTER_PIP, "true",
-                EXTRA_REENTER_PIP_ON_EXIT, "true");
+        launchActivity(PIP_ACTIVITY, EXTRA_ENTER_PIP, "true");
         waitForEnterPip(PIP_ACTIVITY);
         assertPinnedStackExists();
 
         // Relaunch the activity to fullscreen to trigger the activity to exit and re-enter pip
         launchActivity(PIP_ACTIVITY);
-        mAmWmState.waitForWithAmState(amState ->
-                amState.getFrontStackWindowingMode(DEFAULT_DISPLAY) == WINDOWING_MODE_FULLSCREEN,
-                "Waiting for PIP to exit to fullscreen");
+        waitForExitPipToFullscreen(PIP_ACTIVITY);
+        mBroadcastActionTrigger.doAction(ACTION_ENTER_PIP);
         waitForEnterPipAnimationComplete(PIP_ACTIVITY);
         mAmWmState.assertVisibility(TEST_ACTIVITY, true);
     }

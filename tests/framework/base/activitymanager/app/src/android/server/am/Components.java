@@ -277,8 +277,6 @@ public class Components extends ComponentsBase {
         // The amount to delay to artificially introduce in onPause()
         // (before EXTRA_ENTER_PIP_ON_PAUSE is processed)
         public static final String EXTRA_ON_PAUSE_DELAY = "on_pause_delay";
-        // Calls enterPictureInPicture() again after onPictureInPictureModeChanged(false) is called
-        public static final String EXTRA_REENTER_PIP_ON_EXIT = "reenter_pip_on_exit";
         // Calls setPictureInPictureAspectRatio with the aspect ratio specified in the value
         public static final String EXTRA_SET_ASPECT_RATIO_DENOMINATOR =
                 "set_aspect_ratio_denominator";
