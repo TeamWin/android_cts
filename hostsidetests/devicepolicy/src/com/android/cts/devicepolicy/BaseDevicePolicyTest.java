@@ -235,7 +235,7 @@ public class BaseDevicePolicyTest extends DeviceTestCase implements IBuildReceiv
                 + getDevice().executeShellCommand(stopUserCommand));
     }
 
-    private void waitForBroadcastIdle() throws Exception {
+    protected void waitForBroadcastIdle() throws Exception {
         getDevice().executeShellCommand("am wait-for-broadcast-idle");
     }
 
