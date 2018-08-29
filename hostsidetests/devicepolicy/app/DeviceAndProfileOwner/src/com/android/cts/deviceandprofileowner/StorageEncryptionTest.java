@@ -22,6 +22,7 @@ import static com.google.common.truth.Truth.assertThat;
 
 import android.app.admin.DevicePolicyManager;
 import android.content.ComponentName;
+import android.support.test.InstrumentationRegistry;
 
 /**
  * Test {@link DevicePolicyManager#setStorageEncryption(ComponentName, boolean)} and
@@ -33,16 +34,33 @@ import android.content.ComponentName;
  * be caught in CTSVerifier.
  */
 public class StorageEncryptionTest extends BaseDeviceAdminTest {
+
     private static final ComponentName ADMIN_RECEIVER_COMPONENT =
         BaseDeviceAdminTest.ADMIN_RECEIVER_COMPONENT;
+    private static final String IS_PRIMARY_USER_PARAM = "isPrimaryUser";
+
+    /**
+     * When the test is run from the managed profile user, {@link
+     * DevicePolicyManager#setStorageEncryption(ComponentName, boolean)} is expected to return
+     * {@link DevicePolicyManager#ENCRYPTION_STATUS_UNSUPPORTED}, as it is not the primary user.
+     */
+    private boolean mIsPrimaryUser;
+
+    @Override
+    protected void setUp() throws Exception {
+        super.setUp();
+        mIsPrimaryUser = Boolean.parseBoolean(
+                InstrumentationRegistry.getArguments().getString(IS_PRIMARY_USER_PARAM));
+    }
 
     public void testSetStorageEncryption_enabled() {
         if (mDevicePolicyManager.getStorageEncryptionStatus() == ENCRYPTION_STATUS_UNSUPPORTED) {
             return;
         }
         assertThat(mDevicePolicyManager.setStorageEncryption(ADMIN_RECEIVER_COMPONENT, true))
-            .isEqualTo(ENCRYPTION_STATUS_ACTIVE);
-        assertThat(mDevicePolicyManager.getStorageEncryption(ADMIN_RECEIVER_COMPONENT)).isTrue();
+            .isEqualTo(mIsPrimaryUser ? ENCRYPTION_STATUS_ACTIVE : ENCRYPTION_STATUS_UNSUPPORTED);
+        assertThat(mDevicePolicyManager.getStorageEncryption(ADMIN_RECEIVER_COMPONENT))
+                .isEqualTo(mIsPrimaryUser);
     }
 
     public void testSetStorageEncryption_disabled() {
@@ -50,7 +68,8 @@ public class StorageEncryptionTest extends BaseDeviceAdminTest {
             return;
         }
         assertThat(mDevicePolicyManager.setStorageEncryption(ADMIN_RECEIVER_COMPONENT, false))
-            .isEqualTo(ENCRYPTION_STATUS_INACTIVE);
+            .isEqualTo(mIsPrimaryUser ? ENCRYPTION_STATUS_INACTIVE
+                    : ENCRYPTION_STATUS_UNSUPPORTED);
         assertThat(mDevicePolicyManager.getStorageEncryption(ADMIN_RECEIVER_COMPONENT)).isFalse();
     }
 }
