@@ -17,7 +17,7 @@
 /* Original code copied from NDK Native-media sample code */
 
 //#define LOG_NDEBUG 0
-#define TAG "NativeMedia"
+#define LOG_TAG "NativeMedia"
 #include <log/log.h>
 
 #include <assert.h>
@@ -82,15 +82,18 @@ public:
 struct FdDataSource {
 
     FdDataSource(int fd, jlong offset, jlong size)
-        : mFd(fd),
+        : mFd(dup(fd)),
           mOffset(offset),
           mSize(size) {
     }
 
     ssize_t readAt(off64_t offset, void *data, size_t size) {
         ssize_t ssize = size;
-        if (!data || offset < 0 || offset >= mSize || offset + ssize < offset) {
+        if (!data || offset < 0 || offset + ssize < offset) {
             return -1;
+        }
+        if (offset >= mSize) {
+            return 0; // EOS
         }
         if (offset + ssize > mSize) {
             ssize = mSize - offset;
@@ -242,6 +245,21 @@ static void OnErrorCB(
     ALOGV("OnErrorCB: err(%d), actionCode(%d), detail(%s)", err, actionCode, detail);
 }
 
+static int adler32(const uint8_t *input, int len) {
+
+    int a = 1;
+    int b = 0;
+    for (int i = 0; i < len; i++) {
+        a += input[i];
+        b += a;
+        a = a % 65521;
+        b = b % 65521;
+    }
+    int ret = b * 65536 + a;
+    ALOGV("adler %d/%d", len, ret);
+    return ret;
+}
+
 jobject testExtractor(AMediaExtractor *ex, JNIEnv *env) {
 
     simplevector<int> sizes;
@@ -293,6 +311,7 @@ jobject testExtractor(AMediaExtractor *ex, JNIEnv *env) {
         sizes.add(AMediaExtractor_getSampleTrackIndex(ex));
         sizes.add(AMediaExtractor_getSampleFlags(ex));
         sizes.add(AMediaExtractor_getSampleTime(ex));
+        sizes.add(adler32(buf, n));
         AMediaExtractor_advance(ex);
     }
 
@@ -346,21 +365,6 @@ extern "C" jobject Java_android_media_cts_NativeDecoderTest_getSampleSizesNative
         return NULL;
     }
     return testExtractor(ex, env);
-}
-
-static int adler32(const uint8_t *input, int len) {
-
-    int a = 1;
-    int b = 0;
-    for (int i = 0; i < len; i++) {
-        a += input[i];
-        b += a;
-    }
-    a = a % 65521;
-    b = b % 65521;
-    int ret = b * 65536 + a;
-    ALOGV("adler %d/%d", len, ret);
-    return ret;
 }
 
 static int checksum(const uint8_t *in, int len, AMediaFormat *format) {

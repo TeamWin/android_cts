@@ -24,6 +24,7 @@ import android.media.AudioManager;
 import android.media.DataSourceDesc;
 import android.media.MediaPlayer2;
 import android.media.MediaTimestamp;
+import android.media.SubtitleData;
 import android.media.TimedMetaData;
 import android.media.TimedText;
 import android.media.cts.TestUtils.Monitor;
@@ -314,6 +315,15 @@ public class MediaPlayer2TestBase extends ActivityInstrumentationTestCase2<Media
                 synchronized (cbLock) {
                     for (MediaPlayer2.EventCallback ecb : ecbs) {
                         ecb.onCommandLabelReached(mp, label);
+                    }
+                }
+            }
+
+            @Override
+            public void onSubtitleData(MediaPlayer2 mp, DataSourceDesc dsd, SubtitleData data) {
+                synchronized (cbLock) {
+                    for (MediaPlayer2.EventCallback ecb : ecbs) {
+                        ecb.onSubtitleData(mp, dsd, data);
                     }
                 }
             }

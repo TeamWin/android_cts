@@ -51,6 +51,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
+import java.util.zip.Adler32;
 
 @AppModeFull(reason = "TODO: evaluate and port to instant")
 public class NativeDecoderTest extends MediaPlayerTestBase {
@@ -85,6 +86,25 @@ public class NativeDecoderTest extends MediaPlayerTestBase {
 
     // check that native extractor behavior matches java extractor
 
+    private void compareArrays(String message, int[] a1, int[] a2) {
+        if (a1 == a2) {
+            return;
+        }
+
+        assertNotNull(message + ": array 1 is null", a1);
+        assertNotNull(message + ": array 2 is null", a2);
+
+        assertEquals(message + ": arraylengths differ", a1.length, a2.length);
+        int length = a1.length;
+
+        for (int i = 0; i < length; i++)
+            if (a1[i] != a2[i]) {
+                Log.i("@@@@", Arrays.toString(a1));
+                Log.i("@@@@", Arrays.toString(a2));
+                fail(message + ": at index " + i);
+            }
+    }
+
     public void testExtractor() throws Exception {
         testExtractor(R.raw.sinesweepogg);
         testExtractor(R.raw.sinesweepmp3lame);
@@ -109,8 +129,7 @@ public class NativeDecoderTest extends MediaPlayerTestBase {
         int[] jsizes = getSampleSizes(path);
         int[] nsizes = getSampleSizesNativePath(path);
 
-        //Log.i("@@@", Arrays.toString(jsizes));
-        assertTrue("different samplesizes", Arrays.equals(jsizes, nsizes));
+        compareArrays("different samplesizes", jsizes, nsizes);
     }
 
     private void testExtractor(int res) throws Exception {
@@ -122,8 +141,7 @@ public class NativeDecoderTest extends MediaPlayerTestBase {
                 fd.getParcelFileDescriptor().getFd(), fd.getStartOffset(), fd.getLength());
 
         fd.close();
-        //Log.i("@@@", Arrays.toString(jsizes));
-        assertTrue("different samplesizes", Arrays.equals(jsizes, nsizes));
+        compareArrays("different samples", jsizes, nsizes);
     }
 
     private static int[] getSampleSizes(String path) throws IOException {
@@ -172,6 +190,9 @@ public class NativeDecoderTest extends MediaPlayerTestBase {
             foo.add(ex.getSampleTrackIndex());
             foo.add(ex.getSampleFlags());
             foo.add((int)ex.getSampleTime()); // just the low bits should be OK
+            byte foobar[] = new byte[n];
+            buf.get(foobar, 0, n);
+            foo.add((int)adler32(foobar));
             ex.advance();
         }
 
@@ -253,6 +274,18 @@ public class NativeDecoderTest extends MediaPlayerTestBase {
         }
     }
 
+    public void testDataSourceAudioOnly() throws Exception {
+        int testsRun = testDecoder(
+                R.raw.loudsoftmp3,
+                /* wrapFd */ true, /* useCallback */ false) +
+                testDecoder(
+                        R.raw.loudsoftaac,
+                        /* wrapFd */ false, /* useCallback */ false);
+        if (testsRun == 0) {
+            MediaUtils.skipTest("no decoders found");
+        }
+    }
+
     public void testDataSourceWithCallback() throws Exception {
         int testsRun = testDecoder(R.raw.video_176x144_3gp_h263_300kbps_12fps_aac_mono_24kbps_11025hz,
                 /* wrapFd */ true, /* useCallback */ true);
@@ -272,17 +305,21 @@ public class NativeDecoderTest extends MediaPlayerTestBase {
 
         AssetFileDescriptor fd = mResources.openRawResourceFd(res);
 
-        int[] jdata = getDecodedData(
+        int[] jdata1 = getDecodedData(
                 fd.getFileDescriptor(), fd.getStartOffset(), fd.getLength());
-        int[] ndata = getDecodedDataNative(
+        int[] jdata2 = getDecodedData(
+                fd.getFileDescriptor(), fd.getStartOffset(), fd.getLength());
+        int[] ndata1 = getDecodedDataNative(
+                fd.getParcelFileDescriptor().getFd(), fd.getStartOffset(), fd.getLength(), wrapFd,
+                useCallback);
+        int[] ndata2 = getDecodedDataNative(
                 fd.getParcelFileDescriptor().getFd(), fd.getStartOffset(), fd.getLength(), wrapFd,
                 useCallback);
 
         fd.close();
-        Log.i("@@@", Arrays.toString(jdata));
-        Log.i("@@@", Arrays.toString(ndata));
-        assertEquals("number of samples differs", jdata.length, ndata.length);
-        assertTrue("different decoded data", Arrays.equals(jdata, ndata));
+        compareArrays("inconsistent java decoder", jdata1, jdata2);
+        compareArrays("inconsistent native decoder", ndata1, ndata2);
+        compareArrays("different decoded data", jdata1, ndata1);
         return 1;
     }
 
@@ -329,7 +366,7 @@ public class NativeDecoderTest extends MediaPlayerTestBase {
                     Log.i("@@@@", "track " + t + " buffer " + bufidx);
                     ByteBuffer buf = inbuffers[t][bufidx];
                     int sampleSize = ex.readSampleData(buf, 0);
-                    Log.i("@@@@", "read " + sampleSize);
+                    Log.i("@@@@", "read " + sampleSize + " @ " + ex.getSampleTime());
                     if (sampleSize < 0) {
                         sampleSize = 0;
                         sawInputEOS[t] = true;
@@ -428,21 +465,12 @@ public class NativeDecoderTest extends MediaPlayerTestBase {
         dst.add( (int) (sum & 0xffffffff));
     }
 
+    private final static Adler32 checksummer = new Adler32(); 
     // simple checksum computed over every decoded buffer
-    static long adler32(byte[] input) {
-        int a = 1;
-        int b = 0;
-        for (int i = 0; i < input.length; i++) {
-            int unsignedval = input[i];
-            if (unsignedval < 0) {
-                unsignedval = 256 + unsignedval;
-            }
-            a += unsignedval;
-            b += a;
-        }
-        a = a % 65521;
-        b = b % 65521;
-        long ret = b * 65536 + a;
+    static int adler32(byte[] input) {
+        checksummer.reset();
+        checksummer.update(input);
+        int ret = (int) checksummer.getValue();
         Log.i("@@@", "adler " + input.length + "/" + ret);
         return ret;
     }

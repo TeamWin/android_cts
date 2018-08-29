@@ -26,7 +26,9 @@ import android.support.test.InstrumentationRegistry;
 import android.support.test.filters.FlakyTest;
 import android.support.test.rule.ActivityTestRule;
 import android.support.test.runner.AndroidJUnit4;
+import android.view.KeyEvent;
 import android.view.View;
+import android.view.WindowManager.LayoutParams;
 
 import org.junit.After;
 import org.junit.Before;
@@ -35,10 +37,13 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 
 import static android.provider.Settings.Global.WINDOW_ANIMATION_SCALE;
+import static android.view.WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE;
+import static android.view.WindowManager.LayoutParams.TYPE_APPLICATION_PANEL;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertTrue;
 
 import com.android.compatibility.common.util.SystemUtil;
 
@@ -52,10 +57,10 @@ import com.android.compatibility.common.util.SystemUtil;
 @FlakyTest(detail = "Can be promoted to pre-submit once confirmed stable.")
 @RunWith(AndroidJUnit4.class)
 public class LayoutTests {
-    private final long TIMEOUT_LAYOUT = 100; // milliseconds
-    private final long TIMEOUT_REMOVE_WINDOW = 500;
-    private final long TIMEOUT_SYSTEM_UI_VISIBILITY_CHANGE = 1000;
-    private final int SYSTEM_UI_FLAG_HIDE_ALL = View.SYSTEM_UI_FLAG_FULLSCREEN
+    private static final long TIMEOUT_LAYOUT = 200; // milliseconds
+    private static final long TIMEOUT_RECEIVE_KEY = 100;
+    private static final long TIMEOUT_SYSTEM_UI_VISIBILITY_CHANGE = 1000;
+    private static final int SYSTEM_UI_FLAG_HIDE_ALL = View.SYSTEM_UI_FLAG_FULLSCREEN
             | View.SYSTEM_UI_FLAG_HIDE_NAVIGATION;
 
     private Instrumentation mInstrumentation;
@@ -63,6 +68,8 @@ public class LayoutTests {
     private ContentResolver mResolver;
     private float mWindowAnimationScale;
     private boolean mSystemUiFlagsGotCleared = false;
+    private boolean mChildWindowHasFocus = false;
+    private boolean mChildWindowGotKeyEvent = false;
 
     @Rule
     public final ActivityTestRule<LayoutTestsActivity> mActivityRule =
@@ -74,9 +81,9 @@ public class LayoutTests {
         mResolver = mInstrumentation.getContext().getContentResolver();
 
         SystemUtil.runWithShellPermissionIdentity(() -> {
-            // The layout will be performed at the end of the animation of hiding
-            // status/navigation bar, which will recover the possible issue, so we disable the
-            // animation during the test.
+            // The layout will be performed at the end of the animation of hiding status/navigation
+            // bar, which will recover the possible issue, so we disable the animation during the
+            // test.
             mWindowAnimationScale = Settings.Global.getFloat(mResolver, WINDOW_ANIMATION_SCALE, 1f);
             Settings.Global.putFloat(mResolver, WINDOW_ANIMATION_SCALE, 0);
         });
@@ -91,12 +98,12 @@ public class LayoutTests {
     }
 
     @Test
-    public void testLayoutAfterRemovingFocus() throws InterruptedException {
+    public void testLayoutAfterRemovingFocus() {
         mActivity = mActivityRule.getActivity();
         assertNotNull(mActivity);
 
         // Get the visible frame of the main activity before adding any window.
-        Rect visibleFrame = new Rect();
+        final Rect visibleFrame = new Rect();
         mActivity.getWindowVisibleDisplayFrame(visibleFrame);
 
         doTestLayoutAfterRemovingFocus(visibleFrame, mActivity::addWindowHidingStatusBar);
@@ -105,22 +112,19 @@ public class LayoutTests {
     }
 
     private void doTestLayoutAfterRemovingFocus(Rect visibleFrameBeforeAddingWindow,
-            Runnable toAddWindow) throws InterruptedException {
+            Runnable toAddWindow) {
         // Add a window which can affect the global layout.
         mInstrumentation.runOnMainSync(toAddWindow);
 
-        // Wait a bit for the layout finish triggered by adding window.
+        // Wait a bit for the global layout finish triggered by adding window.
         SystemClock.sleep(TIMEOUT_LAYOUT);
 
         // Remove the window we added previously.
         mInstrumentation.runOnMainSync(mActivity::removeWindow);
-        mInstrumentation.runOnMainSync(this::stopWaiting);
-        synchronized (this) {
-            wait(TIMEOUT_REMOVE_WINDOW);
-        }
+        mInstrumentation.waitForIdleSync();
 
         // Get the visible frame of the main activity after removing the window we added.
-        Rect visibleFrameAfterRemovingWindow = new Rect();
+        final Rect visibleFrameAfterRemovingWindow = new Rect();
         mActivity.getWindowVisibleDisplayFrame(visibleFrameAfterRemovingWindow);
 
         // Test whether the visible frame after removing window is the same as one before adding
@@ -143,11 +147,11 @@ public class LayoutTests {
         synchronized (this) {
             wait(TIMEOUT_SYSTEM_UI_VISIBILITY_CHANGE);
         }
-        assertFalse("System UI flags should not be cleared.", mSystemUiFlagsGotCleared);
+        assertFalse("System UI flags must not be cleared.", mSystemUiFlagsGotCleared);
     }
 
     private void addImmersiveWindow() {
-        View view = new View(mActivity);
+        final View view = new View(mActivity);
         view.setSystemUiVisibility(View.SYSTEM_UI_FLAG_IMMERSIVE_STICKY | SYSTEM_UI_FLAG_HIDE_ALL);
         view.setOnSystemUiVisibilityChangeListener(
                 visibility -> {
@@ -157,6 +161,55 @@ public class LayoutTests {
                         stopWaiting();
                     }
                 });
-        mActivity.addWindow(view);
+        mActivity.addWindow(view, new LayoutParams(TYPE_APPLICATION_PANEL));
+    }
+
+    @Test
+    public void testChangingFocusableFlag() throws InterruptedException {
+        mActivity = mActivityRule.getActivity();
+        assertNotNull(mActivity);
+
+        // Add a not-focusable window.
+        mInstrumentation.runOnMainSync(this::addNotFocusableWindow);
+        mInstrumentation.waitForIdleSync();
+
+        // Make the window focusable.
+        mInstrumentation.runOnMainSync(this::makeWindowFocusable);
+        synchronized (this) {
+            wait(TIMEOUT_LAYOUT);
+        }
+
+        // The window must have focus.
+        assertTrue("Child window must have focus.", mChildWindowHasFocus);
+
+        // Send a key event to the system.
+        mInstrumentation.sendKeyDownUpSync(KeyEvent.KEYCODE_0);
+        synchronized (this) {
+            wait(TIMEOUT_RECEIVE_KEY);
+        }
+
+        // The window must get the key event.
+        assertTrue("Child window must get key event.", mChildWindowGotKeyEvent);
+    }
+
+    private void addNotFocusableWindow() {
+        final View view = new View(mActivity) {
+            public void onWindowFocusChanged(boolean hasWindowFocus) {
+                super.onWindowFocusChanged(hasWindowFocus);
+                mChildWindowHasFocus = hasWindowFocus;
+                stopWaiting();
+            }
+
+            public boolean onKeyDown(int keyCode, KeyEvent event) {
+                mChildWindowGotKeyEvent = true;
+                stopWaiting();
+                return super.onKeyDown(keyCode, event);
+            }
+        };
+        mActivity.addWindow(view, new LayoutParams(TYPE_APPLICATION_PANEL, FLAG_NOT_FOCUSABLE));
+    }
+
+    private void makeWindowFocusable() {
+        mActivity.updateLayoutForAddedWindow(new LayoutParams(TYPE_APPLICATION_PANEL));
     }
 }
