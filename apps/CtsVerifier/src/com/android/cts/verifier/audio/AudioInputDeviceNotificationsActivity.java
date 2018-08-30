@@ -32,10 +32,13 @@ import android.view.View.OnClickListener;
 import android.widget.Button;
 import android.widget.TextView;
 
+import com.android.compatibility.common.util.CddTest;
+
 /**
  * Tests Audio Device Connection events for output by prompting the user to insert/remove a
  * wired headset (or microphone) and noting the presence (or absence) of notifications.
  */
+@CddTest(requirement="7.8.2.1/C-2-1")
 public class AudioInputDeviceNotificationsActivity extends HeadsetHonorSystemActivity {
     Context mContext;
 
