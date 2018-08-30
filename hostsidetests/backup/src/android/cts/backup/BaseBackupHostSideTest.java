@@ -51,7 +51,7 @@ public abstract class BaseBackupHostSideTest extends BaseHostJUnit4Test {
     private static final String FEATURE_BACKUP = "android.software.backup";
 
     protected static final String LOCAL_TRANSPORT =
-            "android/com.android.internal.backup.LocalTransport";
+            "com.android.localtransport/.LocalTransport";
 
     private BackupUtils mBackupUtils = new BackupUtils() {
         @Override
@@ -113,10 +113,11 @@ public abstract class BaseBackupHostSideTest extends BaseHostJUnit4Test {
      * Clears backup data stored in Local Transport for a package.
      * NB: 'bmgr wipe' does not produce any useful output if the package or transport not found,
      * so we cannot really check the success of the operation
-      */
+     */
     protected void clearBackupDataInLocalTransport(String packageName)
             throws DeviceNotAvailableException {
-        getDevice().executeShellCommand(String.format("bmgr wipe %s %s", LOCAL_TRANSPORT, packageName));
+        getDevice().executeShellCommand(
+                String.format("bmgr wipe %s %s", LOCAL_TRANSPORT, packageName));
     }
 
     /**

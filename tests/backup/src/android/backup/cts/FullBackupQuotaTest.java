@@ -22,7 +22,7 @@ import android.platform.test.annotations.AppModeFull;
  * Verifies receiving quotaExceeded() callback on full backup.
  *
  * Uses test app that creates large file and receives the callback.
- * {@link com.android.internal.backup.LocalTransport} is used, it has size quota 25MB.
+ * {@link com.android.localtransport.LocalTransport} is used, it has size quota 25MB.
  */
 @AppModeFull
 public class FullBackupQuotaTest extends BaseBackupCtsTest {
