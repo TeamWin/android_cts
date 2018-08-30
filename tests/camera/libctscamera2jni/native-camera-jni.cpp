@@ -563,7 +563,34 @@ class StaticInfo {
         }
         return false;
     }
+
+    int64_t getMinFrameDurationFor(int64_t format, int64_t width, int64_t height) {
+        return getDurationFor(ACAMERA_SCALER_AVAILABLE_MIN_FRAME_DURATIONS, format, width, height);
+    }
+
+    int64_t getStallDurationFor(int64_t format, int64_t width, int64_t height) {
+        return getDurationFor(ACAMERA_SCALER_AVAILABLE_STALL_DURATIONS, format, width, height);
+    }
+
   private:
+    int64_t getDurationFor(uint32_t tag, int64_t format, int64_t width, int64_t height) {
+        if (tag != ACAMERA_SCALER_AVAILABLE_MIN_FRAME_DURATIONS &&
+                tag != ACAMERA_SCALER_AVAILABLE_STALL_DURATIONS &&
+                tag != ACAMERA_DEPTH_AVAILABLE_DEPTH_MIN_FRAME_DURATIONS &&
+                tag != ACAMERA_DEPTH_AVAILABLE_DEPTH_STALL_DURATIONS) {
+            return -1;
+        }
+        ACameraMetadata_const_entry entry;
+        ACameraMetadata_getConstEntry(mChars, tag, &entry);
+        for (uint32_t i = 0; i < entry.count; i += 4) {
+            if (entry.data.i64[i] == format &&
+                    entry.data.i64[i+1] == width &&
+                    entry.data.i64[i+2] == height) {
+                return entry.data.i64[i+3];
+            }
+        }
+        return -1;
+    }
     const ACameraMetadata* mChars;
 };
 
@@ -686,6 +713,22 @@ class PreviewTestCase {
             return nullptr;
         }
         return mCameraIdList->cameraIds[idx];
+    }
+
+    // Caller is responsible to free returned characteristics metadata
+    ACameraMetadata* getCameraChars(int idx) {
+        if (!mMgrInited || !mCameraIdList || idx < 0 || idx >= mCameraIdList->numCameras) {
+            return nullptr;
+        }
+
+        ACameraMetadata* chars;
+        camera_status_t ret = ACameraManager_getCameraCharacteristics(
+                mCameraManager, mCameraIdList->cameraIds[idx], &chars);
+        if (ret != ACAMERA_OK) {
+            LOG_ERROR(errorString, "Get camera characteristics failed: ret %d", ret);
+            return nullptr;
+        }
+        return chars;
     }
 
     camera_status_t updateOutput(JNIEnv* env, ACaptureSessionOutput *output) {
@@ -2313,6 +2356,7 @@ bool nativeImageReaderTestBase(
     int numCameras = 0;
     bool pass = false;
     PreviewTestCase testCase;
+    ACameraMetadata* chars = nullptr;
 
     const char* outPath = (jOutPath == nullptr) ? nullptr :
             env->GetStringUTFChars(jOutPath, nullptr);
@@ -2344,6 +2388,13 @@ bool nativeImageReaderTestBase(
             LOG_ERROR(errorString, "Open camera device %s failure. ret %d", cameraId, ret);
             goto cleanup;
         }
+
+        chars = testCase.getCameraChars(i);
+        if (chars == nullptr) {
+            LOG_ERROR(errorString, "Get camera %s characteristics failure", cameraId);
+            goto cleanup;
+        }
+        StaticInfo staticInfo(chars);
 
         usleep(100000); // sleep to give some time for callbacks to happen
 
@@ -2440,9 +2491,32 @@ bool nativeImageReaderTestBase(
             }
         }
 
+        int64_t minFrameDurationNs = staticInfo.getMinFrameDurationFor(
+                AIMAGE_FORMAT_JPEG, TEST_WIDTH, TEST_HEIGHT);
+        if (minFrameDurationNs < 0) {
+            LOG_ERROR(errorString, "Get camera %s minFrameDuration failed", cameraId);
+            goto cleanup;
+        }
+        int64_t stallDurationNs = staticInfo.getStallDurationFor(
+                AIMAGE_FORMAT_JPEG, TEST_WIDTH, TEST_HEIGHT);
+        if (stallDurationNs < 0) {
+            LOG_ERROR(errorString, "Get camera %s stallDuration failed", cameraId);
+            goto cleanup;
+        }
+
+        int64_t expectedDurationNs = (minFrameDurationNs + stallDurationNs) * NUM_TEST_IMAGES;
+        constexpr int64_t waitPerIterationUs = 100000;
+        constexpr int64_t usToNs = 1000;
+        int totalWaitIteration = 50;
+
+        // Allow 1.5x margin
+        if (expectedDurationNs * 3 / 2 > totalWaitIteration * waitPerIterationUs * usToNs) {
+            totalWaitIteration = expectedDurationNs * 3 / 2 / waitPerIterationUs / usToNs;
+        }
+
         // wait until all capture finished
-        for (int i = 0; i < 50; i++) {
-            usleep(100000); // sleep 100ms
+        for (int i = 0; i < totalWaitIteration; i++) {
+            usleep(waitPerIterationUs);
             if (readerListener.onImageAvailableCount() == NUM_TEST_IMAGES) {
                 ALOGI("Session take ~%d ms to capture %d images",
                         i*100, NUM_TEST_IMAGES);
@@ -2482,6 +2556,12 @@ cleanup:
     if (outPath != nullptr) {
         env->ReleaseStringUTFChars(jOutPath, outPath);
     }
+
+    if (chars != nullptr) {
+        ACameraMetadata_free(chars);
+        chars = nullptr;
+    }
+
     ALOGI("%s %s", __FUNCTION__, pass ? "pass" : "failed");
     if (!pass) {
         throwAssertionError(env, errorString);
@@ -2519,6 +2599,7 @@ testStillCaptureNative(
     int numCameras = 0;
     bool pass = false;
     PreviewTestCase testCase;
+    ACameraMetadata* chars = nullptr;
 
     const char* outPath = env->GetStringUTFChars(jOutPath, nullptr);
     ALOGI("%s: out path is %s", __FUNCTION__, outPath);
@@ -2547,6 +2628,13 @@ testStillCaptureNative(
             LOG_ERROR(errorString, "Open camera device %s failure. ret %d", cameraId, ret);
             goto cleanup;
         }
+
+        chars = testCase.getCameraChars(i);
+        if (chars == nullptr) {
+            LOG_ERROR(errorString, "Get camera %s characteristics failure", cameraId);
+            goto cleanup;
+        }
+        StaticInfo staticInfo(chars);
 
         usleep(100000); // sleep to give some time for callbacks to happen
 
@@ -2606,9 +2694,32 @@ testStillCaptureNative(
             }
         }
 
+        int64_t minFrameDurationNs = staticInfo.getMinFrameDurationFor(
+                AIMAGE_FORMAT_JPEG, TEST_WIDTH, TEST_HEIGHT);
+        if (minFrameDurationNs < 0) {
+            LOG_ERROR(errorString, "Get camera %s minFrameDuration failed", cameraId);
+            goto cleanup;
+        }
+        int64_t stallDurationNs = staticInfo.getStallDurationFor(
+                AIMAGE_FORMAT_JPEG, TEST_WIDTH, TEST_HEIGHT);
+        if (stallDurationNs < 0) {
+            LOG_ERROR(errorString, "Get camera %s stallDuration failed", cameraId);
+            goto cleanup;
+        }
+
+        int64_t expectedDurationNs = (minFrameDurationNs + stallDurationNs) * NUM_TEST_IMAGES;
+        constexpr int64_t waitPerIterationUs = 100000;
+        constexpr int64_t usToNs = 1000;
+        int totalWaitIteration = 50;
+
+        // Allow 1.5x margin
+        if (expectedDurationNs * 3 / 2 > totalWaitIteration * waitPerIterationUs * usToNs) {
+            totalWaitIteration = expectedDurationNs * 3 / 2 / waitPerIterationUs / usToNs;
+        }
+
         // wait until all capture finished
-        for (int i = 0; i < 50; i++) {
-            usleep(100000); // sleep 100ms
+        for (int i = 0; i < totalWaitIteration; i++) {
+            usleep(waitPerIterationUs);
             if (readerListener.onImageAvailableCount() == NUM_TEST_IMAGES) {
                 ALOGI("Session take ~%d ms to capture %d images",
                         i*100, NUM_TEST_IMAGES);
@@ -2645,6 +2756,12 @@ testStillCaptureNative(
     pass = true;
 cleanup:
     env->ReleaseStringUTFChars(jOutPath, outPath);
+
+    if (chars != nullptr) {
+        ACameraMetadata_free(chars);
+        chars = nullptr;
+    }
+
     ALOGI("%s %s", __FUNCTION__, pass ? "pass" : "failed");
     if (!pass) {
         throwAssertionError(env, errorString);
