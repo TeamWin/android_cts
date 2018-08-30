@@ -22,12 +22,15 @@ import com.android.compatibility.common.tradefed.build.CompatibilityBuildHelper;
 import com.android.tradefed.device.DeviceNotAvailableException;
 import com.android.tradefed.log.LogUtil.CLog;
 
+import com.google.common.collect.ImmutableMap;
+
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
+import java.util.Map;
 
 /**
  * Set of tests for use cases that apply to profile and device owner.
@@ -43,6 +46,9 @@ public abstract class DeviceAndProfileOwnerTest extends BaseDevicePolicyTest {
     protected static final String DEVICE_ADMIN_APK = "CtsDeviceAndProfileOwnerApp.apk";
     protected static final String ADMIN_RECEIVER_TEST_CLASS
             = ".BaseDeviceAdminTest$BasicAdminReceiver";
+
+    protected static final String STORAGE_ENCRYPTION_TEST_CLASS = ".StorageEncryptionTest";
+    protected static final String IS_PRIMARY_USER_PARAM = "isPrimaryUser";
 
     private static final String INTENT_RECEIVER_PKG = "com.android.cts.intent.receiver";
     private static final String INTENT_RECEIVER_APK = "CtsIntentReceiverApp.apk";
@@ -1031,7 +1037,10 @@ public abstract class DeviceAndProfileOwnerTest extends BaseDevicePolicyTest {
         if (!mHasFeature) {
             return;
         }
-        executeDeviceTestClass(".StorageEncryptionTest");
+        Map<String, String> params =
+                ImmutableMap.of(IS_PRIMARY_USER_PARAM, String.valueOf(mUserId == mPrimaryUserId));
+        runDeviceTestsAsUser(
+                DEVICE_ADMIN_PKG, STORAGE_ENCRYPTION_TEST_CLASS, null, mUserId, params);
     }
 
     /**
