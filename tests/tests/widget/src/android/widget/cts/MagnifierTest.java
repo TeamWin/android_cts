@@ -304,6 +304,64 @@ public class MagnifierTest {
         assertFalse(newBitmap.sameAs(initialBitmap));
     }
 
+    @Test
+    public void testBuilder_setsPropertiesCorrectly_whenTheyAreValid() {
+        final View view = new View(mActivity);
+
+        final Magnifier.Builder builder = new Magnifier.Builder(view)
+                .setSize(50, 100)
+                .setZoom(1.5f)
+                .setDefaultSourceToMagnifierOffset(0, -100)
+                .setCornerRadius(20.0f)
+                .setElevation(15.0f);
+        final Magnifier magnifier = builder.build();
+
+        assertEquals(50, magnifier.getWidth());
+        assertEquals(100, magnifier.getHeight());
+        assertEquals(1.5f, magnifier.getZoom(), 0.01f);
+    }
+
+    @Test(expected = NullPointerException.class)
+    public void testBuilder_throwsException_whenViewIsNull() {
+        new Magnifier.Builder(null);
+    }
+
+    @Test(expected = IllegalArgumentException.class)
+    public void testBuilder_throwsException_whenWidthIsInvalid() {
+        final View view = new View(mActivity);
+        new Magnifier.Builder(view).setSize(0, 10);
+    }
+
+    @Test(expected = IllegalArgumentException.class)
+    public void testBuilder_throwsException_whenHeightIsInvalid() {
+        final View view = new View(mActivity);
+        new Magnifier.Builder(view).setSize(10, 0);
+    }
+
+    @Test(expected = IllegalArgumentException.class)
+    public void testBuilder_throwsException_whenZoomIsZero() {
+        final View view = new View(mActivity);
+        new Magnifier.Builder(view).setZoom(0f);
+    }
+
+    @Test(expected = IllegalArgumentException.class)
+    public void testBuilder_throwsException_whenZoomIsNegative() {
+        final View view = new View(mActivity);
+        new Magnifier.Builder(view).setZoom(-1f);
+    }
+
+    @Test(expected = IllegalArgumentException.class)
+    public void testBuilder_throwsException_whenElevationIsInvalid() {
+        final View view = new View(mActivity);
+        new Magnifier.Builder(view).setElevation(-1f);
+    }
+
+    @Test(expected = IllegalArgumentException.class)
+    public void testBuilder_throwsException_whenCornerRadiusIsNegative() {
+        final View view = new View(mActivity);
+        new Magnifier.Builder(view).setCornerRadius(-1f);
+    }
+
     /**
      * Sets the activity to contain four equal quadrants coloured differently and
      * instantiates a magnifier. This method should not be called on the UI thread.
