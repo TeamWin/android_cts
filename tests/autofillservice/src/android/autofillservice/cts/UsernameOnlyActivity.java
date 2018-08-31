@@ -18,6 +18,7 @@ package android.autofillservice.cts;
 import android.content.Intent;
 import android.os.Bundle;
 import android.util.Log;
+import android.view.autofill.AutofillId;
 import android.widget.Button;
 import android.widget.EditText;
 
@@ -27,6 +28,7 @@ public final class UsernameOnlyActivity extends AbstractAutoFillActivity {
 
     private EditText mUsernameEditText;
     private Button mNextButton;
+    private AutofillId mPasswordAutofillId;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -50,11 +52,24 @@ public final class UsernameOnlyActivity extends AbstractAutoFillActivity {
         syncRunOnUiThread(() -> mUsernameEditText.setText(username));
     }
 
+    AutofillId getUsernameAutofillId() {
+        return mUsernameEditText.getAutofillId();
+    }
+
+    /**
+     * Sets the autofill id of the password using the intent that launches the new activity, so it's
+     * set before the view strucutre is generated.
+     */
+    void setPasswordAutofillId(AutofillId id) {
+        mPasswordAutofillId = id;
+    }
+
     void next() {
         final String username = mUsernameEditText.getText().toString();
-        Log.v(TAG, "Going to next screen as user " + username);
+        Log.v(TAG, "Going to next screen as user " + username + " and aid " + mPasswordAutofillId);
         final Intent intent = new Intent(this, PasswordOnlyActivity.class)
-                .putExtra(PasswordOnlyActivity.EXTRA_USERNAME, username);
+                .putExtra(PasswordOnlyActivity.EXTRA_USERNAME, username)
+                .putExtra(PasswordOnlyActivity.EXTRA_PASSWORD_AUTOFILL_ID, mPasswordAutofillId);
         startActivity(intent);
         finish();
     }
