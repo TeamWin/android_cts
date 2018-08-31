@@ -125,7 +125,7 @@ def main():
         print 'Diffs (%s):'%(ch), diffs
         for j, diff in enumerate(diffs):
             thresh = max(DIFF_THRESH, FRAC_THRESH*var_expected[i][j])
-            assert diff <= thresh
+            assert diff <= thresh, 'diff: %.5f, thresh: %.4f' % (diff, thresh)
 
 if __name__ == '__main__':
     main()

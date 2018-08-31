@@ -70,12 +70,13 @@ def main():
     pylab.title(NAME)
     pylab.xlabel('Exposure times (ns)')
     pylab.ylabel('RGB means')
-    matplotlib.pyplot.savefig('%s_plot_means.png' % (NAME))
+    plot_name = '%s_plot_means.png' % NAME
+    matplotlib.pyplot.savefig(plot_name)
 
     # Test for pass/fail: check that each shot is brighter than the previous.
     for means in [r_means, g_means, b_means]:
         for i in range(len(means)-1):
-            assert means[i+1] > means[i]
+            assert means[i+1] > means[i], 'See %s' % plot_name
 
 if __name__ == '__main__':
     main()

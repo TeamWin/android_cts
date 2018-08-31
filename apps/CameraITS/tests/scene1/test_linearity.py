@@ -12,17 +12,16 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-import its.image
+import math
+import os.path
 import its.caps
 import its.device
+import its.image
 import its.objects
 import its.target
-import numpy
-import math
-from matplotlib import pylab
-import os.path
 import matplotlib
-import matplotlib.pyplot
+from matplotlib import pylab
+import numpy
 
 NAME = os.path.basename(__file__).split('.')[0]
 RESIDUAL_THRESHOLD = 0.0003  # approximately each sample is off by 2/255
@@ -40,9 +39,9 @@ def main():
     linear R,G,B pixel data.
     """
     gamma_lut = numpy.array(
-        sum([[i/LM1, math.pow(i/LM1, 1/2.2)] for i in xrange(L)], []))
+            sum([[i/LM1, math.pow(i/LM1, 1/2.2)] for i in xrange(L)], []))
     inv_gamma_lut = numpy.array(
-        sum([[i/LM1, math.pow(i/LM1, 2.2)] for i in xrange(L)], []))
+            sum([[i/LM1, math.pow(i/LM1, 2.2)] for i in xrange(L)], []))
 
     with its.device.ItsSession() as cam:
         props = cam.get_camera_properties()
@@ -57,7 +56,7 @@ def main():
             match_ar = (largest_yuv['width'], largest_yuv['height'])
             fmt = its.objects.get_smallest_yuv_format(props, match_ar=match_ar)
 
-        e,s = its.target.get_target_exposure_combos(cam)["midSensitivity"]
+        e, s = its.target.get_target_exposure_combos(cam)['midSensitivity']
         s /= 2
         sens_range = props['android.sensor.info.sensitivityRange']
         sensitivities = [s*1.0/3.0, s*2.0/3.0, s, s*4.0/3.0, s*5.0/3.0]
@@ -68,20 +67,20 @@ def main():
         req['android.blackLevel.lock'] = True
         req['android.tonemap.mode'] = 0
         req['android.tonemap.curve'] = {
-            'red': gamma_lut.tolist(),
-            'green': gamma_lut.tolist(),
-            'blue': gamma_lut.tolist()}
+                'red': gamma_lut.tolist(),
+                'green': gamma_lut.tolist(),
+                'blue': gamma_lut.tolist()}
 
         r_means = []
         g_means = []
         b_means = []
 
         for sens in sensitivities:
-            req["android.sensor.sensitivity"] = sens
+            req['android.sensor.sensitivity'] = sens
             cap = cam.do_capture(req, fmt)
             img = its.image.convert_capture_to_rgb_image(cap)
             its.image.write_image(
-                img, '%s_sens=%04d.jpg' % (NAME, sens))
+                    img, '%s_sens=%04d.jpg' % (NAME, sens))
             img = its.image.apply_lut_to_image(img, inv_gamma_lut[1::2] * LM1)
             tile = its.image.get_image_patch(img, 0.45, 0.45, 0.1, 0.1)
             rgb_means = its.image.compute_image_means(tile)
@@ -104,7 +103,9 @@ def main():
             line, residuals, _, _, _ = numpy.polyfit(range(len(sensitivities)),
                                                      means, 1, full=True)
             print 'Line: m=%f, b=%f, resid=%f'%(line[0], line[1], residuals[0])
-            assert residuals[0] < RESIDUAL_THRESHOLD
+            msg = 'residual: %.5f, THRESH: %.4f' % (
+                    residuals[0], RESIDUAL_THRESHOLD)
+            assert residuals[0] < RESIDUAL_THRESHOLD, msg
 
 if __name__ == '__main__':
     main()

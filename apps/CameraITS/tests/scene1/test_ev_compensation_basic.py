@@ -86,8 +86,10 @@ def main():
                         greens.append(rgb_means[1])
                         blues.append(rgb_means[2])
                         print 'lumas in AE locked captures: ', luma_locked
+                        msg = 'AE locked lumas: %s, RTOL: %.2f' % (
+                                str(luma_locked), LUMA_LOCKED_TOL)
                         assert np.isclose(min(luma_locked), max(luma_locked),
-                                          rtol=LUMA_LOCKED_TOL)
+                                          rtol=LUMA_LOCKED_TOL), msg
             assert caps[THRESH_CONVERGE_FOR_EV-1]['metadata']['android.control.aeState'] == LOCKED
 
         pylab.plot(evs, lumas, '-ro')
@@ -110,13 +112,13 @@ def main():
             else:
                 break
         # Only allow positive EVs to give saturated image
-        assert len(lumas) > 2
+        assert len(lumas) > 2, '3 or more unsaturated images needed'
         luma_diffs = np.diff(lumas)
         min_luma_diffs = min(luma_diffs)
         print 'Min of the luma value difference between adjacent ev comp: ',
         print min_luma_diffs
         # All luma brightness should be increasing with increasing ev comp.
-        assert min_luma_diffs > 0
+        assert min_luma_diffs > 0, 'Luma is not increasing!'
 
 if __name__ == '__main__':
     main()

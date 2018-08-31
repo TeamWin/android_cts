@@ -12,13 +12,13 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-import its.device
-import its.caps
-import its.objects
-import its.image
 import os.path
-from matplotlib import pylab
+import its.caps
+import its.device
+import its.image
+import its.objects
 import matplotlib
+from matplotlib import pylab
 
 GR_PLANE = 1  # GR plane index in RGGB data
 IMG_STATS_GRID = 9  # find used to find the center 11.11%
@@ -106,7 +106,9 @@ def main():
         # Test that each shot is noisier than the previous one.
         x.pop()  # remove last element in x index
         for i in x:
-            assert variances[i] < variances[i+1] / VAR_THRESH
+            msg = 'variances [i]: %.5f, [i+1]: %.5f, THRESH: %.2f' % (
+                    variances[i], variances[i+1], VAR_THRESH)
+            assert variances[i] < variances[i+1] / VAR_THRESH, msg
 
 if __name__ == "__main__":
     main()
