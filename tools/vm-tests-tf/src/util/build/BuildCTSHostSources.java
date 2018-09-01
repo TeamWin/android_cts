@@ -178,7 +178,7 @@ public class BuildCTSHostSources extends BuildUtilBase {
     }
 
     private static String getShellExecJavaLine(String classpath, String mainclass) {
-      String cmd = String.format("ANDROID_DATA=%s dalvikvm|#ABI#| -Xmx512M -Xss32K -Xnodex2oat " +
+      String cmd = String.format("ANDROID_DATA=%s dalvikvm|#ABI#| -Xmx512M -Xss32K " +
               "-Djava.io.tmpdir=%s -classpath %s %s", TARGET_JAR_ROOT_PATH, TARGET_JAR_ROOT_PATH,
               classpath, mainclass);
       StringBuilder code = new StringBuilder();
