@@ -57,6 +57,7 @@ import android.view.View;
 import android.view.View.OnTouchListener;
 import android.view.ViewGroup;
 import android.view.ViewGroup.LayoutParams;
+import android.view.ViewTreeObserver;
 import android.view.WindowInsets;
 import android.view.WindowManager;
 import android.widget.ImageView;
@@ -70,6 +71,9 @@ import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.runner.RunWith;
+
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.TimeUnit;
 
 @FlakyTest
 @SmallTest
@@ -1168,20 +1172,37 @@ public class PopupWindowTest {
 
     @Test
     public void testSetTouchInterceptor() throws Throwable {
+        final CountDownLatch latch = new CountDownLatch(1);
         mActivityRule.runOnUiThread(() -> mTextView = new TextView(mActivity));
-        mInstrumentation.waitForIdleSync();
-        mPopupWindow = new PopupWindow(mTextView);
+        mActivityRule.runOnUiThread(() -> mTextView.setText("Testing"));
+        ViewTreeObserver observer = mTextView.getViewTreeObserver();
+        observer.addOnWindowFocusChangeListener(new ViewTreeObserver.OnWindowFocusChangeListener() {
+            @Override
+            public void onWindowFocusChanged(boolean hasFocus) {
+                if (hasFocus) {
+                    ViewTreeObserver currentObserver = mTextView.getViewTreeObserver();
+                    currentObserver.removeOnWindowFocusChangeListener(this);
+                    latch.countDown();
+                }
+            }
+        });
+        mPopupWindow = new PopupWindow(mTextView, LayoutParams.WRAP_CONTENT,
+                LayoutParams.WRAP_CONTENT, true /* focusable */);
 
         OnTouchListener onTouchListener = mock(OnTouchListener.class);
         when(onTouchListener.onTouch(any(View.class), any(MotionEvent.class))).thenReturn(true);
 
         mPopupWindow.setTouchInterceptor(onTouchListener);
-        mPopupWindow.setFocusable(true);
         mPopupWindow.setOutsideTouchable(true);
         Drawable drawable = new ColorDrawable();
         mPopupWindow.setBackgroundDrawable(drawable);
+        mPopupWindow.setAnimationStyle(0);
         showPopup();
+        mInstrumentation.waitForIdleSync();
 
+        latch.await(2000, TimeUnit.MILLISECONDS);
+        // Extra delay to allow input system to get fully set up (b/113686346)
+        SystemClock.sleep(500);
         int[] xy = new int[2];
         mPopupWindow.getContentView().getLocationOnScreen(xy);
         final int viewWidth = mPopupWindow.getContentView().getWidth();
