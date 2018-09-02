@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!--
- * Copyright (C) 2015 The Android Open Source Project
+ * Copyright (C) 2018 The Android Open Source Project
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,17 +16,16 @@
  -->
 
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
-    package="android.vm.cts">
+    package="android.libcore.cts.simplemodule"
+    android:targetSandboxVersion="2">
 
-    <application>
+    <application android:usesCleartextTraffic="true">
         <uses-library android:name="android.test.runner" />
     </application>
 
-    <!--  self-instrumenting test package. -->
     <instrumentation
         android:name="android.support.test.runner.AndroidJUnitRunner"
-        android:label="CTS VM test cases"
-        android:targetPackage="android.vm.cts" >
+        android:label="CTS Libcore simple module test cases"
+        android:targetPackage="android.libcore.cts.simplemodule">
     </instrumentation>
 </manifest>
-

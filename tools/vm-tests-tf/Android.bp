@@ -34,7 +34,7 @@ java_binary_host {
     wrapper: "etc/vmtests-buildutil.sh",
 }
 
-genrule {
+java_genrule_host {
     name: "vmtests_generated_host_test_sources",
     tools: [
         "vmtests-buildutil",
@@ -45,7 +45,7 @@ genrule {
     out: ["vmtests.host.generated.srcjar"],
 }
 
-genrule {
+java_genrule_host {
     name: "vmtests-dfh-dex-generated",
     tools: [
         "cfassembler",
@@ -57,7 +57,7 @@ genrule {
     out: ["vmtests_dfh_dex_generated.jar"],
 }
 
-genrule {
+java_genrule_host {
     name: "vmtests-dasm-dex-generated",
     tools: [
         "dasm",
@@ -69,7 +69,7 @@ genrule {
     out: ["vmtests_dasm_dex_generated.jar"],
 }
 
-genrule {
+java_genrule {
     name: "vmtests_generated_mains_test_sources",
     tools: [
         "vmtests-buildutil",

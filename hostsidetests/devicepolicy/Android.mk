@@ -26,7 +26,8 @@ LOCAL_JAVA_LIBRARIES := \
     tools-common-prebuilt \
     cts-tradefed \
     tradefed \
-    compatibility-host-util
+    compatibility-host-util \
+    guava
 
 LOCAL_STATIC_JAVA_LIBRARIES := \
     truth-host-prebuilt

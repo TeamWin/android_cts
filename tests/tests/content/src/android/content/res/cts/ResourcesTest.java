@@ -1,11 +1,11 @@
 /*
- * Copyright (C) 2009 The Android Open Source Project
+ * Copyright 2018 The Android Open Source Project
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
- *      http://www.apache.org/licenses/LICENSE-2.0
+ *     https://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -35,15 +35,19 @@ import android.graphics.Paint;
 import android.graphics.Typeface;
 import android.graphics.drawable.AdaptiveIconDrawable;
 import android.graphics.drawable.ColorDrawable;
+import android.graphics.drawable.ColorStateListDrawable;
 import android.graphics.drawable.Drawable;
 import android.os.Bundle;
 import android.os.LocaleList;
+import android.support.test.InstrumentationRegistry;
 import android.test.AndroidTestCase;
 import android.util.AttributeSet;
 import android.util.DisplayMetrics;
 import android.util.TypedValue;
 import android.util.Xml;
 import android.view.Display;
+import android.view.LayoutInflater;
+import android.view.View;
 import android.view.WindowManager;
 
 import java.io.IOException;
@@ -947,5 +951,14 @@ public class ResourcesTest extends AndroidTestCase {
         assertEquals(Typeface.ITALIC, mResources.getFont(R.font.sample_italic_family).getStyle());
         assertEquals(Typeface.BOLD_ITALIC,
                 mResources.getFont(R.font.sample_bolditalic_family).getStyle());
+    }
+
+    public void testComplextColorDrawableAttrInflation() {
+        Context context = InstrumentationRegistry.getTargetContext();
+        LayoutInflater layoutInflater = (LayoutInflater) context.getSystemService(
+                Context.LAYOUT_INFLATER_SERVICE);
+
+        View view = layoutInflater.inflate(R.layout.complex_color_drawable_attr_layout, null);
+        assertTrue(view.getBackground() instanceof ColorStateListDrawable);
     }
 }
