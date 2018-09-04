@@ -158,6 +158,10 @@
         <option name="push" value="CVE-2017-6262->/data/local/tmp/CVE-2017-6262" />
 
         <!--__________________-->
+        <!-- Bulletin 2018-01 -->
+        <!-- Please add tests solely from this bulletin below to avoid merge conflict -->
+
+        <!--__________________-->
         <!-- Bulletin 2018-02 -->
         <!-- Please add tests solely from this bulletin below to avoid merge conflict -->
         <option name="push" value="CVE-2017-13273->/data/local/tmp/CVE-2017-13273" />
@@ -167,6 +171,7 @@
 
         <option name="append-bitness" value="true" />
     </target_preparer>
+
     <target_preparer class="com.android.compatibility.common.tradefed.targetprep.FilePusher">
         <option name="cleanup" value="true" />
 
