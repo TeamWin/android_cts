@@ -13,15 +13,15 @@
      See the License for the specific language governing permissions and
      limitations under the License.
 -->
-<configuration description="Config for CTS Libcore simple module test cases">
+<configuration description="Config for CTS Libcore simple mmodule test cases">
     <option name="test-suite-tag" value="cts" />
     <option name="config-descriptor:metadata" key="component" value="libcore" />
     <target_preparer class="com.android.tradefed.targetprep.suite.SuiteApkInstaller">
         <option name="cleanup-apks" value="true" />
-        <option name="test-file-name" value="CtsLibcoreSimpleModuleTestCases.apk" />
+        <option name="test-file-name" value="CtsLibcoreSimpleMModuleTestCases.apk" />
     </target_preparer>
     <test class="com.android.tradefed.testtype.AndroidJUnitTest" >
-        <option name="package" value="android.libcore.cts.simplemodule" />
+        <option name="package" value="android.libcore.cts.simplemmodule" />
         <option name="runtime-hint" value="1m"/>
         <option name="hidden-api-checks" value="false"/>
     </test>
