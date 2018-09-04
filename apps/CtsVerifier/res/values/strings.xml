@@ -3278,7 +3278,7 @@ You should be prompted to select credentials; choose the ones you just installed
     <string name="disallow_outgoing_beam">Disallow outgoing beam</string>
     <string name="disallow_outgoing_beam_action">Switching on android beam</string>
     <string name="disallow_remove_user">Disallow remove user</string>
-    <string name="disallow_remove_user_action">Removing other users (please create a user and attempt to remove it to verify)</string>
+    <string name="disallow_remove_user_action">Removing other users (please create a user and attempt to remove it to verify). This test should also be considered as passed if \'remove user\' option cannot be found in Settings</string>
     <string name="disallow_remove_managed_profile">Disallow remove managed profile</string>
     <string name="disallow_remove_managed_profile_action">Removing the work profile. It shouldn\'t be possible neither from the Accounts screen nor the Device Administrators screen (after selecting the Device Administrator that corresponds to the badged version of \"CTS Verifier\")</string>
     <string name="disallow_share_location">Disallow share location</string>
