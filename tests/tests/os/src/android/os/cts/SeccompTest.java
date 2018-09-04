@@ -34,6 +34,7 @@ import android.os.Build;
 import android.util.Log;
 import android.test.AndroidTestCase;
 
+import com.android.compatibility.common.util.CddTest;
 import com.android.compatibility.common.util.CpuFeatures;
 import com.google.common.util.concurrent.AbstractFuture;
 
@@ -47,6 +48,7 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 import java.util.Date;
 
+@CddTest(requirement="9.7/C-0-6")
 public class SeccompTest extends AndroidTestCase {
     final static String TAG = "SeccompTest";
 
