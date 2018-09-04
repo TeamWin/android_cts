@@ -80,5 +80,6 @@ public class AccessibilityServiceInfoTest  extends InstrumentationTestCase {
         assertEquals("Some summary", speakingService.loadSummary(
                 getInstrumentation().getContext().getPackageManager()));
         assertNotNull(speakingService.getResolveInfo());
+        assertEquals(1000, speakingService.getMinimumUiTimeoutMillis());
     }
 }
