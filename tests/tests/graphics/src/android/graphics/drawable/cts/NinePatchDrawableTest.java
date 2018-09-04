@@ -195,10 +195,12 @@ public class NinePatchDrawableTest {
         assertEquals(0, mNinePatchDrawable.getPaint().getAlpha());
 
         mNinePatchDrawable.setAlpha(-1);
-        assertEquals(0xff, mNinePatchDrawable.getPaint().getAlpha());
+        assertTrue(0 <= mNinePatchDrawable.getPaint().getAlpha()
+                   && mNinePatchDrawable.getPaint().getAlpha() <= 255);
 
         mNinePatchDrawable.setAlpha(0xfffe);
-        assertEquals(0xfe, mNinePatchDrawable.getPaint().getAlpha());
+        assertTrue(0 <= mNinePatchDrawable.getPaint().getAlpha()
+                   && mNinePatchDrawable.getPaint().getAlpha() <= 255);
     }
 
     @Test

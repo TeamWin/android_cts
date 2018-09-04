@@ -294,10 +294,12 @@ public class BitmapDrawableTest {
 
         // exceptional test
         bitmapDrawable.setAlpha(-1);
-        assertEquals(255, bitmapDrawable.getPaint().getAlpha());
+        assertTrue(0 <= bitmapDrawable.getPaint().getAlpha()
+                   && bitmapDrawable.getPaint().getAlpha() <= 255);
 
         bitmapDrawable.setAlpha(256);
-        assertEquals(0, bitmapDrawable.getPaint().getAlpha());
+        assertTrue(0 <= bitmapDrawable.getPaint().getAlpha()
+                   && bitmapDrawable.getPaint().getAlpha() <= 255);
     }
 
     @Test
