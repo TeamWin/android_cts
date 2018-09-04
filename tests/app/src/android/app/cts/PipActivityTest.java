@@ -21,6 +21,8 @@ import android.app.PictureInPictureParams;
 import android.app.stubs.PipActivity;
 import android.test.ActivityInstrumentationTestCase2;
 
+import com.android.compatibility.common.util.CddTest;
+
 import static android.content.pm.PackageManager.FEATURE_PICTURE_IN_PICTURE;
 
 public class PipActivityTest extends ActivityInstrumentationTestCase2<PipActivity> {
@@ -39,6 +41,7 @@ public class PipActivityTest extends ActivityInstrumentationTestCase2<PipActivit
         mActivity = getActivity();
     }
 
+    @CddTest(requirement="3.8.14/C-3-1")
     public void testLaunchPipActivity() throws Throwable {
         runTestOnUiThread(new Runnable() {
             public void run() {

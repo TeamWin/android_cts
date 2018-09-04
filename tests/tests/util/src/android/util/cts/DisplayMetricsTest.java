@@ -27,9 +27,12 @@ import android.util.DisplayMetrics;
 import android.view.Display;
 import android.view.WindowManager;
 
+import com.android.compatibility.common.util.CddTest;
+
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
+@CddTest(requirement="7.1.2/C-2-1")
 @SmallTest
 @RunWith(AndroidJUnit4.class)
 public class DisplayMetricsTest {

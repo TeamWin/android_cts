@@ -27,6 +27,8 @@ import android.view.Display;
 import android.view.ViewConfiguration;
 import android.view.WindowManager;
 
+import com.android.compatibility.common.util.CddTest;
+
 public class ConfigurationScreenLayoutTest
         extends ActivityInstrumentationTestCase2<OrientationActivity> {
 
@@ -41,6 +43,7 @@ public class ConfigurationScreenLayoutTest
         super(OrientationActivity.class);
     }
 
+    @CddTest(requirement="7.1.3/C-0-2,C-1-2,7.1.1.1/C-0-1")
     public void testScreenLayout() throws Exception {
         int expectedScreenLayout = computeScreenLayout();
         int expectedSize = expectedScreenLayout & Configuration.SCREENLAYOUT_SIZE_MASK;

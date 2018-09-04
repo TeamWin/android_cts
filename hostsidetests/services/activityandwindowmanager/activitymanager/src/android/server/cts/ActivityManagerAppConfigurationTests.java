@@ -24,6 +24,8 @@ import android.server.cts.ActivityManagerState.ActivityTask;
 import com.android.ddmlib.Log.LogLevel;
 import com.android.tradefed.log.LogUtil.CLog;
 
+import com.android.compatibility.common.util.CddTest;
+
 import java.awt.Rectangle;
 import java.util.ArrayList;
 import java.util.List;
@@ -296,6 +298,7 @@ public class ActivityManagerAppConfigurationTests extends ActivityManagerTestBas
     /**
      * Test that device handles consequent requested orientations and displays the activities.
      */
+    @CddTest(requirement="7.1.3/C-1-1")
     @Presubmit
     public void testFullscreenAppOrientationRequests() throws Exception {
         if (!supportsRotation()) {

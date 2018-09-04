@@ -42,6 +42,7 @@ import android.view.Display;
 import android.view.View;
 import android.view.WindowManager;
 
+import com.android.compatibility.common.util.CddTest;
 import com.android.compatibility.common.util.PollingCheck;
 
 import static android.content.Context.WINDOW_SERVICE;
@@ -114,6 +115,7 @@ public class AspectRatioTests {
         finishActivity(mMetaDataMaxAspectRatioActivity);
     }
 
+    @CddTest(requirement="7.1.1.2/C-0-1,C-0-2")
     @Test
     @Presubmit
     public void testDeviceAspectRatio() throws Exception {
