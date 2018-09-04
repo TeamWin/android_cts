@@ -16,7 +16,7 @@
  -->
 
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
-    package="android.libcore.cts.simplemodule"
+    package="android.libcore.cts.simplemmodule"
     android:targetSandboxVersion="2">
 
     <application android:usesCleartextTraffic="true">
@@ -25,7 +25,7 @@
 
     <instrumentation
         android:name="android.support.test.runner.AndroidJUnitRunner"
-        android:label="CTS Libcore simple module test cases"
-        android:targetPackage="android.libcore.cts.simplemodule">
+        android:label="CTS Libcore simple mmodule test cases"
+        android:targetPackage="android.libcore.cts.simplemmodule">
     </instrumentation>
 </manifest>
