@@ -39,15 +39,8 @@ public class BuildDalvikSuite extends BuildUtilBase {
 
     // the folder for the generated junit-files for the cts host (which in turn
     // execute the real vm tests using adb push/shell etc)
-    private static String HOSTJUNIT_SRC_OUTPUT_FOLDER = "";
-    private static String OUTPUT_FOLDER = "";
-    private static String COMPILED_CLASSES_FOLDER = "";
-
-    private static String HOSTJUNIT_CLASSES_OUTPUT_FOLDER = "";
-
-    private static String CLASS_PATH = "";
-
-    private static final String TARGET_JAR_ROOT_PATH = "/data/local/tmp/vm-tests";
+    private String OUTPUT_FOLDER = "";
+    private String COMPILED_CLASSES_FOLDER = "";
 
     private String JAVASRC_FOLDER;
 
@@ -72,15 +65,10 @@ public class BuildDalvikSuite extends BuildUtilBase {
     }
 
     private boolean parseArgs(String[] args) {
-      if (args.length == 5) {
+      if (args.length == 3) {
           JAVASRC_FOLDER = args[0];
           OUTPUT_FOLDER = args[1];
-          CLASS_PATH = args[2];
-
-          COMPILED_CLASSES_FOLDER = args[3];
-
-          HOSTJUNIT_SRC_OUTPUT_FOLDER = args[4];
-          HOSTJUNIT_CLASSES_OUTPUT_FOLDER = HOSTJUNIT_SRC_OUTPUT_FOLDER + "/classes";
+          COMPILED_CLASSES_FOLDER = args[2];
           return true;
       } else {
           return false;
@@ -89,135 +77,7 @@ public class BuildDalvikSuite extends BuildUtilBase {
 
     private static void printUsage() {
         System.out.println("usage: java-src-folder output-folder classpath " +
-                           "generated-main-files compiled_output generated-main-files " +
-                           "[restrict-to-opcode]");
-    }
-
-    private SourceBuildStep hostJunitBuildStep;
-
-    private static class HostState {
-        private String fileName;
-        private StringBuilder fileData;
-
-        public HostState(String fileName) {
-            this.fileName = fileName;
-            fileData = new StringBuilder();
-        }
-
-        public void append(String s) {
-            fileData.append(s);
-        }
-
-        private void addCTSHostMethod(String pName, String method,
-                Collection<String> dependentTestClassNames) {
-            fileData.append("public void " + method + "() throws Exception {\n");
-            final String targetCoreJarPath = String.format("%s/dot/junit/dexcore.jar",
-                    TARGET_JAR_ROOT_PATH);
-
-            String mainsJar = String.format("%s/%s", TARGET_JAR_ROOT_PATH, TARGET_MAIN_FILE);
-
-            String cp = String.format("%s:%s", targetCoreJarPath, mainsJar);
-            for (String depFqcn : dependentTestClassNames) {
-                String sourceName = depFqcn.replaceAll("\\.", "/") + ".jar";
-                String targetName= String.format("%s/%s", TARGET_JAR_ROOT_PATH,
-                        sourceName);
-                cp += ":" + targetName;
-                // dot.junit.opcodes.invoke_interface_range.ITest
-                // -> dot/junit/opcodes/invoke_interface_range/ITest.jar
-            }
-
-            //"dot.junit.opcodes.add_double_2addr.Main_testN2";
-            String mainclass = pName + ".Main_" + method;
-            fileData.append(getShellExecJavaLine(cp, mainclass));
-            fileData.append("\n}\n\n");
-        }
-
-        public void end() {
-            fileData.append("\n}\n");
-        }
-
-        public File getFileToWrite() {
-            return new File(fileName);
-        }
-        public String getBuildStep() {
-            return new File(fileName).getAbsolutePath();
-        }
-        public String getData() {
-            return fileData.toString();
-        }
-    }
-
-    private void flushHostState(HostState state) {
-        state.end();
-
-        File toWrite = state.getFileToWrite();
-        writeToFileMkdir(toWrite, state.getData());
-
-        hostJunitBuildStep.addSourceFile(state.getBuildStep());
-    }
-
-    private HostState openCTSHostFileFor(String pName, String classOnlyName) {
-        String sourceName = classOnlyName;
-
-        String modPackage = pName;
-        {
-            // Given a class name of "Test_zzz" and a package of "xxx.yyy.zzz," strip
-            // "zzz" from the package to reduce duplication (and dashboard clutter).
-            int lastDot = modPackage.lastIndexOf('.');
-            if (lastDot > 0) {
-                String lastPackageComponent = modPackage.substring(lastDot + 1);
-                if (classOnlyName.equals("Test_" + lastPackageComponent)) {
-                    // Drop the duplication.
-                    modPackage = modPackage.substring(0, lastDot);
-                }
-            }
-        }
-
-        String fileName = HOSTJUNIT_SRC_OUTPUT_FOLDER + "/" + modPackage.replaceAll("\\.", "/")
-                + "/" + sourceName + ".java";
-
-        HostState newState = new HostState(fileName);
-
-        newState.append(getWarningMessage());
-        newState.append("package " + modPackage + ";\n");
-        newState.append("import java.io.IOException;\n" +
-                "import java.util.concurrent.TimeUnit;\n\n" +
-                "import com.android.tradefed.device.CollectingOutputReceiver;\n" +
-                "import com.android.tradefed.testtype.IAbi;\n" +
-                "import com.android.tradefed.testtype.IAbiReceiver;\n" +
-                "import com.android.tradefed.testtype.DeviceTestCase;\n" +
-                "import com.android.tradefed.util.AbiFormatter;\n" +
-                "\n");
-        newState.append("public class " + sourceName + " extends DeviceTestCase implements " +
-                "IAbiReceiver {\n");
-
-        newState.append("\n" +
-                "protected IAbi mAbi;\n" +
-                "@Override\n" +
-                "public void setAbi(IAbi abi) {\n" +
-                "    mAbi = abi;\n" +
-                "}\n\n");
-
-        return newState;
-    }
-
-    private static String getShellExecJavaLine(String classpath, String mainclass) {
-      String cmd = String.format("ANDROID_DATA=%s dalvikvm|#ABI#| -Xmx512M -Xss32K " +
-              "-Djava.io.tmpdir=%s -classpath %s %s", TARGET_JAR_ROOT_PATH, TARGET_JAR_ROOT_PATH,
-              classpath, mainclass);
-      StringBuilder code = new StringBuilder();
-      code.append("    String cmd = AbiFormatter.formatCmdForAbi(\"")
-          .append(cmd)
-          .append("\", mAbi.getBitness());\n")
-          .append("    CollectingOutputReceiver receiver = new CollectingOutputReceiver();\n")
-          .append("    getDevice().executeShellCommand(cmd, receiver, 6, TimeUnit.MINUTES, 1);\n")
-          .append("    // A sucessful adb shell command returns an empty string.\n")
-          .append("    assertEquals(cmd, \"\", receiver.getOutput());");
-      return code.toString();
-    }
-
-    private String getWarningMessage() {
-        return "//Autogenerated code by " + this.getClass().getName() + "; do not edit.\n";
+                           "generated-main-files compiled_output");
     }
 
     class MyTestHandler implements TestHandler {
@@ -229,8 +89,6 @@ public class BuildDalvikSuite extends BuildUtilBase {
             int lastDotPos = fqcn.lastIndexOf('.');
             String pName = fqcn.substring(0, lastDotPos);
             String classOnlyName = fqcn.substring(lastDotPos + 1);
-
-            HostState hostState = openCTSHostFileFor(pName, classOnlyName);
 
             Collections.sort(methods, new Comparator<String>() {
                 @Override
@@ -259,8 +117,6 @@ public class BuildDalvikSuite extends BuildUtilBase {
 
                 List<String> dependentTestClassNames = parseTestClassName(pName,
                         classOnlyName, methodContent);
-
-                hostState.addCTSHostMethod(pName, method, dependentTestClassNames);
 
                 if (dependentTestClassNames.isEmpty()) {
                     continue;
@@ -347,27 +203,17 @@ public class BuildDalvikSuite extends BuildUtilBase {
                 datafileContent += line + "\n";
                 generateBuildStepFor(dependentTestClassNames, targets);
             }
-
-            flushHostState(hostState);
         }
     }
 
     @Override
     protected void handleTests(JUnitTestCollector tests, TestHandler ignored) {
-        hostJunitBuildStep = new JavacBuildStep(
-                HOSTJUNIT_CLASSES_OUTPUT_FOLDER, CLASS_PATH);
-
         MyTestHandler handler = new MyTestHandler();
         super.handleTests(tests, handler);
 
         File scriptDataDir = new File(OUTPUT_FOLDER + "/data/");
         scriptDataDir.mkdirs();
         writeToFile(new File(scriptDataDir, "scriptdata"), handler.datafileContent);
-
-        if (!hostJunitBuildStep.build()) {
-            System.out.println("main javac cts-host-hostjunit-classes build step failed");
-            System.exit(1);
-        }
 
         for (BuildStep buildStep : handler.targets) {
             if (!buildStep.build()) {

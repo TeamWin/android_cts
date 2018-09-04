@@ -45,6 +45,16 @@ java_genrule_host {
     out: ["vmtests.host.generated.srcjar"],
 }
 
+java_library_host {
+    name: "host-cts-vmtests",
+    libs: [
+        "junit",
+        "tradefed",
+    ],
+    srcs : [ ":vmtests_generated_host_test_sources" ],
+    installable: false,
+}
+
 java_genrule_host {
     name: "vmtests-dfh-dex-generated",
     tools: [
@@ -94,6 +104,7 @@ java_library {
 java_library_host {
     name: "vmtests-generated-resources",
     static_libs: [
+        "host-cts-vmtests",
         "vmtests-dfh-dex-generated",
         "vmtests-dasm-dex-generated",
     ],
