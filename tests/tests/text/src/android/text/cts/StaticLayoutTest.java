@@ -52,6 +52,7 @@ import android.text.TextPaint;
 import android.text.TextUtils;
 import android.text.TextUtils.TruncateAt;
 import android.text.method.cts.EditorState;
+import android.text.style.LineHeightSpan;
 import android.text.style.ReplacementSpan;
 import android.text.style.StyleSpan;
 import android.text.style.TextAppearanceSpan;
@@ -1535,5 +1536,61 @@ public class StaticLayoutTest {
 
         assertEquals(-200, secondMetrics.ascent);
         assertEquals(40, secondMetrics.descent);
+    }
+
+    @Test
+    public void testChangeFontMetricsLineHeightBySpanTest() {
+        final TextPaint paint = new TextPaint();
+        paint.setTextSize(50);
+        final SpannableString spanStr0 = new SpannableString(LOREM_IPSUM);
+        // Make sure the final layout contain multiple lines.
+        final int width = (int) paint.measureText(spanStr0.toString()) / 5;
+        final int expectedHeight0 = 25;
+
+        spanStr0.setSpan(new LineHeightSpan.Standard(expectedHeight0), 0, spanStr0.length(),
+                SpannableString.SPAN_EXCLUSIVE_EXCLUSIVE);
+        StaticLayout layout0 = StaticLayout.Builder.obtain(spanStr0, 0, spanStr0.length(),
+                paint, width).build();
+
+        // We need at least 3 lines for testing.
+        assertTrue(layout0.getLineCount() > 2);
+        // Omit the first and last line, because their line hight might be different due to padding.
+        for (int i = 1; i < layout0.getLineCount() - 1; ++i) {
+            assertEquals(expectedHeight0, layout0.getLineBottom(i) - layout0.getLineTop(i));
+        }
+
+        final SpannableString spanStr1 = new SpannableString(LOREM_IPSUM);
+        int expectedHeight1 = 100;
+
+        spanStr1.setSpan(new LineHeightSpan.Standard(expectedHeight1), 0, spanStr1.length(),
+                SpannableString.SPAN_EXCLUSIVE_EXCLUSIVE);
+        StaticLayout layout1 = StaticLayout.Builder.obtain(spanStr1, 0, spanStr1.length(),
+                paint, width).build();
+
+        for (int i = 1; i < layout1.getLineCount() - 1; ++i) {
+            assertEquals(expectedHeight1, layout1.getLineBottom(i) - layout1.getLineTop(i));
+        }
+    }
+
+    @Test
+    public void testChangeFontMetricsLineHeightBySpanMultipleTimesTest() {
+        final TextPaint paint = new TextPaint();
+        paint.setTextSize(50);
+        final SpannableString spanStr = new SpannableString(LOREM_IPSUM);
+        final int width = (int) paint.measureText(spanStr.toString()) / 5;
+        final int expectedHeight = 100;
+
+        spanStr.setSpan(new LineHeightSpan.Standard(25), 0, spanStr.length(),
+                SpannableString.SPAN_EXCLUSIVE_EXCLUSIVE);
+        // Only the last span is effective.
+        spanStr.setSpan(new LineHeightSpan.Standard(expectedHeight), 0, spanStr.length(),
+                SpannableString.SPAN_EXCLUSIVE_EXCLUSIVE);
+        StaticLayout layout = StaticLayout.Builder.obtain(spanStr, 0, spanStr.length(),
+                paint, width).build();
+
+        assertTrue(layout.getLineCount() > 2);
+        for (int i = 1; i < layout.getLineCount() - 1; ++i) {
+            assertEquals(expectedHeight, layout.getLineBottom(i) - layout.getLineTop(i));
+        }
     }
 }
