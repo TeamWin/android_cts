@@ -2690,7 +2690,7 @@ You should be prompted to select credentials; choose the ones you just installed
     <string name="negative_device_owner">No Device Owner Tests</string>
     <string name="device_owner_negative_category">No Device Owner Tests</string>
     <string name="device_owner_provisioning_negative">Device owner provisioning</string>
-    <string name="device_owner_provisioning_negative_info">The device owner provisioning test verifies that setting up a corporate owned device can only be done on a factory reset device.\n\nPlease click the "Start provisioning" button, and when you see a warning dialog telling the device can\'t be set up, select "pass". Otherwise, select "fail".</string>
+    <string name="device_owner_provisioning_negative_info">The device owner provisioning test verifies that setting up a corporate owned device can only be done on a factory reset device.\n\nPlease click the "Start provisioning" button, and when you see a warning dialog telling the device is already set up, select "pass". Otherwise, select "fail".</string>
     <string name="start_device_owner_provisioning_button">Start provisioning</string>
     <string name="enterprise_privacy_quick_settings_negative">Quick settings disclosure</string>
     <string name="enterprise_privacy_quick_settings_negative_info">
