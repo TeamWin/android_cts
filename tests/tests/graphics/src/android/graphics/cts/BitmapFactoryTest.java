@@ -39,7 +39,6 @@ import android.support.test.filters.SmallTest;
 import android.support.test.runner.AndroidJUnit4;
 import android.system.ErrnoException;
 import android.system.Os;
-import android.system.OsConstants;
 import android.util.DisplayMetrics;
 import android.util.TypedValue;
 
@@ -718,6 +717,14 @@ public class BitmapFactoryTest {
         assertNotNull(hardwareBitmap);
         // Test that checks that correct bitmap was obtained is in uirendering/HardwareBitmapTests
         assertEquals(Config.HARDWARE, hardwareBitmap.getConfig());
+    }
+
+    @Test
+    public void testJpegInfiniteLoop() {
+        BitmapFactory.Options options = new BitmapFactory.Options();
+        options.inSampleSize = 19;
+        Bitmap bm = BitmapFactory.decodeResource(mRes, R.raw.b78329453, options);
+        assertNotNull(bm);
     }
 
     @Test
