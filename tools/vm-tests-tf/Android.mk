@@ -84,7 +84,6 @@ $(LOCAL_BUILT_MODULE): PRIVATE_SRC_FOLDER := $(LOCAL_PATH)/src
 $(LOCAL_BUILT_MODULE): PRIVATE_INTERMEDIATES_CLASSES := $(call intermediates-dir-for,JAVA_LIBRARIES,cts-tf-dalvik-buildutil,HOST)/classes
 $(LOCAL_BUILT_MODULE): PRIVATE_INTERMEDIATES := $(intermediates)/tests
 $(LOCAL_BUILT_MODULE): PRIVATE_INTERMEDIATES_DEXCORE_JAR := $(intermediates)/tests/dot/junit/dexcore.jar
-$(LOCAL_BUILT_MODULE): PRIVATE_INTERMEDIATES_HOSTJUNIT_FILES := $(intermediates)/hostjunit_files
 $(LOCAL_BUILT_MODULE): PRIVATE_CLASS_PATH := $(call normalize-path-list, $(vmteststf_dep_jars))
 oj_jar := $(call intermediates-dir-for,JAVA_LIBRARIES,core-oj,,COMMON)/classes.jar
 libart_jar := $(call intermediates-dir-for,JAVA_LIBRARIES,core-libart,,COMMON)/classes.jar
@@ -99,8 +98,7 @@ $(LOCAL_BUILT_MODULE) : $(vmteststf_dep_jars) $(HOST_OUT_JAVA_LIBRARIES)/tradefe
 	@echo "Write generated Main_*.java"
 	$(hide) $(JAVA) \
 	    -cp $(PRIVATE_CLASS_PATH) util.build.BuildDalvikSuite $(PRIVATE_SRC_FOLDER) $(PRIVATE_INTERMEDIATES) \
-		$(PRIVATE_DALVIK_SUITE_CLASSPATH) \
-		$(PRIVATE_INTERMEDIATES_CLASSES) $(PRIVATE_INTERMEDIATES_HOSTJUNIT_FILES)
+		$(PRIVATE_INTERMEDIATES_CLASSES)
 	@echo "Generate $(PRIVATE_INTERMEDIATES_DEXCORE_JAR)"
 	$(hide) $(JAR) -cf $(PRIVATE_INTERMEDIATES_DEXCORE_JAR)-class.jar \
 		$(addprefix -C $(PRIVATE_INTERMEDIATES_CLASSES) , dot/junit/DxUtil.class dot/junit/DxAbstractMain.class dot/junit/AssertionFailedException.class)
@@ -109,7 +107,6 @@ $(LOCAL_BUILT_MODULE) : $(vmteststf_dep_jars) $(HOST_OUT_JAVA_LIBRARIES)/tradefe
 		$(if $(NO_OPTIMIZE_DX), --debug) $(PRIVATE_INTERMEDIATES_DEXCORE_JAR)-class.jar && rm -f $(PRIVATE_INTERMEDIATES_DEXCORE_JAR).jar
 	$(hide) cd $(PRIVATE_INTERMEDIATES_DEXCORE_JAR).tmp && zip -q -r $(abspath $(PRIVATE_INTERMEDIATES_DEXCORE_JAR)) .
 	$(hide) cp $(PRIVATE_VMTESTS_GENERATED_RESOURCES) $@
-	$(hide) cd $(PRIVATE_INTERMEDIATES_HOSTJUNIT_FILES)/classes && zip -q -r ../../$(notdir $@) .
 	$(hide) cp $(PRIVATE_VMTESTS_MAINS_GENERATED) $(dir $@)/tests/mains.jar
 	$(hide) cd $(dir $@) && zip -q -r $(notdir $@) tests
 oj_jar :=
