@@ -25,11 +25,11 @@ java_binary_host {
     name: "vmtests-buildutil",
     static_libs: [ "cts-vmtests-dot", "junit" ],
     srcs: [
-        "src/util/build/BuildCTSHostSources.java",
-        "src/util/build/BuildCTSMainsSources.java",
-        "src/util/build/BuildUtilBase.java",
-        "src/util/build/FileUtil.java",
-        "src/util/build/JUnitTestCollector.java",
+        "build/src/util/build/BuildCTSHostSources.java",
+        "build/src/util/build/BuildCTSMainsSources.java",
+        "build/src/util/build/BuildUtilBase.java",
+        "build/src/util/build/FileUtil.java",
+        "build/src/util/build/JUnitTestCollector.java",
     ],
     wrapper: "etc/vmtests-buildutil.sh",
 }
