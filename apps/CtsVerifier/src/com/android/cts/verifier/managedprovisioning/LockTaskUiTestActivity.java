@@ -36,6 +36,7 @@ import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
+import android.content.pm.PackageManager;
 import android.database.DataSetObserver;
 import android.os.AsyncTask;
 import android.os.Bundle;
@@ -143,17 +144,21 @@ public class LockTaskUiTestActivity extends PassFailButtons.TestListActivity {
                 R.string.device_owner_lock_task_ui_notifications_test,
                 R.string.device_owner_lock_task_ui_notifications_test_info));
 
-        adapter.add(createSetLockTaskFeaturesTest(
-                TEST_ID_HOME,
-                LOCK_TASK_FEATURE_HOME,
-                R.string.device_owner_lock_task_ui_home_test,
-                R.string.device_owner_lock_task_ui_home_test_info));
+        if (!getPackageManager().hasSystemFeature(PackageManager.FEATURE_AUTOMOTIVE)) {
+            adapter.add(createSetLockTaskFeaturesTest(
+                    TEST_ID_HOME,
+                    LOCK_TASK_FEATURE_HOME,
+                    R.string.device_owner_lock_task_ui_home_test,
+                    R.string.device_owner_lock_task_ui_home_test_info));
+        }
 
-        adapter.add(createSetLockTaskFeaturesTest(
-                TEST_ID_RECENTS,
-                LOCK_TASK_FEATURE_HOME | LOCK_TASK_FEATURE_OVERVIEW,
-                R.string.device_owner_lock_task_ui_recents_test,
-                R.string.device_owner_lock_task_ui_recents_test_info));
+        if (!getPackageManager().hasSystemFeature(PackageManager.FEATURE_AUTOMOTIVE)) {
+            adapter.add(createSetLockTaskFeaturesTest(
+                    TEST_ID_RECENTS,
+                    LOCK_TASK_FEATURE_HOME | LOCK_TASK_FEATURE_OVERVIEW,
+                    R.string.device_owner_lock_task_ui_recents_test,
+                    R.string.device_owner_lock_task_ui_recents_test_info));
+        }
 
         adapter.add(createSetLockTaskFeaturesTest(
                 TEST_ID_GLOBAL_ACTIONS,
