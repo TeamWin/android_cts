@@ -190,8 +190,8 @@ public class ManagedProfileTest extends BaseDevicePolicyTest {
 
     private void sendWipeProfileBroadcast(String action) throws Exception {
         final String cmd = "am broadcast --receiver-foreground --user " + mProfileUserId
-            + " -a " + action
-            + " com.android.cts.managedprofile/.WipeDataReceiver";
+                + " -a " + action
+                + " com.android.cts.managedprofile/.WipeDataReceiver";
         getDevice().executeShellCommand(cmd);
     }
 
@@ -377,7 +377,7 @@ public class ManagedProfileTest extends BaseDevicePolicyTest {
         String command = "am start -W --user " + mProfileUserId  + " " + MANAGED_PROFILE_PKG
                 + "/.PrimaryUserFilterSetterActivity";
         CLog.d("Output for command " + command + ": "
-              + getDevice().executeShellCommand(command));
+                + getDevice().executeShellCommand(command));
         runDeviceTestsAsUser(
                 MANAGED_PROFILE_PKG, MANAGED_PROFILE_PKG + ".PrimaryUserTest", mParentUserId);
         // TODO: Test with startActivity
@@ -1035,7 +1035,7 @@ public class ManagedProfileTest extends BaseDevicePolicyTest {
             return;
         }
         getDevice().setSetting(
-            mProfileUserId, "secure", "dialer_default_application", MANAGED_PROFILE_PKG);
+                mProfileUserId, "secure", "dialer_default_application", MANAGED_PROFILE_PKG);
 
         // Place a outgoing call through work phone account using TelecomManager and verify the
         // call is inserted properly.
@@ -1070,12 +1070,12 @@ public class ManagedProfileTest extends BaseDevicePolicyTest {
         // Add an incoming missed call with parent user's phone account and verify the call is
         // inserted properly.
         runDeviceTestsAsUser(MANAGED_PROFILE_PKG, ".PhoneAccountTest",
-            "testIncomingMissedCall",
-            mProfileUserId);
+                "testIncomingMissedCall",
+                mProfileUserId);
         // Make sure the call is not inserted into parent user.
         runDeviceTestsAsUser(MANAGED_PROFILE_PKG, ".PhoneAccountTest",
-            "testEnsureCallNotInserted",
-            mParentUserId);
+                "testEnsureCallNotInserted",
+                mParentUserId);
     }
 
     private void givePackageWriteSettingsPermission(int userId, String pkg) throws Exception {
@@ -1236,6 +1236,55 @@ public class ManagedProfileTest extends BaseDevicePolicyTest {
         verifyUnifiedPassword(false);
     }
 
+    public void testRebootDevice_unifiedPassword() throws Exception {
+        if (!mHasFeature) {
+            return;
+        }
+        // Waiting before rebooting prevents flakiness.
+        waitForBroadcastIdle();
+        String password = "0000";
+        changeUserCredential(password, /* oldCredential= */ null, mPrimaryUserId);
+        try {
+            rebootAndWaitUntilReady();
+            verifyUserCredential(password, mPrimaryUserId);
+            installAppAsUser(SIMPLE_APP_APK, mProfileUserId);
+            runDeviceTestsAsUser(MANAGED_PROFILE_PKG, ".SanityTest", mProfileUserId);
+        } finally {
+            changeUserCredential(/* newCredential= */ null, password, mPrimaryUserId);
+            // Work-around for http://b/113866275 - password prompt being erroneously shown at the
+            // end.
+            pressPowerButton();
+        }
+    }
+
+    public void testRebootDevice_separatePasswords() throws Exception {
+        if (!mHasFeature) {
+            return;
+        }
+        // Waiting before rebooting prevents flakiness.
+        waitForBroadcastIdle();
+        String profilePassword = "profile";
+        String primaryPassword = "primary";
+        int managedProfileUserId = getFirstManagedProfileUserId();
+        changeUserCredential(
+                profilePassword, /* oldCredential= */ null, managedProfileUserId);
+        changeUserCredential(primaryPassword, /* oldCredential= */ null, mPrimaryUserId);
+        try {
+            rebootAndWaitUntilReady();
+            verifyUserCredential(profilePassword, managedProfileUserId);
+            verifyUserCredential(primaryPassword, mPrimaryUserId);
+            installAppAsUser(SIMPLE_APP_APK, mProfileUserId);
+            runDeviceTestsAsUser(MANAGED_PROFILE_PKG, ".SanityTest", mProfileUserId);
+        } finally {
+            changeUserCredential(
+                    /* newCredential= */ null, profilePassword, managedProfileUserId);
+            changeUserCredential(/* newCredential= */ null, primaryPassword, mPrimaryUserId);
+            // Work-around for http://b/113866275 - password prompt being erroneously shown at the
+            // end.
+            pressPowerButton();
+        }
+    }
+
     private void verifyUnifiedPassword(boolean unified) throws DeviceNotAvailableException {
         final String testMethod =
                 unified ? "testUsingUnifiedPassword" : "testNotUsingUnifiedPassword";
@@ -1296,7 +1345,7 @@ public class ManagedProfileTest extends BaseDevicePolicyTest {
                 + "--ei user-extra " + getUserSerialNumber(mProfileUserId)
                 + " " + WIDGET_PROVIDER_PKG + "/.SimpleAppWidgetHostService";
         CLog.d("Output for command " + command + ": "
-              + getDevice().executeShellCommand(command));
+                + getDevice().executeShellCommand(command));
     }
 
     private void assertAppLinkResult(String methodName) throws DeviceNotAvailableException {
