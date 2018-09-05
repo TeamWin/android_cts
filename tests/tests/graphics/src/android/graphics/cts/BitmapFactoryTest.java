@@ -57,6 +57,9 @@ import java.io.InputStream;
 import java.io.RandomAccessFile;
 import java.util.concurrent.CountDownLatch;
 
+import com.android.compatibility.common.util.CddTest;
+
+@CddTest(requirement="5.1.5/C-0-1,C-0-2,C-0-3,C-0-4,C-0-5")
 @SmallTest
 @RunWith(AndroidJUnit4.class)
 public class BitmapFactoryTest {
