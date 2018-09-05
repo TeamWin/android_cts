@@ -476,6 +476,7 @@ public class MediaCodecCapabilitiesTest extends MediaPlayerTestBase {
         }
     }
 
+    @CddTest(requirement="5.1.7/C-1-2")
     public void testAllNonTunneledVideoCodecsSupportFlexibleYUV() throws IOException {
         boolean skipped = true;
         for (MediaCodecInfo info : mAllInfos) {

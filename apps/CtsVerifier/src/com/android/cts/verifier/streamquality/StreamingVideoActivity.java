@@ -33,6 +33,8 @@ import android.os.Bundle;
 import android.util.Log;
 import android.widget.TextView;
 
+import com.android.compatibility.common.util.CddTest;
+
 import java.io.BufferedReader;
 import java.io.InputStream;
 import java.io.InputStreamReader;
@@ -46,6 +48,7 @@ import java.net.URL;
  * different protocols for a short amount of time, after which users can mark Pass/Fail depending
  * on the smoothness and subjective quality of the video.
  */
+@CddTest(requirement="5.7/C-1-1,C-1-3")
 public class StreamingVideoActivity extends PassFailButtons.TestListActivity {
     /**
      * Simple storage class for stream information.
