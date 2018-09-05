@@ -1721,4 +1721,42 @@ public class PaintTest {
         p1.setTypeface(p2.getTypeface());
         assertTrue(p1.equalsForTextMeasurement(p2));
     }
+
+    @Test
+    public void testWordSpacing() {
+        Paint p = new Paint();
+        assertEquals(0.0f, p.getWordSpacing(), 0.0f);  // The default value is 0.
+        p.setWordSpacing(10.0f);
+        assertEquals(10.0f, p.getWordSpacing(), 0.0f);
+        p.setWordSpacing(20.0f);
+        assertEquals(20.0f, p.getWordSpacing(), 0.0f);
+    }
+
+    @Test
+    public void testStrikeThruPosition_notCrashes() {
+        // We can't expect any values of strike-through position in CTS.
+        // Just make sure calling that method doesn't crash the app.
+        new Paint().getStrikeThruPosition();
+    }
+
+    @Test
+    public void testStrikeThruThickness_notCrashes() {
+        // We can't expect any values of strike-through thickness in CTS.
+        // Just make sure calling that method doesn't crash the app.
+        new Paint().getStrikeThruThickness();
+    }
+
+    @Test
+    public void testUnderlinePosition_notCrashes() {
+        // We can't expect any values of underline position in CTS.
+        // Just make sure calling that method doesn't crash the app.
+        new Paint().getUnderlinePosition();
+    }
+
+    @Test
+    public void testUnderlineThickness_notCrashes() {
+        // We can't expect any values of underline thickness in CTS.
+        // Just make sure calling that method doesn't crash the app.
+        new Paint().getUnderlineThickness();
+    }
 }
