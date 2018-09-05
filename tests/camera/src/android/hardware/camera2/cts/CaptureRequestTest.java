@@ -1972,6 +1972,19 @@ public class CaptureRequestTest extends Camera2SurfaceViewTestCase {
         CaptureRequest.Builder requestBuilder =
                 mCamera.createCaptureRequest(CameraDevice.TEMPLATE_PREVIEW);
         int[] toneMapModes = mStaticInfo.getAvailableToneMapModesChecked();
+        // Test AUTO modes first. Note that FAST/HQ must both present or not present
+        for (int i = 0; i < toneMapModes.length; i++) {
+            if (toneMapModes[i] == CaptureRequest.TONEMAP_MODE_FAST && i > 0) {
+                int tmpMode = toneMapModes[0];
+                toneMapModes[0] = CaptureRequest.TONEMAP_MODE_FAST;
+                toneMapModes[i] = tmpMode;
+            }
+            if (toneMapModes[i] == CaptureRequest.TONEMAP_MODE_HIGH_QUALITY && i > 1) {
+                int tmpMode = toneMapModes[1];
+                toneMapModes[1] = CaptureRequest.TONEMAP_MODE_HIGH_QUALITY;
+                toneMapModes[i] = tmpMode;
+            }
+        }
         for (int mode : toneMapModes) {
             if (VERBOSE) {
                 Log.v(TAG, "Testing tonemap mode " + mode);
