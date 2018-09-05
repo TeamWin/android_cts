@@ -19,7 +19,7 @@ LOCAL_PATH := $(call my-dir)
 include $(CLEAR_VARS)
 
 # custom variables used to generate test description. do not touch!
-LOCAL_SRC_FILES := $(call all-java-files-under, src/dot)
+LOCAL_SRC_FILES := $(call all-java-files-under, src)
 
 LOCAL_MODULE := cts-tf-dalvik-lib
 LOCAL_MODULE_CLASS := JAVA_LIBRARIES
@@ -37,7 +37,7 @@ include $(CLEAR_VARS)
 LOCAL_TEST_TYPE := vmHostTest
 LOCAL_JAR_PATH := android.core.vm-tests-tf.jar
 
-LOCAL_SRC_FILES := $(call all-java-files-under, src)
+LOCAL_SRC_FILES := $(call all-java-files-under, src build/src)
 
 LOCAL_MODULE := cts-tf-dalvik-buildutil
 LOCAL_MODULE_CLASS := JAVA_LIBRARIES
