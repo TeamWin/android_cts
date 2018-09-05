@@ -31,6 +31,9 @@ import android.os.Looper;
 import android.test.AndroidTestCase;
 import android.util.Log;
 
+import com.android.compatibility.common.util.CddTest;
+
+@CddTest(requirement="5.5.2/C-1-1")
 public class LoudnessEnhancerTest extends PostProcTestBase {
 
     private String TAG = "LoudnessEnhancerTest";

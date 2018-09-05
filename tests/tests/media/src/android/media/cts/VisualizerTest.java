@@ -30,6 +30,9 @@ import android.test.AndroidTestCase;
 import java.util.UUID;
 import android.util.Log;
 
+import com.android.compatibility.common.util.CddTest;
+
+@CddTest(requirement="5.5.2/C-1-2")
 public class VisualizerTest extends PostProcTestBase {
 
     private String TAG = "VisualizerTest";

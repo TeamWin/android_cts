@@ -74,7 +74,7 @@ public class AudioEffectTest extends PostProcTestBase {
     //----------------------------------
 
     //Test case 0.0: test queryEffects() and platfrom at least provides an Equalizer
-    @CddTest(requirement="5.4.2/C-2-2")
+    @CddTest(requirement="5.4.2/C-2-2,5.5.2/C-1-1")
     public void test0_0QueryEffects() throws Exception {
 
         AudioEffect.Descriptor[] desc = AudioEffect.queryEffects();
