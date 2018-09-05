@@ -32,6 +32,7 @@ import static org.mockito.Mockito.when;
 import android.app.Instrumentation;
 import android.content.Context;
 import android.content.pm.ActivityInfo;
+import android.content.pm.PackageManager;
 import android.content.res.Configuration;
 import android.graphics.Color;
 import android.graphics.Point;
@@ -83,6 +84,7 @@ public class PopupWindowTest {
     private static final int CONTENT_SIZE_DP = 30;
 
     private Instrumentation mInstrumentation;
+    private Context mContext;
     private PopupWindowCtsActivity mActivity;
     private PopupWindow mPopupWindow;
     private TextView mTextView;
@@ -94,6 +96,7 @@ public class PopupWindowTest {
     @Before
     public void setup() {
         mInstrumentation = InstrumentationRegistry.getInstrumentation();
+        mContext = InstrumentationRegistry.getContext();
         mActivity = mActivityRule.getActivity();
     }
 
@@ -1353,6 +1356,11 @@ public class PopupWindowTest {
 
         for (int i = 0; i < 2; i++) {
             final int orientation = orientationValues[i];
+            if (orientation == ActivityInfo.SCREEN_ORIENTATION_PORTRAIT
+                    && !hasDeviceFeature(PackageManager.FEATURE_SCREEN_PORTRAIT)) {
+                // skip test for devices not supporting portrait orientation
+                continue;
+            }
             mActivity.runOnUiThread(() ->
                     mActivity.setRequestedOrientation(orientation));
             mActivity.waitForConfigurationChanged();
@@ -1619,6 +1627,10 @@ public class PopupWindowTest {
         PopupWindow window = createPopupWindow();
         window.setContentView(content);
         return window;
+    }
+
+    private boolean hasDeviceFeature(final String requiredFeature) {
+        return mContext.getPackageManager().hasSystemFeature(requiredFeature);
     }
 
     private void showPopup(int resourceId) throws Throwable {
