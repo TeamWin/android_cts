@@ -44,12 +44,12 @@ import android.support.test.filters.SmallTest;
 import android.support.test.runner.AndroidJUnit4;
 import android.text.SpannedString;
 
+import com.android.compatibility.common.util.CddTest;
+
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
 import java.util.Locale;
-
-import com.android.compatibility.common.util.CddTest;
 
 @SmallTest
 @RunWith(AndroidJUnit4.class)
@@ -711,13 +711,13 @@ public class PaintTest {
         p.setAlpha(255);
         assertEquals(255, p.getAlpha());
 
-        // set value should between 0 and 255, so 266 is rounded to 10
+        // set value should between 0 and 255, ensure return value is always in range
         p.setAlpha(266);
-        assertEquals(10, p.getAlpha());
+        assertTrue(0 <= p.getAlpha() && p.getAlpha() <= 255);
 
-        // set value should between 0 and 255, so -20 is rounded to 236
+        // set value should between 0 and 255, ensure return value is always in range
         p.setAlpha(-20);
-        assertEquals(236, p.getAlpha());
+        assertTrue(0 <= p.getAlpha() && p.getAlpha() <= 255);
     }
 
     @Test
