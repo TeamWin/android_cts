@@ -18,6 +18,8 @@ package android.accessibilityservice.cts;
 
 import static android.accessibilityservice.cts.utils.AccessibilityEventFilterUtils
         .filterForEventType;
+import static android.accessibilityservice.cts.utils.ActivityLaunchUtils.findWindowByTitle;
+import static android.accessibilityservice.cts.utils.ActivityLaunchUtils.getActivityTitle;
 import static android.accessibilityservice.cts.utils.RunOnMainUtils.getOnMain;
 import static android.view.accessibility.AccessibilityNodeInfo.AccessibilityAction
         .ACTION_HIDE_TOOLTIP;
@@ -30,6 +32,11 @@ import static org.hamcrest.core.IsNull.notNullValue;
 import static org.hamcrest.Matchers.in;
 import static org.hamcrest.Matchers.not;
 import static org.junit.Assert.assertThat;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.argThat;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.timeout;
+import static org.mockito.Mockito.verify;
 
 import android.accessibilityservice.cts.activities.AccessibilityEndToEndActivity;
 import android.app.Activity;
@@ -55,10 +62,14 @@ import android.platform.test.annotations.Presubmit;
 import android.test.suitebuilder.annotation.MediumTest;
 import android.text.TextUtils;
 import android.util.Log;
+import android.view.MotionEvent;
 import android.view.View;
+import android.view.Window;
+import android.view.WindowManager;
 import android.view.accessibility.AccessibilityEvent;
 import android.view.accessibility.AccessibilityManager;
 import android.view.accessibility.AccessibilityNodeInfo;
+import android.view.accessibility.AccessibilityWindowInfo;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.ListView;
@@ -694,6 +705,51 @@ public class AccessibilityEndToEndTest extends
         assertThat(labelForNode, notNullValue());
         // Labeled node should indicate that it is labeled by the other one
         assertThat(labelForNode.getLabeledBy(), equalTo(editNode));
+    }
+
+    @MediumTest
+    public void testA11yActionTriggerMotionEventActionOutside() throws Exception {
+        final Instrumentation instrumentation = getInstrumentation();
+        final UiAutomation uiAutomation = getInstrumentation().getUiAutomation();
+        final View.OnTouchListener listener = mock(View.OnTouchListener.class);
+        final AccessibilityNodeInfo button = uiAutomation.getRootInActiveWindow()
+                .findAccessibilityNodeInfosByViewId(
+                        "android.accessibilityservice.cts:id/button")
+                .get(0);
+        final String title = getString(R.string.alert_title);
+
+        // Add a dialog that is watching outside touch
+        uiAutomation.executeAndWaitForEvent(
+                () -> instrumentation.runOnMainSync(() -> {
+                            final AlertDialog dialog = new AlertDialog.Builder(getActivity())
+                                    .setTitle(R.string.alert_title)
+                                    .setMessage(R.string.alert_message)
+                                    .create();
+                            final Window window = dialog.getWindow();
+                            window.addFlags(WindowManager.LayoutParams.FLAG_NOT_TOUCH_MODAL
+                                    | WindowManager.LayoutParams.FLAG_WATCH_OUTSIDE_TOUCH);
+                            window.getDecorView().setOnTouchListener(listener);
+                            window.setTitle(title);
+                            dialog.show();
+                    }),
+                (event) -> {
+                    // Ensure the dialog is shown over the activity
+                    final AccessibilityWindowInfo dialog = findWindowByTitle(
+                            uiAutomation, title);
+                    final AccessibilityWindowInfo activity = findWindowByTitle(
+                            uiAutomation, getActivityTitle(instrumentation, getActivity()));
+                    return (dialog != null && activity != null)
+                            && (dialog.getLayer() > activity.getLayer());
+                }, TIMEOUT_ASYNC_PROCESSING);
+
+        // Perform an action and wait for an event
+        uiAutomation.executeAndWaitForEvent(
+                () -> button.performAction(AccessibilityNodeInfo.ACTION_CLICK),
+                filterForEventType(AccessibilityEvent.TYPE_VIEW_CLICKED), TIMEOUT_ASYNC_PROCESSING);
+
+        // Make sure the MotionEvent.ACTION_OUTSIDE is received.
+        verify(listener, timeout(TIMEOUT_ASYNC_PROCESSING).atLeastOnce()).onTouch(any(View.class),
+                argThat(event -> event.getActionMasked() == MotionEvent.ACTION_OUTSIDE));
     }
 
     private static void assertPackageName(AccessibilityNodeInfo node, String packageName) {
