@@ -210,7 +210,7 @@ public class DragDropTest {
             long downTime = SystemClock.uptimeMillis();
             MotionEvent event = MotionEvent.obtain(downTime, downTime, action,
                     destLoc[0] + offset, destLoc[1] + offset, 1);
-            event.setSource(InputDevice.SOURCE_TOUCHSCREEN);
+            event.setSource(InputDevice.SOURCE_MOUSE);
             mAutomation.injectInputEvent(event, false);
         });
 
