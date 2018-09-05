@@ -61,20 +61,19 @@ public class InstantAppUserTest extends BaseHostJUnit4Test {
 
     private boolean mSupportsMultiUser;
     private int mPrimaryUserId;
-    private int[] mTestUser = new int[2];
+    private int mSecondaryUserId;
 
     @Before
     public void setUp() throws Exception {
-        // This test only runs when we have at least 3 users to work with
-        final int[] users = Utils.prepareMultipleUsers(getDevice(), 3);
-        mSupportsMultiUser = (users.length == 3);
+        // This test only runs when we have at least 2 users to work with
+        final int[] users = Utils.prepareMultipleUsers(getDevice(), 2);
+        mSupportsMultiUser = (users.length == 2);
         if (!mSupportsMultiUser) {
             return;
         }
         mPrimaryUserId = getDevice().getPrimaryUserId();
-        mTestUser[0] = users[1];
-        mTestUser[1] = users[2];
-        getDevice().switchUser(mTestUser[0]);
+        mSecondaryUserId = users[1];
+        getDevice().switchUser(mSecondaryUserId);
         uninstallTestPackages();
         installTestPackages();
     }
@@ -96,70 +95,70 @@ public class InstantAppUserTest extends BaseHostJUnit4Test {
         if (!mSupportsMultiUser) {
             return;
         }
-        runDeviceTestsAsUser(EPHEMERAL_1_PKG, TEST_CLASS, "testStartExposed01", mTestUser[0]);
+        runDeviceTestsAsUser(EPHEMERAL_1_PKG, TEST_CLASS, "testStartExposed01", mSecondaryUserId);
     }
     @Test
     public void testStartExposed02() throws Exception {
         if (!mSupportsMultiUser) {
             return;
         }
-        runDeviceTestsAsUser(EPHEMERAL_1_PKG, TEST_CLASS, "testStartExposed02", mTestUser[0]);
+        runDeviceTestsAsUser(EPHEMERAL_1_PKG, TEST_CLASS, "testStartExposed02", mSecondaryUserId);
     }
     @Test
     public void testStartExposed03() throws Exception {
         if (!mSupportsMultiUser) {
             return;
         }
-        runDeviceTestsAsUser(EPHEMERAL_1_PKG, TEST_CLASS, "testStartExposed03", mTestUser[0]);
+        runDeviceTestsAsUser(EPHEMERAL_1_PKG, TEST_CLASS, "testStartExposed03", mSecondaryUserId);
     }
     @Test
     public void testStartExposed04() throws Exception {
         if (!mSupportsMultiUser) {
             return;
         }
-        runDeviceTestsAsUser(EPHEMERAL_1_PKG, TEST_CLASS, "testStartExposed04", mTestUser[0]);
+        runDeviceTestsAsUser(EPHEMERAL_1_PKG, TEST_CLASS, "testStartExposed04", mSecondaryUserId);
     }
     @Test
     public void testStartExposed05() throws Exception {
         if (!mSupportsMultiUser) {
             return;
         }
-        runDeviceTestsAsUser(EPHEMERAL_1_PKG, TEST_CLASS, "testStartExposed05", mTestUser[0]);
+        runDeviceTestsAsUser(EPHEMERAL_1_PKG, TEST_CLASS, "testStartExposed05", mSecondaryUserId);
     }
     @Test
     public void testStartExposed06() throws Exception {
         if (!mSupportsMultiUser) {
             return;
         }
-        runDeviceTestsAsUser(EPHEMERAL_1_PKG, TEST_CLASS, "testStartExposed06", mTestUser[0]);
+        runDeviceTestsAsUser(EPHEMERAL_1_PKG, TEST_CLASS, "testStartExposed06", mSecondaryUserId);
     }
     @Test
     public void testStartExposed07() throws Exception {
         if (!mSupportsMultiUser) {
             return;
         }
-        runDeviceTestsAsUser(EPHEMERAL_1_PKG, TEST_CLASS, "testStartExposed07", mTestUser[0]);
+        runDeviceTestsAsUser(EPHEMERAL_1_PKG, TEST_CLASS, "testStartExposed07", mSecondaryUserId);
     }
     @Test
     public void testStartExposed08() throws Exception {
         if (!mSupportsMultiUser) {
             return;
         }
-        runDeviceTestsAsUser(EPHEMERAL_1_PKG, TEST_CLASS, "testStartExposed08", mTestUser[0]);
+        runDeviceTestsAsUser(EPHEMERAL_1_PKG, TEST_CLASS, "testStartExposed08", mSecondaryUserId);
     }
     @Test
     public void testStartExposed09() throws Exception {
         if (!mSupportsMultiUser) {
             return;
         }
-        runDeviceTestsAsUser(EPHEMERAL_1_PKG, TEST_CLASS, "testStartExposed09", mTestUser[0]);
+        runDeviceTestsAsUser(EPHEMERAL_1_PKG, TEST_CLASS, "testStartExposed09", mSecondaryUserId);
     }
     @Test
     public void testStartExposed10() throws Exception {
         if (!mSupportsMultiUser) {
             return;
         }
-        runDeviceTestsAsUser(EPHEMERAL_1_PKG, TEST_CLASS, "testStartExposed10", mTestUser[0]);
+        runDeviceTestsAsUser(EPHEMERAL_1_PKG, TEST_CLASS, "testStartExposed10", mSecondaryUserId);
     }
 
     @Test
@@ -169,8 +168,7 @@ public class InstantAppUserTest extends BaseHostJUnit4Test {
         }
         installInstantApp(USER_APK);
         runDeviceTestsAsUser(USER_TEST_PKG, TEST_CLASS, "testQueryInstant", mPrimaryUserId);
-        runDeviceTestsAsUser(USER_TEST_PKG, TEST_CLASS, "testQueryInstant", mTestUser[0]);
-        runDeviceTestsAsUser(USER_TEST_PKG, TEST_CLASS, "testQueryInstant", mTestUser[1]);
+        runDeviceTestsAsUser(USER_TEST_PKG, TEST_CLASS, "testQueryInstant", mSecondaryUserId);
     }
 
     @Test
@@ -180,8 +178,7 @@ public class InstantAppUserTest extends BaseHostJUnit4Test {
         }
         installApp(USER_APK);
         runDeviceTestsAsUser(USER_TEST_PKG, TEST_CLASS, "testQueryFull", mPrimaryUserId);
-        runDeviceTestsAsUser(USER_TEST_PKG, TEST_CLASS, "testQueryFull", mTestUser[0]);
-        runDeviceTestsAsUser(USER_TEST_PKG, TEST_CLASS, "testQueryFull", mTestUser[1]);
+        runDeviceTestsAsUser(USER_TEST_PKG, TEST_CLASS, "testQueryFull", mSecondaryUserId);
     }
 
     @Test
@@ -190,11 +187,9 @@ public class InstantAppUserTest extends BaseHostJUnit4Test {
             return;
         }
         installAppAsUser(USER_APK, mPrimaryUserId);
-        installExistingInstantAppAsUser(USER_PKG, mTestUser[0]);
-        installExistingFullAppAsUser(USER_PKG, mTestUser[1]);
+        installExistingInstantAppAsUser(USER_PKG, mSecondaryUserId);
         runDeviceTestsAsUser(USER_TEST_PKG, TEST_CLASS, "testQueryFull", mPrimaryUserId);
-        runDeviceTestsAsUser(USER_TEST_PKG, TEST_CLASS, "testQueryInstant", mTestUser[0]);
-        runDeviceTestsAsUser(USER_TEST_PKG, TEST_CLASS, "testQueryFull", mTestUser[1]);
+        runDeviceTestsAsUser(USER_TEST_PKG, TEST_CLASS, "testQueryInstant", mSecondaryUserId);
     }
 
     @Test
@@ -204,18 +199,11 @@ public class InstantAppUserTest extends BaseHostJUnit4Test {
         }
         installInstantApp(USER_APK);
         runDeviceTestsAsUser(USER_TEST_PKG, TEST_CLASS, "testQueryInstant", mPrimaryUserId);
-        runDeviceTestsAsUser(USER_TEST_PKG, TEST_CLASS, "testQueryInstant", mTestUser[0]);
-        runDeviceTestsAsUser(USER_TEST_PKG, TEST_CLASS, "testQueryInstant", mTestUser[1]);
+        runDeviceTestsAsUser(USER_TEST_PKG, TEST_CLASS, "testQueryInstant", mSecondaryUserId);
 
-        installExistingFullAppAsUser(USER_PKG, mTestUser[0]);
+        installExistingFullAppAsUser(USER_PKG, mSecondaryUserId);
         runDeviceTestsAsUser(USER_TEST_PKG, TEST_CLASS, "testQueryInstant", mPrimaryUserId);
-        runDeviceTestsAsUser(USER_TEST_PKG, TEST_CLASS, "testQueryFull", mTestUser[0]);
-        runDeviceTestsAsUser(USER_TEST_PKG, TEST_CLASS, "testQueryInstant", mTestUser[1]);
-
-        installExistingFullAppAsUser(USER_PKG, mTestUser[1]);
-        runDeviceTestsAsUser(USER_TEST_PKG, TEST_CLASS, "testQueryInstant", mPrimaryUserId);
-        runDeviceTestsAsUser(USER_TEST_PKG, TEST_CLASS, "testQueryFull", mTestUser[0]);
-        runDeviceTestsAsUser(USER_TEST_PKG, TEST_CLASS, "testQueryFull", mTestUser[1]);
+        runDeviceTestsAsUser(USER_TEST_PKG, TEST_CLASS, "testQueryFull", mSecondaryUserId);
     }
 
     @Test
@@ -225,18 +213,11 @@ public class InstantAppUserTest extends BaseHostJUnit4Test {
         }
         installInstantApp(USER_APK);
         runDeviceTestsAsUser(USER_TEST_PKG, TEST_CLASS, "testQueryInstant", mPrimaryUserId);
-        runDeviceTestsAsUser(USER_TEST_PKG, TEST_CLASS, "testQueryInstant", mTestUser[0]);
-        runDeviceTestsAsUser(USER_TEST_PKG, TEST_CLASS, "testQueryInstant", mTestUser[1]);
+        runDeviceTestsAsUser(USER_TEST_PKG, TEST_CLASS, "testQueryInstant", mSecondaryUserId);
 
-        replaceFullAppAsUser(USER_APK, mTestUser[0]);
+        replaceFullAppAsUser(USER_APK, mSecondaryUserId);
         runDeviceTestsAsUser(USER_TEST_PKG, TEST_CLASS, "testQueryInstant", mPrimaryUserId);
-        runDeviceTestsAsUser(USER_TEST_PKG, TEST_CLASS, "testQueryFull", mTestUser[0]);
-        runDeviceTestsAsUser(USER_TEST_PKG, TEST_CLASS, "testQueryInstant", mTestUser[1]);
-
-        replaceFullAppAsUser(USER_APK, mTestUser[1]);
-        runDeviceTestsAsUser(USER_TEST_PKG, TEST_CLASS, "testQueryInstant", mPrimaryUserId);
-        runDeviceTestsAsUser(USER_TEST_PKG, TEST_CLASS, "testQueryFull", mTestUser[0]);
-        runDeviceTestsAsUser(USER_TEST_PKG, TEST_CLASS, "testQueryFull", mTestUser[1]);
+        runDeviceTestsAsUser(USER_TEST_PKG, TEST_CLASS, "testQueryFull", mSecondaryUserId);
     }
 
     private void installTestPackages() throws Exception {
@@ -284,7 +265,6 @@ public class InstantAppUserTest extends BaseHostJUnit4Test {
     private void installExistingInstantAppAsUser(String packageName, int userId) throws Exception {
         final String installString =
                 "Package " + packageName + " installed for user: " + userId + "\n";
-        CompatibilityBuildHelper buildHelper = new CompatibilityBuildHelper(getBuild());
         assertEquals(installString, getDevice().executeShellCommand(
                 "cmd package install-existing --instant"
                         + " --user " + Integer.toString(userId)
@@ -294,7 +274,6 @@ public class InstantAppUserTest extends BaseHostJUnit4Test {
     private void installExistingFullAppAsUser(String packageName, int userId) throws Exception {
         final String installString =
                 "Package " + packageName + " installed for user: " + userId + "\n";
-        CompatibilityBuildHelper buildHelper = new CompatibilityBuildHelper(getBuild());
         assertEquals(installString, getDevice().executeShellCommand(
                 "cmd package install-existing --full"
                         + " --user " + Integer.toString(userId)
