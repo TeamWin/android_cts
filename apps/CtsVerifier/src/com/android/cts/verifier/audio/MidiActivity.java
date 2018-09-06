@@ -20,7 +20,9 @@ import java.io.IOException;
 import java.util.Timer;
 import java.util.TimerTask;
 
+import android.content.ComponentName;
 import android.content.Context;
+import android.content.Intent;
 import android.content.res.Resources;
 import android.content.pm.PackageManager;
 import android.media.midi.MidiDevice;
@@ -37,7 +39,7 @@ import android.view.View;
 import android.widget.Button;
 import android.widget.TextView;
 
-import com.android.cts.verifier.midilib.MidiEchoTestService;
+import com.android.cts.verifier.audio.midilib.MidiEchoTestService;
 import com.android.cts.verifier.PassFailButtons;
 
 import com.android.cts.verifier.R;  // needed to access resource in CTSVerifier project namespace.
@@ -106,6 +108,9 @@ public class MidiActivity extends PassFailButtons.Activity implements View.OnCli
     private TextView    mBTOutputDeviceLbl;
     private TextView    mBTTestStatusTxt;
 
+    private Intent mMidiServiceIntent;
+    private ComponentName mMidiService;
+
     public MidiActivity() {
         super();
     }
@@ -122,7 +127,10 @@ public class MidiActivity extends PassFailButtons.Activity implements View.OnCli
         mUSBTestBtn.setEnabled(mUSBTestModule.isTestReady());
 
         // Virtual MIDI
+        Log.i(TAG, "---- Show Virtual MIDI devices.");
+        Log.i(TAG, "---- Input:" + mVirtTestModule.getInputName());
         mVirtInputDeviceLbl.setText(mVirtTestModule.getInputName());
+        Log.i(TAG, "---- Output:" + mVirtTestModule.getOutputName());
         mVirtOutputDeviceLbl.setText(mVirtTestModule.getOutputName());
         mVirtTestBtn.setEnabled(mVirtTestModule.isTestReady());
 
@@ -211,6 +219,16 @@ public class MidiActivity extends PassFailButtons.Activity implements View.OnCli
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
 
+        if (DEBUG) {
+            Log.i(TAG, "---- onCreate()");
+        }
+
+        mMidiServiceIntent = new Intent(this, MidiEchoTestService.class);
+        mMidiService = startService(mMidiServiceIntent);
+        if (DEBUG) {
+            Log.i(TAG, "---- mMidiService instantiated:" + mMidiService);
+        }
+
         setContentView(R.layout.midi_activity);
 
         // Standard PassFailButtons.Activity initialization
@@ -255,6 +273,19 @@ public class MidiActivity extends PassFailButtons.Activity implements View.OnCli
 
         // Plug in device connect/disconnect callback
         mMidiManager.registerDeviceCallback(new MidiDeviceCallback(), new Handler(getMainLooper()));
+    }
+
+    @Override
+    protected void onPause () {
+        super.onPause();
+        if (DEBUG) {
+            Log.i(TAG, "---- onPause()");
+        }
+
+        boolean isFound = stopService(mMidiServiceIntent);
+        if (DEBUG) {
+            Log.i(TAG, "---- Stop Service: " + isFound);
+        }
     }
 
     /**
@@ -310,6 +341,8 @@ public class MidiActivity extends PassFailButtons.Activity implements View.OnCli
         public MidiOutputPort  mReceivePort;
 
         public void scanDevices(MidiDeviceInfo[] devInfos, int typeID) {
+            Log.i(TAG, "---- scanDevices() typeID: " + typeID);
+
             mSendDevInfo = null;
             mReceiveDevInfo = null;
             mSendPort = null;
@@ -324,7 +357,7 @@ public class MidiActivity extends PassFailButtons.Activity implements View.OnCli
                 if (devInfo.getType() == typeID && mSendDevInfo == null) {
                     mSendDevInfo = devInfo;
                 }
-
+ 
                 // Outputs?
                 int numOutPorts = devInfo.getOutputPortCount();
                 if (numOutPorts <= 0) {
@@ -333,6 +366,7 @@ public class MidiActivity extends PassFailButtons.Activity implements View.OnCli
                 if (devInfo.getType() == typeID && mReceiveDevInfo == null) {
                     mReceiveDevInfo = devInfo;
                 }
+
                 if (mSendDevInfo != null && mReceiveDevInfo != null) {
                     break;  // we have an in and out device, so we can stop scanning
                 }
@@ -340,12 +374,10 @@ public class MidiActivity extends PassFailButtons.Activity implements View.OnCli
 
             if (DEBUG) {
                 if (mSendDevInfo != null) {
-                    Log.i(TAG, "---- mSendDevInfo: " +
-                        mSendDevInfo.getProperties().getString(MidiDeviceInfo.PROPERTY_NAME));
+                    Log.i(TAG, "---- mSendDevInfo: " + mSendDevInfo);
                 }
                 if (mReceiveDevInfo != null) {
-                    Log.i(TAG, "---- mReceiveDevInfo: " +
-                        mReceiveDevInfo.getProperties().getString(MidiDeviceInfo.PROPERTY_NAME));
+                    Log.i(TAG, "---- mReceiveDevInfo: " + mReceiveDevInfo);
                 }
             }
         }

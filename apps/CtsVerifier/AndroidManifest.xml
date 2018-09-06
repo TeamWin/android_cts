@@ -3109,11 +3109,8 @@
                 android:value="android.hardware.usb.host:android.software.midi" />
         </activity>
 
-        <service android:name="com.android.cts.verifier.midilib.MidiEchoTestService"
-                android:permission="android.permission.BIND_MIDI_DEVICE_SERVICE">
-            <intent-filter>
-                <action android:name="android.media.midi.MidiDeviceService" />
-            </intent-filter>
+        <service android:name="com.android.cts.verifier.audio.midilib.MidiEchoTestService"
+            android:permission="android.permission.BIND_MIDI_DEVICE_SERVICE">
             <meta-data android:name="android.media.midi.MidiDeviceService"
                 android:resource="@xml/echo_device_info" />
         </service>

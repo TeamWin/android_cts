@@ -44,12 +44,12 @@ import android.support.test.filters.SmallTest;
 import android.support.test.runner.AndroidJUnit4;
 import android.text.SpannedString;
 
+import com.android.compatibility.common.util.CddTest;
+
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
 import java.util.Locale;
-
-import com.android.compatibility.common.util.CddTest;
 
 @SmallTest
 @RunWith(AndroidJUnit4.class)
@@ -711,13 +711,13 @@ public class PaintTest {
         p.setAlpha(255);
         assertEquals(255, p.getAlpha());
 
-        // set value should between 0 and 255, so 266 is rounded to 10
+        // set value should between 0 and 255, ensure return value is always in range
         p.setAlpha(266);
-        assertEquals(10, p.getAlpha());
+        assertTrue(0 <= p.getAlpha() && p.getAlpha() <= 255);
 
-        // set value should between 0 and 255, so -20 is rounded to 236
+        // set value should between 0 and 255, ensure return value is always in range
         p.setAlpha(-20);
-        assertEquals(236, p.getAlpha());
+        assertTrue(0 <= p.getAlpha() && p.getAlpha() <= 255);
     }
 
     @Test
@@ -1720,5 +1720,43 @@ public class PaintTest {
         assertFalse(p1.equalsForTextMeasurement(p2));
         p1.setTypeface(p2.getTypeface());
         assertTrue(p1.equalsForTextMeasurement(p2));
+    }
+
+    @Test
+    public void testWordSpacing() {
+        Paint p = new Paint();
+        assertEquals(0.0f, p.getWordSpacing(), 0.0f);  // The default value is 0.
+        p.setWordSpacing(10.0f);
+        assertEquals(10.0f, p.getWordSpacing(), 0.0f);
+        p.setWordSpacing(20.0f);
+        assertEquals(20.0f, p.getWordSpacing(), 0.0f);
+    }
+
+    @Test
+    public void testStrikeThruPosition_notCrashes() {
+        // We can't expect any values of strike-through position in CTS.
+        // Just make sure calling that method doesn't crash the app.
+        new Paint().getStrikeThruPosition();
+    }
+
+    @Test
+    public void testStrikeThruThickness_notCrashes() {
+        // We can't expect any values of strike-through thickness in CTS.
+        // Just make sure calling that method doesn't crash the app.
+        new Paint().getStrikeThruThickness();
+    }
+
+    @Test
+    public void testUnderlinePosition_notCrashes() {
+        // We can't expect any values of underline position in CTS.
+        // Just make sure calling that method doesn't crash the app.
+        new Paint().getUnderlinePosition();
+    }
+
+    @Test
+    public void testUnderlineThickness_notCrashes() {
+        // We can't expect any values of underline thickness in CTS.
+        // Just make sure calling that method doesn't crash the app.
+        new Paint().getUnderlineThickness();
     }
 }

@@ -387,9 +387,9 @@ public class StateListDrawableTest {
         stateList.addState(stateSet2, drawable2);
         stateList.addState(stateSet3, drawable3);
 
-        assertEquals(0, stateList.getStateDrawableIndex(stateSet1));
-        assertEquals(1, stateList.getStateDrawableIndex(stateSet2));
-        assertEquals(2, stateList.getStateDrawableIndex(stateSet3));
+        assertEquals(0, stateList.findStateDrawableIndex(stateSet1));
+        assertEquals(1, stateList.findStateDrawableIndex(stateSet2));
+        assertEquals(2, stateList.findStateDrawableIndex(stateSet3));
     }
 
     @Test
