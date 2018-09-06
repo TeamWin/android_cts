@@ -18,6 +18,7 @@ include $(CLEAR_VARS)
 
 LOCAL_MODULE := CtsUnofficialApisUsageTestCases
 LOCAL_MODULE_TAGS := tests
+LOCAL_MODULE_CLASS := JAVA_LIBRARIES
 LOCAL_COMPATIBILITY_SUITE := cts vts general-tests
 
 LOCAL_SRC_FILES := $(call all-java-files-under, src)
@@ -50,6 +51,19 @@ dest :=
 
 # API 27 is added since some support libraries are using old APIs
 LOCAL_JAVA_RESOURCE_FILES += prebuilts/sdk/27/public/api/android.txt
+
+# org.apache.http.legacy is considered as approved APIs
+LOCAL_JAVA_RESOURCE_FILES += \
+    $(call local-intermediates-dir)/org-apache-http-legacy-current.txt \
+    $(call local-intermediates-dir)/org-apache-http-legacy-system-current.txt
+
+$(call local-intermediates-dir)/org-apache-http-legacy-current.txt\
+: external/apache-http/api/current.txt
+	cp $< $@
+
+$(call local-intermediates-dir)/org-apache-http-legacy-system-current.txt\
+: external/apache-http/api/system-current.txt
+	cp $< $@
 
 include $(BUILD_HOST_JAVA_LIBRARY)
 
