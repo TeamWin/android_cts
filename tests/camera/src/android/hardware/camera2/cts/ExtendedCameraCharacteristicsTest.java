@@ -67,7 +67,7 @@ public class ExtendedCameraCharacteristicsTest extends AndroidTestCase {
 
     private CameraManager mCameraManager;
     private List<CameraCharacteristics> mCharacteristics;
-    private String[] mIds;
+    private String[] mIds; // include both standalone camera IDs and "hidden" physical camera IDs
     private CameraErrorCollector mCollector;
 
     private static final Size FULLHD = new Size(1920, 1080);
@@ -120,15 +120,29 @@ public class ExtendedCameraCharacteristicsTest extends AndroidTestCase {
     @Override
     protected void setUp() throws Exception {
         super.setUp();
-        mIds = mCameraManager.getCameraIdList();
+        String[] ids = mCameraManager.getCameraIdList();
+        ArrayList<String> allIds = new ArrayList<String>();
         mCharacteristics = new ArrayList<>();
         mCollector = new CameraErrorCollector();
-        for (int i = 0; i < mIds.length; i++) {
-            CameraCharacteristics props = mCameraManager.getCameraCharacteristics(mIds[i]);
-            assertNotNull(String.format("Can't get camera characteristics from: ID %s", mIds[i]),
+        for (int i = 0; i < ids.length; i++) {
+            CameraCharacteristics props = mCameraManager.getCameraCharacteristics(ids[i]);
+            assertNotNull(String.format("Can't get camera characteristics from: ID %s", ids[i]),
                     props);
+            allIds.add(ids[i]);
             mCharacteristics.add(props);
+
+            for (String physicalId : props.getPhysicalCameraIds()) {
+                if (!Arrays.asList(ids).contains(physicalId) &&
+                        !allIds.contains(physicalId)) {
+                    allIds.add(physicalId);
+                    props = mCameraManager.getCameraCharacteristics(physicalId);
+                    mCharacteristics.add(props);
+                }
+            }
         }
+
+        mIds = new String[allIds.size()];
+        allIds.toArray(mIds);
     }
 
     @Override
@@ -1446,6 +1460,7 @@ public class ExtendedCameraCharacteristicsTest extends AndroidTestCase {
     public void testLogicalCameraCharacteristics() throws Exception {
         int counter = 0;
         List<String> cameraIdList = Arrays.asList(mIds);
+        String[] publicIds = mCameraManager.getCameraIdList();
 
         for (CameraCharacteristics c : mCharacteristics) {
             int[] capabilities = CameraTestUtils.getValueNotNull(
@@ -1471,10 +1486,14 @@ public class ExtendedCameraCharacteristicsTest extends AndroidTestCase {
                             String.format("Physical camera id %s shouldn't be the same as logical"
                                     + " camera id %s", physicalCameraId, mIds[counter]),
                             physicalCameraId != mIds[counter]);
-                    assertTrue(
-                            String.format("Physical camera id %s should be in available camera ids",
-                                    physicalCameraId),
-                            cameraIdList.contains(physicalCameraId));
+
+                    if (Build.VERSION.SDK_INT < Build.VERSION_CODES.Q) {
+                        assertTrue(
+                                String.format(
+                                        "Physical camera id %s should be in available camera ids",
+                                        physicalCameraId),
+                                Arrays.asList(publicIds).contains(physicalCameraId));
+                    }
 
                     //validation for depth static metadata of physical cameras
                     CameraCharacteristics pc =
