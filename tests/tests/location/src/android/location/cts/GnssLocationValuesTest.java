@@ -65,6 +65,13 @@ public class GnssLocationValuesTest extends GnssTestCase {
    * only test them if the hardware is later than 2017
    */
   public void testAccuracyFields() throws Exception {
+    // Checks if GPS hardware feature is present, skips test (pass) if not,
+    // and hard asserts that Location/GPS (Provider) is turned on if is Cts Verifier.
+    if (!TestMeasurementUtil.canTestRunOnCurrentDevice(mTestLocationManager,
+            TAG, MIN_HARDWARE_YEAR_MEASUREMENTS_REQUIRED, isCtsVerifierTest())) {
+        return;
+    }
+
     SoftAssert softAssert = new SoftAssert(TAG);
     mTestLocationManager.requestLocationUpdates(mLocationListener);
     boolean success = mLocationListener.await();
@@ -124,6 +131,13 @@ public class GnssLocationValuesTest extends GnssTestCase {
    * check whether all fields' value make sense
    */
   public void testLocationRegularFields() throws Exception {
+    // Checks if GPS hardware feature is present, skips test (pass) if not,
+    // and hard asserts that Location/GPS (Provider) is turned on if is Cts Verifier.
+    if (!TestMeasurementUtil.canTestRunOnCurrentDevice(mTestLocationManager,
+            TAG, MIN_HARDWARE_YEAR_MEASUREMENTS_REQUIRED, isCtsVerifierTest())) {
+        return;
+    }
+
     mTestLocationManager.requestLocationUpdates(mLocationListener);
     boolean success = mLocationListener.await();
     SoftAssert.failOrWarning(isMeasurementTestStrict(),
