@@ -24,6 +24,60 @@
     Bug: 114804753 android.intent.action.DISMISS_TIMER (public in API 28)
     Bug: 117590943 android.intent.action.View
          Fixed in GMSCore v14.7.68.
+    Bug: 67109014 This intent will be fixed in P.
+    android.intent.action.EMERGENCY_STATE_CHANGED
+    Bug: 67109014 This intent will be fixed in P.
+    android.intent.action.USER_ADDED
+    Bug: 67109014 This intent will be fixed in P.
+    android.intent.action.OMADM_BROWSER_SET_HOMEPAGE
+    Bug: 67109014 This intent will be fixed in P.
+    android.intent.action.OMADM_BROWSER_GET_HOMEPAGE
+    Bug: 67109014 This intent will be fixed in P.
+    android.intent.action.CSC_BROWSER_SET_HOMEPAGE
+    Bug: 67109014 This intent will be fixed in P.
+    android.intent.action.CSC_BROWSER_SET_SEARCH_ENGINE
+    Bug: 67109014 This intent will be fixed in P.
+    android.intent.action.STK_BROWSER_GET_HOMEPAGE2
+    Bug: 67109014 This intent will be fixed in P.
+    android.intent.action.SBROWSER_QR_SCAN_RESULT
+    Bug: 67109014 This intent will be fixed in P.
+    android.intent.action.BCS_REQUEST
+    Bug: 67109014 This intent will be fixed in P.
+    android.intent.action.STK_BROWSER_GET_HOMEPAGE
+    Bug: 67109014 This intent will be fixed in P.
+    android.intent.action.SBROWSER_VIEW_FOR_EXTERNAL_APP
+    Bug: 67109014 This intent will be fixed in P.
+    android.intent.action.CHAMELEON_BROWSER_SET_HOMEPAGE
+    Bug: 67109014 This intent will be fixed in P.
+    android.intent.action.USER_ADDED
+    Bug: 67109014 This intent will be fixed in P.
+    android.intent.action.PEDOMETER_SETTING_SYNC
+    Bug: 67109014 This intent will be fixed in P.
+    android.intent.action.OMADM_BROWSER_SET_HOMEPAGE
+    Bug: 67109014 This intent will be fixed in P.
+    android.intent.action.OMADM_BROWSER_GET_HOMEPAGE
+    Bug: 67109014 This intent will be fixed in P.
+    android.intent.action.CSC_BROWSER_SET_HOMEPAGE
+    Bug: 67109014 This intent will be fixed in P.
+    android.intent.action.CSC_BROWSER_SET_SEARCH_ENGINE
+    Bug: 67109014 This intent will be fixed in P.
+    android.intent.action.STK_BROWSER_GET_HOMEPAGE2
+    Bug: 67109014 This intent will be fixed in P.
+    android.intent.action.SBROWSER_QR_SCAN_RESULT
+    Bug: 67109014 This intent will be fixed in P.
+    android.intent.action.BCS_REQUEST
+    Bug: 67109014 This intent will be fixed in P.
+    android.intent.action.STK_BROWSER_GET_HOMEPAGE
+    Bug: 67109014 This intent will be fixed in P.
+    android.intent.action.SBROWSER_VIEW_FOR_EXTERNAL_APP
+    Bug: 67109014 This intent will be fixed in P.
+    android.intent.action.CHAMELEON_BROWSER_SET_HOMEPAGE
+    Bug: 67109014 This intent will be fixed in P.
+    android.intent.action.STOP_NETWORK_BOOSTER
+    Bug: 67109014 This intent will be fixed in P.
+    android.intent.action.START_NETWORK_BOOSTER
+    Bug: 67109014 Under discussion for P, need whitelisting for O.
+    android.intent.action.BADGE_COUNT_UPDATE
 -->
 <dynamicConfig>
     <entry key ="intent_whitelist">
@@ -34,5 +88,32 @@
       <value>android.intent.action.ACTION_AIRPLANE_MODE_CHANGED</value>
       <value>android.intent.action.DISMISS_TIMER</value>
       <value>android.intent.action.View</value>
+      <value>android.intent.action.EMERGENCY_STATE_CHANGED</value>
+      <value>android.intent.action.USER_ADDED</value>
+      <value>android.intent.action.OMADM_BROWSER_SET_HOMEPAGE</value>
+      <value>android.intent.action.OMADM_BROWSER_GET_HOMEPAGE</value>
+      <value>android.intent.action.CSC_BROWSER_SET_HOMEPAGE</value>
+      <value>android.intent.action.CSC_BROWSER_SET_SEARCH_ENGINE</value>
+      <value>android.intent.action.STK_BROWSER_GET_HOMEPAGE2</value>
+      <value>android.intent.action.SBROWSER_QR_SCAN_RESULT</value>
+      <value>android.intent.action.BCS_REQUEST</value>
+      <value>android.intent.action.STK_BROWSER_GET_HOMEPAGE</value>
+      <value>android.intent.action.SBROWSER_VIEW_FOR_EXTERNAL_APP</value>
+      <value>android.intent.action.CHAMELEON_BROWSER_SET_HOMEPAGE</value>
+      <value>android.intent.action.USER_ADDED</value>
+      <value>android.intent.action.PEDOMETER_SETTING_SYNC</value>
+      <value>android.intent.action.OMADM_BROWSER_SET_HOMEPAGE</value>
+      <value>android.intent.action.OMADM_BROWSER_GET_HOMEPAGE</value>
+      <value>android.intent.action.CSC_BROWSER_SET_HOMEPAGE</value>
+      <value>android.intent.action.CSC_BROWSER_SET_SEARCH_ENGINE</value>
+      <value>android.intent.action.STK_BROWSER_GET_HOMEPAGE2</value>
+      <value>android.intent.action.SBROWSER_QR_SCAN_RESULT</value>
+      <value>android.intent.action.BCS_REQUEST</value>
+      <value>android.intent.action.STK_BROWSER_GET_HOMEPAGE</value>
+      <value>android.intent.action.SBROWSER_VIEW_FOR_EXTERNAL_APP</value>
+      <value>android.intent.action.CHAMELEON_BROWSER_SET_HOMEPAGE</value>
+      <value>android.intent.action.STOP_NETWORK_BOOSTER</value>
+      <value>android.intent.action.START_NETWORK_BOOSTER</value>
+      <value>android.intent.action.BADGE_COUNT_UPDATE</value>
     </entry>
 </dynamicConfig>
