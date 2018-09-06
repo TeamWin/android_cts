@@ -525,10 +525,13 @@ public class ManagedProfileTest extends BaseDevicePolicyTest {
         if (!mHasFeature) {
             return;
         }
+
+        // Storage permission shouldn't be granted, we check if missing permissions are respected
+        // in ContentTest#testSecurity.
+        installAppAsUser(INTENT_SENDER_APK, false /* grantPermissions */, mParentUserId);
+        installAppAsUser(INTENT_SENDER_APK, false /* grantPermissions */, mProfileUserId);
         installAppAsUser(INTENT_RECEIVER_APK, mParentUserId);
-        installAppAsUser(INTENT_SENDER_APK, mParentUserId);
         installAppAsUser(INTENT_RECEIVER_APK, mProfileUserId);
-        installAppAsUser(INTENT_SENDER_APK, mProfileUserId);
 
         // Test from parent to managed
         runDeviceTestsAsUser(MANAGED_PROFILE_PKG, ".CrossProfileUtils",
