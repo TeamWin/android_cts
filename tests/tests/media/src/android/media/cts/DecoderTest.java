@@ -702,10 +702,10 @@ public class DecoderTest extends MediaPlayerTestBase {
 
     public void testVp9HdrStaticMetadata() throws Exception {
         final String staticInfo =
-                "00 d0 84 80 3e c2 33 c4  86 4c 1d b8 0b 13 3d 42" +
-                "40 e8 03 64 00 e8 03 2c  01                     " ;
+                "00 d0 84 80 3e c2 33 c4  86 4c 1d b8 0b 13 3d 42 " +
+                "40 e8 03 64 00 e8 03 2c  01                      " ;
         testHdrStaticMetadata(R.raw.video_1280x720_vp9_hdr_static_3mbps,
-                staticInfo, true /*metadataInContainer*/);
+                staticInfo, true /*metadataInContainer*/, "testVp9HdrStaticMetadata");
     }
 
     public void testH265HDR10StaticMetadata() throws Exception {
@@ -716,13 +716,14 @@ public class DecoderTest extends MediaPlayerTestBase {
         // Media frameworks puts the display primaries in RGB order, here we verify the three
         // primaries are indeed in this order and fail otherwise.
         final String staticInfo =
-                "00 d0 84 80 3e c2 33 c4  86 4c 1d b8 0b 13 3d 42" +
-                "40 e8 03 00 00 e8 03 90  01                     " ;
+                "00 d0 84 80 3e c2 33 c4  86 4c 1d b8 0b 13 3d 42 " +
+                "40 e8 03 00 00 e8 03 90  01                      " ;
         testHdrStaticMetadata(R.raw.video_1280x720_hevc_hdr10_static_3mbps,
-                staticInfo, false /*metadataInContainer*/);
+                staticInfo, false /*metadataInContainer*/, "testH265HDR10StaticMetadata");
     }
 
-    private void testHdrStaticMetadata(int res, String pattern, boolean metadataInContainer)
+    private void testHdrStaticMetadata(
+            int res, String pattern, boolean metadataInContainer, String testName)
             throws Exception {
         AssetFileDescriptor infd = null;
         MediaExtractor extractor = null;
@@ -746,7 +747,8 @@ public class DecoderTest extends MediaPlayerTestBase {
             assertTrue("Extractor failed to extract video track",
                     format != null && trackIndex >= 0);
             if (metadataInContainer) {
-                verifyHdrStaticInfo("Extractor failed to extract static info", format, pattern);
+                verifyHdrStaticInfo("Extractor failed to extract static info",
+                        format, pattern, metadataInContainer, testName);
             }
 
             extractor.selectTrack(trackIndex);
@@ -798,7 +800,7 @@ public class DecoderTest extends MediaPlayerTestBase {
 
                         codec.releaseOutputBuffer(index,  false);
                         verifyHdrStaticInfo("Output buffer has wrong static info",
-                                bufferFormat, pattern);
+                                bufferFormat, pattern, metadataInContainer, testName);
                         mOutputReceived = true;
                         latch.countDown();
                     }
@@ -834,7 +836,7 @@ public class DecoderTest extends MediaPlayerTestBase {
                     public void onOutputFormatChanged(MediaCodec codec, MediaFormat format) {
                         Log.i(TAG, "got output format: " + format);
                         verifyHdrStaticInfo("Output format has wrong static info",
-                                format, pattern);
+                                format, pattern, metadataInContainer, testName);
                     }
                 });
                 decoder.configure(format, surface, null/*crypto*/, 0/*flags*/);
@@ -857,13 +859,32 @@ public class DecoderTest extends MediaPlayerTestBase {
         }
     }
 
-    private void verifyHdrStaticInfo(String reason, MediaFormat format, String pattern) {
+    private void verifyHdrStaticInfo(
+            String reason, MediaFormat format, String pattern,
+            boolean failOnMismatch, String testName) {
         ByteBuffer staticMetadataBuffer = format.containsKey("hdr-static-info") ?
                 format.getByteBuffer("hdr-static-info") : null;
         assertTrue(reason + ": empty",
                 staticMetadataBuffer != null && staticMetadataBuffer.remaining() > 0);
-        assertTrue(reason + ": mismatch",
-                Arrays.equals(loadByteArrayFromString(pattern), staticMetadataBuffer.array()));
+
+        if (!Arrays.equals(loadByteArrayFromString(pattern), staticMetadataBuffer.array())) {
+            // log mismatch
+            DeviceReportLog log = new DeviceReportLog("CtsMediaTestCases", testName);
+
+            log.addValue("reason", reason + ": mismatch", ResultType.NEUTRAL, ResultUnit.NONE);
+            StringBuilder sb = new StringBuilder();
+            for (byte b : staticMetadataBuffer.array()) {
+                sb.append(String.format("%02X ", b));
+            }
+            log.addValue("metadata_actual", sb.toString(), ResultType.NEUTRAL, ResultUnit.NONE);
+            log.addValue("metadata_expected", pattern, ResultType.NEUTRAL, ResultUnit.NONE);
+            log.setSummary("result", 0, ResultType.HIGHER_BETTER, ResultUnit.COUNT);
+            log.submit(getInstrumentation());
+
+            if (failOnMismatch) {
+                fail(reason + ": mismatch");
+            }
+        }
     }
 
     // helper to load byte[] from a String
