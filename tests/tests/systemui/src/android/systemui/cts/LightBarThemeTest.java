@@ -17,6 +17,7 @@
 package android.systemui.cts;
 
 import static android.support.test.InstrumentationRegistry.getInstrumentation;
+import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
@@ -35,8 +36,7 @@ import org.junit.runner.RunWith;
 /**
  * Tests for light system bars that set the flag via theme.
  *
- * mmma cts/tests/tests/systemui
- * cts-tradefed run commandAndExit cts-dev --module CtsSystemUiTestCases --test android.systemui.cts.LightBarThemeTest --disable-reboot --skip-device-info --skip-all-system-status-check --skip-preconditions
+ * atest CtsSystemUiTestCases:LightBarThemeTest
  */
 @RunWith(AndroidJUnit4.class)
 public class LightBarThemeTest extends LightBarTestBase {
@@ -60,31 +60,13 @@ public class LightBarThemeTest extends LightBarTestBase {
     }
 
     @Test
-    public void testNavigationBarDivider() throws Exception {
-        PackageManager pm = getInstrumentation().getContext().getPackageManager();
-        if (pm.hasSystemFeature(PackageManager.FEATURE_AUTOMOTIVE)) {
-            // Car navigation is not transparent
-            return;
-        }
-
-        if (!hasVirtualNavigationBar()) {
-            // No virtual navigation bar, so no effect.
-            return;
-        }
+    public void testNavigationBarDividerColor() throws Exception {
+        assumeHasColorNavigationBar();
 
         // Wait until the activity is fully visible
         mDevice.waitForIdle();
 
-        final int dividerColor = getInstrumentation().getContext().getColor(
-                R.color.navigationBarDividerColor);
-        final Bitmap bitmap = takeNavigationBarScreenshot(mActivityRule.getActivity());
-        int[] pixels = new int[bitmap.getHeight() * bitmap.getWidth()];
-        bitmap.getPixels(pixels, 0, bitmap.getWidth(), 0, 0, bitmap.getWidth(), bitmap.getHeight());
-        for (int col = 0; col < bitmap.getWidth(); col++) {
-            if (dividerColor != pixels[col]) {
-                dumpBitmap(bitmap);
-                fail("Invalid color exptected=" + dividerColor + " actual=" + pixels[col]);
-            }
-        }
+        checkNavigationBarDivider(mActivityRule.getActivity(),
+                getInstrumentation().getContext().getColor(R.color.navigationBarDividerColor));
     }
 }
