@@ -100,7 +100,7 @@ public class TestUtils {
      * @param context {@link Context} object
      * @return {@link NetworkInfo}
      */
-    public static NetworkInfo getActiveNetworkInfo(Context context) {
+    private static NetworkInfo getActiveNetworkInfo(Context context) {
         ConnectivityManager cm = getConnectivityManager(context);
         if (cm != null) {
             return cm.getActiveNetworkInfo();
@@ -131,15 +131,14 @@ public class TestUtils {
      * Changes the setting {@code airplane_mode_on} to 1 if {@code enableAirplaneMode}
      * is {@code true}. Otherwise, it is set to 0.
      *
-     * Waits for certain time duration for network connections to turn on/off based on
+     * <p>Waits for a certain time duration for network connections to turn on/off based on
      * {@code enableAirplaneMode}.
      */
     public static void setAirplaneModeOn(Context context,
             boolean enableAirplaneMode) throws InterruptedException {
         Log.i(TAG, "Setting airplane_mode_on to " + enableAirplaneMode);
-        SystemUtil.runShellCommand("settings put global airplane_mode_on "
-                + (enableAirplaneMode ? 1 : 0));
-        SystemUtil.runShellCommand("am broadcast -a android.intent.action.AIRPLANE_MODE");
+        SystemUtil.runShellCommand("cmd connectivity airplane-mode "
+                + (enableAirplaneMode ? "enable" : "disable"));
 
         // Wait for a few seconds until the airplane mode changes take effect. The airplane mode on
         // state and the WiFi/cell connected state are opposite. So, we wait while they are the
@@ -151,6 +150,8 @@ public class TestUtils {
         int dataConnectionCheckCount = DATA_CONNECTION_CHECK_COUNT;
         while (enableAirplaneMode == isConnectedToWifiOrCellular(context)) {
             if (--dataConnectionCheckCount <= 0) {
+                Log.w(TAG, "Airplane mode " + (enableAirplaneMode ? "on" : "off")
+                        + " setting did not take effect on WiFi/cell connected state.");
                 return;
             }
             Thread.sleep(DATA_CONNECTION_CHECK_INTERVAL_MS);
