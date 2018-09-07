@@ -21,7 +21,7 @@ LOCAL_PRIVATE_PLATFORM_APIS := true
 
 LOCAL_STATIC_JAVA_LIBRARIES := \
     cts-core-test-runner \
-    core-libart-intra-test \
+    core-libart+oj-intra-test \
     core-simple-intra-test
 
 # Don't include this package in any target
