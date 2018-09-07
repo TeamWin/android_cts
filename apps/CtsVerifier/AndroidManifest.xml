@@ -3068,6 +3068,9 @@
             <meta-data
                 android:name="test_required_features"
                 android:value="android.hardware.telephony"/>
+            <meta-data
+                android:name="test_required_configs"
+                android:value="config_voice_capable"/>
         </activity>
 
         <receiver android:name=".voicemail.VoicemailBroadcastReceiver">
@@ -3090,6 +3093,9 @@
             <meta-data
                 android:name="test_required_features"
                 android:value="android.hardware.telephony"/>
+            <meta-data
+                android:name="test_required_configs"
+                android:value="config_voice_capable"/>
         </activity>
 
         <activity
@@ -3106,6 +3112,9 @@
             <meta-data
                 android:name="test_required_features"
                 android:value="android.hardware.telephony"/>
+            <meta-data
+                android:name="test_required_configs"
+                android:value="config_voice_capable"/>
         </activity>
 
         <service android:name=".dialer.DialerCallTestService"
@@ -3130,6 +3139,9 @@
             <meta-data
                 android:name="test_required_features"
                 android:value="android.hardware.telephony"/>
+            <meta-data
+                android:name="test_required_configs"
+                android:value="config_voice_capable"/>
         </activity>
 
         <activity
@@ -3146,6 +3158,9 @@
             <meta-data
                 android:name="test_required_features"
                 android:value="android.hardware.telephony"/>
+            <meta-data
+                android:name="test_required_configs"
+                android:value="config_voice_capable"/>
         </activity>
 
         <activity
@@ -3162,6 +3177,9 @@
             <meta-data
                 android:name="test_required_features"
                 android:value="android.hardware.telephony"/>
+            <meta-data
+                android:name="test_required_configs"
+                android:value="config_voice_capable"/>
         </activity>
 
         <activity
@@ -3178,6 +3196,9 @@
             <meta-data
                 android:name="test_required_features"
                 android:value="android.hardware.telephony"/>
+            <meta-data
+                android:name="test_required_configs"
+                android:value="config_voice_capable"/>
         </activity>
 
         <service
@@ -3222,6 +3243,9 @@
             <meta-data
                 android:name="test_required_features"
                 android:value="android.hardware.telephony"/>
+            <meta-data
+                android:name="test_required_configs"
+                android:value="config_voice_capable"/>
         </activity>
 
         <activity
@@ -3238,6 +3262,9 @@
             <meta-data
                 android:name="test_required_features"
                 android:value="android.hardware.telephony"/>
+            <meta-data
+                android:name="test_required_configs"
+                android:value="config_voice_capable"/>
             </activity>
 
         <activity
@@ -3254,6 +3281,9 @@
             <meta-data
                 android:name="test_required_features"
                 android:value="android.hardware.telephony"/>
+            <meta-data
+                android:name="test_required_configs"
+                android:value="config_voice_capable"/>
         </activity>
 
         <activity
@@ -3270,6 +3300,9 @@
             <meta-data
                 android:name="test_required_features"
                 android:value="android.hardware.telephony"/>
+            <meta-data
+                android:name="test_required_configs"
+                android:value="config_voice_capable"/>
         </activity>
 
         <service android:name="com.android.cts.verifier.telecom.CtsConnectionService"
