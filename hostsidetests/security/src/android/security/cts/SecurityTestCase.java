@@ -36,6 +36,7 @@ import java.util.Map;
 import java.util.HashMap;
 import com.android.ddmlib.MultiLineReceiver;
 import com.android.ddmlib.Log;
+import com.android.ddmlib.TimeoutException;
 
 public class SecurityTestCase extends DeviceTestCase {
 
@@ -45,8 +46,8 @@ public class SecurityTestCase extends DeviceTestCase {
 
     private static final long LOW_MEMORY_DEVICE_THRESHOLD_KB = 1024 * 1024; // 1GB
     private boolean isLowMemoryDevice = false;
-    private static Map<ITestDevice, OomCatcher> oomCatchers = new HashMap<>();
-    private static Map<ITestDevice, Long> totalMemories = new HashMap<>();
+    private static Map<String, OomCatcher> oomCatchers = new HashMap<>();
+    private static Map<String, Long> totalMemories = new HashMap<>();
     private enum OomBehavior {
         FAIL_AND_LOG, // normal behavior
         PASS_AND_LOG, // skip tests that oom low memory devices
@@ -80,10 +81,10 @@ public class SecurityTestCase extends DeviceTestCase {
         //     Specifically time when app framework starts
 
         // Singleton for caching device TotalMem to avoid and adb shell for every test.
-        Long totalMemory = totalMemories.get(getDevice());
+        Long totalMemory = totalMemories.get(getDevice().getSerialNumber());
         if (totalMemory == null) {
             totalMemory = getMemTotal(getDevice());
-            totalMemories.put(getDevice(), totalMemory);
+            totalMemories.put(getDevice().getSerialNumber(), totalMemory);
         }
         isLowMemoryDevice = totalMemory < LOW_MEMORY_DEVICE_THRESHOLD_KB;
 
@@ -102,11 +103,15 @@ public class SecurityTestCase extends DeviceTestCase {
         }
 
         // Singleton OOM detection in separate persistent threads for each device.
-        OomCatcher oomCatcher = oomCatchers.get(getDevice());
+        OomCatcher oomCatcher = oomCatchers.get(getDevice().getSerialNumber());
         if (oomCatcher == null || !oomCatcher.isAlive()) {
             oomCatcher = new OomCatcher();
-            oomCatchers.put(getDevice(), oomCatcher);
+            oomCatchers.put(getDevice().getSerialNumber(), oomCatcher);
             oomCatcher.start();
+            synchronized(this) {
+                // Wait for the oom catcher thread to start listening.
+                this.wait(5000);
+            }
         }
     }
 
@@ -176,6 +181,8 @@ public class SecurityTestCase extends DeviceTestCase {
                 }
             }
         }
+
+        stopOomCatcher(getDevice().getSerialNumber());
     }
 
     public void assertMatches(String pattern, String input) throws Exception {
@@ -215,7 +222,18 @@ public class SecurityTestCase extends DeviceTestCase {
         }
     }
 
+    public static void stopOomCatcher(String serial) {
+       OomCatcher oomCatcher = oomCatchers.get(serial);
+        if (oomCatcher != null && oomCatcher.isAlive()) {
+            oomCatcher.interrupt();
+        }
+    }
+
     class OomCatcher extends Thread {
+
+        OomCatcher() {
+            setDaemon(true);
+        }
 
         @Override
         public void run() {
@@ -223,8 +241,14 @@ public class SecurityTestCase extends DeviceTestCase {
                 private boolean isCancelled = false;
 
                 public void processNewLines(String[] lines) {
+                    synchronized(SecurityTestCase.this) {
+                        // Let the main thread know that the listener has started so it can resume.
+                        // Immediately after logcat is started there is data in the buffer so no
+                        // waiting is expected.
+                        SecurityTestCase.this.notify();
+                    }
                     for (String line : lines) {
-                        if (Pattern.matches(".*lowmemorykiller.*", line)) {
+                        if (Pattern.matches(".*Low memory detected.*", line)) {
                             // low memory detected, reboot device to clear memory and pass test
                             isCancelled = true;
                             Log.logAndDisplay(Log.LogLevel.INFO, LOG_TAG,
@@ -233,7 +257,8 @@ public class SecurityTestCase extends DeviceTestCase {
                                 oomDetected = true;
                             }
                             try {
-                                getDevice().rebootUntilOnline();
+                                AdbUtils.runCommandLine("reboot", getDevice());
+                                getDevice().waitForDeviceOnline(60 * 2 * 1000); // 2 minutes
                                 updateKernelStartTime();
                             } catch (Exception e) {
                                 Log.e(LOG_TAG, e.toString());
@@ -249,8 +274,13 @@ public class SecurityTestCase extends DeviceTestCase {
             };
 
             try {
+                AdbUtils.runCommandLine("am force-stop com.android.cts.oomcatcher", getDevice());
                 AdbUtils.runCommandLine("logcat -c", getDevice());
-                getDevice().executeShellCommand("logcat", rcvr);
+                AdbUtils.runCommandLine("am start com.android.cts.oomcatcher/.OomCatcher",
+                        getDevice());
+                getDevice().executeShellCommand("logcat OomCatcher:V *:S", rcvr);
+            } catch (InterruptedException e) {
+                // thread stopped.
             } catch (Exception e) {
                 Log.e(LOG_TAG, e.toString());
             }
