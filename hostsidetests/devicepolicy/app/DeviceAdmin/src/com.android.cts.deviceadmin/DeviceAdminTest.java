@@ -18,6 +18,7 @@ package com.android.cts.deviceadmin;
 import android.app.admin.DevicePolicyManager;
 import android.content.pm.PackageInfo;
 import android.content.pm.PackageManager;
+import android.os.Build;
 
 /**
  * Device admin device side tests.
@@ -35,7 +36,8 @@ public class DeviceAdminTest extends BaseDeviceAdminTest {
 
         final PackageInfo pi = pm.getPackageInfo(mContext.getPackageName(), /* flags =*/ 0);
 
-        assertEquals(getTargetApiLevel(), pi.applicationInfo.targetSdkVersion);
+        assertTrue(getTargetApiLevel() == pi.applicationInfo.targetSdkVersion ||
+                Build.VERSION_CODES.CUR_DEVELOPMENT == pi.applicationInfo.targetSdkVersion);
     }
 
     public void testGetMaximumFailedPasswordsForWipe() {
