@@ -30,15 +30,28 @@ import android.autofillservice.cts.InstrumentedAutoFillService.FillRequest;
 import android.autofillservice.cts.InstrumentedAutoFillService.SaveRequest;
 import android.content.ComponentName;
 import android.os.Bundle;
+import android.service.autofill.CharSequenceTransformation;
+import android.service.autofill.CustomDescription;
 import android.service.autofill.SaveInfo;
+import android.support.test.uiautomator.By;
+import android.support.test.uiautomator.UiObject2;
+import android.util.Log;
+import android.view.autofill.AutofillId;
+import android.widget.RemoteViews;
 
+import org.junit.Ignore;
 import org.junit.Test;
+
+import java.util.regex.Pattern;
 
 /**
  * Test case for the senario where a login screen is split in multiple activities.
  */
 public class MultiScreenLoginTest
         extends AutoFillServiceTestCase.AutoActivityLaunch<UsernameOnlyActivity> {
+
+    private static final String TAG = "MultiScreenLoginTest";
+    private static final Pattern MATCH_ALL = Pattern.compile("^(.*)$");
 
     private UsernameOnlyActivity mActivity;
 
@@ -301,8 +314,116 @@ public class MultiScreenLoginTest
         assertThat(componentCurrent).isEqualTo(passwordActivity.getComponentName());
     }
 
+    @Test
+    public void testSaveBothFieldsCustomDescription_differentIds() throws Exception {
+        saveBothFieldsCustomDescription(false);
+    }
+
+    @Ignore("TODO(b/113593220): need new API to set context id")
+    @Test
+    public void testSaveBothFieldsCustomDescription_sameIds() throws Exception {
+        saveBothFieldsCustomDescription(true);
+    }
+
+    private void saveBothFieldsCustomDescription(boolean sameAutofillId) throws Exception {
+        // Set service
+        enableService();
+
+        // Set ids
+        final AutofillId usernameId = mActivity.getUsernameAutofillId();
+        final AutofillId passwordId = sameAutofillId ? usernameId
+                : mActivity.getAutofillManager().getNextAutofillId();
+        mActivity.setPasswordAutofillId(passwordId);
+        Log.d(TAG, "usernameId: " + usernameId + ", passwordId: " + passwordId);
+
+        // First handle username...
+
+        // Set expectations.
+        sReplier.addResponse(new CannedFillResponse.Builder()
+                .setSaveInfoFlags(SaveInfo.FLAG_DELAY_SAVE)
+                .build());
+
+        // Trigger autofill
+        mActivity.focusOnUsername();
+        final FillRequest fillRequest1 = sReplier.getNextFillRequest();
+        assertThat(fillRequest1.contexts.size()).isEqualTo(1);
+        final ComponentName component1 = fillRequest1.structure.getActivityComponent();
+        assertThat(component1).isEqualTo(mActivity.getComponentName());
+        mUiBot.assertNoDatasetsEver();
+
+        // Trigger what would be save...
+        mActivity.setUsername("dude");
+        mActivity.next();
+        mUiBot.assertSaveNotShowing();
+
+        // ...now rinse and repeat for password
+
+        // Get the activity
+        final PasswordOnlyActivity passwordActivity = AutofillTestWatcher
+                .getActivity(PasswordOnlyActivity.class);
+
+
+        // Set expectations.
+        final CharSequenceTransformation usernameTrans =
+                new CharSequenceTransformation.Builder(usernameId, MATCH_ALL, "$1").build();
+        final CharSequenceTransformation passwordTrans =
+                new CharSequenceTransformation.Builder(passwordId, MATCH_ALL, "$1").build();
+        sReplier.addResponse(new CannedFillResponse.Builder()
+                .setRequiredSavableAutofillIds(SAVE_DATA_TYPE_USERNAME | SAVE_DATA_TYPE_PASSWORD,
+                        passwordId)
+                .setCustomDescription(newCustomDescriptionWithHiddenFields()
+                        .addChild(R.id.username, usernameTrans)
+                        .addChild(R.id.password, passwordTrans)
+                        .build())
+                .build());
+
+        // Trigger autofill
+        passwordActivity.focusOnPassword();
+        final FillRequest fillRequest2 = sReplier.getNextFillRequest();
+        assertThat(fillRequest2.contexts.size()).isEqualTo(2);
+
+        final ComponentName component2 = fillRequest2.structure.getActivityComponent();
+        assertThat(component2).isEqualTo(passwordActivity.getComponentName());
+        mUiBot.assertNoDatasetsEver();
+
+        // Trigger save...
+        passwordActivity.setPassword("sweet");
+        passwordActivity.login();
+
+        // ...and assert UI
+        final UiObject2 saveUi = mUiBot.assertSaveShowing(
+                SaveInfo.NEGATIVE_BUTTON_STYLE_CANCEL, null, SAVE_DATA_TYPE_USERNAME,
+                SAVE_DATA_TYPE_PASSWORD);
+
+        assertVisible(saveUi, ID_USERNAME_LABEL, "User:");
+        assertVisible(saveUi, ID_USERNAME, "dude");
+        assertVisible(saveUi, ID_PASSWORD_LABEL, "Pass:");
+        assertVisible(saveUi, ID_PASSWORD, "sweet");
+    }
+
     // TODO(b/113281366): add test cases for more scenarios such as:
     // - make sure that activity not marked with keepAlive is not sent in the 2nd request
     // - somehow verify that the first activity's session is gone
     // - WebView
+
+    // TODO: move to UiBot / reuse ?
+    private UiObject2 assertVisible(UiObject2 saveUi, String resourceId, String expectedText)
+            throws Exception {
+        final UiObject2 view = mUiBot.waitForObject(saveUi, By.res(mPackageName, resourceId),
+                Timeouts.UI_TIMEOUT);
+        assertWithMessage("wrong text for view '%s'", resourceId).that(view.getText())
+                .isEqualTo(expectedText);
+        return view;
+    }
+
+    // TODO: move code below to a CustomDescriptionHelper if ever used by other tests
+    private static final String ID_USERNAME_LABEL = "username_label";
+    private static final String ID_USERNAME = "username";
+    private static final String ID_PASSWORD_LABEL = "password_label";
+    private static final String ID_PASSWORD = "password";
+
+    private CustomDescription.Builder newCustomDescriptionWithHiddenFields() {
+        return new CustomDescription.Builder(new RemoteViews(mPackageName,
+                R.layout.custom_description_with_username_and_password));
+    }
 }

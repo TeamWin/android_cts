@@ -176,6 +176,7 @@ public class OnClickActionTest
         return assertVisible(saveUi, ID_HIDE, "HIDE");
     }
 
+    // TODO: move to UiBot / reuse ?
     private UiObject2 assertVisible(UiObject2 saveUi, String resourceId, String expectedText)
             throws Exception {
         final UiObject2 view = mUiBot.waitForObject(saveUi, By.res(mPackageName, resourceId),
