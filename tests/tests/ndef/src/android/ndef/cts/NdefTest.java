@@ -24,6 +24,8 @@ import android.nfc.NdefMessage;
 import android.nfc.NdefRecord;
 import android.nfc.FormatException;
 
+import com.android.compatibility.common.util.CddTest;
+
 import junit.framework.TestCase;
 
 /**
@@ -32,6 +34,7 @@ import junit.framework.TestCase;
  * hardware is required, so these API's are mandatory even on Android
  * devices without NFC hardware.
  */
+@CddTest(requirement="7.4.4/C-0-1")
 public class NdefTest extends TestCase {
     static final Charset ASCII = Charset.forName("US-ASCII");
     static final Charset UTF8 = Charset.forName("UTF-8");
@@ -86,6 +89,7 @@ public class NdefTest extends TestCase {
                 new byte[] {1,2,3}, new byte[] {4,5,6}, new byte[] {7,8,9})).hashCode());
     }
 
+    @CddTest(requirement="7.4.4/C-0-1")
     public void testInvalidParsing() throws FormatException {
         final byte[][] invalidNdefMessages = {
             {},                                    // too short
@@ -115,6 +119,7 @@ public class NdefTest extends TestCase {
         }
     }
 
+    @CddTest(requirement="7.4.4/C-0-1")
     public void testValidParsing() throws FormatException {
         // short record
         assertEquals(new NdefMessage(new NdefRecord(NdefRecord.TNF_EMPTY, null, null, null)),
@@ -307,6 +312,7 @@ public class NdefTest extends TestCase {
                 (byte) 0x6f, (byte) 0x6d}));
     }
 
+    @CddTest(requirement="7.4.4/C-0-1")
     public void testCreateUri() {
         assertEquals(new byte[] {
                 (byte)0xD1, 1, 8, 'U', (byte)0x01, 'n', 'f', 'c', '.', 'c', 'o', 'm'},
@@ -327,6 +333,7 @@ public class NdefTest extends TestCase {
                 new NdefMessage(NdefRecord.createUri("\u00A2")).toByteArray());
     }
 
+    @CddTest(requirement="7.4.4/C-0-1")
     public void testCreateMime() {
         assertEquals(
                 new NdefRecord(NdefRecord.TNF_MIME_MEDIA, "text/plain".getBytes(ASCII), null,
@@ -385,6 +392,7 @@ public class NdefTest extends TestCase {
                 NdefRecord.createExternal("A.b", "C!", null));
     }
 
+    @CddTest(requirement="7.4.4/C-0-1")
     public void testCreateApplicationRecord() throws FormatException {
         NdefMessage m;
         NdefRecord r;
@@ -431,6 +439,7 @@ public class NdefTest extends TestCase {
         assertEquals("com.foo.bar".getBytes(), r.getPayload());
     }
 
+    @CddTest(requirement="7.4.4/C-0-1")
     public void testToByteArray() throws FormatException {
         NdefRecord r;
 
@@ -480,6 +489,7 @@ public class NdefTest extends TestCase {
                 1,2,3,4,5,6,7,8,1,2,3,4,5,6,7,8,1,2,3,4,5,6,7,8,1,2,3,4,5,6,7,8,})).toByteArray());
     }
 
+    @CddTest(requirement="7.4.4/C-0-1")
     public void testToUri() {
         // absolute uri
         assertEquals(Uri.parse("http://www.android.com"),
@@ -516,6 +526,7 @@ public class NdefTest extends TestCase {
         assertEquals(null, new NdefRecord(NdefRecord.TNF_EMPTY, null, null, null).toUri());
     }
 
+    @CddTest(requirement="7.4.4/C-0-1")
     public void testToMimeType() {
         assertEquals(null, NdefRecord.createUri("http://www.android.com").toMimeType());
         assertEquals(null, new NdefRecord(NdefRecord.TNF_EMPTY, null, null, null).toMimeType());
