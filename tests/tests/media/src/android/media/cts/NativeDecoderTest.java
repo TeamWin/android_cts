@@ -49,9 +49,12 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
+import java.util.HashMap;
 import java.util.Set;
 import java.util.UUID;
 import java.util.zip.Adler32;
+import org.apache.http.Header;
+import org.apache.http.HttpRequest;
 
 @AppModeFull(reason = "TODO: evaluate and port to instant")
 public class NativeDecoderTest extends MediaPlayerTestBase {
@@ -123,11 +126,40 @@ public class NativeDecoderTest extends MediaPlayerTestBase {
         testExtractor(foo.getAssetUrl("noiseandchirps.ogg"));
         testExtractor(foo.getAssetUrl("ringer.mp3"));
         testExtractor(foo.getRedirectingAssetUrl("ringer.mp3"));
+
+        String[] keys = new String[] {"header0", "header1"};
+        String[] values = new String[] {"value0", "value1"};
+        testExtractor(foo.getAssetUrl("noiseandchirps.ogg"), keys, values);
+        HttpRequest req = foo.getLastRequest("noiseandchirps.ogg");
+        for (int i = 0; i < keys.length; i++) {
+            String key = keys[i];
+            String value = values[i];
+            Header[] header = req.getHeaders(key);
+            assertTrue("expecting " + key + ":" + value + ", saw " + Arrays.toString(header),
+                    header.length == 1 && header[0].getValue().equals(value));
+        }
+
+        String[] emptyArray = new String[0];
+        testExtractor(foo.getAssetUrl("noiseandchirps.ogg"), emptyArray, emptyArray);
     }
 
     private void testExtractor(String path) throws Exception {
-        int[] jsizes = getSampleSizes(path);
-        int[] nsizes = getSampleSizesNativePath(path);
+        testExtractor(path, null, null);
+    }
+
+    /**
+     * |keys| and |values| should be arrays of the same length.
+     *
+     * If keys or values is null, test {@link MediaExtractor#setDataSource(String)}
+     * and NDK counter part, i.e. set data source without headers.
+     *
+     * If keys or values is zero length, test {@link MediaExtractor#setDataSource(String, Map))}
+     * and NDK counter part with null headers.
+     *
+     */
+    private void testExtractor(String path, String[] keys, String[] values) throws Exception {
+        int[] jsizes = getSampleSizes(path, keys, values);
+        int[] nsizes = getSampleSizesNativePath(path, keys, values);
 
         compareArrays("different samplesizes", jsizes, nsizes);
     }
@@ -144,9 +176,24 @@ public class NativeDecoderTest extends MediaPlayerTestBase {
         compareArrays("different samples", jsizes, nsizes);
     }
 
-    private static int[] getSampleSizes(String path) throws IOException {
+    private static int[] getSampleSizes(String path, String[] keys, String[] values) throws IOException {
         MediaExtractor ex = new MediaExtractor();
-        ex.setDataSource(path);
+        if (keys == null || values == null) {
+            ex.setDataSource(path);
+        } else {
+            Map<String, String> headers = null;
+            int numheaders = Math.min(keys.length, values.length);
+            for (int i = 0; i < numheaders; i++) {
+                if (headers == null) {
+                    headers = new HashMap<>();
+                }
+                String key = keys[i];
+                String value = values[i];
+                headers.put(key, value);
+            }
+            ex.setDataSource(path, headers);
+        }
+
         return getSampleSizes(ex);
     }
 
@@ -204,7 +251,7 @@ public class NativeDecoderTest extends MediaPlayerTestBase {
     }
 
     private static native int[] getSampleSizesNative(int fd, long offset, long size);
-    private static native int[] getSampleSizesNativePath(String path);
+    private static native int[] getSampleSizesNativePath(String path, String[] keys, String[] values);
 
     public void testExtractorFileDurationNative() throws Exception {
         int res = R.raw.video_1280x720_mp4_h264_1000kbps_25fps_aac_stereo_128kbps_44100hz;
