@@ -66,6 +66,8 @@ public class ProfileManager {
             "</PeripheralProfile>" +
           "<PeripheralProfile ProfileName=\"mir\" ProfileDescription=\"Reference USB Dongle\" ProductName=\"USB-Audio - USB Audio\">" +
             "<OutputDevInfo ChanCounts=\"2\" ChanPosMasks=\"12\" ChanIndexMasks=\"3\" Encodings=\"4\" SampleRates=\"48000\" />" +
+            "<InputDevInfo ChanCounts=\"1,2\" ChanPosMasks=\"12,16\" ChanIndexMasks=\"3\" Encodings=\"4\" SampleRates=\"48000\" />" +
+            "<ButtonInfo HasBtnA=\"1\" HasBtnB=\"1\" HasBtnC=\"1\" HasBtnD=\"1\" />" +
           "</PeripheralProfile>" +
             "<PeripheralProfile ProfileName=\"HTC Dongle\" ProfileDescription=\"Type-C to 3.5mm Headphone\" ProductName=\"USB-Audio - HTC Type-C to 3.5mm Headphone J\">" +
                 "<OutputDevInfo ChanCounts=\"2\" ChanPosMasks=\"12\" ChanIndexMasks=\"3\" Encodings=\"4\" SampleRates=\"48000\" />" +
