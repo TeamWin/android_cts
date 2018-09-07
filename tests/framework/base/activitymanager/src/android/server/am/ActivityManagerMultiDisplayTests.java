@@ -41,6 +41,7 @@ import static android.server.am.Components.NON_RESIZEABLE_ACTIVITY;
 import static android.server.am.Components.RESIZEABLE_ACTIVITY;
 import static android.server.am.Components.SHOW_WHEN_LOCKED_ATTR_ACTIVITY;
 import static android.server.am.Components.TEST_ACTIVITY;
+import static android.server.am.Components.TOAST_ACTIVITY;
 import static android.server.am.Components.VIRTUAL_DISPLAY_ACTIVITY;
 import static android.server.am.StateLogger.logAlways;
 import static android.server.am.StateLogger.logE;
@@ -1844,7 +1845,7 @@ public class ActivityManagerMultiDisplayTests extends ActivityManagerDisplayTest
             tapOnDisplay(VirtualDisplayHelper.WIDTH / 2, VirtualDisplayHelper.HEIGHT / 2,
                     newDisplay.mId);
             waitAndAssertTopResumedActivity(VIRTUAL_DISPLAY_ACTIVITY, newDisplay.mId,
-                "Virtual display activity should be top resumed when tapped.");
+                    "Virtual display activity should be top resumed when tapped.");
             mAmWmState.assertFocusedActivity("Activity on second display must be focused.",
                     VIRTUAL_DISPLAY_ACTIVITY);
         }
@@ -1893,6 +1894,28 @@ public class ActivityManagerMultiDisplayTests extends ActivityManagerDisplayTest
             // Ensure that the IME is hidden in virtual display.
             testImeWindowVisibilityForVirtualDisplay(false /* visible */,
                     newDisplay.mId /* displayId */);
+        }
+    }
+
+    /**
+     * Tests that toast works on a secondary display.
+     */
+    @Test
+    public void testSecondaryDisplayShowToast() throws Exception {
+        try (final VirtualDisplaySession virtualDisplaySession = new VirtualDisplaySession()){
+            final ActivityDisplay newDisplay =
+                    virtualDisplaySession.setPublicDisplay(true).createDisplay();
+            final String TOAST_NAME = "Toast";
+            launchActivityOnDisplay(TOAST_ACTIVITY, newDisplay.mId);
+            waitAndAssertTopResumedActivity(TOAST_ACTIVITY, newDisplay.mId,
+                    "Activity launched on external display must be resumed");
+            mAmWmState.waitForWithWmState((state) -> state.containsWindow(TOAST_NAME),
+                    "Waiting for toast window to show");
+
+            assertTrue("Toast window must be shown",
+                    mAmWmState.getWmState().containsWindow(TOAST_NAME));
+            assertTrue("Toast window must be visible",
+                    mAmWmState.getWmState().isWindowVisible(TOAST_NAME));
         }
     }
 

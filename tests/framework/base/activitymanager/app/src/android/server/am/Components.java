@@ -98,6 +98,7 @@ public class Components extends ComponentsBase {
     public static final ComponentName SPLASHSCREEN_ACTIVITY = component("SplashscreenActivity");
     public static final ComponentName SWIPE_REFRESH_ACTIVITY = component("SwipeRefreshActivity");
     public static final ComponentName TEST_ACTIVITY = component("TestActivity");
+    public static final ComponentName TOAST_ACTIVITY = component("ToastActivity");
     public static final ComponentName TOP_ACTIVITY = component("TopActivity");
     public static final ComponentName TEST_ACTIVITY_WITH_SAME_AFFINITY =
             component("TestActivityWithSameAffinity");
