@@ -755,12 +755,26 @@ final class Helper {
             final String resourceId = resourceIds[i];
             final ViewNode node = nodeResolver.apply(resourceId);
             if (node == null) {
-                throw new AssertionError("No node with savable resourceId " + resourceId);
+                throw new AssertionError("No node with resourceId " + resourceId);
             }
             requiredIds[i] = node.getAutofillId();
 
         }
         return requiredIds;
+    }
+
+    /**
+     * Get an {@link AutofillId} mapped from the {@code structure} node with the given
+     * {@code resourceId}.
+     */
+    static AutofillId getAutofillId(Function<String, ViewNode> nodeResolver, String resourceId) {
+        if (resourceId == null) return null;
+
+        final ViewNode node = nodeResolver.apply(resourceId);
+        if (node == null) {
+            throw new AssertionError("No node with resourceId " + resourceId);
+        }
+        return node.getAutofillId();
     }
 
     /**

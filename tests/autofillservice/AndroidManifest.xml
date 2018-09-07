@@ -77,6 +77,7 @@
             </intent-filter>
         </activity>
         <activity android:name=".WebViewActivity"/>
+        <activity android:name=".WebViewMultiScreenLoginActivity"/>
         <activity android:name=".TrampolineWelcomeActivity"/>
         <activity android:name=".AttachedContextActivity"/>
         <activity android:name=".DialogLauncherActivity" >

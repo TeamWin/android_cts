@@ -15,8 +15,11 @@
  */
 package android.autofillservice.cts;
 
+import static android.autofillservice.cts.CustomDescriptionHelper.newCustomDescriptionWithHiddenFields;
 import static android.autofillservice.cts.Helper.ID_PASSWORD;
+import static android.autofillservice.cts.Helper.ID_PASSWORD_LABEL;
 import static android.autofillservice.cts.Helper.ID_USERNAME;
+import static android.autofillservice.cts.Helper.ID_USERNAME_LABEL;
 import static android.autofillservice.cts.Helper.assertTextAndValue;
 import static android.autofillservice.cts.Helper.findNodeByResourceId;
 import static android.service.autofill.SaveInfo.SAVE_DATA_TYPE_PASSWORD;
@@ -31,13 +34,10 @@ import android.autofillservice.cts.InstrumentedAutoFillService.SaveRequest;
 import android.content.ComponentName;
 import android.os.Bundle;
 import android.service.autofill.CharSequenceTransformation;
-import android.service.autofill.CustomDescription;
 import android.service.autofill.SaveInfo;
-import android.support.test.uiautomator.By;
 import android.support.test.uiautomator.UiObject2;
 import android.util.Log;
 import android.view.autofill.AutofillId;
-import android.widget.RemoteViews;
 
 import org.junit.Ignore;
 import org.junit.Test;
@@ -395,35 +395,14 @@ public class MultiScreenLoginTest
                 SaveInfo.NEGATIVE_BUTTON_STYLE_CANCEL, null, SAVE_DATA_TYPE_USERNAME,
                 SAVE_DATA_TYPE_PASSWORD);
 
-        assertVisible(saveUi, ID_USERNAME_LABEL, "User:");
-        assertVisible(saveUi, ID_USERNAME, "dude");
-        assertVisible(saveUi, ID_PASSWORD_LABEL, "Pass:");
-        assertVisible(saveUi, ID_PASSWORD, "sweet");
+        mUiBot.assertChildText(saveUi, ID_USERNAME_LABEL, "User:");
+        mUiBot.assertChildText(saveUi, ID_USERNAME, "dude");
+        mUiBot.assertChildText(saveUi, ID_PASSWORD_LABEL, "Pass:");
+        mUiBot.assertChildText(saveUi, ID_PASSWORD, "sweet");
     }
 
     // TODO(b/113281366): add test cases for more scenarios such as:
     // - make sure that activity not marked with keepAlive is not sent in the 2nd request
     // - somehow verify that the first activity's session is gone
     // - WebView
-
-    // TODO: move to UiBot / reuse ?
-    private UiObject2 assertVisible(UiObject2 saveUi, String resourceId, String expectedText)
-            throws Exception {
-        final UiObject2 view = mUiBot.waitForObject(saveUi, By.res(mPackageName, resourceId),
-                Timeouts.UI_TIMEOUT);
-        assertWithMessage("wrong text for view '%s'", resourceId).that(view.getText())
-                .isEqualTo(expectedText);
-        return view;
-    }
-
-    // TODO: move code below to a CustomDescriptionHelper if ever used by other tests
-    private static final String ID_USERNAME_LABEL = "username_label";
-    private static final String ID_USERNAME = "username";
-    private static final String ID_PASSWORD_LABEL = "password_label";
-    private static final String ID_PASSWORD = "password";
-
-    private CustomDescription.Builder newCustomDescriptionWithHiddenFields() {
-        return new CustomDescription.Builder(new RemoteViews(mPackageName,
-                R.layout.custom_description_with_username_and_password));
-    }
 }

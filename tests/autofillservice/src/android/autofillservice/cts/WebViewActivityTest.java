@@ -34,19 +34,12 @@ import android.view.KeyEvent;
 import android.view.ViewStructure.HtmlInfo;
 import android.view.autofill.AutofillManager;
 
-import org.junit.AfterClass;
-import org.junit.BeforeClass;
 import org.junit.Ignore;
 import org.junit.Test;
 
-public class WebViewActivityTest
-        extends AutoFillServiceTestCase.AutoActivityLaunch<WebViewActivity> {
+public class WebViewActivityTest extends AbstractWebViewTestCase<WebViewActivity> {
 
     private static final String TAG = "WebViewActivityTest";
-
-    // TODO(b/64951517): WebView currently does not trigger the autofill callbacks when values are
-    // set using accessibility.
-    private static final boolean INJECT_EVENTS = true;
 
     private WebViewActivity mActivity;
 
@@ -71,22 +64,6 @@ public class WebViewActivityTest
                 mActivity = getActivity();
             }
         };
-    }
-
-    @BeforeClass
-    public static void setReplierMode() {
-        sReplier.setIdMode(IdMode.HTML_NAME);
-    }
-
-    @AfterClass
-    public static void resetReplierMode() {
-        sReplier.setIdMode(IdMode.RESOURCE_ID);
-    }
-
-    // TODO(b/80317628): remove this method once the real root of the issue is fixed...
-    @Override
-    protected int getNumberRetries() {
-        return 5;
     }
 
     @Test
