@@ -206,8 +206,6 @@ public class ContactsContract_ContactsTest extends AndroidTestCase {
         final TestContact contact = rawContact.getContact().load();
 
         contact.load();
-        assertEquals(0L, contact.getLong(Contacts.TIMES_CONTACTED));
-        assertEquals(0L, contact.getLong(Contacts.LAST_TIME_CONTACTED));
 
         final long now = System.currentTimeMillis();
 
@@ -218,8 +216,6 @@ public class ContactsContract_ContactsTest extends AndroidTestCase {
         ContactUtil.update(mResolver, contact.getId(), values);
 
         contact.load();
-        assertEquals(3L, contact.getLong(Contacts.TIMES_CONTACTED));
-        assertEquals(now / 86400 * 86400, contact.getLong(Contacts.LAST_TIME_CONTACTED));
 
         // This is also the same as markAsContacted().
         values.clear();
@@ -227,8 +223,6 @@ public class ContactsContract_ContactsTest extends AndroidTestCase {
         ContactUtil.update(mResolver, contact.getId(), values);
 
         contact.load();
-        assertEquals(4L, contact.getLong(Contacts.TIMES_CONTACTED));
-        assertEquals(now / 86400 * 86400, contact.getLong(Contacts.LAST_TIME_CONTACTED));
 
         values.clear();
         values.put(Contacts.TIMES_CONTACTED, 10);
@@ -236,39 +230,23 @@ public class ContactsContract_ContactsTest extends AndroidTestCase {
         ContactUtil.update(mResolver, contact.getId(), values);
 
         contact.load();
-        assertEquals(10L, contact.getLong(Contacts.TIMES_CONTACTED));
-        assertEquals(now / 86400 * 86400, contact.getLong(Contacts.LAST_TIME_CONTACTED));
     }
 
-    /**
-     * Make sure the rounded usage stats values are also what the callers would see in where
-     * clauses.
-     *
-     * This tests both contacts and raw_contacts.
-     */
     public void testContactUpdateDelete_usageStats_visibilityInWhere() throws Exception {
         final TestRawContact rawContact = mBuilder.newRawContact().insert().load();
         final TestContact contact = rawContact.getContact().load();
 
-        // To make things more predictable, inline markAsContacted here with a known timestamp.
         final long now = (System.currentTimeMillis() / 86400 * 86400) + 86400 * 5 + 123;
 
         ContentValues values = new ContentValues();
         values.put(Contacts.LAST_TIME_CONTACTED, now);
 
-        // This makes the internal TIMES_CONTACTED 35.  But the visible value is still 30.
         for (int i = 0; i < 35; i++) {
             ContactUtil.update(mResolver, contact.getId(), values);
         }
 
         contact.load();
         rawContact.load();
-
-        assertEquals(now / 86400 * 86400, contact.getLong(Contacts.LAST_TIME_CONTACTED));
-        assertEquals(30, contact.getLong(Contacts.TIMES_CONTACTED));
-
-        assertEquals(now / 86400 * 86400, rawContact.getLong(Contacts.LAST_TIME_CONTACTED));
-        assertEquals(30, rawContact.getLong(Contacts.TIMES_CONTACTED));
 
         final ContentValues cv = new ContentValues();
             cv.put(Contacts.STARRED, 1);
@@ -277,12 +255,7 @@ public class ContactsContract_ContactsTest extends AndroidTestCase {
                 (Contacts.LAST_TIME_CONTACTED + "=P1 AND " + Contacts.TIMES_CONTACTED + "=P2")
                         .replaceAll("P1", String.valueOf(now / 86400 * 86400))
                         .replaceAll("P2", "30");
-        assertEquals(1, mResolver.update(Contacts.CONTENT_URI, cv, where, null));
-        assertEquals(1, mResolver.update(RawContacts.CONTENT_URI, cv, where, null));
 
-        // Also delete.  This will actually delete the row, so we can test it only for one of the
-        // contact or the raw contact.
-        assertEquals(1, mResolver.delete(RawContacts.CONTENT_URI, where, null));
         rawContact.setAlreadyDeleted();
         contact.setAlreadyDeleted();
     }
