@@ -18,6 +18,7 @@ package android.graphics.fonts;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 
@@ -135,6 +136,8 @@ public class FontTest {
             assertEquals(path, italic, font.isItalic());
             assertEquals(path, 0, font.getTtcIndex());
             assertNull(path, font.getAxes());
+            assertNotNull(font.getBuffer());
+            assertNull(font.getFile());
         }
     }
 
@@ -154,6 +157,8 @@ public class FontTest {
             assertEquals(path, italic, font.isItalic());
             assertEquals(path, ttcIndex, font.getTtcIndex());
             assertNull(path, font.getAxes());
+            assertNotNull(font.getBuffer());
+            assertNull(font.getFile());
         }
     }
 
@@ -174,6 +179,8 @@ public class FontTest {
             assertEquals(path, italic, font.isItalic());
             assertEquals(path, 0, font.getTtcIndex());
             assertEquals(path, axes, font.getAxes());
+            assertNotNull(font.getBuffer());
+            assertNull(font.getFile());
         }
     }
 
@@ -193,6 +200,8 @@ public class FontTest {
             assertEquals(path, italic, font.isItalic());
             assertEquals(path, 0, font.getTtcIndex());
             assertNull(path, font.getAxes());
+            assertNotNull(font.getBuffer());
+            assertNull(font.getFile());
         }
 
         boolean customItalic = true;
@@ -208,6 +217,8 @@ public class FontTest {
             assertEquals(path, customItalic, font.isItalic());
             assertEquals(path, 0, font.getTtcIndex());
             assertNull(path, font.getAxes());
+            assertNotNull(font.getBuffer());
+            assertNull(font.getFile());
         }
     }
 
@@ -240,6 +251,8 @@ public class FontTest {
                 assertEquals(path, italic, font.isItalic());
                 assertEquals(path, 0, font.getTtcIndex());
                 assertNull(path, font.getAxes());
+                assertNotNull(font.getBuffer());
+                assertNotNull(font.getFile());
             } finally {
                 file.delete();
             }
@@ -264,6 +277,8 @@ public class FontTest {
                 assertEquals(path, italic, font.isItalic());
                 assertEquals(path, ttcIndex, font.getTtcIndex());
                 assertNull(path, font.getAxes());
+                assertNotNull(font.getBuffer());
+                assertNotNull(font.getFile());
             } finally {
                 file.delete();
             }
@@ -289,6 +304,8 @@ public class FontTest {
                 assertEquals(path, italic, font.isItalic());
                 assertEquals(path, 0, font.getTtcIndex());
                 assertEquals(path, axes, font.getAxes());
+                assertNotNull(font.getBuffer());
+                assertNotNull(font.getFile());
             } finally {
                 file.delete();
             }
@@ -313,6 +330,8 @@ public class FontTest {
                 assertEquals(path, italic, font.isItalic());
                 assertEquals(path, 0, font.getTtcIndex());
                 assertNull(path, font.getAxes());
+                assertNotNull(font.getBuffer());
+                assertNotNull(font.getFile());
             } finally {
                 file.delete();
             }
@@ -332,6 +351,8 @@ public class FontTest {
                 assertEquals(path, customItalic, font.isItalic());
                 assertEquals(path, 0, font.getTtcIndex());
                 assertNull(path, font.getAxes());
+                assertNotNull(font.getBuffer());
+                assertNotNull(font.getFile());
             } finally {
                 file.delete();
             }
@@ -368,6 +389,8 @@ public class FontTest {
                     assertEquals(path, italic, font.isItalic());
                     assertEquals(path, 0, font.getTtcIndex());
                     assertNull(path, font.getAxes());
+                    assertNotNull(font.getBuffer());
+                    assertNull(font.getFile());
                 }
             } finally {
                 file.delete();
@@ -394,6 +417,8 @@ public class FontTest {
                     assertEquals(path, italic, font.isItalic());
                     assertEquals(path, ttcIndex, font.getTtcIndex());
                     assertNull(path, font.getAxes());
+                    assertNotNull(font.getBuffer());
+                    assertNull(font.getFile());
                 }
             } finally {
                 file.delete();
@@ -422,6 +447,8 @@ public class FontTest {
                     assertEquals(path, italic, font.isItalic());
                     assertEquals(path, 0, font.getTtcIndex());
                     assertEquals(path, axes, font.getAxes());
+                    assertNotNull(font.getBuffer());
+                    assertNull(font.getFile());
                 }
             } finally {
                 file.delete();
@@ -448,6 +475,8 @@ public class FontTest {
                     assertEquals(path, italic, font.isItalic());
                     assertEquals(path, 0, font.getTtcIndex());
                     assertNull(path, font.getAxes());
+                    assertNotNull(font.getBuffer());
+                    assertNull(font.getFile());
                 }
             } finally {
                 file.delete();
@@ -469,6 +498,8 @@ public class FontTest {
                     assertEquals(path, customItalic, font.isItalic());
                     assertEquals(path, 0, font.getTtcIndex());
                     assertNull(path, font.getAxes());
+                    assertNotNull(font.getBuffer());
+                    assertNull(font.getFile());
                 }
             } finally {
                 file.delete();
@@ -496,6 +527,8 @@ public class FontTest {
                     assertEquals(path, italic, font.isItalic());
                     assertEquals(path, 0, font.getTtcIndex());
                     assertNull(path, font.getAxes());
+                    assertNotNull(font.getBuffer());
+                    assertNull(font.getFile());
                 }
             } finally {
                 file.delete();
@@ -525,6 +558,8 @@ public class FontTest {
                     assertEquals(path, italic, font.isItalic());
                     assertEquals(path, ttcIndex, font.getTtcIndex());
                     assertNull(path, font.getAxes());
+                    assertNotNull(font.getBuffer());
+                    assertNull(font.getFile());
                 }
             } finally {
                 file.delete();
@@ -555,6 +590,8 @@ public class FontTest {
                     assertEquals(path, italic, font.isItalic());
                     assertEquals(path, 0, font.getTtcIndex());
                     assertEquals(path, axes, font.getAxes());
+                    assertNotNull(font.getBuffer());
+                    assertNull(font.getFile());
                 }
             } finally {
                 file.delete();
@@ -584,6 +621,8 @@ public class FontTest {
                     assertEquals(path, italic, font.isItalic());
                     assertEquals(path, 0, font.getTtcIndex());
                     assertNull(path, font.getAxes());
+                    assertNotNull(font.getBuffer());
+                    assertNull(font.getFile());
                 }
             } finally {
                 file.delete();
@@ -608,6 +647,8 @@ public class FontTest {
                     assertEquals(path, customItalic, font.isItalic());
                     assertEquals(path, 0, font.getTtcIndex());
                     assertNull(path, font.getAxes());
+                    assertNotNull(font.getBuffer());
+                    assertNull(font.getFile());
                 }
             } finally {
                 file.delete();
@@ -668,6 +709,8 @@ public class FontTest {
             assertEquals(path, italic, font.isItalic());
             assertEquals(path, 0, font.getTtcIndex());
             assertNull(path, font.getAxes());
+            assertNotNull(font.getBuffer());
+            assertNull(font.getFile());
         }
     }
 
@@ -685,6 +728,8 @@ public class FontTest {
             assertEquals(path, italic, font.isItalic());
             assertEquals(path, ttcIndex, font.getTtcIndex());
             assertNull(path, font.getAxes());
+            assertNotNull(font.getBuffer());
+            assertNull(font.getFile());
         }
     }
 
@@ -703,6 +748,8 @@ public class FontTest {
             assertEquals(path, italic, font.isItalic());
             assertEquals(path, 0, font.getTtcIndex());
             assertEquals(path, axes, font.getAxes());
+            assertNotNull(font.getBuffer());
+            assertNull(font.getFile());
         }
     }
 
@@ -720,6 +767,8 @@ public class FontTest {
             assertEquals(path, italic, font.isItalic());
             assertEquals(path, 0, font.getTtcIndex());
             assertNull(path, font.getAxes());
+            assertNotNull(font.getBuffer());
+            assertNull(font.getFile());
         }
         boolean customItalic = true;
         for (Pair<Integer, Boolean> style : FontTestUtil.getAllStyles()) {
@@ -732,6 +781,8 @@ public class FontTest {
             assertEquals(path, customItalic, font.isItalic());
             assertEquals(path, 0, font.getTtcIndex());
             assertNull(path, font.getAxes());
+            assertNotNull(font.getBuffer());
+            assertNull(font.getFile());
         }
     }
 
@@ -760,6 +811,8 @@ public class FontTest {
             assertEquals("ResId=#" + resId, italic, font.isItalic());
             assertEquals("ResId=#" + resId, 0, font.getTtcIndex());
             assertNull("ResId=#" + resId, font.getAxes());
+            assertNotNull("ResId=#" + resId, font.getBuffer());
+            assertNull("ResId=#" + resId, font.getFile());
         }
     }
 
@@ -777,6 +830,8 @@ public class FontTest {
             assertEquals("ResId=#" + resId, italic, font.isItalic());
             assertEquals("ResId=#" + resId, ttcIndex, font.getTtcIndex());
             assertNull("ResId=#" + resId, font.getAxes());
+            assertNotNull("ResId=#" + resId, font.getBuffer());
+            assertNull("ResId=#" + resId, font.getFile());
         }
     }
 
@@ -795,6 +850,8 @@ public class FontTest {
             assertEquals("ResId=#" + resId, italic, font.isItalic());
             assertEquals("ResId=#" + resId, 0, font.getTtcIndex());
             assertEquals("ResId=#" + resId, axes, font.getAxes());
+            assertNotNull("ResId=#" + font.getBuffer());
+            assertNull("ResId=#" + resId, font.getFile());
         }
     }
 
@@ -812,6 +869,8 @@ public class FontTest {
             assertEquals("ResId=#" + resId, italic, font.isItalic());
             assertEquals("ResId=#" + resId, 0, font.getTtcIndex());
             assertNull("ResId=#" + resId, font.getAxes());
+            assertNotNull("ResId=#" + resId, font.getBuffer());
+            assertNull("ResId=#" + resId, font.getFile());
         }
 
         boolean customItalic = true;
@@ -825,6 +884,8 @@ public class FontTest {
             assertEquals("ResId=#" + resId, customItalic, font.isItalic());
             assertEquals("ResId=#" + resId, 0, font.getTtcIndex());
             assertNull("ResId=#" + resId, font.getAxes());
+            assertNotNull("ResId=#" + resId, font.getBuffer());
+            assertNull("ResId=#" + resId, font.getFile());
         }
     }
 
