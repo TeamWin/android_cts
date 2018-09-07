@@ -39,6 +39,7 @@ import android.util.AttributeSet;
 import android.util.Xml;
 
 import com.android.content.cts.DummyParcelable;
+import com.android.compatibility.common.util.CddTest;
 
 import java.io.IOException;
 import java.io.Serializable;
@@ -47,6 +48,7 @@ import java.util.ArrayList;
 import java.util.Objects;
 import java.util.Set;
 
+@CddTest(requirement="3.5/C-0-1")
 public class IntentTest extends AndroidTestCase {
 
     private Intent mIntent;

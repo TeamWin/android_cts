@@ -29,6 +29,8 @@ import android.telecom.TelecomManager;
 import android.test.InstrumentationTestCase;
 import android.util.Log;
 
+import com.android.compatibility.common.util.CddTest;
+
 import java.util.ArrayList;
 import java.util.List;
 
@@ -99,6 +101,7 @@ public class TelecomAvailabilityTest extends InstrumentationTestCase {
                 telephonyMatches);
     }
 
+    @CddTest(requirement="7.4.1.1/C-1-6")
     public void testTelecomCanManageBlockedNumbers() {
         if (!shouldTestTelecom(mContext)) {
             return;

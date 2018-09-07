@@ -41,11 +41,13 @@ import android.test.suitebuilder.annotation.MediumTest;
 import android.util.Log;
 import android.app.stubs.R;
 
+import com.android.compatibility.common.util.CddTest;
 import com.android.compatibility.common.util.IBinderParcelable;
 import com.android.compatibility.common.util.SystemUtil;
 
 import java.util.List;
 
+@CddTest(requirement="3.5/C-0-2")
 public class ServiceTest extends ActivityTestsBase {
     private static final String TAG = "ServiceTest";
     private static final String NOTIFICATION_CHANNEL_ID = TAG;

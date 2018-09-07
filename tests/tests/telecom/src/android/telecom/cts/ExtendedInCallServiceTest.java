@@ -33,6 +33,8 @@ import android.telecom.TelecomManager;
 import android.telecom.VideoProfile;
 import android.telephony.TelephonyManager;
 
+import com.android.compatibility.common.util.CddTest;
+
 import java.util.List;
 
 /**
@@ -318,6 +320,7 @@ public class ExtendedInCallServiceTest extends BaseTelecomTestWithMockServices {
         }
     }
 
+    @CddTest(requirement="7.4.1.1/C-1-3")
     public void testIncomingCallFromBlockedNumber_IsRejected() throws Exception {
         if (!mShouldTestTelecom) {
             return;

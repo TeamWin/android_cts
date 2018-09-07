@@ -74,6 +74,7 @@ public class AvailableIntentsTest extends AndroidTestCase {
      * Test ACTION_VIEW when url is http://web_address,
      * it will open a browser window to the URL specified.
      */
+    @CddTest(requirement="3.2.3.1/C-0-1")
     public void testViewNormalUrl() {
         Uri uri = Uri.parse(NORMAL_URL);
         Intent intent = new Intent(Intent.ACTION_VIEW, uri);
@@ -84,6 +85,7 @@ public class AvailableIntentsTest extends AndroidTestCase {
      * Test ACTION_VIEW when url is https://web_address,
      * it will open a browser window to the URL specified.
      */
+    @CddTest(requirement="3.2.3.1/C-0-1")
     public void testViewSecureUrl() {
         Uri uri = Uri.parse(SECURE_URL);
         Intent intent = new Intent(Intent.ACTION_VIEW, uri);
@@ -94,6 +96,7 @@ public class AvailableIntentsTest extends AndroidTestCase {
      * Test ACTION_WEB_SEARCH when url is http://web_address,
      * it will open a browser window to the URL specified.
      */
+    @CddTest(requirement="3.2.3.1/C-0-1")
     public void testWebSearchNormalUrl() {
         Uri uri = Uri.parse(NORMAL_URL);
         Intent intent = new Intent(Intent.ACTION_WEB_SEARCH);
@@ -105,6 +108,7 @@ public class AvailableIntentsTest extends AndroidTestCase {
      * Test ACTION_WEB_SEARCH when url is https://web_address,
      * it will open a browser window to the URL specified.
      */
+    @CddTest(requirement="3.2.3.1/C-0-1")
     public void testWebSearchSecureUrl() {
         Uri uri = Uri.parse(SECURE_URL);
         Intent intent = new Intent(Intent.ACTION_WEB_SEARCH);
@@ -185,6 +189,7 @@ public class AvailableIntentsTest extends AndroidTestCase {
     /**
      * Test ACTION_SHOW_CALL_SETTINGS, it will display the call preferences.
      */
+    @CddTest(requirement="3.2.3.1/C-0-1")
     public void testShowCallSettings() {
         PackageManager packageManager = mContext.getPackageManager();
         if (packageManager.hasSystemFeature(PackageManager.FEATURE_TELEPHONY)) {
@@ -196,6 +201,7 @@ public class AvailableIntentsTest extends AndroidTestCase {
     /**
      * Test ACTION_SHOW_RESPOND_VIA_SMS_SETTINGS, it will display the respond by SMS preferences.
      */
+    @CddTest(requirement="3.2.3.1/C-0-1")
     public void testShowRespondViaSmsSettings() {
         PackageManager packageManager = mContext.getPackageManager();
         if (packageManager.hasSystemFeature(PackageManager.FEATURE_TELEPHONY)) {
@@ -207,6 +213,7 @@ public class AvailableIntentsTest extends AndroidTestCase {
     /**
      * Test start camera by intent
      */
+    @CddTest(requirement="3.2.3.1/C-0-1")
     public void testCamera() {
         PackageManager packageManager = mContext.getPackageManager();
         if (packageManager.hasSystemFeature(PackageManager.FEATURE_CAMERA)
@@ -225,6 +232,7 @@ public class AvailableIntentsTest extends AndroidTestCase {
         }
     }
 
+    @CddTest(requirement="3.2.3.1/C-0-1")
     public void testSettings() {
         assertCanBeHandled(new Intent(Settings.ACTION_SETTINGS));
     }
@@ -232,6 +240,7 @@ public class AvailableIntentsTest extends AndroidTestCase {
     /**
      * Test add event in calendar
      */
+    @CddTest(requirement="3.2.3.1/C-0-1")
     public void testCalendarAddAppointment() {
         Intent addAppointmentIntent = new Intent(Intent.ACTION_EDIT);
         addAppointmentIntent.setType("vnd.android.cursor.item/event");
@@ -241,6 +250,7 @@ public class AvailableIntentsTest extends AndroidTestCase {
     /**
      * Test view call logs
      */
+    @CddTest(requirement="3.2.3.1/C-0-1")
     public void testContactsCallLogs() {
         PackageManager packageManager = mContext.getPackageManager();
         if (packageManager.hasSystemFeature(PackageManager.FEATURE_TELEPHONY)) {
@@ -253,6 +263,7 @@ public class AvailableIntentsTest extends AndroidTestCase {
     /**
      * Test view music playback
      */
+    @CddTest(requirement="3.2.3.1/C-0-1")
     public void testMusicPlayback() {
         Intent intent = new Intent(Intent.ACTION_VIEW);
         intent.setDataAndType(ContentUris.withAppendedId(
@@ -260,6 +271,7 @@ public class AvailableIntentsTest extends AndroidTestCase {
         assertCanBeHandled(intent);
     }
 
+    @CddTest(requirement="3.2.3.1/C-0-1")
     public void testAlarmClockSetAlarm() {
         Intent intent = new Intent(AlarmClock.ACTION_SET_ALARM);
         intent.putExtra(AlarmClock.EXTRA_MESSAGE, "Custom message");
@@ -268,17 +280,20 @@ public class AvailableIntentsTest extends AndroidTestCase {
         assertCanBeHandled(intent);
     }
 
+    @CddTest(requirement="3.2.3.1/C-0-1")
     public void testAlarmClockSetTimer() {
         Intent intent = new Intent(AlarmClock.ACTION_SET_TIMER);
         intent.putExtra(AlarmClock.EXTRA_LENGTH, 60000);
         assertCanBeHandled(intent);
     }
 
+    @CddTest(requirement="3.2.3.1/C-0-1")
     public void testAlarmClockShowAlarms() {
         Intent intent = new Intent(AlarmClock.ACTION_SHOW_ALARMS);
         assertCanBeHandled(intent);
     }
 
+    @CddTest(requirement="3.2.3.1/C-0-1")
     public void testAlarmClockShowTimers() {
         if (mContext.getPackageManager().hasSystemFeature(PackageManager.FEATURE_LEANBACK_ONLY)) {
             return;
