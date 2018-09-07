@@ -18,19 +18,18 @@ package android.server.am;
 
 import static android.hardware.display.DisplayManager.VIRTUAL_DISPLAY_FLAG_OWN_CONTENT_ONLY;
 import static android.hardware.display.DisplayManager.VIRTUAL_DISPLAY_FLAG_PRESENTATION;
+import static android.server.am.ActivityManagerTestBase.isDisplayOn;
 import static android.server.am.StateLogger.logAlways;
 import static android.support.test.InstrumentationRegistry.getContext;
 import static android.view.Display.DEFAULT_DISPLAY;
 
 import static org.junit.Assert.fail;
 
-import android.content.Context;
 import android.graphics.PixelFormat;
 import android.hardware.display.DisplayManager;
 import android.hardware.display.VirtualDisplay;
 import android.media.ImageReader;
 import android.os.SystemClock;
-import android.view.Display;
 
 import com.android.compatibility.common.util.SystemUtil;
 
@@ -125,12 +124,5 @@ class VirtualDisplayHelper {
             SystemClock.sleep(500);
         }
         fail(message + " failed");
-    }
-
-    private static boolean isDisplayOn(int displayId) {
-        final DisplayManager displayManager = (DisplayManager) getContext().getSystemService(
-                Context.DISPLAY_SERVICE);
-        final Display display = displayManager.getDisplay(displayId);
-        return (display != null) ? display.getState() == Display.STATE_ON : false;
     }
 }
