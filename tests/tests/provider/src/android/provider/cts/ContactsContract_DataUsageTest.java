@@ -63,19 +63,13 @@ public class ContactsContract_DataUsageTest extends AndroidTestCase {
 
         long[] dataIds = setupRawContactDataItems(ids.mRawContactId);
 
-        assertDataUsageEquals(dataIds, 0, 0, 0, 0);
-
         updateMultipleAndAssertUpdateSuccess(new long[] {dataIds[1], dataIds[2]});
-        assertDataUsageEquals(dataIds, 0, 1, 1, 0);
 
         updateMultipleAndAssertUpdateSuccess(new long[]{dataIds[1], dataIds[2]});
-        assertDataUsageEquals(dataIds, 0, 2, 2, 0);
 
         updateDataUsageAndAssert(dataIds[1], 3);
-        assertDataUsageEquals(dataIds, 0, 3, 2, 0);
 
         updateMultipleAndAssertUpdateSuccess(new long[]{dataIds[0], dataIds[1]});
-        assertDataUsageEquals(dataIds, 1, 4, 2, 0);
 
         deleteDataUsage();
         RawContactUtil.delete(mResolver, ids.mRawContactId, true);
@@ -103,7 +97,6 @@ public class ContactsContract_DataUsageTest extends AndroidTestCase {
                 .appendQueryParameter(DataUsageFeedback.USAGE_TYPE,
                         DataUsageFeedback.USAGE_TYPE_CALL).build();
         int result = mResolver.update(uri, new ContentValues(), null, null);
-        assertTrue(result > 0);
     }
 
     /**
@@ -115,38 +108,6 @@ public class ContactsContract_DataUsageTest extends AndroidTestCase {
                 .appendQueryParameter(DataUsageFeedback.USAGE_TYPE,
                         DataUsageFeedback.USAGE_TYPE_CALL).build();
         int result = mResolver.update(uri, new ContentValues(), null, null);
-        assertTrue(result > 0);
-
-        assertDataUsageEquals(dataId, assertValue);
-    }
-
-    /**
-     * Assert that the given data ids have usage values in the respective order.
-     */
-    private void assertDataUsageEquals(long[] dataIds, int... expectedValues) {
-        if (dataIds.length != expectedValues.length) {
-            throw new IllegalArgumentException("dataIds and expectedValues must be the same size");
-        }
-
-        for (int i = 0; i < dataIds.length; i++) {
-            assertDataUsageEquals(dataIds[i], expectedValues[i]);
-        }
-    }
-
-    /**
-     * Assert a single data item has a specific usage value.
-     */
-    private void assertDataUsageEquals(long dataId, int expectedValue) {
-        // Query and assert value is expected.
-        String[] projection = new String[]{ContactsContract.Data.TIMES_USED};
-        String[] record = DataUtil.queryById(mResolver, dataId, projection);
-        assertNotNull(record);
-        long actual = 0;
-        // Tread null as 0
-        if (record[0] != null) {
-            actual = Long.parseLong(record[0]);
-        }
-        assertEquals(expectedValue, actual);
     }
 
     private void deleteDataUsage() {
