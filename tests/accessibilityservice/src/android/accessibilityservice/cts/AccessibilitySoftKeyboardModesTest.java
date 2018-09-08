@@ -15,7 +15,7 @@
 package android.accessibilityservice.cts;
 import static android.accessibilityservice.AccessibilityService.SHOW_MODE_AUTO;
 import static android.accessibilityservice.AccessibilityService.SHOW_MODE_HIDDEN;
-import static android.accessibilityservice.AccessibilityService.SHOW_MODE_WITH_HARD_KEYBOARD;
+import static android.accessibilityservice.AccessibilityService.SHOW_MODE_IGNORE_HARD_KEYBOARD;
 
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.assertEquals;
@@ -24,7 +24,6 @@ import android.accessibilityservice.AccessibilityService.SoftKeyboardController;
 import android.accessibilityservice.AccessibilityService.SoftKeyboardController.OnShowModeChangedListener;
 import android.accessibilityservice.cts.activities.AccessibilityTestActivity;
 import android.accessibilityservice.cts.utils.AsyncUtils;
-import android.accessibilityservice.cts.utils.RunOnMainUtils;
 import android.app.Instrumentation;
 import android.os.Bundle;
 import android.os.SystemClock;
@@ -79,7 +78,7 @@ public class AccessibilitySoftKeyboardModesTest {
 
         controller.addOnShowModeChangedListener(mListener);
         assertCanSetAndGetShowModeAndCallbackHappens(SHOW_MODE_HIDDEN, mService);
-        assertCanSetAndGetShowModeAndCallbackHappens(SHOW_MODE_WITH_HARD_KEYBOARD, mService);
+        assertCanSetAndGetShowModeAndCallbackHappens(SHOW_MODE_IGNORE_HARD_KEYBOARD, mService);
         assertCanSetAndGetShowModeAndCallbackHappens(SHOW_MODE_AUTO, mService);
 
         // Make sure we can remove our listener.
@@ -102,7 +101,7 @@ public class AccessibilitySoftKeyboardModesTest {
             assertCanSetAndGetShowModeAndCallbackHappens(SHOW_MODE_HIDDEN, mService);
 
             // Change the mode on the second service
-            assertCanSetAndGetShowModeAndCallbackHappens(SHOW_MODE_WITH_HARD_KEYBOARD,
+            assertCanSetAndGetShowModeAndCallbackHappens(SHOW_MODE_IGNORE_HARD_KEYBOARD,
                     secondService);
         } finally {
             secondService.runOnServiceSync(() -> secondService.disableSelf());
