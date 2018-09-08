@@ -157,11 +157,6 @@
         <option name="append-bitness" value="true" />
     </target_preparer>
 
-    <target_preparer class="com.android.compatibility.common.tradefed.targetprep.ApkInstaller">
-        <option name="cleanup-apks" value="true" />
-        <option name="test-file-name" value="OomCatcher.apk" />
-    </target_preparer>
-
     <test class="com.android.compatibility.common.tradefed.testtype.JarHostTest" >
         <option name="jar" value="CtsSecurityBulletinHostTestCases.jar" />
         <option name="runtime-hint" value="4m2s" />
