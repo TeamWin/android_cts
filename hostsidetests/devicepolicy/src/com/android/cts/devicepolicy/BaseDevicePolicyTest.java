@@ -925,6 +925,10 @@ public class BaseDevicePolicyTest extends DeviceTestCase implements IBuildReceiv
         executeShellCommand("wm dismiss-keyguard");
     }
 
+    protected void pressPowerButton() throws Exception {
+        executeShellCommand("input keyevent KEYCODE_POWER");
+    }
+
     private void stayAwake() throws Exception {
         executeShellCommand(
                 "settings put global stay_on_while_plugged_in " + STAY_ON_WHILE_PLUGGED_IN_FLAGS);
