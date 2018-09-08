@@ -34,6 +34,7 @@ import static android.server.am.Components.TURN_SCREEN_ON_ATTR_DISMISS_KEYGUARD_
 import static android.server.am.Components.TURN_SCREEN_ON_DISMISS_KEYGUARD_ACTIVITY;
 import static android.server.am.UiDeviceUtils.pressBackButton;
 import static android.server.am.UiDeviceUtils.pressHomeButton;
+import static android.view.Display.DEFAULT_DISPLAY;
 import static android.view.Surface.ROTATION_90;
 import static android.view.WindowManager.LayoutParams.TYPE_WALLPAPER;
 
@@ -267,7 +268,7 @@ public class KeyguardTests extends KeyguardTestBase {
             mAmWmState.assertVisibility(TURN_SCREEN_ON_DISMISS_KEYGUARD_ACTIVITY, true);
             assertFalse(mAmWmState.getAmState().getKeyguardControllerState().keyguardShowing);
             assertOnDismissSucceededInLogcat(logSeparator);
-            assertTrue(isDisplayOn());
+            assertTrue(isDisplayOn(DEFAULT_DISPLAY));
         }
     }
 
@@ -345,7 +346,7 @@ public class KeyguardTests extends KeyguardTestBase {
             mAmWmState.assertVisibility(TURN_SCREEN_ON_ATTR_DISMISS_KEYGUARD_ACTIVITY, true);
             assertFalse(mAmWmState.getAmState().getKeyguardControllerState().keyguardShowing);
             assertOnDismissSucceededInLogcat(logSeparator);
-            assertTrue(isDisplayOn());
+            assertTrue(isDisplayOn(DEFAULT_DISPLAY));
         }
     }
 

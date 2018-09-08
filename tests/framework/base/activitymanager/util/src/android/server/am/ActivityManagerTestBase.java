@@ -73,6 +73,7 @@ import static android.server.am.UiDeviceUtils.pressSleepButton;
 import static android.server.am.UiDeviceUtils.pressUnlockButton;
 import static android.server.am.UiDeviceUtils.pressWakeupButton;
 import static android.server.am.UiDeviceUtils.waitForDeviceIdle;
+import static android.support.test.InstrumentationRegistry.getContext;
 import static android.view.Display.DEFAULT_DISPLAY;
 import static android.view.Display.INVALID_DISPLAY;
 
@@ -86,13 +87,13 @@ import android.app.Activity;
 import android.app.ActivityManager;
 import android.app.ActivityOptions;
 import android.app.ActivityTaskManager;
-import android.app.Instrumentation;
 import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
 import android.content.res.Resources;
 import android.graphics.Bitmap;
 import android.graphics.Rect;
+import android.hardware.display.DisplayManager;
 import android.os.Bundle;
 import android.os.SystemClock;
 import android.provider.Settings;
@@ -101,6 +102,7 @@ import android.server.am.CommandSession.LaunchProxy;
 import android.server.am.settings.SettingsSession;
 import android.support.test.InstrumentationRegistry;
 import android.support.test.rule.ActivityTestRule;
+import android.view.Display;
 import android.view.InputDevice;
 import android.view.MotionEvent;
 
@@ -669,16 +671,10 @@ public abstract class ActivityManagerTestBase {
                 .hasSystemFeature(requiredFeature);
     }
 
-    protected boolean isDisplayOn() {
-        final String output = executeShellCommand("dumpsys power");
-        final Matcher matcher = sDisplayStatePattern.matcher(output);
-        if (matcher.find()) {
-            final String state = matcher.group(1);
-            log("power state=" + state);
-            return "ON".equals(state);
-        }
-        logAlways("power state :(");
-        return false;
+    protected static boolean isDisplayOn(int displayId) {
+        final DisplayManager displayManager = getContext().getSystemService(DisplayManager.class);
+        final Display display = displayManager.getDisplay(displayId);
+        return display != null && display.getState() == Display.STATE_ON;
     }
 
     /**
@@ -766,7 +762,7 @@ public abstract class ActivityManagerTestBase {
             // puts the device to sleep, but kept around for clarity.
             InstrumentationRegistry.getInstrumentation().getUiAutomation().performGlobalAction(
                     AccessibilityService.GLOBAL_ACTION_LOCK_SCREEN);
-            for (int retry = 1; isDisplayOn() && retry <= 5; retry++) {
+            for (int retry = 1; isDisplayOn(DEFAULT_DISPLAY) && retry <= 5; retry++) {
                 logAlways("***Waiting for display to turn off... retry=" + retry);
                 SystemClock.sleep(TimeUnit.SECONDS.toMillis(1));
             }

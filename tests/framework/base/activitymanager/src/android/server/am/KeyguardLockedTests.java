@@ -27,6 +27,7 @@ import static android.server.am.Components.PipActivity.EXTRA_SHOW_OVER_KEYGUARD;
 import static android.server.am.Components.SHOW_WHEN_LOCKED_ACTIVITY;
 import static android.server.am.Components.TURN_SCREEN_ON_ATTR_DISMISS_KEYGUARD_ACTIVITY;
 import static android.server.am.UiDeviceUtils.pressBackButton;
+import static android.view.Display.DEFAULT_DISPLAY;
 
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
@@ -167,7 +168,7 @@ public class KeyguardLockedTests extends KeyguardTestBase {
             mAmWmState.waitForKeyguardShowingAndNotOccluded();
             mAmWmState.assertVisibility(TURN_SCREEN_ON_ATTR_DISMISS_KEYGUARD_ACTIVITY, false);
             assertTrue(mAmWmState.getAmState().getKeyguardControllerState().keyguardShowing);
-            assertTrue(isDisplayOn());
+            assertTrue(isDisplayOn(DEFAULT_DISPLAY));
         }
     }
 
