@@ -96,8 +96,7 @@ public class Poc17_03 extends SecurityTestCase {
         String bootCountAfter =
                 AdbUtils.runCommandLine("settings get global boot_count", getDevice());
         // Poc nukes the boot_count setting, reboot to restore it to a sane value
-        AdbUtils.runCommandLine("reboot", getDevice());
-        getDevice().waitForDeviceOnline(60 * 1000);
+        getDevice().reboot();
         updateKernelStartTime();
         assertEquals(bootCountBefore, bootCountAfter);
     }

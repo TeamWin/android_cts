@@ -1388,6 +1388,36 @@ public class ActivityManagerMultiDisplayTests extends ActivityManagerDisplayTest
     }
 
     /**
+     * Tests that an activity is launched on the preferred display when both displays have
+     * matching task.
+     */
+    @Test
+    public void testTaskMatchOrderAcrossDisplays() throws Exception {
+        getLaunchActivityBuilder().setUseInstrumentation()
+                .setTargetActivity(TEST_ACTIVITY).setNewTask(true)
+                .setDisplayId(DEFAULT_DISPLAY).execute();
+        final int defaultDisplayStackId = mAmWmState.getAmState().getFrontStackId(DEFAULT_DISPLAY);
+
+        try (final VirtualDisplaySession virtualDisplaySession = new VirtualDisplaySession()) {
+            final ActivityDisplay newDisplay = virtualDisplaySession.createDisplay();
+            SystemUtil.runWithShellPermissionIdentity(
+                    () -> getLaunchActivityBuilder().setUseInstrumentation()
+                            .setTargetActivity(TEST_ACTIVITY).setNewTask(true)
+                            .setDisplayId(newDisplay.mId).execute());
+            assertNotEquals("Top focus stack should not be on default display",
+                    defaultDisplayStackId, mAmWmState.getAmState().getFocusedStackId());
+
+            // Launch activity without specified display id to avoid adding
+            // FLAG_ACTIVITY_MULTIPLE_TASK flag to this launch. And without specify display id,
+            // AM should search a matching task on default display prior than other displays.
+            getLaunchActivityBuilder().setUseInstrumentation()
+                    .setTargetActivity(TEST_ACTIVITY).setNewTask(true).execute();
+            mAmWmState.assertFocusedStack("Top focus stack must be on the default display",
+                    defaultDisplayStackId);
+        }
+    }
+
+    /**
      * Tests that the task affinity search respects the launch display id.
      */
     @Test
@@ -1724,6 +1754,41 @@ public class ActivityManagerMultiDisplayTests extends ActivityManagerDisplayTest
             mAmWmState.computeState(SHOW_WHEN_LOCKED_ATTR_ACTIVITY);
             assertTrue("Expected resumed activity on secondary display", mAmWmState.getAmState()
                     .hasActivityState(SHOW_WHEN_LOCKED_ATTR_ACTIVITY, STATE_RESUMED));
+        }
+    }
+
+
+    /**
+     * Tests tap and set focus between displays.
+     * TODO(b/111361570): focus tracking between multi-display may change to check focus display.
+     */
+    @Test
+    public void testSecondaryDisplayFocus() throws Exception {
+        try (final ExternalDisplaySession externalDisplaySession = new ExternalDisplaySession()) {
+            launchActivity(TEST_ACTIVITY);
+            mAmWmState.waitForActivityState(TEST_ACTIVITY, STATE_RESUMED);
+
+            final ActivityDisplay newDisplay =
+                    externalDisplaySession.createVirtualDisplay(false /* showContentWhenLocked */);
+            launchActivityOnDisplay(VIRTUAL_DISPLAY_ACTIVITY, newDisplay.mId);
+            waitAndAssertTopResumedActivity(VIRTUAL_DISPLAY_ACTIVITY, newDisplay.mId,
+                    "Virtual activity should be Top Resumed Activity.");
+
+            final ReportedDisplayMetrics displayMetrics = getDisplayMetrics();
+            final int width = displayMetrics.getSize().getWidth();
+            final int height = displayMetrics.getSize().getHeight();
+            tapOnDisplay(width / 2, height / 2, DEFAULT_DISPLAY);
+            waitAndAssertTopResumedActivity(TEST_ACTIVITY, DEFAULT_DISPLAY,
+                    "Activity should be top resumed when tapped.");
+            mAmWmState.assertFocusedActivity("Activity on default display must be focused.",
+                    TEST_ACTIVITY);
+
+            tapOnDisplay(VirtualDisplayHelper.WIDTH / 2, VirtualDisplayHelper.HEIGHT / 2,
+                    newDisplay.mId);
+            waitAndAssertTopResumedActivity(VIRTUAL_DISPLAY_ACTIVITY, newDisplay.mId,
+                "Virtual display activity should be top resumed when tapped.");
+            mAmWmState.assertFocusedActivity("Activity on second display must be focused.",
+                    VIRTUAL_DISPLAY_ACTIVITY);
         }
     }
 

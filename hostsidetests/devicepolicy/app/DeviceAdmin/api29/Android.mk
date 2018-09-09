@@ -16,25 +16,25 @@ LOCAL_PATH:= $(call my-dir)
 
 include $(CLEAR_VARS)
 
-LOCAL_PACKAGE_NAME := CtsLibcoreSimpleMModuleTestCases
-LOCAL_PRIVATE_PLATFORM_APIS := true
+LOCAL_PACKAGE_NAME := CtsDeviceAdminApp29
 
-LOCAL_STATIC_JAVA_LIBRARIES := \
-    cts-core-test-runner \
-    core-libart-intra-test \
-    core-simple-intra-test
+LOCAL_MODULE_TAGS := optional
 
-# Don't include this package in any target
-LOCAL_MODULE_TAGS := tests
-
-# When built, explicitly put it in the data partition.
 LOCAL_MODULE_PATH := $(TARGET_OUT_DATA_APPS)
 
-LOCAL_DEX_PREOPT := false
+LOCAL_SRC_FILES := $(call all-java-files-under, ../src)
 
-LOCAL_PROGUARD_ENABLED := disabled
+LOCAL_RESOURCE_DIR += $(LOCAL_PATH)/../res
 
-# Tag this module as a cts test artifact
-LOCAL_COMPATIBILITY_SUITE := cts vts general-tests
+LOCAL_STATIC_JAVA_LIBRARIES := \
+    ctstestrunner \
+    compatibility-device-util
 
-include $(BUILD_CTS_SUPPORT_PACKAGE)
+LOCAL_JAVA_LIBRARIES := android.test.runner.stubs android.test.base.stubs
+
+LOCAL_SDK_VERSION := current
+
+# tag this module as a cts test artifact
+LOCAL_COMPATIBILITY_SUITE := arcts cts vts general-tests
+
+include $(BUILD_CTS_PACKAGE)

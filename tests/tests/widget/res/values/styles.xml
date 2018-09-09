@@ -252,6 +252,38 @@
         <item name="android:textStyle">bold</item>
     </style>
 
+    <style name="TextAppearance.FontVariationWdth25">
+        <item name="android:fontVariationSettings">\'wdth\' 25</item>
+    </style>
+
+    <style name="TextAppearance.FontVariationWdth50">
+        <item name="android:fontVariationSettings">\'wdth\' 50</item>
+    </style>
+
+    <style name="TextAppearance.FontVariationWght100">
+        <item name="android:fontVariationSettings">\'wght\' 100</item>
+    </style>
+
+    <style name="TextAppearance.FontVariationWght200">
+        <item name="android:fontVariationSettings">\'wght\' 200</item>
+    </style>
+
+    <style name="TextAppearance.FontVariationWdth25Wght100">
+        <item name="android:fontVariationSettings">\'wdth\' 25, \'wght\' 100</item>
+    </style>
+
+    <style name="TextAppearance.FontVariationWdth25Wght200">
+        <item name="android:fontVariationSettings">\'wdth\' 25, \'wght\' 200</item>
+    </style>
+
+    <style name="TextAppearance.FontVariationWdth50Wght100">
+        <item name="android:fontVariationSettings">\'wdth\' 50, \'wght\' 100</item>
+    </style>
+
+    <style name="TextAppearance.FontVariationWdth50Wght200">
+        <item name="android:fontVariationSettings">\'wdth\' 50, \'wght\' 200</item>
+    </style>
+
     <style name="AllCapsPassword">
         <item name="android:textAllCaps">true</item>
         <item name="android:password">true</item>

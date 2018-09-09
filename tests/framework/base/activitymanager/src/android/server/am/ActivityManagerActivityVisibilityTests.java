@@ -48,6 +48,7 @@ import static android.server.am.Components.TURN_SCREEN_ON_SHOW_ON_LOCK_ACTIVITY;
 import static android.server.am.Components.TURN_SCREEN_ON_SINGLE_TASK_ACTIVITY;
 import static android.server.am.Components.TURN_SCREEN_ON_WITH_RELAYOUT_ACTIVITY;
 import static android.server.am.UiDeviceUtils.pressBackButton;
+import static android.view.Display.DEFAULT_DISPLAY;
 
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotEquals;
@@ -181,7 +182,7 @@ public class ActivityManagerActivityVisibilityTests extends ActivityManagerTestB
             launchActivity(TURN_SCREEN_ON_ACTIVITY);
 
             mAmWmState.assertVisibility(TURN_SCREEN_ON_ACTIVITY, true);
-            assertTrue("Display turns on", isDisplayOn());
+            assertTrue("Display turns on", isDisplayOn(DEFAULT_DISPLAY));
         }
     }
 
@@ -371,7 +372,7 @@ public class ActivityManagerActivityVisibilityTests extends ActivityManagerTestB
             final LogSeparator logSeparator = separateLogs();
             launchActivity(TURN_SCREEN_ON_ATTR_ACTIVITY);
             mAmWmState.assertVisibility(TURN_SCREEN_ON_ATTR_ACTIVITY, true);
-            assertTrue("Display turns on", isDisplayOn());
+            assertTrue("Display turns on", isDisplayOn(DEFAULT_DISPLAY));
             assertSingleLaunch(TURN_SCREEN_ON_ATTR_ACTIVITY, logSeparator);
         }
     }
@@ -389,7 +390,7 @@ public class ActivityManagerActivityVisibilityTests extends ActivityManagerTestB
             launchActivityNoWait(TURN_SCREEN_ON_ATTR_ACTIVITY);
             // Wait for the activity stopped because lock screen prevent showing the activity.
             mAmWmState.waitForActivityState(TURN_SCREEN_ON_ATTR_ACTIVITY, STATE_STOPPED);
-            assertFalse("Display keeps off", isDisplayOn());
+            assertFalse("Display keeps off", isDisplayOn(DEFAULT_DISPLAY));
             assertSingleLaunchAndStop(TURN_SCREEN_ON_ATTR_ACTIVITY, logSeparator);
         }
     }
@@ -402,7 +403,7 @@ public class ActivityManagerActivityVisibilityTests extends ActivityManagerTestB
             final LogSeparator logSeparator = separateLogs();
             launchActivity(TURN_SCREEN_ON_SHOW_ON_LOCK_ACTIVITY);
             mAmWmState.assertVisibility(TURN_SCREEN_ON_SHOW_ON_LOCK_ACTIVITY, true);
-            assertTrue("Display turns on", isDisplayOn());
+            assertTrue("Display turns on", isDisplayOn(DEFAULT_DISPLAY));
             assertSingleLaunch(TURN_SCREEN_ON_SHOW_ON_LOCK_ACTIVITY, logSeparator);
         }
     }
@@ -414,7 +415,7 @@ public class ActivityManagerActivityVisibilityTests extends ActivityManagerTestB
             mAmWmState.waitForAllStoppedActivities();
             LogSeparator logSeparator = separateLogs();
             launchActivity(TURN_SCREEN_ON_ATTR_REMOVE_ATTR_ACTIVITY);
-            assertTrue("Display turns on", isDisplayOn());
+            assertTrue("Display turns on", isDisplayOn(DEFAULT_DISPLAY));
             assertSingleLaunch(TURN_SCREEN_ON_ATTR_REMOVE_ATTR_ACTIVITY, logSeparator);
 
             lockScreenSession.sleepDevice();
@@ -423,7 +424,7 @@ public class ActivityManagerActivityVisibilityTests extends ActivityManagerTestB
             launchActivity(TURN_SCREEN_ON_ATTR_REMOVE_ATTR_ACTIVITY);
             // Display should keep off, because setTurnScreenOn(false) has been called at
             // {@link TURN_SCREEN_ON_ATTR_REMOVE_ATTR_ACTIVITY}'s onStop.
-            assertFalse("Display keeps off", isDisplayOn());
+            assertFalse("Display keeps off", isDisplayOn(DEFAULT_DISPLAY));
             assertSingleStartAndStop(TURN_SCREEN_ON_ATTR_REMOVE_ATTR_ACTIVITY, logSeparator);
         }
     }
@@ -436,14 +437,14 @@ public class ActivityManagerActivityVisibilityTests extends ActivityManagerTestB
             LogSeparator logSeparator = separateLogs();
             launchActivity(TURN_SCREEN_ON_SINGLE_TASK_ACTIVITY);
             mAmWmState.assertVisibility(TURN_SCREEN_ON_SINGLE_TASK_ACTIVITY, true);
-            assertTrue("Display turns on", isDisplayOn());
+            assertTrue("Display turns on", isDisplayOn(DEFAULT_DISPLAY));
             assertSingleLaunch(TURN_SCREEN_ON_SINGLE_TASK_ACTIVITY, logSeparator);
 
             lockScreenSession.sleepDevice();
             logSeparator = separateLogs();
             launchActivity(TURN_SCREEN_ON_SINGLE_TASK_ACTIVITY);
             mAmWmState.assertVisibility(TURN_SCREEN_ON_SINGLE_TASK_ACTIVITY, true);
-            assertTrue("Display turns on", isDisplayOn());
+            assertTrue("Display turns on", isDisplayOn(DEFAULT_DISPLAY));
             assertSingleStart(TURN_SCREEN_ON_SINGLE_TASK_ACTIVITY, logSeparator);
         }
     }
@@ -462,7 +463,7 @@ public class ActivityManagerActivityVisibilityTests extends ActivityManagerTestB
             assertTrue(getActivityName(TURN_SCREEN_ON_WITH_RELAYOUT_ACTIVITY) + " stopped",
                     mAmWmState.getAmState().hasActivityState(
                             TURN_SCREEN_ON_WITH_RELAYOUT_ACTIVITY, STATE_STOPPED));
-            assertFalse("Display keeps off", isDisplayOn());
+            assertFalse("Display keeps off", isDisplayOn(DEFAULT_DISPLAY));
         }
     }
 }

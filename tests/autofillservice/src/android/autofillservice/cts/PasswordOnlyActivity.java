@@ -17,6 +17,7 @@ package android.autofillservice.cts;
 
 import android.os.Bundle;
 import android.util.Log;
+import android.view.autofill.AutofillId;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.TextView;
@@ -26,6 +27,7 @@ public final class PasswordOnlyActivity extends AbstractAutoFillActivity {
     private static final String TAG = "PasswordOnlyActivity";
 
     static final String EXTRA_USERNAME = "username";
+    static final String EXTRA_PASSWORD_AUTOFILL_ID = "password_autofill_id";
 
     private TextView mWelcomeLabel;
     private EditText mPasswordEditText;
@@ -46,6 +48,11 @@ public final class PasswordOnlyActivity extends AbstractAutoFillActivity {
         final String welcomeMsg = "Welcome to the jungle, " + mUsername;
         Log.v(TAG, welcomeMsg);
         mWelcomeLabel.setText(welcomeMsg);
+        final AutofillId id = getIntent().getParcelableExtra(EXTRA_PASSWORD_AUTOFILL_ID);
+        if (id != null) {
+            Log.v(TAG, "Setting autofill id to " + id);
+            mPasswordEditText.setAutofillId(id);
+        }
     }
 
     protected int getContentView() {
