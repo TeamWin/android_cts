@@ -226,31 +226,31 @@ public class WallpaperManagerTest {
      * Suggesting desired dimensions is only a hint to the system that can be ignored.
      *
      * Test if the desired minimum width or height the WallpaperManager returns
-     * is greater than 0. If so, then we check whether that the size is at least the
-     * as big as the screen.
+     * is greater than 0. If so, then we check whether that the size is the dimension
+     * that was suggested.
      */
     @Test
     public void suggestDesiredDimensionsTest() {
         final Point min = getScreenSize();
         final int w = min.x * 3;
         final int h = min.y * 2;
-        assertDesiredMinimum(new Point(min.x / 2, min.y / 2), min);
+        assertDesiredDimension(new Point(min.x / 2, min.y / 2), new Point(min.x / 2, min.y / 2));
 
-        assertDesiredMinimum(new Point(w, h), min);
+        assertDesiredDimension(new Point(w, h), new Point(w, h));
 
-        assertDesiredMinimum(new Point(min.x / 2, h), min);
+        assertDesiredDimension(new Point(min.x / 2, h), new Point(min.x / 2, h));
 
-        assertDesiredMinimum(new Point(w, min.y / 2), min);
+        assertDesiredDimension(new Point(w, min.y / 2), new Point(w, min.y / 2));
     }
 
-    private void assertDesiredMinimum(Point suggestedSize, Point minSize) {
+    private void assertDesiredDimension(Point suggestedSize, Point expectedSize) {
         mWallpaperManager.suggestDesiredDimensions(suggestedSize.x, suggestedSize.y);
         Point actualSize = new Point(mWallpaperManager.getDesiredMinimumWidth(),
                 mWallpaperManager.getDesiredMinimumHeight());
         if (actualSize.x > 0 || actualSize.y > 0) {
-            if ((actualSize.x < minSize.x || actualSize.y < minSize.y)) {
-                throw new AssertionError("Expected at least x: " + minSize.x + " y: "
-                        + minSize.y + ", got x: " + actualSize.x +
+            if ((actualSize.x != expectedSize.x || actualSize.y != expectedSize.y)) {
+                throw new AssertionError("Expected x: " + expectedSize.x + " y: "
+                        + expectedSize.y + ", got x: " + actualSize.x +
                         " y: " + actualSize.y);
             }
         }
