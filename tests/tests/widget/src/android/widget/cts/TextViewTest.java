@@ -6274,7 +6274,12 @@ public class TextViewTest {
     public void testSetGetHyphenationFrequency() {
         TextView tv = new TextView(mActivity);
 
-        assertEquals(Layout.HYPHENATION_FREQUENCY_NONE, tv.getHyphenationFrequency());
+        // Hypenation is enabled by default on watches to fit more text on their tiny screens.
+        if (isWatch()) {
+            assertEquals(Layout.HYPHENATION_FREQUENCY_NORMAL, tv.getHyphenationFrequency());
+        } else {
+            assertEquals(Layout.HYPHENATION_FREQUENCY_NONE, tv.getHyphenationFrequency());
+        }
 
         tv.setHyphenationFrequency(Layout.HYPHENATION_FREQUENCY_NORMAL);
         assertEquals(Layout.HYPHENATION_FREQUENCY_NORMAL, tv.getHyphenationFrequency());
@@ -8012,7 +8017,13 @@ public class TextViewTest {
     public void testHyphenationFrequencyDefaultValue() {
         final Context context = InstrumentationRegistry.getTargetContext();
         final TextView textView = new TextView(context);
-        assertEquals(Layout.HYPHENATION_FREQUENCY_NONE, textView.getHyphenationFrequency());
+
+        // Hypenation is enabled by default on watches to fit more text on their tiny screens.
+        if (isWatch()) {
+            assertEquals(Layout.HYPHENATION_FREQUENCY_NORMAL, textView.getHyphenationFrequency());
+        } else {
+            assertEquals(Layout.HYPHENATION_FREQUENCY_NONE, textView.getHyphenationFrequency());
+        }
     }
 
     private void initializeTextForSmartSelection(CharSequence text) throws Throwable {
