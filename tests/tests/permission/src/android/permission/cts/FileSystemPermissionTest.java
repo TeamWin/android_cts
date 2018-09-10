@@ -461,11 +461,10 @@ public class FileSystemPermissionTest {
     }
 
     @MediumTest
-    @AppModeFull(reason = "Instant Apps cannot access proc_net labeled files")
     @Test
     public void testTcpDefaultRwndSane() throws Exception {
         File f = new File("/proc/sys/net/ipv4/tcp_default_init_rwnd");
-        assertTrue(f.canRead());
+        assertFalse(f.canRead());
         assertFalse(f.canWrite());
         assertFalse(f.canExecute());
 
