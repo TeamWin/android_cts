@@ -18,16 +18,22 @@ package android.autofillservice.cts;
 import android.content.Intent;
 import android.os.Bundle;
 import android.util.Log;
+import android.view.ViewGroup;
 import android.view.autofill.AutofillId;
 import android.widget.Button;
 import android.widget.EditText;
+import android.widget.TextView;
 
 public final class UsernameOnlyActivity extends AbstractAutoFillActivity {
 
     private static final String TAG = "UsernameOnlyActivity";
 
+    private TextView mUsernameTextView;
     private EditText mUsernameEditText;
     private Button mNextButton;
+    private Button mSameButton;
+    private Button mFinishButton;
+
     private AutofillId mPasswordAutofillId;
 
     @Override
@@ -35,17 +41,26 @@ public final class UsernameOnlyActivity extends AbstractAutoFillActivity {
         super.onCreate(savedInstanceState);
         setContentView(getContentView());
 
+        mUsernameTextView = findViewById(R.id.username_label);
         mUsernameEditText = findViewById(R.id.username);
         mNextButton = findViewById(R.id.next);
         mNextButton.setOnClickListener((v) -> next());
+        mSameButton = findViewById(R.id.same);
+        mSameButton.setOnClickListener((v) -> same());
+        mFinishButton = findViewById(R.id.finish);
+        mFinishButton.setOnClickListener((v) -> finish());
     }
 
     protected int getContentView() {
         return R.layout.username_only_activity;
     }
 
-    public void focusOnUsername() {
+    void focusOnUsername() {
         syncRunOnUiThread(() -> mUsernameEditText.requestFocus());
+    }
+
+    void requestManualAutofillOnUsername() {
+        syncRunOnUiThread(() -> getAutofillManager().requestAutofill(mUsernameEditText));
     }
 
     void setUsername(String username) {
@@ -72,5 +87,24 @@ public final class UsernameOnlyActivity extends AbstractAutoFillActivity {
                 .putExtra(PasswordOnlyActivity.EXTRA_PASSWORD_AUTOFILL_ID, mPasswordAutofillId);
         startActivity(intent);
         finish();
+    }
+
+    void same() {
+        Log.v(TAG, "Using same activity for password; id=" + mPasswordAutofillId);
+        syncRunOnUiThread(() -> {
+            getAutofillManager().commit();
+            mUsernameTextView.setText("Password");
+            mUsernameEditText.setText(null);
+            final ViewGroup parent = (ViewGroup) mUsernameEditText.getParent();
+            if (mPasswordAutofillId != null) {
+                // Must detach before changing the autofill id
+                Log.v(TAG, "Setting password autofill id to " + mPasswordAutofillId);
+                parent.removeView(mUsernameEditText);
+                mUsernameEditText.setAutofillId(mPasswordAutofillId);
+                parent.addView(mUsernameEditText);
+            }
+            // Set focus away from input field so it can trigger autofill again
+            getWindow().getDecorView().getRootView().requestFocus();
+        });
     }
 }

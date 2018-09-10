@@ -485,6 +485,11 @@ final class CannedFillResponse {
             mSaveInfoDecorator = decorator;
             return this;
         }
+
+        public Builder setSaveType(int type) {
+            mSaveType = type;
+            return this;
+        }
     }
 
     /**

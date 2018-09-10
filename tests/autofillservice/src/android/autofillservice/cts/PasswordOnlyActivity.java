@@ -67,6 +67,10 @@ public final class PasswordOnlyActivity extends AbstractAutoFillActivity {
         syncRunOnUiThread(() -> mPasswordEditText.setText(password));
     }
 
+    public AutofillId getPasswordAutofillId() {
+        return mPasswordEditText.getAutofillId();
+    }
+
     void login() {
         final String password = mPasswordEditText.getText().toString();
         Log.i(TAG, "Login as " + mUsername + "/" + password);
