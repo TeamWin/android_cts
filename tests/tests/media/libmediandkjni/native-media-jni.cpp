@@ -347,7 +347,7 @@ extern "C" jobject Java_android_media_cts_NativeDecoderTest_getSampleSizesNative
 
 // get the sample sizes for the path
 extern "C" jobject Java_android_media_cts_NativeDecoderTest_getSampleSizesNativePath(JNIEnv *env,
-        jclass /*clazz*/, jstring jpath)
+        jclass /*clazz*/, jstring jpath, jobjectArray jkeys, jobjectArray jvalues)
 {
     AMediaExtractor *ex = AMediaExtractor_new();
 
@@ -356,7 +356,33 @@ extern "C" jobject Java_android_media_cts_NativeDecoderTest_getSampleSizesNative
         return NULL;
     }
 
-    int err = AMediaExtractor_setDataSource(ex, tmp);
+    int err;
+    if (jkeys == NULL || jvalues == NULL) {
+        err = AMediaExtractor_setDataSource(ex, tmp);
+    } else {
+        int numkeys = env->GetArrayLength(jkeys);
+        int numvalues = env->GetArrayLength(jvalues);
+        int numheaders = numkeys < numvalues ? numkeys : numvalues;
+        const char **keys = numheaders ? new const char *[numheaders] : NULL;
+        const char **values = numheaders ? new const char *[numheaders] : NULL;
+        for (int i = 0; i < numheaders; i++) {
+            jstring jkey = (jstring) (env->GetObjectArrayElement(jkeys, i));
+            jstring jvalue = (jstring) (env->GetObjectArrayElement(jvalues, i));
+            const char *key = env->GetStringUTFChars(jkey, NULL);
+            const char *value = env->GetStringUTFChars(jvalue, NULL);
+            keys[i] = key;
+            values[i] = value;
+        }
+        err = AMediaExtractor_setDataSourceWithHeaders(ex, tmp, numheaders, keys, values);
+        for (int i = 0; i < numheaders; i++) {
+            jstring jkey = (jstring) (env->GetObjectArrayElement(jkeys, i));
+            jstring jvalue = (jstring) (env->GetObjectArrayElement(jvalues, i));
+            env->ReleaseStringUTFChars(jkey, keys[i]);
+            env->ReleaseStringUTFChars(jvalue, values[i]);
+        }
+        delete[] keys;
+        delete[] values;
+    }
 
     env->ReleaseStringUTFChars(jpath, tmp);
 
