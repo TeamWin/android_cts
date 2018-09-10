@@ -1110,9 +1110,9 @@ public class SELinuxHostTest extends DeviceTestCase implements IBuildReceiver, I
     /* Init is always there */
     @CddTest(requirement="9.7")
     public void testInitDomain() throws DeviceNotAvailableException {
-        assertDomainHasExecutable("u:r:init:s0", "/init");
-        assertDomainHasExecutable("u:r:vendor_init:s0", "/init");
-        assertExecutableHasDomain("/init", "u:r:init:s0", "u:r:vendor_init:s0");
+        assertDomainHasExecutable("u:r:init:s0", "/system/bin/init");
+        assertDomainHasExecutable("u:r:vendor_init:s0", "/system/bin/init");
+        assertExecutableHasDomain("/system/bin/init", "u:r:init:s0", "u:r:vendor_init:s0");
     }
 
     /* Ueventd is always there */
