@@ -20,8 +20,8 @@ import android.content.Context;
 import android.database.DatabaseUtils;
 import android.database.sqlite.SQLiteCompatibilityWalFlags;
 import android.database.sqlite.SQLiteDatabase;
-import android.database.sqlite.SQLiteDatabase.OpenParams;
 import android.test.AndroidTestCase;
+import android.util.Log;
 
 import com.android.compatibility.common.util.SystemUtil;
 
@@ -115,7 +115,7 @@ public class SQLiteWalTest extends AndroidTestCase {
         setCompatibilityWalFlags(TRUNCATE_SIZE_KEY + "=1");
         SQLiteCompatibilityWalFlags.reset();
 
-        SQLiteDatabase db = doOperation();
+        SQLiteDatabase db = doOperation("testWalTruncate");
 
         // Make sure the WAL file is truncated into 0 bytes.
         assertEquals(0, (new File(db.getPath() + WAL_SUFFIX)).length());
@@ -131,7 +131,7 @@ public class SQLiteWalTest extends AndroidTestCase {
         setCompatibilityWalFlags(TRUNCATE_SIZE_KEY + "=1000000");
         SQLiteCompatibilityWalFlags.reset();
 
-        SQLiteDatabase db = doOperation();
+        SQLiteDatabase db = doOperation("testWalNoTruncate");
 
         assertTrue((new File(db.getPath() + WAL_SUFFIX)).length() > 0);
     }
@@ -145,33 +145,59 @@ public class SQLiteWalTest extends AndroidTestCase {
         setCompatibilityWalFlags(TRUNCATE_SIZE_KEY + "=0");
         SQLiteCompatibilityWalFlags.reset();
 
-        SQLiteDatabase db = doOperation();
+        SQLiteDatabase db = doOperation("testWalTruncateDisabled");
 
         assertTrue((new File(db.getPath() + WAL_SUFFIX)).length() > 0);
     }
 
-    private SQLiteDatabase doOperation() {
+    private SQLiteDatabase doOperation(String message) {
+        listFiles(message + ": start");
+
         SQLiteDatabase db = prepareDatabase();
+
+        listFiles(message + ": DB created and prepared");
 
         // db.close() will remove the wal file, so back the files up.
         backupFile(db.getPath());
         backupFile(db.getPath() + SHM_SUFFIX);
         backupFile(db.getPath() + WAL_SUFFIX);
 
+        listFiles(message + ": backup created");
+
         // Close the DB, this will remove the WAL file.
         db.close();
+
+        listFiles(message + ": DB closed");
 
         // Restore the files.
         restoreFile(db.getPath());
         restoreFile(db.getPath() + SHM_SUFFIX);
         restoreFile(db.getPath() + WAL_SUFFIX);
 
+        listFiles(message + ": DB restored");
+
         // Open the DB again.
         db = openDatabase();
+
+        listFiles(message + ": DB re-opened");
 
         // Make sure the table still exists.
         assertTestTableExists(db);
 
         return db;
+    }
+
+    private void listFiles(String message) {
+        final File dir = mContext.getDatabasePath("a").getParentFile();
+        Log.i(TAG, "Listing files: " + message + " (" + dir.getAbsolutePath() + ")");
+
+        final File[] files = mContext.getDatabasePath("a").getParentFile().listFiles();
+        if (files == null || files.length == 0) {
+            Log.i(TAG, "  No files found");
+            return;
+        }
+        for (File f : files) {
+            Log.i(TAG, "  file: " + f.getName() + " " + f.length() + " bytes");
+        }
     }
 }
