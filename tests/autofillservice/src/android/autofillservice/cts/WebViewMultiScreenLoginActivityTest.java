@@ -206,8 +206,10 @@ public class WebViewMultiScreenLoginActivityTest
         sReplier.addResponse(new CannedFillResponse.Builder()
                 .setIgnoreFields(HTML_NAME_USERNAME)
                 .setSaveInfoFlags(SaveInfo.FLAG_DELAY_SAVE)
-                .setSaveInfoDecorator((builder, nodeResolver) ->
-                        usernameId.set(getAutofillId(nodeResolver, HTML_NAME_USERNAME)))
+                .setSaveInfoDecorator((builder, nodeResolver) -> {
+                    usernameId.set(getAutofillId(nodeResolver, HTML_NAME_USERNAME));
+
+                })
                 .build());
         // Trigger autofill.
         mActivity.getUsernameInput().click();

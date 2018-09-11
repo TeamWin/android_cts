@@ -51,15 +51,5 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:text="Next" />
-        <Button
-            android:id="@+id/same"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="Same" />
-        <Button
-            android:id="@+id/finish"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="Finish" />
     </LinearLayout>
 </LinearLayout>
