@@ -25,6 +25,7 @@ import static org.junit.Assert.assertTrue;
 import android.app.Activity;
 import android.app.Instrumentation;
 import android.content.Context;
+import android.content.res.Configuration;
 import android.support.test.InstrumentationRegistry;
 import android.support.test.annotation.UiThreadTest;
 import android.support.test.filters.SmallTest;
@@ -339,11 +340,22 @@ public class EditTextTest {
         assertEquals(mEditText1.getSelectionEnd(), mEditText2.getSelectionEnd());
     }
 
+    private boolean isWatch() {
+        return (mActivity.getResources().getConfiguration().uiMode
+                & Configuration.UI_MODE_TYPE_WATCH) == Configuration.UI_MODE_TYPE_WATCH;
+    }
+
     @Test
     public void testHyphenationFrequencyDefaultValue() {
         final Context context = InstrumentationRegistry.getTargetContext();
         final EditText editText = new EditText(context);
-        assertEquals(Layout.HYPHENATION_FREQUENCY_NONE, editText.getHyphenationFrequency());
+
+        // Hypenation is enabled by default on watches to fit more text on their tiny screens.
+        if (isWatch()) {
+            assertEquals(Layout.HYPHENATION_FREQUENCY_NORMAL, editText.getHyphenationFrequency());
+        } else {
+            assertEquals(Layout.HYPHENATION_FREQUENCY_NONE, editText.getHyphenationFrequency());
+        }
     }
 
     @Test

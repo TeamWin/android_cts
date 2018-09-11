@@ -16,13 +16,19 @@
 
 package android.graphics.fonts;
 
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotEquals;
+
+import android.graphics.Typeface;
 import android.graphics.cts.R;
+import android.text.TextPaint;
 import android.util.Pair;
 
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 
 /**
@@ -150,6 +156,27 @@ public class FontTestUtil {
             R.font.ascii_r3em_weight900_italic,
     };
 
+    private static final char[] CHAR_3EM_WIDTH = {
+            'a',
+            'b',
+            'c',
+            'd',
+            'e',
+            'f',
+            'g',
+            'h',
+            'i',
+            'j',
+            'k',
+            'l',
+            'm',
+            'n',
+            'o',
+            'p',
+            'q',
+            'r',
+    };
+
     static {
         // Style list with the same order of sFontList.
         ArrayList<Pair<Integer, Boolean>> styles = new ArrayList<>();
@@ -188,6 +215,17 @@ public class FontTestUtil {
         sTtcMap = Collections.unmodifiableMap(ttcMap);
         sVariationSettingsMap = Collections.unmodifiableMap(variationMap);
         sResourceMap = Collections.unmodifiableMap(resourceMap);
+    }
+
+    /**
+     * Measure a character with 100px text size
+     */
+    private static float measureChar(Typeface typeface, char c) {
+        final TextPaint tp = new TextPaint();
+        tp.setTextSize(100);
+        tp.setTypeface(typeface);
+        tp.setTextLocale(Locale.US);
+        return tp.measureText(new char[] { c }, 0, 1);
     }
 
     /**
@@ -248,8 +286,64 @@ public class FontTestUtil {
 
     /**
      * Returns all supported styles.
+     *
+     * @return a pair of weight and style(uplight/italic)
      */
     public static List<Pair<Integer, Boolean>> getAllStyles() {
         return sStyleList;
+    }
+
+    /**
+     * Returns selected font index in the sStyleList array.
+     */
+    private static int getSelectedFontStyle(Typeface typeface) {
+        int indexOf3Em = -1;
+        for (int i = 0; i < CHAR_3EM_WIDTH.length; ++i) {
+            if (measureChar(typeface, CHAR_3EM_WIDTH[i]) == 300.0f) {
+                assertEquals("A font has two 3em width character. Likely the wrong test setup.",
+                        -1, indexOf3Em);
+                indexOf3Em = i;
+            }
+        }
+        assertNotEquals("No font has 3em width character. Likely the wrong test setup.",
+                -1, indexOf3Em);
+        return indexOf3Em;
+    }
+
+    /**
+     * Returns selected font's style.
+     */
+    public static Pair<Integer, Boolean> getSelectedStyle(Typeface typeface) {
+        return sStyleList.get(getSelectedFontStyle(typeface));
+    }
+
+    /**
+     * Returns selected font's file path.
+     *
+     * Note that this is valid only if the all Font objects in the FontFamily is created with
+     * AssetManager.
+     */
+    public static String getSelectedFontPathInAsset(Typeface typeface) {
+        return sFontList[getSelectedFontStyle(typeface)];
+    }
+
+    /**
+     * Returns selected font's ttc index.
+     *
+     * Note that this is valid only if the all Font objects in the FontFamily is created with
+     * TTC font with ttcIndex.
+     */
+    public static int getSelectedTtcIndex(Typeface typeface) {
+        return getSelectedFontStyle(typeface);
+    }
+
+    /**
+     * Returns selected font's variation settings.
+     *
+     * Note that this is valid only if the all Font objects in the FontFamily is created with
+     * variable fonts with font variation settings.
+     */
+    public static String getSelectedVariationSettings(Typeface typeface) {
+        return FONT_VARIATION_SETTING_LIST[getSelectedFontStyle(typeface)];
     }
 }

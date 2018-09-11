@@ -130,7 +130,7 @@ public class MediaPlayer2DrmTestBase {
         mContext = mInstrumentation.getTargetContext();
         mResources = mContext.getResources();
 
-        mExecutor = Executors.newFixedThreadPool(1);
+        mExecutor = Executors.newFixedThreadPool(2);
     }
 
     @After
@@ -688,7 +688,16 @@ public class MediaPlayer2DrmTestBase {
                     Log.d(TAG, "setupDrm: selected " + drmScheme);
 
                     if (prepareDrm) {
+                        final Monitor drmPrepared = new Monitor();
+                        mPlayer.setDrmEventCallback(mExecutor, new MediaPlayer2.DrmEventCallback() {
+                            @Override
+                            public void onDrmPrepared(
+                                    MediaPlayer2 mp, DataSourceDesc2 dsd, int status) {
+                                drmPrepared.signal();
+                            }
+                        });
                         mPlayer.prepareDrm(drmScheme);
+                        drmPrepared.waitForSignal();
                     }
 
                     byte[] psshData = drmInfo.getPssh().get(drmScheme);

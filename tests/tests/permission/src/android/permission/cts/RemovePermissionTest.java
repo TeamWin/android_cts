@@ -27,6 +27,7 @@ import android.app.Instrumentation;
 import android.content.Context;
 import android.content.pm.PackageInfo;
 import android.content.pm.PackageManager;
+import android.platform.test.annotations.AppModeFull;
 import android.platform.test.annotations.SecurityTest;
 import android.support.test.InstrumentationRegistry;
 
@@ -89,6 +90,7 @@ public class RemovePermissionTest {
 
     @SecurityTest
     @Test
+    @AppModeFull(reason = "Instant apps donot have dangerous level permissions.")
     public void permissionShouldBeRevokedIfRemoved() throws Throwable {
         installApp("CtsAdversarialPermissionDefinerApp");
         installApp("CtsAdversarialPermissionUserApp");
