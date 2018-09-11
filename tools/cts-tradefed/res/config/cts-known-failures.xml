@@ -136,7 +136,7 @@
     <option name="compatibility:exclude-filter" value="CtsSecurityTestCases android.security.cts.MediaCryptoTest#testMediaCryptoWidevine" />
 
     <!-- b/62302163 -->
-    <option name="compatibility:exclude-filter" value="CtsSecurityHostTestCases android.security.cts.Poc17_04#testPocCVE_2017_0564" />
+    <option name="compatibility:exclude-filter" value="CtsSecurityBulletinHostTestCases android.security.cts.Poc17_04#testPocCVE_2017_0564" />
 
     <!-- b/27873815 -->
     <option name="compatibility:exclude-filter" value="arm64-v8a CtsRenderscriptLegacyTestCases" />
