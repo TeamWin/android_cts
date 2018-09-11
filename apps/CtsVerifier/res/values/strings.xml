@@ -1956,9 +1956,8 @@ You should be prompted to select credentials; choose the ones you just installed
     <string name="device_admin_notification">This is device admin notification</string>
     <string name="device_admin_keyguard_disable_camera">Disable camera</string>
     <string name="device_admin_keyguard_disable_camera_instruction">
-        Please press the Go button to lock the screen. Then try to open the camera
-        from the lower right corner of the screen. Expected result is you cannot
-        open the camera from lock screen and it will ask for password instead.
+        Please press the Go button to lock the screen. Expected result is you cannot
+        see the camera icon on the lower right corner of the screen, or if there is one, you cannot open the camera using it before you are asked for a password.
     </string>
     <string name="device_admin_disable_notifications">Disable notifications</string>
     <string name="device_admin_disable_notifications_instruction">
