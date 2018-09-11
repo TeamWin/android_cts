@@ -78,6 +78,7 @@ import java.util.function.Function;
 final class Helper {
 
     static final String TAG = "AutoFillCtsHelper";
+    private static final String TAG_DUMP = "DUMP";
 
     static final boolean VERBOSE = false;
 
@@ -195,7 +196,7 @@ final class Helper {
      * Dump the assist structure on logcat.
      */
     static void dumpStructure(String message, AssistStructure structure) {
-        Log.i(TAG, toString(structure, new StringBuilder(message)));
+        Log.i(TAG_DUMP, toString(structure, new StringBuilder(message)));
     }
 
     /**

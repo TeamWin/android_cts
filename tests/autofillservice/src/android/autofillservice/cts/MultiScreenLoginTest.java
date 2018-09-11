@@ -15,7 +15,7 @@
  */
 package android.autofillservice.cts;
 
-import static android.autofillservice.cts.CustomDescriptionHelper.newCustomDescriptionWithHiddenFields;
+import static android.autofillservice.cts.CustomDescriptionHelper.newCustomDescriptionWithUsernameAndPassword;
 import static android.autofillservice.cts.Helper.ID_PASSWORD;
 import static android.autofillservice.cts.Helper.ID_PASSWORD_LABEL;
 import static android.autofillservice.cts.Helper.ID_USERNAME;
@@ -39,7 +39,6 @@ import android.support.test.uiautomator.UiObject2;
 import android.util.Log;
 import android.view.autofill.AutofillId;
 
-import org.junit.Ignore;
 import org.junit.Test;
 
 import java.util.regex.Pattern;
@@ -70,7 +69,7 @@ public class MultiScreenLoginTest
      * password) separately.
      */
     @Test
-    public void testSaveEachFieldSeparately() throws Exception {
+    public void testSave_eachFieldSeparately() throws Exception {
         // Set service
         enableService();
 
@@ -142,7 +141,7 @@ public class MultiScreenLoginTest
      * the second fill request and the save request.
      */
     @Test
-    public void testSaveBothFieldsAtOnceNoClientStateOnSecondRequest() throws Exception {
+    public void testSave_noClientStateOnSecondRequest() throws Exception {
         // Set service
         enableService();
 
@@ -228,7 +227,7 @@ public class MultiScreenLoginTest
      * passed to the 2nd request, and the 2nd client state is passed to the save request).
      */
     @Test
-    public void testSaveBothFieldsAtOnceWithClientStateOnBothRequests() throws Exception {
+    public void testSave_clientStateOnBothRequests() throws Exception {
         // Set service
         enableService();
 
@@ -315,26 +314,22 @@ public class MultiScreenLoginTest
     }
 
     @Test
-    public void testSaveBothFieldsCustomDescription_differentIds() throws Exception {
-        saveBothFieldsCustomDescription(false);
+    public void testSave_customDescription_differentIds() throws Exception {
+        saveCustomDescription(false);
     }
 
-    @Ignore("TODO(b/113593220): need new API to set context id")
     @Test
-    public void testSaveBothFieldsCustomDescription_sameIds() throws Exception {
-        saveBothFieldsCustomDescription(true);
+    public void testSave_customDescription_sameIds() throws Exception {
+        saveCustomDescription(true);
     }
 
-    private void saveBothFieldsCustomDescription(boolean sameAutofillId) throws Exception {
+    /**
+     * Tests to make sure the the custom description in the save UI can handle autofill ids from a
+     * previous activity.
+     */
+    private void saveCustomDescription(boolean sameAutofillId) throws Exception {
         // Set service
         enableService();
-
-        // Set ids
-        final AutofillId usernameId = mActivity.getUsernameAutofillId();
-        final AutofillId passwordId = sameAutofillId ? usernameId
-                : mActivity.getAutofillManager().getNextAutofillId();
-        mActivity.setPasswordAutofillId(passwordId);
-        Log.d(TAG, "usernameId: " + usernameId + ", passwordId: " + passwordId);
 
         // First handle username...
 
@@ -357,24 +352,34 @@ public class MultiScreenLoginTest
         mUiBot.assertSaveNotShowing();
 
         // ...now rinse and repeat for password
+        // Set ids
+        final AutofillId usernameId = mActivity.getUsernameAutofillId();
+        final AutofillId passwordIdFirstSession = sameAutofillId ? usernameId
+                : mActivity.getAutofillManager().getNextAutofillId();
+        mActivity.setPasswordAutofillId(passwordIdFirstSession);
 
         // Get the activity
         final PasswordOnlyActivity passwordActivity = AutofillTestWatcher
                 .getActivity(PasswordOnlyActivity.class);
 
-
         // Set expectations.
-        final CharSequenceTransformation usernameTrans =
-                new CharSequenceTransformation.Builder(usernameId, MATCH_ALL, "$1").build();
-        final CharSequenceTransformation passwordTrans =
-                new CharSequenceTransformation.Builder(passwordId, MATCH_ALL, "$1").build();
         sReplier.addResponse(new CannedFillResponse.Builder()
-                .setRequiredSavableAutofillIds(SAVE_DATA_TYPE_USERNAME | SAVE_DATA_TYPE_PASSWORD,
-                        passwordId)
-                .setCustomDescription(newCustomDescriptionWithHiddenFields()
-                        .addChild(R.id.username, usernameTrans)
-                        .addChild(R.id.password, passwordTrans)
-                        .build())
+                .setSaveType(SAVE_DATA_TYPE_USERNAME | SAVE_DATA_TYPE_PASSWORD)
+                .setSaveInfoDecorator((builder, nodeResolver) -> {
+                    final AutofillId passwordId = passwordActivity.getPasswordAutofillId();
+                    Log.d(TAG, "usernameId: " + usernameId
+                            + ", passwordIdFirstSession: " + passwordIdFirstSession
+                            + ", passwordId: " + passwordId);
+                    final CharSequenceTransformation usernameTrans = new CharSequenceTransformation
+                            .Builder(usernameId, MATCH_ALL, "$1").build();
+                    final CharSequenceTransformation passwordTrans = new CharSequenceTransformation
+                            .Builder(passwordId, MATCH_ALL, "$1").build();
+                    builder.setCustomDescription(newCustomDescriptionWithUsernameAndPassword()
+                            .addChild(R.id.username, usernameTrans)
+                            .addChild(R.id.password, passwordTrans)
+                            .build())
+                            .setOptionalIds(new AutofillId[] { passwordId });
+                })
                 .build());
 
         // Trigger autofill
@@ -401,8 +406,102 @@ public class MultiScreenLoginTest
         mUiBot.assertChildText(saveUi, ID_PASSWORD, "sweet");
     }
 
+    @Test
+    public void testSave_sameActivity_customDescription_differentIds() throws Exception {
+        saveSameActivityCustomDescription(false);
+    }
+
+    @Test
+    public void testSave_sameActivity_customDescription_sameIds() throws Exception {
+        saveSameActivityCustomDescription(true);
+    }
+
+    /**
+     * Tests to make sure the the custom description in the save UI can handle autofill ids from a
+     * previous session from the same activity.
+     */
+    private void saveSameActivityCustomDescription(boolean sameAutofillId) throws Exception {
+        // Set service
+        enableService();
+
+        // Set ids
+        final AutofillId usernameId = mActivity.getUsernameAutofillId();
+        final AutofillId passwordIdFirstSession = sameAutofillId ? usernameId
+                : mActivity.getAutofillManager().getNextAutofillId();
+        mActivity.setPasswordAutofillId(passwordIdFirstSession);
+
+        // First handle username...
+
+        // Set expectations.
+        sReplier.addResponse(new CannedFillResponse.Builder()
+                .setSaveInfoFlags(SaveInfo.FLAG_DELAY_SAVE)
+                .build());
+
+        // Trigger autofill
+        mActivity.focusOnUsername();
+        final FillRequest fillRequest1 = sReplier.getNextFillRequest();
+        assertThat(fillRequest1.contexts.size()).isEqualTo(1);
+        final ComponentName component1 = fillRequest1.structure.getActivityComponent();
+        assertThat(component1).isEqualTo(mActivity.getComponentName());
+        mUiBot.assertNoDatasetsEver();
+
+        // Trigger what would be save...
+        mActivity.setUsername("dude");
+        mActivity.same();
+        mUiBot.assertSaveNotShowing();
+
+        // ...now rinse and repeat for password
+
+        // Set expectations.
+        sReplier.addResponse(new CannedFillResponse.Builder()
+                .setSaveType(SAVE_DATA_TYPE_USERNAME | SAVE_DATA_TYPE_PASSWORD)
+                .setSaveInfoDecorator((builder, nodeResolver) -> {
+                    final AutofillId passwordId = mActivity.getUsernameAutofillId();
+                    Log.d(TAG, "usernameId: " + usernameId
+                            + ", passwordIdFirstSession: " + passwordIdFirstSession
+                            + ", passwordId: " + passwordId);
+                    final CharSequenceTransformation usernameTrans = new CharSequenceTransformation
+                            .Builder(usernameId, MATCH_ALL, "$1").build();
+                    final CharSequenceTransformation passwordTrans = new CharSequenceTransformation
+                            .Builder(passwordId, MATCH_ALL, "$1").build();
+                    builder.setCustomDescription(newCustomDescriptionWithUsernameAndPassword()
+                            .addChild(R.id.username, usernameTrans)
+                            .addChild(R.id.password, passwordTrans)
+                            .build())
+                            .setOptionalIds(new AutofillId[] { passwordId });
+                })
+                .build());
+
+        // Trigger autofill
+        if (sameAutofillId) {
+            // Must force a request because otherwise it will be ignored for optimization purposes
+            mActivity.requestManualAutofillOnUsername();
+        } else {
+            mActivity.focusOnUsername();
+        }
+        final FillRequest fillRequest2 = sReplier.getNextFillRequest();
+        assertThat(fillRequest2.contexts.size()).isEqualTo(2);
+
+        final ComponentName component2 = fillRequest2.structure.getActivityComponent();
+        assertThat(component2).isEqualTo(mActivity.getComponentName());
+        mUiBot.assertNoDatasetsEver();
+
+        // Trigger save...
+        mActivity.setUsername("sweet");
+        mActivity.finish();
+
+        // ...and assert UI
+        final UiObject2 saveUi = mUiBot.assertSaveShowing(
+                SaveInfo.NEGATIVE_BUTTON_STYLE_CANCEL, null, SAVE_DATA_TYPE_USERNAME,
+                SAVE_DATA_TYPE_PASSWORD);
+
+        mUiBot.assertChildText(saveUi, ID_USERNAME_LABEL, "User:");
+        mUiBot.assertChildText(saveUi, ID_USERNAME, "dude");
+        mUiBot.assertChildText(saveUi, ID_PASSWORD_LABEL, "Pass:");
+        mUiBot.assertChildText(saveUi, ID_PASSWORD, "sweet");
+    }
+
     // TODO(b/113281366): add test cases for more scenarios such as:
     // - make sure that activity not marked with keepAlive is not sent in the 2nd request
     // - somehow verify that the first activity's session is gone
-    // - WebView
 }
