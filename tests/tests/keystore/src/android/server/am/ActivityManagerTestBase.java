@@ -124,7 +124,6 @@ public abstract class ActivityManagerTestBase {
         pressWakeupButton();
         pressUnlockButton();
         pressHomeButton();
-        removeStacksWithActivityTypes(ALL_ACTIVITY_TYPE_BUT_HOME);
     }
 
     @After
@@ -132,16 +131,10 @@ public abstract class ActivityManagerTestBase {
         // Synchronous execution of removeStacksWithActivityTypes() ensures that all activities but
         // home are cleaned up from the stack at the end of each test. Am force stop shell commands
         // might be asynchronous and could interrupt the stack cleanup process if executed first.
-        removeStacksWithActivityTypes(ALL_ACTIVITY_TYPE_BUT_HOME);
         executeShellCommand(AM_FORCE_STOP_TEST_PACKAGE);
         executeShellCommand(AM_FORCE_STOP_SECOND_TEST_PACKAGE);
         executeShellCommand(AM_FORCE_STOP_THIRD_TEST_PACKAGE);
         pressHomeButton();
-    }
-
-    protected void removeStacksWithActivityTypes(int... activityTypes) {
-        mAtm.removeStacksWithActivityTypes(activityTypes);
-        waitForIdle();
     }
 
     public static String executeShellCommand(String command) {
