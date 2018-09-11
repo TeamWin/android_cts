@@ -18,6 +18,8 @@
 
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
           package="android.admin.app">
+    <uses-sdk android:minSdkVersion="19" android:targetSdkVersion="28"/>
+
     <application android:testOnly="true">
 
         <uses-library android:name="android.test.runner"/>
