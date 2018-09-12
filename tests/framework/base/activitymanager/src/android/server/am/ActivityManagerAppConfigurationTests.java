@@ -526,6 +526,7 @@ public class ActivityManagerAppConfigurationTests extends ActivityManagerTestBas
         // Request portrait
         executeShellCommand(REQUEST_PORTRAIT_BROADCAST);
         mAmWmState.waitForLastOrientation(SCREEN_ORIENTATION_PORTRAIT);
+        waitForBroadcastActivityReady(SCREEN_ORIENTATION_PORTRAIT);
 
         // Finish activity
         executeShellCommand(FINISH_ACTIVITY_BROADCAST);
@@ -553,6 +554,7 @@ public class ActivityManagerAppConfigurationTests extends ActivityManagerTestBas
         launchActivityInNewTask(BROADCAST_RECEIVER_ACTIVITY);
         executeShellCommand(REQUEST_LANDSCAPE_BROADCAST);
         mAmWmState.waitForLastOrientation(SCREEN_ORIENTATION_LANDSCAPE);
+        waitForBroadcastActivityReady(SCREEN_ORIENTATION_LANDSCAPE);
         executeShellCommand(FINISH_ACTIVITY_BROADCAST);
 
         // Verify that activity brought to front is in originally requested orientation.
@@ -570,6 +572,7 @@ public class ActivityManagerAppConfigurationTests extends ActivityManagerTestBas
         launchActivityInNewTask(BROADCAST_RECEIVER_ACTIVITY);
         executeShellCommand(REQUEST_PORTRAIT_BROADCAST);
         mAmWmState.waitForLastOrientation(SCREEN_ORIENTATION_PORTRAIT);
+        waitForBroadcastActivityReady(SCREEN_ORIENTATION_PORTRAIT);
         executeShellCommand(FINISH_ACTIVITY_BROADCAST);
 
         // Verify that activity brought to front is in originally requested orientation.
@@ -694,6 +697,7 @@ public class ActivityManagerAppConfigurationTests extends ActivityManagerTestBas
         // Request portrait
         executeShellCommand(REQUEST_PORTRAIT_BROADCAST);
         mAmWmState.waitForLastOrientation(SCREEN_ORIENTATION_PORTRAIT);
+        waitForBroadcastActivityReady(SCREEN_ORIENTATION_PORTRAIT);
 
         // Finish activity
         executeShellCommand(MOVE_TASK_TO_BACK_BROADCAST);
@@ -881,6 +885,11 @@ public class ActivityManagerAppConfigurationTests extends ActivityManagerTestBas
         assertNotNull("Should be on a display", display);
 
         return display.getDisplayRect();
+    }
+
+    private void waitForBroadcastActivityReady(int orientation) {
+        mAmWmState.waitForActivityOrientation(BROADCAST_RECEIVER_ACTIVITY, orientation);
+        mAmWmState.waitForActivityState(BROADCAST_RECEIVER_ACTIVITY, STATE_RESUMED);
     }
 
     /**
