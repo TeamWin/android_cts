@@ -124,7 +124,8 @@ public class MotionEventTest {
         FutureTask<Point> task = new FutureTask<>(() -> {
             final int[] viewLocation = new int[2];
             viewHolder[0].getLocationOnScreen(viewLocation);
-            return new Point(viewLocation[0], viewLocation[1]);
+            // Set y position to the center of the view, to make sure it is away from the status bar
+            return new Point(viewLocation[0], viewLocation[1] + viewHolder[0].getHeight() / 2);
         });
         mActivity.runOnUiThread(task);
         Point viewLocation = task.get(5, TimeUnit.SECONDS);
