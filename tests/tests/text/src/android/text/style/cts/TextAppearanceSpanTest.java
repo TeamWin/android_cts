@@ -20,6 +20,7 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotEquals;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertSame;
+import static org.junit.Assert.assertTrue;
 
 import android.content.Context;
 import android.content.pm.PackageManager;
@@ -158,6 +159,94 @@ public class TextAppearanceSpanTest {
     }
 
     @Test
+    public void testGetFontWeight() {
+        TextAppearanceSpan textAppearanceSpan = new TextAppearanceSpan(mContext,
+                android.text.cts.R.style.textAppearanceWithFontWeight);
+        assertEquals(500, textAppearanceSpan.getTextFontWeight());
+
+        textAppearanceSpan = new TextAppearanceSpan(mContext,
+                android.text.cts.R.style.textAppearanceWithNoAttributes);
+        assertEquals(-1, textAppearanceSpan.getTextFontWeight());
+    }
+
+    @Test
+    public void testGetShadowColor() {
+        TextAppearanceSpan textAppearanceSpan = new TextAppearanceSpan(mContext,
+                android.text.cts.R.style.textAppearanceWithShadow);
+        assertEquals(Color.parseColor("#00FFFF"), textAppearanceSpan.getShadowColor());
+
+        textAppearanceSpan = new TextAppearanceSpan(mContext,
+                android.text.cts.R.style.textAppearanceWithNoAttributes);
+        assertEquals(0, textAppearanceSpan.getShadowColor());
+    }
+
+    @Test
+    public void testGetShadowDx() {
+        TextAppearanceSpan textAppearanceSpan = new TextAppearanceSpan(mContext,
+                android.text.cts.R.style.textAppearanceWithShadow);
+        assertEquals(1.0f, textAppearanceSpan.getShadowDx(), 0.0f);
+
+        textAppearanceSpan = new TextAppearanceSpan(mContext,
+                android.text.cts.R.style.textAppearanceWithNoAttributes);
+        assertEquals(0.0f, textAppearanceSpan.getShadowDx(), 0.0f);
+    }
+
+    @Test
+    public void testGetShadowDy() {
+        TextAppearanceSpan textAppearanceSpan = new TextAppearanceSpan(mContext,
+                android.text.cts.R.style.textAppearanceWithShadow);
+        assertEquals(2.0f , textAppearanceSpan.getShadowDy(), 0.0f);
+
+        textAppearanceSpan = new TextAppearanceSpan(mContext,
+                android.text.cts.R.style.textAppearanceWithNoAttributes);
+        assertEquals(0.0f, textAppearanceSpan.getShadowDy(), 0.0f);
+    }
+
+    @Test
+    public void testGetShadowRadius() {
+        TextAppearanceSpan textAppearanceSpan = new TextAppearanceSpan(mContext,
+                android.text.cts.R.style.textAppearanceWithShadow);
+        assertEquals(3.0f , textAppearanceSpan.getShadowRadius(), 0.0f);
+
+        textAppearanceSpan = new TextAppearanceSpan(mContext,
+                android.text.cts.R.style.textAppearanceWithNoAttributes);
+        assertEquals(0.0f, textAppearanceSpan.getShadowRadius(), 0.0f);
+    }
+
+    @Test
+    public void testGetFontFeatureSettings() {
+        TextAppearanceSpan textAppearanceSpan = new TextAppearanceSpan(mContext,
+                android.text.cts.R.style.textAppearanceWithFontFeatureSettings);
+        assertEquals("\"smcp\"" , textAppearanceSpan.getFontFeatureSettings());
+
+        textAppearanceSpan = new TextAppearanceSpan(mContext,
+                android.text.cts.R.style.textAppearanceWithNoAttributes);
+        assertEquals(null, textAppearanceSpan.getFontFeatureSettings());
+    }
+
+    @Test
+    public void testGetFontVariationSettings() {
+        TextAppearanceSpan textAppearanceSpan = new TextAppearanceSpan(mContext,
+                android.text.cts.R.style.textAppearanceWithFontVariationSettings);
+        assertEquals("\'wdth\' 150" , textAppearanceSpan.getFontVariationSettings());
+
+        textAppearanceSpan = new TextAppearanceSpan(mContext,
+                android.text.cts.R.style.textAppearanceWithNoAttributes);
+        assertEquals(null, textAppearanceSpan.getFontVariationSettings());
+    }
+
+    @Test
+    public void testIsElegantTextHeight() {
+        TextAppearanceSpan textAppearanceSpan = new TextAppearanceSpan(mContext,
+                android.text.cts.R.style.textAppearanceWithElegantTextHeight);
+        assertEquals(true , textAppearanceSpan.isElegantTextHeight());
+
+        textAppearanceSpan = new TextAppearanceSpan(mContext,
+                android.text.cts.R.style.textAppearanceWithNoAttributes);
+        assertEquals(false, textAppearanceSpan.isElegantTextHeight());
+    }
+
+    @Test
     public void testUpdateDrawState() {
         TextAppearanceSpan textAppearanceSpan =
                 new TextAppearanceSpan("sans", 1, 6, mColorStateList, mColorStateList);
@@ -216,6 +305,42 @@ public class TextAppearanceSpanTest {
     }
 
     @Test
+    public void testCreateFromStyle_ElegantTextHeight() {
+        final TextAppearanceSpan span = new TextAppearanceSpan(mContext,
+                android.text.cts.R.style.textAppearanceWithElegantTextHeight);
+        final TextPaint tp = new TextPaint();
+        span.updateDrawState(tp);
+        assertTrue(tp.isElegantTextHeight());
+    }
+
+    @Test
+    public void testCreateFromStyle_LetterSpacing() {
+        final TextAppearanceSpan span = new TextAppearanceSpan(mContext,
+                android.text.cts.R.style.textAppearanceWithLetterSpacing);
+        final TextPaint tp = new TextPaint();
+        span.updateDrawState(tp);
+        assertEquals(1.0f, tp.getLetterSpacing(), 0.0f);
+    }
+
+    @Test
+    public void testCreateFromStyle_FontFeatureSettings() {
+        final TextAppearanceSpan span = new TextAppearanceSpan(mContext,
+                android.text.cts.R.style.textAppearanceWithFontFeatureSettings);
+        final TextPaint tp = new TextPaint();
+        span.updateDrawState(tp);
+        assertEquals("\"smcp\"", tp.getFontFeatureSettings());
+    }
+
+    @Test
+    public void testCreateFromStyle_FontVariationSettings() {
+        final TextAppearanceSpan span = new TextAppearanceSpan(mContext,
+                android.text.cts.R.style.textAppearanceWithFontVariationSettings);
+        final TextPaint tp = new TextPaint();
+        span.updateDrawState(tp);
+        assertEquals("'wdth' 150", tp.getFontVariationSettings());
+    }
+
+    @Test
     public void testWriteReadParcel_FontResource() {
         final TextAppearanceSpan span = new TextAppearanceSpan(mContext,
                 android.text.cts.R.style.customFont);
@@ -247,6 +372,45 @@ public class TextAppearanceSpanTest {
         final float originalSpanTextWidth = tp.measureText("a");
         unparceledSpan.updateDrawState(tp);
         assertEquals(originalSpanTextWidth, tp.measureText("a"), 0.0f);
+    }
+
+    @Test
+    public void testWriteReadParcel_WithAllAttributes() {
+        final TextAppearanceSpan span = new TextAppearanceSpan(mContext,
+                android.text.cts.R.style.textAppearanceWithAllAttributes);
+
+        final Parcel p = Parcel.obtain();
+        span.writeToParcel(p, 0);
+        p.setDataPosition(0);
+        final TextAppearanceSpan unparceledSpan = new TextAppearanceSpan(p);
+        final ColorStateList originalTextColor = span.getTextColor();
+        final ColorStateList unparceledTextColor = unparceledSpan.getTextColor();
+        final ColorStateList originalLinkTextColor = span.getLinkTextColor();
+        final ColorStateList unparceledLinkTextColor = unparceledSpan.getLinkTextColor();
+
+        assertEquals(span.getFamily(), unparceledSpan.getFamily());
+        // ColorStateList doesn't implement equals(), so we borrow this code
+        // from ColorStateListTest.java to test correctness of parceling.
+        assertEquals(originalTextColor.isStateful(), unparceledTextColor.isStateful());
+        assertEquals(originalTextColor.getDefaultColor(), unparceledTextColor.getDefaultColor());
+        assertEquals(originalLinkTextColor.isStateful(),
+                unparceledLinkTextColor.isStateful());
+        assertEquals(originalLinkTextColor.getDefaultColor(),
+                unparceledLinkTextColor.getDefaultColor());
+
+        assertEquals(span.getTextSize(), unparceledSpan.getTextSize());
+        assertEquals(span.getTextStyle(), unparceledSpan.getTextStyle());
+        assertEquals(span.getTextFontWeight(), unparceledSpan.getTextFontWeight());
+        assertEquals(span.getTypeface(), unparceledSpan.getTypeface());
+
+        assertEquals(span.getShadowColor(), unparceledSpan.getShadowColor());
+        assertEquals(span.getShadowDx(), unparceledSpan.getShadowDx(), 0.0f);
+        assertEquals(span.getShadowDy(), unparceledSpan.getShadowDy(), 0.0f);
+        assertEquals(span.getShadowRadius(), unparceledSpan.getShadowRadius(), 0.0f);
+
+        assertEquals(span.getFontFeatureSettings(), unparceledSpan.getFontFeatureSettings());
+        assertEquals(span.getFontVariationSettings(), unparceledSpan.getFontVariationSettings());
+        assertEquals(span.isElegantTextHeight(), unparceledSpan.isElegantTextHeight());
     }
 
     @Test
