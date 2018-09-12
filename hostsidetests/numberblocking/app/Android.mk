@@ -27,7 +27,7 @@ LOCAL_PROGUARD_ENABLED := disabled
 
 LOCAL_SRC_FILES := $(call all-java-files-under, src)
 
-LOCAL_STATIC_JAVA_LIBRARIES := ctstestrunner android-support-test legacy-android-test
+LOCAL_STATIC_JAVA_LIBRARIES := ctstestrunner android-support-test legacy-android-test compatibility-device-util
 
 # tag this module as a cts test artifact
 LOCAL_COMPATIBILITY_SUITE := cts vts general-tests

@@ -36,6 +36,7 @@ import android.os.PowerManager;
 import android.os.RemoteException;
 import android.test.InstrumentationTestCase;
 
+import com.android.compatibility.common.util.CddTest;
 import com.android.compatibility.common.util.SystemUtil;
 
 public class ActivityManagerProcessStateTest extends InstrumentationTestCase {
@@ -433,6 +434,7 @@ public class ActivityManagerProcessStateTest extends InstrumentationTestCase {
      * Test that background check behaves correctly after a process is no longer foreground:
      * first allowing a service to be started, then stopped by the system when idle.
      */
+    @CddTest(requirement="3.5/C-0-7")
     public void testBackgroundCheckStopsService() throws Exception {
         final Parcel data = Parcel.obtain();
         ServiceConnectionHandler conn = new ServiceConnectionHandler(mContext, mServiceIntent);

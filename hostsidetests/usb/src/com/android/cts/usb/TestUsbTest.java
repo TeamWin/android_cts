@@ -31,6 +31,8 @@ import com.android.tradefed.util.CommandResult;
 import com.android.tradefed.util.CommandStatus;
 import com.android.tradefed.util.RunUtil;
 
+import com.android.compatibility.common.util.CddTest;
+
 import java.io.File;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -78,6 +80,7 @@ public class TestUsbTest extends DeviceTestCase implements IAbiReceiver, IBuildR
      * Check if adb serial number, USB serial number, ro.serialno, and android.os.Build.SERIAL
      * all matches and meets the format requirement [a-zA-Z0-9]{6,20}
      */
+    @CddTest(requirement="7.7.1/C-1-2")
     public void testUsbSerial() throws Exception {
         String adbSerial = mDevice.getSerialNumber().toLowerCase().trim();
         if (adbSerial.startsWith("emulator-")) {

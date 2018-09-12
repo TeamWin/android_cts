@@ -29,6 +29,8 @@ import android.test.AndroidTestCase;
 
 import android.content.cts.R;
 
+import com.android.compatibility.common.util.CddTest;
+
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
@@ -36,6 +38,7 @@ import java.io.IOException;
 /**
  * Test {@link ContentProvider}.
  */
+@CddTest(requirement="3.5/C-0-2")
 public class ContentProviderTest extends AndroidTestCase {
     private static final String TEST_PACKAGE_NAME = "android.content.cts";
     private static final String TEST_FILE_NAME = "testFile.tmp";
