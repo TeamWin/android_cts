@@ -16,11 +16,11 @@
  -->
 
 <resources>
-  <style name="customFont">
-    <item name="android:fontFamily">@font/samplefont</item>
-  </style>
-  <style name="customFontWithStyle">
-    <item name="android:fontFamily">@font/samplefont</item>
-    <item name="android:textStyle">bold|italic</item>
-  </style>
+    <style name="customFont">
+        <item name="android:fontFamily">@font/samplefont</item>
+    </style>
+    <style name="customFontWithStyle">
+        <item name="android:fontFamily">@font/samplefont</item>
+        <item name="android:textStyle">bold|italic</item>
+    </style>
 </resources>
