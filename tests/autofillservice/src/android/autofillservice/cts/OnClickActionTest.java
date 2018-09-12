@@ -15,25 +15,29 @@
  */
 package android.autofillservice.cts;
 
+import static android.autofillservice.cts.CustomDescriptionHelper.ID_HIDE;
+import static android.autofillservice.cts.CustomDescriptionHelper.ID_PASSWORD_MASKED;
+import static android.autofillservice.cts.CustomDescriptionHelper.ID_PASSWORD_PLAIN;
+import static android.autofillservice.cts.CustomDescriptionHelper.ID_SHOW;
+import static android.autofillservice.cts.CustomDescriptionHelper.ID_USERNAME_MASKED;
+import static android.autofillservice.cts.CustomDescriptionHelper.ID_USERNAME_PLAIN;
+import static android.autofillservice.cts.CustomDescriptionHelper.newCustomDescriptionWithHiddenFields;
+import static android.autofillservice.cts.Helper.ID_PASSWORD_LABEL;
+import static android.autofillservice.cts.Helper.ID_USERNAME_LABEL;
 import static android.autofillservice.cts.Helper.assertTextAndValue;
 import static android.autofillservice.cts.Helper.findNodeByResourceId;
 import static android.autofillservice.cts.SimpleSaveActivity.ID_INPUT;
 import static android.autofillservice.cts.SimpleSaveActivity.ID_PASSWORD;
 import static android.service.autofill.SaveInfo.SAVE_DATA_TYPE_GENERIC;
 
-import static com.google.common.truth.Truth.assertWithMessage;
-
 import android.autofillservice.cts.InstrumentedAutoFillService.SaveRequest;
 import android.platform.test.annotations.AppModeFull;
 import android.service.autofill.CharSequenceTransformation;
-import android.service.autofill.CustomDescription;
 import android.service.autofill.OnClickAction;
 import android.service.autofill.VisibilitySetterAction;
-import android.support.test.uiautomator.By;
 import android.support.test.uiautomator.UiObject2;
 import android.view.View;
 import android.view.autofill.AutofillId;
-import android.widget.RemoteViews;
 
 import org.junit.Test;
 
@@ -142,18 +146,18 @@ public class OnClickActionTest
      */
     private UiObject2 assertHidden(UiObject2 saveUi) throws Exception {
         // Username
-        assertVisible(saveUi, ID_USERNAME_LABEL, "User:");
-        assertVisible(saveUi, ID_USERNAME_MASKED, "****");
+        mUiBot.assertChildText(saveUi, ID_USERNAME_LABEL, "User:");
+        mUiBot.assertChildText(saveUi, ID_USERNAME_MASKED, "****");
         assertInvisible(saveUi, ID_USERNAME_PLAIN);
 
         // Password
-        assertVisible(saveUi, ID_PASSWORD_LABEL, "Pass:");
-        assertVisible(saveUi, ID_PASSWORD_MASKED, "....");
+        mUiBot.assertChildText(saveUi, ID_PASSWORD_LABEL, "Pass:");
+        mUiBot.assertChildText(saveUi, ID_PASSWORD_MASKED, "....");
         assertInvisible(saveUi, ID_PASSWORD_PLAIN);
 
         // Buttons
         assertInvisible(saveUi, ID_HIDE);
-        return assertVisible(saveUi, ID_SHOW, "SHOW");
+        return mUiBot.assertChildText(saveUi, ID_SHOW, "SHOW");
     }
 
     /**
@@ -162,47 +166,21 @@ public class OnClickActionTest
      */
     private UiObject2 assertShown(UiObject2 saveUi) throws Exception {
         // Username
-        assertVisible(saveUi, ID_USERNAME_LABEL, "User:");
-        assertVisible(saveUi, ID_USERNAME_PLAIN, "42");
+        mUiBot.assertChildText(saveUi, ID_USERNAME_LABEL, "User:");
+        mUiBot.assertChildText(saveUi, ID_USERNAME_PLAIN, "42");
         assertInvisible(saveUi, ID_USERNAME_MASKED);
 
         // Password
-        assertVisible(saveUi, ID_PASSWORD_LABEL, "Pass:");
-        assertVisible(saveUi, ID_PASSWORD_PLAIN, "108");
+        mUiBot.assertChildText(saveUi, ID_PASSWORD_LABEL, "Pass:");
+        mUiBot.assertChildText(saveUi, ID_PASSWORD_PLAIN, "108");
         assertInvisible(saveUi, ID_PASSWORD_MASKED);
 
         // Buttons
         assertInvisible(saveUi, ID_SHOW);
-        return assertVisible(saveUi, ID_HIDE, "HIDE");
-    }
-
-    // TODO: move to UiBot / reuse ?
-    private UiObject2 assertVisible(UiObject2 saveUi, String resourceId, String expectedText)
-            throws Exception {
-        final UiObject2 view = mUiBot.waitForObject(saveUi, By.res(mPackageName, resourceId),
-                Timeouts.UI_TIMEOUT);
-        assertWithMessage("wrong text for view '%s'", resourceId).that(view.getText())
-                .isEqualTo(expectedText);
-        return view;
+        return mUiBot.assertChildText(saveUi, ID_HIDE, "HIDE");
     }
 
     private void assertInvisible(UiObject2 saveUi, String resourceId) {
         mUiBot.assertGoneByRelativeId(saveUi, resourceId, Timeouts.UI_TIMEOUT);
-    }
-
-    // TODO: move code below to a CustomDescriptionWithHiddenFieldsHelper if ever used by other
-    // tests
-    private static final String ID_USERNAME_LABEL = "username_label";
-    private static final String ID_USERNAME_PLAIN = "username_plain";
-    private static final String ID_USERNAME_MASKED = "username_masked";
-    private static final String ID_PASSWORD_LABEL = "password_label";
-    private static final String ID_PASSWORD_PLAIN = "password_plain";
-    private static final String ID_PASSWORD_MASKED = "password_masked";
-    private static final String ID_SHOW = "show";
-    private static final String ID_HIDE = "hide";
-
-    private CustomDescription.Builder newCustomDescriptionWithHiddenFields() {
-        return new CustomDescription.Builder(new RemoteViews(mPackageName,
-                R.layout.custom_description_with_hidden_fields));
     }
 }

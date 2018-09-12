@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017 The Android Open Source Project
+ * Copyright (C) 2018 The Android Open Source Project
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,66 +19,51 @@ import static android.autofillservice.cts.Timeouts.WEBVIEW_TIMEOUT;
 
 import static com.google.common.truth.Truth.assertThat;
 
-import android.content.Context;
 import android.os.Bundle;
 import android.support.test.uiautomator.UiObject2;
 import android.util.Log;
-import android.view.View;
 import android.webkit.WebResourceRequest;
 import android.webkit.WebResourceResponse;
 import android.webkit.WebView;
 import android.webkit.WebViewClient;
-import android.widget.EditText;
-import android.widget.LinearLayout;
 
 import java.io.IOException;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 
-public class WebViewActivity extends AbstractWebViewActivity {
+public class WebViewMultiScreenLoginActivity extends AbstractWebViewActivity {
 
-    private static final String TAG = "WebViewActivity";
-    private static final String FAKE_URL = "https://" + FAKE_DOMAIN + ":666/login.html";
-    static final String ID_WEBVIEW = "webview";
-
-    static final String ID_OUTSIDE1 = "outside1";
-    static final String ID_OUTSIDE2 = "outside2";
-
-    private LinearLayout mParent;
-    private LinearLayout mOutsideContainer1;
-    private LinearLayout mOutsideContainer2;
-    EditText mOutside1;
-    EditText mOutside2;
+    private static final String TAG = "WebViewMultiScreenLoginActivity";
+    private static final String FAKE_USERNAME_URL = "https://" + FAKE_DOMAIN + ":666/username.html";
+    private static final String FAKE_PASSWORD_URL = "https://" + FAKE_DOMAIN + ":666/password.html";
 
     private UiObject2 mUsernameLabel;
     private UiObject2 mUsernameInput;
+    private UiObject2 mNextButton;
+
     private UiObject2 mPasswordLabel;
     private UiObject2 mPasswordInput;
     private UiObject2 mLoginButton;
+
+    private final Map<String, CountDownLatch> mLatches = new HashMap<>();
+
+    public WebViewMultiScreenLoginActivity() {
+        mLatches.put(FAKE_USERNAME_URL, new CountDownLatch(1));
+        mLatches.put(FAKE_PASSWORD_URL, new CountDownLatch(1));
+    }
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
 
-        setContentView(R.layout.webview_activity);
-
-        mParent = findViewById(R.id.parent);
-        mOutsideContainer1 = findViewById(R.id.outsideContainer1);
-        mOutsideContainer2 = findViewById(R.id.outsideContainer2);
-        mOutside1 = findViewById(R.id.outside1);
-        mOutside2 = findViewById(R.id.outside2);
+        setContentView(R.layout.webview_only_activity);
+        mWebView = findViewById(R.id.my_webview);
     }
 
     public MyWebView loadWebView(UiBot uiBot) throws Exception {
-        return loadWebView(uiBot, false);
-    }
-
-    public MyWebView loadWebView(UiBot uiBot, boolean usingAppContext) throws Exception {
-        final CountDownLatch latch = new CountDownLatch(1);
         syncRunOnUiThread(() -> {
-            final Context context = usingAppContext ? getApplicationContext() : this;
-            mWebView = new MyWebView(context);
-            mParent.addView(mWebView);
             mWebView.setWebViewClient(new WebViewClient() {
                 // WebView does not set the WebDomain on file:// requests, so we need to use an
                 // https:// request and intercept it to provide the real data.
@@ -86,7 +71,7 @@ public class WebViewActivity extends AbstractWebViewActivity {
                 public WebResourceResponse shouldInterceptRequest(WebView view,
                         WebResourceRequest request) {
                     final String url = request.getUrl().toString();
-                    if (!url.equals(FAKE_URL)) {
+                    if (!url.equals(FAKE_USERNAME_URL) && !url.equals(FAKE_PASSWORD_URL)) {
                         Log.d(TAG, "Ignoring " + url);
                         return super.shouldInterceptRequest(view, request);
                     }
@@ -106,15 +91,18 @@ public class WebViewActivity extends AbstractWebViewActivity {
 
                 @Override
                 public void onPageFinished(WebView view, String url) {
-                    Log.v(TAG, "onPageFinished(): " + url);
-                    latch.countDown();
+                    final CountDownLatch latch = mLatches.get(url);
+                    Log.v(TAG, "onPageFinished(): " + url + " latch: " + latch);
+                    if (latch != null) {
+                        latch.countDown();
+                    }
                 }
             });
-            mWebView.loadUrl(FAKE_URL);
+            mWebView.loadUrl(FAKE_USERNAME_URL);
         });
 
         // Wait until it's loaded.
-        if (!latch.await(WEBVIEW_TIMEOUT.ms(), TimeUnit.MILLISECONDS)) {
+        if (!mLatches.get(FAKE_USERNAME_URL).await(WEBVIEW_TIMEOUT.ms(), TimeUnit.MILLISECONDS)) {
             throw new RetryableException(WEBVIEW_TIMEOUT, "WebView not loaded");
         }
 
@@ -132,30 +120,45 @@ public class WebViewActivity extends AbstractWebViewActivity {
         mUsernameLabel = uiBot.assertShownByText("Username: ", WEBVIEW_TIMEOUT);
         // ...then cache the others
         mUsernameInput = getInput(uiBot, mUsernameLabel);
-        mPasswordLabel = uiBot.findRightAwayByText("Password: ");
-        mPasswordInput = getInput(uiBot, mPasswordLabel);
-        mLoginButton = uiBot.findRightAwayByText("Login");
+        mNextButton = uiBot.findRightAwayByText("Next");
 
         return mWebView;
     }
 
-    public void loadOutsideViews() {
-        syncRunOnUiThread(() -> {
-            mOutsideContainer1.setVisibility(View.VISIBLE);
-            mOutsideContainer2.setVisibility(View.VISIBLE);
-        });
+    void waitForPasswordScreen(UiBot uiBot) throws Exception {
+        // Wait until it's loaded.
+        if (!mLatches.get(FAKE_PASSWORD_URL).await(WEBVIEW_TIMEOUT.ms(), TimeUnit.MILLISECONDS)) {
+            throw new RetryableException(WEBVIEW_TIMEOUT, "Password page not loaded");
+        }
+
+        // WebView builds its accessibility tree asynchronously and only after being queried the
+        // first time, so we should first find the WebView and query some of its properties,
+        // wait for its accessibility tree to be populated (by blocking until a known element
+        // appears), then cache the objects for further use.
+
+        // NOTE: we cannot search by resourceId because WebView does not set them...
+
+        // Wait for known element...
+        mPasswordLabel = uiBot.assertShownByText("Password: ", WEBVIEW_TIMEOUT);
+        // ...then cache the others
+        mPasswordInput = getInput(uiBot, mPasswordLabel);
+        mLoginButton = uiBot.findRightAwayByText("Login");
     }
 
     public UiObject2 getUsernameLabel() throws Exception {
         return mUsernameLabel;
     }
 
-    public UiObject2 getPasswordLabel() throws Exception {
-        return mPasswordLabel;
-    }
-
     public UiObject2 getUsernameInput() throws Exception {
         return mUsernameInput;
+    }
+
+    public UiObject2 getNextButton() throws Exception {
+        return mNextButton;
+    }
+
+    public UiObject2 getPasswordLabel() throws Exception {
+        return mPasswordLabel;
     }
 
     public UiObject2 getPasswordInput() throws Exception {

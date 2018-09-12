@@ -954,4 +954,16 @@ public class FontTest {
             assertEquals(fonts1.get(i).hashCode(), fonts2.get(i).hashCode());
         }
     }
+
+    @Test(expected = IllegalArgumentException.class)
+    public void testMaxFontWeight() throws IOException {
+        final Resources res = InstrumentationRegistry.getTargetContext().getResources();
+        new Font.Builder(res, R.font.ascii).setWeight(Font.FONT_WEIGHT_MAX + 1).build();
+    }
+
+    @Test(expected = IllegalArgumentException.class)
+    public void testMinFontWeight() throws IOException {
+        final Resources res = InstrumentationRegistry.getTargetContext().getResources();
+        new Font.Builder(res, R.font.ascii).setWeight(Font.FONT_WEIGHT_MIN - 1).build();
+    }
 }

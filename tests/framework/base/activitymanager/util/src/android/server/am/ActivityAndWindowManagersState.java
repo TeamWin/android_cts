@@ -267,6 +267,19 @@ public class ActivityAndWindowManagersState {
                 "***Waiting for LastOrientation: " + orientation);
     }
 
+    /**
+     * Wait for orientation for the Activity
+     */
+    void waitForActivityOrientation(ComponentName activityName, int orientation) {
+        waitForWithAmState(amState -> {
+            final ActivityTask task = amState.getTaskByActivity(activityName);
+            if (task == null) {
+                return false;
+            }
+            return task.mFullConfiguration.orientation == orientation;
+        }, "***Waiting for Activity orientation: " + orientation);
+    }
+
     void waitForDisplayUnfrozen() {
         waitForWithWmState(state -> !state.isDisplayFrozen(),
                 "***Waiting for Display unfrozen");

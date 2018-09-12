@@ -19,6 +19,8 @@ package android.appsecurity.cts;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 
+import android.platform.test.annotations.RequiresDevice;
+
 import com.android.ddmlib.AdbCommandRejectedException;
 import com.android.ddmlib.CollectingOutputReceiver;
 import com.android.ddmlib.Log;
@@ -112,6 +114,7 @@ public class DirectBootHostTest extends BaseHostJUnit4Test {
      * If device doesn't have native FBE, enable emulation and verify lifecycle.
      */
     @Test
+    @RequiresDevice
     public void testDirectBootEmulated() throws Exception {
         if (!isSupportedDevice()) {
             Log.v(TAG, "Device not supported; skipping test");

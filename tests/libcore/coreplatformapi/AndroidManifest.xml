@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!--
- * Copyright 2013 The Android Open Source Project
+ * Copyright (C) 2018 The Android Open Source Project
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,19 +16,16 @@
  -->
 
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
-    package="android.keystore.cts">
+    package="android.libcore.cts.coreplatformapi"
+    android:targetSandboxVersion="2">
 
-    <uses-permission android:name="android.permission.INTERNET" />
-    <application>
+    <application android:usesCleartextTraffic="true">
         <uses-library android:name="android.test.runner" />
     </application>
 
-    <instrumentation android:name="android.support.test.runner.AndroidJUnitRunner"
-                     android:targetPackage="android.keystore.cts"
-                     android:label="CTS tests of android.keystore.cts">
-        <meta-data android:name="listener"
-            android:value="com.android.cts.runner.CtsTestRunListener" />
+    <instrumentation
+        android:name="android.support.test.runner.AndroidJUnitRunner"
+        android:label="CTS Libcore core platform API test cases"
+        android:targetPackage="android.libcore.cts.coreplatformapi">
     </instrumentation>
-
 </manifest>
-

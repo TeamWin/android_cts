@@ -815,6 +815,18 @@ final class UiBot {
     }
 
     /**
+     * Waits for and returns a child from a parent {@link UiObject2}.
+     */
+    public UiObject2 assertChildText(UiObject2 parent, String resourceId, String expectedText)
+            throws Exception {
+        final UiObject2 child = waitForObject(parent, By.res(mPackageName, resourceId),
+                Timeouts.UI_TIMEOUT);
+        assertWithMessage("wrong text for view '%s'", resourceId).that(child.getText())
+                .isEqualTo(expectedText);
+        return child;
+    }
+
+    /**
      * Execute a Runnable and wait for {@link AccessibilityEvent#TYPE_WINDOWS_CHANGED} or
      * {@link AccessibilityEvent#TYPE_WINDOW_STATE_CHANGED}.
      */

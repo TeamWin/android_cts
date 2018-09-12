@@ -87,6 +87,7 @@ final class CannedFillResponse {
     private final long mDisableDuration;
     private final AutofillId[] mFieldClassificationIds;
     private final boolean mFieldClassificationIdsOverflow;
+    private final SaveInfoDecorator mSaveInfoDecorator;
 
     private CannedFillResponse(Builder builder) {
         mResponseType = builder.mResponseType;
@@ -115,6 +116,7 @@ final class CannedFillResponse {
         mDisableDuration = builder.mDisableDuration;
         mFieldClassificationIds = builder.mFieldClassificationIds;
         mFieldClassificationIdsOverflow = builder.mFieldClassificationIdsOverflow;
+        mSaveInfoDecorator = builder.mSaveInfoDecorator;
     }
 
     /**
@@ -153,9 +155,9 @@ final class CannedFillResponse {
                 builder.addDataset(dataset);
             }
         }
+        final SaveInfo.Builder saveInfo;
         if (mRequiredSavableIds != null || mOptionalSavableIds != null
-                || mRequiredSavableAutofillIds != null) {
-            final SaveInfo.Builder saveInfo;
+                || mRequiredSavableAutofillIds != null || mSaveInfoDecorator != null) {
             if (mRequiredSavableAutofillIds != null) {
                 saveInfo = new SaveInfo.Builder(mSaveType, mRequiredSavableAutofillIds);
             } else {
@@ -191,9 +193,16 @@ final class CannedFillResponse {
             if (mSaveTriggerId != null) {
                 saveInfo.setTriggerId(mSaveTriggerId);
             }
-            builder.setSaveInfo(saveInfo.build());
         } else if (mSaveInfoFlags != 0) {
-            builder.setSaveInfo(new SaveInfo.Builder(mSaveType).setFlags(mSaveInfoFlags).build());
+            saveInfo = new SaveInfo.Builder(mSaveType).setFlags(mSaveInfoFlags);
+        } else {
+            saveInfo = null;
+        }
+        if (saveInfo != null) {
+            if (mSaveInfoDecorator != null) {
+                mSaveInfoDecorator.decorate(saveInfo, nodeResolver);
+            }
+            builder.setSaveInfo(saveInfo.build());
         }
         if (mIgnoredIds != null) {
             builder.setIgnoredIds(getAutofillIds(nodeResolver, mIgnoredIds));
@@ -250,6 +259,7 @@ final class CannedFillResponse {
                 + ", disableDuration=" + mDisableDuration
                 + ", fieldClassificationIds=" + Arrays.toString(mFieldClassificationIds)
                 + ", fieldClassificationIdsOverflow=" + mFieldClassificationIdsOverflow
+                + ", saveInfoDecorator=" + mSaveInfoDecorator
                 + "]";
     }
 
@@ -286,6 +296,7 @@ final class CannedFillResponse {
         private long mDisableDuration;
         private AutofillId[] mFieldClassificationIds;
         private boolean mFieldClassificationIdsOverflow;
+        private SaveInfoDecorator mSaveInfoDecorator;
 
         public Builder(ResponseType type) {
             mResponseType = type;
@@ -466,6 +477,12 @@ final class CannedFillResponse {
         public Builder setFooter(RemoteViews footer) {
             assertWithMessage("already set").that(mFooter).isNull();
             mFooter = footer;
+            return this;
+        }
+
+        public Builder setSaveInfoDecorator(SaveInfoDecorator decorator) {
+            assertWithMessage("already set").that(mSaveInfoDecorator).isNull();
+            mSaveInfoDecorator = decorator;
             return this;
         }
     }
@@ -745,5 +762,9 @@ final class CannedFillResponse {
                 return new CannedDataset(this);
             }
         }
+    }
+
+    interface SaveInfoDecorator {
+        void decorate(SaveInfo.Builder builder, Function<String, ViewNode> nodeResolver);
     }
 }

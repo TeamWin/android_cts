@@ -515,6 +515,7 @@ public class ActivityManagerAppConfigurationTests extends ActivityManagerTestBas
         // Request portrait
         mBroadcastActionTrigger.requestOrientation(SCREEN_ORIENTATION_PORTRAIT);
         mAmWmState.waitForLastOrientation(SCREEN_ORIENTATION_PORTRAIT);
+        waitForBroadcastActivityReady(SCREEN_ORIENTATION_PORTRAIT);
 
         // Finish activity
         mBroadcastActionTrigger.finishBroadcastReceiverActivity();
@@ -542,6 +543,7 @@ public class ActivityManagerAppConfigurationTests extends ActivityManagerTestBas
         launchActivityInNewTask(BROADCAST_RECEIVER_ACTIVITY);
         mBroadcastActionTrigger.requestOrientation(SCREEN_ORIENTATION_LANDSCAPE);
         mAmWmState.waitForLastOrientation(SCREEN_ORIENTATION_LANDSCAPE);
+        waitForBroadcastActivityReady(SCREEN_ORIENTATION_LANDSCAPE);
         mBroadcastActionTrigger.finishBroadcastReceiverActivity();
 
         // Verify that activity brought to front is in originally requested orientation.
@@ -559,6 +561,7 @@ public class ActivityManagerAppConfigurationTests extends ActivityManagerTestBas
         launchActivityInNewTask(BROADCAST_RECEIVER_ACTIVITY);
         mBroadcastActionTrigger.requestOrientation(SCREEN_ORIENTATION_PORTRAIT);
         mAmWmState.waitForLastOrientation(SCREEN_ORIENTATION_PORTRAIT);
+        waitForBroadcastActivityReady(SCREEN_ORIENTATION_PORTRAIT);
         mBroadcastActionTrigger.finishBroadcastReceiverActivity();
 
         // Verify that activity brought to front is in originally requested orientation.
@@ -683,6 +686,7 @@ public class ActivityManagerAppConfigurationTests extends ActivityManagerTestBas
         // Request portrait
         mBroadcastActionTrigger.requestOrientation(SCREEN_ORIENTATION_PORTRAIT);
         mAmWmState.waitForLastOrientation(SCREEN_ORIENTATION_PORTRAIT);
+        waitForBroadcastActivityReady(SCREEN_ORIENTATION_PORTRAIT);
 
         // Finish activity
         mBroadcastActionTrigger.moveTopTaskToBack();
@@ -870,6 +874,11 @@ public class ActivityManagerAppConfigurationTests extends ActivityManagerTestBas
         assertNotNull("Should be on a display", display);
 
         return display.getDisplayRect();
+    }
+
+    private void waitForBroadcastActivityReady(int orientation) {
+        mAmWmState.waitForActivityOrientation(BROADCAST_RECEIVER_ACTIVITY, orientation);
+        mAmWmState.waitForActivityState(BROADCAST_RECEIVER_ACTIVITY, STATE_RESUMED);
     }
 
     /**
