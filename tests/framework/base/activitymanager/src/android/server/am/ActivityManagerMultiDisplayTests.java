@@ -1902,7 +1902,7 @@ public class ActivityManagerMultiDisplayTests extends ActivityManagerDisplayTest
      */
     @Test
     public void testSecondaryDisplayShowToast() throws Exception {
-        try (final VirtualDisplaySession virtualDisplaySession = new VirtualDisplaySession()){
+        try (final VirtualDisplaySession virtualDisplaySession = new VirtualDisplaySession()) {
             final ActivityDisplay newDisplay =
                     virtualDisplaySession.setPublicDisplay(true).createDisplay();
             final String TOAST_NAME = "Toast";
@@ -1917,6 +1917,43 @@ public class ActivityManagerMultiDisplayTests extends ActivityManagerDisplayTest
             assertTrue("Toast window must be visible",
                     mAmWmState.getWmState().isWindowVisible(TOAST_NAME));
         }
+    }
+
+    /**
+     * Tests that the surface size of a fullscreen task is same as its display's surface size.
+     * Also check that the surface size has updated after reparenting to other display.
+     */
+    @Test
+    public void testTaskSurfaceSizeAfterReparentDisplay() throws Exception {
+        try (final VirtualDisplaySession virtualDisplaySession = new VirtualDisplaySession()) {
+            // Create new simulated display and launch an activity on it.
+            final ActivityDisplay newDisplay = virtualDisplaySession.setSimulateDisplay(true)
+                    .createDisplay();
+            launchActivityOnDisplay(LAUNCHING_ACTIVITY, newDisplay.mId);
+
+            waitAndAssertTopResumedActivity(LAUNCHING_ACTIVITY, newDisplay.mId,
+                    "Top activity must be the newly launched one");
+            assertTopTaskSameSurfaceSizeWithDisplay(newDisplay.mId);
+
+            // Destroy the display.
+        }
+
+        // Check the surface size after task was reparented to default display.
+        waitAndAssertTopResumedActivity(LAUNCHING_ACTIVITY, DEFAULT_DISPLAY,
+                "Top activity must be reparented to default display");
+        assertTopTaskSameSurfaceSizeWithDisplay(DEFAULT_DISPLAY);
+    }
+
+    private void assertTopTaskSameSurfaceSizeWithDisplay(int displayId) {
+        final WindowManagerState.Display display = mAmWmState.getWmState().getDisplay(displayId);
+        final int stackId = mAmWmState.getWmState().getFrontStackId(displayId);
+        final WindowManagerState.WindowTask task =
+                mAmWmState.getWmState().getStack(stackId).mTasks.get(0);
+
+        assertEquals("Task must have same surface width with its display",
+                display.getSurfaceSize(), task.getSurfaceWidth());
+        assertEquals("Task must have same surface height with its display",
+                display.getSurfaceSize(), task.getSurfaceHeight());
     }
 
     private class ExternalDisplaySession implements AutoCloseable {
