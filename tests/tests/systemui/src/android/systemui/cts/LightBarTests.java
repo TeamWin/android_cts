@@ -229,6 +229,15 @@ public class LightBarTests extends LightBarTestBase {
 
         int mixedIconColor = mixSrcOver(background, iconColor);
         int mixedIconPartialColor = mixSrcOver(background, iconPartialColor);
+        float [] hsvMixedIconColor = new float[3];
+        float [] hsvMixedPartialColor = new float[3];
+        Color.RGBToHSV(Color.red(mixedIconColor), Color.green(mixedIconColor),
+                Color.blue(mixedIconColor), hsvMixedIconColor);
+        Color.RGBToHSV(Color.red(mixedIconPartialColor), Color.green(mixedIconPartialColor),
+                Color.blue(mixedIconPartialColor), hsvMixedPartialColor);
+
+        float maxHsvValue = Math.max(hsvMixedIconColor[2], hsvMixedPartialColor[2]);
+        float minHsvValue = Math.min(hsvMixedIconColor[2], hsvMixedPartialColor[2]);
 
         int[] pixels = new int[bitmap.getHeight() * bitmap.getWidth()];
         bitmap.getPixels(pixels, 0, bitmap.getWidth(), 0, 0, bitmap.getWidth(), bitmap.getHeight());
@@ -236,6 +245,7 @@ public class LightBarTests extends LightBarTestBase {
         Stats s = new Stats();
         float eps = 0.005f;
 
+        float [] hsvPixel = new float[3];
         for (int c : pixels) {
             if (isColorSame(c, background)) {
                 s.backgroundPixels++;
@@ -243,7 +253,9 @@ public class LightBarTests extends LightBarTestBase {
             }
 
             // What we expect the icons to be colored according to the spec.
-            if (isColorSame(c, mixedIconColor) || isColorSame(c, mixedIconPartialColor)) {
+            Color.RGBToHSV(Color.red(c), Color.green(c), Color.blue(c), hsvPixel);
+            if (isColorSame(c, mixedIconColor) || isColorSame(c, mixedIconPartialColor)
+                    || (hsvPixel[2] >= minHsvValue && hsvPixel[2] <= maxHsvValue)) {
                 s.iconPixels++;
                 continue;
             }
