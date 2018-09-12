@@ -13,6 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 package android.security.cts;
 
 import android.platform.test.annotations.SecurityTest;
@@ -21,10 +22,18 @@ import android.platform.test.annotations.SecurityTest;
 public class Poc16_06 extends SecurityTestCase {
 
     /**
-     *  b/27475409
+     *  b/27661749
      */
     @SecurityTest(minPatchLevel = "2016-06")
     public void testPocCVE_2016_2482() throws Exception {
         AdbUtils.runPocAssertNoCrashes("CVE-2016-2482", getDevice(), "mediaserver");
+    }
+
+    /**
+     *  b/27475409
+     */
+    @SecurityTest(minPatchLevel = "2016-06")
+    public void testPocCVE_2016_2478() throws Exception {
+        AdbUtils.runPocAssertNoCrashes("CVE-2016-2478", getDevice(), "mediaserver");
     }
 }
