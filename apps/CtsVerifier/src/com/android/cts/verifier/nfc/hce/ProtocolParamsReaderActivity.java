@@ -9,11 +9,14 @@ import android.nfc.Tag;
 import android.os.Bundle;
 import android.widget.TextView;
 
+import com.android.compatibility.common.util.CddTest;
+
 import com.android.cts.verifier.PassFailButtons;
 import com.android.cts.verifier.R;
 
 import java.io.IOException;
 
+@CddTest(requirement="7.4.4/C-2-2,C-2-2")
 @TargetApi(19)
 public class ProtocolParamsReaderActivity extends PassFailButtons.Activity implements ReaderCallback {
     public static final String TAG = "ProtocolParamsReaderActivity";

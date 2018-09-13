@@ -24,9 +24,12 @@ import android.nfc.NfcAdapter;
 import android.nfc.cardemulation.NfcFCardEmulation;
 import android.os.Bundle;
 
+import com.android.compatibility.common.util.CddTest;
+
 import com.android.cts.verifier.PassFailButtons;
 import com.android.cts.verifier.R;
 
+@CddTest(requirement="7.4.4/C-3-2")
 public class HceFEmulatorActivity extends PassFailButtons.Activity{
     static String ACTION_TEST_SUCCESS = "success";
 
