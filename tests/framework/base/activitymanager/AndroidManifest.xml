@@ -77,6 +77,8 @@
 
         <activity android:name="android.server.am.StartActivityTests$TestActivity2" />
 
+        <activity android:name="android.server.am.ActivityManagerMultiDisplayTests$EditTestActivity" />
+
     </application>
 
     <instrumentation

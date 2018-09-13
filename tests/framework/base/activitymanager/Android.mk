@@ -38,7 +38,12 @@ LOCAL_SRC_FILES := \
 
 LOCAL_STATIC_JAVA_LIBRARIES := \
     android-support-test \
-    cts-amwm-util
+    cts-amwm-util \
+    CtsMockInputMethod
+
+# Merge resources & AndroidManifest.xml from MockIme cts package
+LOCAL_RESOURCE_DIR := $(LOCAL_PATH)/../../../inputmethod/res
+LOCAL_FULL_LIBS_MANIFEST_FILES := $(LOCAL_PATH)/../../../inputmethod/mockime/AndroidManifest_MockIme.xml
 
 LOCAL_CTS_TEST_PACKAGE := android.server
 
