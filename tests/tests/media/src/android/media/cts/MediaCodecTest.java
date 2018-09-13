@@ -33,6 +33,7 @@ import android.media.MediaFormat;
 import android.media.MediaCodecInfo.CodecCapabilities;
 import android.media.MediaCodecInfo.CodecProfileLevel;
 import android.opengl.GLES20;
+import android.os.ConditionVariable;
 import android.os.Handler;
 import android.os.HandlerThread;
 import android.os.PersistableBundle;
@@ -2058,5 +2059,45 @@ public class MediaCodecTest extends AndroidTestCase {
                 compareStreams(new ByteBufferInputStream(amrToRaw), pcmStream2));
         pcmStream1.close();
         pcmStream2.close();
+    }
+
+    public void testAsyncRelease() throws Exception {
+        OutputSurface outputSurface = new OutputSurface(1, 1);
+        MediaExtractor mediaExtractor = getMediaExtractorForMimeType(INPUT_RESOURCE_ID, "video/");
+        MediaFormat mediaFormat =
+                mediaExtractor.getTrackFormat(mediaExtractor.getSampleTrackIndex());
+        String mimeType = mediaFormat.getString(MediaFormat.KEY_MIME);
+        for (int i = 0; i < 100; ++i) {
+            final MediaCodec codec = MediaCodec.createDecoderByType(mimeType);
+
+            try {
+                codec.configure(mediaFormat, outputSurface.getSurface(), null, 0);
+
+                codec.start();
+
+                final ConditionVariable cv = new ConditionVariable();
+                Thread[] threads = new Thread[10];
+                for (int j = 0; j < threads.length; ++j) {
+                    threads[j] = new Thread(new Runnable() {
+                        @Override
+                        public void run() {
+                            cv.block();
+                            codec.release();
+                        }
+                    });
+                }
+                for (Thread thread : threads) {
+                    thread.start();
+                }
+                // Wait a little bit so that threads may reach block() call.
+                Thread.sleep(50);
+                cv.open();
+                for (Thread thread : threads) {
+                    thread.join();
+                }
+            } finally {
+                codec.release();
+            }
+        }
     }
 }
