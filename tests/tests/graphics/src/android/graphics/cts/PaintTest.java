@@ -1847,4 +1847,39 @@ public class PaintTest {
                 Hyphenator.END_HYPHEN_EDIT_REPLACE_WITH_HYPHEN));
         assertEquals(40.0f, paint.measureText("abc", 0, 3), 0.0f);  // "ab-" in visual.
     }
+
+    @Test
+    public void testGetTextRunAdvances() {
+        final Paint paint = new Paint();
+        final Context context = InstrumentationRegistry.getTargetContext();
+        paint.setTypeface(Typeface.createFromAsset(context.getAssets(), "textrunadvances.ttf"));
+        // The textrunadvances.ttf font supports following characters
+        // - U+0061 (a): The glyph has 3em width.
+        // - U+0062..U+0065 (b..e): The glyph has 1em width.
+        // - U+1F600 (GRINNING FACE): The glyph has 3em width.
+        paint.setTextSize(10.0f);  // Make 1em = 10px
+
+        final char[] chars = { 'a', 'b', 'a', 'b' };
+        final float[] buffer = new float[32];
+
+        assertEquals(80.0f,
+                paint.getTextRunAdvances(chars, 0, 4, 0, 4, false /* isRtl */, buffer, 0), 0.0f);
+        assertEquals(30.0f, buffer[0], 0.0f);
+        assertEquals(10.0f, buffer[1], 0.0f);
+        assertEquals(30.0f, buffer[2], 0.0f);
+        assertEquals(10.0f, buffer[3], 0.0f);
+
+        // Output offset test
+        assertEquals(40.0f,
+                paint.getTextRunAdvances(chars, 1, 2, 1, 2, false /* isRtl */, buffer, 5), 0.0f);
+        assertEquals(10.0f, buffer[5], 0.0f);
+        assertEquals(30.0f, buffer[6], 0.0f);
+
+        // Surrogate pairs
+        final char[] chars2 = Character.toChars(0x1F600);
+        assertEquals(30.0f,
+                paint.getTextRunAdvances(chars2, 0, 2, 0, 2, false /* isRtl */, buffer, 0), 0.0f);
+        assertEquals(30.0f, buffer[0], 0.0f);
+        assertEquals(0.0f, buffer[1], 0.0f);
+    }
 }
