@@ -15,7 +15,7 @@
  */
 package android.autofillservice.cts;
 
-import static android.autofillservice.cts.CustomDescriptionHelper.newCustomDescriptionWithHiddenFields;
+import static android.autofillservice.cts.CustomDescriptionHelper.newCustomDescriptionWithUsernameAndPassword;
 import static android.autofillservice.cts.Helper.ID_PASSWORD;
 import static android.autofillservice.cts.Helper.ID_PASSWORD_LABEL;
 import static android.autofillservice.cts.Helper.ID_USERNAME;
@@ -371,7 +371,7 @@ public class MultiScreenLoginTest
         sReplier.addResponse(new CannedFillResponse.Builder()
                 .setRequiredSavableAutofillIds(SAVE_DATA_TYPE_USERNAME | SAVE_DATA_TYPE_PASSWORD,
                         passwordId)
-                .setCustomDescription(newCustomDescriptionWithHiddenFields()
+                .setCustomDescription(newCustomDescriptionWithUsernameAndPassword()
                         .addChild(R.id.username, usernameTrans)
                         .addChild(R.id.password, passwordTrans)
                         .build())

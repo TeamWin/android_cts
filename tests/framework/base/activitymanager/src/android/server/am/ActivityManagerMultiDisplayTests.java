@@ -22,7 +22,6 @@ import static android.app.WindowConfiguration.ACTIVITY_TYPE_RECENTS;
 import static android.app.WindowConfiguration.ACTIVITY_TYPE_STANDARD;
 import static android.app.WindowConfiguration.WINDOWING_MODE_SPLIT_SCREEN_PRIMARY;
 import static android.app.WindowConfiguration.WINDOWING_MODE_SPLIT_SCREEN_SECONDARY;
-import static android.app.WindowConfiguration.WINDOWING_MODE_UNDEFINED;
 import static android.content.Intent.FLAG_ACTIVITY_MULTIPLE_TASK;
 import static android.content.Intent.FLAG_ACTIVITY_NEW_TASK;
 import static android.server.am.ActivityLauncher.KEY_LAUNCH_ACTIVITY;
@@ -37,6 +36,7 @@ import static android.server.am.Components.BROADCAST_RECEIVER_ACTIVITY;
 import static android.server.am.Components.LAUNCHING_ACTIVITY;
 import static android.server.am.Components.LAUNCH_BROADCAST_ACTION;
 import static android.server.am.Components.LAUNCH_BROADCAST_RECEIVER;
+import static android.server.am.Components.LAUNCH_TEST_ON_DESTROY_ACTIVITY;
 import static android.server.am.Components.NON_RESIZEABLE_ACTIVITY;
 import static android.server.am.Components.RESIZEABLE_ACTIVITY;
 import static android.server.am.Components.SHOW_WHEN_LOCKED_ATTR_ACTIVITY;
@@ -58,7 +58,6 @@ import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
-import static org.junit.Assert.assertThat;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 import static org.junit.Assume.assumeTrue;
@@ -83,8 +82,8 @@ import com.android.compatibility.common.util.SystemUtil;
 import org.junit.Before;
 import org.junit.Test;
 
-import java.util.concurrent.TimeUnit;
 import java.util.List;
+import java.util.concurrent.TimeUnit;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -109,11 +108,30 @@ public class ActivityManagerMultiDisplayTests extends ActivityManagerDisplayTest
     @FlakyTest(bugId = 77270929)
     public void testLaunchActivityOnSecondaryDisplay() throws Exception {
         validateActivityLaunchOnNewDisplay(ACTIVITY_TYPE_STANDARD);
-        // TODO(b/111363427) Enable the tests cases once we have properly handled non-standard
-        // type activities
-        //validateActivityLaunchOnNewDisplay(ACTIVITY_TYPE_HOME);
-        //validateActivityLaunchOnNewDisplay(ACTIVITY_TYPE_RECENTS);
-        //validateActivityLaunchOnNewDisplay(ACTIVITY_TYPE_ASSISTANT);
+    }
+
+    /**
+     * Tests launching a home activity on virtual display.
+     */
+    @Test
+    public void testLaunchHomeActivityOnSecondaryDisplay() throws Exception {
+        validateActivityLaunchOnNewDisplay(ACTIVITY_TYPE_HOME);
+    }
+
+    /**
+     * Tests launching a recent activity on virtual display.
+     */
+    @Test
+    public void testLaunchRecentActivityOnSecondaryDisplay() throws Exception {
+        validateActivityLaunchOnNewDisplay(ACTIVITY_TYPE_RECENTS);
+    }
+
+    /**
+     * Tests launching an assistant activity on virtual display.
+     */
+    @Test
+    public void testLaunchAssistantActivityOnSecondaryDisplay() throws Exception {
+        validateActivityLaunchOnNewDisplay(ACTIVITY_TYPE_ASSISTANT);
     }
 
     private void validateActivityLaunchOnNewDisplay(int activityType) throws Exception {
@@ -1133,6 +1151,32 @@ public class ActivityManagerMultiDisplayTests extends ActivityManagerDisplayTest
         // Check activity logs.
         assertActivityDestroyed(TEST_ACTIVITY, logSeparator);
         assertActivityDestroyed(RESIZEABLE_ACTIVITY, logSeparator);
+    }
+
+    /**
+     * Test that newly launched activity will be landing on default display on display removal.
+     */
+    @Test
+    public void testActivityLaunchOnContentDestroyDisplayRemoved() throws Exception {
+        try (final VirtualDisplaySession virtualDisplaySession = new VirtualDisplaySession()) {
+            // Create new private virtual display.
+            final ActivityDisplay newDisplay = virtualDisplaySession.createDisplay();
+            mAmWmState.assertVisibility(VIRTUAL_DISPLAY_ACTIVITY, true /* visible */);
+
+            // Launch activities on new secondary display.
+            SystemUtil.runWithShellPermissionIdentity(
+                    () -> getLaunchActivityBuilder().setUseInstrumentation()
+                            .setTargetActivity(LAUNCH_TEST_ON_DESTROY_ACTIVITY).setNewTask(true)
+                            .setMultipleTask(true).setDisplayId(newDisplay.mId).execute());
+
+            waitAndAssertTopResumedActivity(LAUNCH_TEST_ON_DESTROY_ACTIVITY, newDisplay.mId,
+                    "Launched activity must be on top");
+
+            // Destroy the display
+        }
+
+        waitAndAssertTopResumedActivity(TEST_ACTIVITY, DEFAULT_DISPLAY,
+                "Newly launches activity should be landing on default display");
     }
 
     /**

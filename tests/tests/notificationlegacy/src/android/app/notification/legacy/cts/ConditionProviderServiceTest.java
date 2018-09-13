@@ -214,6 +214,32 @@ public class ConditionProviderServiceTest {
         }
     }
 
+    @Test
+    public void testRequestRebindWhenStillHasAccess() throws Exception {
+        if (mActivityManager.isLowRamDevice()) {
+            return;
+        }
+
+        // make sure it gets bound
+        pollForConnection(LegacyConditionProviderService.class, true);
+
+        // request unbind
+        LegacyConditionProviderService.getInstance().requestUnbind();
+
+        // make sure it unbinds
+        pollForConnection(LegacyConditionProviderService.class, false);
+
+        // try to rebind
+        LegacyConditionProviderService.requestRebind(LegacyConditionProviderService.getId());
+
+        // make sure it did rebind
+        try {
+            pollForConnection(LegacyConditionProviderService.class, true);
+        } catch (Exception e) {
+            fail("Service should've been able to rebind");
+        }
+    }
+
     private void addRule(ComponentName cn, int filter, boolean enabled) {
         String id = mNm.addAutomaticZenRule(new AutomaticZenRule("name",
                 cn, Uri.EMPTY, filter, enabled));
