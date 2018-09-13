@@ -49,6 +49,14 @@ public class ConfigurationScreenLayoutTest
             tearDown();
             return;
         }
+        if (isPC()) {
+            // The test skips mainly for Chromebook clamshell mode. For Chromebook clamshell mode
+            // with non-rotated landscape physical screen, the portrait window/activity has special
+            // behavior with black background on both sides to make the window/activity look
+            // portrait, which returns smaller screen layout size.
+            tearDown();
+            return;
+        }
         int expectedScreenLayout = computeScreenLayout();
         int expectedSize = expectedScreenLayout & Configuration.SCREENLAYOUT_SIZE_MASK;
         int expectedLong = expectedScreenLayout & Configuration.SCREENLAYOUT_LONG_MASK;
@@ -162,5 +170,10 @@ public class ConfigurationScreenLayoutTest
         final boolean supportsPortrait = hasDeviceFeature(PackageManager.FEATURE_SCREEN_PORTRAIT);
         return (supportsLandscape && supportsPortrait)
                 || (!supportsLandscape && !supportsPortrait);
+    }
+
+    // Check if it is a PC device
+    private boolean isPC() {
+        return hasDeviceFeature(PackageManager.FEATURE_PC);
     }
 }
