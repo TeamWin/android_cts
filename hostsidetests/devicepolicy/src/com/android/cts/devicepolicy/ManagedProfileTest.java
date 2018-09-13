@@ -1231,12 +1231,34 @@ public class ManagedProfileTest extends BaseDevicePolicyTest {
             return;
         }
 
-        // Freshly created profile profile has no separate challenge.
+        // Freshly created profile has no separate challenge.
         verifyUnifiedPassword(true);
 
         // Set separate challenge and verify that the API reports it correctly.
         changeUserCredential("1234" /* newCredential */, null /* oldCredential */, mProfileUserId);
         verifyUnifiedPassword(false);
+    }
+
+    public void testUnlockWorkProfile_deviceWidePassword() throws Exception{
+        if (!mHasFeature) {
+            return;
+        }
+        String password = "0000";
+        try {
+            // Add a device password after the work profile has been created.
+            changeUserCredential(password, /* oldCredential= */ null, mPrimaryUserId);
+            // Lock the profile with key eviction.
+            lockProfile();
+            // Turn on work profile, by unlocking the profile with the device password.
+            verifyUserCredential(password, mPrimaryUserId);
+
+            // Verify profile user is running unlocked by running a sanity test on the work profile.
+            installAppAsUser(SIMPLE_APP_APK, mProfileUserId);
+            runDeviceTestsAsUser(MANAGED_PROFILE_PKG, ".SanityTest", mProfileUserId);
+        } finally {
+            // Clean up
+            changeUserCredential(/* newCredential= */ null, password, mPrimaryUserId);
+        }
     }
 
     public void testRebootDevice_unifiedPassword() throws Exception {
