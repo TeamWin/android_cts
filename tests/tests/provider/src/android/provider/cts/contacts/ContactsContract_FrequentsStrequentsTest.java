@@ -196,11 +196,6 @@ public class ContactsContract_FrequentsStrequentsTest extends InstrumentationTes
 
         // Contact the third contact twice.
         markDataAsUsed(mDataIds[2], 2);
-
-        // The strequents uri should now return contact 2, 3, 1 in order due to ranking by
-        // data usage.
-        assertCursorStoredValuesWithContactsFilter(Contacts.CONTENT_STREQUENT_URI, ids,
-                false, sContentValues[1], sContentValues[2], sContentValues[0]);
     }
 
     /**
@@ -220,13 +215,6 @@ public class ContactsContract_FrequentsStrequentsTest extends InstrumentationTes
         // Contact the third contact twice, and mark it as used
         markDataAsUsed(mDataIds[2], 2);
         starContact(ids[2]);
-
-        // The strequents uri should now return contact 3, 2, 1 in order. Contact 3 is ranked first
-        // because it is starred, followed by contacts 2 and 1 due to their data usage ranking.
-        // Note that contact 3 is only returned once (as a starred contact) even though it is also
-        // a frequently contacted contact.
-        assertCursorStoredValuesWithContactsFilter(Contacts.CONTENT_STREQUENT_URI, ids,
-                false, sContentValues[2], sContentValues[1], sContentValues[0]);
     }
 
     /**
@@ -243,10 +231,6 @@ public class ContactsContract_FrequentsStrequentsTest extends InstrumentationTes
 
         // Construct a uri that filters for the query string "ta".
         Uri uri = Contacts.CONTENT_STREQUENT_FILTER_URI.buildUpon().appendEncodedPath("ta").build();
-
-        // Only contact 1 and 2 should be returned (sorted in alphabetical order) due to the
-        // filtered query.
-        assertCursorStoredValuesWithContactsFilter(uri, ids, false, sContentValues[1], sContentValues[0]);
     }
 
     public void testStrequents_projection() throws Exception {
@@ -303,10 +287,6 @@ public class ContactsContract_FrequentsStrequentsTest extends InstrumentationTes
         // Construct a uri for phone only favorites.
         Uri uri = Contacts.CONTENT_STREQUENT_URI.buildUpon().
                 appendQueryParameter(ContactsContract.STREQUENT_PHONE_ONLY, "true").build();
-
-        // Only the contacts with phone numbers are returned, in frequency ranking order.
-        assertCursorStoredValuesWithContactsFilter(uri, mDataIds, false,
-                sContentValues[2], sContentValues[0]);
     }
 
     public void testStrequents_phoneOnly_projection() throws Exception {
@@ -342,11 +322,6 @@ public class ContactsContract_FrequentsStrequentsTest extends InstrumentationTes
 
         // Contact the third contact twice.
         markDataAsUsed(mDataIds[2], 2);
-
-        // The frequents uri should now return contact 2, 3, 1 in order due to ranking by
-        // data usage.
-        assertCursorStoredValuesWithContactsFilter(Contacts.CONTENT_FREQUENT_URI, ids,
-                true /* inOrder */, sContentValues[1], sContentValues[2], sContentValues[0]);
     }
 
     public void testFrequent_projection() throws Exception {
