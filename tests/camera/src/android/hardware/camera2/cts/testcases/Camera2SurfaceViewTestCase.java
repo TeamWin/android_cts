@@ -137,11 +137,24 @@ public class Camera2SurfaceViewTestCase {
         mDebugFileNameBase = mContext.getExternalFilesDir(null).getPath();
 
         mAllStaticInfo = new HashMap<String, StaticMetadata>();
+        List<String> hiddenPhysicalIds = new ArrayList<>();
         for (String cameraId : mCameraIds) {
-            StaticMetadata staticMetadata = new StaticMetadata(
-                    mCameraManager.getCameraCharacteristics(cameraId),
+            CameraCharacteristics props = mCameraManager.getCameraCharacteristics(cameraId);
+            StaticMetadata staticMetadata = new StaticMetadata(props,
                     CheckLevel.ASSERT, /*collector*/null);
             mAllStaticInfo.put(cameraId, staticMetadata);
+
+            for (String physicalId : props.getPhysicalCameraIds()) {
+                if (!Arrays.asList(mCameraIds).contains(physicalId) &&
+                        !hiddenPhysicalIds.contains(physicalId)) {
+                    hiddenPhysicalIds.add(physicalId);
+                    props = mCameraManager.getCameraCharacteristics(physicalId);
+                    staticMetadata = new StaticMetadata(
+                            mCameraManager.getCameraCharacteristics(physicalId),
+                            CheckLevel.ASSERT, /*collector*/null);
+                    mAllStaticInfo.put(physicalId, staticMetadata);
+                }
+            }
         }
 
         mWindowManager = (WindowManager) mContext.getSystemService(Context.WINDOW_SERVICE);
