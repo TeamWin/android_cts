@@ -42,6 +42,24 @@ public class ProtoTests {
         suite.addTestSuite(ProtoOutputStreamEnumTest.class);
         suite.addTestSuite(ProtoOutputStreamObjectTest.class);
 
+        suite.addTestSuite(ProtoInputStreamDoubleTest.class);
+        suite.addTestSuite(ProtoInputStreamFloatTest.class);
+        suite.addTestSuite(ProtoInputStreamInt32Test.class);
+        suite.addTestSuite(ProtoInputStreamInt64Test.class);
+        suite.addTestSuite(ProtoInputStreamUInt32Test.class);
+        suite.addTestSuite(ProtoInputStreamUInt64Test.class);
+        suite.addTestSuite(ProtoInputStreamSInt32Test.class);
+        suite.addTestSuite(ProtoInputStreamSInt64Test.class);
+        suite.addTestSuite(ProtoInputStreamFixed32Test.class);
+        suite.addTestSuite(ProtoInputStreamFixed64Test.class);
+        suite.addTestSuite(ProtoInputStreamSFixed32Test.class);
+        suite.addTestSuite(ProtoInputStreamSFixed64Test.class);
+        suite.addTestSuite(ProtoInputStreamBoolTest.class);
+        suite.addTestSuite(ProtoInputStreamStringTest.class);
+        suite.addTestSuite(ProtoInputStreamBytesTest.class);
+        suite.addTestSuite(ProtoInputStreamEnumTest.class);
+        suite.addTestSuite(ProtoInputStreamObjectTest.class);
+
         return suite;
     }
 }
