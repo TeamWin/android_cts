@@ -25,7 +25,9 @@ import static org.mockito.Mockito.timeout;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 
+import android.graphics.Color;
 import android.graphics.Matrix;
+import android.graphics.drawable.ColorDrawable;
 import android.graphics.drawable.Drawable;
 import android.support.test.filters.MediumTest;
 import android.support.test.runner.AndroidJUnit4;
@@ -108,6 +110,25 @@ public class ChangeImageTransformTest extends BaseTransitionTest {
         transformImage(ScaleType.CENTER, ScaleType.CENTER);
         verifyMatrixMatches(centerMatrix(), mStartMatrix);
         verifyMatrixMatches(centerMatrix(), mEndMatrix);
+    }
+
+    @Test
+    public void testNoAnimationForDrawableWithoutSize() throws Throwable {
+        transformImage(ScaleType.CENTER_CROP, ScaleType.FIT_XY, new ColorDrawable(Color.WHITE),
+                false, false, true);
+        Matrix identityMatrix = new Matrix();
+        assertEquals(identityMatrix, mStartMatrix);
+        assertEquals(identityMatrix, mEndMatrix);
+    }
+
+    @Test
+    public void testNullAnimatorKeepsImagePadding() throws Throwable {
+        transformImage(ScaleType.FIT_XY, ScaleType.FIT_XY, new ColorDrawable(Color.WHITE),
+                true, true, true);
+        assertEquals(mImage.getBounds().width(), mImageView.getWidth()
+                - mImageView.getPaddingLeft() - mImageView.getPaddingRight());
+        assertEquals(mImage.getBounds().height(), mImageView.getHeight()
+                - mImageView.getPaddingTop() - mImageView.getPaddingBottom());
     }
 
     private Matrix centerMatrix() {
@@ -239,8 +260,18 @@ public class ChangeImageTransformTest extends BaseTransitionTest {
         }
     }
 
-    private void transformImage(ScaleType startScale, final ScaleType endScale) throws Throwable {
-        final ImageView imageView = enterImageViewScene(startScale);
+    private void transformImage(final ScaleType startScale,
+            final ImageView.ScaleType endScale) throws Throwable {
+        transformImage(startScale, endScale, null, false, false, startScale == endScale);
+    }
+
+    private void transformImage(final ScaleType startScale,
+            final ImageView.ScaleType endScale,
+            final Drawable customImage,
+            final boolean applyPadding,
+            final boolean withChangingSize,
+            final boolean noMatrixChangeExpected) throws Throwable {
+        final ImageView imageView = enterImageViewScene(startScale, customImage, applyPadding);
         final List<Matrix> matrices = watchImageMatrix(imageView);
 
         mActivityRule.runOnUiThread(() -> {
@@ -252,12 +283,16 @@ public class ChangeImageTransformTest extends BaseTransitionTest {
 
         mActivityRule.runOnUiThread(() -> {
             TransitionManager.beginDelayedTransition(mSceneRoot, mChangeImageTransform);
+            if (withChangingSize) {
+                imageView.getLayoutParams().height /= 2;
+                imageView.requestLayout();
+            }
             imageView.setScaleType(endScale);
             imageView.invalidate();
         });
         waitForStart();
         waitForEnd(5000);
-        if (startScale == endScale) {
+        if (noMatrixChangeExpected) {
             verify(matrices, times(1)).add(any());
             assertEquals(1, matrices.size());
         } else {
@@ -285,13 +320,19 @@ public class ChangeImageTransformTest extends BaseTransitionTest {
         return matrices;
     }
 
-    private ImageView enterImageViewScene(final ScaleType scaleType) throws Throwable {
+    private ImageView enterImageViewScene(final ScaleType scaleType,
+            final Drawable customImage,
+            final boolean withPadding) throws Throwable {
         enterScene(R.layout.scene4);
         final ViewGroup container = mActivity.findViewById(R.id.holder);
         final ImageView[] imageViews = new ImageView[1];
         mActivityRule.runOnUiThread(() -> {
             mImageView = new ImageView(mActivity);
-            mImage = mActivity.getDrawable(android.R.drawable.ic_media_play);
+            if (customImage != null) {
+                mImage = customImage;
+            } else {
+                mImage = mActivity.getDrawable(android.R.drawable.ic_media_play);
+            }
             mImageView.setImageDrawable(mImage);
             mImageView.setScaleType(scaleType);
             imageViews[0] = mImageView;
@@ -302,6 +343,11 @@ public class ChangeImageTransformTest extends BaseTransitionTest {
             layoutParams.width = Math.round(size);
             layoutParams.height = Math.round(size * 2);
             mImageView.setLayoutParams(layoutParams);
+            if (withPadding) {
+                int padding = (int) TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP, 8,
+                        metrics);
+                mImageView.setPadding(padding, padding, padding, padding);
+            }
         });
         mInstrumentation.waitForIdleSync();
         return imageViews[0];
