@@ -22,7 +22,7 @@ import android.util.Log;
 
 import java.util.ArrayList;
 
-public class MockNotificationListener extends NotificationListenerService {
+public class TestNotificationListener extends NotificationListenerService {
     public static final String TAG = "TestNotificationListener";
     public static final String PKG = "android.app.notification.legacy.cts";
 
@@ -32,17 +32,17 @@ public class MockNotificationListener extends NotificationListenerService {
     public ArrayList<StatusBarNotification> mRemoved = new ArrayList<>();
     public RankingMap mRankingMap;
 
-    private static MockNotificationListener sNotificationListenerInstance = null;
+    private static TestNotificationListener sNotificationListenerInstance = null;
     boolean isConnected;
 
     public static String getId() {
-        return String.format("%s/%s", MockNotificationListener.class.getPackage().getName(),
-                MockNotificationListener.class.getName());
+        return String.format("%s/%s", TestNotificationListener.class.getPackage().getName(),
+                TestNotificationListener.class.getName());
     }
 
     public static ComponentName getComponentName() {
-        return new ComponentName(MockNotificationListener.class.getPackage().getName(),
-                MockNotificationListener.class.getName());
+        return new ComponentName(TestNotificationListener.class.getPackage().getName(),
+                TestNotificationListener.class.getName());
     }
 
     @Override
@@ -63,7 +63,7 @@ public class MockNotificationListener extends NotificationListenerService {
         isConnected = false;
     }
 
-    public static MockNotificationListener getInstance() {
+    public static TestNotificationListener getInstance() {
         return sNotificationListenerInstance;
     }
 
@@ -75,12 +75,14 @@ public class MockNotificationListener extends NotificationListenerService {
     @Override
     public void onNotificationPosted(StatusBarNotification sbn, RankingMap rankingMap) {
         if (!mTestPackages.contains(sbn.getPackageName())) { return; }
+        mRankingMap = rankingMap;
         mPosted.add(sbn);
     }
 
     @Override
     public void onNotificationRemoved(StatusBarNotification sbn, RankingMap rankingMap) {
         if (!mTestPackages.contains(sbn.getPackageName())) { return; }
+        mRankingMap = rankingMap;
         mRemoved.add(sbn);
     }
 
