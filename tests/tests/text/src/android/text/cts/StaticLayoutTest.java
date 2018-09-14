@@ -52,6 +52,7 @@ import android.text.TextPaint;
 import android.text.TextUtils;
 import android.text.TextUtils.TruncateAt;
 import android.text.method.cts.EditorState;
+import android.text.style.LineBackgroundSpan;
 import android.text.style.LineHeightSpan;
 import android.text.style.ReplacementSpan;
 import android.text.style.StyleSpan;
@@ -1592,5 +1593,96 @@ public class StaticLayoutTest {
         for (int i = 1; i < layout.getLineCount() - 1; ++i) {
             assertEquals(expectedHeight, layout.getLineBottom(i) - layout.getLineTop(i));
         }
+    }
+
+    private class FakeLineBackgroundSpan implements LineBackgroundSpan {
+        // Whenever drawBackground() is called, the start and end of
+        // the line will be stored into mHistory as an array in the
+        // format of [start, end].
+        private final List<int[]> mHistory;
+
+        FakeLineBackgroundSpan() {
+            mHistory = new ArrayList<int[]>();
+        }
+
+        @Override
+        public void drawBackground(Canvas c, Paint p,
+                int left, int right,
+                int top, int baseline, int bottom,
+                CharSequence text, int start, int end,
+                int lnum) {
+            mHistory.add(new int[] {start, end});
+        }
+
+        List<int[]> getHistory() {
+            return mHistory;
+        }
+    }
+
+    private void testLineBackgroundSpanInRange(String text, int start, int end) {
+        final SpannableString spanStr = new SpannableString(text);
+        final FakeLineBackgroundSpan span = new FakeLineBackgroundSpan();
+        spanStr.setSpan(span, start, end, SpannableString.SPAN_EXCLUSIVE_EXCLUSIVE);
+
+        final TextPaint paint = new TextPaint();
+        paint.setTextSize(50);
+        final int width = (int) paint.measureText(spanStr.toString()) / 5;
+        final StaticLayout layout = StaticLayout.Builder.obtain(spanStr, 0, spanStr.length(),
+                paint, width).build();
+
+        // One line is too simple, need more to test.
+        assertTrue(layout.getLineCount() > 1);
+        drawToBitmap(layout);
+        List<int[]> history = span.getHistory();
+
+        if (history.size() == 0) {
+            // drawBackground() of FakeLineBackgroundSpan was never called.
+            // This only happens when the length of the span is zero.
+            assertTrue(start >= end);
+            return;
+        }
+
+        // Check if drawBackground() is corrected called for each affected line.
+        int lastLineEnd = history.get(0)[0];
+        for (int[] lineRange: history) {
+            // The range of line must intersect with the span.
+            assertTrue(lineRange[0] < end && lineRange[1] > start);
+            // Check:
+            // 1. drawBackground() is called in the correct sequence.
+            // 2. drawBackground() is called only once for each affected line.
+            assertEquals(lastLineEnd, lineRange[0]);
+            lastLineEnd = lineRange[1];
+        }
+
+        int[] firstLineRange = history.get(0);
+        int[] lastLineRange = history.get(history.size() - 1);
+
+        // Check if affected lines match the span coverage.
+        assertTrue(firstLineRange[0] <= start && end <= lastLineRange[1]);
+    }
+
+    @Test
+    public void testDrawWithLineBackgroundSpanCoverWholeText() {
+        testLineBackgroundSpanInRange(LOREM_IPSUM, 0, LOREM_IPSUM.length());
+    }
+
+    @Test
+    public void testDrawWithLineBackgroundSpanCoverNothing() {
+        int i = 0;
+        // Zero length Spans.
+        testLineBackgroundSpanInRange(LOREM_IPSUM, i, i);
+        i = LOREM_IPSUM.length() / 2;
+        testLineBackgroundSpanInRange(LOREM_IPSUM, i, i);
+    }
+
+    @Test
+    public void testDrawWithLineBackgroundSpanCoverPart() {
+        int start = 0;
+        int end = LOREM_IPSUM.length() / 2;
+        testLineBackgroundSpanInRange(LOREM_IPSUM, start, end);
+
+        start = LOREM_IPSUM.length() / 2;
+        end = LOREM_IPSUM.length();
+        testLineBackgroundSpanInRange(LOREM_IPSUM, start, end);
     }
 }
