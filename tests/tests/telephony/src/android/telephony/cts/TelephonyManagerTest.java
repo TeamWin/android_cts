@@ -616,22 +616,12 @@ public class TelephonyManagerTest {
         }
 
         for(String plmn : plmns) {
-            if (plmn.length() > 6 || plmn.length() < 5) {
-                fail("Invalid Length for PLMN-ID, must be 5 or 6: " + plmn);
-            }
-
-            // A record which is written in the SIM but empty will
-            // be all f's
-            if(android.text.TextUtils.isDigitsOnly(plmn)) {
-                assertTrue(
-                        "PLMNs must be strings of digits 0-9,F! " + plmn,
-                        android.text.TextUtils.isDigitsOnly(plmn));
-            } else {
-                for (char c : plmn.toUpperCase().toCharArray()) {
-                    assertTrue("PLMNs must be strings of digits 0-9,F! " + plmn,
-                            Character.toUpperCase(c) == 'F');
-                }
-            }
+            assertTrue(
+                    "Invalid Length for PLMN-ID, must be 5 or 6! plmn=" + plmn,
+                    plmn.length() >= 5 && plmn.length() <= 6);
+            assertTrue(
+                    "PLMNs must be strings of digits 0-9! plmn=" + plmn,
+                    android.text.TextUtils.isDigitsOnly(plmn));
         }
     }
 
