@@ -32,6 +32,7 @@ import static android.server.am.ComponentNameUtils.getActivityName;
 import static android.server.am.ComponentNameUtils.getWindowName;
 import static android.server.am.Components.ALT_LAUNCHING_ACTIVITY;
 import static android.server.am.Components.BROADCAST_RECEIVER_ACTIVITY;
+import static android.server.am.Components.HOME_ACTIVITY;
 import static android.server.am.Components.LAUNCHING_ACTIVITY;
 import static android.server.am.Components.LAUNCH_BROADCAST_ACTION;
 import static android.server.am.Components.LAUNCH_BROADCAST_RECEIVER;
@@ -39,6 +40,7 @@ import static android.server.am.Components.LAUNCH_TEST_ON_DESTROY_ACTIVITY;
 import static android.server.am.Components.NON_RESIZEABLE_ACTIVITY;
 import static android.server.am.Components.RESIZEABLE_ACTIVITY;
 import static android.server.am.Components.SHOW_WHEN_LOCKED_ATTR_ACTIVITY;
+import static android.server.am.Components.SINGLE_HOME_ACTIVITY;
 import static android.server.am.Components.TEST_ACTIVITY;
 import static android.server.am.Components.TOAST_ACTIVITY;
 import static android.server.am.Components.VIRTUAL_DISPLAY_ACTIVITY;
@@ -129,7 +131,52 @@ public class ActivityManagerMultiDisplayTests extends ActivityManagerDisplayTest
      */
     @Test
     public void testLaunchHomeActivityOnSecondaryDisplay() throws Exception {
-        validateActivityLaunchOnNewDisplay(ACTIVITY_TYPE_HOME);
+        try (final HomeActivitySession homeSession = new HomeActivitySession(HOME_ACTIVITY)) {
+            try (final VirtualDisplaySession virtualDisplaySession = new VirtualDisplaySession()) {
+                final ActivityDisplay newDisplay = virtualDisplaySession.createDisplay();
+
+                assertEquals("No stacks on newly launched virtual display", 0,
+                        newDisplay.mStacks.size());
+            }
+        }
+    }
+
+    /**
+     * Tests launching a single instance home activity on virtual display that supports system
+     * decorations.
+     */
+    @Test
+    public void testLaunchSingleHomeActivityOnDisplayWithDecorations() throws Exception {
+        try (final HomeActivitySession session = new HomeActivitySession(SINGLE_HOME_ACTIVITY)) {
+            try (final VirtualDisplaySession virtualDisplaySession = new VirtualDisplaySession()) {
+                // Create new virtual display with system decoration support.
+                final ActivityDisplay newDisplay
+                        = virtualDisplaySession.setShowSystemDecorations(true).createDisplay();
+
+                assertEquals("No stacks on newly launched virtual display", 0,
+                        newDisplay.mStacks.size());
+            }
+        }
+    }
+
+    /**
+     * Tests launching a home activity on virtual display that supports system decorations.
+     */
+    @Test
+    public void testLaunchHomeActivityOnDisplayWithDecorations() throws Exception {
+        try (final HomeActivitySession homeSession = new HomeActivitySession(HOME_ACTIVITY)) {
+            try (final VirtualDisplaySession virtualDisplaySession = new VirtualDisplaySession()) {
+                // Create new virtual display with system decoration support.
+                final ActivityDisplay newDisplay
+                        = virtualDisplaySession.setShowSystemDecorations(true).createDisplay();
+
+                // Home activity should be automatically launched on the new display.
+                waitAndAssertTopResumedActivity(HOME_ACTIVITY, newDisplay.mId,
+                        "Activity launched on secondary display must be focused and on top");
+                assertEquals("Top activity must be home type", ACTIVITY_TYPE_HOME,
+                        mAmWmState.getAmState().getFrontStackActivityType(newDisplay.mId));
+            }
+        }
     }
 
     /**
@@ -168,6 +215,9 @@ public class ActivityManagerMultiDisplayTests extends ActivityManagerDisplayTest
                     logSeparator);
             assertEquals("Activity launched on secondary display must have proper configuration",
                     CUSTOM_DENSITY_DPI, reportedSizes.densityDpi);
+
+            assertEquals("Top activity must have correct activity type", activityType,
+                    mAmWmState.getAmState().getFrontStackActivityType(newDisplay.mId));
         }
     }
 

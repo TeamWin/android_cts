@@ -26,6 +26,7 @@ import static android.server.am.Components.VirtualDisplayActivity
         .KEY_CAN_SHOW_WITH_INSECURE_KEYGUARD;
 import static android.server.am.Components.VirtualDisplayActivity.KEY_COMMAND;
 import static android.server.am.Components.VirtualDisplayActivity.KEY_COUNT;
+import static android.server.am.Components.VirtualDisplayActivity.KEY_SHOW_SYSTEM_DECORATIONS;
 import static android.server.am.Components.VirtualDisplayActivity.KEY_DENSITY_DPI;
 import static android.server.am.Components.VirtualDisplayActivity.KEY_LAUNCH_TARGET_COMPONENT;
 import static android.server.am.Components.VirtualDisplayActivity.KEY_PUBLIC_DISPLAY;
@@ -218,6 +219,7 @@ class ActivityManagerDisplayTestBase extends ActivityManagerTestBase {
         private boolean mCanShowWithInsecureKeyguard = false;
         private boolean mPublicDisplay = false;
         private boolean mResizeDisplay = true;
+        private boolean mShowSystemDecorations = false;
         private ComponentName mLaunchActivity = null;
         private boolean mSimulateDisplay = false;
         private boolean mMustBeCreated = true;
@@ -248,6 +250,11 @@ class ActivityManagerDisplayTestBase extends ActivityManagerTestBase {
 
         VirtualDisplaySession setResizeDisplay(boolean resizeDisplay) {
             mResizeDisplay = resizeDisplay;
+            return this;
+        }
+
+        VirtualDisplaySession setShowSystemDecorations(boolean showSystemDecorations) {
+            mShowSystemDecorations = showSystemDecorations;
             return this;
         }
 
@@ -359,7 +366,9 @@ class ActivityManagerDisplayTestBase extends ActivityManagerTestBase {
                     .append(" --ez " + KEY_CAN_SHOW_WITH_INSECURE_KEYGUARD + " ")
                     .append(mCanShowWithInsecureKeyguard)
                     .append(" --ez " + KEY_PUBLIC_DISPLAY + " ").append(mPublicDisplay)
-                    .append(" --ez " + KEY_RESIZE_DISPLAY + " ").append(mResizeDisplay);
+                    .append(" --ez " + KEY_RESIZE_DISPLAY + " ").append(mResizeDisplay)
+                    .append(" --ez " + KEY_SHOW_SYSTEM_DECORATIONS + " ")
+                    .append(mShowSystemDecorations);
             if (mLaunchActivity != null) {
                 createVirtualDisplayCommand
                         .append(" --es " + KEY_LAUNCH_TARGET_COMPONENT + " ")
