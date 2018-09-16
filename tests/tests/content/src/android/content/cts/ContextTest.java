@@ -45,6 +45,7 @@ import android.os.Handler;
 import android.os.IBinder;
 import android.os.Looper;
 import android.os.Process;
+import android.os.UserHandle;
 import android.preference.PreferenceManager;
 import android.test.AndroidTestCase;
 import android.util.AttributeSet;
@@ -767,6 +768,16 @@ public class ContextTest extends AndroidTestCase {
                 Context.CONTEXT_IGNORE_SECURITY);
 
         assertNotNull(actualContext);
+    }
+
+    public void testCreatePackageContextAsUser() throws Exception {
+        for (UserHandle user : new UserHandle[] {
+                android.os.Process.myUserHandle(),
+                UserHandle.ALL, UserHandle.CURRENT, UserHandle.SYSTEM
+        }) {
+            assertEquals(user, mContext
+                    .createPackageContextAsUser(getValidPackageName(), 0, user).getUser());
+        }
     }
 
     /**

@@ -61,6 +61,7 @@ import java.util.Objects;
 import java.util.function.BiPredicate;
 import java.util.function.BooleanSupplier;
 import java.util.function.Predicate;
+import java.util.function.Supplier;
 import java.util.stream.Collectors;
 
 /**
@@ -212,6 +213,24 @@ public class ActivityAndWindowManagersState {
             }
         }
         logE("***Waiting for debugger window failed");
+    }
+
+    WindowState waitForWindowWithVisibility(Supplier<WindowState> supplier, String winName,
+            boolean visible) {
+        WindowState windowState = null;
+        for (int retry = 1; retry <= 5; retry++) {
+            windowState = supplier.get();
+            if (windowState != null) {
+                if (windowState.isShown() == visible)
+                    break;
+            } else {
+                if (!visible)
+                    break;
+            }
+            logAlways("***Waiting for valid " + winName + " Window... retry=" + retry);
+            SystemClock.sleep(1000);
+        }
+        return windowState;
     }
 
     void waitForHomeActivityVisible() {

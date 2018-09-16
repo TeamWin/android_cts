@@ -24,6 +24,7 @@ import android.graphics.ImageFormat;
 import android.graphics.Rect;
 import android.hardware.camera2.CameraCaptureSession;
 import android.hardware.camera2.CameraCaptureSession.CaptureCallback;
+import android.hardware.camera2.CameraCharacteristics;
 import android.hardware.camera2.CameraDevice;
 import android.hardware.camera2.CameraManager;
 import android.hardware.camera2.CaptureRequest;
@@ -114,11 +115,24 @@ public class Camera2AndroidTestCase extends AndroidTestCase {
         mDebugFileNameBase = getContext().getExternalFilesDir(null).getPath();
 
         mAllStaticInfo = new HashMap<String, StaticMetadata>();
+        List<String> hiddenPhysicalIds = new ArrayList<>();
         for (String cameraId : mCameraIds) {
-            StaticMetadata staticMetadata = new StaticMetadata(
-                    mCameraManager.getCameraCharacteristics(cameraId),
+            CameraCharacteristics props = mCameraManager.getCameraCharacteristics(cameraId);
+            StaticMetadata staticMetadata = new StaticMetadata(props,
                     CheckLevel.ASSERT, /*collector*/null);
             mAllStaticInfo.put(cameraId, staticMetadata);
+
+            for (String physicalId : props.getPhysicalCameraIds()) {
+                if (!Arrays.asList(mCameraIds).contains(physicalId) &&
+                        !hiddenPhysicalIds.contains(physicalId)) {
+                    hiddenPhysicalIds.add(physicalId);
+                    props = mCameraManager.getCameraCharacteristics(physicalId);
+                    staticMetadata = new StaticMetadata(
+                            mCameraManager.getCameraCharacteristics(physicalId),
+                            CheckLevel.ASSERT, /*collector*/null);
+                    mAllStaticInfo.put(physicalId, staticMetadata);
+                }
+            }
         }
     }
 

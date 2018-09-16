@@ -115,6 +115,7 @@ public class AccessibilityServiceInfoTest extends AndroidTestCase {
         sentInfo.packageNames = new String[] {
             "foo.bar.baz"
         };
+        sentInfo.setMinimumUiTimeoutMillis(2000);
     }
 
     /**
@@ -135,5 +136,7 @@ public class AccessibilityServiceInfoTest extends AndroidTestCase {
                 receivedInfo.packageNames.length);
         assertEquals("packageNames not marshalled properly", sentInfo.packageNames[0],
                 receivedInfo.packageNames[0]);
+        assertEquals("minimumUiTimeout not marshalled properly",
+                sentInfo.getMinimumUiTimeoutMillis(), receivedInfo.getMinimumUiTimeoutMillis());
     }
 }

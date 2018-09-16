@@ -18,9 +18,12 @@ package android.view.accessibility.cts;
 
 import android.accessibilityservice.AccessibilityServiceInfo;
 import android.app.Service;
+import android.app.UiAutomation;
+import android.content.ContentResolver;
 import android.content.Context;
 import android.content.pm.ServiceInfo;
 import android.os.Handler;
+import android.provider.Settings;
 import android.test.InstrumentationTestCase;
 import android.view.accessibility.AccessibilityEvent;
 import android.view.accessibility.AccessibilityManager;
@@ -45,6 +48,12 @@ public class AccessibilityManagerTest extends InstrumentationTestCase {
 
     private static final String MULTIPLE_FEEDBACK_TYPES_ACCESSIBILITY_SERVICE_NAME =
         "android.view.accessibility.cts.SpeakingAndVibratingAccessibilityService";
+
+    private static final String ACCESSIBILITY_MINIMUM_UI_TIMEOUT_ENABLED =
+            "accessibility_minimum_ui_timeout_enabled";
+
+    private static final String ACCESSIBILITY_MINIMUM_UI_TIMEOUT_MS =
+            "accessibility_minimum_ui_timeout_ms";
 
     private AccessibilityManager mAccessibilityManager;
 
@@ -332,6 +341,22 @@ public class AccessibilityManagerTest extends InstrumentationTestCase {
         mAccessibilityManager.removeAccessibilityStateChangeListener(listener);
     }
 
+    public void testGetMinimumUiTimeoutMs() throws Exception {
+        ServiceControlUtils.enableSpeakingAndVibratingServices(getInstrumentation());
+        waitForAccessibilityEnabled();
+        UiAutomation automan = getInstrumentation().getUiAutomation(
+                UiAutomation.FLAG_DONT_SUPPRESS_ACCESSIBILITY_SERVICES);
+        turnOffMinimumUiTimoutSettings(automan);
+        PollingCheck.waitFor(() -> mAccessibilityManager.getMinimumUiTimeoutMillis() == 2000);
+        turnOnMinimumUiTimoutSettings(automan, 5000);
+        PollingCheck.waitFor(() -> mAccessibilityManager.getMinimumUiTimeoutMillis() == 5000);
+        turnOnMinimumUiTimoutSettings(automan, 6000);
+        PollingCheck.waitFor(() -> mAccessibilityManager.getMinimumUiTimeoutMillis() == 6000);
+        turnOffMinimumUiTimoutSettings(automan);
+        PollingCheck.waitFor(() -> mAccessibilityManager.getMinimumUiTimeoutMillis() == 2000);
+        automan.destroy();
+    }
+
     private void assertAtomicBooleanBecomes(AtomicBoolean atomicBoolean,
             boolean expectedValue, Object waitObject, String message)
             throws Exception {
@@ -365,5 +390,25 @@ public class AccessibilityManagerTest extends InstrumentationTestCase {
         }
         mAccessibilityManager.removeAccessibilityStateChangeListener(listener);
         assertTrue("Timed out enabling accessibility", mAccessibilityManager.isEnabled());
+    }
+
+    private void turnOffMinimumUiTimoutSettings(UiAutomation automan) {
+        putSecureSetting(automan, ACCESSIBILITY_MINIMUM_UI_TIMEOUT_ENABLED, null);
+        putSecureSetting(automan, ACCESSIBILITY_MINIMUM_UI_TIMEOUT_MS, null);
+    }
+
+    private void turnOnMinimumUiTimoutSettings(UiAutomation automan, int timeout) {
+        putSecureSetting(automan, ACCESSIBILITY_MINIMUM_UI_TIMEOUT_ENABLED, "1");
+        putSecureSetting(automan, ACCESSIBILITY_MINIMUM_UI_TIMEOUT_MS, Integer.toString(timeout));
+    }
+
+    private void putSecureSetting(UiAutomation automan, String name, String value) {
+        ContentResolver cr = getInstrumentation().getContext().getContentResolver();
+        automan.adoptShellPermissionIdentity();
+        try {
+            Settings.Secure.putString(cr, name, value);
+        } finally {
+            automan.dropShellPermissionIdentity();
+        }
     }
 }

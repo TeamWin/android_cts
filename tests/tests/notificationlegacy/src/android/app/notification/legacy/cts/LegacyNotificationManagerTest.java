@@ -16,7 +16,6 @@
 
 package android.app.notification.legacy.cts;
 
-import static android.app.NotificationManager.Policy.SUPPRESSED_EFFECT_AMBIENT;
 import static android.app.NotificationManager.Policy.SUPPRESSED_EFFECT_FULL_SCREEN_INTENT;
 import static android.app.NotificationManager.Policy.SUPPRESSED_EFFECT_LIGHTS;
 import static android.app.NotificationManager.Policy.SUPPRESSED_EFFECT_NOTIFICATION_LIST;
@@ -26,6 +25,8 @@ import static android.app.NotificationManager.Policy.SUPPRESSED_EFFECT_SCREEN_ON
 import static android.app.NotificationManager.Policy.SUPPRESSED_EFFECT_STATUS_BAR;
 
 import static junit.framework.Assert.assertEquals;
+
+import static org.junit.Assert.assertTrue;
 
 import android.app.ActivityManager;
 import android.app.Instrumentation;
@@ -42,7 +43,6 @@ import android.provider.Telephony.Threads;
 import android.service.notification.NotificationListenerService;
 import android.support.test.InstrumentationRegistry;
 import android.support.test.runner.AndroidJUnit4;
-import android.util.Log;
 
 import junit.framework.Assert;
 
@@ -67,11 +67,14 @@ public class LegacyNotificationManagerTest {
     private ActivityManager mActivityManager;
     private Context mContext;
     private MockNotificationListener mListener;
+    private SecondaryNotificationListener mSecondaryListener;
 
     @Before
     public void setUp() throws Exception {
         mContext = InstrumentationRegistry.getContext();
         toggleListenerAccess(MockNotificationListener.getId(),
+                InstrumentationRegistry.getInstrumentation(), false);
+        toggleListenerAccess(SecondaryNotificationListener.getId(),
                 InstrumentationRegistry.getInstrumentation(), false);
         mNotificationManager = (NotificationManager) mContext.getSystemService(
                 Context.NOTIFICATION_SERVICE);
@@ -84,6 +87,11 @@ public class LegacyNotificationManagerTest {
     public void tearDown() throws Exception {
         toggleListenerAccess(MockNotificationListener.getId(),
                 InstrumentationRegistry.getInstrumentation(), false);
+        toggleListenerAccess(SecondaryNotificationListener.getId(),
+                InstrumentationRegistry.getInstrumentation(), false);
+        Thread.sleep(500); // wait for listener to disconnect
+        assertTrue(mListener == null || !mListener.isConnected);
+        assertTrue(mSecondaryListener == null || !mSecondaryListener.isConnected);
     }
 
     @Test
@@ -205,6 +213,52 @@ public class LegacyNotificationManagerTest {
                 InstrumentationRegistry.getInstrumentation(), false);
 
         mListener.resetData();
+    }
+
+    @Test
+    public void testResetListenerHints_singleListener() throws Exception {
+        toggleListenerAccess(MockNotificationListener.getId(),
+                InstrumentationRegistry.getInstrumentation(), true);
+        Thread.sleep(500); // wait for listener to be allowed
+
+        mListener = MockNotificationListener.getInstance();
+        Assert.assertNotNull(mListener);
+
+        mListener.requestListenerHints(NotificationListenerService.HINT_HOST_DISABLE_CALL_EFFECTS);
+
+        assertEquals(NotificationListenerService.HINT_HOST_DISABLE_CALL_EFFECTS,
+                mListener.getCurrentListenerHints());
+
+        mListener.clearRequestedListenerHints();
+
+        assertEquals(0, mListener.getCurrentListenerHints());
+    }
+
+    @Test
+    public void testResetListenerHints_multiListener() throws Exception {
+        toggleListenerAccess(MockNotificationListener.getId(),
+                InstrumentationRegistry.getInstrumentation(), true);
+        toggleListenerAccess(SecondaryNotificationListener.getId(),
+                InstrumentationRegistry.getInstrumentation(), true);
+        Thread.sleep(500); // wait for listener to be allowed
+
+        mListener = MockNotificationListener.getInstance();
+        mSecondaryListener = SecondaryNotificationListener.getInstance();
+        Assert.assertNotNull(mListener);
+        Assert.assertNotNull(mSecondaryListener);
+
+        mListener.requestListenerHints(NotificationListenerService.HINT_HOST_DISABLE_CALL_EFFECTS);
+        mSecondaryListener.requestListenerHints(
+                NotificationListenerService.HINT_HOST_DISABLE_CALL_EFFECTS
+                        | NotificationListenerService.HINT_HOST_DISABLE_NOTIFICATION_EFFECTS);
+
+        assertEquals(NotificationListenerService.HINT_HOST_DISABLE_CALL_EFFECTS
+                | NotificationListenerService.HINT_HOST_DISABLE_NOTIFICATION_EFFECTS,
+                mListener.getCurrentListenerHints());
+
+        mSecondaryListener.clearRequestedListenerHints();
+        assertEquals(NotificationListenerService.HINT_HOST_DISABLE_CALL_EFFECTS,
+                mSecondaryListener.getCurrentListenerHints());
     }
 
     @Test

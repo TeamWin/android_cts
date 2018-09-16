@@ -22,4 +22,5 @@
     android:canRequestFilterKeyEvents="true"
     android:settingsActivity="foo.bar.Activity"
     android:description="@string/some_description"
-    android:summary="@string/some_summary" />
+    android:summary="@string/some_summary"
+    android:minimumUiTimeout="1000" />

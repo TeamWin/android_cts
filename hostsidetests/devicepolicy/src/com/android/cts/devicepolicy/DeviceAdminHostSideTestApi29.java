@@ -42,4 +42,13 @@ public class DeviceAdminHostSideTestApi29 extends DeviceAdminHostSideTestApi24 {
     public void testResetPassword_nycRestrictions() throws Exception {
         return;
     }
+
+    /**
+     * This test is no longer relevant since resetPassword() was deprecated in version 26.
+     * Device Owner functionality is now tested in DeviceAndProfileOwnerTest.
+     */
+    @Override
+    public void testRunDeviceOwnerPasswordTest() throws Exception {
+        return;
+    }
 }

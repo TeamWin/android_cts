@@ -23,28 +23,42 @@ import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
 import android.support.test.filters.SmallTest;
-import android.support.test.runner.AndroidJUnit4;
 import android.system.ErrnoException;
 import android.system.Os;
 import android.system.OsConstants;
 
 import org.junit.Test;
 import org.junit.runner.RunWith;
+import org.junit.runners.Parameterized;
 
 import java.nio.ReadOnlyBufferException;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Set;
 
 @SmallTest
-@RunWith(AndroidJUnit4.class)
+@RunWith(Parameterized.class)
 public class SystemFontsTest {
+
+    @Parameterized.Parameter(0)
+    public Set<Font> availableFonts;
+
+    @Parameterized.Parameters
+    public static Collection<Object[]> getParameters() {
+        ArrayList<Object[]> allParams = new ArrayList<>();
+        allParams.add(new Object[] { SystemFonts.getAvailableFonts() });
+        allParams.add(new Object[] { NativeSystemFontHelper.getAvailableFonts() });
+        return allParams;
+    }
+
     @Test
     public void testAvailableFonts_NotEmpty() {
-        assertNotEquals("System available fonts must not be empty",
-                0, SystemFonts.getAvailableFonts().size());
+        assertNotEquals("System available fonts must not be empty", 0, availableFonts.size());
     }
 
     @Test
     public void testAvailableFonts_ReadOnlyFile() throws ErrnoException {
-        for (Font font : SystemFonts.getAvailableFonts()) {
+        for (Font font : availableFonts) {
             assertNotNull("System font must provide file path to the font file.", font.getFile());
 
             // The system font must be read-only file.
@@ -62,7 +76,7 @@ public class SystemFontsTest {
 
     @Test
     public void testAvailableFonts_ReadOnlyBuffer() {
-        for (Font font : SystemFonts.getAvailableFonts()) {
+        for (Font font : availableFonts) {
             try {
                 font.getBuffer().put((byte) 0);
                 fail("System font must be read only");
