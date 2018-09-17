@@ -181,8 +181,7 @@ public class UserRestrictions {
                     UserManager.DISALLOW_CONFIG_DATE_TIME,
                     UserManager.DISALLOW_CONFIG_LOCATION,
                     UserManager.DISALLOW_CONFIG_SCREEN_TIMEOUT,
-                    UserManager.DISALLOW_CONFIG_BRIGHTNESS,
-                    UserManager.DISALLOW_AMBIENT_DISPLAY);
+                    UserManager.DISALLOW_CONFIG_BRIGHTNESS);
 
     public static String getRestrictionLabel(Context context, String restriction) {
         final UserRestrictionItem item = findRestrictionItem(restriction);
