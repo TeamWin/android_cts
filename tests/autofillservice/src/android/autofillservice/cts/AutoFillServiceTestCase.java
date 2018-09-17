@@ -19,9 +19,11 @@ package android.autofillservice.cts;
 import static android.autofillservice.cts.Helper.getContext;
 import static android.autofillservice.cts.InstrumentedAutoFillService.SERVICE_NAME;
 import static android.autofillservice.cts.common.ShellHelper.runShellCommand;
+import static android.content.Context.CLIPBOARD_SERVICE;
 
 import android.autofillservice.cts.InstrumentedAutoFillService.Replier;
 import android.autofillservice.cts.common.SettingsStateKeeperRule;
+import android.content.ClipboardManager;
 import android.content.Context;
 import android.content.Intent;
 import android.content.pm.PackageManager;
@@ -247,6 +249,9 @@ final class AutoFillServiceTestCase {
 
             // Wait until device is idle to avoid flakiness
             mUiBot.waitForIdle();
+
+            // Clear Clipboard
+            ((ClipboardManager) mContext.getSystemService(CLIPBOARD_SERVICE)).clearPrimaryClip();
         }
 
         @Before
