@@ -34,7 +34,7 @@ import android.app.NotificationChannelGroup;
 import android.app.NotificationManager;
 import android.app.PendingIntent;
 import android.app.UiAutomation;
-import android.app.stubs.MockNotificationListener;
+import android.app.stubs.TestNotificationListener;
 import android.app.stubs.R;
 import android.content.ComponentName;
 import android.content.Context;
@@ -76,7 +76,7 @@ public class NotificationManagerTest extends AndroidTestCase {
     private NotificationManager mNotificationManager;
     private ActivityManager mActivityManager;
     private String mId;
-    private MockNotificationListener mListener;
+    private TestNotificationListener mListener;
 
     @Override
     protected void setUp() throws Exception {
@@ -110,7 +110,7 @@ public class NotificationManagerTest extends AndroidTestCase {
             mNotificationManager.deleteNotificationChannel(nc.getId());
         }
 
-        toggleListenerAccess(MockNotificationListener.getId(),
+        toggleListenerAccess(TestNotificationListener.getId(),
                 InstrumentationRegistry.getInstrumentation(), false);
 
         List<NotificationChannelGroup> groups = mNotificationManager.getNotificationChannelGroups();
@@ -474,11 +474,11 @@ public class NotificationManagerTest extends AndroidTestCase {
             return;
         }
 
-        toggleListenerAccess(MockNotificationListener.getId(),
+        toggleListenerAccess(TestNotificationListener.getId(),
                 InstrumentationRegistry.getInstrumentation(), true);
         Thread.sleep(500); // wait for listener to be allowed
 
-        mListener = MockNotificationListener.getInstance();
+        mListener = TestNotificationListener.getInstance();
         assertNotNull(mListener);
 
         sendNotification(1, R.drawable.black);
@@ -503,6 +503,52 @@ public class NotificationManagerTest extends AndroidTestCase {
         suspendPackage(mContext.getPackageName(), InstrumentationRegistry.getInstrumentation(),
                 false);
         Thread.sleep(500); // wait for notification listener to get response
+        rankingMap = mListener.mRankingMap;
+        for (String key : rankingMap.getOrderedKeys()) {
+            if (key.contains(mListener.getPackageName())) {
+                rankingMap.getRanking(key, outRanking);
+                Log.d(TAG, "key=" + key + " suspended=" + outRanking.isSuspended());
+                assertFalse(outRanking.isSuspended());
+            }
+        }
+
+        mListener.resetData();
+    }
+
+    public void testSuspendedPackageSendsNotification() throws Exception {
+        if (mActivityManager.isLowRamDevice() && !mPackageManager.hasSystemFeature(FEATURE_WATCH)) {
+            return;
+        }
+
+        toggleListenerAccess(TestNotificationListener.getId(),
+                InstrumentationRegistry.getInstrumentation(), true);
+        Thread.sleep(500); // wait for listener to be allowed
+
+        mListener = TestNotificationListener.getInstance();
+        assertNotNull(mListener);
+
+        // suspend package, post notification while package is suspended, see notification
+        // in ranking map with suspended = true
+        suspendPackage(mContext.getPackageName(), InstrumentationRegistry.getInstrumentation(),
+                true);
+        sendNotification(1, R.drawable.black);
+        Thread.sleep(500); // wait for notification listener to receive notification
+        assertEquals(1, mListener.mPosted.size()); // apps targeting P receive notification
+        NotificationListenerService.RankingMap rankingMap = mListener.mRankingMap;
+        NotificationListenerService.Ranking outRanking = new NotificationListenerService.Ranking();
+        for (String key : rankingMap.getOrderedKeys()) {
+            if (key.contains(mListener.getPackageName())) {
+                rankingMap.getRanking(key, outRanking);
+                Log.d(TAG, "key=" + key + " suspended=" + outRanking.isSuspended());
+                assertTrue(outRanking.isSuspended());
+            }
+        }
+
+        // unsuspend package, ranking should be updated with suspended = false
+        suspendPackage(mContext.getPackageName(), InstrumentationRegistry.getInstrumentation(),
+                false);
+        Thread.sleep(500); // wait for notification listener to get response
+        assertEquals(1, mListener.mPosted.size()); // should see previously posted notification
         rankingMap = mListener.mRankingMap;
         for (String key : rankingMap.getOrderedKeys()) {
             if (key.contains(mListener.getPackageName())) {
@@ -1067,8 +1113,7 @@ public class NotificationManagerTest extends AndroidTestCase {
 
     private void suspendPackage(String packageName,
             Instrumentation instrumentation, boolean suspend) throws IOException {
-        String command = " cmd notification " + (suspend ? "suspend_package "
-                : "unsuspend_package ") + packageName;
+        String command = " cmd package " + (suspend ? "suspend " : "unsuspend ") + packageName;
 
         runCommand(command, instrumentation);
     }
@@ -1082,7 +1127,7 @@ public class NotificationManagerTest extends AndroidTestCase {
         runCommand(command, instrumentation);
 
         final NotificationManager nm = mContext.getSystemService(NotificationManager.class);
-        final ComponentName listenerComponent = MockNotificationListener.getComponentName();
+        final ComponentName listenerComponent = TestNotificationListener.getComponentName();
         assertTrue(listenerComponent + " has not been granted access",
                 nm.isNotificationListenerAccessGranted(listenerComponent) == on);
     }
