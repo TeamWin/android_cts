@@ -37,6 +37,17 @@ do
         echo ">> Require Python $M module" >&2
 done
 
+CV2_VER=$(python -c "\
+try:
+    import cv2
+    print cv2.__version__
+except:
+    print \"N/A\"
+")
+
+echo $CV2_VER | grep -q -e "^2.4" -e "^3.2" || \
+    echo ">> Require python opencv 2.4. or 3.2. Got $CV2_VER" >&2
+
 export PYTHONPATH="$PWD/pymodules:$PYTHONPATH"
 
 for M in device objects image caps dng target error
