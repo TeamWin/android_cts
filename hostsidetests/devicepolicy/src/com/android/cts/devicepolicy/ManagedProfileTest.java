@@ -170,7 +170,28 @@ public class ManagedProfileTest extends BaseDevicePolicyTest {
         // longer exists, verification should be run in primary user.
         runDeviceTestsAsUser(
                 MANAGED_PROFILE_PKG,
-                ".WipeDataWithReasonVerificationTest",
+                ".WipeDataNotificationTest",
+                "testWipeDataWithReasonVerification",
+                mParentUserId);
+    }
+
+    public void testWipeDataWithoutReason() throws Exception {
+        if (!mHasFeature) {
+            return;
+        }
+        assertTrue(listUsers().contains(mProfileUserId));
+        sendWipeProfileBroadcast("com.android.cts.managedprofile.WIPE_DATA_WITHOUT_REASON");
+        // Note: the managed profile is removed by this test, which will make removeUserCommand in
+        // tearDown() to complain, but that should be OK since its result is not asserted.
+        assertUserGetsRemoved(mProfileUserId);
+        // testWipeDataWithoutReason() removes the managed profile,
+        // so it needs to separated from other tests.
+        // Check the notification is not presented after work profile got removed, so profile user
+        // no longer exists, verification should be run in primary user.
+        runDeviceTestsAsUser(
+                MANAGED_PROFILE_PKG,
+                ".WipeDataNotificationTest",
+                "testWipeDataWithoutReasonVerification",
                 mParentUserId);
     }
 
