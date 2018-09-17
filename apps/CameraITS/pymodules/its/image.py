@@ -608,10 +608,10 @@ def get_image_patch(img, xnorm, ynorm, wnorm, hnorm):
     """
     hfull = img.shape[0]
     wfull = img.shape[1]
-    xtile = math.ceil(xnorm * wfull)
-    ytile = math.ceil(ynorm * hfull)
-    wtile = math.floor(wnorm * wfull)
-    htile = math.floor(hnorm * hfull)
+    xtile = int(math.ceil(xnorm * wfull))
+    ytile = int(math.ceil(ynorm * hfull))
+    wtile = int(math.floor(wnorm * wfull))
+    htile = int(math.floor(hnorm * hfull))
     return img[ytile:ytile+htile,xtile:xtile+wtile,:].copy()
 
 def compute_image_means(img):
