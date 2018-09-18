@@ -146,7 +146,7 @@ TEST_F(NdkBinderTest_AParcel, CantReadFromEmptyParcel) {
   EXPECT_OK(SampleData::transact(
       binder, kCode, WriteNothingToParcel, [&](const AParcel* out) {
         bool readTarget = false;
-        EXPECT_EQ(-ENODATA, AParcel_readBool(out, &readTarget));
+        EXPECT_EQ(STATUS_NOT_ENOUGH_DATA, AParcel_readBool(out, &readTarget));
         EXPECT_FALSE(readTarget);
         return STATUS_OK;
       }));
