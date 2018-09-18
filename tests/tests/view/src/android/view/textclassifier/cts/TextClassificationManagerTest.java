@@ -22,6 +22,8 @@ import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 import static org.mockito.Mockito.mock;
 
+import android.icu.util.ULocale;
+import android.os.Bundle;
 import android.os.LocaleList;
 import android.support.test.InstrumentationRegistry;
 import android.support.test.filters.SmallTest;
@@ -31,6 +33,7 @@ import android.view.textclassifier.TextClassification;
 import android.view.textclassifier.TextClassificationContext;
 import android.view.textclassifier.TextClassificationManager;
 import android.view.textclassifier.TextClassifier;
+import android.view.textclassifier.TextLanguage;
 import android.view.textclassifier.TextLinks;
 import android.view.textclassifier.TextSelection;
 
@@ -47,6 +50,12 @@ import java.util.HashSet;
 @RunWith(AndroidJUnit4.class)
 public class TextClassificationManagerTest {
 
+    private static final String BUNDLE_KEY = "key";
+    private static final String BUNDLE_VALUE = "value";
+    private static final Bundle BUNDLE = new Bundle();
+    static {
+        BUNDLE.putString(BUNDLE_KEY, BUNDLE_VALUE);
+    }
     private static final LocaleList LOCALES = LocaleList.forLanguageTags("en");
     private static final int START = 1;
     private static final int END = 3;
@@ -61,6 +70,10 @@ public class TextClassificationManagerTest {
     private static final TextClassification.Request TEXT_CLASSIFICATION_REQUEST =
             new TextClassification.Request.Builder(TEXT, START, END)
                     .setDefaultLocales(LOCALES)
+                    .build();
+    private static final TextLanguage.Request TEXT_LANGUAGE_REQUEST =
+            new TextLanguage.Request.Builder(TEXT)
+                    .setExtras(BUNDLE)
                     .build();
 
     private TextClassificationManager mManager;
@@ -167,6 +180,16 @@ public class TextClassificationManagerTest {
                 SelectionEvent.createSelectionStartedEvent(SelectionEvent.INVOCATION_MANUAL, 0));
     }
 
+    @Test
+    public void testLanguageDetection() {
+        assertValidResult(mClassifier.detectLanguage(TEXT_LANGUAGE_REQUEST));
+    }
+
+    @Test(expected = RuntimeException.class)
+    public void testLanguageDetection_nullRequest() {
+        assertValidResult(mClassifier.detectLanguage(null));
+    }
+
     private static void assertValidResult(TextSelection selection) {
         assertNotNull(selection);
         assertTrue(selection.getSelectionStartIndex() >= 0);
@@ -207,6 +230,19 @@ public class TextClassificationManagerTest {
                 assertTrue(confidenceScore >= 0);
                 assertTrue(confidenceScore <= 1);
             }
+        }
+    }
+
+    private static void assertValidResult(TextLanguage language) {
+        assertNotNull(language);
+        assertNotNull(language.getExtras());
+        assertTrue(language.getLocaleHypothesisCount() >= 0);
+        for (int i = 0; i < language.getLocaleHypothesisCount(); i++) {
+            final ULocale locale = language.getLocale(i);
+            assertNotNull(locale);
+            final float confidenceScore = language.getConfidenceScore(locale);
+            assertTrue(confidenceScore >= 0);
+            assertTrue(confidenceScore <= 1);
         }
     }
 }
