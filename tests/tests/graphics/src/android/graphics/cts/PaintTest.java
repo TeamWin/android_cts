@@ -753,8 +753,13 @@ public class PaintTest {
     }
 
     @Test
-    public void testSetShadowLayer() {
-        new Paint().setShadowLayer(10, 1, 1, 0);
+    public void testSetGetShadowLayer() {
+        Paint paint = new Paint();
+        paint.setShadowLayer(10, 1, 1, 0);
+        assertEquals(10, paint.getShadowLayerRadius(), 0.0f);
+        assertEquals(1, paint.getShadowLayerDx(), 0.0f);
+        assertEquals(1, paint.getShadowLayerDy(), 0.0f);
+        assertEquals(0, paint.getShadowLayerColor());
     }
 
     @Test
