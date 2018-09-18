@@ -42,6 +42,7 @@ import static android.autofillservice.cts.LoginActivity.ID_USERNAME_CONTAINER;
 import static android.autofillservice.cts.LoginActivity.getWelcomeMessage;
 import static android.autofillservice.cts.common.ShellHelper.runShellCommand;
 import static android.autofillservice.cts.common.ShellHelper.tap;
+import static android.content.Context.CLIPBOARD_SERVICE;
 import static android.service.autofill.FillRequest.FLAG_MANUAL_REQUEST;
 import static android.service.autofill.SaveInfo.SAVE_DATA_TYPE_ADDRESS;
 import static android.service.autofill.SaveInfo.SAVE_DATA_TYPE_CREDIT_CARD;
@@ -63,6 +64,8 @@ import android.autofillservice.cts.CannedFillResponse.CannedDataset;
 import android.autofillservice.cts.InstrumentedAutoFillService.FillRequest;
 import android.autofillservice.cts.InstrumentedAutoFillService.SaveRequest;
 import android.content.BroadcastReceiver;
+import android.content.ClipData;
+import android.content.ClipboardManager;
 import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
@@ -1929,6 +1932,38 @@ public class LoginActivityTest extends AbstractLoginActivityTestCase {
 
         // And activity.
         mActivity.onUsername((v) -> v.setImportantForAutofill(IMPORTANT_FOR_AUTOFILL_NO));
+        // Set expectations.
+        sReplier.addResponse(new CannedDataset.Builder()
+                .setField(ID_USERNAME, "dude")
+                .setField(ID_PASSWORD, "sweet")
+                .setPresentation(createPresentation("The Dude"))
+                .build());
+        mActivity.expectAutoFill("dude", "sweet");
+
+        // Explicitly uses the contextual menu to test that functionality.
+        mUiBot.getAutofillMenuOption(ID_USERNAME, false).click();
+
+        final FillRequest fillRequest = sReplier.getNextFillRequest();
+        assertHasFlags(fillRequest.flags, FLAG_MANUAL_REQUEST);
+
+        // Should have been automatically filled.
+        mUiBot.selectDataset("The Dude");
+
+        // Check the results.
+        mActivity.assertAutoFilled();
+    }
+
+    @Test
+    public void testAutofillManuallyOneDatasetWhenClipboardFull() throws Exception {
+        // Set service.
+        enableService();
+
+        // Set clipboard.
+        ClipboardManager cm = (ClipboardManager) mActivity.getSystemService(CLIPBOARD_SERVICE);
+        cm.setPrimaryClip(ClipData.newPlainText(null, "test"));
+
+        // And activity.
+        mActivity.onUsername((v) -> v.setImportantForAutofill(IMPORTANT_FOR_AUTOFILL_NO));
 
         // Set expectations.
         sReplier.addResponse(new CannedDataset.Builder()
@@ -1939,7 +1974,7 @@ public class LoginActivityTest extends AbstractLoginActivityTestCase {
         mActivity.expectAutoFill("dude", "sweet");
 
         // Explicitly uses the contextual menu to test that functionality.
-        mUiBot.getAutofillMenuOption(ID_USERNAME).click();
+        mUiBot.getAutofillMenuOption(ID_USERNAME, true).click();
 
         final FillRequest fillRequest = sReplier.getNextFillRequest();
         assertHasFlags(fillRequest.flags, FLAG_MANUAL_REQUEST);
@@ -1949,6 +1984,9 @@ public class LoginActivityTest extends AbstractLoginActivityTestCase {
 
         // Check the results.
         mActivity.assertAutoFilled();
+
+        // clear clipboard
+        cm.clearPrimaryClip();
     }
 
     @Test
