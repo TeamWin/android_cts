@@ -60,6 +60,8 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.content.res.Configuration;
+import android.graphics.Rect;
+import android.graphics.Region;
 import android.os.Process;
 import android.platform.test.annotations.AppModeFull;
 import android.platform.test.annotations.Presubmit;
@@ -71,6 +73,7 @@ import android.test.suitebuilder.annotation.MediumTest;
 import android.text.TextUtils;
 import android.util.Log;
 import android.view.MotionEvent;
+import android.view.TouchDelegate;
 import android.view.View;
 import android.view.Window;
 import android.view.WindowManager;
@@ -793,6 +796,34 @@ public class AccessibilityEndToEndTest {
         // Make sure the MotionEvent.ACTION_OUTSIDE is received.
         verify(listener, timeout(DEFAULT_TIMEOUT_MS).atLeastOnce()).onTouch(any(View.class),
                 argThat(event -> event.getActionMasked() == MotionEvent.ACTION_OUTSIDE));
+    }
+
+    @MediumTest
+    @Test
+    public void testTouchDelegateInfoReportedToAccessibility() {
+        final Button button = getOnMain(sInstrumentation, () -> mActivity.findViewById(
+                R.id.button));
+        final View parent = (View) button.getParent();
+        final Rect rect = new Rect();
+        button.getHitRect(rect);
+        parent.setTouchDelegate(new TouchDelegate(rect, button));
+
+        final AccessibilityNodeInfo nodeInfo = sUiAutomation.getRootInActiveWindow()
+                .findAccessibilityNodeInfosByViewId(
+                        "android.accessibilityservice.cts:id/buttonLayout")
+                .get(0);
+        AccessibilityNodeInfo.TouchDelegateInfo targetMapInfo =
+                nodeInfo.getTouchDelegateInfo();
+        assertNotNull("Did not receive TouchDelegate target map", targetMapInfo);
+        assertEquals("Incorrect target map size", 1, targetMapInfo.getRegionCount());
+        assertEquals("Incorrect target map region", new Region(rect),
+                targetMapInfo.getRegionAt(0));
+        final AccessibilityNodeInfo node = targetMapInfo.getTargetForRegion(
+                targetMapInfo.getRegionAt(0));
+        assertEquals("Incorrect target map view",
+                "android.accessibilityservice.cts:id/button",
+                node.getViewIdResourceName());
+        node.recycle();
     }
 
     private static void assertPackageName(AccessibilityNodeInfo node, String packageName) {
