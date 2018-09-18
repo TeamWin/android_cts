@@ -26,12 +26,15 @@ import java.util.regex.Pattern;
 import java.util.regex.Matcher;
 import java.util.Map;
 import java.util.HashMap;
+import com.android.ddmlib.Log;
 
 public class SecurityTestCase extends DeviceTestCase {
 
     private static final String LOG_TAG = "SecurityTestCase";
 
     private long kernelStartTime;
+
+    private HostsideOomCatcher oomCatcher = new HostsideOomCatcher(this);
 
     /**
      * Waits for device to be online, marks the most recent boottime of the device
@@ -45,6 +48,8 @@ public class SecurityTestCase extends DeviceTestCase {
             Integer.parseInt(uptime.substring(0, uptime.indexOf('.')));
         //TODO:(badash@): Watch for other things to track.
         //     Specifically time when app framework starts
+
+        oomCatcher.start();
     }
 
     /**
@@ -96,6 +101,22 @@ public class SecurityTestCase extends DeviceTestCase {
                     - kernelStartTime < 2));
         //TODO(badash@): add ability to catch runtime restart
         getDevice().disableAdbRoot();
+
+        if (oomCatcher.isOomDetected()) {
+            switch (oomCatcher.getOomBehavior()) {
+                case FAIL_AND_LOG:
+                    fail("The device ran out of memory.");
+                    return;
+                case PASS_AND_LOG:
+                    Log.logAndDisplay(Log.LogLevel.INFO, LOG_TAG, "Skipping test.");
+                    return;
+                case FAIL_NO_LOG:
+                    fail();
+                    return;
+            }
+        }
+
+        oomCatcher.stop(getDevice().getSerialNumber());
     }
 
     public void assertMatches(String pattern, String input) throws Exception {
@@ -114,9 +135,5 @@ public class SecurityTestCase extends DeviceTestCase {
     public void assertNotMatchesMultiLine(String pattern, String input) throws Exception {
         assertFalse("Pattern found: " + pattern,
           Pattern.compile(pattern, Pattern.DOTALL|Pattern.MULTILINE).matcher(input).find());
-    }
-
-    // Flag meaning the test will likely fail on devices with low memory.
-    public void setHighMemoryTest() {
     }
 }
