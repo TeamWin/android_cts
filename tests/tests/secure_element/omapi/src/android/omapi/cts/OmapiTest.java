@@ -405,8 +405,8 @@ public class OmapiTest {
                     byte[] selectResponse = channel.getSelectResponse();
                     assertNotNull("Null Select Response", selectResponse);
                     assertGreaterOrEqual(selectResponse.length, 2);
-                    assertEquals(selectResponse[selectResponse.length - 1] & 0xFF, 0x00);
-                    assertEquals(selectResponse[selectResponse.length - 2] & 0xFF, 0x90);
+                    assertThat(selectResponse[selectResponse.length - 1] & 0xFF, is(0x00));
+                    assertThat(selectResponse[selectResponse.length - 2] & 0xFF, is(0x90));
                     for (byte[] cmd : ILLEGAL_COMMANDS_TRANSMIT) {
                         try {
                             byte[] response = channel.transmit(cmd);
@@ -461,17 +461,17 @@ public class OmapiTest {
             for (Reader reader : readers) {
                 for (byte[] apdu : NO_DATA_APDU) {
                     byte[] response = internalTransmitApdu(reader, apdu);
-                    assertEquals(response.length, 2);
-                    assertEquals(response[response.length - 1] & 0xFF, 0x00);
-                    assertEquals(response[response.length - 2] & 0xFF, 0x90);
+                    assertThat(response.length, is(2));
+                    assertThat(response[response.length - 1] & 0xFF, is(0x00));
+                    assertThat(response[response.length - 2] & 0xFF, is(0x90));
                 }
 
                 for (byte[] apdu : DATA_APDU) {
                     byte[] response = internalTransmitApdu(reader, apdu);
                     /* 256 byte data and 2 bytes of status word */
-                    assertEquals(response.length, 258);
-                    assertEquals(response[response.length - 1] & 0xFF, 0x00);
-                    assertEquals(response[response.length - 2] & 0xFF, 0x90);
+                    assertThat(response.length, is(258));
+                    assertThat(response[response.length - 1] & 0xFF, is(0x00));
+                    assertThat(response[response.length - 2] & 0xFF, is(0x90));
                 }
             }
         } catch (Exception e) {
@@ -499,8 +499,8 @@ public class OmapiTest {
                         apdu[2] = (byte)(i+1);
                         byte[] response = internalTransmitApdu(reader, apdu);
                         byte[] SW = SW_62xx[i];
-                        assertEquals(response[response.length - 1], SW[1]);
-                        assertEquals(response[response.length - 2], SW[0]);
+                        assertThat(response[response.length - 1], is(SW[1]));
+                        assertThat(response[response.length - 2], is(SW[0]));
                     }
                 }
 
@@ -510,8 +510,8 @@ public class OmapiTest {
                     byte[] response = internalTransmitApdu(reader, apdu);
                     byte[] SW = SW_62xx[i];
                     assertGreaterOrEqual(response.length, 3);
-                    assertEquals(response[response.length - 1], SW[1]);
-                    assertEquals(response[response.length - 2], SW[0]);
+                    assertThat(response[response.length - 1], is(SW[1]));
+                    assertThat(response[response.length - 2], is(SW[0]));
                 }
 
                 for (byte i = 0x00; i < SW_62xx.length; i++) {
@@ -524,8 +524,8 @@ public class OmapiTest {
                     responseSubstring[0] = apdu[0];
                     assertTrue(Arrays.equals(responseSubstring, apdu));
                     byte[] SW = SW_62xx[i];
-                    assertEquals(response[response.length - 1], SW[1]);
-                    assertEquals(response[response.length - 2], SW[0]);
+                    assertThat(response[response.length - 1], is(SW[1]));
+                    assertThat(response[response.length - 2], is(SW[0]));
                 }
             }
         } catch (Exception e) {
@@ -546,10 +546,10 @@ public class OmapiTest {
                     byte[] b = { 0x00, 0x00, apdu[2], apdu[3] };
                     ByteBuffer wrapped = ByteBuffer.wrap(b);
                     int expectedLength = wrapped.getInt();
-                    assertEquals(response.length, expectedLength + 2);
-                    assertEquals(response[response.length - 1] & 0xFF, 0x00);
-                    assertEquals(response[response.length - 2] & 0xFF, 0x90);
-                    assertEquals(response[response.length - 3] & 0xFF, 0xFF);
+                    assertThat(response.length, is(expectedLength + 2));
+                    assertThat(response[response.length - 1] & 0xFF, is(0x00));
+                    assertThat(response[response.length - 2] & 0xFF, is(0x90));
+                    assertThat(response[response.length - 3] & 0xFF, is(0xFF));
                 }
             }
         } catch (Exception e) {
@@ -567,9 +567,9 @@ public class OmapiTest {
             for (Reader reader : readers) {
                 byte[] response = internalTransmitApdu(reader, CHECK_SELECT_P2_APDU);
                 assertGreaterOrEqual(response.length, 3);
-                assertEquals(response[response.length - 1] & 0xFF, 0x00);
-                assertEquals(response[response.length - 2] & 0xFF, 0x90);
-                assertEquals(response[response.length - 3] & 0xFF, 0x00);
+                assertThat(response[response.length - 1] & 0xFF, is(0x00));
+                assertThat(response[response.length - 2] & 0xFF, is(0x90));
+                assertThat(response[response.length - 3] & 0xFF, is(0x00));
             }
         } catch (Exception e) {
           fail("unexpected exception " + e);
