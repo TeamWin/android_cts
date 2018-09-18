@@ -65,7 +65,7 @@ public class FingerprintBoundKeysTest extends PassFailButtons.Activity {
     /** Alias for our key in the Android Key Store. */
     private static final String KEY_NAME = "my_key";
     private static final byte[] SECRET_BYTE_ARRAY = new byte[] {1, 2, 3, 4, 5, 6};
-    private static final int AUTHENTICATION_DURATION_SECONDS = 5;
+    private static final int AUTHENTICATION_DURATION_SECONDS = 2;
     private static final int CONFIRM_CREDENTIALS_REQUEST_CODE = 1;
     private static final int FINGERPRINT_PERMISSION_REQUEST_CODE = 0;
 
@@ -108,7 +108,7 @@ public class FingerprintBoundKeysTest extends PassFailButtons.Activity {
             startTestButton.setOnClickListener(new OnClickListener() {
                 @Override
                 public void onClick(View v) {
-                    createKey();
+                    createKey(false /* hasValidityDuration */);
                     prepareEncrypt();
                     if (tryEncrypt()) {
                         showToast("Test failed. Key accessible without auth.");
@@ -121,10 +121,9 @@ public class FingerprintBoundKeysTest extends PassFailButtons.Activity {
     }
 
     /**
-     * Creates a symmetric key in the Android Key Store which can only be used after the user has
-     * authenticated with device credentials within the last X seconds.
+     * Creates a symmetric key in the Android Key Store which requires auth
      */
-    private void createKey() {
+    private void createKey(boolean hasValidityDuration) {
         // Generate a key to decrypt payment credentials, tokens, etc.
         // This will most likely be a registration step for the user when they are setting up your app.
         try {
@@ -139,6 +138,8 @@ public class FingerprintBoundKeysTest extends PassFailButtons.Activity {
                     KeyProperties.PURPOSE_ENCRYPT | KeyProperties.PURPOSE_DECRYPT)
                     .setBlockModes(KeyProperties.BLOCK_MODE_CBC)
                     .setUserAuthenticationRequired(true)
+                    .setUserAuthenticationValidityDurationSeconds(
+                        hasValidityDuration ? AUTHENTICATION_DURATION_SECONDS : -1)
                     .setEncryptionPaddings(KeyProperties.ENCRYPTION_PADDING_PKCS7)
                     .build());
             keyGenerator.generateKey();
@@ -173,6 +174,15 @@ public class FingerprintBoundKeysTest extends PassFailButtons.Activity {
 
     protected Cipher getCipher() {
         return mCipher;
+    }
+
+    protected boolean doValidityDurationTest() {
+        mCipher = null;
+        createKey(true /* hasValidityDuration */);
+        if (prepareEncrypt()) {
+            return tryEncrypt();
+        }
+        return false;
     }
 
     private boolean encryptInternal(boolean doEncrypt) {
@@ -212,8 +222,11 @@ public class FingerprintBoundKeysTest extends PassFailButtons.Activity {
             // Extra exception info is not of big value, but let's have it,
             // since this is an unlikely sutuation and potential error condition
             Log.w(TAG, "encryptInternal: [5]: Key invalidated", e);
-            createKey();
+            createKey(false /* hasValidityDuration */);
             showToast("The key has been invalidated, please try again.\n");
+            return false;
+        } catch (UserNotAuthenticatedException e) {
+            Log.w(TAG, "encryptInternal: [6]: User not authenticated", e);
             return false;
         } catch (NoSuchPaddingException | KeyStoreException | CertificateException | UnrecoverableKeyException | IOException
                 | NoSuchAlgorithmException | InvalidKeyException e) {
@@ -268,10 +281,19 @@ public class FingerprintBoundKeysTest extends PassFailButtons.Activity {
                 if (DEBUG) {
                     Log.i(TAG,"onAuthenticationSucceeded");
                 }
-                if (mActivity.tryEncrypt()) {
-                    showToast("Test passed.");
-                    mActivity.getPassButton().setEnabled(true);
-                    FingerprintAuthDialogFragment.this.dismiss();
+                if (mActivity.tryEncrypt() && mActivity.doValidityDurationTest()) {
+                    try {
+                        Thread.sleep(3000);
+                    } catch (Exception e) {
+                        throw new RuntimeException("Failed to sleep", e);
+                    }
+                    if (!mActivity.doValidityDurationTest()) {
+                        showToast("Test passed.");
+                        mActivity.getPassButton().setEnabled(true);
+                        FingerprintAuthDialogFragment.this.dismiss();
+                    } else {
+                        showToast("Test failed. Key accessible after validity time limit.");
+                    }
                 } else {
                     showToast("Test failed. Key not accessible after auth");
                 }
