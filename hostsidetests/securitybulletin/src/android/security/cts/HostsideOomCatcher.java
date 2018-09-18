@@ -35,6 +35,7 @@ import java.util.regex.Pattern;
 import java.util.regex.Matcher;
 import java.util.Map;
 import java.util.HashMap;
+import java.util.concurrent.ConcurrentHashMap;
 import com.android.ddmlib.MultiLineReceiver;
 import com.android.ddmlib.Log;
 import com.android.ddmlib.TimeoutException;
@@ -51,8 +52,9 @@ public class HostsideOomCatcher {
     private static final String LOG_TAG = "HostsideOomCatcher";
 
     private static final long LOW_MEMORY_DEVICE_THRESHOLD_KB = 1024 * 1024; // 1GB
-    private static Map<String, WeakReference<BackgroundDeviceAction>> oomCatchers = new HashMap<>();
-    private static Map<String, Long> totalMemories = new HashMap<>();
+    private static Map<String, WeakReference<BackgroundDeviceAction>> oomCatchers =
+            new ConcurrentHashMap<>();
+    private static Map<String, Long> totalMemories = new ConcurrentHashMap<>();
 
     private boolean isLowMemoryDevice = false;
 
@@ -83,7 +85,7 @@ public class HostsideOomCatcher {
         if (matcher.find()) {
             return Long.parseLong(matcher.group(1));
         } else {
-            throw new Exception("Could not get device memory total");
+            throw new RuntimeException("Could not get device memory total");
         }
     }
 
@@ -113,12 +115,13 @@ public class HostsideOomCatcher {
         oomDetected = false;
 
         // Cache OOM detection in separate persistent threads for each device.
-        WeakReference<BackgroundDeviceAction> reference = oomCatchers.get(getDevice().getSerialNumber());
+        WeakReference<BackgroundDeviceAction> reference =
+                oomCatchers.get(getDevice().getSerialNumber());
         BackgroundDeviceAction oomCatcher = null;
         if (reference != null) {
             oomCatcher = reference.get();
         }
-        if (oomCatcher == null || !oomCatcher.isAlive()) {
+        if (oomCatcher == null || !oomCatcher.isAlive() || oomCatcher.isCancelled()) {
             AdbUtils.runCommandLine("am start com.android.cts.oomcatcher/.OomCatcher", getDevice());
 
             oomCatcher = new BackgroundDeviceAction(
@@ -156,7 +159,7 @@ public class HostsideOomCatcher {
      * Return the current test behavior for when oom is detected.
      */
     public synchronized OomBehavior getOomBehavior() {
-            return oomBehavior;
+        return oomBehavior;
     }
 
     /**
