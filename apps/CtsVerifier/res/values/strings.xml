@@ -183,6 +183,10 @@
         \n\n\"Bluetooth LE Insecure Server Test\" x \"Bluetooth LE Insecure Client Test\"
         \n\n\"Bluetooth LE Secure Client Test\" x \"Bluetooth LE Secure Server Test\"
         \n\n\"Bluetooth LE Secure Server Test\" x \"Bluetooth LE Secure Client Test\"
+        \n\n\"Bluetooth LE CoC Insecure Server Test\" x \"Bluetooth LE CoC Insecure Client Test\"
+        \n\n\"Bluetooth LE CoC Insecure Client Test\" x \"Bluetooth LE CoC Insecure Server Test\"
+        \n\n\"Bluetooth LE CoC Secure Server Test\" x \"Bluetooth LE CoC Secure Client Test\"
+        \n\n\"Bluetooth LE CoC Secure Client Test\" x \"Bluetooth LE CoC Secure Server Test\"
         \n\nThe Device Communication tests require two
         devices to pair and exchange messages. The two devices must be:
         \n\n1. a candidate device implementation running the software build to be tested
@@ -193,6 +197,7 @@
     <string name="bt_device_communication">Device Communication</string>
     <string name="bt_le">Bluetooth LE</string>
     <string name="bt_hid">Bluetooth HID</string>
+    <string name="bt_le_coc">Bluetooth LE CoC</string>
 
     <string name="bt_toggle_bluetooth">Toggle Bluetooth</string>
     <string name="bt_toggle_instructions">Disable and enable Bluetooth to successfully complete this test.</string>
@@ -200,6 +205,65 @@
     <string name="bt_disable_bluetooth">Disable Bluetooth</string>
     <string name="bt_disabling">Disabling Bluetooth...</string>
     <string name="bt_disabling_error">Could not disable Bluetooth...</string>
+
+    <string name="ble_coc_insecure_client_test_list_name">Bluetooth LE CoC Insecure Client Test</string>
+    <string name="ble_coc_insecure_client_test_list_info">
+        The Bluetooth LE CoC test must be done simultaneously on two devices. This device is the client.
+        All tests listed here must be done without pairing. Tap \"Bluetooth LE CoC Insecure Server Test\" on the other device.
+        \n\nTap \"01 Bluetooth LE CoC Client Test\" on this device, then tap \"01 Bluetooth LE CoC Server Test\" on the other device.
+        \nWhen the test is complete, move to the next item. You must complete all tests.
+    </string>
+    <string name="ble_coc_insecure_client_test_info">
+        The Bluetooth LE CoC test must be done simultaneously on two devices. This device is the client.
+        All tests listed here must be done without pairing.
+    </string>
+    <string name="ble_coc_insecure_server_test_list_name">Bluetooth LE CoC Insecure Server Test</string>
+    <string name="ble_coc_insecure_server_test_list_info">
+        This test is mostly automated, but requires some user interaction.
+        Once the list items below have check marks, the test is complete.
+        \n\nTap \"01 Bluetooth LE CoC Server Test\" on this device, then tap \"01 Bluetooth LE CoC Client Test\" on the other device.
+        \nWhen the test is complete, move to the next item. You must complete all tests.
+    </string>
+
+    <string name="ble_coc_secure_client_test_list_name">Bluetooth LE CoC Secure Client Test</string>
+    <string name="ble_coc_secure_client_test_list_info">
+        The Bluetooth LE CoC test must be done simultaneously on two devices. This device is the client.
+        All tests listed here must be done without pairing. Tap \"Bluetooth LE CoC Secure Server Test\" on the other device.
+        \n\nTap \"01 Bluetooth LE CoC Client Test\" on this device, then tap \"01 Bluetooth LE CoC Server Test\" on the other device.
+        \nWhen the test is complete, move to the next item. You must complete all tests.
+    </string>
+    <string name="ble_coc_secure_client_test_info">
+        The Bluetooth LE CoC test must be done simultaneously on two devices. This device is the client.
+        All tests listed here must be done without pairing.
+    </string>
+    <string name="ble_coc_secure_server_test_list_name">Bluetooth LE CoC Secure Server Test</string>
+    <string name="ble_coc_secure_server_test_list_info">
+        This test is mostly automated, but requires some user interaction.
+        Once the list items below have check marks, the test is complete.
+        \n\nTap \"01 Bluetooth LE CoC Server Test\" on this device, then tap \"01 Bluetooth LE CoC Client Test\" on the other device.
+        \nWhen the test is complete, move to the next item. You must complete all tests.
+    </string>
+
+    <!-- BLE CoC client side strings -->
+    <string name="ble_coc_client_test_name">01 Bluetooth LE CoC Client Test</string>
+    <string name="ble_coc_client_le_connect">Bluetooth LE Client Connect</string>
+    <string name="ble_coc_client_get_psm">Get peer PSM value</string>
+    <string name="ble_coc_client_coc_connect">LE CoC client Connect</string>
+    <string name="ble_coc_client_check_connection_type">Check connection type</string>
+    <string name="ble_coc_client_send_data_8bytes">Send 8 bytes</string>
+    <string name="ble_coc_client_receive_data_8bytes">Receive 8 bytes</string>
+    <string name="ble_coc_client_data_exchange">Send and receive large data buffer</string>
+
+    <!-- BLE CoC server side strings -->
+    <string name="ble_coc_server_start_name">01 Bluetooth LE CoC Server Test</string>
+    <string name="ble_coc_server_le_connect">Bluetooth LE Server Connect</string>
+    <string name="ble_coc_server_create_listener">Create LE CoC listener</string>
+    <string name="ble_coc_server_psm_read">Waiting on PSM to be read</string>
+    <string name="ble_coc_server_connection">Waiting on LE CoC connection</string>
+    <string name="ble_coc_server_check_connection_type">Check connection type</string>
+    <string name="ble_coc_server_receive_data_8bytes">Waiting to receive 8 bytes</string>
+    <string name="ble_coc_server_send_data_8bytes">Sending 8 bytes</string>
+    <string name="ble_coc_server_data_exchange">Send and receive large data buffer</string>
 
     <string name="bt_connection_access_server">Connection Access Server</string>
     <string name="bt_connection_access_client">Connection Access Client</string>
@@ -455,6 +519,11 @@
     <string name="ble_insecure_client_test_name">Bluetooth LE Insecure Client Test</string>
     <string name="ble_secure_server_test_name">Bluetooth LE Secure Server Test</string>
     <string name="ble_insecure_server_test_name">Bluetooth LE Insecure Server Test</string>
+
+    <string name="ble_coc_secure_client_test_name">Bluetooth LE CoC Secure Client Test</string>
+    <string name="ble_coc_insecure_client_test_name">Bluetooth LE CoC Insecure Client Test</string>
+    <string name="ble_coc_secure_server_test_name">Bluetooth LE CoC Secure Server Test</string>
+    <string name="ble_coc_insecure_server_test_name">Bluetooth LE CoC Insecure Server Test</string>
 
     <string name="ble_read_characteristic_nopermission_name">Bluetooth LE Read Characteristic Without Perrmission</string>
     <string name="ble_write_characteristic_nopermission_name">Bluetooth LE Write Characteristic Without Permission</string>
