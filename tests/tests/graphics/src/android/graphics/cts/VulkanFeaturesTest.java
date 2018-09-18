@@ -173,6 +173,13 @@ public class VulkanFeaturesTest {
     public void testVulkan1_1Requirements() throws JSONException {
         if (mVulkanHardwareVersion == null || mVulkanHardwareVersion.version < VULKAN_1_1)
             return;
+        assertTrue("Devices with Vulkan 1.1 must support " +
+                VK_ANDROID_EXTERNAL_MEMORY_ANDROID_HARDWARE_BUFFER_EXTENSION_NAME +
+                " (version >= " + VK_ANDROID_EXTERNAL_MEMORY_ANDROID_HARDWARE_BUFFER_SPEC_VERSION +
+                ")",
+                hasExtension(mBestDevice,
+                    VK_ANDROID_EXTERNAL_MEMORY_ANDROID_HARDWARE_BUFFER_EXTENSION_NAME,
+                    VK_ANDROID_EXTERNAL_MEMORY_ANDROID_HARDWARE_BUFFER_SPEC_VERSION));
         assertTrue("Devices with Vulkan 1.1 must support SYNC_FD external semaphores",
                 hasHandleType(mBestDevice.getJSONArray("externalSemaphoreProperties"),
                     VK_EXTERNAL_SEMAPHORE_HANDLE_TYPE_SYNC_FD_BIT,

@@ -100,6 +100,17 @@ public class AccessibilityServiceInfoTest extends AndroidTestCase {
                 AccessibilityServiceInfo.FLAG_REQUEST_FILTER_KEY_EVENTS));
         assertEquals("FLAG_REQUEST_TOUCH_EXPLORATION_MODE", AccessibilityServiceInfo.flagToString(
                 AccessibilityServiceInfo.FLAG_REQUEST_TOUCH_EXPLORATION_MODE));
+        assertEquals("FLAG_RETRIEVE_INTERACTIVE_WINDOWS", AccessibilityServiceInfo.flagToString(
+                AccessibilityServiceInfo.FLAG_RETRIEVE_INTERACTIVE_WINDOWS));
+        assertEquals("FLAG_ENABLE_ACCESSIBILITY_VOLUME", AccessibilityServiceInfo.flagToString(
+                AccessibilityServiceInfo.FLAG_ENABLE_ACCESSIBILITY_VOLUME));
+        assertEquals("FLAG_REQUEST_ACCESSIBILITY_BUTTON", AccessibilityServiceInfo.flagToString(
+                AccessibilityServiceInfo.FLAG_REQUEST_ACCESSIBILITY_BUTTON));
+        assertEquals("FLAG_REQUEST_FINGERPRINT_GESTURES", AccessibilityServiceInfo.flagToString(
+                AccessibilityServiceInfo.FLAG_REQUEST_FINGERPRINT_GESTURES));
+        assertEquals("FLAG_REQUEST_SHORTCUT_WARNING_DIALOG_SPOKEN_FEEDBACK", AccessibilityServiceInfo.flagToString(
+                AccessibilityServiceInfo.FLAG_REQUEST_SHORTCUT_WARNING_DIALOG_SPOKEN_FEEDBACK));
+
     }
 
     /**
