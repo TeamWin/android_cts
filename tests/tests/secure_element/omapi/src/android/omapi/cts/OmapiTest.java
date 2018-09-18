@@ -255,18 +255,21 @@ public class OmapiTest {
             Reader[] readers = seService.getReaders();
 
             for (Reader reader : readers) {
-                Session session = reader.openSession();
-                assertNotNull("Could not open session", session);
-                Channel channel = session.openBasicChannel(null, (byte)0x00);
+                Session session = null;
+                Channel channel = null;
+                try {
+                    session = reader.openSession();
+                    assertNotNull("Could not open session", session);
+                    channel = session.openBasicChannel(null, (byte) 0x00);
+                } finally {
+                    if (channel != null) channel.close();
+                    if (session != null) session.close();
+                }
                 if (reader.getName().startsWith(UICC_READER_PREFIX)) {
                     assertNull("Basic channel on UICC can be opened", channel);
                 } else {
                     assertNotNull("Basic Channel cannot be opened", channel);
                 }
-                if (channel != null) {
-                    channel.close();
-                }
-                session.close();
             }
         } catch (Exception e) {
             fail("Unexpected Exception " + e);
@@ -281,18 +284,21 @@ public class OmapiTest {
             Reader[] readers = seService.getReaders();
 
             for (Reader reader : readers) {
-                Session session = reader.openSession();
-                assertNotNull("Could not open session", session);
-                Channel channel = session.openBasicChannel(SELECTABLE_AID, (byte)0x00);
+                Session session = null;
+                Channel channel = null;
+                try {
+                    session = reader.openSession();
+                    assertNotNull("Could not open session", session);
+                    channel = session.openBasicChannel(SELECTABLE_AID, (byte) 0x00);
+                } finally {
+                    if (channel != null) channel.close();
+                    if (session != null) session.close();
+                }
                 if (reader.getName().startsWith(UICC_READER_PREFIX)) {
                     assertNull("Basic channel on UICC can be opened", channel);
                 } else {
                     assertNotNull("Basic Channel cannot be opened", channel);
                 }
-                if (channel != null) {
-                    channel.close();
-                }
-                session.close();
             }
         } catch (Exception e) {
             fail("Unexpected Exception " + e);
@@ -358,86 +364,86 @@ public class OmapiTest {
             for (Reader reader : readers) {
                 testNonSelectableAid(reader, NON_SELECTABLE_AID);
             }
-        } catch (TimeoutException e) {
+        } catch (Exception e) {
             fail("unexpected exception " + e);
         }
     }
 
-    private void testNonSelectableAid(Reader reader, byte[] aid) {
-        boolean exception = false;
+    private void testNonSelectableAid(Reader reader, byte[] aid) throws IOException {
         Session session = null;
+        Channel channel = null;
         try {
             assertTrue(reader.isSecureElementPresent());
             session = reader.openSession();
             assertNotNull("null session", session);
-            Channel channel = session.openLogicalChannel(aid, (byte)0x00);
+            channel = session.openLogicalChannel(aid, (byte) 0x00);
+            fail("Exception expected for this test");
         } catch (NoSuchElementException e) {
-            exception = true;
-            if (session != null) {
-                session.close();
-            }
-        } catch (Exception e) {
-            fail("unexpected exception " + e);
+            // Catch the expected exception here.
+        } finally {
+            if (channel != null) channel.close();
+            if (session != null) session.close();
         }
-        assertTrue(exception);
     }
 
     /** Tests if Security Exception in Transmit */
     @Test
     public void testSecurityExceptionInTransmit() {
-        boolean exception = false;
-        Session session;
-        Channel channel;
         try {
             waitForConnection();
             Reader[] readers = seService.getReaders();
 
             for (Reader reader : readers) {
-                assertTrue(reader.isSecureElementPresent());
-                session = reader.openSession();
-                assertNotNull("null session", session);
-                channel = session.openLogicalChannel(SELECTABLE_AID, (byte)0x00);
-                assertNotNull("Null Channel", channel);
-                byte[] selectResponse = channel.getSelectResponse();
-                assertNotNull("Null Select Response", selectResponse);
-                assertGreaterOrEqual(selectResponse.length, 2);
-                assertEquals(selectResponse[selectResponse.length - 1] & 0xFF, 0x00);
-                assertEquals(selectResponse[selectResponse.length - 2] & 0xFF, 0x90);
-                for (byte[] cmd : ILLEGAL_COMMANDS_TRANSMIT) {
-                    try {
-                        exception = false;
-                        byte[] response = channel.transmit(cmd);
-                    } catch (SecurityException e) {
-                        exception = true;
+                Session session = null;
+                Channel channel = null;
+                try {
+                    assertTrue(reader.isSecureElementPresent());
+                    session = reader.openSession();
+                    assertNotNull("null session", session);
+                    channel = session.openLogicalChannel(SELECTABLE_AID, (byte) 0x00);
+                    assertNotNull("Null Channel", channel);
+                    byte[] selectResponse = channel.getSelectResponse();
+                    assertNotNull("Null Select Response", selectResponse);
+                    assertGreaterOrEqual(selectResponse.length, 2);
+                    assertEquals(selectResponse[selectResponse.length - 1] & 0xFF, 0x00);
+                    assertEquals(selectResponse[selectResponse.length - 2] & 0xFF, 0x90);
+                    for (byte[] cmd : ILLEGAL_COMMANDS_TRANSMIT) {
+                        try {
+                            byte[] response = channel.transmit(cmd);
+                            fail("Exception expected for this test");
+                        } catch (SecurityException e) {
+                            // Catch the expected exception here.
+                        }
                     }
-                    assertTrue(exception);
+                } finally {
+                    if (channel != null) channel.close();
+                    if (session != null) session.close();
                 }
-                channel.close();
-                session.close();
             }
         } catch (Exception e) {
             fail("unexpected exception " + e);
         }
     }
 
-    private byte[] internalTransmitApdu(Reader reader, byte[] apdu) {
+    private byte[] internalTransmitApdu(Reader reader, byte[] apdu) throws IOException {
+        byte[] transmitResponse = null;
+        Session session = null;
+        Channel channel = null;
         try {
             assertTrue(reader.isSecureElementPresent());
-            Session session = reader.openSession();
+            session = reader.openSession();
             assertNotNull("null session", session);
-            Channel channel = session.openLogicalChannel(SELECTABLE_AID, (byte)0x00);
+            channel = session.openLogicalChannel(SELECTABLE_AID, (byte) 0x00);
             assertNotNull("Null Channel", channel);
             byte[] selectResponse = channel.getSelectResponse();
             assertNotNull("Null Select Response", selectResponse);
             assertGreaterOrEqual(selectResponse.length, 2);
-            byte[] transmitResponse = channel.transmit(apdu);
-            channel.close();
-            session.close();
-            return transmitResponse;
-        } catch (Exception e) {
-            fail("unexpected exception " + e);
+            transmitResponse = channel.transmit(apdu);
+        } finally {
+            if (channel != null) channel.close();
+            if (session != null) session.close();
         }
-        return null;
+        return transmitResponse;
     }
 
     /**
