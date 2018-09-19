@@ -87,8 +87,7 @@ struct SampleData {
 
     status = writeFunc(in);
     if (status != STATUS_OK) {
-      AParcel_delete(&in);
-      EXPECT_EQ(nullptr, in);
+      AParcel_delete(in);
       return status;
     }
 
@@ -97,8 +96,7 @@ struct SampleData {
     if (status != STATUS_OK) return status;
 
     status = readFunc(out);
-    AParcel_delete(&out);
-    EXPECT_EQ(nullptr, out);
+    AParcel_delete(out);
 
     return status;
   }
