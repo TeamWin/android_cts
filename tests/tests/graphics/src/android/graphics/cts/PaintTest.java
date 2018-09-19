@@ -975,11 +975,15 @@ public class PaintTest {
         String text1 = "hello";
         Rect bounds1 = new Rect();
         Rect bounds2 = new Rect();
+        Rect bounds3 = new Rect();
         p.getTextBounds(text1, 0, text1.length(), bounds1);
         char[] textChars1 = text1.toCharArray();
         p.getTextBounds(textChars1, 0, textChars1.length, bounds2);
+        CharSequence charSequence1 = new StringBuilder(text1);
+        p.getTextBounds(charSequence1, 0, textChars1.length, bounds3);
         // verify that string and char array methods produce consistent results
         assertEquals(bounds1, bounds2);
+        assertEquals(bounds2, bounds3);
         String text2 = "hello world";
 
         // verify substring produces consistent results
