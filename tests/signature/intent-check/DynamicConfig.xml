@@ -19,6 +19,8 @@
     Bug: 36977779 android.intent.action.MASTER_CLEAR
     Bug: 38182465 android.intent.action.ACTION_DEFAULT_SMS_SUBSCRIPTION_CHANGED
     Bug: 70315695 android.intent.action.HDMI_PLUGGED
+    Bug: 115848568 android.intent.action.ACTION_AIRPLANE_MODE_CHANGED
+         Will be removed after v17 of CS.apk is released.     
 -->
 <dynamicConfig>
     <entry key ="intent_whitelist">
@@ -26,5 +28,6 @@
       <value>android.intent.action.QUICKBOOT_POWERON</value>
       <value>android.intent.action.ACTION_DEFAULT_SMS_SUBSCRIPTION_CHANGED</value>
       <value>android.intent.action.HDMI_PLUGGED</value>
+      <value>android.intent.action.ACTION_AIRPLANE_MODE_CHANGED</value>
     </entry>
 </dynamicConfig>
