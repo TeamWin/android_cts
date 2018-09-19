@@ -22,9 +22,6 @@ import android.content.Intent;
 import android.os.Bundle;
 import android.text.TextUtils;
 import android.util.Log;
-import android.view.ActionMode;
-import android.view.Menu;
-import android.view.MenuItem;
 import android.view.View.OnClickListener;
 import android.view.inputmethod.InputMethodManager;
 import android.widget.Button;
@@ -102,42 +99,6 @@ public class LoginActivity extends AbstractAutoFillActivity {
             getAutofillManager().cancel();
         });
         mCancelButton.setOnClickListener((OnClickListener) v -> finish());
-
-        // Create a custom insertion callback so it just show the AUTOFILL item, otherwise CTS
-        // testAutofillManuallyOneDataset() will fail if a previous test set the clipboard
-        // TODO(b/71711122): remove once there's a proper way to reset the clipboard
-        mUsernameEditText.setCustomInsertionActionModeCallback(new ActionMode.Callback() {
-
-            @Override
-            public boolean onPrepareActionMode(ActionMode mode, Menu menu) {
-                final String autofillTitle = AutoFillServiceTestCase.sDefaultUiBot
-                        .getAutofillContextualMenuTitle();
-                for (int i = 0; i < menu.size(); i++) {
-                    final MenuItem item = menu.getItem(i);
-                    final String title = item.getTitle().toString();
-                    if (!title.equals(autofillTitle)) {
-                        Log.v(TAG, "onPrepareActionMode(): ignoring " + title);
-                        menu.removeItem(item.getItemId());
-                    }
-                }
-                return true;
-            }
-
-            @Override
-            public void onDestroyActionMode(ActionMode mode) {
-
-            }
-
-            @Override
-            public boolean onCreateActionMode(ActionMode mode, Menu menu) {
-                return true;
-            }
-
-            @Override
-            public boolean onActionItemClicked(ActionMode mode, MenuItem item) {
-                return false;
-            }
-        });
     }
 
     protected int getContentView() {

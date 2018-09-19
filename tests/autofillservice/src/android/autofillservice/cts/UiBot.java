@@ -79,6 +79,7 @@ final class UiBot {
     private static final String RESOURCE_ID_CONTEXT_MENUITEM = "floating_toolbar_menu_item_text";
     private static final String RESOURCE_ID_SAVE_BUTTON_NO = "autofill_save_no";
     private static final String RESOURCE_ID_SAVE_BUTTON_YES = "autofill_save_yes";
+    private static final String RESOURCE_ID_OVERFLOW = "overflow";
 
     private static final String RESOURCE_STRING_SAVE_TITLE = "autofill_save_title";
     private static final String RESOURCE_STRING_SAVE_TITLE_WITH_TYPE =
@@ -719,15 +720,38 @@ final class UiBot {
      * faster.
      *
      * @param id resource id of the field.
+     * @param expectOverflow whether overflow menu should be shown (when clipboard contains text)
      */
-    UiObject2 getAutofillMenuOption(String id) throws Exception {
+    UiObject2 getAutofillMenuOption(String id, boolean expectOverflow) throws Exception {
         final UiObject2 field = waitForObject(By.res(mPackageName, id));
         // TODO: figure out why obj.longClick() doesn't always work
         field.click(3000);
 
-        final List<UiObject2> menuItems = waitForObjects(
+        List<UiObject2> menuItems = waitForObjects(
                 By.res("android", RESOURCE_ID_CONTEXT_MENUITEM), mDefaultTimeout);
         final String expectedText = getAutofillContextualMenuTitle();
+
+        if (expectOverflow) {
+            // Check first menu does not have AUTOFILL
+            for (UiObject2 menuItem : menuItems) {
+                final String menuName = menuItem.getText();
+                if (menuName.equalsIgnoreCase(expectedText)) {
+                    throw new IllegalStateException(expectedText + " in context menu");
+                }
+            }
+
+            final BySelector overflowSelector = By.res("android", RESOURCE_ID_OVERFLOW);
+
+            // Click overflow menu button.
+            final UiObject2 overflowMenu = waitForObject(overflowSelector, mDefaultTimeout);
+            overflowMenu.click();
+
+            // Wait for overflow menu to show.
+            mDevice.wait(Until.gone(overflowSelector), 1000);
+        }
+
+        menuItems = waitForObjects(
+                By.res("android", RESOURCE_ID_CONTEXT_MENUITEM), mDefaultTimeout);
         final StringBuffer menuNames = new StringBuffer();
         for (UiObject2 menuItem : menuItems) {
             final String menuName = menuItem.getText();

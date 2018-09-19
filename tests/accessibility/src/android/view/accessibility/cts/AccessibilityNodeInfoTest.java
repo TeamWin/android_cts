@@ -279,9 +279,10 @@ public class AccessibilityNodeInfoTest extends AndroidTestCase {
         info.setImportantForAccessibility(true);
         info.setScreenReaderFocusable(true);
 
-        // 2 Boolean properties, for a total of 22
+        // 3 Boolean properties, for a total of 23
         info.setShowingHintText(true);
         info.setHeading(true);
+        info.setTextEntryKey(true);
     }
 
     /**
@@ -459,11 +460,13 @@ public class AccessibilityNodeInfoTest extends AndroidTestCase {
         assertSame("isScreenReaderFocusable has incorrect value",
                 expectedInfo.isScreenReaderFocusable(), receivedInfo.isScreenReaderFocusable());
 
-        // 2 Boolean properties, for a total of 22
+        // 3 Boolean properties, for a total of 23
         assertSame("isShowingHint has incorrect value",
                 expectedInfo.isShowingHintText(), receivedInfo.isShowingHintText());
         assertSame("isHeading has incorrect value",
                 expectedInfo.isHeading(), receivedInfo.isHeading());
+        assertSame("isTextEntryKey has incorrect value",
+                expectedInfo.isTextEntryKey(), receivedInfo.isTextEntryKey());
     }
 
     /**
@@ -546,8 +549,9 @@ public class AccessibilityNodeInfoTest extends AndroidTestCase {
                 info.isImportantForAccessibility());
         assertFalse("ScreenReaderFocusable not properly recycled", info.isScreenReaderFocusable());
 
-        // 2 Boolean properties
+        // 3 Boolean properties
         assertFalse("isShowingHint not properly reset", info.isShowingHintText());
         assertFalse("isHeading not properly reset", info.isHeading());
+        assertFalse("isTextEntryKey not properly reset", info.isTextEntryKey());
     }
 }

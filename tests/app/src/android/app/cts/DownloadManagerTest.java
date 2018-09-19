@@ -22,7 +22,10 @@ import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
+import android.content.pm.ApplicationInfo;
+import android.content.pm.PackageInfo;
 import android.content.pm.PackageManager;
+import android.content.pm.ProviderInfo;
 import android.database.Cursor;
 import android.net.Uri;
 import android.os.Environment;
@@ -317,6 +320,40 @@ public class DownloadManagerTest extends AndroidTestCase {
             assertRemoveDownload(wrongExtId, allDownloads - 2);
         } finally {
             mContext.unregisterReceiver(receiver);
+        }
+    }
+
+    private String cannonicalizeProcessName(ApplicationInfo ai) {
+        return cannonicalizeProcessName(ai.processName, ai);
+    }
+
+    private String cannonicalizeProcessName(String process, ApplicationInfo ai) {
+        if (process == null) {
+            return null;
+        }
+        // Handle private scoped process names.
+        if (process.startsWith(":")) {
+            return ai.packageName + process;
+        }
+        return process;
+    }
+
+    public void testProviderAcceptsCleartext() throws Exception {
+        // Check that all the applications that share an android:process with the DownloadProvider
+        // accept cleartext traffic. Otherwise process loading races can lead to inconsistent flags.
+        final PackageManager pm = getContext().getPackageManager();
+        ProviderInfo downloadInfo = pm.resolveContentProvider("downloads", 0);
+        assertNotNull(downloadInfo);
+        String downloadProcess
+                = cannonicalizeProcessName(downloadInfo.processName, downloadInfo.applicationInfo);
+
+        for (PackageInfo pi : getContext().getPackageManager().getInstalledPackages(0)) {
+            if (downloadProcess.equals(cannonicalizeProcessName(pi.applicationInfo))) {
+                assertTrue("package: " + pi.applicationInfo.packageName
+                        + " must set android:usesCleartextTraffic=true"
+                        ,(pi.applicationInfo.flags & ApplicationInfo.FLAG_USES_CLEARTEXT_TRAFFIC)
+                        != 0);
+            }
         }
     }
 

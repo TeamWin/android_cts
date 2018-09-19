@@ -477,6 +477,11 @@
         <!-- CTS Verifier BLE Server Encrypted Test Service -->
         <service android:name=".bluetooth.BleEncryptedServerService" />
 
+        <!-- CTS Verifier BLE CoC Client Test Service -->
+        <service android:name=".bluetooth.BleCocClientService" />
+        <!-- CTS Verifier BLE CoC Server Test Service -->
+        <service android:name=".bluetooth.BleCocServerService" />
+
         <!--
              =================================================================================
              ==                     BLE Insecure Client Test Info                           ==
@@ -931,6 +936,234 @@
             <meta-data
                 android:name="test_parent"
                 android:value="com.android.cts.verifier.bluetooth.BleSecureServerTestListActivity" />
+            <meta-data
+                android:name="test_required_features"
+                android:value="android.hardware.bluetooth_le" />
+        </activity>
+
+        <!--
+             =================================================================================
+             ==                     BLE CoC Insecure Client Test Info                       ==
+             =================================================================================
+        -->
+        <!--
+            CTS Verifier BLE CoC Insecure Client Test Top Screen
+                test category : bt_le_coc
+                test parent : BluetoothTestActivity
+        -->
+        <activity
+            android:name=".bluetooth.BleCocInsecureClientTestListActivity"
+            android:configChanges="keyboardHidden|orientation|screenSize"
+            android:label="@string/ble_coc_insecure_client_test_name" >
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+
+                <category android:name="android.cts.intent.category.MANUAL_TEST" />
+            </intent-filter>
+
+            <meta-data
+                android:name="test_category"
+                android:value="@string/bt_le_coc" />
+            <meta-data
+                android:name="test_parent"
+                android:value="com.android.cts.verifier.bluetooth.BluetoothTestActivity" />
+            <meta-data
+                android:name="test_required_features"
+                android:value="android.hardware.bluetooth_le" />
+        </activity>
+
+        <!--
+             CTS Verifier BLE CoC Insecure Client Test List Screen
+                 test category : bt_le_coc
+                 test parent : BleInsecureClientTestListActivity
+        -->
+        <activity
+            android:name=".bluetooth.BleCocInsecureClientStartActivity"
+            android:configChanges="keyboardHidden|orientation|screenSize"
+            android:label="@string/ble_coc_client_test_name" >
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+
+                <category android:name="android.cts.intent.category.MANUAL_TEST" />
+            </intent-filter>
+
+            <meta-data
+                android:name="test_category"
+                android:value="@string/bt_le_coc" />
+            <meta-data
+                android:name="test_parent"
+                android:value="com.android.cts.verifier.bluetooth.BleCocInsecureClientTestListActivity" />
+            <meta-data
+                android:name="test_required_features"
+                android:value="android.hardware.bluetooth_le" />
+        </activity>
+
+        <!--
+              =================================================================================
+              ==                     BLE CoC Insecure Server Test Info                       ==
+              =================================================================================
+        -->
+        <!--
+             CTS Verifier BLE Coc Insecure Server Test Top Screen
+                 test category : bt_le_coc
+                 test parent : BluetoothTestActivity
+        -->
+        <activity
+            android:name=".bluetooth.BleCocInsecureServerTestListActivity"
+            android:configChanges="keyboardHidden|orientation|screenSize"
+            android:label="@string/ble_coc_insecure_server_test_name" >
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+
+                <category android:name="android.cts.intent.category.MANUAL_TEST" />
+            </intent-filter>
+
+            <meta-data
+                android:name="test_category"
+                android:value="@string/bt_le_coc" />
+            <meta-data
+                android:name="test_parent"
+                android:value="com.android.cts.verifier.bluetooth.BluetoothTestActivity" />
+            <meta-data
+                android:name="test_required_features"
+                android:value="android.hardware.bluetooth_le" />
+        </activity>
+
+        <!--
+              CTS Verifier BLE Coc Insecure Server Test List Screen
+                  test category : bt_le_coc
+                  test parent : BleCocInsecureServerTestListActivity
+        -->
+        <activity
+            android:name=".bluetooth.BleCocInsecureServerStartActivity"
+            android:configChanges="keyboardHidden|orientation|screenSize"
+            android:label="@string/ble_coc_server_start_name" >
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+
+                <category android:name="android.cts.intent.category.MANUAL_TEST" />
+            </intent-filter>
+
+            <meta-data
+                android:name="test_category"
+                android:value="@string/bt_le_coc" />
+            <meta-data
+                android:name="test_parent"
+                android:value="com.android.cts.verifier.bluetooth.BleCocInsecureServerTestListActivity" />
+            <meta-data
+                android:name="test_required_features"
+                android:value="android.hardware.bluetooth_le" />
+        </activity>
+
+        <!--
+             =================================================================================
+             ==                     BLE CoC Secure Client Test Info                         ==
+             =================================================================================
+        -->
+        <!--
+            CTS Verifier BLE Coc Secure Client Test Top Screen
+                test category : bt_le_coc
+                test parent : BluetoothTestActivity
+        -->
+        <activity
+            android:name=".bluetooth.BleCocSecureClientTestListActivity"
+            android:configChanges="keyboardHidden|orientation|screenSize"
+            android:label="@string/ble_coc_secure_client_test_name" >
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+
+                <category android:name="android.cts.intent.category.MANUAL_TEST" />
+            </intent-filter>
+
+            <meta-data
+                android:name="test_category"
+                android:value="@string/bt_le_coc" />
+            <meta-data
+                android:name="test_parent"
+                android:value="com.android.cts.verifier.bluetooth.BluetoothTestActivity" />
+            <meta-data
+                android:name="test_required_features"
+                android:value="android.hardware.bluetooth_le" />
+        </activity>
+
+        <!--
+             CTS Verifier BLE Coc Secure Client Test List Screen
+                 test category : bt_le_coc
+                 test parent : BleSecureClientTestListActivity
+        -->
+        <activity
+            android:name=".bluetooth.BleCocSecureClientStartActivity"
+            android:configChanges="keyboardHidden|orientation|screenSize"
+            android:label="@string/ble_coc_client_test_name" >
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+
+                <category android:name="android.cts.intent.category.MANUAL_TEST" />
+            </intent-filter>
+
+            <meta-data
+                android:name="test_category"
+                android:value="@string/bt_le_coc" />
+            <meta-data
+                android:name="test_parent"
+                android:value="com.android.cts.verifier.bluetooth.BleCocSecureClientTestListActivity" />
+            <meta-data
+                android:name="test_required_features"
+                android:value="android.hardware.bluetooth_le" />
+        </activity>
+
+        <!--
+              =================================================================================
+              ==                     BLE CoC Secure Server Test Info                         ==
+              =================================================================================
+        -->
+        <!--
+             CTS Verifier BLE Coc Secure Server Test Top Screen
+                 test category : bt_le_coc
+                 test parent : BluetoothTestActivity
+        -->
+        <activity
+            android:name=".bluetooth.BleCocSecureServerTestListActivity"
+            android:configChanges="keyboardHidden|orientation|screenSize"
+            android:label="@string/ble_coc_secure_server_test_name" >
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+
+                <category android:name="android.cts.intent.category.MANUAL_TEST" />
+            </intent-filter>
+
+            <meta-data
+                android:name="test_category"
+                android:value="@string/bt_le_coc" />
+            <meta-data
+                android:name="test_parent"
+                android:value="com.android.cts.verifier.bluetooth.BluetoothTestActivity" />
+            <meta-data
+                android:name="test_required_features"
+                android:value="android.hardware.bluetooth_le" />
+        </activity>
+
+        <!--
+              CTS Verifier BLE Coc Secure Server Test List Screen
+                  test category : bt_le_coc
+                  test parent : BleCocSecureServerTestListActivity
+        -->
+        <activity
+            android:name=".bluetooth.BleCocSecureServerStartActivity"
+            android:configChanges="keyboardHidden|orientation|screenSize"
+            android:label="@string/ble_coc_server_start_name" >
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+
+                <category android:name="android.cts.intent.category.MANUAL_TEST" />
+            </intent-filter>
+
+            <meta-data
+                android:name="test_category"
+                android:value="@string/bt_le_coc" />
+            <meta-data
+                android:name="test_parent"
+                android:value="com.android.cts.verifier.bluetooth.BleCocSecureServerTestListActivity" />
             <meta-data
                 android:name="test_required_features"
                 android:value="android.hardware.bluetooth_le" />
