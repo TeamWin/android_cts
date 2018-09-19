@@ -48,6 +48,7 @@ class LinkerNamespacesHelper {
     private final static String[] PUBLIC_SYSTEM_LIBRARIES = {
         "libaaudio.so",
         "libandroid.so",
+        "libbinder_ndk.so",
         "libc.so",
         "libcamera2ndk.so",
         "libdl.so",
