@@ -1310,8 +1310,10 @@ public class ActivityManagerMultiDisplayTests extends ActivityManagerDisplayTest
      */
     @Test
     public void testMoveToEmptyDisplayOnLaunch() throws Exception {
-        // Launch activity with unique affinity, so it will the only one in its task.
-        launchActivity(LAUNCHING_ACTIVITY);
+        // Launch activity with unique affinity, so it will the only one in its task. And choose
+        // resizeable activity to prevent the test activity be relaunched when launch it to another
+        // display, which may affect on this test case.
+        launchActivity(RESIZEABLE_ACTIVITY);
 
         try (final VirtualDisplaySession virtualDisplaySession = new VirtualDisplaySession()) {
             // Create new virtual display.
@@ -1325,12 +1327,12 @@ public class ActivityManagerMultiDisplayTests extends ActivityManagerDisplayTest
             // {@link Intent#FLAG_ACTIVITY_NEW_TASK} and {@link Intent#FLAG_ACTIVITY_MULTIPLE_TASK}
             // when launching on some specific display. We don't do it here as we want an existing
             // task to be used.
-            final String launchCommand = "am start -n " + getActivityName(LAUNCHING_ACTIVITY)
+            final String launchCommand = "am start -n " + getActivityName(RESIZEABLE_ACTIVITY)
                     + " --display " + newDisplay.mId;
             executeShellCommand(launchCommand);
 
             // Check that activity is brought to front.
-            waitAndAssertTopResumedActivity(LAUNCHING_ACTIVITY, newDisplay.mId,
+            waitAndAssertTopResumedActivity(RESIZEABLE_ACTIVITY, newDisplay.mId,
                     "Existing task must be brought to front");
 
             // Check that task has moved from primary display to secondary.
