@@ -16,11 +16,12 @@
 
 package android.autofillservice.cts.common;
 
-import androidx.annotation.NonNull;
 import android.support.test.InstrumentationRegistry;
 import android.text.TextUtils;
 import android.util.Log;
 import android.view.View;
+
+import androidx.annotation.NonNull;
 
 import com.android.compatibility.common.util.SystemUtil;
 
@@ -64,5 +65,14 @@ public final class ShellHelper {
 
     private ShellHelper() {
         throw new UnsupportedOperationException("contain static methods only");
+    }
+
+    /**
+     * Simulates input of key event.
+     *
+     * @param keyCode key event to fire.
+     */
+    public static void sendKeyEvent(String keyCode) {
+        runShellCommand("input keyevent " + keyCode);
     }
 }
