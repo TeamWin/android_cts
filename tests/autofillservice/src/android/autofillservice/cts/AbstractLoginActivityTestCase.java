@@ -69,4 +69,11 @@ abstract class AbstractLoginActivityTestCase
     protected void requestFocusOnPassword() throws TimeoutException {
         mUiBot.waitForWindowChange(() -> mActivity.onPassword(View::requestFocus));
     }
+
+    /**
+     * Clears focus from input fields by focusing on the parent layout.
+     */
+    protected void clearFocus() {
+        mActivity.clearFocus();
+    }
 }

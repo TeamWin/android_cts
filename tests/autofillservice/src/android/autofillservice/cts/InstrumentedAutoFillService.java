@@ -16,6 +16,7 @@
 
 package android.autofillservice.cts;
 
+import static android.autofillservice.cts.CannedFillResponse.ResponseType.FAILURE;
 import static android.autofillservice.cts.CannedFillResponse.ResponseType.NULL;
 import static android.autofillservice.cts.CannedFillResponse.ResponseType.TIMEOUT;
 import static android.autofillservice.cts.Helper.dumpStructure;
@@ -570,6 +571,12 @@ public class InstrumentedAutoFillService extends AutofillService {
 
                 if (response.getResponseType() == TIMEOUT) {
                     Log.d(TAG, "onFillRequest(): not replying at all");
+                    return;
+                }
+
+                if (response.getResponseType() == FAILURE) {
+                    Log.d(TAG, "onFillRequest(): replying with failure");
+                    callback.onFailure("D'OH!");
                     return;
                 }
 
