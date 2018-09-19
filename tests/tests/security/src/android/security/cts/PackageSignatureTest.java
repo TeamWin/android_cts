@@ -114,7 +114,10 @@ public class PackageSignatureTest extends AndroidTestCase {
 
             // Test package to verify upgrades to privileged applications
             "com.android.cts.priv.ctsshim",
-            "com.android.cts.ctsshim"
+            "com.android.cts.ctsshim",
+
+            // Oom Catcher package to prevent tests from ooming device.
+            "com.android.cts.oomcatcher"
 
             ));
 
