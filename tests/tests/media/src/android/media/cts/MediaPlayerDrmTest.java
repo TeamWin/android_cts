@@ -45,8 +45,6 @@ import android.os.PowerManager;
 import android.os.ServiceManager;
 import android.os.SystemClock;
 import android.platform.test.annotations.AppModeFull;
-import android.support.test.filters.SmallTest;
-import android.platform.test.annotations.RequiresDevice;
 import android.util.Log;
 
 import com.android.compatibility.common.util.MediaUtils;
@@ -70,8 +68,6 @@ import junit.framework.AssertionFailedError;
  * Blender Foundation / www.bigbuckbunny.org, and are licensed under the Creative Commons
  * Attribution 3.0 License at http://creativecommons.org/licenses/by/3.0/us/.
  */
-@SmallTest
-@RequiresDevice
 @AppModeFull(reason = "TODO: evaluate and port to instant")
 public class MediaPlayerDrmTest extends MediaPlayerDrmTestBase {
 
@@ -133,8 +129,6 @@ public class MediaPlayerDrmTest extends MediaPlayerDrmTestBase {
 
     // Tests
 
-    @SmallTest
-    @RequiresDevice
     public void testCAR_CLEARKEY_AUDIO_DOWNLOADED_V0_SYNC() throws Exception {
         download(CENC_AUDIO_URL,
                 CENC_AUDIO_URL_DOWNLOADED,
@@ -142,8 +136,6 @@ public class MediaPlayerDrmTest extends MediaPlayerDrmTestBase {
                 ModularDrmTestType.V0_SYNC_TEST);
     }
 
-    @SmallTest
-    @RequiresDevice
     public void testCAR_CLEARKEY_AUDIO_DOWNLOADED_V1_ASYNC() throws Exception {
         download(CENC_AUDIO_URL,
                 CENC_AUDIO_URL_DOWNLOADED,
@@ -151,8 +143,6 @@ public class MediaPlayerDrmTest extends MediaPlayerDrmTestBase {
                 ModularDrmTestType.V1_ASYNC_TEST);
     }
 
-    @SmallTest
-    @RequiresDevice
     public void testCAR_CLEARKEY_AUDIO_DOWNLOADED_V2_SYNC_CONFIG() throws Exception {
         download(CENC_AUDIO_URL,
                 CENC_AUDIO_URL_DOWNLOADED,
@@ -160,8 +150,6 @@ public class MediaPlayerDrmTest extends MediaPlayerDrmTestBase {
                 ModularDrmTestType.V2_SYNC_CONFIG_TEST);
     }
 
-    @SmallTest
-    @RequiresDevice
     public void testCAR_CLEARKEY_AUDIO_DOWNLOADED_V3_ASYNC_DRMPREPARED() throws Exception {
         download(CENC_AUDIO_URL,
                 CENC_AUDIO_URL_DOWNLOADED,
@@ -169,8 +157,6 @@ public class MediaPlayerDrmTest extends MediaPlayerDrmTestBase {
                 ModularDrmTestType.V3_ASYNC_DRMPREPARED_TEST);
     }
 
-    @SmallTest
-    @RequiresDevice
     public void testCAR_CLEARKEY_AUDIO_DOWNLOADED_V5_ASYNC_WITH_HANDLER() throws Exception {
         download(CENC_AUDIO_URL,
                 CENC_AUDIO_URL_DOWNLOADED,

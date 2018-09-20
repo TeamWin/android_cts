@@ -16,6 +16,12 @@
 
 package android.graphics.cts;
 
+import static android.graphics.Paint.CURSOR_AFTER;
+import static android.graphics.Paint.CURSOR_AT;
+import static android.graphics.Paint.CURSOR_AT_OR_AFTER;
+import static android.graphics.Paint.CURSOR_AT_OR_BEFORE;
+import static android.graphics.Paint.CURSOR_BEFORE;
+
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNull;
@@ -975,11 +981,15 @@ public class PaintTest {
         String text1 = "hello";
         Rect bounds1 = new Rect();
         Rect bounds2 = new Rect();
+        Rect bounds3 = new Rect();
         p.getTextBounds(text1, 0, text1.length(), bounds1);
         char[] textChars1 = text1.toCharArray();
         p.getTextBounds(textChars1, 0, textChars1.length, bounds2);
+        CharSequence charSequence1 = new StringBuilder(text1);
+        p.getTextBounds(charSequence1, 0, textChars1.length, bounds3);
         // verify that string and char array methods produce consistent results
         assertEquals(bounds1, bounds2);
+        assertEquals(bounds2, bounds3);
         String text2 = "hello world";
 
         // verify substring produces consistent results
@@ -1881,5 +1891,131 @@ public class PaintTest {
                 paint.getTextRunAdvances(chars2, 0, 2, 0, 2, false /* isRtl */, buffer, 0), 0.0f);
         assertEquals(30.0f, buffer[0], 0.0f);
         assertEquals(0.0f, buffer[1], 0.0f);
+    }
+
+    private int getTextRunCursor(String text, int offset, int cursorOpt) {
+        final int contextStart = 0;
+        final int contextEnd = text.length();
+        final int contextCount = text.length();
+        Paint p = new Paint();
+        int result = p.getTextRunCursor(new StringBuilder(text), // as a CharSequence
+                contextStart, contextEnd, false /* isRtl */, offset, cursorOpt);
+        assertEquals(result, p.getTextRunCursor(text.toCharArray(),
+                contextStart, contextCount, false /* isRtl */, offset, cursorOpt));
+        assertEquals(result, p.getTextRunCursor(new StringBuilder(text),  // as a CharSequence
+                contextStart, contextCount, true /* isRtl */, offset, cursorOpt));
+        assertEquals(result, p.getTextRunCursor(text.toCharArray(),
+                contextStart, contextCount, true, offset, cursorOpt));
+        return result;
+    }
+
+    @Test
+    public void testGetRunCursor_CURSOR_AFTER() {
+        assertEquals(1, getTextRunCursor("abc", 0, CURSOR_AFTER));
+        assertEquals(2, getTextRunCursor("abc", 1, CURSOR_AFTER));
+        assertEquals(3, getTextRunCursor("abc", 2, CURSOR_AFTER));
+        assertEquals(3, getTextRunCursor("abc", 3, CURSOR_AFTER));
+
+        // Surrogate pairs
+        assertEquals(1, getTextRunCursor("a\uD83D\uDE00c", 0, CURSOR_AFTER));
+        assertEquals(3, getTextRunCursor("a\uD83D\uDE00c", 1, CURSOR_AFTER));
+        assertEquals(3, getTextRunCursor("a\uD83D\uDE00c", 2, CURSOR_AFTER));
+        assertEquals(4, getTextRunCursor("a\uD83D\uDE00c", 3, CURSOR_AFTER));
+        assertEquals(4, getTextRunCursor("a\uD83D\uDE00c", 4, CURSOR_AFTER));
+
+        // Combining marks
+        assertEquals(1, getTextRunCursor("a\u0061\u0302c", 0, CURSOR_AFTER));
+        assertEquals(3, getTextRunCursor("a\u0061\u0302c", 1, CURSOR_AFTER));
+        assertEquals(3, getTextRunCursor("a\u0061\u0302c", 2, CURSOR_AFTER));
+        assertEquals(4, getTextRunCursor("a\u0061\u0302c", 3, CURSOR_AFTER));
+        assertEquals(4, getTextRunCursor("a\u0061\u0302c", 4, CURSOR_AFTER));
+    }
+
+    @Test
+    public void testGetRunCursor_CURSOR_AT() {
+        assertEquals(0, getTextRunCursor("abc", 0, CURSOR_AT));
+        assertEquals(1, getTextRunCursor("abc", 1, CURSOR_AT));
+        assertEquals(2, getTextRunCursor("abc", 2, CURSOR_AT));
+        assertEquals(3, getTextRunCursor("abc", 3, CURSOR_AT));
+
+        // Surrogate pairs
+        assertEquals(0, getTextRunCursor("a\uD83D\uDE00c", 0, CURSOR_AT));
+        assertEquals(1, getTextRunCursor("a\uD83D\uDE00c", 1, CURSOR_AT));
+        assertEquals(-1, getTextRunCursor("a\uD83D\uDE00c", 2, CURSOR_AT));
+        assertEquals(3, getTextRunCursor("a\uD83D\uDE00c", 3, CURSOR_AT));
+        assertEquals(4, getTextRunCursor("a\uD83D\uDE00c", 4, CURSOR_AT));
+
+        // Combining marks
+        assertEquals(0, getTextRunCursor("a\u0061\u0302c", 0, CURSOR_AT));
+        assertEquals(1, getTextRunCursor("a\u0061\u0302c", 1, CURSOR_AT));
+        assertEquals(-1, getTextRunCursor("a\u0061\u0302c", 2, CURSOR_AT));
+        assertEquals(3, getTextRunCursor("a\u0061\u0302c", 3, CURSOR_AT));
+        assertEquals(4, getTextRunCursor("a\u0061\u0302c", 4, CURSOR_AT));
+    }
+
+    @Test
+    public void testGetRunCursor_CURSOR_AT_OR_AFTER() {
+        assertEquals(0, getTextRunCursor("abc", 0, CURSOR_AT_OR_AFTER));
+        assertEquals(1, getTextRunCursor("abc", 1, CURSOR_AT_OR_AFTER));
+        assertEquals(2, getTextRunCursor("abc", 2, CURSOR_AT_OR_AFTER));
+        assertEquals(3, getTextRunCursor("abc", 3, CURSOR_AT_OR_AFTER));
+
+        // Surrogate pairs
+        assertEquals(0, getTextRunCursor("a\uD83D\uDE00c", 0, CURSOR_AT_OR_AFTER));
+        assertEquals(1, getTextRunCursor("a\uD83D\uDE00c", 1, CURSOR_AT_OR_AFTER));
+        assertEquals(3, getTextRunCursor("a\uD83D\uDE00c", 2, CURSOR_AT_OR_AFTER));
+        assertEquals(3, getTextRunCursor("a\uD83D\uDE00c", 3, CURSOR_AT_OR_AFTER));
+        assertEquals(4, getTextRunCursor("a\uD83D\uDE00c", 4, CURSOR_AT_OR_AFTER));
+
+        // Combining marks
+        assertEquals(0, getTextRunCursor("a\u0061\u0302c", 0, CURSOR_AT_OR_AFTER));
+        assertEquals(1, getTextRunCursor("a\u0061\u0302c", 1, CURSOR_AT_OR_AFTER));
+        assertEquals(3, getTextRunCursor("a\u0061\u0302c", 2, CURSOR_AT_OR_AFTER));
+        assertEquals(3, getTextRunCursor("a\u0061\u0302c", 3, CURSOR_AT_OR_AFTER));
+        assertEquals(4, getTextRunCursor("a\u0061\u0302c", 4, CURSOR_AT_OR_AFTER));
+    }
+
+    @Test
+    public void testGetRunCursor_CURSOR_AT_OR_BEFORE() {
+        assertEquals(0, getTextRunCursor("abc", 0, CURSOR_AT_OR_BEFORE));
+        assertEquals(1, getTextRunCursor("abc", 1, CURSOR_AT_OR_BEFORE));
+        assertEquals(2, getTextRunCursor("abc", 2, CURSOR_AT_OR_BEFORE));
+        assertEquals(3, getTextRunCursor("abc", 3, CURSOR_AT_OR_BEFORE));
+
+        // Surrogate pairs
+        assertEquals(0, getTextRunCursor("a\uD83D\uDE00c", 0, CURSOR_AT_OR_BEFORE));
+        assertEquals(1, getTextRunCursor("a\uD83D\uDE00c", 1, CURSOR_AT_OR_BEFORE));
+        assertEquals(1, getTextRunCursor("a\uD83D\uDE00c", 2, CURSOR_AT_OR_BEFORE));
+        assertEquals(3, getTextRunCursor("a\uD83D\uDE00c", 3, CURSOR_AT_OR_BEFORE));
+        assertEquals(4, getTextRunCursor("a\uD83D\uDE00c", 4, CURSOR_AT_OR_BEFORE));
+
+        // Combining marks
+        assertEquals(0, getTextRunCursor("a\u0061\u0302c", 0, CURSOR_AT_OR_BEFORE));
+        assertEquals(1, getTextRunCursor("a\u0061\u0302c", 1, CURSOR_AT_OR_BEFORE));
+        assertEquals(1, getTextRunCursor("a\u0061\u0302c", 2, CURSOR_AT_OR_BEFORE));
+        assertEquals(3, getTextRunCursor("a\u0061\u0302c", 3, CURSOR_AT_OR_BEFORE));
+        assertEquals(4, getTextRunCursor("a\u0061\u0302c", 4, CURSOR_AT_OR_BEFORE));
+    }
+
+    @Test
+    public void testGetRunCursor_CURSOR_BEFORE() {
+        assertEquals(0, getTextRunCursor("abc", 0, CURSOR_BEFORE));
+        assertEquals(0, getTextRunCursor("abc", 1, CURSOR_BEFORE));
+        assertEquals(1, getTextRunCursor("abc", 2, CURSOR_BEFORE));
+        assertEquals(2, getTextRunCursor("abc", 3, CURSOR_BEFORE));
+
+        // Surrogate pairs
+        assertEquals(0, getTextRunCursor("a\uD83D\uDE00c", 0, CURSOR_BEFORE));
+        assertEquals(0, getTextRunCursor("a\uD83D\uDE00c", 1, CURSOR_BEFORE));
+        assertEquals(1, getTextRunCursor("a\uD83D\uDE00c", 2, CURSOR_BEFORE));
+        assertEquals(1, getTextRunCursor("a\uD83D\uDE00c", 3, CURSOR_BEFORE));
+        assertEquals(3, getTextRunCursor("a\uD83D\uDE00c", 4, CURSOR_BEFORE));
+
+        // Combining marks
+        assertEquals(0, getTextRunCursor("a\u0061\u0302c", 0, CURSOR_BEFORE));
+        assertEquals(0, getTextRunCursor("a\u0061\u0302c", 1, CURSOR_BEFORE));
+        assertEquals(1, getTextRunCursor("a\u0061\u0302c", 2, CURSOR_BEFORE));
+        assertEquals(1, getTextRunCursor("a\u0061\u0302c", 3, CURSOR_BEFORE));
+        assertEquals(3, getTextRunCursor("a\u0061\u0302c", 4, CURSOR_BEFORE));
     }
 }

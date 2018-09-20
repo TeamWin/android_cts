@@ -56,6 +56,7 @@ public class ClipboardManagerTest {
         mContext = InstrumentationRegistry.getTargetContext();
         mClipboardManager = mContext.getSystemService(ClipboardManager.class);
         mUiDevice = UiDevice.getInstance(InstrumentationRegistry.getInstrumentation());
+        mUiDevice.wakeUp();
         launchActivity(MockActivity.class);
     }
 
@@ -241,13 +242,14 @@ public class ClipboardManagerTest {
 
     @Test
     public void testPrimaryClipNotAvailableWithoutFocus() throws Exception {
-        ClipData textData = ClipData.newPlainText("TextLabel", "Text");
+        ClipData textData = ClipData.newPlainText("TextLabel", "Text1");
         assertSetPrimaryClip(textData, "TextLabel",
                 new String[] {ClipDescription.MIMETYPE_TEXT_PLAIN},
-                new ExpectedClipItem("Text", null, null));
+                new ExpectedClipItem("Text1", null, null));
 
         // Press the home button to unfocus the app.
         mUiDevice.pressHome();
+        mUiDevice.wait(Until.gone(By.clazz(MockActivity.class)), 5000);
 
         // We should see an empty clipboard now.
         assertFalse(mClipboardManager.hasPrimaryClip());
@@ -255,9 +257,8 @@ public class ClipboardManagerTest {
         assertNull(mClipboardManager.getPrimaryClip());
         assertNull(mClipboardManager.getPrimaryClipDescription());
 
-        // Attempts to set the clipdata should be ignored.
-        ClipData badData = ClipData.newPlainText("TextLabel", "BadText");
-        mClipboardManager.setPrimaryClip(badData);
+        // We should be able to set the clipboard but not see the contents.
+        mClipboardManager.setPrimaryClip(ClipData.newPlainText("TextLabel", "Text2"));
         assertFalse(mClipboardManager.hasPrimaryClip());
         assertFalse(mClipboardManager.hasText());
         assertNull(mClipboardManager.getPrimaryClip());
@@ -275,7 +276,7 @@ public class ClipboardManagerTest {
         assertClipData(mClipboardManager.getPrimaryClip(),
                 "TextLabel",
                 new String[] {ClipDescription.MIMETYPE_TEXT_PLAIN},
-                new ExpectedClipItem("Text", null, null));
+                new ExpectedClipItem("Text2", null, null));
     }
 
     private void launchActivity(Class<? extends Activity> clazz) {

@@ -1104,9 +1104,8 @@ public class MediaPlayer2Test extends MediaPlayer2TestBase {
     }
 
     // setPlaybackParams() with non-zero speed should NOT start playback.
-    // TODO: enable this test when MediaPlayer2.setPlaybackParams() is fixed
-    /*
-    public void testSetPlaybackParamsPositiveSpeed() throws Exception {
+    // zero speed is invalid.
+    public void testSetPlaybackParamsSpeeds() throws Exception {
         if (IGNORE_TESTS) {
             return;
         }
@@ -1115,6 +1114,9 @@ public class MediaPlayer2Test extends MediaPlayer2TestBase {
             return; // skip
         }
 
+        Monitor onSetPlaybackParamsCompleteCalled = new Monitor();
+        AtomicInteger setPlaybackParamsStatus =
+                new AtomicInteger(MediaPlayer2.CALL_STATUS_NO_ERROR);
         MediaPlayer2.EventCallback ecb = new MediaPlayer2.EventCallback() {
             @Override
             public void onInfo(MediaPlayer2 mp, DataSourceDesc dsd, int what, int extra) {
@@ -1129,6 +1131,9 @@ public class MediaPlayer2Test extends MediaPlayer2TestBase {
             public void onCallCompleted(MediaPlayer2 mp, DataSourceDesc dsd, int what, int status) {
                 if (what == MediaPlayer2.CALL_COMPLETED_SEEK_TO) {
                     mOnSeekCompleteCalled.signal();
+                } else if (what == MediaPlayer2.CALL_COMPLETED_SET_PLAYBACK_PARAMS) {
+                    onSetPlaybackParamsCompleteCalled.signal();
+                    setPlaybackParamsStatus.set(status);
                 }
             }
         };
@@ -1139,42 +1144,46 @@ public class MediaPlayer2Test extends MediaPlayer2TestBase {
         mOnCompletionCalled.reset();
         mPlayer.setDisplay(mActivity.getSurfaceHolder());
 
-        mOnPrepareCalled.reset();
         mPlayer.prepare();
-        mOnPrepareCalled.waitForSignal();
 
         mOnSeekCompleteCalled.reset();
         mPlayer.seekTo(0, MediaPlayer2.SEEK_PREVIOUS_SYNC);
         mOnSeekCompleteCalled.waitForSignal();
 
-        final float playbackRate = 1.0f;
+        float playbackRate = 0.f;
+        onSetPlaybackParamsCompleteCalled.reset();
+        mPlayer.setPlaybackParams(new PlaybackParams().setSpeed(playbackRate));
+        onSetPlaybackParamsCompleteCalled.waitForSignal();
+        assertTrue("speed of zero is invalid",
+                setPlaybackParamsStatus.intValue() == MediaPlayer2.CALL_STATUS_BAD_VALUE);
+
+        playbackRate = 1.0f;
 
         int playTime = 2000;  // The testing clip is about 10 second long.
+        onSetPlaybackParamsCompleteCalled.reset();
         mPlayer.setPlaybackParams(new PlaybackParams().setSpeed(playbackRate));
-        assertTrue("MediaPlayer2 should be playing", mPlayer.isPlaying());
         Thread.sleep(playTime);
-        assertTrue("MediaPlayer2 should still be playing",
-                mPlayer.getCurrentPosition() > 0);
+        onSetPlaybackParamsCompleteCalled.waitForSignal();
+        assertTrue("MediaPlayer2 should not be playing",
+                mPlayer.getState() != MediaPlayer2.PLAYER_STATE_PLAYING);
 
         long duration = mPlayer.getDuration();
         mOnSeekCompleteCalled.reset();
         mPlayer.seekTo(duration - 1000, MediaPlayer2.SEEK_PREVIOUS_SYNC);
         mOnSeekCompleteCalled.waitForSignal();
 
+        mPlayer.play();
+
         mOnCompletionCalled.waitForSignal();
         assertFalse("MediaPlayer2 should not be playing", mPlayer.isPlaying());
-        long eosPosition = mPlayer.getCurrentPosition();
 
+        onSetPlaybackParamsCompleteCalled.reset();
         mPlayer.setPlaybackParams(new PlaybackParams().setSpeed(playbackRate));
-        assertTrue("MediaPlayer2 should be playing after EOS", mPlayer.isPlaying());
-        Thread.sleep(playTime);
-        long position = mPlayer.getCurrentPosition();
-        assertTrue("MediaPlayer2 should still be playing after EOS",
-                position > 0 && position < eosPosition);
+        onSetPlaybackParamsCompleteCalled.waitForSignal();
+        assertFalse("MediaPlayer2 should not be playing after EOS", mPlayer.isPlaying());
 
         mPlayer.reset();
     }
-    */
 
     public void testPlaybackRate() throws Exception {
         if (IGNORE_TESTS) {

@@ -47,6 +47,7 @@ import android.view.KeyEvent;
 import android.view.LayoutInflater;
 import android.view.MotionEvent;
 import android.view.View;
+import android.view.ViewConfiguration;
 import android.view.ViewGroup;
 import android.view.Window;
 import android.view.WindowManager;
@@ -473,10 +474,13 @@ public class DialogTest {
     public void testTouchEvent() {
         startDialogActivity(DialogStubActivity.TEST_ONSTART_AND_ONSTOP);
         final TestDialog d = (TestDialog) mActivity.getDialog();
-        final Rect containingRect = new Rect();
-        mActivity.getWindow().getDecorView().getWindowVisibleDisplayFrame(containingRect);
-        final int x = containingRect.left + 1;
-        final int y = containingRect.top + 1;
+
+        int dialogLocation[] = new int[2];
+        d.getWindow().getDecorView().getRootView().getLocationOnScreen(dialogLocation);
+
+        final int touchSlop = ViewConfiguration.get(mActivity).getScaledWindowTouchSlop();
+        final int x = dialogLocation[0] - (touchSlop + 1);
+        final int y = dialogLocation[1] - (touchSlop + 1);
 
         assertNull(d.onTouchEvent);
         assertNull(d.touchEvent);
