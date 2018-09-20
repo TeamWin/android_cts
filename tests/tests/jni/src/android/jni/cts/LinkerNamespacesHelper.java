@@ -49,6 +49,7 @@ class LinkerNamespacesHelper {
         "libaaudio.so",
         "libamidi.so",
         "libandroid.so",
+        "libbinder_ndk.so",
         "libc.so",
         "libcamera2ndk.so",
         "libdl.so",
