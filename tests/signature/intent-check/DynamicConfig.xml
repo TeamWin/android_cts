@@ -23,6 +23,8 @@
     Bug: 78574873 android.intent.action.INSTALL_EPHEMERAL_PACKAGE
     Bug: 78574873 android.intent.action.RESOLVE_EPHEMERAL_PACKAGE
     Bug: 78574873 android.intent.action.EPHEMERAL_RESOLVER_SETTINGS
+    Bug: 115799975 android.intent.action.ACTION_AIRPLANE_MODE_CHANGED
+         Will be removed after v17 of CS.apk is released.
 -->
 <dynamicConfig>
     <entry key ="intent_whitelist">
@@ -34,5 +36,6 @@
       <value>android.intent.action.INSTALL_EPHEMERAL_PACKAGE</value>
       <value>android.intent.action.RESOLVE_EPHEMERAL_PACKAGE</value>
       <value>android.intent.action.EPHEMERAL_RESOLVER_SETTINGS</value>
+      <value>android.intent.action.ACTION_AIRPLANE_MODE_CHANGED</value>
     </entry>
 </dynamicConfig>
