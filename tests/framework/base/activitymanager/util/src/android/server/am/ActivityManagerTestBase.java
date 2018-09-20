@@ -97,6 +97,8 @@ import android.hardware.display.DisplayManager;
 import android.os.Bundle;
 import android.os.SystemClock;
 import android.provider.Settings;
+import android.server.am.CommandSession.ActivityCallback;
+import android.server.am.CommandSession.ActivitySession;
 import android.server.am.CommandSession.LaunchInjector;
 import android.server.am.CommandSession.LaunchProxy;
 import android.server.am.settings.SettingsSession;
@@ -1522,6 +1524,42 @@ public abstract class ActivityManagerTestBase {
         }
     }
 
+    /** Assert the activity is either relaunched or received configuration changed. */
+    List<ActivityCallback> assertActivityLifecycle(ActivitySession activitySession,
+            boolean relaunched) {
+        final String name = activitySession.getName();
+        final List<ActivityCallback> callbackHistory = activitySession.takeCallbackHistory();
+        final int[] lifecycleCounts = getActivityLifecycleCounts(callbackHistory);
+        if (relaunched) {
+            if (lifecycleCounts[ActivityCallback.ON_DESTROY.ordinal()] < 1) {
+                fail(name + " must have been destroyed. callbacks=" + callbackHistory);
+            }
+            if (lifecycleCounts[ActivityCallback.ON_CREATE.ordinal()] < 1) {
+                fail(name + " must have been (re)created. callbacks=" + callbackHistory);
+            }
+            return callbackHistory;
+        }
+        if (lifecycleCounts[ActivityCallback.ON_DESTROY.ordinal()] > 0) {
+            fail(name + " must *NOT* have been destroyed. callbacks=" + callbackHistory);
+        }
+        if (lifecycleCounts[ActivityCallback.ON_CREATE.ordinal()] > 0) {
+            fail(name + " must *NOT* have been (re)created. callbacks=" + callbackHistory);
+        }
+        if (lifecycleCounts[ActivityCallback.ON_CONFIGURATION_CHANGED.ordinal()] < 1) {
+            fail(name + " must have received configuration changed. callbacks=" + callbackHistory);
+        }
+        return callbackHistory;
+    }
+
+    /** @return A array contains the lifecycle count by the ordinal of {@link ActivityCallback}. */
+    int[] getActivityLifecycleCounts(List<ActivityCallback> lifecycleCallbacks) {
+        final int[] counts = new int[ActivityCallback.SIZE];
+        for (ActivityCallback callback : lifecycleCallbacks) {
+            counts[callback.ordinal()]++;
+        }
+        return counts;
+    }
+
     protected void stopTestPackage(final String packageName) {
         SystemUtil.runWithShellPermissionIdentity(() -> mAm.forceStopPackage(packageName));
     }
@@ -1547,6 +1585,7 @@ public abstract class ActivityManagerTestBase {
         private boolean mReorderToFront;
         private boolean mWaitForLaunched;
         private boolean mSuppressExceptions;
+        private boolean mWithShellPermission;
         // Use of the following variables indicates that a broadcast receiver should be used instead
         // of a launching activity;
         private ComponentName mBroadcastReceiver;
@@ -1650,6 +1689,11 @@ public abstract class ActivityManagerTestBase {
             return this;
         }
 
+        public LaunchActivityBuilder setWithShellPermission(boolean withShellPermission) {
+            mWithShellPermission = withShellPermission;
+            return this;
+        }
+
         @Override
         public boolean shouldWaitForLaunched() {
             return mWaitForLaunched;
@@ -1664,7 +1708,11 @@ public abstract class ActivityManagerTestBase {
         public void execute() {
             switch (mLauncherType) {
                 case INSTRUMENTATION:
-                    launchUsingInstrumentation();
+                    if (mWithShellPermission) {
+                        SystemUtil.runWithShellPermissionIdentity(this::launchUsingInstrumentation);
+                    } else {
+                        launchUsingInstrumentation();
+                    }
                     break;
                 case LAUNCHING_ACTIVITY:
                 case BROADCAST_RECEIVER:
