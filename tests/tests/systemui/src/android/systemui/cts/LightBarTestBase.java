@@ -105,11 +105,18 @@ public class LightBarTestBase {
         assumeTrue(ActivityManager.isHighEndGfx());
     }
 
-    protected void assumeHasColoredStatusBar() {
+    protected void assumeHasColoredStatusBar(ActivityTestRule<? extends LightBarBaseActivity> rule)
+            throws Throwable {
         assumeBasics();
 
         // No status bar when running in Vr
         assumeFalse(isRunningInVr());
+
+        final WindowInsets[] inset = new WindowInsets[1];
+        rule.runOnUiThread(()-> {
+            inset[0] = rule.getActivity().getRootWindowInsets();
+        });
+        assumeTrue("Top stable inset is non-positive.", inset[0].getStableInsetTop() > 0);
     }
 
     protected void assumeHasColorNavigationBar (
