@@ -18,6 +18,8 @@ include $(CLEAR_VARS)
 
 LOCAL_SRC_FILES := $(call all-java-files-under, src)
 
+LOCAL_JAVA_RESOURCE_DIRS := res
+
 LOCAL_MODULE_TAGS := optional
 
 # tag this module as a cts test artifact
