@@ -30,11 +30,12 @@ import android.content.res.Configuration;
 import android.graphics.Rect;
 import android.os.ParcelFileDescriptor;
 import android.os.SystemClock;
-import androidx.annotation.NonNull;
-import androidx.annotation.Nullable;
 import android.support.test.InstrumentationRegistry;
 import android.view.nano.DisplayInfoProto;
 import android.view.nano.ViewProtoEnums;
+
+import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
 
 import com.android.server.wm.nano.AppTransitionProto;
 import com.android.server.wm.nano.AppWindowTokenProto;
@@ -616,6 +617,8 @@ public class WindowManagerState {
         int mTaskId;
         Rect mTempInsetBounds;
         List<String> mAppTokens = new ArrayList<>();
+        private int mSurfaceWidth;
+        private int mSurfaceHeight;
 
         WindowTask(TaskProto proto) {
             super(proto.windowContainer);
@@ -634,6 +637,16 @@ public class WindowManagerState {
                 }
             }
             mTempInsetBounds = extract(proto.tempInsetBounds);
+            mSurfaceWidth = proto.surfaceWidth;
+            mSurfaceHeight = proto.surfaceHeight;
+        }
+
+        int getSurfaceWidth() {
+            return mSurfaceWidth;
+        }
+
+        int getSurfaceHeight() {
+            return mSurfaceHeight;
         }
     }
 
@@ -699,6 +712,7 @@ public class WindowManagerState {
         private int mDpi;
         private Rect mStableBounds;
         private String mName;
+        private int mSurfaceSize;
 
         public Display(DisplayContentProto proto) {
             super(proto.windowContainer);
@@ -723,6 +737,7 @@ public class WindowManagerState {
             if (displayFramesProto != null) {
                 mStableBounds = extract(displayFramesProto.stableBounds);
             }
+            mSurfaceSize = proto.surfaceSize;
         }
 
         private void addWindowsFromTokenProto(WindowTokenProto proto) {
@@ -752,6 +767,10 @@ public class WindowManagerState {
 
         String getName() {
             return mName;
+        }
+
+        int getSurfaceSize() {
+            return mSurfaceSize;
         }
 
         @Override
