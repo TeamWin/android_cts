@@ -25,6 +25,8 @@ import android.hardware.cts.helpers.sensoroperations.TestSensorOperation;
 import android.hardware.cts.helpers.sensorverification.EventBasicVerification;
 import android.hardware.cts.helpers.sensorverification.ISensorVerification;
 
+import com.android.compatibility.common.util.CddTest;
+
 import java.util.concurrent.TimeUnit;
 
 /**
@@ -55,10 +57,12 @@ public class SensorBatchingTests extends SensorTestCase {
      */
     private static final int BATCHING_PADDING_TIME_S = (int) Math.ceil(BATCHING_PERIOD * 0.1f + 2);
 
+    @CddTest(requirement="7.3/C-1-3")
     public void testAccelerometer_fastest_batching() throws Throwable {
         runBatchingSensorTest(Sensor.TYPE_ACCELEROMETER, RATE_FASTEST, BATCHING_PERIOD);
     }
 
+    @CddTest(requirement="7.3/C-1-3")
     public void testAccelerometer_50hz_batching() throws Throwable {
         runBatchingSensorTest(Sensor.TYPE_ACCELEROMETER, RATE_50HZ, BATCHING_PERIOD);
     }
@@ -95,10 +99,12 @@ public class SensorBatchingTests extends SensorTestCase {
         runFlushSensorTest(Sensor.TYPE_ACCELEROMETER_UNCALIBRATED, RATE_50HZ, BATCHING_PERIOD);
     }
 
+    @CddTest(requirement="7.3/C-1-3")
     public void testMagneticField_fastest_batching() throws Throwable {
         runBatchingSensorTest(Sensor.TYPE_MAGNETIC_FIELD, RATE_FASTEST, BATCHING_PERIOD);
     }
 
+    @CddTest(requirement="7.3/C-1-3")
     public void testMagneticField_50hz_batching() throws Throwable {
         runBatchingSensorTest(Sensor.TYPE_MAGNETIC_FIELD, RATE_50HZ, BATCHING_PERIOD);
     }
@@ -131,10 +137,12 @@ public class SensorBatchingTests extends SensorTestCase {
         runFlushSensorTest(Sensor.TYPE_ORIENTATION, RATE_50HZ, BATCHING_PERIOD);
     }
 
+    @CddTest(requirement="7.3/C-1-3")
     public void testGyroscope_fastest_batching() throws Throwable {
         runBatchingSensorTest(Sensor.TYPE_GYROSCOPE, RATE_FASTEST, BATCHING_PERIOD);
     }
 
+    @CddTest(requirement="7.3/C-1-3")
     public void testGyroscope_50hz_batching() throws Throwable {
         runBatchingSensorTest(Sensor.TYPE_GYROSCOPE, RATE_50HZ, BATCHING_PERIOD);
     }
@@ -147,10 +155,12 @@ public class SensorBatchingTests extends SensorTestCase {
         runFlushSensorTest(Sensor.TYPE_GYROSCOPE, RATE_50HZ, BATCHING_PERIOD);
     }
 
+    @CddTest(requirement="7.3/C-1-3")
     public void testPressure_fastest_batching() throws Throwable {
         runBatchingSensorTest(Sensor.TYPE_PRESSURE, RATE_FASTEST, BATCHING_PERIOD);
     }
 
+    @CddTest(requirement="7.3/C-1-3")
     public void testPressure_50hz_batching() throws Throwable {
         runBatchingSensorTest(Sensor.TYPE_PRESSURE, RATE_50HZ, BATCHING_PERIOD);
     }
@@ -163,10 +173,12 @@ public class SensorBatchingTests extends SensorTestCase {
         runFlushSensorTest(Sensor.TYPE_PRESSURE, RATE_50HZ, BATCHING_PERIOD);
     }
 
+    @CddTest(requirement="7.3/C-1-3")
     public void testGravity_fastest_batching() throws Throwable {
         runBatchingSensorTest(Sensor.TYPE_GRAVITY, RATE_FASTEST, BATCHING_PERIOD);
     }
 
+    @CddTest(requirement="7.3/C-1-3")
     public void testGravity_50hz_batching() throws Throwable {
         runBatchingSensorTest(Sensor.TYPE_GRAVITY, RATE_50HZ, BATCHING_PERIOD);
     }
@@ -179,10 +191,12 @@ public class SensorBatchingTests extends SensorTestCase {
         runFlushSensorTest(Sensor.TYPE_GRAVITY, RATE_50HZ, BATCHING_PERIOD);
     }
 
+    @CddTest(requirement="7.3/C-1-3")
     public void testRotationVector_fastest_batching() throws Throwable {
         runBatchingSensorTest(Sensor.TYPE_ROTATION_VECTOR, RATE_FASTEST, BATCHING_PERIOD);
     }
 
+    @CddTest(requirement="7.3/C-1-3")
     public void testRotationVector_50hz_batching() throws Throwable {
         runBatchingSensorTest(Sensor.TYPE_ROTATION_VECTOR, RATE_50HZ, BATCHING_PERIOD);
     }
@@ -211,10 +225,12 @@ public class SensorBatchingTests extends SensorTestCase {
         runFlushSensorTest(Sensor.TYPE_MAGNETIC_FIELD_UNCALIBRATED, RATE_50HZ, BATCHING_PERIOD);
     }
 
+    @CddTest(requirement="7.3/C-1-3")
     public void testGameRotationVector_fastest_batching() throws Throwable {
         runBatchingSensorTest(Sensor.TYPE_GAME_ROTATION_VECTOR, RATE_FASTEST, BATCHING_PERIOD);
     }
 
+    @CddTest(requirement="7.3/C-1-3")
     public void testGameRotationVector_50hz_batching() throws Throwable {
         runBatchingSensorTest(Sensor.TYPE_GAME_ROTATION_VECTOR, RATE_50HZ, BATCHING_PERIOD);
     }
@@ -243,10 +259,12 @@ public class SensorBatchingTests extends SensorTestCase {
         runFlushSensorTest(Sensor.TYPE_GYROSCOPE_UNCALIBRATED, RATE_50HZ, BATCHING_PERIOD);
     }
 
+    @CddTest(requirement="7.3/C-1-3")
     public void testLinearAcceleration_fastest_batching() throws Throwable {
         runBatchingSensorTest(Sensor.TYPE_LINEAR_ACCELERATION, RATE_FASTEST, BATCHING_PERIOD);
     }
 
+    @CddTest(requirement="7.3/C-1-3")
     public void testLinearAcceleration_50hz_batching() throws Throwable {
         runBatchingSensorTest(Sensor.TYPE_LINEAR_ACCELERATION, RATE_50HZ, BATCHING_PERIOD);
     }
