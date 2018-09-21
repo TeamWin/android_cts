@@ -32,4 +32,6 @@ LOCAL_STATIC_JAVA_LIBRARIES := \
     android-support-test \
     cts-signature-common \
 
+LOCAL_HOST_REQUIRED_MODULES := cts-dynamic-config
+
 include $(BUILD_CTS_PACKAGE)
