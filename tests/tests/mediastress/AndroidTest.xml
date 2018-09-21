@@ -17,8 +17,15 @@
     <option name="test-suite-tag" value="cts" />
     <option name="config-descriptor:metadata" key="component" value="media" />
     <target_preparer class="com.android.compatibility.common.tradefed.targetprep.DynamicConfigPusher">
+        <option name="target" value="host" />
+        <option name="config-filename" value="cts" />
+        <option name="dynamic-config-name" value="cts-dynamic-config" />
+        <option name="version" value="9.0_r1"/>
+    </target_preparer>
+    <target_preparer class="com.android.compatibility.common.tradefed.targetprep.DynamicConfigPusher">
         <option name="target" value="device" />
         <option name="config-filename" value="CtsMediaStressTestCases" />
+        <option name="version" value="9.0_r1"/>
     </target_preparer>
     <target_preparer class="com.android.compatibility.common.tradefed.targetprep.MediaPreparer" />
     <target_preparer class="com.android.tradefed.targetprep.suite.SuiteApkInstaller">
