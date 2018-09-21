@@ -21,6 +21,8 @@ import android.os.PowerManager;
 import android.os.Process;
 import android.test.ActivityInstrumentationTestCase2;
 
+import com.android.compatibility.common.util.CddTest;
+
 public class VrFeaturesTest extends ActivityInstrumentationTestCase2<CtsActivity> {
     private CtsActivity mActivity;
 
@@ -28,6 +30,7 @@ public class VrFeaturesTest extends ActivityInstrumentationTestCase2<CtsActivity
         super(CtsActivity.class);
     }
 
+    @CddTest(requirement="7.9.2/C-1-2")
     public void testLacksDeprecatedVrModeFeature() {
         mActivity = getActivity();
         boolean hasVrMode = mActivity.getPackageManager().hasSystemFeature(
@@ -40,6 +43,7 @@ public class VrFeaturesTest extends ActivityInstrumentationTestCase2<CtsActivity
         }
     }
 
+    @CddTest(requirement="7.9.2/C-1-3")
     public void testSustainedPerformanceModeSupported() {
         mActivity = getActivity();
         PowerManager pm = (PowerManager) mActivity.getSystemService(Context.POWER_SERVICE);

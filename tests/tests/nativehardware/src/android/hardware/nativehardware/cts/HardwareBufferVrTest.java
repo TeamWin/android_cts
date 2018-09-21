@@ -20,10 +20,14 @@ import android.content.pm.PackageManager;
 import android.hardware.HardwareBuffer;
 import android.test.AndroidTestCase;
 
+import com.android.compatibility.common.util.CddTest;
+
 /**
  * Checks whether layered buffers are supported when VR feature is present.
  */
 public class HardwareBufferVrTest extends AndroidTestCase {
+
+    @CddTest(requirement="7.9.2/C-1-10")
     public void testLayeredBuffersForVr() throws AssertionError {
         PackageManager pm = getContext().getPackageManager();
         if (!pm.hasSystemFeature(PackageManager.FEATURE_VR_MODE_HIGH_PERFORMANCE)) {
