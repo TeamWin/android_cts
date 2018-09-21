@@ -89,8 +89,7 @@ TEST_F(NdkBinderTest_AIBinder, WeakPointerCanPromote) {
   AIBinder_Weak* weak = AIBinder_Weak_new(binder);
   AIBinder* promoted = AIBinder_Weak_promote(weak);
   EXPECT_EQ(binder, promoted);
-  AIBinder_Weak_delete(&weak);
-  EXPECT_EQ(nullptr, weak);
+  AIBinder_Weak_delete(weak);
   AIBinder_decStrong(binder);
   AIBinder_decStrong(promoted);
 }
