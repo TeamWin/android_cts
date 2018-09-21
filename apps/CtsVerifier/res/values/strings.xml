@@ -3353,7 +3353,10 @@ You should be prompted to select credentials; choose the ones you just installed
     <string name="disallow_share_location">Disallow share location</string>
     <string name="disallow_share_location_action">Turning on location sharing</string>
     <string name="disallow_uninstall_apps">Disallow uninstall apps</string>
-    <string name="disallow_uninstall_apps_action">Uninstalling applications from the work profile (badged applications) other than CtsVerifier</string>
+    <string name="disallow_uninstall_apps_action">
+        a. If testing in work profile: uninstall applications from the work profile (badged applications) other than CtsVerifier and system apps. \n
+        b. Otherwise: uninstall applications other than CtsVerifier and system apps
+    </string>
     <string name="disallow_unified_challenge">Disallow unified challenge</string>
     <string name="disallow_unified_challenge_action">Setting one lock for both personal and work profiles. IMPORTANT: Separate work lock should be set prior to this test in Set work lock test</string>
     <string name="disallow_keyguard_unredacted_notifications">Disallow lockscreen unredacted notification</string>
