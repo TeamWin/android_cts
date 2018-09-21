@@ -108,7 +108,7 @@ public class KernelConfigTest extends DeviceTestCase implements IBuildReceiver, 
      *
      * @throws Exception
      */
-    @CddTest(requirement="9.7")
+    @CddTest(requirement="9.7/C-0-7")
     public void testConfigStackProtectorStrong() throws Exception {
         assertTrue("Linux kernel must have Stack Protector enabled: " +
                 "CONFIG_CC_STACKPROTECTOR_STRONG=y",
@@ -121,7 +121,7 @@ public class KernelConfigTest extends DeviceTestCase implements IBuildReceiver, 
      *
      * @throws Exception
      */
-    @CddTest(requirement="9.7")
+    @CddTest(requirement="9.7/C-0-8")
     public void testConfigROData() throws Exception {
         assertTrue("Linux kernel must have RO data enabled: " +
                 "CONFIG_DEBUG_RODATA=y or CONFIG_STRICT_KERNEL_RWX=y",
