@@ -170,6 +170,7 @@ public class AccessibilityFocusAndInputFocusSyncTest
         assertFalse(rootLinearLayout.isAccessibilityFocused());
     }
 
+    @FlakyTest(bugId = 116260122)
     @MediumTest
     @Presubmit
     public void testOnlyOneNodeHasAccessibilityFocus() throws Exception {
