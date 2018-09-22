@@ -14,8 +14,7 @@
 
 package android.accessibilityservice.cts.utils;
 
-import static android.accessibilityservice.cts.AccessibilityActivityTestCase
-        .TIMEOUT_ASYNC_PROCESSING;
+import static android.accessibilityservice.cts.utils.AsyncUtils.DEFAULT_TIMEOUT_MS;
 
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.fail;
@@ -30,8 +29,14 @@ import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.content.pm.ResolveInfo;
 import android.graphics.Rect;
+import android.os.PowerManager;
+import android.os.SystemClock;
 import android.support.test.rule.ActivityTestRule;
 import android.text.TextUtils;
+import android.util.Log;
+import android.view.InputDevice;
+import android.view.KeyCharacterMap;
+import android.view.KeyEvent;
 import android.view.accessibility.AccessibilityEvent;
 import android.view.accessibility.AccessibilityNodeInfo;
 import android.view.accessibility.AccessibilityWindowInfo;
@@ -44,11 +49,14 @@ import java.util.concurrent.TimeoutException;
  * before we start testing it.
  */
 public class ActivityLaunchUtils {
+    private static final String LOG_TAG = "ActivityLaunchUtils";
+
     // Using a static variable so it can be used in lambdas. Not preserving state in it.
     private static Activity mTempActivity;
 
-    public static Activity launchActivityAndWaitForItToBeOnscreen(Instrumentation instrumentation,
-            UiAutomation uiAutomation, ActivityTestRule<? extends Activity> rule) throws Exception {
+    public static <T extends Activity> T launchActivityAndWaitForItToBeOnscreen(
+            Instrumentation instrumentation, UiAutomation uiAutomation,
+            ActivityTestRule<T> rule) throws Exception {
         final int[] location = new int[2];
         final StringBuilder activityPackage = new StringBuilder();
         final Rect bounds = new Rect();
@@ -80,9 +88,9 @@ public class ActivityLaunchUtils {
                     }
                     return (!bounds.isEmpty())
                             && (bounds.left == location[0]) && (bounds.top == location[1]);
-                }, TIMEOUT_ASYNC_PROCESSING);
+                }, DEFAULT_TIMEOUT_MS);
         assertNotNull(awaitedEvent);
-        return mTempActivity;
+        return (T) mTempActivity;
     }
 
     public static CharSequence getActivityTitle(
@@ -108,13 +116,26 @@ public class ActivityLaunchUtils {
     }
 
     public static void homeScreenOrBust(Context context, UiAutomation uiAutomation) {
+        wakeUpOrBust(context, uiAutomation);
         if (isHomeScreenShowing(context, uiAutomation)) return;
         try {
             uiAutomation.executeAndWaitForEvent(
                     () -> uiAutomation.performGlobalAction(AccessibilityService.GLOBAL_ACTION_HOME),
                     (event) -> isHomeScreenShowing(context, uiAutomation),
-                    TIMEOUT_ASYNC_PROCESSING);
+                    DEFAULT_TIMEOUT_MS);
         } catch (TimeoutException te) {
+            Log.e(LOG_TAG, "Timed out looking for home screen. Dumping window list");
+            final List<AccessibilityWindowInfo> windows = uiAutomation.getWindows();
+            if (windows == null) {
+                Log.e(LOG_TAG, "Window list is null");
+            } else if (windows.isEmpty()) {
+                Log.e(LOG_TAG, "Window list is empty");
+            } else {
+                for (AccessibilityWindowInfo window : windows) {
+                    Log.e(LOG_TAG, window.toString());
+                }
+            }
+
             fail("Unable to reach home screen");
         }
     }
@@ -142,5 +163,33 @@ public class ActivityLaunchUtils {
             }
         }
         return false;
+    }
+
+    private static void wakeUpOrBust(Context context, UiAutomation uiAutomation) {
+        final long deadlineUptimeMillis = SystemClock.uptimeMillis() + DEFAULT_TIMEOUT_MS;
+        final PowerManager powerManager = context.getSystemService(PowerManager.class);
+        do {
+            if (powerManager.isInteractive()) {
+                Log.d(LOG_TAG, "Device is interactive");
+                return;
+            }
+
+            Log.d(LOG_TAG, "Sending wakeup keycode");
+            final long eventTime = SystemClock.uptimeMillis();
+            uiAutomation.injectInputEvent(
+                    new KeyEvent(eventTime, eventTime, KeyEvent.ACTION_DOWN,
+                            KeyEvent.KEYCODE_WAKEUP, 0 /* repeat */, 0 /* metastate */,
+                            KeyCharacterMap.VIRTUAL_KEYBOARD, 0 /* scancode */, 0 /* flags */,
+                            InputDevice.SOURCE_KEYBOARD), true /* sync */);
+            uiAutomation.injectInputEvent(
+                    new KeyEvent(eventTime, eventTime, KeyEvent.ACTION_UP,
+                            KeyEvent.KEYCODE_WAKEUP, 0 /* repeat */, 0 /* metastate */,
+                            KeyCharacterMap.VIRTUAL_KEYBOARD, 0 /* scancode */, 0 /* flags */,
+                            InputDevice.SOURCE_KEYBOARD), true /* sync */);
+            try {
+                Thread.sleep(50);
+            } catch (InterruptedException e) {}
+        } while (SystemClock.uptimeMillis() < deadlineUptimeMillis);
+        fail("Unable to wake up screen");
     }
 }

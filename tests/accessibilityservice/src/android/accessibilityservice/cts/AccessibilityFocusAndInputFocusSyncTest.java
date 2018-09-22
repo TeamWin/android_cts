@@ -14,15 +14,28 @@
 
 package android.accessibilityservice.cts;
 
+import static android.accessibilityservice.cts.utils.ActivityLaunchUtils.launchActivityAndWaitForItToBeOnscreen;
+import static android.accessibilityservice.cts.utils.AsyncUtils.DEFAULT_TIMEOUT_MS;
 import static android.view.accessibility.AccessibilityNodeInfo.ACTION_ACCESSIBILITY_FOCUS;
 import static android.view.accessibility.AccessibilityNodeInfo.ACTION_CLEAR_ACCESSIBILITY_FOCUS;
 
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertNull;
+import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.fail;
+
+import android.accessibilityservice.AccessibilityServiceInfo;
 import android.accessibilityservice.cts.R;
 import android.accessibilityservice.cts.activities.AccessibilityFocusAndInputFocusSyncActivity;
 import android.app.Instrumentation;
 import android.app.UiAutomation;
 import android.platform.test.annotations.Presubmit;
+import android.support.test.InstrumentationRegistry;
 import android.support.test.filters.FlakyTest;
+import android.support.test.rule.ActivityTestRule;
+import android.support.test.runner.AndroidJUnit4;
 import android.test.suitebuilder.annotation.MediumTest;
 import android.view.View;
 import android.view.accessibility.AccessibilityEvent;
@@ -32,49 +45,75 @@ import java.util.LinkedList;
 import java.util.Queue;
 import java.util.concurrent.atomic.AtomicBoolean;
 
+import org.junit.AfterClass;
+import org.junit.Before;
+import org.junit.BeforeClass;
+import org.junit.Rule;
+import org.junit.Test;
+import org.junit.runner.RunWith;
+
 /**
  * Test cases for testing the accessibility focus APIs exposed to accessibility
  * services. These APIs allow moving accessibility focus in the view tree from
  * an AccessiiblityService. Specifically, this activity is for verifying the the
  * sync between accessibility and input focus.
  */
-public class AccessibilityFocusAndInputFocusSyncTest
-        extends AccessibilityActivityTestCase<AccessibilityFocusAndInputFocusSyncActivity>{
+@RunWith(AndroidJUnit4.class)
+public class AccessibilityFocusAndInputFocusSyncTest {
+    private static Instrumentation sInstrumentation;
+    private static UiAutomation sUiAutomation;
 
-    public AccessibilityFocusAndInputFocusSyncTest() {
-        super(AccessibilityFocusAndInputFocusSyncActivity.class);
+    private AccessibilityFocusAndInputFocusSyncActivity mActivity;
+
+    @Rule
+    public ActivityTestRule<AccessibilityFocusAndInputFocusSyncActivity> mActivityRule =
+            new ActivityTestRule<>(AccessibilityFocusAndInputFocusSyncActivity.class, false, false);
+
+    @BeforeClass
+    public static void oneTimeSetup() throws Exception {
+        sInstrumentation = InstrumentationRegistry.getInstrumentation();
+        sUiAutomation = sInstrumentation.getUiAutomation();
+        AccessibilityServiceInfo info = sUiAutomation.getServiceInfo();
+        info.flags |= AccessibilityServiceInfo.FLAG_REQUEST_TOUCH_EXPLORATION_MODE;
+        info.flags &= ~AccessibilityServiceInfo.FLAG_INCLUDE_NOT_IMPORTANT_VIEWS;
+        sUiAutomation.setServiceInfo(info);
+    }
+
+    @AfterClass
+    public static void postTestTearDown() {
+        sUiAutomation.destroy();
+    }
+
+    @Before
+    public void setUp() throws Exception {
+        mActivity = launchActivityAndWaitForItToBeOnscreen(
+                sInstrumentation, sUiAutomation, mActivityRule);
     }
 
     @FlakyTest(bugId = 114543540)
     @MediumTest
     @Presubmit
+    @Test
     public void testFindAccessibilityFocus() throws Exception {
-        getInstrumentation().runOnMainSync(() -> {
-            getActivity().findViewById(R.id.firstEditText).requestFocus();
+        sInstrumentation.runOnMainSync(() -> {
+            mActivity.findViewById(R.id.firstEditText).requestFocus();
         });
         // Get the view that has input and accessibility focus.
-        final AccessibilityNodeInfo expected = getInstrumentation().getUiAutomation()
+        final AccessibilityNodeInfo expected = sUiAutomation
                 .getRootInActiveWindow().findAccessibilityNodeInfosByText(
-                        getString(R.string.firstEditText)).get(0);
+                        sInstrumentation.getContext().getString(R.string.firstEditText)).get(0);
         assertNotNull(expected);
         assertFalse(expected.isAccessibilityFocused());
         assertTrue(expected.isFocused());
 
-        getInstrumentation().getUiAutomation().executeAndWaitForEvent(new Runnable() {
-            @Override
-            public void run() {
-                // Perform a focus action and check for success.
-                assertTrue(expected.performAction(ACTION_ACCESSIBILITY_FOCUS));
-            }
-        }, new UiAutomation.AccessibilityEventFilter() {
-            @Override
-            public boolean accept(AccessibilityEvent event) {
-                return event.getEventType() == AccessibilityEvent.TYPE_VIEW_ACCESSIBILITY_FOCUSED;
-            }
-        }, TIMEOUT_ASYNC_PROCESSING);
+        sUiAutomation.executeAndWaitForEvent(
+                () -> assertTrue(expected.performAction(ACTION_ACCESSIBILITY_FOCUS)),
+                (event) ->
+                        event.getEventType() == AccessibilityEvent.TYPE_VIEW_ACCESSIBILITY_FOCUSED,
+                DEFAULT_TIMEOUT_MS);
 
         // Get the second expected node info.
-        AccessibilityNodeInfo received = getInstrumentation().getUiAutomation()
+        AccessibilityNodeInfo received = sUiAutomation
                 .getRootInActiveWindow().findFocus(AccessibilityNodeInfo.FOCUS_ACCESSIBILITY);
         assertNotNull(received);
         assertTrue(received.isAccessibilityFocused());
@@ -85,34 +124,29 @@ public class AccessibilityFocusAndInputFocusSyncTest
 
     @MediumTest
     @Presubmit
+    @Test
     public void testInitialStateNoAccessibilityFocus() throws Exception {
         // Get the root which is only accessibility focused.
-        AccessibilityNodeInfo focused = getInstrumentation().getUiAutomation()
+        AccessibilityNodeInfo focused = sUiAutomation
                 .getRootInActiveWindow().findFocus(AccessibilityNodeInfo.FOCUS_ACCESSIBILITY);
         assertNull(focused);
     }
 
     @MediumTest
+    @Test
     public void testActionAccessibilityFocus() throws Exception {
         // Get the root linear layout info.
-        final AccessibilityNodeInfo rootLinearLayout = getInstrumentation().getUiAutomation()
+        final AccessibilityNodeInfo rootLinearLayout = sUiAutomation
                 .getRootInActiveWindow().findAccessibilityNodeInfosByText(
-                        getString(R.string.rootLinearLayout)).get(0);
+                        sInstrumentation.getContext().getString(R.string.rootLinearLayout)).get(0);
         assertNotNull(rootLinearLayout);
         assertFalse(rootLinearLayout.isAccessibilityFocused());
 
-        getInstrumentation().getUiAutomation().executeAndWaitForEvent(new Runnable() {
-            @Override
-            public void run() {
-                // Perform a focus action and check for success.
-                assertTrue(rootLinearLayout.performAction(ACTION_ACCESSIBILITY_FOCUS));
-            }
-        }, new UiAutomation.AccessibilityEventFilter() {
-            @Override
-            public boolean accept(AccessibilityEvent event) {
-                return event.getEventType() == AccessibilityEvent.TYPE_VIEW_ACCESSIBILITY_FOCUSED;
-            }
-        }, TIMEOUT_ASYNC_PROCESSING);
+        sUiAutomation.executeAndWaitForEvent(
+                () -> assertTrue(rootLinearLayout.performAction(ACTION_ACCESSIBILITY_FOCUS)),
+                (event) ->
+                        event.getEventType() == AccessibilityEvent.TYPE_VIEW_ACCESSIBILITY_FOCUSED,
+                DEFAULT_TIMEOUT_MS);
 
         // Get the node info again.
         rootLinearLayout.refresh();
@@ -123,25 +157,19 @@ public class AccessibilityFocusAndInputFocusSyncTest
 
     @MediumTest
     @Presubmit
+    @Test
     public void testActionClearAccessibilityFocus() throws Exception {
         // Get the root linear layout info.
-        final AccessibilityNodeInfo rootLinearLayout = getInstrumentation().getUiAutomation()
+        final AccessibilityNodeInfo rootLinearLayout = sUiAutomation
                 .getRootInActiveWindow().findAccessibilityNodeInfosByText(
-                        getString(R.string.rootLinearLayout)).get(0);
+                        sInstrumentation.getContext().getString(R.string.rootLinearLayout)).get(0);
         assertNotNull(rootLinearLayout);
 
-        getInstrumentation().getUiAutomation().executeAndWaitForEvent(new Runnable() {
-            @Override
-            public void run() {
-                // Perform a focus action and check for success.
-                assertTrue(rootLinearLayout.performAction(ACTION_ACCESSIBILITY_FOCUS));
-            }
-        }, new UiAutomation.AccessibilityEventFilter() {
-            @Override
-            public boolean accept(AccessibilityEvent event) {
-                return event.getEventType() == AccessibilityEvent.TYPE_VIEW_ACCESSIBILITY_FOCUSED;
-            }
-        }, TIMEOUT_ASYNC_PROCESSING);
+        sUiAutomation.executeAndWaitForEvent(
+                () -> assertTrue(rootLinearLayout.performAction(ACTION_ACCESSIBILITY_FOCUS)),
+                (event) ->
+                        event.getEventType() == AccessibilityEvent.TYPE_VIEW_ACCESSIBILITY_FOCUSED,
+                DEFAULT_TIMEOUT_MS);
 
         // Refresh the node info.
         rootLinearLayout.refresh();
@@ -149,19 +177,11 @@ public class AccessibilityFocusAndInputFocusSyncTest
         // Check if the node info is focused.
         assertTrue(rootLinearLayout.isAccessibilityFocused());
 
-        getInstrumentation().getUiAutomation().executeAndWaitForEvent(new Runnable() {
-            @Override
-            public void run() {
-                // Perform a clear focus action and check for success.
-                assertTrue(rootLinearLayout.performAction(ACTION_CLEAR_ACCESSIBILITY_FOCUS));
-            }
-        }, new UiAutomation.AccessibilityEventFilter() {
-            @Override
-            public boolean accept(AccessibilityEvent event) {
-                return event.getEventType()
-                        == AccessibilityEvent.TYPE_VIEW_ACCESSIBILITY_FOCUS_CLEARED;
-            }
-        }, TIMEOUT_ASYNC_PROCESSING);
+        sUiAutomation.executeAndWaitForEvent(
+                () -> assertTrue(rootLinearLayout.performAction(ACTION_CLEAR_ACCESSIBILITY_FOCUS)),
+                (event) -> event.getEventType()
+                        == AccessibilityEvent.TYPE_VIEW_ACCESSIBILITY_FOCUS_CLEARED,
+                DEFAULT_TIMEOUT_MS);
 
         // Refresh the node info.
         rootLinearLayout.refresh();
@@ -173,56 +193,42 @@ public class AccessibilityFocusAndInputFocusSyncTest
     @FlakyTest(bugId = 116260122)
     @MediumTest
     @Presubmit
+    @Test
     public void testOnlyOneNodeHasAccessibilityFocus() throws Exception {
         // Get the first not focused edit text.
-        final AccessibilityNodeInfo firstEditText = getInstrumentation().getUiAutomation()
+        final AccessibilityNodeInfo firstEditText = sUiAutomation
                 .getRootInActiveWindow().findAccessibilityNodeInfosByText(
-                        getString(R.string.firstEditText)).get(0);
+                        sInstrumentation.getContext().getString(R.string.firstEditText)).get(0);
         assertNotNull(firstEditText);
         assertTrue(firstEditText.isFocusable());
         assertFalse(firstEditText.isAccessibilityFocused());
 
-        getInstrumentation().getUiAutomation().executeAndWaitForEvent(new Runnable() {
-            @Override
-            public void run() {
-                // Perform a set focus action and check for success.
-                assertTrue(firstEditText.performAction(ACTION_ACCESSIBILITY_FOCUS));
-            }
-        }, new UiAutomation.AccessibilityEventFilter() {
-            @Override
-            public boolean accept(AccessibilityEvent event) {
-                return event.getEventType() == AccessibilityEvent.TYPE_VIEW_ACCESSIBILITY_FOCUSED;
-            }
-        }, TIMEOUT_ASYNC_PROCESSING);
+        sUiAutomation.executeAndWaitForEvent(
+                () -> assertTrue(firstEditText.performAction(ACTION_ACCESSIBILITY_FOCUS)),
+                (event) ->
+                        event.getEventType() == AccessibilityEvent.TYPE_VIEW_ACCESSIBILITY_FOCUSED,
+                DEFAULT_TIMEOUT_MS);
 
         // Get the second not focused edit text.
-        final AccessibilityNodeInfo secondEditText = getInstrumentation().getUiAutomation()
+        final AccessibilityNodeInfo secondEditText = sUiAutomation
                 .getRootInActiveWindow().findAccessibilityNodeInfosByText(
-                        getString(R.string.secondEditText)).get(0);
+                        sInstrumentation.getContext().getString(R.string.secondEditText)).get(0);
         assertNotNull(secondEditText);
         assertTrue(secondEditText.isFocusable());
         assertFalse(secondEditText.isFocused());
         assertFalse(secondEditText.isAccessibilityFocused());
 
-        getInstrumentation().getUiAutomation().executeAndWaitForEvent(new Runnable() {
-            @Override
-            public void run() {
-                // Perform a set focus action and check for success.
-                assertTrue(secondEditText.performAction(ACTION_ACCESSIBILITY_FOCUS));
-
-            }
-        }, new UiAutomation.AccessibilityEventFilter() {
-            @Override
-            public boolean accept(AccessibilityEvent event) {
-                return event.getEventType() == AccessibilityEvent.TYPE_VIEW_ACCESSIBILITY_FOCUSED;
-            }
-        }, TIMEOUT_ASYNC_PROCESSING);
+        sUiAutomation.executeAndWaitForEvent(
+                () -> assertTrue(secondEditText.performAction(ACTION_ACCESSIBILITY_FOCUS)),
+                (event) ->
+                        event.getEventType() == AccessibilityEvent.TYPE_VIEW_ACCESSIBILITY_FOCUSED,
+                DEFAULT_TIMEOUT_MS);
 
         // Get the node info again.
         secondEditText.refresh();
 
         // Make sure no other node has accessibility focus.
-        AccessibilityNodeInfo root = getInstrumentation().getUiAutomation().getRootInActiveWindow();
+        AccessibilityNodeInfo root = sUiAutomation.getRootInActiveWindow();
         Queue<AccessibilityNodeInfo> workQueue = new LinkedList<AccessibilityNodeInfo>();
         workQueue.add(root);
         while (!workQueue.isEmpty()) {
@@ -241,18 +247,18 @@ public class AccessibilityFocusAndInputFocusSyncTest
     }
 
     @Presubmit
+    @Test
     public void testScreenReaderFocusableAttribute_reportedToAccessibility() {
-        final Instrumentation instrumentation = getInstrumentation();
-        final UiAutomation uiAutomation = instrumentation.getUiAutomation();
-        final AccessibilityNodeInfo secondButton = uiAutomation.getRootInActiveWindow()
-                .findAccessibilityNodeInfosByText(getString(R.string.secondButton)).get(0);
+        final AccessibilityNodeInfo secondButton = sUiAutomation.getRootInActiveWindow()
+                .findAccessibilityNodeInfosByText(
+                        sInstrumentation.getContext().getString(R.string.secondButton)).get(0);
         assertTrue("Screen reader focusability not propagated from xml to accessibility",
                 secondButton.isScreenReaderFocusable());
 
         // Verify the setter and getter work
         final AtomicBoolean isScreenReaderFocusableAtomic = new AtomicBoolean(false);
-        instrumentation.runOnMainSync(() -> {
-            View secondButtonView = getActivity().findViewById(R.id.secondButton);
+        sInstrumentation.runOnMainSync(() -> {
+            View secondButtonView = mActivity.findViewById(R.id.secondButton);
             secondButtonView.setScreenReaderFocusable(false);
             isScreenReaderFocusableAtomic.set(secondButtonView.isScreenReaderFocusable());
         });
