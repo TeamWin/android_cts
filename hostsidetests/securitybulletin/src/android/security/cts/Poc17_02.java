@@ -29,4 +29,16 @@ public class Poc17_02 extends SecurityTestCase {
       String logcatOut = AdbUtils.runCommandLine("logcat -d", getDevice());
       assertNotMatches("[\\s\\n\\S]*Bugreports file in wrong path[\\s\\n\\S]*", logcatOut);
   }
+
+   /**
+   *  b/32706020
+   */
+  @SecurityTest(minPatchLevel = "2017-02")
+  public void testPocCVE_2017_0415() throws Exception {
+      AdbUtils.runCommandLine("logcat -c", getDevice());
+      AdbUtils.runPoc("CVE-2017-0415", getDevice(), 60);
+      String logcatOut = AdbUtils.runCommandLine("logcat -d", getDevice());
+      assertNotMatchesMultiLine("Fatal signal[\\s\\S]*>>> /system/bin/mediaserver <<<",
+          logcatOut);
+  }
 }
