@@ -79,6 +79,31 @@
 
         <activity android:name="android.server.am.ActivityManagerMultiDisplayTests$EditTestActivity" />
 
+        <activity android:name="android.server.am.lifecycle.ActivityStarterTests$StandardActivity"
+                  android:exported="true" />
+
+        <activity android:name="android.server.am.lifecycle.ActivityStarterTests$SecondStandardActivity"
+                  android:exported="true" />
+
+        <activity android:name="android.server.am.lifecycle.ActivityStarterTests$StandardWithSingleTopActivity"
+                  android:exported="true" />
+
+        <activity android:name="android.server.am.lifecycle.ActivityStarterTests$SingleTopActivity"
+                  android:launchMode="singleTop"
+                  android:exported="true" />
+
+        <activity android:name="android.server.am.lifecycle.ActivityStarterTests$SingleInstanceActivity"
+                  android:launchMode="singleInstance"
+                  android:exported="true" />
+
+        <activity android:name="android.server.am.lifecycle.ActivityStarterTests$SingleTaskActivity"
+                  android:launchMode="singleTask"
+                  android:exported="true" />
+
+        <activity android:name="android.server.am.lifecycle.ActivityStarterTests$TestLaunchingActivity"
+                  android:taskAffinity="nobody.but.LaunchingActivity"
+                  android:exported="true" />
+
     </application>
 
     <instrumentation
