@@ -95,6 +95,10 @@ public class ActivityLauncher {
      * Key for int extra with target activity type where activity should be launched as.
      */
     public static final String KEY_ACTIVITY_TYPE = "activity_type";
+    /**
+     * Key for int extra with intent flags which are used for launching an activity.
+     */
+    public static final String KEY_INTENT_FLAGS = "intent_flags";
 
 
     /** Perform an activity launch configured by provided extras. */
@@ -150,6 +154,10 @@ public class ActivityLauncher {
                 options = ActivityOptions.makeBasic();
             }
             options.setLaunchActivityType(activityType);
+        }
+        final int intentFlags = extras.getInt(KEY_INTENT_FLAGS); // 0 if key doesn't exist.
+        if (intentFlags != 0) {
+            newIntent.addFlags(intentFlags);
         }
         final Bundle optionsBundle = options != null ? options.toBundle() : null;
 

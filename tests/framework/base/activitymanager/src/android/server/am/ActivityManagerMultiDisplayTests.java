@@ -20,7 +20,6 @@ import static android.app.WindowConfiguration.ACTIVITY_TYPE_ASSISTANT;
 import static android.app.WindowConfiguration.ACTIVITY_TYPE_HOME;
 import static android.app.WindowConfiguration.ACTIVITY_TYPE_RECENTS;
 import static android.app.WindowConfiguration.ACTIVITY_TYPE_STANDARD;
-import static android.app.WindowConfiguration.WINDOWING_MODE_SPLIT_SCREEN_PRIMARY;
 import static android.app.WindowConfiguration.WINDOWING_MODE_SPLIT_SCREEN_SECONDARY;
 import static android.content.Intent.FLAG_ACTIVITY_MULTIPLE_TASK;
 import static android.content.Intent.FLAG_ACTIVITY_NEW_TASK;
@@ -194,7 +193,7 @@ public class ActivityManagerMultiDisplayTests extends ActivityManagerDisplayTest
 
     /**
      * Tests launching a non-resizeable activity on virtual display. It should land on the
-     * default display.
+     * virtual display.
      */
     @Test
     @FlakyTest(bugId = 112055644)
@@ -206,74 +205,45 @@ public class ActivityManagerMultiDisplayTests extends ActivityManagerDisplayTest
             // Launch activity on new secondary display.
             launchActivityOnDisplay(NON_RESIZEABLE_ACTIVITY, newDisplay.mId);
 
-            waitAndAssertTopResumedActivity(NON_RESIZEABLE_ACTIVITY, DEFAULT_DISPLAY,
+            waitAndAssertTopResumedActivity(NON_RESIZEABLE_ACTIVITY, newDisplay.mId,
                     "Activity requested to launch on secondary display must be focused");
         }
     }
 
     /**
-     * Tests launching a non-resizeable activity on virtual display while split-screen is active
-     * on the primary display. It should land on the primary display and dismiss docked stack.
-     */
-    @Test
-    @FlakyTest(bugId = 112055644)
-    public void testLaunchNonResizeableActivityWithSplitScreen() throws Exception {
-        assumeTrue(supportsSplitScreenMultiWindow());
-
-        // Start launching activity.
-        launchActivitiesInSplitScreen(
-                getLaunchActivityBuilder().setTargetActivity(LAUNCHING_ACTIVITY),
-                getLaunchActivityBuilder().setTargetActivity(TEST_ACTIVITY));
-
-        try (final VirtualDisplaySession virtualDisplaySession = new VirtualDisplaySession()) {
-            // Create new virtual display.
-            final ActivityDisplay newDisplay = virtualDisplaySession.setLaunchInSplitScreen(true)
-                    .createDisplay();
-
-            // Launch activity on new secondary display.
-            launchActivityOnDisplay(NON_RESIZEABLE_ACTIVITY, newDisplay.mId);
-
-            waitAndAssertTopResumedActivity(NON_RESIZEABLE_ACTIVITY, DEFAULT_DISPLAY,
-                    "Activity requested to launch on secondary display must be focused");
-            mAmWmState.assertDoesNotContainStack("Must not contain docked stack.",
-                    WINDOWING_MODE_SPLIT_SCREEN_PRIMARY, ACTIVITY_TYPE_STANDARD);
-        }
-    }
-
-    /**
-     * Tests moving a non-resizeable activity to a virtual display. It should stay on the default
-     * display with no action performed.
+     * Tests successfully moving a non-resizeable activity to a virtual display.
      */
     @Test
     public void testMoveNonResizeableActivityToSecondaryDisplay() throws Exception {
-        try (final VirtualDisplaySession virtualDisplaySession = new VirtualDisplaySession()) {
+        try (final VirtualDisplayLauncher virtualLauncher = new VirtualDisplayLauncher()) {
             // Create new virtual display.
-            final ActivityDisplay newDisplay = virtualDisplaySession.createDisplay();
+            final ActivityDisplay newDisplay = virtualLauncher.createDisplay();
             // Launch a non-resizeable activity on a primary display.
-            launchActivityInNewTask(NON_RESIZEABLE_ACTIVITY);
+            final ActivitySession nonResizeableSession = virtualLauncher.launchActivity(
+                    builder -> builder.setTargetActivity(NON_RESIZEABLE_ACTIVITY).setNewTask(true));
+
             // Launch a resizeable activity on new secondary display to create a new stack there.
-            launchActivityOnDisplay(RESIZEABLE_ACTIVITY, newDisplay.mId);
+            virtualLauncher.launchActivityOnDisplay(RESIZEABLE_ACTIVITY, newDisplay);
             final int externalFrontStackId = mAmWmState.getAmState()
                     .getFrontStackId(newDisplay.mId);
 
-            // Try to move the non-resizeable activity to new secondary display.
+            // Clear lifecycle callback history before moving the activity so the later verification
+            // can get the callbacks which are related to the reparenting.
+            nonResizeableSession.takeCallbackHistory();
+
+            // Try to move the non-resizeable activity to the top of stack on secondary display.
             moveActivityToStack(NON_RESIZEABLE_ACTIVITY, externalFrontStackId);
-            // Wait for a while to check that it won't move
+            // Wait for a while to check that it will move.
             mAmWmState.waitForWithAmState(state ->
                     newDisplay.mId == state.getDisplayByActivity(NON_RESIZEABLE_ACTIVITY),
-                    "Waiting to see if activity won't be moved");
-            assertNotEquals("Non-resizeable activity must not be moved",
+                    "Waiting to see if activity is moved");
+            assertEquals("Non-resizeable activity should be moved",
                     newDisplay.mId,
                     mAmWmState.getAmState().getDisplayByActivity(NON_RESIZEABLE_ACTIVITY));
 
-            waitAndAssertTopResumedActivity(RESIZEABLE_ACTIVITY, newDisplay.mId,
-                    "Last launched activity must be focused");
-            mAmWmState.assertResumedActivities("Resumed activity states mustn't change",
-                    new SparseArray<ComponentName>(){{
-                        put(DEFAULT_DISPLAY, NON_RESIZEABLE_ACTIVITY);
-                        put(newDisplay.mId, RESIZEABLE_ACTIVITY);
-                    }}
-            );
+            waitAndAssertTopResumedActivity(NON_RESIZEABLE_ACTIVITY, newDisplay.mId,
+                    "The moved non-resizeable activity must be focused");
+            assertActivityLifecycle(nonResizeableSession, true /* relaunched */);
         }
     }
 
@@ -303,7 +273,7 @@ public class ActivityManagerMultiDisplayTests extends ActivityManagerDisplayTest
 
     /**
      * Tests launching a non-resizeable activity on virtual display in a new task from activity
-     * there. It must land on some different suitable display (usually - on the default one).
+     * there. It must land on the display as its caller.
      */
     @Test
     @FlakyTest(bugId = 112055644)
@@ -321,11 +291,11 @@ public class ActivityManagerMultiDisplayTests extends ActivityManagerDisplayTest
             getLaunchActivityBuilder().setTargetActivity(NON_RESIZEABLE_ACTIVITY)
                     .setNewTask(true).setMultipleTask(true).execute();
 
-            // Check that non-resizeable activity is on a different display.
+            // Check that non-resizeable activity is on the same display.
             final int newFrontStackId = mAmWmState.getAmState().getFocusedStackId();
             final ActivityStack newFrontStack =
                     mAmWmState.getAmState().getStackById(newFrontStackId);
-            assertFalse("Launched activity must be on a different display",
+            assertTrue("Launched activity must be on the same display",
                     newDisplay.mId == newFrontStack.mDisplayId);
             assertEquals("Launched activity must be resumed",
                     getActivityName(NON_RESIZEABLE_ACTIVITY),
@@ -1310,8 +1280,10 @@ public class ActivityManagerMultiDisplayTests extends ActivityManagerDisplayTest
      */
     @Test
     public void testMoveToEmptyDisplayOnLaunch() throws Exception {
-        // Launch activity with unique affinity, so it will the only one in its task.
-        launchActivity(LAUNCHING_ACTIVITY);
+        // Launch activity with unique affinity, so it will the only one in its task. And choose
+        // resizeable activity to prevent the test activity be relaunched when launch it to another
+        // display, which may affect on this test case.
+        launchActivity(RESIZEABLE_ACTIVITY);
 
         try (final VirtualDisplaySession virtualDisplaySession = new VirtualDisplaySession()) {
             // Create new virtual display.
@@ -1325,12 +1297,12 @@ public class ActivityManagerMultiDisplayTests extends ActivityManagerDisplayTest
             // {@link Intent#FLAG_ACTIVITY_NEW_TASK} and {@link Intent#FLAG_ACTIVITY_MULTIPLE_TASK}
             // when launching on some specific display. We don't do it here as we want an existing
             // task to be used.
-            final String launchCommand = "am start -n " + getActivityName(LAUNCHING_ACTIVITY)
+            final String launchCommand = "am start -n " + getActivityName(RESIZEABLE_ACTIVITY)
                     + " --display " + newDisplay.mId;
             executeShellCommand(launchCommand);
 
             // Check that activity is brought to front.
-            waitAndAssertTopResumedActivity(LAUNCHING_ACTIVITY, newDisplay.mId,
+            waitAndAssertTopResumedActivity(RESIZEABLE_ACTIVITY, newDisplay.mId,
                     "Existing task must be brought to front");
 
             // Check that task has moved from primary display to secondary.
@@ -1902,7 +1874,7 @@ public class ActivityManagerMultiDisplayTests extends ActivityManagerDisplayTest
      */
     @Test
     public void testSecondaryDisplayShowToast() throws Exception {
-        try (final VirtualDisplaySession virtualDisplaySession = new VirtualDisplaySession()){
+        try (final VirtualDisplaySession virtualDisplaySession = new VirtualDisplaySession()) {
             final ActivityDisplay newDisplay =
                     virtualDisplaySession.setPublicDisplay(true).createDisplay();
             final String TOAST_NAME = "Toast";
@@ -1917,6 +1889,43 @@ public class ActivityManagerMultiDisplayTests extends ActivityManagerDisplayTest
             assertTrue("Toast window must be visible",
                     mAmWmState.getWmState().isWindowVisible(TOAST_NAME));
         }
+    }
+
+    /**
+     * Tests that the surface size of a fullscreen task is same as its display's surface size.
+     * Also check that the surface size has updated after reparenting to other display.
+     */
+    @Test
+    public void testTaskSurfaceSizeAfterReparentDisplay() throws Exception {
+        try (final VirtualDisplaySession virtualDisplaySession = new VirtualDisplaySession()) {
+            // Create new simulated display and launch an activity on it.
+            final ActivityDisplay newDisplay = virtualDisplaySession.setSimulateDisplay(true)
+                    .createDisplay();
+            launchActivityOnDisplay(LAUNCHING_ACTIVITY, newDisplay.mId);
+
+            waitAndAssertTopResumedActivity(LAUNCHING_ACTIVITY, newDisplay.mId,
+                    "Top activity must be the newly launched one");
+            assertTopTaskSameSurfaceSizeWithDisplay(newDisplay.mId);
+
+            // Destroy the display.
+        }
+
+        // Check the surface size after task was reparented to default display.
+        waitAndAssertTopResumedActivity(LAUNCHING_ACTIVITY, DEFAULT_DISPLAY,
+                "Top activity must be reparented to default display");
+        assertTopTaskSameSurfaceSizeWithDisplay(DEFAULT_DISPLAY);
+    }
+
+    private void assertTopTaskSameSurfaceSizeWithDisplay(int displayId) {
+        final WindowManagerState.Display display = mAmWmState.getWmState().getDisplay(displayId);
+        final int stackId = mAmWmState.getWmState().getFrontStackId(displayId);
+        final WindowManagerState.WindowTask task =
+                mAmWmState.getWmState().getStack(stackId).mTasks.get(0);
+
+        assertEquals("Task must have same surface width with its display",
+                display.getSurfaceSize(), task.getSurfaceWidth());
+        assertEquals("Task must have same surface height with its display",
+                display.getSurfaceSize(), task.getSurfaceHeight());
     }
 
     private class ExternalDisplaySession implements AutoCloseable {

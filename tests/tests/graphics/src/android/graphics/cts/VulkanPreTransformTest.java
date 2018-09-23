@@ -19,10 +19,13 @@ package android.graphics.cts;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 
+import android.content.Context;
+import android.content.pm.PackageManager;
 import android.graphics.Bitmap;
 import android.graphics.Color;
 import android.graphics.Rect;
 import android.os.SystemClock;
+import android.support.test.InstrumentationRegistry;
 import android.support.test.rule.ActivityTestRule;
 import android.support.test.runner.AndroidJUnit4;
 import android.test.suitebuilder.annotation.LargeTest;
@@ -75,6 +78,7 @@ public class VulkanPreTransformTest {
     private static final String TAG = VulkanPreTransformTest.class.getSimpleName();
     private static final boolean DEBUG = false;
     private static VulkanPreTransformCtsActivity sActivity = null;
+    private Context mContext;
 
     @Rule
     public ActivityTestRule<VulkanPreTransformCtsActivity> mActivityRule =
@@ -86,11 +90,17 @@ public class VulkanPreTransformTest {
         // Work around for b/77148807
         // Activity was falsely created before ActivityManager set config change to landscape
         SystemClock.sleep(2000);
+        mContext = InstrumentationRegistry.getContext();
     }
 
     @Test
     public void testVulkanPreTransformSetToMatchCurrentTransform() throws Throwable {
         Log.d(TAG, "testVulkanPreTransformSetToMatchCurrentTransform start");
+        if (!hasDeviceFeature(PackageManager.FEATURE_SCREEN_PORTRAIT)
+                || !hasDeviceFeature(PackageManager.FEATURE_SCREEN_LANDSCAPE)) {
+            Log.d(TAG, "Rotation is not supported on this device.");
+            return;
+        }
         sActivity = mActivityRule.launchActivity(null);
         sActivity.testVulkanPreTransform(true);
         sActivity.finish();
@@ -100,10 +110,19 @@ public class VulkanPreTransformTest {
     @Test
     public void testVulkanPreTransformNotSetToMatchCurrentTransform() throws Throwable {
         Log.d(TAG, "testVulkanPreTransformNotSetToMatchCurrentTransform start");
+        if (!hasDeviceFeature(PackageManager.FEATURE_SCREEN_PORTRAIT)
+                || !hasDeviceFeature(PackageManager.FEATURE_SCREEN_LANDSCAPE)) {
+            Log.d(TAG, "Rotation is not supported on this device.");
+            return;
+        }
         sActivity = mActivityRule.launchActivity(null);
         sActivity.testVulkanPreTransform(false);
         sActivity.finish();
         sActivity = null;
+    }
+
+    private boolean hasDeviceFeature(final String requiredFeature) {
+        return mContext.getPackageManager().hasSystemFeature(requiredFeature);
     }
 
     private static Bitmap takeScreenshot() {

@@ -26,6 +26,11 @@ import android.util.Log;
 import com.android.compatibility.common.util.SystemUtil;
 
 import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
+import java.io.InputStream;
+import java.io.OutputStream;
 
 public class SQLiteWalTest extends AndroidTestCase {
     private static final String TAG = "SQLiteWalTest";
@@ -58,17 +63,26 @@ public class SQLiteWalTest extends AndroidTestCase {
                 + value);
     }
 
-    private void copyFile(String from, String to) {
-        SystemUtil.runShellCommand("rm -f " + to);
-        SystemUtil.runShellCommand("cp -p " + from + " " + to);
+    private void copyFile(String from, String to) throws Exception {
+        (new File(to)).delete();
+
+        try (InputStream in = new FileInputStream(from)) {
+            try (OutputStream out = new FileOutputStream(to)) {
+                byte[] buf = new byte[1024 * 32];
+                int len;
+                while ((len = in.read(buf)) > 0) {
+                    out.write(buf, 0, len);
+                }
+            }
+        }
     }
 
-    private void backupFile(String from) {
-        SystemUtil.runShellCommand("cp -p " + from + " " + from + BACKUP_SUFFIX);
+    private void backupFile(String from) throws Exception {
+        copyFile(from, from + BACKUP_SUFFIX);
     }
 
-    private void restoreFile(String from) {
-        SystemUtil.runShellCommand("cp -p " + from + BACKUP_SUFFIX + " " + from);
+    private void restoreFile(String from) throws Exception {
+        copyFile(from + BACKUP_SUFFIX, from);
     }
 
     private SQLiteDatabase openDatabase() {
@@ -108,7 +122,7 @@ public class SQLiteWalTest extends AndroidTestCase {
      * Open a WAL database when the WAL file size is bigger than the threshold, and make sure
      * the file gets truncated.
      */
-    public void testWalTruncate() {
+    public void testWalTruncate() throws Exception {
         mContext.deleteDatabase(DB_FILE);
 
         // Truncate the WAL file if it's bigger than 1 byte.
@@ -125,7 +139,7 @@ public class SQLiteWalTest extends AndroidTestCase {
      * Open a WAL database when the WAL file size is smaller than the threshold, and make sure
      * the file does *not* get truncated.
      */
-    public void testWalNoTruncate() {
+    public void testWalNoTruncate() throws Exception {
         mContext.deleteDatabase(DB_FILE);
 
         setCompatibilityWalFlags(TRUNCATE_SIZE_KEY + "=1000000");
@@ -139,7 +153,7 @@ public class SQLiteWalTest extends AndroidTestCase {
     /**
      * When "truncate size" is set to 0, we don't truncate the wal file.
      */
-    public void testWalTruncateDisabled() {
+    public void testWalTruncateDisabled() throws Exception {
         mContext.deleteDatabase(DB_FILE);
 
         setCompatibilityWalFlags(TRUNCATE_SIZE_KEY + "=0");
@@ -150,7 +164,7 @@ public class SQLiteWalTest extends AndroidTestCase {
         assertTrue((new File(db.getPath() + WAL_SUFFIX)).length() > 0);
     }
 
-    private SQLiteDatabase doOperation(String message) {
+    private SQLiteDatabase doOperation(String message) throws Exception {
         listFiles(message + ": start");
 
         SQLiteDatabase db = prepareDatabase();

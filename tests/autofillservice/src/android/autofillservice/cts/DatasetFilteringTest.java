@@ -17,7 +17,7 @@
 package android.autofillservice.cts;
 
 import static android.autofillservice.cts.Helper.ID_USERNAME;
-import static android.autofillservice.cts.common.ShellHelper.runShellCommand;
+import static android.autofillservice.cts.common.ShellHelper.sendKeyEvent;
 
 import android.autofillservice.cts.CannedFillResponse.CannedDataset;
 import android.content.IntentSender;
@@ -39,10 +39,6 @@ public class DatasetFilteringTest extends AbstractLoginActivityTestCase {
     @AfterClass
     public static void restoreMaxDatasets() throws Exception {
         Helper.setMaxVisibleDatasets(0);
-    }
-
-    private static void sendKeyEvents(String keyCode) {
-        runShellCommand("input keyevent " + keyCode);
     }
 
     private void changeUsername(CharSequence username) {
@@ -136,26 +132,26 @@ public class DatasetFilteringTest extends AbstractLoginActivityTestCase {
         mUiBot.assertDatasets(aa, ab, b);
 
         // Only two datasets start with 'a'
-        sendKeyEvents("KEYCODE_A");
+        sendKeyEvent("KEYCODE_A");
         mUiBot.assertDatasets(aa, ab);
 
         // Only one dataset start with 'aa'
-        sendKeyEvents("KEYCODE_A");
+        sendKeyEvent("KEYCODE_A");
         mUiBot.assertDatasets(aa);
 
         // Only two datasets start with 'a'
-        sendKeyEvents("KEYCODE_DEL");
+        sendKeyEvent("KEYCODE_DEL");
         mUiBot.assertDatasets(aa, ab);
 
         // With no filter text all datasets should be shown
-        sendKeyEvents("KEYCODE_DEL");
+        sendKeyEvent("KEYCODE_DEL");
         mUiBot.assertDatasets(aa, ab, b);
 
         // No dataset start with 'aaa'
         final MyAutofillCallback callback = mActivity.registerCallback();
-        sendKeyEvents("KEYCODE_A");
-        sendKeyEvents("KEYCODE_A");
-        sendKeyEvents("KEYCODE_A");
+        sendKeyEvent("KEYCODE_A");
+        sendKeyEvent("KEYCODE_A");
+        sendKeyEvent("KEYCODE_A");
         callback.assertUiHiddenEvent(mActivity.getUsername());
         mUiBot.assertNoDatasets();
     }
@@ -470,11 +466,11 @@ public class DatasetFilteringTest extends AbstractLoginActivityTestCase {
         mUiBot.assertDatasets(plain, regexPlain, authRegex, kitchnSync);
 
         // All datasets start with 'a'
-        sendKeyEvents("KEYCODE_A");
+        sendKeyEvent("KEYCODE_A");
         mUiBot.assertDatasets(plain, regexPlain, authRegex, kitchnSync);
 
         // Only the regex datasets should start with 'ab'
-        sendKeyEvents("KEYCODE_B");
+        sendKeyEvent("KEYCODE_B");
         mUiBot.assertDatasets(regexPlain, authRegex, kitchnSync);
     }
 }

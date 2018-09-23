@@ -41,6 +41,7 @@ import static android.autofillservice.cts.LoginActivity.BACKDOOR_USERNAME;
 import static android.autofillservice.cts.LoginActivity.ID_USERNAME_CONTAINER;
 import static android.autofillservice.cts.LoginActivity.getWelcomeMessage;
 import static android.autofillservice.cts.common.ShellHelper.runShellCommand;
+import static android.autofillservice.cts.common.ShellHelper.sendKeyEvent;
 import static android.autofillservice.cts.common.ShellHelper.tap;
 import static android.content.Context.CLIPBOARD_SERVICE;
 import static android.service.autofill.FillRequest.FLAG_MANUAL_REQUEST;
@@ -2568,5 +2569,83 @@ public class LoginActivityTest extends AbstractLoginActivityTestCase {
         assertThat(password.getMinTextEms()).isEqualTo(-1);
         assertThat(password.getMaxTextEms()).isEqualTo(-1);
         assertThat(password.getMaxTextLength()).isEqualTo(-1);
+    }
+
+    @Test
+    public void testUiShowOnChangeAfterAutofill() throws Exception {
+        // Set service.
+        enableService();
+
+        // Set expectations.
+        sReplier.addResponse(new CannedDataset.Builder()
+                .setField(ID_USERNAME, "dude", createPresentation("dude"))
+                .setField(ID_PASSWORD, "sweet", createPresentation("sweet"))
+                .build());
+        mActivity.expectAutoFill("dude", "sweet");
+
+        // Trigger auto-fill.
+        requestFocusOnUsername();
+        mUiBot.assertDatasets("dude");
+        sReplier.getNextFillRequest();
+        mUiBot.selectDataset("dude");
+
+        // Check the results.
+        mActivity.assertAutoFilled();
+        mUiBot.assertNoDatasets();
+
+        // Delete a character.
+        sendKeyEvent("KEYCODE_DEL");
+        assertThat(mUiBot.getTextByRelativeId(ID_USERNAME)).isEqualTo("dud");
+
+        mActivity.expectAutoFill("dude", "sweet");
+
+        // Check autofill UI show.
+        final UiObject2 datasetPicker = mUiBot.assertDatasets("dude");
+
+        // Autofill again.
+        mUiBot.selectDataset(datasetPicker, "dude");
+
+        // Check the results.
+        mActivity.assertAutoFilled();
+        mUiBot.assertNoDatasets();
+    }
+
+    @Test
+    public void testUiShowOnChangeAfterAutofillOnePresentation() throws Exception {
+        // Set service.
+        enableService();
+
+        // Set expectations.
+        sReplier.addResponse(new CannedDataset.Builder()
+                .setField(ID_USERNAME, "dude")
+                .setField(ID_PASSWORD, "sweet")
+                .setPresentation(createPresentation("The Dude"))
+                .build());
+        mActivity.expectAutoFill("dude", "sweet");
+
+        // Trigger auto-fill.
+        requestFocusOnUsername();
+        mUiBot.assertDatasets("The Dude");
+        sReplier.getNextFillRequest();
+        mUiBot.selectDataset("The Dude");
+
+        // Check the results.
+        mActivity.assertAutoFilled();
+        mUiBot.assertNoDatasets();
+
+        // Delete username
+        mUiBot.setTextByRelativeId(ID_USERNAME, "");
+
+        mActivity.expectAutoFill("dude", "sweet");
+
+        // Check autofill UI show.
+        final UiObject2 datasetPicker = mUiBot.assertDatasets("The Dude");
+
+        // Autofill again.
+        mUiBot.selectDataset(datasetPicker, "The Dude");
+
+        // Check the results.
+        mActivity.assertAutoFilled();
+        mUiBot.assertNoDatasets();
     }
 }
