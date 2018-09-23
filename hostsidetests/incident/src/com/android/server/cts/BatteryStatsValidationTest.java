@@ -203,7 +203,15 @@ public class BatteryStatsValidationTest extends ProtoDumpTestCase {
         assertValueRange("st", "", STATE_TIME_FOREGROUND_INDEX, 0, 0);
         turnScreenOnForReal();
         assertScreenOn();
-        executeForeground(ACTION_SHOW_APPLICATION_OVERLAY, 2000);
+        String requestCode =
+                executeForeground(ACTION_SHOW_APPLICATION_OVERLAY, 2000);
+
+        // Wait for process state changed from top to foreground of target activity.
+        // Actually, we called finish, but process state changed at onDestroy finally.
+        checkLogcatForText(BG_VS_FG_TAG,
+                getCompletedActionString("onDestroy", requestCode),
+                10 * 1000 /* ActivityStackSupervisor.IDLE_TIMEOUT */);
+
         Thread.sleep(TIME_SPENT_IN_FOREGROUND); // should be in foreground for about this long
         assertApproximateTimeInState(STATE_TIME_FOREGROUND_INDEX, TIME_SPENT_IN_FOREGROUND);
         batteryOffScreenOn();
