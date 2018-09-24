@@ -133,6 +133,12 @@ final class CannedFillResponse {
             new Builder(ResponseType.TIMEOUT).build();
 
 
+    /**
+     * Constant used to call {@link FillCallback#onFailure(CharSequence)} method.
+     */
+    static final CannedFillResponse FAIL =
+            new Builder(ResponseType.FAILURE).build();
+
     String getFailureMessage() {
         return mFailureMessage;
     }
@@ -266,7 +272,8 @@ final class CannedFillResponse {
     enum ResponseType {
         NORMAL,
         NULL,
-        TIMEOUT
+        TIMEOUT,
+        FAILURE
     }
 
     static class Builder {
