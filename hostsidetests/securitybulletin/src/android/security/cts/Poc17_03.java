@@ -51,4 +51,20 @@ public class Poc17_03 extends SecurityTestCase {
         updateKernelStartTime();
         assertEquals(bootCountBefore, bootCountAfter);
     }
+
+
+    /**
+     * b/33621647
+     */
+    @SecurityTest
+    public void testPocCVE_2017_0477() throws Exception {
+        AdbUtils.pushResource("/CVE-2017-0477.gif", "/data/local/tmp/CVE-2017-0477.gif",
+                getDevice());
+        AdbUtils.runCommandLine("logcat -c", getDevice());
+
+        // because runPocGetExitCode() isn't a thing
+        AdbUtils.runCommandLine("chmod +x /data/local/tmp/CVE-2017-0477", getDevice());
+        int code = AdbUtils.runCommandGetExitCode("/data/local/tmp/CVE-2017-0477", getDevice());
+        assertTrue(code != 139); // 128 + signal 11
+    }
 }
