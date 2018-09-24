@@ -388,7 +388,7 @@ public class MagnifierTest {
             final int height = resources.getDimensionPixelSize(
                     com.android.internal.R.dimen.magnifier_height);
             assertEquals(height, magnifier.getHeight());
-            final int elevation = resources.getDimensionPixelSize(
+            final float elevation = resources.getDimension(
                     com.android.internal.R.dimen.magnifier_elevation);
             assertEquals(elevation, magnifier.getElevation(), 0.01f);
             final float zoom = resources.getFloat(com.android.internal.R.dimen.magnifier_zoom);
