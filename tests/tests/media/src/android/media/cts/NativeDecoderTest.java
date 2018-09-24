@@ -159,9 +159,11 @@ public class NativeDecoderTest extends MediaPlayerTestBase {
      */
     private void testExtractor(String path, String[] keys, String[] values) throws Exception {
         int[] jsizes = getSampleSizes(path, keys, values);
-        int[] nsizes = getSampleSizesNativePath(path, keys, values);
+        int[] nsizes = getSampleSizesNativePath(path, keys, values, /* testNativeSource = */ false);
+        int[] nsizes2 = getSampleSizesNativePath(path, keys, values, /* testNativeSource = */ true);
 
         compareArrays("different samplesizes", jsizes, nsizes);
+        compareArrays("different samplesizes native source", jsizes, nsizes2);
     }
 
     private void testExtractor(int res) throws Exception {
@@ -251,7 +253,8 @@ public class NativeDecoderTest extends MediaPlayerTestBase {
     }
 
     private static native int[] getSampleSizesNative(int fd, long offset, long size);
-    private static native int[] getSampleSizesNativePath(String path, String[] keys, String[] values);
+    private static native int[] getSampleSizesNativePath(
+            String path, String[] keys, String[] values, boolean testNativeSource);
 
     public void testExtractorFileDurationNative() throws Exception {
         int res = R.raw.video_1280x720_mp4_h264_1000kbps_25fps_aac_stereo_128kbps_44100hz;
