@@ -61,9 +61,9 @@ public class Poc18_02 extends SecurityTestCase {
        AdbUtils.runCommandLine("logcat -c" , getDevice());
        AdbUtils.runPocNoOutput("CVE-2017-13232", getDevice(), 60);
        String logcatOutput = AdbUtils.runCommandLine("logcat -d", getDevice());
-       assertNotMatchesMultiLine(".*APM_AudioPolicyManager: getOutputForAttr\\(\\) "+
-                                 "invalid attributes: usage=.{1,} content=.{1,} "+
-                                 "flags=.{1,} tags=\\[.{256,}\\].*", logcatOutput);
+       assertNotMatchesMultiLine("APM_AudioPolicyManager: getOutputForAttr\\(\\) " +
+                                 "invalid attributes: usage=.{1,15} content=.{1,15} " +
+                                 "flags=.{1,15} tags=\\[A{256,}\\]", logcatOutput);
      }
 
     /**
@@ -84,4 +84,3 @@ public class Poc18_02 extends SecurityTestCase {
         AdbUtils.runCommandLine("setenforce 1",getDevice());
     }
 }
-
