@@ -210,9 +210,11 @@ public class CommandReceiverActivity extends Activity {
                 case COMMAND_SET_AUTO_TIME_REQUIRED: {
                     mDpm.setAutoTimeRequired(mAdmin,
                             intent.getBooleanExtra(EXTRA_ENFORCED, false));
+                    break;
                 }
                 case COMMAND_SET_LOCK_SCREEN_INFO: {
                     mDpm.setDeviceOwnerLockScreenInfo(mAdmin, intent.getStringExtra(EXTRA_VALUE));
+                    break;
                 }
                 case COMMAND_SET_MAXIMUM_TO_LOCK: {
                     final long timeInSeconds = Long.parseLong(intent.getStringExtra(EXTRA_VALUE));

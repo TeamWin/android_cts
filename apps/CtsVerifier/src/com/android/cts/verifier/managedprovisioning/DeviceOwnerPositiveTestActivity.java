@@ -431,6 +431,13 @@ public class DeviceOwnerPositiveTestActivity extends PassFailButtons.TestListAct
                                 R.string.device_owner_disable_network_logging_button,
                                 createDisableNetworkLoggingIntent())}));
 
+        // Customize lock screen message
+        adapter.add(TestListItem.newTest(this,
+                R.string.device_owner_customize_lockscreen_message,
+                LockscreenMessageTestActivity.class.getName(),
+                new Intent(this, LockscreenMessageTestActivity.class),
+                /* requiredFeatures */ null));
+
         // removeDeviceOwner
         adapter.add(createInteractiveTestItem(this, REMOVE_DEVICE_OWNER_TEST_ID,
                 R.string.device_owner_remove_device_owner_test,
@@ -439,7 +446,6 @@ public class DeviceOwnerPositiveTestActivity extends PassFailButtons.TestListAct
                         R.string.remove_device_owner_button,
                         createTearDownIntent())));
     }
-
 
     static TestListItem createTestItem(Activity activity, String id, int titleRes,
             Intent intent) {
