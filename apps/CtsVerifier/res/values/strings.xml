@@ -2673,6 +2673,16 @@ You should be prompted to select credentials; choose the ones you just installed
         3. Go back to the cts-verifier tests using the back button, then mark the test accordingly.\n
     </string>
 
+    <string name="provisioning_byod_personal_ringtones">Personal ringtones</string>
+    <string name="provisioning_byod_personal_ringtones_instruction">
+        This test verifies that personal ringtones can be changed independently of work profile ringtones.\n
+        1. Press the go button to go to the sound settings page. Under \"Work profile sounds\" turn off the \"use personal profile sounds\" switch.\n
+        2. Change the personal \"Phone ringtone\", \"Default notification sound\", and \"Default alarm sound\" settings to different values.\n
+        3. Read the values displayed under \"Work phone ringtone\", \"Default work notification sound\", and \"Default work alarm sound\".\n
+        4. Verify that the work sounds are different to the personal values just set.\n
+        5. Go back to the cts-verifier tests using the back button, then mark the test accordingly.\n
+    </string>
+
     <string name="provisioning_byod_turn_off_work">Turn off work profile</string>
     <string name="provisioning_byod_turn_off_work_info">This test verifies device behaviors when turning off work profile.</string>
     <string name="provisioning_byod_turn_off_work_instructions">

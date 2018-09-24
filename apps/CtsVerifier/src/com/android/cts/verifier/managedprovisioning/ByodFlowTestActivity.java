@@ -107,6 +107,7 @@ public class ByodFlowTestActivity extends DialogTestListActivity {
     private DialogTestListItem mSelectWorkChallenge;
     private DialogTestListItem mConfirmWorkCredentials;
     private DialogTestListItem mParentProfilePassword;
+    private DialogTestListItem mPersonalRingtonesTest;
     private TestListItem mVpnTest;
     private TestListItem mKeyChainTest;
     private TestListItem mAlwaysOnVpnSettingsTest;
@@ -448,6 +449,12 @@ public class ByodFlowTestActivity extends DialogTestListActivity {
                 R.string.provisioning_byod_parent_profile_password_description,
                 new Intent(ByodHelperActivity.ACTION_TEST_PARENT_PROFILE_PASSWORD));
 
+        mPersonalRingtonesTest = new DialogTestListItem(this,
+                R.string.provisioning_byod_personal_ringtones,
+                "BYOD_PersonalRingtones",
+                R.string.provisioning_byod_personal_ringtones_instruction,
+                new Intent(Settings.ACTION_SOUND_SETTINGS));
+
         final Intent policyTransparencyTestIntent = new Intent(this,
                 PolicyTransparencyTestListActivity.class);
         policyTransparencyTestIntent.putExtra(
@@ -483,6 +490,7 @@ public class ByodFlowTestActivity extends DialogTestListActivity {
         adapter.add(mAppSettingsVisibleTest);
         adapter.add(mLocationSettingsVisibleTest);
         adapter.add(mPrintSettingsVisibleTest);
+        adapter.add(mPersonalRingtonesTest);
 
         adapter.add(mCrossProfileIntentFiltersTestFromPersonal);
         adapter.add(mCrossProfileIntentFiltersTestFromWork);
