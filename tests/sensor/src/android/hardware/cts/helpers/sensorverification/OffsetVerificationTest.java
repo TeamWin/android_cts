@@ -61,7 +61,7 @@ public class OffsetVerificationTest extends TestCase {
 
         // Verify that no values outside the offsets is used
         values = new float[][]{ {10, 10, 10, 0, 0, 0, 1} };
-        runStats(0.0f /* threshold */, values, true /* pass */);
+        runStats(0.1f /* threshold */, values, true /* pass */);
     }
 
     /**
