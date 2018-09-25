@@ -20,7 +20,16 @@
 
 #include <jni.h>
 #include <nativehelper/ScopedLocalRef.h>
+#include <nativetesthelper_jni/utils.h>
 #include <gtest/gtest.h>
+
+static JavaVM* gVm = nullptr;
+JavaVM* GetJavaVM() {
+    return gVm;
+}
+static void RegisterJavaVm(JNIEnv* env) {
+    (void)env->GetJavaVM(&gVm);
+}
 
 namespace {
 
@@ -152,6 +161,8 @@ private:
 extern "C"
 JNIEXPORT void JNICALL
 Java_com_android_gtestrunner_GtestRunner_nInitialize(JNIEnv *env, jclass, jstring className, jobject suite) {
+    RegisterJavaVm(env);
+
     // Initialize gtest, removing the default result printer
     int argc = 1;
     const char* argv[] = { "gtest_wrapper" };
