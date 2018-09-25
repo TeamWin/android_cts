@@ -22,6 +22,7 @@ cc_library_shared {
 
     srcs: [
         "android_binder_cts_ibinder.cpp",
+        "android_binder_cts_ibinder_jni.cpp",
         "android_binder_cts_parcel.cpp",
         "android_binder_cts_status.cpp",
         "utilities.cpp",
