@@ -60,3 +60,15 @@ const char* SampleData::kAnotherDescriptor = "this-is-another-arbitrary-thing";
 const AIBinder_Class* SampleData::kAnotherClass =
     AIBinder_Class_define(SampleData::kAnotherDescriptor, SampleClassOnCreate,
                           SampleClassOnDestroy, SampleClassOnTransact);
+
+JNIEnv* GetEnv() {
+  JavaVM* vm = GetJavaVM();
+  if (vm == nullptr) return nullptr;
+
+  JNIEnv* result = nullptr;
+  jint attach = vm->AttachCurrentThread(&result, nullptr);
+
+  EXPECT_EQ(JNI_OK, attach);
+  EXPECT_NE(nullptr, result);
+  return result;
+}
