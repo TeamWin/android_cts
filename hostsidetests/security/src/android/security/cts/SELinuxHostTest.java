@@ -386,7 +386,8 @@ public class SELinuxHostTest extends DeviceTestCase implements IBuildReceiver, I
      */
     public static boolean isFullTrebleDevice(ITestDevice device)
             throws DeviceNotAvailableException {
-        return PropertyUtil.getFirstApiLevel(device) > 26;
+        return PropertyUtil.getFirstApiLevel(device) > 26 &&
+                PropertyUtil.propertyEquals(device, "ro.treble.enabled", "true");
     }
 
     private boolean isFullTrebleDevice() throws DeviceNotAvailableException {
@@ -399,7 +400,8 @@ public class SELinuxHostTest extends DeviceTestCase implements IBuildReceiver, I
      */
     public static boolean isCompatiblePropertyEnforcedDevice(ITestDevice device)
             throws DeviceNotAvailableException {
-        return PropertyUtil.getFirstApiLevel(device) > 27;
+        return PropertyUtil.propertyEquals(
+                device, "ro.actionable_compatible_property.enabled", "true");
     }
 
     // NOTE: cts/tools/selinux depends on this method. Rename/change with caution.
