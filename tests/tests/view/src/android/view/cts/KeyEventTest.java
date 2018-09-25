@@ -795,7 +795,7 @@ public class KeyEventTest {
     }
 
     // Parcel a KeyEvent, then create a new KeyEvent from this parcel. Return the new KeyEvent
-    public KeyEvent parcelUnparcel(KeyEvent keyEvent) {
+    private KeyEvent parcelUnparcel(KeyEvent keyEvent) {
         Parcel parcel = Parcel.obtain();
         keyEvent.writeToParcel(parcel, Parcelable.PARCELABLE_WRITE_RETURN_VALUE);
         parcel.setDataPosition(0);
