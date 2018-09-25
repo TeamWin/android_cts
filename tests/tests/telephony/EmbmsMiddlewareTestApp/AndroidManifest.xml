@@ -30,6 +30,13 @@
         <action android:name="android.telephony.cts.embmstestapp.ACTION_CONTROL_MIDDLEWARE" />
       </intent-filter>
     </service>
+    <service android:name="android.telephony.cts.embmstestapp.CtsGroupCallService"
+             android:launchMode="singleInstance">
+      <intent-filter>
+        <action android:name="android.telephony.action.EmbmsGroupCall" />
+        <action android:name="android.telephony.cts.embmstestapp.ACTION_CONTROL_MIDDLEWARE" />
+      </intent-filter>
+    </service>
     <service android:name="android.telephony.cts.embmstestapp.CtsDownloadService"
              android:launchMode="singleInstance">
       <intent-filter>
