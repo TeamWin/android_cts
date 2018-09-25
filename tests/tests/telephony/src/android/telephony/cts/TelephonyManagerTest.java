@@ -40,6 +40,8 @@ import android.telecom.TelecomManager;
 import android.telephony.CellLocation;
 import android.telephony.PhoneStateListener;
 import android.telephony.ServiceState;
+import android.telephony.SubscriptionInfo;
+import android.telephony.SubscriptionManager;
 import android.telephony.TelephonyManager;
 import android.text.TextUtils;
 import android.util.Log;
@@ -563,10 +565,21 @@ public class TelephonyManagerTest {
             return;
         }
 
-        for (int i = 0; i < mTelephonyManager.getPhoneCount(); i++) {
-            String meid = mTelephonyManager.getMeid(i);
-            if (!TextUtils.isEmpty(meid)) {
-                assertMeidEsn(meid);
+        SubscriptionManager sm = (SubscriptionManager) getContext()
+                .getSystemService(Context.TELEPHONY_SUBSCRIPTION_SERVICE);
+        List<SubscriptionInfo> subInfos = sm.getActiveSubscriptionInfoList();
+
+        if (subInfos != null) {
+            for (SubscriptionInfo subInfo : subInfos) {
+                int slotIndex = subInfo.getSimSlotIndex();
+                int subId = subInfo.getSubscriptionId();
+                TelephonyManager tm = mTelephonyManager.createForSubscriptionId(subId);
+                if (tm.getPhoneType() == TelephonyManager.PHONE_TYPE_CDMA) {
+                    String meid = mTelephonyManager.getMeid(slotIndex);
+                    if (!TextUtils.isEmpty(meid)) {
+                        assertMeidEsn(meid);
+                    }
+                }
             }
         }
 

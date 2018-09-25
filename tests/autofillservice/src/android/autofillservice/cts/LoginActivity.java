@@ -22,10 +22,12 @@ import android.content.Intent;
 import android.os.Bundle;
 import android.text.TextUtils;
 import android.util.Log;
+import android.view.View;
 import android.view.View.OnClickListener;
 import android.view.inputmethod.InputMethodManager;
 import android.widget.Button;
 import android.widget.EditText;
+import android.widget.LinearLayout;
 import android.widget.TextView;
 
 import java.util.concurrent.CountDownLatch;
@@ -53,6 +55,7 @@ public class LoginActivity extends AbstractAutoFillActivity {
     static final String BACKDOOR_USERNAME = "LemmeIn";
     static final String BACKDOOR_PASSWORD_SUBSTRING = "pass";
 
+    private LinearLayout mUsernameContainer;
     private TextView mUsernameLabel;
     private EditText mUsernameEditText;
     private TextView mPasswordLabel;
@@ -80,6 +83,7 @@ public class LoginActivity extends AbstractAutoFillActivity {
         super.onCreate(savedInstanceState);
         setContentView(getContentView());
 
+        mUsernameContainer = findViewById(R.id.username_container);
         mLoginButton = findViewById(R.id.login);
         mSaveButton = findViewById(R.id.save);
         mClearButton = findViewById(R.id.clear);
@@ -211,6 +215,13 @@ public class LoginActivity extends AbstractAutoFillActivity {
      */
     void onUsername(Visitor<EditText> v) {
         syncRunOnUiThread(() -> v.visit(mUsernameEditText));
+    }
+
+    /**
+     * Clears focus from input fields by focusing on the parent layout.
+     */
+    public void clearFocus() {
+        syncRunOnUiThread(() -> ((View) mUsernameContainer.getParent()).requestFocus());
     }
 
     /**

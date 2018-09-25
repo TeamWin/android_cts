@@ -17,6 +17,7 @@
 package android.autofillservice.cts;
 
 import static android.autofillservice.cts.CannedFillResponse.DO_NOT_REPLY_RESPONSE;
+import static android.autofillservice.cts.CannedFillResponse.FAIL;
 import static android.autofillservice.cts.CannedFillResponse.NO_RESPONSE;
 import static android.autofillservice.cts.Helper.ID_PASSWORD;
 import static android.autofillservice.cts.Helper.ID_PASSWORD_LABEL;
@@ -373,6 +374,40 @@ public class LoginActivityTest extends AbstractLoginActivityTestCase {
                 findNodeByResourceId(request.structure, ID_USERNAME).isFocused()).isTrue();
         assertWithMessage("Password node is focused").that(
                 findNodeByResourceId(request.structure, ID_PASSWORD).isFocused()).isFalse();
+    }
+
+
+    @Test
+    public void testAutofillAgainAfterOnFailure() throws Exception {
+        // Set service.
+        enableService();
+
+        // Set expectations.
+        sReplier.addResponse(FAIL);
+
+        // Trigger autofill.
+        requestFocusOnUsernameNoWindowChange();
+        sReplier.getNextFillRequest();
+        mUiBot.assertNoDatasetsEver();
+
+        // Try again
+        final CannedFillResponse.Builder builder = new CannedFillResponse.Builder()
+                .addDataset(new CannedDataset.Builder()
+                        .setField(ID_USERNAME, "dude")
+                        .setField(ID_PASSWORD, "sweet")
+                        .setPresentation(createPresentation("The Dude"))
+                        .build());
+        sReplier.addResponse(builder.build());
+
+        // Trigger autofill.
+        clearFocus();
+        requestFocusOnUsername();
+        sReplier.getNextFillRequest();
+        mActivity.expectAutoFill("dude", "sweet");
+        mUiBot.selectDataset("The Dude");
+
+        // Check the results.
+        mActivity.assertAutoFilled();
     }
 
     @Test

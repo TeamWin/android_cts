@@ -347,7 +347,8 @@ extern "C" jobject Java_android_media_cts_NativeDecoderTest_getSampleSizesNative
 
 // get the sample sizes for the path
 extern "C" jobject Java_android_media_cts_NativeDecoderTest_getSampleSizesNativePath(JNIEnv *env,
-        jclass /*clazz*/, jstring jpath, jobjectArray jkeys, jobjectArray jvalues)
+        jclass /*clazz*/, jstring jpath, jobjectArray jkeys, jobjectArray jvalues,
+        jboolean testNativeSource)
 {
     AMediaExtractor *ex = AMediaExtractor_new();
 
@@ -356,41 +357,48 @@ extern "C" jobject Java_android_media_cts_NativeDecoderTest_getSampleSizesNative
         return NULL;
     }
 
+    int numkeys = jkeys ? env->GetArrayLength(jkeys) : 0;
+    int numvalues = jvalues ? env->GetArrayLength(jvalues) : 0;
+    int numheaders = numkeys < numvalues ? numkeys : numvalues;
+    const char **key_values = numheaders ? new const char *[numheaders * 2] : NULL;
+    for (int i = 0; i < numheaders; i++) {
+        jstring jkey = (jstring) (env->GetObjectArrayElement(jkeys, i));
+        jstring jvalue = (jstring) (env->GetObjectArrayElement(jvalues, i));
+        const char *key = env->GetStringUTFChars(jkey, NULL);
+        const char *value = env->GetStringUTFChars(jvalue, NULL);
+        key_values[i * 2] = key;
+        key_values[i * 2 + 1] = value;
+    }
+
     int err;
-    if (jkeys == NULL || jvalues == NULL) {
-        err = AMediaExtractor_setDataSource(ex, tmp);
+    AMediaDataSource *src = NULL;
+    if (testNativeSource) {
+        src = AMediaDataSource_newUri(tmp, numheaders, key_values);
+        err = src ? AMediaExtractor_setDataSourceCustom(ex, src) : -1;
     } else {
-        int numkeys = env->GetArrayLength(jkeys);
-        int numvalues = env->GetArrayLength(jvalues);
-        int numheaders = numkeys < numvalues ? numkeys : numvalues;
-        const char **keys = numheaders ? new const char *[numheaders] : NULL;
-        const char **values = numheaders ? new const char *[numheaders] : NULL;
-        for (int i = 0; i < numheaders; i++) {
-            jstring jkey = (jstring) (env->GetObjectArrayElement(jkeys, i));
-            jstring jvalue = (jstring) (env->GetObjectArrayElement(jvalues, i));
-            const char *key = env->GetStringUTFChars(jkey, NULL);
-            const char *value = env->GetStringUTFChars(jvalue, NULL);
-            keys[i] = key;
-            values[i] = value;
-        }
-        err = AMediaExtractor_setDataSourceWithHeaders(ex, tmp, numheaders, keys, values);
-        for (int i = 0; i < numheaders; i++) {
-            jstring jkey = (jstring) (env->GetObjectArrayElement(jkeys, i));
-            jstring jvalue = (jstring) (env->GetObjectArrayElement(jvalues, i));
-            env->ReleaseStringUTFChars(jkey, keys[i]);
-            env->ReleaseStringUTFChars(jvalue, values[i]);
-        }
-        delete[] keys;
-        delete[] values;
+        err = AMediaExtractor_setDataSource(ex, tmp);
+    }
+
+    for (int i = 0; i < numheaders; i++) {
+        jstring jkey = (jstring) (env->GetObjectArrayElement(jkeys, i));
+        jstring jvalue = (jstring) (env->GetObjectArrayElement(jvalues, i));
+        env->ReleaseStringUTFChars(jkey, key_values[i * 2]);
+        env->ReleaseStringUTFChars(jvalue, key_values[i * 2 + 1]);
     }
 
     env->ReleaseStringUTFChars(jpath, tmp);
+    delete[] key_values;
 
     if (err != 0) {
         ALOGE("setDataSource error: %d", err);
+        AMediaExtractor_delete(ex);
+        AMediaDataSource_delete(src);
         return NULL;
     }
-    return testExtractor(ex, env);
+
+    jobject ret = testExtractor(ex, env);
+    AMediaDataSource_delete(src);
+    return ret;
 }
 
 static int checksum(const uint8_t *in, int len, AMediaFormat *format) {
