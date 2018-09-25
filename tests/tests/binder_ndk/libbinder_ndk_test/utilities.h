@@ -16,6 +16,7 @@
 
 #include <android/binder_ibinder.h>
 #include <gtest/gtest.h>
+#include <nativetesthelper_jni/utils.h>
 
 #include <functional>
 
@@ -121,3 +122,5 @@ class NdkBinderTest : public ::testing::Test {
   void SetUp() override { EXPECT_EQ(0, SampleData::numInstances()); }
   void TearDown() override { EXPECT_EQ(0, SampleData::numInstances()); }
 };
+
+JNIEnv* GetEnv();
