@@ -23,6 +23,7 @@ cc_library_static {
 
     shared_libs: ["libnativehelper_compat_libc++"],
     whole_static_libs: ["libgtest_ndk_c++"],
+    export_include_dirs: ["include"],
     sdk_version: "current",
     stl: "c++_static",
     cflags: [
