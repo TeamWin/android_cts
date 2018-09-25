@@ -155,6 +155,8 @@
                    android:value="android.telephony.cts.embmstestapp/.CtsStreamingService"/>
         <meta-data android:name="mbms-download-service-override"
                    android:value="android.telephony.cts.embmstestapp/.CtsDownloadService"/>
+        <meta-data android:name="mbms-group-call-service-override"
+                   android:value="android.telephony.cts.embmstestapp/.CtsGroupCallService"/>
         <meta-data
             android:name="mbms-file-provider-authority"
             android:value="android.telephony.mbms.cts"/>
