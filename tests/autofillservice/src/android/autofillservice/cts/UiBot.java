@@ -707,7 +707,7 @@ final class UiBot {
         assumeMinimumResolution(500);
 
         runShellCommand("wm size 1080x1920");
-        runShellCommand("wm density 420");
+        runShellCommand("wm density 320");
     }
 
     /**
