@@ -69,6 +69,7 @@
         <uses-library android:name="android.test.runner" />
         <activity android:name=".BasePermissionActivity" />
         <activity android:name=".AutoClosingActivity" android:exported="true" />
+        <service android:name=".PermissionCheckerService" android:exported="true" />
     </application>
 
     <instrumentation

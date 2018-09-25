@@ -538,6 +538,17 @@ public class PermissionsHostTest extends DeviceTestCase implements IAbiReceiver,
                 "assertNoReviewPermissionsNeeded");
     }
 
+    public void testReviewPermissionWhenServiceIsBound() throws Exception {
+        assertNull(getDevice().installPackage(mBuildHelper.getTestFile(APK_22), false,
+                false));
+        assertNull(getDevice().installPackage(mBuildHelper.getTestFile(REVIEW_HELPER_APK), true,
+                true));
+
+        // Check if service of APK_22 has permissions
+        runDeviceTests(REVIEW_HELPER_PKG, REVIEW_HELPER_TEST_CLASS,
+                "reviewPermissionWhenServiceIsBound");
+    }
+
     private void runDeviceTests(String packageName, String testClassName, String testMethodName)
             throws DeviceNotAvailableException {
         Utils.runDeviceTests(getDevice(), packageName, testClassName, testMethodName);
