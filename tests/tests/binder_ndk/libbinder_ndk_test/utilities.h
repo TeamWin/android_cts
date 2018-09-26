@@ -48,9 +48,15 @@ static inline binder_status_t ReadNothingFromParcel(const AParcel*) {
   return STATUS_OK;
 }
 
-struct SampleData {
+// There is an assert instances of this class are destroyed in NdkBinderTest
+struct ThisShouldBeDestroyed {
   static size_t numInstances();
 
+  ThisShouldBeDestroyed();
+  virtual ~ThisShouldBeDestroyed();
+};
+
+struct SampleData : ThisShouldBeDestroyed {
   static const char* kDescriptor;
   static const AIBinder_Class* kClass;
 
@@ -119,8 +125,13 @@ static inline OnTransactFunc TransactionsReturn(binder_status_t result) {
 
 class NdkBinderTest : public ::testing::Test {
  public:
-  void SetUp() override { EXPECT_EQ(0, SampleData::numInstances()); }
-  void TearDown() override { EXPECT_EQ(0, SampleData::numInstances()); }
+  void SetUp() override { instances = ThisShouldBeDestroyed::numInstances(); }
+  void TearDown() override {
+    EXPECT_EQ(instances, ThisShouldBeDestroyed::numInstances());
+  }
+
+ private:
+  size_t instances = 0;
 };
 
 JNIEnv* GetEnv();
