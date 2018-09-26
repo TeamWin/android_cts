@@ -1936,22 +1936,27 @@ public class ActivityManagerMultiDisplayTests extends ActivityManagerDisplayTest
      */
     @Test
     public void testTaskSurfaceSizeAfterReparentDisplay() throws Exception {
+        final LogSeparator logSeparator;
         try (final VirtualDisplaySession virtualDisplaySession = new VirtualDisplaySession()) {
             // Create new simulated display and launch an activity on it.
             final ActivityDisplay newDisplay = virtualDisplaySession.setSimulateDisplay(true)
                     .createDisplay();
-            launchActivityOnDisplay(LAUNCHING_ACTIVITY, newDisplay.mId);
+            launchActivityOnDisplay(TEST_ACTIVITY, newDisplay.mId);
 
-            waitAndAssertTopResumedActivity(LAUNCHING_ACTIVITY, newDisplay.mId,
+            waitAndAssertTopResumedActivity(TEST_ACTIVITY, newDisplay.mId,
                     "Top activity must be the newly launched one");
             assertTopTaskSameSurfaceSizeWithDisplay(newDisplay.mId);
 
+            logSeparator = separateLogs();
             // Destroy the display.
         }
 
-        // Check the surface size after task was reparented to default display.
-        waitAndAssertTopResumedActivity(LAUNCHING_ACTIVITY, DEFAULT_DISPLAY,
+        // Activity must be reparented to default display and relaunched.
+        assertActivityLifecycle(TEST_ACTIVITY, true /* relaunched */, logSeparator);
+        waitAndAssertTopResumedActivity(TEST_ACTIVITY, DEFAULT_DISPLAY,
                 "Top activity must be reparented to default display");
+
+        // Check the surface size after task was reparented to default display.
         assertTopTaskSameSurfaceSizeWithDisplay(DEFAULT_DISPLAY);
     }
 
