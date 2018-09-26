@@ -928,10 +928,12 @@ public class ActivityManagerProcessStateTest extends InstrumentationTestCase {
      * Test that the foreground service app op does prevent the foreground state.
      */
     public void testForegroundServiceAppOp() throws Exception {
+        // Use default timeout value 5000
         final ServiceProcessController controller = new ServiceProcessController(mContext,
-                getInstrumentation(), STUB_PACKAGE_NAME, mAllProcesses, WAIT_TIME);
+                getInstrumentation(), STUB_PACKAGE_NAME, mAllProcesses);
+        // Use default timeout value 5000
         final ServiceConnectionHandler conn = new ServiceConnectionHandler(mContext,
-                mServiceIntent, WAIT_TIME);
+                mServiceIntent);
         final WatchUidRunner uidWatcher = controller.getUidWatcher();
 
         try {

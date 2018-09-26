@@ -30,7 +30,7 @@ COLOR_CHECKER = {'BLACK': [0, 0, 0], 'RED': [1, 0, 0], 'GREEN': [0, 1, 0],
 DELTA = 0.0005  # crop on edge of color bars
 RAW_TOL = 0.001  # 1 DN in [0:1] (1/(1023-64)
 RGB_VAR_TOL = 0.0039  # 1/255
-RGB_MEAN_TOL = 0.075
+RGB_MEAN_TOL = 0.1
 TONEMAP_MAX = 0.5
 
 
