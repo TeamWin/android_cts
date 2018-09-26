@@ -876,6 +876,10 @@ public abstract class ActivityManagerTestBase {
         }
 
         public LockScreenSession enterAndConfirmLockCredential() {
+            // Ensure focus will switch to default display. Meanwhile we cannot tap on center area,
+            // which may tap on input credential area.
+            tapOnDisplay(10, 10, DEFAULT_DISPLAY);
+
             waitForDeviceIdle(3000);
             SystemUtil.runWithShellPermissionIdentity(() ->
                     InstrumentationRegistry.getInstrumentation().sendStringSync(LOCK_CREDENTIAL));

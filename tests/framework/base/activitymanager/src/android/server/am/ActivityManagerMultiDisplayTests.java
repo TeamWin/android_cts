@@ -1669,8 +1669,10 @@ public class ActivityManagerMultiDisplayTests extends ActivityManagerDisplayTest
                 fail(RESIZEABLE_ACTIVITY + " has received " + lifecycleCounts.mStopCount
                         + " onStop() calls, expecting 1");
             }
-            waitAndAssertActivityState(TEST_ACTIVITY, STATE_STOPPED,
-                    "Activity launched on external display must be stopped");
+            // For this test we create this virtual display with flag showContentWhenLocked, so it
+            // cannot be effected when default display screen off.
+            waitAndAssertTopResumedActivity(TEST_ACTIVITY, newDisplay.mId,
+                    "Activity launched on external display must be resumed");
         }
     }
 

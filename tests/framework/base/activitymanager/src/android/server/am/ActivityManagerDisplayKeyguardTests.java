@@ -17,7 +17,11 @@
 package android.server.am;
 
 import static android.server.am.Components.DISMISS_KEYGUARD_ACTIVITY;
+import static android.server.am.UiDeviceUtils.pressBackButton;
+import static android.view.WindowManager.LayoutParams.TYPE_KEYGUARD_DIALOG;
 
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotNull;
 import static org.junit.Assume.assumeTrue;
 
 import android.server.am.ActivityManagerState.ActivityDisplay;
@@ -59,5 +63,40 @@ public class ActivityManagerDisplayKeyguardTests extends ActivityManagerDisplayT
             mAmWmState.assertKeyguardShowingAndNotOccluded();
             mAmWmState.assertVisibility(DISMISS_KEYGUARD_ACTIVITY, true);
         }
+    }
+
+    /**
+     * Tests keyguard dialog should shows on external display.
+     * @throws Exception
+     */
+    @Test
+    public void testShowKeyguardDialogOnSecondaryDisplay() throws Exception {
+        try (final LockScreenSession lockScreenSession = new LockScreenSession();
+             final VirtualDisplaySession virtualDisplaySession = new VirtualDisplaySession()) {
+            final ActivityDisplay newDisplay = virtualDisplaySession.setPublicDisplay(true)
+                    .createDisplay();
+
+            lockScreenSession.gotoKeyguard();
+            WindowManagerState.WindowState keyguardWindowState =
+                    mAmWmState.waitForValidProduct(
+                            this::getKeyguardDialogWindowState, "KeyguardDialog",
+                            w -> w.isShown() && w.getDisplayId() == newDisplay.mId);
+            assertNotNull("KeyguardDialog must show up", keyguardWindowState);
+            assertEquals("KeyguardDialog should show on external display", newDisplay.mId,
+                    keyguardWindowState.getDisplayId());
+
+            // Keyguard dialog mustn't be removed when press back key
+            pressBackButton();
+            keyguardWindowState = mAmWmState.waitForValidProduct(
+                    this::getKeyguardDialogWindowState, "KeyguardDialog",
+                    w -> w.isShown() && w.getDisplayId() == newDisplay.mId);
+            assertNotNull("KeyguardDialog must show up", keyguardWindowState);
+        }
+    }
+
+    private WindowManagerState.WindowState getKeyguardDialogWindowState() {
+        final WindowManagerState wmState = mAmWmState.getWmState();
+        wmState.computeState();
+        return mAmWmState.getWmState().findFirstWindowWithType(TYPE_KEYGUARD_DIALOG);
     }
 }
