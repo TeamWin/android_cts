@@ -21,10 +21,11 @@
 #include <android/log.h>
 
 static size_t sNumInstances = 0;
-size_t SampleData::numInstances() { return sNumInstances; }
+size_t ThisShouldBeDestroyed::numInstances() { return sNumInstances; }
+ThisShouldBeDestroyed::ThisShouldBeDestroyed() { sNumInstances++; }
+ThisShouldBeDestroyed::~ThisShouldBeDestroyed() { sNumInstances--; }
 
 void* SampleClassOnCreate(void* args) {
-  sNumInstances++;
   return args;  // SampleData
 }
 
@@ -33,7 +34,6 @@ void SampleClassOnDestroy(void* userData) {
   if (data->onDestroy != nullptr) {
     data->onDestroy(data);
   }
-  sNumInstances--;
   delete data;
 }
 
