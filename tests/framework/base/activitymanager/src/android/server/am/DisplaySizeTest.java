@@ -93,10 +93,12 @@ public class DisplaySizeTest extends ActivityManagerTestBase {
                 EXTRA_LAUNCH_ANOTHER_ACTIVITY, getActivityName(TEST_ACTIVITY));
         executeShellCommand(startActivityOnTop);
         mAmWmState.assertActivityDisplayed(TEST_ACTIVITY);
+        final LogSeparator logSeparator = separateLogs();
 
         try (final ScreenDensitySession screenDensitySession = new ScreenDensitySession()) {
             screenDensitySession.setUnsupportedDensity();
 
+            assertActivityLifecycle(TEST_ACTIVITY, true /* relaunched */, logSeparator);
             pressBackButton();
 
             mAmWmState.assertActivityDisplayed(SMALLEST_WIDTH_ACTIVITY);
