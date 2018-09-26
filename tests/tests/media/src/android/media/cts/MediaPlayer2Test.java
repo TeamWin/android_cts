@@ -1238,8 +1238,7 @@ public class MediaPlayer2Test extends MediaPlayer2TestBase {
             }
             mPlayer.pause();
             pbp = mPlayer.getPlaybackParams();
-            // TODO: pause() should NOT change PlaybackParams.
-            // assertEquals(0.f, pbp.getSpeed(), FLOAT_TOLERANCE);
+            assertEquals(playbackRate, pbp.getSpeed(), FLOAT_TOLERANCE);
         }
         mPlayer.reset();
     }
@@ -2432,6 +2431,9 @@ public class MediaPlayer2Test extends MediaPlayer2TestBase {
     }
 
     public void testClose() throws Exception {
+        if (IGNORE_TESTS) {
+            return;
+        }
         assertTrue(loadResource(R.raw.testmp3_2));
         AudioAttributes attributes = new AudioAttributes.Builder()
                 .setLegacyStreamType(AudioManager.STREAM_MUSIC)
@@ -2445,4 +2447,53 @@ public class MediaPlayer2Test extends MediaPlayer2TestBase {
         // Tests whether the notification from the player after the close() doesn't crash.
         Thread.sleep(SLEEP_TIME);
     }
+
+    public void testPause() throws Exception {
+        if (IGNORE_TESTS) {
+            return;
+        }
+        if (!checkLoadResource(
+                R.raw.video_480x360_mp4_h264_1000kbps_30fps_aac_stereo_128kbps_44100hz)) {
+            return; // skip
+        }
+
+        Monitor onStartCalled = new Monitor();
+        Monitor mOnVideoSizeChangedCalled = new Monitor();
+        MediaPlayer2.EventCallback ecb = new MediaPlayer2.EventCallback() {
+            @Override
+            public void onVideoSizeChanged(MediaPlayer2 mp, DataSourceDesc dsd,
+                    int width, int height) {
+                if (width > 0 && height > 0) {
+                    mOnVideoSizeChangedCalled.signal();
+                }
+            }
+
+            @Override
+            public void onInfo(MediaPlayer2 mp, DataSourceDesc dsd, int what, int extra) {
+                if (what == MediaPlayer2.MEDIA_INFO_DATA_SOURCE_START) {
+                        Log.i(LOG_TAG, "testPause: MEDIA_INFO_DATA_SOURCE_START");
+                        onStartCalled.signal();
+                }
+            }
+        };
+        synchronized (mEventCbLock) {
+            mEventCallbacks.add(ecb);
+        }
+
+        mPlayer.setDisplay(mActivity.getSurfaceHolder());
+
+        mPlayer.prepare();
+
+        mPlayer.pause();
+
+        onStartCalled.waitForSignal();
+        mOnVideoSizeChangedCalled.waitForSignal();
+        Thread.sleep(1000);
+
+        assertFalse("MediaPlayer2 should not be playing", mPlayer.isPlaying());
+        assertTrue("MediaPlayer2 should be paused",
+                mPlayer.getState() == MediaPlayer2.PLAYER_STATE_PAUSED);
+        mPlayer.reset();
+    }
+
 }
