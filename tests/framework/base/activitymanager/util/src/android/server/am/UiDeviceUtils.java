@@ -66,7 +66,7 @@ public class UiDeviceUtils {
         getDevice().pressEnter();
     }
 
-    static void pressHomeButton() {
+    public static void pressHomeButton() {
         if (DEBUG) Log.d(TAG, "pressHomeButton");
         getDevice().pressHome();
     }
@@ -88,14 +88,14 @@ public class UiDeviceUtils {
                 "***Waiting for device sleep...");
     }
 
-    static void pressWakeupButton() {
+    public static void pressWakeupButton() {
         if (DEBUG) Log.d(TAG, "pressWakeupButton");
         final PowerManager pm = getContext().getSystemService(PowerManager.class);
         retryPressKeyCode(KEYCODE_WAKEUP, () -> pm != null && pm.isInteractive(),
                 "***Waiting for device wakeup...");
     }
 
-    static void pressUnlockButton() {
+    public static void pressUnlockButton() {
         if (DEBUG) Log.d(TAG, "pressUnlockButton");
         final KeyguardManager kgm = getContext().getSystemService(KeyguardManager.class);
         retryPressKeyCode(KEYCODE_MENU, () -> kgm != null && !kgm.isKeyguardLocked(),
