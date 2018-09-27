@@ -2683,6 +2683,20 @@ You should be prompted to select credentials; choose the ones you just installed
         5. Go back to the cts-verifier tests using the back button, then mark the test accordingly.\n
     </string>
 
+    <string name="provisioning_byod_uninstall_work_app">Uninstall work app from launcher</string>
+    <string name="provisioning_byod_uninstall_work_app_instruction">
+        This test verifies that work profile apps can be uninstalled.\n
+        1. You should have received NotificationBot.apk together with the CTS verifier. If you built the CTS verifier yourself, build the NotificationBot.apk by issuing the following command on the host:\n
+            make NotificationBot\n
+        2. Upload the NotificationBot.apk to your device by issuing the following command on the host:\n
+            adb push /path/to/NotificationBot.apk /data/local/tmp/\n
+        3. Pres \"Go\" to install NotificationBot.apk on your work profile.\n
+        4. If you are presented with a dialog to allow installing of unknown apps, enable that option.\n
+        5. Go to home screen.\n
+        6. Verify that the newly installed app, \"CTS Robot\", can successfully be uninstalled from the launcher.\n
+    </string>
+    <string name="provisioning_byod_uninstall_work_app_install_work_app">Install work app</string>
+
     <string name="provisioning_byod_turn_off_work">Turn off work profile</string>
     <string name="provisioning_byod_turn_off_work_info">This test verifies device behaviors when turning off work profile.</string>
     <string name="provisioning_byod_turn_off_work_instructions">
