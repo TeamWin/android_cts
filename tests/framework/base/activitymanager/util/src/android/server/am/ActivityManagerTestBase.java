@@ -78,7 +78,9 @@ import static android.support.test.InstrumentationRegistry.getContext;
 import static android.view.Display.DEFAULT_DISPLAY;
 import static android.view.Display.INVALID_DISPLAY;
 
+import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
 import static java.lang.Integer.toHexString;
@@ -652,6 +654,35 @@ public abstract class ActivityManagerTestBase {
     protected boolean isTablet() {
         // Larger than approx 7" tablets
         return mContext.getResources().getConfiguration().smallestScreenWidthDp >= 600;
+    }
+
+    protected void waitAndAssertActivityState(ComponentName activityName,
+            String state, String message) {
+        mAmWmState.waitForActivityState(activityName, state);
+
+        assertTrue(message, mAmWmState.getAmState().hasActivityState(activityName, state));
+    }
+
+    protected void waitAndAssertTopResumedActivity(ComponentName activityName, int displayId,
+            String message) throws Exception {
+        mAmWmState.waitForValidState(activityName);
+        mAmWmState.waitForActivityState(activityName, STATE_RESUMED);
+        final String activityClassName = getActivityName(activityName);
+        mAmWmState.waitForWithAmState(state ->
+                        activityClassName.equals(state.getFocusedActivity()),
+                "Waiting for activity to be on top");
+
+        mAmWmState.assertSanity();
+        mAmWmState.assertFocusedActivity(message, activityName);
+        assertTrue("Activity must be resumed",
+                mAmWmState.getAmState().hasActivityState(activityName, STATE_RESUMED));
+        final int frontStackId = mAmWmState.getAmState().getFrontStackId(displayId);
+        ActivityManagerState.ActivityStack frontStackOnDisplay =
+                mAmWmState.getAmState().getStackById(frontStackId);
+        assertEquals("Resumed activity of front stack of the target display must match. " + message,
+                activityClassName, frontStackOnDisplay.mResumedActivity);
+        mAmWmState.assertFocusedStack("Top activity's stack must also be on top", frontStackId);
+        mAmWmState.assertVisibility(activityName, true /* visible */);
     }
 
     // TODO: Switch to using a feature flag, when available.

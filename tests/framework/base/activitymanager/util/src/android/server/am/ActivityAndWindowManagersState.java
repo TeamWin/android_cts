@@ -256,13 +256,13 @@ public class ActivityAndWindowManagersState {
 
     void waitForKeyguardShowingAndNotOccluded() {
         waitForWithAmState(state -> state.getKeyguardControllerState().keyguardShowing
-                        && !state.getKeyguardControllerState().keyguardOccluded,
+                        && !state.getKeyguardControllerState().isKeyguardOccluded(DEFAULT_DISPLAY),
                 "***Waiting for Keyguard showing...");
     }
 
     void waitForKeyguardShowingAndOccluded() {
         waitForWithAmState(state -> state.getKeyguardControllerState().keyguardShowing
-                        && state.getKeyguardControllerState().keyguardOccluded,
+                        && state.getKeyguardControllerState().isKeyguardOccluded(DEFAULT_DISPLAY),
                 "***Waiting for Keyguard showing and occluded...");
     }
 
@@ -667,14 +667,14 @@ public class ActivityAndWindowManagersState {
         assertTrue("Keyguard is showing",
                 getAmState().getKeyguardControllerState().keyguardShowing);
         assertTrue("Keyguard is occluded",
-                getAmState().getKeyguardControllerState().keyguardOccluded);
+                getAmState().getKeyguardControllerState().isKeyguardOccluded(DEFAULT_DISPLAY));
     }
 
     public void assertKeyguardShowingAndNotOccluded() {
         assertTrue("Keyguard is showing",
                 getAmState().getKeyguardControllerState().keyguardShowing);
         assertFalse("Keyguard is not occluded",
-                getAmState().getKeyguardControllerState().keyguardOccluded);
+                getAmState().getKeyguardControllerState().isKeyguardOccluded(DEFAULT_DISPLAY));
     }
 
     public void assertKeyguardGone() {

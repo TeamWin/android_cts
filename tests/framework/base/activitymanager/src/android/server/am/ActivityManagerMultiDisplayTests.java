@@ -1549,8 +1549,8 @@ public class ActivityManagerMultiDisplayTests extends ActivityManagerDisplayTest
                     .createDisplay();
 
             // Check that activity is launched and placed correctly.
-            mAmWmState.waitForActivityState(TEST_ACTIVITY, STATE_RESUMED);
-            mAmWmState.assertResumedActivity("Test activity must be on top", TEST_ACTIVITY);
+            waitAndAssertTopResumedActivity(TEST_ACTIVITY, newDisplay.mId,
+                    "Test activity must be on top");
             final int frontStackId = mAmWmState.getAmState().getFrontStackId(newDisplay.mId);
             final ActivityStack firstFrontStack =
                     mAmWmState.getAmState().getStackById(frontStackId);
@@ -1605,8 +1605,8 @@ public class ActivityManagerMultiDisplayTests extends ActivityManagerDisplayTest
                 fail(RESIZEABLE_ACTIVITY + " has received " + lifecycleCounts.mStopCount
                         + " onStop() calls, expecting 1");
             }
-            waitAndAssertTopResumedActivity(TEST_ACTIVITY, newDisplay.mId,
-                    "Activity launched on external display must be resumed");
+            waitAndAssertActivityState(TEST_ACTIVITY, STATE_STOPPED,
+                    "Activity launched on external display must be stopped");
         }
     }
 
@@ -1628,7 +1628,7 @@ public class ActivityManagerMultiDisplayTests extends ActivityManagerDisplayTest
             displayStateSession.turnScreenOff();
 
             // Make sure there is no resumed activity when the primary display is off
-            waitAndAssertActivityStopped(RESIZEABLE_ACTIVITY,
+            waitAndAssertActivityState(RESIZEABLE_ACTIVITY, STATE_STOPPED,
                     "Activity launched on primary display must be stopped after turning off");
             assertEquals("Unexpected resumed activity",
                     0, mAmWmState.getAmState().getResumedActivitiesCount());
@@ -1662,7 +1662,7 @@ public class ActivityManagerMultiDisplayTests extends ActivityManagerDisplayTest
             externalDisplaySession.turnDisplayOff();
 
             // Check that turning off the external display stops the activity
-            waitAndAssertActivityStopped(TEST_ACTIVITY,
+            waitAndAssertActivityState(TEST_ACTIVITY, STATE_STOPPED,
                     "Activity launched on external display must be stopped after turning off");
 
             externalDisplaySession.turnDisplayOn();
@@ -1690,7 +1690,7 @@ public class ActivityManagerMultiDisplayTests extends ActivityManagerDisplayTest
             lockScreenSession.sleepDevice();
 
             // Make sure there is no resumed activity when the primary display is off
-            waitAndAssertActivityStopped(RESIZEABLE_ACTIVITY,
+            waitAndAssertActivityState(RESIZEABLE_ACTIVITY, STATE_STOPPED,
                     "Activity launched on primary display must be stopped after turning off");
             assertEquals("Unexpected resumed activity",
                     0, mAmWmState.getAmState().getResumedActivitiesCount());
@@ -1732,36 +1732,6 @@ public class ActivityManagerMultiDisplayTests extends ActivityManagerDisplayTest
         }
     }
 
-    private void waitAndAssertTopResumedActivity(ComponentName activityName, int displayId,
-            String message) throws Exception {
-        mAmWmState.waitForValidState(activityName);
-        mAmWmState.waitForActivityState(activityName, STATE_RESUMED);
-        final String activityClassName = getActivityName(activityName);
-        mAmWmState.waitForWithAmState(state ->
-                        activityClassName.equals(state.getFocusedActivity()),
-                "Waiting for activity to be on top");
-
-        mAmWmState.assertSanity();
-        mAmWmState.assertFocusedActivity(message, activityName);
-        final int frontStackId = mAmWmState.getAmState().getFrontStackId(displayId);
-        ActivityStack frontStackOnDisplay =
-                mAmWmState.getAmState().getStackById(frontStackId);
-        assertEquals("Resumed activity of front stack of the target display must match. " + message,
-                activityClassName, frontStackOnDisplay.mResumedActivity);
-        assertTrue("Activity must be resumed. " + message,
-                mAmWmState.getAmState().hasActivityState(activityName, STATE_RESUMED));
-        mAmWmState.assertFocusedStack("Top activity's stack must also be on top", frontStackId);
-        mAmWmState.assertVisibility(activityName, true /* visible */);
-    }
-
-    private void waitAndAssertActivityStopped(ComponentName activityName, String message)
-            throws Exception {
-        mAmWmState.waitForActivityState(activityName, STATE_STOPPED);
-
-        assertTrue(message, mAmWmState.getAmState().hasActivityState(activityName,
-                STATE_STOPPED));
-    }
-
     /**
      * Tests that showWhenLocked works on a secondary display.
      */
@@ -1779,12 +1749,10 @@ public class ActivityManagerMultiDisplayTests extends ActivityManagerDisplayTest
 
             lockScreenSession.gotoKeyguard();
 
-            mAmWmState.waitForActivityState(TEST_ACTIVITY, STATE_STOPPED);
-            mAmWmState.waitForActivityState(SHOW_WHEN_LOCKED_ATTR_ACTIVITY, STATE_RESUMED);
-
-            mAmWmState.computeState(SHOW_WHEN_LOCKED_ATTR_ACTIVITY);
-            assertTrue("Expected resumed activity on secondary display", mAmWmState.getAmState()
-                    .hasActivityState(SHOW_WHEN_LOCKED_ATTR_ACTIVITY, STATE_RESUMED));
+            waitAndAssertActivityState(TEST_ACTIVITY, STATE_STOPPED,
+                    "Expected stopped activity on default display");
+            waitAndAssertTopResumedActivity(SHOW_WHEN_LOCKED_ATTR_ACTIVITY, newDisplay.mId,
+                    "Expected resumed activity on secondary display");
         }
     }
 
