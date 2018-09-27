@@ -1108,7 +1108,8 @@ public class CameraTestUtils extends Assert {
             case ImageFormat.RAW_PRIVATE:
             case ImageFormat.DEPTH16:
             case ImageFormat.DEPTH_POINT_CLOUD:
-                assertEquals("JPEG/RAW/depth Images should have one plane", 1, planes.length);
+            case ImageFormat.Y8:
+                assertEquals("JPEG/RAW/depth/Y8 Images should have one plane", 1, planes.length);
                 break;
             default:
                 fail("Unsupported Image Format: " + format);
@@ -1531,6 +1532,9 @@ public class CameraTestUtils extends Assert {
             case ImageFormat.RAW_PRIVATE:
                 validateRawPrivateData(data, width, height, image.getTimestamp(), filePath);
                 break;
+            case ImageFormat.Y8:
+                validateY8Data(data, width, height, format, image.getTimestamp(), filePath);
+                break;
             default:
                 throw new UnsupportedOperationException("Unsupported format for validation: "
                         + format);
@@ -1635,6 +1639,23 @@ public class CameraTestUtils extends Assert {
         if (DEBUG && filePath != null) {
             String fileName =
                     filePath + "/" + width + "x" + height + "_" + ts / 1e6 + ".raw16";
+            dumpFile(fileName, rawData);
+        }
+
+        return;
+    }
+
+    private static void validateY8Data(byte[] rawData, int width, int height, int format,
+            long ts, String filePath) {
+        if (VERBOSE) Log.v(TAG, "Validating Y8 data");
+        int expectedSize = width * height * ImageFormat.getBitsPerPixel(format) / 8;
+        assertEquals("Y8 data doesn't match", expectedSize, rawData.length);
+
+        // TODO: Can add data validation for test pattern.
+
+        if (DEBUG && filePath != null) {
+            String fileName =
+                    filePath + "/" + width + "x" + height + "_" + ts / 1e6 + ".y8";
             dumpFile(fileName, rawData);
         }
 
