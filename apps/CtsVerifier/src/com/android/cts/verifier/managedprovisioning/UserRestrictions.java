@@ -47,7 +47,6 @@ public class UserRestrictions {
         UserManager.DISALLOW_NETWORK_RESET,
         UserManager.DISALLOW_OUTGOING_BEAM,
         UserManager.DISALLOW_REMOVE_MANAGED_PROFILE,
-        UserManager.DISALLOW_REMOVE_USER,
         UserManager.DISALLOW_SHARE_LOCATION,
         UserManager.DISALLOW_UNINSTALL_APPS,
         UserManager.DISALLOW_UNIFIED_PASSWORD,
@@ -77,7 +76,6 @@ public class UserRestrictions {
             R.string.disallow_network_reset,
             R.string.disallow_outgoing_beam,
             R.string.disallow_remove_managed_profile,
-            R.string.disallow_remove_user,
             R.string.disallow_share_location,
             R.string.disallow_uninstall_apps,
             R.string.disallow_unified_challenge,
@@ -105,7 +103,6 @@ public class UserRestrictions {
             R.string.disallow_network_reset_action,
             R.string.disallow_outgoing_beam_action,
             R.string.disallow_remove_managed_profile_action,
-            R.string.disallow_remove_user_action,
             R.string.disallow_share_location_action,
             R.string.disallow_uninstall_apps_action,
             R.string.disallow_unified_challenge_action,
@@ -132,7 +129,6 @@ public class UserRestrictions {
             Settings.ACTION_SYNC_SETTINGS,
             Settings.ACTION_SETTINGS,
             Settings.ACTION_NFC_SETTINGS,
-            Settings.ACTION_SETTINGS,
             Settings.ACTION_SETTINGS,
             Settings.ACTION_LOCATION_SOURCE_SETTINGS,
             Settings.ACTION_APPLICATION_SETTINGS,
@@ -175,7 +171,6 @@ public class UserRestrictions {
                     UserManager.DISALLOW_INSTALL_UNKNOWN_SOURCES,
                     UserManager.DISALLOW_MODIFY_ACCOUNTS,
                     UserManager.DISALLOW_OUTGOING_BEAM,
-                    UserManager.DISALLOW_REMOVE_USER,
                     UserManager.DISALLOW_SHARE_LOCATION,
                     UserManager.DISALLOW_UNINSTALL_APPS,
                     UserManager.DISALLOW_CONFIG_DATE_TIME,
@@ -237,7 +232,6 @@ public class UserRestrictions {
         final PackageManager pm = context.getPackageManager();
         switch (restriction) {
             case UserManager.DISALLOW_ADD_USER:
-            case UserManager.DISALLOW_REMOVE_USER:
                 return UserManager.supportsMultipleUsers();
             case UserManager.DISALLOW_ADJUST_VOLUME:
                 return pm.hasSystemFeature(PackageManager.FEATURE_AUDIO_OUTPUT);
