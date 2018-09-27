@@ -15,16 +15,21 @@
  */
 package android.os.cts.batterysaving;
 
+import static android.support.test.InstrumentationRegistry.getInstrumentation;
 import static com.android.compatibility.common.util.BatteryUtils.enableBatterySaver;
 import static com.android.compatibility.common.util.BatteryUtils.runDumpsysBatteryUnplug;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.fail;
 
 import android.os.PowerManager;
 import android.support.test.filters.MediumTest;
 import android.support.test.runner.AndroidJUnit4;
 
+import com.android.compatibility.common.util.BatteryUtils;
+import com.android.compatibility.common.util.SystemUtil;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
@@ -67,5 +72,28 @@ public class BatterySaverTest extends BatterySavingTestBase {
         waitUntilAlarmForceAppStandby(false);
         waitUntilJobForceAppStandby(false);
         waitUntilForceBackgroundCheck(false);
+    }
+
+    @Test
+    public void testSetBatterySaver_powerManager() {
+        SystemUtil.runWithShellPermissionIdentity(() -> {
+            PowerManager manager = BatteryUtils.getPowerManager();
+            assertFalse(manager.isPowerSaveMode());
+
+            // Unplug the charger.
+            try {
+                runDumpsysBatteryUnplug();
+            } catch (Exception e) {
+                e.printStackTrace();
+                fail("unable to runDumpsysBatteryUnplug");
+            }
+
+            // Verify battery saver gets toggled.
+            manager.setPowerSaveMode(true);
+            assertTrue(manager.isPowerSaveMode());
+
+            manager.setPowerSaveMode(false);
+            assertFalse(manager.isPowerSaveMode());
+        });
     }
 }
