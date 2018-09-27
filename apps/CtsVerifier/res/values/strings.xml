@@ -3347,7 +3347,28 @@ You should be prompted to select credentials; choose the ones you just installed
     <string name="disallow_outgoing_beam">Disallow outgoing beam</string>
     <string name="disallow_outgoing_beam_action">Switching on android beam</string>
     <string name="disallow_remove_user">Disallow remove user</string>
-    <string name="disallow_remove_user_action">Removing other users (please create a user and attempt to remove it to verify). This test should also be considered as passed if \'remove user\' option cannot be found in Settings</string>
+    <string name="device_owner_disallow_remove_user_info">
+        Please press \'Create uninitialized user\' to create a user that is not set up. Then press the
+        \'Set restriction\' button to set the user restriction. Then press \'Go\' to open \'Settings\',
+        and manually find and open \'Multiple users\' setting. \n\n
+
+        Mark this test as passed if:\n\n
+        - The uninitialized user cannot be removed.\n
+        - \'Remove user\' option is disabled with an info icon on it. Clicking on it triggers a support dialog.\n\n
+
+        Use the Back button to return to this page.
+    </string>
+    <string name="managed_user_disallow_remove_user_info">
+        Please press the \'Set restriction\' button to set the user restriction.
+        Then press \'Go\' to open \'Settings\', and manually find and open \'Multiple users\' setting. \n\n
+
+        Mark this test as passed if one of the following conditions is met:\n\n
+        - \'Remove user\' option is disabled with an info icon on it. Clicking on it triggers a support dialog.\n
+        - \'Remove user\' option cannot be found.\n \n
+
+        Use the Back button to return to this page.
+    </string>
+    <string name="device_owner_disallow_remove_user_create_user">Create uninitialized user</string>
     <string name="disallow_remove_managed_profile">Disallow remove managed profile</string>
     <string name="disallow_remove_managed_profile_action">Removing the work profile. It shouldn\'t be possible neither from the Accounts screen nor the Device Administrators screen (after selecting the Device Administrator that corresponds to the badged version of \"CTS Verifier\")</string>
     <string name="disallow_share_location">Disallow share location</string>
