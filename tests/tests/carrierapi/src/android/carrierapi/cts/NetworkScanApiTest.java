@@ -181,8 +181,6 @@ public class NetworkScanApiTest {
             Log.d(TAG, "onError: " + String.valueOf(error));
             mNetworkScanStatus = EVENT_NETWORK_SCAN_ERROR;
             mErrorCode = error;
-            Log.d(TAG, "Stop the network scan");
-            mNetworkScan.stopScan();
             setReady(true);
         }
     }
