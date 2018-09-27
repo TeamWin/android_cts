@@ -35,11 +35,9 @@ def main():
     yuv_sizes = {}
     with its.device.ItsSession() as cam:
         props = cam.get_camera_properties()
-        its.caps.skip_unless(its.caps.compute_target_exposure(props) and
-                             its.caps.per_frame_control(props) and
-                             its.caps.logical_multi_camera(props) and
+        its.caps.skip_unless(its.caps.per_frame_control(props) and
                              its.caps.raw16(props) and
-                             its.caps.manual_sensor(props))
+                             its.caps.logical_multi_camera(props))
         ids = its.caps.logical_multi_camera_physical_ids(props)
         max_raw_size = its.objects.get_available_output_sizes('raw', props)[0]
         for i in ids:

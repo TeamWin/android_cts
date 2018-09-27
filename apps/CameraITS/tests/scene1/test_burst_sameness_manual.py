@@ -43,7 +43,7 @@ def main():
 
         # Capture at the smallest resolution.
         props = cam.get_camera_properties()
-        its.caps.skip_unless(its.caps.manual_sensor(props) and
+        its.caps.skip_unless(its.caps.compute_target_exposure(props) and
                              its.caps.per_frame_control(props))
         debug = its.caps.debug_mode()
 
