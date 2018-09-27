@@ -59,6 +59,18 @@ public class ProfileManager {
                 "<OutputDevInfo ChanCounts=\"2\" ChanPosMasks=\"12\" ChanIndexMasks=\"3\" Encodings=\"4\" SampleRates=\"44100,48000\" />" +
                 "<InputDevInfo ChanCounts=\"1,2\" ChanPosMasks=\"12,16\" ChanIndexMasks=\"3\" Encodings=\"4\" SampleRates=\"44100,48000\" />" +
             "</PeripheralProfile>" +
+            "<PeripheralProfile ProfileName=\"Focusrite 2i4\" ProfileDescription=\"Focusrite Scarlett 2i4\" ProductName=\"USB-Audio - Scarlett 2i4 USB\">" +
+                "<OutputDevInfo ChanCounts=\"2,3,4\" ChanPosMasks=\"12\" ChanIndexMasks=\"3,7,15\" Encodings=\"4\" SampleRates=\"44100,48000,88200,96000\"/>" +
+                "<InputDevInfo ChanCounts=\"1,2\" ChanPosMasks=\"12,16\" ChanIndexMasks=\"3\" Encodings=\"4\" SampleRates=\"44100,48000,88200,96000\"/>" +
+            "</PeripheralProfile>" +
+            "<PeripheralProfile ProfileName=\"Behringer UMC204HD\" ProfileDescription=\"Behringer UMC204HD\" ProductName=\"USB-Audio - UMC204HD 192k\">" +
+                "<OutputDevInfo ChanCounts=\"2,4\" ChanPosMasks=\"12\" ChanIndexMasks=\"15\" Encodings=\"2,4\" SampleRates=\"44100,48000,88200,96000,176400,192000\"/>" +
+                "<InputDevInfo ChanCounts=\"2\" ChanPosMasks=\"12\" ChanIndexMasks=\"3\" Encodings=\"4\" SampleRates=\"44100,48000,88200,96000,176400,192000\"/>" +
+            "</PeripheralProfile>" +
+            "<PeripheralProfile ProfileName=\"Roland Rubix24\" ProfileDescription=\"Roland Rubix24\" ProductName=\"USB-Audio - Rubix24\">" +
+                "<OutputDevInfo ChanCounts=\"2,4\" ChanPosMasks=\"12\" ChanIndexMasks=\"15\" Encodings=\"4\" SampleRates=\"44100,48000,96000,192000\"/>" +
+                "<InputDevInfo ChanCounts=\"2\" ChanPosMasks=\"12\" ChanIndexMasks=\"3\" Encodings=\"4\" SampleRates=\"44100,48000,96000,192000\"/>" +
+            "</PeripheralProfile>" +
             "<PeripheralProfile ProfileName=\"Pixel USB-C Dongle + Wired Analog Headset\" ProfileDescription=\"Reference USB Dongle\" ProductName=\"USB-Audio - USB-C to 3.5mm-Headphone Adapte\">" +
                 "<OutputDevInfo ChanCounts=\"2\" ChanPosMasks=\"12\" ChanIndexMasks=\"3\" Encodings=\"4\" SampleRates=\"48000\" />" +
                 "<InputDevInfo ChanCounts=\"1,2\" ChanPosMasks=\"12,16\" ChanIndexMasks=\"3\" Encodings=\"4\" SampleRates=\"48000\" />" +
