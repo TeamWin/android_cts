@@ -172,6 +172,9 @@ public class EncryptionAppTest extends InstrumentationTestCase {
         mDevice.pressMenu();
         mDevice.waitForIdle();
         enterTestPin();
+        mDevice.waitForIdle();
+        mDevice.pressHome();
+        mDevice.waitForIdle();
     }
 
     public void assertLocked() throws Exception {
