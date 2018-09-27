@@ -20,6 +20,8 @@ import static org.junit.Assert.assertNotEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 import static org.mockito.Matchers.any;
+import static org.mockito.Mockito.clearInvocations;
+import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.reset;
 import static org.mockito.Mockito.times;
@@ -256,5 +258,71 @@ public class TransitionManagerTest extends BaseTransitionTest {
         SystemClock.sleep(10);
         verify(mListener, never()).onTransitionEnd(any());
     }
+
+    @Test
+    public void testGo_enterAction() throws Throwable {
+        Scene scene = loadScene(R.layout.scene1);
+        Runnable enterCheck = mock(Runnable.class);
+        scene.setEnterAction(enterCheck);
+
+        mActivityRule.runOnUiThread(() -> {
+            TransitionManager.go(scene);
+            verify(enterCheck, times(1)).run();
+        });
+    }
+
+    @Test
+    public void testGo_exitAction() throws Throwable {
+        Scene scene1 = loadScene(R.layout.scene1);
+        Runnable exitAction = mock(Runnable.class);
+        scene1.setExitAction(exitAction);
+
+        mActivityRule.runOnUiThread(() -> {
+            TransitionManager.go(scene1);
+            verify(exitAction, never()).run();
+            clearInvocations(exitAction);
+        });
+
+        Scene scene2 = loadScene(R.layout.scene2);
+
+        mActivityRule.runOnUiThread(() -> {
+            TransitionManager.go(scene2);
+            verify(exitAction, times(1)).run();
+        });
+    }
+
+    @Test
+    public void testGo_nullParameter_enterAction() throws Throwable {
+        Scene scene = loadScene(R.layout.scene1);
+        Runnable enterCheck = mock(Runnable.class);
+        scene.setEnterAction(enterCheck);
+
+
+        mActivityRule.runOnUiThread(() -> {
+            TransitionManager.go(scene, null);
+            verify(enterCheck, times(1)).run();
+        });
+    }
+
+    @Test
+    public void testGo_nullParameter_exitAction() throws Throwable {
+        Scene scene1 = loadScene(R.layout.scene1);
+        Runnable exitAction = mock(Runnable.class);
+        scene1.setExitAction(exitAction);
+
+        mActivityRule.runOnUiThread(() -> {
+            TransitionManager.go(scene1, null);
+            verify(exitAction, never()).run();
+            clearInvocations(exitAction);
+        });
+
+        Scene scene2 = loadScene(R.layout.scene2);
+
+        mActivityRule.runOnUiThread(() -> {
+            TransitionManager.go(scene2, null);
+            verify(exitAction, times(1)).run();
+        });
+    }
+
 }
 
