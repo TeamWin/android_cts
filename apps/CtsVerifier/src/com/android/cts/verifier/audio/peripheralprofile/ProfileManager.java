@@ -46,7 +46,11 @@ public class ProfileManager {
 
     private static final String mBuiltInprofiles =
         "<?xml version='1.0' encoding='UTF-8' standalone='yes' ?>" +
-        "<ProfileList Version=\"1.0.0\">" +
+            "<ProfileList Version=\"1.0.0\">" +
+            "<PeripheralProfile ProfileName=\"AudioBox USB 96\" ProfileDescription=\"PreSonus AudioBox USB 96\" ProductName=\"USB-Audio - AudioBox USB 96\">" +
+                "<OutputDevInfo ChanCounts=\"2\" ChanPosMasks=\"12\" ChanIndexMasks=\"3\" Encodings=\"4\" SampleRates=\"44100,48000,88200,96000\"/>" +
+                "<InputDevInfo ChanCounts=\"2\" ChanPosMasks=\"12\" ChanIndexMasks=\"3\" Encodings=\"4\" SampleRates=\"44100,48000,88200,96000\"/>" +
+            "</PeripheralProfile>" +
             "<PeripheralProfile ProfileName=\"Audio Interface\" ProfileDescription=\"Presonus AudioVox 44VSL\" ProductName=\"USB-Audio - AudioBox 44 VSL\">" +
                 "<OutputDevInfo ChanCounts=\"2,4\" ChanPosMasks=\"12\" ChanIndexMasks=\"15\" Encodings=\"4\" SampleRates=\"44100,48000,88200,96000\" />" +
                 "<InputDevInfo ChanCounts=\"1,2,4\" ChanPosMasks=\"12,16\" ChanIndexMasks=\"15\" Encodings=\"4\" SampleRates=\"44100,48000,88200,96000\" />" +
