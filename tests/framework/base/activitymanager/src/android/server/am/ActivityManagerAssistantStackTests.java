@@ -210,8 +210,9 @@ public class ActivityManagerAssistantStackTests extends ActivityManagerTestBase 
         }
         waitForValidStateWithActivityTypeAndWindowingMode(
                 TEST_ACTIVITY, ACTIVITY_TYPE_STANDARD, WINDOWING_MODE_FULLSCREEN);
-        mAmWmState.waitForActivityState(TEST_ACTIVITY, STATE_RESUMED);
-        mAmWmState.assertFocusedActivity("TestActivity should be resumed", TEST_ACTIVITY);
+        waitAndAssertTopResumedActivity(TEST_ACTIVITY, mAssistantDisplayId,
+                "TestActivity should be resumed");
+        mAmWmState.assertFocusedActivity("TestActivity should be focused", TEST_ACTIVITY);
         mAmWmState.assertFrontStack("Fullscreen stack should be on top.",
                 WINDOWING_MODE_FULLSCREEN, ACTIVITY_TYPE_STANDARD);
         mAmWmState.assertFocusedStack("Fullscreen stack should be focused.",

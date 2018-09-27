@@ -28,6 +28,7 @@ import static android.server.am.ComponentNameUtils.getWindowName;
 import static android.server.am.StateLogger.log;
 import static android.server.am.StateLogger.logAlways;
 import static android.server.am.StateLogger.logE;
+import static android.view.Display.DEFAULT_DISPLAY;
 
 import static org.hamcrest.Matchers.greaterThan;
 import static org.hamcrest.Matchers.lessThan;
@@ -143,7 +144,7 @@ public class ActivityAndWindowManagersState {
 
     public void waitForKeyguardShowingAndNotOccluded() {
         waitForWithAmState(state -> state.getKeyguardControllerState().keyguardShowing
-                        && !state.getKeyguardControllerState().keyguardOccluded,
+                        && !state.getKeyguardControllerState().isKeyguardOccluded(DEFAULT_DISPLAY),
                 "***Waiting for Keyguard showing...");
     }
 

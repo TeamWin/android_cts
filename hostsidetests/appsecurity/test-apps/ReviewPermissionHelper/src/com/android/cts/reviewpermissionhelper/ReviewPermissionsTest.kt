@@ -16,10 +16,16 @@
 
 package com.android.cts.reviewpermissionhelper
 
+import android.Manifest.permission.READ_CALENDAR
 import android.app.Activity.RESULT_CANCELED
 import android.app.Activity.RESULT_OK
 import android.content.ComponentName
 import android.content.Intent
+import android.content.pm.PackageManager.PERMISSION_GRANTED
+import android.os.Bundle
+import android.os.Handler
+import android.os.Looper
+import android.os.ResultReceiver
 import android.support.test.InstrumentationRegistry
 import android.support.test.rule.ActivityTestRule
 import android.support.test.runner.AndroidJUnit4
@@ -27,12 +33,16 @@ import android.support.test.uiautomator.By
 import android.support.test.uiautomator.UiDevice
 import android.support.test.uiautomator.Until
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertNull
 import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
+import java.util.concurrent.LinkedBlockingQueue
 import java.util.concurrent.TimeUnit
 
+private const val UI_TIMEOUT_UNEXPECTED = 500L
 private const val UI_TIMEOUT = 5000L
+private const val USE_PERMISSION_PKG = "com.android.cts.usepermission"
 
 @RunWith(AndroidJUnit4::class)
 class ReviewPermissionsTest {
@@ -44,8 +54,8 @@ class ReviewPermissionsTest {
 
     fun startActivityInReviewedAp() {
         val startAutoClosingActivity = Intent()
-        startAutoClosingActivity.component = ComponentName("com.android.cts.usepermission",
-                "com.android.cts.usepermission.AutoClosingActivity")
+        startAutoClosingActivity.component = ComponentName(USE_PERMISSION_PKG,
+                USE_PERMISSION_PKG + ".AutoClosingActivity")
         activityStarter.activity.startActivityForResult(startAutoClosingActivity, 42)
     }
 
@@ -125,5 +135,31 @@ class ReviewPermissionsTest {
 
         uiDevice.waitForIdle()
         clickContinue()
+    }
+
+    @Test
+    fun reviewPermissionWhenServiceIsBound() {
+        val permissionCheckerServiceIntent = Intent()
+        permissionCheckerServiceIntent.component = ComponentName(USE_PERMISSION_PKG,
+                "$USE_PERMISSION_PKG.PermissionCheckerService")
+
+        val results = LinkedBlockingQueue<Int>()
+        permissionCheckerServiceIntent.putExtra("$USE_PERMISSION_PKG.RESULT",
+                object : ResultReceiver(Handler(Looper.getMainLooper())) {
+                    override fun onReceiveResult(resultCode: Int, resultData: Bundle?) {
+                        results.offer(resultCode)
+                    }
+                })
+        permissionCheckerServiceIntent.putExtra("$USE_PERMISSION_PKG.PERMISSION", READ_CALENDAR)
+
+        activityStarter.activity.startService(permissionCheckerServiceIntent)
+
+        // Service is not started before permission are reviewed
+        assertNull(results.poll(UI_TIMEOUT_UNEXPECTED, TimeUnit.MILLISECONDS))
+
+        clickContinue()
+
+        // Service should be started after permission review
+        assertEquals(PERMISSION_GRANTED, results.poll(UI_TIMEOUT, TimeUnit.MILLISECONDS))
     }
 }
