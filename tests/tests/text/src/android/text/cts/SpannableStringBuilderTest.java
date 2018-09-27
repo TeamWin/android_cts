@@ -18,6 +18,7 @@ package android.text.cts;
 
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertSame;
 import static org.junit.Assert.assertTrue;
@@ -768,6 +769,68 @@ public class SpannableStringBuilderTest {
         assertEquals(2, spans.length);
         assertEquals(third, spans[0]);
         assertEquals(fourth, spans[1]);
+    }
+
+    // Same as SpannableStringTest.
+    @Test
+    public void testEquals() {
+        final String text = "this is a test!";
+        final Object span1 = new Object();
+        final Object span2 = new Object();
+
+        final SpannableStringBuilder bd1 = new SpannableStringBuilder(text);
+        bd1.setSpan(span1, 0, 5, 0);
+        bd1.setSpan(span2, 1, 5, 0);
+
+        assertEquals(bd1, bd1);
+
+        final SpannableStringBuilder bd2 = new SpannableStringBuilder(text);
+        bd2.setSpan(span1, 0, 5, 0);
+        bd2.setSpan(span2, 1, 5, 0);
+
+        assertEquals(bd1, bd2);
+        assertEquals(bd2, bd1);
+    }
+
+    // Same as SpannableStringTest
+    @Test
+    public void testEqualsWithPriority() {
+        final String text = "this is a test!";
+        final Object span1 = new Object();
+        final Object span2 = new Object();
+
+        final SpannableStringBuilder bd1 = new SpannableStringBuilder(text);
+        bd1.setSpan(span1, 0, 5, 0);
+        bd1.setSpan(span2, 1, 5, Spanned.SPAN_PRIORITY);
+
+        assertEquals(bd1, bd1);
+
+        final SpannableStringBuilder bd2 = new SpannableStringBuilder(text);
+        bd2.setSpan(span2, 1, 5, Spanned.SPAN_PRIORITY);
+        bd2.setSpan(span1, 0, 5, 0);
+
+        // This should work because the span2 has priority.
+        assertEquals(bd1, bd2);
+    }
+
+    // Same as SpannableStringTest
+    @Test
+    public void testEqualsWithDifferentSequence() {
+        final String text = "this is a test!";
+        final Object span1 = new Object();
+        final Object span2 = new Object();
+
+        final SpannableStringBuilder bd1 = new SpannableStringBuilder(text);
+        bd1.setSpan(span1, 0, 5, Spanned.SPAN_PRIORITY);
+        bd1.setSpan(span2, 1, 5, Spanned.SPAN_PRIORITY);
+
+        final SpannableStringBuilder bd2 = new SpannableStringBuilder(text);
+        bd2.setSpan(span2, 1, 5, Spanned.SPAN_PRIORITY);
+        bd2.setSpan(span1, 0, 5, Spanned.SPAN_PRIORITY);
+
+        // Both span1 and span2 have priority but they are applied in a different sequence,
+        // so bd1 should not equal to bd2.
+        assertFalse(bd1.equals(bd2));
     }
 
     @Test
