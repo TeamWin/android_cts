@@ -201,6 +201,37 @@ public class NotificationManagerTest extends AndroidTestCase {
         assertEquals(channel.getId(), actual.getChannels().get(0).getId());
     }
 
+    public void testGetChannelGroups() throws Exception {
+        final NotificationChannelGroup ncg = new NotificationChannelGroup("a group", "a label");
+        ncg.setDescription("bananas");
+        final NotificationChannelGroup ncg2 = new NotificationChannelGroup("group 2", "label 2");
+        final NotificationChannel channel =
+                new NotificationChannel(mId, "name", NotificationManager.IMPORTANCE_DEFAULT);
+        channel.setGroup(ncg2.getId());
+
+        mNotificationManager.createNotificationChannelGroup(ncg);
+        mNotificationManager.createNotificationChannelGroup(ncg2);
+        mNotificationManager.createNotificationChannel(channel);
+
+        List<NotificationChannelGroup> actual =
+                mNotificationManager.getNotificationChannelGroups();
+        assertEquals(2, actual.size());
+        for (NotificationChannelGroup group : actual) {
+            if (group.getId().equals(ncg.getId())) {
+                assertEquals(group.getName(), ncg.getName());
+                assertEquals(group.getDescription(), ncg.getDescription());
+                assertEquals(0, group.getChannels().size());
+            } else if (group.getId().equals(ncg2.getId())) {
+                assertEquals(group.getName(), ncg2.getName());
+                assertEquals(group.getDescription(), ncg2.getDescription());
+                assertEquals(1, group.getChannels().size());
+                assertEquals(channel.getId(), group.getChannels().get(0).getId());
+            } else {
+                fail("Extra group found " + group.getId());
+            }
+        }
+    }
+
     public void testDeleteChannelGroup() throws Exception {
         final NotificationChannelGroup ncg = new NotificationChannelGroup("a group", "a label");
         final NotificationChannel channel =
@@ -958,6 +989,12 @@ public class NotificationManagerTest extends AndroidTestCase {
 
     private void assertOnlySomeNotificationsAutogrouped(List<Integer> autoGroupedIds) {
         String expectedGroupKey = null;
+        try {
+            // Posting can take ~100 ms
+            Thread.sleep(150);
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        }
         StatusBarNotification[] sbns = mNotificationManager.getActiveNotifications();
         for (StatusBarNotification sbn : sbns) {
             if (isGroupSummary(sbn.getNotification())
@@ -980,6 +1017,12 @@ public class NotificationManagerTest extends AndroidTestCase {
 
     private void assertAllPostedNotificationsAutogrouped() {
         String expectedGroupKey = null;
+        try {
+            // Posting can take ~100 ms
+            Thread.sleep(150);
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        }
         StatusBarNotification[] sbns = mNotificationManager.getActiveNotifications();
         for (StatusBarNotification sbn : sbns) {
             // all notis should be in a group determined by autogrouping
