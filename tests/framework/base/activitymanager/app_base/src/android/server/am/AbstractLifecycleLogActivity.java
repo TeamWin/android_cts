@@ -35,7 +35,7 @@ public abstract class AbstractLifecycleLogActivity extends BasicTestActivity {
 
     @Override
     protected void onStart() {
-        super.onResume();
+        super.onStart();
         Log.i(getTag(), "onStart");
     }
 

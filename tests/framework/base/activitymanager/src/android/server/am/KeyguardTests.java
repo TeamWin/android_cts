@@ -209,6 +209,41 @@ public class KeyguardTests extends KeyguardTestBase {
     }
 
     /**
+     * Test that when a normal activity finished and an existing SHOW_WHEN_LOCKED activity becomes
+     * the top activity, it should be resumed.
+     */
+    @Test
+    public void testResumeShowWhenLockedActivityFromBackground() throws Exception {
+        try (final LockScreenSession lockScreenSession = new LockScreenSession()) {
+            lockScreenSession.gotoKeyguard();
+            mAmWmState.assertKeyguardShowingAndNotOccluded();
+
+            // Launch a SHOW_WHEN_LOCKED activity.
+            getLaunchActivityBuilder().setUseInstrumentation()
+                    .setTargetActivity(SHOW_WHEN_LOCKED_ATTR_ACTIVITY).execute();
+
+            // Launch an activity without SHOW_WHEN_LOCKED and finish it.
+            getLaunchActivityBuilder().setUseInstrumentation()
+                    .setMultipleTask(true)
+                    // Don't wait for activity visible because keyguard will show.
+                    .setWaitForLaunched(false)
+                    .setTargetActivity(BROADCAST_RECEIVER_ACTIVITY).execute();
+            mAmWmState.computeState(true);
+            mAmWmState.assertKeyguardShowingAndNotOccluded();
+
+            mBroadcastActionTrigger.finishBroadcastReceiverActivity();
+            mAmWmState.waitForKeyguardShowingAndOccluded();
+
+            // The SHOW_WHEN_LOCKED activity should be resumed because it becomes the top activity.
+            mAmWmState.computeState(SHOW_WHEN_LOCKED_ATTR_ACTIVITY);
+            mAmWmState.assertVisibility(SHOW_WHEN_LOCKED_ATTR_ACTIVITY, true);
+            assertTrue(SHOW_WHEN_LOCKED_ATTR_ACTIVITY + " must be resumed.",
+                    mAmWmState.getAmState().hasActivityState(SHOW_WHEN_LOCKED_ATTR_ACTIVITY,
+                            ActivityManagerState.STATE_RESUMED));
+        }
+    }
+
+    /**
      * Tests whether a FLAG_DISMISS_KEYGUARD activity occludes Keyguard.
      */
     @Test

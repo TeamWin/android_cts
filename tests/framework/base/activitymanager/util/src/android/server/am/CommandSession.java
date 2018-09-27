@@ -776,7 +776,7 @@ public final class CommandSession {
 
         @Override
         protected void onStart() {
-            super.onResume();
+            super.onStart();
             onCallback(ActivityCallback.ON_START);
         }
 
