@@ -33,7 +33,6 @@ import android.os.SystemClock;
 import android.support.test.InstrumentationRegistry;
 import android.view.nano.DisplayInfoProto;
 
-import com.android.server.wm.nano.AppTransitionProto;
 import com.android.server.wm.nano.AppWindowTokenProto;
 import com.android.server.wm.nano.ConfigurationContainerProto;
 import com.android.server.wm.nano.DisplayFramesProto;
@@ -189,7 +188,6 @@ public class WindowManagerState {
             mWindowStates.add(windowMap.get(hash_code));
         }
         mRotation = state.rotation;
-        AppTransitionProto appTransitionProto = state.appTransition;
     }
 
     public void getMatchingVisibleWindowState(final String windowName, List<WindowState> windowList) {

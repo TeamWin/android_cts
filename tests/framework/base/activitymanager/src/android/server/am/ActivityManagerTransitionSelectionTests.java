@@ -313,6 +313,6 @@ public class ActivityManagerTransitionSelectionTests extends ActivityManagerTest
         }
 
         assertEquals("Picked wrong transition", expectedTransit,
-                mAmWmState.getWmState().getLastTransition());
+                mAmWmState.getWmState().getDefaultDisplayLastTransition());
     }
 }

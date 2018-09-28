@@ -1261,7 +1261,7 @@ public class ActivityManagerPinnedStackTests extends ActivityManagerTestBase {
         launchActivity(TEST_ACTIVITY);
         mBroadcastActionTrigger.doAction(TEST_ACTIVITY_ACTION_FINISH_SELF);
         mAmWmState.waitForActivityState(PIP_ACTIVITY, STATE_RESUMED);
-        mAmWmState.waitForAppTransitionIdle();
+        mAmWmState.waitForAppTransitionIdleOnDisplay(DEFAULT_DISPLAY);
         mBroadcastActionTrigger.doAction(ACTION_ENTER_PIP);
         waitForEnterPipAnimationComplete(PIP_ACTIVITY);
         assertPinnedStackExists();

@@ -99,6 +99,12 @@ public class ActivityLauncher {
      * Key for int extra with intent flags which are used for launching an activity.
      */
     public static final String KEY_INTENT_FLAGS = "intent_flags";
+    /**
+     * Key for boolean extra, indicates if need to automatically applies
+     * {@link Intent#FLAG_ACTIVITY_NEW_TASK} and {@link Intent#FLAG_ACTIVITY_MULTIPLE_TASK} to
+     * the intent when target display id set.
+     */
+    public static final String KEY_MULTIPLE_INSTANCES = "multiple_instances";
 
 
     /** Perform an activity launch configured by provided extras. */
@@ -143,7 +149,9 @@ public class ActivityLauncher {
         if (displayId != -1) {
             options = ActivityOptions.makeBasic();
             options.setLaunchDisplayId(displayId);
-            newIntent.addFlags(FLAG_ACTIVITY_NEW_TASK | FLAG_ACTIVITY_MULTIPLE_TASK);
+            if (extras.getBoolean(KEY_MULTIPLE_INSTANCES, true)) {
+                newIntent.addFlags(FLAG_ACTIVITY_NEW_TASK | FLAG_ACTIVITY_MULTIPLE_TASK);
+            }
         }
         if (launchInjector != null) {
             launchInjector.setupIntent(newIntent);

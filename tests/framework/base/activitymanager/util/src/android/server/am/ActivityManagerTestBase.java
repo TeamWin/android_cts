@@ -42,6 +42,7 @@ import static android.server.am.ActivityLauncher.KEY_DISPLAY_ID;
 import static android.server.am.ActivityLauncher.KEY_INTENT_FLAGS;
 import static android.server.am.ActivityLauncher.KEY_LAUNCH_ACTIVITY;
 import static android.server.am.ActivityLauncher.KEY_LAUNCH_TO_SIDE;
+import static android.server.am.ActivityLauncher.KEY_MULTIPLE_INSTANCES;
 import static android.server.am.ActivityLauncher.KEY_MULTIPLE_TASK;
 import static android.server.am.ActivityLauncher.KEY_NEW_TASK;
 import static android.server.am.ActivityLauncher.KEY_RANDOM_DATA;
@@ -318,9 +319,16 @@ public abstract class ActivityManagerTestBase {
                                 .addFlags(FLAG_ACTIVITY_NEW_TASK), bundle);
                 // Check activity is launched and resumed.
                 final ComponentName testActivityName = mTestActivity.getComponentName();
-                mAmWmState.waitForActivityState(testActivityName, STATE_RESUMED);
-                mAmWmState.assertResumedActivity("Activity must be resumed", testActivityName);
+                waitAndAssertTopResumedActivity(testActivityName, displayId,
+                        "Activity must be resumed");
             });
+        }
+
+        void finishCurrentActivityNoWait() {
+            if (mTestActivity != null) {
+                mTestActivity.finishAndRemoveTask();
+                mTestActivity = null;
+            }
         }
 
         void runOnMainSyncAndWait(Runnable runnable) {
@@ -620,7 +628,7 @@ public abstract class ActivityManagerTestBase {
     protected void pressAppSwitchButtonAndWaitForRecents() {
         pressAppSwitchButton();
         mAmWmState.waitForRecentsActivityVisible();
-        mAmWmState.waitForAppTransitionIdle();
+        mAmWmState.waitForAppTransitionIdleOnDisplay(DEFAULT_DISPLAY);
     }
 
     // Utility method for debugging, not used directly here, but useful, so kept around.
@@ -1694,6 +1702,7 @@ public abstract class ActivityManagerTestBase {
         private boolean mRandomData;
         private boolean mNewTask;
         private boolean mMultipleTask;
+        private boolean mAllowMultipleInstances = true;
         private int mDisplayId = INVALID_DISPLAY;
         private int mActivityType = ACTIVITY_TYPE_UNDEFINED;
         // A proxy activity that launches other activities including mTargetActivityName
@@ -1736,6 +1745,11 @@ public abstract class ActivityManagerTestBase {
 
         public LaunchActivityBuilder setMultipleTask(boolean multipleTask) {
             mMultipleTask = multipleTask;
+            return this;
+        }
+
+        public LaunchActivityBuilder allowMultipleInstances(boolean allowMultipleInstances) {
+            mAllowMultipleInstances = allowMultipleInstances;
             return this;
         }
 
@@ -1855,6 +1869,7 @@ public abstract class ActivityManagerTestBase {
             b.putBoolean(KEY_RANDOM_DATA, mRandomData);
             b.putBoolean(KEY_NEW_TASK, mNewTask);
             b.putBoolean(KEY_MULTIPLE_TASK, mMultipleTask);
+            b.putBoolean(KEY_MULTIPLE_INSTANCES, mAllowMultipleInstances);
             b.putBoolean(KEY_REORDER_TO_FRONT, mReorderToFront);
             b.putInt(KEY_DISPLAY_ID, mDisplayId);
             b.putInt(KEY_ACTIVITY_TYPE, mActivityType);
@@ -1895,6 +1910,9 @@ public abstract class ActivityManagerTestBase {
             }
             if (mMultipleTask) {
                 commandBuilder.append(" --ez " + KEY_MULTIPLE_TASK + " true");
+            }
+            if (mAllowMultipleInstances) {
+                commandBuilder.append(" --ez " + KEY_MULTIPLE_INSTANCES + " true");
             }
             if (mReorderToFront) {
                 commandBuilder.append(" --ez " + KEY_REORDER_TO_FRONT + " true");

@@ -487,12 +487,13 @@ public class ActivityManagerSplitScreenTests extends ActivityManagerTestBase {
                 mAmWmState.computeState(DOCKED_ACTIVITY);
 
                 // Go home and check the app transition
-                assertNotEquals(
-                        TRANSIT_WALLPAPER_OPEN, mAmWmState.getWmState().getLastTransition());
+                assertNotEquals(TRANSIT_WALLPAPER_OPEN,
+                        mAmWmState.getWmState().getDefaultDisplayLastTransition());
                 pressHomeButton();
                 mAmWmState.waitForHomeActivityVisible();
 
-                assertEquals(TRANSIT_WALLPAPER_OPEN, mAmWmState.getWmState().getLastTransition());
+                assertEquals(TRANSIT_WALLPAPER_OPEN,
+                        mAmWmState.getWmState().getDefaultDisplayLastTransition());
             }
         }
     }
