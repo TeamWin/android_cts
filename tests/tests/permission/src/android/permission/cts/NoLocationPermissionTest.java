@@ -110,13 +110,6 @@ public class NoLocationPermissionTest extends InstrumentationTestCase {
         PhoneStateListener phoneStateListener = new PhoneStateListener();
 
         try {
-            telephonyManager.getNeighboringCellInfo();
-            fail("TelephonyManager.getNeighbouringCellInfo did not throw SecurityException as expected");
-        } catch (SecurityException e) {
-            // expected
-        }
-
-        try {
             telephonyManager.getAllCellInfo();
             fail("TelephonyManager.getAllCellInfo did not throw SecurityException as expected");
         } catch (SecurityException e) {
