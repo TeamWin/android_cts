@@ -28,6 +28,9 @@ import android.support.test.filters.SmallTest;
 import android.support.test.runner.AndroidJUnit4;
 import android.util.Log;
 
+import com.android.compatibility.common.util.CddTest;
+import com.android.compatibility.common.util.PropertyUtil;
+
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -36,7 +39,6 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 
 import java.io.UnsupportedEncodingException;
-import com.android.compatibility.common.util.CddTest;
 
 /**
  * Test that the Vulkan loader is present, supports the required extensions, and that system
@@ -63,6 +65,8 @@ public class VulkanFeaturesTest {
     private static final int VK_ANDROID_EXTERNAL_MEMORY_ANDROID_HARDWARE_BUFFER_SPEC_VERSION = 2;
     private static final int VK_EXTERNAL_FENCE_HANDLE_TYPE_SYNC_FD_BIT = 0x8;
     private static final int VK_EXTERNAL_SEMAPHORE_HANDLE_TYPE_SYNC_FD_BIT = 0x10;
+
+    private static final int API_LEVEL_BEFORE_ANDROID_HARDWARE_BUFFER_REQ = 28;
 
     private PackageManager mPm;
     private FeatureInfo mVulkanHardwareLevel = null;
@@ -171,8 +175,11 @@ public class VulkanFeaturesTest {
     @CddTest(requirement="7.9.2/C-1-5")
     @Test
     public void testVulkan1_1Requirements() throws JSONException {
-        if (mVulkanHardwareVersion == null || mVulkanHardwareVersion.version < VULKAN_1_1)
+        if (mVulkanHardwareVersion == null || mVulkanHardwareVersion.version < VULKAN_1_1
+                || !PropertyUtil.isVendorApiLevelNewerThan(
+                        API_LEVEL_BEFORE_ANDROID_HARDWARE_BUFFER_REQ)) {
             return;
+        }
         assertTrue("Devices with Vulkan 1.1 must support " +
                 VK_ANDROID_EXTERNAL_MEMORY_ANDROID_HARDWARE_BUFFER_EXTENSION_NAME +
                 " (version >= " + VK_ANDROID_EXTERNAL_MEMORY_ANDROID_HARDWARE_BUFFER_SPEC_VERSION +
