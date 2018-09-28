@@ -29,17 +29,11 @@
     <target_preparer class="com.android.compatibility.common.tradefed.targetprep.FilePusher">
         <option name="push" value="CtsAppThatRequestsPermissionAandB.apk->/data/local/tmp/cts/permissions/CtsAppThatRequestsPermissionAandB.apk" />
         <option name="push" value="CtsAppThatRequestsPermissionAandC.apk->/data/local/tmp/cts/permissions/CtsAppThatRequestsPermissionAandC.apk" />
-        <option name="push" value="CtsAdversarialPermissionUserApp.apk->/data/local/tmp/cts/permissions/CtsAdversarialPermissionUserApp.apk" />
-        <option name="push" value="CtsAdversarialPermissionDefinerApp.apk->/data/local/tmp/cts/permissions/CtsAdversarialPermissionDefinerApp.apk" />
-        <option name="push" value="CtsVictimPermissionDefinerApp.apk->/data/local/tmp/cts/permissions/CtsVictimPermissionDefinerApp.apk" />
     </target_preparer>
 
     <!-- Remove additional apps if installed -->
     <target_preparer class="com.android.tradefed.targetprep.RunCommandTargetPreparer">
         <option name="teardown-command" value="pm uninstall android.permission.cts.appthatrequestpermission" />
-        <option name="teardown-command" value="pm uninstall android.permission.cts.revokepermissionwhenremoved.AdversarialPermissionDefinerApp" />
-        <option name="teardown-command" value="pm uninstall android.permission.cts.revokepermissionwhenremoved.VictimPermissionDefinerApp" />
-        <option name="teardown-command" value="pm uninstall android.permission.cts.revokepermissionwhenremoved.userapp" />
     </target_preparer>
 
     <test class="com.android.tradefed.testtype.AndroidJUnitTest" >
