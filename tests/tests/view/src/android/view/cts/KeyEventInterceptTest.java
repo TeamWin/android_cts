@@ -44,6 +44,9 @@ import java.util.concurrent.TimeUnit;
  *      KEYCODE_HOME
  * This test launches an Activity and inject KeyEvents with the corresponding key codes.
  * The test will fail if any of these keys are received by the activity.
+ * Note: The ASSIST tests were removed because they caused a side-effect of launching the
+ * assistant asynchronously (as intended), which causes problems with tests which happen to
+ * be running later and lose focus/visibility because of that extra window.
  */
 @MediumTest
 @RunWith(AndroidJUnit4.class)
@@ -60,16 +63,6 @@ public class KeyEventInterceptTest {
         mInstrumentation = InstrumentationRegistry.getInstrumentation();
         mActivity = mActivityRule.getActivity();
         PollingCheck.waitFor(mActivity::hasWindowFocus);
-    }
-
-    @Test
-    public void testKeyCodeAssist() {
-        testKey(KeyEvent.KEYCODE_ASSIST);
-    }
-
-    @Test
-    public void testKeyCodeVoiceAssist() {
-        testKey(KeyEvent.KEYCODE_VOICE_ASSIST);
     }
 
     @Test
