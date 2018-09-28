@@ -184,24 +184,43 @@ public class NetworkScanApiTest {
         }
     }
 
-    private RadioAccessSpecifier getRadioAccessSpecifier(CellInfo cellInfo) {
-        RadioAccessSpecifier ras;
-        if (cellInfo instanceof CellInfoLte) {
-            int ranLte = AccessNetworkConstants.AccessNetworkType.EUTRAN;
-            int[] lteChannels = {((CellInfoLte) cellInfo).getCellIdentity().getEarfcn()};
-            ras = new RadioAccessSpecifier(ranLte, null /* bands */, lteChannels);
-        } else if (cellInfo instanceof CellInfoWcdma) {
-            int ranLte = AccessNetworkConstants.AccessNetworkType.UTRAN;
-            int[] wcdmaChannels = {((CellInfoWcdma) cellInfo).getCellIdentity().getUarfcn()};
-            ras = new RadioAccessSpecifier(ranLte, null /* bands */, wcdmaChannels);
-        } else if (cellInfo instanceof CellInfoGsm) {
-            int ranGsm = AccessNetworkConstants.AccessNetworkType.GERAN;
-            int[] gsmChannels = {((CellInfoGsm) cellInfo).getCellIdentity().getArfcn()};
-            ras = new RadioAccessSpecifier(ranGsm, null /* bands */, gsmChannels);
-        } else {
-            ras = null;
+    private List<RadioAccessSpecifier> getRadioAccessSpecifier(List<CellInfo> allCellInfo) {
+        List<RadioAccessSpecifier> radioAccessSpecifier = new ArrayList<>();
+        List<Integer> lteChannels = new ArrayList<>();
+        List<Integer> wcdmaChannels = new ArrayList<>();
+        List<Integer> gsmChannels = new ArrayList<>();
+        for (int i = 0; i < allCellInfo.size(); i++) {
+            CellInfo cellInfo = allCellInfo.get(i);
+            if (cellInfo instanceof CellInfoLte) {
+                lteChannels.add(((CellInfoLte) cellInfo).getCellIdentity().getEarfcn());
+            } else if (cellInfo instanceof CellInfoWcdma) {
+                wcdmaChannels.add(((CellInfoWcdma) cellInfo).getCellIdentity().getUarfcn());
+            } else if (cellInfo instanceof CellInfoGsm) {
+                gsmChannels.add(((CellInfoGsm) cellInfo).getCellIdentity().getArfcn());
+            }
         }
-        return ras;
+        if (!lteChannels.isEmpty()) {
+            Log.d(TAG, "lte channels" + lteChannels.toString());
+            int ranLte = AccessNetworkConstants.AccessNetworkType.EUTRAN;
+            radioAccessSpecifier.add(
+                    new RadioAccessSpecifier(ranLte, null /* bands */,
+                            lteChannels.stream().mapToInt(i->i).toArray()));
+        }
+        if (!wcdmaChannels.isEmpty()) {
+            Log.d(TAG, "wcdma channels" + wcdmaChannels.toString());
+            int ranWcdma = AccessNetworkConstants.AccessNetworkType.UTRAN;
+            radioAccessSpecifier.add(
+                    new RadioAccessSpecifier(ranWcdma, null /* bands */,
+                            wcdmaChannels.stream().mapToInt(i->i).toArray()));
+        }
+        if (!gsmChannels.isEmpty()) {
+            Log.d(TAG, "gsm channels" + gsmChannels.toString());
+            int ranGsm = AccessNetworkConstants.AccessNetworkType.GERAN;
+            radioAccessSpecifier.add(
+                    new RadioAccessSpecifier(ranGsm, null /* bands */,
+                            gsmChannels.stream().mapToInt(i->i).toArray()));
+        }
+        return radioAccessSpecifier;
     }
 
     /**
@@ -228,14 +247,9 @@ public class NetworkScanApiTest {
         }
 
         // Construct a NetworkScanRequest
-        List<RadioAccessSpecifier> radioAccessSpecifier = new ArrayList<>();
-        for (int i = 0; i < allCellInfo.size(); i++) {
-            RadioAccessSpecifier ras = getRadioAccessSpecifier(allCellInfo.get(i));
-            if (ras != null) {
-                radioAccessSpecifier.add(ras);
-            }
-        }
-        if (radioAccessSpecifier.size() == 0) {
+        List<RadioAccessSpecifier> radioAccessSpecifier = getRadioAccessSpecifier(allCellInfo);
+        Log.d(TAG, "number of radioAccessSpecifier: " + radioAccessSpecifier.size());
+        if (radioAccessSpecifier.isEmpty()) {
             RadioAccessSpecifier gsm = new RadioAccessSpecifier(
                     AccessNetworkConstants.AccessNetworkType.GERAN,
                     null /* bands */,
@@ -301,7 +315,7 @@ public class NetworkScanApiTest {
      * To test its constructor and getters.
      */
     @Test
-    public void testNetworkScanRequest_ConstructorAndGetters(){
+    public void testNetworkScanRequest_ConstructorAndGetters() {
         NetworkScanRequest networkScanRequest = new NetworkScanRequest(
                 SCAN_TYPE,
                 RADIO_ACCESS_SPECIFIERS,
