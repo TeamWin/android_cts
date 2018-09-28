@@ -662,6 +662,19 @@ public class ByodFlowTestActivity extends DialogTestListActivity {
                 new String[] {PackageManager.FEATURE_APP_WIDGETS});
         adapter.add(mWidgetTest);
 
+        adapter.add(new DialogTestListItem(this,
+                R.string.provisioning_byod_uninstall_work_app,
+                "BYOD_UninstallWorkApp",
+                R.string.provisioning_byod_uninstall_work_app_instruction,
+                createInstallWorkProfileAppIntent()));
+    }
+
+    private Intent createInstallWorkProfileAppIntent() {
+        // We place the APK file in /data/local/tmp to make it visible from the work profile.
+        return new Intent(ByodHelperActivity.ACTION_INSTALL_APK)
+                .putExtra(ByodHelperActivity.EXTRA_ALLOW_NON_MARKET_APPS, true)
+                .putExtra(ByodHelperActivity.EXTRA_PARAMETER_1,
+                        "/data/local/tmp/NotificationBot.apk");
     }
 
     // Return whether the intent can be resolved in the current profile
