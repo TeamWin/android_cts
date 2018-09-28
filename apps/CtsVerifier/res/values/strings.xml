@@ -3747,6 +3747,30 @@ You should be prompted to select credentials; choose the ones you just installed
     <string name="device_owner_enable_network_logging_button">Enable Network Logging</string>
     <string name="device_owner_disable_network_logging_button">Disable Network Logging</string>
 
+    <!-- Strings for Customize Lock Screen Message -->
+    <string name="device_owner_customize_lockscreen_message">Customize Lock Screen Message</string>
+    <string name="device_owner_customize_lockscreen_message_info">Please do the following:\n
+        1) Press the \"Go\" button to go to Settings\n
+        2) Find the \"Screen lock\" option and set it to \"Swipe\"\n
+        3) Use the Back button to return to this page\n
+        4) In the field below, write a lock screen message.\n
+        5) Press the \"Set lock screen message\" button\n
+        6) Press Power button once to lock the screen.\n
+        7) Press Power button again to reveal the lock screen.\n
+        8) Verify that the message from step 1) appears on the lock screen.\n
+        9) Unlock the screen and return to this page.\n
+        10) Press the \"Go\" button to go to Settings\n
+        11) Find the \"Lock screen message\" option\n
+        12) Verify that you cannot modify the setting.\n
+        13) Use the Back button to return to this page.\n
+        14) Press the \"Go\" button to go to Settings\n
+        15) Find the \"Screen lock\" option and set it to \"None\"\n
+        16) Use the Back button to return to this page
+    </string>
+    <string name="device_owner_set_lockscreen_message_button">Set lock screen message</string>
+    <string name="device_owner_set_lockscreen_message_hint">My lock screen message</string>
+    <string name="device_owner_lockscreen_message_cannot_be_empty">Lock screen message cannot be empty.</string>
+
     <string name="comp_test">Corporate Owned Managed Profile</string>
     <string name="comp_provision_profile_dialog_title">Provision work profile</string>
     <string name="comp_provision_profile_dialog_text">Press the OK button to start the managed provisioning flow, and complete the flow to create a work profile</string>
