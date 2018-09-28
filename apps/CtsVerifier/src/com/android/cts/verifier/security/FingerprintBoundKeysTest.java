@@ -69,6 +69,8 @@ public class FingerprintBoundKeysTest extends PassFailButtons.Activity {
     private static final int CONFIRM_CREDENTIALS_REQUEST_CODE = 1;
     private static final int FINGERPRINT_PERMISSION_REQUEST_CODE = 0;
 
+    protected boolean useStrongBox;
+
     private FingerprintManager mFingerprintManager;
     private KeyguardManager mKeyguardManager;
     private FingerprintAuthDialogFragment mFingerprintDialog;
@@ -88,6 +90,7 @@ public class FingerprintBoundKeysTest extends PassFailButtons.Activity {
     @Override
     public void onRequestPermissionsResult(int requestCode, String[] permissions, int[] state) {
         if (requestCode == FINGERPRINT_PERMISSION_REQUEST_CODE && state[0] == PackageManager.PERMISSION_GRANTED) {
+            useStrongBox = false;
             mFingerprintManager = (FingerprintManager) getSystemService(Context.FINGERPRINT_SERVICE);
             mKeyguardManager = (KeyguardManager) getSystemService(KeyguardManager.class);
             Button startTestButton = (Button) findViewById(R.id.sec_start_test_button);
@@ -108,15 +111,19 @@ public class FingerprintBoundKeysTest extends PassFailButtons.Activity {
             startTestButton.setOnClickListener(new OnClickListener() {
                 @Override
                 public void onClick(View v) {
-                    createKey(false /* hasValidityDuration */);
-                    prepareEncrypt();
-                    if (tryEncrypt()) {
-                        showToast("Test failed. Key accessible without auth.");
-                    } else {
-                        showAuthenticationScreen();
-                    }
+                    startTest();
                 }
             });
+        }
+    }
+
+    protected void startTest() {
+        createKey(false /* hasValidityDuration */);
+        prepareEncrypt();
+        if (tryEncrypt()) {
+            showToast("Test failed. Key accessible without auth.");
+        } else {
+            showAuthenticationScreen();
         }
     }
 
@@ -141,6 +148,7 @@ public class FingerprintBoundKeysTest extends PassFailButtons.Activity {
                     .setUserAuthenticationValidityDurationSeconds(
                         hasValidityDuration ? AUTHENTICATION_DURATION_SECONDS : -1)
                     .setEncryptionPaddings(KeyProperties.ENCRYPTION_PADDING_PKCS7)
+                    .setIsStrongBoxBacked(useStrongBox)
                     .build());
             keyGenerator.generateKey();
             if (DEBUG) {
@@ -176,7 +184,7 @@ public class FingerprintBoundKeysTest extends PassFailButtons.Activity {
         return mCipher;
     }
 
-    protected boolean doValidityDurationTest() {
+    protected boolean doValidityDurationTest(boolean useStrongBox) {
         mCipher = null;
         createKey(true /* hasValidityDuration */);
         if (prepareEncrypt()) {
@@ -251,6 +259,7 @@ public class FingerprintBoundKeysTest extends PassFailButtons.Activity {
         private FingerprintManager mFingerprintManager;
         private FingerprintManagerCallback mFingerprintManagerCallback;
         private boolean mSelfCancelled;
+        private boolean hasStrongBox;
 
         class FingerprintManagerCallback extends FingerprintManager.AuthenticationCallback {
             @Override
@@ -281,15 +290,22 @@ public class FingerprintBoundKeysTest extends PassFailButtons.Activity {
                 if (DEBUG) {
                     Log.i(TAG,"onAuthenticationSucceeded");
                 }
-                if (mActivity.tryEncrypt() && mActivity.doValidityDurationTest()) {
+                hasStrongBox = getContext().getPackageManager()
+                                    .hasSystemFeature(PackageManager.FEATURE_STRONGBOX_KEYSTORE);
+                if (mActivity.tryEncrypt() && mActivity.doValidityDurationTest(false)) {
                     try {
                         Thread.sleep(3000);
                     } catch (Exception e) {
                         throw new RuntimeException("Failed to sleep", e);
                     }
-                    if (!mActivity.doValidityDurationTest()) {
-                        showToast("Test passed.");
-                        mActivity.getPassButton().setEnabled(true);
+                    if (!mActivity.doValidityDurationTest(false)) {
+                        showToast(String.format("Test passed. useStrongBox: %b",
+                                                mActivity.useStrongBox));
+                        if (mActivity.useStrongBox || !hasStrongBox) {
+                            mActivity.getPassButton().setEnabled(true);
+                        } else {
+                            showToast("Rerunning with StrongBox");
+                        }
                         FingerprintAuthDialogFragment.this.dismiss();
                     } else {
                         showToast("Test failed. Key accessible after validity time limit.");
@@ -304,6 +320,11 @@ public class FingerprintBoundKeysTest extends PassFailButtons.Activity {
         public void onDismiss(DialogInterface dialog) {
             mCancellationSignal.cancel();
             mSelfCancelled = true;
+            // Start the test again, but with StrongBox if supported
+            if (!mActivity.useStrongBox && hasStrongBox) {
+                mActivity.useStrongBox = true;
+                mActivity.startTest();
+            }
         }
 
         private void setActivity(FingerprintBoundKeysTest activity) {
