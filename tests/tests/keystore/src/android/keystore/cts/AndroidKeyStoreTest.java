@@ -30,6 +30,8 @@ import android.util.Log;
 
 import android.keystore.cts.R;
 
+import com.android.compatibility.common.util.CddTest;
+
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.OutputStream;
@@ -2144,6 +2146,7 @@ public class AndroidKeyStoreTest extends AndroidTestCase {
         }
     }
 
+    @CddTest(requirement="9.11/C-0-1")
     @LargeTest
     public void testKeyStore_LargeNumberOfKeysSupported_EC() throws Exception {
         // This test imports key1, then lots of other keys, then key2, and then confirms that
@@ -2242,6 +2245,7 @@ public class AndroidKeyStoreTest extends AndroidTestCase {
         }
     }
 
+    @CddTest(requirement="9.11/C-0-1")
     @LargeTest
     public void testKeyStore_LargeNumberOfKeysSupported_AES() throws Exception {
         // This test imports key1, then lots of other keys, then key2, and then confirms that
@@ -2332,6 +2336,7 @@ public class AndroidKeyStoreTest extends AndroidTestCase {
         }
     }
 
+    @CddTest(requirement="9.11/C-0-1")
     @LargeTest
     public void testKeyStore_LargeNumberOfKeysSupported_HMAC() throws Exception {
         // This test imports key1, then lots of other keys, then key2, and then confirms that

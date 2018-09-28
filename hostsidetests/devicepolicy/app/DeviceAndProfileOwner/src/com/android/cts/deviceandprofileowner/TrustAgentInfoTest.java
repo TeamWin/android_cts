@@ -20,6 +20,8 @@ import android.app.admin.DevicePolicyManager;
 import android.content.ComponentName;
 import android.os.PersistableBundle;
 
+import com.android.compatibility.common.util.CddTest;
+
 import java.util.List;
 
 
@@ -47,6 +49,7 @@ public class TrustAgentInfoTest extends BaseDeviceAdminTest {
         super.tearDown();
     }
 
+    @CddTest(requirement="9.11.1/C-1-2")
     public void testSetAndGetTrustAgentConfiguration() {
         // Set the config
         mDevicePolicyManager.setTrustAgentConfiguration(ADMIN_RECEIVER_COMPONENT,
