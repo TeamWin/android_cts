@@ -16,6 +16,8 @@
 package android.security.cts;
 
 import android.platform.test.annotations.SecurityTest;
+import static org.junit.Assert.*;
+import java.util.regex.Pattern;
 
 @SecurityTest
 public class Poc16_09 extends SecurityTestCase {
@@ -36,5 +38,21 @@ public class Poc16_09 extends SecurityTestCase {
         AdbUtils.runPoc("CVE-2015-8839", getDevice(), 60);
         String logcat =  AdbUtils.runCommandLine("logcat -d", getDevice());
         assertMatches("[\\s\\n\\S]*fallocate result EOPNOTSUPP[\\s\\n\\S]*", logcat);
+    }
+
+    /**
+     *  b/29422022
+     */
+    @SecurityTest
+    public void testPocCVE_2016_3871() throws Exception {
+       String pattern1 = "Fatal signal[\\s\\S]*>>> /system/bin/mediaserver <<<";
+       String pattern2 = "CHECK_EQ";
+       AdbUtils.runCommandLine("logcat -c" , getDevice());
+       AdbUtils.runPoc("CVE-2016-3871", getDevice(), 60);
+       String logcat =  AdbUtils.runCommandLine("logcat -d", getDevice());
+       if(Pattern.compile(pattern1, Pattern.DOTALL|Pattern.MULTILINE).matcher(logcat).find()) {
+           assertTrue("CVE-2016-3871 failed", Pattern.compile(pattern2,
+                        Pattern.DOTALL|Pattern.MULTILINE).matcher(logcat).find());
+       }
     }
 }
