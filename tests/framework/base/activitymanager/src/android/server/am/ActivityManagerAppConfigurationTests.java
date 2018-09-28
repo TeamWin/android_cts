@@ -404,14 +404,14 @@ public class ActivityManagerAppConfigurationTests extends ActivityManagerTestBas
         assumeTrue("Skipping test: no rotation support", supportsRotation());
 
         LogSeparator logSeparator = separateLogs();
-        launchActivity(PORTRAIT_ORIENTATION_ACTIVITY);
+        launchActivity(PORTRAIT_ORIENTATION_ACTIVITY, WINDOWING_MODE_FULLSCREEN);
         mAmWmState.assertVisibility(PORTRAIT_ORIENTATION_ACTIVITY, true /* visible */);
 
         assertLifecycleCounts(PORTRAIT_ORIENTATION_ACTIVITY, logSeparator, 1 /* create */,
                 1 /* start */, 1 /* resume */, 0 /* pause */, 0 /* stop */, 0 /* destroy */,
                 0 /* config */);
 
-        launchActivity(LANDSCAPE_ORIENTATION_ACTIVITY);
+        launchActivity(LANDSCAPE_ORIENTATION_ACTIVITY, WINDOWING_MODE_FULLSCREEN);
         mAmWmState.assertVisibility(LANDSCAPE_ORIENTATION_ACTIVITY, true /* visible */);
 
         assertLifecycleCounts(PORTRAIT_ORIENTATION_ACTIVITY, logSeparator, 1 /* create */,
@@ -421,7 +421,7 @@ public class ActivityManagerAppConfigurationTests extends ActivityManagerTestBas
                 1 /* start */, 1 /* resume */, 0 /* pause */, 0 /* stop */, 0 /* destroy */,
                 0 /* config */);
 
-        launchActivity(PORTRAIT_ORIENTATION_ACTIVITY);
+        launchActivity(PORTRAIT_ORIENTATION_ACTIVITY, WINDOWING_MODE_FULLSCREEN);
         mAmWmState.assertVisibility(PORTRAIT_ORIENTATION_ACTIVITY, true /* visible */);
 
         assertLifecycleCounts(PORTRAIT_ORIENTATION_ACTIVITY, logSeparator, 2 /* create */,
