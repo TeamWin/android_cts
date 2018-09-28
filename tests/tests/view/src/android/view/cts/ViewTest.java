@@ -408,6 +408,10 @@ public class ViewTest {
         CtsTouchUtils.emulateTapOnViewCenter(mInstrumentation, view);
         assertTrue(view.hasCalledOnTouchEvent());
         verify(delegate, times(1)).onTouchEvent(any());
+        CtsMouseUtil.emulateHoverOnView(mInstrumentation, view, view.getWidth() / 2,
+                view.getHeight() / 2);
+        assertTrue(view.hasCalledOnHoverEvent());
+        verifyZeroInteractions(delegate);
 
         view.setTouchDelegate(null);
         assertNull(view.getTouchDelegate());

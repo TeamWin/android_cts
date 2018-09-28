@@ -15,14 +15,13 @@
 package android.accessibilityservice.cts.utils;
 
 import static org.hamcrest.CoreMatchers.both;
-
 import android.app.UiAutomation.AccessibilityEventFilter;
 import android.view.accessibility.AccessibilityEvent;
 
 import org.hamcrest.Description;
-import org.hamcrest.Matcher;
-import org.hamcrest.Matchers;
 import org.hamcrest.TypeSafeMatcher;
+
+import java.util.function.BiPredicate;
 
 /**
  * Utility class for creating AccessibilityEventFilters
@@ -36,6 +35,16 @@ public class AccessibilityEventFilterUtils {
         return (both(new AccessibilityEventTypeMatcher(AccessibilityEvent.TYPE_WINDOWS_CHANGED))
                         .and(new WindowChangesMatcher(changes)))::matches;
     }
+
+    public static AccessibilityEventFilter filterForEventTypeWithResource(int eventType,
+            String ResourceName) {
+        TypeSafeMatcher<AccessibilityEvent> matchResourceName = new PropertyMatcher<>(
+                ResourceName, "Resource name",
+                (event, expect) -> event.getSource() != null
+                        && event.getSource().getViewIdResourceName().equals(expect));
+        return (both(new AccessibilityEventTypeMatcher(eventType)).and(matchResourceName))::matches;
+    }
+
     public static class AccessibilityEventTypeMatcher extends TypeSafeMatcher<AccessibilityEvent> {
         private int mType;
 
@@ -89,7 +98,31 @@ public class AccessibilityEventFilterUtils {
 
         @Override
         public void describeTo(Description description) {
-            description.appendText("With window change type " + mContentChanges);
+            description.appendText("With content change type " + mContentChanges);
+        }
+    }
+
+    public static class PropertyMatcher<T> extends TypeSafeMatcher<AccessibilityEvent> {
+        private T mProperty;
+        private String mDescription;
+        private BiPredicate<AccessibilityEvent, T> mComparator;
+
+        public PropertyMatcher(T property, String description,
+                BiPredicate<AccessibilityEvent, T> comparator) {
+            super();
+            mProperty = property;
+            mDescription = description;
+            mComparator = comparator;
+        }
+
+        @Override
+        protected boolean matchesSafely(AccessibilityEvent event) {
+            return mComparator.test(event, mProperty);
+        }
+
+        @Override
+        public void describeTo(Description description) {
+            description.appendText("Matching to " + mDescription + " " + mProperty.toString());
         }
     }
 }
