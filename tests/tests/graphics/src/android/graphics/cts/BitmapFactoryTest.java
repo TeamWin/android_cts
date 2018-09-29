@@ -204,6 +204,7 @@ public class BitmapFactoryTest {
         assertEquals(START_WIDTH, b.getWidth());
     }
 
+    @CddTest(requirement="5.1.5/C-0-1,C-0-2,C-0-3,C-0-4,C-0-5")
     @Test
     public void testDecodeStream3() {
         for (int i = 0; i < RES_IDS.length; ++i) {
@@ -216,6 +217,7 @@ public class BitmapFactoryTest {
         }
     }
 
+    @CddTest(requirement="5.1.4/C-0-3,5.1.5/C-0-5")
     @Test
     public void testDecodeStream4() {
         BitmapFactory.Options options = new BitmapFactory.Options();
@@ -251,6 +253,7 @@ public class BitmapFactoryTest {
         }
     }
 
+    @CddTest(requirement="5.1.4/C-0-3,5.1.5/C-0-5")
     @Test
     public void testDecodeStream5() {
         BitmapFactory.Options options = new BitmapFactory.Options();
