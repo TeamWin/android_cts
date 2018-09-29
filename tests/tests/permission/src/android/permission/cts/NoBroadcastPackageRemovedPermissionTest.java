@@ -21,9 +21,12 @@ import android.os.Bundle;
 import android.test.AndroidTestCase;
 import android.test.suitebuilder.annotation.SmallTest;
 
+import com.android.compatibility.common.util.CddTest;
+
 /**
  * Verify Context related methods without specific BROADCAST series permissions.
  */
+@CddTest(requirement="3.2.1/C-0-1,9.1/C-0-1")
 public class NoBroadcastPackageRemovedPermissionTest extends AndroidTestCase {
     private static final String TEST_RECEIVER_PERMISSION = "receiverPermission";
 

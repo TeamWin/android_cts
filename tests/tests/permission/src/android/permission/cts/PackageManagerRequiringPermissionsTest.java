@@ -22,9 +22,12 @@ import android.content.pm.PackageManager;
 import android.test.AndroidTestCase;
 import android.test.suitebuilder.annotation.SmallTest;
 
+import com.android.compatibility.common.util.CddTest;
+
 /**
  * Verify the PackageManager related operations require specific permissions.
  */
+@CddTest(requirement="3.2.1/C-0-1,9/C-0-1,9.1/C-0-1")
 @SmallTest
 public class PackageManagerRequiringPermissionsTest extends AndroidTestCase {
     // Must be a known-present application package other than the one hosting this class

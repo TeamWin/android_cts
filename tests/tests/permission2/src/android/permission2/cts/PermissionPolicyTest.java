@@ -31,6 +31,8 @@ import android.util.ArraySet;
 import android.util.Log;
 import android.util.Xml;
 
+import com.android.compatibility.common.util.CddTest;
+
 import org.xmlpull.v1.XmlPullParser;
 
 import java.io.InputStream;
@@ -64,6 +66,7 @@ public class PermissionPolicyTest extends AndroidTestCase {
     private static final String ATTR_PERMISSION_GROUP = "permissionGroup";
     private static final String ATTR_PROTECTION_LEVEL = "protectionLevel";
 
+    @CddTest(requirement="9.1/C-0-1")
     public void testPlatformPermissionPolicyUnaltered() throws Exception {
         Map<String, PermissionInfo> declaredPermissionsMap =
                 getPermissionsForPackage(getContext(), PLATFORM_PACKAGE_NAME);

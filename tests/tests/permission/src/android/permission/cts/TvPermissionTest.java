@@ -22,9 +22,12 @@ import android.media.tv.TvContract;
 import android.net.Uri;
 import android.test.AndroidTestCase;
 
+import com.android.compatibility.common.util.CddTest;
+
 /**
  * Tests for TV API related permissions.
  */
+@CddTest(requirement="3.2/1/C-0-1,9/C-0-1,9.1/C-0-1")
 public class TvPermissionTest extends AndroidTestCase {
     private static final String DUMMY_INPUT_ID = "dummy";
 

@@ -19,6 +19,8 @@ package android.os.cts;
 import android.os.Environment;
 import android.test.AndroidTestCase;
 
+import com.android.compatibility.common.util.CddTest;
+
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FilenameFilter;
@@ -44,6 +46,7 @@ import java.io.IOException;
  *
  * TODO: Combine this file with {@link android.permission.cts.FileSystemPermissionTest}
  */
+@CddTest(requirement="9.3/C-0-1")
 public class FileAccessPermissionTest extends AndroidTestCase {
 
     /**

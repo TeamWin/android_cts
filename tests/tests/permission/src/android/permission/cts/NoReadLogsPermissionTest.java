@@ -24,6 +24,8 @@ import android.test.AndroidTestCase;
 import android.test.suitebuilder.annotation.MediumTest;
 import android.util.Log;
 
+import com.android.compatibility.common.util.CddTest;
+
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.IOException;
@@ -32,6 +34,7 @@ import java.io.InputStreamReader;
 /**
  * Verify the read system log require specific permissions.
  */
+@CddTest(requirement="3.2.1/C-0-1,9/C-0-1,9.1/C-0-1")
 public class NoReadLogsPermissionTest extends AndroidTestCase {
     /**
      * Verify that we'll only get our logs without the READ_LOGS permission.

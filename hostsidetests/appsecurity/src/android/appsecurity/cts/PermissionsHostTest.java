@@ -17,6 +17,7 @@
 package android.appsecurity.cts;
 
 import com.android.compatibility.common.tradefed.build.CompatibilityBuildHelper;
+import com.android.compatibility.common.util.CddTest;
 import com.android.tradefed.build.IBuildInfo;
 import com.android.tradefed.device.DeviceNotAvailableException;
 import com.android.tradefed.testtype.DeviceTestCase;
@@ -167,6 +168,7 @@ public class PermissionsHostTest extends DeviceTestCase implements IAbiReceiver,
                 "testGranted");
     }
 
+    @CddTest(requirement="9.1/C-0-3")
     public void testInteractiveGrant23() throws Exception {
         assertNull(getDevice().installPackage(mBuildHelper.getTestFile(APK_23), false, false));
         runDeviceTests(USES_PERMISSION_PKG, "com.android.cts.usepermission.UsePermissionTest23",

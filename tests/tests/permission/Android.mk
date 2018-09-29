@@ -33,7 +33,8 @@ LOCAL_STATIC_JAVA_LIBRARIES := \
     ctstestrunner \
     guava \
     android-ex-camera2 \
-    legacy-android-test
+    legacy-android-test \
+    compatibility-device-util
 
 LOCAL_JNI_SHARED_LIBRARIES := libctspermission_jni libnativehelper_compat_libc++
 
