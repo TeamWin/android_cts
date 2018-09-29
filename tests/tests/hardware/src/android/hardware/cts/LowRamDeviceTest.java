@@ -147,7 +147,7 @@ public class LowRamDeviceTest {
     }
 
     @Test
-    @CddTest(requirement="7.6.2")
+    @CddTest(requirement="7.6.2/H-0-1")
     public void testMinSharedDataPartitionSize() {
         assertDataPartitionMinimumSize(
                 "Shared data",
@@ -156,7 +156,7 @@ public class LowRamDeviceTest {
     }
 
     @Test
-    @CddTest(requirement="7.6.1/H-9-2,7.6.1/H-10-1")
+    @CddTest(requirement="7.6.1/H-9-2,T-0-1,A-0-1,7.6.1/H-10-1")
     public void testMinDataPartitionSize() {
         long totalMemoryMb = getTotalMemory() / ONE_MEGABYTE;
         boolean lowRam = totalMemoryMb <= LOW_RAM_MAX;
