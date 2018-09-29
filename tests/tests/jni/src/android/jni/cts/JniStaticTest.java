@@ -38,6 +38,7 @@ public class JniStaticTest extends JniTestCase {
      * Test library accessibility. Internal platform libraries should not
      * be accessible from the jni code.
      */
+    @CddTest(requirement="3.3.1/C-0-7,C-0-9,C-0-10")
     public void test_linker_namespaces() throws IOException {
         String error = LinkerNamespacesHelper.runAccessibilityTest();
         if (error != null) {
