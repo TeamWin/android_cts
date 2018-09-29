@@ -150,6 +150,8 @@ static std::string load_library(JNIEnv* env, jclass clazz, const std::string& pa
   return error;
 }
 
+static const std::string kUbsanLibraryPrefix = "libclang_rt.ubsan_standalone";
+
 static bool check_lib(JNIEnv* env,
                       jclass clazz,
                       const std::string& path,
@@ -174,6 +176,11 @@ static bool check_lib(JNIEnv* env,
       return false;
     }
   } else if (loaded) {
+    // We skip over libclang_rt.ubsan_standalone libraries, because they are
+    // intended to be GLOBAL (for interception), but not officially public.
+    if (baselib.find(kUbsanLibraryPrefix) != std::string::npos) {
+      return true;
+    }
     errors->push_back("The library \"" + path + "\" is not a public library but it loaded.");
     return false;
   } else { // (!loaded && !shouldBeAccessible(path))
