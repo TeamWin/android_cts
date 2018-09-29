@@ -52,6 +52,7 @@ import java.io.FilenameFilter;
 import java.io.IOException;
 import java.io.PrintWriter;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashSet;
@@ -441,7 +442,7 @@ public class DalvikTest implements IAbiReceiver, IBuildReceiver, IDeviceTest, IR
                         test = getTestDescription(parts[1]);
                         listener.testStarted(test);
                     } else if (tag.equals(FAILURE)) {
-                        listener.testFailed(test, parts[1]);
+                        listener.testFailed(test, processSerializedValue(parts[1]));
                     } else if (tag.equals(END_TEST)) {
                         listener.testEnded(getTestDescription(parts[1]),
                                 Collections.<String, String>emptyMap());
@@ -449,6 +450,11 @@ public class DalvikTest implements IAbiReceiver, IBuildReceiver, IDeviceTest, IR
                     // Always log the output for debugging
                     CLog.d(line);
                 }
+            }
+
+            private String processSerializedValue(String input) {
+                // Opposite of stringify.
+                return input.replace("^~^", "\n");
             }
 
             private TestDescription getTestDescription(String name) {
