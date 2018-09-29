@@ -16,6 +16,7 @@
 
 package android.security.cts;
 
+import com.android.compatibility.common.util.CddTest;
 import com.android.compatibility.common.util.PropertyUtil;
 
 import android.platform.test.annotations.SecurityTest;
@@ -49,6 +50,7 @@ public class EncryptionTest extends AndroidTestCase {
         return PropertyUtil.getFirstApiLevel() >= MIN_API_LEVEL;
     }
 
+    @CddTest(requirement="9.9/C-2-1")
     public void testEncryption() throws Exception {
         if (!isRequired() || deviceIsEncrypted()) {
             return;
