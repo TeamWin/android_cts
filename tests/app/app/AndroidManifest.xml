@@ -59,6 +59,8 @@
 
         <activity android:name="android.app.stubs.ActionBarActivity" />
 
+        <activity android:name="android.app.stubs.ActivityCallbacksTestActivity" />
+
         <activity android:name="android.app.stubs.MockActivity" android:label="MockActivity">
             <meta-data android:name="android.app.alias"
                 android:resource="@xml/alias" />

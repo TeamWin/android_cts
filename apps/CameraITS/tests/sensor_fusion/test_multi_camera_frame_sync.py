@@ -39,11 +39,10 @@ CM_TO_M = 1/100.0
 def _check_available_capabilities(props):
     """Returns True if all required test capabilities are present."""
     return all([
-            its.caps.compute_target_exposure(props),
+            its.caps.read_3a(props),
             its.caps.per_frame_control(props),
             its.caps.logical_multi_camera(props),
             its.caps.raw16(props),
-            its.caps.manual_sensor(props),
             its.caps.sensor_fusion(props)])
 
 
@@ -100,9 +99,9 @@ def _plot_frame_pairs_angles(frame_pairs_angles, ids):
     pylab.ylabel("Rotation angle difference (degrees)")
     matplotlib.pyplot.savefig("%s_angle_diffs_plot.png" % (NAME))
 
+
 def _collect_data():
     """Returns list of pair of gray frames and camera ids used for captures."""
-    yuv_sizes = {}
     with its.device.ItsSession() as cam:
         props = cam.get_camera_properties()
 
@@ -145,6 +144,7 @@ def _collect_data():
 
         return frame_pairs_gray, ids
 
+
 def main():
     """Test frame timestamps captured by logical camera are within 10ms."""
     frame_pairs_gray, ids = _collect_data()
@@ -156,12 +156,12 @@ def main():
     # Remove frames where not enough squares were detected.
     filtered_pairs_angles = []
     for angle_1, angle_2 in frame_pairs_angles:
-        if angle_1 == None or angle_2 == None:
+        if angle_1 is None or angle_2 is None:
             continue
         filtered_pairs_angles.append([angle_1, angle_2])
 
-    print 'Using {} image pairs to compute angular difference.'.format(
-        len(filtered_pairs_angles))
+    print "Using {} image pairs to compute angular difference.".format(
+            len(filtered_pairs_angles))
 
     assert len(filtered_pairs_angles) > 20, (
         "Unable to identify enough frames with detected squares.")

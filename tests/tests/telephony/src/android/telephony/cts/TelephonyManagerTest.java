@@ -207,13 +207,6 @@ public class TelephonyManagerTest {
         mTelephonyManager.getNetworkOperator();
         mTelephonyManager.getSimCountryIso();
         mTelephonyManager.getVoiceMailAlphaTag();
-        try {
-            mTelephonyManager.getNeighboringCellInfo();
-        } catch (SecurityException expectedForQ) {
-            // FIXME(nharold): This API will always throw a SecurityException for SDK level Q+.
-            // For earlier API levels this check should ensure that no exception is thrown.
-        }
-
         mTelephonyManager.isNetworkRoaming();
         mTelephonyManager.getDeviceId();
         mTelephonyManager.getDeviceId(mTelephonyManager.getSlotIndex());

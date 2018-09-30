@@ -1018,6 +1018,112 @@ public class MediaPlayer2Test extends MediaPlayer2TestBase {
         mPlayer.reset();
     }
 
+    public void testSkipToNext() throws Exception {
+        if (IGNORE_TESTS) {
+            return;
+        }
+        if (!checkLoadResource(
+                R.raw.video_480x360_mp4_h264_1000kbps_30fps_aac_stereo_128kbps_44100hz)) {
+            return; // skip
+        }
+
+        int resid = R.raw.testvideo;
+        if (!MediaUtils.hasCodecsForResource(mContext, resid)) {
+            return;  // skip
+        }
+
+        AssetFileDescriptor afd2 = mResources.openRawResourceFd(resid);
+        DataSourceDesc dsd2 = new DataSourceDesc.Builder()
+                .setDataSource(afd2.getFileDescriptor(), afd2.getStartOffset(), afd2.getLength())
+                .build();
+
+        resid = R.raw.video_480x360_mp4_h264_1000kbps_30fps_aac_stereo_128kbps_44100hz;
+        AssetFileDescriptor afd3 = mResources.openRawResourceFd(resid);
+        DataSourceDesc dsd3 = new DataSourceDesc.Builder()
+                .setDataSource(afd3.getFileDescriptor(), afd3.getStartOffset(), afd3.getLength())
+                .build();
+
+        ArrayList<DataSourceDesc> nextDSDs = new ArrayList<DataSourceDesc>(2);
+        nextDSDs.add(dsd2);
+        nextDSDs.add(dsd3);
+
+        mPlayer.setNextDataSources(nextDSDs);
+
+        Monitor onStartCalled = new Monitor();
+        Monitor onStart2Called = new Monitor();
+        Monitor onStart3Called = new Monitor();
+        Monitor onCompletion2Called = new Monitor();
+        Monitor onCompletion3Called = new Monitor();
+        Monitor onListCompletionCalled = new Monitor();
+        MediaPlayer2.EventCallback ecb = new MediaPlayer2.EventCallback() {
+            @Override
+            public void onInfo(MediaPlayer2 mp, DataSourceDesc dsd, int what, int extra) {
+                if (what == MediaPlayer2.MEDIA_INFO_PREPARED) {
+                    Log.i(LOG_TAG, "testSkipToNext: prepared dsd MediaId=" + dsd.getMediaId());
+                    mOnPrepareCalled.signal();
+                } else if (what == MediaPlayer2.MEDIA_INFO_DATA_SOURCE_START) {
+                    if (dsd == dsd2) {
+                        Log.i(LOG_TAG, "testSkipToNext: MEDIA_INFO_DATA_SOURCE_START dsd2");
+                        onStart2Called.signal();
+                    } else if (dsd == dsd3) {
+                        Log.i(LOG_TAG, "testSkipToNext: MEDIA_INFO_DATA_SOURCE_START dsd3");
+                        onStart3Called.signal();
+                    } else {
+                        Log.i(LOG_TAG, "testSkipToNext: MEDIA_INFO_DATA_SOURCE_START other");
+                        onStartCalled.signal();
+                    }
+                } else if (what == MediaPlayer2.MEDIA_INFO_DATA_SOURCE_END) {
+                    if (dsd == dsd2) {
+                        Log.i(LOG_TAG, "testSkipToNext: MEDIA_INFO_DATA_SOURCE_END dsd2");
+                        onCompletion2Called.signal();
+                    } else if (dsd == dsd3) {
+                        Log.i(LOG_TAG, "testSkipToNext: MEDIA_INFO_DATA_SOURCE_END dsd3");
+                        onCompletion3Called.signal();
+                    } else {
+                        Log.i(LOG_TAG, "testSkipToNext: MEDIA_INFO_DATA_SOURCE_END other");
+                        mOnCompletionCalled.signal();
+                    }
+                } else if (what == MediaPlayer2.MEDIA_INFO_DATA_SOURCE_LIST_END) {
+                    Log.i(LOG_TAG, "testSkipToNext: MEDIA_INFO_DATA_SOURCE_LIST_END");
+                    onListCompletionCalled.signal();
+                }
+            }
+        };
+        synchronized (mEventCbLock) {
+            mEventCallbacks.add(ecb);
+        }
+
+        mOnCompletionCalled.reset();
+        onCompletion2Called.reset();
+        onCompletion3Called.reset();
+
+        mPlayer.setDisplay(mActivity.getSurfaceHolder());
+
+        mPlayer.prepare();
+
+        mPlayer.play();
+        Thread.sleep(1000);
+        onStartCalled.waitForSignal();
+
+        mPlayer.skipToNext();
+        mOnCompletionCalled.waitForSignal(3000);
+        assertTrue("current data source is not dsd2",
+                mPlayer.getCurrentDataSource() == dsd2);
+        Thread.sleep(1000);
+        onStart2Called.waitForSignal();
+
+        mPlayer.skipToNext();
+        onCompletion2Called.waitForSignal(3000);
+        assertTrue("current data source is not dsd2",
+                mPlayer.getCurrentDataSource() == dsd3);
+        onStart3Called.waitForSignal();
+
+        onCompletion3Called.waitForSignal();
+        onListCompletionCalled.waitForSignal();
+
+        mPlayer.reset();
+    }
+
     public void testClearNextDataSources() throws Exception {
         if (IGNORE_TESTS) {
             return;
@@ -1238,8 +1344,7 @@ public class MediaPlayer2Test extends MediaPlayer2TestBase {
             }
             mPlayer.pause();
             pbp = mPlayer.getPlaybackParams();
-            // TODO: pause() should NOT change PlaybackParams.
-            // assertEquals(0.f, pbp.getSpeed(), FLOAT_TOLERANCE);
+            assertEquals(playbackRate, pbp.getSpeed(), FLOAT_TOLERANCE);
         }
         mPlayer.reset();
     }
@@ -2432,6 +2537,9 @@ public class MediaPlayer2Test extends MediaPlayer2TestBase {
     }
 
     public void testClose() throws Exception {
+        if (IGNORE_TESTS) {
+            return;
+        }
         assertTrue(loadResource(R.raw.testmp3_2));
         AudioAttributes attributes = new AudioAttributes.Builder()
                 .setLegacyStreamType(AudioManager.STREAM_MUSIC)
@@ -2445,4 +2553,53 @@ public class MediaPlayer2Test extends MediaPlayer2TestBase {
         // Tests whether the notification from the player after the close() doesn't crash.
         Thread.sleep(SLEEP_TIME);
     }
+
+    public void testPause() throws Exception {
+        if (IGNORE_TESTS) {
+            return;
+        }
+        if (!checkLoadResource(
+                R.raw.video_480x360_mp4_h264_1000kbps_30fps_aac_stereo_128kbps_44100hz)) {
+            return; // skip
+        }
+
+        Monitor onStartCalled = new Monitor();
+        Monitor mOnVideoSizeChangedCalled = new Monitor();
+        MediaPlayer2.EventCallback ecb = new MediaPlayer2.EventCallback() {
+            @Override
+            public void onVideoSizeChanged(MediaPlayer2 mp, DataSourceDesc dsd,
+                    int width, int height) {
+                if (width > 0 && height > 0) {
+                    mOnVideoSizeChangedCalled.signal();
+                }
+            }
+
+            @Override
+            public void onInfo(MediaPlayer2 mp, DataSourceDesc dsd, int what, int extra) {
+                if (what == MediaPlayer2.MEDIA_INFO_DATA_SOURCE_START) {
+                        Log.i(LOG_TAG, "testPause: MEDIA_INFO_DATA_SOURCE_START");
+                        onStartCalled.signal();
+                }
+            }
+        };
+        synchronized (mEventCbLock) {
+            mEventCallbacks.add(ecb);
+        }
+
+        mPlayer.setDisplay(mActivity.getSurfaceHolder());
+
+        mPlayer.prepare();
+
+        mPlayer.pause();
+
+        onStartCalled.waitForSignal();
+        mOnVideoSizeChangedCalled.waitForSignal();
+        Thread.sleep(1000);
+
+        assertFalse("MediaPlayer2 should not be playing", mPlayer.isPlaying());
+        assertTrue("MediaPlayer2 should be paused",
+                mPlayer.getState() == MediaPlayer2.PLAYER_STATE_PAUSED);
+        mPlayer.reset();
+    }
+
 }

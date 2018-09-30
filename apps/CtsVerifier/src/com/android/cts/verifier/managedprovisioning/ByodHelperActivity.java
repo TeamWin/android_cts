@@ -55,6 +55,7 @@ import java.util.ArrayList;
  */
 public class ByodHelperActivity extends LocationListenerActivity
         implements DialogCallback {
+
     static final String TAG = "ByodHelperActivity";
 
     // Primary -> managed intent: query if the profile owner has been set up.
@@ -157,6 +158,8 @@ public class ByodHelperActivity extends LocationListenerActivity
 
     private static final int NOTIFICATION_ID = 7;
     private static final String NOTIFICATION_CHANNEL_ID = TAG;
+    private static final String FILE_PROVIDER_AUTHORITY =
+            "com.android.cts.verifier.managedprovisioning.fileprovider";
 
     private NotificationManager mNotificationManager;
     private Bundle mOriginalRestrictions;
@@ -248,13 +251,21 @@ public class ByodHelperActivity extends LocationListenerActivity
             }
             // Start the installer activity until this activity is rendered to workaround a glitch.
             mMainThreadHandler.post(() -> {
-                // Request to install a non-market application- easiest way is to reinstall ourself
+                final String pathToApk = intent.getStringExtra(EXTRA_PARAMETER_1);
+                final Uri uri;
+                if (pathToApk == null) {
+                    // By default we reinstall ourself, e.g. request to install a non-market app
+                    uri = Uri.parse("package:" + getPackageName());
+                } else {
+                    uri = FileProvider.getUriForFile(
+                            this, FILE_PROVIDER_AUTHORITY, new File(pathToApk));
+                }
                 final Intent installIntent = new Intent(Intent.ACTION_INSTALL_PACKAGE)
-                        .setData(Uri.parse("package:" + getPackageName()))
+                        .setData(uri)
                         .putExtra(Intent.EXTRA_NOT_UNKNOWN_SOURCE, true)
+                        .addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
                         .putExtra(Intent.EXTRA_RETURN_RESULT, true);
                 startActivityForResult(installIntent, REQUEST_INSTALL_PACKAGE);
-
             });
             // Not yet ready to finish- wait until the result comes back
             return;
@@ -482,8 +493,7 @@ public class ByodHelperActivity extends LocationListenerActivity
                 + File.separator + fileName);
         file.getParentFile().mkdirs(); //if the folder doesn't exists it is created
         mTempFiles.add(file);
-        return new Pair<>(file, FileProvider.getUriForFile(this,
-                    "com.android.cts.verifier.managedprovisioning.fileprovider", file));
+        return new Pair<>(file, FileProvider.getUriForFile(this, FILE_PROVIDER_AUTHORITY, file));
     }
 
     private void cleanUpTempUris() {

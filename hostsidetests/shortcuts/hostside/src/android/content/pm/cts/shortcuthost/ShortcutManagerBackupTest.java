@@ -126,16 +126,16 @@ public class ShortcutManagerBackupTest extends BaseShortcutManagerHostTest {
 
         CLog.i("Making sure the local transport is selected...");
         assertContainsRegex(
-                "^Selected transport android/com.android.internal.backup.LocalTransport",
+                "^Selected transport com.android.localtransport/.LocalTransport",
                 executeShellCommandWithLog(
-                        "bmgr transport android/com.android.internal.backup.LocalTransport"));
+                        "bmgr transport com.android.localtransport/.LocalTransport"));
 
         executeShellCommandWithLog("dumpsys backup");
 
         assertContainsRegex(
                 "Wiped",
                 executeShellCommandWithLog(
-                        "bmgr wipe android/com.android.internal.backup.LocalTransport android"));
+                        "bmgr wipe com.android.localtransport/.LocalTransport android"));
 
         assertContainsRegex(
                 "Backup finished with result: Success",

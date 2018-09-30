@@ -226,7 +226,7 @@ def get_best_alignment_offset(cam_times, cam_rots, gyro_events):
     if abs(best_shift - exact_best_shift) > 2.0 or a <= 0 or c <= 0:
         print "Test failed; bad fit to time-shift curve"
         print "best_shift %f, exact_best_shift %f, a %f, c %f" % (
-            best_shift, exact_best_shift, a, c)
+                best_shift, exact_best_shift, a, c)
         assert 0
 
     xfit = numpy.arange(candidates[0], candidates[-1], 0.05).tolist()
@@ -345,7 +345,7 @@ def get_cam_rotations(frames, facing, h):
         if num_features < MIN_FEATURE_PTS:
             print "Not enough feature points in frame", i
             print "Need at least %d features, got %d" % (
-                MIN_FEATURE_PTS, num_features)
+                    MIN_FEATURE_PTS, num_features)
             assert 0
         else:
             print "Number of features in frame %d is %d" % (i, num_features)
@@ -428,8 +428,8 @@ def collect_data(fps, w, h, test_length):
     """
     with its.device.ItsSession() as cam:
         props = cam.get_camera_properties()
-        its.caps.skip_unless(its.caps.sensor_fusion(props) and
-                             its.caps.manual_sensor(props) and
+        its.caps.skip_unless(its.caps.read_3a and
+                             its.caps.sensor_fusion(props) and
                              props["android.lens.facing"] != FACING_EXTERNAL)
 
         print "Starting sensor event collection"
@@ -451,7 +451,7 @@ def collect_data(fps, w, h, test_length):
         req["android.control.aeTargetFpsRange"] = [fps, fps]
         req["android.sensor.frameDuration"] = int(1000.0/fps * MSEC_TO_NSEC)
         print "Capturing %dx%d with sens. %d, exp. time %.1fms at %dfps" % (
-            w, h, s, e*NSEC_TO_MSEC, fps)
+                w, h, s, e*NSEC_TO_MSEC, fps)
         caps = cam.do_capture([req]*int(fps*test_length), fmt)
 
         # Capture a bit more gyro samples for use in

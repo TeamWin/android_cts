@@ -3722,6 +3722,9 @@
                 android:value="config_voice_capable"/>
         </activity>
 
+        <activity android:name=".managedprovisioning.LockscreenMessageTestActivity"
+            android:label="@string/device_owner_customize_lockscreen_message" />
+
         <service android:name="com.android.cts.verifier.telecom.CtsConnectionService"
             android:permission="android.permission.BIND_TELECOM_CONNECTION_SERVICE" >
             <intent-filter>
