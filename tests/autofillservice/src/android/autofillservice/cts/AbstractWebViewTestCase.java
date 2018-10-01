@@ -34,10 +34,4 @@ abstract class AbstractWebViewTestCase<A extends AbstractWebViewActivity>
     public static void resetReplierMode() {
         sReplier.setIdMode(IdMode.RESOURCE_ID);
     }
-
-    // TODO(b/80317628): remove this method once the real root of the issue is fixed...
-    @Override
-    protected int getNumberRetries() {
-        return 5;
-    }
 }
