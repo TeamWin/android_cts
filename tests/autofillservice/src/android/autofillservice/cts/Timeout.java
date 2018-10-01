@@ -20,6 +20,7 @@ import android.text.TextUtils;
 import android.util.Log;
 
 import androidx.annotation.NonNull;
+import androidx.annotation.VisibleForTesting;
 
 import java.util.concurrent.Callable;
 
@@ -37,6 +38,10 @@ public final class Timeout {
     private final float mMultiplier;
     private final long mMaxValue;
 
+    private final Sleeper mSleeper;
+
+    private static final Sleeper DEFAULT_SLEEPER = (t) -> SystemClock.sleep(t);
+
     /**
      * Default constructor.
      *
@@ -50,6 +55,12 @@ public final class Timeout {
      * or if {@code initialValue} is higher than {@code maxValue}
      */
     public Timeout(String name, long initialValue, float multiplier, long maxValue) {
+        this(DEFAULT_SLEEPER, name, initialValue, multiplier, maxValue);
+    }
+
+    @VisibleForTesting
+    Timeout(@NonNull Sleeper sleeper, String name, long initialValue, float multiplier,
+            long maxValue) {
         if (initialValue < 1 || maxValue < 1 || initialValue > maxValue) {
             throw new IllegalArgumentException(
                     "invalid initial and/or max values: " + initialValue + " and " + maxValue);
@@ -60,6 +71,7 @@ public final class Timeout {
         if (TextUtils.isEmpty(name)) {
             throw new IllegalArgumentException("no name");
         }
+        mSleeper = sleeper;
         mName = name;
         mCurrentValue = initialValue;
         mMultiplier = multiplier;
@@ -154,6 +166,7 @@ public final class Timeout {
         }
         long startTime = SystemClock.elapsedRealtime();
         int attempt = 0;
+        long totalSlept = 0;
         while (SystemClock.elapsedRealtime() - startTime <= mCurrentValue) {
             final T result = job.call();
             if (result != null) {
@@ -161,15 +174,18 @@ public final class Timeout {
                 return result;
             }
             attempt++;
+            final long napTime = Math.min(retryMs, mCurrentValue - totalSlept);
             if (VERBOSE) {
                 Log.v(TAG, description + " failed at attempt #" + attempt + "; sleeping for "
-                        + retryMs + "ms before trying again");
+                        + napTime + "ms before trying again");
             }
-            SystemClock.sleep(retryMs);
+            mSleeper.sleep(napTime);
+            totalSlept += napTime;
+
             retryMs *= mMultiplier;
         }
-        Log.w(TAG, description + " failed after " + attempt + " attempts and "
-                + (System.currentTimeMillis() - startTime) + "ms: " + this);
+        Log.w(TAG, description + " failed after " + attempt + " attempts and " + totalSlept + "ms: "
+                + this);
         throw new RetryableException(this, description);
     }
 
@@ -179,4 +195,8 @@ public final class Timeout {
                 + mMaxValue + "ms]";
     }
 
+    @VisibleForTesting
+    interface Sleeper {
+        void sleep(long napTimeMs);
+    }
 }
