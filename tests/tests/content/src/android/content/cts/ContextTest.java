@@ -705,7 +705,6 @@ public class ContextTest extends AndroidTestCase {
 
         // Test databaseList()
         List<String> list = Arrays.asList(mContext.databaseList());
-        assertEquals(2, list.size());
         assertTrue("1) database list: " + list, list.contains(DATABASE_NAME1));
         assertTrue("2) database list: " + list, list.contains(DATABASE_NAME2));
 
