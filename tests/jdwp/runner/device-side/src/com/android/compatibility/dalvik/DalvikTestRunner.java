@@ -29,6 +29,8 @@ import junit.framework.TestSuite;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
+import java.io.PrintWriter;
+import java.io.StringWriter;
 import java.lang.annotation.Annotation;
 import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
@@ -308,7 +310,20 @@ public class DalvikTestRunner {
         }
 
         public static String stringify(Throwable error) {
-            return Arrays.toString(error.getStackTrace()).replaceAll("\n", " ");
+            String output = null;
+            try {
+              try (StringWriter sw = new StringWriter()) {
+                try (PrintWriter pw = new PrintWriter(sw)) {
+                  error.printStackTrace(pw);
+                }
+                output = sw.toString();
+              }
+            } catch (Exception e) {
+              if (output == null) {
+                output = error.toString() + Arrays.toString(error.getStackTrace());
+              }
+            }
+            return output.replace("\n", "^~^");
         }
     }
 
