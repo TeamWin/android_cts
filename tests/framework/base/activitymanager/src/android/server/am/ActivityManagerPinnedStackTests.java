@@ -610,17 +610,14 @@ public class ActivityManagerPinnedStackTests extends ActivityManagerTestBase {
         launchActivity(TEST_ACTIVITY);
 
         // Launch an auto pip activity
-        launchActivity(PIP_ACTIVITY,
-                EXTRA_ENTER_PIP, "true",
-                EXTRA_REENTER_PIP_ON_EXIT, "true");
+        launchActivity(PIP_ACTIVITY, EXTRA_ENTER_PIP, "true");
         waitForEnterPip(PIP_ACTIVITY);
         assertPinnedStackExists();
 
         // Relaunch the activity to fullscreen to trigger the activity to exit and re-enter pip
         launchActivity(PIP_ACTIVITY);
-        mAmWmState.waitForWithAmState(amState ->
-                amState.getFrontStackWindowingMode(DEFAULT_DISPLAY) == WINDOWING_MODE_FULLSCREEN,
-                "Waiting for PIP to exit to fullscreen");
+        waitForExitPipToFullscreen(PIP_ACTIVITY);
+        executeShellCommand("am broadcast -a " + ACTION_ENTER_PIP);
         waitForEnterPipAnimationComplete(PIP_ACTIVITY);
         mAmWmState.assertVisibility(TEST_ACTIVITY, true);
     }
