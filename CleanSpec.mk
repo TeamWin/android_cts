@@ -48,6 +48,7 @@ $(call add-clean-step, rm -rf $(HOST_OUT_INTERMEDIATES)/EXECUTABLES/vm-tests-tf_
 $(call add-clean-step, rm -rf $(OUT_DIR)/host/common/obj/JAVA_LIBRARIES/cts-tradefed_intermediates/com/android/compatibility/SuiteInfo.java)
 $(call add-clean-step, rm -rf $(HOST_OUT)/cts/android-cts/testcases/CtsUiHostTestCases*)
 $(call add-clean-step, rm -rf $(HOST_OUT)/cts_instant/android-cts_instant/testcases/CtsJobSchedulerTestCases*)
+$(call add-clean-step, rm -rf $(HOST_OUT)/cts_instant/android-cts_instant/testcases/CtsUiHostTestCases*)
 
 # ************************************************
 # NEWER CLEAN STEPS MUST BE AT THE END OF THE LIST
