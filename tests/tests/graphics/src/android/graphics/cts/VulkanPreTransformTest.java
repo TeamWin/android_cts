@@ -44,7 +44,7 @@ import org.junit.runner.RunWith;
 /*
  * testVulkanPreTransformSetToMatchCurrentTransform()
  *
- *   For devices rotating 90 degree CW when orientation changes.
+ *   For devices rotating 90 degrees.
  *
  *      Buffer          Screen
  *      ---------       ---------
@@ -53,13 +53,31 @@ import org.junit.runner.RunWith;
  *      | B | Y |       | R | B |
  *      ---------       ---------
  *
- *   For devices rotating 90 degree CCW when orientation changes.
+ *   For devices rotating 180 degrees.
+ *
+ *      Buffer          Screen
+ *      ---------       ---------
+ *      | R | G |       | Y | B |
+ *      ---------       ---------
+ *      | B | Y |       | G | R |
+ *      ---------       ---------
+ *
+ *   For devices rotating 270 degrees.
  *
  *      Buffer          Screen
  *      ---------       ---------
  *      | R | G |       | B | R |
  *      ---------       ---------
  *      | B | Y |       | Y | G |
+ *      ---------       ---------
+ *
+ *   For devices not rotating.
+ *
+ *      Buffer          Screen
+ *      ---------       ---------
+ *      | R | G |       | R | G |
+ *      ---------       ---------
+ *      | B | Y |       | B | Y |
  *      ---------       ---------
  *
  * testVulkanPreTransformNotSetToMatchCurrentTransform()
@@ -155,23 +173,26 @@ public class VulkanPreTransformTest {
         int width = bitmap.getWidth();
         int height = bitmap.getHeight();
         int diff = 0;
-        if (!setPreTransform) {
+        if (!setPreTransform || sActivity.getRotation() == Surface.ROTATION_0) {
             diff += pixelDiff(bitmap.getPixel(0, 0), 255, 0, 0);
             diff += pixelDiff(bitmap.getPixel(width - 1, 0), 0, 255, 0);
             diff += pixelDiff(bitmap.getPixel(0, height - 1), 0, 0, 255);
             diff += pixelDiff(bitmap.getPixel(width - 1, height - 1), 255, 255, 0);
-        } else if (sActivity.getRotation() == Surface.ROTATION_270) {
-            // For devices rotating 90 degree CCW when orientation changes.
-            diff += pixelDiff(bitmap.getPixel(0, 0), 0, 0, 255);
-            diff += pixelDiff(bitmap.getPixel(width - 1, 0), 255, 0, 0);
-            diff += pixelDiff(bitmap.getPixel(0, height - 1), 255, 255, 0);
-            diff += pixelDiff(bitmap.getPixel(width - 1, height - 1), 0, 255, 0);
-        } else {
-            // For devices rotating 90 degree CW when orientation changes.
+        } else if (sActivity.getRotation() == Surface.ROTATION_90) {
             diff += pixelDiff(bitmap.getPixel(0, 0), 0, 255, 0);
             diff += pixelDiff(bitmap.getPixel(width - 1, 0), 255, 255, 0);
             diff += pixelDiff(bitmap.getPixel(0, height - 1), 255, 0, 0);
             diff += pixelDiff(bitmap.getPixel(width - 1, height - 1), 0, 0, 255);
+        } else if (sActivity.getRotation() == Surface.ROTATION_180) {
+            diff += pixelDiff(bitmap.getPixel(0, 0), 255, 255, 0);
+            diff += pixelDiff(bitmap.getPixel(width - 1, 0), 0, 0, 255);
+            diff += pixelDiff(bitmap.getPixel(0, height - 1), 0, 255, 0);
+            diff += pixelDiff(bitmap.getPixel(width - 1, height - 1), 255, 0, 0);
+        } else {
+            diff += pixelDiff(bitmap.getPixel(0, 0), 0, 0, 255);
+            diff += pixelDiff(bitmap.getPixel(width - 1, 0), 255, 0, 0);
+            diff += pixelDiff(bitmap.getPixel(0, height - 1), 255, 255, 0);
+            diff += pixelDiff(bitmap.getPixel(width - 1, height - 1), 0, 255, 0);
         }
 
         return diff < 10;
