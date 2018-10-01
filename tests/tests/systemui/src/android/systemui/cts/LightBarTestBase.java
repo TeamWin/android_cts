@@ -26,10 +26,11 @@ import android.content.Context;
 import android.content.pm.PackageManager;
 import android.content.res.Configuration;
 import android.graphics.Bitmap;
+import android.graphics.Rect;
 import android.support.test.InstrumentationRegistry;
 import android.support.test.rule.ActivityTestRule;
 import android.util.Log;
-import android.view.KeyEvent;
+import android.view.DisplayCutout;
 import android.view.WindowInsets;
 
 import java.io.File;
@@ -37,6 +38,8 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.nio.file.FileSystems;
 import java.nio.file.Path;
+import java.util.ArrayList;
+import java.util.Locale;
 
 public class LightBarTestBase {
 
@@ -46,6 +49,8 @@ public class LightBarTestBase {
             .getPath("/sdcard/LightBarTestBase/");
 
     public static final int WAIT_TIME = 2000;
+
+    private ArrayList<Rect> mCutouts;
 
     protected Bitmap takeStatusBarScreenshot(LightBarBaseActivity activity) {
         Bitmap fullBitmap = getInstrumentation().getUiAutomation().takeScreenshot();
@@ -148,18 +153,30 @@ public class LightBarTestBase {
         int[] pixels = new int[bitmap.getHeight() * bitmap.getWidth()];
         bitmap.getPixels(pixels, 0, bitmap.getWidth(), 0, 0, bitmap.getWidth(), bitmap.getHeight());
 
+        loadCutout(activity);
         int backgroundColorPixelCount = 0;
+        int shiftY = activity.getBottom();
         for (int i = 0; i < pixels.length; i++) {
-            if (pixels[i] == backgroundColor) {
+            int x = i % bitmap.getWidth();
+            int y = i / bitmap.getWidth();
+
+            if (pixels[i] == backgroundColor
+                    || isInsideCutout(x, shiftY + y)) {
                 backgroundColorPixelCount++;
             }
         }
         assumeNavigationBarChangesColor(backgroundColorPixelCount, pixels.length);
 
         for (int col = 0; col < bitmap.getWidth(); col++) {
+            if (isInsideCutout(col, shiftY)) {
+                continue;
+            }
+
             if (dividerColor != pixels[col]) {
                 dumpBitmap(bitmap, methodName);
-                fail("Invalid color exptected=" + dividerColor + " actual=" + pixels[col]);
+                fail(String.format(Locale.ENGLISH,
+                        "Invalid color expected= 0x%08x, actual= 0x%08x",
+                        dividerColor, pixels[col]));
             }
         }
     }
@@ -167,5 +184,26 @@ public class LightBarTestBase {
     protected void assumeNavigationBarChangesColor(int backgroundColorPixelCount, int totalPixel) {
         assumeTrue("Not enough background pixels. The navigation bar may not be able to change "
                 + "color.", backgroundColorPixelCount > 0.3f * totalPixel);
+    }
+
+    protected ArrayList loadCutout(LightBarBaseActivity activity) {
+        mCutouts = new ArrayList<>();
+        InstrumentationRegistry.getInstrumentation().runOnMainSync(()-> {
+            WindowInsets windowInsets = activity.getRootWindowInsets();
+            DisplayCutout displayCutout = windowInsets.getDisplayCutout();
+            if (displayCutout != null) {
+                mCutouts.addAll(displayCutout.getBoundingRects());
+            }
+        });
+        return mCutouts;
+    }
+
+    protected boolean isInsideCutout(int x, int y) {
+        for (Rect cutout : mCutouts) {
+            if (cutout.contains(x, y)) {
+                return true;
+            }
+        }
+        return false;
     }
 }
