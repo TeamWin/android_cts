@@ -47,6 +47,7 @@ public class BaseInstallMultiple<T extends BaseInstallMultiple<?>> {
 
     private final List<String> mArgs = new ArrayList<>();
     private final List<File> mApks = new ArrayList<>();
+    private final List<String> mSplits = new ArrayList<>();
     private boolean mUseNaturalAbi;
 
     public BaseInstallMultiple(ITestDevice device, IBuildInfo buildInfo, IAbi abi) {
@@ -64,6 +65,11 @@ public class BaseInstallMultiple<T extends BaseInstallMultiple<?>> {
     T addApk(String apk) throws FileNotFoundException {
         CompatibilityBuildHelper buildHelper = new CompatibilityBuildHelper(mBuild);
         mApks.add(buildHelper.getTestFile(apk));
+        return (T) this;
+    }
+
+    T removeSplit(String split) {
+        mSplits.add(split);
         return (T) this;
     }
 
@@ -163,6 +169,18 @@ public class BaseInstallMultiple<T extends BaseInstallMultiple<?>> {
             cmd.append(' ').append(sessionId);
             cmd.append(' ').append(i + "_" + apk.getName());
             cmd.append(' ').append(remotePath);
+
+            result = device.executeShellCommand(cmd.toString());
+            TestCase.assertTrue(result, result.startsWith("Success"));
+        }
+
+        for (int i = 0; i < mSplits.size(); i++) {
+            final String split = mSplits.get(i);
+
+            cmd.setLength(0);
+            cmd.append("pm install-remove");
+            cmd.append(' ').append(sessionId);
+            cmd.append(' ').append(split);
 
             result = device.executeShellCommand(cmd.toString());
             TestCase.assertTrue(result, result.startsWith("Success"));
