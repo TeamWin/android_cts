@@ -107,6 +107,8 @@ import android.server.am.CommandSession.LaunchProxy;
 import android.server.am.settings.SettingsSession;
 import android.support.test.InstrumentationRegistry;
 import android.support.test.rule.ActivityTestRule;
+import android.util.EventLog;
+import android.util.EventLog.Event;
 import android.view.Display;
 import android.view.InputDevice;
 import android.view.MotionEvent;
@@ -121,9 +123,11 @@ import org.junit.runner.Description;
 import org.junit.runners.model.Statement;
 
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
@@ -140,6 +144,8 @@ public abstract class ActivityManagerTestBase {
     private static final boolean PRETEND_DEVICE_SUPPORTS_PIP = false;
     private static final boolean PRETEND_DEVICE_SUPPORTS_FREEFORM = false;
     private static final String LOG_SEPARATOR = "LOG_SEPARATOR";
+    // Use one of the test tags as a separator
+    private static final int EVENT_LOG_SEPARATOR_TAG = 42;
 
     protected static final int[] ALL_ACTIVITY_TYPE_BUT_HOME = {
             ACTIVITY_TYPE_STANDARD, ACTIVITY_TYPE_ASSISTANT, ACTIVITY_TYPE_RECENTS,
@@ -1004,6 +1010,7 @@ public abstract class ActivityManagerTestBase {
     protected LogSeparator separateLogs() {
         final LogSeparator logSeparator = new LogSeparator();
         executeShellCommand("log -t " + LOG_SEPARATOR + " " + logSeparator);
+        EventLog.writeEvent(EVENT_LOG_SEPARATOR_TAG, logSeparator.mUniqueString);
         return logSeparator;
     }
 
@@ -1033,6 +1040,29 @@ public abstract class ActivityManagerTestBase {
             filteredResult[curPos] = result[i];
         }
         return filteredResult;
+    }
+
+    protected static List<Event> getEventLogsForComponents(LogSeparator logSeparator, int... tags) {
+        List<Event> events = new ArrayList<>();
+
+        int[] searchTags = Arrays.copyOf(tags, tags.length + 1);
+        searchTags[searchTags.length - 1] = EVENT_LOG_SEPARATOR_TAG;
+
+        try {
+            EventLog.readEvents(searchTags, events);
+        } catch (IOException e) {
+            fail("Could not read from event log." + e);
+        }
+
+        for (Iterator<Event> itr = events.iterator(); itr.hasNext(); ) {
+            Event event = itr.next();
+            itr.remove();
+            if (event.getTag() == EVENT_LOG_SEPARATOR_TAG &&
+                    logSeparator.mUniqueString.equals(event.getData())) {
+                break;
+            }
+        }
+        return events;
     }
 
     /**
