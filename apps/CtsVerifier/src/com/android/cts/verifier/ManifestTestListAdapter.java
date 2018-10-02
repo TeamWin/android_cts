@@ -22,6 +22,7 @@ import android.content.pm.ActivityInfo;
 import android.content.pm.PackageManager;
 import android.content.pm.ResolveInfo;
 import android.os.Bundle;
+import android.telephony.TelephonyManager;
 import android.util.Log;
 import android.widget.ListView;
 
@@ -98,6 +99,10 @@ public class ManifestTestListAdapter extends TestListAdapter {
     private static final String TEST_EXCLUDED_FEATURES_META_DATA = "test_excluded_features";
 
     private static final String TEST_APPLICABLE_FEATURES_META_DATA = "test_applicable_features";
+
+    private static final String TEST_REQUIRED_CONFIG_META_DATA = "test_required_configs";
+
+    private static final String CONFIG_VOICE_CAPABLE = "config_voice_capable";
 
     private final HashSet<String> mDisabledTests;
 
@@ -188,10 +193,11 @@ public class ManifestTestListAdapter extends TestListAdapter {
             String testName = info.activityInfo.name;
             Intent intent = getActivityIntent(info.activityInfo);
             String[] requiredFeatures = getRequiredFeatures(info.activityInfo.metaData);
+            String[] requiredConfigs = getRequiredConfigs(info.activityInfo.metaData);
             String[] excludedFeatures = getExcludedFeatures(info.activityInfo.metaData);
             String[] applicableFeatures = getApplicableFeatures(info.activityInfo.metaData);
             TestListItem item = TestListItem.newTest(title, testName, intent, requiredFeatures,
-                    excludedFeatures, applicableFeatures);
+                     requiredConfigs, excludedFeatures, applicableFeatures);
 
             String testCategory = getTestCategory(mContext, info.activityInfo.metaData);
             addTestToCategory(testsByCategory, testCategory, item);
@@ -221,6 +227,19 @@ public class ManifestTestListAdapter extends TestListAdapter {
             return null;
         } else {
             String value = metaData.getString(TEST_REQUIRED_FEATURES_META_DATA);
+            if (value == null) {
+                return null;
+            } else {
+                return value.split(":");
+            }
+        }
+    }
+
+    static String[] getRequiredConfigs(Bundle metaData) {
+        if (metaData == null) {
+            return null;
+        } else {
+            String value = metaData.getString(TEST_REQUIRED_CONFIG_META_DATA);
             if (value == null) {
                 return null;
             } else {
@@ -305,10 +324,29 @@ public class ManifestTestListAdapter extends TestListAdapter {
         return true;
     }
 
+    private boolean matchAllConfigs(String[] configs) {
+        if (configs != null) {
+            TelephonyManager telephonyManager =
+                    (TelephonyManager) mContext.getSystemService(Context.TELEPHONY_SERVICE);
+            for (String config : configs) {
+                switch(config) {
+                    case CONFIG_VOICE_CAPABLE:
+                        if (!telephonyManager.isVoiceCapable()) {
+                            return false;
+                        }
+                    default:
+                        break;
+                }
+            }
+        }
+        return true;
+    }
+
     List<TestListItem> filterTests(List<TestListItem> tests) {
         List<TestListItem> filteredTests = new ArrayList<TestListItem>();
         for (TestListItem test : tests) {
-            if (!hasAnyFeature(test.excludedFeatures) && hasAllFeatures(test.requiredFeatures)) {
+            if (!hasAnyFeature(test.excludedFeatures) && hasAllFeatures(test.requiredFeatures)
+                    && matchAllConfigs(test.requiredConfigs)) {
                 if (test.applicableFeatures == null || hasAnyFeature(test.applicableFeatures)) {
                     filteredTests.add(test);
                 }

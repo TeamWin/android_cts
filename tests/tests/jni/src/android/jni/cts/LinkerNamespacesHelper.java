@@ -40,9 +40,9 @@ class LinkerNamespacesHelper {
     private final static String PRODUCT_CONFIG_DIR = "/product/etc/";
     private final static String SYSTEM_CONFIG_FILE = PUBLIC_CONFIG_DIR + "public.libraries.txt";
     private final static Pattern EXTENSION_CONFIG_FILE_PATTERN = Pattern.compile(
-            "public\\.libraries-([A-Za-z0-9\\-_]+)\\.txt");
+            "public\\.libraries-([A-Za-z0-9\\-_.]+)\\.txt");
     private final static Pattern EXTENSION_LIBRARY_FILE_PATTERN = Pattern.compile(
-            "lib[^.]+\\.([A-Za-z0-9\\-_]+)\\.so");
+            "lib[^.]+\\.([A-Za-z0-9\\-_.]+)\\.so");
     private final static String VENDOR_CONFIG_FILE = "/vendor/etc/public.libraries.txt";
     private final static String[] PUBLIC_SYSTEM_LIBRARIES = {
         "libaaudio.so",

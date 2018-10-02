@@ -235,16 +235,6 @@ public class AppOpsTest extends InstrumentationTestCase {
     }
 
     @SmallTest
-    public void testAllOpsHaveOpString() {
-        Set<String> opStrs = new HashSet<>();
-        for (String opStr : AppOpsManager.getOpStrs()) {
-            assertNotNull("Each app op must have an operation string defined", opStr);
-            opStrs.add(opStr);
-        }
-        assertEquals("Not all op strings are unique", AppOpsManager._NUM_OP, opStrs.size());
-    }
-
-    @SmallTest
     public void testOpCodesUnique() {
         String[] opStrs = AppOpsManager.getOpStrs();
         Set<Integer> opCodes = new HashSet<>();

@@ -372,7 +372,8 @@ public class KeyManagementTest extends BaseDeviceAdminTest {
         Attestation attestationRecord = new Attestation((X509Certificate) leaf);
         AuthorizationList teeAttestation = attestationRecord.getTeeEnforced();
         assertNotNull(teeAttestation);
-        assertEquals(Build.BRAND, teeAttestation.getBrand());
+
+        validateBrandAttestationRecord(teeAttestation);
         assertEquals(Build.DEVICE, teeAttestation.getDevice());
         assertEquals(Build.PRODUCT, teeAttestation.getProduct());
         assertEquals(Build.MANUFACTURER, teeAttestation.getManufacturer());
@@ -380,6 +381,15 @@ public class KeyManagementTest extends BaseDeviceAdminTest {
         assertEquals(expectedSerial, teeAttestation.getSerialNumber());
         assertEquals(expectedImei, teeAttestation.getImei());
         assertEquals(expectedMeid, teeAttestation.getMeid());
+    }
+
+    private void validateBrandAttestationRecord(AuthorizationList teeAttestation) {
+        if (!Build.MODEL.equals("Pixel 2")) {
+            assertEquals(Build.BRAND, teeAttestation.getBrand());
+        } else {
+            assertTrue(teeAttestation.getBrand().equals(Build.BRAND)
+                    || teeAttestation.getBrand().equals("htc"));
+        }
     }
 
     private void validateAttestationRecord(List<Certificate> attestation,

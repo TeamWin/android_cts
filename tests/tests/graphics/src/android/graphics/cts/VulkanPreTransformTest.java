@@ -19,10 +19,13 @@ package android.graphics.cts;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 
+import android.content.Context;
+import android.content.pm.PackageManager;
 import android.graphics.Bitmap;
 import android.graphics.Color;
 import android.graphics.Rect;
 import android.os.SystemClock;
+import android.support.test.InstrumentationRegistry;
 import android.support.test.rule.ActivityTestRule;
 import android.support.test.runner.AndroidJUnit4;
 import android.test.suitebuilder.annotation.LargeTest;
@@ -41,7 +44,7 @@ import org.junit.runner.RunWith;
 /*
  * testVulkanPreTransformSetToMatchCurrentTransform()
  *
- *   For devices rotating 90 degree CW when orientation changes.
+ *   For devices rotating 90 degrees.
  *
  *      Buffer          Screen
  *      ---------       ---------
@@ -50,13 +53,31 @@ import org.junit.runner.RunWith;
  *      | B | Y |       | R | B |
  *      ---------       ---------
  *
- *   For devices rotating 90 degree CCW when orientation changes.
+ *   For devices rotating 180 degrees.
+ *
+ *      Buffer          Screen
+ *      ---------       ---------
+ *      | R | G |       | Y | B |
+ *      ---------       ---------
+ *      | B | Y |       | G | R |
+ *      ---------       ---------
+ *
+ *   For devices rotating 270 degrees.
  *
  *      Buffer          Screen
  *      ---------       ---------
  *      | R | G |       | B | R |
  *      ---------       ---------
  *      | B | Y |       | Y | G |
+ *      ---------       ---------
+ *
+ *   For devices not rotating.
+ *
+ *      Buffer          Screen
+ *      ---------       ---------
+ *      | R | G |       | R | G |
+ *      ---------       ---------
+ *      | B | Y |       | B | Y |
  *      ---------       ---------
  *
  * testVulkanPreTransformNotSetToMatchCurrentTransform()
@@ -75,6 +96,7 @@ public class VulkanPreTransformTest {
     private static final String TAG = "vulkan";
     private static final boolean DEBUG = false;
     private static VulkanPreTransformCtsActivity sActivity = null;
+    private Context mContext;
 
     @Rule
     public ActivityTestRule<VulkanPreTransformCtsActivity> mActivityRule =
@@ -86,11 +108,17 @@ public class VulkanPreTransformTest {
         // Work around for b/77148807
         // Activity was falsely created before ActivityManager set config change to landscape
         SystemClock.sleep(2000);
+        mContext = InstrumentationRegistry.getContext();
     }
 
     @Test
     public void testVulkanPreTransformSetToMatchCurrentTransform() throws Throwable {
         Log.d(TAG, "testVulkanPreTransformSetToMatchCurrentTransform start");
+        if (!hasDeviceFeature(PackageManager.FEATURE_SCREEN_PORTRAIT)
+                || !hasDeviceFeature(PackageManager.FEATURE_SCREEN_LANDSCAPE)) {
+            Log.d(TAG, "Rotation is not supported on this device.");
+            return;
+        }
         sActivity = mActivityRule.launchActivity(null);
         sActivity.testVulkanPreTransform(true);
         sActivity.finish();
@@ -100,10 +128,19 @@ public class VulkanPreTransformTest {
     @Test
     public void testVulkanPreTransformNotSetToMatchCurrentTransform() throws Throwable {
         Log.d(TAG, "testVulkanPreTransformNotSetToMatchCurrentTransform start");
+        if (!hasDeviceFeature(PackageManager.FEATURE_SCREEN_PORTRAIT)
+                || !hasDeviceFeature(PackageManager.FEATURE_SCREEN_LANDSCAPE)) {
+            Log.d(TAG, "Rotation is not supported on this device.");
+            return;
+        }
         sActivity = mActivityRule.launchActivity(null);
         sActivity.testVulkanPreTransform(false);
         sActivity.finish();
         sActivity = null;
+    }
+
+    private boolean hasDeviceFeature(final String requiredFeature) {
+        return mContext.getPackageManager().hasSystemFeature(requiredFeature);
     }
 
     private static Bitmap takeScreenshot() {
@@ -136,23 +173,26 @@ public class VulkanPreTransformTest {
         int width = bitmap.getWidth();
         int height = bitmap.getHeight();
         int diff = 0;
-        if (!setPreTransform) {
+        if (!setPreTransform || sActivity.getRotation() == Surface.ROTATION_0) {
             diff += pixelDiff(bitmap.getPixel(0, 0), 255, 0, 0);
             diff += pixelDiff(bitmap.getPixel(width - 1, 0), 0, 255, 0);
             diff += pixelDiff(bitmap.getPixel(0, height - 1), 0, 0, 255);
             diff += pixelDiff(bitmap.getPixel(width - 1, height - 1), 255, 255, 0);
-        } else if (sActivity.getRotation() == Surface.ROTATION_270) {
-            // For devices rotating 90 degree CCW when orientation changes.
-            diff += pixelDiff(bitmap.getPixel(0, 0), 0, 0, 255);
-            diff += pixelDiff(bitmap.getPixel(width - 1, 0), 255, 0, 0);
-            diff += pixelDiff(bitmap.getPixel(0, height - 1), 255, 255, 0);
-            diff += pixelDiff(bitmap.getPixel(width - 1, height - 1), 0, 255, 0);
-        } else {
-            // For devices rotating 90 degree CW when orientation changes.
+        } else if (sActivity.getRotation() == Surface.ROTATION_90) {
             diff += pixelDiff(bitmap.getPixel(0, 0), 0, 255, 0);
             diff += pixelDiff(bitmap.getPixel(width - 1, 0), 255, 255, 0);
             diff += pixelDiff(bitmap.getPixel(0, height - 1), 255, 0, 0);
             diff += pixelDiff(bitmap.getPixel(width - 1, height - 1), 0, 0, 255);
+        } else if (sActivity.getRotation() == Surface.ROTATION_180) {
+            diff += pixelDiff(bitmap.getPixel(0, 0), 255, 255, 0);
+            diff += pixelDiff(bitmap.getPixel(width - 1, 0), 0, 0, 255);
+            diff += pixelDiff(bitmap.getPixel(0, height - 1), 0, 255, 0);
+            diff += pixelDiff(bitmap.getPixel(width - 1, height - 1), 255, 0, 0);
+        } else {
+            diff += pixelDiff(bitmap.getPixel(0, 0), 0, 0, 255);
+            diff += pixelDiff(bitmap.getPixel(width - 1, 0), 255, 0, 0);
+            diff += pixelDiff(bitmap.getPixel(0, height - 1), 255, 255, 0);
+            diff += pixelDiff(bitmap.getPixel(width - 1, height - 1), 0, 255, 0);
         }
 
         return diff < 10;

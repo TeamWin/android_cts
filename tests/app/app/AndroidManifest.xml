@@ -51,7 +51,7 @@
                 android:multiArch="true"
                 android:name="android.app.stubs.MockApplication"
                 android:supportsRtl="true"
-                android:usesCleartextTraffic="true">
+                android:networkSecurityConfig="@xml/network_security_config">
         <uses-library android:name="android.test.runner" />
         <uses-library android:name="org.apache.http.legacy" android:required="false" />
 

@@ -37,7 +37,7 @@ class TestGnssMeasurementListener extends GnssMeasurementsEvent.Callback {
     private boolean filterByEventSize = false;
     // Timeout in sec for count down latch wait
     private static final int STATUS_TIMEOUT_IN_SEC = 10;
-    private static final int MEAS_TIMEOUT_IN_SEC = 60;
+    private static final int MEAS_TIMEOUT_IN_SEC = 75;
     private static final int C_TO_N0_THRESHOLD_DB_HZ = 18;
     private volatile int mStatus = -1;
 
