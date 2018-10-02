@@ -43,7 +43,7 @@ public class BuildTest extends TestCase {
     /** Tests that check the values of {@link Build#CPU_ABI} and {@link Build#CPU_ABI2}. */
     public void testCpuAbi() throws Exception {
         runTestCpuAbiCommon();
-        if (VMRuntime.getRuntime().is64Bit()) {
+        if (android.os.Process.is64Bit()) {
             runTestCpuAbi64();
         } else {
             runTestCpuAbi32();
