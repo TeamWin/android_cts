@@ -23,7 +23,6 @@ import static org.junit.Assert.assertSame;
 import static org.junit.Assert.assertTrue;
 
 import android.content.res.AssetManager;
-import android.platform.test.annotations.Presubmit;
 import android.support.test.InstrumentationRegistry;
 import android.support.test.filters.SmallTest;
 import android.support.test.runner.AndroidJUnit4;
@@ -33,7 +32,6 @@ import org.junit.runner.RunWith;
 
 import java.io.IOException;
 
-@Presubmit
 @SmallTest
 @RunWith(AndroidJUnit4.class)
 public class FontFamilyTest {
