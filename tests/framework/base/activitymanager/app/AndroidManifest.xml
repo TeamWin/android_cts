@@ -414,6 +414,9 @@
         <activity android:name=".LaunchTestOnDestroyActivity"
                   android:exported="true"/>
 
+        <activity android:name=".ReportFullyDrawnActivity"
+                  android:exported="true"/>
+
         <service android:name="com.android.cts.verifier.vr.MockVrListenerService"
                  android:exported="true"
                  android:enabled="true"

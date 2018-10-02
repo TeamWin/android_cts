@@ -17,6 +17,7 @@
 
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
     package="android.server.cts.am">
+    <uses-permission android:name="android.permission.READ_LOGS" />
 
     <application android:label="CtsActivityManagerDeviceTestCases">
         <uses-library android:name="android.test.runner" />

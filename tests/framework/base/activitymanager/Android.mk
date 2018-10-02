@@ -39,7 +39,8 @@ LOCAL_SRC_FILES := \
 LOCAL_STATIC_JAVA_LIBRARIES := \
     android-support-test \
     cts-amwm-util \
-    CtsMockInputMethod
+    CtsMockInputMethod \
+    metrics-helper-lib
 
 # Merge resources & AndroidManifest.xml from MockIme cts package
 LOCAL_RESOURCE_DIR := $(LOCAL_PATH)/../../../inputmethod/res
