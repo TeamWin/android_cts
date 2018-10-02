@@ -3942,14 +3942,14 @@ Follow the instructions on the screen to measure the frequency response for the 
     <!-- USB Audio Peripheral Play Test -->
     <string name="usbaudio_play_test"> USB Audio Peripheral Play Test</string>
     <string name="usbaudio_play_info">
-        This test requires that you have connected a mandated USB Audio Interface peripheral and
+        This test requires that you have connected a USB Audio Interface peripheral and
         some way to monitor the output. Press the \"Play\" button and verify that a tone is produced.
        </string>
 
     <!-- USB Audio Peripheral Record Test -->
     <string name="usbaudio_record_test"> USB Audio Peripheral Record Test</string>
     <string name="usbaudio_record_info">
-        This test requires that you have connected a mandated USB Audio Interface peripheral.
+        This test requires that you have connected a USB Audio Interface peripheral.
         Connect the outputs to the inputs (with patch cables). Start playback by pressing the
         \"Record Loopback\" button and verify that the recorded signal is displayed in the wave
         display view. (It may be necessary to adjust the input controls on the peripheral).
@@ -3958,9 +3958,11 @@ Follow the instructions on the screen to measure the frequency response for the 
     <!-- USB Audio Peripheral Buttons Test -->
     <string name="usbaudio_buttons_test"> USB Audio Peripheral Buttons Test</string>
     <string name="usbaudio_buttons_info">
-        This test requires that you have connected a mandated USB Audio headset. Press each
-        \"transport\" button and verify that it is recognized by the test.
-       </string>
+        This test requires that you have connected a USB Audio headset that supports the
+        Android USB audio headset buttons specification. Press each
+        \"transport\" button and verify that it is recognized by the test. When each of the
+        buttons has been recognized the \"pass\" button will be enabled.
+    </string>
 
     <!-- Telecom tests -->
     <string name="telecom_enable_phone_account_test"> Telecom Enable Phone Account Test</string>
