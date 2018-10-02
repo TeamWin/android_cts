@@ -22,6 +22,7 @@ import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
+import android.platform.test.annotations.Presubmit;
 import android.support.test.filters.SmallTest;
 import android.system.ErrnoException;
 import android.system.Os;
@@ -36,6 +37,7 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Set;
 
+@Presubmit
 @SmallTest
 @RunWith(Parameterized.class)
 public class SystemFontsTest {
