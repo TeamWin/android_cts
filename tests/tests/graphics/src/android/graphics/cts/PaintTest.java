@@ -926,7 +926,8 @@ public class PaintTest {
 
         Paint p = new Paint();
         Context context = InstrumentationRegistry.getTargetContext();
-        Typeface typeface = Typeface.createFromAsset(context.getAssets(), "multiaxis.ttf");
+        Typeface typeface = Typeface.createFromAsset(context.getAssets(),
+                "fonts/var_fonts/multiaxis.ttf");
         p.setTypeface(typeface);
 
         // multiaxis.ttf supports "wght", "PRIV", "PR12" axes.
@@ -1821,7 +1822,8 @@ public class PaintTest {
         // - U+058A (ARMENIAN HYPHEN): The glyph has 3em width.
         // - U+05BE (MAQAF): The glyph has 4em width.
         // - U+1400 (UCAS HYPHEN): The glyph has 5em width.
-        paint.setTypeface(Typeface.createFromAsset(context.getAssets(), "hyphenation.ttf"));
+        paint.setTypeface(Typeface.createFromAsset(context.getAssets(),
+                  "fonts/layout/hyphenation.ttf"));
         paint.setTextSize(10.0f);  // Make 1em = 10px
 
         assertEquals(30.0f, paint.measureText("abc", 0, 3), 0.0f);
@@ -1867,7 +1869,8 @@ public class PaintTest {
     public void testGetTextRunAdvances() {
         final Paint paint = new Paint();
         final Context context = InstrumentationRegistry.getTargetContext();
-        paint.setTypeface(Typeface.createFromAsset(context.getAssets(), "textrunadvances.ttf"));
+        paint.setTypeface(Typeface.createFromAsset(context.getAssets(),
+                  "fonts/layout/textrunadvances.ttf"));
         // The textrunadvances.ttf font supports following characters
         // - U+0061 (a): The glyph has 3em width.
         // - U+0062..U+0065 (b..e): The glyph has 1em width.
