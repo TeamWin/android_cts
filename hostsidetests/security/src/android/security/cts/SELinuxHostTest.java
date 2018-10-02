@@ -769,15 +769,6 @@ public class SELinuxHostTest extends DeviceTestCase implements IBuildReceiver, I
         assertDomainOne("u:r:system_server:s0", "system_server");
     }
 
-    /*
-     * Some OEMs do not use sdcardd so transient. Other OEMs have multiple sdcards
-     * so they run the daemon multiple times.
-     */
-    @CddTest(requirement="9.7")
-    public void testSdcarddDomain() throws DeviceNotAvailableException {
-        assertDomainHasExecutable("u:r:sdcardd:s0", "/system/bin/sdcard");
-    }
-
     /* Watchdogd may or may not be there */
     @CddTest(requirement="9.7")
     public void testWatchdogdDomain() throws DeviceNotAvailableException {
