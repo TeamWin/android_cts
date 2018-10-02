@@ -22,14 +22,7 @@ import android.os.Environment;
 import android.platform.test.annotations.AppModeFull;
 import android.support.test.filters.LargeTest;
 import android.support.test.filters.SdkSuppress;
-import android.support.test.rule.GrantPermissionRule;
 import android.support.test.runner.AndroidJUnit4;
-
-import org.junit.After;
-import org.junit.Before;
-import org.junit.Rule;
-import org.junit.Test;
-import org.junit.runner.RunWith;
 
 import java.io.File;
 
@@ -41,26 +34,19 @@ import java.io.File;
  * Attribution 3.0 License at http://creativecommons.org/licenses/by/3.0/us/.
  */
 @LargeTest
-@RunWith(AndroidJUnit4.class)
 @SdkSuppress(minSdkVersion = Build.VERSION_CODES.P)
 @AppModeFull(reason = "Instant apps cannot hold READ/WRITE_EXTERNAL_STORAGE")
 public class MediaPlayer2DrmTest extends MediaPlayer2DrmTestBase {
 
     private static final String LOG_TAG = "MediaPlayer2DrmTest";
 
-    @Rule
-    public GrantPermissionRule mRuntimePermissionRule =
-            GrantPermissionRule.grant(Manifest.permission.WRITE_EXTERNAL_STORAGE);
-
-    @Before
     @Override
-    public void setUp() throws Throwable {
+    protected void setUp() throws Exception {
         super.setUp();
     }
 
-    @After
     @Override
-    public void tearDown() throws Throwable {
+    protected void tearDown() throws Exception {
         super.tearDown();
     }
 
@@ -110,7 +96,6 @@ public class MediaPlayer2DrmTest extends MediaPlayer2DrmTestBase {
 
     // Tests
 
-    @Test
     @LargeTest
     public void testCAR_CLEARKEY_AUDIO_DOWNLOADED_V0_SYNC() throws Exception {
         download(CENC_AUDIO_URL,
@@ -119,7 +104,6 @@ public class MediaPlayer2DrmTest extends MediaPlayer2DrmTestBase {
                 ModularDrmTestType.V0_SYNC_TEST);
     }
 
-    @Test
     @LargeTest
     public void testCAR_CLEARKEY_AUDIO_DOWNLOADED_V1_ASYNC() throws Exception {
         download(CENC_AUDIO_URL,
@@ -128,7 +112,6 @@ public class MediaPlayer2DrmTest extends MediaPlayer2DrmTestBase {
                 ModularDrmTestType.V1_ASYNC_TEST);
     }
 
-    @Test
     @LargeTest
     public void testCAR_CLEARKEY_AUDIO_DOWNLOADED_V2_SYNC_CONFIG() throws Exception {
         download(CENC_AUDIO_URL,
@@ -137,7 +120,6 @@ public class MediaPlayer2DrmTest extends MediaPlayer2DrmTestBase {
                 ModularDrmTestType.V2_SYNC_CONFIG_TEST);
     }
 
-    @Test
     @LargeTest
     public void testCAR_CLEARKEY_AUDIO_DOWNLOADED_V3_ASYNC_DRMPREPARED() throws Exception {
         download(CENC_AUDIO_URL,
