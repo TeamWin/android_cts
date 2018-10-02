@@ -15,7 +15,7 @@
 -->
 
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
-    package="com.android.cts.appbinding.app.b" >
+    package="com.android.cts.appbinding.app" >
 
     <uses-permission android:name="android.permission.WRITE_SMS" />
     <uses-permission android:name="android.permission.READ_SMS" />
@@ -26,11 +26,10 @@
     <application>
         <uses-library android:name="android.test.runner" />
 
-        <!-- Target to-be-bound service. -->
+        <!-- Target to-be-bound service found, but doesn't have :process. -->
         <service
-            android:name="com.android.cts.appbinding.app.MyService"
-            android:exported="true"
-            android:process=":persistent"
+            android:name=".MyService2"
+            android:exported="false"
             android:permission="android.permission.BIND_SMS_APP_SERVICE" >
             <intent-filter>
                 <action android:name="android.telephony.action.SMS_APP_SERVICE" />
@@ -38,7 +37,7 @@
         </service>
 
         <!-- Components needed to be an SMS app -->
-        <activity android:name="com.android.cts.appbinding.app.MySendToActivity">
+        <activity android:name=".MySendToActivity">
             <intent-filter>
                 <action android:name="android.intent.action.SEND" />
                 <action android:name="android.intent.action.SENDTO" />
@@ -52,14 +51,14 @@
 
         </activity>
 
-        <receiver android:name="com.android.cts.appbinding.app.sms.MySmsReceiver"
+        <receiver android:name=".sms.MySmsReceiver"
             android:permission="android.permission.BROADCAST_SMS">
             <intent-filter>
                 <action android:name="android.provider.Telephony.SMS_DELIVER" />
             </intent-filter>
         </receiver>
 
-        <receiver android:name="com.android.cts.appbinding.app.sms.MyMmsReceiver"
+        <receiver android:name=".sms.MyMmsReceiver"
             android:permission="android.permission.BROADCAST_WAP_PUSH">
             <intent-filter>
                 <action android:name="android.provider.Telephony.WAP_PUSH_DELIVER" />
@@ -68,7 +67,7 @@
 
         </receiver>
 
-        <service android:name="com.android.cts.appbinding.app.sms.MyRespondService"
+        <service android:name=".sms.MyRespondService"
             android:permission="android.permission.SEND_RESPOND_VIA_MESSAGE" >
             <intent-filter>
                 <action android:name="android.intent.action.RESPOND_VIA_MESSAGE" />
