@@ -28,6 +28,7 @@ import java.io.InputStreamReader;
 import java.io.IOException;
 import java.util.Arrays;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Set;
 
 import junit.framework.TestCase;
@@ -63,13 +64,12 @@ public class BuildVersionTest extends TestCase {
      */
     @RestrictedBuildTest
     public void testBuildFingerprint() {
-        final String fingerprint = Build.FINGERPRINT;
+        String fingerprint = Build.FINGERPRINT;
         Log.i(LOG_TAG, String.format("Testing fingerprint %s", fingerprint));
 
-        assertEquals("Build fingerprint must not include whitespace", -1,
-                fingerprint.indexOf(' '));
-        final String[] fingerprintSegs = fingerprint.split("/");
-        assertEquals("Build fingerprint does not match expected format", 6, fingerprintSegs.length);
+        verifyFingerprintStructure(fingerprint);
+
+        String[] fingerprintSegs = fingerprint.split("/");
         assertEquals(Build.BRAND, fingerprintSegs[0]);
         assertEquals(Build.PRODUCT, fingerprintSegs[1]);
 
@@ -80,11 +80,40 @@ public class BuildVersionTest extends TestCase {
 
         assertEquals(Build.ID, fingerprintSegs[3]);
 
-        assertTrue(fingerprintSegs[4].contains(":"));
         String[] buildNumberVariant = fingerprintSegs[4].split(":");
         String buildVariant = buildNumberVariant[1];
         assertEquals("Variant", EXPECTED_BUILD_VARIANT, buildVariant);
         assertEquals("Tag", EXPECTED_TAG, fingerprintSegs[5]);
+    }
+
+    public void testPartitions() {
+        List<Build.Partition> partitions = Build.getPartitions();
+        Set<String> seenPartitions = new HashSet<>();
+        for (Build.Partition partition : partitions) {
+            if (partition.getName().equals(Build.Partition.PARTITION_NAME_SYSTEM)) {
+                assertEquals(Build.FINGERPRINT, partition.getFingerprint());
+            }
+            verifyFingerprintStructure(partition.getFingerprint());
+            assertTrue(partition.getTimeMillis() > 0);
+            boolean unique = seenPartitions.add(partition.getName());
+            assertTrue("partitions not unique, " + partition.getName() + " is duplicated", unique);
+        }
+
+        assertTrue(seenPartitions.contains("system"));
+    }
+
+    private void verifyFingerprintStructure(String fingerprint) {
+        assertEquals("Build fingerprint must not include whitespace", -1, fingerprint.indexOf(' '));
+
+        String[] segments = fingerprint.split("/");
+        assertEquals("Build fingerprint does not match expected format", 6, segments.length);
+
+        String[] devicePlatform = segments[2].split(":");
+        assertEquals(2, devicePlatform.length);
+
+        assertTrue(segments[4].contains(":"));
+        String buildVariant = segments[4].split(":")[1];
+        assertTrue(buildVariant.length() > 0);
     }
 
     private void assertNotEmpty(String value) {

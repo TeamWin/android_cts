@@ -2970,6 +2970,18 @@
     <permission android:name="android.permission.MANAGE_DEVICE_ADMINS"
         android:protectionLevel="signature|privileged" />
 
+    <!-- @SystemApi Allows an app to reset the device password.
+         <p>Not for use by third-party applications.
+         @hide -->
+    <permission android:name="android.permission.RESET_PASSWORD"
+        android:protectionLevel="signature|privileged" />
+
+    <!-- @SystemApi Allows an app to lock the device.
+         <p>Not for use by third-party applications.
+         @hide -->
+    <permission android:name="android.permission.LOCK_DEVICE"
+        android:protectionLevel="signature|privileged" />
+
     <!-- @SystemApi Allows low-level access to setting the orientation (actually
          rotation) of the screen.
          <p>Not for use by third-party applications.
@@ -3668,6 +3680,10 @@
     <permission android:name="android.permission.USE_BIOMETRIC_INTERNAL"
         android:protectionLevel="signature" />
 
+    <!-- Allows the system to control the BiometricDialog (SystemUI). Reserved for the system. @hide -->
+    <permission android:name="android.permission.MANAGE_BIOMETRIC_DIALOG"
+        android:protectionLevel="signature" />
+
     <!-- Allows an app to reset face authentication attempt counter. Reserved for the system. @hide -->
     <permission android:name="android.permission.RESET_FACE_LOCKOUT"
         android:protectionLevel="signature" />
@@ -4024,13 +4040,19 @@
     <!-- Allows an application to directly open the "Open by default" page inside a package's
          Details screen.
          @hide <p>Not for use by third-party applications. -->
-    <permission android:name="android.permission.OPEN_APPLICATION_DETAILS_OPEN_BY_DEFAULT_PAGE"
+    <permission android:name="android.permission.OPEN_APP_OPEN_BY_DEFAULT_SETTINGS"
                 android:protectionLevel="signature" />
 
     <!-- Allows hidden API checks to be disabled when starting a process.
          @hide <p>Not for use by third-party applications. -->
     <permission android:name="android.permission.DISABLE_HIDDEN_API_CHECKS"
                 android:protectionLevel="signature" />
+
+    <!-- @hide Permission that protects the
+         {@link android.provider.Telephony.Intents#ACTION_DEFAULT_SMS_PACKAGE_CHANGED_INTERNAL}
+         broadcast -->
+    <permission android:name="android.permission.MONITOR_DEFAULT_SMS_PACKAGE"
+        android:protectionLevel="signature" />
 
     <application android:process="system"
                  android:persistent="true"
