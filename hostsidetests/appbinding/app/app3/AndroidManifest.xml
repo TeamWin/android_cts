@@ -30,7 +30,7 @@
         <service
             android:name=".MyService"
             android:exported="false"
-            android:process=".persistent">
+            android:process=":persistent">
             <intent-filter>
                 <action android:name="android.telephony.action.SMS_APP_SERVICE" />
             </intent-filter>

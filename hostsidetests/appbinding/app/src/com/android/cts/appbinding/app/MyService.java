@@ -30,7 +30,7 @@ public class MyService extends SmsAppService {
             (new Thread(() -> {throw new RuntimeException();})).start();
             return;
         }
-        writer.println("Package: [" + getPackageName() + "]");
-        writer.println("Class: [" + this.getClass().getName() + "]");
+        writer.print("Package=[" + getPackageName() + "]");
+        writer.println("Class=[" + this.getClass().getName() + "]");
     }
 }
