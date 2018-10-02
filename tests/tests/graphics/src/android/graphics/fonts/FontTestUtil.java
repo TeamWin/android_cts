@@ -87,31 +87,31 @@ import java.util.Map;
  *   - 'Ascb' 1.0, 'wght' 100.0, 'ital' 1.0' is equivalent with ascii_b3em_width100_italic.ttf
  */
 public class FontTestUtil {
-    private static final String FAMILY_SELECTION_FONT_PATH_IN_ASSET = "fonts_for_family_selection";
+    private static final String FAMILY_SELECTION_FONT_PATH_IN_ASSET = "fonts/family_selection";
     private static final List<Pair<Integer, Boolean>> sStyleList;
     private static final Map<Pair<Integer, Boolean>, String> sFontMap;
     private static final Map<Pair<Integer, Boolean>, Integer> sTtcMap;
     private static final Map<Pair<Integer, Boolean>, String> sVariationSettingsMap;
     private static final Map<Pair<Integer, Boolean>, Integer> sResourceMap;
     private static final String[] sFontList = {  // Same order of ascii.ttc
-            FAMILY_SELECTION_FONT_PATH_IN_ASSET + "/fonts/ascii_a3em_weight100_upright.ttf",
-            FAMILY_SELECTION_FONT_PATH_IN_ASSET + "/fonts/ascii_b3em_weight100_italic.ttf",
-            FAMILY_SELECTION_FONT_PATH_IN_ASSET + "/fonts/ascii_c3em_weight200_upright.ttf",
-            FAMILY_SELECTION_FONT_PATH_IN_ASSET + "/fonts/ascii_d3em_weight200_italic.ttf",
-            FAMILY_SELECTION_FONT_PATH_IN_ASSET + "/fonts/ascii_e3em_weight300_upright.ttf",
-            FAMILY_SELECTION_FONT_PATH_IN_ASSET + "/fonts/ascii_f3em_weight300_italic.ttf",
-            FAMILY_SELECTION_FONT_PATH_IN_ASSET + "/fonts/ascii_g3em_weight400_upright.ttf",
-            FAMILY_SELECTION_FONT_PATH_IN_ASSET + "/fonts/ascii_h3em_weight400_italic.ttf",
-            FAMILY_SELECTION_FONT_PATH_IN_ASSET + "/fonts/ascii_i3em_weight500_upright.ttf",
-            FAMILY_SELECTION_FONT_PATH_IN_ASSET + "/fonts/ascii_j3em_weight500_italic.ttf",
-            FAMILY_SELECTION_FONT_PATH_IN_ASSET + "/fonts/ascii_k3em_weight600_upright.ttf",
-            FAMILY_SELECTION_FONT_PATH_IN_ASSET + "/fonts/ascii_l3em_weight600_italic.ttf",
-            FAMILY_SELECTION_FONT_PATH_IN_ASSET + "/fonts/ascii_m3em_weight700_upright.ttf",
-            FAMILY_SELECTION_FONT_PATH_IN_ASSET + "/fonts/ascii_n3em_weight700_italic.ttf",
-            FAMILY_SELECTION_FONT_PATH_IN_ASSET + "/fonts/ascii_o3em_weight800_upright.ttf",
-            FAMILY_SELECTION_FONT_PATH_IN_ASSET + "/fonts/ascii_p3em_weight800_italic.ttf",
-            FAMILY_SELECTION_FONT_PATH_IN_ASSET + "/fonts/ascii_q3em_weight900_upright.ttf",
-            FAMILY_SELECTION_FONT_PATH_IN_ASSET + "/fonts/ascii_r3em_weight900_italic.ttf",
+            FAMILY_SELECTION_FONT_PATH_IN_ASSET + "/ttf/ascii_a3em_weight100_upright.ttf",
+            FAMILY_SELECTION_FONT_PATH_IN_ASSET + "/ttf/ascii_b3em_weight100_italic.ttf",
+            FAMILY_SELECTION_FONT_PATH_IN_ASSET + "/ttf/ascii_c3em_weight200_upright.ttf",
+            FAMILY_SELECTION_FONT_PATH_IN_ASSET + "/ttf/ascii_d3em_weight200_italic.ttf",
+            FAMILY_SELECTION_FONT_PATH_IN_ASSET + "/ttf/ascii_e3em_weight300_upright.ttf",
+            FAMILY_SELECTION_FONT_PATH_IN_ASSET + "/ttf/ascii_f3em_weight300_italic.ttf",
+            FAMILY_SELECTION_FONT_PATH_IN_ASSET + "/ttf/ascii_g3em_weight400_upright.ttf",
+            FAMILY_SELECTION_FONT_PATH_IN_ASSET + "/ttf/ascii_h3em_weight400_italic.ttf",
+            FAMILY_SELECTION_FONT_PATH_IN_ASSET + "/ttf/ascii_i3em_weight500_upright.ttf",
+            FAMILY_SELECTION_FONT_PATH_IN_ASSET + "/ttf/ascii_j3em_weight500_italic.ttf",
+            FAMILY_SELECTION_FONT_PATH_IN_ASSET + "/ttf/ascii_k3em_weight600_upright.ttf",
+            FAMILY_SELECTION_FONT_PATH_IN_ASSET + "/ttf/ascii_l3em_weight600_italic.ttf",
+            FAMILY_SELECTION_FONT_PATH_IN_ASSET + "/ttf/ascii_m3em_weight700_upright.ttf",
+            FAMILY_SELECTION_FONT_PATH_IN_ASSET + "/ttf/ascii_n3em_weight700_italic.ttf",
+            FAMILY_SELECTION_FONT_PATH_IN_ASSET + "/ttf/ascii_o3em_weight800_upright.ttf",
+            FAMILY_SELECTION_FONT_PATH_IN_ASSET + "/ttf/ascii_p3em_weight800_italic.ttf",
+            FAMILY_SELECTION_FONT_PATH_IN_ASSET + "/ttf/ascii_q3em_weight900_upright.ttf",
+            FAMILY_SELECTION_FONT_PATH_IN_ASSET + "/ttf/ascii_r3em_weight900_italic.ttf",
     };
 
     private static final String[] FONT_VARIATION_SETTING_LIST = {

@@ -36,7 +36,7 @@ import java.io.IOException;
 @RunWith(AndroidJUnit4.class)
 public class FontFamilyTest {
     private static final String TAG = "FontFamilyTest";
-    private static final String FONT_DIR = "fonts_for_family_selection/fonts/";
+    private static final String FONT_DIR = "fonts/family_selection/ttf/";
 
     @Test
     public void testBuilder_SingleFont() throws IOException {
