@@ -20,11 +20,7 @@ package android.provider.cts.contacts;
 import android.content.ContentProviderClient;
 import android.content.ContentResolver;
 import android.content.ContentValues;
-import android.database.ContentObserver;
 import android.net.Uri;
-import android.os.Handler;
-import android.os.HandlerThread;
-import android.os.Looper;
 import android.provider.ContactsContract;
 import android.provider.ContactsContract.CommonDataKinds.StructuredName;
 import android.provider.ContactsContract.RawContacts;
@@ -33,8 +29,6 @@ import android.provider.cts.contacts.ContactsContract_TestDataBuilder.TestRawCon
 import android.provider.cts.contacts.account.StaticAccountAuthenticator;
 import android.test.AndroidTestCase;
 import android.test.MoreAsserts;
-import java.util.concurrent.CountDownLatch;
-import java.util.concurrent.TimeUnit;
 
 public class ContactsContract_RawContactsTest extends AndroidTestCase {
     private ContentResolver mResolver;
@@ -310,70 +304,5 @@ public class ContactsContract_RawContactsTest extends AndroidTestCase {
         rawContact.load();
         assertEquals(0, rawContact.getLong(RawContacts.TIMES_CONTACTED));
         assertEquals(0, rawContact.getLong(RawContacts.LAST_TIME_CONTACTED));
-    }
-
-    public void testRawContactsChangeNotification() {
-        final HandlerThread handlerThread = new HandlerThread("MyHandlerThread");
-        handlerThread.start();
-        // The ContentObserver's onChange() method is called from the Handler.
-        final MyObserver observer = new MyObserver(new Handler(handlerThread.getLooper()));
-        mResolver.registerContentObserver(
-                        RawContacts.RAW_CONTACTS_NOTIFICATION_URI,
-                        true,
-                observer);
-
-        observer.reset();
-        final DatabaseAsserts.ContactIdPair ids = DatabaseAsserts.assertAndCreateContact(mResolver);
-        observer.await();
-        assertEquals(RawContacts.RAW_CONTACTS_NOTIFICATION_INSERT_URI, observer.mNotifiedUri);
-
-        final ContentValues values = new ContentValues();
-        values.put(ContactsContract.RawContacts.STARRED, 1);
-        observer.reset();
-        RawContactUtil.update(mResolver, ids.mRawContactId, values);
-        observer.await();
-        assertEquals(RawContacts.RAW_CONTACTS_NOTIFICATION_UPDATE_URI, observer.mNotifiedUri);
-
-        observer.reset();
-        RawContactUtil.delete(mResolver, ids.mRawContactId, true);
-        observer.await();
-        assertEquals(RawContacts.RAW_CONTACTS_NOTIFICATION_DELETE_URI, observer.mNotifiedUri);
-
-        mResolver.unregisterContentObserver(observer);
-        handlerThread.quit();
-    }
-
-    private class MyObserver extends ContentObserver {
-        public Uri mNotifiedUri;
-        public CountDownLatch mDoneSignal;
-
-        public MyObserver(Handler handler) {
-            super(handler);
-        }
-
-        @Override
-        public void onChange(boolean selfChange) {
-            this.onChange(selfChange, null);
-        }
-
-        @Override
-        public void onChange(boolean selfChange, Uri uri) {
-            mNotifiedUri = uri;
-            mDoneSignal.countDown();
-        }
-
-        public void reset() {
-            mNotifiedUri = null;
-            mDoneSignal = new CountDownLatch(1);
-        }
-
-        public void await() {
-            try {
-                final boolean ret = mDoneSignal.await(5, TimeUnit.SECONDS);
-                assertTrue(ret);
-            } catch (InterruptedException e) {
-                fail("CountDownlatch is interrupted");
-            }
-        }
     }
 }
