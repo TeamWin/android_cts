@@ -36,14 +36,14 @@ import android.security.keystore.StrongBoxUnavailableException;
 import android.security.keystore.WrappedKeyEntry;
 import android.test.AndroidTestCase;
 
-import com.android.org.bouncycastle.asn1.ASN1Encoding;
-import com.android.org.bouncycastle.asn1.DEREncodableVector;
-import com.android.org.bouncycastle.asn1.DERInteger;
-import com.android.org.bouncycastle.asn1.DERNull;
-import com.android.org.bouncycastle.asn1.DEROctetString;
-import com.android.org.bouncycastle.asn1.DERSequence;
-import com.android.org.bouncycastle.asn1.DERSet;
-import com.android.org.bouncycastle.asn1.DERTaggedObject;
+import org.bouncycastle.asn1.ASN1Encoding;
+import org.bouncycastle.asn1.DEREncodableVector;
+import org.bouncycastle.asn1.DERInteger;
+import org.bouncycastle.asn1.DERNull;
+import org.bouncycastle.asn1.DEROctetString;
+import org.bouncycastle.asn1.DERSequence;
+import org.bouncycastle.asn1.DERSet;
+import org.bouncycastle.asn1.DERTaggedObject;
 
 import java.security.Key;
 import java.security.KeyPair;
