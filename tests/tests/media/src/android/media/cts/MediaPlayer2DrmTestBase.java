@@ -15,45 +15,30 @@
  */
 package android.media.cts;
 
-import static android.content.Context.KEYGUARD_SERVICE;
-
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertTrue;
-import static org.junit.Assert.fail;
-
 import android.app.DownloadManager;
 import android.app.DownloadManager.Request;
-import android.app.Instrumentation;
-import android.app.KeyguardManager;
 import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.res.Resources;
+import android.media.DataSourceDesc;
 import android.media.MediaDrm;
+import android.media.MediaPlayer2;
+import android.media.MediaPlayer2.DrmInfo;
+import android.media.ResourceBusyException;
+import android.media.UnsupportedSchemeException;
 import android.media.cts.TestUtils.Monitor;
 import android.net.Uri;
-import android.os.PowerManager;
 import android.os.SystemClock;
-import android.support.test.InstrumentationRegistry;
-import android.support.test.rule.ActivityTestRule;
+import android.test.ActivityInstrumentationTestCase2;
 import android.util.Base64;
 import android.util.Log;
 import android.view.SurfaceHolder;
-import android.view.WindowManager;
-
-import androidx.annotation.CallSuper;
-import androidx.media2.DataSourceDesc2;
-import androidx.media2.MediaPlayer2;
-import androidx.media2.MediaPlayer2.DrmInfo;
-import androidx.media2.UriDataSourceDesc2;
 
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
-import org.junit.After;
-import org.junit.Before;
-import org.junit.Rule;
 
 import java.io.IOException;
 import java.nio.ByteBuffer;
@@ -66,11 +51,14 @@ import java.util.Vector;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.logging.Logger;
 
 /**
  * Base class for DRM tests which use MediaPlayer2 to play audio or video.
  */
-public class MediaPlayer2DrmTestBase {
+public class MediaPlayer2DrmTestBase extends ActivityInstrumentationTestCase2<MediaStubActivity> {
+    private static final Logger LOG = Logger.getLogger(MediaPlayerTestBase.class.getName());
+
     protected static final int STREAM_RETRIES = 3;
 
     protected Monitor mSetDataSourceCallCompleted = new Monitor();
@@ -86,56 +74,37 @@ public class MediaPlayer2DrmTestBase {
 
     protected MediaPlayer2 mPlayer = null;
     protected MediaStubActivity mActivity;
-    protected Instrumentation mInstrumentation;
 
     protected ExecutorService mExecutor;
     protected MediaPlayer2.EventCallback mECb = null;
 
-    @Rule
-    public ActivityTestRule<MediaStubActivity> mActivityRule =
-            new ActivityTestRule<>(MediaStubActivity.class);
-    public PowerManager.WakeLock mScreenLock;
-    private KeyguardManager mKeyguardManager;
+    public MediaPlayer2DrmTestBase() {
+        super(MediaStubActivity.class);
+    }
 
-    @Before
-    @CallSuper
-    public void setUp() throws Throwable {
-        mInstrumentation = InstrumentationRegistry.getInstrumentation();
-        mKeyguardManager = (KeyguardManager)
-                mInstrumentation.getTargetContext().getSystemService(KEYGUARD_SERVICE);
-        mActivity = mActivityRule.getActivity();
-        mActivityRule.runOnUiThread(new Runnable() {
-            @Override
-            public void run() {
-                // Keep screen on while testing.
-                mActivity.getWindow().addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
-                mActivity.setTurnScreenOn(true);
-                mActivity.setShowWhenLocked(true);
-                mKeyguardManager.requestDismissKeyguard(mActivity, null);
-            }
-        });
-        mInstrumentation.waitForIdleSync();
-
+    @Override
+    protected void setUp() throws Exception {
+        super.setUp();
+        mActivity = getActivity();
+        getInstrumentation().waitForIdleSync();
         try {
-            mActivityRule.runOnUiThread(new Runnable() {
+            runTestOnUiThread(new Runnable() {
                 public void run() {
-                    mPlayer = MediaPlayer2.create(mInstrumentation.getTargetContext());
+                    mPlayer = MediaPlayer2.create();
                 }
             });
         } catch (Throwable e) {
             e.printStackTrace();
             fail();
         }
-
-        mContext = mInstrumentation.getTargetContext();
+        mContext = getInstrumentation().getTargetContext();
         mResources = mContext.getResources();
 
         mExecutor = Executors.newFixedThreadPool(2);
     }
 
-    @After
-    @CallSuper
-    public void tearDown() throws Throwable {
+    @Override
+    protected void tearDown() throws Exception {
         if (mPlayer != null) {
             mPlayer.close();
             mPlayer = null;
@@ -273,18 +242,18 @@ public class MediaPlayer2DrmTestBase {
         mCallStatus = MediaPlayer2.CALL_STATUS_NO_ERROR;
         mECb = new MediaPlayer2.EventCallback() {
                 @Override
-                public void onVideoSizeChanged(MediaPlayer2 mp, DataSourceDesc2 dsd, int w, int h) {
+                public void onVideoSizeChanged(MediaPlayer2 mp, DataSourceDesc dsd, int w, int h) {
                     Log.v(TAG, "VideoSizeChanged" + " w:" + w + " h:" + h);
                     mOnVideoSizeChangedCalled.signal();
                 }
 
                 @Override
-                public void onError(MediaPlayer2 mp, DataSourceDesc2 dsd, int what, int extra) {
+                public void onError(MediaPlayer2 mp, DataSourceDesc dsd, int what, int extra) {
                     fail("Media player had error " + what + " playing video");
                 }
 
                 @Override
-                public void onInfo(MediaPlayer2 mp, DataSourceDesc2 dsd, int what, int extra) {
+                public void onInfo(MediaPlayer2 mp, DataSourceDesc dsd, int what, int extra) {
                     if (what == MediaPlayer2.MEDIA_INFO_PREPARED) {
                         mOnPreparedCalled.signal();
                     } else if (what == MediaPlayer2.MEDIA_INFO_DATA_SOURCE_END) {
@@ -294,7 +263,7 @@ public class MediaPlayer2DrmTestBase {
                 }
 
                 @Override
-                public void onCallCompleted(MediaPlayer2 mp, DataSourceDesc2 dsd,
+                public void onCallCompleted(MediaPlayer2 mp, DataSourceDesc dsd,
                         int what, int status) {
                     if (what == MediaPlayer2.CALL_COMPLETED_SET_DATA_SOURCE) {
                         mCallStatus = status;
@@ -303,9 +272,9 @@ public class MediaPlayer2DrmTestBase {
                 }
             };
 
-        mPlayer.setEventCallback(mExecutor, mECb);
+        mPlayer.registerEventCallback(mExecutor, mECb);
         Log.v(TAG, "playLoadedVideo: setDataSource()");
-        mPlayer.setDataSource(new UriDataSourceDesc2.Builder(mContext, file).build());
+        mPlayer.setDataSource(new DataSourceDesc.Builder().setDataSource(mContext, file).build());
         mSetDataSourceCallCompleted.waitForSignal();
         if (mCallStatus != MediaPlayer2.CALL_STATUS_NO_ERROR) {
             throw new PrepareFailedException();
@@ -385,7 +354,7 @@ public class MediaPlayer2DrmTestBase {
 
         mPlayer.setDrmEventCallback(mExecutor, new MediaPlayer2.DrmEventCallback() {
             @Override
-            public void onDrmInfo(MediaPlayer2 mp, DataSourceDesc2 dsd, DrmInfo drmInfo) {
+            public void onDrmInfo(MediaPlayer2 mp, DataSourceDesc dsd, DrmInfo drmInfo) {
                 Log.v(TAG, "preparePlayerAndDrm_V1: onDrmInfo" + drmInfo);
 
                 // in the callback (async mode) so handling exceptions here
@@ -419,7 +388,7 @@ public class MediaPlayer2DrmTestBase {
     private void preparePlayerAndDrm_V2_syncDrmSetupPlusConfig() throws Exception {
         mPlayer.setOnDrmConfigHelper(new MediaPlayer2.OnDrmConfigHelper() {
             @Override
-            public void onDrmConfig(MediaPlayer2 mp, DataSourceDesc2 dsd) {
+            public void onDrmConfig(MediaPlayer2 mp, DataSourceDesc dsd) {
                 String widevineSecurityLevel3 = "L3";
                 String securityLevelProperty = "securityLevel";
 
@@ -461,7 +430,7 @@ public class MediaPlayer2DrmTestBase {
 
         mPlayer.setDrmEventCallback(mExecutor, new MediaPlayer2.DrmEventCallback() {
             @Override
-            public void onDrmInfo(MediaPlayer2 mp, DataSourceDesc2 dsd, DrmInfo drmInfo) {
+            public void onDrmInfo(MediaPlayer2 mp, DataSourceDesc dsd, DrmInfo drmInfo) {
                 Log.v(TAG, "preparePlayerAndDrm_V3: onDrmInfo" + drmInfo);
 
                 // DRM preperation
@@ -499,7 +468,7 @@ public class MediaPlayer2DrmTestBase {
             }
 
             @Override
-            public void onDrmPrepared(MediaPlayer2 mp, DataSourceDesc2 dsd, int status) {
+            public void onDrmPrepared(MediaPlayer2 mp, DataSourceDesc dsd, int status) {
                 Log.v(TAG, "preparePlayerAndDrm_V3: onDrmPrepared status: " + status);
 
                 assertTrue("preparePlayerAndDrm_V3: onDrmPrepared did not succeed",
@@ -556,10 +525,11 @@ public class MediaPlayer2DrmTestBase {
             Log.v(TAG, "playLoadedVideo: round " + round);
 
             try {
-                mPlayer.setEventCallback(mExecutor, mECb);
+                mPlayer.registerEventCallback(mExecutor, mECb);
 
                 Log.v(TAG, "playLoadedVideo: setDataSource()");
-                mPlayer.setDataSource(new UriDataSourceDesc2.Builder(mContext, file).build());
+                mPlayer.setDataSource(
+                        new DataSourceDesc.Builder().setDataSource(mContext, file).build());
 
                 Log.v(TAG, "playLoadedVideo: prepare()");
                 mPlayer.prepare();
@@ -692,7 +662,7 @@ public class MediaPlayer2DrmTestBase {
                         mPlayer.setDrmEventCallback(mExecutor, new MediaPlayer2.DrmEventCallback() {
                             @Override
                             public void onDrmPrepared(
-                                    MediaPlayer2 mp, DataSourceDesc2 dsd, int status) {
+                                    MediaPlayer2 mp, DataSourceDesc dsd, int status) {
                                 drmPrepared.signal();
                             }
                         });
@@ -756,6 +726,22 @@ public class MediaPlayer2DrmTestBase {
 
         } catch (MediaPlayer2.NoDrmSchemeException e) {
             Log.d(TAG, "setupDrm: NoDrmSchemeException");
+            e.printStackTrace();
+            throw e;
+        } catch (MediaPlayer2.ProvisioningNetworkErrorException e) {
+            Log.d(TAG, "setupDrm: ProvisioningNetworkErrorException");
+            e.printStackTrace();
+            throw e;
+        } catch (MediaPlayer2.ProvisioningServerErrorException e) {
+            Log.d(TAG, "setupDrm: ProvisioningServerErrorException");
+            e.printStackTrace();
+            throw e;
+        } catch (UnsupportedSchemeException e) {
+            Log.d(TAG, "setupDrm: UnsupportedSchemeException");
+            e.printStackTrace();
+            throw e;
+        } catch (ResourceBusyException e) {
+            Log.d(TAG, "setupDrm: ResourceBusyException");
             e.printStackTrace();
             throw e;
         } catch (Exception e) {
