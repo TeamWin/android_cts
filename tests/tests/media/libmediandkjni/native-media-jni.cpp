@@ -956,6 +956,47 @@ extern "C" jboolean Java_android_media_cts_NativeDecoderTest_testCryptoInfoNativ
     return true;
 }
 
+extern "C" jlong Java_android_media_cts_NativeDecoderTest_createAMediaExtractor(JNIEnv * /*env*/,
+        jclass /*clazz*/) {
+    AMediaExtractor *ex = AMediaExtractor_new();
+    return reinterpret_cast<jlong>(ex);
+}
+
+extern "C" jlong Java_android_media_cts_NativeDecoderTest_createAMediaDataSource(JNIEnv * env,
+        jclass /*clazz*/, jstring jurl) {
+    const char *url = env->GetStringUTFChars(jurl, NULL);
+    if (url == NULL) {
+        ALOGE("GetStringUTFChars error");
+        return 0;
+    }
+
+    AMediaDataSource *ds = AMediaDataSource_newUri(url, 0, NULL);
+    env->ReleaseStringUTFChars(jurl, url);
+    return reinterpret_cast<jlong>(ds);
+}
+
+extern "C" jint Java_android_media_cts_NativeDecoderTest_setAMediaExtractorDataSource(JNIEnv * /*env*/,
+        jclass /*clazz*/, jlong jex, jlong jds) {
+    AMediaExtractor *ex = reinterpret_cast<AMediaExtractor *>(jex);
+    AMediaDataSource *ds = reinterpret_cast<AMediaDataSource *>(jds);
+    return AMediaExtractor_setDataSourceCustom(ex, ds);
+}
+
+extern "C" void Java_android_media_cts_NativeDecoderTest_closeAMediaDataSource(
+        JNIEnv * /*env*/, jclass /*clazz*/, jlong ds) {
+    AMediaDataSource_close(reinterpret_cast<AMediaDataSource *>(ds));
+}
+
+extern "C" void Java_android_media_cts_NativeDecoderTest_deleteAMediaExtractor(
+        JNIEnv * /*env*/, jclass /*clazz*/, jlong ex) {
+    AMediaExtractor_delete(reinterpret_cast<AMediaExtractor *>(ex));
+}
+
+extern "C" void Java_android_media_cts_NativeDecoderTest_deleteAMediaDataSource(
+        JNIEnv * /*env*/, jclass /*clazz*/, jlong ds) {
+    AMediaDataSource_delete(reinterpret_cast<AMediaDataSource *>(ds));
+}
+//
 // === NdkMediaCodec
 
 extern "C" jlong Java_android_media_cts_NdkMediaCodec_AMediaCodecCreateCodecByName(
