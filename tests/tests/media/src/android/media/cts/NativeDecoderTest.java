@@ -291,11 +291,14 @@ public class NativeDecoderTest extends MediaPlayerTestBase {
 
     public void testExtractorCachedDurationNative() throws Exception {
         CtsTestServer foo = new CtsTestServer(mContext);
-        long cachedDurationUs = getExtractorCachedDurationNative(foo.getAssetUrl("ringer.mp3"));
+        String url = foo.getAssetUrl("ringer.mp3");
+        long cachedDurationUs = getExtractorCachedDurationNative(url, /* testNativeSource = */ false);
         assertTrue("cached duration negative", cachedDurationUs >= 0);
+        cachedDurationUs = getExtractorCachedDurationNative(url, /* testNativeSource = */ true);
+        assertTrue("cached duration negative native source", cachedDurationUs >= 0);
     }
 
-    private static native long getExtractorCachedDurationNative(String uri);
+    private static native long getExtractorCachedDurationNative(String uri, boolean testNativeSource);
 
     public void testDecoder() throws Exception {
         int testsRun =

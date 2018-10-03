@@ -441,7 +441,7 @@ extern "C" jlong Java_android_media_cts_NativeDecoderTest_getExtractorFileDurati
 }
 
 extern "C" jlong Java_android_media_cts_NativeDecoderTest_getExtractorCachedDurationNative(
-        JNIEnv * env, jclass /*clazz*/, jstring jpath)
+        JNIEnv * env, jclass /*clazz*/, jstring jpath, jboolean testNativeSource)
 {
     AMediaExtractor *ex = AMediaExtractor_new();
 
@@ -451,18 +451,27 @@ extern "C" jlong Java_android_media_cts_NativeDecoderTest_getExtractorCachedDura
         return -1;
     }
 
-    int err = AMediaExtractor_setDataSource(ex, tmp);
+    int err;
+    AMediaDataSource *src = NULL;
+    if (testNativeSource) {
+        src = AMediaDataSource_newUri(tmp, 0, NULL);
+        err = src ? AMediaExtractor_setDataSourceCustom(ex, src) : -1;
+    } else {
+        err = AMediaExtractor_setDataSource(ex, tmp);
+    }
 
     env->ReleaseStringUTFChars(jpath, tmp);
 
     if (err != 0) {
         ALOGE("setDataSource error: %d", err);
         AMediaExtractor_delete(ex);
+        AMediaDataSource_delete(src);
         return -1;
     }
 
     int64_t cachedDurationUs = AMediaExtractor_getCachedDuration(ex);
     AMediaExtractor_delete(ex);
+    AMediaDataSource_delete(src);
     return cachedDurationUs;
 
 }
