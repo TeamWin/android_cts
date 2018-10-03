@@ -505,7 +505,8 @@ public class OmapiTest {
                     byte[] response = internalTransmitApdu(reader, apdu);
                     assertGreaterOrEqual(response.length, apdu.length + 2);
                     byte[] responseSubstring = Arrays.copyOfRange(response, 0, apdu.length);
-                    apdu[0] = 0x01;
+                    // We should not care about which channel number is actually assigned.
+                    responseSubstring[0] = apdu[0];
                     assertTrue(Arrays.equals(responseSubstring, apdu));
                     byte[] SW = SW_62xx[i];
                     assertEquals(response[response.length - 1], SW[1]);
