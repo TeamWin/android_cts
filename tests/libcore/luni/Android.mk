@@ -51,6 +51,9 @@ LOCAL_JNI_SHARED_LIBRARIES := libjavacoretests libsqlite_jni libnativehelper_com
 # where applicable.
 LOCAL_MULTILIB := both
 
+# This test requires cts-dalvik-host-test-runner to be built to run via Atest.
+LOCAL_HOST_REQUIRED_MODULES := cts-dalvik-host-test-runner
+
 # Tag this module as a cts test artifact
 LOCAL_COMPATIBILITY_SUITE := cts vts general-tests
 
