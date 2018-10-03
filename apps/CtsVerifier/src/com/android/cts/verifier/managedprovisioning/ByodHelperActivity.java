@@ -152,7 +152,6 @@ public class ByodHelperActivity extends LocationListenerActivity
     private static final int REQUEST_VIDEO_CAPTURE_WITH_EXTRA_OUTPUT = 4;
     private static final int REQUEST_VIDEO_CAPTURE_WITHOUT_EXTRA_OUTPUT = 5;
     private static final int REQUEST_AUDIO_CAPTURE = 6;
-    private static final int REQUEST_LOCATION_UPDATE = 7;
 
     private static final String ORIGINAL_RESTRICTIONS_NAME = "original restrictions";
 
