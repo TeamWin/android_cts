@@ -89,7 +89,7 @@ LOCAL_SRC_FILES := \
 
 LOCAL_STATIC_JAVA_LIBRARIES := androidx.legacy_legacy-support-v4 \
                                compatibility-common-util-devicesidelib \
-                               compatibility-device-util \
+                               compatibility-device-util
 
 include $(BUILD_STATIC_JAVA_LIBRARY)
 
