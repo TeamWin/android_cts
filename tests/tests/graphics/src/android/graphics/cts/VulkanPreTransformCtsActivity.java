@@ -57,18 +57,15 @@ public class VulkanPreTransformCtsActivity extends Activity {
             return;
         }
 
-        if (((WindowManager) getSystemService(Context.WINDOW_SERVICE))
-                        .getDefaultDisplay()
-                        .getRotation()
-                != Surface.ROTATION_0) {
-            throw new RuntimeException("Display not in natural orientation");
+        if (getRotation() == Surface.ROTATION_0) {
+            if (getResources().getConfiguration().orientation
+                    == Configuration.ORIENTATION_LANDSCAPE) {
+                setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_PORTRAIT);
+            } else {
+                setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_LANDSCAPE);
+            }
         }
 
-        if (getResources().getConfiguration().orientation == Configuration.ORIENTATION_LANDSCAPE) {
-            setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_PORTRAIT);
-        } else {
-            setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_LANDSCAPE);
-        }
         sOrientationRequested = true;
     }
 

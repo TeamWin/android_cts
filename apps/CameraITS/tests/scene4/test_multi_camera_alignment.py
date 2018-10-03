@@ -263,7 +263,7 @@ def main():
 
     with its.device.ItsSession() as cam:
         props = cam.get_camera_properties()
-        its.caps.skip_unless(its.caps.compute_read_3a(props) and
+        its.caps.skip_unless(its.caps.read_3a(props) and
                              its.caps.per_frame_control(props) and
                              its.caps.logical_multi_camera(props) and
                              its.caps.raw16(props))

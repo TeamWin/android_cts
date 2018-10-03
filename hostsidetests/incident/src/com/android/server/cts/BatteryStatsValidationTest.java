@@ -502,7 +502,7 @@ public class BatteryStatsValidationTest extends ProtoDumpTestCase {
     }
 
     private void assertApproximateTimeInState(int index, long duration) throws Exception {
-        assertValueRange("st", "", index, (long) (0.8 * duration), 2 * duration);
+        assertValueRange("st", "", index, (long) (0.7 * duration), 2 * duration);
     }
 
     /**

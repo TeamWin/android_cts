@@ -24,6 +24,9 @@ import static org.mockito.Mockito.when;
 import static org.testng.Assert.assertThrows;
 import static org.testng.Assert.expectThrows;
 
+import android.autofillservice.cts.Timeout.Sleeper;
+import android.os.SystemClock;
+
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.Mock;
@@ -39,6 +42,8 @@ public class TimeoutTest {
 
     @Mock
     private Callable<Object> mJob;
+
+    private final MySleeper mSleeper = new MySleeper();
 
     @Test
     public void testInvalidConstructor() {
@@ -98,26 +103,41 @@ public class TimeoutTest {
 
     @Test
     public void testRun_successOnFirstAttempt() throws Exception {
-        final Timeout timeout = new Timeout(NAME, 100, 2, 500);
+        final Timeout timeout = new Timeout(mSleeper, NAME, 100, 2, 500);
         final Object result = new Object();
         when(mJob.call()).thenReturn(result);
         assertThat(timeout.run(DESC, 1, mJob)).isSameAs(result);
+        assertThat(mSleeper.totalSleepingTime).isEqualTo(0);
     }
 
     @Test
     public void testRun_successOnSecondAttempt() throws Exception {
-        final Timeout timeout = new Timeout(NAME, 100, 2, 500);
+        final Timeout timeout = new Timeout(mSleeper, NAME, 100, 2, 500);
         final Object result = new Object();
         when(mJob.call()).thenReturn((Object) null, result);
         assertThat(timeout.run(DESC, 10, mJob)).isSameAs(result);
+        assertThat(mSleeper.totalSleepingTime).isEqualTo(10);
     }
 
     @Test
     public void testRun_allAttemptsFailed() throws Exception {
-        final Timeout timeout = new Timeout(NAME, 100, 2, 500);
+        final Timeout timeout = new Timeout(mSleeper, NAME, 100, 2, 500);
         final RetryableException e = expectThrows(RetryableException.class,
                 () -> timeout.run(DESC, 10, mJob));
         assertThat(e.getMessage()).contains(DESC);
         assertThat(e.getTimeout()).isSameAs(timeout);
+        assertThat(mSleeper.totalSleepingTime).isEqualTo(100);
+    }
+
+    private static final class MySleeper implements Sleeper {
+        public long totalSleepingTime;
+
+        @Override
+        public void sleep(long napTimeMs) {
+            // We still need to sleep, as the retry is based on ellapsed time. We could use a
+            // Mockito spy, but let's keep it simple
+            SystemClock.sleep(napTimeMs);
+            totalSleepingTime += napTimeMs;
+        }
     }
 }
