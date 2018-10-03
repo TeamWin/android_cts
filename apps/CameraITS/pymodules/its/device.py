@@ -12,20 +12,18 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-import its.error
-import os
-import os.path
-import sys
-import re
 import json
-import time
-import unittest
+import os
 import socket
-import subprocess
-import hashlib
-import numpy
 import string
+import subprocess
+import sys
+import time
 import unicodedata
+import unittest
+
+import its.error
+import numpy
 
 
 class ItsSession(object):
@@ -71,7 +69,7 @@ class ItsSession(object):
     INTENT_START = 'com.android.cts.verifier.camera.its.START'
     ACTION_ITS_RESULT = 'com.android.cts.verifier.camera.its.ACTION_ITS_RESULT'
     EXTRA_VERSION = 'camera.its.extra.VERSION'
-    CURRENT_ITS_VERSION = '1.0' # version number to sync with CtsVerifier
+    CURRENT_ITS_VERSION = '1.0'  # version number to sync with CtsVerifier
     EXTRA_CAMERA_ID = 'camera.its.extra.CAMERA_ID'
     EXTRA_RESULTS = 'camera.its.extra.RESULTS'
     ITS_TEST_ACTIVITY = 'com.android.cts.verifier/.camera.its.ItsTestActivity'
@@ -147,7 +145,7 @@ class ItsSession(object):
                 if forward_info[0] == self.device_id and \
                    remote_p == ItsSession.REMOTE_PORT:
                     port = local_p
-                    break;
+                    break
                 else:
                     used_ports.append(local_p)
 
@@ -850,18 +848,37 @@ class ItsSession(object):
 
                 if j in physical_cam_ids:
                     obj["data"] = physical_buffers[physical_cam_ids[j]][i]
-                elif fmt == 'yuv':
+                elif fmt == "yuv":
                     buf_size = widths[j] * heights[j] * 3 / 2
                     obj["data"] = yuv_bufs[buf_size][i]
                 else:
                     obj["data"] = bufs[fmt][i]
                 objs.append(obj)
-            rets.append(objs if ncap>1 else objs[0])
+            rets.append(objs if ncap > 1 else objs[0])
         self.sock.settimeout(self.SOCK_TIMEOUT)
-        return rets if len(rets)>1 else rets[0]
+        if len(rets) > 1 or (isinstance(rets[0], dict) and
+                             isinstance(cap_request, list)):
+            return rets
+        else:
+            return rets[0]
+
+def do_capture_with_latency(cam, req, sync_latency, fmt=None):
+    """Helper function to take enough frames with do_capture to allow sync latency.
+
+    Args:
+        cam:            camera object
+        req:            request for camera
+        sync_latency:   integer number of frames
+        fmt:            format for the capture
+    Returns:
+        single capture with the unsettled frames discarded
+    """
+    caps = cam.do_capture([req]*(sync_latency+1), fmt)
+    return caps[-1]
+
 
 def get_device_id():
-    """ Return the ID of the device that the test is running on.
+    """Return the ID of the device that the test is running on.
 
     Return the device ID provided in the command line if it's connected. If no
     device ID is provided in the command line and there is only one device
@@ -997,12 +1014,14 @@ def get_device_fingerprint(device_id):
 
     return device_bfp
 
+
 def _run(cmd):
     """Replacement for os.system, with hiding of stdout+stderr messages.
     """
     with open(os.devnull, 'wb') as devnull:
         subprocess.check_call(
                 cmd.split(), stdout=devnull, stderr=subprocess.STDOUT)
+
 
 class __UnitTest(unittest.TestCase):
     """Run a suite of unit tests on this module.

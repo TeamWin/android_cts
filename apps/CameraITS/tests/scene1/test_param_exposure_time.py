@@ -36,8 +36,8 @@ def main():
 
     with its.device.ItsSession() as cam:
         props = cam.get_camera_properties()
-        its.caps.skip_unless(its.caps.compute_target_exposure(props) and
-                             its.caps.per_frame_control(props))
+        its.caps.skip_unless(its.caps.compute_target_exposure(props))
+        sync_latency = its.caps.sync_latency(props)
 
         debug = its.caps.debug_mode()
         largest_yuv = its.objects.get_largest_yuv_format(props)
@@ -51,7 +51,8 @@ def main():
         for i, e_mult in enumerate([0.8, 0.9, 1.0, 1.1, 1.2]):
             req = its.objects.manual_capture_request(
                     s, e * e_mult, 0.0, True, props)
-            cap = cam.do_capture(req, fmt)
+            cap = its.device.do_capture_with_latency(
+                    cam, req, sync_latency, fmt)
             img = its.image.convert_capture_to_rgb_image(cap)
             its.image.write_image(
                     img, '%s_frame%d.jpg' % (NAME, i))

@@ -513,6 +513,20 @@ def debug_mode():
     return False
 
 
+def sync_latency(props):
+    """Returns sync latency in number of frames.
+
+    If undefined, 8 frames.
+
+    Returns:
+        integer number of frames
+    """
+    sync_latency = props['android.sync.maxLatency']
+    if sync_latency < 0:
+        sync_latency = 8
+    return sync_latency
+
+
 class __UnitTest(unittest.TestCase):
     """Run a suite of unit tests on this module.
     """

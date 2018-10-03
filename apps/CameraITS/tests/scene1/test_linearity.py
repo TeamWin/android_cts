@@ -45,8 +45,8 @@ def main():
 
     with its.device.ItsSession() as cam:
         props = cam.get_camera_properties()
-        its.caps.skip_unless(its.caps.compute_target_exposure(props) and
-                             its.caps.per_frame_control(props))
+        its.caps.skip_unless(its.caps.compute_target_exposure(props))
+        sync_latency = its.caps.sync_latency(props)
 
         debug = its.caps.debug_mode()
         largest_yuv = its.objects.get_largest_yuv_format(props)
@@ -77,7 +77,8 @@ def main():
 
         for sens in sensitivities:
             req['android.sensor.sensitivity'] = sens
-            cap = cam.do_capture(req, fmt)
+            cap = its.device.do_capture_with_latency(
+                    cam, req, sync_latency, fmt)
             img = its.image.convert_capture_to_rgb_image(cap)
             its.image.write_image(
                     img, '%s_sens=%04d.jpg' % (NAME, sens))
