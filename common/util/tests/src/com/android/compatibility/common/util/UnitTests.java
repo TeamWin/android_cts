@@ -36,6 +36,7 @@ public class UnitTests extends TestSuite {
         addTestSuite(ResultHandlerTest.class);
         addTestSuite(StatTest.class);
         addTestSuite(TestResultTest.class);
+        addTestSuite(CrashUtilsTest.class);
     }
 
     public static Test suite() {
