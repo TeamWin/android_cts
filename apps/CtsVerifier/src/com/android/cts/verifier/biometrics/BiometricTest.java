@@ -25,6 +25,7 @@ import android.os.Bundle;
 import android.os.CancellationSignal;
 import android.os.Handler;
 import android.os.Looper;
+import android.util.Log;
 import android.view.View;
 import android.widget.Button;
 import android.widget.Toast;
@@ -43,6 +44,7 @@ import java.util.concurrent.Executor;
  */
 public class BiometricTest extends PassFailButtons.Activity {
 
+    private static final String TAG = "BiometricTest";
     private static final int BIOMETRIC_PERMISSION_REQUEST_CODE = 0;
 
     private static final int TEST_NONE_ENROLLED = 1;
@@ -65,9 +67,9 @@ public class BiometricTest extends PassFailButtons.Activity {
         @Override
         public void onAuthenticationSucceeded(BiometricPrompt.AuthenticationResult result) {
             if (mCurrentTest == TEST_NONE_ENROLLED) {
-                showToast("This should be impossible, please capture a bug report");
+                showToastAndLog("This should be impossible, please capture a bug report");
             } else if (mCurrentTest == TEST_ENROLLED) {
-                showToast("Authenticated. You passed the test.");
+                showToastAndLog("Authenticated. You passed the test.");
                 getPassButton().setEnabled(true);
             }
         }
@@ -78,19 +80,19 @@ public class BiometricTest extends PassFailButtons.Activity {
                 if (errorCode == mExpectedError) {
                     mButtonTest1.setVisibility(View.INVISIBLE);
                     mButtonTest2.setVisibility(View.VISIBLE);
-                    showToast("Please enroll a biometric and start the next test");
+                    showToastAndLog("Please enroll a biometric and start the next test");
                 } else {
-                    showToast("Expected: " + mExpectedError +
+                    showToastAndLog("Expected: " + mExpectedError +
                             " Actual: " + errorCode + " " + errString);
                 }
             } else if (mCurrentTest == TEST_ENROLLED) {
-                showToast(errString.toString() + " Please try again");
+                showToastAndLog(errString.toString() + " Please try again");
             }
         }
     };
 
     private DialogInterface.OnClickListener mBiometricPromptButtonListener = (dialog, which) -> {
-        showToast("Authentication canceled");
+        showToastAndLog("Authentication canceled");
     };
 
     @Override
@@ -143,18 +145,18 @@ public class BiometricTest extends PassFailButtons.Activity {
                 mExpectedError = BiometricPrompt.BIOMETRIC_ERROR_NO_BIOMETRICS;
                 showBiometricPrompt();
             } else {
-                showToast("Error: " + result + " Please remove all biometrics and try again");
+                showToastAndLog("Error: " + result + " Please remove all biometrics and try again");
             }
         } else if (testType == TEST_ENROLLED) {
             if (result == BiometricManager.ERROR_NONE) {
                 mExpectedError = 0;
                 showBiometricPrompt();
             } else {
-                showToast("Error: " + result +
+                showToastAndLog("Error: " + result +
                         " Please ensure at least one biometric is enrolled and try again");
             }
         } else {
-            showToast("Unknown test type: " + testType);
+            showToastAndLog("Unknown test type: " + testType);
         }
     }
 
@@ -167,7 +169,8 @@ public class BiometricTest extends PassFailButtons.Activity {
         bp.authenticate(mCancellationSignal, mExecutor, mAuthenticationCallback);
     }
 
-    private void showToast(String string) {
+    private void showToastAndLog(String string) {
         Toast.makeText(getApplicationContext(), string, Toast.LENGTH_SHORT).show();
+        Log.v(TAG, string);
     }
 }
