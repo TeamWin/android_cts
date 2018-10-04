@@ -145,13 +145,15 @@ public class SystemUtil {
     }
 
     /**
-     * Runs a {@link Runnable} adopting Shell's permissions.
+     * Runs a {@link ThrowingRunnable} adopting Shell's permissions.
      */
-    public static void runWithShellPermissionIdentity(@NonNull Runnable runnable) {
+    public static void runWithShellPermissionIdentity(@NonNull ThrowingRunnable runnable) {
         final UiAutomation automan = InstrumentationRegistry.getInstrumentation().getUiAutomation();
         automan.adoptShellPermissionIdentity();
         try {
             runnable.run();
+        } catch (Exception e) {
+            throw new RuntimeException("Caught exception", e);
         } finally {
             automan.dropShellPermissionIdentity();
         }
