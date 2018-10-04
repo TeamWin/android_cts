@@ -723,6 +723,9 @@ public abstract class DeviceAndProfileOwnerTest extends BaseDevicePolicyTest {
         }
         // UserManager.DISALLOW_INSTALL_UNKNOWN_SOURCES
         final String DISALLOW_INSTALL_UNKNOWN_SOURCES = "no_install_unknown_sources";
+        // UserManager.DISALLOW_INSTALL_UNKNOWN_SOURCES_GLOBALLY
+        final String DISALLOW_INSTALL_UNKNOWN_SOURCES_GLOBALLY =
+                "no_install_unknown_sources_globally";
         final String PACKAGE_VERIFIER_USER_CONSENT_SETTING = "package_verifier_user_consent";
         final String PACKAGE_VERIFIER_ENABLE_SETTING = "package_verifier_enable";
         final String SECURE_SETTING_CATEGORY = "secure";
@@ -745,6 +748,15 @@ public abstract class DeviceAndProfileOwnerTest extends BaseDevicePolicyTest {
 
             // Clear restrictions and test if we can install the apk.
             changeUserRestrictionOrFail(DISALLOW_INSTALL_UNKNOWN_SOURCES, false, mUserId);
+
+            // Add global restriction and test if we can install the apk.
+            getDevice().uninstallPackage(TEST_APP_PKG);
+            changeUserRestrictionOrFail(DISALLOW_INSTALL_UNKNOWN_SOURCES_GLOBALLY, true, mUserId);
+            runDeviceTestsAsUser(PACKAGE_INSTALLER_PKG, ".ManualPackageInstallTest",
+                    "testManualInstallBlocked", mUserId);
+
+            // Clear global restriction and test if we can install the apk.
+            changeUserRestrictionOrFail(DISALLOW_INSTALL_UNKNOWN_SOURCES_GLOBALLY, false, mUserId);
 
             // Disable verifier.
             packageVerifierUserConsentSetting = getSettings(SECURE_SETTING_CATEGORY,

@@ -40,8 +40,8 @@ def main():
     with its.device.ItsSession() as cam:
         props = cam.get_camera_properties()
         its.caps.skip_unless(its.caps.compute_target_exposure(props) and
-                             its.caps.per_frame_control(props) and
                              not its.caps.mono_camera(props))
+        sync_latency = its.caps.sync_latency(props)
 
         # Baseline request
         debug = its.caps.debug_mode()
@@ -81,7 +81,8 @@ def main():
         for i in range(len(transforms)):
             req['android.colorCorrection.transform'] = transforms[i]
             req['android.colorCorrection.gains'] = gains[i]
-            cap = cam.do_capture(req, fmt)
+            cap = its.device.do_capture_with_latency(
+                    cam, req, sync_latency, fmt)
             img = its.image.convert_capture_to_rgb_image(cap)
             its.image.write_image(img, '%s_req=%d.jpg' % (NAME, i))
             tile = its.image.get_image_patch(img, 0.45, 0.45, 0.1, 0.1)
