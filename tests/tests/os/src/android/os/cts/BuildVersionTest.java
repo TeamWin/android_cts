@@ -87,14 +87,14 @@ public class BuildVersionTest extends TestCase {
     }
 
     public void testPartitions() {
-        List<Build.Partition> partitions = Build.getPartitions();
+        List<Build.Partition> partitions = Build.getFingerprintedPartitions();
         Set<String> seenPartitions = new HashSet<>();
         for (Build.Partition partition : partitions) {
             if (partition.getName().equals(Build.Partition.PARTITION_NAME_SYSTEM)) {
                 assertEquals(Build.FINGERPRINT, partition.getFingerprint());
             }
             verifyFingerprintStructure(partition.getFingerprint());
-            assertTrue(partition.getTimeMillis() > 0);
+            assertTrue(partition.getBuildTimeMillis() > 0);
             boolean unique = seenPartitions.add(partition.getName());
             assertTrue("partitions not unique, " + partition.getName() + " is duplicated", unique);
         }
