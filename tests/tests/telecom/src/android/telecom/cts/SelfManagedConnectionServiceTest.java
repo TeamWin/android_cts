@@ -576,6 +576,20 @@ public class SelfManagedConnectionServiceTest extends BaseTelecomTestWithMockSer
 
     private void verifyAudioMode() {
         AudioManager am = (AudioManager) mContext.getSystemService(Context.AUDIO_SERVICE);
-        assertEquals(MODE_IN_COMMUNICATION, am.getMode());
+        waitUntilConditionIsTrueOrTimeout(
+                new Condition() {
+                    @Override
+                    public Object expected() {
+                        return MODE_IN_COMMUNICATION;
+                    }
+
+                    @Override
+                    public Object actual() {
+                        return am.getMode();
+                    }
+                },
+                WAIT_FOR_STATE_CHANGE_TIMEOUT_MS,
+                "Expected audio mode to be " + MODE_IN_COMMUNICATION
+        );
     }
 }
