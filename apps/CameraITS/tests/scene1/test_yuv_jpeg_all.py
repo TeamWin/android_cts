@@ -21,6 +21,9 @@ import its.image
 import its.objects
 import its.target
 
+import matplotlib.pylab
+import matplotlib.pyplot
+
 NAME = os.path.basename(__file__).split(".")[0]
 THRESHOLD_MAX_RMS_DIFF = 0.03
 
@@ -47,12 +50,13 @@ def main():
             assert cap["format"] == "yuv"
             assert cap["width"] == size[0]
             assert cap["height"] == size[1]
-            print "Captured YUV %dx%d" % (cap["width"], cap["height"])
+            print "Captured YUV %dx%d" % (cap["width"], cap["height"]),
             img = its.image.convert_capture_to_rgb_image(cap)
             its.image.write_image(img, "%s_yuv_w%d_h%d.jpg"%(
                     NAME, size[0], size[1]))
             tile = its.image.get_image_patch(img, 0.45, 0.45, 0.1, 0.1)
             rgb = its.image.compute_image_means(tile)
+            print "rgb =", rgb
             rgbs.append(rgb)
 
         for size in its.objects.get_available_output_sizes("jpg", props):
@@ -67,10 +71,21 @@ def main():
             assert img.shape[0] == size[1]
             assert img.shape[1] == size[0]
             assert img.shape[2] == 3
-            print "Captured JPEG %dx%d" % (cap["width"], cap["height"])
+            print "Captured JPEG %dx%d" % (cap["width"], cap["height"]),
             tile = its.image.get_image_patch(img, 0.45, 0.45, 0.1, 0.1)
             rgb = its.image.compute_image_means(tile)
+            print "rgb =", rgb
             rgbs.append(rgb)
+
+        # Plot means vs format
+        matplotlib.pylab.title(NAME)
+        matplotlib.pylab.plot(range(len(rgbs)), [r[0] for r in rgbs], "-ro")
+        matplotlib.pylab.plot(range(len(rgbs)), [g[1] for g in rgbs], "-go")
+        matplotlib.pylab.plot(range(len(rgbs)), [b[2] for b in rgbs], "-bo")
+        matplotlib.pylab.ylim([0, 1])
+        matplotlib.pylab.xlabel("format number")
+        matplotlib.pylab.ylabel("RGB avg [0, 1]")
+        matplotlib.pyplot.savefig("%s_plot_means.png" % (NAME))
 
         max_diff = 0
         rgb0 = rgbs[0]
@@ -83,6 +98,6 @@ def main():
                                                         THRESHOLD_MAX_RMS_DIFF)
         assert max_diff < THRESHOLD_MAX_RMS_DIFF, msg
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     main()
 
