@@ -44,9 +44,10 @@ public class BiometricManagerTest extends AndroidTestCase {
     @Presubmit
     public void test_canAuthenticate() {
         if (!mHasBiometric) {
-            return;
+            assertTrue(mBiometricManager.canAuthenticate() == BiometricManager.ERROR_NO_HARDWARE);
+        } else {
+            // No biometrics are enrolled. CTSVerifier should test the other error cases.
+            assertTrue(mBiometricManager.canAuthenticate() == BiometricManager.ERROR_NO_BIOMETRICS);
         }
-        // No biometrics are enrolled. CTSVerifier should test the other error cases.
-        assertTrue(mBiometricManager.canAuthenticate() == BiometricManager.ERROR_NO_BIOMETRICS);
     }
 }
