@@ -26,6 +26,7 @@ import static org.junit.Assert.fail;
 
 import android.content.ContentResolver;
 import android.content.Context;
+import android.content.res.AssetFileDescriptor;
 import android.content.res.AssetManager;
 import android.content.res.Resources;
 import android.graphics.Bitmap;
@@ -65,6 +66,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.nio.ByteBuffer;
+import java.util.concurrent.Callable;
 import java.util.function.IntFunction;
 import java.util.function.Supplier;
 import java.util.function.ToIntFunction;
@@ -199,6 +201,14 @@ public class ImageDecoderTest {
                 .build();
     }
 
+    private Callable<AssetFileDescriptor> getAsCallable(int resId) {
+        final Context context = InstrumentationRegistry.getTargetContext();
+        final Uri uri = getAsContentUri(resId);
+        return () -> {
+            return context.getContentResolver().openAssetFileDescriptor(uri, "r");
+        };
+    }
+
     private interface SourceCreator extends IntFunction<ImageDecoder.Source> {};
 
     private SourceCreator[] mCreators = new SourceCreator[] {
@@ -206,6 +216,7 @@ public class ImageDecoderTest {
             resId -> ImageDecoder.createSource(getAsDirectByteBuffer(resId)),
             resId -> ImageDecoder.createSource(getAsReadOnlyByteBuffer(resId)),
             resId -> ImageDecoder.createSource(getAsFile(resId)),
+            resId -> ImageDecoder.createSource(getAsCallable(resId)),
     };
 
     private interface UriCreator extends IntFunction<Uri> {};
