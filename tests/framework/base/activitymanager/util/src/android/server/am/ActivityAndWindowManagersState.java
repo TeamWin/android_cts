@@ -215,22 +215,19 @@ public class ActivityAndWindowManagersState {
         logE("***Waiting for debugger window failed");
     }
 
-    WindowState waitForWindowWithVisibility(Supplier<WindowState> supplier, String winName,
-            boolean visible) {
-        WindowState windowState = null;
+    <T> T waitForValidProduct(Supplier<T> supplier, String productName, Predicate<T> tester) {
+        T product = null;
         for (int retry = 1; retry <= 5; retry++) {
-            windowState = supplier.get();
-            if (windowState != null) {
-                if (windowState.isShown() == visible)
+            product = supplier.get();
+            if (product != null) {
+                if (tester.test(product)) {
                     break;
-            } else {
-                if (!visible)
-                    break;
+                }
             }
-            logAlways("***Waiting for valid " + winName + " Window... retry=" + retry);
+            logAlways("***Waiting for valid " + productName + "... retry=" + retry);
             SystemClock.sleep(1000);
         }
-        return windowState;
+        return product;
     }
 
     void waitForHomeActivityVisible() {
@@ -586,6 +583,12 @@ public class ActivityAndWindowManagersState {
         final String activityComponentName = getActivityName(activityName);
         assertEquals(msg, activityComponentName, mAmState.getFocusedActivity());
         assertEquals(msg, activityComponentName, mWmState.getFocusedApp());
+    }
+
+    void assertFocusedAppOnDisplay(final String msg, final ComponentName activityName,
+            final int displayId) {
+        final String activityComponentName = getActivityName(activityName);
+        assertEquals(msg, activityComponentName, mWmState.getDisplay(displayId).getFocusedApp());
     }
 
     void assertNotFocusedActivity(String msg, ComponentName activityName) {
