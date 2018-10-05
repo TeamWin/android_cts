@@ -599,6 +599,74 @@ public class Camera2SurfaceViewTestCase {
     }
 
     /**
+     * Close the pending images then close current active {@link ImageReader} objects.
+     */
+    protected void closeImageReaders(ImageReader[] readers) {
+        if ((readers != null) && (readers.length > 0)) {
+            for (ImageReader reader : readers) {
+                CameraTestUtils.closeImageReader(reader);
+            }
+        }
+    }
+
+    /**
+     * Setup still capture configuration and start preview.
+     *
+     * @param previewRequest The capture request to be used for preview
+     * @param stillRequest The capture request to be used for still capture
+     * @param previewSz Preview size
+     * @param captureSizes Still capture sizes
+     * @param formats The single capture image formats
+     * @param resultListener Capture result listener
+     * @param maxNumImages The max number of images set to the image reader
+     * @param imageListeners The single capture capture image listeners
+     */
+    protected ImageReader[] prepareStillCaptureAndStartPreview(
+            CaptureRequest.Builder previewRequest, CaptureRequest.Builder stillRequest,
+            Size previewSz, Size[] captureSizes, int[] formats, CaptureCallback resultListener,
+            int maxNumImages, ImageReader.OnImageAvailableListener[] imageListeners)
+            throws Exception {
+
+        if ((captureSizes == null) || (formats == null) || (imageListeners == null) &&
+                (captureSizes.length != formats.length) ||
+                (formats.length != imageListeners.length)) {
+            throw new IllegalArgumentException("Invalid capture sizes/formats or image listeners!");
+        }
+
+        if (VERBOSE) {
+            Log.v(TAG, String.format("Prepare still capture and preview (%s)",
+                    previewSz.toString()));
+        }
+
+        // Update preview size.
+        updatePreviewSurface(previewSz);
+
+        ImageReader[] readers = new ImageReader[captureSizes.length];
+        List<Surface> outputSurfaces = new ArrayList<Surface>();
+        outputSurfaces.add(mPreviewSurface);
+        for (int i = 0; i < captureSizes.length; i++) {
+            readers[i] = makeImageReader(captureSizes[i], formats[i], maxNumImages,
+                    imageListeners[i], mHandler);
+            outputSurfaces.add(readers[i].getSurface());
+        }
+
+        mSessionListener = new BlockingSessionCallback();
+        mSession = configureCameraSession(mCamera, outputSurfaces, mSessionListener, mHandler);
+
+        // Configure the requests.
+        previewRequest.addTarget(mPreviewSurface);
+        stillRequest.addTarget(mPreviewSurface);
+        for (int i = 0; i < readers.length; i++) {
+            stillRequest.addTarget(readers[i].getSurface());
+        }
+
+        // Start preview.
+        mSession.setRepeatingRequest(previewRequest.build(), resultListener, mHandler);
+
+        return readers;
+    }
+
+    /**
      * Open a camera device and get the StaticMetadata for a given camera id.
      *
      * @param cameraId The id of the camera device to be opened.
