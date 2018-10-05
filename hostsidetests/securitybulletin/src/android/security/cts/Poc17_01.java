@@ -23,16 +23,6 @@ public class Poc17_01 extends SecurityTestCase {
 
     //Criticals
     /**
-     *  b/31606947
-     */
-    @SecurityTest
-    public void testPocCVE_2016_8424() throws Exception {
-        if(containsDriver(getDevice(), "/dev/nvmap")) {
-            AdbUtils.runPoc("CVE-2016-8424", getDevice(), 60);
-        }
-    }
-
-    /**
      *  b/31797770
      */
     @SecurityTest
