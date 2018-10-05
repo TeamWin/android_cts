@@ -49,8 +49,7 @@ Java_android_signature_cts_DexMemberChecker_getField_1JNI(
   ScopedUtfChars utf_type(env, type);
   jfieldID fid = env->GetFieldID(klass, utf_name.c_str(), utf_type.c_str());
   if (env->ExceptionCheck()) {
-    // GetFieldID could have thrown either NoSuchFieldError or ExceptionInInitializerError.
-    // Do not clear the exception, let Java code handle it.
+    env->ExceptionClear();
     return nullptr;
   }
   return env->ToReflectedField(klass, fid, /* static */ false);
@@ -63,8 +62,7 @@ Java_android_signature_cts_DexMemberChecker_getStaticField_1JNI(
   ScopedUtfChars utf_type(env, type);
   jfieldID fid = env->GetStaticFieldID(klass, utf_name.c_str(), utf_type.c_str());
   if (env->ExceptionCheck()) {
-    // GetStaticFieldID could have thrown either NoSuchFieldError or ExceptionInInitializerError.
-    // Do not clear the exception, let Java code handle it.
+    env->ExceptionClear();
     return nullptr;
   }
   return env->ToReflectedField(klass, fid, /* static */ true);
@@ -77,8 +75,7 @@ Java_android_signature_cts_DexMemberChecker_getMethod_1JNI(
   ScopedUtfChars utf_signature(env, signature);
   jmethodID mid = env->GetMethodID(klass, utf_name.c_str(), utf_signature.c_str());
   if (env->ExceptionCheck()) {
-    // GetMethodID could have thrown either NoSuchMethodError or ExceptionInInitializerError.
-    // Do not clear the exception, let Java code handle it.
+    env->ExceptionClear();
     return nullptr;
   }
   return env->ToReflectedMethod(klass, mid, /* static */ false);
@@ -91,8 +88,7 @@ Java_android_signature_cts_DexMemberChecker_getStaticMethod_1JNI(
   ScopedUtfChars utf_signature(env, signature);
   jmethodID mid = env->GetStaticMethodID(klass, utf_name.c_str(), utf_signature.c_str());
   if (env->ExceptionCheck()) {
-    // GetStaticMethodID could have thrown either NoSuchMethodError or ExceptionInInitializerError.
-    // Do not clear the exception, let Java code handle it.
+    env->ExceptionClear();
     return nullptr;
   }
   return env->ToReflectedMethod(klass, mid, /* static */ true);
