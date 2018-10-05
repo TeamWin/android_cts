@@ -22,6 +22,8 @@ import android.hardware.Sensor;
 import android.hardware.SensorDirectChannel;
 import android.hardware.SensorManager;
 
+import com.android.compatibility.common.util.CddTest;
+
 /**
  * Checks if Hifi sensors  or VR High performance mode sensors
  * are supported. When supported, checks individual support for
@@ -52,26 +54,32 @@ public class SensorSupportTest extends SensorTestCase {
         }
     }
 
+    @CddTest(requirement="7.9.2/C-1-19,C-1-20")
     public void testSupportsAccelerometer() {
         checkSupportsSensor(Sensor.TYPE_ACCELEROMETER);
     }
 
+    @CddTest(requirement="7.9.2/C-1-19,C-1-20")
     public void testSupportsAccelerometerUncalibrated() {
         checkSupportsSensor(Sensor.TYPE_ACCELEROMETER_UNCALIBRATED);
     }
 
+    @CddTest(requirement="7.9.2/C-1-19,C-1-20")
     public void testSupportsGyroscope() {
         checkSupportsSensor(Sensor.TYPE_GYROSCOPE);
     }
 
+    @CddTest(requirement="7.9.2/C-1-19,C-1-20")
     public void testSupportsGyroscopeUncalibrated() {
         checkSupportsSensor(Sensor.TYPE_GYROSCOPE_UNCALIBRATED);
     }
 
+    @CddTest(requirement="7.9.2/C-1-19,C-1-20")
     public void testSupportsGeoMagneticField() {
         checkSupportsSensor(Sensor.TYPE_MAGNETIC_FIELD);
     }
 
+    @CddTest(requirement="7.9.2/C-1-19,C-1-20")
     public void testSupportsMagneticFieldUncalibrated() {
         checkSupportsSensor(Sensor.TYPE_MAGNETIC_FIELD_UNCALIBRATED);
     }
