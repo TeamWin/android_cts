@@ -151,9 +151,22 @@ public class DalvikTestRunner {
     }
 
     private static boolean packageFilterApplies(String className, Set<String> filters) {
+      // Traditional meaning: equality.
       int index = className.lastIndexOf('.');
       String packageName = index < 0 ? "" : className.substring(0, index);
-      return filters.contains(packageName);
+      if (filters.contains(packageName)) {
+        return true;
+      }
+
+      // See if it's a name prefix, for JarJared names.
+      for (String filter : filters) {
+        if (className.startsWith(filter) && className.length() > filter.length() &&
+                className.charAt(filter.length()) == '_') {
+            return true;
+        }
+      }
+
+      return false;
     }
 
     private static boolean shouldRun(Test test, Set<String> includes, Set<String> excludes) {
