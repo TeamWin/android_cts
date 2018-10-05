@@ -88,6 +88,12 @@ public class BaseDevicePolicyTest extends DeviceTestCase implements IBuildReceiv
      */
     private static final long DEFAULT_TEST_TIMEOUT_MILLIS = TimeUnit.MINUTES.toMillis(10);
 
+    /**
+     * The amount of milliseconds to wait for the remove user calls in {@link #tearDown}.
+     * This is a temporary measure until b/114057686 is fixed.
+     */
+    private static final long USER_REMOVE_WAIT = TimeUnit.SECONDS.toMillis(5);
+
     // From the UserInfo class
     protected static final int FLAG_PRIMARY = 0x00000001;
     protected static final int FLAG_GUEST = 0x00000004;
@@ -335,9 +341,12 @@ public class BaseDevicePolicyTest extends DeviceTestCase implements IBuildReceiv
             String stopUserCommand = "am stop-user -w -f " + userId;
             CLog.d("stopping and removing user " + userId);
             getDevice().executeShellCommand(stopUserCommand);
+            // TODO: Remove both sleeps and USER_REMOVE_WAIT constant when b/114057686 is fixed.
+            Thread.sleep(USER_REMOVE_WAIT);
             // Ephemeral users may have already been removed after being stopped.
             if (listUsers().contains(userId)) {
                 assertTrue("Couldn't remove user", getDevice().removeUser(userId));
+                Thread.sleep(USER_REMOVE_WAIT);
             }
         }
     }
