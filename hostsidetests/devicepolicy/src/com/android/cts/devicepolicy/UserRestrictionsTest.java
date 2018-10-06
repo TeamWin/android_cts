@@ -205,9 +205,9 @@ public class UserRestrictionsTest extends BaseDevicePolicyTest {
         runTests("userrestrictions.PrimaryProfileOwnerUserRestrictionsTest",
                 "testSetAllRestrictions", mDeviceOwnerUserId);
 
-        // Secondary users shouldn't see any of them.
+        // Secondary users shouldn't see any of them. Leaky user restrictions are excluded.
         runTests("userrestrictions.SecondaryProfileOwnerUserRestrictionsTest",
-                "testDefaultRestrictionsOnly", secondaryUserId);
+                "testDefaultAndLeakyRestrictions", secondaryUserId);
     }
 
     /**

@@ -25,6 +25,7 @@ public class DeviceOwnerUserRestrictionsTest extends BaseUserRestrictionsTest {
             UserManager.DISALLOW_UNINSTALL_APPS,
             // UserManager.DISALLOW_SHARE_LOCATION, // Has unrecoverable side effects.
             // UserManager.DISALLOW_INSTALL_UNKNOWN_SOURCES, // Has unrecoverable side effects.
+            UserManager.DISALLOW_INSTALL_UNKNOWN_SOURCES_GLOBALLY,
             UserManager.DISALLOW_CONFIG_BLUETOOTH,
             UserManager.DISALLOW_USB_FILE_TRANSFER,
             UserManager.DISALLOW_CONFIG_CREDENTIALS,
