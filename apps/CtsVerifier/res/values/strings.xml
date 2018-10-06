@@ -3363,7 +3363,10 @@ You should be prompted to select credentials; choose the ones you just installed
     <string name="disallow_config_mobile_networks">Disallow config mobile networks</string>
     <string name="disallow_config_mobile_networks_action">Configuring mobile networks</string>
     <string name="disallow_config_tethering">Disallow config tethering</string>
-    <string name="disallow_config_tethering_action">Configuring tethering and portable hotspots</string>
+    <string name="disallow_config_tethering_action">
+        Configuring tethering and portable hotspots.\n
+        NOTE: If the device does not support tethering please skip this test and mark it as passing.\n
+    </string>
     <string name="disallow_config_wifi">Disallow config Wi-Fi</string>
     <string name="disallow_config_wifi_action">Modifying Wi-Fi configuration</string>
     <string name="disallow_debugging_features">Disallow debugging features</string>
