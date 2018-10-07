@@ -22,8 +22,12 @@ import static android.app.WindowConfiguration.ACTIVITY_TYPE_RECENTS;
 import static android.app.WindowConfiguration.ACTIVITY_TYPE_STANDARD;
 import static android.app.WindowConfiguration.ACTIVITY_TYPE_UNDEFINED;
 import static android.app.WindowConfiguration.WINDOWING_MODE_SPLIT_SCREEN_PRIMARY;
+import static android.content.Intent.ACTION_MAIN;
+import static android.content.Intent.CATEGORY_HOME;
 import static android.content.Intent.FLAG_ACTIVITY_MULTIPLE_TASK;
 import static android.content.Intent.FLAG_ACTIVITY_NEW_TASK;
+import static android.content.pm.PackageManager.COMPONENT_ENABLED_STATE_DISABLED;
+import static android.content.pm.PackageManager.COMPONENT_ENABLED_STATE_ENABLED;
 import static android.content.pm.PackageManager.FEATURE_EMBEDDED;
 import static android.content.pm.PackageManager.FEATURE_FREEFORM_WINDOW_MANAGEMENT;
 import static android.content.pm.PackageManager.FEATURE_LEANBACK;
@@ -32,6 +36,7 @@ import static android.content.pm.PackageManager.FEATURE_SCREEN_LANDSCAPE;
 import static android.content.pm.PackageManager.FEATURE_SCREEN_PORTRAIT;
 import static android.content.pm.PackageManager.FEATURE_VR_MODE_HIGH_PERFORMANCE;
 import static android.content.pm.PackageManager.FEATURE_WATCH;
+import static android.content.pm.PackageManager.MATCH_DEFAULT_ONLY;
 import static android.server.am.ActivityLauncher.KEY_ACTIVITY_TYPE;
 import static android.server.am.ActivityLauncher.KEY_DISPLAY_ID;
 import static android.server.am.ActivityLauncher.KEY_INTENT_FLAGS;
@@ -93,6 +98,8 @@ import android.app.ActivityTaskManager;
 import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
+import android.content.pm.PackageManager;
+import android.content.pm.ResolveInfo;
 import android.content.res.Resources;
 import android.graphics.Bitmap;
 import android.graphics.Rect;
@@ -112,6 +119,9 @@ import android.util.EventLog.Event;
 import android.view.Display;
 import android.view.InputDevice;
 import android.view.MotionEvent;
+
+import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
 
 import com.android.compatibility.common.util.SystemUtil;
 
@@ -136,9 +146,6 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
-
-import androidx.annotation.NonNull;
-import androidx.annotation.Nullable;
 
 public abstract class ActivityManagerTestBase {
     private static final boolean PRETEND_DEVICE_SUPPORTS_PIP = false;
@@ -791,6 +798,53 @@ public abstract class ActivityManagerTestBase {
                     }
                 }
             };
+        }
+    }
+
+    /**
+     * HomeActivitySession is used to replace the default home component, so that you can use
+     * your preferred home for testing within the session. The original default home will be
+     * restored automatically afterward.
+     */
+    protected class HomeActivitySession implements AutoCloseable {
+        private PackageManager mPackageManager;
+        private ComponentName mOrigHome;
+        private ComponentName mSessionHome;
+
+        public HomeActivitySession(ComponentName sessionHome) {
+            mSessionHome = sessionHome;
+            mPackageManager = mContext.getPackageManager();
+
+            final Intent intent = new Intent(ACTION_MAIN);
+            intent.addCategory(CATEGORY_HOME);
+            intent.addFlags(FLAG_ACTIVITY_NEW_TASK);
+            final ResolveInfo resolveInfo =
+                    mPackageManager.resolveActivity(intent, MATCH_DEFAULT_ONLY);
+            if (resolveInfo != null) {
+                mOrigHome = new ComponentName(resolveInfo.activityInfo.packageName,
+                        resolveInfo.activityInfo.name);
+            }
+
+            SystemUtil.runWithShellPermissionIdentity(
+                    () -> mPackageManager.setComponentEnabledSetting(mSessionHome,
+                            COMPONENT_ENABLED_STATE_ENABLED, 0 /* flags */));
+            setDefaultHome(mSessionHome);
+        }
+
+        @Override
+        public void close() {
+            SystemUtil.runWithShellPermissionIdentity(
+                    () -> mPackageManager.setComponentEnabledSetting(mSessionHome,
+                            COMPONENT_ENABLED_STATE_DISABLED, 0 /* flags */));
+            if (mOrigHome != null) {
+                setDefaultHome(mOrigHome);
+            }
+        }
+
+        private void setDefaultHome(ComponentName componentName) {
+            executeShellCommand("cmd package set-home-activity --user "
+                    + android.os.Process.myUserHandle().getIdentifier() + " "
+                    + componentName.flattenToString());
         }
     }
 

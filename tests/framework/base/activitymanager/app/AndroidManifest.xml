@@ -414,8 +414,34 @@
         <activity android:name=".LaunchTestOnDestroyActivity"
                   android:exported="true"/>
 
+
         <activity android:name=".ReportFullyDrawnActivity"
                   android:exported="true"/>
+
+        <!-- Disable home activities by default or it may disturb other tests by
+             showing ResolverActivity when start home activity -->
+        <activity-alias android:name=".HomeActivity"
+                        android:targetActivity=".TestActivity"
+                        android:enabled="false"
+                        android:exported="true">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN"/>
+                <category android:name="android.intent.category.HOME"/>
+                <category android:name="android.intent.category.DEFAULT"/>
+            </intent-filter>
+        </activity-alias>
+
+        <activity-alias android:name=".SingleHomeActivity"
+                        android:targetActivity=".SingleInstanceActivity"
+                        android:launchMode="singleInstance"
+                        android:enabled="false"
+                        android:exported="true">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN"/>
+                <category android:name="android.intent.category.HOME"/>
+                <category android:name="android.intent.category.DEFAULT"/>
+            </intent-filter>
+        </activity-alias>
 
         <service android:name="com.android.cts.verifier.vr.MockVrListenerService"
                  android:exported="true"

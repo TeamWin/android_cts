@@ -21,6 +21,7 @@ import com.android.tradefed.log.LogUtil.CLog;
 import com.android.tradefed.testtype.DeviceTestCase;
 import com.android.tradefed.testtype.IBuildReceiver;
 
+import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 public class AppBindingHostTest extends DeviceTestCase implements IBuildReceiver {
@@ -38,6 +39,8 @@ public class AppBindingHostTest extends DeviceTestCase implements IBuildReceiver
     private static final String PACKAGE_A = "com.android.cts.appbinding.app";
     private static final String PACKAGE_B = "com.android.cts.appbinding.app.b";
 
+    private static final String PACKAGE_A_PROC = PACKAGE_A + ":persistent";
+
     private static final String APP_BINDING_SETTING = "app_binding_constants";
 
     private static final String SERVICE_1 = "com.android.cts.appbinding.app.MyService";
@@ -47,7 +50,7 @@ public class AppBindingHostTest extends DeviceTestCase implements IBuildReceiver
 
     private static final int USER_SYSTEM = 0;
 
-    private static final int DEFAULT_TIMEOUT_SEC = 60;
+    private static final int DEFAULT_TIMEOUT_SEC = 30;
 
     private interface ThrowingRunnable {
         void run() throws Throwable;
@@ -99,6 +102,42 @@ public class AppBindingHostTest extends DeviceTestCase implements IBuildReceiver
                     + " \"" + expectedOutputPattern + "\"");
         }
         return output;
+    }
+
+    private String runCommandAndExtract(String command,
+            String startPattern, boolean startInclusive,
+            String endPattern, boolean endInclusive) throws Exception {
+        final String[] output = runCommand(command).split("\\n");
+        final StringBuilder sb = new StringBuilder();
+
+        final Pattern start = Pattern.compile(startPattern, Pattern.COMMENTS);
+        final Pattern end = Pattern.compile(endPattern, Pattern.COMMENTS);
+
+        boolean in = false;
+        for (String s : output) {
+            if (in) {
+                if (end.matcher(s.trim()).find()) {
+                    if (endInclusive) {
+                        sb.append(s);
+                        sb.append("\n");
+                    }
+                    break;
+                }
+                sb.append(s);
+                sb.append("\n");
+            } else {
+                if (start.matcher(s.trim()).find()) {
+                    if (startInclusive) {
+                        sb.append(s);
+                        sb.append("\n");
+                    }
+                    continue;
+                }
+                in = true;
+            }
+        }
+
+        return sb.toString();
     }
 
     private void updateConstants(String settings) throws Exception {
@@ -189,6 +228,11 @@ public class AppBindingHostTest extends DeviceTestCase implements IBuildReceiver
         // Set as the default app
         setSmsApp(packageName, userId);
 
+        checkNotBound(packageName, userId, expectedErrorPattern);
+    }
+
+    private void checkNotBound(String packageName, int userId,
+            String expectedErrorPattern) throws Throwable {
         // This should contain:
         // "finder,0,[Default SMS app],PACKAGE,null,ERROR-MESSAGE"
         runWithRetries(DEFAULT_TIMEOUT_SEC, () -> {
@@ -197,6 +241,53 @@ public class AppBindingHostTest extends DeviceTestCase implements IBuildReceiver
                             + packageName + ",null,") + ".*"
                             + Pattern.quote(expectedErrorPattern) + ".*$");
         });
+    }
+
+    private void assertOomAdjustment(String packageName, String processName, int oomAdj)
+            throws Exception {
+        final String output = runCommandAndExtract("dumpsys activity -a p " + packageName,
+                "\\sProcessRecord\\{.*\\:" + Pattern.quote(processName) + "\\/", false,
+                "^\\s*oom:", true);
+        /* Example:
+ACTIVITY MANAGER RUNNING PROCESSES (dumpsys activity processes)
+  All known processes:
+  *APP* UID 10196 ProcessRecord{ef7dd8f 29993:com.android.cts.appbinding.app:persistent/u0a196}
+    user #0 uid=10196 gids={50196, 20196, 9997}
+    mRequiredAbi=arm64-v8a instructionSet=null
+    dir=/data/app/com.android.cts.appbinding.app-zvJ1Z44jYKxm-K0HLBRtLA==/base.apk publicDir=/da...
+    packageList={com.android.cts.appbinding.app}
+    compat={560dpi}
+    thread=android.app.IApplicationThread$Stub$Proxy@a5181c
+    pid=29993 starting=false
+    lastActivityTime=-14s282ms lastPssTime=-14s316ms pssStatType=0 nextPssTime=+5s718ms
+    adjSeq=35457 lruSeq=0 lastPss=0.00 lastSwapPss=0.00 lastCachedPss=0.00 lastCachedSwapPss=0.00
+    procStateMemTracker: best=4 () / pending state=2 highest=2 1.0x
+    cached=false empty=true
+    oom: max=1001 curRaw=200 setRaw=200 cur=200 set=200
+    mCurSchedGroup=2 setSchedGroup=2 systemNoUi=false trimMemoryLevel=0
+    curProcState=4 mRepProcState=4 pssProcState=19 setProcState=4 lastStateTime=-14s282ms
+    reportedInteraction=true time=-14s284ms
+    startSeq=369
+    lastRequestedGc=-14s283ms lastLowMemory=-14s283ms reportLowMemory=false
+     Configuration={1.0 ?mcc?mnc [en_US] ldltr sw411dp w411dp h746dp 560dpi nrml long widecg ...
+     OverrideConfiguration={0.0 ?mcc?mnc ?localeList ?layoutDir ?swdp ?wdp ?hdp ?density ?lsize ...
+     mLastReportedConfiguration={0.0 ?mcc?mnc ?localeList ?layoutDir ?swdp ?wdp ?hdp ?density ...
+    Services:
+      - ServiceRecord{383eb86 u0 com.android.cts.appbinding.app/.MyService}
+    Connected Providers:
+      - 54bfc25/com.android.providers.settings/.SettingsProvider->29993:com.android.cts....
+
+  Process LRU list (sorted by oom_adj, 50 total, non-act at 4, non-svc at 4):
+    Proc #10: prcp  F/ /BFGS trm: 0 29993:com.android.cts.appbinding.app:persistent/u0a196 (service)
+        com.android.cts.appbinding.app/.MyService<=Proc{1332:system/1000}
+         */
+        final Pattern pat = Pattern.compile("\\soom:\\s.* set=(\\d+)$", Pattern.MULTILINE);
+        final Matcher m = pat.matcher(output);
+        if (!m.find()) {
+            fail("Unable to fild the oom: line for process " + processName);
+        }
+        final String oom = m.group(1);
+        assertEquals("Unexpected oom adjustment:", String.valueOf(oomAdj), oom);
     }
 
     /**
@@ -401,5 +492,29 @@ public class AppBindingHostTest extends DeviceTestCase implements IBuildReceiver
                     "^conn,\\[Default\\sSMS\\sapp\\],0,.*,bound,connected"
                             + ",\\#con=4,\\#dis=3,\\#died=2,backoff=5000");
         });
+    }
+
+    /**
+     * Test the feature flag.
+     */
+    public void testFeatureDisabled() throws Throwable {
+        installAndCheckBound(APK_1, PACKAGE_A, SERVICE_1, USER_SYSTEM);
+
+        updateConstants("sms_service_enabled=false");
+
+        runWithRetries(DEFAULT_TIMEOUT_SEC, () -> {
+            checkNotBound("null", USER_SYSTEM, "feature disabled");
+        });
+
+        updateConstants("sms_service_enabled=true");
+
+        runWithRetries(DEFAULT_TIMEOUT_SEC, () -> {
+            checkBound(PACKAGE_A, SERVICE_1, USER_SYSTEM);
+        });
+    }
+
+    public void testOomAdjustment() throws Throwable {
+        installAndCheckBound(APK_1, PACKAGE_A, SERVICE_1, USER_SYSTEM);
+        assertOomAdjustment(PACKAGE_A, PACKAGE_A_PROC, 200);
     }
 }

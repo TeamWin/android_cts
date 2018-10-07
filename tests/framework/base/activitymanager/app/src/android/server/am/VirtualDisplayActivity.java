@@ -28,6 +28,7 @@ import static android.server.am.Components.VirtualDisplayActivity.COMMAND_RESIZE
 import static android.server.am.Components.VirtualDisplayActivity.KEY_CAN_SHOW_WITH_INSECURE_KEYGUARD;
 import static android.server.am.Components.VirtualDisplayActivity.KEY_COMMAND;
 import static android.server.am.Components.VirtualDisplayActivity.KEY_COUNT;
+import static android.server.am.Components.VirtualDisplayActivity.KEY_SHOW_SYSTEM_DECORATIONS;
 import static android.server.am.Components.VirtualDisplayActivity.KEY_DENSITY_DPI;
 import static android.server.am.Components.VirtualDisplayActivity.KEY_LAUNCH_TARGET_COMPONENT;
 import static android.server.am.Components.VirtualDisplayActivity.KEY_PUBLIC_DISPLAY;
@@ -183,6 +184,11 @@ public class VirtualDisplayActivity extends Activity implements SurfaceHolder.Ca
         final boolean publicDisplay = entry.extras.getBoolean(KEY_PUBLIC_DISPLAY);
         if (publicDisplay) {
             flags |= VIRTUAL_DISPLAY_FLAG_PUBLIC | VIRTUAL_DISPLAY_FLAG_OWN_CONTENT_ONLY;
+        }
+
+        final boolean showSystemDecorations = entry.extras.getBoolean(KEY_SHOW_SYSTEM_DECORATIONS);
+        if (showSystemDecorations) {
+            flags |= 1 << 9; // VIRTUAL_DISPLAY_FLAG_SHOULD_SHOW_SYSTEM_DECORATIONS;
         }
 
         Log.d(TAG, "createVirtualDisplay: " + width + "x" + height + ", dpi: "

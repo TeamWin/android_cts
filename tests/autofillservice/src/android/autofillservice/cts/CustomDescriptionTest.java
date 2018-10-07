@@ -30,6 +30,7 @@ import android.service.autofill.CharSequenceTransformation;
 import android.service.autofill.CustomDescription;
 import android.service.autofill.ImageTransformation;
 import android.service.autofill.RegexValidator;
+import android.service.autofill.TextValueSanitizer;
 import android.service.autofill.Validator;
 import android.support.test.uiautomator.By;
 import android.support.test.uiautomator.UiObject2;
@@ -85,6 +86,86 @@ public class CustomDescriptionTest extends AbstractLoginActivityTestCase {
 
         mUiBot.saveForAutofill(true, SAVE_DATA_TYPE_GENERIC);
         sReplier.getNextSaveRequest();
+    }
+
+    @Test
+    public void testSanitizationBeforeBatchUpdates() throws Exception {
+        enableService();
+
+        final RemoteViews presentation = newTemplate(R.layout.two_horizontal_text_fields);
+
+        final AutofillId usernameId = mActivity.getUsername().getAutofillId();
+
+        // Validator for sanitization
+        final Validator validCondition = new RegexValidator(usernameId, Pattern.compile("user"));
+
+        final RemoteViews update = newTemplate(-666); // layout id not really used
+        update.setTextViewText(R.id.first, "batch updated");
+
+        final CustomDescription customDescription = new CustomDescription.Builder(presentation)
+                .batchUpdate(validCondition,
+                        new BatchUpdates.Builder().updateTemplate(update).build())
+                .build();
+
+        // Set response with custom description
+        sReplier.addResponse(new CannedFillResponse.Builder()
+                .setRequiredSavableIds(SAVE_DATA_TYPE_GENERIC, ID_USERNAME)
+                .addSanitizer(new TextValueSanitizer(Pattern.compile("USERNAME"), "user"),
+                        usernameId)
+                .setCustomDescription(customDescription)
+                .build());
+
+        // Trigger autofill with custom description
+        mActivity.onPassword(View::requestFocus);
+
+        // Wait for onFill() before proceeding.
+        sReplier.getNextFillRequest();
+
+        // Trigger save.
+        mActivity.onUsername((v) -> v.setText("USERNAME"));
+        mActivity.onPassword((v) -> v.setText(LoginActivity.BACKDOOR_PASSWORD_SUBSTRING));
+        mActivity.tapLogin();
+
+        assertSaveUiIsShownWithTwoLines("batch updated");
+    }
+
+    @Test
+    public void testSanitizationBeforeTransformations() throws Exception {
+        enableService();
+
+        final RemoteViews presentation = newTemplate(R.layout.two_horizontal_text_fields);
+
+        final AutofillId usernameId = mActivity.getUsername().getAutofillId();
+
+        // Transformation
+        final CharSequenceTransformation trans = new CharSequenceTransformation
+                .Builder(usernameId, Pattern.compile("user"), "transformed")
+                .build();
+
+        final CustomDescription customDescription = new CustomDescription.Builder(presentation)
+                .addChild(R.id.first, trans)
+                .build();
+
+        // Set response with custom description
+        sReplier.addResponse(new CannedFillResponse.Builder()
+                .setRequiredSavableIds(SAVE_DATA_TYPE_GENERIC, ID_USERNAME)
+                .addSanitizer(new TextValueSanitizer(Pattern.compile("USERNAME"), "user"),
+                        usernameId)
+                .setCustomDescription(customDescription)
+                .build());
+
+        // Trigger autofill with custom description
+        mActivity.onPassword(View::requestFocus);
+
+        // Wait for onFill() before proceeding.
+        sReplier.getNextFillRequest();
+
+        // Trigger save.
+        mActivity.onUsername((v) -> v.setText("USERNAME"));
+        mActivity.onPassword((v) -> v.setText(LoginActivity.BACKDOOR_PASSWORD_SUBSTRING));
+        mActivity.tapLogin();
+
+        assertSaveUiIsShownWithTwoLines("transformed");
     }
 
     @Test

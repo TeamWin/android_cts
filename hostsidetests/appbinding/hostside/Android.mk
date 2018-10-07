@@ -37,6 +37,14 @@ LOCAL_STATIC_JAVA_LIBRARIES := \
 # tag this module as a cts test artifact
 LOCAL_COMPATIBILITY_SUITE := cts vts general-tests
 
+LOCAL_TARGET_REQUIRED_MODULES := \
+    CtsAppBindingService1 \
+    CtsAppBindingService2 \
+    CtsAppBindingService3 \
+    CtsAppBindingService4 \
+    CtsAppBindingService5 \
+    CtsAppBindingService6
+
 include $(BUILD_CTS_HOST_JAVA_LIBRARY)
 
 # Build the test APKs using their own makefiles

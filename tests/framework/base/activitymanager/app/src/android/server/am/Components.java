@@ -95,6 +95,8 @@ public class Components extends ComponentsBase {
             component("ShowWhenLockedWithDialogActivity");
     public static final ComponentName SINGLE_INSTANCE_ACTIVITY =
             component("SingleInstanceActivity");
+    public static final ComponentName HOME_ACTIVITY = component("HomeActivity");
+    public static final ComponentName SINGLE_HOME_ACTIVITY = component("SingleHomeActivity");
     public static final ComponentName SINGLE_TASK_ACTIVITY = component("SingleTaskActivity");
     public static final ComponentName SLOW_CREATE_ACTIVITY = component("SlowCreateActivity");
     public static final ComponentName SPLASHSCREEN_ACTIVITY = component("SplashscreenActivity");
@@ -331,6 +333,7 @@ public class Components extends ComponentsBase {
         public static final String KEY_LAUNCH_TARGET_COMPONENT = "launch_target_component";
         public static final String KEY_PUBLIC_DISPLAY = "public_display";
         public static final String KEY_RESIZE_DISPLAY = "resize_display";
+        public static final String KEY_SHOW_SYSTEM_DECORATIONS = "show_system_decorations";
         // Value constants of {@link #KEY_COMMAND}.
         public static final String COMMAND_CREATE_DISPLAY = "create_display";
         public static final String COMMAND_DESTROY_DISPLAY = "destroy_display";
