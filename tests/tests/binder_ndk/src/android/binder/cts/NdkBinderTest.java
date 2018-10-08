@@ -16,10 +16,31 @@
 
 package android.binder.cts;
 
-import org.junit.runner.RunWith;
+import android.os.IBinder;
+
+import android.support.test.InstrumentationRegistry;
+
 import com.android.gtestrunner.GtestRunner;
 import com.android.gtestrunner.TargetLibrary;
 
+import test_package.ITest;
+
+import org.junit.runner.RunWith;
+
+/**
+ * This test runs gtests for testing libbinder_ndk directly and it also runs client tests for native code.
+ */
 @RunWith(GtestRunner.class)
 @TargetLibrary("binder_ndk_test")
-public class NdkBinderTest {}
+public class NdkBinderTest {
+    static IBinder getRemoteNativeService() {
+        return new SyncTestServiceConnection(
+            InstrumentationRegistry.getTargetContext(), NativeService.class)
+        .get().asBinder();
+    }
+    static IBinder getRemoteJavaService() {
+        return new SyncTestServiceConnection(
+            InstrumentationRegistry.getTargetContext(), JavaService.class)
+        .get().asBinder();
+    }
+}

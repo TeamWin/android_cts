@@ -14,6 +14,9 @@
  * limitations under the License.
  */
 
+#pragma once
+
+#include <android/binder_auto_utils.h>
 #include <android/binder_ibinder.h>
 #include <gtest/gtest.h>
 #include <nativetesthelper_jni/utils.h>
@@ -22,8 +25,28 @@
 
 // Helpers for testing
 
-#define EXPECT_OK(THING) EXPECT_EQ(STATUS_OK, (THING))
-#define ASSERT_OK(THING) ASSERT_EQ(STATUS_OK, (THING))
+template <typename T>
+static inline ::testing::AssertionResult isOk(T) = delete;
+
+template <>
+inline ::testing::AssertionResult isOk(::android::AutoAStatus t) {
+  if (AStatus_isOk(t.get())) {
+    return ::testing::AssertionSuccess();
+  } else {
+    return ::testing::AssertionFailure();
+  }
+}
+
+template <>
+inline ::testing::AssertionResult isOk(binder_status_t t) {
+  if (t == STATUS_OK) {
+    return ::testing::AssertionSuccess();
+  }
+  return ::testing::AssertionFailure() << "Status: " << t;
+}
+
+#define EXPECT_OK(THING) EXPECT_TRUE(isOk(THING))
+#define ASSERT_OK(THING) ASSERT_TRUE(isOk(THING))
 
 // placeholder
 constexpr transaction_code_t kCode = +1 + 918;
