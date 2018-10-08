@@ -441,6 +441,10 @@ public class ClientTest {
         final int originalSetting = Secure.getInt(contentResolver, Secure.INSTANT_APPS_ENABLED, 1);
         Secure.putInt(contentResolver, Secure.INSTANT_APPS_ENABLED, 0);
         try {
+            Thread.sleep(1000);
+        } catch (Exception e) {
+        }
+        try {
             // start the ephemeral activity; using VIEW/BROWSABLE with setting disabled
             try {
                 final Intent startViewIntent = new Intent(Intent.ACTION_VIEW)
