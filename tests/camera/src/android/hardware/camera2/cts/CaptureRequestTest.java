@@ -2090,6 +2090,25 @@ public class CaptureRequestTest extends Camera2SurfaceViewTestCase {
                     CameraTestUtils.toObject(mapBlue), /*min*/ZERO, /*max*/ONE);
             mCollector.expectInRange("Tonemap curve blue length is out of range",
                     mapBlue.length, MIN_TONEMAP_CURVE_POINTS, maxCurvePoints * 2);
+
+            // Make sure capture result tonemap has identical channels.
+            if (mStaticInfo.isMonochromeCamera()) {
+                mCollector.expectEquals("Capture result tonemap of monochrome camera should " +
+                        "have same dimension for all channels", mapRed.length, mapGreen.length);
+                mCollector.expectEquals("Capture result tonemap of monochrome camera should " +
+                        "have same dimension for all channels", mapRed.length, mapBlue.length);
+
+                if (mapRed.length == mapGreen.length && mapRed.length == mapBlue.length) {
+                    boolean isIdentical = true;
+                    for (int j = 0; j < mapRed.length; j++) {
+                        isIdentical = (mapRed[j] == mapGreen[j] && mapRed[j] == mapBlue[j]);
+                        if (!isIdentical)
+                            break;
+                    }
+                    mCollector.expectTrue("Capture result tonemap of monochrome camera should " +
+                            "be identical between all channels", isIdentical);
+                }
+            }
         }
         stopPreview();
     }

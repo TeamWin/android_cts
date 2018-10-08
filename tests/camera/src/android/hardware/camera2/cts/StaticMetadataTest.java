@@ -486,19 +486,23 @@ public class StaticMetadataTest extends Camera2AndroidTestCase {
         Set<CameraCharacteristics.Key<?>> characteristicsKeys = new HashSet<>();
         characteristicsKeys.add(HOT_PIXEL_AVAILABLE_HOT_PIXEL_MODES);
         characteristicsKeys.add(SENSOR_BLACK_LEVEL_PATTERN);
-        characteristicsKeys.add(SENSOR_CALIBRATION_TRANSFORM1);
-        characteristicsKeys.add(SENSOR_COLOR_TRANSFORM1);
-        characteristicsKeys.add(SENSOR_FORWARD_MATRIX1);
         characteristicsKeys.add(SENSOR_INFO_ACTIVE_ARRAY_SIZE);
         characteristicsKeys.add(SENSOR_INFO_COLOR_FILTER_ARRANGEMENT);
         characteristicsKeys.add(SENSOR_INFO_WHITE_LEVEL);
-        characteristicsKeys.add(SENSOR_REFERENCE_ILLUMINANT1);
         characteristicsKeys.add(STATISTICS_INFO_AVAILABLE_HOT_PIXEL_MAP_MODES);
+        if (!mStaticInfo.isMonochromeCamera()) {
+            characteristicsKeys.add(SENSOR_CALIBRATION_TRANSFORM1);
+            characteristicsKeys.add(SENSOR_COLOR_TRANSFORM1);
+            characteristicsKeys.add(SENSOR_FORWARD_MATRIX1);
+            characteristicsKeys.add(SENSOR_REFERENCE_ILLUMINANT1);
+        }
 
         Set<CaptureResult.Key<?>> resultKeys = new HashSet<>();
-        resultKeys.add(CaptureResult.SENSOR_NEUTRAL_COLOR_POINT);
-        resultKeys.add(CaptureResult.SENSOR_GREEN_SPLIT);
         resultKeys.add(CaptureResult.SENSOR_NOISE_PROFILE);
+        if (!mStaticInfo.isMonochromeCamera()) {
+            resultKeys.add(CaptureResult.SENSOR_GREEN_SPLIT);
+            resultKeys.add(CaptureResult.SENSOR_NEUTRAL_COLOR_POINT);
+        }
 
         boolean rawOutputSupported = mStaticInfo.getRawOutputSizesChecked().length > 0;
         boolean requestKeysPresent = mStaticInfo.areRequestKeysAvailable(requestKeys);
