@@ -35,6 +35,7 @@ import java.util.List;
 import java.util.Map;
 
 class ReleaseParser {
+    private static final String ROOT_FOLDER_TAG = "/";
     // configuration option
     private static final String NOT_SHARDABLE_TAG = "not-shardable";
     // test class option
@@ -74,11 +75,15 @@ class ReleaseParser {
         mEntries = new HashMap<String, Entry>();
     }
 
-    public String getRelNameVer() {
+    public String getReleaseId() {
         ReleaseContent relContent = getReleaseContent();
+        return getReleaseId(relContent);
+    }
+
+    public static String getReleaseId(ReleaseContent relContent) {
         return String.format(
                 "%s-%s-%s",
-                relContent.getName(), relContent.getVersion(), relContent.getBuildNumber());
+                relContent.getFullname(), relContent.getVersion(), relContent.getBuildNumber());
     }
 
     public ReleaseContent getReleaseContent() {
@@ -89,14 +94,14 @@ class ReleaseParser {
             if (mRelContentBuilder.getName().equals("")) {
                 System.err.println("Release Name unknown!");
                 mRelContentBuilder.setName(mFolderPath);
+                mRelContentBuilder.setFullname(mFolderPath);
             }
-            fBuilder.setName(
-                    String.format(
-                            "%s-%s-%s",
-                            mRelContentBuilder.getName(),
-                            mRelContentBuilder.getVersion(),
-                            mRelContentBuilder.getBuildNumber()));
-            fBuilder.setParentFolder(mFolderPath);
+            fBuilder.setRelativePath(ROOT_FOLDER_TAG);
+            String relId = getReleaseId(mRelContentBuilder.build());
+            fBuilder.setName(relId);
+            mRelContentBuilder.setReleaseId(relId);
+            mRelContentBuilder.setContentId(fBuilder.getContentId());
+            mRelContentBuilder.setSize(fBuilder.getSize());
             Entry fEntry = fBuilder.build();
             mEntries.put(fEntry.getRelativePath(), fEntry);
             mRelContentBuilder.putAllEntries(mEntries);
@@ -123,7 +128,12 @@ class ReleaseParser {
                 fileEntry.setName(file.getName());
                 fileEntry.setSize(file.length());
                 fileEntry.setRelativePath(fileRelativePath);
-                fileEntry.setParentFolder(folderRelativePath);
+
+                if (folderRelativePath.isEmpty()) {
+                    fileEntry.setParentFolder(ROOT_FOLDER_TAG);
+                } else {
+                    fileEntry.setParentFolder(folderRelativePath);
+                }
 
                 FileParser fParser = FileParser.getParser(file);
                 fileEntry.setContentId(fParser.getFileContentId());
@@ -155,6 +165,7 @@ class ReleaseParser {
                             mRelContentBuilder.setFullname(bpParser.getFullName());
                             mRelContentBuilder.setBuildNumber(bpParser.getBuildNumber());
                             mRelContentBuilder.setVersion(bpParser.getVersion());
+                            mRelContentBuilder.putAllProperties(bpParser.getProperties());
                         } catch (Exception e) {
                             System.err.println(
                                     "No product name, version & etc. in "
@@ -167,11 +178,43 @@ class ReleaseParser {
                         RcParser rcParser = (RcParser) fParser;
                         fileEntry.addAllServices(rcParser.getServiceList());
                         break;
+                    case APK:
+                        ApkParser apkParser = (ApkParser) fParser;
+                        fileEntry.setAppInfo(apkParser.getAppInfo());
+                        break;
+                    case ART:
+                        ArtParser artParser = (ArtParser) fParser;
+                        fileEntry.setArtInfo(artParser.getArtInfo());
+                        break;
+                    case OAT:
+                        OatParser oatParser = (OatParser) fParser;
+                        fileEntry.setOatInfo(oatParser.getOatInfo());
+                        break;
+                    case ODEX:
+                        OdexParser odexParser = (OdexParser) fParser;
+                        fileEntry.setOatInfo(odexParser.getOatInfo());
+                        break;
+                    case VDEX:
+                        VdexParser vdexParser = (VdexParser) fParser;
+                        fileEntry.setVdexInfo(vdexParser.getVdexInfo());
+                        break;
+                    case XML:
+                        XmlParser xmlParser = (XmlParser) fParser;
+                        HashMap<String, PermissionList> permissions = xmlParser.getPermissions();
+                        if (permissions != null) {
+                            fileEntry.putAllDevicePermissions(permissions);
+                        }
+                        break;
                     default:
                 }
                 // System.err.println("File:" + file.getAbsoluteFile());
-                fileEntry.addAllDependencies(fParser.getDependencies());
-                fileEntry.addAllDynamicLoadingDependencies(fParser.getDynamicLoadingDependencies());
+                if (fParser.getDependencies() != null) {
+                    fileEntry.addAllDependencies(fParser.getDependencies());
+                }
+                if (fParser.getDynamicLoadingDependencies() != null) {
+                    fileEntry.addAllDynamicLoadingDependencies(
+                            fParser.getDynamicLoadingDependencies());
+                }
                 fileEntry.setAbiBits(fParser.getAbiBits());
                 fileEntry.setAbiArchitecture(fParser.getAbiArchitecture());
 
@@ -182,7 +225,11 @@ class ReleaseParser {
             } else if (file.isDirectory()) {
                 // Checks subfolders
                 Entry.Builder subFolderEntry = parseFolder(file.getAbsolutePath());
-                subFolderEntry.setParentFolder(folderRelativePath);
+                if (folderRelativePath.isEmpty()) {
+                    subFolderEntry.setParentFolder(ROOT_FOLDER_TAG);
+                } else {
+                    subFolderEntry.setParentFolder(folderRelativePath);
+                }
                 Entry sfEntry = subFolderEntry.build();
                 entryList.add(sfEntry);
                 mEntries.put(sfEntry.getRelativePath(), sfEntry);
@@ -220,7 +267,7 @@ class ReleaseParser {
             // Header
             pWriter.printf(
                     "release,type,name,size,relative_path,content_id,parent_folder,code_id,architecture,bits,dependencies,dynamic_loading_dependencies,services\n");
-            for (Entry entry : getFileEntriesList()) {
+            for (Entry entry : getFileEntries()) {
                 pWriter.printf(
                         "%s,%s,%s,%d,%s,%s,%s,%s,%s,%d,%s,%s,%s\n",
                         relNameVer,
@@ -267,7 +314,7 @@ class ReleaseParser {
         }
     }
 
-    public Collection<Entry> getFileEntriesList() {
+    public Collection<Entry> getFileEntries() {
         return getReleaseContent().getEntries().values();
     }
 }

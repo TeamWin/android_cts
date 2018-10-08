@@ -24,25 +24,27 @@ import java.io.FileInputStream;
 import java.io.IOException;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
-import java.util.ArrayList;
 import java.util.Base64;
 import java.util.List;
 
 public class FileParser {
     private static final String NO_ID = "";
-    private static final int READ_BLOCK_SIZE = 1024;
+    protected static final int READ_BLOCK_SIZE = 1024;
 
     // Target File Extensions
-    private static final String CONFIG_EXT_TAG = ".config";
-    private static final String TEST_SUITE_TRADEFED_TAG = "-tradefed.jar";
-    private static final String JAR_EXT_TAG = ".jar";
-    private static final String APK_EXT_TAG = ".apk";
-    private static final String SO_EXT_TAG = ".so";
-    private static final String ODEX_EXT_TAG = ".odex";
-    private static final String VDEX_EXT_TAG = ".vdex";
-    private static final String BUILD_PROP_TAG = "build.prop";
-    private static final String RC_TAG = ".rc";
-
+    public static final String CONFIG_EXT_TAG = ".config";
+    public static final String TEST_SUITE_TRADEFED_TAG = "-tradefed.jar";
+    public static final String JAR_EXT_TAG = ".jar";
+    public static final String APK_EXT_TAG = ".apk";
+    public static final String SO_EXT_TAG = ".so";
+    public static final String ODEX_EXT_TAG = ".odex";
+    public static final String VDEX_EXT_TAG = ".vdex";
+    public static final String ART_EXT_TAG = ".art";
+    public static final String OAT_EXT_TAG = ".oat";
+    public static final String BUILD_PROP_EXT_TAG = "build.prop";
+    public static final String RC_EXT_TAG = ".rc";
+    public static final String XML_EXT_TAG = ".xml";
+    public static final String IMG_EXT_TAG = ".img";
     protected File mFile;
     protected String mContentId;
     protected String mCodeId;
@@ -64,14 +66,23 @@ public class FileParser {
             return new JarParser(file);
         } else if (fName.endsWith(SO_EXT_TAG)) {
             return new SoParser(file);
+        } else if (fName.endsWith(ART_EXT_TAG)) {
+            return new ArtParser(file);
+        } else if (fName.endsWith(OAT_EXT_TAG)) {
+            return new OatParser(file);
         } else if (fName.endsWith(ODEX_EXT_TAG)) {
             return new OdexParser(file);
         } else if (fName.endsWith(VDEX_EXT_TAG)) {
             return new VdexParser(file);
-        } else if (fName.endsWith(BUILD_PROP_TAG)) {
+        } else if (fName.endsWith(BUILD_PROP_EXT_TAG)) {
+            // ToDo prop.default & etc in system/core/init/property_service.cpp
             return new BuildPropParser(file);
-        } else if (fName.endsWith(RC_TAG)) {
+        } else if (fName.endsWith(RC_EXT_TAG)) {
             return new RcParser(file);
+        } else if (fName.endsWith(XML_EXT_TAG)) {
+            return new XmlParser(file);
+        } else if (fName.endsWith(IMG_EXT_TAG)) {
+            return new ImgParser(file);
         } else if (ReadElf.isElf(file)) {
             // keeps this in the end as no Exe Ext name
             return new ExeParser(file);
@@ -133,15 +144,24 @@ public class FileParser {
     }
 
     public List<String> getDependencies() {
-        return new ArrayList<String>();
+        return null;
     }
 
     public List<String> getDynamicLoadingDependencies() {
-        return new ArrayList<String>();
+        return null;
     }
 
     private static boolean isSymbolicLink(File f) {
         // Assumes 0b files are Symbolic Link
         return (f.length() == 0);
+    }
+
+    public static int getIntLittleEndian(byte[] byteArray, int start) {
+        int answer = 0;
+        // Assume Little-Endian. ToDo: if to care about big-endian
+        for (int i = start + 3; i >= start; --i) {
+            answer = (answer << 8) | (byteArray[i] & 0xff);
+        }
+        return answer;
     }
 }
