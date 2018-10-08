@@ -28,6 +28,7 @@ using ::aidl::test_package::BpTest;
 using ::aidl::test_package::ITest;
 using ::aidl::test_package::RegularPolygon;
 using ::ndk::ScopedAStatus;
+using ::ndk::SharedRefBase;
 using ::ndk::SpAIBinder;
 
 class NdkBinderTest_Aidl
@@ -113,7 +114,7 @@ TEST_P(NdkBinderTest_Aidl, RepeatBinder) {
 TEST_P(NdkBinderTest_Aidl, RepeatInterface) {
   class MyEmpty : public ::aidl::test_package::BnEmpty {};
 
-  std::shared_ptr<IEmpty> empty = (new MyEmpty)->ref<IEmpty>();
+  std::shared_ptr<IEmpty> empty = SharedRefBase::make<MyEmpty>();
 
   std::shared_ptr<IEmpty> ret;
   ASSERT_OK(iface->RepeatInterface(empty, &ret));
@@ -161,7 +162,7 @@ TEST_P(NdkBinderTest_Aidl, InsAndOuts) {
 
 std::shared_ptr<ITest> getLocalService() {
   // BpTest -> AIBinder -> test
-  std::shared_ptr<MyTest> test = (new MyTest)->ref<MyTest>();
+  std::shared_ptr<MyTest> test = SharedRefBase::make<MyTest>();
   return BpTest::associate(test->asBinder());
 }
 
