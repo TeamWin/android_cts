@@ -12,6 +12,15 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+aidl_interface {
+    name: "libbinder_ndk_test_interface",
+    srcs: [
+        "test_package/IEmpty.aidl",
+        "test_package/ITest.aidl",
+        "test_package/RegularPolygon.aidl",
+    ],
+}
+
 cc_library_shared {
     name: "libbinder_ndk_test",
 
@@ -21,8 +30,10 @@ cc_library_shared {
     ],
 
     srcs: [
+        "android_binder_cts_NativeService.cpp",
         "test_ibinder.cpp",
         "test_ibinder_jni.cpp",
+        "test_native_aidl_client.cpp",
         "test_parcel.cpp",
         "test_status.cpp",
         "utilities.cpp",
@@ -33,6 +44,9 @@ cc_library_shared {
         "libbinder_ndk",
     ],
     whole_static_libs: ["libnativetesthelper_jni"],
+    static_libs: [
+        "libbinder_ndk_test_interface-ndk",
+    ],
 
     sdk_version: "current",
     stl: "c++_static",
