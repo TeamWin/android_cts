@@ -3,6 +3,8 @@ package android.location.cts;
 import android.location.GnssStatus;
 import android.util.Log;
 
+import com.android.compatibility.common.util.CddTest;
+
 public class GnssStatusTest extends GnssTestCase  {
 
     private static final String TAG = "GnssStatusTest";
@@ -56,6 +58,7 @@ public class GnssStatusTest extends GnssTestCase  {
   /**
    * Tests values of {@link GnssStatus}.
    */
+  @CddTest(requirement="7.3.3/C-1-4")
   public void testGnssStatusValues() throws InterruptedException {
     // Checks if GPS hardware feature is present, skips test (pass) if not,
     // and hard asserts that Location/GPS (Provider) is turned on if is Cts Verifier.

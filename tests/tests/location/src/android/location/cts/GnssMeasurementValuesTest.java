@@ -20,6 +20,8 @@ import android.location.GnssMeasurement;
 import android.location.GnssMeasurementsEvent;
 import android.util.Log;
 
+import com.android.compatibility.common.util.CddTest;
+
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -76,6 +78,7 @@ public class GnssMeasurementValuesTest extends GnssTestCase {
      * It only performs sanity checks for the measurements received.
      * This tests uses actual data retrieved from GPS HAL.
      */
+    @CddTest(requirement="7.3.3/C-3-2,C-3-3")
     public void testListenForGnssMeasurements() throws Exception {
         // Checks if GPS hardware feature is present, skips test (pass) if not,
         // and hard asserts that Location/GPS (Provider) is turned on if is Cts Verifier.
