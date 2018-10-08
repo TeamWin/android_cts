@@ -191,6 +191,17 @@ def raw_output(props):
     """
     return raw16(props) or raw10(props) or raw12(props)
 
+def y8(props):
+    """Returns whether a device supports Y8 output.
+
+    Args:
+        props: Camera properties object.
+
+    Returns:
+        Boolean.
+    """
+    return len(its.objects.get_available_output_sizes("y8", props)) > 0
+
 def post_raw_sensitivity_boost(props):
     """Returns whether a device supports post RAW sensitivity boost..
 
