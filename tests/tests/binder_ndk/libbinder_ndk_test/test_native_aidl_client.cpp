@@ -42,7 +42,10 @@ TEST_P(NdkBinderTest_Aidl, UseBinder) {
   ASSERT_EQ(STATUS_OK, AIBinder_ping(iface->asBinder().get()));
 }
 
-TEST_P(NdkBinderTest_Aidl, Oneway) { ASSERT_OK(iface->TestOneway()); }
+TEST_P(NdkBinderTest_Aidl, Trivial) {
+  ASSERT_OK(iface->TestVoidReturn());
+  ASSERT_OK(iface->TestOneway());
+}
 
 TEST_P(NdkBinderTest_Aidl, Constants) {
   ASSERT_EQ(0, ITest::kZero);
