@@ -126,4 +126,11 @@ public class JavaClientTest {
         assertEquals(polygon.numSides, result.numSides);
         assertEquals(polygon.sideLength, result.sideLength, 0.0f);
     }
+
+    @Test
+    public void testInsAndOuts() throws RemoteException {
+        RegularPolygon polygon = new RegularPolygon();
+        mInterface.RenamePolygon(polygon, "Jerry");
+        assertEquals("Jerry", polygon.name);
+    }
 }

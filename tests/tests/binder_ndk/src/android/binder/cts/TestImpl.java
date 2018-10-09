@@ -83,4 +83,9 @@ public class TestImpl extends ITest.Stub {
   public RegularPolygon RepeatPolygon(RegularPolygon in_value) {
       return in_value;
   }
+
+  @Override
+  public void RenamePolygon(RegularPolygon value, String name) {
+      value.name = name;
+  }
 }
