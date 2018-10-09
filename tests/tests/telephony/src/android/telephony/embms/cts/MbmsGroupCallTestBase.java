@@ -26,7 +26,7 @@ import java.util.stream.Collectors;
 public class MbmsGroupCallTestBase extends InstrumentationTestCase {
     protected static final int ASYNC_TIMEOUT = 10000;
 
-    protected static class TestCallback extends MbmsGroupCallSessionCallback {
+    protected static class TestCallback implements MbmsGroupCallSessionCallback {
         private final BlockingQueue<SomeArgs> mErrorCalls = new LinkedBlockingQueue<>();
         private final BlockingQueue<SomeArgs> mOnAvailableSaisUpdatedCalls =
                 new LinkedBlockingQueue<>();
