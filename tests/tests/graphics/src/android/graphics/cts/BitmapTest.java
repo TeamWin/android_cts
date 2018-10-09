@@ -34,6 +34,7 @@ import android.graphics.ColorSpace.Named;
 import android.graphics.Matrix;
 import android.graphics.Paint;
 import android.graphics.Picture;
+import android.hardware.HardwareBuffer;
 import android.os.Debug;
 import android.os.Parcel;
 import android.os.StrictMode;
@@ -519,6 +520,31 @@ public class BitmapTest {
         assertEquals(50, ret.getWidth());
         assertEquals(100, ret.getHeight());
         assertTrue(ret.isMutable());
+    }
+
+    @Test
+    public void testWrapHardwareBufferSucceeds() {
+        try (HardwareBuffer hwBuffer = createTestBuffer(128, 128, false)) {
+            Bitmap bitmap = Bitmap.wrapHardwareBuffer(hwBuffer, ColorSpace.get(Named.SRGB));
+            assertNotNull(bitmap);
+            bitmap.recycle();
+        }
+    }
+
+    @Test(expected = IllegalArgumentException.class)
+    public void testWrapHardwareBufferWithInvalidUsageFails() {
+        try (HardwareBuffer hwBuffer = HardwareBuffer.create(512, 512, HardwareBuffer.RGBA_8888, 1,
+            HardwareBuffer.USAGE_CPU_WRITE_RARELY)) {
+            Bitmap bitmap = Bitmap.wrapHardwareBuffer(hwBuffer, ColorSpace.get(Named.SRGB));
+        }
+    }
+
+    @Test(expected = IllegalArgumentException.class)
+    public void testWrapHardwareBufferWithRgbBufferButNonRgbColorSpaceFails() {
+        try (HardwareBuffer hwBuffer = HardwareBuffer.create(512, 512, HardwareBuffer.RGBA_8888, 1,
+            HardwareBuffer.USAGE_GPU_SAMPLED_IMAGE)) {
+            Bitmap bitmap = Bitmap.wrapHardwareBuffer(hwBuffer, ColorSpace.get(Named.CIE_LAB));
+        }
     }
 
     @Test
@@ -1380,6 +1406,30 @@ public class BitmapTest {
         assertFalse(bitmap1.sameAs(bitmap4));
     }
 
+    @Test
+    public void testSameAs_wrappedHardwareBuffer() {
+        try (HardwareBuffer hwBufferA = createTestBuffer(512, 512, true);
+             HardwareBuffer hwBufferB = createTestBuffer(512, 512, true);
+             HardwareBuffer hwBufferC = createTestBuffer(512, 512, true);) {
+            // Fill buffer C with generated data
+            nFillRgbaHwBuffer(hwBufferC);
+
+            // Create the test bitmaps
+            Bitmap bitmap1 = Bitmap.wrapHardwareBuffer(hwBufferA, ColorSpace.get(Named.SRGB));
+            Bitmap bitmap2 = Bitmap.wrapHardwareBuffer(hwBufferA, ColorSpace.get(Named.SRGB));
+            Bitmap bitmap3 = BitmapFactory.decodeResource(mRes, R.drawable.robot);
+            Bitmap bitmap4 = Bitmap.wrapHardwareBuffer(hwBufferB, ColorSpace.get(Named.SRGB));
+            Bitmap bitmap5 = Bitmap.wrapHardwareBuffer(hwBufferC, ColorSpace.get(Named.SRGB));
+
+            // Run the compare-a-thon
+            assertTrue(bitmap1.sameAs(bitmap2));  // SAME UNDERLYING BUFFER
+            assertTrue(bitmap2.sameAs(bitmap1));  // SAME UNDERLYING BUFFER
+            assertFalse(bitmap1.sameAs(bitmap3)); // HW vs. NON-HW
+            assertTrue(bitmap1.sameAs(bitmap4));  // DIFFERENT BUFFERS, SAME CONTENT
+            assertFalse(bitmap1.sameAs(bitmap5)); // DIFFERENT BUFFERS, DIFFERENT CONTENT
+        }
+    }
+
     @Test(expected=IllegalStateException.class)
     public void testHardwareGetPixel() {
         Bitmap bitmap = BitmapFactory.decodeResource(mRes, R.drawable.robot, HARDWARE_OPTIONS);
@@ -1620,6 +1670,41 @@ public class BitmapTest {
 
     @Test
     @LargeTest
+    public void testWrappedHardwareBufferBitmapNotLeaking() {
+        Debug.MemoryInfo meminfoStart = new Debug.MemoryInfo();
+        Debug.MemoryInfo meminfoEnd = new Debug.MemoryInfo();
+        BitmapFactory.Options opts = new BitmapFactory.Options();
+        opts.inPreferredConfig = Config.HARDWARE;
+        opts.inScaled = false;
+
+        final ColorSpace colorSpace = ColorSpace.get(Named.SRGB);
+        try (HardwareBuffer hwBuffer = createTestBuffer(128, 128, false)) {
+            for (int i = 0; i < 2000; i++) {
+                if (i == 2) {
+                    // Not really the "start" but by having done a couple
+                    // we've fully initialized any state that may be required,
+                    // so memory usage should be stable now
+                    runGcAndFinalizersSync();
+                    Debug.getMemoryInfo(meminfoStart);
+                }
+                if (i % 100 == 5) {
+                    assertNotLeaking(i, meminfoStart, meminfoEnd);
+                }
+                Bitmap bitmap = Bitmap.wrapHardwareBuffer(hwBuffer, colorSpace);
+                assertNotNull(bitmap);
+                // Make sure nothing messed with the bitmap
+                assertEquals(128, bitmap.getWidth());
+                assertEquals(128, bitmap.getHeight());
+                assertEquals(Config.HARDWARE, bitmap.getConfig());
+                bitmap.recycle();
+            }
+        }
+
+        assertNotLeaking(2000, meminfoStart, meminfoEnd);
+    }
+
+    @Test
+    @LargeTest
     public void testDrawingHardwareBitmapNotLeaking() {
         Debug.MemoryInfo meminfoStart = new Debug.MemoryInfo();
         Debug.MemoryInfo meminfoEnd = new Debug.MemoryInfo();
@@ -1656,6 +1741,64 @@ public class BitmapTest {
         assertNotLeaking(2000, meminfoStart, meminfoEnd);
     }
 
+    @Test
+    public void testWrapHardwareBufferHoldsReference() {
+        RenderTarget renderTarget = RenderTarget.create();
+        renderTarget.setDefaultSize(128, 128);
+        final Surface surface = renderTarget.getSurface();
+        Bitmap bitmap = null;
+
+        // Create hardware-buffer and wrap it in a Bitmap
+        try (HardwareBuffer hwBuffer = createTestBuffer(128, 128, false)) {
+            // Fill buffer with colors (x, y, 42, 255)
+            nFillRgbaHwBuffer(hwBuffer);
+            bitmap = Bitmap.wrapHardwareBuffer(hwBuffer, ColorSpace.get(Named.SRGB));
+        }
+
+        // Buffer is closed at this point. Ensure bitmap still works by drawing it
+        assertEquals(128, bitmap.getWidth());
+        assertEquals(128, bitmap.getHeight());
+        assertEquals(Config.HARDWARE, bitmap.getConfig());
+
+        // Copy bitmap to target bitmap we can read from
+        Bitmap dstBitmap = bitmap.copy(Config.ARGB_8888, false);
+        bitmap.recycle();
+
+        // Ensure that the bitmap has valid contents
+        int pixel = dstBitmap.getPixel(0, 0);
+        assertEquals(255 << 24 | 42, pixel);
+        dstBitmap.recycle();
+    }
+
+    @Test
+    public void testWrapHardwareBufferPreservesColors() {
+        try (HardwareBuffer hwBuffer = createTestBuffer(128, 128, true)) {
+            // Fill buffer with colors (x, y, 42, 255)
+            nFillRgbaHwBuffer(hwBuffer);
+
+            // Create HW bitmap from this buffer
+            Bitmap srcBitmap = Bitmap.wrapHardwareBuffer(hwBuffer, ColorSpace.get(Named.SRGB));
+            assertNotNull(srcBitmap);
+
+            // Copy it to target non-HW bitmap
+            Bitmap dstBitmap = srcBitmap.copy(Config.ARGB_8888, false);
+            srcBitmap.recycle();
+
+            // Ensure all colors are as expected (matches the nFillRgbaHwBuffer call used above).
+            for (int y = 0; y < 128; ++y) {
+                for (int x = 0; x < 128; ++x) {
+                    int pixel = dstBitmap.getPixel(x, y);
+                    short a = 255;
+                    short r = (short) (x % 255);
+                    short g = (short) (y % 255);
+                    short b = 42;
+                    assertEquals(a << 24 | r << 16 | g << 8 | b, pixel);
+                }
+            }
+            dstBitmap.recycle();
+        }
+    }
+
     private void strictModeTest(Runnable runnable) {
         StrictMode.ThreadPolicy originalPolicy = StrictMode.getThreadPolicy();
         StrictMode.setThreadPolicy(new StrictMode.ThreadPolicy.Builder()
@@ -1673,6 +1816,19 @@ public class BitmapTest {
     private static native void nValidateBitmapInfo(Bitmap bitmap, int width, int height,
             boolean is565);
     private static native void nValidateNdkAccessAfterRecycle(Bitmap bitmap);
+
+    private static native void nFillRgbaHwBuffer(HardwareBuffer hwBuffer);
+
+    private static HardwareBuffer createTestBuffer(int width, int height, boolean cpuAccess) {
+        long usage = HardwareBuffer.USAGE_GPU_SAMPLED_IMAGE;
+        if (cpuAccess) {
+            usage |= HardwareBuffer.USAGE_CPU_WRITE_RARELY;
+        }
+        // We can assume that RGBA_8888 format is supported for every platform.
+        HardwareBuffer hwBuffer = HardwareBuffer.create(width, height, HardwareBuffer.RGBA_8888,
+                1, usage);
+        return hwBuffer;
+    }
 
     private static int scaleFromDensity(int size, int sdensity, int tdensity) {
         if (sdensity == Bitmap.DENSITY_NONE || sdensity == tdensity) {
