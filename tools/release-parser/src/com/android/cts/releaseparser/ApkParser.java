@@ -39,6 +39,11 @@ public class ApkParser extends ZipParser {
         return Entry.EntryType.APK;
     }
 
+    @Override
+    public void setAdditionalInfo() {
+        getFileEntryBuilder().setAppInfo(getAppInfo());
+    }
+
     public ApiPackage getExternalApiPackage() {
         if (mExternalApiPackage == null) {
             prase();

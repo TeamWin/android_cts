@@ -43,6 +43,15 @@ public class TestModuleConfigParser extends FileParser {
         return mType;
     }
 
+    @Override
+    public void setAdditionalInfo() {
+        if (mType == Entry.EntryType.TEST_MODULE_CONFIG) {
+            // only if it's actaully a test module config file
+            getFileEntryBuilder().setTestModuleConfig(getTestModuleConfig());
+        }
+
+    }
+
     public TestModuleConfig getTestModuleConfig() {
         if (mType == null) {
             parseFile();

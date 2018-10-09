@@ -48,10 +48,10 @@ public class FileParser {
     protected File mFile;
     protected String mContentId;
     protected String mCodeId;
+    protected Entry.Builder mFileEntryBuilder;
 
     public static FileParser getParser(File file) {
         String fName = file.getName();
-
         // Starts with SymbolicLink
         if (isSymbolicLink(file)) {
             return new SymbolicLinkParser(file);
@@ -96,6 +96,7 @@ public class FileParser {
         mFile = file;
         mCodeId = NO_ID;
         mContentId = NO_ID;
+        mFileEntryBuilder = null;
     }
 
     public File getFile() {
@@ -104,6 +105,13 @@ public class FileParser {
 
     public String getFileName() {
         return mFile.getName();
+    }
+
+    public Entry.Builder getFileEntryBuilder() {
+        if (mFileEntryBuilder == null) {
+            parse();
+        }
+        return mFileEntryBuilder;
     }
 
     public Entry.EntryType getType() {
@@ -151,6 +159,9 @@ public class FileParser {
         return null;
     }
 
+    /** For subclass parser to add file type specific info into the entry. */
+    public void setAdditionalInfo() {}
+
     private static boolean isSymbolicLink(File f) {
         // Assumes 0b files are Symbolic Link
         return (f.length() == 0);
@@ -163,5 +174,15 @@ public class FileParser {
             answer = (answer << 8) | (byteArray[i] & 0xff);
         }
         return answer;
+    }
+
+    private void parse() {
+        mFileEntryBuilder = Entry.newBuilder();
+        mFileEntryBuilder.setName(getFileName());
+        mFileEntryBuilder.setSize(getFile().length());
+        mFileEntryBuilder.setContentId(getFileContentId());
+        mFileEntryBuilder.setCodeId(getCodeId());
+        mFileEntryBuilder.setType(getType());
+        setAdditionalInfo();
     }
 }

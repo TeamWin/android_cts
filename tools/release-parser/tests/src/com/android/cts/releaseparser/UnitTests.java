@@ -29,6 +29,7 @@ import org.junit.runners.Suite.SuiteClasses;
 @SuiteClasses({
     ApkParserTest.class,
     SoParserTest.class,
+    FileParserTest.class,
 })
 public class UnitTests {
     // empty on purpose

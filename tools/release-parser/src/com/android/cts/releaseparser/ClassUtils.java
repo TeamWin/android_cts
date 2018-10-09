@@ -158,6 +158,18 @@ public class ClassUtils {
     }
 
     /**
+     * Gets an InputStremReader of a file from Resource
+     *
+     * @param clazz the Class contins resrouce files
+     * @param fileName of a resource file
+     * @return the (@link InputStream} object of the file
+     */
+    public static InputStreamReader openResourceAsStreamReader(Class clazz, String fileName) {
+        return new InputStreamReader(
+                openResourceAsStream(clazz, fileName), Charset.forName("UTF-8"));
+    }
+
+    /**
      * Gets/new ApiClass.Builder from a map by the class name
      *
      * @param HashMap<class name, ApiClass.Builder>

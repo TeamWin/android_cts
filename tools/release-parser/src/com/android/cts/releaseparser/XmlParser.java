@@ -41,6 +41,14 @@ public class XmlParser extends FileParser {
         return Entry.EntryType.XML;
     }
 
+    @Override
+    public void setAdditionalInfo() {
+        HashMap<String, PermissionList> permissions = getPermissions();
+        if (permissions != null) {
+            getFileEntryBuilder().putAllDevicePermissions(permissions);
+        }
+    }
+
     public HashMap<String, PermissionList> getPermissions() {
         if (mPermissions == null) {
             parse();
