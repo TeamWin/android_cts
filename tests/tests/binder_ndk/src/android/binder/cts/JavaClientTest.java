@@ -68,6 +68,12 @@ public class JavaClientTest {
     }
 
     @Test
+    public void testTrivial() throws RemoteException {
+        mInterface.TestVoidReturn();
+        mInterface.TestOneway();
+    }
+
+    @Test
     public void testRepeatPrimitives() throws RemoteException {
         assertEquals(1, mInterface.RepeatInt(1));
         assertEquals(2, mInterface.RepeatLong(2));

@@ -27,8 +27,8 @@
 using ::aidl::test_package::BpTest;
 using ::aidl::test_package::ITest;
 using ::aidl::test_package::RegularPolygon;
-using ::android::AutoAIBinder;
-using ::android::AutoAStatus;
+using ::ndk::ScopedAStatus;
+using ::ndk::SpAIBinder;
 
 class NdkBinderTest_Aidl
     : public NdkBinderTest,
@@ -42,7 +42,10 @@ TEST_P(NdkBinderTest_Aidl, UseBinder) {
   ASSERT_EQ(STATUS_OK, AIBinder_ping(iface->asBinder().get()));
 }
 
-TEST_P(NdkBinderTest_Aidl, Oneway) { ASSERT_OK(iface->TestOneway()); }
+TEST_P(NdkBinderTest_Aidl, Trivial) {
+  ASSERT_OK(iface->TestVoidReturn());
+  ASSERT_OK(iface->TestOneway());
+}
 
 TEST_P(NdkBinderTest_Aidl, Constants) {
   ASSERT_EQ(0, ITest::kZero);
@@ -97,8 +100,8 @@ TEST_P(NdkBinderTest_Aidl, RepeatPrimitives) {
 }
 
 TEST_P(NdkBinderTest_Aidl, RepeatBinder) {
-  AutoAIBinder binder = iface->asBinder();
-  AutoAIBinder ret;
+  SpAIBinder binder = iface->asBinder();
+  SpAIBinder ret;
 
   ASSERT_OK(iface->RepeatBinder(binder, &ret));
   EXPECT_EQ(binder.get(), ret.get());
@@ -182,7 +185,7 @@ std::shared_ptr<ITest> getNdkBinderTestJavaService(const std::string& method) {
     return nullptr;
   }
 
-  AutoAIBinder binder = AutoAIBinder(AIBinder_fromJavaBinder(env, object));
+  SpAIBinder binder = SpAIBinder(AIBinder_fromJavaBinder(env, object));
 
   return BpTest::associate(binder);
 }
