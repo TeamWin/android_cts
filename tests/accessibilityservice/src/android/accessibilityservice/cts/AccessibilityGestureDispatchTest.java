@@ -320,6 +320,7 @@ public class AccessibilityGestureDispatchTest extends
         final PointF magRegionCenterPoint = new PointF();
         magnificationService.runOnServiceSync(() -> {
             magnificationController.reset(false);
+            magnificationController.getMagnificationRegion();
             magRegionCenterPoint.set(magnificationController.getCenterX(),
                     magnificationController.getCenterY());
         });
