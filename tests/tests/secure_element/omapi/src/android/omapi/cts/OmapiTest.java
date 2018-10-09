@@ -18,6 +18,7 @@
 
 package android.omapi.cts;
 
+import static org.hamcrest.CoreMatchers.is;
 import static org.junit.Assert.*;
 import static org.junit.Assume.assumeTrue;
 
@@ -301,43 +302,51 @@ public class OmapiTest {
     /** Tests Select API */
     @Test
     public void testSelectableAid() {
-        testSelectableAid(SELECTABLE_AID);
+        try {
+            waitForConnection();
+            Reader[] readers = seService.getReaders();
+            for (Reader reader : readers) {
+                testSelectableAid(reader, SELECTABLE_AID);
+            }
+        } catch (Exception e) {
+            fail("unexpected exception " + e);
+        }
     }
 
     @Test
     public void testLongSelectResponse() {
-        byte[] selectResponse = testSelectableAid(LONG_SELECT_RESPONSE_AID);
-        if (selectResponse == null) {
-            return;
-        }
-        assertTrue("Select Response is not complete", verifyBerTlvData(selectResponse));
-    }
-
-
-    private byte[] testSelectableAid(byte[] aid) {
         try {
             waitForConnection();
             Reader[] readers = seService.getReaders();
-
             for (Reader reader : readers) {
-                assertTrue(reader.isSecureElementPresent());
-                Session session = reader.openSession();
-                assertNotNull("Null Session", session);
-                Channel channel = session.openLogicalChannel(aid, (byte)0x00);
-                assertNotNull("Null Channel", channel);
-                byte[] selectResponse = channel.getSelectResponse();
-                assertNotNull("Null Select Response", selectResponse);
-                assertGreaterOrEqual(selectResponse.length, 2);
-                assertEquals(selectResponse[selectResponse.length - 1] & 0xFF, 0x00);
-                assertEquals(selectResponse[selectResponse.length - 2] & 0xFF, 0x90);
-                channel.close();
-                session.close();
-                return selectResponse;
+                byte[] selectResponse = testSelectableAid(reader, LONG_SELECT_RESPONSE_AID);
+                assertTrue("Select Response is not complete", verifyBerTlvData(selectResponse));
             }
         } catch (Exception e) {
-            fail("Unexpected Exception " + e);
+            fail("unexpected exception " + e);
         }
-        return null;
+    }
+
+    private byte[] testSelectableAid(Reader reader, byte[] aid) throws IOException {
+        byte[] selectResponse = null;
+        Session session = null;
+        Channel channel = null;
+        try {
+            assertTrue(reader.isSecureElementPresent());
+            session = reader.openSession();
+            assertNotNull("Null Session", session);
+            channel = session.openLogicalChannel(aid, (byte) 0x00);
+            assertNotNull("Null Channel", channel);
+            selectResponse = channel.getSelectResponse();
+        } finally {
+            if (channel != null) channel.close();
+            if (session != null) session.close();
+        }
+        assertNotNull("Null Select Response", selectResponse);
+        assertGreaterOrEqual(selectResponse.length, 2);
+        assertThat(selectResponse[selectResponse.length - 1] & 0xFF, is(0x00));
+        assertThat(selectResponse[selectResponse.length - 2] & 0xFF, is(0x90));
+        return selectResponse;
     }
 
     /** Tests if NoSuchElementException in Select */
