@@ -108,7 +108,7 @@ static JNINativeMethod gMethods[] = {
 void register_android_jvmti_cts_JvmtiTrackingTest(jvmtiEnv* jenv, JNIEnv* env) {
   ScopedLocalRef<jclass> klass(env, FindClass(jenv, env,
           "android/jvmti/cts/JvmtiTrackingTest", nullptr));
-  if (env->ExceptionCheck()) {
+  if (klass.get() == nullptr) {
     env->ExceptionClear();
     return;
   }
