@@ -51,6 +51,10 @@ import java.io.FileInputStream;
 import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.io.FileOutputStream;
+import java.io.OutputStream;
+import java.io.InputStream;
+import java.net.Socket;
+import java.net.ServerSocket;
 import java.io.File;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -823,6 +827,70 @@ public class StagefrightTest extends InstrumentationTestCase {
      to prevent merge conflicts, add N tests below this comment,
      before any existing test methods
      ***********************************************************/
+
+    @SecurityTest
+    public void testStagefright_bug_68342866() throws Exception {
+        Thread server = new Thread() {
+            @Override
+            public void run() {
+                try (ServerSocket serverSocket = new ServerSocket(8080);
+                        Socket conn = serverSocket.accept()) {
+                    OutputStream outputstream = conn.getOutputStream();
+                    InputStream inputStream = conn.getInputStream();
+                    byte input[] = new byte[65536];
+                    inputStream.read(input, 0, 65536);
+                    String inputStr = new String(input);
+                    if (inputStr.contains("bug_68342866.m3u8")) {
+                        byte http[] = ("HTTP/1.0 200 OK\r\nContent-Type: application/x-mpegURL\r\n\r\n")
+                                .getBytes();
+                        byte playlist[] = new byte[] { 0x23, 0x45, 0x58, 0x54,
+                                0x4D, 0x33, 0x55, 0x0A, 0x23, 0x45, 0x58, 0x54,
+                                0x2D, 0x58, 0x2D, 0x53, 0x54, 0x52, 0x45, 0x41,
+                                0x4D, 0x2D, 0x49, 0x4E, 0x46, 0x46, 0x43, 0x23,
+                                0x45, 0x3A, 0x54, 0x42, 0x00, 0x00, 0x00, 0x0A,
+                                0x00, 0x00, 0x00, 0x00, 0x00, (byte) 0xFF,
+                                (byte) 0xFF, (byte) 0xFF, (byte) 0xFF,
+                                (byte) 0xFF, (byte) 0xFF, 0x3F, 0x2C, 0x4E,
+                                0x46, 0x00, 0x00 };
+                        outputstream.write(http);
+                        outputstream.write(playlist);
+                    }
+                } catch (IOException e) {
+                }
+            }
+        };
+        server.start();
+        String uri = "http://127.0.0.1:8080/bug_68342866.m3u8";
+        final MediaPlayerCrashListener mpcl = new MediaPlayerCrashListener();
+        LooperThread t = new LooperThread(new Runnable() {
+            @Override
+            public void run() {
+                MediaPlayer mp = new MediaPlayer();
+                mp.setOnErrorListener(mpcl);
+                mp.setOnPreparedListener(mpcl);
+                mp.setOnCompletionListener(mpcl);
+                Surface surface = getDummySurface();
+                mp.setSurface(surface);
+                AssetFileDescriptor fd = null;
+                try {
+                    mp.setDataSource(uri);
+                    mp.prepareAsync();
+                } catch (IOException e) {
+                    Log.e(TAG, e.toString());
+                } finally {
+                    closeQuietly(fd);
+                }
+                Looper.loop();
+                mp.release();
+            }
+        });
+        t.start();
+        assertFalse("Device *IS* vulnerable to BUG-68342866",
+                mpcl.waitForError() == MediaPlayer.MEDIA_ERROR_SERVER_DIED);
+        t.stopLooper();
+        t.join();
+        server.join();
+    }
 
     @SecurityTest
     public void testStagefright_bug_74114680() throws Exception {
