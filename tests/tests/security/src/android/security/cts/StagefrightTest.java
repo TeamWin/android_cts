@@ -834,6 +834,11 @@ public class StagefrightTest extends InstrumentationTestCase {
      ***********************************************************/
 
     @SecurityTest
+    public void testStagefright_bug_74114680() throws Exception {
+        doStagefrightTest(R.raw.bug_74114680_ts, (10 * 60 * 1000));
+    }
+
+    @SecurityTest
     public void testStagefright_bug_70239507() throws Exception {
         doStagefrightTestExtractorSeek(R.raw.bug_70239507,1311768465173141112L);
     }
