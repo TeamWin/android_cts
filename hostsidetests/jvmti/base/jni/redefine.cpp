@@ -196,7 +196,7 @@ static JNINativeMethod gMethods[] = {
 void register_android_jvmti_cts_JvmtiRedefineClassesTest(jvmtiEnv* jenv, JNIEnv* env) {
   ScopedLocalRef<jclass> klass(env, FindClass(jenv, env,
           "android/jvmti/cts/JvmtiRedefineClassesTest", nullptr));
-  if (env->ExceptionCheck()) {
+  if (klass.get() == nullptr) {
     env->ExceptionClear();
     return;
   }
