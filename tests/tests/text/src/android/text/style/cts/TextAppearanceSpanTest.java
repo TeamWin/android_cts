@@ -30,6 +30,7 @@ import android.graphics.Canvas;
 import android.graphics.Color;
 import android.graphics.Rect;
 import android.graphics.Typeface;
+import android.os.LocaleList;
 import android.os.Parcel;
 import android.support.test.InstrumentationRegistry;
 import android.support.test.filters.SmallTest;
@@ -164,7 +165,7 @@ public class TextAppearanceSpanTest {
     }
 
     @Test
-    public void testGetFontWeight() {
+    public void testGetTextFontWeight() {
         TextAppearanceSpan textAppearanceSpan = new TextAppearanceSpan(mContext,
                 android.text.cts.R.style.textAppearanceWithFontWeight);
         assertEquals(500, textAppearanceSpan.getTextFontWeight());
@@ -172,6 +173,14 @@ public class TextAppearanceSpanTest {
         textAppearanceSpan = new TextAppearanceSpan(mContext,
                 android.text.cts.R.style.textAppearanceWithNoAttributes);
         assertEquals(-1, textAppearanceSpan.getTextFontWeight());
+    }
+
+    @Test
+    public void testGetTextLocales() {
+        TextAppearanceSpan textAppearanceSpan = new TextAppearanceSpan(mContext,
+                android.text.cts.R.style.textAppearanceWithTextLocales);
+        assertEquals(textAppearanceSpan.getTextLocales(),
+                LocaleList.forLanguageTags("ja-JP,zh-CN"));
     }
 
     @Test
@@ -406,6 +415,7 @@ public class TextAppearanceSpanTest {
         assertEquals(span.getTextSize(), unparceledSpan.getTextSize());
         assertEquals(span.getTextStyle(), unparceledSpan.getTextStyle());
         assertEquals(span.getTextFontWeight(), unparceledSpan.getTextFontWeight());
+        assertEquals(span.getTextLocales(), unparceledSpan.getTextLocales());
         assertEquals(span.getTypeface(), unparceledSpan.getTypeface());
 
         assertEquals(span.getShadowColor(), unparceledSpan.getShadowColor());
