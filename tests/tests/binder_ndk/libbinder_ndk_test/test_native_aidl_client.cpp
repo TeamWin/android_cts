@@ -30,13 +30,22 @@ using ::aidl::test_package::RegularPolygon;
 using ::ndk::ScopedAStatus;
 using ::ndk::SpAIBinder;
 
-class NdkBinderTest_Aidl
-    : public NdkBinderTest,
-      public ::testing::WithParamInterface<std::shared_ptr<ITest>> {};
+struct Params {
+  std::shared_ptr<ITest> iface;
+  bool shouldBeRemote;
+};
 
-#define iface GetParam()
+#define iface GetParam().iface
+#define shouldBeRemote GetParam().shouldBeRemote
+
+class NdkBinderTest_Aidl : public NdkBinderTest,
+                           public ::testing::WithParamInterface<Params> {};
 
 TEST_P(NdkBinderTest_Aidl, GotTest) { ASSERT_NE(nullptr, iface); }
+
+TEST_P(NdkBinderTest_Aidl, Remoteness) {
+  ASSERT_EQ(shouldBeRemote, iface->isRemote());
+}
 
 TEST_P(NdkBinderTest_Aidl, UseBinder) {
   ASSERT_EQ(STATUS_OK, AIBinder_ping(iface->asBinder().get()));
@@ -197,10 +206,13 @@ std::shared_ptr<ITest> getNdkBinderTestJavaService(const std::string& method) {
 }
 
 INSTANTIATE_TEST_CASE_P(Local, NdkBinderTest_Aidl,
-                        ::testing::Values(getLocalService()));
-INSTANTIATE_TEST_CASE_P(
-    RemoteNative, NdkBinderTest_Aidl,
-    ::testing::Values(getNdkBinderTestJavaService("getRemoteNativeService")));
-INSTANTIATE_TEST_CASE_P(
-    RemoteJava, NdkBinderTest_Aidl,
-    ::testing::Values(getNdkBinderTestJavaService("getRemoteJavaService")));
+                        ::testing::Values(Params{getLocalService(),
+                                                 false /*shouldBeRemote*/}));
+INSTANTIATE_TEST_CASE_P(RemoteNative, NdkBinderTest_Aidl,
+                        ::testing::Values(Params{getNdkBinderTestJavaService(
+                                                     "getRemoteNativeService"),
+                                                 true /*shouldBeRemote*/}));
+INSTANTIATE_TEST_CASE_P(RemoteJava, NdkBinderTest_Aidl,
+                        ::testing::Values(Params{
+                            getNdkBinderTestJavaService("getRemoteJavaService"),
+                            true /*shouldBeRemote*/}));
