@@ -20,7 +20,7 @@ import com.android.cts.releaseparser.ReleaseProto.*;
 
 import java.io.File;
 
-public class OdexParser extends FileParser {
+public class OdexParser extends OatParser {
     public OdexParser(File file) {
         super(file);
     }

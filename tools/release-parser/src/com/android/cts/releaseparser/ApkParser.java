@@ -17,28 +17,18 @@
 package com.android.cts.releaseparser;
 
 import com.android.cts.releaseparser.ReleaseProto.*;
-
-import org.jf.dexlib2.DexFileFactory;
-import org.jf.dexlib2.Opcodes;
-import org.jf.dexlib2.ReferenceType;
-import org.jf.dexlib2.dexbacked.DexBackedClassDef;
-import org.jf.dexlib2.dexbacked.DexBackedDexFile;
-import org.jf.dexlib2.dexbacked.DexBackedField;
-import org.jf.dexlib2.dexbacked.DexBackedMethod;
-import org.jf.dexlib2.dexbacked.reference.DexBackedFieldReference;
-import org.jf.dexlib2.dexbacked.reference.DexBackedMethodReference;
-import org.jf.dexlib2.dexbacked.reference.DexBackedTypeReference;
+import com.google.protobuf.TextFormat;
 
 import java.io.File;
-import java.io.IOException;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.stream.Collectors;
+import java.io.FileOutputStream;
+import java.nio.charset.Charset;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
-public class ApkParser extends FileParser {
-    private DexBackedDexFile mDexFile;
-    private Api.Builder mApiBuilder;
+public class ApkParser extends ZipParser {
+    private ApiPackage mExternalApiPackage;
+    private ApiPackage mInternalApiPackage;
+    private AppInfo.Builder mAppInfoBuilder;
 
     public ApkParser(File file) {
         super(file);
@@ -49,198 +39,94 @@ public class ApkParser extends FileParser {
         return Entry.EntryType.APK;
     }
 
-    public Api getApi() {
-        if (mApiBuilder == null) {
-            mApiBuilder = prase();
+    public ApiPackage getExternalApiPackage() {
+        if (mExternalApiPackage == null) {
+            prase();
         }
-        return mApiBuilder.build();
+        return mExternalApiPackage;
     }
 
-    private boolean isInternal(DexBackedTypeReference t) {
-        if (t.getType().length() == 1) {
-            // primitive class
-            return true;
-        } else if (t.getType().charAt(0) == '[') {
-            return true;
+    public ApiPackage getTestCaseApiPackage() {
+        if (mInternalApiPackage == null) {
+            prase();
         }
-        return false;
+        return mInternalApiPackage;
     }
 
-    // [[Lcom/foo/bar/MyClass$Inner; becomes
-    // com.foo.bar.MyClass.Inner[][]
-    // and [[I becomes int[][]
-    private static String toCanonicalName(String name) {
-        int arrayDepth = 0;
-        for (int i = 0; i < name.length(); i++) {
-            if (name.charAt(i) == '[') {
-                arrayDepth++;
-            } else {
-                break;
-            }
+    public AppInfo getAppInfo() {
+        if (mAppInfoBuilder == null) {
+            prase();
         }
-
-        if (name.length() == arrayDepth + 1) {
-            // primitive types
-            name = name.substring(arrayDepth);
-        } else if (name.charAt(arrayDepth) == 'L') {
-            // omit the leading 'L' and the trailing ';'
-            name = name.substring(arrayDepth + 1, name.length() - 1);
-
-            // replace '/' to '.'
-            name = name.replace('/', '.');
-        } else {
-            throw new RuntimeException("Invalid type name " + name);
-        }
-
-        // add []'s, if any
-        if (arrayDepth > 0) {
-            for (int i = 0; i < arrayDepth; i++) {
-                name += "[]";
-            }
-        }
-        return name;
+        return mAppInfoBuilder.build();
     }
 
-    private String getSignature(DexBackedTypeReference f) {
-        return toCanonicalName(f.getType());
+    private void prase() {
+        // todo parse dependencies
+        processManifest();
+        processDex();
+        processZip();
+        getLogger().log(Level.WARNING, "ToDo,parse dependencies," + getFileName());
     }
 
-    private String getSignature(DexBackedClassDef c) {
-        return toCanonicalName(c.getType());
+    private void processManifest() {
+        AndroidManifestParser manifestParser = new AndroidManifestParser(getFile());
+        mAppInfoBuilder = manifestParser.getAppInfoBuilder();
     }
 
-    private String getSignature(DexBackedMethod m) {
-        return toCanonicalName(m.getDefiningClass())
-                + "."
-                + m.getName()
-                + ","
-                + toParametersString(m.getParameterTypes())
-                + ","
-                + toCanonicalName(m.getReturnType());
+    private void processDex() {
+        DexParser dexParser = new DexParser(getFile());
+        dexParser.setPackageName(mAppInfoBuilder.getPackageName());
+        mExternalApiPackage = dexParser.getExternalApiPackage();
+        mAppInfoBuilder.addExternalApiPackages(mExternalApiPackage);
+        mInternalApiPackage = dexParser.getInternalApiPackage();
+        mAppInfoBuilder.addInternalApiPackages(mInternalApiPackage);
     }
 
-    private String getSignature(DexBackedField f) {
-        return toCanonicalName(f.getDefiningClass())
-                + "."
-                + f.getName()
-                + "."
-                + toCanonicalName(f.getType());
-    }
-
-    private String getRefName(DexBackedFieldReference f) {
-        return toCanonicalName(f.getDefiningClass()) + "." + f.getName() + " : " + f.getType();
-    }
-
-    private String getRefName(DexBackedMethodReference m) {
-        return toCanonicalName(m.getDefiningClass())
-                + "."
-                + m.getName()
-                + " : ("
-                + String.join("", m.getParameterTypes())
-                + ")"
-                + m.getReturnType();
-    }
-
-    private String toParametersString(List<String> pList) {
-        return pList.stream().map(p -> toCanonicalName(p)).collect(Collectors.joining(":"));
-    }
-
-    private Api.Builder prase() {
-        Api.Builder apiBuilder = Api.newBuilder();
-        DexBackedDexFile dexFile = null;
-        Map<String, DexBackedClassDef> definedClassesInDex = new HashMap<>();
-        Map<String, DexBackedMethod> definedMethodsInDex = new HashMap<>();
-        Map<String, DexBackedField> definedFieldsInDex = new HashMap<>();
-
-        // Loads a Dex file
-        System.out.println("dexFile: " + getFile().getName());
-        try {
-            dexFile = DexFileFactory.loadDexFile(getFile().getName(), Opcodes.getDefault());
-
-            dexFile.getClasses().stream().forEach(c -> definedClassesInDex.put(c.getType(), c));
-
-            for (DexBackedClassDef clazz : definedClassesInDex.values()) {
-                for (DexBackedField dxField : clazz.getFields()) {
-                    definedFieldsInDex.put(getSignature(dxField), dxField);
-                }
-                for (DexBackedMethod dxMethod : clazz.getMethods()) {
-                    definedMethodsInDex.put(getSignature(dxMethod), dxMethod);
-                }
-            }
-
-            System.out.println("Ext");
-            System.out.println("Classes:");
-            dexFile.getReferences(ReferenceType.TYPE)
-                    .stream()
-                    .map(t -> (DexBackedTypeReference) t)
-                    .filter(t -> !isInternal(t))
-                    .filter(t -> !definedClassesInDex.containsKey(t.getType()))
-                    .forEach(ref -> System.out.println(getSignature(ref)));
-
-            System.out.println("\nFields:");
-            dexFile.getReferences(ReferenceType.FIELD)
-                    .stream()
-                    .map(f -> (DexBackedFieldReference) f)
-                    .filter(f -> !definedClassesInDex.containsKey(f.getDefiningClass()))
-                    .forEach(f -> System.out.println(getRefName(f)));
-
-            System.out.println("\nMethods:");
-            dexFile.getReferences(ReferenceType.METHOD)
-                    .stream()
-                    .map(m -> (DexBackedMethodReference) m)
-                    .filter(m -> !definedClassesInDex.containsKey(m.getDefiningClass()))
-                    .filter(
-                            m ->
-                                    !(m.getDefiningClass().startsWith("[")
-                                            && m.getName().equals("clone")))
-                    .forEach(m -> System.out.println(getRefName(m)));
-
-        } catch (IOException | DexFileFactory.DexFileNotFoundException ex) {
-            System.err.println("Unable to load dex file: " + getFile().getName());
-            // ex.printStackTrace();
-        }
-        return apiBuilder;
+    private void processZip() {
+        mAppInfoBuilder.setPackageFileContent(getPackageFileContent());
     }
 
     private static final String USAGE_MESSAGE =
-            "Usage: java -jar releaseparser.jar com.android.cts.releaseparser.ApkParser [-options] <path> [args...]\n"
-                    + "           to prase an APK for API\n"
+            "Usage: java -jar releaseparser.jar "
+                    + ApkParser.class.getCanonicalName()
+                    + " [-options <parameter>]...\n"
+                    + "           to prase APK file meta data\n"
                     + "Options:\n"
-                    + "\t-i PATH\t APK path \n";
+                    + "\t-i PATH\t The file path of the file to be parsed.\n"
+                    + "\t-of PATH\t The file path of the output file instead of printing to System.out.\n"
+                    + "\t-pi \t Parses internal methods and fields too. Output will be large when parsing multiple files in a release.\n"
+                    + "\t-s \t Skips parsing embedded SO files if it takes too long time.\n";
 
-    /** Get the argument or print out the usage and exit. */
-    private static void printUsage() {
-        System.out.printf(USAGE_MESSAGE);
-        System.exit(1);
-    }
+    public static void main(String[] args) {
+        try {
+            ArgumentParser argParser = new ArgumentParser(args);
+            String fileName = argParser.getParameterElement("i", 0);
+            String outputFileName = argParser.getParameterElement("of", 0);
+            boolean parseSo = !argParser.containsOption("s");
+            boolean parseInternalApi = argParser.containsOption("pi");
 
-    /** Get the argument or print out the usage and exit. */
-    private static String getExpectedArg(String[] args, int index) {
-        if (index < args.length) {
-            return args[index];
-        } else {
-            printUsage();
-            return null; // Never will happen because printUsage will call exit(1)
-        }
-    }
+            File aFile = new File(fileName);
+            ApkParser aParser = new ApkParser(aFile);
+            aParser.setParseSo(parseSo);
+            aParser.setParseInternalApi(parseInternalApi);
 
-    public static void main(String[] args) throws IOException {
-        String apkFileName = null;
-
-        for (int i = 0; i < args.length; i++) {
-            if (args[i].startsWith("-")) {
-                if ("-i".equals(args[i])) {
-                    apkFileName = getExpectedArg(args, ++i);
-                }
+            if (outputFileName != null) {
+                FileOutputStream txtOutput = new FileOutputStream(outputFileName);
+                txtOutput.write(
+                        TextFormat.printToString(aParser.getAppInfo())
+                                .getBytes(Charset.forName("UTF-8")));
+                txtOutput.flush();
+                txtOutput.close();
+            } else {
+                System.out.println(TextFormat.printToString(aParser.getAppInfo()));
             }
+        } catch (Exception ex) {
+            System.out.println(USAGE_MESSAGE);
+            ex.printStackTrace();
         }
+    }
 
-        if (apkFileName == null) {
-            printUsage();
-        }
-
-        File apkFile = new File(apkFileName);
-        ApkParser apkParser = new ApkParser(apkFile);
-        Api api = apkParser.getApi();
+    private static Logger getLogger() {
+        return Logger.getLogger(ApkParser.class.getSimpleName());
     }
 }

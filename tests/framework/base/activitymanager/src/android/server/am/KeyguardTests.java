@@ -18,6 +18,7 @@ package android.server.am;
 
 import static android.app.WindowConfiguration.ACTIVITY_TYPE_STANDARD;
 import static android.app.WindowConfiguration.WINDOWING_MODE_SPLIT_SCREEN_PRIMARY;
+import static android.server.am.ComponentNameUtils.getActivityName;
 import static android.server.am.ComponentNameUtils.getWindowName;
 import static android.server.am.Components.BROADCAST_RECEIVER_ACTIVITY;
 import static android.server.am.Components.DISMISS_KEYGUARD_ACTIVITY;
@@ -228,7 +229,7 @@ public class KeyguardTests extends KeyguardTestBase {
                     // Don't wait for activity visible because keyguard will show.
                     .setWaitForLaunched(false)
                     .setTargetActivity(BROADCAST_RECEIVER_ACTIVITY).execute();
-            mAmWmState.computeState(true);
+            mAmWmState.waitForKeyguardShowingAndNotOccluded();
             mAmWmState.assertKeyguardShowingAndNotOccluded();
 
             mBroadcastActionTrigger.finishBroadcastReceiverActivity();
@@ -356,6 +357,10 @@ public class KeyguardTests extends KeyguardTestBase {
             mAmWmState.assertSanity();
             mAmWmState.assertHomeActivityVisible(false);
             mAmWmState.assertKeyguardShowingAndNotOccluded();
+            // The activity may not be destroyed immediately.
+            mAmWmState.waitForWithAmState(
+                    amState -> !amState.containsActivity(SHOW_WHEN_LOCKED_ACTIVITY),
+                    "Waiting for " + getActivityName(SHOW_WHEN_LOCKED_ACTIVITY) + " to be removed");
             // The {@link SHOW_WHEN_LOCKED_ACTIVITY} has gone because of {@link pressBackButton()}.
             mAmWmState.assertNotExist(SHOW_WHEN_LOCKED_ACTIVITY);
         }
