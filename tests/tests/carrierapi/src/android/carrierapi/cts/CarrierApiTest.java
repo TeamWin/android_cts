@@ -26,6 +26,7 @@ import android.content.pm.PackageInfo;
 import android.content.pm.PackageManager;
 import android.database.Cursor;
 import android.net.Uri;
+import android.os.Build;
 import android.os.Handler;
 import android.os.HandlerThread;
 import android.os.PersistableBundle;
@@ -251,12 +252,11 @@ public class CarrierApiTest extends AndroidTestCase {
     public void testTelephonyApisAreAccessible() {
         if (!hasCellular) return;
         // The following methods may return any value depending on the state of the device. Simply
-        // call them to make sure they do not throw any exceptions.
+        // call them to make sure they do not throw any exceptions. Methods that return a device
+        // identifier are no longer accessible to apps with carrier privileges so those methods are
+        // not included in this test.
         try {
             mTelephonyManager.getDeviceSoftwareVersion();
-            mTelephonyManager.getDeviceId();
-            mTelephonyManager.getImei();
-            mTelephonyManager.getMeid();
             mTelephonyManager.getNai();
             mTelephonyManager.getDataNetworkType();
             mTelephonyManager.getVoiceNetworkType();
@@ -272,22 +272,33 @@ public class CarrierApiTest extends AndroidTestCase {
         } catch (SecurityException e) {
             failMessage();
         }
-        // For APIs which take a slot ID, we should be able to call them without getting a
-        // SecurityException for at last one valid slot ID.
-        // TODO(b/112441100): Simplify this test once slot ID APIs are cleaned up.
-        boolean hasReadableSlot = false;
-        for (int slotIndex = 0; slotIndex < mTelephonyManager.getPhoneCount(); slotIndex++) {
-            try {
-                mTelephonyManager.getDeviceId(slotIndex);
-                mTelephonyManager.getImei(slotIndex);
-                mTelephonyManager.getMeid(slotIndex);
-                hasReadableSlot = true;
-                break;
-            } catch (SecurityException e) {
-                // Move on to the next slot.
-            }
+    }
+
+    public void testDeviceIdentifiersAreNotAccessible() {
+        if (!hasCellular) return;
+        // Apps with carrier privileges should not have access to device identifiers. If an app's
+        // target SDK is less than Q and it has the READ_PHONE_STATE permission or carrier
+        // privileges then a null value is returned, otherwise a SecurityException is thrown. This
+        // test verifies that an app with carrier privileges targeting Q+ receives a
+        // SecurityException when attempting to query for device identifiers.
+        try {
+            mTelephonyManager.getDeviceId();
+            fail("An app targeting Q+ with carrier privileges must receive a SecurityException "
+                    + "when invoking getDeviceId");
+        } catch (SecurityException expected) {
         }
-        assertTrue("Unable to read device identifiers for any slot index", hasReadableSlot);
+        try {
+            mTelephonyManager.getImei();
+            fail("An app targeting Q+ with carrier privileges must receive a SecurityException "
+                    + "when invoking getImei");
+        } catch (SecurityException expected) {
+        }
+        try {
+            mTelephonyManager.getMeid();
+            fail("An app targeting Q+ with carrier privileges must receive a SecurityException "
+                    + "when invoking getMeid");
+        } catch (SecurityException expected) {
+        }
     }
 
     public void testVoicemailTableIsAccessible() throws Exception {

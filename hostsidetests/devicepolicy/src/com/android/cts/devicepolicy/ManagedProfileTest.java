@@ -1199,6 +1199,15 @@ public class ManagedProfileTest extends BaseDevicePolicyTest {
                 "testOppDisabledWhenRestrictionSet", mProfileUserId);
     }
 
+    public void testProfileOwnerCanGetDeviceIdentifiers() throws Exception {
+        // The Profile Owner should have access to all device identifiers.
+        if (!mHasFeature) {
+            return;
+        }
+
+        runDeviceTestsAsUser(MANAGED_PROFILE_PKG, ".DeviceIdentifiersTest", mProfileUserId);
+    }
+
     public void testResetPasswordWithTokenBeforeUnlock() throws Exception {
         if (!mHasFeature || !mSupportsFbe) {
             return;
