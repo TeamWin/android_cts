@@ -827,6 +827,11 @@ public class StagefrightTest extends InstrumentationTestCase {
      ***********************************************************/
 
     @SecurityTest
+    public void testStagefright_bug_70239507() throws Exception {
+        doStagefrightTestExtractorSeek(R.raw.bug_70239507,1311768465173141112L);
+    }
+
+    @SecurityTest
     public void testBug_33250932() throws Exception {
     int[] frameSizes = {65, 11, 102, 414};
     doStagefrightTestRawBlob(R.raw.bug_33250932_avc, "video/avc", 640, 480, frameSizes);
@@ -1768,5 +1773,69 @@ public class StagefrightTest extends InstrumentationTestCase {
         assertTrue("Device *IS* vulnerable to " + cve, mpl.waitForErrorOrCompletion());
         t.stopLooper();
         t.join(); // wait for thread to exit so we're sure the player was released
+    }
+
+    private void doStagefrightTestExtractorSeek(final int rid, final long offset) throws Exception {
+        final MediaPlayerCrashListener mpcl = new MediaPlayerCrashListener();
+        LooperThread thr = new LooperThread(new Runnable() {
+            @Override
+            public void run() {
+                MediaPlayer mp = new MediaPlayer();
+                mp.setOnErrorListener(mpcl);
+                try {
+                    AssetFileDescriptor fd = getInstrumentation().getContext().getResources()
+                        .openRawResourceFd(R.raw.good);
+                    mp.setDataSource(fd.getFileDescriptor(),
+                                     fd.getStartOffset(),
+                                     fd.getLength());
+                    fd.close();
+                } catch (Exception e) {
+                    fail("setDataSource of known-good file failed");
+                }
+                synchronized(mpcl) {
+                    mpcl.notify();
+                }
+                Looper.loop();
+                mp.release();
+            }
+        });
+        thr.start();
+        synchronized(mpcl) {
+            mpcl.wait();
+        }
+        Resources resources =  getInstrumentation().getContext().getResources();
+        MediaExtractor ex = new MediaExtractor();
+        AssetFileDescriptor fd = resources.openRawResourceFd(rid);
+        try {
+            ex.setDataSource(fd.getFileDescriptor(), fd.getStartOffset(), fd.getLength());
+        } catch (IOException e) {
+        } finally {
+            closeQuietly(fd);
+        }
+        int numtracks = ex.getTrackCount();
+        String rname = resources.getResourceEntryName(rid);
+        Log.i(TAG, "start mediaextractor test for: " + rname + ", which has " + numtracks + " tracks");
+        for (int t = 0; t < numtracks; t++) {
+            try {
+                ex.selectTrack(t);
+            } catch (IllegalArgumentException e) {
+                Log.w(TAG, "couldn't select track " + t);
+            }
+            ex.seekTo(0, MediaExtractor.SEEK_TO_CLOSEST_SYNC);
+            ex.advance();
+            ex.seekTo(offset, MediaExtractor.SEEK_TO_NEXT_SYNC);
+            try
+            {
+                ex.unselectTrack(t);
+            }
+            catch (Exception e) {
+            }
+        }
+        ex.release();
+        String cve = rname.replace("_", "-").toUpperCase();
+        assertFalse("Device *IS* vulnerable to " + cve,
+                    mpcl.waitForError() == MediaPlayer.MEDIA_ERROR_SERVER_DIED);
+        thr.stopLooper();
+        thr.join();
     }
 }
