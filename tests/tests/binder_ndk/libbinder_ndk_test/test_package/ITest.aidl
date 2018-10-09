@@ -48,4 +48,7 @@ interface ITest {
     String RepeatString(String value);
 
     RegularPolygon RepeatPolygon(in RegularPolygon value);
+
+    // Testing inout
+    void RenamePolygon(inout RegularPolygon value, String newName);
 }
