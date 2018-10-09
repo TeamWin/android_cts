@@ -153,6 +153,12 @@ TEST_P(NdkBinderTest_Aidl, RepeatPolygon) {
   EXPECT_EQ(defaultPolygon.sideLength, outputPolygon.sideLength);
 }
 
+TEST_P(NdkBinderTest_Aidl, InsAndOuts) {
+  RegularPolygon defaultPolygon;
+  ASSERT_OK(iface->RenamePolygon(&defaultPolygon, "Jerry"));
+  EXPECT_EQ("Jerry", defaultPolygon.name);
+}
+
 std::shared_ptr<ITest> getLocalService() {
   // BpTest -> AIBinder -> test
   std::shared_ptr<MyTest> test = (new MyTest)->ref<MyTest>();

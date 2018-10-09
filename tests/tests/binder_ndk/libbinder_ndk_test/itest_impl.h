@@ -87,4 +87,9 @@ class MyTest : public ::aidl::test_package::BnTest,
     *_aidl_return = in_value;
     return ::ndk::ScopedAStatus(AStatus_newOk());
   }
+  ::ndk::ScopedAStatus RenamePolygon(RegularPolygon* value,
+                                     const std::string& newName) override {
+    value->name = newName;
+    return ::ndk::ScopedAStatus(AStatus_newOk());
+  }
 };
