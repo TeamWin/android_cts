@@ -42,6 +42,8 @@ import android.system.Os;
 import android.util.DisplayMetrics;
 import android.util.TypedValue;
 
+import com.android.compatibility.common.util.CddTest;
+
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -725,6 +727,43 @@ public class BitmapFactoryTest {
         options.inSampleSize = 19;
         Bitmap bm = BitmapFactory.decodeResource(mRes, R.raw.b78329453, options);
         assertNotNull(bm);
+    }
+
+    private static final class DNG {
+        public final int resId;
+        public final int width;
+        public final int height;
+
+        DNG(int resId, int width, int height) {
+            this.resId    = resId;
+            this.width    = width;
+            this.height   = height;
+        }
+    }
+
+    @Test
+    @CddTest(requirement = "5.1.5/C-0-6")
+    public void testDng() {
+        DNG[] dngs = new DNG[]{
+            new DNG(R.raw.sample_1mp, 600, 338),
+            new DNG(R.raw.sample_arw, 1616, 1080),
+            new DNG(R.raw.sample_cr2, 2304, 1536),
+            new DNG(R.raw.sample_nef, 4608, 3072),
+            new DNG(R.raw.sample_nrw, 4000, 3000),
+            new DNG(R.raw.sample_orf, 3200, 2400),
+            new DNG(R.raw.sample_pef, 4928, 3264),
+            new DNG(R.raw.sample_raf, 2048, 1536),
+            new DNG(R.raw.sample_rw2, 1920, 1440),
+            new DNG(R.raw.sample_srw, 5472, 3648),
+        };
+
+        for (DNG dng : dngs) {
+            // No scaling
+            Bitmap bm = BitmapFactory.decodeResource(mRes, dng.resId, mOpt1);
+            assertNotNull(bm);
+            assertEquals(dng.width, bm.getWidth());
+            assertEquals(dng.height, bm.getHeight());
+        }
     }
 
     @Test
