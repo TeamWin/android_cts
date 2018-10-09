@@ -16,6 +16,7 @@
 
 package android.signature.cts;
 
+import android.util.Log;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.Executable;
 import java.lang.reflect.Field;
@@ -24,6 +25,7 @@ import java.lang.reflect.Method;
 import java.util.List;
 
 public class DexMemberChecker {
+    public static final String TAG = "DexMemberChecker";
 
     public interface Observer {
         void classAccessible(boolean accessible, DexMember member);
@@ -85,17 +87,39 @@ public class DexMemberChecker {
             observer.fieldAccessibleViaReflection(
                     hasMatchingField_Reflection(klass, field),
                     field);
-            observer.fieldAccessibleViaJni(
-                    hasMatchingField_JNI(klass, field),
-                    field);
+            try {
+                observer.fieldAccessibleViaJni(
+                        hasMatchingField_JNI(klass, field),
+                        field);
+            } catch (ExceptionInInitializerError | UnsatisfiedLinkError | NoClassDefFoundError e) {
+                if ((e instanceof NoClassDefFoundError)
+                        && !(e.getCause() instanceof ExceptionInInitializerError)
+                        && !(e.getCause() instanceof UnsatisfiedLinkError)) {
+                    throw e;
+                }
+
+                // Could not initialize the class. Skip JNI test.
+                Log.w(TAG, "JNI failed for " + dexMember.toString(), e);
+            }
         } else if (dexMember instanceof DexMethod) {
             DexMethod method = (DexMethod) dexMember;
             observer.methodAccessibleViaReflection(
                     hasMatchingMethod_Reflection(klass, method),
                     method);
-            observer.methodAccessibleViaJni(
-                    hasMatchingMethod_JNI(klass, method),
-                    method);
+            try {
+                observer.methodAccessibleViaJni(
+                        hasMatchingMethod_JNI(klass, method),
+                        method);
+            } catch (ExceptionInInitializerError | UnsatisfiedLinkError | NoClassDefFoundError e) {
+                if ((e instanceof NoClassDefFoundError)
+                        && !(e.getCause() instanceof ExceptionInInitializerError)
+                        && !(e.getCause() instanceof UnsatisfiedLinkError)) {
+                    throw e;
+                }
+
+                // Could not initialize the class. Skip JNI test.
+                Log.w(TAG, "JNI failed for " + dexMember.toString(), e);
+            }
         } else {
             throw new IllegalStateException("Unexpected type of dex member");
         }
@@ -134,10 +158,25 @@ public class DexMemberChecker {
     }
 
     private static boolean hasMatchingField_JNI(Class<?> klass, DexField dexField) {
-        Field ifield = getField_JNI(klass, dexField.getName(), dexField.getDexType());
-        Field sfield = getStaticField_JNI(klass, dexField.getName(), dexField.getDexType());
-        return (ifield != null && ifield.getDeclaringClass() == klass) ||
-               (sfield != null && sfield.getDeclaringClass() == klass);
+        try {
+            Field ifield = getField_JNI(klass, dexField.getName(), dexField.getDexType());
+            if (ifield.getDeclaringClass() == klass) {
+              return true;
+            }
+        } catch (NoSuchFieldError e) {
+            // Not found.
+        }
+
+        try {
+            Field sfield = getStaticField_JNI(klass, dexField.getName(), dexField.getDexType());
+            if (sfield.getDeclaringClass() == klass) {
+              return true;
+            }
+        } catch (NoSuchFieldError e) {
+            // Not found.
+        }
+
+        return false;
     }
 
     private static boolean hasMatchingMethod_Reflection(Class<?> klass, DexMethod dexMethod) {
@@ -163,11 +202,29 @@ public class DexMemberChecker {
     }
 
     private static boolean hasMatchingMethod_JNI(Class<?> klass, DexMethod dexMethod) {
-        Executable imethod = getMethod_JNI(klass, dexMethod.getName(), dexMethod.getDexSignature());
-        Executable smethod = dexMethod.isConstructor() ? null :
-             getStaticMethod_JNI(klass, dexMethod.getName(), dexMethod.getDexSignature());
-        return (imethod != null && imethod.getDeclaringClass() == klass) ||
-               (smethod != null && smethod.getDeclaringClass() == klass);
+        try {
+            Executable imethod = getMethod_JNI(
+                klass, dexMethod.getName(), dexMethod.getDexSignature());
+            if (imethod.getDeclaringClass() == klass) {
+                return true;
+            }
+        } catch (NoSuchMethodError e) {
+            // Not found.
+        }
+
+        if (!dexMethod.isConstructor()) {
+            try {
+                Executable smethod =
+                    getStaticMethod_JNI(klass, dexMethod.getName(), dexMethod.getDexSignature());
+                if (smethod.getDeclaringClass() == klass) {
+                    return true;
+                }
+            } catch (NoSuchMethodError e) {
+                // Not found.
+            }
+        }
+
+        return false;
     }
 
     private static native Field getField_JNI(Class<?> klass, String name, String type);
