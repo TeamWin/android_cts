@@ -15,6 +15,7 @@
  */
 package android.media.cts;
 
+import android.content.Context;
 import android.media.BufferingParams;
 import android.media.DataSourceDesc;
 import android.media.MediaFormat;
@@ -696,6 +697,7 @@ public class StreamingMediaPlayer2Test extends MediaPlayer2TestBase {
     }
 
     private static class WorkerWithPlayer implements Runnable {
+        private Context mContext;
         private final Object mLock = new Object();
         private Looper mLooper;
         private MediaPlayer2 mPlayer;
@@ -705,7 +707,8 @@ public class StreamingMediaPlayer2Test extends MediaPlayer2TestBase {
          * then runs a {@link android.os.Looper}.
          * @param name A name for the new thread
          */
-        WorkerWithPlayer(String name) {
+        WorkerWithPlayer(Context context, String name) {
+            mContext = context;
             Thread t = new Thread(null, this, name);
             t.setPriority(Thread.MIN_PRIORITY);
             t.start();
@@ -728,7 +731,7 @@ public class StreamingMediaPlayer2Test extends MediaPlayer2TestBase {
             synchronized (mLock) {
                 Looper.prepare();
                 mLooper = Looper.myLooper();
-                mPlayer = MediaPlayer2.create();
+                mPlayer = MediaPlayer2.create(mContext);
                 mLock.notifyAll();
             }
             Looper.loop();
@@ -747,7 +750,7 @@ public class StreamingMediaPlayer2Test extends MediaPlayer2TestBase {
 
         mServer = new CtsTestServer(mContext);
 
-        WorkerWithPlayer worker = new WorkerWithPlayer("player");
+        WorkerWithPlayer worker = new WorkerWithPlayer(mContext, "player");
         final MediaPlayer2 mp = worker.getPlayer();
 
         try {

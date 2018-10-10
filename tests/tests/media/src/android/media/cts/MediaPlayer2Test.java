@@ -2281,7 +2281,7 @@ public class MediaPlayer2Test extends MediaPlayer2TestBase {
             recordMedia(outputFileLocation);
 
             Uri uri = Uri.parse(outputFileLocation);
-            MediaPlayer2 mp = MediaPlayer2.create();
+            MediaPlayer2 mp = MediaPlayer2.create(mContext);
             try {
                 mp.setDataSource(new DataSourceDesc.Builder()
                         .setDataSource(mContext, uri)
