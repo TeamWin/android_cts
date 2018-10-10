@@ -93,30 +93,33 @@ public class SecurityTestCase extends DeviceTestCase {
      */
     @Override
     public void tearDown() throws Exception {
-        getDevice().waitForDeviceAvailable(120 * 1000);
-        String uptime = getDevice().executeShellCommand("cat /proc/uptime");
-        assertTrue("Phone has had a hard reset",
-            (System.currentTimeMillis()/1000 -
-                Integer.parseInt(uptime.substring(0, uptime.indexOf('.')))
-                    - kernelStartTime < 2));
-        //TODO(badash@): add ability to catch runtime restart
-        getDevice().disableAdbRoot();
+        try {
+            getDevice().waitForDeviceAvailable(120 * 1000);
+            String uptime = getDevice().executeShellCommand("cat /proc/uptime");
+            assertTrue("Phone has had a hard reset",
+                (System.currentTimeMillis()/1000 -
+                    Integer.parseInt(uptime.substring(0, uptime.indexOf('.')))
+                        - kernelStartTime < 2));
+            //TODO(badash@): add ability to catch runtime restart
+            getDevice().disableAdbRoot();
 
-        if (oomCatcher.isOomDetected()) {
-            switch (oomCatcher.getOomBehavior()) {
-                case FAIL_AND_LOG:
-                    fail("The device ran out of memory.");
-                    return;
-                case PASS_AND_LOG:
-                    Log.logAndDisplay(Log.LogLevel.INFO, LOG_TAG, "Skipping test.");
-                    return;
-                case FAIL_NO_LOG:
-                    fail();
-                    return;
+            if (oomCatcher.isOomDetected()) {
+                switch (oomCatcher.getOomBehavior()) {
+                    case FAIL_AND_LOG:
+                        fail("The device ran out of memory.");
+                        return;
+                    case PASS_AND_LOG:
+                        Log.logAndDisplay(Log.LogLevel.INFO, LOG_TAG, "Skipping test.");
+                        return;
+                    case FAIL_NO_LOG:
+                        fail();
+                        return;
+                }
             }
-        }
 
-        oomCatcher.stop(getDevice().getSerialNumber());
+        } finally {
+            oomCatcher.stop(getDevice().getSerialNumber());
+        }
     }
 
     public void assertMatches(String pattern, String input) throws Exception {
