@@ -2,6 +2,23 @@ name: "android.test.runner.odex"
 type: ODEX
 size: 17392
 content_id: "CZnRjQmCUjBNQi6p3iiIsh4RUzzCTbdjstEoNhcbD3E="
+code_id: "e5468a50,"
+dependencies: "system/framework/arm64/boot.art"
+dependencies: "system/framework/arm64/boot-core-libart.art"
+dependencies: "system/framework/arm64/boot-conscrypt.art"
+dependencies: "system/framework/arm64/boot-okhttp.art"
+dependencies: "system/framework/arm64/boot-bouncycastle.art"
+dependencies: "system/framework/arm64/boot-apache-xml.art"
+dependencies: "system/framework/arm64/boot-ext.art"
+dependencies: "system/framework/arm64/boot-framework.art"
+dependencies: "system/framework/arm64/boot-telephony-common.art"
+dependencies: "system/framework/arm64/boot-voip-common.art"
+dependencies: "system/framework/arm64/boot-ims-common.art"
+dependencies: "system/framework/arm64/boot-android.hidl.base-V1.0-java.art"
+dependencies: "system/framework/arm64/boot-android.hidl.manager-V1.0-java.art"
+dependencies: "system/framework/arm64/boot-framework-oahl-backward-compatibility.art"
+dependencies: "system/framework/arm64/boot-android.test.base.art"
+dependencies: "system/framework/arm64/boot-com.google.vr.platform.art"
 oat_info {
   version: "138\000"
   adler32_checksum: 1475110939
@@ -51,6 +68,14 @@ oat_info {
   key_value_store {
     key: "dex2oat-cmdline"
     value: "out/host/linux-x86/bin/dex2oatd --runtime-arg -Xms64m --runtime-arg -Xmx512m --class-loader-context=& --boot-image=out/target/product/sailfish/dex_bootjars/system/framework/boot.art --dex-file=out/target/common/obj/JAVA_LIBRARIES/android.test.runner_intermediates/javalib.jar --dex-location=/system/framework/android.test.runner.jar --oat-file=out/target/product/sailfish/obj/JAVA_LIBRARIES/android.test.runner_intermediates/oat/arm64/javalib.odex --android-root=out/target/product/sailfish/system --instruction-set=arm64 --instruction-set-variant=kryo --instruction-set-features=default --runtime-arg -Xnorelocate --compile-pic --no-generate-debug-info --generate-build-id --abort-on-hard-verifier-error --force-determinism --no-inline-from=core-oj.jar --compiler-filter=quicken --generate-mini-debug-info --compilation-reason=prebuilt"
+  }
+  oat_dex_info {
+    dex_file_location_data: "/system/framework/android.test.runner.jar"
+    dex_file_location_checksum: 3846605392
+    dex_file_offset: 40
+    lookup_table_offset: 3108
+    class_offsets_offset: 2516
+    method_bss_mapping_offset: 3028
   }
   valid: true
   bits: 64

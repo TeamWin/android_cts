@@ -47,6 +47,14 @@ public class ArtParser extends FileParser {
         getFileEntryBuilder().setArtInfo(getArtInfo());
     }
 
+    @Override
+    public String getCodeId() {
+        if (mArtInfoBuilder == null) {
+            parse();
+        }
+        return mCodeId;
+    }
+
     public ArtInfo getArtInfo() {
         if (mArtInfoBuilder == null) {
             parse();
@@ -83,8 +91,12 @@ public class ArtParser extends FileParser {
             offset += 4;
             mArtInfoBuilder.setImageSize(getIntLittleEndian(buffer, offset));
             offset += 4;
-            mArtInfoBuilder.setOatChecksum(getIntLittleEndian(buffer, offset));
+
+            int oatChecksum = getIntLittleEndian(buffer, offset);
             offset += 4;
+            mArtInfoBuilder.setOatChecksum(oatChecksum);
+            mCodeId = String.format("%x", oatChecksum);
+
             mArtInfoBuilder.setOatFileBegin(getIntLittleEndian(buffer, offset));
             offset += 4;
             mArtInfoBuilder.setOatDataBegin(getIntLittleEndian(buffer, offset));

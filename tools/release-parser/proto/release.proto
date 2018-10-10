@@ -227,6 +227,24 @@ message ArtInfo {
     uint32 data_size = 22;
 }
 
+// art/dex2oat/linker/oat_writer.cc OatDexFile
+message OatDexInfo {
+    string dex_file_location_data = 1;
+    // The checksum of the dex file.
+    uint32 dex_file_location_checksum = 2;
+    // Offset of the dex file in the vdex file.
+    uint32 dex_file_offset = 3;
+    // The lookup table offset in the oat file. Set in WriteTypeLookupTables.
+    uint32 lookup_table_offset = 4;
+    // Class and BSS offsets set in PrepareLayout.
+    uint32 class_offsets_offset = 5;
+    uint32 method_bss_mapping_offset = 6;
+    uint32 type_bss_mapping_offset = 7;
+    uint32 string_bss_mapping_offset = 8;
+    // Offset of dex sections that will have different runtime madvise states.
+    uint32 dex_sections_layout_offset = 9;
+}
+
 // art/runtime/oat.h
 message OatInfo {
     // skip magic_[4]
@@ -258,10 +276,10 @@ message OatInfo {
 
     // int8_t key_value_store_[0];
     map<string, string> key_value_store = 19;
-
-    bool valid = 20;
-    int32 bits = 21;
-    string architecture = 22;
+    repeated OatDexInfo oat_dex_info = 20;
+    bool valid = 21;
+    int32 bits = 22;
+    string architecture = 23;
 }
 
 message DexSectionHeader {
