@@ -1070,23 +1070,23 @@ public class StaticLayoutTest {
         state.assertEquals("| U+00A9 U+FE0E U+00A9 U+FE0F U+00A9 U+FE0E");
 
         // Keycap + variation selector
-        state.setByString("| '1' U+FE0E U+20E3 '1' U+FE0E U+20E3 '1' U+FE0E U+20E3");
+        state.setByString("| '1' U+FE0F U+20E3 '1' U+FE0F U+20E3 '1' U+FE0F U+20E3");
         moveCursorToRightCursorableOffset(state);
-        state.assertEquals("'1' U+FE0E U+20E3 | '1' U+FE0E U+20E3 '1' U+FE0E U+20E3");
+        state.assertEquals("'1' U+FE0F U+20E3 | '1' U+FE0F U+20E3 '1' U+FE0F U+20E3");
         moveCursorToRightCursorableOffset(state);
-        state.assertEquals("'1' U+FE0E U+20E3 '1' U+FE0E U+20E3 | '1' U+FE0E U+20E3");
+        state.assertEquals("'1' U+FE0F U+20E3 '1' U+FE0F U+20E3 | '1' U+FE0F U+20E3");
         moveCursorToRightCursorableOffset(state);
-        state.assertEquals("'1' U+FE0E U+20E3 '1' U+FE0E U+20E3 '1' U+FE0E U+20E3 |");
+        state.assertEquals("'1' U+FE0F U+20E3 '1' U+FE0F U+20E3 '1' U+FE0F U+20E3 |");
         moveCursorToRightCursorableOffset(state);
-        state.assertEquals("'1' U+FE0E U+20E3 '1' U+FE0E U+20E3 '1' U+FE0E U+20E3 |");
+        state.assertEquals("'1' U+FE0F U+20E3 '1' U+FE0F U+20E3 '1' U+FE0F U+20E3 |");
         moveCursorToLeftCursorableOffset(state);
-        state.assertEquals("'1' U+FE0E U+20E3 '1' U+FE0E U+20E3 | '1' U+FE0E U+20E3");
+        state.assertEquals("'1' U+FE0F U+20E3 '1' U+FE0F U+20E3 | '1' U+FE0F U+20E3");
         moveCursorToLeftCursorableOffset(state);
-        state.assertEquals("'1' U+FE0E U+20E3 | '1' U+FE0E U+20E3 '1' U+FE0E U+20E3");
+        state.assertEquals("'1' U+FE0F U+20E3 | '1' U+FE0F U+20E3 '1' U+FE0F U+20E3");
         moveCursorToLeftCursorableOffset(state);
-        state.assertEquals("| '1' U+FE0E U+20E3 '1' U+FE0E U+20E3 '1' U+FE0E U+20E3");
+        state.assertEquals("| '1' U+FE0F U+20E3 '1' U+FE0F U+20E3 '1' U+FE0F U+20E3");
         moveCursorToLeftCursorableOffset(state);
-        state.assertEquals("| '1' U+FE0E U+20E3 '1' U+FE0E U+20E3 '1' U+FE0E U+20E3");
+        state.assertEquals("| '1' U+FE0F U+20E3 '1' U+FE0F U+20E3 '1' U+FE0F U+20E3");
 
         // Flags
         // U+1F1E6 U+1F1E8 is Ascension Island flag.
