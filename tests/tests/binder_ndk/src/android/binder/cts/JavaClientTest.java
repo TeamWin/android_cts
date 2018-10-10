@@ -68,6 +68,12 @@ public class JavaClientTest {
     }
 
     @Test
+    public void testTrivial() throws RemoteException {
+        mInterface.TestVoidReturn();
+        mInterface.TestOneway();
+    }
+
+    @Test
     public void testRepeatPrimitives() throws RemoteException {
         assertEquals(1, mInterface.RepeatInt(1));
         assertEquals(2, mInterface.RepeatLong(2));
@@ -119,5 +125,12 @@ public class JavaClientTest {
         assertEquals(polygon.name, result.name);
         assertEquals(polygon.numSides, result.numSides);
         assertEquals(polygon.sideLength, result.sideLength, 0.0f);
+    }
+
+    @Test
+    public void testInsAndOuts() throws RemoteException {
+        RegularPolygon polygon = new RegularPolygon();
+        mInterface.RenamePolygon(polygon, "Jerry");
+        assertEquals("Jerry", polygon.name);
     }
 }

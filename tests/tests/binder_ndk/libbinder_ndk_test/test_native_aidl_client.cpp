@@ -27,22 +27,35 @@
 using ::aidl::test_package::BpTest;
 using ::aidl::test_package::ITest;
 using ::aidl::test_package::RegularPolygon;
-using ::android::AutoAIBinder;
-using ::android::AutoAStatus;
+using ::ndk::ScopedAStatus;
+using ::ndk::SharedRefBase;
+using ::ndk::SpAIBinder;
 
-class NdkBinderTest_Aidl
-    : public NdkBinderTest,
-      public ::testing::WithParamInterface<std::shared_ptr<ITest>> {};
+struct Params {
+  std::shared_ptr<ITest> iface;
+  bool shouldBeRemote;
+};
 
-#define iface GetParam()
+#define iface GetParam().iface
+#define shouldBeRemote GetParam().shouldBeRemote
+
+class NdkBinderTest_Aidl : public NdkBinderTest,
+                           public ::testing::WithParamInterface<Params> {};
 
 TEST_P(NdkBinderTest_Aidl, GotTest) { ASSERT_NE(nullptr, iface); }
+
+TEST_P(NdkBinderTest_Aidl, Remoteness) {
+  ASSERT_EQ(shouldBeRemote, iface->isRemote());
+}
 
 TEST_P(NdkBinderTest_Aidl, UseBinder) {
   ASSERT_EQ(STATUS_OK, AIBinder_ping(iface->asBinder().get()));
 }
 
-TEST_P(NdkBinderTest_Aidl, Oneway) { ASSERT_OK(iface->TestOneway()); }
+TEST_P(NdkBinderTest_Aidl, Trivial) {
+  ASSERT_OK(iface->TestVoidReturn());
+  ASSERT_OK(iface->TestOneway());
+}
 
 TEST_P(NdkBinderTest_Aidl, Constants) {
   ASSERT_EQ(0, ITest::kZero);
@@ -97,8 +110,8 @@ TEST_P(NdkBinderTest_Aidl, RepeatPrimitives) {
 }
 
 TEST_P(NdkBinderTest_Aidl, RepeatBinder) {
-  AutoAIBinder binder = iface->asBinder();
-  AutoAIBinder ret;
+  SpAIBinder binder = iface->asBinder();
+  SpAIBinder ret;
 
   ASSERT_OK(iface->RepeatBinder(binder, &ret));
   EXPECT_EQ(binder.get(), ret.get());
@@ -110,7 +123,7 @@ TEST_P(NdkBinderTest_Aidl, RepeatBinder) {
 TEST_P(NdkBinderTest_Aidl, RepeatInterface) {
   class MyEmpty : public ::aidl::test_package::BnEmpty {};
 
-  std::shared_ptr<IEmpty> empty = (new MyEmpty)->ref<IEmpty>();
+  std::shared_ptr<IEmpty> empty = SharedRefBase::make<MyEmpty>();
 
   std::shared_ptr<IEmpty> ret;
   ASSERT_OK(iface->RepeatInterface(empty, &ret));
@@ -150,9 +163,15 @@ TEST_P(NdkBinderTest_Aidl, RepeatPolygon) {
   EXPECT_EQ(defaultPolygon.sideLength, outputPolygon.sideLength);
 }
 
+TEST_P(NdkBinderTest_Aidl, InsAndOuts) {
+  RegularPolygon defaultPolygon;
+  ASSERT_OK(iface->RenamePolygon(&defaultPolygon, "Jerry"));
+  EXPECT_EQ("Jerry", defaultPolygon.name);
+}
+
 std::shared_ptr<ITest> getLocalService() {
   // BpTest -> AIBinder -> test
-  std::shared_ptr<MyTest> test = (new MyTest)->ref<MyTest>();
+  std::shared_ptr<MyTest> test = SharedRefBase::make<MyTest>();
   return BpTest::associate(test->asBinder());
 }
 
@@ -182,16 +201,19 @@ std::shared_ptr<ITest> getNdkBinderTestJavaService(const std::string& method) {
     return nullptr;
   }
 
-  AutoAIBinder binder = AutoAIBinder(AIBinder_fromJavaBinder(env, object));
+  SpAIBinder binder = SpAIBinder(AIBinder_fromJavaBinder(env, object));
 
   return BpTest::associate(binder);
 }
 
 INSTANTIATE_TEST_CASE_P(Local, NdkBinderTest_Aidl,
-                        ::testing::Values(getLocalService()));
-INSTANTIATE_TEST_CASE_P(
-    RemoteNative, NdkBinderTest_Aidl,
-    ::testing::Values(getNdkBinderTestJavaService("getRemoteNativeService")));
-INSTANTIATE_TEST_CASE_P(
-    RemoteJava, NdkBinderTest_Aidl,
-    ::testing::Values(getNdkBinderTestJavaService("getRemoteJavaService")));
+                        ::testing::Values(Params{getLocalService(),
+                                                 false /*shouldBeRemote*/}));
+INSTANTIATE_TEST_CASE_P(RemoteNative, NdkBinderTest_Aidl,
+                        ::testing::Values(Params{getNdkBinderTestJavaService(
+                                                     "getRemoteNativeService"),
+                                                 true /*shouldBeRemote*/}));
+INSTANTIATE_TEST_CASE_P(RemoteJava, NdkBinderTest_Aidl,
+                        ::testing::Values(Params{
+                            getNdkBinderTestJavaService("getRemoteJavaService"),
+                            true /*shouldBeRemote*/}));

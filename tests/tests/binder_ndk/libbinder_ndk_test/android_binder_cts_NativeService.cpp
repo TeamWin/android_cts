@@ -20,12 +20,13 @@
 #include "itest_impl.h"
 
 using ::aidl::test_package::ITest;
-using ::android::AutoAIBinder;
+using ::ndk::SharedRefBase;
+using ::ndk::SpAIBinder;
 
 extern "C" JNIEXPORT jobject JNICALL
 Java_android_binder_cts_NativeService_getBinder_1native(JNIEnv* env) {
   // The ref owns the MyTest, and the binder owns the ref.
-  AutoAIBinder binder = (new MyTest)->ref<MyTest>()->asBinder();
+  SpAIBinder binder = SharedRefBase::make<MyTest>()->asBinder();
 
   // And the Java object owns the binder
   return AIBinder_toJavaBinder(env, binder.get());

@@ -29,7 +29,7 @@ template <typename T>
 static inline ::testing::AssertionResult isOk(T) = delete;
 
 template <>
-inline ::testing::AssertionResult isOk(::android::AutoAStatus t) {
+inline ::testing::AssertionResult isOk(::ndk::ScopedAStatus t) {
   if (AStatus_isOk(t.get())) {
     return ::testing::AssertionSuccess();
   } else {
