@@ -437,11 +437,13 @@ public class ActivityManagerTest extends InstrumentationTestCase {
      * lifetime tests.
      */
     private void launchHome() throws Exception {
-        Intent intent = new Intent(Intent.ACTION_MAIN);
-        intent.addCategory(Intent.CATEGORY_HOME);
-        intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
-        mContext.startActivity(intent);
-        Thread.sleep(WAIT_TIME);
+        if (!noHomeScreen()) {
+            Intent intent = new Intent(Intent.ACTION_MAIN);
+            intent.addCategory(Intent.CATEGORY_HOME);
+            intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+            mContext.startActivity(intent);
+            Thread.sleep(WAIT_TIME);
+        }
     }
 
    /**
