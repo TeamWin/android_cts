@@ -832,6 +832,12 @@ public class StagefrightTest extends InstrumentationTestCase {
      ***********************************************************/
 
     @SecurityTest
+    public void testBug_33250932() throws Exception {
+    int[] frameSizes = {65, 11, 102, 414};
+    doStagefrightTestRawBlob(R.raw.bug_33250932_avc, "video/avc", 640, 480, frameSizes);
+    }
+
+    @SecurityTest
     public void testStagefright_bug_37430213() throws Exception {
     doStagefrightTest(R.raw.bug_37430213);
     }
