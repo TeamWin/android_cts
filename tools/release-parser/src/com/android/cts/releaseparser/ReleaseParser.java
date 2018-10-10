@@ -124,29 +124,18 @@ class ReleaseParser {
             if (file.isFile()) {
                 String fileRelativePath =
                         mRootPath.relativize(Paths.get(file.getAbsolutePath())).toString();
-                Entry.Builder fileEntry = Entry.newBuilder();
-                fileEntry.setName(file.getName());
-                fileEntry.setSize(file.length());
-                fileEntry.setRelativePath(fileRelativePath);
+                FileParser fParser = FileParser.getParser(file);
+                Entry.Builder fileEntryBuilder = fParser.getFileEntryBuilder();
+                fileEntryBuilder.setRelativePath(fileRelativePath);
 
                 if (folderRelativePath.isEmpty()) {
-                    fileEntry.setParentFolder(ROOT_FOLDER_TAG);
+                    fileEntryBuilder.setParentFolder(ROOT_FOLDER_TAG);
                 } else {
-                    fileEntry.setParentFolder(folderRelativePath);
+                    fileEntryBuilder.setParentFolder(folderRelativePath);
                 }
 
-                FileParser fParser = FileParser.getParser(file);
-                fileEntry.setContentId(fParser.getFileContentId());
-                fileEntry.setCodeId(fParser.getCodeId());
-
                 Entry.EntryType eType = fParser.getType();
-
-                fileEntry.setType(eType);
                 switch (eType) {
-                    case TEST_MODULE_CONFIG:
-                        TestModuleConfigParser tmcParser = (TestModuleConfigParser) fParser;
-                        fileEntry.setTestModuleConfig(tmcParser.getTestModuleConfig());
-                        break;
                     case TEST_SUITE_TRADEFED:
                         mRelContentBuilder.setTestSuiteTradefed(fileRelativePath);
                         TestSuiteTradefedParser tstParser = (TestSuiteTradefedParser) fParser;
@@ -174,51 +163,20 @@ class ReleaseParser {
                                             + e.getMessage());
                         }
                         break;
-                    case RC:
-                        RcParser rcParser = (RcParser) fParser;
-                        fileEntry.addAllServices(rcParser.getServiceList());
-                        break;
-                    case APK:
-                        ApkParser apkParser = (ApkParser) fParser;
-                        fileEntry.setAppInfo(apkParser.getAppInfo());
-                        break;
-                    case ART:
-                        ArtParser artParser = (ArtParser) fParser;
-                        fileEntry.setArtInfo(artParser.getArtInfo());
-                        break;
-                    case OAT:
-                        OatParser oatParser = (OatParser) fParser;
-                        fileEntry.setOatInfo(oatParser.getOatInfo());
-                        break;
-                    case ODEX:
-                        OdexParser odexParser = (OdexParser) fParser;
-                        fileEntry.setOatInfo(odexParser.getOatInfo());
-                        break;
-                    case VDEX:
-                        VdexParser vdexParser = (VdexParser) fParser;
-                        fileEntry.setVdexInfo(vdexParser.getVdexInfo());
-                        break;
-                    case XML:
-                        XmlParser xmlParser = (XmlParser) fParser;
-                        HashMap<String, PermissionList> permissions = xmlParser.getPermissions();
-                        if (permissions != null) {
-                            fileEntry.putAllDevicePermissions(permissions);
-                        }
-                        break;
                     default:
                 }
                 // System.err.println("File:" + file.getAbsoluteFile());
                 if (fParser.getDependencies() != null) {
-                    fileEntry.addAllDependencies(fParser.getDependencies());
+                    fileEntryBuilder.addAllDependencies(fParser.getDependencies());
                 }
                 if (fParser.getDynamicLoadingDependencies() != null) {
-                    fileEntry.addAllDynamicLoadingDependencies(
+                    fileEntryBuilder.addAllDynamicLoadingDependencies(
                             fParser.getDynamicLoadingDependencies());
                 }
-                fileEntry.setAbiBits(fParser.getAbiBits());
-                fileEntry.setAbiArchitecture(fParser.getAbiArchitecture());
+                fileEntryBuilder.setAbiBits(fParser.getAbiBits());
+                fileEntryBuilder.setAbiArchitecture(fParser.getAbiArchitecture());
 
-                Entry fEntry = fileEntry.build();
+                Entry fEntry = fileEntryBuilder.build();
                 entryList.add(fEntry);
                 mEntries.put(fEntry.getRelativePath(), fEntry);
                 folderSize += file.length();

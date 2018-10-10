@@ -21,10 +21,14 @@ import com.android.cts.releaseparser.ReleaseProto.*;
 import com.google.protobuf.TextFormat;
 
 import java.io.File;
-import java.io.IOException;
+import java.io.FileOutputStream;
+import java.nio.charset.Charset;
+import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Map;
 import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.logging.Logger;
 
 // Oat is embedded in an ELF file .rodata secion
 // art/runtime/oat.h & oat.cc
@@ -37,21 +41,37 @@ public class OatParser extends FileParser {
     private int mBits;
     private String mArch;
     private byte[] mRoData;
+    private List<String> mDependencies;
 
     public OatParser(File file) {
         super(file);
+        mDependencies = null;
+    }
+
+    @Override
+    public List<String> getDependencies() {
+        if (mDependencies == null) {
+            parse();
+        }
+        return mDependencies;
+    }
+
+    @Override
+    public void setAdditionalInfo() {
+        getFileEntryBuilder().setOatInfo(getOatInfo());
     }
 
     public OatInfo getOatInfo() {
         if (mOatInfoBuilder == null) {
-            prase();
+            parse();
         }
         return mOatInfoBuilder.build();
     }
 
-    private void prase() {
+    private void parse() {
         mOatInfoBuilder = OatInfo.newBuilder();
         try {
+            mDependencies = new ArrayList<String>();
             ReadElf elf = ReadElf.read(getFile());
             mOatInfoBuilder.setBits(elf.getBits());
             mOatInfoBuilder.setArchitecture(elf.getArchitecture());
@@ -126,7 +146,16 @@ public class OatParser extends FileParser {
         mOatInfoBuilder.setKeyValueStoreSize(storeSize);
         offset += 4;
 
-        mOatInfoBuilder.putAllKeyValueStore(getKeyValuePairMap(buffer, offset, storeSize));
+        Map<String, String> kvMap = getKeyValuePairMap(buffer, offset, storeSize);
+        mOatInfoBuilder.putAllKeyValueStore(kvMap);
+        String imageLocation = kvMap.get("image-location");
+        if (imageLocation != null) {
+            mDependencies.addAll(Arrays.asList(imageLocation.split(":")));
+        }
+        String bootClasspath = kvMap.get("bootclasspath");
+        if (bootClasspath != null) {
+            mDependencies.addAll(Arrays.asList(bootClasspath.split(":")));
+        }
     }
 
     // as art/runtime/oat.cc GetStoreValueByKey
@@ -165,41 +194,40 @@ public class OatParser extends FileParser {
     }
 
     private static final String USAGE_MESSAGE =
-            "Usage: java -jar releaseparser.jar com.android.cts.releaseparser.OatParser [-options] <path> [args...]\n"
-                    + "           to prase an OAT file \n"
+            "Usage: java -jar releaseparser.jar "
+                    + OatParser.class.getCanonicalName()
+                    + " [-options <parameter>]...\n"
+                    + "           to prase OAT file meta data\n"
                     + "Options:\n"
-                    + "\t-i PATH\t OAT path \n";
+                    + "\t-i PATH\t The file path of the file to be parsed.\n"
+                    + "\t-of PATH\t The file path of the output file instead of printing to System.out.\n";
 
-    /** Get the argument or print out the usage and exit. */
-    private static void printUsage() {
-        System.out.printf(USAGE_MESSAGE);
-        System.exit(1);
-    }
+    public static void main(String[] args) {
+        try {
+            ArgumentParser argParser = new ArgumentParser(args);
+            String fileName = argParser.getParameterElement("i", 0);
+            String outputFileName = argParser.getParameterElement("of", 0);
 
-    /** Get the argument or print out the usage and exit. */
-    private static String getExpectedArg(String[] args, int index) {
-        if (index < args.length) {
-            return args[index];
-        } else {
-            printUsage();
-            return null; // Never will happen because printUsage will call exit(1)
-        }
-    }
+            File aFile = new File(fileName);
+            OatParser aParser = (OatParser) FileParser.getParser(aFile);
+            Entry fileEntry = aParser.getFileEntryBuilder().build();
 
-    public static void main(String[] args) throws IOException {
-        String fileName = null;
-        for (int i = 0; i < args.length; i++) {
-            if (args[i].startsWith("-")) {
-                if ("-i".equals(args[i])) {
-                    fileName = getExpectedArg(args, ++i);
-                }
+            if (outputFileName != null) {
+                FileOutputStream txtOutput = new FileOutputStream(outputFileName);
+                txtOutput.write(
+                        TextFormat.printToString(fileEntry).getBytes(Charset.forName("UTF-8")));
+                txtOutput.flush();
+                txtOutput.close();
+            } else {
+                System.out.println(TextFormat.printToString(fileEntry));
             }
+        } catch (Exception ex) {
+            System.out.println(USAGE_MESSAGE);
+            ex.printStackTrace();
         }
-        if (fileName == null) {
-            printUsage();
-        }
-        File aFile = new File(fileName);
-        OatParser aParser = new OatParser(aFile);
-        System.out.println(TextFormat.printToString(aParser.getOatInfo()));
+    }
+
+    private static Logger getLogger() {
+        return Logger.getLogger(OatParser.class.getSimpleName());
     }
 }

@@ -53,6 +53,11 @@ public class RcParser extends FileParser {
     }
 
     @Override
+    public void setAdditionalInfo() {
+        getFileEntryBuilder().addAllServices(getServiceList());
+    }
+
+    @Override
     public List<String> getDependencies() {
         if (mServices == null) {
             parseFile();

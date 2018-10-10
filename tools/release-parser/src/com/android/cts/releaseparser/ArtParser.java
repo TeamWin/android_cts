@@ -20,9 +20,11 @@ import com.android.cts.releaseparser.ReleaseProto.*;
 import com.google.protobuf.TextFormat;
 
 import java.io.File;
-import java.io.IOException;
+import java.io.FileOutputStream;
 import java.io.RandomAccessFile;
+import java.nio.charset.Charset;
 import java.util.Arrays;
+import java.util.logging.Logger;
 
 // ART file format at art/runtime/image.h
 public class ArtParser extends FileParser {
@@ -40,14 +42,19 @@ public class ArtParser extends FileParser {
         return Entry.EntryType.ART;
     }
 
+    @Override
+    public void setAdditionalInfo() {
+        getFileEntryBuilder().setArtInfo(getArtInfo());
+    }
+
     public ArtInfo getArtInfo() {
         if (mArtInfoBuilder == null) {
-            prase();
+            parse();
         }
         return mArtInfoBuilder.build();
     }
 
-    private void prase() {
+    private void parse() {
         byte[] buffer = new byte[HEADER_SIZE];
         mArtInfoBuilder = ArtInfo.newBuilder();
         // ToDo check this
@@ -121,41 +128,40 @@ public class ArtParser extends FileParser {
     }
 
     private static final String USAGE_MESSAGE =
-            "Usage: java -jar releaseparser.jar com.android.cts.releaseparser.ArtParser [-options] <path> [args...]\n"
-                    + "           to prase an ART file \n"
+            "Usage: java -jar releaseparser.jar "
+                    + ArtParser.class.getCanonicalName()
+                    + " [-options <parameter>]...\n"
+                    + "           to parse APK file meta data\n"
                     + "Options:\n"
-                    + "\t-i PATH\t ART path \n";
+                    + "\t-i PATH\t The file path of the file to be parsed.\n"
+                    + "\t-of PATH\t The file path of the output file instead of printing to System.out.\n";
 
-    /** Get the argument or print out the usage and exit. */
-    private static void printUsage() {
-        System.out.printf(USAGE_MESSAGE);
-        System.exit(1);
-    }
+    public static void main(String[] args) {
+        try {
+            ArgumentParser argParser = new ArgumentParser(args);
+            String fileName = argParser.getParameterElement("i", 0);
+            String outputFileName = argParser.getParameterElement("of", 0);
 
-    /** Get the argument or print out the usage and exit. */
-    private static String getExpectedArg(String[] args, int index) {
-        if (index < args.length) {
-            return args[index];
-        } else {
-            printUsage();
-            return null; // Never will happen because printUsage will call exit(1)
-        }
-    }
+            File aFile = new File(fileName);
+            ArtParser aParser = new ArtParser(aFile);
+            Entry fileEntry = aParser.getFileEntryBuilder().build();
 
-    public static void main(String[] args) throws IOException {
-        String fileName = null;
-        for (int i = 0; i < args.length; i++) {
-            if (args[i].startsWith("-")) {
-                if ("-i".equals(args[i])) {
-                    fileName = getExpectedArg(args, ++i);
-                }
+            if (outputFileName != null) {
+                FileOutputStream txtOutput = new FileOutputStream(outputFileName);
+                txtOutput.write(
+                        TextFormat.printToString(fileEntry).getBytes(Charset.forName("UTF-8")));
+                txtOutput.flush();
+                txtOutput.close();
+            } else {
+                System.out.println(TextFormat.printToString(fileEntry));
             }
+        } catch (Exception ex) {
+            System.out.println(USAGE_MESSAGE);
+            ex.printStackTrace();
         }
-        if (fileName == null) {
-            printUsage();
-        }
-        File aFile = new File(fileName);
-        ArtParser aParser = new ArtParser(aFile);
-        System.out.println(TextFormat.printToString(aParser.getArtInfo()));
+    }
+
+    private static Logger getLogger() {
+        return Logger.getLogger(ArtParser.class.getSimpleName());
     }
 }
