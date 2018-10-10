@@ -3342,6 +3342,17 @@
                 android:value="android.hardware.usb.host:android.software.midi" />
         </activity>
 
+        <activity android:name=".audio.NDKMidiActivity"
+                  android:label="@string/ndk_midi_test">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.cts.intent.category.MANUAL_TEST" />
+            </intent-filter>
+            <meta-data android:name="test_category" android:value="@string/test_category_audio" />
+            <meta-data android:name="test_required_features"
+                android:value="android.hardware.usb.host:android.software.midi" />
+        </activity>
+
         <service android:name="com.android.cts.verifier.audio.midilib.MidiEchoTestService"
             android:permission="android.permission.BIND_MIDI_DEVICE_SERVICE">
             <meta-data android:name="android.media.midi.MidiDeviceService"

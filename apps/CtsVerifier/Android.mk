@@ -59,8 +59,10 @@ LOCAL_JAVA_LIBRARIES += bouncycastle
 LOCAL_PACKAGE_NAME := CtsVerifier
 LOCAL_PRIVATE_PLATFORM_APIS := true
 
-LOCAL_JNI_SHARED_LIBRARIES := libctsverifier_jni \
-		libaudioloopback_jni \
+LOCAL_JNI_SHARED_LIBRARIES := \
+	libctsverifier_jni \
+	libctsnativemidi_jni \
+	libaudioloopback_jni \
 
 LOCAL_PROGUARD_FLAG_FILES := proguard.flags
 
