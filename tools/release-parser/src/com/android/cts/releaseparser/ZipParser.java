@@ -17,7 +17,6 @@
 package com.android.cts.releaseparser;
 
 import com.android.cts.releaseparser.ReleaseProto.*;
-import com.google.protobuf.TextFormat;
 
 import java.io.File;
 import java.io.FileOutputStream;
@@ -38,6 +37,7 @@ public class ZipParser extends FileParser {
     private List<String> mDynamicLoadingDependencies;
     private boolean mParseSo;
     private boolean mParseInternalApi;
+    private StringBuilder mCodeIdStringBuilder;
 
     // Todo: provide utilities to parse files in zip, e.g. SOs in an APK
     ZipParser(File file) {
@@ -45,6 +45,7 @@ public class ZipParser extends FileParser {
         mParseSo = true;
         // default off to avoid a large output
         mParseInternalApi = false;
+        mCodeIdStringBuilder = null;
     }
 
     @Override
@@ -64,12 +65,47 @@ public class ZipParser extends FileParser {
         return mDynamicLoadingDependencies;
     }
 
+    @Override
+    public String getCodeId() {
+        if (mCodeIdStringBuilder == null) {
+            parseFileContent();
+        }
+        return mCodeIdStringBuilder.toString();
+    }
+
+    @Override
+    public Entry.Builder getFileEntryBuilder() {
+        if (mFileEntryBuilder == null) {
+            super.getFileEntryBuilder();
+            parseFileContent();
+            mFileEntryBuilder.addAllDependencies(getDependencies());
+            mFileEntryBuilder.addAllDynamicLoadingDependencies(getDynamicLoadingDependencies());
+        }
+        return mFileEntryBuilder;
+    }
+
     public void setParseSo(boolean parseSo) {
         mParseSo = parseSo;
     }
 
     public void setParseInternalApi(boolean parseInternalApi) {
         mParseInternalApi = parseInternalApi;
+    }
+
+    public static File getFilefromZip(ZipFile zipFile, ZipEntry zipEntry) throws IOException {
+        String fileName = zipEntry.getName();
+        File tmpFile = File.createTempFile("RPZ", "");
+        tmpFile.deleteOnExit();
+        InputStream iStream = zipFile.getInputStream(zipEntry);
+        FileOutputStream fOutputStream = new FileOutputStream(tmpFile);
+        byte[] buffer = new byte[READ_BLOCK_SIZE];
+        int length;
+        while ((length = iStream.read(buffer)) >= 0) {
+            fOutputStream.write(buffer, 0, length);
+        }
+        iStream.close();
+        fOutputStream.close();
+        return tmpFile;
     }
 
     public PackageFileContent getPackageFileContent() {
@@ -85,6 +121,7 @@ public class ZipParser extends FileParser {
         mFileMap = new HashMap<String, Entry>();
         mDependencies = new ArrayList<String>();
         mDynamicLoadingDependencies = new ArrayList<String>();
+        mCodeIdStringBuilder = new StringBuilder();
 
         try {
             zFile = new ZipFile(getFile());
@@ -96,12 +133,13 @@ public class ZipParser extends FileParser {
 
                 Entry.Builder entryBuilder = Entry.newBuilder();
                 entryBuilder.setName(name);
-                entryBuilder.setContentId(String.format("%x", entry.hashCode()));
+                entryBuilder.setContentId(String.format(CODE_ID_FORMAT, entry.hashCode()));
                 entryBuilder.setSize(entry.getSize());
                 if (entry.isDirectory()) {
                     entryBuilder.setType(Entry.EntryType.FOLDER);
                 } else {
                     entryBuilder.setType(Entry.EntryType.FILE);
+                    appendToCodeID(entry);
                     if (mParseSo) {
                         // ToDo: to be optimized if taking too long
                         if (name.endsWith(SO_EXT_TAG)) {
@@ -143,20 +181,13 @@ public class ZipParser extends FileParser {
         }
     }
 
-    private File getFilefromZip(ZipFile zipFile, ZipEntry zipEntry) throws IOException {
-        String fileName = zipEntry.getName();
-        File tmpFile = File.createTempFile("RPZ", "");
-        tmpFile.deleteOnExit();
-        InputStream iStream = zipFile.getInputStream(zipEntry);
-        FileOutputStream fOutputStream = new FileOutputStream(tmpFile);
-        byte[] buffer = new byte[READ_BLOCK_SIZE];
-        int length;
-        while ((length = iStream.read(buffer)) >= 0) {
-            fOutputStream.write(buffer, 0, length);
+    private void appendToCodeID(ZipEntry zEntry) {
+        String name = zEntry.getName();
+        if (name.endsWith(SO_EXT_TAG)
+                || name.endsWith(DEX_EXT_TAG)
+                || name.endsWith(ANDROID_MANIFEST_TAG)) {
+            mCodeIdStringBuilder.append(String.format(CODE_ID_FORMAT, zEntry.hashCode()));
         }
-        iStream.close();
-        fOutputStream.close();
-        return tmpFile;
     }
 
     private static final String USAGE_MESSAGE =
@@ -166,6 +197,7 @@ public class ZipParser extends FileParser {
                     + "           to prase ZIP file meta data\n"
                     + "Options:\n"
                     + "\t-i PATH\t The path of the file to be parsed.\n"
+                    + "\t-of PATH\t The file path of the output file instead of printing to System.out.\n"
                     + "\t-pi \t Parses internal methods and fields too. Output will be large when parsing multiple files in a release.\n"
                     + "\t-s \t Skips parsing embedded SO files if it takes too long time.\n";
 
@@ -173,6 +205,7 @@ public class ZipParser extends FileParser {
         try {
             ArgumentParser argParser = new ArgumentParser(args);
             String fileName = argParser.getParameterList("i").get(0);
+            String outputFileName = argParser.getParameterElement("of", 0);
             boolean parseSo = !argParser.containsOption("s");
             boolean parseInternalApi = argParser.containsOption("pi");
 
@@ -180,13 +213,9 @@ public class ZipParser extends FileParser {
             ZipParser aParser = new ZipParser(aFile);
             aParser.setParseSo(parseSo);
             aParser.setParseInternalApi(parseInternalApi);
-            if (parseSo) {
-                System.out.println("Dependencies: " + String.join(",", aParser.getDependencies()));
-                System.out.println(
-                        "Dynamic Loading Dependencies: "
-                                + String.join(",", aParser.getDynamicLoadingDependencies()));
-            }
-            System.out.println(TextFormat.printToString(aParser.getPackageFileContent()));
+
+            Entry.Builder fileEntryBuilder = aParser.getFileEntryBuilder();
+            writeTextFormatMessage(outputFileName, fileEntryBuilder.build());
         } catch (Exception ex) {
             System.out.printf(USAGE_MESSAGE);
             System.err.printf(ex.getMessage());
