@@ -105,8 +105,8 @@ public class FileParserTest {
     }
 
     private void testFileParser(String fileName, Entry fileEntry) throws Exception {
-        String txtProtobufFileName = fileName + PB_TXT;
         Entry.Builder expectedEntryBuilder = Entry.newBuilder();
+        String txtProtobufFileName = fileName + PB_TXT;
         TextFormat.getParser()
                 .merge(
                         ClassUtils.openResourceAsStreamReader(getClass(), txtProtobufFileName),

@@ -2,7 +2,7 @@ name: "boot-framework.oat"
 type: OAT
 size: 15599048
 content_id: "3x7nAT8P+6fzuagnGVB6QqYJ4caUcMG3uF+jkaXh52M="
-code_id: "f0acaa05,2d59fc59,34ad167d,"
+code_id: "f0acaa05 2d59fc59 34ad167d "
 dependencies: "system/framework/arm64/boot.art"
 dependencies: "system/framework/arm64/boot-core-libart.art"
 dependencies: "system/framework/arm64/boot-conscrypt.art"
