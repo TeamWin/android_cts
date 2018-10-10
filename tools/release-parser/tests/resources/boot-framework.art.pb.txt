@@ -2,6 +2,7 @@ name: "boot-framework.art"
 type: ART
 size: 11558912
 content_id: "+3pO8URmb2E6aYWRQXK6LoHxW/5pufe1V/bx7rGRJvQ="
+code_id: "533a429a"
 art_info {
   valid: true
   version: "056\000"

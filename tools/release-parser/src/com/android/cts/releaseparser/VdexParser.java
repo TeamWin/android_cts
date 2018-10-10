@@ -47,6 +47,14 @@ public class VdexParser extends FileParser {
         getFileEntryBuilder().setVdexInfo(getVdexInfo());
     }
 
+    @Override
+    public String getCodeId() {
+        if (mVdexInfoBuilder == null) {
+            parse();
+        }
+        return mCodeId;
+    }
+
     public VdexInfo getVdexInfo() {
         if (mVdexInfoBuilder == null) {
             parse();
@@ -87,10 +95,15 @@ public class VdexParser extends FileParser {
             mVdexInfoBuilder.setVerifierDepsSize(getIntLittleEndian(buffer, offset));
             offset += 4;
 
+            // Code Id format: [0xchecksum1],...
+            StringBuilder codeIdSB = new StringBuilder();
             for (int i = 0; i < numberOfDexFiles; i++) {
-                mVdexInfoBuilder.addChecksums(getIntLittleEndian(buffer, offset));
+                int checksums = getIntLittleEndian(buffer, offset);
                 offset += 4;
+                mVdexInfoBuilder.addChecksums(checksums);
+                codeIdSB.append(String.format("%x,", checksums));
             }
+            mCodeId = codeIdSB.toString();
 
             for (int i = 0; i < numberOfDexFiles; i++) {
                 DexSectionHeader.Builder dshBuilder = DexSectionHeader.newBuilder();
@@ -109,6 +122,7 @@ public class VdexParser extends FileParser {
                 offset += 4;
                 // Todo processing Dex
             }
+
         } catch (Exception ex) {
             System.err.println("Invalid VDEX file:" + getFileName());
             mVdexInfoBuilder.setValid(false);
