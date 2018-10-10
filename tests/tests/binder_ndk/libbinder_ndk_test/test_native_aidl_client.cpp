@@ -206,9 +206,17 @@ std::shared_ptr<ITest> getNdkBinderTestJavaService(const std::string& method) {
   return BpTest::associate(binder);
 }
 
-INSTANTIATE_TEST_CASE_P(Local, NdkBinderTest_Aidl,
+INSTANTIATE_TEST_CASE_P(LocalNative, NdkBinderTest_Aidl,
                         ::testing::Values(Params{getLocalService(),
                                                  false /*shouldBeRemote*/}));
+INSTANTIATE_TEST_CASE_P(LocalNativeFromJava, NdkBinderTest_Aidl,
+                        ::testing::Values(Params{getNdkBinderTestJavaService(
+                                                     "getLocalNativeService"),
+                                                 false /*shouldBeRemote*/}));
+INSTANTIATE_TEST_CASE_P(LocalJava, NdkBinderTest_Aidl,
+                        ::testing::Values(Params{
+                            getNdkBinderTestJavaService("getLocalJavaService"),
+                            false /*shouldBeRemote*/}));
 INSTANTIATE_TEST_CASE_P(RemoteNative, NdkBinderTest_Aidl,
                         ::testing::Values(Params{getNdkBinderTestJavaService(
                                                      "getRemoteNativeService"),

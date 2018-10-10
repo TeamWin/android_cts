@@ -53,7 +53,15 @@ public class JavaClientTest {
 
     @Parameterized.Parameters( name = "{0}" )
     public static Collection<Object[]> data() {
-        return Arrays.asList(new Object[][] { {NativeService.class}, {JavaService.class} });
+        // For local interfaces, this test will parcel the data locally.
+        // Whenever possible, the desired service should be accessed directly
+        // in order to avoid this additional overhead.
+        return Arrays.asList(new Object[][] {
+                {NativeService.Local.class},
+                {JavaService.Local.class},
+                {NativeService.Remote.class},
+                {JavaService.Remote.class},
+            });
     }
 
     @Before
