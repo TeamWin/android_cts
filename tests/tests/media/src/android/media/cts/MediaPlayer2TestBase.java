@@ -372,16 +372,6 @@ public class MediaPlayer2TestBase extends ActivityInstrumentationTestCase2<Media
         return MediaUtils.check(loadResource(resid), "no decoder found");
     }
 
-    protected void loadSubtitleSource(int resid) throws Exception {
-        AssetFileDescriptor afd = mResources.openRawResourceFd(resid);
-        try {
-            mPlayer.addTimedTextSource(afd.getFileDescriptor(), afd.getStartOffset(),
-                      afd.getLength(), MediaPlayer2.MEDIA_MIMETYPE_TEXT_SUBRIP);
-        } finally {
-            afd.close();
-        }
-    }
-
     protected void playLiveVideoTest(String path, int playTime) throws Exception {
         playVideoWithRetries(path, null, null, playTime);
     }
