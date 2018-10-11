@@ -118,8 +118,6 @@
         settings that may specify a timeout.\n\nClick the \"Force Lock\" button to lock the screen.
         Your screen should be locked and require the password to be entered.
     </string>
-    <string name="da_kg_disabled_features_test">Keyguard Disabled Features Test</string>
-    <string name="rn_kg_disabled_features_test">Redacted Notifications Keyguard Disabled Features Test</string>
     <string name="da_force_lock">Force Lock</string>
     <string name="da_lock_success">It appears the screen was locked successfully!</string>
     <string name="da_lock_error">It does not look like the screen was locked...</string>
