@@ -19,151 +19,91 @@ package com.android.cts.releaseparser;
 import com.android.cts.releaseparser.ReleaseProto.*;
 import com.google.protobuf.TextFormat;
 
-import java.io.File;
 import java.io.FileOutputStream;
-import java.io.IOException;
 import java.nio.charset.Charset;
 import java.nio.file.Paths;
+import java.util.logging.Logger;
 
 /** Main of release parser */
 public class Main {
-
-    private static final String USAGE_MESSAGE =
-            "Usage: java -jar releaseparser.jar [-options] <folder> [args...]\n"
-                    + "           to prase a release content in the folder\n"
-                    + "Options:\n"
-                    + "\t-a API#\t API Level, e.g. 27 \n"
-                    + "\t-i PATH\t path to a release folder \n"
-                    + "\t-o PATH\t path to output files \n";
-
     private Main() {}
 
-    /** Get the argument or print out the usage and exit. */
-    private static void printUsage() {
-        System.out.printf(USAGE_MESSAGE);
-        System.exit(1);
-    }
-
-    /** Get the argument or print out the usage and exit. */
-    private static String getExpectedArg(String[] args, int index) {
-        if (index < args.length) {
-            return args[index];
-        } else {
-            printUsage();
-            return null; // Never will happen because printUsage will call exit(1)
-        }
-    }
+    private static final String USAGE_MESSAGE =
+            "Usage: java -jar releaseparser.jar [-options <parameter>]...\n"
+                    + "\tto prase a release, such as device build, test suite or app distribution package\n"
+                    + "Options:\n"
+                    + "\t-i PATH\t path to a release folder\n"
+                    + "\t-o PATH\t path to output files\n";
 
     public static void main(final String[] args) {
-        String relNameVer;
-        String relFolder = "";
-        String outputPath = "";
-        int apiL = 27;
-
-        for (int i = 0; i < args.length; i++) {
-            if (args[i].startsWith("-")) {
-                if ("-o".equals(args[i])) {
-                    outputPath = getExpectedArg(args, ++i);
-                    File file = new File(outputPath);
-                    // Only acception a folder
-                    if (!file.isDirectory()) {
-                        printUsage();
-                    }
-                } else if ("-i".equals(args[i])) {
-                    relFolder = getExpectedArg(args, ++i);
-                    File file = new File(relFolder);
-                    // Only acception a folder
-                    if (!file.isDirectory()) {
-                        printUsage();
-                    }
-                } else if ("-a".equals(args[i])) {
-                    apiL = Integer.parseInt(getExpectedArg(args, ++i));
-                } else {
-                    printUsage();
-                }
-            }
-        }
-
-        if ("".equals(relFolder) || "".equals(outputPath)) {
-            printUsage();
-        }
-
-        ReleaseParser relParser = new ReleaseParser(relFolder);
-        relNameVer = relParser.getReleaseId();
-
-        relParser.writeRelesaeContentCsvFile(
-                relNameVer,
-                Paths.get(outputPath, String.format("%s-ReleaseContent.csv", relNameVer))
-                        .toString());
-
-        JsonPrinter jPrinter =
-                new JsonPrinter(
-                        relParser.getReleaseContent(),
-                        Paths.get(outputPath, relNameVer).toString());
-        jPrinter.write();
-
-        relParser.writeKnownFailureCsvFile(
-                relNameVer,
-                Paths.get(outputPath, String.format("%s-KnownFailure.csv", relNameVer)).toString());
-
-        ReleaseContent relContent = relParser.getReleaseContent();
-
-        // Write release content message to disk.
         try {
+            ArgumentParser argParser = new ArgumentParser(args);
+            String relFolder = argParser.getParameterElement("i", 0);
+            String outputPath = argParser.getParameterElement("o", 0);
+
+            // parse a release folder
+            ReleaseParser relParser = new ReleaseParser(relFolder);
+            String relNameVer = relParser.getReleaseId();
+            relParser.writeRelesaeContentCsvFile(
+                    relNameVer, getPathString(outputPath, "%s-ReleaseContent.csv", relNameVer));
+
+            // write release content JSON file
+            JsonPrinter jPrinter =
+                    new JsonPrinter(
+                            relParser.getReleaseContent(),
+                            getPathString(outputPath, "%s", relNameVer));
+            jPrinter.write();
+
+            // Write release content message to disk.
+            ReleaseContent relContent = relParser.getReleaseContent();
             FileOutputStream output =
                     new FileOutputStream(
-                            Paths.get(outputPath, String.format("%s-ReleaseContent.pb", relNameVer))
-                                    .toString());
-            try {
-                relContent.writeTo(output);
-            } finally {
-                output.close();
-            }
+                            getPathString(outputPath, "%s-ReleaseContent.pb", relNameVer));
+            relContent.writeTo(output);
+            output.flush();
+            output.close();
 
             FileOutputStream txtOutput =
                     new FileOutputStream(
-                            Paths.get(
-                                            outputPath,
-                                            String.format("%s-ReleaseContent.txt", relNameVer))
-                                    .toString());
-            try {
-                txtOutput.write(
-                        TextFormat.printToString(relContent).getBytes(Charset.forName("UTF-8")));
-                txtOutput.flush();
-            } finally {
-                output.close();
+                            getPathString(outputPath, "%s-ReleaseContent.txt", relNameVer));
+            txtOutput.write(
+                    TextFormat.printToString(relContent).getBytes(Charset.forName("UTF-8")));
+            txtOutput.flush();
+            txtOutput.close();
+
+            // parse Test Suite
+            TestSuiteParser tsParser = new TestSuiteParser(relContent, relFolder);
+            if (tsParser.getTestSuite().getModulesList().size() == 0) {
+                // skip if no test module
+                return;
             }
-        } catch (IOException e) {
-            System.err.println("IOException:" + e.getMessage());
-        }
 
-        TestSuiteParser tsParser = new TestSuiteParser(relContent, relFolder, apiL);
-        if (tsParser.getTestSuite().getModulesList().size() == 0) {
-            // skip if no test module
-            return;
-        }
+            // write Known Failus & etc. CSV files
+            relParser.writeKnownFailureCsvFile(
+                    relNameVer, getPathString(outputPath, "%s-KnownFailure.csv", relNameVer));
+            tsParser.writeCsvFile(
+                    relNameVer, getPathString(outputPath, "%s-TestCase.csv", relNameVer));
+            tsParser.writeModuleCsvFile(
+                    relNameVer, getPathString(outputPath, "%s-TestModule.csv", relNameVer));
 
-        tsParser.writeCsvFile(
-                relNameVer,
-                Paths.get(outputPath, String.format("%s-TestCase.csv", relNameVer)).toString());
-        tsParser.writeModuleCsvFile(
-                relNameVer,
-                Paths.get(outputPath, String.format("%s-TestModule.csv", relNameVer)).toString());
-
-        // Write test suite content message to disk.
-        TestSuite testSuite = tsParser.getTestSuite();
-        try {
-            FileOutputStream output =
-                    new FileOutputStream(
-                            Paths.get(outputPath, String.format("%s-TestSuite.pb", relNameVer))
-                                    .toString());
-            try {
-                testSuite.writeTo(output);
-            } finally {
-                output.close();
-            }
-        } catch (IOException e) {
-            System.err.println("IOException:" + e.getMessage());
+            // Write test suite content message to disk.
+            TestSuite testSuite = tsParser.getTestSuite();
+            FileOutputStream tsOutput =
+                    new FileOutputStream(getPathString(outputPath, "%s-TestSuite.pb", relNameVer));
+            testSuite.writeTo(tsOutput);
+            tsOutput.flush();
+            tsOutput.close();
+        } catch (Exception ex) {
+            System.out.println(USAGE_MESSAGE);
+            ex.printStackTrace();
         }
+    }
+
+    public static String getPathString(String outputPath, String format, String id) {
+        return Paths.get(outputPath, String.format(format, id)).toString();
+    }
+
+    private static Logger getLogger() {
+        return Logger.getLogger(Main.class.getSimpleName());
     }
 }

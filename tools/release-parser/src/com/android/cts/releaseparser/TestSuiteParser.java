@@ -109,13 +109,11 @@ class TestSuiteParser {
 
     private final String mFolderPath;
     private ReleaseContent mRelContent;
-    private final int mApiLevel;
     private TestSuite.Builder mTSBuilder;
 
-    TestSuiteParser(ReleaseContent relContent, String folder, int apiL) {
+    TestSuiteParser(ReleaseContent relContent, String folder) {
         mFolderPath = folder;
         mRelContent = relContent;
-        mApiLevel = apiL;
     }
 
     public TestSuite getTestSuite() {
@@ -212,7 +210,7 @@ class TestSuiteParser {
 
         // Loads a Dex file
         try {
-            dexFile = DexFileFactory.loadDexFile(apkPath, Opcodes.forApi(mApiLevel));
+            dexFile = DexFileFactory.loadDexFile(apkPath, Opcodes.getDefault());
 
             // Iterates through all clesses in the Dex file
             for (ClassDef classDef : dexFile.getClasses()) {
