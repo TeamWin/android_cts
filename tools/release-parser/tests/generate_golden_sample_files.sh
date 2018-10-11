@@ -52,3 +52,15 @@ for file in $TargetFiles; do
     echo Processing $file
     java -cp $ANDROID_HOST_OUT/framework/release-parser.jar com.android.cts.releaseparser.ArtParser -i resources/$file -of resources/$file.pb.txt
 done
+
+TargetFiles="platform.xml android.hardware.vulkan.version.xml"
+for file in $TargetFiles; do
+    echo Processing $file
+    java -cp $ANDROID_HOST_OUT/framework/release-parser.jar com.android.cts.releaseparser.XmlParser -i resources/$file -of resources/$file.pb.txt
+done
+
+TargetFiles="build.prop"
+for file in $TargetFiles; do
+    echo Processing $file
+    java -cp $ANDROID_HOST_OUT/framework/release-parser.jar com.android.cts.releaseparser.BuildPropParser -i resources/$file -of resources/$file.pb.txt
+done

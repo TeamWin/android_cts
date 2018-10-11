@@ -369,6 +369,8 @@ message Entry {
     repeated Service services = 17;
     // Device permissions
     map<string, PermissionList> device_permissions = 18;
+    // property map(key,value)
+    map<string, string> properties = 19;
 }
 
 enum ReleaseType {
