@@ -21,13 +21,18 @@ import com.android.cts.releaseparser.ReleaseProto.*;
 import com.google.protobuf.TextFormat;
 
 import java.io.File;
-import java.io.IOException;
+import java.io.FileOutputStream;
+import java.nio.charset.Charset;
+import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Map;
 import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.logging.Logger;
 
 // Oat is embedded in an ELF file .rodata secion
 // art/runtime/oat.h & oat.cc
+// art/dex2oat/linker/oat_writer.h
 public class OatParser extends FileParser {
     // The magic values for the OAT identification.
     private static final byte[] OAT_MAGIC = {(byte) 'o', (byte) 'a', (byte) 't', (byte) 0x0A};
@@ -37,21 +42,45 @@ public class OatParser extends FileParser {
     private int mBits;
     private String mArch;
     private byte[] mRoData;
+    private List<String> mDependencies;
 
     public OatParser(File file) {
         super(file);
+        mDependencies = null;
+    }
+
+    @Override
+    public List<String> getDependencies() {
+        if (mDependencies == null) {
+            parse();
+        }
+        return mDependencies;
+    }
+
+    @Override
+    public String getCodeId() {
+        if (mOatInfoBuilder == null) {
+            parse();
+        }
+        return mCodeId;
+    }
+
+    @Override
+    public void setAdditionalInfo() {
+        getFileEntryBuilder().setOatInfo(getOatInfo());
     }
 
     public OatInfo getOatInfo() {
         if (mOatInfoBuilder == null) {
-            prase();
+            parse();
         }
         return mOatInfoBuilder.build();
     }
 
-    private void prase() {
+    private void parse() {
         mOatInfoBuilder = OatInfo.newBuilder();
         try {
+            mDependencies = new ArrayList<String>();
             ReadElf elf = ReadElf.read(getFile());
             mOatInfoBuilder.setBits(elf.getBits());
             mOatInfoBuilder.setArchitecture(elf.getArchitecture());
@@ -74,6 +103,7 @@ public class OatParser extends FileParser {
             System.err.println("Invalid OAT file:" + getFileName() + " " + content);
             throw new IllegalArgumentException("Invalid OAT MAGIC");
         }
+
         int offset = 4;
         String version = new String(Arrays.copyOfRange(buffer, offset, offset + 4));
         mOatInfoBuilder.setVersion(version);
@@ -84,9 +114,11 @@ public class OatParser extends FileParser {
         offset += 4;
         mOatInfoBuilder.setInstructionSetFeaturesBitmap(getIntLittleEndian(buffer, offset));
         offset += 4;
-        mOatInfoBuilder.setDexFileCount(getIntLittleEndian(buffer, offset));
+        int dexFileCount = getIntLittleEndian(buffer, offset);
+        mOatInfoBuilder.setDexFileCount(dexFileCount);
         offset += 4;
-        mOatInfoBuilder.setOatDexFilesOffset(getIntLittleEndian(buffer, offset));
+        int dexFileOffset = getIntLittleEndian(buffer, offset);
+        mOatInfoBuilder.setOatDexFilesOffset(dexFileOffset);
         offset += 4;
         mOatInfoBuilder.setExecutableOffset(getIntLittleEndian(buffer, offset));
         offset += 4;
@@ -126,7 +158,73 @@ public class OatParser extends FileParser {
         mOatInfoBuilder.setKeyValueStoreSize(storeSize);
         offset += 4;
 
-        mOatInfoBuilder.putAllKeyValueStore(getKeyValuePairMap(buffer, offset, storeSize));
+        // adds dependencies at the build time
+        // trims device & dex_bootjars from the path
+        // e.g. out/target/product/sailfish/dex_bootjars/system/framework/arm64/boot.art
+        final String dexBootJars = "/dex_bootjars/";
+        Map<String, String> kvMap = getKeyValuePairMap(buffer, offset, storeSize);
+        mOatInfoBuilder.putAllKeyValueStore(kvMap);
+        String imageLocation = kvMap.get("image-location");
+        if (imageLocation != null) {
+            for (String path : imageLocation.split(":")) {
+                mDependencies.add(path.substring(path.indexOf(dexBootJars) + dexBootJars.length()));
+            }
+        }
+        String bootClasspath = kvMap.get("bootclasspath");
+        if (bootClasspath != null) {
+            for (String path : bootClasspath.split(":")) {
+                mDependencies.add(path.substring(path.indexOf(dexBootJars) + dexBootJars.length()));
+            }
+        }
+        if (!mDependencies.isEmpty()) {
+            getFileEntryBuilder().addAllDependencies(mDependencies);
+        }
+
+        // Code Id format: [0xchecksum1],...
+        StringBuilder codeIdSB = new StringBuilder();
+        // art/dex2oat/linker/oat_writer.cc OatDexFile
+        offset = dexFileOffset;
+        for (int i = 0; i < dexFileCount; i++) {
+            OatDexInfo.Builder oatDexInfoBuilder = OatDexInfo.newBuilder();
+
+            // dex_file_location_size_
+            int length = getIntLittleEndian(buffer, offset);
+            offset += 4;
+            // dex_file_location_data_
+            oatDexInfoBuilder.setDexFileLocationData(
+                    new String(Arrays.copyOfRange(buffer, offset, offset + length)));
+            offset += length;
+
+            // dex_file_location_checksum_
+            int dexFileLocationChecksum = getIntLittleEndian(buffer, offset);
+            offset += 4;
+            oatDexInfoBuilder.setDexFileLocationChecksum(dexFileLocationChecksum);
+            codeIdSB.append(String.format("%x,", dexFileLocationChecksum));
+
+            // dex_file_offset_
+            oatDexInfoBuilder.setDexFileOffset(getIntLittleEndian(buffer, offset));
+            offset += 4;
+            // lookup_table_offset_
+            oatDexInfoBuilder.setLookupTableOffset(getIntLittleEndian(buffer, offset));
+            offset += 4;
+            // uint32_t class_offsets_offset_;
+            oatDexInfoBuilder.setClassOffsetsOffset(getIntLittleEndian(buffer, offset));
+            offset += 4;
+            // uint32_t method_bss_mapping_offset_;
+            oatDexInfoBuilder.setMethodBssMappingOffset(getIntLittleEndian(buffer, offset));
+            offset += 4;
+            // uint32_t type_bss_mapping_offset_;
+            oatDexInfoBuilder.setTypeBssMappingOffset(getIntLittleEndian(buffer, offset));
+            offset += 4;
+            // uint32_t string_bss_mapping_offset_;
+            oatDexInfoBuilder.setStringBssMappingOffset(getIntLittleEndian(buffer, offset));
+            offset += 4;
+            // uint32_t dex_sections_layout_offset_;
+            oatDexInfoBuilder.setDexSectionsLayoutOffset(getIntLittleEndian(buffer, offset));
+            offset += 4;
+            mOatInfoBuilder.addOatDexInfo(oatDexInfoBuilder.build());
+        }
+        mCodeId = codeIdSB.toString();
     }
 
     // as art/runtime/oat.cc GetStoreValueByKey
@@ -165,41 +263,40 @@ public class OatParser extends FileParser {
     }
 
     private static final String USAGE_MESSAGE =
-            "Usage: java -jar releaseparser.jar com.android.cts.releaseparser.OatParser [-options] <path> [args...]\n"
-                    + "           to prase an OAT file \n"
+            "Usage: java -jar releaseparser.jar "
+                    + OatParser.class.getCanonicalName()
+                    + " [-options <parameter>]...\n"
+                    + "           to prase OAT file meta data\n"
                     + "Options:\n"
-                    + "\t-i PATH\t OAT path \n";
+                    + "\t-i PATH\t The file path of the file to be parsed.\n"
+                    + "\t-of PATH\t The file path of the output file instead of printing to System.out.\n";
 
-    /** Get the argument or print out the usage and exit. */
-    private static void printUsage() {
-        System.out.printf(USAGE_MESSAGE);
-        System.exit(1);
-    }
+    public static void main(String[] args) {
+        try {
+            ArgumentParser argParser = new ArgumentParser(args);
+            String fileName = argParser.getParameterElement("i", 0);
+            String outputFileName = argParser.getParameterElement("of", 0);
 
-    /** Get the argument or print out the usage and exit. */
-    private static String getExpectedArg(String[] args, int index) {
-        if (index < args.length) {
-            return args[index];
-        } else {
-            printUsage();
-            return null; // Never will happen because printUsage will call exit(1)
-        }
-    }
+            File aFile = new File(fileName);
+            OatParser aParser = (OatParser) FileParser.getParser(aFile);
+            Entry fileEntry = aParser.getFileEntryBuilder().build();
 
-    public static void main(String[] args) throws IOException {
-        String fileName = null;
-        for (int i = 0; i < args.length; i++) {
-            if (args[i].startsWith("-")) {
-                if ("-i".equals(args[i])) {
-                    fileName = getExpectedArg(args, ++i);
-                }
+            if (outputFileName != null) {
+                FileOutputStream txtOutput = new FileOutputStream(outputFileName);
+                txtOutput.write(
+                        TextFormat.printToString(fileEntry).getBytes(Charset.forName("UTF-8")));
+                txtOutput.flush();
+                txtOutput.close();
+            } else {
+                System.out.println(TextFormat.printToString(fileEntry));
             }
+        } catch (Exception ex) {
+            System.out.println(USAGE_MESSAGE);
+            ex.printStackTrace();
         }
-        if (fileName == null) {
-            printUsage();
-        }
-        File aFile = new File(fileName);
-        OatParser aParser = new OatParser(aFile);
-        System.out.println(TextFormat.printToString(aParser.getOatInfo()));
+    }
+
+    private static Logger getLogger() {
+        return Logger.getLogger(OatParser.class.getSimpleName());
     }
 }

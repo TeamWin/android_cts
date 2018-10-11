@@ -46,6 +46,7 @@ import android.telephony.TelephonyManager;
 import android.text.TextUtils;
 import android.util.Log;
 
+import com.android.compatibility.common.util.ShellIdentityUtils;
 import com.android.compatibility.common.util.TestThread;
 
 import org.junit.After;
@@ -198,21 +199,27 @@ public class TelephonyManagerTest {
         mTelephonyManager.getCellLocation();
         mTelephonyManager.getSimCarrierId();
         mTelephonyManager.getSimCarrierIdName();
-        mTelephonyManager.getSimSerialNumber();
+        ShellIdentityUtils.invokeMethodWithShellPermissions(mTelephonyManager,
+                (tm) -> tm.getSimSerialNumber());
         mTelephonyManager.getSimOperator();
         mTelephonyManager.getSignalStrength();
         mTelephonyManager.getNetworkOperatorName();
-        mTelephonyManager.getSubscriberId();
+        ShellIdentityUtils.invokeMethodWithShellPermissions(mTelephonyManager,
+                (tm) -> tm.getSubscriberId());
         mTelephonyManager.getLine1Number();
         mTelephonyManager.getNetworkOperator();
         mTelephonyManager.getSimCountryIso();
         mTelephonyManager.getVoiceMailAlphaTag();
         mTelephonyManager.isNetworkRoaming();
-        mTelephonyManager.getDeviceId();
-        mTelephonyManager.getDeviceId(mTelephonyManager.getSlotIndex());
+        ShellIdentityUtils.invokeMethodWithShellPermissions(mTelephonyManager,
+                (tm) -> tm.getDeviceId());
+        ShellIdentityUtils.invokeMethodWithShellPermissions(mTelephonyManager,
+                (tm) -> tm.getDeviceId(mTelephonyManager.getSlotIndex()));
         mTelephonyManager.getDeviceSoftwareVersion();
-        mTelephonyManager.getImei();
-        mTelephonyManager.getImei(mTelephonyManager.getSlotIndex());
+        ShellIdentityUtils.invokeMethodWithShellPermissions(mTelephonyManager,
+                (tm) -> tm.getImei());
+        ShellIdentityUtils.invokeMethodWithShellPermissions(mTelephonyManager,
+                (tm) -> tm.getImei(mTelephonyManager.getSlotIndex()));
         mTelephonyManager.getPhoneCount();
         mTelephonyManager.getDataEnabled();
         mTelephonyManager.getNetworkSpecifier();
@@ -236,7 +243,11 @@ public class TelephonyManagerTest {
         PhoneAccountHandle handle =
                 telecomManager.getDefaultOutgoingPhoneAccount(PhoneAccount.SCHEME_TEL);
         TelephonyManager telephonyManager = mTelephonyManager.createForPhoneAccountHandle(handle);
-        assertEquals(mTelephonyManager.getSubscriberId(), telephonyManager.getSubscriberId());
+        String globalSubscriberId = ShellIdentityUtils.invokeMethodWithShellPermissions(
+                mTelephonyManager, (tm) -> tm.getSubscriberId());
+        String localSubscriberId = ShellIdentityUtils.invokeMethodWithShellPermissions(
+                telephonyManager, (tm) -> tm.getSubscriberId());
+        assertEquals(globalSubscriberId, localSubscriberId);
     }
 
     @Test
@@ -272,7 +283,9 @@ public class TelephonyManagerTest {
      */
     @Test
     public void testGetDeviceId() {
-        verifyDeviceId(mTelephonyManager.getDeviceId());
+        String deviceId = ShellIdentityUtils.invokeMethodWithShellPermissions(mTelephonyManager,
+                (tm) -> tm.getDeviceId());
+        verifyDeviceId(deviceId);
     }
 
     /**
@@ -281,11 +294,16 @@ public class TelephonyManagerTest {
      */
     @Test
     public void testGetDeviceIdForSlot() {
-        String deviceId = mTelephonyManager.getDeviceId(mTelephonyManager.getSlotIndex());
+        String deviceId = ShellIdentityUtils.invokeMethodWithShellPermissions(mTelephonyManager,
+                (tm) -> tm.getDeviceId(mTelephonyManager.getSlotIndex()));
         verifyDeviceId(deviceId);
         // Also verify that no exception is thrown for any slot index (including invalid ones)
         for (int i = -1; i <= mTelephonyManager.getPhoneCount(); i++) {
-            mTelephonyManager.getDeviceId(i);
+            // The compiler error 'local variables referenced from a lambda expression must be final
+            // or effectively final' is reported when using i, so assign it to a final variable.
+            final int currI = i;
+            ShellIdentityUtils.invokeMethodWithShellPermissions(mTelephonyManager,
+                    (tm) -> tm.getDeviceId(currI));
         }
     }
 
@@ -505,7 +523,8 @@ public class TelephonyManagerTest {
      */
     @Test
     public void testGetImei() {
-        String imei = mTelephonyManager.getImei();
+        String imei = ShellIdentityUtils.invokeMethodWithShellPermissions(mTelephonyManager,
+                (tm) -> tm.getImei());
 
         if (mPackageManager.hasSystemFeature(PackageManager.FEATURE_TELEPHONY)) {
             if (mTelephonyManager.getPhoneType() == TelephonyManager.PHONE_TYPE_GSM) {
@@ -524,15 +543,21 @@ public class TelephonyManagerTest {
         }
 
         for (int i = 0; i < mTelephonyManager.getPhoneCount(); i++) {
-            String imei = mTelephonyManager.getImei(i);
+            // The compiler error 'local variables referenced from a lambda expression must be final
+            // or effectively final' is reported when using i, so assign it to a final variable.
+            final int currI = i;
+            String imei = ShellIdentityUtils.invokeMethodWithShellPermissions(mTelephonyManager,
+                    (tm) -> tm.getImei(currI));
             if (!TextUtils.isEmpty(imei)) {
                 assertImei(imei);
             }
         }
 
         // Also verify that no exception is thrown for any slot index (including invalid ones)
-        mTelephonyManager.getImei(-1);
-        mTelephonyManager.getImei(mTelephonyManager.getPhoneCount());
+        ShellIdentityUtils.invokeMethodWithShellPermissions(mTelephonyManager,
+                (tm) -> tm.getImei(-1));
+        ShellIdentityUtils.invokeMethodWithShellPermissions(mTelephonyManager,
+                (tm) -> tm.getImei(mTelephonyManager.getPhoneCount()));
     }
 
     /**
@@ -540,7 +565,8 @@ public class TelephonyManagerTest {
      */
     @Test
     public void testGetMeid() {
-        String meid = mTelephonyManager.getMeid();
+        String meid = ShellIdentityUtils.invokeMethodWithShellPermissions(mTelephonyManager,
+                (tm) -> tm.getMeid());
 
         if (mPackageManager.hasSystemFeature(PackageManager.FEATURE_TELEPHONY)) {
             if (mTelephonyManager.getPhoneType() == TelephonyManager.PHONE_TYPE_CDMA) {
@@ -568,7 +594,10 @@ public class TelephonyManagerTest {
                 int subId = subInfo.getSubscriptionId();
                 TelephonyManager tm = mTelephonyManager.createForSubscriptionId(subId);
                 if (tm.getPhoneType() == TelephonyManager.PHONE_TYPE_CDMA) {
-                    String meid = mTelephonyManager.getMeid(slotIndex);
+                    String meid = ShellIdentityUtils.invokeMethodWithShellPermissions(
+                            mTelephonyManager,
+                            (telephonyManager) -> telephonyManager.getMeid(slotIndex));
+
                     if (!TextUtils.isEmpty(meid)) {
                         assertMeidEsn(meid);
                     }
@@ -577,8 +606,10 @@ public class TelephonyManagerTest {
         }
 
         // Also verify that no exception is thrown for any slot index (including invalid ones)
-        mTelephonyManager.getMeid(-1);
-        mTelephonyManager.getMeid(mTelephonyManager.getPhoneCount());
+        ShellIdentityUtils.invokeMethodWithShellPermissions(mTelephonyManager,
+                (tm) -> tm.getMeid(-1));
+        ShellIdentityUtils.invokeMethodWithShellPermissions(mTelephonyManager,
+                (tm) -> tm.getMeid(mTelephonyManager.getPhoneCount()));
     }
 
     /**

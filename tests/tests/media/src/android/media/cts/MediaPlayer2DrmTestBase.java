@@ -87,17 +87,17 @@ public class MediaPlayer2DrmTestBase extends ActivityInstrumentationTestCase2<Me
         super.setUp();
         mActivity = getActivity();
         getInstrumentation().waitForIdleSync();
+        mContext = getInstrumentation().getTargetContext();
         try {
             runTestOnUiThread(new Runnable() {
                 public void run() {
-                    mPlayer = MediaPlayer2.create();
+                    mPlayer = MediaPlayer2.create(mContext);
                 }
             });
         } catch (Throwable e) {
             e.printStackTrace();
             fail();
         }
-        mContext = getInstrumentation().getTargetContext();
         mResources = mContext.getResources();
 
         mExecutor = Executors.newFixedThreadPool(2);

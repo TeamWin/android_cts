@@ -741,6 +741,14 @@ public class DeviceOwnerTest extends BaseDevicePolicyTest {
                 "testEnablingAndDisablingBackupService");
     }
 
+    public void testDeviceOwnerCanGetDeviceIdentifiers() throws Exception {
+        // The Device Owner should have access to all device identifiers.
+        if (!mHasFeature) {
+            return;
+        }
+        executeDeviceOwnerTest("DeviceIdentifiersTest");
+    }
+
     public void testPackageInstallCache() throws Exception {
         if (!mHasFeature) {
             return;

@@ -177,6 +177,14 @@ public class NativeMediaDrmClearkeyTest extends MediaPlayerTestBase {
         assertEquals("ClearKey CDM", value.toString());
     }
 
+    public void testPropertyByteArray() throws Exception {
+        if (watchHasNoClearkeySupport()) {
+            return;
+        }
+
+        assertTrue(testPropertyByteArrayNative(uuidByteArray(CLEARKEY_SCHEME_UUID)));
+    }
+
     public void testUnknownPropertyString() throws Exception {
         StringBuffer value = new StringBuffer();
 
@@ -275,6 +283,8 @@ public class NativeMediaDrmClearkeyTest extends MediaPlayerTestBase {
     private static native boolean testGetPropertyStringNative(final byte[] uuid,
             final String name, StringBuffer value);
 
+    private static native boolean testPropertyByteArrayNative(final byte[] uuid);
+
     private static native boolean testPsshNative(final byte[] uuid, final String videoUrl);
 
     private static native boolean testQueryKeyStatusNative(final byte[] uuid);
@@ -297,3 +307,4 @@ public class NativeMediaDrmClearkeyTest extends MediaPlayerTestBase {
             VIDEO_WIDTH_CENC, VIDEO_HEIGHT_CENC);
     }
 }
+

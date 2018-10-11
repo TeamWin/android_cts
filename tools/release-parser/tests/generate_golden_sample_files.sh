@@ -11,20 +11,44 @@
 # 6. test: ./cts/tools/release-parser/tests/run_test.sh
 
 echo Generating golden sample files for parser validation
-ApkTargetFiles="HelloActivity.apk CtsJniTestCases.apk"
-for file in $ApkTargetFiles; do
+TargetFiles="HelloActivity.apk CtsJniTestCases.apk"
+for file in $TargetFiles; do
     echo Processing $file
     java -cp $ANDROID_HOST_OUT/framework/release-parser.jar com.android.cts.releaseparser.ApkParser -i resources/$file -of resources/$file.pb.txt
 done
 
-SoTargetFiles="libEGL.so"
-for file in $SoTargetFiles; do
+TargetFiles="libEGL.so"
+for file in $TargetFiles; do
     echo Processing $file
     java -cp $ANDROID_HOST_OUT/framework/release-parser.jar com.android.cts.releaseparser.SoParser -i resources/$file -pi -of resources/$file.pb.txt
 done
 
-SoTargetFiles="CtsAslrMallocTestCases32"
-for file in $SoTargetFiles; do
+TargetFiles="CtsAslrMallocTestCases32"
+for file in $TargetFiles; do
     echo Processing $file
     java -cp $ANDROID_HOST_OUT/framework/release-parser.jar com.android.cts.releaseparser.SoParser -i resources/$file -of resources/$file.pb.txt
+done
+
+TargetFiles="android.test.runner.vdex"
+for file in $TargetFiles; do
+    echo Processing $file
+    java -cp $ANDROID_HOST_OUT/framework/release-parser.jar com.android.cts.releaseparser.VdexParser -i resources/$file -of resources/$file.pb.txt
+done
+
+TargetFiles="android.test.runner.odex"
+for file in $TargetFiles; do
+    echo Processing $file
+    java -cp $ANDROID_HOST_OUT/framework/release-parser.jar com.android.cts.releaseparser.OdexParser -i resources/$file -of resources/$file.pb.txt
+done
+
+TargetFiles="boot-framework.oat"
+for file in $TargetFiles; do
+    echo Processing $file
+    java -cp $ANDROID_HOST_OUT/framework/release-parser.jar com.android.cts.releaseparser.OatParser -i resources/$file -of resources/$file.pb.txt
+done
+
+TargetFiles="boot-framework.art"
+for file in $TargetFiles; do
+    echo Processing $file
+    java -cp $ANDROID_HOST_OUT/framework/release-parser.jar com.android.cts.releaseparser.ArtParser -i resources/$file -of resources/$file.pb.txt
 done

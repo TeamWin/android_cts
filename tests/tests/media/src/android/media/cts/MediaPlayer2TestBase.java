@@ -99,7 +99,7 @@ public class MediaPlayer2TestBase extends ActivityInstrumentationTestCase2<Media
     protected static MediaPlayer2 createMediaPlayer2(Context context, Uri uri, SurfaceHolder holder,
             AudioAttributes audioAttributes, int audioSessionId) {
         try {
-            MediaPlayer2 mp = MediaPlayer2.create();
+            MediaPlayer2 mp = MediaPlayer2.create(context);
             final AudioAttributes aa = audioAttributes != null ? audioAttributes :
                     new AudioAttributes.Builder().build();
             mp.setAudioAttributes(aa);
@@ -154,7 +154,7 @@ public class MediaPlayer2TestBase extends ActivityInstrumentationTestCase2<Media
                 return null;
             }
 
-            MediaPlayer2 mp = MediaPlayer2.create();
+            MediaPlayer2 mp = MediaPlayer2.create(context);
 
             final AudioAttributes aa = audioAttributes != null ? audioAttributes :
                     new AudioAttributes.Builder().build();
@@ -208,18 +208,18 @@ public class MediaPlayer2TestBase extends ActivityInstrumentationTestCase2<Media
         super.setUp();
         mActivity = getActivity();
         getInstrumentation().waitForIdleSync();
+        mContext = getInstrumentation().getTargetContext();
         try {
             runTestOnUiThread(new Runnable() {
                 public void run() {
-                    mPlayer = MediaPlayer2.create();
-                    mPlayer2 = MediaPlayer2.create();
+                    mPlayer = MediaPlayer2.create(mContext);
+                    mPlayer2 = MediaPlayer2.create(mContext);
                 }
             });
         } catch (Throwable e) {
             e.printStackTrace();
             fail();
         }
-        mContext = getInstrumentation().getTargetContext();
         mResources = mContext.getResources();
         mExecutor = Executors.newFixedThreadPool(1);
 
@@ -370,16 +370,6 @@ public class MediaPlayer2TestBase extends ActivityInstrumentationTestCase2<Media
 
     protected boolean checkLoadResource(int resid) throws Exception {
         return MediaUtils.check(loadResource(resid), "no decoder found");
-    }
-
-    protected void loadSubtitleSource(int resid) throws Exception {
-        AssetFileDescriptor afd = mResources.openRawResourceFd(resid);
-        try {
-            mPlayer.addTimedTextSource(afd.getFileDescriptor(), afd.getStartOffset(),
-                      afd.getLength(), MediaPlayer2.MEDIA_MIMETYPE_TEXT_SUBRIP);
-        } finally {
-            afd.close();
-        }
     }
 
     protected void playLiveVideoTest(String path, int playTime) throws Exception {
