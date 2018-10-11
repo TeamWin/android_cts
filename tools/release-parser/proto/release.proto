@@ -371,6 +371,12 @@ message Entry {
     map<string, PermissionList> device_permissions = 18;
 }
 
+enum ReleaseType {
+    DEVICE_BUILD = 0;
+    TEST_SUITE = 1;
+    APP_DISTRIBUTION_PACKAGE = 2;
+}
+
 message ReleaseContent {
     // Name
     string name = 1;
@@ -386,13 +392,15 @@ message ReleaseContent {
     string content_id = 6;
     // Size in byte
     int64 size = 7;
+    ReleaseType release_type = 8;
     // property map(key,value)
-    map<string, string> properties = 8;
+    map<string, string> properties = 9;
     // File Entry map(relative_path, entry)
-    map<string, Entry> entries = 9;
+    map<string, Entry> entries = 10;
 
-    string test_suite_tradefed = 10;
-    repeated string known_failures = 11;
+    // Test Suite specific
+    string test_suite_tradefed = 11;
     string target_arch = 12;
+    repeated string known_failures = 13;
 }
 // [END messages]

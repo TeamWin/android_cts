@@ -89,6 +89,8 @@ class ReleaseParser {
     public ReleaseContent getReleaseContent() {
         if (mRelContentBuilder == null) {
             mRelContentBuilder = ReleaseContent.newBuilder();
+            // default APP_DISTRIBUTION_PACKAGE if no BUILD_PROP nor TEST_SUITE_TRADEFED is found
+            mRelContentBuilder.setReleaseType(ReleaseType.APP_DISTRIBUTION_PACKAGE);
             // also add the root folder entry
             Entry.Builder fBuilder = parseFolder(mFolderPath);
             if (mRelContentBuilder.getName().equals("")) {
@@ -146,10 +148,12 @@ class ReleaseParser {
                         mRelContentBuilder.setBuildNumber(tstParser.getBuildNumber());
                         mRelContentBuilder.setTargetArch(tstParser.getTargetArch());
                         mRelContentBuilder.setVersion(tstParser.getVersion());
+                        mRelContentBuilder.setReleaseType(ReleaseType.TEST_SUITE);
                         break;
                     case BUILD_PROP:
                         BuildPropParser bpParser = (BuildPropParser) fParser;
                         try {
+                            mRelContentBuilder.setReleaseType(ReleaseType.DEVICE_BUILD);
                             mRelContentBuilder.setName(bpParser.getName());
                             mRelContentBuilder.setFullname(bpParser.getFullName());
                             mRelContentBuilder.setBuildNumber(bpParser.getBuildNumber());

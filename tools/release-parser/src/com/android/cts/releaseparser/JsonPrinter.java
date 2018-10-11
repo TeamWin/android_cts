@@ -63,6 +63,7 @@ public class JsonPrinter {
         mJsonWriter.name("build_number").value(mRelContent.getBuildNumber());
         mJsonWriter.name("fullname").value(mRelContent.getFullname());
         mJsonWriter.name("size").value(mRelContent.getSize());
+        mJsonWriter.name("release_type").value(mRelContent.getReleaseType().toString());
         mJsonWriter.name("test_suite_tradefed").value(mRelContent.getTestSuiteTradefed());
         mJsonWriter.name("target_arch").value(mRelContent.getTargetArch());
         writeProperties(mRelContent.getProperties());
