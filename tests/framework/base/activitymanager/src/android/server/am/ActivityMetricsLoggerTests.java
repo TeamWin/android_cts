@@ -18,6 +18,7 @@ package android.server.am;
 
 import static android.server.am.Components.REPORT_FULLY_DRAWN_ACTIVITY;
 import static android.server.am.Components.TEST_ACTIVITY;
+import static android.server.am.Components.TRANSLUCENT_TEST_ACTIVITY;
 
 import static com.android.compatibility.common.util.SystemUtil.runShellCommand;
 import static com.android.internal.logging.nano.MetricsProto.MetricsEvent.APP_TRANSITION;
@@ -34,11 +35,11 @@ import static com.android.internal.logging.nano.MetricsProto.MetricsEvent.TYPE_T
 
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.containsString;
-import static org.hamcrest.Matchers.greaterThan;
 import static org.hamcrest.Matchers.greaterThanOrEqualTo;
 import static org.hamcrest.Matchers.lessThanOrEqualTo;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertNull;
 import static org.junit.Assert.fail;
 
 import android.app.Activity;
@@ -56,6 +57,7 @@ import org.junit.Test;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Queue;
+import java.util.concurrent.TimeUnit;
 
 /**
  * CTS device tests for {@link com.android.server.am.ActivityMetricsLogger}.
@@ -65,13 +67,13 @@ import java.util.Queue;
 public class ActivityMetricsLoggerTests extends ActivityManagerTestBase {
     private static final String TAG_AM = "ActivityManager";
     private final MetricsReader mMetricsReader = new MetricsReader();
-    private int mPreUptime;
+    private long mPreUptimeMs;
     private LogSeparator mLogSeparator;
 
     @Before
     public void setUp() throws Exception {
         super.setUp();
-        mPreUptime = (int) (SystemClock.uptimeMillis() / 1000);
+        mPreUptimeMs = SystemClock.uptimeMillis();
         mMetricsReader.checkpoint(); // clear out old logs
         mLogSeparator = separateLogs(); // add a new separator for logs
     }
@@ -96,8 +98,8 @@ public class ActivityMetricsLoggerTests extends ActivityManagerTestBase {
         List<Event> eventLogs = getEventLogsForComponents(mLogSeparator,
                 30009 /* AM_ACTIVITY_LAUNCH_TIME */);
 
-        final int postUptime = (int) (SystemClock.uptimeMillis() / 1000);
-        assertMetricsLogs(TEST_ACTIVITY, APP_TRANSITION, metricsLog, postUptime);
+        final long postUptimeMs = SystemClock.uptimeMillis();
+        assertMetricsLogs(TEST_ACTIVITY, APP_TRANSITION, metricsLog, mPreUptimeMs, postUptimeMs);
         final int windowsDrawnDelayMs =
                 (int) metricsLog.getTaggedData(APP_TRANSITION_WINDOWS_DRAWN_DELAY_MS);
         final String expectedLog =
@@ -108,17 +110,20 @@ public class ActivityMetricsLoggerTests extends ActivityManagerTestBase {
     }
 
     private void assertMetricsLogs(ComponentName componentName,
-            int category, LogMaker log, int postUptime) {
+            int category, LogMaker log, long preUptimeMs, long postUptimeMs) {
         assertNotNull("did not find the metrics log for: " + componentName
                 + " category:" + category, log);
-        int startUptime =
+        int startUptimeSec =
                 ((Number) log.getTaggedData(APP_TRANSITION_DEVICE_UPTIME_SECONDS)).intValue();
+        int preUptimeSec = (int) (TimeUnit.MILLISECONDS.toSeconds(preUptimeMs));
+        int postUptimeSec = (int) (TimeUnit.MILLISECONDS.toSeconds(postUptimeMs));
+        long testElapsedTimeMs = postUptimeMs - preUptimeMs;
         assertThat("must be either cold or warm launch", log.getType(),
                 IsIn.oneOf(TYPE_TRANSITION_COLD_LAUNCH, TYPE_TRANSITION_WARM_LAUNCH));
-        assertThat("reported uptime should be after the app was started", startUptime,
-                greaterThanOrEqualTo(mPreUptime));
-        assertThat("reported uptime should be before assertion time", startUptime,
-                lessThanOrEqualTo(postUptime));
+        assertThat("reported uptime should be after the app was started", startUptimeSec,
+                greaterThanOrEqualTo(preUptimeSec));
+        assertThat("reported uptime should be before assertion time", startUptimeSec,
+                lessThanOrEqualTo(postUptimeSec));
         assertNotNull("log should have delay", log.getTaggedData(APP_TRANSITION_DELAY_MS));
         assertEquals("transition should be started because of starting window",
                 1 /* APP_TRANSITION_STARTING_WINDOW */, log.getSubtype());
@@ -126,6 +131,9 @@ public class ActivityMetricsLoggerTests extends ActivityManagerTestBase {
                 log.getTaggedData(APP_TRANSITION_STARTING_WINDOW_DELAY_MS));
         assertNotNull("log should have windows drawn delay",
                 log.getTaggedData(APP_TRANSITION_WINDOWS_DRAWN_DELAY_MS));
+        long windowsDrawnDelayMs = (int) log.getTaggedData(APP_TRANSITION_WINDOWS_DRAWN_DELAY_MS);
+        assertThat("windows drawn delay should be less that total elapsed time",
+                windowsDrawnDelayMs,  lessThanOrEqualTo(testElapsedTimeMs));
     }
 
     private void assertEventLogsContainsLaunchTime(List<Event> events, ComponentName componentName,
@@ -204,6 +212,59 @@ public class ActivityMetricsLoggerTests extends ActivityManagerTestBase {
 
         assertThat("did not find windows drawn delay time in am start output.", amStartOutput,
                 containsString(Integer.toString(windowsDrawnDelayMs)));
+    }
+
+    /**
+     * Launch an app that is already visible and verify we handle cases where we will not
+     * receive a windows drawn message.
+     * see b/117148004
+     */
+    @Test
+    public void testLaunchOfVisibleApp() {
+        ComponentName secondTestActivity =
+                ComponentName.unflattenFromString("android.server.am.second/.SecondActivity");
+
+        // Launch an activity.
+        getLaunchActivityBuilder()
+                .setUseInstrumentation()
+                .setTargetActivity(secondTestActivity)
+                .setWaitForLaunched(true)
+                .execute();
+
+        // Launch a translucent activity on top.
+        getLaunchActivityBuilder()
+                .setUseInstrumentation()
+                .setTargetActivity(TRANSLUCENT_TEST_ACTIVITY)
+                .setWaitForLaunched(true)
+                .execute();
+
+        // Launch the first activity again. This will not trigger a windows drawn message since
+        // its windows were visible before launching.
+        mMetricsReader.checkpoint(); // clear out old logs
+        getLaunchActivityBuilder()
+                .setUseInstrumentation()
+                .setTargetActivity(secondTestActivity)
+                .setWaitForLaunched(true)
+                .execute();
+        LogMaker metricsLog = getMetricsLog(secondTestActivity, APP_TRANSITION);
+        // Verify transition logs are absent since we cannot measure windows drawn delay.
+        assertNull("transition logs should be reset.", metricsLog);
+
+        // Verify metrics for subsequent launches are generated as expected.
+        stopTestPackage(TEST_ACTIVITY.getPackageName());
+        mPreUptimeMs = SystemClock.uptimeMillis();
+        mMetricsReader.checkpoint(); // clear out old logs
+
+        getLaunchActivityBuilder()
+                .setUseInstrumentation()
+                .setTargetActivity(TEST_ACTIVITY)
+                .setWaitForLaunched(true)
+                .execute();
+
+        long postUptimeMs = SystemClock.uptimeMillis();
+        metricsLog = getMetricsLog(TEST_ACTIVITY, APP_TRANSITION);
+        assertMetricsLogs(TEST_ACTIVITY, APP_TRANSITION, metricsLog, mPreUptimeMs,
+                postUptimeMs);
     }
 
     private LogMaker getMetricsLog(ComponentName componentName, int category) {
