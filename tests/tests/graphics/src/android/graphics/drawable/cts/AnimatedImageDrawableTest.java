@@ -43,6 +43,7 @@ import android.view.View;
 import android.widget.ImageView;
 
 import androidx.test.InstrumentationRegistry;
+import androidx.test.filters.FlakyTest;
 import androidx.test.rule.ActivityTestRule;
 import androidx.test.runner.AndroidJUnit4;
 
@@ -247,6 +248,7 @@ public class AnimatedImageDrawableTest {
     }
 
     @Test
+    @FlakyTest (bugId = 120280954)
     public void testLifeCycle() throws Throwable {
         AnimatedImageDrawable drawable = createFromImageDecoder(RES_ID);
 
@@ -323,6 +325,7 @@ public class AnimatedImageDrawableTest {
     }
 
     @Test
+    @FlakyTest (bugId = 72737527)
     public void testAddCallbackAfterStart() throws Throwable {
         AnimatedImageDrawable drawable = createFromImageDecoder(RES_ID);
         Callback cb = new Callback(drawable);
@@ -368,6 +371,7 @@ public class AnimatedImageDrawableTest {
     }
 
     @Test
+    @FlakyTest (bugId = 72737527)
     public void testRepeatCounts() throws Throwable {
         for (int repeatCount : new int[] { 3, 5, 7, 16 }) {
             AnimatedImageDrawable drawable = createFromImageDecoder(RES_ID);
