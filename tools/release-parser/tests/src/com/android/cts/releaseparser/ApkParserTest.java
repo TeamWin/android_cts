@@ -42,7 +42,6 @@ public class ApkParserTest {
     // android/development/samples/HelloActivity/AndroidManifest.xml
     private static final String TEST_SO_APK = "CtsJniTestCases.apk";
 
-
     /**
      * Test {@link ApkParser} with an simple APK
      *
