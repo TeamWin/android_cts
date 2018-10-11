@@ -26,16 +26,16 @@ import java.util.HashMap;
 /** {@link DefaultHandler} */
 class XmlHandler extends DefaultHandler {
     // Root Element Tag
-    private static final String PERMISSIONS_TAG = "permissions";
+    public static final String PERMISSIONS_TAG = "permissions";
 
     // Element Tag
-    private static final String PERMISSION_TAG = "permission";
-    private static final String ASSIGN_PERMISSION_TAG = "assign-permission";
-    private static final String LIBRARY_TAG = "library";
-    private static final String ALLOW_IN_POWER_SAVE_TAG = "allow-in-power-save";
-    private static final String SYSTEM_USER_WHITELISTED_TAG = "system-user-whitelisted-app";
-    private static final String PRIVAPP_PERMISSIONS_TAG = "privapp-permissions";
-    private static final String FEATURE_TAG = "feature";
+    public static final String PERMISSION_TAG = "permission";
+    public static final String ASSIGN_PERMISSION_TAG = "assign-permission";
+    public static final String LIBRARY_TAG = "library";
+    public static final String ALLOW_IN_POWER_SAVE_TAG = "allow-in-power-save";
+    public static final String SYSTEM_USER_WHITELISTED_TAG = "system-user-whitelisted-app";
+    public static final String PRIVAPP_PERMISSIONS_TAG = "privapp-permissions";
+    public static final String FEATURE_TAG = "feature";
 
     // Attribue Tag
     private static final String NAME_TAG = "name";

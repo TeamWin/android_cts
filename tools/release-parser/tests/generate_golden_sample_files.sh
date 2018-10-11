@@ -11,7 +11,7 @@
 # 6. test: ./cts/tools/release-parser/tests/run_test.sh
 
 echo Generating golden sample files for parser validation
-TargetFiles="HelloActivity.apk CtsJniTestCases.apk"
+TargetFiles="HelloActivity.apk CtsJniTestCases.apk Shell.apk"
 for file in $TargetFiles; do
     echo Processing $file
     java -cp $ANDROID_HOST_OUT/framework/release-parser.jar com.android.cts.releaseparser.ApkParser -i resources/$file -of resources/$file.pb.txt

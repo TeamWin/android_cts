@@ -34,9 +34,14 @@ public class ApkParserTest {
     // HelloActivity.apk's source code: android/cts/tests/tests/jni/AndroidManifest.xml
     private static final String TEST_SIMPLE_APK = "HelloActivity.apk";
 
+    // Shell.apk's source code:
+    // android/frameworks/base/packages/Shell/AndroidManifest.xml
+    private static final String TEST_SYS_APK = "Shell.apk";
+
     // CtsJniTestCases.apk's source code:
     // android/development/samples/HelloActivity/AndroidManifest.xml
     private static final String TEST_SO_APK = "CtsJniTestCases.apk";
+
 
     /**
      * Test {@link ApkParser} with an simple APK
@@ -46,6 +51,16 @@ public class ApkParserTest {
     @Test
     public void testSimpleApk() throws Exception {
         testApkParser(TEST_SIMPLE_APK);
+    }
+
+    /**
+     * Test {@link ApkParser} with an Sys(priv-app) APK
+     *
+     * @throws Exception
+     */
+    @Test
+    public void testSysApk() throws Exception {
+        testApkParser(TEST_SYS_APK);
     }
 
     /**

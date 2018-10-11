@@ -121,6 +121,7 @@ app_info {
     name: "android.test.runner"
     required: "android.test.runner"
   }
+  uses_permissions: "android.permission.DISABLE_KEYGUARD"
   properties {
     key: "compileSdkVersionCodename"
     value: "Q"
@@ -128,10 +129,6 @@ app_info {
   properties {
     key: "minSdkVersion"
     value: "Q"
-  }
-  properties {
-    key: "uses-permission"
-    value: "android.permission.DISABLE_KEYGUARD"
   }
   properties {
     key: "platformBuildVersionName"

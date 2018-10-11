@@ -166,9 +166,14 @@ public class AndroidManifestParser extends FileParser {
                         processed = 1;
                         break;
                     case "original-package":
-                    case "uses-permission":
                         if (key.equals("name")) {
                             mProperties.put(mElementName, value);
+                            processed = 1;
+                        }
+                        break;
+                    case "uses-permission":
+                        if (key.equals("name")) {
+                            mAppInfoBuilder.addUsesPermissions(value);
                             processed = 1;
                         }
                         break;
