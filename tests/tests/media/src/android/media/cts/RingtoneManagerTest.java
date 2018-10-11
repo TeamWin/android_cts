@@ -16,6 +16,7 @@
 package android.media.cts;
 
 import android.app.ActivityManager;
+import android.content.res.AssetFileDescriptor;
 import android.media.cts.R;
 
 
@@ -32,6 +33,9 @@ import android.platform.test.annotations.AppModeFull;
 import android.provider.Settings;
 import android.test.ActivityInstrumentationTestCase2;
 import android.util.Log;
+
+import java.io.FileNotFoundException;
+import java.io.IOException;
 
 @AppModeFull(reason = "TODO: evaluate and port to instant")
 public class RingtoneManagerTest
@@ -132,6 +136,27 @@ public class RingtoneManagerTest
         RingtoneManager.setActualDefaultRingtoneUri(mContext, RingtoneManager.TYPE_RINGTONE, uri);
         assertEquals(uri, RingtoneManager.getActualDefaultRingtoneUri(mContext,
                 RingtoneManager.TYPE_RINGTONE));
+
+        try (AssetFileDescriptor afd = RingtoneManager.openDefaultRingtoneUri(
+                mActivity, RingtoneManager.getDefaultUri(RingtoneManager.TYPE_RINGTONE))) {
+            assertNotNull(afd);
+        } catch (IOException e) {
+            fail(e.getMessage());
+        }
+
+        Uri bogus = Uri.parse("content://a_bogus_uri");
+        RingtoneManager.setActualDefaultRingtoneUri(mContext, RingtoneManager.TYPE_RINGTONE, bogus);
+        assertEquals(bogus, RingtoneManager.getActualDefaultRingtoneUri(mContext,
+                RingtoneManager.TYPE_RINGTONE));
+
+        try (AssetFileDescriptor ignored = RingtoneManager.openDefaultRingtoneUri(
+                mActivity, RingtoneManager.getDefaultUri(RingtoneManager.TYPE_RINGTONE))) {
+            fail("FileNotFoundException should be thrown for a bogus Uri.");
+        } catch (FileNotFoundException e) {
+            // Expected.
+        } catch (IOException e) {
+            fail(e.getMessage());
+        }
 
         assertEquals(Settings.System.DEFAULT_RINGTONE_URI,
                 RingtoneManager.getDefaultUri(RingtoneManager.TYPE_RINGTONE));
