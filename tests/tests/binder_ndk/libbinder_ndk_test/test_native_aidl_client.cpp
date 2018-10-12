@@ -17,9 +17,9 @@
 
 #include <android/binder_ibinder_jni.h>
 #include <gtest/gtest.h>
-#include <test_package/BnEmpty.h>
-#include <test_package/BpTest.h>
-#include <test_package/RegularPolygon.h>
+#include <aidl/test_package/BnEmpty.h>
+#include <aidl/test_package/BpTest.h>
+#include <aidl/test_package/RegularPolygon.h>
 
 #include "itest_impl.h"
 #include "utilities.h"
