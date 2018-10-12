@@ -96,6 +96,7 @@ public class KeyguardLockedTests extends KeyguardTestBase {
             lockScreenSession.enterAndConfirmLockCredential();
             mAmWmState.waitForKeyguardGone();
             mAmWmState.assertKeyguardGone();
+            mAmWmState.computeState(DISMISS_KEYGUARD_ACTIVITY);
             boolean isDismissTranslucent =
                     mAmWmState.getAmState().isActivityTranslucent(DISMISS_KEYGUARD_ACTIVITY);
             mAmWmState.assertVisibility(DISMISS_KEYGUARD_ACTIVITY, true);
