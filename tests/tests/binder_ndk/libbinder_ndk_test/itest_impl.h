@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-#include <test_package/BnTest.h>
+#include <aidl/test_package/BnTest.h>
 
 #include "utilities.h"
 
