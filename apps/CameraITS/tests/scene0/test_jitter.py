@@ -61,10 +61,14 @@ def main():
         matplotlib.pyplot.savefig('%s_deltas.png' % (NAME))
 
         # Test for pass/fail.
-        assert avg > MIN_AVG_FRAME_DELTA
-        assert var < MAX_VAR_FRAME_DELTA
-        assert abs(range0) < MAX_FRAME_DELTA_JITTER
-        assert abs(range1) < MAX_FRAME_DELTA_JITTER
+        emsg = 'avg: %.4fms, TOL: %.fms' % (avg, MIN_AVG_FRAME_DELTA)
+        assert avg > MIN_AVG_FRAME_DELTA, emsg
+        emsg = 'var: %.4fms, TOL: %.2fms' % (var, MAX_VAR_FRAME_DELTA)
+        assert var < MAX_VAR_FRAME_DELTA, emsg
+        emsg = 'range0: %.4fms, range1: %.4fms, TOL: %.2fms' % (
+                range0, range1, MAX_FRAME_DELTA_JITTER)
+        assert abs(range0) < MAX_FRAME_DELTA_JITTER, emsg
+        assert abs(range1) < MAX_FRAME_DELTA_JITTER, emsg
 
 if __name__ == '__main__':
     main()
