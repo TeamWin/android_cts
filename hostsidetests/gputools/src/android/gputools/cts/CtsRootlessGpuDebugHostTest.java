@@ -53,7 +53,7 @@ public class CtsRootlessGpuDebugHostTest implements IDeviceTest {
         return mDevice;
     }
 
-    // This test ensures that the Vulkan and GLES loaders can use Settings to load layers
+    // This test ensures that the Vulkan loader can use Settings to load layer
     // from the base directory of debuggable applications.  Is also tests several
     // positive and negative scenarios we want to cover (listed below).
     //
@@ -67,7 +67,7 @@ public class CtsRootlessGpuDebugHostTest implements IDeviceTest {
     // The layers themselves are practically null, only enough functionality to
     // satisfy loader enumerating and loading.  They don't actually chain together.
     //
-    // Positive Vulkan tests
+    // Positive tests
     // - Ensure we can toggle the Enable Setting on and off (testDebugLayerLoadVulkan)
     // - Ensure we can set the debuggable app (testDebugLayerLoadVulkan)
     // - Ensure we can set the layer list (testDebugLayerLoadVulkan)
@@ -76,30 +76,12 @@ public class CtsRootlessGpuDebugHostTest implements IDeviceTest {
     // - Ensure we can load a layer from app's data directory (testDebugLayerLoadVulkan)
     // - Ensure we can load multiple layers, in order, from app's data directory (testDebugLayerLoadVulkan)
     // - Ensure we can still use system properties if no layers loaded via Settings (testSystemPropertyEnableVulkan)
-    // - Ensure we can find layers in separate specified app (testDebugLayerLoadExternalVulkan)
-    // Negative Vulkan tests
-    // - Ensure we cannot push a layer to non-debuggable app (testReleaseLayerLoadVulkan)
-    // - Ensure non-debuggable app ignores the new Settings (testReleaseLayerLoadVulkan)
+    // Negative tests
+    // - Ensure we cannot push a layer to non-debuggable app (testReleaseLayerLoad)
+    // - Ensure non-debuggable app ignores the new Settings (testReleaseLayerLoad)
     // - Ensure we cannot enumerate layers from debuggable app's data directory if Setting not specified (testDebugNoEnumerateVulkan)
     // - Ensure we cannot enumerate layers without specifying the debuggable app (testDebugNoEnumerateVulkan)
     // - Ensure we cannot use system properties when layer is found via Settings with debuggable app (testSystemPropertyIgnoreVulkan)
-    //
-    // Positive GLES tests
-    // - Ensure we can toggle the Enable Setting on and off (testDebugLayerLoadGLES)
-    // - Ensure we can set the debuggable app (testDebugLayerLoadGLES)
-    // - Ensure we can set the layer list (testDebugLayerLoadGLES)
-    // - Ensure we can push a layer to debuggable app (testDebugLayerLoadGLES)
-    // - Ensure we can specify the app to load layers (testDebugLayerLoadGLES)
-    // - Ensure we can load a layer from app's data directory (testDebugLayerLoadGLES)
-    // - Ensure we can load multiple layers, in order, from app's data directory (testDebugLayerLoadGLES)
-    // - Ensure we can find layers in separate specified app (testDebugLayerLoadExternalGLES)
-    // Negative GLES tests
-    // - Ensure we cannot push a layer to non-debuggable app (testReleaseLayerLoadGLES)
-    // - Ensure non-debuggable app ignores the new Settings (testReleaseLayerLoadGLES)
-    // - Ensure we cannot enumerate layers from debuggable app's data directory if Setting not specified (testDebugNoEnumerateGLES)
-    // - Ensure we cannot enumerate layers without specifying the debuggable app (testDebugNoEnumerateGLES)
-
-
 
     private static final String CLASS = "RootlessGpuDebugDeviceActivity";
     private static final String ACTIVITY = "android.rootlessgpudebug.app.RootlessGpuDebugDeviceActivity";
@@ -115,12 +97,6 @@ public class CtsRootlessGpuDebugHostTest implements IDeviceTest {
     private static final String DEBUG_APP = "android.rootlessgpudebug.DEBUG.app";
     private static final String RELEASE_APP = "android.rootlessgpudebug.RELEASE.app";
     private static final String LAYERS_APP = "android.rootlessgpudebug.LAYERS.app";
-    private static final String SHIM_A = "glesLayer1";
-    private static final String SHIM_B = "glesLayer2";
-    private static final String SHIM_C = "glesLayer3";
-    private static final String SHIM_A_LIB = "libGLES_" + SHIM_A + ".so";
-    private static final String SHIM_B_LIB = "libGLES_" + SHIM_B + ".so";
-    private static final String SHIM_C_LIB = "libGLES_" + SHIM_C + ".so";
 
     // This is how long we'll scan the log for a result before giving up. This limit will only
     // be reached if something has gone wrong
@@ -199,7 +175,7 @@ public class CtsRootlessGpuDebugHostTest implements IDeviceTest {
                     result.found = true;
                     result.lineNumber = lineNumber;
                 }
-                if (line.contains("RootlessGpuDebug activity complete")) {
+                if (line.contains("vkCreateInstance succeeded")) {
                     // Once we've got output from the app, we've collected what we need
                     scanComplete= true;
                 }
@@ -220,15 +196,10 @@ public class CtsRootlessGpuDebugHostTest implements IDeviceTest {
         mDevice.executeAdbCommand("shell", "rm", "-f", "/data/local/tmp/" + LAYER_A_LIB);
         mDevice.executeAdbCommand("shell", "rm", "-f", "/data/local/tmp/" + LAYER_B_LIB);
         mDevice.executeAdbCommand("shell", "rm", "-f", "/data/local/tmp/" + LAYER_C_LIB);
-        mDevice.executeAdbCommand("shell", "rm", "-f", "/data/local/tmp/" + SHIM_A_LIB);
-        mDevice.executeAdbCommand("shell", "rm", "-f", "/data/local/tmp/" + SHIM_B_LIB);
-        mDevice.executeAdbCommand("shell", "rm", "-f", "/data/local/tmp/" + SHIM_C_LIB);
         mDevice.executeAdbCommand("shell", "settings", "delete", "global", "enable_gpu_debug_layers");
         mDevice.executeAdbCommand("shell", "settings", "delete", "global", "gpu_debug_app");
         mDevice.executeAdbCommand("shell", "settings", "delete", "global", "gpu_debug_layers");
-        mDevice.executeAdbCommand("shell", "settings", "delete", "global", "gpu_debug_layer_app");
         mDevice.executeAdbCommand("shell", "setprop", "debug.vulkan.layers", "\'\"\"\'");
-        mDevice.executeAdbCommand("shell", "setprop", "debug.gles.layers", "\'\"\"\'");
     }
 
     /**
@@ -401,7 +372,7 @@ public class CtsRootlessGpuDebugHostTest implements IDeviceTest {
     }
 
     /**
-     * This test ensures we can still use properties if no layer specified via Settings
+     * This test ensures we can still use properties if no layer found via Settings
      */
     @Test
     public void testSystemPropertyEnableVulkan() throws Exception {
@@ -409,9 +380,7 @@ public class CtsRootlessGpuDebugHostTest implements IDeviceTest {
         // Set up layerA to be loaded, but not layerB or layerC
         mDevice.executeAdbCommand("shell", "settings", "put", "global", "enable_gpu_debug_layers", "1");
         mDevice.executeAdbCommand("shell", "settings", "put", "global", "gpu_debug_app", RELEASE_APP);
-        // Switch back to delete once b/117555066 is fixed
-        //mDevice.executeAdbCommand("shell", "settings", "delete", "global", "gpu_debug_layers");
-        mDevice.executeShellCommand("settings put global gpu_debug_layers ''");
+        mDevice.executeAdbCommand("shell", "settings", "put", "global", "gpu_debug_layers", LAYER_A_NAME);
 
         // Enable layerC (which is packaged with the RELEASE app) with system properties
         mDevice.executeAdbCommand("shell", "setprop", "debug.vulkan.layers " + LAYER_C_NAME);
@@ -473,305 +442,4 @@ public class CtsRootlessGpuDebugHostTest implements IDeviceTest {
         LogScanResult resultB = scanLog(pid, searchStringB);
         Assert.assertFalse("LayerB was loaded", resultB.found);
     }
-
-    /**
-     *
-     */
-    @Test
-    public void testDebugLayerLoadExternalVulkan() throws Exception {
-
-        // Set up layers to be loaded
-        mDevice.executeAdbCommand("shell", "settings", "put", "global", "enable_gpu_debug_layers", "1");
-        mDevice.executeAdbCommand("shell", "settings", "put", "global", "gpu_debug_app", DEBUG_APP);
-        mDevice.executeAdbCommand("shell", "settings", "put", "global", "gpu_debug_layers", LAYER_C_NAME);
-
-        // Specify the external app that hosts layers
-        mDevice.executeAdbCommand("shell", "settings", "put", "global", "gpu_debug_layer_app", LAYERS_APP);
-
-        // Kick off our DEBUG app
-        mDevice.executeAdbCommand("shell", "am", "start", "-n", DEBUG_APP + "/" + ACTIVITY);
-
-        // Give it a chance to start, then grab process ID
-        Thread.sleep(1000);
-        String pid = getPID(DEBUG_APP);
-
-        // Check that our external layer was loaded
-        String searchStringC = "nullCreateInstance called in " + LAYER_C;
-        LogScanResult resultC = scanLog(pid, searchStringC);
-        Assert.assertTrue("LayerC was not loaded", resultC.found);
-    }
-
-
-    /**
-     * This test pushes GLES layers to our debuggable app and ensures they are
-     * loaded in the correct order.
-     */
-    @Test
-    public void testDebugLayerLoadGLES() throws Exception {
-
-        // Set up layers to be loaded
-        mDevice.executeAdbCommand("shell", "settings", "put", "global", "enable_gpu_debug_layers", "1");
-        mDevice.executeAdbCommand("shell", "settings", "put", "global", "gpu_debug_app", DEBUG_APP);
-        mDevice.executeAdbCommand("shell", "settings", "put", "global", "gpu_debug_layers", SHIM_A_LIB + ":" + SHIM_B_LIB);
-
-        // Copy the layers from our LAYERS APK to tmp
-        setupLayer(SHIM_A_LIB);
-        setupLayer(SHIM_B_LIB);
-
-        // Copy them over to our DEBUG app
-        mDevice.executeAdbCommand("shell", "cat", "/data/local/tmp/" + SHIM_A_LIB, "|", "run-as", DEBUG_APP,
-                                  "sh", "-c", "\'cat", ">", SHIM_A_LIB, ";", "chmod", "700", SHIM_A_LIB + "\'");
-        mDevice.executeAdbCommand("shell", "cat", "/data/local/tmp/" + SHIM_B_LIB, "|", "run-as", DEBUG_APP,
-                                  "sh", "-c", "\'cat", ">", SHIM_B_LIB, ";", "chmod", "700", SHIM_B_LIB + "\'");
-
-        // Kick off our DEBUG app
-        mDevice.executeAdbCommand("shell", "am", "start", "-n", DEBUG_APP + "/" + ACTIVITY);
-
-        // Give it a chance to start, then grab process ID
-        Thread.sleep(1000);
-        String pid = getPID(DEBUG_APP);
-
-        // Check that both layers were loaded, in the correct order
-        String searchStringA = "glesLayer_eglChooseConfig called in " + SHIM_A;
-        LogScanResult resultA = scanLog(pid, searchStringA);
-        Assert.assertTrue("glesLayer1 was not loaded", resultA.found);
-
-        String searchStringB = "glesLayer_eglChooseConfig called in " + SHIM_B;
-        LogScanResult resultB = scanLog(pid, searchStringB);
-        Assert.assertTrue("glesLayer2 was not loaded", resultB.found);
-
-        Assert.assertTrue("glesLayer1 should be loaded before glesLayer2", resultA.lineNumber < resultB.lineNumber);
-    }
-
-    /**
-     * This test ensures that we cannot push a layer to a non-debuggable GLES app
-     * It also ensures non-debuggable apps ignore Settings and don't enumerate layers in the base directory.
-     */
-    @Test
-    public void testReleaseLayerLoadGLES() throws Exception {
-
-        // Set up a layers to be loaded for RELEASE app
-        mDevice.executeAdbCommand("shell", "settings", "put", "global", "enable_gpu_debug_layers", "1");
-        mDevice.executeAdbCommand("shell", "settings", "put", "global", "gpu_debug_app", RELEASE_APP);
-        mDevice.executeAdbCommand("shell", "settings", "put", "global", "gpu_debug_layers", SHIM_A_LIB + ":" + SHIM_B_LIB);
-        // Remove this once b/117555066 has been fixed
-        mDevice.executeShellCommand("settings put global gpu_debug_layer_app ''");
-
-        // Copy a layer from our LAYERS APK to tmp
-        setupLayer(SHIM_A_LIB);
-
-        // Attempt to copy them over to our RELEASE app (this should fail)
-        mDevice.executeAdbCommand("shell", "cat", "/data/local/tmp/" + SHIM_A_LIB, "|", "run-as", RELEASE_APP,
-                                   "sh", "-c", "\'cat", ">", SHIM_A_LIB, ";", "chmod", "700", SHIM_A_LIB + "\'", "||", "echo", "run-as", "failed");
-
-        // Kick off our RELEASE app
-        mDevice.executeAdbCommand("shell", "am", "start", "-n", RELEASE_APP + "/" + ACTIVITY);
-
-        // Give it a chance to start, then grab process ID
-        Thread.sleep(1000);
-        String pid = getPID(RELEASE_APP);
-
-        // Ensure we don't load the layer in base dir
-        String searchStringA = SHIM_A + " loaded";
-        LogScanResult resultA = scanLog(pid, searchStringA);
-        Assert.assertFalse(SHIM_A + " was enumerated", resultA.found);
-    }
-
-    /**
-     * This test ensures debuggable GLES apps do not enumerate layers in base
-     * directory if enable_gpu_debug_layers is not enabled.
-     */
-    @Test
-    public void testDebugNotEnabledGLES() throws Exception {
-
-        // Ensure the global layer enable settings is NOT enabled
-        mDevice.executeAdbCommand("shell", "settings", "put", "global", "enable_gpu_debug_layers", "0");
-        mDevice.executeAdbCommand("shell", "settings", "put", "global", "gpu_debug_app", DEBUG_APP);
-        mDevice.executeAdbCommand("shell", "settings", "put", "global", "gpu_debug_layers", SHIM_A_LIB);
-
-        // Copy a layer from our LAYERS APK to tmp
-        setupLayer(SHIM_A_LIB);
-
-        // Copy it over to our DEBUG app
-        mDevice.executeAdbCommand("shell", "cat", "/data/local/tmp/" + SHIM_A_LIB, "|", "run-as", DEBUG_APP,
-                                  "sh", "-c", "\'cat", ">", SHIM_A_LIB, ";", "chmod", "700", SHIM_A_LIB + "\'");
-
-        // Kick off our DEBUG app
-        mDevice.executeAdbCommand("shell", "am", "start", "-n", DEBUG_APP + "/" + ACTIVITY);
-
-        // Give it a chance to start, then grab process ID
-        Thread.sleep(1000);
-        String pid = getPID(DEBUG_APP);
-
-        // Ensure we don't load the layer in base dir
-        String searchStringA = SHIM_A + " loaded";
-        LogScanResult resultA = scanLog(pid, searchStringA);
-        Assert.assertFalse(SHIM_A + " was enumerated", resultA.found);
-    }
-
-    /**
-     * This test ensures debuggable GLES apps do not enumerate layers in base
-     * directory if gpu_debug_app does not match.
-     */
-    @Test
-    public void testDebugWrongAppGLES() throws Exception {
-
-        // Ensure the gpu_debug_app does not match what we launch
-        mDevice.executeAdbCommand("shell", "settings", "put", "global", "enable_gpu_debug_layers", "1");
-        mDevice.executeAdbCommand("shell", "settings", "put", "global", "gpu_debug_app", RELEASE_APP);
-        mDevice.executeAdbCommand("shell", "settings", "put", "global", "gpu_debug_layers", SHIM_A_LIB);
-
-        // Copy a layer from our LAYERS APK to tmp
-        setupLayer(SHIM_A_LIB);
-
-        // Copy it over to our DEBUG app
-        mDevice.executeAdbCommand("shell", "cat", "/data/local/tmp/" + SHIM_A_LIB, "|", "run-as", DEBUG_APP,
-                                  "sh", "-c", "\'cat", ">", SHIM_A_LIB, ";", "chmod", "700", SHIM_A_LIB + "\'");
-
-        // Kick off our DEBUG app
-        mDevice.executeAdbCommand("shell", "am", "start", "-n", DEBUG_APP + "/" + ACTIVITY);
-
-        // Give it a chance to start, then grab process ID
-        Thread.sleep(1000);
-        String pid = getPID(DEBUG_APP);
-
-        // Ensure we don't load the layer in base dir
-        String searchStringA = SHIM_A + " loaded";
-        LogScanResult resultA = scanLog(pid, searchStringA);
-        Assert.assertFalse("ShimA was enumerated", resultA.found);
-    }
-
-    /**
-     * This test ensures debuggable GLES apps do not enumerate layers in base
-     * directory if gpu_debug_layers are not set.
-     */
-    @Test
-    public void testDebugNoLayersEnabledGLES() throws Exception {
-
-        // Ensure the global layer enable settings is NOT enabled
-        mDevice.executeAdbCommand("shell", "settings", "put", "global", "enable_gpu_debug_layers", "1");
-        mDevice.executeAdbCommand("shell", "settings", "put", "global", "gpu_debug_app", DEBUG_APP);
-        mDevice.executeAdbCommand("shell", "settings", "put", "global", "gpu_debug_layers", "foo");
-
-        // Copy a layer from our LAYERS APK to tmp
-        setupLayer(SHIM_A_LIB);
-
-        // Copy it over to our DEBUG app
-        mDevice.executeAdbCommand("shell", "cat", "/data/local/tmp/" + SHIM_A_LIB, "|", "run-as", DEBUG_APP,
-                                  "sh", "-c", "\'cat", ">", SHIM_A_LIB, ";", "chmod", "700", SHIM_A_LIB + "\'");
-
-        // Kick off our DEBUG app
-        mDevice.executeAdbCommand("shell", "am", "start", "-n", DEBUG_APP + "/" + ACTIVITY);
-
-        // Give it a chance to start, then grab process ID
-        Thread.sleep(1000);
-        String pid = getPID(DEBUG_APP);
-
-        // Ensure layerA is not loaded
-        String searchStringA = "glesLayer_eglChooseConfig called in " + SHIM_A;
-        LogScanResult resultA = scanLog(pid, searchStringA);
-        Assert.assertFalse("ShimA was loaded", resultA.found);
-    }
-
-    /**
-     * This test ensures we can still use properties if no GLES layers are specified
-     */
-    @Test
-    public void testSystemPropertyEnableGLES() throws Exception {
-
-        // Set up layerA to be loaded, but not layerB or layerC
-        mDevice.executeAdbCommand("shell", "settings", "put", "global", "enable_gpu_debug_layers", "1");
-        mDevice.executeAdbCommand("shell", "settings", "put", "global", "gpu_debug_app", RELEASE_APP);
-        // Switch back to delete once b/117555066 is fixed
-        //mDevice.executeAdbCommand("shell", "settings", "delete", "global", "gpu_debug_layers");
-        mDevice.executeShellCommand("settings put global gpu_debug_layers ''");
-
-        // Enable layerC (which is packaged with the RELEASE app) with system properties
-        mDevice.executeAdbCommand("shell", "setprop", "debug.gles.layers " + SHIM_C_LIB);
-
-        // Kick off our RELEASE app
-        mDevice.executeAdbCommand("shell", "am", "start", "-n", RELEASE_APP + "/" + ACTIVITY);
-
-        // Give it a chance to start, then grab process ID
-        Thread.sleep(1000);
-        String pid = getPID(RELEASE_APP);
-
-        // Check that both layers were loaded, in the correct order
-        String searchStringA = SHIM_A + "loaded";
-        LogScanResult resultA = scanLog(pid, searchStringA);
-        Assert.assertFalse("ShimA was enumerated", resultA.found);
-
-        String searchStringC = "glesLayer_eglChooseConfig called in " + SHIM_C;
-        LogScanResult resultC = scanLog(pid, searchStringC);
-        Assert.assertTrue("ShimC was not loaded", resultC.found);
-    }
-
-    /**
-     * This test ensures system properties are ignored if Settings load a GLES layer
-     */
-    @Test
-    public void testSystemPropertyIgnoreGLES() throws Exception {
-
-        // Set up layerA to be loaded, but not layerB
-        mDevice.executeAdbCommand("shell", "settings", "put", "global", "enable_gpu_debug_layers", "1");
-        mDevice.executeAdbCommand("shell", "settings", "put", "global", "gpu_debug_app", DEBUG_APP);
-        mDevice.executeAdbCommand("shell", "settings", "put", "global", "gpu_debug_layers", SHIM_A_LIB);
-
-        // Copy the layers from our LAYERS APK
-        setupLayer(SHIM_A_LIB);
-        setupLayer(SHIM_B_LIB);
-
-        // Copy them over to our DEBUG app
-        mDevice.executeAdbCommand("shell", "cat", "/data/local/tmp/" + SHIM_A_LIB, "|", "run-as", DEBUG_APP,
-                                 "sh", "-c", "\'cat", ">", SHIM_A_LIB, ";", "chmod", "700", SHIM_A_LIB + "\'");
-        mDevice.executeAdbCommand("shell", "cat", "/data/local/tmp/" + SHIM_B_LIB, "|", "run-as", DEBUG_APP,
-                                 "sh", "-c", "\'cat", ">", SHIM_B_LIB, ";", "chmod", "700", SHIM_B_LIB + "\'");
-
-        // Enable layerB with system properties
-        mDevice.executeAdbCommand("shell", "setprop", "debug.gles.layers " + SHIM_B_LIB);
-
-        // Kick off our DEBUG app
-        mDevice.executeAdbCommand("shell", "am", "start", "-n", DEBUG_APP + "/" + ACTIVITY);
-
-        // Give it a chance to start, then grab process ID
-        Thread.sleep(1000);
-        String pid = getPID(DEBUG_APP);
-
-        // Ensure only layerA is loaded
-        String searchStringA = "glesLayer_eglChooseConfig called in " + SHIM_A;
-        LogScanResult resultA = scanLog(pid, searchStringA);
-        Assert.assertTrue("ShimA was not loaded", resultA.found);
-
-        String searchStringB = "glesLayer_eglChooseConfig called in " + SHIM_B;
-        LogScanResult resultB = scanLog(pid, searchStringB);
-        Assert.assertFalse("ShimB was loaded", resultB.found);
-    }
-
-    /**
-     *
-     */
-    @Test
-    public void testDebugLayerLoadExternalGLES() throws Exception {
-
-        // Set up layers to be loaded
-        mDevice.executeAdbCommand("shell", "settings", "put", "global", "enable_gpu_debug_layers", "1");
-        mDevice.executeAdbCommand("shell", "settings", "put", "global", "gpu_debug_app", DEBUG_APP);
-        mDevice.executeAdbCommand("shell", "settings", "put", "global", "gpu_debug_layers", SHIM_C_LIB);
-
-        // Specify the external app that hosts layers
-        mDevice.executeAdbCommand("shell", "settings", "put", "global", "gpu_debug_layer_app", LAYERS_APP);
-
-        // Kick off our DEBUG app
-        mDevice.executeAdbCommand("shell", "am", "start", "-n", DEBUG_APP + "/" + ACTIVITY);
-
-        // Give it a chance to start, then grab process ID
-        Thread.sleep(1000);
-        String pid = getPID(DEBUG_APP);
-
-        // Check that our external layer was loaded
-        String searchStringC = "glesLayer_eglChooseConfig called in " + SHIM_C;
-        LogScanResult resultC = scanLog(pid, searchStringC);
-        Assert.assertTrue("ShimC was not loaded", resultC.found);
-    }
-
 }
