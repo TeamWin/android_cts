@@ -609,7 +609,7 @@ public class BitmapColorSpaceTest {
             assertSame(ColorSpace.get(ColorSpace.Named.SRGB), cs);
             assertEquals(opts.inPreferredColorSpace, opts.outColorSpace);
 
-            verifyGetPixel(b, 0x3ff00ff, 0xff00ff00);
+            verifyGetPixel(b, 0x2ff00ff, 0xff00ff00);
         } catch (IOException e) {
             fail();
         }
