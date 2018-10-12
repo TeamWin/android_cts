@@ -78,6 +78,18 @@ TEST_F(NdkBinderTest_AIBinder, DestructionGivesUserData) {
   EXPECT_EQ(data, destroyedPointer);
 }
 
+void onBinderDied(void* /*cookie*/) {}
+
+TEST_F(NdkBinderTest_AIBinder, LinkUnlink) {
+  AIBinder* binder = SampleData::newBinder();
+  AIBinder_DeathRecipient* recipient = AIBinder_DeathRecipient_new(onBinderDied);
+
+  EXPECT_EQ(STATUS_INVALID_OPERATION, AIBinder_linkToDeath(binder, recipient, nullptr));
+
+  AIBinder_DeathRecipient_delete(recipient);
+  AIBinder_decStrong(binder);
+}
+
 TEST_F(NdkBinderTest_AIBinder, DebugRefCount) {
   AIBinder* binder = SampleData::newBinder();
   EXPECT_EQ(1, AIBinder_debugGetRefCount(binder));
