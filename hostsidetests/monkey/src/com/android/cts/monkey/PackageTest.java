@@ -18,6 +18,8 @@ package com.android.cts.monkey;
 
 import com.android.tradefed.device.CollectingOutputReceiver;
 
+import com.android.compatibility.common.util.CddTest;
+
 import java.util.concurrent.TimeUnit;
 import java.util.regex.Pattern;
 
@@ -33,6 +35,7 @@ public class PackageTest extends AbstractMonkeyTest {
             Pattern.compile("^.*Allowing.*cmp=com\\.android\\.cts\\.monkey2/\\.ChimpActivity.*$",
                     Pattern.MULTILINE);
 
+    @CddTest(requirement="6.1/C-0-8")
     public void testSinglePackage() throws Exception {
         String cmd = MONKEY_CMD + " -v -p " + PKGS[0] + " 5000";
         CollectingOutputReceiver receiver = new CollectingOutputReceiver();
@@ -63,6 +66,7 @@ public class PackageTest extends AbstractMonkeyTest {
         }
     }
 
+    @CddTest(requirement="6.1/C-0-8")
     public void testMultiplePackages() throws Exception {
         String cmd = MONKEY_CMD + " -v -p " + PKGS[0] + " -p " + PKGS[1] + " 5000";
         CollectingOutputReceiver receiver = new CollectingOutputReceiver();

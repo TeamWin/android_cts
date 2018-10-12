@@ -18,12 +18,15 @@ package com.android.cts.monkey;
 
 import com.android.tradefed.device.CollectingOutputReceiver;
 
+import com.android.compatibility.common.util.CddTest;
+
 import java.util.concurrent.TimeUnit;
 
 public class CategoryTest extends AbstractMonkeyTest {
 
     private static final long MAX_TIMEOUT = 5 * 60 * 1000; // 5 min
 
+    @CddTest(requirement="6.1/C-0-8")
     public void testDefaultCategories() throws Exception {
         String cmd = MONKEY_CMD + " -v -p " + PKGS[0] + " 5000";
         CollectingOutputReceiver receiver = new CollectingOutputReceiver();
@@ -39,6 +42,7 @@ public class CategoryTest extends AbstractMonkeyTest {
         }
     }
 
+    @CddTest(requirement="6.1/C-0-8")
     public void testSingleCategory() throws Exception {
         String cmd = MONKEY_CMD + " -v -p " + PKGS[0]
                 + " -c android.intent.category.LAUNCHER 5000";
@@ -69,6 +73,7 @@ public class CategoryTest extends AbstractMonkeyTest {
         }
     }
 
+    @CddTest(requirement="6.1/C-0-8")
     public void testMultipleCategories() throws Exception {
         String cmd = MONKEY_CMD + " -v -p " + PKGS[0]
                 + " -c android.intent.category.LAUNCHER"

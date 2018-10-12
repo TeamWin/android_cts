@@ -18,6 +18,8 @@ package android.dumpsys.cts;
 
 import com.android.tradefed.log.LogUtil.CLog;
 
+import com.android.compatibility.common.util.CddTest;
+
 import java.io.BufferedReader;
 import java.io.StringReader;
 import java.util.HashSet;
@@ -50,6 +52,7 @@ public class ProcessStatsDumpsysTest extends BaseDumpsysTest {
      * Tests the output of "dumpsys procstats -c". This is a proxy for testing "dumpsys procstats
      * --checkin", since the latter is not idempotent.
      */
+    @CddTest(requirement="6.1/C-0-2/C-0-3")
     public void testProcstatsOutput() throws Exception {
         // First, run the helper app so that we have some interesting records in the output.
         checkWithProcStatsApp();

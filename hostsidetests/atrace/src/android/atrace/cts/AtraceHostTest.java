@@ -24,6 +24,8 @@ import com.android.tradefed.log.LogUtil.CLog;
 import com.android.tradefed.testtype.DeviceTestCase;
 import com.android.tradefed.testtype.IBuildReceiver;
 
+import com.android.compatibility.common.util.CddTest;
+
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.Reader;
@@ -154,6 +156,7 @@ public class AtraceHostTest extends DeviceTestCase implements IBuildReceiver {
     /**
      * Tests that atrace exists and is runnable with no args
      */
+    @CddTest(requirement="6.1/C-0-9")
     public void testSimpleRun() throws Exception {
         String output = getDevice().executeShellCommand("atrace");
         String[] lines = output.split("\\r?\\n");
@@ -169,6 +172,7 @@ public class AtraceHostTest extends DeviceTestCase implements IBuildReceiver {
     /**
      * Tests the output of "atrace --list_categories" to ensure required categories exist.
      */
+    @CddTest(requirement="6.1/C-0-9")
     public void testCategories() throws Exception {
         String output = getDevice().executeShellCommand("atrace --list_categories");
         String[] categories = output.split("\\r?\\n");
@@ -195,6 +199,7 @@ public class AtraceHostTest extends DeviceTestCase implements IBuildReceiver {
     /**
      * Tests that atrace captures app launch, including app level tracing
      */
+    @CddTest(requirement="6.1/C-0-9")
     public void testTracingContent() throws Exception {
         String atraceOutput = null;
         try {
