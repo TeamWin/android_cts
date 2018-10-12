@@ -137,7 +137,7 @@ static JNINativeMethod gMethodsForMain[] = {
 };
 
 void register_art_Main(jvmtiEnv* jenv, JNIEnv* env) {
-  ScopedLocalRef<jclass> klass(env, FindClass(jenv, env, "art/Main", nullptr));
+  ScopedLocalRef<jclass> klass(env, GetClass(jenv, env, "art/Main", nullptr));
   if (klass.get() == nullptr) {
     env->ExceptionClear();
     return;
@@ -157,7 +157,7 @@ static JNINativeMethod gMethods[] = {
 };
 
 void register_android_jvmti_cts_JvmtiTaggingTest(jvmtiEnv* jenv, JNIEnv* env) {
-  ScopedLocalRef<jclass> klass(env, FindClass(jenv, env,
+  ScopedLocalRef<jclass> klass(env, GetClass(jenv, env,
           "android/jvmti/cts/JvmtiTaggingTest", nullptr));
   if (klass.get() == nullptr) {
     env->ExceptionClear();
