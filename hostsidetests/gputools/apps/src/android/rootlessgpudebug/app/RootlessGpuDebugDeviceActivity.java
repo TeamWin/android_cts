@@ -36,15 +36,9 @@ public class RootlessGpuDebugDeviceActivity extends Activity {
 
         String result = nativeInitVulkan();
         Log.i(TAG, result);
-
-        result = nativeInitGLES();
-        Log.i(TAG, result);
-
-        Log.i(TAG, "RootlessGpuDebug activity complete");
     }
 
     private static native String nativeInitVulkan();
-    private static native String nativeInitGLES();
 
 }
 
