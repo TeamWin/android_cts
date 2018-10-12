@@ -56,6 +56,10 @@ import java.io.InputStream;
 import java.net.URL;
 import java.nio.ByteBuffer;
 import java.io.FileOutputStream;
+import java.io.OutputStream;
+import java.io.InputStream;
+import java.net.Socket;
+import java.net.ServerSocket;
 import java.io.File;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -830,6 +834,80 @@ public class StagefrightTest extends InstrumentationTestCase {
      to prevent merge conflicts, add N tests below this comment,
      before any existing test methods
      ***********************************************************/
+
+    @SecurityTest
+    public void testStagefright_bug_68342866() throws Exception {
+        Thread server = new Thread() {
+            @Override
+            public void run() {
+                try (ServerSocket serverSocket = new ServerSocket(8080);
+                        Socket conn = serverSocket.accept()) {
+                    OutputStream outputstream = conn.getOutputStream();
+                    InputStream inputStream = conn.getInputStream();
+                    byte input[] = new byte[65536];
+                    inputStream.read(input, 0, 65536);
+                    String inputStr = new String(input);
+                    if (inputStr.contains("bug_68342866.m3u8")) {
+                        byte http[] = ("HTTP/1.0 200 OK\r\nContent-Type: application/x-mpegURL\r\n\r\n")
+                                .getBytes();
+                        byte playlist[] = new byte[] { 0x23, 0x45, 0x58, 0x54,
+                                0x4D, 0x33, 0x55, 0x0A, 0x23, 0x45, 0x58, 0x54,
+                                0x2D, 0x58, 0x2D, 0x53, 0x54, 0x52, 0x45, 0x41,
+                                0x4D, 0x2D, 0x49, 0x4E, 0x46, 0x46, 0x43, 0x23,
+                                0x45, 0x3A, 0x54, 0x42, 0x00, 0x00, 0x00, 0x0A,
+                                0x00, 0x00, 0x00, 0x00, 0x00, (byte) 0xFF,
+                                (byte) 0xFF, (byte) 0xFF, (byte) 0xFF,
+                                (byte) 0xFF, (byte) 0xFF, 0x3F, 0x2C, 0x4E,
+                                0x46, 0x00, 0x00 };
+                        outputstream.write(http);
+                        outputstream.write(playlist);
+                    }
+                } catch (IOException e) {
+                }
+            }
+        };
+        server.start();
+        String uri = "http://127.0.0.1:8080/bug_68342866.m3u8";
+        final MediaPlayerCrashListener mpcl = new MediaPlayerCrashListener();
+        LooperThread t = new LooperThread(new Runnable() {
+            @Override
+            public void run() {
+                MediaPlayer mp = new MediaPlayer();
+                mp.setOnErrorListener(mpcl);
+                mp.setOnPreparedListener(mpcl);
+                mp.setOnCompletionListener(mpcl);
+                Surface surface = getDummySurface();
+                mp.setSurface(surface);
+                AssetFileDescriptor fd = null;
+                try {
+                    mp.setDataSource(uri);
+                    mp.prepareAsync();
+                } catch (IOException e) {
+                    Log.e(TAG, e.toString());
+                } finally {
+                    closeQuietly(fd);
+                }
+                Looper.loop();
+                mp.release();
+            }
+        });
+        t.start();
+        assertFalse("Device *IS* vulnerable to BUG-68342866",
+                mpcl.waitForError() == MediaPlayer.MEDIA_ERROR_SERVER_DIED);
+        t.stopLooper();
+        t.join();
+        server.join();
+    }
+
+    @SecurityTest
+    public void testStagefright_bug_74114680() throws Exception {
+        doStagefrightTest(R.raw.bug_74114680_ts, (10 * 60 * 1000));
+    }
+
+    @SecurityTest
+    public void testStagefright_bug_70239507() throws Exception {
+        doStagefrightTestExtractorSeek(R.raw.bug_70239507,1311768465173141112L);
+    }
 
     @SecurityTest
     public void testBug_33250932() throws Exception {
@@ -1811,5 +1889,69 @@ public class StagefrightTest extends InstrumentationTestCase {
         assertTrue("Device *IS* vulnerable to " + cve, mpl.waitForErrorOrCompletion());
         t.stopLooper();
         t.join(); // wait for thread to exit so we're sure the player was released
+    }
+
+    private void doStagefrightTestExtractorSeek(final int rid, final long offset) throws Exception {
+        final MediaPlayerCrashListener mpcl = new MediaPlayerCrashListener();
+        LooperThread thr = new LooperThread(new Runnable() {
+            @Override
+            public void run() {
+                MediaPlayer mp = new MediaPlayer();
+                mp.setOnErrorListener(mpcl);
+                try {
+                    AssetFileDescriptor fd = getInstrumentation().getContext().getResources()
+                        .openRawResourceFd(R.raw.good);
+                    mp.setDataSource(fd.getFileDescriptor(),
+                                     fd.getStartOffset(),
+                                     fd.getLength());
+                    fd.close();
+                } catch (Exception e) {
+                    fail("setDataSource of known-good file failed");
+                }
+                synchronized(mpcl) {
+                    mpcl.notify();
+                }
+                Looper.loop();
+                mp.release();
+            }
+        });
+        thr.start();
+        synchronized(mpcl) {
+            mpcl.wait();
+        }
+        Resources resources =  getInstrumentation().getContext().getResources();
+        MediaExtractor ex = new MediaExtractor();
+        AssetFileDescriptor fd = resources.openRawResourceFd(rid);
+        try {
+            ex.setDataSource(fd.getFileDescriptor(), fd.getStartOffset(), fd.getLength());
+        } catch (IOException e) {
+        } finally {
+            closeQuietly(fd);
+        }
+        int numtracks = ex.getTrackCount();
+        String rname = resources.getResourceEntryName(rid);
+        Log.i(TAG, "start mediaextractor test for: " + rname + ", which has " + numtracks + " tracks");
+        for (int t = 0; t < numtracks; t++) {
+            try {
+                ex.selectTrack(t);
+            } catch (IllegalArgumentException e) {
+                Log.w(TAG, "couldn't select track " + t);
+            }
+            ex.seekTo(0, MediaExtractor.SEEK_TO_CLOSEST_SYNC);
+            ex.advance();
+            ex.seekTo(offset, MediaExtractor.SEEK_TO_NEXT_SYNC);
+            try
+            {
+                ex.unselectTrack(t);
+            }
+            catch (Exception e) {
+            }
+        }
+        ex.release();
+        String cve = rname.replace("_", "-").toUpperCase();
+        assertFalse("Device *IS* vulnerable to " + cve,
+                    mpcl.waitForError() == MediaPlayer.MEDIA_ERROR_SERVER_DIED);
+        thr.stopLooper();
+        thr.join();
     }
 }
