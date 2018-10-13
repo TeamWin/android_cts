@@ -44,7 +44,7 @@ static void InformMainAttach(jvmtiEnv* jenv,
   register_android_jvmti_cts_JvmtiTrackingTest(jenv, env);
 
   // Use JNI to load the class.
-  ScopedLocalRef<jclass> klass(env, FindClass(jenv, env, class_name, nullptr));
+  ScopedLocalRef<jclass> klass(env, GetClass(jenv, env, class_name, nullptr));
   CHECK(klass.get() != nullptr) << class_name;
 
   jmethodID method = env->GetStaticMethodID(klass.get(), method_name, "()V");
