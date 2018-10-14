@@ -25,13 +25,18 @@ import static org.junit.Assert.assertTrue;
 import android.content.Context;
 import android.content.pm.PackageManager;
 import android.content.res.ColorStateList;
+import android.graphics.Bitmap;
+import android.graphics.Canvas;
 import android.graphics.Color;
+import android.graphics.Rect;
+import android.graphics.Typeface;
 import android.os.Parcel;
 import android.support.test.InstrumentationRegistry;
 import android.support.test.filters.SmallTest;
 import android.support.test.runner.AndroidJUnit4;
 import android.text.TextPaint;
 import android.text.style.TextAppearanceSpan;
+import android.widget.TextView;
 
 import org.junit.Before;
 import org.junit.Test;
@@ -425,5 +430,180 @@ public class TextAppearanceSpanTest {
         // Custom font must not be loaded with the restricted context.
         assertEquals(originalTextWidth, tp.measureText("a"), 0.0f);
 
+    }
+
+    @Test
+    public void testSameAsTextView_TextColor() {
+        final TextAppearanceSpan span = new TextAppearanceSpan(mContext,
+                android.text.cts.R.style.TextAppearanceWithTextColor);
+        final TextView tv = new TextView(mContext);
+        tv.setTextAppearance(android.text.cts.R.style.TextAppearanceWithTextColor);
+
+        // No equals implemented in ColorStateList
+        assertEquals(span.getTextColor().toString(), tv.getTextColors().toString());
+    }
+
+    @Test
+    public void testSameAsTextView_TextColorLink() {
+        final TextAppearanceSpan span = new TextAppearanceSpan(mContext,
+                android.text.cts.R.style.TextAppearanceWithTextColorLink);
+        final TextView tv = new TextView(mContext);
+        tv.setTextAppearance(android.text.cts.R.style.TextAppearanceWithTextColorLink);
+
+        // No equals implemented in ColorStateList
+        assertEquals(span.getLinkTextColor().toString(), tv.getLinkTextColors().toString());
+    }
+
+    @Test
+    public void testSameAsTextView_TextSize() {
+        final TextAppearanceSpan span = new TextAppearanceSpan(mContext,
+                android.text.cts.R.style.TextAppearanceWithTextSize);
+        final TextView tv = new TextView(mContext);
+        tv.setTextAppearance(android.text.cts.R.style.TextAppearanceWithTextSize);
+
+        assertEquals((float) span.getTextSize(), tv.getTextSize(), 0.0f);
+    }
+
+    // Currently we don't have a good way to compare typefaces. So this function simply draws
+    // text on Bitmap use the input typeface and then compare the result Bitmaps.
+    private void assertTypefaceSame(Typeface typeface0, Typeface typeface1) {
+        final int width = 200;
+        final int height = 100;
+        final String testStr = "Ez 123*!\u7B80";
+
+        final Bitmap bitmap0 = Bitmap.createBitmap(width, height, Bitmap.Config.RGB_565);
+        final Bitmap bitmap1 = Bitmap.createBitmap(width, height, Bitmap.Config.RGB_565);
+        final Canvas canvas0 = new Canvas(bitmap0);
+        final Canvas canvas1 = new Canvas(bitmap1);
+        final TextPaint paint0 = new TextPaint();
+        final TextPaint paint1 = new TextPaint();
+        // Set the textSize smaller than the bitmap.
+        paint0.setTextSize(20);
+        paint1.setTextSize(20);
+        // Set the bitmap background color to white.
+        canvas0.drawColor(0xFFFFFFFF);
+        canvas1.drawColor(0xFFFFFFFF);
+        // Set paint a different color from the background.
+        paint0.setColor(0xFF000000);
+        paint1.setColor(0xFF000000);
+        paint0.setTypeface(typeface0);
+        paint1.setTypeface(typeface1);
+
+        final Rect bound0 = new Rect();
+        final Rect bound1 = new Rect();
+
+        paint0.getTextBounds(testStr, 0, testStr.length(), bound0);
+        paint1.getTextBounds(testStr, 0, testStr.length(), bound1);
+
+        // The bounds measured by two paints should be the same.
+        assertEquals(bound0, bound1);
+
+        canvas0.drawText(testStr, -bound0.left, -bound0.top, paint0);
+        canvas1.drawText(testStr, -bound1.left, -bound1.top, paint1);
+
+        assertTrue(bitmap0.sameAs(bitmap1));
+    }
+
+    @Test
+    public void testSameAsTextView_Typeface() {
+        // Here we need textView0 to get a default typeface, which will be updated by
+        // TextAppearanceSpan, and the result of update should be the same as that of
+        // textView1.setTextAppearance().
+        final TextView textView0 = new TextView(mContext);
+        final TextView textView1 = new TextView(mContext);
+
+        final TextPaint paint = new TextPaint();
+        paint.setTypeface(textView0.getTypeface());
+        final TextAppearanceSpan span = new TextAppearanceSpan(mContext,
+                android.text.cts.R.style.TextAppearanceWithTypeface);
+        span.updateDrawState(paint);
+
+        textView1.setTextAppearance(android.text.cts.R.style.TextAppearanceWithTypeface);
+
+        assertTypefaceSame(paint.getTypeface(), textView1.getTypeface());
+    }
+
+    @Test
+    public void testSameAsTextView_TypefaceWithStyle() {
+        final TextView textView0 = new TextView(mContext);
+        final TextView textView1 = new TextView(mContext);
+
+        final TextPaint paint = new TextPaint();
+        paint.setTypeface(textView0.getTypeface());
+        final TextAppearanceSpan span = new TextAppearanceSpan(mContext,
+                android.text.cts.R.style.TextAppearanceWithTypefaceAndBold);
+        span.updateDrawState(paint);
+
+        textView1.setTextAppearance(android.text.cts.R.style.TextAppearanceWithTypefaceAndBold);
+
+        assertTypefaceSame(paint.getTypeface(), textView1.getTypeface());
+    }
+
+    @Test
+    public void testSameAsTextView_TypefaceWithWeight() {
+        final TextView textView0 = new TextView(mContext);
+        final TextView textView1 = new TextView(mContext);
+
+        final TextPaint paint = new TextPaint();
+        paint.setTypeface(textView0.getTypeface());
+        final TextAppearanceSpan span = new TextAppearanceSpan(mContext,
+                android.text.cts.R.style.TextAppearanceWithTypefaceAndWeight);
+        span.updateDrawState(paint);
+
+        textView1.setTextAppearance(
+                android.text.cts.R.style.TextAppearanceWithTypefaceAndWeight);
+
+        assertTypefaceSame(paint.getTypeface(), textView1.getTypeface());
+    }
+
+    // The priority of fontWeight and bold should be identical in both classes.
+    @Test
+    public void testSameAsTextView_WeightAndBold() {
+        final TextView textView0 = new TextView(mContext);
+        final TextView textView1 = new TextView(mContext);
+
+        final TextPaint paint = new TextPaint();
+        paint.setTypeface(textView0.getTypeface());
+        final TextAppearanceSpan span = new TextAppearanceSpan(mContext,
+                android.text.cts.R.style.TextAppearanceWithBoldAndWeight);
+        span.updateDrawState(paint);
+
+        textView1.setTextAppearance(android.text.cts.R.style.TextAppearanceWithBoldAndWeight);
+
+        assertTypefaceSame(paint.getTypeface(), textView1.getTypeface());
+    }
+
+    @Test
+    public void testSameAsTextView_FontFamily() {
+        final TextView textView0 = new TextView(mContext);
+        final TextView textView1 = new TextView(mContext);
+
+        final TextPaint paint = new TextPaint();
+        paint.setTypeface(textView0.getTypeface());
+        final TextAppearanceSpan span = new TextAppearanceSpan(mContext,
+                android.text.cts.R.style.TextAppearanceWithFontFamily);
+        span.updateDrawState(paint);
+
+        textView1.setTextAppearance(android.text.cts.R.style.TextAppearanceWithFontFamily);
+
+        assertTypefaceSame(paint.getTypeface(), textView1.getTypeface());
+    }
+
+    // The priority of fontFamily and typeface should be identical in both classes.
+    @Test
+    public void testSameAsTextView_FontFamilyAndTypeface() {
+        final TextView textView0 = new TextView(mContext);
+        final TextView textView1 = new TextView(mContext);
+
+        final TextPaint paint = new TextPaint();
+        paint.setTypeface(textView0.getTypeface());
+        final TextAppearanceSpan span = new TextAppearanceSpan(mContext,
+                android.text.cts.R.style.TextAppearanceWithFontFamilyAndTypeface);
+        span.updateDrawState(paint);
+
+        textView1.setTextAppearance(
+                android.text.cts.R.style.TextAppearanceWithFontFamilyAndTypeface);
+
+        assertTypefaceSame(paint.getTypeface(), textView1.getTypeface());
     }
 }

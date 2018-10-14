@@ -17,11 +17,8 @@
 package com.android.cts.releaseparser;
 
 import com.android.cts.releaseparser.ReleaseProto.*;
-import com.google.protobuf.TextFormat;
 
 import java.io.File;
-import java.io.FileOutputStream;
-import java.nio.charset.Charset;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -51,6 +48,7 @@ public class ApkParser extends ZipParser {
         return mExternalApiPackage;
     }
 
+    // Todo
     public ApiPackage getTestCaseApiPackage() {
         if (mInternalApiPackage == null) {
             prase();
@@ -114,17 +112,8 @@ public class ApkParser extends ZipParser {
             ApkParser aParser = new ApkParser(aFile);
             aParser.setParseSo(parseSo);
             aParser.setParseInternalApi(parseInternalApi);
-
-            if (outputFileName != null) {
-                FileOutputStream txtOutput = new FileOutputStream(outputFileName);
-                txtOutput.write(
-                        TextFormat.printToString(aParser.getAppInfo())
-                                .getBytes(Charset.forName("UTF-8")));
-                txtOutput.flush();
-                txtOutput.close();
-            } else {
-                System.out.println(TextFormat.printToString(aParser.getAppInfo()));
-            }
+            Entry.Builder fileEntryBuilder = aParser.getFileEntryBuilder();
+            writeTextFormatMessage(outputFileName, fileEntryBuilder.build());
         } catch (Exception ex) {
             System.out.println(USAGE_MESSAGE);
             ex.printStackTrace();

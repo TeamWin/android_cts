@@ -78,7 +78,7 @@ public class HostsideOomCatcher {
     /**
      * Utility to get the device memory total by reading /proc/meminfo and returning MemTotal
      */
-    private static long getMemTotal(ITestDevice device) throws Exception {
+    private static long getMemTotal(ITestDevice device) throws DeviceNotAvailableException {
         String memInfo = device.executeShellCommand("cat /proc/meminfo");
         Pattern pattern = Pattern.compile("MemTotal:\\s*(.*?)\\s*[kK][bB]");
         Matcher matcher = pattern.matcher(memInfo);
@@ -193,6 +193,7 @@ public class HostsideOomCatcher {
 
         private boolean isCancelled = false;
 
+        @Override
         public void processNewLines(String[] lines) {
             for (String line : lines) {
                 if (Pattern.matches(".*Low memory.*", line)) {

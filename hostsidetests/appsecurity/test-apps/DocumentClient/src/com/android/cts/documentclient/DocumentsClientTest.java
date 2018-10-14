@@ -543,6 +543,22 @@ public class DocumentsClientTest extends DocumentsClientTestCase {
         assertTrue(findDocument("FILE4").exists());
     }
 
+    public void testOpenRootWithoutRootIdAtInitialLocation() throws Exception {
+        if (!supportedHardware()) return;
+
+        // Clear DocsUI's storage to avoid it opening stored last location
+        // which may make this test pass "luckily".
+        clearDocumentsUi();
+
+        final Uri rootsUri = DocumentsContract.buildRootsUri(PROVIDER_PACKAGE);
+        final Intent intent = new Intent(Intent.ACTION_VIEW);
+        intent.setDataAndType(rootsUri, "vnd.android.document/root");
+        mActivity.startActivity(intent);
+        mDevice.waitForIdle();
+
+        assertTrue(findDocument("DIR1").exists());
+    }
+
     public void testCreateDocumentAtInitialLocation() throws Exception {
         if (!supportedHardware()) return;
 

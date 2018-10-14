@@ -17,12 +17,9 @@
 package com.android.cts.releaseparser;
 
 import com.android.cts.releaseparser.ReleaseProto.*;
-import com.google.protobuf.TextFormat;
 
 import java.io.File;
-import java.io.FileOutputStream;
 import java.io.RandomAccessFile;
-import java.nio.charset.Charset;
 import java.util.Arrays;
 import java.util.logging.Logger;
 
@@ -95,7 +92,7 @@ public class ArtParser extends FileParser {
             int oatChecksum = getIntLittleEndian(buffer, offset);
             offset += 4;
             mArtInfoBuilder.setOatChecksum(oatChecksum);
-            mCodeId = String.format("%x", oatChecksum);
+            mCodeId = String.format(CODE_ID_FORMAT, oatChecksum);
 
             mArtInfoBuilder.setOatFileBegin(getIntLittleEndian(buffer, offset));
             offset += 4;
@@ -158,15 +155,7 @@ public class ArtParser extends FileParser {
             ArtParser aParser = new ArtParser(aFile);
             Entry fileEntry = aParser.getFileEntryBuilder().build();
 
-            if (outputFileName != null) {
-                FileOutputStream txtOutput = new FileOutputStream(outputFileName);
-                txtOutput.write(
-                        TextFormat.printToString(fileEntry).getBytes(Charset.forName("UTF-8")));
-                txtOutput.flush();
-                txtOutput.close();
-            } else {
-                System.out.println(TextFormat.printToString(fileEntry));
-            }
+            writeTextFormatMessage(outputFileName, fileEntry);
         } catch (Exception ex) {
             System.out.println(USAGE_MESSAGE);
             ex.printStackTrace();

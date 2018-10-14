@@ -39,6 +39,12 @@ public class FileParserTest {
     private static final String TEST_OAT = "boot-framework.oat";
     // ref: android/frameworks/base/test-runner
     private static final String TEST_ODEX = "android.test.runner.odex";
+    // ref: android/build/make/core/Makefile, system_build_prop
+    private static final String TEST_BUILD_PROP = "build.prop";
+    // ref: android/frameworks/base/data/etc/platform.xml
+    private static final String TEST_PLATFORM_XML = "platform.xml";
+    // ref: android/frameworks/native/data/etc/android.hardware.vulkan.version-1_0_3.xml
+    private static final String TEST_DEVICE_FEATURE_XML = "android.hardware.vulkan.version.xml";
 
     /**
      * Test {@link VdexParser} with an Vdex file
@@ -104,9 +110,54 @@ public class FileParserTest {
         testFileParser(fileName, fileEntryBuilder.build());
     }
 
+    /**
+     * Test {@link BuildPropParser} with build.prop file
+     *
+     * @throws Exception
+     */
+    @Test
+    public void testBuildProp() throws Exception {
+        String fileName = TEST_BUILD_PROP;
+        File aFile = ClassUtils.getResrouceFile(getClass(), fileName);
+        BuildPropParser aParser = new BuildPropParser(aFile);
+
+        Entry.Builder fileEntryBuilder = aParser.getFileEntryBuilder();
+        fileEntryBuilder.setName(fileName);
+        testFileParser(fileName, fileEntryBuilder.build());
+    }
+
+    /**
+     * Test {@link XmlParser} with a platform.xml file
+     *
+     * @throws Exception
+     */
+    @Test
+    public void testPlatformXml() throws Exception {
+        testXmlParser(TEST_PLATFORM_XML);
+    }
+
+    /**
+     * Test {@link XmlParser} with a feature xml file
+     *
+     * @throws Exception
+     */
+    @Test
+    public void testFeatureXml() throws Exception {
+        testXmlParser(TEST_DEVICE_FEATURE_XML);
+    }
+
+    private void testXmlParser(String fileName) throws Exception {
+        File aFile = ClassUtils.getResrouceFile(getClass(), fileName);
+        XmlParser aParser = new XmlParser(aFile);
+
+        Entry.Builder fileEntryBuilder = aParser.getFileEntryBuilder();
+        fileEntryBuilder.setName(fileName);
+        testFileParser(fileName, fileEntryBuilder.build());
+    }
+
     private void testFileParser(String fileName, Entry fileEntry) throws Exception {
-        String txtProtobufFileName = fileName + PB_TXT;
         Entry.Builder expectedEntryBuilder = Entry.newBuilder();
+        String txtProtobufFileName = fileName + PB_TXT;
         TextFormat.getParser()
                 .merge(
                         ClassUtils.openResourceAsStreamReader(getClass(), txtProtobufFileName),

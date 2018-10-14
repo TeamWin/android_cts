@@ -17,7 +17,6 @@
 package com.android.cts.releaseparser;
 
 import com.android.cts.releaseparser.ReleaseProto.*;
-import com.google.protobuf.TextFormat;
 
 import org.xml.sax.InputSource;
 import org.xml.sax.XMLReader;
@@ -25,8 +24,8 @@ import org.xml.sax.helpers.XMLReaderFactory;
 
 import java.io.File;
 import java.io.FileReader;
-import java.io.IOException;
 import java.util.HashMap;
+import java.util.logging.Logger;
 
 public class XmlParser extends FileParser {
     private XmlHandler mHandler;
@@ -74,43 +73,31 @@ public class XmlParser extends FileParser {
     }
 
     private static final String USAGE_MESSAGE =
-            "Usage: java -jar releaseparser.jar com.android.cts.releaseparser.XmlParser [-options] <path> [args...]\n"
-                    + "           to prase an XML file \n"
+            "Usage: java -jar releaseparser.jar "
+                    + XmlParser.class.getCanonicalName()
+                    + " [-options <parameter>]...\n"
+                    + "           to prase platform permissions xml file meta data\n"
                     + "Options:\n"
-                    + "\t-i PATH\t XML path \n";
+                    + "\t-i PATH\t The file path of the file to be parsed.\n"
+                    + "\t-of PATH\t The file path of the output file instead of printing to System.out.\n";
 
-    /** Get the argument or print out the usage and exit. */
-    private static void printUsage() {
-        System.out.printf(USAGE_MESSAGE);
-        System.exit(1);
-    }
+    public static void main(String[] args) {
+        try {
+            ArgumentParser argParser = new ArgumentParser(args);
+            String fileName = argParser.getParameterElement("i", 0);
+            String outputFileName = argParser.getParameterElement("of", 0);
 
-    /** Get the argument or print out the usage and exit. */
-    private static String getExpectedArg(String[] args, int index) {
-        if (index < args.length) {
-            return args[index];
-        } else {
-            printUsage();
-            return null; // Never will happen because printUsage will call exit(1)
+            File aFile = new File(fileName);
+            XmlParser aParser = new XmlParser(aFile);
+            Entry.Builder fileEntryBuilder = aParser.getFileEntryBuilder();
+            writeTextFormatMessage(outputFileName, fileEntryBuilder.build());
+        } catch (Exception ex) {
+            System.out.println(USAGE_MESSAGE);
+            ex.printStackTrace();
         }
     }
 
-    public static void main(String[] args) throws IOException {
-        String fileName = null;
-        for (int i = 0; i < args.length; i++) {
-            if (args[i].startsWith("-")) {
-                if ("-i".equals(args[i])) {
-                    fileName = getExpectedArg(args, ++i);
-                }
-            }
-        }
-        if (fileName == null) {
-            printUsage();
-        }
-        File aFile = new File(fileName);
-        XmlParser aParser = new XmlParser(aFile);
-        HashMap<String, PermissionList> map = aParser.getPermissions();
-        map.forEach(
-                (key, value) -> System.out.println(key + "\n" + TextFormat.printToString(value)));
+    private static Logger getLogger() {
+        return Logger.getLogger(XmlParser.class.getSimpleName());
     }
 }

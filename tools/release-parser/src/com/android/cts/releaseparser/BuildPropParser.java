@@ -24,6 +24,7 @@ import java.io.FileReader;
 import java.io.IOException;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.logging.Logger;
 
 public class BuildPropParser extends FileParser {
     private Entry.EntryType mType;
@@ -39,6 +40,14 @@ public class BuildPropParser extends FileParser {
             parseFile();
         }
         return mType;
+    }
+
+    @Override
+    public void setAdditionalInfo() {
+        Map<String, String> properties = getProperties();
+        if (properties != null) {
+            getFileEntryBuilder().putAllProperties(properties);
+        }
     }
 
     public String getBuildNumber() {
@@ -97,5 +106,34 @@ public class BuildPropParser extends FileParser {
             System.err.println("BuildProp err:" + getFileName() + "\n" + e.getMessage());
             mType = super.getType();
         }
+    }
+
+    private static final String USAGE_MESSAGE =
+            "Usage: java -jar releaseparser.jar "
+                    + BuildPropParser.class.getCanonicalName()
+                    + " [-options <parameter>]...\n"
+                    + "           to prase build.prop file meta data\n"
+                    + "Options:\n"
+                    + "\t-i PATH\t The file path of the file to be parsed.\n"
+                    + "\t-of PATH\t The file path of the output file instead of printing to System.out.\n";
+
+    public static void main(String[] args) {
+        try {
+            ArgumentParser argParser = new ArgumentParser(args);
+            String fileName = argParser.getParameterElement("i", 0);
+            String outputFileName = argParser.getParameterElement("of", 0);
+
+            File aFile = new File(fileName);
+            BuildPropParser aParser = new BuildPropParser(aFile);
+            Entry.Builder fileEntryBuilder = aParser.getFileEntryBuilder();
+            writeTextFormatMessage(outputFileName, fileEntryBuilder.build());
+        } catch (Exception ex) {
+            System.out.println(USAGE_MESSAGE);
+            ex.printStackTrace();
+        }
+    }
+
+    private static Logger getLogger() {
+        return Logger.getLogger(BuildPropParser.class.getSimpleName());
     }
 }

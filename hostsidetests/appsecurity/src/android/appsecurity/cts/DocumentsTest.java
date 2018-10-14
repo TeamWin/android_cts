@@ -82,6 +82,11 @@ public class DocumentsTest extends DocumentsTestCase {
         runDeviceTests(CLIENT_PKG, ".DocumentsClientTest", "testOpenDocumentTreeAtInitialLocation");
     }
 
+    public void testOpenRootWithoutRootIdAtInitialLocation() throws Exception {
+        runDeviceTests(CLIENT_PKG, ".DocumentsClientTest",
+                "testOpenRootWithoutRootIdAtInitialLocation");
+    }
+
     public void testCreateDocumentAtInitialLocation() throws Exception {
         runDeviceTests(CLIENT_PKG, ".DocumentsClientTest", "testCreateDocumentAtInitialLocation");
     }

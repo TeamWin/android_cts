@@ -2,7 +2,7 @@ name: "android.test.runner.odex"
 type: ODEX
 size: 17392
 content_id: "CZnRjQmCUjBNQi6p3iiIsh4RUzzCTbdjstEoNhcbD3E="
-code_id: "e5468a50,"
+code_id: "e5468a50 "
 dependencies: "system/framework/arm64/boot.art"
 dependencies: "system/framework/arm64/boot-core-libart.art"
 dependencies: "system/framework/arm64/boot-conscrypt.art"

@@ -63,6 +63,7 @@ public class JsonPrinter {
         mJsonWriter.name("build_number").value(mRelContent.getBuildNumber());
         mJsonWriter.name("fullname").value(mRelContent.getFullname());
         mJsonWriter.name("size").value(mRelContent.getSize());
+        mJsonWriter.name("release_type").value(mRelContent.getReleaseType().toString());
         mJsonWriter.name("test_suite_tradefed").value(mRelContent.getTestSuiteTradefed());
         mJsonWriter.name("target_arch").value(mRelContent.getTargetArch());
         writeProperties(mRelContent.getProperties());
@@ -97,11 +98,11 @@ public class JsonPrinter {
             mJsonWriter.name("type").value(entry.getType().toString());
             mJsonWriter.name("size").value(entry.getSize());
             mJsonWriter.name("content_id").value(entry.getContentId());
-            mJsonWriter.name("parent_folder").value(entry.getParentFolder());
-            mJsonWriter.name("relative_path").value(entry.getRelativePath());
             mJsonWriter.name("code_id").value(entry.getCodeId());
             mJsonWriter.name("abi_architecture").value(entry.getAbiArchitecture());
             mJsonWriter.name("abi_bits").value(entry.getAbiBits());
+            mJsonWriter.name("parent_folder").value(entry.getParentFolder());
+            mJsonWriter.name("relative_path").value(entry.getRelativePath());
             writeStringCollection("dependencies", entry.getDependenciesList());
             writeStringCollection(
                     "dynamic_loading_dependencies", entry.getDynamicLoadingDependenciesList());

@@ -18,10 +18,13 @@ package com.android.cts.releaseparser;
 
 import com.android.compatibility.common.util.ReadElf;
 import com.android.cts.releaseparser.ReleaseProto.*;
+import com.google.protobuf.TextFormat;
 
 import java.io.File;
 import java.io.FileInputStream;
+import java.io.FileOutputStream;
 import java.io.IOException;
+import java.nio.charset.Charset;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.util.Base64;
@@ -32,19 +35,24 @@ public class FileParser {
     protected static final int READ_BLOCK_SIZE = 1024;
 
     // Target File Extensions
-    public static final String CONFIG_EXT_TAG = ".config";
-    public static final String TEST_SUITE_TRADEFED_TAG = "-tradefed.jar";
-    public static final String JAR_EXT_TAG = ".jar";
     public static final String APK_EXT_TAG = ".apk";
-    public static final String SO_EXT_TAG = ".so";
+    public static final String JAR_EXT_TAG = ".jar";
+    public static final String DEX_EXT_TAG = ".dex";
     public static final String ODEX_EXT_TAG = ".odex";
     public static final String VDEX_EXT_TAG = ".vdex";
     public static final String ART_EXT_TAG = ".art";
     public static final String OAT_EXT_TAG = ".oat";
+    public static final String SO_EXT_TAG = ".so";
     public static final String BUILD_PROP_EXT_TAG = "build.prop";
     public static final String RC_EXT_TAG = ".rc";
     public static final String XML_EXT_TAG = ".xml";
     public static final String IMG_EXT_TAG = ".img";
+    public static final String TEST_SUITE_TRADEFED_TAG = "-tradefed.jar";
+    public static final String CONFIG_EXT_TAG = ".config";
+    public static final String ANDROID_MANIFEST_TAG = "AndroidManifest.xml";
+    // Code Id format: [0xchecksum1] [...
+    public static final String CODE_ID_FORMAT = "%x ";
+
     protected File mFile;
     protected String mContentId;
     protected String mCodeId;
@@ -174,6 +182,18 @@ public class FileParser {
             answer = (answer << 8) | (byteArray[i] & 0xff);
         }
         return answer;
+    }
+
+    public static void writeTextFormatMessage(String outputFileName, Entry fileEntry)
+            throws IOException {
+        if (outputFileName != null) {
+            FileOutputStream txtOutput = new FileOutputStream(outputFileName);
+            txtOutput.write(TextFormat.printToString(fileEntry).getBytes(Charset.forName("UTF-8")));
+            txtOutput.flush();
+            txtOutput.close();
+        } else {
+            System.out.println(TextFormat.printToString(fileEntry));
+        }
     }
 
     private void parse() {

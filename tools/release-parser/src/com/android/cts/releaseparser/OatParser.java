@@ -18,11 +18,8 @@ package com.android.cts.releaseparser;
 
 import com.android.compatibility.common.util.ReadElf;
 import com.android.cts.releaseparser.ReleaseProto.*;
-import com.google.protobuf.TextFormat;
 
 import java.io.File;
-import java.io.FileOutputStream;
-import java.nio.charset.Charset;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
@@ -180,7 +177,6 @@ public class OatParser extends FileParser {
             getFileEntryBuilder().addAllDependencies(mDependencies);
         }
 
-        // Code Id format: [0xchecksum1],...
         StringBuilder codeIdSB = new StringBuilder();
         // art/dex2oat/linker/oat_writer.cc OatDexFile
         offset = dexFileOffset;
@@ -199,7 +195,7 @@ public class OatParser extends FileParser {
             int dexFileLocationChecksum = getIntLittleEndian(buffer, offset);
             offset += 4;
             oatDexInfoBuilder.setDexFileLocationChecksum(dexFileLocationChecksum);
-            codeIdSB.append(String.format("%x,", dexFileLocationChecksum));
+            codeIdSB.append(String.format(CODE_ID_FORMAT, dexFileLocationChecksum));
 
             // dex_file_offset_
             oatDexInfoBuilder.setDexFileOffset(getIntLittleEndian(buffer, offset));
@@ -281,15 +277,7 @@ public class OatParser extends FileParser {
             OatParser aParser = (OatParser) FileParser.getParser(aFile);
             Entry fileEntry = aParser.getFileEntryBuilder().build();
 
-            if (outputFileName != null) {
-                FileOutputStream txtOutput = new FileOutputStream(outputFileName);
-                txtOutput.write(
-                        TextFormat.printToString(fileEntry).getBytes(Charset.forName("UTF-8")));
-                txtOutput.flush();
-                txtOutput.close();
-            } else {
-                System.out.println(TextFormat.printToString(fileEntry));
-            }
+            writeTextFormatMessage(outputFileName, fileEntry);
         } catch (Exception ex) {
             System.out.println(USAGE_MESSAGE);
             ex.printStackTrace();

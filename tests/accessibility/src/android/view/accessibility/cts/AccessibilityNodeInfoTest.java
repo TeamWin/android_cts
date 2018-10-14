@@ -17,6 +17,7 @@
 package android.view.accessibility.cts;
 
 import android.graphics.Rect;
+import android.graphics.Region;
 import android.os.Bundle;
 import android.os.Parcel;
 import android.platform.test.annotations.Presubmit;
@@ -24,6 +25,7 @@ import android.test.AndroidTestCase;
 import android.test.suitebuilder.annotation.SmallTest;
 import android.text.InputType;
 import android.text.TextUtils;
+import android.util.ArrayMap;
 import android.view.View;
 import android.view.accessibility.AccessibilityEvent;
 import android.view.accessibility.AccessibilityNodeInfo;
@@ -31,6 +33,7 @@ import android.view.accessibility.AccessibilityNodeInfo.AccessibilityAction;
 import android.view.accessibility.AccessibilityNodeInfo.CollectionInfo;
 import android.view.accessibility.AccessibilityNodeInfo.CollectionItemInfo;
 import android.view.accessibility.AccessibilityNodeInfo.RangeInfo;
+import android.view.accessibility.AccessibilityNodeInfo.TouchDelegateInfo;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -249,11 +252,12 @@ public class AccessibilityNodeInfoTest extends AndroidTestCase {
         info.setTraversalBefore(new View(getContext()));
         info.setTraversalAfter(new View(getContext()));
 
-        // Populate 2 fields
+        // Populate 3 fields
         info.setLabeledBy(new View(getContext()));
         info.setLabelFor(new View(getContext()));
+        populateTouchDelegateTargetMap(info);
 
-        // And Boolean properties are another field. Total is 33
+        // And Boolean properties are another field. Total is 34
 
         // 10 Boolean properties
         info.setCheckable(true);
@@ -283,6 +287,43 @@ public class AccessibilityNodeInfoTest extends AndroidTestCase {
         info.setShowingHintText(true);
         info.setHeading(true);
         info.setTextEntryKey(true);
+    }
+
+    /**
+     * Populates touch delegate target map.
+     */
+    private void populateTouchDelegateTargetMap(AccessibilityNodeInfo info) {
+        final ArrayMap<Region, View> targetMap = new ArrayMap<>(3);
+        final Rect rect1 = new Rect(1, 1, 10, 10);
+        final Rect rect2 = new Rect(2, 2, 20, 20);
+        final Rect rect3 = new Rect(3, 3, 30, 30);
+        targetMap.put(new Region(rect1), new View(getContext()));
+        targetMap.put(new Region(rect2), new View(getContext()));
+        targetMap.put(new Region(rect3), new View(getContext()));
+
+        final TouchDelegateInfo touchDelegateInfo = new TouchDelegateInfo(targetMap);
+        info.setTouchDelegateInfo(touchDelegateInfo);
+    }
+
+    private static void assertEqualsTouchDelegateInfo(String message,
+            AccessibilityNodeInfo.TouchDelegateInfo expected,
+            AccessibilityNodeInfo.TouchDelegateInfo actual) {
+        if (expected == actual) return;
+        assertEquals(message, expected.getRegionCount(), actual.getRegionCount());
+        for (int i = 0; i < expected.getRegionCount(); i++) {
+            final Region expectedRegion = expected.getRegionAt(i);
+            final Long expectedId = expected.getAccessibilityIdForRegion(expectedRegion);
+            boolean matched = false;
+            for (int j = 0; j < actual.getRegionCount(); j++) {
+                final Region actualRegion = actual.getRegionAt(j);
+                final Long actualId = actual.getAccessibilityIdForRegion(actualRegion);
+                if (expectedRegion.equals(actualRegion) && expectedId.equals(actualId)) {
+                    matched = true;
+                    break;
+                }
+            }
+            assertTrue(message, matched);
+        }
     }
 
     /**
@@ -401,6 +442,10 @@ public class AccessibilityNodeInfoTest extends AndroidTestCase {
                     receivedItemInfo.getRowSpan());
         }
 
+        assertEqualsTouchDelegateInfo("TouchDelegate target map has incorrect value",
+                expectedInfo.getTouchDelegateInfo(),
+                receivedInfo.getTouchDelegateInfo());
+
         // And the boolean properties are another field, for a total of 26
         // Missing parent: Tested end-to-end in AccessibilityWindowTraversalTest#testObjectContract
         //                 (getting a child is also checked there)
@@ -506,12 +551,13 @@ public class AccessibilityNodeInfoTest extends AndroidTestCase {
         assertEquals("Text selection end not properly recycled", -1, info.getTextSelectionEnd());
         assertEquals("Live region not properly recycled", 0, info.getLiveRegion());
 
-        // Check 5 fields
+        // Check 6 fields
         assertEquals("Extras not properly recycled", 0, info.getExtras().keySet().size());
         assertEquals("Input type not properly recycled", 0, info.getInputType());
         assertNull("Range info not properly recycled", info.getRangeInfo());
         assertNull("Collection info not properly recycled", info.getCollectionInfo());
         assertNull("Collection item info not properly recycled", info.getCollectionItemInfo());
+        assertNull("TouchDelegate target map not recycled", info.getTouchDelegateInfo());
 
         // And Boolean properties brings up to 26 fields
         // Missing:

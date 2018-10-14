@@ -79,6 +79,11 @@ public class RcParser extends FileParser {
         return new ArrayList<String>(dependencies.keySet());
     }
 
+    @Override
+    public String getCodeId() {
+        return getFileContentId();
+    }
+
     public List<Service> getServiceList() {
         if (mServices == null) {
             parseFile();

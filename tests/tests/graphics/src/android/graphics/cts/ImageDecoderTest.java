@@ -2123,10 +2123,11 @@ public class ImageDecoderTest {
                     ColorSpace.get(ColorSpace.Named.NTSC_1953),
                     ColorSpace.get(ColorSpace.Named.SMPTE_C),
                     ColorSpace.get(ColorSpace.Named.PRO_PHOTO_RGB),
-                    // FIXME: These will not match due to b/77276533.
-                    // ColorSpace.get(ColorSpace.Named.LINEAR_SRGB),
-                    // ColorSpace.get(ColorSpace.Named.ACES),
-                    // ColorSpace.get(ColorSpace.Named.ACESCG),
+                    ColorSpace.get(ColorSpace.Named.ACES),
+                    ColorSpace.get(ColorSpace.Named.ACESCG),
+                    // FIXME: This returns LINEAR_EXTENDED_SRGB.
+                    // See b/117601185 and b/77276533
+                    //ColorSpace.get(ColorSpace.Named.LINEAR_SRGB),
             }) {
                 try {
                     Bitmap bm = ImageDecoder.decodeBitmap(src, (decoder, info, s) -> {
