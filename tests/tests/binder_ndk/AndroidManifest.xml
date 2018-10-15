@@ -22,11 +22,18 @@
         <uses-library android:name="android.test.runner" />
 
         <service
-            android:name="android.binder.cts.JavaService"
+            android:name="android.binder.cts.JavaService$Local"
+            android:exported="true" />
+        <service
+            android:name="android.binder.cts.NativeService$Local"
+            android:exported="true" />
+
+        <service
+            android:name="android.binder.cts.JavaService$Remote"
             android:process=":java"
             android:exported="true" />
         <service
-            android:name="android.binder.cts.NativeService"
+            android:name="android.binder.cts.NativeService$Remote"
             android:process=":native"
             android:exported="true" />
     </application>
