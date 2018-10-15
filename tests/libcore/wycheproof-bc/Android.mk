@@ -23,8 +23,6 @@ LOCAL_STATIC_JAVA_LIBRARIES := \
     cts-core-test-runner \
     wycheproof
 
-LOCAL_JAVA_LIBRARIES := bouncycastle
-
 # Don't include this package in any target
 LOCAL_MODULE_TAGS := tests
 
