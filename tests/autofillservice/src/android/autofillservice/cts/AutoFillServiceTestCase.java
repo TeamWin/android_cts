@@ -251,7 +251,13 @@ final class AutoFillServiceTestCase {
             mUiBot.waitForIdle();
 
             // Clear Clipboard
-            ((ClipboardManager) mContext.getSystemService(CLIPBOARD_SERVICE)).clearPrimaryClip();
+            // TODO(b/117768051): remove try/catch once fixed
+            try {
+                ((ClipboardManager) mContext.getSystemService(CLIPBOARD_SERVICE))
+                    .clearPrimaryClip();
+            } catch (Exception e) {
+                Log.e(TAG, "Ignoring exception clearing clipboard", e);
+            }
         }
 
         @Before
