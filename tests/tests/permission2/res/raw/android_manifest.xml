@@ -3317,6 +3317,12 @@
    <permission android:name="android.permission.DEVICE_POWER"
         android:protectionLevel="signature" />
 
+    <!-- Allows toggling battery saver on the system.
+     Superseded by DEVICE_POWER permission. @hide @SystemApi
+    -->
+    <permission android:name="android.permission.POWER_SAVER"
+        android:protectionLevel="signature|privileged" />
+
    <!-- Allows access to the PowerManager.userActivity function.
    <p>Not for use by third-party applications. @hide @SystemApi -->
     <permission android:name="android.permission.USER_ACTIVITY"
@@ -4052,6 +4058,15 @@
          {@link android.provider.Telephony.Intents#ACTION_DEFAULT_SMS_PACKAGE_CHANGED_INTERNAL}
          broadcast -->
     <permission android:name="android.permission.MONITOR_DEFAULT_SMS_PACKAGE"
+        android:protectionLevel="signature" />
+
+    <!-- A subclass of {@link android.app.SmsAppService} must be protected with this permission. -->
+    <permission android:name="android.permission.BIND_SMS_APP_SERVICE"
+        android:protectionLevel="signature" />
+
+    <!-- @hide Permission that allows background clipboard access.
+     <p>Not for use by third-party applications. -->
+    <permission android:name="android.permission.READ_CLIPBOARD_IN_BACKGROUND"
         android:protectionLevel="signature" />
 
     <application android:process="system"
