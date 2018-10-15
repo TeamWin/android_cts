@@ -46,7 +46,7 @@ public class ApiLevelUtil {
     }
 
     public static boolean isAtLeast(String version) {
-        return Build.VERSION.SDK_INT > resolveVersionString(version);
+        return Build.VERSION.SDK_INT >= resolveVersionString(version);
     }
 
     public static boolean isAtMost(int version) {
