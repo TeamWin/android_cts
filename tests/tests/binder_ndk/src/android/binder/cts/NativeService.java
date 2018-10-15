@@ -27,6 +27,10 @@ import android.util.Log;
 public class NativeService extends Service {
     private final String TAG = "NativeService";
 
+    // the configuration of these services is done in AndroidManifest.xml
+    public static class Local extends NativeService {}
+    public static class Remote extends NativeService {}
+
     @Override
     public IBinder onBind(Intent intent) {
         Log.i(TAG, "Binding service");
