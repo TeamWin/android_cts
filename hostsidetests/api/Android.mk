@@ -35,6 +35,14 @@ api_files := $(addprefix frameworks/base/,\
   test-runner/api/current.txt:android-test-runner-current.txt \
   test-mock/api/current.txt:android-test-mock-current.txt)
 
+# org.apache.http.legacy is considered as approved APIs
+api_files += $(addprefix external/apache-http/,\
+  api/current.txt:org-apache-http-legacy-current.txt \
+  api/system-current.txt:org-apache-http-legacy-system-current.txt)
+
+# API 27 is added since some support libraries are using old APIs
+api_files += prebuilts/sdk/27/public/api/android.txt:android27.txt
+
 define define-api-files
   $(eval tw := $(subst :, ,$(strip $(1)))) \
   $(eval $(call copy-one-file,$(word 1,$(tw)),$(2)/$(word 2,$(tw)))) \
@@ -48,22 +56,6 @@ $(foreach f,$(api_files),\
 
 api_files :=
 dest :=
-
-# API 27 is added since some support libraries are using old APIs
-LOCAL_JAVA_RESOURCE_FILES += prebuilts/sdk/27/public/api/android.txt
-
-# org.apache.http.legacy is considered as approved APIs
-LOCAL_JAVA_RESOURCE_FILES += \
-    $(call local-intermediates-dir)/org-apache-http-legacy-current.txt \
-    $(call local-intermediates-dir)/org-apache-http-legacy-system-current.txt
-
-$(call local-intermediates-dir)/org-apache-http-legacy-current.txt\
-: external/apache-http/api/current.txt
-	cp $< $@
-
-$(call local-intermediates-dir)/org-apache-http-legacy-system-current.txt\
-: external/apache-http/api/system-current.txt
-	cp $< $@
 
 include $(BUILD_HOST_JAVA_LIBRARY)
 
