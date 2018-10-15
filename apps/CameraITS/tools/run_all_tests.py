@@ -20,6 +20,7 @@ import re
 import subprocess
 import sys
 import tempfile
+import threading
 import time
 
 import its.caps
@@ -31,7 +32,7 @@ import its.image
 import numpy as np
 
 # For sanity checking the installed APK's target SDK version
-MIN_SUPPORTED_SDK_VERSION = 28 # P
+MIN_SUPPORTED_SDK_VERSION = 28  # P
 
 CHART_DELAY = 1  # seconds
 CHART_DISTANCE = 30.0  # cm
@@ -42,8 +43,10 @@ CHART_SCALE_STOP = 1.35
 CHART_SCALE_STEP = 0.025
 FACING_EXTERNAL = 2
 NUM_TRYS = 2
-SCENE3_FILE = os.path.join(os.environ["CAMERA_ITS_TOP"], "pymodules", "its",
-                           "test_images", "ISO12233.png")
+PROC_TIMEOUT_CODE = -101  # terminated process return -process_id
+PROC_TIMEOUT_TIME = 300  # timeout in seconds for a process (5 minutes)
+SCENE3_FILE = os.path.join(os.environ['CAMERA_ITS_TOP'], 'pymodules', 'its',
+                           'test_images', 'ISO12233.png')
 SKIP_RET_CODE = 101  # note this must be same as tests/scene*/test_*
 VGA_HEIGHT = 480
 VGA_WIDTH = 640
@@ -65,6 +68,36 @@ NOT_YET_MANDATED = {
         'scene5': [],
         'sensor_fusion': []
 }
+
+
+def run_subprocess_with_timeout(cmd, fout, ferr, outdir):
+    """Run subprocess with a timeout.
+
+    Args:
+        cmd:    list containing python command
+        fout:   stdout file for the test
+        ferr:   stderr file for the test
+        outdir: dir location for fout/ferr
+
+    Returns:
+        process status or PROC_TIMEOUT_CODE if timer maxes
+    """
+
+    proc = subprocess.Popen(
+            cmd, stdout=fout, stderr=ferr, cwd=outdir)
+    timer = threading.Timer(PROC_TIMEOUT_TIME, proc.kill)
+
+    try:
+        timer.start()
+        proc.communicate()
+        test_code = proc.returncode
+    finally:
+        timer.cancel()
+
+    if test_code < 0:
+        return PROC_TIMEOUT_CODE
+    else:
+        return test_code
 
 
 def calc_camera_fov():
@@ -422,13 +455,13 @@ def main():
                         cmd += sys.argv[1:] + [camera_id_arg] + [chart_loc_arg]
                         cmd += [chart_dist_arg]
                         with open(outpath, 'w') as fout, open(errpath, 'w') as ferr:
-                            test_code = subprocess.call(
-                                cmd, stderr=ferr, stdout=fout, cwd=outdir)
+                            test_code = run_subprocess_with_timeout(
+                                cmd, fout, ferr, outdir)
                     if test_code == 0 or test_code == SKIP_RET_CODE:
                         break
                     else:
                         socket_fail = evaluate_socket_failure(errpath)
-                        if socket_fail:
+                        if socket_fail or test_code == PROC_TIMEOUT_CODE:
                             if num_try != NUM_TRYS-1:
                                 print ' Retry %s/%s' % (scene, testname)
                             else:
