@@ -325,10 +325,18 @@ public class SmsManagerTest extends InstrumentationTestCase {
 
     public void testContentProviderAccessRestriction() throws Exception {
         Uri dummySmsUri = null;
-        ContentResolver contentResolver = getInstrumentation().getContext().getContentResolver();
+        Context context = getInstrumentation().getContext();
+        ContentResolver contentResolver = context.getContentResolver();
+        int originalWriteSmsMode = -1;
+        String ctsPackageName = context.getPackageName();
         try {
             // Insert some dummy sms
+            originalWriteSmsMode = context.getSystemService(AppOpsManager.class)
+                    .unsafeCheckOpNoThrow(AppOpsManager.OPSTR_WRITE_SMS,
+                            getPackageUid(ctsPackageName), ctsPackageName);
             dummySmsUri = executeWithShellPermissionIdentity(() -> {
+                setModeForOps(ctsPackageName,
+                        AppOpsManager.MODE_ALLOWED, AppOpsManager.OPSTR_WRITE_SMS);
                 ContentValues contentValues = new ContentValues();
                 contentValues.put(Telephony.TextBasedSmsColumns.ADDRESS, "addr");
                 contentValues.put(Telephony.TextBasedSmsColumns.READ, 1);
@@ -352,6 +360,12 @@ public class SmsManagerTest extends InstrumentationTestCase {
                 final Uri finalDummySmsUri = dummySmsUri;
                 executeWithShellPermissionIdentity(() -> contentResolver.delete(finalDummySmsUri,
                         null, null));
+            }
+            if (originalWriteSmsMode >= 0) {
+                int finalOriginalWriteSmsMode = originalWriteSmsMode;
+                executeWithShellPermissionIdentity(() ->
+                        setModeForOps(ctsPackageName,
+                                finalOriginalWriteSmsMode, AppOpsManager.OPSTR_WRITE_SMS));
             }
         }
     }
@@ -396,17 +410,25 @@ public class SmsManagerTest extends InstrumentationTestCase {
     }
 
     private void resetReadWriteSmsAppOps(String pkg) throws Exception {
+        setModeForOps(pkg, AppOpsManager.MODE_DEFAULT,
+                AppOpsManager.OPSTR_READ_SMS, AppOpsManager.OPSTR_WRITE_SMS);
+    }
+
+    private void setModeForOps(String pkg, int mode, String... ops) throws Exception {
         // We cannot reset these app ops to DEFAULT via current API, so we reset them manually here
         // temporarily as we will rewrite how the default SMS app is setup later.
         executeWithShellPermissionIdentity(() -> {
-            Context context = getInstrumentation().getContext();
-            PackageManager packageManager = context.getPackageManager();
-            int uid = packageManager.getPackageUid(pkg, 0);
-            AppOpsManager appOpsManager = context.getSystemService(AppOpsManager.class);
-            appOpsManager.setUidMode(AppOpsManager.OPSTR_READ_SMS, uid, AppOpsManager.MODE_DEFAULT);
-            appOpsManager.setUidMode(AppOpsManager.OPSTR_WRITE_SMS, uid,
-                    AppOpsManager.MODE_DEFAULT);
+            int uid = getPackageUid(pkg);
+            AppOpsManager appOpsManager =
+                    getInstrumentation().getContext().getSystemService(AppOpsManager.class);
+            for (String op : ops) {
+                appOpsManager.setUidMode(op, uid, mode);
+            }
         });
+    }
+
+    private int getPackageUid(String pkg) throws PackageManager.NameNotFoundException {
+        return getInstrumentation().getContext().getPackageManager().getPackageUid(pkg, 0);
     }
 
     private void setSmsApp(String pkg) throws Exception {
