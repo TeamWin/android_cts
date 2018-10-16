@@ -259,6 +259,9 @@
       "name": "CtsJvmtiRunTest1943HostTestCases"
     },
     {
+      "name": "CtsJvmtiRunTest1953HostTestCases"
+    },
+    {
       "name": "CtsJvmtiTaggingHostTestCases"
     },
     {
