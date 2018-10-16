@@ -1019,6 +1019,7 @@ void AHardwareBufferGLTest::SetUpTexture(const AHardwareBuffer_Desc& desc, int u
                     internal_format = GL_DEPTH_STENCIL_OES;
                     format = GL_DEPTH_STENCIL;
                     type = GL_UNSIGNED_INT_24_8;
+                    break;
                 default:
                     FAIL() << "Unrecognized GL format"; break;
             }
