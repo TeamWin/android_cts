@@ -24,6 +24,8 @@ import android.graphics.Bitmap.Config;
 import android.support.test.filters.SmallTest;
 import android.support.test.runner.AndroidJUnit4;
 
+import com.android.compatibility.common.util.CddTest;
+
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
@@ -32,6 +34,8 @@ import java.io.ByteArrayOutputStream;
 @SmallTest
 @RunWith(AndroidJUnit4.class)
 public class Bitmap_CompressFormatTest {
+
+    @CddTest(requirement="5.1.4/C-0-1,C-0-2,C-0-3")
     @Test
     public void testValueOf(){
         assertEquals(CompressFormat.JPEG, CompressFormat.valueOf("JPEG"));
@@ -39,6 +43,7 @@ public class Bitmap_CompressFormatTest {
         assertEquals(CompressFormat.WEBP, CompressFormat.valueOf("WEBP"));
     }
 
+    @CddTest(requirement="5.1.4/C-0-1,C-0-2,C-0-3")
     @Test
     public void testValues(){
         CompressFormat[] comFormat = CompressFormat.values();
