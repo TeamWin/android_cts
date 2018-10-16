@@ -45,6 +45,8 @@ import android.os.SystemClock;
 import android.platform.test.annotations.Presubmit;
 import android.util.Log;
 
+import com.android.compatibility.common.util.CddTest;
+
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Random;
@@ -115,6 +117,7 @@ public class SensorTest extends SensorTestCase {
         }
     }
 
+    @CddTest(requirement="7.3/C-0-1,7.3.1/C-1-2,7.3.2/C-1-1")
     @SuppressWarnings("deprecation")
     public void testSensorOperations() {
         // Because we can't know every sensors unit details, so we can't assert
@@ -260,6 +263,7 @@ public class SensorTest extends SensorTestCase {
         }
     }
 
+    @CddTest(requirement="7.3/C-0-3")
     public void testRequestTriggerWithNonTriggerSensor() {
         mTriggerSensor = mSensorManager.getDefaultSensor(Sensor.TYPE_ACCELEROMETER);
         if (mTriggerSensor == null) {
@@ -270,6 +274,7 @@ public class SensorTest extends SensorTestCase {
         assertFalse(result);
     }
 
+    @CddTest(requirement="7.3/C-0-3")
     public void testCancelTriggerWithNonTriggerSensor() {
         mTriggerSensor = mSensorManager.getDefaultSensor(Sensor.TYPE_ACCELEROMETER);
         if (mTriggerSensor == null) {
@@ -280,6 +285,7 @@ public class SensorTest extends SensorTestCase {
         assertFalse(result);
     }
 
+    @CddTest(requirement="7.3/C-0-3")
     public void testRegisterWithTriggerSensor() {
         Sensor sensor = mSensorManager.getDefaultSensor(Sensor.TYPE_SIGNIFICANT_MOTION);
         if (sensor == null) {

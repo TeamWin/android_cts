@@ -297,6 +297,7 @@ public class SystemFeaturesTest extends InstrumentationTestCase {
      * Check that the sensor features reported by the PackageManager correspond to the sensors
      * returned by {@link SensorManager#getSensorList(int)}.
      */
+    @CddTest(requirement="7.3/C-0-1,C-0-2,C-0-3")
     public void testSensorFeatures() throws Exception {
         Set<String> featuresLeft = getFeatureConstantsNames("FEATURE_SENSOR_");
 

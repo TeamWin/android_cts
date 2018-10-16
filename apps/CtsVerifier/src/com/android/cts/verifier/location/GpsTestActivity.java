@@ -19,6 +19,8 @@ package com.android.cts.verifier.location;
 import com.android.cts.verifier.PassFailButtons;
 import com.android.cts.verifier.R;
 
+import com.android.compatibility.common.util.CddTest;
+
 import android.content.Context;
 import android.graphics.Color;
 import android.graphics.Typeface;
@@ -41,6 +43,7 @@ interface PassFailLog {
 /**
  * CTS Verifier case for verifying GPS.
  */
+@CddTest(requirement="7.3.3/C-1-1")
 public class GpsTestActivity extends PassFailButtons.Activity implements PassFailLog {
     private LocationManager mLocationManager;
     private TextView mTextView;

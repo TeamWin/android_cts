@@ -31,6 +31,8 @@ import android.os.MemoryFile;
 import android.os.SystemClock;
 import android.util.Log;
 
+import com.android.compatibility.common.util.CddTest;
+
 import java.io.IOException;
 import java.io.UncheckedIOException;
 import java.nio.ByteBuffer;
@@ -204,6 +206,7 @@ public class SensorDirectReportTest extends SensorTestCase {
                        (mHardwareBuffer != null && mHardwareBufferSecondary != null));
     }
 
+    @CddTest(requirement="7.3.9/C-3-1,C-3-2")
     public void testAccelerometerAshmemNormal() {
         runSensorDirectReportTest(
                 Sensor.TYPE_ACCELEROMETER,
@@ -211,6 +214,7 @@ public class SensorDirectReportTest extends SensorTestCase {
                 SensorDirectChannel.RATE_NORMAL);
     }
 
+    @CddTest(requirement="7.3.9/C-3-1,C-3-2")
     public void testGyroscopeAshmemNormal() {
         runSensorDirectReportTest(
                 Sensor.TYPE_GYROSCOPE,
@@ -218,6 +222,7 @@ public class SensorDirectReportTest extends SensorTestCase {
                 SensorDirectChannel.RATE_NORMAL);
     }
 
+    @CddTest(requirement="7.3.9/C-3-1,C-3-2")
     public void testMagneticFieldAshmemNormal() {
         runSensorDirectReportTest(
                 Sensor.TYPE_MAGNETIC_FIELD,
@@ -225,6 +230,7 @@ public class SensorDirectReportTest extends SensorTestCase {
                 SensorDirectChannel.RATE_NORMAL);
     }
 
+    @CddTest(requirement="7.3.9/C-3-1,C-3-2")
     public void testAccelerometerAshmemFast() {
         runSensorDirectReportTest(
                 Sensor.TYPE_ACCELEROMETER,
@@ -233,6 +239,7 @@ public class SensorDirectReportTest extends SensorTestCase {
 
     }
 
+    @CddTest(requirement="7.3.9/C-3-1,C-3-2")
     public void testGyroscopeAshmemFast() {
         runSensorDirectReportTest(
                 Sensor.TYPE_GYROSCOPE,
@@ -240,6 +247,7 @@ public class SensorDirectReportTest extends SensorTestCase {
                 SensorDirectChannel.RATE_FAST);
     }
 
+    @CddTest(requirement="7.3.9/C-3-1,C-3-2")
     public void testMagneticFieldAshmemFast() {
         runSensorDirectReportTest(
                 Sensor.TYPE_MAGNETIC_FIELD,
@@ -247,6 +255,7 @@ public class SensorDirectReportTest extends SensorTestCase {
                 SensorDirectChannel.RATE_FAST);
     }
 
+    @CddTest(requirement="7.3.9/C-3-1,C-3-2")
     public void testAccelerometerAshmemVeryFast() {
         runSensorDirectReportTest(
                 Sensor.TYPE_ACCELEROMETER,
@@ -255,6 +264,7 @@ public class SensorDirectReportTest extends SensorTestCase {
 
     }
 
+    @CddTest(requirement="7.3.9/C-3-1,C-3-2")
     public void testGyroscopeAshmemVeryFast() {
         runSensorDirectReportTest(
                 Sensor.TYPE_GYROSCOPE,
@@ -262,6 +272,7 @@ public class SensorDirectReportTest extends SensorTestCase {
                 SensorDirectChannel.RATE_VERY_FAST);
     }
 
+    @CddTest(requirement="7.3.9/C-3-1,C-3-2")
     public void testMagneticFieldAshmemVeryFast() {
         runSensorDirectReportTest(
                 Sensor.TYPE_MAGNETIC_FIELD,
@@ -269,6 +280,7 @@ public class SensorDirectReportTest extends SensorTestCase {
                 SensorDirectChannel.RATE_VERY_FAST);
     }
 
+    @CddTest(requirement="7.3.9/C-3-1,C-3-2")
     public void testAccelerometerHardwareBufferNormal() {
         runSensorDirectReportTest(
                 Sensor.TYPE_ACCELEROMETER,
@@ -276,6 +288,7 @@ public class SensorDirectReportTest extends SensorTestCase {
                 SensorDirectChannel.RATE_NORMAL);
     }
 
+    @CddTest(requirement="7.3.9/C-3-1,C-3-2")
     public void testGyroscopeHardwareBufferNormal() {
         runSensorDirectReportTest(
                 Sensor.TYPE_GYROSCOPE,
@@ -283,6 +296,7 @@ public class SensorDirectReportTest extends SensorTestCase {
                 SensorDirectChannel.RATE_NORMAL);
     }
 
+    @CddTest(requirement="7.3.9/C-3-1,C-3-2")
     public void testMagneticFieldHardwareBufferNormal() {
         runSensorDirectReportTest(
                 Sensor.TYPE_MAGNETIC_FIELD,
@@ -290,6 +304,7 @@ public class SensorDirectReportTest extends SensorTestCase {
                 SensorDirectChannel.RATE_NORMAL);
     }
 
+    @CddTest(requirement="7.3.9/C-3-1,C-3-2")
     public void testAccelerometerHardwareBufferFast() {
         runSensorDirectReportTest(
                 Sensor.TYPE_ACCELEROMETER,
@@ -297,6 +312,7 @@ public class SensorDirectReportTest extends SensorTestCase {
                 SensorDirectChannel.RATE_FAST);
     }
 
+    @CddTest(requirement="7.3.9/C-3-1,C-3-2")
     public void testGyroscopeHardwareBufferFast() {
         runSensorDirectReportTest(
                 Sensor.TYPE_GYROSCOPE,
@@ -304,6 +320,7 @@ public class SensorDirectReportTest extends SensorTestCase {
                 SensorDirectChannel.RATE_FAST);
     }
 
+    @CddTest(requirement="7.3.9/C-3-1,C-3-2")
     public void testMagneticFieldHardwareBufferFast() {
         runSensorDirectReportTest(
                 Sensor.TYPE_MAGNETIC_FIELD,
@@ -311,6 +328,7 @@ public class SensorDirectReportTest extends SensorTestCase {
                 SensorDirectChannel.RATE_FAST);
     }
 
+    @CddTest(requirement="7.3.9/C-3-1,C-3-2")
     public void testAccelerometerHardwareBufferVeryFast() {
         runSensorDirectReportTest(
                 Sensor.TYPE_ACCELEROMETER,
@@ -318,6 +336,7 @@ public class SensorDirectReportTest extends SensorTestCase {
                 SensorDirectChannel.RATE_VERY_FAST);
     }
 
+    @CddTest(requirement="7.3.9/C-3-1,C-3-2")
     public void testGyroscopeHardwareBufferVeryFast() {
         runSensorDirectReportTest(
                 Sensor.TYPE_GYROSCOPE,
@@ -325,6 +344,7 @@ public class SensorDirectReportTest extends SensorTestCase {
                 SensorDirectChannel.RATE_VERY_FAST);
     }
 
+    @CddTest(requirement="7.3.9/C-3-1,C-3-2")
     public void testMagneticFieldHardwareBufferVeryFast() {
         runSensorDirectReportTest(
                 Sensor.TYPE_MAGNETIC_FIELD,

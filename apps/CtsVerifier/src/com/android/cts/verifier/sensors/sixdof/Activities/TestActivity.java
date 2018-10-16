@@ -39,6 +39,8 @@ import com.android.cts.verifier.sensors.sixdof.Utils.Path.PathUtilityClasses.Way
 import com.android.cts.verifier.sensors.sixdof.Utils.PoseProvider.PoseProvider;
 import com.android.cts.verifier.sensors.sixdof.Utils.ResultObjects.ResultObject;
 
+import com.android.compatibility.common.util.CddTest;
+
 import android.content.Intent;
 import android.content.pm.ActivityInfo;
 import android.content.res.Configuration;
@@ -62,6 +64,7 @@ import java.util.ArrayList;
  * Main Activity for 6DOF tests Handles calls between UI fragments and the Data fragment. The
  * controller in the MVC structure.
  */
+@CddTest(requirement="7.3.12/C-1-1")
 public class TestActivity extends Activity implements BaseUiListener, AccuracyListener,
         RobustnessListener, ComplexMovementListener {
 

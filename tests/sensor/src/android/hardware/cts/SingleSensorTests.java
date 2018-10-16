@@ -25,6 +25,8 @@ import android.hardware.cts.helpers.TestSensorEnvironment;
 import android.hardware.cts.helpers.sensoroperations.TestSensorOperation;
 import android.content.pm.PackageManager;
 
+import com.android.compatibility.common.util.CddTest;
+
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Map.Entry;
@@ -150,6 +152,7 @@ public class SingleSensorTests extends SensorTestCase {
         runSensorTest(Sensor.TYPE_ACCELEROMETER, RATE_100HZ);
     }
 
+    @CddTest(requirement="7.3.1/C-1-1,C-1-2,C-1-3,C-1-6,7.3/C-1-7")
     public void testAccelerometer_50hz() throws Throwable {
         runSensorTest(Sensor.TYPE_ACCELEROMETER, RATE_50HZ);
     }
@@ -234,14 +237,17 @@ public class SingleSensorTests extends SensorTestCase {
         runSensorTest(Sensor.TYPE_MAGNETIC_FIELD, RATE_15HZ);
     }
 
+    @CddTest(requirement="7.3.2/C-1-1,C-1-2,C-1-3,C-1-9,7.3/C-1-7")
     public void testMagneticField_10hz() throws Throwable {
         runSensorTest(Sensor.TYPE_MAGNETIC_FIELD, RATE_10HZ);
     }
 
+    @CddTest(requirement="7.3.2/C-1-1,C-1-3,7.3/C-1-2")
     public void testMagneticField_5hz() throws Throwable {
         runSensorTest(Sensor.TYPE_MAGNETIC_FIELD, RATE_5HZ);
     }
 
+    @CddTest(requirement="7.3.2/C-1-1,C-1-3,7.3/C-1-2,7.3/C-1-7")
     public void testMagneticField_1hz() throws Throwable {
         runSensorTest(Sensor.TYPE_MAGNETIC_FIELD, RATE_1HZ);
     }
@@ -302,6 +308,7 @@ public class SingleSensorTests extends SensorTestCase {
         runSensorTest(Sensor.TYPE_GYROSCOPE, RATE_100HZ);
     }
 
+    @CddTest(requirement="7.3.4/C-1-1,C-1-7,7.3/C-1-7")
     public void testGyroscope_50hz() throws Throwable {
         runSensorTest(Sensor.TYPE_GYROSCOPE, RATE_50HZ);
     }
@@ -322,6 +329,7 @@ public class SingleSensorTests extends SensorTestCase {
         runSensorTest(Sensor.TYPE_GYROSCOPE, RATE_5HZ);
     }
 
+    @CddTest(requirement="7.3.4/C-1-2,C-1-7,7.3/C-1-7")
     public void testGyroscope_1hz() throws Throwable {
         runSensorTest(Sensor.TYPE_GYROSCOPE, RATE_1HZ);
     }
@@ -354,6 +362,7 @@ public class SingleSensorTests extends SensorTestCase {
         runSensorTest(Sensor.TYPE_PRESSURE, RATE_10HZ);
     }
 
+    @CddTest(requirement="7.3.5/C-1-1,C-1-2,7.3/C-1-7,C-1-2")
     public void testPressure_5hz() throws Throwable {
         runSensorTest(Sensor.TYPE_PRESSURE, RATE_5HZ);
     }
@@ -362,6 +371,7 @@ public class SingleSensorTests extends SensorTestCase {
         runSensorTest(Sensor.TYPE_PRESSURE, RATE_1HZ);
     }
 
+    @CddTest(requirement="7.3.1/C-3-1")
     public void testGravity_fastest() throws Throwable {
         runSensorTest(Sensor.TYPE_GRAVITY, SensorManager.SENSOR_DELAY_FASTEST);
     }
@@ -378,26 +388,32 @@ public class SingleSensorTests extends SensorTestCase {
         runSensorTest(Sensor.TYPE_GRAVITY, RATE_50HZ);
     }
 
+    @CddTest(requirement="7.3.1/C-3-1")
     public void testGravity_25hz() throws Throwable {
         runSensorTest(Sensor.TYPE_GRAVITY, RATE_25HZ);
     }
 
+    @CddTest(requirement="7.3.1/C-3-1")
     public void testGravity_15hz() throws Throwable {
         runSensorTest(Sensor.TYPE_GRAVITY, RATE_15HZ);
     }
 
+    @CddTest(requirement="7.3.1/C-3-1")
     public void testGravity_10hz() throws Throwable {
         runSensorTest(Sensor.TYPE_GRAVITY, RATE_10HZ);
     }
 
+    @CddTest(requirement="7.3.1/C-3-1")
     public void testGravity_5hz() throws Throwable {
         runSensorTest(Sensor.TYPE_GRAVITY, RATE_5HZ);
     }
 
+    @CddTest(requirement="7.3.1/C-3-1")
     public void testGravity_1hz() throws Throwable {
         runSensorTest(Sensor.TYPE_GRAVITY, RATE_1HZ);
     }
 
+    @CddTest(requirement="7.3.1/C-4-1,7.3.2/C-2-1")
     public void testRotationVector_fastest() throws Throwable {
         runSensorTest(Sensor.TYPE_ROTATION_VECTOR, SensorManager.SENSOR_DELAY_FASTEST);
     }
@@ -410,6 +426,7 @@ public class SingleSensorTests extends SensorTestCase {
         runSensorTest(Sensor.TYPE_ROTATION_VECTOR, RATE_100HZ);
     }
 
+    @CddTest(requirement="7.3.1/C-4-1")
     public void testRotationVector_50hz() throws Throwable {
         runSensorTest(Sensor.TYPE_ROTATION_VECTOR, RATE_50HZ);
     }
@@ -422,14 +439,17 @@ public class SingleSensorTests extends SensorTestCase {
         runSensorTest(Sensor.TYPE_ROTATION_VECTOR, RATE_15HZ);
     }
 
+    @CddTest(requirement="7.3.1/C-4-1,7.3.2/C-2-1")
     public void testRotationVector_10hz() throws Throwable {
         runSensorTest(Sensor.TYPE_ROTATION_VECTOR, RATE_10HZ);
     }
 
+    @CddTest(requirement="7.3.1/C-4-1,7.3.2/C-2-1")
     public void testRotationVector_5hz() throws Throwable {
         runSensorTest(Sensor.TYPE_ROTATION_VECTOR, RATE_5HZ);
     }
 
+    @CddTest(requirement="7.3.1/C-4-1,7.3.2/C-2-1")
     public void testRotationVector_1hz() throws Throwable {
         runSensorTest(Sensor.TYPE_ROTATION_VECTOR, RATE_1HZ);
     }
@@ -498,14 +518,17 @@ public class SingleSensorTests extends SensorTestCase {
         runSensorTest(Sensor.TYPE_GAME_ROTATION_VECTOR, RATE_10HZ);
     }
 
+    @CddTest(requirement="7.3/C-2-1")
     public void testGameRotationVector_5hz() throws Throwable {
         runSensorTest(Sensor.TYPE_GAME_ROTATION_VECTOR, RATE_5HZ);
     }
 
+    @CddTest(requirement="7.3/C-2-1")
     public void testGameRotationVector_1hz() throws Throwable {
         runSensorTest(Sensor.TYPE_GAME_ROTATION_VECTOR, RATE_1HZ);
     }
 
+    @CddTest(requirement="7.3/C-2-1")
     public void testGyroscopeUncalibrated_fastest() throws Throwable {
         runSensorTest(Sensor.TYPE_GYROSCOPE_UNCALIBRATED, SensorManager.SENSOR_DELAY_FASTEST);
     }
@@ -518,6 +541,7 @@ public class SingleSensorTests extends SensorTestCase {
         runSensorTest(Sensor.TYPE_GYROSCOPE_UNCALIBRATED, RATE_100HZ);
     }
 
+    @CddTest(requirement="7.3/C-2-1")
     public void testGyroscopeUncalibrated_50hz() throws Throwable {
         runSensorTest(Sensor.TYPE_GYROSCOPE_UNCALIBRATED, RATE_50HZ);
     }
@@ -530,14 +554,17 @@ public class SingleSensorTests extends SensorTestCase {
         runSensorTest(Sensor.TYPE_GYROSCOPE_UNCALIBRATED, RATE_15HZ);
     }
 
+    @CddTest(requirement="7.3/C-2-1")
     public void testGyroscopeUncalibrated_10hz() throws Throwable {
         runSensorTest(Sensor.TYPE_GYROSCOPE_UNCALIBRATED, RATE_10HZ);
     }
 
+    @CddTest(requirement="7.3/C-2-1")
     public void testGyroscopeUncalibrated_5hz() throws Throwable {
         runSensorTest(Sensor.TYPE_GYROSCOPE_UNCALIBRATED, RATE_5HZ);
     }
 
+    @CddTest(requirement="7.3/C-2-1")
     public void testGyroscopeUncalibrated_1hz() throws Throwable {
         runSensorTest(Sensor.TYPE_GYROSCOPE_UNCALIBRATED, RATE_1HZ);
     }
@@ -554,26 +581,32 @@ public class SingleSensorTests extends SensorTestCase {
         runSensorTest(Sensor.TYPE_LINEAR_ACCELERATION, RATE_100HZ);
     }
 
+     @CddTest(requirement="7.3.1/C-3-1")
     public void testLinearAcceleration_50hz() throws Throwable {
         runSensorTest(Sensor.TYPE_LINEAR_ACCELERATION, RATE_50HZ);
     }
 
+    @CddTest(requirement="7.3.1/C-3-1")
     public void testLinearAcceleration_25hz() throws Throwable {
         runSensorTest(Sensor.TYPE_LINEAR_ACCELERATION, RATE_25HZ);
     }
 
+     @CddTest(requirement="7.3.1/C-3-1")
     public void testLinearAcceleration_15hz() throws Throwable {
         runSensorTest(Sensor.TYPE_LINEAR_ACCELERATION, RATE_15HZ);
     }
 
+    @CddTest(requirement="7.3.1/C-3-1")
     public void testLinearAcceleration_10hz() throws Throwable {
         runSensorTest(Sensor.TYPE_LINEAR_ACCELERATION, RATE_10HZ);
     }
 
+    @CddTest(requirement="7.3.1/C-3-1")
     public void testLinearAcceleration_5hz() throws Throwable {
         runSensorTest(Sensor.TYPE_LINEAR_ACCELERATION, RATE_5HZ);
     }
 
+    @CddTest(requirement="7.3.1/C-3-1")
     public void testLinearAcceleration_1hz() throws Throwable {
         runSensorTest(Sensor.TYPE_LINEAR_ACCELERATION, RATE_1HZ);
     }
