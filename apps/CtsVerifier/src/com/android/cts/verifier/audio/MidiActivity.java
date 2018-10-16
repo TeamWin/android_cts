@@ -24,6 +24,7 @@ import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
 import android.content.res.Resources;
+import android.content.ServiceConnection;
 import android.content.pm.PackageManager;
 import android.media.midi.MidiDevice;
 import android.media.midi.MidiDeviceInfo;
@@ -34,6 +35,7 @@ import android.media.midi.MidiOutputPort;
 import android.media.midi.MidiReceiver;
 import android.os.Bundle;
 import android.os.Handler;
+import android.os.IBinder;
 import android.util.Log;
 import android.view.View;
 import android.widget.Button;
@@ -109,7 +111,7 @@ public class MidiActivity extends PassFailButtons.Activity implements View.OnCli
     private TextView    mBTTestStatusTxt;
 
     private Intent mMidiServiceIntent;
-    private ComponentName mMidiService;
+    private MidiServiceConnection mMidiServiceConnection;
 
     public MidiActivity() {
         super();
@@ -127,10 +129,7 @@ public class MidiActivity extends PassFailButtons.Activity implements View.OnCli
         mUSBTestBtn.setEnabled(mUSBTestModule.isTestReady());
 
         // Virtual MIDI
-        Log.i(TAG, "---- Show Virtual MIDI devices.");
-        Log.i(TAG, "---- Input:" + mVirtTestModule.getInputName());
         mVirtInputDeviceLbl.setText(mVirtTestModule.getInputName());
-        Log.i(TAG, "---- Output:" + mVirtTestModule.getOutputName());
         mVirtOutputDeviceLbl.setText(mVirtTestModule.getOutputName());
         mVirtTestBtn.setEnabled(mVirtTestModule.isTestReady());
 
@@ -161,9 +160,9 @@ public class MidiActivity extends PassFailButtons.Activity implements View.OnCli
         }
 
         MidiDeviceInfo[] devInfos = mMidiManager.getDevices();
-        mUSBTestModule.scanDevices(devInfos, MidiDeviceInfo.TYPE_USB);
-        mVirtTestModule.scanDevices(devInfos, MidiDeviceInfo.TYPE_VIRTUAL);
-        mBTTestModule.scanDevices(devInfos, MidiDeviceInfo.TYPE_BLUETOOTH);
+        mUSBTestModule.scanDevices(devInfos);
+        mVirtTestModule.scanDevices(devInfos);
+        mBTTestModule.scanDevices(devInfos);
 
         showConnectedMIDIPeripheral();
     }
@@ -215,18 +214,30 @@ public class MidiActivity extends PassFailButtons.Activity implements View.OnCli
         });
     }
 
+    class MidiServiceConnection implements ServiceConnection {
+        private static final String TAG = "MidiServiceConnection";
+        @Override
+        public void  onServiceConnected(ComponentName name, IBinder service) {
+            if (DEBUG) {
+                Log.i(TAG, "MidiServiceConnection.onServiceConnected()");
+            }
+            scanMidiDevices();
+        }
+
+        @Override
+        public void onServiceDisconnected(ComponentName name) {
+            if (DEBUG) {
+                Log.i(TAG, "MidiServiceConnection.onServiceDisconnected()");
+            }
+        }
+    }
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
 
         if (DEBUG) {
             Log.i(TAG, "---- onCreate()");
-        }
-
-        mMidiServiceIntent = new Intent(this, MidiEchoTestService.class);
-        mMidiService = startService(mMidiServiceIntent);
-        if (DEBUG) {
-            Log.i(TAG, "---- mMidiService instantiated:" + mMidiService);
         }
 
         setContentView(R.layout.midi_activity);
@@ -261,12 +272,14 @@ public class MidiActivity extends PassFailButtons.Activity implements View.OnCli
         mBTTestStatusTxt = (TextView)findViewById(R.id.midiBTTestStatusLbl);
 
         // Setup Test Modules
-        mUSBTestModule = new MidiTestModule();
-        mVirtTestModule = new MidiTestModule();
+        mUSBTestModule = new MidiTestModule(MidiDeviceInfo.TYPE_USB);
+        mVirtTestModule = new MidiTestModule(MidiDeviceInfo.TYPE_VIRTUAL);
         mBTTestModule = new BTMidiTestModule();
 
         // Init MIDI Stuff
         mMidiManager = (MidiManager) getSystemService(Context.MIDI_SERVICE);
+
+        mMidiServiceIntent = new Intent(this, MidiEchoTestService.class);
 
         // Initial MIDI Device Scan
         scanMidiDevices();
@@ -276,16 +289,28 @@ public class MidiActivity extends PassFailButtons.Activity implements View.OnCli
     }
 
     @Override
-    protected void onPause () {
+    protected void onResume() {
+        super.onResume();
+        if (DEBUG) {
+            Log.i(TAG, "---- Loading Virtual MIDI Service ...");
+        }
+        mMidiServiceConnection = new MidiServiceConnection();
+        boolean isBound =
+            bindService(mMidiServiceIntent,  mMidiServiceConnection,  Context.BIND_AUTO_CREATE);
+        if (DEBUG) {
+            Log.i(TAG, "---- Virtual MIDI Service loaded: " + isBound);
+        }
+    }
+
+    @Override
+    protected void onPause() {
         super.onPause();
         if (DEBUG) {
             Log.i(TAG, "---- onPause()");
         }
 
-        boolean isFound = stopService(mMidiServiceIntent);
-        if (DEBUG) {
-            Log.i(TAG, "---- Stop Service: " + isFound);
-        }
+        unbindService(mMidiServiceConnection);
+        mMidiServiceConnection = null;
     }
 
     /**
@@ -334,15 +359,22 @@ public class MidiActivity extends PassFailButtons.Activity implements View.OnCli
     private class MidiIODevice {
         private static final String TAG = "MidiIODevice";
 
+        private final int mDeviceType;
+
         public MidiDeviceInfo mSendDevInfo;
         public MidiDeviceInfo mReceiveDevInfo;
 
         public MidiInputPort   mSendPort;
         public MidiOutputPort  mReceivePort;
 
-        public void scanDevices(MidiDeviceInfo[] devInfos, int typeID) {
-            Log.i(TAG, "---- scanDevices() typeID: " + typeID);
+        public MidiIODevice(int deviceType) {
+            mDeviceType = deviceType;
+        }
 
+        public void scanDevices(MidiDeviceInfo[] devInfos) {
+            if (DEBUG) {
+                Log.i(TAG, "---- scanDevices() typeID: " + mDeviceType);
+            }
             mSendDevInfo = null;
             mReceiveDevInfo = null;
             mSendPort = null;
@@ -354,16 +386,16 @@ public class MidiActivity extends PassFailButtons.Activity implements View.OnCli
                 if (numInPorts <= 0) {
                     continue; // none?
                 }
-                if (devInfo.getType() == typeID && mSendDevInfo == null) {
+                if (devInfo.getType() == mDeviceType && mSendDevInfo == null) {
                     mSendDevInfo = devInfo;
                 }
- 
+
                 // Outputs?
                 int numOutPorts = devInfo.getOutputPortCount();
                 if (numOutPorts <= 0) {
                     continue; // none?
                 }
-                if (devInfo.getType() == typeID && mReceiveDevInfo == null) {
+                if (devInfo.getType() == mDeviceType && mReceiveDevInfo == null) {
                     mReceiveDevInfo = devInfo;
                 }
 
@@ -418,13 +450,23 @@ public class MidiActivity extends PassFailButtons.Activity implements View.OnCli
         }
 
         public String getInputName() {
-            return mReceiveDevInfo != null
-                    ? mReceiveDevInfo.getProperties().getString(MidiDeviceInfo.PROPERTY_NAME) : "";
+            if (mReceiveDevInfo != null) {
+                return mDeviceType == MidiDeviceInfo.TYPE_VIRTUAL
+                        ? "Virtual MIDI Device"
+                        : mReceiveDevInfo.getProperties().getString(MidiDeviceInfo.PROPERTY_NAME);
+            } else {
+                return "";
+            }
         }
 
         public String getOutputName() {
-            return mSendDevInfo != null
-                    ? mSendDevInfo.getProperties().getString(MidiDeviceInfo.PROPERTY_NAME) : "";
+            if (mSendDevInfo != null) {
+                return mDeviceType == MidiDeviceInfo.TYPE_VIRTUAL
+                        ? "Virtual MIDI Device"
+                        : mSendDevInfo.getProperties().getString(MidiDeviceInfo.PROPERTY_NAME);
+            } else {
+                return "";
+            }
         }
     }   /* class MidiIODevice */
 
@@ -446,14 +488,18 @@ public class MidiActivity extends PassFailButtons.Activity implements View.OnCli
 
         public boolean matches(byte[] msg, int offset, int count) {
             // Length
-            // Log.i(TAG, "  count [" + count + " : " + mMsgBytes.length + "]");
+            if (DEBUG) {
+                Log.i(TAG, "  count [" + count + " : " + mMsgBytes.length + "]");
+            }
             if (count != mMsgBytes.length) {
                 return false;
             }
 
             // Data
             for(int index = 0; index < count; index++) {
-                // Log.i(TAG, "  [" + msg[offset + index] + " : " + mMsgBytes[index] + "]");
+                if (DEBUG) {
+                    Log.i(TAG, "  [" + msg[offset + index] + " : " + mMsgBytes[index] + "]");
+                }
                 if (msg[offset + index] != mMsgBytes[index]) {
                     return false;
                 }
@@ -475,7 +521,7 @@ public class MidiActivity extends PassFailButtons.Activity implements View.OnCli
         private static final String TAG = "MidiTestModule";
 
         // Test Peripheral
-        MidiIODevice mIODevice = new MidiIODevice();
+        MidiIODevice mIODevice;
 
         // Test Status
         protected static final int TESTSTATUS_NOTRUN = 0;
@@ -494,7 +540,8 @@ public class MidiActivity extends PassFailButtons.Activity implements View.OnCli
         private byte[] mMIDIDataStream;
         private int mReceiveStreamPos;
 
-        public MidiTestModule() {
+        public MidiTestModule(int deviceType) {
+            mIODevice = new MidiIODevice(deviceType);
             setupTestMessages();
         }
 
@@ -522,8 +569,8 @@ public class MidiActivity extends PassFailButtons.Activity implements View.OnCli
             }
         }
 
-        public void scanDevices(MidiDeviceInfo[] devInfos, int typeID) {
-            mIODevice.scanDevices(devInfos, typeID);
+        public void scanDevices(MidiDeviceInfo[] devInfos) {
+            mIODevice.scanDevices(devInfos);
         }
 
         public void showTimeoutMessage() {
@@ -772,14 +819,18 @@ public class MidiActivity extends PassFailButtons.Activity implements View.OnCli
      */
     private class BTMidiTestModule extends MidiTestModule {
         private static final String TAG = "BTMidiTestModule";
-        private MidiIODevice mUSBLoopbackDevice = new MidiIODevice();
+        private MidiIODevice mUSBLoopbackDevice = new MidiIODevice(MidiDeviceInfo.TYPE_USB);
+
+        public BTMidiTestModule() {
+            super(MidiDeviceInfo.TYPE_BLUETOOTH );
+        }
 
         @Override
-        public void scanDevices(MidiDeviceInfo[] devInfos, int typeID) {
+        public void scanDevices(MidiDeviceInfo[] devInfos) {
             // (normal) Scan for BT MIDI device
-            super.scanDevices(devInfos, typeID);
+            super.scanDevices(devInfos);
             // Find a USB Loopback Device
-            mUSBLoopbackDevice.scanDevices(devInfos, MidiDeviceInfo.TYPE_USB);
+            mUSBLoopbackDevice.scanDevices(devInfos);
         }
 
         private void openUSBEchoDevice(MidiDevice device) {
