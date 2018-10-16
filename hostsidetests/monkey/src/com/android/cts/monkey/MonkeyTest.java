@@ -19,6 +19,8 @@ package com.android.cts.monkey;
 import com.android.ddmlib.NullOutputReceiver;
 import com.android.tradefed.device.DeviceNotAvailableException;
 
+import com.android.compatibility.common.util.CddTest;
+
 import java.util.Scanner;
 
 public class MonkeyTest extends AbstractMonkeyTest {
@@ -26,11 +28,13 @@ public class MonkeyTest extends AbstractMonkeyTest {
     private static final String MONKEY = "@(>.<)@";
     private static final String HUMAN = "(^_^)";
 
+    @CddTest(requirement="6.1/C-0-8")
     public void testIsMonkey() throws Exception {
         mDevice.executeShellCommand(MONKEY_CMD + " -p " + PKGS[0] + " 500");
         assertIsUserAMonkey(true);
     }
 
+    @CddTest(requirement="6.1/C-0-8")
     public void testNotMonkey() throws Exception {
         mDevice.executeShellCommand("am start -W -a android.intent.action.MAIN "
                 + "-n com.android.cts.monkey/com.android.cts.monkey.MonkeyActivity",

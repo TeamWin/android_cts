@@ -55,6 +55,7 @@ import junit.framework.AssertionFailedError;
 /**
  * Test for checking that the {@link PackageManager} is reporting the correct features.
  */
+@CddTest(requirement="7/C-0-7")
 public class SystemFeaturesTest extends InstrumentationTestCase {
 
     private Context mContext;
