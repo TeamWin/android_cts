@@ -27,6 +27,9 @@
          Will be removed after v17 of CS.apk is released.
     Bug: 117590943 android.intent.action.View
          Fixed in GMSCore v14.7.68.
+    Bug: 67109014 android.intent.action.BADGE_COUNT_UPDATE // Samsung is sending
+    //new corrected intent and the old intent in P.
+    //Target date for fix is under disucssion for BADGE_COUNT_UPDATE
 -->
 <dynamicConfig>
     <entry key ="intent_whitelist">
@@ -40,5 +43,6 @@
       <value>android.intent.action.EPHEMERAL_RESOLVER_SETTINGS</value>
       <value>android.intent.action.ACTION_AIRPLANE_MODE_CHANGED</value>
       <value>android.intent.action.View</value>
+      <value>android.intent.action.BADGE_COUNT_UPDATE</value>
     </entry>
 </dynamicConfig>
