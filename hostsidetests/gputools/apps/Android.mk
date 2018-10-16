@@ -21,6 +21,7 @@ LOCAL_SRC_FILES := \
     jni/android_gputools_cts_RootlessGpuDebug.cpp
 LOCAL_CFLAGS += -Wall -Werror
 LOCAL_SHARED_LIBRARIES := libandroid libvulkan liblog
+LOCAL_SHARED_LIBRARIES := libandroid libvulkan libEGL libGLESv3 liblog
 LOCAL_NDK_STL_VARIANT := c++_static
 LOCAL_SDK_VERSION := current
 include $(BUILD_SHARED_LIBRARY)
@@ -61,7 +62,8 @@ LOCAL_MULTILIB := both
 
 LOCAL_JNI_SHARED_LIBRARIES := \
 libctsgputools_jni \
-libVkLayer_nullLayerC
+libVkLayer_nullLayerC \
+libGLES_glesLayer3
 
 LOCAL_AAPT_FLAGS := \
 --rename-manifest-package android.rootlessgpudebug.RELEASE.app

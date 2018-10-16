@@ -20,7 +20,7 @@ LOCAL_MODULE := libVkLayer_nullLayerA
 LOCAL_MODULE_TAGS := tests
 LOCAL_SRC_FILES := jni/nullLayer.cpp
 LOCAL_CFLAGS += -Wall -Werror -fvisibility=hidden -DLAYERNAME="A"
-LOCAL_SHARED_LIBRARIES := libandroid libvulkan liblog
+LOCAL_SHARED_LIBRARIES := libandroid libvulkan libEGL libGLESv3 liblog
 LOCAL_NDK_STL_VARIANT := c++_static
 LOCAL_SDK_VERSION := current
 include $(BUILD_SHARED_LIBRARY)
@@ -31,7 +31,7 @@ LOCAL_MODULE := libVkLayer_nullLayerB
 LOCAL_MODULE_TAGS := tests
 LOCAL_SRC_FILES := jni/nullLayer.cpp
 LOCAL_CFLAGS += -Wall -Werror -fvisibility=hidden -DLAYERNAME="B"
-LOCAL_SHARED_LIBRARIES := libandroid libvulkan liblog
+LOCAL_SHARED_LIBRARIES := libandroid libvulkan libEGL libGLESv3 liblog
 LOCAL_NDK_STL_VARIANT := c++_static
 LOCAL_SDK_VERSION := current
 include $(BUILD_SHARED_LIBRARY)
@@ -42,11 +42,43 @@ LOCAL_MODULE := libVkLayer_nullLayerC
 LOCAL_MODULE_TAGS := tests
 LOCAL_SRC_FILES := jni/nullLayer.cpp
 LOCAL_CFLAGS += -Wall -Werror -fvisibility=hidden -DLAYERNAME="C"
-LOCAL_SHARED_LIBRARIES := libandroid libvulkan liblog
+LOCAL_SHARED_LIBRARIES := libandroid libvulkan libEGL libGLESv3 liblog
 LOCAL_NDK_STL_VARIANT := c++_static
 LOCAL_SDK_VERSION := current
 include $(BUILD_SHARED_LIBRARY)
 
+
+include $(CLEAR_VARS)
+LOCAL_MODULE := libGLES_glesLayer1
+LOCAL_MODULE_TAGS := tests
+LOCAL_SRC_FILES := jni/glesLayer.cpp
+LOCAL_CFLAGS += -std=c++14 -Wall -Werror -fvisibility=hidden -DLAYERNAME=1
+LOCAL_SHARED_LIBRARIES := libandroid libEGL libGLESv3 liblog
+LOCAL_NDK_STL_VARIANT := c++_static
+LOCAL_SDK_VERSION := current
+include $(BUILD_SHARED_LIBRARY)
+
+
+include $(CLEAR_VARS)
+LOCAL_MODULE := libGLES_glesLayer2
+LOCAL_MODULE_TAGS := tests
+LOCAL_SRC_FILES := jni/glesLayer.cpp
+LOCAL_CFLAGS += -std=c++14 -Wall -Werror -fvisibility=hidden -DLAYERNAME=2
+LOCAL_SHARED_LIBRARIES := libandroid libEGL libGLESv3 liblog
+LOCAL_NDK_STL_VARIANT := c++_static
+LOCAL_SDK_VERSION := current
+include $(BUILD_SHARED_LIBRARY)
+
+
+include $(CLEAR_VARS)
+LOCAL_MODULE := libGLES_glesLayer3
+LOCAL_MODULE_TAGS := tests
+LOCAL_SRC_FILES := jni/glesLayer.cpp
+LOCAL_CFLAGS += -std=c++14 -Wall -Werror -fvisibility=hidden -DLAYERNAME=3
+LOCAL_SHARED_LIBRARIES := libandroid libEGL libGLESv3 liblog
+LOCAL_NDK_STL_VARIANT := c++_static
+LOCAL_SDK_VERSION := current
+include $(BUILD_SHARED_LIBRARY)
 
 
 include $(CLEAR_VARS)
@@ -64,7 +96,10 @@ LOCAL_MULTILIB := both
 LOCAL_JNI_SHARED_LIBRARIES := \
 libVkLayer_nullLayerA \
 libVkLayer_nullLayerB \
-libVkLayer_nullLayerC
+libVkLayer_nullLayerC \
+libGLES_glesLayer1 \
+libGLES_glesLayer2 \
+libGLES_glesLayer3
 
 include $(call all-makefiles-under,$(LOCAL_PATH))
 
