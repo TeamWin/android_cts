@@ -60,8 +60,8 @@ public class LightBarThemeTest extends LightBarTestBase {
     }
 
     @Test
-    public void testNavigationBarDividerColor() throws Exception {
-        assumeHasColorNavigationBar();
+    public void testNavigationBarDividerColor() throws Throwable {
+        assumeHasColorNavigationBar(mActivityRule);
 
         // Wait until the activity is fully visible
         mDevice.waitForIdle();
