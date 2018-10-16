@@ -4197,6 +4197,7 @@ You should be prompted to select credentials; choose the ones you just installed
 
     <!--  MIDI Test -->
     <string name="midi_test">MIDI Test</string>
+    <string name="ndk_midi_test">Native MIDI API Test</string>
     <string name="midi_info">
        For the USB MIDI interface test it is required that you have connected a supported USB
        Audio Peripheral device with standard MIDI 5-pin, DIN (round) connectors and a standard
@@ -4230,6 +4231,9 @@ You should be prompted to select credentials; choose the ones you just installed
     <string name="midiPassedLbl">Passed.</string>
     <string name="midiFailedMismatchLbl">Failed - Data Mismatch.</string>
     <string name="midiFailedTimeoutLbl">Failed - Timeout.</string>
+    <string name="midiFailedOverrunLbl">Failed - Data Overrun.</string>
+    <string name="midiFailedDeviceLbl">Failed - Device Error.</string>
+    <string name="midiFailedJNILbl">Failed - JNI Error.</string>
 
     <!-- Audio general text -->
     <string name="audio_general_headset_port_exists">Does this device have a headset port?</string>
