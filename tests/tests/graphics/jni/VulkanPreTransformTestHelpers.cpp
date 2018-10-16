@@ -259,7 +259,7 @@ SwapchainInfo::~SwapchainInfo() {
     }
 }
 
-VkTestResult SwapchainInfo::init(bool setPreTransform) {
+VkTestResult SwapchainInfo::init(bool setPreTransform, int* outPreTransformHint) {
     VkSurfaceCapabilitiesKHR surfaceCapabilities;
     VK_CALL(vkGetPhysicalDeviceSurfaceCapabilitiesKHR(mDeviceInfo->gpu(), mDeviceInfo->surface(),
                                                       &surfaceCapabilities));
@@ -308,6 +308,10 @@ VkTestResult SwapchainInfo::init(bool setPreTransform) {
           VK_SURFACE_TRANSFORM_HORIZONTAL_MIRROR_ROTATE_90_BIT_KHR |
           VK_SURFACE_TRANSFORM_HORIZONTAL_MIRROR_ROTATE_270_BIT_KHR)) != 0) {
         std::swap(mDisplaySize.width, mDisplaySize.height);
+    }
+
+    if (outPreTransformHint) {
+        *outPreTransformHint = preTransform;
     }
 
     const uint32_t queueFamilyIndex = mDeviceInfo->queueFamilyIndex();
