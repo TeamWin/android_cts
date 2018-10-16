@@ -33,14 +33,24 @@ import org.junit.runner.RunWith;
 @RunWith(GtestRunner.class)
 @TargetLibrary("binder_ndk_test")
 public class NdkBinderTest {
+    static IBinder getLocalNativeService() {
+        return new SyncTestServiceConnection(
+            InstrumentationRegistry.getTargetContext(), NativeService.Local.class)
+        .get().asBinder();
+    }
+    static IBinder getLocalJavaService() {
+        return new SyncTestServiceConnection(
+            InstrumentationRegistry.getTargetContext(), JavaService.Local.class)
+        .get().asBinder();
+    }
     static IBinder getRemoteNativeService() {
         return new SyncTestServiceConnection(
-            InstrumentationRegistry.getTargetContext(), NativeService.class)
+            InstrumentationRegistry.getTargetContext(), NativeService.Remote.class)
         .get().asBinder();
     }
     static IBinder getRemoteJavaService() {
         return new SyncTestServiceConnection(
-            InstrumentationRegistry.getTargetContext(), JavaService.class)
+            InstrumentationRegistry.getTargetContext(), JavaService.Remote.class)
         .get().asBinder();
     }
 }
