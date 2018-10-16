@@ -430,7 +430,8 @@ def collect_data(fps, w, h, test_length):
         props = cam.get_camera_properties()
         its.caps.skip_unless(its.caps.sensor_fusion(props) and
                              its.caps.manual_sensor(props) and
-                             props["android.lens.facing"] != FACING_EXTERNAL)
+                             props["android.lens.facing"] != FACING_EXTERNAL and
+                             cam.get_sensors().get("gyro"))
 
         print "Starting sensor event collection"
         cam.start_sensor_events()
