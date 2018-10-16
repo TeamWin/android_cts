@@ -35,7 +35,6 @@ import android.graphics.Typeface;
 import android.os.LocaleList;
 import android.support.test.InstrumentationRegistry;
 import android.support.test.filters.SmallTest;
-import android.support.test.filters.Suppress;
 import android.support.test.runner.AndroidJUnit4;
 import android.text.Editable;
 import android.text.Layout;
@@ -1264,10 +1263,8 @@ public class StaticLayoutTest {
             .setBreakStrategy(Layout.BREAK_STRATEGY_BALANCED).build();
     }
 
-    // TODO: Re-enable once http://b/65207701 is fixed.
     @Test
-    @Suppress
-    public void testGetLineWidth() {
+    public void testGetLineMax() {
         final float wholeWidth = mDefaultPaint.measureText(LOREM_IPSUM);
         final int lineWidth = (int) (wholeWidth / 10.0f);  // Make 10 lines per paragraph.
         final String multiParaTestString =
@@ -1276,13 +1273,11 @@ public class StaticLayoutTest {
                 multiParaTestString.length(), mDefaultPaint, lineWidth)
                 .build();
         for (int i = 0; i < layout.getLineCount(); i++) {
-            assertTrue(layout.getLineWidth(i) <= lineWidth);
+            assertTrue(layout.getLineMax(i) <= lineWidth);
         }
     }
 
-    // TODO: Re-enable once http://b/65207701 is fixed.
     @Test
-    @Suppress
     public void testIndent() {
         final float wholeWidth = mDefaultPaint.measureText(LOREM_IPSUM);
         final int lineWidth = (int) (wholeWidth / 10.0f);  // Make 10 lines per paragraph.
@@ -1294,7 +1289,7 @@ public class StaticLayoutTest {
                 .setIndents(new int[] { indentWidth }, null)
                 .build();
         for (int i = 0; i < layout.getLineCount(); i++) {
-            assertTrue(layout.getLineWidth(i) <= lineWidth - indentWidth);
+            assertTrue(layout.getLineMax(i) <= lineWidth - indentWidth);
         }
     }
 
