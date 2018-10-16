@@ -20,13 +20,11 @@ import static android.support.test.InstrumentationRegistry.getInstrumentation;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
-import android.app.ActivityManager;
 import android.app.Notification;
 import android.app.NotificationChannel;
 import android.app.NotificationManager;
 import android.app.UiAutomation;
 import android.content.Context;
-import android.content.pm.PackageManager;
 import android.graphics.Bitmap;
 import android.graphics.Color;
 import android.os.SystemClock;
@@ -96,7 +94,7 @@ public class LightBarTests extends LightBarTestBase {
         Thread.sleep(WAIT_TIME);
 
         Bitmap bitmap = takeStatusBarScreenshot(mActivityRule.getActivity());
-        Stats s = evaluateLightBarBitmap(bitmap, Color.RED /* background */);
+        Stats s = evaluateLightBarBitmap(bitmap, Color.RED /* background */, 0);
         assertLightStats(bitmap, s);
 
         mNm.cancelAll();
@@ -116,8 +114,9 @@ public class LightBarTests extends LightBarTestBase {
         injectCanceledTap(x, y);
         Thread.sleep(WAIT_TIME);
 
-        Bitmap bitmap = takeNavigationBarScreenshot(mActivityRule.getActivity());
-        Stats s = evaluateLightBarBitmap(bitmap, Color.RED /* background */);
+        LightBarActivity activity = mActivityRule.getActivity();
+        Bitmap bitmap = takeNavigationBarScreenshot(activity);
+        Stats s = evaluateLightBarBitmap(bitmap, Color.RED /* background */, activity.getBottom());
         assertLightStats(bitmap, s);
     }
 
@@ -225,7 +224,7 @@ public class LightBarTests extends LightBarTestBase {
         }
     }
 
-    private Stats evaluateLightBarBitmap(Bitmap bitmap, int background) {
+    private Stats evaluateLightBarBitmap(Bitmap bitmap, int background, int shiftY) {
         int iconColor = 0x99000000;
         int iconPartialColor = 0x3d000000;
 
@@ -247,8 +246,17 @@ public class LightBarTests extends LightBarTestBase {
         Stats s = new Stats();
         float eps = 0.005f;
 
+        loadCutout(mActivityRule.getActivity());
         float [] hsvPixel = new float[3];
+        int i = 0;
         for (int c : pixels) {
+            int x = i % bitmap.getWidth();
+            int y = i / bitmap.getWidth();
+            i++;
+            if (isInsideCutout(x, shiftY + y)) {
+                continue;
+            }
+
             if (isColorSame(c, background)) {
                 s.backgroundPixels++;
                 continue;
