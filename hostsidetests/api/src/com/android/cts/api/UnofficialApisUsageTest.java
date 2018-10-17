@@ -180,7 +180,7 @@ public class UnofficialApisUsageTest extends DeviceTestCase {
             "/android-test-runner-current.txt",
             "/android-test-mock-current.txt",
             "/27.txt",
-            "/apache-http-legacy-current"
+            "/apache-http-legacy-current.txt"
         }).map(name -> new File(name));
 
         approvedApis = new ApprovedApis(apiFiles);
