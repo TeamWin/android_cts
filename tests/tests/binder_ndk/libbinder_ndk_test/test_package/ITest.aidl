@@ -30,6 +30,8 @@ interface ITest {
     const String kEmpty = "";
     const String kFoo = "foo";
 
+    String GetName();
+
     void TestVoidReturn();
     oneway void TestOneway();
 

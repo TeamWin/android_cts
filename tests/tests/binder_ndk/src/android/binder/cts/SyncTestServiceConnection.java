@@ -45,15 +45,15 @@ public class SyncTestServiceConnection implements ServiceConnection {
     }
 
     public void onServiceConnected(ComponentName className, IBinder service) {
-        Log.e(TAG, "Service has connected.");
         synchronized (this) {
             mInterface = ITest.Stub.asInterface(service);
+            Log.e(TAG, "Service has connected: " + mServiceProviderClass);
             this.notify();
         }
     }
 
     public void onServiceDisconnected(ComponentName className) {
-        Log.e(TAG, "Service has disconnected.");
+        Log.e(TAG, "Service has disconnected: " + mServiceProviderClass);
         synchronized (this) {
             mInterface = null;
             mInvalid = true;

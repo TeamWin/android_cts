@@ -34,6 +34,7 @@ using ::ndk::SpAIBinder;
 struct Params {
   std::shared_ptr<ITest> iface;
   bool shouldBeRemote;
+  std::string expectedName;
 };
 
 #define iface GetParam().iface
@@ -43,6 +44,12 @@ class NdkBinderTest_Aidl : public NdkBinderTest,
                            public ::testing::WithParamInterface<Params> {};
 
 TEST_P(NdkBinderTest_Aidl, GotTest) { ASSERT_NE(nullptr, iface); }
+
+TEST_P(NdkBinderTest_Aidl, SanityCheckSource) {
+  std::string name;
+  ASSERT_OK(iface->GetName(&name));
+  EXPECT_EQ(GetParam().expectedName, name);
+}
 
 TEST_P(NdkBinderTest_Aidl, Remoteness) {
   ASSERT_EQ(shouldBeRemote, iface->isRemote());
@@ -208,20 +215,23 @@ std::shared_ptr<ITest> getNdkBinderTestJavaService(const std::string& method) {
 
 INSTANTIATE_TEST_CASE_P(LocalNative, NdkBinderTest_Aidl,
                         ::testing::Values(Params{getLocalService(),
-                                                 false /*shouldBeRemote*/}));
-INSTANTIATE_TEST_CASE_P(LocalNativeFromJava, NdkBinderTest_Aidl,
-                        ::testing::Values(Params{getNdkBinderTestJavaService(
-                                                     "getLocalNativeService"),
-                                                 false /*shouldBeRemote*/}));
+                                                 false /*shouldBeRemote*/,
+                                                 "CPP"}));
+INSTANTIATE_TEST_CASE_P(
+    LocalNativeFromJava, NdkBinderTest_Aidl,
+    ::testing::Values(Params{
+        getNdkBinderTestJavaService("getLocalNativeService"),
+        false /*shouldBeRemote*/, "CPP"}));
 INSTANTIATE_TEST_CASE_P(LocalJava, NdkBinderTest_Aidl,
                         ::testing::Values(Params{
                             getNdkBinderTestJavaService("getLocalJavaService"),
-                            false /*shouldBeRemote*/}));
-INSTANTIATE_TEST_CASE_P(RemoteNative, NdkBinderTest_Aidl,
-                        ::testing::Values(Params{getNdkBinderTestJavaService(
-                                                     "getRemoteNativeService"),
-                                                 true /*shouldBeRemote*/}));
+                            false /*shouldBeRemote*/, "JAVA"}));
+INSTANTIATE_TEST_CASE_P(
+    RemoteNative, NdkBinderTest_Aidl,
+    ::testing::Values(Params{
+        getNdkBinderTestJavaService("getRemoteNativeService"),
+        true /*shouldBeRemote*/, "CPP"}));
 INSTANTIATE_TEST_CASE_P(RemoteJava, NdkBinderTest_Aidl,
                         ::testing::Values(Params{
                             getNdkBinderTestJavaService("getRemoteJavaService"),
-                            true /*shouldBeRemote*/}));
+                            true /*shouldBeRemote*/, "JAVA"}));
