@@ -16,9 +16,13 @@
 
 package com.android.cts.verifier.audio.midilib;
 
+import android.content.Intent;
+
 import android.media.midi.MidiDeviceService;
 import android.media.midi.MidiDeviceStatus;
 import android.media.midi.MidiReceiver;
+import android.os.Binder;
+import android.os.IBinder;
 import android.util.Log;
 
 import java.io.IOException;
@@ -30,6 +34,7 @@ import java.io.IOException;
 
 public class MidiEchoTestService extends MidiDeviceService {
     private static final String TAG = "MidiEchoTestService";
+    private static final boolean DEBUG = false;
 
     // Other apps will write to this port.
     private MidiReceiver mInputReceiver = new MyReceiver();
@@ -42,17 +47,39 @@ public class MidiEchoTestService extends MidiDeviceService {
     public boolean inputOpened;
     public int outputOpenCount;
 
+    private Binder mBinder = new Binder();
+
     @Override
     public void onCreate() {
         super.onCreate();
-        Log.i(TAG, "#### onCreate()");
+        if (DEBUG) {
+            Log.i(TAG, "#### onCreate()");
+        }
         mInstance = this;
     }
 
     @Override
     public void onDestroy() {
         super.onDestroy();
-        Log.i(TAG, "#### onDestroy()");
+        if (DEBUG) {
+            Log.i(TAG, "#### onDestroy()");
+        }
+    }
+
+    @Override
+    public int onStartCommand(Intent intent, int flags, int startId) {
+        if (DEBUG) {
+            Log.i(TAG, "#### onStartCommand()");
+        }
+        return super.onStartCommand(intent, flags, startId);
+    }
+
+    @Override
+    public IBinder onBind(Intent intent) {
+        if (DEBUG) {
+            Log.i(TAG, "#### onBind()");
+        }
+        return mBinder;
     }
 
     // For CTS testing, so I can read test fields.
