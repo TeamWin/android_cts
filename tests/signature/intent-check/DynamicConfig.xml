@@ -25,6 +25,8 @@
     Bug: 78574873 android.intent.action.EPHEMERAL_RESOLVER_SETTINGS
     Bug: 115799975 android.intent.action.ACTION_AIRPLANE_MODE_CHANGED
          Will be removed after v17 of CS.apk is released.
+    Bug: 117590943 android.intent.action.View
+         Fixed in GMSCore v14.7.68.
 -->
 <dynamicConfig>
     <entry key ="intent_whitelist">
@@ -37,5 +39,6 @@
       <value>android.intent.action.RESOLVE_EPHEMERAL_PACKAGE</value>
       <value>android.intent.action.EPHEMERAL_RESOLVER_SETTINGS</value>
       <value>android.intent.action.ACTION_AIRPLANE_MODE_CHANGED</value>
+      <value>android.intent.action.View</value>
     </entry>
 </dynamicConfig>
