@@ -849,6 +849,13 @@ public class DeviceOwnerTest extends BaseDevicePolicyTest {
         executeDeviceOwnerTest("OverrideApnTest");
     }
 
+    public void testPrivateDnsPolicy() throws Exception {
+        if (!mHasFeature) {
+            return;
+        }
+        executeDeviceOwnerTest("PrivateDnsPolicyTest");
+    }
+
     private void executeDeviceOwnerTest(String testClassName) throws Exception {
         if (!mHasFeature) {
             return;

@@ -864,6 +864,9 @@ public class KeyPairGeneratorTest extends AndroidTestCase {
     // respecting the spec constraints.
     // Test fails until the resolution of b/113276806
     public void testGenerate_EC_ModernSpec_AsCustomAsPossibleStrongbox() throws Exception {
+        if (!TestUtils.hasStrongBox(getContext())) {
+            return;
+        }
         KeyPairGenerator generator = getEcGenerator();
         Date keyValidityStart = new Date(System.currentTimeMillis());
         Date keyValidityEndDateForOrigination = new Date(System.currentTimeMillis() + 1000000);
@@ -1014,6 +1017,9 @@ public class KeyPairGeneratorTest extends AndroidTestCase {
     // respecting the spec constraints.
     // Test fails until the resolution of b/113276806
     public void testGenerate_RSA_ModernSpec_AsCustomAsPossibleStrongbox() throws Exception {
+        if (!TestUtils.hasStrongBox(getContext())) {
+            return;
+        }
         KeyPairGenerator generator = getRsaGenerator();
         Date keyValidityStart = new Date(System.currentTimeMillis());
         Date keyValidityEndDateForOrigination = new Date(System.currentTimeMillis() + 1000000);
@@ -1238,7 +1244,7 @@ public class KeyPairGeneratorTest extends AndroidTestCase {
         assertKeyGenUsingECSizeOnlyUsesCorrectCurve(384, ECCurves.NIST_P_384_SPEC);
         assertKeyGenUsingECSizeOnlyUsesCorrectCurve(521, ECCurves.NIST_P_521_SPEC);
         if (TestUtils.hasStrongBox(getContext())) {
-                    assertKeyGenUsingECSizeOnlyUsesCorrectCurve(256, ECCurves.NIST_P_256_SPEC, true);
+            assertKeyGenUsingECSizeOnlyUsesCorrectCurve(256, ECCurves.NIST_P_256_SPEC, true);
         }
     }
 
