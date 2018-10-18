@@ -44,4 +44,12 @@ public class Poc16_05 extends SecurityTestCase {
                          "[\\s\\n\\S]*>>> /system/bin/" +
                          "mediaserver <<<[\\s\\n\\S]*", logcatOut);
     }
+
+    /**
+     *  b/27275324
+     */
+    @SecurityTest
+    public void testPocCVE_2015_1805() throws Exception {
+      AdbUtils.runPoc("CVE-2015-1805", getDevice(), 300);
+    }
 }
