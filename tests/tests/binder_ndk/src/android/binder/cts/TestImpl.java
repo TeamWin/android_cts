@@ -24,6 +24,11 @@ import test_package.RegularPolygon;
 
 public class TestImpl extends ITest.Stub {
   @Override
+  public String GetName() {
+    return "JAVA";
+  }
+
+  @Override
   public void TestVoidReturn() {}
 
   @Override

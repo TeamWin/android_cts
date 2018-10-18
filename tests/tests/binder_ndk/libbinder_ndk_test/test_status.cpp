@@ -76,9 +76,9 @@ static void checkIsErrorException(const AStatus* status,
   EXPECT_EQ(exception, AStatus_getExceptionCode(status));
   // not a service-specific error, so other errorcodes return the default
   EXPECT_EQ(0, AStatus_getServiceSpecificError(status));
-  EXPECT_EQ(
-      exception == EX_TRANSACTION_FAILED ? STATUS_FAILED_TRANSACTION : STATUS_OK,
-      AStatus_getStatus(status));
+  EXPECT_EQ(exception == EX_TRANSACTION_FAILED ? STATUS_FAILED_TRANSACTION
+                                               : STATUS_OK,
+            AStatus_getStatus(status));
 }
 static void checkIsServiceSpecific(const AStatus* status, int32_t error,
                                    const std::string& message) {
