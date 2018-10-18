@@ -53,6 +53,7 @@ import android.content.res.ColorStateList;
 import android.content.res.Configuration;
 import android.content.res.Resources;
 import android.content.res.Resources.NotFoundException;
+import android.graphics.Canvas;
 import android.graphics.Color;
 import android.graphics.Paint;
 import android.graphics.Paint.FontMetricsInt;
@@ -4020,6 +4021,171 @@ public class TextViewTest {
         assertNull(drawables[1]);
         assertNull(drawables[2]);
         assertNull(drawables[3]);
+    }
+
+    @UiThreadTest
+    @Test
+    public void testHandleDrawables_areNotNullByDefault() {
+        mTextView = new TextView(mActivity);
+        assertNotNull(mTextView.getTextSelectHandle());
+        assertNotNull(mTextView.getTextSelectHandleLeft());
+        assertNotNull(mTextView.getTextSelectHandleRight());
+    }
+
+    @UiThreadTest
+    @Test
+    public void testHandleDrawables_canBeSet_toDrawables() {
+        mTextView = new TextView(mActivity);
+
+        final Drawable blue = TestUtils.getDrawable(mActivity, R.drawable.blue);
+        final Drawable yellow = TestUtils.getDrawable(mActivity, R.drawable.yellow);
+        final Drawable red = TestUtils.getDrawable(mActivity, R.drawable.red);
+
+        mTextView.setTextSelectHandle(blue);
+        mTextView.setTextSelectHandleLeft(yellow);
+        mTextView.setTextSelectHandleRight(red);
+
+        assertSame(blue, mTextView.getTextSelectHandle());
+        assertSame(yellow, mTextView.getTextSelectHandleLeft());
+        assertSame(red, mTextView.getTextSelectHandleRight());
+    }
+
+    @UiThreadTest
+    @Test
+    public void testHandleDrawables_canBeSet_toDrawableResources() {
+        mTextView = new TextView(mActivity);
+
+        mTextView.setTextSelectHandle(R.drawable.start);
+        mTextView.setTextSelectHandleLeft(R.drawable.pass);
+        mTextView.setTextSelectHandleRight(R.drawable.failed);
+
+        WidgetTestUtils.assertEquals(TestUtils.getBitmap(mActivity, R.drawable.start),
+                ((BitmapDrawable) mTextView.getTextSelectHandle()).getBitmap());
+        WidgetTestUtils.assertEquals(TestUtils.getBitmap(mActivity, R.drawable.pass),
+                ((BitmapDrawable) mTextView.getTextSelectHandleLeft()).getBitmap());
+        WidgetTestUtils.assertEquals(TestUtils.getBitmap(mActivity, R.drawable.failed),
+                ((BitmapDrawable) mTextView.getTextSelectHandleRight()).getBitmap());
+    }
+
+    @UiThreadTest
+    @Test(expected = NullPointerException.class)
+    public void testSelectHandleDrawable_cannotBeSetToNull() {
+        new TextView(mActivity).setTextSelectHandle(null);
+    }
+
+    @UiThreadTest
+    @Test(expected = IllegalArgumentException.class)
+    public void testSelectHandleDrawable_cannotBeSetToZeroResId() {
+        new TextView(mActivity).setTextSelectHandle(0);
+    }
+
+    @UiThreadTest
+    @Test(expected = IllegalArgumentException.class)
+    public void testSelectHandleDrawable_cannotBeSetToNegativeResId() {
+        new TextView(mActivity).setTextSelectHandle(-1);
+    }
+
+    @UiThreadTest
+    @Test(expected = NullPointerException.class)
+    public void testSelectHandleDrawableLeft_cannotBeSetToNull() {
+        new TextView(mActivity).setTextSelectHandleLeft(null);
+    }
+
+    @UiThreadTest
+    @Test(expected = IllegalArgumentException.class)
+    public void testSelectHandleDrawableLeft_cannotBeSetToZeroResId() {
+        new TextView(mActivity).setTextSelectHandleLeft(0);
+    }
+
+    @UiThreadTest
+    @Test(expected = IllegalArgumentException.class)
+    public void testSelectHandleDrawableLeft_cannotBeSetToNegativeResId() {
+        new TextView(mActivity).setTextSelectHandle(-1);
+    }
+
+    @UiThreadTest
+    @Test(expected = NullPointerException.class)
+    public void testSelectHandleDrawableRight_cannotBeSetToNull() {
+        new TextView(mActivity).setTextSelectHandleRight(null);
+    }
+
+    @UiThreadTest
+    @Test(expected = IllegalArgumentException.class)
+    public void testSelectHandleDrawableRight_cannotBeSetToZeroResId() {
+        new TextView(mActivity).setTextSelectHandleRight(0);
+    }
+
+    @UiThreadTest
+    @Test(expected = IllegalArgumentException.class)
+    public void testSelectHandleDrawableRight_cannotBeSetToNegativeResId() {
+        new TextView(mActivity).setTextSelectHandleRight(-1);
+    }
+
+    @Test
+    public void testHandleDrawable_canBeSet_whenInsertionHandleIsShown() throws Throwable {
+        initTextViewForTypingOnUiThread();
+        mActivityRule.runOnUiThread(() -> {
+            mTextView.setTextIsSelectable(true);
+            mTextView.setText("abcd", BufferType.EDITABLE);
+        });
+        mInstrumentation.waitForIdleSync();
+
+        // Trigger insertion.
+        CtsTouchUtils.emulateTapOnViewCenter(mInstrumentation, mTextView);
+
+        final boolean[] mDrawn = new boolean[3];
+        mActivityRule.runOnUiThread(() -> {
+            mTextView.setTextSelectHandle(new TestHandleDrawable(mDrawn, 0));
+            mTextView.setTextSelectHandleLeft(new TestHandleDrawable(mDrawn, 1));
+            mTextView.setTextSelectHandleRight(new TestHandleDrawable(mDrawn, 2));
+        });
+        mInstrumentation.waitForIdleSync();
+
+        assertTrue(mDrawn[0]);
+        assertFalse(mDrawn[1]);
+        assertFalse(mDrawn[2]);
+    }
+
+    @Test
+    public void testHandleDrawables_canBeSet_whenSelectionHandlesAreShown()
+            throws Throwable {
+        initTextViewForTypingOnUiThread();
+        mActivityRule.runOnUiThread(() -> {
+            mTextView.setTextIsSelectable(true);
+            mTextView.setText("abcd", BufferType.EDITABLE);
+        });
+        mInstrumentation.waitForIdleSync();
+
+        // Trigger selection.
+        CtsTouchUtils.emulateLongPressOnViewCenter(mInstrumentation, mTextView);
+
+        final boolean[] mDrawn = new boolean[3];
+        mActivityRule.runOnUiThread(() -> {
+            mTextView.setTextSelectHandle(new TestHandleDrawable(mDrawn, 0));
+            mTextView.setTextSelectHandleLeft(new TestHandleDrawable(mDrawn, 1));
+            mTextView.setTextSelectHandleRight(new TestHandleDrawable(mDrawn, 2));
+        });
+        mInstrumentation.waitForIdleSync();
+
+        assertFalse(mDrawn[0]);
+        assertTrue(mDrawn[1]);
+        assertTrue(mDrawn[2]);
+    }
+
+    private class TestHandleDrawable extends ColorDrawable {
+        private final boolean[] mArray;
+        private final int mIndex;
+
+        TestHandleDrawable(final boolean[] array, final int index) {
+            mArray = array;
+            mIndex = index;
+        }
+
+        @Override
+        public void draw(Canvas canvas) {
+            super.draw(canvas);
+            mArray[mIndex] = true;
+        }
     }
 
     @Test
