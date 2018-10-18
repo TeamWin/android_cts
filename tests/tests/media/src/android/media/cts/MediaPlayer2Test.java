@@ -1636,7 +1636,7 @@ public class MediaPlayer2Test extends MediaPlayer2TestBase {
             return;
         }
         playVideoTest(
-                R.raw.video_176x144_3gp_h263_56kbps_12fps_aac_stereo_24kbps_11025hz, 176, 144);
+                R.raw.video_176x144_3gp_h263_56kbps_12fps_aac_stereo_24kbps_22050hz, 176, 144);
     }
 
     public void testLocalVideo_3gp_H263_176x144_56kbps_12fps_AAC_Stereo_128kbps_11025Hz()
@@ -1654,7 +1654,7 @@ public class MediaPlayer2Test extends MediaPlayer2TestBase {
             return;
         }
         playVideoTest(
-                R.raw.video_176x144_3gp_h263_56kbps_12fps_aac_stereo_128kbps_11025hz, 176, 144);
+                R.raw.video_176x144_3gp_h263_56kbps_12fps_aac_stereo_128kbps_22050hz, 176, 144);
     }
 
     public void testLocalVideo_3gp_H263_176x144_56kbps_25fps_AAC_Mono_24kbps_11025Hz()
@@ -1690,7 +1690,7 @@ public class MediaPlayer2Test extends MediaPlayer2TestBase {
             return;
         }
         playVideoTest(
-                R.raw.video_176x144_3gp_h263_56kbps_25fps_aac_stereo_24kbps_11025hz, 176, 144);
+                R.raw.video_176x144_3gp_h263_56kbps_25fps_aac_stereo_24kbps_22050hz, 176, 144);
     }
 
     public void testLocalVideo_3gp_H263_176x144_56kbps_25fps_AAC_Stereo_128kbps_11025Hz()
@@ -1708,7 +1708,7 @@ public class MediaPlayer2Test extends MediaPlayer2TestBase {
             return;
         }
         playVideoTest(
-                R.raw.video_176x144_3gp_h263_56kbps_25fps_aac_stereo_128kbps_11025hz, 176, 144);
+                R.raw.video_176x144_3gp_h263_56kbps_25fps_aac_stereo_128kbps_22050hz, 176, 144);
     }
 
     public void testLocalVideo_3gp_H263_176x144_300kbps_12fps_AAC_Mono_24kbps_11025Hz()
@@ -1744,7 +1744,7 @@ public class MediaPlayer2Test extends MediaPlayer2TestBase {
             return;
         }
         playVideoTest(
-                R.raw.video_176x144_3gp_h263_300kbps_12fps_aac_stereo_24kbps_11025hz, 176, 144);
+                R.raw.video_176x144_3gp_h263_300kbps_12fps_aac_stereo_24kbps_22050hz, 176, 144);
     }
 
     public void testLocalVideo_3gp_H263_176x144_300kbps_12fps_AAC_Stereo_128kbps_11025Hz()
@@ -1762,7 +1762,7 @@ public class MediaPlayer2Test extends MediaPlayer2TestBase {
             return;
         }
         playVideoTest(
-                R.raw.video_176x144_3gp_h263_300kbps_12fps_aac_stereo_128kbps_11025hz, 176, 144);
+                R.raw.video_176x144_3gp_h263_300kbps_12fps_aac_stereo_128kbps_22050hz, 176, 144);
     }
 
     public void testLocalVideo_3gp_H263_176x144_300kbps_25fps_AAC_Mono_24kbps_11025Hz()
@@ -1798,7 +1798,7 @@ public class MediaPlayer2Test extends MediaPlayer2TestBase {
             return;
         }
         playVideoTest(
-                R.raw.video_176x144_3gp_h263_300kbps_25fps_aac_stereo_24kbps_11025hz, 176, 144);
+                R.raw.video_176x144_3gp_h263_300kbps_25fps_aac_stereo_24kbps_22050hz, 176, 144);
     }
 
     public void testLocalVideo_3gp_H263_176x144_300kbps_25fps_AAC_Stereo_128kbps_11025Hz()
