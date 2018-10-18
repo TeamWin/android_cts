@@ -46,9 +46,11 @@ public class JavaClientTest {
 
     private Class mServiceClass;
     private ITest mInterface;
+    private String mExpectedName;
 
-    public JavaClientTest(Class serviceClass) {
+    public JavaClientTest(Class serviceClass, String expectedName) {
         mServiceClass = serviceClass;
+        mExpectedName = expectedName;
     }
 
     @Parameterized.Parameters( name = "{0}" )
@@ -57,10 +59,10 @@ public class JavaClientTest {
         // Whenever possible, the desired service should be accessed directly
         // in order to avoid this additional overhead.
         return Arrays.asList(new Object[][] {
-                {NativeService.Local.class},
-                {JavaService.Local.class},
-                {NativeService.Remote.class},
-                {JavaService.Remote.class},
+                {NativeService.Local.class, "CPP"},
+                {JavaService.Local.class, "JAVA"},
+                {NativeService.Remote.class, "CPP"},
+                {JavaService.Remote.class, "JAVA"},
             });
     }
 
@@ -73,6 +75,14 @@ public class JavaClientTest {
 
         mInterface = connection.get();
         assertNotEquals(null, mInterface);
+    }
+
+    @Test
+    public void testSanityCheckSource() throws RemoteException {
+        String name = mInterface.GetName();
+
+        Log.i(TAG, "Service GetName: " + name);
+        assertEquals(mExpectedName, name);
     }
 
     @Test
