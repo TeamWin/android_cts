@@ -84,7 +84,7 @@ public class FontFamilyTest {
         Font regularFont = new Font.Builder(
                 am, FONT_DIR + "ascii_g3em_weight400_upright.ttf").build();
         Font italicFont = new Font.Builder(am, FONT_DIR + "ascii_g3em_weight400_upright.ttf")
-                .setItalic(true).build();
+                .setSlant(FontStyle.FONT_SLANT_ITALIC).build();
         FontFamily family = new FontFamily.Builder(regularFont).addFont(italicFont).build();
         assertNotNull(family);
         assertEquals(2, family.getSize());
@@ -119,7 +119,7 @@ public class FontFamilyTest {
         Font regularFont = new Font.Builder(
                 am, FONT_DIR + "ascii_g3em_weight400_upright.ttf").build();
         Font regularFont2 = new Font.Builder(am, FONT_DIR + "ascii_h3em_weight400_italic.ttf")
-                .setItalic(false).build();
+                .setSlant(FontStyle.FONT_SLANT_UPRIGHT).build();
         new FontFamily.Builder(regularFont).addFont(regularFont2).build();
     }
 }

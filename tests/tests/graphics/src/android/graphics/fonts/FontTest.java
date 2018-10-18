@@ -127,13 +127,14 @@ public class FontTest {
         for (Pair<Integer, Boolean> style : FontTestUtil.getAllStyles()) {
             int weight = style.first.intValue();
             boolean italic = style.second.booleanValue();
+            final int slant = italic ? FontStyle.FONT_SLANT_ITALIC : FontStyle.FONT_SLANT_UPRIGHT;
             String path = FontTestUtil.getFontPathFromStyle(weight, italic);
 
             ByteBuffer buffer = mmap(am, path);
 
             Font font = new Font.Builder(buffer).build();
             assertEquals(path, weight, font.getWeight());
-            assertEquals(path, italic, font.isItalic());
+            assertEquals(path, slant, font.getSlant());
             assertEquals(path, 0, font.getTtcIndex());
             assertNull(path, font.getAxes());
             assertNotNull(font.getBuffer());
@@ -147,6 +148,7 @@ public class FontTest {
         for (Pair<Integer, Boolean> style : FontTestUtil.getAllStyles()) {
             int weight = style.first.intValue();
             boolean italic = style.second.booleanValue();
+            final int slant = italic ? FontStyle.FONT_SLANT_ITALIC : FontStyle.FONT_SLANT_UPRIGHT;
             String path = FontTestUtil.getTtcFontFileInAsset();
 
             ByteBuffer buffer = mmap(am, path);
@@ -154,7 +156,7 @@ public class FontTest {
 
             Font font = new Font.Builder(buffer).setTtcIndex(ttcIndex).build();
             assertEquals(path, weight, font.getWeight());
-            assertEquals(path, italic, font.isItalic());
+            assertEquals(path, slant, font.getSlant());
             assertEquals(path, ttcIndex, font.getTtcIndex());
             assertNull(path, font.getAxes());
             assertNotNull(font.getBuffer());
@@ -169,6 +171,7 @@ public class FontTest {
             int weight = style.first.intValue();
             boolean italic = style.second.booleanValue();
             String path = FontTestUtil.getVFFontInAsset();
+            final int slant = italic ? FontStyle.FONT_SLANT_ITALIC : FontStyle.FONT_SLANT_UPRIGHT;
 
             ByteBuffer buffer = mmap(am, path);
             FontVariationAxis[] axes = FontVariationAxis.fromFontVariationSettings(
@@ -176,7 +179,7 @@ public class FontTest {
 
             Font font = new Font.Builder(buffer).setFontVariationSettings(axes).build();
             assertEquals(path, weight, font.getWeight());
-            assertEquals(path, italic, font.isItalic());
+            assertEquals(path, slant, font.getSlant());
             assertEquals(path, 0, font.getTtcIndex());
             assertEquals(path, axes, font.getAxes());
             assertNotNull(font.getBuffer());
@@ -192,19 +195,19 @@ public class FontTest {
             int weight = style.first.intValue();
             boolean italic = style.second.booleanValue();
             String path = FontTestUtil.getFontPathFromStyle(weight, italic);
+            final int slant = italic ? FontStyle.FONT_SLANT_ITALIC : FontStyle.FONT_SLANT_UPRIGHT;
 
             ByteBuffer buffer = mmap(am, path);
 
             Font font = new Font.Builder(buffer).setWeight(customWeight).build();
             assertEquals(path, customWeight, font.getWeight());
-            assertEquals(path, italic, font.isItalic());
+            assertEquals(path, slant, font.getSlant());
             assertEquals(path, 0, font.getTtcIndex());
             assertNull(path, font.getAxes());
             assertNotNull(font.getBuffer());
             assertNull(font.getFile());
         }
 
-        boolean customItalic = true;
         for (Pair<Integer, Boolean> style : FontTestUtil.getAllStyles()) {
             int weight = style.first.intValue();
             boolean italic = style.second.booleanValue();
@@ -212,9 +215,9 @@ public class FontTest {
 
             ByteBuffer buffer = mmap(am, path);
 
-            Font font = new Font.Builder(buffer).setItalic(customItalic).build();
+            Font font = new Font.Builder(buffer).setSlant(FontStyle.FONT_SLANT_ITALIC).build();
             assertEquals(path, weight, font.getWeight());
-            assertEquals(path, customItalic, font.isItalic());
+            assertEquals(path, FontStyle.FONT_SLANT_ITALIC, font.getSlant());
             assertEquals(path, 0, font.getTtcIndex());
             assertNull(path, font.getAxes());
             assertNotNull(font.getBuffer());
@@ -241,6 +244,7 @@ public class FontTest {
             int weight = style.first.intValue();
             boolean italic = style.second.booleanValue();
             String path = FontTestUtil.getFontPathFromStyle(weight, italic);
+            final int slant = italic ? FontStyle.FONT_SLANT_ITALIC : FontStyle.FONT_SLANT_UPRIGHT;
 
             File file = getTempFile();
             try (InputStream is = am.open(path)) {
@@ -248,7 +252,7 @@ public class FontTest {
 
                 Font font = new Font.Builder(file).build();
                 assertEquals(path, weight, font.getWeight());
-                assertEquals(path, italic, font.isItalic());
+                assertEquals(path, slant, font.getSlant());
                 assertEquals(path, 0, font.getTtcIndex());
                 assertNull(path, font.getAxes());
                 assertNotNull(font.getBuffer());
@@ -267,6 +271,7 @@ public class FontTest {
             boolean italic = style.second.booleanValue();
             String path = FontTestUtil.getTtcFontFileInAsset();
             int ttcIndex = FontTestUtil.getTtcIndexFromStyle(weight, italic);
+            final int slant = italic ? FontStyle.FONT_SLANT_ITALIC : FontStyle.FONT_SLANT_UPRIGHT;
 
             File file = getTempFile();
             try (InputStream is = am.open(path)) {
@@ -274,7 +279,7 @@ public class FontTest {
 
                 Font font = new Font.Builder(file).setTtcIndex(ttcIndex).build();
                 assertEquals(path, weight, font.getWeight());
-                assertEquals(path, italic, font.isItalic());
+                assertEquals(path, slant, font.getSlant());
                 assertEquals(path, ttcIndex, font.getTtcIndex());
                 assertNull(path, font.getAxes());
                 assertNotNull(font.getBuffer());
@@ -294,6 +299,7 @@ public class FontTest {
             String path = FontTestUtil.getVFFontInAsset();
             FontVariationAxis[] axes = FontVariationAxis.fromFontVariationSettings(
                     FontTestUtil.getVarSettingsFromStyle(weight, italic));
+            final int slant = italic ? FontStyle.FONT_SLANT_ITALIC : FontStyle.FONT_SLANT_UPRIGHT;
 
             File file = getTempFile();
             try (InputStream is = am.open(path)) {
@@ -301,7 +307,7 @@ public class FontTest {
 
                 Font font = new Font.Builder(file).setFontVariationSettings(axes).build();
                 assertEquals(path, weight, font.getWeight());
-                assertEquals(path, italic, font.isItalic());
+                assertEquals(path, slant, font.getSlant());
                 assertEquals(path, 0, font.getTtcIndex());
                 assertEquals(path, axes, font.getAxes());
                 assertNotNull(font.getBuffer());
@@ -320,6 +326,7 @@ public class FontTest {
             int weight = style.first.intValue();
             boolean italic = style.second.booleanValue();
             String path = FontTestUtil.getFontPathFromStyle(weight, italic);
+            final int slant = italic ? FontStyle.FONT_SLANT_ITALIC : FontStyle.FONT_SLANT_UPRIGHT;
 
             File file = getTempFile();
             try (InputStream is = am.open(path)) {
@@ -327,7 +334,7 @@ public class FontTest {
 
                 Font font = new Font.Builder(file).setWeight(customWeight).build();
                 assertEquals(path, customWeight, font.getWeight());
-                assertEquals(path, italic, font.isItalic());
+                assertEquals(path, slant, font.getSlant());
                 assertEquals(path, 0, font.getTtcIndex());
                 assertNull(path, font.getAxes());
                 assertNotNull(font.getBuffer());
@@ -336,7 +343,6 @@ public class FontTest {
                 file.delete();
             }
         }
-        boolean customItalic = true;
         for (Pair<Integer, Boolean> style : FontTestUtil.getAllStyles()) {
             int weight = style.first.intValue();
             boolean italic = style.second.booleanValue();
@@ -346,9 +352,9 @@ public class FontTest {
             try (InputStream is = am.open(path)) {
                 assertTrue(copyToFile(file, is));
 
-                Font font = new Font.Builder(file).setItalic(customItalic).build();
+                Font font = new Font.Builder(file).setSlant(FontStyle.FONT_SLANT_ITALIC).build();
                 assertEquals(path, weight, font.getWeight());
-                assertEquals(path, customItalic, font.isItalic());
+                assertEquals(path, FontStyle.FONT_SLANT_ITALIC, font.getSlant());
                 assertEquals(path, 0, font.getTtcIndex());
                 assertNull(path, font.getAxes());
                 assertNotNull(font.getBuffer());
@@ -378,6 +384,7 @@ public class FontTest {
             int weight = style.first.intValue();
             boolean italic = style.second.booleanValue();
             String path = FontTestUtil.getFontPathFromStyle(weight, italic);
+            final int slant = italic ? FontStyle.FONT_SLANT_ITALIC : FontStyle.FONT_SLANT_UPRIGHT;
 
             File file = getTempFile();
             try (InputStream is = am.open(path)) {
@@ -386,7 +393,7 @@ public class FontTest {
                 try (FileInputStream fis = new FileInputStream(file)) {
                     Font font = new Font.Builder(fis.getFD()).build();
                     assertEquals(path, weight, font.getWeight());
-                    assertEquals(path, italic, font.isItalic());
+                    assertEquals(path, slant, font.getSlant());
                     assertEquals(path, 0, font.getTtcIndex());
                     assertNull(path, font.getAxes());
                     assertNotNull(font.getBuffer());
@@ -406,6 +413,7 @@ public class FontTest {
             boolean italic = style.second.booleanValue();
             String path = FontTestUtil.getTtcFontFileInAsset();
             int ttcIndex = FontTestUtil.getTtcIndexFromStyle(weight, italic);
+            final int slant = italic ? FontStyle.FONT_SLANT_ITALIC : FontStyle.FONT_SLANT_UPRIGHT;
 
             File file = getTempFile();
             try (InputStream is = am.open(path)) {
@@ -414,7 +422,7 @@ public class FontTest {
                 try (FileInputStream fis = new FileInputStream(file)) {
                     Font font = new Font.Builder(fis.getFD()).setTtcIndex(ttcIndex).build();
                     assertEquals(path, weight, font.getWeight());
-                    assertEquals(path, italic, font.isItalic());
+                    assertEquals(path, slant, font.getSlant());
                     assertEquals(path, ttcIndex, font.getTtcIndex());
                     assertNull(path, font.getAxes());
                     assertNotNull(font.getBuffer());
@@ -435,6 +443,7 @@ public class FontTest {
             String path = FontTestUtil.getVFFontInAsset();
             FontVariationAxis[] axes = FontVariationAxis.fromFontVariationSettings(
                     FontTestUtil.getVarSettingsFromStyle(weight, italic));
+            final int slant = italic ? FontStyle.FONT_SLANT_ITALIC : FontStyle.FONT_SLANT_UPRIGHT;
 
             File file = getTempFile();
             try (InputStream is = am.open(path)) {
@@ -444,7 +453,7 @@ public class FontTest {
                     Font font = new Font.Builder(fis.getFD()).setFontVariationSettings(axes)
                             .build();
                     assertEquals(path, weight, font.getWeight());
-                    assertEquals(path, italic, font.isItalic());
+                    assertEquals(path, slant, font.getSlant());
                     assertEquals(path, 0, font.getTtcIndex());
                     assertEquals(path, axes, font.getAxes());
                     assertNotNull(font.getBuffer());
@@ -464,6 +473,7 @@ public class FontTest {
             int weight = style.first.intValue();
             boolean italic = style.second.booleanValue();
             String path = FontTestUtil.getFontPathFromStyle(weight, italic);
+            final int slant = italic ? FontStyle.FONT_SLANT_ITALIC : FontStyle.FONT_SLANT_UPRIGHT;
 
             File file = getTempFile();
             try (InputStream is = am.open(path)) {
@@ -472,7 +482,7 @@ public class FontTest {
                 try (FileInputStream fis = new FileInputStream(file)) {
                     Font font = new Font.Builder(fis.getFD()).setWeight(customWeight).build();
                     assertEquals(path, customWeight, font.getWeight());
-                    assertEquals(path, italic, font.isItalic());
+                    assertEquals(path, slant, font.getSlant());
                     assertEquals(path, 0, font.getTtcIndex());
                     assertNull(path, font.getAxes());
                     assertNotNull(font.getBuffer());
@@ -482,20 +492,21 @@ public class FontTest {
                 file.delete();
             }
         }
-        boolean customItalic = true;
         for (Pair<Integer, Boolean> style : FontTestUtil.getAllStyles()) {
             int weight = style.first.intValue();
             boolean italic = style.second.booleanValue();
             String path = FontTestUtil.getFontPathFromStyle(weight, italic);
+            final int slant = italic ? FontStyle.FONT_SLANT_ITALIC : FontStyle.FONT_SLANT_UPRIGHT;
 
             File file = getTempFile();
             try (InputStream is = am.open(path)) {
                 assertTrue(copyToFile(file, is));
 
                 try (FileInputStream fis = new FileInputStream(file)) {
-                    Font font = new Font.Builder(fis.getFD()).setItalic(customItalic).build();
+                    Font font = new Font.Builder(fis.getFD()).setSlant(
+                            FontStyle.FONT_SLANT_ITALIC).build();
                     assertEquals(path, weight, font.getWeight());
-                    assertEquals(path, customItalic, font.isItalic());
+                    assertEquals(path, FontStyle.FONT_SLANT_ITALIC, font.getSlant());
                     assertEquals(path, 0, font.getTtcIndex());
                     assertNull(path, font.getAxes());
                     assertNotNull(font.getBuffer());
@@ -515,6 +526,7 @@ public class FontTest {
             int weight = style.first.intValue();
             boolean italic = style.second.booleanValue();
             String path = FontTestUtil.getFontPathFromStyle(weight, italic);
+            final int slant = italic ? FontStyle.FONT_SLANT_ITALIC : FontStyle.FONT_SLANT_UPRIGHT;
 
             File file = getTempFile();
             try (InputStream is = am.open(path)) {
@@ -524,7 +536,7 @@ public class FontTest {
                     Font font = new Font.Builder(
                             fis.getFD(), dummy.length, file.length() - dummy.length * 2).build();
                     assertEquals(path, weight, font.getWeight());
-                    assertEquals(path, italic, font.isItalic());
+                    assertEquals(path, slant, font.getSlant());
                     assertEquals(path, 0, font.getTtcIndex());
                     assertNull(path, font.getAxes());
                     assertNotNull(font.getBuffer());
@@ -545,6 +557,7 @@ public class FontTest {
             boolean italic = style.second.booleanValue();
             String path = FontTestUtil.getTtcFontFileInAsset();
             int ttcIndex = FontTestUtil.getTtcIndexFromStyle(weight, italic);
+            final int slant = italic ? FontStyle.FONT_SLANT_ITALIC : FontStyle.FONT_SLANT_UPRIGHT;
 
             File file = getTempFile();
             try (InputStream is = am.open(path)) {
@@ -555,7 +568,7 @@ public class FontTest {
                             fis.getFD(), dummy.length, file.length() - dummy.length * 2)
                             .setTtcIndex(ttcIndex).build();
                     assertEquals(path, weight, font.getWeight());
-                    assertEquals(path, italic, font.isItalic());
+                    assertEquals(path, slant, font.getSlant());
                     assertEquals(path, ttcIndex, font.getTtcIndex());
                     assertNull(path, font.getAxes());
                     assertNotNull(font.getBuffer());
@@ -577,6 +590,7 @@ public class FontTest {
             String path = FontTestUtil.getVFFontInAsset();
             FontVariationAxis[] axes = FontVariationAxis.fromFontVariationSettings(
                     FontTestUtil.getVarSettingsFromStyle(weight, italic));
+            final int slant = italic ? FontStyle.FONT_SLANT_ITALIC : FontStyle.FONT_SLANT_UPRIGHT;
 
             File file = getTempFile();
             try (InputStream is = am.open(path)) {
@@ -587,7 +601,7 @@ public class FontTest {
                             fis.getFD(), dummy.length, file.length() - dummy.length * 2)
                             .setFontVariationSettings(axes).build();
                     assertEquals(path, weight, font.getWeight());
-                    assertEquals(path, italic, font.isItalic());
+                    assertEquals(path, slant, font.getSlant());
                     assertEquals(path, 0, font.getTtcIndex());
                     assertEquals(path, axes, font.getAxes());
                     assertNotNull(font.getBuffer());
@@ -608,6 +622,7 @@ public class FontTest {
             int weight = style.first.intValue();
             boolean italic = style.second.booleanValue();
             String path = FontTestUtil.getFontPathFromStyle(weight, italic);
+            final int slant = italic ? FontStyle.FONT_SLANT_ITALIC : FontStyle.FONT_SLANT_UPRIGHT;
 
             File file = getTempFile();
             try (InputStream is = am.open(path)) {
@@ -618,7 +633,7 @@ public class FontTest {
                             fis.getFD(), dummy.length, file.length() - dummy.length * 2)
                             .setWeight(customWeight).build();
                     assertEquals(path, customWeight, font.getWeight());
-                    assertEquals(path, italic, font.isItalic());
+                    assertEquals(path, slant, font.getSlant());
                     assertEquals(path, 0, font.getTtcIndex());
                     assertNull(path, font.getAxes());
                     assertNotNull(font.getBuffer());
@@ -629,7 +644,6 @@ public class FontTest {
             }
         }
 
-        boolean customItalic = true;
         for (Pair<Integer, Boolean> style : FontTestUtil.getAllStyles()) {
             int weight = style.first.intValue();
             boolean italic = style.second.booleanValue();
@@ -642,9 +656,9 @@ public class FontTest {
                 try (FileInputStream fis = new FileInputStream(file)) {
                     Font font = new Font.Builder(
                             fis.getFD(), dummy.length, file.length() - dummy.length * 2)
-                            .setItalic(customItalic).build();
+                            .setSlant(FontStyle.FONT_SLANT_ITALIC).build();
                     assertEquals(path, weight, font.getWeight());
-                    assertEquals(path, customItalic, font.isItalic());
+                    assertEquals(path, FontStyle.FONT_SLANT_ITALIC, font.getSlant());
                     assertEquals(path, 0, font.getTtcIndex());
                     assertNull(path, font.getAxes());
                     assertNotNull(font.getBuffer());
@@ -703,10 +717,11 @@ public class FontTest {
             int weight = style.first.intValue();
             boolean italic = style.second.booleanValue();
             String path = FontTestUtil.getFontPathFromStyle(weight, italic);
+            final int slant = italic ? FontStyle.FONT_SLANT_ITALIC : FontStyle.FONT_SLANT_UPRIGHT;
 
             Font font = new Font.Builder(am, path).build();
             assertEquals(path, weight, font.getWeight());
-            assertEquals(path, italic, font.isItalic());
+            assertEquals(path, slant, font.getSlant());
             assertEquals(path, 0, font.getTtcIndex());
             assertNull(path, font.getAxes());
             assertNotNull(font.getBuffer());
@@ -722,10 +737,11 @@ public class FontTest {
             boolean italic = style.second.booleanValue();
             String path = FontTestUtil.getTtcFontFileInAsset();
             int ttcIndex = FontTestUtil.getTtcIndexFromStyle(weight, italic);
+            final int slant = italic ? FontStyle.FONT_SLANT_ITALIC : FontStyle.FONT_SLANT_UPRIGHT;
 
             Font font = new Font.Builder(am, path).setTtcIndex(ttcIndex).build();
             assertEquals(path, weight, font.getWeight());
-            assertEquals(path, italic, font.isItalic());
+            assertEquals(path, slant, font.getSlant());
             assertEquals(path, ttcIndex, font.getTtcIndex());
             assertNull(path, font.getAxes());
             assertNotNull(font.getBuffer());
@@ -742,10 +758,11 @@ public class FontTest {
             String path = FontTestUtil.getVFFontInAsset();
             FontVariationAxis[] axes = FontVariationAxis.fromFontVariationSettings(
                     FontTestUtil.getVarSettingsFromStyle(weight, italic));
+            final int slant = italic ? FontStyle.FONT_SLANT_ITALIC : FontStyle.FONT_SLANT_UPRIGHT;
 
             Font font = new Font.Builder(am, path).setFontVariationSettings(axes).build();
             assertEquals(path, weight, font.getWeight());
-            assertEquals(path, italic, font.isItalic());
+            assertEquals(path, slant, font.getSlant());
             assertEquals(path, 0, font.getTtcIndex());
             assertEquals(path, axes, font.getAxes());
             assertNotNull(font.getBuffer());
@@ -761,24 +778,24 @@ public class FontTest {
             int weight = style.first.intValue();
             boolean italic = style.second.booleanValue();
             String path = FontTestUtil.getFontPathFromStyle(weight, italic);
+            final int slant = italic ? FontStyle.FONT_SLANT_ITALIC : FontStyle.FONT_SLANT_UPRIGHT;
 
             Font font = new Font.Builder(am, path).setWeight(customWeight).build();
             assertEquals(path, customWeight, font.getWeight());
-            assertEquals(path, italic, font.isItalic());
+            assertEquals(path, slant, font.getSlant());
             assertEquals(path, 0, font.getTtcIndex());
             assertNull(path, font.getAxes());
             assertNotNull(font.getBuffer());
             assertNull(font.getFile());
         }
-        boolean customItalic = true;
         for (Pair<Integer, Boolean> style : FontTestUtil.getAllStyles()) {
             int weight = style.first.intValue();
             boolean italic = style.second.booleanValue();
             String path = FontTestUtil.getFontPathFromStyle(weight, italic);
 
-            Font font = new Font.Builder(am, path).setItalic(customItalic).build();
+            Font font = new Font.Builder(am, path).setSlant(FontStyle.FONT_SLANT_ITALIC).build();
             assertEquals(path, weight, font.getWeight());
-            assertEquals(path, customItalic, font.isItalic());
+            assertEquals(path, FontStyle.FONT_SLANT_ITALIC, font.getSlant());
             assertEquals(path, 0, font.getTtcIndex());
             assertNull(path, font.getAxes());
             assertNotNull(font.getBuffer());
@@ -805,10 +822,11 @@ public class FontTest {
             int weight = style.first.intValue();
             boolean italic = style.second.booleanValue();
             int resId = FontTestUtil.getFontResourceIdFromStyle(weight, italic);
+            final int slant = italic ? FontStyle.FONT_SLANT_ITALIC : FontStyle.FONT_SLANT_UPRIGHT;
 
             Font font = new Font.Builder(res, resId).build();
             assertEquals("ResId=#" + resId, weight, font.getWeight());
-            assertEquals("ResId=#" + resId, italic, font.isItalic());
+            assertEquals("ResId=#" + resId, slant, font.getSlant());
             assertEquals("ResId=#" + resId, 0, font.getTtcIndex());
             assertNull("ResId=#" + resId, font.getAxes());
             assertNotNull("ResId=#" + resId, font.getBuffer());
@@ -824,10 +842,11 @@ public class FontTest {
             boolean italic = style.second.booleanValue();
             int resId = FontTestUtil.getTtcFontFileResourceId();
             int ttcIndex = FontTestUtil.getTtcIndexFromStyle(weight, italic);
+            final int slant = italic ? FontStyle.FONT_SLANT_ITALIC : FontStyle.FONT_SLANT_UPRIGHT;
 
             Font font = new Font.Builder(res, resId).setTtcIndex(ttcIndex).build();
             assertEquals("ResId=#" + resId, weight, font.getWeight());
-            assertEquals("ResId=#" + resId, italic, font.isItalic());
+            assertEquals("ResId=#" + resId, slant, font.getSlant());
             assertEquals("ResId=#" + resId, ttcIndex, font.getTtcIndex());
             assertNull("ResId=#" + resId, font.getAxes());
             assertNotNull("ResId=#" + resId, font.getBuffer());
@@ -844,10 +863,11 @@ public class FontTest {
             int resId = FontTestUtil.getVFFontResourceId();
             FontVariationAxis[] axes = FontVariationAxis.fromFontVariationSettings(
                     FontTestUtil.getVarSettingsFromStyle(weight, italic));
+            final int slant = italic ? FontStyle.FONT_SLANT_ITALIC : FontStyle.FONT_SLANT_UPRIGHT;
 
             Font font = new Font.Builder(res, resId).setFontVariationSettings(axes).build();
             assertEquals("ResId=#" + resId, weight, font.getWeight());
-            assertEquals("ResId=#" + resId, italic, font.isItalic());
+            assertEquals("ResId=#" + resId, slant, font.getSlant());
             assertEquals("ResId=#" + resId, 0, font.getTtcIndex());
             assertEquals("ResId=#" + resId, axes, font.getAxes());
             assertNotNull("ResId=#" + font.getBuffer());
@@ -863,25 +883,25 @@ public class FontTest {
             int weight = style.first.intValue();
             boolean italic = style.second.booleanValue();
             int resId = FontTestUtil.getFontResourceIdFromStyle(weight, italic);
+            final int slant = italic ? FontStyle.FONT_SLANT_ITALIC : FontStyle.FONT_SLANT_UPRIGHT;
 
             Font font = new Font.Builder(res, resId).setWeight(customWeight).build();
             assertEquals("ResId=#" + resId, customWeight, font.getWeight());
-            assertEquals("ResId=#" + resId, italic, font.isItalic());
+            assertEquals("ResId=#" + resId, slant, font.getSlant());
             assertEquals("ResId=#" + resId, 0, font.getTtcIndex());
             assertNull("ResId=#" + resId, font.getAxes());
             assertNotNull("ResId=#" + resId, font.getBuffer());
             assertNull("ResId=#" + resId, font.getFile());
         }
 
-        boolean customItalic = true;
         for (Pair<Integer, Boolean> style : FontTestUtil.getAllStyles()) {
             int weight = style.first.intValue();
             boolean italic = style.second.booleanValue();
             int resId = FontTestUtil.getFontResourceIdFromStyle(weight, italic);
 
-            Font font = new Font.Builder(res, resId).setItalic(customItalic).build();
+            Font font = new Font.Builder(res, resId).setSlant(FontStyle.FONT_SLANT_ITALIC).build();
             assertEquals("ResId=#" + resId, weight, font.getWeight());
-            assertEquals("ResId=#" + resId, customItalic, font.isItalic());
+            assertEquals("ResId=#" + resId, FontStyle.FONT_SLANT_ITALIC, font.getSlant());
             assertEquals("ResId=#" + resId, 0, font.getTtcIndex());
             assertNull("ResId=#" + resId, font.getAxes());
             assertNotNull("ResId=#" + resId, font.getBuffer());
@@ -958,12 +978,12 @@ public class FontTest {
     @Test(expected = IllegalArgumentException.class)
     public void testMaxFontWeight() throws IOException {
         final Resources res = InstrumentationRegistry.getTargetContext().getResources();
-        new Font.Builder(res, R.font.ascii).setWeight(Font.FONT_WEIGHT_MAX + 1).build();
+        new Font.Builder(res, R.font.ascii).setWeight(FontStyle.FONT_WEIGHT_MAX + 1).build();
     }
 
     @Test(expected = IllegalArgumentException.class)
     public void testMinFontWeight() throws IOException {
         final Resources res = InstrumentationRegistry.getTargetContext().getResources();
-        new Font.Builder(res, R.font.ascii).setWeight(Font.FONT_WEIGHT_MIN - 1).build();
+        new Font.Builder(res, R.font.ascii).setWeight(FontStyle.FONT_WEIGHT_MIN - 1).build();
     }
 }

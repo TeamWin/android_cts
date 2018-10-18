@@ -48,7 +48,8 @@ public class NativeSystemFontHelper {
                     }
                     nativeFonts.add(new Font.Builder(new File(nGetFilePath(fontPtr)))
                             .setWeight(nGetWeight(fontPtr))
-                            .setItalic(nIsItalic(fontPtr))
+                            .setSlant(nIsItalic(fontPtr)
+                                    ?  FontStyle.FONT_SLANT_ITALIC : FontStyle.FONT_SLANT_UPRIGHT)
                             .setTtcIndex(nGetCollectionIndex(fontPtr))
                             .setFontVariationSettings(axes)
                             .build());
