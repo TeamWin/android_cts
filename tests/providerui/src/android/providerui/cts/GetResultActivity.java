@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package android.provider.cts;
+package android.providerui.cts;
 
 import android.app.Activity;
 import android.content.Intent;
