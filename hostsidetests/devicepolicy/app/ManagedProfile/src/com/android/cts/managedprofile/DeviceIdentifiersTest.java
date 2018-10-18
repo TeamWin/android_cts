@@ -24,22 +24,74 @@ import android.telephony.TelephonyManager;
  */
 public class DeviceIdentifiersTest extends BaseManagedProfileTest {
 
-    public void testProfileOwnerCanGetDeviceIdentifiers() throws Exception {
+    private static final String NULL_DEVICE_ID_ERROR_MESSAGE =
+            "The profile owner with the READ_PHONE_STATE permission must receive a non-null value"
+                    + " when invoking %s";
+    private static final String NO_SECURITY_EXCEPTION_ERROR_MESSAGE =
+            "A profile owner that does not have the READ_PHONE_STATE permission must receive a "
+                    + "SecurityException when invoking %s";
+
+    public void testProfileOwnerCanGetDeviceIdentifiersWithPermission() throws Exception {
+        // The profile owner with the READ_PHONE_STATE permission should have access to all device
+        // identifiers.
+        TelephonyManager telephonyManager = (TelephonyManager) mContext.getSystemService(
+                Context.TELEPHONY_SERVICE);
         try {
-            TelephonyManager tm = (TelephonyManager) mContext.getSystemService(
-                    Context.TELEPHONY_SERVICE);
-            assertNotNull("The profile owner must have access to getDeviceId", tm.getDeviceId());
-            assertNotNull("The profile owner must have access to getImei", tm.getImei());
-            assertNotNull("The profile owner must have access to getMeid", tm.getMeid());
-            assertNotNull("The profile owner must have access to getSubscriberId",
-                    tm.getSubscriberId());
-            assertNotNull("The profile owner must have access to getSimSerialNumber",
-                    tm.getSimSerialNumber());
-            assertNotNull("The profile owner must have access to Build.getSerial",
+            assertNotNull(String.format(NULL_DEVICE_ID_ERROR_MESSAGE, "getDeviceId"),
+                    telephonyManager.getDeviceId());
+            assertNotNull(String.format(NULL_DEVICE_ID_ERROR_MESSAGE, "getImei"), telephonyManager.getImei());
+            assertNotNull(String.format(NULL_DEVICE_ID_ERROR_MESSAGE, "getMeid"), telephonyManager.getMeid());
+            assertNotNull(String.format(NULL_DEVICE_ID_ERROR_MESSAGE, "getSubscriberId"),
+                    telephonyManager.getSubscriberId());
+            assertNotNull(String.format(NULL_DEVICE_ID_ERROR_MESSAGE, "getSimSerialNumber"),
+                    telephonyManager.getSimSerialNumber());
+            assertNotNull(String.format(NULL_DEVICE_ID_ERROR_MESSAGE, "Build#getSerial"),
                     Build.getSerial());
         } catch (SecurityException e) {
-            fail("The profile owner must be able to access the device ID");
+            fail("The profile owner with the READ_PHONE_STATE permission must be able to access "
+                    + "the device IDs: " + e);
         }
     }
 
+    public void testProfileOwnerCannotGetDeviceIdentifiersWithoutPermission() throws Exception {
+        // The profile owner without the READ_PHONE_STATE permission should still receive a
+        // SecurityException when querying for device identifiers.
+        TelephonyManager telephonyManager = (TelephonyManager) mContext.getSystemService(
+                Context.TELEPHONY_SERVICE);
+        try {
+            telephonyManager.getDeviceId();
+            fail(String.format(NO_SECURITY_EXCEPTION_ERROR_MESSAGE, "getDeviceId"));
+        } catch (SecurityException expected) {
+        }
+
+        try {
+            telephonyManager.getImei();
+            fail(String.format(NO_SECURITY_EXCEPTION_ERROR_MESSAGE, "getImei"));
+        } catch (SecurityException expected) {
+        }
+
+        try {
+            telephonyManager.getMeid();
+            fail(String.format(NO_SECURITY_EXCEPTION_ERROR_MESSAGE, "getMeid"));
+        } catch (SecurityException expected) {
+        }
+
+        try {
+            telephonyManager.getSubscriberId();
+            fail(String.format(NO_SECURITY_EXCEPTION_ERROR_MESSAGE, "getSubscriberId"));
+        } catch (SecurityException expected) {
+        }
+
+        try {
+            telephonyManager.getSimSerialNumber();
+            fail(String.format(NO_SECURITY_EXCEPTION_ERROR_MESSAGE, "getSimSerialNumber"));
+        } catch (SecurityException expected) {
+        }
+
+        try {
+            Build.getSerial();
+            fail(String.format(NO_SECURITY_EXCEPTION_ERROR_MESSAGE, "Build#getSerial"));
+        } catch (SecurityException expected) {
+        }
+    }
 }

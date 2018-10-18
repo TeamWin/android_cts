@@ -746,7 +746,22 @@ public class DeviceOwnerTest extends BaseDevicePolicyTest {
         if (!mHasFeature) {
             return;
         }
-        executeDeviceOwnerTest("DeviceIdentifiersTest");
+        executeDeviceTestMethod(".DeviceIdentifiersTest",
+                "testDeviceOwnerCanGetDeviceIdentifiersWithPermission");
+    }
+
+    public void testDeviceOwnerCannotGetDeviceIdentifiersWithoutPermission() throws Exception {
+        // The Device Owner must have the READ_PHONE_STATE permission to get access to the device
+        // identifiers.
+        if (!mHasFeature) {
+            return;
+        }
+        // Revoke the READ_PHONE_STATE permission to ensure the device owner cannot access device
+        // identifiers without consent.
+        getDevice().executeShellCommand(
+                "pm revoke " + DEVICE_OWNER_PKG + " android.permission.READ_PHONE_STATE");
+        executeDeviceTestMethod(".DeviceIdentifiersTest",
+                "testDeviceOwnerCannotGetDeviceIdentifiersWithoutPermission");
     }
 
     public void testPackageInstallCache() throws Exception {
