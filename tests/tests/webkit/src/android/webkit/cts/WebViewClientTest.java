@@ -787,7 +787,6 @@ public class WebViewClientTest extends ActivityInstrumentationTestCase2<WebViewC
         @Override
         public void onLoadResource(WebView view, String url) {
             super.onLoadResource(view, url);
-            assertTrue(mOnPageStartedCalled);
             mOnLoadResourceCalled = true;
         }
 
