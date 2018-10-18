@@ -39,8 +39,8 @@ public class PropagationTest extends BaseTransitionTest {
         enterScene(R.layout.scene10);
         CircularPropagation propagation = new CircularPropagation();
         mTransition.setPropagation(propagation);
-        final TransitionValues redValues = new TransitionValues();
-        redValues.view = mActivity.findViewById(R.id.redSquare);
+        final TransitionValues redValues = new TransitionValues(
+                mActivity.findViewById(R.id.redSquare));
         propagation.captureValues(redValues);
 
         // Only the reported propagation properties are set
@@ -218,8 +218,7 @@ public class PropagationTest extends BaseTransitionTest {
     }
 
     private TransitionValues capturePropagationValues(int viewId) {
-        TransitionValues transitionValues = new TransitionValues();
-        transitionValues.view = mSceneRoot.findViewById(viewId);
+        TransitionValues transitionValues = new TransitionValues(mSceneRoot.findViewById(viewId));
         mTransition.getPropagation().captureValues(transitionValues);
         return transitionValues;
     }
