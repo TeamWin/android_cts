@@ -30,16 +30,22 @@ import static com.android.cts.storageapp.Utils.getSizeManual;
 import static com.android.cts.storageapp.Utils.makeUniqueFile;
 import static com.android.cts.storageapp.Utils.useSpace;
 
+import android.app.Activity;
 import android.app.usage.StorageStats;
 import android.app.usage.StorageStatsManager;
 import android.content.ComponentName;
 import android.content.Context;
+import android.content.Intent;
 import android.content.pm.ApplicationInfo;
 import android.content.pm.PackageManager;
+import android.net.Uri;
 import android.os.Environment;
 import android.os.ParcelFileDescriptor;
 import android.os.UserHandle;
 import android.os.storage.StorageManager;
+import android.provider.Settings;
+import android.support.test.uiautomator.UiDevice;
+import android.support.test.uiautomator.UiSelector;
 import android.test.InstrumentationTestCase;
 
 import java.io.File;
@@ -73,6 +79,32 @@ public class StorageTest extends InstrumentationTestCase {
         getContext().getPackageManager().setComponentEnabledSetting(
                 new ComponentName(getContext().getPackageName(), UtilsReceiver.class.getName()),
                 PackageManager.COMPONENT_ENABLED_STATE_DISABLED, PackageManager.DONT_KILL_APP);
+    }
+
+    public void testClearSpace() throws Exception {
+        // First, disk better be full!
+        assertTrue(getContext().getDataDir().getUsableSpace() < 256_000_000);
+
+        final Activity activity = launchActivity("com.android.cts.storageapp_a",
+                UtilsActivity.class, null);
+
+        final Intent intent = new Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS);
+        intent.setData(Uri.fromParts("package", "com.android.cts.storageapp_b", null));
+        activity.startActivity(intent);
+
+        final UiDevice device = UiDevice.getInstance(getInstrumentation());
+        device.waitForIdle();
+
+        // Hunt around to clear storage of other app
+        device.findObject(new UiSelector().textContains("internal storage")).click();
+        device.waitForIdle();
+        device.findObject(new UiSelector().textContains("Clear")).click();
+        device.waitForIdle();
+        device.findObject(new UiSelector().text("OK")).click();
+        device.waitForIdle();
+
+        // Now, disk better be less-full!
+        assertTrue(getContext().getDataDir().getUsableSpace() > 256_000_000);
     }
 
     /**
