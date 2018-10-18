@@ -41,6 +41,8 @@ import android.view.KeyCharacterMap;
 import android.view.KeyCharacterMap.KeyData;
 import android.view.KeyEvent;
 
+import com.android.compatibility.common.util.CddTest;
+
 import junit.framework.Assert;
 
 import org.junit.Before;
@@ -514,6 +516,7 @@ public class KeyEventTest {
         assertTrue(mKeyEvent.getDisplayLabel() > 0);
     }
 
+    @CddTest(requirement="7.2.3/H-0-1,T-0-1,A-0-1")
     @Test
     public void testIsSystem() {
         mKeyEvent = new KeyEvent(KeyEvent.ACTION_DOWN, KeyEvent.KEYCODE_MENU);

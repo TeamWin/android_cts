@@ -24,9 +24,12 @@ import android.widget.Button;
 import android.widget.LinearLayout;
 import android.widget.TextView;
 
+import com.android.compatibility.common.util.CddTest;
+
 import com.android.cts.verifier.PassFailButtons;
 import com.android.cts.verifier.R;
 
+@CddTest(requirement="3.8.8/C-1-2")
 public class ScreenPinningTestActivity extends PassFailButtons.Activity {
 
     private static final String TAG = "ScreenPinningTestActivity";

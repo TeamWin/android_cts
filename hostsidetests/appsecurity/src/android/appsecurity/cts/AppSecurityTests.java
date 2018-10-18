@@ -27,6 +27,8 @@ import com.android.tradefed.testtype.IBuildReceiver;
 import com.android.tradefed.util.AbiUtils;
 import com.android.tradefed.util.RunUtil;
 
+import com.android.compatibility.common.util.CddTest;
+
 import java.io.BufferedReader;
 import java.io.EOFException;
 import java.io.File;
@@ -119,6 +121,7 @@ public class AppSecurityTests extends DeviceTestCase implements IAbiReceiver, IB
      * Test that an app that declares the same shared uid as an existing app, cannot be installed
      * if it is signed with a different certificate.
      */
+    @CddTest(requirement="9.2/C-0-2")
     public void testSharedUidDifferentCerts() throws Exception {
         Log.i(LOG_TAG, "installing apks with shared uid, but different certs");
         try {
