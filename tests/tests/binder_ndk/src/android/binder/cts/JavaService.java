@@ -28,8 +28,8 @@ public class JavaService extends Service {
     private final String TAG = "JavaService";
 
     // the configuration of these services is done in AndroidManifest.xml
-    public static class Local extends NativeService {}
-    public static class Remote extends NativeService {}
+    public static class Local extends JavaService {}
+    public static class Remote extends JavaService {}
 
     @Override
     public IBinder onBind(Intent intent) {

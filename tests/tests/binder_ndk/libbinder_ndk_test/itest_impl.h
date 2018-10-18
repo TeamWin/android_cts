@@ -24,6 +24,10 @@ using RegularPolygon = ::aidl::test_package::RegularPolygon;
 class MyTest : public ::aidl::test_package::BnTest,
                public ThisShouldBeDestroyed {
  public:
+  ::ndk::ScopedAStatus GetName(std::string* _aidl_return) override {
+    *_aidl_return = "CPP";
+    return ::ndk::ScopedAStatus(AStatus_newOk());
+  }
   ::ndk::ScopedAStatus TestVoidReturn() override {
     return ::ndk::ScopedAStatus(AStatus_newOk());
   }
