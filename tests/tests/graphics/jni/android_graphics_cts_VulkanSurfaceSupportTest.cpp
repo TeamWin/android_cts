@@ -52,7 +52,8 @@ void createNativeTest(JNIEnv* env, jclass /*clazz*/, jobject jAssetManager, jobj
     ASSERT(jSupported == true, "Surface format should be supported");
 
     SwapchainInfo swapchainInfo(&deviceInfo);
-    ASSERT(swapchainInfo.init(false) == VK_TEST_SUCCESS, "Failed to initialize Vulkan swapchain");
+    ASSERT(swapchainInfo.init(false, nullptr) == VK_TEST_SUCCESS,
+           "Failed to initialize Vulkan swapchain");
 
     Renderer renderer(&deviceInfo, &swapchainInfo);
     ASSERT(renderer.init(env, jAssetManager) == VK_TEST_SUCCESS,

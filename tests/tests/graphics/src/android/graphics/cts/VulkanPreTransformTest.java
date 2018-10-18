@@ -31,7 +31,6 @@ import android.support.test.runner.AndroidJUnit4;
 import android.test.suitebuilder.annotation.LargeTest;
 import android.util.Log;
 import android.view.PixelCopy;
-import android.view.Surface;
 import android.view.SurfaceView;
 
 import com.android.compatibility.common.util.SynchronousPixelCopy;
@@ -167,28 +166,29 @@ public class VulkanPreTransformTest {
                 + Math.abs(actualB - expectedB);
     }
 
-    private static boolean validatePixelValuesAfterRotation(boolean setPreTransform) {
+    private static boolean validatePixelValuesAfterRotation(
+            boolean setPreTransform, int preTransformHint) {
         Bitmap bitmap = takeScreenshot();
 
         int width = bitmap.getWidth();
         int height = bitmap.getHeight();
         int diff = 0;
-        if (!setPreTransform || sActivity.getRotation() == Surface.ROTATION_0) {
+        if (!setPreTransform || preTransformHint == 0x1 /*VK_SURFACE_TRANSFORM_IDENTITY_BIT_KHR*/) {
             diff += pixelDiff(bitmap.getPixel(0, 0), 255, 0, 0);
             diff += pixelDiff(bitmap.getPixel(width - 1, 0), 0, 255, 0);
             diff += pixelDiff(bitmap.getPixel(0, height - 1), 0, 0, 255);
             diff += pixelDiff(bitmap.getPixel(width - 1, height - 1), 255, 255, 0);
-        } else if (sActivity.getRotation() == Surface.ROTATION_90) {
+        } else if (preTransformHint == 0x2 /*VK_SURFACE_TRANSFORM_ROTATE_90_BIT_KHR*/) {
             diff += pixelDiff(bitmap.getPixel(0, 0), 0, 255, 0);
             diff += pixelDiff(bitmap.getPixel(width - 1, 0), 255, 255, 0);
             diff += pixelDiff(bitmap.getPixel(0, height - 1), 255, 0, 0);
             diff += pixelDiff(bitmap.getPixel(width - 1, height - 1), 0, 0, 255);
-        } else if (sActivity.getRotation() == Surface.ROTATION_180) {
+        } else if (preTransformHint == 0x4 /*VK_SURFACE_TRANSFORM_ROTATE_180_BIT_KHR*/) {
             diff += pixelDiff(bitmap.getPixel(0, 0), 255, 255, 0);
             diff += pixelDiff(bitmap.getPixel(width - 1, 0), 0, 0, 255);
             diff += pixelDiff(bitmap.getPixel(0, height - 1), 0, 255, 0);
             diff += pixelDiff(bitmap.getPixel(width - 1, height - 1), 255, 0, 0);
-        } else {
+        } else { /* 0x8 : VK_SURFACE_TRANSFORM_ROTATE_270_BIT_KHR*/
             diff += pixelDiff(bitmap.getPixel(0, 0), 0, 0, 255);
             diff += pixelDiff(bitmap.getPixel(width - 1, 0), 255, 0, 0);
             diff += pixelDiff(bitmap.getPixel(0, height - 1), 255, 255, 0);
