@@ -2710,24 +2710,28 @@ public class MediaPlayer2Test extends MediaPlayer2TestBase {
         }
 
         long startPosMs = 3000;
+        long endPosMs = 7000;
         AssetFileDescriptor afd = mResources.openRawResourceFd(
                 R.raw.video_480x360_mp4_h264_1350kbps_30fps_aac_stereo_192kbps_44100hz);
         mPlayer.setDataSource(new DataSourceDesc.Builder()
                 .setDataSource(afd.getFileDescriptor(), afd.getStartOffset(), afd.getLength())
                 .setStartPosition(startPosMs)
+                .setEndPosition(endPosMs)
                 .build());
         mPlayer.setDisplay(mActivity.getSurfaceHolder());
         mPlayer.setScreenOnWhilePlaying(true);
 
         final Monitor videoRenderingStarted = new Monitor();
+        final Monitor repeatCalled = new Monitor();
         MediaPlayer2.EventCallback ecb = new MediaPlayer2.EventCallback() {
             @Override
             public void onInfo(MediaPlayer2 mp, DataSourceDesc dsd, int what, int extra) {
                 if (what == MediaPlayer2.MEDIA_INFO_VIDEO_RENDERING_START) {
                     videoRenderingStarted.signal();
-                }
-                if (what == MediaPlayer2.MEDIA_INFO_DATA_SOURCE_END) {
+                } else if (what == MediaPlayer2.MEDIA_INFO_DATA_SOURCE_END) {
                     mOnCompletionCalled.signal();
+                } else if (what == MediaPlayer2.MEDIA_INFO_DATA_SOURCE_REPEAT) {
+                    repeatCalled.signal();
                 }
             }
 
@@ -2750,12 +2754,37 @@ public class MediaPlayer2Test extends MediaPlayer2TestBase {
         long startRenderingTime = mPlayer.getCurrentPosition();
         Log.i(LOG_TAG, "testStartEndPositions: start rendering time " + startRenderingTime
                 + " vs requested " + startPosMs);
-        assertEquals(startRenderingTime, startPosMs, 1000);  // 1 second tolerance
+        assertEquals(startPosMs, startRenderingTime, 250);  // 250 ms tolerance
 
         mOnCompletionCalled.waitForSignal();
+        long endRenderingTime = mPlayer.getCurrentPosition();
+        Log.i(LOG_TAG, "testStartEndPositions: end rendering time " + endRenderingTime
+                + " vs requested " + endPosMs);
+        assertEquals(endPosMs, endRenderingTime, 250);  // 250 ms tolerance
 
         assertFalse(mOnErrorCalled.isSignalled());
 
+        videoRenderingStarted.reset();
+        mOnCompletionCalled.reset();
+        mPlayer.play();
+
+        videoRenderingStarted.waitForSignal();
+        videoRenderingStarted.reset();
+        startRenderingTime = mPlayer.getCurrentPosition();
+        Log.i(LOG_TAG, "testStartEndPositions: replay start rendering time " + startRenderingTime
+                + " vs requested " + startPosMs);
+        assertEquals(startPosMs, startRenderingTime, 250);  // 250 ms tolerance
+
+        repeatCalled.reset();
+        mPlayer.loopCurrent(true);
+        repeatCalled.waitForSignal();
+        videoRenderingStarted.waitForSignal();
+        startRenderingTime = mPlayer.getCurrentPosition();
+        Log.i(LOG_TAG, "testStartEndPositions: looping start rendering time " + startRenderingTime
+                + " vs requested " + startPosMs);
+        assertEquals(startPosMs, startRenderingTime, 250);  // 250 ms tolerance
+
+        Thread.sleep(1000);
         mPlayer.reset();
     }
 }
