@@ -146,7 +146,7 @@ public class LineBreakerTest {
         final ParagraphConstraints c = new ParagraphConstraints();
         c.setWidth(Float.MAX_VALUE);
         final Result r = lb.computeLineBreaks(new MeasuredText.Builder(text.toCharArray())
-                .addStyleRun(sPaint, 0, text.length(), false).build(), c, 0);
+                .appendStyleRun(sPaint, text.length(), false).build(), c, 0);
         assertEquals(1, r.getLineCount());
         assertEquals(13, r.getLineBreakOffset(0));
         assertEquals(-10.0f, r.getLineAscent(0), 0.0f);
@@ -168,7 +168,7 @@ public class LineBreakerTest {
         final ParagraphConstraints c = new ParagraphConstraints();
         c.setWidth(80.0f);
         final Result r = lb.computeLineBreaks(new MeasuredText.Builder(text.toCharArray())
-                .addStyleRun(sPaint, 0, text.length(), false).build(), c, 0);
+                .appendStyleRun(sPaint, text.length(), false).build(), c, 0);
         assertEquals(2, r.getLineCount());
         assertEquals(9, r.getLineBreakOffset(0));
         assertEquals(14, r.getLineBreakOffset(1));
@@ -198,7 +198,7 @@ public class LineBreakerTest {
         final ParagraphConstraints c = new ParagraphConstraints();
         c.setWidth(40.0f);
         final Result r = lb.computeLineBreaks(new MeasuredText.Builder(text.toCharArray())
-                .addStyleRun(sPaint, 0, text.length(), false).build(), c, 0);
+                .appendStyleRun(sPaint, text.length(), false).build(), c, 0);
         assertEquals(4, r.getLineCount());
         assertEquals(4, r.getLineBreakOffset(0));
         assertEquals(9, r.getLineBreakOffset(1));
@@ -239,7 +239,7 @@ public class LineBreakerTest {
         c.setWidth(100.0f);
         c.setIndent(50.0f, 1);  // Make the first line width 50 px.
         final Result r = lb.computeLineBreaks(new MeasuredText.Builder(text.toCharArray())
-                .addStyleRun(sPaint, 0, text.length(), false).build(), c, 0);
+                .appendStyleRun(sPaint, text.length(), false).build(), c, 0);
         assertEquals(2, r.getLineCount());
         assertEquals(4, r.getLineBreakOffset(0));
         assertEquals(14, r.getLineBreakOffset(1));
@@ -270,7 +270,7 @@ public class LineBreakerTest {
         final ParagraphConstraints c = new ParagraphConstraints();
         c.setWidth(40.0f);
         final Result r = lb.computeLineBreaks(new MeasuredText.Builder(text.toCharArray())
-                .addStyleRun(sPaint, 0, text.length(), false).build(), c, 0);
+                .appendStyleRun(sPaint, text.length(), false).build(), c, 0);
         assertEquals(4, r.getLineCount());
         assertEquals(5, r.getLineBreakOffset(0));
         assertEquals(11, r.getLineBreakOffset(1));
@@ -316,9 +316,9 @@ public class LineBreakerTest {
         final Paint biggerPaint = new Paint(sPaint);
         biggerPaint.setTextSize(sPaint.getTextSize() * 2.0f);
         final Result r = lb.computeLineBreaks(new MeasuredText.Builder(text.toCharArray())
-                .addStyleRun(sPaint, 0, 4, false)
-                .addStyleRun(biggerPaint, 4, 9, false)
-                .addStyleRun(sPaint, 9, text.length(), false).build(), c, 0);
+                .appendStyleRun(sPaint, 4, false)
+                .appendStyleRun(biggerPaint, 5, false)
+                .appendStyleRun(sPaint, 5, false).build(), c, 0);
         assertEquals(3, r.getLineCount());
         assertEquals(4, r.getLineBreakOffset(0));
         assertEquals(9, r.getLineBreakOffset(1));
@@ -354,9 +354,9 @@ public class LineBreakerTest {
         final Paint biggerPaint = new Paint(sPaint);
         biggerPaint.setTextSize(sPaint.getTextSize() * 2.0f);
         final Result r = lb.computeLineBreaks(new MeasuredText.Builder(text.toCharArray())
-                .addStyleRun(sPaint, 0, 6, false)
-                .addStyleRun(biggerPaint, 6, 7, false)
-                .addStyleRun(sPaint, 7, text.length(), false)
+                .appendStyleRun(sPaint, 6, false)
+                .appendStyleRun(biggerPaint, 1, false)
+                .appendStyleRun(sPaint, 7, false)
                 .build(), c, 0);
         assertEquals(2, r.getLineCount());
         assertEquals(9, r.getLineBreakOffset(0));
@@ -386,7 +386,7 @@ public class LineBreakerTest {
         final ParagraphConstraints c = new ParagraphConstraints();
         c.setWidth(100.0f);
         final Result r = lb.computeLineBreaks(new MeasuredText.Builder(text.toCharArray())
-                .addStyleRun(sPaint, 0, text.length(), false)
+                .appendStyleRun(sPaint, text.length(), false)
                 .build(), c, 0);
         assertEquals(2, r.getLineCount());
         assertEquals(4, r.getLineBreakOffset(0));
@@ -417,7 +417,7 @@ public class LineBreakerTest {
         final ParagraphConstraints c = new ParagraphConstraints();
         c.setWidth(100.0f);
         final Result r = lb.computeLineBreaks(new MeasuredText.Builder(text.toCharArray())
-                .addStyleRun(sPaint, 0, text.length(), false)
+                .appendStyleRun(sPaint, text.length(), false)
                 .build(), c, 0);
         assertEquals(3, r.getLineCount());
         assertEquals(4, r.getLineBreakOffset(0));
@@ -454,7 +454,7 @@ public class LineBreakerTest {
         c.setWidth(70.0f);
         c.setTabStops(null, 40);
         final Result r = lb.computeLineBreaks(new MeasuredText.Builder(text.toCharArray())
-                .addStyleRun(sPaint, 0, text.length(), false)
+                .appendStyleRun(sPaint, text.length(), false)
                 .build(), c, 0);
         assertEquals(3, r.getLineCount());
         assertEquals(4, r.getLineBreakOffset(0));
@@ -491,7 +491,7 @@ public class LineBreakerTest {
         c.setWidth(70.0f);
         c.setTabStops(new int[] { 20 }, 50);
         final Result r = lb.computeLineBreaks(new MeasuredText.Builder(text.toCharArray())
-                .addStyleRun(sPaint, 0, text.length(), false)
+                .appendStyleRun(sPaint, text.length(), false)
                 .build(), c, 0);
         assertEquals(3, r.getLineCount());
         assertEquals(6, r.getLineBreakOffset(0));
@@ -532,7 +532,7 @@ public class LineBreakerTest {
         final ParagraphConstraints c = new ParagraphConstraints();
         c.setWidth(70.0f);
         final Result r = lb.computeLineBreaks(new MeasuredText.Builder(text.toCharArray())
-                .addStyleRun(sPaint, 0, text.length(), false)
+                .appendStyleRun(sPaint, text.length(), false)
                 .build(), c, 0);
         assertEquals(3, r.getLineCount());
         assertEquals(5, r.getLineBreakOffset(0));
