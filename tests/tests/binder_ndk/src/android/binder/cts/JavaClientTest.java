@@ -37,6 +37,7 @@ import test_package.RegularPolygon;
 
 import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
+import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 
@@ -150,5 +151,73 @@ public class JavaClientTest {
         RegularPolygon polygon = new RegularPolygon();
         mInterface.RenamePolygon(polygon, "Jerry");
         assertEquals("Jerry", polygon.name);
+    }
+
+    @Test
+    public void testPrimitiveArrays() throws RemoteException {
+        {
+            boolean[] value = {};
+            boolean[] out1 = new boolean[0];
+            boolean[] out2 = mInterface.RepeatBooleanArray(value, out1);
+
+            Assert.assertArrayEquals(value, out1);
+            Assert.assertArrayEquals(value, out2);
+        }
+        {
+            boolean[] value = {false, true, false};
+            boolean[] out1 = new boolean[3];
+            boolean[] out2 = mInterface.RepeatBooleanArray(value, out1);
+
+            Assert.assertArrayEquals(value, out1);
+            Assert.assertArrayEquals(value, out2);
+        }
+        {
+            byte[] value = {1, 2, 3};
+            byte[] out1 = new byte[3];
+            byte[] out2 = mInterface.RepeatByteArray(value, out1);
+
+            Assert.assertArrayEquals(value, out1);
+            Assert.assertArrayEquals(value, out2);
+        }
+        {
+            char[] value = {'h', 'a', '!'};
+            char[] out1 = new char[3];
+            char[] out2 = mInterface.RepeatCharArray(value, out1);
+
+            Assert.assertArrayEquals(value, out1);
+            Assert.assertArrayEquals(value, out2);
+        }
+        {
+            int[] value = {1, 2, 3};
+            int[] out1 = new int[3];
+            int[] out2 = mInterface.RepeatIntArray(value, out1);
+
+            Assert.assertArrayEquals(value, out1);
+            Assert.assertArrayEquals(value, out2);
+        }
+        {
+            long[] value = {1, 2, 3};
+            long[] out1 = new long[3];
+            long[] out2 = mInterface.RepeatLongArray(value, out1);
+
+            Assert.assertArrayEquals(value, out1);
+            Assert.assertArrayEquals(value, out2);
+        }
+        {
+            float[] value = {1.0f, 2.0f, 3.0f};
+            float[] out1 = new float[3];
+            float[] out2 = mInterface.RepeatFloatArray(value, out1);
+
+            Assert.assertArrayEquals(value, out1, 0.0f);
+            Assert.assertArrayEquals(value, out2, 0.0f);
+        }
+        {
+            double[] value = {1.0, 2.0, 3.0};
+            double[] out1 = new double[3];
+            double[] out2 = mInterface.RepeatDoubleArray(value, out1);
+
+            Assert.assertArrayEquals(value, out1, 0.0);
+            Assert.assertArrayEquals(value, out2, 0.0);
+        }
     }
 }

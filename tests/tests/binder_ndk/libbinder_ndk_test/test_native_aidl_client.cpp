@@ -15,11 +15,11 @@
  */
 #define LOG_TAG "Cts-NdkBinderTest"
 
-#include <android/binder_ibinder_jni.h>
-#include <gtest/gtest.h>
 #include <aidl/test_package/BnEmpty.h>
 #include <aidl/test_package/BpTest.h>
 #include <aidl/test_package/RegularPolygon.h>
+#include <android/binder_ibinder_jni.h>
+#include <gtest/gtest.h>
 
 #include "itest_impl.h"
 #include "utilities.h"
@@ -174,6 +174,69 @@ TEST_P(NdkBinderTest_Aidl, InsAndOuts) {
   RegularPolygon defaultPolygon;
   ASSERT_OK(iface->RenamePolygon(&defaultPolygon, "Jerry"));
   EXPECT_EQ("Jerry", defaultPolygon.name);
+}
+
+template <typename T>
+using RepeatMethod = ScopedAStatus (ITest::*)(const std::vector<T>&,
+                                              std::vector<T>*, std::vector<T>*);
+
+template <typename T>
+void testRepeat(const std::shared_ptr<ITest>& i, RepeatMethod<T> repeatMethod,
+                std::vector<std::vector<T>> tests) {
+  for (const auto& input : tests) {
+    std::vector<T> out1;
+    out1.resize(input.size());
+    std::vector<T> out2;
+
+    ASSERT_OK((i.get()->*repeatMethod)(input, &out1, &out2)) << input.size();
+    EXPECT_EQ(input, out1);
+    EXPECT_EQ(input, out2);
+  }
+}
+
+TEST_P(NdkBinderTest_Aidl, PrimitiveArrays) {
+  testRepeat<bool>(iface, &ITest::RepeatBooleanArray,
+                   {
+                       {},
+                       {true},
+                       {false, true, false},
+                   });
+  testRepeat<int8_t>(iface, &ITest::RepeatByteArray,
+                     {
+                         {},
+                         {1},
+                         {1, 2, 3},
+                     });
+  testRepeat<char16_t>(iface, &ITest::RepeatCharArray,
+                       {
+                           {},
+                           {L'@'},
+                           {L'@', L'!', L'A'},
+                       });
+  testRepeat<int32_t>(iface, &ITest::RepeatIntArray,
+                      {
+                          {},
+                          {1},
+                          {1, 2, 3},
+                      });
+  testRepeat<int64_t>(iface, &ITest::RepeatLongArray,
+                      {
+                          {},
+                          {1},
+                          {1, 2, 3},
+                      });
+  testRepeat<float>(iface, &ITest::RepeatFloatArray,
+                    {
+                        {},
+                        {1.0f},
+                        {1.0f, 2.0f, 3.0f},
+                    });
+  testRepeat<double>(iface, &ITest::RepeatDoubleArray,
+                     {
+                         {},
+                         {1.0},
+                         {1.0, 2.0, 3.0},
+                     });
 }
 
 std::shared_ptr<ITest> getLocalService() {
