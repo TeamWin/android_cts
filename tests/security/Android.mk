@@ -19,7 +19,7 @@ include $(CLEAR_VARS)
 # Don't include this package in any target.
 LOCAL_MODULE_TAGS := optional
 
-LOCAL_STATIC_JAVA_LIBRARIES := bouncycastle-unbundled bouncycastle-bcpkix-unbundled guava
+LOCAL_STATIC_JAVA_LIBRARIES := bouncycastle-unbundled bouncycastle-bcpkix-unbundled guava truth-prebuilt testng
 LOCAL_SRC_FILES := $(call all-java-files-under, src)
 LOCAL_MODULE := cts-security-test-support-library
 
