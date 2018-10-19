@@ -28,6 +28,8 @@ import android.graphics.Color;
 import android.graphics.drawable.ColorDrawable;
 import android.graphics.drawable.Drawable;
 import android.graphics.drawable.Icon;
+import android.icu.util.ULocale;
+import android.os.Bundle;
 import android.os.LocaleList;
 import android.support.test.InstrumentationRegistry;
 import android.support.test.filters.SmallTest;
@@ -35,6 +37,7 @@ import android.support.test.runner.AndroidJUnit4;
 import android.view.View;
 import android.view.textclassifier.TextClassification;
 import android.view.textclassifier.TextClassifier;
+import android.view.textclassifier.TextLanguage;
 import android.view.textclassifier.TextSelection;
 
 import org.junit.Test;
@@ -49,6 +52,13 @@ import org.junit.runner.RunWith;
 @RunWith(AndroidJUnit4.class)
 public class TextClassifierValueObjectsTest {
 
+    private static final float EPSILON = 0.000001f;
+    private static final String BUNDLE_KEY = "key";
+    private static final String BUNDLE_VALUE = "value";
+    private static final Bundle BUNDLE = new Bundle();
+    static {
+        BUNDLE.putString(BUNDLE_KEY, BUNDLE_VALUE);
+    }
     private static final double ACCEPTED_DELTA = 0.0000001;
     private static final String TEXT = "abcdefghijklmnopqrstuvwxyz";
     private static final int START = 5;
@@ -299,6 +309,50 @@ public class TextClassifierValueObjectsTest {
         final TextClassification.Request request =
                 new TextClassification.Request.Builder(TEXT, START, END).build();
         assertNull(request.getDefaultLocales());
+    }
+
+    @Test
+    public void testTextLanguage() {
+        final TextLanguage language = new TextLanguage.Builder()
+                .setId(ID)
+                .putLocale(ULocale.ENGLISH, 0.6f)
+                .putLocale(ULocale.CHINESE, 0.3f)
+                .putLocale(ULocale.JAPANESE, 0.1f)
+                .setExtras(BUNDLE)
+                .build();
+
+        assertEquals(ID, language.getId());
+        assertEquals(3, language.getLocaleHypothesisCount());
+        assertEquals(ULocale.ENGLISH, language.getLocale(0));
+        assertEquals(ULocale.CHINESE, language.getLocale(1));
+        assertEquals(ULocale.JAPANESE, language.getLocale(2));
+        assertEquals(0.6f, language.getConfidenceScore(ULocale.ENGLISH), EPSILON);
+        assertEquals(0.3f, language.getConfidenceScore(ULocale.CHINESE), EPSILON);
+        assertEquals(0.1f, language.getConfidenceScore(ULocale.JAPANESE), EPSILON);
+        assertEquals(BUNDLE_VALUE, language.getExtras().getString(BUNDLE_KEY));
+    }
+
+    @Test
+    public void testTextLanguage_clippedScore() {
+        final TextLanguage language = new TextLanguage.Builder()
+                .putLocale(ULocale.ENGLISH, 2f)
+                .putLocale(ULocale.CHINESE, -2f)
+                .build();
+
+        assertEquals(1, language.getLocaleHypothesisCount());
+        assertEquals(ULocale.ENGLISH, language.getLocale(0));
+        assertEquals(1f, language.getConfidenceScore(ULocale.ENGLISH), EPSILON);
+        assertNull(language.getId());
+    }
+
+    @Test
+    public void testTextLanguageRequest() {
+        final TextLanguage.Request request = new TextLanguage.Request.Builder(TEXT)
+                .setExtras(BUNDLE)
+                .build();
+
+        assertEquals(TEXT, request.getText());
+        assertEquals(BUNDLE_VALUE, request.getExtras().getString(BUNDLE_KEY));
     }
 
     // TODO: Add more tests.
