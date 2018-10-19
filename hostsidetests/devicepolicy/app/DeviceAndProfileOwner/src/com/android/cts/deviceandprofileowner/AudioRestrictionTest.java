@@ -20,6 +20,7 @@ import android.content.Context;
 import android.content.pm.PackageManager;
 import android.media.AudioManager;
 import android.media.MediaPlayer;
+import android.net.Uri;
 import android.provider.Settings;
 import android.os.SystemClock;
 import android.os.UserManager;
@@ -84,8 +85,9 @@ public class AudioRestrictionTest extends BaseDeviceAdminTest {
             return;
         }
 
+        Uri uri = Uri.parse("android.resource://" + mContext.getPackageName() + "/" + R.raw.ringer);
         MediaPlayer mediaPlayer = new MediaPlayer();
-        mediaPlayer.setDataSource(mContext, Settings.System.DEFAULT_RINGTONE_URI);
+        mediaPlayer.setDataSource(mContext, uri);
         mediaPlayer.setAudioStreamType(AudioManager.STREAM_MUSIC);
         mediaPlayer.prepare();
         mediaPlayer.setLooping(true);
