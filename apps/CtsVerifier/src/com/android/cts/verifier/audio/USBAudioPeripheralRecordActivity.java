@@ -77,7 +77,12 @@ public class USBAudioPeripheralRecordActivity extends USBAudioPeripheralPlayerAc
             mRecorder.stop();
         }
 
+        // no reason to do more than 2
         int numChans = USBDeviceInfoHelper.calcMaxChannelCount(mInputDevInfo);
+        if (numChans > 2) {
+            numChans = 2;
+        }
+        Log.i(TAG, "  numChans:" + numChans);
 
         if (mRecorder.open(numChans, mSystemSampleRate, mSystemBufferSize)) {
             connectWaveView();  // Setup the WaveView
