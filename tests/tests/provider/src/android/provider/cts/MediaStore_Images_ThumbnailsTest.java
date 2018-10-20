@@ -23,6 +23,7 @@ import android.content.Context;
 import android.database.Cursor;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
+import android.media.MediaScanner;
 import android.net.Uri;
 import android.os.Environment;
 import android.provider.MediaStore;
@@ -47,6 +48,9 @@ public class MediaStore_Images_ThumbnailsTest extends InstrumentationTestCase {
     private ContentResolver mContentResolver;
 
     private FileCopyHelper mHelper;
+
+    private Uri mRed;
+    private Uri mBlue;
 
     @Override
     protected void tearDown() throws Exception {
@@ -74,6 +78,19 @@ public class MediaStore_Images_ThumbnailsTest extends InstrumentationTestCase {
         mRowsAdded = new ArrayList<Uri>();
     }
 
+    private void prepareImages() throws Exception {
+        final File red = new File(Environment.getExternalStorageDirectory(), "red.jpg");
+        final File blue = new File(Environment.getExternalStorageDirectory(), "blue.jpg");
+        mHelper.copyToExternalStorage(R.raw.scenery, red);
+        mHelper.copyToExternalStorage(R.raw.scenery, blue);
+        try (MediaScanner scanner = new MediaScanner(mContext, "external")) {
+            mRed = scanner.scanSingleFile(red.getAbsolutePath(), "image/jpeg");
+            mBlue = scanner.scanSingleFile(blue.getAbsolutePath(), "image/jpeg");
+        }
+        mRowsAdded.add(mRed);
+        mRowsAdded.add(mBlue);
+    }
+
     public static void assertMostlyEquals(long expected, long actual, long delta) {
         if (Math.abs(expected - actual) > delta) {
             throw new AssertionFailedError("Expected roughly " + expected + " but was " + actual);
@@ -81,6 +98,8 @@ public class MediaStore_Images_ThumbnailsTest extends InstrumentationTestCase {
     }
 
     public void testQueryExternalThumbnails() throws Exception {
+        prepareImages();
+
         Cursor c = Thumbnails.queryMiniThumbnails(mContentResolver,
                 Thumbnails.EXTERNAL_CONTENT_URI, Thumbnails.MICRO_KIND, null);
         int previousMicroKindCount = c.getCount();
@@ -91,7 +110,7 @@ public class MediaStore_Images_ThumbnailsTest extends InstrumentationTestCase {
         ContentValues values = new ContentValues();
         values.put(Thumbnails.KIND, Thumbnails.MINI_KIND);
         values.put(Thumbnails.DATA, path);
-        values.put(Thumbnails.IMAGE_ID, 0);
+        values.put(Thumbnails.IMAGE_ID, ContentUris.parseId(mRed));
         Uri uri = mContentResolver.insert(Thumbnails.EXTERNAL_CONTENT_URI, values);
         if (uri != null) {
             mRowsAdded.add(uri);
@@ -239,14 +258,16 @@ public class MediaStore_Images_ThumbnailsTest extends InstrumentationTestCase {
                 null));
     }
 
-    public void testStoreImagesMediaExternal() {
+    public void testStoreImagesMediaExternal() throws Exception {
+        prepareImages();
+
         final String externalImgPath = Environment.getExternalStorageDirectory() +
                 "/testimage.jpg";
         final String externalImgPath2 = Environment.getExternalStorageDirectory() +
                 "/testimage1.jpg";
         ContentValues values = new ContentValues();
         values.put(Thumbnails.KIND, Thumbnails.FULL_SCREEN_KIND);
-        values.put(Thumbnails.IMAGE_ID, 0);
+        values.put(Thumbnails.IMAGE_ID, ContentUris.parseId(mRed));
         values.put(Thumbnails.HEIGHT, 480);
         values.put(Thumbnails.WIDTH, 320);
         values.put(Thumbnails.DATA, externalImgPath);
@@ -262,7 +283,7 @@ public class MediaStore_Images_ThumbnailsTest extends InstrumentationTestCase {
         long id = c.getLong(c.getColumnIndex(Thumbnails._ID));
         assertTrue(id > 0);
         assertEquals(Thumbnails.FULL_SCREEN_KIND, c.getInt(c.getColumnIndex(Thumbnails.KIND)));
-        assertEquals(0, c.getLong(c.getColumnIndex(Thumbnails.IMAGE_ID)));
+        assertEquals(ContentUris.parseId(mRed), c.getLong(c.getColumnIndex(Thumbnails.IMAGE_ID)));
         assertEquals(480, c.getInt(c.getColumnIndex(Thumbnails.HEIGHT)));
         assertEquals(320, c.getInt(c.getColumnIndex(Thumbnails.WIDTH)));
         assertEquals(externalImgPath, c.getString(c.getColumnIndex(Thumbnails.DATA)));
@@ -271,7 +292,7 @@ public class MediaStore_Images_ThumbnailsTest extends InstrumentationTestCase {
         // update
         values.clear();
         values.put(Thumbnails.KIND, Thumbnails.MICRO_KIND);
-        values.put(Thumbnails.IMAGE_ID, 1);
+        values.put(Thumbnails.IMAGE_ID, ContentUris.parseId(mBlue));
         values.put(Thumbnails.HEIGHT, 50);
         values.put(Thumbnails.WIDTH, 50);
         values.put(Thumbnails.DATA, externalImgPath2);
