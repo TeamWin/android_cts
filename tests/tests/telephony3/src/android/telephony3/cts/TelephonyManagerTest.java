@@ -16,6 +16,7 @@
 
 package android.telephony3.cts;
 
+import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.fail;
 
@@ -73,13 +74,18 @@ public class TelephonyManagerTest {
                     "An app targeting pre-Q with the READ_PHONE_STATE permission granted must "
                             + "receive null when invoking getSimSerialNumber",
                     mTelephonyManager.getSimSerialNumber());
-            assertNull(
+            // Since Build.getSerial is not documented to return null in previous releases this test
+            // verifies that the Build.UNKNOWN value is returned when the caller does not have
+            // permission to access the device identifier.
+            assertEquals(
                     "An app targeting pre-Q with the READ_PHONE_STATE permission granted must "
-                            + "receive null when invoking Build.getSerial",
-                    Build.getSerial());
+                            + "receive " + Build.UNKNOWN + " when invoking Build.getSerial",
+                    Build.getSerial(), Build.UNKNOWN);
         } catch (SecurityException e) {
             fail("An app targeting pre-Q with the READ_PHONE_STATE permission granted must "
-                    + "receive null when querying for device identifiers.");
+                    + "receive null (or "
+                    + Build.UNKNOWN
+                    + " for Build#getSerial) when querying for device identifiers");
         }
     }
 }

@@ -15,11 +15,11 @@
  */
 #define LOG_TAG "Cts-NdkBinderTest"
 
-#include <android/binder_ibinder_jni.h>
-#include <gtest/gtest.h>
 #include <aidl/test_package/BnEmpty.h>
 #include <aidl/test_package/BpTest.h>
 #include <aidl/test_package/RegularPolygon.h>
+#include <android/binder_ibinder_jni.h>
+#include <gtest/gtest.h>
 
 #include "itest_impl.h"
 #include "utilities.h"
@@ -34,6 +34,7 @@ using ::ndk::SpAIBinder;
 struct Params {
   std::shared_ptr<ITest> iface;
   bool shouldBeRemote;
+  std::string expectedName;
 };
 
 #define iface GetParam().iface
@@ -43,6 +44,12 @@ class NdkBinderTest_Aidl : public NdkBinderTest,
                            public ::testing::WithParamInterface<Params> {};
 
 TEST_P(NdkBinderTest_Aidl, GotTest) { ASSERT_NE(nullptr, iface); }
+
+TEST_P(NdkBinderTest_Aidl, SanityCheckSource) {
+  std::string name;
+  ASSERT_OK(iface->GetName(&name));
+  EXPECT_EQ(GetParam().expectedName, name);
+}
 
 TEST_P(NdkBinderTest_Aidl, Remoteness) {
   ASSERT_EQ(shouldBeRemote, iface->isRemote());
@@ -169,6 +176,69 @@ TEST_P(NdkBinderTest_Aidl, InsAndOuts) {
   EXPECT_EQ("Jerry", defaultPolygon.name);
 }
 
+template <typename T>
+using RepeatMethod = ScopedAStatus (ITest::*)(const std::vector<T>&,
+                                              std::vector<T>*, std::vector<T>*);
+
+template <typename T>
+void testRepeat(const std::shared_ptr<ITest>& i, RepeatMethod<T> repeatMethod,
+                std::vector<std::vector<T>> tests) {
+  for (const auto& input : tests) {
+    std::vector<T> out1;
+    out1.resize(input.size());
+    std::vector<T> out2;
+
+    ASSERT_OK((i.get()->*repeatMethod)(input, &out1, &out2)) << input.size();
+    EXPECT_EQ(input, out1);
+    EXPECT_EQ(input, out2);
+  }
+}
+
+TEST_P(NdkBinderTest_Aidl, PrimitiveArrays) {
+  testRepeat<bool>(iface, &ITest::RepeatBooleanArray,
+                   {
+                       {},
+                       {true},
+                       {false, true, false},
+                   });
+  testRepeat<int8_t>(iface, &ITest::RepeatByteArray,
+                     {
+                         {},
+                         {1},
+                         {1, 2, 3},
+                     });
+  testRepeat<char16_t>(iface, &ITest::RepeatCharArray,
+                       {
+                           {},
+                           {L'@'},
+                           {L'@', L'!', L'A'},
+                       });
+  testRepeat<int32_t>(iface, &ITest::RepeatIntArray,
+                      {
+                          {},
+                          {1},
+                          {1, 2, 3},
+                      });
+  testRepeat<int64_t>(iface, &ITest::RepeatLongArray,
+                      {
+                          {},
+                          {1},
+                          {1, 2, 3},
+                      });
+  testRepeat<float>(iface, &ITest::RepeatFloatArray,
+                    {
+                        {},
+                        {1.0f},
+                        {1.0f, 2.0f, 3.0f},
+                    });
+  testRepeat<double>(iface, &ITest::RepeatDoubleArray,
+                     {
+                         {},
+                         {1.0},
+                         {1.0, 2.0, 3.0},
+                     });
+}
+
 std::shared_ptr<ITest> getLocalService() {
   // BpTest -> AIBinder -> test
   std::shared_ptr<MyTest> test = SharedRefBase::make<MyTest>();
@@ -208,20 +278,23 @@ std::shared_ptr<ITest> getNdkBinderTestJavaService(const std::string& method) {
 
 INSTANTIATE_TEST_CASE_P(LocalNative, NdkBinderTest_Aidl,
                         ::testing::Values(Params{getLocalService(),
-                                                 false /*shouldBeRemote*/}));
-INSTANTIATE_TEST_CASE_P(LocalNativeFromJava, NdkBinderTest_Aidl,
-                        ::testing::Values(Params{getNdkBinderTestJavaService(
-                                                     "getLocalNativeService"),
-                                                 false /*shouldBeRemote*/}));
+                                                 false /*shouldBeRemote*/,
+                                                 "CPP"}));
+INSTANTIATE_TEST_CASE_P(
+    LocalNativeFromJava, NdkBinderTest_Aidl,
+    ::testing::Values(Params{
+        getNdkBinderTestJavaService("getLocalNativeService"),
+        false /*shouldBeRemote*/, "CPP"}));
 INSTANTIATE_TEST_CASE_P(LocalJava, NdkBinderTest_Aidl,
                         ::testing::Values(Params{
                             getNdkBinderTestJavaService("getLocalJavaService"),
-                            false /*shouldBeRemote*/}));
-INSTANTIATE_TEST_CASE_P(RemoteNative, NdkBinderTest_Aidl,
-                        ::testing::Values(Params{getNdkBinderTestJavaService(
-                                                     "getRemoteNativeService"),
-                                                 true /*shouldBeRemote*/}));
+                            false /*shouldBeRemote*/, "JAVA"}));
+INSTANTIATE_TEST_CASE_P(
+    RemoteNative, NdkBinderTest_Aidl,
+    ::testing::Values(Params{
+        getNdkBinderTestJavaService("getRemoteNativeService"),
+        true /*shouldBeRemote*/, "CPP"}));
 INSTANTIATE_TEST_CASE_P(RemoteJava, NdkBinderTest_Aidl,
                         ::testing::Values(Params{
                             getNdkBinderTestJavaService("getRemoteJavaService"),
-                            true /*shouldBeRemote*/}));
+                            true /*shouldBeRemote*/, "JAVA"}));

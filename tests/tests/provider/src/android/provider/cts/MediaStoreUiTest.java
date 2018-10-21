@@ -31,6 +31,8 @@ import android.content.Intent;
 import android.content.UriPermission;
 import android.content.pm.PackageInfo;
 import android.content.pm.PackageManager;
+import android.content.pm.PackageManager.NameNotFoundException;
+import android.content.pm.PermissionInfo;
 import android.content.pm.ResolveInfo;
 import android.media.ExifInterface;
 import android.media.MediaScannerConnection;
@@ -153,7 +155,15 @@ public class MediaStoreUiTest extends InstrumentationTestCase {
         try { mDevice.findObject(sel).click(); } catch (Throwable ignored) { }
     }
 
-    private void maybeGrantRuntimePermission(String pkg, Set<String> requested, String permission) {
+    private void maybeGrantRuntimePermission(String pkg, Set<String> requested, String permission)
+            throws NameNotFoundException {
+        // We only need to grant dangerous permissions
+        final Context context = getInstrumentation().getContext();
+        if ((context.getPackageManager().getPermissionInfo(permission, 0).getProtection()
+                & PermissionInfo.PROTECTION_DANGEROUS) == 0) {
+            return;
+        }
+
         if (requested.contains(permission)) {
             InstrumentationRegistry.getInstrumentation().getUiAutomation()
                     .grantRuntimePermission(pkg, permission);

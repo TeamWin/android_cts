@@ -30,6 +30,8 @@ interface ITest {
     const String kEmpty = "";
     const String kFoo = "foo";
 
+    String GetName();
+
     void TestVoidReturn();
     oneway void TestOneway();
 
@@ -51,4 +53,14 @@ interface ITest {
 
     // Testing inout
     void RenamePolygon(inout RegularPolygon value, String newName);
+
+    // Arrays
+    boolean[] RepeatBooleanArray(in boolean[] input, out boolean[] repeated);
+    byte[] RepeatByteArray(in byte[] input, out byte[] repeated);
+    char[] RepeatCharArray(in char[] input, out char[] repeated);
+    int[] RepeatIntArray(in int[] input, out int[] repeated);
+    long[] RepeatLongArray(in long[] input, out long[] repeated);
+    float[] RepeatFloatArray(in float[] input, out float[] repeated);
+    double[] RepeatDoubleArray(in double[] input, out double[] repeated);
+
 }

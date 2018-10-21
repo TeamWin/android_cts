@@ -24,6 +24,10 @@ using RegularPolygon = ::aidl::test_package::RegularPolygon;
 class MyTest : public ::aidl::test_package::BnTest,
                public ThisShouldBeDestroyed {
  public:
+  ::ndk::ScopedAStatus GetName(std::string* _aidl_return) override {
+    *_aidl_return = "CPP";
+    return ::ndk::ScopedAStatus(AStatus_newOk());
+  }
   ::ndk::ScopedAStatus TestVoidReturn() override {
     return ::ndk::ScopedAStatus(AStatus_newOk());
   }
@@ -90,6 +94,56 @@ class MyTest : public ::aidl::test_package::BnTest,
   ::ndk::ScopedAStatus RenamePolygon(RegularPolygon* value,
                                      const std::string& newName) override {
     value->name = newName;
+    return ::ndk::ScopedAStatus(AStatus_newOk());
+  }
+  ::ndk::ScopedAStatus RepeatBooleanArray(
+      const std::vector<bool>& in_value, std::vector<bool>* out_repeated,
+      std::vector<bool>* _aidl_return) override {
+    *out_repeated = in_value;
+    *_aidl_return = in_value;
+    return ::ndk::ScopedAStatus(AStatus_newOk());
+  }
+  ::ndk::ScopedAStatus RepeatByteArray(
+      const std::vector<int8_t>& in_value, std::vector<int8_t>* out_repeated,
+      std::vector<int8_t>* _aidl_return) override {
+    *out_repeated = in_value;
+    *_aidl_return = in_value;
+    return ::ndk::ScopedAStatus(AStatus_newOk());
+  }
+  ::ndk::ScopedAStatus RepeatCharArray(
+      const std::vector<char16_t>& in_value,
+      std::vector<char16_t>* out_repeated,
+      std::vector<char16_t>* _aidl_return) override {
+    *out_repeated = in_value;
+    *_aidl_return = in_value;
+    return ::ndk::ScopedAStatus(AStatus_newOk());
+  }
+  ::ndk::ScopedAStatus RepeatIntArray(
+      const std::vector<int32_t>& in_value, std::vector<int32_t>* out_repeated,
+      std::vector<int32_t>* _aidl_return) override {
+    *out_repeated = in_value;
+    *_aidl_return = in_value;
+    return ::ndk::ScopedAStatus(AStatus_newOk());
+  }
+  ::ndk::ScopedAStatus RepeatLongArray(
+      const std::vector<int64_t>& in_value, std::vector<int64_t>* out_repeated,
+      std::vector<int64_t>* _aidl_return) override {
+    *out_repeated = in_value;
+    *_aidl_return = in_value;
+    return ::ndk::ScopedAStatus(AStatus_newOk());
+  }
+  ::ndk::ScopedAStatus RepeatFloatArray(
+      const std::vector<float>& in_value, std::vector<float>* out_repeated,
+      std::vector<float>* _aidl_return) override {
+    *out_repeated = in_value;
+    *_aidl_return = in_value;
+    return ::ndk::ScopedAStatus(AStatus_newOk());
+  }
+  ::ndk::ScopedAStatus RepeatDoubleArray(
+      const std::vector<double>& in_value, std::vector<double>* out_repeated,
+      std::vector<double>* _aidl_return) override {
+    *out_repeated = in_value;
+    *_aidl_return = in_value;
     return ::ndk::ScopedAStatus(AStatus_newOk());
   }
 };

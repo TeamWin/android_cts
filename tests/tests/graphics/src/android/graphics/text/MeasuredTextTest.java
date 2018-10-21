@@ -50,7 +50,7 @@ public class MeasuredTextTest {
     public void testBuilder() {
         String text = "Hello, World";
         new MeasuredText.Builder(text.toCharArray())
-                .addStyleRun(sPaint, 0, text.length(), false /* isRtl */).build();
+                .appendStyleRun(sPaint, text.length(), false /* isRtl */).build();
     }
 
     @Test(expected = NullPointerException.class)
@@ -61,14 +61,14 @@ public class MeasuredTextTest {
     @Test(expected = NullPointerException.class)
     public void testBuilder_NullPaint() {
         String text = "Hello, World";
-        new MeasuredText.Builder(text.toCharArray()).addStyleRun(null, 0, text.length(), false);
+        new MeasuredText.Builder(text.toCharArray()).appendStyleRun(null, text.length(), false);
     }
 
     @Test
     public void testGetWidth() {
         String text = "Hello, World";
         MeasuredText mt = new MeasuredText.Builder(text.toCharArray())
-                .addStyleRun(sPaint, 0, text.length(), false /* isRtl */).build();
+                .appendStyleRun(sPaint, text.length(), false /* isRtl */).build();
         assertEquals(0.0f, mt.getWidth(0, 0), 0.0f);
         assertEquals(10.0f, mt.getWidth(0, 1), 0.0f);
         assertEquals(20.0f, mt.getWidth(0, 2), 0.0f);
@@ -80,7 +80,7 @@ public class MeasuredTextTest {
     public void testGetWidth_StartSmallerThanZero() {
         String text = "Hello, World";
         new MeasuredText.Builder(text.toCharArray())
-                .addStyleRun(sPaint, 0, text.length(), false /* isRtl */)
+                .appendStyleRun(sPaint, text.length(), false /* isRtl */)
                 .build()
                 .getWidth(-1, 0);
     }
@@ -89,7 +89,7 @@ public class MeasuredTextTest {
     public void testGetWidth_StartLargerThanLength() {
         String text = "Hello, World";
         new MeasuredText.Builder(text.toCharArray())
-                .addStyleRun(sPaint, 0, text.length(), false /* isRtl */)
+                .appendStyleRun(sPaint, text.length(), false /* isRtl */)
                 .build()
                 .getWidth(text.length() + 1, 0);
     }
@@ -98,7 +98,7 @@ public class MeasuredTextTest {
     public void testGetWidth_EndSmallerThanZero() {
         String text = "Hello, World";
         new MeasuredText.Builder(text.toCharArray())
-                .addStyleRun(sPaint, 0, text.length(), false /* isRtl */)
+                .appendStyleRun(sPaint, text.length(), false /* isRtl */)
                 .build()
                 .getWidth(0, -1);
     }
@@ -107,7 +107,7 @@ public class MeasuredTextTest {
     public void testGetWidth_EndLargerThanLength() {
         String text = "Hello, World";
         new MeasuredText.Builder(text.toCharArray())
-                .addStyleRun(sPaint, 0, text.length(), false /* isRtl */)
+                .appendStyleRun(sPaint, text.length(), false /* isRtl */)
                 .build()
                 .getWidth(0, text.length() + 1);
     }
@@ -116,7 +116,7 @@ public class MeasuredTextTest {
     public void testGetWidth_StartLargerThanEnd() {
         String text = "Hello, World";
         new MeasuredText.Builder(text.toCharArray())
-                .addStyleRun(sPaint, 0, text.length(), false /* isRtl */)
+                .appendStyleRun(sPaint, text.length(), false /* isRtl */)
                 .build()
                 .getWidth(1, 0);
     }
@@ -125,7 +125,7 @@ public class MeasuredTextTest {
     public void testGetBounds() {
         String text = "Hello, World";
         MeasuredText mt = new MeasuredText.Builder(text.toCharArray())
-                .addStyleRun(sPaint, 0, text.length(), false /* isRtl */).build();
+                .appendStyleRun(sPaint, text.length(), false /* isRtl */).build();
         final Rect emptyRect = new Rect(0, 0, 0, 0);
         final Rect singleCharRect = new Rect(0, -10, 10, 0);
         final Rect twoCharRect = new Rect(0, -10, 20, 0);
@@ -147,7 +147,7 @@ public class MeasuredTextTest {
         String text = "Hello, World";
         Rect rect = new Rect();
         new MeasuredText.Builder(text.toCharArray())
-                .addStyleRun(sPaint, 0, text.length(), false /* isRtl */)
+                .appendStyleRun(sPaint, text.length(), false /* isRtl */)
                 .build()
                 .getBounds(-1, 0, rect);
     }
@@ -157,7 +157,7 @@ public class MeasuredTextTest {
         String text = "Hello, World";
         Rect rect = new Rect();
         new MeasuredText.Builder(text.toCharArray())
-                .addStyleRun(sPaint, 0, text.length(), false /* isRtl */)
+                .appendStyleRun(sPaint, text.length(), false /* isRtl */)
                 .build()
                 .getBounds(text.length() + 1, 0, rect);
     }
@@ -167,7 +167,7 @@ public class MeasuredTextTest {
         String text = "Hello, World";
         Rect rect = new Rect();
         new MeasuredText.Builder(text.toCharArray())
-                .addStyleRun(sPaint, 0, text.length(), false /* isRtl */)
+                .appendStyleRun(sPaint, text.length(), false /* isRtl */)
                 .build()
                 .getBounds(0, -1, rect);
     }
@@ -177,7 +177,7 @@ public class MeasuredTextTest {
         String text = "Hello, World";
         Rect rect = new Rect();
         new MeasuredText.Builder(text.toCharArray())
-                .addStyleRun(sPaint, 0, text.length(), false /* isRtl */)
+                .appendStyleRun(sPaint, text.length(), false /* isRtl */)
                 .build()
                 .getBounds(0, text.length() + 1, rect);
     }
@@ -187,7 +187,7 @@ public class MeasuredTextTest {
         String text = "Hello, World";
         Rect rect = new Rect();
         new MeasuredText.Builder(text.toCharArray())
-                .addStyleRun(sPaint, 0, text.length(), false /* isRtl */)
+                .appendStyleRun(sPaint, text.length(), false /* isRtl */)
                 .build()
                 .getBounds(1, 0, rect);
     }
@@ -197,7 +197,7 @@ public class MeasuredTextTest {
         String text = "Hello, World";
         Rect rect = new Rect();
         new MeasuredText.Builder(text.toCharArray())
-                .addStyleRun(sPaint, 0, text.length(), false /* isRtl */)
+                .appendStyleRun(sPaint, text.length(), false /* isRtl */)
                 .build()
                 .getBounds(0, 0, null);
     }
@@ -206,7 +206,7 @@ public class MeasuredTextTest {
     public void testGetCharWidthAt() {
         String text = "Hello, World";
         MeasuredText mt = new MeasuredText.Builder(text.toCharArray())
-                .addStyleRun(sPaint, 0, text.length(), false /* isRtl */).build();
+                .appendStyleRun(sPaint, text.length(), false /* isRtl */).build();
         assertEquals(10.0f, mt.getCharWidthAt(0), 0.0f);
         assertEquals(10.0f, mt.getCharWidthAt(1), 0.0f);
         assertEquals(10.0f, mt.getCharWidthAt(2), 0.0f);
@@ -217,7 +217,7 @@ public class MeasuredTextTest {
     public void testGetCharWidthAt_OffsetSmallerThanZero() {
         String text = "Hello, World";
         new MeasuredText.Builder(text.toCharArray())
-                .addStyleRun(sPaint, 0, text.length(), false /* isRtl */)
+                .appendStyleRun(sPaint, text.length(), false /* isRtl */)
                 .build()
                 .getCharWidthAt(-1);
     }
@@ -226,7 +226,7 @@ public class MeasuredTextTest {
     public void testGetCharWidthAt_OffsetLargerThanLength() {
         String text = "Hello, World";
         new MeasuredText.Builder(text.toCharArray())
-                .addStyleRun(sPaint, 0, text.length(), false /* isRtl */)
+                .appendStyleRun(sPaint, text.length(), false /* isRtl */)
                 .build()
                 .getCharWidthAt(text.length());
     }
@@ -235,8 +235,41 @@ public class MeasuredTextTest {
     public void testBuilder_reuse_throw_exception() {
         String text = "Hello, World";
         MeasuredText.Builder b = new MeasuredText.Builder(text.toCharArray())
-                .addStyleRun(sPaint, 0, text.length(), false /* isRtl */);
+                .appendStyleRun(sPaint, text.length(), false /* isRtl */);
         b.build();
         b.build();
+    }
+
+    @Test(expected = IllegalArgumentException.class)
+    public void testBuilder_tooSmallLengthStyle() {
+        String text = "Hello, World";
+        new MeasuredText.Builder(text.toCharArray()).appendStyleRun(sPaint, -1, false /* isRtl */);
+    }
+
+    @Test(expected = IllegalArgumentException.class)
+    public void testBuilder_tooLargeLengthStyle() {
+        String text = "Hello, World";
+        new MeasuredText.Builder(text.toCharArray())
+                .appendStyleRun(sPaint, text.length() + 1, false /* isRtl */);
+    }
+
+    @Test(expected = IllegalArgumentException.class)
+    public void testBuilder_tooSmallLengthReplacement() {
+        String text = "Hello, World";
+        new MeasuredText.Builder(text.toCharArray()).appendReplacementRun(sPaint, -1, 1.0f);
+    }
+
+    @Test(expected = IllegalArgumentException.class)
+    public void testBuilder_tooLargeLengthReplacement() {
+        String text = "Hello, World";
+        new MeasuredText.Builder(text.toCharArray())
+                .appendReplacementRun(sPaint, text.length() + 1, 1.0f);
+    }
+
+    @Test(expected = IllegalStateException.class)
+    public void testBuilder_notEnoughStyle() {
+        String text = "Hello, World";
+        new MeasuredText.Builder(text.toCharArray())
+                .appendReplacementRun(sPaint, text.length() - 1, 1.0f).build();
     }
 }

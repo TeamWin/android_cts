@@ -191,46 +191,24 @@ public class StorageHostTest extends BaseHostJUnit4Test {
         getDevice().executeShellCommand("pm trim-caches 4096G");
         getDevice().executeShellCommand("rm -rf /sdcard/*");
 
-        // We're interested in any crashes while disk full
-        final String lastEvent = getDevice().executeShellCommand("logcat -d -b events -t 1");
-        final String sinceTime = lastEvent.trim().substring(0, 18);
-
         try {
             // Try our hardest to fill up the entire disk
-            Utils.runDeviceTests(getDevice(), PKG_A, CLASS, "testFullDisk");
+            Utils.runDeviceTests(getDevice(), PKG_B, CLASS, "testFullDisk");
         } catch (Throwable t) {
-            // If we had trouble filling the disk, don't bother going any
-            // further; we failed because we either don't have quota support, or
-            // because disk was more than 10% full.
-            return;
+            if (t.getMessage().contains("Skipping")) {
+                // If the device doens't have resgid support, there's nothing
+                // for this test to verify
+                return;
+            } else {
+                throw new AssertionFailedError(t.getMessage());
+            }
         }
 
         // Tweak something that causes PackageManager to persist data
         Utils.runDeviceTests(getDevice(), PKG_A, CLASS, "testTweakComponent");
 
-        // Try poking around a couple of settings apps
-        getDevice().executeShellCommand("input keyevent KEY_HOME");
-        Thread.sleep(1000);
-        getDevice().executeShellCommand("am start -a android.settings.SETTINGS");
-        Thread.sleep(2000);
-        getDevice().executeShellCommand("input keyevent KEY_BACK");
-        Thread.sleep(1000);
-        getDevice().executeShellCommand("am start -a android.os.storage.action.MANAGE_STORAGE");
-        Thread.sleep(2000);
-        getDevice().executeShellCommand("input keyevent KEY_BACK");
-        Thread.sleep(1000);
-
-        // Our misbehaving app above shouldn't have caused anything else to
-        // think the disk was full
-        String troubleLogs = getDevice().executeShellCommand(
-                "logcat -d -t '" + sinceTime + "' -e '(ENOSPC|No space left on device)'");
-
-        if (troubleLogs == null) troubleLogs = "";
-        troubleLogs = troubleLogs.trim().replaceAll("\\-+ beginning of [a-z]+", "");
-
-        if (troubleLogs.length() > 4) {
-            throw new AssertionFailedError("Unexpected crashes while disk full: " + troubleLogs);
-        }
+        // Verify that Settings can free space used by abusive app
+        Utils.runDeviceTests(getDevice(), PKG_A, CLASS, "testClearSpace");
     }
 
     public void waitForIdle() throws Exception {

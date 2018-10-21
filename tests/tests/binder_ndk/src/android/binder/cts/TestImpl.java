@@ -24,6 +24,11 @@ import test_package.RegularPolygon;
 
 public class TestImpl extends ITest.Stub {
   @Override
+  public String GetName() {
+    return "JAVA";
+  }
+
+  @Override
   public void TestVoidReturn() {}
 
   @Override
@@ -31,61 +36,103 @@ public class TestImpl extends ITest.Stub {
 
   @Override
   public int RepeatInt(int in_value) {
-      return in_value;
+    return in_value;
   }
 
   @Override
   public long RepeatLong(long in_value) {
-      return in_value;
+    return in_value;
   }
 
   @Override
   public float RepeatFloat(float in_value) {
-      return in_value;
+    return in_value;
   }
 
   @Override
   public double RepeatDouble(double in_value) {
-      return in_value;
+    return in_value;
   }
 
   @Override
   public boolean RepeatBoolean(boolean in_value) {
-      return in_value;
+    return in_value;
   }
 
   @Override
   public char RepeatChar(char in_value) {
-      return in_value;
+    return in_value;
   }
 
   @Override
   public byte RepeatByte(byte in_value) {
-      return in_value;
+    return in_value;
   }
 
   @Override
   public IBinder RepeatBinder(IBinder in_value) {
-      return in_value;
+    return in_value;
   }
 
   @Override
   public IEmpty RepeatInterface(IEmpty in_value) {
-      return in_value;
+    return in_value;
   }
 
   @Override
   public String RepeatString(String in_value) {
-      return in_value;
+    return in_value;
   }
 
   @Override
   public RegularPolygon RepeatPolygon(RegularPolygon in_value) {
-      return in_value;
+    return in_value;
   }
 
   @Override
   public void RenamePolygon(RegularPolygon value, String name) {
-      value.name = name;
+    value.name = name;
+  }
+
+  @Override
+  public boolean[] RepeatBooleanArray(boolean[] in_value, boolean[] repeated) {
+    System.arraycopy(in_value, 0, repeated, 0, in_value.length);
+    return in_value;
+  }
+
+  @Override
+  public byte[] RepeatByteArray(byte[] in_value, byte[] repeated) {
+    System.arraycopy(in_value, 0, repeated, 0, in_value.length);
+    return in_value;
+  }
+
+  @Override
+  public char[] RepeatCharArray(char[] in_value, char[] repeated) {
+    System.arraycopy(in_value, 0, repeated, 0, in_value.length);
+    return in_value;
+  }
+
+  @Override
+  public int[] RepeatIntArray(int[] in_value, int[] repeated) {
+    System.arraycopy(in_value, 0, repeated, 0, in_value.length);
+    return in_value;
+  }
+
+  @Override
+  public long[] RepeatLongArray(long[] in_value, long[] repeated) {
+    System.arraycopy(in_value, 0, repeated, 0, in_value.length);
+    return in_value;
+  }
+
+  @Override
+  public float[] RepeatFloatArray(float[] in_value, float[] repeated) {
+    System.arraycopy(in_value, 0, repeated, 0, in_value.length);
+    return in_value;
+  }
+
+  @Override
+  public double[] RepeatDoubleArray(double[] in_value, double[] repeated) {
+    System.arraycopy(in_value, 0, repeated, 0, in_value.length);
+    return in_value;
   }
 }

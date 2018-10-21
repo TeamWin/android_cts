@@ -340,6 +340,8 @@ public class ActivityManagerMultiDisplayTests extends ActivityManagerDisplayTest
             getLaunchActivityBuilder().setTargetActivity(NON_RESIZEABLE_ACTIVITY)
                     .setNewTask(true).setMultipleTask(true).execute();
 
+            mAmWmState.waitForActivityState(NON_RESIZEABLE_ACTIVITY, STATE_RESUMED);
+
             // Check that non-resizeable activity is on the same display.
             final int newFrontStackId = mAmWmState.getAmState().getFocusedStackId();
             final ActivityStack newFrontStack =

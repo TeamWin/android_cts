@@ -33,7 +33,10 @@ inline ::testing::AssertionResult isOk(::ndk::ScopedAStatus t) {
   if (AStatus_isOk(t.get())) {
     return ::testing::AssertionSuccess();
   } else {
-    return ::testing::AssertionFailure();
+    return ::testing::AssertionFailure()
+           << "exception: " << AStatus_getExceptionCode(t.get())
+           << " service specific: " << AStatus_getServiceSpecificError(t.get())
+           << " status: " << AStatus_getStatus(t.get());
   }
 }
 

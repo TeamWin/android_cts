@@ -28,6 +28,10 @@
         <item name="android:textFontWeight">500</item>
     </style>
 
+    <style name="textAppearanceWithTextLocales">
+        <item name="android:textLocale">ja-JP,zh-CN</item>
+    </style>
+
     <style name="textAppearanceWithShadow">
         <item name="android:shadowColor">#00FFFF</item>
         <item name="android:shadowDx">1.0</item>
@@ -97,6 +101,7 @@
         <item name="android:textSize">160px</item>
         <item name="android:textColor">#FF00FF</item>
         <item name="android:textColorLink">#00FFFF</item>
+        <item name="android:textLocale">ja-JP,zh-CN</item>
         <item name="android:shadowColor">#00FFFF</item>
         <item name="android:shadowDx">1.0</item>
         <item name="android:shadowDy">2.0</item>

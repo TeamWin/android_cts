@@ -14,28 +14,9 @@
  * limitations under the License.
  */
 
-package android.binder.cts;
+package com.android.cts.storageapp;
 
-import android.app.Service;
+import android.app.Activity;
 
-import android.content.Intent;
-
-import android.os.IBinder;
-
-import android.util.Log;
-
-public class JavaService extends Service {
-    private final String TAG = "JavaService";
-
-    // the configuration of these services is done in AndroidManifest.xml
-    public static class Local extends JavaService {}
-    public static class Remote extends JavaService {}
-
-    @Override
-    public IBinder onBind(Intent intent) {
-        Log.i(TAG, "Binding service");
-        return mBinder;
-    }
-
-    private final TestImpl mBinder = new TestImpl();
+public class UtilsActivity extends Activity {
 }

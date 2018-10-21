@@ -13,29 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+package android.app.usage.cts;
 
-package android.binder.cts;
-
-import android.app.Service;
-
-import android.content.Intent;
-
-import android.os.IBinder;
-
-import android.util.Log;
-
-public class JavaService extends Service {
-    private final String TAG = "JavaService";
-
-    // the configuration of these services is done in AndroidManifest.xml
-    public static class Local extends JavaService {}
-    public static class Remote extends JavaService {}
-
-    @Override
-    public IBinder onBind(Intent intent) {
-        Log.i(TAG, "Binding service");
-        return mBinder;
-    }
-
-    private final TestImpl mBinder = new TestImpl();
+public class ActivityTransitionActivity2 extends ActivityTransitionActivity {
 }

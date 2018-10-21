@@ -29,14 +29,14 @@
 
 namespace {
 
-jboolean validatePixelValues(JNIEnv* env, jboolean setPreTransform) {
+jboolean validatePixelValues(JNIEnv* env, jboolean setPreTransform, jint preTransformHint) {
     jclass clazz = env->FindClass("android/graphics/cts/VulkanPreTransformTest");
-    jmethodID mid = env->GetStaticMethodID(clazz, "validatePixelValuesAfterRotation", "(Z)Z");
+    jmethodID mid = env->GetStaticMethodID(clazz, "validatePixelValuesAfterRotation", "(ZI)Z");
     if (mid == 0) {
         ALOGE("Failed to find method ID");
         return false;
     }
-    return env->CallStaticBooleanMethod(clazz, mid, setPreTransform);
+    return env->CallStaticBooleanMethod(clazz, mid, setPreTransform, preTransformHint);
 }
 
 void createNativeTest(JNIEnv* env, jclass /*clazz*/, jobject jAssetManager, jobject jSurface,
@@ -46,6 +46,7 @@ void createNativeTest(JNIEnv* env, jclass /*clazz*/, jobject jAssetManager, jobj
     ASSERT(jSurface, "jSurface is NULL");
 
     DeviceInfo deviceInfo;
+    int preTransformHint;
     VkTestResult ret = deviceInfo.init(env, jSurface);
     if (ret == VK_TEST_PHYSICAL_DEVICE_NOT_EXISTED) {
         ALOGD("Hardware not supported for this test");
@@ -54,7 +55,7 @@ void createNativeTest(JNIEnv* env, jclass /*clazz*/, jobject jAssetManager, jobj
     ASSERT(ret == VK_TEST_SUCCESS, "Failed to initialize Vulkan device");
 
     SwapchainInfo swapchainInfo(&deviceInfo);
-    ASSERT(swapchainInfo.init(setPreTransform) == VK_TEST_SUCCESS,
+    ASSERT(swapchainInfo.init(setPreTransform, &preTransformHint) == VK_TEST_SUCCESS,
            "Failed to initialize Vulkan swapchain");
 
     Renderer renderer(&deviceInfo, &swapchainInfo);
@@ -65,7 +66,7 @@ void createNativeTest(JNIEnv* env, jclass /*clazz*/, jobject jAssetManager, jobj
         ASSERT(renderer.drawFrame() == VK_TEST_SUCCESS, "Failed to draw frame");
     }
 
-    ASSERT(validatePixelValues(env, setPreTransform), "Not properly rotated");
+    ASSERT(validatePixelValues(env, setPreTransform, preTransformHint), "Not properly rotated");
 }
 
 const std::array<JNINativeMethod, 1> JNI_METHODS = {{
