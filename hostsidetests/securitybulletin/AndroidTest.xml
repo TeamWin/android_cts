@@ -36,12 +36,6 @@
         <option name="push" value="CVE-2016-8434->/data/local/tmp/CVE-2016-8434" />
         <option name="push" value="CVE-2016-2504->/data/local/tmp/CVE-2016-2504" />
 
-        <!-- Media Codec Tests -->
-        <!-- Please add tests for media codecs below to avoid merge conflict -->
-        <option name="push" value="testhevcdec->/data/local/tmp/testhevcdec" />
-        <option name="push" value="testavcdec->/data/local/tmp/testavcdec" />
-        <option name="push" value="testmpeg2dec->/data/local/tmp/testmpeg2dec" />
-
         <!--__________________-->
         <!-- Bulletin 2015-12 -->
         <!-- Please add tests solely from this bulletin below to avoid merge conflict -->
