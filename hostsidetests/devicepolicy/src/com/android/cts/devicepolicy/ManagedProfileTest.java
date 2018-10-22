@@ -672,8 +672,6 @@ public class ManagedProfileTest extends BaseDevicePolicyTest {
         if (shouldSucceed) {
             runDeviceTestsAsUser(INTENT_SENDER_PKG, ".CopyPasteTest",
                     "testCanReadAcrossProfiles", userId);
-            runDeviceTestsAsUser(INTENT_SENDER_PKG, ".CopyPasteTest",
-                    "testIsNotified", userId);
         } else {
             runDeviceTestsAsUser(INTENT_SENDER_PKG, ".CopyPasteTest",
                     "testCannotReadAcrossProfiles", userId);
