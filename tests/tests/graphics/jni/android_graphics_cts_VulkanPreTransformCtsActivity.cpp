@@ -33,14 +33,14 @@
 
 namespace {
 
-jboolean validatePixelValues(JNIEnv* env, jboolean setPreTransform) {
+jboolean validatePixelValues(JNIEnv* env, jboolean setPreTransform, jint preTransformHint) {
     jclass clazz = env->FindClass("android/graphics/cts/VulkanPreTransformTest");
-    jmethodID mid = env->GetStaticMethodID(clazz, "validatePixelValuesAfterRotation", "(Z)Z");
+    jmethodID mid = env->GetStaticMethodID(clazz, "validatePixelValuesAfterRotation", "(ZI)Z");
     if (mid == 0) {
         ALOGE("Failed to find method ID");
         return false;
     }
-    return env->CallStaticBooleanMethod(clazz, mid, setPreTransform);
+    return env->CallStaticBooleanMethod(clazz, mid, setPreTransform, preTransformHint);
 }
 
 void createNativeTest(JNIEnv* env, jclass /*clazz*/, jobject jAssetManager, jobject jSurface,
@@ -50,6 +50,7 @@ void createNativeTest(JNIEnv* env, jclass /*clazz*/, jobject jAssetManager, jobj
     ASSERT(jSurface, "jSurface is NULL");
 
     DeviceInfo deviceInfo;
+    int preTransformHint;
     int ret = deviceInfo.init(env, jSurface);
     ASSERT(ret >= 0, "Failed to initialize Vulkan device");
     if (ret > 0) {
@@ -58,7 +59,7 @@ void createNativeTest(JNIEnv* env, jclass /*clazz*/, jobject jAssetManager, jobj
     }
 
     SwapchainInfo swapchainInfo(&deviceInfo);
-    ASSERT(!swapchainInfo.init(setPreTransform), "Failed to initialize Vulkan swapchain");
+    ASSERT(!swapchainInfo.init(setPreTransform, &preTransformHint), "Failed to initialize Vulkan swapchain");
 
     Renderer renderer(&deviceInfo, &swapchainInfo);
     ASSERT(!renderer.init(env, jAssetManager), "Failed to initialize Vulkan renderer");
@@ -67,7 +68,7 @@ void createNativeTest(JNIEnv* env, jclass /*clazz*/, jobject jAssetManager, jobj
         ASSERT(!renderer.drawFrame(), "Failed to draw frame");
     }
 
-    ASSERT(validatePixelValues(env, setPreTransform), "Not properly rotated");
+    ASSERT(validatePixelValues(env, setPreTransform, preTransformHint), "Not properly rotated");
 }
 
 const std::array<JNINativeMethod, 1> JNI_METHODS = {{
