@@ -31,4 +31,24 @@ public class PowerManagerServicePermissionTest extends AndroidTestCase {
             // Expected Exception
         }
     }
+
+    public void testGetPowerSaverMode_requiresPermissions() {
+        try {
+            PowerManager manager = getContext().getSystemService(PowerManager.class);
+            manager.getPowerSaveMode();
+            fail("Getting the current power saver mode requires the POWER_SAVER permission");
+        } catch (SecurityException e) {
+            // Expected Exception
+        }
+    }
+
+    public void testsetDynamicPowerSavings_requiresPermissions() {
+        try {
+            PowerManager manager = getContext().getSystemService(PowerManager.class);
+            manager.setDynamicPowerSavings(true, 0);
+            fail("Updating the dynamic power savings state requires the POWER_SAVER permission");
+        } catch (SecurityException e) {
+            // Expected Exception
+        }
+    }
 }
