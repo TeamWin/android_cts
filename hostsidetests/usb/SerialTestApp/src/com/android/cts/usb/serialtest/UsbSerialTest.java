@@ -20,6 +20,8 @@ import android.os.Build;
 import android.support.test.runner.AndroidJUnit4;
 import android.util.Log;
 
+import com.android.compatibility.common.util.ShellIdentityUtils;
+
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
@@ -32,7 +34,9 @@ public class UsbSerialTest {
 
     @Test
     public void logSerial() {
-        Log.e(TAG, Build.getSerial());
+        // Since device identifiers are no longer accessible to third party apps invoke the
+        // Build#getSerial method with the shell identity's permissions.
+        Log.e(TAG, ShellIdentityUtils.invokeStaticMethodWithShellPermissions(Build::getSerial));
     }
 
     @Test(expected = SecurityException.class)
