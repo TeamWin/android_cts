@@ -81,6 +81,8 @@ public class ByodFlowTestActivity extends DialogTestListActivity {
     private DialogTestListItem mAppLinkingTest;
     private DialogTestListItem mDisableNonMarketTest;
     private DialogTestListItem mEnableNonMarketTest;
+    private DialogTestListItem mDisableNonMarketWorkProfileDeviceWideTest;
+    private DialogTestListItem mEnableNonMarketWorkProfileDeviceWideTest;
     private DialogTestListItem mWorkNotificationBadgedTest;
     private DialogTestListItem mWorkStatusBarIconTest;
     private DialogTestListItem mWorkStatusBarToastTest;
@@ -295,6 +297,20 @@ public class ByodFlowTestActivity extends DialogTestListActivity {
                 new Intent(ByodHelperActivity.ACTION_INSTALL_APK)
                         .putExtra(ByodHelperActivity.EXTRA_ALLOW_NON_MARKET_APPS, true));
 
+        mDisableNonMarketWorkProfileDeviceWideTest = new DialogTestListItem(this,
+            R.string.provisioning_byod_nonmarket_deny_global,
+            "BYOD_DisableNonMarketDeviceWideTest",
+            R.string.provisioning_byod_nonmarket_deny_global_info,
+            new Intent(ByodHelperActivity.ACTION_INSTALL_APK_WORK_PROFILE_GLOBAL_RESTRICTION)
+                .putExtra(ByodHelperActivity.EXTRA_ALLOW_NON_MARKET_APPS_DEVICE_WIDE, false));
+
+        mEnableNonMarketWorkProfileDeviceWideTest = new DialogTestListItem(this,
+            R.string.provisioning_byod_nonmarket_allow_global,
+            "BYOD_EnableNonMarketDeviceWideTest",
+            R.string.provisioning_byod_nonmarket_allow_global_info,
+            new Intent(ByodHelperActivity.ACTION_INSTALL_APK_WORK_PROFILE_GLOBAL_RESTRICTION)
+                .putExtra(ByodHelperActivity.EXTRA_ALLOW_NON_MARKET_APPS_DEVICE_WIDE, true));
+
         mProfileAccountVisibleTest = new DialogTestListItem(this,
                 R.string.provisioning_byod_profile_visible,
                 "BYOD_ProfileAccountVisibleTest",
@@ -499,6 +515,8 @@ public class ByodFlowTestActivity extends DialogTestListActivity {
         */
         adapter.add(mDisableNonMarketTest);
         adapter.add(mEnableNonMarketTest);
+        adapter.add(mDisableNonMarketWorkProfileDeviceWideTest);
+        adapter.add(mEnableNonMarketWorkProfileDeviceWideTest);
         adapter.add(mIntentFiltersTest);
         adapter.add(mPermissionLockdownTest);
         adapter.add(mKeyguardDisabledFeaturesTest);

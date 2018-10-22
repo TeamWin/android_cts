@@ -1913,6 +1913,23 @@ You should be prompted to select credentials; choose the ones you just installed
         2. Verify that the installation of the package is refused.
     </string>
 
+    <string name="provisioning_byod_nonmarket_allow_global">Enable non-market apps (global restriction)</string>
+    <string name="provisioning_byod_nonmarket_allow_global_info">
+        This test verifies that non-market apps can be installed if permitted by device-wide block.\n
+        1. A package installation UI should appear.\n
+        2. If \'Cts Verifier\' is not allowed to install apps, a warning dialog will appear
+        blocking the install. In this case go to step 3, else skip to step 4.\n
+        3. Allow \'Cts Verifier\' to install apps. Return to package installer.\n
+        4. Accept the installation and verify that it succeeds (no error message is displayed).
+    </string>
+
+    <string name="provisioning_byod_nonmarket_deny_global">Disable non-market apps (global restriction)</string>
+    <string name="provisioning_byod_nonmarket_deny_global_info">
+        This test verifies that non-market apps cannot be installed unless permitted by device-wide block.\n
+        1. A package installation UI should appear.\n
+        2. Verify that the installation of the package is refused.
+    </string>
+
     <string name="provisioning_byod_capture_image_support">Camera support cross profile image capture</string>
     <string name="provisioning_byod_capture_image_support_info">
         This test verifies that images can be captured from the managed profile using the primary profile camera.\n
@@ -3377,6 +3394,8 @@ You should be prompted to select credentials; choose the ones you just installed
     <string name="disallow_fun_action">Opening android easter egg game by tapping repeatedly on the \'Android version\' option</string>
     <string name="disallow_install_unknown_sources">Disallow install unknown sources</string>
     <string name="disallow_install_unknown_sources_action">Enabling \'Cts Verifier\' to install apps</string>
+    <string name="disallow_install_unknown_sources_globally">Disallow install unknown sources globally</string>
+    <string name="disallow_install_unknown_sources_globally_action">Enabling \'Cts Verifier\' to install apps device-wide</string>
     <string name="disallow_modify_accounts">Disallow modify accounts</string>
     <string name="disallow_modify_accounts_action">Adding an account, and also removing an account (after you have previously added one)</string>
     <string name="disallow_network_reset">Disallow network reset</string>

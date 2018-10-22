@@ -17,6 +17,7 @@
 package com.android.cts.verifier.managedprovisioning;
 
 import static android.os.UserManager.DISALLOW_INSTALL_UNKNOWN_SOURCES;
+import static android.os.UserManager.DISALLOW_INSTALL_UNKNOWN_SOURCES_GLOBALLY;
 
 import android.app.KeyguardManager;
 import android.app.Notification;
@@ -95,6 +96,8 @@ public class ByodHelperActivity extends LocationListenerActivity
     // Primary -> managed intent: set unknown sources restriction and install package
     public static final String ACTION_INSTALL_APK = "com.android.cts.verifier.managedprovisioning.BYOD_INSTALL_APK";
     public static final String EXTRA_ALLOW_NON_MARKET_APPS = "allow_non_market_apps";
+    public static final String ACTION_INSTALL_APK_WORK_PROFILE_GLOBAL_RESTRICTION = "com.android.cts.verifier.managedprovisioning.BYOD_INSTALL_APK_WORK_PROFILE_GLOBAL_RESTRICTION";
+    public static final String EXTRA_ALLOW_NON_MARKET_APPS_DEVICE_WIDE = "allow_non_market_apps_device_wide";
 
     // Primary -> managed intent: check if the required cross profile intent filters are set.
     public static final String ACTION_CHECK_INTENT_FILTERS =
@@ -242,34 +245,22 @@ public class ByodHelperActivity extends LocationListenerActivity
             setResult(RESULT_OK, response);
         } else if (action.equals(ACTION_INSTALL_APK)) {
             boolean allowNonMarket = intent.getBooleanExtra(EXTRA_ALLOW_NON_MARKET_APPS, false);
-            boolean wasAllowed = !isUnknownSourcesRestrictionSet();
-
-            if (wasAllowed != allowNonMarket) {
-                setUnknownSourcesRestriction(!allowNonMarket);
-                mOriginalRestrictions.putBoolean(DISALLOW_INSTALL_UNKNOWN_SOURCES, !wasAllowed);
-            }
-            // Start the installer activity until this activity is rendered to workaround a glitch.
-            mMainThreadHandler.post(() -> {
-                final String pathToApk = intent.getStringExtra(EXTRA_PARAMETER_1);
-                final Uri uri;
-                if (pathToApk == null) {
-                    // By default we reinstall ourself, e.g. request to install a non-market app
-                    uri = Uri.parse("package:" + getPackageName());
-                } else {
-                    uri = FileProvider.getUriForFile(
-                            this, FILE_PROVIDER_AUTHORITY, new File(pathToApk));
-                }
-                final Intent installIntent = new Intent(Intent.ACTION_INSTALL_PACKAGE)
-                        .setData(uri)
-                        .putExtra(Intent.EXTRA_NOT_UNKNOWN_SOURCE, true)
-                        .addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
-                        .putExtra(Intent.EXTRA_RETURN_RESULT, true);
-                startActivityForResult(installIntent, REQUEST_INSTALL_PACKAGE);
-            });
-            // Not yet ready to finish- wait until the result comes back
+            setRestrictionAndSaveOriginal(DISALLOW_INSTALL_UNKNOWN_SOURCES, !allowNonMarket);
+            startInstallerActivity(intent.getStringExtra(EXTRA_PARAMETER_1));
+            // Not yet ready to finish - wait until the result comes back
             return;
-            // Queried by CtsVerifier in the primary side using startActivityForResult.
+        } else if (action.equals(ACTION_INSTALL_APK_WORK_PROFILE_GLOBAL_RESTRICTION)) {
+            // Save original unknown sources setting to be restored later and clear it for now.
+            setRestrictionAndSaveOriginal(DISALLOW_INSTALL_UNKNOWN_SOURCES, false);
+            boolean allowNonMarketGlobal = intent.getBooleanExtra(
+                    EXTRA_ALLOW_NON_MARKET_APPS_DEVICE_WIDE, false);
+            setRestrictionAndSaveOriginal(DISALLOW_INSTALL_UNKNOWN_SOURCES_GLOBALLY,
+                    !allowNonMarketGlobal);
+            startInstallerActivity(intent.getStringExtra(EXTRA_PARAMETER_1));
+            // Not yet ready to finish - wait until the result comes back
+            return;
         } else if (action.equals(ACTION_CHECK_INTENT_FILTERS)) {
+            // Queried by CtsVerifier in the primary side using startActivityForResult.
             final boolean intentFiltersSetForManagedIntents =
                     new IntentFiltersTestHelper(this).checkCrossProfileIntentFilters(
                             IntentFiltersTestHelper.FLAG_INTENTS_FROM_MANAGED);
@@ -397,6 +388,26 @@ public class ByodHelperActivity extends LocationListenerActivity
         finish();
     }
 
+    private void startInstallerActivity(String pathToApk) {
+        // Start the installer activity until this activity is rendered to workaround a glitch.
+        mMainThreadHandler.post(() -> {
+            final Uri uri;
+            if (pathToApk == null) {
+                // By default we reinstall ourselves, e.g. request to install a non-market app
+                uri = Uri.parse("package:" + getPackageName());
+            } else {
+                uri = FileProvider.getUriForFile(
+                    this, FILE_PROVIDER_AUTHORITY, new File(pathToApk));
+            }
+            final Intent installIntent = new Intent(Intent.ACTION_INSTALL_PACKAGE)
+                .setData(uri)
+                .putExtra(Intent.EXTRA_NOT_UNKNOWN_SOURCE, true)
+                .addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
+                .putExtra(Intent.EXTRA_RETURN_RESULT, true);
+            startActivityForResult(installIntent, REQUEST_INSTALL_PACKAGE);
+        });
+    }
+
     @Override
     protected void onSaveInstanceState(final Bundle savedState) {
         super.onSaveInstanceState(savedState);
@@ -409,12 +420,9 @@ public class ByodHelperActivity extends LocationListenerActivity
         switch (requestCode) {
             case REQUEST_INSTALL_PACKAGE: {
                 Log.w(TAG, "Received REQUEST_INSTALL_PACKAGE, resultCode = " + resultCode);
-                if (mOriginalRestrictions.containsKey(DISALLOW_INSTALL_UNKNOWN_SOURCES)) {
-                    // Restore original setting
-                    setUnknownSourcesRestriction(
-                            mOriginalRestrictions.getBoolean(DISALLOW_INSTALL_UNKNOWN_SOURCES));
-                    mOriginalRestrictions.remove(DISALLOW_INSTALL_UNKNOWN_SOURCES);
-                }
+                // Restore original settings
+                restoreOriginalRestriction(DISALLOW_INSTALL_UNKNOWN_SOURCES);
+                restoreOriginalRestriction(DISALLOW_INSTALL_UNKNOWN_SOURCES_GLOBALLY);
                 finish();
                 break;
             }
@@ -506,20 +514,18 @@ public class ByodHelperActivity extends LocationListenerActivity
                 mDevicePolicyManager.isProfileOwnerApp(mAdminReceiverComponent.getPackageName());
     }
 
-    private boolean isUnknownSourcesRestrictionSet() {
-        // We only care about restrictions set by Cts Verifier. In other cases, we cannot modify
-        // it and the test will fail anyway.
+    private boolean isRestrictionSet(String restriction) {
         Bundle restrictions = mDevicePolicyManager.getUserRestrictions(mAdminReceiverComponent);
-        return restrictions.getBoolean(DISALLOW_INSTALL_UNKNOWN_SOURCES, false);
+        // This defaults to false if there is no value already there. If a restriction was true,
+        // the restriction would already be set.
+        return restrictions.getBoolean(restriction, false);
     }
 
-    private void setUnknownSourcesRestriction(boolean enabled) {
+    private void setRestriction(String restriction, boolean enabled) {
         if (enabled) {
-            mDevicePolicyManager.addUserRestriction(mAdminReceiverComponent,
-                    DISALLOW_INSTALL_UNKNOWN_SOURCES);
+            mDevicePolicyManager.addUserRestriction(mAdminReceiverComponent, restriction);
         } else {
-            mDevicePolicyManager.clearUserRestriction(mAdminReceiverComponent,
-                    DISALLOW_INSTALL_UNKNOWN_SOURCES);
+            mDevicePolicyManager.clearUserRestriction(mAdminReceiverComponent, restriction);
         }
     }
 
@@ -534,6 +540,22 @@ public class ByodHelperActivity extends LocationListenerActivity
         Intent chooser = Intent.createChooser(toSend,
                 getResources().getString(R.string.provisioning_cross_profile_chooser));
         startActivity(chooser);
+    }
+
+    private void setRestrictionAndSaveOriginal(String restriction, boolean enabled) {
+        // Saves original restriction values in mOriginalRestrictions before changing its value.
+        boolean original = isRestrictionSet(restriction);
+        if (enabled != original) {
+            setRestriction(restriction, enabled);
+            mOriginalRestrictions.putBoolean(restriction, original);
+        }
+    }
+
+    private void restoreOriginalRestriction(String restriction) {
+        if (mOriginalRestrictions.containsKey(restriction)) {
+            setRestriction(restriction, mOriginalRestrictions.getBoolean(restriction));
+            mOriginalRestrictions.remove(restriction);
+        }
     }
 
     @Override

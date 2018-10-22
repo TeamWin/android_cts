@@ -144,6 +144,7 @@ public class DeviceAdminTestReceiver extends DeviceAdminReceiver {
         filter.addAction(ByodHelperActivity.ACTION_REMOVE_MANAGED_PROFILE);
         filter.addAction(ByodHelperActivity.ACTION_CHECK_DISK_ENCRYPTION);
         filter.addAction(ByodHelperActivity.ACTION_INSTALL_APK);
+        filter.addAction(ByodHelperActivity.ACTION_INSTALL_APK_WORK_PROFILE_GLOBAL_RESTRICTION);
         filter.addAction(ByodHelperActivity.ACTION_CHECK_INTENT_FILTERS);
         filter.addAction(ByodHelperActivity.ACTION_CAPTURE_AND_CHECK_IMAGE);
         filter.addAction(ByodHelperActivity.ACTION_CAPTURE_AND_CHECK_VIDEO_WITH_EXTRA_OUTPUT);
