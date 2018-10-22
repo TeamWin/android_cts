@@ -2084,14 +2084,16 @@ You should be prompted to select credentials; choose the ones you just installed
         Verify recents are not redacted when unlocked.
     </string>
     <string name="provisioning_byod_recents_verify_not_redacted_instruction">
-        1) Follow the instructions on-screen to remove the work password.\n
-        2) Open Recents.\n
-        3) Confirm that this "CTS Verifier" activity is shown in Recents.\n
-        4) Confirm that the contents of the activity <b>are not</b> hidden.\n
-        5) Return to this page and pass the test.
+        1) Press the Go button to go to security settings.\n
+        2) Make work profile use one lock with personal profile.\n
+        3) Open Recents.\n
+        4) Confirm that this "CTS Verifier" activity is shown in Recents.\n
+        5) Confirm that the contents of the activity <b>are not</b> hidden.\n
+        6) Return to this page and pass the test.
     </string>
     <string name="provisioning_byod_recents_remove_password">
-        The work profile still has a separate password. Please remove this before continuing.
+        The work profile still has a separate password. Please make it use one lock with the
+        personal profile.
     </string>
 
     <string name="provisioning_byod_keychain">KeyChain test</string>
