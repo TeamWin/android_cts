@@ -114,7 +114,7 @@ public class SmsManagerTest extends InstrumentationTestCase {
     private static boolean mReceivedDataSms;
     private static String mReceivedText;
 
-    private static final int TIME_OUT = 1000 * 60 * 5;
+    private static final int TIME_OUT = 1000 * 60 * 4;
     private static final int NO_CALLS_TIMEOUT_MILLIS = 1000; // 1 second
 
     @Override
@@ -323,7 +323,8 @@ public class SmsManagerTest extends InstrumentationTestCase {
         }
     }
 
-    public void testContentProviderAccessRestriction() throws Exception {
+    //TODO(eugenesusla) re-enable once b/117885969 is addressed
+    public void disabledTestContentProviderAccessRestriction() throws Exception {
         Uri dummySmsUri = null;
         Context context = getInstrumentation().getContext();
         ContentResolver contentResolver = context.getContentResolver();
