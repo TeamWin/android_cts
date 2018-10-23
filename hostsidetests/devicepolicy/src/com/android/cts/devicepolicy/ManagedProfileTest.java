@@ -672,8 +672,6 @@ public class ManagedProfileTest extends BaseDevicePolicyTest {
         if (shouldSucceed) {
             runDeviceTestsAsUser(INTENT_SENDER_PKG, ".CopyPasteTest",
                     "testCanReadAcrossProfiles", userId);
-            runDeviceTestsAsUser(INTENT_SENDER_PKG, ".CopyPasteTest",
-                    "testIsNotified", userId);
         } else {
             runDeviceTestsAsUser(INTENT_SENDER_PKG, ".CopyPasteTest",
                     "testCannotReadAcrossProfiles", userId);
@@ -752,38 +750,11 @@ public class ManagedProfileTest extends BaseDevicePolicyTest {
             return;
         }
         try {
-            setDeviceAdmin(MANAGED_PROFILE_PKG + "/.PrimaryUserDeviceAdmin", mParentUserId);
-
-            // Disable managed profile camera.
             runDeviceTestsAsUser(MANAGED_PROFILE_PKG, ".CameraPolicyTest",
                     "testDisableCameraInManagedProfile",
                     mProfileUserId);
             runDeviceTestsAsUser(MANAGED_PROFILE_PKG, ".CameraPolicyTest",
-                    "testIsCameraEnabledInPrimaryProfile",
-                    mParentUserId);
-
-            // Enable managed profile camera.
-            runDeviceTestsAsUser(MANAGED_PROFILE_PKG, ".CameraPolicyTest",
                     "testEnableCameraInManagedProfile",
-                    mProfileUserId);
-            runDeviceTestsAsUser(MANAGED_PROFILE_PKG, ".CameraPolicyTest",
-                    "testIsCameraEnabledInPrimaryProfile",
-                    mParentUserId);
-
-            // Disable primary profile camera.
-            runDeviceTestsAsUser(MANAGED_PROFILE_PKG, ".CameraPolicyTest",
-                    "testDisableCameraInPrimaryProfile",
-                    mParentUserId);
-            runDeviceTestsAsUser(MANAGED_PROFILE_PKG, ".CameraPolicyTest",
-                    "testIsCameraEnabledInManagedProfile",
-                    mProfileUserId);
-
-            // Enable primary profile camera.
-            runDeviceTestsAsUser(MANAGED_PROFILE_PKG, ".CameraPolicyTest",
-                    "testEnableCameraInPrimaryProfile",
-                    mParentUserId);
-            runDeviceTestsAsUser(MANAGED_PROFILE_PKG, ".CameraPolicyTest",
-                    "testIsCameraEnabledInManagedProfile",
                     mProfileUserId);
         } finally {
             final String adminHelperClass = ".PrimaryUserAdminHelper";
