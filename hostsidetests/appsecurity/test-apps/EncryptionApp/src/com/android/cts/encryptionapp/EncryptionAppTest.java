@@ -19,6 +19,7 @@ package com.android.cts.encryptionapp;
 import static android.content.pm.PackageManager.MATCH_DIRECT_BOOT_AWARE;
 import static android.content.pm.PackageManager.MATCH_DIRECT_BOOT_UNAWARE;
 
+import android.app.KeyguardManager;
 import android.content.BroadcastReceiver;
 import android.content.ComponentName;
 import android.content.Context;
@@ -56,6 +57,7 @@ public class EncryptionAppTest extends InstrumentationTestCase {
     private Context mCe;
     private Context mDe;
     private PackageManager mPm;
+    private KeyguardManager mKm;
 
     private UiDevice mDevice;
     private AwareActivity mActivity;
@@ -67,6 +69,7 @@ public class EncryptionAppTest extends InstrumentationTestCase {
         mCe = getInstrumentation().getContext();
         mDe = mCe.createDeviceProtectedStorageContext();
         mPm = mCe.getPackageManager();
+        mKm = (KeyguardManager) mCe.getSystemService(Context.KEYGUARD_SERVICE);
 
         mDevice = UiDevice.getInstance(getInstrumentation());
         assertNotNull(mDevice);
@@ -100,7 +103,9 @@ public class EncryptionAppTest extends InstrumentationTestCase {
 
     public void testTearDown() throws Exception {
         // Just in case, always try tearing down keyguard
-        dismissKeyguard();
+        if (mKm.isKeyguardLocked()) {
+            dismissKeyguard();
+        }
 
         mActivity = launchActivity(getInstrumentation().getTargetContext().getPackageName(),
                 AwareActivity.class, null);
