@@ -54,6 +54,7 @@ import android.support.test.filters.SmallTest;
 import android.platform.test.annotations.RequiresDevice;
 import android.util.Log;
 import android.util.Pair;
+import android.webkit.cts.CtsTestServer;
 
 import com.android.compatibility.common.util.MediaUtils;
 
@@ -62,8 +63,14 @@ import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
+import java.net.CookieHandler;
+import java.net.CookieManager;
+import java.net.CookieStore;
+import java.net.HttpCookie;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
+import java.util.Map;
 import java.util.StringTokenizer;
 import java.util.UUID;
 import java.util.Vector;
@@ -75,6 +82,8 @@ import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import junit.framework.AssertionFailedError;
+import org.apache.http.Header;
+import org.apache.http.HttpRequest;
 
 /**
  * Tests for the MediaPlayer2 API and local video/audio playback.
@@ -728,6 +737,36 @@ public class MediaPlayer2Test extends MediaPlayer2TestBase {
             return;
         }
         playVideoTest(R.raw.testvideo, 352, 288);
+    }
+
+    public void testPlayVideoWithCookies() throws Exception {
+        if (IGNORE_TESTS) {
+            return;
+        }
+
+        String cookieName = "foo";
+        String cookieValue = "bar";
+        HttpCookie cookie = new HttpCookie(cookieName, cookieValue);
+        cookie.setDomain(".local");
+
+        CtsTestServer foo = new CtsTestServer(mContext);
+        String video = "video_decode_accuracy_and_capability-h264_270x480_30fps.mp4";
+        Uri uri = Uri.parse(foo.getAssetUrl(video));
+        List<HttpCookie> cookies = Collections.singletonList(cookie);
+        Map<String, String> headers = Collections.<String, String>emptyMap();
+        playVideoWithRetries(uri, headers, cookies, 270, 480, 0);
+
+        HttpRequest req = foo.getLastRequest(video);
+        for (Header h : req.getAllHeaders()) {
+            String v = h.getValue();
+            String regex = ".*" + cookie.getName() + ".*" + cookie.getValue() + ".*";
+            Log.v(LOG_TAG, String.format("testCookies: header %s regex %s", h, regex));
+            if (v.matches(regex)) {
+                return;
+            }
+        }
+
+        fail("missing cookie: " + cookie);
     }
 
     /**
