@@ -29,4 +29,13 @@ public class Poc18_05 extends SecurityTestCase {
     public void testPocCVE_2017_13315() throws Exception {
         LaunchSomeWhere.launchSomeWhere("CVE_2017_13315", getDevice());
     }
+
+    /**
+     * b/73085795
+     * Does not require root but must be a hostside test to avoid a race condition
+     */
+    @SecurityTest
+    public void testPocCVE_2017_13312() throws Exception {
+        LaunchSomeWhere.launchSomeWhere("CVE_2017_13312", getDevice());
+    }
 }
