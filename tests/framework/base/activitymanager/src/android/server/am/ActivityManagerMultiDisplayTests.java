@@ -72,6 +72,7 @@ import android.content.ComponentName;
 import android.content.Intent;
 import android.content.res.Configuration;
 import android.graphics.Rect;
+import android.hardware.display.DisplayManager;
 import android.os.Bundle;
 import android.os.SystemClock;
 import android.platform.test.annotations.Presubmit;
@@ -82,6 +83,7 @@ import android.server.am.CommandSession.SizeInfo;
 import android.support.test.InstrumentationRegistry;
 import android.support.test.filters.FlakyTest;
 import android.util.SparseArray;
+import android.view.Display;
 import android.view.WindowManager;
 import android.view.inputmethod.InputMethodManager;
 import android.widget.EditText;
@@ -1871,8 +1873,8 @@ public class ActivityManagerMultiDisplayTests extends ActivityManagerDisplayTest
                      new ImeSettings.Builder())) {
 
             // Create a virtual display and launch an activity on it.
-            final ActivityDisplay newDisplay =
-                    virtualDisplaySession.setPublicDisplay(true).createDisplay();
+            final ActivityDisplay newDisplay = virtualDisplaySession.setPublicDisplay(true)
+                    .setShowSystemDecorations(true).createDisplay();
             imeTestActivitySession.launchTestActivityOnDisplaySync(ImeTestActivity.class,
                     newDisplay.mId);
 
@@ -1884,11 +1886,11 @@ public class ActivityManagerMultiDisplayTests extends ActivityManagerDisplayTest
                     TIMEOUT_SOFT_INPUT);
 
             // Assert the IME is shown on the virtual display.
-            waitAndAssertImeWindowShownOnDisplay(newDisplay.mId);
+            mAmWmState.waitAndAssertImeWindowShownOnDisplay(newDisplay.mId);
 
             // Assert the configuration of the IME window is the same as the configuration of the
             // virtual display.
-            assertImeWindowAndDisplayConfiguration(getImeWindowState(), newDisplay);
+            assertImeWindowAndDisplayConfiguration(mAmWmState.getImeWindowState(), newDisplay);
 
             // Launch another activity on the default display.
             imeTestActivitySession2.launchTestActivityOnDisplaySync(ImeTestActivity2.class,
@@ -1901,11 +1903,11 @@ public class ActivityManagerMultiDisplayTests extends ActivityManagerDisplayTest
                     TIMEOUT_SOFT_INPUT);
 
             // Assert the IME is shown on the default display.
-            waitAndAssertImeWindowShownOnDisplay(DEFAULT_DISPLAY);
+            mAmWmState.waitAndAssertImeWindowShownOnDisplay(DEFAULT_DISPLAY);
 
             // Assert the configuration of the IME window is the same as the configuration of the
             // default display.
-            assertImeWindowAndDisplayConfiguration(getImeWindowState(),
+            assertImeWindowAndDisplayConfiguration(mAmWmState.getImeWindowState(),
                     mAmWmState.getAmState().getDisplay(DEFAULT_DISPLAY));
         }
     }
@@ -1960,6 +1962,47 @@ public class ActivityManagerMultiDisplayTests extends ActivityManagerDisplayTest
 
         // Check the surface size after task was reparented to default display.
         assertTopTaskSameSurfaceSizeWithDisplay(DEFAULT_DISPLAY);
+    }
+
+    /**
+     * Test that the IME should be shown in default display when target display does not support
+     * system decoration.
+     */
+    @Test
+    public void testImeShownInDefaultDisplayWhenNoSystemDecoration() throws Exception {
+        final long TIMEOUT_SOFT_INPUT = TimeUnit.SECONDS.toMillis(5);
+
+        try (final VirtualDisplaySession virtualDisplaySession  = new VirtualDisplaySession();
+             final TestActivitySession<ImeTestActivity>
+                     imeTestActivitySession = new TestActivitySession<>();
+             // Leverage MockImeSession to ensure at least a test Ime exists as default.
+             final MockImeSession mockImeSession = MockImeSession.create(
+                     mContext, InstrumentationRegistry.getInstrumentation().getUiAutomation(),
+                     new ImeSettings.Builder())) {
+
+            // Create a virtual display and pretend display does not support system decoration.
+            final ActivityDisplay newDisplay = virtualDisplaySession.setPublicDisplay(true)
+                    .setShowSystemDecorations(false).createDisplay();
+            // Verify the virtual display should not support system decoration.
+            final DisplayManager displayManager = InstrumentationRegistry.getTargetContext()
+                    .getSystemService(DisplayManager.class);
+            final Display display = displayManager.getDisplay(newDisplay.mId);
+            final boolean supportSystemDecoration =
+                    display != null && display.supportsSystemDecorations();
+            assertFalse("Display should not support system decoration", supportSystemDecoration);
+
+            // Launch Ime test activity in virtual display.
+            imeTestActivitySession.launchTestActivityOnDisplaySync(ImeTestActivity.class,
+                    newDisplay.mId);
+            // Make the activity to show soft input.
+            final ImeEventStream stream = mockImeSession.openEventStream();
+            imeTestActivitySession.runOnMainSyncAndWait(
+                    imeTestActivitySession.getActivity()::showSoftInput);
+            expectEvent(stream, event -> "showSoftInput".equals(event.getEventName()),
+                    TIMEOUT_SOFT_INPUT);
+
+            mAmWmState.waitAndAssertImeWindowShownOnDisplay(DEFAULT_DISPLAY);
+        }
     }
 
     private void assertTopTaskSameSurfaceSizeWithDisplay(int displayId) {
@@ -2070,16 +2113,6 @@ public class ActivityManagerMultiDisplayTests extends ActivityManagerDisplayTest
 
     public static class ImeTestActivity2 extends ImeTestActivity { }
 
-    void waitAndAssertImeWindowShownOnDisplay(int displayId) {
-        final WindowManagerState.WindowState imeWinState = mAmWmState.waitForValidProduct(
-                this::getImeWindowState, "IME window",
-                w -> w.isShown() && w.getDisplayId() == displayId);
-        assertNotNull("IME window must exist", imeWinState);
-        assertTrue("IME window must be shown", imeWinState.isShown());
-        assertEquals("IME window must be on the given display", displayId,
-                imeWinState.getDisplayId());
-    }
-
     void assertImeWindowAndDisplayConfiguration(
             WindowManagerState.WindowState imeWinState, ActivityDisplay display) {
         final Configuration configurationForIme = imeWinState.mMergedOverrideConfiguration;
@@ -2091,11 +2124,5 @@ public class ActivityManagerMultiDisplayTests extends ActivityManagerDisplayTest
 
         assertEquals("Display density not the same", displayDensityDpi, displayDensityDpiForIme);
         assertEquals("Display bounds not the same", displayBounds, displayBoundsForIme);
-    }
-
-    WindowManagerState.WindowState getImeWindowState() {
-        final WindowManagerState wmState = mAmWmState.getWmState();
-        wmState.computeState();
-        return wmState.getInputMethodWindowState();
     }
 }

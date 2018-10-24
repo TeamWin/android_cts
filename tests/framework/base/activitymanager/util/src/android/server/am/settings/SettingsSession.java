@@ -10,6 +10,7 @@ import android.util.Log;
 import com.android.compatibility.common.util.SystemUtil;
 
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 /**
@@ -108,13 +109,9 @@ public class SettingsSession<T> implements AutoCloseable {
                 Log.i(TAG, "close: uri=" + mUri + " value=" + mInitialValue);
             }
         } else {
-            try {
-                delete(mUri);
-                if (DEBUG) {
-                    Log.i(TAG, "close: uri=" + mUri + " deleted");
-                }
-            } catch (IllegalArgumentException e) {
-                Log.w(TAG, "Can't delete settings " + mUri, e);
+            delete(mUri);
+            if (DEBUG) {
+                Log.i(TAG, "close: uri=" + mUri + " deleted");
             }
         }
         if (DEBUG) {
@@ -134,10 +131,18 @@ public class SettingsSession<T> implements AutoCloseable {
         return getter.get(getContentResolver(), uri.getLastPathSegment());
     }
 
-    private static void delete(final Uri uri) throws IllegalArgumentException {
-        SystemUtil.runWithShellPermissionIdentity(() -> {
-            getContentResolver().delete(uri, null, null);
-        });
+    private static void delete(final Uri uri) {
+        final List<String> segments = uri.getPathSegments();
+        if (segments.size() != 2) {
+            Log.w(TAG, "Unsupported uri for deletion: " + uri, new Throwable());
+            return;
+        }
+        final String namespace = segments.get(0);
+        final String key = segments.get(1);
+        // SystemUtil.runWithShellPermissionIdentity (only applies to the permission checking in
+        // package manager and appops) does not change calling uid which is enforced in
+        // SettingsProvider for deletion, so it requires shell command to pass the restriction.
+        SystemUtil.runShellCommand("settings delete " + namespace + " " + key);
     }
 
     private static ContentResolver getContentResolver() {
