@@ -916,6 +916,22 @@ public class ActivityAndWindowManagersState {
         assertTrue(windowName + "is visible", getWmState().isWindowVisible(windowName));
     }
 
+    void waitAndAssertImeWindowShownOnDisplay(int displayId) {
+        final WindowManagerState.WindowState imeWinState = waitForValidProduct(
+                this::getImeWindowState, "IME window",
+                w -> w.isShown() && w.getDisplayId() == displayId);
+        assertNotNull("IME window must exist", imeWinState);
+        assertTrue("IME window must be shown", imeWinState.isShown());
+        assertEquals("IME window must be on the given display", displayId,
+                imeWinState.getDisplayId());
+    }
+
+    WindowManagerState.WindowState getImeWindowState() {
+        final WindowManagerState wmState = getWmState();
+        wmState.computeState();
+        return wmState.getInputMethodWindowState();
+    }
+
     boolean isScreenPortrait() {
         final int displayId = mAmState.getStandardStackByWindowingMode(
             WINDOWING_MODE_SPLIT_SCREEN_PRIMARY).mDisplayId;
