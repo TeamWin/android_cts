@@ -27,7 +27,6 @@
         <option name="push" value="CVE-2016-6734->/data/local/tmp/CVE-2016-6734" />
         <option name="push" value="CVE-2016-6735->/data/local/tmp/CVE-2016-6735" />
         <option name="push" value="CVE-2016-6736->/data/local/tmp/CVE-2016-6736" />
-        <option name="push" value="CVE-2016-8424->/data/local/tmp/CVE-2016-8424" />
         <option name="push" value="CVE-2016-8425->/data/local/tmp/CVE-2016-8425" />
         <option name="push" value="CVE-2016-8426->/data/local/tmp/CVE-2016-8426" />
         <option name="push" value="CVE-2016-8427->/data/local/tmp/CVE-2016-8427" />
@@ -49,6 +48,7 @@
         <!-- Bulletin 2016-05 -->
         <!-- Please add tests solely from this bulletin below to avoid merge conflict -->
         <option name="push" value="CVE-2016-2460->/data/local/tmp/CVE-2016-2460" />
+        <option name="push" value="CVE-2015-1805->/data/local/tmp/CVE-2015-1805" />
 
         <!--__________________-->
         <!-- Bulletin 2016-06 -->
@@ -174,6 +174,11 @@
         <option name="push" value="CVE-2018-9515->/data/local/tmp/CVE-2018-9515" />
 
         <option name="append-bitness" value="true" />
+    </target_preparer>
+
+    <target_preparer class="com.android.tradefed.targetprep.suite.SuiteApkInstaller">
+        <option name="cleanup-apks" value="true" />
+        <option name="test-file-name" value="CtsHostLaunchAnyWhereApp.apk" />
     </target_preparer>
 
     <target_preparer class="com.android.tradefed.targetprep.suite.SuiteApkInstaller">

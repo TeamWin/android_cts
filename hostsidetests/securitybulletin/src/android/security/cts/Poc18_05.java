@@ -19,24 +19,23 @@ package android.security.cts;
 import android.platform.test.annotations.SecurityTest;
 
 @SecurityTest
-public class Poc16_05 extends SecurityTestCase {
+public class Poc18_05 extends SecurityTestCase {
     /**
-     *  b/27555981
+     * b/70721937
+     * Does not require root but must be a hostside test to avoid a race
+     * condition
      */
     @SecurityTest
-    public void testPocCVE_2016_2460() throws Exception {
-        AdbUtils.runCommandLine("logcat -c" , getDevice());
-        AdbUtils.runPoc("CVE-2016-2460", getDevice(), 60);
-
-        String logcat =  AdbUtils.runCommandLine("logcat -d", getDevice());
-        assertNotMatches("[\\s\\n\\S]*IGraphicBufferProducer_Info is Leaked[\\s\\n\\S]*", logcat);
+    public void testPocCVE_2017_13315() throws Exception {
+        LaunchSomeWhere.launchSomeWhere("CVE_2017_13315", getDevice());
     }
 
     /**
-     *  b/27275324
+     * b/73085795
+     * Does not require root but must be a hostside test to avoid a race condition
      */
     @SecurityTest
-    public void testPocCVE_2015_1805() throws Exception {
-      AdbUtils.runPoc("CVE-2015-1805", getDevice(), 300);
+    public void testPocCVE_2017_13312() throws Exception {
+        LaunchSomeWhere.launchSomeWhere("CVE_2017_13312", getDevice());
     }
 }
