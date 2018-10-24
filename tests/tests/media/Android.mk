@@ -89,6 +89,8 @@ LOCAL_JAVA_LIBRARIES += \
 # Tag this module as a cts test artifact
 LOCAL_COMPATIBILITY_SUITE := cts vts general-tests cts_instant
 
+LOCAL_HOST_REQUIRED_MODULES := cts-dynamic-config
+
 include $(BUILD_CTS_PACKAGE)
 
 include $(call all-makefiles-under,$(LOCAL_PATH))
