@@ -27,7 +27,7 @@ java_test_host {
         "compatibility-host-util",
     ],
 
-    static_libs: ["vogarexpect"],
+    static_libs: ["vogarexpect-no-deps"],
 
     java_resource_dirs: ["resources"],
 
