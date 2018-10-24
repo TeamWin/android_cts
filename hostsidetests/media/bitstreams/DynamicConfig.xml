@@ -14,6 +14,9 @@
      limitations under the License.
 -->
 <dynamicConfig>
+  <entry key="remote_config_required">
+    <value>false</value>
+  </entry>
   <entry key="h264/yuv420/8bit/bp/bitrate/crowd_1280x720p24f300_5000kbps_bp.mp4">
     <value>mime=video/avc,size=7930107,width=1280,height=720,frame-rate=24,profile=1,level=512,bitrate=5073888,package=full</value>
   </entry>
