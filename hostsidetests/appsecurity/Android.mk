@@ -23,7 +23,7 @@ LOCAL_MODULE := CtsAppSecurityHostTestCases
 
 LOCAL_JAVA_LIBRARIES := cts-tradefed tradefed compatibility-host-util
 
-LOCAL_STATIC_JAVA_LIBRARIES := truth-host-prebuilt
+LOCAL_STATIC_JAVA_LIBRARIES := truth-prebuilt-jar
 
 LOCAL_JAVA_RESOURCE_DIRS := res
 
