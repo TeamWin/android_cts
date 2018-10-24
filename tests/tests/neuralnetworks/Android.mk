@@ -40,7 +40,7 @@ LOCAL_C_INCLUDES += frameworks/ml/nn/tools/test_generator/include
 
 LOCAL_SHARED_LIBRARIES := libandroid liblog libneuralnetworks
 
-LOCAL_STATIC_LIBRARIES := libgtest_ndk_c++ libgtest_main_ndk_c++
+LOCAL_STATIC_LIBRARIES := libgmock_ndk libgtest_ndk_c++ libgtest_main_ndk_c++
 
 LOCAL_CTS_TEST_PACKAGE := android.neuralnetworks
 
