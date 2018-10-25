@@ -26,7 +26,7 @@ public class AppUsageObserverTest extends BaseProfileOwnerTest {
 
     static final int OBSERVER_LIMIT = 1000;
 
-    public void testMinTimeLimit() throws Exception {
+    public void testAppUsageObserver_MinTimeLimit() throws Exception {
         final String[] packages = {"not.real.package.name"};
         final int obsId = 0;
         UsageStatsManager usm = mContext.getSystemService(UsageStatsManager.class);
@@ -46,6 +46,28 @@ public class AppUsageObserverTest extends BaseProfileOwnerTest {
         }
     }
 
+    public void testUsageSessionObserver_MinTimeLimit() throws Exception {
+        final String[] packages = {"not.real.package.name"};
+        final int obsId = 0;
+        UsageStatsManager usm = mContext.getSystemService(UsageStatsManager.class);
+
+        Intent intent = new Intent(Intent.ACTION_MAIN);
+        PendingIntent pendingIntent = PendingIntent.getActivity(
+                InstrumentationRegistry.getContext(),
+                1, intent, 0);
+
+        usm.registerUsageSessionObserver(obsId, packages, 60, TimeUnit.SECONDS, 10,
+                TimeUnit.SECONDS, pendingIntent, null);
+        usm.unregisterUsageSessionObserver(obsId);
+        try {
+            usm.registerUsageSessionObserver(obsId, packages, 59, TimeUnit.SECONDS, 10,
+                    TimeUnit.SECONDS, pendingIntent, null);
+            fail("Should have thrown an IllegalArgumentException");
+        } catch (IllegalArgumentException expected) {
+            // Do nothing. Exception is expected.
+        }
+    }
+
     public void testObserverLimit() throws Exception {
         final String[] packages = {"not.real.package.name"};
         UsageStatsManager usm = mContext.getSystemService(UsageStatsManager.class);
@@ -55,6 +77,7 @@ public class AppUsageObserverTest extends BaseProfileOwnerTest {
                 InstrumentationRegistry.getContext(),
                 1, intent, 0);
 
+        // Register too many AppUsageObservers
         for (int obsId = 0; obsId < OBSERVER_LIMIT; obsId++) {
             usm.registerAppUsageObserver(obsId, packages, 60, TimeUnit.MINUTES, pendingIntent);
         }
@@ -65,8 +88,26 @@ public class AppUsageObserverTest extends BaseProfileOwnerTest {
         } catch (IllegalStateException expected) {
             // Do nothing. Exception is expected.
         }
+
+        // Register too many UsageSessionObservers.
+        for (int obsId = 0; obsId < OBSERVER_LIMIT; obsId++) {
+            usm.registerUsageSessionObserver(obsId, packages, 60, TimeUnit.MINUTES, 10,
+                    TimeUnit.SECONDS, pendingIntent, null);
+        }
+        try {
+            usm.registerUsageSessionObserver(OBSERVER_LIMIT, packages, 60, TimeUnit.MINUTES, 10,
+                    TimeUnit.SECONDS, pendingIntent, null);
+            fail("Should have thrown an IllegalStateException");
+        } catch (IllegalStateException expected) {
+            // Do nothing. Exception is expected.
+        }
+
         for (int obsId = 0; obsId < OBSERVER_LIMIT; obsId++) {
             usm.unregisterAppUsageObserver(obsId);
+        }
+
+        for (int obsId = 0; obsId < OBSERVER_LIMIT; obsId++) {
+            usm.unregisterUsageSessionObserver(obsId);
         }
     }
 }
