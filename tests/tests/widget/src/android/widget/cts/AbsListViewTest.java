@@ -763,7 +763,7 @@ public class AbsListViewTest {
         mActivityRule.runOnUiThread(() -> mListView.setItemChecked(0, false));
         assertFalse(mListView.isLayoutRequested());
     }
-
+    private boolean checkResult = false;
     @MediumTest
     @Test
     public void testSetItemChecked_multipleModeDifferentValue() throws Throwable {
@@ -773,8 +773,15 @@ public class AbsListViewTest {
         mActivityRule.runOnUiThread(() -> mListView.setItemChecked(0, false));
         mInstrumentation.waitForIdleSync();
         assertFalse(mListView.isLayoutRequested());
-        mActivityRule.runOnUiThread(() -> mListView.setItemChecked(0, true));
-        assertTrue(mListView.isLayoutRequested());
+        checkResult = false;
+        mActivityRule.runOnUiThread(new Runnable() {
+            @Override
+            public void run() {
+                mListView.setItemChecked(0, true);
+                checkResult = mListView.isLayoutRequested();
+            }
+        });
+        assertTrue(checkResult);
     }
 
     @MediumTest
@@ -786,8 +793,15 @@ public class AbsListViewTest {
         mActivityRule.runOnUiThread(() -> mListView.setItemChecked(0, false));
         mInstrumentation.waitForIdleSync();
         assertFalse(mListView.isLayoutRequested());
-        mActivityRule.runOnUiThread(() -> mListView.setItemChecked(0, true));
-        assertTrue(mListView.isLayoutRequested());
+        checkResult = false;
+        mActivityRule.runOnUiThread(new Runnable() {
+            @Override
+            public void run() {
+                mListView.setItemChecked(0, true);
+                checkResult = mListView.isLayoutRequested();
+            }
+        });
+        assertTrue(checkResult);
     }
 
     @LargeTest
