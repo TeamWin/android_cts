@@ -31,3 +31,14 @@ java_library_host {
     name: "vogarexpectlib",
     static_libs: ["vogarexpect"],
 }
+
+// Version of the lib without dependencies statically linked
+java_library_host {
+    name: "vogarexpect-no-deps",
+    srcs: ["src/**/*.java"],
+
+    libs: [
+        "guava",
+	"json",
+    ],
+}
