@@ -137,6 +137,10 @@ public class ByodHelperActivity extends LocationListenerActivity
     public static final String ACTION_TEST_SELECT_WORK_CHALLENGE =
             "com.android.cts.verifier.managedprovisioning.TEST_SELECT_WORK_CHALLENGE";
 
+    // Primary -> managed intent: Start the selection of a work challenge
+    public static final String ACTION_TEST_PATTERN_WORK_CHALLENGE =
+            "com.android.cts.verifier.managedprovisioning.TEST_PATTERN_WORK_CHALLENGE";
+
     // Primary -> managed intent: Start the selection of a parent profile password.
     public static final String ACTION_TEST_PARENT_PROFILE_PASSWORD =
             "com.android.cts.verifier.managedprovisioning.TEST_PARENT_PROFILE_PASSWORD";
@@ -371,6 +375,9 @@ public class ByodHelperActivity extends LocationListenerActivity
             } else {
                 showToast(R.string.provisioning_byod_no_secure_lockscreen);
             }
+        } else if (ACTION_TEST_PATTERN_WORK_CHALLENGE.equals(action)) {
+            startActivity(new Intent(DevicePolicyManager.ACTION_SET_NEW_PASSWORD));
+            // The remaining steps are manual.
         } else if (ACTION_SET_ORGANIZATION_INFO.equals(action)) {
             if(intent.hasExtra(OrganizationInfoTestActivity.EXTRA_ORGANIZATION_NAME)) {
                 final String organizationName = intent
