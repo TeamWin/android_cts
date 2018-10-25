@@ -1,0 +1,115 @@
+/*
+ * Copyright (C) 2018 The Android Open Source Project
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+package android.uirendering.cts.testclasses;
+
+import android.graphics.Color;
+import android.graphics.Paint;
+import android.graphics.Rect;
+import android.support.test.filters.MediumTest;
+import android.support.test.runner.AndroidJUnit4;
+import android.uirendering.cts.R;
+import android.uirendering.cts.bitmapverifiers.RectVerifier;
+import android.uirendering.cts.testinfrastructure.ActivityTestBase;
+import android.uirendering.cts.testinfrastructure.CanvasClientView;
+import android.uirendering.cts.testinfrastructure.ViewInitializer;
+
+import com.android.compatibility.common.util.SystemUtil;
+
+import org.junit.AfterClass;
+import org.junit.BeforeClass;
+import org.junit.Test;
+import org.junit.runner.RunWith;
+
+@MediumTest
+@RunWith(AndroidJUnit4.class)
+public class ForceDarkTests extends ActivityTestBase {
+    static boolean sWasEnabled = false;
+
+    @BeforeClass
+    public static void enableForceDark() {
+        // We need to ensure the value is set to the default, overriding any user preference
+        // temporarily
+        sWasEnabled = Boolean.parseBoolean(
+                SystemUtil.runShellCommand("getprop debug.hwui.force_dark_enabled"));
+        SystemUtil.runShellCommand("setprop debug.hwui.force_dark_enabled true");
+    }
+
+    @AfterClass
+    public static void restoreForceDarkSetting() {
+        if (!sWasEnabled) {
+            SystemUtil.runShellCommand("setprop debug.hwui.force_dark_enabled false");
+        }
+    }
+
+    @Override
+    protected boolean useForceDark() {
+        return true;
+    }
+
+    @Test
+    public void testFgRect() {
+        final Rect rect = new Rect(10, 10, 80, 80);
+        createTest()
+                .addLayout(R.layout.simple_force_dark, (ViewInitializer) view ->
+                        ((CanvasClientView) view).setCanvasClient((canvas, width, height) -> {
+                            Paint p = new Paint();
+                            p.setAntiAlias(false);
+                            p.setColor(Color.BLACK);
+                            canvas.drawRect(rect, p);
+                        }), true)
+                .runWithVerifier(new RectVerifier(Color.BLACK, Color.WHITE, rect, 100));
+    }
+
+    @Test
+    public void testFgRectDisable() {
+        final Rect rect = new Rect(10, 10, 80, 80);
+        createTest()
+                .addLayout(R.layout.simple_force_dark, (ViewInitializer) view -> {
+                    view.setForceDarkAllowed(false);
+                    ((CanvasClientView) view).setCanvasClient((canvas, width, height) -> {
+                        Paint p = new Paint();
+                        p.setAntiAlias(false);
+                        p.setColor(Color.BLACK);
+                        canvas.drawRect(rect, p);
+                    });
+                }, true)
+                .runWithVerifier(new RectVerifier(Color.WHITE, Color.BLACK, rect, 0));
+    }
+
+    @Test
+    public void testSiblings() {
+        final Rect fgRect = new Rect(10, 10, 80, 80);
+        createTest()
+                .addLayout(R.layout.force_dark_siblings, (ViewInitializer) view -> {
+
+                    CanvasClientView bg = view.findViewById(R.id.bg_canvas);
+                    CanvasClientView fg = view.findViewById(R.id.fg_canvas);
+
+                    bg.setCanvasClient((canvas, width, height) -> {
+                        canvas.drawColor(Color.WHITE);
+                    });
+
+                    fg.setCanvasClient((canvas, width, height) -> {
+                        Paint p = new Paint();
+                        p.setAntiAlias(false);
+                        p.setColor(Color.BLACK);
+                        canvas.drawRect(fgRect, p);
+                    });
+                }, true)
+                .runWithVerifier(new RectVerifier(Color.BLACK, Color.WHITE, fgRect, 100));
+    }
+}
