@@ -47,8 +47,6 @@ public class MidiEchoTestService extends MidiDeviceService {
     public boolean inputOpened;
     public int outputOpenCount;
 
-    private Binder mBinder = new Binder();
-
     @Override
     public void onCreate() {
         super.onCreate();
@@ -79,7 +77,7 @@ public class MidiEchoTestService extends MidiDeviceService {
         if (DEBUG) {
             Log.i(TAG, "#### onBind()");
         }
-        return mBinder;
+        return super.onBind(intent);
     }
 
     // For CTS testing, so I can read test fields.

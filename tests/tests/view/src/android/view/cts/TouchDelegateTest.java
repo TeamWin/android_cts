@@ -28,6 +28,8 @@ import android.support.test.rule.ActivityTestRule;
 import android.support.test.runner.AndroidJUnit4;
 import android.view.InputDevice;
 import android.view.MotionEvent;
+import android.view.TouchDelegate;
+import android.view.View;
 
 
 import org.junit.Before;
@@ -118,6 +120,13 @@ public class TouchDelegateTest {
         ensureOldestActionEquals(MotionEvent.ACTION_MOVE);
         ensureOldestActionEquals(MotionEvent.ACTION_POINTER_UP);
         ensureOldestActionEquals(MotionEvent.ACTION_UP);
+    }
+
+    @Test
+    public void testGetTouchDelegateInfo_withNullBounds_noException() {
+        final View view = mActivity.findViewById(R.id.layout);
+        final TouchDelegate touchDelegate = new TouchDelegate(null, view);
+        touchDelegate.getTouchDelegateInfo();
     }
 
     private void ensureOldestActionEquals(int action) {
