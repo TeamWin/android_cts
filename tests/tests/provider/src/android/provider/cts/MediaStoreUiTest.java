@@ -147,6 +147,23 @@ public class MediaStoreUiTest extends InstrumentationTestCase {
         }
     }
 
+    public void testGetDocumentUri_Symmetry() throws Exception {
+        if (!supportsHardware()) return;
+
+        prepareFile();
+
+        final Uri treeUri = acquireAccess(mFile, Environment.DIRECTORY_DOCUMENTS);
+        assertNotNull(treeUri);
+
+        final Uri docUri = MediaStore.getDocumentUri(mActivity, mMediaStoreUri);
+        assertNotNull(docUri);
+
+        final Uri mediaUri = MediaStore.getMediaUri(mActivity, docUri);
+        assertNotNull(mediaUri);
+
+        assertEquals(mMediaStoreUri, mediaUri);
+    }
+
     private void maybeClick(UiSelector sel) {
         try { mDevice.findObject(sel).click(); } catch (Throwable ignored) { }
     }
