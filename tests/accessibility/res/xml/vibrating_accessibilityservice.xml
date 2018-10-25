@@ -19,4 +19,5 @@
     android:accessibilityFlags="flagDefault|flagRequestTouchExplorationMode"
     android:canRetrieveWindowContent="true"
     android:canRequestTouchExplorationMode="true"
-    android:minimumUiTimeout="2000" />
+    android:nonInteractiveUiTimeout="2000"
+    android:interactiveUiTimeout="5000"/>
