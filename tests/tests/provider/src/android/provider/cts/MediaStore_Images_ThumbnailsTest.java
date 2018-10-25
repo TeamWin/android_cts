@@ -16,6 +16,9 @@
 
 package android.provider.cts;
 
+import static android.provider.cts.ProviderTestUtils.assertExists;
+import static android.provider.cts.ProviderTestUtils.assertNotExists;
+
 import android.content.ContentResolver;
 import android.content.ContentUris;
 import android.content.ContentValues;
@@ -138,7 +141,7 @@ public class MediaStore_Images_ThumbnailsTest extends InstrumentationTestCase {
         c.close();
     }
 
-    public void testQueryExternalMiniThumbnails() {
+    public void testQueryExternalMiniThumbnails() throws Exception {
         // insert the image by bitmap
         BitmapFactory.Options opts = new BitmapFactory.Options();
         opts.inTargetDensity = DisplayMetrics.DENSITY_XHIGH;
@@ -162,7 +165,7 @@ public class MediaStore_Images_ThumbnailsTest extends InstrumentationTestCase {
         String imagePath = c.getString(c.getColumnIndex(Media.DATA));
         c.close();
 
-        assertTrue("image file does not exist", new File(imagePath).exists());
+        assertExists("image file does not exist", imagePath);
 
         String[] sizeProjection = new String[] { Thumbnails.WIDTH, Thumbnails.HEIGHT };
         c = Thumbnails.queryMiniThumbnail(mContentResolver, imageId, Thumbnails.MINI_KIND,
@@ -187,7 +190,7 @@ public class MediaStore_Images_ThumbnailsTest extends InstrumentationTestCase {
         long img = c.getLong(c.getColumnIndex(Thumbnails.IMAGE_ID));
         assertEquals(imageId, img);
         String thumbPath = c.getString(c.getColumnIndex(Thumbnails.DATA));
-        assertTrue("thumbnail file does not exist", new File(thumbPath).exists());
+        assertExists("thumbnail file does not exist", thumbPath);
 
         // deleting the image from the database also deletes the image file, and the
         // corresponding entry in the thumbnail table, which in turn triggers deletion
@@ -195,14 +198,14 @@ public class MediaStore_Images_ThumbnailsTest extends InstrumentationTestCase {
         mContentResolver.delete(stringUri, null, null);
         mRowsAdded.remove(stringUri);
 
-        assertFalse("image file should no longer exist", new File(imagePath).exists());
+        assertNotExists("image file should no longer exist", imagePath);
 
         Cursor c2 = Thumbnails.queryMiniThumbnail(mContentResolver, imageId, Thumbnails.MINI_KIND,
                 new String[] { Thumbnails._ID, Thumbnails.DATA, Thumbnails.IMAGE_ID});
         assertEquals(0, c2.getCount());
         c2.close();
 
-        assertFalse("thumbnail file should no longer exist", new File(thumbPath).exists());
+        assertNotExists("thumbnail file should no longer exist", thumbPath);
         c.close();
 
         // insert image, then delete it via the files table
@@ -213,10 +216,10 @@ public class MediaStore_Images_ThumbnailsTest extends InstrumentationTestCase {
         imageId = c.getLong(c.getColumnIndex(Media._ID));
         imagePath = c.getString(c.getColumnIndex(Media.DATA));
         c.close();
-        assertTrue("image file does not exist", new File(imagePath).exists());
+        assertExists("image file does not exist", imagePath);
         Uri fileuri = MediaStore.Files.getContentUri("external", imageId);
         mContentResolver.delete(fileuri, null, null);
-        assertFalse("image file should no longer exist", new File(imagePath).exists());
+        assertNotExists("image file should no longer exist", imagePath);
 
 
         // insert image, then delete its thumbnail
@@ -231,7 +234,7 @@ public class MediaStore_Images_ThumbnailsTest extends InstrumentationTestCase {
                 new String[] { Thumbnails._ID, Thumbnails.DATA, Thumbnails.IMAGE_ID});
         c2.moveToFirst();
         thumbPath = c2.getString(c2.getColumnIndex(Thumbnails.DATA));
-        assertTrue("thumbnail file does not exist", new File(thumbPath).exists());
+        assertExists("thumbnail file does not exist", thumbPath);
 
         Uri imguri = Uri.parse(stringUrl);
         long imgid = ContentUris.parseId(imguri);
@@ -239,8 +242,8 @@ public class MediaStore_Images_ThumbnailsTest extends InstrumentationTestCase {
         mRowsAdded.add(imguri);
         mContentResolver.delete(MediaStore.Images.Thumbnails.EXTERNAL_CONTENT_URI,
                 MediaStore.Images.Thumbnails.IMAGE_ID + "=?", new String[]{ "" + imgid});
-        assertFalse("thumbnail file should no longer exist", new File(thumbPath).exists());
-        assertTrue("image file should still exist", new File(imagePath).exists());
+        assertNotExists("thumbnail file should no longer exist", thumbPath);
+        assertExists("image file should still exist", imagePath);
     }
 
     public void testGetContentUri() {
@@ -318,11 +321,11 @@ public class MediaStore_Images_ThumbnailsTest extends InstrumentationTestCase {
         assertTrue("couldn't find thumbnail", c.moveToNext());
         String path = c.getString(0);
         c.close();
-        assertTrue("thumbnail does not exist", new File(path).exists());
+        assertExists("thumbnail does not exist", path);
 
         // delete the source image and check that the thumbnail is gone too
         mContentResolver.delete(uri, null /* where clause */, null /* where args */);
-        assertFalse("thumbnail still exists after source file delete", new File(path).exists());
+        assertNotExists("thumbnail still exists after source file delete", path);
 
         // insert again
         uri = Uri.parse(Media.insertImage(mContentResolver, src, "test", "test description"));
@@ -338,7 +341,7 @@ public class MediaStore_Images_ThumbnailsTest extends InstrumentationTestCase {
         assertTrue("couldn't find thumbnail", c.moveToNext());
         path = c.getString(0);
         c.close();
-        assertTrue("thumbnail does not exist", new File(path).exists());
+        assertExists("thumbnail does not exist", path);
 
         // update the media type
         ContentValues values = new ContentValues();
@@ -360,7 +363,7 @@ public class MediaStore_Images_ThumbnailsTest extends InstrumentationTestCase {
             assertFalse("thumbnail entry exists for non-thumbnail file", c.moveToNext());
             c.close();
         }
-        assertFalse("thumbnail remains after source file type change", new File(path).exists());
+        assertNotExists("thumbnail remains after source file type change", path);
 
         // check source no longer exists as image
         c = mContentResolver.query(uri,
@@ -406,35 +409,12 @@ public class MediaStore_Images_ThumbnailsTest extends InstrumentationTestCase {
                 assertNotNull(foo);
             }
 
-            // remove one of the images, its thumbnail, and the thumbnail cache
-            Cursor c = mContentResolver.query(url[1], null, null, null, null);
-            assertEquals(1, c.getCount());
-            c.moveToFirst();
-            String path = c.getString(c.getColumnIndex(MediaColumns.DATA));
-            long id = c.getLong(c.getColumnIndex(MediaColumns._ID));
-            c.close();
-            assertTrue(new File(path).delete());
+            // Remove one of the images, which will also delete any thumbnails
+            mContentResolver.delete(url[1], null, null);
 
             long removedId = Long.parseLong(url[1].getLastPathSegment());
             long remainingId1 = Long.parseLong(url[0].getLastPathSegment());
             long remainingId2 = Long.parseLong(url[2].getLastPathSegment());
-            c = mContentResolver.query(
-                    MediaStore.Images.Thumbnails.EXTERNAL_CONTENT_URI, null,
-                    Thumbnails.IMAGE_ID + "=?", new String[] { Long.toString(removedId) }, null);
-            assertTrue(c.getCount() > 0);  // one or more thumbnail kinds
-            while (c.moveToNext()) {
-                path = c.getString(c.getColumnIndex(MediaColumns.DATA));
-                assertTrue(new File(path).delete());
-            }
-            c.close();
-
-            File thumbdir = new File(path).getParentFile();
-            File[] list = thumbdir.listFiles();
-            for (int i = 0; i < list.length; i++) {
-                if (list[i].getName().startsWith(".thumbdata")) {
-                    assertTrue(list[i].delete());
-                }
-            }
 
             // check if a thumbnail is still being returned for the image that was removed
             Bitmap foo = MediaStore.Images.Thumbnails.getThumbnail(mContentResolver,
@@ -442,11 +422,11 @@ public class MediaStore_Images_ThumbnailsTest extends InstrumentationTestCase {
             assertNull(foo);
 
             for (String order: new String[] { " ASC", " DESC" }) {
-                c = mContentResolver.query(
+                Cursor c = mContentResolver.query(
                         MediaStore.Images.Media.EXTERNAL_CONTENT_URI, null, null, null,
                         MediaColumns._ID + order);
                 while (c.moveToNext()) {
-                    id = c.getLong(c.getColumnIndex(MediaColumns._ID));
+                    long id = c.getLong(c.getColumnIndex(MediaColumns._ID));
                     foo = MediaStore.Images.Thumbnails.getThumbnail(
                             mContentResolver, id,
                             MediaStore.Images.Thumbnails.MICRO_KIND, null);
