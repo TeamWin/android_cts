@@ -17,7 +17,6 @@
 package android.telephony.cts.sms;
 
 import android.app.Activity;
-import android.content.ContentValues;
 import android.content.pm.PackageManager;
 import android.database.Cursor;
 import android.net.Uri;
@@ -46,7 +45,6 @@ public class MainActivity extends Activity {
             int[] grantResults) {
         if (requestCode == REQUEST_CODE_READ_SMS) {
             Cursor cursor = null;
-            Uri insertResult = null;
             Throwable t = null;
             if (grantResults[0] != PackageManager.PERMISSION_GRANTED) {
                 t = new SecurityException("Permission denied");
@@ -54,16 +52,6 @@ public class MainActivity extends Activity {
             try {
                 cursor = getContentResolver()
                         .query(Sms.CONTENT_URI, null, null, null, null);
-
-                ContentValues values = new ContentValues();
-                values.put(Sms.SUBSCRIPTION_ID, 1);
-                values.put(Sms.ADDRESS, "12345");
-                values.put(Sms.BODY, "test");
-                values.put(Sms.DATE, System.currentTimeMillis());
-                values.put(Sms.SEEN, 1);
-                values.put(Sms.READ, 1);
-                values.put(Sms.THREAD_ID, 1);
-                insertResult = getContentResolver().insert(Sms.CONTENT_URI, values);
             } catch (Throwable ex) {
                 List<Throwable> causes = causes(ex);
                 causes.get(causes.size() - 1).initCause(t);
@@ -72,7 +60,6 @@ public class MainActivity extends Activity {
                 Bundle result = new Bundle();
                 result.putString("class", getClass().getName());
                 result.putInt("queryCount", cursor == null ? -1 : cursor.getCount());
-                result.putString("insertResult", String.valueOf(insertResult));
                 result.putString("exceptionMessage",
                         causes(t).stream().map(Throwable::getMessage)
                                 .collect(Collectors.joining("\n")));
