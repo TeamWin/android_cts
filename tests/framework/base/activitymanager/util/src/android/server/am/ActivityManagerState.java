@@ -372,6 +372,10 @@ public class ActivityManagerState {
         return mStacks.size();
     }
 
+    int getDisplayCount() {
+        return mDisplays.size();
+    }
+
     boolean containsActivity(ComponentName activityName) {
         final String fullName = getActivityName(activityName);
         for (ActivityStack stack : mStacks) {
