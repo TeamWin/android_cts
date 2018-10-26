@@ -16,8 +16,6 @@
 
 package android.media.cts;
 
-import android.media.cts.R;
-
 import android.content.ComponentName;
 import android.content.ContentResolver;
 import android.content.ContentUris;
@@ -30,17 +28,16 @@ import android.database.Cursor;
 import android.media.MediaMetadataRetriever;
 import android.media.MediaScannerConnection;
 import android.media.MediaScannerConnection.MediaScannerConnectionClient;
-import android.mtp.MtpConstants;
 import android.net.Uri;
-import android.platform.test.annotations.AppModeFull;
-import android.support.test.filters.SmallTest;
-import android.platform.test.annotations.RequiresDevice;
 import android.os.Bundle;
 import android.os.Environment;
 import android.os.IBinder;
 import android.os.SystemClock;
+import android.platform.test.annotations.AppModeFull;
+import android.platform.test.annotations.RequiresDevice;
 import android.provider.MediaStore;
 import android.test.AndroidTestCase;
+import android.test.suitebuilder.annotation.SmallTest;
 import android.util.Log;
 
 import com.android.compatibility.common.util.FileCopyHelper;
@@ -210,12 +207,7 @@ public class MediaScannerTest extends AndroidTestCase {
         // add nomedia file and insert into database, file should no longer be in audio view
         File nomedia = new File(mMediaFile.getParent() + "/.nomedia");
         nomedia.createNewFile();
-        ContentValues values = new ContentValues();
-        values.put(MediaStore.MediaColumns.DATA, nomedia.getAbsolutePath());
-        values.put(MediaStore.Files.FileColumns.FORMAT, MtpConstants.FORMAT_UNDEFINED);
-        Uri nomediauri = res.insert(MediaStore.Files.getContentUri("external"), values);
-        // clean up nomedia file
-        nomedia.delete();
+        startMediaScanAndWait();
 
         // entry should not be in audio view anymore
         c = res.query(audiouri, null, null, null, null);
@@ -223,6 +215,7 @@ public class MediaScannerTest extends AndroidTestCase {
         c.close();
 
         // with nomedia file removed, do media scan and check that entry is in audio table again
+        nomedia.delete();
         startMediaScanAndWait();
 
         // Give the 2nd stage scan that makes the unhidden files visible again
