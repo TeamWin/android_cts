@@ -21,6 +21,7 @@ import android.os.Build;
 import android.platform.test.annotations.SecurityTest;
 import android.test.AndroidTestCase;
 import com.android.compatibility.common.util.PropertyUtil;
+import com.android.compatibility.common.util.CddTest;
 
 @SecurityTest
 public class VerifiedBootTest extends AndroidTestCase {
@@ -42,6 +43,7 @@ public class VerifiedBootTest extends AndroidTestCase {
    * A device without the feature flag android.hardware.ram.normal is exempt if
    * it launched on a pre-P level.
    */
+  @CddTest(requirement="9.10/C-1-1,C-2-1")
   public void testVerifiedBootSupport() throws Exception {
     if (PropertyUtil.getFirstApiLevel() < Build.VERSION_CODES.O_MR1) {
       return;
