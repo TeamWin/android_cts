@@ -16,8 +16,6 @@
 
 package android.provider.cts;
 
-import android.provider.cts.R;
-
 import android.content.ContentResolver;
 import android.content.ContentValues;
 import android.content.Context;
@@ -37,7 +35,6 @@ import com.android.compatibility.common.util.FileUtils;
 
 import java.io.File;
 import java.io.FileNotFoundException;
-import java.lang.Math;
 import java.util.ArrayList;
 
 public class MediaStore_Images_MediaTest extends InstrumentationTestCase {

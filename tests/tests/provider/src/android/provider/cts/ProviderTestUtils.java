@@ -16,10 +16,16 @@
 
 package android.provider.cts;
 
+import static org.junit.Assert.fail;
+
 import android.app.UiAutomation;
 import android.os.ParcelFileDescriptor;
+import android.system.ErrnoException;
+import android.system.Os;
+import android.system.OsConstants;
 
 import java.io.BufferedReader;
+import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
@@ -118,5 +124,46 @@ public class ProviderTestUtils {
     static void wipeBackup(String backupTransport, String packageName, UiAutomation uiAutomation)
             throws Exception {
         executeShellCommand("bmgr wipe " + backupTransport + " " + packageName, uiAutomation);
+    }
+
+    public static void assertExists(String path) throws ErrnoException {
+        assertExists(null, path);
+    }
+
+    public static void assertExists(File file) throws ErrnoException {
+        assertExists(null, file.getAbsolutePath());
+    }
+
+    public static void assertExists(String msg, String path) throws ErrnoException {
+        try {
+            Os.access(path, OsConstants.F_OK);
+        } catch (ErrnoException e) {
+            if (e.errno == OsConstants.ENOENT) {
+                fail(msg);
+            } else {
+                throw e;
+            }
+        }
+    }
+
+    public static void assertNotExists(String path) throws ErrnoException {
+        assertNotExists(null, path);
+    }
+
+    public static void assertNotExists(File file) throws ErrnoException {
+        assertNotExists(null, file.getAbsolutePath());
+    }
+
+    public static void assertNotExists(String msg, String path) throws ErrnoException {
+        try {
+            Os.access(path, OsConstants.F_OK);
+            fail(msg);
+        } catch (ErrnoException e) {
+            if (e.errno == OsConstants.ENOENT) {
+                return;
+            } else {
+                throw e;
+            }
+        }
     }
 }

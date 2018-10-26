@@ -16,8 +16,8 @@
 
 package android.provider.cts;
 
-
-import android.provider.cts.R;
+import static android.provider.cts.ProviderTestUtils.assertExists;
+import static android.provider.cts.ProviderTestUtils.assertNotExists;
 
 import android.content.ContentResolver;
 import android.content.ContentValues;
@@ -201,17 +201,17 @@ public class MediaStore_Video_MediaTest extends AndroidTestCase {
         Context context = getContext();
         Uri videoUri = insertVideo(context);
         File videofile = new File(Environment.getExternalStorageDirectory(), "testVideo.3gp");
-        assertTrue(videofile.exists());
+        assertExists(videofile);
         mContentResolver.delete(videoUri, null, null);
-        assertFalse(videofile.exists());
+        assertNotExists(videofile);
 
         // insert again, then delete with the "delete data" parameter set to false
         videoUri = insertVideo(context);
-        assertTrue(videofile.exists());
+        assertExists(videofile);
         Uri.Builder builder = videoUri.buildUpon();
         builder.appendQueryParameter(MediaStore.PARAM_DELETE_DATA, "false");
         mContentResolver.delete(builder.build(), null, null);
-        assertTrue(videofile.exists());
+        assertExists(videofile);
         videofile.delete();
 
     }
