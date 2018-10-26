@@ -171,6 +171,7 @@ public class DeviceAdminTestReceiver extends DeviceAdminReceiver {
         filter.addAction(AlwaysOnVpnSettingsTestActivity.ACTION_ALWAYS_ON_VPN_SETTINGS_TEST);
         filter.addAction(RecentsRedactionActivity.ACTION_RECENTS);
         filter.addAction(ByodHelperActivity.ACTION_TEST_SELECT_WORK_CHALLENGE);
+        filter.addAction(ByodHelperActivity.ACTION_TEST_PATTERN_WORK_CHALLENGE);
         filter.addAction(ByodHelperActivity.ACTION_LAUNCH_CONFIRM_WORK_CREDENTIALS);
         filter.addAction(ByodHelperActivity.ACTION_SET_ORGANIZATION_INFO);
         filter.addAction(ByodHelperActivity.ACTION_TEST_PARENT_PROFILE_PASSWORD);

@@ -108,6 +108,7 @@ public class ByodFlowTestActivity extends DialogTestListActivity {
     private DialogTestListItem mPrimaryLocationWhenWorkDisabledTest;
     private DialogTestListItem mSelectWorkChallenge;
     private DialogTestListItem mConfirmWorkCredentials;
+    private DialogTestListItem mPatternWorkChallenge;
     private DialogTestListItem mParentProfilePassword;
     private DialogTestListItem mPersonalRingtonesTest;
     private TestListItem mVpnTest;
@@ -249,6 +250,12 @@ public class ByodFlowTestActivity extends DialogTestListActivity {
                     "BYOD_ConfirmWorkCredentials",
                     R.string.provisioning_byod_confirm_work_credentials_description,
                     new Intent(Intent.ACTION_MAIN).addCategory(Intent.CATEGORY_HOME));
+
+            mPatternWorkChallenge = new DialogTestListItem(this,
+                    R.string.provisioning_byod_pattern_work_challenge,
+                    "BYOD_PatternWorkChallenge",
+                    R.string.provisioning_byod_pattern_work_challenge_description,
+                    new Intent(ByodHelperActivity.ACTION_TEST_PATTERN_WORK_CHALLENGE));
 
             mWiFiDataUsageSettingsVisibleTest = new DialogTestListItem(this,
                     R.string.provisioning_byod_wifi_data_usage_settings,
@@ -527,6 +534,7 @@ public class ByodFlowTestActivity extends DialogTestListActivity {
         adapter.add(mSelectWorkChallenge);
         if (!getPackageManager().hasSystemFeature(PackageManager.FEATURE_AUTOMOTIVE)) {
             adapter.add(mConfirmWorkCredentials);
+            adapter.add(mPatternWorkChallenge);
         }
         adapter.add(mRecentsTest);
         adapter.add(mOrganizationInfoTest);
