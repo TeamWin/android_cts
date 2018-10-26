@@ -19,6 +19,7 @@ package android.view.textclassifier.cts;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
+import static org.junit.Assert.assertTrue;
 
 import android.app.PendingIntent;
 import android.app.RemoteAction;
@@ -205,6 +206,7 @@ public class TextClassifierValueObjectsTest {
                 .addAction(new RemoteAction(icon1, label1, description1, intent1))
                 .addAction(new RemoteAction(icon2, label2, description2, intent2))
                 .setId(ID)
+                .setExtras(BUNDLE)
                 .build();
 
         assertEquals(TEXT, classification.getText());
@@ -233,6 +235,7 @@ public class TextClassifierValueObjectsTest {
         assertEquals(intent2, classification.getActions().get(1).getActionIntent());
         assertNotNull(classification.getActions().get(1).getIcon());
         assertEquals(ID, classification.getId());
+        assertEquals(BUNDLE_VALUE, classification.getExtras().getString(BUNDLE_KEY));
     }
 
     @Test
@@ -284,6 +287,7 @@ public class TextClassifierValueObjectsTest {
         assertEquals(null, classification.getOnClickListener());
         assertEquals(0, classification.getActions().size());
         assertNull(classification.getId());
+        assertTrue(classification.getExtras().isEmpty());
     }
 
     @Test
@@ -291,8 +295,11 @@ public class TextClassifierValueObjectsTest {
         final TextClassification.Request request =
                 new TextClassification.Request.Builder(TEXT, START, END)
                         .setDefaultLocales(LOCALES)
+                        .setExtras(BUNDLE)
                         .build();
+
         assertEquals(LOCALES, request.getDefaultLocales());
+        assertEquals(BUNDLE_VALUE, request.getExtras().getString(BUNDLE_KEY));
     }
 
     @Test
@@ -301,7 +308,9 @@ public class TextClassifierValueObjectsTest {
                 new TextClassification.Request.Builder(TEXT, START, END)
                         .setDefaultLocales(null)
                         .build();
+
         assertNull(request.getDefaultLocales());
+        assertTrue(request.getExtras().isEmpty());
     }
 
     @Test
@@ -309,6 +318,7 @@ public class TextClassifierValueObjectsTest {
         final TextClassification.Request request =
                 new TextClassification.Request.Builder(TEXT, START, END).build();
         assertNull(request.getDefaultLocales());
+        assertTrue(request.getExtras().isEmpty());
     }
 
     @Test
