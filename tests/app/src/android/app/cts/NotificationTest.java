@@ -120,13 +120,14 @@ public class NotificationTest extends AndroidTestCase {
     }
 
     public void testWriteToParcel() {
-
+        PendingIntent overlayIntent = PendingIntent.getActivity(mContext, 0, new Intent(), 0);
         mNotification = new Notification.Builder(mContext, CHANNEL.getId())
                 .setBadgeIconType(Notification.BADGE_ICON_SMALL)
                 .setShortcutId(SHORTCUT_ID)
                 .setTimeoutAfter(TIMEOUT)
                 .setSettingsText(SETTING_TEXT)
                 .setGroupAlertBehavior(Notification.GROUP_ALERT_CHILDREN)
+                .setAppOverlayIntent(overlayIntent)
                 .build();
         mNotification.icon = 0;
         mNotification.number = 1;
@@ -183,6 +184,7 @@ public class NotificationTest extends AndroidTestCase {
         assertEquals(mNotification.getChannelId(), result.getChannelId());
         assertEquals(mNotification.getSettingsText(), result.getSettingsText());
         assertEquals(mNotification.getGroupAlertBehavior(), result.getGroupAlertBehavior());
+        assertEquals(overlayIntent, result.getAppOverlayIntent());
 
         mNotification.contentIntent = null;
         parcel = Parcel.obtain();
@@ -233,6 +235,7 @@ public class NotificationTest extends AndroidTestCase {
     public void testBuilder() {
         final Intent intent = new Intent();
         final PendingIntent contentIntent = PendingIntent.getBroadcast(mContext, 0, intent, 0);
+        PendingIntent overlayIntent = PendingIntent.getActivity(mContext, 0, intent, 0);
         mNotification = new Notification.Builder(mContext, CHANNEL.getId())
                 .setSmallIcon(1)
                 .setContentTitle(CONTENT_TITLE)
@@ -243,6 +246,7 @@ public class NotificationTest extends AndroidTestCase {
                 .setTimeoutAfter(TIMEOUT)
                 .setSettingsText(SETTING_TEXT)
                 .setGroupAlertBehavior(Notification.GROUP_ALERT_SUMMARY)
+                .setAppOverlayIntent(overlayIntent)
                 .build();
         assertEquals(CONTENT_TEXT, mNotification.extras.getString(Notification.EXTRA_TEXT));
         assertEquals(CONTENT_TITLE, mNotification.extras.getString(Notification.EXTRA_TITLE));
@@ -254,6 +258,7 @@ public class NotificationTest extends AndroidTestCase {
         assertEquals(TIMEOUT, mNotification.getTimeoutAfter());
         assertEquals(SETTING_TEXT, mNotification.getSettingsText());
         assertEquals(Notification.GROUP_ALERT_SUMMARY, mNotification.getGroupAlertBehavior());
+        assertEquals(overlayIntent, mNotification.getAppOverlayIntent());
     }
 
     public void testBuilder_getStyle() {

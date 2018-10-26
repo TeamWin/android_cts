@@ -17,6 +17,7 @@
 package android.app.cts;
 
 import static android.app.NotificationManager.IMPORTANCE_DEFAULT;
+import static android.app.NotificationManager.IMPORTANCE_HIGH;
 
 import android.app.Notification;
 import android.app.NotificationChannel;
@@ -44,7 +45,7 @@ public class NotificationChannelTest extends AndroidTestCase {
 
     public void testConstructor() {
         NotificationChannel channel =
-                new NotificationChannel("1", "one", IMPORTANCE_DEFAULT);
+                new NotificationChannel("1", "one", IMPORTANCE_HIGH);
         assertEquals("1", channel.getId());
         assertEquals("one", channel.getName());
         assertEquals(null, channel.getDescription());
@@ -52,12 +53,13 @@ public class NotificationChannelTest extends AndroidTestCase {
         assertEquals(false, channel.shouldShowLights());
         assertEquals(false, channel.shouldVibrate());
         assertEquals(null, channel.getVibrationPattern());
-        assertEquals(IMPORTANCE_DEFAULT, channel.getImportance());
+        assertEquals(IMPORTANCE_HIGH, channel.getImportance());
         assertEquals(Settings.System.DEFAULT_NOTIFICATION_URI, channel.getSound());
         assertTrue(channel.canShowBadge());
         assertEquals(Notification.AUDIO_ATTRIBUTES_DEFAULT, channel.getAudioAttributes());
         assertEquals(null, channel.getGroup());
         assertTrue(channel.getLightColor() == 0);
+        assertTrue(channel.canOverlayApps());
     }
 
     public void testWriteToParcel() {
@@ -151,5 +153,20 @@ public class NotificationChannelTest extends AndroidTestCase {
                 new NotificationChannel("1", "one", IMPORTANCE_DEFAULT);
         channel.setGroup("banana");
         assertEquals("banana", channel.getGroup());
+    }
+
+    public void testAppOverlay() {
+        NotificationChannel channel =
+                new NotificationChannel("1", "one", IMPORTANCE_DEFAULT);
+        channel.setAllowAppOverlay(true);
+        assertEquals("Only HIGH channels can have app overlays", false, channel.canOverlayApps());
+
+        channel = new NotificationChannel("1", "one", IMPORTANCE_HIGH);
+        channel.setAllowAppOverlay(false);
+        assertEquals(false, channel.canOverlayApps());
+
+        channel = new NotificationChannel("1", "one", IMPORTANCE_HIGH);
+        channel.setAllowAppOverlay(true);
+        assertEquals(true, channel.canOverlayApps());
     }
 }
