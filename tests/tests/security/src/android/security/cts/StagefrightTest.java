@@ -983,6 +983,23 @@ public class StagefrightTest extends InstrumentationTestCase {
         doStagefrightTest(R.raw.cve_2016_3879);
     }
 
+    @SecurityTest
+    public void testStagefright_xaac_not_present() throws Exception {
+        // ensure that the xaac codec is not present
+        MediaCodec codec;
+        String names[] = new String[] { "c2.android.xaac.decoder", "OMX.google.xaac.decoder" };
+        for (String name : names) {
+            Log.w(TAG, "trying to create codec: " + name);
+            try {
+                codec = MediaCodec.createByCodecName(name);
+                fail("not allowed to createByCodecName() for " + name);
+            } catch (IllegalArgumentException e) {
+                // expected
+                Log.w(TAG, "correctly unable to instantiate code for " + name);
+            }
+        }
+    }
+
     private void doStagefrightTest(final int rid) throws Exception {
         doStagefrightTestMediaPlayer(rid);
         doStagefrightTestMediaCodec(rid);
