@@ -58,6 +58,7 @@ public class ByodFlowTestActivity extends DialogTestListActivity {
             "com.android.cts.verifier.managedprovisioning.BYOD_TEST_RESULT";
     // Extra for ACTION_TEST_RESULT containing test result.
     public static final String EXTRA_RESULT = "extra-result";
+    protected static final String HELPER_APP_PATH = "/data/local/tmp/NotificationBot.apk";
 
     private static final String TAG = "ByodFlowTestActivity";
     private static ConnectivityManager mCm;
@@ -83,6 +84,8 @@ public class ByodFlowTestActivity extends DialogTestListActivity {
     private DialogTestListItem mEnableNonMarketTest;
     private DialogTestListItem mDisableNonMarketWorkProfileDeviceWideTest;
     private DialogTestListItem mEnableNonMarketWorkProfileDeviceWideTest;
+    private DialogTestListItem mDisableNonMarketPrimaryUserDeviceWideTest;
+    private DialogTestListItem mEnableNonMarketPrimaryUserDeviceWideTest;
     private DialogTestListItem mWorkNotificationBadgedTest;
     private DialogTestListItem mWorkStatusBarIconTest;
     private DialogTestListItem mWorkStatusBarToastTest;
@@ -318,6 +321,22 @@ public class ByodFlowTestActivity extends DialogTestListActivity {
             new Intent(ByodHelperActivity.ACTION_INSTALL_APK_WORK_PROFILE_GLOBAL_RESTRICTION)
                 .putExtra(ByodHelperActivity.EXTRA_ALLOW_NON_MARKET_APPS_DEVICE_WIDE, true));
 
+        mDisableNonMarketPrimaryUserDeviceWideTest = new DialogTestListItem(this,
+            R.string.provisioning_byod_nonmarket_deny_global_primary,
+            "BYOD_DisableNonMarketPrimaryUserDeviceWideTest",
+            R.string.provisioning_byod_nonmarket_deny_global_primary_info,
+            new Intent(ByodHelperActivity.ACTION_INSTALL_APK_PRIMARY_PROFILE_GLOBAL_RESTRICTION)
+                    .putExtra(ByodHelperActivity.EXTRA_ALLOW_NON_MARKET_APPS_DEVICE_WIDE,
+                            false));
+
+        mEnableNonMarketPrimaryUserDeviceWideTest = new DialogTestListItem(this,
+            R.string.provisioning_byod_nonmarket_allow_global_primary,
+            "BYOD_EnableNonMarketPrimaryUserDeviceWideTest",
+            R.string.provisioning_byod_nonmarket_allow_global_primary_info,
+            new Intent(ByodHelperActivity.ACTION_INSTALL_APK_PRIMARY_PROFILE_GLOBAL_RESTRICTION)
+                    .putExtra(ByodHelperActivity.EXTRA_ALLOW_NON_MARKET_APPS_DEVICE_WIDE,
+                            true));
+
         mProfileAccountVisibleTest = new DialogTestListItem(this,
                 R.string.provisioning_byod_profile_visible,
                 "BYOD_ProfileAccountVisibleTest",
@@ -524,6 +543,8 @@ public class ByodFlowTestActivity extends DialogTestListActivity {
         adapter.add(mEnableNonMarketTest);
         adapter.add(mDisableNonMarketWorkProfileDeviceWideTest);
         adapter.add(mEnableNonMarketWorkProfileDeviceWideTest);
+        adapter.add(mDisableNonMarketPrimaryUserDeviceWideTest);
+        adapter.add(mEnableNonMarketPrimaryUserDeviceWideTest);
         adapter.add(mIntentFiltersTest);
         adapter.add(mPermissionLockdownTest);
         adapter.add(mKeyguardDisabledFeaturesTest);
@@ -699,8 +720,7 @@ public class ByodFlowTestActivity extends DialogTestListActivity {
         // We place the APK file in /data/local/tmp to make it visible from the work profile.
         return new Intent(ByodHelperActivity.ACTION_INSTALL_APK)
                 .putExtra(ByodHelperActivity.EXTRA_ALLOW_NON_MARKET_APPS, true)
-                .putExtra(ByodHelperActivity.EXTRA_PARAMETER_1,
-                        "/data/local/tmp/NotificationBot.apk");
+                .putExtra(ByodHelperActivity.EXTRA_PARAMETER_1, HELPER_APP_PATH);
     }
 
     // Return whether the intent can be resolved in the current profile
