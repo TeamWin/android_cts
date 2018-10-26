@@ -1326,6 +1326,11 @@ public class ManagedProfileTest extends BaseDevicePolicyTest {
         }
     }
 
+    public void testCrossProfileCalendarPackage() throws Exception {
+        runDeviceTestsAsUser(MANAGED_PROFILE_PKG, ".CrossProfileCalendarTest",
+                "testCrossPrfileCalendarPackage", mProfileUserId);
+    }
+
     private void verifyUnifiedPassword(boolean unified) throws DeviceNotAvailableException {
         final String testMethod =
                 unified ? "testUsingUnifiedPassword" : "testNotUsingUnifiedPassword";
@@ -1480,7 +1485,7 @@ public class ManagedProfileTest extends BaseDevicePolicyTest {
                     userId);
         }
 
-        // Enable / Disable cross profile caller id
+        // Enable / Disable 
         public void setCallerIdEnabled(boolean enabled) throws DeviceNotAvailableException {
             if (enabled) {
                 runDeviceTestsAsUser(mManagedProfilePackage, ".ContactsTest",
