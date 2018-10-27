@@ -354,6 +354,7 @@ public class KeyguardTests extends KeyguardTestBase {
             pressBackButton();
             mAmWmState.waitForKeyguardShowingAndNotOccluded();
             mAmWmState.waitForDisplayUnfrozen();
+            mAmWmState.waitForAppTransitionIdle();
             mAmWmState.assertSanity();
             mAmWmState.assertHomeActivityVisible(false);
             mAmWmState.assertKeyguardShowingAndNotOccluded();
