@@ -18,6 +18,7 @@ package android.view.cts;
 
 import static org.junit.Assert.fail;
 
+import android.os.SystemClock;
 import android.support.test.filters.SmallTest;
 import android.support.test.runner.AndroidJUnit4;
 import android.util.Log;
@@ -154,6 +155,28 @@ public class VelocityTrackerTest {
         }
         assertVelocity(TOLERANCE_VERY_WEAK,
                 "Expect weak bound when there is changing acceleration.");
+    }
+
+    @Test
+    public void testUsesRawCoordinates() {
+        VelocityTracker vt = VelocityTracker.obtain();
+        final int numevents = 5;
+
+        final long downTime = SystemClock.uptimeMillis();
+        for (int i = 0; i < numevents; i++) {
+            final long eventTime = downTime + i * 10;
+            int action = i == 0 ? MotionEvent.ACTION_DOWN : MotionEvent.ACTION_MOVE;
+            MotionEvent event = MotionEvent.obtain(downTime, eventTime, action, 0, 0, 0);
+            event.offsetLocation(i * 10, i * 10);
+            vt.addMovement(event);
+        }
+        vt.computeCurrentVelocity(1000);
+        float xVelocity = vt.getXVelocity();
+        float yVelocity = vt.getYVelocity();
+        if (xVelocity == 0 || yVelocity == 0) {
+            fail("VelocityTracker is using raw coordinates,"
+                    + " but it should be using adjusted coordinates");
+        }
     }
 
     private void move(long duration, long step) {
