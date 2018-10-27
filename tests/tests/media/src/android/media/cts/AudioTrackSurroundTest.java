@@ -290,7 +290,8 @@ public class AudioTrackSurroundTest extends CtsAndroidTestCase {
             assertTrue("expect many timestamps, got " + mTimestamps.size(),
                     mTimestamps.size() > 10);
             // Use first and last timestamp to get the most accurate rate.
-            AudioTimestamp first = mTimestamps.get(0);
+            // TODO: Actually we're using the second timestamp since the first one is flaky.
+            AudioTimestamp first = mTimestamps.get(1);
             AudioTimestamp last = mTimestamps.get(mTimestamps.size() - 1);
             return calculateSampleRate(first, last);
         }
