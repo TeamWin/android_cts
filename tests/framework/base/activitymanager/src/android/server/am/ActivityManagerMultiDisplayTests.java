@@ -69,6 +69,8 @@ import static org.junit.Assume.assumeTrue;
 import android.app.Activity;
 import android.app.ActivityOptions;
 import android.content.ComponentName;
+import android.content.Context;
+import android.content.ContextWrapper;
 import android.content.Intent;
 import android.content.res.Configuration;
 import android.graphics.Rect;
@@ -82,9 +84,10 @@ import android.server.am.CommandSession.ActivitySession;
 import android.server.am.CommandSession.SizeInfo;
 import android.support.test.InstrumentationRegistry;
 import android.support.test.filters.FlakyTest;
+import android.text.TextUtils;
 import android.util.SparseArray;
 import android.view.Display;
-import android.view.WindowManager;
+import android.view.inputmethod.EditorInfo;
 import android.view.inputmethod.InputMethodManager;
 import android.widget.EditText;
 import android.widget.LinearLayout;
@@ -1912,6 +1915,46 @@ public class ActivityManagerMultiDisplayTests extends ActivityManagerDisplayTest
         }
     }
 
+    @Test
+    public void testImeApiForBug118341760() throws Exception {
+        final long TIMEOUT_START_INPUT = TimeUnit.SECONDS.toMillis(5);
+
+        try (final VirtualDisplaySession virtualDisplaySession = new VirtualDisplaySession();
+             final TestActivitySession<ImeTestActivityWithBrokenContextWrapper>
+                     imeTestActivitySession = new TestActivitySession<>();
+
+             // Leverage MockImeSession to ensure at least an IME exists as default.
+             final MockImeSession mockImeSession = MockImeSession.create(
+                     mContext, InstrumentationRegistry.getInstrumentation().getUiAutomation(),
+                     new ImeSettings.Builder())) {
+
+            // Create a virtual display and launch an activity on it.
+            final ActivityDisplay newDisplay = virtualDisplaySession.setPublicDisplay(true)
+                    .setShowSystemDecorations(true).createDisplay();
+            imeTestActivitySession.launchTestActivityOnDisplaySync(
+                    ImeTestActivityWithBrokenContextWrapper.class, newDisplay.mId);
+
+            final ImeTestActivityWithBrokenContextWrapper activity =
+                    imeTestActivitySession.getActivity();
+            final ImeEventStream stream = mockImeSession.openEventStream();
+            final String privateImeOption = activity.getEditText().getPrivateImeOptions();
+            expectEvent(stream, event -> {
+                if (!TextUtils.equals("onStartInput", event.getEventName())) {
+                    return false;
+                }
+                final EditorInfo editorInfo = event.getArguments().getParcelable("editorInfo");
+                return TextUtils.equals(editorInfo.packageName, mContext.getPackageName())
+                        && TextUtils.equals(editorInfo.privateImeOptions, privateImeOption);
+            }, TIMEOUT_START_INPUT);
+
+            imeTestActivitySession.runOnMainSyncAndWait(() -> {
+                final InputMethodManager imm = activity.getSystemService(InputMethodManager.class);
+                assertTrue("InputMethodManager.isActive() should work",
+                        imm.isActive(activity.getEditText()));
+            });
+        }
+    }
+
     /**
      * Tests that toast works on a secondary display.
      */
@@ -2112,6 +2155,56 @@ public class ActivityManagerMultiDisplayTests extends ActivityManagerDisplayTest
     }
 
     public static class ImeTestActivity2 extends ImeTestActivity { }
+
+    public static final class ImeTestActivityWithBrokenContextWrapper extends Activity {
+        private EditText mEditText;
+
+        /**
+         * Emulates the behavior of certain {@link ContextWrapper} subclasses we found in the wild.
+         *
+         * <p> Certain {@link ContextWrapper} subclass in the wild delegate method calls to
+         * ApplicationContext except for {@link #getSystemService(String)}.</p>
+         *
+         **/
+        private static final class Bug118341760ContextWrapper extends ContextWrapper {
+            private final Context mOriginalContext;
+
+            Bug118341760ContextWrapper(Context base) {
+                super(base.getApplicationContext());
+                mOriginalContext = base;
+            }
+
+            /**
+             * Emulates the behavior of {@link ContextWrapper#getSystemService(String)} of certain
+             * {@link ContextWrapper} subclasses we found in the wild.
+             *
+             * @param name The name of the desired service.
+             * @return The service or {@link null} if the name does not exist.
+             */
+            @Override
+            public Object getSystemService(String name) {
+                return mOriginalContext.getSystemService(name);
+            }
+        }
+
+        @Override
+        protected void onCreate(Bundle icicle) {
+            super.onCreate(icicle);
+            mEditText = new EditText(new Bug118341760ContextWrapper(this));
+            // Use SystemClock.elapsedRealtimeNanos()) as a unique ID of this edit text.
+            mEditText.setPrivateImeOptions(Long.toString(SystemClock.elapsedRealtimeNanos()));
+            final LinearLayout layout = new LinearLayout(this);
+            layout.setOrientation(LinearLayout.VERTICAL);
+            layout.addView(mEditText);
+            mEditText.requestFocus();
+            setContentView(layout);
+        }
+
+        EditText getEditText() {
+            return mEditText;
+        }
+    }
+
 
     void assertImeWindowAndDisplayConfiguration(
             WindowManagerState.WindowState imeWinState, ActivityDisplay display) {
