@@ -26,8 +26,6 @@ import android.media.DataSourceDesc;
 import android.media.MediaDrm;
 import android.media.MediaPlayer2;
 import android.media.MediaPlayer2.DrmInfo;
-import android.media.ResourceBusyException;
-import android.media.UnsupportedSchemeException;
 import android.media.cts.TestUtils.Monitor;
 import android.net.Uri;
 import android.os.SystemClock;
@@ -352,7 +350,7 @@ public class MediaPlayer2DrmTestBase extends ActivityInstrumentationTestCase2<Me
     private void preparePlayerAndDrm_V1_asyncDrmSetup() throws InterruptedException {
         final AtomicBoolean asyncSetupDrmError = new AtomicBoolean(false);
 
-        mPlayer.setDrmEventCallback(mExecutor, new MediaPlayer2.DrmEventCallback() {
+        mPlayer.registerDrmEventCallback(mExecutor, new MediaPlayer2.DrmEventCallback() {
             @Override
             public void onDrmInfo(MediaPlayer2 mp, DataSourceDesc dsd, DrmInfo drmInfo) {
                 Log.v(TAG, "preparePlayerAndDrm_V1: onDrmInfo" + drmInfo);
@@ -428,7 +426,7 @@ public class MediaPlayer2DrmTestBase extends ActivityInstrumentationTestCase2<Me
             throws InterruptedException {
         final AtomicBoolean asyncSetupDrmError = new AtomicBoolean(false);
 
-        mPlayer.setDrmEventCallback(mExecutor, new MediaPlayer2.DrmEventCallback() {
+        mPlayer.registerDrmEventCallback(mExecutor, new MediaPlayer2.DrmEventCallback() {
             @Override
             public void onDrmInfo(MediaPlayer2 mp, DataSourceDesc dsd, DrmInfo drmInfo) {
                 Log.v(TAG, "preparePlayerAndDrm_V3: onDrmInfo" + drmInfo);
@@ -449,19 +447,8 @@ public class MediaPlayer2DrmTestBase extends ActivityInstrumentationTestCase2<Me
                 UUID drmScheme = CLEARKEY_SCHEME_UUID;
                 Log.d(TAG, "preparePlayerAndDrm_V3: onDrmInfo: selected " + drmScheme);
 
-                try {
-                    Log.v(TAG, "preparePlayerAndDrm_V3: onDrmInfo: calling prepareDrm");
-                    mp.prepareDrm(drmScheme);
-                    Log.v(TAG, "preparePlayerAndDrm_V3: onDrmInfo: called prepareDrm");
-                } catch (Exception e) {
-                    e.printStackTrace();
-                    Log.e(TAG, "preparePlayerAndDrm_V3: onDrmInfo: prepareDrm exception " + e);
-                    asyncSetupDrmError.set(true);
-                    mOnDrmInfoCalled.signal();
-                    // need to get passed the wait
-                    mOnDrmPreparedCalled.signal();
-                    return;
-                }
+                Log.v(TAG, "preparePlayerAndDrm_V3: onDrmInfo: calling prepareDrm");
+                mp.prepareDrm(drmScheme);
 
                 mOnDrmInfoCalled.signal();
                 Log.v(TAG, "preparePlayerAndDrm_V3: onDrmInfo done!");
@@ -471,8 +458,10 @@ public class MediaPlayer2DrmTestBase extends ActivityInstrumentationTestCase2<Me
             public void onDrmPrepared(MediaPlayer2 mp, DataSourceDesc dsd, int status) {
                 Log.v(TAG, "preparePlayerAndDrm_V3: onDrmPrepared status: " + status);
 
-                assertTrue("preparePlayerAndDrm_V3: onDrmPrepared did not succeed",
-                           status == MediaPlayer2.PREPARE_DRM_STATUS_SUCCESS);
+                if (status != MediaPlayer2.PREPARE_DRM_STATUS_SUCCESS) {
+                    asyncSetupDrmError.set(true);
+                    Log.e(TAG, "preparePlayerAndDrm_V3: onDrmPrepared did not succeed");
+                }
 
                 DrmInfo drmInfo = mPlayer.getDrmInfo();
 
@@ -643,6 +632,7 @@ public class MediaPlayer2DrmTestBase extends ActivityInstrumentationTestCase2<Me
             byte[] initData = null;
             String mime = null;
             String keyTypeStr = "Unexpected";
+            final AtomicBoolean prepareDrmFailed = new AtomicBoolean(false);
 
             switch (keyType) {
                 case MediaDrm.KEY_TYPE_STREAMING:
@@ -659,15 +649,22 @@ public class MediaPlayer2DrmTestBase extends ActivityInstrumentationTestCase2<Me
 
                     if (prepareDrm) {
                         final Monitor drmPrepared = new Monitor();
-                        mPlayer.setDrmEventCallback(mExecutor, new MediaPlayer2.DrmEventCallback() {
+                        mPlayer.registerDrmEventCallback(
+                                mExecutor, new MediaPlayer2.DrmEventCallback() {
                             @Override
                             public void onDrmPrepared(
                                     MediaPlayer2 mp, DataSourceDesc dsd, int status) {
+                                if (status != MediaPlayer2.PREPARE_DRM_STATUS_SUCCESS) {
+                                    prepareDrmFailed.set(true);
+                                }
                                 drmPrepared.signal();
                             }
                         });
                         mPlayer.prepareDrm(drmScheme);
                         drmPrepared.waitForSignal();
+                        if (prepareDrmFailed.get()) {
+                            fail("setupDrm: prepareDrm failed");
+                        }
                     }
 
                     byte[] psshData = drmInfo.getPssh().get(drmScheme);
@@ -728,22 +725,6 @@ public class MediaPlayer2DrmTestBase extends ActivityInstrumentationTestCase2<Me
             Log.d(TAG, "setupDrm: NoDrmSchemeException");
             e.printStackTrace();
             throw e;
-        } catch (MediaPlayer2.ProvisioningNetworkErrorException e) {
-            Log.d(TAG, "setupDrm: ProvisioningNetworkErrorException");
-            e.printStackTrace();
-            throw e;
-        } catch (MediaPlayer2.ProvisioningServerErrorException e) {
-            Log.d(TAG, "setupDrm: ProvisioningServerErrorException");
-            e.printStackTrace();
-            throw e;
-        } catch (UnsupportedSchemeException e) {
-            Log.d(TAG, "setupDrm: UnsupportedSchemeException");
-            e.printStackTrace();
-            throw e;
-        } catch (ResourceBusyException e) {
-            Log.d(TAG, "setupDrm: ResourceBusyException");
-            e.printStackTrace();
-            throw e;
         } catch (Exception e) {
             Log.d(TAG, "setupDrm: Exception " + e);
             e.printStackTrace();
@@ -755,6 +736,8 @@ public class MediaPlayer2DrmTestBase extends ActivityInstrumentationTestCase2<Me
         Log.d(TAG, "setupDrmRestore: drmInfo: " + drmInfo + " prepareDrm: " + prepareDrm);
         try {
             if (prepareDrm) {
+                final AtomicBoolean prepareDrmFailed = new AtomicBoolean(false);
+
                 // DRM preparation
                 List<UUID> supportedSchemes = drmInfo.getSupportedSchemes();
                 if (supportedSchemes.isEmpty()) {
@@ -765,7 +748,23 @@ public class MediaPlayer2DrmTestBase extends ActivityInstrumentationTestCase2<Me
                 UUID drmScheme = CLEARKEY_SCHEME_UUID;
                 Log.d(TAG, "setupDrmRestore: selected " + drmScheme);
 
+                final Monitor drmPrepared = new Monitor();
+                mPlayer.registerDrmEventCallback(
+                        mExecutor, new MediaPlayer2.DrmEventCallback() {
+                    @Override
+                    public void onDrmPrepared(
+                            MediaPlayer2 mp, DataSourceDesc dsd, int status) {
+                        if (status != MediaPlayer2.PREPARE_DRM_STATUS_SUCCESS) {
+                            prepareDrmFailed.set(true);
+                        }
+                        drmPrepared.signal();
+                    }
+                });
                 mPlayer.prepareDrm(drmScheme);
+                drmPrepared.waitForSignal();
+                if (prepareDrmFailed.get()) {
+                    fail("setupDrmRestore: prepareDrm failed");
+                }
             }
 
             if (mKeySetId == null) {
