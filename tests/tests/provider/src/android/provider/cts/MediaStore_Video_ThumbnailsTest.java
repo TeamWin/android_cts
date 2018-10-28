@@ -16,14 +16,13 @@
 
 package android.provider.cts;
 
-import android.provider.cts.R;
+import static android.provider.cts.ProviderTestUtils.assertExists;
+import static android.provider.cts.ProviderTestUtils.assertNotExists;
 
 import android.content.ContentResolver;
 import android.content.ContentUris;
 import android.content.ContentValues;
 import android.database.Cursor;
-import android.media.MediaCodecInfo;
-import android.media.MediaCodecList;
 import android.net.Uri;
 import android.os.Environment;
 import android.provider.MediaStore.Files;
@@ -113,11 +112,11 @@ public class MediaStore_Video_ThumbnailsTest extends AndroidTestCase {
             long vid = c.getLong(2);
             assertEquals(videoId, vid);
             String path = c.getString(1);
-            assertTrue("thumbnail file does not exist", new File(path).exists());
+            assertExists("thumbnail file does not exist", path);
             long id = c.getLong(0);
             mResolver.delete(ContentUris.withAppendedId(Thumbnails.EXTERNAL_CONTENT_URI, id),
                     null, null);
-            assertFalse("thumbnail file should no longer exist", new File(path).exists());
+            assertNotExists("thumbnail file should no longer exist", path);
         }
         c.close();
 
@@ -150,11 +149,11 @@ public class MediaStore_Video_ThumbnailsTest extends AndroidTestCase {
         assertTrue("couldn't find thumbnail", c.moveToNext());
         String path = c.getString(0);
         c.close();
-        assertTrue("thumbnail does not exist", new File(path).exists());
+        assertExists("thumbnail does not exist", path);
 
         // delete the source video and check that the thumbnail is gone too
         mResolver.delete(uri, null /* where clause */, null /* where args */);
-        assertFalse("thumbnail still exists after source file delete", new File(path).exists());
+        assertNotExists("thumbnail still exists after source file delete", path);
 
         // insert again
         uri = insertVideo();
@@ -174,7 +173,7 @@ public class MediaStore_Video_ThumbnailsTest extends AndroidTestCase {
         assertTrue("couldn't find thumbnail", c.moveToNext());
         path = c.getString(0);
         c.close();
-        assertTrue("thumbnail does not exist", new File(path).exists());
+        assertExists("thumbnail does not exist", path);
 
         // update the media type
         ContentValues values = new ContentValues();
@@ -196,7 +195,7 @@ public class MediaStore_Video_ThumbnailsTest extends AndroidTestCase {
             assertFalse("thumbnail entry exists for non-thumbnail file", c.moveToNext());
             c.close();
         }
-        assertFalse("thumbnail remains after source file type change", new File(path).exists());
+        assertNotExists("thumbnail remains after source file type change", path);
 
         // check source no longer exists as video
         c = mResolver.query(uri,

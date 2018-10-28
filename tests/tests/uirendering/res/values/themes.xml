@@ -14,7 +14,7 @@ See the License for the specific language governing permissions and
 limitations under the License.
 -->
 <resources>
-    <style name="WhiteBackgroundTheme" parent="@android:style/Theme.Material.NoActionBar.Fullscreen">
+    <style name="DefaultTheme" parent="@android:style/Theme.Material.NoActionBar.Fullscreen">
         <item name="android:windowNoTitle">true</item>
         <item name="android:windowFullscreen">true</item>
         <item name="android:windowOverscan">true</item>
@@ -24,5 +24,10 @@ limitations under the License.
         <item name="android:windowAnimationStyle">@null</item>
         <item name="android:ambientShadowAlpha">0.039</item>
         <item name="android:spotShadowAlpha">0.19</item>
+        <item name="android:forceDarkAllowed">false</item>
+    </style>
+    <style name="AutoDarkTheme" parent="@style/DefaultTheme">
+        <item name="android:forceDarkAllowed">true</item>
+        <item name="android:isLightTheme">true</item>
     </style>
 </resources>

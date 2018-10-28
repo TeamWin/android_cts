@@ -27,7 +27,6 @@ import android.app.admin.DevicePolicyManager;
 import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
-import android.content.pm.PackageManager;
 import android.graphics.Color;
 import android.net.Uri;
 import android.os.Bundle;
@@ -99,6 +98,12 @@ public class ByodHelperActivity extends LocationListenerActivity
     public static final String ACTION_INSTALL_APK_WORK_PROFILE_GLOBAL_RESTRICTION = "com.android.cts.verifier.managedprovisioning.BYOD_INSTALL_APK_WORK_PROFILE_GLOBAL_RESTRICTION";
     public static final String EXTRA_ALLOW_NON_MARKET_APPS_DEVICE_WIDE = "allow_non_market_apps_device_wide";
 
+    // Primary -> managed intent: set unknown sources globally restriction
+    public static final String ACTION_INSTALL_APK_PRIMARY_PROFILE_GLOBAL_RESTRICTION = "com.android.cts.verifier.managedprovisioning.BYOD_INSTALL_APK_PRIMARY_PROFILE_GLOBAL_RESTRICTION";
+    // Managed -> primary intent: install primary profile app with global unknown sources
+    // restriction.
+    public static final String ACTION_INSTALL_APK_IN_PRIMARY = "com.android.cts.verifier.managedprovisioning.BYOD_INSTALL_APK_IN_PRIMARY";
+
     // Primary -> managed intent: check if the required cross profile intent filters are set.
     public static final String ACTION_CHECK_INTENT_FILTERS =
             "com.android.cts.verifier.managedprovisioning.action.CHECK_INTENT_FILTERS";
@@ -137,6 +142,10 @@ public class ByodHelperActivity extends LocationListenerActivity
     public static final String ACTION_TEST_SELECT_WORK_CHALLENGE =
             "com.android.cts.verifier.managedprovisioning.TEST_SELECT_WORK_CHALLENGE";
 
+    // Primary -> managed intent: Start the selection of a work challenge
+    public static final String ACTION_TEST_PATTERN_WORK_CHALLENGE =
+            "com.android.cts.verifier.managedprovisioning.TEST_PATTERN_WORK_CHALLENGE";
+
     // Primary -> managed intent: Start the selection of a parent profile password.
     public static final String ACTION_TEST_PARENT_PROFILE_PASSWORD =
             "com.android.cts.verifier.managedprovisioning.TEST_PARENT_PROFILE_PASSWORD";
@@ -160,8 +169,6 @@ public class ByodHelperActivity extends LocationListenerActivity
 
     private static final int NOTIFICATION_ID = 7;
     private static final String NOTIFICATION_CHANNEL_ID = TAG;
-    private static final String FILE_PROVIDER_AUTHORITY =
-            "com.android.cts.verifier.managedprovisioning.fileprovider";
 
     private NotificationManager mNotificationManager;
     private Bundle mOriginalRestrictions;
@@ -258,6 +265,16 @@ public class ByodHelperActivity extends LocationListenerActivity
                     !allowNonMarketGlobal);
             startInstallerActivity(intent.getStringExtra(EXTRA_PARAMETER_1));
             // Not yet ready to finish - wait until the result comes back
+            return;
+        } else if (action.equals(ACTION_INSTALL_APK_PRIMARY_PROFILE_GLOBAL_RESTRICTION)) {
+            boolean allowNonMarketGlobal = intent.getExtras().getBoolean(
+                    EXTRA_ALLOW_NON_MARKET_APPS_DEVICE_WIDE, false);
+            setRestrictionAndSaveOriginal(DISALLOW_INSTALL_UNKNOWN_SOURCES_GLOBALLY,
+                    !allowNonMarketGlobal);
+            setRestrictionAndSaveOriginal(DISALLOW_INSTALL_UNKNOWN_SOURCES, false);
+            Intent installPersonalProfileIntent = new Intent(ACTION_INSTALL_APK_IN_PRIMARY);
+            // Attempt to install an apk in the primary profile
+            startActivityForResult(installPersonalProfileIntent, REQUEST_INSTALL_PACKAGE);
             return;
         } else if (action.equals(ACTION_CHECK_INTENT_FILTERS)) {
             // Queried by CtsVerifier in the primary side using startActivityForResult.
@@ -371,6 +388,9 @@ public class ByodHelperActivity extends LocationListenerActivity
             } else {
                 showToast(R.string.provisioning_byod_no_secure_lockscreen);
             }
+        } else if (ACTION_TEST_PATTERN_WORK_CHALLENGE.equals(action)) {
+            startActivity(new Intent(DevicePolicyManager.ACTION_SET_NEW_PASSWORD));
+            // The remaining steps are manual.
         } else if (ACTION_SET_ORGANIZATION_INFO.equals(action)) {
             if(intent.hasExtra(OrganizationInfoTestActivity.EXTRA_ORGANIZATION_NAME)) {
                 final String organizationName = intent
@@ -397,7 +417,7 @@ public class ByodHelperActivity extends LocationListenerActivity
                 uri = Uri.parse("package:" + getPackageName());
             } else {
                 uri = FileProvider.getUriForFile(
-                    this, FILE_PROVIDER_AUTHORITY, new File(pathToApk));
+                    this, Utils.FILE_PROVIDER_AUTHORITY, new File(pathToApk));
             }
             final Intent installIntent = new Intent(Intent.ACTION_INSTALL_PACKAGE)
                 .setData(uri)
@@ -420,7 +440,7 @@ public class ByodHelperActivity extends LocationListenerActivity
         switch (requestCode) {
             case REQUEST_INSTALL_PACKAGE: {
                 Log.w(TAG, "Received REQUEST_INSTALL_PACKAGE, resultCode = " + resultCode);
-                // Restore original settings
+                // Restore original settings for restrictions being changed before installs.
                 restoreOriginalRestriction(DISALLOW_INSTALL_UNKNOWN_SOURCES);
                 restoreOriginalRestriction(DISALLOW_INSTALL_UNKNOWN_SOURCES_GLOBALLY);
                 finish();
@@ -500,7 +520,8 @@ public class ByodHelperActivity extends LocationListenerActivity
                 + File.separator + fileName);
         file.getParentFile().mkdirs(); //if the folder doesn't exists it is created
         mTempFiles.add(file);
-        return new Pair<>(file, FileProvider.getUriForFile(this, FILE_PROVIDER_AUTHORITY, file));
+        return new Pair<>(file, FileProvider.getUriForFile(
+                this, Utils.FILE_PROVIDER_AUTHORITY, file));
     }
 
     private void cleanUpTempUris() {
@@ -529,6 +550,22 @@ public class ByodHelperActivity extends LocationListenerActivity
         }
     }
 
+    private void setRestrictionAndSaveOriginal(String restriction, boolean enabled) {
+        // Saves original restriction values in mOriginalRestrictions before changing its value.
+        boolean original = isRestrictionSet(restriction);
+        if (enabled != original) {
+            setRestriction(restriction, enabled);
+            mOriginalRestrictions.putBoolean(restriction, original);
+        }
+    }
+
+    public void restoreOriginalRestriction(String restriction) {
+        if (mOriginalRestrictions.containsKey(restriction)) {
+            setRestriction(restriction, mOriginalRestrictions.getBoolean(restriction));
+            mOriginalRestrictions.remove(restriction);
+        }
+    }
+
     private void grantCameraPermissionToSelf() {
         mDevicePolicyManager.setPermissionGrantState(mAdminReceiverComponent, getPackageName(),
                 android.Manifest.permission.CAMERA,
@@ -540,22 +577,6 @@ public class ByodHelperActivity extends LocationListenerActivity
         Intent chooser = Intent.createChooser(toSend,
                 getResources().getString(R.string.provisioning_cross_profile_chooser));
         startActivity(chooser);
-    }
-
-    private void setRestrictionAndSaveOriginal(String restriction, boolean enabled) {
-        // Saves original restriction values in mOriginalRestrictions before changing its value.
-        boolean original = isRestrictionSet(restriction);
-        if (enabled != original) {
-            setRestriction(restriction, enabled);
-            mOriginalRestrictions.putBoolean(restriction, original);
-        }
-    }
-
-    private void restoreOriginalRestriction(String restriction) {
-        if (mOriginalRestrictions.containsKey(restriction)) {
-            setRestriction(restriction, mOriginalRestrictions.getBoolean(restriction));
-            mOriginalRestrictions.remove(restriction);
-        }
     }
 
     @Override

@@ -82,12 +82,17 @@ public abstract class ActivityTestBase {
             intent.setClass(instrumentation.getTargetContext(), DrawActivity.class);
             intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
             intent.putExtra(DrawActivity.EXTRA_WIDE_COLOR_GAMUT, isWideColorGamut());
+            intent.putExtra(DrawActivity.EXTRA_USE_FORCE_DARK, useForceDark());
             sActivity = (DrawActivity) instrumentation.startActivitySync(intent);
         }
         return sActivity;
     }
 
     protected boolean isWideColorGamut() {
+        return false;
+    }
+
+    protected boolean useForceDark() {
         return false;
     }
 
@@ -294,7 +299,7 @@ public abstract class ActivityTestBase {
         }
 
         public TestCaseBuilder addLayout(int layoutId, @Nullable ViewInitializer viewInitializer,
-                                         boolean useHardware) {
+                boolean useHardware) {
             mTestCases.add(new TestCase(layoutId, viewInitializer, useHardware));
             return this;
         }
@@ -321,7 +326,7 @@ public abstract class ActivityTestBase {
         }
 
         public TestCaseBuilder addCanvasClient(String debugString,
-                    CanvasClient canvasClient, boolean useHardware) {
+                CanvasClient canvasClient, boolean useHardware) {
             return addCanvasClientInternal(debugString, canvasClient, useHardware, false)
                     .addCanvasClientInternal(debugString, canvasClient, useHardware, true);
         }
@@ -355,9 +360,11 @@ public abstract class ActivityTestBase {
     private class TestCase {
         public int layoutID;
         public ViewInitializer viewInitializer;
-        /** After launching the test case this fence is used to signal when
+        /**
+         * After launching the test case this fence is used to signal when
          * to proceed with capture & verification. If this is null the test
-         * proceeds immediately to verification */
+         * proceeds immediately to verification
+         */
         @Nullable
         public CountDownLatch readyFence;
 

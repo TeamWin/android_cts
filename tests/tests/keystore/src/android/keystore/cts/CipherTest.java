@@ -279,7 +279,10 @@ public class CipherTest extends AndroidTestCase {
 
         public void performDeviceLock() {
             mLockCredential.sleepDevice();
-            SystemClock.sleep(200);
+            KeyguardManager keyguardManager = (KeyguardManager)getContext().getSystemService(Context.KEYGUARD_SERVICE);
+            for (int i = 0; i < 25 && !keyguardManager.isDeviceLocked(); i++) {
+                SystemClock.sleep(200);
+            }
         }
 
         public void performDeviceUnlock() throws Exception {

@@ -16,7 +16,9 @@
 package android.uirendering.cts.testinfrastructure
 
 import android.app.Activity
+import android.app.UiModeManager
 import android.content.pm.ActivityInfo
+import android.content.res.Configuration
 import android.graphics.Point
 import android.os.Bundle
 import android.os.Handler
@@ -31,12 +33,23 @@ import org.junit.Assert.assertTrue
 import java.util.concurrent.CountDownLatch
 import java.util.concurrent.TimeUnit
 
+class Offset(val dx: Float, val dy: Float) {
+    override fun equals(other: Any?): Boolean {
+        return this === other || (other as? Offset)?.let {
+            dx == other.dx && dy == other.dy
+        } ?: false
+    }
+
+    override fun hashCode(): Int = dx.hashCode() xor dy.hashCode()
+}
+
 /**
  * A generic activity that uses a view specified by the user.
  */
 class DrawActivity : Activity() {
     companion object {
         internal const val EXTRA_WIDE_COLOR_GAMUT = "DrawActivity.WIDE_COLOR_GAMUT"
+        internal const val EXTRA_USE_FORCE_DARK = "DrawActivity.USE_FORCE_DARK"
 
         private const val TIME_OUT_MS: Long = 10000
 
@@ -56,15 +69,33 @@ class DrawActivity : Activity() {
 
     public override fun onCreate(bundle: Bundle?) {
         super.onCreate(bundle)
-        window.decorView.systemUiVisibility = View.SYSTEM_UI_FLAG_HIDE_NAVIGATION or
-                View.SYSTEM_UI_FLAG_FULLSCREEN
+
+        if (intent.getBooleanExtra(EXTRA_USE_FORCE_DARK, false)) {
+            forceUiMode(Configuration.UI_MODE_NIGHT_YES)
+            setTheme(R.style.AutoDarkTheme)
+        } else {
+            forceUiMode(Configuration.UI_MODE_NIGHT_NO)
+        }
+
         if (intent.getBooleanExtra(EXTRA_WIDE_COLOR_GAMUT, false)) {
             window.colorMode = ActivityInfo.COLOR_MODE_WIDE_COLOR_GAMUT
         }
+
+        window.decorView.systemUiVisibility = View.SYSTEM_UI_FLAG_HIDE_NAVIGATION or
+                View.SYSTEM_UI_FLAG_FULLSCREEN
         mHandler = RenderSpecHandler()
 
         setContentView(R.layout.test_container)
         mTestContainer = findViewById(R.id.test_content_wrapper)
+    }
+
+    private fun forceUiMode(mode: Int) {
+        if (resources.configuration.uiMode != mode) {
+            val newConfig = Configuration(resources.configuration)
+            newConfig.uiMode = mode
+            resources.updateConfiguration(newConfig, resources.displayMetrics)
+            onConfigurationChanged(newConfig)
+        }
     }
 
     fun enqueueRenderSpecAndWait(

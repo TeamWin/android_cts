@@ -16,6 +16,8 @@ my_bionic_testlib_files := \
   dt_runpath_b_c_x/libtest_dt_runpath_b.so \
   dt_runpath_b_c_x/libtest_dt_runpath_c.so \
   dt_runpath_b_c_x/libtest_dt_runpath_x.so \
+  exec_linker_helper/exec_linker_helper \
+  exec_linker_helper_lib.so \
   inaccessible_libs/libtestshared.so \
   inaccessible_libs/libtestshared.so \
   ld_config_test_helper/ld_config_test_helper \

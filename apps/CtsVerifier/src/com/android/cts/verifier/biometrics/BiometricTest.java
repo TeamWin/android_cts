@@ -38,8 +38,8 @@ import java.util.concurrent.Executor;
 /**
  * Manual test for BiometricManager and BiometricPrompt. This tests two things currently.
  * 1) When no biometrics are enrolled, BiometricManager and BiometricPrompt both return consistent
- *    ERROR_NO_BIOMETRICS errors).
- * 2) When biometrics are enrolled, BiometricManager returns ERROR_NONE and BiometricPrompt
+ *    BIOMETRIC_ERROR_NO_BIOMETRICS errors).
+ * 2) When biometrics are enrolled, BiometricManager returns BIOMETRIC_SUCCESS and BiometricPrompt
  *    authentication can be successfully completed.
  */
 public class BiometricTest extends PassFailButtons.Activity {
@@ -141,14 +141,14 @@ public class BiometricTest extends PassFailButtons.Activity {
         int result = mBiometricManager.canAuthenticate();
 
         if (testType == TEST_NONE_ENROLLED) {
-            if (result == BiometricManager.ERROR_NO_BIOMETRICS) {
+            if (result == BiometricManager.BIOMETRIC_ERROR_NO_BIOMETRICS) {
                 mExpectedError = BiometricPrompt.BIOMETRIC_ERROR_NO_BIOMETRICS;
                 showBiometricPrompt();
             } else {
                 showToastAndLog("Error: " + result + " Please remove all biometrics and try again");
             }
         } else if (testType == TEST_ENROLLED) {
-            if (result == BiometricManager.ERROR_NONE) {
+            if (result == BiometricManager.BIOMETRIC_SUCCESS) {
                 mExpectedError = 0;
                 showBiometricPrompt();
             } else {

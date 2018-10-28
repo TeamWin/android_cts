@@ -264,11 +264,23 @@ public class MediaPlayerTest extends MediaPlayerTestBase {
         }
     }
 
-    public void testPlayAudio() throws Exception {
-        final int resid = R.raw.testmp3_2;
-        final int mp3Duration = 34909;
-        final int tolerance = 70;
-        final int seekDuration = 100;
+    public void testPlayAudioMp3() throws Exception {
+        testPlayAudio(R.raw.testmp3_2,
+                34909 /* duration */, 70 /* tolerance */, 100 /* seekDuration */);
+    }
+
+    public void testPlayAudioOpus() throws Exception {
+        testPlayAudio(R.raw.testopus,
+                34909 /* duration */, 70 /* tolerance */, 100 /* seekDuration */);
+    }
+
+    public void testPlayAudioAmr() throws Exception {
+        testPlayAudio(R.raw.testamr,
+                34909 /* duration */, 70 /* tolerance */, 100 /* seekDuration */);
+    }
+
+    public void testPlayAudio(int resid,
+            int mp3Duration, int tolerance, int seekDuration) throws Exception {
 
         MediaPlayer mp = MediaPlayer.create(mContext, resid);
         try {

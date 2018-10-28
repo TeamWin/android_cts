@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package android.provider.cts;
+package android.providerui.cts;
 
 import static android.Manifest.permission.ACCESS_BACKGROUND_LOCATION;
 import static android.Manifest.permission.ACCESS_COARSE_LOCATION;
@@ -43,7 +43,7 @@ import android.os.SystemClock;
 import android.os.storage.StorageManager;
 import android.os.storage.StorageVolume;
 import android.provider.MediaStore;
-import android.provider.cts.GetResultActivity.Result;
+import android.providerui.cts.GetResultActivity.Result;
 import android.support.test.InstrumentationRegistry;
 import android.support.test.uiautomator.By;
 import android.support.test.uiautomator.BySelector;
@@ -147,6 +147,23 @@ public class MediaStoreUiTest extends InstrumentationTestCase {
         }
     }
 
+    public void testGetDocumentUri_Symmetry() throws Exception {
+        if (!supportsHardware()) return;
+
+        prepareFile();
+
+        final Uri treeUri = acquireAccess(mFile, Environment.DIRECTORY_DOCUMENTS);
+        assertNotNull(treeUri);
+
+        final Uri docUri = MediaStore.getDocumentUri(mActivity, mMediaStoreUri);
+        assertNotNull(docUri);
+
+        final Uri mediaUri = MediaStore.getMediaUri(mActivity, docUri);
+        assertNotNull(mediaUri);
+
+        assertEquals(mMediaStoreUri, mediaUri);
+    }
+
     private void maybeClick(UiSelector sel) {
         try { mDevice.findObject(sel).click(); } catch (Throwable ignored) { }
     }
@@ -189,7 +206,7 @@ public class MediaStoreUiTest extends InstrumentationTestCase {
 
         final Intent intent = new Intent(MediaStore.ACTION_IMAGE_CAPTURE);
         intent.putExtra(MediaStore.EXTRA_OUTPUT,
-                FileProvider.getUriForFile(context, "android.provider.cts.fileprovider", target));
+                FileProvider.getUriForFile(context, "android.providerui.cts.fileprovider", target));
 
         // Figure out who is going to answer the phone
         final ResolveInfo ri = context.getPackageManager().resolveActivity(intent, 0);

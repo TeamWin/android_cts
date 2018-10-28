@@ -16,6 +16,9 @@
 
 package android.provider.cts;
 
+import static android.provider.cts.ProviderTestUtils.assertExists;
+import static android.provider.cts.ProviderTestUtils.assertNotExists;
+
 import android.content.ContentResolver;
 import android.content.ContentUris;
 import android.content.ContentValues;
@@ -26,8 +29,8 @@ import android.os.Environment;
 import android.os.ParcelFileDescriptor;
 import android.os.SystemClock;
 import android.provider.MediaStore;
-import android.provider.MediaStore.MediaColumns;
 import android.provider.MediaStore.Files.FileColumns;
+import android.provider.MediaStore.MediaColumns;
 import android.test.AndroidTestCase;
 
 import com.android.compatibility.common.util.FileCopyHelper;
@@ -206,7 +209,7 @@ public class MediaStore_FilesTest extends AndroidTestCase {
         }
     }
 
-    public void testAccess() throws IOException {
+    public void testAccess() throws Exception {
         // clean up from previous run
         mResolver.delete(MediaStore.Images.Media.INTERNAL_CONTENT_URI,
                 "_data NOT LIKE ?", new String[] { "/system/%" } );
@@ -289,7 +292,7 @@ public class MediaStore_FilesTest extends AndroidTestCase {
                     "/" + getClass().getCanonicalName() + "/test.mp3";
             sdfile = new File(fileDir);
             writeFile(R.raw.testmp3, sdfile.getCanonicalPath());
-            assertTrue(sdfile.exists());
+            assertExists(sdfile);
             values = new ContentValues();
             values.put("_data", sdfile.getCanonicalPath());
             mResolver.update(uri, values, null, null);
@@ -391,8 +394,8 @@ public class MediaStore_FilesTest extends AndroidTestCase {
 
         for (String s: trimmedPaths) {
             File dir = new File(s + "/foobardir-" + SystemClock.elapsedRealtime());
-            assertFalse("please remove " + dir.getAbsolutePath()
-                    + " before running", dir.exists());
+            assertNotExists("please remove " + dir.getAbsolutePath()
+                    + " before running", dir.getAbsolutePath());
             File file = new File(dir, "foobar");
             values = new ContentValues();
             values.put(MediaStore.Audio.Media.ALBUM_ID, albumid);
@@ -406,7 +409,7 @@ public class MediaStore_FilesTest extends AndroidTestCase {
             } finally {
                 pfd.close();
             }
-            assertFalse(dir.getAbsolutePath() + " was created", dir.exists());
+            assertNotExists(dir.getAbsolutePath() + " was created", dir.getAbsolutePath());
         }
         mResolver.delete(fileUri, null, null);
         new File(fileName).delete();
@@ -422,7 +425,7 @@ public class MediaStore_FilesTest extends AndroidTestCase {
             assertNotNull(fileUri);
 
             // check that adding the file doesn't cause it to be created
-            assertFalse(file.exists());
+            assertNotExists(file);
 
             // check if opening the file for write works
             try {
@@ -433,7 +436,7 @@ public class MediaStore_FilesTest extends AndroidTestCase {
             }
             // check that deleting the file doesn't cause it to be created
             mResolver.delete(fileUri, null, null);
-            assertFalse(file.exists());
+            assertNotExists(file);
         }
 
         // try creating files in new subdir
@@ -453,8 +456,8 @@ public class MediaStore_FilesTest extends AndroidTestCase {
             assertNotNull(fileUri);
 
             // check that adding the file or its folder didn't cause either one to be created
-            assertFalse(dir.exists());
-            assertFalse(file.exists());
+            assertNotExists(dir);
+            assertNotExists(file);
 
             // check if opening the file for write works
             try {
@@ -465,11 +468,11 @@ public class MediaStore_FilesTest extends AndroidTestCase {
             }
             // check that deleting the file or its folder doesn't cause either one to be created
             mResolver.delete(fileUri, null, null);
-            assertFalse(dir.exists());
-            assertFalse(file.exists());
+            assertNotExists(dir);
+            assertNotExists(file);
             mResolver.delete(dirUri, null, null);
-            assertFalse(dir.exists());
-            assertFalse(file.exists());
+            assertNotExists(dir);
+            assertNotExists(file);
         }
     }
 
