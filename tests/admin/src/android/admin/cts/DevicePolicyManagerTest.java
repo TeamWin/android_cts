@@ -32,6 +32,8 @@ import android.test.AndroidTestCase;
 import android.test.suitebuilder.annotation.Suppress;
 import android.util.Log;
 
+import com.android.compatibility.common.util.CddTest;
+
 import java.util.List;
 
 /**
@@ -92,6 +94,7 @@ public class DevicePolicyManagerTest extends AndroidTestCase {
         assertTrue(mDevicePolicyManager.isAdminActive(mComponent));
     }
 
+    @CddTest(requirement="7.3.10/C-1-10,9.11.1/C-5-2")
     public void testKeyguardDisabledFeatures() {
         if (!mDeviceAdmin) {
             Log.w(TAG, "Skipping testKeyguardDisabledFeatures");

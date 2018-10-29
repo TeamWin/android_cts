@@ -24,9 +24,12 @@ import android.os.CancellationSignal;
 import android.platform.test.annotations.Presubmit;
 import android.test.AndroidTestCase;
 
+import com.android.compatibility.common.util.CddTest;
+
 /**
  * Basic test cases for FingerprintManager
  */
+@CddTest(requirement="7.3.10/C-1-2")
 public class FingerprintManagerTest extends AndroidTestCase {
     private enum AuthState {
         AUTH_UNKNOWN, AUTH_ERROR, AUTH_FAILED, AUTH_SUCCEEDED
@@ -82,6 +85,7 @@ public class FingerprintManagerTest extends AndroidTestCase {
         assertTrue(!hasEnrolledFingerprints);
     }
 
+    @CddTest(requirement="7.3.10/C-1-2")
     public void test_authenticateNullCallback() {
         if (!mHasFingerprintManager) {
             return; // skip test if no fingerprint feature
@@ -99,6 +103,7 @@ public class FingerprintManagerTest extends AndroidTestCase {
         }
     }
 
+    @CddTest(requirement="7.3.10/C-1-2")
     public void test_authenticate() {
         if (!mHasFingerprintManager) {
             return; // skip test if no fingerprint feature
