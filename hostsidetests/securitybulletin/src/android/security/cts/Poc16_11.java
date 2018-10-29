@@ -13,6 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 package android.security.cts;
 
 import android.platform.test.annotations.SecurityTest;
@@ -39,5 +40,75 @@ public class Poc16_11 extends SecurityTestCase {
         AdbUtils.runPoc("CVE-2012-6702", getDevice(), 60);
         String logcat = AdbUtils.runCommandLine("logcat -d", getDevice());
         assertNotMatches("[\\s\\n\\S]*fail: encountered same random values![\\s\\n\\S]*", logcat);
+    }
+
+    /**
+     *  b/30904789
+     */
+    @SecurityTest
+    public void testPocCVE_2016_6730() throws Exception {
+        if(containsDriver(getDevice(), "/dev/dri/renderD129")) {
+            AdbUtils.runPoc("CVE-2016-6730", getDevice(), 60);
+        }
+    }
+
+    /**
+     *  b/30906023
+     */
+    @SecurityTest
+    public void testPocCVE_2016_6731() throws Exception {
+        if(containsDriver(getDevice(), "/dev/dri/renderD129")) {
+            AdbUtils.runPoc("CVE-2016-6731", getDevice(), 60);
+        }
+    }
+
+    /**
+     *  b/30906599
+     */
+    @SecurityTest
+    public void testPocCVE_2016_6732() throws Exception {
+        if(containsDriver(getDevice(), "/dev/dri/renderD129")) {
+            AdbUtils.runPoc("CVE-2016-6732", getDevice(), 60);
+        }
+    }
+
+    /**
+     *  b/30906694
+     */
+    @SecurityTest
+    public void testPocCVE_2016_6733() throws Exception {
+        if(containsDriver(getDevice(), "/dev/dri/renderD129")) {
+            AdbUtils.runPoc("CVE-2016-6733", getDevice(), 60);
+        }
+    }
+
+    /**
+     *  b/30907120
+     */
+    @SecurityTest
+    public void testPocCVE_2016_6734() throws Exception {
+        if(containsDriver(getDevice(), "/dev/dri/renderD129")) {
+            AdbUtils.runPoc("CVE-2016-6734", getDevice(), 60);
+        }
+    }
+
+    /**
+     *  b/30907701
+     */
+    @SecurityTest
+    public void testPocCVE_2016_6735() throws Exception {
+        if(containsDriver(getDevice(), "/dev/dri/renderD129")) {
+            AdbUtils.runPoc("CVE-2016-6735", getDevice(), 60);
+        }
+    }
+
+    /**
+     *  b/30953284
+     */
+    @SecurityTest
+    public void testPocCVE_2016_6736() throws Exception {
+        if(containsDriver(getDevice(), "/dev/dri/renderD129")) {
+            AdbUtils.runPoc("CVE-2016-6736", getDevice(), 60);
+        }
     }
 }
