@@ -29,4 +29,14 @@ public class Poc17_02 extends SecurityTestCase {
       String logcatOut = AdbUtils.runCommandLine("logcat -d", getDevice());
       assertNotMatches("[\\s\\n\\S]*Bugreports file in wrong path[\\s\\n\\S]*", logcatOut);
   }
+
+    /**
+     *  b/31799863
+     */
+    @SecurityTest
+    public void testPocCVE_2016_8482() throws Exception {
+        if(containsDriver(getDevice(), "/dev/nvmap")) {
+            AdbUtils.runPoc("CVE-2016-8482", getDevice(), 60);
+        }
+    }
 }
