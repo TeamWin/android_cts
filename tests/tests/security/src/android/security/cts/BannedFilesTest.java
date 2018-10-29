@@ -148,6 +148,24 @@ public class BannedFilesTest extends TestCase {
         assertNotSetugid("/vendor/bin/tcpdump-arm");
     }
 
+    /**
+     * enforce that the xaac codec has not been included on the device
+     */
+    public void testNoXaac() {
+        String libraries[] = new String[] {
+            "libstagefright_soft_xaacdec.so", "libstagefright_soft_c2xaacdec.so"
+        };
+        String directories[] = new String[] {
+            "/system/lib", "/system/lib64", "/vendor/lib", "/vendor/lib64"
+        };
+        for (String f : libraries) {
+            for (String d : directories) {
+                String fullPath = d + "/" + f;
+                assertFalse(fullPath, new File(fullPath).exists());
+            }
+        }
+    }
+
     private static void assertNotSetugid(String file) {
         FileUtils.FileStatus fs = new FileUtils.FileStatus();
         if (!FileUtils.getFileStatus(file, fs, false)) {
