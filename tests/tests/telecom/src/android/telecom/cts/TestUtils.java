@@ -485,7 +485,6 @@ public class TestUtils {
          */
         public void waitForPredicate(Predicate predicate, long timeoutMillis) {
             synchronized (mLock) {
-                mInvokeArgs.clear();
                 long startTimeMillis = SystemClock.uptimeMillis();
                 long elapsedTimeMillis = 0;
                 long remainingTimeMillis = timeoutMillis;
@@ -507,6 +506,12 @@ public class TestUtils {
                 } else if (remainingTimeMillis <= 0) {
                     TestCase.fail("Expected value not found within time limit");
                 }
+            }
+        }
+
+        public void clearArgs() {
+            synchronized (mLock) {
+                mInvokeArgs.clear();
             }
         }
     }
