@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2017 The Android Open Source Project
+# Copyright (C) 2018 The Android Open Source Project
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -37,9 +37,12 @@ LOCAL_JNI_SHARED_LIBRARIES := \
     libselinux \
 
 LOCAL_SRC_FILES := $(call all-java-files-under, src common)
-LOCAL_PACKAGE_NAME := CtsSelinuxTargetSdk27TestCases
+LOCAL_PACKAGE_NAME := CtsSelinuxTargetSdk28TestCases
 LOCAL_PRIVATE_PLATFORM_APIS := true
 LOCAL_COMPATIBILITY_SUITE := cts vts general-tests
+
+LOCAL_MIN_SDK_VERSION := 21
+
 include $(BUILD_CTS_PACKAGE)
 
 include $(call all-makefiles-under,$(LOCAL_PATH))
