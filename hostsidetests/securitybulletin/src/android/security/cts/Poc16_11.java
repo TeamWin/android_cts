@@ -16,24 +16,10 @@
 
 package android.security.cts;
 
-import com.android.tradefed.device.CollectingOutputReceiver;
-import com.android.tradefed.device.DeviceNotAvailableException;
-import com.android.tradefed.device.ITestDevice;
-import com.android.tradefed.testtype.DeviceTestCase;
-
-import android.platform.test.annotations.RootPermissionTest;
 import android.platform.test.annotations.SecurityTest;
 
-import java.io.BufferedOutputStream;
-import java.io.File;
-import java.io.FileOutputStream;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.OutputStream;
-import java.util.Scanner;
-
 @SecurityTest
-public class Poc16_10 extends SecurityTestCase {
+public class Poc16_11 extends SecurityTestCase {
 
     /**
      *  b/30904789
