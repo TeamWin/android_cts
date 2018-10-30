@@ -23,6 +23,8 @@ import android.content.SharedPreferences;
 import android.content.SharedPreferences.OnSharedPreferenceChangeListener;
 import android.test.InstrumentationTestCase;
 
+import com.android.compatibility.common.util.CddTest;
+
 import java.util.concurrent.Semaphore;
 import java.util.concurrent.TimeUnit;
 import java.lang.InterruptedException;
@@ -42,6 +44,7 @@ public class OwnerChangedBroadcastTest extends InstrumentationTestCase {
     // We can't just register a broadcast receiver in the code because the broadcast
     // may have been sent before this test is run. So we have a manifest receiver
     // listening to the broadcast and writing to a shared preference when it receives it.
+    @CddTest(requirement="3.2.3.4/C-0-1")
     public void testOwnerChangedBroadcastReceived() throws InterruptedException {
         final Semaphore mPreferenceChanged = new Semaphore(0);
 

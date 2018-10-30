@@ -29,7 +29,8 @@ LOCAL_JAVA_LIBRARIES := android.test.runner
 LOCAL_STATIC_JAVA_LIBRARIES := \
     android-support-v4 \
     ctstestrunner \
-    legacy-android-test
+    legacy-android-test \
+    compatibility-device-util
 
 LOCAL_SDK_VERSION := current
 
