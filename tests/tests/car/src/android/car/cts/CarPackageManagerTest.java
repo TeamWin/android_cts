@@ -97,9 +97,9 @@ public class CarPackageManagerTest extends CarApiTestBase {
 
     public void testServiceDistractionOptimized() throws Exception {
         assertFalse(mCarPm.isServiceDistractionOptimized("com.basic.package", ""));
-        assertTrue(mCarPm.isServiceDistractionOptimized("com.android.settings", "Any"));
-        assertTrue(mCarPm.isServiceDistractionOptimized("com.android.settings", ""));
-        assertTrue(mCarPm.isServiceDistractionOptimized("com.android.settings", null));
+        assertTrue(mCarPm.isServiceDistractionOptimized("com.android.car.settings", "Any"));
+        assertTrue(mCarPm.isServiceDistractionOptimized("com.android.car.settings", ""));
+        assertTrue(mCarPm.isServiceDistractionOptimized("com.android.car.settings", null));
 
         try {
             mCarPm.isServiceDistractionOptimized(null, "Any");
