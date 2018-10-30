@@ -56,6 +56,14 @@ public class BusinessLogicDeviceExecutor extends BusinessLogicExecutor {
      * {@inheritDoc}
      */
     @Override
+    public void logDebug(String format, Object... args) {
+        Log.d(LOG_TAG, String.format(format, args));
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
     protected ResolvedMethod getResolvedMethod(Class cls, String methodName, String... args)
             throws ClassNotFoundException {
         List<Method> nameMatches = getMethodsWithName(cls, methodName);
