@@ -33,10 +33,6 @@ import java.io.InputStream;
 import java.io.OutputStream;
 import java.util.Scanner;
 import java.util.concurrent.TimeUnit;
-import java.util.regex.Pattern;
-import java.lang.Thread;
-import static org.junit.Assert.*;
-import junit.framework.Assert;
 
 public class AdbUtils {
 
@@ -53,7 +49,7 @@ public class AdbUtils {
     /**
      * Pushes and runs a binary to the selected device
      *
-     * @param pocName name of the poc binary
+     * @param pathToPoc a string path to poc from the /res folder
      * @param device device to be ran on
      * @return the console output from the binary
      */
@@ -65,35 +61,15 @@ public class AdbUtils {
     /**
      * Pushes and runs a binary to the selected device
      *
-     * @param pocName name of the poc binary
+     * @param pocName a string path to poc from the /res folder
      * @param device device to be ran on
      * @param timeout time to wait for output in seconds
      * @return the console output from the binary
      */
     public static String runPoc(String pocName, ITestDevice device, int timeout) throws Exception {
-        return runPoc(pocName, device, timeout, null);
-    }
-
-    /**
-     * Pushes and runs a binary to the selected device
-     *
-     * @param pocName name of the poc binary
-     * @param device device to be ran on
-     * @param timeout time to wait for output in seconds
-     * @param arguments the input arguments for the poc
-     * @return the console output from the binary
-     */
-    public static String runPoc(String pocName, ITestDevice device, int timeout, String arguments)
-            throws Exception {
         device.executeShellCommand("chmod +x /data/local/tmp/" + pocName);
         CollectingOutputReceiver receiver = new CollectingOutputReceiver();
-        if (arguments != null) {
-            device.executeShellCommand("/data/local/tmp/" + pocName + " " + arguments, receiver,
-                    timeout, TimeUnit.SECONDS, 0);
-        } else {
-            device.executeShellCommand("/data/local/tmp/" + pocName, receiver, timeout,
-                    TimeUnit.SECONDS, 0);
-        }
+        device.executeShellCommand("/data/local/tmp/" + pocName, receiver, timeout, TimeUnit.SECONDS, 0);
         String output = receiver.getOutput();
         return output;
     }
@@ -101,40 +77,20 @@ public class AdbUtils {
     /**
      * Pushes and runs a binary to the selected device and ignores any of its output.
      *
-     * @param pocName name of the poc binary
+     * @param pocName a string path to poc from the /res folder
      * @param device device to be ran on
      * @param timeout time to wait for output in seconds
      */
     public static void runPocNoOutput(String pocName, ITestDevice device, int timeout)
             throws Exception {
-        runPocNoOutput(pocName, device, timeout, null);
-    }
-
-    /**
-     * Pushes and runs a binary with arguments to the selected device and
-     * ignores any of its output.
-     *
-     * @param pocName name of the poc binary
-     * @param device device to be ran on
-     * @param timeout time to wait for output in seconds
-     * @param arguments input arguments for the poc
-     */
-    public static void runPocNoOutput(String pocName, ITestDevice device, int timeout,
-            String arguments) throws Exception {
         device.executeShellCommand("chmod +x /data/local/tmp/" + pocName);
         NullOutputReceiver receiver = new NullOutputReceiver();
-        if (arguments != null) {
-            device.executeShellCommand("/data/local/tmp/" + pocName + " " + arguments, receiver,
-                    timeout, TimeUnit.SECONDS, 0);
-        } else {
-            device.executeShellCommand("/data/local/tmp/" + pocName, receiver, timeout,
-                    TimeUnit.SECONDS, 0);
-        }
+        device.executeShellCommand("/data/local/tmp/" + pocName, receiver, timeout,
+                TimeUnit.SECONDS, 0);
     }
 
     /**
-     * Pushes and runs a binary with arguments to the selected device and
-     * ignores any of its output.
+     * Enables malloc debug on a given process.
      *
      * @param processName the name of the process to run with libc malloc debug
      * @param device the device to use
@@ -270,55 +226,5 @@ public class AdbUtils {
 
        //Refer to go/asdl-sts-guide Test section for knowing the significance of 113 code
        return returnNum == 113;
-    }
-
-    /**
-     * Executes a given poc within a given timeout. Returns error if the
-     * given poc doesnt complete its execution within timeout. It also deletes
-     * the list of files provided.
-     *
-     * @param runner the thread which will be run
-     * @param timeout the timeout within which the thread's execution should
-     *        complete
-     * @param device device to be ran on
-     * @param inputFiles list of files to be deleted
-     */
-    public static void runWithTimeoutDeleteFiles(Runnable runner, int timeout, ITestDevice device,
-            String[] inputFiles) throws Exception {
-        Thread t = new Thread(runner);
-        t.start();
-        boolean test_failed = false;
-        try {
-            t.join(timeout);
-        } catch (InterruptedException e) {
-            test_failed = true;
-        } finally {
-            if (inputFiles != null) {
-                for (int i = 0; i < inputFiles.length; i++) {
-                    AdbUtils.runCommandLine("rm /data/local/tmp/" + inputFiles[i], device);
-                }
-            }
-            if (test_failed == true) {
-                Assert.fail("PoC was interrupted");
-            }
-        }
-        if (t.isAlive()) {
-            Assert.fail("PoC not completed within timeout of " + timeout + " ms");
-        }
-    }
-
-    /**
-     * Raises assert exception upon crash/error occurence
-     *
-     * @param crashPatternList array of crash log patterns to be checked for
-     * @param logcat String to be parsed
-     */
-    public static void checkCrash(String crashPatternList[], String logcat)
-            throws Exception {
-        for (int i = 0; i < crashPatternList.length; i++) {
-            assertFalse("Crash log pattern found!",
-                    Pattern.compile(crashPatternList[i],
-                            Pattern.MULTILINE).matcher(logcat).find());
-        }
     }
 }
