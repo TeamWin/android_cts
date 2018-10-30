@@ -27,9 +27,7 @@ LOCAL_COMPATIBILITY_SUITE := cts vts general-tests
 
 LOCAL_MODULE := CtsCompilationTestCases
 
-LOCAL_JAVA_LIBRARIES := cts-tradefed tradefed compatibility-host-util
-
-LOCAL_STATIC_JAVA_LIBRARIES := guava
+LOCAL_JAVA_LIBRARIES := cts-tradefed tradefed compatibility-host-util guava
 
 include $(BUILD_HOST_JAVA_LIBRARY)
 
