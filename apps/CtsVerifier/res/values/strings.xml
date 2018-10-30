@@ -2162,10 +2162,8 @@ You should be prompted to select credentials; choose the ones you just installed
         Press \'Go\'.\n
     </string>
     <string name="provisioning_byod_keychain_info_second_test">
-        Once you press \'Run 2nd test\', the same prompt should appear again.\n
-        This time, verify that the title is \"No certificates found\" and the list is empty,
-        then press \'Cancel\'.\n
-        \n
+        Once you press \'Run 2nd test\', the prompt should NOT appear.\n
+        Verify that the prompt does not appear at all.\n
         Mark the test as passed if the text at the bottom shows \"PASSED (2/2)\"\n
     </string>
 
