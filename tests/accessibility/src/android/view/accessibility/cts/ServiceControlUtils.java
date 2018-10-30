@@ -16,16 +16,13 @@
 
 package android.view.accessibility.cts;
 
-import static org.hamcrest.Matchers.is;
-import static org.hamcrest.core.IsEqual.equalTo;
-import static org.junit.Assert.assertThat;
+import static com.android.compatibility.common.util.TestUtils.waitOn;
 
 import android.app.Instrumentation;
 import android.app.UiAutomation;
 import android.content.ContentResolver;
 import android.content.Context;
 import android.os.ParcelFileDescriptor;
-import android.os.SystemClock;
 import android.provider.Settings;
 import android.view.accessibility.AccessibilityManager;
 
@@ -33,6 +30,7 @@ import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.function.BooleanSupplier;
 
 /**
  * Utility methods for enabling and disabling the services used in this package
@@ -60,9 +58,7 @@ public class ServiceControlUtils {
         UiAutomation uiAutomation = instrumentation.getUiAutomation();
 
         // Change the settings to enable the two services
-        ContentResolver cr = context.getContentResolver();
-        String alreadyEnabledServices = Settings.Secure.getString(
-                cr, Settings.Secure.ENABLED_ACCESSIBILITY_SERVICES);
+        String alreadyEnabledServices = getEnabledServices(context.getContentResolver());
         ParcelFileDescriptor fd = uiAutomation.executeShellCommand("settings --user cur put secure "
                 + Settings.Secure.ENABLED_ACCESSIBILITY_SERVICES + " "
                 + alreadyEnabledServices + ":"
@@ -73,42 +69,14 @@ public class ServiceControlUtils {
         uiAutomation.destroy();
 
         // Wait for speaking service to be connected
-        long timeoutTimeMillis = SystemClock.uptimeMillis() + TIMEOUT_FOR_SERVICE_ENABLE;
-        boolean speakingServiceStarted = false;
-        while (!speakingServiceStarted && (SystemClock.uptimeMillis() < timeoutTimeMillis)) {
-            synchronized (SpeakingAccessibilityService.sWaitObjectForConnecting) {
-                if (SpeakingAccessibilityService.sConnectedInstance != null) {
-                    speakingServiceStarted = true;
-                    break;
-                }
-                if (!speakingServiceStarted) {
-                    try {
-                        SpeakingAccessibilityService.sWaitObjectForConnecting.wait(
-                                timeoutTimeMillis - SystemClock.uptimeMillis());
-                    } catch (InterruptedException e) {
-                    }
-                }
-            }
-        }
-        if (!speakingServiceStarted) {
-            throw new RuntimeException("Speaking accessibility service not starting");
-        }
+        waitOn(SpeakingAccessibilityService.sWaitObjectForConnecting,
+                () -> SpeakingAccessibilityService.sConnectedInstance != null,
+                TIMEOUT_FOR_SERVICE_ENABLE, "Speaking accessibility service starts up");
 
         // Wait for vibrating service to be connected
-        while (SystemClock.uptimeMillis() < timeoutTimeMillis) {
-            synchronized (VibratingAccessibilityService.sWaitObjectForConnecting) {
-                if (VibratingAccessibilityService.sConnectedInstance != null) {
-                    return;
-                }
-
-                try {
-                    VibratingAccessibilityService.sWaitObjectForConnecting.wait(
-                            timeoutTimeMillis - SystemClock.uptimeMillis());
-                } catch (InterruptedException e) {
-                }
-            }
-        }
-        throw new RuntimeException("Vibrating accessibility service not starting");
+        waitOn(VibratingAccessibilityService.sWaitObjectForConnecting,
+                () -> VibratingAccessibilityService.sConnectedInstance != null,
+                TIMEOUT_FOR_SERVICE_ENABLE, "Vibrating accessibility service starts up");
     }
 
     /**
@@ -125,9 +93,7 @@ public class ServiceControlUtils {
         UiAutomation uiAutomation = instrumentation.getUiAutomation();
 
         // Change the settings to enable the services
-        ContentResolver cr = context.getContentResolver();
-        String alreadyEnabledServices = Settings.Secure.getString(
-                cr, Settings.Secure.ENABLED_ACCESSIBILITY_SERVICES);
+        String alreadyEnabledServices = getEnabledServices(context.getContentResolver());
         ParcelFileDescriptor fd = uiAutomation.executeShellCommand("settings --user cur put secure "
                 + Settings.Secure.ENABLED_ACCESSIBILITY_SERVICES + " "
                 + alreadyEnabledServices + ":"
@@ -138,28 +104,10 @@ public class ServiceControlUtils {
         uiAutomation.destroy();
 
         // Wait for the service to be connected
-        long timeoutTimeMillis = SystemClock.uptimeMillis() + TIMEOUT_FOR_SERVICE_ENABLE;
-        boolean multipleFeedbackTypesServiceEnabled = false;
-        while (!multipleFeedbackTypesServiceEnabled && (SystemClock.uptimeMillis()
-                < timeoutTimeMillis)) {
-            synchronized (SpeakingAndVibratingAccessibilityService.sWaitObjectForConnecting) {
-                if (SpeakingAndVibratingAccessibilityService.sConnectedInstance != null) {
-                    multipleFeedbackTypesServiceEnabled = true;
-                    break;
-                }
-                if (!multipleFeedbackTypesServiceEnabled) {
-                    try {
-                        SpeakingAndVibratingAccessibilityService.sWaitObjectForConnecting.wait(
-                                timeoutTimeMillis - SystemClock.uptimeMillis());
-                    } catch (InterruptedException e) {
-                    }
-                }
-            }
-        }
-        if (!multipleFeedbackTypesServiceEnabled) {
-            throw new RuntimeException(
-                    "Multiple feedback types accessibility service not starting");
-        }
+        waitOn(SpeakingAndVibratingAccessibilityService.sWaitObjectForConnecting,
+                () -> SpeakingAndVibratingAccessibilityService.sConnectedInstance != null,
+                TIMEOUT_FOR_SERVICE_ENABLE,
+                "Multiple feedback types accessibility service starts up");
     }
 
     /**
@@ -195,23 +143,37 @@ public class ServiceControlUtils {
             }
         };
         manager.addAccessibilityStateChangeListener(listener);
-        try {
-            long timeoutTimeMillis = SystemClock.uptimeMillis() + TIMEOUT_FOR_SERVICE_ENABLE;
-            while (SystemClock.uptimeMillis() < timeoutTimeMillis) {
-                synchronized (waitLockForA11yOff) {
-                    if (!accessibilityEnabled.get()) {
-                        return;
-                    }
-                    try {
-                        waitLockForA11yOff.wait(timeoutTimeMillis - SystemClock.uptimeMillis());
-                    } catch (InterruptedException e) {
-                        // Ignored; loop again
-                    }
-                }
+        waitOn(waitLockForA11yOff, () -> !accessibilityEnabled.get(), TIMEOUT_FOR_SERVICE_ENABLE,
+                "Accessibility turns off");
+    }
+
+    public static String getEnabledServices(ContentResolver cr) {
+        return Settings.Secure.getString(cr, Settings.Secure.ENABLED_ACCESSIBILITY_SERVICES);
+    }
+
+    /**
+     * Wait for a specified condition that will change with a services state change
+     *
+     * @param context A valid context
+     * @param condition The condition to check
+     * @param timeoutMs The timeout in millis
+     * @param conditionName The name to include in the assertion. If null, will be given a default.
+     */
+    public static void waitForConditionWithServiceStateChange(Context context,
+            BooleanSupplier condition, long timeoutMs, String conditionName) {
+        AccessibilityManager manager =
+                (AccessibilityManager) context.getSystemService(Context.ACCESSIBILITY_SERVICE);
+        Object lock = new Object();
+        AccessibilityManager.AccessibilityServicesStateChangeListener listener = (m) -> {
+            synchronized (lock) {
+                lock.notifyAll();
             }
+        };
+        manager.addAccessibilityServicesStateChangeListener(listener, null);
+        try {
+            waitOn(lock, condition, timeoutMs, conditionName);
         } finally {
-            manager.removeAccessibilityStateChangeListener(listener);
+            manager.removeAccessibilityServicesStateChangeListener(listener);
         }
-        assertThat("Unable to turn accessibility off", manager.isEnabled(), is(equalTo(false)));
     }
 }

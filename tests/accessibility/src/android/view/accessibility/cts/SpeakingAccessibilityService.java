@@ -18,12 +18,16 @@ package android.view.accessibility.cts;
 
 import android.accessibilityservice.AccessibilityService;
 import android.accessibilityservice.AccessibilityServiceInfo;
+import android.content.ComponentName;
 import android.view.accessibility.AccessibilityEvent;
 
 /**
  * Stub accessibility service that reports itself as providing spoken feedback.
  */
 public class SpeakingAccessibilityService extends AccessibilityService {
+    public static final ComponentName COMPONENT_NAME = new ComponentName(
+            "android.view.accessibility.cts",
+            "android.view.accessibility.cts.SpeakingAccessibilityService");
     public static Object sWaitObjectForConnecting = new Object();
 
     public static SpeakingAccessibilityService sConnectedInstance;
