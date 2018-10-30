@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!--
- * Copyright (C) 2017 The Android Open Source Project
+ * Copyright (C) 2018 The Android Open Source Project
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,18 +16,18 @@
  -->
 
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
-    package="android.selinuxtargetsdk27.cts">
+    package="android.selinuxtargetsdk28.cts">
 
-    <!-- This app tests that apps with 25<targetSdkValue<=27 are placed in the
-         untrusted_app_27 selinux domain -->
-    <uses-sdk android:minSdkVersion="21" android:targetSdkVersion="27" />
+    <!-- This app tests that apps with targetSdkValue==28 are placed in the
+         untrusted_app_28 selinux domain -->
+    <uses-sdk android:minSdkVersion="21" android:targetSdkVersion="28" />
 
     <application>
         <uses-library android:name="android.test.runner" />
     </application>
 
     <instrumentation android:name="android.support.test.runner.AndroidJUnitRunner"
-                     android:targetPackage="android.selinuxtargetsdk27.cts"
+                     android:targetPackage="android.selinuxtargetsdk28.cts"
                      android:label="CTS tests for permissions enforce by selinux based on targetSdkVersion">
         <meta-data android:name="listener"
             android:value="com.android.cts.runner.CtsTestRunListener" />
