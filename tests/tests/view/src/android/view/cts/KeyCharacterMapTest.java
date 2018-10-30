@@ -29,10 +29,13 @@ import android.view.KeyCharacterMap;
 import android.view.KeyCharacterMap.KeyData;
 import android.view.KeyEvent;
 
+import com.android.compatibility.common.util.CddTest;
+
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
+@CddTest(requirement="7.2.3/H-0-1,T-0-1,A-0-1,7.2.1/C-1-3")
 @SmallTest
 @RunWith(AndroidJUnit4.class)
 public class KeyCharacterMapTest {

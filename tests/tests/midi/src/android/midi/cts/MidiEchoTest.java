@@ -31,6 +31,8 @@ import android.media.midi.MidiSender;
 import android.os.Bundle;
 import android.test.AndroidTestCase;
 
+import com.android.compatibility.common.util.CddTest;
+
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Random;
@@ -326,6 +328,7 @@ public class MidiEchoTest extends AndroidTestCase {
         tearDownEchoServer(mc);
     }
 
+    @CddTest(requirement="5.9/C-1-2")
     public void testEchoSmallMessage() throws Exception {
         PackageManager pm = mContext.getPackageManager();
         if (!pm.hasSystemFeature(PackageManager.FEATURE_MIDI)) {
@@ -411,6 +414,7 @@ public class MidiEchoTest extends AndroidTestCase {
         tearDownEchoServer(mc);
     }
 
+    @CddTest(requirement="5.9/C-1-2")
     public void testEchoMultipleMessages() throws Exception {
         PackageManager pm = mContext.getPackageManager();
         if (!pm.hasSystemFeature(PackageManager.FEATURE_MIDI)) {
@@ -485,6 +489,7 @@ public class MidiEchoTest extends AndroidTestCase {
     }
 
     // What happens if the app does bad things.
+    @CddTest(requirement="5.9/C-1-2")
     public void testEchoBadBehavior() throws Exception {
         PackageManager pm = mContext.getPackageManager();
         if (!pm.hasSystemFeature(PackageManager.FEATURE_MIDI)) {
