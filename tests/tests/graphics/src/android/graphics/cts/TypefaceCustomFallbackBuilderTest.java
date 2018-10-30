@@ -27,6 +27,7 @@ import android.graphics.fonts.FontTestUtil;
 import android.support.test.InstrumentationRegistry;
 import android.support.test.filters.SmallTest;
 import android.support.test.runner.AndroidJUnit4;
+import android.text.TextPaint;
 import android.util.Pair;
 
 import org.junit.Test;
@@ -167,5 +168,38 @@ public class TypefaceCustomFallbackBuilderTest {
         // If 600 is specified, 700 is selected since it is closer than 300.
         assertEquals(new Pair<Integer, Boolean>(700, false),
                   FontTestUtil.getSelectedStyle(Typeface.create(typeface, 600, false)));
+    }
+
+    @Test
+    public void testUserFallback() throws IOException {
+        final AssetManager am = InstrumentationRegistry.getTargetContext().getAssets();
+        final FontFamily baseFamily = new FontFamily.Builder(
+                new Font.Builder(am, "fonts/user_fallback/ascii.ttf").build()).build();
+        final FontFamily fallbackFamily = new FontFamily.Builder(
+                new Font.Builder(am, "fonts/user_fallback/hebrew.ttf").build()).build();
+
+        // baseFamily supports all ASCII alphabet characters but not supports Hebrew characters.
+        // FallbackFamily suppors all Hebrew alphabet characters and its width is 2em.
+        final Typeface typeface = new Typeface.CustomFallbackBuilder(baseFamily)
+                .addCustomFallback(fallbackFamily)
+                .build();
+
+        TextPaint paint = new TextPaint();
+        paint.setTextSize(10.0f);  // Make 1em = 10px.
+        paint.setTypeface(typeface);
+
+        assertEquals(10.0f, paint.measureText("a", 0, 1), 0.0f);
+        assertEquals(20.0f, paint.measureText("\u05D0", 0, 1), 0.0f);  // Hebrew letter
+    }
+
+    @Test(expected = IllegalArgumentException.class)
+    public void testMaxCustomFallback() throws IOException {
+        final AssetManager am = InstrumentationRegistry.getTargetContext().getAssets();
+        final Font font = new Font.Builder(am, "fonts/user_fallback/ascii.ttf").build();
+        final Typeface.CustomFallbackBuilder b = new Typeface.CustomFallbackBuilder(
+                new FontFamily.Builder(font).build());
+        for (int i = 0; i < 64; ++i) {
+            b.addCustomFallback(new FontFamily.Builder(font).build());
+        }
     }
 }
