@@ -75,13 +75,16 @@
           android:permission="android.permission.BIND_REMOTEVIEWS">
       </service>
 
-      <activity android:name="android.appwidget.cts.EmptyActivity"
+      <activity android:name="android.appwidget.cts.activity.EmptyActivity"
                 android:label="EmptyActivity">
           <intent-filter>
               <action android:name="android.intent.action.MAIN" />
               <category android:name="android.intent.category.FRAMEWORK_INSTRUMENTATION_TEST" />
           </intent-filter>
       </activity>
+
+      <activity android:name="android.appwidget.cts.activity.TransitionActivity"
+          android:label="TransitionActivity" />
   </application>
 
   <instrumentation android:name="android.support.test.runner.AndroidJUnitRunner"

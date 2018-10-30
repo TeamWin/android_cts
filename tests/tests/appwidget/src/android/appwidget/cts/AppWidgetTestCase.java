@@ -20,12 +20,15 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assume.assumeTrue;
 
 import android.app.Instrumentation;
+import android.appwidget.AppWidgetManager;
 import android.appwidget.AppWidgetProviderInfo;
 import android.appwidget.cts.provider.FirstAppWidgetProvider;
 import android.appwidget.cts.provider.SecondAppWidgetProvider;
 import android.content.ComponentName;
+import android.content.Context;
 import android.content.pm.PackageManager;
 import android.os.ParcelFileDescriptor;
+import android.os.Process;
 import android.support.test.InstrumentationRegistry;
 import android.support.test.runner.AndroidJUnit4;
 
@@ -160,6 +163,27 @@ public abstract class AppWidgetTestCase {
         return new ComponentName(
                 getInstrumentation().getTargetContext().getPackageName(),
                 SecondAppWidgetProvider.class.getName());
+    }
+
+    public AppWidgetProviderInfo getProviderInfo(ComponentName componentName) {
+        List<AppWidgetProviderInfo> providers = getAppWidgetManager().getInstalledProviders();
+
+        final int providerCount = providers.size();
+        for (int i = 0; i < providerCount; i++) {
+            AppWidgetProviderInfo provider = providers.get(i);
+            if (componentName.equals(provider.provider)
+                    && Process.myUserHandle().equals(provider.getProfile())) {
+                return provider;
+
+            }
+        }
+
+        return null;
+    }
+
+    public AppWidgetManager getAppWidgetManager() {
+        return (AppWidgetManager) getInstrumentation().getTargetContext()
+                .getSystemService(Context.APPWIDGET_SERVICE);
     }
 
     public ArrayList<String> runShellCommand(String command) throws Exception {
