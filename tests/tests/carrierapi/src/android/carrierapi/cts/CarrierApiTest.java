@@ -253,9 +253,12 @@ public class CarrierApiTest extends AndroidTestCase {
         if (!hasCellular) return;
         // The following methods may return any value depending on the state of the device. Simply
         // call them to make sure they do not throw any exceptions. Methods that return a device
-        // identifier are no longer accessible to apps with carrier privileges so those methods are
-        // not included in this test.
+        // identifier will be accessible to apps with carrier privileges in Q, but this may change
+        // in a future release.
         try {
+            mTelephonyManager.getDeviceId();
+            mTelephonyManager.getImei();
+            mTelephonyManager.getMeid();
             mTelephonyManager.getDeviceSoftwareVersion();
             mTelephonyManager.getNai();
             mTelephonyManager.getDataNetworkType();
@@ -271,33 +274,6 @@ public class CarrierApiTest extends AndroidTestCase {
             mTelephonyManager.getServiceState();
         } catch (SecurityException e) {
             failMessage();
-        }
-    }
-
-    public void testDeviceIdentifiersAreNotAccessible() {
-        if (!hasCellular) return;
-        // Apps with carrier privileges should not have access to device identifiers. If an app's
-        // target SDK is less than Q and it has the READ_PHONE_STATE permission or carrier
-        // privileges then a null value is returned, otherwise a SecurityException is thrown. This
-        // test verifies that an app with carrier privileges targeting Q+ receives a
-        // SecurityException when attempting to query for device identifiers.
-        try {
-            mTelephonyManager.getDeviceId();
-            fail("An app targeting Q+ with carrier privileges must receive a SecurityException "
-                    + "when invoking getDeviceId");
-        } catch (SecurityException expected) {
-        }
-        try {
-            mTelephonyManager.getImei();
-            fail("An app targeting Q+ with carrier privileges must receive a SecurityException "
-                    + "when invoking getImei");
-        } catch (SecurityException expected) {
-        }
-        try {
-            mTelephonyManager.getMeid();
-            fail("An app targeting Q+ with carrier privileges must receive a SecurityException "
-                    + "when invoking getMeid");
-        } catch (SecurityException expected) {
         }
     }
 

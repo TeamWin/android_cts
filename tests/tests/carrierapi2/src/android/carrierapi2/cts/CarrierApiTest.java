@@ -110,9 +110,12 @@ public class CarrierApiTest extends AndroidTestCase {
         if (!hasCellular) return;
         // The following methods may return any value depending on the state of the device. Simply
         // call them to make sure they do not throw any exceptions. Methods that return a device
-        // identifier are no longer accessible to apps with carrier privileges so those methods are
-        // not included in this test.
+        // identifier will be accessible to apps with carrier privileges in Q, but this may change
+        // in a future release.
         try {
+            mTelephonyManager.getDeviceId();
+            mTelephonyManager.getImei();
+            mTelephonyManager.getMeid();
             mTelephonyManager.getDeviceSoftwareVersion();
             mTelephonyManager.getNai();
             mTelephonyManager.getDataNetworkType();
@@ -128,32 +131,6 @@ public class CarrierApiTest extends AndroidTestCase {
             mTelephonyManager.getServiceState();
         } catch (SecurityException e) {
             failMessage();
-        }
-    }
-
-    public void testDeviceIdentifiersAreNotAccessible() {
-        if (!hasCellular) return;
-        // Apps with carrier privileges should not have access to device identifiers. If an app's
-        // target SDK is less than Q and it has the READ_PHONE_STATE or carrier privileges then a
-        // null value should be returned, otherwise a SecurityException is thrown. This test
-        // verifies an app with carrier privileges targeting pre-Q receives a null value when
-        // querying for device identifiers.
-        try {
-            assertNull(
-                    "An app targeting pre-Q with carrier privileges must receive null when "
-                            + "invoking getDeviceId",
-                    mTelephonyManager.getDeviceId());
-            assertNull(
-                    "An app targeting pre-Q with carrier privileges must receive null when "
-                            + "invoking getImei",
-                    mTelephonyManager.getImei());
-            assertNull(
-                    "An app targeting pre-Q with carrier privileges must receive null when "
-                            + "invoking getMeid",
-                    mTelephonyManager.getMeid());
-        } catch (SecurityException e) {
-            fail("An app targeting pre-Q with carrier privileges must receive null when "
-                    + "querying for device identifiers.");
         }
     }
 
