@@ -29,9 +29,7 @@ LOCAL_MODULE := CtsCompilationTestCases
 
 LOCAL_MIN_SDK_VERSION := 23
 
-LOCAL_JAVA_LIBRARIES := cts-tradefed tradefed compatibility-host-util
-
-LOCAL_STATIC_JAVA_LIBRARIES := guava
+LOCAL_JAVA_LIBRARIES := cts-tradefed tradefed compatibility-host-util guava
 
 include $(BUILD_HOST_JAVA_LIBRARY)
 
