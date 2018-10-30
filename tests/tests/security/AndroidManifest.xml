@@ -50,6 +50,10 @@
                 <category android:name="android.intent.category.FRAMEWORK_INSTRUMENTATION_TEST"/>
             </intent-filter>
         </activity>
+
+        <activity android:name="android.security.cts.ActivityManagerTest$NormalActivity" />
+        <activity android:name="android.security.cts.ActivityManagerTest$MaliciousActivity" />
+        <service android:name="android.security.cts.ActivityManagerTest$AppMonitoringService" />
     </application>
 
     <instrumentation android:name="android.support.test.runner.AndroidJUnitRunner"
