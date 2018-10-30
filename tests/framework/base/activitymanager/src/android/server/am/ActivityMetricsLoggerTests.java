@@ -16,10 +16,13 @@
 
 package android.server.am;
 
+import static android.os.SystemClock.sleep;
 import static android.server.am.Components.REPORT_FULLY_DRAWN_ACTIVITY;
 import static android.server.am.Components.TEST_ACTIVITY;
 import static android.server.am.Components.TRANSLUCENT_TEST_ACTIVITY;
 
+import static android.server.am.second.Components.SECOND_ACTIVITY;
+import static android.server.am.third.Components.THIRD_ACTIVITY;
 import static com.android.compatibility.common.util.SystemUtil.runShellCommand;
 import static com.android.internal.logging.nano.MetricsProto.MetricsEvent.APP_TRANSITION;
 import static com.android.internal.logging.nano.MetricsProto.MetricsEvent.APP_TRANSITION_DELAY_MS;
@@ -65,7 +68,7 @@ import java.util.concurrent.TimeUnit;
  * atest CtsActivityManagerDeviceTestCases:ActivityMetricsLoggerTests
  */
 public class ActivityMetricsLoggerTests extends ActivityManagerTestBase {
-    private static final String TAG_AM = "ActivityManager";
+    private static final String TAG_ATM = "ActivityTaskManager";
     private final MetricsReader mMetricsReader = new MetricsReader();
     private long mPreUptimeMs;
     private LogSeparator mLogSeparator;
@@ -93,9 +96,9 @@ public class ActivityMetricsLoggerTests extends ActivityManagerTestBase {
                 .setWaitForLaunched(true)
                 .execute();
 
-        LogMaker metricsLog = getMetricsLog(TEST_ACTIVITY, APP_TRANSITION);
-        String[] deviceLogs = getDeviceLogsForComponents(mLogSeparator, TAG_AM);
-        List<Event> eventLogs = getEventLogsForComponents(mLogSeparator,
+        final LogMaker metricsLog = getMetricsLog(TEST_ACTIVITY, APP_TRANSITION);
+        final String[] deviceLogs = getDeviceLogsForComponents(mLogSeparator, TAG_ATM);
+        final List<Event> eventLogs = getEventLogsForComponents(mLogSeparator,
                 30009 /* AM_ACTIVITY_LAUNCH_TIME */);
 
         final long postUptimeMs = SystemClock.uptimeMillis();
@@ -168,11 +171,11 @@ public class ActivityMetricsLoggerTests extends ActivityManagerTestBase {
                 .execute();
 
         // Sleep until activity under test has reported drawn (after 500ms)
-        SystemClock.sleep(1000);
+        sleep(1000);
 
-        LogMaker metricsLog = getMetricsLog(REPORT_FULLY_DRAWN_ACTIVITY,
+        final LogMaker metricsLog = getMetricsLog(REPORT_FULLY_DRAWN_ACTIVITY,
                 APP_TRANSITION_REPORTED_DRAWN);
-        String[] deviceLogs = getDeviceLogsForComponents(mLogSeparator, TAG_AM);
+        final String[] deviceLogs = getDeviceLogsForComponents(mLogSeparator, TAG_ATM);
 
         assertNotNull("did not find the metrics log for: " + REPORT_FULLY_DRAWN_ACTIVITY
                 + " category:" + APP_TRANSITION_REPORTED_DRAWN, metricsLog);
@@ -199,7 +202,7 @@ public class ActivityMetricsLoggerTests extends ActivityManagerTestBase {
         final String amStartOutput =
                 runShellCommand("am start -S -W " + TEST_ACTIVITY.flattenToShortString());
 
-        LogMaker metricsLog = getMetricsLog(TEST_ACTIVITY, APP_TRANSITION);
+        final LogMaker metricsLog = getMetricsLog(TEST_ACTIVITY, APP_TRANSITION);
         assertNotNull("log should have windows drawn delay", metricsLog);
 
         final int windowsDrawnDelayMs =
@@ -221,13 +224,10 @@ public class ActivityMetricsLoggerTests extends ActivityManagerTestBase {
      */
     @Test
     public void testLaunchOfVisibleApp() {
-        ComponentName secondTestActivity =
-                ComponentName.unflattenFromString("android.server.am.second/.SecondActivity");
-
         // Launch an activity.
         getLaunchActivityBuilder()
                 .setUseInstrumentation()
-                .setTargetActivity(secondTestActivity)
+                .setTargetActivity(SECOND_ACTIVITY)
                 .setWaitForLaunched(true)
                 .execute();
 
@@ -243,27 +243,26 @@ public class ActivityMetricsLoggerTests extends ActivityManagerTestBase {
         mMetricsReader.checkpoint(); // clear out old logs
         getLaunchActivityBuilder()
                 .setUseInstrumentation()
-                .setTargetActivity(secondTestActivity)
+                .setTargetActivity(SECOND_ACTIVITY)
                 .setWaitForLaunched(true)
                 .execute();
-        LogMaker metricsLog = getMetricsLog(secondTestActivity, APP_TRANSITION);
+        LogMaker metricsLog = getMetricsLog(SECOND_ACTIVITY, APP_TRANSITION);
         // Verify transition logs are absent since we cannot measure windows drawn delay.
         assertNull("transition logs should be reset.", metricsLog);
 
         // Verify metrics for subsequent launches are generated as expected.
-        stopTestPackage(TEST_ACTIVITY.getPackageName());
         mPreUptimeMs = SystemClock.uptimeMillis();
         mMetricsReader.checkpoint(); // clear out old logs
 
         getLaunchActivityBuilder()
                 .setUseInstrumentation()
-                .setTargetActivity(TEST_ACTIVITY)
+                .setTargetActivity(THIRD_ACTIVITY)
                 .setWaitForLaunched(true)
                 .execute();
 
         long postUptimeMs = SystemClock.uptimeMillis();
-        metricsLog = getMetricsLog(TEST_ACTIVITY, APP_TRANSITION);
-        assertMetricsLogs(TEST_ACTIVITY, APP_TRANSITION, metricsLog, mPreUptimeMs,
+        metricsLog = getMetricsLog(THIRD_ACTIVITY, APP_TRANSITION);
+        assertMetricsLogs(THIRD_ACTIVITY, APP_TRANSITION, metricsLog, mPreUptimeMs,
                 postUptimeMs);
     }
 
