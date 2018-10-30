@@ -30,6 +30,7 @@ LOCAL_JAVA_LIBRARIES := android.test.runner.stubs android.test.base.stubs
 
 LOCAL_STATIC_JAVA_LIBRARIES := \
     androidx.test.rules \
+    androidx.test.ext.junit \
     compatibility-device-util-axt \
     ctsdeviceutillegacy-axt \
     ctstestrunner-axt \
