@@ -24,6 +24,7 @@ import android.location.GnssNavigationMessage;
 import android.location.GnssStatus;
 import android.location.LocationManager;
 import android.os.Build;
+import android.os.SystemProperties;
 import android.util.Log;
 
 import java.util.Arrays;
@@ -55,7 +56,6 @@ public final class TestMeasurementUtil {
 
     private static final int YEAR_2016 = 2016;
     private static final int YEAR_2017 = 2017;
-    private static final int YEAR_2018 = 2018;
 
     private enum GnssBand {
         GNSS_L1,
@@ -815,10 +815,10 @@ public final class TestMeasurementUtil {
     public static void verifyGnssCarrierFrequency(SoftAssert softAssert,
         TestLocationManager testLocationManager,
         boolean hasCarrierFrequency, float carrierFrequencyHz) {
-        // Enforcing CarrierFrequencyHz  check only for year 2018+
-        if (testLocationManager.getLocationManager().getGnssYearOfHardware() >= YEAR_2018) {
+        // Enforcing CarrierFrequencyHz present only for devices shipped with P+.
+        if (SystemProperties.getInt("ro.product.first_api_level", 0) >= Build.VERSION_CODES.P) {
             softAssert.assertTrue("Measurement has Carrier Frequency: " + hasCarrierFrequency,
-                hasCarrierFrequency);
+                    hasCarrierFrequency);
         }
 
         if (hasCarrierFrequency) {
