@@ -20,6 +20,7 @@ import android.media.CamcorderProfile;
 import android.media.MediaCodecInfo.CodecCapabilities;
 import android.media.MediaCodecList;
 import android.media.MediaDrm;
+import android.media.MediaDrm.MediaDrmStateException;
 import android.media.MediaDrmException;
 import android.media.MediaFormat;
 import android.net.Uri;
@@ -177,7 +178,7 @@ public class MediaDrmClearkeyTest extends MediaPlayerTestBase {
                     "\",\"k\":\"" + key + "\"}";
         }
         jwkSet += "], \"type\":";
-        if (keyType == MediaDrm.KEY_TYPE_OFFLINE) {
+        if (keyType == MediaDrm.KEY_TYPE_OFFLINE || keyType == MediaDrm.KEY_TYPE_RELEASE) {
             jwkSet += "\"persistent-license\" }";
         } else {
             jwkSet += "\"temporary\" }";
@@ -359,6 +360,40 @@ public class MediaDrmClearkeyTest extends MediaPlayerTestBase {
         return true;
     }
 
+    /*
+     * Verify if we can support playback resolution and has network connection.
+     * @return true if both conditions are true, else false
+     */
+    private boolean playbackPreCheck(String videoMime, String[] videoFeatures,
+            Uri videoUrl, int videoWidth, int videoHeight) {
+        if (!isResolutionSupported(videoMime, videoFeatures, videoWidth, videoHeight)) {
+            Log.i(TAG, "Device does not support " +
+                    videoWidth + "x" + videoHeight + " resolution for " + videoMime);
+            return false;
+        }
+
+        IConnectionStatus connectionStatus = new ConnectionStatus(mContext);
+        if (!connectionStatus.isAvailable()) {
+            throw new Error("Network is not available, reason: " +
+                    connectionStatus.getNotConnectedReason());
+        }
+
+        // If device is not online, recheck the status a few times.
+        int retries = 0;
+        while (!connectionStatus.isConnected()) {
+            if (retries++ >= CONNECTION_RETRIES) {
+                throw new Error("Device is not online, reason: " +
+                        connectionStatus.getNotConnectedReason());
+            }
+            try {
+                Thread.sleep(100);
+            } catch (InterruptedException e) {
+            }
+        }
+        connectionStatus.testConnection(videoUrl);
+        return true;
+    }
+
     /**
      * Tests clear key system playback.
      */
@@ -381,31 +416,11 @@ public class MediaDrmClearkeyTest extends MediaPlayerTestBase {
             mSessionId = openSession(drm);
         }
 
-        if (!isResolutionSupported(videoMime, videoFeatures, videoWidth, videoHeight)) {
-            Log.i(TAG, "Device does not support " +
-                    videoWidth + "x" + videoHeight + " resolution for " + videoMime);
+        if (false == playbackPreCheck(videoMime, videoFeatures, videoUrl,
+                videoWidth, videoHeight)) {
+            Log.e(TAG, "Failed playback precheck");
             return;
         }
-
-        IConnectionStatus connectionStatus = new ConnectionStatus(mContext);
-        if (!connectionStatus.isAvailable()) {
-            throw new Error("Network is not available, reason: " +
-                    connectionStatus.getNotConnectedReason());
-        }
-
-        // If device is not online, recheck the status a few times.
-        int retries = 0;
-        while (!connectionStatus.isConnected()) {
-            if (retries++ >= CONNECTION_RETRIES) {
-                throw new Error("Device is not online, reason: " +
-                        connectionStatus.getNotConnectedReason());
-            }
-            try {
-                Thread.sleep(100);
-            } catch (InterruptedException e) {
-            }
-        }
-        connectionStatus.testConnection(videoUrl);
 
         mMediaCodecPlayer = new MediaCodecClearKeyPlayer(
                 getActivity().getSurfaceHolder(),
@@ -452,6 +467,73 @@ public class MediaDrmClearkeyTest extends MediaPlayerTestBase {
             closeSession(drm, mSessionId);
             stopDrm(drm);
         }
+    }
+
+    /**
+     * Tests KEY_TYPE_RELEASE for offline license.
+     */
+    public void testReleaseOfflineLicense() throws Exception {
+        if (isWatchDevice()) {
+            return;
+        }
+
+        byte[][] clearKeys = new byte[][] { CLEAR_KEY_CENC };
+        mSessionId = null;
+        String initDataType = "cenc";
+
+        MediaDrm drm = startDrm(clearKeys, initDataType,
+                CLEARKEY_SCHEME_UUID, MediaDrm.KEY_TYPE_OFFLINE);
+        mSessionId = openSession(drm);
+
+        Uri videoUrl = CENC_VIDEO_URL;
+        if (false == playbackPreCheck(MIME_VIDEO_AVC,
+                new String[] { CodecCapabilities.FEATURE_SecurePlayback }, videoUrl,
+                VIDEO_WIDTH_CENC, VIDEO_HEIGHT_CENC)) {
+            Log.e(TAG, "Failed playback precheck");
+            return;
+        }
+
+        mMediaCodecPlayer = new MediaCodecClearKeyPlayer(
+                getActivity().getSurfaceHolder(),
+                mSessionId, false /*scrambled */,
+                mContext.getResources());
+
+        Uri audioUrl = CENC_AUDIO_URL;
+        mMediaCodecPlayer.setAudioDataSource(audioUrl, null, false);
+        mMediaCodecPlayer.setVideoDataSource(videoUrl, null, true);
+        mMediaCodecPlayer.start();
+        mMediaCodecPlayer.prepare();
+        mDrmInitData = mMediaCodecPlayer.getDrmInitData();
+
+        // Create and store the offline license
+        getKeys(mDrm, initDataType, mSessionId, mDrmInitData, MediaDrm.KEY_TYPE_OFFLINE,
+                clearKeys);
+
+        // Verify the offline license is valid
+        closeSession(drm, mSessionId);
+        mSessionId = openSession(drm);
+        drm.restoreKeys(mSessionId, mKeySetId);
+        closeSession(drm, mSessionId);
+
+        // Release the offline license
+        getKeys(mDrm, initDataType, mKeySetId, mDrmInitData, MediaDrm.KEY_TYPE_RELEASE,
+                clearKeys);
+
+        // Verify restoreKeys will throw an exception if the offline license
+        // has already been released
+        mSessionId = openSession(drm);
+        try {
+            drm.restoreKeys(mSessionId, mKeySetId);
+        } catch (MediaDrmStateException e) {
+            // Expected exception caught, all is good
+            return;
+        } finally {
+            closeSession(drm, mSessionId);
+            stopDrm(drm);
+        }
+
+        // Did not receive expected exception, throw an Error
+        throw new Error("Did not receive expected exception from restoreKeys");
     }
 
     private boolean queryKeyStatus(@NonNull final MediaDrm drm, @NonNull final byte[] sessionId) {
