@@ -31,9 +31,6 @@ LOCAL_JAVA_LIBRARIES := \
     compatibility-host-util \
     guava
 
-LOCAL_STATIC_JAVA_LIBRARIES := \
-    truth-host-prebuilt
-
 # tag this module as a cts test artifact
 LOCAL_COMPATIBILITY_SUITE := cts vts general-tests
 

@@ -29,12 +29,6 @@ LOCAL_JAVA_LIBRARIES := \
     compatibility-host-util \
     guava
 
-LOCAL_STATIC_JAVA_LIBRARIES := \
-    truth-host-prebuilt
-
-LOCAL_STATIC_JAVA_LIBRARIES := \
-    truth-host-prebuilt
-
 LOCAL_CTS_TEST_PACKAGE := android.adminhostside
 
 # tag this module as a cts test artifact
