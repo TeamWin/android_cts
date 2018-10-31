@@ -39,6 +39,7 @@ import android.transition.TransitionSet;
 import android.transition.TransitionValues;
 import android.view.ViewGroup;
 import android.view.animation.AccelerateDecelerateInterpolator;
+import android.view.animation.AccelerateInterpolator;
 import android.view.animation.DecelerateInterpolator;
 
 import org.junit.Test;
@@ -229,6 +230,28 @@ public class TransitionSetTest extends BaseTransitionTest {
         assertSame(interpolator, fade.getInterpolator());
         assertSame(pathMotion, fade.getPathMotion());
         assertSame(epicenterCallback, fade.getEpicenterCallback());
+    }
+
+    @Test
+    public void testSetAllowsChildrenToOverrideConfigs() {
+        TransitionSet transitionSet = new TransitionSet();
+        transitionSet.setDuration(100);
+        transitionSet.setInterpolator(new DecelerateInterpolator());
+
+        Fade fade = new Fade();
+        transitionSet.addTransition(fade); // here set's duration and interpolator are applied
+
+        int overriddenDuration = 200;
+        TimeInterpolator overriddenInterpolator = new AccelerateInterpolator();
+        fade.setDuration(overriddenDuration);
+        fade.setInterpolator(overriddenInterpolator);
+
+        // emulate beginDelayedTransition where we clone the provided transition
+        transitionSet = (TransitionSet) transitionSet.clone();
+        fade = (Fade) transitionSet.getTransitionAt(0);
+
+        assertEquals(overriddenDuration, fade.getDuration());
+        assertEquals(overriddenInterpolator, fade.getInterpolator());
     }
 
     private static class TestPropagation extends TransitionPropagation {
