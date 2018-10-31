@@ -23,6 +23,7 @@ import static android.server.am.Components.TRANSLUCENT_TEST_ACTIVITY;
 
 import static android.server.am.second.Components.SECOND_ACTIVITY;
 import static android.server.am.third.Components.THIRD_ACTIVITY;
+import static android.util.TimeUtils.formatDuration;
 import static com.android.compatibility.common.util.SystemUtil.runShellCommand;
 import static com.android.internal.logging.nano.MetricsProto.MetricsEvent.APP_TRANSITION;
 import static com.android.internal.logging.nano.MetricsProto.MetricsEvent.APP_TRANSITION_DELAY_MS;
@@ -107,7 +108,7 @@ public class ActivityMetricsLoggerTests extends ActivityManagerTestBase {
                 (int) metricsLog.getTaggedData(APP_TRANSITION_WINDOWS_DRAWN_DELAY_MS);
         final String expectedLog =
                 "Displayed " + TEST_ACTIVITY.flattenToShortString()
-                        + ": +" + Integer.toString(windowsDrawnDelayMs) + "ms";
+                        + ": " + formatDuration(windowsDrawnDelayMs);
         assertLogsContain(deviceLogs, expectedLog);
         assertEventLogsContainsLaunchTime(eventLogs, TEST_ACTIVITY, windowsDrawnDelayMs);
     }
@@ -188,7 +189,7 @@ public class ActivityMetricsLoggerTests extends ActivityManagerTestBase {
                 (long) metricsLog.getTaggedData(APP_TRANSITION_REPORTED_DRAWN_MS);
         final String expectedLog =
                 "Fully drawn " + REPORT_FULLY_DRAWN_ACTIVITY.flattenToShortString()
-                        + ": +" + Long.toString(fullyDrawnDelayMs) + "ms";
+                        + ": " + formatDuration(fullyDrawnDelayMs);
         assertLogsContain(deviceLogs, expectedLog);
     }
 
