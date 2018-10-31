@@ -16,6 +16,8 @@
 
 package android.view.textclassifier.cts;
 
+import static com.google.common.truth.Truth.assertThat;
+
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
@@ -28,6 +30,7 @@ import android.os.LocaleList;
 import android.support.test.InstrumentationRegistry;
 import android.support.test.filters.SmallTest;
 import android.support.test.runner.AndroidJUnit4;
+import android.view.textclassifier.ConversationActions;
 import android.view.textclassifier.SelectionEvent;
 import android.view.textclassifier.TextClassification;
 import android.view.textclassifier.TextClassificationContext;
@@ -45,6 +48,7 @@ import org.junit.runner.RunWith;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashSet;
+import java.util.List;
 
 @SmallTest
 @RunWith(AndroidJUnit4.class)
@@ -75,6 +79,10 @@ public class TextClassificationManagerTest {
             new TextLanguage.Request.Builder(TEXT)
                     .setExtras(BUNDLE)
                     .build();
+    private static final ConversationActions.Message MESSAGE =
+            new ConversationActions.Message.Builder().setText(TEXT).build();
+    private static final ConversationActions.Request CONVERSATION_ACTIONS_REQUEST =
+            new ConversationActions.Request.Builder(Arrays.asList(MESSAGE)).build();
 
     private TextClassificationManager mManager;
     private TextClassifier mClassifier;
@@ -139,6 +147,14 @@ public class TextClassificationManagerTest {
     @Test
     public void testGenerateLinks() {
         assertValidResult(mClassifier.generateLinks(new TextLinks.Request.Builder(TEXT).build()));
+    }
+
+    @Test
+    public void testSuggestConversationActions() {
+        ConversationActions conversationActions =
+                mClassifier.suggestConversationActions(CONVERSATION_ACTIONS_REQUEST);
+
+        assertValidResult(conversationActions);
     }
 
     @Test
@@ -243,6 +259,19 @@ public class TextClassificationManagerTest {
             final float confidenceScore = language.getConfidenceScore(locale);
             assertTrue(confidenceScore >= 0);
             assertTrue(confidenceScore <= 1);
+        }
+    }
+
+    private static void assertValidResult(ConversationActions conversationActions) {
+        assertNotNull(conversationActions);
+        List<ConversationActions.ConversationAction> conversationActionsList =
+                conversationActions.getConversationActions();
+        assertNotNull(conversationActionsList);
+        for (ConversationActions.ConversationAction conversationAction : conversationActionsList) {
+            assertThat(conversationAction.getAction()).isNotNull();
+            assertThat(conversationAction.getType()).isNotNull();
+            assertThat(conversationAction.getConfidenceScore()).isGreaterThan(0f);
+            assertThat(conversationAction.getConfidenceScore()).isLessThan(1.0f);
         }
     }
 }
