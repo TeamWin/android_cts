@@ -2657,12 +2657,10 @@ public class MediaPlayer2Test extends MediaPlayer2TestBase {
             @Override
             public int readAt(long position, byte[] buffer, int offset, int size)
                     throws IOException {
-                if (!readAllowed.isSignalled()) {
-                    try {
-                        readAllowed.waitForSignal();
-                    } catch (InterruptedException e) {
-                        fail();
-                    }
+                try {
+                    readAllowed.waitForSignal();
+                } catch (InterruptedException e) {
+                    fail();
                 }
                 return source.readAt(position, buffer, offset, size);
             }
@@ -2825,5 +2823,110 @@ public class MediaPlayer2Test extends MediaPlayer2TestBase {
 
         Thread.sleep(1000);
         mPlayer.reset();
+    }
+
+    public void testCancelPendingCommands() throws Exception {
+        if (IGNORE_TESTS) {
+            return;
+        }
+
+        final int resid = R.raw.video_480x360_mp4_h264_1350kbps_30fps_aac_stereo_192kbps_44100hz;
+
+        final Monitor readRequested = new Monitor();
+        final Monitor readAllowed = new Monitor();
+        Media2DataSource dataSource = new Media2DataSource() {
+            TestMedia2DataSource mTestSource =
+                TestMedia2DataSource.fromAssetFd(mResources.openRawResourceFd(resid));
+            @Override
+            public int readAt(long position, byte[] buffer, int offset, int size)
+                    throws IOException {
+                try {
+                    readRequested.signal();
+                    readAllowed.waitForSignal();
+                } catch (InterruptedException e) {
+                    fail();
+                }
+                return mTestSource.readAt(position, buffer, offset, size);
+            }
+
+            @Override
+            public long getSize() throws IOException {
+                return mTestSource.getSize();
+            }
+
+            @Override
+            public void close() throws IOException {
+                mTestSource.close();
+            }
+        };
+
+        final ArrayList<Integer> commandsCompleted = new ArrayList<>();
+        setOnErrorListener();
+        final Monitor labelReached = new Monitor();
+        MediaPlayer2.EventCallback ecb = new MediaPlayer2.EventCallback() {
+            @Override
+            public void onInfo(MediaPlayer2 mp, DataSourceDesc dsd, int what, int extra) {
+                if (what == MediaPlayer2.MEDIA_INFO_PREPARED) {
+                    mOnPrepareCalled.signal();
+                }
+            }
+
+            @Override
+            public void onCallCompleted(
+                    MediaPlayer2 mp, DataSourceDesc dsd, int what, int status) {
+                commandsCompleted.add(what);
+            }
+
+            @Override
+            public void onError(MediaPlayer2 mp, DataSourceDesc dsd, int what, int extra) {
+                mOnErrorCalled.signal();
+            }
+
+            @Override
+            public void onCommandLabelReached(MediaPlayer2 mp, Object label) {
+                labelReached.signal();
+            }
+        };
+        synchronized (mEventCbLock) {
+            mEventCallbacks.add(ecb);
+        }
+
+        mOnPrepareCalled.reset();
+        mOnErrorCalled.reset();
+
+        mPlayer.setDataSource(new DataSourceDesc.Builder()
+                .setDataSource(dataSource)
+                .build());
+
+
+        // prepare() will be pending until readAllowed is signaled.
+        mPlayer.prepare();
+
+        Object playToken = mPlayer.play();
+        Object seekToken = mPlayer.seekTo(1000);
+        mPlayer.pause();
+
+        readRequested.waitForSignal();
+
+        // Cancel the pending commands while preparation is on hold.
+        boolean canceled = mPlayer.cancelCommand(playToken);
+        assertTrue("play command should be in pending queue", canceled);
+        canceled = mPlayer.cancelCommand(seekToken);
+        assertTrue("seekTo command should be in pending queue", canceled);
+
+        Object dummy = new Object();
+        canceled = mPlayer.cancelCommand(dummy);
+        assertFalse("dummy command should not be in pending queue", canceled);
+
+        // Make the on-going prepare operation fail and check the results.
+        readAllowed.signal();
+        mPlayer.notifyWhenCommandLabelReached(new Object());
+        labelReached.waitForSignal();
+
+        assertEquals(3, commandsCompleted.size());
+        assertEquals(MediaPlayer2.CALL_COMPLETED_SET_DATA_SOURCE, (int) commandsCompleted.get(0));
+        assertEquals(MediaPlayer2.CALL_COMPLETED_PREPARE, (int) commandsCompleted.get(1));
+        assertEquals(MediaPlayer2.CALL_COMPLETED_PAUSE, (int) commandsCompleted.get(2));
+        assertEquals(0, mOnErrorCalled.getNumSignal());
     }
 }
