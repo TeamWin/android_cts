@@ -20,14 +20,10 @@ import android.test.AndroidTestCase;
 import java.io.IOException;
 
 /**
- * Verify the selinux domain for apps running with targetSdkVersion&lt;=25
+ * Verify the selinux domain for apps running with targetSdkVersion<=25
  */
 public class SELinuxTargetSdkTest extends SELinuxTargetSdkTestBase
 {
-    public void testCanExecuteFromHomeDir() throws Exception {
-        assertTrue(canExecuteFromHomeDir());
-    }
-
     /**
      * Verify that selinux context is the expected domain based on
      * targetSdkVersion = 25
@@ -45,13 +41,13 @@ public class SELinuxTargetSdkTest extends SELinuxTargetSdkTestBase
 
     /**
      * Verify that selinux context is the expected type based on
-     * targetSdkVersion = 25
+     * targetSdkVersion = current
      */
     public void testAppDataContext() throws Exception {
         String context = "u:object_r:app_data_file:s0:c[0-9]+,c[0-9]+";
-        String msg = "Untrusted apps with targetSdkVersion of 25 and below " +
-            "must use the app_data_file selinux context and use the levelFrom=user " +
-            "selector in SELinux seapp_contexts which adds two category types " +
+        String msg = "Untrusted apps with targetSdkVersion of 25 and below and above" +
+            "must use the app_data_file selinux context and use the levelFrom=all " +
+            "selector in SELinux seapp_contexts which adds four category types " +
             "to the app_data_file context.\n" +
             "Example expected value: u:object_r:app_data_file:s0:c512,c768\n" +
             "Actual value: ";
