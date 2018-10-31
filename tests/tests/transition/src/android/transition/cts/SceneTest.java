@@ -15,6 +15,8 @@
  */
 package android.transition.cts;
 
+import static org.hamcrest.CoreMatchers.is;
+import static org.hamcrest.MatcherAssert.assertThat;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
@@ -91,6 +93,13 @@ public class SceneTest extends BaseTransitionTest {
     public void testFactory() throws Throwable {
         Scene scene = loadScene(R.layout.scene1);
         constructorTest(scene);
+    }
+
+    @Test
+    public void testGetCurrentScene() throws Throwable {
+        Scene scene = Scene.getSceneForLayout(mSceneRoot, R.layout.scene1, mActivity);
+        enterScene(scene);
+        assertThat(Scene.getCurrentScene(mSceneRoot), is(scene));
     }
 
     /**
