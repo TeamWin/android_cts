@@ -51,6 +51,7 @@ def main():
         mono_camera = its.caps.mono_camera(props)
         effects = props['android.control.availableEffects']
         its.caps.skip_unless(effects)
+        cam.do_3a(mono_camera=mono_camera)
         print 'Supported effects:', effects
         failed = []
         for effect in effects:

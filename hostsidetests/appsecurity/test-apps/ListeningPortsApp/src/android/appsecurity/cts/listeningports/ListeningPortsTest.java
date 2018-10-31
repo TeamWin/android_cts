@@ -14,15 +14,17 @@
  * limitations under the License.
  */
 
-package android.security.cts;
+package android.appsecurity.cts.listeningports;
 
 import android.content.pm.PackageManager;
+import android.os.Bundle;
 import android.os.Process;
 import android.os.UserHandle;
 import android.test.AndroidTestCase;
 import android.util.Log;
-import com.android.compatibility.common.util.FeatureUtil;
 import junit.framework.AssertionFailedError;
+import android.support.test.InstrumentationRegistry;
+
 
 import java.io.File;
 import java.io.IOException;
@@ -45,9 +47,11 @@ import java.util.regex.Pattern;
 public class ListeningPortsTest extends AndroidTestCase {
     private static final String TAG = "ListeningPortsTest";
 
-    private static final int CONN_TIMEOUT_IN_MS = 5000;
+    private static final String PROC_FILE_CONTENTS_PARAM = "procFileContents";
+    private static final String IS_TCP_PARAM = "isTcp";
+    private static final String LOOPBACK_PARAM = "loopback";
 
-    private boolean mIsTelevision;
+    private static final int CONN_TIMEOUT_IN_MS = 5000;
 
     /** Ports that are allowed to be listening. */
     private static final List<String> EXCEPTION_PATTERNS = new ArrayList<String>(6);
@@ -76,136 +80,6 @@ public class ListeningPortsTest extends AndroidTestCase {
         EXCEPTION_PATTERNS.add(":::5555");          // emulator port for adb
     }
 
-    @Override
-    protected void setUp() throws Exception {
-        super.setUp();
-        mIsTelevision = FeatureUtil.isTV();
-    }
-
-    /**
-     * Remotely accessible ports are often used by attackers to gain
-     * unauthorized access to computers systems without user knowledge or
-     * awareness.
-     */
-    public void testNoRemotelyAccessibleListeningTcpPorts() throws Exception {
-        assertNoAccessibleListeningPorts("/proc/net/tcp", true, false);
-    }
-
-    /**
-     * Remotely accessible ports are often used by attackers to gain
-     * unauthorized access to computers systems without user knowledge or
-     * awareness.
-     */
-    public void testNoRemotelyAccessibleListeningTcp6Ports() throws Exception {
-        assertNoAccessibleListeningPorts("/proc/net/tcp6", true, false);
-    }
-
-    /**
-     * Remotely accessible ports are often used by attackers to gain
-     * unauthorized access to computers systems without user knowledge or
-     * awareness.
-     */
-    public void testNoRemotelyAccessibleListeningUdpPorts() throws Exception {
-        assertNoRemotelyAccessibleListeningUdpPorts("/proc/net/udp", false);
-    }
-
-    /**
-     * Remotely accessible ports are often used by attackers to gain
-     * unauthorized access to computers systems without user knowledge or
-     * awareness.
-     */
-    /* Disabling this test due to ims_rtp_daemon listening on a random UDP6 port per b/110264058.
-    public void testNoRemotelyAccessibleListeningUdp6Ports() throws Exception {
-        assertNoRemotelyAccessibleListeningUdpPorts("/proc/net/udp6", false);
-    }
-    */
-
-    /**
-     * Locally accessible ports are often targeted by malicious locally
-     * installed programs to gain unauthorized access to program data or
-     * cause system corruption.
-     *
-     * In all cases, a local listening IP port can be replaced by a UNIX domain
-     * socket. Unix domain sockets can be protected with unix filesystem
-     * permission. Alternatively, you can use getsockopt(SO_PEERCRED) to
-     * determine if a program is authorized to connect to your socket.
-     *
-     * Please convert loopback IP connections to unix domain sockets.
-     */
-    public void testNoListeningLoopbackTcpPorts() throws Exception {
-        assertNoAccessibleListeningPorts("/proc/net/tcp", true, true);
-    }
-
-    /**
-     * Locally accessible ports are often targeted by malicious locally
-     * installed programs to gain unauthorized access to program data or
-     * cause system corruption.
-     *
-     * In all cases, a local listening IP port can be replaced by a UNIX domain
-     * socket. Unix domain sockets can be protected with unix filesystem
-     * permission. Alternatively, you can use getsockopt(SO_PEERCRED) to
-     * determine if a program is authorized to connect to your socket.
-     *
-     * Please convert loopback IP connections to unix domain sockets.
-     */
-    public void testNoListeningLoopbackTcp6Ports() throws Exception {
-        assertNoAccessibleListeningPorts("/proc/net/tcp6", true, true);
-    }
-
-    /**
-     * Locally accessible ports are often targeted by malicious locally
-     * installed programs to gain unauthorized access to program data or
-     * cause system corruption.
-     *
-     * In all cases, a local listening IP port can be replaced by a UNIX domain
-     * socket. Unix domain sockets can be protected with unix filesystem
-     * permission.  Alternately, or you can use setsockopt(SO_PASSCRED) to
-     * send credentials, and recvmsg to retrieve the passed credentials.
-     *
-     * Please convert loopback IP connections to unix domain sockets.
-     */
-    public void testNoListeningLoopbackUdpPorts() throws Exception {
-        assertNoAccessibleListeningPorts("/proc/net/udp", false, true);
-    }
-
-    /**
-     * Locally accessible ports are often targeted by malicious locally
-     * installed programs to gain unauthorized access to program data or
-     * cause system corruption.
-     *
-     * In all cases, a local listening IP port can be replaced by a UNIX domain
-     * socket. Unix domain sockets can be protected with unix filesystem
-     * permission.  Alternately, or you can use setsockopt(SO_PASSCRED) to
-     * send credentials, and recvmsg to retrieve the passed credentials.
-     *
-     * Please convert loopback IP connections to unix domain sockets.
-     */
-    public void testNoListeningLoopbackUdp6Ports() throws Exception {
-        assertNoAccessibleListeningPorts("/proc/net/udp6", false, true);
-    }
-
-    private static final int RETRIES_MAX = 6;
-
-    /**
-     * UDP tests can be flaky due to DNS lookups.  Compensate.
-     */
-    private void assertNoRemotelyAccessibleListeningUdpPorts(
-            String procFilePath, boolean loopback)
-            throws Exception {
-        for (int i = 0; i < RETRIES_MAX; i++) {
-            try {
-                assertNoAccessibleListeningPorts(procFilePath, false, loopback);
-                return;
-            } catch (ListeningPortsAssertionError e) {
-                if (i == RETRIES_MAX - 1) {
-                    throw e;
-                }
-                Thread.sleep(2 * 1000 * i);
-            }
-        }
-        throw new IllegalStateException("unreachable");
-    }
-
     /**
      * Remotely accessible ports (loopback==false) are often used by
      * attackers to gain unauthorized access to computers systems without
@@ -214,11 +88,18 @@ public class ListeningPortsTest extends AndroidTestCase {
      * Locally accessible ports (loopback==true) are often targeted by
      * malicious locally installed programs to gain unauthorized access to
      * program data or cause system corruption.
+     *
+     * Since direct /proc/net access is no longer possible the contents of the file and the boolean
+     * values are received as parameters from the host side test.
      */
-    private void assertNoAccessibleListeningPorts(
-            String procFilePath, boolean isTcp, boolean loopback) throws IOException {
+    public void testNoAccessibleListeningPorts() throws Exception {
+        final Bundle testArgs = InstrumentationRegistry.getArguments();
+        final String procFileContents = testArgs.getString(PROC_FILE_CONTENTS_PARAM);
+        final boolean isTcp = Boolean.valueOf(testArgs.getString(IS_TCP_PARAM));
+        final boolean loopback = Boolean.valueOf(testArgs.getString(LOOPBACK_PARAM));
+
         String errors = "";
-        List<ParsedProcEntry> entries = ParsedProcEntry.parse(procFilePath);
+        List<ParsedProcEntry> entries = ParsedProcEntry.parse(procFileContents);
         for (ParsedProcEntry entry : entries) {
             String addrPort = entry.localAddress.getHostAddress() + ':' + entry.port;
             String addrUid = entry.localAddress.getHostAddress() + ' ' + entry.uid;
@@ -236,12 +117,10 @@ public class ListeningPortsTest extends AndroidTestCase {
                         && appId <= Process.LAST_APPLICATION_UID) {
                     continue;
                 }
-
                 errors += "\nFound port listening on addr="
                         + entry.localAddress.getHostAddress() + ", port="
                         + entry.port + ", UID=" + entry.uid
-                        + " " + uidToPackage(entry.uid) + " in "
-                        + procFilePath;
+                        + " " + uidToPackage(entry.uid);
             }
         }
         if (!errors.equals("")) {
@@ -325,7 +204,7 @@ public class ListeningPortsTest extends AndroidTestCase {
         }
 
 
-        private static List<ParsedProcEntry> parse(String procFilePath) throws IOException {
+        private static List<ParsedProcEntry> parse(String procFileContents) throws IOException {
 
             List<ParsedProcEntry> retval = new ArrayList<ParsedProcEntry>();
             /*
@@ -338,10 +217,9 @@ public class ListeningPortsTest extends AndroidTestCase {
             *
             */
 
-            File procFile = new File(procFilePath);
             Scanner scanner = null;
             try {
-                scanner = new Scanner(procFile);
+                scanner = new Scanner(procFileContents);
                 while (scanner.hasNextLine()) {
                     String line = scanner.nextLine().trim();
 
@@ -352,7 +230,7 @@ public class ListeningPortsTest extends AndroidTestCase {
 
                     String[] fields = line.split("\\s+");
                     final int expectedNumColumns = 12;
-                    assertTrue(procFilePath + " should have at least " + expectedNumColumns
+                    assertTrue(line + " should have at least " + expectedNumColumns
                             + " columns of output " + Arrays.toString(fields),
                             fields.length >= expectedNumColumns);
 

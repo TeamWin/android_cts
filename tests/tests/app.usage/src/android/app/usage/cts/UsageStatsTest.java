@@ -848,10 +848,19 @@ public class UsageStatsTest {
         try {
             mUsageStatsManager.registerAppUsageObserver(0, new String[] {"com.android.settings"},
                     1, java.util.concurrent.TimeUnit.HOURS, null);
+            fail("Should throw SecurityException");
         } catch (SecurityException e) {
-            return;
+            // Exception expected
         }
-        fail("Should throw SecurityException");
+
+        try {
+            mUsageStatsManager.registerUsageSessionObserver(0, new String[]{"com.android.settings"},
+                    1, java.util.concurrent.TimeUnit.HOURS, 10,
+                    java.util.concurrent.TimeUnit.SECONDS, null, null);
+            fail("Should throw SecurityException");
+        } catch (SecurityException e) {
+            // Exception expected
+        }
     }
 
     private void pressWakeUp() {

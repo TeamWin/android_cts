@@ -149,6 +149,15 @@ public class SystemUtil {
      */
     public static void runWithShellPermissionIdentity(@NonNull ThrowingRunnable runnable) {
         final UiAutomation automan = InstrumentationRegistry.getInstrumentation().getUiAutomation();
+        runWithShellPermissionIdentity(automan, runnable);
+    }
+
+    /**
+     * Runs a {@link ThrowingRunnable} adopting Shell's permissions, where you can specify the
+     * uiAutomation used.
+     */
+    public static void runWithShellPermissionIdentity(
+            @NonNull UiAutomation automan, @NonNull ThrowingRunnable runnable) {
         automan.adoptShellPermissionIdentity();
         try {
             runnable.run();

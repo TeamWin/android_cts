@@ -228,7 +228,7 @@ public class KeyChainTestActivity extends PassFailButtons.Activity {
         @Override
         public void onClick(View v) {
             Log.i(TAG, "Selecting certificate");
-            mLogView.setText("Waiting for prompt");
+            mLogView.setText("Prompt should not appear.");
             selectCertificate(this);
         }
 
