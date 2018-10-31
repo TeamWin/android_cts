@@ -1,6 +1,5 @@
 package android.security;
 
-import android.system.Os;
 import android.test.AndroidTestCase;
 import java.io.BufferedReader;
 import java.io.FileReader;
@@ -80,22 +79,6 @@ abstract class SELinuxTargetSdkTestBase extends AndroidTestCase
         String context = getFileContext(appDataDir.getAbsolutePath());
         String msg = errorMsg + context;
         assertTrue(msg, m.matches());
-    }
-
-    protected boolean canExecuteFromHomeDir() throws Exception {
-        File appDataDir = getContext().getFilesDir();
-        File temp = File.createTempFile("badbin", "exe", appDataDir);
-        temp.deleteOnExit();
-        String path = temp.getPath();
-        Os.chmod(path, 0700);
-        try {
-            Process process = new ProcessBuilder(path).start();
-        } catch (IOException e) {
-            return !e.toString().contains("Permission denied");
-        } finally {
-            temp.delete();
-        }
-        return true;
     }
 
     private static final native String getFileContext(String path);
