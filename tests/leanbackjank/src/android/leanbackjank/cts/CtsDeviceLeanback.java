@@ -32,7 +32,7 @@ public class CtsDeviceLeanback extends CtsJankTestBase {
     private static final long WAIT_TIMEOUT = 5 * MILLIS_PER_SECOND;
     private static final int SCROLL_COUNT = 100;
     private static final int SCROLL_INTERVAL_MILLIS = 200;
-    private static final int PRE_SCROLL_DELAY_MILLIS = 0;
+    private static final int PRE_SCROLL_DELAY_MILLIS = 500;
     private static final int PRE_SCROLL_IDLE_TIME = 2 * MILLIS_PER_SECOND;
     private static final int SAMPLING_DURATION_SECONDS = 2;
     private static final int SAMPLING_DURATION_MILLIS =
