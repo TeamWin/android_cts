@@ -34,6 +34,7 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 
 import java.io.IOException;
+import java.util.Locale;
 
 @SmallTest
 @RunWith(AndroidJUnit4.class)
@@ -201,5 +202,28 @@ public class TypefaceCustomFallbackBuilderTest {
         for (int i = 0; i < 64; ++i) {
             b.addCustomFallback(new FontFamily.Builder(font).build());
         }
+    }
+
+    @Test
+    public void testUserFallbackOverLocaleFallback() throws IOException {
+        final AssetManager am = InstrumentationRegistry.getTargetContext().getAssets();
+        final FontFamily baseFamily = new FontFamily.Builder(
+                new Font.Builder(am, "fonts/user_fallback/ascii.ttf").build()).build();
+        final FontFamily fallbackFamily = new FontFamily.Builder(
+                new Font.Builder(am, "fonts/user_fallback/ideograms.ttf").build()).build();
+
+        // baseFamily supports all ASCII alphabet characters but not supports Hebrew characters.
+        // FallbackFamily suppors all Hebrew alphabet characters and its width is 2em.
+        final Typeface typeface = new Typeface.CustomFallbackBuilder(baseFamily)
+                .addCustomFallback(fallbackFamily)
+                .build();
+
+        TextPaint paint = new TextPaint();
+        paint.setTextSize(10.0f);  // Make 1em = 10px.
+        paint.setTypeface(typeface);
+        paint.setTextLocale(Locale.JAPANESE);
+
+        assertEquals(10.0f, paint.measureText("a", 0, 1), 0.0f);
+        assertEquals(20.0f, paint.measureText("\u4E0D", 0, 1), 0.0f);  // Hebrew letter
     }
 }
