@@ -16,28 +16,14 @@
 
 package android.provider.cts;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNull;
-import static org.junit.Assert.assertTrue;
-
 import android.content.ContentResolver;
 import android.content.ContentValues;
-import android.content.Context;
 import android.database.Cursor;
 import android.net.Uri;
 import android.provider.MediaStore;
-import android.support.test.InstrumentationRegistry;
-import android.support.test.runner.AndroidJUnit4;
+import android.test.InstrumentationTestCase;
 
-import org.junit.After;
-import org.junit.Before;
-import org.junit.Test;
-import org.junit.runner.RunWith;
-
-import java.util.Set;
-
-@RunWith(AndroidJUnit4.class)
-public class MediaStoreTest {
+public class MediaStoreTest extends InstrumentationTestCase {
     private static final String TEST_VOLUME_NAME = "volume_for_cts";
 
     private static final String[] PROJECTION = new String[] { MediaStore.MEDIA_SCANNER_VOLUME };
@@ -48,14 +34,10 @@ public class MediaStoreTest {
 
     private ContentResolver mContentResolver;
 
-    private Context getContext() {
-        return InstrumentationRegistry.getTargetContext();
-    }
-
-    @Before
-    public void setUp() throws Exception {
+    @Override
+    protected void setUp() throws Exception {
         mScannerUri = MediaStore.getMediaScannerUri();
-        mContentResolver = getContext().getContentResolver();
+        mContentResolver = getInstrumentation().getContext().getContentResolver();
         Cursor c = mContentResolver.query(mScannerUri, PROJECTION, null, null, null);
         if (c != null) {
             c.moveToFirst();
@@ -64,17 +46,18 @@ public class MediaStoreTest {
         }
     }
 
-    @After
-    public void tearDown() throws Exception {
+    @Override
+    protected void tearDown() throws Exception {
         // restore initial values
         if (mVolumnBackup != null) {
             ContentValues values = new ContentValues();
             values.put(MediaStore.MEDIA_SCANNER_VOLUME, mVolumnBackup);
             mContentResolver.insert(mScannerUri, values);
         }
+        super.tearDown();
     }
 
-    @Test
+
     public void testGetMediaScannerUri() {
         ContentValues values = new ContentValues();
         String selection = MediaStore.MEDIA_SCANNER_VOLUME + "=?";
@@ -102,18 +85,8 @@ public class MediaStoreTest {
         assertNull(mContentResolver.query(mScannerUri, PROJECTION, null, null, null));
     }
 
-    @Test
     public void testGetVersion() {
         // Could be a version string or null...just check it doesn't blow up.
-        MediaStore.getVersion(getContext());
-    }
-
-    @Test
-    public void getAllVolumeNames() {
-        Set<String> volumeNames = MediaStore.getAllVolumeNames(getContext());
-
-        // At very least should contain these two volumes
-        assertTrue(volumeNames.contains("internal"));
-        assertTrue(volumeNames.contains("external"));
+        MediaStore.getVersion(getInstrumentation().getTargetContext());
     }
 }
