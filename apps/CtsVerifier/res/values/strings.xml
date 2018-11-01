@@ -154,6 +154,7 @@
     <string name="biometric_test_info">
         This test ensures that biometrics can be authenticated when templates are enrolled.
     </string>
+    <string name="biometric_enroll">Enroll</string>
     <string name="biometric_start_test1">Start Test 1</string>
     <string name="biometric_start_test2">Start Test 2</string>
 

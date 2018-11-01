@@ -27,6 +27,14 @@
         android:text="@string/biometric_start_test1"
         />
 
+    <Button android:id="@+id/biometric_enroll_button"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_above="@+id/biometric_start_test2_button"
+        android:layout_centerHorizontal="true"
+        android:text="@string/biometric_enroll"
+        />
+
     <Button android:id="@+id/biometric_start_test2_button"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
