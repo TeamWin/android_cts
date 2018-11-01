@@ -25,7 +25,9 @@ import android.app.stubs.OrientationTestUtils;
 import android.content.Context;
 import android.content.Intent;
 import android.content.pm.PackageManager;
+import android.cts.util.PollingCheck;
 import android.test.InstrumentationTestCase;
+
 
 /**
  * Test {@link Application}.
@@ -50,14 +52,36 @@ public class ApplicationTest extends InstrumentationTestCase {
                 && pm.hasSystemFeature(PackageManager.FEATURE_SCREEN_PORTRAIT))){
             return;
         }
+        // Wait for each orientation change request because it may restart activity.
+        // Don't use OrientationTestUtils.Observer because global configuration
+        // change won't happen in multi window mode.
+        final int orientations[] = OrientationTestUtils.getOrientations(activity);
+        runTestOnUiThread(new Runnable() {
+            public void run() {
+                activity.setRequestedOrientation(orientations[1]);
+            }
+        });
+
+        // Wait until rotation finishes. Needed for slow devices. But don't wait on Multi Window
+        // mode since orientation request gets ignored.
+        // orientation[1], on "non Multi Window mode" guarantees an onConfigurationChanged event,
+        // since it cannot be SCREEN_ORIENTATION_USER.
+        if (!activity.isInMultiWindowMode()) {
+            PollingCheck.waitFor(() -> mockApp.isOnConfigurationChangedCalled == true);
+        }
+        instrumentation.waitForIdleSync();
 
         runTestOnUiThread(new Runnable() {
             public void run() {
-               OrientationTestUtils.toggleOrientation(activity);
+                activity.setRequestedOrientation(orientations[0]);
             }
         });
+
+        // Restore original orientation. But don't wait for 'onConfigurationChanged' since the
+        // original orientation could be 'SCREEN_ORIENTATION_USER'. And that won't trigger any
+        // event.
         instrumentation.waitForIdleSync();
-        final boolean isInMultiwindowMode = activity.isInMultiWindowMode();
+
         if (activity.isInMultiWindowMode()) {
             assertFalse("Orientation change should not trigger global configuration change when "
                     + " in multi-window mode.", mockApp.isOnConfigurationChangedCalled);

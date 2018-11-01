@@ -43,7 +43,7 @@ public class OrientationTestUtils {
      * @return The first element is original orientation adn the second element is toggled
      *     orientation.
      */
-    private static int[] getOrientations(final Activity activity) {
+    public static int[] getOrientations(final Activity activity) {
         final int originalOrientation = activity.getResources().getConfiguration().orientation;
         final int newOrientation = originalOrientation == ActivityInfo.SCREEN_ORIENTATION_PORTRAIT
             ? ActivityInfo.SCREEN_ORIENTATION_LANDSCAPE
