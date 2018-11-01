@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package android.graphics.text;
+package android.graphics.text.cts;
 
 import static org.junit.Assert.assertEquals;
 
@@ -23,6 +23,7 @@ import android.content.res.AssetManager;
 import android.graphics.Paint;
 import android.graphics.Rect;
 import android.graphics.Typeface;
+import android.graphics.text.MeasuredText;
 import android.support.test.InstrumentationRegistry;
 import android.support.test.filters.SmallTest;
 import android.support.test.runner.AndroidJUnit4;

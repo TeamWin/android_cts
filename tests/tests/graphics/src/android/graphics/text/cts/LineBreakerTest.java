@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package android.graphics.text;
+package android.graphics.text.cts;
 
 import static android.graphics.text.LineBreaker.BREAK_STRATEGY_BALANCED;
 import static android.graphics.text.LineBreaker.BREAK_STRATEGY_HIGH_QUALITY;
@@ -37,6 +37,8 @@ import android.content.Context;
 import android.content.res.AssetManager;
 import android.graphics.Paint;
 import android.graphics.Typeface;
+import android.graphics.text.LineBreaker;
+import android.graphics.text.MeasuredText;
 import android.support.test.InstrumentationRegistry;
 import android.support.test.filters.SmallTest;
 import android.support.test.runner.AndroidJUnit4;

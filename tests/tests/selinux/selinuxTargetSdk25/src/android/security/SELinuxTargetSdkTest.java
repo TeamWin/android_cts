@@ -24,10 +24,6 @@ import java.io.IOException;
  */
 public class SELinuxTargetSdkTest extends SELinuxTargetSdkTestBase
 {
-    public void testCanExecuteFromHomeDir() throws Exception {
-        assertTrue(canExecuteFromHomeDir());
-    }
-
     /**
      * Verify that selinux context is the expected domain based on
      * targetSdkVersion = 25

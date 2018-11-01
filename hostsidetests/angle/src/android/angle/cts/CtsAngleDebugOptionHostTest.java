@@ -27,6 +27,7 @@ import java.util.Scanner;
 
 import org.junit.After;
 import org.junit.Assert;
+import org.junit.Assume;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -39,12 +40,29 @@ public class CtsAngleDebugOptionHostTest extends BaseHostJUnit4Test implements I
 
     private static final String TAG = CtsAngleDebugOptionHostTest.class.getSimpleName();
 
+    // System Properties
+    private static final String PROPERTY_DISABLE_OPENGL_PRELOADING = "ro.zygote.disable_gl_preload";
+    private static final String PROPERTY_GFX_DRIVER = "ro.gfx.driver.0";
+
     // ANGLE
     private static final String ANGLE_DEBUG_OPTION_PKG = "com.android.angleIntegrationTest.debugOption";
     private static final String ANGLE_DEBUG_OPTION_CLASS = "AngleDebugOptionActivityTest";
     private static final String ANGLE_DEBUG_OPTION_ON_METHOD = "testDebugOptionOn";
     private static final String ANGLE_DEBUG_OPTION_OFF_METHOD = "testDebugOptionOff";
     private static final String ANGLE_DEBUG_OPTION_APP = "CtsAngleDebugOptionTestCases.apk";
+
+    private boolean isAngleLoadable() throws Exception {
+        String propDisablePreloading = getDevice().getProperty(PROPERTY_DISABLE_OPENGL_PRELOADING);
+        String propGfxDriver = getDevice().getProperty(PROPERTY_GFX_DRIVER);
+
+        // This logic is attempting to mimic ZygoteInit.java::ZygoteInit#preloadOpenGL()
+        if (((propDisablePreloading != null) && propDisablePreloading.equals("true")) &&
+            ((propGfxDriver == null) || propGfxDriver.isEmpty())) {
+            return false;
+        }
+
+        return true;
+    }
 
     private void enableAngle() throws Exception {
         String developerOptionCmd = String.format("settings put global angle_enabled_app %s",
@@ -77,6 +95,8 @@ public class CtsAngleDebugOptionHostTest extends BaseHostJUnit4Test implements I
      */
     @Test
     public void testDebugOptionOn() throws Exception {
+        Assume.assumeTrue(isAngleLoadable());
+
         // Disable ANGLE so we have a fresh enable to check
         disableAngle();
 
@@ -95,6 +115,8 @@ public class CtsAngleDebugOptionHostTest extends BaseHostJUnit4Test implements I
      */
     @Test
     public void testDebugOptionOff() throws Exception {
+        Assume.assumeTrue(isAngleLoadable());
+
         // Enable ANGLE so that disabling it actually has something to disable.
         enableAngle();
 
