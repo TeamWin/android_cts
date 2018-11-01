@@ -112,7 +112,6 @@ import java.util.regex.Pattern;
  *     atest CtsActivityManagerDeviceTestCases:ActivityManagerMultiDisplayTests
  */
 @Presubmit
-@FlakyTest(bugId = 118715516)
 public class ActivityManagerMultiDisplayTests extends ActivityManagerDisplayTestBase {
     @Before
     @Override
