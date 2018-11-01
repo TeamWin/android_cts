@@ -16,6 +16,8 @@
 
 package android.graphics.fonts;
 
+import android.util.Pair;
+
 import java.io.File;
 import java.io.IOException;
 import java.util.HashSet;
@@ -65,6 +67,19 @@ public class NativeSystemFontHelper {
         return nativeFonts;
     }
 
+    public static Pair<File, Integer> matchFamilyStyleCharacter(String familyName, int weight,
+            boolean italic, String languageTags, String text) {
+        final long fontPtr = nMatchFamilyStyleCharacter(familyName, weight, italic, languageTags,
+                text);
+        final int runLength = nMatchFamilyStyleCharacter_runLength(familyName, weight, italic,
+                languageTags, text);
+        try {
+            return new Pair<>(new File(nGetFilePath(fontPtr)), runLength);
+        } finally {
+            nCloseFont(fontPtr);
+        }
+    }
+
     private static native long nOpenIterator();
     private static native void nCloseIterator(long ptr);
     private static native long nNext(long ptr);
@@ -77,4 +92,8 @@ public class NativeSystemFontHelper {
     private static native int nGetAxisCount(long ptr);
     private static native int nGetAxisTag(long ptr, int index);
     private static native float nGetAxisValue(long ptr, int index);
+    private static native long nMatchFamilyStyleCharacter(String familyName, int weight,
+            boolean italic, String languageTags, String text);
+    private static native int nMatchFamilyStyleCharacter_runLength(String familyName, int weight,
+            boolean italic, String languageTags, String text);
 }
