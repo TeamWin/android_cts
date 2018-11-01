@@ -65,7 +65,7 @@ public class AnimationBackgroundTests extends ActivityManagerTestBase {
         launchActivityOnDisplay(LAUNCHING_ACTIVITY, DEFAULT_DISPLAY);
         getLaunchActivityBuilder().setTargetActivity(ANIMATION_TEST_ACTIVITY).execute();
         mAmWmState.computeState(ANIMATION_TEST_ACTIVITY);
-        mAmWmState.waitForAppTransitionIdle();
+        mAmWmState.waitForAppTransitionIdleOnDisplay(DEFAULT_DISPLAY);
 
         // Make sure we're testing an activity that runs on fullscreen display. This animation API
         // doesn't make much sense in freeform displays.

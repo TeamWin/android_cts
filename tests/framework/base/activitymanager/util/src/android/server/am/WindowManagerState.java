@@ -108,8 +108,6 @@ public class WindowManagerState {
     private List<Display> mDisplays = new ArrayList();
     private String mFocusedWindow = null;
     private String mFocusedApp = null;
-    private String mLastTransition = null;
-    private String mAppTransitionState = null;
     private String mInputMethodWindowAppToken = null;
     private Rect mDefaultPinnedStackBounds = new Rect();
     private Rect mPinnedStackMovementBounds = new Rect();
@@ -229,15 +227,6 @@ public class WindowManagerState {
         mDisplayFrozen = state.displayFrozen;
         mRotation = state.rotation;
         mLastOrientation = state.lastOrientation;
-        AppTransitionProto appTransitionProto = state.appTransition;
-        int appState = 0;
-        int lastTransition = 0;
-        if (appTransitionProto != null) {
-            appState = appTransitionProto.appTransitionState;
-            lastTransition = appTransitionProto.lastUsedAppTransition;
-        }
-        mAppTransitionState = appStateToString(appState);
-        mLastTransition = appTransitionToString(lastTransition);
     }
 
     static String appStateToString(int appState) {
@@ -398,12 +387,12 @@ public class WindowManagerState {
         return mFocusedApp;
     }
 
-    String getLastTransition() {
-        return mLastTransition;
+    String getDefaultDisplayLastTransition() {
+        return getDisplay(DEFAULT_DISPLAY).getLastTransition();
     }
 
-    String getAppTransitionState() {
-        return mAppTransitionState;
+    String getDefaultDisplayAppTransitionState() {
+        return getDisplay(DEFAULT_DISPLAY).getAppTransitionState();
     }
 
     int getFrontStackId(int displayId) {
@@ -566,7 +555,6 @@ public class WindowManagerState {
         mDisplayStacks.clear();
         mFocusedWindow = null;
         mFocusedApp = null;
-        mLastTransition = null;
         mInputMethodWindowAppToken = null;
         mIsDockedStackMinimized = false;
         mDefaultPinnedStackBounds.setEmpty();
@@ -714,6 +702,8 @@ public class WindowManagerState {
         private String mName;
         private int mSurfaceSize;
         private String mFocusedApp;
+        private String mLastTransition;
+        private String mAppTransitionState;
 
         public Display(DisplayContentProto proto) {
             super(proto.windowContainer);
@@ -740,6 +730,16 @@ public class WindowManagerState {
             }
             mSurfaceSize = proto.surfaceSize;
             mFocusedApp = proto.focusedApp;
+
+            final AppTransitionProto appTransitionProto = proto.appTransition;
+            int appState = 0;
+            int lastTransition = 0;
+            if (appTransitionProto != null) {
+                appState = appTransitionProto.appTransitionState;
+                lastTransition = appTransitionProto.lastUsedAppTransition;
+            }
+            mAppTransitionState = appStateToString(appState);
+            mLastTransition = appTransitionToString(lastTransition);
         }
 
         private void addWindowsFromTokenProto(WindowTokenProto proto) {
@@ -778,6 +778,10 @@ public class WindowManagerState {
         String getFocusedApp() {
             return mFocusedApp;
         }
+
+        String getLastTransition() { return mLastTransition; }
+
+        String getAppTransitionState() { return mAppTransitionState; }
 
         @Override
         public String toString() {
