@@ -16,6 +16,7 @@
 
 package android.media.cts;
 
+import android.icu.util.ULocale;
 import android.media.AudioPresentation;
 import android.util.Log;
 
@@ -39,21 +40,18 @@ public class AudioPresentationTest extends CtsAndroidTestCase {
         final boolean HAS_SPOKEN_SUBTITLES = true;
         final boolean HAS_DIALOGUE_ENHANCEMENT = true;
 
-        AudioPresentation presentation = new AudioPresentation(
-                PRESENTATION_ID,
-                PROGRAM_ID,
-                labelsLocaleToString(LABELS),
-                LOCALE.toString(),
-                MASTERING_INDICATION,
-                HAS_AUDIO_DESCRIPTION,
-                HAS_SPOKEN_SUBTITLES,
-                HAS_DIALOGUE_ENHANCEMENT);
+        AudioPresentation presentation = (new AudioPresentation.Builder(PRESENTATION_ID)
+                .setProgramId(PROGRAM_ID)
+                .setLocale(ULocale.forLocale(LOCALE))
+                .setLabels(localeToULocale(LABELS))
+                .setMasteringIndication(MASTERING_INDICATION)
+                .setHasAudioDescription(HAS_AUDIO_DESCRIPTION)
+                .setHasSpokenSubtitles(HAS_SPOKEN_SUBTITLES)
+                .setHasDialogueEnhancement(HAS_DIALOGUE_ENHANCEMENT)).build();
         assertEquals(PRESENTATION_ID, presentation.getPresentationId());
         assertEquals(PROGRAM_ID, presentation.getProgramId());
-        assertEquals(LABELS.toString().toLowerCase(),
-                presentation.getLabels().toString().toLowerCase());
-        assertEquals(LOCALE.toString().toLowerCase(),
-                presentation.getLocale().toString().toLowerCase());
+        assertEquals(LABELS, presentation.getLabels());
+        assertEquals(LOCALE, presentation.getLocale());
         assertEquals(MASTERING_INDICATION, presentation.getMasteringIndication());
         assertEquals(HAS_AUDIO_DESCRIPTION, presentation.hasAudioDescription());
         assertEquals(HAS_SPOKEN_SUBTITLES, presentation.hasSpokenSubtitles());
@@ -68,11 +66,11 @@ public class AudioPresentationTest extends CtsAndroidTestCase {
         return result;
     }
 
-    private static Map<String, String> labelsLocaleToString(Map<Locale, String> localesMap) {
-        Map<String, String> result = new HashMap<String, String>();
-        for (Map.Entry<Locale, String> entry : localesMap.entrySet()) {
-            result.put(entry.getKey().toString(), entry.getValue());
+    private static Map<ULocale, String> localeToULocale(Map<Locale, String> locales) {
+        Map<ULocale, String> ulocaleLabels = new HashMap<ULocale, String>();
+        for (Map.Entry<Locale, String> entry : locales.entrySet()) {
+            ulocaleLabels.put(ULocale.forLocale(entry.getKey()), entry.getValue());
         }
-        return result;
+        return ulocaleLabels;
     }
 }
