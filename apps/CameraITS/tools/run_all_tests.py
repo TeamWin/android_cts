@@ -73,9 +73,9 @@ NOT_YET_MANDATED = {
 }
 
 
-def calc_camera_fov():
+def calc_camera_fov(camera_id):
     """Determine the camera field of view from internal params."""
-    with ItsSession() as cam:
+    with ItsSession(camera_id) as cam:
         props = cam.get_camera_properties()
     try:
         focal_l = props['android.lens.info.availableFocalLengths'][0]
@@ -101,11 +101,11 @@ def evaluate_socket_failure(err_file_path):
     return socket_fail
 
 
-def skip_sensor_fusion():
+def skip_sensor_fusion(camera_id):
     """Determine if sensor fusion test is skipped for this camera."""
 
     skip_code = SKIP_RET_CODE
-    with ItsSession() as cam:
+    with ItsSession(camera_id) as cam:
         props = cam.get_camera_properties()
         if (its.caps.sensor_fusion(props) and its.caps.manual_sensor(props) and
                 props['android.lens.facing'] is not FACING_EXTERNAL):
@@ -174,7 +174,6 @@ def main():
     tmp_dir = None
     skip_scene_validation = False
     chart_distance = CHART_DISTANCE
-    chart_height = CHART_HEIGHT
 
     for s in sys.argv[1:]:
         if s[:7] == "camera=" and len(s) > 7:
@@ -277,7 +276,7 @@ def main():
             assert wake_code == 0
 
     for camera_id in camera_ids:
-        camera_fov = calc_camera_fov()
+        camera_fov = calc_camera_fov(camera_id)
         # Loop capturing images until user confirm test scene is correct
         camera_id_arg = "camera=" + camera_id
         print "Preparing to run ITS on camera", camera_id
@@ -303,7 +302,7 @@ def main():
                 out_path = os.path.join(topdir, camera_id, scene+".jpg")
                 out_arg = "out=" + out_path
                 if scene == 'sensor_fusion':
-                    skip_code = skip_sensor_fusion()
+                    skip_code = skip_sensor_fusion(camera_id)
                     if rot_rig_id or skip_code == SKIP_RET_CODE:
                         validate_switch = False
                 if skip_scene_validation:
@@ -335,13 +334,15 @@ def main():
             print "Start running ITS on camera %s, %s" % (camera_id, scene)
             # Extract chart from scene for scene3 once up front
             chart_loc_arg = ''
+            chart_height = CHART_HEIGHT
             if scene == 'scene3':
                 if float(camera_fov) < 90 and np.isclose(chart_distance, 22,
                                                          rtol=0.1):
                     chart_height *= 0.67
                 chart = its.cv2image.Chart(SCENE3_FILE, chart_height,
                                            chart_distance, CHART_SCALE_START,
-                                           CHART_SCALE_STOP, CHART_SCALE_STEP)
+                                           CHART_SCALE_STOP, CHART_SCALE_STEP,
+                                           camera_id)
                 chart_loc_arg = 'chart_loc=%.2f,%.2f,%.2f,%.2f,%.3f' % (
                         chart.xnorm, chart.ynorm, chart.wnorm, chart.hnorm,
                         chart.scale)
