@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package android.appwidget.cts;
+package android.appwidget.cts.activity;
 
 import android.app.Activity;
 
