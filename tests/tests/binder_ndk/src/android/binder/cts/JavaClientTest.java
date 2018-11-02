@@ -23,11 +23,15 @@ import static org.junit.Assert.assertTrue;
 
 import android.os.IBinder;
 import android.os.RemoteException;
+import android.os.ParcelFileDescriptor;
 
 import android.support.test.InstrumentationRegistry;
 
 import android.util.Log;
 
+import java.io.FileInputStream;
+import java.io.FileOutputStream;
+import java.io.IOException;
 import java.util.Arrays;
 import java.util.Collection;
 
@@ -124,9 +128,29 @@ public class JavaClientTest {
     }
 
     @Test
-    public void testRepeatString() throws RemoteException {
-        IEmpty empty = new Empty();
+    public void testRepeatFd() throws RemoteException, IOException {
+        ParcelFileDescriptor inFd = ParcelFileDescriptor.open(
+                InstrumentationRegistry.getTargetContext().getFileStreamPath("test-dummy"),
+                ParcelFileDescriptor.MODE_CREATE | ParcelFileDescriptor.MODE_WRITE_ONLY);
 
+        ParcelFileDescriptor outFd = mInterface.RepeatFd(inFd);
+
+        FileOutputStream outFdStream = new ParcelFileDescriptor.AutoCloseOutputStream(outFd);
+        String testData = "asdf";
+        byte[] output = testData.getBytes();
+        outFdStream.write(output);
+        outFdStream.close();
+
+        FileInputStream fileInputStream =
+                InstrumentationRegistry.getTargetContext().openFileInput("test-dummy");
+        byte[] input = new byte[output.length];
+
+        assertEquals(input.length, fileInputStream.read(input));
+        Assert.assertArrayEquals(input, output);
+    }
+
+    @Test
+    public void testRepeatString() throws RemoteException {
         assertEquals("", mInterface.RepeatString(""));
         assertEquals("a", mInterface.RepeatString("a"));
         assertEquals("foo", mInterface.RepeatString("foo"));
