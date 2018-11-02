@@ -28,6 +28,7 @@ using ::aidl::test_package::BpTest;
 using ::aidl::test_package::ITest;
 using ::aidl::test_package::RegularPolygon;
 using ::ndk::ScopedAStatus;
+using ::ndk::ScopedFileDescriptor;
 using ::ndk::SharedRefBase;
 using ::ndk::SpAIBinder;
 
@@ -138,6 +139,36 @@ TEST_P(NdkBinderTest_Aidl, RepeatInterface) {
 
   ASSERT_OK(iface->RepeatInterface(nullptr, &ret));
   EXPECT_EQ(nullptr, ret.get());
+}
+
+static void checkInOut(const ScopedFileDescriptor& inFd,
+                       const ScopedFileDescriptor& outFd) {
+  static const std::string kContent = "asdf";
+
+  ASSERT_EQ(static_cast<int>(kContent.size()),
+            write(inFd.get(), kContent.data(), kContent.size()));
+
+  std::string out;
+  out.resize(kContent.size());
+  ASSERT_EQ(static_cast<int>(kContent.size()),
+            read(outFd.get(), &out[0], kContent.size()));
+
+  EXPECT_EQ(kContent, out);
+}
+
+TEST_P(NdkBinderTest_Aidl, RepeatFd) {
+  int fds[2];
+
+  while (pipe(fds) == -1 && errno == EAGAIN)
+    ;
+
+  ScopedFileDescriptor readFd(fds[0]);
+  ScopedFileDescriptor writeFd(fds[1]);
+
+  ScopedFileDescriptor readOutFd;
+  ASSERT_OK(iface->RepeatFd(readFd, &readOutFd));
+
+  checkInOut(writeFd, readOutFd);
 }
 
 TEST_P(NdkBinderTest_Aidl, RepeatString) {
