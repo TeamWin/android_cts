@@ -17,6 +17,7 @@
 package android.server.am;
 
 import static android.app.ActivityTaskManager.SPLIT_SCREEN_CREATE_MODE_TOP_OR_LEFT;
+import static android.app.Instrumentation.ActivityMonitor;
 import static android.app.WindowConfiguration.ACTIVITY_TYPE_ASSISTANT;
 import static android.app.WindowConfiguration.ACTIVITY_TYPE_RECENTS;
 import static android.app.WindowConfiguration.ACTIVITY_TYPE_STANDARD;
@@ -310,13 +311,20 @@ public abstract class ActivityManagerTestBase {
      */
     protected class TestActivitySession<T extends Activity> implements AutoCloseable {
         private T mTestActivity;
+        boolean mFinishAfterClose;
+        private static final int ACTIVITY_LAUNCH_TIMEOUT = 10000;
+
         void launchTestActivityOnDisplaySync(Class<T> activityClass, int displayId) {
             SystemUtil.runWithShellPermissionIdentity(() -> {
                 final Bundle bundle = ActivityOptions.makeBasic()
                         .setLaunchDisplayId(displayId).toBundle();
-                mTestActivity = (T) InstrumentationRegistry.getInstrumentation()
-                        .startActivitySync(new Intent(mContext, activityClass)
-                                .addFlags(FLAG_ACTIVITY_NEW_TASK), bundle);
+                final ActivityMonitor monitor = InstrumentationRegistry.getInstrumentation()
+                        .addMonitor((String) null, null, false);
+                mContext.startActivity(new Intent(mContext, activityClass)
+                        .addFlags(FLAG_ACTIVITY_NEW_TASK), bundle);
+                // Wait for activity launch with timeout.
+                mTestActivity = (T) monitor.waitForActivityWithTimeout(ACTIVITY_LAUNCH_TIMEOUT);
+                assertNotNull(mTestActivity);
                 // Check activity is launched and resumed.
                 final ComponentName testActivityName = mTestActivity.getComponentName();
                 waitAndAssertTopResumedActivity(testActivityName, displayId,
@@ -342,7 +350,7 @@ public abstract class ActivityManagerTestBase {
 
         @Override
         public void close() throws Exception {
-            if (mTestActivity != null) {
+            if (mTestActivity != null && mFinishAfterClose) {
                 mTestActivity.finishAndRemoveTask();
             }
         }
