@@ -1948,6 +1948,14 @@ public class DecoderTest extends MediaPlayerTestBase {
         testDecode(
                 R.raw.bbb_s2_1920x1080_mp4_h264_mp42_20mbps_60fps_aac_he_v2_5ch_160kbps_48000hz,
                 300);
+        testDecode(
+                R.raw.bbb_s2_1920x1080_mkv_h264_mp42_20mbps_60fps_aac_he_v2_5ch_160kbps_48000hz,
+                300);
+    }
+
+    public void testH265Decode25fps1280x720() throws Exception {
+        testDecode(
+                R.raw.video_1280x720_mkv_h265_500kbps_25fps_aac_stereo_128kbps_44100hz, 240);
     }
 
     public void testVP8Decode320x180() throws Exception {
