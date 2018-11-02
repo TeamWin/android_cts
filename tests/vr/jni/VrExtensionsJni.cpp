@@ -86,9 +86,18 @@ PFNGLUNMAPBUFFERPROC glUnmapBuffer;
     ASSERT((a) != (b), "assert failed on (" #a ") at " __FILE__ ":%d", __LINE__)
 #define ASSERT_GT(a, b) \
     ASSERT((a) > (b), "assert failed on (" #a ") at " __FILE__ ":%d", __LINE__)
-#define ASSERT_NEAR(a, b, delta)                     \
-    ASSERT((a - delta) <= (b) && (b) <= (a + delta), \
+#define ASSERT_NEAR_RGBA(a, b, delta) \
+    ASSERT(areNearRgba(a, b, delta),  \
            "assert failed on (" #a ") at " __FILE__ ":%d", __LINE__)
+
+bool areNearRgba(int32_t actual, int32_t expected, int delta) {
+    for (int shift = 0; shift < 32; shift += 8) {
+        if (std::abs((actual >> shift & 0xFF) - (expected >> shift & 0xFF)) > delta) {
+            return false;
+        }
+    }
+    return true;
+}
 
 void fail(JNIEnv* env, const char* format, ...) {
     va_list args;
@@ -638,20 +647,20 @@ Java_android_vr_cts_VrExtensionBehaviorTest_nativeTestSrgbBuffer(
     uint32_t middle_pixel;
     // First do a sanity check with plain old pre-linearized textures.
     testLinearMagnification(env, 0, &middle_pixel);
-    ASSERT_NEAR(middle_pixel, kExpectedMiddlePixel_NoSrgb, 1);
+    ASSERT_NEAR_RGBA(middle_pixel, kExpectedMiddlePixel_NoSrgb, 1);
     testLinearMagnification(env, SrgbFlag::kHardwareBuffer, &middle_pixel);
-    ASSERT_NEAR(middle_pixel, kExpectedMiddlePixel_NoSrgb, 1);
+    ASSERT_NEAR_RGBA(middle_pixel, kExpectedMiddlePixel_NoSrgb, 1);
     // Try a "normally allocated" OpenGL texture with an sRGB source format.
     testLinearMagnification(env, SrgbFlag::kSrgbFormat, &middle_pixel);
-    ASSERT_NEAR(middle_pixel, kExpectedMiddlePixel_LinearizeBeforeFiltering, 1);
+    ASSERT_NEAR_RGBA(middle_pixel, kExpectedMiddlePixel_LinearizeBeforeFiltering, 1);
     // Try EGL_EXT_image_gl_colorspace.
     if (egl_colorspace_supported) {
         testLinearMagnification(env, SrgbFlag::kHardwareBuffer | SrgbFlag::kEglColorspaceDefault, &middle_pixel);
-        ASSERT_NEAR(middle_pixel, kExpectedMiddlePixel_NoSrgb, 1);
+        ASSERT_NEAR_RGBA(middle_pixel, kExpectedMiddlePixel_NoSrgb, 1);
         testLinearMagnification(env, SrgbFlag::kHardwareBuffer | SrgbFlag::kEglColorspaceLinear, &middle_pixel);
-        ASSERT_NEAR(middle_pixel, kExpectedMiddlePixel_NoSrgb, 1);
+        ASSERT_NEAR_RGBA(middle_pixel, kExpectedMiddlePixel_NoSrgb, 1);
         testLinearMagnification(env, SrgbFlag::kHardwareBuffer | SrgbFlag::kEglColorspaceSrgb, &middle_pixel);
-        ASSERT_NEAR(middle_pixel, kExpectedMiddlePixel_LinearizeBeforeFiltering, 1);
+        ASSERT_NEAR_RGBA(middle_pixel, kExpectedMiddlePixel_LinearizeBeforeFiltering, 1);
     }
 
     // Blending test.
@@ -660,19 +669,19 @@ Java_android_vr_cts_VrExtensionBehaviorTest_nativeTestSrgbBuffer(
     uint32_t final_color;
     // First do a sanity check with plain old pre-linearized textures.
     testFramebufferBlending(env, 0, &final_color);
-    ASSERT_NEAR(final_color, kExpectedBlendedPixel_NoSrgb, 1);
+    ASSERT_NEAR_RGBA(final_color, kExpectedBlendedPixel_NoSrgb, 1);
     testFramebufferBlending(env, SrgbFlag::kHardwareBuffer, &final_color);
-    ASSERT_NEAR(final_color, kExpectedBlendedPixel_NoSrgb, 1);
+    ASSERT_NEAR_RGBA(final_color, kExpectedBlendedPixel_NoSrgb, 1);
     // Try a "normally allocated" OpenGL texture with an sRGB source format.
     testFramebufferBlending(env, SrgbFlag::kSrgbFormat, &final_color);
-    ASSERT_NEAR(final_color, kExpectedBlendedPixel_Srgb, 1);
+    ASSERT_NEAR_RGBA(final_color, kExpectedBlendedPixel_Srgb, 1);
     // Try EGL_EXT_image_gl_colorspace.
     if (egl_colorspace_supported) {
         testFramebufferBlending(env, SrgbFlag::kHardwareBuffer | SrgbFlag::kEglColorspaceDefault, &final_color);
-        ASSERT_NEAR(final_color, kExpectedBlendedPixel_NoSrgb, 1);
+        ASSERT_NEAR_RGBA(final_color, kExpectedBlendedPixel_NoSrgb, 1);
         testFramebufferBlending(env, SrgbFlag::kHardwareBuffer | SrgbFlag::kEglColorspaceLinear, &final_color);
-        ASSERT_NEAR(final_color, kExpectedBlendedPixel_NoSrgb, 1);
+        ASSERT_NEAR_RGBA(final_color, kExpectedBlendedPixel_NoSrgb, 1);
         testFramebufferBlending(env, SrgbFlag::kHardwareBuffer | SrgbFlag::kEglColorspaceSrgb, &final_color);
-        ASSERT_NEAR(final_color, kExpectedBlendedPixel_Srgb, 1);
+        ASSERT_NEAR_RGBA(final_color, kExpectedBlendedPixel_Srgb, 1);
     }
 }
