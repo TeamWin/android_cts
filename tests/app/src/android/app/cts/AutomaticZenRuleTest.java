@@ -21,6 +21,7 @@ import android.app.NotificationManager;
 import android.content.ComponentName;
 import android.net.Uri;
 import android.os.Parcel;
+import android.service.notification.ZenPolicy;
 import android.test.AndroidTestCase;
 
 public class AutomaticZenRuleTest extends AndroidTestCase {
@@ -102,5 +103,16 @@ public class AutomaticZenRuleTest extends AndroidTestCase {
                 mInterruptionFilter, mEnabled);
         rule.setName(mName + "new");
         assertEquals(mName + "new", rule.getName());
+    }
+
+    public void testCreateRuleWithZenPolicy() {
+        ZenPolicy.Builder builder = new ZenPolicy.Builder();
+        ZenPolicy policy = builder.build();
+        builder.allowAlarms(true);
+        AutomaticZenRule rule = new AutomaticZenRule(mName, mOwner, mConditionId,
+                policy, mEnabled);
+        assertEquals(rule.getInterruptionFilter(),
+                NotificationManager.INTERRUPTION_FILTER_PRIORITY);
+        assertEquals(rule.getZenPolicy(), policy);
     }
 }

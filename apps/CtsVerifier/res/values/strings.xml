@@ -1839,7 +1839,9 @@
     <string name="cp_disable_service">Please disable \"CTS Verifier\" under Do Not Disturb access and return here.</string>
     <string name="cp_start_settings">Launch Settings</string>
     <string name="cp_create_rule">Creating Automatic Zen Rule</string>
+    <string name="cp_create_rule_with_zen_policy">Creating Automatic Zen Rule with Zen Policy</string>
     <string name="cp_update_rule">Updating Automatic Zen Rule</string>
+    <string name="cp_update_rule_use_zen_policy">Updating Automatic Rule to Use Zen Policy</string>
     <string name="cp_subscribe_rule">Subscribing to Automatic Zen Rule</string>
     <string name="cp_service_started">Service should start once enabled.</string>
     <string name="cp_service_stopped">Service should stop once disabled.</string>
