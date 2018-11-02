@@ -47,6 +47,8 @@ interface ITest {
     IBinder RepeatBinder(IBinder value);
     IEmpty RepeatInterface(IEmpty value);
 
+    ParcelFileDescriptor RepeatFd(in ParcelFileDescriptor fd);
+
     String RepeatString(String value);
 
     RegularPolygon RepeatPolygon(in RegularPolygon value);
@@ -62,5 +64,4 @@ interface ITest {
     long[] RepeatLongArray(in long[] input, out long[] repeated);
     float[] RepeatFloatArray(in float[] input, out float[] repeated);
     double[] RepeatDoubleArray(in double[] input, out double[] repeated);
-
 }
