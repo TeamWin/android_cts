@@ -17,6 +17,7 @@
 package android.accessibilityservice.cts;
 
 import static android.accessibilityservice.cts.utils.AccessibilityEventFilterUtils.filterForEventType;
+import static android.accessibilityservice.cts.utils.AccessibilityEventFilterUtils.filterForEventTypeWithResource;
 import static android.accessibilityservice.cts.utils.ActivityLaunchUtils.findWindowByTitle;
 import static android.accessibilityservice.cts.utils.ActivityLaunchUtils.getActivityTitle;
 import static android.accessibilityservice.cts.utils.ActivityLaunchUtils.launchActivityAndWaitForItToBeOnscreen;
@@ -25,23 +26,26 @@ import static android.accessibilityservice.cts.utils.RunOnMainUtils.getOnMain;
 import static android.view.accessibility.AccessibilityNodeInfo.AccessibilityAction.ACTION_HIDE_TOOLTIP;
 import static android.view.accessibility.AccessibilityNodeInfo.AccessibilityAction.ACTION_SHOW_TOOLTIP;
 
-import static org.hamcrest.core.IsEqual.equalTo;
-import static org.hamcrest.core.IsNull.nullValue;
-import static org.hamcrest.core.IsNull.notNullValue;
 import static org.hamcrest.Matchers.in;
 import static org.hamcrest.Matchers.not;
+import static org.hamcrest.core.IsEqual.equalTo;
+import static org.hamcrest.core.IsNull.notNullValue;
+import static org.hamcrest.core.IsNull.nullValue;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertThat;
+import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.fail;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.argThat;
+import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.inOrder;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.timeout;
 import static org.mockito.Mockito.verify;
-import static org.junit.Assert.assertTrue;
-import static org.junit.Assert.fail;
 
+import android.accessibilityservice.AccessibilityServiceInfo;
 import android.accessibilityservice.cts.activities.AccessibilityEndToEndActivity;
 import android.app.Activity;
 import android.app.AlertDialog;
@@ -60,9 +64,11 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.content.res.Configuration;
+import android.content.res.Resources;
 import android.graphics.Rect;
 import android.graphics.Region;
 import android.os.Process;
+import android.os.SystemClock;
 import android.platform.test.annotations.AppModeFull;
 import android.platform.test.annotations.Presubmit;
 import android.support.test.InstrumentationRegistry;
@@ -72,6 +78,7 @@ import android.support.test.runner.AndroidJUnit4;
 import android.test.suitebuilder.annotation.MediumTest;
 import android.text.TextUtils;
 import android.util.Log;
+import android.view.InputDevice;
 import android.view.MotionEvent;
 import android.view.TouchDelegate;
 import android.view.View;
@@ -85,9 +92,7 @@ import android.widget.Button;
 import android.widget.EditText;
 import android.widget.ListView;
 
-import java.util.Iterator;
-import java.util.List;
-import java.util.concurrent.TimeoutException;
+import com.android.compatibility.common.util.CtsMouseUtil;
 
 import org.junit.AfterClass;
 import org.junit.Before;
@@ -95,6 +100,11 @@ import org.junit.BeforeClass;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.runner.RunWith;
+
+import java.util.Iterator;
+import java.util.List;
+import java.util.concurrent.TimeoutException;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 /**
  * This class performs end-to-end testing of the accessibility feature by
@@ -826,6 +836,69 @@ public class AccessibilityEndToEndTest {
         node.recycle();
     }
 
+    @MediumTest
+    @Test
+    public void testTouchDelegateWithExploreByTouch_reHoverDelegate() throws Throwable {
+        final Resources resources = sInstrumentation.getTargetContext().getResources();
+        final String buttonResourceName = resources.getResourceName(R.id.button);
+        final Button button = mActivity.findViewById(R.id.button);
+        final int[] buttonLocation = new int[2];
+        button.getLocationOnScreen(buttonLocation);
+        final int buttonX = button.getWidth() / 2;
+        final int buttonY = button.getHeight() / 2;
+        final int hoverY = buttonLocation[1] + buttonY;
+        final int aboveY = buttonLocation[1] - buttonY;
+        final Button buttonWithTooltip = mActivity.findViewById(R.id.buttonWithTooltip);
+        final int touchableSize = 48;
+        final int hoverRight = buttonWithTooltip.getLeft() + touchableSize / 2;
+        final int hoverLeft = button.getRight() + touchableSize / 2;
+        final int hoverMiddle = (hoverLeft + hoverRight) / 2;
+        final View.OnHoverListener listener = CtsMouseUtil.installHoverListener(button, false);
+        enableTouchExploration(sInstrumentation, true);
+
+        try {
+            // common downTime for touch explorer injected events
+            final long downTime = SystemClock.uptimeMillis();
+            // hover through delegate, parent, 2nd view, delegate again and 3rd view to exit
+            sUiAutomation.executeAndWaitForEvent(
+                    () -> injectHoverEvent(downTime, false, hoverLeft, hoverY),
+                    filterForEventTypeWithResource(AccessibilityEvent.TYPE_VIEW_HOVER_ENTER,
+                            buttonResourceName), DEFAULT_TIMEOUT_MS);
+            assertTrue(button.isHovered());
+            sUiAutomation.executeAndWaitForEvent(
+                    () -> {
+                        injectHoverEvent(downTime, true, hoverMiddle, hoverY);
+                        injectHoverEvent(downTime, true, hoverRight, hoverY);
+                        injectHoverEvent(downTime, true, hoverMiddle, hoverY);
+                        injectHoverEvent(downTime, true, hoverLeft, hoverY);
+                    },
+                    filterForEventTypeWithResource(AccessibilityEvent.TYPE_VIEW_HOVER_ENTER,
+                            buttonResourceName), DEFAULT_TIMEOUT_MS);
+            // delegate target has a11y focus again
+            assertTrue(button.isHovered());
+            sUiAutomation.executeAndWaitForEvent(
+                    () -> injectHoverEvent(downTime, true, hoverLeft, aboveY),
+                    filterForEventTypeWithResource(AccessibilityEvent.TYPE_VIEW_HOVER_EXIT,
+                            buttonResourceName), DEFAULT_TIMEOUT_MS);
+
+            CtsMouseUtil.clearHoverListener(button);
+            View.OnHoverListener verifier = inOrder(listener).verify(listener);
+            verifier.onHover(eq(button),
+                    matchHover(MotionEvent.ACTION_HOVER_ENTER, buttonX, buttonY));
+            verifier.onHover(eq(button),
+                    matchHover(MotionEvent.ACTION_HOVER_MOVE, buttonX, buttonY));
+            verifier.onHover(eq(button),
+                    matchHover(MotionEvent.ACTION_HOVER_MOVE, hoverMiddle, buttonY));
+            verifier.onHover(eq(button),
+                    matchHover(MotionEvent.ACTION_HOVER_MOVE, buttonX, buttonY));
+            verifier.onHover(eq(button),
+                    matchHover(MotionEvent.ACTION_HOVER_EXIT, buttonX, buttonY));
+        } catch (TimeoutException e) {
+            fail("Accessibility events should be received as expected");
+        } finally {
+            enableTouchExploration(sInstrumentation, false);
+        }
+    }
     private static void assertPackageName(AccessibilityNodeInfo node, String packageName) {
         if (node == null) {
             return;
@@ -838,6 +911,66 @@ public class AccessibilityEndToEndTest {
                 assertPackageName(child, packageName);
             }
         }
+    }
+
+    private static void enableTouchExploration(Instrumentation instrumentation, boolean enabled)
+            throws InterruptedException {
+        final int TIMEOUT_FOR_SERVICE_ENABLE = 10000; // millis; 10s
+        final Object waitObject = new Object();
+        final AtomicBoolean atomicBoolean = new AtomicBoolean(!enabled);
+        AccessibilityManager.TouchExplorationStateChangeListener serviceListener = (boolean b) -> {
+            synchronized (waitObject) {
+                atomicBoolean.set(b);
+                waitObject.notifyAll();
+            }
+        };
+        final AccessibilityManager manager =
+                (AccessibilityManager) instrumentation.getContext().getSystemService(
+                        Service.ACCESSIBILITY_SERVICE);
+        manager.addTouchExplorationStateChangeListener(serviceListener);
+
+        final UiAutomation uiAutomation = instrumentation.getUiAutomation();
+        final AccessibilityServiceInfo info = uiAutomation.getServiceInfo();
+        assert info != null;
+        if (enabled) {
+            info.flags |= AccessibilityServiceInfo.FLAG_REQUEST_TOUCH_EXPLORATION_MODE;
+        } else {
+            info.flags &= ~AccessibilityServiceInfo.FLAG_REQUEST_TOUCH_EXPLORATION_MODE;
+        }
+        uiAutomation.setServiceInfo(info);
+
+        final long timeoutTime = System.currentTimeMillis() + TIMEOUT_FOR_SERVICE_ENABLE;
+        synchronized (waitObject) {
+            while ((enabled != atomicBoolean.get()) && (System.currentTimeMillis() < timeoutTime)) {
+                waitObject.wait(timeoutTime - System.currentTimeMillis());
+            }
+        }
+        if (enabled) {
+            assertTrue("Touch exploration state listener not called when services enabled",
+                    atomicBoolean.get());
+            assertTrue("Timed out enabling accessibility",
+                    manager.isEnabled() && manager.isTouchExplorationEnabled());
+        } else {
+            assertFalse("Touch exploration state listener not called when services disabled",
+                    atomicBoolean.get());
+            assertFalse("Timed out disabling accessibility",
+                    manager.isEnabled() && manager.isTouchExplorationEnabled());
+        }
+        manager.removeTouchExplorationStateChangeListener(serviceListener);
+    }
+
+    private static MotionEvent matchHover(int action, int x, int y) {
+        return argThat(new CtsMouseUtil.PositionMatcher(action, x, y));
+    }
+
+    private static void injectHoverEvent(long downTime, boolean isFirstHoverEvent,
+            int xOnScreen, int yOnScreen) {
+        final long eventTime = isFirstHoverEvent ? SystemClock.uptimeMillis() : downTime;
+        MotionEvent event = MotionEvent.obtain(downTime, eventTime, MotionEvent.ACTION_HOVER_MOVE,
+                xOnScreen, yOnScreen, 0);
+        event.setSource(InputDevice.SOURCE_TOUCHSCREEN);
+        sUiAutomation.injectInputEvent(event, true);
+        event.recycle();
     }
 
     private AppWidgetProviderInfo getAppWidgetProviderInfo() {
