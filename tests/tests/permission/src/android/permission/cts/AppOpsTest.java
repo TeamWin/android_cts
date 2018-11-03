@@ -16,6 +16,15 @@
 
 package android.permission.cts;
 
+import static com.android.compatibility.common.util.SystemUtil.runWithShellPermissionIdentity;
+
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertSame;
+import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.fail;
+
 import static android.app.AppOpsManager.MODE_ALLOWED;
 import static android.app.AppOpsManager.MODE_DEFAULT;
 import static android.app.AppOpsManager.MODE_ERRORED;
@@ -35,20 +44,28 @@ import static org.mockito.Mockito.verifyZeroInteractions;
 
 import android.Manifest.permission;
 import android.app.AppOpsManager;
+import android.app.AppOpsManager.HistoricalOpEntry;
+import android.app.AppOpsManager.HistoricalPackageOps;
 import android.app.AppOpsManager.OnOpChangedListener;
+import android.app.Instrumentation;
 import android.content.Context;
 import android.os.Process;
-import android.test.InstrumentationTestCase;
-import android.test.suitebuilder.annotation.SmallTest;
+import android.support.test.runner.AndroidJUnit4;
+import android.support.test.InstrumentationRegistry;
 
 import com.android.compatibility.common.util.AppOpsUtils;
+import org.junit.Before;
+import org.junit.Test;
+import org.junit.runner.RunWith;
 
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-public class AppOpsTest extends InstrumentationTestCase {
+@RunWith(AndroidJUnit4.class)
+public class AppOpsTest {
     // Notifying OnOpChangedListener callbacks is an async operation, so we define a timeout.
     private static final int MODE_WATCHER_TIMEOUT_MS = 5000;
 
@@ -98,9 +115,8 @@ public class AppOpsTest extends InstrumentationTestCase {
                 AppOpsManager.OPSTR_WRITE_EXTERNAL_STORAGE);
     }
 
-    @Override
-    protected void setUp() throws Exception {
-        super.setUp();
+    @Before
+    public void setUp() throws Exception {
         mContext = getInstrumentation().getContext();
         mAppOps = (AppOpsManager) mContext.getSystemService(Context.APP_OPS_SERVICE);
         mOpPackageName = mContext.getOpPackageName();
@@ -111,6 +127,7 @@ public class AppOpsTest extends InstrumentationTestCase {
         AppOpsUtils.reset(mOpPackageName);
     }
 
+    @Test
     public void testNoteOpAndCheckOp() throws Exception {
         setOpMode(mOpPackageName, OPSTR_READ_SMS, MODE_ALLOWED);
         assertEquals(MODE_ALLOWED, mAppOps.noteOp(OPSTR_READ_SMS, mMyUid, mOpPackageName));
@@ -145,6 +162,7 @@ public class AppOpsTest extends InstrumentationTestCase {
         }
     }
 
+    @Test
     public void testStartOpAndFinishOp() throws Exception {
         setOpMode(mOpPackageName, OPSTR_READ_SMS, MODE_ALLOWED);
         assertEquals(MODE_ALLOWED, mAppOps.startOp(OPSTR_READ_SMS, mMyUid, mOpPackageName));
@@ -169,11 +187,13 @@ public class AppOpsTest extends InstrumentationTestCase {
         }
     }
 
+    @Test
     public void testCheckPackagePassesCheck() throws Exception {
         mAppOps.checkPackage(mMyUid, mOpPackageName);
         mAppOps.checkPackage(Process.SYSTEM_UID, "android");
     }
 
+    @Test
     public void testCheckPackageDoesntPassCheck() throws Exception {
         try {
             // Package name doesn't match UID.
@@ -197,6 +217,7 @@ public class AppOpsTest extends InstrumentationTestCase {
         }
     }
 
+    @Test
     public void testWatchingMode() throws Exception {
         OnOpChangedListener watcher = mock(OnOpChangedListener.class);
         try {
@@ -234,7 +255,7 @@ public class AppOpsTest extends InstrumentationTestCase {
         }
     }
 
-    @SmallTest
+    @Test
     public void testAllOpsHaveOpString() {
         Set<String> opStrs = new HashSet<>();
         for (String opStr : AppOpsManager.getOpStrs()) {
@@ -244,7 +265,7 @@ public class AppOpsTest extends InstrumentationTestCase {
         assertEquals("Not all op strings are unique", AppOpsManager.getNumOps(), opStrs.size());
     }
 
-    @SmallTest
+    @Test
     public void testOpCodesUnique() {
         String[] opStrs = AppOpsManager.getOpStrs();
         Set<Integer> opCodes = new HashSet<>();
@@ -254,7 +275,7 @@ public class AppOpsTest extends InstrumentationTestCase {
         assertEquals("Not all app op codes are unique", opStrs.length, opCodes.size());
     }
 
-    @SmallTest
+    @Test
     public void testPermissionMapping() {
         for (String permission : permissionToOpStr.keySet()) {
             testPermissionMapping(permission, permissionToOpStr.get(permission));
@@ -277,7 +298,7 @@ public class AppOpsTest extends InstrumentationTestCase {
     /**
      * Test that the app can not change the app op mode for itself.
      */
-    @SmallTest
+    @Test
     public void testCantSetModeForSelf() {
         try {
             int writeSmsOp = AppOpsManager.permissionToOpCode("android.permission.WRITE_SMS");
@@ -287,7 +308,7 @@ public class AppOpsTest extends InstrumentationTestCase {
         }
     }
 
-    @SmallTest
+    @Test
     public void testGetOpsForPackage_opsAreLogged() throws Exception {
         // This test checks if operations get logged by the system. It needs to start with a clean
         // slate, i.e. these ops can't have been logged previously for this test package. The reason
@@ -311,5 +332,146 @@ public class AppOpsTest extends InstrumentationTestCase {
         mAppOps.noteOpNoThrow(OPSTR_READ_CALENDAR, mMyUid, mOpPackageName);
         assertTrue(mustBeLogged, allowedOperationLogged(mOpPackageName, OPSTR_RECORD_AUDIO));
         assertTrue(mustBeLogged, rejectedOperationLogged(mOpPackageName, OPSTR_READ_CALENDAR));
+    }
+
+    @Test
+    public void testGetHistoricalPackageOps() {
+        final AppOpsManager appOpsManager = getContext().getSystemService(AppOpsManager.class);
+        final int uid = Process.myUid();
+        final String packageName = getContext().getPackageName();
+        final String[] interestingOps = new String[] {AppOpsManager.OPSTR_FINE_LOCATION};
+
+        runWithShellPermissionIdentity(() -> {
+            // Note an op to have some data
+            appOpsManager.noteOp(AppOpsManager.OPSTR_FINE_LOCATION, uid, packageName);
+
+            // Get all ops for the package
+            final HistoricalPackageOps historicalPackageOpsForAllOps = appOpsManager
+                    .getHistoricalPackagesOps(uid, packageName, null, 0, 1);
+            // Get only the interesting ops for the package
+            final HistoricalPackageOps historicalPackageOpsForOneOp = appOpsManager
+                    .getHistoricalPackagesOps(uid, packageName, interestingOps, 0, 1);
+            // Make sure we get the same result when fetching all vs a subset
+            assertHistoricEntriesEqual(historicalPackageOpsForAllOps,
+                    historicalPackageOpsForOneOp, interestingOps);
+
+//            TODO: Uncomment once hisotric support implemented
+//            // Note an op to change
+//            appOpsManager.noteOp(AppOpsManager.OPSTR_FINE_LOCATION, uid, packageName);
+//
+//            // Get all ops for the package
+//            final HistoricalPackageOps historicalPackageOpsForAllOpsIncr = appOpsManager
+//                    .getHistoricalPackagesOps(uid, packageName, null, 0, 1);
+//            // Get only the interesting ops for the package
+//            final HistoricalPackageOps historicalPackageOpsForOneOpIncr = appOpsManager
+//                    .getHistoricalPackagesOps(uid, packageName, interestingOps, 0, 1);
+//            // Make sure we get the same result when fetching all vs a subset
+//            assertHistoricEntriesEqual(historicalPackageOpsForAllOpsIncr,
+//                    historicalPackageOpsForOneOpIncr, interestingOps);
+//
+//            // Make sure the op was incremented.
+//            assertSame(historicalPackageOpsForAllOps.getEntry(
+//                            AppOpsManager.OPSTR_FINE_LOCATION).getForegroundAccessCount() + 1,
+//                    historicalPackageOpsForAllOpsIncr.getEntry(
+//                            AppOpsManager.OPSTR_FINE_LOCATION).getForegroundAccessCount());
+        });
+    }
+
+    @Test
+    public void testGetAllHistoricPackageOps() {
+        final AppOpsManager appOpsManager = getContext().getSystemService(AppOpsManager.class);
+        final int uid = Process.myUid();
+        final String packageName = getContext().getPackageName();
+        final String[] interestingOps = new String[] {AppOpsManager.OPSTR_FINE_LOCATION};
+
+        runWithShellPermissionIdentity(() -> {
+            // Note an op to have some data
+            appOpsManager.noteOp(AppOpsManager.OPSTR_FINE_LOCATION, uid, packageName);
+
+            // Get all ops for the package
+            final List<HistoricalPackageOps> historicAllPackageOpsForAllOps = appOpsManager
+                    .getAllHistoricPackagesOps(null, 0, 1);
+            // Get only the interesting ops for the package
+            final List<AppOpsManager.HistoricalPackageOps> historicAllPackageOpsForOneOp =
+                    appOpsManager.getAllHistoricPackagesOps(interestingOps, 0, 1);
+            // Make sure we get the same result when fetching all vs a subset
+            assertHistoricEntriesEqual(historicAllPackageOpsForAllOps,
+                    historicAllPackageOpsForOneOp, interestingOps);
+
+//            TODO: Uncomment once hisotric support implemented
+//            // Note an op to change
+//            appOpsManager.noteOp(AppOpsManager.OPSTR_FINE_LOCATION, uid, packageName);
+//
+//            // Get all ops for the package
+//            final List<HistoricalPackageOps> historicAllPackageOpsForAllOpsIncr = appOpsManager
+//                    .getAllHistoricPackagesOps(null, 0, 1);
+//            // Get only the interesting ops for the package
+//            final List<HistoricalPackageOps> historicAllPackageOpsForOneOpIncr = appOpsManager
+//                    .getAllHistoricPackagesOps(interestingOps, 0, 1);
+//            // Make sure we get the same result when fetching all vs a subset
+//            assertHistoricEntriesEqual(historicAllPackageOpsForAllOpsIncr,
+//                    historicAllPackageOpsForOneOpIncr, interestingOps);
+//
+//            // Make sure the op was incremented.
+//            final HistoricalPackageOps historicalPackageOpsForOneOp = findHistoricalPackageOps(
+//                    packageName, historicAllPackageOpsForOneOp);
+//            final HistoricalPackageOps historicalPackageOpsForOneOpIncr =
+//                    findHistoricalPackageOps(packageName, historicAllPackageOpsForOneOpIncr);
+//
+//            assertSame(historicalPackageOpsForOneOp.getEntry(
+//                            AppOpsManager.OPSTR_FINE_LOCATION).getForegroundAccessCount() + 1,
+//                    historicalPackageOpsForOneOpIncr.getEntry(
+//                            AppOpsManager.OPSTR_FINE_LOCATION).getForegroundAccessCount());
+        });
+    }
+
+    private static AppOpsManager.HistoricalPackageOps findHistoricalPackageOps(
+             String packageName, List<AppOpsManager.HistoricalPackageOps> historicalPackageOps) {
+        final int packageCount = historicalPackageOps.size();
+        for (int i = 0; i < packageCount; i++) {
+            final HistoricalPackageOps packageOps = historicalPackageOps.get(i);
+            if (packageOps.getPackageName().equals(packageName)) {
+                return packageOps;
+            }
+        }
+        return null;
+    }
+
+    private static void assertHistoricEntriesEqual(
+            List<AppOpsManager.HistoricalPackageOps> expected,
+            List<AppOpsManager.HistoricalPackageOps> actual, String[] opNames) {
+        assertSame(expected.size(), actual.size());
+
+        final int packageCount = expected.size();
+        for (int i = 0; i < packageCount; i++) {
+            final HistoricalPackageOps expectedOps = expected.get(i);
+            final HistoricalPackageOps actualOps = actual.get(i);
+            assertHistoricEntriesEqual(expectedOps, actualOps, opNames);
+        }
+    }
+
+    private static void assertHistoricEntriesEqual(AppOpsManager.HistoricalPackageOps expected,
+            AppOpsManager.HistoricalPackageOps actual, String[] opNames) {
+        if (opNames == null) {
+            opNames = AppOpsManager.getOpStrs();
+        }
+        for (String opName : opNames) {
+            assertHistoricEntryEqual(expected, actual, opName);
+        }
+    }
+
+    private static void assertHistoricEntryEqual(HistoricalPackageOps expected,
+            HistoricalPackageOps actual, String opName) {
+        final HistoricalOpEntry expectedEntry = expected.getEntry(opName);
+        final HistoricalOpEntry actualEntry = actual.getEntry(opName);
+        assertEquals(expectedEntry, actualEntry);
+    }
+
+    private static Instrumentation getInstrumentation() {
+        return InstrumentationRegistry.getInstrumentation();
+    }
+
+    private static Context getContext() {
+        return getInstrumentation().getContext();
     }
 }
