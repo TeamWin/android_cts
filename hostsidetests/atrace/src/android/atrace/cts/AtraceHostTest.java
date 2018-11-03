@@ -61,7 +61,7 @@ public class AtraceHostTest extends DeviceTestCase implements IBuildReceiver {
             if (m.matches()) {
                 callback.onTraceEntry(
                         /*threadname*/ m.group(1),
-                        /*pid*/ m.group(3).startsWith("-") ? -1 : Integer.parseInt(m.group(3)),
+                        /*pid*/ (m.group(3) == null || m.group(3).startsWith("-")) ? -1 : Integer.parseInt(m.group(3)),
                         /*tid*/ Integer.parseInt(m.group(2)),
                         /*eventName*/ m.group(6),
                         /*details*/ m.group(7));
