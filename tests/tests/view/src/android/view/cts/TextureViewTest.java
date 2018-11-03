@@ -33,6 +33,7 @@ import android.graphics.ColorSpace;
 import android.graphics.Matrix;
 import android.graphics.Point;
 import android.graphics.Rect;
+import android.graphics.RectF;
 import android.support.test.filters.MediumTest;
 import android.support.test.rule.ActivityTestRule;
 import android.support.test.runner.AndroidJUnit4;
@@ -248,6 +249,97 @@ public class TextureViewTest {
                 new SRGBCompare(Bitmap.Config.ARGB_8888));
     }
 
+    /**
+     *  Test that verifies TextureView is drawn with bilerp sampling, when the matrix is not
+     *  an integer translate or identity.
+     */
+    @Test
+    public void testSamplingWithTransform() throws Throwable {
+        final TextureViewCtsActivity activity = mActivityRule.launchActivity(null);
+        final TextureView textureView = activity.getTextureView();
+        WidgetTestUtils.runOnMainAndDrawSync(mActivityRule, activity.getTextureView(), null);
+        // Remove cover and calculate TextureView position on the screen.
+        WidgetTestUtils.runOnMainAndDrawSync(mActivityRule,
+                activity.findViewById(android.R.id.content), () -> activity.removeCover());
+
+        float[][] matrices = {
+            {1, 0, 0, 0, 1, 0, 0, 0, 1},        // identity matrix
+            {1, 0, 0, 0, 1, 10.3f, 0, 0, 1},    // translation matrix with a fractional offset
+            {1, 0, 0, 0, 0.75f, 0, 0, 0, 1},    // scaling matrix
+            {1, 0, 0, 0, 1, 10f, 0, 0, 1}       // translation matrix with an integer offset
+        };
+        boolean[] nearestSampling = {
+            true,  // nearest sampling for identity
+            false, // bilerp sampling for fractional translate
+            false, // bilerp sampling for scaling
+            true   // nearest sampling for integer translate
+        };
+        for (int i = 0; i < nearestSampling.length; i++) {
+
+            Matrix transform = new Matrix();
+            transform.setValues(matrices[i]);
+
+            // Test draws a set of black & white alternating lines.
+            activity.drawFrame(transform, TextureViewTest::drawGlBlackWhiteLines);
+
+            final Rect viewPos = new Rect();
+            mActivityRule.runOnUiThread(() -> {
+                int[] outLocation = new int[2];
+                textureView.getLocationOnScreen(outLocation);
+                viewPos.left = outLocation[0];
+                viewPos.top = outLocation[1];
+                viewPos.right = viewPos.left + textureView.getWidth();
+                viewPos.bottom = viewPos.top + textureView.getHeight();
+            });
+
+            // Capture the portion of the screen that contains the texture view only.
+            Window window = activity.getWindow();
+            Bitmap screenshot = Bitmap.createBitmap(viewPos.width(), viewPos.height(),
+                    Bitmap.Config.ARGB_8888);
+            int result = new SynchronousPixelCopy().request(window, viewPos, screenshot);
+            assertEquals("Copy request failed", PixelCopy.SUCCESS, result);
+
+            // "texturePos" has SurfaceTexture position inside the TextureView.
+            RectF texturePosF = new RectF(0, 0, viewPos.width(), viewPos.height());
+            transform.mapRect(texturePosF);
+            //clip parts outside TextureView
+            texturePosF.intersect(0, 0, viewPos.width(), viewPos.height());
+            Rect texturePos = new Rect((int) Math.ceil(texturePosF.left),
+                    (int) Math.ceil(texturePosF.top), (int) Math.floor(texturePosF.right),
+                    (int) Math.floor(texturePosF.bottom));
+
+            int[] pixels = new int[texturePos.width() * texturePos.height()];
+            screenshot.getPixels(pixels, 0, texturePos.width(), texturePos.left, texturePos.top,
+                    texturePos.width(), texturePos.height());
+
+            boolean success = true;
+            int failPosition = 0;
+            if (nearestSampling[i]) {
+                // Check all pixels are either black or white.
+                for (int j = 0; j < pixels.length; j++) {
+                    if (pixels[j] != Color.BLACK && pixels[j] != Color.WHITE) {
+                        success = false;
+                        failPosition = j;
+                        break;
+                    }
+                }
+            } else {
+                // Check there are no black nor white pixels, because bilerp sampling changed
+                // pure black/white to a variety of gray intermediates.
+                for (int j = 0; j < pixels.length; j++) {
+                    if (pixels[j] == Color.BLACK || pixels[j] == Color.WHITE) {
+                        success = false;
+                        failPosition = j;
+                        break;
+                    }
+                }
+            }
+            assertTrue("Unexpected color at position " + failPosition + " = "
+                    + Integer.toHexString(pixels[failPosition]) + " " + transform.toString(),
+                    success);
+        }
+    }
+
     interface CompareFunction {
         Bitmap.Config getConfig();
         ColorSpace getColorSpace();
@@ -362,6 +454,15 @@ public class TextureViewTest {
 
         glScissor(cx, 0, width - cx, cy);
         clearColor(Color.BLACK);
+    }
+
+    private static void drawGlBlackWhiteLines(int width, int height) {
+        final int lineHeight = 1;
+        glEnable(GL_SCISSOR_TEST);
+        for (int y = 0; y < height / lineHeight; y++) {
+            glScissor(0, lineHeight * y, width, lineHeight);
+            clearColor((y % 2 == 0) ? Color.BLACK : Color.WHITE);
+        }
     }
 
     private static void clearColor(int color) {
