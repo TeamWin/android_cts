@@ -183,6 +183,19 @@ public class MediaMetadataRetrieverTest extends AndroidTestCase {
                 mRetriever.extractMetadata(MediaMetadataRetriever.METADATA_KEY_WRITER));
     }
 
+    public void testBitsPerSampleAndSampleRate() {
+        setDataSourceFd(R.raw.testwav_16bit_44100hz);
+
+        assertEquals("Bits per sample was other than expected",
+                "16",
+                mRetriever.extractMetadata(MediaMetadataRetriever.METADATA_KEY_BITS_PER_SAMPLE));
+
+        assertEquals("Sample rate was other than expected",
+                "44100",
+                mRetriever.extractMetadata(MediaMetadataRetriever.METADATA_KEY_SAMPLERATE));
+
+    }
+
     public void testLargeAlbumArt() {
         setDataSourceFd(R.raw.largealbumart);
 
