@@ -80,16 +80,16 @@ public class DocumentsClientTest extends DocumentsClientTestCase {
         return new UiObject(rootsList.childSelector(new UiSelector().text(label)));
     }
 
-    private UiObject findEjectIcon(String rootLabel) throws UiObjectNotFoundException {
+    private UiObject findActionIcon(String rootLabel) throws UiObjectNotFoundException {
         final UiSelector rootsList = findRootListSelector();
         revealRoot(rootsList, rootLabel);
 
         final UiScrollable rootsListObject = new UiScrollable(rootsList);
         final UiObject rootItem = rootsListObject.getChildByText(
                 new UiSelector().className("android.widget.LinearLayout"), rootLabel, false);
-        final UiSelector ejectIcon =
-                new UiSelector().resourceId("com.android.documentsui:id/eject_icon");
-        return new UiObject(rootItem.getSelector().childSelector(ejectIcon));
+        final UiSelector actionIcon =
+                new UiSelector().resourceId("com.android.documentsui:id/action_icon_area");
+        return new UiObject(rootItem.getSelector().childSelector(actionIcon));
     }
 
     private UiObject findDocument(String label) throws UiObjectNotFoundException {
@@ -339,16 +339,18 @@ public class DocumentsClientTest extends DocumentsClientTestCase {
         mActivity.startActivityForResult(intent, REQUEST_CODE);
 
         // Look around, we should be able to see both DocumentsProviders and
-        // other GET_CONTENT sources.
+        // other GET_CONTENT sources. If the DocumentsProvider and GetContent
+        // root has the same package, they will be combined as one root item.
         mDevice.waitForIdle();
         assertTrue("CtsLocal root", findRoot("CtsLocal").exists());
         assertTrue("CtsCreate root", findRoot("CtsCreate").exists());
-        assertTrue("CtsGetContent root", findRoot("CtsGetContent").exists());
+        assertFalse("CtsGetContent root", findRoot("CtsGetContent").exists());
 
         mDevice.waitForIdle();
-        findRoot("CtsGetContent").click();
-
-        final Result result = mActivity.getResult();
+        // Both CtsLocal and CtsLocal have action icon and have the same action.
+        findActionIcon("CtsCreate");
+        findActionIcon("CtsLocal").click();
+        Result result = mActivity.getResult();
         assertEquals("ReSuLt", result.data.getAction());
     }
 
@@ -634,7 +636,7 @@ public class DocumentsClientTest extends DocumentsClientTestCase {
                 Document.MIME_TYPE_DIR);
         mActivity.startActivity(intent);
 
-        findEjectIcon("eject").click();
+        findActionIcon("eject").click();
 
         try {
             findRoot("eject").click();

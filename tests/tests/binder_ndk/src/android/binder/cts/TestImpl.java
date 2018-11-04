@@ -17,6 +17,7 @@
 package android.binder.cts;
 
 import android.os.IBinder;
+import android.os.ParcelFileDescriptor;
 
 import test_package.IEmpty;
 import test_package.ITest;
@@ -76,6 +77,11 @@ public class TestImpl extends ITest.Stub {
 
   @Override
   public IEmpty RepeatInterface(IEmpty in_value) {
+    return in_value;
+  }
+
+  @Override
+  public ParcelFileDescriptor RepeatFd(ParcelFileDescriptor in_value) {
     return in_value;
   }
 

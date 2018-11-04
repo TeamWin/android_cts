@@ -25,6 +25,74 @@
 
 namespace {
 
+class ScopedUtfChars {
+public:
+    ScopedUtfChars(JNIEnv* env, jstring s) : mEnv(env), mString(s) {
+        if (s == nullptr) {
+            mUtfChars = nullptr;
+            mSize = 0;
+        } else {
+            mUtfChars = mEnv->GetStringUTFChars(mString, nullptr);
+            mSize = mEnv->GetStringUTFLength(mString);
+        }
+    }
+
+    ~ScopedUtfChars() {
+        if (mUtfChars) {
+            mEnv->ReleaseStringUTFChars(mString, mUtfChars);
+        }
+    }
+
+    const char* c_str() const {
+        return mUtfChars;
+    }
+
+    size_t size() const {
+      return mSize;
+    }
+
+private:
+    JNIEnv* mEnv;
+    jstring mString;
+    const char* mUtfChars;
+    size_t mSize;
+};
+
+class ScopedStringChars {
+public:
+    ScopedStringChars(JNIEnv* env, jstring s) : mEnv(env), mString(s) {
+        if (s == nullptr) {
+            mChars = nullptr;
+            mSize = 0;
+        } else {
+            mChars = mEnv->GetStringChars(mString, NULL);
+            mSize = mEnv->GetStringLength(mString);
+        }
+    }
+
+    ~ScopedStringChars() {
+        if (mChars != nullptr) {
+            mEnv->ReleaseStringChars(mString, mChars);
+        }
+    }
+
+    const jchar* get() const {
+        return mChars;
+    }
+
+    size_t size() const {
+        return mSize;
+    }
+
+
+private:
+    JNIEnv* const mEnv;
+    const jstring mString;
+    const jchar* mChars;
+    size_t mSize;
+};
+
+
 jlong nOpenIterator(JNIEnv*, jclass) {
     return reinterpret_cast<jlong>(ASystemFontIterator_open());
 }
@@ -74,7 +142,30 @@ jfloat nGetAxisValue(JNIEnv*, jclass, jlong ptr, jint axisIndex) {
     return ASystemFont_getAxisValue(reinterpret_cast<ASystemFont*>(ptr), axisIndex);
 }
 
-const std::array<JNINativeMethod, 12> JNI_METHODS = {{
+jlong nMatchFamilyStyleCharacter(JNIEnv* env, jclass, jstring familyName, jint weight,
+                                 jboolean italic, jstring langTags, jstring text) {
+    ScopedUtfChars familyNameChars(env, familyName);
+    ScopedUtfChars langTagsChars(env, langTags);
+    ScopedStringChars textChars(env, text);
+    return reinterpret_cast<jlong>(ASystemFont_matchFamilyStyleCharacter(
+        familyNameChars.c_str(), weight, italic, langTagsChars.c_str(), textChars.get(),
+        textChars.size(), nullptr));
+}
+
+jint nMatchFamilyStyleCharacter_runLength(JNIEnv* env, jclass, jstring familyName, jint weight,
+                                          jboolean italic, jstring langTags, jstring text) {
+    ScopedUtfChars familyNameChars(env, familyName);
+    ScopedUtfChars langTagsChars(env, langTags);
+    ScopedStringChars textChars(env, text);
+    uint32_t runLength = 0;
+    ASystemFont* ptr = ASystemFont_matchFamilyStyleCharacter(
+            familyNameChars.c_str(), weight, italic, langTagsChars.c_str(), textChars.get(),
+            textChars.size(), &runLength);
+    ASystemFont_close(ptr);
+    return runLength;
+}
+
+const std::array<JNINativeMethod, 14> JNI_METHODS = {{
     { "nOpenIterator", "()J", (void*) nOpenIterator },
     { "nCloseIterator", "(J)V", (void*) nCloseIterator },
     { "nNext", "(J)J", (void*) nGetNext },
@@ -87,6 +178,13 @@ const std::array<JNINativeMethod, 12> JNI_METHODS = {{
     { "nGetAxisCount", "(J)I", (void*) nGetAxisCount },
     { "nGetAxisTag", "(JI)I", (void*) nGetAxisTag },
     { "nGetAxisValue", "(JI)F", (void*) nGetAxisValue },
+    { "nMatchFamilyStyleCharacter",
+          "(Ljava/lang/String;IZLjava/lang/String;Ljava/lang/String;)J",
+          (void*) nMatchFamilyStyleCharacter },
+    { "nMatchFamilyStyleCharacter_runLength",
+          "(Ljava/lang/String;IZLjava/lang/String;Ljava/lang/String;)I",
+          (void*) nMatchFamilyStyleCharacter_runLength },
+
 }};
 
 }

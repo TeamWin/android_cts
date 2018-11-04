@@ -59,7 +59,7 @@ public class KeyguardTransitionTests extends ActivityManagerTestBase {
                     .unlockDevice();
             mAmWmState.computeState(TEST_ACTIVITY);
             assertEquals("Picked wrong transition", TRANSIT_KEYGUARD_GOING_AWAY,
-                    mAmWmState.getWmState().getLastTransition());
+                    mAmWmState.getWmState().getDefaultDisplayLastTransition());
         }
     }
 
@@ -71,7 +71,7 @@ public class KeyguardTransitionTests extends ActivityManagerTestBase {
                     .unlockDevice();
             mAmWmState.computeState(WALLPAPAER_ACTIVITY);
             assertEquals("Picked wrong transition", TRANSIT_KEYGUARD_GOING_AWAY_ON_WALLPAPER,
-                    mAmWmState.getWmState().getLastTransition());
+                    mAmWmState.getWmState().getDefaultDisplayLastTransition());
         }
     }
 
@@ -82,7 +82,7 @@ public class KeyguardTransitionTests extends ActivityManagerTestBase {
             launchActivity(SHOW_WHEN_LOCKED_ACTIVITY);
             mAmWmState.computeState(SHOW_WHEN_LOCKED_ACTIVITY);
             assertEquals("Picked wrong transition", TRANSIT_KEYGUARD_OCCLUDE,
-                    mAmWmState.getWmState().getLastTransition());
+                    mAmWmState.getWmState().getDefaultDisplayLastTransition());
         }
     }
 
@@ -95,7 +95,7 @@ public class KeyguardTransitionTests extends ActivityManagerTestBase {
             mAmWmState.waitForKeyguardShowingAndNotOccluded();
             mAmWmState.computeState(true);
             assertEquals("Picked wrong transition", TRANSIT_KEYGUARD_UNOCCLUDE,
-                    mAmWmState.getWmState().getLastTransition());
+                    mAmWmState.getWmState().getDefaultDisplayLastTransition());
         }
     }
 
@@ -107,7 +107,7 @@ public class KeyguardTransitionTests extends ActivityManagerTestBase {
             launchActivity(SHOW_WHEN_LOCKED_WITH_DIALOG_ACTIVITY);
             mAmWmState.computeState(SHOW_WHEN_LOCKED_WITH_DIALOG_ACTIVITY);
             assertEquals("Picked wrong transition", TRANSIT_ACTIVITY_OPEN,
-                    mAmWmState.getWmState().getLastTransition());
+                    mAmWmState.getWmState().getDefaultDisplayLastTransition());
         }
     }
 
@@ -119,7 +119,7 @@ public class KeyguardTransitionTests extends ActivityManagerTestBase {
             launchActivity(SHOW_WHEN_LOCKED_ATTR_ACTIVITY);
             mAmWmState.computeState(SHOW_WHEN_LOCKED_ATTR_ACTIVITY);
             assertEquals("Picked wrong transition", TRANSIT_KEYGUARD_OCCLUDE,
-                    mAmWmState.getWmState().getLastTransition());
+                    mAmWmState.getWmState().getDefaultDisplayLastTransition());
             assertSingleLaunch(SHOW_WHEN_LOCKED_ATTR_ACTIVITY, logSeparator);
         }
     }
@@ -132,7 +132,7 @@ public class KeyguardTransitionTests extends ActivityManagerTestBase {
             launchActivity(SHOW_WHEN_LOCKED_ATTR_REMOVE_ATTR_ACTIVITY);
             mAmWmState.computeState(SHOW_WHEN_LOCKED_ATTR_REMOVE_ATTR_ACTIVITY);
             assertEquals("Picked wrong transition", TRANSIT_KEYGUARD_OCCLUDE,
-                    mAmWmState.getWmState().getLastTransition());
+                    mAmWmState.getWmState().getDefaultDisplayLastTransition());
             assertSingleLaunch(SHOW_WHEN_LOCKED_ATTR_REMOVE_ATTR_ACTIVITY, logSeparator);
 
             // Waiting for the standard keyguard since
@@ -157,7 +157,7 @@ public class KeyguardTransitionTests extends ActivityManagerTestBase {
             launchActivity(SHOW_WHEN_LOCKED_WITH_DIALOG_ACTIVITY);
             mAmWmState.computeState(SHOW_WHEN_LOCKED_WITH_DIALOG_ACTIVITY);
             assertEquals("Picked wrong transition", TRANSIT_ACTIVITY_OPEN,
-                    mAmWmState.getWmState().getLastTransition());
+                    mAmWmState.getWmState().getDefaultDisplayLastTransition());
         }
     }
 }

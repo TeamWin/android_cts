@@ -18,6 +18,7 @@ package com.android.cts.verifier.biometrics;
 
 import android.Manifest;
 import android.content.DialogInterface;
+import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.hardware.biometrics.BiometricManager;
 import android.hardware.biometrics.BiometricPrompt;
@@ -45,6 +46,7 @@ import java.util.concurrent.Executor;
 public class BiometricTest extends PassFailButtons.Activity {
 
     private static final String TAG = "BiometricTest";
+    private static final String BIOMETRIC_ENROLL = "android.settings.BIOMETRIC_ENROLL";
     private static final int BIOMETRIC_PERMISSION_REQUEST_CODE = 0;
 
     private static final int TEST_NONE_ENROLLED = 1;
@@ -55,6 +57,7 @@ public class BiometricTest extends PassFailButtons.Activity {
     private CancellationSignal mCancellationSignal;
     private int mExpectedError;
     private int mCurrentTest;
+    private Button mButtonEnroll;
     private Button mButtonTest1;
     private Button mButtonTest2;
 
@@ -80,6 +83,7 @@ public class BiometricTest extends PassFailButtons.Activity {
                 if (errorCode == mExpectedError) {
                     mButtonTest1.setVisibility(View.INVISIBLE);
                     mButtonTest2.setVisibility(View.VISIBLE);
+                    mButtonEnroll.setVisibility(View.VISIBLE);
                     showToastAndLog("Please enroll a biometric and start the next test");
                 } else {
                     showToastAndLog("Expected: " + mExpectedError +
@@ -104,6 +108,8 @@ public class BiometricTest extends PassFailButtons.Activity {
         getPassButton().setEnabled(false);
 
         mBiometricManager = getApplicationContext().getSystemService(BiometricManager.class);
+        mButtonEnroll = findViewById(R.id.biometric_enroll_button);
+        mButtonEnroll.setVisibility(View.INVISIBLE);
         mButtonTest1 = findViewById(R.id.biometric_start_test1_button);
         mButtonTest2 = findViewById(R.id.biometric_start_test2_button);
         mButtonTest2.setVisibility(View.INVISIBLE);
@@ -120,6 +126,11 @@ public class BiometricTest extends PassFailButtons.Activity {
             });
             mButtonTest2.setOnClickListener((view) -> {
                 startTest(TEST_ENROLLED);
+            });
+            mButtonEnroll.setOnClickListener((view) -> {
+                final Intent intent = new Intent();
+                intent.setAction(BIOMETRIC_ENROLL);
+                startActivity(intent);
             });
         } else {
             // NO biometrics available

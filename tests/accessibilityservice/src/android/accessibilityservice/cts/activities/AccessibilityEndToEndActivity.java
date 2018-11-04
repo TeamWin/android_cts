@@ -17,13 +17,15 @@
 package android.accessibilityservice.cts.activities;
 
 import android.accessibilityservice.cts.R;
-
+import android.graphics.Rect;
 import android.os.Bundle;
+import android.view.TouchDelegate;
 import android.view.View;
 import android.view.ViewGroup;
 import android.view.accessibility.AccessibilityEvent;
 import android.view.accessibility.AccessibilityNodeInfo;
 import android.widget.BaseAdapter;
+import android.widget.Button;
 import android.widget.ListAdapter;
 import android.widget.ListView;
 import android.widget.TextView;
@@ -68,6 +70,19 @@ public class AccessibilityEndToEndActivity extends AccessibilityTestActivity {
 
         ListView listView = (ListView) findViewById(R.id.listview);
         listView.setAdapter(listAdapter);
+
+        Button button = (Button) findViewById(R.id.button);
+        button.getViewTreeObserver().addOnGlobalLayoutListener(this::setTouchDelegate);
+    }
+
+    public void setTouchDelegate() {
+        final Button button = findViewById(R.id.button);
+        final View parent = (View) button.getParent();
+        final int touchableSize = 48;
+        final Rect rect = new Rect();
+        button.getHitRect(rect);
+        rect.right += touchableSize;
+        parent.setTouchDelegate(new TouchDelegate(rect, button));
     }
 
     public void setReportedPackageName(String packageName) {

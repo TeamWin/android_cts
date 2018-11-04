@@ -54,7 +54,7 @@ public class MultiViewTest extends Camera2MultiViewTestCase {
     private static final String TAG = "MultiViewTest";
     private final static long WAIT_FOR_COMMAND_TO_COMPLETE = 5000; //ms
     private final static long PREVIEW_TIME_MS = 2000;
-    private final static int NUM_SURFACE_SWITCHES = 10;
+    private final static int NUM_SURFACE_SWITCHES = 30;
     private final static int IMG_READER_COUNT = 2;
     private final static int YUV_IMG_READER_COUNT = 3;
 
@@ -516,7 +516,9 @@ public class MultiViewTest extends Camera2MultiViewTestCase {
                 if ((yuvFormat != -1) && (frameSize.getWidth() > 0) &&
                         (frameSize.getHeight() > 0)) {
                     testSharedSurfaceYUVImageReaderSwitch(cameraId, NUM_SURFACE_SWITCHES, yuvFormat,
-                            frameSize);
+                            frameSize, /*blockMaxAcquired*/ false);
+                    testSharedSurfaceYUVImageReaderSwitch(cameraId, NUM_SURFACE_SWITCHES, yuvFormat,
+                            frameSize, /*blockMaxAcquired*/ true);
                 } else {
                     Log.i(TAG, "Camera " + cameraId +
                             " does not support YUV outputs, skipping");
@@ -529,7 +531,7 @@ public class MultiViewTest extends Camera2MultiViewTestCase {
     }
 
     private void testSharedSurfaceYUVImageReaderSwitch(String cameraId, int switchCount, int format,
-            Size frameSize) throws Exception {
+            Size frameSize, boolean blockMaxAcquired) throws Exception {
 
         assertTrue("YUV_IMG_READER_COUNT should be equal or greater than 2",
                 (YUV_IMG_READER_COUNT >= 2));
@@ -560,6 +562,11 @@ public class MultiViewTest extends Camera2MultiViewTestCase {
         // Test YUV ImageReader surface sharing. The first ImageReader will
         // always be part of the capture request, the rest will switch on each
         // iteration.
+        // If 'blockMaxAcquired' is enabled, the first image reader will acquire
+        // the maximum possible amount of buffers and also block a few more.
+        int maxAcquiredImages = imageReaders[0].getMaxImages();
+        int acquiredCount = 0;
+        Image[] acquiredImages = new Image[maxAcquiredImages];
         for (int j = 0; j < switchCount; j++) {
             for (int i = 1; i < YUV_IMG_READER_COUNT; i++) {
                 outputConfig.addSurface(readerSurfaces[i]);
@@ -567,17 +574,34 @@ public class MultiViewTest extends Camera2MultiViewTestCase {
                 CaptureRequest.Builder imageReaderRequestBuilder = getCaptureBuilder(cameraId,
                         CameraDevice.TEMPLATE_PREVIEW);
                 imageReaderRequestBuilder.addTarget(readerSurfaces[i]);
-                imageReaderRequestBuilder.addTarget(readerSurfaces[0]);
+                if (blockMaxAcquired) {
+                    if (acquiredCount <= (maxAcquiredImages + 1)) {
+                        // Camera should be able to handle cases where
+                        // one output blocks more buffers than the respective
+                        // maximum acquired count.
+                        imageReaderRequestBuilder.addTarget(readerSurfaces[0]);
+                    }
+                } else {
+                    imageReaderRequestBuilder.addTarget(readerSurfaces[0]);
+                }
                 capture(cameraId, imageReaderRequestBuilder.build(), resultListener);
                 imageListeners[i].waitForAnyImageAvailable(PREVIEW_TIME_MS);
                 Image img = imageReaders[i].acquireLatestImage();
                 assertNotNull("Invalid image acquired!", img);
                 assertNotNull("Image planes are invalid!", img.getPlanes());
                 img.close();
-                imageListeners[0].waitForAnyImageAvailable(PREVIEW_TIME_MS);
-                img = imageReaders[0].acquireLatestImage();
-                assertNotNull("Invalid image acquired!", img);
-                img.close();
+                if (blockMaxAcquired) {
+                    if (acquiredCount < maxAcquiredImages) {
+                        imageListeners[0].waitForAnyImageAvailable(PREVIEW_TIME_MS);
+                        acquiredImages[acquiredCount] = imageReaders[0].acquireNextImage();
+                    }
+                    acquiredCount++;
+                } else {
+                    imageListeners[0].waitForAnyImageAvailable(PREVIEW_TIME_MS);
+                    img = imageReaders[0].acquireLatestImage();
+                    assertNotNull("Invalid image acquired!", img);
+                    img.close();
+                }
                 outputConfig.removeSurface(readerSurfaces[i]);
                 updateOutputConfiguration(cameraId, outputConfig);
             }

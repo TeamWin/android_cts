@@ -23,6 +23,7 @@ import com.android.tradefed.result.TestResult;
 import com.android.tradefed.result.TestRunResult;
 import com.android.tradefed.testtype.DeviceJUnit4ClassRunner;
 import com.android.tradefed.testtype.junit4.BaseHostJUnit4Test;
+import com.android.tradefed.testtype.junit4.DeviceTestRunOptions;
 
 import junit.framework.AssertionFailedError;
 
@@ -140,14 +141,14 @@ public class StorageHostTest extends BaseHostJUnit4Test {
     @Test
     public void testVerifyStatsExternal() throws Exception {
         for (int user : mUsers) {
-            runDeviceTests(PKG_STATS, CLASS_STATS, "testVerifyStatsExternal", user);
+            runDeviceTests(PKG_STATS, CLASS_STATS, "testVerifyStatsExternal", user, true);
         }
     }
 
     @Test
     public void testVerifyStatsExternalConsistent() throws Exception {
         for (int user : mUsers) {
-            runDeviceTests(PKG_STATS, CLASS_STATS, "testVerifyStatsExternalConsistent", user);
+            runDeviceTests(PKG_STATS, CLASS_STATS, "testVerifyStatsExternalConsistent", user, true);
         }
     }
 
@@ -221,7 +222,19 @@ public class StorageHostTest extends BaseHostJUnit4Test {
 
     public void runDeviceTests(String packageName, String testClassName, String testMethodName,
             int userId) throws DeviceNotAvailableException {
-        if (!runDeviceTests(getDevice(), packageName, testClassName, testMethodName, userId, 20 * 60 * 1000L)) {
+        runDeviceTests(packageName, testClassName, testMethodName, userId, false);
+    }
+
+    public void runDeviceTests(String packageName, String testClassName, String testMethodName,
+            int userId, boolean disableIsolatedStorage) throws DeviceNotAvailableException {
+        final DeviceTestRunOptions options = new DeviceTestRunOptions(packageName);
+        options.setDevice(getDevice());
+        options.setTestClassName(testClassName);
+        options.setTestMethodName(testMethodName);
+        options.setUserId(userId);
+        options.setTestTimeoutMs(20 * 60 * 1000L);
+        options.setDisableIsolatedStorage(disableIsolatedStorage);
+        if (!runDeviceTests(options)) {
             TestRunResult res = getLastDeviceRunResults();
             if (res != null) {
                 StringBuilder errorBuilder = new StringBuilder("on-device tests failed:\n");

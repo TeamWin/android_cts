@@ -109,7 +109,7 @@ public class MediaStoreTest {
     }
 
     @Test
-    public void getAllVolumeNames() {
+    public void testGetAllVolumeNames() {
         Set<String> volumeNames = MediaStore.getAllVolumeNames(getContext());
 
         // At very least should contain these two volumes

@@ -2562,14 +2562,6 @@ public class AudioTrackTest extends CtsAndroidTestCase {
     }
 
     private static AudioPresentation createAudioPresentation() {
-        return new AudioPresentation(
-                42 /*presentationId*/,
-                43 /*programId*/,
-                new HashMap<String, String>(),
-                Locale.US.toString(),
-                AudioPresentation.MASTERING_NOT_INDICATED,
-                false /*audioDescriptionAvailable*/,
-                false /*spokenSubtitlesAvailable*/,
-                false /*dialogueEnhancementAvailable*/);
+        return (new AudioPresentation.Builder(42 /*presentationId*/)).build();
     }
 }

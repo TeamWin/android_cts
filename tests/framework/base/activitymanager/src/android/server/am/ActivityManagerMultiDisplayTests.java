@@ -31,6 +31,7 @@ import static android.server.am.ActivityManagerState.STATE_STOPPED;
 import static android.server.am.ComponentNameUtils.getActivityName;
 import static android.server.am.ComponentNameUtils.getWindowName;
 import static android.server.am.Components.ALT_LAUNCHING_ACTIVITY;
+import static android.server.am.Components.BOTTOM_ACTIVITY;
 import static android.server.am.Components.BROADCAST_RECEIVER_ACTIVITY;
 import static android.server.am.Components.HOME_ACTIVITY;
 import static android.server.am.Components.LAUNCHING_ACTIVITY;
@@ -48,6 +49,9 @@ import static android.server.am.StateLogger.logAlways;
 import static android.server.am.StateLogger.logE;
 import static android.server.am.UiDeviceUtils.pressSleepButton;
 import static android.server.am.UiDeviceUtils.pressWakeupButton;
+import static android.server.am.WindowManagerState.TRANSIT_TASK_CLOSE;
+import static android.server.am.WindowManagerState.TRANSIT_TASK_OPEN;
+import static android.server.am.lifecycle.ActivityStarterTests.StandardActivity;
 import static android.server.am.second.Components.SECOND_ACTIVITY;
 import static android.server.am.second.Components.SECOND_LAUNCH_BROADCAST_ACTION;
 import static android.server.am.second.Components.SECOND_LAUNCH_BROADCAST_RECEIVER;
@@ -112,7 +116,6 @@ import java.util.regex.Pattern;
  *     atest CtsActivityManagerDeviceTestCases:ActivityManagerMultiDisplayTests
  */
 @Presubmit
-@FlakyTest(bugId = 118715516)
 public class ActivityManagerMultiDisplayTests extends ActivityManagerDisplayTestBase {
     @Before
     @Override
@@ -2046,6 +2049,73 @@ public class ActivityManagerMultiDisplayTests extends ActivityManagerDisplayTest
                     TIMEOUT_SOFT_INPUT);
 
             mAmWmState.waitAndAssertImeWindowShownOnDisplay(DEFAULT_DISPLAY);
+        }
+    }
+
+    @Test
+    public void testAppTransitionForActivityOnDifferentDisplay() throws Exception {
+        try (final VirtualDisplaySession virtualDisplaySession = new VirtualDisplaySession();
+             final TestActivitySession<StandardActivity> transitionActivitySession = new
+                     TestActivitySession<>()) {
+            // Create new simulated display.
+            final ActivityDisplay newDisplay = virtualDisplaySession
+                    .setSimulateDisplay(true).createDisplay();
+
+            // Launch BottomActivity on top of launcher activity to prevent transition state
+            // affected by wallpaper theme.
+            launchActivityOnDisplay(BOTTOM_ACTIVITY, DEFAULT_DISPLAY);
+            waitAndAssertTopResumedActivity(BOTTOM_ACTIVITY, DEFAULT_DISPLAY,
+                    "Activity must be resumed");
+
+            // Launch StandardActivity on default display, verify last transition if is correct.
+            transitionActivitySession.launchTestActivityOnDisplaySync(StandardActivity.class,
+                    DEFAULT_DISPLAY);
+            mAmWmState.waitForAppTransitionIdleOnDisplay(DEFAULT_DISPLAY);
+            mAmWmState.assertSanity();
+            assertEquals(TRANSIT_TASK_OPEN,
+                    mAmWmState.getWmState().getDisplay(DEFAULT_DISPLAY).getLastTransition());
+
+            // Finish current activity & launch another TestActivity in virtual display in parallel.
+            transitionActivitySession.finishCurrentActivityNoWait();
+            launchActivityOnDisplayNoWait(TEST_ACTIVITY, newDisplay.mId);
+            mAmWmState.waitForAppTransitionIdleOnDisplay(DEFAULT_DISPLAY);
+            mAmWmState.waitForAppTransitionIdleOnDisplay(newDisplay.mId);
+            mAmWmState.assertSanity();
+
+            // Verify each display's last transition if is correct as expected.
+            assertEquals(TRANSIT_TASK_CLOSE,
+                    mAmWmState.getWmState().getDisplay(DEFAULT_DISPLAY).getLastTransition());
+            assertEquals(TRANSIT_TASK_OPEN,
+                    mAmWmState.getWmState().getDisplay(newDisplay.mId).getLastTransition());
+        }
+    }
+
+    @Test
+    public void testNoTransitionWhenMovingActivityToDisplay() throws Exception {
+        try (final VirtualDisplaySession virtualDisplaySession = new VirtualDisplaySession()) {
+            // Create new simulated display & capture new display's transition state.
+            final ActivityDisplay newDisplay = virtualDisplaySession
+                    .setSimulateDisplay(true).createDisplay();
+
+            // Launch TestActivity in virtual display & capture its transition state.
+            launchActivityOnDisplay(TEST_ACTIVITY, newDisplay.mId);
+            mAmWmState.waitForAppTransitionIdleOnDisplay(newDisplay.mId);
+            mAmWmState.assertSanity();
+            final String lastTranstionOnVirtualDisplay = mAmWmState.getWmState()
+                    .getDisplay(newDisplay.mId).getLastTransition();
+
+            // Move TestActivity from virtual display to default display.
+            getLaunchActivityBuilder().setTargetActivity(TEST_ACTIVITY)
+                    .allowMultipleInstances(false).setNewTask(true)
+                    .setDisplayId(DEFAULT_DISPLAY).execute();
+
+            // Verify TestActivity moved to virtual display.
+            waitAndAssertTopResumedActivity(TEST_ACTIVITY, DEFAULT_DISPLAY,
+                    "Existing task must be brought to front");
+
+            // Make sure last transition will not change when task move to another display.
+            assertEquals(lastTranstionOnVirtualDisplay,
+                    mAmWmState.getWmState().getDisplay(newDisplay.mId).getLastTransition());
         }
     }
 

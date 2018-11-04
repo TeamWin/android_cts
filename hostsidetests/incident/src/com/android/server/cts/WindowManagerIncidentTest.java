@@ -32,7 +32,6 @@ public class WindowManagerIncidentTest extends ProtoDumpTestCase {
         verifyRootWindowContainerProto(dump.getRootWindowContainer(), filterLevel);
         verifyIdentifierProto(dump.getFocusedWindow(), filterLevel);
         verifyIdentifierProto(dump.getInputMethodWindow(), filterLevel);
-        verifyAppTransitionProto(dump.getAppTransition(), filterLevel);
     }
 
     private static void verifyWindowManagerPolicyProto(WindowManagerPolicyProto wmp, final int filterLevel) throws Exception {
@@ -53,12 +52,5 @@ public class WindowManagerIncidentTest extends ProtoDumpTestCase {
         for (IdentifierProto ip : rwcp.getWindowsList()) {
             verifyIdentifierProto(ip, filterLevel);
         }
-    }
-
-    private static void verifyAppTransitionProto(AppTransitionProto atp, final int filterLevel) throws Exception {
-        assertTrue(AppTransitionProto.AppState.getDescriptor().getValues()
-                .contains(atp.getAppTransitionState().getValueDescriptor()));
-        assertTrue(TransitionTypeEnum.getDescriptor().getValues()
-                .contains(atp.getLastUsedAppTransition().getValueDescriptor()));
     }
 }

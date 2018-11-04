@@ -118,8 +118,9 @@ public class DevicePolicyManagerTest extends AndroidTestCase {
         }
         int originalValue = mDevicePolicyManager.getKeyguardDisabledFeatures(mComponent);
         try {
+            // Test all possible combinations which mathematically ends at 2 * LAST - 1
             for (int which = DevicePolicyManager.KEYGUARD_DISABLE_FEATURES_NONE;
-                    which < 2 * DevicePolicyManager.KEYGUARD_DISABLE_FINGERPRINT; ++which) {
+                    which < 2 * DevicePolicyManager.KEYGUARD_DISABLE_IRIS; ++which) {
                 mDevicePolicyManager.setKeyguardDisabledFeatures(mComponent, which);
                 assertEquals(which, mDevicePolicyManager.getKeyguardDisabledFeatures(mComponent));
             }

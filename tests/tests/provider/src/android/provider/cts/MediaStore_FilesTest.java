@@ -100,14 +100,7 @@ public class MediaStore_FilesTest extends AndroidTestCase {
         // adding a file to the provider.
         int fileCount = getFileCount(allFilesUri);
 
-        // Check that inserting empty values causes an exception.
         ContentValues values = new ContentValues();
-        try {
-            mResolver.insert(allFilesUri, values);
-            fail("Should throw an exception");
-        } catch (IllegalArgumentException e) {
-            // Expecting an exception
-        }
 
         // Add a path for a file and check that the returned uri appends a
         // path properly.

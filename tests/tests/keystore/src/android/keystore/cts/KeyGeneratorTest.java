@@ -83,6 +83,7 @@ public class KeyGeneratorTest extends AndroidTestCase {
     }
 
     static final int[] AES_SUPPORTED_KEY_SIZES = new int[] {128, 192, 256};
+    static final int[] DES_SUPPORTED_KEY_SIZES = new int[] {112, 168};
 
     public void testAlgorithmList() {
         // Assert that Android Keystore Provider exposes exactly the expected KeyGenerator
@@ -290,6 +291,44 @@ public class KeyGeneratorTest extends AndroidTestCase {
                 }
             } catch (Throwable e) {
                 throw new RuntimeException("Failed for key size " + i, e);
+            }
+        }
+    }
+
+    // TODO: This test will fail until b/117509689 is resolved.
+    public void testDESKeySupportedSizes() throws Exception {
+        KeyGenerator keyGenerator = getKeyGenerator("DESede");
+        KeyGenParameterSpec.Builder goodSpec = getWorkingSpec();
+        CountingSecureRandom rng = new CountingSecureRandom();
+        for (int i = -16; i <= 168; i++) {
+            try {
+                rng.resetCounters();
+                KeyGenParameterSpec spec;
+                if (i >= 0) {
+                    spec = TestUtils.buildUpon(goodSpec.setKeySize(i)).build();
+                } else {
+                    try {
+                        spec = TestUtils.buildUpon(goodSpec.setKeySize(i)).build();
+                        fail();
+                    } catch (IllegalArgumentException expected) {
+                        continue;
+                    }
+                }
+                rng.resetCounters();
+                if (TestUtils.contains(DES_SUPPORTED_KEY_SIZES, i)) {
+                    keyGenerator.init(spec, rng);
+                    SecretKey key = keyGenerator.generateKey();
+                    assertEquals(i, TestUtils.getKeyInfo(key).getKeySize());
+                } else {
+                    try {
+                        keyGenerator.init(spec, rng);
+                        fail();
+                    } catch (InvalidAlgorithmParameterException expected) {}
+                    assertEquals(0, rng.getOutputSizeBytes());
+                }
+            } catch (Throwable e) {
+                throw new RuntimeException("Failed for key size " + i +
+                    "\n***This test will continue to fail until b/117509689 is resolved***", e);
             }
         }
     }

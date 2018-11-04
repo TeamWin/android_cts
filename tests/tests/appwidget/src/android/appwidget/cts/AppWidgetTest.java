@@ -1345,27 +1345,6 @@ public class AppWidgetTest extends AppWidgetTestCase {
         return getProviderInfo(getSecondWidgetComponent());
     }
 
-    private AppWidgetProviderInfo getProviderInfo(ComponentName componentName) {
-        List<AppWidgetProviderInfo> providers = getAppWidgetManager().getInstalledProviders();
-
-        final int providerCount = providers.size();
-        for (int i = 0; i < providerCount; i++) {
-            AppWidgetProviderInfo provider = providers.get(i);
-            if (componentName.equals(provider.provider)
-                    && Process.myUserHandle().equals(provider.getProfile())) {
-                return provider;
-
-            }
-        }
-
-        return null;
-    }
-
-    private AppWidgetManager getAppWidgetManager() {
-        return (AppWidgetManager) getInstrumentation().getTargetContext()
-                .getSystemService(Context.APPWIDGET_SERVICE);
-    }
-
     private AppWidgetProviderCallbacks createAppWidgetProviderCallbacks(
             final AtomicInteger callCounter) {
         // Set a mock to intercept provider callbacks.

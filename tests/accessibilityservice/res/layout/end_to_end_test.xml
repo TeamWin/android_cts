@@ -43,6 +43,7 @@
                 android:accessibilityPaneTitle="@string/paneTitle"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
+                android:layout_marginRight="60dp"
                 android:bufferType="normal">
         </Button>
         <Button android:id="@id/buttonWithTooltip"

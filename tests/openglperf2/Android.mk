@@ -36,5 +36,3 @@ LOCAL_SDK_VERSION := 16
 #LOCAL_MIN_SDK_VERSION := 16
 
 include $(BUILD_CTS_PACKAGE)
-
-include $(call all-makefiles-under,$(LOCAL_PATH))

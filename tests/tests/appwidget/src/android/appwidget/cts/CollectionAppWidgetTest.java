@@ -15,6 +15,8 @@
  */
 package android.appwidget.cts;
 
+import static android.appwidget.cts.provider.CollectionAppWidgetProvider.BROADCAST_ACTION;
+
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
@@ -29,15 +31,13 @@ import android.appwidget.AppWidgetHost;
 import android.appwidget.AppWidgetHostView;
 import android.appwidget.AppWidgetManager;
 import android.appwidget.AppWidgetProviderInfo;
+import android.appwidget.cts.activity.EmptyActivity;
 import android.appwidget.cts.provider.CollectionAppWidgetProvider;
 import android.appwidget.cts.service.MyAppWidgetService;
-import android.content.BroadcastReceiver;
 import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
-import android.content.IntentFilter;
 import android.os.Bundle;
-import android.os.Process;
 import android.platform.test.annotations.AppModeFull;
 import android.support.test.InstrumentationRegistry;
 import android.support.test.filters.LargeTest;
@@ -60,7 +60,6 @@ import org.junit.runner.RunWith;
 import org.mockito.invocation.InvocationOnMock;
 import org.mockito.stubbing.Answer;
 
-import java.util.List;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -161,7 +160,7 @@ public class CollectionAppWidgetTest extends AppWidgetTestCase {
                 // Set a fill-intent which will be used to fill-in the pending intent template
                 // which is set on the collection view in CollectionAppWidgetProvider.
                 Bundle extras = new Bundle();
-                extras.putString(ClickBroadcastReceiver.KEY_PARAM, COUNTRY_LIST[position]);
+                extras.putString(BlockingBroadcastReceiver.KEY_PARAM, COUNTRY_LIST[position]);
                 Intent fillInIntent = new Intent();
                 fillInIntent.putExtras(extras);
                 remoteViews.setOnClickFillInIntent(R.id.item, fillInIntent);
@@ -203,31 +202,11 @@ public class CollectionAppWidgetTest extends AppWidgetTestCase {
         revokeBindAppWidgetPermission();
     }
 
-    private AppWidgetManager getAppWidgetManager() {
-        return (AppWidgetManager) mContext.getSystemService(Context.APPWIDGET_SERVICE);
-    }
-
     private AppWidgetProviderInfo getAppWidgetProviderInfo() {
         ComponentName firstComponentName = new ComponentName(mContext.getPackageName(),
                 CollectionAppWidgetProvider.class.getName());
 
         return getProviderInfo(firstComponentName);
-    }
-
-    private AppWidgetProviderInfo getProviderInfo(ComponentName componentName) {
-        List<AppWidgetProviderInfo> providers = getAppWidgetManager().getInstalledProviders();
-
-        final int providerCount = providers.size();
-        for (int i = 0; i < providerCount; i++) {
-            AppWidgetProviderInfo provider = providers.get(i);
-            if (componentName.equals(provider.provider)
-                    && Process.myUserHandle().equals(provider.getProfile())) {
-                return provider;
-
-            }
-        }
-
-        return null;
     }
 
     @Test
@@ -330,8 +309,8 @@ public class CollectionAppWidgetTest extends AppWidgetTestCase {
     }
 
     private void verifyItemClickIntents(int indexToClick) throws Throwable {
-        ClickBroadcastReceiver receiver = new ClickBroadcastReceiver();
-        mActivityRule.runOnUiThread(receiver::register);
+        BlockingBroadcastReceiver receiver = new BlockingBroadcastReceiver();
+        mActivityRule.runOnUiThread(() -> receiver.register(BROADCAST_ACTION));
 
         mStackView = (StackView) mAppWidgetHostView.findViewById(R.id.remoteViews_stack);
         PollingCheck.waitFor(() -> mStackView.getCurrentView() != null);
@@ -476,31 +455,5 @@ public class CollectionAppWidgetTest extends AppWidgetTestCase {
             // ignore
         }
         assertTrue("Timed out while waiting for the target view to be scrolled into view", result);
-    }
-
-    private static final class ClickBroadcastReceiver extends BroadcastReceiver {
-
-        public static final String KEY_PARAM = "ClickBroadcastReceiver.param";
-
-        private final CountDownLatch latch = new CountDownLatch(1);
-
-        private String mParams;
-
-        @Override
-        public void onReceive(Context context, Intent intent) {
-            mParams = intent.getStringExtra(KEY_PARAM);
-            InstrumentationRegistry.getTargetContext().unregisterReceiver(this);
-            latch.countDown();
-        }
-
-        public String getParam(long timeout, TimeUnit unit) throws InterruptedException {
-            latch.await(timeout, unit);
-            return mParams;
-        }
-
-        public void register() {
-            InstrumentationRegistry.getTargetContext().registerReceiver(this,
-                    new IntentFilter(CollectionAppWidgetProvider.BROADCAST_ACTION));
-        }
     }
 }

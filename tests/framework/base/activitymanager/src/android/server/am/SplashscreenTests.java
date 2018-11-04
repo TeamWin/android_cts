@@ -17,6 +17,7 @@
 package android.server.am;
 
 import static android.server.am.Components.SPLASHSCREEN_ACTIVITY;
+import static android.view.Display.DEFAULT_DISPLAY;
 
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.lessThan;
@@ -37,7 +38,7 @@ public class SplashscreenTests extends ActivityManagerTestBase {
     @Test
     public void testSplashscreenContent() {
         launchActivityNoWait(SPLASHSCREEN_ACTIVITY);
-        mAmWmState.waitForAppTransitionIdle();
+        mAmWmState.waitForAppTransitionIdleOnDisplay(DEFAULT_DISPLAY);
         mAmWmState.getWmState().getStableBounds();
         final Bitmap image = takeScreenshot();
         // Use ratios to flexibly accomodate circular or not quite rectangular displays

@@ -326,10 +326,11 @@ public class ActivityAndWindowManagersState {
                 "***Waiting for activity in pending list...");
     }
 
-    void waitForAppTransitionIdle() {
+    void waitForAppTransitionIdleOnDisplay(int displayId) {
         waitForWithWmState(
-                state -> WindowManagerState.APP_STATE_IDLE.equals(state.getAppTransitionState()),
-                "***Waiting for app transition idle...");
+                state -> WindowManagerState.APP_STATE_IDLE.equals(
+                        state.getDisplay(displayId).getAppTransitionState()),
+                "***Waiting for app transition idle on Display " + displayId + " ...");
     }
 
     void waitForWithAmState(Predicate<ActivityManagerState> waitCondition, String message) {
