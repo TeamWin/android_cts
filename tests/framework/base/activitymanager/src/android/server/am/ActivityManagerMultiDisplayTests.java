@@ -1864,6 +1864,36 @@ public class ActivityManagerMultiDisplayTests extends ActivityManagerDisplayTest
         }
     }
 
+    /**
+     * Tests no leaking after external display removed.
+     */
+    @Test
+    public void testNoLeakOnExternalDisplay() throws Exception {
+        // How this test works:
+        // When receiving the request to remove a display and some activities still exist on that
+        // display, it will finish those activities first, so the display won't be removed
+        // immediately. Then, when all activities were destroyed, the display removes itself.
+
+        // Get display count before testing, as some devices may have more than one built-in
+        // display.
+        mAmWmState.getAmState().computeState();
+        final int displayCount = mAmWmState.getAmState().getDisplayCount();
+        try (final ExternalDisplaySession externalDisplaySession = new ExternalDisplaySession()) {
+            final ActivityDisplay newDisplay =
+                    externalDisplaySession.createVirtualDisplay(false /* showContentWhenLocked */);
+            launchActivityOnDisplay(VIRTUAL_DISPLAY_ACTIVITY, newDisplay.mId);
+            waitAndAssertTopResumedActivity(VIRTUAL_DISPLAY_ACTIVITY, newDisplay.mId,
+                    "Virtual activity should be Top Resumed Activity.");
+            mAmWmState.assertFocusedAppOnDisplay("Activity on second display must be focused.",
+                    VIRTUAL_DISPLAY_ACTIVITY, newDisplay.mId);
+        }
+        mAmWmState.waitFor((amState, wmState) -> amState.getDisplayCount() == displayCount,
+                "Waiting for external displays to be removed");
+        assertEquals(displayCount, mAmWmState.getAmState().getDisplayCount());
+        assertEquals(displayCount, mAmWmState.getAmState().getKeyguardControllerState().
+                mKeyguardOccludedStates.size());
+    }
+
     @Test
     public void testImeWindowCanSwitchToDifferentDisplays() throws Exception {
         final long TIMEOUT_SOFT_INPUT = TimeUnit.SECONDS.toMillis(5);
