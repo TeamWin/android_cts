@@ -191,7 +191,7 @@ public class MediaDrmClearkeyTest extends MediaPlayerTestBase {
      * set and send it to the CDM via provideKeyResponse().
      */
     private void getKeys(MediaDrm drm, String initDataType,
-            byte[] sessionId, byte[] drmInitData, int keyType, byte[][] clearKeys) {
+            byte[] sessionId, byte[] drmInitData, int keyType, byte[][] clearKeyIds) {
         MediaDrm.KeyRequest drmRequest = null;;
         try {
             drmRequest = drm.getKeyRequest(sessionId, drmInitData, initDataType,
@@ -211,16 +211,16 @@ public class MediaDrmClearkeyTest extends MediaPlayerTestBase {
             return;
         }
 
-        if (clearKeys.length != keyIds.size()) {
+        if (clearKeyIds.length != keyIds.size()) {
             Log.e(TAG, "Mismatch number of key ids and keys: ids=" +
-                    keyIds.size() + ", keys=" + clearKeys.length);
+                    keyIds.size() + ", keys=" + clearKeyIds.length);
             return;
         }
 
         // Base64 encodes clearkeys. Keys are known to the application.
         Vector<String> keys = new Vector<String>();
-        for (int i = 0; i < clearKeys.length; ++i) {
-            String clearKey = Base64.encodeToString(clearKeys[i],
+        for (int i = 0; i < clearKeyIds.length; ++i) {
+            String clearKey = Base64.encodeToString(clearKeyIds[i],
                     Base64.NO_PADDING | Base64.NO_WRAP);
             keys.add(clearKey);
         }
@@ -240,7 +240,7 @@ public class MediaDrmClearkeyTest extends MediaPlayerTestBase {
         }
     }
 
-    private @NonNull MediaDrm startDrm(final byte[][] clearKeys, final String initDataType,
+    private @NonNull MediaDrm startDrm(final byte[][] clearKeyIds, final String initDataType,
                                        final UUID drmSchemeUuid, int keyType) {
         if (!MediaDrm.isCryptoSchemeSupported(drmSchemeUuid)) {
             throw new Error(ERR_MSG_CRYPTO_SCHEME_NOT_SUPPORTED);
@@ -275,11 +275,11 @@ public class MediaDrmClearkeyTest extends MediaPlayerTestBase {
                                 if (event == MediaDrm.EVENT_KEY_REQUIRED) {
                                     Log.i(TAG, "MediaDrm event: Key required");
                                     getKeys(mDrm, initDataType, mSessionId, mDrmInitData,
-                                            keyType, clearKeys);
+                                            keyType, clearKeyIds);
                                 } else if (event == MediaDrm.EVENT_KEY_EXPIRED) {
                                     Log.i(TAG, "MediaDrm event: Key expired");
                                     getKeys(mDrm, initDataType, mSessionId, mDrmInitData,
-                                            keyType, clearKeys);
+                                            keyType, clearKeyIds);
                                 } else {
                                     Log.e(TAG, "Events not supported" + event);
                                 }
@@ -400,7 +400,7 @@ public class MediaDrmClearkeyTest extends MediaPlayerTestBase {
     private void testClearKeyPlayback(
             UUID drmSchemeUuid,
             String videoMime, String[] videoFeatures,
-            String initDataType, byte[][] clearKeys,
+            String initDataType, byte[][] clearKeyIds,
             Uri audioUrl, boolean audioEncrypted,
             Uri videoUrl, boolean videoEncrypted,
             int videoWidth, int videoHeight, boolean scrambled, int keyType) throws Exception {
@@ -412,7 +412,7 @@ public class MediaDrmClearkeyTest extends MediaPlayerTestBase {
         MediaDrm drm = null;
         mSessionId = null;
         if (!scrambled) {
-            drm = startDrm(clearKeys, initDataType, drmSchemeUuid, keyType);
+            drm = startDrm(clearKeyIds, initDataType, drmSchemeUuid, keyType);
             mSessionId = openSession(drm);
         }
 
@@ -433,7 +433,7 @@ public class MediaDrmClearkeyTest extends MediaPlayerTestBase {
         mMediaCodecPlayer.prepare();
         if (!scrambled) {
             mDrmInitData = mMediaCodecPlayer.getDrmInitData();
-            getKeys(mDrm, initDataType, mSessionId, mDrmInitData, keyType, clearKeys);
+            getKeys(mDrm, initDataType, mSessionId, mDrmInitData, keyType, clearKeyIds);
         }
 
         if (!scrambled && keyType == MediaDrm.KEY_TYPE_OFFLINE) {
@@ -477,11 +477,11 @@ public class MediaDrmClearkeyTest extends MediaPlayerTestBase {
             return;
         }
 
-        byte[][] clearKeys = new byte[][] { CLEAR_KEY_CENC };
+        byte[][] clearKeyIds = new byte[][] { CLEAR_KEY_CENC };
         mSessionId = null;
         String initDataType = "cenc";
 
-        MediaDrm drm = startDrm(clearKeys, initDataType,
+        MediaDrm drm = startDrm(clearKeyIds, initDataType,
                 CLEARKEY_SCHEME_UUID, MediaDrm.KEY_TYPE_OFFLINE);
         mSessionId = openSession(drm);
 
@@ -507,7 +507,7 @@ public class MediaDrmClearkeyTest extends MediaPlayerTestBase {
 
         // Create and store the offline license
         getKeys(mDrm, initDataType, mSessionId, mDrmInitData, MediaDrm.KEY_TYPE_OFFLINE,
-                clearKeys);
+                clearKeyIds);
 
         // Verify the offline license is valid
         closeSession(drm, mSessionId);
@@ -517,7 +517,7 @@ public class MediaDrmClearkeyTest extends MediaPlayerTestBase {
 
         // Release the offline license
         getKeys(mDrm, initDataType, mKeySetId, mDrmInitData, MediaDrm.KEY_TYPE_RELEASE,
-                clearKeys);
+                clearKeyIds);
 
         // Verify restoreKeys will throw an exception if the offline license
         // has already been released
@@ -597,6 +597,91 @@ public class MediaDrmClearkeyTest extends MediaPlayerTestBase {
         stopDrm(drm);
         if (!success) {
             throw new Error("query key status failed");
+        }
+    }
+
+    public void testOfflineKeyManagement() throws Exception {
+        if (isWatchDevice()) {
+            // skip this test on watch because it calls
+            // addTrack that requires codec
+            return;
+        }
+
+        MediaDrm drm = startDrm(new byte[][] { CLEAR_KEY_CENC }, "cenc",
+                CLEARKEY_SCHEME_UUID, MediaDrm.KEY_TYPE_OFFLINE);
+
+        if (getClearkeyVersion(drm).matches("1.[01]")) {
+            Log.i(TAG, "Skipping testsOfflineKeyManagement: clearkey 1.2 required");
+            return;
+        }
+
+        mSessionId = openSession(drm);
+
+        // Test get offline keys
+        mMediaCodecPlayer = new MediaCodecClearKeyPlayer(
+                getActivity().getSurfaceHolder(),
+                mSessionId, false,
+                mContext.getResources());
+        mMediaCodecPlayer.setAudioDataSource(CENC_AUDIO_URL, null, false);
+        mMediaCodecPlayer.setVideoDataSource(CENC_VIDEO_URL, null, true);
+        mMediaCodecPlayer.start();
+        mMediaCodecPlayer.prepare();
+
+        try {
+            mDrmInitData = mMediaCodecPlayer.getDrmInitData();
+
+            List<byte[]> keySetIds = drm.getOfflineLicenseKeySetIds();
+            int preCount = keySetIds.size();
+
+            getKeys(drm, "cenc", mSessionId, mDrmInitData, MediaDrm.KEY_TYPE_OFFLINE,
+                    new byte[][] { CLEAR_KEY_CENC });
+
+            if (drm.getOfflineLicenseState(mKeySetId) != MediaDrm.OFFLINE_LICENSE_USABLE) {
+                throw new Error("Offline license state is not usable");
+            }
+
+            keySetIds = drm.getOfflineLicenseKeySetIds();
+
+            if (keySetIds.size() != preCount + 1) {
+                throw new Error("KeySetIds size did not increment");
+            }
+
+            boolean found = false;
+            for (int i = 0; i < keySetIds.size(); i++) {
+                if (Arrays.equals(keySetIds.get(i), mKeySetId)) {
+                    found = true;
+                    break;
+                }
+            }
+            if (!found) {
+                throw new Error("New KeySetId is missing from KeySetIds");
+            }
+
+            drm.removeOfflineLicense(mKeySetId);
+
+            keySetIds = drm.getOfflineLicenseKeySetIds();
+            if (keySetIds.size() != preCount) {
+                throw new Error("KeySetIds size is incorrect");
+            }
+
+            found = false;
+            for (int i = 0; i < keySetIds.size(); i++) {
+                if (Arrays.equals(keySetIds.get(i), mKeySetId)) {
+                    found = true;
+                    break;
+                }
+            }
+
+            if (found) {
+                throw new Error("New KeySetId is still in from KeySetIds after removal");
+            }
+
+            // TODO: after RELEASE is implemented: add offline key, release it
+            // get offline key status, check state is inactive
+        } finally {
+            mMediaCodecPlayer.reset();
+            closeSession(drm, mSessionId);
+            stopDrm(drm);
         }
     }
 
