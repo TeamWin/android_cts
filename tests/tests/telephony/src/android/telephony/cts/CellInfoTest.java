@@ -67,17 +67,6 @@ public class CellInfoTest extends AndroidTestCase{
     private static final int MAX_CQI = 30;
     private static final int MIN_CQI = 0;
 
-    /**
-     * Maximum and minimum valid LTE RSSI values in dBm
-     *
-     * The valid RSSI ASU range from current HAL is [0,31].
-     * Convert RSSI ASU to dBm: dBm = -113 + 2 * ASU, which is [-113, -51]
-     *
-     * Reference: TS 27.007 8.5 - Signal quality +CSQ
-     */
-    private static final int MAX_LTE_RSSI = -51;
-    private static final int MIN_LTE_RSSI = -113;
-
     // The followings are parameters for testing CellIdentityCdma
     // Network Id ranges from 0 to 65535.
     private static final int NETWORK_ID  = 65535;
@@ -401,11 +390,6 @@ public class CellInfoTest extends AndroidTestCase{
         int rsrq = cellSignalStrengthLte.getRsrq();
         assertTrue("getRsrq() out of range | Integer.MAX_VALUE, rsrq=" + rsrq,
             rsrq == Integer.MAX_VALUE || (rsrq >= MIN_RSRQ && rsrq <= MAX_RSRQ));
-
-        int rssi = cellSignalStrengthLte.getRssi();
-        assertTrue("getRssi() out of range [-113, -51] or Integer.MAX_VALUE if unknown, rssi="
-                        + rssi, rssi == CellInfo.UNAVAILABLE
-                        || (rssi >= MIN_LTE_RSSI && rssi <= MAX_LTE_RSSI));
 
         int rssnr = cellSignalStrengthLte.getRssnr();
         assertTrue("getRssnr() out of range | Integer.MAX_VALUE, rssnr=" + rssnr,
