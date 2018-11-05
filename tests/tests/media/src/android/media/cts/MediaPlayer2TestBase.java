@@ -54,7 +54,6 @@ public class MediaPlayer2TestBase extends ActivityInstrumentationTestCase2<Media
     protected static final int SLEEP_TIME = 1000;
     protected static final int LONG_SLEEP_TIME = 6000;
     protected static final int STREAM_RETRIES = 20;
-    protected static boolean sUseScaleToFitMode = false;
 
     protected Monitor mOnVideoSizeChangedCalled = new Monitor();
     protected Monitor mOnVideoRenderingStartCalled = new Monitor();
@@ -341,19 +340,10 @@ public class MediaPlayer2TestBase extends ActivityInstrumentationTestCase2<Media
             mPlayer.setDataSource(new DataSourceDesc.Builder()
                     .setDataSource(afd.getFileDescriptor(), afd.getStartOffset(), afd.getLength())
                     .build());
-
-            // Although it is only meant for video playback, it should not
-            // cause issues for audio-only playback.
-            int videoScalingMode = sUseScaleToFitMode?
-                                    MediaPlayer2.VIDEO_SCALING_MODE_SCALE_TO_FIT
-                                  : MediaPlayer2.VIDEO_SCALING_MODE_SCALE_TO_FIT_WITH_CROPPING;
-
-            mPlayer.setVideoScalingMode(videoScalingMode);
         } finally {
             // TODO: close afd only after setDataSource is confirmed.
             // afd.close();
         }
-        sUseScaleToFitMode = !sUseScaleToFitMode;  // Alternate the scaling mode
         return true;
     }
 
