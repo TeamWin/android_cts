@@ -148,11 +148,33 @@ public class UserDataTest {
     }
 
     @Test
+    public void testSetFcAlgorithmForCategory_invalid() {
+        assertThrows(NullPointerException.class, () -> mBuilder
+                .setFieldClassificationAlgorithmForCategory(null, "algo_mas", null));
+    }
+
+    @Test
+    public void testSetFcAlgorithmForCateogry() {
+        final UserData userData = mBuilder.setFieldClassificationAlgorithmForCategory(
+                mCategoryId, "algo_mas", null).build();
+        assertThat(userData.getFieldClassificationAlgorithmForCategory(mCategoryId)).isEqualTo(
+                "algo_mas");
+    }
+
+    @Test
     public void testBuild_valid() {
         final UserData userData = mBuilder.build();
         assertThat(userData).isNotNull();
         assertThat(userData.getId()).isEqualTo(mId);
-        assertThat(userData.getFieldClassificationAlgorithm()).isNull();
+        assertThat(userData.getFieldClassificationAlgorithmForCategory(mCategoryId)).isNull();
+    }
+
+    @Test
+    public void testGetFcAlgorithmForCategory_invalid() {
+        final UserData userData = mBuilder.setFieldClassificationAlgorithm("algo_mas", null)
+                .build();
+        assertThrows(NullPointerException.class, () -> userData
+                .getFieldClassificationAlgorithmForCategory(null));
     }
 
     @Test
@@ -161,7 +183,8 @@ public class UserDataTest {
 
         assertThrows(IllegalStateException.class, () -> mBuilder.add(mValue, mCategoryId2));
         assertThrows(IllegalStateException.class,
-                () -> mBuilder.setFieldClassificationAlgorithm("algo_mas", null));
+                () -> mBuilder.setFieldClassificationAlgorithmForCategory(mCategoryId,
+                        "algo_mas", null));
         assertThrows(IllegalStateException.class, () -> mBuilder.build());
     }
 }
