@@ -15,6 +15,8 @@
  */
 package com.android.cts.launchertests;
 
+import static org.junit.Assert.assertNotEquals;
+
 import android.app.Instrumentation;
 import android.content.BroadcastReceiver;
 import android.content.ComponentName;
@@ -22,10 +24,12 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.ServiceConnection;
+import android.content.pm.ActivityInfo;
 import android.content.pm.ApplicationInfo;
 import android.content.pm.LauncherActivityInfo;
 import android.content.pm.LauncherApps;
 import android.content.pm.PackageManager;
+import android.content.pm.PackageManager.NameNotFoundException;
 import android.net.Uri;
 import android.os.Bundle;
 import android.os.Handler;
@@ -48,6 +52,10 @@ import java.util.concurrent.TimeUnit;
 public class LauncherAppsTests extends AndroidTestCase {
 
     public static final String SIMPLE_APP_PACKAGE = "com.android.cts.launcherapps.simpleapp";
+    private static final String NO_LAUNCHABLE_ACTIVITY_APP_PACKAGE =
+            "com.android.cts.nolaunchableactivityapp";
+
+    private static final String SYNTHETIC_APP_DETAILS_ACTIVITY = "android.app.AppDetailsActivity";
 
     public static final String USER_EXTRA = "user_extra";
     public static final String PACKAGE_EXTRA = "package_extra";
@@ -199,6 +207,49 @@ public class LauncherAppsTests extends AndroidTestCase {
         // Trying to access the main profile from a managed profile -> shouldn't throw but
         // should just return false.
         assertFalse(mLauncherApps.isPackageEnabled("android", mUser));
+    }
+
+    public void testNoLaunchableActivityAppHasAppDetailsActivityInjected() throws Exception {
+        // NoLaunchableActivityApp is installed for duration of this test - make sure
+        // it's present on the activity list, has the synthetic activity generated, and it's
+        // enabled and exported
+        List<LauncherActivityInfo> activities = mLauncherApps.getActivityList(null, mUser);
+        boolean noLaunchableActivityAppFound = false;
+        for (LauncherActivityInfo activity : activities) {
+            ComponentName compName = activity.getComponentName();
+            if (compName.getPackageName().equals(NO_LAUNCHABLE_ACTIVITY_APP_PACKAGE)) {
+                noLaunchableActivityAppFound = true;
+                // make sure it points to the synthetic app details activity
+                assertEquals(activity.getName(), SYNTHETIC_APP_DETAILS_ACTIVITY);
+                // make sure it's both exported and enabled
+                try {
+                    PackageManager pm = mInstrumentation.getContext().getPackageManager();
+                    ActivityInfo ai = pm.getActivityInfo(compName, /*flags=*/ 0);
+                    assertTrue("Component " + compName + " is not enabled", ai.enabled);
+                    assertTrue("Component " + compName + " is not exported", ai.exported);
+                } catch (NameNotFoundException e) {
+                    fail("Package " + compName.getPackageName() + " not found.");
+                }
+            }
+        }
+        assertTrue(noLaunchableActivityAppFound);
+    }
+
+    public void testNoSystemAppHasSyntheticAppDetailsActivityInjected() throws Exception {
+        List<LauncherActivityInfo> activities = mLauncherApps.getActivityList(null, mUser);
+        for (LauncherActivityInfo activity : activities) {
+            ApplicationInfo appInfo = activity.getApplicationInfo();
+            boolean isSystemApp = ((appInfo.flags & ApplicationInfo.FLAG_SYSTEM) != 0)
+                    || ((appInfo.flags & ApplicationInfo.FLAG_UPDATED_SYSTEM_APP) != 0);
+            if (isSystemApp) {
+                // make sure we haven't generated a synthetic app details activity for it
+                assertNotEquals("Found a system app that had a synthetic activity generated,"
+                        + " package name: " + activity.getComponentName().getPackageName()
+                        + "; activity name: " + activity.getName(),
+                        activity.getName(),
+                        SYNTHETIC_APP_DETAILS_ACTIVITY);
+            }
+        }
     }
 
     private void expectSecurityException(ExceptionRunnable action, String failMessage)
