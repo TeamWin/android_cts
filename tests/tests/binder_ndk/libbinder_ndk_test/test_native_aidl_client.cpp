@@ -225,7 +225,7 @@ void testRepeat(const std::shared_ptr<ITest>& i, RepeatMethod<T> repeatMethod,
   }
 }
 
-TEST_P(NdkBinderTest_Aidl, PrimitiveArrays) {
+TEST_P(NdkBinderTest_Aidl, Arrays) {
   testRepeat<bool>(iface, &ITest::RepeatBooleanArray,
                    {
                        {},
@@ -268,6 +268,12 @@ TEST_P(NdkBinderTest_Aidl, PrimitiveArrays) {
                          {1.0},
                          {1.0, 2.0, 3.0},
                      });
+  testRepeat<std::string>(iface, &ITest::RepeatStringArray,
+                          {
+                              {},
+                              {"asdf"},
+                              {"aoeu", "lol", "brb"},
+                          });
 }
 
 std::shared_ptr<ITest> getLocalService() {

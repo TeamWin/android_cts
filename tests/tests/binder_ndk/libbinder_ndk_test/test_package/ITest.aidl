@@ -64,4 +64,5 @@ interface ITest {
     long[] RepeatLongArray(in long[] input, out long[] repeated);
     float[] RepeatFloatArray(in float[] input, out float[] repeated);
     double[] RepeatDoubleArray(in double[] input, out double[] repeated);
+    String[] RepeatStringArray(in String[] input, out String[] repeated);
 }
