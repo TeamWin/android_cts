@@ -52,9 +52,8 @@
         </activity>
 
         <activity android:name="android.security.cts.ActivityManagerTest$NormalActivity" />
-        <service android:name="android.security.cts.ActivityManagerTest$NormalAppMonitoring" />
         <activity android:name="android.security.cts.ActivityManagerTest$MaliciousActivity" />
-        <service android:name="android.security.cts.ActivityManagerTest$MaliciousAppMonitoring" />
+        <service android:name="android.security.cts.ActivityManagerTest$AppMonitoringService" />
     </application>
 
     <instrumentation android:name="android.support.test.runner.AndroidJUnitRunner"
