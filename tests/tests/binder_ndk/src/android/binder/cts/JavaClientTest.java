@@ -178,7 +178,7 @@ public class JavaClientTest {
     }
 
     @Test
-    public void testPrimitiveArrays() throws RemoteException {
+    public void testArrays() throws RemoteException {
         {
             boolean[] value = {};
             boolean[] out1 = new boolean[0];
@@ -242,6 +242,14 @@ public class JavaClientTest {
 
             Assert.assertArrayEquals(value, out1, 0.0);
             Assert.assertArrayEquals(value, out2, 0.0);
+        }
+        {
+            String[] value = {"aoeu", "lol", "brb"};
+            String[] out1 = new String[3];
+            String[] out2 = mInterface.RepeatStringArray(value, out1);
+
+            Assert.assertArrayEquals(value, out1);
+            Assert.assertArrayEquals(value, out2);
         }
     }
 }
