@@ -141,4 +141,10 @@ public class TestImpl extends ITest.Stub {
     System.arraycopy(in_value, 0, repeated, 0, in_value.length);
     return in_value;
   }
+
+  @Override
+  public String[] RepeatStringArray(String[] in_value, String[] repeated) {
+    System.arraycopy(in_value, 0, repeated, 0, in_value.length);
+    return in_value;
+  }
 }
