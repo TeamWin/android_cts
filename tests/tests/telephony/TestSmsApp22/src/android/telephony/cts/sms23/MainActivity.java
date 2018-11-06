@@ -17,9 +17,7 @@
 package android.telephony.cts.sms23;
 
 import android.app.Activity;
-import android.content.ContentValues;
 import android.database.Cursor;
-import android.net.Uri;
 import android.os.Bundle;
 import android.os.RemoteCallback;
 import android.provider.Telephony.Sms;
@@ -31,28 +29,16 @@ public class MainActivity extends Activity {
         super.onCreate(savedInstanceState);
 
         Cursor cursor = null;
-        Uri insertResult = null;
         Throwable t = null;
         try {
             cursor = getContentResolver()
                     .query(Sms.CONTENT_URI, null, null, null, null);
-
-            ContentValues values = new ContentValues();
-            values.put(Sms.SUBSCRIPTION_ID, 1);
-            values.put(Sms.ADDRESS, "12345");
-            values.put(Sms.BODY, "test");
-            values.put(Sms.DATE, System.currentTimeMillis());
-            values.put(Sms.SEEN, 1);
-            values.put(Sms.READ, 1);
-            values.put(Sms.THREAD_ID, 1);
-            insertResult = getContentResolver().insert(Sms.CONTENT_URI, values);
         } catch (Throwable ex) {
             t = ex;
         } finally {
             Bundle result = new Bundle();
             result.putString("class", getClass().getName());
             result.putInt("queryCount", cursor == null ? -1 : cursor.getCount());
-            result.putString("insertResult", String.valueOf(insertResult));
             result.putString("exceptionMessage",
                     t == null ? null : t.getMessage());
             getIntent().<RemoteCallback>getParcelableExtra("callback").sendResult(result);

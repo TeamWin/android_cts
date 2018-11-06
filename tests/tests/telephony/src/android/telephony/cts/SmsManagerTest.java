@@ -16,14 +16,11 @@
 
 package android.telephony.cts;
 
-import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.Matchers.anyOf;
 import static org.hamcrest.Matchers.emptyString;
-import static org.hamcrest.Matchers.endsWith;
 import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.greaterThan;
 import static org.hamcrest.Matchers.lessThanOrEqualTo;
-import static org.hamcrest.Matchers.not;
 import static org.hamcrest.Matchers.startsWith;
 import static org.junit.Assert.assertNotEquals;
 import static org.junit.Assert.assertThat;
@@ -113,6 +110,7 @@ public class SmsManagerTest extends InstrumentationTestCase {
     private boolean mDeliveryReportSupported;
     private static boolean mReceivedDataSms;
     private static String mReceivedText;
+    private static boolean sHasShellPermissionIdentity = false;
 
     private static final int TIME_OUT = 1000 * 60 * 4;
     private static final int NO_CALLS_TIMEOUT_MILLIS = 1000; // 1 second
@@ -323,8 +321,7 @@ public class SmsManagerTest extends InstrumentationTestCase {
         }
     }
 
-    //TODO(eugenesusla) re-enable once b/117885969 is addressed
-    public void disabledTestContentProviderAccessRestriction() throws Exception {
+    public void testContentProviderAccessRestriction() throws Exception {
         Uri dummySmsUri = null;
         Context context = getInstrumentation().getContext();
         ContentResolver contentResolver = context.getContentResolver();
@@ -400,12 +397,12 @@ public class SmsManagerTest extends InstrumentationTestCase {
                 getInstrumentation().getContext().getContentResolver(),
                 Settings.Secure.SMS_DEFAULT_APPLICATION);
         assertNotEquals(pkg, originalSmsApp);
-        resetReadWriteSmsAppOps(pkg);
         assertCanAccessSms(pkg, !accessRestrictionEnabled);
         try {
             setSmsApp(pkg);
             assertCanAccessSms(pkg, true);
         } finally {
+            resetReadWriteSmsAppOps(pkg);
             setSmsApp(originalSmsApp);
         }
     }
@@ -439,18 +436,22 @@ public class SmsManagerTest extends InstrumentationTestCase {
                     Settings.Secure.SMS_DEFAULT_APPLICATION, pkg);
             // Modifying settings by-passes SmsApplication, so we try to fix it with this.
             SmsApplication.getDefaultSmsApplication(context, true);
-            return null;
         });
     }
 
     private <T> T executeWithShellPermissionIdentity(Callable<T> callable) throws Exception {
+        if (sHasShellPermissionIdentity) {
+            return callable.call();
+        }
         UiAutomation uiAutomation = getInstrumentation().getUiAutomation(
                 UiAutomation.FLAG_DONT_SUPPRESS_ACCESSIBILITY_SERVICES);
         uiAutomation.adoptShellPermissionIdentity();
         try {
+            sHasShellPermissionIdentity = true;
             return callable.call();
         } finally {
             uiAutomation.dropShellPermissionIdentity();
+            sHasShellPermissionIdentity = false;
         }
     }
 
@@ -479,8 +480,6 @@ public class SmsManagerTest extends InstrumentationTestCase {
         assertThat(bundle.getString("exceptionMessage"), anyOf(equalTo(null), emptyString()));
         assertThat(bundle.getInt("queryCount"),
                 expectAccess ? greaterThan(0) : lessThanOrEqualTo(0));
-        assertThat(bundle.getString("insertResult"),
-                expectAccess ? not(endsWith("/0")) : anyOf(is(equalTo("null")), endsWith("/0")));
     }
 
     private void init() {

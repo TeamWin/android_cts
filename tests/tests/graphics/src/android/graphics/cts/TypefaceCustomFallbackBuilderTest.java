@@ -22,6 +22,7 @@ import android.content.res.AssetManager;
 import android.graphics.Typeface;
 import android.graphics.fonts.Font;
 import android.graphics.fonts.FontFamily;
+import android.graphics.fonts.FontStyle;
 import android.graphics.fonts.FontTestUtil;
 import android.support.test.InstrumentationRegistry;
 import android.support.test.filters.SmallTest;
@@ -141,8 +142,9 @@ public class TypefaceCustomFallbackBuilderTest {
                 }
             }
             final Typeface typeface = new Typeface.CustomFallbackBuilder(b.build())
-                    .setWeight(testStyle.first.intValue())
-                    .setItalic(testStyle.second.booleanValue()).build();
+                    .setStyle(new FontStyle(testStyle.first.intValue(),
+                              testStyle.second.booleanValue()
+                            ?  FontStyle.FONT_SLANT_ITALIC : FontStyle.FONT_SLANT_UPRIGHT)).build();
 
             assertEquals(testStyle, FontTestUtil.getSelectedStyle(typeface));
         }
