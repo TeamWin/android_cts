@@ -86,7 +86,7 @@ TEST_F(NdkBinderTest_AIBinder, LinkUnlink) {
       AIBinder_DeathRecipient_new(onBinderDied);
 
   EXPECT_EQ(STATUS_INVALID_OPERATION,
-            AIBinder_linkToDeath(binder, recipient, nullptr));
+            AIBinder_linkToDeath(binder, recipient, nullptr /*cookie*/));
 
   AIBinder_DeathRecipient_delete(recipient);
   AIBinder_decStrong(binder);
@@ -187,5 +187,109 @@ TEST_F(NdkBinderTest_AIBinder, UnknownFlagsRejected) {
   EXPECT_EQ(STATUS_BAD_VALUE,
             SampleData::transact(binder, kCode, WriteNothingToParcel,
                                  ReadNothingFromParcel, ~0));
+  AIBinder_decStrong(binder);
+}
+
+void* EmptyOnCreate(void* args) { return args; }
+void EmptyOnDestroy(void* /*userData*/) {}
+binder_status_t EmptyOnTransact(AIBinder* /*binder*/,
+                                transaction_code_t /*code*/,
+                                const AParcel* /*in*/, AParcel* /*out*/) {
+  return STATUS_OK;
+}
+
+TEST_F(NdkBinderTest_AIBinder, NullArguments) {
+  void* const kVoidStar = reinterpret_cast<void*>(0xDEADBEEF);
+  const char* const kStr = "asdf";
+  AIBinder* binder = SampleData::newBinder();
+  AIBinder_DeathRecipient* recipient =
+      AIBinder_DeathRecipient_new(onBinderDied);
+  EXPECT_NE(nullptr, recipient);
+
+  EXPECT_EQ(nullptr, AIBinder_Class_define(nullptr, EmptyOnCreate,
+                                           EmptyOnDestroy, EmptyOnTransact));
+  EXPECT_EQ(nullptr, AIBinder_Class_define(kStr, nullptr, EmptyOnDestroy,
+                                           EmptyOnTransact));
+  EXPECT_EQ(nullptr, AIBinder_Class_define(kStr, EmptyOnCreate, nullptr,
+                                           EmptyOnTransact));
+  EXPECT_EQ(nullptr, AIBinder_Class_define(kStr, EmptyOnCreate, EmptyOnDestroy,
+                                           nullptr));
+
+  EXPECT_EQ(nullptr, AIBinder_new(nullptr /*clazz*/, kVoidStar /*args*/));
+  EXPECT_EQ(false, AIBinder_isRemote(nullptr));
+  EXPECT_EQ(false, AIBinder_isAlive(nullptr));
+  EXPECT_EQ(STATUS_UNEXPECTED_NULL, AIBinder_ping(nullptr));
+
+  EXPECT_EQ(STATUS_UNEXPECTED_NULL,
+            AIBinder_linkToDeath(nullptr, recipient, kVoidStar /*cookie*/));
+  EXPECT_EQ(STATUS_UNEXPECTED_NULL,
+            AIBinder_linkToDeath(binder, nullptr, kVoidStar /*cookie*/));
+  EXPECT_EQ(STATUS_UNEXPECTED_NULL,
+            AIBinder_unlinkToDeath(nullptr, recipient, kVoidStar /*cookie*/));
+  EXPECT_EQ(STATUS_UNEXPECTED_NULL,
+            AIBinder_unlinkToDeath(binder, nullptr, kVoidStar /*cookie*/));
+
+  // Does not crash
+  AIBinder_incStrong(nullptr);
+  AIBinder_decStrong(nullptr);
+
+  EXPECT_EQ(-1, AIBinder_debugGetRefCount(nullptr));
+  EXPECT_EQ(false, AIBinder_associateClass(binder, nullptr));
+  EXPECT_EQ(false, AIBinder_associateClass(nullptr, SampleData::kClass));
+  EXPECT_EQ(nullptr, AIBinder_getClass(nullptr));
+  EXPECT_EQ(nullptr, AIBinder_getUserData(nullptr));
+
+  AParcel* parcel = nullptr;
+  EXPECT_EQ(STATUS_UNEXPECTED_NULL,
+            AIBinder_prepareTransaction(binder, nullptr));
+  EXPECT_EQ(STATUS_UNEXPECTED_NULL,
+            AIBinder_prepareTransaction(nullptr, &parcel));
+  EXPECT_EQ(nullptr, parcel);  // not modified
+
+  {
+    auto newParcel = [&] {
+      AParcel* parcel = nullptr;
+      EXPECT_OK(AIBinder_prepareTransaction(binder, &parcel));
+      return parcel;
+    };
+
+    AParcel* inParcel = nullptr;
+    AParcel* outParcel = nullptr;
+
+    inParcel = newParcel();
+    EXPECT_NE(nullptr, inParcel);
+    EXPECT_EQ(
+        STATUS_UNEXPECTED_NULL,
+        AIBinder_transact(nullptr, kCode, &inParcel, &outParcel, 0 /*flags*/));
+    EXPECT_EQ(nullptr, inParcel);   // ownership taken
+    EXPECT_EQ(nullptr, outParcel);  // not modified
+
+    EXPECT_EQ(
+        STATUS_UNEXPECTED_NULL,
+        AIBinder_transact(binder, kCode, nullptr, &outParcel, 0 /*flags*/));
+    EXPECT_EQ(nullptr, outParcel);  // not modified
+
+    inParcel = newParcel();
+    EXPECT_NE(nullptr, inParcel);
+    EXPECT_EQ(
+        STATUS_UNEXPECTED_NULL,
+        AIBinder_transact(binder, kCode, &inParcel, nullptr, 0 /*flags*/));
+    EXPECT_EQ(nullptr, inParcel);   // ownership taken
+    EXPECT_EQ(nullptr, outParcel);  // not modified
+  }
+
+  EXPECT_EQ(nullptr, AIBinder_Weak_new(nullptr));
+
+  // Does not crash
+  AIBinder_Weak_delete(nullptr);
+
+  EXPECT_EQ(nullptr, AIBinder_Weak_promote(nullptr));
+
+  EXPECT_EQ(nullptr, AIBinder_DeathRecipient_new(nullptr));
+
+  // Does not crash
+  AIBinder_DeathRecipient_delete(nullptr);
+
+  AIBinder_DeathRecipient_delete(recipient);
   AIBinder_decStrong(binder);
 }
