@@ -138,6 +138,7 @@ public class BrowserTest extends AndroidTestCase {
     /**
      * See Bug 6212665 for detailed information about this issue.
      */
+    @SecurityTest(minPatchLevel = "2012-01")
     public void testBrowserPrivateDataAccess() throws Throwable {
         // Yucky workaround to let us launch file:// Uris
         StrictMode.setVmPolicy(new StrictMode.VmPolicy.Builder().build());

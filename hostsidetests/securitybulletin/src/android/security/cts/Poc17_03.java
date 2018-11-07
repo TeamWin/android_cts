@@ -23,7 +23,7 @@ public class Poc17_03 extends SecurityTestCase {
     /**
      *  b/31824853
      */
-    @SecurityTest
+    @SecurityTest(minPatchLevel = "2017-03")
     public void testPocCVE_2016_8479() throws Exception {
         if (containsDriver(getDevice(), "/dev/kgsl-3d0")) {
              AdbUtils.runPocNoOutput("CVE-2016-8479", getDevice(), 180);
@@ -36,7 +36,7 @@ public class Poc17_03 extends SecurityTestCase {
     /**
      *  b/33940449
      */
-    @SecurityTest
+    @SecurityTest(minPatchLevel = "2017-03")
     public void testPocCVE_2017_0508() throws Exception {
         if (containsDriver(getDevice(), "/dev/ion") &&
             containsDriver(getDevice(), "/dev/dri/renderD129")) {
@@ -50,7 +50,7 @@ public class Poc17_03 extends SecurityTestCase {
     /**
      *  b/33899363
      */
-    @SecurityTest
+    @SecurityTest(minPatchLevel = "2017-03")
     public void testPocCVE_2017_0333() throws Exception {
         if (containsDriver(getDevice(), "/dev/dri/renderD128")) {
             AdbUtils.runPocNoOutput("CVE-2017-0333", getDevice(), 30);
@@ -62,7 +62,7 @@ public class Poc17_03 extends SecurityTestCase {
     /**
      *  b/33245849
      */
-    @SecurityTest
+    @SecurityTest(minPatchLevel = "2017-03")
     public void testPocCVE_2017_0334() throws Exception {
         if (containsDriver(getDevice(), "/dev/dri/renderD129")) {
            String out = AdbUtils.runPoc("CVE-2017-0334", getDevice());
@@ -73,7 +73,7 @@ public class Poc17_03 extends SecurityTestCase {
     /**
      * b/32707507
      */
-    @SecurityTest
+    @SecurityTest(minPatchLevel = "2017-03")
     public void testPocCVE_2017_0479() throws Exception {
         AdbUtils.runCommandLine("logcat -c" , getDevice());
         AdbUtils.runPocNoOutput("CVE-2017-0479", getDevice(), 60);
@@ -85,7 +85,7 @@ public class Poc17_03 extends SecurityTestCase {
     /*
      *  b/33178389
      */
-    @SecurityTest
+    @SecurityTest(minPatchLevel = "2017-03")
     public void testPocCVE_2017_0490() throws Exception {
         String bootCountBefore =
                 AdbUtils.runCommandLine("settings get global boot_count", getDevice());
