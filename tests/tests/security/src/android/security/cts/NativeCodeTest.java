@@ -124,7 +124,7 @@ public class NativeCodeTest extends TestCase {
      */
     private static native boolean doVrootTest();
 
-    @SecurityTest
+    @SecurityTest(minPatchLevel = "2017-01")
     public void testCVE20141710() throws Exception {
         assertTrue("Device is vulnerable to CVE-2014-1710", doCVE20141710Test());
     }

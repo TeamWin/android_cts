@@ -24,7 +24,7 @@ public class Poc18_02 extends SecurityTestCase {
     /**
      *  b/31799863
      */
-    @SecurityTest
+    @SecurityTest(minPatchLevel = "2018-02")
     public void testPocCVE_2017_6258() throws Exception {
         AdbUtils.runCommandLine("logcat -c", getDevice());
         AdbUtils.runPocNoOutput("CVE-2017-6258", getDevice(), 60);
@@ -37,7 +37,7 @@ public class Poc18_02 extends SecurityTestCase {
     /**
      *  b/35269676
      */
-    @SecurityTest
+    @SecurityTest(minPatchLevel = "2018-02")
     public void testPocCVE_2017_11041() throws Exception {
         AdbUtils.runCommandLine("logcat -c", getDevice());
         AdbUtils.runPocNoOutput("CVE-2017-11041", getDevice(), 60);
@@ -56,7 +56,7 @@ public class Poc18_02 extends SecurityTestCase {
     /**
      * b/68953950
      */
-     @SecurityTest
+     @SecurityTest(minPatchLevel = "2018-02")
      public void testPocCVE_2017_13232() throws Exception {
        AdbUtils.runCommandLine("logcat -c" , getDevice());
        AdbUtils.runPocNoOutput("CVE-2017-13232", getDevice(), 60);
@@ -69,7 +69,7 @@ public class Poc18_02 extends SecurityTestCase {
     /**
      *  b/65853158
      */
-    @SecurityTest
+    @SecurityTest(minPatchLevel = "2018-02")
     public void testPocCVE_2017_13273() throws Exception {
         AdbUtils.runCommandLine("dmesg -c" ,getDevice());
         AdbUtils.runCommandLine("setenforce 0",getDevice());

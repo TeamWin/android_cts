@@ -24,7 +24,7 @@ public class Poc16_11 extends SecurityTestCase {
     /**
      *  b/30955105
      */
-    @SecurityTest
+    @SecurityTest(minPatchLevel = "2016-11")
     public void testPocCVE_2016_6746() throws Exception {
         if(containsDriver(getDevice(), "/dev/dri/renderD129")) {
             AdbUtils.runPoc("CVE-2016-6746", getDevice(), 60);
@@ -34,7 +34,7 @@ public class Poc16_11 extends SecurityTestCase {
     /**
      *  b/29149404
      */
-    @SecurityTest
+    @SecurityTest(minPatchLevel = "2016-11")
     public void testPocCVE_2012_6702() throws Exception {
         AdbUtils.runCommandLine("logcat -c", getDevice());
         AdbUtils.runPoc("CVE-2012-6702", getDevice(), 60);
@@ -45,7 +45,7 @@ public class Poc16_11 extends SecurityTestCase {
     /**
      *  b/30904789
      */
-    @SecurityTest
+    @SecurityTest(minPatchLevel = "2016-11")
     public void testPocCVE_2016_6730() throws Exception {
         if(containsDriver(getDevice(), "/dev/dri/renderD129")) {
             AdbUtils.runPoc("CVE-2016-6730", getDevice(), 60);
@@ -55,7 +55,7 @@ public class Poc16_11 extends SecurityTestCase {
     /**
      *  b/30906023
      */
-    @SecurityTest
+    @SecurityTest(minPatchLevel = "2016-11")
     public void testPocCVE_2016_6731() throws Exception {
         if(containsDriver(getDevice(), "/dev/dri/renderD129")) {
             AdbUtils.runPoc("CVE-2016-6731", getDevice(), 60);
@@ -65,7 +65,7 @@ public class Poc16_11 extends SecurityTestCase {
     /**
      *  b/30906599
      */
-    @SecurityTest
+    @SecurityTest(minPatchLevel = "2016-11")
     public void testPocCVE_2016_6732() throws Exception {
         if(containsDriver(getDevice(), "/dev/dri/renderD129")) {
             AdbUtils.runPoc("CVE-2016-6732", getDevice(), 60);
@@ -75,7 +75,7 @@ public class Poc16_11 extends SecurityTestCase {
     /**
      *  b/30906694
      */
-    @SecurityTest
+    @SecurityTest(minPatchLevel = "2016-11")
     public void testPocCVE_2016_6733() throws Exception {
         if(containsDriver(getDevice(), "/dev/dri/renderD129")) {
             AdbUtils.runPoc("CVE-2016-6733", getDevice(), 60);
@@ -85,7 +85,7 @@ public class Poc16_11 extends SecurityTestCase {
     /**
      *  b/30907120
      */
-    @SecurityTest
+    @SecurityTest(minPatchLevel = "2016-11")
     public void testPocCVE_2016_6734() throws Exception {
         if(containsDriver(getDevice(), "/dev/dri/renderD129")) {
             AdbUtils.runPoc("CVE-2016-6734", getDevice(), 60);
@@ -95,7 +95,7 @@ public class Poc16_11 extends SecurityTestCase {
     /**
      *  b/30907701
      */
-    @SecurityTest
+    @SecurityTest(minPatchLevel = "2016-11")
     public void testPocCVE_2016_6735() throws Exception {
         if(containsDriver(getDevice(), "/dev/dri/renderD129")) {
             AdbUtils.runPoc("CVE-2016-6735", getDevice(), 60);
@@ -105,7 +105,7 @@ public class Poc16_11 extends SecurityTestCase {
     /**
      *  b/30953284
      */
-    @SecurityTest
+    @SecurityTest(minPatchLevel = "2016-11")
     public void testPocCVE_2016_6736() throws Exception {
         if(containsDriver(getDevice(), "/dev/dri/renderD129")) {
             AdbUtils.runPoc("CVE-2016-6736", getDevice(), 60);

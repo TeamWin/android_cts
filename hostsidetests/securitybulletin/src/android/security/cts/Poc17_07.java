@@ -26,7 +26,7 @@ public class Poc17_07 extends SecurityTestCase {
     /**
      * b/35443725
      **/
-    @SecurityTest
+    @SecurityTest(minPatchLevel = "2017-07")
     public void testPocCVE_2016_2109() throws Exception {
       assertFalse("Overallocation detected!",
           AdbUtils.runPocCheckExitCode("CVE-2016-2109",
@@ -36,7 +36,7 @@ public class Poc17_07 extends SecurityTestCase {
     /**
      * b/35467458
      */
-    @SecurityTest
+    @SecurityTest(minPatchLevel = "2017-07")
     public void testPocCVE_2017_0698() throws Exception {
       assertFalse("VULNERABLE EXIT CODE FOUND", AdbUtils.runPocCheckExitCode("CVE-2017-0698",
                   getDevice(), 60));

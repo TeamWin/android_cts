@@ -23,7 +23,7 @@ public class Poc16_09 extends SecurityTestCase {
     /**
      * b/27773913
      */
-    @SecurityTest
+    @SecurityTest(minPatchLevel = "2016-09")
     public void testPocCVE_2016_2471() throws Exception {
         AdbUtils.runPoc("CVE-2016-2471", getDevice(), 60);
     }
@@ -31,7 +31,7 @@ public class Poc16_09 extends SecurityTestCase {
     /**
      *  b/28760453
      */
-    @SecurityTest
+    @SecurityTest(minPatchLevel = "2016-09")
     public void testPocCVE_2015_8839() throws Exception {
         AdbUtils.runCommandLine("logcat -c" , getDevice());
         AdbUtils.runPoc("CVE-2015-8839", getDevice(), 60);
