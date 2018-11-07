@@ -27,6 +27,7 @@ public class ActivityManagerTest extends TestCase {
         super.setUp();
     }
 
+    @SecurityTest(minPatchLevel = "2015-03")
     public void testActivityManager_injectInputEvents() throws ClassNotFoundException {
         try {
             /*
