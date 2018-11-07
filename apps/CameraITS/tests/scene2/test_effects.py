@@ -33,8 +33,8 @@ MONO_UV_SPREAD_MAX = 2  # max spread for U & V channels [0:255] for mono image
 NAME = os.path.basename(__file__).split('.')[0]
 W, H = 640, 480
 YUV_MAX = 255.0  # normalization number for YUV images [0:1] --> [0:255]
-YUV_UV_SPREAD_MIN = 40  # min spread for U & V channels [0:255] for color image
-YUV_Y_SPREAD_MIN = 100  # min spread for Y channel [0:255] for color image
+YUV_UV_SPREAD_MIN = 10  # min spread for U & V channels [0:255] for color image
+YUV_Y_SPREAD_MIN = 50  # min spread for Y channel [0:255] for color image
 
 
 def main():

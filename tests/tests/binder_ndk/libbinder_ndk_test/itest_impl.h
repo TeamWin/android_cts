@@ -152,4 +152,12 @@ class MyTest : public ::aidl::test_package::BnTest,
     *_aidl_return = in_value;
     return ::ndk::ScopedAStatus(AStatus_newOk());
   }
+  ::ndk::ScopedAStatus RepeatStringArray(
+      const std::vector<std::string>& in_value,
+      std::vector<std::string>* out_repeated,
+      std::vector<std::string>* _aidl_return) override {
+    *out_repeated = in_value;
+    *_aidl_return = in_value;
+    return ::ndk::ScopedAStatus(AStatus_newOk());
+  }
 };
