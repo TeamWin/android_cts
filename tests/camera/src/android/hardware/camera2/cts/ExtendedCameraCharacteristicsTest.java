@@ -182,19 +182,33 @@ public class ExtendedCameraCharacteristicsTest extends AndroidTestCase {
                 continue;
             }
 
+            boolean isMonochromeWithY8 = arrayContains(actualCapabilities, MONOCHROME)
+                    && arrayContains(outputFormats, ImageFormat.Y8);
+
             assertArrayContains(
                     String.format("No valid YUV_420_888 preview formats found for: ID %s",
                             mIds[counter]), outputFormats, ImageFormat.YUV_420_888);
+            if (isMonochromeWithY8) {
+                assertArrayContains(
+                        String.format("No valid Y8 preview formats found for: ID %s",
+                                mIds[counter]), outputFormats, ImageFormat.Y8);
+            }
             assertArrayContains(String.format("No JPEG image format for: ID %s",
                     mIds[counter]), outputFormats, ImageFormat.JPEG);
 
             Size[] yuvSizes = config.getOutputSizes(ImageFormat.YUV_420_888);
+            Size[] y8Sizes = config.getOutputSizes(ImageFormat.Y8);
             Size[] jpegSizes = config.getOutputSizes(ImageFormat.JPEG);
             Size[] privateSizes = config.getOutputSizes(ImageFormat.PRIVATE);
 
             CameraTestUtils.assertArrayNotEmpty(yuvSizes,
                     String.format("No sizes for preview format %x for: ID %s",
                             ImageFormat.YUV_420_888, mIds[counter]));
+            if (isMonochromeWithY8) {
+                CameraTestUtils.assertArrayNotEmpty(y8Sizes,
+                    String.format("No sizes for preview format %x for: ID %s",
+                            ImageFormat.Y8, mIds[counter]));
+            }
 
             Rect activeRect = CameraTestUtils.getValueNotNull(
                     c, CameraCharacteristics.SENSOR_INFO_ACTIVE_ARRAY_SIZE);
@@ -271,6 +285,13 @@ public class ExtendedCameraCharacteristicsTest extends AndroidTestCase {
                             privateSizesList.contains(FULLHD_ALT);
                     assertTrue("Full device FullHD YUV size not found", yuvSupportFullHD);
                     assertTrue("Full device FullHD PRIVATE size not found", privateSupportFullHD);
+
+                    if (isMonochromeWithY8) {
+                        ArrayList<Size> y8SizesList = new ArrayList<>(Arrays.asList(y8Sizes));
+                        boolean y8SupportFullHD = y8SizesList.contains(FULLHD) ||
+                                y8SizesList.contains(FULLHD_ALT);
+                        assertTrue("Full device FullHD Y8 size not found", y8SupportFullHD);
+                    }
                 }
                 // remove all FullHD or FullHD_Alt sizes for the remaining of the test
                 jpegSizesList.remove(FULLHD);
@@ -295,6 +316,17 @@ public class ExtendedCameraCharacteristicsTest extends AndroidTestCase {
                     for (Size s : jpegSizesList) {
                         if (!yuvSizesList.contains(s)) {
                             fail("Size " + s + " not found in YUV format");
+                        }
+                    }
+                }
+
+                if (isMonochromeWithY8) {
+                    ArrayList<Size> y8SizesList = new ArrayList<>(Arrays.asList(y8Sizes));
+                    if (!y8SizesList.containsAll(jpegSizesList)) {
+                        for (Size s : jpegSizesList) {
+                            if (!y8SizesList.contains(s)) {
+                                fail("Size " + s + " not found in Y8 format");
+                            }
                         }
                     }
                 }
@@ -777,6 +809,9 @@ public class ExtendedCameraCharacteristicsTest extends AndroidTestCase {
                     CameraCharacteristics.NOISE_REDUCTION_AVAILABLE_NOISE_REDUCTION_MODES);
 
             int[] inputFormats = configs.getInputFormats();
+            int[] outputFormats = configs.getOutputFormats();
+            boolean isMonochromeWithY8 = arrayContains(capabilities, MONOCHROME)
+                    && arrayContains(outputFormats, ImageFormat.Y8);
 
             boolean supportZslEdgeMode = false;
             boolean supportZslNoiseReductionMode = false;
@@ -820,6 +855,9 @@ public class ExtendedCameraCharacteristicsTest extends AndroidTestCase {
                 // Verify mandatory input formats are supported
                 mCollector.expectTrue("YUV_420_888 input must be supported for YUV reprocessing",
                         !supportYUV || arrayContains(inputFormats, ImageFormat.YUV_420_888));
+                mCollector.expectTrue("Y8 input must be supported for YUV reprocessing on " +
+                        "MONOCHROME devices with Y8 support", !supportYUV || !isMonochromeWithY8
+                        || arrayContains(inputFormats, ImageFormat.Y8));
                 mCollector.expectTrue("PRIVATE input must be supported for OPAQUE reprocessing",
                         !supportOpaque || arrayContains(inputFormats, ImageFormat.PRIVATE));
 
@@ -832,11 +870,17 @@ public class ExtendedCameraCharacteristicsTest extends AndroidTestCase {
 
                 for (int input : inputFormats) {
                     // Verify mandatory output formats are supported
-                    int[] outputFormats = configs.getValidOutputFormatsForInput(input);
-                    mCollector.expectTrue("YUV_420_888 output must be supported for reprocessing",
-                            arrayContains(outputFormats, ImageFormat.YUV_420_888));
+                    int[] outputFormatsForInput = configs.getValidOutputFormatsForInput(input);
+                    mCollector.expectTrue(
+                        "YUV_420_888 output must be supported for reprocessing",
+                        input == ImageFormat.Y8
+                        || arrayContains(outputFormatsForInput, ImageFormat.YUV_420_888));
+                    mCollector.expectTrue(
+                        "Y8 output must be supported for reprocessing on MONOCHROME devices with"
+                        + " Y8 support", !isMonochromeWithY8 || input == ImageFormat.YUV_420_888
+                        || arrayContains(outputFormatsForInput, ImageFormat.Y8));
                     mCollector.expectTrue("JPEG output must be supported for reprocessing",
-                            arrayContains(outputFormats, ImageFormat.JPEG));
+                            arrayContains(outputFormatsForInput, ImageFormat.JPEG));
 
                     // Verify camera can output the reprocess input formats and sizes.
                     Size[] inputSizes = configs.getInputSizes(input);

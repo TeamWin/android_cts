@@ -2268,6 +2268,20 @@ public class StaticMetadata {
     }
 
     /**
+     * Check if this camera device is a monochrome camera with Y8 support.
+     *
+     * @return true if this is a monochrome camera with Y8 support.
+     */
+    public boolean isMonochromeWithY8() {
+        int[] supportedFormats = getAvailableFormats(
+                StaticMetadata.StreamDirection.Output);
+        return (isColorOutputSupported()
+                && isCapabilitySupported(
+                        CameraCharacteristics.REQUEST_AVAILABLE_CAPABILITIES_MONOCHROME)
+                && CameraTestUtils.contains(supportedFormats, ImageFormat.Y8));
+    }
+
+    /**
      * Check if high speed video is supported (HIGH_SPEED_VIDEO scene mode is
      * supported, supported high speed fps ranges and sizes are valid).
      *

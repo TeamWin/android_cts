@@ -119,6 +119,11 @@ public class ItsUtils {
         return getOutputSizes(ccs, ImageFormat.YUV_420_888);
     }
 
+    public static Size[] getY8OutputSizes(CameraCharacteristics ccs)
+            throws ItsException {
+        return getOutputSizes(ccs, ImageFormat.Y8);
+    }
+
     public static Size getMaxOutputSize(CameraCharacteristics ccs, int format)
             throws ItsException {
         return getMaxSize(getOutputSizes(ccs, format));
@@ -201,10 +206,11 @@ public class ItsUtils {
             }
             data = new byte[buffer.capacity()];
             buffer.get(data);
-            Logt.i(TAG, "Done reading jpeg image, format %d");
+            Logt.i(TAG, "Done reading jpeg image");
             return data;
         } else if (format == ImageFormat.YUV_420_888 || format == ImageFormat.RAW_SENSOR
-                || format == ImageFormat.RAW10 || format == ImageFormat.RAW12) {
+                || format == ImageFormat.RAW10 || format == ImageFormat.RAW12
+                || format == ImageFormat.Y8) {
             int offset = 0;
             int dataSize = width * height * ImageFormat.getBitsPerPixel(format) / 8;
             if (quota != null) {
@@ -291,6 +297,7 @@ public class ItsUtils {
             case ImageFormat.RAW10:
             case ImageFormat.RAW12:
             case ImageFormat.JPEG:
+            case ImageFormat.Y8:
                 return 1 == planes.length;
             default:
                 return false;

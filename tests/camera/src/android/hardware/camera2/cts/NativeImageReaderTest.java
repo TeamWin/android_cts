@@ -38,11 +38,17 @@ public class NativeImageReaderTest extends Camera2AndroidTestCase {
                 testJpegNative(mDebugFileNameBase));
     }
 
+    public void testY8() {
+        assertTrue("testY8 fail, see log for details",
+                testY8Native(mDebugFileNameBase));
+    }
+
     public void testImageReaderCloseAcquiredImages() {
         assertTrue("testImageReaderClose fail, see log for details",
                 testImageReaderCloseAcquiredImagesNative());
     }
 
     private static native boolean testJpegNative(String filePath);
+    private static native boolean testY8Native(String filePath);
     private static native boolean testImageReaderCloseAcquiredImagesNative();
 }

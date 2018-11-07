@@ -572,6 +572,29 @@ class StaticInfo {
         return getDurationFor(ACAMERA_SCALER_AVAILABLE_STALL_DURATIONS, format, width, height);
     }
 
+    bool getMaxSizeForFormat(int32_t format, int32_t *width, int32_t *height) {
+        ACameraMetadata_const_entry entry;
+        ACameraMetadata_getConstEntry(mChars,
+                ACAMERA_SCALER_AVAILABLE_STREAM_CONFIGURATIONS, &entry);
+        bool supported = false;
+        int32_t w = 0, h = 0;
+        for (uint32_t i = 0; i < entry.count; i += 4) {
+            if (entry.data.i32[i] == format &&
+                    entry.data.i32[i+3] == ACAMERA_SCALER_AVAILABLE_STREAM_CONFIGURATIONS_OUTPUT &&
+                    entry.data.i32[i+1] * entry.data.i32[i+2] > w * h) {
+                w = entry.data.i32[i+1];
+                h = entry.data.i32[i+2];
+                supported = true;
+            }
+        }
+
+        if (supported) {
+            *width = w;
+            *height = h;
+        }
+        return supported;
+    }
+
   private:
     int64_t getDurationFor(uint32_t tag, int64_t format, int64_t width, int64_t height) {
         if (tag != ACAMERA_SCALER_AVAILABLE_MIN_FRAME_DURATIONS &&
@@ -2348,7 +2371,7 @@ cleanup:
 }
 
 bool nativeImageReaderTestBase(
-        JNIEnv* env, jstring jOutPath, AImageReader_ImageCallback cb) {
+        JNIEnv* env, jstring jOutPath, jint format, AImageReader_ImageCallback cb) {
     const int NUM_TEST_IMAGES = 10;
     const int TEST_WIDTH  = 640;
     const int TEST_HEIGHT = 480;
@@ -2407,8 +2430,26 @@ bool nativeImageReaderTestBase(
         AImageReader_ImageListener readerCb { &readerListener, cb };
         readerListener.setDumpFilePathBase(outPath);
 
+        int32_t testWidth, testHeight;
+        switch (format) {
+            case AIMAGE_FORMAT_JPEG:
+                testWidth = TEST_WIDTH;
+                testHeight = TEST_HEIGHT;
+                break;
+            case AIMAGE_FORMAT_Y8:
+                if (!staticInfo.getMaxSizeForFormat(format, &testWidth, &testHeight)) {
+                    // This isn't an error condition: device does't support this
+                    // format.
+                    pass = true;
+                    goto cleanup;
+                }
+                break;
+            default:
+                LOG_ERROR(errorString, "Testcase doesn't yet support format %d", format);
+                goto cleanup;
+        }
         mediaRet = testCase.initImageReaderWithErrorLog(
-                TEST_WIDTH, TEST_HEIGHT, AIMAGE_FORMAT_JPEG, NUM_TEST_IMAGES,
+                testWidth, testHeight, format, NUM_TEST_IMAGES,
                 &readerCb);
         if (mediaRet != AMEDIA_OK) {
             // Don't log error here. testcase did it
@@ -2574,18 +2615,27 @@ Java_android_hardware_camera2_cts_NativeImageReaderTest_\
 testJpegNative(
         JNIEnv* env, jclass /*clazz*/, jstring jOutPath) {
     ALOGV("%s", __FUNCTION__);
-    return nativeImageReaderTestBase(env, jOutPath, ImageReaderListener::validateImageCb);
+    return nativeImageReaderTestBase(env, jOutPath, AIMAGE_FORMAT_JPEG,
+            ImageReaderListener::validateImageCb);
 }
 
+extern "C" jboolean
+Java_android_hardware_camera2_cts_NativeImageReaderTest_\
+testY8Native(
+        JNIEnv* env, jclass /*clazz*/, jstring jOutPath) {
+    ALOGV("%s", __FUNCTION__);
+    return nativeImageReaderTestBase(env, jOutPath, AIMAGE_FORMAT_Y8,
+            ImageReaderListener::validateImageCb);
+}
 
 extern "C" jboolean
 Java_android_hardware_camera2_cts_NativeImageReaderTest_\
 testImageReaderCloseAcquiredImagesNative(
         JNIEnv* env, jclass /*clazz*/) {
     ALOGV("%s", __FUNCTION__);
-    return nativeImageReaderTestBase(env, nullptr, ImageReaderListener::acquireImageCb);
+    return nativeImageReaderTestBase(env, nullptr, AIMAGE_FORMAT_JPEG,
+            ImageReaderListener::acquireImageCb);
 }
-
 
 extern "C" jboolean
 Java_android_hardware_camera2_cts_NativeStillCaptureTest_\

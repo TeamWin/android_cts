@@ -1538,6 +1538,7 @@ public class RobustnessTest extends Camera2AndroidTestCase {
         static final int JPEG = ImageFormat.JPEG;
         static final int YUV  = ImageFormat.YUV_420_888;
         static final int RAW  = ImageFormat.RAW_SENSOR;
+        static final int Y8   = ImageFormat.Y8;
 
         // Max resolution indices
         static final int PREVIEW = 0;
@@ -1554,6 +1555,8 @@ public class RobustnessTest extends Camera2AndroidTestCase {
             Size[] privSizes = sm.getAvailableSizesForFormatChecked(ImageFormat.PRIVATE,
                     StaticMetadata.StreamDirection.Output);
             Size[] yuvSizes = sm.getAvailableSizesForFormatChecked(ImageFormat.YUV_420_888,
+                    StaticMetadata.StreamDirection.Output);
+            Size[] y8Sizes = sm.getAvailableSizesForFormatChecked(ImageFormat.Y8,
                     StaticMetadata.StreamDirection.Output);
             Size[] jpegSizes = sm.getJpegOutputSizesChecked();
             Size[] rawSizes = sm.getRawOutputSizesChecked();
@@ -1588,6 +1591,17 @@ public class RobustnessTest extends Camera2AndroidTestCase {
                 maxPrivSizes[VGA] = vgaSize;
                 maxYuvSizes[VGA] = vgaSize;
                 maxJpegSizes[VGA] = vgaSize;
+
+                if (sm.isMonochromeWithY8()) {
+                    maxY8Sizes[PREVIEW]  = getMaxSize(y8Sizes, maxPreviewSize);
+                    if (sm.isExternalCamera()) {
+                        maxY8Sizes[RECORD]  = getMaxExternalRecordingSize(cameraId, configs);
+                    } else {
+                        maxY8Sizes[RECORD]  = getMaxRecordingSize(cameraId);
+                    }
+                    maxY8Sizes[MAXIMUM] = CameraTestUtils.getMaxSize(y8Sizes);
+                    maxY8Sizes[VGA] = vgaSize;
+                }
             }
 
             if (sm.isColorOutputSupported() && !sm.isHardwareLevelLegacy()) {
@@ -1598,11 +1612,15 @@ public class RobustnessTest extends Camera2AndroidTestCase {
                 maxPrivSizes[VGA_FULL_FOV] = vgaFullFovSize;
                 maxYuvSizes[VGA_FULL_FOV] = vgaFullFovSize;
                 maxJpegSizes[VGA_FULL_FOV] = vgaFullFovSize;
+                if (sm.isMonochromeWithY8()) {
+                    maxY8Sizes[VGA_FULL_FOV] = vgaFullFovSize;
+                }
 
                 // Max resolution that runs at 30fps
 
                 Size maxPriv30fpsSize = null;
                 Size maxYuv30fpsSize = null;
+                Size maxY830fpsSize = null;
                 Size maxJpeg30fpsSize = null;
                 Comparator<Size> comparator = new SizeComparator();
                 for (Map.Entry<Size, Long> e :
@@ -1636,6 +1654,25 @@ public class RobustnessTest extends Camera2AndroidTestCase {
                 }
                 assertTrue("No YUV_420_888 resolution available at 30fps!", maxYuv30fpsSize != null);
 
+                if (sm.isMonochromeWithY8()) {
+                    for (Map.Entry<Size, Long> e :
+                                 sm.getAvailableMinFrameDurationsForFormatChecked(
+                                         ImageFormat.Y8).
+                                 entrySet()) {
+                        Size s = e.getKey();
+                        Long minDuration = e.getValue();
+                        Log.d(TAG, String.format("Y8 Size: %s, duration %d limit %d",
+                                s, minDuration, FRAME_DURATION_30FPS_NSEC));
+                        if (minDuration <= FRAME_DURATION_30FPS_NSEC) {
+                            if (maxY830fpsSize == null ||
+                                    comparator.compare(maxY830fpsSize, s) < 0) {
+                                maxY830fpsSize = s;
+                            }
+                        }
+                    }
+                    assertTrue("No Y8 resolution available at 30fps!", maxY830fpsSize != null);
+                }
+
                 for (Map.Entry<Size, Long> e :
                              sm.getAvailableMinFrameDurationsForFormatChecked(ImageFormat.JPEG).
                              entrySet()) {
@@ -1653,6 +1690,7 @@ public class RobustnessTest extends Camera2AndroidTestCase {
 
                 maxPrivSizes[MAX_30FPS] = maxPriv30fpsSize;
                 maxYuvSizes[MAX_30FPS] = maxYuv30fpsSize;
+                maxY8Sizes[MAX_30FPS] = maxY830fpsSize;
                 maxJpegSizes[MAX_30FPS] = maxJpeg30fpsSize;
             }
 
@@ -1662,16 +1700,20 @@ public class RobustnessTest extends Camera2AndroidTestCase {
             Size[] yuvInputSizes = configs.getInputSizes(ImageFormat.YUV_420_888);
             maxInputYuvSize = yuvInputSizes != null ?
                     CameraTestUtils.getMaxSize(yuvInputSizes) : null;
-
+            Size[] y8InputSizes = configs.getInputSizes(ImageFormat.Y8);
+            maxInputY8Size = y8InputSizes != null ?
+                    CameraTestUtils.getMaxSize(y8InputSizes) : null;
         }
 
         public final Size[] maxPrivSizes = new Size[RESOLUTION_COUNT];
         public final Size[] maxJpegSizes = new Size[RESOLUTION_COUNT];
         public final Size[] maxYuvSizes = new Size[RESOLUTION_COUNT];
+        public final Size[] maxY8Sizes = new Size[RESOLUTION_COUNT];
         public final Size maxRawSize;
         // TODO: support non maximum reprocess input.
         public final Size maxInputPrivSize;
         public final Size maxInputYuvSize;
+        public final Size maxInputY8Size;
 
         static public String configToString(int[] config) {
             StringBuilder b = new StringBuilder("{ ");
@@ -1714,6 +1756,9 @@ public class RobustnessTest extends Camera2AndroidTestCase {
                     break;
                 case YUV:
                     b.append("[YUV, ");
+                    break;
+                case Y8:
+                    b.append("[Y8, ");
                     break;
                 case RAW:
                     b.append("[RAW, ");
@@ -1769,6 +1814,10 @@ public class RobustnessTest extends Camera2AndroidTestCase {
                 format = ImageFormat.YUV_420_888;
                 size = maxSizes.maxInputYuvSize;
                 break;
+            case Y8:
+                format = ImageFormat.Y8;
+                size = maxSizes.maxInputY8Size;
+                break;
             default:
                 throw new IllegalArgumentException("Input format not supported: " +
                         reprocessConfig[0]);
@@ -1778,6 +1827,27 @@ public class RobustnessTest extends Camera2AndroidTestCase {
     }
 
     private void testReprocessStreamCombination(String cameraId, int[] reprocessConfig,
+            MaxStreamSizes maxSizes, StaticMetadata staticInfo) throws Exception {
+        // Test reprocess stream combination
+        testSingleReprocessStreamCombination(cameraId, reprocessConfig, maxSizes, staticInfo);
+
+        // Test substituting YUV_888 format with Y8 format in reprocess stream combination.
+        if (mStaticInfo.isMonochromeWithY8()) {
+            int[] substitutedCfg = reprocessConfig.clone();
+            boolean hasY8 = false;
+            for (int i = 0; i < reprocessConfig.length; i += 2) {
+                if (substitutedCfg[i] == YUV) {
+                    substitutedCfg[i] = Y8;
+                    hasY8 = true;
+                }
+            }
+            if (hasY8) {
+                testSingleReprocessStreamCombination(cameraId, substitutedCfg, maxSizes, staticInfo);
+            }
+        }
+
+    }
+    private void testSingleReprocessStreamCombination(String cameraId, int[] reprocessConfig,
             MaxStreamSizes maxSizes, StaticMetadata staticInfo) throws Exception {
 
         Log.i(TAG, String.format("Testing Camera %s, reprocess config: %s", cameraId,
@@ -1789,6 +1859,7 @@ public class RobustnessTest extends Camera2AndroidTestCase {
         List<SurfaceTexture> privTargets = new ArrayList<>();
         List<ImageReader> jpegTargets = new ArrayList<>();
         List<ImageReader> yuvTargets = new ArrayList<>();
+        List<ImageReader> y8Targets = new ArrayList<>();
         List<ImageReader> rawTargets = new ArrayList<>();
         List<Surface> outputSurfaces = new ArrayList<>();
         ImageReader inputReader = null;
@@ -1803,7 +1874,7 @@ public class RobustnessTest extends Camera2AndroidTestCase {
                 CameraCharacteristics.REQUEST_AVAILABLE_CAPABILITIES_PRIVATE_REPROCESSING);
 
         // Skip the configuration if the format is not supported for reprocessing.
-        if ((reprocessConfig[0] == YUV && !supportYuvReprocess) ||
+        if (((reprocessConfig[0] == YUV || reprocessConfig[0] == Y8) && !supportYuvReprocess) ||
                 (reprocessConfig[0] == PRIV && !supportOpaqueReprocess)) {
             return;
         }
@@ -1812,18 +1883,22 @@ public class RobustnessTest extends Camera2AndroidTestCase {
             // reprocessConfig[2..] are additional outputs
             setupConfigurationTargets(
                     Arrays.copyOfRange(reprocessConfig, 2, reprocessConfig.length),
-                    maxSizes, privTargets, jpegTargets, yuvTargets, rawTargets, outputSurfaces,
-                    NUM_REPROCESS_CAPTURES_PER_CONFIG);
+                    maxSizes, privTargets, jpegTargets, yuvTargets, y8Targets,
+                    rawTargets, outputSurfaces, NUM_REPROCESS_CAPTURES_PER_CONFIG);
 
             // reprocessConfig[0:1] is input
             InputConfiguration inputConfig = getInputConfig(
                     Arrays.copyOfRange(reprocessConfig, 0, 2), maxSizes);
 
-            // For each config, YUV and JPEG outputs will be tested. (For YUV reprocessing,
-            // the YUV ImageReader for input is also used for output.)
+            // For each config, YUV and JPEG outputs will be tested. (For YUV/Y8 reprocessing,
+            // the YUV/Y8 ImageReader for input is also used for output.)
+            final boolean inputIsYuv = inputConfig.getFormat() == ImageFormat.YUV_420_888;
+            final boolean inputIsY8 = inputConfig.getFormat() == ImageFormat.Y8;
+            final boolean useYuv = inputIsYuv || yuvTargets.size() > 0;
+            final boolean useY8 = inputIsY8 || y8Targets.size() > 0;
             final int totalNumReprocessCaptures =  NUM_REPROCESS_CAPTURES_PER_CONFIG * (
-                    (inputConfig.getFormat() == ImageFormat.YUV_420_888 ? 1 : 0) +
-                    jpegTargets.size() + yuvTargets.size());
+                    ((inputIsYuv || inputIsY8) ? 1 : 0) +
+                    jpegTargets.size() + (useYuv ? yuvTargets.size() : y8Targets.size()));
 
             // It needs 1 input buffer for each reprocess capture + the number of buffers
             // that will be used as outputs.
@@ -1851,7 +1926,7 @@ public class RobustnessTest extends Camera2AndroidTestCase {
 
             List<CaptureRequest> reprocessRequests = new ArrayList<>();
             List<Surface> reprocessOutputs = new ArrayList<>();
-            if (inputConfig.getFormat() == ImageFormat.YUV_420_888) {
+            if (inputIsYuv || inputIsY8) {
                 reprocessOutputs.add(inputReader.getSurface());
             }
 
@@ -1860,6 +1935,10 @@ public class RobustnessTest extends Camera2AndroidTestCase {
             }
 
             for (ImageReader reader : yuvTargets) {
+                reprocessOutputs.add(reader.getSurface());
+            }
+
+            for (ImageReader reader : y8Targets) {
                 reprocessOutputs.add(reader.getSurface());
             }
 
@@ -1900,6 +1979,10 @@ public class RobustnessTest extends Camera2AndroidTestCase {
                 target.close();
             }
 
+            for (ImageReader target : y8Targets) {
+                target.close();
+            }
+
             for (ImageReader target : rawTargets) {
                 target.close();
             }
@@ -1917,16 +2000,42 @@ public class RobustnessTest extends Camera2AndroidTestCase {
     private void testOutputCombination(String cameraId, int[] config, MaxStreamSizes maxSizes)
             throws Exception {
 
-        Log.i(TAG, String.format("Testing single Camera %s, config %s",
-                        cameraId, MaxStreamSizes.configToString(config)));
 
+        // Check whether substituting YUV_888 format with Y8 format
+        boolean substituteY8 = false;
+        int[] substitutedCfg = config.clone();
+        if (mStaticInfo.isMonochromeWithY8()) {
+            for (int i = 0; i < config.length; i += 2) {
+                if (substitutedCfg[i] == YUV) {
+                    substitutedCfg[i] = Y8;
+                    substituteY8 = true;
+                }
+            }
+        }
+
+        // Test camera output combination
+        Log.i(TAG, String.format("Testing single Camera %s, config %s",
+                cameraId, MaxStreamSizes.configToString(config)));
         testSingleCameraOutputCombination(cameraId, config, maxSizes);
 
+        if (substituteY8) {
+            Log.i(TAG, String.format("Testing single Camera %s, config %s",
+                    cameraId, MaxStreamSizes.configToString(substitutedCfg)));
+            testSingleCameraOutputCombination(cameraId, substitutedCfg, maxSizes);
+        }
+
+        // Test substituting YUV_888/RAW with physical streams for logical camera
         if (mStaticInfo.isLogicalMultiCamera()) {
             Log.i(TAG, String.format("Testing logical Camera %s, config %s",
                     cameraId, MaxStreamSizes.configToString(config)));
 
             testMultiCameraOutputCombination(cameraId, config, maxSizes);
+
+            if (substituteY8) {
+                Log.i(TAG, String.format("Testing logical Camera %s, config %s",
+                        cameraId, MaxStreamSizes.configToString(substitutedCfg)));
+                testMultiCameraOutputCombination(cameraId, substitutedCfg, maxSizes);
+            }
         }
     }
 
@@ -1943,9 +2052,10 @@ public class RobustnessTest extends Camera2AndroidTestCase {
         List<ImageReader> jpegTargets = new ArrayList<ImageReader>();
         List<ImageReader> yuvTargets = new ArrayList<ImageReader>();
         List<ImageReader> rawTargets = new ArrayList<ImageReader>();
+        List<ImageReader> y8Targets = new ArrayList<ImageReader>();
 
         setupConfigurationTargets(config, maxSizes, privTargets, jpegTargets, yuvTargets,
-                rawTargets, outputConfigs, MIN_RESULT_COUNT, -1 /*overrideStreamIndex*/,
+                y8Targets, rawTargets, outputConfigs, MIN_RESULT_COUNT, -1 /*overrideStreamIndex*/,
                 null /*overridePhysicalCameraIds*/, null /*overridePhysicalCameraSizes*/);
 
         boolean haveSession = false;
@@ -2018,12 +2128,13 @@ public class RobustnessTest extends Camera2AndroidTestCase {
         for (int i = 0; i < config.length; i += 2) {
             int format = config[i];
             int sizeLimit = config[i+1];
-            if (format != YUV && format != RAW) {
+            if (format != YUV && format != Y8 && format != RAW) {
                 continue;
             }
 
             // Find physical cameras with matching size.
             Size targetSize = (format == YUV) ? maxSizes.maxYuvSizes[sizeLimit] :
+                    (format == Y8) ? maxSizes.maxY8Sizes[sizeLimit] :
                     maxSizes.maxRawSize;
             List<String> physicalCamerasForSize = new ArrayList<String>();
             List<Size> physicalCameraSizes = new ArrayList<Size>();
@@ -2052,11 +2163,12 @@ public class RobustnessTest extends Camera2AndroidTestCase {
             List<SurfaceTexture> privTargets = new ArrayList<SurfaceTexture>();
             List<ImageReader> jpegTargets = new ArrayList<ImageReader>();
             List<ImageReader> yuvTargets = new ArrayList<ImageReader>();
+            List<ImageReader> y8Targets = new ArrayList<ImageReader>();
             List<ImageReader> rawTargets = new ArrayList<ImageReader>();
 
             setupConfigurationTargets(config, maxSizes, privTargets, jpegTargets, yuvTargets,
-                    rawTargets, outputConfigs, MIN_RESULT_COUNT, i, physicalCamerasForSize,
-                    physicalCameraSizes);
+                    y8Targets, rawTargets, outputConfigs, MIN_RESULT_COUNT, i,
+                    physicalCamerasForSize, physicalCameraSizes);
 
             boolean haveSession = false;
             try {
@@ -2112,6 +2224,9 @@ public class RobustnessTest extends Camera2AndroidTestCase {
             for (ImageReader target : yuvTargets) {
                 target.close();
             }
+            for (ImageReader target : y8Targets) {
+                target.close();
+            }
             for (ImageReader target : rawTargets) {
                 target.close();
             }
@@ -2120,12 +2235,12 @@ public class RobustnessTest extends Camera2AndroidTestCase {
 
     private void setupConfigurationTargets(int[] configs, MaxStreamSizes maxSizes,
             List<SurfaceTexture> privTargets, List<ImageReader> jpegTargets,
-            List<ImageReader> yuvTargets, List<ImageReader> rawTargets,
-            List<Surface> outputSurfaces, int numBuffers) {
+            List<ImageReader> yuvTargets, List<ImageReader> y8Targets,
+            List<ImageReader> rawTargets, List<Surface> outputSurfaces, int numBuffers) {
         List<OutputConfiguration> outputConfigs = new ArrayList<OutputConfiguration> ();
 
         setupConfigurationTargets(configs, maxSizes, privTargets, jpegTargets, yuvTargets,
-                rawTargets, outputConfigs, numBuffers, -1 /*overrideStreamIndex*/,
+                y8Targets, rawTargets, outputConfigs, numBuffers, -1 /*overrideStreamIndex*/,
                 null /*overridePhysicalCameraIds*/, null /* overridePhysicalCameraSizes) */);
 
         for (OutputConfiguration outputConfig : outputConfigs) {
@@ -2135,8 +2250,8 @@ public class RobustnessTest extends Camera2AndroidTestCase {
 
     private void setupConfigurationTargets(int[] configs, MaxStreamSizes maxSizes,
             List<SurfaceTexture> privTargets, List<ImageReader> jpegTargets,
-            List<ImageReader> yuvTargets, List<ImageReader> rawTargets,
-            List<OutputConfiguration> outputConfigs, int numBuffers,
+            List<ImageReader> yuvTargets, List<ImageReader> y8Targets,
+            List<ImageReader> rawTargets, List<OutputConfiguration> outputConfigs, int numBuffers,
             int overrideStreamIndex, List<String> overridePhysicalCameraIds,
             List<Size> overridePhysicalCameraSizes) {
 
@@ -2193,6 +2308,20 @@ public class RobustnessTest extends Camera2AndroidTestCase {
                         }
                         outputConfigs.add(config);
                         yuvTargets.add(target);
+                        break;
+                    }
+                    case Y8: {
+                        Size targetSize = (numConfigs == 1) ? maxSizes.maxY8Sizes[sizeLimit] :
+                                overridePhysicalCameraSizes.get(j);
+                        ImageReader target = ImageReader.newInstance(
+                            targetSize.getWidth(), targetSize.getHeight(), Y8, numBuffers);
+                        target.setOnImageAvailableListener(imageDropperListener, mHandler);
+                        OutputConfiguration config = new OutputConfiguration(target.getSurface());
+                        if (numConfigs > 1) {
+                            config.setPhysicalCameraId(overridePhysicalCameraIds.get(j));
+                        }
+                        outputConfigs.add(config);
+                        y8Targets.add(target);
                         break;
                     }
                     case RAW: {
