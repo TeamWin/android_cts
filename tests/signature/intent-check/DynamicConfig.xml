@@ -53,6 +53,20 @@
     android.intent.action.START_NETWORK_BOOSTER
     android.intent.action.BADGE_COUNT_UPDATE
         All of them(except BADGE_COUNT_UPDATE) will be fixed on P.
+    Bug: Honeywell com.redbend.app bug:
+    android.intent.action.SyncSWVersion
+    android.intent.action.ActionRadioReset
+    android.intent.action.ActionMbbNoOptIn
+    android.intent.action.ActionStartEmergencyCallEnd
+    android.intent.action.ActionHfaSmfResult
+    android.intent.action.ActionStartEmergencyCall
+    android.intent.action.ActionSetMbbMaintWindow
+    android.intent.action.ActionStartCISession
+    android.intent.action.TEST
+    android.intent.action.ActionSetMbbInterval
+    android.intent.action.REGISTER_HFA
+    android.intent.action.ActionHfaReminder
+        Fixed in Honeywell's release build at Nov 25.
 -->
 <dynamicConfig>
     <entry key ="intent_whitelist">
@@ -90,5 +104,17 @@
       <value>android.intent.action.STOP_NETWORK_BOOSTER</value>
       <value>android.intent.action.START_NETWORK_BOOSTER</value>
       <value>android.intent.action.BADGE_COUNT_UPDATE</value>
+      <value>android.intent.action.SyncSWVersion</value>
+      <value>android.intent.action.ActionRadioReset</value>
+      <value>android.intent.action.ActionMbbNoOptIn</value>
+      <value>android.intent.action.ActionStartEmergencyCallEnd</value>
+      <value>android.intent.action.ActionHfaSmfResult</value>
+      <value>android.intent.action.ActionStartEmergencyCall</value>
+      <value>android.intent.action.ActionSetMbbMaintWindow</value>
+      <value>android.intent.action.ActionStartCISession</value>
+      <value>android.intent.action.TEST</value>
+      <value>android.intent.action.ActionSetMbbInterval</value>
+      <value>android.intent.action.REGISTER_HFA</value>
+      <value>android.intent.action.ActionHfaReminder</value>
     </entry>
 </dynamicConfig>
