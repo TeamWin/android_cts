@@ -35,6 +35,7 @@ import android.hardware.camera2.cts.testcases.Camera2AndroidTestCase;
 import android.hardware.camera2.params.InputConfiguration;
 import android.hardware.camera2.params.OisSample;
 import android.hardware.camera2.params.OutputConfiguration;
+import android.hardware.camera2.params.SessionConfiguration;
 import android.hardware.camera2.params.StreamConfigurationMap;
 import android.media.CamcorderProfile;
 import android.media.Image;
@@ -1908,6 +1909,11 @@ public class RobustnessTest extends Camera2AndroidTestCase {
             inputReader.setOnImageAvailableListener(inputReaderListener, mHandler);
             outputSurfaces.add(inputReader.getSurface());
 
+            assertTrue(String.format("Session configuration query %s failed",
+                    MaxStreamSizes.reprocessConfigToString(reprocessConfig)),
+                    checkSessionConfigurationWithSurfaces(mCamera, mHandler, outputSurfaces,
+                    inputConfig, SessionConfiguration.SESSION_REGULAR, /*expectedResult*/ true));
+
             // Verify we can create a reprocessable session with the input and all outputs.
             BlockingSessionCallback sessionListener = new BlockingSessionCallback();
             CameraCaptureSession session = configureReprocessableCameraSession(mCamera,
@@ -2070,6 +2076,11 @@ public class RobustnessTest extends Camera2AndroidTestCase {
             CameraCaptureSession.CaptureCallback mockCaptureCallback =
                     mock(CameraCaptureSession.CaptureCallback.class);
 
+            assertTrue(String.format("Session configuration query %s failed",
+                    MaxStreamSizes.configToString(config)), checkSessionConfiguration(mCamera,
+                    mHandler, outputConfigs, /*inputConfig*/ null,
+                    SessionConfiguration.SESSION_REGULAR, /*expectedResult*/ true));
+
             createSessionByConfigs(outputConfigs);
             haveSession = true;
             CaptureRequest request = requestBuilder.build();
@@ -2181,6 +2192,12 @@ public class RobustnessTest extends Camera2AndroidTestCase {
 
                 CameraCaptureSession.CaptureCallback mockCaptureCallback =
                         mock(CameraCaptureSession.CaptureCallback.class);
+
+                assertTrue(String.format("Session configuration query %s failed",
+                        MaxStreamSizes.configToString(config)),
+                        checkSessionConfiguration(mCamera, mHandler, outputConfigs,
+                        /*inputConfig*/ null, SessionConfiguration.SESSION_REGULAR,
+                        /*expectedResult*/ true));
 
                 createSessionByConfigs(outputConfigs);
                 haveSession = true;

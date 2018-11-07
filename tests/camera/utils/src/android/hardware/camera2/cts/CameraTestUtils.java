@@ -2503,4 +2503,48 @@ public class CameraTestUtils extends Assert {
             return false;
         }
     }
+
+    /*
+     * Query whether a particular stream combination is supported.
+     */
+    public static boolean checkSessionConfigurationWithSurfaces(CameraDevice camera,
+            Handler handler, List<Surface> outputSurfaces, InputConfiguration inputConfig,
+            int operatingMode, boolean expectedResult) {
+        List<OutputConfiguration> outConfigurations = new ArrayList<>(outputSurfaces.size());
+        for (Surface surface : outputSurfaces) {
+            outConfigurations.add(new OutputConfiguration(surface));
+        }
+
+        return checkSessionConfiguration(camera, handler, outConfigurations, inputConfig,
+                operatingMode, expectedResult);
+    }
+
+    /*
+     * Query whether a particular stream combination is supported.
+     */
+    public static boolean checkSessionConfiguration(CameraDevice camera, Handler handler,
+            List<OutputConfiguration> outputConfigs, InputConfiguration inputConfig,
+            int operatingMode, boolean expectedResult) {
+        boolean ret;
+        BlockingSessionCallback sessionListener = new BlockingSessionCallback();
+
+        SessionConfiguration sessionConfig = new SessionConfiguration(operatingMode, outputConfigs,
+                new HandlerExecutor(handler), sessionListener);
+        if (inputConfig != null) {
+            sessionConfig.setInputConfiguration(inputConfig);
+        }
+
+        try {
+            ret = camera.isSessionConfigurationSupported(sessionConfig);
+        } catch (UnsupportedOperationException e) {
+            // Camera doesn't support session configuration query, return expected result
+            return true;
+        } catch (IllegalArgumentException e) {
+            return false;
+        } catch (android.hardware.camera2.CameraAccessException e) {
+            return false;
+        }
+
+        return !(expectedResult ^ ret);
+    }
 }

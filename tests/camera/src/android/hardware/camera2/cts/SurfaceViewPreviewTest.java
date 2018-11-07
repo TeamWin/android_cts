@@ -36,6 +36,7 @@ import android.hardware.camera2.cts.CameraTestUtils.SimpleCaptureCallback;
 import android.hardware.camera2.cts.helpers.StaticMetadata;
 import android.hardware.camera2.cts.testcases.Camera2SurfaceViewTestCase;
 import android.hardware.camera2.params.OutputConfiguration;
+import android.hardware.camera2.params.SessionConfiguration;
 import android.util.Log;
 import android.util.Pair;
 import android.util.Range;
@@ -524,6 +525,12 @@ public class SurfaceViewPreviewTest extends Camera2SurfaceViewTestCase {
                 //expected
             }
         }
+
+        // Check whether session configuration is supported
+        assertTrue("Deferred session configuration query failed",
+                CameraTestUtils.checkSessionConfiguration(mCamera, mHandler, outputSurfaces,
+                /*inputConfig*/ null, SessionConfiguration.SESSION_REGULAR,
+                /*expectedResult*/ true));
 
         // Create session
 
