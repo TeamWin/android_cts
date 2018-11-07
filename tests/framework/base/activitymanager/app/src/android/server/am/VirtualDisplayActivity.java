@@ -17,6 +17,7 @@
 package android.server.am;
 
 import static android.hardware.display.DisplayManager.VIRTUAL_DISPLAY_FLAG_OWN_CONTENT_ONLY;
+import static android.hardware.display.DisplayManager.VIRTUAL_DISPLAY_FLAG_PRESENTATION;
 import static android.hardware.display.DisplayManager.VIRTUAL_DISPLAY_FLAG_PUBLIC;
 import static android.server.am.ActivityLauncher.KEY_DISPLAY_ID;
 import static android.server.am.ActivityLauncher.KEY_LAUNCH_ACTIVITY;
@@ -31,6 +32,7 @@ import static android.server.am.Components.VirtualDisplayActivity.KEY_COUNT;
 import static android.server.am.Components.VirtualDisplayActivity.KEY_SHOW_SYSTEM_DECORATIONS;
 import static android.server.am.Components.VirtualDisplayActivity.KEY_DENSITY_DPI;
 import static android.server.am.Components.VirtualDisplayActivity.KEY_LAUNCH_TARGET_COMPONENT;
+import static android.server.am.Components.VirtualDisplayActivity.KEY_PRESENTATION_DISPLAY;
 import static android.server.am.Components.VirtualDisplayActivity.KEY_PUBLIC_DISPLAY;
 import static android.server.am.Components.VirtualDisplayActivity.KEY_RESIZE_DISPLAY;
 import static android.server.am.Components.VirtualDisplayActivity.VIRTUAL_DISPLAY_PREFIX;
@@ -191,9 +193,16 @@ public class VirtualDisplayActivity extends Activity implements SurfaceHolder.Ca
             flags |= 1 << 9; // VIRTUAL_DISPLAY_FLAG_SHOULD_SHOW_SYSTEM_DECORATIONS;
         }
 
-        Log.d(TAG, "createVirtualDisplay: " + width + "x" + height + ", dpi: "
-                + densityDpi + ", canShowWithInsecureKeyguard=" + canShowWithInsecureKeyguard
-                + ", publicDisplay=" + publicDisplay);
+        final boolean presentationDisplay = entry.extras.getBoolean(KEY_PRESENTATION_DISPLAY);
+        if (presentationDisplay) {
+            flags |= VIRTUAL_DISPLAY_FLAG_PRESENTATION;
+        }
+
+        Log.d(TAG, "createVirtualDisplay: " + width + "x" + height + ", dpi: " + densityDpi
+                + ", canShowWithInsecureKeyguard=" + canShowWithInsecureKeyguard
+                + ", publicDisplay=" + publicDisplay + ", presentationDisplay="
+                + presentationDisplay);
+
         try {
             VirtualDisplay virtualDisplay = mDisplayManager.createVirtualDisplay(
                     VIRTUAL_DISPLAY_PREFIX + mVirtualDisplays.size(), width,
