@@ -1728,6 +1728,14 @@ public class ItsService extends Service implements SensorEventListener {
                                               .left;
                             int aay = ItsUtils.getActiveArrayCropRegion(mCameraCharacteristics)
                                               .top;
+
+                            if (w == aaw) {
+                                aax = 0;
+                            }
+                            if (h == aah) {
+                                aay = 0;
+                            }
+
                             int gw = mCaptureStatsGridWidth;
                             int gh = mCaptureStatsGridHeight;
                             float[] stats = StatsImage.computeStatsImage(
