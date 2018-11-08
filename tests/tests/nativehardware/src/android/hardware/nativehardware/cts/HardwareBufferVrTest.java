@@ -17,6 +17,7 @@
 package android.hardware.nativehardware.cts;
 
 import android.content.pm.PackageManager;
+import android.content.res.Configuration;
 import android.hardware.HardwareBuffer;
 import android.test.AndroidTestCase;
 
@@ -29,8 +30,13 @@ public class HardwareBufferVrTest extends AndroidTestCase {
 
     @CddTest(requirement="7.9.2/C-1-10")
     public void testLayeredBuffersForVr() throws AssertionError {
+        boolean mIsVrHeadset = (getContext().getResources().getConfiguration().uiMode
+            & Configuration.UI_MODE_TYPE_MASK) == Configuration.UI_MODE_TYPE_VR_HEADSET;
+
+        // Some phones upgrading from older Android versions have the high performance VR feature,
+        // but cannot meet this requirement. Only actually check it for standalone VR headsets.
         PackageManager pm = getContext().getPackageManager();
-        if (!pm.hasSystemFeature(PackageManager.FEATURE_VR_MODE_HIGH_PERFORMANCE)) {
+        if (!pm.hasSystemFeature(PackageManager.FEATURE_VR_MODE_HIGH_PERFORMANCE) || !mIsVrHeadset) {
             return;
         }
         final long flags = HardwareBuffer.USAGE_GPU_SAMPLED_IMAGE | HardwareBuffer.USAGE_GPU_COLOR_OUTPUT;
