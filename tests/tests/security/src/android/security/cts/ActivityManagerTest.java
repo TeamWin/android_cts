@@ -58,6 +58,7 @@ public class ActivityManagerTest extends TestCase {
         sIsAppForeground = false;
     }
 
+    @SecurityTest(minPatchLevel = "2015-03")
     public void testActivityManager_injectInputEvents() throws ClassNotFoundException {
         try {
             /*
@@ -74,6 +75,7 @@ public class ActivityManagerTest extends TestCase {
         }
     }
 
+    @SecurityTest(minPatchLevel = "2019-01")
     public void testIsAppInForegroundNormal() throws Exception {
         /* Verify that isAppForeground can be called by the caller on itself. */
         launchActivity(NormalActivity.class);
@@ -84,6 +86,7 @@ public class ActivityManagerTest extends TestCase {
         assertTrue("isAppForeground failed to query for uid on itself.", sIsAppForeground);
     }
 
+    @SecurityTest(minPatchLevel = "2019-01")
     public void testIsAppInForegroundMalicious() throws Exception {
         /* Verify that isAppForeground cannot be called by another app on a known uid. */
         launchActivity(MaliciousActivity.class);
