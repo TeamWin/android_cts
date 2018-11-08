@@ -46,9 +46,10 @@ public class ProviderTestUtils {
 
     static void setDefaultSmsApp(boolean setToSmsApp, String packageName, UiAutomation uiAutomation)
             throws Exception {
-        String command = String.format(
-                "appops set %s WRITE_SMS %s", packageName, setToSmsApp ? "allow" : "default");
-        executeShellCommand(command, uiAutomation);
+        String mode = setToSmsApp ? "allow" : "default";
+        String cmd = "appops set %s %s %s";
+        executeShellCommand(String.format(cmd, packageName, "WRITE_SMS", mode), uiAutomation);
+        executeShellCommand(String.format(cmd, packageName, "READ_SMS", mode), uiAutomation);
     }
 
     static String executeShellCommand(String command, UiAutomation uiAutomation)
