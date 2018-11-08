@@ -24,5 +24,16 @@
                   android:supportsPictureInPicture="true"
                   android:exported="true"
         />
+
+        <activity android:name="android.server.am.app27.HomeActivity"
+                        android:enabled="false"
+                        android:exported="true">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN"/>
+                <category android:name="android.intent.category.HOME"/>
+                <category android:name="android.intent.category.DEFAULT"/>
+            </intent-filter>
+        </activity>
+
     </application>
 </manifest>

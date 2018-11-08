@@ -16,14 +16,9 @@
 
 package android.server.am.app27;
 
-import android.content.ComponentName;
-import android.server.am.component.ComponentsBase;
 
-public class Components extends ComponentsBase {
+import android.app.Activity;
 
-    public static final ComponentName SDK_27_LAUNCHING_ACTIVITY =
-            component(Components.class, "android.server.am.LaunchingActivity");
+public class HomeActivity extends Activity {
 
-    public static final ComponentName SDK_27_HOME_ACTIVITY =
-            component(Components.class, "android.server.am.app27.HomeActivity");
 }
