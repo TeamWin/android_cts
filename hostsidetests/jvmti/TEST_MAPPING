@@ -262,6 +262,9 @@
       "name": "CtsJvmtiRunTest1953HostTestCases"
     },
     {
+      "name": "CtsJvmtiRunTest1958HostTestCases"
+    },
+    {
       "name": "CtsJvmtiTaggingHostTestCases"
     },
     {
