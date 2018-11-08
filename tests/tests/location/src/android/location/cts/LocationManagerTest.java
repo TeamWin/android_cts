@@ -1058,40 +1058,6 @@ public class LocationManagerTest extends BaseMockLocationTest {
         assertFalse(mManager.sendExtraCommand(UNKNOWN_PROVIDER_NAME, "unknown", new Bundle()));
     }
 
-    public void testSetTestProviderStatus() throws InterruptedException {
-        final int status = LocationProvider.TEMPORARILY_UNAVAILABLE;
-        final long updateTime = 1000;
-        final MockLocationListener listener = new MockLocationListener();
-
-        HandlerThread handlerThread = new HandlerThread("testStatusUpdates");
-        handlerThread.start();
-
-        // set status successfully
-        mManager.requestLocationUpdates(TEST_MOCK_PROVIDER_NAME, 0, 0, listener,
-                handlerThread.getLooper());
-        mManager.setTestProviderStatus(TEST_MOCK_PROVIDER_NAME, status, null, updateTime);
-        // setting the status alone is not sufficient to trigger a status update
-        updateLocation(10, 30);
-        assertTrue(listener.hasCalledOnStatusChanged(TEST_TIME_OUT));
-        assertEquals(TEST_MOCK_PROVIDER_NAME, listener.getProvider());
-        assertEquals(status, listener.getStatus());
-
-        try {
-            mManager.setTestProviderStatus(UNKNOWN_PROVIDER_NAME, 0, null,
-                    System.currentTimeMillis());
-            fail("Should throw IllegalArgumentException if provider is unknown!");
-        } catch (IllegalArgumentException e) {
-            // expected
-        }
-
-        try {
-            mManager.clearTestProviderStatus(UNKNOWN_PROVIDER_NAME);
-            fail("Should throw IllegalArgumentException if provider is unknown!");
-        } catch (IllegalArgumentException e) {
-            // expected
-        }
-    }
-
     /**
      * Tests basic proximity alert when entering proximity
      */

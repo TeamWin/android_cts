@@ -425,39 +425,6 @@ public class NoLocationPermissionTest extends InstrumentationTestCase {
         }
     }
 
-    /**
-     * Verify that checking setTestProviderStatus requires permissions.
-     * <p>
-     * Requires Permission:
-     * {@link android.Manifest.permission#ACCESS_MOCK_LOCATION}.
-     */
-    @SmallTest
-    public void testSetTestProviderStatus() {
-        try {
-            mLocationManager.setTestProviderStatus(TEST_PROVIDER_NAME, 0, Bundle.EMPTY, 0);
-            fail("LocationManager.setTestProviderStatus did not throw SecurityException as"
-                    + " expected");
-        } catch (SecurityException e) {
-        }
-    }
-
-    /**
-     * Verify that checking clearTestProviderStatus requires permissions.
-     * <p>
-     * Requires Permission:
-     * {@link android.Manifest.permission#ACCESS_MOCK_LOCATION}.
-     */
-    @SmallTest
-    public void testClearTestProviderStatus() {
-        try {
-            mLocationManager.clearTestProviderStatus(TEST_PROVIDER_NAME);
-            fail("LocationManager.setTestProviderStatus did not throw SecurityException as"
-                    + " expected");
-        } catch (SecurityException e) {
-            // expected
-        }
-    }
-
     private static class MockLocationListener implements LocationListener {
         public void onLocationChanged(Location location) {
             // ignore
