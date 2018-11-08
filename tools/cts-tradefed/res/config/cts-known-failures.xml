@@ -203,5 +203,8 @@
     <!-- b/67377433 -->
     <!-- fails only on angler/bullhead userdebug -->
     <option name="compatibility:exclude-filter" value="CtsLiblogTestCases liblog#wrap_mode_blocks" />
+    <!--b/118833202 -->
+    <!-- test fails if usb charging is disabled which is not mandatory -->
+    <option name="compatibility:exclude-filter" value="CtsDumpsysHostTestCases  android.dumpsys.cts.StoragedDumpsysTest#testStoragedOutput" />
 
 </configuration>
