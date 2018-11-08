@@ -80,7 +80,7 @@ TEST_F(NdkBinderTest_AIBinder, DestructionGivesUserData) {
 
 void onBinderDied(void* /*cookie*/) {}
 
-TEST_F(NdkBinderTest_AIBinder, LinkUnlink) {
+TEST_F(NdkBinderTest_AIBinder, LinkInProcess) {
   AIBinder* binder = SampleData::newBinder();
   AIBinder_DeathRecipient* recipient =
       AIBinder_DeathRecipient_new(onBinderDied);
