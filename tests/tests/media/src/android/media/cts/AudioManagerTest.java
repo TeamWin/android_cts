@@ -527,12 +527,12 @@ public class AudioManagerTest extends InstrumentationTestCase {
                         maxVolume),
                         minVolume < maxVolume);
 
-                mAudioManager.setStreamVolume(streams[i], 1, 0);
+                mAudioManager.setStreamVolume(streams[i], minVolume, 0);
                 if (mUseFixedVolume) {
                     assertEquals(maxVolume, mAudioManager.getStreamVolume(streams[i]));
                     continue;
                 }
-                assertEquals(1, mAudioManager.getStreamVolume(streams[i]));
+                assertEquals(minVolume, mAudioManager.getStreamVolume(streams[i]));
 
                 if (streams[i] == AudioManager.STREAM_MUSIC && mAudioManager.isWiredHeadsetOn()) {
                     // due to new regulations, music sent over a wired headset may be volume limited
@@ -571,7 +571,7 @@ public class AudioManagerTest extends InstrumentationTestCase {
                 mAudioManager.adjustStreamVolume(streams[i], ADJUST_SAME, 0);
 
                 // volume raise
-                mAudioManager.setStreamVolume(streams[i], 1, 0);
+                mAudioManager.setStreamVolume(streams[i], minVolume, 0);
                 volume = mAudioManager.getStreamVolume(streams[i]);
                 while (volume < maxVolume) {
                     volumeDelta = getVolumeDelta(mAudioManager.getStreamVolume(streams[i]));
@@ -612,11 +612,12 @@ public class AudioManagerTest extends InstrumentationTestCase {
                 assertEquals(maxMusicVolume, mAudioManager.getStreamVolume(STREAM_MUSIC));
             }
 
+            int minMusicVolume = mAudioManager.getStreamMinVolume(STREAM_MUSIC);
             // adjust volume as ADJUST_RAISE
-            mAudioManager.setStreamVolume(STREAM_MUSIC, 0, 0);
+            mAudioManager.setStreamVolume(STREAM_MUSIC, minMusicVolume, 0);
             volumeDelta = getVolumeDelta(mAudioManager.getStreamVolume(STREAM_MUSIC));
             mAudioManager.adjustVolume(ADJUST_RAISE, 0);
-            assertEquals(Math.min(volumeDelta, maxMusicVolume),
+            assertEquals(Math.min(minMusicVolume + volumeDelta, maxMusicVolume),
                     mAudioManager.getStreamVolume(STREAM_MUSIC));
 
             // adjust volume as ADJUST_LOWER
