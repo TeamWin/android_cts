@@ -22,12 +22,14 @@ import android.graphics.Rect;
 import android.graphics.SurfaceTexture;
 import android.hardware.camera2.CameraCharacteristics;
 import android.hardware.camera2.CameraCharacteristics.Key;
+import android.hardware.camera2.CameraDevice;
 import android.hardware.camera2.CameraManager;
 import android.hardware.camera2.CaptureRequest;
 import android.hardware.camera2.CaptureResult;
 import android.hardware.camera2.cts.helpers.CameraErrorCollector;
 import android.hardware.camera2.params.BlackLevelPattern;
 import android.hardware.camera2.params.ColorSpaceTransform;
+import android.hardware.camera2.params.RecommendedStreamConfigurationMap;
 import android.hardware.camera2.params.StreamConfigurationMap;
 import android.media.CamcorderProfile;
 import android.media.ImageReader;
@@ -37,6 +39,7 @@ import android.util.Log;
 import android.util.Rational;
 import android.util.Range;
 import android.util.Size;
+import android.util.Pair;
 import android.util.Patterns;
 import android.view.Surface;
 import android.view.WindowManager;
@@ -182,19 +185,33 @@ public class ExtendedCameraCharacteristicsTest extends AndroidTestCase {
                 continue;
             }
 
+            boolean isMonochromeWithY8 = arrayContains(actualCapabilities, MONOCHROME)
+                    && arrayContains(outputFormats, ImageFormat.Y8);
+
             assertArrayContains(
                     String.format("No valid YUV_420_888 preview formats found for: ID %s",
                             mIds[counter]), outputFormats, ImageFormat.YUV_420_888);
+            if (isMonochromeWithY8) {
+                assertArrayContains(
+                        String.format("No valid Y8 preview formats found for: ID %s",
+                                mIds[counter]), outputFormats, ImageFormat.Y8);
+            }
             assertArrayContains(String.format("No JPEG image format for: ID %s",
                     mIds[counter]), outputFormats, ImageFormat.JPEG);
 
             Size[] yuvSizes = config.getOutputSizes(ImageFormat.YUV_420_888);
+            Size[] y8Sizes = config.getOutputSizes(ImageFormat.Y8);
             Size[] jpegSizes = config.getOutputSizes(ImageFormat.JPEG);
             Size[] privateSizes = config.getOutputSizes(ImageFormat.PRIVATE);
 
             CameraTestUtils.assertArrayNotEmpty(yuvSizes,
                     String.format("No sizes for preview format %x for: ID %s",
                             ImageFormat.YUV_420_888, mIds[counter]));
+            if (isMonochromeWithY8) {
+                CameraTestUtils.assertArrayNotEmpty(y8Sizes,
+                    String.format("No sizes for preview format %x for: ID %s",
+                            ImageFormat.Y8, mIds[counter]));
+            }
 
             Rect activeRect = CameraTestUtils.getValueNotNull(
                     c, CameraCharacteristics.SENSOR_INFO_ACTIVE_ARRAY_SIZE);
@@ -271,6 +288,13 @@ public class ExtendedCameraCharacteristicsTest extends AndroidTestCase {
                             privateSizesList.contains(FULLHD_ALT);
                     assertTrue("Full device FullHD YUV size not found", yuvSupportFullHD);
                     assertTrue("Full device FullHD PRIVATE size not found", privateSupportFullHD);
+
+                    if (isMonochromeWithY8) {
+                        ArrayList<Size> y8SizesList = new ArrayList<>(Arrays.asList(y8Sizes));
+                        boolean y8SupportFullHD = y8SizesList.contains(FULLHD) ||
+                                y8SizesList.contains(FULLHD_ALT);
+                        assertTrue("Full device FullHD Y8 size not found", y8SupportFullHD);
+                    }
                 }
                 // remove all FullHD or FullHD_Alt sizes for the remaining of the test
                 jpegSizesList.remove(FULLHD);
@@ -298,6 +322,17 @@ public class ExtendedCameraCharacteristicsTest extends AndroidTestCase {
                         }
                     }
                 }
+
+                if (isMonochromeWithY8) {
+                    ArrayList<Size> y8SizesList = new ArrayList<>(Arrays.asList(y8Sizes));
+                    if (!y8SizesList.containsAll(jpegSizesList)) {
+                        for (Size s : jpegSizesList) {
+                            if (!y8SizesList.contains(s)) {
+                                fail("Size " + s + " not found in Y8 format");
+                            }
+                        }
+                    }
+                }
             }
 
             if (!privateSizesList.containsAll(yuvSizesList)) {
@@ -306,6 +341,403 @@ public class ExtendedCameraCharacteristicsTest extends AndroidTestCase {
                         fail("Size " + s + " not found in PRIVATE format");
                     }
                 }
+            }
+
+            counter++;
+        }
+    }
+
+    private void verifyCommonRecommendedConfiguration(String id, CameraCharacteristics c,
+            RecommendedStreamConfigurationMap config, boolean checkNoInput,
+            boolean checkNoHighRes, boolean checkNoHighSpeed, boolean checkNoPrivate,
+            boolean checkNoDepth) {
+        StreamConfigurationMap fullConfig = c.get(
+                CameraCharacteristics.SCALER_STREAM_CONFIGURATION_MAP);
+        assertNotNull(String.format("No stream configuration map found for ID: %s!", id),
+                fullConfig);
+
+        Set<Integer> recommendedOutputFormats = config.getOutputFormats();
+
+        if (checkNoInput) {
+            Set<Integer> inputFormats = config.getInputFormats();
+            assertTrue(String.format("Recommended configuration must not include any input " +
+                    "streams for ID: %s", id),
+                    ((inputFormats == null) || (inputFormats.size() == 0)));
+        }
+
+        if (checkNoHighRes) {
+            for (int format : recommendedOutputFormats) {
+                Set<Size> highResSizes = config.getHighResolutionOutputSizes(format);
+                assertTrue(String.format("Recommended configuration should not include any " +
+                        "high resolution sizes, which cannot operate at full " +
+                        "BURST_CAPTURE rate for ID: %s", id),
+                        ((highResSizes == null) || (highResSizes.size() == 0)));
+            }
+        }
+
+        if (checkNoHighSpeed) {
+            Set<Size> highSpeedSizes = config.getHighSpeedVideoSizes();
+            assertTrue(String.format("Recommended configuration must not include any high " +
+                    "speed configurations for ID: %s", id),
+                    ((highSpeedSizes == null) || (highSpeedSizes.size() == 0)));
+        }
+
+        int[] exhaustiveOutputFormats = fullConfig.getOutputFormats();
+        for (Integer formatInteger : recommendedOutputFormats) {
+            int format = formatInteger.intValue();
+            assertArrayContains(String.format("Unsupported recommended output format: %d for " +
+                    "ID: %s ", format, id), exhaustiveOutputFormats, format);
+            Set<Size> recommendedSizes = config.getOutputSizes(format);
+
+            switch (format) {
+                case ImageFormat.PRIVATE:
+                    if (checkNoPrivate) {
+                        fail(String.format("Recommended configuration must not include " +
+                                "PRIVATE format entries for ID: %s", id));
+                    }
+
+                    Set<Size> classOutputSizes = config.getOutputSizes(ImageReader.class);
+                    assertCollectionContainsAnyOf(String.format("Recommended output sizes for " +
+                            "ImageReader class don't match the output sizes for the " +
+                            "corresponding format for ID: %s", id), classOutputSizes,
+                            recommendedSizes);
+                    break;
+                case ImageFormat.DEPTH16:
+                case ImageFormat.DEPTH_POINT_CLOUD:
+                    if (checkNoDepth) {
+                        fail(String.format("Recommended configuration must not include any DEPTH " +
+                                "formats for ID: %s", id));
+                    }
+                    break;
+                default:
+            }
+            Size [] exhaustiveSizes = fullConfig.getOutputSizes(format);
+            for (Size sz : recommendedSizes) {
+                assertArrayContains(String.format("Unsupported recommended size %s for " +
+                        "format: %d for ID: %s", sz.toString(), format, id),
+                        exhaustiveSizes, sz);
+
+                long recommendedMinDuration = config.getOutputMinFrameDuration(format, sz);
+                long availableMinDuration = fullConfig.getOutputMinFrameDuration(format, sz);
+                assertTrue(String.format("Recommended minimum frame duration %d for size " +
+                        "%s format: %d doesn't match with currently available minimum" +
+                        " frame duration of %d for ID: %s", recommendedMinDuration,
+                        sz.toString(), format, availableMinDuration, id),
+                        (recommendedMinDuration == availableMinDuration));
+                long recommendedStallDuration = config.getOutputStallDuration(format, sz);
+                long availableStallDuration = fullConfig.getOutputStallDuration(format, sz);
+                assertTrue(String.format("Recommended stall duration %d for size %s" +
+                        " format: %d doesn't match with currently available stall " +
+                        "duration of %d for ID: %s", recommendedStallDuration,
+                        sz.toString(), format, availableStallDuration, id),
+                        (recommendedStallDuration == availableStallDuration));
+
+                ImageReader reader = ImageReader.newInstance(sz.getWidth(), sz.getHeight(), format,
+                        /*maxImages*/1);
+                Surface readerSurface = reader.getSurface();
+                assertTrue(String.format("ImageReader surface using format %d and size %s is not" +
+                        " supported for ID: %s", format, sz.toString(), id),
+                        config.isOutputSupportedFor(readerSurface));
+                if (format == ImageFormat.PRIVATE) {
+                    long classMinDuration = config.getOutputMinFrameDuration(ImageReader.class, sz);
+                    assertTrue(String.format("Recommended minimum frame duration %d for size " +
+                            "%s format: %d doesn't match with the duration %d for " +
+                            "ImageReader class of the same size", recommendedMinDuration,
+                            sz.toString(), format, classMinDuration),
+                            classMinDuration == recommendedMinDuration);
+                    long classStallDuration = config.getOutputStallDuration(ImageReader.class, sz);
+                    assertTrue(String.format("Recommended stall duration %d for size " +
+                            "%s format: %d doesn't match with the stall duration %d for " +
+                            "ImageReader class of the same size", recommendedStallDuration,
+                            sz.toString(), format, classStallDuration),
+                            classStallDuration == recommendedStallDuration);
+                }
+            }
+        }
+    }
+
+    private void verifyRecommendedPreviewConfiguration(String cameraId, CameraCharacteristics c,
+            RecommendedStreamConfigurationMap previewConfig) {
+        verifyCommonRecommendedConfiguration(cameraId, c, previewConfig, /*checkNoInput*/ true,
+                /*checkNoHighRes*/ true, /*checkNoHighSpeed*/ true, /*checkNoPrivate*/ false,
+                /*checkNoDepth*/ true);
+
+        Set<Integer> outputFormats = previewConfig.getOutputFormats();
+        assertTrue(String.format("No valid YUV_420_888 and PRIVATE preview " +
+                "formats found in recommended preview configuration for ID: %s", cameraId),
+                outputFormats.containsAll(Arrays.asList(new Integer(ImageFormat.YUV_420_888),
+                        new Integer(ImageFormat.PRIVATE))));
+    }
+
+    private void verifyRecommendedVideoConfiguration(String cameraId, CameraCharacteristics c,
+            RecommendedStreamConfigurationMap videoConfig) {
+        verifyCommonRecommendedConfiguration(cameraId, c, videoConfig, /*checkNoInput*/ true,
+                /*checkNoHighRes*/ true, /*checkNoHighSpeed*/ false, /*checkNoPrivate*/false,
+                /*checkNoDepth*/ true);
+
+        Set<Size> highSpeedSizes = videoConfig.getHighSpeedVideoSizes();
+        StreamConfigurationMap fullConfig = c.get(
+                CameraCharacteristics.SCALER_STREAM_CONFIGURATION_MAP);
+        assertNotNull("No stream configuration map found!", fullConfig);
+        Size [] availableHighSpeedSizes = fullConfig.getHighSpeedVideoSizes();
+        if ((highSpeedSizes != null) && (highSpeedSizes.size() > 0)) {
+            for (Size sz : highSpeedSizes) {
+                assertArrayContains(String.format("Recommended video configuration includes " +
+                        "unsupported high speed configuration with size %s for ID: %s",
+                        sz.toString(), cameraId), availableHighSpeedSizes, sz);
+                Set<Range<Integer>>  highSpeedFpsRanges =
+                    videoConfig.getHighSpeedVideoFpsRangesFor(sz);
+                Range<Integer> [] availableHighSpeedFpsRanges =
+                    fullConfig.getHighSpeedVideoFpsRangesFor(sz);
+                for (Range<Integer> fpsRange : highSpeedFpsRanges) {
+                    assertArrayContains(String.format("Recommended video configuration includes " +
+                            "unsupported high speed fps range [%d %d] for ID: %s",
+                            fpsRange.getLower().intValue(), fpsRange.getUpper().intValue(),
+                            cameraId), availableHighSpeedFpsRanges, fpsRange);
+                }
+            }
+        }
+
+        final int[] profileList = {
+            CamcorderProfile.QUALITY_2160P,
+            CamcorderProfile.QUALITY_1080P,
+            CamcorderProfile.QUALITY_480P,
+            CamcorderProfile.QUALITY_720P,
+            CamcorderProfile.QUALITY_CIF,
+            CamcorderProfile.QUALITY_HIGH,
+            CamcorderProfile.QUALITY_LOW,
+            CamcorderProfile.QUALITY_QCIF,
+            CamcorderProfile.QUALITY_QVGA,
+        };
+        Set<Size> privateSizeSet = videoConfig.getOutputSizes(ImageFormat.PRIVATE);
+        for (int profile : profileList) {
+            int idx = Integer.valueOf(cameraId);
+            if (CamcorderProfile.hasProfile(idx, profile)) {
+                CamcorderProfile videoProfile = CamcorderProfile.get(idx, profile);
+                Size profileSize  = new Size(videoProfile.videoFrameWidth,
+                        videoProfile.videoFrameHeight);
+                assertCollectionContainsAnyOf(String.format("Recommended video configuration " +
+                        "doesn't include supported video profile size %s with Private format " +
+                        "for ID: %s", profileSize.toString(), cameraId), privateSizeSet,
+                        Arrays.asList(profileSize));
+            }
+        }
+    }
+
+    private Pair<Boolean, Size> isSizeWithinSensorMargin(Size sz, Size sensorSize) {
+        final float SIZE_ERROR_MARGIN = 0.03f;
+        float croppedWidth = (float)sensorSize.getWidth();
+        float croppedHeight = (float)sensorSize.getHeight();
+        float sensorAspectRatio = (float)sensorSize.getWidth() / (float)sensorSize.getHeight();
+        float maxAspectRatio = (float)sz.getWidth() / (float)sz.getHeight();
+        if (sensorAspectRatio < maxAspectRatio) {
+            croppedHeight = (float)sensorSize.getWidth() / maxAspectRatio;
+        } else if (sensorAspectRatio > maxAspectRatio) {
+            croppedWidth = (float)sensorSize.getHeight() * maxAspectRatio;
+        }
+        Size croppedSensorSize = new Size((int)croppedWidth, (int)croppedHeight);
+
+        Boolean match = new Boolean(
+            (sz.getWidth() <= croppedSensorSize.getWidth() * (1.0 + SIZE_ERROR_MARGIN) &&
+             sz.getWidth() >= croppedSensorSize.getWidth() * (1.0 - SIZE_ERROR_MARGIN) &&
+             sz.getHeight() <= croppedSensorSize.getHeight() * (1.0 + SIZE_ERROR_MARGIN) &&
+             sz.getHeight() >= croppedSensorSize.getHeight() * (1.0 - SIZE_ERROR_MARGIN)));
+
+        return Pair.create(match, croppedSensorSize);
+    }
+
+    private void verifyRecommendedSnapshotConfiguration(String cameraId, CameraCharacteristics c,
+            RecommendedStreamConfigurationMap snapshotConfig) {
+        verifyCommonRecommendedConfiguration(cameraId, c, snapshotConfig, /*checkNoInput*/ true,
+                /*checkNoHighRes*/ false, /*checkNoHighSpeed*/ true, /*checkNoPrivate*/false,
+                /*checkNoDepth*/ false);
+        Rect activeRect = CameraTestUtils.getValueNotNull(
+                c, CameraCharacteristics.SENSOR_INFO_ACTIVE_ARRAY_SIZE);
+        Size arraySize = new Size(activeRect.width(), activeRect.height());
+
+        Set<Size> snapshotSizeSet = snapshotConfig.getOutputSizes(ImageFormat.JPEG);
+        Size[] snapshotSizes = new Size[snapshotSizeSet.size()];
+        snapshotSizes = snapshotSizeSet.toArray(snapshotSizes);
+        Size maxJpegSize = CameraTestUtils.getMaxSize(snapshotSizes);
+        assertTrue(String.format("Maximum recommended Jpeg size %s should be within 3 percent " +
+                "of the area of the advertised array size %s for ID: %s",
+                maxJpegSize.toString(), arraySize.toString(), cameraId),
+                isSizeWithinSensorMargin(maxJpegSize, arraySize).first.booleanValue());
+    }
+
+    private void verifyRecommendedVideoSnapshotConfiguration(String cameraId,
+            CameraCharacteristics c,
+            RecommendedStreamConfigurationMap videoSnapshotConfig,
+            RecommendedStreamConfigurationMap videoConfig) {
+        verifyCommonRecommendedConfiguration(cameraId, c, videoSnapshotConfig,
+                /*checkNoInput*/ true, /*checkNoHighRes*/ false, /*checkNoHighSpeed*/ true,
+                /*checkNoPrivate*/ true, /*checkNoDepth*/ true);
+
+        Set<Integer> outputFormats = videoSnapshotConfig.getOutputFormats();
+        assertCollectionContainsAnyOf(String.format("No valid JPEG format found " +
+                "in recommended video snapshot configuration for ID: %s", cameraId),
+                outputFormats, Arrays.asList(new Integer(ImageFormat.JPEG)));
+        assertTrue(String.format("Recommended video snapshot configuration must only advertise " +
+                "JPEG format for ID: %s", cameraId), outputFormats.size() == 1);
+
+        Set<Size> privateVideoSizeSet = videoConfig.getOutputSizes(ImageFormat.PRIVATE);
+        Size[] privateVideoSizes = new Size[privateVideoSizeSet.size()];
+        privateVideoSizes = privateVideoSizeSet.toArray(privateVideoSizes);
+        Size maxVideoSize = CameraTestUtils.getMaxSize(privateVideoSizes);
+        Set<Size> outputSizes = videoSnapshotConfig.getOutputSizes(ImageFormat.JPEG);
+        assertCollectionContainsAnyOf(String.format("The maximum recommended video size %s " +
+                "should be present in the recommended video snapshot configurations for ID: %s",
+                maxVideoSize.toString(), cameraId), outputSizes, Arrays.asList(maxVideoSize));
+    }
+
+    private void verifyRecommendedRawConfiguration(String cameraId,
+            CameraCharacteristics c, RecommendedStreamConfigurationMap rawConfig) {
+        verifyCommonRecommendedConfiguration(cameraId, c, rawConfig, /*checkNoInput*/ true,
+                /*checkNoHighRes*/ false, /*checkNoHighSpeed*/ true, /*checkNoPrivate*/ true,
+                /*checkNoDepth*/ true);
+
+        Set<Integer> outputFormats = rawConfig.getOutputFormats();
+        for (Integer outputFormatInteger : outputFormats) {
+            int outputFormat = outputFormatInteger.intValue();
+            switch (outputFormat) {
+                case ImageFormat.RAW10:
+                case ImageFormat.RAW12:
+                case ImageFormat.RAW_PRIVATE:
+                case ImageFormat.RAW_SENSOR:
+                    break;
+                default:
+                    fail(String.format("Recommended raw configuration map must not contain " +
+                            " non-RAW formats like: %d for ID: %s", outputFormat, cameraId));
+
+            }
+        }
+    }
+
+    private void verifyRecommendedZSLConfiguration(String cameraId, CameraCharacteristics c,
+            RecommendedStreamConfigurationMap zslConfig) {
+        verifyCommonRecommendedConfiguration(cameraId, c, zslConfig, /*checkNoInput*/ false,
+                /*checkNoHighRes*/ false, /*checkNoHighSpeed*/ true, /*checkNoPrivate*/ false,
+                /*checkNoDepth*/ false);
+
+        StreamConfigurationMap fullConfig =
+            c.get(CameraCharacteristics.SCALER_STREAM_CONFIGURATION_MAP);
+        assertNotNull(String.format("No stream configuration map found for ID: %s!", cameraId),
+                fullConfig);
+        Set<Integer> inputFormats = zslConfig.getInputFormats();
+        int [] availableInputFormats = fullConfig.getInputFormats();
+        for (Integer inputFormatInteger : inputFormats) {
+            int inputFormat = inputFormatInteger.intValue();
+            assertArrayContains(String.format("Recommended ZSL configuration includes " +
+                    "unsupported input format %d for ID: %s", inputFormat, cameraId),
+                    availableInputFormats, inputFormat);
+
+            Set<Size> inputSizes = zslConfig.getInputSizes(inputFormat);
+            Size [] availableInputSizes = fullConfig.getInputSizes(inputFormat);
+            assertTrue(String.format("Recommended ZSL configuration input format %d includes " +
+                    "invalid input sizes for ID: %s", inputFormat, cameraId),
+                    ((inputSizes != null) && (inputSizes.size() > 0)));
+            for (Size inputSize : inputSizes) {
+                assertArrayContains(String.format("Recommended ZSL configuration includes " +
+                        "unsupported input format %d with size %s ID: %s", inputFormat,
+                        inputSize.toString(), cameraId), availableInputSizes, inputSize);
+            }
+            Set<Integer> validOutputFormats = zslConfig.getValidOutputFormatsForInput(inputFormat);
+            int [] availableValidOutputFormats = fullConfig.getValidOutputFormatsForInput(
+                    inputFormat);
+            for (Integer outputFormatInteger : validOutputFormats) {
+                int outputFormat = outputFormatInteger.intValue();
+                assertArrayContains(String.format("Recommended ZSL configuration includes " +
+                        "unsupported output format %d for input %s ID: %s", outputFormat,
+                        inputFormat, cameraId), availableValidOutputFormats, outputFormat);
+            }
+        }
+    }
+
+    public void testRecommendedStreamConfigurations() {
+        int counter = 0;
+        for (CameraCharacteristics c : mCharacteristics) {
+            int[] actualCapabilities = c.get(CameraCharacteristics.REQUEST_AVAILABLE_CAPABILITIES);
+            assertNotNull("android.request.availableCapabilities must never be null",
+                    actualCapabilities);
+
+            if (!arrayContains(actualCapabilities, BC)) {
+                Log.i(TAG, "Camera " + mIds[counter] +
+                        ": BACKWARD_COMPATIBLE capability not supported, skipping test");
+                continue;
+            }
+
+            try {
+                RecommendedStreamConfigurationMap map = c.getRecommendedStreamConfigurationMap(
+                        RecommendedStreamConfigurationMap.USECASE_PREVIEW - 1);
+                fail("Recommended configuration map shouldn't be available for invalid " +
+                        "use case!");
+            } catch (IllegalArgumentException e) {
+                //Expected continue
+            }
+
+            try {
+                RecommendedStreamConfigurationMap map = c.getRecommendedStreamConfigurationMap(
+                        RecommendedStreamConfigurationMap.USECASE_RAW + 1);
+                fail("Recommended configuration map shouldn't be available for invalid " +
+                        "use case!");
+            } catch (IllegalArgumentException e) {
+                //Expected continue
+            }
+
+            RecommendedStreamConfigurationMap previewConfig =
+                    c.getRecommendedStreamConfigurationMap(
+                    RecommendedStreamConfigurationMap.USECASE_PREVIEW);
+            RecommendedStreamConfigurationMap videoRecordingConfig =
+                    c.getRecommendedStreamConfigurationMap(
+                    RecommendedStreamConfigurationMap.USECASE_RECORD);
+            RecommendedStreamConfigurationMap videoSnapshotConfig =
+                    c.getRecommendedStreamConfigurationMap(
+                    RecommendedStreamConfigurationMap.USECASE_VIDEO_SNAPSHOT);
+            RecommendedStreamConfigurationMap snapshotConfig =
+                    c.getRecommendedStreamConfigurationMap(
+                    RecommendedStreamConfigurationMap.USECASE_SNAPSHOT);
+            RecommendedStreamConfigurationMap rawConfig =
+                    c.getRecommendedStreamConfigurationMap(
+                    RecommendedStreamConfigurationMap.USECASE_RAW);
+            RecommendedStreamConfigurationMap zslConfig =
+                    c.getRecommendedStreamConfigurationMap(
+                    RecommendedStreamConfigurationMap.USECASE_ZSL);
+            if ((previewConfig == null) && (videoRecordingConfig == null) &&
+                    (videoSnapshotConfig == null) && (snapshotConfig == null) &&
+                    (rawConfig == null) && (zslConfig == null)) {
+                Log.i(TAG, "Camera " + mIds[counter] +
+                        " doesn't support recommended configurations, skipping test");
+                continue;
+            }
+
+            assertNotNull(String.format("Mandatory recommended preview configuration map not " +
+                    "found for: ID %s", mIds[counter]), previewConfig);
+            verifyRecommendedPreviewConfiguration(mIds[counter], c, previewConfig);
+
+            assertNotNull(String.format("Mandatory recommended video recording configuration map " +
+                    "not found for: ID %s", mIds[counter]), videoRecordingConfig);
+            verifyRecommendedVideoConfiguration(mIds[counter], c, videoRecordingConfig);
+
+            assertNotNull(String.format("Mandatory recommended video snapshot configuration map " +
+                    "not found for: ID %s", mIds[counter]), videoSnapshotConfig);
+            verifyRecommendedVideoSnapshotConfiguration(mIds[counter], c, videoSnapshotConfig,
+                    videoRecordingConfig);
+
+            assertNotNull(String.format("Mandatory recommended snapshot configuration map not " +
+                    "found for: ID %s", mIds[counter]), snapshotConfig);
+            verifyRecommendedSnapshotConfiguration(mIds[counter], c, snapshotConfig);
+
+            if (arrayContains(actualCapabilities, RAW)) {
+                assertNotNull(String.format("Mandatory recommended raw configuration map not " +
+                        "found for: ID %s", mIds[counter]), rawConfig);
+                verifyRecommendedRawConfiguration(mIds[counter], c, rawConfig);
+            }
+
+            if (arrayContains(actualCapabilities, OPAQUE_REPROCESS) ||
+                    arrayContains(actualCapabilities, YUV_REPROCESS)) {
+                assertNotNull(String.format("Mandatory recommended ZSL configuration map not " +
+                        "found for: ID %s", mIds[counter]), zslConfig);
+                verifyRecommendedZSLConfiguration(mIds[counter], c, zslConfig);
             }
 
             counter++;
@@ -583,7 +1015,6 @@ public class ExtendedCameraCharacteristicsTest extends AndroidTestCase {
      */
     public void testStaticBurstCharacteristics() throws Exception {
         int counter = 0;
-        final float SIZE_ERROR_MARGIN = 0.03f;
         for (CameraCharacteristics c : mCharacteristics) {
             int[] actualCapabilities = CameraTestUtils.getValueNotNull(
                     c, CameraCharacteristics.REQUEST_AVAILABLE_CAPABILITIES);
@@ -626,22 +1057,8 @@ public class ExtendedCameraCharacteristicsTest extends AndroidTestCase {
                 (maxJpegSize.getWidth() <= maxYuvSize.getWidth() &&
                         maxJpegSize.getHeight() <= maxYuvSize.getHeight()) : false;
 
-            float croppedWidth = (float)sensorSize.getWidth();
-            float croppedHeight = (float)sensorSize.getHeight();
-            float sensorAspectRatio = (float)sensorSize.getWidth() / (float)sensorSize.getHeight();
-            float maxYuvAspectRatio = (float)maxYuvSize.getWidth() / (float)maxYuvSize.getHeight();
-            if (sensorAspectRatio < maxYuvAspectRatio) {
-                croppedHeight = (float)sensorSize.getWidth() / maxYuvAspectRatio;
-            } else if (sensorAspectRatio > maxYuvAspectRatio) {
-                croppedWidth = (float)sensorSize.getHeight() * maxYuvAspectRatio;
-            }
-            Size croppedSensorSize = new Size((int)croppedWidth, (int)croppedHeight);
-
-            boolean maxYuvMatchSensor =
-                    (maxYuvSize.getWidth() <= croppedSensorSize.getWidth() * (1.0 + SIZE_ERROR_MARGIN) &&
-                     maxYuvSize.getWidth() >= croppedSensorSize.getWidth() * (1.0 - SIZE_ERROR_MARGIN) &&
-                     maxYuvSize.getHeight() <= croppedSensorSize.getHeight() * (1.0 + SIZE_ERROR_MARGIN) &&
-                     maxYuvSize.getHeight() >= croppedSensorSize.getHeight() * (1.0 - SIZE_ERROR_MARGIN));
+            Pair<Boolean, Size> maxYuvMatchSensorPair = isSizeWithinSensorMargin(maxYuvSize,
+                    sensorSize);
 
             // No need to do null check since framework will generate the key if HAL don't supply
             boolean haveAeLock = CameraTestUtils.getValueNotNull(
@@ -727,8 +1144,8 @@ public class ExtendedCameraCharacteristicsTest extends AndroidTestCase {
                         String.format("BURST-capable camera device %s max YUV size %s should be" +
                                 "close to active array size %s or cropped active array size %s",
                                 mIds[counter], maxYuvSize.toString(), sensorSize.toString(),
-                                croppedSensorSize.toString()),
-                        maxYuvMatchSensor);
+                                maxYuvMatchSensorPair.second.toString()),
+                        maxYuvMatchSensorPair.first.booleanValue());
                 assertTrue(
                         String.format("BURST-capable camera device %s does not support AE lock",
                                 mIds[counter]),
@@ -744,7 +1161,7 @@ public class ExtendedCameraCharacteristicsTest extends AndroidTestCase {
                         String.format("Camera device %s has all the requirements for BURST" +
                                 " capability but does not report it!", mIds[counter]),
                         !(haveMaxYuv && haveMaxYuvRate && haveFastYuvRate && haveFastAeTargetFps &&
-                                haveFastSyncLatency && maxYuvMatchSensor &&
+                                haveFastSyncLatency && maxYuvMatchSensorPair.first.booleanValue() &&
                                 haveAeLock && haveAwbLock));
             }
 
@@ -777,6 +1194,9 @@ public class ExtendedCameraCharacteristicsTest extends AndroidTestCase {
                     CameraCharacteristics.NOISE_REDUCTION_AVAILABLE_NOISE_REDUCTION_MODES);
 
             int[] inputFormats = configs.getInputFormats();
+            int[] outputFormats = configs.getOutputFormats();
+            boolean isMonochromeWithY8 = arrayContains(capabilities, MONOCHROME)
+                    && arrayContains(outputFormats, ImageFormat.Y8);
 
             boolean supportZslEdgeMode = false;
             boolean supportZslNoiseReductionMode = false;
@@ -820,6 +1240,9 @@ public class ExtendedCameraCharacteristicsTest extends AndroidTestCase {
                 // Verify mandatory input formats are supported
                 mCollector.expectTrue("YUV_420_888 input must be supported for YUV reprocessing",
                         !supportYUV || arrayContains(inputFormats, ImageFormat.YUV_420_888));
+                mCollector.expectTrue("Y8 input must be supported for YUV reprocessing on " +
+                        "MONOCHROME devices with Y8 support", !supportYUV || !isMonochromeWithY8
+                        || arrayContains(inputFormats, ImageFormat.Y8));
                 mCollector.expectTrue("PRIVATE input must be supported for OPAQUE reprocessing",
                         !supportOpaque || arrayContains(inputFormats, ImageFormat.PRIVATE));
 
@@ -832,11 +1255,17 @@ public class ExtendedCameraCharacteristicsTest extends AndroidTestCase {
 
                 for (int input : inputFormats) {
                     // Verify mandatory output formats are supported
-                    int[] outputFormats = configs.getValidOutputFormatsForInput(input);
-                    mCollector.expectTrue("YUV_420_888 output must be supported for reprocessing",
-                            arrayContains(outputFormats, ImageFormat.YUV_420_888));
+                    int[] outputFormatsForInput = configs.getValidOutputFormatsForInput(input);
+                    mCollector.expectTrue(
+                        "YUV_420_888 output must be supported for reprocessing",
+                        input == ImageFormat.Y8
+                        || arrayContains(outputFormatsForInput, ImageFormat.YUV_420_888));
+                    mCollector.expectTrue(
+                        "Y8 output must be supported for reprocessing on MONOCHROME devices with"
+                        + " Y8 support", !isMonochromeWithY8 || input == ImageFormat.YUV_420_888
+                        || arrayContains(outputFormatsForInput, ImageFormat.Y8));
                     mCollector.expectTrue("JPEG output must be supported for reprocessing",
-                            arrayContains(outputFormats, ImageFormat.JPEG));
+                            arrayContains(outputFormatsForInput, ImageFormat.JPEG));
 
                     // Verify camera can output the reprocess input formats and sizes.
                     Size[] inputSizes = configs.getInputSizes(input);

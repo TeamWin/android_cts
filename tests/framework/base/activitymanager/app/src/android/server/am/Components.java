@@ -334,6 +334,7 @@ public class Components extends ComponentsBase {
         public static final String KEY_PUBLIC_DISPLAY = "public_display";
         public static final String KEY_RESIZE_DISPLAY = "resize_display";
         public static final String KEY_SHOW_SYSTEM_DECORATIONS = "show_system_decorations";
+        public static final String KEY_PRESENTATION_DISPLAY = "presentation_display";
         // Value constants of {@link #KEY_COMMAND}.
         public static final String COMMAND_CREATE_DISPLAY = "create_display";
         public static final String COMMAND_DESTROY_DISPLAY = "destroy_display";

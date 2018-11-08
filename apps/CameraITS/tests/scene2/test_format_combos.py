@@ -71,11 +71,18 @@ def main():
             [fmt_yuv_prev, fmt_jpg_prev, fmt_raw_full],  # F8
             [fmt_yuv_prev, fmt_jpg_full, fmt_raw_full]]  # F9
 
+        if its.caps.y8(props):
+            wy8, hy8 = its.objects.get_available_output_sizes("y8", props)[-1]
+            fmt_y8_prev = {"format": "y8", "width": wy8, "height": hy8}
+            fmt_y8_full = {"format": "y8"}
+            fmt_combos.append([fmt_y8_prev])
+            fmt_combos.append([fmt_y8_full])
+
         # Two different burst lengths: single frame, and 3 frames.
         burst_lens = [1,  # B0
                       3]  # B1
 
-        # There are 2x10x2=40 different combinations. Run through them all.
+        # There are 2xlen(fmt_combos)x2 different combinations. Run through them all.
         n = 0
         for r,req in enumerate(reqs):
             for f,fmt_combo in enumerate(fmt_combos):

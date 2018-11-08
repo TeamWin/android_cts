@@ -810,6 +810,8 @@ public class ItsService extends Service implements SensorEventListener {
                         jsonSurface.put("format", "jpeg");
                     } else if (format == ImageFormat.YUV_420_888) {
                         jsonSurface.put("format", "yuv");
+                    } else if (format == ImageFormat.Y8) {
+                        jsonSurface.put("format", "y8");
                     } else {
                         throw new ItsException("Invalid format");
                     }
@@ -1294,6 +1296,9 @@ public class ItsService extends Service implements SensorEventListener {
                         mCaptureRawIsStats = true;
                         mCaptureStatsGridWidth = surfaceObj.optInt("gridWidth");
                         mCaptureStatsGridHeight = surfaceObj.optInt("gridHeight");
+                    } else if ("y8".equals(sformat)) {
+                        outputFormats[i] = ImageFormat.Y8;
+                        sizes = ItsUtils.getY8OutputSizes(mCameraCharacteristics);
                     } else {
                         throw new ItsException("Unsupported format: " + sformat);
                     }
@@ -1735,6 +1740,14 @@ public class ItsService extends Service implements SensorEventListener {
                                               .left;
                             int aay = ItsUtils.getActiveArrayCropRegion(mCameraCharacteristics)
                                               .top;
+
+                            if (w == aaw) {
+                                aax = 0;
+                            }
+                            if (h == aah) {
+                                aay = 0;
+                            }
+
                             int gw = mCaptureStatsGridWidth;
                             int gh = mCaptureStatsGridHeight;
                             float[] stats = StatsImage.computeStatsImage(
@@ -1782,6 +1795,12 @@ public class ItsService extends Service implements SensorEventListener {
                             }
                         }
                     }
+                } else if (format == ImageFormat.Y8) {
+                    Logt.i(TAG, "Received Y8 capture");
+                    byte[] img = ItsUtils.getDataFromImage(capture, mSocketQueueQuota);
+                    ByteBuffer buf = ByteBuffer.wrap(img);
+                    mSocketRunnableObj.sendResponseCaptureBuffer(
+                            "y8Image"+physicalCameraId, buf);
                 } else {
                     throw new ItsException("Unsupported image format: " + format);
                 }

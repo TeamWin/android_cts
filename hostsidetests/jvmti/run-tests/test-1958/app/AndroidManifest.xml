@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!--
- * Copyright (C) 2018 The Android Open Source Project
+ * Copyright (C) 2017 The Android Open Source Project
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,14 +16,20 @@
  -->
 
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
-    package="android.permission.cts.revokepermissionwhenremoved.AdversarialPermissionDefinerApp">
+    package="android.jvmti.cts.run_test_1958">
 
-    <permission android:name="android.permission.cts.revokepermissionwhenremoved.TestPermission"
-        android:protectionLevel="dangerous"
-        android:label="TestPermission"
-        android:description="@string/test_permission" />
-
-    <application>
+    <application android:debuggable="true">
+        <uses-library android:name="android.test.runner" />
+        <meta-data android:name="android.jvmti.cts.run_test_nr" android:value="1958" />
+        <activity android:name="android.jvmti.JvmtiActivity" >
+        </activity>
     </application>
+
+    <!--  self-instrumenting test package. -->
+    <instrumentation
+        android:name="android.support.test.runner.AndroidJUnitRunner"
+        android:label="CTS tests for JVMTI"
+        android:targetPackage="android.jvmti.cts.run_test_1958" >
+    </instrumentation>
 </manifest>
 

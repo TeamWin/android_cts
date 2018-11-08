@@ -57,7 +57,8 @@ public class ActivityManagerDisplayLockedKeyguardTests extends ActivityManagerDi
             lockScreenSession.setLockCredential();
 
             // Create new usual virtual display.
-            final ActivityDisplay newDisplay = virtualDisplaySession.createDisplay();
+            final ActivityDisplay newDisplay = virtualDisplaySession.setPublicDisplay(true)
+                    .createDisplay();
             mAmWmState.assertVisibility(VIRTUAL_DISPLAY_ACTIVITY, true /* visible */);
 
             // Launch activity on new secondary display.
@@ -71,9 +72,11 @@ public class ActivityManagerDisplayLockedKeyguardTests extends ActivityManagerDi
             mAmWmState.assertVisibility(TEST_ACTIVITY, false /* visible */);
 
             // Unlock and check if visibility is back.
-            lockScreenSession.unlockDevice()
-                    .enterAndConfirmLockCredential();
+            lockScreenSession.unlockDevice();
+
+            lockScreenSession.enterAndConfirmLockCredential();
             mAmWmState.waitForKeyguardGone();
+            mAmWmState.assertKeyguardGone();
             waitAndAssertActivityState(TEST_ACTIVITY, STATE_RESUMED,
                     "Expected resumed activity on secondary display");
             mAmWmState.assertVisibility(TEST_ACTIVITY, true /* visible */);

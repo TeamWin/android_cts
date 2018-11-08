@@ -140,6 +140,18 @@ public class ImageReaderTest extends Camera2AndroidTestCase {
         }
     }
 
+    public void testY8() throws Exception {
+        for (String id : mCameraIds) {
+            try {
+                Log.i(TAG, "Testing Camera " + id);
+                openDevice(id);
+                bufferFormatTestByCamera(ImageFormat.Y8, /*repeating*/true);
+            } finally {
+                closeDevice(id);
+            }
+        }
+    }
+
     public void testJpeg() throws Exception {
         for (String id : mCameraIds) {
             try {

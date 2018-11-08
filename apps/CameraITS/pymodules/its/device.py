@@ -548,7 +548,7 @@ class ItsSession(object):
 
         The out_surfaces field can specify the width(s), height(s), and
         format(s) of the captured image. The formats may be "yuv", "jpeg",
-        "dng", "raw", "raw10", "raw12", or "rawStats". The default is a YUV420
+        "dng", "raw", "raw10", "raw12", "rawStats" or "y8". The default is a YUV420
         frame ("yuv") corresponding to a full sensor frame.
 
         Optionally the out_surfaces field can specify physical camera id(s) if the
@@ -806,7 +806,8 @@ class ItsSession(object):
         # out in any order for that capture.
         nbufs = 0
         bufs = {"raw":[], "raw10":[], "raw12":[],
-                "rawStats":[], "dng":[], "jpeg":[]}
+                "rawStats":[], "dng":[], "jpeg":[],
+                "y8":[]}
         yuv_bufs = {size:[] for size in yuv_sizes}
         mds = []
         physical_mds = []
@@ -815,7 +816,7 @@ class ItsSession(object):
         while nbufs < ncap*nsurf or len(mds) < ncap:
             jsonObj,buf = self.__read_response_from_socket()
             if jsonObj['tag'] in ['jpegImage', 'rawImage', \
-                    'raw10Image', 'raw12Image', 'rawStatsImage', 'dngImage'] \
+                    'raw10Image', 'raw12Image', 'rawStatsImage', 'dngImage', 'y8Image'] \
                     and buf is not None:
                 fmt = jsonObj['tag'][:-5]
                 bufs[fmt].append(buf)
