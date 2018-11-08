@@ -133,6 +133,7 @@ LOCAL_SRC_FILES += \
   src/1942-suspend-raw-monitor-exit/src/art/Test1942.java \
   src/1943-suspend-raw-monitor-wait/src/art/Test1943.java \
   src/1953-pop-frame/src/art/Test1953.java \
+  src/1958-transform-try-jit/src/art/Test1958.java \
 
 JVMTI_RUN_TEST_GENERATED_NUMBERS := \
   901 \
@@ -223,6 +224,7 @@ JVMTI_RUN_TEST_GENERATED_NUMBERS := \
   1942 \
   1943 \
   1953 \
+  1958 \
 
 # Try to enforce that the directories correspond to the Java files we pull in.
 JVMTI_RUN_TEST_DIR_CHECK := $(sort $(foreach DIR,$(addprefix src/,$(JVMTI_RUN_TEST_GENERATED_NUMBERS)), \
