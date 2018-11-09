@@ -25,7 +25,7 @@ public class Poc17_06 extends SecurityTestCase {
     /**
      * b/36392138
      */
-    @SecurityTest
+    @SecurityTest(minPatchLevel = "2017-06")
     public void testPocCVE_2017_0647() throws Exception {
         AdbUtils.pushResource("/CVE-2017-0647.zip", "/data/local/tmp/CVE-2017-0647.zip",
                 getDevice());

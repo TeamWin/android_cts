@@ -80,17 +80,17 @@ public class StagefrightTest extends InstrumentationTestCase {
      before any existing test methods
      ***********************************************************/
 
-    @SecurityTest
+    @SecurityTest(minPatchLevel = "2017-07")
     public void testStagefright_bug_36725407() throws Exception {
         doStagefrightTest(R.raw.bug_36725407);
     }
 
-    @SecurityTest
+    @SecurityTest(minPatchLevel = "2016-08")
     public void testStagefright_cve_2016_3829() throws Exception {
         doStagefrightTest(R.raw.cve_2016_3829);
     }
 
-    @SecurityTest
+    @SecurityTest(minPatchLevel = "2016-08")
     public void testStagefright_cve_2016_3828() throws Exception {
         doStagefrightTest(R.raw.cve_2016_3828);
     }
@@ -100,37 +100,37 @@ public class StagefrightTest extends InstrumentationTestCase {
         doStagefrightTest(R.raw.bug_64710074);
     }
 
-    @SecurityTest
+    @SecurityTest(minPatchLevel = "2017-06")
     public void testStagefright_cve_2017_0643() throws Exception {
         doStagefrightTest(R.raw.cve_2017_0643);
     }
 
-    @SecurityTest
+    @SecurityTest(minPatchLevel = "2017-08")
     public void testStagefright_cve_2017_0728() throws Exception {
         doStagefrightTest(R.raw.cve_2017_0728);
     }
 
-    @SecurityTest
+    @SecurityTest(minPatchLevel = "2017-10")
     public void testStagefright_bug_62187433() throws Exception {
         doStagefrightTest(R.raw.bug_62187433);
     }
 
-    @SecurityTest
+    @SecurityTest(minPatchLevel = "2017-09")
     public void testStagefrightANR_bug_62673844() throws Exception {
         doStagefrightTestANR(R.raw.bug_62673844);
     }
 
-    @SecurityTest
+    @SecurityTest(minPatchLevel = "2017-09")
     public void testStagefright_bug_37079296() throws Exception {
         doStagefrightTest(R.raw.bug_37079296);
     }
 
-    @SecurityTest
+    @SecurityTest(minPatchLevel = "2017-09")
     public void testStagefright_bug_38342499() throws Exception {
         doStagefrightTest(R.raw.bug_38342499);
     }
 
-    @SecurityTest
+    @SecurityTest(minPatchLevel = "2015-10")
     public void testStagefright_bug_22771132() throws Exception {
         doStagefrightTest(R.raw.bug_22771132);
     }
@@ -147,87 +147,87 @@ public class StagefrightTest extends InstrumentationTestCase {
         doStagefrightTest(R.raw.bug_35763994);
     }
 
-    @SecurityTest
+    @SecurityTest(minPatchLevel = "2017-03")
     public void testStagefright_bug_33137046() throws Exception {
         doStagefrightTest(R.raw.bug_33137046);
     }
 
-    @SecurityTest
+    @SecurityTest(minPatchLevel = "2017-07")
     public void testStagefright_cve_2016_2507() throws Exception {
         doStagefrightTest(R.raw.cve_2016_2507);
     }
 
-    @SecurityTest
+    @SecurityTest(minPatchLevel = "2017-03")
     public void testStagefright_bug_31647370() throws Exception {
         doStagefrightTest(R.raw.bug_31647370);
     }
 
-    @SecurityTest
+    @SecurityTest(minPatchLevel = "2017-01")
     public void testStagefright_bug_32577290() throws Exception {
         doStagefrightTest(R.raw.bug_32577290);
     }
 
-    @SecurityTest
+    @SecurityTest(minPatchLevel = "2017-07")
     public void testStagefright_cve_2015_1538_1() throws Exception {
         doStagefrightTest(R.raw.cve_2015_1538_1);
     }
 
-    @SecurityTest
+    @SecurityTest(minPatchLevel = "2017-07")
     public void testStagefright_cve_2015_1538_2() throws Exception {
         doStagefrightTest(R.raw.cve_2015_1538_2);
     }
 
-    @SecurityTest
+    @SecurityTest(minPatchLevel = "2017-07")
     public void testStagefright_cve_2015_1538_3() throws Exception {
         doStagefrightTest(R.raw.cve_2015_1538_3);
     }
 
-    @SecurityTest
+    @SecurityTest(minPatchLevel = "2017-07")
     public void testStagefright_cve_2015_1538_4() throws Exception {
         doStagefrightTest(R.raw.cve_2015_1538_4);
     }
 
-    @SecurityTest
+    @SecurityTest(minPatchLevel = "2017-07")
     public void testStagefright_cve_2015_1539() throws Exception {
         doStagefrightTest(R.raw.cve_2015_1539);
     }
 
-    @SecurityTest
+    @SecurityTest(minPatchLevel = "2015-01")
     public void testStagefright_cve_2015_3824() throws Exception {
         doStagefrightTest(R.raw.cve_2015_3824);
     }
 
-    @SecurityTest
+    @SecurityTest(minPatchLevel = "2015-01")
     public void testStagefright_cve_2015_3826() throws Exception {
         doStagefrightTest(R.raw.cve_2015_3826);
     }
 
-    @SecurityTest
+    @SecurityTest(minPatchLevel = "2015-01")
     public void testStagefright_cve_2015_3827() throws Exception {
         doStagefrightTest(R.raw.cve_2015_3827);
     }
 
-    @SecurityTest
+    @SecurityTest(minPatchLevel = "2015-01")
     public void testStagefright_cve_2015_3828() throws Exception {
         doStagefrightTest(R.raw.cve_2015_3828);
     }
 
-    @SecurityTest
+    @SecurityTest(minPatchLevel = "2015-01")
     public void testStagefright_cve_2015_3829() throws Exception {
         doStagefrightTest(R.raw.cve_2015_3829);
     }
 
-    @SecurityTest
+    @SecurityTest(minPatchLevel = "2015-01")
     public void testStagefright_cve_2015_3836() throws Exception {
         doStagefrightTest(R.raw.cve_2015_3836);
     }
 
-    @SecurityTest
+    @SecurityTest(minPatchLevel = "2015-01")
     public void testStagefright_cve_2015_3864() throws Exception {
         doStagefrightTest(R.raw.cve_2015_3864);
     }
 
-    @SecurityTest
+    @SecurityTest(minPatchLevel = "2015-01")
     public void testStagefright_cve_2015_3864_b23034759() throws Exception {
         doStagefrightTest(R.raw.cve_2015_3864_b23034759);
     }
@@ -236,22 +236,22 @@ public class StagefrightTest extends InstrumentationTestCase {
         doStagefrightTest(R.raw.cve_2015_6598);
     }
 
-    @SecurityTest
+    @SecurityTest(minPatchLevel = "2016-12")
     public void testStagefright_cve_2016_6766() throws Exception {
         doStagefrightTest(R.raw.cve_2016_6766);
     }
 
-    @SecurityTest
+    @SecurityTest(minPatchLevel = "2016-04")
     public void testStagefright_bug_26366256() throws Exception {
         doStagefrightTest(R.raw.bug_26366256);
     }
 
-    @SecurityTest
+    @SecurityTest(minPatchLevel = "2017-02")
     public void testStagefright_cve_2016_2429_b_27211885() throws Exception {
         doStagefrightTest(R.raw.cve_2016_2429_b_27211885);
     }
 
-    @SecurityTest
+    @SecurityTest(minPatchLevel = "2017-08")
     public void testStagefright_bug_34031018() throws Exception {
         doStagefrightTest(R.raw.bug_34031018_32bit);
         doStagefrightTest(R.raw.bug_34031018_64bit);
@@ -262,32 +262,32 @@ public class StagefrightTest extends InstrumentationTestCase {
      before any existing test methods
      ***********************************************************/
 
-    @SecurityTest
+    @SecurityTest(minPatchLevel = "2018-01")
     public void testStagefright_bug_65123471() throws Exception {
         doStagefrightTest(R.raw.bug_65123471);
     }
 
-    @SecurityTest
+    @SecurityTest(minPatchLevel = "2018-04")
     public void testStagefright_bug_72165027() throws Exception {
         doStagefrightTest(R.raw.bug_72165027);
     }
 
-    @SecurityTest
+    @SecurityTest(minPatchLevel = "2018-06")
     public void testStagefright_bug_65483665() throws Exception {
         doStagefrightTest(R.raw.bug_65483665);
     }
 
-    @SecurityTest
+    @SecurityTest(minPatchLevel = "2018-01")
     public void testStagefright_cve_2017_0852_b_62815506() throws Exception {
         doStagefrightTest(R.raw.cve_2017_0852_b_62815506);
     }
 
-    @SecurityTest
+    @SecurityTest(minPatchLevel = "2018-02")
     public void testStagefright_cve_2017_13229() throws Exception {
         doStagefrightTest(R.raw.cve_2017_13229);
     }
 
-    @SecurityTest
+    @SecurityTest(minPatchLevel = "2017-09")
     public void testStagefright_cve_2017_0763() throws Exception {
         doStagefrightTest(R.raw.cve_2017_0763);
     }
@@ -297,321 +297,321 @@ public class StagefrightTest extends InstrumentationTestCase {
      before any existing test methods
      ***********************************************************/
 
-    @SecurityTest
+    @SecurityTest(minPatchLevel = "2018-06")
     public void testBug_73965890() throws Exception {
         int[] frameSizes = getFrameSizes(R.raw.bug_73965890_framelen);
         doStagefrightTestRawBlob(R.raw.bug_73965890_hevc, "video/hevc", 320, 240, frameSizes);
     }
 
-    @SecurityTest
+    @SecurityTest(minPatchLevel = "2016-10")
     public void testStagefright_cve_2016_3920() throws Exception {
         doStagefrightTest(R.raw.cve_2016_3920);
     }
 
-    @SecurityTest
+    @SecurityTest(minPatchLevel = "2018-06")
     public void testStagefright_bug_68953854() throws Exception {
         doStagefrightTest(R.raw.bug_68953854, 1 * 60 * 1000);
     }
 
-    @SecurityTest
+    @SecurityTest(minPatchLevel = "2017-09")
     public void testStagefright_bug_38448381() throws Exception {
         doStagefrightTest(R.raw.bug_38448381);
     }
 
-    @SecurityTest
+    @SecurityTest(minPatchLevel = "2016-08")
     public void testStagefright_cve_2016_3821() throws Exception {
         doStagefrightTest(R.raw.cve_2016_3821);
     }
 
-    @SecurityTest
+    @SecurityTest(minPatchLevel = "2018-04")
     public void testStagefright_bug_70897454() throws Exception {
         doStagefrightTestRawBlob(R.raw.b70897454_avc, "video/avc", 320, 420);
     }
 
-    @SecurityTest
+    @SecurityTest(minPatchLevel = "2016-07")
     public void testStagefright_cve_2016_3742_b_28165659() throws Exception {
         doStagefrightTest(R.raw.cve_2016_3742_b_28165659);
     }
 
-    @SecurityTest
+    @SecurityTest(minPatchLevel = "2017-05")
     public void testStagefright_bug_35039946() throws Exception {
         doStagefrightTestRawBlob(R.raw.bug_35039946_hevc, "video/hevc", 320, 420);
     }
 
-    @SecurityTest
+    @SecurityTest(minPatchLevel = "2017-09")
     public void testStagefright_bug_38115076() throws Exception {
         doStagefrightTest(R.raw.bug_38115076);
     }
 
-    @SecurityTest
+    @SecurityTest(minPatchLevel = "2017-05")
     public void testStagefright_bug_34618607() throws Exception {
         doStagefrightTest(R.raw.bug_34618607);
     }
 
-    @SecurityTest
+    @SecurityTest(minPatchLevel = "2018-02")
     public void testStagefright_bug_69478425() throws Exception {
         doStagefrightTest(R.raw.bug_69478425);
     }
 
-    @SecurityTest
+    @SecurityTest(minPatchLevel = "2018-01")
     public void testStagefright_bug_65735716() throws Exception {
         doStagefrightTestRawBlob(R.raw.bug_65735716_avc, "video/avc", 320, 240);
     }
 
-    @SecurityTest
+    @SecurityTest(minPatchLevel = "2017-12")
     public void testStagefright_bug_65717533() throws Exception {
         doStagefrightTest(R.raw.bug_65717533_header_corrupt);
     }
 
-    @SecurityTest
+    @SecurityTest(minPatchLevel = "2017-08")
     public void testStagefright_bug_38239864() throws Exception {
         doStagefrightTest(R.raw.bug_38239864, (4 * 60 * 1000));
     }
 
-    @SecurityTest
+    @SecurityTest(minPatchLevel = "2017-05")
     public void testStagefright_cve_2017_0600() throws Exception {
         doStagefrightTest(R.raw.cve_2017_0600);
     }
 
-    @SecurityTest
+    @SecurityTest(minPatchLevel = "2017-08")
     public void testBug_38014992() throws Exception {
         int[] frameSizes = getFrameSizes(R.raw.bug_38014992_framelen);
         doStagefrightTestRawBlob(R.raw.bug_38014992_avc, "video/avc", 640, 480, frameSizes);
     }
 
-    @SecurityTest
+    @SecurityTest(minPatchLevel = "2017-07")
     public void testBug_35584425() throws Exception {
         int[] frameSizes = getFrameSizes(R.raw.bug_35584425_framelen);
         doStagefrightTestRawBlob(R.raw.bug_35584425_avc, "video/avc", 352, 288, frameSizes);
     }
 
-    @SecurityTest
+    @SecurityTest(minPatchLevel = "2016-11")
     public void testBug_31092462() throws Exception {
         int[] frameSizes = getFrameSizes(R.raw.bug_31092462_framelen);
         doStagefrightTestRawBlob(R.raw.bug_31092462_avc, "video/avc", 1280, 1024, frameSizes);
     }
 
-    @SecurityTest
+    @SecurityTest(minPatchLevel = "2017-04")
     public void testBug_34097866() throws Exception {
         int[] frameSizes = getFrameSizes(R.raw.bug_34097866_frame_len);
         doStagefrightTestRawBlob(R.raw.bug_34097866_avc, "video/avc", 352, 288, frameSizes);
     }
 
-    @SecurityTest
+    @SecurityTest(minPatchLevel = "2017-03")
     public void testBug_33862021() throws Exception {
         int[] frameSizes = getFrameSizes(R.raw.bug_33862021_frame_len);
         doStagefrightTestRawBlob(R.raw.bug_33862021_hevc, "video/hevc", 160, 96, frameSizes);
     }
 
-    @SecurityTest
+    @SecurityTest(minPatchLevel = "2017-03")
     public void testBug_33387820() throws Exception {
         int[] frameSizes = {45, 3202, 430, 2526};
         doStagefrightTestRawBlob(R.raw.bug_33387820_avc, "video/avc", 320, 240, frameSizes);
     }
 
-    @SecurityTest
+    @SecurityTest(minPatchLevel = "2017-07")
     public void testBug_37008096() throws Exception {
         int[] frameSizes = {245, 12, 33, 140, 164};
         doStagefrightTestRawBlob(R.raw.bug_37008096_avc, "video/avc", 320, 240, frameSizes);
     }
 
-    @SecurityTest
+    @SecurityTest(minPatchLevel = "2017-07")
     public void testStagefright_bug_34231163() throws Exception {
         int[] frameSizes = {22, 357, 217, 293, 175};
         doStagefrightTestRawBlob(R.raw.bug_34231163_mpeg2, "video/mpeg2", 320, 240, frameSizes);
     }
 
-    @SecurityTest
+    @SecurityTest(minPatchLevel = "2017-04")
     public void testStagefright_bug_33933140() throws Exception {
         int[] frameSizes = getFrameSizes(R.raw.bug_33933140_framelen);
         doStagefrightTestRawBlob(R.raw.bug_33933140_avc, "video/avc", 320, 240, frameSizes);
     }
 
-    @SecurityTest
+    @SecurityTest(minPatchLevel = "2017-04")
     public void testStagefright_bug_34097915() throws Exception {
         int[] frameSizes = {4140, 593, 0, 15495};
         doStagefrightTestRawBlob(R.raw.bug_34097915_avc, "video/avc", 320, 240, frameSizes);
     }
 
-    @SecurityTest
+    @SecurityTest(minPatchLevel = "2017-03")
     public void testStagefright_bug_34097213() throws Exception {
         int[] frameSizes = {2571, 210, 33858};
         doStagefrightTestRawBlob(R.raw.bug_34097213_avc, "video/avc", 320, 240, frameSizes);
     }
 
-    @SecurityTest
+    @SecurityTest(minPatchLevel = "2016-08")
     public void testBug_28816956() throws Exception {
         int[] frameSizes = getFrameSizes(R.raw.bug_28816956_framelen);
         doStagefrightTestRawBlob(R.raw.bug_28816956_hevc, "video/hevc", 352, 288, frameSizes);
     }
 
-    @SecurityTest
+    @SecurityTest(minPatchLevel = "2017-03")
     public void testBug_33818500() throws Exception {
         int[] frameSizes = getFrameSizes(R.raw.bug_33818500_framelen);
         doStagefrightTestRawBlob(R.raw.bug_33818500_avc, "video/avc", 64, 32, frameSizes);
     }
 
-    @SecurityTest
+    @SecurityTest(minPatchLevel = "2018-01")
     public void testBug_64784973() throws Exception {
         int[] frameSizes = getFrameSizes(R.raw.bug_64784973_framelen);
         doStagefrightTestRawBlob(R.raw.bug_64784973_hevc, "video/hevc", 1280, 720, frameSizes);
     }
 
-    @SecurityTest
+    @SecurityTest(minPatchLevel = "2017-07")
     public void testBug_34231231() throws Exception {
         int[] frameSizes = getFrameSizes(R.raw.bug_34231231_framelen);
         doStagefrightTestRawBlob(R.raw.bug_34231231_mpeg2, "video/mpeg2", 352, 288, frameSizes);
     }
 
-    @SecurityTest
+    @SecurityTest(minPatchLevel = "2017-10")
     public void testBug_63045918() throws Exception {
         int[] frameSizes = getFrameSizes(R.raw.bug_63045918_framelen);
         doStagefrightTestRawBlob(R.raw.bug_63045918_hevc, "video/hevc", 352, 288, frameSizes);
     }
 
-    @SecurityTest
+    @SecurityTest(minPatchLevel = "2017-03")
     public void testBug_33298089() throws Exception {
         int[] frameSizes = {3247, 430, 221, 2305};
         doStagefrightTestRawBlob(R.raw.bug_33298089_avc, "video/avc", 32, 64, frameSizes);
     }
 
-    @SecurityTest
+    @SecurityTest(minPatchLevel = "2017-05")
     public void testStagefright_cve_2017_0599() throws Exception {
         doStagefrightTest(R.raw.cve_2017_0599);
     }
 
-    @SecurityTest
+    @SecurityTest(minPatchLevel = "2017-09")
     public void testStagefright_bug_36492741() throws Exception {
         doStagefrightTest(R.raw.bug_36492741);
     }
 
-    @SecurityTest
+    @SecurityTest(minPatchLevel = "2017-08")
     public void testStagefright_bug_38487564() throws Exception {
         doStagefrightTest(R.raw.bug_38487564, (4 * 60 * 1000));
     }
 
-    @SecurityTest
+    @SecurityTest(minPatchLevel = "2017-09")
     public void testStagefright_bug_37237396() throws Exception {
         doStagefrightTest(R.raw.bug_37237396);
     }
 
-    @SecurityTest
+    @SecurityTest(minPatchLevel = "2017-09")
     public void testStagefright_cve_2016_0842() throws Exception {
         doStagefrightTest(R.raw.cve_2016_0842);
     }
 
-    @SecurityTest
+    @SecurityTest(minPatchLevel = "2017-11")
     public void testStagefright_bug_63121644() throws Exception {
         doStagefrightTest(R.raw.bug_63121644);
     }
 
-    @SecurityTest
+    @SecurityTest(minPatchLevel = "2017-09")
     public void testStagefright_cve_2016_6712() throws Exception {
         doStagefrightTest(R.raw.cve_2016_6712);
     }
 
-    @SecurityTest
+    @SecurityTest(minPatchLevel = "2017-04")
     public void testStagefright_bug_34097231() throws Exception {
         doStagefrightTestRawBlob(R.raw.bug_34097231_avc, "video/avc", 320, 240);
     }
 
-    @SecurityTest
+    @SecurityTest(minPatchLevel = "2017-05")
     public void testStagefright_bug_34097672() throws Exception {
         doStagefrightTest(R.raw.bug_34097672);
     }
 
 
-    @SecurityTest
+    @SecurityTest(minPatchLevel = "2017-03")
     public void testStagefright_bug_33751193() throws Exception {
         doStagefrightTestRawBlob(R.raw.bug_33751193_avc, "video/avc", 320, 240);
     }
 
-    @SecurityTest
+    @SecurityTest(minPatchLevel = "2017-07")
     public void testBug_36993291() throws Exception {
         doStagefrightTestRawBlob(R.raw.bug_36993291_avc, "video/avc", 320, 240);
     }
 
-    @SecurityTest
+    @SecurityTest(minPatchLevel = "2017-06")
     public void testStagefright_bug_33818508() throws Exception {
         doStagefrightTest(R.raw.bug_33818508);
     }
 
-    @SecurityTest
+    @SecurityTest(minPatchLevel = "2017-08")
     public void testStagefright_bug_32873375() throws Exception {
         doStagefrightTest(R.raw.bug_32873375);
     }
 
-    @SecurityTest
+    @SecurityTest(minPatchLevel = "2016-03")
     public void testStagefright_bug_25765591() throws Exception {
         doStagefrightTest(R.raw.bug_25765591);
     }
 
-    @SecurityTest
+    @SecurityTest(minPatchLevel = "2017-09")
     public void testStagefright_bug_62673179() throws Exception {
         doStagefrightTest(R.raw.bug_62673179_ts, (4 * 60 * 1000));
     }
 
-    @SecurityTest
+    @SecurityTest(minPatchLevel = "2018-03")
     public void testStagefright_bug_69269702() throws Exception {
         doStagefrightTest(R.raw.bug_69269702);
     }
 
-    @SecurityTest
+    @SecurityTest(minPatchLevel = "2015-10")
     public void testStagefright_cve_2015_3867() throws Exception {
         doStagefrightTest(R.raw.cve_2015_3867);
     }
 
-    @SecurityTest
+    @SecurityTest(minPatchLevel = "2018-01")
     public void testStagefright_bug_65398821() throws Exception {
         doStagefrightTest(R.raw.bug_65398821, ( 4 * 60 * 1000 ) );
     }
 
-    @SecurityTest
+    @SecurityTest(minPatchLevel = "2015-10")
     public void testStagefright_cve_2015_3869() throws Exception {
         doStagefrightTest(R.raw.cve_2015_3869);
     }
 
-    @SecurityTest
+    @SecurityTest(minPatchLevel = "2016-03")
     public void testStagefright_bug_23452792() throws Exception {
         doStagefrightTest(R.raw.bug_23452792);
     }
 
-    @SecurityTest
+    @SecurityTest(minPatchLevel = "2016-08")
     public void testStagefright_cve_2016_3820() throws Exception {
         doStagefrightTest(R.raw.cve_2016_3820);
     }
 
-    @SecurityTest
+    @SecurityTest(minPatchLevel = "2016-07")
     public void testStagefright_cve_2016_3741() throws Exception {
         doStagefrightTest(R.raw.cve_2016_3741);
     }
 
-    @SecurityTest
+    @SecurityTest(minPatchLevel = "2016-07")
     public void testStagefright_cve_2016_2506() throws Exception {
         doStagefrightTest(R.raw.cve_2016_2506);
     }
 
-    @SecurityTest
+    @SecurityTest(minPatchLevel = "2016-06")
     public void testStagefright_cve_2016_2428() throws Exception {
         doStagefrightTest(R.raw.cve_2016_2428);
     }
 
-    @SecurityTest
+    @SecurityTest(minPatchLevel = "2016-07")
     public void testStagefright_cve_2016_3756() throws Exception {
         doStagefrightTest(R.raw.cve_2016_3756);
     }
 
-    @SecurityTest
+    @SecurityTest(minPatchLevel = "2016-11")
     public void testStagefright_bug_30822755() throws Exception {
         doStagefrightTest(R.raw.bug_30822755);
     }
 
-    @SecurityTest
+    @SecurityTest(minPatchLevel = "2017-06")
     public void testStagefright_bug_32322258() throws Exception {
         doStagefrightTest(R.raw.bug_32322258);
     }
 
-    @SecurityTest
+    @SecurityTest(minPatchLevel = "2017-08")
     public void testStagefright_bug_37710346() throws Exception {
         UUID CLEARKEY_SCHEME_UUID = new UUID(0x1077efecc0b24d02L, 0xace33c1e52e2fb4bL);
 
@@ -644,47 +644,47 @@ public class StagefrightTest extends InstrumentationTestCase {
         }
     }
 
-    @SecurityTest
+    @SecurityTest(minPatchLevel = "2015-10")
     public void testStagefright_cve_2015_3873_b_23248776() throws Exception {
         doStagefrightTest(R.raw.cve_2015_3873_b_23248776);
     }
 
-    @SecurityTest
+    @SecurityTest(minPatchLevel = "2017-06")
     public void testStagefright_bug_35472997() throws Exception {
         doStagefrightTest(R.raw.bug_35472997);
     }
 
-    @SecurityTest
+    @SecurityTest(minPatchLevel = "2015-10")
     public void testStagefright_cve_2015_3873_b_20718524() throws Exception {
         doStagefrightTest(R.raw.cve_2015_3873_b_20718524);
     }
 
-    @SecurityTest
+    @SecurityTest(minPatchLevel = "2017-07")
     public void testStagefright_bug_34896431() throws Exception {
         doStagefrightTest(R.raw.bug_34896431);
     }
 
-    @SecurityTest
+    @SecurityTest(minPatchLevel = "2017-04")
     public void testBug_33641588() throws Exception {
         doStagefrightTestRawBlob(R.raw.bug_33641588_avc, "video/avc", 320, 240);
     }
 
-    @SecurityTest
+    @SecurityTest(minPatchLevel = "2015-10")
     public void testStagefright_cve_2015_3862_b_22954006() throws Exception {
         doStagefrightTest(R.raw.cve_2015_3862_b_22954006);
     }
 
-    @SecurityTest
+    @SecurityTest(minPatchLevel = "2015-10")
     public void testStagefright_cve_2015_3867_b_23213430() throws Exception {
         doStagefrightTest(R.raw.cve_2015_3867_b_23213430);
     }
 
-    @SecurityTest
+    @SecurityTest(minPatchLevel = "2015-10")
     public void testStagefright_cve_2015_3873_b_21814993() throws Exception {
         doStagefrightTest(R.raw.cve_2015_3873_b_21814993);
     }
 
-    @SecurityTest
+    @SecurityTest(minPatchLevel = "2016-04")
     public void testStagefright_bug_25812590() throws Exception {
         doStagefrightTest(R.raw.bug_25812590);
     }
@@ -701,12 +701,12 @@ public class StagefrightTest extends InstrumentationTestCase {
         doStagefrightTest(R.raw.cve_2015_6604);
     }
 
-    @SecurityTest
+    @SecurityTest(minPatchLevel = "2015-12")
     public void testStagefright_bug_24157524() throws Exception {
         doStagefrightTest(R.raw.bug_24157524);
     }
 
-    @SecurityTest
+    @SecurityTest(minPatchLevel = "2015-10")
     public void testStagefright_cve_2015_3871() throws Exception {
         doStagefrightTest(R.raw.cve_2015_3871);
     }
@@ -719,42 +719,42 @@ public class StagefrightTest extends InstrumentationTestCase {
         doStagefrightTest(R.raw.bug_32915871);
     }
 
-    @SecurityTest
+    @SecurityTest(minPatchLevel = "2016-07")
     public void testStagefright_bug_28333006() throws Exception {
         doStagefrightTest(R.raw.bug_28333006);
     }
 
-    @SecurityTest
+    @SecurityTest(minPatchLevel = "2015-11")
     public void testStagefright_bug_14388161() throws Exception {
         doStagefrightTestMediaPlayer(R.raw.bug_14388161);
     }
 
-    @SecurityTest
+    @SecurityTest(minPatchLevel = "2016-07")
     public void testStagefright_cve_2016_3755() throws Exception {
         doStagefrightTest(R.raw.cve_2016_3755);
     }
 
-    @SecurityTest
+    @SecurityTest(minPatchLevel = "2016-09")
     public void testStagefright_cve_2016_3878_b_29493002() throws Exception {
         doStagefrightTest(R.raw.cve_2016_3878_b_29493002);
     }
 
-    @SecurityTest
+    @SecurityTest(minPatchLevel = "2017-08")
     public void testBug_36819262() throws Exception {
         doStagefrightTestRawBlob(R.raw.bug_36819262_mpeg2, "video/mpeg2", 640, 480);
     }
 
-    @SecurityTest
+    @SecurityTest(minPatchLevel = "2015-11")
     public void testStagefright_cve_2015_6608_b_23680780() throws Exception {
         doStagefrightTest(R.raw.cve_2015_6608_b_23680780);
     }
 
-    @SecurityTest
+    @SecurityTest(minPatchLevel = "2017-09")
     public void testStagefright_bug_36715268() throws Exception {
         doStagefrightTest(R.raw.bug_36715268);
     }
 
-    @SecurityTest
+    @SecurityTest(minPatchLevel = "2016-06")
     public void testStagefright_bug_27855419_CVE_2016_2463() throws Exception {
         doStagefrightTest(R.raw.bug_27855419);
     }
@@ -768,7 +768,7 @@ public class StagefrightTest extends InstrumentationTestCase {
      before any existing test methods
      ***********************************************************/
 
-    @SecurityTest
+    @SecurityTest(minPatchLevel = "2018-02")
     public void testStagefright_bug_68342866() throws Exception {
         Thread server = new Thread() {
             @Override
@@ -832,108 +832,108 @@ public class StagefrightTest extends InstrumentationTestCase {
         server.join();
     }
 
-    @SecurityTest
+    @SecurityTest(minPatchLevel = "2018-05")
     public void testStagefright_bug_74114680() throws Exception {
         doStagefrightTest(R.raw.bug_74114680_ts, (10 * 60 * 1000));
     }
 
-    @SecurityTest
+    @SecurityTest(minPatchLevel = "2018-03")
     public void testStagefright_bug_70239507() throws Exception {
         doStagefrightTestExtractorSeek(R.raw.bug_70239507,1311768465173141112L);
     }
 
-    @SecurityTest
+    @SecurityTest(minPatchLevel = "2017-03")
     public void testBug_33250932() throws Exception {
     int[] frameSizes = {65, 11, 102, 414};
     doStagefrightTestRawBlob(R.raw.bug_33250932_avc, "video/avc", 640, 480, frameSizes);
     }
 
-    @SecurityTest
+    @SecurityTest(minPatchLevel = "2017-08")
     public void testStagefright_bug_37430213() throws Exception {
     doStagefrightTest(R.raw.bug_37430213);
     }
 
-    @SecurityTest
+    @SecurityTest(minPatchLevel = "2018-11")
     public void testStagefright_bug_68664359() throws Exception {
         doStagefrightTest(R.raw.bug_68664359, 60000);
     }
 
-    @SecurityTest
+    @SecurityTest(minPatchLevel = "2018-11")
     public void testStagefright_bug_110435401() throws Exception {
         doStagefrightTest(R.raw.bug_110435401, 60000);
     }
 
-    @SecurityTest
+    @SecurityTest(minPatchLevel = "2017-03")
     public void testStagefright_cve_2017_0474() throws Exception {
         doStagefrightTest(R.raw.cve_2017_0474, 120000);
     }
 
-    @SecurityTest
+    @SecurityTest(minPatchLevel = "2018-04")
     public void testStagefright_cve_2017_13276() throws Exception {
         doStagefrightTest(R.raw.cve_2017_13276);
     }
 
-    @SecurityTest
+    @SecurityTest(minPatchLevel = "2016-12")
     public void testStagefright_cve_2016_6764() throws Exception {
         doStagefrightTest(R.raw.cve_2016_6764);
     }
 
-    @SecurityTest
+    @SecurityTest(minPatchLevel = "2018-01")
     public void testStagefright_cve_2017_13214() throws Exception {
         doStagefrightTest(R.raw.cve_2017_13214);
     }
 
-    @SecurityTest
+    @SecurityTest(minPatchLevel = "2017-06")
     public void testStagefright_bug_35467107() throws Exception {
         doStagefrightTest(R.raw.bug_35467107);
     }
 
-    @SecurityTest
+    @SecurityTest(minPatchLevel = "2017-07")
     public void testStagefright_bug_37093318() throws Exception {
         doStagefrightTest(R.raw.bug_37093318, (4 * 60 * 1000));
     }
 
-    @SecurityTest
+    @SecurityTest(minPatchLevel = "2016-03")
     public void testStagefright_cve_2016_0824() throws Exception {
         doStagefrightTest(R.raw.cve_2016_0824);
     }
 
-    @SecurityTest
+    @SecurityTest(minPatchLevel = "2016-03")
     public void testStagefright_cve_2016_0815() throws Exception {
         doStagefrightTest(R.raw.cve_2016_0815);
     }
 
-    @SecurityTest
+    @SecurityTest(minPatchLevel = "2016-05")
     public void testStagefright_cve_2016_2454() throws Exception {
         doStagefrightTest(R.raw.cve_2016_2454);
     }
 
-    @SecurityTest
+    @SecurityTest(minPatchLevel = "2016-12")
     public void testStagefright_cve_2016_6765() throws Exception {
         doStagefrightTest(R.raw.cve_2016_6765);
     }
 
-    @SecurityTest
+    @SecurityTest(minPatchLevel = "2016-07")
     public void testStagefright_cve_2016_2508() throws Exception {
         doStagefrightTest(R.raw.cve_2016_2508);
     }
 
-    @SecurityTest
+    @SecurityTest(minPatchLevel = "2016-11")
     public void testStagefright_cve_2016_6699() throws Exception {
         doStagefrightTest(R.raw.cve_2016_6699);
     }
 
-    @SecurityTest
+    @SecurityTest(minPatchLevel = "2018-06")
     public void testStagefright_cve_2017_18155() throws Exception {
         doStagefrightTest(R.raw.cve_2017_18155);
     }
 
-    @SecurityTest
+    @SecurityTest(minPatchLevel = "2018-07")
     public void testStagefright_cve_2018_9423() throws Exception {
         doStagefrightTest(R.raw.cve_2018_9423);
     }
 
-    @SecurityTest
+    @SecurityTest(minPatchLevel = "2016-09")
     public void testStagefright_cve_2016_3879() throws Exception {
         doStagefrightTest(R.raw.cve_2016_3879);
     }
@@ -1407,22 +1407,22 @@ public class StagefrightTest extends InstrumentationTestCase {
         doStagefrightTestRawBlob(R.raw.bug_64836894, "video/avc", 320, 240);
     }
 
-    @SecurityTest
+    @SecurityTest(minPatchLevel = "2017-08")
     public void testCve_2017_0687() throws Exception {
         doStagefrightTestRawBlob(R.raw.cve_2017_0687, "video/avc", 320, 240);
     }
 
-    @SecurityTest
+    @SecurityTest(minPatchLevel = "2018-01")
     public void testBug_37930177() throws Exception {
         doStagefrightTestRawBlob(R.raw.bug_37930177_hevc, "video/hevc", 320, 240);
     }
 
-    @SecurityTest
+    @SecurityTest(minPatchLevel = "2018-04")
     public void testBug_70897394() throws Exception {
         doStagefrightTestRawBlob(R.raw.bug_70897394_avc, "video/avc", 320, 240);
     }
 
-    @SecurityTest
+    @SecurityTest(minPatchLevel = "2017-08")
     public void testBug_37712181() throws Exception {
         doStagefrightTestRawBlob(R.raw.bug_37712181_hevc, "video/hevc", 320, 240);
     }

@@ -24,7 +24,7 @@ public class Poc17_03 extends SecurityTestCase {
     /**
      * b/32707507
      */
-    @SecurityTest
+    @SecurityTest(minPatchLevel = "2017-03")
     public void testPocCVE_2017_0479() throws Exception {
         AdbUtils.runCommandLine("logcat -c" , getDevice());
         AdbUtils.runPocNoOutput("CVE-2017-0479", getDevice(), 60);
@@ -36,7 +36,7 @@ public class Poc17_03 extends SecurityTestCase {
     /*
      *  b/33178389
      */
-    @SecurityTest
+    @SecurityTest(minPatchLevel = "2017-03")
     public void testPocCVE_2017_0490() throws Exception {
         String bootCountBefore =
                 AdbUtils.runCommandLine("settings get global boot_count", getDevice());

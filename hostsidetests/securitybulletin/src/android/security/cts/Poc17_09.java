@@ -24,7 +24,7 @@ public class Poc17_09 extends SecurityTestCase {
   /**
    * b/63852675
    */
-  @SecurityTest
+  @SecurityTest(minPatchLevel = "2017-09")
   public void testPocCve_2017_6983() throws Exception {
     // Error code of 139 represents segmentation fault
     assertFalse("Segfault found",
