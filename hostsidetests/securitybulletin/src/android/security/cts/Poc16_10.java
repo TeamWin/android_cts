@@ -24,7 +24,7 @@ public class Poc16_10 extends SecurityTestCase {
     /**
      *  b/30741779
      */
-    @SecurityTest
+    @SecurityTest(minPatchLevel = "2016-10")
     public void testPocCVE_2016_3916() throws Exception {
         AdbUtils.installApk("/cve_2016_3916.apk", getDevice());
         AdbUtils.runCommandLine("logcat -c" , getDevice());

@@ -24,7 +24,7 @@ public class Poc18_10 extends SecurityTestCase {
     /**
      *  b/111641492
      */
-    @SecurityTest
+    @SecurityTest(minPatchLevel = "2018-10")
     public void testPocCVE_2018_9515() throws Exception {
         AdbUtils.runCommandLine("rm /sdcard/Android/data/CVE-2018-9515", getDevice());
         AdbUtils.runCommandLine("mkdir /sdcard/Android/data/CVE-2018-9515", getDevice());

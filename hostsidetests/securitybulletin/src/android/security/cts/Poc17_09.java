@@ -24,7 +24,7 @@ public class Poc17_09 extends SecurityTestCase {
     /**
      * b/63852675
      */
-    @SecurityTest
+    @SecurityTest(minPatchLevel = "2017-09")
     public void testPocCve_2017_6983() throws Exception {
       // Error code of 139 represents segmentation fault
       assertFalse("Segfault found",
@@ -57,7 +57,7 @@ public class Poc17_09 extends SecurityTestCase {
    * b/38195738
    * b/36590192
    */
-  @SecurityTest
+  @SecurityTest(minPatchLevel = "2017-09")
   public void testPocBug_38195738() throws Exception {
     if(containsDriver(getDevice(), "/dev/kgsl-3d0")) {
       AdbUtils.runPocNoOutput("Bug-38195738", getDevice(), 60);
