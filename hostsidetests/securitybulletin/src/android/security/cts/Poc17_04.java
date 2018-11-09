@@ -24,7 +24,7 @@ public class Poc17_04 extends SecurityTestCase {
   /**
    * b/32342065
    */
-  @SecurityTest
+  @SecurityTest(minPatchLevel = "2017-04")
   public void testPocCVE_2017_0553() throws Exception {
     // Error code of 139 represents segmentation fault
     getDevice().executeShellCommand("chmod +x /data/local/tmp/CVE-2017-0553");
