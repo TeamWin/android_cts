@@ -39,6 +39,7 @@ public class Movie33897722 extends AndroidTestCase {
      * larger than 2. Ensure that we do not attempt to read colors from beyond the end of the
      * color map, which would be reading memory that we do not control, and may be uninitialized.
      */
+    @SecurityTest(minPatchLevel = "2017-06")
     public void test_android_bug_33897722() {
         InputStream exploitImage = mContext.getResources().openRawResource(R.raw.bug_33897722);
         Movie movie = Movie.decodeStream(exploitImage);

@@ -24,7 +24,7 @@ public class Poc16_12 extends SecurityTestCase {
     /**
      *  b/29982686
      */
-    @SecurityTest
+    @SecurityTest(minPatchLevel = "2016-12")
     public void testPocCVE_2016_6759() throws Exception {
         AdbUtils.runCommandLine("logcat -c", getDevice());
         AdbUtils.runPocNoOutput("CVE-2016-6759", getDevice(), 60);
@@ -151,7 +151,7 @@ public class Poc16_12 extends SecurityTestCase {
     /**
      *  b/31796940
      */
-    @SecurityTest
+    @SecurityTest(minPatchLevel = "2016-12")
     public void testPocCVE_2016_8406() throws Exception {
         String cmd ="ls -l /sys/kernel/slab 2>/dev/null | grep nf_conn";
         String result =  AdbUtils.runCommandLine(cmd ,getDevice());

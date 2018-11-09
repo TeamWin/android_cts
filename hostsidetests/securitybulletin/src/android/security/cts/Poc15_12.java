@@ -22,7 +22,7 @@ public class Poc15_12 extends SecurityTestCase {
     /**
      *  b/24310423
      */
-    @SecurityTest
+    @SecurityTest(minPatchLevel = "2015-12")
     public void testPocCVE_2015_6626() throws Exception {
         AdbUtils.runCommandLine("logcat -c" , getDevice());
         AdbUtils.runPoc("CVE-2015-6626", getDevice(), 60);

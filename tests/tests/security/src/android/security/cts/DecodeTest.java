@@ -32,7 +32,7 @@ public class DecodeTest extends AndroidTestCase {
      * Prior to fixing bug 34778578, decoding this file would crash. Instead, it should fail to
      * decode.
      */
-    @SecurityTest
+    @SecurityTest(minPatchLevel = "2017-07")
     public void test_android_bug_34778578() {
         InputStream exploitImage = mContext.getResources().openRawResource(R.raw.bug_34778578);
         Bitmap bitmap = BitmapFactory.decodeStream(exploitImage);

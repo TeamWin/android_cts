@@ -22,7 +22,7 @@ public class Poc17_02 extends SecurityTestCase {
   /**
    *  b/32799236
    */
-  @SecurityTest
+  @SecurityTest(minPatchLevel = "2017-02")
   public void testPocCVE_2017_0426() throws Exception {
       AdbUtils.runCommandLine("logcat -c", getDevice());
       AdbUtils.runPoc("CVE-2017-0426", getDevice(), 60);
@@ -41,4 +41,14 @@ public class Poc17_02 extends SecurityTestCase {
       assertNotMatchesMultiLine("Fatal signal[\\s\\S]*>>> /system/bin/mediaserver <<<",
           logcatOut);
   }
+
+    /**
+     *  b/31799863
+     */
+    @SecurityTest(minPatchLevel = "2017-02")
+    public void testPocCVE_2016_8482() throws Exception {
+        if(containsDriver(getDevice(), "/dev/nvmap")) {
+            AdbUtils.runPoc("CVE-2016-8482", getDevice(), 60);
+        }
+    }
 }

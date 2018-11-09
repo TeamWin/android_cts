@@ -23,7 +23,7 @@ public class Poc18_03 extends SecurityTestCase {
   /**
    *  b/71389378
    */
-  @SecurityTest
+  @SecurityTest(minPatchLevel = "2018-03")
   public void testPocCVE_2017_13253() throws Exception {
     String output = AdbUtils.runPoc("CVE-2017-13253", getDevice());
     assertNotMatchesMultiLine(".*OVERFLOW DETECTED.*",output);
