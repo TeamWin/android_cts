@@ -24,7 +24,7 @@ public class Poc17_05 extends SecurityTestCase {
     /**
      * b/34705519
      */
-    @SecurityTest
+    @SecurityTest(minPatchLevel = "2017-05")
     public void testPocCve_2017_0595() throws Exception {
         AdbUtils.runCommandLine("logcat -c" , getDevice());
         AdbUtils.runPocNoOutput("CVE-2017-0595", getDevice(), 60);
@@ -37,7 +37,7 @@ public class Poc17_05 extends SecurityTestCase {
     /**
      * b/34749392
      */
-    @SecurityTest
+    @SecurityTest(minPatchLevel = "2017-05")
     public void testPocCve_2017_0596() throws Exception {
         AdbUtils.runCommandLine("logcat -c" , getDevice());
         AdbUtils.runPocNoOutput("CVE-2017-0596", getDevice(), 60);
@@ -50,7 +50,7 @@ public class Poc17_05 extends SecurityTestCase {
     /**
      *  b/34277115
      */
-    @SecurityTest
+    @SecurityTest(minPatchLevel = "2017-05")
     public void testPocCVE_2017_0630() throws Exception {
         if (containsDriver(getDevice(), "/sys/kernel/debug/tracing/printk_formats")) {
           String commandOutput = AdbUtils.runCommandLine("cat /sys/kernel/debug/tracing" +
