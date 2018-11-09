@@ -23,4 +23,5 @@
     android:settingsActivity="foo.bar.Activity"
     android:description="@string/some_description"
     android:summary="@string/some_summary"
-    android:minimumUiTimeout="1000" />
+    android:nonInteractiveUiTimeout="1000"
+    android:interactiveUiTimeout="6000"/>

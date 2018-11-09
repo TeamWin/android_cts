@@ -23,6 +23,7 @@ import static android.view.accessibility.cts.ServiceControlUtils.waitForConditio
 import static com.android.compatibility.common.util.SystemUtil.runWithShellPermissionIdentity;
 import static com.android.compatibility.common.util.TestUtils.waitOn;
 
+import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertSame;
 import static org.junit.Assert.assertTrue;
@@ -73,11 +74,11 @@ public class AccessibilityManagerTest {
     private static final String MULTIPLE_FEEDBACK_TYPES_ACCESSIBILITY_SERVICE_NAME =
         "android.view.accessibility.cts.SpeakingAndVibratingAccessibilityService";
 
-    private static final String ACCESSIBILITY_MINIMUM_UI_TIMEOUT_ENABLED =
-            "accessibility_minimum_ui_timeout_enabled";
+    public static final String ACCESSIBILITY_NON_INTERACTIVE_UI_TIMEOUT_MS =
+            "accessibility_non_interactive_ui_timeout_ms";
 
-    private static final String ACCESSIBILITY_MINIMUM_UI_TIMEOUT_MS =
-            "accessibility_minimum_ui_timeout_ms";
+    public static final String ACCESSIBILITY_INTERACTIVE_UI_TIMEOUT_MS =
+            "accessibility_interactive_ui_timeout_ms";
 
     private AccessibilityManager mAccessibilityManager;
 
@@ -380,20 +381,33 @@ public class AccessibilityManagerTest {
     }
 
     @Test
-    public void testGetMinimumUiTimeoutMs() throws Exception {
+    public void testGetRecommendedTimeoutMillis() throws Exception {
         ServiceControlUtils.enableSpeakingAndVibratingServices(sInstrumentation);
         waitForAccessibilityEnabled();
         UiAutomation automan = sInstrumentation.getUiAutomation(
                 UiAutomation.FLAG_DONT_SUPPRESS_ACCESSIBILITY_SERVICES);
-        turnOffMinimumUiTimoutSettings(automan);
-        PollingCheck.waitFor(() -> mAccessibilityManager.getMinimumUiTimeoutMillis() == 2000);
-        turnOnMinimumUiTimoutSettings(automan, 5000);
-        PollingCheck.waitFor(() -> mAccessibilityManager.getMinimumUiTimeoutMillis() == 5000);
-        turnOnMinimumUiTimoutSettings(automan, 6000);
-        PollingCheck.waitFor(() -> mAccessibilityManager.getMinimumUiTimeoutMillis() == 6000);
-        turnOffMinimumUiTimoutSettings(automan);
-        PollingCheck.waitFor(() -> mAccessibilityManager.getMinimumUiTimeoutMillis() == 2000);
-        automan.destroy();
+        try {
+            // SpeakingA11yService interactive/nonInteractive timeout is 6000/1000
+            // vibratingA11yService interactive/nonInteractive timeout is 5000/2000
+            turnOffRecommendedUiTimoutSettings(automan);
+            PollingCheck.waitFor(() -> sameRecommendedTimeout(6000, 2000));
+            turnOnRecommendedUiTimoutSettings(automan, 7000, 0);
+            PollingCheck.waitFor(() -> sameRecommendedTimeout(7000, 2000));
+            turnOnRecommendedUiTimoutSettings(automan, 0, 4000);
+            PollingCheck.waitFor(() -> sameRecommendedTimeout(6000, 4000));
+            turnOnRecommendedUiTimoutSettings(automan, 9000, 8000);
+            PollingCheck.waitFor(() -> sameRecommendedTimeout(9000, 8000));
+            turnOffRecommendedUiTimoutSettings(automan);
+            PollingCheck.waitFor(() -> sameRecommendedTimeout(6000, 2000));
+            assertEquals("Should return original timeout", 3000,
+                    mAccessibilityManager.getRecommendedTimeoutMillis(3000,
+                            AccessibilityManager.FLAG_CONTENT_ICONS));
+            assertEquals("Should return original timeout", 7000,
+                    mAccessibilityManager.getRecommendedTimeoutMillis(7000,
+                            AccessibilityManager.FLAG_CONTENT_CONTROLS));
+        } finally {
+            automan.destroy();
+        }
     }
 
     @Test
@@ -486,14 +500,27 @@ public class AccessibilityManagerTest {
         assertTrue("Timed out enabling accessibility", mAccessibilityManager.isEnabled());
     }
 
-    private void turnOffMinimumUiTimoutSettings(UiAutomation automan) {
-        putSecureSetting(automan, ACCESSIBILITY_MINIMUM_UI_TIMEOUT_ENABLED, null);
-        putSecureSetting(automan, ACCESSIBILITY_MINIMUM_UI_TIMEOUT_MS, null);
+    private void turnOffRecommendedUiTimoutSettings(UiAutomation automan) {
+        putSecureSetting(automan, ACCESSIBILITY_INTERACTIVE_UI_TIMEOUT_MS, null);
+        putSecureSetting(automan, ACCESSIBILITY_NON_INTERACTIVE_UI_TIMEOUT_MS, null);
     }
 
-    private void turnOnMinimumUiTimoutSettings(UiAutomation automan, int timeout) {
-        putSecureSetting(automan, ACCESSIBILITY_MINIMUM_UI_TIMEOUT_ENABLED, "1");
-        putSecureSetting(automan, ACCESSIBILITY_MINIMUM_UI_TIMEOUT_MS, Integer.toString(timeout));
+    private void turnOnRecommendedUiTimoutSettings(UiAutomation automan,
+            int interactiveUiTimeout, int nonInteractiveUiTimeout) {
+        putSecureSetting(automan, ACCESSIBILITY_INTERACTIVE_UI_TIMEOUT_MS,
+                Integer.toString(interactiveUiTimeout));
+        putSecureSetting(automan, ACCESSIBILITY_NON_INTERACTIVE_UI_TIMEOUT_MS,
+                Integer.toString(nonInteractiveUiTimeout));
+    }
+
+    private boolean sameRecommendedTimeout(int interactiveUiTimeout,
+            int nonInteractiveUiTimeout) {
+        final int currentInteractiveUiTimeout = mAccessibilityManager
+                .getRecommendedTimeoutMillis(0, AccessibilityManager.FLAG_CONTENT_CONTROLS);
+        final int currentNonInteractiveUiTimeout = mAccessibilityManager
+                .getRecommendedTimeoutMillis(0, AccessibilityManager.FLAG_CONTENT_ICONS);
+        return (currentInteractiveUiTimeout == interactiveUiTimeout
+                && currentNonInteractiveUiTimeout == nonInteractiveUiTimeout);
     }
 
     private void putSecureSetting(UiAutomation automan, String name, String value) {
