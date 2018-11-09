@@ -203,6 +203,7 @@ public class BatteryStatsDumpsysTest extends BaseDumpsysTest {
                             break;
                         case "cpu":
                             checkUidCpuUsage(parts);
+                            break;
                         default:
                             break;
                     }
