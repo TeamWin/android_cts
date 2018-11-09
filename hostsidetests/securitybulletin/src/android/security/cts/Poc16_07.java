@@ -49,4 +49,14 @@ public class Poc16_07 extends SecurityTestCase {
         assertNotMatchesMultiLine("Fatal signal[\\s\\S]*>>> /system/bin/mediaserver <<<",
                 logcat);
     }
+ 
+    /**
+     *  b/28377502
+     */
+    @SecurityTest(minPatchLevel = "2016-07")
+    public void testPocCVE_2016_3764() throws Exception {
+        AdbUtils.pushResource("/CVE-2016-3764.mp4", "/sdcard/CVE-2016-3764.ts", getDevice());
+        AdbUtils.runPocAssertExitStatusNotVulnerable("CVE-2016-3764", getDevice(), 60);
+        getDevice().executeShellCommand("rm /sdcard/CVE-2016-3764.ts");
+    }
 }
