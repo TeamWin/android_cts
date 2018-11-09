@@ -34,4 +34,9 @@ LOCAL_SDK_VERSION := current
 
 LOCAL_COMPATIBILITY_SUITE := cts vts general-tests
 
+# Disable AAPT2 manifest checks to fix:
+# out/target/common/obj/APPS/CtsAtraceTestApp_intermediates/manifest/AndroidManifest.xml:32: error: unexpected element <profileable> found in <manifest>.
+# TODO: Remove when AAPT2 recognizes the manifest elements.
+LOCAL_AAPT_FLAGS += --warn-manifest-validation
+
 include $(BUILD_CTS_PACKAGE)
