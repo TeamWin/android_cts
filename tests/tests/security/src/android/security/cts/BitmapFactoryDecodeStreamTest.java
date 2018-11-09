@@ -32,7 +32,7 @@ public class BitmapFactoryDecodeStreamTest extends AndroidTestCase {
      * to heap corruption by trying to open a crafted PNG image with incorrect
      * npTc chunk.
      */
-    @SecurityTest
+    @SecurityTest(minPatchLevel = "2015-01")
     public void testNinePatchHeapOverflow() throws Exception {
         InputStream inStream = new BufferedInputStream(mContext.getResources().openRawResource(
                 R.raw.cve_2015_1532));

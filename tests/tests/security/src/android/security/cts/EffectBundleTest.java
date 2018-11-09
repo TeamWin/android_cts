@@ -170,7 +170,7 @@ public class EffectBundleTest extends InstrumentationTestCase {
     }
 
     //Testing security bug: 63662938
-    @SecurityTest
+    @SecurityTest(minPatchLevel = "2017-10")
     public void testDownmix_setParameter() throws Exception {
         verifyZeroPVSizeRejectedForSetParameter(
                 EFFECT_TYPE_DOWNMIX, new int[] { DOWNMIX_PARAM_TYPE });
@@ -186,7 +186,7 @@ public class EffectBundleTest extends InstrumentationTestCase {
     private static final int DOWNMIX_PARAM_TYPE = 0;
 
     //Testing security bug: 63526567
-    @SecurityTest
+    @SecurityTest(minPatchLevel = "2017-10")
     public void testEnvironmentalReverb_setParameter() throws Exception {
         verifyZeroPVSizeRejectedForSetParameter(
                 AudioEffect.EFFECT_TYPE_ENV_REVERB, new int[] {
@@ -206,7 +206,7 @@ public class EffectBundleTest extends InstrumentationTestCase {
     }
 
     //Testing security bug: 67647856
-    @SecurityTest
+    @SecurityTest(minPatchLevel = "2018-01")
     public void testPresetReverb_setParameter() throws Exception {
         verifyZeroPVSizeRejectedForSetParameter(
                 AudioEffect.EFFECT_TYPE_PRESET_REVERB, new int[] {
