@@ -33,7 +33,7 @@ import java.lang.reflect.Field;
 @SecurityTest
 public class ParcelableExceptionTest extends AndroidTestCase {
 
-    @SecurityTest
+    @SecurityTest(minPatchLevel = "2017-12")
     public void test_CVE_2017_0871() throws Exception {
         String filePath = "/data/system/" + System.currentTimeMillis();
         File file = new File(filePath);
