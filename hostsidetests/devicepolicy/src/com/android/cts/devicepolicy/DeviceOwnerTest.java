@@ -858,7 +858,7 @@ public class DeviceOwnerTest extends BaseDevicePolicyTest {
     }
 
     public void testOverrideApn() throws Exception {
-        if (!mHasFeature) {
+        if (!mHasFeature || !hasDeviceFeature("android.hardware.telephony")) {
             return;
         }
         executeDeviceOwnerTest("OverrideApnTest");
