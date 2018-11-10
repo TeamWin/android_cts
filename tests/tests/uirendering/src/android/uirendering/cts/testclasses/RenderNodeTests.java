@@ -41,7 +41,7 @@ public class RenderNodeTests extends ActivityTestBase {
     public void testBasicDraw() {
         final Rect rect = new Rect(10, 10, 80, 80);
 
-        final RenderNode renderNode = RenderNode.create("Blue rect");
+        final RenderNode renderNode = new RenderNode("Blue rect");
         renderNode.setLeftTopRightBottom(rect.left, rect.top, rect.right, rect.bottom);
         renderNode.setClipToBounds(true);
 
@@ -66,7 +66,7 @@ public class RenderNodeTests extends ActivityTestBase {
 
     @Test
     public void testTranslationGetSet() {
-        final RenderNode renderNode = RenderNode.create("translation");
+        final RenderNode renderNode = new RenderNode("translation");
 
         assertTrue(renderNode.hasIdentityMatrix());
 
@@ -94,7 +94,7 @@ public class RenderNodeTests extends ActivityTestBase {
 
     @Test
     public void testAlphaGetSet() {
-        final RenderNode renderNode = RenderNode.create("alpha");
+        final RenderNode renderNode = new RenderNode("alpha");
 
         assertFalse(renderNode.setAlpha(1.0f));
         assertTrue(renderNode.setAlpha(.5f));
@@ -104,7 +104,7 @@ public class RenderNodeTests extends ActivityTestBase {
 
     @Test
     public void testRotationGetSet() {
-        final RenderNode renderNode = RenderNode.create("rotation");
+        final RenderNode renderNode = new RenderNode("rotation");
 
         assertFalse(renderNode.setRotationX(0.0f));
         assertFalse(renderNode.setRotationY(0.0f));
@@ -127,7 +127,7 @@ public class RenderNodeTests extends ActivityTestBase {
 
     @Test
     public void testScaleGetSet() {
-        final RenderNode renderNode = RenderNode.create("scale");
+        final RenderNode renderNode = new RenderNode("scale");
 
         assertFalse(renderNode.setScaleX(1.0f));
         assertFalse(renderNode.setScaleY(1.0f));
@@ -143,7 +143,7 @@ public class RenderNodeTests extends ActivityTestBase {
 
     @Test
     public void testStartEndRecordingEmpty() {
-        final RenderNode renderNode = RenderNode.create(null);
+        final RenderNode renderNode = new RenderNode(null);
         assertEquals(0, renderNode.getWidth());
         assertEquals(0, renderNode.getHeight());
         RecordingCanvas canvas = renderNode.startRecording();
@@ -155,7 +155,7 @@ public class RenderNodeTests extends ActivityTestBase {
 
     @Test
     public void testStartEndRecordingWithBounds() {
-        final RenderNode renderNode = RenderNode.create(null);
+        final RenderNode renderNode = new RenderNode(null);
         renderNode.setLeftTopRightBottom(10, 20, 30, 50);
         assertEquals(20, renderNode.getWidth());
         assertEquals(30, renderNode.getHeight());
@@ -168,7 +168,7 @@ public class RenderNodeTests extends ActivityTestBase {
 
     @Test
     public void testStartEndRecordingEmptyWithSize() {
-        final RenderNode renderNode = RenderNode.create(null);
+        final RenderNode renderNode = new RenderNode(null);
         assertEquals(0, renderNode.getWidth());
         assertEquals(0, renderNode.getHeight());
         RecordingCanvas canvas = renderNode.startRecording(5, 10);
@@ -180,7 +180,7 @@ public class RenderNodeTests extends ActivityTestBase {
 
     @Test
     public void testStartEndRecordingWithBoundsWithSize() {
-        final RenderNode renderNode = RenderNode.create(null);
+        final RenderNode renderNode = new RenderNode(null);
         renderNode.setLeftTopRightBottom(10, 20, 30, 50);
         assertEquals(20, renderNode.getWidth());
         assertEquals(30, renderNode.getHeight());
