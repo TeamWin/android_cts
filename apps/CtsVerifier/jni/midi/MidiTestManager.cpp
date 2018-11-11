@@ -50,8 +50,7 @@ static const uint8_t kMIDISysCmd_Reset = 0xFF;
 
 static void* readThreadRoutine(void * context) {
     MidiTestManager* testManager = (MidiTestManager*)context;
-    testManager->ProcessInput();
-    return NULL;
+    return reinterpret_cast<void*>(static_cast<intptr_t>(testManager->ProcessInput()));
 }
 
 /*
@@ -91,8 +90,7 @@ MidiTestManager::MidiTestManager()
       mTestStream(NULL), mNumTestStreamBytes(0),
       mReceiveStreamPos(0),
       mMidiSendPort(NULL), mMidiReceivePort(NULL),
-      mTestMsgs(NULL), mNumTestMsgs(0),
-      mTestResult(TESTSTATUS_NOTRUN)
+      mTestMsgs(NULL), mNumTestMsgs(0)
 {}
 
 MidiTestManager::~MidiTestManager(){
@@ -122,6 +120,7 @@ void MidiTestManager::buildTestStream() {
         mNumTestStreamBytes += mTestMsgs[msgIndex].mNumMsgBytes;
     }
 
+    delete[] mTestStream;
     mTestStream = new uint8_t[mNumTestStreamBytes];
     int streamIndex = 0;
     for(int msgIndex = 0; msgIndex < mNumTestMsgs; msgIndex++) {
@@ -193,11 +192,12 @@ int MidiTestManager::sendMessages() {
     return totalSent;
 }
 
-void MidiTestManager::ProcessInput() {
+int MidiTestManager::ProcessInput() {
     uint8_t readBuffer[128];
     size_t totalNumReceived = 0;
 
     bool testRunning = true;
+    int testResult = TESTSTATUS_NOTRUN;
 
     int32_t opCode;
     size_t numBytesReceived;
@@ -221,37 +221,40 @@ void MidiTestManager::ProcessInput() {
             }
             // Process Here
             if (!matchStream(readBuffer, numBytesReceived)) {
-                mTestResult = TESTSTATUS_FAILED_MISMATCH;
+                testResult = TESTSTATUS_FAILED_MISMATCH;
                 testRunning = false;   // bail
             }
             totalNumReceived += numBytesReceived;
             if (totalNumReceived > mNumTestStreamBytes) {
-                mTestResult = TESTSTATUS_FAILED_OVERRUN;
+                testResult = TESTSTATUS_FAILED_OVERRUN;
                 testRunning = false;   // bail
             }
             if (totalNumReceived == mNumTestStreamBytes) {
-                mTestResult = TESTSTATUS_PASSED;
+                testResult = TESTSTATUS_PASSED;
                 testRunning = false;   // done
             }
         }
     }
 
-    EndTest(mTestResult);
+    return testResult;
 }
 
 bool MidiTestManager::StartReading(AMidiDevice* nativeReadDevice) {
     ALOGI("StartReading()...");
 
-    // Start read thread
-    media_status_t status =
+    media_status_t m_status =
         AMidiOutputPort_open(nativeReadDevice, 0, &mMidiReceivePort);
-    if (status != 0) {
-        ALOGE("Can't open MIDI device for reading err:%d", status);
+    if (m_status != 0) {
+        ALOGE("Can't open MIDI device for reading err:%d", m_status);
         return false;
     }
 
-    pthread_create(&readThread, NULL, readThreadRoutine, this);
-    return true;
+    // Start read thread
+    int status = pthread_create(&readThread, NULL, readThreadRoutine, this);
+    if (status != 0) {
+        ALOGE("Can't start readThread: %s (%d)", strerror(status), status);
+    }
+    return status == 0;
 }
 
 bool MidiTestManager::StartWriting(AMidiDevice* nativeWriteDevice) {
@@ -284,15 +287,17 @@ bool MidiTestManager::RunTest(jobject testModuleObj, AMidiDevice* sendDevice,
 
     mTestModuleObj = env->NewGlobalRef(testModuleObj);
 
-    if (!StartReading(receiveDevice) || !StartWriting(sendDevice)) {
+    // Call StartWriting first because StartReading starts a thread.
+    if (!StartWriting(sendDevice) || !StartReading(receiveDevice)) {
         // Test call to EndTest will close any open devices.
         EndTest(TESTSTATUS_FAILED_DEVICE);
         return false; // bail
     }
 
     // setup messages
-    mTestMsgs = new TestMessage[2];
+    delete[] mTestMsgs;
     mNumTestMsgs = 3;
+    mTestMsgs = new TestMessage[mNumTestMsgs];
 
     int sysExSize = 8;
     uint8_t* sysExMsg = new uint8_t[sysExSize];
@@ -307,6 +312,7 @@ bool MidiTestManager::RunTest(jobject testModuleObj, AMidiDevice* sendDevice,
         !mTestMsgs[2].set(sysExMsg, sysExSize)) {
         return false;
     }
+    delete[] sysExMsg;
 
     buildTestStream();
 
@@ -314,12 +320,16 @@ bool MidiTestManager::RunTest(jobject testModuleObj, AMidiDevice* sendDevice,
     // mTestMsgs[0].set(msg0Alt, 3);
 
     sendMessages();
-
+    void* threadRetval = (void*)TESTSTATUS_NOTRUN;
+    int status = pthread_join(readThread, &threadRetval);
+    if (status != 0) {
+        ALOGE("Failed to join readThread: %s (%d)", strerror(status), status);
+    }
+    EndTest(static_cast<int>(reinterpret_cast<intptr_t>(threadRetval)));
     return true;
 }
 
 void MidiTestManager::EndTest(int endCode) {
-    pthread_join(readThread, NULL);
 
     JNIEnv* env;
     mJvm->AttachCurrentThread(&env, NULL);

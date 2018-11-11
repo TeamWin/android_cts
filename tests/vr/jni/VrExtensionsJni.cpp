@@ -120,8 +120,8 @@ static void testEglImageArray(JNIEnv* env, AHardwareBuffer_Desc desc,
                               int nsamples) {
     ASSERT_GT(desc.layers, 1);
     AHardwareBuffer* hwbuffer = nullptr;
-    int error = AHardwareBuffer_allocate(&desc, &hwbuffer);
-    ASSERT_FALSE(error);
+    // If the format is unsupported and allocation fails, skip the test.
+    if (AHardwareBuffer_allocate(&desc, &hwbuffer) != NO_ERROR) return;
     // Create EGLClientBuffer from the AHardwareBuffer.
     EGLClientBuffer native_buffer = eglGetNativeClientBufferANDROID(hwbuffer);
     ASSERT_TRUE(native_buffer);

@@ -24,6 +24,7 @@ import static android.server.am.StateLogger.log;
 import static android.server.am.StateLogger.logE;
 import static android.view.Display.DEFAULT_DISPLAY;
 
+import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
 import android.content.res.Configuration;
@@ -31,6 +32,7 @@ import android.graphics.Rect;
 import android.os.ParcelFileDescriptor;
 import android.os.SystemClock;
 import android.support.test.InstrumentationRegistry;
+import android.view.WindowManager;
 import android.view.nano.DisplayInfoProto;
 import android.view.nano.ViewProtoEnums;
 
@@ -97,6 +99,12 @@ public class WindowManagerState {
 
     private static final String STARTING_WINDOW_PREFIX = "Starting ";
     private static final String DEBUGGER_WINDOW_PREFIX = "Waiting For Debugger: ";
+
+    /** @see WindowManager.LayoutParams */
+    private static final int TYPE_NAVIGATION_BAR = 2019;
+
+    /** @see WindowManager.LayoutParams */
+    private static final int TYPE_NAVIGATION_BAR_PANEL = 2024;
 
     // Windows in z-order with the top most at the front of the list.
     private List<WindowState> mWindowStates = new ArrayList();
@@ -324,6 +332,33 @@ public class WindowManagerState {
         return getMatchingWindows(ws -> windowName.equals(ws.getName()))
                 .map(WindowState::getToken)
                 .collect(Collectors.toList());
+    }
+
+    List<WindowState> getAllNavigationBarStates() {
+        return getMatchingWindows(WindowManagerState::isValidNavBarType)
+                .collect(Collectors.toList());
+    }
+
+    WindowState getAndAssertSingleNavBarWindowOnDisplay(int displayId) {
+        List<WindowState> navWindow = getMatchingWindows(ws ->
+                isValidNavBarType(ws) && ws.getDisplayId() == displayId)
+                .collect(Collectors.toList());
+
+        // We may need some time to wait for nav bar showing.
+        // It's Ok to get 0 nav bar here.
+        assertTrue("There should be at most one navigation bar on a display",
+                navWindow.size() <= 1);
+
+        return navWindow.isEmpty() ? null : navWindow.get(0);
+    }
+
+    // TODO(117478341): Modify this method after we resolve one status/nav bar assumption.
+    static boolean isValidNavBarType(WindowState navState) {
+        final int displayId = navState.getDisplayId();
+        final int type = navState.getType();
+        return (displayId == DEFAULT_DISPLAY)
+                ? TYPE_NAVIGATION_BAR == type
+                : TYPE_NAVIGATION_BAR_PANEL == type;
     }
 
     public List<WindowState> getMatchingVisibleWindowState(final String windowName) {

@@ -17,8 +17,9 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
         package="com.android.simpleperf">
 
-    <application android:debuggable="true">
+    <application>
         <uses-library android:name="android.test.runner" />
+        <profileable android:shell="true" />
     </application>
     <instrumentation
         android:targetPackage="com.android.simpleperf"

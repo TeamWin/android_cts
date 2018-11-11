@@ -52,6 +52,11 @@ void Java_com_android_cts_verifier_audio_midilib_NativeMidiManager_startTest(
     }
 
     sTestManager.RunTest(testModuleObj, nativeMidiDevice, nativeMidiDevice);
+
+    status = AMidiDevice_release(nativeMidiDevice);
+    if (DEBUG) {
+        ALOGI("device release status:%d", status);
+    }
 }
 
 } // extern "C"

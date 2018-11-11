@@ -30,7 +30,7 @@ public:
     void EndTest(int testCode);
 
     // Called by the thread routine.
-    void ProcessInput();
+    int ProcessInput();
 
 private:
    void buildTestStream();
@@ -64,7 +64,6 @@ private:
     static const int TESTSTATUS_FAILED_OVERRUN = 4;
     static const int TESTSTATUS_FAILED_DEVICE = 5;
     static const int TESTSTATUS_FAILED_JNI = 6;
-    int mTestResult;
 
     bool StartReading(AMidiDevice* nativeReadDevice);
     bool StartWriting(AMidiDevice* nativeWriteDevice);

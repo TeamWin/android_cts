@@ -34,6 +34,13 @@
     <target_preparer class="com.android.compatibility.common.tradefed.targetprep.FilePusher">
         <option name="push" value="CtsAppThatRequestsPermissionAandB.apk->/data/local/tmp/cts/permissions/CtsAppThatRequestsPermissionAandB.apk" />
         <option name="push" value="CtsAppThatRequestsPermissionAandC.apk->/data/local/tmp/cts/permissions/CtsAppThatRequestsPermissionAandC.apk" />
+        <option name="push" value="CtsAppThatRequestsContactsPermission16.apk->/data/local/tmp/cts/permissions/CtsAppThatRequestsContactsPermission16.apk" />
+        <option name="push" value="CtsAppThatRequestsContactsPermission15.apk->/data/local/tmp/cts/permissions/CtsAppThatRequestsContactsPermission15.apk" />
+        <option name="push" value="CtsAppThatRequestsContactsAndCallLogPermission16.apk->/data/local/tmp/cts/permissions/CtsAppThatRequestsContactsAndCallLogPermission16.apk" />
+        <option name="push" value="CtsAppThatRequestsLocationPermission29.apk->/data/local/tmp/cts/permissions/CtsAppThatRequestsLocationPermission29.apk" />
+        <option name="push" value="CtsAppThatRequestsLocationPermission28.apk->/data/local/tmp/cts/permissions/CtsAppThatRequestsLocationPermission28.apk" />
+        <option name="push" value="CtsAppThatRequestsLocationPermission22.apk->/data/local/tmp/cts/permissions/CtsAppThatRequestsLocationPermission22.apk" />
+        <option name="push" value="CtsAppThatRequestsLocationAndBackgroundPermission29.apk->/data/local/tmp/cts/permissions/CtsAppThatRequestsLocationAndBackgroundPermission29.apk" />
     </target_preparer>
 
     <!-- Remove additional apps if installed -->

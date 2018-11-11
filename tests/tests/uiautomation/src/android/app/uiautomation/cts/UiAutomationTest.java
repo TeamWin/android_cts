@@ -79,7 +79,7 @@ public class UiAutomationTest {
     }
 
     @Test
-    public void testAdoptShellPermissions() {
+    public void testAdoptAllShellPermissions() {
         final Context context = getInstrumentation().getContext();
         final ActivityManager activityManager = context.getSystemService(ActivityManager.class);
         final PackageManager packageManager = context.getPackageManager();
@@ -134,6 +134,47 @@ public class UiAutomationTest {
             fail("Should not be able to access APIs protected by a permission apps cannot get");
         } catch (SecurityException e) {
             /* expected */
+        }
+    }
+
+    @Test
+    public void testAdoptSomeShellPermissions() {
+        final Context context = getInstrumentation().getContext();
+
+        // Make sure we don't have any of the permissions
+        assertSame(PackageManager.PERMISSION_DENIED, context.checkSelfPermission(
+                Manifest.permission.BATTERY_STATS));
+        assertSame(PackageManager.PERMISSION_DENIED, context.checkSelfPermission(
+                Manifest.permission.PACKAGE_USAGE_STATS));
+
+        try {
+            // Adopt a permission
+            getInstrumentation().getUiAutomation().adoptShellPermissionIdentity(
+                    Manifest.permission.BATTERY_STATS);
+            // Check one is granted and the other not
+            assertSame(PackageManager.PERMISSION_GRANTED, context.checkSelfPermission(
+                    Manifest.permission.BATTERY_STATS));
+            assertSame(PackageManager.PERMISSION_DENIED, context.checkSelfPermission(
+                    Manifest.permission.PACKAGE_USAGE_STATS));
+
+            // Adopt all permissions
+            getInstrumentation().getUiAutomation().adoptShellPermissionIdentity();
+            // Check both permissions are granted
+            assertSame(PackageManager.PERMISSION_GRANTED, context.checkSelfPermission(
+                    Manifest.permission.BATTERY_STATS));
+            assertSame(PackageManager.PERMISSION_GRANTED, context.checkSelfPermission(
+                    Manifest.permission.PACKAGE_USAGE_STATS));
+
+            // Adopt a permission
+            getInstrumentation().getUiAutomation().adoptShellPermissionIdentity(
+                    Manifest.permission.PACKAGE_USAGE_STATS);
+            // Check one is granted and the other not
+            assertSame(PackageManager.PERMISSION_DENIED, context.checkSelfPermission(
+                    Manifest.permission.BATTERY_STATS));
+            assertSame(PackageManager.PERMISSION_GRANTED, context.checkSelfPermission(
+                    Manifest.permission.PACKAGE_USAGE_STATS));
+        } finally {
+            getInstrumentation().getUiAutomation().dropShellPermissionIdentity();
         }
     }
 

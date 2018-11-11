@@ -86,6 +86,7 @@ import android.server.am.ActivityManagerState.ActivityDisplay;
 import android.server.am.ActivityManagerState.ActivityStack;
 import android.server.am.CommandSession.ActivitySession;
 import android.server.am.CommandSession.SizeInfo;
+import android.server.am.WindowManagerState.WindowState;
 import android.support.test.InstrumentationRegistry;
 import android.support.test.filters.FlakyTest;
 import android.text.TextUtils;
@@ -2161,6 +2162,78 @@ public class ActivityManagerMultiDisplayTests extends ActivityManagerDisplayTest
                 display.getSurfaceSize(), task.getSurfaceWidth());
         assertEquals("Task must have same surface height with its display",
                 display.getSurfaceSize(), task.getSurfaceHeight());
+    }
+
+    // TODO(115978725): add runtime sys decor change test once we can do this.
+    /**
+     * Test that navigation bar should show on display with system decoration.
+     */
+    @Test
+    public void testNavBarShowingOnDisplayWithDecor() throws Exception {
+        try (final VirtualDisplaySession virtualDisplaySession = new VirtualDisplaySession()) {
+            final ActivityDisplay newDisplay = virtualDisplaySession
+                    .setPublicDisplay(true).setShowSystemDecorations(true).createDisplay();
+
+            mAmWmState.waitAndAssertNavBarShownOnDisplay(newDisplay.mId);
+        }
+    }
+
+    /**
+     * Test that navigation bar should not show on display without system decoration.
+     */
+    @Test
+    public void testNavBarNotShowingOnDisplayWithoutDecor() throws Exception {
+        try (final VirtualDisplaySession virtualDisplaySession = new VirtualDisplaySession()) {
+            virtualDisplaySession.setPublicDisplay(true)
+                    .setShowSystemDecorations(false).createDisplay();
+
+            final List<WindowState> expected = mAmWmState.getWmState().getAllNavigationBarStates();
+
+            waitAndAssertNavBarStatesAreTheSame(expected);
+        }
+    }
+
+    /**
+     * Test that navigation bar should not show on private display even if the display
+     * supports system decoration.
+     */
+    @Test
+    public void testNavBarNotShowingOnPrivateDisplay() throws Exception {
+        try (final VirtualDisplaySession virtualDisplaySession = new VirtualDisplaySession()) {
+            virtualDisplaySession.setPublicDisplay(false)
+                    .setShowSystemDecorations(true).createDisplay();
+
+            final List<WindowState> expected = mAmWmState.getWmState().getAllNavigationBarStates();
+
+            waitAndAssertNavBarStatesAreTheSame(expected);
+        }
+    }
+
+    private void waitAndAssertNavBarStatesAreTheSame(List<WindowState> expected) throws Exception {
+        // This is used to verify that we have nav bars shown on the same displays
+        // as before the test.
+        //
+        // The strategy is:
+        // Once a display with system ui decor support is created and a nav bar shows on the
+        // display, go back to verify whether the nav bar states are unchanged to verify that no nav
+        // bars were added to a display that was added before executing this method that shouldn't
+        // have nav bars (i.e. private or without system ui decor).
+        try (final VirtualDisplaySession secondDisplaySession = new VirtualDisplaySession()) {
+            final ActivityDisplay supportsSysDecorDisplay = secondDisplaySession
+                    .setPublicDisplay(true).setShowSystemDecorations(true).createDisplay();
+            mAmWmState.waitAndAssertNavBarShownOnDisplay(supportsSysDecorDisplay.mId);
+            // This display has finished his task. Just close it.
+        }
+
+        final List<WindowState> result = mAmWmState.getWmState().getAllNavigationBarStates();
+
+        assertEquals("The number of nav bars should be the same", expected.size(), result.size());
+
+        // Nav bars should show on the same displays
+        for (int i = 0; i < expected.size(); i++) {
+            final int expectedDisplayId = expected.get(i).getDisplayId();
+            mAmWmState.waitAndAssertNavBarShownOnDisplay(expectedDisplayId);
+        }
     }
 
     private class ExternalDisplaySession implements AutoCloseable {

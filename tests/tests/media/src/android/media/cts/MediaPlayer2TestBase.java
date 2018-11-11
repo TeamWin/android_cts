@@ -27,6 +27,7 @@ import android.media.MediaTimestamp;
 import android.media.SubtitleData;
 import android.media.TimedMetaData;
 import android.media.TimedText;
+import android.media.VideoSize;
 import android.media.cts.TestUtils.Monitor;
 import android.net.Uri;
 import android.os.PersistableBundle;
@@ -245,10 +246,10 @@ public class MediaPlayer2TestBase extends ActivityInstrumentationTestCase2<Media
             List<MediaPlayer2.EventCallback> ecbs) {
         mp.registerEventCallback(mExecutor, new MediaPlayer2.EventCallback() {
             @Override
-            public void onVideoSizeChanged(MediaPlayer2 mp, DataSourceDesc dsd, int w, int h) {
+            public void onVideoSizeChanged(MediaPlayer2 mp, DataSourceDesc dsd, VideoSize size) {
                 synchronized (cbLock) {
                     for (MediaPlayer2.EventCallback ecb : ecbs) {
-                        ecb.onVideoSizeChanged(mp, dsd, w, h);
+                        ecb.onVideoSizeChanged(mp, dsd, size);
                     }
                 }
             }
@@ -454,18 +455,18 @@ public class MediaPlayer2TestBase extends ActivityInstrumentationTestCase2<Media
         synchronized (mEventCbLock) {
             mEventCallbacks.add(new MediaPlayer2.EventCallback() {
                 @Override
-                public void onVideoSizeChanged(MediaPlayer2 mp, DataSourceDesc dsd, int w, int h) {
-                    if (w == 0 && h == 0) {
+                public void onVideoSizeChanged(MediaPlayer2 mp, DataSourceDesc dsd, VideoSize size) {
+                    if (size.getWidth() == 0 && size.getHeight() == 0) {
                         // A size of 0x0 can be sent initially one time when using NuPlayer.
                         assertFalse(mOnVideoSizeChangedCalled.isSignalled());
                         return;
                     }
                     mOnVideoSizeChangedCalled.signal();
                     if (width != null) {
-                        assertEquals(width.intValue(), w);
+                        assertEquals(width.intValue(), size.getWidth());
                     }
                     if (height != null) {
-                        assertEquals(height.intValue(), h);
+                        assertEquals(height.intValue(), size.getHeight());
                     }
                 }
 

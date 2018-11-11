@@ -333,6 +333,16 @@ public class ActivityAndWindowManagersState {
                 "***Waiting for app transition idle on Display " + displayId + " ...");
     }
 
+
+    void waitAndAssertNavBarShownOnDisplay(int displayId) {
+        waitForWithWmState(
+                state -> state.getAndAssertSingleNavBarWindowOnDisplay(displayId) != null,
+                "***Waiting for navigation bar #" + displayId + " show...");
+        final WindowState ws = getWmState().getAndAssertSingleNavBarWindowOnDisplay(displayId);
+
+        assertNotNull(ws);
+    }
+
     void waitForWithAmState(Predicate<ActivityManagerState> waitCondition, String message) {
         waitFor((amState, wmState) -> waitCondition.test(amState), message);
     }

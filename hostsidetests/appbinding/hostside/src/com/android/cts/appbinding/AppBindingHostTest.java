@@ -215,9 +215,14 @@ public class AppBindingHostTest extends DeviceTestCase implements IBuildReceiver
 
         // This should contain:
         // "conn,0,[Default SMS app],PACKAGE,CLASS,bound,connected"
-        runCommand("dumpsys app_binding -s",
-                "^" + Pattern.quote("conn,[Default SMS app]," + userId + "," + packageName + ","
-                        + serviceClass + ",bound,connected,"));
+
+        // The binding information is propagated asynchronously, so we need a retry here too.
+        // (Even though the activity manager said it's already bound.)
+        runWithRetries(DEFAULT_TIMEOUT_SEC, () -> {
+            runCommand("dumpsys app_binding -s",
+                    "^" + Pattern.quote("conn,[Default SMS app]," + userId + "," + packageName + ","
+                            + serviceClass + ",bound,connected,"));
+        });
     }
 
     private void installAndCheckNotBound(String apk, String packageName, int userId,

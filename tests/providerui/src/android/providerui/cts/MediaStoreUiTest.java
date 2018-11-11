@@ -42,6 +42,7 @@ import android.os.ParcelFileDescriptor;
 import android.os.SystemClock;
 import android.os.storage.StorageManager;
 import android.os.storage.StorageVolume;
+import android.provider.DocumentsContract;
 import android.provider.MediaStore;
 import android.providerui.cts.GetResultActivity.Result;
 import android.support.test.InstrumentationRegistry;
@@ -334,13 +335,16 @@ public class MediaStoreUiTest extends InstrumentationTestCase {
                 (StorageManager) mActivity.getSystemService(Context.STORAGE_SERVICE);
 
         // Request access from DocumentsUI
+        final Intent intent = new Intent(Intent.ACTION_OPEN_DOCUMENT_TREE);
         final StorageVolume volume = storageManager.getStorageVolume(file);
-        final Intent intent = volume.createAccessIntent(directoryName);
+        // TODO(b/118898214): clean up this flow to not rely on private APIs
+        intent.putExtra(DocumentsContract.EXTRA_INITIAL_URI, DocumentsContract.buildDocumentUri(
+                "com.android.externalstorage.documents", "primary:" + directoryName));
         mActivity.startActivityForResult(intent, REQUEST_CODE);
 
         // Granting the access
         BySelector buttonPanelSelector = By.pkg("com.android.documentsui")
-                .res("android:id/buttonPanel");
+                .res("com.android.documentsui:id/container_save");
         mDevice.wait(Until.hasObject(buttonPanelSelector), 30 * DateUtils.SECOND_IN_MILLIS);
         final UiObject2 buttonPanel = mDevice.findObject(buttonPanelSelector);
         final UiObject2 allowButton = buttonPanel.findObject(By.res("android:id/button1"));

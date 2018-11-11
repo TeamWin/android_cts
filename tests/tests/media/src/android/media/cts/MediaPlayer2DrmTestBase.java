@@ -26,6 +26,7 @@ import android.media.DataSourceDesc;
 import android.media.MediaDrm;
 import android.media.MediaPlayer2;
 import android.media.MediaPlayer2.DrmInfo;
+import android.media.VideoSize;
 import android.media.cts.TestUtils.Monitor;
 import android.net.Uri;
 import android.os.SystemClock;
@@ -240,8 +241,9 @@ public class MediaPlayer2DrmTestBase extends ActivityInstrumentationTestCase2<Me
         mCallStatus = MediaPlayer2.CALL_STATUS_NO_ERROR;
         mECb = new MediaPlayer2.EventCallback() {
                 @Override
-                public void onVideoSizeChanged(MediaPlayer2 mp, DataSourceDesc dsd, int w, int h) {
-                    Log.v(TAG, "VideoSizeChanged" + " w:" + w + " h:" + h);
+                public void onVideoSizeChanged(MediaPlayer2 mp, DataSourceDesc dsd, VideoSize size) {
+                    Log.v(TAG, "VideoSizeChanged" + " w:" + size.getWidth()
+                            + " h:" + size.getHeight());
                     mOnVideoSizeChangedCalled.signal();
                 }
 
