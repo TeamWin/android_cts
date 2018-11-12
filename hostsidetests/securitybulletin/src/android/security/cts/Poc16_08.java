@@ -23,7 +23,7 @@ public class Poc16_08 extends SecurityTestCase {
   /**
    *  b/28026365
    */
-  @SecurityTest
+  @SecurityTest(minPatchLevel = "2016-08")
   public void testPocCVE_2016_2504() throws Exception {
     if (containsDriver(getDevice(), "/dev/kgsl-3d0")) {
         AdbUtils.runPoc("CVE-2016-2504", getDevice(), 60);

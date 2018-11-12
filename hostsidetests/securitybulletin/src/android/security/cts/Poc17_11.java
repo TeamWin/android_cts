@@ -24,7 +24,7 @@ public class Poc17_11 extends SecurityTestCase {
     /**
      * b/36075131
      */
-    @SecurityTest
+    @SecurityTest(minPatchLevel = "2017-11")
     public void testPocCVE_2017_0859() throws Exception {
         AdbUtils.runCommandLine("logcat -c", getDevice());
         AdbUtils.pushResource("/cve_2017_0859.mp4", "/sdcard/cve_2017_0859.mp4", getDevice());
