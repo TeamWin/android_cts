@@ -16,6 +16,8 @@
 #define LOG_TAG "Cts-NdkBinderTest"
 
 #include <android/binder_ibinder.h>
+#include <android/binder_parcel.h>
+#include <android/binder_parcel_utils.h>
 #include <android/log.h>
 #include <gtest/gtest.h>
 
@@ -218,6 +220,69 @@ TEST_F(NdkBinderTest_AParcel, ExtremeValues) {
   ExpectInOutMinMax<bool, AParcel_writeBool, AParcel_readBool>();
   ExpectInOutMinMax<char16_t, AParcel_writeChar, AParcel_readChar>();
   ExpectInOutMinMax<int8_t, AParcel_writeByte, AParcel_readByte>();
+}
+
+TEST_F(NdkBinderTest_AParcel, NonNullTerminatedString) {
+  // This is a helper to write a vector of strings which are not
+  // null-terminated. It has infinite length, and every element is the same
+  // value (element.substr(0, elementLen)). However, when it is written, no
+  // copies of element are made to produce a null-terminated string.
+  struct PartialStringCycle {
+    // every element of the vector is a prefix of this string
+    const std::string& element;
+    // this is the number of characters of the string to write, < element.size()
+    size_t elementLen;
+
+    binder_status_t writeToParcel(AParcel* p, size_t length) const {
+      return AParcel_writeStringArray(p, static_cast<const void*>(this), length,
+                                      ElementGetter);
+    }
+
+   private:
+    static const char* ElementGetter(const void* vectorData, size_t /*index*/,
+                                     size_t* outLength) {
+      const PartialStringCycle* vector =
+          static_cast<const PartialStringCycle*>(vectorData);
+
+      *outLength = vector->elementLen;
+      return vector->element.c_str();
+    }
+  };
+
+  const std::string kTestcase = "aoeuhtns";
+
+  for (size_t i = 0; i < kTestcase.size(); i++) {
+    const std::string expectedString = kTestcase.substr(0, i);
+    const std::vector<std::string> expectedVector = {expectedString,
+                                                     expectedString};
+
+    const PartialStringCycle writeVector{.element = kTestcase, .elementLen = i};
+
+    AIBinder* binder = SampleData::newBinder(
+        [&](transaction_code_t, const AParcel* in, AParcel* /*out*/) {
+          std::string readString;
+          EXPECT_OK(::ndk::AParcel_readString(in, &readString));
+          EXPECT_EQ(expectedString, readString);
+
+          std::vector<std::string> readVector;
+          EXPECT_OK(::ndk::AParcel_readVector(in, &readVector));
+          EXPECT_EQ(expectedVector, readVector);
+
+          return STATUS_OK;
+        },
+        ExpectLifetimeTransactions(1));
+
+    EXPECT_OK(SampleData::transact(
+        binder, kCode,
+        [&](AParcel* in) {
+          EXPECT_OK(AParcel_writeString(in, kTestcase.c_str(), i));
+          EXPECT_OK(writeVector.writeToParcel(in, expectedVector.size()));
+          return STATUS_OK;
+        },
+        ReadNothingFromParcel));
+
+    AIBinder_decStrong(binder);
+  }
 }
 
 TEST_F(NdkBinderTest_AParcel, CantReadFromEmptyParcel) {
