@@ -25,6 +25,8 @@ import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.test.AndroidTestCase;
 
+import com.android.compatibility.common.util.CddTest;
+
 import com.android.cts.process.activity.NoSharePidActivity;
 import com.android.cts.process.activity.SharePidActivity;
 import com.android.cts.process.activity.SharePidSubActivity;
@@ -32,6 +34,7 @@ import com.android.cts.process.activity.SharePidSubActivity;
 public class ProcessTest extends AndroidTestCase {
     private final int WAIT_TIME = 2000;
 
+    @CddTest(requirement="9.2/C-0-1")
     public void testUid() throws Exception {
         String enableApp = "com.android.cts.process.shareuidapp";
         String disableApp = "com.android.cts.process.noshareuidapp";
@@ -46,6 +49,7 @@ public class ProcessTest extends AndroidTestCase {
         assertNotSame(uid2, uid3);
     }
 
+    @CddTest(requirement="9.2/C-0-1")
     public void testPid() throws Exception {
         ActivityManager am = (ActivityManager) mContext.getSystemService(Context.ACTIVITY_SERVICE);
         String shareProcessName = mContext.getPackageName() + ":shareProcess";

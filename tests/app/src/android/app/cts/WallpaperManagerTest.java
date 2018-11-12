@@ -45,6 +45,8 @@ import android.util.Log;
 import android.view.Display;
 import android.view.WindowManager;
 
+import com.android.compatibility.common.util.CddTest;
+
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
@@ -112,6 +114,7 @@ public class WallpaperManagerTest {
         }
     }
 
+    @CddTest(requirement="3.2.3.4/C-0-1")
     @Test
     public void wallpaperChangedBroadcastTest() {
         Bitmap tmpWallpaper = Bitmap.createBitmap(100, 100, Bitmap.Config.ARGB_8888);

@@ -55,7 +55,7 @@ public class BroadcastsTest {
      * receiver.
      */
     @Test
-    @CddTest(requirement="3.5/C-0-6")
+    @CddTest(requirement="3.5/C-0-6,3.2.3.4/C-0-1")
     public void testNonSupportedBroadcastsNotDelivered_runtimeReceiver() throws Exception {
 
         // Need a reference here to initialize it in a lambda.
@@ -82,7 +82,7 @@ public class BroadcastsTest {
      * receiver, even if an intent is targeted to the component.
      */
     @Test
-    @CddTest(requirement="3.5/C-0-6")
+    @CddTest(requirement="3.5/C-0-6,3.2.3.4/C-0-1")
     public void testNonSupportedBroadcastsNotDelivered_manifestReceiver() throws Exception {
         // Need a reference here to initialize it in a lambda.
         final AtomicReference<BroadcastReceiver> receiverRef = new AtomicReference<>();

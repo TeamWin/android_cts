@@ -28,6 +28,8 @@ import android.os.UserHandle;
 import android.os.UserManager;
 import android.text.TextUtils;
 
+import com.android.compatibility.common.util.CddTest;
+
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 
@@ -49,6 +51,7 @@ public class SessionCommitBroadcastTest extends BasePackageInstallTest {
         mThisAppLauncher = new ComponentName(mContext, LauncherActivity.class);
     }
 
+    @CddTest(requirement="3.2.3.4/C-0-1")
     public void testBroadcastNotReceivedForDifferentLauncher() throws Exception {
         if (!mHasFeature) {
             return;
@@ -85,6 +88,7 @@ public class SessionCommitBroadcastTest extends BasePackageInstallTest {
         assertEquals(TEST_APP_PKG, info.getAppPackageName());
     }
 
+    @CddTest(requirement="3.2.3.4/C-0-1")
     public void testBroadcastReceivedForNewInstall() throws Exception {
         if (!mHasFeature) {
             return;
@@ -107,6 +111,7 @@ public class SessionCommitBroadcastTest extends BasePackageInstallTest {
         setLauncher(mDefaultLauncher.flattenToString());
     }
 
+    @CddTest(requirement="3.2.3.4/C-0-1")
     public void testBroadcastReceivedForEnablingApp() throws Exception {
         if (!mHasFeature || !UserManager.supportsMultipleUsers()) {
             return;

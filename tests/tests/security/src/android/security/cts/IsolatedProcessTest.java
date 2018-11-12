@@ -26,6 +26,7 @@ import android.security.cts.IIsolatedService;
 import android.security.cts.IsolatedService;
 import android.test.AndroidTestCase;
 import android.util.Log;
+import com.android.compatibility.common.util.CddTest;
 import com.android.internal.util.ArrayUtils;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
@@ -74,6 +75,7 @@ public class IsolatedProcessTest extends AndroidTestCase {
                 mLatch.await(BIND_SERVICE_TIMEOUT, TimeUnit.MILLISECONDS));
     }
 
+    @CddTest(requirement="9.2/C-0-1")
     public void testGetCachedServicesFromIsolatedService() throws RemoteException {
         String[] cachedServices = mService.getCachedSystemServices();
         for (String serviceName : cachedServices) {
@@ -82,6 +84,7 @@ public class IsolatedProcessTest extends AndroidTestCase {
         }
     }
 
+    @CddTest(requirement="9.2/C-0-1")
     public void testGetServiceFromIsolatedService() throws RemoteException {
         for (String serviceName : RESTRICTED_SERVICES_TO_TEST) {
             IBinder service = mService.getSystemService(serviceName);

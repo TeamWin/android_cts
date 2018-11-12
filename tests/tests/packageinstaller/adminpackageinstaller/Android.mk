@@ -30,7 +30,8 @@ LOCAL_STATIC_JAVA_LIBRARIES := \
 	ub-uiautomator \
 	android-support-test \
 	android-support-v4 \
-	legacy-android-test
+	legacy-android-test \
+	compatibility-device-util
 
 LOCAL_SDK_VERSION := test_current
 
