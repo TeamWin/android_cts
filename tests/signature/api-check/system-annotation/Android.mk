@@ -22,5 +22,7 @@ LOCAL_STATIC_JAVA_LIBRARIES := compatibility-device-util
 LOCAL_SIGNATURE_API_FILES := \
     system-current.api \
     system-removed.api \
+    car-system-current.api \
+    car-system-removed.api \
 
 include $(LOCAL_PATH)/../build_signature_apk.mk
