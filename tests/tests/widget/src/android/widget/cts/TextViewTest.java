@@ -4172,6 +4172,33 @@ public class TextViewTest {
         assertTrue(mDrawn[2]);
     }
 
+    @Test
+    public void testTextActionModeCallback_loadsHandleDrawables() throws Throwable {
+        final String text = "abcde";
+        mActivityRule.runOnUiThread(() -> {
+            mTextView = new EditText(mActivity);
+            mActivity.setContentView(mTextView);
+            mTextView.setText(text, BufferType.SPANNABLE);
+            mTextView.setTextIsSelectable(true);
+            mTextView.requestFocus();
+            mTextView.setSelected(true);
+            mTextView.setTextClassifier(TextClassifier.NO_OP);
+        });
+        mInstrumentation.waitForIdleSync();
+
+        mActivityRule.runOnUiThread(() -> {
+            // Set selection and try to start action mode.
+            final Bundle args = new Bundle();
+            args.putInt(AccessibilityNodeInfo.ACTION_ARGUMENT_SELECTION_START_INT, 0);
+            args.putInt(AccessibilityNodeInfo.ACTION_ARGUMENT_SELECTION_END_INT, text.length());
+            mTextView.performAccessibilityAction(
+                    AccessibilityNodeInfo.ACTION_SET_SELECTION, args);
+        });
+        mInstrumentation.waitForIdleSync();
+
+        // There should be no null pointer exception caused by handle drawables not being loaded.
+    }
+
     private class TestHandleDrawable extends ColorDrawable {
         private final boolean[] mArray;
         private final int mIndex;
