@@ -213,4 +213,13 @@ public class DefaultDialerOperationsTest extends InstrumentationTestCase {
                 + "default dialer.", result.contains("set as default dialer"));
         assertEquals(TestUtils.PACKAGE, TestUtils.getDefaultDialer(getInstrumentation()));
     }
+
+    /**
+     * Verifies that the {@link TelecomManager#getSystemDialerPackage()} API returns the correct
+     * package name for the preloaded system dialer app.
+     */
+    public void testGetSystemDialer() throws Exception {
+        String reportedDialer = mTelecomManager.getSystemDialerPackage();
+        assertEquals(mSystemDialer, reportedDialer);
+    }
 }
