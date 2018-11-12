@@ -43,6 +43,7 @@ public class GlesView extends SurfaceView implements SurfaceHolder.Callback2 {
     private static final EGL10 EGL = (EGL10) EGLContext.getEGL();
     private EGLConfig eglConfig;
     private EGLDisplay display;
+    private SurfaceHolder mSurfaceHolder;
     private String mRenderer = "";
 
     private final String TAG = this.getClass().getSimpleName();
@@ -52,6 +53,7 @@ public class GlesView extends SurfaceView implements SurfaceHolder.Callback2 {
       this.setWillNotDraw(false);
       getHolder().addCallback(this);
       createEGL();
+      getHolder().getSurface();
     }
 
     @TargetApi(VERSION_CODES.JELLY_BEAN_MR1)
