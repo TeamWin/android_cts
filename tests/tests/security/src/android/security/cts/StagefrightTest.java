@@ -93,11 +93,6 @@ public class StagefrightTest extends InstrumentationTestCase {
         doStagefrightTest(R.raw.cve_2016_3829);
     }
 
-    @SecurityTest(minPatchLevel = "2016-08")
-    public void testStagefright_cve_2016_3828() throws Exception {
-        doStagefrightTest(R.raw.cve_2016_3828);
-    }
-
     @SecurityTest
     public void testStagefright_bug_64710074() throws Exception {
         doStagefrightTest(R.raw.bug_64710074);
