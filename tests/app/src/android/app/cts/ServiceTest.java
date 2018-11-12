@@ -22,6 +22,7 @@ import android.app.NotificationChannel;
 import android.app.NotificationManager;
 import android.app.PendingIntent;
 import android.app.stubs.ActivityTestsBase;
+import android.app.stubs.IsolatedService;
 import android.app.stubs.LocalDeniedService;
 import android.app.stubs.LocalForegroundService;
 import android.app.stubs.LocalGrantedService;
@@ -73,6 +74,7 @@ public class ServiceTest extends ActivityTestsBase {
     private Intent mLocalGrantedService;
     private Intent mLocalService_ApplicationHasPermission;
     private Intent mLocalService_ApplicationDoesNotHavePermission;
+    private Intent mIsolatedService;
     private Intent mExternalService;
 
     private IBinder mStateReceiver;
@@ -186,6 +188,95 @@ public class ServiceTest extends ActivityTestsBase {
                 } else {
                     finishBad("onServiceDisconnected() called unexpectedly");
                 }
+            }
+        }
+    }
+
+    private class IsolatedConnection implements ServiceConnection {
+        private IBinder mService;
+
+        public IsolatedConnection() {
+        }
+
+        public void waitForService(int timeoutMs) {
+            final long endTime = System.currentTimeMillis() + timeoutMs;
+
+            boolean timeout = false;
+            synchronized (this) {
+                while (mService == null) {
+                    final long delay = endTime - System.currentTimeMillis();
+                    if (delay < 0) {
+                        timeout = true;
+                        break;
+                    }
+
+                    try {
+                        wait(delay);
+                    } catch (final java.lang.InterruptedException e) {
+                        // do nothing
+                    }
+                }
+            }
+
+            if (timeout) {
+                throw new RuntimeException("Timed out waiting for connection");
+            }
+        }
+
+        public void setValue(int value) {
+            Parcel data = Parcel.obtain();
+            data.writeInterfaceToken(LocalService.SERVICE_LOCAL);
+            data.writeInt(value);
+            try {
+                mService.transact(LocalService.SET_VALUE_CODE, data, null, 0);
+            } catch (RemoteException e) {
+                finishBad("DeadObjectException when sending reporting object");
+            }
+            data.recycle();
+        }
+
+        public int getValue() {
+            Parcel data = Parcel.obtain();
+            Parcel reply = Parcel.obtain();
+            data.writeInterfaceToken(LocalService.SERVICE_LOCAL);
+            try {
+                mService.transact(LocalService.GET_VALUE_CODE, data, reply, 0);
+            } catch (RemoteException e) {
+                finishBad("DeadObjectException when sending reporting object");
+            }
+            int value = reply.readInt();
+            reply.recycle();
+            data.recycle();
+            return value;
+        }
+
+        public int getPid() {
+            Parcel data = Parcel.obtain();
+            Parcel reply = Parcel.obtain();
+            data.writeInterfaceToken(LocalService.SERVICE_LOCAL);
+            try {
+                mService.transact(LocalService.GET_PID_CODE, data, reply, 0);
+            } catch (RemoteException e) {
+                finishBad("DeadObjectException when sending reporting object");
+            }
+            int value = reply.readInt();
+            reply.recycle();
+            data.recycle();
+            return value;
+        }
+
+        @Override
+        public void onServiceConnected(ComponentName name, IBinder service) {
+            synchronized (this) {
+                mService = service;
+                notifyAll();
+            }
+        }
+
+        @Override
+        public void onServiceDisconnected(ComponentName name) {
+            synchronized (this) {
+                mService = null;
             }
         }
     }
@@ -441,6 +532,7 @@ public class ServiceTest extends ActivityTestsBase {
                 LocalService.SERVICE_LOCAL_GRANTED, null /*uri*/, mContext, LocalService.class);
         mLocalService_ApplicationDoesNotHavePermission = new Intent(
                 LocalService.SERVICE_LOCAL_DENIED, null /*uri*/, mContext, LocalService.class);
+        mIsolatedService = new Intent(mContext, IsolatedService.class);
         mStateReceiver = new MockBinder();
         getNotificationManager().createNotificationChannel(new NotificationChannel(
                 NOTIFICATION_CHANNEL_ID, "name", NotificationManager.IMPORTANCE_DEFAULT));
@@ -890,6 +982,78 @@ public class ServiceTest extends ActivityTestsBase {
         } finally {
             mContext.unbindService(conn1);
             mContext.unbindService(conn2);
+        }
+    }
+
+    /**
+     * Verify that we can't use bindIsolatedService() on a non-isolated service.
+     */
+    @MediumTest
+    public void testFailBindNonIsolatedService() throws Exception {
+        EmptyConnection conn = new EmptyConnection();
+        try {
+            mContext.bindIsolatedService(mLocalService, conn, 0, "isolated");
+            mContext.unbindService(conn);
+            fail("Didn't get IllegalArgumentException");
+        } catch (IllegalArgumentException e) {
+            // This is expected.
+        }
+    }
+
+    /**
+     * Verify that bindIsolatedService() correctly makes different instances when given
+     * different instance names.
+     */
+    @MediumTest
+    public void testBindIsolatedServiceInstances() throws Exception {
+        IsolatedConnection conn1a = null;
+        IsolatedConnection conn1b = null;
+        IsolatedConnection conn2 = null;
+        try {
+            conn1a = new IsolatedConnection();
+            mContext.bindIsolatedService(
+                    mIsolatedService, conn1a, Context.BIND_AUTO_CREATE, "1");
+            conn1b = new IsolatedConnection();
+            mContext.bindIsolatedService(
+                    mIsolatedService, conn1b, Context.BIND_AUTO_CREATE, "1");
+            conn2 = new IsolatedConnection();
+            mContext.bindIsolatedService(
+                    mIsolatedService, conn2, Context.BIND_AUTO_CREATE, "2");
+
+            conn1a.waitForService(DELAY);
+            conn1b.waitForService(DELAY);
+            conn2.waitForService(DELAY);
+
+            if (conn1a.getPid() != conn1b.getPid()) {
+                fail("Connections to same service name in different pids");
+            }
+            if (conn1a.getPid() == conn2.getPid()) {
+                fail("Connections to different service names in same pids");
+            }
+
+            conn1a.setValue(1);
+            assertEquals(1, conn1a.getValue());
+            assertEquals(1, conn1b.getValue());
+
+            conn2.setValue(2);
+            assertEquals(1, conn1a.getValue());
+            assertEquals(1, conn1b.getValue());
+            assertEquals(2, conn2.getValue());
+
+            conn1b.setValue(3);
+            assertEquals(3, conn1a.getValue());
+            assertEquals(3, conn1b.getValue());
+            assertEquals(2, conn2.getValue());
+        } finally {
+            if (conn2 != null) {
+                mContext.unbindService(conn2);
+            }
+            if (conn1b != null) {
+                mContext.unbindService(conn1b);
+            }
+            if (conn1a != null) {
+                mContext.unbindService(conn1a);
+            }
         }
     }
 }
