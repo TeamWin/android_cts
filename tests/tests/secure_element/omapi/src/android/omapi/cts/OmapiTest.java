@@ -43,7 +43,7 @@ import android.se.omapi.SEService;
 import android.se.omapi.SEService.OnConnectedListener;
 import android.se.omapi.Session;
 import android.support.test.InstrumentationRegistry;
-
+import android.os.Build;
 import com.android.compatibility.common.util.PropertyUtil;
 
 public class OmapiTest {
@@ -160,6 +160,7 @@ public class OmapiTest {
 
     @Before
     public void setUp() throws Exception {
+        assumeTrue(PropertyUtil.getFirstApiLevel() > Build.VERSION_CODES.O_MR1);
         assumeTrue(supportsHardware());
         seService = new SEService(InstrumentationRegistry.getContext(), new SynchronousExecutor(), mListener);
         connectionTimer = new Timer();
