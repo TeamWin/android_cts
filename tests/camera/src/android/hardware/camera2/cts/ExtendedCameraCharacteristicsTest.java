@@ -829,9 +829,6 @@ public class ExtendedCameraCharacteristicsTest extends AndroidTestCase {
                 expectKeyAvailable(c, CameraCharacteristics.SCALER_STREAM_CONFIGURATION_MAP                 , OPT      ,   BC                   );
                 expectKeyAvailable(c, CameraCharacteristics.SCALER_CROPPING_TYPE                            , OPT      ,   BC                   );
                 expectKeyAvailable(c, CameraCharacteristics.SENSOR_BLACK_LEVEL_PATTERN                      , FULL     ,   RAW                  );
-                expectKeyAvailable(c, CameraCharacteristics.SENSOR_CALIBRATION_TRANSFORM1                   , OPT      ,   RAW                  );
-                expectKeyAvailable(c, CameraCharacteristics.SENSOR_COLOR_TRANSFORM1                         , OPT      ,   RAW                  );
-                expectKeyAvailable(c, CameraCharacteristics.SENSOR_FORWARD_MATRIX1                          , OPT      ,   RAW                  );
                 expectKeyAvailable(c, CameraCharacteristics.SENSOR_INFO_ACTIVE_ARRAY_SIZE                   , OPT      ,   BC, RAW              );
                 expectKeyAvailable(c, CameraCharacteristics.SENSOR_INFO_COLOR_FILTER_ARRANGEMENT            , FULL     ,   RAW                  );
                 expectKeyAvailable(c, CameraCharacteristics.SENSOR_INFO_EXPOSURE_TIME_RANGE                 , FULL     ,   MANUAL_SENSOR        );
@@ -842,7 +839,6 @@ public class ExtendedCameraCharacteristicsTest extends AndroidTestCase {
                 expectKeyAvailable(c, CameraCharacteristics.SENSOR_INFO_TIMESTAMP_SOURCE                    , OPT      ,   BC                   );
                 expectKeyAvailable(c, CameraCharacteristics.SENSOR_MAX_ANALOG_SENSITIVITY                   , FULL     ,   MANUAL_SENSOR        );
                 expectKeyAvailable(c, CameraCharacteristics.SENSOR_ORIENTATION                              , OPT      ,   BC                   );
-                expectKeyAvailable(c, CameraCharacteristics.SENSOR_REFERENCE_ILLUMINANT1                    , OPT      ,   RAW                  );
                 expectKeyAvailable(c, CameraCharacteristics.SHADING_AVAILABLE_MODES                         , LIMITED  ,   MANUAL_POSTPROC, RAW );
                 expectKeyAvailable(c, CameraCharacteristics.STATISTICS_INFO_AVAILABLE_FACE_DETECT_MODES     , OPT      ,   BC                   );
                 expectKeyAvailable(c, CameraCharacteristics.STATISTICS_INFO_AVAILABLE_HOT_PIXEL_MAP_MODES   , OPT      ,   RAW                  );
@@ -857,12 +853,25 @@ public class ExtendedCameraCharacteristicsTest extends AndroidTestCase {
                 // TODO: check that no other 'android' keys are listed in #getKeys if they aren't in the above list
             }
 
-            // Only check for these if the second reference illuminant is included
-            if (allKeys.contains(CameraCharacteristics.SENSOR_REFERENCE_ILLUMINANT2)) {
-                expectKeyAvailable(c, CameraCharacteristics.SENSOR_REFERENCE_ILLUMINANT2                    , OPT      ,   RAW                  );
-                expectKeyAvailable(c, CameraCharacteristics.SENSOR_COLOR_TRANSFORM2                         , OPT      ,   RAW                  );
-                expectKeyAvailable(c, CameraCharacteristics.SENSOR_CALIBRATION_TRANSFORM2                   , OPT      ,   RAW                  );
-                expectKeyAvailable(c, CameraCharacteristics.SENSOR_FORWARD_MATRIX2                          , OPT      ,   RAW                  );
+            int[] actualCapabilities = c.get(CameraCharacteristics.REQUEST_AVAILABLE_CAPABILITIES);
+            assertNotNull("android.request.availableCapabilities must never be null",
+                    actualCapabilities);
+            boolean isMonochrome = arrayContains(actualCapabilities,
+                    CameraCharacteristics.REQUEST_AVAILABLE_CAPABILITIES_MONOCHROME);
+            if (!isMonochrome) {
+                expectKeyAvailable(c, CameraCharacteristics.SENSOR_CALIBRATION_TRANSFORM1                   , OPT      ,   RAW                  );
+                expectKeyAvailable(c, CameraCharacteristics.SENSOR_COLOR_TRANSFORM1                         , OPT      ,   RAW                  );
+                expectKeyAvailable(c, CameraCharacteristics.SENSOR_FORWARD_MATRIX1                          , OPT      ,   RAW                  );
+                expectKeyAvailable(c, CameraCharacteristics.SENSOR_REFERENCE_ILLUMINANT1                    , OPT      ,   RAW                  );
+
+
+                // Only check for these if the second reference illuminant is included
+                if (allKeys.contains(CameraCharacteristics.SENSOR_REFERENCE_ILLUMINANT2)) {
+                    expectKeyAvailable(c, CameraCharacteristics.SENSOR_REFERENCE_ILLUMINANT2                    , OPT      ,   RAW                  );
+                    expectKeyAvailable(c, CameraCharacteristics.SENSOR_COLOR_TRANSFORM2                         , OPT      ,   RAW                  );
+                    expectKeyAvailable(c, CameraCharacteristics.SENSOR_CALIBRATION_TRANSFORM2                   , OPT      ,   RAW                  );
+                    expectKeyAvailable(c, CameraCharacteristics.SENSOR_FORWARD_MATRIX2                          , OPT      ,   RAW                  );
+                }
             }
 
             // Required key if any of RAW format output is supported
@@ -932,40 +941,53 @@ public class ExtendedCameraCharacteristicsTest extends AndroidTestCase {
             mCollector.expectKeyValueGreaterThan(c, CameraCharacteristics.SENSOR_INFO_WHITE_LEVEL,
                     MIN_ALLOWABLE_WHITELEVEL);
 
-            mCollector.expectKeyValueIsIn(c,
-                    CameraCharacteristics.SENSOR_INFO_COLOR_FILTER_ARRANGEMENT,
-                    CameraCharacteristics.SENSOR_INFO_COLOR_FILTER_ARRANGEMENT_RGGB,
-                    CameraCharacteristics.SENSOR_INFO_COLOR_FILTER_ARRANGEMENT_GRBG,
-                    CameraCharacteristics.SENSOR_INFO_COLOR_FILTER_ARRANGEMENT_GBRG,
-                    CameraCharacteristics.SENSOR_INFO_COLOR_FILTER_ARRANGEMENT_BGGR);
-            // TODO: SENSOR_INFO_COLOR_FILTER_ARRANGEMENT_RGB isn't supported yet.
 
-            mCollector.expectKeyValueInRange(c, CameraCharacteristics.SENSOR_REFERENCE_ILLUMINANT1,
-                    CameraCharacteristics.SENSOR_REFERENCE_ILLUMINANT1_DAYLIGHT,
-                    CameraCharacteristics.SENSOR_REFERENCE_ILLUMINANT1_ISO_STUDIO_TUNGSTEN);
-            // Only check the range if the second reference illuminant is avaliable
-            if (c.get(CameraCharacteristics.SENSOR_REFERENCE_ILLUMINANT2) != null) {
-                mCollector.expectKeyValueInRange(c, CameraCharacteristics.SENSOR_REFERENCE_ILLUMINANT2,
+            boolean isMonochrome = arrayContains(actualCapabilities,
+                    CameraCharacteristics.REQUEST_AVAILABLE_CAPABILITIES_MONOCHROME);
+            if (!isMonochrome) {
+                mCollector.expectKeyValueIsIn(c,
+                        CameraCharacteristics.SENSOR_INFO_COLOR_FILTER_ARRANGEMENT,
+                        CameraCharacteristics.SENSOR_INFO_COLOR_FILTER_ARRANGEMENT_RGGB,
+                        CameraCharacteristics.SENSOR_INFO_COLOR_FILTER_ARRANGEMENT_GRBG,
+                        CameraCharacteristics.SENSOR_INFO_COLOR_FILTER_ARRANGEMENT_GBRG,
+                        CameraCharacteristics.SENSOR_INFO_COLOR_FILTER_ARRANGEMENT_BGGR);
+                // TODO: SENSOR_INFO_COLOR_FILTER_ARRANGEMENT_RGB isn't supported yet.
+
+                mCollector.expectKeyValueInRange(c,
+                        CameraCharacteristics.SENSOR_REFERENCE_ILLUMINANT1,
+                        CameraCharacteristics.SENSOR_REFERENCE_ILLUMINANT1_DAYLIGHT,
+                        CameraCharacteristics.SENSOR_REFERENCE_ILLUMINANT1_ISO_STUDIO_TUNGSTEN);
+                // Only check the range if the second reference illuminant is avaliable
+                if (c.get(CameraCharacteristics.SENSOR_REFERENCE_ILLUMINANT2) != null) {
+                        mCollector.expectKeyValueInRange(c,
+                        CameraCharacteristics.SENSOR_REFERENCE_ILLUMINANT2,
                         (byte) CameraCharacteristics.SENSOR_REFERENCE_ILLUMINANT1_DAYLIGHT,
                         (byte) CameraCharacteristics.SENSOR_REFERENCE_ILLUMINANT1_ISO_STUDIO_TUNGSTEN);
+                }
+
+                Rational[] zeroes = new Rational[9];
+                Arrays.fill(zeroes, Rational.ZERO);
+
+                ColorSpaceTransform zeroed = new ColorSpaceTransform(zeroes);
+                mCollector.expectNotEquals("Forward Matrix1 should not contain all zeroes.", zeroed,
+                        c.get(CameraCharacteristics.SENSOR_FORWARD_MATRIX1));
+                mCollector.expectNotEquals("Forward Matrix2 should not contain all zeroes.", zeroed,
+                        c.get(CameraCharacteristics.SENSOR_FORWARD_MATRIX2));
+                mCollector.expectNotEquals("Calibration Transform1 should not contain all zeroes.",
+                        zeroed, c.get(CameraCharacteristics.SENSOR_CALIBRATION_TRANSFORM1));
+                mCollector.expectNotEquals("Calibration Transform2 should not contain all zeroes.",
+                        zeroed, c.get(CameraCharacteristics.SENSOR_CALIBRATION_TRANSFORM2));
+                mCollector.expectNotEquals("Color Transform1 should not contain all zeroes.",
+                        zeroed, c.get(CameraCharacteristics.SENSOR_COLOR_TRANSFORM1));
+                mCollector.expectNotEquals("Color Transform2 should not contain all zeroes.",
+                        zeroed, c.get(CameraCharacteristics.SENSOR_COLOR_TRANSFORM2));
+            } else {
+                mCollector.expectKeyValueIsIn(c,
+                        CameraCharacteristics.SENSOR_INFO_COLOR_FILTER_ARRANGEMENT,
+                        CameraCharacteristics.SENSOR_INFO_COLOR_FILTER_ARRANGEMENT_MONO,
+                        CameraCharacteristics.SENSOR_INFO_COLOR_FILTER_ARRANGEMENT_NIR);
+                // TODO: SENSOR_INFO_COLOR_FILTER_ARRANGEMENT_RGB isn't supported yet.
             }
-
-            Rational[] zeroes = new Rational[9];
-            Arrays.fill(zeroes, Rational.ZERO);
-
-            ColorSpaceTransform zeroed = new ColorSpaceTransform(zeroes);
-            mCollector.expectNotEquals("Forward Matrix1 should not contain all zeroes.", zeroed,
-                    c.get(CameraCharacteristics.SENSOR_FORWARD_MATRIX1));
-            mCollector.expectNotEquals("Forward Matrix2 should not contain all zeroes.", zeroed,
-                    c.get(CameraCharacteristics.SENSOR_FORWARD_MATRIX2));
-            mCollector.expectNotEquals("Calibration Transform1 should not contain all zeroes.",
-                    zeroed, c.get(CameraCharacteristics.SENSOR_CALIBRATION_TRANSFORM1));
-            mCollector.expectNotEquals("Calibration Transform2 should not contain all zeroes.",
-                    zeroed, c.get(CameraCharacteristics.SENSOR_CALIBRATION_TRANSFORM2));
-            mCollector.expectNotEquals("Color Transform1 should not contain all zeroes.",
-                    zeroed, c.get(CameraCharacteristics.SENSOR_COLOR_TRANSFORM1));
-            mCollector.expectNotEquals("Color Transform2 should not contain all zeroes.",
-                    zeroed, c.get(CameraCharacteristics.SENSOR_COLOR_TRANSFORM2));
 
             BlackLevelPattern blackLevel = mCollector.expectKeyValueNotNull(c,
                     CameraCharacteristics.SENSOR_BLACK_LEVEL_PATTERN);
@@ -976,6 +998,14 @@ public class ExtendedCameraCharacteristicsTest extends AndroidTestCase {
                 }
                 int[] blackLevelPattern = new int[BlackLevelPattern.COUNT];
                 blackLevel.copyTo(blackLevelPattern, /*offset*/0);
+                if (isMonochrome) {
+                    for (int index = 1; index < BlackLevelPattern.COUNT; index++) {
+                        mCollector.expectEquals(
+                                "Monochrome camera 2x2 channels blacklevel value must be the same.",
+                                blackLevelPattern[index], blackLevelPattern[0]);
+                    }
+                }
+
                 Integer whitelevel = c.get(CameraCharacteristics.SENSOR_INFO_WHITE_LEVEL);
                 if (whitelevel != null) {
                     mCollector.expectValuesInRange("BlackLevelPattern", blackLevelPattern, 0,
@@ -1916,14 +1946,6 @@ public class ExtendedCameraCharacteristicsTest extends AndroidTestCase {
                                     + " camera id %s", physicalCameraId, mIds[counter]),
                             physicalCameraId != mIds[counter]);
 
-                    if (Build.VERSION.SDK_INT < Build.VERSION_CODES.Q) {
-                        assertTrue(
-                                String.format(
-                                        "Physical camera id %s should be in available camera ids",
-                                        physicalCameraId),
-                                Arrays.asList(publicIds).contains(physicalCameraId));
-                    }
-
                     //validation for depth static metadata of physical cameras
                     CameraCharacteristics pc =
                             mCameraManager.getCameraCharacteristics(physicalCameraId);
@@ -1968,12 +1990,58 @@ public class ExtendedCameraCharacteristicsTest extends AndroidTestCase {
                 continue;
             }
 
+            List<Key<?>> allKeys = c.getKeys();
+            List<CaptureRequest.Key<?>> requestKeys = c.getAvailableCaptureRequestKeys();
+            List<CaptureResult.Key<?>> resultKeys = c.getAvailableCaptureResultKeys();
+
             assertTrue("Monochrome camera must have BACKWARD_COMPATIBLE capability",
                     arrayContains(capabilities, BC));
-            assertTrue("Monochrome camera must not have RAW capability",
-                    !arrayContains(capabilities, RAW));
+            int colorFilterArrangement = c.get(
+                    CameraCharacteristics.SENSOR_INFO_COLOR_FILTER_ARRANGEMENT);
+            assertTrue("Monochrome camera must have either MONO or NIR color filter pattern",
+                    colorFilterArrangement ==
+                            CameraCharacteristics.SENSOR_INFO_COLOR_FILTER_ARRANGEMENT_MONO
+                    || colorFilterArrangement ==
+                            CameraCharacteristics.SENSOR_INFO_COLOR_FILTER_ARRANGEMENT_NIR);
+
+            assertFalse("Monochrome camera must not contain SENSOR_CALIBRATION_TRANSFORM1 key",
+                    allKeys.contains(CameraCharacteristics.SENSOR_CALIBRATION_TRANSFORM1));
+            assertFalse("Monochrome camera must not contain SENSOR_COLOR_TRANSFORM1 key",
+                    allKeys.contains(CameraCharacteristics.SENSOR_COLOR_TRANSFORM1));
+            assertFalse("Monochrome camera must not contain SENSOR_FORWARD_MATRIX1 key",
+                    allKeys.contains(CameraCharacteristics.SENSOR_FORWARD_MATRIX1));
+            assertFalse("Monochrome camera must not contain SENSOR_REFERENCE_ILLUMINANT1 key",
+                    allKeys.contains(CameraCharacteristics.SENSOR_REFERENCE_ILLUMINANT1));
+            assertFalse("Monochrome camera must not contain SENSOR_CALIBRATION_TRANSFORM2 key",
+                    allKeys.contains(CameraCharacteristics.SENSOR_CALIBRATION_TRANSFORM2));
+            assertFalse("Monochrome camera must not contain SENSOR_COLOR_TRANSFORM2 key",
+                    allKeys.contains(CameraCharacteristics.SENSOR_COLOR_TRANSFORM2));
+            assertFalse("Monochrome camera must not contain SENSOR_FORWARD_MATRIX2 key",
+                    allKeys.contains(CameraCharacteristics.SENSOR_FORWARD_MATRIX2));
+            assertFalse("Monochrome camera must not contain SENSOR_REFERENCE_ILLUMINANT2 key",
+                    allKeys.contains(CameraCharacteristics.SENSOR_REFERENCE_ILLUMINANT2));
+
+            assertFalse(
+                    "Monochrome capture result must not contain SENSOR_NEUTRAL_COLOR_POINT key",
+                    resultKeys.contains(CaptureResult.SENSOR_NEUTRAL_COLOR_POINT));
+            assertFalse("Monochrome capture result must not contain SENSOR_GREEN_SPLIT key",
+                    resultKeys.contains(CaptureResult.SENSOR_GREEN_SPLIT));
+
+            // Check that color correction tags are not available for monochrome cameras
             assertTrue("Monochrome camera must not have MANUAL_POST_PROCESSING capability",
                     !arrayContains(capabilities, MANUAL_POSTPROC));
+            assertTrue("Monochrome camera must not have COLOR_CORRECTION_MODE in request keys",
+                    !requestKeys.contains(CaptureRequest.COLOR_CORRECTION_MODE));
+            assertTrue("Monochrome camera must not have COLOR_CORRECTION_MODE in result keys",
+                    !resultKeys.contains(CaptureResult.COLOR_CORRECTION_MODE));
+            assertTrue("Monochrome camera must not have COLOR_CORRECTION_TRANSFORM in request keys",
+                    !requestKeys.contains(CaptureRequest.COLOR_CORRECTION_TRANSFORM));
+            assertTrue("Monochrome camera must not have COLOR_CORRECTION_TRANSFORM in result keys",
+                    !resultKeys.contains(CaptureResult.COLOR_CORRECTION_TRANSFORM));
+            assertTrue("Monochrome camera must not have COLOR_CORRECTION_GAINS in request keys",
+                    !requestKeys.contains(CaptureRequest.COLOR_CORRECTION_GAINS));
+            assertTrue("Monochrome camera must not have COLOR_CORRECTION_GAINS in result keys",
+                    !resultKeys.contains(CaptureResult.COLOR_CORRECTION_GAINS));
 
             // Check that awbSupportedModes only contains AUTO
             int[] awbAvailableModes = c.get(CameraCharacteristics.CONTROL_AWB_AVAILABLE_MODES);

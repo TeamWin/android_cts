@@ -55,6 +55,8 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
+import junit.framework.Assert;
+
 import org.junit.Test;
 
 public class StillCaptureTest extends Camera2SurfaceViewTestCase {
@@ -1091,25 +1093,44 @@ public class StillCaptureTest extends Camera2SurfaceViewTestCase {
         assertNotNull(rawRequest);
         assertNotNull(rawResult);
 
-        Rational[] empty = new Rational[] { Rational.ZERO, Rational.ZERO, Rational.ZERO};
-        Rational[] neutralColorPoint = mCollector.expectKeyValueNotNull("NeutralColorPoint",
-                rawResult, CaptureResult.SENSOR_NEUTRAL_COLOR_POINT);
-        if (neutralColorPoint != null) {
-            mCollector.expectEquals("NeutralColorPoint length", empty.length,
-                    neutralColorPoint.length);
-            mCollector.expectNotEquals("NeutralColorPoint cannot be all zeroes, ", empty,
-                    neutralColorPoint);
-            mCollector.expectValuesGreaterOrEqual("NeutralColorPoint", neutralColorPoint,
-                    Rational.ZERO);
-        }
+        if (!mStaticInfo.isMonochromeCamera()) {
+            Rational[] empty = new Rational[] { Rational.ZERO, Rational.ZERO, Rational.ZERO};
+            Rational[] neutralColorPoint = mCollector.expectKeyValueNotNull("NeutralColorPoint",
+                    rawResult, CaptureResult.SENSOR_NEUTRAL_COLOR_POINT);
+            if (neutralColorPoint != null) {
+                mCollector.expectEquals("NeutralColorPoint length", empty.length,
+                        neutralColorPoint.length);
+                mCollector.expectNotEquals("NeutralColorPoint cannot be all zeroes, ", empty,
+                        neutralColorPoint);
+                mCollector.expectValuesGreaterOrEqual("NeutralColorPoint", neutralColorPoint,
+                        Rational.ZERO);
+            }
 
-        mCollector.expectKeyValueGreaterOrEqual(rawResult, CaptureResult.SENSOR_GREEN_SPLIT, 0.0f);
+            mCollector.expectKeyValueGreaterOrEqual(rawResult,
+                    CaptureResult.SENSOR_GREEN_SPLIT, 0.0f);
+        }
 
         Pair<Double, Double>[] noiseProfile = mCollector.expectKeyValueNotNull("NoiseProfile",
                 rawResult, CaptureResult.SENSOR_NOISE_PROFILE);
         if (noiseProfile != null) {
-            mCollector.expectEquals("NoiseProfile length", noiseProfile.length,
-                /*Num CFA channels*/4);
+            int cfa = mStaticInfo.getCFAChecked();
+            int numCfaChannels = 0;
+            switch (cfa) {
+                case CameraCharacteristics.SENSOR_INFO_COLOR_FILTER_ARRANGEMENT_RGGB:
+                case CameraCharacteristics.SENSOR_INFO_COLOR_FILTER_ARRANGEMENT_GRBG:
+                case CameraCharacteristics.SENSOR_INFO_COLOR_FILTER_ARRANGEMENT_GBRG:
+                case CameraCharacteristics.SENSOR_INFO_COLOR_FILTER_ARRANGEMENT_BGGR:
+                    numCfaChannels = 4;
+                    break;
+                case CameraCharacteristics.SENSOR_INFO_COLOR_FILTER_ARRANGEMENT_MONO:
+                case CameraCharacteristics.SENSOR_INFO_COLOR_FILTER_ARRANGEMENT_NIR:
+                    numCfaChannels = 1;
+                    break;
+                default:
+                    Assert.fail("Invalid color filter arrangement " + cfa);
+                    break;
+            }
+            mCollector.expectEquals("NoiseProfile length", noiseProfile.length, numCfaChannels);
             for (Pair<Double, Double> p : noiseProfile) {
                 mCollector.expectTrue("NoiseProfile coefficients " + p +
                         " must have: S > 0, O >= 0", p.first > 0 && p.second >= 0);
