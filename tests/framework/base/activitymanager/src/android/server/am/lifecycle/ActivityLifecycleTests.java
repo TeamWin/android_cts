@@ -150,12 +150,14 @@ public class ActivityLifecycleTests extends ActivityLifecycleClientTestBase {
                 occludedActivityState(translucentActivity, topOpaqueActivity),
                 state(topOpaqueActivity, ON_RESUME));
 
-        getLifecycleLog().clear();
         try (final RotationSession rotationSession = new RotationSession()) {
             if (!supportsLockedUserRotation(
                     rotationSession, translucentActivity.getDisplay().getDisplayId())) {
                 return;
             }
+
+            getLifecycleLog().clear();
+
             final int current = rotationSession.get();
             // Set new rotation to cause a configuration change.
             switch (current) {
