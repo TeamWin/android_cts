@@ -16,6 +16,9 @@
 
 #include <aidl/test_package/BnTest.h>
 
+#include <condition_variable>
+#include <mutex>
+
 #include "utilities.h"
 
 using IEmpty = ::aidl::test_package::IEmpty;
@@ -34,6 +37,49 @@ class MyTest : public ::aidl::test_package::BnTest,
   ::ndk::ScopedAStatus TestOneway() override {
     // This return code should be ignored since it is oneway.
     return ::ndk::ScopedAStatus(AStatus_fromStatus(STATUS_UNKNOWN_ERROR));
+  }
+
+  ::ndk::ScopedAStatus GiveMeMyCallingPid(int32_t* _aidl_return) override {
+    *_aidl_return = AIBinder_getCallingPid();
+    return ::ndk::ScopedAStatus(AStatus_newOk());
+  }
+  ::ndk::ScopedAStatus GiveMeMyCallingUid(int32_t* _aidl_return) override {
+    *_aidl_return = AIBinder_getCallingUid();
+    return ::ndk::ScopedAStatus(AStatus_newOk());
+  }
+
+ private:
+  bool mCached = false;
+  std::mutex mCachedMutex;
+  std::condition_variable mCachedCondition;
+  int mCachedPid = -1;
+  int mCachedUid = -1;
+
+ public:
+  ::ndk::ScopedAStatus CacheCallingInfoFromOneway() override {
+    std::unique_lock<std::mutex> l(mCachedMutex);
+    mCached = true;
+    mCachedPid = AIBinder_getCallingPid();
+    mCachedUid = AIBinder_getCallingUid();
+    mCachedCondition.notify_all();
+
+    return ::ndk::ScopedAStatus(AStatus_newOk());
+  }
+  ::ndk::ScopedAStatus GiveMeMyCallingPidFromOneway(
+      int32_t* _aidl_return) override {
+    std::unique_lock<std::mutex> l(mCachedMutex);
+    mCachedCondition.wait(l, [&] { return mCached; });
+
+    *_aidl_return = mCachedPid;
+    return ::ndk::ScopedAStatus(AStatus_newOk());
+  }
+  ::ndk::ScopedAStatus GiveMeMyCallingUidFromOneway(
+      int32_t* _aidl_return) override {
+    std::unique_lock<std::mutex> l(mCachedMutex);
+    mCachedCondition.wait(l, [&] { return mCached; });
+
+    *_aidl_return = mCachedUid;
+    return ::ndk::ScopedAStatus(AStatus_newOk());
   }
   ::ndk::ScopedAStatus RepeatInt(int32_t in_value,
                                  int32_t* _aidl_return) override {

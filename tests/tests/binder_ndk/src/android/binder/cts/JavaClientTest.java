@@ -24,6 +24,7 @@ import static org.junit.Assert.assertTrue;
 import android.os.IBinder;
 import android.os.RemoteException;
 import android.os.ParcelFileDescriptor;
+import android.os.Process;
 
 import android.support.test.InstrumentationRegistry;
 
@@ -52,10 +53,12 @@ public class JavaClientTest {
     private Class mServiceClass;
     private ITest mInterface;
     private String mExpectedName;
+    private boolean mShouldBeRemote;
 
-    public JavaClientTest(Class serviceClass, String expectedName) {
+    public JavaClientTest(Class serviceClass, String expectedName, boolean shouldBeRemote) {
         mServiceClass = serviceClass;
         mExpectedName = expectedName;
+        mShouldBeRemote = shouldBeRemote;
     }
 
     @Parameterized.Parameters( name = "{0}" )
@@ -64,10 +67,10 @@ public class JavaClientTest {
         // Whenever possible, the desired service should be accessed directly
         // in order to avoid this additional overhead.
         return Arrays.asList(new Object[][] {
-                {NativeService.Local.class, "CPP"},
-                {JavaService.Local.class, "JAVA"},
-                {NativeService.Remote.class, "CPP"},
-                {JavaService.Remote.class, "JAVA"},
+                {NativeService.Local.class, "CPP", false /*shouldBeRemote*/},
+                {JavaService.Local.class, "JAVA", false /*shouldBeRemote*/},
+                {NativeService.Remote.class, "CPP", true /*shouldBeRemote*/},
+                {JavaService.Remote.class, "JAVA", true /*shouldBeRemote*/},
             });
     }
 
@@ -94,6 +97,23 @@ public class JavaClientTest {
     public void testTrivial() throws RemoteException {
         mInterface.TestVoidReturn();
         mInterface.TestOneway();
+    }
+
+    @Test
+    public void testCallingInfo() throws RemoteException {
+      mInterface.CacheCallingInfoFromOneway();
+
+      assertEquals(Process.myPid(), mInterface.GiveMeMyCallingPid());
+      assertEquals(Process.myUid(), mInterface.GiveMeMyCallingUid());
+
+      if (mShouldBeRemote) {
+        // PID is hidden from oneway calls
+        assertEquals(0, mInterface.GiveMeMyCallingPidFromOneway());
+      } else {
+        assertEquals(Process.myPid(), mInterface.GiveMeMyCallingPidFromOneway());
+      }
+
+      assertEquals(Process.myUid(), mInterface.GiveMeMyCallingUidFromOneway());
     }
 
     @Test
