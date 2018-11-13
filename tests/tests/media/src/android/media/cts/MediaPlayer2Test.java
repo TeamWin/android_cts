@@ -1221,8 +1221,8 @@ public class MediaPlayer2Test extends MediaPlayer2TestBase {
                 if (what == MediaPlayer2.CALL_COMPLETED_SEEK_TO) {
                     mOnSeekCompleteCalled.signal();
                 } else if (what == MediaPlayer2.CALL_COMPLETED_SET_PLAYBACK_PARAMS) {
-                    onSetPlaybackParamsCompleteCalled.signal();
                     setPlaybackParamsStatus.set(status);
+                    onSetPlaybackParamsCompleteCalled.signal();
                 }
             }
         };
