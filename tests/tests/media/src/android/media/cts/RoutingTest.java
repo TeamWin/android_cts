@@ -783,11 +783,11 @@ public class RoutingTest extends AndroidTestCase {
         onPrepareCalled.waitForSignal();
         mediaPlayer2.setWakeMode(mContext, PowerManager.PARTIAL_WAKE_LOCK);
 
-        assertFalse(mediaPlayer2.isPlaying());
+        assertFalse(mediaPlayer2.getState() == MediaPlayer2.PLAYER_STATE_PLAYING);
         onPlayCalled.reset();
         mediaPlayer2.play();
         onPlayCalled.waitForSignal();
-        assertTrue(mediaPlayer2.isPlaying());
+        assertTrue(mediaPlayer2.getState() == MediaPlayer2.PLAYER_STATE_PLAYING);
 
         mediaPlayer2.unregisterEventCallback(ecb);
         afd.close();
