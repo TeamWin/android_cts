@@ -1009,7 +1009,8 @@ public class ActivityManagerProcessStateTest extends InstrumentationTestCase {
             uidWatcher.waitFor(WatchUidRunner.CMD_ACTIVE, null);
             uidWatcher.waitFor(WatchUidRunner.CMD_UNCACHED, null);
             uidWatcher.waitFor(WatchUidRunner.CMD_PROCSTATE, WatchUidRunner.STATE_FG_SERVICE);
-
+            // Remove tempwhitelist avoid temp white list block idle command and app crash occur.
+            executeShellCmd("cmd deviceidle tempwhitelist -r " + SIMPLE_PACKAGE_NAME);
             // Good, now stop the service and wait for it to go away.
             mContext.stopService(mServiceStartForegroundIntent);
             conn.waitForDisconnect();
