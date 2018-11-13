@@ -164,7 +164,9 @@ public class UsageStatsTest {
         while (events.hasNextEvent()) {
             UsageEvents.Event event = new UsageEvents.Event();
             assertTrue(events.getNextEvent(event));
-            eventList.add(event);
+            if (mTargetPackage.equals(event.getPackageName())) {
+                eventList.add(event);
+            }
         }
 
         // Find the last Activity's MOVE_TO_FOREGROUND event.
@@ -190,7 +192,6 @@ public class UsageStatsTest {
 
             // Check for foreground event.
             UsageEvents.Event event = eventList.get(index);
-            assertEquals(mTargetPackage, event.getPackageName());
             assertEquals(activitySequence[i].getName(), event.getClassName());
             assertEquals(UsageEvents.Event.MOVE_TO_FOREGROUND, event.getEventType());
 
@@ -198,7 +199,6 @@ public class UsageStatsTest {
             // last activity.
             if (i < activityCount - 1) {
                 event = eventList.get(index + 1);
-                assertEquals(mTargetPackage, event.getPackageName());
                 assertEquals(activitySequence[i].getName(), event.getClassName());
                 assertEquals(UsageEvents.Event.MOVE_TO_BACKGROUND, event.getEventType());
             }
@@ -861,6 +861,43 @@ public class UsageStatsTest {
         } catch (SecurityException e) {
             // Exception expected
         }
+    }
+
+    @Test
+    public void testForegroundService() throws Exception {
+        final long startTime = System.currentTimeMillis();
+        final Context context = InstrumentationRegistry.getInstrumentation().getContext();
+        context.startService(new Intent(context, TestService.class));
+        mUiDevice.wait(Until.hasObject(By.clazz(TestService.class)), TIMEOUT);
+        context.stopService(new Intent(context, TestService.class));
+        mUiDevice.wait(Until.gone(By.clazz(TestService.class)), TIMEOUT);
+        final long endTime = System.currentTimeMillis();
+        UsageEvents events = mUsageStatsManager.queryEvents(startTime, endTime);
+
+        int numStarts = 0;
+        int numStops = 0;
+        int startIdx = -1;
+        int stopIdx = -1;
+        int i = 0;
+        while (events.hasNextEvent()) {
+            UsageEvents.Event event = new UsageEvents.Event();
+            assertTrue(events.getNextEvent(event));
+            if (mTargetPackage.equals(event.getPackageName())
+                    || TestService.class.getName().equals(event.getClassName())) {
+                if (event.getEventType() == Event.FOREGROUND_SERVICE_START) {
+                    numStarts++;
+                    startIdx = i;
+                } else if (event.getEventType() == Event.FOREGROUND_SERVICE_STOP) {
+                    numStops++;
+                    stopIdx = i;
+                }
+                i++;
+            }
+        }
+        // One FOREGROUND_SERVICE_START event followed by one FOREGROUND_SERVICE_STOP event.
+        assertEquals(numStarts, 1);
+        assertEquals(numStops, 1);
+        assertLessThan(startIdx, stopIdx);
     }
 
     private void pressWakeUp() {
