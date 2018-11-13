@@ -339,7 +339,6 @@ public class WindowManagerState {
     static class WindowTask extends WindowContainer {
 
         int mTaskId;
-        Rect mTempInsetBounds;
         List<String> mAppTokens = new ArrayList<>();
 
         WindowTask(TaskProto proto) {
@@ -358,7 +357,6 @@ public class WindowManagerState {
                     mSubWindows.addAll(window.getWindows());
                 }
             }
-            mTempInsetBounds = extract(proto.tempInsetBounds);
         }
     }
 
