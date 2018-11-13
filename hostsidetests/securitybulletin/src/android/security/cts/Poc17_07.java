@@ -24,7 +24,7 @@ public class Poc17_07 extends SecurityTestCase {
     /**
      * b/35443725
      **/
-    @SecurityTest
+    @SecurityTest(minPatchLevel = "2017-07")
     public void testPocCVE_2016_2109() throws Exception {
       assertFalse("Overallocation detected!",
           AdbUtils.runPocCheckExitCode("CVE-2016-2109",

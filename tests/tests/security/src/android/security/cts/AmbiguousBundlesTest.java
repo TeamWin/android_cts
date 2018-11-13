@@ -33,7 +33,7 @@ import android.platform.test.annotations.SecurityTest;
 
 public class AmbiguousBundlesTest extends AndroidTestCase {
 
-    @SecurityTest
+    @SecurityTest(minPatchLevel = "2018-05")
     public void test_android_CVE_2017_0806() throws Exception {
         Ambiguator ambiguator = new Ambiguator() {
             @Override
@@ -135,7 +135,7 @@ public class AmbiguousBundlesTest extends AndroidTestCase {
 
 
 
-    @SecurityTest
+    @SecurityTest(minPatchLevel = "2018-05")
     public void test_android_CVE_2017_13311() throws Exception {
         Ambiguator ambiguator = new Ambiguator() {
             @Override
@@ -231,7 +231,7 @@ public class AmbiguousBundlesTest extends AndroidTestCase {
         testAmbiguator(ambiguator);
     }
 
-    @SecurityTest
+    @SecurityTest(minPatchLevel = "2018-04")
     public void test_android_CVE_2017_13287() throws Exception {
         Ambiguator ambiguator = new Ambiguator() {
             @Override
