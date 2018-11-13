@@ -19,7 +19,13 @@ package com.android.cts.devicepolicy;
 import com.android.compatibility.common.tradefed.build.CompatibilityBuildHelper;
 import com.android.tradefed.device.DeviceNotAvailableException;
 
+import com.google.common.io.ByteStreams;
+
 import java.io.File;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
@@ -59,6 +65,7 @@ public class DeviceOwnerTest extends BaseDevicePolicyTest {
     private static final int SECURITY_EVENTS_BATCH_SIZE = 100;
 
     private static final String ARG_NETWORK_LOGGING_BATCH_COUNT = "batchCount";
+    private static final String TEST_UPDATE_LOCATION = "/data/local/tmp/cts/deviceowner";
 
     /** CreateAndManageUser is available and an additional user can be created. */
     private boolean mHasCreateAndManageUserFeature;
@@ -74,6 +81,8 @@ public class DeviceOwnerTest extends BaseDevicePolicyTest {
                 getDevice().uninstallPackage(DEVICE_OWNER_PKG);
                 fail("Failed to set device owner");
             }
+
+            getDevice().executeShellCommand(" mkdir " + TEST_UPDATE_LOCATION);
         }
         mHasCreateAndManageUserFeature = mHasFeature && canCreateAdditionalUsers(1)
                 && hasDeviceFeature("android.software.managed_users");
@@ -87,6 +96,7 @@ public class DeviceOwnerTest extends BaseDevicePolicyTest {
             getDevice().uninstallPackage(DEVICE_OWNER_PKG);
             switchUser(USER_SYSTEM);
             removeTestUsers();
+            getDevice().executeShellCommand(" rm -r " + TEST_UPDATE_LOCATION);
         }
 
         super.tearDown();
@@ -869,6 +879,33 @@ public class DeviceOwnerTest extends BaseDevicePolicyTest {
             return;
         }
         executeDeviceOwnerTest("PrivateDnsPolicyTest");
+    }
+
+    public void testInstallUpdate() throws Exception {
+        if (!mHasFeature) {
+            return;
+        }
+
+        pushUpdateFileToDevice("wrongVersion.zip");
+        pushUpdateFileToDevice("notZip.zi");
+        pushUpdateFileToDevice("empty.zip");
+        pushUpdateFileToDevice("wrongPayload.zip");
+        pushUpdateFileToDevice("wrongHash.zip");
+        pushUpdateFileToDevice("wrongSize.zip");
+        executeDeviceOwnerTest("InstallUpdateTest");
+    }
+
+    private void pushUpdateFileToDevice(String fileName)
+            throws IOException, DeviceNotAvailableException {
+        File file = File.createTempFile(
+                fileName.split("\\.")[0], "." + fileName.split("\\.")[1]);
+        try (OutputStream outputStream = new FileOutputStream(file)) {
+            InputStream inputStream = getClass().getResourceAsStream("/" + fileName);
+            ByteStreams.copy(inputStream, outputStream);
+        }
+
+        getDevice().pushFile(file, TEST_UPDATE_LOCATION + "/" + fileName);
+        file.delete();
     }
 
     private void executeDeviceOwnerTest(String testClassName) throws Exception {
