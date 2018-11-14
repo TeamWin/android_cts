@@ -89,6 +89,7 @@ public class OutOfProcessLoginActivity extends Activity {
             Log.e(TAG, "could write destroyed marker: " + e);
         }
         super.onDestroy();
+        sInstance = null;
     }
 
     /**
@@ -126,5 +127,9 @@ public class OutOfProcessLoginActivity extends Activity {
         if (sInstance != null) {
             sInstance.finish();
         }
+    }
+
+    public static boolean hasInstance() {
+        return sInstance != null;
     }
 }
