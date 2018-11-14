@@ -151,6 +151,9 @@
             </intent-filter>
         </service>
 
+        <service android:name="android.app.stubs.IsolatedService" android:isolatedProcess="true">
+        </service>
+
         <activity android:name="android.app.stubs.TestedScreen"
                 android:process=":remoteScreen">
         </activity>
