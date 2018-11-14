@@ -358,24 +358,29 @@ public class AudioTrackTest extends CtsAndroidTestCase {
         //     use a stream type documented in AudioAttributes.Builder.setLegacyStreamType(int)
         final int expectedStreamType = AudioManager.STREAM_ALARM;
         final int expectedContentType = AudioAttributes.CONTENT_TYPE_SPEECH;
-        final AudioAttributes aa = new AudioAttributes.Builder()
+        final AudioAttributes attributes = new AudioAttributes.Builder()
                 .setLegacyStreamType(expectedStreamType)
                 .setContentType(expectedContentType)
                 .build();
         // use builder
         final AudioTrack track = new AudioTrack.Builder()
-                .setAudioAttributes(aa)
+                .setAudioAttributes(attributes)
                 .build();
         // save results
         final int observedStreamType = track.getStreamType();
+        final AudioAttributes observedAttributes = track.getAudioAttributes();
+
         // release track before the test exits (either successfully or with an exception)
         track.release();
         // compare results
         assertEquals(TEST_NAME + ": track stream type", expectedStreamType, observedStreamType);
+        // attributes and observedAttributes should satisfy the overloaded equals.
+        assertEquals(TEST_NAME + ": observed attributes must match",
+                attributes, observedAttributes);
         //    also test content type was preserved in the attributes even though they
         //     were first configured with a legacy stream type
         assertEquals(TEST_NAME + ": attributes content type", expectedContentType,
-                aa.getContentType());
+                attributes.getContentType());
     }
 
     // Test case 5: build AudioTrack with attributes and performance mode
