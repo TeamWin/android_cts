@@ -49,5 +49,6 @@ cc_library_shared {
     ],
 
     sdk_version: "current",
+    cpp_std: "c++17",
     stl: "c++_static",
 }
