@@ -149,20 +149,34 @@ public class JavaClientTest {
 
     @Test
     public void testRepeatFd() throws RemoteException, IOException {
-        ParcelFileDescriptor inFd = ParcelFileDescriptor.open(
-                InstrumentationRegistry.getTargetContext().getFileStreamPath("test-dummy"),
-                ParcelFileDescriptor.MODE_CREATE | ParcelFileDescriptor.MODE_WRITE_ONLY);
+        ParcelFileDescriptor[] sockets = ParcelFileDescriptor.createReliableSocketPair();
+        ParcelFileDescriptor socketIn = sockets[0];
+        ParcelFileDescriptor socketOut = sockets[1];
 
-        ParcelFileDescriptor outFd = mInterface.RepeatFd(inFd);
+        ParcelFileDescriptor repeatFd = mInterface.RepeatFd(socketIn);
 
-        FileOutputStream outFdStream = new ParcelFileDescriptor.AutoCloseOutputStream(outFd);
+        boolean isNativeRemote = mInterface.GetName().equals("CPP");
+        try {
+            socketOut.checkError();
+
+            // Either native didn't properly call detach, or native properly handles detach, and
+            // we should change the test to enforce that socket comms work.
+            assertFalse("Native doesn't implement comm fd but did not get detach.", isNativeRemote);
+        } catch (ParcelFileDescriptor.FileDescriptorDetachedException e) {
+            assertTrue("Detach, so remote should be native", isNativeRemote);
+        }
+
+        // Both backends support these.
+        socketIn.checkError();
+        repeatFd.checkError();
+
+        FileOutputStream repeatFdStream = new ParcelFileDescriptor.AutoCloseOutputStream(repeatFd);
         String testData = "asdf";
         byte[] output = testData.getBytes();
-        outFdStream.write(output);
-        outFdStream.close();
+        repeatFdStream.write(output);
+        repeatFdStream.close();
 
-        FileInputStream fileInputStream =
-                InstrumentationRegistry.getTargetContext().openFileInput("test-dummy");
+        FileInputStream fileInputStream = new ParcelFileDescriptor.AutoCloseInputStream(socketOut);
         byte[] input = new byte[output.length];
 
         assertEquals(input.length, fileInputStream.read(input));
