@@ -51,8 +51,12 @@ public class IncludeExcludeTest {
     private static final int FILE_SIZE_BYTES = 1024 * 1024;
     private static final String SHARED_PREF_KEY1 = "dummy_key1";
     private static final String SHARED_PREF_KEY2 = "dummy_key2";
+    private static final String SHARED_PREF_KEY3 = "dummy_key3";
+    private static final String SHARED_PREF_KEY4 = "dummy_key4";
     private static final int SHARED_PREF_VALUE1 = 1337;
     private static final int SHARED_PREF_VALUE2 = 1338;
+    private static final int SHARED_PREF_VALUE3 = 1339;
+    private static final int SHARED_PREF_VALUE4 = 1340;
 
     private Context mContext;
 
@@ -60,8 +64,10 @@ public class IncludeExcludeTest {
     private List<File> mExcludeFiles;
     private List<File> mRequireFakeClientSideEncryptionFiles;
 
-    private SharedPreferences mIncludeSharedPref;
-    private SharedPreferences mExcludeSharedPref;
+    private SharedPreferences mIncludeSharedPref1;
+    private SharedPreferences mIncludeSharedPref2;
+    private SharedPreferences mExcludeSharedPref1;
+    private SharedPreferences mExcludeSharedPref2;
 
     @Before
     public void setUp() {
@@ -79,32 +85,42 @@ public class IncludeExcludeTest {
 
         // Files in the normal files directory.
         File filesDir = mContext.getFilesDir();
-        File excludeFolder = new File(filesDir, "exclude_folder");
-        mIncludeFiles.add(new File(filesDir, "file_to_include"));
-        mExcludeFiles.add(new File(excludeFolder, "file_to_exclude"));
+        setupFileTree(filesDir);
 
         // Files in database directory.
         File databaseDir = mContext.getDatabasePath("db_name");
-        mIncludeFiles.add(new File(databaseDir, "file_to_include"));
-        mExcludeFiles.add(new File(databaseDir, "file_to_exclude"));
+        setupFileTree(databaseDir);
 
         // Files in external files directory.
         File externalDir = mContext.getExternalFilesDir(null);
-        File excludeExternalFolder = new File(externalDir, "exclude_folder");
-        mIncludeFiles.add(new File(externalDir, "file_to_include"));
-        mExcludeFiles.add(new File(excludeExternalFolder, "file_to_exclude"));
+        setupFileTree(externalDir);
 
         // Files in root directory
         File rootDir = mContext.getDataDir();
-        mIncludeFiles.add(new File(rootDir, "file_to_include"));
-        mExcludeFiles.add(new File(rootDir, "file_to_exclude"));
+        setupFileTree(rootDir);
         mRequireFakeClientSideEncryptionFiles.add(new File(rootDir, "fake_encryption_file"));
 
         // Set up SharedPreferences
-        mIncludeSharedPref =
-                mContext.getSharedPreferences("include_shared_pref", Context.MODE_PRIVATE);
-        mExcludeSharedPref =
-                mContext.getSharedPreferences("exclude_shared_pref", Context.MODE_PRIVATE);
+        mIncludeSharedPref1 =
+                mContext.getSharedPreferences("include_shared_pref1", Context.MODE_PRIVATE);
+        mIncludeSharedPref2 =
+                mContext.getSharedPreferences("include_shared_pref2", Context.MODE_PRIVATE);
+        mExcludeSharedPref1 =
+                mContext.getSharedPreferences("exclude_shared_pref1", Context.MODE_PRIVATE);
+        mExcludeSharedPref2 =
+                mContext.getSharedPreferences("exclude_shared_pref2", Context.MODE_PRIVATE);
+    }
+
+    private void setupFileTree(File directory) {
+        setupFilesInDirectory(directory);
+
+        setupFilesInDirectory(new File(directory, "include_folder"));
+        setupFilesInDirectory(new File(directory, "exclude_folder"));
+    }
+
+    private void setupFilesInDirectory(File directory) {
+        mIncludeFiles.add(new File(directory, "file_to_include"));
+        mExcludeFiles.add(new File(directory, "file_to_exclude"));
     }
 
     @Test
@@ -252,49 +268,75 @@ public class IncludeExcludeTest {
     }
 
     private void generateSharedPrefs() {
-        SharedPreferences.Editor editor = mIncludeSharedPref.edit();
+        SharedPreferences.Editor editor = mIncludeSharedPref1.edit();
         editor.putInt(SHARED_PREF_KEY1, SHARED_PREF_VALUE1);
+        editor.commit();
+        editor = mIncludeSharedPref2.edit();
+        editor.putInt(SHARED_PREF_KEY2, SHARED_PREF_VALUE2);
         editor.commit();
 
 
-        editor = mExcludeSharedPref.edit();
-        editor.putInt(SHARED_PREF_KEY2, SHARED_PREF_VALUE2);
+        editor = mExcludeSharedPref1.edit();
+        editor.putInt(SHARED_PREF_KEY3, SHARED_PREF_VALUE3);
+        editor.commit();
+        editor = mExcludeSharedPref2.edit();
+        editor.putInt(SHARED_PREF_KEY4, SHARED_PREF_VALUE4);
         editor.commit();
     }
 
     private void checkSharedPrefExist() {
-        int value = mIncludeSharedPref.getInt(SHARED_PREF_KEY1, 0);
+        int value = mIncludeSharedPref1.getInt(SHARED_PREF_KEY1, 0);
         assertEquals("Shared preference did not exist", SHARED_PREF_VALUE1, value);
-
-        value = mExcludeSharedPref.getInt(SHARED_PREF_KEY2, 0);
+        value = mIncludeSharedPref2.getInt(SHARED_PREF_KEY2, 0);
         assertEquals("Shared preference did not exist", SHARED_PREF_VALUE2, value);
+
+        value = mExcludeSharedPref1.getInt(SHARED_PREF_KEY3, 0);
+        assertEquals("Shared preference did not exist", SHARED_PREF_VALUE3, value);
+        value = mExcludeSharedPref2.getInt(SHARED_PREF_KEY4, 0);
+        assertEquals("Shared preference did not exist", SHARED_PREF_VALUE4, value);
     }
 
     private void deleteSharedPref() {
-        SharedPreferences.Editor editor = mIncludeSharedPref.edit();
+        SharedPreferences.Editor editor = mIncludeSharedPref1.edit();
+        editor.clear();
+        editor.commit();
+        editor = mIncludeSharedPref2.edit();
         editor.clear();
         editor.commit();
 
-        editor = mExcludeSharedPref.edit();
+        editor = mExcludeSharedPref1.edit();
+        editor.clear();
+        editor.commit();
+        editor = mExcludeSharedPref2.edit();
         editor.clear();
         editor.commit();
     }
 
     private void checkSharedPrefDontExist() {
-        int value = mIncludeSharedPref.getInt(SHARED_PREF_KEY1, 0);
+        int value = mIncludeSharedPref1.getInt(SHARED_PREF_KEY1, 0);
+        assertEquals("Shared preference did exist", 0, value);
+        value = mIncludeSharedPref2.getInt(SHARED_PREF_KEY2, 0);
         assertEquals("Shared preference did exist", 0, value);
 
-        value = mExcludeSharedPref.getInt(SHARED_PREF_KEY2, 0);
+        value = mExcludeSharedPref1.getInt(SHARED_PREF_KEY3, 0);
+        assertEquals("Shared preference did exist", 0, value);
+        value = mExcludeSharedPref2.getInt(SHARED_PREF_KEY4, 0);
         assertEquals("Shared preference did exist", 0, value);
     }
 
     private void checkIncludeSharedPrefExist() {
-        int value = mIncludeSharedPref.getInt(SHARED_PREF_KEY1, 0);
+        int value = mIncludeSharedPref1.getInt(SHARED_PREF_KEY1, 0);
         assertEquals("Shared preference did not exist", SHARED_PREF_VALUE1, value);
+
+        value = mIncludeSharedPref2.getInt(SHARED_PREF_KEY2, 0);
+        assertEquals("Shared preference did not exist", SHARED_PREF_VALUE2, value);
     }
 
     private void checkExcludeSharedPrefDoNotExist() {
-        int value = mExcludeSharedPref.getInt(SHARED_PREF_KEY2, 0);
+        int value = mExcludeSharedPref1.getInt(SHARED_PREF_KEY3, 0);
+        assertEquals("Shared preference did exist", 0, value);
+
+        value = mExcludeSharedPref2.getInt(SHARED_PREF_KEY4, 0);
         assertEquals("Shared preference did exist", 0, value);
     }
 }
