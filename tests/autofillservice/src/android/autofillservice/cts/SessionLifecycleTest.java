@@ -40,6 +40,7 @@ import android.content.Intent;
 import android.content.IntentSender;
 import android.os.Bundle;
 import android.os.SystemClock;
+import android.util.Log;
 import android.view.autofill.AutofillValue;
 
 import org.junit.After;
@@ -50,6 +51,8 @@ import org.junit.Test;
  * Test the lifecycle of a autofill session
  */
 public class SessionLifecycleTest extends AutoFillServiceTestCase {
+    private static final String TAG = "SessionLifecycleTest";
+
     private static final String USERNAME_FULL_ID = "android.autofillservice.cts:id/" + ID_USERNAME;
     private static final String PASSWORD_FULL_ID = "android.autofillservice.cts:id/" + ID_PASSWORD;
     private static final String LOGIN_FULL_ID = "android.autofillservice.cts:id/" + ID_LOGIN;
@@ -83,6 +86,10 @@ public class SessionLifecycleTest extends AutoFillServiceTestCase {
                 + "-n android.autofillservice.cts/.OutOfProcessLoginActivityFinisherReceiver");
         sUiBot.assertGoneByRelativeId(ID_USERNAME, Helper.ACTIVITY_RESURRECTION_MS);
 
+        if (!OutOfProcessLoginActivity.hasInstance()) {
+            Log.v(TAG, "@After: Not waiting for oop activity to be destroyed");
+            return;
+        }
         // Waiting for activity to be destroyed (destroy marker appears)
         eventually(() -> assertThat(getDestroyedMarker(getContext()).exists()).isTrue());
     }
