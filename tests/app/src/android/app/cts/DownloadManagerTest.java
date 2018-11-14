@@ -15,6 +15,13 @@
  */
 package android.app.cts;
 
+import static com.android.compatibility.common.util.SystemUtil.runShellCommand;
+
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertTrue;
+
 import android.app.DownloadManager;
 import android.app.DownloadManager.Query;
 import android.app.DownloadManager.Request;
@@ -31,7 +38,8 @@ import android.net.Uri;
 import android.os.Environment;
 import android.os.ParcelFileDescriptor;
 import android.os.SystemClock;
-import android.test.AndroidTestCase;
+import android.support.test.InstrumentationRegistry;
+import android.support.test.runner.AndroidJUnit4;
 import android.text.format.DateUtils;
 import android.util.Log;
 import android.webkit.cts.CtsTestServer;
@@ -39,11 +47,24 @@ import android.webkit.cts.CtsTestServer;
 import com.android.compatibility.common.util.CddTest;
 import com.android.compatibility.common.util.PollingCheck;
 
+import org.junit.After;
+import org.junit.Before;
+import org.junit.Test;
+import org.junit.runner.RunWith;
+
+import java.io.BufferedReader;
 import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileNotFoundException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
+import java.io.PrintWriter;
+import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
 import java.util.HashSet;
 
-public class DownloadManagerTest extends AndroidTestCase {
+@RunWith(AndroidJUnit4.class)
+public class DownloadManagerTest {
     private static final String TAG = "DownloadManagerTest";
 
     /**
@@ -55,24 +76,25 @@ public class DownloadManagerTest extends AndroidTestCase {
     private static final long SHORT_TIMEOUT = 5 * DateUtils.SECOND_IN_MILLIS;
     private static final long LONG_TIMEOUT = 3 * DateUtils.MINUTE_IN_MILLIS;
 
+    private Context mContext;
     private DownloadManager mDownloadManager;
 
     private CtsTestServer mWebServer;
 
-    @Override
-    protected void setUp() throws Exception {
-        super.setUp();
+    @Before
+    public void setUp() throws Exception {
+        mContext = InstrumentationRegistry.getTargetContext();
         mDownloadManager = (DownloadManager) mContext.getSystemService(Context.DOWNLOAD_SERVICE);
         mWebServer = new CtsTestServer(mContext);
         clearDownloads();
     }
 
-    @Override
-    protected void tearDown() throws Exception {
-        super.tearDown();
+    @After
+    public void tearDown() throws Exception {
         mWebServer.shutdown();
     }
 
+    @Test
     public void testDownloadManager() throws Exception {
         final DownloadCompleteReceiver receiver = new DownloadCompleteReceiver();
         try {
@@ -100,6 +122,7 @@ public class DownloadManagerTest extends AndroidTestCase {
         }
     }
 
+    @Test
     public void testDownloadManagerSupportsHttp() throws Exception {
         final DownloadCompleteReceiver receiver = new DownloadCompleteReceiver();
         try {
@@ -122,6 +145,7 @@ public class DownloadManagerTest extends AndroidTestCase {
         }
     }
 
+    @Test
     public void testDownloadManagerSupportsHttpWithExternalWebServer() throws Exception {
         if (!hasInternetConnection()) {
             Log.i(TAG, "testDownloadManagerSupportsHttpWithExternalWebServer() ignored on device without Internet");
@@ -153,6 +177,7 @@ public class DownloadManagerTest extends AndroidTestCase {
         }
     }
 
+    @Test
     public void testDownloadManagerSupportsHttpsWithExternalWebServer() throws Exception {
         if (!hasInternetConnection()) {
             Log.i(TAG, "testDownloadManagerSupportsHttpsWithExternalWebServer() ignored on device without Internet");
@@ -187,6 +212,7 @@ public class DownloadManagerTest extends AndroidTestCase {
     }
 
     @CddTest(requirement="7.6.1")
+    @Test
     public void testMinimumDownload() throws Exception {
         final DownloadCompleteReceiver receiver = new DownloadCompleteReceiver();
         try {
@@ -226,6 +252,7 @@ public class DownloadManagerTest extends AndroidTestCase {
      * Checks three different methods of setting location: directly via setDestinationUri, and
      * indirectly through setDestinationInExternalFilesDir and setDestinationinExternalPublicDir.
      */
+    @Test
     public void testDownloadManagerDestination() throws Exception {
         File uriLocation = new File(mContext.getExternalFilesDir(null), "uriFile.bin");
         if (uriLocation.exists()) {
@@ -282,6 +309,7 @@ public class DownloadManagerTest extends AndroidTestCase {
     /**
      * Set the download location and verify that the extension of the file name is left unchanged.
      */
+    @Test
     public void testDownloadManagerDestinationExtension() throws Exception {
         String noExt = "noiseandchirps";
         File noExtLocation = new File(mContext.getExternalFilesDir(null), noExt);
@@ -338,22 +366,85 @@ public class DownloadManagerTest extends AndroidTestCase {
         return process;
     }
 
+    @Test
     public void testProviderAcceptsCleartext() throws Exception {
         // Check that all the applications that share an android:process with the DownloadProvider
         // accept cleartext traffic. Otherwise process loading races can lead to inconsistent flags.
-        final PackageManager pm = getContext().getPackageManager();
+        final PackageManager pm = mContext.getPackageManager();
         ProviderInfo downloadInfo = pm.resolveContentProvider("downloads", 0);
         assertNotNull(downloadInfo);
         String downloadProcess
                 = cannonicalizeProcessName(downloadInfo.processName, downloadInfo.applicationInfo);
 
-        for (PackageInfo pi : getContext().getPackageManager().getInstalledPackages(0)) {
+        for (PackageInfo pi : mContext.getPackageManager().getInstalledPackages(0)) {
             if (downloadProcess.equals(cannonicalizeProcessName(pi.applicationInfo))) {
                 assertTrue("package: " + pi.applicationInfo.packageName
                         + " must set android:usesCleartextTraffic=true"
                         ,(pi.applicationInfo.flags & ApplicationInfo.FLAG_USES_CLEARTEXT_TRAFFIC)
                         != 0);
             }
+        }
+    }
+
+    @Test
+    public void testAddCompletedDownload() throws Exception {
+        final String fileContents = "RED;GREEN;BLUE";
+        final File file = createFile(Environment.getExternalStoragePublicDirectory(
+                Environment.DIRECTORY_DOCUMENTS), "colors.txt");
+        writeToFile(file, fileContents);
+
+        final long id = mDownloadManager.addCompletedDownload("Test title", "Test desc", true,
+                "text/plain", file.getPath(), fileContents.getBytes().length, true);
+        final String actualContents = readFromFile(mDownloadManager.openDownloadedFile(id));
+        assertEquals(fileContents, actualContents);
+
+        final String rawFilePath = getRawFilePath(mDownloadManager.getUriForDownloadedFile(id));
+        final String rawFileContents = readFromRawFile(rawFilePath);
+        assertEquals(fileContents, rawFileContents);
+    }
+
+    private static String getRawFilePath(Uri uri) throws Exception {
+        final String res = runShellCommand("content query --uri " + uri + " --projection _data");
+        final int i = res.indexOf("_data=");
+        if (i >= 0) {
+            return res.substring(i + 6);
+        } else {
+            throw new FileNotFoundException("Failed to find _data for " + uri + "; found " + res);
+        }
+    }
+
+    private static String readFromRawFile(String filePath) throws Exception {
+        Log.d(TAG, "Reading form file: " + filePath);
+        return runShellCommand("cat " + filePath);
+    }
+
+    private static String readFromFile(ParcelFileDescriptor pfd) throws Exception {
+        BufferedReader br = null;
+        try (final InputStream in = new FileInputStream(pfd.getFileDescriptor())) {
+            br = new BufferedReader(new InputStreamReader(in, StandardCharsets.UTF_8));
+            String str;
+            StringBuilder out = new StringBuilder();
+            while ((str = br.readLine()) != null) {
+                out.append(str);
+            }
+            return out.toString();
+        } finally {
+            if (br != null) {
+                br.close();
+            }
+        }
+    }
+
+    private static File createFile(File baseDir, String fileName) {
+        if (!baseDir.exists()) {
+            baseDir.mkdirs();
+        }
+        return new File(baseDir, fileName);
+    }
+
+    private static void writeToFile(File file, String contents) throws Exception {
+        try (final PrintWriter out = new PrintWriter(file)) {
+            out.print(contents);
         }
     }
 
@@ -514,7 +605,7 @@ public class DownloadManagerTest extends AndroidTestCase {
     }
 
     private boolean hasInternetConnection() {
-        final PackageManager pm = getContext().getPackageManager();
+        final PackageManager pm = mContext.getPackageManager();
         return pm.hasSystemFeature(PackageManager.FEATURE_TELEPHONY)
                 || pm.hasSystemFeature(PackageManager.FEATURE_WIFI)
                 || pm.hasSystemFeature(PackageManager.FEATURE_ETHERNET);
