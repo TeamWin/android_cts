@@ -65,6 +65,28 @@ TEST_P(NdkBinderTest_Aidl, Trivial) {
   ASSERT_OK(iface->TestOneway());
 }
 
+TEST_P(NdkBinderTest_Aidl, CallingInfo) {
+  EXPECT_OK(iface->CacheCallingInfoFromOneway());
+  int32_t res;
+
+  EXPECT_OK(iface->GiveMeMyCallingPid(&res));
+  EXPECT_EQ(getpid(), res);
+
+  EXPECT_OK(iface->GiveMeMyCallingUid(&res));
+  EXPECT_EQ(getuid(), res);
+
+  EXPECT_OK(iface->GiveMeMyCallingPidFromOneway(&res));
+  if (shouldBeRemote) {
+    // PID is hidden from oneway calls
+    EXPECT_EQ(0, res);
+  } else {
+    EXPECT_EQ(getpid(), res);
+  }
+
+  EXPECT_OK(iface->GiveMeMyCallingUidFromOneway(&res));
+  EXPECT_EQ(getuid(), res);
+}
+
 TEST_P(NdkBinderTest_Aidl, Constants) {
   ASSERT_EQ(0, ITest::kZero);
   ASSERT_EQ(1, ITest::kOne);
