@@ -371,6 +371,12 @@ public class TextureViewCtsActivity extends Activity implements SurfaceTextureLi
             if (mIsEGLWideGamut && !extensions.contains("EXT_pixel_format_float")) {
                 mEGLExtensionUnsupported = true;
             }
+            // If the extension is present but the device doesn't claim to have a wide color gamut
+            // display then it might not return any actual float formats.
+            if (mIsEGLWideGamut && !mEGLExtensionUnsupported
+                    && !getWindowManager().getDefaultDisplay().isWideColorGamut()) {
+                mEGLExtensionUnsupported = true;
+            }
 
             mEglConfig = chooseEglConfig();
             if (mEglConfig == null) {

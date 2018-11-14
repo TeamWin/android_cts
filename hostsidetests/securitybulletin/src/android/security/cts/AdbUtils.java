@@ -20,19 +20,17 @@ import com.android.ddmlib.NullOutputReceiver;
 import com.android.tradefed.device.CollectingOutputReceiver;
 import com.android.tradefed.device.DeviceNotAvailableException;
 import com.android.tradefed.device.ITestDevice;
-import com.android.tradefed.testtype.DeviceTestCase;
 import com.android.tradefed.log.LogUtil.CLog;
-
-import android.platform.test.annotations.RootPermissionTest;
 
 import java.io.BufferedOutputStream;
 import java.io.File;
 import java.io.FileOutputStream;
-import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
-import java.util.Scanner;
 import java.util.concurrent.TimeUnit;
+import java.util.Scanner;
+
+import static org.junit.Assert.*;
 
 public class AdbUtils {
 
@@ -203,28 +201,41 @@ public class AdbUtils {
      * @param device device to be ran on
      * @param timeout time to wait for output in seconds
      */
+    @Deprecated
     public static boolean runPocCheckExitCode(String pocName, ITestDevice device,
                                               int timeout) throws Exception {
-      device.executeShellCommand("chmod +x /data/local/tmp/" + pocName);
-      CollectingOutputReceiver receiver = new CollectingOutputReceiver();
-      device.executeShellCommand("/data/local/tmp/" + pocName + " > /dev/null 2>&1; echo $?",
-                                 receiver, timeout, TimeUnit.SECONDS, 0);
-
-      String returnStr = null;
-      int returnNum = 0;
-
-      try{
-           returnStr = receiver.getOutput().replaceAll("[^0-9]", "");
-       }catch(NullPointerException e){
-          return false;
-       }
-       try{
-         returnNum = Integer.parseInt(returnStr);
-       }catch(NumberFormatException e){
-          return false;
-       }
 
        //Refer to go/asdl-sts-guide Test section for knowing the significance of 113 code
-       return returnNum == 113;
+       return runPocGetExitStatus(pocName, device, timeout) == 113;
+    }
+
+    /**
+     * Pushes and runs a binary to the device and returns the exit status.
+     * @param pocName a string path to poc from the /res folder
+     * @param device device to be ran on
+     * @param timeout time to wait for output in seconds
+
+     */
+    public static int runPocGetExitStatus(String pocName, ITestDevice device, int timeout)
+            throws Exception {
+        device.executeShellCommand("chmod +x /data/local/tmp/" + pocName);
+        CollectingOutputReceiver receiver = new CollectingOutputReceiver();
+        device.executeShellCommand("/data/local/tmp/" + pocName + " > /dev/null 2>&1; echo $?",
+                                   receiver, timeout, TimeUnit.SECONDS, 0);
+
+        String exitStatus = receiver.getOutput().replaceAll("[^0-9]", "");
+        return Integer.parseInt(exitStatus);
+    }
+
+    /**
+     * Pushes and runs a binary and asserts that the exit status isn't 113: vulnerable.
+     * @param pocName a string path to poc from the /res folder
+     * @param device device to be ran on
+     * @param timeout time to wait for output in seconds
+     */
+    public static void runPocAssertExitStatusNotVulnerable(
+            String pocName, ITestDevice device, int timeout) throws Exception {
+        assertTrue("PoC returned exit status 113: vulnerable",
+                runPocGetExitStatus(pocName, device, timeout) != 113);
     }
 }

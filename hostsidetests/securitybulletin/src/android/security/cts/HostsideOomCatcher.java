@@ -127,7 +127,7 @@ public class HostsideOomCatcher {
             oomCatcher = new BackgroundDeviceAction(
                     "logcat -c && logcat OomCatcher:V *:S",
                     "Oom Catcher background thread",
-                    getDevice(), new OomReceiver(), 0);
+                    getDevice(), new OomReceiver(getDevice()), 0);
 
             oomCatchers.put(getDevice().getSerialNumber(), new WeakReference<>(oomCatcher));
             oomCatcher.start();
@@ -191,7 +191,12 @@ public class HostsideOomCatcher {
      */
     class OomReceiver extends MultiLineReceiver {
 
+        private ITestDevice device = null;
         private boolean isCancelled = false;
+
+        public OomReceiver(ITestDevice device) {
+            this.device = device;
+        }
 
         @Override
         public void processNewLines(String[] lines) {
@@ -205,9 +210,8 @@ public class HostsideOomCatcher {
                         oomDetected = true;
                     }
                     try {
-
-                        getDevice().nonBlockingReboot();
-                        getDevice().waitForDeviceOnline(60 * 2 * 1000); // 2 minutes
+                        device.nonBlockingReboot();
+                        device.waitForDeviceOnline(60 * 2 * 1000); // 2 minutes
                         context.updateKernelStartTime();
                     } catch (Exception e) {
                         Log.e(LOG_TAG, e.toString());

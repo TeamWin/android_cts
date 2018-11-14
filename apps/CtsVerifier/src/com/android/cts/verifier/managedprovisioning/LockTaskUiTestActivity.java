@@ -126,17 +126,19 @@ public class LockTaskUiTestActivity extends PassFailButtons.TestListActivity {
     }
 
     private void addTestsToAdapter(final ArrayTestListAdapter adapter) {
-        adapter.add(createSetLockTaskFeaturesTest(
-                TEST_ID_DEFAULT,
-                LOCK_TASK_FEATURE_NONE,
-                R.string.device_owner_lock_task_ui_default_test,
-                R.string.device_owner_lock_task_ui_default_test_info));
+        if (!getPackageManager().hasSystemFeature(PackageManager.FEATURE_AUTOMOTIVE)) {
+            adapter.add(createSetLockTaskFeaturesTest(
+                    TEST_ID_DEFAULT,
+                    LOCK_TASK_FEATURE_NONE,
+                    R.string.device_owner_lock_task_ui_default_test,
+                    R.string.device_owner_lock_task_ui_default_test_info));
 
-        adapter.add(createSetLockTaskFeaturesTest(
-                TEST_ID_SYSTEM_INFO,
-                LOCK_TASK_FEATURE_SYSTEM_INFO,
-                R.string.device_owner_lock_task_ui_system_info_test,
-                R.string.device_owner_lock_task_ui_system_info_test_info));
+            adapter.add(createSetLockTaskFeaturesTest(
+                    TEST_ID_SYSTEM_INFO,
+                    LOCK_TASK_FEATURE_SYSTEM_INFO,
+                    R.string.device_owner_lock_task_ui_system_info_test,
+                    R.string.device_owner_lock_task_ui_system_info_test_info));
+        }
 
         if (!getPackageManager().hasSystemFeature(PackageManager.FEATURE_AUTOMOTIVE)) {
             adapter.add(createSetLockTaskFeaturesTest(
@@ -146,29 +148,35 @@ public class LockTaskUiTestActivity extends PassFailButtons.TestListActivity {
                     R.string.device_owner_lock_task_ui_notifications_test_info));
         }
 
-        adapter.add(createSetLockTaskFeaturesTest(
-                TEST_ID_HOME,
-                LOCK_TASK_FEATURE_HOME,
-                R.string.device_owner_lock_task_ui_home_test,
-                R.string.device_owner_lock_task_ui_home_test_info));
+        if (!getPackageManager().hasSystemFeature(PackageManager.FEATURE_AUTOMOTIVE)) {
+            adapter.add(createSetLockTaskFeaturesTest(
+                    TEST_ID_HOME,
+                    LOCK_TASK_FEATURE_HOME,
+                    R.string.device_owner_lock_task_ui_home_test,
+                    R.string.device_owner_lock_task_ui_home_test_info));
+        }
 
-        adapter.add(createSetLockTaskFeaturesTest(
-                TEST_ID_RECENTS,
-                LOCK_TASK_FEATURE_HOME | LOCK_TASK_FEATURE_OVERVIEW,
-                R.string.device_owner_lock_task_ui_recents_test,
-                R.string.device_owner_lock_task_ui_recents_test_info));
+        if (!getPackageManager().hasSystemFeature(PackageManager.FEATURE_AUTOMOTIVE)) {
+            adapter.add(createSetLockTaskFeaturesTest(
+                    TEST_ID_RECENTS,
+                    LOCK_TASK_FEATURE_HOME | LOCK_TASK_FEATURE_OVERVIEW,
+                    R.string.device_owner_lock_task_ui_recents_test,
+                    R.string.device_owner_lock_task_ui_recents_test_info));
+        }
 
-        adapter.add(createSetLockTaskFeaturesTest(
-                TEST_ID_GLOBAL_ACTIONS,
-                LOCK_TASK_FEATURE_GLOBAL_ACTIONS,
-                R.string.device_owner_lock_task_ui_global_actions_test,
-                R.string.device_owner_lock_task_ui_global_actions_test_info));
+        if (!getPackageManager().hasSystemFeature(PackageManager.FEATURE_AUTOMOTIVE)) {
+            adapter.add(createSetLockTaskFeaturesTest(
+                    TEST_ID_GLOBAL_ACTIONS,
+                    LOCK_TASK_FEATURE_GLOBAL_ACTIONS,
+                    R.string.device_owner_lock_task_ui_global_actions_test,
+                    R.string.device_owner_lock_task_ui_global_actions_test_info));
 
-        adapter.add(createSetLockTaskFeaturesTest(
-                TEST_ID_KEYGUARD,
-                LOCK_TASK_FEATURE_KEYGUARD,
-                R.string.device_owner_lock_task_ui_keyguard_test,
-                R.string.device_owner_lock_task_ui_keyguard_test_info));
+            adapter.add(createSetLockTaskFeaturesTest(
+                    TEST_ID_KEYGUARD,
+                    LOCK_TASK_FEATURE_KEYGUARD,
+                    R.string.device_owner_lock_task_ui_keyguard_test,
+                    R.string.device_owner_lock_task_ui_keyguard_test_info));
+        }
 
         final Intent stopLockTaskIntent = new Intent(this, LockTaskUiTestActivity.class);
         stopLockTaskIntent.setAction(ACTION_STOP_LOCK_TASK);
