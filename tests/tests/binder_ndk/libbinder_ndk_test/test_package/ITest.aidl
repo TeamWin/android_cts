@@ -35,6 +35,14 @@ interface ITest {
     void TestVoidReturn();
     oneway void TestOneway();
 
+    int GiveMeMyCallingPid();
+    int GiveMeMyCallingUid();
+
+    // This must be called before calling one of the give-me methods below
+    oneway void CacheCallingInfoFromOneway();
+    int GiveMeMyCallingPidFromOneway();
+    int GiveMeMyCallingUidFromOneway();
+
     // Sending/receiving primitive types.
     int RepeatInt(int value);
     long RepeatLong(long value);
