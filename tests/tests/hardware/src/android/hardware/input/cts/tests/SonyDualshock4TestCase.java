@@ -1,5 +1,5 @@
 /*
- * Copyright 2015 The Android Open Source Project
+ * Copyright 2018 The Android Open Source Project
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,32 +15,25 @@
  */
 
 package android.hardware.input.cts.tests;
+
+import android.hardware.cts.R;
 import android.support.test.filters.SmallTest;
 import android.support.test.runner.AndroidJUnit4;
-import android.view.KeyEvent;
 
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
-import android.hardware.cts.R;
 
 @SmallTest
 @RunWith(AndroidJUnit4.class)
-public class GamepadTestCase extends InputTestCase {
-    private static final String TAG = "GamepadTests";
+public class SonyDualshock4TestCase extends InputTestCase {
+
+    public SonyDualshock4TestCase() {
+        super(R.raw.sony_dualshock4_register);
+    }
 
     @Test
-    public void testButtonA() throws Exception {
-        registerInputDevice(R.raw.gamepad_register_device);
-
-        sendHidCommands(R.raw.gamepad_button_a_down);
-        sendHidCommands(R.raw.gamepad_delay);
-        assertReceivedKeyEvent(KeyEvent.ACTION_DOWN, KeyEvent.KEYCODE_BUTTON_A);
-
-        sendHidCommands(R.raw.gamepad_button_a_up);
-        assertReceivedKeyEvent(KeyEvent.ACTION_UP, KeyEvent.KEYCODE_BUTTON_A);
-
-        assertNoMoreEvents();
+    public void testAllKeys() {
+        testInputEvents(R.raw.sony_dualshock4_keyeventtests);
     }
 }
-
