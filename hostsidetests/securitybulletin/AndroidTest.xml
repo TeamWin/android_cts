@@ -185,6 +185,16 @@
         <option name="append-bitness" value="true" />
     </target_preparer>
 
+    <target_preparer class="com.android.compatibility.common.tradefed.targetprep.FilePusher">
+        <option name="cleanup" value="true" />
+
+        <option name="push" value="testhevcdec->/data/local/tmp/testhevcdec" />
+        <option name="push" value="testavcdec->/data/local/tmp/testavcdec" />
+        <option name="push" value="testmpeg2dec->/data/local/tmp/testmpeg2dec" />
+
+        <option name="append-bitness" value="true" />
+    </target_preparer>
+
     <target_preparer class="com.android.tradefed.targetprep.suite.SuiteApkInstaller">
         <option name="cleanup-apks" value="true" />
         <option name="test-file-name" value="CtsHostLaunchAnyWhereApp.apk" />
