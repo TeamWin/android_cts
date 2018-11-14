@@ -146,7 +146,10 @@ TEST_P(NdkBinderTest_Aidl, RepeatBinder) {
   ASSERT_OK(iface->RepeatBinder(binder, &ret));
   EXPECT_EQ(binder.get(), ret.get());
 
-  ASSERT_OK(iface->RepeatBinder(nullptr, &ret));
+  ASSERT_OK(iface->RepeatNullableBinder(binder, &ret));
+  EXPECT_EQ(binder.get(), ret.get());
+
+  ASSERT_OK(iface->RepeatNullableBinder(nullptr, &ret));
   EXPECT_EQ(nullptr, ret.get());
 }
 
@@ -159,7 +162,10 @@ TEST_P(NdkBinderTest_Aidl, RepeatInterface) {
   ASSERT_OK(iface->RepeatInterface(empty, &ret));
   EXPECT_EQ(empty.get(), ret.get());
 
-  ASSERT_OK(iface->RepeatInterface(nullptr, &ret));
+  ASSERT_OK(iface->RepeatNullableInterface(empty, &ret));
+  EXPECT_EQ(empty.get(), ret.get());
+
+  ASSERT_OK(iface->RepeatNullableInterface(nullptr, &ret));
   EXPECT_EQ(nullptr, ret.get());
 }
 

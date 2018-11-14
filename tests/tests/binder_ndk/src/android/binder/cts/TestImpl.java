@@ -124,7 +124,17 @@ public class TestImpl extends ITest.Stub {
   }
 
   @Override
+  public IBinder RepeatNullableBinder(IBinder in_value) {
+    return in_value;
+  }
+
+  @Override
   public IEmpty RepeatInterface(IEmpty in_value) {
+    return in_value;
+  }
+
+  @Override
+  public IEmpty RepeatNullableInterface(IEmpty in_value) {
     return in_value;
   }
 

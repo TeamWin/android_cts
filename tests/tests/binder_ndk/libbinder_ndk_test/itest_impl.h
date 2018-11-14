@@ -121,7 +121,19 @@ class MyTest : public ::aidl::test_package::BnTest,
     *_aidl_return = in_value;
     return ::ndk::ScopedAStatus(AStatus_newOk());
   }
+  ::ndk::ScopedAStatus RepeatNullableBinder(
+      const ::ndk::SpAIBinder& in_value,
+      ::ndk::SpAIBinder* _aidl_return) override {
+    *_aidl_return = in_value;
+    return ::ndk::ScopedAStatus(AStatus_newOk());
+  }
   ::ndk::ScopedAStatus RepeatInterface(
+      const std::shared_ptr<IEmpty>& in_value,
+      std::shared_ptr<IEmpty>* _aidl_return) override {
+    *_aidl_return = in_value;
+    return ::ndk::ScopedAStatus(AStatus_newOk());
+  }
+  ::ndk::ScopedAStatus RepeatNullableInterface(
       const std::shared_ptr<IEmpty>& in_value,
       std::shared_ptr<IEmpty>* _aidl_return) override {
     *_aidl_return = in_value;

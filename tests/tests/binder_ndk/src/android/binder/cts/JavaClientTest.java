@@ -132,8 +132,8 @@ public class JavaClientTest {
         IBinder binder = mInterface.asBinder();
 
         assertEquals(binder, mInterface.RepeatBinder(binder));
-
-        assertEquals(null, mInterface.RepeatBinder(null));
+        assertEquals(binder, mInterface.RepeatNullableBinder(binder));
+        assertEquals(null, mInterface.RepeatNullableBinder(null));
     }
 
     private static class Empty extends IEmpty.Stub {}
@@ -143,8 +143,8 @@ public class JavaClientTest {
         IEmpty empty = new Empty();
 
         assertEquals(empty, mInterface.RepeatInterface(empty));
-
-        assertEquals(null, mInterface.RepeatInterface(null));
+        assertEquals(empty, mInterface.RepeatNullableInterface(empty));
+        assertEquals(null, mInterface.RepeatNullableInterface(null));
     }
 
     @Test

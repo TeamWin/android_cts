@@ -53,7 +53,9 @@ interface ITest {
     byte RepeatByte(byte value);
 
     IBinder RepeatBinder(IBinder value);
+    @nullable IBinder RepeatNullableBinder(@nullable IBinder value);
     IEmpty RepeatInterface(IEmpty value);
+    @nullable IEmpty RepeatNullableInterface(@nullable IEmpty value);
 
     ParcelFileDescriptor RepeatFd(in ParcelFileDescriptor fd);
 
