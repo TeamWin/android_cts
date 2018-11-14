@@ -391,7 +391,7 @@ public class StreamingMediaPlayer2Test extends MediaPlayer2TestBase {
             if (nolength) {
                 mPlayer.play();
                 Thread.sleep(LONG_SLEEP_TIME);
-                assertFalse(mPlayer.isPlaying());
+                assertFalse(mPlayer.getState() == MediaPlayer2.PLAYER_STATE_PLAYING);
             } else {
                 mOnBufferingUpdateCalled.waitForSignal();
                 mPlayer.play();
@@ -460,6 +460,7 @@ public class StreamingMediaPlayer2Test extends MediaPlayer2TestBase {
     }
 
     // TODO: unhide this test when we sort out how to expose buffering control API.
+    /*
     private void doTestBuffering() throws Throwable {
         final String name = "ringer.mp3";
         mServer = new CtsTestServer(mContext);
@@ -548,6 +549,7 @@ public class StreamingMediaPlayer2Test extends MediaPlayer2TestBase {
             mServer.shutdown();
         }
     }
+    */
 
     public void testPlayHlsStream() throws Throwable {
         if (IGNORE_TESTS) {
@@ -671,7 +673,8 @@ public class StreamingMediaPlayer2Test extends MediaPlayer2TestBase {
             mOnPlayCalled.reset();
             mPlayer.play();
             mOnPlayCalled.waitForSignal();
-            assertTrue("MediaPlayer2 not playing", mPlayer.isPlaying());
+            assertTrue("MediaPlayer2 not playing",
+                    mPlayer.getState() == MediaPlayer2.PLAYER_STATE_PLAYING);
 
             int i = -1;
             List<TrackInfo> trackInfos = mPlayer.getTrackInfo();

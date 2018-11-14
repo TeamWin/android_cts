@@ -515,7 +515,7 @@ public class MediaPlayer2TestBase extends ActivityInstrumentationTestCase2<Media
         if (playTime == -1) {
             return;
         } else if (playTime == 0) {
-            while (mPlayer.isPlaying()) {
+            while (mPlayer.getState() == MediaPlayer2.PLAYER_STATE_PLAYING) {
                 Thread.sleep(SLEEP_TIME);
             }
         } else {

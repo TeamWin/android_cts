@@ -313,6 +313,20 @@ public class StaticMetadata {
     }
 
     /**
+     * Get the color filter arrangement for this camera device.
+     *
+     * @return Color Filter arrangement of this camera device
+     */
+    public int getCFAChecked() {
+        Integer cfa = getValueFromKeyNonNull(
+                CameraCharacteristics.SENSOR_INFO_COLOR_FILTER_ARRANGEMENT);
+        if (cfa == null) {
+            Assert.fail("No color filter array (CFA) reported.");
+        }
+        return cfa;
+    }
+
+    /**
      * Whether or not the hardware level reported by android.info.supportedHardwareLevel
      * is {@value CameraMetadata#INFO_SUPPORTED_HARDWARE_LEVEL_LIMITED}.
      *
@@ -2329,6 +2343,14 @@ public class StaticMetadata {
     public boolean isColorOutputSupported() {
         return isCapabilitySupported(
                 CameraCharacteristics.REQUEST_AVAILABLE_CAPABILITIES_BACKWARD_COMPATIBLE);
+    }
+
+    /**
+     * Check if this camera is a MONOCHROME camera.
+     */
+    public boolean isMonochromeCamera() {
+        return isCapabilitySupported(
+                CameraCharacteristics.REQUEST_AVAILABLE_CAPABILITIES_MONOCHROME);
     }
 
     /**

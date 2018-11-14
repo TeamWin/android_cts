@@ -39,10 +39,13 @@ import android.view.View;
 import android.view.textclassifier.TextClassification;
 import android.view.textclassifier.TextClassifier;
 import android.view.textclassifier.TextLanguage;
+import android.view.textclassifier.TextLinks;
 import android.view.textclassifier.TextSelection;
 
 import org.junit.Test;
 import org.junit.runner.RunWith;
+
+import java.util.Collections;
 
 /**
  * TextClassifier value objects tests.
@@ -76,6 +79,7 @@ public class TextClassifierValueObjectsTest {
                 .setEntityType(TextClassifier.TYPE_ADDRESS, addressScore)
                 .setEntityType(TextClassifier.TYPE_EMAIL, emailScore)
                 .setId(ID)
+                .setExtras(BUNDLE)
                 .build();
 
         assertEquals(START, selection.getSelectionStartIndex());
@@ -89,6 +93,7 @@ public class TextClassifierValueObjectsTest {
                 ACCEPTED_DELTA);
         assertEquals(0, selection.getConfidenceScore("random_type"), ACCEPTED_DELTA);
         assertEquals(ID, selection.getId());
+        assertEquals(BUNDLE_VALUE, selection.getExtras().getString(BUNDLE_KEY));
     }
 
     @Test
@@ -118,6 +123,7 @@ public class TextClassifierValueObjectsTest {
         TextSelection selection = new TextSelection.Builder(START, END).build();
         assertEquals(0, selection.getEntityCount());
         assertNull(selection.getId());
+        assertTrue(selection.getExtras().isEmpty());
     }
 
     @Test
@@ -182,6 +188,7 @@ public class TextClassifierValueObjectsTest {
         final TextSelection.Request request =
                 new TextSelection.Request.Builder(TEXT, START, END).build();
         assertNull(request.getDefaultLocales());
+        assertTrue(request.getExtras().isEmpty());
     }
 
     @Test
@@ -319,6 +326,56 @@ public class TextClassifierValueObjectsTest {
                 new TextClassification.Request.Builder(TEXT, START, END).build();
         assertNull(request.getDefaultLocales());
         assertTrue(request.getExtras().isEmpty());
+    }
+
+    @Test
+    public void testTextLinks_defaultValues() {
+        final TextLinks textLinks = new TextLinks.Builder(TEXT).build();
+
+        assertTrue(textLinks.getExtras().isEmpty());
+        assertTrue(textLinks.getLinks().isEmpty());
+    }
+
+    @Test
+    public void testTextLinks_full() {
+        final TextLinks textLinks = new TextLinks.Builder(TEXT)
+                .setExtras(BUNDLE)
+                .addLink(START, END, Collections.singletonMap(TextClassifier.TYPE_ADDRESS, 1.0f))
+                .build();
+
+        assertEquals(BUNDLE_VALUE, textLinks.getExtras().getString(BUNDLE_KEY));
+        assertEquals(1, textLinks.getLinks().size());
+        TextLinks.TextLink textLink = textLinks.getLinks().iterator().next();
+        assertEquals(TextClassifier.TYPE_ADDRESS, textLink.getEntity(0));
+        assertEquals(1.0f, textLink.getConfidenceScore(TextClassifier.TYPE_ADDRESS), EPSILON);
+    }
+
+    @Test
+    public void testTextLinksRequest_defaultValues() {
+        final TextLinks.Request request = new TextLinks.Request.Builder(TEXT).build();
+
+        assertEquals(TEXT, request.getText());
+        assertNull(request.getDefaultLocales());
+        assertTrue(request.getExtras().isEmpty());
+        assertNull(request.getEntityConfig());
+    }
+
+    @Test
+    public void testTextLinksRequest_full() {
+        final TextLinks.Request request = new TextLinks.Request.Builder(TEXT)
+                .setDefaultLocales(LOCALES)
+                .setExtras(BUNDLE)
+                .setEntityConfig(TextClassifier.EntityConfig.createWithHints(
+                        Collections.singletonList(TextClassifier.HINT_TEXT_IS_EDITABLE)))
+                .build();
+
+        assertEquals(TEXT, request.getText());
+        assertEquals(LOCALES, request.getDefaultLocales());
+        assertEquals(BUNDLE_VALUE, request.getExtras().getString(BUNDLE_KEY));
+        assertEquals(1, request.getEntityConfig().getHints().size());
+        assertEquals(
+                TextClassifier.HINT_TEXT_IS_EDITABLE,
+                request.getEntityConfig().getHints().iterator().next());
     }
 
     @Test

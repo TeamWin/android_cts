@@ -23,6 +23,7 @@ import android.hardware.camera2.CameraCharacteristics;
 import android.hardware.camera2.CameraDevice;
 import android.hardware.camera2.CaptureRequest;
 import android.hardware.camera2.CaptureResult;
+import android.hardware.camera2.params.BlackLevelPattern;
 import android.hardware.camera2.TotalCaptureResult;
 import android.media.Image;
 import android.media.ImageReader;
@@ -407,10 +408,12 @@ public class CaptureResultTest extends Camera2AndroidTestCase {
                     physicalCaptureResults.size() + " vs " + requestedPhysicalIds.size(),
                     physicalCaptureResults.size(), requestedPhysicalIds.size());
 
-            validateOneCaptureResult(errorCollector, waiverKeys, allKeys, requestBuilder, result,
-                    null/*cameraId*/, i);
+            validateOneCaptureResult(errorCollector, staticInfo, waiverKeys, allKeys,
+                    requestBuilder, result, null/*cameraId*/, i);
             for (String physicalId : requestedPhysicalIds) {
-                validateOneCaptureResult(errorCollector, physicalWaiverKeys.get(physicalId),
+                StaticMetadata physicalStaticInfo = allStaticInfo.get(physicalId);
+                validateOneCaptureResult(errorCollector, physicalStaticInfo,
+                        physicalWaiverKeys.get(physicalId),
                         allKeys, null/*requestBuilder*/, physicalCaptureResults.get(physicalId),
                         physicalId, i);
             }
@@ -418,7 +421,8 @@ public class CaptureResultTest extends Camera2AndroidTestCase {
     }
 
     private static void validateOneCaptureResult(CameraErrorCollector errorCollector,
-            List<CaptureResult.Key<?>> skippedKeys, List<CaptureResult.Key<?>> allKeys,
+            StaticMetadata staticInfo, List<CaptureResult.Key<?>> skippedKeys,
+            List<CaptureResult.Key<?>> allKeys,
             CaptureRequest.Builder requestBuilder, CaptureResult result, String cameraId,
             int resultCount) throws Exception {
         String failMsg = "Failed capture result " + resultCount + " test";
@@ -472,9 +476,22 @@ public class CaptureResultTest extends Camera2AndroidTestCase {
                                 requestBuilder.get(CaptureRequest.STATISTICS_OIS_DATA_MODE),
                                 result.get(CaptureResult.STATISTICS_OIS_DATA_MODE));
                     } else if (key.equals(CaptureResult.DISTORTION_CORRECTION_MODE)) {
-                         errorCollector.expectEquals(msg,
+                        errorCollector.expectEquals(msg,
                                 requestBuilder.get(CaptureRequest.DISTORTION_CORRECTION_MODE),
                                 result.get(CaptureResult.DISTORTION_CORRECTION_MODE));
+                    } else if (key.equals(CaptureResult.SENSOR_DYNAMIC_BLACK_LEVEL)) {
+                        float[] blackLevel = errorCollector.expectKeyValueNotNull(
+                                result, CaptureResult.SENSOR_DYNAMIC_BLACK_LEVEL);
+                        if (blackLevel != null && staticInfo.isMonochromeCamera()) {
+                            errorCollector.expectEquals(
+                                    "Monochrome camera dynamic blacklevel must be 2x2",
+                                    blackLevel.length, 4);
+                            for (int index = 1; index < blackLevel.length; index++) {
+                                errorCollector.expectEquals(
+                                    "Monochrome camera 2x2 channels blacklevel value must be the same.",
+                                    blackLevel[index], blackLevel[0]);
+                            }
+                        }
                     } else {
                         // Only do non-null check for the rest of keys.
                         errorCollector.expectKeyValueNotNull(failMsg, result, key);
@@ -544,8 +561,10 @@ public class CaptureResultTest extends Camera2AndroidTestCase {
             waiverKeys.add(CaptureResult.SENSOR_NEUTRAL_COLOR_POINT);
             waiverKeys.add(CaptureResult.SENSOR_GREEN_SPLIT);
             waiverKeys.add(CaptureResult.SENSOR_NOISE_PROFILE);
+        } else if (staticInfo.isMonochromeCamera()) {
+            waiverKeys.add(CaptureResult.SENSOR_NEUTRAL_COLOR_POINT);
+            waiverKeys.add(CaptureResult.SENSOR_GREEN_SPLIT);
         }
-
 
         boolean calibrationReported = staticInfo.areKeysAvailable(
                 CameraCharacteristics.LENS_POSE_ROTATION,
@@ -613,8 +632,7 @@ public class CaptureResultTest extends Camera2AndroidTestCase {
         }
 
         // Waived if MONOCHROME capability
-        if (!staticInfo.isCapabilitySupported(
-                CameraCharacteristics.REQUEST_AVAILABLE_CAPABILITIES_MONOCHROME)) {
+        if (staticInfo.isMonochromeCamera()) {
             waiverKeys.add(CaptureResult.COLOR_CORRECTION_MODE);
             waiverKeys.add(CaptureResult.COLOR_CORRECTION_TRANSFORM);
             waiverKeys.add(CaptureResult.COLOR_CORRECTION_GAINS);

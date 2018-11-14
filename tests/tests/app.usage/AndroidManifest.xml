@@ -17,6 +17,7 @@
 
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
     package="android.app.usage.cts" android:targetSandboxVersion="2">
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE"/>
 
     <!-- We can't have the test framework turn off the keyguard, because that will
          prevent us from testing interactions with it.
@@ -41,6 +42,7 @@
         <activity android:name=".ActivityTransitionActivity2"
             android:taskAffinity="android.app.usage.cts.other_task"/>
         <activity android:name=".FragmentTestActivity" />
+        <service android:name=".TestService" />
     </application>
 
     <instrumentation android:name="android.support.test.runner.AndroidJUnitRunner"

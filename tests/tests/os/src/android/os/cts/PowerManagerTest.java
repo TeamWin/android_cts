@@ -16,15 +16,25 @@
 
 package android.os.cts;
 
+import android.content.ContentResolver;
 import android.content.Context;
 import android.os.PowerManager;
 import android.os.PowerManager.WakeLock;
+import android.provider.Settings.Global;
 import android.test.AndroidTestCase;
+import com.android.compatibility.common.util.BatteryUtils;
+import com.android.compatibility.common.util.SystemUtil;
+import org.junit.After;
+import org.junit.Before;
 
 public class PowerManagerTest extends AndroidTestCase {
     private static final String TAG = "PowerManagerTest";
     public static final long TIME = 3000;
     public static final int MORE_TIME = 300;
+
+    private int mInitialPowerSaverMode;
+    private int mInitialDynamicPowerSavingsEnabled;
+    private int mInitialThreshold;
 
     /**
      * test points:
@@ -47,5 +57,68 @@ public class PowerManagerTest extends AndroidTestCase {
         } catch (SecurityException e) {
             // expected
         }
+    }
+
+    @Before
+    public void setUp() {
+        // store the current value so we can restore it
+        ContentResolver resolver = getContext().getContentResolver();
+        mInitialPowerSaverMode = Global.getInt(resolver, Global.AUTOMATIC_POWER_SAVER_MODE, 0);
+        mInitialDynamicPowerSavingsEnabled =
+                Global.getInt(resolver, Global.DYNAMIC_POWER_SAVINGS_ENABLED, 0);
+        mInitialThreshold =
+                Global.getInt(resolver, Global.DYNAMIC_POWER_SAVINGS_DISABLE_THRESHOLD, 0);
+
+    }
+
+    @After
+    public void tearDown() {
+        SystemUtil.runWithShellPermissionIdentity(() -> {
+            ContentResolver resolver = getContext().getContentResolver();
+
+            // Verify we can change it to dynamic.
+            Global.putInt(resolver, Global.AUTOMATIC_POWER_SAVER_MODE, mInitialPowerSaverMode);
+            Global.putInt(resolver,
+                    Global.DYNAMIC_POWER_SAVINGS_ENABLED, mInitialDynamicPowerSavingsEnabled);
+            Global.putInt(resolver,
+                    Global.DYNAMIC_POWER_SAVINGS_DISABLE_THRESHOLD, mInitialThreshold);
+        });
+    }
+
+    public void testPowerManager_getPowerSaveMode() {
+        SystemUtil.runWithShellPermissionIdentity(() -> {
+            PowerManager manager = BatteryUtils.getPowerManager();
+            ContentResolver resolver = getContext().getContentResolver();
+
+            // Verify we can change it to percentage.
+            Global.putInt(resolver, Global.AUTOMATIC_POWER_SAVER_MODE, 0);
+            assertEquals(
+                    PowerManager.POWER_SAVER_MODE_PERCENTAGE,
+                    manager.getPowerSaveMode());
+
+            // Verify we can change it to dynamic.
+            Global.putInt(resolver, Global.AUTOMATIC_POWER_SAVER_MODE, 1);
+            assertEquals(
+                    PowerManager.POWER_SAVER_MODE_DYNAMIC,
+                    manager.getPowerSaveMode());
+        });
+    }
+
+    public void testPowerManager_setDynamicPowerSavings() {
+        SystemUtil.runWithShellPermissionIdentity(() -> {
+            PowerManager manager = BatteryUtils.getPowerManager();
+            ContentResolver resolver = getContext().getContentResolver();
+
+            // Verify settings are actually updated.
+            manager.setDynamicPowerSavings(true, 80);
+            assertEquals(1, Global.getInt(resolver, Global.DYNAMIC_POWER_SAVINGS_ENABLED, 0));
+            assertEquals(80, Global.getInt(resolver,
+                    Global.DYNAMIC_POWER_SAVINGS_DISABLE_THRESHOLD, 0));
+
+            manager.setDynamicPowerSavings(false, 20);
+            assertEquals(0, Global.getInt(resolver, Global.DYNAMIC_POWER_SAVINGS_ENABLED, 1));
+            assertEquals(20, Global.getInt(resolver,
+                    Global.DYNAMIC_POWER_SAVINGS_DISABLE_THRESHOLD, 0));
+        });
     }
 }
