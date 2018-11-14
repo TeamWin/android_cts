@@ -30,7 +30,9 @@ LOCAL_JAVA_LIBRARIES := android.test.runner.stubs android.test.base.stubs
 
 LOCAL_STATIC_JAVA_LIBRARIES := \
     android-support-test \
+    androidx.annotation_annotation \
     compatibility-device-util \
+    cts-input-lib \
     ctstestrunner \
     mockito-target-minus-junit4 \
     platform-test-annotations \
