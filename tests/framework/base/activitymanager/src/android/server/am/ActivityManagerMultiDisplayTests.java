@@ -51,6 +51,7 @@ import static android.server.am.UiDeviceUtils.pressSleepButton;
 import static android.server.am.UiDeviceUtils.pressWakeupButton;
 import static android.server.am.WindowManagerState.TRANSIT_TASK_CLOSE;
 import static android.server.am.WindowManagerState.TRANSIT_TASK_OPEN;
+import static android.server.am.app27.Components.SDK_27_HOME_ACTIVITY;
 import static android.server.am.lifecycle.ActivityStarterTests.StandardActivity;
 import static android.server.am.second.Components.SECOND_ACTIVITY;
 import static android.server.am.second.Components.SECOND_LAUNCH_BROADCAST_ACTION;
@@ -187,6 +188,36 @@ public class ActivityManagerMultiDisplayTests extends ActivityManagerDisplayTest
                         "Activity launched on secondary display must be focused and on top");
                 assertEquals("Top activity must be home type", ACTIVITY_TYPE_HOME,
                         mAmWmState.getAmState().getFrontStackActivityType(newDisplay.mId));
+            }
+        }
+    }
+
+    /**
+     * Tests home activity that target before Q won't be started on virtual display that supports
+     * system decorations.
+     */
+    @Test
+    public void testLaunchSdk27HomeActivityOnDisplayWithDecorations() throws Exception {
+        try (final HomeActivitySession homeSession
+                     = new HomeActivitySession(SDK_27_HOME_ACTIVITY)) {
+            try (final VirtualDisplaySession virtualDisplaySession = new VirtualDisplaySession()) {
+                // Create new virtual display with system decoration support.
+                final ActivityDisplay newDisplay
+                        = virtualDisplaySession.setShowSystemDecorations(true).createDisplay();
+
+                // Launching an activity on virtual display. There should only have one stack on the
+                // display, i.e. home stack should not be created.
+                getLaunchActivityBuilder()
+                        .setUseInstrumentation()
+                        .setWithShellPermission(true)
+                        .setNewTask(true)
+                        .setTargetActivity(TEST_ACTIVITY)
+                        .setDisplayId(newDisplay.mId)
+                        .execute();
+                waitAndAssertTopResumedActivity(TEST_ACTIVITY, newDisplay.mId,
+                        "Activity launched on secondary display must be focused and on top");
+                assertEquals("There must have exactly one stack on virtual display.", 1,
+                        mAmWmState.getAmState().getDisplay(newDisplay.mId).mStacks.size());
             }
         }
     }
