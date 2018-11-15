@@ -155,16 +155,16 @@ public class LightBarTests extends LightBarTestBase {
             assumeNavigationBarChangesColor(s.backgroundPixels, s.totalPixels());
 
             assertMoreThan("Not enough pixels colored as in the spec", 0.3f,
-                    (float) s.iconPixels / s.foregroundPixels(),
+                    (float) s.iconPixels / (float) s.foregroundPixels(),
                     "Are the bar icons colored according to the spec "
                             + "(60% black and 24% black)?");
 
             assertLessThan("Too many lighter pixels lighter than the background", 0.05f,
-                    (float) s.sameHueLightPixels / s.foregroundPixels(),
+                    (float) s.sameHueLightPixels / (float) s.foregroundPixels(),
                     "Are the bar icons dark?");
 
             assertLessThan("Too many pixels with a changed hue", 0.05f,
-                    (float) s.unexpectedHuePixels / s.foregroundPixels(),
+                    (float) s.unexpectedHuePixels / (float) s.foregroundPixels(),
                     "Are the bar icons color-free?");
 
             success = true;
@@ -172,20 +172,6 @@ public class LightBarTests extends LightBarTestBase {
             if (!success) {
                 dumpBitmap(bitmap, mTestName.getMethodName());
             }
-        }
-    }
-
-    private void assertMoreThan(String what, float expected, float actual, String hint) {
-        if (!(actual > expected)) {
-            fail(what + ": expected more than " + expected * 100 + "%, but only got " + actual * 100
-                    + "%; " + hint);
-        }
-    }
-
-    private void assertLessThan(String what, float expected, float actual, String hint) {
-        if (!(actual < expected)) {
-            fail(what + ": expected less than " + expected * 100 + "%, but got " + actual * 100
-                    + "%; " + hint);
         }
     }
 
