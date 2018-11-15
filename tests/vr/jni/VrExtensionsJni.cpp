@@ -265,7 +265,8 @@ Java_android_vr_cts_VrExtensionBehaviorTest_nativeTestExternalBuffer(
     JNIEnv* env, jclass /* unused */) {
     // First, check for EXT_external_buffer in the extension string.
     auto exts = reinterpret_cast<const char*>(glGetString(GL_EXTENSIONS));
-    ASSERT_TRUE(exts && strstr(exts, "GL_EXT_external_buffer"));
+    ASSERT_TRUE(exts);
+    if (strstr(exts, "GL_EXT_external_buffer") == nullptr) return;
     // Next, load entry points provided by extensions.
     LOAD_PROC(eglGetNativeClientBufferANDROID, PFNEGLGETNATIVECLIENTBUFFERANDROID);
     ASSERT_NE(eglGetNativeClientBufferANDROID, nullptr);
