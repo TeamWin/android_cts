@@ -80,7 +80,7 @@ abstract class CustomDescriptionWithLinkTestCase extends AutoFillServiceTestCase
         mUiBot.setScreenOrientation(UiBot.PORTRAIT);
         try {
             runShellCommand("wm size 1080x1920");
-            runShellCommand("wm density 420");
+            runShellCommand("wm density 320");
             saveUiRestoredAfterTappingLinkTest(
                     PostSaveLinkTappedAction.ROTATE_THEN_TAP_BACK_BUTTON);
         } finally {
