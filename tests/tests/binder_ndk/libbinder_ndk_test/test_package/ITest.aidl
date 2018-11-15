@@ -60,6 +60,7 @@ interface ITest {
     ParcelFileDescriptor RepeatFd(in ParcelFileDescriptor fd);
 
     String RepeatString(String value);
+    @nullable String RepeatNullableString(@nullable String value);
 
     RegularPolygon RepeatPolygon(in RegularPolygon value);
 
@@ -75,4 +76,7 @@ interface ITest {
     float[] RepeatFloatArray(in float[] input, out float[] repeated);
     double[] RepeatDoubleArray(in double[] input, out double[] repeated);
     String[] RepeatStringArray(in String[] input, out String[] repeated);
+
+    // Nullable Arrays
+    @nullable String[] RepeatNullableStringArray(in @nullable String[] input, out @nullable String[] repeated);
 }

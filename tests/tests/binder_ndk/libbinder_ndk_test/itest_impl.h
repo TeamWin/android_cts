@@ -150,6 +150,12 @@ class MyTest : public ::aidl::test_package::BnTest,
     *_aidl_return = in_value;
     return ::ndk::ScopedAStatus(AStatus_newOk());
   }
+  ::ndk::ScopedAStatus RepeatNullableString(
+      const std::optional<std::string>& in_value,
+      std::optional<std::string>* _aidl_return) override {
+    *_aidl_return = in_value;
+    return ::ndk::ScopedAStatus(AStatus_newOk());
+  }
   ::ndk::ScopedAStatus RepeatPolygon(const RegularPolygon& in_value,
                                      RegularPolygon* _aidl_return) override {
     *_aidl_return = in_value;
@@ -214,6 +220,15 @@ class MyTest : public ::aidl::test_package::BnTest,
       const std::vector<std::string>& in_value,
       std::vector<std::string>* out_repeated,
       std::vector<std::string>* _aidl_return) override {
+    *out_repeated = in_value;
+    *_aidl_return = in_value;
+    return ::ndk::ScopedAStatus(AStatus_newOk());
+  }
+  ::ndk::ScopedAStatus RepeatNullableStringArray(
+      const std::optional<std::vector<std::optional<std::string>>>& in_value,
+      std::optional<std::vector<std::optional<std::string>>>* out_repeated,
+      std::optional<std::vector<std::optional<std::string>>>* _aidl_return)
+      override {
     *out_repeated = in_value;
     *_aidl_return = in_value;
     return ::ndk::ScopedAStatus(AStatus_newOk());

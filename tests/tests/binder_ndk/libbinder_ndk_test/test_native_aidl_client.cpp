@@ -212,6 +212,22 @@ TEST_P(NdkBinderTest_Aidl, RepeatString) {
   EXPECT_EQ("say what?", res);
 }
 
+TEST_P(NdkBinderTest_Aidl, RepeatNullableString) {
+  std::optional<std::string> res;
+
+  EXPECT_OK(iface->RepeatNullableString(std::nullopt, &res));
+  EXPECT_EQ(std::nullopt, res);
+
+  EXPECT_OK(iface->RepeatNullableString("", &res));
+  EXPECT_EQ("", *res);
+
+  EXPECT_OK(iface->RepeatNullableString("a", &res));
+  EXPECT_EQ("a", *res);
+
+  EXPECT_OK(iface->RepeatNullableString("say what?", &res));
+  EXPECT_EQ("say what?", *res);
+}
+
 TEST_P(NdkBinderTest_Aidl, ParcelableDefaults) {
   RegularPolygon polygon;
 
@@ -300,7 +316,44 @@ TEST_P(NdkBinderTest_Aidl, Arrays) {
                           {
                               {},
                               {"asdf"},
-                              {"aoeu", "lol", "brb"},
+                              {"", "aoeu", "lol", "brb"},
+                          });
+}
+
+template <typename T>
+using RepeatNullableMethod = ScopedAStatus (ITest::*)(
+    const std::optional<std::vector<std::optional<T>>>&,
+    std::optional<std::vector<std::optional<T>>>*,
+    std::optional<std::vector<std::optional<T>>>*);
+
+template <typename T>
+void testRepeat(
+    const std::shared_ptr<ITest>& i, RepeatNullableMethod<T> repeatMethod,
+    std::vector<std::optional<std::vector<std::optional<T>>>> tests) {
+  for (const auto& input : tests) {
+    std::optional<std::vector<std::optional<T>>> out1;
+    if (input) {
+      out1 = std::vector<std::optional<T>>{};
+      out1->resize(input->size());
+    }
+    std::optional<std::vector<std::optional<T>>> out2;
+
+    ASSERT_OK((i.get()->*repeatMethod)(input, &out1, &out2))
+        << (input ? input->size() : -1);
+    EXPECT_EQ(input, out1);
+    EXPECT_EQ(input, out2);
+  }
+}
+
+TEST_P(NdkBinderTest_Aidl, NullableArrays) {
+  testRepeat<std::string>(iface, &ITest::RepeatNullableStringArray,
+                          {
+                              // std::nullopt, TODO(b/119580050)
+                              {{}},
+                              {{"asdf"}},
+                              {{std::nullopt}},
+                              {{"aoeu", "lol", "brb"}},
+                              {{"", "aoeu", std::nullopt, "brb"}},
                           });
 }
 
