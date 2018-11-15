@@ -48,6 +48,7 @@ import android.view.Surface;
 import android.view.SurfaceHolder;
 import android.view.SurfaceView;
 import android.view.ViewGroup;
+import android.widget.LinearLayout;
 
 import java.util.HashMap;
 
@@ -131,10 +132,12 @@ public class VirtualDisplayActivity extends Activity implements SurfaceHolder.Ca
         Log.d(TAG, "createVirtualDisplays. requested count:" + requestedCount);
 
         for (int displayCount = 0; displayCount < requestedCount; ++displayCount) {
-            final ViewGroup root = findViewById(android.R.id.content);
+            final ViewGroup root = findViewById(R.id.display_content);
             final SurfaceView surfaceView = new SurfaceView(this);
-            surfaceView.setLayoutParams(new ViewGroup.LayoutParams(
-                    ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT));
+            surfaceView.setLayoutParams(
+                    // Using WRAP_CONTENT & layout weight to allow multiple virtual displays shown.
+                    new LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT,
+                            LinearLayout.LayoutParams.WRAP_CONTENT, 1.0f));
             surfaceView.getHolder().addCallback(this);
             mPendingDisplayRequests.put(surfaceView.getHolder().getSurface(),
                     new VirtualDisplayRequest(surfaceView, extras));
