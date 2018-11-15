@@ -16,9 +16,6 @@
 
 package com.android.cts.verifier.security;
 
-import com.android.cts.verifier.PassFailButtons;
-import com.android.cts.verifier.R;
-
 import android.Manifest;
 import android.app.AlertDialog;
 import android.app.Dialog;
@@ -26,20 +23,22 @@ import android.app.DialogFragment;
 import android.app.KeyguardManager;
 import android.content.Context;
 import android.content.DialogInterface;
-import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.hardware.fingerprint.FingerprintManager;
 import android.os.Bundle;
 import android.os.CancellationSignal;
-import android.util.Log;
 import android.security.keystore.KeyGenParameterSpec;
 import android.security.keystore.KeyPermanentlyInvalidatedException;
 import android.security.keystore.KeyProperties;
 import android.security.keystore.UserNotAuthenticatedException;
+import android.util.Log;
 import android.view.View;
 import android.view.View.OnClickListener;
 import android.widget.Button;
 import android.widget.Toast;
+
+import com.android.cts.verifier.PassFailButtons;
+import com.android.cts.verifier.R;
 
 import java.io.IOException;
 import java.security.InvalidAlgorithmParameterException;
@@ -76,12 +75,20 @@ public class FingerprintBoundKeysTest extends PassFailButtons.Activity {
     private FingerprintAuthDialogFragment mFingerprintDialog;
     private Cipher mCipher;
 
+    protected int getTitleRes() {
+        return R.string.sec_fingerprint_bound_key_test;
+    }
+
+    protected int getDescriptionRes() {
+        return R.string.sec_fingerprint_bound_key_test_info;
+    }
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.sec_screen_lock_keys_main);
         setPassFailButtonClickListeners();
-        setInfoResources(R.string.sec_fingerprint_bound_key_test, R.string.sec_fingerprint_bound_key_test_info, -1);
+        setInfoResources(getTitleRes(), getDescriptionRes(), -1);
         getPassButton().setEnabled(false);
         requestPermissions(new String[]{Manifest.permission.USE_FINGERPRINT},
                 FINGERPRINT_PERMISSION_REQUEST_CODE);
