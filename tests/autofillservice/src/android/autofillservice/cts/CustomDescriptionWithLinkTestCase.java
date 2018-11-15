@@ -15,8 +15,6 @@
  */
 package android.autofillservice.cts;
 
-import static android.autofillservice.cts.common.ShellHelper.runShellCommand;
-
 import static com.google.common.truth.Truth.assertThat;
 
 import android.app.Activity;
@@ -95,8 +93,6 @@ abstract class CustomDescriptionWithLinkTestCase<A extends AbstractAutoFillActiv
 
         mUiBot.setScreenOrientation(UiBot.PORTRAIT);
         try {
-            runShellCommand("wm size 1080x1920");
-            runShellCommand("wm density 420");
             saveUiRestoredAfterTappingLinkTest(
                     PostSaveLinkTappedAction.ROTATE_THEN_TAP_BACK_BUTTON);
         } finally {
