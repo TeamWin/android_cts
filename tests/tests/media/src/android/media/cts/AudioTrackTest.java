@@ -16,6 +16,8 @@
 
 package android.media.cts;
 
+import static org.testng.Assert.assertThrows;
+
 import android.app.ActivityManager;
 import android.content.Context;
 import android.content.pm.PackageManager;
@@ -2514,6 +2516,13 @@ public class AudioTrackTest extends CtsAndroidTestCase {
                 }
             }
         }
+    }
+
+    public void testSetNullPresentation() throws Exception {
+        final AudioTrack track = new AudioTrack.Builder().build();
+        assertThrows(IllegalArgumentException.class, () -> {
+            track.setPresentation(null);
+        });
     }
 
     public void testSetPresentationDefaultTrack() throws Exception {
