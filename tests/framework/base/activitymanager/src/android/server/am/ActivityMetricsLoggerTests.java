@@ -17,7 +17,10 @@
 package android.server.am;
 
 import static android.os.SystemClock.sleep;
+import static android.server.am.Components.ENTRY_POINT_ALIAS_ACTIVITY;
+import static android.server.am.Components.NO_DISPLAY_ACTIVITY;
 import static android.server.am.Components.REPORT_FULLY_DRAWN_ACTIVITY;
+import static android.server.am.Components.SINGLE_TASK_ACTIVITY;
 import static android.server.am.Components.TEST_ACTIVITY;
 import static android.server.am.Components.TRANSLUCENT_TEST_ACTIVITY;
 
@@ -104,6 +107,7 @@ public class ActivityMetricsLoggerTests extends ActivityManagerTestBase {
 
         final long postUptimeMs = SystemClock.uptimeMillis();
         assertMetricsLogs(TEST_ACTIVITY, APP_TRANSITION, metricsLog, mPreUptimeMs, postUptimeMs);
+        assertTransitionIsStartingWindow(metricsLog);
         final int windowsDrawnDelayMs =
                 (int) metricsLog.getTaggedData(APP_TRANSITION_WINDOWS_DRAWN_DELAY_MS);
         final String expectedLog =
@@ -129,15 +133,18 @@ public class ActivityMetricsLoggerTests extends ActivityManagerTestBase {
         assertThat("reported uptime should be before assertion time", startUptimeSec,
                 lessThanOrEqualTo(postUptimeSec));
         assertNotNull("log should have delay", log.getTaggedData(APP_TRANSITION_DELAY_MS));
-        assertEquals("transition should be started because of starting window",
-                1 /* APP_TRANSITION_STARTING_WINDOW */, log.getSubtype());
-        assertNotNull("log should have starting window delay",
-                log.getTaggedData(APP_TRANSITION_STARTING_WINDOW_DELAY_MS));
         assertNotNull("log should have windows drawn delay",
                 log.getTaggedData(APP_TRANSITION_WINDOWS_DRAWN_DELAY_MS));
         long windowsDrawnDelayMs = (int) log.getTaggedData(APP_TRANSITION_WINDOWS_DRAWN_DELAY_MS);
         assertThat("windows drawn delay should be less that total elapsed time",
                 windowsDrawnDelayMs,  lessThanOrEqualTo(testElapsedTimeMs));
+    }
+
+    private void assertTransitionIsStartingWindow(LogMaker log) {
+        assertEquals("transition should be started because of starting window",
+                1 /* APP_TRANSITION_STARTING_WINDOW */, log.getSubtype());
+        assertNotNull("log should have starting window delay",
+                log.getTaggedData(APP_TRANSITION_STARTING_WINDOW_DELAY_MS));
     }
 
     private void assertEventLogsContainsLaunchTime(List<Event> events, ComponentName componentName,
@@ -265,6 +272,51 @@ public class ActivityMetricsLoggerTests extends ActivityManagerTestBase {
         metricsLog = getMetricsLog(THIRD_ACTIVITY, APP_TRANSITION);
         assertMetricsLogs(THIRD_ACTIVITY, APP_TRANSITION, metricsLog, mPreUptimeMs,
                 postUptimeMs);
+        assertTransitionIsStartingWindow(metricsLog);
+    }
+
+    /**
+     * Launch a NoDisplay activity and verify it does not affect subsequent activity launch
+     * metrics. NoDisplay activities do not draw any windows and may be incorrectly identified as a
+     * trampoline activity. See b/80380150 (Long warm launch times reported in dev play console)
+     */
+    @Test
+    public void testNoDisplayActivityLaunch() {
+        getLaunchActivityBuilder()
+                .setUseInstrumentation()
+                .setTargetActivity(NO_DISPLAY_ACTIVITY)
+                .setWaitForLaunched(true)
+                .execute();
+
+        mPreUptimeMs = SystemClock.uptimeMillis();
+        getLaunchActivityBuilder()
+                .setUseInstrumentation()
+                .setTargetActivity(SECOND_ACTIVITY)
+                .setWaitForLaunched(true)
+                .execute();
+        final LogMaker metricsLog = getMetricsLog(SECOND_ACTIVITY, APP_TRANSITION);
+        final long postUptimeMs = SystemClock.uptimeMillis();
+        assertMetricsLogs(SECOND_ACTIVITY, APP_TRANSITION, metricsLog, mPreUptimeMs, postUptimeMs);
+        assertTransitionIsStartingWindow(metricsLog);
+    }
+
+    /**
+     * Launch an activity with a trampoline activity and verify launch metrics measures the complete
+     * launch sequence from when the trampoline activity is launching to when the target activity
+     * draws on screen.
+     */
+    @Test
+    public void testTrampolineActivityLaunch() {
+        // Launch a trampoline activity that will launch single task activity.
+        getLaunchActivityBuilder()
+                .setUseInstrumentation()
+                .setTargetActivity(ENTRY_POINT_ALIAS_ACTIVITY)
+                .setWaitForLaunched(true)
+                .execute();
+        final LogMaker metricsLog = getMetricsLog(SINGLE_TASK_ACTIVITY, APP_TRANSITION);
+        final long postUptimeMs = SystemClock.uptimeMillis();
+        assertMetricsLogs(SINGLE_TASK_ACTIVITY, APP_TRANSITION, metricsLog, mPreUptimeMs,
+                        postUptimeMs);
     }
 
     private LogMaker getMetricsLog(ComponentName componentName, int category) {

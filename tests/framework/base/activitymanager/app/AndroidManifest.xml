@@ -414,9 +414,12 @@
         <activity android:name=".LaunchTestOnDestroyActivity"
                   android:exported="true"/>
 
-
         <activity android:name=".ReportFullyDrawnActivity"
                   android:exported="true"/>
+
+        <activity android:name=".NoDisplayActivity"
+                  android:exported="true"
+                  android:theme="@android:style/Theme.NoDisplay"/>
 
         <!-- Disable home activities by default or it may disturb other tests by
              showing ResolverActivity when start home activity -->

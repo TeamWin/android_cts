@@ -65,6 +65,7 @@ public class Components extends ComponentsBase {
     public static final ComponentName MOVE_TASK_TO_BACK_ACTIVITY =
             component("MoveTaskToBackActivity");
     public static final ComponentName NIGHT_MODE_ACTIVITY = component("NightModeActivity");
+    public static final ComponentName NO_DISPLAY_ACTIVITY = component("NoDisplayActivity");
     public static final ComponentName NO_HISTORY_ACTIVITY = component("NoHistoryActivity");
     public static final ComponentName NO_RELAUNCH_ACTIVITY = component("NoRelaunchActivity");
     public static final ComponentName NON_RESIZEABLE_ACTIVITY = component("NonResizeableActivity");
