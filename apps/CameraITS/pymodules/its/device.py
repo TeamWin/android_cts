@@ -309,6 +309,20 @@ class ItsSession(object):
         if data['tag'] != 'vibrationStarted':
             raise its.error.Error('Invalid command response')
 
+    def get_sensors(self):
+        """Get all sensors on the device.
+
+        Returns:
+            A Python dictionary that returns keys and booleans for each sensor.
+        """
+        cmd = {}
+        cmd["cmdName"] = "checkSensorExistence"
+        self.sock.send(json.dumps(cmd) + "\n")
+        data,_ = self.__read_response_from_socket()
+        if data['tag'] != 'sensorExistence':
+            raise its.error.Error('Invalid command response')
+        return data['objValue']
+
     def start_sensor_events(self):
         """Start collecting sensor events on the device.
 
