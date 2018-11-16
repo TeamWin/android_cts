@@ -212,6 +212,41 @@ public class TestImpl extends ITest.Stub {
   }
 
   @Override
+  public boolean[] RepeatNullableBooleanArray(boolean[] in_value) {
+    return in_value;
+  }
+
+  @Override
+  public byte[] RepeatNullableByteArray(byte[] in_value) {
+    return in_value;
+  }
+
+  @Override
+  public char[] RepeatNullableCharArray(char[] in_value) {
+    return in_value;
+  }
+
+  @Override
+  public int[] RepeatNullableIntArray(int[] in_value) {
+    return in_value;
+  }
+
+  @Override
+  public long[] RepeatNullableLongArray(long[] in_value) {
+    return in_value;
+  }
+
+  @Override
+  public float[] RepeatNullableFloatArray(float[] in_value) {
+    return in_value;
+  }
+
+  @Override
+  public double[] RepeatNullableDoubleArray(double[] in_value) {
+    return in_value;
+  }
+
+  @Override
   public String[] RepeatNullableStringArray(String[] in_value, String[] repeated) {
     if (in_value == null) {
       return null; // can't do anything to repeated

@@ -345,7 +345,72 @@ void testRepeat(
   }
 }
 
+template <typename T>
+using SingleRepeatNullableMethod = ScopedAStatus (ITest::*)(
+    const std::optional<std::vector<T>>&, std::optional<std::vector<T>>*);
+
+template <typename T>
+void testRepeat(const std::shared_ptr<ITest>& i,
+                SingleRepeatNullableMethod<T> repeatMethod,
+                std::vector<std::optional<std::vector<T>>> tests) {
+  for (const auto& input : tests) {
+    std::optional<std::vector<T>> ret;
+    ASSERT_OK((i.get()->*repeatMethod)(input, &ret))
+        << (input ? input->size() : -1);
+    EXPECT_EQ(input, ret);
+  }
+}
+
 TEST_P(NdkBinderTest_Aidl, NullableArrays) {
+  testRepeat<bool>(iface, &ITest::RepeatNullableBooleanArray,
+                   {
+                       std::nullopt,
+                       {{}},
+                       {{true}},
+                       {{false, true, false}},
+                   });
+  testRepeat<int8_t>(iface, &ITest::RepeatNullableByteArray,
+                     {
+                         std::nullopt,
+                         {{}},
+                         {{1}},
+                         {{1, 2, 3}},
+                     });
+  testRepeat<char16_t>(iface, &ITest::RepeatNullableCharArray,
+                       {
+                           std::nullopt,
+                           {{}},
+                           {{L'@'}},
+                           {{L'@', L'!', L'A'}},
+                       });
+  testRepeat<int32_t>(iface, &ITest::RepeatNullableIntArray,
+                      {
+                          std::nullopt,
+                          {{}},
+                          {{1}},
+                          {{1, 2, 3}},
+                      });
+  testRepeat<int64_t>(iface, &ITest::RepeatNullableLongArray,
+                      {
+                          std::nullopt,
+                          {{}},
+                          {{1}},
+                          {{1, 2, 3}},
+                      });
+  testRepeat<float>(iface, &ITest::RepeatNullableFloatArray,
+                    {
+                        std::nullopt,
+                        {{}},
+                        {{1.0f}},
+                        {{1.0f, 2.0f, 3.0f}},
+                    });
+  testRepeat<double>(iface, &ITest::RepeatNullableDoubleArray,
+                     {
+                         std::nullopt,
+                         {{}},
+                         {{1.0}},
+                         {{1.0, 2.0, 3.0}},
+                     });
   testRepeat<std::string>(iface, &ITest::RepeatNullableStringArray,
                           {
                               // std::nullopt, TODO(b/119580050)
