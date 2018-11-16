@@ -120,21 +120,27 @@ public:
 
     virtual void OnTestPartResult(const testing::TestPartResult &testPartResult) override {
         if (!testPartResult.passed()) {
-            std::ostringstream messageStream;
-            messageStream << testPartResult.file_name() << ":" << testPartResult.line_number()
-                          << "\n" << testPartResult.message();
-            ScopedLocalRef<jstring> jmessage(mEnv, mEnv->NewStringUTF(messageStream.str().c_str()));
+            mCurrentTestError << "\n" << testPartResult.file_name() << ":" << testPartResult.line_number()
+                          << "\n" << testPartResult.message() << "\n";
+        }
+    }
+
+    virtual void OnTestEnd(const testing::TestInfo&) override {
+        const std::string error = mCurrentTestError.str();
+
+        if (!error.empty()) {
+            ScopedLocalRef<jstring> jmessage(mEnv, mEnv->NewStringUTF(error.c_str()));
             ScopedLocalRef<jobject> jthrowable(mEnv, mEnv->NewObject(gAssertionFailure.clazz,
                     gAssertionFailure.ctor, jmessage.get()));
             ScopedLocalRef<jobject> jfailure(mEnv, mEnv->NewObject(gFailure.clazz,
                     gFailure.ctor, mCurrentTestDescription.get(), jthrowable.get()));
             mEnv->CallVoidMethod(mRunNotifier, gRunNotifier.fireTestFailure, jfailure.get());
         }
-    }
 
-    virtual void OnTestEnd(const testing::TestInfo&) override {
         notify(gRunNotifier.fireTestFinished);
         mCurrentTestDescription.reset();
+        mCurrentTestError.str("");
+        mCurrentTestError.clear();
     }
 
     void reportDisabledTests(const std::vector<std::string>& mangledNames) {
@@ -154,6 +160,7 @@ private:
     jobject mRunNotifier;
     jstring mClassName;
     ScopedLocalRef<jobject> mCurrentTestDescription;
+    std::ostringstream mCurrentTestError;
 };
 
 }  // namespace
