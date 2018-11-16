@@ -179,6 +179,11 @@ public class JvmtiAttachingHostTest extends DeviceTestCase implements IBuildRece
             throw new IllegalStateException("Incorrect configuration");
         }
 
+        // Wakeup the device if it is on the lockscreen and move it to the home screen.
+        device.executeShellCommand("input keyevent KEYCODE_WAKEUP");
+        device.executeShellCommand("wm dismiss-keyguard");
+        device.executeShellCommand("input keyevent KEYCODE_HOME");
+
         runner.run(device, mTestPackageName, mTestApk, mAbi.getName());
     }
 
