@@ -99,7 +99,7 @@ public class MediaPlayer2TestBase extends ActivityInstrumentationTestCase2<Media
     protected static MediaPlayer2 createMediaPlayer2(Context context, Uri uri, SurfaceHolder holder,
             AudioAttributes audioAttributes, int audioSessionId) {
         try {
-            MediaPlayer2 mp = MediaPlayer2.create(context);
+            MediaPlayer2 mp = new MediaPlayer2(context);
             final AudioAttributes aa = audioAttributes != null ? audioAttributes :
                     new AudioAttributes.Builder().build();
             mp.setAudioAttributes(aa);
@@ -154,7 +154,7 @@ public class MediaPlayer2TestBase extends ActivityInstrumentationTestCase2<Media
                 return null;
             }
 
-            MediaPlayer2 mp = MediaPlayer2.create(context);
+            MediaPlayer2 mp = new MediaPlayer2(context);
 
             final AudioAttributes aa = audioAttributes != null ? audioAttributes :
                     new AudioAttributes.Builder().build();
@@ -212,8 +212,8 @@ public class MediaPlayer2TestBase extends ActivityInstrumentationTestCase2<Media
         try {
             runTestOnUiThread(new Runnable() {
                 public void run() {
-                    mPlayer = MediaPlayer2.create(mContext);
-                    mPlayer2 = MediaPlayer2.create(mContext);
+                    mPlayer = new MediaPlayer2(mContext);
+                    mPlayer2 = new MediaPlayer2(mContext);
                 }
             });
         } catch (Throwable e) {

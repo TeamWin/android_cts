@@ -744,7 +744,7 @@ public class RoutingTest extends AndroidTestCase {
         final int resid = R.raw.testmp3_2;
         AssetFileDescriptor afd = mContext.getResources().openRawResourceFd(resid);
 
-        MediaPlayer2 mediaPlayer2 = MediaPlayer2.create(mContext);
+        MediaPlayer2 mediaPlayer2 = new MediaPlayer2(mContext);
         mediaPlayer2.setAudioAttributes(new AudioAttributes.Builder().build());
         mediaPlayer2.setDataSource(new DataSourceDesc.Builder()
                 .setDataSource(afd.getFileDescriptor(), afd.getStartOffset(), afd.getLength())

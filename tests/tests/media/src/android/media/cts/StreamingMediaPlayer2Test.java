@@ -734,7 +734,7 @@ public class StreamingMediaPlayer2Test extends MediaPlayer2TestBase {
             synchronized (mLock) {
                 Looper.prepare();
                 mLooper = Looper.myLooper();
-                mPlayer = MediaPlayer2.create(mContext);
+                mPlayer = new MediaPlayer2(mContext);
                 mLock.notifyAll();
             }
             Looper.loop();
