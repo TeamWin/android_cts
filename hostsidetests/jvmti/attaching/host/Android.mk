@@ -21,6 +21,6 @@ LOCAL_SRC_FILES := $(call all-subdir-java-files)
 LOCAL_SDK_VERSION := current
 LOCAL_JAVA_LIBRARIES := cts-tradefed tradefed compatibility-host-util
 LOCAL_MODULE_TAGS := tests
-LOCAL_COMPATIBILITY_SUITE := cts vts
+LOCAL_COMPATIBILITY_SUITE := cts vts general-tests
 
 include $(BUILD_HOST_JAVA_LIBRARY)
