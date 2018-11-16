@@ -78,5 +78,12 @@ interface ITest {
     String[] RepeatStringArray(in String[] input, out String[] repeated);
 
     // Nullable Arrays
+    @nullable boolean[] RepeatNullableBooleanArray(in @nullable boolean[] input);
+    @nullable byte[] RepeatNullableByteArray(in @nullable byte[] input);
+    @nullable char[] RepeatNullableCharArray(in @nullable char[] input);
+    @nullable int[] RepeatNullableIntArray(in @nullable int[] input);
+    @nullable long[] RepeatNullableLongArray(in @nullable long[] input);
+    @nullable float[] RepeatNullableFloatArray(in @nullable float[] input);
+    @nullable double[] RepeatNullableDoubleArray(in @nullable double[] input);
     @nullable String[] RepeatNullableStringArray(in @nullable String[] input, out @nullable String[] repeated);
 }
