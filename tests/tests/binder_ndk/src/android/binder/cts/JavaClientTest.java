@@ -132,8 +132,8 @@ public class JavaClientTest {
         IBinder binder = mInterface.asBinder();
 
         assertEquals(binder, mInterface.RepeatBinder(binder));
-
-        assertEquals(null, mInterface.RepeatBinder(null));
+        assertEquals(binder, mInterface.RepeatNullableBinder(binder));
+        assertEquals(null, mInterface.RepeatNullableBinder(null));
     }
 
     private static class Empty extends IEmpty.Stub {}
@@ -143,8 +143,8 @@ public class JavaClientTest {
         IEmpty empty = new Empty();
 
         assertEquals(empty, mInterface.RepeatInterface(empty));
-
-        assertEquals(null, mInterface.RepeatInterface(null));
+        assertEquals(empty, mInterface.RepeatNullableInterface(empty));
+        assertEquals(null, mInterface.RepeatNullableInterface(null));
     }
 
     @Test
@@ -191,6 +191,14 @@ public class JavaClientTest {
     }
 
     @Test
+    public void testRepeatNullableString() throws RemoteException {
+        assertEquals(null, mInterface.RepeatNullableString(null));
+        assertEquals("", mInterface.RepeatNullableString(""));
+        assertEquals("a", mInterface.RepeatNullableString("a"));
+        assertEquals("foo", mInterface.RepeatNullableString("foo"));
+    }
+
+    @Test
     public void testRepeatPolygon() throws RemoteException {
         RegularPolygon polygon = new RegularPolygon();
         polygon.name = "hexagon";
@@ -215,7 +223,7 @@ public class JavaClientTest {
     public void testArrays() throws RemoteException {
         {
             boolean[] value = {};
-            boolean[] out1 = new boolean[0];
+            boolean[] out1 = new boolean[value.length];
             boolean[] out2 = mInterface.RepeatBooleanArray(value, out1);
 
             Assert.assertArrayEquals(value, out1);
@@ -223,7 +231,7 @@ public class JavaClientTest {
         }
         {
             boolean[] value = {false, true, false};
-            boolean[] out1 = new boolean[3];
+            boolean[] out1 = new boolean[value.length];
             boolean[] out2 = mInterface.RepeatBooleanArray(value, out1);
 
             Assert.assertArrayEquals(value, out1);
@@ -231,7 +239,7 @@ public class JavaClientTest {
         }
         {
             byte[] value = {1, 2, 3};
-            byte[] out1 = new byte[3];
+            byte[] out1 = new byte[value.length];
             byte[] out2 = mInterface.RepeatByteArray(value, out1);
 
             Assert.assertArrayEquals(value, out1);
@@ -239,7 +247,7 @@ public class JavaClientTest {
         }
         {
             char[] value = {'h', 'a', '!'};
-            char[] out1 = new char[3];
+            char[] out1 = new char[value.length];
             char[] out2 = mInterface.RepeatCharArray(value, out1);
 
             Assert.assertArrayEquals(value, out1);
@@ -247,7 +255,7 @@ public class JavaClientTest {
         }
         {
             int[] value = {1, 2, 3};
-            int[] out1 = new int[3];
+            int[] out1 = new int[value.length];
             int[] out2 = mInterface.RepeatIntArray(value, out1);
 
             Assert.assertArrayEquals(value, out1);
@@ -255,7 +263,7 @@ public class JavaClientTest {
         }
         {
             long[] value = {1, 2, 3};
-            long[] out1 = new long[3];
+            long[] out1 = new long[value.length];
             long[] out2 = mInterface.RepeatLongArray(value, out1);
 
             Assert.assertArrayEquals(value, out1);
@@ -263,7 +271,7 @@ public class JavaClientTest {
         }
         {
             float[] value = {1.0f, 2.0f, 3.0f};
-            float[] out1 = new float[3];
+            float[] out1 = new float[value.length];
             float[] out2 = mInterface.RepeatFloatArray(value, out1);
 
             Assert.assertArrayEquals(value, out1, 0.0f);
@@ -271,16 +279,28 @@ public class JavaClientTest {
         }
         {
             double[] value = {1.0, 2.0, 3.0};
-            double[] out1 = new double[3];
+            double[] out1 = new double[value.length];
             double[] out2 = mInterface.RepeatDoubleArray(value, out1);
 
             Assert.assertArrayEquals(value, out1, 0.0);
             Assert.assertArrayEquals(value, out2, 0.0);
         }
         {
-            String[] value = {"aoeu", "lol", "brb"};
-            String[] out1 = new String[3];
+            String[] value = {"", "aoeu", "lol", "brb"};
+            String[] out1 = new String[value.length];
             String[] out2 = mInterface.RepeatStringArray(value, out1);
+
+            Assert.assertArrayEquals(value, out1);
+            Assert.assertArrayEquals(value, out2);
+        }
+    }
+
+    @Test
+    public void testNullableArrays() throws RemoteException {
+        {
+            String[] value = {"", "aoeu", null, "brb"};
+            String[] out1 = new String[value.length];
+            String[] out2 = mInterface.RepeatNullableStringArray(value, out1);
 
             Assert.assertArrayEquals(value, out1);
             Assert.assertArrayEquals(value, out2);
