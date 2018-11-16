@@ -1276,7 +1276,7 @@
         </activity>
 
         <activity android:name=".security.BiometricPromptBoundKeysTest"
-            android:label="@string/sec_fingerprint_dialog_bound_key_test"
+            android:label="@string/sec_biometric_prompt_bound_key_test"
             android:configChanges="keyboardHidden|orientation|screenSize" >
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
