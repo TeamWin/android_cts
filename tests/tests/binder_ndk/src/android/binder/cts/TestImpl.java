@@ -124,7 +124,17 @@ public class TestImpl extends ITest.Stub {
   }
 
   @Override
+  public IBinder RepeatNullableBinder(IBinder in_value) {
+    return in_value;
+  }
+
+  @Override
   public IEmpty RepeatInterface(IEmpty in_value) {
+    return in_value;
+  }
+
+  @Override
+  public IEmpty RepeatNullableInterface(IEmpty in_value) {
     return in_value;
   }
 
@@ -135,6 +145,11 @@ public class TestImpl extends ITest.Stub {
 
   @Override
   public String RepeatString(String in_value) {
+    return in_value;
+  }
+
+  @Override
+  public String RepeatNullableString(String in_value) {
     return in_value;
   }
 
@@ -192,6 +207,16 @@ public class TestImpl extends ITest.Stub {
 
   @Override
   public String[] RepeatStringArray(String[] in_value, String[] repeated) {
+    System.arraycopy(in_value, 0, repeated, 0, in_value.length);
+    return in_value;
+  }
+
+  @Override
+  public String[] RepeatNullableStringArray(String[] in_value, String[] repeated) {
+    if (in_value == null) {
+      return null; // can't do anything to repeated
+    }
+
     System.arraycopy(in_value, 0, repeated, 0, in_value.length);
     return in_value;
   }
