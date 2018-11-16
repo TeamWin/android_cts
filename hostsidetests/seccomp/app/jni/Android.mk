@@ -1,4 +1,4 @@
-# Copyright (C) 2012 The Android Open Source Project
+# Copyright (C) 2017 The Android Open Source Project
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -16,35 +16,26 @@ LOCAL_PATH:= $(call my-dir)
 
 include $(CLEAR_VARS)
 
-LOCAL_MODULE := libctssecurity_jni
+LOCAL_MODULE := libctsseccomp_jni
 
 # Don't include this package in any configuration by default.
 LOCAL_MODULE_TAGS := optional
 
 LOCAL_SRC_FILES := \
-		CtsSecurityJniOnLoad.cpp \
-		android_security_cts_CharDeviceTest.cpp \
-		android_security_cts_KernelSettingsTest.cpp \
-		android_security_cts_LinuxRngTest.cpp \
-		android_security_cts_NativeCodeTest.cpp \
-		android_security_cts_SELinuxTest.cpp \
-		android_security_cts_MMapExecutableTest.cpp \
-		android_security_cts_EncryptionTest.cpp \
+		CtsSeccompJniOnLoad.cpp \
+		android_seccomp_cts_app_SeccompDeviceTest.cpp \
 
 LOCAL_SHARED_LIBRARIES := \
 		libnativehelper \
 		liblog \
 		libcutils \
-		libcrypto \
-		libselinux \
 		libc++ \
-		libpcre2 \
 		libpackagelistparser \
 
 
 LOCAL_C_INCLUDES += ndk/sources/cpufeatures
 LOCAL_STATIC_LIBRARIES := cpufeatures
 
-LOCAL_CFLAGS := -Wno-unused-parameter
+LOCAL_CFLAGS := -Wall -Werror
 
 include $(BUILD_SHARED_LIBRARY)
