@@ -16,21 +16,31 @@
 
 package android.media.cts;
 
+import static org.junit.Assert.assertNotEquals;
+
 import android.media.cts.R;
 
 import android.content.res.AssetFileDescriptor;
 import android.content.res.Resources;
+import android.icu.util.ULocale;
 import android.media.AudioPresentation;
 import android.media.MediaDataSource;
 import android.media.MediaExtractor;
+import android.media.MediaFormat;
 import android.os.PersistableBundle;
 import android.test.AndroidTestCase;
+import android.util.Log;
 
 import java.io.IOException;
 import java.nio.ByteBuffer;
+import java.util.Arrays;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 public class MediaExtractorTest extends AndroidTestCase {
+    private static final String TAG = "MediaExtractorTest";
+
     protected Resources mResources;
     protected MediaExtractor mExtractor;
 
@@ -125,10 +135,121 @@ public class MediaExtractorTest extends AndroidTestCase {
 
     }
 
+    static boolean audioPresentationSetMatchesReference(
+            Map<Integer, AudioPresentation> reference,
+            List<AudioPresentation> actual) {
+        if (reference.size() != actual.size()) {
+            Log.w(TAG, "AudioPresentations set size is invalid, expected: " +
+                    reference.size() + ", actual: " + actual.size());
+            return false;
+        }
+        for (AudioPresentation ap : actual) {
+            AudioPresentation refAp = reference.get(ap.getPresentationId());
+            if (refAp == null) {
+                Log.w(TAG, "AudioPresentation not found in the reference set, presentation id=" +
+                        ap.getPresentationId());
+                return false;
+            }
+            if (!refAp.equals(ap)) {
+                Log.w(TAG, "AudioPresentations are different, reference: " +
+                        refAp + ", actual: " + ap);
+                return false;
+            }
+        }
+        return true;
+    }
+
     public void testGetAudioPresentations() throws Exception {
-        TestMediaDataSource dataSource = setDataSource(R.raw.testvideo);
-        List<AudioPresentation> presentations = mExtractor.getAudioPresentations(0 /*trackIndex*/);
-        assertNotNull(presentations);
-        assertTrue(presentations.isEmpty());
+        final int resid = R.raw.MultiLangPerso_1PID_PC0_Select_AC4_H265_DVB_50fps;
+        TestMediaDataSource dataSource = setDataSource(resid);
+        int ac4TrackIndex = -1;
+        for (int i = 0; i < mExtractor.getTrackCount(); i++) {
+            MediaFormat format = mExtractor.getTrackFormat(i);
+            String mime = format.getString(MediaFormat.KEY_MIME);
+            if (MediaFormat.MIMETYPE_AUDIO_AC4.equals(mime)) {
+                ac4TrackIndex = i;
+                break;
+            }
+        }
+        assertNotEquals(
+                "AC4 track was not found in MultiLangPerso_1PID_PC0_Select_AC4_H265_DVB_50fps",
+                -1, ac4TrackIndex);
+
+        // The test file has two sets of audio presentations. The presentation set
+        // changes for every 100 audio presentation descriptors between two presentations.
+        // Instead of attempting to count the presentation descriptors, the test assumes
+        // a particular order of the presentations and advances to the next reference set
+        // once getAudioPresentations returns a set that doesn't match the current reference set.
+        // Thus the test can match the set 0 several times, then it encounters set 1,
+        // advances the reference set index, matches set 1 until it encounters set 2 etc.
+        // At the end it verifies that all the reference sets were met.
+        List<Map<Integer, AudioPresentation>> refPresentations = Arrays.asList(
+                new HashMap<Integer, AudioPresentation>() {{  // First set.
+                    put(10, new AudioPresentation.Builder(10)
+                            .setLocale(ULocale.ENGLISH)
+                            .setMasteringIndication(AudioPresentation.MASTERED_FOR_SURROUND)
+                            .setHasDialogueEnhancement(true)
+                            .build());
+                    put(11, new AudioPresentation.Builder(11)
+                            .setLocale(ULocale.ENGLISH)
+                            .setMasteringIndication(AudioPresentation.MASTERED_FOR_SURROUND)
+                            .setHasAudioDescription(true)
+                            .setHasDialogueEnhancement(true)
+                            .build());
+                    put(12, new AudioPresentation.Builder(12)
+                            .setLocale(ULocale.FRENCH)
+                            .setMasteringIndication(AudioPresentation.MASTERED_FOR_SURROUND)
+                            .setHasDialogueEnhancement(true)
+                            .build());
+                }},
+                new HashMap<Integer, AudioPresentation>() {{  // Second set.
+                    put(10, new AudioPresentation.Builder(10)
+                            .setLocale(ULocale.GERMAN)
+                            .setMasteringIndication(AudioPresentation.MASTERED_FOR_SURROUND)
+                            .setHasAudioDescription(true)
+                            .setHasDialogueEnhancement(true)
+                            .build());
+                    put(11, new AudioPresentation.Builder(11)
+                            .setLocale(new ULocale("es"))
+                            .setMasteringIndication(AudioPresentation.MASTERED_FOR_SURROUND)
+                            .setHasSpokenSubtitles(true)
+                            .setHasDialogueEnhancement(true)
+                            .build());
+                    put(12, new AudioPresentation.Builder(12)
+                            .setLocale(ULocale.ENGLISH)
+                            .setMasteringIndication(AudioPresentation.MASTERED_FOR_SURROUND)
+                            .setHasDialogueEnhancement(true)
+                            .build());
+                }},
+                null,
+                null
+        );
+        refPresentations.set(2, refPresentations.get(0));
+        refPresentations.set(3, refPresentations.get(1));
+        boolean[] presentationsMatched = new boolean[refPresentations.size()];
+        mExtractor.selectTrack(ac4TrackIndex);
+        // See b/120846068, the call to 'seek' is needed to guarantee a reset of the AP parser.
+        mExtractor.seekTo(0, MediaExtractor.SEEK_TO_CLOSEST_SYNC);
+        for (int i = 0; i < refPresentations.size(); ) {
+            List<AudioPresentation> presentations = mExtractor.getAudioPresentations(ac4TrackIndex);
+            assertNotNull(presentations);
+            // Assumes all presentation sets have the same number of presentations.
+            assertEquals(refPresentations.get(i).size(), presentations.size());
+            if (!audioPresentationSetMatchesReference(refPresentations.get(i), presentations)) {
+                    // Time to advance to the next presentation set.
+                    i++;
+                    continue;
+            }
+            Log.d(TAG, "Matched presentation " + i);
+            presentationsMatched[i] = true;
+            // No need to wait for another switch after the last presentation has been matched.
+            if (i == presentationsMatched.length - 1 || !mExtractor.advance()) {
+                break;
+            }
+        }
+        for (int i = 0; i < presentationsMatched.length; i++) {
+            assertTrue("Presentation set " + i + " was not found in the stream",
+                    presentationsMatched[i]);
+        }
     }
 }
