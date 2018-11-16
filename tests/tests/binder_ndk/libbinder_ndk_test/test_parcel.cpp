@@ -100,26 +100,6 @@ void ExpectInOutMinMax() {
       {std::numeric_limits<T>::min(), std::numeric_limits<T>::max()});
 }
 
-TEST_F(NdkBinderTest_AParcel, ReadUnexpectedNullBinder) {
-  AIBinder* binder = SampleData::newBinder(
-      [](transaction_code_t, const AParcel* in, AParcel* /*out*/) {
-        AIBinder* value = nullptr;
-        binder_status_t ret = AParcel_readStrongBinder(in, &value);
-        EXPECT_EQ(nullptr, value);
-        EXPECT_EQ(STATUS_UNEXPECTED_NULL, ret);
-        return ret;
-      },
-      ExpectLifetimeTransactions(1));
-
-  EXPECT_EQ(STATUS_UNEXPECTED_NULL,
-            SampleData::transact(binder, kCode, [&](AParcel* in) {
-              EXPECT_OK(AParcel_writeStrongBinder(in, nullptr));
-              return STATUS_OK;
-            }));
-
-  AIBinder_decStrong(binder);
-}
-
 TEST_F(NdkBinderTest_AParcel, BindersInMustComeOut) {
   AIBinder* binder = SampleData::newBinder();
 
@@ -132,8 +112,8 @@ TEST_F(NdkBinderTest_AParcel, BindersInMustComeOut) {
   // this same process and is read again
   AIBinder_decStrong(binder);
 
-  ExpectInOut<AIBinder*, AParcel_writeStrongBinder,
-              AParcel_readNullableStrongBinder>({nullptr, binder});
+  ExpectInOut<AIBinder*, AParcel_writeStrongBinder, AParcel_readStrongBinder>(
+      {nullptr, binder});
   // copy which is read when this binder is sent in a transaction to this
   // process
   AIBinder_decStrong(binder);
