@@ -224,6 +224,48 @@ class MyTest : public ::aidl::test_package::BnTest,
     *_aidl_return = in_value;
     return ::ndk::ScopedAStatus(AStatus_newOk());
   }
+  ::ndk::ScopedAStatus RepeatNullableBooleanArray(
+      const std::optional<std::vector<bool>>& in_value,
+      std::optional<std::vector<bool>>* _aidl_return) override {
+    *_aidl_return = in_value;
+    return ::ndk::ScopedAStatus(AStatus_newOk());
+  }
+  ::ndk::ScopedAStatus RepeatNullableByteArray(
+      const std::optional<std::vector<int8_t>>& in_value,
+      std::optional<std::vector<int8_t>>* _aidl_return) override {
+    *_aidl_return = in_value;
+    return ::ndk::ScopedAStatus(AStatus_newOk());
+  }
+  ::ndk::ScopedAStatus RepeatNullableCharArray(
+      const std::optional<std::vector<char16_t>>& in_value,
+      std::optional<std::vector<char16_t>>* _aidl_return) override {
+    *_aidl_return = in_value;
+    return ::ndk::ScopedAStatus(AStatus_newOk());
+  }
+  ::ndk::ScopedAStatus RepeatNullableIntArray(
+      const std::optional<std::vector<int32_t>>& in_value,
+      std::optional<std::vector<int32_t>>* _aidl_return) override {
+    *_aidl_return = in_value;
+    return ::ndk::ScopedAStatus(AStatus_newOk());
+  }
+  ::ndk::ScopedAStatus RepeatNullableLongArray(
+      const std::optional<std::vector<int64_t>>& in_value,
+      std::optional<std::vector<int64_t>>* _aidl_return) override {
+    *_aidl_return = in_value;
+    return ::ndk::ScopedAStatus(AStatus_newOk());
+  }
+  ::ndk::ScopedAStatus RepeatNullableFloatArray(
+      const std::optional<std::vector<float>>& in_value,
+      std::optional<std::vector<float>>* _aidl_return) override {
+    *_aidl_return = in_value;
+    return ::ndk::ScopedAStatus(AStatus_newOk());
+  }
+  ::ndk::ScopedAStatus RepeatNullableDoubleArray(
+      const std::optional<std::vector<double>>& in_value,
+      std::optional<std::vector<double>>* _aidl_return) override {
+    *_aidl_return = in_value;
+    return ::ndk::ScopedAStatus(AStatus_newOk());
+  }
   ::ndk::ScopedAStatus RepeatNullableStringArray(
       const std::optional<std::vector<std::optional<std::string>>>& in_value,
       std::optional<std::vector<std::optional<std::string>>>* out_repeated,

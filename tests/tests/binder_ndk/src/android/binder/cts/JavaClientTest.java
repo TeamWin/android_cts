@@ -298,6 +298,56 @@ public class JavaClientTest {
     @Test
     public void testNullableArrays() throws RemoteException {
         {
+            boolean[] emptyValue = {};
+            boolean[] value = {false, true, false};
+            Assert.assertArrayEquals(null, mInterface.RepeatNullableBooleanArray(null));
+            Assert.assertArrayEquals(emptyValue, mInterface.RepeatNullableBooleanArray(emptyValue));
+            Assert.assertArrayEquals(value, mInterface.RepeatNullableBooleanArray(value));
+        }
+        {
+            byte[] emptyValue = {};
+            byte[] value = {1, 2, 3};
+            Assert.assertArrayEquals(null, mInterface.RepeatNullableByteArray(null));
+            Assert.assertArrayEquals(emptyValue, mInterface.RepeatNullableByteArray(emptyValue));
+            Assert.assertArrayEquals(value, mInterface.RepeatNullableByteArray(value));
+        }
+        {
+            char[] emptyValue = {};
+            char[] value = {'h', 'a', '!'};
+            Assert.assertArrayEquals(null, mInterface.RepeatNullableCharArray(null));
+            Assert.assertArrayEquals(emptyValue, mInterface.RepeatNullableCharArray(emptyValue));
+            Assert.assertArrayEquals(value, mInterface.RepeatNullableCharArray(value));
+        }
+        {
+            int[] emptyValue = {};
+            int[] value = {1, 2, 3};
+            Assert.assertArrayEquals(null, mInterface.RepeatNullableIntArray(null));
+            Assert.assertArrayEquals(emptyValue, mInterface.RepeatNullableIntArray(emptyValue));
+            Assert.assertArrayEquals(value, mInterface.RepeatNullableIntArray(value));
+        }
+        {
+            long[] emptyValue = {};
+            long[] value = {1, 2, 3};
+            Assert.assertArrayEquals(null, mInterface.RepeatNullableLongArray(null));
+            Assert.assertArrayEquals(emptyValue, mInterface.RepeatNullableLongArray(emptyValue));
+            Assert.assertArrayEquals(value, mInterface.RepeatNullableLongArray(value));
+        }
+        {
+            float[] emptyValue = {};
+            float[] value = {1.0f, 2.0f, 3.0f};
+            Assert.assertArrayEquals(null, mInterface.RepeatNullableFloatArray(null), 0.0f);
+            Assert.assertArrayEquals(emptyValue, mInterface.RepeatNullableFloatArray(emptyValue), 0.0f);
+            Assert.assertArrayEquals(value, mInterface.RepeatNullableFloatArray(value), 0.0f);
+        }
+        {
+            double[] emptyValue = {};
+            double[] value = {1.0, 2.0, 3.0};
+            Assert.assertArrayEquals(null, mInterface.RepeatNullableDoubleArray(null), 0.0);
+            Assert.assertArrayEquals(emptyValue, mInterface.RepeatNullableDoubleArray(emptyValue), 0.0);
+            Assert.assertArrayEquals(value, mInterface.RepeatNullableDoubleArray(value), 0.0);
+        }
+        {
+            String[] emptyValue = {};
             String[] value = {"", "aoeu", null, "brb"};
             String[] out1 = new String[value.length];
             String[] out2 = mInterface.RepeatNullableStringArray(value, out1);
