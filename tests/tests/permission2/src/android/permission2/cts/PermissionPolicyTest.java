@@ -41,6 +41,7 @@ import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Set;
 
 /**
@@ -61,6 +62,7 @@ public class PermissionPolicyTest extends AndroidTestCase {
     private static final String AUTOMOTIVE_SERVICE_PACKAGE_NAME = "com.android.car";
 
     private static final String TAG_PERMISSION = "permission";
+    private static final String TAG_PERMISSION_GROUP = "permission-group";
 
     private static final String ATTR_NAME = "name";
     private static final String ATTR_PERMISSION_GROUP = "permissionGroup";
@@ -79,7 +81,8 @@ public class PermissionPolicyTest extends AndroidTestCase {
             declaredGroupsSet.add(declaredGroup.name);
         }
 
-        Set<String> expectedPermissionGroups = new ArraySet<>();
+        Set<String> expectedPermissionGroups = loadExpectedPermissionGroupNames(
+                R.raw.android_manifest);
         List<PermissionInfo> expectedPermissions = loadExpectedPermissions(R.raw.android_manifest);
 
         if (getContext().getPackageManager().hasSystemFeature(PackageManager.FEATURE_AUTOMOTIVE)) {
@@ -103,8 +106,6 @@ public class PermissionPolicyTest extends AndroidTestCase {
 
             // We want to end up with OEM defined permissions and groups to check their namespace
             declaredPermissionsMap.remove(expectedPermissionName);
-            // Collect expected groups to check if OEM defined groups aren't in platform namespace
-            expectedPermissionGroups.add(expectedPermission.group);
 
             // OEMs cannot change permission protection
             final int expectedProtection = expectedPermission.protectionLevel
@@ -132,14 +133,15 @@ public class PermissionPolicyTest extends AndroidTestCase {
 
             // OEMs cannot change permission grouping
             if ((declaredPermission.protectionLevel & PermissionInfo.PROTECTION_DANGEROUS) != 0) {
-                if (!expectedPermission.group.equals(declaredPermission.group)) {
+                if (!Objects.equals(expectedPermission.group, declaredPermission.group)) {
                     offendingList.add(
                             "Permission " + expectedPermissionName + " not in correct group "
                             + "(expected=" + expectedPermission.group + " actual="
                                     + declaredPermission.group);
                 }
 
-                if (!declaredGroupsSet.contains(declaredPermission.group)) {
+                if (declaredPermission.group != null
+                        && !declaredGroupsSet.contains(declaredPermission.group)) {
                     offendingList.add(
                             "Permission group " + expectedPermission.group + " must be defined");
                 }
@@ -214,6 +216,29 @@ public class PermissionPolicyTest extends AndroidTestCase {
             }
         }
         return permissions;
+    }
+
+    private Set<String> loadExpectedPermissionGroupNames(int resourceId) throws Exception {
+        ArraySet<String> permissionGroups = new ArraySet<>();
+        try (InputStream in = getContext().getResources().openRawResource(resourceId)) {
+            XmlPullParser parser = Xml.newPullParser();
+            parser.setInput(in, null);
+
+            final int outerDepth = parser.getDepth();
+            int type;
+            while ((type = parser.next()) != XmlPullParser.END_DOCUMENT
+                    && (type != XmlPullParser.END_TAG || parser.getDepth() > outerDepth)) {
+                if (type == XmlPullParser.END_TAG || type == XmlPullParser.TEXT) {
+                    continue;
+                }
+                if (TAG_PERMISSION_GROUP.equals(parser.getName())) {
+                    permissionGroups.add(parser.getAttributeValue(null, ATTR_NAME));
+                } else {
+                    Log.e(LOG_TAG, "Unknown tag " + parser.getName());
+                }
+            }
+        }
+        return permissionGroups;
     }
 
     private static int parseProtectionLevel(String protectionLevelString) {
