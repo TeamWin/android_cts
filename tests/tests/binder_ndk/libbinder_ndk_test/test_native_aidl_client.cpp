@@ -184,7 +184,10 @@ static void checkInOut(const ScopedFileDescriptor& inFd,
   EXPECT_EQ(kContent, out);
 }
 
-TEST_P(NdkBinderTest_Aidl, RepeatFd) {
+static void checkFdRepeat(
+    const std::shared_ptr<ITest>& test,
+    ScopedAStatus (ITest::*repeatFd)(const ScopedFileDescriptor&,
+                                     ScopedFileDescriptor*)) {
   int fds[2];
 
   while (pipe(fds) == -1 && errno == EAGAIN)
@@ -194,9 +197,23 @@ TEST_P(NdkBinderTest_Aidl, RepeatFd) {
   ScopedFileDescriptor writeFd(fds[1]);
 
   ScopedFileDescriptor readOutFd;
-  ASSERT_OK(iface->RepeatFd(readFd, &readOutFd));
+  ASSERT_OK((test.get()->*repeatFd)(readFd, &readOutFd));
 
   checkInOut(writeFd, readOutFd);
+}
+
+TEST_P(NdkBinderTest_Aidl, RepeatFd) { checkFdRepeat(iface, &ITest::RepeatFd); }
+
+TEST_P(NdkBinderTest_Aidl, RepeatNullableFd) {
+  checkFdRepeat(iface, &ITest::RepeatNullableFd);
+
+  ScopedFileDescriptor in;
+  EXPECT_EQ(-1, in.get());
+
+  ScopedFileDescriptor out;
+  ASSERT_OK(iface->RepeatNullableFd(in, &out));
+
+  EXPECT_EQ(-1, out.get());
 }
 
 TEST_P(NdkBinderTest_Aidl, RepeatString) {

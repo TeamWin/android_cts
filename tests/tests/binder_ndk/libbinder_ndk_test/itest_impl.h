@@ -145,6 +145,12 @@ class MyTest : public ::aidl::test_package::BnTest,
     _aidl_return->set(dup(in_value.get()));
     return ::ndk::ScopedAStatus(AStatus_newOk());
   }
+  ::ndk::ScopedAStatus RepeatNullableFd(
+      const ::ndk::ScopedFileDescriptor& in_value,
+      ::ndk::ScopedFileDescriptor* _aidl_return) override {
+    _aidl_return->set(dup(in_value.get()));
+    return ::ndk::ScopedAStatus(AStatus_newOk());
+  }
   ::ndk::ScopedAStatus RepeatString(const std::string& in_value,
                                     std::string* _aidl_return) override {
     *_aidl_return = in_value;
