@@ -968,6 +968,7 @@ public class ActivityManagerMultiDisplayTests extends ActivityManagerDisplayTest
 
     /** Test that launching app from pending activity queue on external display is allowed. */
     @Test
+    @FlakyTest(bugId = 118708868)
     public void testLaunchPendingActivityOnSecondaryDisplay() throws Exception {
         try (final VirtualDisplaySession virtualDisplaySession = new VirtualDisplaySession()) {
             // Create new simulated display.
