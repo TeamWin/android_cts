@@ -14,23 +14,28 @@
  * limitations under the License.
  */
 
-package android.security.cts;
+package android.seccomp.cts.app;
 
-import android.test.AndroidTestCase;
+import org.junit.After;
+import org.junit.Assert;
+import org.junit.Assume;
+import org.junit.Before;
+import org.junit.Test;
+import org.junit.runner.RunWith;
 
+import android.support.test.runner.AndroidJUnit4;
 import com.android.compatibility.common.util.CpuFeatures;
 
-import junit.framework.TestCase;
-
 /**
- * Verify that the seccomp policy is enforced
+ * Device-side tests for CtsSeccompHostTestCases
  */
-public class SeccompTest extends AndroidTestCase {
-
+@RunWith(AndroidJUnit4.class)
+public class SeccompDeviceTest {
     static {
-        System.loadLibrary("ctssecurity_jni");
+        System.loadLibrary("ctsseccomp_jni");
     }
 
+    @Test
     public void testCTSSyscallBlocked() {
         if (CpuFeatures.isArm64Cpu()) {
             testBlocked(217); // __NR_add_key
@@ -63,10 +68,11 @@ public class SeccompTest extends AndroidTestCase {
             testBlocked(4282); // __NR_keyctl
             testAllowed(4288); // __NR_openat
         } else {
-            fail("Unsupported OS");
+            Assert.fail("Unsupported OS");
         }
     }
 
+    @Test
     public void testCTSSwapOnOffBlocked() {
         if (CpuFeatures.isArm64Cpu()) {
             testBlocked(224); // __NR_swapon
@@ -87,16 +93,16 @@ public class SeccompTest extends AndroidTestCase {
             testBlocked(4087); // __NR_swapon
             testBlocked(4115); // __NR_swapoff
         } else {
-            fail("Unsupported OS");
+            Assert.fail("Unsupported OS");
         }
     }
 
     private void testBlocked(int nr) {
-        assertTrue("Syscall " + nr + " allowed", testSyscallBlocked(nr));
+        Assert.assertTrue("Syscall " + nr + " not blocked", testSyscallBlocked(nr));
     }
 
     private void testAllowed(int nr) {
-        assertFalse("Syscall " + nr + " blocked", testSyscallBlocked(nr));
+        Assert.assertFalse("Syscall " + nr + " blocked", testSyscallBlocked(nr));
     }
 
     private static final native boolean testSyscallBlocked(int nr);

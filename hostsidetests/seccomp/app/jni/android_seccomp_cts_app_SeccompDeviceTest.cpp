@@ -36,7 +36,7 @@ static jboolean testSyscallBlocked(JNIEnv *, jobject, int nr) {
     int pid = fork();
     if (pid == 0) {
         ALOGI("Calling syscall %d", nr);
-        int ret = syscall(nr);
+        syscall(nr);
         return false;
     } else {
         int status;
@@ -72,9 +72,9 @@ static JNINativeMethod gMethods[] = {
             (void*) testSyscallBlocked },
 };
 
-int register_android_security_cts_SeccompTest(JNIEnv* env)
+int register_android_seccomp_cts_app_SeccompTest(JNIEnv* env)
 {
-    jclass clazz = env->FindClass("android/security/cts/SeccompTest");
+    jclass clazz = env->FindClass("android/seccomp/cts/app/SeccompDeviceTest");
 
     return env->RegisterNatives(clazz, gMethods,
             sizeof(gMethods) / sizeof(JNINativeMethod));
