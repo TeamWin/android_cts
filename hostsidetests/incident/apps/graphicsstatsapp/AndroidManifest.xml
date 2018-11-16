@@ -20,7 +20,9 @@
 
     <application>
         <uses-library android:name="android.test.runner" />
-        <activity android:name=".DrawFramesActivity" android:label="GraphicsStats Test Activity" />
+        <activity android:name=".DrawFramesActivity"
+                  android:label="GraphicsStats Test Activity"
+                  android:theme="@style/DefaultTheme"/>
     </application>
 
     <instrumentation android:name="android.support.test.runner.AndroidJUnitRunner"
