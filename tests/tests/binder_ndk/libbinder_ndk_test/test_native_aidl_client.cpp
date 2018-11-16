@@ -411,9 +411,18 @@ TEST_P(NdkBinderTest_Aidl, NullableArrays) {
                          {{1.0}},
                          {{1.0, 2.0, 3.0}},
                      });
-  testRepeat<std::string>(iface, &ITest::RepeatNullableStringArray,
+  testRepeat<std::optional<std::string>>(
+      iface, &ITest::RepeatNullableStringArray,
+      {
+          std::nullopt,
+          {{}},
+          {{"asdf"}},
+          {{std::nullopt}},
+          {{"aoeu", "lol", "brb"}},
+          {{"", "aoeu", std::nullopt, "brb"}},
+      });
+  testRepeat<std::string>(iface, &ITest::DoubleRepeatNullableStringArray,
                           {
-                              // std::nullopt, TODO(b/119580050)
                               {{}},
                               {{"asdf"}},
                               {{std::nullopt}},
