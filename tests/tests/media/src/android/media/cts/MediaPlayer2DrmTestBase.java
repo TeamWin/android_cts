@@ -90,7 +90,7 @@ public class MediaPlayer2DrmTestBase extends ActivityInstrumentationTestCase2<Me
         try {
             runTestOnUiThread(new Runnable() {
                 public void run() {
-                    mPlayer = MediaPlayer2.create(mContext);
+                    mPlayer = new MediaPlayer2(mContext);
                 }
             });
         } catch (Throwable e) {
