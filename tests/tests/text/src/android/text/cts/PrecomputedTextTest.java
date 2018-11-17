@@ -22,6 +22,7 @@ import static android.text.TextDirectionHeuristics.RTL;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertNotSame;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
@@ -178,6 +179,17 @@ public class PrecomputedTextTest {
         } catch (NullPointerException e) {
             // pass
         }
+    }
+
+    @Test
+    public void testCreateForDifferentDirection() {
+        final Params param = new Params.Builder(PAINT).setTextDirection(LTR).build();
+        final PrecomputedText textWithLTR = PrecomputedText.create(STRING, param);
+        final Params newParam = new Params.Builder(PAINT).setTextDirection(RTL).build();
+        final PrecomputedText textWithRTL = PrecomputedText.create(textWithLTR, newParam);
+        assertNotNull(textWithRTL);
+        assertNotSame(textWithLTR, textWithRTL);
+        assertEquals(textWithLTR.toString(), textWithRTL.toString());
     }
 
     @Test
@@ -650,9 +662,20 @@ public class PrecomputedTextTest {
         final Params params = new Params.Builder(paint).build();
         final PrecomputedText pt = PrecomputedText.create(cs, params);
 
+        final Params rtlParams = new Params.Builder(paint)
+                .setTextDirection(TextDirectionHeuristics.RTL).build();
+        final PrecomputedText rtlPt = PrecomputedText.create(cs, rtlParams);
+        // FIRSTSTRONG_LTR is the default direction.
+        final PrecomputedText ptFromRtl = PrecomputedText.create(rtlPt,
+                new Params.Builder(params).setTextDirection(
+                        TextDirectionHeuristics.FIRSTSTRONG_LTR).build());
+
         final Bitmap originalDrawOutput = drawToBitmap(cs, start, end, ctxStart, ctxEnd, paint);
         final Bitmap precomputedDrawOutput = drawToBitmap(pt, start, end, ctxStart, ctxEnd, paint);
+        final Bitmap precomputedFromDifferentDirectionDrawOutput =
+                drawToBitmap(pt, start, end, ctxStart, ctxEnd, paint);
         assertTrue(originalDrawOutput.sameAs(precomputedDrawOutput));
+        assertTrue(originalDrawOutput.sameAs(precomputedFromDifferentDirectionDrawOutput));
     }
 
     @Test
