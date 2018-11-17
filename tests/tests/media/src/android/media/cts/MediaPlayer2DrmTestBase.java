@@ -23,6 +23,7 @@ import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.res.Resources;
 import android.media.DataSourceDesc;
+import android.media.UriDataSourceDesc;
 import android.media.MediaDrm;
 import android.media.MediaPlayer2;
 import android.media.MediaPlayer2.DrmInfo;
@@ -274,7 +275,7 @@ public class MediaPlayer2DrmTestBase extends ActivityInstrumentationTestCase2<Me
 
         mPlayer.registerEventCallback(mExecutor, mECb);
         Log.v(TAG, "playLoadedVideo: setDataSource()");
-        DataSourceDesc dsd = new DataSourceDesc.Builder().setDataSource(mContext, file).build();
+        DataSourceDesc dsd = new UriDataSourceDesc.Builder().setDataSource(mContext, file).build();
         mPlayer.setDataSource(dsd);
         mSetDataSourceCallCompleted.waitForSignal();
         if (mCallStatus != MediaPlayer2.CALL_STATUS_NO_ERROR) {
@@ -542,7 +543,7 @@ public class MediaPlayer2DrmTestBase extends ActivityInstrumentationTestCase2<Me
             boolean restoreRound = (round == 1);
             Log.v(TAG, "playLoadedVideo: round " + round);
 
-            DataSourceDesc.Builder dsdBuilder = new DataSourceDesc.Builder();
+            UriDataSourceDesc.Builder dsdBuilder = new UriDataSourceDesc.Builder();
             DataSourceDesc dsd = dsdBuilder.setDataSource(mContext, file).build();
             try {
                 mPlayer.registerEventCallback(mExecutor, mECb);
