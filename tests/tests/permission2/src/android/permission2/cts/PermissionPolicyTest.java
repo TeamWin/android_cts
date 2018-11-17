@@ -267,6 +267,9 @@ public class PermissionPolicyTest extends AndroidTestCase {
                 case "textClassifier": {
                     protectionLevel |= PermissionInfo.PROTECTION_FLAG_SYSTEM_TEXT_CLASSIFIER;
                 } break;
+                case "wellbeing": {
+                    protectionLevel |= PermissionInfo.PROTECTION_FLAG_WELLBEING;
+                } break;
                 case "instant": {
                     protectionLevel |= PermissionInfo.PROTECTION_FLAG_INSTANT;
                 } break;
