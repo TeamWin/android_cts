@@ -167,16 +167,28 @@ public class LightBarTestBase {
         }
         assumeNavigationBarChangesColor(backgroundColorPixelCount, pixels.length);
 
+        int diffCount = 0;
         for (int col = 0; col < bitmap.getWidth(); col++) {
             if (isInsideCutout(col, shiftY)) {
                 continue;
             }
 
             if (dividerColor != pixels[col]) {
+                diffCount++;
+            }
+        }
+
+        boolean success = false;
+        try {
+            assertLessThan(String.format(Locale.ENGLISH,
+                    "There are invalid color pixels. expected= 0x%08x", dividerColor),
+                    0.3f, (float) diffCount / (float)bitmap.getWidth(),
+                    "Is the divider colored according to android:navigationBarDividerColor "
+                            + " in the theme?");
+            success = true;
+        } finally {
+            if (!success) {
                 dumpBitmap(bitmap, methodName);
-                fail(String.format(Locale.ENGLISH,
-                        "Invalid color expected= 0x%08x, actual= 0x%08x",
-                        dividerColor, pixels[col]));
             }
         }
     }
@@ -205,5 +217,19 @@ public class LightBarTestBase {
             }
         }
         return false;
+    }
+
+    protected void assertMoreThan(String what, float expected, float actual, String hint) {
+        if (!(actual > expected)) {
+            fail(what + ": expected more than " + expected * 100 + "%, but only got " + actual * 100
+                    + "%; " + hint);
+        }
+    }
+
+    protected void assertLessThan(String what, float expected, float actual, String hint) {
+        if (!(actual < expected)) {
+            fail(what + ": expected less than " + expected * 100 + "%, but got " + actual * 100
+                    + "%; " + hint);
+        }
     }
 }

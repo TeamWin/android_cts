@@ -52,10 +52,6 @@ public class PermissionsHostTest extends DeviceTestCase implements IAbiReceiver,
     private static final String APK_ESCLATE_TO_RUNTIME_PERMISSIONS =
             "CtsEscalateToRuntimePermissions.apk";
 
-    private static final String APK_ACCESS_SERIAL_LEGACY = "CtsAccessSerialLegacy.apk";
-    private static final String APK_ACCESS_SERIAL_MODERN = "CtsAccessSerialModern.apk";
-    private static final String ACCESS_SERIAL_PKG = "android.os.cts";
-
     private static final String REVIEW_HELPER_APK = "ReviewPermissionHelper.apk";
     private static final String REVIEW_HELPER_PKG = "com.android.cts.reviewpermissionhelper";
     private static final String REVIEW_HELPER_TEST_CLASS = REVIEW_HELPER_PKG
@@ -99,7 +95,6 @@ public class PermissionsHostTest extends DeviceTestCase implements IAbiReceiver,
         getDevice().uninstallPackage(USES_PERMISSION_PKG);
         getDevice().uninstallPackage(ESCALATE_PERMISSION_PKG);
         getDevice().uninstallPackage(PERMISSION_POLICY_25_PKG);
-        getDevice().uninstallPackage(ACCESS_SERIAL_PKG);
 
         // Set screen timeout to 30 min to not timeout while waiting for UI to change
         mScreenTimeoutBeforeTest = getDevice().getSetting(SCREEN_OFF_TIMEOUT_NS,
@@ -121,7 +116,6 @@ public class PermissionsHostTest extends DeviceTestCase implements IAbiReceiver,
         getDevice().uninstallPackage(USES_PERMISSION_PKG);
         getDevice().uninstallPackage(ESCALATE_PERMISSION_PKG);
         getDevice().uninstallPackage(PERMISSION_POLICY_25_PKG);
-        getDevice().uninstallPackage(ACCESS_SERIAL_PKG);
     }
 
     public void testFail() throws Exception {
@@ -417,23 +411,6 @@ public class PermissionsHostTest extends DeviceTestCase implements IAbiReceiver,
         assertNull(getDevice().installPackage(mBuildHelper.getTestFile(APK_23), false, false));
         runDeviceTests(USES_PERMISSION_PKG, "com.android.cts.usepermission.UsePermissionTest23",
                 "testInvalidPermission");
-    }
-
-
-    public void testSerialAccessPolicy() throws Exception {
-        // Verify legacy app behavior
-        assertNull(getDevice().installPackage(mBuildHelper.getTestFile(
-                APK_ACCESS_SERIAL_LEGACY), false, false));
-        runDeviceTests(ACCESS_SERIAL_PKG,
-                "android.os.cts.AccessSerialLegacyTest",
-                "testAccessSerialNoPermissionNeeded");
-
-        // Verify modern app behavior
-        assertNull(getDevice().installPackage(mBuildHelper.getTestFile(
-                APK_ACCESS_SERIAL_MODERN), true, false));
-        runDeviceTests(ACCESS_SERIAL_PKG,
-                "android.os.cts.AccessSerialModernTest",
-                "testAccessSerialPermissionNeeded");
     }
 
     public void testPermissionSplit28() throws Exception {

@@ -71,7 +71,7 @@ public final class StaticLayoutGetLineLeftRightTest {
     @Parameterized.Parameters(name = "leadingMargin {0} align {1} dir {2}")
     public static Collection<Object[]> cases() {
         final Alignment[] aligns = new Alignment[]{Alignment.ALIGN_NORMAL, Alignment.ALIGN_OPPOSITE,
-                Alignment.ALIGN_CENTER};
+                Alignment.ALIGN_CENTER, null};
         // Use String to generate a meaningful test name,
         final TextDirectionHeuristic[] dirs = new TextDirectionHeuristic[]
                 {TextDirectionHeuristics.LTR, TextDirectionHeuristics.RTL};
@@ -115,6 +115,10 @@ public final class StaticLayoutGetLineLeftRightTest {
                 .setTextDirection(mDir)
                 .build();
 
+        if (mAlign == null) {
+            mExpectedAlign = ALIGN_CENTER;
+            return;
+        }
         switch (mAlign) {
             case ALIGN_NORMAL:
                 if (dir == TextDirectionHeuristics.RTL) {

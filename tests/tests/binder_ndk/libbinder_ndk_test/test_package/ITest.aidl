@@ -35,6 +35,14 @@ interface ITest {
     void TestVoidReturn();
     oneway void TestOneway();
 
+    int GiveMeMyCallingPid();
+    int GiveMeMyCallingUid();
+
+    // This must be called before calling one of the give-me methods below
+    oneway void CacheCallingInfoFromOneway();
+    int GiveMeMyCallingPidFromOneway();
+    int GiveMeMyCallingUidFromOneway();
+
     // Sending/receiving primitive types.
     int RepeatInt(int value);
     long RepeatLong(long value);
@@ -45,11 +53,14 @@ interface ITest {
     byte RepeatByte(byte value);
 
     IBinder RepeatBinder(IBinder value);
+    @nullable IBinder RepeatNullableBinder(@nullable IBinder value);
     IEmpty RepeatInterface(IEmpty value);
+    @nullable IEmpty RepeatNullableInterface(@nullable IEmpty value);
 
     ParcelFileDescriptor RepeatFd(in ParcelFileDescriptor fd);
 
     String RepeatString(String value);
+    @nullable String RepeatNullableString(@nullable String value);
 
     RegularPolygon RepeatPolygon(in RegularPolygon value);
 
@@ -65,4 +76,14 @@ interface ITest {
     float[] RepeatFloatArray(in float[] input, out float[] repeated);
     double[] RepeatDoubleArray(in double[] input, out double[] repeated);
     String[] RepeatStringArray(in String[] input, out String[] repeated);
+
+    // Nullable Arrays
+    @nullable boolean[] RepeatNullableBooleanArray(in @nullable boolean[] input);
+    @nullable byte[] RepeatNullableByteArray(in @nullable byte[] input);
+    @nullable char[] RepeatNullableCharArray(in @nullable char[] input);
+    @nullable int[] RepeatNullableIntArray(in @nullable int[] input);
+    @nullable long[] RepeatNullableLongArray(in @nullable long[] input);
+    @nullable float[] RepeatNullableFloatArray(in @nullable float[] input);
+    @nullable double[] RepeatNullableDoubleArray(in @nullable double[] input);
+    @nullable String[] RepeatNullableStringArray(in @nullable String[] input, out @nullable String[] repeated);
 }

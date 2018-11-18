@@ -39,10 +39,13 @@ import android.support.test.rule.ActivityTestRule;
 import android.support.test.runner.AndroidJUnit4;
 import android.util.DisplayMetrics;
 import android.view.ContextThemeWrapper;
+import android.view.Gravity;
 import android.view.View;
+import android.widget.HorizontalScrollView;
 import android.widget.LinearLayout;
 import android.widget.LinearLayout.LayoutParams;
 import android.widget.Magnifier;
+import android.widget.ScrollView;
 
 import com.android.compatibility.common.util.PollingCheck;
 import com.android.compatibility.common.util.WidgetTestUtils;
@@ -547,6 +550,289 @@ public class MagnifierTest {
         new Magnifier(view).setZoom(-1f);
     }
 
+    @Test
+    public void testSourcePosition_respectsMaxVisibleBounds_inHorizontalScrollableContainer()
+            throws Throwable {
+        // TODO: this setup is similar for this and a few other methods, deduplicate
+        WidgetTestUtils.runOnMainAndLayoutSync(mActivityRule, () -> {
+            mActivity.setContentView(R.layout.magnifier_activity_scrollable_views_layout);
+        }, false /*forceLayout*/);
+        final View view = mActivity
+                .findViewById(R.id.magnifier_activity_horizontally_scrolled_view);
+        final HorizontalScrollView container = (HorizontalScrollView) mActivity
+                .findViewById(R.id.horizontal_scroll_container);
+        final Magnifier.Builder builder = new Magnifier.Builder(view)
+                .setSize(100, 100)
+                .setZoom(20f) /* 5x5 source size */
+                .setSourceBounds(
+                        Magnifier.SOURCE_BOUND_MAX_VISIBLE,
+                        Magnifier.SOURCE_BOUND_MAX_IN_SURFACE,
+                        Magnifier.SOURCE_BOUND_MAX_VISIBLE,
+                        Magnifier.SOURCE_BOUND_MAX_IN_SURFACE
+                );
+
+        mActivityRule.runOnUiThread(() -> {
+            mMagnifier = builder.build();
+            // Scroll halfway horizontally.
+            container.scrollTo(view.getWidth() / 2, 0);
+        });
+        WidgetTestUtils.runOnMainAndDrawSync(mActivityRule, view, null);
+
+        final int[] containerPosition = new int[2];
+        container.getLocationInSurface(containerPosition);
+
+        // Try to copy from an x to the left of the currently visible region.
+        showMagnifier(view.getWidth() / 4, 0);
+        Point sourcePosition = mMagnifier.getSourcePosition();
+        assertEquals(containerPosition[0], sourcePosition.x);
+
+        // Try to copy from an x to the right of the currently visible region.
+        showMagnifier(3 * view.getWidth() / 4, 0);
+        sourcePosition = mMagnifier.getSourcePosition();
+        assertEquals(containerPosition[0] + container.getWidth() - mMagnifier.getSourceWidth() + 1,
+                sourcePosition.x);
+    }
+
+    @Test
+    public void testSourcePosition_respectsMaxVisibleBounds_inVerticalScrollableContainer()
+            throws Throwable {
+        WidgetTestUtils.runOnMainAndLayoutSync(mActivityRule, () -> {
+            mActivity.setContentView(R.layout.magnifier_activity_scrollable_views_layout);
+        }, false /*forceLayout*/);
+        final View view = mActivity.findViewById(R.id.magnifier_activity_vertically_scrolled_view);
+        final ScrollView container = (ScrollView) mActivity
+                .findViewById(R.id.vertical_scroll_container);
+        final Magnifier.Builder builder = new Magnifier.Builder(view)
+                .setSize(100, 100)
+                .setZoom(10f) /* 10x10 source size */
+                .setSourceBounds(
+                        Magnifier.SOURCE_BOUND_MAX_IN_SURFACE,
+                        Magnifier.SOURCE_BOUND_MAX_VISIBLE,
+                        Magnifier.SOURCE_BOUND_MAX_IN_SURFACE,
+                        Magnifier.SOURCE_BOUND_MAX_VISIBLE
+                );
+
+        mActivityRule.runOnUiThread(() -> {
+            mMagnifier = builder.build();
+            // Scroll halfway vertically.
+            container.scrollTo(0, view.getHeight() / 2);
+        });
+        WidgetTestUtils.runOnMainAndDrawSync(mActivityRule, view, null);
+
+        final int[] containerPosition = new int[2];
+        container.getLocationInSurface(containerPosition);
+
+        // Try to copy from an y above the currently visible region.
+        showMagnifier(0, view.getHeight() / 4);
+        Point sourcePosition = mMagnifier.getSourcePosition();
+        assertEquals(containerPosition[1], sourcePosition.y);
+
+        // Try to copy from an x below the currently visible region.
+        showMagnifier(0, 3 * view.getHeight() / 4);
+        sourcePosition = mMagnifier.getSourcePosition();
+        assertEquals(containerPosition[1] + container.getHeight() - mMagnifier.getSourceHeight(),
+                sourcePosition.y);
+    }
+
+    @Test
+    public void testSourcePosition_respectsMaxInViewBounds() throws Throwable {
+        WidgetTestUtils.runOnMainAndLayoutSync(mActivityRule, () -> {
+            mActivity.setContentView(R.layout.magnifier_activity_centered_view_layout);
+        }, false /*forceLayout*/);
+        final View view = mActivity.findViewById(R.id.magnifier_centered_view);
+        final Magnifier.Builder builder = new Magnifier.Builder(view)
+                .setSize(100, 100)
+                .setZoom(10f) /* 10x10 source size */
+                .setSourceBounds(
+                        Magnifier.SOURCE_BOUND_MAX_IN_VIEW,
+                        Magnifier.SOURCE_BOUND_MAX_IN_VIEW,
+                        Magnifier.SOURCE_BOUND_MAX_IN_VIEW,
+                        Magnifier.SOURCE_BOUND_MAX_IN_VIEW
+                );
+
+        mActivityRule.runOnUiThread(() -> mMagnifier = builder.build());
+        WidgetTestUtils.runOnMainAndDrawSync(mActivityRule, view, null);
+
+        final int[] viewPosition = new int[2];
+        view.getLocationInSurface(viewPosition);
+
+        // Copy content centered on relative position (0, 0) and expect the top left
+        // corner of the source to have been pulled to coincide with (0, 0) of the view.
+        showMagnifier(0, 0);
+        Point sourcePosition = mMagnifier.getSourcePosition();
+        assertEquals(viewPosition[0], sourcePosition.x);
+        assertEquals(viewPosition[1], sourcePosition.y);
+
+        showMagnifier(view.getWidth(), view.getHeight());
+        sourcePosition = mMagnifier.getSourcePosition();
+        assertEquals(viewPosition[0] + view.getWidth() - mMagnifier.getSourceWidth(),
+                sourcePosition.x);
+        assertEquals(viewPosition[1] + view.getHeight() - mMagnifier.getSourceHeight(),
+                sourcePosition.y);
+    }
+
+    @Test
+    public void testSourcePosition_respectsMaxInSurfaceBounds() throws Throwable {
+        WidgetTestUtils.runOnMainAndLayoutSync(mActivityRule, () -> {
+            mActivity.setContentView(R.layout.magnifier_activity_centered_view_layout);
+        }, false /*forceLayout*/);
+        final View view = mActivity.findViewById(R.id.magnifier_centered_view);
+        final Magnifier.Builder builder = new Magnifier.Builder(view)
+                .setSize(100, 100)
+                .setZoom(5f) /* 20x20 source size */
+                .setSourceBounds(
+                        Magnifier.SOURCE_BOUND_MAX_IN_SURFACE,
+                        Magnifier.SOURCE_BOUND_MAX_IN_SURFACE,
+                        Magnifier.SOURCE_BOUND_MAX_IN_SURFACE,
+                        Magnifier.SOURCE_BOUND_MAX_IN_SURFACE
+                );
+
+        mActivityRule.runOnUiThread(() -> mMagnifier = builder.build());
+        WidgetTestUtils.runOnMainAndDrawSync(mActivityRule, view, null);
+
+        final int[] viewPosition = new int[2];
+        view.getLocationInSurface(viewPosition);
+
+        // Copy content centered on relative position (0, 0) and expect the top left
+        // corner of the source NOT to have been pulled to coincide with (0, 0) of the view.
+        showMagnifier(0, 0);
+        Point sourcePosition = mMagnifier.getSourcePosition();
+        assertEquals(viewPosition[0] - mMagnifier.getSourceWidth() / 2, sourcePosition.x);
+        assertEquals(viewPosition[1] - mMagnifier.getSourceHeight() / 2, sourcePosition.y);
+
+        // Copy content centered on the bottom right corner of the view and expect the top left
+        // corner of the source NOT to have been pulled inside the view.
+        showMagnifier(view.getWidth(), view.getHeight());
+        sourcePosition = mMagnifier.getSourcePosition();
+        assertEquals(viewPosition[0] + view.getWidth() - mMagnifier.getSourceWidth() / 2,
+                sourcePosition.x);
+        assertEquals(viewPosition[1] + view.getHeight() - mMagnifier.getSourceHeight() / 2,
+                sourcePosition.y);
+
+        // Copy content centered on the top left corner of the main app surface and expect the top
+        // left corner of the source to have been pulled to the top left corner of the surface.
+        showMagnifier(-viewPosition[0], -viewPosition[1]);
+        sourcePosition = mMagnifier.getSourcePosition();
+        assertEquals(0, sourcePosition.x);
+        assertEquals(0, sourcePosition.y);
+
+        // Copy content centered on the bottom right corner of the main app surface and expect the
+        // source to have been pulled inside the surface at its bottom right.
+        final Rect surfaceInsets = view.getViewRootImpl().mWindowAttributes.surfaceInsets;
+        final int surfaceWidth = view.getViewRootImpl().getWidth() + surfaceInsets.left
+                + surfaceInsets.right;
+        final int surfaceHeight = view.getViewRootImpl().getHeight() + surfaceInsets.top
+                + surfaceInsets.bottom;
+        showMagnifier(surfaceWidth - viewPosition[0] + view.getWidth(),
+                surfaceHeight - viewPosition[1] + view.getHeight());
+        sourcePosition = mMagnifier.getSourcePosition();
+        assertEquals(surfaceWidth - mMagnifier.getSourceWidth(), sourcePosition.x);
+        assertEquals(surfaceHeight - mMagnifier.getSourceHeight(), sourcePosition.y);
+    }
+
+    @Test
+    public void testSourcePosition_respectsMaxInSurfaceBounds_forSurfaceView() throws Throwable {
+        WidgetTestUtils.runOnMainAndLayoutSync(mActivityRule, () -> {
+            mActivity.setContentView(R.layout.magnifier_activity_centered_surfaceview_layout);
+        }, false /*forceLayout*/);
+        final View view = mActivity.findViewById(R.id.magnifier_centered_view);
+        final Magnifier.Builder builder = new Magnifier.Builder(view)
+                .setSize(100, 100)
+                .setZoom(5f) /* 20x20 source size */
+                .setSourceBounds(
+                        Magnifier.SOURCE_BOUND_MAX_IN_SURFACE,
+                        Magnifier.SOURCE_BOUND_MAX_IN_SURFACE,
+                        Magnifier.SOURCE_BOUND_MAX_IN_SURFACE,
+                        Magnifier.SOURCE_BOUND_MAX_IN_SURFACE
+                );
+
+        mActivityRule.runOnUiThread(() -> mMagnifier = builder.build());
+        WidgetTestUtils.runOnMainAndDrawSync(mActivityRule, view, null);
+
+        // Copy content centered on relative position (0, 0) and expect the top left
+        // corner of the source to have been pulled to coincide with (0, 0) of the view
+        // (since the view coincides with the surface content is copied from).
+        showMagnifier(0, 0);
+        Point sourcePosition = mMagnifier.getSourcePosition();
+        assertEquals(0, sourcePosition.x);
+        assertEquals(0, sourcePosition.y);
+
+        // Copy content centered on the bottom right corner of the view and expect the top left
+        // corner of the source to have been pulled inside the surface view.
+        showMagnifier(view.getWidth(), view.getHeight());
+        sourcePosition = mMagnifier.getSourcePosition();
+        assertEquals(view.getWidth() - mMagnifier.getSourceWidth(), sourcePosition.x);
+        assertEquals(view.getHeight() - mMagnifier.getSourceHeight(), sourcePosition.y);
+
+        // Copy content from the center of the surface view and expect no clamping to be done.
+        showMagnifier(view.getWidth() / 2, view.getHeight() / 2);
+        sourcePosition = mMagnifier.getSourcePosition();
+        assertEquals(view.getWidth() / 2 - mMagnifier.getSourceWidth() / 2, sourcePosition.x);
+        assertEquals(view.getHeight() / 2 - mMagnifier.getSourceHeight() / 2, sourcePosition.y);
+    }
+
+    @Test
+    public void testSourceBounds_areAdjustedWhenInvalid() throws Throwable {
+        WidgetTestUtils.runOnMainAndLayoutSync(mActivityRule, () -> {
+            mActivity.setContentView(R.layout.magnifier_activity_centered_view_layout);
+        }, false /*forceLayout*/);
+        final View view = mActivity.findViewById(R.id.magnifier_centered_view);
+        final Insets systemInsets = view.getRootWindowInsets().getSystemWindowInsets();
+        final Magnifier.Builder builder = new Magnifier.Builder(view)
+                .setSize(2 * view.getWidth() + systemInsets.right,
+                        2 * view.getHeight() + systemInsets.bottom)
+                .setZoom(1f) /* source double the size of the view + right/bottom insets */
+                .setSourceBounds(/* invalid bounds */
+                        Magnifier.SOURCE_BOUND_MAX_IN_VIEW,
+                        Magnifier.SOURCE_BOUND_MAX_IN_VIEW,
+                        Magnifier.SOURCE_BOUND_MAX_IN_VIEW,
+                        Magnifier.SOURCE_BOUND_MAX_IN_VIEW
+                );
+
+        mActivityRule.runOnUiThread(() -> mMagnifier = builder.build());
+        WidgetTestUtils.runOnMainAndDrawSync(mActivityRule, view, null);
+
+        final int[] viewPosition = new int[2];
+        view.getLocationInSurface(viewPosition);
+
+        // Make sure that the left and top bounds are respected, since this is possible
+        // for this source size, when the view is centered.
+        showMagnifier(0, 0);
+        Point sourcePosition = mMagnifier.getSourcePosition();
+        assertEquals(viewPosition[0], sourcePosition.x);
+        assertEquals(viewPosition[1], sourcePosition.y);
+
+        // Move the magnified view to the top left of the screen, and make sure that
+        // the top and left bounds are still respected.
+        mActivityRule.runOnUiThread(() -> {
+            final LinearLayout layout =
+                    mActivity.findViewById(R.id.magnifier_activity_centered_view_layout);
+            layout.setGravity(Gravity.TOP | Gravity.LEFT);
+        });
+        WidgetTestUtils.runOnMainAndDrawSync(mActivityRule, view, null);
+        view.getLocationInSurface(viewPosition);
+
+        showMagnifier(0, 0);
+        sourcePosition = mMagnifier.getSourcePosition();
+        assertEquals(viewPosition[0], sourcePosition.x);
+        assertEquals(viewPosition[1], sourcePosition.y);
+
+        // Move the magnified view to the bottom right of the layout, and expect the top and left
+        // bounds to have been shifted such that the source sits inside the surface.
+        mActivityRule.runOnUiThread(() -> {
+            final LinearLayout layout =
+                    mActivity.findViewById(R.id.magnifier_activity_centered_view_layout);
+            layout.setGravity(Gravity.BOTTOM | Gravity.RIGHT);
+        });
+        WidgetTestUtils.runOnMainAndDrawSync(mActivityRule, view, null);
+        view.getLocationInSurface(viewPosition);
+
+        showMagnifier(0, 0);
+        sourcePosition = mMagnifier.getSourcePosition();
+        assertEquals(viewPosition[0] - view.getWidth(), sourcePosition.x);
+        assertEquals(viewPosition[1] - view.getHeight(), sourcePosition.y);
+    }
+
     private void showMagnifier(float sourceX, float sourceY) throws Throwable {
         runAndWaitForMagnifierOperationComplete(() -> mMagnifier.show(sourceX, sourceY));
     }
@@ -561,7 +847,7 @@ public class MagnifierTest {
         final CountDownLatch latch = new CountDownLatch(1);
         mMagnifier.setOnOperationCompleteCallback(latch::countDown);
         mActivityRule.runOnUiThread(lambda);
-        assertTrue(TIME_LIMIT_EXCEEDED, latch.await(1, TimeUnit.SECONDS));
+        assertTrue(TIME_LIMIT_EXCEEDED, latch.await(3, TimeUnit.SECONDS));
     }
 
     /**

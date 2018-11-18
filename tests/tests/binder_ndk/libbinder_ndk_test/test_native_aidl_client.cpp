@@ -65,6 +65,28 @@ TEST_P(NdkBinderTest_Aidl, Trivial) {
   ASSERT_OK(iface->TestOneway());
 }
 
+TEST_P(NdkBinderTest_Aidl, CallingInfo) {
+  EXPECT_OK(iface->CacheCallingInfoFromOneway());
+  int32_t res;
+
+  EXPECT_OK(iface->GiveMeMyCallingPid(&res));
+  EXPECT_EQ(getpid(), res);
+
+  EXPECT_OK(iface->GiveMeMyCallingUid(&res));
+  EXPECT_EQ(getuid(), res);
+
+  EXPECT_OK(iface->GiveMeMyCallingPidFromOneway(&res));
+  if (shouldBeRemote) {
+    // PID is hidden from oneway calls
+    EXPECT_EQ(0, res);
+  } else {
+    EXPECT_EQ(getpid(), res);
+  }
+
+  EXPECT_OK(iface->GiveMeMyCallingUidFromOneway(&res));
+  EXPECT_EQ(getuid(), res);
+}
+
 TEST_P(NdkBinderTest_Aidl, Constants) {
   ASSERT_EQ(0, ITest::kZero);
   ASSERT_EQ(1, ITest::kOne);
@@ -124,7 +146,10 @@ TEST_P(NdkBinderTest_Aidl, RepeatBinder) {
   ASSERT_OK(iface->RepeatBinder(binder, &ret));
   EXPECT_EQ(binder.get(), ret.get());
 
-  ASSERT_OK(iface->RepeatBinder(nullptr, &ret));
+  ASSERT_OK(iface->RepeatNullableBinder(binder, &ret));
+  EXPECT_EQ(binder.get(), ret.get());
+
+  ASSERT_OK(iface->RepeatNullableBinder(nullptr, &ret));
   EXPECT_EQ(nullptr, ret.get());
 }
 
@@ -137,7 +162,10 @@ TEST_P(NdkBinderTest_Aidl, RepeatInterface) {
   ASSERT_OK(iface->RepeatInterface(empty, &ret));
   EXPECT_EQ(empty.get(), ret.get());
 
-  ASSERT_OK(iface->RepeatInterface(nullptr, &ret));
+  ASSERT_OK(iface->RepeatNullableInterface(empty, &ret));
+  EXPECT_EQ(empty.get(), ret.get());
+
+  ASSERT_OK(iface->RepeatNullableInterface(nullptr, &ret));
   EXPECT_EQ(nullptr, ret.get());
 }
 
@@ -182,6 +210,22 @@ TEST_P(NdkBinderTest_Aidl, RepeatString) {
 
   EXPECT_OK(iface->RepeatString("say what?", &res));
   EXPECT_EQ("say what?", res);
+}
+
+TEST_P(NdkBinderTest_Aidl, RepeatNullableString) {
+  std::optional<std::string> res;
+
+  EXPECT_OK(iface->RepeatNullableString(std::nullopt, &res));
+  EXPECT_EQ(std::nullopt, res);
+
+  EXPECT_OK(iface->RepeatNullableString("", &res));
+  EXPECT_EQ("", *res);
+
+  EXPECT_OK(iface->RepeatNullableString("a", &res));
+  EXPECT_EQ("a", *res);
+
+  EXPECT_OK(iface->RepeatNullableString("say what?", &res));
+  EXPECT_EQ("say what?", *res);
 }
 
 TEST_P(NdkBinderTest_Aidl, ParcelableDefaults) {
@@ -272,7 +316,109 @@ TEST_P(NdkBinderTest_Aidl, Arrays) {
                           {
                               {},
                               {"asdf"},
-                              {"aoeu", "lol", "brb"},
+                              {"", "aoeu", "lol", "brb"},
+                          });
+}
+
+template <typename T>
+using RepeatNullableMethod = ScopedAStatus (ITest::*)(
+    const std::optional<std::vector<std::optional<T>>>&,
+    std::optional<std::vector<std::optional<T>>>*,
+    std::optional<std::vector<std::optional<T>>>*);
+
+template <typename T>
+void testRepeat(
+    const std::shared_ptr<ITest>& i, RepeatNullableMethod<T> repeatMethod,
+    std::vector<std::optional<std::vector<std::optional<T>>>> tests) {
+  for (const auto& input : tests) {
+    std::optional<std::vector<std::optional<T>>> out1;
+    if (input) {
+      out1 = std::vector<std::optional<T>>{};
+      out1->resize(input->size());
+    }
+    std::optional<std::vector<std::optional<T>>> out2;
+
+    ASSERT_OK((i.get()->*repeatMethod)(input, &out1, &out2))
+        << (input ? input->size() : -1);
+    EXPECT_EQ(input, out1);
+    EXPECT_EQ(input, out2);
+  }
+}
+
+template <typename T>
+using SingleRepeatNullableMethod = ScopedAStatus (ITest::*)(
+    const std::optional<std::vector<T>>&, std::optional<std::vector<T>>*);
+
+template <typename T>
+void testRepeat(const std::shared_ptr<ITest>& i,
+                SingleRepeatNullableMethod<T> repeatMethod,
+                std::vector<std::optional<std::vector<T>>> tests) {
+  for (const auto& input : tests) {
+    std::optional<std::vector<T>> ret;
+    ASSERT_OK((i.get()->*repeatMethod)(input, &ret))
+        << (input ? input->size() : -1);
+    EXPECT_EQ(input, ret);
+  }
+}
+
+TEST_P(NdkBinderTest_Aidl, NullableArrays) {
+  testRepeat<bool>(iface, &ITest::RepeatNullableBooleanArray,
+                   {
+                       std::nullopt,
+                       {{}},
+                       {{true}},
+                       {{false, true, false}},
+                   });
+  testRepeat<int8_t>(iface, &ITest::RepeatNullableByteArray,
+                     {
+                         std::nullopt,
+                         {{}},
+                         {{1}},
+                         {{1, 2, 3}},
+                     });
+  testRepeat<char16_t>(iface, &ITest::RepeatNullableCharArray,
+                       {
+                           std::nullopt,
+                           {{}},
+                           {{L'@'}},
+                           {{L'@', L'!', L'A'}},
+                       });
+  testRepeat<int32_t>(iface, &ITest::RepeatNullableIntArray,
+                      {
+                          std::nullopt,
+                          {{}},
+                          {{1}},
+                          {{1, 2, 3}},
+                      });
+  testRepeat<int64_t>(iface, &ITest::RepeatNullableLongArray,
+                      {
+                          std::nullopt,
+                          {{}},
+                          {{1}},
+                          {{1, 2, 3}},
+                      });
+  testRepeat<float>(iface, &ITest::RepeatNullableFloatArray,
+                    {
+                        std::nullopt,
+                        {{}},
+                        {{1.0f}},
+                        {{1.0f, 2.0f, 3.0f}},
+                    });
+  testRepeat<double>(iface, &ITest::RepeatNullableDoubleArray,
+                     {
+                         std::nullopt,
+                         {{}},
+                         {{1.0}},
+                         {{1.0, 2.0, 3.0}},
+                     });
+  testRepeat<std::string>(iface, &ITest::RepeatNullableStringArray,
+                          {
+                              // std::nullopt, TODO(b/119580050)
+                              {{}},
+                              {{"asdf"}},
+                              {{std::nullopt}},
+                              {{"aoeu", "lol", "brb"}},
+                              {{"", "aoeu", std::nullopt, "brb"}},
                           });
 }
 

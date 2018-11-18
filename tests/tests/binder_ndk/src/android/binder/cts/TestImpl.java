@@ -16,12 +16,16 @@
 
 package android.binder.cts;
 
+import android.os.Binder;
 import android.os.IBinder;
 import android.os.ParcelFileDescriptor;
+import android.os.RemoteException;
 
 import test_package.IEmpty;
 import test_package.ITest;
 import test_package.RegularPolygon;
+
+import java.util.concurrent.CountDownLatch;
 
 public class TestImpl extends ITest.Stub {
   @Override
@@ -34,6 +38,50 @@ public class TestImpl extends ITest.Stub {
 
   @Override
   public void TestOneway() {}
+
+  @Override
+  public int GiveMeMyCallingPid() {
+    return Binder.getCallingPid();
+  }
+
+  @Override
+  public int GiveMeMyCallingUid() {
+    return Binder.getCallingUid();
+  }
+
+  private CountDownLatch mCachedLatch = new CountDownLatch(1);
+  private int mCachedPid = -1;
+  private int mCachedUid = -1;
+
+  private void waitForCachedOnewayInfo() {
+    try {
+      mCachedLatch.await();
+    } catch (InterruptedException e) {
+      // This thread is never expected to be interrupted during this test. This will be
+      // converted to a RemoteException on the other side and cause the test to fail.
+
+      throw new RuntimeException(e.toString());
+    }
+  }
+
+  @Override
+  public void CacheCallingInfoFromOneway() {
+    mCachedLatch.countDown();
+    mCachedPid = Binder.getCallingPid();
+    mCachedUid = Binder.getCallingUid();
+  }
+
+  @Override
+  public int GiveMeMyCallingPidFromOneway() {
+    waitForCachedOnewayInfo();
+    return mCachedPid;
+  }
+
+  @Override
+  public int GiveMeMyCallingUidFromOneway() {
+    waitForCachedOnewayInfo();
+    return mCachedUid;
+  }
 
   @Override
   public int RepeatInt(int in_value) {
@@ -76,7 +124,17 @@ public class TestImpl extends ITest.Stub {
   }
 
   @Override
+  public IBinder RepeatNullableBinder(IBinder in_value) {
+    return in_value;
+  }
+
+  @Override
   public IEmpty RepeatInterface(IEmpty in_value) {
+    return in_value;
+  }
+
+  @Override
+  public IEmpty RepeatNullableInterface(IEmpty in_value) {
     return in_value;
   }
 
@@ -87,6 +145,11 @@ public class TestImpl extends ITest.Stub {
 
   @Override
   public String RepeatString(String in_value) {
+    return in_value;
+  }
+
+  @Override
+  public String RepeatNullableString(String in_value) {
     return in_value;
   }
 
@@ -144,6 +207,51 @@ public class TestImpl extends ITest.Stub {
 
   @Override
   public String[] RepeatStringArray(String[] in_value, String[] repeated) {
+    System.arraycopy(in_value, 0, repeated, 0, in_value.length);
+    return in_value;
+  }
+
+  @Override
+  public boolean[] RepeatNullableBooleanArray(boolean[] in_value) {
+    return in_value;
+  }
+
+  @Override
+  public byte[] RepeatNullableByteArray(byte[] in_value) {
+    return in_value;
+  }
+
+  @Override
+  public char[] RepeatNullableCharArray(char[] in_value) {
+    return in_value;
+  }
+
+  @Override
+  public int[] RepeatNullableIntArray(int[] in_value) {
+    return in_value;
+  }
+
+  @Override
+  public long[] RepeatNullableLongArray(long[] in_value) {
+    return in_value;
+  }
+
+  @Override
+  public float[] RepeatNullableFloatArray(float[] in_value) {
+    return in_value;
+  }
+
+  @Override
+  public double[] RepeatNullableDoubleArray(double[] in_value) {
+    return in_value;
+  }
+
+  @Override
+  public String[] RepeatNullableStringArray(String[] in_value, String[] repeated) {
+    if (in_value == null) {
+      return null; // can't do anything to repeated
+    }
+
     System.arraycopy(in_value, 0, repeated, 0, in_value.length);
     return in_value;
   }

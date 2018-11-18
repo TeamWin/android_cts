@@ -42,7 +42,7 @@ public class BackgroundPermissionsTest {
 
     @Test
     @AppModeFull(reason = "Instant apps cannot read properties of other packages")
-    public void backgroundPermissionsNeedToBeInSameGroupAsForegroundPermissions() throws Exception {
+    public void verifybackgroundPermissionsProperties() throws Exception {
         PackageInfo pkg = InstrumentationRegistry.getContext().getPackageManager().getPackageInfo(
                 "android", PackageManager.GET_PERMISSIONS);
         ArrayMap<String, String> potentialBackgroundPermissionsToGroup = new ArrayMap<>();
@@ -67,19 +67,12 @@ public class BackgroundPermissionsTest {
                 // foreground permissions must be dangerous
                 assertNotEquals(0, permission.getProtection() & PROTECTION_DANGEROUS);
 
-                // foreground permissions must be in a group
-                assertNotNull(permission.group);
-
                 // All foreground permissions need an app op
                 assertNotNull(AppOpsManager.permissionToOp(permission.name));
 
                 // the background permission must exist
                 assertTrue(potentialBackgroundPermissionsToGroup
                         .containsKey(backgroundPermissionName));
-
-                // the foreground and background permission must be in the same group
-                assertEquals(permission.group,
-                        potentialBackgroundPermissionsToGroup.get(backgroundPermissionName));
             }
         }
     }

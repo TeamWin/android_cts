@@ -92,6 +92,13 @@ TEST_F(NdkBinderTest_AIBinder, LinkInProcess) {
   AIBinder_decStrong(binder);
 }
 
+TEST_F(NdkBinderTest_AIBinder, GetCallingWhenNoCalling) {
+  // Calling UID/PID are current calling UID/PID if there isn't an incoming
+  // call.
+  EXPECT_EQ(getuid(), AIBinder_getCallingUid());
+  EXPECT_EQ(getpid(), AIBinder_getCallingPid());
+}
+
 TEST_F(NdkBinderTest_AIBinder, DebugRefCount) {
   AIBinder* binder = SampleData::newBinder();
   EXPECT_EQ(1, AIBinder_debugGetRefCount(binder));

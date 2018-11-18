@@ -16,6 +16,8 @@
 
 package android.media.cts;
 
+import static org.junit.Assert.assertNotEquals;
+
 import android.icu.util.ULocale;
 import android.media.AudioPresentation;
 import android.util.Log;
@@ -56,6 +58,127 @@ public class AudioPresentationTest extends CtsAndroidTestCase {
         assertEquals(HAS_AUDIO_DESCRIPTION, presentation.hasAudioDescription());
         assertEquals(HAS_SPOKEN_SUBTITLES, presentation.hasSpokenSubtitles());
         assertEquals(HAS_DIALOGUE_ENHANCEMENT, presentation.hasDialogueEnhancement());
+    }
+
+    public void testEqualsAndHashCode() throws Exception {
+        final int PRESENTATION_ID = 42;
+        final int PROGRAM_ID = 43;
+        final Map<Locale, String> LABELS = generateLabels();
+        final Locale LOCALE = Locale.US;
+        final Locale LOCALE_3 = Locale.FRENCH;
+        final int MASTERING_INDICATION = AudioPresentation.MASTERED_FOR_STEREO;
+        final int MASTERING_INDICATION_3 = AudioPresentation.MASTERED_FOR_HEADPHONE;
+        final boolean HAS_AUDIO_DESCRIPTION = false;
+        final boolean HAS_SPOKEN_SUBTITLES = true;
+        final boolean HAS_DIALOGUE_ENHANCEMENT = true;
+
+        {
+            AudioPresentation presentation1 = (new AudioPresentation.Builder(PRESENTATION_ID))
+                    .build();
+            assertEquals(presentation1, presentation1);
+            assertNotEquals(presentation1, null);
+            assertNotEquals(presentation1, new Object());
+            AudioPresentation presentation2 = (new AudioPresentation.Builder(PRESENTATION_ID))
+                    .build();
+            assertEquals(presentation1, presentation2);
+            assertEquals(presentation2, presentation1);
+            assertEquals(presentation1.hashCode(), presentation2.hashCode());
+            AudioPresentation presentation3 = (new AudioPresentation.Builder(PRESENTATION_ID + 1))
+                    .build();
+            assertNotEquals(presentation1, presentation3);
+            assertNotEquals(presentation1.hashCode(), presentation3.hashCode());
+        }
+        {
+            AudioPresentation presentation1 = (new AudioPresentation.Builder(PRESENTATION_ID)
+                    .setProgramId(PROGRAM_ID)).build();
+            AudioPresentation presentation2 = (new AudioPresentation.Builder(PRESENTATION_ID)
+                    .setProgramId(PROGRAM_ID)).build();
+            assertEquals(presentation1, presentation2);
+            assertEquals(presentation2, presentation1);
+            assertEquals(presentation1.hashCode(), presentation2.hashCode());
+            AudioPresentation presentation3 = (new AudioPresentation.Builder(PRESENTATION_ID)
+                    .setProgramId(PROGRAM_ID + 1)).build();
+            assertNotEquals(presentation1, presentation3);
+            assertNotEquals(presentation1.hashCode(), presentation3.hashCode());
+        }
+        {
+            AudioPresentation presentation1 = (new AudioPresentation.Builder(PRESENTATION_ID)
+                    .setLocale(ULocale.forLocale(LOCALE))).build();
+            AudioPresentation presentation2 = (new AudioPresentation.Builder(PRESENTATION_ID)
+                    .setLocale(ULocale.forLocale(LOCALE))).build();
+            assertEquals(presentation1, presentation2);
+            assertEquals(presentation2, presentation1);
+            assertEquals(presentation1.hashCode(), presentation2.hashCode());
+            AudioPresentation presentation3 = (new AudioPresentation.Builder(PRESENTATION_ID)
+                    .setLocale(ULocale.forLocale(LOCALE_3))).build();
+            assertNotEquals(presentation1, presentation3);
+            assertNotEquals(presentation1.hashCode(), presentation3.hashCode());
+        }
+        {
+            AudioPresentation presentation1 = (new AudioPresentation.Builder(PRESENTATION_ID)
+                    .setLabels(localeToULocale(LABELS))).build();
+            AudioPresentation presentation2 = (new AudioPresentation.Builder(PRESENTATION_ID)
+                    .setLabels(localeToULocale(LABELS))).build();
+            assertEquals(presentation1, presentation2);
+            assertEquals(presentation2, presentation1);
+            assertEquals(presentation1.hashCode(), presentation2.hashCode());
+            AudioPresentation presentation3 = (new AudioPresentation.Builder(PRESENTATION_ID)
+                    .setLabels(new HashMap<ULocale, String>())).build();
+            assertNotEquals(presentation1, presentation3);
+            assertNotEquals(presentation1.hashCode(), presentation3.hashCode());
+        }
+        {
+            AudioPresentation presentation1 = (new AudioPresentation.Builder(PRESENTATION_ID)
+                    .setMasteringIndication(MASTERING_INDICATION)).build();
+            AudioPresentation presentation2 = (new AudioPresentation.Builder(PRESENTATION_ID)
+                    .setMasteringIndication(MASTERING_INDICATION)).build();
+            assertEquals(presentation1, presentation2);
+            assertEquals(presentation2, presentation1);
+            assertEquals(presentation1.hashCode(), presentation2.hashCode());
+            AudioPresentation presentation3 = (new AudioPresentation.Builder(PRESENTATION_ID)
+                    .setMasteringIndication(MASTERING_INDICATION_3)).build();
+            assertNotEquals(presentation1, presentation3);
+            assertNotEquals(presentation1.hashCode(), presentation3.hashCode());
+        }
+        {
+            AudioPresentation presentation1 = (new AudioPresentation.Builder(PRESENTATION_ID)
+                    .setHasAudioDescription(HAS_AUDIO_DESCRIPTION)).build();
+            AudioPresentation presentation2 = (new AudioPresentation.Builder(PRESENTATION_ID)
+                    .setHasAudioDescription(HAS_AUDIO_DESCRIPTION)).build();
+            assertEquals(presentation1, presentation2);
+            assertEquals(presentation2, presentation1);
+            assertEquals(presentation1.hashCode(), presentation2.hashCode());
+            AudioPresentation presentation3 = (new AudioPresentation.Builder(PRESENTATION_ID)
+                    .setHasAudioDescription(!HAS_AUDIO_DESCRIPTION)).build();
+            assertNotEquals(presentation1, presentation3);
+            assertNotEquals(presentation1.hashCode(), presentation3.hashCode());
+        }
+        {
+            AudioPresentation presentation1 = (new AudioPresentation.Builder(PRESENTATION_ID)
+                    .setHasSpokenSubtitles(HAS_SPOKEN_SUBTITLES)).build();
+            AudioPresentation presentation2 = (new AudioPresentation.Builder(PRESENTATION_ID)
+                    .setHasSpokenSubtitles(HAS_SPOKEN_SUBTITLES)).build();
+            assertEquals(presentation1, presentation2);
+            assertEquals(presentation2, presentation1);
+            assertEquals(presentation1.hashCode(), presentation2.hashCode());
+            AudioPresentation presentation3 = (new AudioPresentation.Builder(PRESENTATION_ID)
+                    .setHasSpokenSubtitles(!HAS_SPOKEN_SUBTITLES)).build();
+            assertNotEquals(presentation1, presentation3);
+            assertNotEquals(presentation1.hashCode(), presentation3.hashCode());
+        }
+        {
+            AudioPresentation presentation1 = (new AudioPresentation.Builder(PRESENTATION_ID)
+                    .setHasDialogueEnhancement(HAS_DIALOGUE_ENHANCEMENT)).build();
+            AudioPresentation presentation2 = (new AudioPresentation.Builder(PRESENTATION_ID)
+                    .setHasDialogueEnhancement(HAS_DIALOGUE_ENHANCEMENT)).build();
+            assertEquals(presentation1, presentation2);
+            assertEquals(presentation2, presentation1);
+            assertEquals(presentation1.hashCode(), presentation2.hashCode());
+            AudioPresentation presentation3 = (new AudioPresentation.Builder(PRESENTATION_ID)
+                    .setHasDialogueEnhancement(!HAS_DIALOGUE_ENHANCEMENT)).build();
+            assertNotEquals(presentation1, presentation3);
+            assertNotEquals(presentation1.hashCode(), presentation3.hashCode());
+        }
     }
 
     private static Map<Locale, String> generateLabels() {

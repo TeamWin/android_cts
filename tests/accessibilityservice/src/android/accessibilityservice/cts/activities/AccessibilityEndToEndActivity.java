@@ -30,6 +30,9 @@ import android.widget.ListAdapter;
 import android.widget.ListView;
 import android.widget.TextView;
 
+import java.util.function.Function;
+import java.util.function.Supplier;
+
 /**
  * This class is an {@link android.app.Activity} used to perform end-to-end
  * testing of the accessibility feature by interaction with the
@@ -71,18 +74,23 @@ public class AccessibilityEndToEndActivity extends AccessibilityTestActivity {
         ListView listView = (ListView) findViewById(R.id.listview);
         listView.setAdapter(listAdapter);
 
-        Button button = (Button) findViewById(R.id.button);
-        button.getViewTreeObserver().addOnGlobalLayoutListener(this::setTouchDelegate);
+        final int touchableSize = 48;
+        Button button = findViewById(R.id.button);
+        Function<View, Rect> withTouchableAtRight = (v) -> new Rect(
+                v.getLeft(), 0, v.getRight() + touchableSize, v.getHeight());
+        button.getViewTreeObserver().addOnGlobalLayoutListener(setTouchDelegate(button,
+                () -> withTouchableAtRight.apply(button))::run);
+
+        Button delegated = findViewById(R.id.buttonDelegated);
+        Function<View, Rect> withTouchableAsParent = (v) -> new Rect(
+                0, 0, v.getWidth(), v.getHeight());
+        delegated.getViewTreeObserver().addOnGlobalLayoutListener(setTouchDelegate(delegated,
+                () -> withTouchableAsParent.apply((View) delegated.getParent()))::run);
     }
 
-    public void setTouchDelegate() {
-        final Button button = findViewById(R.id.button);
-        final View parent = (View) button.getParent();
-        final int touchableSize = 48;
-        final Rect rect = new Rect();
-        button.getHitRect(rect);
-        rect.right += touchableSize;
-        parent.setTouchDelegate(new TouchDelegate(rect, button));
+    private static Runnable setTouchDelegate(View target, Supplier<Rect> rectSupplier) {
+        return () -> ((View) target.getParent()).setTouchDelegate(
+                new TouchDelegate(rectSupplier.get(), target));
     }
 
     public void setReportedPackageName(String packageName) {

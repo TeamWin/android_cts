@@ -16,6 +16,9 @@
 
 #include <aidl/test_package/BnTest.h>
 
+#include <condition_variable>
+#include <mutex>
+
 #include "utilities.h"
 
 using IEmpty = ::aidl::test_package::IEmpty;
@@ -34,6 +37,49 @@ class MyTest : public ::aidl::test_package::BnTest,
   ::ndk::ScopedAStatus TestOneway() override {
     // This return code should be ignored since it is oneway.
     return ::ndk::ScopedAStatus(AStatus_fromStatus(STATUS_UNKNOWN_ERROR));
+  }
+
+  ::ndk::ScopedAStatus GiveMeMyCallingPid(int32_t* _aidl_return) override {
+    *_aidl_return = AIBinder_getCallingPid();
+    return ::ndk::ScopedAStatus(AStatus_newOk());
+  }
+  ::ndk::ScopedAStatus GiveMeMyCallingUid(int32_t* _aidl_return) override {
+    *_aidl_return = AIBinder_getCallingUid();
+    return ::ndk::ScopedAStatus(AStatus_newOk());
+  }
+
+ private:
+  bool mCached = false;
+  std::mutex mCachedMutex;
+  std::condition_variable mCachedCondition;
+  int mCachedPid = -1;
+  int mCachedUid = -1;
+
+ public:
+  ::ndk::ScopedAStatus CacheCallingInfoFromOneway() override {
+    std::unique_lock<std::mutex> l(mCachedMutex);
+    mCached = true;
+    mCachedPid = AIBinder_getCallingPid();
+    mCachedUid = AIBinder_getCallingUid();
+    mCachedCondition.notify_all();
+
+    return ::ndk::ScopedAStatus(AStatus_newOk());
+  }
+  ::ndk::ScopedAStatus GiveMeMyCallingPidFromOneway(
+      int32_t* _aidl_return) override {
+    std::unique_lock<std::mutex> l(mCachedMutex);
+    mCachedCondition.wait(l, [&] { return mCached; });
+
+    *_aidl_return = mCachedPid;
+    return ::ndk::ScopedAStatus(AStatus_newOk());
+  }
+  ::ndk::ScopedAStatus GiveMeMyCallingUidFromOneway(
+      int32_t* _aidl_return) override {
+    std::unique_lock<std::mutex> l(mCachedMutex);
+    mCachedCondition.wait(l, [&] { return mCached; });
+
+    *_aidl_return = mCachedUid;
+    return ::ndk::ScopedAStatus(AStatus_newOk());
   }
   ::ndk::ScopedAStatus RepeatInt(int32_t in_value,
                                  int32_t* _aidl_return) override {
@@ -75,7 +121,19 @@ class MyTest : public ::aidl::test_package::BnTest,
     *_aidl_return = in_value;
     return ::ndk::ScopedAStatus(AStatus_newOk());
   }
+  ::ndk::ScopedAStatus RepeatNullableBinder(
+      const ::ndk::SpAIBinder& in_value,
+      ::ndk::SpAIBinder* _aidl_return) override {
+    *_aidl_return = in_value;
+    return ::ndk::ScopedAStatus(AStatus_newOk());
+  }
   ::ndk::ScopedAStatus RepeatInterface(
+      const std::shared_ptr<IEmpty>& in_value,
+      std::shared_ptr<IEmpty>* _aidl_return) override {
+    *_aidl_return = in_value;
+    return ::ndk::ScopedAStatus(AStatus_newOk());
+  }
+  ::ndk::ScopedAStatus RepeatNullableInterface(
       const std::shared_ptr<IEmpty>& in_value,
       std::shared_ptr<IEmpty>* _aidl_return) override {
     *_aidl_return = in_value;
@@ -89,6 +147,12 @@ class MyTest : public ::aidl::test_package::BnTest,
   }
   ::ndk::ScopedAStatus RepeatString(const std::string& in_value,
                                     std::string* _aidl_return) override {
+    *_aidl_return = in_value;
+    return ::ndk::ScopedAStatus(AStatus_newOk());
+  }
+  ::ndk::ScopedAStatus RepeatNullableString(
+      const std::optional<std::string>& in_value,
+      std::optional<std::string>* _aidl_return) override {
     *_aidl_return = in_value;
     return ::ndk::ScopedAStatus(AStatus_newOk());
   }
@@ -156,6 +220,57 @@ class MyTest : public ::aidl::test_package::BnTest,
       const std::vector<std::string>& in_value,
       std::vector<std::string>* out_repeated,
       std::vector<std::string>* _aidl_return) override {
+    *out_repeated = in_value;
+    *_aidl_return = in_value;
+    return ::ndk::ScopedAStatus(AStatus_newOk());
+  }
+  ::ndk::ScopedAStatus RepeatNullableBooleanArray(
+      const std::optional<std::vector<bool>>& in_value,
+      std::optional<std::vector<bool>>* _aidl_return) override {
+    *_aidl_return = in_value;
+    return ::ndk::ScopedAStatus(AStatus_newOk());
+  }
+  ::ndk::ScopedAStatus RepeatNullableByteArray(
+      const std::optional<std::vector<int8_t>>& in_value,
+      std::optional<std::vector<int8_t>>* _aidl_return) override {
+    *_aidl_return = in_value;
+    return ::ndk::ScopedAStatus(AStatus_newOk());
+  }
+  ::ndk::ScopedAStatus RepeatNullableCharArray(
+      const std::optional<std::vector<char16_t>>& in_value,
+      std::optional<std::vector<char16_t>>* _aidl_return) override {
+    *_aidl_return = in_value;
+    return ::ndk::ScopedAStatus(AStatus_newOk());
+  }
+  ::ndk::ScopedAStatus RepeatNullableIntArray(
+      const std::optional<std::vector<int32_t>>& in_value,
+      std::optional<std::vector<int32_t>>* _aidl_return) override {
+    *_aidl_return = in_value;
+    return ::ndk::ScopedAStatus(AStatus_newOk());
+  }
+  ::ndk::ScopedAStatus RepeatNullableLongArray(
+      const std::optional<std::vector<int64_t>>& in_value,
+      std::optional<std::vector<int64_t>>* _aidl_return) override {
+    *_aidl_return = in_value;
+    return ::ndk::ScopedAStatus(AStatus_newOk());
+  }
+  ::ndk::ScopedAStatus RepeatNullableFloatArray(
+      const std::optional<std::vector<float>>& in_value,
+      std::optional<std::vector<float>>* _aidl_return) override {
+    *_aidl_return = in_value;
+    return ::ndk::ScopedAStatus(AStatus_newOk());
+  }
+  ::ndk::ScopedAStatus RepeatNullableDoubleArray(
+      const std::optional<std::vector<double>>& in_value,
+      std::optional<std::vector<double>>* _aidl_return) override {
+    *_aidl_return = in_value;
+    return ::ndk::ScopedAStatus(AStatus_newOk());
+  }
+  ::ndk::ScopedAStatus RepeatNullableStringArray(
+      const std::optional<std::vector<std::optional<std::string>>>& in_value,
+      std::optional<std::vector<std::optional<std::string>>>* out_repeated,
+      std::optional<std::vector<std::optional<std::string>>>* _aidl_return)
+      override {
     *out_repeated = in_value;
     *_aidl_return = in_value;
     return ::ndk::ScopedAStatus(AStatus_newOk());

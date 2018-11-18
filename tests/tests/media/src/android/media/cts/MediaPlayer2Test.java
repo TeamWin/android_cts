@@ -1283,11 +1283,19 @@ public class MediaPlayer2Test extends MediaPlayer2TestBase {
             return; // skip
         }
 
+        Monitor onSetPlaybackParamsCompleteCalled = new Monitor();
         MediaPlayer2.EventCallback ecb = new MediaPlayer2.EventCallback() {
             @Override
             public void onInfo(MediaPlayer2 mp, DataSourceDesc dsd, int what, int extra) {
                 if (what == MediaPlayer2.MEDIA_INFO_PREPARED) {
                     mOnPrepareCalled.signal();
+                }
+            }
+
+            @Override
+            public void onCallCompleted(MediaPlayer2 mp, DataSourceDesc dsd, int what, int status) {
+                if (what == MediaPlayer2.CALL_COMPLETED_SET_PLAYBACK_PARAMS) {
+                    onSetPlaybackParamsCompleteCalled.signal();
                 }
             }
         };
@@ -1307,11 +1315,12 @@ public class MediaPlayer2Test extends MediaPlayer2TestBase {
         float[] rates = { 0.25f, 0.5f, 1.0f, 2.0f };
         for (float playbackRate : rates) {
             mPlayer.seekTo(0, MediaPlayer2.SEEK_PREVIOUS_SYNC);
-            Thread.sleep(1000);
             int playTime = 4000;  // The testing clip is about 10 second long.
+            onSetPlaybackParamsCompleteCalled.reset();
             mPlayer.setPlaybackParams(new PlaybackParams().setSpeed(playbackRate));
             mPlayer.play();
             Thread.sleep(playTime);
+            onSetPlaybackParamsCompleteCalled.waitForSignal();
             PlaybackParams pbp = mPlayer.getPlaybackParams();
             assertEquals(
                     playbackRate, pbp.getSpeed(),
@@ -1432,6 +1441,7 @@ public class MediaPlayer2Test extends MediaPlayer2TestBase {
         }
 
         Monitor onPauseCalled = new Monitor();
+        Monitor onSetPlaybackParamsCompleteCalled = new Monitor();
         MediaPlayer2.EventCallback ecb = new MediaPlayer2.EventCallback() {
             @Override
             public void onInfo(MediaPlayer2 mp, DataSourceDesc dsd, int what, int extra) {
@@ -1444,6 +1454,8 @@ public class MediaPlayer2Test extends MediaPlayer2TestBase {
             public void onCallCompleted(MediaPlayer2 mp, DataSourceDesc dsd, int what, int status) {
                 if (what == MediaPlayer2.CALL_COMPLETED_PAUSE) {
                     onPauseCalled.signal();
+                } else if (what == MediaPlayer2.CALL_COMPLETED_SET_PLAYBACK_PARAMS) {
+                    onSetPlaybackParamsCompleteCalled.signal();
                 }
             }
         };
@@ -1458,8 +1470,10 @@ public class MediaPlayer2Test extends MediaPlayer2TestBase {
         mOnPrepareCalled.waitForSignal();
 
         mPlayer.play();
+        onSetPlaybackParamsCompleteCalled.reset();
         mPlayer.setPlaybackParams(new PlaybackParams().setSpeed(playbackRate));
         Thread.sleep(SLEEP_TIME);  // let player get into stable state.
+        onSetPlaybackParamsCompleteCalled.waitForSignal();
         long nt1 = System.nanoTime();
         MediaTimestamp ts1 = mPlayer.getTimestamp();
         long nt2 = System.nanoTime();
@@ -2138,7 +2152,7 @@ public class MediaPlayer2Test extends MediaPlayer2TestBase {
             recordMedia(outputFileLocation);
 
             Uri uri = Uri.parse(outputFileLocation);
-            MediaPlayer2 mp = MediaPlayer2.create(mContext);
+            MediaPlayer2 mp = new MediaPlayer2(mContext);
             try {
                 mp.setDataSource(new DataSourceDesc.Builder()
                         .setDataSource(mContext, uri)

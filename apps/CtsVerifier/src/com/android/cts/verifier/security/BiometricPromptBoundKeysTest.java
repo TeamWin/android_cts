@@ -22,6 +22,8 @@ import android.os.CancellationSignal;
 import android.os.Handler;
 import android.os.Looper;
 
+import com.android.cts.verifier.R;
+
 import java.util.concurrent.Executor;
 
 public class BiometricPromptBoundKeysTest extends FingerprintBoundKeysTest {
@@ -63,7 +65,7 @@ public class BiometricPromptBoundKeysTest extends FingerprintBoundKeysTest {
         mCancellationSignal = new CancellationSignal();
         mDialogCallback = new DialogCallback();
         mBiometricPrompt = new BiometricPrompt.Builder(getApplicationContext())
-                .setTitle("Authenticate with fingerprint")
+                .setTitle("Authenticate with biometric")
                 .setNegativeButton("Cancel", mExecutor,
                         (DialogInterface dialogInterface, int which) -> {
                             if (which == DialogInterface.BUTTON_NEGATIVE) {
@@ -75,5 +77,15 @@ public class BiometricPromptBoundKeysTest extends FingerprintBoundKeysTest {
                 new BiometricPrompt
                 .CryptoObject(getCipher()),
                 mCancellationSignal, mExecutor, mDialogCallback);
+    }
+
+    @Override
+    protected int getTitleRes() {
+        return R.string.sec_biometric_prompt_bound_key_test;
+    }
+
+    @Override
+    protected int getDescriptionRes() {
+        return R.string.sec_biometric_prompt_bound_key_test_info;
     }
 }

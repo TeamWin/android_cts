@@ -23,4 +23,7 @@ public class Components extends ComponentsBase {
 
     public static final ComponentName SDK_27_LAUNCHING_ACTIVITY =
             component(Components.class, "android.server.am.LaunchingActivity");
+
+    public static final ComponentName SDK_27_HOME_ACTIVITY =
+            component(Components.class, "android.server.am.app27.HomeActivity");
 }

@@ -51,6 +51,7 @@ import static android.server.am.UiDeviceUtils.pressSleepButton;
 import static android.server.am.UiDeviceUtils.pressWakeupButton;
 import static android.server.am.WindowManagerState.TRANSIT_TASK_CLOSE;
 import static android.server.am.WindowManagerState.TRANSIT_TASK_OPEN;
+import static android.server.am.app27.Components.SDK_27_HOME_ACTIVITY;
 import static android.server.am.lifecycle.ActivityStarterTests.StandardActivity;
 import static android.server.am.second.Components.SECOND_ACTIVITY;
 import static android.server.am.second.Components.SECOND_LAUNCH_BROADCAST_ACTION;
@@ -60,6 +61,7 @@ import static android.server.am.third.Components.THIRD_ACTIVITY;
 import static android.view.Display.DEFAULT_DISPLAY;
 
 import static com.android.cts.mockime.ImeEventStreamTestUtils.expectEvent;
+import static com.android.cts.mockime.ImeEventStreamTestUtils.editorMatcher;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
@@ -100,6 +102,7 @@ import android.widget.LinearLayout;
 import androidx.annotation.Nullable;
 
 import com.android.compatibility.common.util.SystemUtil;
+import com.android.cts.mockime.ImeEvent;
 import com.android.cts.mockime.ImeEventStream;
 import com.android.cts.mockime.ImeSettings;
 import com.android.cts.mockime.MockImeSession;
@@ -109,6 +112,7 @@ import org.junit.Test;
 
 import java.util.List;
 import java.util.concurrent.TimeUnit;
+import java.util.function.Predicate;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -184,6 +188,36 @@ public class ActivityManagerMultiDisplayTests extends ActivityManagerDisplayTest
                         "Activity launched on secondary display must be focused and on top");
                 assertEquals("Top activity must be home type", ACTIVITY_TYPE_HOME,
                         mAmWmState.getAmState().getFrontStackActivityType(newDisplay.mId));
+            }
+        }
+    }
+
+    /**
+     * Tests home activity that target before Q won't be started on virtual display that supports
+     * system decorations.
+     */
+    @Test
+    public void testLaunchSdk27HomeActivityOnDisplayWithDecorations() throws Exception {
+        try (final HomeActivitySession homeSession
+                     = new HomeActivitySession(SDK_27_HOME_ACTIVITY)) {
+            try (final VirtualDisplaySession virtualDisplaySession = new VirtualDisplaySession()) {
+                // Create new virtual display with system decoration support.
+                final ActivityDisplay newDisplay
+                        = virtualDisplaySession.setShowSystemDecorations(true).createDisplay();
+
+                // Launching an activity on virtual display. There should only have one stack on the
+                // display, i.e. home stack should not be created.
+                getLaunchActivityBuilder()
+                        .setUseInstrumentation()
+                        .setWithShellPermission(true)
+                        .setNewTask(true)
+                        .setTargetActivity(TEST_ACTIVITY)
+                        .setDisplayId(newDisplay.mId)
+                        .execute();
+                waitAndAssertTopResumedActivity(TEST_ACTIVITY, newDisplay.mId,
+                        "Activity launched on secondary display must be focused and on top");
+                assertEquals("There must have exactly one stack on virtual display.", 1,
+                        mAmWmState.getAmState().getDisplay(newDisplay.mId).mStacks.size());
             }
         }
     }
@@ -934,6 +968,7 @@ public class ActivityManagerMultiDisplayTests extends ActivityManagerDisplayTest
 
     /** Test that launching app from pending activity queue on external display is allowed. */
     @Test
+    @FlakyTest(bugId = 118708868)
     public void testLaunchPendingActivityOnSecondaryDisplay() throws Exception {
         try (final VirtualDisplaySession virtualDisplaySession = new VirtualDisplaySession()) {
             // Create new simulated display.
@@ -1899,13 +1934,11 @@ public class ActivityManagerMultiDisplayTests extends ActivityManagerDisplayTest
 
     @Test
     public void testImeWindowCanSwitchToDifferentDisplays() throws Exception {
-        final long TIMEOUT_SOFT_INPUT = TimeUnit.SECONDS.toMillis(5);
-
-        try (final VirtualDisplaySession virtualDisplaySession = new VirtualDisplaySession();
-             final TestActivitySession<ImeTestActivity> imeTestActivitySession = new
-                     TestActivitySession<>();
+        try (final TestActivitySession<ImeTestActivity> imeTestActivitySession = new
+                TestActivitySession<>();
              final TestActivitySession<ImeTestActivity2> imeTestActivitySession2 = new
                      TestActivitySession<>();
+             final VirtualDisplaySession virtualDisplaySession = new VirtualDisplaySession();
 
              // Leverage MockImeSession to ensure at least an IME exists as default.
              final MockImeSession mockImeSession = MockImeSession.create(
@@ -1922,11 +1955,8 @@ public class ActivityManagerMultiDisplayTests extends ActivityManagerDisplayTest
             final ImeEventStream stream = mockImeSession.openEventStream();
             imeTestActivitySession.runOnMainSyncAndWait(
                     imeTestActivitySession.getActivity()::showSoftInput);
-            expectEvent(stream, event -> "showSoftInput".equals(event.getEventName()),
-                    TIMEOUT_SOFT_INPUT);
-
-            // Assert the IME is shown on the virtual display.
-            mAmWmState.waitAndAssertImeWindowShownOnDisplay(newDisplay.mId);
+            waitOrderedImeEventsThenAssertImeShown(stream, newDisplay.mId,
+                    event -> "showSoftInput".equals(event.getEventName()));
 
             // Assert the configuration of the IME window is the same as the configuration of the
             // virtual display.
@@ -1939,11 +1969,8 @@ public class ActivityManagerMultiDisplayTests extends ActivityManagerDisplayTest
             // Make the activity to show soft input.
             imeTestActivitySession2.runOnMainSyncAndWait(
                     imeTestActivitySession2.getActivity()::showSoftInput);
-            expectEvent(stream, event -> "showSoftInput".equals(event.getEventName()),
-                    TIMEOUT_SOFT_INPUT);
-
-            // Assert the IME is shown on the default display.
-            mAmWmState.waitAndAssertImeWindowShownOnDisplay(DEFAULT_DISPLAY);
+            waitOrderedImeEventsThenAssertImeShown(stream, DEFAULT_DISPLAY,
+                    event -> "showSoftInput".equals(event.getEventName()));
 
             // Assert the configuration of the IME window is the same as the configuration of the
             // default display.
@@ -1989,6 +2016,63 @@ public class ActivityManagerMultiDisplayTests extends ActivityManagerDisplayTest
                 assertTrue("InputMethodManager.isActive() should work",
                         imm.isActive(activity.getEditText()));
             });
+        }
+    }
+
+    @Test
+    public void testImeWindowCanSwitchWhenTopFocusedDisplayChange() throws Exception {
+        try (final VirtualDisplaySession virtualDisplaySession = new VirtualDisplaySession();
+             final TestActivitySession<ImeTestActivity> imeTestActivitySession = new
+                     TestActivitySession<>();
+             final TestActivitySession<ImeTestActivity2> imeTestActivitySession2 = new
+                     TestActivitySession<>();
+             // Leverage MockImeSession to ensure at least an IME exists as default.
+             final MockImeSession mockImeSession1 = MockImeSession.create(
+                     mContext, InstrumentationRegistry.getInstrumentation().getUiAutomation(),
+                     new ImeSettings.Builder())) {
+
+            // Create 2 virtual displays and launch an activity on each display.
+            final List<ActivityDisplay> newDisplays = virtualDisplaySession.setPublicDisplay(true)
+                    .setShowSystemDecorations(true).createDisplays(2);
+            final ActivityDisplay display1 = newDisplays.get(0);
+            final ActivityDisplay display2 = newDisplays.get(1);
+
+            imeTestActivitySession.launchTestActivityOnDisplaySync(ImeTestActivity.class,
+                    display1.mId);
+            imeTestActivitySession.getActivity().mEditText.setPrivateImeOptions(
+                    ImeTestActivity.class.getName());
+            imeTestActivitySession2.launchTestActivityOnDisplaySync(ImeTestActivity2.class,
+                    display2.mId);
+            imeTestActivitySession2.getActivity().mEditText.setPrivateImeOptions(
+                    ImeTestActivity2.class.getName());
+            final ImeEventStream stream = mockImeSession1.openEventStream();
+
+            // Tap display1 as top focused display & request focus on EditText to show soft input.
+            tapOnDisplay(display1.mOverrideConfiguration.screenWidthDp / 2,
+                    display1.mOverrideConfiguration.screenHeightDp / 2, display1.mId);
+            imeTestActivitySession.runOnMainSyncAndWait(
+                    imeTestActivitySession.getActivity()::showSoftInput);
+            waitOrderedImeEventsThenAssertImeShown(stream, display1.mId,
+                    editorMatcher("onStartInput", ImeTestActivity.class.getName()),
+                    event -> "showSoftInput".equals(event.getEventName()));
+
+            // Tap display2 as top focused display & request focus on EditText to show soft input.
+            tapOnDisplay(display2.mOverrideConfiguration.screenWidthDp / 2,
+                    display2.mOverrideConfiguration.screenHeightDp / 2, display2.mId);
+            imeTestActivitySession2.runOnMainSyncAndWait(
+                    imeTestActivitySession2.getActivity()::showSoftInput);
+            waitOrderedImeEventsThenAssertImeShown(stream, display2.mId,
+                    editorMatcher("onStartInput", ImeTestActivity2.class.getName()),
+                    event -> "showSoftInput".equals(event.getEventName()));
+
+            // Tap display1 again to make sure the IME window will come back.
+            tapOnDisplay(display1.mOverrideConfiguration.screenWidthDp / 2,
+                    display1.mOverrideConfiguration.screenHeightDp / 2, display1.mId);
+            imeTestActivitySession.runOnMainSyncAndWait(
+                    imeTestActivitySession.getActivity()::showSoftInput);
+            waitOrderedImeEventsThenAssertImeShown(stream, display1.mId,
+                    editorMatcher("onStartInput", ImeTestActivity.class.getName()),
+                    event -> "showSoftInput".equals(event.getEventName()));
         }
     }
 
@@ -2309,7 +2393,7 @@ public class ActivityManagerMultiDisplayTests extends ActivityManagerDisplayTest
     }
 
     public static class ImeTestActivity extends Activity {
-        private EditText mEditText;
+        EditText mEditText;
 
         @Override
         protected void onCreate(Bundle icicle) {
@@ -2324,9 +2408,7 @@ public class ActivityManagerMultiDisplayTests extends ActivityManagerDisplayTest
         void showSoftInput() {
             mEditText.setFocusable(true);
             mEditText.requestFocus();
-            SystemUtil.runWithShellPermissionIdentity(() -> {
-                getSystemService(InputMethodManager.class).showSoftInput(mEditText, 0);
-            });
+            getSystemService(InputMethodManager.class).showSoftInput(mEditText, 0);
         }
     }
 
@@ -2381,7 +2463,6 @@ public class ActivityManagerMultiDisplayTests extends ActivityManagerDisplayTest
         }
     }
 
-
     void assertImeWindowAndDisplayConfiguration(
             WindowManagerState.WindowState imeWinState, ActivityDisplay display) {
         final Configuration configurationForIme = imeWinState.mMergedOverrideConfiguration;
@@ -2393,5 +2474,14 @@ public class ActivityManagerMultiDisplayTests extends ActivityManagerDisplayTest
 
         assertEquals("Display density not the same", displayDensityDpi, displayDensityDpiForIme);
         assertEquals("Display bounds not the same", displayBounds, displayBoundsForIme);
+    }
+
+    void waitOrderedImeEventsThenAssertImeShown(ImeEventStream stream, int displayId,
+            Predicate<ImeEvent>... conditions) throws Exception {
+        for (Predicate<ImeEvent> condition : conditions) {
+            expectEvent(stream, condition, TimeUnit.SECONDS.toMillis(5) /* eventTimeout */);
+        }
+        // Assert the IME is shown on the expected display.
+        mAmWmState.waitAndAssertImeWindowShownOnDisplay(displayId);
     }
 }
