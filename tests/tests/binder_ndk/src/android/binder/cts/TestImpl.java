@@ -144,6 +144,11 @@ public class TestImpl extends ITest.Stub {
   }
 
   @Override
+  public ParcelFileDescriptor RepeatNullableFd(ParcelFileDescriptor in_value) {
+    return in_value;
+  }
+
+  @Override
   public String RepeatString(String in_value) {
     return in_value;
   }

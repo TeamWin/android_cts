@@ -58,6 +58,7 @@ interface ITest {
     @nullable IEmpty RepeatNullableInterface(@nullable IEmpty value);
 
     ParcelFileDescriptor RepeatFd(in ParcelFileDescriptor fd);
+    @nullable ParcelFileDescriptor RepeatNullableFd(in @nullable ParcelFileDescriptor fd);
 
     String RepeatString(String value);
     @nullable String RepeatNullableString(@nullable String value);
