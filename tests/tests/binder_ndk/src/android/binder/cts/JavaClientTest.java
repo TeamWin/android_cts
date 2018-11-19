@@ -349,8 +349,15 @@ public class JavaClientTest {
         {
             String[] emptyValue = {};
             String[] value = {"", "aoeu", null, "brb"};
+            Assert.assertArrayEquals(null, mInterface.RepeatNullableStringArray(null));
+            Assert.assertArrayEquals(emptyValue, mInterface.RepeatNullableStringArray(emptyValue));
+            Assert.assertArrayEquals(value, mInterface.RepeatNullableStringArray(value));
+        }
+        {
+            String[] emptyValue = {};
+            String[] value = {"", "aoeu", null, "brb"};
             String[] out1 = new String[value.length];
-            String[] out2 = mInterface.RepeatNullableStringArray(value, out1);
+            String[] out2 = mInterface.DoubleRepeatNullableStringArray(value, out1);
 
             Assert.assertArrayEquals(value, out1);
             Assert.assertArrayEquals(value, out2);
