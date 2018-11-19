@@ -398,7 +398,10 @@ public class DownloadManagerTest {
         final String actualContents = readFromFile(mDownloadManager.openDownloadedFile(id));
         assertEquals(fileContents, actualContents);
 
-        final String rawFilePath = getRawFilePath(mDownloadManager.getUriForDownloadedFile(id));
+        final Uri downloadUri = mDownloadManager.getUriForDownloadedFile(id);
+        mContext.grantUriPermission("com.android.shell", downloadUri,
+                Intent.FLAG_GRANT_READ_URI_PERMISSION);
+        final String rawFilePath = getRawFilePath(downloadUri);
         final String rawFileContents = readFromRawFile(rawFilePath);
         assertEquals(fileContents, rawFileContents);
     }
