@@ -110,6 +110,7 @@ public class OpenSSLEarlyCCSTest extends InstrumentationTestCase {
      * Tests that TLS handshake succeeds when the MiTM simply forwards all data without tampering
      * with it. This is to catch issues unrelated to early CCS.
      */
+    @SecurityTest(minPatchLevel = "2014-09")
     public void testWithoutEarlyCCS() throws Exception {
         handshake(false, false);
     }
@@ -117,6 +118,7 @@ public class OpenSSLEarlyCCSTest extends InstrumentationTestCase {
     /**
      * Tests whether client sockets are vulnerable to early CCS.
      */
+    @SecurityTest(minPatchLevel = "2014-09")
     public void testEarlyCCSInjectedIntoClient() throws Exception {
         checkEarlyCCS(true);
     }
@@ -124,6 +126,7 @@ public class OpenSSLEarlyCCSTest extends InstrumentationTestCase {
     /**
      * Tests whether server sockets are vulnerable to early CCS.
      */
+    @SecurityTest(minPatchLevel = "2014-09")
     public void testEarlyCCSInjectedIntoServer() throws Exception {
         checkEarlyCCS(false);
     }
