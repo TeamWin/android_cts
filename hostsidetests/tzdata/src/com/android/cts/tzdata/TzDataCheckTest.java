@@ -31,7 +31,9 @@ import java.nio.file.Path;
 import java.util.Comparator;
 import java.util.StringJoiner;
 import java.util.function.Consumer;
-import libcore.tzdata.testing.ZoneInfoTestHelper;
+
+import libcore.timezone.TzDataSetVersion;
+import libcore.timezone.testing.ZoneInfoTestHelper;
 
 import static org.junit.Assert.assertArrayEquals;
 
@@ -303,9 +305,9 @@ public class TzDataCheckTest extends DeviceTestCase {
         createSystemTzDataFileOnHost(VALID_RULES_VERSION);
 
         DistroVersion currentDistroVersion = new DistroVersion(
-                DistroVersion.CURRENT_FORMAT_MAJOR_VERSION, 1, VALID_RULES_VERSION, 1);
+                TzDataSetVersion.currentFormatMajorVersion(), 1, VALID_RULES_VERSION, 1);
         DistroVersion stagedDistroVersion = new DistroVersion(
-                DistroVersion.CURRENT_FORMAT_MAJOR_VERSION, 1, VALID_RULES_VERSION, 2);
+                TzDataSetVersion.currentFormatMajorVersion(), 1, VALID_RULES_VERSION, 2);
 
         // Set up the /data directory structure on host.
 
@@ -488,7 +490,7 @@ public class TzDataCheckTest extends DeviceTestCase {
         // Set up the /data directory structure on host.
         PathPair dataCurrentDir = mDataDir.createSubPath(CURRENT_DIR_NAME);
         DistroVersion oldMajorDistroVersion = new DistroVersion(
-                DistroVersion.CURRENT_FORMAT_MAJOR_VERSION - 1, 1, VALID_RULES_VERSION, 1);
+                TzDataSetVersion.currentFormatMajorVersion() - 1, 1, VALID_RULES_VERSION, 1);
         byte[] distroBytes = createValidDistroBuilder()
                 .setDistroVersion(oldMajorDistroVersion)
                 .buildBytes();
@@ -512,8 +514,8 @@ public class TzDataCheckTest extends DeviceTestCase {
         // Set up the /data directory structure on host.
         PathPair dataCurrentDir = mDataDir.createSubPath(CURRENT_DIR_NAME);
         DistroVersion newMajorDistroVersion = new DistroVersion(
-                DistroVersion.CURRENT_FORMAT_MAJOR_VERSION + 1,
-                DistroVersion.CURRENT_FORMAT_MINOR_VERSION,
+                TzDataSetVersion.currentFormatMajorVersion() + 1,
+                TzDataSetVersion.currentFormatMinorVersion(),
                 VALID_RULES_VERSION, VALID_REVISION);
         byte[] distroBytes = createValidDistroBuilder()
                 .setDistroVersion(newMajorDistroVersion)
@@ -538,8 +540,8 @@ public class TzDataCheckTest extends DeviceTestCase {
         // Set up the /data directory structure on host.
         PathPair dataCurrentDir = mDataDir.createSubPath(CURRENT_DIR_NAME);
         DistroVersion oldMinorDistroVersion = new DistroVersion(
-                DistroVersion.CURRENT_FORMAT_MAJOR_VERSION,
-                DistroVersion.CURRENT_FORMAT_MINOR_VERSION - 1,
+                TzDataSetVersion.currentFormatMajorVersion(),
+                TzDataSetVersion.currentFormatMinorVersion() - 1,
                 VALID_RULES_VERSION, 1);
         byte[] distroBytes = createValidDistroBuilder()
                 .setDistroVersion(oldMinorDistroVersion)
@@ -565,8 +567,8 @@ public class TzDataCheckTest extends DeviceTestCase {
         // Set up the /data directory structure on host.
         PathPair dataCurrentDir = mDataDir.createSubPath(CURRENT_DIR_NAME);
         DistroVersion newMajorDistroVersion = new DistroVersion(
-                DistroVersion.CURRENT_FORMAT_MAJOR_VERSION,
-                DistroVersion.CURRENT_FORMAT_MINOR_VERSION + 1,
+                TzDataSetVersion.currentFormatMajorVersion(),
+                TzDataSetVersion.currentFormatMinorVersion() + 1,
                 VALID_RULES_VERSION, VALID_REVISION);
         byte[] distroBytes = createValidDistroBuilder()
                 .setDistroVersion(newMajorDistroVersion)
@@ -633,8 +635,8 @@ public class TzDataCheckTest extends DeviceTestCase {
         // Newer than RULES_VERSION_ONE in /system
         final String distroRulesVersion = RULES_VERSION_TWO;
         DistroVersion distroVersion = new DistroVersion(
-                DistroVersion.CURRENT_FORMAT_MAJOR_VERSION,
-                DistroVersion.CURRENT_FORMAT_MINOR_VERSION, distroRulesVersion, VALID_REVISION);
+                TzDataSetVersion.currentFormatMajorVersion(),
+                TzDataSetVersion.currentFormatMinorVersion(), distroRulesVersion, VALID_REVISION);
         byte[] distroBytes = createValidDistroBuilder()
                 .setDistroVersion(distroVersion)
                 .setTzDataFile(createValidTzDataBytes(distroRulesVersion))
@@ -660,8 +662,8 @@ public class TzDataCheckTest extends DeviceTestCase {
         // Set up the /data directory structure on host.
         PathPair dataCurrentDir = mDataDir.createSubPath(CURRENT_DIR_NAME);
         DistroVersion distroVersion = new DistroVersion(
-                DistroVersion.CURRENT_FORMAT_MAJOR_VERSION,
-                DistroVersion.CURRENT_FORMAT_MINOR_VERSION, systemRulesVersion, VALID_REVISION);
+                TzDataSetVersion.currentFormatMajorVersion(),
+                TzDataSetVersion.currentFormatMinorVersion(), systemRulesVersion, VALID_REVISION);
         byte[] distroBytes = createValidDistroBuilder()
                 .setDistroVersion(distroVersion)
                 .setTzDataFile(createValidTzDataBytes(systemRulesVersion))
@@ -688,8 +690,8 @@ public class TzDataCheckTest extends DeviceTestCase {
         PathPair dataCurrentDir = mDataDir.createSubPath(CURRENT_DIR_NAME);
         String distroRulesVersion = RULES_VERSION_ONE; // Older than the system version.
         DistroVersion distroVersion = new DistroVersion(
-                DistroVersion.CURRENT_FORMAT_MAJOR_VERSION,
-                DistroVersion.CURRENT_FORMAT_MINOR_VERSION,
+                TzDataSetVersion.currentFormatMajorVersion(),
+                TzDataSetVersion.currentFormatMinorVersion(),
                 distroRulesVersion,
                 VALID_REVISION);
         byte[] distroBytes = createValidDistroBuilder()
@@ -731,8 +733,8 @@ public class TzDataCheckTest extends DeviceTestCase {
         String distroRulesVersion = VALID_RULES_VERSION;
         DistroVersion validDistroVersion =
                 new DistroVersion(
-                        DistroVersion.CURRENT_FORMAT_MAJOR_VERSION,
-                        DistroVersion.CURRENT_FORMAT_MINOR_VERSION,
+                        TzDataSetVersion.currentFormatMajorVersion(),
+                        TzDataSetVersion.currentFormatMinorVersion(),
                         distroRulesVersion, VALID_REVISION);
         return new TimeZoneDistroBuilder()
                 .setDistroVersion(validDistroVersion)
