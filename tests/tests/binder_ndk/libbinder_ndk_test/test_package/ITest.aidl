@@ -85,5 +85,10 @@ interface ITest {
     @nullable long[] RepeatNullableLongArray(in @nullable long[] input);
     @nullable float[] RepeatNullableFloatArray(in @nullable float[] input);
     @nullable double[] RepeatNullableDoubleArray(in @nullable double[] input);
-    @nullable String[] RepeatNullableStringArray(in @nullable String[] input, out @nullable String[] repeated);
+    @nullable String[] RepeatNullableStringArray(in @nullable String[] input);
+
+    // Nullable Arrays where each individual element can be nullable
+    // (specifically for testing out parameters)
+    @nullable String[] DoubleRepeatNullableStringArray(
+        in @nullable String[] input, out @nullable String[] repeated);
 }
