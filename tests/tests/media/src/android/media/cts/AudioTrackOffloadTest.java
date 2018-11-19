@@ -114,15 +114,15 @@ public class AudioTrackOffloadTest extends CtsAndroidTestCase {
                 assertTrue("onDataRequest not called",mCallback.mDataRequestCount > 0);
                 // we are 6s after less than 5s of data was supplied, presentation should have
                 // ended
-                // FIXME: disabling test, not working at the moment
-                //assertEquals("onPresentationEnded not called one time",
-                //        1, mCallback.mPresentationEndedCount);
+                assertEquals("onPresentationEnded not called one time",
+                        1, mCallback.mPresentationEndedCount);
             }
 
         } finally {
             if (track != null) {
                 Log.i(TAG, "pause");
                 track.pause();
+                track.unregisterStreamEventCallback(mCallback);
                 track.release();
             }
         }
