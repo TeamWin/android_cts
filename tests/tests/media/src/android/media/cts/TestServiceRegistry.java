@@ -19,7 +19,6 @@ package android.media.cts;
 import static org.junit.Assert.fail;
 
 import android.media.MediaSession2.SessionCallback;
-import android.media.MediaSessionService2;
 import android.media.cts.TestUtils.SyncHandler;
 import android.os.Handler;
 import androidx.annotation.GuardedBy;
@@ -36,13 +35,9 @@ public class TestServiceRegistry {
     @GuardedBy("TestServiceRegistry.class")
     private static TestServiceRegistry sInstance;
     @GuardedBy("TestServiceRegistry.class")
-    private MediaSessionService2 mService;
-    @GuardedBy("TestServiceRegistry.class")
     private SyncHandler mHandler;
     @GuardedBy("TestServiceRegistry.class")
     private SessionCallback mSessionCallback;
-    @GuardedBy("TestServiceRegistry.class")
-    private SessionServiceCallback mSessionServiceCallback;
 
     /**
      * Callback for session service's lifecyle (onCreate() / onDestroy())
@@ -73,12 +68,6 @@ public class TestServiceRegistry {
         }
     }
 
-    public void setSessionServiceCallback(SessionServiceCallback sessionServiceCallback) {
-        synchronized (TestServiceRegistry.class) {
-            mSessionServiceCallback = sessionServiceCallback;
-        }
-    }
-
     public void setSessionCallback(SessionCallback sessionCallback) {
         synchronized (TestServiceRegistry.class) {
             mSessionCallback = sessionCallback;
@@ -91,44 +80,12 @@ public class TestServiceRegistry {
         }
     }
 
-    public void setServiceInstance(MediaSessionService2 service) {
-        synchronized (TestServiceRegistry.class) {
-            if (mService != null) {
-                fail("Previous service instance is still running. Clean up manually to ensure"
-                        + " previoulsy running service doesn't break current test");
-            }
-            mService = service;
-            if (mSessionServiceCallback != null) {
-                mSessionServiceCallback.onCreated();
-            }
-        }
-    }
-
-    public MediaSessionService2 getServiceInstance() {
-        synchronized (TestServiceRegistry.class) {
-            return mService;
-        }
-    }
-
     public void cleanUp() {
         synchronized (TestServiceRegistry.class) {
-            if (mService != null) {
-                // TODO(jaewan): Remove this, and override SessionService#onDestroy() to do this
-                mService.getSession().close();
-                // stopSelf() would not kill service while the binder connection established by
-                // bindService() exists, and close() above will do the job instead.
-                // So stopSelf() isn't really needed, but just for sure.
-                mService.stopSelf();
-                mService = null;
-            }
             if (mHandler != null) {
                 mHandler.removeCallbacksAndMessages(null);
             }
             mSessionCallback = null;
-            if (mSessionServiceCallback != null) {
-                mSessionServiceCallback.onDestroyed();
-                mSessionServiceCallback = null;
-            }
         }
     }
 }
