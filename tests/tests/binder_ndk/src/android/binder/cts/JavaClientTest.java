@@ -147,13 +147,16 @@ public class JavaClientTest {
         assertEquals(null, mInterface.RepeatNullableInterface(null));
     }
 
-    @Test
-    public void testRepeatFd() throws RemoteException, IOException {
+    private static interface IRepeatFd {
+        ParcelFileDescriptor repeat(ParcelFileDescriptor fd) throws RemoteException;
+    }
+
+    private void checkFdRepeated(IRepeatFd transformer) throws RemoteException, IOException {
         ParcelFileDescriptor[] sockets = ParcelFileDescriptor.createReliableSocketPair();
         ParcelFileDescriptor socketIn = sockets[0];
         ParcelFileDescriptor socketOut = sockets[1];
 
-        ParcelFileDescriptor repeatFd = mInterface.RepeatFd(socketIn);
+        ParcelFileDescriptor repeatFd = transformer.repeat(socketIn);
 
         boolean isNativeRemote = mInterface.GetName().equals("CPP");
         try {
@@ -181,6 +184,17 @@ public class JavaClientTest {
 
         assertEquals(input.length, fileInputStream.read(input));
         Assert.assertArrayEquals(input, output);
+    }
+
+    @Test
+    public void testRepeatFd() throws RemoteException, IOException {
+        checkFdRepeated((fd) -> mInterface.RepeatFd(fd));
+    }
+
+    @Test
+    public void testRepeatNullableFd() throws RemoteException, IOException {
+        checkFdRepeated((fd) -> mInterface.RepeatNullableFd(fd));
+        assertEquals(null, mInterface.RepeatNullableFd(null));
     }
 
     @Test
