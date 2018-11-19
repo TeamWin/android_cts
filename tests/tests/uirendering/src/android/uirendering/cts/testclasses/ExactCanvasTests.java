@@ -16,6 +16,7 @@
 
 package android.uirendering.cts.testclasses;
 
+import android.graphics.BlendMode;
 import android.graphics.Canvas;
 import android.graphics.Color;
 import android.graphics.Paint;
@@ -193,6 +194,14 @@ public class ExactCanvasTests extends ActivityTestBase {
                     canvas.drawColor(Color.BLUE, PorterDuff.Mode.MULTIPLY);
                 })
                 .runWithComparer(mExactComparer);
+    }
+
+    @Test
+    public void testBasicColorBlendMode() {
+        createTest().addCanvasClient((canvas, width, height) -> {
+            canvas.drawColor(Color.GRAY);
+            canvas.drawColor(Color.BLUE, BlendMode.MULTIPLY);
+        }).runWithComparer(mExactComparer);
     }
 
     @Test
