@@ -60,4 +60,8 @@ public class SELinuxTargetSdkTest extends SELinuxTargetSdkTestBase
             "Actual value: ";
         appDataContext(context, msg);
     }
+
+    public void testDex2oat() throws Exception {
+        checkDex2oatAccess(false);
+    }
 }
