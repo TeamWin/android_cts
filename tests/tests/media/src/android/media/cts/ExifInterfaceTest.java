@@ -39,6 +39,7 @@ import java.io.FileNotFoundException;
 import java.io.InputStream;
 import java.io.IOException;
 import java.lang.reflect.Type;
+import java.util.Arrays;
 
 import libcore.io.IoUtils;
 import libcore.io.Streams;
@@ -99,10 +100,14 @@ public class ExifInterfaceTest extends AndroidTestCase {
         public final int thumbnailWidth;
         public final int thumbnailHeight;
         public final boolean isThumbnailCompressed;
+        public final int thumbnailOffset;
+        public final int thumbnailLength;
 
         // GPS information.
         public final boolean hasLatLong;
         public final float latitude;
+        public final int latitudeOffset;
+        public final int latitudeLength;
         public final float longitude;
         public final float altitude;
 
@@ -142,12 +147,16 @@ public class ExifInterfaceTest extends AndroidTestCase {
 
             // Reads thumbnail information.
             hasThumbnail = typedArray.getBoolean(index++, false);
+            thumbnailOffset = typedArray.getInt(index++, -1);
+            thumbnailLength = typedArray.getInt(index++, -1);
             thumbnailWidth = typedArray.getInt(index++, 0);
             thumbnailHeight = typedArray.getInt(index++, 0);
             isThumbnailCompressed = typedArray.getBoolean(index++, false);
 
             // Reads GPS information.
             hasLatLong = typedArray.getBoolean(index++, false);
+            latitudeOffset = typedArray.getInt(index++, -1);
+            latitudeLength = typedArray.getInt(index++, -1);
             latitude = typedArray.getFloat(index++, 0f);
             longitude = typedArray.getFloat(index++, 0f);
             altitude = typedArray.getFloat(index++, 0f);
@@ -251,6 +260,9 @@ public class ExifInterfaceTest extends AndroidTestCase {
         // Checks a thumbnail image.
         assertEquals(expectedValue.hasThumbnail, exifInterface.hasThumbnail());
         if (expectedValue.hasThumbnail) {
+            final long[] thumbnailRange = exifInterface.getThumbnailRange();
+            assertEquals(expectedValue.thumbnailOffset, thumbnailRange[0]);
+            assertEquals(expectedValue.thumbnailLength, thumbnailRange[1]);
             byte[] thumbnailBytes = exifInterface.getThumbnailBytes();
             assertNotNull(thumbnailBytes);
             Bitmap thumbnailBitmap = exifInterface.getThumbnailBitmap();
@@ -267,8 +279,17 @@ public class ExifInterfaceTest extends AndroidTestCase {
         float[] latLong = new float[2];
         assertEquals(expectedValue.hasLatLong, exifInterface.getLatLong(latLong));
         if (expectedValue.hasLatLong) {
+            final long[] latitudeRange = exifInterface
+                    .getAttributeRange(ExifInterface.TAG_GPS_LATITUDE);
+            assertEquals(expectedValue.latitudeOffset, latitudeRange[0]);
+            assertEquals(expectedValue.latitudeLength, latitudeRange[1]);
             assertEquals(expectedValue.latitude, latLong[0], DIFFERENCE_TOLERANCE);
             assertEquals(expectedValue.longitude, latLong[1], DIFFERENCE_TOLERANCE);
+            assertTrue(exifInterface.hasAttribute(ExifInterface.TAG_GPS_LATITUDE));
+            assertTrue(exifInterface.hasAttribute(ExifInterface.TAG_GPS_LONGITUDE));
+        } else {
+            assertFalse(exifInterface.hasAttribute(ExifInterface.TAG_GPS_LATITUDE));
+            assertFalse(exifInterface.hasAttribute(ExifInterface.TAG_GPS_LONGITUDE));
         }
         assertEquals(expectedValue.altitude, exifInterface.getAltitude(.0), DIFFERENCE_TOLERANCE);
 
@@ -309,6 +330,10 @@ public class ExifInterfaceTest extends AndroidTestCase {
         // Creates via path.
         ExifInterface exifInterface = new ExifInterface(imageFile.getAbsolutePath());
         assertNotNull(exifInterface);
+        compareWithExpectedValue(exifInterface, expectedValue, verboseTag);
+
+        // Creates via file.
+        exifInterface = new ExifInterface(imageFile);
         compareWithExpectedValue(exifInterface, expectedValue, verboseTag);
 
         InputStream in = null;
