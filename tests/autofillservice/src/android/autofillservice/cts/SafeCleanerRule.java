@@ -20,6 +20,7 @@ import android.util.Log;
 
 import androidx.annotation.NonNull;
 
+import org.junit.AssumptionViolatedException;
 import org.junit.rules.TestRule;
 import org.junit.runner.Description;
 import org.junit.runners.model.Statement;
@@ -113,6 +114,9 @@ public final class SafeCleanerRule implements TestRule {
                         mThrowables.addAll(extraThrowables);
                     }
                 }
+
+                // Ignore all instances of AssumptionViolatedExceptions
+                mThrowables.removeIf(t -> t instanceof AssumptionViolatedException);
 
                 // Finally, throw up!
                 if (mThrowables.isEmpty()) return;
