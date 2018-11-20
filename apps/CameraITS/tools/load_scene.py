@@ -55,7 +55,7 @@ def main():
                 scene, str(its.cv2image.SCALE_TELE_IN_WFOV_BOX))
     elif np.isclose(chart_scaling, its.cv2image.SCALE_RFOV_IN_WFOV_BOX, atol=0.01):
         file_name = '%s_%s_scaled.pdf' % (
-                scene, str(its.cv2image.SCALE_TELE_IN_WFOV_BOX))
+                scene, str(its.cv2image.SCALE_RFOV_IN_WFOV_BOX))
     else:
         file_name = '%s.pdf' % scene
     src_scene_file = os.path.join(src_scene_path, file_name)
