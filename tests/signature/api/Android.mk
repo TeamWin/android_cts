@@ -42,6 +42,8 @@ $(eval $(call build_xml_api_file,system-removed.api,frameworks/base/api/system-r
 $(eval $(call build_xml_api_file,android-test-base-current.api,frameworks/base/test-base/api/android-test-base-current.txt))
 $(eval $(call build_xml_api_file,android-test-mock-current.api,frameworks/base/test-mock/api/android-test-mock-current.txt))
 $(eval $(call build_xml_api_file,android-test-runner-current.api,frameworks/base/test-runner/api/android-test-runner-current.txt))
+$(eval $(call build_xml_api_file,car-system-current.api,packages/services/Car/car-lib/api/system-current.txt))
+$(eval $(call build_xml_api_file,car-system-removed.api,packages/services/Car/car-lib/api/system-removed.txt))
 $(foreach ver,$(PLATFORM_SYSTEMSDK_VERSIONS),\
   $(if $(call math_is_number,$(ver)),\
     $(eval $(call build_xml_api_file,system-$(ver).api,prebuilts/sdk/system-api/$(ver).txt))\
