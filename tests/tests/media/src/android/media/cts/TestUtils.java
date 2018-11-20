@@ -21,6 +21,7 @@ import static org.junit.Assert.fail;
 
 import android.content.Context;
 import android.media.DataSourceDesc;
+import android.media.FileDataSourceDesc;
 import android.media.MediaItem2;
 import android.media.MediaMetadata2;
 import android.media.SessionToken2;
@@ -85,7 +86,7 @@ public final class TestUtils {
             list.add(new MediaItem2.Builder(MediaItem2.FLAG_PLAYABLE)
                     .setMediaId(caller + "_item_" + (size + 1))
                     .setDataSourceDesc(
-                            new DataSourceDesc.Builder()
+                            new FileDataSourceDesc.Builder()
                                     .setDataSource(new FileDescriptor())
                                     .build())
                     .build());

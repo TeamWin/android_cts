@@ -22,6 +22,8 @@ import android.content.res.Resources;
 import android.media.AudioAttributes;
 import android.media.AudioManager;
 import android.media.DataSourceDesc;
+import android.media.FileDataSourceDesc;
+import android.media.UriDataSourceDesc;
 import android.media.MediaPlayer2;
 import android.media.MediaTimestamp;
 import android.media.SubtitleData;
@@ -104,7 +106,7 @@ public class MediaPlayer2TestBase extends ActivityInstrumentationTestCase2<Media
                     new AudioAttributes.Builder().build();
             mp.setAudioAttributes(aa);
             mp.setAudioSessionId(audioSessionId);
-            mp.setDataSource(new DataSourceDesc.Builder()
+            mp.setDataSource(new UriDataSourceDesc.Builder()
                     .setDataSource(context, uri)
                     .build());
             if (holder != null) {
@@ -161,7 +163,7 @@ public class MediaPlayer2TestBase extends ActivityInstrumentationTestCase2<Media
             mp.setAudioAttributes(aa);
             mp.setAudioSessionId(audioSessionId);
 
-            mp.setDataSource(new DataSourceDesc.Builder()
+            mp.setDataSource(new FileDataSourceDesc.Builder()
                     .setDataSource(afd.getFileDescriptor(), afd.getStartOffset(), afd.getLength())
                     .build());
 
@@ -338,7 +340,7 @@ public class MediaPlayer2TestBase extends ActivityInstrumentationTestCase2<Media
 
         AssetFileDescriptor afd = mResources.openRawResourceFd(resid);
         try {
-            mPlayer.setDataSource(new DataSourceDesc.Builder()
+            mPlayer.setDataSource(new FileDataSourceDesc.Builder()
                     .setDataSource(afd.getFileDescriptor(), afd.getStartOffset(), afd.getLength())
                     .build());
         } finally {
@@ -354,7 +356,7 @@ public class MediaPlayer2TestBase extends ActivityInstrumentationTestCase2<Media
         }
 
         AssetFileDescriptor afd = mResources.openRawResourceFd(resid);
-        return new DataSourceDesc.Builder()
+        return new FileDataSourceDesc.Builder()
                 .setDataSource(afd.getFileDescriptor(), afd.getStartOffset(), afd.getLength())
                 .build();
     }
@@ -381,7 +383,7 @@ public class MediaPlayer2TestBase extends ActivityInstrumentationTestCase2<Media
         final Uri uri = Uri.parse(path);
         for (int i = 0; i < STREAM_RETRIES; i++) {
           try {
-            mPlayer.setDataSource(new DataSourceDesc.Builder()
+            mPlayer.setDataSource(new UriDataSourceDesc.Builder()
                     .setDataSource(mContext, uri)
                     .build());
             playLoadedVideo(width, height, playTime);
@@ -415,7 +417,7 @@ public class MediaPlayer2TestBase extends ActivityInstrumentationTestCase2<Media
         boolean playedSuccessfully = false;
         for (int i = 0; i < STREAM_RETRIES; i++) {
             try {
-                mPlayer.setDataSource(new DataSourceDesc.Builder()
+                mPlayer.setDataSource(new UriDataSourceDesc.Builder()
                         .setDataSource(getInstrumentation().getTargetContext(),
                             uri, headers, cookies)
                         .build());
