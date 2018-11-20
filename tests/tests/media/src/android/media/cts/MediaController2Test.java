@@ -926,82 +926,8 @@ public class MediaController2Test extends MediaSession2TestBase {
     }
 
     @Test
-    public void testGetServiceToken() {
-        SessionToken2 token = TestUtils.getServiceToken(mContext, MockMediaSessionService2.ID);
-        assertNotNull(token);
-        assertEquals(mContext.getPackageName(), token.getPackageName());
-        assertEquals(MockMediaSessionService2.ID, token.getId());
-        assertEquals(SessionToken2.TYPE_SESSION_SERVICE, token.getType());
-    }
-
-    @Test
-    public void testConnectToService_sessionService() throws InterruptedException {
-        testConnectToService(MockMediaSessionService2.ID);
-    }
-
-    @Ignore
-    @Test
-    public void testConnectToService_libraryService() throws InterruptedException {
-        testConnectToService(MockMediaLibraryService2.ID);
-    }
-
-    public void testConnectToService(String id) throws InterruptedException {
-        final CountDownLatch latch = new CountDownLatch(1);
-        final SessionCallback sessionCallback = new SessionCallback() {
-            @Override
-            public SessionCommandGroup2 onConnect(@NonNull MediaSession2 session,
-                    @NonNull ControllerInfo controller) {
-                if (Process.myUid() == controller.getUid()) {
-                    if (mSession != null) {
-                        mSession.close();
-                    }
-                    mSession = session;
-                    mPlayer = (MockPlayer) session.getPlayer();
-                    assertEquals(mContext.getPackageName(), controller.getPackageName());
-                    assertFalse(controller.isTrusted());
-                    latch.countDown();
-                }
-                return super.onConnect(session, controller);
-            }
-        };
-        TestServiceRegistry.getInstance().setSessionCallback(sessionCallback);
-
-        mController = createController(TestUtils.getServiceToken(mContext, id));
-        assertTrue(latch.await(TIMEOUT_MS, TimeUnit.MILLISECONDS));
-
-        // Test command from controller to session service
-        mController.play();
-        assertTrue(mPlayer.mCountDownLatch.await(TIMEOUT_MS, TimeUnit.MILLISECONDS));
-        assertTrue(mPlayer.mPlayCalled);
-
-        // Test command from session service to controller
-        // TODO(jaewan): Add equivalent tests again
-        /*
-        final CountDownLatch latch = new CountDownLatch(1);
-        mController.registerPlayerEventCallback((state) -> {
-            assertNotNull(state);
-            assertEquals(PlaybackState.STATE_REWINDING, state.getState());
-            latch.countDown();
-        }, sHandler);
-        mPlayer.notifyPlaybackState(
-                TestUtils.createPlaybackState(PlaybackState.STATE_REWINDING));
-        assertTrue(latch.await(WAIT_TIME_MS, TimeUnit.MILLISECONDS));
-        */
-    }
-
-    @Test
     public void testControllerAfterSessionIsGone_session() throws InterruptedException {
         testControllerAfterSessionIsGone(mSession.getToken().getId());
-    }
-
-    // TODO(jaewan): Re-enable this test
-    @Ignore
-    @Test
-    public void testControllerAfterSessionIsGone_sessionService() throws InterruptedException {
-        /*
-        connectToService(TestUtils.getServiceToken(mContext, MockMediaSessionService2.ID));
-        testControllerAfterSessionIsGone(MockMediaSessionService2.ID);
-        */
     }
 
     @Test
@@ -1022,36 +948,6 @@ public class MediaController2Test extends MediaSession2TestBase {
         final String id = mSession.getToken().getId();
         mController.close();
         // close is done immediately for session.
-        testNoInteraction();
-
-        // Test whether the controller is notified about later close of the session or
-        // re-creation.
-        testControllerAfterSessionIsGone(id);
-    }
-
-    @Test
-    public void testClose_sessionService() throws InterruptedException {
-        testCloseFromService(MockMediaSessionService2.ID);
-    }
-
-    @Test
-    public void testClose_libraryService() throws InterruptedException {
-        testCloseFromService(MockMediaLibraryService2.ID);
-    }
-
-    private void testCloseFromService(String id) throws InterruptedException {
-        final CountDownLatch latch = new CountDownLatch(1);
-        TestServiceRegistry.getInstance().setSessionServiceCallback(new SessionServiceCallback() {
-            @Override
-            public void onDestroyed() {
-                latch.countDown();
-            }
-        });
-        mController = createController(TestUtils.getServiceToken(mContext, id));
-        mController.close();
-        // Wait until close triggers onDestroy() of the session service.
-        assertTrue(latch.await(WAIT_TIME_MS, TimeUnit.MILLISECONDS));
-        assertNull(TestServiceRegistry.getInstance().getServiceInstance());
         testNoInteraction();
 
         // Test whether the controller is notified about later close of the session or

@@ -44,28 +44,6 @@ public final class TestUtils {
     private static final int WAIT_SERVICE_TIME_MS = 5000;
 
     /**
-     * Finds the session with id in this test package.
-     *
-     * @param context
-     * @param id
-     * @return
-     */
-    public static SessionToken2 getServiceToken(Context context, String id) {
-        MediaSessionManager manager =
-                (MediaSessionManager) context.getSystemService(Context.MEDIA_SESSION_SERVICE);
-        List<SessionToken2> tokens = manager.getSessionServiceTokens();
-        for (int i = 0; i < tokens.size(); i++) {
-            SessionToken2 token = tokens.get(i);
-            if (context.getPackageName().equals(token.getPackageName())
-                    && id.equals(token.getId())) {
-                return token;
-            }
-        }
-        fail("Failed to find service");
-        return null;
-    }
-
-    /**
      * Compares contents of two bundles.
      *
      * @param a a bundle
