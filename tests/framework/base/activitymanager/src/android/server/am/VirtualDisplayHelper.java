@@ -15,7 +15,7 @@
  */
 
 package android.server.am;
-
+import static android.hardware.display.DisplayManager.VIRTUAL_DISPLAY_FLAG_PUBLIC;
 import static android.hardware.display.DisplayManager.VIRTUAL_DISPLAY_FLAG_OWN_CONTENT_ONLY;
 import static android.hardware.display.DisplayManager.VIRTUAL_DISPLAY_FLAG_PRESENTATION;
 import static android.server.am.ActivityManagerTestBase.isDisplayOn;
@@ -54,11 +54,19 @@ class VirtualDisplayHelper {
 
     void createAndWaitForDisplay(boolean requestShowWhenLocked) {
         SystemUtil.runWithShellPermissionIdentity(() -> {
-            createVirtualDisplay(requestShowWhenLocked);
+            createVirtualDisplay(requestShowWhenLocked, 0 /* virtualDisplayFlags */);
             waitForDisplayState(mVirtualDisplay.getDisplay().getDisplayId() /* default */,
                     true /* on */);
             mCreated = true;
         });
+    }
+
+    int createAndWaitForPublicDisplay(boolean requestShowWhenLocked) {
+        createVirtualDisplay(requestShowWhenLocked, VIRTUAL_DISPLAY_FLAG_PUBLIC);
+        waitForDisplayState(mVirtualDisplay.getDisplay().getDisplayId() /* default */,
+                true /* on */);
+        mCreated = true;
+        return mVirtualDisplay.getDisplay().getDisplayId();
     }
 
     void turnDisplayOff() {
@@ -90,12 +98,14 @@ class VirtualDisplayHelper {
         });
     }
 
-    private void createVirtualDisplay(boolean requestShowWhenLocked) {
+    private void createVirtualDisplay(boolean requestShowWhenLocked, int virtualDisplayFlags) {
         mReader = ImageReader.newInstance(WIDTH, HEIGHT, PixelFormat.RGBA_8888, 2);
 
         final DisplayManager displayManager = getContext().getSystemService(DisplayManager.class);
 
-        int flags = VIRTUAL_DISPLAY_FLAG_PRESENTATION | VIRTUAL_DISPLAY_FLAG_OWN_CONTENT_ONLY;
+        int flags = VIRTUAL_DISPLAY_FLAG_PRESENTATION | VIRTUAL_DISPLAY_FLAG_OWN_CONTENT_ONLY
+                | virtualDisplayFlags;
+
         if (requestShowWhenLocked) {
             flags |= VIRTUAL_DISPLAY_FLAG_CAN_SHOW_WITH_INSECURE_KEYGUARD;
         }
