@@ -78,6 +78,8 @@
 
         <activity android:name="android.server.am.lifecycle.ActivityLifecycleClientTestBase$SecondActivity"/>
 
+        <activity android:name="android.server.am.lifecycle.ActivityLifecycleClientTestBase$ThirdActivity"/>
+
         <activity
                 android:name="android.server.am.lifecycle.ActivityLifecycleClientTestBase$TranslucentActivity"
                 android:theme="@android:style/Theme.Translucent.NoTitleBar" />
@@ -97,6 +99,10 @@
 
         <activity android:name="android.server.am.lifecycle.ActivityLifecycleClientTestBase$ConfigChangeHandlingActivity"
                   android:configChanges="orientation|screenSize|smallestScreenSize|screenLayout|colorMode|density" />
+
+        <activity android:name="android.server.am.lifecycle.ActivityLifecycleClientTestBase$PipActivity"
+                  android:configChanges="orientation|screenSize|smallestScreenSize|screenLayout"
+                  android:supportsPictureInPicture="true"/>
 
         <activity android:name="android.server.am.StartActivityTests$TestActivity2" />
 

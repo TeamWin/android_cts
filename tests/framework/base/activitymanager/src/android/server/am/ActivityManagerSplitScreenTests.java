@@ -508,6 +508,7 @@ public class ActivityManagerSplitScreenTests extends ActivityManagerTestBase {
 
         mBroadcastActionTrigger.doAction(TEST_ACTIVITY_ACTION_FINISH_SELF);
         waitForDockNotMinimized();
+        mAmWmState.waitForActivityRemoved(TEST_ACTIVITY);
         mAmWmState.assertNotExist(TEST_ACTIVITY);
         assertDockNotMinimized();
     }

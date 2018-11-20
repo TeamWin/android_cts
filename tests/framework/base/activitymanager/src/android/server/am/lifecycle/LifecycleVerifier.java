@@ -1,3 +1,19 @@
+/*
+ * Copyright (C) 2018 The Android Open Source Project
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License
+ */
+
 package android.server.am.lifecycle;
 
 import static android.server.am.StateLogger.log;
@@ -31,10 +47,14 @@ class LifecycleVerifier {
         log("Observed sequence: " + observedTransitions);
         final String errorMessage = errorDuringTransition(activityClass, "launch");
 
-        final List<ActivityCallback> expectedTransitions = includeCallbacks
+        final List<ActivityCallback> expectedTransitions = getLaunchSequence(includeCallbacks);
+        assertEquals(errorMessage, expectedTransitions, observedTransitions);
+    }
+
+    static List<ActivityCallback> getLaunchSequence(boolean includeCallbacks) {
+        return includeCallbacks
                 ? Arrays.asList(PRE_ON_CREATE, ON_CREATE, ON_START, ON_POST_CREATE, ON_RESUME)
                 : Arrays.asList(PRE_ON_CREATE, ON_CREATE, ON_START, ON_RESUME);
-        assertEquals(errorMessage, expectedTransitions, observedTransitions);
     }
 
     static void assertLaunchSequence(Class<? extends Activity> launchingActivity,
@@ -101,7 +121,7 @@ class LifecycleVerifier {
         assertEquals(errorMessage, expectedTransitions, observedTransitions);
     }
 
-    static void assertRestartAndPauseSequence(Class<? extends Activity> activityClass,
+    static void assertRestartAndResumeSequence(Class<? extends Activity> activityClass,
                                               LifecycleLog lifecycleLog) {
         final List<ActivityCallback> observedTransitions =
                 lifecycleLog.getActivityLog(activityClass);
@@ -109,11 +129,11 @@ class LifecycleVerifier {
         final String errorMessage = errorDuringTransition(activityClass, "restart and pause");
 
         final List<ActivityCallback> expectedTransitions =
-                Arrays.asList(ON_RESTART, ON_START, ON_RESUME, ON_PAUSE);
+                Arrays.asList(ON_RESTART, ON_START, ON_RESUME);
         assertEquals(errorMessage, expectedTransitions, observedTransitions);
     }
 
-    static void assertRecreateAndPauseSequence(Class<? extends Activity> activityClass,
+    static void assertRecreateAndResumeSequence(Class<? extends Activity> activityClass,
                                               LifecycleLog lifecycleLog) {
         final List<ActivityCallback> observedTransitions =
                 lifecycleLog.getActivityLog(activityClass);
@@ -121,7 +141,7 @@ class LifecycleVerifier {
         final String errorMessage = errorDuringTransition(activityClass, "recreateA  and pause");
 
         final List<ActivityCallback> expectedTransitions =
-                Arrays.asList(ON_DESTROY, PRE_ON_CREATE, ON_CREATE, ON_START, ON_RESUME, ON_PAUSE);
+                Arrays.asList(ON_DESTROY, PRE_ON_CREATE, ON_CREATE, ON_START, ON_RESUME);
         assertEquals(errorMessage, expectedTransitions, observedTransitions);
     }
 
@@ -134,6 +154,29 @@ class LifecycleVerifier {
 
         final List<ActivityCallback> expectedTransitions = Arrays.asList(PRE_ON_CREATE, ON_CREATE,
                 ON_START, ON_RESUME, ON_PAUSE, ON_STOP, ON_DESTROY);
+        assertEquals(errorMessage, expectedTransitions, observedTransitions);
+    }
+
+    static void assertResumeToDestroySequence(Class<? extends Activity> activityClass,
+            LifecycleLog lifecycleLog) {
+        final List<ActivityCallback> observedTransitions =
+                lifecycleLog.getActivityLog(activityClass);
+        log("Observed sequence: " + observedTransitions);
+        final String errorMessage = errorDuringTransition(activityClass, "launch and destroy");
+
+        final List<ActivityCallback> expectedTransitions = Arrays.asList(ON_PAUSE, ON_STOP,
+                ON_DESTROY);
+        assertEquals(errorMessage, expectedTransitions, observedTransitions);
+    }
+
+    static void assertResumeToStopSequence(Class<? extends Activity> activityClass,
+            LifecycleLog lifecycleLog) {
+        final List<ActivityCallback> observedTransitions =
+                lifecycleLog.getActivityLog(activityClass);
+        log("Observed sequence: " + observedTransitions);
+        final String errorMessage = errorDuringTransition(activityClass, "launch and destroy");
+
+        final List<ActivityCallback> expectedTransitions = Arrays.asList(ON_PAUSE, ON_STOP);
         assertEquals(errorMessage, expectedTransitions, observedTransitions);
     }
 
