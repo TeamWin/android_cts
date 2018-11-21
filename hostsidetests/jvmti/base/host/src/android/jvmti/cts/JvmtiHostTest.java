@@ -110,22 +110,24 @@ public class JvmtiHostTest extends DeviceTestCase implements IBuildReceiver, IAb
             device.setSetting("global", "hidden_api_policy", "1");
         }
 
-        RemoteAndroidTestRunner runner = new RemoteAndroidTestRunner(mTestPackageName, RUNNER,
-                device.getIDevice());
-        // set a max deadline limit to avoid hanging forever
-        runner.setMaxTimeToOutputResponse(2, TimeUnit.MINUTES);
+        try {
+            RemoteAndroidTestRunner runner = new RemoteAndroidTestRunner(mTestPackageName, RUNNER,
+                    device.getIDevice());
+            // set a max deadline limit to avoid hanging forever
+            runner.setMaxTimeToOutputResponse(2, TimeUnit.MINUTES);
 
-        AttachAgent aa = new AttachAgent(device, mTestPackageName, mTestApk);
-        aa.prepare();
-        TestResults tr = new TestResults(aa);
+            AttachAgent aa = new AttachAgent(device, mTestPackageName, mTestApk);
+            aa.prepare();
+            TestResults tr = new TestResults(aa);
 
-        device.runInstrumentationTests(runner, tr);
+            device.runInstrumentationTests(runner, tr);
 
-        assertTrue(tr.getErrors(), tr.hasStarted());
-        assertFalse(tr.getErrors(), tr.hasFailed());
-
-        if (disable_hidden_api) {
-            device.setSetting("global", "hidden_api_policy", old_hiddenapi_setting);
+            assertTrue(tr.getErrors(), tr.hasStarted());
+            assertFalse(tr.getErrors(), tr.hasFailed());
+        } finally {
+            if (disable_hidden_api) {
+                device.setSetting("global", "hidden_api_policy", old_hiddenapi_setting);
+            }
         }
     }
 
