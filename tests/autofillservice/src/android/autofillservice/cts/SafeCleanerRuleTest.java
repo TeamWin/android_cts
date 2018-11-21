@@ -26,6 +26,7 @@ import android.platform.test.annotations.AppModeFull;
 
 import com.google.common.collect.ImmutableList;
 
+import org.junit.AssumptionViolatedException;
 import org.junit.Test;
 import org.junit.runner.Description;
 import org.junit.runner.RunWith;
@@ -234,6 +235,27 @@ public class SafeCleanerRuleTest {
         verify(mGoodGuyRunner1).run();
         verify(mGoodGuyRunner2).run();
         verify(mGoodGuyExtraExceptions1).call();
+    }
+
+    @Test
+    public void testIgnoreAssumptionViolatedException() throws Throwable {
+        final AssumptionViolatedException ave = new AssumptionViolatedException(
+                "tis an assumption violation");
+        final RuntimeException testException  = new RuntimeException("TEST, Y U NO PASS?");
+        final SafeCleanerRule rule = new SafeCleanerRule()
+                .run(mGoodGuyRunner1)
+                .add(mRuntimeException)
+                .run(() -> {
+                    throw ave;
+                });
+
+        final SafeCleanerRule.MultipleExceptions actualException = expectThrows(
+                SafeCleanerRule.MultipleExceptions.class,
+                () -> rule.apply(new FailureStatement(testException), mDescription).evaluate());
+        assertThat(actualException.getThrowables())
+                .containsExactly(testException, mRuntimeException)
+                .inOrder();
+        verify(mGoodGuyRunner1).run();
     }
 
     @Test
