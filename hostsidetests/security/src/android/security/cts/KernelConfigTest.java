@@ -123,6 +123,9 @@ public class KernelConfigTest extends DeviceTestCase implements IBuildReceiver, 
      */
     @CddTest(requirement="9.7/C-0-8")
     public void testConfigROData() throws Exception {
+        if (configSet.contains("CONFIG_UH_RKP=y"))
+            return;
+
         assertTrue("Linux kernel must have RO data enabled: " +
                 "CONFIG_DEBUG_RODATA=y or CONFIG_STRICT_KERNEL_RWX=y",
                 configSet.contains("CONFIG_DEBUG_RODATA=y") ||
