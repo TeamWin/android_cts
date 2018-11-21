@@ -23,6 +23,7 @@ import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.res.Resources;
 import android.media.DataSourceDesc;
+import android.media.UriDataSourceDesc;
 import android.media.MediaDrm;
 import android.media.MediaPlayer2;
 import android.media.MediaPlayer2.DrmInfo;
@@ -274,7 +275,8 @@ public class MediaPlayer2DrmTestBase extends ActivityInstrumentationTestCase2<Me
 
         mPlayer.registerEventCallback(mExecutor, mECb);
         Log.v(TAG, "playLoadedVideo: setDataSource()");
-        mPlayer.setDataSource(new DataSourceDesc.Builder().setDataSource(mContext, file).build());
+        DataSourceDesc dsd = new UriDataSourceDesc.Builder().setDataSource(mContext, file).build();
+        mPlayer.setDataSource(dsd);
         mSetDataSourceCallCompleted.waitForSignal();
         if (mCallStatus != MediaPlayer2.CALL_STATUS_NO_ERROR) {
             throw new PrepareFailedException();
@@ -287,19 +289,19 @@ public class MediaPlayer2DrmTestBase extends ActivityInstrumentationTestCase2<Me
         try {
             switch (testType) {
                 case V0_SYNC_TEST:
-                    preparePlayerAndDrm_V0_syncDrmSetup();
+                    preparePlayerAndDrm_V0_syncDrmSetup(dsd);
                     break;
 
                 case V1_ASYNC_TEST:
-                    preparePlayerAndDrm_V1_asyncDrmSetup();
+                    preparePlayerAndDrm_V1_asyncDrmSetup(dsd);
                     break;
 
                 case V2_SYNC_CONFIG_TEST:
-                    preparePlayerAndDrm_V2_syncDrmSetupPlusConfig();
+                    preparePlayerAndDrm_V2_syncDrmSetupPlusConfig(dsd);
                     break;
 
                 case V3_ASYNC_DRMPREPARED_TEST:
-                    preparePlayerAndDrm_V3_asyncDrmSetupPlusDrmPreparedListener();
+                    preparePlayerAndDrm_V3_asyncDrmSetupPlusDrmPreparedListener(dsd);
                     break;
             }
 
@@ -326,14 +328,14 @@ public class MediaPlayer2DrmTestBase extends ActivityInstrumentationTestCase2<Me
 
         try {
             Log.v(TAG, "playLoadedVideo: releaseDrm");
-            mPlayer.releaseDrm();
+            mPlayer.releaseDrm(dsd);
         } catch (Exception e) {
             e.printStackTrace();
             throw new PrepareFailedException();
         }
     }
 
-    private void preparePlayerAndDrm_V0_syncDrmSetup() throws Exception {
+    private void preparePlayerAndDrm_V0_syncDrmSetup(DataSourceDesc dsd) throws Exception {
         Log.v(TAG, "preparePlayerAndDrm_V0: calling prepare()");
         mPlayer.prepare();
         mOnPreparedCalled.waitForSignal();
@@ -341,26 +343,32 @@ public class MediaPlayer2DrmTestBase extends ActivityInstrumentationTestCase2<Me
             throw new IOException();
         }
 
-        DrmInfo drmInfo = mPlayer.getDrmInfo();
+        DrmInfo drmInfo = mPlayer.getDrmInfo(dsd);
         if (drmInfo != null) {
-            setupDrm(drmInfo, true /* prepareDrm */, true /* synchronousNetworking */,
-                    MediaDrm.KEY_TYPE_STREAMING);
+            setupDrm(dsd, drmInfo, true /* prepareDrm */,
+                    true /* synchronousNetworking */, MediaDrm.KEY_TYPE_STREAMING);
             Log.v(TAG, "preparePlayerAndDrm_V0: setupDrm done!");
         }
     }
 
-    private void preparePlayerAndDrm_V1_asyncDrmSetup() throws InterruptedException {
+    private void preparePlayerAndDrm_V1_asyncDrmSetup(DataSourceDesc dsd) throws InterruptedException {
         final AtomicBoolean asyncSetupDrmError = new AtomicBoolean(false);
 
         mPlayer.registerDrmEventCallback(mExecutor, new MediaPlayer2.DrmEventCallback() {
             @Override
-            public void onDrmInfo(MediaPlayer2 mp, DataSourceDesc dsd, DrmInfo drmInfo) {
+            public void onDrmInfo(MediaPlayer2 mp, DataSourceDesc dsd2, DrmInfo drmInfo) {
                 Log.v(TAG, "preparePlayerAndDrm_V1: onDrmInfo" + drmInfo);
+                if (dsd != dsd2) {
+                    Log.e(TAG, "preparePlayerAndDrm_V1: onDrmInfo dsd mismatch");
+                    asyncSetupDrmError.set(true);
+                    mOnDrmInfoCalled.signal();
+                    return;
+                }
 
                 // in the callback (async mode) so handling exceptions here
                 try {
-                    setupDrm(drmInfo, true /* prepareDrm */, true /* synchronousNetworking */,
-                            MediaDrm.KEY_TYPE_STREAMING);
+                    setupDrm(dsd2, drmInfo, true /* prepareDrm */,
+                            true /* synchronousNetworking */, MediaDrm.KEY_TYPE_STREAMING);
                 } catch (Exception e) {
                     Log.v(TAG, "preparePlayerAndDrm_V1: setupDrm EXCEPTION " + e);
                     asyncSetupDrmError.set(true);
@@ -385,19 +393,27 @@ public class MediaPlayer2DrmTestBase extends ActivityInstrumentationTestCase2<Me
         }
     }
 
-    private void preparePlayerAndDrm_V2_syncDrmSetupPlusConfig() throws Exception {
+    private void preparePlayerAndDrm_V2_syncDrmSetupPlusConfig(DataSourceDesc dsd)
+            throws Exception {
+        final AtomicBoolean drmConfigError = new AtomicBoolean(false);
         mPlayer.setOnDrmConfigHelper(new MediaPlayer2.OnDrmConfigHelper() {
             @Override
-            public void onDrmConfig(MediaPlayer2 mp, DataSourceDesc dsd) {
+            public void onDrmConfig(MediaPlayer2 mp, DataSourceDesc dsd2) {
+                if (dsd != dsd2) {
+                    Log.e(TAG, "preparePlayerAndDrm_V2: onDrmConfig dsd mismatch");
+                    drmConfigError.set(true);
+                    return;
+                }
+
                 String widevineSecurityLevel3 = "L3";
                 String securityLevelProperty = "securityLevel";
 
                 try {
-                    String level = mp.getDrmPropertyString(securityLevelProperty);
+                    String level = mp.getDrmPropertyString(dsd2, securityLevelProperty);
                     Log.v(TAG, "preparePlayerAndDrm_V2: getDrmPropertyString: "
                             + securityLevelProperty + " -> " + level);
-                    mp.setDrmPropertyString(securityLevelProperty, widevineSecurityLevel3);
-                    level = mp.getDrmPropertyString(securityLevelProperty);
+                    mp.setDrmPropertyString(dsd2, securityLevelProperty, widevineSecurityLevel3);
+                    level = mp.getDrmPropertyString(dsd2, securityLevelProperty);
                     Log.v(TAG, "preparePlayerAndDrm_V2: getDrmPropertyString: "
                             + securityLevelProperty + " -> " + level);
                 } catch (MediaPlayer2.NoDrmSchemeException e) {
@@ -416,27 +432,32 @@ public class MediaPlayer2DrmTestBase extends ActivityInstrumentationTestCase2<Me
             throw new IOException();
         }
 
-        DrmInfo drmInfo = mPlayer.getDrmInfo();
+        if (drmConfigError.get()) {
+            fail("preparePlayerAndDrm_V2: onDrmConfig");
+        }
+
+        DrmInfo drmInfo = mPlayer.getDrmInfo(dsd);
         if (drmInfo != null) {
-            setupDrm(drmInfo, true /* prepareDrm */, true /* synchronousNetworking */,
-                    MediaDrm.KEY_TYPE_STREAMING);
+            setupDrm(dsd, drmInfo, true /* prepareDrm */,
+                    true /* synchronousNetworking */, MediaDrm.KEY_TYPE_STREAMING);
             Log.v(TAG, "preparePlayerAndDrm_V2: setupDrm done!");
         }
     }
 
-    private void preparePlayerAndDrm_V3_asyncDrmSetupPlusDrmPreparedListener()
+    private void preparePlayerAndDrm_V3_asyncDrmSetupPlusDrmPreparedListener(DataSourceDesc dsd)
             throws InterruptedException {
         final AtomicBoolean asyncSetupDrmError = new AtomicBoolean(false);
 
         mPlayer.registerDrmEventCallback(mExecutor, new MediaPlayer2.DrmEventCallback() {
             @Override
-            public void onDrmInfo(MediaPlayer2 mp, DataSourceDesc dsd, DrmInfo drmInfo) {
+            public void onDrmInfo(MediaPlayer2 mp, DataSourceDesc dsd2, DrmInfo drmInfo) {
                 Log.v(TAG, "preparePlayerAndDrm_V3: onDrmInfo" + drmInfo);
 
                 // DRM preperation
                 List<UUID> supportedSchemes = drmInfo.getSupportedSchemes();
-                if (supportedSchemes.isEmpty()) {
-                    Log.e(TAG, "preparePlayerAndDrm_V3: onDrmInfo: No supportedSchemes");
+                if (dsd != dsd2 || supportedSchemes.isEmpty()) {
+                    String msg = dsd != dsd2 ? "dsd mismatch" : "No supportedSchemes";
+                    Log.e(TAG, "preparePlayerAndDrm_V3: onDrmInfo " + msg);
                     asyncSetupDrmError.set(true);
                     mOnDrmInfoCalled.signal();
                     // we won't call prepareDrm anymore but need to get passed the wait
@@ -450,27 +471,34 @@ public class MediaPlayer2DrmTestBase extends ActivityInstrumentationTestCase2<Me
                 Log.d(TAG, "preparePlayerAndDrm_V3: onDrmInfo: selected " + drmScheme);
 
                 Log.v(TAG, "preparePlayerAndDrm_V3: onDrmInfo: calling prepareDrm");
-                mp.prepareDrm(drmScheme);
+                mp.prepareDrm(dsd2, drmScheme);
 
                 mOnDrmInfoCalled.signal();
                 Log.v(TAG, "preparePlayerAndDrm_V3: onDrmInfo done!");
             }
 
             @Override
-            public void onDrmPrepared(MediaPlayer2 mp, DataSourceDesc dsd, int status) {
+            public void onDrmPrepared(MediaPlayer2 mp, DataSourceDesc dsd2, int status) {
                 Log.v(TAG, "preparePlayerAndDrm_V3: onDrmPrepared status: " + status);
+
+                if (dsd != dsd2) {
+                    asyncSetupDrmError.set(true);
+                    Log.e(TAG, "preparePlayerAndDrm_V3: onDrmPrepared dsd mismatch");
+                    mOnDrmPreparedCalled.signal();
+                    return;
+                }
 
                 if (status != MediaPlayer2.PREPARE_DRM_STATUS_SUCCESS) {
                     asyncSetupDrmError.set(true);
                     Log.e(TAG, "preparePlayerAndDrm_V3: onDrmPrepared did not succeed");
                 }
 
-                DrmInfo drmInfo = mPlayer.getDrmInfo();
+                DrmInfo drmInfo = mPlayer.getDrmInfo(dsd2);
 
                 // in the callback (async mode) so handling exceptions here
                 try {
-                    setupDrm(drmInfo, false /* prepareDrm */, true /* synchronousNetworking */,
-                            MediaDrm.KEY_TYPE_STREAMING);
+                    setupDrm(dsd2, drmInfo, false /* prepareDrm */,
+                            true /* synchronousNetworking */, MediaDrm.KEY_TYPE_STREAMING);
                 } catch (Exception e) {
                     Log.v(TAG, "preparePlayerAndDrm_V3: setupDrm EXCEPTION " + e);
                     asyncSetupDrmError.set(true);
@@ -515,26 +543,27 @@ public class MediaPlayer2DrmTestBase extends ActivityInstrumentationTestCase2<Me
             boolean restoreRound = (round == 1);
             Log.v(TAG, "playLoadedVideo: round " + round);
 
+            UriDataSourceDesc.Builder dsdBuilder = new UriDataSourceDesc.Builder();
+            DataSourceDesc dsd = dsdBuilder.setDataSource(mContext, file).build();
             try {
                 mPlayer.registerEventCallback(mExecutor, mECb);
 
                 Log.v(TAG, "playLoadedVideo: setDataSource()");
-                mPlayer.setDataSource(
-                        new DataSourceDesc.Builder().setDataSource(mContext, file).build());
+                mPlayer.setDataSource(dsd);
 
                 Log.v(TAG, "playLoadedVideo: prepare()");
                 mPlayer.prepare();
                 mOnPreparedCalled.waitForSignal();
 
                 // but preparing the DRM every time with proper key request type
-                drmInfo = mPlayer.getDrmInfo();
+                drmInfo = mPlayer.getDrmInfo(dsd);
                 if (drmInfo != null) {
                     if (keyRequestRound) {
                         // asking for offline keys
-                        setupDrm(drmInfo, true /* prepareDrm */, true /* synchronousNetworking */,
-                                 MediaDrm.KEY_TYPE_OFFLINE);
+                        setupDrm(dsd, drmInfo, true /* prepareDrm */,
+                                 true /* synchronousNetworking */, MediaDrm.KEY_TYPE_OFFLINE);
                     } else if (restoreRound) {
-                        setupDrmRestore(drmInfo, true /* prepareDrm */);
+                        setupDrmRestore(dsd, drmInfo, true /* prepareDrm */);
                     } else {
                         fail("preparePlayer: unexpected round " + round);
                     }
@@ -566,13 +595,13 @@ public class MediaPlayer2DrmTestBase extends ActivityInstrumentationTestCase2<Me
                 if (drmInfo != null) {
                     if (restoreRound) {
                         // releasing the offline key
-                        setupDrm(null /* drmInfo */, false /* prepareDrm */,
+                        setupDrm(dsd, null /* drmInfo */, false /* prepareDrm */,
                                  true /* synchronousNetworking */, MediaDrm.KEY_TYPE_RELEASE);
                         Log.v(TAG, "playLoadedVideo: released offline keys");
                     }
 
                     Log.v(TAG, "playLoadedVideo: releaseDrm");
-                    mPlayer.releaseDrm();
+                    mPlayer.releaseDrm(dsd);
                 }
             } catch (Exception e) {
                 e.printStackTrace();
@@ -626,8 +655,8 @@ public class MediaPlayer2DrmTestBase extends ActivityInstrumentationTestCase2<Me
      * @param synchronousNetworking whether the network operation of key request/response will
      *        be performed synchronously
      */
-    private void setupDrm(DrmInfo drmInfo, boolean prepareDrm, boolean synchronousNetworking,
-            int keyType) throws Exception {
+    private void setupDrm(DataSourceDesc dsd, DrmInfo drmInfo, boolean prepareDrm,
+            boolean synchronousNetworking, int keyType) throws Exception {
         Log.d(TAG, "setupDrm: drmInfo: " + drmInfo + " prepareDrm: " + prepareDrm
                 + " synchronousNetworking: " + synchronousNetworking);
         try {
@@ -655,14 +684,15 @@ public class MediaPlayer2DrmTestBase extends ActivityInstrumentationTestCase2<Me
                                 mExecutor, new MediaPlayer2.DrmEventCallback() {
                             @Override
                             public void onDrmPrepared(
-                                    MediaPlayer2 mp, DataSourceDesc dsd, int status) {
-                                if (status != MediaPlayer2.PREPARE_DRM_STATUS_SUCCESS) {
+                                    MediaPlayer2 mp, DataSourceDesc dsd2, int status) {
+                                if (status != MediaPlayer2.PREPARE_DRM_STATUS_SUCCESS
+                                        || dsd != dsd2) {
                                     prepareDrmFailed.set(true);
                                 }
                                 drmPrepared.signal();
                             }
                         });
-                        mPlayer.prepareDrm(drmScheme);
+                        mPlayer.prepareDrm(dsd, drmScheme);
                         drmPrepared.waitForSignal();
                         if (prepareDrmFailed.get()) {
                             fail("setupDrm: prepareDrm failed");
@@ -701,6 +731,7 @@ public class MediaPlayer2DrmTestBase extends ActivityInstrumentationTestCase2<Me
             }
 
             final MediaDrm.KeyRequest request = mPlayer.getDrmKeyRequest(
+                    dsd,
                     (keyType == MediaDrm.KEY_TYPE_RELEASE) ? mKeySetId : null,
                     initData,
                     mime,
@@ -717,6 +748,7 @@ public class MediaPlayer2DrmTestBase extends ActivityInstrumentationTestCase2<Me
 
             // null is returned when the response is for a streaming or release request.
             byte[] keySetId = mPlayer.provideDrmKeyResponse(
+                    dsd,
                     (keyType == MediaDrm.KEY_TYPE_RELEASE) ? mKeySetId : null,
                     response);
             Log.d(TAG, "setupDrm: provideDrmKeyResponse -> " + Arrays.toString(keySetId));
@@ -734,7 +766,8 @@ public class MediaPlayer2DrmTestBase extends ActivityInstrumentationTestCase2<Me
         }
     } // setupDrm
 
-    private void setupDrmRestore(DrmInfo drmInfo, boolean prepareDrm) throws Exception {
+    private void setupDrmRestore(DataSourceDesc dsd, DrmInfo drmInfo, boolean prepareDrm)
+            throws Exception {
         Log.d(TAG, "setupDrmRestore: drmInfo: " + drmInfo + " prepareDrm: " + prepareDrm);
         try {
             if (prepareDrm) {
@@ -755,14 +788,15 @@ public class MediaPlayer2DrmTestBase extends ActivityInstrumentationTestCase2<Me
                         mExecutor, new MediaPlayer2.DrmEventCallback() {
                     @Override
                     public void onDrmPrepared(
-                            MediaPlayer2 mp, DataSourceDesc dsd, int status) {
-                        if (status != MediaPlayer2.PREPARE_DRM_STATUS_SUCCESS) {
+                            MediaPlayer2 mp, DataSourceDesc dsd2, int status) {
+                        if (status != MediaPlayer2.PREPARE_DRM_STATUS_SUCCESS
+                                || dsd != dsd2) {
                             prepareDrmFailed.set(true);
                         }
                         drmPrepared.signal();
                     }
                 });
-                mPlayer.prepareDrm(drmScheme);
+                mPlayer.prepareDrm(dsd, drmScheme);
                 drmPrepared.waitForSignal();
                 if (prepareDrmFailed.get()) {
                     fail("setupDrmRestore: prepareDrm failed");
@@ -773,7 +807,7 @@ public class MediaPlayer2DrmTestBase extends ActivityInstrumentationTestCase2<Me
                 fail("setupDrmRestore: Offline key has not been setup.");
             }
 
-            mPlayer.restoreDrmKeys(mKeySetId);
+            mPlayer.restoreDrmKeys(dsd, mKeySetId);
 
         } catch (MediaPlayer2.NoDrmSchemeException e) {
             Log.v(TAG, "setupDrmRestore: NoDrmSchemeException");

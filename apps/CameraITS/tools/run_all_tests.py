@@ -407,14 +407,13 @@ def main():
                 if cmd is not None:
                     valid_scene_code = subprocess.call(cmd, cwd=topdir)
                     assert valid_scene_code == 0
-            print "Start running ITS on camera %s, %s" % (camera_id, scene)
+            print 'Start running ITS on camera %s, %s' % (camera_id, scene)
             # Extract chart from scene for scene3 once up front
             chart_loc_arg = ''
             chart_height = CHART_HEIGHT
             if scene == 'scene3':
-                if float(camera_fov) < 90 and np.isclose(chart_distance, 22,
-                                                         rtol=0.1):
-                    chart_height *= 0.67
+                chart_height *= its.cv2image.calc_chart_scaling(
+                        chart_distance, camera_fov)
                 chart = its.cv2image.Chart(SCENE3_FILE, chart_height,
                                            chart_distance, CHART_SCALE_START,
                                            CHART_SCALE_STOP, CHART_SCALE_STEP,

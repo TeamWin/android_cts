@@ -24,6 +24,10 @@ import java.io.IOException;
  */
 public class SELinuxTargetSdkTest extends SELinuxTargetSdkTestBase
 {
+    public void testCanExecuteFromHomeDir() throws Exception {
+        assertTrue(canExecuteFromHomeDir());
+    }
+
     /**
      * Verify that selinux context is the expected domain based on
      * targetSdkVersion = 25
@@ -52,5 +56,9 @@ public class SELinuxTargetSdkTest extends SELinuxTargetSdkTestBase
             "Example expected value: u:object_r:app_data_file:s0:c512,c768\n" +
             "Actual value: ";
         appDataContext(context, msg);
+    }
+
+    public void testDex2oat() throws Exception {
+        checkDex2oatAccess(true);
     }
 }

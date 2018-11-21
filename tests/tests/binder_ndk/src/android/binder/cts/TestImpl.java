@@ -144,6 +144,11 @@ public class TestImpl extends ITest.Stub {
   }
 
   @Override
+  public ParcelFileDescriptor RepeatNullableFd(ParcelFileDescriptor in_value) {
+    return in_value;
+  }
+
+  @Override
   public String RepeatString(String in_value) {
     return in_value;
   }
@@ -247,7 +252,12 @@ public class TestImpl extends ITest.Stub {
   }
 
   @Override
-  public String[] RepeatNullableStringArray(String[] in_value, String[] repeated) {
+  public String[] RepeatNullableStringArray(String[] in_value) {
+    return in_value;
+  }
+
+  @Override
+  public String[] DoubleRepeatNullableStringArray(String[] in_value, String[] repeated) {
     if (in_value == null) {
       return null; // can't do anything to repeated
     }

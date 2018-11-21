@@ -64,6 +64,7 @@ public class SSLConscryptPlainTextExposureTest extends InstrumentationTestCase {
   public static String output = "";
   private final String pattern = ".*PLAIN TEXT EXPOSED.*";
 
+  @SecurityTest(minPatchLevel = "2018-05")
   public void test_android_CVE_2017_13309() {
 
     context = getInstrumentation().getContext();

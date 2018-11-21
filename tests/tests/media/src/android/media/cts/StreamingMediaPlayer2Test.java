@@ -18,6 +18,7 @@ package android.media.cts;
 import android.content.Context;
 import android.media.BufferingParams;
 import android.media.DataSourceDesc;
+import android.media.UriDataSourceDesc;
 import android.media.MediaFormat;
 import android.media.MediaPlayer2;
 import android.media.MediaPlayer2.TrackInfo;
@@ -357,7 +358,7 @@ public class StreamingMediaPlayer2Test extends MediaPlayer2TestBase {
             }
 
             final Uri uri = Uri.parse(stream_url);
-            mPlayer.setDataSource(new DataSourceDesc.Builder()
+            mPlayer.setDataSource(new UriDataSourceDesc.Builder()
                     .setDataSource(mContext, uri)
                     .build());
 
@@ -420,7 +421,7 @@ public class StreamingMediaPlayer2Test extends MediaPlayer2TestBase {
             }
 
             final Uri uri = Uri.parse(stream_url);
-            mPlayer.setDataSource(new DataSourceDesc.Builder()
+            mPlayer.setDataSource(new UriDataSourceDesc.Builder()
                     .setDataSource(mContext, uri)
                     .build());
 
@@ -516,7 +517,7 @@ public class StreamingMediaPlayer2Test extends MediaPlayer2TestBase {
             assertTrue(mCallStatus != MediaPlayer2.CALL_STATUS_NO_ERROR);
 
             final Uri uri = Uri.parse(stream_url);
-            mPlayer.setDataSource(new DataSourceDesc.Builder()
+            mPlayer.setDataSource(new UriDataSourceDesc.Builder()
                     .setDataSource(mContext, uri)
                     .build());
 
@@ -597,7 +598,7 @@ public class StreamingMediaPlayer2Test extends MediaPlayer2TestBase {
             final AtomicInteger counter = new AtomicInteger();
             String stream_url = mServer.getAssetUrl("prog_index.m3u8");
             final Uri uri = Uri.parse(stream_url);
-            mPlayer.setDataSource(new DataSourceDesc.Builder()
+            mPlayer.setDataSource(new UriDataSourceDesc.Builder()
                     .setDataSource(mContext, uri)
                     .build());
             mPlayer.setDisplay(getActivity().getSurfaceHolder());
@@ -759,7 +760,7 @@ public class StreamingMediaPlayer2Test extends MediaPlayer2TestBase {
         try {
             String path = mServer.getDelayedAssetUrl("noiseandchirps.ogg", 15000);
             final Uri uri = Uri.parse(path);
-            mp.setDataSource(new DataSourceDesc.Builder()
+            mp.setDataSource(new UriDataSourceDesc.Builder()
                     .setDataSource(mContext, uri)
                     .build());
 

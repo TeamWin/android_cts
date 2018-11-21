@@ -1,5 +1,6 @@
 package android.security;
 
+import android.system.Os;
 import android.test.AndroidTestCase;
 import java.io.BufferedReader;
 import java.io.FileReader;
@@ -57,6 +58,31 @@ abstract class SELinuxTargetSdkTestBase extends AndroidTestCase
     }
 
     /**
+     * Check expectations of being able to read/execute dex2oat.
+     */
+    protected static void checkDex2oatAccess(boolean expectedAllowed) throws Exception {
+        File dex2oatBinary = new File("/system/bin/dex2oat");
+        assertTrue(dex2oatBinary.exists());
+
+        // Check permissions.
+        assertEquals(expectedAllowed, dex2oatBinary.canRead());
+        assertEquals(expectedAllowed, dex2oatBinary.canExecute());
+
+        // Try to execute dex2oat.
+        try {
+            Runtime rt = Runtime.getRuntime();
+            Process p = rt.exec(dex2oatBinary.getAbsolutePath());
+            p.waitFor();
+            assertEquals(expectedAllowed, true);
+        } catch (IOException ex) {
+            assertEquals(expectedAllowed, false);
+            assertEquals(ex.getMessage(),
+                    "Cannot run program \"" + dex2oatBinary.getAbsolutePath() +
+                    "\": error=13, Permission denied");
+        }
+    }
+
+    /**
      * Verify that selinux context is the expected domain based on
      * targetSdkVersion,
      */
@@ -79,6 +105,22 @@ abstract class SELinuxTargetSdkTestBase extends AndroidTestCase
         String context = getFileContext(appDataDir.getAbsolutePath());
         String msg = errorMsg + context;
         assertTrue(msg, m.matches());
+    }
+
+    protected boolean canExecuteFromHomeDir() throws Exception {
+        File appDataDir = getContext().getFilesDir();
+        File temp = File.createTempFile("badbin", "exe", appDataDir);
+        temp.deleteOnExit();
+        String path = temp.getPath();
+        Os.chmod(path, 0700);
+        try {
+            Process process = new ProcessBuilder(path).start();
+        } catch (IOException e) {
+            return !e.toString().contains("Permission denied");
+        } finally {
+            temp.delete();
+        }
+        return true;
     }
 
     private static final native String getFileContext(String path);

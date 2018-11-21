@@ -21,6 +21,7 @@ import static org.junit.Assert.fail;
 
 import android.content.Context;
 import android.media.DataSourceDesc;
+import android.media.FileDataSourceDesc;
 import android.media.MediaItem2;
 import android.media.MediaMetadata2;
 import android.media.SessionToken2;
@@ -42,28 +43,6 @@ import java.util.concurrent.TimeUnit;
 public final class TestUtils {
     private static final int WAIT_TIME_MS = 1000;
     private static final int WAIT_SERVICE_TIME_MS = 5000;
-
-    /**
-     * Finds the session with id in this test package.
-     *
-     * @param context
-     * @param id
-     * @return
-     */
-    public static SessionToken2 getServiceToken(Context context, String id) {
-        MediaSessionManager manager =
-                (MediaSessionManager) context.getSystemService(Context.MEDIA_SESSION_SERVICE);
-        List<SessionToken2> tokens = manager.getSessionServiceTokens();
-        for (int i = 0; i < tokens.size(); i++) {
-            SessionToken2 token = tokens.get(i);
-            if (context.getPackageName().equals(token.getPackageName())
-                    && id.equals(token.getId())) {
-                return token;
-            }
-        }
-        fail("Failed to find service");
-        return null;
-    }
 
     /**
      * Compares contents of two bundles.
@@ -107,7 +86,7 @@ public final class TestUtils {
             list.add(new MediaItem2.Builder(MediaItem2.FLAG_PLAYABLE)
                     .setMediaId(caller + "_item_" + (size + 1))
                     .setDataSourceDesc(
-                            new DataSourceDesc.Builder()
+                            new FileDataSourceDesc.Builder()
                                     .setDataSource(new FileDescriptor())
                                     .build())
                     .build());

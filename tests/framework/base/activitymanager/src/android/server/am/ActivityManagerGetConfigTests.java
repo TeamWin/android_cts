@@ -292,12 +292,12 @@ public class ActivityManagerGetConfigTests {
         // XXX not comparing windowConfiguration, since by definition this is contextual.
     }
 
-    private void checkDeviceConfig(DisplayManager dm, DeviceConfigurationProto deviceConfig) {
-        Point stableSize = dm.getStableDisplaySize();
+    private void checkDeviceConfig(DisplayMetrics displayMetrics,
+            DeviceConfigurationProto deviceConfig) {
         assertEquals("Expected stable screen width does not match",
-                stableSize.x, deviceConfig.stableScreenWidthPx);
+                displayMetrics.widthPixels, deviceConfig.stableScreenWidthPx);
         assertEquals("Expected stable screen height does not match",
-                stableSize.y, deviceConfig.stableScreenHeightPx);
+                displayMetrics.heightPixels, deviceConfig.stableScreenHeightPx);
         assertEquals("Expected stable screen density does not match",
                 DisplayMetrics.DENSITY_DEVICE_STABLE, deviceConfig.stableDensityDpi);
 
@@ -376,6 +376,28 @@ public class ActivityManagerGetConfigTests {
         display.getMetrics(metrics);
 
         checkResourceConfig(config, metrics, globalConfig.resources);
-        checkDeviceConfig(dm, globalConfig.device);
+        checkDeviceConfig(metrics, globalConfig.device);
+    }
+
+    @Test
+    public void testDeviceConfigWithSecondaryDisplay() throws Exception {
+        VirtualDisplayHelper vd = new VirtualDisplayHelper();
+        final int displayId = vd.createAndWaitForPublicDisplay(false);
+
+        DisplayManager dm = mContext.getSystemService(DisplayManager.class);
+        Display display = dm.getDisplay(displayId);
+        DisplayMetrics metrics = new DisplayMetrics();
+        display.getMetrics(metrics);
+        String cmd = "cmd activity get-config --proto --device --display " + displayId;
+        byte[] dump = executeShellCommand(cmd);
+
+        GlobalConfigurationProto globalConfig;
+        globalConfig = GlobalConfigurationProto.parseFrom(dump);
+        Configuration config = mContext.getResources().getConfiguration();
+
+        checkResourceConfig(config, metrics, globalConfig.resources);
+        checkDeviceConfig(metrics, globalConfig.device);
+
+        vd.releaseDisplay();
     }
 }

@@ -30,6 +30,7 @@ import android.media.AudioTrack;
 import android.media.MediaPlayer;
 import android.media.MediaPlayer2;
 import android.media.DataSourceDesc;
+import android.media.FileDataSourceDesc;
 import android.media.MediaFormat;
 import android.media.MediaRecorder;
 import android.media.cts.TestUtils.Monitor;
@@ -746,7 +747,7 @@ public class RoutingTest extends AndroidTestCase {
 
         MediaPlayer2 mediaPlayer2 = new MediaPlayer2(mContext);
         mediaPlayer2.setAudioAttributes(new AudioAttributes.Builder().build());
-        mediaPlayer2.setDataSource(new DataSourceDesc.Builder()
+        mediaPlayer2.setDataSource(new FileDataSourceDesc.Builder()
                 .setDataSource(afd.getFileDescriptor(), afd.getStartOffset(), afd.getLength())
                 .build());
 

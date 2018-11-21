@@ -31,13 +31,18 @@ public class SELinuxTargetSdkTest extends SELinuxTargetSdkTestBase
         noDns();
     }
 
+
+    public void testCanNotExecuteFromHomeDir() throws Exception {
+        assertFalse(canExecuteFromHomeDir());
+    }
+
     /**
      * Verify that selinux context is the expected domain based on
      * targetSdkVersion = current
      */
     public void testAppDomainContext() throws IOException {
         String context = "u:r:untrusted_app:s0:c[0-9]+,c[0-9]+,c[0-9]+,c[0-9]+";
-        String msg = "Untrusted apps with targetSdkVersion 28 and above " +
+        String msg = "Untrusted apps with targetSdkVersion 29 and above " +
             "must run in the untrusted_app selinux domain and use the levelFrom=all " +
             "selector in SELinux seapp_contexts which adds four category types " +
             "to the app's selinux context.\n" +
@@ -52,12 +57,16 @@ public class SELinuxTargetSdkTest extends SELinuxTargetSdkTestBase
      */
     public void testAppDataContext() throws Exception {
         String context = "u:object_r:app_data_file:s0:c[0-9]+,c[0-9]+,c[0-9]+,c[0-9]+";
-        String msg = "Untrusted apps with targetSdkVersion 28 and above " +
+        String msg = "Untrusted apps with targetSdkVersion 29 and above " +
             "must use the app_data_file selinux context and use the levelFrom=all " +
             "selector in SELinux seapp_contexts which adds four category types " +
             "to the app_data_file context.\n" +
             "Example expected value: u:object_r:app_data_file:s0:c89,c256,c512,c768\n" +
             "Actual value: ";
         appDataContext(context, msg);
+    }
+
+    public void testDex2oat() throws Exception {
+        checkDex2oatAccess(false);
     }
 }

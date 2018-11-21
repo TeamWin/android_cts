@@ -1690,7 +1690,7 @@ public class ImageDecoderTest {
         };
         Listener l = new Listener();
         SourceCreator f = mCreators[0];
-        for (int resId : new int[] { R.drawable.png_test, R.raw.basi6a16 }) {
+        for (int resId : new int[] { R.drawable.png_test, R.raw.f16 }) {
             Bitmap normal = null;
             try {
                 normal = ImageDecoder.decodeBitmap(f.apply(resId));
@@ -1716,7 +1716,7 @@ public class ImageDecoderTest {
                         // We do not support 565 in HARDWARE, so no RAM savings
                         // are possible.
                         assertEquals(normalByteCount, byteCount);
-                    } else { // R.raw.basi6a16
+                    } else { // R.raw.f16
                         // This image defaults to F16. MEMORY_POLICY_LOW_RAM
                         // forces "test" to decode to 8888. But if the device
                         // does not support F16 in HARDWARE, "normal" is also
@@ -1734,10 +1734,10 @@ public class ImageDecoderTest {
                         }
                     }
                 } else {
-                    // Not decoding to HARDWARE, but |normal| was. Again, if basi6a16
+                    // Not decoding to HARDWARE, but |normal| was. Again, if f16
                     // was decoded to 8888, which we can detect by looking at the color
                     // space, no savings are possible.
-                    if (resId == R.raw.basi6a16 && !normal.getColorSpace().equals(
+                    if (resId == R.raw.f16 && !normal.getColorSpace().equals(
                                 ColorSpace.get(ColorSpace.Named.LINEAR_EXTENDED_SRGB))) {
                         assertEquals(normalByteCount, byteCount);
                     } else {
@@ -1775,8 +1775,8 @@ public class ImageDecoderTest {
                                    // If this were stored in drawable/, it would
                                    // be converted from 16-bit to 8. FIXME: Is
                                    // behavior still desirable now that we have
-                                   // F16?
-                                   R.raw.basi6a16 };
+                                   // F16? b/119760146
+                                   R.raw.f16 };
         // An opaque image can be converted to 565, but postProcess will promote
         // to 8888 in case alpha is added. The third image defaults to F16, so
         // even with postProcess it will only be promoted to 8888.
