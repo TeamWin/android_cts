@@ -85,6 +85,32 @@ public class TextToSpeechServiceTest extends AndroidTestCase {
         }
     }
 
+    public void testMaxSpeechInputLength() {
+      File sampleFile = new File(Environment.getExternalStorageDirectory(), SAMPLE_FILE_NAME);
+      try {
+          assertFalse(sampleFile.exists());
+          TextToSpeech tts = getTts();
+
+          int maxLength = tts.getMaxSpeechInputLength();
+          StringBuilder sb = new StringBuilder();
+          for (int i = 0; i < maxLength; i++) {
+            sb.append("c");
+          }
+          String valid = sb.toString();
+          sb.append("c");
+          String invalid = sb.toString();
+
+          assertEquals(maxLength, valid.length());
+          assertTrue(invalid.length() > maxLength);
+          assertEquals(TextToSpeech.ERROR,
+                  tts.synthesizeToFile(invalid, createParams("mockToFile"), sampleFile.getPath()));
+          assertEquals(TextToSpeech.SUCCESS,
+                  tts.synthesizeToFile(valid, createParams("mockToFile"), sampleFile.getPath()));
+      } finally {
+          sampleFile.delete();
+      }
+    }
+
     public void testSpeak() throws Exception {
         int result = getTts().speak(UTTERANCE, TextToSpeech.QUEUE_FLUSH, createParams("mockspeak"));
         assertEquals("speak() failed", TextToSpeech.SUCCESS, result);
