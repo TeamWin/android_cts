@@ -627,14 +627,12 @@ public abstract class DeviceAndProfileOwnerTest extends BaseDevicePolicyTest {
         }
     }
 
-    // This test currently duplicates the testDelegatedCertInstaller, with one difference:
-    // The Delegated cert installer app is called directly rather than via intents from
-    // the DelegatedCertinstallerTest.
-    public void testDelegatedCertInstallerDirectly() throws Exception {
-        if (!mHasFeature) {
-            return;
-        }
+    public interface DelegatedCertInstallerTestAction {
+        void run() throws Exception;
+    }
 
+    protected void setUpDelegatedCertInstallerAndRunTests(DelegatedCertInstallerTestAction test)
+            throws Exception {
         installAppAsUser(CERT_INSTALLER_APK, mUserId);
 
         try {
@@ -644,13 +642,27 @@ public abstract class DeviceAndProfileOwnerTest extends BaseDevicePolicyTest {
 
             runDeviceTestsAsUser(DEVICE_ADMIN_PKG, ".DelegatedCertInstallerHelper",
                     "testManualSetCertInstallerDelegate", mUserId);
-            runDeviceTestsAsUser("com.android.cts.certinstaller",
-                    ".DirectDelegatedCertInstallerTest", mUserId);
+
+            test.run();
+        } finally {
             runDeviceTestsAsUser(DEVICE_ADMIN_PKG, ".DelegatedCertInstallerHelper",
                     "testManualClearCertInstallerDelegate", mUserId);
-        } finally {
+
             changeUserCredential(null, "1234", mUserId);
         }
+    }
+
+    // This test currently duplicates the testDelegatedCertInstaller, with one difference:
+    // The Delegated cert installer app is called directly rather than via intents from
+    // the DelegatedCertinstallerTest.
+    public void testDelegatedCertInstallerDirectly() throws Exception {
+        if (!mHasFeature) {
+            return;
+        }
+
+        setUpDelegatedCertInstallerAndRunTests(() ->
+            runDeviceTestsAsUser("com.android.cts.certinstaller",
+                    ".DirectDelegatedCertInstallerTest", mUserId));
     }
 
     // Sets restrictions and launches non-admin app, that tries to set wallpaper.

@@ -22,8 +22,11 @@ import static org.testng.Assert.assertThrows;
 
 import android.app.admin.DevicePolicyManager;
 import android.content.Context;
+import android.security.AttestedKeyPair;
 import android.security.KeyChain;
 import android.security.KeyChainException;
+import android.security.keystore.KeyGenParameterSpec;
+import android.security.keystore.KeyProperties;
 import android.test.InstrumentationTestCase;
 import android.util.Base64;
 import android.util.Base64InputStream;
@@ -181,6 +184,29 @@ public class DirectDelegatedCertInstallerTest extends InstrumentationTestCase {
         assertThat(mDpm.removeKeyPair(null, alias)).isTrue();
         assertThrows(
                 KeyChainException.class, () -> KeyChain.getPrivateKey(getContext(), alias));
+    }
+
+    // Test that a key generation request succeeds when device identifiers are not requested.
+    public void testGenerateKeyPairWithoutDeviceIdAttestation() {
+        final String alias = "com.android.test.generated-rsa-1";
+        try {
+            KeyGenParameterSpec keySpec = new KeyGenParameterSpec.Builder(
+                    alias,
+                    KeyProperties.PURPOSE_SIGN | KeyProperties.PURPOSE_VERIFY)
+                    .setKeySize(2048)
+                    .setDigests(KeyProperties.DIGEST_SHA256)
+                    .setSignaturePaddings(KeyProperties.SIGNATURE_PADDING_RSA_PSS,
+                            KeyProperties.SIGNATURE_PADDING_RSA_PKCS1)
+                    .setIsStrongBoxBacked(false)
+                    .setAttestationChallenge(new byte[]{'a', 'b', 'c'})
+                    .build();
+
+            AttestedKeyPair generated = mDpm.generateKeyPair(
+                    null, "RSA", keySpec, 0);
+            assertThat(generated).isNotNull();
+        } finally {
+            assertThat(mDpm.removeKeyPair(null, alias)).isTrue();
+        }
     }
 
     private static boolean containsCertificate(List<byte[]> certificates, byte[] toMatch)
