@@ -206,45 +206,77 @@ public class MagnifierTest {
     //***** Tests for default parameters *****//
 
     @Test
-    public void testMagnifierDefaultParameters() {
-        final Magnifier[] magnifiers = new Magnifier[] {
-                new Magnifier(mView),
-                new Magnifier.Builder(mView).build()
-        };
+    public void testMagnifierDefaultParameters_withDeprecatedConstructor() {
+        final Magnifier magnifier = new Magnifier(mView);
+
+        final Context context = mView.getContext();
+        final TypedArray a = context.obtainStyledAttributes(
+                null, com.android.internal.R.styleable.Magnifier,
+                com.android.internal.R.attr.magnifierStyle, 0);
+        final int width = a.getDimensionPixelSize(
+                com.android.internal.R.styleable.Magnifier_magnifierWidth, 0);
+        assertEquals(width, magnifier.getWidth());
+        final int height = a.getDimensionPixelSize(
+                com.android.internal.R.styleable.Magnifier_magnifierHeight, 0);
+        assertEquals(height, magnifier.getHeight());
+        final float elevation = a.getDimension(
+                com.android.internal.R.styleable.Magnifier_magnifierElevation, 0f);
+        assertEquals(elevation, magnifier.getElevation(), 0.01f);
+        final float zoom = a.getFloat(com.android.internal.R.styleable.Magnifier_magnifierZoom, 0f);
+        assertEquals(zoom, magnifier.getZoom(), 0.01f);
+        final int verticalOffset = a.getDimensionPixelSize(
+                com.android.internal.R.styleable.Magnifier_magnifierVerticalOffset, 0);
+        assertEquals(verticalOffset, magnifier.getDefaultVerticalSourceToMagnifierOffset());
+        final int horizontalOffset = a.getDimensionPixelSize(
+                com.android.internal.R.styleable.Magnifier_magnifierHorizontalOffset, 0);
+        assertEquals(horizontalOffset, magnifier.getDefaultHorizontalSourceToMagnifierOffset());
+        final Context deviceDefaultContext = new ContextThemeWrapper(mView.getContext(),
+                android.R.style.Theme_DeviceDefault);
+        final TypedArray ta = deviceDefaultContext.obtainStyledAttributes(
+                new int[]{android.R.attr.dialogCornerRadius});
+        final float dialogCornerRadius = ta.getDimension(0, 0);
+        ta.recycle();
+        assertEquals(dialogCornerRadius, magnifier.getCornerRadius(), 0.01f);
+        final boolean forcePositionWithinBounds = true;
+        assertEquals(forcePositionWithinBounds,
+                magnifier.isForcePositionWithinWindowSystemInsetsBounds());
+        final int overlayColor = a.getColor(
+                com.android.internal.R.styleable.Magnifier_magnifierColorOverlay,
+                Color.TRANSPARENT);
+        assertEquals(overlayColor, ((ColorDrawable) magnifier.getOverlay()).getColor());
+    }
+
+    @Test
+    public void testMagnifierDefaultParameters_withBuilder() {
+        final Magnifier magnifier = new Magnifier.Builder(mView).build();
 
         final Resources resources = mView.getContext().getResources();
-        for (final Magnifier magnifier : magnifiers) {
-            final int width = resources.getDimensionPixelSize(
-                    com.android.internal.R.dimen.magnifier_width);
-            assertEquals(width, magnifier.getWidth());
-            final int height = resources.getDimensionPixelSize(
-                    com.android.internal.R.dimen.magnifier_height);
-            assertEquals(height, magnifier.getHeight());
-            final float elevation = resources.getDimension(
-                    com.android.internal.R.dimen.magnifier_elevation);
-            assertEquals(elevation, magnifier.getElevation(), 0.01f);
-            final float zoom = resources.getFloat(com.android.internal.R.dimen.magnifier_zoom);
-            assertEquals(zoom, magnifier.getZoom(), 0.01f);
-            final int verticalOffset = resources.getDimensionPixelSize(
-                    com.android.internal.R.dimen.magnifier_vertical_offset);
-            assertEquals(verticalOffset, magnifier.getDefaultVerticalSourceToMagnifierOffset());
-            final int horizontalOffset = resources.getDimensionPixelSize(
-                    com.android.internal.R.dimen.magnifier_horizontal_offset);
-            assertEquals(horizontalOffset, magnifier.getDefaultHorizontalSourceToMagnifierOffset());
-            final Context deviceDefaultContext = new ContextThemeWrapper(mView.getContext(),
-                    android.R.style.Theme_DeviceDefault);
-            final TypedArray ta = deviceDefaultContext.obtainStyledAttributes(
-                    new int[]{android.R.attr.dialogCornerRadius});
-            final float dialogCornerRadius = ta.getDimension(0, 0);
-            ta.recycle();
-            assertEquals(dialogCornerRadius, magnifier.getCornerRadius(), 0.01f);
-            final boolean forcePositionWithinBounds = true;
-            assertEquals(forcePositionWithinBounds,
-                    magnifier.isForcePositionWithinWindowSystemInsetsBounds());
-            final int overlayColor = resources.getColor(
-                    com.android.internal.R.color.magnifier_color_overlay, null);
-            assertEquals(overlayColor, ((ColorDrawable) magnifier.getOverlay()).getColor());
-        }
+        final int width = resources.getDimensionPixelSize(
+                com.android.internal.R.dimen.default_magnifier_width);
+        assertEquals(width, magnifier.getWidth());
+        final int height = resources.getDimensionPixelSize(
+                com.android.internal.R.dimen.default_magnifier_height);
+        assertEquals(height, magnifier.getHeight());
+        final float elevation = resources.getDimension(
+                com.android.internal.R.dimen.default_magnifier_elevation);
+        assertEquals(elevation, magnifier.getElevation(), 0.01f);
+        final float zoom = resources.getFloat(com.android.internal.R.dimen.default_magnifier_zoom);
+        assertEquals(zoom, magnifier.getZoom(), 0.01f);
+        final int verticalOffset = resources.getDimensionPixelSize(
+                com.android.internal.R.dimen.default_magnifier_vertical_offset);
+        assertEquals(verticalOffset, magnifier.getDefaultVerticalSourceToMagnifierOffset());
+        final int horizontalOffset = resources.getDimensionPixelSize(
+                com.android.internal.R.dimen.default_magnifier_horizontal_offset);
+        assertEquals(horizontalOffset, magnifier.getDefaultHorizontalSourceToMagnifierOffset());
+        final float dialogCornerRadius = resources.getDimension(
+                com.android.internal.R.dimen.default_magnifier_corner_radius);
+        assertEquals(dialogCornerRadius, magnifier.getCornerRadius(), 0.01f);
+        final boolean forcePositionWithinBounds = true;
+        assertEquals(forcePositionWithinBounds,
+                magnifier.isForcePositionWithinWindowSystemInsetsBounds());
+        final int overlayColor = resources.getColor(
+                com.android.internal.R.color.default_magnifier_color_overlay, null);
+        assertEquals(overlayColor, ((ColorDrawable) magnifier.getOverlay()).getColor());
     }
 
     @Test
