@@ -440,7 +440,7 @@ public class AppOpsTest {
     private static void assertHistoricEntriesEqual(
             List<AppOpsManager.HistoricalPackageOps> expected,
             List<AppOpsManager.HistoricalPackageOps> actual, String[] opNames) {
-        assertSame(expected.size(), actual.size());
+        assertEquals(expected.size(), actual.size());
 
         final int packageCount = expected.size();
         for (int i = 0; i < packageCount; i++) {
