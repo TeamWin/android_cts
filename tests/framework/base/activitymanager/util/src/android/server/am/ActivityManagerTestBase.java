@@ -944,7 +944,7 @@ public abstract class ActivityManagerTestBase {
         }
 
         @Override
-        public void close() throws Exception {
+        public void close() {
             setLockDisabled(mIsLockDisabled);
             if (mLockCredentialSet) {
                 removeLockCredential();
