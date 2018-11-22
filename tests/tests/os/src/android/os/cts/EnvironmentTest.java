@@ -68,6 +68,28 @@ public class EnvironmentTest extends TestCase {
     }
 
     /**
+     * verify hidepid=2 on /proc
+     */
+    public void testHidePid2() throws Exception {
+        try (BufferedReader br = new BufferedReader(new FileReader("/proc/mounts"))) {
+            String line;
+            while ((line = br.readLine()) != null) {
+                final String[] fields = line.split(" ");
+                final String source = fields[0];
+                final String options = fields[3];
+
+                if (source.equals("proc") && !options.contains("hidepid=2")) {
+                    fail("proc filesystem mounted without hidepid=2");
+                }
+            }
+        }
+    }
+
+    public void testHidePid2_direct() throws Exception {
+        assertFalse(new File("/proc/1").exists());
+    }
+
+    /**
      * Verify that all writable block filesystems are mounted with "resgid" to
      * mitigate disk-full trouble.
      */
