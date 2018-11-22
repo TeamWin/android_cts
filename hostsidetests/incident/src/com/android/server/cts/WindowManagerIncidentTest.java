@@ -37,9 +37,6 @@ public class WindowManagerIncidentTest extends ProtoDumpTestCase {
     private static void verifyWindowManagerPolicyProto(WindowManagerPolicyProto wmp, final int filterLevel) throws Exception {
         assertTrue(WindowManagerPolicyProto.UserRotationMode.getDescriptor().getValues()
                 .contains(wmp.getRotationMode().getValueDescriptor()));
-        verifyIdentifierProto(wmp.getFocusedWindow(), filterLevel);
-        verifyIdentifierProto(wmp.getTopFullscreenOpaqueWindow(), filterLevel);
-        verifyIdentifierProto(wmp.getTopFullscreenOpaqueOrDimmingWindow(), filterLevel);
     }
 
     private static void verifyIdentifierProto(IdentifierProto ip, final int filterLevel) throws Exception {
