@@ -20,7 +20,7 @@ import com.android.tradefed.device.DeviceNotAvailableException;
 import com.android.tradefed.testtype.DeviceTestCase;
 import com.android.timezone.distro.DistroVersion;
 import com.android.timezone.distro.TimeZoneDistro;
-import com.android.timezone.distro.tools.TimeZoneDistroBuilder;
+import com.android.timezone.distro.builder.TimeZoneDistroBuilder;
 
 import java.io.File;
 import java.io.FileOutputStream;
