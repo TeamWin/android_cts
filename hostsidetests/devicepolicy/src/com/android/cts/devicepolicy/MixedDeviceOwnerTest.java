@@ -49,5 +49,14 @@ public class MixedDeviceOwnerTest extends DeviceAndProfileOwnerTest {
         super.tearDown();
     }
 
-    // All tests for this class are defined in DeviceAndProfileOwnerTest
+    public void testDelegatedCertInstallerDeviceIdAttestation() throws Exception {
+        if (!mHasFeature) {
+            return;
+        }
+
+        setUpDelegatedCertInstallerAndRunTests(() ->
+                runDeviceTestsAsUser("com.android.cts.certinstaller",
+                        ".DelegatedDeviceIdAttestationTest",
+                        "testGenerateKeyPairWithDeviceIdAttestationExpectingSuccess", mUserId));
+    }
 }

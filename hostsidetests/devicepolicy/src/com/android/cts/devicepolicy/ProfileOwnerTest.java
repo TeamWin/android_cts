@@ -92,4 +92,9 @@ public class ProfileOwnerTest extends BaseDevicePolicyTest {
         String testClass = PROFILE_OWNER_PKG + "." + testClassName;
         runDeviceTestsAsUser(PROFILE_OWNER_PKG, testClass, mPrimaryUserId);
     }
+
+    protected void executeProfileOwnerTestMethod(String className, String testName)
+            throws Exception {
+        runDeviceTestsAsUser(PROFILE_OWNER_PKG, className, testName, mUserId);
+    }
 }

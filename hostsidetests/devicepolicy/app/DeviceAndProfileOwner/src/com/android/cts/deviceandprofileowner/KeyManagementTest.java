@@ -651,7 +651,8 @@ public class KeyManagementTest extends BaseDeviceAdminTest {
                             + "possible from profile owner");
                 }
             } catch (SecurityException e) {
-                assertThat(e.getMessage()).contains("does not own the device");
+                assertThat(e.getMessage()).contains(
+                        "Profile Owner is not allowed to access Device IDs.");
             }
         }
     }

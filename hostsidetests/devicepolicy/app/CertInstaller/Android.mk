@@ -27,14 +27,15 @@ LOCAL_SRC_FILES := $(call all-java-files-under, src)
 LOCAL_JAVA_LIBRARIES := android.test.runner.stubs \
     android.test.base.stubs \
 
-LOCAL_SDK_VERSION := current
+LOCAL_PRIVATE_PLATFORM_APIS := true
 LOCAL_MIN_SDK_VERSION := 22
 
 LOCAL_STATIC_JAVA_LIBRARIES := \
     compatibility-device-util \
     ctstestrunner \
     truth-prebuilt \
-    testng
+    testng \
+	cts-security-test-support-library
 
 
 # tag this module as a cts test artifact
