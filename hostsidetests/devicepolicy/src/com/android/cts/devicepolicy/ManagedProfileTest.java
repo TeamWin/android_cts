@@ -1256,7 +1256,7 @@ public class ManagedProfileTest extends BaseDevicePolicyTest {
     }
 
     public void testUnlockWorkProfile_deviceWidePassword() throws Exception{
-        if (!mHasFeature) {
+        if (!mHasFeature || !mSupportsFbe) {
             return;
         }
         String password = "0000";
