@@ -852,10 +852,16 @@ bool AHardwareBufferGLTest::SetUpBuffer(const AHardwareBuffer_Desc& desc) {
     int result = AHardwareBuffer_allocate(&desc, &mBuffer);
     // Skip if this format cannot be allocated.
     if (result != NO_ERROR) {
-        ALOGI("Test skipped: format %s not supported",
+        EXPECT_FALSE(AHardwareBuffer_isSupported(&desc)) <<
+            "AHardwareBuffer_isSupported returned true, but buffer allocation failed. "
+            "Potential gralloc bug or resource exhaustion.";
+        ALOGI("Test skipped: format %s could not be allocated",
               AHBFormatAsString(desc.format));
         return false;
     }
+    EXPECT_TRUE(AHardwareBuffer_isSupported(&desc)) <<
+        "AHardwareBuffer_isSupported returned false, but buffer allocation succeeded. "
+        "This is most likely a bug in the gralloc implementation.";
 
     // The code below will only execute if allocating an AHardwareBuffer succeeded.
     // Fail early if the buffer is mipmapped or a cube map, but the GL extension required
