@@ -23,14 +23,13 @@ import static android.app.admin.DevicePolicyManager.PRIVATE_DNS_MODE_PROVIDER_HO
 import android.app.admin.DevicePolicyManager;
 import android.os.UserManager;
 
-import org.junit.Test;
-
 import static com.google.common.truth.Truth.assertThat;
 
 import static org.testng.Assert.assertThrows;
 
 public class PrivateDnsPolicyTest extends BaseDeviceOwnerTest {
-    private static final String PRIVATE_DNS_HOST = "resolver.example.com";
+    private static final String DUMMY_PRIVATE_DNS_HOST = "resolver.example.com";
+    private static final String VALID_PRIVATE_DNS_HOST = "dns.google";
 
     private UserManager mUserManager;
 
@@ -70,17 +69,37 @@ public class PrivateDnsPolicyTest extends BaseDeviceOwnerTest {
         }
     }
 
+    /**
+     * Call DevicePolicyManager.setGlobalPrivateDns with the given mode, host, expecting
+     * the result code expectedResult.
+     */
+    private void callSetGlobalPrivateDnsExpectingResult(int mode, String privateDnsHost,
+            int expectedResult) {
+        int resultCode = mDevicePolicyManager.setGlobalPrivateDns(getWho(), mode, privateDnsHost);
+
+        assertEquals(
+                String.format(
+                        "Call to setGlobalPrivateDns with mode %d and host %s "
+                                + "should have produced result %d, but was %d",
+                        mode, privateDnsHost, expectedResult, resultCode),
+                expectedResult, resultCode);
+    }
+
     public void testCannotSetOffMode() {
         assertThrows(
                 IllegalArgumentException.class,
-                () -> mDevicePolicyManager.setGlobalPrivateDns(getWho(),
-                        PRIVATE_DNS_MODE_OFF, null)
-        );
+                () -> mDevicePolicyManager.setGlobalPrivateDns(
+                        getWho(), PRIVATE_DNS_MODE_OFF, null));
+
+        assertThat(
+                mDevicePolicyManager.getGlobalPrivateDnsMode(getWho())).isNotEqualTo(
+                PRIVATE_DNS_MODE_OFF);
     }
 
     public void testSetOpportunisticMode() {
-        mDevicePolicyManager.setGlobalPrivateDns(getWho(),
-                PRIVATE_DNS_MODE_OPPORTUNISTIC, null);
+        callSetGlobalPrivateDnsExpectingResult(PRIVATE_DNS_MODE_OPPORTUNISTIC, null,
+                DevicePolicyManager.PRIVATE_DNS_SET_SUCCESS);
+
         assertThat(
                 mDevicePolicyManager.getGlobalPrivateDnsMode(getWho())).isEqualTo(
                 PRIVATE_DNS_MODE_OPPORTUNISTIC);
@@ -88,14 +107,32 @@ public class PrivateDnsPolicyTest extends BaseDeviceOwnerTest {
     }
 
     public void testSetSpecificHostMode() {
-        mDevicePolicyManager.setGlobalPrivateDns(getWho(),
-                PRIVATE_DNS_MODE_PROVIDER_HOSTNAME, PRIVATE_DNS_HOST);
+        callSetGlobalPrivateDnsExpectingResult(PRIVATE_DNS_MODE_PROVIDER_HOSTNAME,
+                VALID_PRIVATE_DNS_HOST,
+                DevicePolicyManager.PRIVATE_DNS_SET_SUCCESS);
 
         assertThat(
                 mDevicePolicyManager.getGlobalPrivateDnsMode(getWho())).isEqualTo(
                 PRIVATE_DNS_MODE_PROVIDER_HOSTNAME);
         assertThat(
                 mDevicePolicyManager.getGlobalPrivateDnsHost(getWho())).isEqualTo(
-                PRIVATE_DNS_HOST);
+                VALID_PRIVATE_DNS_HOST);
+    }
+
+    public void testSetModeWithIncorrectHost() {
+        assertThrows(
+                IllegalArgumentException.class,
+                () -> mDevicePolicyManager.setGlobalPrivateDns(
+                        getWho(), PRIVATE_DNS_MODE_PROVIDER_HOSTNAME, null));
+
+        assertThrows(
+                IllegalArgumentException.class,
+                () -> mDevicePolicyManager.setGlobalPrivateDns(
+                        getWho(), PRIVATE_DNS_MODE_OPPORTUNISTIC, DUMMY_PRIVATE_DNS_HOST));
+
+        // This host does not resolve, so would output an error.
+        callSetGlobalPrivateDnsExpectingResult(PRIVATE_DNS_MODE_PROVIDER_HOSTNAME,
+                DUMMY_PRIVATE_DNS_HOST,
+                DevicePolicyManager.PRIVATE_DNS_SET_ERROR_HOST_NOT_SERVING);
     }
 }
