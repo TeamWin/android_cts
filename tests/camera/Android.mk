@@ -32,6 +32,33 @@ LOCAL_SDK_VERSION := current
 -include cts/error_prone_rules_tests.mk
 include $(BUILD_STATIC_JAVA_LIBRARY)
 
+# Reusable Camera performance test classes and helpers
+include $(CLEAR_VARS)
+
+LOCAL_MODULE := CtsCameraPerformanceCases
+
+LOCAL_MODULE_TAGS := tests
+
+# Include both the 32 and 64 bit versions
+LOCAL_MULTILIB := both
+
+LOCAL_STATIC_JAVA_LIBRARIES := compatibility-device-util \
+	ctstestrunner \
+	mockito-target-minus-junit4 \
+	CtsCameraUtils \
+	truth-prebuilt \
+	android-support-test
+
+LOCAL_SRC_FILES := \
+	src/android/hardware/camera2/cts/testcases/Camera2AndroidTestCase.java \
+	src/android/hardware/camera2/cts/PerformanceTest.java
+
+LOCAL_SDK_VERSION := test_current
+
+LOCAL_JAVA_LIBRARIES := android.test.runner.stubs android.test.base.stubs
+
+include $(BUILD_JAVA_LIBRARY)
+
 # CtsCameraTestCases package
 
 include $(CLEAR_VARS)
