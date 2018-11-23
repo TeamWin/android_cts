@@ -54,7 +54,6 @@ LOCAL_SRC_FILES += \
     src/911-get-stack-trace/src/art/ThreadListTraces.java \
   src/912-classes/src-art/art/Test912.java \
     src/912-classes/src-art/art/DexData.java \
-  src/913-heaps/src/art/Test913.java \
   src/914-hello-obsolescence/src/art/Test914.java \
   src/915-obsolete-2/src/art/Test915.java \
   src/917-fields-transformation/src/art/Test917.java \
@@ -147,7 +146,6 @@ JVMTI_RUN_TEST_GENERATED_NUMBERS := \
   910 \
   911 \
   912 \
-  913 \
   914 \
   915 \
   917 \
