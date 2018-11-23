@@ -19,6 +19,7 @@
     package="android.server.cts.am">
     <uses-permission android:name="android.permission.READ_LOGS" />
     <uses-permission android:name="android.permission.REQUEST_DELETE_PACKAGES" />
+    <uses-permission android:name="android.permission.DISABLE_KEYGUARD" />
 
     <application android:label="CtsActivityManagerDeviceTestCases">
         <uses-library android:name="android.test.runner" />
