@@ -44,6 +44,7 @@ import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assume.assumeTrue;
 
+import android.content.ComponentName;
 import android.platform.test.annotations.Presubmit;
 import android.server.am.WindowManagerState.WindowState;
 import android.support.test.filters.FlakyTest;
@@ -210,18 +211,31 @@ public class KeyguardTests extends KeyguardTestBase {
     }
 
     /**
+     * Test that when a normal activity finished and an existing FLAG_DISMISS_KEYGUARD activity
+     * becomes the top activity, it should be resumed.
+     */
+    @Test
+    public void testResumeDismissKeyguardActivityFromBackground() {
+        testResumeOccludingActivityFromBackground(DISMISS_KEYGUARD_ACTIVITY);
+    }
+
+    /**
      * Test that when a normal activity finished and an existing SHOW_WHEN_LOCKED activity becomes
      * the top activity, it should be resumed.
      */
     @Test
-    public void testResumeShowWhenLockedActivityFromBackground() throws Exception {
+    public void testResumeShowWhenLockedActivityFromBackground() {
+        testResumeOccludingActivityFromBackground(SHOW_WHEN_LOCKED_ATTR_ACTIVITY);
+    }
+
+    private void testResumeOccludingActivityFromBackground(ComponentName occludingActivity) {
         try (final LockScreenSession lockScreenSession = new LockScreenSession()) {
             lockScreenSession.gotoKeyguard();
             mAmWmState.assertKeyguardShowingAndNotOccluded();
 
-            // Launch a SHOW_WHEN_LOCKED activity.
+            // Launch an activity which is able to occlude keyguard.
             getLaunchActivityBuilder().setUseInstrumentation()
-                    .setTargetActivity(SHOW_WHEN_LOCKED_ATTR_ACTIVITY).execute();
+                    .setTargetActivity(occludingActivity).execute();
 
             // Launch an activity without SHOW_WHEN_LOCKED and finish it.
             getLaunchActivityBuilder().setUseInstrumentation()
@@ -235,11 +249,11 @@ public class KeyguardTests extends KeyguardTestBase {
             mBroadcastActionTrigger.finishBroadcastReceiverActivity();
             mAmWmState.waitForKeyguardShowingAndOccluded();
 
-            // The SHOW_WHEN_LOCKED activity should be resumed because it becomes the top activity.
-            mAmWmState.computeState(SHOW_WHEN_LOCKED_ATTR_ACTIVITY);
-            mAmWmState.assertVisibility(SHOW_WHEN_LOCKED_ATTR_ACTIVITY, true);
-            assertTrue(SHOW_WHEN_LOCKED_ATTR_ACTIVITY + " must be resumed.",
-                    mAmWmState.getAmState().hasActivityState(SHOW_WHEN_LOCKED_ATTR_ACTIVITY,
+            // The occluding activity should be resumed because it becomes the top activity.
+            mAmWmState.computeState(occludingActivity);
+            mAmWmState.assertVisibility(occludingActivity, true);
+            assertTrue(occludingActivity + " must be resumed.",
+                    mAmWmState.getAmState().hasActivityState(occludingActivity,
                             ActivityManagerState.STATE_RESUMED));
         }
     }
