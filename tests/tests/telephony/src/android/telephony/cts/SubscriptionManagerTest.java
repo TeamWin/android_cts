@@ -84,25 +84,21 @@ public class SubscriptionManagerTest {
     }
 
     /**
-     * Sanity check that both {@link PackageManager#FEATURE_TELEPHONY} and
-     * {@link NetworkCapabilities#TRANSPORT_CELLULAR} network must both be
-     * either defined or undefined; you can't cross the streams.
+     * Sanity check that the device has a cellular network and a valid default data subId
+     * when {@link PackageManager#FEATURE_TELEPHONY} support.
      */
     @Test
     public void testSanity() throws Exception {
+        if (!isSupported()) return;
+
         final boolean hasCellular = findCellularNetwork() != null;
-        if (isSupported() && !hasCellular) {
+        if (!hasCellular) {
             fail("Device claims to support " + PackageManager.FEATURE_TELEPHONY
                     + " but has no active cellular network, which is required for validation");
-        } else if (!isSupported() && hasCellular) {
-            fail("Device has active cellular network, but claims to not support "
-                    + PackageManager.FEATURE_TELEPHONY);
         }
 
-        if (isSupported()) {
-            if (mSubId == SubscriptionManager.INVALID_SUBSCRIPTION_ID) {
-                fail("Device must have a valid default data subId for validation");
-            }
+        if (mSubId == SubscriptionManager.INVALID_SUBSCRIPTION_ID) {
+            fail("Device must have a valid default data subId for validation");
         }
     }
 
