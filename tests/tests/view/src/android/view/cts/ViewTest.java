@@ -49,6 +49,7 @@ import android.graphics.BitmapFactory;
 import android.graphics.Canvas;
 import android.graphics.Color;
 import android.graphics.ColorFilter;
+import android.graphics.Matrix;
 import android.graphics.Point;
 import android.graphics.PorterDuff;
 import android.graphics.Rect;
@@ -4728,6 +4729,60 @@ public class ViewTest {
         View greenShadow = group.findViewById(R.id.green_shadow);
         assertEquals(Color.GREEN, greenShadow.getOutlineSpotShadowColor());
         assertEquals(Color.GREEN, greenShadow.getOutlineAmbientShadowColor());
+    }
+
+    @Test
+    public void testTransformMatrixToGlobal() {
+        final View view = mActivity.findViewById(R.id.transform_matrix_view);
+        final Matrix initialMatrix = view.getMatrix();
+        assertNotNull(initialMatrix);
+
+        final Matrix newMatrix = new Matrix(initialMatrix);
+        float[] initialValues = new float[9];
+        newMatrix.getValues(initialValues);
+
+        view.transformMatrixToGlobal(newMatrix);
+        float[] newValues = new float[9];
+        newMatrix.getValues(newValues);
+        int[] location = new int[2];
+        view.getLocationInWindow(location);
+        boolean hasChanged = false;
+        for (int i = 0; i < 9; ++i) {
+            if (initialValues[i] != newValues[i]) {
+                hasChanged = true;
+            }
+        }
+        assertTrue("Matrix should be changed", hasChanged);
+        assertEquals("Matrix should reflect position in window",
+                location[1], newValues[5], 0.001);
+    }
+
+    @Test
+    public void testTransformMatrixToLocal() {
+        final View view1 = mActivity.findViewById(R.id.transform_matrix_view);
+        final View view2 = mActivity.findViewById(R.id.transform_matrix_view_2);
+        final Matrix initialMatrix = view1.getMatrix();
+        assertNotNull(initialMatrix);
+
+        final Matrix globalMatrix = new Matrix(initialMatrix);
+
+        view1.transformMatrixToGlobal(globalMatrix);
+        float[] globalValues = new float[9];
+        globalMatrix.getValues(globalValues);
+
+        view2.transformMatrixToLocal(globalMatrix);
+        float[] localValues = new float[9];
+        globalMatrix.getValues(localValues);
+
+        boolean hasChanged = false;
+        for (int i = 0; i < 9; ++i) {
+            if (globalValues[i] != localValues[i]) {
+                hasChanged = true;
+            }
+        }
+        assertTrue("Matrix should be changed", hasChanged);
+        assertEquals("The first view should be 10px above the second view",
+                -10, localValues[5], 0.001);
     }
 
     @Test
