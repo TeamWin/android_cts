@@ -24,6 +24,8 @@ import android.util.DisplayMetrics;
 import android.view.Display;
 import android.view.WindowManager;
 
+import com.android.compatibility.common.util.FeatureUtil;
+
 import java.util.HashSet;
 import java.util.Set;
 
@@ -44,9 +46,12 @@ public class ConfigurationTest extends AndroidTestCase {
         double yInches = (double) metrics.heightPixels / metrics.ydpi;
         double diagonalInches = Math.sqrt(Math.pow(xInches, 2) + Math.pow(yInches, 2));
         double minSize = 2.5d;
-        if (getContext().getPackageManager().hasSystemFeature(PackageManager.FEATURE_WATCH)) {
+        if (FeatureUtil.isWatch()) {
             // Watches have a different minimum diagonal.
             minSize = 1.0d;
+        } else if (FeatureUtil.isAutomotive()) {
+            // Cars have a different minimum diagonal.
+            minSize = 6.0d;
         }
         assertTrue("Screen diagonal must be at least " + minSize + " inches: " + diagonalInches,
                 diagonalInches >= minSize);
