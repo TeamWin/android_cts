@@ -175,23 +175,6 @@
 
         <option name="append-bitness" value="true" />
     </target_preparer>
-    <!-- Support for 64-bit software codecs has been deprecated from o-mr1-sts-release    -->
-    <!-- onwards. Hence tests which use them will be built only for 32-bit architectures. -->
-    <!-- The default 'target_preparer' tries to copy both 64-bit and 32-bit binaries as   -->
-    <!-- 'append=bitness' value is set to 'true'. In order to ensure that that only       -->
-    <!-- 32-bit binaries are copied, a new 'target_preparer' section is added with        -->
-    <!-- 'append-bitness' value set to false and additionally '32' has been added in the  -->
-    <!-- end after the bug id. This ensures that it does not try to copy the unavailable  -->
-    <!-- 64-bit binary.                                                                   -->
-    <target_preparer class="com.android.compatibility.common.tradefed.targetprep.FilePusher">
-        <option name="cleanup" value="true" />
-
-        <option name="push" value="testhevcdec32->/data/local/tmp/testhevcdec" />
-        <option name="push" value="testavcdec32->/data/local/tmp/testavcdec" />
-        <option name="push" value="testmpeg2dec32->/data/local/tmp/testmpeg2dec" />
-
-        <option name="append-bitness" value="false" />
-    </target_preparer>
 
     <target_preparer class="com.android.tradefed.targetprep.suite.SuiteApkInstaller">
         <option name="cleanup-apks" value="true" />
