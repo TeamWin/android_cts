@@ -131,6 +131,14 @@ public class AdaptiveIconDrawableTest {
         assertEquals(-21, iconDrawable.getChangingConfigurations());
     }
 
+    @Test
+    public void testGetAlpha() {
+        ColorDrawable drawable = new ColorDrawable(Color.RED);
+        AdaptiveIconDrawable iconDrawable = new AdaptiveIconDrawable(null, drawable);
+        iconDrawable.setAlpha(128);
+        assertEquals(128, iconDrawable.getAlpha());
+    }
+
     /**
      * When setBound isn't called before draw method is called.
      * Nothing is drawn.
@@ -252,11 +260,13 @@ public class AdaptiveIconDrawableTest {
     public void testGetOpacity() {
         AdaptiveIconDrawable iconDrawable = new AdaptiveIconDrawable(
             new ColorDrawable(Color.RED), new ColorDrawable(Color.BLUE));
+        // Drawable#getOpacity is deprecated, AdaptiveIconDrawable
+        // should return PixelFormat.TRANSLUCENT always
         iconDrawable.setOpacity(PixelFormat.OPAQUE);
-        assertEquals(PixelFormat.OPAQUE, iconDrawable.getOpacity());
+        assertEquals(PixelFormat.TRANSLUCENT, iconDrawable.getOpacity());
 
         iconDrawable.setOpacity(PixelFormat.TRANSPARENT);
-        assertEquals(PixelFormat.TRANSPARENT, iconDrawable.getOpacity());
+        assertEquals(PixelFormat.TRANSLUCENT, iconDrawable.getOpacity());
     }
 
     @Test
