@@ -96,8 +96,9 @@ public class CtsGroupCallService extends MbmsGroupCallServiceBase {
     }
 
     @Override
-    public int startGroupCall(final int subscriptionId, final long tmgi, final int[] saiArray,
-                final int[] frequencyArray, final GroupCallCallback callback) {
+    public int startGroupCall(final int subscriptionId, final long tmgi,
+            final List<Integer> saiArray, final List<Integer> frequencyArray,
+            final GroupCallCallback callback) {
         mReceivedCalls.add(Arrays.asList(METHOD_START_GROUP_CALL, subscriptionId, tmgi, saiArray,
                 frequencyArray));
         if (mErrorCodeOverride != MbmsErrors.SUCCESS) {
@@ -112,7 +113,7 @@ public class CtsGroupCallService extends MbmsGroupCallServiceBase {
 
     @Override
     public void updateGroupCall(int subscriptionId, long tmgi,
-            int[] saiArray, int[] frequencyArray) {
+            List<Integer> saiArray, List<Integer> frequencyArray) {
         mReceivedCalls.add(Arrays.asList(METHOD_UPDATE_GROUP_CALL,
                 subscriptionId, tmgi, saiArray, frequencyArray));
     }
