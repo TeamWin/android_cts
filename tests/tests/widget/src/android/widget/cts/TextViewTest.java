@@ -90,6 +90,7 @@ import android.text.Spannable;
 import android.text.SpannableString;
 import android.text.SpannableStringBuilder;
 import android.text.Spanned;
+import android.text.TextDirectionHeuristics;
 import android.text.TextPaint;
 import android.text.TextUtils;
 import android.text.TextUtils.TruncateAt;
@@ -8217,6 +8218,122 @@ public class TextViewTest {
         } else {
             assertEquals(Layout.HYPHENATION_FREQUENCY_NONE, textView.getHyphenationFrequency());
         }
+    }
+
+    @Test
+    @UiThreadTest
+    public void testGetTextDirectionHeuristic_password_returnsLTR() {
+        mActivity.setContentView(R.layout.textview_textdirectionheuristic);
+        final TextView textView = mActivity.findViewById(R.id.text_password);
+
+        assertEquals(TextDirectionHeuristics.LTR, textView.getTextDirectionHeuristic());
+    }
+
+    @Test
+    @UiThreadTest
+    public void testGetTextDirectionHeuristic_LtrLayout_TextDirectionFirstStrong() {
+        mActivity.setContentView(R.layout.textview_textdirectionheuristic);
+        final TextView textView = mActivity.findViewById(R.id.text);
+        textView.setTextDirection(View.TEXT_DIRECTION_FIRST_STRONG);
+        textView.setLayoutDirection(View.LAYOUT_DIRECTION_LTR);
+
+        assertEquals(TextDirectionHeuristics.FIRSTSTRONG_LTR, textView.getTextDirectionHeuristic());
+    }
+
+    @Test
+    @UiThreadTest
+    public void testGetTextDirectionHeuristic_RtlLayout_TextDirectionFirstStrong() {
+        mActivity.setContentView(R.layout.textview_textdirectionheuristic);
+        final TextView textView = mActivity.findViewById(R.id.text);
+        textView.setTextDirection(View.TEXT_DIRECTION_FIRST_STRONG);
+        textView.setLayoutDirection(View.LAYOUT_DIRECTION_RTL);
+
+        assertEquals(TextDirectionHeuristics.FIRSTSTRONG_RTL, textView.getTextDirectionHeuristic());
+    }
+
+    @Test
+    @UiThreadTest
+    public void testGetTextDirectionHeuristic_RtlLayout_TextDirectionAnyRtl() {
+        mActivity.setContentView(R.layout.textview_textdirectionheuristic);
+        final TextView textView = mActivity.findViewById(R.id.text);
+        textView.setTextDirection(View.TEXT_DIRECTION_ANY_RTL);
+
+        textView.setLayoutDirection(View.LAYOUT_DIRECTION_RTL);
+        assertEquals(TextDirectionHeuristics.ANYRTL_LTR, textView.getTextDirectionHeuristic());
+
+        textView.setLayoutDirection(View.LAYOUT_DIRECTION_LTR);
+        assertEquals(TextDirectionHeuristics.ANYRTL_LTR, textView.getTextDirectionHeuristic());
+    }
+
+    @Test
+    @UiThreadTest
+    public void testGetTextDirectionHeuristic_RtlLayout_TextDirectionLtr() {
+        mActivity.setContentView(R.layout.textview_textdirectionheuristic);
+        final TextView textView = mActivity.findViewById(R.id.text);
+        textView.setTextDirection(View.TEXT_DIRECTION_LTR);
+
+        assertEquals(TextDirectionHeuristics.LTR, textView.getTextDirectionHeuristic());
+    }
+
+    @Test
+    @UiThreadTest
+    public void testGetTextDirectionHeuristic_RtlLayout_TextDirectionRtl() {
+        mActivity.setContentView(R.layout.textview_textdirectionheuristic);
+        final TextView textView = mActivity.findViewById(R.id.text);
+        textView.setTextDirection(View.TEXT_DIRECTION_RTL);
+
+        assertEquals(TextDirectionHeuristics.RTL, textView.getTextDirectionHeuristic());
+    }
+
+    @Test
+    @UiThreadTest
+    public void testGetTextDirectionHeuristic_RtlLayout_TextDirectionFirstStrongLtr() {
+        mActivity.setContentView(R.layout.textview_textdirectionheuristic);
+        final TextView textView = mActivity.findViewById(R.id.text);
+        textView.setTextDirection(View.TEXT_DIRECTION_FIRST_STRONG_LTR);
+
+        textView.setLayoutDirection(View.LAYOUT_DIRECTION_RTL);
+        assertEquals(TextDirectionHeuristics.FIRSTSTRONG_LTR, textView.getTextDirectionHeuristic());
+
+        textView.setLayoutDirection(View.LAYOUT_DIRECTION_LTR);
+        assertEquals(TextDirectionHeuristics.FIRSTSTRONG_LTR, textView.getTextDirectionHeuristic());
+    }
+
+    @Test
+    @UiThreadTest
+    public void testGetTextDirectionHeuristic_RtlLayout_TextDirectionFirstStrongRtl() {
+        mActivity.setContentView(R.layout.textview_textdirectionheuristic);
+        final TextView textView = mActivity.findViewById(R.id.text);
+        textView.setTextDirection(View.TEXT_DIRECTION_FIRST_STRONG_RTL);
+
+        textView.setLayoutDirection(View.LAYOUT_DIRECTION_RTL);
+        assertEquals(TextDirectionHeuristics.FIRSTSTRONG_RTL, textView.getTextDirectionHeuristic());
+
+        textView.setLayoutDirection(View.LAYOUT_DIRECTION_LTR);
+        assertEquals(TextDirectionHeuristics.FIRSTSTRONG_RTL, textView.getTextDirectionHeuristic());
+    }
+
+    @Test
+    @UiThreadTest
+    public void testGetTextDirectionHeuristic_phoneInputType_returnsLTR() {
+        mActivity.setContentView(R.layout.textview_textdirectionheuristic);
+        final TextView textView = mActivity.findViewById(R.id.text_phone);
+
+        textView.setTextLocale(Locale.forLanguageTag("ar"));
+        textView.setTextDirection(View.TEXT_DIRECTION_RTL);
+        textView.setLayoutDirection(View.LAYOUT_DIRECTION_RTL);
+
+        assertEquals(TextDirectionHeuristics.LTR, textView.getTextDirectionHeuristic());
+    }
+
+    @Test
+    @UiThreadTest
+    public void testGetTextDirectionHeuristic_RtlLayout_TextDirectionLocale() {
+        mActivity.setContentView(R.layout.textview_textdirectionheuristic);
+        final TextView textView = mActivity.findViewById(R.id.text);
+        textView.setTextDirection(View.TEXT_DIRECTION_LOCALE);
+
+        assertEquals(TextDirectionHeuristics.LOCALE, textView.getTextDirectionHeuristic());
     }
 
     private void initializeTextForSmartSelection(CharSequence text) throws Throwable {
