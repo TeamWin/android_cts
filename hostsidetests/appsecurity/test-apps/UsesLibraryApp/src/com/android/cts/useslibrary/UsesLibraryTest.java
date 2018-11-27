@@ -30,6 +30,7 @@ import dalvik.system.PathClassLoader;
 import java.io.File;
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
+import java.util.Arrays;
 
 public class UsesLibraryTest extends InstrumentationTestCase {
     private static final String TAG = "UsesLibraryTest";
@@ -92,7 +93,8 @@ public class UsesLibraryTest extends InstrumentationTestCase {
 
             PathClassLoader testLoader = new PathClassLoader(testPath, null);
             Object[] testDexElements = getDexElementsFromClassLoader(testLoader);
-            assertTrue(testDexElements != null && testDexElements.length == 3);
+            assertTrue(testDexElements != null);
+            assertEquals(Arrays.toString(testDexElements), 3, testDexElements.length);
 
             DexFile testDexFile = getDexFileFromDexElement(testDexElements[2]);
             assertFalse(isDexFileBackedByOatFile(testDexFile));
