@@ -156,16 +156,19 @@ bool FormatIsFloat(uint32_t format) {
 void UploadData(const AHardwareBuffer_Desc& desc, GLenum format, GLenum type, const void* data) {
     if (desc.layers <= 1) {
         glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, desc.width, desc.height, format, type, data);
+        ASSERT_EQ(GLenum{GL_NO_ERROR}, glGetError()) << "glTexSubImage2D failed";
     } else {
         for (uint32_t layer = 0; layer < desc.layers; ++layer) {
             glTexSubImage3D(GL_TEXTURE_2D_ARRAY, 0, 0, 0, layer, desc.width, desc.height, 1,
                             format, type, data);
+            ASSERT_EQ(GLenum{GL_NO_ERROR}, glGetError()) << "glTexSubImage3D failed";
         }
     }
 }
 
 // Uploads opaque red to the currently bound texture.
 void UploadRedPixels(const AHardwareBuffer_Desc& desc) {
+    ASSERT_EQ(GLenum{GL_NO_ERROR}, glGetError());
     const bool use_srgb = desc.stride & kUseSrgb;
     glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
     switch (desc.format) {
@@ -225,7 +228,6 @@ void UploadRedPixels(const AHardwareBuffer_Desc& desc) {
         }
         default: FAIL() << "Unrecognized AHardwareBuffer format"; break;
     }
-    EXPECT_EQ(GLenum{GL_NO_ERROR}, glGetError());
 }
 
 // Draws the following checkerboard pattern using glScissor and glClear.
@@ -268,7 +270,7 @@ void DrawCheckerboard(int width, int height) {
     glClear(all_bits);
 
     glDisable(GL_SCISSOR_TEST);
-    EXPECT_EQ(GLenum{GL_NO_ERROR}, glGetError());
+    ASSERT_EQ(GLenum{GL_NO_ERROR}, glGetError());
 }
 
 enum GoldenColor {
@@ -292,14 +294,14 @@ struct GoldenPixel {
 template <typename T>
 void CheckGoldenPixel(int x, int y, const std::array<T, 4>& golden,
                       const std::array<T, 4>& actual) {
-    EXPECT_EQ(GLenum{GL_NO_ERROR}, glGetError());
+    ASSERT_EQ(GLenum{GL_NO_ERROR}, glGetError());
     EXPECT_EQ(golden, actual) << "Pixel doesn't match at X=" << x << ", Y=" << y;
 }
 
 template <typename T>
 void CheckGoldenPixel(int x, int y, const std::array<T, 4>& minimum,
                       const std::array<T, 4>& maximum, const std::array<T, 4>& actual) {
-    EXPECT_EQ(GLenum{GL_NO_ERROR}, glGetError());
+    ASSERT_EQ(GLenum{GL_NO_ERROR}, glGetError());
     bool in_range = true;
     for (int i = 0; i < 4; ++i) {
         if (actual[i] < minimum[i] || actual[i] > maximum[i]) {
@@ -307,9 +309,11 @@ void CheckGoldenPixel(int x, int y, const std::array<T, 4>& minimum,
             break;
         }
     }
-    if (!in_range) {
-        EXPECT_NE(actual, actual) << "Pixel out of acceptable range at X=" << x << ", Y=" << y;
-    }
+    EXPECT_TRUE(in_range) << "Pixel out of acceptable range at X=" << x << ", Y=" << y
+        << "; actual value: {" << actual[0] << ", " << actual[1] << ", " << actual[2] << ", " << actual[3]
+        << "}, minimum: {" << minimum[0] << ", " << minimum[1] << ", " << minimum[2] << ", " << minimum[3]
+        << "}, maximum: {" << maximum[0] << ", " << maximum[1] << ", " << maximum[2] << ", " << maximum[3]
+        << "}";
 }
 
 void CheckGoldenPixel(const GoldenPixel& golden, const std::array<uint8_t, 4>& pixel,
@@ -404,7 +408,7 @@ void CheckGoldenPixels(const std::vector<GoldenPixel>& goldens, uint32_t format)
     if (FormatIsFloat(format)) {
         std::unique_ptr<float[]> pixels(new float[width * height * 4]);
         glReadPixels(left, bottom, width, height, GL_RGBA, GL_FLOAT, pixels.get());
-        EXPECT_EQ(GLenum{GL_NO_ERROR}, glGetError());
+        ASSERT_EQ(GLenum{GL_NO_ERROR}, glGetError());
         for (const GoldenPixel& golden : goldens) {
             float* pixel = pixels.get() + ((golden.y - bottom) * width + golden.x - left) * 4;
             std::array<float, 4> pixel_array;
@@ -414,7 +418,7 @@ void CheckGoldenPixels(const std::vector<GoldenPixel>& goldens, uint32_t format)
     } else {
         std::unique_ptr<uint8_t[]> pixels(new uint8_t[width * height * 4]);
         glReadPixels(left, bottom, width, height, GL_RGBA, GL_UNSIGNED_BYTE, pixels.get());
-        EXPECT_EQ(GLenum{GL_NO_ERROR}, glGetError());
+        ASSERT_EQ(GLenum{GL_NO_ERROR}, glGetError());
         for (const GoldenPixel& golden : goldens) {
             uint8_t* pixel = pixels.get() + ((golden.y - bottom) * width + golden.x - left) * 4;
             std::array<uint8_t, 4> pixel_array;
@@ -919,7 +923,7 @@ void AHardwareBufferGLTest::SetUpProgram(const std::string& vertex_source,
     glDeleteShader(vertex_shader);
     glDeleteShader(fragment_shader);
     glUseProgram(mProgram);
-    ASSERT_EQ(GLenum{GL_NO_ERROR}, glGetError());
+    ASSERT_EQ(GLenum{GL_NO_ERROR}, glGetError()) << "GL error during shader program setup";
 
     GLint a_position_location = glGetAttribLocation(mProgram, "aPosition");
     GLint a_depth_location = glGetAttribLocation(mProgram, "aDepth");
@@ -951,6 +955,7 @@ void AHardwareBufferGLTest::SetUpProgram(const std::string& vertex_source,
         glUniform1f(u_layer_location, static_cast<float>(GetParam().layers - 1));
     }
     mFaceVectorLocation = glGetUniformLocation(mProgram, "uFaceVector");
+    ASSERT_EQ(GLenum{GL_NO_ERROR}, glGetError()) << "GL error during shader uniform setup";
 }
 
 void AHardwareBufferGLTest::SetUpTexture(const AHardwareBuffer_Desc& desc, int unit) {
@@ -1038,7 +1043,7 @@ void AHardwareBufferGLTest::SetUpTexture(const AHardwareBuffer_Desc& desc, int u
             glEGLImageTargetTexture2DOES(mTexTarget, static_cast<GLeglImageOES>(mEGLImage));
         }
     }
-    ASSERT_EQ(GLenum{GL_NO_ERROR}, glGetError());
+    ASSERT_EQ(GLenum{GL_NO_ERROR}, glGetError()) << "GL error during texture setup";
 }
 
 void AHardwareBufferGLTest::SetUpBufferObject(uint32_t size, GLenum target, GLbitfield flags) {
@@ -1046,7 +1051,7 @@ void AHardwareBufferGLTest::SetUpBufferObject(uint32_t size, GLenum target, GLbi
     glBindBuffer(target, mBufferObjects[mWhich]);
     glBufferStorageExternalEXT(target, 0, size,
                                eglGetNativeClientBufferANDROID(mBuffer), flags);
-    ASSERT_EQ(GLenum{GL_NO_ERROR}, glGetError());
+    ASSERT_EQ(GLenum{GL_NO_ERROR}, glGetError()) << "GL error during buffer object setup";
 }
 
 void AHardwareBufferGLTest::SetUpFramebuffer(int width, int height, int layer,
@@ -1113,9 +1118,9 @@ void AHardwareBufferGLTest::SetUpFramebuffer(int width, int height, int layer,
             default: FAIL() << "Unrecognized binding type";
         }
     }
-    ASSERT_EQ(GLenum{GL_NO_ERROR}, glGetError());
+    ASSERT_EQ(GLenum{GL_NO_ERROR}, glGetError()) << "GL error during framebuffer setup";
     ASSERT_EQ(GLenum{GL_FRAMEBUFFER_COMPLETE},
-              glCheckFramebufferStatus(GL_FRAMEBUFFER));
+              glCheckFramebufferStatus(GL_FRAMEBUFFER)) << "Framebuffer not complete";
     glViewport(0, 0, width, height);
 }
 
@@ -1154,12 +1159,14 @@ TEST_P(BlobTest, GpuDataBufferVertexBuffer) {
     desc.usage = AHARDWAREBUFFER_USAGE_GPU_DATA_BUFFER;
     if (!SetUpBuffer(desc)) return;
 
-    SetUpProgram(kVertexShader, kColorFragmentShader, kQuadPositions, 0.5f);
+    ASSERT_NO_FATAL_FAILURE(
+        SetUpProgram(kVertexShader, kColorFragmentShader, kQuadPositions, 0.5f));
 
     for (int i = 0; i < mContextCount; ++i) {
         MakeCurrent(i);
-        SetUpBufferObject(desc.width, GL_ARRAY_BUFFER,
-                          GL_DYNAMIC_STORAGE_BIT_EXT | GL_MAP_WRITE_BIT);
+        ASSERT_NO_FATAL_FAILURE(
+            SetUpBufferObject(desc.width, GL_ARRAY_BUFFER,
+                              GL_DYNAMIC_STORAGE_BIT_EXT | GL_MAP_WRITE_BIT));
     }
     float* data = static_cast<float*>(
         glMapBufferRange(GL_ARRAY_BUFFER, 0, desc.width,
@@ -1170,11 +1177,11 @@ TEST_P(BlobTest, GpuDataBufferVertexBuffer) {
     glFinish();
 
     MakeCurrent(0);
-    SetUpFramebuffer(40, 40, 0, kRenderbuffer);
+    ASSERT_NO_FATAL_FAILURE(SetUpFramebuffer(40, 40, 0, kRenderbuffer));
     GLint a_position_location = glGetAttribLocation(mProgram, "aPosition");
     glVertexAttribPointer(a_position_location, 2, GL_FLOAT, GL_TRUE, 0, 0);
     glDrawArrays(GL_TRIANGLES, 0, kQuadVertexCount);
-    EXPECT_EQ(GLenum{GL_NO_ERROR}, glGetError());
+    ASSERT_EQ(GLenum{GL_NO_ERROR}, glGetError());
 
     // Check the rendered pixels. There should be a red square in the middle.
     std::vector<GoldenPixel> goldens{
@@ -1193,12 +1200,14 @@ TEST_P(BlobTest, GpuDataBufferCpuWrite) {
     desc.usage = AHARDWAREBUFFER_USAGE_CPU_WRITE_RARELY | AHARDWAREBUFFER_USAGE_GPU_DATA_BUFFER;
     if (!SetUpBuffer(desc)) return;
 
-    SetUpProgram(kVertexShader, kColorFragmentShader, kQuadPositions, 0.5f);
+    ASSERT_NO_FATAL_FAILURE(
+        SetUpProgram(kVertexShader, kColorFragmentShader, kQuadPositions, 0.5f));
 
     for (int i = 0; i < mContextCount; ++i) {
         MakeCurrent(i);
-        SetUpBufferObject(desc.width, GL_ARRAY_BUFFER,
-                          GL_DYNAMIC_STORAGE_BIT_EXT | GL_MAP_WRITE_BIT);
+        ASSERT_NO_FATAL_FAILURE(
+            SetUpBufferObject(desc.width, GL_ARRAY_BUFFER,
+                              GL_DYNAMIC_STORAGE_BIT_EXT | GL_MAP_WRITE_BIT));
     }
 
     // Clear the buffer to zero
@@ -1216,11 +1225,11 @@ TEST_P(BlobTest, GpuDataBufferCpuWrite) {
 
     // Render the buffer in the other context
     MakeCurrent(0);
-    SetUpFramebuffer(40, 40, 0, kRenderbuffer);
+    ASSERT_NO_FATAL_FAILURE(SetUpFramebuffer(40, 40, 0, kRenderbuffer));
     GLint a_position_location = glGetAttribLocation(mProgram, "aPosition");
     glVertexAttribPointer(a_position_location, 2, GL_FLOAT, GL_TRUE, 0, 0);
     glDrawArrays(GL_TRIANGLES, 0, kQuadVertexCount);
-    EXPECT_EQ(GLenum{GL_NO_ERROR}, glGetError());
+    ASSERT_EQ(GLenum{GL_NO_ERROR}, glGetError());
 
     // Check the rendered pixels. There should be a red square in the middle.
     std::vector<GoldenPixel> goldens{
@@ -1247,8 +1256,9 @@ TEST_P(BlobTest, GpuDataBufferCpuRead) {
 
     for (int i = 0; i < mContextCount; ++i) {
         MakeCurrent(i);
-        SetUpBufferObject(desc.width, GL_SHADER_STORAGE_BUFFER,
-                          GL_DYNAMIC_STORAGE_BIT_EXT | GL_MAP_READ_BIT);
+        ASSERT_NO_FATAL_FAILURE(
+            SetUpBufferObject(desc.width, GL_SHADER_STORAGE_BUFFER,
+                              GL_DYNAMIC_STORAGE_BIT_EXT | GL_MAP_READ_BIT));
     }
 
     // Clear the buffer to zero
@@ -1271,22 +1281,22 @@ TEST_P(BlobTest, GpuDataBufferCpuRead) {
     glDetachShader(mProgram, shader);
     glDeleteShader(shader);
     glUseProgram(mProgram);
-    ASSERT_EQ(GLenum{GL_NO_ERROR}, glGetError());
+    ASSERT_EQ(GLenum{GL_NO_ERROR}, glGetError()) << "GL error during compute shader setup";
     glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 0, mBufferObjects[mWhich]);
     glDispatchCompute(kBufferElements, 1, 1);
     glMemoryBarrier(GL_BUFFER_UPDATE_BARRIER_BIT);
     glFinish();
-    EXPECT_EQ(GLenum{GL_NO_ERROR}, glGetError());
+    EXPECT_EQ(GLenum{GL_NO_ERROR}, glGetError()) << "GL error during compute shader execution";
 
     // Inspect the data written into the buffer using CPU access.
     MakeCurrent(0);
     unsigned int* data = nullptr;
     int result = AHardwareBuffer_lock(mBuffer, AHARDWAREBUFFER_USAGE_CPU_READ_RARELY,
                                       -1, nullptr, reinterpret_cast<void**>(&data));
-    ASSERT_EQ(NO_ERROR, result);
+    ASSERT_EQ(NO_ERROR, result) << "AHardwareBuffer_lock failed with error " << result;
     std::ostringstream s;
     for (int i = 0; i < kBufferElements; ++i) {
-		expected_data[i] = static_cast<unsigned int>(i * 3);
+        expected_data[i] = static_cast<unsigned int>(i * 3);
         s << data[i] << ", ";
     }
     EXPECT_EQ(0, memcmp(expected_data.data(), data, desc.width)) << s.str();
@@ -1327,7 +1337,8 @@ TEST_P(ColorTest, GpuColorOutputIsRenderable) {
 
     for (int i = 0; i < mContextCount; ++i) {
         MakeCurrent(i);
-        SetUpFramebuffer(desc.width, desc.height, 0, kBufferAsRenderbuffer);
+        ASSERT_NO_FATAL_FAILURE(
+            SetUpFramebuffer(desc.width, desc.height, 0, kBufferAsRenderbuffer));
     }
 
     // Draw a simple checkerboard pattern in the second context, which will
@@ -1356,7 +1367,8 @@ TEST_P(ColorTest, GpuColorOutputCpuRead) {
     if (!SetUpBuffer(desc)) return;
 
     MakeCurrent(1);
-    SetUpFramebuffer(desc.width, desc.height, 0, kBufferAsRenderbuffer);
+    ASSERT_NO_FATAL_FAILURE(
+        SetUpFramebuffer(desc.width, desc.height, 0, kBufferAsRenderbuffer));
     // Draw a simple checkerboard pattern in the second context, which will
     // be current after the loop above, then read it in the first.
     DrawCheckerboard(desc.width, desc.height);
@@ -1368,7 +1380,7 @@ TEST_P(ColorTest, GpuColorOutputCpuRead) {
     void* data = nullptr;
     int result = AHardwareBuffer_lock(mBuffer, AHARDWAREBUFFER_USAGE_CPU_READ_RARELY,
                                       -1, nullptr, &data);
-    ASSERT_EQ(NO_ERROR, result);
+    ASSERT_EQ(NO_ERROR, result) << "AHardwareBuffer_lock failed with error " << result;
 
     std::vector<GoldenPixel> goldens{
         {0, 9, kRed},  {4, 9, kRed},  {5, 9, kBlue},  {9, 9, kBlue},
@@ -1450,28 +1462,31 @@ TEST_P(ColorTest, GpuSampledImageCanBeSampled) {
     const int kTextureUnit = 6 % mMaxTextureUnits;
     for (int i = 0; i < mContextCount; ++i) {
         MakeCurrent(i);
-        SetUpTexture(desc, kTextureUnit);
+        ASSERT_NO_FATAL_FAILURE(SetUpTexture(desc, kTextureUnit));
         glTexParameteri(mTexTarget, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
         glTexParameteri(mTexTarget, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
     }
     // In the second context, upload opaque red to the texture.
-    UploadRedPixels(desc);
+    ASSERT_NO_FATAL_FAILURE(UploadRedPixels(desc));
     glFinish();
 
     // In the first context, draw a quad that samples from the texture.
     MakeCurrent(0);
-    SetUpFramebuffer(40, 40, 0, kRenderbuffer);
+    ASSERT_NO_FATAL_FAILURE(SetUpFramebuffer(40, 40, 0, kRenderbuffer));
     glClearColor(0.f, 0.f, 0.f, 0.f);
     glClear(GL_COLOR_BUFFER_BIT);
 
     if (desc.layers > 1) {
-        SetUpProgram(std::string("#version 300 es") + kVertexShaderEs3x, kArrayFragmentShaderEs30,
-                     kQuadPositions, 0.5f, kTextureUnit);
+        ASSERT_NO_FATAL_FAILURE(
+            SetUpProgram(std::string("#version 300 es") + kVertexShaderEs3x,
+                         kArrayFragmentShaderEs30, kQuadPositions, 0.5f, kTextureUnit));
     } else {
-        SetUpProgram(kVertexShader, kTextureFragmentShader, kQuadPositions, 0.5f, kTextureUnit);
+        ASSERT_NO_FATAL_FAILURE(
+            SetUpProgram(kVertexShader, kTextureFragmentShader, kQuadPositions,
+                         0.5f, kTextureUnit));
     }
     glDrawArrays(GL_TRIANGLES, 0, kQuadVertexCount);
-    EXPECT_EQ(GLenum{GL_NO_ERROR}, glGetError());
+    ASSERT_EQ(GLenum{GL_NO_ERROR}, glGetError());
 
     // Check the rendered pixels. There should be a red square in the middle.
     GoldenColor color = kRed;
@@ -1498,30 +1513,34 @@ TEST_P(ColorTest, GpuColorOutputAndSampledImage) {
     const int kTextureUnit = 1 % mMaxTextureUnits;
     for (int i = 0; i < mContextCount; ++i) {
         MakeCurrent(i);
-        SetUpTexture(desc, kTextureUnit);
+        ASSERT_NO_FATAL_FAILURE(SetUpTexture(desc, kTextureUnit));
         glTexParameteri(mTexTarget, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
         glTexParameteri(mTexTarget, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
     }
 
     // In the second context, draw a checkerboard pattern.
-    SetUpFramebuffer(desc.width, desc.height, desc.layers - 1, kBufferAsTexture);
+    ASSERT_NO_FATAL_FAILURE(
+        SetUpFramebuffer(desc.width, desc.height, desc.layers - 1, kBufferAsTexture));
     DrawCheckerboard(desc.width, desc.height);
     glFinish();
 
     // In the first context, draw a quad that samples from the texture.
     MakeCurrent(0);
-    SetUpFramebuffer(40, 40, 0, kRenderbuffer);
+    ASSERT_NO_FATAL_FAILURE(SetUpFramebuffer(40, 40, 0, kRenderbuffer));
     glClearColor(0.f, 0.f, 0.f, 0.f);
     glClear(GL_COLOR_BUFFER_BIT);
 
     if (desc.layers > 1) {
-        SetUpProgram(std::string("#version 300 es") + kVertexShaderEs3x, kArrayFragmentShaderEs30,
-                     kQuadPositions, 0.5f, kTextureUnit);
+        ASSERT_NO_FATAL_FAILURE(
+            SetUpProgram(std::string("#version 300 es") + kVertexShaderEs3x,
+                         kArrayFragmentShaderEs30, kQuadPositions, 0.5f, kTextureUnit));
     } else {
-        SetUpProgram(kVertexShader, kTextureFragmentShader, kQuadPositions, 0.5f, kTextureUnit);
+        ASSERT_NO_FATAL_FAILURE(
+            SetUpProgram(kVertexShader, kTextureFragmentShader, kQuadPositions,
+                         0.5f, kTextureUnit));
     }
     glDrawArrays(GL_TRIANGLES, 0, kQuadVertexCount);
-    EXPECT_EQ(GLenum{GL_NO_ERROR}, glGetError());
+    ASSERT_EQ(GLenum{GL_NO_ERROR}, glGetError());
 
     // Check the rendered pixels. The lower left area of the checkerboard will
     // be either transparent or opaque black depending on whether the texture
@@ -1556,14 +1575,16 @@ TEST_P(ColorTest, MipmapComplete) {
     const int kTextureUnit = 7 % mMaxTextureUnits;
     for (int i = 0; i < mContextCount; ++i) {
         MakeCurrent(i);
-        SetUpTexture(desc, kTextureUnit);
+        ASSERT_NO_FATAL_FAILURE(SetUpTexture(desc, kTextureUnit));
         glTexParameteri(mTexTarget, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
     }
+    ASSERT_EQ(GLenum{GL_NO_ERROR}, glGetError());
 
     // Draw checkerboard for mipmapping.
     const int kTileWidth = desc.width / kNumTiles;
     const int kTileHeight = desc.height / kNumTiles;
-    SetUpFramebuffer(desc.width, desc.height, desc.layers - 1, kBufferAsTexture);
+    ASSERT_NO_FATAL_FAILURE(
+        SetUpFramebuffer(desc.width, desc.height, desc.layers - 1, kBufferAsTexture));
     glEnable(GL_SCISSOR_TEST);
     for (int i = 0; i < kNumTiles; ++i) {
         for (int j = 0; j < kNumTiles; ++j) {
@@ -1576,10 +1597,12 @@ TEST_P(ColorTest, MipmapComplete) {
     glDisable(GL_SCISSOR_TEST);
     glGenerateMipmap(mTexTarget);
     glFinish();
+    ASSERT_EQ(GLenum{GL_NO_ERROR}, glGetError());
 
     MakeCurrent(0);
-    SetUpFramebuffer(1, 1, desc.layers - 1, kBufferAsTexture, kNone, kNone, kNone,
-                     MipLevelCount(desc.width, desc.height) - 1);
+    ASSERT_NO_FATAL_FAILURE(
+        SetUpFramebuffer(1, 1, desc.layers - 1, kBufferAsTexture, kNone, kNone, kNone,
+                         MipLevelCount(desc.width, desc.height) - 1));
     std::vector<GoldenPixel> goldens{{0, 0, (desc.stride & kUseSrgb) ? kRed50Srgb : kRed50}};
     CheckGoldenPixels(goldens, desc.format);
 }
@@ -1597,23 +1620,26 @@ TEST_P(ColorTest, CubemapSampling) {
     const int kTextureUnit = 4 % mMaxTextureUnits;
     for (int i = 0; i < mContextCount; ++i) {
         MakeCurrent(i);
-        SetUpTexture(desc, kTextureUnit);
+        ASSERT_NO_FATAL_FAILURE(SetUpTexture(desc, kTextureUnit));
     }
 
     for (int i = 0; i < 6; ++i) {
-        SetUpFramebuffer(desc.width, desc.height, desc.layers - 6 + i, kBufferAsTexture);
+        ASSERT_NO_FATAL_FAILURE(
+            SetUpFramebuffer(desc.width, desc.height, desc.layers - 6 + i, kBufferAsTexture));
         DrawCheckerboard(desc.width, desc.height);
     }
     glFinish();
 
     MakeCurrent(0);
     if (desc.layers > 6) {
-        SetUpProgram(std::string("#version 320 es") + kVertexShaderEs3x,
-                     kCubeMapArrayFragmentShaderEs32, kQuadPositions, 0.5f, kTextureUnit);
+        ASSERT_NO_FATAL_FAILURE(
+            SetUpProgram(std::string("#version 320 es") + kVertexShaderEs3x,
+                         kCubeMapArrayFragmentShaderEs32, kQuadPositions, 0.5f, kTextureUnit));
     } else {
-        SetUpProgram(kVertexShader, kCubeMapFragmentShader, kQuadPositions, 0.5f, kTextureUnit);
+        ASSERT_NO_FATAL_FAILURE(
+            SetUpProgram(kVertexShader, kCubeMapFragmentShader, kQuadPositions, 0.5f, kTextureUnit));
     }
-    SetUpFramebuffer(40, 40, 0, kRenderbuffer);
+    ASSERT_NO_FATAL_FAILURE(SetUpFramebuffer(40, 40, 0, kRenderbuffer));
     for (int i = 0; i < 6; ++i) {
         float face_vector[3] = {0.f, 0.f, 0.f};
         face_vector[i / 2] = (i % 2) ? -1.f : 1.f;
@@ -1652,15 +1678,17 @@ TEST_P(ColorTest, CubemapMipmaps) {
     desc.layers *= 6;
     if (!SetUpBuffer(desc)) return;
 
+    const int kTextureUnit = 5 % mMaxTextureUnits;
     for (int i = 0; i < mContextCount; ++i) {
         MakeCurrent(i);
-        SetUpTexture(desc, 5);
+        ASSERT_NO_FATAL_FAILURE(SetUpTexture(desc, kTextureUnit));
     }
 
     const int kTileSize = desc.width / kNumTiles;
     glEnable(GL_SCISSOR_TEST);
     for (int face = 0; face < 6; ++face) {
-        SetUpFramebuffer(desc.width, desc.height, desc.layers - 6 + face, kBufferAsTexture);
+        ASSERT_NO_FATAL_FAILURE(
+            SetUpFramebuffer(desc.width, desc.height, desc.layers - 6 + face, kBufferAsTexture));
         for (int i = 0; i < kNumTiles; ++i) {
                 for (int j = 0; j < kNumTiles; ++j) {
                 const float v = (i & 1) ^ (j & 1) ? 1.f : 0.f;
@@ -1676,8 +1704,9 @@ TEST_P(ColorTest, CubemapMipmaps) {
 
     MakeCurrent(0);
     for (int face = 0; face < 6; ++face) {
-        SetUpFramebuffer(1, 1, desc.layers - 6 + face, kBufferAsTexture, kNone, kNone, kNone,
-                         MipLevelCount(desc.width, desc.height) - 1);
+        ASSERT_NO_FATAL_FAILURE(
+            SetUpFramebuffer(1, 1, desc.layers - 6 + face, kBufferAsTexture, kNone, kNone, kNone,
+                             MipLevelCount(desc.width, desc.height) - 1));
         std::vector<GoldenPixel> goldens{{0, 0, (desc.stride & kUseSrgb) ? kRed50Srgb : kRed50}};
         CheckGoldenPixels(goldens, desc.format);
     }
@@ -1742,7 +1771,8 @@ TEST_P(DepthTest, DepthAffectsDrawAcrossContexts) {
     // The depth buffer is shared, but the color buffer is not.
     for (int i = 0; i < mContextCount; ++i) {
         MakeCurrent(i);
-        SetUpFramebuffer(40, 40, 0, kRenderbuffer, kBufferAsRenderbuffer);
+        ASSERT_NO_FATAL_FAILURE(
+            SetUpFramebuffer(40, 40, 0, kRenderbuffer, kBufferAsRenderbuffer));
     }
 
     // In the second context, clear the depth buffer to a checkerboard pattern.
@@ -1751,13 +1781,14 @@ TEST_P(DepthTest, DepthAffectsDrawAcrossContexts) {
 
     // In the first context, clear the color buffer only, then draw a red pyramid.
     MakeCurrent(0);
-    SetUpProgram(kVertexShader, kColorFragmentShader, kPyramidPositions, 1.f);
+    ASSERT_NO_FATAL_FAILURE(
+        SetUpProgram(kVertexShader, kColorFragmentShader, kPyramidPositions, 1.f));
     glClearColor(0.f, 0.f, 0.f, 0.f);
     glClear(GL_COLOR_BUFFER_BIT);
     glEnable(GL_DEPTH_TEST);
     glDepthFunc(GL_LESS);
     glDrawArrays(GL_TRIANGLES, 0, kPyramidVertexCount);
-    EXPECT_EQ(GLenum{GL_NO_ERROR}, glGetError());
+    ASSERT_EQ(GLenum{GL_NO_ERROR}, glGetError());
 
     // Check golden pixels.
     std::vector<GoldenPixel> goldens{
@@ -1780,31 +1811,34 @@ TEST_P(DepthTest, DepthCanBeSampled) {
     const int kTextureUnit = 3 % mMaxTextureUnits;
     for (int i = 0; i < 2; ++i) {
         MakeCurrent(i);
-        SetUpTexture(desc, kTextureUnit);
+        ASSERT_NO_FATAL_FAILURE(SetUpTexture(desc, kTextureUnit));
         glTexParameteri(mTexTarget, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
         glTexParameteri(mTexTarget, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
     }
 
     // In the second context, attach the depth texture to the framebuffer and clear to 1.
-    SetUpFramebuffer(desc.width, desc.height, desc.layers - 1, kNone, kBufferAsTexture);
+    ASSERT_NO_FATAL_FAILURE(
+        SetUpFramebuffer(desc.width, desc.height, desc.layers - 1, kNone, kBufferAsTexture));
     glClearDepthf(1.f);
     glClear(GL_DEPTH_BUFFER_BIT);
     glFinish();
 
     // In the first context, draw a quad using the depth texture.
     MakeCurrent(0);
-    SetUpFramebuffer(40, 40, 0, kRenderbuffer);
+    ASSERT_NO_FATAL_FAILURE(SetUpFramebuffer(40, 40, 0, kRenderbuffer));
     glClearColor(0.f, 0.f, 0.f, 0.f);
     glClear(GL_COLOR_BUFFER_BIT);
     if (desc.layers > 1) {
-        SetUpProgram(std::string("#version 300 es") + kVertexShaderEs3x, kArrayFragmentShaderEs30,
-                     kQuadPositions, 0.5f, kTextureUnit);
+        ASSERT_NO_FATAL_FAILURE(
+            SetUpProgram(std::string("#version 300 es") + kVertexShaderEs3x, kArrayFragmentShaderEs30,
+                         kQuadPositions, 0.5f, kTextureUnit));
     } else {
-        SetUpProgram(kVertexShader, kTextureFragmentShader, kQuadPositions, 0.5f, kTextureUnit);
+        ASSERT_NO_FATAL_FAILURE(
+            SetUpProgram(kVertexShader, kTextureFragmentShader, kQuadPositions, 0.5f, kTextureUnit));
     }
     glDrawArrays(GL_TRIANGLES, 0, kQuadVertexCount);
-    EXPECT_EQ(GLenum{GL_NO_ERROR}, glGetError());
     glFinish();
+    ASSERT_EQ(GLenum{GL_NO_ERROR}, glGetError());
 
     // Check the rendered pixels. There should be a square in the middle.
     const GoldenColor kDepth = mGLVersion < 30 ? kWhite : kRed;
@@ -1830,14 +1864,15 @@ TEST_P(DepthTest, DepthCubemapSampling) {
     const int kTextureUnit = 9 % mMaxTextureUnits;
     for (int i = 0; i < mContextCount; ++i) {
         MakeCurrent(i);
-        SetUpTexture(desc, kTextureUnit);
+        ASSERT_NO_FATAL_FAILURE(SetUpTexture(desc, kTextureUnit));
         glTexParameteri(mTexTarget, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
         glTexParameteri(mTexTarget, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
     }
 
     glEnable(GL_SCISSOR_TEST);
     for (int i = 0; i < 6; ++i) {
-        SetUpFramebuffer(desc.width, desc.height, desc.layers - 6 + i, kNone, kBufferAsTexture);
+        ASSERT_NO_FATAL_FAILURE(
+            SetUpFramebuffer(desc.width, desc.height, desc.layers - 6 + i, kNone, kBufferAsTexture));
         glClearDepthf(0.f);
         glScissor(0, 0, desc.width, desc.height);
         glClear(GL_DEPTH_BUFFER_BIT);
@@ -1849,15 +1884,18 @@ TEST_P(DepthTest, DepthCubemapSampling) {
     }
     glDisable(GL_SCISSOR_TEST);
     glFinish();
+    ASSERT_EQ(GLenum{GL_NO_ERROR}, glGetError());
 
     MakeCurrent(0);
     if (desc.layers > 6) {
-        SetUpProgram(std::string("#version 320 es") + kVertexShaderEs3x,
-                     kCubeMapArrayFragmentShaderEs32, kQuadPositions, 0.5f, kTextureUnit);
+        ASSERT_NO_FATAL_FAILURE(
+            SetUpProgram(std::string("#version 320 es") + kVertexShaderEs3x,
+                         kCubeMapArrayFragmentShaderEs32, kQuadPositions, 0.5f, kTextureUnit));
     } else {
-        SetUpProgram(kVertexShader, kCubeMapFragmentShader, kQuadPositions, 0.5f, kTextureUnit);
+        ASSERT_NO_FATAL_FAILURE(
+            SetUpProgram(kVertexShader, kCubeMapFragmentShader, kQuadPositions, 0.5f, kTextureUnit));
     }
-    SetUpFramebuffer(40, 40, 0, kRenderbuffer);
+    ASSERT_NO_FATAL_FAILURE(SetUpFramebuffer(40, 40, 0, kRenderbuffer));
     const GoldenColor kDepth = mGLVersion < 30 ? kWhite: kRed;
     for (int i = 0; i < 6; ++i) {
         float face_vector[3] = {0.f, 0.f, 0.f};
@@ -1866,6 +1904,7 @@ TEST_P(DepthTest, DepthCubemapSampling) {
         glClearColor(0.f, 0.f, 0.f, 0.f);
         glClear(GL_COLOR_BUFFER_BIT);
         glDrawArrays(GL_TRIANGLES, 0, kQuadVertexCount);
+        ASSERT_EQ(GLenum{GL_NO_ERROR}, glGetError());
 
         std::vector<GoldenPixel> goldens{
             {5, 35, kZero}, {15, 35, kZero},  {25, 35, kZero},  {35, 35, kZero},
@@ -1919,16 +1958,19 @@ TEST_P(StencilTest, StencilAffectsDrawAcrossContexts) {
     // The depth buffer is shared, but the color buffer is not.
     for (int i = 0; i < mContextCount; ++i) {
         MakeCurrent(i);
-        SetUpFramebuffer(40, 40, 0, kRenderbuffer, kNone, kBufferAsRenderbuffer);
+        ASSERT_NO_FATAL_FAILURE(
+            SetUpFramebuffer(40, 40, 0, kRenderbuffer, kNone, kBufferAsRenderbuffer));
     }
 
     // In the second context, clear the stencil buffer to a checkerboard pattern.
     DrawCheckerboard(40, 40);
     glFinish();
+    ASSERT_EQ(GLenum{GL_NO_ERROR}, glGetError());
 
     // In the first context, clear the color buffer only, then draw a flat quad.
     MakeCurrent(0);
-    SetUpProgram(kVertexShader, kColorFragmentShader, kQuadPositions, 1.f);
+    ASSERT_NO_FATAL_FAILURE(
+        SetUpProgram(kVertexShader, kColorFragmentShader, kQuadPositions, 1.f));
     glClearColor(0.f, 0.f, 0.f, 0.f);
     glClear(GL_COLOR_BUFFER_BIT);
     glEnable(GL_STENCIL_TEST);
@@ -1943,7 +1985,7 @@ TEST_P(StencilTest, StencilAffectsDrawAcrossContexts) {
     glStencilFunc(GL_EQUAL, 4, 0xFF);
     glStencilOp(GL_KEEP, GL_KEEP, GL_KEEP);
     glDrawArrays(GL_TRIANGLES, 0, kQuadVertexCount);
-    EXPECT_EQ(GLenum{GL_NO_ERROR}, glGetError());
+    ASSERT_EQ(GLenum{GL_NO_ERROR}, glGetError());
 
     // Check golden pixels.
     std::vector<GoldenPixel> goldens{
@@ -1973,7 +2015,7 @@ TEST_P(StencilTest, StencilTexture) {
     const int kTextureUnit = 8 % mMaxTextureUnits;
     for (int i = 0; i < mContextCount; ++i) {
         MakeCurrent(i);
-        SetUpTexture(desc, kTextureUnit);
+        ASSERT_NO_FATAL_FAILURE(SetUpTexture(desc, kTextureUnit));
         glTexParameteri(mTexTarget, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
         glTexParameteri(mTexTarget, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
         if (!kPureStencil) {
@@ -1982,19 +2024,22 @@ TEST_P(StencilTest, StencilTexture) {
     }
 
     // In the second context, clear the stencil buffer to a checkerboard pattern.
-    SetUpFramebuffer(desc.width, desc.height, desc.layers - 1,
-                     kNone, kNone, kBufferAsTexture);
+    ASSERT_NO_FATAL_FAILURE(
+        SetUpFramebuffer(desc.width, desc.height, desc.layers - 1,
+                         kNone, kNone, kBufferAsTexture));
     DrawCheckerboard(desc.width, desc.height);
     glFinish();
+    ASSERT_EQ(GLenum{GL_NO_ERROR}, glGetError());
 
     // In the first context, reconstruct the checkerboard with a special shader.
     MakeCurrent(0);
-    SetUpProgram(std::string("#version 300 es") + kVertexShaderEs3x,
-                 desc.layers > 1 ? kStencilArrayFragmentShaderEs30 : kStencilFragmentShaderEs30,
-                 kQuadPositions, 1.f, kTextureUnit);
-    SetUpFramebuffer(40, 40, 0, kRenderbuffer);
+    ASSERT_NO_FATAL_FAILURE(
+        SetUpProgram(std::string("#version 300 es") + kVertexShaderEs3x,
+                     desc.layers > 1 ? kStencilArrayFragmentShaderEs30 : kStencilFragmentShaderEs30,
+                     kQuadPositions, 1.f, kTextureUnit));
+    ASSERT_NO_FATAL_FAILURE(SetUpFramebuffer(40, 40, 0, kRenderbuffer));
     glDrawArrays(GL_TRIANGLES, 0, kQuadVertexCount);
-    EXPECT_EQ(GLenum{GL_NO_ERROR}, glGetError());
+    ASSERT_EQ(GLenum{GL_NO_ERROR}, glGetError());
 
     // Check golden pixels.
     std::vector<GoldenPixel> goldens{
