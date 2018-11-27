@@ -19,6 +19,7 @@ package android.text.style.cts;
 import static org.junit.Assert.assertEquals;
 
 import android.graphics.Paint.FontMetricsInt;
+import android.os.Parcel;
 import android.support.test.filters.SmallTest;
 import android.support.test.runner.AndroidJUnit4;
 import android.text.style.LineHeightSpan;
@@ -75,5 +76,24 @@ public class LineHeightSpan_StandardTest {
         span.chooseHeight("helloworld", 0, 9, 0, fm.descent - fm.ascent, fm);
         assertEquals(ascent, fm.ascent);
         assertEquals(descent, fm.descent);
+    }
+
+    @Test
+    public void testGetHeight() {
+        final int height = 23;
+        LineHeightSpan.Standard span = new LineHeightSpan.Standard(height);
+
+        assertEquals(height, span.getHeight());
+    }
+
+    @Test
+    public void testWriteToParcel() {
+        final LineHeightSpan.Standard span = new LineHeightSpan.Standard(20);
+        final Parcel parcel = Parcel.obtain();
+        span.writeToParcel(parcel, 0);
+        parcel.setDataPosition(0);
+
+        final LineHeightSpan.Standard parcelSpan = new LineHeightSpan.Standard(parcel);
+        assertEquals(span.getHeight(), parcelSpan.getHeight());
     }
 }
