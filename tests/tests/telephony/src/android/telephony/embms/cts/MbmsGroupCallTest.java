@@ -23,13 +23,14 @@ import android.telephony.mbms.MbmsErrors;
 import android.telephony.mbms.GroupCall;
 
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.TimeUnit;
 
 public class MbmsGroupCallTest extends MbmsGroupCallTestBase {
-    private class TestGroupCallCallback extends GroupCallCallback {
+    private class TestGroupCallCallback implements GroupCallCallback {
         private final BlockingQueue<SomeArgs> mErrorCalls = new LinkedBlockingQueue<>();
         private final BlockingQueue<SomeArgs> mGroupCallStateChangedCalls=
                 new LinkedBlockingQueue<>();
@@ -86,15 +87,16 @@ public class MbmsGroupCallTest extends MbmsGroupCallTestBase {
     }
 
     private static final long TMGI = 568734963245L;
-    private static final int[] SAI_ARRAY = new int[]{16, 24, 46, 76};
-    private static final int[] FREQUENCY_ARRAY = new int[]{2075, 2050, 1865};
+    private static final List<Integer> SAI_LIST = Arrays.asList(16, 24, 46, 76);
+    private static final List<Integer> FREQUENCY_LIST = Arrays.asList(2075, 2050, 1865);
 
     private TestGroupCallCallback mGroupCallCallback =
             new TestGroupCallCallback();
 
     public void testStartGroupCall() throws Exception {
-        GroupCall groupCall = mGroupCallSession.startGroupCall(mCallbackExecutor,
-                TMGI, SAI_ARRAY, FREQUENCY_ARRAY, mGroupCallCallback);
+        GroupCall groupCall = mGroupCallSession.startGroupCall(TMGI, SAI_LIST, FREQUENCY_LIST,
+                mCallbackExecutor, mGroupCallCallback
+        );
         assertNotNull(groupCall);
         assertEquals(TMGI, groupCall.getTmgi());
 
@@ -107,15 +109,16 @@ public class MbmsGroupCallTest extends MbmsGroupCallTestBase {
         assertEquals(1, startGroupCallCalls.size());
         List<Object> startGroupCallCall = startGroupCallCalls.get(0);
         assertEquals(TMGI, startGroupCallCall.get(2));
-        assertArrayEquals(SAI_ARRAY, (int[]) startGroupCallCall.get(3));
-        assertArrayEquals(FREQUENCY_ARRAY, (int[]) startGroupCallCall.get(4));
+        assertEquals(SAI_LIST, startGroupCallCall.get(3));
+        assertEquals(FREQUENCY_LIST, startGroupCallCall.get(4));
     }
 
     public void testUpdateGroupCall() throws Exception {
-        GroupCall groupCall = mGroupCallSession.startGroupCall(mCallbackExecutor,
-                TMGI, SAI_ARRAY, FREQUENCY_ARRAY, mGroupCallCallback);
-        int[] newSais = new int[]{16};
-        int[] newFreqs = new int[]{2075};
+        GroupCall groupCall = mGroupCallSession.startGroupCall(TMGI, SAI_LIST, FREQUENCY_LIST,
+                mCallbackExecutor, mGroupCallCallback
+        );
+        List<Integer> newSais = Collections.singletonList(16);
+        List<Integer> newFreqs = Collections.singletonList(2025);
         groupCall.updateGroupCall(newSais, newFreqs);
 
         List<List<Object>> updateGroupCallCalls =
@@ -123,13 +126,14 @@ public class MbmsGroupCallTest extends MbmsGroupCallTestBase {
         assertEquals(1, updateGroupCallCalls.size());
         List<Object> updateGroupCallCall = updateGroupCallCalls.get(0);
         assertEquals(TMGI, updateGroupCallCall.get(2));
-        assertArrayEquals(newSais, (int[]) updateGroupCallCall.get(3));
-        assertArrayEquals(newFreqs, (int[]) updateGroupCallCall.get(4));
+        assertEquals(newSais, updateGroupCallCall.get(3));
+        assertEquals(newFreqs, updateGroupCallCall.get(4));
     }
 
     public void testStopGroupCall() throws Exception {
-        GroupCall groupCall = mGroupCallSession.startGroupCall(mCallbackExecutor,
-                TMGI, SAI_ARRAY, FREQUENCY_ARRAY, mGroupCallCallback);
+        GroupCall groupCall = mGroupCallSession.startGroupCall(TMGI, SAI_LIST, FREQUENCY_LIST,
+                mCallbackExecutor, mGroupCallCallback
+        );
         groupCall.close();
         List<List<Object>> stopGroupCallCalls =
                 getMiddlewareCalls(CtsGroupCallService.METHOD_STOP_GROUP_CALL);
@@ -138,8 +142,9 @@ public class MbmsGroupCallTest extends MbmsGroupCallTestBase {
     }
 
     public void testGroupCallCallbacks() throws Exception {
-        mGroupCallSession.startGroupCall(mCallbackExecutor,
-                TMGI, SAI_ARRAY, FREQUENCY_ARRAY, mGroupCallCallback);
+        mGroupCallSession.startGroupCall(TMGI, SAI_LIST, FREQUENCY_LIST, mCallbackExecutor,
+                mGroupCallCallback
+        );
         mMiddlewareControl.fireErrorOnGroupCall(MbmsErrors.GeneralErrors.ERROR_IN_E911,
                 MbmsGroupCallTest.class.getSimpleName());
         SomeArgs groupCallErrorArgs = mGroupCallCallback.waitOnError();
@@ -155,20 +160,10 @@ public class MbmsGroupCallTest extends MbmsGroupCallTestBase {
     public void testStartGroupCallFailure() throws Exception {
         mMiddlewareControl.forceErrorCode(
                 MbmsErrors.GeneralErrors.ERROR_MIDDLEWARE_TEMPORARILY_UNAVAILABLE);
-        mGroupCallSession.startGroupCall(mCallbackExecutor,
-                TMGI, SAI_ARRAY, FREQUENCY_ARRAY, mGroupCallCallback);
+        mGroupCallSession.startGroupCall(TMGI, SAI_LIST, FREQUENCY_LIST, mCallbackExecutor,
+                mGroupCallCallback
+        );
         assertEquals(MbmsErrors.GeneralErrors.ERROR_MIDDLEWARE_TEMPORARILY_UNAVAILABLE,
                 mCallback.waitOnError().arg1);
-    }
-
-    private void assertArrayEquals(int[] expected, int[] actual) {
-        assertEquals(expected.length, actual.length);
-        for (int i = 0; i < expected.length; i++) {
-            if (expected[i] != actual[i]) {
-                throw new AssertionError("Arrays differ at element " + i
-                        + " -- expected: " + Arrays.toString(expected) + "; actual: "
-                        + Arrays.toString(actual));
-            }
-        }
     }
 }
