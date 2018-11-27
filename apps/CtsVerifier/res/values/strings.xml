@@ -1414,6 +1414,16 @@
     <string name="camera_flashlight_passed_text">All tests passed. Press Done or Pass button.
     </string>
 
+    <!-- Strings for the Camera Performance test activity -->
+    <string name="camera_performance_test">Camera Performance</string>
+    <string name="camera_performance_test_info">
+        This activity will run performance test cases. For optimal and consistent results please
+        make sure that all camera sensors are pointing in a direction with sufficiently bright
+        light source.
+    </string>
+    <string name="camera_performance_spinner_text">Running CTS performance test case...</string>
+    <string name="camera_performance_result_title">Test Result</string>
+
     <!-- Strings for StreamingVideoActivity -->
     <string name="streaming_video">Streaming Video Quality Verifier</string>
     <string name="streaming_video_info">This is a test for assessing the quality of streaming videos.  Play each stream and verify that the video is smooth and in sync with the audio, and that there are no quality problems.</string>

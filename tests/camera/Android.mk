@@ -35,7 +35,7 @@ include $(BUILD_STATIC_JAVA_LIBRARY)
 # Reusable Camera performance test classes and helpers
 include $(CLEAR_VARS)
 
-LOCAL_MODULE := CtsCameraPerformanceCases
+LOCAL_MODULE := cts-camera-performance-tests
 
 LOCAL_MODULE_TAGS := tests
 
@@ -57,7 +57,7 @@ LOCAL_SDK_VERSION := test_current
 
 LOCAL_JAVA_LIBRARIES := android.test.runner.stubs android.test.base.stubs
 
-include $(BUILD_JAVA_LIBRARY)
+include $(BUILD_STATIC_JAVA_LIBRARY)
 
 # CtsCameraTestCases package
 
