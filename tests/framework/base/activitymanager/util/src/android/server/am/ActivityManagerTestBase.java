@@ -137,12 +137,14 @@ import org.junit.runners.model.Statement;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
+import java.util.concurrent.Callable;
 import java.util.concurrent.TimeUnit;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -164,6 +166,14 @@ public abstract class ActivityManagerTestBase {
     private static final String TEST_PACKAGE = "android.server.am";
     private static final String SECOND_TEST_PACKAGE = "android.server.am.second";
     private static final String THIRD_TEST_PACKAGE = "android.server.am.third";
+    private static final List<String> TEST_PACKAGES;
+    static {
+        final List<String> testPackages = new ArrayList<>(3);
+        testPackages.add(TEST_PACKAGE);
+        testPackages.add(SECOND_TEST_PACKAGE);
+        testPackages.add(THIRD_TEST_PACKAGE);
+        TEST_PACKAGES = Collections.unmodifiableList(testPackages);
+    }
 
     protected static final String AM_START_HOME_ACTIVITY_COMMAND =
             "am start -a android.intent.action.MAIN -c android.intent.category.HOME";
@@ -180,6 +190,14 @@ public abstract class ActivityManagerTestBase {
     protected Context mContext;
     protected ActivityManager mAm;
     protected ActivityTaskManager mAtm;
+
+    /**
+     * Callable to clear launch params for all test packages.
+     */
+    private final Callable<Void> mClearLaunchParamsCallable = () -> {
+        mAtm.clearLaunchParamsForPackages(TEST_PACKAGES);
+        return null;
+    };
 
     @Rule
     public final ActivityTestRule<SideActivity> mSideActivityRule =
@@ -366,6 +384,9 @@ public abstract class ActivityManagerTestBase {
         pressUnlockButton();
         pressHomeButton();
         removeStacksWithActivityTypes(ALL_ACTIVITY_TYPE_BUT_HOME);
+
+        // Clear launch params for all test packages to make sure each test is run in a clean state.
+        SystemUtil.callWithShellPermissionIdentity(mClearLaunchParamsCallable);
     }
 
     @After
