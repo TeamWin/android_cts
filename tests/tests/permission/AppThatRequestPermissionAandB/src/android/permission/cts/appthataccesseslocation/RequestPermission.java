@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package android.permission.cts.appthatrequestpermission;
+package android.permission.cts.appthataccesseslocation;
 
 import android.app.Activity;
 import android.os.Bundle;
