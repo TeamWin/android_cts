@@ -352,13 +352,8 @@ public class WindowManagerState {
         return navWindow.isEmpty() ? null : navWindow.get(0);
     }
 
-    // TODO(117478341): Modify this method after we resolve one status/nav bar assumption.
-    static boolean isValidNavBarType(WindowState navState) {
-        final int displayId = navState.getDisplayId();
-        final int type = navState.getType();
-        return (displayId == DEFAULT_DISPLAY)
-                ? TYPE_NAVIGATION_BAR == type
-                : TYPE_NAVIGATION_BAR_PANEL == type;
+    private static boolean isValidNavBarType(WindowState navState) {
+        return TYPE_NAVIGATION_BAR == navState.getType();
     }
 
     public List<WindowState> getMatchingVisibleWindowState(final String windowName) {
