@@ -194,29 +194,6 @@ public class AudioManagerTest extends InstrumentationTestCase {
         }
     }
 
-    // helper class to simplify that abstracts out the handling of spurious wakeups in Object.wait()
-    private static final class SafeWaitObject {
-        private boolean mQuit = false;
-
-        public void safeNotify() {
-            synchronized (this) {
-                mQuit = true;
-                this.notify();
-            }
-        }
-
-        public void safeWait(long millis) throws InterruptedException {
-            final long timeOutTime = java.lang.System.currentTimeMillis() + millis;
-            synchronized (this) {
-                while (!mQuit) {
-                    final long timeToWait = timeOutTime - java.lang.System.currentTimeMillis();
-                    if (timeToWait < 0) { break; }
-                    this.wait(timeToWait);
-                }
-            }
-        }
-    }
-
     private static final class MyBlockingIntentReceiver extends BroadcastReceiver {
         private final SafeWaitObject mLock = new SafeWaitObject();
         // state protected by mLock
