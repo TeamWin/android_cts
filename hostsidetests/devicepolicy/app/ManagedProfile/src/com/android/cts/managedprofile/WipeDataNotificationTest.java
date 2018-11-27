@@ -3,6 +3,7 @@ package com.android.cts.managedprofile;
 import android.support.test.InstrumentationRegistry;
 import android.support.test.uiautomator.By;
 import android.support.test.uiautomator.UiDevice;
+import android.support.test.uiautomator.UiObject2;
 import android.support.test.uiautomator.Until;
 import android.test.AndroidTestCase;
 
@@ -31,6 +32,13 @@ public class WipeDataNotificationTest extends AndroidTestCase {
         assertEquals("Wipe notification title not found", Boolean.TRUE, wipeDataTitleExist);
         assertEquals("Wipe notification content not found",
                 Boolean.TRUE, wipeDataReasonExist);
+
+        // Clear the notification by pressing "clear all" if found.
+        final UiObject2 clearAll = uiDevice.wait(
+                Until.findObject(By.res("com.android.systemui:id/dismiss_text")), UI_TIMEOUT_MILLI);
+        if (clearAll != null) {
+            clearAll.click();
+        }
     }
 
     public void testWipeDataWithoutReasonVerification() {

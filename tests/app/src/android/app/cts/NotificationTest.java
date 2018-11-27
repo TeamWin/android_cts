@@ -62,6 +62,7 @@ public class NotificationTest extends AndroidTestCase {
             NotificationManager.IMPORTANCE_HIGH);
     private static final String SHORTCUT_ID = "shortcutId";
     private static final String SETTING_TEXT = "work chats";
+    private static final boolean ALLOW_SYS_GEN_CONTEXTUAL_ACTIONS = false;
 
     @Override
     protected void setUp() throws Exception {
@@ -128,6 +129,7 @@ public class NotificationTest extends AndroidTestCase {
                 .setSettingsText(SETTING_TEXT)
                 .setGroupAlertBehavior(Notification.GROUP_ALERT_CHILDREN)
                 .setAppOverlayIntent(overlayIntent)
+                .setAllowSystemGeneratedContextualActions(ALLOW_SYS_GEN_CONTEXTUAL_ACTIONS)
                 .build();
         mNotification.icon = 0;
         mNotification.number = 1;
@@ -185,6 +187,8 @@ public class NotificationTest extends AndroidTestCase {
         assertEquals(mNotification.getSettingsText(), result.getSettingsText());
         assertEquals(mNotification.getGroupAlertBehavior(), result.getGroupAlertBehavior());
         assertEquals(overlayIntent, result.getAppOverlayIntent());
+        assertEquals(mNotification.getAllowSystemGeneratedContextualActions(),
+                result.getAllowSystemGeneratedContextualActions());
 
         mNotification.contentIntent = null;
         parcel = Parcel.obtain();
@@ -247,6 +251,7 @@ public class NotificationTest extends AndroidTestCase {
                 .setSettingsText(SETTING_TEXT)
                 .setGroupAlertBehavior(Notification.GROUP_ALERT_SUMMARY)
                 .setAppOverlayIntent(overlayIntent)
+                .setAllowSystemGeneratedContextualActions(ALLOW_SYS_GEN_CONTEXTUAL_ACTIONS)
                 .build();
         assertEquals(CONTENT_TEXT, mNotification.extras.getString(Notification.EXTRA_TEXT));
         assertEquals(CONTENT_TITLE, mNotification.extras.getString(Notification.EXTRA_TITLE));
@@ -259,6 +264,8 @@ public class NotificationTest extends AndroidTestCase {
         assertEquals(SETTING_TEXT, mNotification.getSettingsText());
         assertEquals(Notification.GROUP_ALERT_SUMMARY, mNotification.getGroupAlertBehavior());
         assertEquals(overlayIntent, mNotification.getAppOverlayIntent());
+        assertEquals(ALLOW_SYS_GEN_CONTEXTUAL_ACTIONS,
+                mNotification.getAllowSystemGeneratedContextualActions());
     }
 
     public void testBuilder_getStyle() {
@@ -525,6 +532,18 @@ public class NotificationTest extends AndroidTestCase {
         } finally {
             StrictMode.setThreadPolicy(new StrictMode.ThreadPolicy.Builder().permitAll().build());
         }
+    }
+
+    public void testGetAllowSystemGeneratedContextualActions_trueByDefault() {
+        Notification notification = new Notification.Builder(mContext, CHANNEL.getId()).build();
+        assertTrue(notification.getAllowSystemGeneratedContextualActions());
+    }
+
+    public void testGetAllowSystemGeneratedContextualActions() {
+        Notification notification = new Notification.Builder(mContext, CHANNEL.getId())
+                .setAllowSystemGeneratedContextualActions(false)
+                .build();
+        assertFalse(notification.getAllowSystemGeneratedContextualActions());
     }
 
     private static RemoteInput newDataOnlyRemoteInput() {
