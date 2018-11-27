@@ -479,6 +479,7 @@ public class MagnifierTest {
         prepareFourQuadrantsScenario();
         mMagnifier = new Magnifier.Builder(mLayout)
                 .setForcePositionWithinWindowSystemInsetsBounds(false)
+                .setSize(40, 40)
                 .build();
 
         // Magnify the center of the activity in a magnifier outside bounds.
