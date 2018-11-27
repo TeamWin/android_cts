@@ -32,6 +32,7 @@ import android.media.TimedText;
 import android.media.VideoSize;
 import android.media.cts.TestUtils.Monitor;
 import android.net.Uri;
+import android.os.ParcelFileDescriptor;
 import android.os.PersistableBundle;
 import android.test.ActivityInstrumentationTestCase2;
 import android.view.SurfaceHolder;
@@ -164,8 +165,10 @@ public class MediaPlayer2TestBase extends ActivityInstrumentationTestCase2<Media
             mp.setAudioSessionId(audioSessionId);
 
             mp.setDataSource(new FileDataSourceDesc.Builder()
-                    .setDataSource(afd.getFileDescriptor(), afd.getStartOffset(), afd.getLength())
+                    .setDataSource(ParcelFileDescriptor.dup(afd.getFileDescriptor()),
+                        afd.getStartOffset(), afd.getLength())
                     .build());
+            afd.close();
 
             Monitor onPrepareCalled = new Monitor();
             ExecutorService executor = Executors.newFixedThreadPool(1);
@@ -182,7 +185,6 @@ public class MediaPlayer2TestBase extends ActivityInstrumentationTestCase2<Media
             mp.prepare();
             onPrepareCalled.waitForSignal();
             mp.unregisterEventCallback(ecb);
-            afd.close();
             executor.shutdown();
             return mp;
         } catch (IOException ex) {
@@ -341,11 +343,11 @@ public class MediaPlayer2TestBase extends ActivityInstrumentationTestCase2<Media
         AssetFileDescriptor afd = mResources.openRawResourceFd(resid);
         try {
             mPlayer.setDataSource(new FileDataSourceDesc.Builder()
-                    .setDataSource(afd.getFileDescriptor(), afd.getStartOffset(), afd.getLength())
+                    .setDataSource(ParcelFileDescriptor.dup(afd.getFileDescriptor()),
+                        afd.getStartOffset(), afd.getLength())
                     .build());
+            afd.close();
         } finally {
-            // TODO: close afd only after setDataSource is confirmed.
-            // afd.close();
         }
         return true;
     }
@@ -356,9 +358,12 @@ public class MediaPlayer2TestBase extends ActivityInstrumentationTestCase2<Media
         }
 
         AssetFileDescriptor afd = mResources.openRawResourceFd(resid);
-        return new FileDataSourceDesc.Builder()
-                .setDataSource(afd.getFileDescriptor(), afd.getStartOffset(), afd.getLength())
+        FileDataSourceDesc fdsd = new FileDataSourceDesc.Builder()
+                .setDataSource(ParcelFileDescriptor.dup(afd.getFileDescriptor()),
+                        afd.getStartOffset(), afd.getLength())
                 .build();
+        afd.close();
+        return fdsd;
     }
 
     protected boolean checkLoadResource(int resid) throws Exception {
