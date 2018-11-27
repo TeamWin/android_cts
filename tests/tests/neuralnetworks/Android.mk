@@ -27,7 +27,8 @@ LOCAL_SRC_FILES := \
      TestUnknownDimensions.cpp \
      TestValidateOperations.cpp \
      TestValidation.cpp \
-     TestWrapper.cpp
+     TestWrapper.cpp \
+     TestNeuralNetworksWrapper.cpp
 
 LOCAL_C_INCLUDES := frameworks/ml/nn/runtime/include/
 LOCAL_C_INCLUDES += frameworks/ml/nn/runtime/test/
