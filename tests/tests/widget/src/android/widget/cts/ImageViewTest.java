@@ -48,6 +48,7 @@ import android.graphics.PorterDuff;
 import android.graphics.PorterDuff.Mode;
 import android.graphics.PorterDuffColorFilter;
 import android.graphics.PorterDuffXfermode;
+import android.graphics.Rect;
 import android.graphics.Xfermode;
 import android.graphics.drawable.BitmapDrawable;
 import android.graphics.drawable.ColorDrawable;
@@ -668,6 +669,55 @@ public class ImageViewTest {
         assertEquals(255, mImageViewRegular.getImageAlpha());
         TestUtils.assertAllPixelsOfColor("All pixels should be blue", mImageViewRegular,
                 0xFF0000FF, 1, false);
+    }
+
+    @UiThreadTest
+    @Test
+    public void testAnimateTransform() {
+        Bitmap bitmap = Bitmap.createBitmap(100, 100, Bitmap.Config.ALPHA_8);
+        mImageViewRegular.setScaleType(ScaleType.FIT_XY);
+        mImageViewRegular.setImageBitmap(bitmap);
+        Rect viewRect = new Rect(0, 0, mImageViewRegular.getWidth(), mImageViewRegular.getHeight());
+        Rect bitmapRect = new Rect(0, 0, bitmap.getWidth(), bitmap.getHeight());
+
+        assertEquals(viewRect, mImageViewRegular.getDrawable().getBounds());
+        assertTrue(mImageViewRegular.getImageMatrix().isIdentity());
+
+        Matrix matrix = new Matrix();
+        mImageViewRegular.animateTransform(matrix);
+
+        assertEquals(bitmapRect, mImageViewRegular.getDrawable().getBounds());
+        assertEquals(matrix, mImageViewRegular.getImageMatrix());
+
+        // clear temporary transformation
+        mImageViewRegular.setImageBitmap(bitmap);
+
+        assertEquals(viewRect, mImageViewRegular.getDrawable().getBounds());
+        assertTrue(mImageViewRegular.getImageMatrix().isIdentity());
+    }
+
+    @UiThreadTest
+    @Test
+    public void testAnimateTransformWithNullPassed() {
+        Bitmap bitmap = Bitmap.createBitmap(100, 100, Bitmap.Config.ALPHA_8);
+        mImageViewRegular.setScaleType(ScaleType.CENTER);
+        mImageViewRegular.setImageBitmap(bitmap);
+        Rect viewRect = new Rect(0, 0, mImageViewRegular.getWidth(), mImageViewRegular.getHeight());
+        Rect bitmapRect = new Rect(0, 0, bitmap.getWidth(), bitmap.getHeight());
+
+        assertEquals(bitmapRect, mImageViewRegular.getDrawable().getBounds());
+        assertFalse(mImageViewRegular.getImageMatrix().isIdentity());
+
+        mImageViewRegular.animateTransform(null);
+
+        assertEquals(viewRect, mImageViewRegular.getDrawable().getBounds());
+        assertTrue(mImageViewRegular.getImageMatrix().isIdentity());
+
+        // clear temporary transformation
+        mImageViewRegular.setImageBitmap(bitmap);
+
+        assertEquals(bitmapRect, mImageViewRegular.getDrawable().getBounds());
+        assertFalse(mImageViewRegular.getImageMatrix().isIdentity());
     }
 
     public static class MockImageView extends ImageView {
