@@ -840,6 +840,8 @@ public class AccessibilityEndToEndTest {
     @Test
     public void testTouchDelegateWithEbtBetweenView_ReHoverDelegate_FocusTargetAgain()
             throws Throwable {
+        mActivity.waitForEnterAnimationComplete();
+
         final Resources resources = sInstrumentation.getTargetContext().getResources();
         final String buttonResourceName = resources.getResourceName(R.id.button);
         final Button button = mActivity.findViewById(R.id.button);
@@ -902,6 +904,8 @@ public class AccessibilityEndToEndTest {
     @Test
     public void testTouchDelegateCoverParentWithEbt_HoverChildAndBack_FocusTargetAgain()
             throws Throwable {
+        mActivity.waitForEnterAnimationComplete();
+
         final int touchableSize = 48;
         final Resources resources = sInstrumentation.getTargetContext().getResources();
         final String targetResourceName = resources.getResourceName(R.id.buttonDelegated);
