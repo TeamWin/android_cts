@@ -4818,6 +4818,17 @@ public class ViewTest {
         assertFalse(view.isPivotSet());
     }
 
+    @Test
+    public void testSetLeftTopRightBottom() {
+        View view = new View(mContext);
+        view.setLeftTopRightBottom(1, 2, 3, 4);
+
+        assertEquals(1, view.getLeft());
+        assertEquals(2, view.getTop());
+        assertEquals(3, view.getRight());
+        assertEquals(4, view.getBottom());
+    }
+
     private static class MockDrawable extends Drawable {
         private boolean mCalledSetTint = false;
 
