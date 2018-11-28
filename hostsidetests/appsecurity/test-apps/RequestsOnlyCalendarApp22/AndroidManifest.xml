@@ -20,8 +20,9 @@
 
     <uses-sdk android:minSdkVersion="22" android:targetSdkVersion="22" />
 
-    <!-- Storage -->
-    <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE"/>
+    <!-- Calendar -->
+    <uses-permission android:name="android.permission.READ_CALENDAR"/>
+    <uses-permission android:name="android.permission.WRITE_CALENDAR"/>
 
     <application>
         <uses-library android:name="android.test.runner" />

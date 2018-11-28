@@ -16,21 +16,26 @@
 
 package com.android.cts.usepermission;
 
-import static junit.framework.Assert.assertEquals;
-
 import static com.android.cts.externalstorageapp.CommonExternalStorageTest.assertDirNoAccess;
 import static com.android.cts.externalstorageapp.CommonExternalStorageTest.assertDirReadWriteAccess;
 import static com.android.cts.externalstorageapp.CommonExternalStorageTest.assertMediaNoAccess;
 import static com.android.cts.externalstorageapp.CommonExternalStorageTest.assertMediaReadWriteAccess;
 import static com.android.cts.externalstorageapp.CommonExternalStorageTest.getAllPackageSpecificPaths;
 import static com.android.cts.externalstorageapp.CommonExternalStorageTest.logCommand;
+
+import static junit.framework.Assert.assertEquals;
 import static junit.framework.Assert.assertTrue;
 
 import android.Manifest;
+import android.content.ContentValues;
 import android.content.Context;
 import android.content.pm.PackageManager;
+import android.database.Cursor;
+import android.net.Uri;
 import android.os.Environment;
 import android.os.Process;
+import android.provider.CalendarContract;
+
 import org.junit.Test;
 
 import java.io.File;
@@ -176,12 +181,32 @@ public class UsePermissionTest22 extends BasePermissionsTest {
     }
 
     @Test
-    public void testAssertNoStorageAccess() throws Exception {
-        assertNoStorageAccess();
+    public void testAssertNoCalendarAccess() throws Exception {
+        // Without access we're handed back a "fake" Uri that doesn't contain
+        // any of the data we tried persisting
+        final Uri uri = insertCalendarItem();
+        try (Cursor c = mContext.getContentResolver().query(uri, null, null, null)) {
+            assertEquals(0, c.getCount());
+        }
     }
 
     @Test
-    public void testAssertStorageAccess() {
-        assertEquals(Environment.MEDIA_MOUNTED, Environment.getExternalStorageState());
+    public void testAssertCalendarAccess() {
+        final Uri uri = insertCalendarItem();
+        try (Cursor c = mContext.getContentResolver().query(uri, null, null, null)) {
+            assertEquals(1, c.getCount());
+        }
+    }
+
+    /**
+     * Attempt to insert a new unique calendar item; this might be ignored if
+     * this legacy app has its permission revoked.
+     */
+    private Uri insertCalendarItem() {
+        final ContentValues values = new ContentValues();
+        values.put(CalendarContract.Calendars.NAME, "cts" + System.nanoTime());
+        values.put(CalendarContract.Calendars.CALENDAR_DISPLAY_NAME, "cts");
+        values.put(CalendarContract.Calendars.CALENDAR_COLOR, 0xffff0000);
+        return mContext.getContentResolver().insert(CalendarContract.Calendars.CONTENT_URI, values);
     }
 }

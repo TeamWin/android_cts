@@ -87,49 +87,49 @@ class ReviewPermissionsTest {
     }
 
     @Test
-    fun denyGrantDenyStoragePermissions() {
+    fun denyGrantDenyCalendarPermissions() {
         startActivityInReviewedAp()
 
         // Deny
-        uiDevice.wait(Until.findObject(By.text("Storage")), UI_TIMEOUT).click()
+        uiDevice.wait(Until.findObject(By.text("Calendar")), UI_TIMEOUT).click()
         // Confirm deny
         uiDevice.wait(Until.findObject(By.res("android:id/button1")), UI_TIMEOUT).click()
 
         // Grant
         uiDevice.waitForIdle()
-        uiDevice.wait(Until.findObject(By.text("Storage")), UI_TIMEOUT).click()
+        uiDevice.wait(Until.findObject(By.text("Calendar")), UI_TIMEOUT).click()
 
         // Deny
         uiDevice.waitForIdle()
-        uiDevice.wait(Until.findObject(By.text("Storage")), UI_TIMEOUT).click()
+        uiDevice.wait(Until.findObject(By.text("Calendar")), UI_TIMEOUT).click()
 
         uiDevice.waitForIdle()
         clickContinue()
     }
 
     @Test
-    fun denyGrantStoragePermissions() {
+    fun denyGrantCalendarPermissions() {
         startActivityInReviewedAp()
 
         // Deny
-        uiDevice.wait(Until.findObject(By.text("Storage")), UI_TIMEOUT).click()
+        uiDevice.wait(Until.findObject(By.text("Calendar")), UI_TIMEOUT).click()
         // Confirm deny
         uiDevice.wait(Until.findObject(By.res("android:id/button1")), UI_TIMEOUT).click()
 
         // Grant
         uiDevice.waitForIdle()
-        uiDevice.wait(Until.findObject(By.text("Storage")), UI_TIMEOUT).click()
+        uiDevice.wait(Until.findObject(By.text("Calendar")), UI_TIMEOUT).click()
 
         uiDevice.waitForIdle()
         clickContinue()
     }
 
     @Test
-    fun denyStoragePermissions() {
+    fun denyCalendarPermissions() {
         startActivityInReviewedAp()
 
         // Deny
-        uiDevice.wait(Until.findObject(By.text("Storage")), UI_TIMEOUT).click()
+        uiDevice.wait(Until.findObject(By.text("Calendar")), UI_TIMEOUT).click()
         // Confirm deny
         uiDevice.wait(Until.findObject(By.res("android:id/button1")), UI_TIMEOUT).click()
 

@@ -36,7 +36,7 @@ public class PermissionsHostTest extends DeviceTestCase implements IAbiReceiver,
     private static final String ESCALATE_PERMISSION_PKG = "com.android.cts.escalate.permission";
 
     private static final String APK_22 = "CtsUsePermissionApp22.apk";
-    private static final String APK_22_ONLY_STORAGE = "RequestsOnlyStorageApp22.apk";
+    private static final String APK_22_ONLY_CALENDAR = "RequestsOnlyCalendarApp22.apk";
     private static final String APK_23 = "CtsUsePermissionApp23.apk";
     private static final String APK_25 = "CtsUsePermissionApp25.apk";
     private static final String APK_26 = "CtsUsePermissionApp26.apk";
@@ -461,54 +461,54 @@ public class PermissionsHostTest extends DeviceTestCase implements IAbiReceiver,
                 "locationPermissionIsNotSplit");
     }
 
-    public void testDenyStorageDuringReview() throws Exception {
-        assertNull(getDevice().installPackage(mBuildHelper.getTestFile(APK_22_ONLY_STORAGE), false,
+    public void testDenyCalendarDuringReview() throws Exception {
+        assertNull(getDevice().installPackage(mBuildHelper.getTestFile(APK_22_ONLY_CALENDAR), false,
                 false));
         assertNull(getDevice().installPackage(mBuildHelper.getTestFile(REVIEW_HELPER_APK), true,
                 true));
 
-        runDeviceTests(REVIEW_HELPER_PKG, REVIEW_HELPER_TEST_CLASS, "denyStoragePermissions");
+        runDeviceTests(REVIEW_HELPER_PKG, REVIEW_HELPER_TEST_CLASS, "denyCalendarPermissions");
 
         runDeviceTests(USES_PERMISSION_PKG, "com.android.cts.usepermission.UsePermissionTest22",
-                "testAssertNoStorageAccess");
+                "testAssertNoCalendarAccess");
     }
 
-    public void testDenyGrantStorageDuringReview() throws Exception {
-        assertNull(getDevice().installPackage(mBuildHelper.getTestFile(APK_22_ONLY_STORAGE), false,
+    public void testDenyGrantCalendarDuringReview() throws Exception {
+        assertNull(getDevice().installPackage(mBuildHelper.getTestFile(APK_22_ONLY_CALENDAR), false,
                 false));
         assertNull(getDevice().installPackage(mBuildHelper.getTestFile(REVIEW_HELPER_APK), true,
                 true));
 
-        runDeviceTests(REVIEW_HELPER_PKG, REVIEW_HELPER_TEST_CLASS, "denyGrantStoragePermissions");
+        runDeviceTests(REVIEW_HELPER_PKG, REVIEW_HELPER_TEST_CLASS, "denyGrantCalendarPermissions");
 
         runDeviceTests(USES_PERMISSION_PKG, "com.android.cts.usepermission.UsePermissionTest22",
-                "testAssertStorageAccess");
+                "testAssertCalendarAccess");
     }
 
-    public void testDenyGrantDenyStorageDuringReview() throws Exception {
-        assertNull(getDevice().installPackage(mBuildHelper.getTestFile(APK_22_ONLY_STORAGE), false,
+    public void testDenyGrantDenyCalendarDuringReview() throws Exception {
+        assertNull(getDevice().installPackage(mBuildHelper.getTestFile(APK_22_ONLY_CALENDAR), false,
                 false));
         assertNull(getDevice().installPackage(mBuildHelper.getTestFile(REVIEW_HELPER_APK), true,
                 true));
 
         runDeviceTests(REVIEW_HELPER_PKG, REVIEW_HELPER_TEST_CLASS,
-                "denyGrantDenyStoragePermissions");
+                "denyGrantDenyCalendarPermissions");
 
         runDeviceTests(USES_PERMISSION_PKG, "com.android.cts.usepermission.UsePermissionTest22",
-                "testAssertNoStorageAccess");
+                "testAssertNoCalendarAccess");
     }
 
     public void testCancelReview() throws Exception {
-        assertNull(getDevice().installPackage(mBuildHelper.getTestFile(APK_22_ONLY_STORAGE), false,
+        assertNull(getDevice().installPackage(mBuildHelper.getTestFile(APK_22_ONLY_CALENDAR), false,
                 false));
         assertNull(getDevice().installPackage(mBuildHelper.getTestFile(REVIEW_HELPER_APK), true,
                 true));
 
-        // Start APK_22_ONLY_STORAGE, but cancel review
+        // Start APK_22_ONLY_CALENDAR, but cancel review
         runDeviceTests(REVIEW_HELPER_PKG, REVIEW_HELPER_TEST_CLASS,
                 "cancelReviewPermissions");
 
-        // Start APK_22_ONLY_STORAGE again, now approve review
+        // Start APK_22_ONLY_CALENDAR again, now approve review
         runDeviceTests(REVIEW_HELPER_PKG, REVIEW_HELPER_TEST_CLASS, "approveReviewPermissions");
 
         runDeviceTests(REVIEW_HELPER_PKG, REVIEW_HELPER_TEST_CLASS,
