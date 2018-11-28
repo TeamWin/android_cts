@@ -77,6 +77,7 @@ public class SensorParameterRangeTest extends SensorTestCase {
     private static final int STEP_DETECTOR_MIN_FIFO_LENGTH = 100;
 
     private boolean mHasHifiSensors;
+    private boolean mVrModeHighPerformance;
     private SensorManager mSensorManager;
 
     @Override
@@ -84,6 +85,7 @@ public class SensorParameterRangeTest extends SensorTestCase {
         PackageManager pm = getContext().getPackageManager();
         mSensorManager = (SensorManager) getContext().getSystemService(Context.SENSOR_SERVICE);
         mHasHifiSensors = pm.hasSystemFeature(PackageManager.FEATURE_HIFI_SENSORS);
+        mVrModeHighPerformance = pm.hasSystemFeature(PackageManager.FEATURE_VR_MODE_HIGH_PERFORMANCE);
     }
 
     public void testAccelerometerRange() {
@@ -92,7 +94,7 @@ public class SensorParameterRangeTest extends SensorTestCase {
                 ACCELEROMETER_HIFI_MAX_FREQUENCY_BEFORE_N;
 
         checkSensorRangeAndFrequency(
-                mSensorManager.getDefaultSensor(Sensor.TYPE_ACCELEROMETER),
+                Sensor.TYPE_ACCELEROMETER,
                 ACCELEROMETER_MAX_RANGE,
                 ACCELEROMETER_MAX_FREQUENCY,
                 ACCELEROMETER_HIFI_MAX_RANGE,
@@ -106,7 +108,7 @@ public class SensorParameterRangeTest extends SensorTestCase {
                 GYRO_HIFI_MAX_FREQUENCY_BEFORE_N;
 
         checkSensorRangeAndFrequency(
-                mSensorManager.getDefaultSensor(Sensor.TYPE_GYROSCOPE),
+                Sensor.TYPE_GYROSCOPE,
                 GYRO_MAX_RANGE,
                 GYRO_MAX_FREQUENCY,
                 GYRO_HIFI_MAX_RANGE,
@@ -116,7 +118,7 @@ public class SensorParameterRangeTest extends SensorTestCase {
 
     public void testMagnetometerRange() {
         checkSensorRangeAndFrequency(
-                mSensorManager.getDefaultSensor(Sensor.TYPE_MAGNETIC_FIELD),
+                Sensor.TYPE_MAGNETIC_FIELD,
                 MAGNETOMETER_MAX_RANGE,
                 MAGNETOMETER_MAX_FREQUENCY,
                 MAGNETOMETER_HIFI_MAX_RANGE,
@@ -126,7 +128,7 @@ public class SensorParameterRangeTest extends SensorTestCase {
 
     public void testPressureRange() {
         checkSensorRangeAndFrequency(
-                mSensorManager.getDefaultSensor(Sensor.TYPE_PRESSURE),
+                Sensor.TYPE_PRESSURE,
                 PRESSURE_MAX_RANGE,
                 PRESSURE_MAX_FREQUENCY,
                 PRESSURE_HIFI_MAX_RANGE,
@@ -135,11 +137,28 @@ public class SensorParameterRangeTest extends SensorTestCase {
     }
 
     private void checkSensorRangeAndFrequency(
-            Sensor sensor, double maxRange, double maxFrequency, double hifiMaxRange,
+            int sensorType, double maxRange, double maxFrequency, double hifiMaxRange,
             double hifiMinFrequency, double hifiMaxFrequency) {
+        boolean mustMeetHiFi = mHasHifiSensors;
 
-        double range = mHasHifiSensors ? hifiMaxRange : maxRange;
-        double frequency = mHasHifiSensors ? hifiMaxFrequency : maxFrequency;
+        // CDD 7.9.2/C-1-21: High Performance VR must meet accel, gyro, and mag HiFi requirements
+        if (mVrModeHighPerformance && (sensorType == Sensor.TYPE_ACCELEROMETER ||
+                sensorType == Sensor.TYPE_GYROSCOPE || sensorType == Sensor.TYPE_MAGNETIC_FIELD)) {
+            mustMeetHiFi = true;
+        }
+
+        Sensor sensor = mSensorManager.getDefaultSensor(sensorType);
+        if (sensor == null) {
+            if (mustMeetHiFi) {
+                fail(String.format("Must support sensor type %d", sensorType));
+            } else {
+                // Sensor is not required
+                return;
+            }
+        }
+
+        double range = mustMeetHiFi ? hifiMaxRange : maxRange;
+        double frequency = mustMeetHiFi ? hifiMaxFrequency : maxFrequency;
 
         assertTrue(String.format("%s Range actual=%.2f expected=%.2f %s",
                     sensor.getName(), sensor.getMaximumRange(), range,
@@ -152,7 +171,7 @@ public class SensorParameterRangeTest extends SensorTestCase {
                     sensor.getName(), actualMaxFrequency, frequency), actualMaxFrequency >=
                 frequency - 0.1);
 
-        if (mHasHifiSensors) {
+        if (mustMeetHiFi) {
             double actualMinFrequency = SensorCtsHelper.getFrequency(sensor.getMaxDelay(),
                     TimeUnit.MICROSECONDS);
             assertTrue(String.format("%s Min Frequency actual=%.2f expected=%.2fHz",

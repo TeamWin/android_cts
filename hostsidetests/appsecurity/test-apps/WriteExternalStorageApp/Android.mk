@@ -17,7 +17,7 @@ LOCAL_PATH:= $(call my-dir)
 include $(CLEAR_VARS)
 
 LOCAL_MODULE_TAGS := tests
-LOCAL_SDK_VERSION := current
+LOCAL_SDK_VERSION := 28
 LOCAL_STATIC_JAVA_LIBRARIES := \
 	android-support-test \
 	compatibility-device-util
