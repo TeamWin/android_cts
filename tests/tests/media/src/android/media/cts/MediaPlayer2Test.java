@@ -30,7 +30,7 @@ import android.media.DataSourceDesc;
 import android.media.FileDataSourceDesc;
 import android.media.UriDataSourceDesc;
 import android.media.MediaCodec;
-import android.media.Media2DataSource;
+import android.media.DataSourceCallback;
 import android.media.MediaExtractor;
 import android.media.MediaFormat;
 import android.media.MediaMetadataRetriever;
@@ -2231,8 +2231,8 @@ public class MediaPlayer2Test extends MediaPlayer2TestBase {
                 PackageManager.FEATURE_MICROPHONE);
     }
 
-    // Smoke test playback from a Media2DataSource.
-    public void testPlaybackFromAMedia2DataSource() throws Exception {
+    // Smoke test playback from a DataSourceCallback.
+    public void testPlaybackFromADataSourceCallback() throws Exception {
         final int resid = R.raw.video_480x360_mp4_h264_1350kbps_30fps_aac_stereo_192kbps_44100hz;
         final int duration = 10000;
 
@@ -2240,8 +2240,8 @@ public class MediaPlayer2Test extends MediaPlayer2TestBase {
             return;
         }
 
-        TestMedia2DataSource dataSource =
-                TestMedia2DataSource.fromAssetFd(mResources.openRawResourceFd(resid));
+        TestDataSourceCallback dataSource =
+                TestDataSourceCallback.fromAssetFd(mResources.openRawResourceFd(resid));
         // Test returning -1 from getSize() to indicate unknown size.
         dataSource.returnFromGetSize(-1);
         mPlayer.setDataSource(new CallbackDataSourceDesc.Builder()
@@ -2302,7 +2302,7 @@ public class MediaPlayer2Test extends MediaPlayer2TestBase {
         }
     }
 
-    public void testNullMedia2DataSourceIsRejected() throws Exception {
+    public void testNullDataSourceCallbackIsRejected() throws Exception {
         MediaPlayer2.EventCallback ecb = new MediaPlayer2.EventCallback() {
             @Override
             public void onCallCompleted(MediaPlayer2 mp, DataSourceDesc dsd, int what, int status) {
@@ -2320,7 +2320,7 @@ public class MediaPlayer2Test extends MediaPlayer2TestBase {
         assertTrue(mCallStatus != MediaPlayer2.CALL_STATUS_NO_ERROR);
     }
 
-    public void testMedia2DataSourceIsClosedOnReset() throws Exception {
+    public void testDataSourceCallbackIsClosedOnReset() throws Exception {
         MediaPlayer2.EventCallback ecb = new MediaPlayer2.EventCallback() {
             @Override
             public void onCallCompleted(MediaPlayer2 mp, DataSourceDesc dsd, int what, int status) {
@@ -2332,7 +2332,7 @@ public class MediaPlayer2Test extends MediaPlayer2TestBase {
         };
         mPlayer.registerEventCallback(mExecutor, ecb);
 
-        TestMedia2DataSource dataSource = new TestMedia2DataSource(new byte[0]);
+        TestDataSourceCallback dataSource = new TestDataSourceCallback(new byte[0]);
         mPlayer.setDataSource(new CallbackDataSourceDesc.Builder()
                 .setDataSource(dataSource)
                 .build());
@@ -2341,15 +2341,15 @@ public class MediaPlayer2Test extends MediaPlayer2TestBase {
         assertTrue(dataSource.isClosed());
     }
 
-    public void testPlaybackFailsIfMedia2DataSourceThrows() throws Exception {
+    public void testPlaybackFailsIfDataSourceCallbackThrows() throws Exception {
         final int resid = R.raw.video_480x360_mp4_h264_1350kbps_30fps_aac_stereo_192kbps_44100hz;
         if (!MediaUtils.hasCodecsForResource(mContext, resid)) {
             return;
         }
 
         setOnErrorListener();
-        TestMedia2DataSource dataSource =
-                TestMedia2DataSource.fromAssetFd(mResources.openRawResourceFd(resid));
+        TestDataSourceCallback dataSource =
+                TestDataSourceCallback.fromAssetFd(mResources.openRawResourceFd(resid));
         mPlayer.setDataSource(new CallbackDataSourceDesc.Builder()
                 .setDataSource(dataSource)
                 .build());
@@ -2375,14 +2375,14 @@ public class MediaPlayer2Test extends MediaPlayer2TestBase {
         assertTrue(mOnErrorCalled.waitForSignal());
     }
 
-    public void testPlaybackFailsIfMedia2DataSourceReturnsAnError() throws Exception {
+    public void testPlaybackFailsIfDataSourceCallbackReturnsAnError() throws Exception {
         final int resid = R.raw.video_480x360_mp4_h264_1350kbps_30fps_aac_stereo_192kbps_44100hz;
         if (!MediaUtils.hasCodecsForResource(mContext, resid)) {
             return;
         }
 
-        TestMedia2DataSource dataSource =
-                TestMedia2DataSource.fromAssetFd(mResources.openRawResourceFd(resid));
+        TestDataSourceCallback dataSource =
+                TestDataSourceCallback.fromAssetFd(mResources.openRawResourceFd(resid));
         mPlayer.setDataSource(new CallbackDataSourceDesc.Builder()
                 .setDataSource(dataSource)
                 .build());
@@ -2471,10 +2471,10 @@ public class MediaPlayer2Test extends MediaPlayer2TestBase {
 
     public void testConsecutiveSeeks() throws Exception {
         final int resid = R.raw.video_480x360_mp4_h264_1350kbps_30fps_aac_stereo_192kbps_44100hz;
-        final TestMedia2DataSource source =
-                TestMedia2DataSource.fromAssetFd(mResources.openRawResourceFd(resid));
+        final TestDataSourceCallback source =
+                TestDataSourceCallback.fromAssetFd(mResources.openRawResourceFd(resid));
         final Monitor readAllowed = new Monitor();
-        Media2DataSource dataSource = new Media2DataSource() {
+        DataSourceCallback dataSource = new DataSourceCallback() {
             @Override
             public int readAt(long position, byte[] buffer, int offset, int size)
                     throws IOException {
@@ -2670,9 +2670,9 @@ public class MediaPlayer2Test extends MediaPlayer2TestBase {
 
         final Monitor readRequested = new Monitor();
         final Monitor readAllowed = new Monitor();
-        Media2DataSource dataSource = new Media2DataSource() {
-            TestMedia2DataSource mTestSource =
-                TestMedia2DataSource.fromAssetFd(mResources.openRawResourceFd(resid));
+        DataSourceCallback dataSource = new DataSourceCallback() {
+            TestDataSourceCallback mTestSource =
+                TestDataSourceCallback.fromAssetFd(mResources.openRawResourceFd(resid));
             @Override
             public int readAt(long position, byte[] buffer, int offset, int size)
                     throws IOException {
