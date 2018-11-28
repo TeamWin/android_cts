@@ -59,6 +59,7 @@ public class JvmtiHostTest extends DeviceTestCase implements IBuildReceiver, IAb
 
     private CompatibilityBuildHelper mBuildHelper;
     private IAbi mAbi;
+    private int mCurrentUser;
 
     @Override
     public void setBuild(IBuildInfo arg0) {
@@ -68,6 +69,11 @@ public class JvmtiHostTest extends DeviceTestCase implements IBuildReceiver, IAb
     @Override
     public void setAbi(IAbi arg0) {
         mAbi = arg0;
+    }
+
+    @Override
+    protected void setUp() throws Exception {
+        mCurrentUser = getDevice().getCurrentUser();
     }
 
     public void testJvmti() throws Exception {
@@ -123,7 +129,8 @@ public class JvmtiHostTest extends DeviceTestCase implements IBuildReceiver, IAb
         @Override
         public void run() {
             try {
-                String pwd = mDevice.executeShellCommand("run-as " + mPkg + " pwd");
+                String pwd = mDevice.executeShellCommand(
+                        "run-as " + mPkg + " --user " + mCurrentUser + " pwd");
                 if (pwd == null) {
                     throw new RuntimeException("pwd failed");
                 }
@@ -165,13 +172,15 @@ public class JvmtiHostTest extends DeviceTestCase implements IBuildReceiver, IAb
                 }
 
                 String runAsCp = mDevice.executeShellCommand(
-                        "run-as " + mPkg + " cp " + libInTmp + " " + libInDataData);
+                        "run-as " + mPkg + " --user " + mCurrentUser +
+                                " cp " + libInTmp + " " + libInDataData);
                 if (runAsCp != null && !runAsCp.trim().isEmpty()) {
                     throw new RuntimeException(runAsCp.trim());
                 }
 
-                String runAsChmod = mDevice
-                        .executeShellCommand("run-as " + mPkg + " chmod a+x " + libInDataData);
+                String runAsChmod = mDevice.executeShellCommand(
+                        "run-as " + mPkg + " --user " + mCurrentUser +
+                                " chmod a+x " + libInDataData);
                 if (runAsChmod != null && !runAsChmod.trim().isEmpty()) {
                     throw new RuntimeException(runAsChmod.trim());
                 }
