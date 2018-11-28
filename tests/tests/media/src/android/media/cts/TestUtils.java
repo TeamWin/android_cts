@@ -21,7 +21,6 @@ import static org.junit.Assert.fail;
 
 import android.content.Context;
 import android.media.DataSourceDesc;
-import android.media.FileDataSourceDesc;
 import android.media.session.MediaSessionManager;
 import android.os.Bundle;
 import android.os.Handler;

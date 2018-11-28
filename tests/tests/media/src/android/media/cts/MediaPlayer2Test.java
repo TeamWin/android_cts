@@ -52,6 +52,7 @@ import android.os.IBinder;
 import android.os.PowerManager;
 import android.os.ServiceManager;
 import android.os.SystemClock;
+import android.os.ParcelFileDescriptor;
 import android.platform.test.annotations.AppModeFull;
 import android.support.test.InstrumentationRegistry;
 import android.support.test.filters.SmallTest;
@@ -142,8 +143,10 @@ public class MediaPlayer2Test extends MediaPlayer2TestBase {
         MediaPlayer2 mp2 = mPlayer2;
         AssetFileDescriptor afd2 = mResources.openRawResourceFd(R.raw.testmp3_2);
         mp2.setDataSource(new FileDataSourceDesc.Builder()
-                .setDataSource(afd2.getFileDescriptor(), afd2.getStartOffset(), afd2.getLength())
+                .setDataSource(ParcelFileDescriptor.dup(afd2.getFileDescriptor()),
+                    afd2.getStartOffset(), afd2.getLength())
                 .build());
+        afd2.close();
         Monitor onPrepareCalled = new Monitor();
         Monitor onErrorCalled = new Monitor();
         MediaPlayer2.EventCallback ecb = new MediaPlayer2.EventCallback() {
@@ -162,7 +165,6 @@ public class MediaPlayer2Test extends MediaPlayer2TestBase {
         mp2.registerEventCallback(mExecutor, ecb);
         mp2.prepare();
         onPrepareCalled.waitForSignal();
-        afd2.close();
         mp2.unregisterEventCallback(ecb);
 
         mp2.loopCurrent(true);
@@ -172,14 +174,14 @@ public class MediaPlayer2Test extends MediaPlayer2TestBase {
             try {
                 AssetFileDescriptor afd = mResources.openRawResourceFd(R.raw.bug13652927);
                 mp.setDataSource(new FileDataSourceDesc.Builder()
-                        .setDataSource(afd.getFileDescriptor(), afd.getStartOffset(),
-                            afd.getLength())
+                        .setDataSource(ParcelFileDescriptor.dup(afd.getFileDescriptor()),
+                            afd.getStartOffset(), afd.getLength())
                         .build());
+                afd.close();
                 mp.registerEventCallback(mExecutor, ecb);
                 onPrepareCalled.reset();
                 mp.prepare();
                 onErrorCalled.waitForSignal();
-                afd.close();
             } catch (Exception e) {
                 // expected to fail
                 Log.i("@@@", "failed: " + e);
@@ -391,14 +393,15 @@ public class MediaPlayer2Test extends MediaPlayer2TestBase {
             mp.reset();
             AssetFileDescriptor afd = mResources.openRawResourceFd(resid);
             mp.setDataSource(new FileDataSourceDesc.Builder()
-                    .setDataSource(afd.getFileDescriptor(), afd.getStartOffset(), afd.getLength())
+                    .setDataSource(ParcelFileDescriptor.dup(afd.getFileDescriptor()),
+                        afd.getStartOffset(), afd.getLength())
                     .build());
+            afd.close();
 
             mp.registerEventCallback(mExecutor, ecb);
             onPrepareCalled.reset();
             mp.prepare();
             onPrepareCalled.waitForSignal();
-            afd.close();
 
             assertFalse(mp.getState() == MediaPlayer2.PLAYER_STATE_PLAYING);
             onPlayCalled.reset();
@@ -597,14 +600,15 @@ public class MediaPlayer2Test extends MediaPlayer2TestBase {
             mp.reset();
             AssetFileDescriptor afd = mResources.openRawResourceFd(resid);
             mp.setDataSource(new FileDataSourceDesc.Builder()
-                    .setDataSource(afd.getFileDescriptor(), afd.getStartOffset(), afd.getLength())
+                    .setDataSource(ParcelFileDescriptor.dup(afd.getFileDescriptor()),
+                        afd.getStartOffset(), afd.getLength())
                     .build());
+            afd.close();
 
             mp.registerEventCallback(mExecutor, ecb);
             onPrepareCalled.reset();
             mp.prepare();
             onPrepareCalled.waitForSignal();
-            afd.close();
 
             mp.play();
 
@@ -933,14 +937,18 @@ public class MediaPlayer2Test extends MediaPlayer2TestBase {
 
         AssetFileDescriptor afd2 = mResources.openRawResourceFd(resid);
         DataSourceDesc dsd2 = new FileDataSourceDesc.Builder()
-                .setDataSource(afd2.getFileDescriptor(), afd2.getStartOffset(), afd2.getLength())
+                .setDataSource(ParcelFileDescriptor.dup(afd2.getFileDescriptor()),
+                        afd2.getStartOffset(), afd2.getLength())
                 .build();
+        afd2.close();
 
         resid = R.raw.video_480x360_mp4_h264_1000kbps_30fps_aac_stereo_128kbps_44100hz;
         AssetFileDescriptor afd3 = mResources.openRawResourceFd(resid);
         DataSourceDesc dsd3 = new FileDataSourceDesc.Builder()
-                .setDataSource(afd3.getFileDescriptor(), afd3.getStartOffset(), afd3.getLength())
+                .setDataSource(ParcelFileDescriptor.dup(afd3.getFileDescriptor()),
+                        afd3.getStartOffset(), afd3.getLength())
                 .build();
+        afd3.close();
 
         ArrayList<DataSourceDesc> nextDSDs = new ArrayList<DataSourceDesc>(2);
         nextDSDs.add(dsd2);
@@ -1026,14 +1034,18 @@ public class MediaPlayer2Test extends MediaPlayer2TestBase {
 
         AssetFileDescriptor afd2 = mResources.openRawResourceFd(resid);
         DataSourceDesc dsd2 = new FileDataSourceDesc.Builder()
-                .setDataSource(afd2.getFileDescriptor(), afd2.getStartOffset(), afd2.getLength())
+                .setDataSource(ParcelFileDescriptor.dup(afd2.getFileDescriptor()),
+                        afd2.getStartOffset(), afd2.getLength())
                 .build();
+        afd2.close();
 
         resid = R.raw.video_480x360_mp4_h264_1000kbps_30fps_aac_stereo_128kbps_44100hz;
         AssetFileDescriptor afd3 = mResources.openRawResourceFd(resid);
         DataSourceDesc dsd3 = new FileDataSourceDesc.Builder()
-                .setDataSource(afd3.getFileDescriptor(), afd3.getStartOffset(), afd3.getLength())
+                .setDataSource(ParcelFileDescriptor.dup(afd3.getFileDescriptor()),
+                        afd3.getStartOffset(), afd3.getLength())
                 .build();
+        afd3.close();
 
         ArrayList<DataSourceDesc> nextDSDs = new ArrayList<DataSourceDesc>(2);
         nextDSDs.add(dsd2);
@@ -1129,8 +1141,10 @@ public class MediaPlayer2Test extends MediaPlayer2TestBase {
 
         AssetFileDescriptor afd2 = mResources.openRawResourceFd(resid);
         DataSourceDesc dsd2 = new FileDataSourceDesc.Builder()
-                .setDataSource(afd2.getFileDescriptor(), afd2.getStartOffset(), afd2.getLength())
+                .setDataSource(ParcelFileDescriptor.dup(afd2.getFileDescriptor()),
+                        afd2.getStartOffset(), afd2.getLength())
                 .build();
+        afd2.close();
 
         mPlayer.setNextDataSource(dsd2);
 
@@ -2575,10 +2589,12 @@ public class MediaPlayer2Test extends MediaPlayer2TestBase {
         AssetFileDescriptor afd = mResources.openRawResourceFd(
                 R.raw.video_480x360_mp4_h264_1350kbps_30fps_aac_stereo_192kbps_44100hz);
         mPlayer.setDataSource(new FileDataSourceDesc.Builder()
-                .setDataSource(afd.getFileDescriptor(), afd.getStartOffset(), afd.getLength())
+                .setDataSource(ParcelFileDescriptor.dup(afd.getFileDescriptor()),
+                    afd.getStartOffset(), afd.getLength())
                 .setStartPosition(startPosMs)
                 .setEndPosition(endPosMs)
                 .build());
+        afd.close();
         mPlayer.setDisplay(mActivity.getSurfaceHolder());
         mPlayer.setScreenOnWhilePlaying(true);
 

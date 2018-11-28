@@ -39,6 +39,7 @@ import android.os.Environment;
 import android.os.Handler;
 import android.os.Looper;
 import android.os.SystemClock;
+import android.os.ParcelFileDescriptor;
 import android.os.PowerManager;
 
 import android.platform.test.annotations.AppModeFull;
@@ -748,8 +749,10 @@ public class RoutingTest extends AndroidTestCase {
         MediaPlayer2 mediaPlayer2 = new MediaPlayer2(mContext);
         mediaPlayer2.setAudioAttributes(new AudioAttributes.Builder().build());
         mediaPlayer2.setDataSource(new FileDataSourceDesc.Builder()
-                .setDataSource(afd.getFileDescriptor(), afd.getStartOffset(), afd.getLength())
+                .setDataSource(ParcelFileDescriptor.dup(afd.getFileDescriptor()),
+                    afd.getStartOffset(), afd.getLength())
                 .build());
+        afd.close();
 
         Monitor onPrepareCalled = new Monitor();
         Monitor onPlayCalled = new Monitor();
@@ -791,7 +794,6 @@ public class RoutingTest extends AndroidTestCase {
         assertTrue(mediaPlayer2.getState() == MediaPlayer2.PLAYER_STATE_PLAYING);
 
         mediaPlayer2.unregisterEventCallback(ecb);
-        afd.close();
         executor.shutdown();
 
         return mediaPlayer2;
