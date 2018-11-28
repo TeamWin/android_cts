@@ -278,3 +278,92 @@ TEST_F(NdkBinderTest_AParcel, CantReadFromEmptyParcel) {
       }));
   AIBinder_decStrong(binder);
 }
+
+TEST_F(NdkBinderTest_AParcel, ReturnParcelPosition) {
+  AIBinder* binder = SampleData::newBinder(
+      [&](transaction_code_t, const AParcel* /*in*/, AParcel* out) {
+        size_t position = AParcel_getDataPosition(out);
+        EXPECT_EQ(position, AParcel_getDataPosition(out));
+        EXPECT_OK(AParcel_setDataPosition(out, position));
+        EXPECT_EQ(position, AParcel_getDataPosition(out));
+
+        return STATUS_OK;
+      },
+      ExpectLifetimeTransactions(1));
+
+  EXPECT_OK(SampleData::transact(binder, kCode, WriteNothingToParcel,
+                                 ReadNothingFromParcel));
+
+  AIBinder_decStrong(binder);
+}
+
+TEST_F(NdkBinderTest_AParcel, TooLargePosition) {
+  AIBinder* binder = SampleData::newBinder(
+      [&](transaction_code_t, const AParcel* /*in*/, AParcel* out) {
+        EXPECT_OK(AParcel_setDataPosition(out, 0));
+        EXPECT_OK(AParcel_setDataPosition(out, INT32_MAX));
+        EXPECT_EQ(STATUS_BAD_VALUE, AParcel_setDataPosition(out, -1));
+        EXPECT_EQ(STATUS_BAD_VALUE, AParcel_setDataPosition(out, -2));
+        return STATUS_OK;
+      },
+      ExpectLifetimeTransactions(1));
+
+  EXPECT_OK(SampleData::transact(binder, kCode, WriteNothingToParcel,
+                                 ReadNothingFromParcel));
+
+  AIBinder_decStrong(binder);
+}
+
+TEST_F(NdkBinderTest_AParcel, RewritePositions) {
+  const std::string kTestString1 = "asdf";
+  const std::string kTestString2 = "aoeu";
+
+  // v-- position     v-- postPosition
+  // | delta | "asdf" | "aoeu" |
+  //         ^-- prePosition
+  //
+  // uint32_t delta = postPosition - prePosition
+
+  AIBinder* binder = SampleData::newBinder(
+      [&](transaction_code_t, const AParcel* in, AParcel* /*out*/) {
+        uint32_t delta;
+        EXPECT_OK(AParcel_readUint32(in, &delta));
+        size_t prePosition = AParcel_getDataPosition(in);
+        size_t postPosition = prePosition + delta;
+
+        std::string readString;
+
+        EXPECT_OK(AParcel_setDataPosition(in, postPosition));
+        EXPECT_OK(::ndk::AParcel_readString(in, &readString));
+        EXPECT_EQ(kTestString2, readString);
+
+        EXPECT_OK(AParcel_setDataPosition(in, prePosition));
+        EXPECT_OK(::ndk::AParcel_readString(in, &readString));
+        EXPECT_EQ(kTestString1, readString);
+
+        EXPECT_EQ(postPosition, AParcel_getDataPosition(in));
+
+        return STATUS_OK;
+      },
+      ExpectLifetimeTransactions(1));
+
+  EXPECT_OK(SampleData::transact(
+      binder, kCode,
+      [&](AParcel* in) {
+        size_t position = AParcel_getDataPosition(in);
+        EXPECT_OK(AParcel_writeUint32(in, 0));  // placeholder
+        size_t prePosition = AParcel_getDataPosition(in);
+        EXPECT_OK(::ndk::AParcel_writeString(in, kTestString1));
+        size_t postPosition = AParcel_getDataPosition(in);
+        EXPECT_OK(::ndk::AParcel_writeString(in, kTestString2));
+
+        size_t delta = postPosition - prePosition;
+        EXPECT_OK(AParcel_setDataPosition(in, position));
+        EXPECT_OK(AParcel_writeUint32(in, static_cast<uint32_t>(delta)));
+
+        return STATUS_OK;
+      },
+      ReadNothingFromParcel));
+
+  AIBinder_decStrong(binder);
+}
