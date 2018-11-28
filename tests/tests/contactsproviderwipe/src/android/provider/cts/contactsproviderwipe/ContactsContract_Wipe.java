@@ -133,7 +133,7 @@ public class ContactsContract_Wipe extends AndroidTestCase {
 
         final String result = concatResult(readAll(
                 InstrumentationRegistry.getInstrumentation().getUiAutomation().executeShellCommand(
-                        "pm clear " + providerPackage)));
+                        "pm clear --user current " + providerPackage)));
         Log.i(TAG, "Result:" + result);
 
         assertEquals("Success", result);
