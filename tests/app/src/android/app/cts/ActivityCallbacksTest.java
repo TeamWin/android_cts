@@ -92,92 +92,92 @@ public class ActivityCallbacksTest {
             @Override
             public void onActivityPreCreated(Activity activity, Bundle savedInstanceState) {
                 ActivityCallbacksTestActivity a = (ActivityCallbacksTestActivity) activity;
-                a.collectEvent(Source.ACTIVITY_CALLBACK, ON_PRE_CREATE);
+                a.collectEvent(Source.APPLICATION_ACTIVITY_CALLBACK, ON_PRE_CREATE);
             }
 
             @Override
             public void onActivityCreated(Activity activity, Bundle savedInstanceState) {
                 ActivityCallbacksTestActivity a = (ActivityCallbacksTestActivity) activity;
-                a.collectEvent(Source.ACTIVITY_CALLBACK, ON_CREATE);
+                a.collectEvent(Source.APPLICATION_ACTIVITY_CALLBACK, ON_CREATE);
             }
 
             @Override
             public void onActivityPostCreated(Activity activity, Bundle savedInstanceState) {
                 ActivityCallbacksTestActivity a = (ActivityCallbacksTestActivity) activity;
-                a.collectEvent(Source.ACTIVITY_CALLBACK, ON_POST_CREATE);
+                a.collectEvent(Source.APPLICATION_ACTIVITY_CALLBACK, ON_POST_CREATE);
             }
 
             @Override
             public void onActivityPreStarted(Activity activity) {
                 ActivityCallbacksTestActivity a = (ActivityCallbacksTestActivity) activity;
-                a.collectEvent(Source.ACTIVITY_CALLBACK, ON_PRE_START);
+                a.collectEvent(Source.APPLICATION_ACTIVITY_CALLBACK, ON_PRE_START);
             }
 
             @Override
             public void onActivityStarted(Activity activity) {
                 ActivityCallbacksTestActivity a = (ActivityCallbacksTestActivity) activity;
-                a.collectEvent(Source.ACTIVITY_CALLBACK, ON_START);
+                a.collectEvent(Source.APPLICATION_ACTIVITY_CALLBACK, ON_START);
             }
 
             @Override
             public void onActivityPostStarted(Activity activity) {
                 ActivityCallbacksTestActivity a = (ActivityCallbacksTestActivity) activity;
-                a.collectEvent(Source.ACTIVITY_CALLBACK, ON_POST_START);
+                a.collectEvent(Source.APPLICATION_ACTIVITY_CALLBACK, ON_POST_START);
             }
 
             @Override
             public void onActivityPreResumed(Activity activity) {
                 ActivityCallbacksTestActivity a = (ActivityCallbacksTestActivity) activity;
-                a.collectEvent(Source.ACTIVITY_CALLBACK, ON_PRE_RESUME);
+                a.collectEvent(Source.APPLICATION_ACTIVITY_CALLBACK, ON_PRE_RESUME);
             }
 
             @Override
             public void onActivityResumed(Activity activity) {
                 ActivityCallbacksTestActivity a = (ActivityCallbacksTestActivity) activity;
-                a.collectEvent(Source.ACTIVITY_CALLBACK, ON_RESUME);
+                a.collectEvent(Source.APPLICATION_ACTIVITY_CALLBACK, ON_RESUME);
             }
 
             @Override
             public void onActivityPostResumed(Activity activity) {
                 ActivityCallbacksTestActivity a = (ActivityCallbacksTestActivity) activity;
-                a.collectEvent(Source.ACTIVITY_CALLBACK, ON_POST_RESUME);
+                a.collectEvent(Source.APPLICATION_ACTIVITY_CALLBACK, ON_POST_RESUME);
                 a.finish();
             }
 
             @Override
             public void onActivityPrePaused(Activity activity) {
                 ActivityCallbacksTestActivity a = (ActivityCallbacksTestActivity) activity;
-                a.collectEvent(Source.ACTIVITY_CALLBACK, ON_PRE_PAUSE);
+                a.collectEvent(Source.APPLICATION_ACTIVITY_CALLBACK, ON_PRE_PAUSE);
             }
 
             @Override
             public void onActivityPaused(Activity activity) {
                 ActivityCallbacksTestActivity a = (ActivityCallbacksTestActivity) activity;
-                a.collectEvent(Source.ACTIVITY_CALLBACK, ON_PAUSE);
+                a.collectEvent(Source.APPLICATION_ACTIVITY_CALLBACK, ON_PAUSE);
             }
 
             @Override
             public void onActivityPostPaused(Activity activity) {
                 ActivityCallbacksTestActivity a = (ActivityCallbacksTestActivity) activity;
-                a.collectEvent(Source.ACTIVITY_CALLBACK, ON_POST_PAUSE);
+                a.collectEvent(Source.APPLICATION_ACTIVITY_CALLBACK, ON_POST_PAUSE);
             }
 
             @Override
             public void onActivityPreStopped(Activity activity) {
                 ActivityCallbacksTestActivity a = (ActivityCallbacksTestActivity) activity;
-                a.collectEvent(Source.ACTIVITY_CALLBACK, ON_PRE_STOP);
+                a.collectEvent(Source.APPLICATION_ACTIVITY_CALLBACK, ON_PRE_STOP);
             }
 
             @Override
             public void onActivityStopped(Activity activity) {
                 ActivityCallbacksTestActivity a = (ActivityCallbacksTestActivity) activity;
-                a.collectEvent(Source.ACTIVITY_CALLBACK, ON_STOP);
+                a.collectEvent(Source.APPLICATION_ACTIVITY_CALLBACK, ON_STOP);
             }
 
             @Override
             public void onActivityPostStopped(Activity activity) {
                 ActivityCallbacksTestActivity a = (ActivityCallbacksTestActivity) activity;
-                a.collectEvent(Source.ACTIVITY_CALLBACK, ON_POST_STOP);
+                a.collectEvent(Source.APPLICATION_ACTIVITY_CALLBACK, ON_POST_STOP);
             }
 
             @Override
@@ -188,19 +188,19 @@ public class ActivityCallbacksTest {
             @Override
             public void onActivityPreDestroyed(Activity activity) {
                 ActivityCallbacksTestActivity a = (ActivityCallbacksTestActivity) activity;
-                a.collectEvent(Source.ACTIVITY_CALLBACK, ON_PRE_DESTROY);
+                a.collectEvent(Source.APPLICATION_ACTIVITY_CALLBACK, ON_PRE_DESTROY);
             }
 
             @Override
             public void onActivityDestroyed(Activity activity) {
                 ActivityCallbacksTestActivity a = (ActivityCallbacksTestActivity) activity;
-                a.collectEvent(Source.ACTIVITY_CALLBACK, ON_DESTROY);
+                a.collectEvent(Source.APPLICATION_ACTIVITY_CALLBACK, ON_DESTROY);
             }
 
             @Override
             public void onActivityPostDestroyed(Activity activity) {
                 ActivityCallbacksTestActivity a = (ActivityCallbacksTestActivity) activity;
-                a.collectEvent(Source.ACTIVITY_CALLBACK, ON_POST_DESTROY);
+                a.collectEvent(Source.APPLICATION_ACTIVITY_CALLBACK, ON_POST_DESTROY);
                 actualEvents.addAll(a.getCollectedEvents());
                 latch.countDown();
             }
@@ -227,10 +227,20 @@ public class ActivityCallbacksTest {
 
     private void addNestedEvents(ArrayList<Pair<Source, Event>> expectedEvents,
             Event preEvent, Event event, Event postEvent) {
+        expectedEvents.add(new Pair<>(Source.APPLICATION_ACTIVITY_CALLBACK, preEvent));
         expectedEvents.add(new Pair<>(Source.ACTIVITY_CALLBACK, preEvent));
         expectedEvents.add(new Pair<>(Source.ACTIVITY, preEvent));
-        expectedEvents.add(new Pair<>(Source.ACTIVITY_CALLBACK, event));
+        if (event == ON_CREATE || event == ON_START || event == ON_RESUME) {
+            // Application goes first on upward lifecycle events
+            expectedEvents.add(new Pair<>(Source.APPLICATION_ACTIVITY_CALLBACK, event));
+            expectedEvents.add(new Pair<>(Source.ACTIVITY_CALLBACK, event));
+        } else {
+            // Application goes last on downward lifecycle events
+            expectedEvents.add(new Pair<>(Source.ACTIVITY_CALLBACK, event));
+            expectedEvents.add(new Pair<>(Source.APPLICATION_ACTIVITY_CALLBACK, event));
+        }
         expectedEvents.add(new Pair<>(Source.ACTIVITY, postEvent));
         expectedEvents.add(new Pair<>(Source.ACTIVITY_CALLBACK, postEvent));
+        expectedEvents.add(new Pair<>(Source.APPLICATION_ACTIVITY_CALLBACK, postEvent));
     }
 }
