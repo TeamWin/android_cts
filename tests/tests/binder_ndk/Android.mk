@@ -35,10 +35,16 @@ LOCAL_STATIC_JAVA_LIBRARIES := \
     libbinder_ndk_test_interface-java \
     nativetesthelper
 
-LOCAL_JNI_SHARED_LIBRARIES := libbinder_ndk_test
+LOCAL_JNI_SHARED_LIBRARIES := \
+    libbinder_ndk_test \
+    libbinder_ndk_test_utilities \
+    libbinder_ndk_test_interface-ndk \
+    libbinder_ndk_test_interface_old \
+    libbinder_ndk_test_interface_new \
 
 LOCAL_SRC_FILES := $(call all-java-files-under, src)
 
 LOCAL_SDK_VERSION := current
+LOCAL_NDK_STL_VARIANT := c++_shared
 
 include $(BUILD_CTS_PACKAGE)
