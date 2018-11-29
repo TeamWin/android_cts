@@ -4706,6 +4706,16 @@ public class ViewTest {
     }
 
     @Test
+    public void testTransitionAlpha() {
+        View view = new View(mContext);
+        view.setAlpha(1f);
+        view.setTransitionAlpha(0.5f);
+
+        assertEquals(1f, view.getAlpha(), 0.0001f);
+        assertEquals(0.5f, view.getTransitionAlpha(), 0.0001f);
+    }
+
+    @Test
     public void testSetGetOutlineShadowColor() {
         ViewGroup group = (ViewGroup) LayoutInflater.from(mContext).inflate(
                 R.layout.view_outlineshadowcolor, null);
