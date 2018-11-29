@@ -36,6 +36,7 @@ struct Params {
   std::shared_ptr<ITest> iface;
   bool shouldBeRemote;
   std::string expectedName;
+  bool shouldBeOld;
 };
 
 #define iface GetParam().iface
@@ -448,6 +449,43 @@ TEST_P(NdkBinderTest_Aidl, NullableArrays) {
                           });
 }
 
+class DefaultImpl : public ::aidl::test_package::ITestDefault {
+public:
+  ::ndk::ScopedAStatus NewMethodThatReturns10(int32_t* _aidl_return) override {
+    *_aidl_return = 100; // default impl returns different value
+    return ::ndk::ScopedAStatus(AStatus_newOk());
+  }
+};
+
+TEST_P(NdkBinderTest_Aidl, NewMethod) {
+  std::shared_ptr<ITest> default_impl = SharedRefBase::make<DefaultImpl>();
+  ::aidl::test_package::ITest::setDefaultImpl(default_impl);
+
+  int32_t res;
+  EXPECT_OK(iface->NewMethodThatReturns10(&res));
+  if (GetParam().shouldBeOld) {
+    // Remote was built with version 1 interface which does not have
+    // "NewMethodThatReturns10". In this case the default method
+    // which returns 100 is called.
+    EXPECT_EQ(100, res);
+  } else {
+    // Remote is built with the current version of the interface.
+    // The method returns 10.
+    EXPECT_EQ(10, res);
+  }
+}
+
+TEST_P(NdkBinderTest_Aidl, GetInterfaceVersion) {
+  int32_t res;
+  EXPECT_OK(iface->getInterfaceVersion(&res));
+  if (GetParam().shouldBeOld) {
+    EXPECT_EQ(1, res);
+  } else {
+    // 10000 is the not-yet-frozen version
+    EXPECT_EQ(10000, res);
+  }
+}
+
 std::shared_ptr<ITest> getLocalService() {
   // BpTest -> AIBinder -> test
   std::shared_ptr<MyTest> test = SharedRefBase::make<MyTest>();
@@ -488,22 +526,28 @@ std::shared_ptr<ITest> getNdkBinderTestJavaService(const std::string& method) {
 INSTANTIATE_TEST_CASE_P(LocalNative, NdkBinderTest_Aidl,
                         ::testing::Values(Params{getLocalService(),
                                                  false /*shouldBeRemote*/,
-                                                 "CPP"}));
+                                                 "CPP",
+                                                 false /*shouldBeOld*/}));
 INSTANTIATE_TEST_CASE_P(
     LocalNativeFromJava, NdkBinderTest_Aidl,
     ::testing::Values(Params{
         getNdkBinderTestJavaService("getLocalNativeService"),
-        false /*shouldBeRemote*/, "CPP"}));
+        false /*shouldBeRemote*/, "CPP", false /*shouldBeOld*/}));
 INSTANTIATE_TEST_CASE_P(LocalJava, NdkBinderTest_Aidl,
                         ::testing::Values(Params{
                             getNdkBinderTestJavaService("getLocalJavaService"),
-                            false /*shouldBeRemote*/, "JAVA"}));
+                            false /*shouldBeRemote*/, "JAVA", false /*shouldBeOld*/}));
 INSTANTIATE_TEST_CASE_P(
     RemoteNative, NdkBinderTest_Aidl,
     ::testing::Values(Params{
         getNdkBinderTestJavaService("getRemoteNativeService"),
-        true /*shouldBeRemote*/, "CPP"}));
+        true /*shouldBeRemote*/, "CPP", false /*shouldBeOld*/}));
 INSTANTIATE_TEST_CASE_P(RemoteJava, NdkBinderTest_Aidl,
                         ::testing::Values(Params{
                             getNdkBinderTestJavaService("getRemoteJavaService"),
-                            true /*shouldBeRemote*/, "JAVA"}));
+                            true /*shouldBeRemote*/, "JAVA", false /*shouldBeOld*/}));
+
+INSTANTIATE_TEST_CASE_P(RemoteNativeOld, NdkBinderTest_Aidl,
+                        ::testing::Values(Params{
+                            getNdkBinderTestJavaService("getRemoteOldNativeService"),
+                            true /*shouldBeRemote*/, "CPP", true /*shouldBeOld*/}));
