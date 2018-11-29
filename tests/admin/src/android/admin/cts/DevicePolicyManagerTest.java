@@ -1050,4 +1050,30 @@ public class DevicePolicyManagerTest extends AndroidTestCase {
         assertThrows(SecurityException.class,
             () -> mDevicePolicyManager.setStorageEncryption(notAdmin, false));
     }
+
+    public void testCrossProfileCalendar_failIfNotProfileOwner() {
+        final String TEST_PACKAGE_NAME = "test.package.name";
+        if (!mDeviceAdmin) {
+            Log.w(TAG, "Skipping testCrossProfileCalendar_failIfNotProfileOwner");
+            return;
+        }
+        try {
+            mDevicePolicyManager.addCrossProfileCalendarPackage(mComponent, TEST_PACKAGE_NAME);
+            fail("addCrossProfileCalendarPackage did not throw expected SecurityException");
+        } catch (SecurityException e) {
+            assertProfileOwnerMessage(e.getMessage());
+        }
+        try {
+            mDevicePolicyManager.removeCrossProfileCalendarPackage(mComponent, TEST_PACKAGE_NAME);
+            fail("removeCrossProfileCalendarPackage did not throw expected SecurityException");
+        } catch (SecurityException e) {
+            assertProfileOwnerMessage(e.getMessage());
+        }
+        try {
+            mDevicePolicyManager.getCrossProfileCalendarPackages(mComponent);
+            fail("getCrossProfileCalendarPackages did not throw expected SecurityException");
+        } catch (SecurityException e) {
+            assertProfileOwnerMessage(e.getMessage());
+        }
+    }
 }
