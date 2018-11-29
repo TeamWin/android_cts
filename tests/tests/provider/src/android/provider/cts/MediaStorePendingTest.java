@@ -64,6 +64,7 @@ public class MediaStorePendingTest {
     private Uri mExternalAudio = MediaStore.Audio.Media.EXTERNAL_CONTENT_URI;
     private Uri mExternalVideo = MediaStore.Video.Media.EXTERNAL_CONTENT_URI;
     private Uri mExternalImages = MediaStore.Images.Media.EXTERNAL_CONTENT_URI;
+    private Uri mExternalDownloads = MediaStore.Downloads.EXTERNAL_CONTENT_URI;
 
     @Before
     public void setUp() throws Exception {
@@ -77,9 +78,18 @@ public class MediaStorePendingTest {
 
     @Test
     public void testSimple_Success() throws Exception {
+        verifySuccessfulImageInsertion(mExternalImages, Environment.DIRECTORY_PICTURES);
+    }
+
+    @Test
+    public void testSimpleDownload_Success() throws Exception {
+        verifySuccessfulImageInsertion(mExternalDownloads, Environment.DIRECTORY_DOWNLOADS);
+    }
+
+    private void verifySuccessfulImageInsertion(Uri insertUri, String expectedDestDir)
+            throws Exception {
         final String displayName = "cts" + System.nanoTime();
 
-        final Uri insertUri = mExternalImages;
         final MediaStore.PendingParams params = new MediaStore.PendingParams(
                 insertUri, displayName, "image/png");
 
@@ -100,7 +110,7 @@ public class MediaStorePendingTest {
         final MediaStore.PendingSession session = MediaStore.openPending(mContext, pendingUri);
         try {
             try (InputStream in = mContext.getResources().openRawResource(R.raw.scenery);
-                    OutputStream out = session.openOutputStream()) {
+                 OutputStream out = session.openOutputStream()) {
                 FileUtils.copy(in, out);
             }
             publishUri = session.publish();
@@ -120,7 +130,7 @@ public class MediaStorePendingTest {
         // Make sure our raw filename looks sane
         final File rawFile = getRawFile(publishUri);
         assertEquals(displayName + ".png", rawFile.getName());
-        assertEquals(Environment.DIRECTORY_PICTURES, rawFile.getParentFile().getName());
+        assertEquals(expectedDestDir, rawFile.getParentFile().getName());
 
         // Make sure file actually exists
         getRawFileHash(rawFile);
@@ -209,6 +219,12 @@ public class MediaStorePendingTest {
         assertNotCreatePending(new PendingParams(mExternalImages, displayName, "audio/ogg"));
         assertNotCreatePending(new PendingParams(mExternalImages, displayName, "video/ogg"));
         assertCreatePending(new PendingParams(mExternalImages, displayName, "image/png"));
+
+        assertCreatePending(new PendingParams(mExternalDownloads, displayName, "audio/ogg"));
+        assertCreatePending(new PendingParams(mExternalDownloads, displayName, "video/ogg"));
+        assertCreatePending(new PendingParams(mExternalDownloads, displayName, "image/png"));
+        assertCreatePending(new PendingParams(mExternalDownloads, displayName,
+                "application/pdf"));
     }
 
     @Test
@@ -245,11 +261,15 @@ public class MediaStorePendingTest {
                 Arrays.asList(Environment.DIRECTORY_MOVIES, Environment.DIRECTORY_DCIM));
         final Set<String> allowedImages = new HashSet<>(
                 Arrays.asList(Environment.DIRECTORY_PICTURES, Environment.DIRECTORY_DCIM));
+        final Set<String> allowedDownloads = new HashSet<>(
+                Arrays.asList(Environment.DIRECTORY_DOWNLOADS));
 
         final Set<String> everything = new HashSet<>();
         everything.addAll(allowedAudio);
         everything.addAll(allowedVideo);
         everything.addAll(allowedImages);
+        everything.addAll(allowedDownloads);
+        everything.add(Environment.DIRECTORY_DOCUMENTS);
 
         {
             final PendingParams params = new PendingParams(mExternalAudio,
@@ -287,6 +307,18 @@ public class MediaStorePendingTest {
                 }
             }
         }
+        {
+            final PendingParams params = new PendingParams(mExternalDownloads,
+                        displayName, "video/ogg");
+            for (String dir : everything) {
+                params.setPrimaryDirectory(dir);
+                if (allowedDownloads.contains(dir)) {
+                    assertCreatePending(params);
+                } else {
+                    assertNotCreatePending(dir, params);
+                }
+            }
+        }
     }
 
     @Test
@@ -308,6 +340,13 @@ public class MediaStorePendingTest {
             final Uri uri = execPending(new PendingParams(mExternalVideo,
                     displayName, "video/ogg"), R.raw.scenery);
             assertEquals(Environment.DIRECTORY_MOVIES, getRawFile(uri).getParentFile().getName());
+        }
+        {
+            final String displayName = "cts" + System.nanoTime();
+            final Uri uri = execPending(new PendingParams(mExternalDownloads,
+                    displayName, "image/png"), R.raw.scenery);
+            assertEquals(Environment.DIRECTORY_DOWNLOADS,
+                    getRawFile(uri).getParentFile().getName());
         }
     }
 
