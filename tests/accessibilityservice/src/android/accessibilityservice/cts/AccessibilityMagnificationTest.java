@@ -28,6 +28,7 @@ import android.accessibilityservice.AccessibilityService.MagnificationController
 import android.accessibilityservice.AccessibilityServiceInfo;
 import android.app.Instrumentation;
 import android.content.Context;
+import android.graphics.Rect;
 import android.graphics.Region;
 import android.platform.test.annotations.AppModeFull;
 import android.test.InstrumentationTestCase;
@@ -89,13 +90,11 @@ public class AccessibilityMagnificationTest extends InstrumentationTestCase {
 
     public void testSetScaleAndCenter() {
         final MagnificationController controller = mService.getMagnificationController();
-        final WindowManager wm = (WindowManager) mInstrumentation.getContext().getSystemService(
-                Context.WINDOW_SERVICE);
-        final DisplayMetrics metrics = new DisplayMetrics();
-        wm.getDefaultDisplay().getRealMetrics(metrics);
+        final Region region = controller.getMagnificationRegion();
+        final Rect bounds = region.getBounds();
         final float scale = 2.0f;
-        final float x = metrics.widthPixels / 4.0f;
-        final float y = metrics.heightPixels / 4.0f;
+        final float x = bounds.left + (bounds.width() / 4.0f);
+        final float y = bounds.top + (bounds.height() / 4.0f);
         final AtomicBoolean setScale = new AtomicBoolean();
         final AtomicBoolean setCenter = new AtomicBoolean();
         final AtomicBoolean result = new AtomicBoolean();

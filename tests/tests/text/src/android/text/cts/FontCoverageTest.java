@@ -26,12 +26,15 @@ import android.icu.text.UnicodeSet;
 import android.support.test.filters.LargeTest;
 import android.support.test.runner.AndroidJUnit4;
 
+import com.android.compatibility.common.util.CddTest;
+
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
 import java.util.HashMap;
 import java.util.Locale;
 
+@CddTest(requirement="3.8.13/C-1-1")
 @LargeTest
 @RunWith(AndroidJUnit4.class)
 public class FontCoverageTest {

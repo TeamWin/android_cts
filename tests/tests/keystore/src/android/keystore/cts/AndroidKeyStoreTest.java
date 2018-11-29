@@ -63,6 +63,7 @@ import java.util.Set;
 
 import javax.crypto.BadPaddingException;
 import javax.crypto.Cipher;
+import javax.crypto.IllegalBlockSizeException;
 import javax.crypto.Mac;
 import javax.crypto.SecretKey;
 import javax.security.auth.x500.X500Principal;
@@ -1967,8 +1968,10 @@ public class AndroidKeyStoreTest extends AndroidTestCase {
         // is bigger than the modulus.
         try {
             encrypt.doFinal(plainText);
-            fail("Expected BadPaddingException");
+            fail("Expected BadPaddingException or IllegalBlockSizeException");
         } catch (BadPaddingException e) {
+            // pass on exception as it is expected
+        } catch (IllegalBlockSizeException e) {
             // pass on exception as it is expected
         }
     }

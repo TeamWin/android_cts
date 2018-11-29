@@ -156,19 +156,37 @@ final class Helper {
         return hasHint(view.getAutofillHints(), id);
     };
 
+    private static String toString(AssistStructure structure, StringBuilder builder) {
+        builder.append("[component=").append(structure.getActivityComponent());
+        final int nodes = structure.getWindowNodeCount();
+        for (int i = 0; i < nodes; i++) {
+            final WindowNode windowNode = structure.getWindowNodeAt(i);
+            dump(builder, windowNode.getRootViewNode(), " ", 0);
+        }
+        return builder.append(']').toString();
+    }
+
+    @NonNull
+    static String toString(@NonNull AssistStructure structure) {
+        return toString(structure, new StringBuilder());
+    }
+
+    @Nullable
+    static String toString(@Nullable AutofillValue value) {
+        if (value == null) return null;
+        if (value.isText()) {
+            // We don't care about PII...
+            final CharSequence text = value.getTextValue();
+            return text == null ? null : text.toString();
+        }
+        return value.toString();
+    }
+
     /**
      * Dump the assist structure on logcat.
      */
     static void dumpStructure(String message, AssistStructure structure) {
-        final StringBuffer buffer = new StringBuffer(message)
-                .append(": component=")
-                .append(structure.getActivityComponent());
-        final int nodes = structure.getWindowNodeCount();
-        for (int i = 0; i < nodes; i++) {
-            final WindowNode windowNode = structure.getWindowNodeAt(i);
-            dump(buffer, windowNode.getRootViewNode(), " ", 0);
-        }
-        Log.i(TAG, buffer.toString());
+        Log.i(TAG, toString(structure, new StringBuilder(message)));
     }
 
     /**
@@ -194,36 +212,66 @@ final class Helper {
         SettingsHelper.syncSet(context, USER_SETUP_COMPLETE, complete ? "1" : null);
     }
 
-    private static void dump(StringBuffer buffer, ViewNode node, String prefix, int childId) {
+    private static void dump(@NonNull StringBuilder builder, @NonNull ViewNode node,
+            @NonNull String prefix, int childId) {
         final int childrenSize = node.getChildCount();
-        buffer.append("\n").append(prefix)
-            .append('#').append(childId).append(':')
-            .append("resId=").append(node.getIdEntry())
-            .append(" class=").append(node.getClassName())
-            .append(" text=").append(node.getText())
-            .append(" class=").append(node.getClassName())
-            .append(" webDomain=").append(node.getWebDomain())
-            .append(" #children=").append(childrenSize);
-
-        buffer.append("\n").append(prefix)
-            .append("   afId=").append(node.getAutofillId())
-            .append(" afType=").append(node.getAutofillType())
-            .append(" afValue=").append(node.getAutofillValue())
-            .append(" checked=").append(node.isChecked())
-            .append(" focused=").append(node.isFocused());
-
+        builder.append("\n").append(prefix)
+            .append("child #").append(childId).append(':');
+        append(builder, "afId", node.getAutofillId());
+        append(builder, "afType", node.getAutofillType());
+        append(builder, "afValue", toString(node.getAutofillValue()));
+        append(builder, "resId", node.getIdEntry());
+        append(builder, "class", node.getClassName());
+        append(builder, "text", node.getText());
+        append(builder, "webDomain", node.getWebDomain());
+        append(builder, "checked", node.isChecked());
+        append(builder, "focused", node.isFocused());
         final HtmlInfo htmlInfo = node.getHtmlInfo();
         if (htmlInfo != null) {
-            buffer.append("\nHtmlInfo: tag=").append(htmlInfo.getTag())
-                .append(", attrs: ").append(htmlInfo.getAttributes());
+            builder.append(", HtmlInfo[tag=").append(htmlInfo.getTag())
+                .append(", attrs: ").append(htmlInfo.getAttributes()).append(']');
         }
-
-        prefix += " ";
         if (childrenSize > 0) {
-            for (int i = 0; i < childrenSize; i++) {
-                dump(buffer, node.getChildAt(i), prefix, i);
+            append(builder, "#children", childrenSize).append("\n").append(prefix);
+            prefix += " ";
+            if (childrenSize > 0) {
+                for (int i = 0; i < childrenSize; i++) {
+                    dump(builder, node.getChildAt(i), prefix, i);
+                }
             }
         }
+    }
+
+    /**
+     * Appends a field value to a {@link StringBuilder} when it's not {@code null}.
+     */
+    @NonNull
+    static StringBuilder append(@NonNull StringBuilder builder, @NonNull String field,
+            @Nullable Object value) {
+        if (value == null) return builder;
+
+        if ((value instanceof Boolean) && ((Boolean) value)) {
+            return builder.append(", ").append(field);
+        }
+
+        if (value instanceof Integer && ((Integer) value) == 0
+                || value instanceof CharSequence && TextUtils.isEmpty((CharSequence) value)) {
+            return builder;
+        }
+
+        return builder.append(", ").append(field).append('=').append(value);
+    }
+
+    /**
+     * Appends a field value to a {@link StringBuilder} when it's {@code true}.
+     */
+    @NonNull
+    static StringBuilder append(@NonNull StringBuilder builder, @NonNull String field,
+            boolean value) {
+        if (value) {
+            builder.append(", ").append(field);
+        }
+        return builder;
     }
 
     /**

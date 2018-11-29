@@ -32,6 +32,7 @@ import static android.test.MoreAsserts.assertNotEqual;
 import android.content.ContentResolver;
 import android.content.Context;
 import android.content.Intent;
+import android.content.pm.PackageManager;
 import android.net.Uri;
 import android.os.storage.StorageManager;
 import android.os.storage.StorageVolume;
@@ -361,8 +362,10 @@ public class ScopedDirectoryAccessClientTest extends DocumentsClientTestCase {
 
         // Close app screen.
         mDevice.pressBack();
-        // Close main screen.
-        mDevice.pressBack();
+        if (!isTelevision()) {
+            // Close main screen.
+            mDevice.pressBack();
+        }
 
         // Finally, make sure it's reset by requesting it again.
         sendOpenExternalDirectoryIntent(volume, dir);
@@ -401,8 +404,10 @@ public class ScopedDirectoryAccessClientTest extends DocumentsClientTestCase {
 
         // Close app screen.
         mDevice.pressBack();
-        // Close main screen.
-        mDevice.pressBack();
+        if (!isTelevision()) {
+            // Close main screen.
+            mDevice.pressBack();
+        }
 
         // Then tries again - should be denied.
         sendOpenExternalDirectoryIntent(volume, dir);

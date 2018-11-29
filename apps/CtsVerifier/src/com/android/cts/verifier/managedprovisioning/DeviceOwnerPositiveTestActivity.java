@@ -76,6 +76,7 @@ public class DeviceOwnerPositiveTestActivity extends PassFailButtons.TestListAct
     private static final String COMP_TEST_ID = "COMP_UI";
     private static final String MANAGED_USER_TEST_ID = "MANAGED_USER_UI";
     private static final String REMOVE_DEVICE_OWNER_TEST_ID = "REMOVE_DEVICE_OWNER";
+    private static final String DISALLOW_AMBIENT_DISPLAY_ID = "DISALLOW_AMBIENT_DISPLAY";
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -182,6 +183,19 @@ public class DeviceOwnerPositiveTestActivity extends PassFailButtons.TestListAct
                                     R.string.device_owner_settings_go,
                                     new Intent(Settings.ACTION_WIFI_SETTINGS))}));
         }
+
+        // DISALLOW_AMBIENT_DISPLAY.
+        adapter.add(createInteractiveTestItem(this, DISALLOW_AMBIENT_DISPLAY_ID,
+                R.string.device_owner_disallow_ambient_display,
+                R.string.device_owner_disallow_ambient_display_info,
+                new ButtonInfo[] {
+                        new ButtonInfo(
+                                R.string.device_owner_user_restriction_set,
+                                CommandReceiverActivity.createSetUserRestrictionIntent(
+                                        UserManager.DISALLOW_AMBIENT_DISPLAY, true)),
+                        new ButtonInfo(
+                                R.string.device_owner_settings_go,
+                                new Intent(Settings.ACTION_DISPLAY_SETTINGS))}));
 
         // DISALLOW_CONFIG_VPN
         adapter.add(createInteractiveTestItem(this, DISALLOW_CONFIG_VPN_ID,

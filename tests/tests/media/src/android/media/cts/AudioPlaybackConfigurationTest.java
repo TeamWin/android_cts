@@ -37,7 +37,7 @@ import java.util.List;
 public class AudioPlaybackConfigurationTest extends CtsAndroidTestCase {
     private final static String TAG = "AudioPlaybackConfigurationTest";
 
-    private final static int TEST_TIMING_TOLERANCE_MS = 50;
+    private final static int TEST_TIMING_TOLERANCE_MS = 150;
     private final static int TEST_TIMEOUT_SOUNDPOOL_LOAD_MS = 3000;
 
     // not declared inside test so it can be released in case of failure
@@ -81,7 +81,7 @@ public class AudioPlaybackConfigurationTest extends CtsAndroidTestCase {
         mMp = MediaPlayer.create(getContext(), R.raw.sine1khzs40dblong,
                 aa, am.generateAudioSessionId());
         mMp.start();
-        Thread.sleep(2*TEST_TIMING_TOLERANCE_MS);// waiting for playback to start
+        Thread.sleep(TEST_TIMING_TOLERANCE_MS);// waiting for playback to start
         List<AudioPlaybackConfiguration> configs = am.getActivePlaybackConfigurations();
         mMp.stop();
         assertTrue("No playback reported", configs.size() > 0);
@@ -132,7 +132,7 @@ public class AudioPlaybackConfigurationTest extends CtsAndroidTestCase {
                 nbActivePlayersBeforeStart /*expected*/, configs.size());
 
         mMp.start();
-        Thread.sleep(2*TEST_TIMING_TOLERANCE_MS);// waiting for playback to start
+        Thread.sleep(TEST_TIMING_TOLERANCE_MS);// waiting for playback to start
         configs = am.getActivePlaybackConfigurations();
         assertEquals("active MediaPlayer, number of configs should have increased",
                 nbActivePlayersBeforeStart + 1 /*expected*/,

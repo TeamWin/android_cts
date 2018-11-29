@@ -115,7 +115,10 @@ public class DexMemberChecker {
 
     private static Class<?> findClass(DexMember dexMember) {
         try {
-            return Class.forName(dexMember.getJavaClassName());
+            // Try to find the class. Do not initialize it - we do not want to run
+            // static initializers.
+            return Class.forName(dexMember.getJavaClassName(), /* initialize */ false,
+                DexMemberChecker.class.getClassLoader());
         } catch (ClassNotFoundException ex) {
             return null;
         }

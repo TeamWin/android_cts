@@ -306,8 +306,7 @@ public class RecordingTest extends Camera2SurfaceViewTestCase {
     }
 
     public void testConstrainedHighSpeedRecording() throws Exception {
-        constrainedHighSpeedRecording(/*enableSessionParams*/ false);
-        constrainedHighSpeedRecording(/*enableSessionParams*/ true);
+        constrainedHighSpeedRecording();
     }
 
     public void testAbandonedHighSpeedRequest() throws Exception {
@@ -649,8 +648,7 @@ public class RecordingTest extends Camera2SurfaceViewTestCase {
                     // Start recording
                     SimpleCaptureCallback resultListener = new SimpleCaptureCallback();
                     startSlowMotionRecording(/*useMediaRecorder*/true, videoFramerate, captureRate,
-                            fpsRange, resultListener, /*useHighSpeedSession*/false,
-                            /*enableHighSpeedParams*/ false);
+                            fpsRange, resultListener, /*useHighSpeedSession*/false);
 
                     // Record certain duration.
                     SystemClock.sleep(RECORDING_DURATION_MS);
@@ -672,7 +670,7 @@ public class RecordingTest extends Camera2SurfaceViewTestCase {
         }
     }
 
-    private void constrainedHighSpeedRecording(boolean enableSessionParams) throws Exception {
+    private void constrainedHighSpeedRecording() throws Exception {
         for (String id : mCameraIds) {
             try {
                 Log.i(TAG, "Testing constrained high speed recording for camera " + id);
@@ -725,8 +723,7 @@ public class RecordingTest extends Camera2SurfaceViewTestCase {
                         // Start recording
                         startSlowMotionRecording(/*useMediaRecorder*/true, VIDEO_FRAME_RATE,
                                 captureRate, fpsRange, resultListener,
-                                /*useHighSpeedSession*/true,
-                                /*enableHighSpeedParams*/ enableSessionParams);
+                                /*useHighSpeedSession*/true);
 
                         // Record certain duration.
                         SystemClock.sleep(RECORDING_DURATION_MS);
@@ -812,24 +809,25 @@ public class RecordingTest extends Camera2SurfaceViewTestCase {
         assertTrue("Preview surface should be valid", mPreviewSurface.isValid());
         outputSurfaces.add(mPreviewSurface);
         mSessionListener = new BlockingSessionCallback();
-        mSession = configureCameraSession(mCamera, outputSurfaces, /*isHighSpeed*/ true,
-                mSessionListener, mHandler);
 
         List<CaptureRequest> slowMoRequests = null;
         CaptureRequest.Builder requestBuilder =
             mCamera.createCaptureRequest(CameraDevice.TEMPLATE_RECORD);
         requestBuilder.set(CaptureRequest.CONTROL_AE_TARGET_FPS_RANGE, fpsRange);
         requestBuilder.addTarget(mPreviewSurface);
+        CaptureRequest initialRequest = requestBuilder.build();
+        mSession = buildConstrainedCameraSession(mCamera, outputSurfaces, mSessionListener,
+                mHandler, initialRequest);
         slowMoRequests = ((CameraConstrainedHighSpeedCaptureSession) mSession).
-            createHighSpeedRequestList(requestBuilder.build());
+            createHighSpeedRequestList(initialRequest);
 
         mSession.setRepeatingBurst(slowMoRequests, listener, mHandler);
     }
 
     private void startSlowMotionRecording(boolean useMediaRecorder, int videoFrameRate,
             int captureRate, Range<Integer> fpsRange,
-            CameraCaptureSession.CaptureCallback listener, boolean useHighSpeedSession,
-            boolean enableHighSpeedParams) throws Exception {
+            CameraCaptureSession.CaptureCallback listener, boolean useHighSpeedSession)
+            throws Exception {
         List<Surface> outputSurfaces = new ArrayList<Surface>(2);
         assertTrue("Both preview and recording surfaces should be valid",
                 mPreviewSurface.isValid() && mRecordingSurface.isValid());
@@ -840,13 +838,6 @@ public class RecordingTest extends Camera2SurfaceViewTestCase {
             outputSurfaces.add(mReaderSurface);
         }
         mSessionListener = new BlockingSessionCallback();
-        if (useHighSpeedSession && enableHighSpeedParams) {
-            mSession = buildConstrainedCameraSession(mCamera, outputSurfaces, useHighSpeedSession,
-                    mSessionListener, mHandler);
-        } else {
-            mSession = configureCameraSession(mCamera, outputSurfaces, useHighSpeedSession,
-                    mSessionListener, mHandler);
-        }
 
         // Create slow motion request list
         List<CaptureRequest> slowMoRequests = null;
@@ -856,8 +847,11 @@ public class RecordingTest extends Camera2SurfaceViewTestCase {
             requestBuilder.set(CaptureRequest.CONTROL_AE_TARGET_FPS_RANGE, fpsRange);
             requestBuilder.addTarget(mPreviewSurface);
             requestBuilder.addTarget(mRecordingSurface);
+            CaptureRequest initialRequest = requestBuilder.build();
+            mSession = buildConstrainedCameraSession(mCamera, outputSurfaces, mSessionListener,
+                    mHandler, initialRequest);
             slowMoRequests = ((CameraConstrainedHighSpeedCaptureSession) mSession).
-                    createHighSpeedRequestList(requestBuilder.build());
+                    createHighSpeedRequestList(initialRequest);
         } else {
             CaptureRequest.Builder recordingRequestBuilder =
                     mCamera.createCaptureRequest(CameraDevice.TEMPLATE_RECORD);
@@ -881,8 +875,12 @@ public class RecordingTest extends Camera2SurfaceViewTestCase {
             recordingOnlyBuilder.set(CaptureRequest.CONTROL_AE_TARGET_FPS_RANGE, fpsRange);
             recordingOnlyBuilder.addTarget(mRecordingSurface);
 
+            CaptureRequest initialRequest = recordingRequestBuilder.build();
+            mSession = configureCameraSessionWithParameters(mCamera, outputSurfaces,
+                    mSessionListener, mHandler, initialRequest);
+
             slowMoRequests = new ArrayList<CaptureRequest>();
-            slowMoRequests.add(recordingRequestBuilder.build());// Preview + recording.
+            slowMoRequests.add(initialRequest);// Preview + recording.
 
             for (int i = 0; i < slowMotionFactor - 1; i++) {
                 slowMoRequests.add(recordingOnlyBuilder.build()); // Recording only.
@@ -1510,7 +1508,6 @@ public class RecordingTest extends Camera2SurfaceViewTestCase {
             outputSurfaces.add(mReaderSurface);
         }
         mSessionListener = new BlockingSessionCallback();
-        mSession = configureCameraSession(mCamera, outputSurfaces, mSessionListener, mHandler);
 
         CaptureRequest.Builder recordingRequestBuilder =
                 mCamera.createCaptureRequest(CameraDevice.TEMPLATE_RECORD);
@@ -1525,7 +1522,10 @@ public class RecordingTest extends Camera2SurfaceViewTestCase {
         }
         recordingRequestBuilder.addTarget(mRecordingSurface);
         recordingRequestBuilder.addTarget(mPreviewSurface);
-        mSession.setRepeatingRequest(recordingRequestBuilder.build(), listener, mHandler);
+        CaptureRequest recordingRequest = recordingRequestBuilder.build();
+        mSession = configureCameraSessionWithParameters(mCamera, outputSurfaces, mSessionListener,
+                mHandler, recordingRequest);
+        mSession.setRepeatingRequest(recordingRequest, listener, mHandler);
 
         if (useMediaRecorder) {
             mMediaRecorder.start();

@@ -2357,6 +2357,26 @@ public class StaticMetadata {
     }
 
     /**
+     * Check if distortion correction is supported.
+     */
+    public boolean isDistortionCorrectionSupported() {
+        boolean distortionCorrectionSupported = false;
+        int[] distortionModes = mCharacteristics.get(
+                CameraCharacteristics.DISTORTION_CORRECTION_AVAILABLE_MODES);
+        if (distortionModes == null) {
+            return false;
+        }
+
+        for (int mode : distortionModes) {
+            if (mode != CaptureRequest.DISTORTION_CORRECTION_MODE_OFF) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    /**
      * Get the value in index for a fixed-size array from a given key.
      *
      * <p>If the camera device is incorrectly reporting values, log a warning and return

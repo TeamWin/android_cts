@@ -18,6 +18,7 @@ import its.device
 import its.objects
 import os.path
 import math
+import numpy as np
 
 def main():
     """Capture auto and manual shots that should look the same.
@@ -93,9 +94,13 @@ def main():
 
         # Check that the WB gains and transform reported in each capture
         # result match with the original AWB estimate from do_3a.
-        for g,x in [(gains_a,xform_a),(gains_m1,xform_m1),(gains_m2,xform_m2)]:
+        for g,x in [(gains_m1,xform_m1),(gains_m2,xform_m2)]:
             assert(all([abs(xform[i] - x[i]) < 0.05 for i in range(9)]))
             assert(all([abs(gains[i] - g[i]) < 0.05 for i in range(4)]))
+
+        # Check that auto AWB settings are close
+        assert(all([np.isclose(xform_a[i], xform[i], rtol=0.25, atol=0.1) for i in range(9)]))
+        assert(all([np.isclose(gains_a[i], gains[i], rtol=0.25, atol=0.1) for i in range(4)]))
 
 if __name__ == '__main__':
     main()

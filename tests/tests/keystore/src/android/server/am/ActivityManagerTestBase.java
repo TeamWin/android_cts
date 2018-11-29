@@ -33,6 +33,7 @@ import static android.server.am.UiDeviceUtils.pressUnlockButton;
 import static android.server.am.UiDeviceUtils.pressWakeupButton;
 import static android.server.am.UiDeviceUtils.waitForDeviceIdle;
 
+import android.accessibilityservice.AccessibilityService;
 import android.app.ActivityManager;
 import android.content.ComponentName;
 import android.content.Context;
@@ -297,6 +298,11 @@ public abstract class ActivityManagerTestBase {
 
         public LockScreenSession sleepDevice() {
             pressSleepButton();
+            // Not all device variants lock when we go to sleep, so we need to explicitly lock the
+            // device. Note that pressSleepButton() above is redundant because the action also
+            // puts the device to sleep, but kept around for clarity.
+            InstrumentationRegistry.getInstrumentation().getUiAutomation().performGlobalAction(
+                    AccessibilityService.GLOBAL_ACTION_LOCK_SCREEN);
             waitForDisplayStateWithRetry(false /* displayOn */ );
             return this;
         }

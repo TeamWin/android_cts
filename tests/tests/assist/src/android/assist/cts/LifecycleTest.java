@@ -121,8 +121,8 @@ public class LifecycleTest extends AssistTestBase {
     }
 
     public void testLayerDoesNotTriggerLifecycleMethods() throws Exception {
-        if (mActivityManager.isLowRamDevice()) {
-            Log.d(TAG, "Not running assist tests on low-RAM device.");
+        if (!mContext.getPackageManager().hasSystemFeature(FEATURE_VOICE_RECOGNIZERS)) {
+            Log.d(TAG, "Not running assist tests - voice_recognizers feature is not supported");
             return;
         }
         mTestActivity.startTest(Utils.LIFECYCLE);

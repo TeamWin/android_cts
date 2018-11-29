@@ -398,10 +398,10 @@ public class SecurityLoggingTest extends BaseDeviceOwnerTest {
 
     private void verifyOsStartupEventPresent(List<SecurityEvent> events) {
         final SecurityEvent event = findEvent("os startup", events, TAG_OS_STARTUP);
-        // Verified boot state
-        assertTrue(ImmutableSet.of("green", "yellow", "orange").contains(getString(event, 0)));
-        // dm-verity mode
-        assertTrue(ImmutableSet.of("enforcing", "eio").contains(getString(event, 1)));
+        // Verified boot state, empty if running on emulator
+        assertTrue(ImmutableSet.of("", "green", "yellow", "orange").contains(getString(event, 0)));
+        // dm-verity mode, empty if it is disabled
+        assertTrue(ImmutableSet.of("enforcing", "eio", "").contains(getString(event, 1)));
     }
 
     private void verifyCryptoSelfTestEventPresent(List<SecurityEvent> events) {

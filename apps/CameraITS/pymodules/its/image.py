@@ -151,7 +151,7 @@ def unpack_raw10_image(img):
     lsbs = img[::, 4::5].reshape(h,w/4)
     lsbs = numpy.right_shift(
             numpy.packbits(numpy.unpackbits(lsbs).reshape(h,w/4,4,2),3), 6)
-    # Pair the LSB bits group to pixel 0 instead of pixel 3
+    # Pair the LSB bits group to 0th pixel instead of 3rd pixel
     lsbs = lsbs.reshape(h,w/4,4)[:,:,::-1]
     lsbs = lsbs.reshape(h,w)
     # Fuse the MSBs and LSBs back together
@@ -267,8 +267,8 @@ def convert_capture_to_planes(cap, props=None):
                             buffer=cap["data"][0:w*h*2])
         img = img.astype(numpy.float32).reshape(h,w) / white_level
         # Crop the raw image to the active array region.
-        if props.has_key("android.sensor.info.activeArraySize") \
-                and props["android.sensor.info.activeArraySize"] is not None \
+        if props.has_key("android.sensor.info.preCorrectionActiveArraySize") \
+                and props["android.sensor.info.preCorrectionActiveArraySize"] is not None \
                 and props.has_key("android.sensor.info.pixelArraySize") \
                 and props["android.sensor.info.pixelArraySize"] is not None:
             # Note that the Rect class is defined such that the left,top values
@@ -277,10 +277,10 @@ def convert_capture_to_planes(cap, props=None):
             # computed as right-left, rather than right-left+1, etc.
             wfull = props["android.sensor.info.pixelArraySize"]["width"]
             hfull = props["android.sensor.info.pixelArraySize"]["height"]
-            xcrop = props["android.sensor.info.activeArraySize"]["left"]
-            ycrop = props["android.sensor.info.activeArraySize"]["top"]
-            wcrop = props["android.sensor.info.activeArraySize"]["right"]-xcrop
-            hcrop = props["android.sensor.info.activeArraySize"]["bottom"]-ycrop
+            xcrop = props["android.sensor.info.preCorrectionActiveArraySize"]["left"]
+            ycrop = props["android.sensor.info.preCorrectionActiveArraySize"]["top"]
+            wcrop = props["android.sensor.info.preCorrectionActiveArraySize"]["right"]-xcrop
+            hcrop = props["android.sensor.info.preCorrectionActiveArraySize"]["bottom"]-ycrop
             assert(wfull >= wcrop >= 0)
             assert(hfull >= hcrop >= 0)
             assert(wfull - wcrop >= xcrop >= 0)

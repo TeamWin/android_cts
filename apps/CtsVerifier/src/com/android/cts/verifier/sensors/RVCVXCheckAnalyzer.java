@@ -30,6 +30,7 @@ import org.opencv.core.MatOfDouble;
 import org.opencv.core.MatOfFloat;
 import org.opencv.core.MatOfPoint2f;
 import org.opencv.core.MatOfPoint3f;
+import org.opencv.core.Point;
 import org.opencv.core.Size;
 import org.opencv.imgcodecs.Imgcodecs;
 import org.opencv.imgproc.Imgproc;
@@ -65,7 +66,7 @@ public class RVCVXCheckAnalyzer {
 
     private static final boolean OUTPUT_DEBUG_IMAGE = false;
     private static final double VALID_FRAME_THRESHOLD = 0.8;
-    private static final double REPROJECTION_THREASHOLD_RATIO = 0.008;
+    private static final double REPROJECTION_THRESHOLD_RATIO = 0.03;
     private static final boolean FORCE_CV_ANALYSIS  = false;
     private static final boolean TRACE_VIDEO_ANALYSIS = false;
     private static final double DECIMATION_FPS_TARGET = 15.0;
@@ -811,7 +812,9 @@ public class RVCVXCheckAnalyzer {
             Debug.startMethodTracing("cvprocess");
         }
 
-        Size patternSize = new Size(4,11);
+        final int patternWidth = 4;
+        final int patternHeight = 11;
+        Size patternSize = new Size(patternWidth, patternHeight);
 
         float fc = (float)(meta.frameWidth/2.0/Math.tan(meta.fovWidth/2.0));
         Mat camMat = cameraMatrix(fc, new Size(frameSize.width/2, frameSize.height/2));
@@ -884,9 +887,19 @@ public class RVCVXCheckAnalyzer {
                 Log.v(TAG, "Found attitude, re-projection error = " + error);
             }
 
-            // if error is reasonable, add it into the results. use ratio to frame height to avoid
-            // discriminating higher definition videos
-            if (error < REPROJECTION_THREASHOLD_RATIO * frameSize.height) {
+            // Calculate the average distance between opposite corners of the pattern in pixels
+            Point[] centerPoints = centers.toArray();
+            Point bottomLeftPos = centerPoints[0];
+            Point bottomRightPos = centerPoints[patternWidth - 1];
+            Point topLeftPos = centerPoints[(patternHeight * patternWidth) - patternWidth];
+            Point topRightPos = centerPoints[(patternHeight * patternWidth) - 1];
+            double avgPixelDist = (getDistanceBetweenPoints(bottomLeftPos, topRightPos)
+                    + getDistanceBetweenPoints(bottomRightPos, topLeftPos)) / 2;
+
+            // if error is reasonable, add it into the results. Use a dynamic threshold based on
+            // the pixel distance of opposite corners of the pattern to prevent higher resolution
+            // video or the distance between the camera and the test pattern from impacting the test
+            if (error < REPROJECTION_THRESHOLD_RATIO * avgPixelDist) {
                 double [] rv = new double[3];
                 double timestamp;
 
@@ -1324,6 +1337,10 @@ public class RVCVXCheckAnalyzer {
 
     private static double [] rodr2rpy( double [] r) {
         return quat2rpy(rodr2quat(r));
+    }
+
+    private double getDistanceBetweenPoints(Point a, Point b) {
+        return Math.sqrt(Math.pow(a.x - b.x, 2) + Math.pow(a.y - b.y, 2));
     }
     //////////////////
 

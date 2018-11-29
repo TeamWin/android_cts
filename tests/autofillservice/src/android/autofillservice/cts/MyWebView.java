@@ -21,7 +21,9 @@ import static com.google.common.truth.Truth.assertWithMessage;
 
 import android.content.Context;
 import android.util.AttributeSet;
+import android.util.Log;
 import android.util.SparseArray;
+import android.view.autofill.AutofillManager;
 import android.view.autofill.AutofillValue;
 import android.webkit.WebView;
 
@@ -33,6 +35,7 @@ import java.util.concurrent.TimeUnit;
  */
 public class MyWebView extends WebView {
 
+    private static final String TAG = "MyWebView";
     private FillExpectation mExpectation;
 
     public MyWebView(Context context) {
@@ -41,6 +44,7 @@ public class MyWebView extends WebView {
 
     public MyWebView(Context context, AttributeSet attrs) {
         super(context, attrs);
+        Log.d(TAG, "isAutofillEnabled() on constructor? " + isAutofillEnabled());
     }
 
     public void expectAutofill(String username, String password) {
@@ -93,6 +97,10 @@ public class MyWebView extends WebView {
         } finally {
             mExpectation.mLatch.countDown();
         }
+    }
+
+    boolean isAutofillEnabled() {
+        return getContext().getSystemService(AutofillManager.class).isEnabled();
     }
 
     private class FillExpectation {

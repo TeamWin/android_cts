@@ -115,18 +115,22 @@ public class ActivityManagerFreeformStackTests extends ActivityManagerTestBase {
                 ActivityAndWindowManagersState.dpToPx(TEST_TASK_SIZE_DP_2, densityDpi);
 
         resizeActivityTask(TEST_ACTIVITY,
-                TEST_TASK_OFFSET, TEST_TASK_OFFSET, testTaskSize1, testTaskSize2);
+                TEST_TASK_OFFSET, TEST_TASK_OFFSET,
+                TEST_TASK_OFFSET + testTaskSize1, TEST_TASK_OFFSET + testTaskSize2);
         resizeActivityTask(NO_RELAUNCH_ACTIVITY,
-                TEST_TASK_OFFSET_2, TEST_TASK_OFFSET_2, testTaskSize1, testTaskSize2);
+                TEST_TASK_OFFSET_2, TEST_TASK_OFFSET_2,
+                TEST_TASK_OFFSET_2 + testTaskSize1, TEST_TASK_OFFSET_2 + testTaskSize2);
 
         mAmWmState.computeState(new WaitForValidActivityState.Builder(TEST_ACTIVITY).build(),
                 new WaitForValidActivityState.Builder(NO_RELAUNCH_ACTIVITY).build());
 
         final LogSeparator logSeparator = separateLogs();
         resizeActivityTask(TEST_ACTIVITY,
-                TEST_TASK_OFFSET, TEST_TASK_OFFSET, testTaskSize2, testTaskSize1);
+                TEST_TASK_OFFSET, TEST_TASK_OFFSET,
+                TEST_TASK_OFFSET + testTaskSize2, TEST_TASK_OFFSET + testTaskSize1);
         resizeActivityTask(NO_RELAUNCH_ACTIVITY,
-                TEST_TASK_OFFSET_2, TEST_TASK_OFFSET_2, testTaskSize2, testTaskSize1);
+                TEST_TASK_OFFSET_2, TEST_TASK_OFFSET_2,
+                TEST_TASK_OFFSET_2 + testTaskSize2, TEST_TASK_OFFSET_2 + testTaskSize1);
         mAmWmState.computeState(TEST_ACTIVITY, NO_RELAUNCH_ACTIVITY);
 
         assertActivityLifecycle(TEST_ACTIVITY, true /* relaunched */, logSeparator);

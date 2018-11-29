@@ -71,4 +71,34 @@ public class Poc17_03 extends SecurityTestCase {
         }
     }
 
+    /**
+     * b/32707507
+     */
+    @SecurityTest
+    public void testPocCVE_2017_0479() throws Exception {
+        AdbUtils.runCommandLine("logcat -c" , getDevice());
+        AdbUtils.runPocNoOutput("CVE-2017-0479", getDevice(), 60);
+        String logcatOut = AdbUtils.runCommandLine("logcat -d", getDevice());
+        assertNotMatchesMultiLine(".*Fatal signal 11 \\(SIGSEGV\\).*>>> /system/bin/" +
+                         "audioserver <<<.*", logcatOut);
+    }
+
+    /*
+     *  b/33178389
+     */
+    @SecurityTest
+    public void testPocCVE_2017_0490() throws Exception {
+        String bootCountBefore =
+                AdbUtils.runCommandLine("settings get global boot_count", getDevice());
+        AdbUtils.runCommandLine("service call wifi 43 s16 content://settings/global/boot_count s16 "
+                + "\"application/x-wifi-config\"",
+                getDevice());
+        String bootCountAfter =
+                AdbUtils.runCommandLine("settings get global boot_count", getDevice());
+        // Poc nukes the boot_count setting, reboot to restore it to a sane value
+        AdbUtils.runCommandLine("reboot", getDevice());
+        getDevice().waitForDeviceOnline(60 * 1000);
+        updateKernelStartTime();
+        assertEquals(bootCountBefore, bootCountAfter);
+    }
 }

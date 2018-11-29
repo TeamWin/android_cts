@@ -718,8 +718,8 @@ public class KeyAttestationTest extends AndroidTestCase {
 
     @SuppressWarnings("unchecked")
     private void checkAttestationSecurityLevelDependentParams(Attestation attestation) {
-        assertThat("Attestation version must be 1 or 2", attestation.getAttestationVersion(),
-                either(is(1)).or(is(2)));
+        assertThat("Attestation version must be 1, 2, or 3", attestation.getAttestationVersion(),
+               either(is(1)).or(is(2)).or(is(3)));
 
         AuthorizationList teeEnforced = attestation.getTeeEnforced();
         AuthorizationList softwareEnforced = attestation.getSoftwareEnforced();
@@ -732,7 +732,7 @@ public class KeyAttestationTest extends AndroidTestCase {
                 assertThat("TEE attestation can only come from TEE keymaster",
                         attestation.getKeymasterSecurityLevel(),
                         is(KM_SECURITY_LEVEL_TRUSTED_ENVIRONMENT));
-                assertThat(attestation.getKeymasterVersion(), either(is(2)).or(is(3)));
+                assertThat(attestation.getKeymasterVersion(), either(is(2)).or(is(3)).or(is(4)));
 
                 checkRootOfTrust(attestation);
                 assertThat(teeEnforced.getOsVersion(), is(systemOsVersion));

@@ -22,7 +22,9 @@ import static android.server.am.Components.BroadcastReceiverActivity.EXTRA_DISMI
 import static android.server.am.Components.BroadcastReceiverActivity.EXTRA_DISMISS_KEYGUARD_METHOD;
 import static android.server.am.Components.BroadcastReceiverActivity.EXTRA_FINISH_BROADCAST;
 import static android.server.am.Components.BroadcastReceiverActivity.EXTRA_MOVE_BROADCAST_TO_BACK;
+import static android.view.ViewGroup.LayoutParams.MATCH_PARENT;
 import static android.view.WindowManager.LayoutParams.FLAG_DISMISS_KEYGUARD;
+import static android.view.WindowManager.LayoutParams.LAYOUT_IN_DISPLAY_CUTOUT_MODE_SHORT_EDGES;
 
 import android.app.Activity;
 import android.app.KeyguardManager;
@@ -32,6 +34,9 @@ import android.content.Intent;
 import android.content.IntentFilter;
 import android.os.Bundle;
 import android.util.Log;
+import android.view.View;
+import android.view.ViewGroup;
+import android.view.Window;
 
 /**
  * Activity that registers broadcast receiver .
@@ -48,6 +53,20 @@ public class BroadcastReceiverActivity extends Activity {
         IntentFilter broadcastFilter = new IntentFilter(ACTION_TRIGGER_BROADCAST);
 
         registerReceiver(mBroadcastReceiver, broadcastFilter);
+
+        // Determine if a display cutout is present
+        final View view = new View(this);
+        getWindow().requestFeature(Window.FEATURE_NO_TITLE);
+        getWindow().getAttributes().layoutInDisplayCutoutMode =
+                LAYOUT_IN_DISPLAY_CUTOUT_MODE_SHORT_EDGES;
+        view.setLayoutParams(new ViewGroup.LayoutParams(MATCH_PARENT, MATCH_PARENT));
+        view.setSystemUiVisibility(View.SYSTEM_UI_FLAG_LAYOUT_FULLSCREEN
+                | View.SYSTEM_UI_FLAG_LAYOUT_HIDE_NAVIGATION);
+        view.setOnApplyWindowInsetsListener((v, insets) -> {
+            Log.i(getClass().getSimpleName(), "cutout=" + (insets.getDisplayCutout() != null));
+            return insets;
+        });
+        setContentView(view);
     }
 
     @Override

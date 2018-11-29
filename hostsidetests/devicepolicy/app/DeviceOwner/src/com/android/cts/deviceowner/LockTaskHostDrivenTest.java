@@ -69,6 +69,10 @@ public class LockTaskHostDrivenTest {
         mUiDevice.waitForIdle();
     }
 
+    /**
+     * On low-RAM devices, this test can take too long to finish, so the test runner can incorrectly
+     * assume it's finished. Therefore, only use it once in a given test.
+     */
     @Test
     public void testLockTaskIsActiveAndCantBeInterrupted() throws Exception {
         mUiDevice.waitForIdle();

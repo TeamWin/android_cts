@@ -86,7 +86,6 @@ public class ProtectedBroadcastsTest extends AndroidTestCase {
         "android.intent.action.NETWORK_SET_TIME",
         "android.intent.action.NETWORK_SET_TIMEZONE",
         "com.android.internal.intent.action.ACTION_SHOW_NOTICE_ECM_BLOCK_OTHERS",
-        "android.telephony.action.SUBSCRIPTION_CARRIER_IDENTITY_CHANGED",
     };
 
     /**

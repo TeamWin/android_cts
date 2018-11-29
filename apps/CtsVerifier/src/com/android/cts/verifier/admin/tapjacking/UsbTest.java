@@ -17,6 +17,7 @@
 package com.android.cts.verifier.admin.tapjacking;
 
 import android.content.Intent;
+import android.content.res.Resources;
 import android.graphics.PixelFormat;
 import android.os.Bundle;
 import android.provider.Settings;
@@ -26,6 +27,7 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.view.WindowManager;
 import android.widget.Button;
+import android.widget.TextView;
 import android.widget.Toast;
 
 import com.android.cts.verifier.PassFailButtons;
@@ -33,6 +35,7 @@ import com.android.cts.verifier.R;
 
 public class UsbTest extends PassFailButtons.Activity {
     private View mOverlay;
+    private TextView mUsbTapjackingInstructions;
     private Button mTriggerOverlayButton;
 
     public static final String LOG_TAG = "UsbTest";
@@ -45,8 +48,12 @@ public class UsbTest extends PassFailButtons.Activity {
         setInfoResources(R.string.usb_tapjacking_test,
                 R.string.usb_tapjacking_test_info, -1);
 
+        String usbDebuggingComponent = getString(R.string.usb_tapjacking_usb_debugging_component);
+        mUsbTapjackingInstructions = findViewById(R.id.usb_tapjacking_instructions);
+        mUsbTapjackingInstructions.setText(
+                getString(R.string.usb_tapjacking_test_instructions, usbDebuggingComponent));
         //initialise the escalate button and set a listener
-        mTriggerOverlayButton = (Button) findViewById(R.id.tapjacking_btn);
+        mTriggerOverlayButton = findViewById(R.id.tapjacking_btn);
         mTriggerOverlayButton.setEnabled(true);
         mTriggerOverlayButton.setOnClickListener(new View.OnClickListener() {
             @Override

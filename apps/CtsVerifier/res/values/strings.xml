@@ -1085,12 +1085,13 @@
     <string name="usb_tapjacking_test_instructions">
         1. Connect device via usb to computer.\n
         2. Click \"Show overlay\" button.  Settings may appear if the CTS Verifier app doesn\'t have display over apps permission.  Enable this permission and then click back to navigate back to the app.\n
-        3. Trigger USB debugging dialog (from computer terminal): \"adb shell am start -e fingerprints placeholder -e key placeholder com.android.systemui/.UsbDebuggingActivityAlias\"\n
-        4. USB debugging dialog should appear with the overlay on top saying \"This message covers the USB debugging RSA prompt\" to appear.\n
+        3. Trigger USB debugging dialog (from computer terminal): \"adb shell am start -e fingerprints placeholder -e key placeholder %s\"\n
+        4. USB debugging dialog should appear.  If the overlay cannot be seen above the USB debugging dialog, PASS this test (no need to proceed to Step 5).  Else, if the overlay does appear on top saying \"This message covers the USB debugging RSA prompt\", continue to Step 5.\n
         5. Try clicking OK. \n
         Test pass if you cannot click OK when the text quoted above is on top of the USB debugging dialog.  Toast should appear saying there is an overlay so Settings cannot verify your response. \n
         Note: Fake message overlay may remain on screen until you leave the test. This is working as intended. \n
     </string>
+    <string name="usb_tapjacking_usb_debugging_component">com.android.systemui/.UsbDebuggingActivityAlias</string>
     <string name="usb_tapjacking_overlay_message">This message covers the USB debugging RSA prompt</string>
     <string name="usb_tapjacking_error_toast">Please restart the application and try again.</string>
     <string name="usb_tapjacking_error_toast2">Please enable display over apps permission for this application before proceeding.</string>
@@ -1998,7 +1999,7 @@ You should be prompted to select credentials; choose the ones you just installed
     <string name="provisioning_byod_recents_verify_redacted_instruction">
         1) Follow the instructions on-screen to set a work password.\n
         2) Turn the screen off and on again, or use the "lock now" button, to lock the work profile.\n
-        3) Open Recents.\n
+        3) Go to home screen and then open Recents.\n
         4) Confirm that this "CTS Verifier" activity is shown in Recents.\n
         5) Confirm that the contents of the activity <b>are</b> hidden.\n
         6) Return to this page and pass the test.
@@ -2435,7 +2436,7 @@ You should be prompted to select credentials; choose the ones you just installed
     <string name="provisioning_byod_user_settings_instruction">
         Please press the Go button to open the Settings page.
         (If this device has a separate app for work settings, ignore the Go button and open that app manually from the launcher.)\n
-        Navigate to Users (or \"Multiple Users\") and confirm that:\n
+        Navigate to Accounts and confirm that:\n
         - There are two auto-sync options present, one for personal and one for work data (either on the screen or in the overflow menu).\n
         - De-selecting either option prompts a warning dialog.\n
         \n
@@ -2696,7 +2697,9 @@ You should be prompted to select credentials; choose the ones you just installed
         Please do the following:\n
         1) Open and fully expand Quick Settings.\n
         2) Verify that at the bottom of Quick Settings, you are not told the device is managed.\n
-        3) Close Quick Settings.
+        3) Close Quick Settings.\n
+        \n
+        If this device does not have quick settings, please skip this test and mark it passing
     </string>
     <string name="enterprise_privacy_keyguard_negative">Keyguard disclosure</string>
     <string name="enterprise_privacy_keyguard_negative_info">
@@ -3035,6 +3038,16 @@ You should be prompted to select credentials; choose the ones you just installed
         \n
         Use the Back button to return to this page.
     </string>
+    <string name="device_owner_disallow_ambient_display">Disallow ambient display</string>
+    <string name="device_owner_disallow_ambient_display_info">
+        Please press the Set restriction button to set the user restriction.
+        Then press Go to open the Display page in Settings.
+        Mark this test as passed if one of the following:\n\n
+        - There is no ambient display setting in Display Settings.\n
+        - Ambient display setting is disabled with an info icon on it. Clicking on it triggers a support dialog.\n
+        \n
+        Use the Back button to return to this page.
+    </string>
     <string name="device_owner_disallow_data_roaming">Disallow data roaming</string>
     <string name="device_owner_disallow_data_roaming_info">
         Device should have a sim card to perform this test.
@@ -3238,8 +3251,6 @@ You should be prompted to select credentials; choose the ones you just installed
     <string name="disallow_config_screen_timeout_action">Configuring sleep options in Display or Battery page.</string>
     <string name="disallow_config_brightness">Disallow config brightness settings</string>
     <string name="disallow_config_brightness_action">Configuring brightness level or adaptive brightness in Display or Battery page, or toggling brightness slider in quick settings</string>
-    <string name="disallow_ambient_display">Disallow ambient display</string>
-    <string name="disallow_ambient_display_action">Configuring ambient display in Display or Battery page</string>
     <string name="disallow_apps_control">Disallow controlling apps</string>
     <string name="disallow_apps_control_action">DISABLE/UNINSTALL/FORCE STOP-ing any app in the managed device/profile other than CtsVerifier</string>
     <string name="disallow_config_cell_broadcasts">Disallow config cell broadcasts</string>
@@ -3577,7 +3588,7 @@ You should be prompted to select credentials; choose the ones you just installed
         10) Tap the \"Learn more\" link.\n
         11) Verify that a screen informing you what your managing organization can do is shown.\n
         \n
-        Use the Back button to return to this page.
+        Use the Back button to return to this page. If this device does not have quick settings, please skip this test and mark it passing.
     </string>
     <string name="enterprise_privacy_keyguard">Keyguard disclosure</string>
     <string name="enterprise_privacy_keyguard_info">
@@ -3625,6 +3636,8 @@ You should be prompted to select credentials; choose the ones you just installed
         9) Close the dialog.\n
         10) Tap the right button below to disable network logging.\n
         11) Verify that the notification disappeared.\n
+        \n
+        If this device does not have quick settings, please skip this test and mark it passing.
     </string>
     <string name="device_owner_enable_network_logging_button">Enable Network Logging</string>
     <string name="device_owner_disable_network_logging_button">Disable Network Logging</string>

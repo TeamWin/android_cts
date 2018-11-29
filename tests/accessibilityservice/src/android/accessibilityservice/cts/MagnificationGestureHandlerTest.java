@@ -237,7 +237,7 @@ public class MagnificationGestureHandlerTest {
 
         dispatch(swipe(
                 mTapLocation,
-                add(mTapLocation, 31, 29)));
+                add(mTapLocation, 0, 29)));
         assertPropagated(ACTION_DOWN, ACTION_MOVE, ACTION_UP);
     }
 

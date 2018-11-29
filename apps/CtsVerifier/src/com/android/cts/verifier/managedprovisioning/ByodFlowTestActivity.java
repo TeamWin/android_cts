@@ -53,6 +53,12 @@ import com.android.cts.verifier.location.LocationListenerActivity;
  */
 public class ByodFlowTestActivity extends DialogTestListActivity {
 
+    // Action for delivering sub-test result from the profile.
+    public static final String ACTION_TEST_RESULT =
+            "com.android.cts.verifier.managedprovisioning.BYOD_TEST_RESULT";
+    // Extra for ACTION_TEST_RESULT containing test result.
+    public static final String EXTRA_RESULT = "extra-result";
+
     private static final String TAG = "ByodFlowTestActivity";
     private static ConnectivityManager mCm;
     private static final int REQUEST_MANAGED_PROVISIONING = 0;
@@ -151,10 +157,13 @@ public class ByodFlowTestActivity extends DialogTestListActivity {
 
     @Override
     protected void onNewIntent(Intent intent) {
-        // This is called when managed provisioning completes successfully without reboot.
         super.onNewIntent(intent);
         if (ByodHelperActivity.ACTION_PROFILE_OWNER_STATUS.equals(intent.getAction())) {
+            // This is called when managed provisioning completes successfully without reboot.
             handleStatusUpdate(RESULT_OK, intent);
+        } else if (ACTION_TEST_RESULT.equals(intent.getAction())) {
+            // Called when subtest cannot communicate test result from the profile via setResult().
+            handleLaunchTestResult(RESULT_OK, intent.getParcelableExtra(EXTRA_RESULT));
         }
     }
 
@@ -261,6 +270,7 @@ public class ByodFlowTestActivity extends DialogTestListActivity {
                 workStatusIcon,
                 R.drawable.stat_sys_managed_profile_status);
 
+        /* Disable due to b/111734436.
         Intent workStatusToast = new Intent(WorkStatusTestActivity.ACTION_WORK_STATUS_TOAST);
         workStatusToast.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
         mWorkStatusBarToastTest = new DialogTestListItem(this,
@@ -268,6 +278,7 @@ public class ByodFlowTestActivity extends DialogTestListActivity {
                 "BYOD_WorkStatusBarToastTest",
                 R.string.provisioning_byod_work_status_toast_instruction,
                 workStatusToast);
+        */
 
         mDisableNonMarketTest = new DialogTestListItem(this,
                 R.string.provisioning_byod_nonmarket_deny,
@@ -415,7 +426,8 @@ public class ByodFlowTestActivity extends DialogTestListActivity {
         mRecentsTest = TestListItem.newTest(this,
                 R.string.provisioning_byod_recents,
                 RecentsRedactionActivity.class.getName(),
-                new Intent(RecentsRedactionActivity.ACTION_RECENTS),
+                new Intent(RecentsRedactionActivity.ACTION_RECENTS).setFlags(
+                        Intent.FLAG_ACTIVITY_NEW_TASK),
                 null);
 
         mOrganizationInfoTest = TestListItem.newTest(this,
@@ -458,7 +470,10 @@ public class ByodFlowTestActivity extends DialogTestListActivity {
 
         adapter.add(mWorkNotificationBadgedTest);
         adapter.add(mWorkStatusBarIconTest);
+
+        /* Disable due to b/111734436.
         adapter.add(mWorkStatusBarToastTest);
+        */
 
         // Settings related tests.
         adapter.add(mProfileAccountVisibleTest);

@@ -28,7 +28,7 @@ public class BatteryIncidentTest extends ProtoDumpTestCase {
     private static final String LEANBACK_FEATURE = "android.software.leanback";
 
     public void testBatteryServiceDump() throws Exception {
-        if (hasBattery(getDevice())) {
+        if (!hasBattery(getDevice())) {
             return;
         }
 
@@ -57,7 +57,6 @@ public class BatteryIncidentTest extends ProtoDumpTestCase {
         int level = dump.getLevel();
         assertTrue(level >= 0 && level <= scale);
         assertTrue(dump.getVoltage() > 0);
-        assertTrue(dump.getTemperature() > 0);
     }
 
     static boolean hasBattery(ITestDevice device) throws DeviceNotAvailableException {

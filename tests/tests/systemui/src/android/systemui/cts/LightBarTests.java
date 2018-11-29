@@ -38,6 +38,7 @@ import android.view.MotionEvent;
 
 import org.junit.Rule;
 import org.junit.Test;
+import org.junit.rules.TestName;
 import org.junit.runner.RunWith;
 
 /**
@@ -56,7 +57,7 @@ public class LightBarTests extends LightBarTestBase {
      * Color may be slightly off-spec when resources are resized for lower densities. Use this error
      * margin to accommodate for that when comparing colors.
      */
-    private static final int COLOR_COMPONENT_ERROR_MARGIN = 10;
+    private static final int COLOR_COMPONENT_ERROR_MARGIN = 20;
 
     private final String NOTIFICATION_TAG = "TEST_TAG";
     private final String NOTIFICATION_CHANNEL_ID = "test_channel";
@@ -66,11 +67,13 @@ public class LightBarTests extends LightBarTestBase {
     @Rule
     public ActivityTestRule<LightBarActivity> mActivityRule = new ActivityTestRule<>(
             LightBarActivity.class);
+    @Rule
+    public TestName mTestName = new TestName();
 
     @Test
     @AppModeFull // Instant apps cannot create notifications
     public void testLightStatusBarIcons() throws Throwable {
-        assumeHasColoredStatusBar();
+        assumeHasColoredStatusBar(mActivityRule);
 
         mNm = (NotificationManager) getInstrumentation().getContext()
                 .getSystemService(Context.NOTIFICATION_SERVICE);
@@ -102,7 +105,7 @@ public class LightBarTests extends LightBarTestBase {
 
     @Test
     public void testLightNavigationBar() throws Throwable {
-        assumeHasColorNavigationBar();
+        assumeHasColoredNavigationBar(mActivityRule);
 
         requestLightBars(Color.RED /* background */);
         Thread.sleep(WAIT_TIME);
@@ -120,7 +123,7 @@ public class LightBarTests extends LightBarTestBase {
 
     @Test
     public void testNavigationBarDivider() throws Throwable {
-        assumeHasColorNavigationBar();
+        assumeHasColoredNavigationBar(mActivityRule);
 
         mActivityRule.runOnUiThread(() -> {
             mActivityRule.getActivity().getWindow().setNavigationBarColor(Color.RED);
@@ -128,7 +131,8 @@ public class LightBarTests extends LightBarTestBase {
         });
         Thread.sleep(WAIT_TIME);
 
-        checkNavigationBarDivider(mActivityRule.getActivity(), Color.WHITE);
+        checkNavigationBarDivider(mActivityRule.getActivity(), Color.WHITE, Color.RED,
+                mTestName.getMethodName());
     }
 
     private void injectCanceledTap(int x, int y) {
@@ -149,9 +153,7 @@ public class LightBarTests extends LightBarTestBase {
     private void assertLightStats(Bitmap bitmap, Stats s) {
         boolean success = false;
         try {
-            assertMoreThan("Not enough background pixels", 0.3f,
-                    (float) s.backgroundPixels / s.totalPixels(),
-                    "Is the bar background showing correctly (solid red)?");
+            assumeNavigationBarChangesColor(s.backgroundPixels, s.totalPixels());
 
             assertMoreThan("Not enough pixels colored as in the spec", 0.3f,
                     (float) s.iconPixels / s.foregroundPixels(),
@@ -169,7 +171,7 @@ public class LightBarTests extends LightBarTestBase {
             success = true;
         } finally {
             if (!success) {
-                dumpBitmap(bitmap);
+                dumpBitmap(bitmap, mTestName.getMethodName());
             }
         }
     }
@@ -237,7 +239,7 @@ public class LightBarTests extends LightBarTestBase {
         float eps = 0.005f;
 
         for (int c : pixels) {
-            if (c == background) {
+            if (isColorSame(c, background)) {
                 s.backgroundPixels++;
                 continue;
             }

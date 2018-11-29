@@ -40,4 +40,13 @@ public class Poc17_04 extends SecurityTestCase {
     assertFalse("VULNERABLE DEVICE DETECTED",
                 AdbUtils.runPocCheckExitCode("CVE-2014-3145", getDevice(), 60));
   }
+
+  /**
+   * b/32813456
+   */
+  @SecurityTest
+  public void testPocCVE_2016_10229() throws Exception {
+    String out = AdbUtils.runPoc("CVE-2016-10229", getDevice());
+    assertNotMatchesMultiLine(".*OVERWRITE.*", out);
+  }
 }

@@ -2010,15 +2010,20 @@ public class RobustnessTest extends Camera2AndroidTestCase {
                     case RAW: {
                         Size targetSize = (numConfigs == 1) ? maxSizes.maxRawSize :
                                 overridePhysicalCameraSizes.get(j);
-                        ImageReader target = ImageReader.newInstance(
-                            targetSize.getWidth(), targetSize.getHeight(), RAW, numBuffers);
-                        target.setOnImageAvailableListener(imageDropperListener, mHandler);
-                        OutputConfiguration config = new OutputConfiguration(target.getSurface());
-                        if (numConfigs > 1) {
-                            config.setPhysicalCameraId(overridePhysicalCameraIds.get(j));
+                        // targetSize could be null in the logical camera case where only
+                        // physical camera supports RAW stream.
+                        if (targetSize != null) {
+                            ImageReader target = ImageReader.newInstance(
+                                targetSize.getWidth(), targetSize.getHeight(), RAW, numBuffers);
+                            target.setOnImageAvailableListener(imageDropperListener, mHandler);
+                            OutputConfiguration config =
+                                    new OutputConfiguration(target.getSurface());
+                            if (numConfigs > 1) {
+                                config.setPhysicalCameraId(overridePhysicalCameraIds.get(j));
+                            }
+                            outputConfigs.add(config);
+                            rawTargets.add(target);
                         }
-                        outputConfigs.add(config);
-                        rawTargets.add(target);
                         break;
                     }
                     default:

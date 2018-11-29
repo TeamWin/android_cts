@@ -27,18 +27,23 @@ import android.content.pm.PackageManager;
 import android.content.res.Configuration;
 import android.graphics.Bitmap;
 import android.support.test.InstrumentationRegistry;
+import android.support.test.rule.ActivityTestRule;
 import android.util.Log;
-import android.view.KeyCharacterMap;
 import android.view.KeyEvent;
+import android.view.WindowInsets;
 
+import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
+import java.nio.file.FileSystems;
+import java.nio.file.Path;
 
 public class LightBarTestBase {
 
     private static final String TAG = "LightBarTestBase";
 
-    public static final String DUMP_PATH = "/sdcard/lightstatustest.png";
+    public static final Path DUMP_PATH = FileSystems.getDefault()
+            .getPath("/sdcard/LightBarTestBase/");
 
     protected Bitmap takeStatusBarScreenshot(LightBarBaseActivity activity) {
         Bitmap fullBitmap = getInstrumentation().getUiAutomation().takeScreenshot();
@@ -51,11 +56,17 @@ public class LightBarTestBase {
                 fullBitmap.getHeight() - activity.getBottom());
     }
 
-    protected void dumpBitmap(Bitmap bitmap) {
-        Log.e(TAG, "Dumping failed bitmap to " + DUMP_PATH);
+    protected void dumpBitmap(Bitmap bitmap, String name) {
+        File dumpDir = DUMP_PATH.toFile();
+        if (!dumpDir.exists()) {
+            dumpDir.mkdirs();
+        }
+
+        Path filePath = DUMP_PATH.resolve(name + ".png");
+        Log.e(TAG, "Dumping failed bitmap to " + filePath);
         FileOutputStream fileStream = null;
         try {
-            fileStream = new FileOutputStream(DUMP_PATH);
+            fileStream = new FileOutputStream(filePath.toFile());
             bitmap.compress(Bitmap.CompressFormat.PNG, 85, fileStream);
             fileStream.flush();
         } catch (Exception e) {
@@ -71,10 +82,13 @@ public class LightBarTestBase {
         }
     }
 
-    private boolean hasVirtualNavigationBar() {
-        boolean hasBackKey = KeyCharacterMap.deviceHasKey(KeyEvent.KEYCODE_BACK);
-        boolean hasHomeKey = KeyCharacterMap.deviceHasKey(KeyEvent.KEYCODE_HOME);
-        return !hasBackKey || !hasHomeKey;
+    private boolean hasVirtualNavigationBar(ActivityTestRule<? extends LightBarBaseActivity> rule)
+            throws Throwable {
+        final WindowInsets[] inset = new WindowInsets[1];
+        rule.runOnUiThread(()-> {
+            inset[0] = rule.getActivity().getRootWindowInsets();
+        });
+        return inset[0].getStableInsetBottom() > 0;
     }
 
     private boolean isRunningInVr() {
@@ -101,29 +115,53 @@ public class LightBarTestBase {
         assumeTrue(ActivityManager.isHighEndGfx());
     }
 
-    protected void assumeHasColoredStatusBar() {
+    protected void assumeHasColoredStatusBar(ActivityTestRule<? extends LightBarBaseActivity> rule)
+            throws Throwable {
         assumeBasics();
 
         // No status bar when running in Vr
         assumeFalse(isRunningInVr());
+
+        // Status bar exists only when top stable inset is positive
+        final WindowInsets[] inset = new WindowInsets[1];
+        rule.runOnUiThread(()-> {
+            inset[0] = rule.getActivity().getRootWindowInsets();
+        });
+        assumeTrue("Top stable inset is non-positive.", inset[0].getStableInsetTop() > 0);
     }
 
-    protected void assumeHasColorNavigationBar() {
+    protected void assumeHasColoredNavigationBar(
+            ActivityTestRule<? extends LightBarBaseActivity> rule) throws Throwable {
         assumeBasics();
 
         // No virtual navigation bar, so no effect.
-        assumeTrue(hasVirtualNavigationBar());
+        assumeTrue(hasVirtualNavigationBar(rule));
     }
 
-    protected void checkNavigationBarDivider(LightBarBaseActivity activity, int dividerColor) {
+    protected void checkNavigationBarDivider(LightBarBaseActivity activity, int dividerColor,
+            int backgroundColor, String methodName) {
         final Bitmap bitmap = takeNavigationBarScreenshot(activity);
         int[] pixels = new int[bitmap.getHeight() * bitmap.getWidth()];
         bitmap.getPixels(pixels, 0, bitmap.getWidth(), 0, 0, bitmap.getWidth(), bitmap.getHeight());
+
+        int backgroundColorPixelCount = 0;
+        for (int i = 0; i < pixels.length; i++) {
+            if (pixels[i] == backgroundColor) {
+                backgroundColorPixelCount++;
+            }
+        }
+        assumeNavigationBarChangesColor(backgroundColorPixelCount, pixels.length);
+
         for (int col = 0; col < bitmap.getWidth(); col++) {
             if (dividerColor != pixels[col]) {
-                dumpBitmap(bitmap);
+                dumpBitmap(bitmap, methodName);
                 fail("Invalid color exptected=" + dividerColor + " actual=" + pixels[col]);
             }
         }
+    }
+
+    protected void assumeNavigationBarChangesColor(int backgroundColorPixelCount, int totalPixel) {
+        assumeTrue("Not enough background pixels. The navigation bar may not be able to change "
+                + "color.", backgroundColorPixelCount > 0.3f * totalPixel);
     }
 }

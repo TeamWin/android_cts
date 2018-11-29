@@ -67,9 +67,7 @@ NOT_YET_MANDATED = {
                 "test_lens_movement_reporting",
                 "test_lens_position"
         ],
-        "scene4": [
-                "test_multi_camera_alignment"
-        ],
+        "scene4": [],
         "scene5": [],
         "sensor_fusion": []
 }
@@ -338,7 +336,7 @@ def main():
             # Extract chart from scene for scene3 once up front
             chart_loc_arg = ''
             if scene == 'scene3':
-                if float(camera_fov) < 90 and np.isclose(chart_distance, 20,
+                if float(camera_fov) < 90 and np.isclose(chart_distance, 22,
                                                          rtol=0.1):
                     chart_height *= 0.67
                 chart = its.cv2image.Chart(SCENE3_FILE, chart_height,

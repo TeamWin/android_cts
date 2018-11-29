@@ -58,6 +58,7 @@ import java.security.spec.RSAKeyGenParameterSpec;
 import java.util.Arrays;
 
 import javax.crypto.Cipher;
+import javax.crypto.KeyGenerator;
 import javax.crypto.spec.GCMParameterSpec;
 import javax.crypto.spec.IvParameterSpec;
 import javax.crypto.spec.OAEPParameterSpec;
@@ -120,12 +121,11 @@ public class ImportWrappedKeyTest extends AndroidTestCase {
       if (!TestUtils.supports3DES()) {
           return;
         }
-
-        random.setSeed(0);
-
-        byte[] keyMaterial = new byte[24]; //  192 bits in a 168-bit 3DES key
+        KeyGenerator kg = KeyGenerator.getInstance("DESEDE");
+        kg.init(168);
+        byte[] keyMaterial = kg.generateKey().getEncoded();
         random.nextBytes(keyMaterial);
-        byte[] mask = new byte[32]; // Zero mask
+        byte[] mask = new byte[24]; // Zero mask
 
         KeyPair kp;
         try {
@@ -169,17 +169,35 @@ public class ImportWrappedKeyTest extends AndroidTestCase {
       }
 
       if (TestUtils.hasStrongBox(getContext())) {
-            random.setSeed(0);
-
-            byte[] keyMaterial = new byte[32];
+            KeyGenerator kg = KeyGenerator.getInstance("DESEDE");
+            kg.init(168);
+            byte[] keyMaterial = kg.generateKey().getEncoded();
             random.nextBytes(keyMaterial);
-            byte[] mask = new byte[32]; // Zero mask
+            byte[] mask = new byte[24]; // Zero mask
 
             importWrappedKey(wrapKey(
                     genKeyPair(WRAPPING_KEY_ALIAS, true).getPublic(),
                     keyMaterial,
                     mask,
                     makeAuthList(168, KM_ALGORITHM_3DES)));
+
+            // Use Key
+            KeyStore keyStore = KeyStore.getInstance("AndroidKeyStore");
+            keyStore.load(null, null);
+
+            assertTrue("Failed to load key after wrapped import", keyStore.containsAlias(ALIAS));
+
+            Key key = keyStore.getKey(ALIAS, null);
+
+            Cipher c = Cipher.getInstance("DESede/CBC/PKCS7Padding");
+            c.init(Cipher.ENCRYPT_MODE, key);
+            IvParameterSpec paramSpec = new IvParameterSpec(c.getIV());
+            byte[] encrypted = c.doFinal("hello, world".getBytes());
+
+            c = Cipher.getInstance("DESede/CBC/PKCS7Padding");
+            c.init(Cipher.DECRYPT_MODE, key, paramSpec);
+
+            assertEquals(new String(c.doFinal(encrypted)), "hello, world");
         } else {
             try {
                 genKeyPair(WRAPPING_KEY_ALIAS, true);
@@ -202,6 +220,25 @@ public class ImportWrappedKeyTest extends AndroidTestCase {
                     keyMaterial,
                     mask,
                     makeAuthList(keyMaterial.length * 8, KM_ALGORITHM_AES)));
+
+            // Use Key
+            KeyStore keyStore = KeyStore.getInstance("AndroidKeyStore");
+            keyStore.load(null, null);
+
+            assertTrue("Failed to load key after wrapped import", keyStore.containsAlias(ALIAS));
+
+            Key key = keyStore.getKey(ALIAS, null);
+
+            Cipher c = Cipher.getInstance("AES/CBC/PKCS7Padding");
+            c.init(Cipher.ENCRYPT_MODE, key);
+            IvParameterSpec paramSpec = new IvParameterSpec(c.getIV());
+
+            byte[] encrypted = c.doFinal("hello, world".getBytes());
+
+            c = Cipher.getInstance("AES/CBC/PKCS7Padding");
+            c.init(Cipher.DECRYPT_MODE, key, paramSpec);
+
+            assertEquals(new String(c.doFinal(encrypted)), "hello, world");
         } else {
             try {
               random.setSeed(0);
