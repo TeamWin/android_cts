@@ -287,4 +287,8 @@ class MyTest : public ::aidl::test_package::BnTest,
     *_aidl_return = in_value;
     return ::ndk::ScopedAStatus(AStatus_newOk());
   }
+  ::ndk::ScopedAStatus NewMethodThatReturns10(int32_t* _aidl_return) {
+    *_aidl_return = 10;
+    return ::ndk::ScopedAStatus(AStatus_newOk());
+  }
 };

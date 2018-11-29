@@ -92,4 +92,7 @@ interface ITest {
     // (specifically for testing out parameters)
     @nullable String[] DoubleRepeatNullableStringArray(
         in @nullable String[] input, out @nullable String[] repeated);
+
+    // Methods that do not exist in version 1
+    int NewMethodThatReturns10();
 }
