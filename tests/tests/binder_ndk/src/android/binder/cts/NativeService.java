@@ -26,10 +26,23 @@ import android.util.Log;
 
 public class NativeService extends Service {
     private final String TAG = "NativeService";
+    private final IBinder mBinder;
+
+    private NativeService() {
+        this("binder_ndk_test_interface_new");
+    }
+
+    private NativeService(String libName) {
+        System.loadLibrary(libName);
+        mBinder = getBinder_native();
+    }
 
     // the configuration of these services is done in AndroidManifest.xml
     public static class Local extends NativeService {}
     public static class Remote extends NativeService {}
+    public static class RemoteOld extends NativeService {
+        public RemoteOld() { super("binder_ndk_test_interface_old"); }
+    }
 
     @Override
     public IBinder onBind(Intent intent) {
@@ -37,11 +50,5 @@ public class NativeService extends Service {
         return mBinder;
     }
 
-    private IBinder getBinder() {
-        System.loadLibrary("binder_ndk_test");
-        return getBinder_native();
-    }
     private native IBinder getBinder_native();
-
-    private final IBinder mBinder = getBinder();
 }

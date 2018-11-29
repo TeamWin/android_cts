@@ -53,4 +53,9 @@ public class NdkBinderTest {
             InstrumentationRegistry.getTargetContext(), JavaService.Remote.class)
         .get().asBinder();
     }
+    static IBinder getRemoteOldNativeService() {
+        return new SyncTestServiceConnection(
+            InstrumentationRegistry.getTargetContext(), NativeService.RemoteOld.class)
+        .get().asBinder();
+    }
 }

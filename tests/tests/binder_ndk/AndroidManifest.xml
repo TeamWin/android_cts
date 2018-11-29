@@ -36,6 +36,11 @@
             android:name="android.binder.cts.NativeService$Remote"
             android:process=":native"
             android:exported="true" />
+
+        <service
+            android:name="android.binder.cts.NativeService$RemoteOld"
+            android:process=":native_old"
+            android:exported="true" />
     </application>
 
     <!-- This is a self-instrumenting test package. -->

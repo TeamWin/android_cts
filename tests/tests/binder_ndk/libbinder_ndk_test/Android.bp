@@ -19,24 +19,15 @@ aidl_interface {
         "test_package/ITest.aidl",
         "test_package/RegularPolygon.aidl",
     ],
+    versions: ["1"],
 }
 
-cc_library_shared {
-    name: "libbinder_ndk_test",
+cc_defaults {
+    name: "libbinder_ndk_test_defaults",
 
     cflags: [
         "-Wall",
         "-Werror",
-    ],
-
-    srcs: [
-        "android_binder_cts_NativeService.cpp",
-        "test_ibinder.cpp",
-        "test_ibinder_jni.cpp",
-        "test_native_aidl_client.cpp",
-        "test_parcel.cpp",
-        "test_status.cpp",
-        "utilities.cpp",
     ],
 
     shared_libs: [
@@ -44,11 +35,63 @@ cc_library_shared {
         "libbinder_ndk",
     ],
     whole_static_libs: ["libnativetesthelper_jni"],
-    static_libs: [
-        "libbinder_ndk_test_interface-ndk",
-    ],
 
     sdk_version: "current",
     cpp_std: "c++17",
     stl: "c++_static",
+}
+
+cc_library_shared {
+    name: "libbinder_ndk_test_utilities",
+    defaults: ["libbinder_ndk_test_defaults"],
+    srcs: ["utilities.cpp"],
+}
+
+cc_library_shared {
+    name: "libbinder_ndk_test_interface_new",
+    defaults: ["libbinder_ndk_test_defaults"],
+    srcs: [
+        "android_binder_cts_NativeService.cpp",
+    ],
+
+    // Using the up-to-date version of the interface
+
+    shared_libs: [
+        "libbinder_ndk_test_interface-ndk",
+        "libbinder_ndk_test_utilities",
+    ],
+}
+
+cc_library_shared {
+    name: "libbinder_ndk_test_interface_old",
+    defaults: ["libbinder_ndk_test_defaults"],
+    srcs: [
+        "android_binder_cts_NativeService.cpp",
+    ],
+
+    // Using the frozen version 1 of the interface
+    static_libs: [
+        "libbinder_ndk_test_interface-V1-ndk",
+    ],
+
+    shared_libs: [
+        "libbinder_ndk_test_utilities",
+    ],
+}
+
+cc_library_shared {
+    name: "libbinder_ndk_test",
+    defaults: ["libbinder_ndk_test_defaults"],
+    srcs: [
+        "test_ibinder.cpp",
+        "test_ibinder_jni.cpp",
+        "test_native_aidl_client.cpp",
+        "test_parcel.cpp",
+        "test_status.cpp",
+    ],
+
+    shared_libs: [
+        "libbinder_ndk_test_interface-ndk",
+        "libbinder_ndk_test_utilities",
+    ],
 }
