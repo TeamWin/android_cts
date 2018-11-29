@@ -29,6 +29,9 @@ import java.util.concurrent.CountDownLatch;
 
 public class TestImpl extends ITest.Stub {
   @Override
+  public int getInterfaceVersion() { return TestImpl.VERSION; }
+
+  @Override
   public String GetName() {
     return "JAVA";
   }
@@ -264,5 +267,10 @@ public class TestImpl extends ITest.Stub {
 
     System.arraycopy(in_value, 0, repeated, 0, in_value.length);
     return in_value;
+  }
+
+  @Override
+  public int NewMethodThatReturns10() {
+    return 10;
   }
 }

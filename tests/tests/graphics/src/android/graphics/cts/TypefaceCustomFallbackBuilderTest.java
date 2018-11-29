@@ -17,6 +17,8 @@
 package android.graphics.cts;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertTrue;
 
 import android.content.res.AssetManager;
 import android.graphics.Typeface;
@@ -193,15 +195,34 @@ public class TypefaceCustomFallbackBuilderTest {
         assertEquals(20.0f, paint.measureText("\u05D0", 0, 1), 0.0f);  // Hebrew letter
     }
 
-    @Test(expected = IllegalArgumentException.class)
+    @Test
     public void testMaxCustomFallback() throws IOException {
         final AssetManager am = InstrumentationRegistry.getTargetContext().getAssets();
         final Font font = new Font.Builder(am, "fonts/user_fallback/ascii.ttf").build();
         final Typeface.CustomFallbackBuilder b = new Typeface.CustomFallbackBuilder(
                 new FontFamily.Builder(font).build());
-        for (int i = 0; i < 64; ++i) {
+        // Start from 1 since the first font family is already passed to the constructor.
+        for (int i = 1; i < Typeface.CustomFallbackBuilder.getMaxCustomFallbackCount(); ++i) {
             b.addCustomFallback(new FontFamily.Builder(font).build());
         }
+        assertNotNull(b.build());
+    }
+
+    @Test(expected = IllegalArgumentException.class)
+    public void testMaxCustomFallback_exceed_limits() throws IOException {
+        final AssetManager am = InstrumentationRegistry.getTargetContext().getAssets();
+        final Font font = new Font.Builder(am, "fonts/user_fallback/ascii.ttf").build();
+        final Typeface.CustomFallbackBuilder b = new Typeface.CustomFallbackBuilder(
+                new FontFamily.Builder(font).build());
+        // Start from 1 since the first font family is already passed to the constructor.
+        for (int i = 1; i < Typeface.CustomFallbackBuilder.getMaxCustomFallbackCount() + 1; ++i) {
+            b.addCustomFallback(new FontFamily.Builder(font).build());
+        }
+    }
+
+    @Test
+    public void testMaxCustomFallback_must_be_positive() {
+        assertTrue(Typeface.CustomFallbackBuilder.getMaxCustomFallbackCount() > 0);
     }
 
     @Test
