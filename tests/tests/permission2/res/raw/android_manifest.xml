@@ -750,6 +750,12 @@
     -->
     <permission android:name="android.permission.BIND_FINANCIAL_SMS_SERVICE"
                 android:protectionLevel="signature" />
+
+    <!-- @SystemApi Allows wallpaper to be rendered in ambient mode.
+         @hide -->
+    <permission android:name="android.permission.AMBIENT_WALLPAPER"
+                android:protectionLevel="signature|preinstalled" />
+
     <!-- ====================================================================== -->
     <!-- Permissions for accessing external storage                             -->
     <!-- ====================================================================== -->
