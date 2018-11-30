@@ -76,27 +76,23 @@ public class UsesLibraryTest extends InstrumentationTestCase {
         ClassLoader loader = getClass().getClassLoader();
         if (loader instanceof BaseDexClassLoader) {
             Object[] dexElements = getDexElementsFromClassLoader((BaseDexClassLoader) loader);
-            assertTrue(dexElements != null && dexElements.length > 1);
+            assertTrue(dexElements != null);
+            assertTrue(dexElements.length > 0);
 
-            // First dex file is either the shared library or the cts instrumentation library.
-            DexFile libDexFile = getDexFileFromDexElement(dexElements[0]);
-            String libPath = libDexFile.getName();
             // The last dex file should be the test apk file: com.android.cts.useslibrary.
             DexFile apkDexFile = getDexFileFromDexElement(dexElements[dexElements.length - 1]);
             String apkPath = apkDexFile.getName();
 
             // In order to ensure the collision check is executed we use the apkDexFile when
             // constructing the test class path for duplicates.
-            // We do not use the shared libraries apks because they are compiled with a special
-            // marker which may skip the collision check (b/37777332).
-            String testPath = libPath + File.pathSeparator + apkPath + File.pathSeparator + apkPath;
+            String testPath = apkPath + File.pathSeparator + apkPath;
 
             PathClassLoader testLoader = new PathClassLoader(testPath, null);
             Object[] testDexElements = getDexElementsFromClassLoader(testLoader);
             assertTrue(testDexElements != null);
-            assertEquals(Arrays.toString(testDexElements), 3, testDexElements.length);
+            assertEquals(Arrays.toString(testDexElements), 2, testDexElements.length);
 
-            DexFile testDexFile = getDexFileFromDexElement(testDexElements[2]);
+            DexFile testDexFile = getDexFileFromDexElement(testDexElements[1]);
             assertFalse(isDexFileBackedByOatFile(testDexFile));
         }
     }
