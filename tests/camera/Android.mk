@@ -51,7 +51,9 @@ LOCAL_STATIC_JAVA_LIBRARIES := compatibility-device-util \
 
 LOCAL_SRC_FILES := \
 	src/android/hardware/camera2/cts/testcases/Camera2AndroidTestCase.java \
-	src/android/hardware/camera2/cts/PerformanceTest.java
+	src/android/hardware/camera2/cts/PerformanceTest.java \
+	src/android/hardware/cts/CameraTestCase.java \
+	src/android/hardware/cts/LegacyCameraPerformanceTest.java
 
 LOCAL_SDK_VERSION := test_current
 
