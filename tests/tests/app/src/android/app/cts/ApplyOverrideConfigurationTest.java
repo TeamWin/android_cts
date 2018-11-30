@@ -16,9 +16,12 @@
 package android.app.cts;
 
 import android.app.UiAutomation;
+import android.content.Context;
+import android.content.pm.PackageManager;
 import android.content.res.Configuration;
 import android.support.test.filters.SmallTest;
 import android.test.ActivityInstrumentationTestCase2;
+import android.util.Log;
 
 import java.util.concurrent.Future;
 
@@ -28,6 +31,11 @@ import java.util.concurrent.Future;
  */
 public class ApplyOverrideConfigurationTest extends
         ActivityInstrumentationTestCase2<ApplyOverrideConfigurationActivity> {
+
+    private final static String TAG = "ApplyOverrideConfigurationTest";
+    //Whether screen rotation is supported
+    private boolean mRotationSupported = false;
+
     public ApplyOverrideConfigurationTest() {
         super(ApplyOverrideConfigurationActivity.class);
     }
@@ -35,17 +43,30 @@ public class ApplyOverrideConfigurationTest extends
     @Override
     public void setUp() throws Exception {
         super.setUp();
-        getInstrumentation().getUiAutomation().setRotation(UiAutomation.ROTATION_FREEZE_0);
+        mRotationSupported = isRotationSupported(getActivity());
+        if (!mRotationSupported) {
+            Log.e(TAG, "No rotation support, all tests will be skipped.");
+        }
+        else {
+            getInstrumentation().getUiAutomation().setRotation(UiAutomation.ROTATION_FREEZE_0);
+        }
     }
 
     @Override
     public void tearDown() throws Exception {
-        getInstrumentation().getUiAutomation().setRotation(UiAutomation.ROTATION_UNFREEZE);
+        if (mRotationSupported) {
+            getInstrumentation().getUiAutomation().setRotation(UiAutomation.ROTATION_UNFREEZE);
+        }
         super.tearDown();
     }
 
     @SmallTest
     public void testOverriddenConfigurationIsPassedIntoCallback() throws Exception {
+        // This test instruments display rotation; disable it on devices that do not
+        // support auto-rotation.
+        if (!mRotationSupported) {
+            return;
+        }
         final Configuration config = getActivity().getResources().getConfiguration();
         final int originalOrientation = config.orientation;
         assertEquals(ApplyOverrideConfigurationActivity.OVERRIDE_SMALLEST_WIDTH,
@@ -65,5 +86,18 @@ public class ApplyOverrideConfigurationTest extends
                 newConfig.smallestScreenWidthDp);
 
         assertEquals(newConfig, callbackConfig);
+    }
+
+    /**
+     * Gets whether the device supports rotation. In general such a
+     * device has both portrait and landscape features.
+     *
+     * @param context Context for accessing system resources.
+     * @return Whether the device supports rotation.
+     */
+    private boolean isRotationSupported(Context context) {
+        PackageManager pm = context.getPackageManager();
+        return pm.hasSystemFeature(PackageManager.FEATURE_SCREEN_PORTRAIT)
+                && pm.hasSystemFeature(PackageManager.FEATURE_SCREEN_LANDSCAPE);
     }
 }
