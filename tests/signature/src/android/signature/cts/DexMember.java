@@ -22,11 +22,13 @@ public abstract class DexMember {
     private final String mName;
     private final String mClassDescriptor;
     private final String mType;
+    private final String[] mFlags;
 
-    protected DexMember(String className, String name, String type) {
+    protected DexMember(String className, String name, String type, String[] flags) {
         mName = name;
         mClassDescriptor = className;
         mType = type;
+        mFlags = flags;
     }
 
     public String getName() {
@@ -47,6 +49,10 @@ public abstract class DexMember {
 
     public String getJavaType() {
         return dexToJavaType(mType);
+    }
+
+    public String[] getHiddenapiFlags() {
+        return mFlags;
     }
 
     /**
