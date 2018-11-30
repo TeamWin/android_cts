@@ -87,6 +87,16 @@ public class P2pTestListActivity extends PassFailButtons.TestListActivity {
                 P2pClientTestListActivity.class.getName(),
                 new Intent(this, P2pClientTestListActivity.class), null));
 
+        adapter.add(TestListItem.newCategory(this, R.string.p2p_join_with_config));
+        adapter.add(TestListItem.newTest(this,
+                R.string.p2p_group_owner_with_config_test,
+                GoWithConfigTestActivity.class.getName(),
+                new Intent(this, GoWithConfigTestActivity.class), null));
+        adapter.add(TestListItem.newTest(this,
+                R.string.p2p_group_client_with_config_test,
+                P2pClientWithConfigTestListActivity.class.getName(),
+                new Intent(this, P2pClientWithConfigTestListActivity.class), null));
+
         adapter.add(TestListItem.newCategory(this, R.string.p2p_service_discovery));
         adapter.add(TestListItem.newTest(this,
                 R.string.p2p_service_discovery_responder_test,
