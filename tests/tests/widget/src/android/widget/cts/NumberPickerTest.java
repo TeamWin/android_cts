@@ -438,4 +438,16 @@ public class NumberPickerTest {
         mNumberPicker.setWrapSelectorWheel(true);
         assertTrue(mNumberPicker.getWrapSelectorWheel());
     }
+
+    @UiThreadTest
+    @Test
+    public void testSelectionDividerHeight() {
+        final NumberPicker numberPicker =
+                (NumberPicker) mActivity.findViewById(R.id.number_picker_divider_height);
+        final int initialValue = numberPicker.getSelectionDividerHeight();
+        assertEquals("Height set via XML", 4, initialValue);
+        final int newValue = 8;
+        numberPicker.setSelectionDividerHeight(newValue);
+        assertEquals(newValue, numberPicker.getSelectionDividerHeight());
+    }
 }
