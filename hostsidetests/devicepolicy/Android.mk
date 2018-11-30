@@ -29,7 +29,8 @@ LOCAL_JAVA_LIBRARIES := \
     cts-tradefed \
     tradefed \
     compatibility-host-util \
-    guava
+    guava \
+    truth-prebuilt
 
 LOCAL_CTS_TEST_PACKAGE := android.adminhostside
 
