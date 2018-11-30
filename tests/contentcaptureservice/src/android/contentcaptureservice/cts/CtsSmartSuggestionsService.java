@@ -15,6 +15,7 @@
  */
 package android.contentcaptureservice.cts;
 
+import static android.contentcaptureservice.cts.Helper.MY_PACKAGE;
 import static android.contentcaptureservice.cts.Helper.await;
 
 import android.service.intelligence.ContentCaptureEventsRequest;
@@ -32,13 +33,15 @@ import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.CountDownLatch;
 
-
 // TODO(b/119638958): if we don't move this service to a separate package, we need to handle the
 // onXXXX methods in a separate thread
 // Either way, we need to make sure its methods are thread safe
 public class CtsSmartSuggestionsService extends SmartSuggestionsService {
 
-    private static final String TAG = "CtsSmartSuggestionsService";
+    private static final String TAG = CtsSmartSuggestionsService.class.getSimpleName();
+
+    public static final String SERVICE_NAME = MY_PACKAGE + "/."
+            + CtsSmartSuggestionsService.class.getSimpleName();
 
     private static final CountDownLatch sInstanceLatch = new CountDownLatch(1);
 

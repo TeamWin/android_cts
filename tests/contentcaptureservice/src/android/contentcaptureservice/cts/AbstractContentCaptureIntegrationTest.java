@@ -17,6 +17,8 @@ package android.contentcaptureservice.cts;
 
 import static android.contentcaptureservice.cts.Helper.GENERIC_TIMEOUT_MS;
 import static android.contentcaptureservice.cts.Helper.TAG;
+import static android.contentcaptureservice.cts.Helper.resetService;
+import static android.contentcaptureservice.cts.Helper.setService;
 
 import static com.android.compatibility.common.util.SystemUtil.runShellCommand;
 
@@ -27,7 +29,6 @@ import static org.junit.Assume.assumeFalse;
 import android.app.Application;
 import android.content.Context;
 import android.contentcaptureservice.cts.common.ActivitiesWatcher;
-import android.os.SystemClock;
 import android.support.test.InstrumentationRegistry;
 import android.support.test.runner.AndroidJUnit4;
 import android.util.Log;
@@ -36,7 +37,6 @@ import android.view.intelligence.ContentCaptureEvent;
 import androidx.annotation.NonNull;
 
 import org.junit.After;
-import org.junit.AfterClass;
 import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.runner.RunWith;
@@ -49,40 +49,19 @@ public abstract class AbstractContentCaptureIntegrationTest {
 
     protected static final Context sContext = InstrumentationRegistry.getTargetContext();
 
-    private static String sPreviousService;
-    private static boolean sSkipped = false;
-
     protected ActivitiesWatcher mActivitiesWatcher;
 
     @BeforeClass
-    public static void saveService() {
+    public static void checkSupported() {
         // TODO(b/119638958): use a @Rule to skip it (once we unhardcode the
         // config.disable_intelligence=true from SystemServer)
         final String checkService = runShellCommand("service check intelligence").trim();
         final boolean notSupported = checkService.contains("not found");
         if (notSupported) {
-            sSkipped = true;
             final String msg = "Skipping test because Content Capture is not supported on device";
             Log.i(TAG, msg);
             assumeFalse(msg, notSupported);
             return;
-        }
-
-        sPreviousService = runShellCommand("settings get secure smart_suggestions_service").trim();
-        if (sPreviousService.equals("null")) {
-            sPreviousService = null;
-        }
-        Log.d(TAG, "Saving previous service: " + sPreviousService);
-    }
-
-    @AfterClass
-    public static void restoreService() {
-        if (sSkipped) return;
-
-        if (sPreviousService != null) {
-            setService(sPreviousService);
-        } else {
-            Log.d(TAG, "No need to restore previous service");
         }
     }
 
@@ -103,6 +82,11 @@ public abstract class AbstractContentCaptureIntegrationTest {
         }
     }
 
+    @After
+    public void restoreDefaultService() {
+        resetService();
+    }
+
     public void assertLifecycleEvent(@NonNull ContentCaptureEvent event, int expected) {
         assertWithMessage("wrong event: %s", event).that(event.getType()).isEqualTo(expected);
     }
@@ -111,19 +95,6 @@ public abstract class AbstractContentCaptureIntegrationTest {
      * Sets {@link CtsSmartSuggestionsService} as the service for the current user.
      */
     public static void enableService() {
-        setService("android.contentcaptureservice.cts/."
-                + CtsSmartSuggestionsService.class.getSimpleName());
-    }
-
-    /**
-     * Sets the content capture service.
-     */
-    public static void setService(@NonNull String service) {
-        Log.d(TAG, "Setting service to " + service);
-        runShellCommand("settings put secure smart_suggestions_service " + service);
-        // TODO(b/119638958): add a more robust mechanism to wait for service to be set.
-        // For example, when the service is set using a shell cmd, block until the
-        // IntelligencePerUserService is cached.
-        SystemClock.sleep(GENERIC_TIMEOUT_MS);
+        setService(CtsSmartSuggestionsService.SERVICE_NAME);
     }
 }
