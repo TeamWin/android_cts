@@ -1956,6 +1956,8 @@ public class ActivityManagerMultiDisplayTests extends ActivityManagerDisplayTest
             imeTestActivitySession.runOnMainSyncAndWait(
                     imeTestActivitySession.getActivity()::showSoftInput);
             waitOrderedImeEventsThenAssertImeShown(stream, newDisplay.mId,
+                    editorMatcher("onStartInput",
+                            imeTestActivitySession.getActivity().mEditText.getPrivateImeOptions()),
                     event -> "showSoftInput".equals(event.getEventName()));
 
             // Assert the configuration of the IME window is the same as the configuration of the
@@ -1970,6 +1972,8 @@ public class ActivityManagerMultiDisplayTests extends ActivityManagerDisplayTest
             imeTestActivitySession2.runOnMainSyncAndWait(
                     imeTestActivitySession2.getActivity()::showSoftInput);
             waitOrderedImeEventsThenAssertImeShown(stream, DEFAULT_DISPLAY,
+                    editorMatcher("onStartInput",
+                            imeTestActivitySession2.getActivity().mEditText.getPrivateImeOptions()),
                     event -> "showSoftInput".equals(event.getEventName()));
 
             // Assert the configuration of the IME window is the same as the configuration of the
@@ -2039,12 +2043,8 @@ public class ActivityManagerMultiDisplayTests extends ActivityManagerDisplayTest
 
             imeTestActivitySession.launchTestActivityOnDisplaySync(ImeTestActivity.class,
                     display1.mId);
-            imeTestActivitySession.getActivity().mEditText.setPrivateImeOptions(
-                    ImeTestActivity.class.getName());
             imeTestActivitySession2.launchTestActivityOnDisplaySync(ImeTestActivity2.class,
                     display2.mId);
-            imeTestActivitySession2.getActivity().mEditText.setPrivateImeOptions(
-                    ImeTestActivity2.class.getName());
             final ImeEventStream stream = mockImeSession1.openEventStream();
 
             // Tap display1 as top focused display & request focus on EditText to show soft input.
@@ -2053,7 +2053,8 @@ public class ActivityManagerMultiDisplayTests extends ActivityManagerDisplayTest
             imeTestActivitySession.runOnMainSyncAndWait(
                     imeTestActivitySession.getActivity()::showSoftInput);
             waitOrderedImeEventsThenAssertImeShown(stream, display1.mId,
-                    editorMatcher("onStartInput", ImeTestActivity.class.getName()),
+                    editorMatcher("onStartInput",
+                            imeTestActivitySession.getActivity().mEditText.getPrivateImeOptions()),
                     event -> "showSoftInput".equals(event.getEventName()));
 
             // Tap display2 as top focused display & request focus on EditText to show soft input.
@@ -2062,7 +2063,8 @@ public class ActivityManagerMultiDisplayTests extends ActivityManagerDisplayTest
             imeTestActivitySession2.runOnMainSyncAndWait(
                     imeTestActivitySession2.getActivity()::showSoftInput);
             waitOrderedImeEventsThenAssertImeShown(stream, display2.mId,
-                    editorMatcher("onStartInput", ImeTestActivity2.class.getName()),
+                    editorMatcher("onStartInput",
+                            imeTestActivitySession2.getActivity().mEditText.getPrivateImeOptions()),
                     event -> "showSoftInput".equals(event.getEventName()));
 
             // Tap display1 again to make sure the IME window will come back.
@@ -2071,7 +2073,8 @@ public class ActivityManagerMultiDisplayTests extends ActivityManagerDisplayTest
             imeTestActivitySession.runOnMainSyncAndWait(
                     imeTestActivitySession.getActivity()::showSoftInput);
             waitOrderedImeEventsThenAssertImeShown(stream, display1.mId,
-                    editorMatcher("onStartInput", ImeTestActivity.class.getName()),
+                    editorMatcher("onStartInput",
+                            imeTestActivitySession.getActivity().mEditText.getPrivateImeOptions()),
                     event -> "showSoftInput".equals(event.getEventName()));
         }
     }
@@ -2399,15 +2402,18 @@ public class ActivityManagerMultiDisplayTests extends ActivityManagerDisplayTest
         protected void onCreate(Bundle icicle) {
             super.onCreate(icicle);
             mEditText = new EditText(this);
+            // Set private IME option for editorMatcher to identify which TextView received
+            // onStartInput event.
+            mEditText.setPrivateImeOptions(
+                    getClass().getName() + "/" + Long.toString(SystemClock.elapsedRealtimeNanos()));
             final LinearLayout layout = new LinearLayout(this);
             layout.setOrientation(LinearLayout.VERTICAL);
             layout.addView(mEditText);
+            mEditText.requestFocus();
             setContentView(layout);
         }
 
         void showSoftInput() {
-            mEditText.setFocusable(true);
-            mEditText.requestFocus();
             getSystemService(InputMethodManager.class).showSoftInput(mEditText, 0);
         }
     }
