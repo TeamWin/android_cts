@@ -16,7 +16,10 @@
 
 package com.android.cts.devicepolicy;
 
+import static com.android.cts.devicepolicy.metrics.DevicePolicyEventLogVerifier.assertMetricsLogged;
+
 import com.android.compatibility.common.tradefed.build.CompatibilityBuildHelper;
+import com.android.cts.devicepolicy.metrics.DevicePolicyEventWrapper;
 import com.android.tradefed.device.DeviceNotAvailableException;
 
 import com.google.common.io.ByteStreams;
@@ -29,6 +32,8 @@ import java.io.OutputStream;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
+
+import android.stats.devicepolicy.EventId;
 
 /**
  * Set of tests for Device Owner use cases.
@@ -434,6 +439,24 @@ public class DeviceOwnerTest extends BaseDevicePolicyTest {
                 getDevice().setSetting("global", "stay_on_while_plugged_in", stayAwake);
             }
         }
+    }
+
+    public void testSecurityLoggingEnabledLogged() throws Exception {
+        if (!mHasFeature) {
+            return;
+        }
+        assertMetricsLogged(getDevice(), () -> {
+            executeDeviceTestMethod(".SecurityLoggingTest", "testEnablingSecurityLogging");
+            executeDeviceTestMethod(".SecurityLoggingTest", "testDisablingSecurityLogging");
+        }, new DevicePolicyEventWrapper.Builder(EventId.SET_SECURITY_LOGGING_ENABLED_VALUE)
+                .setAdminPackageName(DEVICE_OWNER_PKG)
+                .setBoolean(true)
+                .build(),
+            new DevicePolicyEventWrapper.Builder(EventId.SET_SECURITY_LOGGING_ENABLED_VALUE)
+                    .setAdminPackageName(DEVICE_OWNER_PKG)
+                    .setBoolean(false)
+                    .build());
+
     }
 
     private void generateDummySecurityLogs() throws DeviceNotAvailableException {
@@ -906,6 +929,20 @@ public class DeviceOwnerTest extends BaseDevicePolicyTest {
 
         getDevice().pushFile(file, TEST_UPDATE_LOCATION + "/" + fileName);
         file.delete();
+    }
+
+    public void testRetrieveSecurityLogsLogged() throws Exception {
+        if (!mHasFeature) {
+            return;
+        }
+        assertMetricsLogged(getDevice(), () -> {
+            executeDeviceTestMethod(".AdminActionBookkeepingTest", "testRetrieveSecurityLogs");
+        }, new DevicePolicyEventWrapper.Builder(EventId.RETRIEVE_SECURITY_LOGS_VALUE)
+                .setAdminPackageName(DEVICE_OWNER_PKG)
+                .build(),
+            new DevicePolicyEventWrapper.Builder(EventId.RETRIEVE_PRE_REBOOT_SECURITY_LOGS_VALUE)
+                    .setAdminPackageName(DEVICE_OWNER_PKG)
+                    .build());
     }
 
     private void executeDeviceOwnerTest(String testClassName) throws Exception {
