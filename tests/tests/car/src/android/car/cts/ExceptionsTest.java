@@ -15,35 +15,18 @@
  */
 package android.car.cts;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertNull;
-import static org.junit.Assume.assumeTrue;
-
 import android.car.CarNotConnectedException;
 import android.platform.test.annotations.RequiresDevice;
-import android.support.test.runner.AndroidJUnit4;
+import android.test.AndroidTestCase;
 import android.test.suitebuilder.annotation.SmallTest;
 
-import com.android.compatibility.common.util.FeatureUtil;
-
-import org.junit.Before;
-import org.junit.Test;
-import org.junit.runner.RunWith;
 
 @SmallTest
 @RequiresDevice
-@RunWith(AndroidJUnit4.class)
-public class ExceptionsTest {
+public class ExceptionsTest extends AndroidTestCase {
     private static final String MESSAGE = "Oops!";
     private static final Exception CAUSE = new RuntimeException();
 
-    @Before
-    public void setUp() {
-        assumeTrue(FeatureUtil.isAutomotive());
-    }
-
-    @Test
     public void testCarNotConnectedException() {
         CarNotConnectedException exception = new CarNotConnectedException();
         assertNull(exception.getMessage());

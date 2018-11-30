@@ -15,53 +15,30 @@
  */
 package android.car.cts;
 
-
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertNull;
-import static org.junit.Assert.assertTrue;
-import static org.junit.Assume.assumeTrue;
-
 import android.car.Car;
 import android.content.ComponentName;
 import android.content.ServiceConnection;
 import android.os.IBinder;
 import android.platform.test.annotations.RequiresDevice;
-import android.support.test.InstrumentationRegistry;
-import android.support.test.runner.AndroidJUnit4;
 import android.test.AndroidTestCase;
 import android.test.suitebuilder.annotation.SmallTest;
-
-import com.android.compatibility.common.util.FeatureUtil;
 
 import java.util.concurrent.Semaphore;
 import java.util.concurrent.TimeUnit;
 
-import org.junit.Before;
-import org.junit.Test;
-import org.junit.runner.RunWith;
 
 @SmallTest
 @RequiresDevice
-@RunWith(AndroidJUnit4.class)
-public class CarTest {
+public class CarTest extends AndroidTestCase {
 
     private static final long DEFAULT_WAIT_TIMEOUT_MS = 2000;
 
     private Car mCar;
     private DefaultServiceConnectionListener mServiceConnectionListener;
 
-    @Before
-    public void setUp() {
-        assumeTrue(FeatureUtil.isAutomotive());
-    }
-
-    @Test
     public void testConnection() throws Exception {
         mServiceConnectionListener = new DefaultServiceConnectionListener();
-        mCar = Car.createCar(
-            InstrumentationRegistry.getInstrumentation().getTargetContext(),
-                    mServiceConnectionListener);
+        mCar = Car.createCar(getContext(), mServiceConnectionListener);
         assertFalse(mCar.isConnected());
         assertFalse(mCar.isConnecting());
         mCar.connect();
