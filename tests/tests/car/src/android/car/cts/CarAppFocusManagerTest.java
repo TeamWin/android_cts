@@ -15,44 +15,30 @@
  */
 package android.car.cts;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertTrue;
-import static org.junit.Assert.fail;
-
 import static android.car.CarAppFocusManager.APP_FOCUS_REQUEST_SUCCEEDED;
 import static android.car.CarAppFocusManager.APP_FOCUS_TYPE_NAVIGATION;
 import static android.car.CarAppFocusManager.APP_FOCUS_TYPE_VOICE_COMMAND;
 
 import android.car.Car;
 import android.car.CarAppFocusManager;
-import android.content.Context;
 import android.platform.test.annotations.RequiresDevice;
-import android.support.test.InstrumentationRegistry;
-import android.support.test.runner.AndroidJUnit4;
 import android.test.suitebuilder.annotation.SmallTest;
-
 import android.util.Log;
 
 import java.util.concurrent.Semaphore;
 import java.util.concurrent.TimeUnit;
 
-import org.junit.After;
 import org.junit.Assert;
-import org.junit.Before;
-import org.junit.Test;
-import org.junit.runner.RunWith;
+
 
 @SmallTest
 @RequiresDevice
-@RunWith(AndroidJUnit4.class)
 public class CarAppFocusManagerTest extends CarApiTestBase {
     private static final String TAG = CarAppFocusManagerTest.class.getSimpleName();
     private CarAppFocusManager mManager;
 
-    @Before
-    public void setUp() throws Exception {
+    @Override
+    protected void setUp() throws Exception {
         super.setUp();
         mManager = (CarAppFocusManager) getCar().getCarManager(Car.APP_FOCUS_SERVICE);
         assertNotNull(mManager);
@@ -71,7 +57,6 @@ public class CarAppFocusManagerTest extends CarApiTestBase {
 
     }
 
-    @Test
     public void testSetActiveNullListener() throws Exception {
         try {
             mManager.requestAppFocus(CarAppFocusManager.APP_FOCUS_TYPE_NAVIGATION, null);
@@ -81,7 +66,6 @@ public class CarAppFocusManagerTest extends CarApiTestBase {
         }
     }
 
-    @Test
     public void testRegisterNull() throws Exception {
         try {
             mManager.addFocusListener(null, 0);
@@ -91,7 +75,6 @@ public class CarAppFocusManagerTest extends CarApiTestBase {
         }
     }
 
-    @Test
     public void testRegisterUnregister() throws Exception {
         FocusChangedListerner listener = new FocusChangedListerner();
         FocusChangedListerner listener2 = new FocusChangedListerner();
@@ -101,14 +84,10 @@ public class CarAppFocusManagerTest extends CarApiTestBase {
         mManager.removeFocusListener(listener2);
     }
 
-    @Test
     public void testFocusChange() throws Exception {
-        Context context =
-                InstrumentationRegistry.getInstrumentation().getTargetContext();
-
         DefaultServiceConnectionListener connectionListener =
                 new DefaultServiceConnectionListener();
-        Car car2 = Car.createCar(context, connectionListener, null);
+        Car car2 = Car.createCar(getContext(), connectionListener, null);
         car2.connect();
         connectionListener.waitForConnection(DEFAULT_WAIT_TIMEOUT_MS);
         CarAppFocusManager manager2 = (CarAppFocusManager)
@@ -237,13 +216,10 @@ public class CarAppFocusManagerTest extends CarApiTestBase {
         manager2.removeFocusListener(change2);
     }
 
-    @Test
     public void testFilter() throws Exception {
         DefaultServiceConnectionListener connectionListener =
                 new DefaultServiceConnectionListener();
-        Context context =
-                InstrumentationRegistry.getInstrumentation().getTargetContext();
-        Car car2 = Car.createCar(context, connectionListener);
+        Car car2 = Car.createCar(getContext(), connectionListener);
         car2.connect();
         connectionListener.waitForConnection(DEFAULT_WAIT_TIMEOUT_MS);
         CarAppFocusManager manager2 = (CarAppFocusManager)
@@ -298,7 +274,6 @@ public class CarAppFocusManagerTest extends CarApiTestBase {
                 CarAppFocusManager.APP_FOCUS_TYPE_NAVIGATION, false));
     }
 
-    @Test
     public void testMultipleChangeListenersPerManager() throws Exception {
         FocusChangedListerner listener = new FocusChangedListerner();
         FocusChangedListerner listener2 = new FocusChangedListerner();

@@ -16,36 +16,24 @@
 
 package android.car.cts;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertTrue;
-import static org.junit.Assert.assertNotNull;
-
 import android.car.Car;
 import android.car.hardware.CarSensorEvent;
 import android.car.hardware.CarSensorManager;
 import android.platform.test.annotations.RequiresDevice;
-import android.support.test.runner.AndroidJUnit4;
 import android.test.suitebuilder.annotation.SmallTest;
-
-import org.junit.Before;
-import org.junit.Test;
-import org.junit.runner.RunWith;
 
 @SmallTest
 @RequiresDevice
-@RunWith(AndroidJUnit4.class)
 public class CarSensorManagerTest extends CarApiTestBase {
 
     private CarSensorManager mCarSensorManager;
 
-    @Before
-    public void setUp() throws Exception {
+    @Override
+    protected void setUp() throws Exception {
         super.setUp();
         mCarSensorManager = (CarSensorManager) getCar().getCarManager(Car.SENSOR_SERVICE);
     }
 
-    @Test
     public void testRequiredSensorsForDrivingState() throws Exception {
         int[] supportedSensors = mCarSensorManager.getSupportedSensors();
         assertNotNull(supportedSensors);
