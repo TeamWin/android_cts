@@ -220,12 +220,14 @@ public class TextureViewTest {
                 screenshot.getPixel(texturePos.right - 10, texturePos.bottom - 10));
     }
 
+    @Ignore // Disabled temporarily, b/119504473
     @Test
     public void testGetBitmap_8888_P3() throws Throwable {
         testGetBitmap(EGL_GL_COLORSPACE_DISPLAY_P3_EXT, ColorSpace.Named.DISPLAY_P3, false,
                 new FP16Compare(ColorSpace.Named.EXTENDED_SRGB));
     }
 
+    @Ignore // Disabled temporarily, b/119504473
     @Test
     public void testGetBitmap_FP16_P3() throws Throwable {
         testGetBitmap(EGL_GL_COLORSPACE_DISPLAY_P3_LINEAR_EXT, ColorSpace.Named.DISPLAY_P3, true,
@@ -238,12 +240,14 @@ public class TextureViewTest {
                 true, new FP16Compare(ColorSpace.Named.EXTENDED_SRGB));
     }
 
+    @Ignore // Disabled temporarily, b/119504473
     @Test
     public void testGet565Bitmap_SRGB() throws Throwable {
         testGetBitmap(EGL_GL_COLORSPACE_SRGB_KHR, ColorSpace.Named.SRGB, false,
                 new SRGBCompare(Bitmap.Config.RGB_565));
     }
 
+    @Ignore // Disabled temporarily, b/119504473
     @Test
     public void testGetBitmap_SRGB() throws Throwable {
         testGetBitmap(EGL_GL_COLORSPACE_SRGB_KHR, ColorSpace.Named.SRGB, false,
