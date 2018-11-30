@@ -16,6 +16,6 @@ LOCAL_SRC_FILES := \
 
 LOCAL_MODULE := cts-am-app-base
 
-LOCAL_SDK_VERSION := current
+LOCAL_SDK_VERSION := test_current
 
 include $(BUILD_STATIC_JAVA_LIBRARY)

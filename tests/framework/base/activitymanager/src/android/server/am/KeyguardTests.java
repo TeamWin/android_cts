@@ -278,7 +278,7 @@ public class KeyguardTests extends KeyguardTestBase {
     @Test
     public void testDismissKeyguardActivity_method() throws Exception {
         try (final LockScreenSession lockScreenSession = new LockScreenSession()) {
-            final LogSeparator logSeparator = separateLogs();
+            separateTestJournal();
             lockScreenSession.gotoKeyguard();
             mAmWmState.computeState(true);
             assertTrue(mAmWmState.getAmState().getKeyguardControllerState().keyguardShowing);
@@ -287,28 +287,28 @@ public class KeyguardTests extends KeyguardTestBase {
             mAmWmState.computeState(DISMISS_KEYGUARD_METHOD_ACTIVITY);
             mAmWmState.assertVisibility(DISMISS_KEYGUARD_METHOD_ACTIVITY, true);
             assertFalse(mAmWmState.getAmState().getKeyguardControllerState().keyguardShowing);
-            assertOnDismissSucceededInLogcat(logSeparator);
+            assertOnDismissSucceeded(DISMISS_KEYGUARD_METHOD_ACTIVITY);
         }
     }
 
     @Test
     public void testDismissKeyguardActivity_method_notTop() throws Exception {
         try (final LockScreenSession lockScreenSession = new LockScreenSession()) {
-            final LogSeparator logSeparator = separateLogs();
+            separateTestJournal();
             lockScreenSession.gotoKeyguard();
             mAmWmState.computeState(true);
             assertTrue(mAmWmState.getAmState().getKeyguardControllerState().keyguardShowing);
             launchActivity(BROADCAST_RECEIVER_ACTIVITY);
             launchActivity(TEST_ACTIVITY);
             mBroadcastActionTrigger.dismissKeyguardByMethod();
-            assertOnDismissErrorInLogcat(logSeparator);
+            assertOnDismissError(BROADCAST_RECEIVER_ACTIVITY);
         }
     }
 
     @Test
     public void testDismissKeyguardActivity_method_turnScreenOn() throws Exception {
         try (final LockScreenSession lockScreenSession = new LockScreenSession()) {
-            final LogSeparator logSeparator = separateLogs();
+            separateTestJournal();
             lockScreenSession.sleepDevice();
             mAmWmState.computeState(true);
             assertTrue(mAmWmState.getAmState().getKeyguardControllerState().keyguardShowing);
@@ -317,7 +317,7 @@ public class KeyguardTests extends KeyguardTestBase {
             mAmWmState.computeState(TURN_SCREEN_ON_DISMISS_KEYGUARD_ACTIVITY);
             mAmWmState.assertVisibility(TURN_SCREEN_ON_DISMISS_KEYGUARD_ACTIVITY, true);
             assertFalse(mAmWmState.getAmState().getKeyguardControllerState().keyguardShowing);
-            assertOnDismissSucceededInLogcat(logSeparator);
+            assertOnDismissSucceeded(TURN_SCREEN_ON_DISMISS_KEYGUARD_ACTIVITY);
             assertTrue(isDisplayOn(DEFAULT_DISPLAY));
         }
     }
@@ -393,14 +393,14 @@ public class KeyguardTests extends KeyguardTestBase {
         try (final LockScreenSession lockScreenSession = new LockScreenSession()) {
             lockScreenSession.sleepDevice();
 
-            final LogSeparator logSeparator = separateLogs();
+            separateTestJournal();
             mAmWmState.computeState(true);
             assertTrue(mAmWmState.getAmState().getKeyguardControllerState().keyguardShowing);
             launchActivity(TURN_SCREEN_ON_ATTR_DISMISS_KEYGUARD_ACTIVITY);
             mAmWmState.waitForKeyguardGone();
             mAmWmState.assertVisibility(TURN_SCREEN_ON_ATTR_DISMISS_KEYGUARD_ACTIVITY, true);
             assertFalse(mAmWmState.getAmState().getKeyguardControllerState().keyguardShowing);
-            assertOnDismissSucceededInLogcat(logSeparator);
+            assertOnDismissSucceeded(TURN_SCREEN_ON_ATTR_DISMISS_KEYGUARD_ACTIVITY);
             assertTrue(isDisplayOn(DEFAULT_DISPLAY));
         }
     }
@@ -408,7 +408,7 @@ public class KeyguardTests extends KeyguardTestBase {
     @Test
     public void testScreenOffWhileOccludedStopsActivity() throws Exception {
         try (final LockScreenSession lockScreenSession = new LockScreenSession()) {
-            final LogSeparator logSeparator = separateLogs();
+            separateTestJournal();
             lockScreenSession.gotoKeyguard();
             mAmWmState.assertKeyguardShowingAndNotOccluded();
             launchActivity(SHOW_WHEN_LOCKED_ATTR_ACTIVITY);
@@ -416,18 +416,18 @@ public class KeyguardTests extends KeyguardTestBase {
             mAmWmState.assertVisibility(SHOW_WHEN_LOCKED_ATTR_ACTIVITY, true);
             mAmWmState.assertKeyguardShowingAndOccluded();
             lockScreenSession.sleepDevice();
-            assertSingleLaunchAndStop(SHOW_WHEN_LOCKED_ATTR_ACTIVITY, logSeparator);
+            assertSingleLaunchAndStop(SHOW_WHEN_LOCKED_ATTR_ACTIVITY);
         }
     }
 
     @Test
     public void testScreenOffCausesSingleStop() throws Exception {
         try (final LockScreenSession lockScreenSession = new LockScreenSession()) {
-            final LogSeparator logSeparator = separateLogs();
+            separateTestJournal();
             launchActivity(TEST_ACTIVITY);
             mAmWmState.assertVisibility(TEST_ACTIVITY, true);
             lockScreenSession.sleepDevice();
-            assertSingleLaunchAndStop(TEST_ACTIVITY, logSeparator);
+            assertSingleLaunchAndStop(TEST_ACTIVITY);
         }
     }
 }

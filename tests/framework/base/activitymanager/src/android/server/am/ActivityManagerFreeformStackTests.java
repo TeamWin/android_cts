@@ -134,7 +134,7 @@ public class ActivityManagerFreeformStackTests extends ActivityManagerDisplayTes
         mAmWmState.computeState(new WaitForValidActivityState.Builder(TEST_ACTIVITY).build(),
                 new WaitForValidActivityState.Builder(NO_RELAUNCH_ACTIVITY).build());
 
-        final LogSeparator logSeparator = separateLogs();
+        separateTestJournal();
         resizeActivityTask(TEST_ACTIVITY,
                 TEST_TASK_OFFSET, TEST_TASK_OFFSET,
                 TEST_TASK_OFFSET + testTaskSize2, TEST_TASK_OFFSET + testTaskSize1);
@@ -143,7 +143,7 @@ public class ActivityManagerFreeformStackTests extends ActivityManagerDisplayTes
                 TEST_TASK_OFFSET_2 + testTaskSize2, TEST_TASK_OFFSET_2 + testTaskSize1);
         mAmWmState.computeState(TEST_ACTIVITY, NO_RELAUNCH_ACTIVITY);
 
-        assertActivityLifecycle(TEST_ACTIVITY, true /* relaunched */, logSeparator);
-        assertActivityLifecycle(NO_RELAUNCH_ACTIVITY, false /* relaunched */, logSeparator);
+        assertActivityLifecycle(TEST_ACTIVITY, true /* relaunched */);
+        assertActivityLifecycle(NO_RELAUNCH_ACTIVITY, false /* relaunched */);
     }
 }

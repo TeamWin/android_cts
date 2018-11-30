@@ -115,12 +115,12 @@ public class KeyguardTransitionTests extends ActivityManagerTestBase {
     public void testOccludeManifestAttr() throws Exception {
         try (final LockScreenSession lockScreenSession = new LockScreenSession()) {
             lockScreenSession.gotoKeyguard();
-            final LogSeparator logSeparator = separateLogs();
+            separateTestJournal();
             launchActivity(SHOW_WHEN_LOCKED_ATTR_ACTIVITY);
             mAmWmState.computeState(SHOW_WHEN_LOCKED_ATTR_ACTIVITY);
             assertEquals("Picked wrong transition", TRANSIT_KEYGUARD_OCCLUDE,
                     mAmWmState.getWmState().getDefaultDisplayLastTransition());
-            assertSingleLaunch(SHOW_WHEN_LOCKED_ATTR_ACTIVITY, logSeparator);
+            assertSingleLaunch(SHOW_WHEN_LOCKED_ATTR_ACTIVITY);
         }
     }
 
@@ -128,24 +128,24 @@ public class KeyguardTransitionTests extends ActivityManagerTestBase {
     public void testOccludeAttrRemove() throws Exception {
         try (final LockScreenSession lockScreenSession = new LockScreenSession()) {
             lockScreenSession.gotoKeyguard();
-            LogSeparator logSeparator = separateLogs();
+            separateTestJournal();
             launchActivity(SHOW_WHEN_LOCKED_ATTR_REMOVE_ATTR_ACTIVITY);
             mAmWmState.computeState(SHOW_WHEN_LOCKED_ATTR_REMOVE_ATTR_ACTIVITY);
             assertEquals("Picked wrong transition", TRANSIT_KEYGUARD_OCCLUDE,
                     mAmWmState.getWmState().getDefaultDisplayLastTransition());
-            assertSingleLaunch(SHOW_WHEN_LOCKED_ATTR_REMOVE_ATTR_ACTIVITY, logSeparator);
+            assertSingleLaunch(SHOW_WHEN_LOCKED_ATTR_REMOVE_ATTR_ACTIVITY);
 
             // Waiting for the standard keyguard since
             // {@link SHOW_WHEN_LOCKED_ATTR_REMOVE_ATTR_ACTIVITY} called
             // {@link Activity#showWhenLocked(boolean)} and removed the attribute.
             lockScreenSession.gotoKeyguard();
-            logSeparator = separateLogs();
+            separateTestJournal();
             // Waiting for {@link SHOW_WHEN_LOCKED_ATTR_REMOVE_ATTR_ACTIVITY} stopped since it
             // already lost show-when-locked attribute.
             launchActivityNoWait(SHOW_WHEN_LOCKED_ATTR_REMOVE_ATTR_ACTIVITY);
             mAmWmState.waitForActivityState(
                     SHOW_WHEN_LOCKED_ATTR_REMOVE_ATTR_ACTIVITY, STATE_STOPPED);
-            assertSingleStartAndStop(SHOW_WHEN_LOCKED_ATTR_REMOVE_ATTR_ACTIVITY, logSeparator);
+            assertSingleStartAndStop(SHOW_WHEN_LOCKED_ATTR_REMOVE_ATTR_ACTIVITY);
         }
     }
 

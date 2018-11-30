@@ -126,6 +126,10 @@
                   android:taskAffinity="nobody.but.LaunchingActivity"
                   android:exported="true" />
 
+        <provider
+            android:name="android.server.am.TestJournalProvider"
+            android:authorities="android.server.am.testjournalprovider"
+            android:exported="true" />
     </application>
 
     <instrumentation

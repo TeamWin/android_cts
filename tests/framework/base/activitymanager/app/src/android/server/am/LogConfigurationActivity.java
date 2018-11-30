@@ -18,6 +18,7 @@ package android.server.am;
 
 import android.app.Activity;
 import android.content.res.Configuration;
+import android.server.am.CommandSession.ActivityCallback;
 import android.util.Log;
 
 /**
@@ -32,5 +33,7 @@ public class LogConfigurationActivity extends Activity {
         super.onConfigurationChanged(newConfig);
         Log.i(TAG, "Configuration changed: " + newConfig.screenWidthDp + ","
                 + newConfig.screenHeightDp);
+
+        TestJournalProvider.putActivityCallback(this, ActivityCallback.ON_CONFIGURATION_CHANGED);
     }
 }

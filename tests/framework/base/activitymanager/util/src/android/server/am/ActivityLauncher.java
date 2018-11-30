@@ -31,6 +31,7 @@ import android.content.Intent;
 import android.net.Uri;
 import android.os.Bundle;
 import android.server.am.CommandSession.LaunchInjector;
+import android.server.am.TestJournalProvider.TestJournalContainer;
 import android.text.TextUtils;
 import android.util.Log;
 
@@ -92,6 +93,17 @@ public class ActivityLauncher {
      * it's always written to logs.
      */
     public static final String KEY_SUPPRESS_EXCEPTIONS = "suppress_exceptions";
+    /**
+     * Key for boolean extra, indicates the result of
+     * {@link ActivityManager#isActivityStartAllowedOnDisplay(Context, int, Intent)}
+     */
+    public static final String KEY_IS_ACTIVITY_START_ALLOWED_ON_DISPLAY =
+            "is_activity_start_allowed_on_display";
+    /**
+     * Key for boolean extra, indicates a security exception is caught when launching activity by
+     * {@link #launchActivityFromExtras}.
+     */
+    private static final String KEY_CAUGHT_SECURITY_EXCEPTION = "caught_security_exception";
     /**
      * Key for int extra with target activity type where activity should be launched as.
      */
@@ -189,14 +201,15 @@ public class ActivityLauncher {
                 launchContext.startActivity(newIntent, optionsBundle);
             }
         } catch (SecurityException e) {
-            Log.e(TAG, "SecurityException launching activity");
+            handleSecurityException(context, e);
         } catch (PendingIntent.CanceledException e) {
             if (extras.getBoolean(KEY_SUPPRESS_EXCEPTIONS)) {
                 Log.e(TAG, "Exception launching activity with pending intent");
             } else {
                 throw new RuntimeException(e);
             }
-            Log.e(TAG, "SecurityException launching activity");
+            // Bypass the exception although it is not SecurityException.
+            handleSecurityException(context, e);
         } catch (Exception e) {
             if (extras.getBoolean(KEY_SUPPRESS_EXCEPTIONS)) {
                 Log.e(TAG, "Exception launching activity");
@@ -208,12 +221,24 @@ public class ActivityLauncher {
 
     public static void checkActivityStartOnDisplay(Context context, int displayId,
             ComponentName componentName) {
-        final ActivityManager activityManager =
-                (ActivityManager) context.getSystemService(Context.ACTIVITY_SERVICE);
         final Intent launchIntent = new Intent(Intent.ACTION_VIEW).setComponent(componentName);
 
-        Log.i(TAG, "isActivityStartAllowedOnDisplay="
-                + activityManager.isActivityStartAllowedOnDisplay(context, displayId,
-                launchIntent));
+        final boolean isAllowed = context.getSystemService(ActivityManager.class)
+                .isActivityStartAllowedOnDisplay(context, displayId, launchIntent);
+        Log.i(TAG, "isActivityStartAllowedOnDisplay=" + isAllowed);
+        TestJournalProvider.putExtras(context, TAG, bundle -> {
+            bundle.putBoolean(KEY_IS_ACTIVITY_START_ALLOWED_ON_DISPLAY, isAllowed);
+        });
+    }
+
+    public static void handleSecurityException(Context context, Exception e) {
+        Log.e(TAG, "SecurityException launching activity: " + e);
+        TestJournalProvider.putExtras(context, TAG, bundle -> {
+            bundle.putBoolean(KEY_CAUGHT_SECURITY_EXCEPTION, true);
+        });
+    }
+
+    static boolean hasCaughtSecurityException() {
+        return TestJournalContainer.get(TAG).extras.containsKey(KEY_CAUGHT_SECURITY_EXCEPTION);
     }
 }
