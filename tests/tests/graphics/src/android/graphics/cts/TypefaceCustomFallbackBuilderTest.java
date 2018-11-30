@@ -221,6 +221,11 @@ public class TypefaceCustomFallbackBuilderTest {
     }
 
     @Test
+    public void testMaxCustomFallbackAtLeast64() throws IOException {
+        assertTrue(Typeface.CustomFallbackBuilder.getMaxCustomFallbackCount() >= 64);
+    }
+
+    @Test
     public void testMaxCustomFallback_must_be_positive() {
         assertTrue(Typeface.CustomFallbackBuilder.getMaxCustomFallbackCount() > 0);
     }
