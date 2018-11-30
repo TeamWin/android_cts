@@ -16,8 +16,8 @@
 package android.signature.cts;
 
 public class DexField extends DexMember {
-  public DexField(String className, String name, String type) {
-      super(className, name, type);
+  public DexField(String className, String name, String type, String[] flags) {
+      super(className, name, type, flags);
   }
 
   @Override

@@ -19,6 +19,7 @@ import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
+import java.util.Arrays;
 import java.util.Spliterator;
 import java.util.function.Consumer;
 import java.util.regex.Matcher;
@@ -109,9 +110,14 @@ public class DexApiDocumentParser {
                 // Increment the line number.
                 mLineNum = mLineNum + 1;
 
+                // Split the CSV line.
+                String[] splitLine = line.split(",");
+                String signature = splitLine[0];
+                String[] flags = Arrays.copyOfRange(splitLine, 1, splitLine.length);
+
                 // Match line against regex patterns.
-                Matcher matchField = REGEX_FIELD.matcher(line);
-                Matcher matchMethod = REGEX_METHOD.matcher(line);
+                Matcher matchField = REGEX_FIELD.matcher(signature);
+                Matcher matchMethod = REGEX_METHOD.matcher(signature);
 
                 // Check that *exactly* one pattern matches.
                 int matchCount = (matchField.matches() ? 1 : 0) + (matchMethod.matches() ? 1 : 0);
@@ -121,13 +127,13 @@ public class DexApiDocumentParser {
                     throw new ParseException("Ambiguous parse: \"" + line + "\"", mLineNum);
                 }
 
-                // Extract information from the line.
+                // Extract information from the signature.
                 if (matchField.matches()) {
                     return new DexField(
-                            matchField.group(1), matchField.group(2), matchField.group(3));
+                            matchField.group(1), matchField.group(2), matchField.group(3), flags);
                 } else if (matchMethod.matches()) {
                     return new DexMethod(
-                            matchMethod.group(1),matchMethod.group(2), matchMethod.group(3));
+                            matchMethod.group(1),matchMethod.group(2), matchMethod.group(3), flags);
                 } else {
                     throw new IllegalStateException();
                 }

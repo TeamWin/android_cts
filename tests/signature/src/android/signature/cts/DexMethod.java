@@ -24,8 +24,8 @@ import java.util.stream.Collectors;
 public class DexMethod extends DexMember {
   private final List<String> mParamTypeList;
 
-  public DexMethod(String className, String name, String signature) {
-      super(className, name, parseDexReturnType(signature));
+  public DexMethod(String className, String name, String signature, String[] flags) {
+      super(className, name, parseDexReturnType(signature), flags);
       mParamTypeList = parseDexTypeList(signature);
   }
 
