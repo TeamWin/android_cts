@@ -56,6 +56,8 @@ import java.util.Set;
 
 import android.hardware.camera2.cts.testcases.Camera2AndroidTestCase;
 import android.hardware.camera2.cts.PerformanceTest;
+import android.hardware.cts.CameraTestCase;
+import android.hardware.cts.LegacyCameraPerformanceTest;
 
 /**
  * This test checks the camera performance by running the respective CTS performance test cases
@@ -63,6 +65,8 @@ import android.hardware.camera2.cts.PerformanceTest;
  */
 public class CameraPerformanceActivity extends DialogTestListActivity {
     private static final String TAG = "CameraPerformanceActivity";
+    private static final Class[] TEST_CLASSES =
+            { PerformanceTest.class, LegacyCameraPerformanceTest.class };
 
     private ExecutorService mExecutorService;
     private CameraTestInstrumentation mCameraInstrumentation = new CameraTestInstrumentation();
@@ -163,6 +167,21 @@ public class CameraPerformanceActivity extends DialogTestListActivity {
                 public void run() {
                     setTestResult(failure.getDescription().getMethodName(),
                             TestResult.TEST_RESULT_FAILED);
+                    mSpinnerDialog.dismiss();
+                    mResults.clear();
+                    String message = new String();
+                    String failureMessage = failure.getMessage();
+                    String failureTrace = failure.getTrace();
+                    if ((failureMessage != null) && (!failureMessage.isEmpty())) {
+                        message = failureMessage + "\n";
+                    } else if ((failureTrace != null) && (!failureTrace.isEmpty())) {
+                        message += failureTrace;
+                    }
+
+                    if (!message.isEmpty()) {
+                        mResultDialog.setMessage(message);
+                        mResultDialog.show();
+                    }
                 }
             });
         }
@@ -179,8 +198,7 @@ public class CameraPerformanceActivity extends DialogTestListActivity {
     }
 
     private void initializeTestCases(Context ctx) {
-        TestSuite suite = new TestSuite();
-        suite.addTestSuite(PerformanceTest.class);
+        TestSuite suite = new TestSuite(TEST_CLASSES);
         Enumeration<Test> testSuite = suite.tests();
         while (testSuite.hasMoreElements()) {
             Test s = testSuite.nextElement();
@@ -191,7 +209,7 @@ public class CameraPerformanceActivity extends DialogTestListActivity {
                     if (test instanceof Camera2AndroidTestCase) {
                         Camera2AndroidTestCase testCase = (Camera2AndroidTestCase) test;
 
-                        // 'AndroidTestCase' has one internal test case that can
+                        // The base case class has one internal test that can
                         // be ignored for the purpose of this test activity.
                         try {
                             Method method = testCase.getClass().getMethod(testCase.getName());
@@ -207,8 +225,11 @@ public class CameraPerformanceActivity extends DialogTestListActivity {
 
                         testCase.setContext(ctx);
                         mTestCaseMap.put(testCase.getName(), testCase);
+                    } else if (test instanceof CameraTestCase) {
+                        TestCase testCase = (CameraTestCase) test;
+                        mTestCaseMap.put(testCase.getName(), testCase);
                     } else {
-                        Log.d(TAG, "Test is not instance of TestCase");
+                        Log.d(TAG, "Test is not instance of any known camera test cases");
                     }
                 }
             } else {
@@ -236,16 +257,6 @@ public class CameraPerformanceActivity extends DialogTestListActivity {
         mResultDialog =
                 new AlertDialog.Builder(this).setCancelable(true).setTitle(resultTitle).create();
 
-        mCameraInstrumentation.addMetricListener(new MetricListener());
-
-        try {
-            mCachedInstrumentation = InstrumentationRegistry.getInstrumentation();
-            mCachedInstrumentationArgs = InstrumentationRegistry.getArguments();
-        } catch (IllegalStateException e) {
-            // This is expected in case there was no prior instrumentation.
-        }
-
-        InstrumentationRegistry.registerInstance(mCameraInstrumentation, new Bundle());
     }
 
     private class TestListItem extends DialogTestListActivity.DialogTestListItem {
@@ -285,6 +296,16 @@ public class CameraPerformanceActivity extends DialogTestListActivity {
     protected void onResume() {
         super.onResume();
 
+        mCameraInstrumentation.addMetricListener(new MetricListener());
+
+        try {
+            mCachedInstrumentation = InstrumentationRegistry.getInstrumentation();
+            mCachedInstrumentationArgs = InstrumentationRegistry.getArguments();
+        } catch (IllegalStateException e) {
+            // This is expected in case there was no prior instrumentation.
+        }
+        InstrumentationRegistry.registerInstance(mCameraInstrumentation, new Bundle());
+
         mExecutorService = Executors.newSingleThreadExecutor();
     }
 
@@ -296,7 +317,7 @@ public class CameraPerformanceActivity extends DialogTestListActivity {
         mExecutorService.shutdownNow();
 
         // Restore any cached instrumentation.
-        if ((mCachedInstrumentation != null) || (mCachedInstrumentationArgs != null)) {
+        if ((mCachedInstrumentation != null) && (mCachedInstrumentationArgs != null)) {
             InstrumentationRegistry.registerInstance(mCachedInstrumentation,
                     mCachedInstrumentationArgs);
         }

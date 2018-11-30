@@ -44,6 +44,10 @@ public class CameraTestInstrumentation extends Instrumentation {
     public void sendStatus(int resultCode, Bundle results) {
         super.sendStatus(resultCode, results);
 
+        if (results == null) {
+            return;
+        }
+
         Set<String> keys = results.keySet();
         if (keys.isEmpty()) {
             Log.v(TAG,"Empty keys");

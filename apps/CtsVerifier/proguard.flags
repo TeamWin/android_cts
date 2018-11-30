@@ -23,6 +23,10 @@
     public <methods>;
 }
 
+-keepclassmembers class * extends android.hardware.cts.CameraTestCase {
+    public <methods>;
+}
+
 -keepclasseswithmembers class * extends com.android.cts.verifier.location.LocationModeTestActivity
 
 # keep mockito methods
