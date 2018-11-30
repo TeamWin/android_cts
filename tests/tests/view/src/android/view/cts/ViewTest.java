@@ -18,6 +18,7 @@ package android.view.cts;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNotEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNotSame;
 import static org.junit.Assert.assertNull;
@@ -121,6 +122,8 @@ import java.lang.reflect.Constructor;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.HashSet;
+import java.util.Set;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -4827,6 +4830,19 @@ public class ViewTest {
         assertEquals(2, view.getTop());
         assertEquals(3, view.getRight());
         assertEquals(4, view.getBottom());
+    }
+
+    @Test
+    public void testGetUniqueDrawingId() {
+        View view1 = new View(mContext);
+        View view2 = new View(mContext);
+        Set<Long> idSet = new HashSet<>(50);
+
+        assertNotEquals(view1.getUniqueDrawingId(), view2.getUniqueDrawingId());
+
+        for (int i = 0; i < 50; i++) {
+            assertTrue(idSet.add(new View(mContext).getUniqueDrawingId()));
+        }
     }
 
     private static class MockDrawable extends Drawable {
