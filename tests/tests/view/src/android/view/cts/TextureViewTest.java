@@ -61,6 +61,7 @@ public class TextureViewTest {
 
     static final int EGL_GL_COLORSPACE_SRGB_KHR = 0x3089;
     static final int EGL_GL_COLORSPACE_DISPLAY_P3_EXT = 0x3363;
+    static final int EGL_GL_COLORSPACE_DISPLAY_P3_LINEAR_EXT = 0x3362;
     static final int EGL_GL_COLORSPACE_SCRGB_LINEAR_EXT = 0x3350;
 
     @Rule
@@ -227,7 +228,7 @@ public class TextureViewTest {
 
     @Test
     public void testGetBitmap_FP16_P3() throws Throwable {
-        testGetBitmap(EGL_GL_COLORSPACE_DISPLAY_P3_EXT, ColorSpace.Named.DISPLAY_P3, true,
+        testGetBitmap(EGL_GL_COLORSPACE_DISPLAY_P3_LINEAR_EXT, ColorSpace.Named.DISPLAY_P3, true,
                 new FP16Compare(ColorSpace.Named.EXTENDED_SRGB));
     }
 
@@ -239,13 +240,13 @@ public class TextureViewTest {
 
     @Test
     public void testGet565Bitmap_SRGB() throws Throwable {
-        testGetBitmap(EGL_GL_COLORSPACE_SRGB_KHR, ColorSpace.Named.SRGB, true,
+        testGetBitmap(EGL_GL_COLORSPACE_SRGB_KHR, ColorSpace.Named.SRGB, false,
                 new SRGBCompare(Bitmap.Config.RGB_565));
     }
 
     @Test
     public void testGetBitmap_SRGB() throws Throwable {
-        testGetBitmap(EGL_GL_COLORSPACE_SRGB_KHR, ColorSpace.Named.SRGB, true,
+        testGetBitmap(EGL_GL_COLORSPACE_SRGB_KHR, ColorSpace.Named.SRGB, false,
                 new SRGBCompare(Bitmap.Config.ARGB_8888));
     }
 
