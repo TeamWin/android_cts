@@ -73,7 +73,6 @@ public class PipActivityTest extends ActivityInstrumentationTestCase2<PipActivit
             assertTrue(mActivity.getLastReportedMultiWindowMode());
             assertTrue(mActivity.getLastReporterPictureInPictureMode());
         } else {
-            mActivity.enterPictureInPictureMode();
             assertTrue(!mActivity.enterPictureInPictureMode(
                     new PictureInPictureParams.Builder().build()));
 
