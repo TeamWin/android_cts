@@ -42,39 +42,44 @@ import java.io.File;
  */
 public class CorruptApkTests extends DeviceTestCase implements IBuildReceiver {
 
-    /** A container for information about the system_server process. */
-    private class SytemServerInformation {
-        String mPid;
-        long mStartTime;
+    private IBuildInfo mBuildInfo;
 
-        SytemServerInformation(String pid, long startTime) {
+    /** A container for information about the system_server process. */
+    private class SystemServerInformation {
+        final long mPid;
+        final long mStartTime;
+
+        SystemServerInformation(long pid, long startTime) {
             this.mPid = pid;
             this.mStartTime = startTime;
         }
 
         @Override
         public boolean equals(Object actual) {
-            return (actual instanceof SytemServerInformation)
-                && mPid == ((SytemServerInformation) actual).mPid
-                && mStartTime == ((SytemServerInformation) actual).mStartTime;
+            return (actual instanceof SystemServerInformation)
+                && mPid == ((SystemServerInformation) actual).mPid
+                && mStartTime == ((SystemServerInformation) actual).mStartTime;
         }
     }
 
-    private IBuildInfo mBuildInfo;
-
     /** Retrieves the process id and elapsed run time of system_server. */
-    private SytemServerInformation retrieveInfo() throws DeviceNotAvailableException {
+    private SystemServerInformation retrieveInfo() throws DeviceNotAvailableException {
         ITestDevice device = getDevice();
 
         // Retrieve the process id of system_server
-        String pid = device.executeShellCommand("pidof system_server").trim();
-        assertNotNull("Failed to retrieve pid of system_server", pid);
-
-        String pidStats = device.executeShellCommand("cat /proc/" + pid + "/stat");
-        assertNotNull("Failed to retrieve stat of system_server with pid '" + pid + "'", pidStats);
+        String pidResult = device.executeShellCommand("pidof system_server").trim();
+        assertNotNull("Failed to retrieve pid of system_server", pidResult);
+        long pid = 0;
+        try {
+            pid = Long.parseLong(pidResult);
+        } catch (NumberFormatException | IndexOutOfBoundsException e) {
+            fail("Unable to parse pid of system_server '" + pidResult + "'");
+        }
 
         // Retrieve the start time of system_server
         long startTime = 0;
+        String pidStats = device.executeShellCommand("cat /proc/" + pid + "/stat");
+        assertNotNull("Failed to retrieve stat of system_server with pid '" + pid + "'", pidStats);
         try {
             String startTimeJiffies = pidStats.split("\\s+")[21];
             startTime = Long.parseLong(startTimeJiffies);
@@ -82,7 +87,7 @@ public class CorruptApkTests extends DeviceTestCase implements IBuildReceiver {
             fail("Unable to parse system_server stat file '" + pidStats + "'");
         }
 
-        return new SytemServerInformation(pid, startTime);
+        return new SystemServerInformation(pid, startTime);
     }
 
     @Override
@@ -117,14 +122,16 @@ public class CorruptApkTests extends DeviceTestCase implements IBuildReceiver {
      * to crash (typically the result of a buffer overflow or an out-of-bounds read).
      */
     private void assertInstallDoesNotCrashSystem(String apk) throws Exception {
-        SytemServerInformation beforeInfo = retrieveInfo();
+        SystemServerInformation beforeInfo = retrieveInfo();
 
         final String result = getDevice().installPackage(
                 new CompatibilityBuildHelper(mBuildInfo).getTestFile(apk),
                 false /*reinstall*/);
         CLog.logAndDisplay(LogLevel.INFO, "Result: '" + result + "'");
-        assertFalse("Install package segmentation faulted",
+        if (result != null) {
+            assertFalse("Install package segmentation faulted",
                 result.toLowerCase().contains("segmentation fault"));
+        }
 
         assertEquals("system_server restarted", beforeInfo, retrieveInfo());
     }
