@@ -22,6 +22,8 @@ import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertSame;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
+import org.junit.Rule;
+import org.junit.rules.ExpectedException;
 
 import android.graphics.ColorSpace;
 import android.support.test.filters.SmallTest;
@@ -68,6 +70,9 @@ public class ColorSpaceTest {
     private static final float[] SRGB_WHITE_POINT_XYZ = { 0.950456f, 1.000f, 1.089058f };
 
     private static final DoubleUnaryOperator sIdentity = DoubleUnaryOperator.identity();
+
+    @Rule
+    public ExpectedException mExpectedException = ExpectedException.none();
 
     @Test
     public void testNamedColorSpaces() {
@@ -808,6 +813,19 @@ public class ColorSpaceTest {
                         1 / 1.055, 0.055 / 1.055, 1 / 12.92, 0.04045, 2.4)));
     }
 
+    @Test
+    public void testCctToIlluminantdXyz() {
+        assertArrayEquals(ColorSpace.cctToIlluminantdXyz(5000),
+                xyYToXyz(ColorSpace.ILLUMINANT_D50), 0.01f);
+        assertArrayEquals(ColorSpace.cctToIlluminantdXyz(7500),
+                xyYToXyz(ColorSpace.ILLUMINANT_D75), 0.01f);
+    }
+
+    @Test
+    public void testCctToIlluminantdXyzErrors() {
+        mExpectedException.expect(IllegalArgumentException.class);
+        ColorSpace.cctToIlluminantdXyz(0);
+    }
 
     @SuppressWarnings("SameParameterValue")
     private static void assertArrayNotEquals(float[] a, float[] b, float eps) {
@@ -825,4 +843,12 @@ public class ColorSpaceTest {
             }
         }
     }
+
+    /**
+     * Convenience function copied from android.graphics.ColorSpace
+     */
+    private static float[] xyYToXyz(float[] xyY) {
+        return new float[] { xyY[0] / xyY[1], 1.0f, (1 - xyY[0] - xyY[1]) / xyY[1] };
+    }
+
 }
