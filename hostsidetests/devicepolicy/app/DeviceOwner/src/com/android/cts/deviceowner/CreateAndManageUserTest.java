@@ -379,6 +379,8 @@ public class CreateAndManageUserTest extends BaseDeviceOwnerTest {
         localBroadcastManager.registerReceiver(broadcastReceiver,
                 new IntentFilter(BasicAdminReceiver.ACTION_USER_STOPPED));
 
+        Thread.sleep(USER_SWITCH_DELAY);
+
         try {
             assertEquals(UserManager.USER_OPERATION_SUCCESS,
                     mDevicePolicyManager.stopUser(getWho(), userHandle));
