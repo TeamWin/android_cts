@@ -34,7 +34,8 @@ LOCAL_STATIC_JAVA_LIBRARIES := \
     android-support-test \
     platform-test-annotations \
     cts-amwm-util \
-    android-support-test
+    android-support-test \
+    platformprotosnano
 
 LOCAL_SRC_FILES := \
     $(call all-java-files-under, src)
