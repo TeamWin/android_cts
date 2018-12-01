@@ -29,7 +29,7 @@ import org.junit.runner.RunWith;
 @RunWith(AndroidJUnit4.class)
 public class AppComponentFactoryTest {
     public static final String SECONDARY_APK_PATH =
-            "/data/local/tmp/classloaderfactory-test/secondary.apk";
+            "/data/local/tmp/classloaderfactory-test/secondary.jar";
     private static final String CLASS_PACKAGE_NAME =
             AppComponentFactoryTest.class.getPackage().getName();
 
