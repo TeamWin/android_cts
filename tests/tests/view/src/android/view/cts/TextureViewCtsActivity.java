@@ -355,6 +355,9 @@ public class TextureViewCtsActivity extends Activity implements SurfaceTextureLi
                     case TextureViewTest.EGL_GL_COLORSPACE_DISPLAY_P3_EXT:
                         eglColorSpaceString = "EGL_EXT_gl_colorspace_display_p3";
                         break;
+                    case TextureViewTest.EGL_GL_COLORSPACE_DISPLAY_P3_LINEAR_EXT:
+                        eglColorSpaceString = "EGL_EXT_gl_colorspace_display_p3_linear";
+                        break;
                     case TextureViewTest.EGL_GL_COLORSPACE_SRGB_KHR:
                         eglColorSpaceString = "EGL_KHR_gl_colorspace";
                         break;
