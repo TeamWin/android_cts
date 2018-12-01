@@ -103,7 +103,7 @@ public class UsePermissionTestP0 extends BasePermissionsTest {
         String[] permissions = {ACCESS_FINE_LOCATION, ACCESS_BACKGROUND_LOCATION};
 
         BasePermissionActivity.Result result = requestPermissions(permissions,
-                this::selectAlwaysOption, this::clickAllowButton);
+                this::clickAllowAlwaysButton);
         assertPermissionRequestResult(result, permissions, true, true);
 
         assertGranted(ACCESS_FINE_LOCATION);
@@ -136,9 +136,8 @@ public class UsePermissionTestP0 extends BasePermissionsTest {
     public void requestBothButGrantInSequence() throws Exception {
         // Step 1: grant foreground only
         String[] permissions = {ACCESS_FINE_LOCATION, ACCESS_BACKGROUND_LOCATION};
-
         BasePermissionActivity.Result result = requestPermissions(permissions,
-                this::selectForegroundOnlyOption, this::clickAllowButton);
+                this::clickAllowForegroundButton);
         assertPermissionRequestResult(result, permissions, true, false);
 
         assertGranted(ACCESS_FINE_LOCATION);
@@ -165,8 +164,7 @@ public class UsePermissionTestP0 extends BasePermissionsTest {
         assertDenied(ACCESS_BACKGROUND_LOCATION);
 
         // Step 2: deny with prejudice
-        result = requestPermissions(permissions, this::selectDenyAndDontAskAgainOption,
-                this::clickDenyButton);
+        result = requestPermissions(permissions, this::clickDenyAndDontAskAgainButton);
         assertPermissionRequestResult(result, permissions, false, false);
 
         assertDenied(ACCESS_FINE_LOCATION);
