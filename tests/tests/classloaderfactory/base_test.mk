@@ -28,7 +28,7 @@ LOCAL_STATIC_JAVA_LIBRARIES := \
 LOCAL_SRC_FILES := $(call all-java-files-under, ../src)
 
 LOCAL_ADDITIONAL_DEPENDENCIES += \
-    $(TARGET_OUT_TESTCASES)/CtsClassLoaderFactoryTestCasesSecondaryDex.apk
+    $(TARGET_OUT_TESTCASES)/classloaderfactory-secondary.jar
 
 # Tag this module as a cts test artifact
 LOCAL_COMPATIBILITY_SUITE := cts vts general-tests
