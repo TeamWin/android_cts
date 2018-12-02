@@ -12,8 +12,18 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-# Copy secondary APK to CTS target directory.
-my_secondary_apk := $(call intermediates-dir-for,JAVA_LIBRARIES,CtsClassLoaderFactoryTestCasesSecondaryDex,,COMMON)/javalib.jar
-$(eval $(call copy-one-file,$(my_secondary_apk),$(TARGET_OUT_TESTCASES)/CtsClassLoaderFactoryTestCasesSecondaryDex.apk))
+LOCAL_PATH := $(call my-dir)
 
-include $(call all-subdir-makefiles)
+# Copy secondary APK to CTS target directory.
+include $(CLEAR_VARS)
+LOCAL_MODULE := cts-classloaderfactory-secondary-jar
+LOCAL_MODULE_STEM := classloaderfactory-secondary.jar
+LOCAL_MODULE_CLASS := ETC
+LOCAL_MODULE_PATH = $(TARGET_OUT_TESTCASES)
+LOCAL_COMPATIBILITY_SUITE := cts vts general-tests
+include $(BUILD_SYSTEM)/base_rules.mk
+my_secondary_apk_src := $(call intermediates-dir-for,JAVA_LIBRARIES,CtsClassLoaderFactoryTestCasesSecondaryDex,,COMMON)/javalib.jar
+$(eval $(call copy-one-file,$(my_secondary_apk_src),$(LOCAL_BUILT_MODULE)))
+my_secondary_apk_src :=
+
+include $(call all-makefiles-under,$(LOCAL_PATH))
