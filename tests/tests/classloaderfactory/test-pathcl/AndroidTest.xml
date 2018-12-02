@@ -21,7 +21,7 @@
         <option name="teardown-command" value="rm -rf /data/local/tmp/classloaderfactory-test" />
     </target_preparer>
     <target_preparer class="com.android.compatibility.common.tradefed.targetprep.FilePusher">
-        <option name="push" value="CtsClassLoaderFactoryTestCasesSecondaryDex.apk->/data/local/tmp/classloaderfactory-test/secondary.apk" />
+        <option name="push" value="classloaderfactory-secondary.jar->/data/local/tmp/classloaderfactory-test/secondary.jar" />
     </target_preparer>
     <target_preparer class="com.android.tradefed.targetprep.suite.SuiteApkInstaller">
         <option name="cleanup-apks" value="true" />
