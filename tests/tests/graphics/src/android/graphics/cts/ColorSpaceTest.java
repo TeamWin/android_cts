@@ -610,6 +610,31 @@ public class ColorSpaceTest {
     }
 
     @Test
+    public void testSinglePointAdaptation() {
+        float[] illumD65xyY = Arrays.copyOf(ColorSpace.ILLUMINANT_D65,
+                ColorSpace.ILLUMINANT_D65.length);
+        float[] illumD50xyY = Arrays.copyOf(ColorSpace.ILLUMINANT_D50,
+                ColorSpace.ILLUMINANT_D50.length);
+
+        final float[] catXyz = ColorSpace.chromaticAdaptation(ColorSpace.Adaptation.BRADFORD,
+                illumD65xyY, illumD50xyY);
+
+        // Ensure the original arguments were not modified
+        assertArrayEquals(illumD65xyY, ColorSpace.ILLUMINANT_D65, 0);
+        assertArrayEquals(illumD50xyY, ColorSpace.ILLUMINANT_D50, 0);
+
+        // Verify results. This reference data has been cross-checked with
+        // http://www.brucelindbloom.com/index.html?Eqn_ChromAdapt.html
+        final float[] illumD65ToIllumD50Xyz = {
+             1.0478525f,  0.0295722f, -0.0092367f,
+             0.0229074f,  0.9904668f,  0.0150463f,
+            -0.0501464f, -0.0170567f,  0.7520621f
+        };
+
+        assertArrayEquals(catXyz, illumD65ToIllumD50Xyz, 1e-7f);
+    }
+
+    @Test
     public void testImplicitSRGBConnector() {
         ColorSpace.Connector connector1 = ColorSpace.connect(
                 ColorSpace.get(ColorSpace.Named.DCI_P3));

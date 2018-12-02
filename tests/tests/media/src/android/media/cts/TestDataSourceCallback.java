@@ -18,7 +18,7 @@ package android.media.cts;
 
 import android.content.res.AssetFileDescriptor;
 import android.media.cts.TestUtils.Monitor;
-import android.media.Media2DataSource;
+import android.media.DataSourceCallback;
 import android.platform.test.annotations.AppModeFull;
 import android.util.Log;
 
@@ -27,11 +27,11 @@ import java.io.InputStream;
 import java.io.IOException;
 
 /**
- * A Media2DataSource that reads from a byte array for use in tests.
+ * A DataSourceCallback that reads from a byte array for use in tests.
  */
 @AppModeFull(reason = "TODO: evaluate and port to instant")
-public class TestMedia2DataSource extends Media2DataSource {
-    private static final String TAG = "TestMedia2DataSource";
+public class TestDataSourceCallback extends DataSourceCallback {
+    private static final String TAG = "TestDataSourceCallback";
 
     private byte[] mData;
 
@@ -42,7 +42,7 @@ public class TestMedia2DataSource extends Media2DataSource {
     private boolean mIsClosed;
 
     // Read an asset fd into a new byte array data source. Closes afd.
-    public static TestMedia2DataSource fromAssetFd(AssetFileDescriptor afd) throws IOException {
+    public static TestDataSourceCallback fromAssetFd(AssetFileDescriptor afd) throws IOException {
         try {
             InputStream in = afd.createInputStream();
             final int size = (int) afd.getDeclaredLength();
@@ -53,13 +53,13 @@ public class TestMedia2DataSource extends Media2DataSource {
                 numRead = in.read(data, writeIndex, size - writeIndex);
                 writeIndex += numRead;
             } while (numRead >= 0);
-            return new TestMedia2DataSource(data);
+            return new TestDataSourceCallback(data);
         } finally {
             afd.close();
         }
     }
 
-    public TestMedia2DataSource(byte[] data) {
+    public TestDataSourceCallback(byte[] data) {
         mData = data;
     }
 

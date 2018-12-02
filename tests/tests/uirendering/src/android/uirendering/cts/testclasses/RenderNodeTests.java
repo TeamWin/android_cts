@@ -18,6 +18,7 @@ package android.uirendering.cts.testclasses;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNotEquals;
 import static org.junit.Assert.assertTrue;
 
 import android.graphics.Canvas;
@@ -32,6 +33,9 @@ import android.uirendering.cts.testinfrastructure.ActivityTestBase;
 
 import org.junit.Test;
 import org.junit.runner.RunWith;
+
+import java.util.HashSet;
+import java.util.Set;
 
 @MediumTest
 @RunWith(AndroidJUnit4.class)
@@ -189,5 +193,18 @@ public class RenderNodeTests extends ActivityTestBase {
         assertEquals(5, canvas.getWidth());
         assertEquals(10, canvas.getHeight());
         renderNode.endRecording();
+    }
+
+    @Test
+    public void testGetUniqueId() {
+        final RenderNode r1 = new RenderNode(null);
+        final RenderNode r2 = new RenderNode(null);
+        assertNotEquals(r1.getUniqueId(), r2.getUniqueId());
+        final Set<Long> usedIds = new HashSet<>();
+        assertTrue(usedIds.add(r1.getUniqueId()));
+        assertTrue(usedIds.add(r2.getUniqueId()));
+        for (int i = 0; i < 100; i++) {
+            assertTrue(usedIds.add(new RenderNode(null).getUniqueId()));
+        }
     }
 }

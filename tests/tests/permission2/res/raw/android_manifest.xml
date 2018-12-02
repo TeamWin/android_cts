@@ -610,6 +610,10 @@
     <!-- ====================================================================== -->
     <eat-comment />
 
+    <!-- Grouping for platform runtime permissions is not accessible to apps -->
+    <permission-group android:name="android.permission-group.UNDEFINED"
+        android:priority="100" />
+
     <!-- ====================================================================== -->
     <!-- Permissions for accessing user's contacts including personal profile   -->
     <!-- ====================================================================== -->
@@ -628,6 +632,7 @@
         <p>Protection level: dangerous
     -->
     <permission android:name="android.permission.READ_CONTACTS"
+        android:permissionGroup="android.permission-group.UNDEFINED"
         android:label="@string/permlab_readContacts"
         android:description="@string/permdesc_readContacts"
         android:protectionLevel="dangerous" />
@@ -636,6 +641,7 @@
          <p>Protection level: dangerous
     -->
     <permission android:name="android.permission.WRITE_CONTACTS"
+        android:permissionGroup="android.permission-group.UNDEFINED"
         android:label="@string/permlab_writeContacts"
         android:description="@string/permdesc_writeContacts"
         android:protectionLevel="dangerous" />
@@ -657,6 +663,7 @@
          <p>Protection level: dangerous
     -->
     <permission android:name="android.permission.READ_CALENDAR"
+        android:permissionGroup="android.permission-group.UNDEFINED"
         android:label="@string/permlab_readCalendar"
         android:description="@string/permdesc_readCalendar"
         android:protectionLevel="dangerous" />
@@ -665,6 +672,7 @@
          <p>Protection level: dangerous
     -->
     <permission android:name="android.permission.WRITE_CALENDAR"
+        android:permissionGroup="android.permission-group.UNDEFINED"
         android:label="@string/permlab_writeCalendar"
         android:description="@string/permdesc_writeCalendar"
         android:protectionLevel="dangerous" />
@@ -686,6 +694,7 @@
          <p>Protection level: dangerous
     -->
     <permission android:name="android.permission.SEND_SMS"
+        android:permissionGroup="android.permission-group.UNDEFINED"
         android:label="@string/permlab_sendSms"
         android:description="@string/permdesc_sendSms"
         android:permissionFlags="costsMoney"
@@ -695,6 +704,7 @@
          <p>Protection level: dangerous
     -->
     <permission android:name="android.permission.RECEIVE_SMS"
+        android:permissionGroup="android.permission-group.UNDEFINED"
         android:label="@string/permlab_receiveSms"
         android:description="@string/permdesc_receiveSms"
         android:protectionLevel="dangerous"/>
@@ -703,6 +713,7 @@
          <p>Protection level: dangerous
     -->
     <permission android:name="android.permission.READ_SMS"
+        android:permissionGroup="android.permission-group.UNDEFINED"
         android:label="@string/permlab_readSms"
         android:description="@string/permdesc_readSms"
         android:protectionLevel="dangerous" />
@@ -711,6 +722,7 @@
          <p>Protection level: dangerous
     -->
     <permission android:name="android.permission.RECEIVE_WAP_PUSH"
+        android:permissionGroup="android.permission-group.UNDEFINED"
         android:label="@string/permlab_receiveWapPush"
         android:description="@string/permdesc_receiveWapPush"
         android:protectionLevel="dangerous" />
@@ -719,6 +731,7 @@
         <p>Protection level: dangerous
     -->
     <permission android:name="android.permission.RECEIVE_MMS"
+        android:permissionGroup="android.permission-group.UNDEFINED"
         android:label="@string/permlab_receiveMms"
         android:description="@string/permdesc_receiveMms"
         android:protectionLevel="dangerous" />
@@ -736,6 +749,7 @@
          <p>Protection level: dangerous
          @hide Pending API council approval -->
     <permission android:name="android.permission.READ_CELL_BROADCASTS"
+        android:permissionGroup="android.permission-group.UNDEFINED"
         android:label="@string/permlab_readCellBroadcasts"
         android:description="@string/permdesc_readCellBroadcasts"
         android:protectionLevel="dangerous" />
@@ -750,6 +764,12 @@
     -->
     <permission android:name="android.permission.BIND_FINANCIAL_SMS_SERVICE"
                 android:protectionLevel="signature" />
+
+    <!-- @SystemApi Allows wallpaper to be rendered in ambient mode.
+         @hide -->
+    <permission android:name="android.permission.AMBIENT_WALLPAPER"
+                android:protectionLevel="signature|preinstalled" />
+
     <!-- ====================================================================== -->
     <!-- Permissions for accessing external storage                             -->
     <!-- ====================================================================== -->
@@ -786,6 +806,7 @@
      <p>Protection level: dangerous
      -->
     <permission android:name="android.permission.READ_EXTERNAL_STORAGE"
+        android:permissionGroup="android.permission-group.UNDEFINED"
         android:label="@string/permlab_sdcardRead"
         android:description="@string/permdesc_sdcardRead"
         android:protectionLevel="dangerous" />
@@ -806,6 +827,7 @@
          <p>Protection level: dangerous
     -->
     <permission android:name="android.permission.WRITE_EXTERNAL_STORAGE"
+        android:permissionGroup="android.permission-group.UNDEFINED"
         android:label="@string/permlab_sdcardWrite"
         android:description="@string/permdesc_sdcardWrite"
         android:protectionLevel="dangerous" />
@@ -831,6 +853,7 @@
          <p>Protection level: dangerous
     -->
     <permission android:name="android.permission.ACCESS_FINE_LOCATION"
+        android:permissionGroup="android.permission-group.UNDEFINED"
         android:label="@string/permlab_accessFineLocation"
         android:description="@string/permdesc_accessFineLocation"
         android:backgroundPermission="android.permission.ACCESS_BACKGROUND_LOCATION"
@@ -841,6 +864,7 @@
          <p>Protection level: dangerous
     -->
     <permission android:name="android.permission.ACCESS_COARSE_LOCATION"
+        android:permissionGroup="android.permission-group.UNDEFINED"
         android:label="@string/permlab_accessCoarseLocation"
         android:description="@string/permdesc_accessCoarseLocation"
         android:backgroundPermission="android.permission.ACCESS_BACKGROUND_LOCATION"
@@ -854,6 +878,7 @@
          @hide
     -->
     <permission android:name="android.permission.ACCESS_BACKGROUND_LOCATION"
+        android:permissionGroup="android.permission-group.UNDEFINED"
         android:label="@string/permlab_accessBackgroundLocation"
         android:description="@string/permdesc_accessBackgroundLocation"
         android:protectionLevel="dangerous|instant" />
@@ -894,6 +919,7 @@
          <p>Protection level: dangerous
     -->
     <permission android:name="android.permission.READ_CALL_LOG"
+        android:permissionGroup="android.permission-group.UNDEFINED"
         android:label="@string/permlab_readCallLog"
         android:description="@string/permdesc_readCallLog"
         android:protectionLevel="dangerous" />
@@ -912,6 +938,7 @@
          <p>Protection level: dangerous
     -->
     <permission android:name="android.permission.WRITE_CALL_LOG"
+        android:permissionGroup="android.permission-group.UNDEFINED"
         android:label="@string/permlab_writeCallLog"
         android:description="@string/permdesc_writeCallLog"
         android:protectionLevel="dangerous" />
@@ -922,6 +949,7 @@
          <p>Protection level: dangerous
     -->
     <permission android:name="android.permission.PROCESS_OUTGOING_CALLS"
+        android:permissionGroup="android.permission-group.UNDEFINED"
         android:label="@string/permlab_processOutgoingCalls"
         android:description="@string/permdesc_processOutgoingCalls"
         android:protectionLevel="dangerous" />
@@ -953,6 +981,7 @@
          <p>Protection level: dangerous
     -->
     <permission android:name="android.permission.READ_PHONE_STATE"
+        android:permissionGroup="android.permission-group.UNDEFINED"
         android:label="@string/permlab_readPhoneState"
         android:description="@string/permdesc_readPhoneState"
         android:protectionLevel="dangerous" />
@@ -961,6 +990,7 @@
          granted by {@link #READ_PHONE_STATE} but is exposed to instant applications.
          <p>Protection level: dangerous-->
     <permission android:name="android.permission.READ_PHONE_NUMBERS"
+        android:permissionGroup="android.permission-group.UNDEFINED"
         android:label="@string/permlab_readPhoneNumbers"
         android:description="@string/permdesc_readPhoneNumbers"
         android:protectionLevel="dangerous|instant" />
@@ -970,6 +1000,7 @@
         <p>Protection level: dangerous
     -->
     <permission android:name="android.permission.CALL_PHONE"
+        android:permissionGroup="android.permission-group.UNDEFINED"
         android:permissionFlags="costsMoney"
         android:label="@string/permlab_callPhone"
         android:description="@string/permdesc_callPhone"
@@ -979,6 +1010,7 @@
          <p>Protection level: dangerous
     -->
     <permission android:name="com.android.voicemail.permission.ADD_VOICEMAIL"
+        android:permissionGroup="android.permission-group.UNDEFINED"
         android:label="@string/permlab_addVoicemail"
         android:description="@string/permdesc_addVoicemail"
         android:protectionLevel="dangerous" />
@@ -987,6 +1019,7 @@
          <p>Protection level: dangerous
     -->
     <permission android:name="android.permission.USE_SIP"
+        android:permissionGroup="android.permission-group.UNDEFINED"
         android:description="@string/permdesc_use_sip"
         android:label="@string/permlab_use_sip"
         android:protectionLevel="dangerous"/>
@@ -995,6 +1028,7 @@
          <p>Protection level: dangerous
     -->
     <permission android:name="android.permission.ANSWER_PHONE_CALLS"
+        android:permissionGroup="android.permission-group.UNDEFINED"
         android:label="@string/permlab_answerPhoneCalls"
         android:description="@string/permdesc_answerPhoneCalls"
         android:protectionLevel="dangerous|runtime" />
@@ -1022,6 +1056,7 @@
          <p>Protection level: dangerous
     -->
     <permission android:name="android.permission.ACCEPT_HANDOVER"
+                android:permissionGroup="android.permission-group.UNDEFINED"
                 android.label="@string/permlab_acceptHandover"
                 android:description="@string/permdesc_acceptHandovers"
                 android:protectionLevel="dangerous" />
@@ -1045,6 +1080,7 @@
          <p>Protection level: dangerous
     -->
     <permission android:name="android.permission.RECORD_AUDIO"
+        android:permissionGroup="android.permission-group.UNDEFINED"
         android:label="@string/permlab_recordAudio"
         android:description="@string/permdesc_recordAudio"
         android:protectionLevel="dangerous|instant"/>
@@ -1066,6 +1102,7 @@
          <p>Protection level: dangerous
     -->
     <permission android:name="android.permission.ACTIVITY_RECOGNITION"
+        android:permissionGroup="android.permission-group.UNDEFINED"
         android:label="@string/permlab_activityRecognition"
         android:description="@string/permdesc_activityRecognition"
         android:protectionLevel="dangerous|instant" />
@@ -1114,6 +1151,7 @@
          <p>Protection level: dangerous
     -->
     <permission android:name="android.permission.CAMERA"
+        android:permissionGroup="android.permission-group.UNDEFINED"
         android:label="@string/permlab_camera"
         android:description="@string/permdesc_camera"
         android:protectionLevel="dangerous|instant" />
@@ -1137,6 +1175,7 @@
          measure what is happening inside his/her body, such as heart rate.
          <p>Protection level: dangerous -->
     <permission android:name="android.permission.BODY_SENSORS"
+        android:permissionGroup="android.permission-group.UNDEFINED"
         android:label="@string/permlab_bodySensors"
         android:description="@string/permdesc_bodySensors"
         android:protectionLevel="dangerous" />
@@ -1622,6 +1661,7 @@
     <p>Protection level: dangerous
     -->
     <permission android:name="android.permission.GET_ACCOUNTS"
+        android:permissionGroup="android.permission-group.UNDEFINED"
         android:protectionLevel="dangerous"
         android:description="@string/permdesc_getAccounts"
         android:label="@string/permlab_getAccounts" />
@@ -4132,6 +4172,18 @@
          @hide -->
     <permission android:name="android.permission.GRANT_PROFILE_OWNER_DEVICE_IDS_ACCESS"
         android:protectionLevel="signature" />
+
+    <!-- @SystemApi Allows requesting the framework broadcast the
+         {@link Intent#ACTION_DEVICE_CUSTOMIZATION_READY} intent.
+         @hide -->
+    <permission android:name="android.permission.SEND_DEVICE_CUSTOMIZATION_READY"
+        android:protectionLevel="signature|privileged" />
+
+    <!-- @SystemApi Permission that protects the {@link Intent#ACTION_DEVICE_CUSTOMIZATION_READY}
+         intent.
+         @hide -->
+    <permission android:name="android.permission.RECEIVE_DEVICE_CUSTOMIZATION_READY"
+        android:protectionLevel="signature|preinstalled" />
 
     <application android:process="system"
                  android:persistent="true"

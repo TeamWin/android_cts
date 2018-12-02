@@ -47,9 +47,14 @@ import android.provider.Settings;
 import android.support.test.uiautomator.UiDevice;
 import android.support.test.uiautomator.UiSelector;
 import android.test.InstrumentationTestCase;
+import android.util.Log;
 
 import java.io.File;
 import java.io.IOException;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.LinkedList;
+import java.util.List;
 import java.util.UUID;
 
 /**
@@ -245,5 +250,62 @@ public class StorageTest extends InstrumentationTestCase {
         ext.mkdir();
         try { sm.setCacheBehaviorTombstone(ext, true); fail(); } catch (IOException expected) { }
         try { sm.setCacheBehaviorTombstone(ext, false); fail(); } catch (IOException expected) { }
+    }
+
+    /**
+     * Create "cts" probe files in every possible common storage location that
+     * we can think of.
+     */
+    public void testExternalStorageIsolatedWrite() throws Exception {
+        final Context context = getContext();
+        final List<File> paths = new ArrayList<File>();
+        Collections.addAll(paths, Environment.getExternalStorageDirectory());
+        Collections.addAll(paths,
+                Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_PICTURES));
+        Collections.addAll(paths, context.getExternalCacheDirs());
+        Collections.addAll(paths, context.getExternalFilesDirs(null));
+        Collections.addAll(paths, context.getExternalFilesDirs(Environment.DIRECTORY_PICTURES));
+        Collections.addAll(paths, context.getExternalMediaDirs());
+        Collections.addAll(paths, context.getObbDirs());
+
+        final String name = "cts_" + System.nanoTime();
+        for (File path : paths) {
+            final File otherPath = new File(path.getAbsolutePath()
+                    .replace("com.android.cts.storageapp_a", "com.android.cts.storageapp_b"));
+
+            path.mkdirs();
+            otherPath.mkdirs();
+
+            final File file = new File(path, name);
+            final File otherFile = new File(otherPath, name);
+
+            file.createNewFile();
+            otherFile.createNewFile();
+
+            assertTrue(file.exists());
+            assertTrue(otherFile.exists());
+        }
+    }
+
+    /**
+     * Verify that we can't see any of the "cts" probe files created above,
+     * since our storage should be fully isolated.
+     */
+    public void testExternalStorageIsolatedRead() throws Exception {
+        final LinkedList<File> traverse = new LinkedList<>();
+        traverse.push(Environment.getStorageDirectory());
+        traverse.push(Environment.getExternalStorageDirectory());
+
+        while (!traverse.isEmpty()) {
+            final File dir = traverse.poll();
+            for (File f : dir.listFiles()) {
+                if (f.getName().startsWith("cts_")) {
+                    fail("Found leaked file " + f.getAbsolutePath());
+                }
+                if (f.isDirectory()) {
+                    traverse.push(f);
+                }
+            }
+        }
     }
 }

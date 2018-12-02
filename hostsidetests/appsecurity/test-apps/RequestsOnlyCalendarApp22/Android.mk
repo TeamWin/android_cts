@@ -33,7 +33,7 @@ LOCAL_SRC_FILES := $(call all-java-files-under, ../UsePermissionApp22/src) \
     ../UsePermissionApp23/src/com/android/cts/usepermission/BasePermissionsTest.java
 LOCAL_RESOURCE_DIR := cts/hostsidetests/appsecurity/test-apps/UsePermissionApp22/res
 
-LOCAL_PACKAGE_NAME := RequestsOnlyStorageApp22
+LOCAL_PACKAGE_NAME := RequestsOnlyCalendarApp22
 
 # For ACCESS_BACKGROUND_LOCATION
 LOCAL_PRIVATE_PLATFORM_APIS := true

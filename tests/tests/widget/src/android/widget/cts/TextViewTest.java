@@ -4272,6 +4272,48 @@ public class TextViewTest {
 
     @UiThreadTest
     @Test
+    public void testIsSingleLineTrue() {
+        mTextView = new TextView(mActivity);
+
+        mTextView.setSingleLine(true);
+
+        assertTrue(mTextView.isSingleLine());
+    }
+
+    @UiThreadTest
+    @Test
+    public void testIsSingleLineFalse() {
+        mTextView = new TextView(mActivity);
+
+        mTextView.setSingleLine(false);
+
+        assertFalse(mTextView.isSingleLine());
+    }
+
+    @Test
+    public void testXmlIsSingleLineTrue() {
+        final Context context = InstrumentationRegistry.getTargetContext();
+        final LayoutInflater layoutInflater = LayoutInflater.from(context);
+        final View root = layoutInflater.inflate(R.layout.textview_singleline, null);
+
+        mTextView = root.findViewById(R.id.textview_singleline_true);
+
+        assertTrue(mTextView.isSingleLine());
+    }
+
+    @Test
+    public void testXmlIsSingleLineFalse() {
+        final Context context = InstrumentationRegistry.getTargetContext();
+        final LayoutInflater layoutInflater = LayoutInflater.from(context);
+        final View root = layoutInflater.inflate(R.layout.textview_singleline, null);
+
+        mTextView = root.findViewById(R.id.textview_singleline_false);
+
+        assertFalse(mTextView.isSingleLine());
+    }
+
+    @UiThreadTest
+    @Test
     public void testAccessMaxLines() {
         mTextView = findTextView(R.id.textview_text);
         mTextView.setWidth((int) (mTextView.getPaint().measureText(LONG_TEXT) / 4));

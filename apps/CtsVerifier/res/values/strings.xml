@@ -1438,7 +1438,10 @@
     <string name="p2p_go_neg_responder_test">GO Negotiation Responder Test</string>
     <string name="p2p_go_neg_requester_test">GO Negotiation Requester Test</string>
     <string name="p2p_group_owner_test">Group Owner Test</string>
+    <string name="p2p_join_with_config">Group Join with Config</string>
+    <string name="p2p_group_owner_with_config_test">Group Owner With Config Test</string>
     <string name="p2p_group_client_test">Group Client Test</string>
+    <string name="p2p_group_client_with_config_test">Group Client With Config Test</string>
     <string name="p2p_service_discovery_responder_test">
         Service Discovery Responder Test</string>
     <string name="p2p_service_discovery_requester_test">
