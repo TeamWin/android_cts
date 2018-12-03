@@ -34,8 +34,8 @@ import android.app.NotificationChannelGroup;
 import android.app.NotificationManager;
 import android.app.PendingIntent;
 import android.app.UiAutomation;
-import android.app.stubs.TestNotificationListener;
 import android.app.stubs.R;
+import android.app.stubs.TestNotificationListener;
 import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
@@ -978,6 +978,48 @@ public class NotificationManagerTest extends AndroidTestCase {
                 InstrumentationRegistry.getInstrumentation(), false);
     }
 
+    public void testPostFullScreenIntent_permission() {
+        int id = 6000;
+
+        final Notification notification =
+                new Notification.Builder(mContext, NOTIFICATION_CHANNEL_ID)
+                        .setSmallIcon(R.drawable.black)
+                        .setWhen(System.currentTimeMillis())
+                        .setFullScreenIntent(getPendingIntent(), true)
+                        .setContentText("This is #FSI notification")
+                        .setContentIntent(getPendingIntent())
+                        .build();
+        mNotificationManager.notify(id, notification);
+
+        StatusBarNotification n = findPostedNotification(id);
+        assertNotNull(n);
+        assertEquals(notification.fullScreenIntent, n.getNotification().fullScreenIntent);
+    }
+
+    private StatusBarNotification findPostedNotification(int id) {
+        // notification is a bit asynchronous so it may take a few ms to appear in
+        // getActiveNotifications()
+        // we will check for it for up to 300ms before giving up
+        StatusBarNotification n = null;
+        for (int tries = 3; tries--> 0;) {
+            final StatusBarNotification[] sbns = mNotificationManager.getActiveNotifications();
+            for (StatusBarNotification sbn : sbns) {
+                Log.d(TAG, "Found " + sbn.getKey());
+                if (sbn.getId() == id) {
+                    n = sbn;
+                    break;
+                }
+            }
+            if (n != null) break;
+            try {
+                Thread.sleep(100);
+            } catch (InterruptedException ex) {
+                // pass
+            }
+        }
+        return n;
+    }
+
     private PendingIntent getPendingIntent() {
         return PendingIntent.getActivity(
                 getContext(), 0, new Intent(getContext(), this.getClass()), 0);
@@ -1190,5 +1232,9 @@ public class NotificationManagerTest extends AndroidTestCase {
         } finally {
             uiAutomation.destroy();
         }
+    }
+
+    private Instrumentation getInstrumentation() {
+        return InstrumentationRegistry.getInstrumentation();
     }
 }

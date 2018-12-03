@@ -19,7 +19,7 @@
           package="android.app.notification.legacy.cts">
     <uses-permission android:name="android.permission.ACCESS_NOTIFICATION_POLICY" />
 
-    <uses-sdk android:minSdkVersion="24" android:targetSdkVersion="24" />
+    <uses-sdk android:minSdkVersion="27" android:targetSdkVersion="27" />
     <application>
         <uses-library android:name="android.test.runner" />
 
@@ -62,7 +62,7 @@
 
     <instrumentation android:name="android.support.test.runner.AndroidJUnitRunner"
                      android:targetPackage="android.app.notification.legacy.cts"
-                     android:label="CTS tests for legacy notification behavior">
+                     android:label="CTS tests for notification behavior (API 27)">
         <meta-data android:name="listener"
                    android:value="com.android.cts.runner.CtsTestRunListener" />
     </instrumentation>

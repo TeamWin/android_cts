@@ -4173,6 +4173,12 @@
     <permission android:name="android.permission.GRANT_PROFILE_OWNER_DEVICE_IDS_ACCESS"
         android:protectionLevel="signature" />
 
+    <!-- Required for apps targeting {@link android.os.Build.VERSION_CODES#P} that want to use
+         {@link android.app.Notification.Builder#setFullScreenIntent notification full screen
+         intents}.  -->
+    <permission android:name="android.permission.USE_FULL_SCREEN_INTENT"
+                android:protectionLevel="normal" />
+
     <!-- @SystemApi Allows requesting the framework broadcast the
          {@link Intent#ACTION_DEVICE_CUSTOMIZATION_READY} intent.
          @hide -->
