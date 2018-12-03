@@ -27,6 +27,7 @@ import static org.junit.Assert.assertTrue;
 import static org.junit.Assume.assumeFalse;
 
 import android.content.ComponentName;
+import android.platform.test.annotations.Presubmit;
 import android.server.am.WindowManagerState.Display;
 
 import org.junit.Test;
@@ -35,6 +36,7 @@ import org.junit.Test;
  * Build/Install/Run:
  *     atest CtsActivityManagerDeviceTestCases:AnimationBackgroundTests
  */
+@Presubmit
 public class AnimationBackgroundTests extends ActivityManagerTestBase {
 
     @Test
