@@ -134,7 +134,6 @@ public class ActivityManagerMultiDisplayTests extends ActivityManagerDisplayTest
      * Tests launching an activity on virtual display.
      */
     @Test
-    @FlakyTest(bugId = 77270929)
     public void testLaunchActivityOnSecondaryDisplay() throws Exception {
         validateActivityLaunchOnNewDisplay(ACTIVITY_TYPE_STANDARD);
     }
