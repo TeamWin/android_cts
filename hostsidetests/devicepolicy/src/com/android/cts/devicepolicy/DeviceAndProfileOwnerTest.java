@@ -439,7 +439,7 @@ public abstract class DeviceAndProfileOwnerTest extends BaseDevicePolicyTest {
         // the same. However we're only testing the FBE case here as we need to set a device
         // password during the test. This would cause FDE devices (e.g. angler) to prompt for the
         // password during reboot, which we can't handle easily.
-        if (!mHasFeature || !mSupportsFbe) {
+        if (!mHasFeature || !mSupportsFbe || !mHasSecureLockScreen) {
             return;
         }
 
@@ -1013,7 +1013,7 @@ public abstract class DeviceAndProfileOwnerTest extends BaseDevicePolicyTest {
     }
 
     public void testTrustAgentInfo() throws Exception {
-        if (!mHasFeature) {
+        if (!mHasFeature || !mHasSecureLockScreen) {
             return;
         }
         executeDeviceTestClass(".TrustAgentInfoTest");
@@ -1060,7 +1060,7 @@ public abstract class DeviceAndProfileOwnerTest extends BaseDevicePolicyTest {
     }
 
     public void testRequiredStrongAuthTimeout() throws Exception {
-        if (!mHasFeature) {
+        if (!mHasFeature || !mHasSecureLockScreen) {
             return;
         }
         executeDeviceTestClass(".RequiredStrongAuthTimeoutTest");
@@ -1090,7 +1090,7 @@ public abstract class DeviceAndProfileOwnerTest extends BaseDevicePolicyTest {
     }
 
     public void testResetPasswordWithToken() throws Exception {
-        if (!mHasFeature) {
+        if (!mHasFeature || !mHasSecureLockScreen) {
             return;
         }
         // If ResetPasswordWithTokenTest for managed profile is executed before device owner and
@@ -1111,7 +1111,7 @@ public abstract class DeviceAndProfileOwnerTest extends BaseDevicePolicyTest {
     }
 
     public void testGetCurrentFailedPasswordAttempts() throws Exception {
-        if (!mHasFeature) {
+        if (!mHasFeature || !mHasSecureLockScreen) {
             return;
         }
         final String testPassword = "1234";
@@ -1143,14 +1143,14 @@ public abstract class DeviceAndProfileOwnerTest extends BaseDevicePolicyTest {
     }
 
     public void testPasswordExpiration() throws Exception {
-        if (!mHasFeature) {
+        if (!mHasFeature || !mHasSecureLockScreen) {
             return;
         }
         executeDeviceTestClass(".PasswordExpirationTest");
     }
 
     public void testGetPasswordExpiration() throws Exception {
-        if (!mHasFeature) {
+        if (!mHasFeature || !mHasSecureLockScreen) {
             return;
         }
         executeDeviceTestMethod(".GetPasswordExpirationTest",

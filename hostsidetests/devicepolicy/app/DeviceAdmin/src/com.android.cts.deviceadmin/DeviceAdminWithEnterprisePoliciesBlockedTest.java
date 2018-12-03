@@ -42,6 +42,9 @@ public class DeviceAdminWithEnterprisePoliciesBlockedTest extends DeviceAdminTes
 
     @Override
     public void testPasswordHistoryLength() {
+        if (!mHasSecureLockScreen) {
+            return;
+        }
         int originalValue = dpm.getPasswordHistoryLength(mAdminComponent);
         assertSecurityException(() -> dpm.setPasswordHistoryLength(mAdminComponent, 3));
         assertEquals(originalValue, dpm.getPasswordHistoryLength(mAdminComponent));
@@ -98,6 +101,9 @@ public class DeviceAdminWithEnterprisePoliciesBlockedTest extends DeviceAdminTes
 
     @Override
     public void testPasswordExpirationTimeout() {
+        if (!mHasSecureLockScreen) {
+            return;
+        }
         long originalValue = dpm.getPasswordExpirationTimeout(mAdminComponent);
         assertSecurityException(() -> dpm.setPasswordExpirationTimeout(mAdminComponent, 1234L));
         assertEquals(originalValue, dpm.getPasswordExpirationTimeout(mAdminComponent));

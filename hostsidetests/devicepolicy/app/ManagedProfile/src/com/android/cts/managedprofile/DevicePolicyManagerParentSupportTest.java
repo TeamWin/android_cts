@@ -31,6 +31,9 @@ public class DevicePolicyManagerParentSupportTest extends BaseManagedProfileTest
     }
 
     public void testSetAndGetPasswordHistoryLength_onParent() {
+        if (!mHasSecureLockScreen) {
+            return;
+        }
         final int passwordHistoryLength = 5;
 
         mParentDevicePolicyManager.setPasswordHistoryLength(
@@ -42,6 +45,9 @@ public class DevicePolicyManagerParentSupportTest extends BaseManagedProfileTest
     }
 
     public void testSetAndGetPasswordExpirationTimeout_onParent() {
+        if (!mHasSecureLockScreen) {
+            return;
+        }
         final int passwordExpirationTimeout = 432000000;
 
         mParentDevicePolicyManager.setPasswordExpirationTimeout(
@@ -53,6 +59,9 @@ public class DevicePolicyManagerParentSupportTest extends BaseManagedProfileTest
     }
 
     public void testGetPasswordExpiration_onParent() {
+        if (!mHasSecureLockScreen) {
+            return;
+        }
         final long passwordExpirationTimeout = 432000000;
         final long currentTime = System.currentTimeMillis();
 
@@ -85,6 +94,9 @@ public class DevicePolicyManagerParentSupportTest extends BaseManagedProfileTest
     }
 
     public void testSetAndGetMaximumFailedPasswordsForWipe_onParent() {
+        if (!mHasSecureLockScreen) {
+            return;
+        }
         final int maximumFailedPasswordsForWipe = 15;
 
         mParentDevicePolicyManager.setMaximumFailedPasswordsForWipe(
@@ -122,6 +134,9 @@ public class DevicePolicyManagerParentSupportTest extends BaseManagedProfileTest
     }
 
     public void testSetAndGetTrustAgentConfiguration_onParent() {
+        if (!mHasSecureLockScreen) {
+            return;
+        }
         final PersistableBundle configuration = new PersistableBundle();
         final String key = "key";
         final String value = "value";
@@ -137,6 +152,9 @@ public class DevicePolicyManagerParentSupportTest extends BaseManagedProfileTest
     }
 
     public void testSetAndGetRequiredStrongAuthTimeout_onParent() {
+        if (!mHasSecureLockScreen) {
+            return;
+        }
         final int requiredStrongAuthTimeout = 4600000;
 
         mParentDevicePolicyManager.setRequiredStrongAuthTimeout(
