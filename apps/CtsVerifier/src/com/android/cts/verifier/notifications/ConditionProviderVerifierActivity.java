@@ -16,6 +16,8 @@
 
 package com.android.cts.verifier.notifications;
 
+import static android.app.NotificationManager.INTERRUPTION_FILTER_PRIORITY;
+
 import android.app.ActivityManager;
 import android.app.AutomaticZenRule;
 import android.app.NotificationManager;
@@ -400,13 +402,13 @@ public class ConditionProviderVerifierActivity extends InteractiveVerifierActivi
             AutomaticZenRule updated1 = mNm.getAutomaticZenRule(id1);
             updated1.setName("AfterUpdate1");
             updated1.setConditionId(MockConditionProvider.toConditionId("afterValue1"));
-            updated1.setInterruptionFilter(NotificationManager.INTERRUPTION_FILTER_PRIORITY);
+            updated1.setInterruptionFilter(INTERRUPTION_FILTER_PRIORITY);
             updated1.setZenPolicy(builder.build());
 
             AutomaticZenRule updated2 = mNm.getAutomaticZenRule(id2);
             updated2.setName("AfterUpdate2");
             updated2.setConditionId(MockConditionProvider.toConditionId("afterValue2"));
-            updated2.setInterruptionFilter(NotificationManager.INTERRUPTION_FILTER_PRIORITY);
+            updated2.setInterruptionFilter(INTERRUPTION_FILTER_PRIORITY);
             updated2.setZenPolicy(builder.build());
 
             try {
@@ -677,7 +679,7 @@ public class ConditionProviderVerifierActivity extends InteractiveVerifierActivi
         @Override
         protected void setUp() {
             ruleToCreate = createRule("RuleUnsubscribe", "valueUnsubscribe",
-                    NotificationManager.INTERRUPTION_FILTER_PRIORITY);
+                    INTERRUPTION_FILTER_PRIORITY);
             id = mNm.addAutomaticZenRule(ruleToCreate);
             status = READY;
             delay();
@@ -803,8 +805,9 @@ public class ConditionProviderVerifierActivity extends InteractiveVerifierActivi
     private AutomaticZenRule createRuleWithZenPolicy(String name, String queryValue,
             ZenPolicy policy) {
         return new AutomaticZenRule(name,
-                ComponentName.unflattenFromString(CP_PATH),
-                MockConditionProvider.toConditionId(queryValue), policy, true);
+                ComponentName.unflattenFromString(CP_PATH), null,
+                MockConditionProvider.toConditionId(queryValue), policy,
+                INTERRUPTION_FILTER_PRIORITY, true);
     }
 
     private boolean compareRules(AutomaticZenRule rule1, AutomaticZenRule rule2) {
