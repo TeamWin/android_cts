@@ -2777,6 +2777,40 @@ public class ViewGroupTest implements CTSResult {
         assertEquals(5, resetResolvedDrawablesCount);
     }
 
+    @UiThreadTest
+    @Test
+    public void testLayoutNotCalledWithSuppressLayoutTrue() {
+        mMockViewGroup.suppressLayout(true);
+        mMockViewGroup.layout(0, 0, 100, 100);
+
+        assertTrue(mMockViewGroup.isLayoutSuppressed());
+        assertFalse(mMockViewGroup.isOnLayoutCalled);
+        assertFalse(mMockViewGroup.isRequestLayoutCalled);
+    }
+
+    @UiThreadTest
+    @Test
+    public void testLayoutCalledAfterSettingBackSuppressLayoutToFalseTrue() {
+        mMockViewGroup.suppressLayout(true);
+        mMockViewGroup.suppressLayout(false);
+        mMockViewGroup.layout(0, 0, 100, 100);
+
+        assertFalse(mMockViewGroup.isLayoutSuppressed());
+        assertTrue(mMockViewGroup.isOnLayoutCalled);
+    }
+
+    @UiThreadTest
+    @Test
+    public void testRequestLayoutCalledAfterSettingSuppressToFalseWhenItWasCalledWithTrue() {
+        mMockViewGroup.suppressLayout(true);
+        // now we call layout while in suppressed state
+        mMockViewGroup.layout(0, 0, 100, 100);
+        // then we undo suppressing. it should call requestLayout as we swallowed one layout call
+        mMockViewGroup.suppressLayout(false);
+
+        assertTrue(mMockViewGroup.isRequestLayoutCalled);
+    }
+
     static class MockTextView extends TextView {
 
         public boolean isClearFocusCalled;
