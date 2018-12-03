@@ -24,6 +24,8 @@ import android.os.RemoteException;
 import test_package.IEmpty;
 import test_package.ITest;
 import test_package.RegularPolygon;
+import test_package.Foo;
+import test_package.Bar;
 
 import java.util.concurrent.CountDownLatch;
 
@@ -273,4 +275,28 @@ public class TestImpl extends ITest.Stub {
   public int NewMethodThatReturns10() {
     return 10;
   }
+
+  @Override
+  public Foo repeatFoo(Foo inFoo) {
+    return inFoo;
+  }
+
+  @Override
+  public void renameFoo(Foo foo, String name) {
+    foo.a = name;
+  }
+
+  @Override
+  public void renameBar(Foo foo, String name) {
+    if (foo.d == null) {
+      foo.d = new Bar();
+    }
+    foo.d.a = name;
+  }
+
+  @Override
+  public int getF(Foo foo) {
+    return foo.f;
+  }
+
 }
