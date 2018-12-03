@@ -16,11 +16,18 @@
 
 package android.provider.cts;
 
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertTrue;
+
 import android.content.Intent;
 import android.content.pm.ResolveInfo;
 import android.net.Uri;
 import android.provider.MediaStore;
-import android.test.AndroidTestCase;
+import android.support.test.InstrumentationRegistry;
+import android.support.test.runner.AndroidJUnit4;
+
+import org.junit.Test;
+import org.junit.runner.RunWith;
 
 import java.util.List;
 
@@ -28,45 +35,52 @@ import java.util.List;
  * Tests to verify that common actions on {@link MediaStore} content are
  * available.
  */
-public class MediaStoreIntentsTest extends AndroidTestCase {
+@RunWith(AndroidJUnit4.class)
+public class MediaStoreIntentsTest {
     public void assertCanBeHandled(Intent intent) {
-        List<ResolveInfo> resolveInfoList = getContext()
+        List<ResolveInfo> resolveInfoList = InstrumentationRegistry.getTargetContext()
                 .getPackageManager().queryIntentActivities(intent, 0);
         assertNotNull("Missing ResolveInfo", resolveInfoList);
         assertTrue("No ResolveInfo found for " + intent.toString(),
                 resolveInfoList.size() > 0);
     }
 
+    @Test
     public void testPickImageDir() {
         Intent intent = new Intent(Intent.ACTION_PICK);
         intent.setData(MediaStore.Images.Media.EXTERNAL_CONTENT_URI);
         assertCanBeHandled(intent);
     }
 
+    @Test
     public void testPickVideoDir() {
         Intent intent = new Intent(Intent.ACTION_PICK);
         intent.setData(MediaStore.Video.Media.EXTERNAL_CONTENT_URI);
         assertCanBeHandled(intent);
     }
 
+    @Test
     public void testPickAudioDir() {
         Intent intent = new Intent(Intent.ACTION_PICK);
         intent.setData(MediaStore.Audio.Media.EXTERNAL_CONTENT_URI);
         assertCanBeHandled(intent);
     }
 
+    @Test
     public void testViewImageDir() {
         Intent intent = new Intent(Intent.ACTION_VIEW);
         intent.setData(MediaStore.Images.Media.EXTERNAL_CONTENT_URI);
         assertCanBeHandled(intent);
     }
 
+    @Test
     public void testViewVideoDir() {
         Intent intent = new Intent(Intent.ACTION_VIEW);
         intent.setData(MediaStore.Video.Media.EXTERNAL_CONTENT_URI);
         assertCanBeHandled(intent);
     }
 
+    @Test
     public void testViewImageFile() {
         final String[] schemes = new String[] {
                 "file", "http", "https", "content" };
@@ -87,6 +101,7 @@ public class MediaStoreIntentsTest extends AndroidTestCase {
         }
     }
 
+    @Test
     public void testViewVideoFile() {
         final String[] schemes = new String[] {
                 "file", "http", "https", "content" };
@@ -105,6 +120,7 @@ public class MediaStoreIntentsTest extends AndroidTestCase {
         }
     }
 
+    @Test
     public void testViewAudioFile() {
         final String[] schemes = new String[] {
                 "file", "http", "content" };

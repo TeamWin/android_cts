@@ -19,6 +19,13 @@ package android.provider.cts;
 import static android.provider.cts.ProviderTestUtils.assertExists;
 import static android.provider.cts.ProviderTestUtils.assertNotExists;
 
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertNull;
+import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.fail;
+
 import android.content.ContentResolver;
 import android.content.ContentUris;
 import android.content.ContentValues;
@@ -31,9 +38,15 @@ import android.os.SystemClock;
 import android.provider.MediaStore;
 import android.provider.MediaStore.Files.FileColumns;
 import android.provider.MediaStore.MediaColumns;
-import android.test.AndroidTestCase;
+import android.support.test.InstrumentationRegistry;
+import android.support.test.runner.AndroidJUnit4;
 
 import com.android.compatibility.common.util.FileCopyHelper;
+
+import org.junit.After;
+import org.junit.Before;
+import org.junit.Test;
+import org.junit.runner.RunWith;
 
 import java.io.File;
 import java.io.FileNotFoundException;
@@ -44,20 +57,21 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
-public class MediaStore_FilesTest extends AndroidTestCase {
-
+@RunWith(AndroidJUnit4.class)
+public class MediaStore_FilesTest {
+    private Context mContext;
     private ContentResolver mResolver;
 
-    @Override
-    protected void setUp() throws Exception {
-        super.setUp();
+    @Before
+    public void setUp() throws Exception {
+        mContext = InstrumentationRegistry.getTargetContext();
         mResolver = mContext.getContentResolver();
+
         cleanup();
     }
 
-    @Override
-    protected void tearDown() throws Exception {
-        super.tearDown();
+    @After
+    public void tearDown() throws Exception {
         cleanup();
     }
 
@@ -92,6 +106,7 @@ public class MediaStore_FilesTest extends AndroidTestCase {
         f.delete();
     }
 
+    @Test
     public void testGetContentUri() {
         String volumeName = MediaStoreAudioTestHelper.EXTERNAL_VOLUME_NAME;
         Uri allFilesUri = MediaStore.Files.getContentUri(volumeName);
@@ -172,6 +187,7 @@ public class MediaStore_FilesTest extends AndroidTestCase {
         }
     }
 
+    @Test
     public void testCaseSensitivity() throws IOException {
         String fileDir = Environment.getExternalStorageDirectory() +
                 "/" + getClass().getCanonicalName();
@@ -202,6 +218,7 @@ public class MediaStore_FilesTest extends AndroidTestCase {
         }
     }
 
+    @Test
     public void testAccess() throws Exception {
         // clean up from previous run
         mResolver.delete(MediaStore.Images.Media.INTERNAL_CONTENT_URI,
@@ -479,6 +496,7 @@ public class MediaStore_FilesTest extends AndroidTestCase {
         return paths;
     }
 
+    @Test
     public void testUpdateMediaType() throws Exception {
         String fileDir = Environment.getExternalStorageDirectory() +
                 "/" + getClass().getCanonicalName();

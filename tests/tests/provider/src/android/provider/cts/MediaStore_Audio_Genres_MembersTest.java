@@ -16,31 +16,42 @@
 
 package android.provider.cts;
 
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertNull;
+import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.fail;
 
 import android.content.ContentResolver;
 import android.content.ContentValues;
+import android.content.Context;
 import android.database.Cursor;
 import android.database.SQLException;
 import android.net.Uri;
 import android.provider.MediaStore.Audio.Genres;
-import android.provider.MediaStore.Audio.Media;
 import android.provider.MediaStore.Audio.Genres.Members;
+import android.provider.MediaStore.Audio.Media;
 import android.provider.cts.MediaStoreAudioTestHelper.Audio1;
 import android.provider.cts.MediaStoreAudioTestHelper.Audio2;
-import android.test.InstrumentationTestCase;
+import android.support.test.InstrumentationRegistry;
 
-public class MediaStore_Audio_Genres_MembersTest extends InstrumentationTestCase {
+import org.junit.After;
+import org.junit.Before;
+import org.junit.Test;
+
+public class MediaStore_Audio_Genres_MembersTest {
+    private Context mContext;
     private ContentResolver mContentResolver;
 
     private long mAudioIdOfJam;
 
     private long mAudioIdOfJamLive;
 
-    @Override
-    protected void setUp() throws Exception {
-        super.setUp();
+    @Before
+    public void setUp() throws Exception {
+        mContext = InstrumentationRegistry.getTargetContext();
+        mContentResolver = mContext.getContentResolver();
 
-        mContentResolver = getInstrumentation().getContext().getContentResolver();
         Uri uri = Audio1.getInstance().insertToExternal(mContentResolver);
         Cursor c = mContentResolver.query(uri, null, null, null, null);
         c.moveToFirst();
@@ -54,16 +65,16 @@ public class MediaStore_Audio_Genres_MembersTest extends InstrumentationTestCase
         c.close();
     }
 
-    @Override
-    protected void tearDown() throws Exception {
+    @After
+    public void tearDown() throws Exception {
         // "jam" should already have been deleted as part of the test, but delete it again just
         // in case the test failed and aborted before that.
         mContentResolver.delete(Media.EXTERNAL_CONTENT_URI, Media._ID + "=" + mAudioIdOfJam, null);
         mContentResolver.delete(Media.EXTERNAL_CONTENT_URI, Media._ID + "=" + mAudioIdOfJamLive,
                 null);
-        super.tearDown();
     }
 
+    @Test
     public void testGetContentUri() {
         Cursor c = null;
         assertNotNull(c = mContentResolver.query(
@@ -87,6 +98,7 @@ public class MediaStore_Audio_Genres_MembersTest extends InstrumentationTestCase
                 null));
     }
 
+    @Test
     public void testStoreAudioGenresMembersExternal() {
         ContentValues values = new ContentValues();
         values.put(Genres.NAME, Audio1.GENRE);
@@ -292,6 +304,7 @@ public class MediaStore_Audio_Genres_MembersTest extends InstrumentationTestCase
         }
     }
 
+    @Test
     public void testStoreAudioGenresMembersInternal() {
         // the internal database can not have genres
         ContentValues values = new ContentValues();
