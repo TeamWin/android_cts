@@ -1001,7 +1001,7 @@ public class NotificationManagerTest extends AndroidTestCase {
         // getActiveNotifications()
         // we will check for it for up to 300ms before giving up
         StatusBarNotification n = null;
-        for (int tries = 3; tries--> 0;) {
+        for (int tries = 3; tries-- > 0; ) {
             final StatusBarNotification[] sbns = mNotificationManager.getActiveNotifications();
             for (StatusBarNotification sbn : sbns) {
                 Log.d(TAG, "Found " + sbn.getKey());
@@ -1018,6 +1018,37 @@ public class NotificationManagerTest extends AndroidTestCase {
             }
         }
         return n;
+    }
+
+    public void testNotificationPolicyVisualEffectsEqual() {
+        NotificationManager.Policy policy = new NotificationManager.Policy(0,0 ,0 ,
+                SUPPRESSED_EFFECT_SCREEN_ON);
+        NotificationManager.Policy policy2 = new NotificationManager.Policy(0,0 ,0 ,
+                SUPPRESSED_EFFECT_PEEK);
+        assertTrue(policy.equals(policy2));
+        assertTrue(policy2.equals(policy));
+
+        policy = new NotificationManager.Policy(0,0 ,0 ,
+                SUPPRESSED_EFFECT_SCREEN_ON);
+        policy2 = new NotificationManager.Policy(0,0 ,0 ,
+                0);
+        assertFalse(policy.equals(policy2));
+        assertFalse(policy2.equals(policy));
+
+        policy = new NotificationManager.Policy(0,0 ,0 ,
+                SUPPRESSED_EFFECT_SCREEN_OFF);
+        policy2 = new NotificationManager.Policy(0,0 ,0 ,
+                SUPPRESSED_EFFECT_FULL_SCREEN_INTENT | SUPPRESSED_EFFECT_AMBIENT
+                        | SUPPRESSED_EFFECT_LIGHTS);
+        assertTrue(policy.equals(policy2));
+        assertTrue(policy2.equals(policy));
+
+        policy = new NotificationManager.Policy(0,0 ,0 ,
+                SUPPRESSED_EFFECT_SCREEN_OFF);
+        policy2 = new NotificationManager.Policy(0,0 ,0 ,
+                SUPPRESSED_EFFECT_LIGHTS);
+        assertFalse(policy.equals(policy2));
+        assertFalse(policy2.equals(policy));
     }
 
     private PendingIntent getPendingIntent() {
