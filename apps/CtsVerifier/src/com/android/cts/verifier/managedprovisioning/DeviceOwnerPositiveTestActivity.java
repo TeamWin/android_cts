@@ -400,7 +400,7 @@ public class DeviceOwnerPositiveTestActivity extends PassFailButtons.TestListAct
                                             UserManager.DISALLOW_USER_SWITCH, true)),
                             new ButtonInfo(
                                     R.string.device_owner_settings_go,
-                                    new Intent(Settings.ACTION_SETTINGS))}));
+                                    new Intent(Settings.ACTION_USER_SETTINGS))}));
 
             // DISALLOW_REMOVE_USER
             adapter.add(createInteractiveTestItem(this, DISALLOW_REMOVE_USER_TEST_ID,
@@ -416,7 +416,7 @@ public class DeviceOwnerPositiveTestActivity extends PassFailButtons.TestListAct
                                             UserManager.DISALLOW_REMOVE_USER, true)),
                             new ButtonInfo(
                                     R.string.device_owner_settings_go,
-                                    new Intent(Settings.ACTION_SETTINGS))}));
+                                    new Intent(Settings.ACTION_USER_SETTINGS))}));
         }
 
         // Network logging UI
