@@ -229,7 +229,7 @@ public class CtsRootlessGpuDebugHostTest implements IDeviceTest {
         mDevice.executeAdbCommand("shell", "settings", "delete", "global", "gpu_debug_layers_gles");
         mDevice.executeAdbCommand("shell", "settings", "delete", "global", "gpu_debug_layer_app");
         mDevice.executeAdbCommand("shell", "setprop", "debug.vulkan.layers", "\'\'");
-        mDevice.executeAdbCommand("shell", "setprop", "debug.gles.layers", "\'\"\"\'");
+        mDevice.executeAdbCommand("shell", "setprop", "debug.gles.layers", "\'\'");
     }
 
     /**
