@@ -18,6 +18,8 @@ aidl_interface {
         "test_package/IEmpty.aidl",
         "test_package/ITest.aidl",
         "test_package/RegularPolygon.aidl",
+        "test_package/Bar.aidl",
+        "test_package/Foo.aidl",
     ],
     versions: ["1"],
 }
