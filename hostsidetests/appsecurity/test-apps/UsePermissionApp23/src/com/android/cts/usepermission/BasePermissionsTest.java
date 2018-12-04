@@ -389,7 +389,7 @@ public abstract class BasePermissionsTest {
         waitForIdle();
 
         for (String permission : permissions) {
-            // Find the permission toggle
+            // Find the permission screen
             String permissionLabel = getPermissionLabel(permission);
 
             AccessibilityNodeInfo labelView = getNodeTimed(() -> findByText(permissionLabel), true);
@@ -398,17 +398,28 @@ public abstract class BasePermissionsTest {
             AccessibilityNodeInfo itemView = findCollectionItem(labelView);
             Assert.assertNotNull("Permission item should be present", itemView);
 
-            final AccessibilityNodeInfo toggleView = findSwitch(itemView);
-            Assert.assertNotNull("Permission toggle should be present", toggleView);
+            click(itemView);
 
-            final boolean wasGranted = toggleView.isChecked();
+            String denyLabel = mContext.getResources().getString(R.string.Deny);
+            AccessibilityNodeInfo denyView = getNodeTimed(() -> findByText(denyLabel), true);
+            Assert.assertNotNull("Deny label should be present", denyView);
+
+            final boolean wasGranted = !denyView.isChecked();
             if (granted != wasGranted) {
                 // Toggle the permission
 
-                if (!itemView.getActionList().contains(AccessibilityAction.ACTION_CLICK)) {
-                    click(toggleView);
+                if (granted) {
+                    String allowLabel = mContext.getResources().getString(R.string.Allow);
+                    AccessibilityNodeInfo allowView = getNodeTimed(() -> findByText(allowLabel), false);
+                    if (allowView == null) {
+                        String allowAllLabel = mContext.getResources().getString(R.string.AllowAll);
+                        allowView = getNodeTimed(() -> findByText(allowAllLabel), true);
+                    }
+                    Assert.assertNotNull("Allow label should be present", allowView);
+
+                    click(allowView);
                 } else {
-                    click(itemView);
+                    click(denyView);
                 }
 
                 waitForIdle();
@@ -430,6 +441,9 @@ public abstract class BasePermissionsTest {
                     waitForIdle();
                 }
             }
+
+            getUiDevice().pressBack();
+            waitForIdle();
         }
 
         getUiDevice().pressBack();
