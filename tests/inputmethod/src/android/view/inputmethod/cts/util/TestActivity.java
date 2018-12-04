@@ -34,7 +34,6 @@ import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Function;
 
 public final class TestActivity extends Activity {
-
     private static final AtomicReference<Function<TestActivity, View>> sInitializer =
             new AtomicReference<>();
 
@@ -43,6 +42,8 @@ public final class TestActivity extends Activity {
     private AtomicBoolean mIgnoreBackKey = new AtomicBoolean();
 
     private long mOnBackPressedCallCount;
+
+    private boolean mEnterAnimationComplete = false;
 
     /**
      * Controls how {@link #onBackPressed()} behaves.
@@ -94,6 +95,25 @@ public final class TestActivity extends Activity {
     }
 
     /**
+     * Launches {@link TestActivity} with the given initialization logic for content view and waits
+     * for the enter animation to complete.
+     *
+     * <p>As long as you are using {@link android.support.test.runner.AndroidJUnitRunner}, the test
+     * runner automatically calls {@link Activity#finish()} for the {@link Activity} launched when
+     * the test finished.  You do not need to explicitly call {@link Activity#finish()}.</p>
+     *
+     * @param activityInitializer initializer to supply {@link View} to be passed to
+     *                           {@link Activity#setContentView(View)}
+     * @return {@link TestActivity} launched
+     */
+    public static TestActivity startSyncAndWait(
+            @NonNull Function<TestActivity, View> activityInitializer) {
+        TestActivity activity = startSync(activityInitializer, 0 /* noAnimation */);
+        activity.waitForEnterAnimationComplete();
+        return activity;
+    }
+
+    /**
      * Launches {@link TestActivity} with the given initialization logic for content view.
      *
      * <p>As long as you are using {@link android.support.test.runner.AndroidJUnitRunner}, the test
@@ -133,6 +153,30 @@ public final class TestActivity extends Activity {
                 .addFlags(additionalFlags);
         return (TestActivity) InstrumentationRegistry
                 .getInstrumentation().startActivitySync(intent);
+    }
+
+    @Override
+    public void onStop() {
+        super.onStop();
+        mEnterAnimationComplete = false;
+    }
+
+    @Override
+    public void onEnterAnimationComplete() {
+        synchronized (this) {
+           mEnterAnimationComplete = true;
+           notifyAll();
+        }
+    }
+
+    private void waitForEnterAnimationComplete() {
+        synchronized(this) {
+            if (mEnterAnimationComplete == false) {
+                try {
+                    wait(5000);
+                } catch (InterruptedException e) {}
+            }
+        }
     }
 
     /**
