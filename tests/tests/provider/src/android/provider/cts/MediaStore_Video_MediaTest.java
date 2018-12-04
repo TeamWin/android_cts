@@ -19,6 +19,12 @@ package android.provider.cts;
 import static android.provider.cts.ProviderTestUtils.assertExists;
 import static android.provider.cts.ProviderTestUtils.assertNotExists;
 
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertNull;
+import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.fail;
+
 import android.content.ContentResolver;
 import android.content.ContentValues;
 import android.content.Context;
@@ -28,24 +34,31 @@ import android.os.Environment;
 import android.provider.MediaStore;
 import android.provider.MediaStore.Video.Media;
 import android.provider.MediaStore.Video.VideoColumns;
-import android.test.AndroidTestCase;
+import android.support.test.InstrumentationRegistry;
+import android.support.test.runner.AndroidJUnit4;
 
 import com.android.compatibility.common.util.FileCopyHelper;
 import com.android.compatibility.common.util.FileUtils;
 
+import org.junit.Before;
+import org.junit.Test;
+import org.junit.runner.RunWith;
+
 import java.io.File;
 import java.io.IOException;
 
-public class MediaStore_Video_MediaTest extends AndroidTestCase {
+@RunWith(AndroidJUnit4.class)
+public class MediaStore_Video_MediaTest {
+    private Context mContext;
     private ContentResolver mContentResolver;
 
-    @Override
-    protected void setUp() throws Exception {
-        super.setUp();
-
-        mContentResolver = getContext().getContentResolver();
+    @Before
+    public void setUp() throws Exception {
+        mContext = InstrumentationRegistry.getTargetContext();
+        mContentResolver = mContext.getContentResolver();
     }
 
+    @Test
     public void testGetContentUri() {
         Cursor c = null;
         assertNotNull(c = mContentResolver.query(Media.getContentUri("internal"), null, null, null,
@@ -65,6 +78,7 @@ public class MediaStore_Video_MediaTest extends AndroidTestCase {
         new File(path).delete();
     }
 
+    @Test
     public void testStoreVideoMediaExternal() throws Exception {
         final String externalVideoPath = Environment.getExternalStorageDirectory().getPath() +
                  "/video/testvideo.3gp";
@@ -198,7 +212,7 @@ public class MediaStore_Video_MediaTest extends AndroidTestCase {
         }
 
         // check that the video file is removed when deleting the database entry
-        Context context = getContext();
+        Context context = mContext;
         Uri videoUri = insertVideo(context);
         File videofile = new File(Environment.getExternalStorageDirectory(), "testVideo.3gp");
         assertExists(videofile);
@@ -216,6 +230,7 @@ public class MediaStore_Video_MediaTest extends AndroidTestCase {
 
     }
 
+    @Test
     public void testStoreVideoMediaInternal() {
         // can not insert any data, so other operations can not be tested
         try {

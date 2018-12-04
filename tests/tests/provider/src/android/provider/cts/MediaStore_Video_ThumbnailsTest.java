@@ -19,9 +19,17 @@ package android.provider.cts;
 import static android.provider.cts.ProviderTestUtils.assertExists;
 import static android.provider.cts.ProviderTestUtils.assertNotExists;
 
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertNull;
+import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.fail;
+
 import android.content.ContentResolver;
 import android.content.ContentUris;
 import android.content.ContentValues;
+import android.content.Context;
 import android.database.Cursor;
 import android.net.Uri;
 import android.os.Environment;
@@ -29,18 +37,26 @@ import android.provider.MediaStore.Files;
 import android.provider.MediaStore.Video.Media;
 import android.provider.MediaStore.Video.Thumbnails;
 import android.provider.MediaStore.Video.VideoColumns;
-import android.test.AndroidTestCase;
+import android.support.test.InstrumentationRegistry;
+import android.support.test.runner.AndroidJUnit4;
 import android.util.Log;
 
 import com.android.compatibility.common.util.FileCopyHelper;
 import com.android.compatibility.common.util.MediaUtils;
 
+import org.junit.After;
+import org.junit.Before;
+import org.junit.Test;
+import org.junit.runner.RunWith;
+
 import java.io.File;
 import java.io.IOException;
 
-public class MediaStore_Video_ThumbnailsTest extends AndroidTestCase {
+@RunWith(AndroidJUnit4.class)
+public class MediaStore_Video_ThumbnailsTest {
     private static final String TAG = "MediaStore_Video_ThumbnailsTest";
 
+    private Context mContext;
     private ContentResolver mResolver;
 
     private FileCopyHelper mFileHelper;
@@ -50,19 +66,19 @@ public class MediaStore_Video_ThumbnailsTest extends AndroidTestCase {
                 mContext, R.raw.testthumbvideo, "video/");
     }
 
-    @Override
-    protected void setUp() throws Exception {
-        super.setUp();
+    @Before
+    public void setUp() throws Exception {
+        mContext = InstrumentationRegistry.getTargetContext();
         mResolver = mContext.getContentResolver();
         mFileHelper = new FileCopyHelper(mContext);
     }
 
-    @Override
-    protected void tearDown() throws Exception {
+    @After
+    public void tearDown() throws Exception {
         mFileHelper.clear();
-        super.tearDown();
     }
 
+    @Test
     public void testGetContentUri() {
         Uri internalUri = Thumbnails.getContentUri(MediaStoreAudioTestHelper.INTERNAL_VOLUME_NAME);
         Uri externalUri = Thumbnails.getContentUri(MediaStoreAudioTestHelper.EXTERNAL_VOLUME_NAME);
@@ -70,6 +86,7 @@ public class MediaStore_Video_ThumbnailsTest extends AndroidTestCase {
         assertEquals(Thumbnails.EXTERNAL_CONTENT_URI, externalUri);
     }
 
+    @Test
     public void testGetThumbnail() throws Exception {
         // Insert a video into the provider.
         Uri videoUri = insertVideo();
@@ -123,6 +140,7 @@ public class MediaStore_Video_ThumbnailsTest extends AndroidTestCase {
         assertEquals(1, mResolver.delete(videoUri, null, null));
     }
 
+    @Test
     public void testThumbnailGenerationAndCleanup() throws Exception {
 
         if (!hasCodec()) {

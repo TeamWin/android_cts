@@ -33,7 +33,8 @@ LOCAL_STATIC_JAVA_LIBRARIES := \
     android-ex-camera2 \
     compatibility-device-util \
     truth-prebuilt \
-    androidx.annotation_annotation
+    androidx.annotation_annotation \
+    platformprotosnano
 
 LOCAL_JNI_SHARED_LIBRARIES := libctspermission_jni libnativehelper_compat_libc++
 

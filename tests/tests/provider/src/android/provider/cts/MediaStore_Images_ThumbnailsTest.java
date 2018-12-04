@@ -19,6 +19,13 @@ package android.provider.cts;
 import static android.provider.cts.ProviderTestUtils.assertExists;
 import static android.provider.cts.ProviderTestUtils.assertNotExists;
 
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertNull;
+import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.fail;
+
 import android.content.ContentResolver;
 import android.content.ContentUris;
 import android.content.ContentValues;
@@ -33,17 +40,24 @@ import android.provider.MediaStore;
 import android.provider.MediaStore.Images.Media;
 import android.provider.MediaStore.Images.Thumbnails;
 import android.provider.MediaStore.MediaColumns;
-import android.test.InstrumentationTestCase;
+import android.support.test.InstrumentationRegistry;
+import android.support.test.runner.AndroidJUnit4;
 import android.util.DisplayMetrics;
 
 import com.android.compatibility.common.util.FileCopyHelper;
 
 import junit.framework.AssertionFailedError;
 
+import org.junit.After;
+import org.junit.Before;
+import org.junit.Test;
+import org.junit.runner.RunWith;
+
 import java.io.File;
 import java.util.ArrayList;
 
-public class MediaStore_Images_ThumbnailsTest extends InstrumentationTestCase {
+@RunWith(AndroidJUnit4.class)
+public class MediaStore_Images_ThumbnailsTest {
     private ArrayList<Uri> mRowsAdded;
 
     private Context mContext;
@@ -55,8 +69,8 @@ public class MediaStore_Images_ThumbnailsTest extends InstrumentationTestCase {
     private Uri mRed;
     private Uri mBlue;
 
-    @Override
-    protected void tearDown() throws Exception {
+    @After
+    public void tearDown() throws Exception {
         for (Uri row : mRowsAdded) {
             try {
                 mContentResolver.delete(row, null, null);
@@ -67,14 +81,11 @@ public class MediaStore_Images_ThumbnailsTest extends InstrumentationTestCase {
         }
 
         mHelper.clear();
-        super.tearDown();
     }
 
-    @Override
-    protected void setUp() throws Exception {
-        super.setUp();
-
-        mContext = getInstrumentation().getTargetContext();
+    @Before
+    public void setUp() throws Exception {
+        mContext = InstrumentationRegistry.getTargetContext();
         mContentResolver = mContext.getContentResolver();
 
         mHelper = new FileCopyHelper(mContext);
@@ -100,6 +111,7 @@ public class MediaStore_Images_ThumbnailsTest extends InstrumentationTestCase {
         }
     }
 
+    @Test
     public void testQueryExternalThumbnails() throws Exception {
         prepareImages();
 
@@ -141,6 +153,7 @@ public class MediaStore_Images_ThumbnailsTest extends InstrumentationTestCase {
         c.close();
     }
 
+    @Test
     public void testQueryExternalMiniThumbnails() throws Exception {
         // insert the image by bitmap
         BitmapFactory.Options opts = new BitmapFactory.Options();
@@ -246,6 +259,7 @@ public class MediaStore_Images_ThumbnailsTest extends InstrumentationTestCase {
         assertExists("image file should still exist", imagePath);
     }
 
+    @Test
     public void testGetContentUri() {
         Cursor c = null;
         assertNotNull(c = mContentResolver.query(Thumbnails.getContentUri("internal"), null, null,
@@ -261,6 +275,7 @@ public class MediaStore_Images_ThumbnailsTest extends InstrumentationTestCase {
                 null));
     }
 
+    @Test
     public void testStoreImagesMediaExternal() throws Exception {
         prepareImages();
 
@@ -305,6 +320,7 @@ public class MediaStore_Images_ThumbnailsTest extends InstrumentationTestCase {
         assertEquals(1, mContentResolver.delete(uri, null, null));
     }
 
+    @Test
     public void testThumbnailGenerationAndCleanup() throws Exception {
         // insert an image
         Bitmap src = BitmapFactory.decodeResource(mContext.getResources(), R.raw.scenery);
@@ -386,6 +402,7 @@ public class MediaStore_Images_ThumbnailsTest extends InstrumentationTestCase {
         new File(sourcePath).delete();
     }
 
+    @Test
     public void testStoreImagesMediaInternal() {
         // can not insert any data, so other operations can not be tested
         try {
@@ -397,6 +414,7 @@ public class MediaStore_Images_ThumbnailsTest extends InstrumentationTestCase {
         }
     }
 
+    @Test
     public void testThumbnailOrderedQuery() throws Exception {
         Bitmap src = BitmapFactory.decodeResource(mContext.getResources(), R.raw.scenery);
         Uri url[] = new Uri[3];

@@ -2965,12 +2965,12 @@
     <permission android:name="android.permission.BIND_TEXTCLASSIFIER_SERVICE"
                 android:protectionLevel="signature" />
 
-    <!-- Must be required by a android.service.intelligence.IntelligenceService,
+    <!-- Must be required by a android.service.intelligence.SmartSuggestionsService,
          to ensure that only the system can bind to it.
          @SystemApi @hide This is not a third-party API (intended for OEMs and system apps).
          <p>Protection level: signature
     -->
-    <permission android:name="android.permission.BIND_INTELLIGENCE_SERVICE"
+    <permission android:name="android.permission.BIND_SMART_SUGGESTIONS_SERVICE"
                 android:protectionLevel="signature" />
 
     <!-- Must be required by hotword enrollment application,
@@ -4172,6 +4172,12 @@
          @hide -->
     <permission android:name="android.permission.GRANT_PROFILE_OWNER_DEVICE_IDS_ACCESS"
         android:protectionLevel="signature" />
+
+    <!-- Required for apps targeting {@link android.os.Build.VERSION_CODES#P} that want to use
+         {@link android.app.Notification.Builder#setFullScreenIntent notification full screen
+         intents}.  -->
+    <permission android:name="android.permission.USE_FULL_SCREEN_INTENT"
+                android:protectionLevel="normal" />
 
     <!-- @SystemApi Allows requesting the framework broadcast the
          {@link Intent#ACTION_DEVICE_CUSTOMIZATION_READY} intent.

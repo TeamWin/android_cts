@@ -16,28 +16,50 @@
 
 package android.provider.cts;
 
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertNull;
+import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.fail;
+
 import android.content.ContentResolver;
 import android.content.ContentValues;
 import android.content.Context;
 import android.database.Cursor;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
+import android.media.ExifInterface;
 import android.net.Uri;
 import android.os.Environment;
+import android.os.ParcelFileDescriptor;
+import android.os.storage.StorageManager;
 import android.platform.test.annotations.Presubmit;
+import android.provider.MediaStore;
 import android.provider.MediaStore.Images.Media;
 import android.provider.MediaStore.Images.Thumbnails;
-import android.test.InstrumentationTestCase;
+import android.support.test.InstrumentationRegistry;
+import android.support.test.runner.AndroidJUnit4;
 import android.util.Log;
 
 import com.android.compatibility.common.util.FileCopyHelper;
 import com.android.compatibility.common.util.FileUtils;
 
+import libcore.io.IoUtils;
+
+import org.junit.After;
+import org.junit.Assume;
+import org.junit.Before;
+import org.junit.Test;
+import org.junit.runner.RunWith;
+
 import java.io.File;
 import java.io.FileNotFoundException;
+import java.io.InputStream;
+import java.io.OutputStream;
 import java.util.ArrayList;
 
-public class MediaStore_Images_MediaTest extends InstrumentationTestCase {
+@RunWith(AndroidJUnit4.class)
+public class MediaStore_Images_MediaTest {
     private static final String MIME_TYPE_JPEG = "image/jpeg";
 
     private static final String TEST_TITLE1 = "test title1";
@@ -62,21 +84,18 @@ public class MediaStore_Images_MediaTest extends InstrumentationTestCase {
 
     private FileCopyHelper mHelper;
 
-    @Override
-    protected void tearDown() throws Exception {
+    @After
+    public void tearDown() throws Exception {
         for (Uri row : mRowsAdded) {
             mContentResolver.delete(row, null, null);
         }
 
         mHelper.clear();
-        super.tearDown();
     }
 
-    @Override
-    protected void setUp() throws Exception {
-        super.setUp();
-
-        mContext = getInstrumentation().getTargetContext();
+    @Before
+    public void setUp() throws Exception {
+        mContext = InstrumentationRegistry.getTargetContext();
         mContentResolver = mContext.getContentResolver();
 
         mHelper = new FileCopyHelper(mContext);
@@ -93,6 +112,7 @@ public class MediaStore_Images_MediaTest extends InstrumentationTestCase {
 
     }
 
+    @Test
     public void testInsertImageWithImagePath() throws Exception {
         Cursor c = Media.query(mContentResolver, Media.EXTERNAL_CONTENT_URI, null, null,
                 "_id ASC");
@@ -164,6 +184,7 @@ public class MediaStore_Images_MediaTest extends InstrumentationTestCase {
         c.close();
     }
 
+    @Test
     public void testInsertImageWithBitmap() throws Exception {
         // insert the image by bitmap
         Bitmap src = BitmapFactory.decodeResource(mContext.getResources(), R.raw.scenery);
@@ -191,6 +212,7 @@ public class MediaStore_Images_MediaTest extends InstrumentationTestCase {
     }
 
     @Presubmit
+    @Test
     public void testGetContentUri() {
         Cursor c = null;
         assertNotNull(c = mContentResolver.query(Media.getContentUri("internal"), null, null, null,
@@ -210,6 +232,7 @@ public class MediaStore_Images_MediaTest extends InstrumentationTestCase {
         new File(path).delete();
     }
 
+    @Test
     public void testStoreImagesMediaExternal() throws Exception {
         final String externalPath = Environment.getExternalStorageDirectory().getPath() +
                 "/testimage.jpg";
@@ -324,6 +347,7 @@ public class MediaStore_Images_MediaTest extends InstrumentationTestCase {
         }
     }
 
+    @Test
     public void testStoreImagesMediaInternal() {
         // can not insert any data, so other operations can not be tested
         try {
@@ -350,5 +374,65 @@ public class MediaStore_Images_MediaTest extends InstrumentationTestCase {
                 Thumbnails.IMAGE_ID + "=" + imageId, null, null);
         assertEquals(2, c.getCount());
         c.close();
+    }
+
+    /**
+     * This test doesn't hold
+     * {@link android.Manifest.permission#ACCESS_MEDIA_LOCATION}, so Exif
+     * location information should be redacted.
+     */
+    @Test
+    public void testLocationRedaction() throws Exception {
+        // STOPSHIP: remove this once isolated storage is always enabled
+        Assume.assumeTrue(StorageManager.hasIsolatedStorage());
+
+        final String displayName = "cts" + System.nanoTime();
+        final MediaStore.PendingParams params = new MediaStore.PendingParams(
+                MediaStore.Images.Media.EXTERNAL_CONTENT_URI, displayName, "image/jpeg");
+
+        final Uri pendingUri = MediaStore.createPending(mContext, params);
+        final Uri publishUri;
+        final MediaStore.PendingSession session = MediaStore.openPending(mContext, pendingUri);
+        try {
+            try (InputStream in = mContext.getResources().openRawResource(R.raw.volantis);
+                 OutputStream out = session.openOutputStream()) {
+                android.os.FileUtils.copy(in, out);
+            }
+            publishUri = session.publish();
+        } finally {
+            IoUtils.closeQuietly(session);
+        }
+
+        final Uri originalUri = MediaStore.setRequireOriginal(publishUri);
+
+        // Since we own the image, we should be able to see the Exif data that
+        // we ourselves contributed
+        try (InputStream is = mContentResolver.openInputStream(publishUri)) {
+            final ExifInterface exif = new ExifInterface(is);
+            final float[] latLong = new float[2];
+            exif.getLatLong(latLong);
+            assertEquals(37.42303, latLong[0], 0.001);
+            assertEquals(-122.162025, latLong[1], 0.001);
+        }
+        // As owner, we should be able to request the original bytes
+        try (ParcelFileDescriptor pfd = mContentResolver.openFileDescriptor(originalUri, "r")) {
+        }
+
+        // Now remove ownership, which means that Exif should be redacted
+        ProviderTestUtils.executeShellCommand(
+                "content update --uri " + publishUri + " --bind owner_package_name:n:",
+                InstrumentationRegistry.getInstrumentation().getUiAutomation());
+        try (InputStream is = mContentResolver.openInputStream(publishUri)) {
+            final ExifInterface exif = new ExifInterface(is);
+            final float[] latLong = new float[2];
+            exif.getLatLong(latLong);
+            assertEquals(0, latLong[0], 0.001);
+            assertEquals(0, latLong[1], 0.001);
+        }
+        // We can't request original bytes unless we have permission
+        try (ParcelFileDescriptor pfd = mContentResolver.openFileDescriptor(originalUri, "r")) {
+            fail("Able to read original content without ACCESS_MEDIA_LOCATION");
+        } catch (UnsupportedOperationException expected) {
+        }
     }
 }

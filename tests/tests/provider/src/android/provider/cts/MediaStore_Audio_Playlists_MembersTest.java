@@ -16,9 +16,14 @@
 
 package android.provider.cts;
 
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertTrue;
 
 import android.content.ContentResolver;
 import android.content.ContentValues;
+import android.content.Context;
 import android.database.Cursor;
 import android.net.Uri;
 import android.provider.MediaStore;
@@ -31,11 +36,18 @@ import android.provider.cts.MediaStoreAudioTestHelper.Audio3;
 import android.provider.cts.MediaStoreAudioTestHelper.Audio4;
 import android.provider.cts.MediaStoreAudioTestHelper.Audio5;
 import android.provider.cts.MediaStoreAudioTestHelper.MockAudioMediaInfo;
-import android.test.InstrumentationTestCase;
+import android.support.test.InstrumentationRegistry;
+import android.support.test.runner.AndroidJUnit4;
+
+import org.junit.After;
+import org.junit.Before;
+import org.junit.Test;
+import org.junit.runner.RunWith;
 
 import java.util.regex.Pattern;
 
-public class MediaStore_Audio_Playlists_MembersTest extends InstrumentationTestCase {
+@RunWith(AndroidJUnit4.class)
+public class MediaStore_Audio_Playlists_MembersTest {
     private String[] mAudioProjection = {
             Members._ID,
             Members.ALBUM,
@@ -93,6 +105,7 @@ public class MediaStore_Audio_Playlists_MembersTest extends InstrumentationTestC
             Members.YEAR,
     };
 
+    private Context mContext;
     private ContentResolver mContentResolver;
 
     private long mIdOfAudio1;
@@ -110,11 +123,11 @@ public class MediaStore_Audio_Playlists_MembersTest extends InstrumentationTestC
         return id;
     }
 
-    @Override
-    protected void setUp() throws Exception {
-        super.setUp();
+    @Before
+    public void setUp() throws Exception {
+        mContext = InstrumentationRegistry.getTargetContext();
+        mContentResolver = mContext.getContentResolver();
 
-        mContentResolver = getInstrumentation().getContext().getContentResolver();
         mIdOfAudio1 = insertAudioItem(Audio1.getInstance());
         mIdOfAudio2 = insertAudioItem(Audio2.getInstance());
         mIdOfAudio3 = insertAudioItem(Audio3.getInstance());
@@ -122,16 +135,16 @@ public class MediaStore_Audio_Playlists_MembersTest extends InstrumentationTestC
         mIdOfAudio5 = insertAudioItem(Audio5.getInstance());
     }
 
-    @Override
-    protected void tearDown() throws Exception {
+    @After
+    public void tearDown() throws Exception {
         mContentResolver.delete(Media.EXTERNAL_CONTENT_URI, Media._ID + "=" + mIdOfAudio1, null);
         mContentResolver.delete(Media.EXTERNAL_CONTENT_URI, Media._ID + "=" + mIdOfAudio2, null);
         mContentResolver.delete(Media.EXTERNAL_CONTENT_URI, Media._ID + "=" + mIdOfAudio3, null);
         mContentResolver.delete(Media.EXTERNAL_CONTENT_URI, Media._ID + "=" + mIdOfAudio4, null);
         mContentResolver.delete(Media.EXTERNAL_CONTENT_URI, Media._ID + "=" + mIdOfAudio5, null);
-        super.tearDown();
     }
 
+    @Test
     public void testGetContentUri() {
         assertEquals("content://media/external/audio/playlists/1337/members",
                 Members.getContentUri("external", 1337).toString());
@@ -182,6 +195,7 @@ public class MediaStore_Audio_Playlists_MembersTest extends InstrumentationTestC
         c.close();
     }
 
+    @Test
     public void testStoreAudioPlaylistsMembersExternal() {
         ContentValues values = new ContentValues();
         values.put(Playlists.NAME, "My favourites");
@@ -451,6 +465,7 @@ public class MediaStore_Audio_Playlists_MembersTest extends InstrumentationTestC
         }
     }
 
+    @Test
     public void testStoreAudioPlaylistsMembersInternal() {
         ContentValues values = new ContentValues();
         values.put(Playlists.NAME, "My favourites");

@@ -30,4 +30,7 @@
         <!-- Profileable to enable tracing -->
         <profileable android:shell="true"/>
     </application>
+
+    <instrumentation android:name="android.support.test.runner.AndroidJUnitRunner"
+                     android:targetPackage="com.android.cts.atracetestapp" />
 </manifest>

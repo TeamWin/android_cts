@@ -42,11 +42,13 @@ import static android.signature.cts.CurrentApi.API_FILE_DIRECTORY;
  */
 public class HiddenApiTest extends AbstractApiTest {
 
-    private String[] hiddenApiFiles;
+    private String[] hiddenapiFiles;
+    private String[] hiddenapiTestFlags;
 
     @Override
     protected void initializeFromArgs(Bundle instrumentationArgs) throws Exception {
-        hiddenApiFiles = getCommaSeparatedList(instrumentationArgs, "hidden-api-files");
+        hiddenapiFiles = getCommaSeparatedList(instrumentationArgs, "hiddenapi-files");
+        hiddenapiTestFlags = getCommaSeparatedList(instrumentationArgs, "hiddenapi-test-flags");
     }
 
     @Override
@@ -108,8 +110,10 @@ public class HiddenApiTest extends AbstractApiTest {
                     }
                 }
             };
-            parseDexApiFilesAsStream(hiddenApiFiles).forEach(dexMember -> {
-                DexMemberChecker.checkSingleMember(dexMember, observer);
+            parseDexApiFilesAsStream(hiddenapiFiles).forEach(dexMember -> {
+                if (shouldTestMember(dexMember)) {
+                    DexMemberChecker.checkSingleMember(dexMember, observer);
+                }
             });
         });
     }
@@ -120,6 +124,17 @@ public class HiddenApiTest extends AbstractApiTest {
                 .map(name -> new File(API_FILE_DIRECTORY + "/" + name))
                 .flatMap(file -> readFile(file))
                 .flatMap(stream -> dexApiDocumentParser.parseAsStream(stream));
+    }
+
+    private boolean shouldTestMember(DexMember member) {
+        for (String testFlag : hiddenapiTestFlags) {
+            for (String memberFlag : member.getHiddenapiFlags()) {
+                if (testFlag.equals(memberFlag)) {
+                    return true;
+                }
+            }
+        }
+        return false;
     }
 
 }

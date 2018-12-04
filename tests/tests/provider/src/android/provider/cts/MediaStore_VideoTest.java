@@ -16,7 +16,7 @@
 
 package android.provider.cts;
 
-import android.provider.cts.R;
+import static org.junit.Assert.assertEquals;
 
 import android.content.ContentResolver;
 import android.content.ContentValues;
@@ -25,13 +25,20 @@ import android.database.Cursor;
 import android.net.Uri;
 import android.provider.MediaStore.Video;
 import android.provider.MediaStore.Video.VideoColumns;
-import android.test.InstrumentationTestCase;
+import android.support.test.InstrumentationRegistry;
+import android.support.test.runner.AndroidJUnit4;
 
 import com.android.compatibility.common.util.FileCopyHelper;
 
+import org.junit.After;
+import org.junit.Before;
+import org.junit.Test;
+import org.junit.runner.RunWith;
+
 import java.util.ArrayList;
 
-public class MediaStore_VideoTest extends InstrumentationTestCase {
+@RunWith(AndroidJUnit4.class)
+public class MediaStore_VideoTest {
     private static final String TEST_VIDEO_3GP = "testVideo.3gp";
 
     private ArrayList<Uri> mRowsAdded;
@@ -42,24 +49,23 @@ public class MediaStore_VideoTest extends InstrumentationTestCase {
 
     private FileCopyHelper mHelper;
 
-    @Override
-    protected void tearDown() throws Exception {
+    @After
+    public void tearDown() throws Exception {
         for (Uri row : mRowsAdded) {
             mContentResolver.delete(row, null, null);
         }
         mHelper.clear();
-        super.tearDown();
     }
 
-    @Override
-    protected void setUp() throws Exception {
-        super.setUp();
-        mContext = getInstrumentation().getTargetContext();
+    @Before
+    public void setUp() throws Exception {
+        mContext = InstrumentationRegistry.getTargetContext();
         mContentResolver = mContext.getContentResolver();
         mHelper = new FileCopyHelper(mContext);
         mRowsAdded = new ArrayList<Uri>();
     }
 
+    @Test
     public void testQuery() throws Exception {
         ContentValues values = new ContentValues();
         String valueOfData = mHelper.copy(R.raw.testvideo, TEST_VIDEO_3GP);

@@ -16,26 +16,39 @@
 
 package android.provider.cts;
 
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertNull;
+import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.fail;
 
 import android.content.ContentResolver;
 import android.content.ContentValues;
+import android.content.Context;
 import android.database.Cursor;
 import android.net.Uri;
 import android.provider.MediaStore.Audio.Artists;
 import android.provider.cts.MediaStoreAudioTestHelper.Audio1;
 import android.provider.cts.MediaStoreAudioTestHelper.Audio2;
-import android.test.InstrumentationTestCase;
+import android.support.test.InstrumentationRegistry;
+import android.support.test.runner.AndroidJUnit4;
 
-public class MediaStore_Audio_ArtistsTest extends InstrumentationTestCase {
+import org.junit.Before;
+import org.junit.Test;
+import org.junit.runner.RunWith;
+
+@RunWith(AndroidJUnit4.class)
+public class MediaStore_Audio_ArtistsTest {
+    private Context mContext;
     private ContentResolver mContentResolver;
 
-    @Override
-    protected void setUp() throws Exception {
-        super.setUp();
-
-        mContentResolver = getInstrumentation().getContext().getContentResolver();
+    @Before
+    public void setUp() throws Exception {
+        mContext = InstrumentationRegistry.getTargetContext();
+        mContentResolver = mContext.getContentResolver();
     }
 
+    @Test
     public void testGetContentUri() {
         Cursor c = null;
         assertNotNull(c = mContentResolver.query(
@@ -52,15 +65,17 @@ public class MediaStore_Audio_ArtistsTest extends InstrumentationTestCase {
         assertNull(mContentResolver.query(Artists.getContentUri(volume), null, null, null, null));
     }
 
+    @Test
     public void testStoreAudioArtistsInternal() {
-        testStoreAudioArtists(true);
+        doStoreAudioArtists(true);
     }
 
+    @Test
     public void testStoreAudioArtistsExternal() {
-        testStoreAudioArtists(false);
+        doStoreAudioArtists(false);
     }
 
-    private void testStoreAudioArtists(boolean isInternal) {
+    private void doStoreAudioArtists(boolean isInternal) {
         Uri artistsUri = isInternal ? Artists.INTERNAL_CONTENT_URI : Artists.EXTERNAL_CONTENT_URI;
         // do not support insert operation of the artists
         try {

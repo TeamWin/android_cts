@@ -23,10 +23,12 @@ import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
+import android.content.Context;
 import android.content.res.ColorStateList;
 import android.content.res.Resources;
 import android.content.res.Resources.Theme;
 import android.content.res.XmlResourceParser;
+import android.graphics.Bitmap;
 import android.graphics.Canvas;
 import android.graphics.Color;
 import android.graphics.ColorFilter;
@@ -563,6 +565,28 @@ public class GradientDrawableTest {
         GradientDrawable drawable =
                 (GradientDrawable) mResources.getDrawable(R.drawable.gradientdrawable);
         assertEquals(Insets.of(1, 2, 3, 4), drawable.getOpticalInsets());
+    }
+
+    @Test
+    public void testInflationWithThemeAndNonThemeResources() {
+        final Context context = InstrumentationRegistry.getTargetContext();
+        final Theme theme = context.getResources().newTheme();
+        theme.applyStyle(R.style.Theme_MixedGradientTheme, true);
+        final Theme ctxTheme = context.getTheme();
+        ctxTheme.setTo(theme);
+
+        GradientDrawable drawable = (GradientDrawable)
+                ctxTheme.getDrawable(R.drawable.gradientdrawable_mix_theme);
+
+        Bitmap bitmap = Bitmap.createBitmap(10, 10, Bitmap.Config.ARGB_8888);
+        Canvas canvas = new Canvas(bitmap);
+        drawable.setBounds(0, 0, 10, 10);
+        drawable.draw(canvas);
+        int[] colors = drawable.getColors();
+        assertEquals(3, colors.length);
+        assertEquals(0, colors[0]);
+        assertEquals(context.getColor(R.color.colorPrimary), colors[1]);
+        assertEquals(context.getColor(R.color.colorPrimaryDark), colors[2]);
     }
 
     private void verifyPreloadDensityInner(Resources res, int densityDpi)

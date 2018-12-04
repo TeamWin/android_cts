@@ -14,17 +14,20 @@
  * limitations under the License.
  */
 
-package android.permission.cts.appthatrequestpermission;
+package android.atrace.cts;
 
-import android.app.Activity;
-import android.os.Bundle;
+import trebuchet.model.Model;
 
-public class RequestPermission extends Activity {
-    @Override
-    protected void onCreate(Bundle savedInstanceState) {
-        super.onCreate(savedInstanceState);
+public class TraceResult {
+    private final PidTidPair mPidTidPair;
+    private final Model mModel;
 
-        requestPermissions(new String[] {"android.permission.cts.appthatrequestpermission.A",
-                "android.permission.cts.B"}, 0);
+    public TraceResult(PidTidPair pidTidPair, Model model) {
+        mModel = model;
+        mPidTidPair = pidTidPair;
     }
+
+    public int getTid() { return mPidTidPair.tid; }
+    public int getPid() { return mPidTidPair.pid; }
+    public Model getModel() { return mModel; }
 }
