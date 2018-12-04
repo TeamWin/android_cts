@@ -21,7 +21,6 @@ import static com.android.compatibility.common.util.SystemUtil.runWithShellPermi
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertSame;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
@@ -440,7 +439,7 @@ public class AppOpsTest {
     private static void assertHistoricEntriesEqual(
             List<AppOpsManager.HistoricalPackageOps> expected,
             List<AppOpsManager.HistoricalPackageOps> actual, String[] opNames) {
-        assertSame(expected.size(), actual.size());
+        assertEquals(expected.size(), actual.size());
 
         final int packageCount = expected.size();
         for (int i = 0; i < packageCount; i++) {
