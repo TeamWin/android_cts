@@ -23,6 +23,8 @@
 
 using IEmpty = ::aidl::test_package::IEmpty;
 using RegularPolygon = ::aidl::test_package::RegularPolygon;
+using Foo = ::aidl::test_package::Foo;
+using Bar = ::aidl::test_package::Bar;
 
 class MyTest : public ::aidl::test_package::BnTest,
                public ThisShouldBeDestroyed {
@@ -294,4 +296,24 @@ class MyTest : public ::aidl::test_package::BnTest,
     return ::ndk::ScopedAStatus(AStatus_newOk());
   }
 #endif
+
+  ::ndk::ScopedAStatus repeatFoo(const Foo& in_inFoo, Foo* _aidl_return) {
+    *_aidl_return = in_inFoo;
+    return ::ndk::ScopedAStatus(AStatus_newOk());
+  }
+
+  ::ndk::ScopedAStatus renameFoo(Foo* in_foo, const std::string& in_name) {
+    in_foo->a = in_name;
+    return ::ndk::ScopedAStatus(AStatus_newOk());
+  }
+
+  ::ndk::ScopedAStatus renameBar(Foo* in_foo, const std::string& in_name) {
+    in_foo->d.a = in_name;
+    return ::ndk::ScopedAStatus(AStatus_newOk());
+  }
+
+  ::ndk::ScopedAStatus getF(const Foo& foo, int32_t* _aidl_return) {
+    *_aidl_return = foo.f;
+    return ::ndk::ScopedAStatus(AStatus_newOk());
+  }
 };

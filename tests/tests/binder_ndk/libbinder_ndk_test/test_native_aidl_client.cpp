@@ -17,6 +17,7 @@
 
 #include <aidl/test_package/BnEmpty.h>
 #include <aidl/test_package/BpTest.h>
+#include <aidl/test_package/Foo.h>
 #include <aidl/test_package/RegularPolygon.h>
 #include <android/binder_ibinder_jni.h>
 #include <gtest/gtest.h>
@@ -24,7 +25,9 @@
 #include "itest_impl.h"
 #include "utilities.h"
 
+using ::aidl::test_package::Bar;
 using ::aidl::test_package::BpTest;
+using ::aidl::test_package::Foo;
 using ::aidl::test_package::ITest;
 using ::aidl::test_package::RegularPolygon;
 using ::ndk::ScopedAStatus;
@@ -267,6 +270,46 @@ TEST_P(NdkBinderTest_Aidl, InsAndOuts) {
   RegularPolygon defaultPolygon;
   ASSERT_OK(iface->RenamePolygon(&defaultPolygon, "Jerry"));
   EXPECT_EQ("Jerry", defaultPolygon.name);
+}
+
+TEST_P(NdkBinderTest_Aidl, RenameFoo) {
+  Foo foo;
+  Foo outputFoo;
+  ASSERT_OK(iface->renameFoo(&foo, "MYFOO"));
+
+  EXPECT_EQ("MYFOO", foo.a);
+}
+
+TEST_P(NdkBinderTest_Aidl, RenameBar) {
+  Foo foo;
+  Foo outputFoo;
+  ASSERT_OK(iface->renameBar(&foo, "MYBAR"));
+
+  EXPECT_EQ("MYBAR", foo.d.a);
+}
+
+TEST_P(NdkBinderTest_Aidl, GetLastItem) {
+  Foo foo;
+  foo.f = 15;
+  int retF;
+  ASSERT_OK(iface->getF(foo, &retF));
+  EXPECT_EQ(15, retF);
+}
+
+TEST_P(NdkBinderTest_Aidl, RepeatFoo) {
+  Foo foo;
+  foo.a = "NEW FOO";
+  foo.b = 57;
+  foo.d.b = "a";
+  foo.e.d = 99;
+  Foo retFoo;
+
+  ASSERT_OK(iface->repeatFoo(foo, &retFoo));
+
+  EXPECT_EQ(foo.a, retFoo.a);
+  EXPECT_EQ(foo.b, retFoo.b);
+  EXPECT_EQ(foo.d.b, retFoo.d.b);
+  EXPECT_EQ(foo.e.d, retFoo.e.d);
 }
 
 template <typename T>
