@@ -27,6 +27,7 @@ CtsSystemApiAnnotationTestCases
 
 CtsHiddenApiBlacklistCurrentApiTestCases
 CtsHiddenApiBlacklistApi27TestCases
+CtsHiddenApiBlacklistApi28TestCases
 CtsHiddenApiBlacklistDebugClassTestCases
 
 CtsHiddenApiKillswitchWildcardTestCases
