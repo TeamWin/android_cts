@@ -70,7 +70,7 @@ final class AutoFillServiceTestCase {
      * Base class for all test cases that use an {@link AutofillActivityTestRule} to
      * launch the activity.
      */
-    // Must be public becaue of @ClassRule
+    // Must be public because of @ClassRule
     public abstract static class AutoActivityLaunch<A extends AbstractAutoFillActivity>
             extends BaseTestCase {
 
@@ -108,7 +108,7 @@ final class AutoFillServiceTestCase {
     /**
      * Base class for all test cases that don't require an {@link AutofillActivityTestRule}.
      */
-    // Must be public becaue of @ClassRule
+    // Must be public because of @ClassRule
     public abstract static class ManualActivityLaunch extends BaseTestCase {
 
         @ClassRule
