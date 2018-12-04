@@ -37,7 +37,6 @@ cc_defaults {
     whole_static_libs: ["libnativetesthelper_jni"],
 
     sdk_version: "current",
-    cpp_std: "c++17",
     stl: "c++_static",
 }
 
