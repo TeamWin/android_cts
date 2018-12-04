@@ -157,8 +157,8 @@ public class ActivityManagerMultiDisplayTests extends ActivityManagerDisplayTest
      * Tests launching a single instance home activity on virtual display that supports system
      * decorations.
      */
-    @Test
-    public void testLaunchSingleHomeActivityOnDisplayWithDecorations() throws Exception {
+    // TODO (b/118206886): Will add it back once launcher's patch is merged into master.
+    private void testLaunchSingleHomeActivityOnDisplayWithDecorations() throws Exception {
         try (final HomeActivitySession session = new HomeActivitySession(SINGLE_HOME_ACTIVITY)) {
             try (final VirtualDisplaySession virtualDisplaySession = new VirtualDisplaySession()) {
                 // Create new virtual display with system decoration support.
@@ -174,8 +174,8 @@ public class ActivityManagerMultiDisplayTests extends ActivityManagerDisplayTest
     /**
      * Tests launching a home activity on virtual display that supports system decorations.
      */
-    @Test
-    public void testLaunchHomeActivityOnDisplayWithDecorations() throws Exception {
+    // TODO (b/118206886): Will add it back once launcher's patch is merged into master.
+    private void testLaunchHomeActivityOnDisplayWithDecorations() throws Exception {
         try (final HomeActivitySession homeSession = new HomeActivitySession(HOME_ACTIVITY)) {
             try (final VirtualDisplaySession virtualDisplaySession = new VirtualDisplaySession()) {
                 // Create new virtual display with system decoration support.
@@ -195,8 +195,8 @@ public class ActivityManagerMultiDisplayTests extends ActivityManagerDisplayTest
      * Tests home activity that target before Q won't be started on virtual display that supports
      * system decorations.
      */
-    @Test
-    public void testLaunchSdk27HomeActivityOnDisplayWithDecorations() throws Exception {
+    // TODO (b/118206886): Will add it back once launcher's patch is merged into master.
+    private void testLaunchSdk27HomeActivityOnDisplayWithDecorations() throws Exception {
         try (final HomeActivitySession homeSession
                      = new HomeActivitySession(SDK_27_HOME_ACTIVITY)) {
             try (final VirtualDisplaySession virtualDisplaySession = new VirtualDisplaySession()) {
