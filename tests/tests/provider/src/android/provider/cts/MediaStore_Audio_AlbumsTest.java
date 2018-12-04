@@ -16,10 +16,15 @@
 
 package android.provider.cts;
 
-import android.provider.cts.R;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertNull;
+import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.fail;
 
 import android.content.ContentResolver;
 import android.content.ContentValues;
+import android.content.Context;
 import android.content.res.AssetFileDescriptor;
 import android.database.Cursor;
 import android.net.Uri;
@@ -29,23 +34,30 @@ import android.provider.MediaStore.Audio.Albums;
 import android.provider.MediaStore.Audio.Media;
 import android.provider.cts.MediaStoreAudioTestHelper.Audio1;
 import android.provider.cts.MediaStoreAudioTestHelper.Audio2;
-import android.test.AndroidTestCase;
+import android.support.test.InstrumentationRegistry;
+import android.support.test.runner.AndroidJUnit4;
 
 import com.android.compatibility.common.util.FileCopyHelper;
+
+import org.junit.Before;
+import org.junit.Test;
+import org.junit.runner.RunWith;
 
 import java.io.File;
 import java.io.FileNotFoundException;
 
-public class MediaStore_Audio_AlbumsTest extends AndroidTestCase {
+@RunWith(AndroidJUnit4.class)
+public class MediaStore_Audio_AlbumsTest {
+    private Context mContext;
     private ContentResolver mContentResolver;
 
-    @Override
-    protected void setUp() throws Exception {
-        super.setUp();
-
+    @Before
+    public void setUp() throws Exception {
+        mContext = InstrumentationRegistry.getTargetContext();
         mContentResolver = mContext.getContentResolver();
     }
 
+    @Test
     public void testGetContentUri() {
         Cursor c = null;
         assertNotNull(c = mContentResolver.query(
@@ -62,15 +74,17 @@ public class MediaStore_Audio_AlbumsTest extends AndroidTestCase {
         assertNull(mContentResolver.query(Albums.getContentUri(volume), null, null, null, null));
     }
 
+    @Test
     public void testStoreAudioAlbumsInternal() {
-        testStoreAudioAlbums(true);
+        doStoreAudioAlbums(true);
     }
 
+    @Test
     public void testStoreAudioAlbumsExternal() {
-        testStoreAudioAlbums(false);
+        doStoreAudioAlbums(false);
     }
 
-    private void testStoreAudioAlbums(boolean isInternal) {
+    private void doStoreAudioAlbums(boolean isInternal) {
         // do not support direct insert operation of the albums
         Uri audioAlbumsUri = isInternal? Albums.INTERNAL_CONTENT_URI : Albums.EXTERNAL_CONTENT_URI;
         try {
@@ -161,6 +175,7 @@ public class MediaStore_Audio_AlbumsTest extends AndroidTestCase {
         c.close();
     }
 
+    @Test
     public void testAlbumArt() {
         File path = new File(Environment.getExternalStorageDirectory()
                 + "/test" + System.currentTimeMillis() + ".mp3");

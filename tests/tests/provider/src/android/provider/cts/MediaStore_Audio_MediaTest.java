@@ -16,27 +16,40 @@
 
 package android.provider.cts;
 
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertNull;
+import static org.junit.Assert.assertTrue;
 
 import android.content.ContentResolver;
 import android.content.ContentValues;
+import android.content.Context;
 import android.database.Cursor;
 import android.net.Uri;
 import android.os.Environment;
 import android.provider.MediaStore.Audio.Media;
 import android.provider.cts.MediaStoreAudioTestHelper.Audio1;
 import android.provider.cts.MediaStoreAudioTestHelper.Audio2;
-import android.test.InstrumentationTestCase;
+import android.support.test.InstrumentationRegistry;
+import android.support.test.runner.AndroidJUnit4;
 
-public class MediaStore_Audio_MediaTest extends InstrumentationTestCase {
+import org.junit.Before;
+import org.junit.Test;
+import org.junit.runner.RunWith;
+
+@RunWith(AndroidJUnit4.class)
+public class MediaStore_Audio_MediaTest {
+    private Context mContext;
     private ContentResolver mContentResolver;
 
-    @Override
-    protected void setUp() throws Exception {
-        super.setUp();
-
-        mContentResolver = getInstrumentation().getContext().getContentResolver();
+    @Before
+    public void setUp() throws Exception {
+        mContext = InstrumentationRegistry.getTargetContext();
+        mContentResolver = mContext.getContentResolver();
     }
 
+    @Test
     public void testGetContentUri() {
         Cursor c = null;
         assertNotNull(c = mContentResolver.query(
@@ -53,6 +66,7 @@ public class MediaStore_Audio_MediaTest extends InstrumentationTestCase {
         assertNull(mContentResolver.query(Media.getContentUri(volume), null, null, null, null));
     }
 
+    @Test
     public void testGetContentUriForPath() {
         Cursor c = null;
         String externalPath = Environment.getExternalStorageDirectory().getPath();
@@ -60,22 +74,23 @@ public class MediaStore_Audio_MediaTest extends InstrumentationTestCase {
                 null, null));
         c.close();
 
-        String internalPath =
-            getInstrumentation().getTargetContext().getFilesDir().getAbsolutePath();
+        String internalPath = mContext.getFilesDir().getAbsolutePath();
         assertNotNull(c = mContentResolver.query(Media.getContentUriForPath(internalPath), null, null,
                 null, null));
         c.close();
     }
 
+    @Test
     public void testStoreAudioMediaInternal() {
-        testStoreAudioMedia(true);
+        doStoreAudioMedia(true);
     }
 
+    @Test
     public void testStoreAudioMediaExternal() {
-        testStoreAudioMedia(false);
+        doStoreAudioMedia(false);
     }
 
-    private void testStoreAudioMedia(boolean isInternal) {
+    private void doStoreAudioMedia(boolean isInternal) {
         Audio1 audio1 = Audio1.getInstance();
         ContentValues values = audio1.getContentValues(isInternal);
         //insert

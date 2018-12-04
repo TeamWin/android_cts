@@ -16,6 +16,12 @@
 
 package android.provider.cts;
 
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertNull;
+import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.fail;
+
 import android.content.ContentResolver;
 import android.content.ContentValues;
 import android.content.Context;
@@ -27,17 +33,24 @@ import android.os.Environment;
 import android.platform.test.annotations.Presubmit;
 import android.provider.MediaStore.Images.Media;
 import android.provider.MediaStore.Images.Thumbnails;
-import android.test.InstrumentationTestCase;
+import android.support.test.InstrumentationRegistry;
+import android.support.test.runner.AndroidJUnit4;
 import android.util.Log;
 
 import com.android.compatibility.common.util.FileCopyHelper;
 import com.android.compatibility.common.util.FileUtils;
 
+import org.junit.After;
+import org.junit.Before;
+import org.junit.Test;
+import org.junit.runner.RunWith;
+
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.util.ArrayList;
 
-public class MediaStore_Images_MediaTest extends InstrumentationTestCase {
+@RunWith(AndroidJUnit4.class)
+public class MediaStore_Images_MediaTest {
     private static final String MIME_TYPE_JPEG = "image/jpeg";
 
     private static final String TEST_TITLE1 = "test title1";
@@ -62,21 +75,18 @@ public class MediaStore_Images_MediaTest extends InstrumentationTestCase {
 
     private FileCopyHelper mHelper;
 
-    @Override
-    protected void tearDown() throws Exception {
+    @After
+    public void tearDown() throws Exception {
         for (Uri row : mRowsAdded) {
             mContentResolver.delete(row, null, null);
         }
 
         mHelper.clear();
-        super.tearDown();
     }
 
-    @Override
-    protected void setUp() throws Exception {
-        super.setUp();
-
-        mContext = getInstrumentation().getTargetContext();
+    @Before
+    public void setUp() throws Exception {
+        mContext = InstrumentationRegistry.getTargetContext();
         mContentResolver = mContext.getContentResolver();
 
         mHelper = new FileCopyHelper(mContext);
@@ -93,6 +103,7 @@ public class MediaStore_Images_MediaTest extends InstrumentationTestCase {
 
     }
 
+    @Test
     public void testInsertImageWithImagePath() throws Exception {
         Cursor c = Media.query(mContentResolver, Media.EXTERNAL_CONTENT_URI, null, null,
                 "_id ASC");
@@ -164,6 +175,7 @@ public class MediaStore_Images_MediaTest extends InstrumentationTestCase {
         c.close();
     }
 
+    @Test
     public void testInsertImageWithBitmap() throws Exception {
         // insert the image by bitmap
         Bitmap src = BitmapFactory.decodeResource(mContext.getResources(), R.raw.scenery);
@@ -191,6 +203,7 @@ public class MediaStore_Images_MediaTest extends InstrumentationTestCase {
     }
 
     @Presubmit
+    @Test
     public void testGetContentUri() {
         Cursor c = null;
         assertNotNull(c = mContentResolver.query(Media.getContentUri("internal"), null, null, null,
@@ -210,6 +223,7 @@ public class MediaStore_Images_MediaTest extends InstrumentationTestCase {
         new File(path).delete();
     }
 
+    @Test
     public void testStoreImagesMediaExternal() throws Exception {
         final String externalPath = Environment.getExternalStorageDirectory().getPath() +
                 "/testimage.jpg";
@@ -324,6 +338,7 @@ public class MediaStore_Images_MediaTest extends InstrumentationTestCase {
         }
     }
 
+    @Test
     public void testStoreImagesMediaInternal() {
         // can not insert any data, so other operations can not be tested
         try {

@@ -16,28 +16,43 @@
 
 package android.provider.cts;
 
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertNull;
+import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.fail;
+
 import android.content.ContentResolver;
 import android.content.ContentUris;
 import android.content.ContentValues;
+import android.content.Context;
 import android.database.Cursor;
 import android.database.SQLException;
 import android.net.Uri;
 import android.provider.MediaStore.Audio.Genres;
-import android.provider.MediaStore.Audio.Media;
 import android.provider.MediaStore.Audio.Genres.Members;
+import android.provider.MediaStore.Audio.Media;
 import android.provider.cts.MediaStoreAudioTestHelper.Audio1;
-import android.test.InstrumentationTestCase;
+import android.support.test.InstrumentationRegistry;
+import android.support.test.runner.AndroidJUnit4;
 
-public class MediaStore_Audio_GenresTest extends InstrumentationTestCase {
+import org.junit.Before;
+import org.junit.Test;
+import org.junit.runner.RunWith;
+
+@RunWith(AndroidJUnit4.class)
+public class MediaStore_Audio_GenresTest {
+    private Context mContext;
     private ContentResolver mContentResolver;
 
-    @Override
-    protected void setUp() throws Exception {
-        super.setUp();
-
-        mContentResolver = getInstrumentation().getContext().getContentResolver();
+    @Before
+    public void setUp() throws Exception {
+        mContext = InstrumentationRegistry.getTargetContext();
+        mContentResolver = mContext.getContentResolver();
     }
 
+    @Test
     public void testGetContentUri() {
         Cursor c = null;
         assertNotNull(c = mContentResolver.query(
@@ -59,6 +74,7 @@ public class MediaStore_Audio_GenresTest extends InstrumentationTestCase {
         assertNull(mContentResolver.query(Genres.getContentUri(volume), null, null, null, null));
     }
 
+    @Test
     public void testStoreAudioGenresExternal() {
         // insert
         ContentValues values = new ContentValues();
@@ -88,6 +104,7 @@ public class MediaStore_Audio_GenresTest extends InstrumentationTestCase {
         }
     }
 
+    @Test
     public void testStoreAudioGenresInternal() {
         // the internal database does not have genres
         ContentValues values = new ContentValues();
@@ -96,6 +113,7 @@ public class MediaStore_Audio_GenresTest extends InstrumentationTestCase {
         assertNull(uri);
     }
 
+    @Test
     public void testGetContentUriForAudioId() {
         // Insert an audio file into the content provider.
         ContentValues values = Audio1.getInstance().getContentValues(true);

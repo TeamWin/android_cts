@@ -16,28 +16,40 @@
 
 package android.provider.cts;
 
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertNull;
+import static org.junit.Assert.fail;
 
 import android.content.ContentResolver;
 import android.content.ContentValues;
+import android.content.Context;
 import android.database.Cursor;
 import android.net.Uri;
 import android.provider.MediaStore;
-import android.provider.MediaStore.Audio.Media;
 import android.provider.MediaStore.Audio.Artists.Albums;
+import android.provider.MediaStore.Audio.Media;
 import android.provider.cts.MediaStoreAudioTestHelper.Audio1;
 import android.provider.cts.MediaStoreAudioTestHelper.Audio2;
-import android.test.InstrumentationTestCase;
+import android.support.test.InstrumentationRegistry;
+import android.support.test.runner.AndroidJUnit4;
 
-public class MediaStore_Audio_Artists_AlbumsTest extends InstrumentationTestCase {
+import org.junit.Before;
+import org.junit.Test;
+import org.junit.runner.RunWith;
+
+@RunWith(AndroidJUnit4.class)
+public class MediaStore_Audio_Artists_AlbumsTest {
+    private Context mContext;
     private ContentResolver mContentResolver;
 
-    @Override
-    protected void setUp() throws Exception {
-        super.setUp();
-
-        mContentResolver = getInstrumentation().getContext().getContentResolver();
+    @Before
+    public void setUp() throws Exception {
+        mContext = InstrumentationRegistry.getTargetContext();
+        mContentResolver = mContext.getContentResolver();
     }
 
+    @Test
     public void testGetContentUri() {
         Cursor c = null;
         Uri contentUri = MediaStore.Audio.Artists.Albums.getContentUri(
@@ -56,15 +68,17 @@ public class MediaStore_Audio_Artists_AlbumsTest extends InstrumentationTestCase
                 null, null, null, null));
     }
 
+    @Test
     public void testStoreAudioArtistsAlbumsInternal() {
-        testStoreAudioArtistsAlbums(true);
+        doStoreAudioArtistsAlbums(true);
     }
 
+    @Test
     public void testStoreAudioArtistsAlbumsExternal() {
-        testStoreAudioArtistsAlbums(false);
+        doStoreAudioArtistsAlbums(false);
     }
 
-    private void testStoreAudioArtistsAlbums(boolean isInternal) {
+    private void doStoreAudioArtistsAlbums(boolean isInternal) {
         // the album item is inserted when inserting audio media
         Uri audioMediaUri = isInternal ? Audio1.getInstance().insertToInternal(mContentResolver)
                 : Audio1.getInstance().insertToExternal(mContentResolver);

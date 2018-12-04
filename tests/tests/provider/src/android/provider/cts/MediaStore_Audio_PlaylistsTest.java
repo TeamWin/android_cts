@@ -16,28 +16,41 @@
 
 package android.provider.cts;
 
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertNull;
+import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.fail;
 
 import android.content.ContentResolver;
 import android.content.ContentValues;
+import android.content.Context;
 import android.database.Cursor;
 import android.database.SQLException;
 import android.net.Uri;
 import android.os.Environment;
 import android.provider.MediaStore.Audio.Playlists;
-import android.test.InstrumentationTestCase;
+import android.support.test.InstrumentationRegistry;
+import android.support.test.runner.AndroidJUnit4;
+
+import org.junit.Before;
+import org.junit.Test;
+import org.junit.runner.RunWith;
 
 import java.util.regex.Pattern;
 
-public class MediaStore_Audio_PlaylistsTest extends InstrumentationTestCase {
+@RunWith(AndroidJUnit4.class)
+public class MediaStore_Audio_PlaylistsTest {
+    private Context mContext;
     private ContentResolver mContentResolver;
 
-    @Override
-    protected void setUp() throws Exception {
-        super.setUp();
-
-        mContentResolver = getInstrumentation().getContext().getContentResolver();
+    @Before
+    public void setUp() throws Exception {
+        mContext = InstrumentationRegistry.getTargetContext();
+        mContentResolver = mContext.getContentResolver();
     }
 
+    @Test
     public void testGetContentUri() {
         Cursor c = null;
         assertNotNull(c = mContentResolver.query(
@@ -61,6 +74,7 @@ public class MediaStore_Audio_PlaylistsTest extends InstrumentationTestCase {
                 null));
     }
 
+    @Test
     public void testStoreAudioPlaylistsExternal() {
         final String externalPlaylistPath = Environment.getExternalStorageDirectory().getPath() +
             "/my_favorites.pl";
@@ -109,6 +123,7 @@ public class MediaStore_Audio_PlaylistsTest extends InstrumentationTestCase {
         }
     }
 
+    @Test
     public void testStoreAudioPlaylistsInternal() {
         ContentValues values = new ContentValues();
         values.put(Playlists.NAME, "My favourites");
