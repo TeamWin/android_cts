@@ -42,6 +42,10 @@ interface ITest {
   @nullable double[] RepeatNullableDoubleArray(in @nullable double[] input);
   @nullable String[] RepeatNullableStringArray(in @nullable String[] input);
   @nullable String[] DoubleRepeatNullableStringArray(in @nullable String[] input, out @nullable String[] repeated);
+  test_package.Foo repeatFoo(in test_package.Foo inFoo);
+  void renameFoo(inout test_package.Foo foo, String name);
+  void renameBar(inout test_package.Foo foo, String name);
+  int getF(in test_package.Foo foo);
   const int kZero = 0;
   const int kOne = 1;
   const int kOnes = -1;
