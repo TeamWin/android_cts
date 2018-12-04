@@ -102,8 +102,6 @@ public class MediaStore_Video_MediaTest {
         values.put(Media.DESCRIPTION, "This is a video");
         values.put(Media.DURATION, 8480);
         values.put(Media.LANGUAGE, "en");
-        values.put(Media.LATITUDE, 40.689060d);
-        values.put(Media.LONGITUDE, -74.044636d);
         values.put(Media.IS_PRIVATE, 1);
         values.put(Media.MINI_THUMB_MAGIC, 0);
         values.put(Media.RESOLUTION, "176x144");
@@ -137,8 +135,6 @@ public class MediaStore_Video_MediaTest {
             assertEquals("This is a video",
                     c.getString(c.getColumnIndex(Media.DESCRIPTION)));
             assertEquals("en", c.getString(c.getColumnIndex(Media.LANGUAGE)));
-            assertEquals(40.689060d, c.getDouble(c.getColumnIndex(Media.LATITUDE)), 0d);
-            assertEquals(-74.044636d, c.getDouble(c.getColumnIndex(Media.LONGITUDE)), 0d);
             assertEquals(1, c.getInt(c.getColumnIndex(Media.IS_PRIVATE)));
             assertEquals(0, c.getLong(c.getColumnIndex(Media.MINI_THUMB_MAGIC)));
             assertEquals("176x144", c.getString(c.getColumnIndex(Media.RESOLUTION)));
@@ -163,8 +159,6 @@ public class MediaStore_Video_MediaTest {
             values.put(Media.DESCRIPTION, "This is another video");
             values.put(Media.DURATION, 8481);
             values.put(Media.LANGUAGE, "cn");
-            values.put(Media.LATITUDE, 41.689060d);
-            values.put(Media.LONGITUDE, -75.044636d);
             values.put(Media.IS_PRIVATE, 0);
             values.put(Media.MINI_THUMB_MAGIC, 2);
             values.put(Media.RESOLUTION, "320x240");
@@ -190,8 +184,6 @@ public class MediaStore_Video_MediaTest {
             assertEquals("This is another video",
                     c.getString(c.getColumnIndex(Media.DESCRIPTION)));
             assertEquals("cn", c.getString(c.getColumnIndex(Media.LANGUAGE)));
-            assertEquals(41.689060d, c.getDouble(c.getColumnIndex(Media.LATITUDE)), 0d);
-            assertEquals(-75.044636d, c.getDouble(c.getColumnIndex(Media.LONGITUDE)), 0d);
             assertEquals(0, c.getInt(c.getColumnIndex(Media.IS_PRIVATE)));
             assertEquals(2, c.getLong(c.getColumnIndex(Media.MINI_THUMB_MAGIC)));
             assertEquals("320x240", c.getString(c.getColumnIndex(Media.RESOLUTION)));
