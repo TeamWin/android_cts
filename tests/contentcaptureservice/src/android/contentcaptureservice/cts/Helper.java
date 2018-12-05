@@ -15,6 +15,11 @@
  */
 package android.contentcaptureservice.cts;
 
+import static com.android.compatibility.common.util.SystemUtil.runShellCommand;
+
+import android.os.SystemClock;
+import android.util.Log;
+
 import androidx.annotation.NonNull;
 
 import java.util.concurrent.CountDownLatch;
@@ -26,7 +31,11 @@ import java.util.concurrent.TimeUnit;
 final class Helper {
 
     public static final String TAG = "ContentCaptureTest";
+
     public static final long GENERIC_TIMEOUT_MS = 2000;
+
+    public static final String MY_PACKAGE = "android.contentcaptureservice.cts";
+
 
     public static void await(@NonNull CountDownLatch latch, @NonNull String errorMsg)
             throws InterruptedException {
@@ -34,6 +43,27 @@ final class Helper {
         if (!called) {
             throw new IllegalStateException(errorMsg + " in " + GENERIC_TIMEOUT_MS + "ms");
         }
+    }
+
+    /**
+     * Sets the content capture service.
+     */
+    public static void setService(@NonNull String service) {
+        Log.d(TAG, "Setting service to " + service);
+        // TODO(b/119638958): use @TestingAPI for max duration constant
+        runShellCommand("cmd intelligence set temporary-service 0 " + service + " 12000");
+        // TODO(b/119638958): add a more robust mechanism to wait for service to be set.
+        // For example, when the service is set using a shell cmd, block until the
+        // IntelligencePerUserService is cached (or use a @TestingApi instead of shell cmd)
+        SystemClock.sleep(GENERIC_TIMEOUT_MS);
+    }
+
+    /**
+     * Resets the content capture service.
+     */
+    public static void resetService() {
+        Log.d(TAG, "Resetting back to default service");
+        runShellCommand("cmd intelligence set temporary-service 0");
     }
 
     private Helper() {
