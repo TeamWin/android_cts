@@ -34,8 +34,11 @@ import static android.service.autofill.SaveInfo.SAVE_DATA_TYPE_USERNAME;
 import static com.google.common.truth.Truth.assertThat;
 import static com.google.common.truth.Truth.assertWithMessage;
 
+import static org.junit.Assume.assumeFalse;
 import static org.junit.Assume.assumeTrue;
 
+import android.app.ActivityManager;
+import android.content.Context;
 import android.app.PendingIntent;
 import android.app.assist.AssistStructure;
 import android.content.Intent;
@@ -148,6 +151,9 @@ public class SessionLifecycleTest extends AutoFillServiceTestCase {
     @Test
     public void testDatasetAuthResponseWhileAutofilledAppIsLifecycled() throws Exception {
         assumeTrue("Rotation is supported", Helper.isRotationSupported(mContext));
+        final ActivityManager activityManager = (ActivityManager) getContext()
+                .getSystemService(Context.ACTIVITY_SERVICE);
+        assumeFalse(activityManager.isLowRamDevice());
 
         // Set service.
         enableService();
