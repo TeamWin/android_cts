@@ -65,7 +65,15 @@ import javax.crypto.spec.OAEPParameterSpec;
 import javax.crypto.spec.PSource;
 import javax.crypto.spec.SecretKeySpec;
 
+import java.lang.Process;
+import java.io.InputStream;
+import java.io.InputStreamReader;
+import java.io.BufferedReader;
+import java.io.IOException;
+import java.lang.InterruptedException;
+
 public class ImportWrappedKeyTest extends AndroidTestCase {
+    private static final String TAG = "ImportWrappedKeyTest";
 
     private static final String ALIAS = "my key";
     private static final String WRAPPING_KEY_ALIAS = "my_favorite_wrapping_key";
@@ -115,6 +123,24 @@ public class ImportWrappedKeyTest extends AndroidTestCase {
         c.init(Cipher.DECRYPT_MODE, key);
 
         assertEquals(new String(c.doFinal(encrypted)), "hello, world");
+    }
+
+    public void testKeyStore_ImportWrappedKeyWrappingKeyMissing() throws Exception {
+        final String EXPECTED_FAILURE = "Failed to import wrapped key. Keystore error code: 7";
+        String failureMessage = null;
+
+        try {
+            byte [] fakeWrappedKey = new byte[1];
+            importWrappedKey(fakeWrappedKey, WRAPPING_KEY_ALIAS + "_Missing");
+        } catch (KeyStoreException e) {
+            failureMessage = e.getMessage();
+        }
+
+        if (failureMessage == null) {
+            fail("Did not hit a failure but expected one");
+        }
+
+        assertEquals(failureMessage, EXPECTED_FAILURE);
     }
 
     public void testKeyStore_ImportWrappedKey_3DES() throws Exception {
@@ -258,17 +284,21 @@ public class ImportWrappedKeyTest extends AndroidTestCase {
         }
     }
 
-    public void importWrappedKey(byte[] wrappedKey) throws Exception {
+    public void importWrappedKey(byte[] wrappedKey, String wrappingKeyAlias) throws Exception {
         KeyStore keyStore = KeyStore.getInstance("AndroidKeyStore");
         keyStore.load(null, null);
 
-        AlgorithmParameterSpec spec = new KeyGenParameterSpec.Builder(WRAPPING_KEY_ALIAS,
+        AlgorithmParameterSpec spec = new KeyGenParameterSpec.Builder(wrappingKeyAlias,
                 KeyProperties.PURPOSE_WRAP_KEY)
                 .setDigests(KeyProperties.DIGEST_SHA1)
                 .build();
-        Entry wrappedKeyEntry = new WrappedKeyEntry(wrappedKey, WRAPPING_KEY_ALIAS,
+        Entry wrappedKeyEntry = new WrappedKeyEntry(wrappedKey, wrappingKeyAlias,
                   "RSA/ECB/OAEPPadding", spec);
         keyStore.setEntry(ALIAS, wrappedKeyEntry, null);
+    }
+
+    public void importWrappedKey(byte[] wrappedKey) throws Exception {
+        importWrappedKey(wrappedKey, WRAPPING_KEY_ALIAS);
     }
 
     public byte[] wrapKey(PublicKey publicKey, byte[] keyMaterial, byte[] mask,
