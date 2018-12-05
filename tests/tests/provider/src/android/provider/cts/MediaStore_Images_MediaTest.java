@@ -35,6 +35,7 @@ import android.os.ParcelFileDescriptor;
 import android.os.storage.StorageManager;
 import android.platform.test.annotations.Presubmit;
 import android.provider.MediaStore;
+import android.provider.MediaStore.Images.ImageColumns;
 import android.provider.MediaStore.Images.Media;
 import android.provider.MediaStore.Images.Thumbnails;
 import android.support.test.InstrumentationRegistry;
@@ -252,8 +253,6 @@ public class MediaStore_Images_MediaTest {
         long dateTaken = System.currentTimeMillis();
         values.put(Media.DATE_TAKEN, dateTaken);
         values.put(Media.DESCRIPTION, "This is a image");
-        values.put(Media.LATITUDE, 40.689060d);
-        values.put(Media.LONGITUDE, -74.044636d);
         values.put(Media.IS_PRIVATE, 1);
         values.put(Media.MINI_THUMB_MAGIC, 0);
         values.put(Media.DATA, externalPath);
@@ -282,8 +281,6 @@ public class MediaStore_Images_MediaTest {
             assertEquals(dateTaken, c.getLong(c.getColumnIndex(Media.DATE_TAKEN)));
             assertEquals("This is a image",
                     c.getString(c.getColumnIndex(Media.DESCRIPTION)));
-            assertEquals(40.689060d, c.getDouble(c.getColumnIndex(Media.LATITUDE)), 0d);
-            assertEquals(-74.044636d, c.getDouble(c.getColumnIndex(Media.LONGITUDE)), 0d);
             assertEquals(1, c.getInt(c.getColumnIndex(Media.IS_PRIVATE)));
             assertEquals(0, c.getLong(c.getColumnIndex(Media.MINI_THUMB_MAGIC)));
             assertEquals(externalPath, c.getString(c.getColumnIndex(Media.DATA)));
@@ -305,8 +302,6 @@ public class MediaStore_Images_MediaTest {
             dateTaken = System.currentTimeMillis();
             values.put(Media.DATE_TAKEN, dateTaken);
             values.put(Media.DESCRIPTION, "This is another image");
-            values.put(Media.LATITUDE, 41.689060d);
-            values.put(Media.LONGITUDE, -75.044636d);
             values.put(Media.IS_PRIVATE, 0);
             values.put(Media.MINI_THUMB_MAGIC, 2);
             values.put(Media.DATA, externalPath2);
@@ -327,8 +322,6 @@ public class MediaStore_Images_MediaTest {
             assertEquals(dateTaken, c.getLong(c.getColumnIndex(Media.DATE_TAKEN)));
             assertEquals("This is another image",
                     c.getString(c.getColumnIndex(Media.DESCRIPTION)));
-            assertEquals(41.689060d, c.getDouble(c.getColumnIndex(Media.LATITUDE)), 0d);
-            assertEquals(-75.044636d, c.getDouble(c.getColumnIndex(Media.LONGITUDE)), 0d);
             assertEquals(0, c.getInt(c.getColumnIndex(Media.IS_PRIVATE)));
             assertEquals(2, c.getLong(c.getColumnIndex(Media.MINI_THUMB_MAGIC)));
             assertEquals(externalPath2,
@@ -433,6 +426,47 @@ public class MediaStore_Images_MediaTest {
         try (ParcelFileDescriptor pfd = mContentResolver.openFileDescriptor(originalUri, "r")) {
             fail("Able to read original content without ACCESS_MEDIA_LOCATION");
         } catch (UnsupportedOperationException expected) {
+        }
+    }
+
+    @Test
+    public void testLocationDeprecated() throws Exception {
+        final String displayName = "cts" + System.nanoTime();
+        final MediaStore.PendingParams params = new MediaStore.PendingParams(
+                MediaStore.Images.Media.EXTERNAL_CONTENT_URI, displayName, "image/jpeg");
+
+        final Uri pendingUri = MediaStore.createPending(mContext, params);
+        final Uri publishUri;
+        final MediaStore.PendingSession session = MediaStore.openPending(mContext, pendingUri);
+        try {
+            try (InputStream in = mContext.getResources().openRawResource(R.raw.volantis);
+                    OutputStream out = session.openOutputStream()) {
+                android.os.FileUtils.copy(in, out);
+            }
+            publishUri = session.publish();
+        } finally {
+            IoUtils.closeQuietly(session);
+        }
+
+        // Verify that location wasn't indexed
+        try (Cursor c = mContentResolver.query(publishUri,
+                new String[] { ImageColumns.LATITUDE, ImageColumns.LONGITUDE }, null, null)) {
+            assertTrue(c.moveToFirst());
+            assertTrue(c.isNull(0));
+            assertTrue(c.isNull(1));
+        }
+
+        // Verify that location values aren't recorded
+        final ContentValues values = new ContentValues();
+        values.put(ImageColumns.LATITUDE, 32f);
+        values.put(ImageColumns.LONGITUDE, 64f);
+        mContentResolver.update(publishUri, values, null, null);
+
+        try (Cursor c = mContentResolver.query(publishUri,
+                new String[] { ImageColumns.LATITUDE, ImageColumns.LONGITUDE }, null, null)) {
+            assertTrue(c.moveToFirst());
+            assertTrue(c.isNull(0));
+            assertTrue(c.isNull(1));
         }
     }
 }
