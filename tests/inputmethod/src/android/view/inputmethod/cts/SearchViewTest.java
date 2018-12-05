@@ -50,7 +50,7 @@ public class SearchViewTest extends EndToEndImeTestBase {
 
     public SearchView launchTestActivity() {
         final AtomicReference<SearchView> searchViewRef = new AtomicReference<>();
-        TestActivity.startSync(activity -> {
+        TestActivity.startSyncAndWait(activity -> {
             final LinearLayout layout = new LinearLayout(activity);
             layout.setOrientation(LinearLayout.VERTICAL);
 

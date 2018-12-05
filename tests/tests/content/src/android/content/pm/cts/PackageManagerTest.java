@@ -705,11 +705,11 @@ public class PackageManagerTest extends AndroidTestCase {
         assertEquals(PermissionInfo.PROTECTION_NORMAL, permissionInfo.getProtection());
 
         // Check a dangerous (runtime) permission.
-        permissionName = "android.permission.SEND_SMS";
+        permissionName = "android.permission.RECORD_AUDIO";
         permissionInfo = mPackageManager.getPermissionInfo(permissionName, 0);
         assertEquals(permissionName, permissionInfo.name);
         assertEquals(PermissionInfo.PROTECTION_DANGEROUS, permissionInfo.getProtection());
-        assertEquals("android.permission-group.SMS", permissionInfo.group);
+        assertNotNull(permissionInfo.group);
 
         // Check a signature permission.
         permissionName = "android.permission.MODIFY_PHONE_STATE";

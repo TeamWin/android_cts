@@ -70,7 +70,7 @@ final class AutoFillServiceTestCase {
      * Base class for all test cases that use an {@link AutofillActivityTestRule} to
      * launch the activity.
      */
-    // Must be public becaue of @ClassRule
+    // Must be public because of @ClassRule
     public abstract static class AutoActivityLaunch<A extends AbstractAutoFillActivity>
             extends BaseTestCase {
 
@@ -108,7 +108,7 @@ final class AutoFillServiceTestCase {
     /**
      * Base class for all test cases that don't require an {@link AutofillActivityTestRule}.
      */
-    // Must be public becaue of @ClassRule
+    // Must be public because of @ClassRule
     public abstract static class ManualActivityLaunch extends BaseTestCase {
 
         @ClassRule
@@ -217,7 +217,8 @@ final class AutoFillServiceTestCase {
          * Gets how many times a test should be retried.
          */
         protected int getNumberRetries() {
-            return 1;
+            return 0; // TODO(b/120242516): STOPSHIP temporarily disabled until uiautomator is fixed
+            // return 1;
         }
 
         /**

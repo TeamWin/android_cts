@@ -58,7 +58,7 @@ public class OnScreenPositionTest extends EndToEndImeTestBase {
 
     public EditText launchTestActivity() {
         final AtomicReference<EditText> editTextRef = new AtomicReference<>();
-        TestActivity.startSync(activity -> {
+        TestActivity.startSyncAndWait(activity -> {
             final LinearLayout layout = new LinearLayout(activity);
             layout.setOrientation(LinearLayout.VERTICAL);
 

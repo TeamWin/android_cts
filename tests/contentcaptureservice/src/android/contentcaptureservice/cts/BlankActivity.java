@@ -1,4 +1,4 @@
-/**
+/*
  * Copyright (C) 2018 The Android Open Source Project
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -13,20 +13,10 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+package android.contentcaptureservice.cts;
 
-package android.security.cts;
+import android.app.Activity;
 
-import android.platform.test.annotations.SecurityTest;
+public class BlankActivity extends Activity {
 
-@SecurityTest
-public class Poc16_08 extends SecurityTestCase {
-  /**
-   *  b/28026365
-   */
-  @SecurityTest(minPatchLevel = "2016-08")
-  public void testPocCVE_2016_2504() throws Exception {
-    if (containsDriver(getDevice(), "/dev/kgsl-3d0")) {
-        AdbUtils.runPoc("CVE-2016-2504", getDevice(), 60);
-    }
-  }
 }

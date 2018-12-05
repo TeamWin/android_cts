@@ -18,6 +18,7 @@ package test_package;
 
 import test_package.IEmpty;
 import test_package.RegularPolygon;
+import test_package.Foo;
 
 // This test interface is used in order to test the all of the things that AIDL can generate which
 // build on top of the NDK.
@@ -92,6 +93,11 @@ interface ITest {
     // (specifically for testing out parameters)
     @nullable String[] DoubleRepeatNullableStringArray(
         in @nullable String[] input, out @nullable String[] repeated);
+
+    Foo repeatFoo(in Foo inFoo);
+    void renameFoo(inout Foo foo, String name);
+    void renameBar(inout Foo foo, String name);
+    int getF(in Foo foo);
 
     // Methods that do not exist in version 1
     int NewMethodThatReturns10();

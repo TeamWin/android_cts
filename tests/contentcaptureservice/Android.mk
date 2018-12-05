@@ -12,23 +12,29 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-LOCAL_PATH := $(call my-dir)
+LOCAL_PATH:= $(call my-dir)
 
 include $(CLEAR_VARS)
-LOCAL_MODULE := CVE-2016-3809
-LOCAL_SRC_FILES := poc.c
-LOCAL_MULTILIB := both
-LOCAL_MODULE_STEM_32 := $(LOCAL_MODULE)32
-LOCAL_MODULE_STEM_64 := $(LOCAL_MODULE)64
+
+# Don't include this package in any target.
+LOCAL_MODULE_TAGS := optional
+
+# When built, explicitly put it in the data partition.
+LOCAL_MODULE_PATH := $(TARGET_OUT_DATA_APPS)
+
+LOCAL_STATIC_JAVA_LIBRARIES := \
+    androidx.annotation_annotation \
+    compatibility-device-util \
+    ctstestrunner \
+    truth-prebuilt
+
+LOCAL_SRC_FILES := $(call all-java-files-under, src)
 
 # Tag this module as a cts test artifact
-LOCAL_COMPATIBILITY_SUITE := cts vts sts
-LOCAL_CTS_TEST_PACKAGE := android.security.cts
+LOCAL_COMPATIBILITY_SUITE := cts vts general-tests cts_instant
 
-LOCAL_SHARED_LIBRARIES := liblog
+LOCAL_PACKAGE_NAME := CtsContentCaptureServiceTestCases
 
-LOCAL_CFLAGS += -Wall -Werror
-LOCAL_CFLAGS += -Iinclude -fPIE
-LOCAL_LDFLAGS += -fPIE -pie
-LOCAL_LDFLAGS += -rdynamic
-include $(BUILD_CTS_EXECUTABLE)
+LOCAL_SDK_VERSION := system_current
+
+include $(BUILD_CTS_PACKAGE)

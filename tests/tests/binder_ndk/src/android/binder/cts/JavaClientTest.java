@@ -39,6 +39,8 @@ import java.util.Collection;
 import test_package.IEmpty;
 import test_package.ITest;
 import test_package.RegularPolygon;
+import test_package.Foo;
+import test_package.Bar;
 
 import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
@@ -379,5 +381,53 @@ public class JavaClientTest {
             Assert.assertArrayEquals(value, out1);
             Assert.assertArrayEquals(value, out2);
         }
+    }
+
+    @Test
+    public void testGetLastItem() throws RemoteException {
+        Foo foo = new Foo();
+        foo.d = new Bar();
+        foo.e = new Bar();
+        foo.f = 15;
+
+        assertEquals(foo.f, mInterface.getF(foo));
+    }
+
+    @Test
+    public void testRepeatFoo() throws RemoteException {
+        Foo foo = new Foo();
+
+        foo.a = "NEW FOO";
+        foo.b = 57;
+
+        foo.d = new Bar();
+        foo.d.b = "a";
+
+        foo.e = new Bar();
+        foo.e.d = 99;
+
+        Foo repeatedFoo = mInterface.repeatFoo(foo);
+
+        assertEquals(foo.a, repeatedFoo.a);
+        assertEquals(foo.b, repeatedFoo.b);
+        assertEquals(foo.d.b, repeatedFoo.d.b);
+        assertEquals(foo.e.d, repeatedFoo.e.d);
+    }
+
+    @Test
+    public void testRenameFoo() throws RemoteException {
+        Foo foo = new Foo();
+        foo.d = new Bar();
+        foo.e = new Bar();
+        mInterface.renameFoo(foo, "MYFOO");
+        assertEquals("MYFOO", foo.a);
+    }
+    @Test
+    public void testRenameBar() throws RemoteException {
+        Foo foo = new Foo();
+        foo.d = new Bar();
+        foo.e = new Bar();
+        mInterface.renameBar(foo, "MYBAR");
+        assertEquals("MYBAR", foo.d.a);
     }
 }
