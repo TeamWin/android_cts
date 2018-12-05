@@ -46,16 +46,4 @@ public class Poc17_05 extends SecurityTestCase {
                          "[\\s\\n\\S]*>>> /system/bin/" +
                          "mediaserver <<<[\\s\\n\\S]*", logcatOut);
     }
-
-    /**
-     *  b/34277115
-     */
-    @SecurityTest(minPatchLevel = "2017-05")
-    public void testPocCVE_2017_0630() throws Exception {
-        if (containsDriver(getDevice(), "/sys/kernel/debug/tracing/printk_formats")) {
-          String commandOutput = AdbUtils.runCommandLine("cat /sys/kernel/debug/tracing" +
-                                                         "/printk_formats", getDevice());
-          assertNotMatchesMultiLine(".*0x(?!0){8,16}[0-9a-fA-F]{8,16} : .*", commandOutput);
-        }
-    }
 }
