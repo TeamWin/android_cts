@@ -29,17 +29,6 @@ public class Poc16_09 extends SecurityTestCase {
     }
 
     /**
-     *  b/28760453
-     */
-    @SecurityTest(minPatchLevel = "2016-09")
-    public void testPocCVE_2015_8839() throws Exception {
-        AdbUtils.runCommandLine("logcat -c" , getDevice());
-        AdbUtils.runPoc("CVE-2015-8839", getDevice(), 60);
-        String logcat =  AdbUtils.runCommandLine("logcat -d", getDevice());
-        assertMatches("[\\s\\n\\S]*fallocate result EOPNOTSUPP[\\s\\n\\S]*", logcat);
-    }
-
-    /**
      * b/29422022
      */
     @SecurityTest(minPatchLevel = "2016-09")
