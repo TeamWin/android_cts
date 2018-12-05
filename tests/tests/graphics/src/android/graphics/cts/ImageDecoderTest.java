@@ -1734,15 +1734,10 @@ public class ImageDecoderTest {
                         }
                     }
                 } else {
-                    // Not decoding to HARDWARE, but |normal| was. Again, if f16
-                    // was decoded to 8888, which we can detect by looking at the color
-                    // space, no savings are possible.
-                    if (resId == R.raw.f16 && !normal.getColorSpace().equals(
-                                ColorSpace.get(ColorSpace.Named.LINEAR_EXTENDED_SRGB))) {
-                        assertEquals(normalByteCount, byteCount);
-                    } else {
-                        assertTrue(byteCount < normalByteCount);
-                    }
+                    // Not decoding to HARDWARE, but |normal| was. As such this should always
+                    // succeed in being smaller, as software will decode to 565 in this case.
+                    // This will always be less than whatever HARDWARE supports.
+                    assertTrue(byteCount < normalByteCount);
                 }
             }
         }
