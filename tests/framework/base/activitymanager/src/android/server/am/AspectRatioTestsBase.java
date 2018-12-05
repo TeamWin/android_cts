@@ -16,13 +16,19 @@
 
 package android.server.am;
 
+import static org.hamcrest.Matchers.greaterThanOrEqualTo;
+import static org.hamcrest.Matchers.lessThanOrEqualTo;
+
 import android.app.Activity;
-import android.content.Context;
 import android.graphics.Point;
 import android.support.test.InstrumentationRegistry;
 import android.support.test.rule.ActivityTestRule;
 import android.view.Display;
 import android.view.WindowManager;
+
+import com.android.compatibility.common.util.PollingCheck;
+
+import org.hamcrest.Matcher;
 
 class AspectRatioTestsBase {
     // The delta allowed when comparing two floats for equality. We consider them equal if they are
@@ -30,14 +36,19 @@ class AspectRatioTestsBase {
     private static final float FLOAT_EQUALITY_DELTA = .01f;
 
     interface AssertAspectRatioCallback {
-        void assertAspectRatio(float actual);
+        void assertAspectRatio(float actual, int displayId);
     }
 
     void runAspectRatioTest(final ActivityTestRule activityRule,
             final AssertAspectRatioCallback callback) {
         final Activity activity = launchActivity(activityRule);
-        runTest(activity, callback);
-        finishActivity(activityRule);
+        PollingCheck.waitFor(activity::hasWindowFocus);
+        try {
+            callback.assertAspectRatio(getActivityAspectRatio(activity),
+                    getDisplay(activity).getDisplayId());
+        } finally {
+            finishActivity(activityRule);
+        }
 
         // TODO(b/35810513): All this rotation stuff doesn't really work yet. Need to make sure
         // context is updated correctly here. Also, what does it mean to be holding a reference to
@@ -51,13 +62,20 @@ class AspectRatioTestsBase {
 //        callback.assertAspectRatio(getAspectRatio(activity));
     }
 
-    protected void runTest(Activity activity, AssertAspectRatioCallback callback) {
-        callback.assertAspectRatio(getAspectRatio(activity));
+    static float getDefaultDisplayAspectRatio() {
+        return getAspectRatio(InstrumentationRegistry.getContext().getSystemService(
+                WindowManager.class).getDefaultDisplay());
     }
 
-     static float getAspectRatio(Context context) {
-        final Display display =
-                context.getSystemService(WindowManager.class).getDefaultDisplay();
+    static float getActivityAspectRatio(Activity activity) {
+        return getAspectRatio(getDisplay(activity));
+    }
+
+    private static Display getDisplay(Activity activity) {
+        return activity.getWindow().peekDecorView().getDisplay();
+    }
+
+    private static float getAspectRatio(Display display) {
         final Point size = new Point();
         display.getSize(size);
         final float longSide = Math.max(size.x, size.y);
@@ -82,11 +100,11 @@ class AspectRatioTestsBase {
         InstrumentationRegistry.getInstrumentation().waitForIdleSync();
     }
 
-    static boolean aspectRatioEqual(float a, float b) {
-        return Math.abs(a - b) < FLOAT_EQUALITY_DELTA;
+    static Matcher<Float> greaterThanOrEqualToInexact(float expected) {
+        return greaterThanOrEqualTo(expected - FLOAT_EQUALITY_DELTA);
     }
 
-    static boolean aspectRatioLessThanEqual(float a, float b) {
-        return a < b || aspectRatioEqual(a, b);
+    static Matcher<Float> lessThanOrEqualToInexact(float expected) {
+        return lessThanOrEqualTo(expected + FLOAT_EQUALITY_DELTA);
     }
 }

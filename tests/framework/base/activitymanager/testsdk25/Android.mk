@@ -27,7 +27,8 @@ LOCAL_SRC_FILES := $(call all-java-files-under, src) \
 LOCAL_SDK_VERSION := 25
 
 LOCAL_STATIC_JAVA_LIBRARIES := \
-    android-support-test
+    android-support-test \
+    cts-amwm-util
 
 LOCAL_COMPATIBILITY_SUITE := cts vts general-tests
 
