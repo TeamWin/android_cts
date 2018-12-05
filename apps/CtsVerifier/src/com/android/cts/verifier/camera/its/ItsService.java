@@ -331,7 +331,8 @@ public class ItsService extends Service implements SensorEventListener {
                     mCameraListener, mCameraHandler);
             mCameraCharacteristics = mCameraManager.getCameraCharacteristics(
                     devices[cameraId]);
-            Size maxYuvSize = ItsUtils.getYuvOutputSizes(mCameraCharacteristics)[0];
+            Size maxYuvSize = ItsUtils.getMaxOutputSize(
+                    mCameraCharacteristics, ImageFormat.YUV_420_888);
             // 2 bytes per pixel for RGBA Bitmap and at least 3 Bitmaps per CDD
             int quota = maxYuvSize.getWidth() * maxYuvSize.getHeight() * 2 * 3;
             mSocketQueueQuota = new Semaphore(quota, true);
