@@ -4026,6 +4026,48 @@ public class TextViewTest {
 
     @UiThreadTest
     @Test
+    public void testCursorDrawable_isNotNullByDefault() {
+        assertNotNull(new TextView(mActivity).getTextCursorDrawable());
+    }
+
+    @UiThreadTest
+    @Test
+    public void testCursorDrawable_canBeSet_toDrawable() {
+        mTextView = new TextView(mActivity);
+        final Drawable cursor = TestUtils.getDrawable(mActivity, R.drawable.blue);
+        mTextView.setTextCursorDrawable(cursor);
+        assertSame(cursor, mTextView.getTextCursorDrawable());
+    }
+
+    @UiThreadTest
+    @Test
+    public void testCursorDrawable_canBeSet_toDrawableResource() {
+        mTextView = new TextView(mActivity);
+        mTextView.setTextCursorDrawable(R.drawable.start);
+        WidgetTestUtils.assertEquals(TestUtils.getBitmap(mActivity, R.drawable.start),
+                ((BitmapDrawable) mTextView.getTextCursorDrawable()).getBitmap());
+    }
+
+    @UiThreadTest
+    @Test(expected = NullPointerException.class)
+    public void testCursorDrawable_cannotBeSetToNull() {
+        new TextView(mActivity).setTextCursorDrawable(null);
+    }
+
+    @UiThreadTest
+    @Test(expected = IllegalArgumentException.class)
+    public void testCursorDrawable_cannotBeSetToZeroResId() {
+        new TextView(mActivity).setTextCursorDrawable(0);
+    }
+
+    @UiThreadTest
+    @Test(expected = IllegalArgumentException.class)
+    public void testCursorDrawable_cannotBeSetToNegativeResId() {
+        new TextView(mActivity).setTextCursorDrawable(-1);
+    }
+
+    @UiThreadTest
+    @Test
     public void testHandleDrawables_areNotNullByDefault() {
         mTextView = new TextView(mActivity);
         assertNotNull(mTextView.getTextSelectHandle());
