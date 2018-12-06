@@ -271,7 +271,7 @@ public class AnimatedImageDrawableTest {
         cb.assertStarted(true);
 
         // Extra time, to wait for the message to post.
-        cb.waitForEnd(DURATION * 3);
+        cb.waitForEnd(DURATION * 10);
         cb.assertEnded(true);
         assertFalse(drawable.isRunning());
     }
@@ -335,7 +335,7 @@ public class AnimatedImageDrawableTest {
 
         // Add extra duration to wait for the message posted by the end of the
         // animation. This should help fix flakiness.
-        cb.waitForEnd(DURATION * 3);
+        cb.waitForEnd(DURATION * 10);
         cb.assertEnded(true);
     }
 
@@ -386,7 +386,7 @@ public class AnimatedImageDrawableTest {
             cb.waitForEnd(DURATION * repeatCount);
             cb.assertEnded(false);
 
-            cb.waitForEnd(DURATION * 2);
+            cb.waitForEnd(DURATION * 10);
             cb.assertEnded(true);
 
             drawable.setRepeatCount(AnimatedImageDrawable.REPEAT_INFINITE);
