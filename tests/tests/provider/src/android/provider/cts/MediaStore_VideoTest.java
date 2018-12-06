@@ -28,13 +28,12 @@ import android.provider.MediaStore.Video.VideoColumns;
 import android.support.test.InstrumentationRegistry;
 import android.support.test.runner.AndroidJUnit4;
 
-import com.android.compatibility.common.util.FileCopyHelper;
-
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
+import java.io.File;
 import java.util.ArrayList;
 
 @RunWith(AndroidJUnit4.class)
@@ -47,28 +46,28 @@ public class MediaStore_VideoTest {
 
     private ContentResolver mContentResolver;
 
-    private FileCopyHelper mHelper;
-
     @After
     public void tearDown() throws Exception {
         for (Uri row : mRowsAdded) {
             mContentResolver.delete(row, null, null);
         }
-        mHelper.clear();
     }
 
     @Before
     public void setUp() throws Exception {
         mContext = InstrumentationRegistry.getTargetContext();
         mContentResolver = mContext.getContentResolver();
-        mHelper = new FileCopyHelper(mContext);
         mRowsAdded = new ArrayList<Uri>();
     }
 
     @Test
     public void testQuery() throws Exception {
         ContentValues values = new ContentValues();
-        String valueOfData = mHelper.copy(R.raw.testvideo, TEST_VIDEO_3GP);
+
+        final File file = mContext.getFileStreamPath(TEST_VIDEO_3GP);
+        final String valueOfData = file.getAbsolutePath();
+        ProviderTestUtils.stageFile(R.raw.testvideo, file);
+
         values.put(VideoColumns.DATA, valueOfData);
 
         Uri newUri = mContentResolver.insert(Video.Media.INTERNAL_CONTENT_URI, values);

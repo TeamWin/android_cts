@@ -37,7 +37,6 @@ import android.provider.MediaStore.Video.VideoColumns;
 import android.support.test.InstrumentationRegistry;
 import android.support.test.runner.AndroidJUnit4;
 
-import com.android.compatibility.common.util.FileCopyHelper;
 import com.android.compatibility.common.util.FileUtils;
 
 import org.junit.Before;
@@ -239,7 +238,7 @@ public class MediaStore_Video_MediaTest {
         // clean up any potential left over entries from a previous aborted run
         cleanExternalMediaFile(file.getAbsolutePath());
 
-        new FileCopyHelper(context).copyToExternalStorage(R.raw.testvideo, file);
+        ProviderTestUtils.stageFile(R.raw.testvideo, file);
 
         ContentValues values = new ContentValues();
         values.put(VideoColumns.DATA, file.getAbsolutePath());
