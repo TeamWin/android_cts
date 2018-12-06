@@ -52,11 +52,21 @@ public class ActivityManagerConfigChangeTests extends ActivityManagerTestBase {
     }
 
     public void testRotation180Relaunch() throws Exception {
+        if (hasDisplayCutout()) {
+            // Skip case in CTS 8.1
+            // Skipping test: display cutout present, can't predict exact lifecycle"
+            return;
+        }
         // Should receive nothing
         testRotation(TEST_ACTIVITY_NAME, 2, 0, 0);
     }
 
     public void testRotation180NoRelaunch() throws Exception {
+        if (hasDisplayCutout()) {
+            // Skip case in CTS 8.1
+            // Skipping test: display cutout present, can't predict exact lifecycle"
+            return;
+        }
         // Should receive nothing
         testRotation(NO_RELAUNCH_ACTIVITY_NAME, 2, 0, 0);
     }

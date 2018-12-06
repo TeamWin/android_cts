@@ -16,6 +16,7 @@
 
 package android.server.cts;
 
+import static android.view.ViewGroup.LayoutParams.MATCH_PARENT;
 import static android.view.WindowManager.LayoutParams.FLAG_DISMISS_KEYGUARD;
 
 import android.app.Activity;
@@ -27,6 +28,13 @@ import android.content.IntentFilter;
 import android.os.Bundle;
 import android.server.cts.tools.ActivityLauncher;
 import android.util.Log;
+import android.view.View;
+import android.view.ViewGroup;
+import android.view.Window;
+import android.view.WindowInsets;
+
+import java.lang.reflect.Field;
+import java.lang.reflect.Method;
 
 /**
  * Activity that registers broadcast receiver .
@@ -45,6 +53,34 @@ public class BroadcastReceiverActivity extends Activity {
         IntentFilter broadcastFilter = new IntentFilter(ACTION_TRIGGER_BROADCAST);
 
         registerReceiver(mBroadcastReceiver, broadcastFilter);
+
+        // Determine if a display cutout is present
+        final View view = new View(this);
+        getWindow().requestFeature(Window.FEATURE_NO_TITLE);
+        try {
+            Field field = getWindow().getAttributes().getClass().getField(
+                "layoutInDisplayCutoutMode");
+            field.setAccessible(true);
+            field.setInt(getWindow().getAttributes(),
+                1 /* LAYOUT_IN_DISPLAY_CUTOUT_MODE_SHORT_EDGES */);
+        } catch (Exception e) {
+            e.printStackTrace();
+            return;
+        }
+        view.setLayoutParams(new ViewGroup.LayoutParams(MATCH_PARENT, MATCH_PARENT));
+        view.setSystemUiVisibility(View.SYSTEM_UI_FLAG_LAYOUT_FULLSCREEN
+                                       | View.SYSTEM_UI_FLAG_LAYOUT_HIDE_NAVIGATION);
+        view.setOnApplyWindowInsetsListener((v, insets) -> {
+            try {
+                Method method = WindowInsets.class.getDeclaredMethod("getDisplayCutout");
+                Object displayCutoutInstance = method.invoke(insets);
+                Log.i(getClass().getSimpleName(), "cutout=" + (displayCutoutInstance != null));
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+            return insets;
+        });
+        setContentView(view);
     }
 
     @Override
