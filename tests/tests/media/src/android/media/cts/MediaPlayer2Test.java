@@ -260,7 +260,11 @@ public class MediaPlayer2Test extends MediaPlayer2TestBase {
                     .setInternalLegacyStreamType(AudioManager.STREAM_MUSIC)
                     .build();
             mp.setAudioAttributes(attributes);
-            mp.setWakeMode(mContext, PowerManager.PARTIAL_WAKE_LOCK);
+            PowerManager pm = (PowerManager) mContext.getSystemService(Context.POWER_SERVICE);
+            PowerManager.WakeLock wakeLock =
+                    pm.newWakeLock(PowerManager.PARTIAL_WAKE_LOCK | PowerManager.ON_AFTER_RELEASE,
+                            "MediaPlayer2Test");
+            mp.setWakeLock(wakeLock);
 
             assertFalse(mp.getState() == MediaPlayer2.PLAYER_STATE_PLAYING);
             onPlayCalled.reset();
@@ -356,7 +360,11 @@ public class MediaPlayer2Test extends MediaPlayer2TestBase {
                     .setInternalLegacyStreamType(AudioManager.STREAM_MUSIC)
                     .build();
             mp.setAudioAttributes(attributes);
-            mp.setWakeMode(mContext, PowerManager.PARTIAL_WAKE_LOCK);
+            PowerManager pm = (PowerManager) mContext.getSystemService(Context.POWER_SERVICE);
+            PowerManager.WakeLock wakeLock =
+                    pm.newWakeLock(PowerManager.PARTIAL_WAKE_LOCK | PowerManager.ON_AFTER_RELEASE,
+                            "MediaPlayer2Test");
+            mp.setWakeLock(wakeLock);
 
             assertFalse(mp.getState() == MediaPlayer2.PLAYER_STATE_PLAYING);
             onPlayCalled.reset();
@@ -447,7 +455,12 @@ public class MediaPlayer2Test extends MediaPlayer2TestBase {
                         .setInternalLegacyStreamType(AudioManager.STREAM_MUSIC)
                         .build();
                 mp.setAudioAttributes(attributes);
-                mp.setWakeMode(mContext, PowerManager.PARTIAL_WAKE_LOCK);
+                PowerManager pm = (PowerManager) mContext.getSystemService(Context.POWER_SERVICE);
+                PowerManager.WakeLock wakeLock =
+                        pm.newWakeLock(
+                                PowerManager.PARTIAL_WAKE_LOCK | PowerManager.ON_AFTER_RELEASE,
+                                "MediaPlayer2Test");
+                mp.setWakeLock(wakeLock);
 
                 assertFalse(mp.getState() == MediaPlayer2.PLAYER_STATE_PLAYING);
                 onPlayCalled.reset();
@@ -486,7 +499,12 @@ public class MediaPlayer2Test extends MediaPlayer2TestBase {
                     .setInternalLegacyStreamType(AudioManager.STREAM_MUSIC)
                     .build();
             mp.setAudioAttributes(attributes);
-            mp.setWakeMode(mContext, PowerManager.PARTIAL_WAKE_LOCK);
+            PowerManager pm = (PowerManager) mContext.getSystemService(Context.POWER_SERVICE);
+            PowerManager.WakeLock wakeLock =
+                    pm.newWakeLock(PowerManager.PARTIAL_WAKE_LOCK | PowerManager.ON_AFTER_RELEASE,
+                            "MediaPlayer2Test");
+            mp.setWakeLock(wakeLock);
+
             mp.loopCurrent(true);
             Monitor onCompletionCalled = new Monitor();
             Monitor onRepeatCalled = new Monitor();
@@ -576,7 +594,11 @@ public class MediaPlayer2Test extends MediaPlayer2TestBase {
                     .setInternalLegacyStreamType(AudioManager.STREAM_MUSIC)
                     .build();
             mp.setAudioAttributes(attributes);
-            mp.setWakeMode(mContext, PowerManager.PARTIAL_WAKE_LOCK);
+            PowerManager pm = (PowerManager) mContext.getSystemService(Context.POWER_SERVICE);
+            PowerManager.WakeLock wakeLock =
+                    pm.newWakeLock(PowerManager.PARTIAL_WAKE_LOCK | PowerManager.ON_AFTER_RELEASE,
+                            "MediaPlayer2Test");
+            mp.setWakeLock(wakeLock);
 
             mp.play();
 
@@ -691,7 +713,11 @@ public class MediaPlayer2Test extends MediaPlayer2TestBase {
                     .setInternalLegacyStreamType(AudioManager.STREAM_MUSIC)
                     .build();
             mp.setAudioAttributes(attributes);
-            mp.setWakeMode(mContext, PowerManager.PARTIAL_WAKE_LOCK);
+            PowerManager pm = (PowerManager) mContext.getSystemService(Context.POWER_SERVICE);
+            PowerManager.WakeLock wakeLock =
+                    pm.newWakeLock(PowerManager.PARTIAL_WAKE_LOCK | PowerManager.ON_AFTER_RELEASE,
+                            "MediaPlayer2Test");
+            mp.setWakeLock(wakeLock);
 
             OutputListener listener = new OutputListener(mp.getAudioSessionId());
 
@@ -1802,7 +1828,11 @@ public class MediaPlayer2Test extends MediaPlayer2TestBase {
 
         mPlayer.setDisplay(getActivity().getSurfaceHolder());
         mPlayer.setScreenOnWhilePlaying(true);
-        mPlayer.setWakeMode(mContext, PowerManager.PARTIAL_WAKE_LOCK);
+        PowerManager pm = (PowerManager) mContext.getSystemService(Context.POWER_SERVICE);
+        PowerManager.WakeLock wakeLock =
+                pm.newWakeLock(PowerManager.PARTIAL_WAKE_LOCK | PowerManager.ON_AFTER_RELEASE,
+                        "MediaPlayer2Test");
+        mPlayer.setWakeLock(wakeLock);
 
         mOnPrepareCalled.reset();
         mPlayer.prepare();
@@ -1878,7 +1908,11 @@ public class MediaPlayer2Test extends MediaPlayer2TestBase {
 
         mPlayer.setDisplay(getActivity().getSurfaceHolder());
         mPlayer.setScreenOnWhilePlaying(true);
-        mPlayer.setWakeMode(mContext, PowerManager.PARTIAL_WAKE_LOCK);
+        PowerManager pm = (PowerManager) mContext.getSystemService(Context.POWER_SERVICE);
+        PowerManager.WakeLock wakeLock =
+                pm.newWakeLock(PowerManager.PARTIAL_WAKE_LOCK | PowerManager.ON_AFTER_RELEASE,
+                        "MediaPlayer2Test");
+        mPlayer.setWakeLock(wakeLock);
 
         mOnPrepareCalled.reset();
         mPlayer.prepare();
@@ -1939,7 +1973,11 @@ public class MediaPlayer2Test extends MediaPlayer2TestBase {
 
         mPlayer.setDisplay(getActivity().getSurfaceHolder());
         mPlayer.setScreenOnWhilePlaying(true);
-        mPlayer.setWakeMode(mContext, PowerManager.PARTIAL_WAKE_LOCK);
+        PowerManager pm = (PowerManager) mContext.getSystemService(Context.POWER_SERVICE);
+        PowerManager.WakeLock wakeLock =
+                pm.newWakeLock(PowerManager.PARTIAL_WAKE_LOCK | PowerManager.ON_AFTER_RELEASE,
+                        "MediaPlayer2Test");
+        mPlayer.setWakeLock(wakeLock);
 
         mOnPrepareCalled.reset();
         mPlayer.prepare();
