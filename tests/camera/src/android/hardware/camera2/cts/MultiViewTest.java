@@ -696,6 +696,8 @@ public class MultiViewTest extends Camera2MultiViewTestCase {
                 }
             } else {
                 surfaceSharedOutput.addSurface(surfaces[i]);
+                assertTrue("Session configuration should not fail",
+                        isSessionConfigurationSupported(cameraId, outputConfigurations));
                 updateOutputConfiguration(cameraId, surfaceSharedOutput);
                 sequenceId = updateRepeatingRequest(cameraId, outputConfigurations, resultListener);
 
@@ -713,7 +715,8 @@ public class MultiViewTest extends Camera2MultiViewTestCase {
                 }
             } else {
                 surfaceSharedOutput.removeSurface(surfaces[i]);
-
+                assertTrue("Session configuration should not fail",
+                        isSessionConfigurationSupported(cameraId, outputConfigurations));
             }
         }
         //Remove all previously added shared outputs in one call
