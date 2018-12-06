@@ -45,6 +45,7 @@ public class LocalService extends Service {
     public static final int GET_VALUE_CODE = 6;
     public static final int SET_VALUE_CODE = 7;
     public static final int GET_PID_CODE = 8;
+    public static final int GET_UID_CODE = 9;
 
     public static Context sServiceContext = null;
 
@@ -72,6 +73,10 @@ public class LocalService extends Service {
                 case GET_PID_CODE:
                     data.enforceInterface(SERVICE_LOCAL);
                     reply.writeInt(Process.myPid());
+                    return true;
+                case GET_UID_CODE:
+                    data.enforceInterface(SERVICE_LOCAL);
+                    reply.writeInt(Process.myUid());
                     return true;
                 default:
                     return super.onTransact(code, data, reply, flags);
