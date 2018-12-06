@@ -16,11 +16,16 @@
 
 package com.android.cts.tzdata;
 
-import com.android.tradefed.device.DeviceNotAvailableException;
-import com.android.tradefed.testtype.DeviceTestCase;
+import static org.junit.Assert.assertArrayEquals;
+
+import libcore.timezone.TzDataSetVersion;
+import libcore.timezone.testing.ZoneInfoTestHelper;
+
 import com.android.timezone.distro.DistroVersion;
 import com.android.timezone.distro.TimeZoneDistro;
 import com.android.timezone.distro.builder.TimeZoneDistroBuilder;
+import com.android.tradefed.device.DeviceNotAvailableException;
+import com.android.tradefed.testtype.DeviceTestCase;
 
 import java.io.File;
 import java.io.FileOutputStream;
@@ -31,11 +36,6 @@ import java.nio.file.Path;
 import java.util.Comparator;
 import java.util.StringJoiner;
 import java.util.function.Consumer;
-
-import libcore.timezone.TzDataSetVersion;
-import libcore.timezone.testing.ZoneInfoTestHelper;
-
-import static org.junit.Assert.assertArrayEquals;
 
 /**
  * Tests for the tzdatacheck binary.
@@ -58,15 +58,15 @@ public class TzDataCheckTest extends DeviceTestCase {
 
     /**
      * The name of the directory containing the current time zone rules data beneath
-     * {@link #mDataDir}.  Also known to {@link com.android.timezone.distro.installer.TimeZoneDistroInstaller} and
-     * tzdatacheck.cpp.
+     * {@link #mDataDir}.  Also known to {@link
+     * com.android.timezone.distro.installer.TimeZoneDistroInstaller} and tzdatacheck.cpp.
      */
     private static final String CURRENT_DIR_NAME = "current";
 
     /**
      * The name of the directory containing the staged time zone rules data beneath
-     * {@link #mDataDir}.  Also known to {@link com.android.timezone.distro.installer.TimeZoneDistroInstaller} and
-     * tzdatacheck.cpp.
+     * {@link #mDataDir}.  Also known to {@link
+     * com.android.timezone.distro.installer.TimeZoneDistroInstaller} and tzdatacheck.cpp.
      */
     private static final String STAGED_DIR_NAME = "staged";
 
@@ -78,10 +78,9 @@ public class TzDataCheckTest extends DeviceTestCase {
     private static final String UNINSTALL_TOMBSTONE_FILE_NAME = "STAGED_UNINSTALL_TOMBSTONE";
 
     /**
-     * The name of the /system time zone data file. Also known to
-     * {@link com.android.timezone.distro.installer.TimeZoneDistroInstaller} and tzdatacheck.cpp.
+     * The name of the /system time zone data file. Also known to tzdatacheck.cpp.
      */
-    private static final String SYSTEM_TZDATA_FILE_NAME = "tzdata";
+    private static final String SYSTEM_TZ_VERSION_FILE_NAME = "tz_version";
 
     /** A valid time zone rules version guaranteed to be older than {@link #RULES_VERSION_TWO} */
     private static final String RULES_VERSION_ONE = "2016g";
@@ -137,6 +136,16 @@ public class TzDataCheckTest extends DeviceTestCase {
         super.tearDown();
     }
 
+    /**
+     * Test the real /system files exist in the expected locations - tzcdatacheck relies on some of
+     * them.
+     */
+    public void testExpectedSystemFilesExist() throws Exception {
+        assertDeviceFileExists("/system/usr/share/zoneinfo/tz_version");
+        assertDeviceFileExists("/system/usr/share/zoneinfo/tzdata");
+        assertDeviceFileExists("/system/usr/share/zoneinfo/tzlookup.xml");
+    }
+
     public void testTooFewArgs() throws Exception {
         // No need to set up or push files to the device for this test.
         assertEquals(1, runTzDataCheckWithArgs(new String[0]));
@@ -146,7 +155,7 @@ public class TzDataCheckTest extends DeviceTestCase {
     // {dataDir}/staged exists but it is a file.
     public void testStaging_stagingDirIsFile() throws Exception {
         // Set up the /system directory structure on host.
-        createSystemTzDataFileOnHost(VALID_RULES_VERSION);
+        createSystemTzVersionFileOnHost(VALID_RULES_VERSION);
 
         // Set up the /data directory structure on host.
         PathPair dataStagedDir = mDataDir.createSubPath(STAGED_DIR_NAME);
@@ -169,7 +178,7 @@ public class TzDataCheckTest extends DeviceTestCase {
     // {dataDir}/staged exists but /current dir is a file.
     public void testStaging_uninstall_currentDirIsFile() throws Exception {
         // Set up the /system directory structure on host.
-        createSystemTzDataFileOnHost(VALID_RULES_VERSION);
+        createSystemTzVersionFileOnHost(VALID_RULES_VERSION);
 
         // Set up the /data directory structure on host.
 
@@ -195,7 +204,7 @@ public class TzDataCheckTest extends DeviceTestCase {
     // {dataDir}/staged contains an uninstall, but there is nothing to uninstall.
     public void testStaging_uninstall_noCurrent() throws Exception {
         // Set up the /system directory structure on host.
-        createSystemTzDataFileOnHost(VALID_RULES_VERSION);
+        createSystemTzVersionFileOnHost(VALID_RULES_VERSION);
 
         PathPair dataCurrentDir = mDataDir.createSubPath(CURRENT_DIR_NAME);
 
@@ -220,7 +229,7 @@ public class TzDataCheckTest extends DeviceTestCase {
     // {dataDir}/staged contains an uninstall, and there is something to uninstall.
     public void testStaging_uninstall_withCurrent() throws Exception {
         // Set up the /system directory structure on host.
-        createSystemTzDataFileOnHost(VALID_RULES_VERSION);
+        createSystemTzVersionFileOnHost(VALID_RULES_VERSION);
 
         // Set up the /data directory structure on host.
 
@@ -248,7 +257,7 @@ public class TzDataCheckTest extends DeviceTestCase {
     // {dataDir}/staged exists but /current dir is a file.
     public void testStaging_install_currentDirIsFile() throws Exception {
         // Set up the /system directory structure on host.
-        createSystemTzDataFileOnHost(VALID_RULES_VERSION);
+        createSystemTzVersionFileOnHost(VALID_RULES_VERSION);
 
         // Set up the /data directory structure on host.
 
@@ -276,7 +285,7 @@ public class TzDataCheckTest extends DeviceTestCase {
     // {dataDir}/staged contains an install, but there is nothing to replace.
     public void testStaging_install_noCurrent() throws Exception {
         // Set up the /system directory structure on host.
-        createSystemTzDataFileOnHost(VALID_RULES_VERSION);
+        createSystemTzVersionFileOnHost(VALID_RULES_VERSION);
 
         PathPair dataCurrentDir = mDataDir.createSubPath(CURRENT_DIR_NAME);
 
@@ -302,7 +311,7 @@ public class TzDataCheckTest extends DeviceTestCase {
     // {dataDir}/staged contains an install, and there is something to replace.
     public void testStaging_install_withCurrent() throws Exception {
         // Set up the /system directory structure on host.
-        createSystemTzDataFileOnHost(VALID_RULES_VERSION);
+        createSystemTzVersionFileOnHost(VALID_RULES_VERSION);
 
         DistroVersion currentDistroVersion = new DistroVersion(
                 TzDataSetVersion.currentFormatMajorVersion(), 1, VALID_RULES_VERSION, 1);
@@ -343,11 +352,11 @@ public class TzDataCheckTest extends DeviceTestCase {
     // an invalid distro is handled the same.
     public void testStaging_install_withCurrent_invalidStaged() throws Exception {
         // Set up the /system directory structure on host.
-        createSystemTzDataFileOnHost(VALID_RULES_VERSION);
+        createSystemTzVersionFileOnHost(VALID_RULES_VERSION);
 
         // Set up the /data directory structure on host.
 
-        // Create a staged uninstall which contains invalid.
+        // Create a staged uninstall which contains invalid files (missing distro version).
         PathPair dataStagedDir = mDataDir.createSubPath(STAGED_DIR_NAME);
         byte[] stagedDistroBytes = createValidDistroBuilder()
                 .clearVersionForTests()
@@ -374,7 +383,7 @@ public class TzDataCheckTest extends DeviceTestCase {
     // No {dataDir}/current exists.
     public void testNoCurrentDataDir() throws Exception {
         // Set up the /system directory structure on host.
-        createSystemTzDataFileOnHost(VALID_RULES_VERSION);
+        createSystemTzVersionFileOnHost(VALID_RULES_VERSION);
 
         // Deliberately not creating anything on host in the data dir here, leaving the empty
         // structure.
@@ -389,7 +398,7 @@ public class TzDataCheckTest extends DeviceTestCase {
     // {dataDir}/current exists but it is a file.
     public void testCurrentDataDirIsFile() throws Exception {
         // Set up the /system directory structure on host.
-        createSystemTzDataFileOnHost(VALID_RULES_VERSION);
+        createSystemTzVersionFileOnHost(VALID_RULES_VERSION);
 
         // Set up the /data directory structure on host.
         PathPair dataCurrentDir = mDataDir.createSubPath(CURRENT_DIR_NAME);
@@ -411,7 +420,7 @@ public class TzDataCheckTest extends DeviceTestCase {
     // {dataDir}/current exists but is missing the distro version file.
     public void testMissingDataDirDistroVersionFile() throws Exception {
         // Set up the /system directory structure on host.
-        createSystemTzDataFileOnHost(VALID_RULES_VERSION);
+        createSystemTzVersionFileOnHost(VALID_RULES_VERSION);
 
         // Set up the /data directory structure on host.
         PathPair dataCurrentDir = mDataDir.createSubPath(CURRENT_DIR_NAME);
@@ -433,7 +442,7 @@ public class TzDataCheckTest extends DeviceTestCase {
     // {dataDir}/current exists but the distro version file is short.
     public void testShortDataDirDistroVersionFile() throws Exception {
         // Set up the /system directory structure on host.
-        createSystemTzDataFileOnHost(VALID_RULES_VERSION);
+        createSystemTzVersionFileOnHost(VALID_RULES_VERSION);
 
         // Set up the /data directory structure on host.
         PathPair dataCurrentDir = mDataDir.createSubPath(CURRENT_DIR_NAME);
@@ -457,7 +466,7 @@ public class TzDataCheckTest extends DeviceTestCase {
     // {dataDir}/current exists and the distro version file is long enough, but contains junk.
     public void testCorruptDistroVersionFile() throws Exception {
         // Set up the /system directory structure on host.
-        createSystemTzDataFileOnHost(VALID_RULES_VERSION);
+        createSystemTzVersionFileOnHost(VALID_RULES_VERSION);
 
         // Set up the /data directory structure on host.
         PathPair dataCurrentDir = mDataDir.createSubPath(CURRENT_DIR_NAME);
@@ -485,7 +494,7 @@ public class TzDataCheckTest extends DeviceTestCase {
     // {dataDir}/current exists but the distro version is incorrect.
     public void testInvalidMajorDistroVersion_older() throws Exception {
         // Set up the /system directory structure on host.
-        createSystemTzDataFileOnHost(VALID_RULES_VERSION);
+        createSystemTzVersionFileOnHost(VALID_RULES_VERSION);
 
         // Set up the /data directory structure on host.
         PathPair dataCurrentDir = mDataDir.createSubPath(CURRENT_DIR_NAME);
@@ -509,7 +518,7 @@ public class TzDataCheckTest extends DeviceTestCase {
     // {dataDir}/current exists but the distro version is incorrect.
     public void testInvalidMajorDistroVersion_newer() throws Exception {
         // Set up the /system directory structure on host.
-        createSystemTzDataFileOnHost(VALID_RULES_VERSION);
+        createSystemTzVersionFileOnHost(VALID_RULES_VERSION);
 
         // Set up the /data directory structure on host.
         PathPair dataCurrentDir = mDataDir.createSubPath(CURRENT_DIR_NAME);
@@ -535,7 +544,7 @@ public class TzDataCheckTest extends DeviceTestCase {
     // {dataDir}/current exists but the distro version is incorrect.
     public void testInvalidMinorDistroVersion_older() throws Exception {
         // Set up the /system directory structure on host.
-        createSystemTzDataFileOnHost(VALID_RULES_VERSION);
+        createSystemTzVersionFileOnHost(VALID_RULES_VERSION);
 
         // Set up the /data directory structure on host.
         PathPair dataCurrentDir = mDataDir.createSubPath(CURRENT_DIR_NAME);
@@ -562,7 +571,7 @@ public class TzDataCheckTest extends DeviceTestCase {
     // be backwards compatible).
     public void testValidMinorDistroVersion_newer() throws Exception {
         // Set up the /system directory structure on host.
-        createSystemTzDataFileOnHost(VALID_RULES_VERSION);
+        createSystemTzVersionFileOnHost(VALID_RULES_VERSION);
 
         // Set up the /data directory structure on host.
         PathPair dataCurrentDir = mDataDir.createSubPath(CURRENT_DIR_NAME);
@@ -585,8 +594,8 @@ public class TzDataCheckTest extends DeviceTestCase {
         assertDeviceDirContainsDistro(dataCurrentDir, distroBytes);
     }
 
-    // {dataDir}/current is valid but the tzdata file in /system is missing.
-    public void testSystemTzDataFileMissing() throws Exception {
+    // {dataDir}/current is valid but the tz_version file in /system is missing.
+    public void testSystemTzVersionFileMissing() throws Exception {
         // Deliberately not writing anything in /system here.
 
         // Set up the /data directory structure on host.
@@ -604,11 +613,11 @@ public class TzDataCheckTest extends DeviceTestCase {
         assertDeviceDirContainsDistro(dataCurrentDir, validDistroBytes);
     }
 
-    // {dataDir}/current is valid but the tzdata file in /system has an invalid header.
-    public void testSystemTzDataFileCorrupt() throws Exception {
+    // {dataDir}/current is valid but the tz_version file in /system is junk.
+    public void testSystemTzVersionFileCorrupt() throws Exception {
         // Set up the /system directory structure on host.
         byte[] invalidTzDataBytes = new byte[20];
-        Files.write(mSystemDir.hostPath.resolve(SYSTEM_TZDATA_FILE_NAME), invalidTzDataBytes);
+        Files.write(mSystemDir.hostPath.resolve(SYSTEM_TZ_VERSION_FILE_NAME), invalidTzDataBytes);
 
         // Set up the /data directory structure on host.
         PathPair dataCurrentDir = mDataDir.createSubPath(CURRENT_DIR_NAME);
@@ -625,10 +634,10 @@ public class TzDataCheckTest extends DeviceTestCase {
         assertDeviceDirContainsDistro(dataCurrentDir, validDistroBytes);
     }
 
-    // {dataDir}/current is valid and the tzdata file in /system is older.
+    // {dataDir}/current is valid and the tz_version file in /system is for older data.
     public void testSystemTzRulesOlder() throws Exception {
         // Set up the /system directory structure on host.
-        createSystemTzDataFileOnHost(RULES_VERSION_ONE);
+        createSystemTzVersionFileOnHost(RULES_VERSION_ONE);
 
         // Set up the /data directory structure on host.
         PathPair dataCurrentDir = mDataDir.createSubPath(CURRENT_DIR_NAME);
@@ -653,17 +662,20 @@ public class TzDataCheckTest extends DeviceTestCase {
         assertDeviceDirContainsDistro(dataCurrentDir, distroBytes);
     }
 
-    // {dataDir}/current is valid and the tzdata file in /system is the same (and should be kept).
-    public void testSystemTzDataSame() throws Exception {
+    // {dataDir}/current is valid and the tz_version file in /system is the same. Data dir should be
+    // kept.
+    public void testSystemTzVersionSame() throws Exception {
         // Set up the /system directory structure on host.
         final String systemRulesVersion = VALID_RULES_VERSION;
-        createSystemTzDataFileOnHost(systemRulesVersion);
+        createSystemTzVersionFileOnHost(systemRulesVersion);
 
         // Set up the /data directory structure on host.
         PathPair dataCurrentDir = mDataDir.createSubPath(CURRENT_DIR_NAME);
         DistroVersion distroVersion = new DistroVersion(
                 TzDataSetVersion.currentFormatMajorVersion(),
-                TzDataSetVersion.currentFormatMinorVersion(), systemRulesVersion, VALID_REVISION);
+                TzDataSetVersion.currentFormatMinorVersion(),
+                systemRulesVersion,
+                VALID_REVISION);
         byte[] distroBytes = createValidDistroBuilder()
                 .setDistroVersion(distroVersion)
                 .setTzDataFile(createValidTzDataBytes(systemRulesVersion))
@@ -681,10 +693,10 @@ public class TzDataCheckTest extends DeviceTestCase {
     }
 
     // {dataDir}/current is valid and the tzdata file in /system is the newer.
-    public void testSystemTzDataNewer() throws Exception {
+    public void testSystemTzVersionNewer() throws Exception {
         // Set up the /system directory structure on host.
         String systemRulesVersion = RULES_VERSION_TWO;
-        createSystemTzDataFileOnHost(systemRulesVersion);
+        createSystemTzVersionFileOnHost(systemRulesVersion);
 
         // Set up the /data directory structure on host.
         PathPair dataCurrentDir = mDataDir.createSubPath(CURRENT_DIR_NAME);
@@ -711,9 +723,9 @@ public class TzDataCheckTest extends DeviceTestCase {
         assertDevicePathDoesNotExist(dataCurrentDir);
     }
 
-    private void createSystemTzDataFileOnHost(String systemRulesVersion) throws IOException {
-        byte[] systemTzData = createValidTzDataBytes(systemRulesVersion);
-        Files.write(mSystemDir.hostPath.resolve(SYSTEM_TZDATA_FILE_NAME), systemTzData);
+    private void createSystemTzVersionFileOnHost(String systemRulesVersion) throws Exception {
+        byte[] systemTzData = createValidTzVersionBytes(systemRulesVersion);
+        Files.write(mSystemDir.hostPath.resolve(SYSTEM_TZ_VERSION_FILE_NAME), systemTzData);
     }
 
     private static void createStagedUninstallOnHost(PathPair stagedDir) throws Exception {
@@ -747,6 +759,15 @@ public class TzDataCheckTest extends DeviceTestCase {
                 .initializeToValid()
                 .setHeaderMagic("tzdata" + rulesVersion)
                 .build();
+    }
+
+    private static byte[] createValidTzVersionBytes(String rulesVersion) throws Exception {
+        return new TzDataSetVersion(
+                TzDataSetVersion.currentFormatMajorVersion(),
+                TzDataSetVersion.currentFormatMinorVersion(),
+                rulesVersion,
+                VALID_REVISION)
+                .toBytes();
     }
 
     private int runTzDataCheckOnDevice() throws Exception {
@@ -908,8 +929,12 @@ public class TzDataCheckTest extends DeviceTestCase {
         }
     }
 
+    private void assertDeviceFileExists(String s) throws DeviceNotAvailableException {
+        assertTrue(getDevice().doesFileExist(s));
+    }
+
     private void assertDevicePathExists(PathPair path) throws DeviceNotAvailableException {
-        assertTrue(getDevice().doesFileExist(path.devicePath));
+        assertDeviceFileExists(path.devicePath);
     }
 
     private void assertDeviceDirContainsDistro(PathPair distroPath, byte[] expectedDistroBytes)

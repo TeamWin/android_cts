@@ -16,10 +16,14 @@
 
 package android.server.am;
 
-import static android.content.Context.WINDOW_SERVICE;
 import static android.content.pm.PackageManager.FEATURE_WATCH;
 
+import static org.hamcrest.Matchers.greaterThanOrEqualTo;
+import static org.hamcrest.Matchers.is;
+import static org.hamcrest.Matchers.lessThanOrEqualTo;
+import static org.junit.Assert.assertThat;
 import static org.junit.Assert.fail;
+import static org.junit.Assume.assumeThat;
 
 import android.app.Activity;
 import android.content.Context;
@@ -30,8 +34,6 @@ import android.support.test.runner.AndroidJUnit4;
 import android.util.DisplayMetrics;
 import android.view.Display;
 import android.view.WindowManager;
-
-import com.android.compatibility.common.util.PollingCheck;
 
 import org.junit.Rule;
 import org.junit.Test;
@@ -93,9 +95,9 @@ public class AspectRatioTests extends AspectRatioTestsBase {
                     false /* initialTouchMode */, false /* launchActivity */);
 
     @Test
-    public void testDeviceAspectRatio() throws Exception {
+    public void testDeviceAspectRatio() {
         final Context context = InstrumentationRegistry.getInstrumentation().getContext();
-        final WindowManager wm = (WindowManager) context.getSystemService(WINDOW_SERVICE);
+        final WindowManager wm = context.getSystemService(WindowManager.class);
         final Display display = wm.getDefaultDisplay();
         final DisplayMetrics metrics = new DisplayMetrics();
         display.getRealMetrics(metrics);
@@ -106,60 +108,46 @@ public class AspectRatioTests extends AspectRatioTestsBase {
         float expectedMinAspectRatio = context.getPackageManager().hasSystemFeature(FEATURE_WATCH)
                 ? MIN_WATCH_DEVICE_ASPECT_RATIO : MIN_DEVICE_ASPECT_RATIO;
 
-        if (deviceAspectRatio < expectedMinAspectRatio) {
-            fail("deviceAspectRatio=" + deviceAspectRatio
-                    + " is less than expectedMinAspectRatio=" + expectedMinAspectRatio);
-        }
+        assertThat(deviceAspectRatio, greaterThanOrEqualTo(expectedMinAspectRatio));
     }
 
     @Test
-    public void testMaxAspectRatio() throws Exception {
-        runAspectRatioTest(mMaxAspectRatioActivity, actual -> {
-            if (MAX_ASPECT_RATIO >= actual) return;
-            fail("actual=" + actual + " is greater than expected=" + MAX_ASPECT_RATIO);
+    public void testMaxAspectRatio() {
+        // Activity has a maxAspectRatio, assert that the actual ratio is less than that.
+        runAspectRatioTest(mMaxAspectRatioActivity, (actual, displayId) -> {
+            assertThat(actual, lessThanOrEqualTo(MAX_ASPECT_RATIO));
         });
     }
 
     @Test
-    public void testMetaDataMaxAspectRatio() throws Exception {
-        runAspectRatioTest(mMetaDataMaxAspectRatioActivity, actual -> {
-            if (MAX_ASPECT_RATIO >= actual) return;
-            fail("actual=" + actual + " is greater than expected=" + MAX_ASPECT_RATIO);
+    public void testMetaDataMaxAspectRatio() {
+        // Activity has a maxAspectRatio, assert that the actual ratio is less than that.
+        runAspectRatioTest(mMetaDataMaxAspectRatioActivity, (actual, displayId) -> {
+            assertThat(actual, lessThanOrEqualTo(MAX_ASPECT_RATIO));
         });
     }
 
     @Test
-    public void testMaxAspectRatioResizeableActivity() throws Exception {
-        final Context context = InstrumentationRegistry.getInstrumentation().getContext();
-        final float expected = getAspectRatio(context);
-        final Activity testActivity = launchActivity(mMaxAspectRatioResizeableActivity);
-        PollingCheck.waitFor(testActivity::hasWindowFocus);
+    public void testMaxAspectRatioResizeableActivity() {
+        // Since this activity is resizeable, its max aspect ratio should be ignored.
+        runAspectRatioTest(mMaxAspectRatioResizeableActivity, (actual, displayId) -> {
+            // TODO(b/69982434): Add ability to get native aspect ratio non-default display.
+            assumeThat(displayId, is(Display.DEFAULT_DISPLAY));
 
-        Display testDisplay = testActivity.findViewById(android.R.id.content).getDisplay();
-
-        // TODO(b/69982434): Fix DisplayManager NPE when getting display from Instrumentation
-        // context, then can use DisplayManager to get the aspect ratio of the correct display.
-        if (testDisplay.getDisplayId() != Display.DEFAULT_DISPLAY) {
-            return;
-        }
-
-        // Since this activity is resizeable, its aspect ratio shouldn't be less than the device's
-        runTest(testActivity, actual -> {
-            if (aspectRatioEqual(expected, actual) || expected < actual) return;
-            fail("actual=" + actual + " is less than expected=" + expected);
+            final float defaultDisplayAspectRatio = getDefaultDisplayAspectRatio();
+            assertThat(actual, greaterThanOrEqualToInexact(defaultDisplayAspectRatio));
         });
     }
 
     @Test
-    public void testMaxAspectRatioUnsetActivity() throws Exception {
-        final Context context = InstrumentationRegistry.getInstrumentation().getContext();
-        final float expected = getAspectRatio(context);
+    public void testMaxAspectRatioUnsetActivity() {
+        // Since this activity didn't set an explicit maxAspectRatio, there should be no such
+        // ratio enforced.
+        runAspectRatioTest(mMaxAspectRatioUnsetActivity, (actual, displayId) -> {
+            // TODO(b/69982434): Add ability to get native aspect ratio non-default display.
+            assumeThat(displayId, is(Display.DEFAULT_DISPLAY));
 
-        // Since this activity didn't set an aspect ratio, its aspect ratio shouldn't be less than
-        // the device's
-        runAspectRatioTest(mMaxAspectRatioUnsetActivity, actual -> {
-            if (aspectRatioEqual(expected, actual) || expected < actual) return;
-            fail("actual=" + actual + " is less than expected=" + expected);
+            assertThat(actual, greaterThanOrEqualToInexact(getDefaultDisplayAspectRatio()));
         });
     }
 }

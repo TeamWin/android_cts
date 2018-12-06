@@ -16,6 +16,7 @@
 
 package android.server.am;
 
+import static org.junit.Assert.assertThat;
 import static org.junit.Assert.fail;
 
 import android.app.Activity;
@@ -48,10 +49,9 @@ public class AspectRatioSdk25Tests extends AspectRatioTestsBase {
                     false /* initialTouchMode */, false /* launchActivity */);
 
     @Test
-    public void testMaxAspectRatioPreOActivity() throws Exception {
-        runAspectRatioTest(mSdk25MaxAspectRatioActivity, actual -> {
-            if (aspectRatioLessThanEqual(actual, MAX_PRE_O_ASPECT_RATIO)) return;
-            fail("actual=" + actual + " is greater than expected=" + MAX_PRE_O_ASPECT_RATIO);
+    public void testMaxAspectRatioPreOActivity() {
+        runAspectRatioTest(mSdk25MaxAspectRatioActivity, (actual, displayId) -> {
+            assertThat(actual, lessThanOrEqualToInexact(MAX_PRE_O_ASPECT_RATIO));
         });
     }
 }
