@@ -41,10 +41,8 @@ import android.support.test.InstrumentationRegistry;
 import android.support.test.runner.AndroidJUnit4;
 import android.util.Log;
 
-import com.android.compatibility.common.util.FileCopyHelper;
 import com.android.compatibility.common.util.MediaUtils;
 
-import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -59,8 +57,6 @@ public class MediaStore_Video_ThumbnailsTest {
     private Context mContext;
     private ContentResolver mResolver;
 
-    private FileCopyHelper mFileHelper;
-
     private boolean hasCodec() {
         return MediaUtils.hasCodecForResourceAndDomain(
                 mContext, R.raw.testthumbvideo, "video/");
@@ -70,12 +66,6 @@ public class MediaStore_Video_ThumbnailsTest {
     public void setUp() throws Exception {
         mContext = InstrumentationRegistry.getTargetContext();
         mResolver = mContext.getContentResolver();
-        mFileHelper = new FileCopyHelper(mContext);
-    }
-
-    @After
-    public void tearDown() throws Exception {
-        mFileHelper.clear();
     }
 
     @Test
@@ -242,7 +232,8 @@ public class MediaStore_Video_ThumbnailsTest {
         mResolver.delete(Media.EXTERNAL_CONTENT_URI,
                 "_data=?", new String[] { file.getAbsolutePath() });
         file.delete();
-        mFileHelper.copyToExternalStorage(R.raw.testthumbvideo, file);
+
+        ProviderTestUtils.stageFile(R.raw.testthumbvideo, file);
 
         ContentValues values = new ContentValues();
         values.put(VideoColumns.DATA, file.getAbsolutePath());

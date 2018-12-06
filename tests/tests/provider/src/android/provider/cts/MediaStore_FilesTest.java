@@ -41,8 +41,6 @@ import android.provider.MediaStore.MediaColumns;
 import android.support.test.InstrumentationRegistry;
 import android.support.test.runner.AndroidJUnit4;
 
-import com.android.compatibility.common.util.FileCopyHelper;
-
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
@@ -537,8 +535,7 @@ public class MediaStore_FilesTest {
         File out = new File(path);
         File dir = out.getParentFile();
         dir.mkdirs();
-        FileCopyHelper copier = new FileCopyHelper(mContext);
-        copier.copyToExternalStorage(resid, out);
+        ProviderTestUtils.stageFile(resid, out);
     }
 
     private int getFileCount(Uri uri) {
