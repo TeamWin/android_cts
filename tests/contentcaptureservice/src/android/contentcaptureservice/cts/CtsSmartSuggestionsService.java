@@ -18,13 +18,13 @@ package android.contentcaptureservice.cts;
 import static android.contentcaptureservice.cts.Helper.MY_PACKAGE;
 import static android.contentcaptureservice.cts.Helper.await;
 
-import android.service.intelligence.ContentCaptureEventsRequest;
-import android.service.intelligence.InteractionContext;
-import android.service.intelligence.InteractionSessionId;
-import android.service.intelligence.SmartSuggestionsService;
+import android.service.contentcapture.ContentCaptureEventsRequest;
+import android.service.contentcapture.ContentCaptureService;
+import android.service.contentcapture.InteractionContext;
+import android.service.contentcapture.InteractionSessionId;
 import android.util.ArrayMap;
 import android.util.Log;
-import android.view.intelligence.ContentCaptureEvent;
+import android.view.contentcapture.ContentCaptureEvent;
 
 import androidx.annotation.NonNull;
 
@@ -36,7 +36,7 @@ import java.util.concurrent.CountDownLatch;
 // TODO(b/119638958): if we don't move this service to a separate package, we need to handle the
 // onXXXX methods in a separate thread
 // Either way, we need to make sure its methods are thread safe
-public class CtsSmartSuggestionsService extends SmartSuggestionsService {
+public class CtsSmartSuggestionsService extends ContentCaptureService {
 
     private static final String TAG = CtsSmartSuggestionsService.class.getSimpleName();
 

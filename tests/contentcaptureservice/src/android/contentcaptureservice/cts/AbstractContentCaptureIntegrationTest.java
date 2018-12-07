@@ -32,7 +32,7 @@ import android.contentcaptureservice.cts.common.ActivitiesWatcher;
 import android.support.test.InstrumentationRegistry;
 import android.support.test.runner.AndroidJUnit4;
 import android.util.Log;
-import android.view.intelligence.ContentCaptureEvent;
+import android.view.contentcapture.ContentCaptureEvent;
 
 import androidx.annotation.NonNull;
 
@@ -53,9 +53,8 @@ public abstract class AbstractContentCaptureIntegrationTest {
 
     @BeforeClass
     public static void checkSupported() {
-        // TODO(b/119638958): use a @Rule to skip it (once we unhardcode the
-        // config.disable_intelligence=true from SystemServer)
-        final String checkService = runShellCommand("service check intelligence").trim();
+        // TODO(b/119638958): use a @Rule to skip it and/or check for the Global Settings directly
+        final String checkService = runShellCommand("service check content_capture").trim();
         final boolean notSupported = checkService.contains("not found");
         if (notSupported) {
             final String msg = "Skipping test because Content Capture is not supported on device";
