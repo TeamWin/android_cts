@@ -41,7 +41,7 @@ public class ConfigurationTest extends AndroidTestCase {
                 (WindowManager) getContext().getSystemService(Context.WINDOW_SERVICE);
         Display display = windowManager.getDefaultDisplay();
         DisplayMetrics metrics = new DisplayMetrics();
-        display.getMetrics(metrics);
+        display.getRealMetrics(metrics);
 
         double xInches = (double) metrics.widthPixels / metrics.xdpi;
         double yInches = (double) metrics.heightPixels / metrics.ydpi;
