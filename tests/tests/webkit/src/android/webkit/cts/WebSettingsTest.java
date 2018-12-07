@@ -39,13 +39,13 @@ import android.webkit.cts.WebViewOnUiThread.WaitForProgressClient;
 
 import com.android.compatibility.common.util.NullWebViewUtils;
 import com.android.compatibility.common.util.PollingCheck;
+import com.google.common.util.concurrent.SettableFuture;
 
 import java.io.ByteArrayInputStream;
 import java.io.FileOutputStream;
 import java.nio.charset.StandardCharsets;
 import java.util.Locale;
 import java.util.concurrent.CountDownLatch;
-import java.util.concurrent.TimeUnit;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -417,15 +417,15 @@ public class WebSettingsTest extends ActivityInstrumentationTestCase2<WebViewCts
         startWebServer();
 
         final WebView childWebView = mOnUiThread.createWebView();
-        final CountDownLatch latch = new CountDownLatch(1);
+        final SettableFuture<Void> createWindowFuture = SettableFuture.create();
         mOnUiThread.setWebChromeClient(new WebChromeClient() {
             @Override
             public boolean onCreateWindow(
-                WebView view, boolean isDialog, boolean isUserGesture, Message resultMsg) {
+                    WebView view, boolean isDialog, boolean isUserGesture, Message resultMsg) {
                 WebView.WebViewTransport transport = (WebView.WebViewTransport) resultMsg.obj;
                 transport.setWebView(childWebView);
                 resultMsg.sendToTarget();
-                latch.countDown();
+                createWindowFuture.set(null);
                 return true;
             }
         });
@@ -439,12 +439,12 @@ public class WebSettingsTest extends ActivityInstrumentationTestCase2<WebViewCts
                 return "Popup blocked".equals(mOnUiThread.getTitle());
             }
         }.run();
-        assertEquals(1, latch.getCount());
+        assertFalse("onCreateWindow should not have been called yet", createWindowFuture.isDone());
 
         mSettings.setJavaScriptCanOpenWindowsAutomatically(true);
         assertTrue(mSettings.getJavaScriptCanOpenWindowsAutomatically());
         mOnUiThread.loadUrl(mWebServer.getAssetUrl(TestHtmlConstants.POPUP_URL));
-        assertTrue(latch.await(WEBVIEW_TIMEOUT, TimeUnit.MILLISECONDS));
+        WebkitUtils.waitForFuture(createWindowFuture);
     }
 
     public void testAccessJavaScriptEnabled() throws Exception {
