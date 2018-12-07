@@ -81,6 +81,7 @@ import android.widget.LinearLayout;
 import com.android.compatibility.common.util.EvaluateJsResultPollingCheck;
 import com.android.compatibility.common.util.NullWebViewUtils;
 import com.android.compatibility.common.util.PollingCheck;
+import com.google.common.util.concurrent.SettableFuture;
 
 import junit.framework.Assert;
 
@@ -101,7 +102,6 @@ import java.util.Date;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.concurrent.Callable;
-import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.FutureTask;
 import java.util.concurrent.Semaphore;
 import java.util.concurrent.TimeUnit;
@@ -979,18 +979,17 @@ public class WebViewTest extends ActivityInstrumentationTestCase2<WebViewCtsActi
 
         assertFalse(mJsInterfaceWasCalled.get());
 
-        final CountDownLatch resultLatch = new CountDownLatch(1);
+        final SettableFuture<String> javascriptResultFuture = SettableFuture.create();
         mOnUiThread.evaluateJavascript(
                 "try {dummy.call(); 'fail'; } catch (exception) { 'pass'; } ",
                 new ValueCallback<String>() {
                         @Override
                         public void onReceiveValue(String result) {
-                            assertEquals("\"pass\"", result);
-                            resultLatch.countDown();
+                            javascriptResultFuture.set(result);
                         }
                     });
 
-        assertTrue(resultLatch.await(TEST_TIMEOUT, TimeUnit.MILLISECONDS));
+        assertEquals("\"pass\"", WebkitUtils.waitForFuture(javascriptResultFuture));
         assertTrue(mJsInterfaceWasCalled.get());
     }
 
@@ -2290,7 +2289,7 @@ public class WebViewTest extends ActivityInstrumentationTestCase2<WebViewCtsActi
             return;
         }
 
-        final CountDownLatch resultLatch = new CountDownLatch(1);
+        final SettableFuture<Void> downloadStartFuture = SettableFuture.create();
         final class MyDownloadListener implements DownloadListener {
             public String url;
             public String mimeType;
@@ -2304,7 +2303,7 @@ public class WebViewTest extends ActivityInstrumentationTestCase2<WebViewCtsActi
                 this.mimeType = mimetype;
                 this.contentLength = contentLength;
                 this.contentDisposition = contentDisposition;
-                resultLatch.countDown();
+                downloadStartFuture.set(null);
             }
         }
 
@@ -2327,7 +2326,7 @@ public class WebViewTest extends ActivityInstrumentationTestCase2<WebViewCtsActi
         // Wait for layout to complete before setting focus.
         getInstrumentation().waitForIdleSync();
 
-        assertTrue(resultLatch.await(TEST_TIMEOUT, TimeUnit.MILLISECONDS));
+        WebkitUtils.waitForFuture(downloadStartFuture);
         assertEquals(url, listener.url);
         assertTrue(listener.contentDisposition.contains("test.bin"));
         assertEquals(length, listener.contentLength);
@@ -2646,19 +2645,18 @@ public class WebViewTest extends ActivityInstrumentationTestCase2<WebViewCtsActi
             return;
         }
 
-        final CountDownLatch callbackLatch = new CountDownLatch(1);
         final long kRequest = 100;
 
         mOnUiThread.loadUrl("about:blank");
 
+        final SettableFuture<Long> visualStateFuture = SettableFuture.create();
         mOnUiThread.postVisualStateCallback(kRequest, new VisualStateCallback() {
             public void onComplete(long requestId) {
-                assertEquals(kRequest, requestId);
-                callbackLatch.countDown();
+                visualStateFuture.set(requestId);
             }
         });
 
-        assertTrue(callbackLatch.await(TEST_TIMEOUT, TimeUnit.MILLISECONDS));
+        assertEquals(kRequest, (long) WebkitUtils.waitForFuture(visualStateFuture));
     }
 
     /**
@@ -2675,15 +2673,14 @@ public class WebViewTest extends ActivityInstrumentationTestCase2<WebViewCtsActi
         List whitelist = new ArrayList<String>();
         // Protocols are not supported in the whitelist
         whitelist.add("http://google.com");
-        final CountDownLatch resultLatch = new CountDownLatch(1);
+        final SettableFuture<Boolean> safeBrowsingWhitelistFuture = SettableFuture.create();
         WebView.setSafeBrowsingWhitelist(whitelist, new ValueCallback<Boolean>() {
             @Override
             public void onReceiveValue(Boolean success) {
-                assertFalse(success);
-                resultLatch.countDown();
+                safeBrowsingWhitelistFuture.set(success);
             }
         });
-        assertTrue(resultLatch.await(TEST_TIMEOUT, TimeUnit.MILLISECONDS));
+        assertFalse(WebkitUtils.waitForFuture(safeBrowsingWhitelistFuture));
     }
 
     /**
@@ -2699,34 +2696,34 @@ public class WebViewTest extends ActivityInstrumentationTestCase2<WebViewCtsActi
 
         List whitelist = new ArrayList<String>();
         whitelist.add("safe-browsing");
-        final CountDownLatch resultLatch = new CountDownLatch(1);
+        final SettableFuture<Boolean> safeBrowsingWhitelistFuture = SettableFuture.create();
         WebView.setSafeBrowsingWhitelist(whitelist, new ValueCallback<Boolean>() {
             @Override
             public void onReceiveValue(Boolean success) {
-                assertTrue(success);
-                resultLatch.countDown();
+                safeBrowsingWhitelistFuture.set(success);
             }
         });
-        assertTrue(resultLatch.await(TEST_TIMEOUT, TimeUnit.MILLISECONDS));
+        assertTrue(WebkitUtils.waitForFuture(safeBrowsingWhitelistFuture));
 
-        final CountDownLatch resultLatch2 = new CountDownLatch(1);
+        final SettableFuture<Void> pageFinishedFuture = SettableFuture.create();
         mOnUiThread.setWebViewClient(new WebViewClient() {
             @Override
             public void onPageFinished(WebView view, String url) {
-                resultLatch2.countDown();
+                pageFinishedFuture.set(null);
             }
 
             @Override
             public void onSafeBrowsingHit(WebView view, WebResourceRequest request, int threatType,
                     SafeBrowsingResponse callback) {
-                Assert.fail("Should not invoke onSafeBrowsingHit");
+                pageFinishedFuture.setException(new IllegalStateException(
+                        "Should not invoke onSafeBrowsingHit"));
             }
         });
 
         mOnUiThread.loadUrl("chrome://safe-browsing/match?type=malware");
 
         // Wait until page load has completed
-        assertTrue(resultLatch2.await(TEST_TIMEOUT, TimeUnit.MILLISECONDS));
+        WebkitUtils.waitForFuture(pageFinishedFuture);
     }
 
     /**
@@ -2836,16 +2833,15 @@ public class WebViewTest extends ActivityInstrumentationTestCase2<WebViewCtsActi
         }
 
         final MockContext ctx = new MockContext(getActivity());
-        final CountDownLatch resultLatch = new CountDownLatch(1);
+        final SettableFuture<Boolean> startSafeBrowsingFuture = SettableFuture.create();
         WebView.startSafeBrowsing(ctx, new ValueCallback<Boolean>() {
             @Override
             public void onReceiveValue(Boolean value) {
-                assertTrue(ctx.wasGetApplicationContextCalled());
-                resultLatch.countDown();
+                startSafeBrowsingFuture.set(ctx.wasGetApplicationContextCalled());
                 return;
             }
         });
-        assertTrue(resultLatch.await(TEST_TIMEOUT, TimeUnit.MILLISECONDS));
+        assertTrue(WebkitUtils.waitForFuture(startSafeBrowsingFuture));
     }
 
     /**
@@ -2872,17 +2868,16 @@ public class WebViewTest extends ActivityInstrumentationTestCase2<WebViewCtsActi
             return;
         }
 
-        final CountDownLatch resultLatch = new CountDownLatch(1);
+        final SettableFuture<Boolean> startSafeBrowsingFuture = SettableFuture.create();
         WebView.startSafeBrowsing(getActivity().getApplicationContext(),
                 new ValueCallback<Boolean>() {
             @Override
             public void onReceiveValue(Boolean value) {
-                assertTrue(Looper.getMainLooper().isCurrentThread());
-                resultLatch.countDown();
+                startSafeBrowsingFuture.set(Looper.getMainLooper().isCurrentThread());
                 return;
             }
         });
-        assertTrue(resultLatch.await(TEST_TIMEOUT, TimeUnit.MILLISECONDS));
+        assertTrue(WebkitUtils.waitForFuture(startSafeBrowsingFuture));
     }
 
     private void savePrintedPage(final PrintDocumentAdapter adapter,

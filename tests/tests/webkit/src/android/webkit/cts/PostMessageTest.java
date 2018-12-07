@@ -28,9 +28,12 @@ import android.webkit.WebView;
 
 import com.android.compatibility.common.util.NullWebViewUtils;
 import com.android.compatibility.common.util.PollingCheck;
+import com.google.common.util.concurrent.SettableFuture;
 
-import java.util.concurrent.CountDownLatch;
 import junit.framework.Assert;
+
+import java.util.concurrent.ArrayBlockingQueue;
+import java.util.concurrent.BlockingQueue;
 
 public class PostMessageTest extends ActivityInstrumentationTestCase2<WebViewCtsActivity> {
     public static final long TIMEOUT = 20000L;
@@ -176,7 +179,7 @@ public class PostMessageTest extends ActivityInstrumentationTestCase2<WebViewCts
         WebMessage message = new WebMessage(WEBVIEW_MESSAGE, new WebMessagePort[]{channel[1]});
         mOnUiThread.postWebMessage(message, Uri.parse(BASE_URI));
         final int messageCount = 3;
-        final CountDownLatch latch = new CountDownLatch(messageCount);
+        final BlockingQueue<String> queue = new ArrayBlockingQueue<>(messageCount);
         runTestOnUiThread(new Runnable() {
             @Override
             public void run() {
@@ -186,15 +189,20 @@ public class PostMessageTest extends ActivityInstrumentationTestCase2<WebViewCts
                 channel[0].setWebMessageCallback(new WebMessagePort.WebMessageCallback() {
                     @Override
                     public void onMessage(WebMessagePort port, WebMessage message) {
-                        int i = messageCount - (int)latch.getCount();
-                        assertEquals(WEBVIEW_MESSAGE + i + i, message.getData());
-                        latch.countDown();
+                        queue.add(message.getData());
                     }
                 });
             }
         });
+
         // Wait for all the responses to arrive.
-        assertTrue(latch.await(TIMEOUT, java.util.concurrent.TimeUnit.MILLISECONDS));
+        for (int i = 0; i < messageCount; i++) {
+            // The JavaScript code simply appends an integer counter to the end of the message it
+            // receives, which is why we have a second i on the end.
+            String expectedMessageFromJavascript = WEBVIEW_MESSAGE + i + "" + i;
+            assertEquals(expectedMessageFromJavascript,
+                    WebkitUtils.waitForNextQueueElement(queue));
+        }
     }
 
     /**
@@ -288,7 +296,7 @@ public class PostMessageTest extends ActivityInstrumentationTestCase2<WebViewCts
         WebMessage message = new WebMessage(WEBVIEW_MESSAGE, new WebMessagePort[]{channel[1]});
         mOnUiThread.postWebMessage(message, Uri.parse(BASE_URI));
         final int messageCount = 1;
-        final CountDownLatch latch = new CountDownLatch(messageCount);
+        final SettableFuture<Boolean> messageHandlerThreadFuture = SettableFuture.create();
 
         // Create a new thread for the WebMessageCallback.
         final HandlerThread messageHandlerThread = new HandlerThread("POST_MESSAGE_THREAD");
@@ -302,14 +310,14 @@ public class PostMessageTest extends ActivityInstrumentationTestCase2<WebViewCts
                 channel[0].setWebMessageCallback(new WebMessagePort.WebMessageCallback() {
                     @Override
                     public void onMessage(WebMessagePort port, WebMessage message) {
-                        assertTrue(messageHandlerThread.getLooper().isCurrentThread());
-                        latch.countDown();
+                        messageHandlerThreadFuture.set(
+                                messageHandlerThread.getLooper().isCurrentThread());
                     }
                 }, messageHandler);
             }
         });
-        // Wait for all the responses to arrive.
-        assertTrue(latch.await(TIMEOUT, java.util.concurrent.TimeUnit.MILLISECONDS));
+        // Wait for all the responses to arrive and assert correct thread.
+        assertTrue(WebkitUtils.waitForFuture(messageHandlerThreadFuture));
     }
 
     /**
@@ -327,7 +335,7 @@ public class PostMessageTest extends ActivityInstrumentationTestCase2<WebViewCts
         WebMessage message = new WebMessage(WEBVIEW_MESSAGE, new WebMessagePort[]{channel[1]});
         mOnUiThread.postWebMessage(message, Uri.parse(BASE_URI));
         final int messageCount = 1;
-        final CountDownLatch latch = new CountDownLatch(messageCount);
+        final SettableFuture<Boolean> messageMainLooperFuture = SettableFuture.create();
 
         runTestOnUiThread(new Runnable() {
             @Override
@@ -336,13 +344,12 @@ public class PostMessageTest extends ActivityInstrumentationTestCase2<WebViewCts
                 channel[0].setWebMessageCallback(new WebMessagePort.WebMessageCallback() {
                     @Override
                     public void onMessage(WebMessagePort port, WebMessage message) {
-                        assertTrue(Looper.getMainLooper().isCurrentThread());
-                        latch.countDown();
+                        messageMainLooperFuture.set(Looper.getMainLooper().isCurrentThread());
                     }
                 });
             }
         });
-        // Wait for all the responses to arrive.
-        assertTrue(latch.await(TIMEOUT, java.util.concurrent.TimeUnit.MILLISECONDS));
+        // Wait for all the responses to arrive and assert correct thread.
+        assertTrue(WebkitUtils.waitForFuture(messageMainLooperFuture));
     }
 }
