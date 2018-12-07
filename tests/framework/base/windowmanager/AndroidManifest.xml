@@ -32,7 +32,9 @@
 
         <activity android:name="android.server.wm.AlertWindowsAppOpsTestsActivity"/>
         <activity android:name="android.server.wm.DialogFrameTestActivity" />
-        <activity android:name="android.server.wm.DisplayCutoutTests$TestActivity" />
+        <activity android:name="android.server.wm.DisplayCutoutTests$TestActivity"
+                  android:turnScreenOn="true"
+                  android:showWhenLocked="true"/>
         <activity android:name="android.server.wm.LayoutTestsActivity"
                   android:theme="@style/no_animation" />
         <activity android:name="android.server.wm.LocationOnScreenTests$TestActivity"
