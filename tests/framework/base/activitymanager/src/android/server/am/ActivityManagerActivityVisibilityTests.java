@@ -26,7 +26,6 @@ import static android.app.WindowConfiguration.WINDOWING_MODE_SPLIT_SCREEN_SECOND
 import static android.server.am.ActivityManagerState.STATE_PAUSED;
 import static android.server.am.ActivityManagerState.STATE_RESUMED;
 import static android.server.am.ActivityManagerState.STATE_STOPPED;
-import static android.server.am.ComponentNameUtils.getActivityName;
 import static android.server.am.Components.ALT_LAUNCHING_ACTIVITY;
 import static android.server.am.Components.ALWAYS_FOCUSABLE_PIP_ACTIVITY;
 import static android.server.am.Components.BROADCAST_RECEIVER_ACTIVITY;
@@ -442,6 +441,10 @@ public class ActivityManagerActivityVisibilityTests extends ActivityManagerTestB
             assertSingleLaunch(TURN_SCREEN_ON_SINGLE_TASK_ACTIVITY, logSeparator);
 
             lockScreenSession.sleepDevice();
+            // We should make sure test activity stopped to prevent a false alarm stop state
+            // included when separateLogs() called.
+            waitAndAssertActivityState(TURN_SCREEN_ON_SINGLE_TASK_ACTIVITY, STATE_STOPPED,
+                    "Activity should be stopped");
             logSeparator = separateLogs();
             launchActivity(TURN_SCREEN_ON_SINGLE_TASK_ACTIVITY);
             mAmWmState.assertVisibility(TURN_SCREEN_ON_SINGLE_TASK_ACTIVITY, true);
