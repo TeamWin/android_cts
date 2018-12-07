@@ -22,6 +22,7 @@ import android.app.Instrumentation;
 import android.app.UiAutomation;
 import android.hardware.input.InputManager;
 import android.os.ParcelFileDescriptor;
+import android.os.SystemClock;
 
 import org.json.JSONArray;
 import org.json.JSONException;
@@ -84,6 +85,10 @@ public final class HidDevice implements InputManager.InputDeviceListener {
             throw new RuntimeException(
                     "Unexpectedly interrupted while waiting for device added notification.");
         }
+        // Even though the device has been added, it still may not be ready to process the events
+        // right away. This seems to be a kernel bug.
+        // Add a small delay here to ensure device is "ready".
+        SystemClock.sleep(500);
     }
 
     /**
