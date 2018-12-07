@@ -15,7 +15,10 @@
  */
 package android.contentcaptureservice.cts;
 
+import static android.contentcaptureservice.cts.Assertions.assertLifecycleEvent;
+import static android.contentcaptureservice.cts.Assertions.assertRightActivity;
 import static android.contentcaptureservice.cts.Helper.TAG;
+import static android.contentcaptureservice.cts.Helper.enableService;
 import static android.contentcaptureservice.cts.common.ActivitiesWatcher.ActivityLifecycle.DESTROYED;
 import static android.contentcaptureservice.cts.common.ActivitiesWatcher.ActivityLifecycle.RESUMED;
 import static android.view.contentcapture.ContentCaptureEvent.TYPE_ACTIVITY_PAUSED;
@@ -25,32 +28,28 @@ import static android.view.contentcapture.ContentCaptureEvent.TYPE_ACTIVITY_STOP
 
 import static com.google.common.truth.Truth.assertThat;
 
-import android.content.Intent;
 import android.contentcaptureservice.cts.CtsSmartSuggestionsService.Session;
 import android.contentcaptureservice.cts.common.ActivitiesWatcher.ActivityWatcher;
 import android.support.test.rule.ActivityTestRule;
 import android.util.Log;
 import android.view.contentcapture.ContentCaptureEvent;
 
-import org.junit.Rule;
 import org.junit.Test;
 
 import java.util.List;
 
-public class ActivityLifecycleTest extends AbstractContentCaptureIntegrationTest {
+public class BlankActivityTest extends AbstractContentCaptureIntegrationTest<BlankActivity> {
 
-    // TODO(b/119638958): move to superclass ?
-    @Rule
-    public final ActivityTestRule<BlankActivity> activityRule = new ActivityTestRule<>(
+    private static final ActivityTestRule<BlankActivity> sActivityRule = new ActivityTestRule<>(
             BlankActivity.class, false, false);
 
-    private BlankActivity mActivity;
+    public BlankActivityTest() {
+        super(BlankActivity.class);
+    }
 
-    // TODO(b/119638958): move to superclass ?
-    private void launchActivity() {
-        Log.d(TAG, "Launching BlankActivity");
-
-        mActivity = activityRule.launchActivity(new Intent(sContext, BlankActivity.class));
+    @Override
+    protected ActivityTestRule<BlankActivity> getActivityTestRule() {
+        return sActivityRule;
     }
 
     // TODO(b/119638958): rename once we add moar tests
@@ -61,20 +60,17 @@ public class ActivityLifecycleTest extends AbstractContentCaptureIntegrationTest
         // TODO(b/119638958): move to super class
         final ActivityWatcher watcher = mActivitiesWatcher.watch(BlankActivity.class);
 
-        launchActivity();
+        final BlankActivity activity = launchActivity();
         watcher.waitFor(RESUMED);
 
-        mActivity.finish();
+        activity.finish();
         watcher.waitFor(DESTROYED);
 
         final CtsSmartSuggestionsService service = CtsSmartSuggestionsService.getInstance();
         try {
             final Session session = service.getFinishedSession(BlankActivity.class);
 
-            // TODO(b/119638958): create custom Truth assertions for expect component name and
-            // events
-            assertThat(session.context.getActivityComponent())
-                    .isEqualTo(mActivity.getComponentName());
+            assertRightActivity(session, activity);
 
             final List<ContentCaptureEvent> events = session.getEvents();
             Log.v(TAG, "events: " + events);

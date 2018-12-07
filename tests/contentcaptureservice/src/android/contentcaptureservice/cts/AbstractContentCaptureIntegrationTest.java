@@ -18,38 +18,49 @@ package android.contentcaptureservice.cts;
 import static android.contentcaptureservice.cts.Helper.GENERIC_TIMEOUT_MS;
 import static android.contentcaptureservice.cts.Helper.TAG;
 import static android.contentcaptureservice.cts.Helper.resetService;
-import static android.contentcaptureservice.cts.Helper.setService;
 
 import static com.android.compatibility.common.util.SystemUtil.runShellCommand;
-
-import static com.google.common.truth.Truth.assertWithMessage;
 
 import static org.junit.Assume.assumeFalse;
 
 import android.app.Application;
 import android.content.Context;
+import android.content.Intent;
 import android.contentcaptureservice.cts.common.ActivitiesWatcher;
 import android.support.test.InstrumentationRegistry;
+import android.support.test.rule.ActivityTestRule;
 import android.support.test.runner.AndroidJUnit4;
 import android.util.Log;
-import android.view.contentcapture.ContentCaptureEvent;
 
 import androidx.annotation.NonNull;
 
 import org.junit.After;
 import org.junit.Before;
 import org.junit.BeforeClass;
+import org.junit.Rule;
+import org.junit.rules.RuleChain;
 import org.junit.runner.RunWith;
 
 /**
  * Base class for all (or most :-) integration tests in this CTS suite.
  */
 @RunWith(AndroidJUnit4.class)
-public abstract class AbstractContentCaptureIntegrationTest {
+public abstract class AbstractContentCaptureIntegrationTest
+        <A extends AbstractContentCaptureActivity> {
 
     protected static final Context sContext = InstrumentationRegistry.getTargetContext();
 
+    @Rule
+    public final RuleChain mLookAllTheseRules = RuleChain
+            .outerRule(getActivityTestRule());
+
     protected ActivitiesWatcher mActivitiesWatcher;
+
+    private final Class<A> mActivityClass;
+
+    protected AbstractContentCaptureIntegrationTest(@NonNull Class<A> activityClass) {
+        mActivityClass = activityClass;
+    }
 
     @BeforeClass
     public static void checkSupported() {
@@ -86,14 +97,17 @@ public abstract class AbstractContentCaptureIntegrationTest {
         resetService();
     }
 
-    public void assertLifecycleEvent(@NonNull ContentCaptureEvent event, int expected) {
-        assertWithMessage("wrong event: %s", event).that(event.getType()).isEqualTo(expected);
-    }
-
     /**
-     * Sets {@link CtsSmartSuggestionsService} as the service for the current user.
+     * Gets the {@link ActivityTestRule} use to launch this activity.
+     *
+     * <p><b>NOTE: </b>implementation must return a static singleton, otherwise it might be
+     * {@code null} when used it in this class' {@code @Rule}
      */
-    public static void enableService() {
-        setService(CtsSmartSuggestionsService.SERVICE_NAME);
+    protected abstract ActivityTestRule<A> getActivityTestRule();
+
+    protected A launchActivity() {
+        Log.d(TAG, "Launching " + mActivityClass.getSimpleName());
+
+        return getActivityTestRule().launchActivity(new Intent(sContext, mActivityClass));
     }
 }
