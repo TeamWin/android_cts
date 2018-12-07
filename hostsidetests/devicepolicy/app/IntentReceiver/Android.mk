@@ -31,6 +31,7 @@ LOCAL_STATIC_JAVA_LIBRARIES := \
     ctstestrunner
 
 LOCAL_SDK_VERSION := current
+LOCAL_MIN_SDK_VERSION := 19
 
 # tag this module as a cts test artifact
 LOCAL_COMPATIBILITY_SUITE := arcts cts vts general-tests
