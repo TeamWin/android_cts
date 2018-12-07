@@ -20,6 +20,8 @@ java_test {
     static_libs: [
         "compatibility-device-util",
         "junit",
+        "testng", // TODO: remove once Android migrates to JUnit 4.12, which provide assertThrows
+        "truth-prebuilt"
     ],
 
     sdk_version: "test_current",
