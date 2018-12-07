@@ -19,9 +19,12 @@ package android.server.cts;
 import java.util.List;
 import java.util.ArrayList;
 import java.awt.Rectangle;
+import java.lang.Float;
+import java.lang.String;
 
 import com.android.ddmlib.Log.LogLevel;
 import com.android.tradefed.log.LogUtil.CLog;
+import com.android.tradefed.device.DeviceNotAvailableException;
 
 import android.server.cts.WindowManagerState.WindowState;
 
@@ -55,6 +58,7 @@ public class DialogFrameTests extends ParentChildTestBase {
         mAmWmState.computeState(mDevice, waitForVisible);
         WindowState dialog = getSingleWindow("TestDialog");
         WindowState parent = getSingleWindow("DialogTestActivity");
+        setupTest();
 
         t.doTest(parent, dialog);
     }
@@ -79,6 +83,7 @@ public class DialogFrameTests extends ParentChildTestBase {
     }
 
     static final int explicitDimension = 200;
+    private int mSize = explicitDimension;
 
     // The default gravity for dialogs should center them.
     public void testExplicitSizeDefaultGravity() throws Exception {
@@ -86,9 +91,9 @@ public class DialogFrameTests extends ParentChildTestBase {
             (WindowState parent, WindowState dialog) -> {
                 Rectangle contentFrame = parent.getContentFrame();
                 Rectangle expectedFrame = new Rectangle(
-                        contentFrame.x + (contentFrame.width - explicitDimension)/2,
-                        contentFrame.y + (contentFrame.height - explicitDimension)/2,
-                        explicitDimension, explicitDimension);
+                        contentFrame.x + (contentFrame.width - mSize)/2,
+                        contentFrame.y + (contentFrame.height - mSize)/2,
+                        mSize, mSize);
                 assertEquals(expectedFrame, dialog.getFrame());
             });
     }
@@ -100,8 +105,8 @@ public class DialogFrameTests extends ParentChildTestBase {
                 Rectangle expectedFrame = new Rectangle(
                         contentFrame.x,
                         contentFrame.y,
-                        explicitDimension,
-                        explicitDimension);
+                        mSize,
+                        mSize);
                 assertEquals(expectedFrame, dialog.getFrame());
             });
     }
@@ -111,9 +116,9 @@ public class DialogFrameTests extends ParentChildTestBase {
             (WindowState parent, WindowState dialog) -> {
                 Rectangle contentFrame = parent.getContentFrame();
                 Rectangle expectedFrame = new Rectangle(
-                        contentFrame.x + contentFrame.width - explicitDimension,
-                        contentFrame.y + contentFrame.height - explicitDimension,
-                        explicitDimension, explicitDimension);
+                        contentFrame.x + contentFrame.width - mSize,
+                        contentFrame.y + contentFrame.height - mSize,
+                        mSize, mSize);
                 assertEquals(expectedFrame, dialog.getFrame());
             });
     }
@@ -197,8 +202,8 @@ public class DialogFrameTests extends ParentChildTestBase {
                 Rectangle expectedFrame = new Rectangle(
                         (int)(horizontalMargin*frame.width + frame.x),
                         (int)(verticalMargin*frame.height + frame.y),
-                        explicitDimension,
-                        explicitDimension);
+                        mSize,
+                        mSize);
                 assertEquals(expectedFrame, dialog.getFrame());
                 });
     }
@@ -211,5 +216,34 @@ public class DialogFrameTests extends ParentChildTestBase {
                 // etc...
                 assertTrue(dialog.getLayer() - parent.getLayer() >= 5);
         });
+    }
+
+    private void setupTest() {
+        mSize = getSize();
+    }
+
+    private int getSize() {
+        int size = explicitDimension;
+        try {
+            float density = getDensity();
+            size = (int)(explicitDimension * density);
+        } catch (DeviceNotAvailableException e) {
+        }
+        return size;
+    }
+
+    private float getDensity() throws DeviceNotAvailableException {
+        float density;
+        String output = runCommandAndPrintOutput("wm density");
+        if (output.contains("Override density")) {
+            int cnt = output.indexOf("Override density");
+            String token = output.substring(cnt + 18);
+            density = Float.parseFloat(token.replace("\n",""));
+        } else {
+            String tokens[] = output.split(": ");
+            density = Float.parseFloat(tokens[1].replace("\n",""));
+        }
+        float ret = density / 160f;
+        return ret;
     }
 }
