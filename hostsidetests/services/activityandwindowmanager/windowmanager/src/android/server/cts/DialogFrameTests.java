@@ -68,16 +68,6 @@ public class DialogFrameTests extends ParentChildTestBase {
             });
     }
 
-    // If we have LAYOUT_IN_SCREEN and LAYOUT_IN_OVERSCAN with MATCH_PARENT,
-    // we will not be constrained to the insets and so we will be the same size
-    // as the main window main frame.
-    public void testMatchParentDialogLayoutInOverscan() throws Exception {
-        doParentChildTest("MatchParentLayoutInOverscan",
-            (WindowState parent, WindowState dialog) -> {
-                assertEquals(parent.getFrame(), dialog.getFrame());
-            });
-    }
-
     static final int explicitDimension = 200;
 
     // The default gravity for dialogs should center them.
