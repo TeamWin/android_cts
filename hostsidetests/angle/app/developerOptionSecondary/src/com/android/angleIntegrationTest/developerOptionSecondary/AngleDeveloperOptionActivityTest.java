@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package com.android.angleIntegrationTest.debugOption;
+package com.android.angleIntegrationTest.developerOptionSecondary;
 
 import com.android.angleIntegrationTest.common.AngleIntegrationTestActivity;
 import com.android.angleIntegrationTest.common.GlesView;
@@ -35,7 +35,7 @@ import org.junit.runner.RunWith;
 import java.lang.Override;
 
 @RunWith(AndroidJUnit4.class)
-public class AngleDebugOptionActivityTest {
+public class AngleDeveloperOptionActivityTest {
 
     private final String TAG = this.getClass().getSimpleName();
 
@@ -43,12 +43,12 @@ public class AngleDebugOptionActivityTest {
     public ActivityTestRule<AngleIntegrationTestActivity> rule =
             new ActivityTestRule<>(AngleIntegrationTestActivity.class);
 
-    private void validateDebugOption(boolean debugOptionOn) throws Exception {
+    private void validateDeveloperOption(boolean angleEnabled) throws Exception {
         AngleIntegrationTestActivity activity = rule.getActivity();
         GlesView glesView = activity.getGlesView();
         String renderer = glesView.getRenderer();
 
-        if (debugOptionOn) {
+        if (angleEnabled) {
             if (!renderer.toLowerCase().contains("ANGLE".toLowerCase())) {
                 fail("Failure - ANGLE was not loaded: '" + renderer + "'");
             }
@@ -61,12 +61,18 @@ public class AngleDebugOptionActivityTest {
     }
 
     @Test
-    public void testDebugOptionOn() throws Exception {
-        validateDebugOption(true);
+    public void testUseDefaultDriver() throws Exception {
+        // The rules file does not enable ANGLE for this app
+        validateDeveloperOption(false);
     }
 
     @Test
-    public void testDebugOptionOff() throws Exception {
-        validateDebugOption(false);
+    public void testUseAngleDriver() throws Exception {
+        validateDeveloperOption(true);
+    }
+
+    @Test
+    public void testUseNativeDriver() throws Exception {
+        validateDeveloperOption(false);
     }
 }

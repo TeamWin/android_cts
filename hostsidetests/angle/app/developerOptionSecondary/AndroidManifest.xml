@@ -16,7 +16,7 @@
  -->
 
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
-    package="com.android.angleIntegrationTest.debugOption">
+    package="com.android.angleIntegrationTest.developerOptionSecondary">
 
     <application>
         <uses-library android:name="android.test.runner" />
@@ -31,7 +31,7 @@
 
     <instrumentation
         android:name="android.support.test.runner.AndroidJUnitRunner"
-        android:targetPackage="com.android.angleIntegrationTest.debugOption" />
+        android:targetPackage="com.android.angleIntegrationTest.developerOptionSecondary" />
 
 </manifest>
 
