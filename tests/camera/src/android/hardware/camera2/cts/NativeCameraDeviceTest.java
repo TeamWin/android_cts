@@ -85,8 +85,20 @@ public class NativeCameraDeviceTest extends Camera2SurfaceViewTestCase {
         SurfaceTexture outputTexture = new SurfaceTexture(/* random texture ID*/ 5);
         outputTexture.setDefaultBufferSize(previewSize.getWidth(), previewSize.getHeight());
         Surface outputSurface = new Surface(outputTexture);
-        assertTrue("testCameraDeviceSharedWindowAddRemove fail, see log for details",
+        assertTrue("testCameraDeviceSharedOutputUpdate fail, see log for details",
                 testCameraDeviceSharedOutputUpdate(mPreviewSurface, outputSurface));
+    }
+
+    @Test
+    public void testCameraDeviceLogicalPhysicalStreaming() {
+        // Init preview surface to a guaranteed working size
+        Size previewSize = new Size(640, 480);
+        updatePreviewSurface(previewSize);
+        SurfaceTexture outputTexture = new SurfaceTexture(/* random texture ID*/ 5);
+        outputTexture.setDefaultBufferSize(previewSize.getWidth(), previewSize.getHeight());
+        Surface outputSurface = new Surface(outputTexture);
+        assertTrue("testCameraDeviceLogicalPhysicalStreamingNative fail, see log for details",
+                testCameraDeviceLogicalPhysicalStreamingNative(mPreviewSurface));
     }
 
     private static native boolean testCameraDeviceOpenAndCloseNative();
@@ -96,4 +108,6 @@ public class NativeCameraDeviceTest extends Camera2SurfaceViewTestCase {
     private static native boolean testCameraDevicePreviewWithSessionParametersNative(
             Surface preview);
     private static native boolean testCameraDeviceSharedOutputUpdate(Surface src, Surface dst);
+    private static native boolean testCameraDeviceLogicalPhysicalStreamingNative(Surface preview);
+
 }
