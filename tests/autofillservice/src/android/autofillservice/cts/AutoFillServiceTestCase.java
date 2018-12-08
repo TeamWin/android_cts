@@ -217,8 +217,7 @@ final class AutoFillServiceTestCase {
          * Gets how many times a test should be retried.
          */
         protected int getNumberRetries() {
-            return 0; // TODO(b/120242516): STOPSHIP temporarily disabled until uiautomator is fixed
-            // return 1;
+            return 1;
         }
 
         /**
