@@ -281,6 +281,8 @@ public class SelfManagedConnectionServiceTest extends BaseTelecomTestWithMockSer
         CtsSelfManagedConnectionService.waitForBinding();
         assertTrue(CtsSelfManagedConnectionService.getConnectionService().waitForUpdate(
                 CtsSelfManagedConnectionService.CREATE_OUTGOING_CONNECTION_FAILED_LOCK));
+
+        assertFalse(mTelecomManager.isOutgoingCallPermitted(TestUtils.TEST_SELF_MANAGED_HANDLE_1));
     }
 
     /**
@@ -293,8 +295,13 @@ public class SelfManagedConnectionServiceTest extends BaseTelecomTestWithMockSer
         if (!mShouldTestTelecom) {
             return;
         }
+        assertTrue(mTelecomManager.isOutgoingCallPermitted(TestUtils.TEST_SELF_MANAGED_HANDLE_1));
         placeAndVerifyOutgoingCall(TestUtils.TEST_SELF_MANAGED_HANDLE_1, TEST_ADDRESS_1);
+
+        assertTrue(mTelecomManager.isOutgoingCallPermitted(TestUtils.TEST_SELF_MANAGED_HANDLE_2));
         placeAndVerifyOutgoingCall(TestUtils.TEST_SELF_MANAGED_HANDLE_2, TEST_ADDRESS_3);
+
+        assertTrue(mTelecomManager.isOutgoingCallPermitted(TestUtils.TEST_SELF_MANAGED_HANDLE_3));
         placeAndVerifyOutgoingCall(TestUtils.TEST_SELF_MANAGED_HANDLE_3, TEST_ADDRESS_4);
     }
 
@@ -398,6 +405,7 @@ public class SelfManagedConnectionServiceTest extends BaseTelecomTestWithMockSer
         SelfManagedConnection connection = TestUtils.waitForAndGetConnection(TEST_ADDRESS_1);
         setActiveAndVerify(connection);
 
+        assertTrue(mTelecomManager.isIncomingCallPermitted(TestUtils.TEST_SELF_MANAGED_HANDLE_2));
         // Attempt to create a new incoming call for the other PhoneAccount; it should succeed.
         TestUtils.addIncomingCall(getInstrumentation(), mTelecomManager,
                 TestUtils.TEST_SELF_MANAGED_HANDLE_2, TEST_ADDRESS_2);
@@ -415,6 +423,7 @@ public class SelfManagedConnectionServiceTest extends BaseTelecomTestWithMockSer
             return;
         }
 
+        assertTrue(mTelecomManager.isIncomingCallPermitted(TestUtils.TEST_SELF_MANAGED_HANDLE_1));
         // Attempt to create a new Incoming self-managed call
         TestUtils.addIncomingCall(getInstrumentation(), mTelecomManager,
                 TestUtils.TEST_SELF_MANAGED_HANDLE_1, TEST_ADDRESS_1);
@@ -468,6 +477,7 @@ public class SelfManagedConnectionServiceTest extends BaseTelecomTestWithMockSer
         SelfManagedConnection connection = TestUtils.waitForAndGetConnection(TEST_ADDRESS_1);
         connection.setRinging();
 
+        assertFalse(mTelecomManager.isIncomingCallPermitted(TestUtils.TEST_SELF_MANAGED_HANDLE_1));
         // WHEN create a new incoming call for the the same PhoneAccount
         TestUtils.addIncomingCall(getInstrumentation(), mTelecomManager,
                 TestUtils.TEST_SELF_MANAGED_HANDLE_1, TEST_ADDRESS_1);
@@ -492,6 +502,8 @@ public class SelfManagedConnectionServiceTest extends BaseTelecomTestWithMockSer
         for (int ix = 0; ix < 10; ix++) {
             Uri address = Uri.fromParts("sip", "test" + ix + "@test.com", null);
             // Create an ongoing call in the first self-managed PhoneAccount.
+            assertTrue(mTelecomManager.isOutgoingCallPermitted(
+                    TestUtils.TEST_SELF_MANAGED_HANDLE_1));
             TestUtils.placeOutgoingCall(getInstrumentation(), mTelecomManager,
                     TestUtils.TEST_SELF_MANAGED_HANDLE_1, address);
             SelfManagedConnection connection = TestUtils.waitForAndGetConnection(address);
@@ -500,6 +512,7 @@ public class SelfManagedConnectionServiceTest extends BaseTelecomTestWithMockSer
         }
 
         // Try adding an 11th.  It should fail to be created.
+        assertFalse(mTelecomManager.isIncomingCallPermitted(TestUtils.TEST_SELF_MANAGED_HANDLE_1));
         TestUtils.addIncomingCall(getInstrumentation(), mTelecomManager,
                 TestUtils.TEST_SELF_MANAGED_HANDLE_1, TEST_ADDRESS_2);
         assertTrue("Expected onCreateIncomingConnectionFailed callback",
