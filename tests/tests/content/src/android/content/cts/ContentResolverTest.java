@@ -30,6 +30,7 @@ import android.os.CancellationSignal;
 import android.os.OperationCanceledException;
 import android.os.ParcelFileDescriptor;
 import android.os.RemoteException;
+import android.support.test.InstrumentationRegistry;
 import android.test.AndroidTestCase;
 import android.util.Log;
 
@@ -42,6 +43,8 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.OutputStream;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.TimeUnit;
 
 public class ContentResolverTest extends AndroidTestCase {
     private final static String COLUMN_ID_NAME = "_id";
@@ -62,10 +65,10 @@ public class ContentResolverTest extends AndroidTestCase {
     private static final String REMOTE_AUTHORITY = "remotectstest";
     private static final Uri REMOTE_TABLE1_URI = Uri.parse("content://"
                 + REMOTE_AUTHORITY + "/testtable1/");
-    private static final Uri REMOTE_SELF_URI = Uri.parse("content://"
-                + REMOTE_AUTHORITY + "/self/");
     private static final Uri REMOTE_CRASH_URI = Uri.parse("content://"
             + REMOTE_AUTHORITY + "/crash/");
+    private static final Uri REMOTE_HANG_URI = Uri.parse("content://"
+            + REMOTE_AUTHORITY + "/hang/");
 
     private static final Account ACCOUNT = new Account("cts", "cts");
 
@@ -112,6 +115,9 @@ public class ContentResolverTest extends AndroidTestCase {
 
     @Override
     protected void tearDown() throws Exception {
+        InstrumentationRegistry.getInstrumentation().getUiAutomation()
+                .dropShellPermissionIdentity();
+
         mContentResolver.delete(TABLE1_URI, null, null);
         if ( null != mCursor && !mCursor.isClosed() ) {
             mCursor.close();
@@ -138,7 +144,7 @@ public class ContentResolverTest extends AndroidTestCase {
         // so the act of killing it doesn't kill our own process.
         client.release();
         try {
-            client.delete(REMOTE_SELF_URI, null, null);
+            client.delete(REMOTE_CRASH_URI, null, null);
         } catch (RemoteException e) {
         }
         // Now make sure the thing is actually gone.
@@ -189,7 +195,7 @@ public class ContentResolverTest extends AndroidTestCase {
         try {
             Log.i("ContentResolverTest",
                     "Killing remote client -- if test process goes away, that is why!");
-            uClient.delete(REMOTE_SELF_URI, null, null);
+            uClient.delete(REMOTE_CRASH_URI, null, null);
         } catch (RemoteException e) {
         }
         // Make sure the remote client is actually gone.
@@ -227,7 +233,7 @@ public class ContentResolverTest extends AndroidTestCase {
         try {
             Log.i("ContentResolverTest",
                     "Killing remote client -- if test process goes away, that is why!");
-            uClient.delete(REMOTE_SELF_URI, null, null);
+            uClient.delete(REMOTE_CRASH_URI, null, null);
         } catch (RemoteException e) {
         }
         // Make sure the remote client is actually gone.
@@ -276,7 +282,7 @@ public class ContentResolverTest extends AndroidTestCase {
         try {
             Log.i("ContentResolverTest",
                     "Killing remote client -- if test process goes away, that is why!");
-            client.delete(REMOTE_SELF_URI, null, null);
+            client.delete(REMOTE_CRASH_URI, null, null);
         } catch (RemoteException e) {
         }
         // Make sure the remote client is actually gone.
@@ -708,7 +714,7 @@ public class ContentResolverTest extends AndroidTestCase {
         try {
             Log.i("ContentResolverTest",
                     "Killing remote client -- if test process goes away, that is why!");
-            uClient.delete(REMOTE_SELF_URI, null, null);
+            uClient.delete(REMOTE_CRASH_URI, null, null);
         } catch (RemoteException e) {
         }
         uClient.release();
@@ -740,7 +746,7 @@ public class ContentResolverTest extends AndroidTestCase {
         try {
             Log.i("ContentResolverTest",
                     "Killing remote client -- if test process goes away, that is why!");
-            uClient.delete(REMOTE_SELF_URI, null, null);
+            uClient.delete(REMOTE_CRASH_URI, null, null);
         } catch (RemoteException e) {
         }
         uClient.release();
@@ -1230,6 +1236,30 @@ public class ContentResolverTest extends AndroidTestCase {
         } catch (IllegalArgumentException e) {
             //expected.
         }
+    }
+
+    public void testHangRecover() throws Exception {
+        InstrumentationRegistry.getInstrumentation().getUiAutomation()
+                .adoptShellPermissionIdentity(android.Manifest.permission.REMOVE_TASKS);
+
+        final CountDownLatch latch = new CountDownLatch(1);
+        new Thread(() -> {
+            final ContentProviderClient client = mContentResolver
+                    .acquireUnstableContentProviderClient(REMOTE_AUTHORITY);
+            client.setDetectNotResponding(2_000);
+            try {
+                client.query(REMOTE_HANG_URI, null, null, null);
+                fail("Funky, we somehow returned?");
+            } catch (RemoteException e) {
+                latch.countDown();
+            }
+        }).start();
+
+        // The remote process should have been killed after the ANR was detected
+        // above, causing our pending call to return and release our latch above
+        // within 10 seconds; if our Binder thread hasn't been freed, then we
+        // fail with a timeout.
+        latch.await(10, TimeUnit.SECONDS);
     }
 
     private class MockContentObserver extends ContentObserver {

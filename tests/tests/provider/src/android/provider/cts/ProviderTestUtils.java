@@ -20,7 +20,9 @@ import static org.junit.Assert.fail;
 
 import android.app.UiAutomation;
 import android.content.Context;
+import android.net.Uri;
 import android.os.ParcelFileDescriptor;
+import android.provider.MediaStore;
 import android.support.test.InstrumentationRegistry;
 import android.system.ErrnoException;
 import android.system.Os;
@@ -145,6 +147,21 @@ public class ProviderTestUtils {
         try (InputStream source = context.getResources().openRawResource(resId);
                 OutputStream target = new FileOutputStream(file)) {
             android.os.FileUtils.copy(source, target);
+        }
+    }
+
+    static Uri stageMedia(int resId, Uri collectionUri) throws IOException {
+        final Context context = InstrumentationRegistry.getTargetContext();
+        final String displayName = "cts" + System.nanoTime();
+        final MediaStore.PendingParams params = new MediaStore.PendingParams(
+                collectionUri, displayName, "image/png");
+        final Uri pendingUri = MediaStore.createPending(context, params);
+        try (MediaStore.PendingSession session = MediaStore.openPending(context, pendingUri)) {
+            try (InputStream source = context.getResources().openRawResource(resId);
+                    OutputStream target = session.openOutputStream()) {
+                android.os.FileUtils.copy(source, target);
+            }
+            return session.publish();
         }
     }
 
