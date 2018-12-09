@@ -785,7 +785,11 @@ public class RoutingTest extends AndroidTestCase {
         onPrepareCalled.reset();
         mediaPlayer2.prepare();
         onPrepareCalled.waitForSignal();
-        mediaPlayer2.setWakeMode(mContext, PowerManager.PARTIAL_WAKE_LOCK);
+        PowerManager pm = (PowerManager) mContext.getSystemService(Context.POWER_SERVICE);
+        PowerManager.WakeLock wakeLock =
+                pm.newWakeLock(PowerManager.PARTIAL_WAKE_LOCK | PowerManager.ON_AFTER_RELEASE,
+                        "RoutingTest");
+        mediaPlayer2.setWakeLock(wakeLock);
 
         assertFalse(mediaPlayer2.getState() == MediaPlayer2.PLAYER_STATE_PLAYING);
         onPlayCalled.reset();

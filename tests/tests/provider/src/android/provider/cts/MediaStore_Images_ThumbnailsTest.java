@@ -44,8 +44,6 @@ import android.support.test.InstrumentationRegistry;
 import android.support.test.runner.AndroidJUnit4;
 import android.util.DisplayMetrics;
 
-import com.android.compatibility.common.util.FileCopyHelper;
-
 import junit.framework.AssertionFailedError;
 
 import org.junit.After;
@@ -64,8 +62,6 @@ public class MediaStore_Images_ThumbnailsTest {
 
     private ContentResolver mContentResolver;
 
-    private FileCopyHelper mHelper;
-
     private Uri mRed;
     private Uri mBlue;
 
@@ -79,8 +75,6 @@ public class MediaStore_Images_ThumbnailsTest {
                 // ignores the exception and make the loop goes on
             }
         }
-
-        mHelper.clear();
     }
 
     @Before
@@ -88,15 +82,14 @@ public class MediaStore_Images_ThumbnailsTest {
         mContext = InstrumentationRegistry.getTargetContext();
         mContentResolver = mContext.getContentResolver();
 
-        mHelper = new FileCopyHelper(mContext);
         mRowsAdded = new ArrayList<Uri>();
     }
 
     private void prepareImages() throws Exception {
         final File red = new File(Environment.getExternalStorageDirectory(), "red.jpg");
         final File blue = new File(Environment.getExternalStorageDirectory(), "blue.jpg");
-        mHelper.copyToExternalStorage(R.raw.scenery, red);
-        mHelper.copyToExternalStorage(R.raw.scenery, blue);
+        ProviderTestUtils.stageFile(R.raw.scenery, red);
+        ProviderTestUtils.stageFile(R.raw.scenery, blue);
         try (MediaScanner scanner = new MediaScanner(mContext, "external")) {
             mRed = scanner.scanSingleFile(red.getAbsolutePath(), "image/jpeg");
             mBlue = scanner.scanSingleFile(blue.getAbsolutePath(), "image/jpeg");
@@ -121,7 +114,9 @@ public class MediaStore_Images_ThumbnailsTest {
         c.close();
 
         // add a thumbnail
-        String path = mHelper.copy(R.raw.scenery, "testThumbnails.jpg");
+        final File file = mContext.getFileStreamPath("testThumbnails.jpg");
+        final String path = file.getAbsolutePath();
+        ProviderTestUtils.stageFile(R.raw.scenery, file);
         ContentValues values = new ContentValues();
         values.put(Thumbnails.KIND, Thumbnails.MINI_KIND);
         values.put(Thumbnails.DATA, path);

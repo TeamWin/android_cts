@@ -37,8 +37,6 @@ import android.provider.cts.MediaStoreAudioTestHelper.Audio2;
 import android.support.test.InstrumentationRegistry;
 import android.support.test.runner.AndroidJUnit4;
 
-import com.android.compatibility.common.util.FileCopyHelper;
-
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -181,10 +179,9 @@ public class MediaStore_Audio_AlbumsTest {
                 + "/test" + System.currentTimeMillis() + ".mp3");
         Uri uri = null;
         try {
-            FileCopyHelper copier = new FileCopyHelper(mContext);
             File dir = path.getParentFile();
             dir.mkdirs();
-            copier.copyToExternalStorage(R.raw.testmp3, path);
+            ProviderTestUtils.stageFile(R.raw.testmp3, path);
 
             ContentValues v = new ContentValues();
             v.put(Media.DATA, path.getAbsolutePath());

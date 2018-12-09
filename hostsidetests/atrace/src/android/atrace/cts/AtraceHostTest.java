@@ -183,9 +183,11 @@ public class AtraceHostTest extends AtraceHostTestBase {
         assertNotNull(result.getModel());
         ThreadModel thread = findThread(result.getModel(), result.getTid());
         assertNotNull(thread);
-        assertEquals(1, thread.getSlices().size());
-        Slice slice = thread.getSlices().get(0);
-        assertEquals("AtraceDeviceTest::beginEndSection", slice.getName());
+        assertEquals(2, thread.getSlices().size());
+        Slice sdkSlice = thread.getSlices().get(0);
+        assertEquals("AtraceDeviceTest::beginEndSection", sdkSlice.getName());
+        Slice ndkSlice = thread.getSlices().get(1);
+        assertEquals("ndk::beginEndSection", ndkSlice.getName());
     }
 
     public void testAsyncBeginEndSection() {
@@ -195,10 +197,13 @@ public class AtraceHostTest extends AtraceHostTestBase {
         assertNotNull(result.getModel());
         ProcessModel process = findProcess(result.getModel(), result.getPid());
         assertNotNull(process);
-        assertEquals(1, process.getAsyncSlices().size());
-        AsyncSlice slice = process.getAsyncSlices().get(0);
-        assertEquals("AtraceDeviceTest::asyncBeginEndSection", slice.getName());
-        assertEquals(42, slice.getCookie());
+        assertEquals(2, process.getAsyncSlices().size());
+        AsyncSlice sdkSlice = process.getAsyncSlices().get(0);
+        assertEquals("AtraceDeviceTest::asyncBeginEndSection", sdkSlice.getName());
+        assertEquals(42, sdkSlice.getCookie());
+        AsyncSlice ndkSlice = process.getAsyncSlices().get(1);
+        assertEquals("ndk::asyncBeginEndSection", ndkSlice.getName());
+        assertEquals(4770, ndkSlice.getCookie());
     }
 
     public void testCounter() {
@@ -212,10 +217,11 @@ public class AtraceHostTest extends AtraceHostTestBase {
         Counter counter = findCounter(process, "AtraceDeviceTest::counter");
         assertNotNull(counter);
         List<CounterValue> values = counter.getEvents();
-        assertEquals(3, values.size());
+        assertEquals(4, values.size());
         assertEquals(10, values.get(0).getCount());
         assertEquals(20, values.get(1).getCount());
         assertEquals(30, values.get(2).getCount());
+        assertEquals(9223372000000005807L, values.get(3).getCount());
     }
 
     /**

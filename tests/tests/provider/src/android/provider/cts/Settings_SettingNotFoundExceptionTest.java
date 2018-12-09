@@ -16,11 +16,15 @@
 
 package android.provider.cts;
 
-
 import android.provider.Settings.SettingNotFoundException;
-import android.test.AndroidTestCase;
+import android.support.test.runner.AndroidJUnit4;
 
-public class Settings_SettingNotFoundExceptionTest extends AndroidTestCase {
+import org.junit.Test;
+import org.junit.runner.RunWith;
+
+@RunWith(AndroidJUnit4.class)
+public class Settings_SettingNotFoundExceptionTest {
+    @Test
     public void testConstructor() {
         new SettingNotFoundException("Setting not found exception.");
         new SettingNotFoundException(null);

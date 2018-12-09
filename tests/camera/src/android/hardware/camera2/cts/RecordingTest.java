@@ -24,6 +24,7 @@ import android.hardware.camera2.CaptureRequest;
 import android.hardware.camera2.CaptureResult;
 import android.hardware.camera2.cts.helpers.StaticMetadata;
 import android.hardware.camera2.params.OutputConfiguration;
+import android.hardware.camera2.params.SessionConfiguration;
 import android.hardware.camera2.params.StreamConfigurationMap;
 import android.util.Size;
 import android.hardware.camera2.cts.testcases.Camera2SurfaceViewTestCase;
@@ -840,6 +841,10 @@ public class RecordingTest extends Camera2SurfaceViewTestCase {
         requestBuilder.set(CaptureRequest.CONTROL_AE_TARGET_FPS_RANGE, fpsRange);
         requestBuilder.addTarget(mPreviewSurface);
         CaptureRequest initialRequest = requestBuilder.build();
+        assertTrue("Constrained session configuration query failed",
+                CameraTestUtils.checkSessionConfigurationWithSurfaces(mCamera, mHandler,
+                outputSurfaces, /*inputConfig*/ null, SessionConfiguration.SESSION_HIGH_SPEED,
+                /*expectedResult*/ true));
         mSession = buildConstrainedCameraSession(mCamera, outputSurfaces, mSessionListener,
                 mHandler, initialRequest);
         slowMoRequests = ((CameraConstrainedHighSpeedCaptureSession) mSession).

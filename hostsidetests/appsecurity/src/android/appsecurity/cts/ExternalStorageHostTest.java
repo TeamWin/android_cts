@@ -28,6 +28,7 @@ import com.android.tradefed.testtype.DeviceJUnit4ClassRunner;
 import com.android.tradefed.testtype.junit4.BaseHostJUnit4Test;
 import com.android.tradefed.util.AbiUtils;
 
+import org.junit.After;
 import org.junit.Assume;
 import org.junit.Before;
 import org.junit.Test;
@@ -60,12 +61,18 @@ public class ExternalStorageHostTest extends BaseHostJUnit4Test {
     private static final String MULTIUSER_APK = "CtsMultiUserStorageApp.apk";
     private static final String MULTIUSER_PKG = "com.android.cts.multiuserstorageapp";
     private static final String MULTIUSER_CLASS = MULTIUSER_PKG + ".MultiUserStorageTest";
+    private static final String MEDIA_APK = "CtsMediaStorageApp.apk";
+    private static final String MEDIA_PKG = "com.android.cts.mediastorageapp";
+    private static final String MEDIA_CLASS = MEDIA_PKG + ".MediaStorageTest";
 
     private static final String PKG_A = "com.android.cts.storageapp_a";
     private static final String PKG_B = "com.android.cts.storageapp_b";
     private static final String APK_A = "CtsStorageAppA.apk";
     private static final String APK_B = "CtsStorageAppB.apk";
     private static final String CLASS = "com.android.cts.storageapp.StorageTest";
+
+    private static final String PERM_READ_MEDIA_IMAGES = "android.permission.READ_MEDIA_IMAGES";
+    private static final String ROLE_GALLERY = "android.app.role.GALLERY";
 
     private int[] mUsers;
 
@@ -79,6 +86,19 @@ public class ExternalStorageHostTest extends BaseHostJUnit4Test {
         mUsers = Utils.prepareMultipleUsers(getDevice());
         assertNotNull(getAbi());
         assertNotNull(getBuild());
+    }
+
+    @Before
+    @After
+    public void cleanUp() throws DeviceNotAvailableException {
+        getDevice().uninstallPackage(NONE_PKG);
+        getDevice().uninstallPackage(READ_PKG);
+        getDevice().uninstallPackage(WRITE_PKG);
+        getDevice().uninstallPackage(MULTIUSER_PKG);
+        getDevice().uninstallPackage(PKG_A);
+        getDevice().uninstallPackage(PKG_B);
+
+        wipePrimaryExternalStorage();
     }
 
     /**
@@ -331,7 +351,7 @@ public class ExternalStorageHostTest extends BaseHostJUnit4Test {
             assertNull(getDevice().installPackage(getTestAppFile(NONE_APK), false, options));
 
             for (int user : mUsers) {
-                enableWriteSettings(WRITE_PKG, user);
+                updateAppOp(WRITE_PKG, user, "android:write_settings", true);
                 runDeviceTests(
                         WRITE_PKG, WRITE_PKG + ".ChangeDefaultUris", "testChangeDefaultUris", user);
 
@@ -382,25 +402,73 @@ public class ExternalStorageHostTest extends BaseHostJUnit4Test {
         }
     }
 
+    @Test
+    public void testMediaNone() throws Exception {
+        // STOPSHIP: remove this once isolated storage is always enabled
+        Assume.assumeTrue(hasIsolatedStorage());
+
+        installPackage(MEDIA_APK);
+        for (int user : mUsers) {
+            updatePermission(MEDIA_PKG, user, PERM_READ_MEDIA_IMAGES, false);
+            updateRole(MEDIA_PKG, user, ROLE_GALLERY, false);
+
+            runDeviceTests(MEDIA_PKG, MEDIA_CLASS, "testMediaNone", user);
+        }
+    }
+
+    @Test
+    public void testMediaRead() throws Exception {
+        // STOPSHIP: remove this once isolated storage is always enabled
+        Assume.assumeTrue(hasIsolatedStorage());
+
+        installPackage(MEDIA_APK);
+        for (int user : mUsers) {
+            updatePermission(MEDIA_PKG, user, PERM_READ_MEDIA_IMAGES, true);
+            updateRole(MEDIA_PKG, user, ROLE_GALLERY, false);
+
+            runDeviceTests(MEDIA_PKG, MEDIA_CLASS, "testMediaRead", user);
+        }
+    }
+
+    @Test
+    public void testMediaWrite() throws Exception {
+        // STOPSHIP: remove this once isolated storage is always enabled
+        Assume.assumeTrue(hasIsolatedStorage());
+
+        installPackage(MEDIA_APK);
+        for (int user : mUsers) {
+            updatePermission(MEDIA_PKG, user, PERM_READ_MEDIA_IMAGES, true);
+            updateRole(MEDIA_PKG, user, ROLE_GALLERY, true);
+
+            runDeviceTests(MEDIA_PKG, MEDIA_CLASS, "testMediaWrite", user);
+        }
+    }
+
     private boolean access(String path) throws DeviceNotAvailableException {
         final long nonce = System.nanoTime();
         return getDevice().executeShellCommand("ls -la " + path + " && echo " + nonce)
                 .contains(Long.toString(nonce));
     }
 
-    private void enableWriteSettings(String packageName, int userId)
-            throws DeviceNotAvailableException {
-        StringBuilder cmd = new StringBuilder();
-        cmd.append("appops set --user ");
-        cmd.append(userId);
-        cmd.append(" ");
-        cmd.append(packageName);
-        cmd.append(" android:write_settings allow");
-        getDevice().executeShellCommand(cmd.toString());
-        try {
-            Thread.sleep(2200);
-        } catch (InterruptedException e) {
-        }
+    private void updatePermission(String packageName, int userId, String permission, boolean grant)
+            throws Exception {
+        final String verb = grant ? "grant" : "revoke";
+        getDevice().executeShellCommand(
+                "cmd package " + verb + " --user " + userId + " " + packageName + " " + permission);
+    }
+
+    private void updateAppOp(String packageName, int userId, String appOp, boolean allow)
+            throws Exception {
+        final String verb = allow ? "allow" : "default";
+        getDevice().executeShellCommand(
+                "cmd appops set --user " + userId + " " + packageName + " " + appOp + " " + verb);
+    }
+
+    private void updateRole(String packageName, int userId, String role, boolean add)
+            throws Exception {
+        final String verb = add ? "add-role-holder" : "remove-role-holder";
+        getDevice().executeShellCommand(
+                "cmd role " + verb + " --user " + userId + " " + role + " " + packageName);
     }
 
     private boolean hasIsolatedStorage() throws DeviceNotAvailableException {

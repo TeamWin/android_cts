@@ -266,9 +266,6 @@ public class LocationManagerTest extends InstrumentationTestCase {
         addTestProvider(LocationManager.NETWORK_PROVIDER, Criteria.ACCURACY_COARSE, true, false, true);
         addTestProvider(LocationManager.GPS_PROVIDER, Criteria.ACCURACY_FINE, false, true, false);
 
-        // Unknown command
-        assertFalse(mManager.sendExtraCommand(LocationManager.NETWORK_PROVIDER, "unknown", new Bundle()));
-
         try {
             mManager.sendExtraCommand(LocationManager.GPS_PROVIDER, "unknown", new Bundle());
             fail("Should have failed to send a command to the gps provider");

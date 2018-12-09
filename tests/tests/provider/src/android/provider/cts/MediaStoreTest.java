@@ -17,28 +17,43 @@
 package android.provider.cts;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.fail;
 
+import android.app.usage.StorageStatsManager;
 import android.content.ContentResolver;
+import android.content.ContentUris;
 import android.content.ContentValues;
 import android.content.Context;
+import android.content.res.AssetFileDescriptor;
 import android.database.Cursor;
+import android.media.MediaScanner;
 import android.net.Uri;
+import android.os.Environment;
+import android.os.storage.StorageManager;
 import android.provider.MediaStore;
+import android.provider.MediaStore.MediaColumns;
 import android.support.test.InstrumentationRegistry;
 import android.support.test.runner.AndroidJUnit4;
 
 import org.junit.After;
+import org.junit.Assume;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
+import java.io.File;
+import java.util.HashSet;
 import java.util.Set;
+import java.util.UUID;
 
 @RunWith(AndroidJUnit4.class)
 public class MediaStoreTest {
     private static final String TEST_VOLUME_NAME = "volume_for_cts";
+
+    private static final long SIZE_DELTA = 32_000;
 
     private static final String[] PROJECTION = new String[] { MediaStore.MEDIA_SCANNER_VOLUME };
 
@@ -56,6 +71,7 @@ public class MediaStoreTest {
     public void setUp() throws Exception {
         mScannerUri = MediaStore.getMediaScannerUri();
         mContentResolver = getContext().getContentResolver();
+
         Cursor c = mContentResolver.query(mScannerUri, PROJECTION, null, null, null);
         if (c != null) {
             c.moveToFirst();
@@ -66,6 +82,9 @@ public class MediaStoreTest {
 
     @After
     public void tearDown() throws Exception {
+        InstrumentationRegistry.getInstrumentation().getUiAutomation()
+                .dropShellPermissionIdentity();
+
         // restore initial values
         if (mVolumnBackup != null) {
             ContentValues values = new ContentValues();
@@ -115,5 +134,108 @@ public class MediaStoreTest {
         // At very least should contain these two volumes
         assertTrue(volumeNames.contains("internal"));
         assertTrue(volumeNames.contains("external"));
+    }
+
+    @Test
+    public void testContributedMedia() throws Exception {
+        // STOPSHIP: remove this once isolated storage is always enabled
+        Assume.assumeTrue(StorageManager.hasIsolatedStorage());
+
+        InstrumentationRegistry.getInstrumentation().getUiAutomation().adoptShellPermissionIdentity(
+                android.Manifest.permission.CLEAR_APP_USER_DATA,
+                android.Manifest.permission.PACKAGE_USAGE_STATS);
+
+        // Measure usage before
+        final long beforePackage = getExternalPackageSize();
+        final long beforeTotal = getExternalTotalSize();
+        final long beforeContributed = MediaStore.getContributedMediaSize(getContext(),
+                getContext().getPackageName());
+
+        final long stageSize;
+        try (AssetFileDescriptor fd = getContext().getResources()
+                .openRawResourceFd(R.raw.volantis)) {
+            stageSize = fd.getLength();
+        }
+
+        // Create media both inside and outside sandbox
+        final Uri inside;
+        final Uri outside;
+        final File file = new File(getContext().getExternalMediaDirs()[0],
+                "cts" + System.nanoTime());
+        ProviderTestUtils.stageFile(R.raw.volantis, file);
+        try (MediaScanner scanner = new MediaScanner(getContext(), "external")) {
+            inside = scanner.scanSingleFile(file.getAbsolutePath(), "image/jpeg");
+        }
+        outside = ProviderTestUtils.stageMedia(R.raw.volantis,
+                MediaStore.Images.Media.EXTERNAL_CONTENT_URI);
+
+        {
+            final HashSet<Long> visible = getVisibleIds(
+                    MediaStore.Images.Media.EXTERNAL_CONTENT_URI);
+            assertTrue(visible.contains(ContentUris.parseId(inside)));
+            assertTrue(visible.contains(ContentUris.parseId(outside)));
+
+            final long afterPackage = getExternalPackageSize();
+            final long afterTotal = getExternalTotalSize();
+            final long afterContributed = MediaStore.getContributedMediaSize(getContext(),
+                    getContext().getPackageName());
+
+            assertMostlyEquals(beforePackage + stageSize, afterPackage, SIZE_DELTA);
+            assertMostlyEquals(beforeTotal + stageSize + stageSize, afterTotal, SIZE_DELTA);
+            assertMostlyEquals(beforeContributed + stageSize, afterContributed, SIZE_DELTA);
+        }
+
+        // Delete only contributed items
+        MediaStore.deleteContributedMedia(getContext(), getContext().getPackageName());
+        {
+            final HashSet<Long> visible = getVisibleIds(
+                    MediaStore.Images.Media.EXTERNAL_CONTENT_URI);
+            assertTrue(visible.contains(ContentUris.parseId(inside)));
+            assertFalse(visible.contains(ContentUris.parseId(outside)));
+
+            final long afterPackage = getExternalPackageSize();
+            final long afterTotal = getExternalTotalSize();
+            final long afterContributed = MediaStore.getContributedMediaSize(getContext(),
+                    getContext().getPackageName());
+
+            assertMostlyEquals(beforePackage + stageSize, afterPackage, SIZE_DELTA);
+            assertMostlyEquals(beforeTotal + stageSize, afterTotal, SIZE_DELTA);
+            assertMostlyEquals(beforeContributed, afterContributed, SIZE_DELTA);
+        }
+    }
+
+    private long getExternalPackageSize() throws Exception {
+        final StorageManager storage = getContext().getSystemService(StorageManager.class);
+        final StorageStatsManager stats = getContext().getSystemService(StorageStatsManager.class);
+
+        final UUID externalUuid = storage.getUuidForPath(Environment.getExternalStorageDirectory());
+        return stats.queryStatsForPackage(externalUuid, getContext().getPackageName(),
+                android.os.Process.myUserHandle()).getDataBytes();
+    }
+
+    private long getExternalTotalSize() throws Exception {
+        final StorageManager storage = getContext().getSystemService(StorageManager.class);
+        final StorageStatsManager stats = getContext().getSystemService(StorageStatsManager.class);
+
+        final UUID externalUuid = storage.getUuidForPath(Environment.getExternalStorageDirectory());
+        return stats.queryExternalStatsForUser(externalUuid, android.os.Process.myUserHandle())
+                .getTotalBytes();
+    }
+
+    private HashSet<Long> getVisibleIds(Uri collectionUri) {
+        final HashSet<Long> res = new HashSet<>();
+        try (Cursor c = mContentResolver.query(collectionUri,
+                new String[] { MediaColumns._ID }, null, null)) {
+            while (c.moveToNext()) {
+                res.add(c.getLong(0));
+            }
+        }
+        return res;
+    }
+
+    private static void assertMostlyEquals(long expected, long actual, long delta) {
+        if (Math.abs(expected - actual) > delta) {
+            fail("Expected roughly " + expected + " but was " + actual);
+        }
     }
 }

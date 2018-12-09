@@ -51,33 +51,42 @@ public class AtraceDeviceTests {
     @Test
     public void assertTracingOn() {
         assertTrue(Trace.isEnabled());
+        assertTrue(AtraceNdkMethods.isEnabled());
     }
 
     @Test
     public void assertTracingOff() {
         assertFalse(Trace.isEnabled());
+        assertFalse(AtraceNdkMethods.isEnabled());
     }
 
     @Test
     public void beginEndSection() {
         assertTrue(Trace.isEnabled());
+        assertTrue(AtraceNdkMethods.isEnabled());
         Trace.beginSection("AtraceDeviceTest::beginEndSection");
         Trace.endSection();
+        AtraceNdkMethods.beginEndSection();
     }
 
     @Test
     public void asyncBeginEndSection() {
         assertTrue(Trace.isEnabled());
+        assertTrue(AtraceNdkMethods.isEnabled());
         Trace.beginAsyncSection("AtraceDeviceTest::asyncBeginEndSection", 42);
         Trace.endAsyncSection("AtraceDeviceTest::asyncBeginEndSection", 42);
+        AtraceNdkMethods.asyncBeginEndSection();
     }
 
     @Test
     public void counter() {
         assertTrue(Trace.isEnabled());
+        assertTrue(AtraceNdkMethods.isEnabled());
         Trace.setCounter("AtraceDeviceTest::counter", 10);
         Trace.setCounter("AtraceDeviceTest::counter", 20);
         Trace.setCounter("AtraceDeviceTest::counter", 30);
+        Trace.setCounter("AtraceDeviceTest::counter", 9223372000000005807L);
+        AtraceNdkMethods.counter();
     }
 
     @Test
@@ -85,5 +94,9 @@ public class AtraceDeviceTests {
         AtraceTestAppActivity activity = mActivity.launchActivity(null);
         activity.waitForDraw();
         activity.finish();
+    }
+
+    static {
+        System.loadLibrary("ctstrace_jni");
     }
 }

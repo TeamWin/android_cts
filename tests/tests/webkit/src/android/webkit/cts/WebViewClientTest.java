@@ -40,11 +40,10 @@ import android.util.Pair;
 import com.android.compatibility.common.util.EvaluateJsResultPollingCheck;
 import com.android.compatibility.common.util.NullWebViewUtils;
 import com.android.compatibility.common.util.PollingCheck;
+import com.google.common.util.concurrent.SettableFuture;
 
 import java.io.ByteArrayInputStream;
 import java.nio.charset.StandardCharsets;
-import java.util.concurrent.CountDownLatch;
-import java.util.concurrent.TimeUnit;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.List;
@@ -729,17 +728,16 @@ public class WebViewClientTest extends ActivityInstrumentationTestCase2<WebViewC
             return;
         }
 
-        final CountDownLatch callbackLatch = new CountDownLatch(1);
-
+        final SettableFuture<String> pageCommitVisibleFuture = SettableFuture.create();
         mOnUiThread.setWebViewClient(new WebViewClient() {
-                public void onPageCommitVisible(WebView view, String url) {
-                    assertEquals(url, "about:blank");
-                    callbackLatch.countDown();
-                }
-            });
+            public void onPageCommitVisible(WebView view, String url) {
+                pageCommitVisibleFuture.set(url);
+            }
+        });
 
-        mOnUiThread.loadUrl("about:blank");
-        assertTrue(callbackLatch.await(TEST_TIMEOUT, TimeUnit.MILLISECONDS));
+        final String url = "about:blank";
+        mOnUiThread.loadUrl(url);
+        assertEquals(url, WebkitUtils.waitForFuture(pageCommitVisibleFuture));
     }
 
     private class MockWebViewClient extends WaitForLoadedClient {

@@ -34,9 +34,9 @@
         <service
             android:name=".CtsSmartSuggestionsService"
             android:label="CtsSmartSuggestionsService"
-            android:permission="android.permission.BIND_SMART_SUGGESTIONS_SERVICE">
+            android:permission="android.permission.BIND_CONTENT_CAPTURE_SERVICE">
             <intent-filter>
-                <action android:name="android.service.intelligence.SmartSuggestionsService" />
+                <action android:name="android.service.contentcapture.ContentCaptureService" />
             </intent-filter>
         </service>
 

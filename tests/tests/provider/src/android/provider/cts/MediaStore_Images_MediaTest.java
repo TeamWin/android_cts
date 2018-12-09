@@ -42,7 +42,6 @@ import android.support.test.InstrumentationRegistry;
 import android.support.test.runner.AndroidJUnit4;
 import android.util.Log;
 
-import com.android.compatibility.common.util.FileCopyHelper;
 import com.android.compatibility.common.util.FileUtils;
 
 import libcore.io.IoUtils;
@@ -83,15 +82,11 @@ public class MediaStore_Images_MediaTest {
 
     private ContentResolver mContentResolver;
 
-    private FileCopyHelper mHelper;
-
     @After
     public void tearDown() throws Exception {
         for (Uri row : mRowsAdded) {
             mContentResolver.delete(row, null, null);
         }
-
-        mHelper.clear();
     }
 
     @Before
@@ -99,7 +94,6 @@ public class MediaStore_Images_MediaTest {
         mContext = InstrumentationRegistry.getTargetContext();
         mContentResolver = mContext.getContentResolver();
 
-        mHelper = new FileCopyHelper(mContext);
         mRowsAdded = new ArrayList<Uri>();
 
         File pics = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_PICTURES);
@@ -121,7 +115,9 @@ public class MediaStore_Images_MediaTest {
         c.close();
 
         // insert an image by path
-        String path = mHelper.copy(R.raw.scenery, "mediaStoreTest1.jpg");
+        File file = mContext.getFileStreamPath("mediaStoreTest1.jpg");
+        String path = file.getAbsolutePath();
+        ProviderTestUtils.stageFile(R.raw.scenery, file);
         String stringUrl = null;
         try {
             stringUrl = Media.insertImage(mContentResolver, path, TEST_TITLE1, TEST_DESCRIPTION1);
@@ -135,7 +131,9 @@ public class MediaStore_Images_MediaTest {
         mRowsAdded.add(Uri.parse(stringUrl));
 
         // insert another image by path
-        path = mHelper.copy(R.raw.scenery, "mediaStoreTest2.jpg");
+        file = mContext.getFileStreamPath("mediaStoreTest2.jpg");
+        path = file.getAbsolutePath();
+        ProviderTestUtils.stageFile(R.raw.scenery, file);
         stringUrl = null;
         try {
             stringUrl = Media.insertImage(mContentResolver, path, TEST_TITLE2, TEST_DESCRIPTION2);

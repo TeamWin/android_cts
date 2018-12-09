@@ -603,7 +603,11 @@ public class StreamingMediaPlayer2Test extends MediaPlayer2TestBase {
                     .build());
             mPlayer.setDisplay(getActivity().getSurfaceHolder());
             mPlayer.setScreenOnWhilePlaying(true);
-            mPlayer.setWakeMode(mContext, PowerManager.PARTIAL_WAKE_LOCK);
+            PowerManager pm = (PowerManager) mContext.getSystemService(Context.POWER_SERVICE);
+            PowerManager.WakeLock wakeLock =
+                    pm.newWakeLock(PowerManager.PARTIAL_WAKE_LOCK | PowerManager.ON_AFTER_RELEASE,
+                            "StreamingMediaPlayer2Test");
+            mPlayer.setWakeLock(wakeLock);
 
             final Object completion = new Object();
             MediaPlayer2.EventCallback ecb =

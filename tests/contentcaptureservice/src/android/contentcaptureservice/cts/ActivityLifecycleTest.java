@@ -18,10 +18,10 @@ package android.contentcaptureservice.cts;
 import static android.contentcaptureservice.cts.Helper.TAG;
 import static android.contentcaptureservice.cts.common.ActivitiesWatcher.ActivityLifecycle.DESTROYED;
 import static android.contentcaptureservice.cts.common.ActivitiesWatcher.ActivityLifecycle.RESUMED;
-import static android.view.intelligence.ContentCaptureEvent.TYPE_ACTIVITY_PAUSED;
-import static android.view.intelligence.ContentCaptureEvent.TYPE_ACTIVITY_RESUMED;
-import static android.view.intelligence.ContentCaptureEvent.TYPE_ACTIVITY_STARTED;
-import static android.view.intelligence.ContentCaptureEvent.TYPE_ACTIVITY_STOPPED;
+import static android.view.contentcapture.ContentCaptureEvent.TYPE_ACTIVITY_PAUSED;
+import static android.view.contentcapture.ContentCaptureEvent.TYPE_ACTIVITY_RESUMED;
+import static android.view.contentcapture.ContentCaptureEvent.TYPE_ACTIVITY_STARTED;
+import static android.view.contentcapture.ContentCaptureEvent.TYPE_ACTIVITY_STOPPED;
 
 import static com.google.common.truth.Truth.assertThat;
 
@@ -30,7 +30,7 @@ import android.contentcaptureservice.cts.CtsSmartSuggestionsService.Session;
 import android.contentcaptureservice.cts.common.ActivitiesWatcher.ActivityWatcher;
 import android.support.test.rule.ActivityTestRule;
 import android.util.Log;
-import android.view.intelligence.ContentCaptureEvent;
+import android.view.contentcapture.ContentCaptureEvent;
 
 import org.junit.Rule;
 import org.junit.Test;

@@ -19,7 +19,11 @@ package android.provider.cts;
 import static org.junit.Assert.fail;
 
 import android.app.UiAutomation;
+import android.content.Context;
+import android.net.Uri;
 import android.os.ParcelFileDescriptor;
+import android.provider.MediaStore;
+import android.support.test.InstrumentationRegistry;
 import android.system.ErrnoException;
 import android.system.Os;
 import android.system.OsConstants;
@@ -27,9 +31,11 @@ import android.system.OsConstants;
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileInputStream;
+import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
+import java.io.OutputStream;
 import java.nio.charset.StandardCharsets;
 import java.util.Objects;
 import java.util.regex.Matcher;
@@ -125,6 +131,38 @@ public class ProviderTestUtils {
     static void wipeBackup(String backupTransport, String packageName, UiAutomation uiAutomation)
             throws Exception {
         executeShellCommand("bmgr wipe " + backupTransport + " " + packageName, uiAutomation);
+    }
+
+    static String stageInternalFile(int resId, String fileName) throws IOException {
+        final Context context = InstrumentationRegistry.getTargetContext();
+        try (InputStream source = context.getResources().openRawResource(resId);
+                OutputStream target = context.openFileOutput(fileName, Context.MODE_PRIVATE)) {
+            android.os.FileUtils.copy(source, target);
+        }
+        return context.getFileStreamPath(fileName).getAbsolutePath();
+    }
+
+    static void stageFile(int resId, File file) throws IOException {
+        final Context context = InstrumentationRegistry.getTargetContext();
+        try (InputStream source = context.getResources().openRawResource(resId);
+                OutputStream target = new FileOutputStream(file)) {
+            android.os.FileUtils.copy(source, target);
+        }
+    }
+
+    static Uri stageMedia(int resId, Uri collectionUri) throws IOException {
+        final Context context = InstrumentationRegistry.getTargetContext();
+        final String displayName = "cts" + System.nanoTime();
+        final MediaStore.PendingParams params = new MediaStore.PendingParams(
+                collectionUri, displayName, "image/png");
+        final Uri pendingUri = MediaStore.createPending(context, params);
+        try (MediaStore.PendingSession session = MediaStore.openPending(context, pendingUri)) {
+            try (InputStream source = context.getResources().openRawResource(resId);
+                    OutputStream target = session.openOutputStream()) {
+                android.os.FileUtils.copy(source, target);
+            }
+            return session.publish();
+        }
     }
 
     public static void assertExists(String path) throws ErrnoException {

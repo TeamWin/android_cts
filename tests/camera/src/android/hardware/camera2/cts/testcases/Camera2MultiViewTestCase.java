@@ -35,6 +35,7 @@ import android.hardware.camera2.cts.Camera2MultiViewCtsActivity;
 import android.hardware.camera2.cts.helpers.StaticMetadata;
 import android.hardware.camera2.cts.helpers.StaticMetadata.CheckLevel;
 import android.hardware.camera2.params.OutputConfiguration;
+import android.hardware.camera2.params.SessionConfiguration;
 import android.os.ConditionVariable;
 import android.os.Handler;
 import android.os.HandlerThread;
@@ -292,6 +293,13 @@ public class Camera2MultiViewTestCase {
         camera.updateOutputConfiguration(config);
     }
 
+    protected boolean isSessionConfigurationSupported(String cameraId,
+            List<OutputConfiguration> configs) {
+        CameraHolder camera = getCameraHolder(cameraId);
+        assertTrue("Camera " + cameraId + " is not opened", camera.isOpened());
+        return camera.isSessionConfigurationSupported(configs);
+    }
+
     protected void capture(String cameraId, CaptureRequest request, CaptureCallback listener)
             throws Exception {
         CameraHolder camera = getCameraHolder(cameraId);
@@ -529,6 +537,10 @@ public class Camera2MultiViewTestCase {
         public int startPreviewWithConfigs(List<OutputConfiguration> outputConfigs,
                 CaptureCallback listener)
                 throws Exception {
+            assertTrue("Session configuration query should not fail",
+                    checkSessionConfiguration(mCamera, mHandler, outputConfigs,
+                    /*inputConfig*/ null, SessionConfiguration.SESSION_REGULAR,
+                    /*expectedResult*/ true));
             createSessionWithConfigs(outputConfigs);
 
             CaptureRequest.Builder captureBuilder =
@@ -557,6 +569,12 @@ public class Camera2MultiViewTestCase {
 
         public void updateOutputConfiguration(OutputConfiguration config) throws Exception {
             mSession.updateOutputConfiguration(config);
+        }
+
+        public boolean isSessionConfigurationSupported(List<OutputConfiguration> configs) {
+            return checkSessionConfiguration(mCamera, mHandler, configs,
+                    /*inputConig*/ null, SessionConfiguration.SESSION_REGULAR,
+                    /*expectedResult*/ true);
         }
 
         public void capture(CaptureRequest request, CaptureCallback listener)

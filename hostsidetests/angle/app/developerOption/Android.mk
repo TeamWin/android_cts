@@ -22,7 +22,7 @@ LOCAL_MODULE_TAGS := tests
 # When built, explicitly put it in the data partition.
 LOCAL_MODULE_PATH := $(TARGET_OUT_DATA_APPS)
 
-LOCAL_PACKAGE_NAME := CtsAngleDebugOptionTestCases
+LOCAL_PACKAGE_NAME := CtsAngleDeveloperOptionTestCases
 
 LOCAL_SDK_VERSION := current
 

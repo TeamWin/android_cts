@@ -77,6 +77,7 @@ public class LocationAccessCheckTest {
     private static final String TEST_APP_SERVICE = TEST_APP_PKG + ".AccessLocationOnCommand";
 
     private static final long UNEXPECTED_TIMEOUT_MILLIS = 10000;
+    private static final long EXPECTED_TIMEOUT_MILLIS = 1000;
 
     private static final Context sContext = InstrumentationRegistry.getTargetContext();
     private static final UiAutomation sUiAutomation = InstrumentationRegistry.getInstrumentation()
@@ -437,5 +438,26 @@ public class LocationAccessCheckTest {
         runShellCommand("pm uninstall " + TEST_APP_PKG);
 
         eventually(() -> assertNull(getNotification(false)), UNEXPECTED_TIMEOUT_MILLIS);
+    }
+
+    @Test
+    public void notificationIsNotShownAfterAppDoesNotRequestLocationAnymore() throws Throwable {
+        accessLocation();
+        getNotification(true);
+
+        // Update to app to a version that does not request permission anymore
+        runShellCommand("pm install -r "
+                + "/data/local/tmp/cts/permissions/AppThatDoesNotHaveBgLocationAccess.apk");
+
+        resetPermissionController();
+
+        try {
+            // We don't expect a notification, but try to trigger one anyway
+            eventually(() -> assertNotNull(getNotification(false)), EXPECTED_TIMEOUT_MILLIS);
+        } catch (AssertionError expected) {
+            return;
+        }
+
+        fail("Location access notification was shown");
     }
 }

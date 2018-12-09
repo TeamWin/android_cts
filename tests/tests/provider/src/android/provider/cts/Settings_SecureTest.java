@@ -16,6 +16,10 @@
 
 package android.provider.cts;
 
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertNull;
+import static org.junit.Assert.fail;
 
 import android.content.ContentResolver;
 import android.database.Cursor;
@@ -23,9 +27,15 @@ import android.net.Uri;
 import android.provider.Settings;
 import android.provider.Settings.Secure;
 import android.provider.Settings.SettingNotFoundException;
-import android.test.AndroidTestCase;
+import android.support.test.InstrumentationRegistry;
+import android.support.test.runner.AndroidJUnit4;
 
-public class Settings_SecureTest extends AndroidTestCase {
+import org.junit.Before;
+import org.junit.Test;
+import org.junit.runner.RunWith;
+
+@RunWith(AndroidJUnit4.class)
+public class Settings_SecureTest {
 
     private static final String NO_SUCH_SETTING = "NoSuchSetting";
 
@@ -37,11 +47,9 @@ public class Settings_SecureTest extends AndroidTestCase {
 
     private ContentResolver cr;
 
-    @Override
-    protected void setUp() throws Exception {
-        super.setUp();
-
-        cr = mContext.getContentResolver();
+    @Before
+    public void setUp() throws Exception {
+        cr = InstrumentationRegistry.getTargetContext().getContentResolver();
         assertNotNull(cr);
         assertSettingsForTests();
     }
@@ -59,12 +67,14 @@ public class Settings_SecureTest extends AndroidTestCase {
         }
     }
 
+    @Test
     public void testGetDefaultValues() {
         assertEquals(10, Secure.getInt(cr, "int", 10));
         assertEquals(20, Secure.getLong(cr, "long", 20));
         assertEquals(30.0f, Secure.getFloat(cr, "float", 30), 0.001);
     }
 
+    @Test
     public void testGetPutInt() {
         assertNull(Secure.getString(cr, NO_SUCH_SETTING));
 
@@ -87,6 +97,7 @@ public class Settings_SecureTest extends AndroidTestCase {
         }
     }
 
+    @Test
     public void testGetPutFloat() throws SettingNotFoundException {
         assertNull(Secure.getString(cr, NO_SUCH_SETTING));
 
@@ -109,6 +120,7 @@ public class Settings_SecureTest extends AndroidTestCase {
         }
     }
 
+    @Test
     public void testGetPutLong() {
         assertNull(Secure.getString(cr, NO_SUCH_SETTING));
 
@@ -131,6 +143,7 @@ public class Settings_SecureTest extends AndroidTestCase {
         }
     }
 
+    @Test
     public void testGetPutString() {
         assertNull(Secure.getString(cr, NO_SUCH_SETTING));
 
@@ -145,6 +158,7 @@ public class Settings_SecureTest extends AndroidTestCase {
         assertNull(Secure.getString(cr, NO_SUCH_SETTING));
     }
 
+    @Test
     public void testGetUriFor() {
         String name = "table";
 
@@ -153,6 +167,7 @@ public class Settings_SecureTest extends AndroidTestCase {
         assertEquals(Uri.withAppendedPath(Secure.CONTENT_URI, name), uri);
     }
 
+    @Test
     public void testUnknownSourcesOnByDefault() throws SettingNotFoundException {
         assertEquals("install_non_market_apps is deprecated. Should be set to 1 by default.",
                 1, Settings.Secure.getInt(cr, Settings.Global.INSTALL_NON_MARKET_APPS));
@@ -165,6 +180,7 @@ public class Settings_SecureTest extends AndroidTestCase {
      * available to non-privileged apps, such as the CTS test app in the context of which this test
      * runs.
      */
+    @Test
     public void testBluetoothAddressNotAvailable() {
         assertNull(Settings.Secure.getString(cr, BLUETOOTH_MAC_ADDRESS_SETTING_NAME));
 

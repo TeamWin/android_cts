@@ -507,7 +507,7 @@ public class SystemFeaturesTest extends InstrumentationTestCase {
         }
     }
 
-  public void testWifiFeature() throws Exception {
+    public void testWifiFeature() throws Exception {
         if (!mPackageManager.hasSystemFeature(PackageManager.FEATURE_WIFI)) {
             // no WiFi, skip the test
             return;
@@ -519,6 +519,13 @@ public class SystemFeaturesTest extends InstrumentationTestCase {
 
         } finally {
             mWifiManager.setWifiEnabled(enabled);
+        }
+    }
+
+    public void testAudioOutputFeature() throws Exception {
+        if (mPackageManager.hasSystemFeature(PackageManager.FEATURE_AUTOMOTIVE) ||
+                mPackageManager.hasSystemFeature(PackageManager.FEATURE_TELEVISION)) {
+            assertAvailable(PackageManager.FEATURE_AUDIO_OUTPUT);
         }
     }
 
