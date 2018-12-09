@@ -739,7 +739,7 @@ public class BaseDevicePolicyTest extends DeviceTestCase implements IBuildReceiv
                 String[] tokens = line.split("\\{|\\}");
                 String componentName = tokens[1];
                 // Skip to user id line.
-                i += 3;
+                i += 4;
                 line = lines[i].trim();
                 // Line is User ID: <N>
                 tokens = line.split(":");
