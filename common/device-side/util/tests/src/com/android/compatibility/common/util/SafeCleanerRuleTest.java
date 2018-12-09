@@ -14,15 +14,14 @@
  * limitations under the License.
  */
 
-package android.autofillservice.cts;
+package com.android.compatibility.common.util;
 
 import static com.google.common.truth.Truth.assertThat;
 
 import static org.mockito.Mockito.verify;
 import static org.testng.Assert.expectThrows;
 
-import android.autofillservice.cts.SafeCleanerRule.Dumper;
-import android.platform.test.annotations.AppModeFull;
+import com.android.compatibility.common.util.SafeCleanerRule.Dumper;
 
 import com.google.common.collect.ImmutableList;
 
@@ -37,7 +36,6 @@ import java.util.List;
 import java.util.concurrent.Callable;
 
 @RunWith(MockitoJUnitRunner.class)
-@AppModeFull // Unit test
 public class SafeCleanerRuleTest {
 
     private static class FailureStatement extends Statement {
