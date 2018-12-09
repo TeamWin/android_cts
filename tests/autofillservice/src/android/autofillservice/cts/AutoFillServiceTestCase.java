@@ -34,6 +34,7 @@ import android.util.Log;
 import android.widget.RemoteViews;
 
 import com.android.compatibility.common.util.RequiredFeatureRule;
+import com.android.compatibility.common.util.SafeCleanerRule;
 
 import org.junit.After;
 import org.junit.Before;
