@@ -411,8 +411,13 @@ public class CreateAndManageUserTest extends BaseDeviceOwnerTest {
 
         LocalBroadcastReceiver broadcastReceiver = new LocalBroadcastReceiver();
         localBroadcastManager.registerReceiver(broadcastReceiver,
-                new IntentFilter(BasicAdminReceiver.ACTION_USER_REMOVED));
+                new IntentFilter(BasicAdminReceiver.ACTION_USER_STARTED));
+        broadcastReceiver.waitForBroadcastReceived();
+        localBroadcastManager.unregisterReceiver(broadcastReceiver);
 
+        // Register broadcast receiver for the remove action.
+        localBroadcastManager.registerReceiver(broadcastReceiver,
+                new IntentFilter(BasicAdminReceiver.ACTION_USER_REMOVED));
         try {
             assertEquals(UserManager.USER_OPERATION_SUCCESS,
                     mDevicePolicyManager.stopUser(getWho(), userHandle));
