@@ -59,6 +59,7 @@ import static android.server.am.second.Components.SECOND_LAUNCH_BROADCAST_RECEIV
 import static android.server.am.second.Components.SECOND_NO_EMBEDDING_ACTIVITY;
 import static android.server.am.third.Components.THIRD_ACTIVITY;
 import static android.view.Display.DEFAULT_DISPLAY;
+import static android.view.WindowManager.LayoutParams.TYPE_WALLPAPER;
 
 import static com.android.cts.mockime.ImeEventStreamTestUtils.expectEvent;
 import static com.android.cts.mockime.ImeEventStreamTestUtils.editorMatcher;
@@ -70,6 +71,7 @@ import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
+import static org.junit.Assume.assumeNotNull;
 import static org.junit.Assume.assumeTrue;
 
 import android.app.Activity;
@@ -2128,6 +2130,43 @@ public class ActivityManagerMultiDisplayTests extends ActivityManagerDisplayTest
 
         // Check the surface size after task was reparented to default display.
         assertTopTaskSameSurfaceSizeWithDisplay(DEFAULT_DISPLAY);
+    }
+
+    /**
+     * Tests that wallpaper shows on secondary displays.
+     */
+    @Test
+    public void testWallpaperShowOnSecondaryDisplays() throws Exception {
+        mAmWmState.computeState(true);
+        final WindowManagerState.WindowState wallpaper =
+                mAmWmState.getWmState().findFirstWindowWithType(TYPE_WALLPAPER);
+        // Skip if there is no wallpaper.
+        assumeNotNull(wallpaper);
+        try (final VirtualDisplaySession virtualDisplaySession = new VirtualDisplaySession()) {
+            final ActivityDisplay noDecorDisplay = virtualDisplaySession.setPublicDisplay(true)
+                    .setShowSystemDecorations(false).createDisplay();
+            // Tests when the system decor flag is included in that display, the wallpaper must
+            // be displayed on the secondary display. And at the same time we do not need to wait
+            // for the wallpaper which should not to be displayed.
+            final ActivityDisplay decorDisplay = virtualDisplaySession.setPublicDisplay(true)
+                    .setShowSystemDecorations(true).createDisplay();
+            mAmWmState.waitForWithWmState((state) -> isWallpaperOnDisplay(state, decorDisplay.mId),
+                    "Waiting for wallpaper window to show");
+            assertTrue("Wallpaper must be displayed on secondary display with system decor flag",
+                    isWallpaperOnDisplay(mAmWmState.getWmState(), decorDisplay.mId));
+
+            assertFalse("Wallpaper must not be displayed on the display without system decor flag",
+                    isWallpaperOnDisplay(mAmWmState.getWmState(), noDecorDisplay.mId));
+        }
+    }
+
+    private boolean isWallpaperOnDisplay(WindowManagerState windowManagerState, int displayId) {
+        List<WindowManagerState.WindowState> states =
+                windowManagerState.getMatchingWindowType(TYPE_WALLPAPER);
+        for (WindowManagerState.WindowState ws : states) {
+            if (ws.getDisplayId() == displayId) return true;
+        }
+        return false;
     }
 
     /**
