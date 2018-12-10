@@ -24,10 +24,12 @@ import static org.junit.Assert.assertSame;
 import static org.junit.Assert.assertTrue;
 
 import android.app.Instrumentation;
+import android.app.UiAutomation;
 import android.content.Context;
 import android.content.pm.PackageManager;
 import android.graphics.drawable.Drawable;
 import android.os.SystemClock;
+import android.provider.Settings;
 import android.support.test.InstrumentationRegistry;
 import android.support.test.annotation.UiThreadTest;
 import android.support.test.filters.LargeTest;
@@ -37,10 +39,13 @@ import android.view.Gravity;
 import android.view.View;
 import android.view.ViewTreeObserver;
 import android.view.WindowManager;
+import android.view.accessibility.AccessibilityManager;
 import android.widget.ImageView;
 import android.widget.Toast;
 
 import com.android.compatibility.common.util.PollingCheck;
+import com.android.compatibility.common.util.SystemUtil;
+import com.android.compatibility.common.util.TestUtils;
 
 import org.junit.Before;
 import org.junit.Rule;
@@ -51,6 +56,9 @@ import org.junit.runner.RunWith;
 @RunWith(AndroidJUnit4.class)
 public class ToastTest {
     private static final String TEST_TOAST_TEXT = "test toast";
+    private static final String SETTINGS_ACCESSIBILITY_UI_TIMEOUT =
+            "accessibility_non_interactive_ui_timeout_ms";
+    private static final int ACCESSIBILITY_STATE_WAIT_TIMEOUT_MS = 3000;
     private static final long TIME_FOR_UI_OPERATION  = 1000L;
     private static final long TIME_OUT = 5000L;
     private Toast mToast;
@@ -200,6 +208,69 @@ public class ToastTest {
         long shortDuration = SystemClock.uptimeMillis() - start;
 
         assertTrue(longDuration > shortDuration);
+    }
+
+    @Test
+    public void testAccessDuration_withA11yTimeoutEnabled() throws Throwable {
+        makeToast();
+        final Runnable showToast = () -> {
+            mToast.setDuration(Toast.LENGTH_SHORT);
+            mToast.show();
+        };
+        long start = SystemClock.uptimeMillis();
+        mActivityRule.runOnUiThread(showToast);
+        mInstrumentation.waitForIdleSync();
+        assertShowAndHide(mToast.getView());
+        final long shortDuration = SystemClock.uptimeMillis() - start;
+
+        final UiAutomation uiAutomation = mInstrumentation.getUiAutomation();
+        final String originalSetting = Settings.Secure.getString(mContext.getContentResolver(),
+                SETTINGS_ACCESSIBILITY_UI_TIMEOUT);
+        try {
+            final int a11ySettingDuration = (int) shortDuration + 1000;
+            SystemUtil.runWithShellPermissionIdentity(uiAutomation,
+                    () -> Settings.Secure.putInt(mContext.getContentResolver(),
+                            SETTINGS_ACCESSIBILITY_UI_TIMEOUT, a11ySettingDuration));
+            waitForA11yRecommendedTimeoutChanged(mContext,
+                    ACCESSIBILITY_STATE_WAIT_TIMEOUT_MS, a11ySettingDuration);
+            start = SystemClock.uptimeMillis();
+            mActivityRule.runOnUiThread(showToast);
+            mInstrumentation.waitForIdleSync();
+            assertShowAndHide(mToast.getView());
+            final long a11yDuration = SystemClock.uptimeMillis() - start;
+            assertTrue(a11yDuration >= a11ySettingDuration);
+        } finally {
+            SystemUtil.runWithShellPermissionIdentity(uiAutomation,
+                    () -> Settings.Secure.putString(mContext.getContentResolver(),
+                            SETTINGS_ACCESSIBILITY_UI_TIMEOUT, originalSetting));
+        }
+    }
+
+    /**
+     * Wait for accessibility recommended timeout changed and equals to expected timeout.
+     *
+     * @param expectedTimeoutMs expected recommended timeout
+     */
+    private void waitForA11yRecommendedTimeoutChanged(Context context,
+            long waitTimeoutMs, int expectedTimeoutMs) {
+        final AccessibilityManager manager =
+                (AccessibilityManager) context.getSystemService(Context.ACCESSIBILITY_SERVICE);
+        final Object lock = new Object();
+        AccessibilityManager.AccessibilityServicesStateChangeListener listener = (m) -> {
+            synchronized (lock) {
+                lock.notifyAll();
+            }
+        };
+        manager.addAccessibilityServicesStateChangeListener(listener, null);
+        try {
+            TestUtils.waitOn(lock,
+                    () -> manager.getRecommendedTimeoutMillis(0,
+                            AccessibilityManager.FLAG_CONTENT_TEXT) == expectedTimeoutMs,
+                    waitTimeoutMs,
+                    "Wait for accessibility recommended timeout changed");
+        } finally {
+            manager.removeAccessibilityServicesStateChangeListener(listener);
+        }
     }
 
     @Test
