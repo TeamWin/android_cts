@@ -67,21 +67,16 @@ public class BlankActivityTest extends AbstractContentCaptureIntegrationTest<Bla
         watcher.waitFor(DESTROYED);
 
         final CtsSmartSuggestionsService service = CtsSmartSuggestionsService.getInstance();
-        try {
-            final Session session = service.getFinishedSession(BlankActivity.class);
+        final Session session = service.getFinishedSession(BlankActivity.class);
 
-            assertRightActivity(session, activity);
+        assertRightActivity(session, activity);
 
-            final List<ContentCaptureEvent> events = session.getEvents();
-            Log.v(TAG, "events: " + events);
-            assertThat(events).hasSize(4);
-            assertLifecycleEvent(events.get(0), TYPE_ACTIVITY_STARTED);
-            assertLifecycleEvent(events.get(1), TYPE_ACTIVITY_RESUMED);
-            assertLifecycleEvent(events.get(2), TYPE_ACTIVITY_PAUSED);
-            assertLifecycleEvent(events.get(3), TYPE_ACTIVITY_STOPPED);
-        } finally {
-            // TODO(b/119638958): move to @Rule SafeCleaner
-            CtsSmartSuggestionsService.assertNoExceptions();
-        }
+        final List<ContentCaptureEvent> events = session.getEvents();
+        Log.v(TAG, "events: " + events);
+        assertThat(events).hasSize(4);
+        assertLifecycleEvent(events.get(0), TYPE_ACTIVITY_STARTED);
+        assertLifecycleEvent(events.get(1), TYPE_ACTIVITY_RESUMED);
+        assertLifecycleEvent(events.get(2), TYPE_ACTIVITY_PAUSED);
+        assertLifecycleEvent(events.get(3), TYPE_ACTIVITY_STOPPED);
     }
 }

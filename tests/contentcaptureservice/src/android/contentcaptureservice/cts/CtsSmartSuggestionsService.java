@@ -171,15 +171,10 @@ public class CtsSmartSuggestionsService extends ContentCaptureService {
     }
 
     /**
-     * Asserts that no exception was thrown while the service handlded requests.
+     * Gets the exceptions that were thrown while the service handlded requests.
      */
-    public static void assertNoExceptions() throws Exception {
-        if (sExceptions.isEmpty()) return;
-        if (sExceptions.size() == 1) {
-            throwException(sExceptions.get(0));
-        }
-        // TODO(b/119638958): use a MultipleExceptions class (from common)
-        throw new AssertionError("Multiple exceptions: " + sExceptions);
+    public static List<Throwable> getExceptions() throws Exception {
+        return Collections.unmodifiableList(sExceptions);
     }
 
     private void throwIllegalSessionStateException(@NonNull String fmt, @Nullable Object...args) {
@@ -208,16 +203,6 @@ public class CtsSmartSuggestionsService extends ContentCaptureService {
             Log.e(TAG, "Exception handling service callback: " + t);
             sExceptions.add(t);
         }
-    }
-
-    private static void throwException(Throwable t) throws Exception {
-        if (t instanceof Exception) {
-            throw (Exception) t;
-        }
-        if (t instanceof Error) {
-            throw (Error) t;
-        }
-        throw new Exception(t);
     }
 
     public final class Session {
