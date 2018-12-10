@@ -36,6 +36,7 @@ import android.widget.RemoteViews;
 import androidx.annotation.NonNull;
 
 import com.android.compatibility.common.util.RequiredFeatureRule;
+import com.android.compatibility.common.util.SafeCleanerRule;
 
 import org.junit.Before;
 import org.junit.ClassRule;
