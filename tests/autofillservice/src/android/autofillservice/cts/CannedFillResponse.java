@@ -88,6 +88,7 @@ final class CannedFillResponse {
     private final AutofillId[] mFieldClassificationIds;
     private final boolean mFieldClassificationIdsOverflow;
     private final SaveInfoDecorator mSaveInfoDecorator;
+    private final UserData mUserData;
 
     private CannedFillResponse(Builder builder) {
         mResponseType = builder.mResponseType;
@@ -117,6 +118,7 @@ final class CannedFillResponse {
         mFieldClassificationIds = builder.mFieldClassificationIds;
         mFieldClassificationIdsOverflow = builder.mFieldClassificationIdsOverflow;
         mSaveInfoDecorator = builder.mSaveInfoDecorator;
+        mUserData = builder.mUserData;
     }
 
     /**
@@ -239,6 +241,9 @@ final class CannedFillResponse {
         if (mFooter != null) {
             builder.setFooter(mFooter);
         }
+        if (mUserData != null) {
+            builder.setUserData(mUserData);
+        }
         return builder.build();
     }
 
@@ -266,6 +271,7 @@ final class CannedFillResponse {
                 + ", fieldClassificationIds=" + Arrays.toString(mFieldClassificationIds)
                 + ", fieldClassificationIdsOverflow=" + mFieldClassificationIdsOverflow
                 + ", saveInfoDecorator=" + mSaveInfoDecorator
+                + ", userData=" + mUserData
                 + "]";
     }
 
@@ -304,6 +310,7 @@ final class CannedFillResponse {
         private AutofillId[] mFieldClassificationIds;
         private boolean mFieldClassificationIdsOverflow;
         private SaveInfoDecorator mSaveInfoDecorator;
+        private UserData mUserData;
 
         public Builder(ResponseType type) {
             mResponseType = type;
@@ -490,6 +497,17 @@ final class CannedFillResponse {
         public Builder setSaveInfoDecorator(SaveInfoDecorator decorator) {
             assertWithMessage("already set").that(mSaveInfoDecorator).isNull();
             mSaveInfoDecorator = decorator;
+            return this;
+        }
+
+        /**
+         * Sets the package-specific UserData.
+         *
+         * <p>Overrides the default UserData for field classification.
+         */
+        public Builder setUserData(UserData userData) {
+            assertWithMessage("already set").that(mUserData).isNull();
+            mUserData = userData;
             return this;
         }
     }

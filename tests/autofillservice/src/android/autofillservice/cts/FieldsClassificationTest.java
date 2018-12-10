@@ -91,7 +91,7 @@ public class FieldsClassificationTest extends AbstractGridActivityTestCase {
         // Check algorithms
         final List<String> names = mAfm.getAvailableFieldClassificationAlgorithms();
         assertThat(names.size()).isAtLeast(1);
-        final String defaultAlgorithm = getDefaultAlgorithm();
+        final String defaultAlgorithm = mAfm.getDefaultFieldClassificationAlgorithm();
         assertThat(defaultAlgorithm).isNotEmpty();
         assertThat(names).contains(defaultAlgorithm);
 
@@ -481,8 +481,61 @@ public class FieldsClassificationTest extends AbstractGridActivityTestCase {
         assertFillEventForContextCommitted(events.get(0));
     }
 
-    private String getDefaultAlgorithm() {
-        return mAfm.getDefaultFieldClassificationAlgorithm();
+    @Test
+    public void testHit_usePackageUserData() throws Exception {
+        enableService();
+
+        // Set expectations.
+        mAfm.setUserData(new UserData
+                .Builder("id", "TEST1", "cat")
+                .setFieldClassificationAlgorithm(null, null)
+                .build());
+
+        final MyAutofillCallback callback = mActivity.registerCallback();
+        final EditText field = mActivity.getCell(1, 1);
+        final AutofillId fieldId = field.getAutofillId();
+        sReplier.addResponse(new CannedFillResponse.Builder()
+                .setFieldClassificationIds(fieldId)
+                .setUserData(new UserData.Builder("id2", "TEST2", "cat")
+                        .setFieldClassificationAlgorithm(null, null)
+                        .build())
+                .build())
+                .addResponse(new CannedFillResponse.Builder()
+                .setFieldClassificationIds(fieldId)
+                .build());
+
+        // Trigger autofill
+        mActivity.focusCell(1, 1);
+        sReplier.getNextFillRequest();
+
+        mUiBot.assertNoDatasetsEver();
+        callback.assertUiUnavailableEvent(field);
+
+        // Simulate user input
+        mActivity.setText(1, 1, "test1");
+
+        // Finish context
+        mAfm.commit();
+
+        final Event packageUserDataEvent = InstrumentedAutoFillService.getFillEvents(1).get(0);
+        assertFillEventForFieldsClassification(packageUserDataEvent, fieldId, "cat", 0.8F);
+
+        // Need to switch focus first
+        mActivity.focusCell(1, 2);
+
+        // Trigger second autofill
+        mActivity.focusCell(1, 1);
+        sReplier.getNextFillRequest();
+
+        mUiBot.assertNoDatasetsEver();
+        callback.assertUiUnavailableEvent(field);
+
+        // Finish context.
+        mAfm.commit();
+
+        // Assert results
+        final Event defaultUserDataEvent = InstrumentedAutoFillService.getFillEvents(1).get(0);
+        assertFillEventForFieldsClassification(defaultUserDataEvent, fieldId, "cat", 1.0F);
     }
 
     /*
