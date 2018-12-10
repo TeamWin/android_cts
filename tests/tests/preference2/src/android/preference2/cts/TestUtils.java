@@ -25,7 +25,11 @@ import android.graphics.Bitmap;
 import android.support.test.InstrumentationRegistry;
 import android.support.test.uiautomator.By;
 import android.support.test.uiautomator.UiDevice;
+import android.support.test.uiautomator.UiObject;
 import android.support.test.uiautomator.UiObject2;
+import android.support.test.uiautomator.UiObjectNotFoundException;
+import android.support.test.uiautomator.UiScrollable;
+import android.support.test.uiautomator.UiSelector;
 import android.support.test.uiautomator.Until;
 
 /**
@@ -74,15 +78,35 @@ public class TestUtils {
     }
 
     void tapOnViewWithText(String text) {
-        UiObject2 object = getTextObject(text);
-        if (object == null) {
-            throw new AssertionError("View with text '" + text + "' was not found!");
+        UiObject2 object2 = getTextObject(text);
+        if (object2 != null) {
+          object2.click();
+          return;
         }
-        object.click();
+
+        // If the view is a part of a scrollable, it might be offscreen
+        try {
+            UiScrollable textScroll = new UiScrollable(new UiSelector().scrollable(true));
+
+            textScroll.scrollIntoView(new UiSelector().text(text));
+            UiObject object = new UiObject(new UiSelector().text(text));
+            object.click();
+        } catch (UiObjectNotFoundException e) {
+            throw new AssertionError("View with text '" + text + "' was not found!", e);
+        }
     }
 
     boolean isTextShown(String text) {
-        return getTextObject(text) != null;
+        if (getTextObject(text) != null) {
+          return true;
+        }
+
+        UiScrollable textScroll = new UiScrollable(new UiSelector().scrollable(true));
+        try {
+            return textScroll.scrollIntoView(new UiSelector().text(text));
+        } catch (UiObjectNotFoundException e) {
+            return false;
+        }
     }
 
     boolean isTextHidden(String text) {
