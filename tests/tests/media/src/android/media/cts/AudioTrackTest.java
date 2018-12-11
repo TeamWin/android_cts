@@ -2535,6 +2535,26 @@ public class AudioTrackTest extends CtsAndroidTestCase {
         assertEquals(AudioTrack.ERROR, track.setPresentation(createAudioPresentation()));
     }
 
+    public void testIsDirectPlaybackSupported() throws Exception {
+        // constants for test
+        final String TEST_NAME = "testIsDirectPlaybackSupported";
+        // Default format leaves everything unspecified
+        assertFalse(AudioTrack.isDirectPlaybackSupported(
+                        new AudioFormat.Builder().build(),
+                        new AudioAttributes.Builder().build()));
+        // There is no requirement to support direct playback for this format,
+        // so it's not possible to assert on the result, but at least the method
+        // must execute with no exceptions.
+        boolean isPcmStereo48kSupported = AudioTrack.isDirectPlaybackSupported(
+                new AudioFormat.Builder()
+                .setEncoding(AudioFormat.ENCODING_PCM_16BIT)
+                .setChannelMask(AudioFormat.CHANNEL_OUT_STEREO)
+                .setSampleRate(48000)
+                .build(),
+                new AudioAttributes.Builder().build());
+        log(TEST_NAME, "PCM Stereo 48 kHz: " + isPcmStereo48kSupported);
+    }
+
 /* Do not run in JB-MR1. will be re-opened in the next platform release.
     public void testResourceLeakage() throws Exception {
         final int BUFFER_SIZE = 600 * 1024;
