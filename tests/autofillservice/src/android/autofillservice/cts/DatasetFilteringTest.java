@@ -22,6 +22,7 @@ import static android.autofillservice.cts.common.ShellHelper.sendKeyEvent;
 import android.autofillservice.cts.CannedFillResponse.CannedDataset;
 import android.content.IntentSender;
 import android.platform.test.annotations.AppModeFull;
+import android.widget.EditText;
 
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
@@ -472,5 +473,108 @@ public class DatasetFilteringTest extends AbstractLoginActivityTestCase {
         // Only the regex datasets should start with 'ab'
         sendKeyEvent("KEYCODE_B");
         mUiBot.assertDatasets(regexPlain, authRegex, kitchnSync);
+    }
+
+    @Test
+    public void testFilter_resetFilter_chooseFirst() throws Exception {
+        resetFilterTest(1);
+    }
+
+    @Test
+    public void testFilter_resetFilter_chooseSecond() throws Exception {
+        resetFilterTest(2);
+    }
+
+    @Test
+    public void testFilter_resetFilter_chooseThird() throws Exception {
+        resetFilterTest(3);
+    }
+
+    private void resetFilterTest(int number) throws Exception {
+        final String aa = "Two A's";
+        final String ab = "A and B";
+        final String b = "Only B";
+
+        enableService();
+
+        // Set expectations.
+        sReplier.addResponse(new CannedFillResponse.Builder()
+                .addDataset(new CannedDataset.Builder()
+                        .setField(ID_USERNAME, "aa")
+                        .setPresentation(createPresentation(aa))
+                        .build())
+                .addDataset(new CannedDataset.Builder()
+                        .setField(ID_USERNAME, "ab")
+                        .setPresentation(createPresentation(ab))
+                        .build())
+                .addDataset(new CannedDataset.Builder()
+                        .setField(ID_USERNAME, "b")
+                        .setPresentation(createPresentation(b))
+                        .build())
+                .build());
+
+        final String chosenOne;
+        switch (number) {
+            case 1:
+                chosenOne = aa;
+                mActivity.expectAutoFill("aa");
+                break;
+            case 2:
+                chosenOne = ab;
+                mActivity.expectAutoFill("ab");
+                break;
+            case 3:
+                chosenOne = b;
+                mActivity.expectAutoFill("b");
+                break;
+            default:
+                throw new IllegalArgumentException("invalid dataset number: " + number);
+        }
+
+        final MyAutofillCallback callback = mActivity.registerCallback();
+        final EditText username = mActivity.getUsername();
+
+        // Trigger auto-fill.
+        requestFocusOnUsername();
+        callback.assertUiShownEvent(username);
+
+        sReplier.getNextFillRequest();
+
+        // With no filter text all datasets should be shown
+        mUiBot.assertDatasets(aa, ab, b);
+
+        // Only two datasets start with 'a'
+        changeUsername("a");
+        mUiBot.assertDatasets(aa, ab);
+
+        // One dataset starts with 'aa'
+        changeUsername("aa");
+        mUiBot.assertDatasets(aa);
+
+        // Filter all out
+        changeUsername("aaa");
+        callback.assertUiHiddenEvent(username);
+        mUiBot.assertNoDatasets();
+
+        // Now delete the char and assert aa is showing again
+        changeUsername("aa");
+        callback.assertUiShownEvent(username);
+        mUiBot.assertDatasets(aa);
+
+        // Delete one more and assert two datasets showing
+        changeUsername("a");
+        mUiBot.assertDatasets(aa, ab);
+
+        // Reset back to all choices
+        changeUsername("");
+        mUiBot.assertDatasets(aa, ab, b);
+
+        // select the choice
+        mUiBot.selectDataset(chosenOne);
+        callback.assertUiHiddenEvent(username);
+        mUiBot.assertNoDatasets();
+
+        // Check the results.
+        mActivity.assertAutoFilled();
     }
 }

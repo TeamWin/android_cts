@@ -328,6 +328,10 @@ public class WindowManagerState {
         }
     }
 
+    List<WindowState> getMatchingWindowType(int type) {
+        return getMatchingWindows(ws -> type == ws.mType).collect(Collectors.toList());
+    }
+
     List<String> getMatchingWindowTokens(final String windowName) {
         return getMatchingWindows(ws -> windowName.equals(ws.getName()))
                 .map(WindowState::getToken)
