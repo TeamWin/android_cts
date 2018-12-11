@@ -68,11 +68,10 @@ public class ConversationActionsTest {
     @Test
     public void testMessage_full() {
         ConversationActions.Message message =
-                new ConversationActions.Message.Builder()
+                new ConversationActions.Message.Builder(PERSON)
                         .setText(TEXT)
-                        .setAuthor(PERSON)
                         .setExtras(EXTRAS)
-                        .setComposeTime(TIME)
+                        .setReferenceTime(TIME)
                         .build();
 
         ConversationActions.Message recovered = parcelizeDeparcelize(message,
@@ -85,7 +84,7 @@ public class ConversationActionsTest {
     @Test
     public void testMessage_minimal() {
         ConversationActions.Message message =
-                new ConversationActions.Message.Builder().build();
+                new ConversationActions.Message.Builder(PERSON).build();
 
         ConversationActions.Message recovered = parcelizeDeparcelize(message,
                 ConversationActions.Message.CREATOR);
@@ -144,7 +143,7 @@ public class ConversationActionsTest {
     @Test
     public void testRequest_minimal() {
         ConversationActions.Message message =
-                new ConversationActions.Message.Builder()
+                new ConversationActions.Message.Builder(PERSON)
                         .setText(TEXT)
                         .build();
 
@@ -162,7 +161,7 @@ public class ConversationActionsTest {
     @Test
     public void testRequest_full() {
         ConversationActions.Message message =
-                new ConversationActions.Message.Builder()
+                new ConversationActions.Message.Builder(PERSON)
                         .setText(TEXT)
                         .build();
         ConversationActions.TypeConfig typeConfig =
@@ -206,6 +205,7 @@ public class ConversationActionsTest {
                         .setConfidenceScore(1.0f)
                         .setTextReply(TEXT)
                         .setAction(REMOTE_ACTION)
+                        .setExtras(EXTRAS)
                         .build();
 
         ConversationActions.ConversationAction recovered =
@@ -235,15 +235,15 @@ public class ConversationActionsTest {
 
     private void assertFullMessage(ConversationActions.Message message) {
         assertThat(message.getText().toString()).isEqualTo(TEXT);
-        assertThat(message.getAuthor().getKey()).isEqualTo(PERSON.getKey());
+        assertThat(message.getAuthor()).isEqualTo(PERSON);
         assertThat(message.getExtras().keySet()).containsExactly(TEXT);
-        assertThat(message.getTime()).isEqualTo(TIME);
+        assertThat(message.getReferenceTime()).isEqualTo(TIME);
     }
 
     private void assertMinimalMessage(ConversationActions.Message message) {
-        assertThat(message.getAuthor()).isNull();
+        assertThat(message.getAuthor()).isEqualTo(PERSON);
         assertThat(message.getExtras().isEmpty()).isTrue();
-        assertThat(message.getTime()).isNull();
+        assertThat(message.getReferenceTime()).isNull();
     }
 
     private void assertFullTypeConfig(ConversationActions.TypeConfig typeConfig) {
@@ -285,6 +285,7 @@ public class ConversationActionsTest {
     private void assertMinimalRequest(ConversationActions.Request request) {
         assertThat(request.getConversation()).hasSize(1);
         assertThat(request.getConversation().get(0).getText().toString()).isEqualTo(TEXT);
+        assertThat(request.getConversation().get(0).getAuthor()).isEqualTo(PERSON);
         assertThat(request.getHints()).isEmpty();
         assertThat(request.getMaxSuggestions()).isEqualTo(0);
         assertThat(request.getTypeConfig()).isNotNull();
@@ -293,6 +294,7 @@ public class ConversationActionsTest {
     private void assertFullRequest(ConversationActions.Request request) {
         assertThat(request.getConversation()).hasSize(1);
         assertThat(request.getConversation().get(0).getText().toString()).isEqualTo(TEXT);
+        assertThat(request.getConversation().get(0).getAuthor()).isEqualTo(PERSON);
         assertThat(request.getHints()).containsExactly(ConversationActions.HINT_FOR_IN_APP);
         assertThat(request.getMaxSuggestions()).isEqualTo(10);
         assertThat(request.getTypeConfig().shouldIncludeTypesFromTextClassifier()).isFalse();
@@ -311,6 +313,7 @@ public class ConversationActionsTest {
         assertThat(conversationAction.getConfidenceScore()).isWithin(FLOAT_TOLERANCE).of(1.0f);
         assertThat(conversationAction.getType()).isEqualTo(ConversationActions.TYPE_CALL_PHONE);
         assertThat(conversationAction.getTextReply()).isEqualTo(TEXT);
+        assertThat(conversationAction.getExtras().keySet()).containsExactly(TEXT);
     }
 
     private void assertConversationActions(ConversationActions conversationActions) {
