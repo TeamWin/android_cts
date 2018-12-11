@@ -149,7 +149,7 @@ public class MediaStoreTest {
         final long beforePackage = getExternalPackageSize();
         final long beforeTotal = getExternalTotalSize();
         final long beforeContributed = MediaStore.getContributedMediaSize(getContext(),
-                getContext().getPackageName());
+                getContext().getPackageName(), android.os.Process.myUserHandle());
 
         final long stageSize;
         try (AssetFileDescriptor fd = getContext().getResources()
@@ -178,7 +178,7 @@ public class MediaStoreTest {
             final long afterPackage = getExternalPackageSize();
             final long afterTotal = getExternalTotalSize();
             final long afterContributed = MediaStore.getContributedMediaSize(getContext(),
-                    getContext().getPackageName());
+                    getContext().getPackageName(), android.os.Process.myUserHandle());
 
             assertMostlyEquals(beforePackage + stageSize, afterPackage, SIZE_DELTA);
             assertMostlyEquals(beforeTotal + stageSize + stageSize, afterTotal, SIZE_DELTA);
@@ -186,7 +186,8 @@ public class MediaStoreTest {
         }
 
         // Delete only contributed items
-        MediaStore.deleteContributedMedia(getContext(), getContext().getPackageName());
+        MediaStore.deleteContributedMedia(getContext(), getContext().getPackageName(),
+                android.os.Process.myUserHandle());
         {
             final HashSet<Long> visible = getVisibleIds(
                     MediaStore.Images.Media.EXTERNAL_CONTENT_URI);
@@ -196,7 +197,7 @@ public class MediaStoreTest {
             final long afterPackage = getExternalPackageSize();
             final long afterTotal = getExternalTotalSize();
             final long afterContributed = MediaStore.getContributedMediaSize(getContext(),
-                    getContext().getPackageName());
+                    getContext().getPackageName(), android.os.Process.myUserHandle());
 
             assertMostlyEquals(beforePackage + stageSize, afterPackage, SIZE_DELTA);
             assertMostlyEquals(beforeTotal + stageSize, afterTotal, SIZE_DELTA);
