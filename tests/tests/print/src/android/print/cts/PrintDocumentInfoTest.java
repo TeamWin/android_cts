@@ -61,7 +61,7 @@ public class PrintDocumentInfoTest extends BasePrintTest {
     private static boolean sIsDefaultPrinterSet;
 
     @Before
-    public void setDefaultPrinter() throws Exception {
+    public void setDefaultPrinter() throws Throwable {
         if (!sIsDefaultPrinterSet) {
             // Create a callback for the target print service.
             FirstPrintService.setCallbacks(createFirstMockPrintServiceCallbacks());

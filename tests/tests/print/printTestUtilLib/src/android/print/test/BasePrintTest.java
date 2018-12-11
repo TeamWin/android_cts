@@ -18,6 +18,7 @@ package android.print.test;
 
 import static android.content.pm.PackageManager.GET_META_DATA;
 import static android.content.pm.PackageManager.GET_SERVICES;
+import static android.print.test.Utils.eventually;
 import static android.print.test.Utils.getPrintManager;
 
 import static org.junit.Assert.assertFalse;
@@ -111,7 +112,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 public abstract class BasePrintTest {
     private static final String LOG_TAG = "BasePrintTest";
 
-    protected static final long OPERATION_TIMEOUT_MILLIS = 60000;
+    protected static final long OPERATION_TIMEOUT_MILLIS = 20000;
     protected static final String PRINT_JOB_NAME = "Test";
     static final String TEST_ID = "BasePrintTest.EXTRA_TEST_ID";
 
@@ -617,6 +618,7 @@ public abstract class BasePrintTest {
     }
 
     protected void answerPrintServicesWarning(boolean confirm) throws UiObjectNotFoundException {
+        getUiDevice().waitForIdle();
         UiObject button;
         if (confirm) {
             button = getUiDevice().findObject(new UiSelector().resourceId("android:id/button1"));
@@ -972,18 +974,22 @@ public abstract class BasePrintTest {
     }
 
     protected void selectPages(String pages, int totalPages) throws Exception {
+        getUiDevice().waitForIdle();
         UiObject pagesSpinner = getUiDevice().findObject(new UiSelector().resourceId(
                 "com.android.printspooler:id/range_options_spinner"));
         pagesSpinner.click();
 
+        getUiDevice().waitForIdle();
         UiObject rangeOption = getUiDevice().findObject(new UiSelector().textContains("Range of "
                 + totalPages));
         rangeOption.click();
 
+        getUiDevice().waitForIdle();
         UiObject pagesEditText = getUiDevice().findObject(new UiSelector().resourceId(
                 "com.android.printspooler:id/page_range_edittext"));
         pagesEditText.setText(pages);
 
+        getUiDevice().waitForIdle();
         // Hide the keyboard.
         getUiDevice().pressBack();
     }
@@ -1040,7 +1046,7 @@ public abstract class BasePrintTest {
      * @throws Exception If the printer could not be made default
      */
     public void makeDefaultPrinter(PrintDocumentAdapter adapter, String printerName)
-            throws Exception {
+            throws Throwable {
         // Perform a full print operation on the printer
         Log.d(LOG_TAG, "print");
         print(adapter);
@@ -1050,10 +1056,13 @@ public abstract class BasePrintTest {
         selectPrinter(printerName);
         Log.d(LOG_TAG, "clickPrintButton");
         clickPrintButton();
-        Log.d(LOG_TAG, "answerPrintServicesWarning");
-        answerPrintServicesWarning(true);
-        Log.d(LOG_TAG, "waitForPrinterDiscoverySessionDestroyCallbackCalled");
-        waitForPrinterDiscoverySessionDestroyCallbackCalled(1);
+
+        eventually(() -> {
+            Log.d(LOG_TAG, "answerPrintServicesWarning");
+            answerPrintServicesWarning(true);
+            Log.d(LOG_TAG, "waitForPrinterDiscoverySessionDestroyCallbackCalled");
+            waitForPrinterDiscoverySessionDestroyCallbackCalled(1);
+        }, OPERATION_TIMEOUT_MILLIS * 2);
 
         // Switch to new activity, which should now use the default printer
         Log.d(LOG_TAG, "getActivity().finish()");

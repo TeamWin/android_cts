@@ -321,7 +321,7 @@ public class PrintAttributesTest extends BasePrintTest {
     }
 
     @Before
-    public void setUpServicesAndAdapter() throws Exception {
+    public void setUpServicesAndAdapter() throws Throwable {
         if (!sHasBeenSetup) {
             // Set up printer with supported and default attributes
             PrintDocumentAdapter adapter =
