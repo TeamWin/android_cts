@@ -163,8 +163,13 @@ public class WindowFocusTests {
             sendAndAssertTargetConsumedKey(secondaryActivity, KEYCODE_3,
                     secondaryDisplay.getDisplayId());
 
-            primaryActivity.assertWindowFocusState(true /* hasFocus */);
-            sendAndAssertTargetConsumedKey(primaryActivity, KEYCODE_4, DEFAULT_DISPLAY);
+            if (getTargetContext().getResources().getBoolean(
+                    com.android.internal.R.bool.config_perDisplayFocusEnabled)) {
+                primaryActivity.assertWindowFocusState(true /* hasFocus */);
+                sendAndAssertTargetConsumedKey(primaryActivity, KEYCODE_4, DEFAULT_DISPLAY);
+            } else {
+                primaryActivity.waitAndAssertWindowFocusState(false /* hasFocus */);
+            }
 
             // Press display-unspecified keys and a display-specified key but not release them.
             sendKey(ACTION_DOWN, KEYCODE_5, INVALID_DISPLAY);
