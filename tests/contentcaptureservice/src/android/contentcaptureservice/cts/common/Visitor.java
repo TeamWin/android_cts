@@ -13,20 +13,19 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package android.contentcaptureservice.cts;
+package android.contentcaptureservice.cts.common;
 
-import android.app.Activity;
-import android.view.contentcapture.ContentCaptureManager;
-
-import androidx.annotation.Nullable;
+import androidx.annotation.NonNull;
 
 /**
- * Base class for all activities.
+ * Implements the Visitor design pattern
+ *
+ * @param <V> visited object
  */
-abstract class AbstractContentCaptureActivity extends Activity {
+public interface Visitor<V> {
 
-    @Nullable
-    public ContentCaptureManager getContentCaptureManager() {
-        return getSystemService(ContentCaptureManager.class);
-    }
+    /**
+     * Visit that object.
+     */
+    void visit(@NonNull V visited);
 }

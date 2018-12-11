@@ -16,6 +16,7 @@
 
 package android.contentcaptureservice.cts;
 
+import static android.contentcaptureservice.cts.Helper.MY_PACKAGE;
 import static android.contentcaptureservice.cts.Helper.TAG;
 import static android.contentcaptureservice.cts.common.ShellHelper.runShellCommand;
 
@@ -84,8 +85,9 @@ public class ContentCaptureLoggingTestRule implements TestRule, SafeCleanerRule.
         Log.e(mTag, "Dumping after exception on " + testName, t);
         final String autofillDump = runShellCommand("dumpsys content_capture");
         Log.e(mTag, "content_capture dump: \n" + autofillDump);
-        final String activityDump = runShellCommand("dumpsys activity top --contentcapture");
-        Log.e(mTag, "top activity dump: \n" + activityDump);
+        final String activityDump = runShellCommand(
+                "dumpsys activity " + MY_PACKAGE + " --contentcapture");
+        Log.e(mTag, "activity dump: \n" + activityDump);
         mDumped = true;
     }
 }
