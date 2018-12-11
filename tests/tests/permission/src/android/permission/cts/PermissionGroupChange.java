@@ -20,6 +20,8 @@ import static android.content.Intent.FLAG_ACTIVITY_NEW_TASK;
 import static android.content.pm.PackageInfo.REQUESTED_PERMISSION_GRANTED;
 import static android.content.pm.PackageManager.GET_PERMISSIONS;
 
+import static com.android.compatibility.common.util.SystemUtil.runShellCommand;
+
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.fail;
 
@@ -37,6 +39,7 @@ import android.widget.ScrollView;
 
 import com.android.compatibility.common.util.SystemUtil;
 
+import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 
@@ -139,6 +142,11 @@ public class PermissionGroupChange {
         startApp.setFlags(FLAG_ACTIVITY_NEW_TASK);
 
         mContext.startActivity(startApp);
+    }
+
+    @After
+    public void uninstallTestApp() {
+        runShellCommand("pm uninstall android.permission.cts.appthatrequestpermission");
     }
 
     @SecurityTest
