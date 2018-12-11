@@ -33,7 +33,9 @@ import java.util.concurrent.Executor;
 public class AudioTrackOffloadTest extends CtsAndroidTestCase {
     private static final String TAG = "AudioTrackOffloadTest";
 
-    private static final int MP3_BUFF_SIZE = 192 * 1024 * 5 / 8; // 5s for 192kbps MP3
+    private static final int MP3_BUFF_SIZE = 192 * 1024 * 3 / 8; // 3s for 192kbps MP3
+
+    private static final int PRESENTATION_END_TIMEOUT_MS = 8 * 1000; // 8s
 
 
     public void testIsOffloadSupportedNullFormat() throws Exception {
@@ -107,13 +109,17 @@ public class AudioTrackOffloadTest extends CtsAndroidTestCase {
             }
             try {
                 Thread.sleep(1 * 1000);
-                track.stop();
-                Thread.sleep(5 * 1000);
+                synchronized(mPresEndLock) {
+                    track.stop();
+                    mPresEndLock.safeWait(PRESENTATION_END_TIMEOUT_MS);
+                }
             } catch (InterruptedException e) { fail("Error while sleeping"); }
             synchronized (mEventCallbackLock) {
-                assertTrue("onDataRequest not called",mCallback.mDataRequestCount > 0);
-                // we are 6s after less than 5s of data was supplied, presentation should have
-                // ended
+                assertTrue("onDataRequest not called", mCallback.mDataRequestCount > 0);
+            }
+            synchronized (mPresEndLock) {
+                // we are at most PRESENTATION_END_TIMEOUT_MS + 1s after about 3s of data was
+                // supplied, presentation should have ended
                 assertEquals("onPresentationEnded not called one time",
                         1, mCallback.mPresentationEndedCount);
             }
@@ -136,13 +142,14 @@ public class AudioTrackOffloadTest extends CtsAndroidTestCase {
     };
 
     private final Object mEventCallbackLock = new Object();
+    private final SafeWaitObject mPresEndLock = new SafeWaitObject();
 
     private EventCallback mCallback = new EventCallback();
 
     private class EventCallback extends AudioTrack.StreamEventCallback {
         @GuardedBy("mEventCallbackLock")
         int mTearDownCount;
-        @GuardedBy("mEventCallbackLock")
+        @GuardedBy("mPresEndLock")
         int mPresentationEndedCount;
         @GuardedBy("mEventCallbackLock")
         int mDataRequestCount;
@@ -157,9 +164,10 @@ public class AudioTrackOffloadTest extends CtsAndroidTestCase {
 
         @Override
         public void onPresentationEnded(AudioTrack track) {
-            synchronized (mEventCallbackLock) {
+            synchronized (mPresEndLock) {
                 Log.i(TAG, "onPresentationEnded");
                 mPresentationEndedCount++;
+                mPresEndLock.safeNotify();
             }
         }
 
