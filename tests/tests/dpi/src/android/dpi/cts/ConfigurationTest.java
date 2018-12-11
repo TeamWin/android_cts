@@ -24,6 +24,7 @@ import android.util.DisplayMetrics;
 import android.view.Display;
 import android.view.WindowManager;
 
+import com.android.compatibility.common.util.CddTest;
 import com.android.compatibility.common.util.FeatureUtil;
 
 import java.util.HashSet;
@@ -34,16 +35,22 @@ import java.util.Set;
  */
 public class ConfigurationTest extends AndroidTestCase {
 
-    @Presubmit
-    public void testScreenConfiguration() {
+    private DisplayMetrics mMetrics;
+
+    @Override
+    protected void setUp() throws Exception {
+        super.setUp();
         WindowManager windowManager =
                 (WindowManager) getContext().getSystemService(Context.WINDOW_SERVICE);
         Display display = windowManager.getDefaultDisplay();
-        DisplayMetrics metrics = new DisplayMetrics();
-        display.getMetrics(metrics);
+        mMetrics = new DisplayMetrics();
+        display.getMetrics(mMetrics);
+    }
 
-        double xInches = (double) metrics.widthPixels / metrics.xdpi;
-        double yInches = (double) metrics.heightPixels / metrics.ydpi;
+    @Presubmit
+    public void testScreenConfiguration() {
+        double xInches = (double) mMetrics.widthPixels / mMetrics.xdpi;
+        double yInches = (double) mMetrics.heightPixels / mMetrics.ydpi;
         double diagonalInches = Math.sqrt(Math.pow(xInches, 2) + Math.pow(yInches, 2));
         double minSize = 2.5d;
         if (FeatureUtil.isWatch()) {
@@ -56,7 +63,7 @@ public class ConfigurationTest extends AndroidTestCase {
         assertTrue("Screen diagonal must be at least " + minSize + " inches: " + diagonalInches,
                 diagonalInches >= minSize);
 
-        double density = 160.0d * metrics.density;
+        double density = 160.0d * mMetrics.density;
         assertTrue("Screen density must be at least 100 dpi: " + density, density >= 100.0d);
 
         Set<Integer> allowedDensities = new HashSet<Integer>();
@@ -77,10 +84,22 @@ public class ConfigurationTest extends AndroidTestCase {
         allowedDensities.add(DisplayMetrics.DENSITY_560);
         allowedDensities.add(DisplayMetrics.DENSITY_XXXHIGH);
         assertTrue("DisplayMetrics#densityDpi must be one of the DisplayMetrics.DENSITY_* values: "
-                + allowedDensities, allowedDensities.contains(metrics.densityDpi));
+                + allowedDensities, allowedDensities.contains(mMetrics.densityDpi));
 
-        assertEquals(metrics.density,
-                (float) metrics.densityDpi / DisplayMetrics.DENSITY_DEFAULT,
+        assertEquals(mMetrics.density,
+                (float) mMetrics.densityDpi / DisplayMetrics.DENSITY_DEFAULT,
                 0.5f / DisplayMetrics.DENSITY_DEFAULT);
+    }
+
+    @CddTest(requirement="2.5.1")
+    public void testAutomotiveMinimumScreenSize() {
+        if (!FeatureUtil.isAutomotive()) {
+            return;
+        }
+        float dpHeight = mMetrics.heightPixels / mMetrics.density;
+        float dpWidth = mMetrics.widthPixels / mMetrics.density;
+
+        assertTrue("Height must be >= 480dp, found: " + dpHeight, dpHeight >= 480);
+        assertTrue("Width must be >= 750dp, found: " + dpWidth, dpWidth >= 750);
     }
 }
