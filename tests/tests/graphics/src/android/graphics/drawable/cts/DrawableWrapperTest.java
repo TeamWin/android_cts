@@ -156,6 +156,14 @@ public class DrawableWrapperTest {
     }
 
     @Test
+    public void testCallbackIsSet() {
+        Drawable dr = new MockDrawable();
+
+        DrawableWrapper wrapper = new MyWrapper(dr);
+        assertEquals(wrapper, dr.getCallback());
+    }
+
+    @Test
     public void testDraw() {
         Drawable mockDrawable = spy(new ColorDrawable(Color.BLUE));
         doNothing().when(mockDrawable).draw(any());
@@ -222,6 +230,7 @@ public class DrawableWrapperTest {
         DrawableWrapper wrapper = new MyWrapper(mockDrawable);
         assertTrue(wrapper.isVisible());
 
+        reset(mockDrawable);
         assertTrue(wrapper.setVisible(false, false));
         assertFalse(wrapper.isVisible());
         verify(mockDrawable, times(1)).setVisible(anyBoolean(), anyBoolean());
