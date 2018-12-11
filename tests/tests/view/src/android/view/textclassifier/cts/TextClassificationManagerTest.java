@@ -36,6 +36,7 @@ import android.view.textclassifier.TextClassification;
 import android.view.textclassifier.TextClassificationContext;
 import android.view.textclassifier.TextClassificationManager;
 import android.view.textclassifier.TextClassifier;
+import android.view.textclassifier.TextClassifierEvent;
 import android.view.textclassifier.TextLanguage;
 import android.view.textclassifier.TextLinks;
 import android.view.textclassifier.TextSelection;
@@ -196,6 +197,12 @@ public class TextClassificationManagerTest {
         // Doesn't crash.
         mClassifier.onSelectionEvent(
                 SelectionEvent.createSelectionStartedEvent(SelectionEvent.INVOCATION_MANUAL, 0));
+    }
+
+    @Test
+    public void testOnTextClassifierEvent() {
+        // Doesn't crash.
+        mClassifier.onTextClassifierEvent(new TextClassifierEvent.Builder(0, 0).build());
     }
 
     @Test
