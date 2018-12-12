@@ -215,7 +215,7 @@ public class PrintJobTest extends BasePrintTest {
     }
 
     @Before
-    public void setPrinter() throws Exception {
+    public void setPrinter() throws Throwable {
         if (!sHasBeenSetUp) {
             resetCounters();
             PrinterDiscoverySessionCallbacks sessionCallbacks
