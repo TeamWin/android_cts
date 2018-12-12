@@ -85,6 +85,27 @@ public class ActivityManagerDisplayLockedKeyguardTests extends ActivityManagerDi
     }
 
     /**
+     * Tests that private display cannot show content while device locked.
+     */
+    @Test
+    public void testPrivateDisplayHideContentWhenLocked() throws Exception {
+        try (final LockScreenSession lockScreenSession = new LockScreenSession();
+             final VirtualDisplaySession virtualDisplaySession = new VirtualDisplaySession()) {
+            lockScreenSession.setLockCredential();
+
+            final ActivityDisplay newDisplay =
+                    virtualDisplaySession.setPublicDisplay(false).createDisplay();
+            launchActivityOnDisplay(TEST_ACTIVITY, newDisplay.mId);
+
+            lockScreenSession.gotoKeyguard();
+
+            waitAndAssertActivityState(TEST_ACTIVITY, STATE_STOPPED,
+                    "Expected stopped activity on private display");
+            mAmWmState.assertVisibility(TEST_ACTIVITY, false /* visible */);
+        }
+    }
+
+    /**
      * Tests whether a FLAG_DISMISS_KEYGUARD activity on a secondary display dismisses the keyguard.
      */
     @Test
