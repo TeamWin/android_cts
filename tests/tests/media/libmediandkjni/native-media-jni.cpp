@@ -839,10 +839,10 @@ extern "C" jboolean Java_android_media_cts_NativeDecoderTest_testFormatNative(JN
         return false;
     }
 
-    AMediaFormat_setInt64(format, AMEDIAFORMAT_KEY_DURATION, 123456789123456789ll);
+    AMediaFormat_setInt64(format, AMEDIAFORMAT_KEY_DURATION, 123456789123456789LL);
     int64_t duration = 0;
     if (!AMediaFormat_getInt64(format, AMEDIAFORMAT_KEY_DURATION, &duration)
-            || duration != 123456789123456789ll) {
+            || duration != 123456789123456789LL) {
         ALOGE("AMediaFormat_getInt64 fail: %lld", (long long) duration);
         return false;
     }
