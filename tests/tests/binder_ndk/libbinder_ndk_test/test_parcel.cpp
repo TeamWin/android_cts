@@ -211,7 +211,7 @@ TEST_F(NdkBinderTest_AParcel, NonNullTerminatedString) {
     // every element of the vector is a prefix of this string
     const std::string& element;
     // this is the number of characters of the string to write, < element.size()
-    size_t elementLen;
+    int32_t elementLen;
 
     binder_status_t writeToParcel(AParcel* p, size_t length) const {
       return AParcel_writeStringArray(p, static_cast<const void*>(this), length,
@@ -219,8 +219,7 @@ TEST_F(NdkBinderTest_AParcel, NonNullTerminatedString) {
     }
 
    private:
-    static const char* ElementGetter(const void* vectorData, size_t /*index*/,
-                                     size_t* outLength) {
+    static const char* ElementGetter(const void* vectorData, size_t /*index*/, int32_t* outLength) {
       const PartialStringCycle* vector =
           static_cast<const PartialStringCycle*>(vectorData);
 
@@ -236,7 +235,8 @@ TEST_F(NdkBinderTest_AParcel, NonNullTerminatedString) {
     const std::vector<std::string> expectedVector = {expectedString,
                                                      expectedString};
 
-    const PartialStringCycle writeVector{.element = kTestcase, .elementLen = i};
+    const PartialStringCycle writeVector{.element = kTestcase,
+                                         .elementLen = static_cast<int32_t>(i)};
 
     AIBinder* binder = SampleData::newBinder(
         [&](transaction_code_t, const AParcel* in, AParcel* /*out*/) {
