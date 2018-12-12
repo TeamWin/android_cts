@@ -28,6 +28,10 @@ import android.platform.test.annotations.RequiresDevice;
 import android.support.test.runner.AndroidJUnit4;
 import android.test.suitebuilder.annotation.SmallTest;
 
+import com.android.compatibility.common.util.CddTest;
+
+import java.util.stream.IntStream;
+
 import org.junit.Before;
 import org.junit.Ignore;
 import org.junit.Test;
@@ -38,22 +42,24 @@ import org.junit.runner.RunWith;
 @RunWith(AndroidJUnit4.class)
 public class CarSensorManagerTest extends CarApiTestBase {
 
-    private CarSensorManager mCarSensorManager;
+    private int[] mSupportedSensors;
 
     @Before
     public void setUp() throws Exception {
         super.setUp();
-        mCarSensorManager = (CarSensorManager) getCar().getCarManager(Car.SENSOR_SERVICE);
+        CarSensorManager carSensorManager =
+                (CarSensorManager) getCar().getCarManager(Car.SENSOR_SERVICE);
+        mSupportedSensors = carSensorManager.getSupportedSensors();
+        assertNotNull(mSupportedSensors);
     }
 
+    @CddTest(requirement="2.5.1")
     @Test
     @Ignore // Enable when b/120125891 is fixed
     public void testRequiredSensorsForDrivingState() throws Exception {
-        int[] supportedSensors = mCarSensorManager.getSupportedSensors();
-        assertNotNull(supportedSensors);
         boolean foundSpeed = false;
         boolean foundGear = false;
-        for (int sensor: supportedSensors) {
+        for (int sensor: mSupportedSensors) {
             if (sensor == CarSensorManager.SENSOR_TYPE_CAR_SPEED) {
                 foundSpeed = true;
             } else if ( sensor == CarSensorManager.SENSOR_TYPE_GEAR) {
@@ -64,5 +70,13 @@ public class CarSensorManagerTest extends CarApiTestBase {
             }
         }
         assertTrue(foundGear && foundSpeed);
+    }
+
+    @CddTest(requirement="2.5.1")
+    @Test
+    public void testMustSupportNightSensor() {
+        assertTrue("Must support SENSOR_TYPE_NIGHT",
+                IntStream.of(mSupportedSensors)
+                        .anyMatch(x -> x == CarSensorManager.SENSOR_TYPE_NIGHT));
     }
 }
