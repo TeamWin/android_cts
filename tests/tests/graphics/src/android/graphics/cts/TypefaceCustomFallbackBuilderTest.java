@@ -252,4 +252,57 @@ public class TypefaceCustomFallbackBuilderTest {
         assertEquals(10.0f, paint.measureText("a", 0, 1), 0.0f);
         assertEquals(20.0f, paint.measureText("\u4E0D", 0, 1), 0.0f);  // Hebrew letter
     }
+
+    @Test
+    public void testSystemFallback_SansSerif() throws IOException {
+        final AssetManager am = InstrumentationRegistry.getTargetContext().getAssets();
+        final Font font = new Font.Builder(am, "fonts/user_fallback/ascii.ttf").build();
+        {
+            final Typeface.CustomFallbackBuilder b = new Typeface.CustomFallbackBuilder(
+                    new FontFamily.Builder(font).build());
+            assertNotNull(b.setSystemFallback("sans-serif").build());
+        }
+    }
+
+    @Test
+    public void testSystemFallback_Serif() throws IOException {
+        final AssetManager am = InstrumentationRegistry.getTargetContext().getAssets();
+        final Font font = new Font.Builder(am, "fonts/user_fallback/ascii.ttf").build();
+        {
+            final Typeface.CustomFallbackBuilder b = new Typeface.CustomFallbackBuilder(
+                    new FontFamily.Builder(font).build());
+            assertNotNull(b.setSystemFallback("serif").build());
+        }
+    }
+
+    @Test
+    public void testSystemFallback_anyString() throws IOException {
+        final AssetManager am = InstrumentationRegistry.getTargetContext().getAssets();
+        final Font font = new Font.Builder(am, "fonts/user_fallback/ascii.ttf").build();
+        {
+            final Typeface.CustomFallbackBuilder b = new Typeface.CustomFallbackBuilder(
+                    new FontFamily.Builder(font).build());
+            assertNotNull(b.setSystemFallback("any-string-is-fine").build());
+        }
+    }
+
+    @Test
+    public void testSystemFallback_emptyString() throws IOException {
+        final AssetManager am = InstrumentationRegistry.getTargetContext().getAssets();
+        final Font font = new Font.Builder(am, "fonts/user_fallback/ascii.ttf").build();
+        {
+            final Typeface.CustomFallbackBuilder b = new Typeface.CustomFallbackBuilder(
+                    new FontFamily.Builder(font).build());
+            assertNotNull(b.setSystemFallback("").build());
+        }
+    }
+
+    @Test(expected = NullPointerException.class)
+    public void testSystemFallback_null() throws IOException {
+        final AssetManager am = InstrumentationRegistry.getTargetContext().getAssets();
+        final Font font = new Font.Builder(am, "fonts/user_fallback/ascii.ttf").build();
+        final Typeface.CustomFallbackBuilder b = new Typeface.CustomFallbackBuilder(
+                new FontFamily.Builder(font).build());
+        b.setSystemFallback(null);
+    }
 }
