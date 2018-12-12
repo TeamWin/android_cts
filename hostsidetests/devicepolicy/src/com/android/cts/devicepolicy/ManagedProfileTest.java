@@ -16,6 +16,9 @@
 
 package com.android.cts.devicepolicy;
 
+import static com.android.cts.devicepolicy.metrics.DevicePolicyEventLogVerifier.assertMetricsLogged;
+
+import com.android.cts.devicepolicy.metrics.DevicePolicyEventWrapper;
 import com.android.ddmlib.Log.LogLevel;
 import com.android.tradefed.device.DeviceNotAvailableException;
 import com.android.tradefed.log.LogUtil.CLog;
@@ -27,6 +30,8 @@ import java.util.concurrent.Callable;
 import java.util.concurrent.TimeUnit;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+
+import android.stats.devicepolicy.EventId;
 
 /**
  * Set of tests for Managed Profile use cases.
@@ -173,6 +178,19 @@ public class ManagedProfileTest extends BaseDevicePolicyTest {
                 ".WipeDataNotificationTest",
                 "testWipeDataWithReasonVerification",
                 mParentUserId);
+    }
+
+    public void testWipeDataLogged() throws Exception {
+        if (!mHasFeature) {
+            return;
+        }
+        assertTrue(listUsers().contains(mProfileUserId));
+        assertMetricsLogged(getDevice(), () -> {
+            sendWipeProfileBroadcast("com.android.cts.managedprofile.WIPE_DATA_WITH_REASON");
+        }, new DevicePolicyEventWrapper.Builder(EventId.WIPE_DATA_WITH_REASON_VALUE)
+                .setAdminPackageName(MANAGED_PROFILE_PKG)
+                .setInt(0)
+                .build());
     }
 
     public void testWipeDataWithoutReason() throws Exception {
@@ -1331,6 +1349,18 @@ public class ManagedProfileTest extends BaseDevicePolicyTest {
                 "testCrossPrfileCalendarPackage", mProfileUserId);
     }
 
+    public void testCreateSeparateChallengeChangedLogged() throws Exception {
+        if (!mHasFeature) {
+            return;
+        }
+        assertMetricsLogged(getDevice(), () -> {
+            changeUserCredential(
+                    "1234" /* newCredential */, null /* oldCredential */, mProfileUserId);
+        }, new DevicePolicyEventWrapper.Builder(EventId.SEPARATE_PROFILE_CHALLENGE_CHANGED_VALUE)
+                .setBoolean(true)
+                .build());
+    }
+
     private void verifyUnifiedPassword(boolean unified) throws DeviceNotAvailableException {
         final String testMethod =
                 unified ? "testUsingUnifiedPassword" : "testNotUsingUnifiedPassword";
@@ -1485,7 +1515,7 @@ public class ManagedProfileTest extends BaseDevicePolicyTest {
                     userId);
         }
 
-        // Enable / Disable 
+        // Enable / Disable
         public void setCallerIdEnabled(boolean enabled) throws DeviceNotAvailableException {
             if (enabled) {
                 runDeviceTestsAsUser(mManagedProfilePackage, ".ContactsTest",
