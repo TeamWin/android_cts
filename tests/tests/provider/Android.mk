@@ -35,7 +35,8 @@ LOCAL_USE_AAPT2 := true
 LOCAL_STATIC_JAVA_LIBRARIES := \
     compatibility-device-util \
     ctstestrunner \
-    junit
+    junit \
+    truth-prebuilt
 
 LOCAL_JNI_SHARED_LIBRARIES := libcts_jni libnativehelper_compat_libc++
 
