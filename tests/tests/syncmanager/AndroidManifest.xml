@@ -25,6 +25,9 @@
     <uses-permission android:name="android.permission.READ_SYNC_SETTINGS" />
     <uses-permission android:name="android.permission.WRITE_SYNC_SETTINGS" />
 
+    <!-- We need it to write dump files in /sdcard/. See also AndroidTest.xml in the same directory -->
+    <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" />
+
     <instrumentation android:name="android.support.test.runner.AndroidJUnitRunner"
         android:targetPackage="android.content.syncmanager.cts"
         android:label="CTS tests for sync manager">
