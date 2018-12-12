@@ -41,8 +41,10 @@ import android.view.accessibility.AccessibilityEvent;
 import android.view.accessibility.AccessibilityNodeInfo;
 import android.view.accessibility.AccessibilityWindowInfo;
 
+import com.android.compatibility.common.util.TestUtils;
+
 import java.util.List;
-import java.util.concurrent.TimeoutException;
+import java.util.function.BooleanSupplier;
 
 /**
  * Utilities useful when launching an activity to make sure it's all the way on the screen
@@ -119,11 +121,13 @@ public class ActivityLaunchUtils {
         wakeUpOrBust(context, uiAutomation);
         if (isHomeScreenShowing(context, uiAutomation)) return;
         try {
-            uiAutomation.executeAndWaitForEvent(
+            executeAndWaitOn(
+                    uiAutomation,
                     () -> uiAutomation.performGlobalAction(AccessibilityService.GLOBAL_ACTION_HOME),
-                    (event) -> isHomeScreenShowing(context, uiAutomation),
-                    DEFAULT_TIMEOUT_MS);
-        } catch (TimeoutException te) {
+                    () -> isHomeScreenShowing(context, uiAutomation),
+                    DEFAULT_TIMEOUT_MS,
+                    "home screen");
+        } catch (AssertionError error) {
             Log.e(LOG_TAG, "Timed out looking for home screen. Dumping window list");
             final List<AccessibilityWindowInfo> windows = uiAutomation.getWindows();
             if (windows == null) {
@@ -191,5 +195,30 @@ public class ActivityLaunchUtils {
             } catch (InterruptedException e) {}
         } while (SystemClock.uptimeMillis() < deadlineUptimeMillis);
         fail("Unable to wake up screen");
+    }
+
+    /**
+     * Executes a command and waits for a specified condition up to a given wait timeout. It checks
+     * condition result each time when events delivered, and throws exception if the condition
+     * result is not {@code true} within the given timeout.
+     */
+    private static void executeAndWaitOn(UiAutomation uiAutomation, Runnable command,
+            BooleanSupplier condition, long timeoutMillis, String conditionName) {
+        final Object waitObject = new Object();
+        final long executionStartTimeMillis = SystemClock.uptimeMillis();
+        try {
+            uiAutomation.setOnAccessibilityEventListener((event) -> {
+                if (event.getEventTime() < executionStartTimeMillis) {
+                    return;
+                }
+                synchronized (waitObject) {
+                    waitObject.notifyAll();
+                }
+            });
+            command.run();
+            TestUtils.waitOn(waitObject, condition, timeoutMillis, conditionName);
+        } finally {
+            uiAutomation.setOnAccessibilityEventListener(null);
+        }
     }
 }

@@ -271,7 +271,7 @@ public class AnimatedImageDrawableTest {
         cb.assertStarted(true);
 
         // Extra time, to wait for the message to post.
-        cb.waitForEnd(DURATION * 10);
+        cb.waitForEnd(DURATION * 20);
         cb.assertEnded(true);
         assertFalse(drawable.isRunning());
     }
@@ -386,7 +386,7 @@ public class AnimatedImageDrawableTest {
             cb.waitForEnd(DURATION * repeatCount);
             cb.assertEnded(false);
 
-            cb.waitForEnd(DURATION * 10);
+            cb.waitForEnd(DURATION * 20);
             cb.assertEnded(true);
 
             drawable.setRepeatCount(AnimatedImageDrawable.REPEAT_INFINITE);

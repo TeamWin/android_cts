@@ -95,11 +95,6 @@ public class StagefrightTest extends InstrumentationTestCase {
         doStagefrightTest(R.raw.cve_2016_3829);
     }
 
-    @SecurityTest
-    public void testStagefright_bug_64710074() throws Exception {
-        doStagefrightTest(R.raw.bug_64710074);
-    }
-
     @SecurityTest(minPatchLevel = "2017-06")
     public void testStagefright_cve_2017_0643() throws Exception {
         doStagefrightTest(R.raw.cve_2017_0643);
@@ -721,6 +716,11 @@ public class StagefrightTest extends InstrumentationTestCase {
     @SecurityTest(minPatchLevel = "2015-10")
     public void testStagefright_cve_2015_6604() throws Exception {
         doStagefrightTest(R.raw.cve_2015_6604);
+    }
+
+    @SecurityTest(minPatchLevel = "2015-12")
+    public void testStagefright_bug_24157524() throws Exception {
+        doStagefrightTestMediaCodec(R.raw.bug_24157524);
     }
 
     @SecurityTest(minPatchLevel = "2015-10")

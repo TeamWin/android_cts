@@ -23,11 +23,14 @@ import static android.provider.Settings.Secure.AUTOFILL_USER_DATA_MAX_FIELD_CLAS
 import static android.provider.Settings.Secure.AUTOFILL_USER_DATA_MAX_USER_DATA_SIZE;
 import static android.provider.Settings.Secure.AUTOFILL_USER_DATA_MAX_VALUE_LENGTH;
 import static android.provider.Settings.Secure.AUTOFILL_USER_DATA_MIN_VALUE_LENGTH;
+import static android.service.autofill.AutofillFieldClassificationService.REQUIRED_ALGORITHM_EDIT_DISTANCE;
+import static android.service.autofill.AutofillFieldClassificationService.REQUIRED_ALGORITHM_EXACT_MATCH;
 
 import static com.google.common.truth.Truth.assertThat;
 
 import android.autofillservice.cts.Helper.FieldClassificationResult;
 import android.autofillservice.cts.common.SettingsStateChangerRule;
+import android.os.Bundle;
 import android.platform.test.annotations.AppModeFull;
 import android.service.autofill.FillEventHistory.Event;
 import android.service.autofill.UserData;
@@ -58,7 +61,7 @@ public class FieldsClassificationTest extends AbstractGridActivityTestCase {
 
     @ClassRule
     public static final SettingsStateChangerRule sUserDataMinValueChanger =
-            new SettingsStateChangerRule(sContext, AUTOFILL_USER_DATA_MIN_VALUE_LENGTH, "5");
+            new SettingsStateChangerRule(sContext, AUTOFILL_USER_DATA_MIN_VALUE_LENGTH, "4");
 
     @ClassRule
     public static final SettingsStateChangerRule sUserDataMaxValueChanger =
@@ -69,10 +72,12 @@ public class FieldsClassificationTest extends AbstractGridActivityTestCase {
             new SettingsStateChangerRule(sContext, AUTOFILL_USER_DATA_MAX_CATEGORY_COUNT, "42");
 
     private AutofillManager mAfm;
+    private Bundle mLast4Bundle = new Bundle();
 
     @Override
     protected void postActivityLaunched() {
         mAfm = mActivity.getAutofillManager();
+        mLast4Bundle.putInt("suffix", 4);
     }
 
     @Test
@@ -108,14 +113,25 @@ public class FieldsClassificationTest extends AbstractGridActivityTestCase {
         enableService();
         mAfm.setUserData(new UserData.Builder("user_data_id", "value", "remote_id")
                 .build());
+        assertThat(mAfm.getUserData()).isNotNull();
         assertThat(mAfm.getUserDataId()).isEqualTo("user_data_id");
         final UserData userData = mAfm.getUserData();
         assertThat(userData.getId()).isEqualTo("user_data_id");
         assertThat(userData.getFieldClassificationAlgorithm()).isNull();
+        assertThat(userData.getFieldClassificationAlgorithms()).isNull();
 
         disableService();
         assertThat(mAfm.getUserData()).isNull();
         assertThat(mAfm.getUserDataId()).isNull();
+    }
+
+    @Test
+    public void testRequiredAlgorithmsAvailable() throws Exception {
+        enableService();
+        final List<String> availableAlgorithms = mAfm.getAvailableFieldClassificationAlgorithms();
+        assertThat(availableAlgorithms).isNotNull();
+        assertThat(availableAlgorithms.contains(REQUIRED_ALGORITHM_EDIT_DISTANCE)).isTrue();
+        assertThat(availableAlgorithms.contains(REQUIRED_ALGORITHM_EXACT_MATCH)).isTrue();
     }
 
     @Test
@@ -124,7 +140,7 @@ public class FieldsClassificationTest extends AbstractGridActivityTestCase {
         // make sure the getters below are reading the right property.
         assertThat(UserData.getMaxFieldClassificationIdsSize()).isEqualTo(10);
         assertThat(UserData.getMaxUserDataSize()).isEqualTo(9);
-        assertThat(UserData.getMinValueLength()).isEqualTo(5);
+        assertThat(UserData.getMinValueLength()).isEqualTo(4);
         assertThat(UserData.getMaxValueLength()).isEqualTo(50);
         assertThat(UserData.getMaxCategoryCount()).isEqualTo(42);
     }
@@ -145,6 +161,112 @@ public class FieldsClassificationTest extends AbstractGridActivityTestCase {
     @Test
     public void testHit_userDataAlgorithmIsReset() throws Exception {
         simpleHitTest(true, null);
+    }
+
+    @Test
+    public void testMiss_exactMatchAlgorithm() throws Exception {
+        enableService();
+
+        // Set expectations.
+        mAfm.setUserData(new UserData
+                .Builder("id", "t 1234", "cat")
+                .setFieldClassificationAlgorithmForCategory("cat",
+                        REQUIRED_ALGORITHM_EXACT_MATCH, mLast4Bundle)
+                .build());
+        final MyAutofillCallback callback = mActivity.registerCallback();
+        final EditText field = mActivity.getCell(1, 1);
+        final AutofillId fieldId = field.getAutofillId();
+        sReplier.addResponse(new CannedFillResponse.Builder()
+                .setFieldClassificationIds(fieldId)
+                .build());
+
+        // Trigger autofill
+        mActivity.focusCell(1, 1);
+        sReplier.getNextFillRequest();
+
+        mUiBot.assertNoDatasetsEver();
+        callback.assertUiUnavailableEvent(field);
+
+        // Simulate user input
+        mActivity.setText(1, 1, "t 5678");
+
+        // Finish context.
+        mAfm.commit();
+
+        // Assert results
+        final List<Event> events = InstrumentedAutoFillService.getFillEvents(1);
+        assertFillEventForFieldsClassification(events.get(0), null);
+    }
+
+    @Test
+    public void testHit_exactMatchLast4Algorithm() throws Exception {
+        enableService();
+
+        // Set expectations.
+        mAfm.setUserData(new UserData
+                .Builder("id", "1234", "cat")
+                .setFieldClassificationAlgorithmForCategory("cat",
+                        REQUIRED_ALGORITHM_EXACT_MATCH, mLast4Bundle)
+                .build());
+        final MyAutofillCallback callback = mActivity.registerCallback();
+        final EditText field = mActivity.getCell(1, 1);
+        final AutofillId fieldId = field.getAutofillId();
+        sReplier.addResponse(new CannedFillResponse.Builder()
+                .setFieldClassificationIds(fieldId)
+                .build());
+
+        // Trigger autofill
+        mActivity.focusCell(1, 1);
+        sReplier.getNextFillRequest();
+
+        mUiBot.assertNoDatasetsEver();
+        callback.assertUiUnavailableEvent(field);
+
+        // Simulate user input
+        mActivity.setText(1, 1, "T1234");
+
+        // Finish context.
+        mAfm.commit();
+
+        // Assert results
+        final List<Event> events = InstrumentedAutoFillService.getFillEvents(1);
+        assertFillEventForFieldsClassification(events.get(0), fieldId, "cat", 1);
+    }
+
+    @Test
+    public void testHit_useDefaultAlgorithm() throws Exception {
+        enableService();
+
+        // Set expectations.
+        mAfm.setUserData(new UserData
+                .Builder("id", "1234", "cat")
+                .setFieldClassificationAlgorithm(REQUIRED_ALGORITHM_EXACT_MATCH, mLast4Bundle)
+                .setFieldClassificationAlgorithmForCategory("dog",
+                        REQUIRED_ALGORITHM_EDIT_DISTANCE, null)
+                .build());
+        final MyAutofillCallback callback = mActivity.registerCallback();
+        final EditText field = mActivity.getCell(1, 1);
+        final AutofillId fieldId = field.getAutofillId();
+        sReplier.addResponse(new CannedFillResponse.Builder()
+                .setFieldClassificationIds(fieldId)
+                .build());
+
+        // Trigger autofill
+        mActivity.focusCell(1, 1);
+        sReplier.getNextFillRequest();
+
+        mUiBot.assertNoDatasetsEver();
+        callback.assertUiUnavailableEvent(field);
+
+        // Simulate user input
+        mActivity.setText(1, 1, "T1234");
+
+        // Finish context.
+        mAfm.commit();
+
+        // Assert results
+        final List<Event> events = InstrumentedAutoFillService.getFillEvents(1);
+        assertFillEventForFieldsClassification(events.get(0), fieldId, "cat", 1);
     }
 
     private void simpleHitTest(boolean setAlgorithm, String algorithm) throws Exception {
@@ -363,6 +485,59 @@ public class FieldsClassificationTest extends AbstractGridActivityTestCase {
                                 new float[] { 0.6F, 0.2F }),
                         new FieldClassificationResult(fieldId4, new String[] { "otherId", "myId"},
                                 new float[] { 0.80F, 0.2F })});
+    }
+
+    @Test
+    public void testHit_manyUserData_manyDetectableFields_differentClassificationAlgo()
+            throws Exception {
+        // Set service.
+        enableService();
+
+        // Set expectations.
+        mAfm.setUserData(new UserData.Builder("id", "1234", "myId")
+                .add("ZZZZZZZZZZ", "totalMiss") // should not have matched any
+                .add("EMPTY", "otherId")
+                .setFieldClassificationAlgorithmForCategory("myId",
+                        REQUIRED_ALGORITHM_EXACT_MATCH, mLast4Bundle)
+                .setFieldClassificationAlgorithmForCategory("otherId",
+                        REQUIRED_ALGORITHM_EDIT_DISTANCE, null)
+                .build());
+        final MyAutofillCallback callback = mActivity.registerCallback();
+        final EditText field1 = mActivity.getCell(1, 1);
+        final AutofillId fieldId1 = field1.getAutofillId();
+        final EditText field2 = mActivity.getCell(1, 2);
+        final AutofillId fieldId2 = field2.getAutofillId();
+        final EditText field3 = mActivity.getCell(2, 1);
+        final AutofillId fieldId3 = field3.getAutofillId();
+        sReplier.addResponse(new CannedFillResponse.Builder()
+                .setFieldClassificationIds(fieldId1, fieldId2)
+                .build());
+
+        // Trigger autofill
+        mActivity.focusCell(1, 1);
+        sReplier.getNextFillRequest();
+
+        mUiBot.assertNoDatasetsEver();
+        callback.assertUiUnavailableEvent(field1);
+
+        // Simulate user input
+        mActivity.setText(1, 1, "E1234"); // u1: 100% u2:  20%
+        mActivity.setText(1, 2, "empty"); // u1:   0% u2: 100%
+        mActivity.setText(2, 1, "fULLy"); // u1:   0% u2:  20%
+
+        // Finish context.
+        mAfm.commit();
+
+        // Assert results
+        final List<Event> events = InstrumentedAutoFillService.getFillEvents(1);
+        assertFillEventForFieldsClassification(events.get(0),
+                new FieldClassificationResult[] {
+                        new FieldClassificationResult(fieldId1, new String[] { "myId", "otherId" },
+                                new float[] { 1.0F, 0.2F }),
+                        new FieldClassificationResult(fieldId2, new String[] { "otherId" },
+                                new float[] { 1.0F }),
+                        new FieldClassificationResult(fieldId3, new String[] { "otherId" },
+                                new float[] { 0.2F })});
     }
 
     @Test
