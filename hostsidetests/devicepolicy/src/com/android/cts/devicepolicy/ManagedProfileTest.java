@@ -127,7 +127,7 @@ public class ManagedProfileTest extends BaseDevicePolicyTest {
         }
     }
 
-    private void  waitForUserUnlock() throws Exception {
+    private void waitForUserUnlock() throws Exception {
         final String command = String.format("am get-started-user-state %d", mProfileUserId);
         final long deadline = System.nanoTime() + USER_UNLOCK_TIMEOUT_NANO;
         while (System.nanoTime() <= deadline) {
@@ -214,7 +214,7 @@ public class ManagedProfileTest extends BaseDevicePolicyTest {
     }
 
     /**
-     *  wipeData() test removes the managed profile, so it needs to separated from other tests.
+     * wipeData() test removes the managed profile, so it needs to be separated from other tests.
      */
     public void testWipeData() throws Exception {
         if (!mHasFeature) {
@@ -413,7 +413,7 @@ public class ManagedProfileTest extends BaseDevicePolicyTest {
                 MANAGED_PROFILE_PKG + ".ManagedProfileTest", mProfileUserId);
 
         // Set up filters from primary to managed profile
-        String command = "am start -W --user " + mProfileUserId  + " " + MANAGED_PROFILE_PKG
+        String command = "am start -W --user " + mProfileUserId + " " + MANAGED_PROFILE_PKG
                 + "/.PrimaryUserFilterSetterActivity";
         CLog.d("Output for command " + command + ": "
                 + getDevice().executeShellCommand(command));
@@ -749,7 +749,7 @@ public class ManagedProfileTest extends BaseDevicePolicyTest {
     public void testBluetooth() throws Exception {
         boolean hasBluetooth = hasDeviceFeature(FEATURE_BLUETOOTH);
         if (!mHasFeature || !hasBluetooth) {
-            return ;
+            return;
         }
 
         runDeviceTestsAsUser(MANAGED_PROFILE_PKG, ".BluetoothTest",
@@ -1000,7 +1000,7 @@ public class ManagedProfileTest extends BaseDevicePolicyTest {
                 + getDevice().executeShellCommand(command));
     }
 
-    public void testPhoneAccountVisibility() throws Exception  {
+    public void testPhoneAccountVisibility() throws Exception {
         if (!mHasFeature) {
             return;
         }
@@ -1273,7 +1273,7 @@ public class ManagedProfileTest extends BaseDevicePolicyTest {
         verifyUnifiedPassword(false);
     }
 
-    public void testUnlockWorkProfile_deviceWidePassword() throws Exception{
+    public void testUnlockWorkProfile_deviceWidePassword() throws Exception {
         if (!mHasFeature || !mSupportsFbe) {
             return;
         }
@@ -1345,8 +1345,111 @@ public class ManagedProfileTest extends BaseDevicePolicyTest {
     }
 
     public void testCrossProfileCalendarPackage() throws Exception {
+        if (!mHasFeature) {
+            return;
+        }
         runDeviceTestsAsUser(MANAGED_PROFILE_PKG, ".CrossProfileCalendarTest",
-                "testCrossPrfileCalendarPackage", mProfileUserId);
+                "testCrossProfileCalendarPackage", mProfileUserId);
+    }
+
+    public void testCrossProfileCalendar() throws Exception {
+        if (!mHasFeature) {
+            return;
+        }
+        runCrossProfileCalendarTestsWhenWhitelistedAndEnabled();
+        runCrossProfileCalendarTestsWhenDisabled();
+        runCrossProfileCalendarTestsWhenNotWhitelisted();
+    }
+
+    private void runCrossProfileCalendarTestsWhenWhitelistedAndEnabled() throws Exception {
+        try {
+            // Setup. Add the test package into cross-profile calendar whitelist, enable
+            // cross-profile calendar in settings, and insert test data into calendar provider.
+            // All setups should be done in managed profile.
+            runDeviceTestsAsUser(MANAGED_PROFILE_PKG, ".CrossProfileCalendarTest",
+                    "testWhitelistManagedProfilePackage", mProfileUserId);
+            runDeviceTestsAsUser(MANAGED_PROFILE_PKG, ".CrossProfileCalendarTest",
+                    "testAddTestCalendarDataForWorkProfile", mProfileUserId);
+            runDeviceTestsAsUser(MANAGED_PROFILE_PKG, ".CrossProfileCalendarTest",
+                    "testEnableCrossProfileCalendarSettings", mProfileUserId);
+
+            // Testing.
+            runDeviceTestsAsUser(MANAGED_PROFILE_PKG, ".CrossProfileCalendarTest",
+                    "testPrimaryProfile_getCorrectWorkCalendarsWhenEnabled", mParentUserId);
+            runDeviceTestsAsUser(MANAGED_PROFILE_PKG, ".CrossProfileCalendarTest",
+                    "testPrimaryProfile_getCorrectWorkEventsWhenEnabled", mParentUserId);
+            runDeviceTestsAsUser(MANAGED_PROFILE_PKG, ".CrossProfileCalendarTest",
+                    "testPrimaryProfile_getCorrectWorkInstancesWhenEnabled", mParentUserId);
+            runDeviceTestsAsUser(MANAGED_PROFILE_PKG, ".CrossProfileCalendarTest",
+                    "testPrimaryProfile_canAccessWorkInstancesSearch1", mParentUserId);
+            runDeviceTestsAsUser(MANAGED_PROFILE_PKG, ".CrossProfileCalendarTest",
+                    "testPrimaryProfile_canAccessWorkInstancesSearch2", mParentUserId);
+
+        } finally {
+            // Cleanup.
+            runDeviceTestsAsUser(MANAGED_PROFILE_PKG, ".CrossProfileCalendarTest",
+                    "testRemoveManagedProfilePackageFromWhitelist", mProfileUserId);
+            runDeviceTestsAsUser(MANAGED_PROFILE_PKG, ".CrossProfileCalendarTest",
+                    "testCleanupTestCalendarDataForWorkProfile", mProfileUserId);
+            runDeviceTestsAsUser(MANAGED_PROFILE_PKG, ".CrossProfileCalendarTest",
+                    "testDisableCrossProfileCalendarSettings", mProfileUserId);
+        }
+    }
+
+    private void runCrossProfileCalendarTestsWhenDisabled() throws Exception {
+        try {
+            // Setup. Add the test package into cross-profile calendar whitelist,
+            // and insert test data into calendar provider. But disable cross-profile calendar
+            // in settings. Thus cross-profile calendar Uris should not be accessible.
+            // All setups should be done in managed profile.
+            runDeviceTestsAsUser(MANAGED_PROFILE_PKG, ".CrossProfileCalendarTest",
+                    "testWhitelistManagedProfilePackage", mProfileUserId);
+            runDeviceTestsAsUser(MANAGED_PROFILE_PKG, ".CrossProfileCalendarTest",
+                    "testAddTestCalendarDataForWorkProfile", mProfileUserId);
+            runDeviceTestsAsUser(MANAGED_PROFILE_PKG, ".CrossProfileCalendarTest",
+                    "testDisableCrossProfileCalendarSettings", mProfileUserId);
+
+            // Testing.
+            runDeviceTestsAsUser(MANAGED_PROFILE_PKG, ".CrossProfileCalendarTest",
+                    "testPrimaryProfile_cannotAccessWorkCalendarsWhenDisabled", mParentUserId);
+            runDeviceTestsAsUser(MANAGED_PROFILE_PKG, ".CrossProfileCalendarTest",
+                    "testPrimaryProfile_cannotAccessWorkEventsWhenDisabled", mParentUserId);
+            runDeviceTestsAsUser(MANAGED_PROFILE_PKG, ".CrossProfileCalendarTest",
+                    "testPrimaryProfile_cannotAccessWorkInstancesWhenDisabled", mParentUserId);
+        } finally {
+            // Cleanup.
+            runDeviceTestsAsUser(MANAGED_PROFILE_PKG, ".CrossProfileCalendarTest",
+                    "testRemoveManagedProfilePackageFromWhitelist", mProfileUserId);
+            runDeviceTestsAsUser(MANAGED_PROFILE_PKG, ".CrossProfileCalendarTest",
+                    "testCleanupTestCalendarDataForWorkProfile", mProfileUserId);
+        }
+    }
+
+    private void runCrossProfileCalendarTestsWhenNotWhitelisted() throws Exception {
+        try {
+            // Setup. Enable cross-profile calendar in settings and insert test data into calendar
+            // provider. But make sure that the test package is not whitelisted for cross-profile
+            // calendar. Thus cross-profile calendar Uris should not be accessible.
+            // All setups should be done in managed profile.
+            runDeviceTestsAsUser(MANAGED_PROFILE_PKG, ".CrossProfileCalendarTest",
+                    "testAddTestCalendarDataForWorkProfile", mProfileUserId);
+            runDeviceTestsAsUser(MANAGED_PROFILE_PKG, ".CrossProfileCalendarTest",
+                    "testEnableCrossProfileCalendarSettings", mProfileUserId);
+
+            // Testing.
+            runDeviceTestsAsUser(MANAGED_PROFILE_PKG, ".CrossProfileCalendarTest",
+                    "testPrimaryProfile_cannotAccessWorkCalendarsWhenDisabled", mParentUserId);
+            runDeviceTestsAsUser(MANAGED_PROFILE_PKG, ".CrossProfileCalendarTest",
+                    "testPrimaryProfile_cannotAccessWorkEventsWhenDisabled", mParentUserId);
+            runDeviceTestsAsUser(MANAGED_PROFILE_PKG, ".CrossProfileCalendarTest",
+                    "testPrimaryProfile_cannotAccessWorkInstancesWhenDisabled", mParentUserId);
+        } finally {
+            // Cleanup.
+            runDeviceTestsAsUser(MANAGED_PROFILE_PKG, ".CrossProfileCalendarTest",
+                    "testCleanupTestCalendarDataForWorkProfile", mProfileUserId);
+            runDeviceTestsAsUser(MANAGED_PROFILE_PKG, ".CrossProfileCalendarTest",
+                    "testDisableCrossProfileCalendarSettings", mProfileUserId);
+        }
     }
 
     public void testCreateSeparateChallengeChangedLogged() throws Exception {
