@@ -25,10 +25,16 @@ import android.app.admin.DevicePolicyManager;
 import android.content.ContentResolver;
 import android.content.ContentUris;
 import android.content.ContentValues;
+import android.content.Intent;
 import android.database.Cursor;
 import android.net.Uri;
 import android.provider.CalendarContract;
 import android.provider.Settings.Secure;
+import android.support.test.InstrumentationRegistry;
+import android.support.test.uiautomator.By;
+import android.support.test.uiautomator.UiDevice;
+import android.support.test.uiautomator.UiObject2;
+import android.support.test.uiautomator.Until;
 import android.test.AndroidTestCase;
 import android.text.TextUtils;
 import android.text.format.DateUtils;
@@ -72,6 +78,15 @@ public class CrossProfileCalendarTest extends AndroidTestCase {
 
     private static final String SELECTION_ACCOUNT_TYPE = "(" +
             CalendarContract.Calendars.ACCOUNT_TYPE + " = ? )";
+
+    private static final long TEST_VIEW_EVENT_ID = 1;
+    private static final long TEST_VIEW_EVENT_START = 100;
+    private static final long TEST_VIEW_EVENT_END = 10000;
+    private static final boolean TEST_VIEW_EVENT_ALL_DAY = false;
+    private static final int TEST_VIEW_EVENT_FLAG = Intent.FLAG_ACTIVITY_NEW_TASK;
+    private static final int TIMEOUT_SEC = 10;
+    private static final String ID_TEXTVIEW =
+            "com.android.cts.managedprofile:id/view_event_text";
 
     private ContentResolver mResolver;
     private DevicePolicyManager mDevicePolicyManager;
@@ -262,6 +277,38 @@ public class CrossProfileCalendarTest extends AndroidTestCase {
         assertThat(cursor.getCount()).isEqualTo(2);
     }
 
+    // This test should be run when the test package is whitelisted.
+    public void testViewEventCrossProfile_intentReceivedWhenWhitelisted() throws Exception {
+        requireRunningOnPrimaryProfile();
+
+        // Get UiDevice and start view event activity.
+        final UiDevice device = UiDevice.getInstance(InstrumentationRegistry.getInstrumentation());
+        device.wakeUp();
+
+        assertThat(CalendarContract.startViewCalendarEventInManagedProfile(mContext,
+                TEST_VIEW_EVENT_ID, TEST_VIEW_EVENT_START, TEST_VIEW_EVENT_END,
+                TEST_VIEW_EVENT_ALL_DAY, TEST_VIEW_EVENT_FLAG)).isTrue();
+        final String textviewString = getViewEventCrossProfileString(TEST_VIEW_EVENT_ID,
+                TEST_VIEW_EVENT_START, TEST_VIEW_EVENT_END, TEST_VIEW_EVENT_ALL_DAY,
+                TEST_VIEW_EVENT_FLAG);
+
+        // Look for the text view to verify that activity is started in work profile.
+        UiObject2 textView = device.wait(
+                Until.findObject(By.res(ID_TEXTVIEW)),
+                TIMEOUT_SEC);
+        assertThat(textView).isNotNull();
+        assertThat(textView.getText()).isEqualTo(textviewString);
+    }
+
+    // This test should be run when the test package is not whitelisted.
+    public void testViewEventCrossProfile_intentFailedWhenNotWhitelisted() throws Exception {
+        requireRunningOnPrimaryProfile();
+
+        assertThat(CalendarContract.startViewCalendarEventInManagedProfile(mContext,
+                TEST_VIEW_EVENT_ID, TEST_VIEW_EVENT_START, TEST_VIEW_EVENT_END,
+                TEST_VIEW_EVENT_ALL_DAY, TEST_VIEW_EVENT_FLAG)).isFalse();
+    }
+
     // Utils method, not a actual test. Ran from ManagedProfileTest.java to set up for actual tests.
     public void testWhitelistManagedProfilePackage() {
         requireRunningOnManagedProfile();
@@ -322,6 +369,14 @@ public class CrossProfileCalendarTest extends AndroidTestCase {
             builder = builder.appendPath(query);
         }
         return builder.build();
+    }
+
+    // This method should align with
+    // DummyCrossProfileViewEventActivity#getViewEventCrossProfileString.
+    private String getViewEventCrossProfileString(long eventId, long start, long end,
+            boolean allDay, int flags) {
+        return String.format("id:%d, start:%d, end:%d, allday:%b, flag:%d", eventId,
+                start, end, allDay, flags);
     }
 
     // This method is to guard that particular tests are supposed to run on managed profile.

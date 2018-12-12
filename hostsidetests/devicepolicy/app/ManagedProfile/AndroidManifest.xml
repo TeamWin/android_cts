@@ -163,6 +163,15 @@
 
         <activity android:name=".TimeoutActivity" android:exported="true"/>
 
+        <activity
+            android:name=".DummyCrossProfileViewEventActivity"
+            android:exported="true">
+            <intent-filter>
+                <action android:name="android.provider.calendar.action.VIEW_WORK_CALENDAR_EVENT"/>
+                <category android:name="android.intent.category.DEFAULT"/>
+            </intent-filter>
+        </activity>
+
         <service
             android:name=".CrossProfileNotificationListenerService"
             android:label="CrossProfileNotificationListenerService"
