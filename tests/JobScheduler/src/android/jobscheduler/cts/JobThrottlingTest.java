@@ -16,6 +16,7 @@
 
 package android.jobscheduler.cts;
 
+import static android.jobscheduler.cts.ConnectivityConstraintTest.setWifiState;
 import static android.jobscheduler.cts.jobtestapp.TestJobService.ACTION_JOB_STARTED;
 import static android.jobscheduler.cts.jobtestapp.TestJobService.ACTION_JOB_STOPPED;
 import static android.jobscheduler.cts.jobtestapp.TestJobService.JOB_PARAMS_EXTRA_KEY;
@@ -32,10 +33,14 @@ import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
+import android.content.pm.PackageManager;
 import android.jobscheduler.cts.jobtestapp.TestActivity;
 import android.jobscheduler.cts.jobtestapp.TestJobSchedulerReceiver;
+import android.net.ConnectivityManager;
+import android.net.wifi.WifiManager;
 import android.os.PowerManager;
 import android.os.SystemClock;
+import android.os.Temperature;
 import android.support.test.InstrumentationRegistry;
 import android.support.test.filters.LargeTest;
 import android.support.test.runner.AndroidJUnit4;
@@ -44,6 +49,7 @@ import android.util.Log;
 
 import com.android.compatibility.common.util.AppStandbyUtils;
 import com.android.compatibility.common.util.BatteryUtils;
+import com.android.compatibility.common.util.ThermalUtils;
 
 import org.junit.After;
 import org.junit.Before;
@@ -82,6 +88,12 @@ public class JobThrottlingTest {
     private boolean mDeviceInDoze;
     private boolean mDeviceIdleEnabled;
     private boolean mAppStandbyEnabled;
+    private WifiManager mWifiManager;
+    private ConnectivityManager mCm;
+    /** Whether the device running these tests supports WiFi. */
+    private boolean mHasWifi;
+    /** Track whether WiFi was enabled in case we turn it off. */
+    private boolean mInitialWiFiState;
 
     /* accesses must be synchronized on itself */
     private final TestJobStatus mTestJobStatus = new TestJobStatus();
@@ -140,6 +152,10 @@ public class JobThrottlingTest {
         } else {
             Log.w(TAG, "App standby not enabled on test device");
         }
+        mWifiManager = mContext.getSystemService(WifiManager.class);
+        mCm = mContext.getSystemService(ConnectivityManager.class);
+        mHasWifi = mContext.getPackageManager().hasSystemFeature(PackageManager.FEATURE_WIFI);
+        mInitialWiFiState = mWifiManager.isWifiEnabled();
     }
 
     @Test
@@ -185,6 +201,23 @@ public class JobThrottlingTest {
         Thread.sleep(BACKGROUND_JOBS_EXPECTED_DELAY - DEFAULT_WAIT_TIMEOUT);
         assertTrue("Job for background app did not start after the expected delay of "
                 + BACKGROUND_JOBS_EXPECTED_DELAY + "ms", awaitJobStart(DEFAULT_WAIT_TIMEOUT));
+    }
+
+    @Test
+    public void testBackgroundConnectivityJobsThrottled() throws Exception {
+        if (!mHasWifi) {
+            Log.d(TAG, "Skipping test that requires the device be WiFi enabled.");
+            return;
+        }
+        setWifiState(true, mContext, mCm, mWifiManager);
+        assumeTrue("device idle not enabled", mDeviceIdleEnabled);
+        sendScheduleJobBroadcast(false, true);
+        assertTrue("Job did not start after scheduling", awaitJobStart(DEFAULT_WAIT_TIMEOUT));
+        ThermalUtils.overrideThermalStatus(Temperature.THROTTLING_CRITICAL);
+        assertTrue("Job did not stop on thermal throttling", awaitJobStop(DEFAULT_WAIT_TIMEOUT));
+        Thread.sleep(TestJobSchedulerReceiver.JOB_INITIAL_BACKOFF);
+        ThermalUtils.overrideThermalNotThrottling();
+        assertTrue("Job did not start back from throttling", awaitJobStart(DEFAULT_WAIT_TIMEOUT));
     }
 
     @Test
@@ -260,6 +293,8 @@ public class JobThrottlingTest {
 
     @After
     public void tearDown() throws Exception {
+        // Lock thermal service to not throttling
+        ThermalUtils.overrideThermalNotThrottling();
         if (mDeviceIdleEnabled) {
             toggleDeviceIdleState(false);
         }
@@ -273,6 +308,11 @@ public class JobThrottlingTest {
 
         Thread.sleep(500); // To avoid any race between unregister and the next register in setUp
         waitUntilTestAppNotInTempWhitelist();
+
+        // Ensure that we leave WiFi in its previous state.
+        if (mWifiManager.isWifiEnabled() != mInitialWiFiState) {
+            setWifiState(mInitialWiFiState, mContext, mCm, mWifiManager);
+        }
     }
 
     private boolean isTestAppTempWhitelisted() throws Exception {
@@ -292,13 +332,19 @@ public class JobThrottlingTest {
         mContext.startActivity(testActivity);
     }
 
-    private void sendScheduleJobBroadcast(boolean allowWhileIdle) throws Exception {
+    private void sendScheduleJobBroadcast(boolean allowWhileIdle, boolean needNetwork)
+            throws Exception {
         final Intent scheduleJobIntent = new Intent(TestJobSchedulerReceiver.ACTION_SCHEDULE_JOB);
         scheduleJobIntent.addFlags(Intent.FLAG_RECEIVER_FOREGROUND);
         scheduleJobIntent.putExtra(TestJobSchedulerReceiver.EXTRA_JOB_ID_KEY, mTestJobId);
         scheduleJobIntent.putExtra(TestJobSchedulerReceiver.EXTRA_ALLOW_IN_IDLE, allowWhileIdle);
+        scheduleJobIntent.putExtra(TestJobSchedulerReceiver.EXTRA_REQUIRE_NETWORK_ANY, needNetwork);
         scheduleJobIntent.setComponent(new ComponentName(TEST_APP_PACKAGE, TEST_APP_RECEIVER));
         mContext.sendBroadcast(scheduleJobIntent);
+    }
+
+    private void sendScheduleJobBroadcast(boolean allowWhileIdle) throws Exception {
+        sendScheduleJobBroadcast(allowWhileIdle, false);
     }
 
     private void toggleDeviceIdleState(final boolean idle) throws Exception {

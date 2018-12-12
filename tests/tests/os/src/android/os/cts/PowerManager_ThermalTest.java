@@ -28,6 +28,8 @@ import static org.mockito.Mockito.reset;
 import static org.mockito.Mockito.timeout;
 import static org.mockito.Mockito.verify;
 
+import com.android.compatibility.common.util.ThermalUtils;
+
 import org.junit.After;
 
 import org.junit.Before;
@@ -35,7 +37,6 @@ import org.junit.Test;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
 
-import java.io.IOException;
 import java.util.concurrent.Executor;
 import java.util.concurrent.Executors;
 
@@ -54,42 +55,39 @@ public class PowerManager_ThermalTest {
         mContext = InstrumentationRegistry.getTargetContext();
         mUiDevice = UiDevice.getInstance(InstrumentationRegistry.getInstrumentation());
         mPowerManager = mContext.getSystemService(PowerManager.class);
-        mUiDevice.executeShellCommand("cmd thermalservice override-status 0");
+        ThermalUtils.overrideThermalNotThrottling();
     }
 
     @After
     public void tearDown() throws Exception {
-        mUiDevice.executeShellCommand("cmd thermalservice reset");
+        ThermalUtils.resetThermalStatus();
     }
 
     @Test
     public void testGetThermalStatus() throws Exception {
-        int status = 0;
+        int status = 0; // Temperature.THROTTLING_NONE
         assertEquals(status, mPowerManager.getCurrentThermalStatus());
-        status = 3;
-        mUiDevice.executeShellCommand("cmd thermalservice override-status "
-                + status);
+        status = 3; // Temperature.THROTTLING_SEVERE
+        ThermalUtils.overrideThermalStatus(status);
         assertEquals(status, mPowerManager.getCurrentThermalStatus());
     }
 
     @Test
     public void testThermalStatusCallback() throws Exception {
-        // Initial override status is 0
-        int status = 0;
+        // Initial override status is Temperature.THROTTLING_NONE (0)
+        int status = 0; // Temperature.THROTTLING_NONE
         mPowerManager.registerThermalStatusCallback(mCallback, mExec);
         verify(mCallback, timeout(CALLBACK_TIMEOUT_MILLI_SEC)
                 .times(1)).onStatusChange(status);
         reset(mCallback);
-        status = 3;
-        mUiDevice.executeShellCommand("cmd thermalservice override-status "
-                + status);
+        status = 3; // Temperature.THROTTLING_SEVERE
+        ThermalUtils.overrideThermalStatus(status);
         verify(mCallback, timeout(CALLBACK_TIMEOUT_MILLI_SEC)
                 .times(1)).onStatusChange(status);
         reset(mCallback);
         mPowerManager.unregisterThermalStatusCallback(mCallback);
-        status = 2;
-        mUiDevice.executeShellCommand("cmd thermalservice override-status "
-                + status);
+        status = 2; // THROTTLING_MODERATE
+        ThermalUtils.overrideThermalStatus(status);
         verify(mCallback, timeout(CALLBACK_TIMEOUT_MILLI_SEC)
                 .times(0)).onStatusChange(status);
     }
