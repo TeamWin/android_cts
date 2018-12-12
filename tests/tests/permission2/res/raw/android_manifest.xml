@@ -2093,10 +2093,9 @@
 
     <!-- @hide Allows an application to cache content.
          <p>Not for use by third-party applications.
-         <p>Protection level: signature
     -->
     <permission android:name="android.permission.CACHE_CONTENT"
-        android:protectionLevel="signature" />
+        android:protectionLevel="signature|documenter" />
 
     <!-- @SystemApi @hide
          Allows an application to aggressively allocate disk space.
@@ -2184,7 +2183,7 @@
          This permission is not available to third party applications.
          @hide -->
     <permission android:name="android.permission.INTERACT_ACROSS_PROFILES"
-                android:protectionLevel="signature|privileged" />
+        android:protectionLevel="signature|privileged" />
 
     <!-- @SystemApi @hide Allows an application to call APIs that allow it to query and manage
          users on the device. This permission is not available to
