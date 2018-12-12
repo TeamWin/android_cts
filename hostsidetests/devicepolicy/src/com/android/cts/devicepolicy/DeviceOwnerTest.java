@@ -72,6 +72,21 @@ public class DeviceOwnerTest extends BaseDevicePolicyTest {
     private static final String ARG_NETWORK_LOGGING_BATCH_COUNT = "batchCount";
     private static final String TEST_UPDATE_LOCATION = "/data/local/tmp/cts/deviceowner";
 
+    /**
+     * Copied from {@link
+     * DevicePolicyManager.InstallUpdateCallback#UPDATE_ERROR_UPDATE_FILE_INVALID }
+     */
+    private static final int UPDATE_ERROR_UPDATE_FILE_INVALID = 3;
+
+    private static final int TYPE_NONE = 0;
+
+    /**
+     * Copied from {@link android.app.admin.SystemUpdatePolicy}
+     */
+    private static final int TYPE_INSTALL_AUTOMATIC = 1;
+    private static final int TYPE_INSTALL_WINDOWED = 2;
+    private static final int TYPE_POSTPONE = 3;
+
     /** CreateAndManageUser is available and an additional user can be created. */
     private boolean mHasCreateAndManageUserFeature;
 
@@ -113,6 +128,11 @@ public class DeviceOwnerTest extends BaseDevicePolicyTest {
 
     public void testLockScreenInfo() throws Exception {
         executeDeviceOwnerTest("LockScreenInfoTest");
+        assertMetricsLogged(getDevice(), () -> {
+            executeDeviceTestMethod(".LockScreenInfoTest", "testSetAndGetLockInfo");
+        }, new DevicePolicyEventWrapper.Builder(EventId.SET_DEVICE_OWNER_LOCK_SCREEN_INFO_VALUE)
+                .setAdminPackageName(DEVICE_OWNER_PKG)
+                .build());
     }
 
     public void testWifi() throws Exception {
@@ -120,6 +140,11 @@ public class DeviceOwnerTest extends BaseDevicePolicyTest {
             return;
         }
         executeDeviceOwnerTest("WifiTest");
+        assertMetricsLogged(getDevice(), () -> {
+            executeDeviceTestMethod(".WifiTest", "testGetWifiMacAddress");
+        }, new DevicePolicyEventWrapper.Builder(EventId.GET_WIFI_MAC_ADDRESS_VALUE)
+                .setAdminPackageName(DEVICE_OWNER_PKG)
+                .build());
     }
 
     public void testRemoteBugreportWithTwoUsers() throws Exception {
@@ -529,6 +554,14 @@ public class DeviceOwnerTest extends BaseDevicePolicyTest {
         try {
             installAppAsUser(INTENT_RECEIVER_APK, mPrimaryUserId);
             executeDeviceOwnerTest("LockTaskTest");
+            assertMetricsLogged(getDevice(), () -> {
+                runDeviceTestsAsUser(DEVICE_OWNER_PKG, ".LockTaskTest", "testStartLockTask",
+                        mPrimaryUserId);
+            }, new DevicePolicyEventWrapper.Builder(EventId.SET_LOCKTASK_MODE_ENABLED_VALUE)
+                    .setAdminPackageName(DEVICE_OWNER_PKG)
+                    .setBoolean(true)
+                    .setStrings(DEVICE_OWNER_PKG)
+                    .build());
         } catch (AssertionError ex) {
             // STOPSHIP(b/32771855), remove this once we fixed the bug.
             executeShellCommand("dumpsys activity activities");
@@ -628,6 +661,36 @@ public class DeviceOwnerTest extends BaseDevicePolicyTest {
         executeDeviceOwnerTest("SystemUpdatePolicyTest");
     }
 
+    public void testSetSystemUpdatePolicyLogged() throws Exception {
+        if (!mHasFeature) {
+            return;
+        }
+        assertMetricsLogged(getDevice(), () -> {
+            executeDeviceTestMethod(".SystemUpdatePolicyTest", "testSetAutomaticInstallPolicy");
+        }, new DevicePolicyEventWrapper.Builder(EventId.SET_SYSTEM_UPDATE_POLICY_VALUE)
+                    .setAdminPackageName(DEVICE_OWNER_PKG)
+                    .setInt(TYPE_INSTALL_AUTOMATIC)
+                    .build());
+        assertMetricsLogged(getDevice(), () -> {
+            executeDeviceTestMethod(".SystemUpdatePolicyTest", "testSetWindowedInstallPolicy");
+        }, new DevicePolicyEventWrapper.Builder(EventId.SET_SYSTEM_UPDATE_POLICY_VALUE)
+                    .setAdminPackageName(DEVICE_OWNER_PKG)
+                    .setInt(TYPE_INSTALL_WINDOWED)
+                    .build());
+        assertMetricsLogged(getDevice(), () -> {
+            executeDeviceTestMethod(".SystemUpdatePolicyTest", "testSetPostponeInstallPolicy");
+        }, new DevicePolicyEventWrapper.Builder(EventId.SET_SYSTEM_UPDATE_POLICY_VALUE)
+                    .setAdminPackageName(DEVICE_OWNER_PKG)
+                    .setInt(TYPE_POSTPONE)
+                    .build());
+        assertMetricsLogged(getDevice(), () -> {
+            executeDeviceTestMethod(".SystemUpdatePolicyTest", "testSetEmptytInstallPolicy");
+        }, new DevicePolicyEventWrapper.Builder(EventId.SET_SYSTEM_UPDATE_POLICY_VALUE)
+                    .setAdminPackageName(DEVICE_OWNER_PKG)
+                    .setInt(TYPE_NONE)
+                    .build());
+    }
+
     public void testWifiConfigLockdown() throws Exception {
         final boolean hasWifi = hasDeviceFeature("android.hardware.wifi");
         if (hasWifi && mHasFeature) {
@@ -717,8 +780,26 @@ public class DeviceOwnerTest extends BaseDevicePolicyTest {
         if (!mHasFeature) {
             return;
         }
-
         executeDeviceOwnerTest("AdminActionBookkeepingTest");
+        assertMetricsLogged(getDevice(), () -> {
+            executeDeviceTestMethod(".AdminActionBookkeepingTest", "testRetrieveSecurityLogs");
+        }, new DevicePolicyEventWrapper.Builder(EventId.RETRIEVE_SECURITY_LOGS_VALUE)
+                    .setAdminPackageName(DEVICE_OWNER_PKG)
+                    .build(),
+            new DevicePolicyEventWrapper.Builder(EventId.RETRIEVE_PRE_REBOOT_SECURITY_LOGS_VALUE)
+                    .setAdminPackageName(DEVICE_OWNER_PKG)
+                    .build());
+    }
+
+    public void testRequestBugreportLogged() throws Exception {
+        if (!mHasFeature) {
+            return;
+        }
+        assertMetricsLogged(getDevice(), () -> {
+            executeDeviceTestMethod(".AdminActionBookkeepingTest", "testRequestBugreport");
+        }, new DevicePolicyEventWrapper.Builder(EventId.REQUEST_BUGREPORT_VALUE)
+                .setAdminPackageName(DEVICE_OWNER_PKG)
+                .build());
     }
 
     public void testBluetoothRestriction() throws Exception {
@@ -811,16 +892,28 @@ public class DeviceOwnerTest extends BaseDevicePolicyTest {
             runDeviceTestsAsUser(DEVICE_OWNER_PKG, ".PackageInstallTest",
                     "testPackageInstall", mPrimaryUserId);
 
-            runDeviceTestsAsUser(DEVICE_OWNER_PKG, ".PackageInstallTest",
-                    "testKeepPackageCache", mPrimaryUserId);
+            assertMetricsLogged(getDevice(), () -> {
+                runDeviceTestsAsUser(DEVICE_OWNER_PKG, ".PackageInstallTest",
+                        "testKeepPackageCache", mPrimaryUserId);
+            }, new DevicePolicyEventWrapper.Builder(EventId.SET_KEEP_UNINSTALLED_PACKAGES_VALUE)
+                    .setAdminPackageName(DEVICE_OWNER_PKG)
+                    .setBoolean(false)
+                    .setStrings(TEST_APP_PKG)
+                    .build());
 
             // Remove the package in primary user
             runDeviceTestsAsUser(DEVICE_OWNER_PKG, ".PackageInstallTest",
                     "testPackageUninstall", mPrimaryUserId);
 
-            // Should be able to enable the cached package in primary user
-            runDeviceTestsAsUser(DEVICE_OWNER_PKG, ".PackageInstallTest",
-                    "testInstallExistingPackage", mPrimaryUserId);
+            assertMetricsLogged(getDevice(), () -> {
+                // Should be able to enable the cached package in primary user
+                runDeviceTestsAsUser(DEVICE_OWNER_PKG, ".PackageInstallTest",
+                        "testInstallExistingPackage", mPrimaryUserId);
+            }, new DevicePolicyEventWrapper.Builder(EventId.INSTALL_EXISTING_PACKAGE_VALUE)
+                    .setAdminPackageName(DEVICE_OWNER_PKG)
+                    .setBoolean(false)
+                    .setStrings(TEST_APP_PKG)
+                    .build());
         } finally {
             String command = "rm " + TEST_APP_LOCATION + apk.getName();
             getDevice().executeShellCommand(command);
@@ -916,6 +1009,37 @@ public class DeviceOwnerTest extends BaseDevicePolicyTest {
         pushUpdateFileToDevice("wrongHash.zip");
         pushUpdateFileToDevice("wrongSize.zip");
         executeDeviceOwnerTest("InstallUpdateTest");
+
+        assertMetricsLogged(getDevice(), () -> {
+            executeDeviceTestMethod(".InstallUpdateTest", "testInstallUpdate_failWrongHash");
+        }, new DevicePolicyEventWrapper.Builder(EventId.INSTALL_SYSTEM_UPDATE_VALUE)
+                .setAdminPackageName(DEVICE_OWNER_PKG)
+                .setBoolean(isDeviceAb())
+                .build(),
+            new DevicePolicyEventWrapper.Builder(EventId.INSTALL_SYSTEM_UPDATE_ERROR_VALUE)
+                .setInt(UPDATE_ERROR_UPDATE_FILE_INVALID)
+                .build());
+    }
+
+    public void testInstallUpdateLogged() throws Exception {
+        if (!mHasFeature) {
+            return;
+        }
+        pushUpdateFileToDevice("wrongHash.zip");
+        assertMetricsLogged(getDevice(), () -> {
+            executeDeviceTestMethod(".InstallUpdateTest", "testInstallUpdate_failWrongHash");
+        }, new DevicePolicyEventWrapper.Builder(EventId.INSTALL_SYSTEM_UPDATE_VALUE)
+                    .setAdminPackageName(DEVICE_OWNER_PKG)
+                    .setBoolean(isDeviceAb())
+                    .build(),
+            new DevicePolicyEventWrapper.Builder(EventId.INSTALL_SYSTEM_UPDATE_ERROR_VALUE)
+                    .setInt(UPDATE_ERROR_UPDATE_FILE_INVALID)
+                    .build());
+    }
+
+    private boolean isDeviceAb() throws DeviceNotAvailableException {
+        final String result = getDevice().executeShellCommand("getprop ro.build.ab_update").trim();
+        return "true".equalsIgnoreCase(result);
     }
 
     private void pushUpdateFileToDevice(String fileName)
@@ -931,17 +1055,30 @@ public class DeviceOwnerTest extends BaseDevicePolicyTest {
         file.delete();
     }
 
-    public void testRetrieveSecurityLogsLogged() throws Exception {
+    public void testSetKeyguardDisabledLogged() throws Exception {
         if (!mHasFeature) {
             return;
         }
         assertMetricsLogged(getDevice(), () -> {
-            executeDeviceTestMethod(".AdminActionBookkeepingTest", "testRetrieveSecurityLogs");
-        }, new DevicePolicyEventWrapper.Builder(EventId.RETRIEVE_SECURITY_LOGS_VALUE)
+            executeDeviceTestMethod(".DevicePolicyLoggingTest", "testSetKeyguardDisabledLogged");
+        }, new DevicePolicyEventWrapper.Builder(EventId.SET_KEYGUARD_DISABLED_VALUE)
                 .setAdminPackageName(DEVICE_OWNER_PKG)
-                .build(),
-            new DevicePolicyEventWrapper.Builder(EventId.RETRIEVE_PRE_REBOOT_SECURITY_LOGS_VALUE)
+                .build());
+    }
+
+    public void testSetStatusBarDisabledLogged() throws Exception {
+        if (!mHasFeature) {
+            return;
+        }
+        assertMetricsLogged(getDevice(), () -> {
+            executeDeviceTestMethod(".DevicePolicyLoggingTest", "testSetStatusBarDisabledLogged");
+        }, new DevicePolicyEventWrapper.Builder(EventId.SET_STATUS_BAR_DISABLED_VALUE)
                     .setAdminPackageName(DEVICE_OWNER_PKG)
+                    .setBoolean(true)
+                    .build(),
+            new DevicePolicyEventWrapper.Builder(EventId.SET_STATUS_BAR_DISABLED_VALUE)
+                    .setAdminPackageName(DEVICE_OWNER_PKG)
+                    .setBoolean(true)
                     .build());
     }
 
