@@ -17,7 +17,6 @@ package android.contentcaptureservice.cts.common;
 
 import android.app.Activity;
 import android.app.Application.ActivityLifecycleCallbacks;
-import android.contentcaptureservice.cts.BlankActivity;
 import android.os.Bundle;
 import android.util.ArrayMap;
 import android.util.Log;
@@ -98,7 +97,7 @@ public final class ActivitiesWatcher implements ActivityLifecycleCallbacks {
      *
      * @throws IllegalStateException if already registered.
      */
-    public ActivityWatcher watch(@NonNull Class<BlankActivity> clazz) {
+    public ActivityWatcher watch(@NonNull Class<? extends Activity> clazz) {
         return watch(clazz.getName());
     }
 
