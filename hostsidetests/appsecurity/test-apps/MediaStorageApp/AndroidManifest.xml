@@ -27,6 +27,7 @@
             </intent-filter>
         </activity>
 
+        <activity android:name=".GetResultActivity" />
     </application>
 
     <instrumentation android:name="android.support.test.runner.AndroidJUnitRunner"

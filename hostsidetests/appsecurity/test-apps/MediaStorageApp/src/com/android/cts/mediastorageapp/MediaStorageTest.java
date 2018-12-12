@@ -16,13 +16,18 @@
 
 package com.android.cts.mediastorageapp;
 
+import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
+import android.app.Activity;
+import android.app.Instrumentation;
+import android.app.RecoverableSecurityException;
 import android.content.ContentResolver;
 import android.content.ContentUris;
 import android.content.Context;
+import android.content.Intent;
 import android.database.Cursor;
 import android.graphics.Bitmap;
 import android.net.Uri;
@@ -31,6 +36,8 @@ import android.provider.MediaStore;
 import android.provider.MediaStore.MediaColumns;
 import android.support.test.InstrumentationRegistry;
 import android.support.test.runner.AndroidJUnit4;
+import android.support.test.uiautomator.UiDevice;
+import android.support.test.uiautomator.UiSelector;
 
 import org.junit.Before;
 import org.junit.Test;
@@ -138,6 +145,47 @@ public class MediaStorageTest {
         try (ParcelFileDescriptor pfd = mContentResolver.openFileDescriptor(blue, "r")) {
         }
         try (ParcelFileDescriptor pfd = mContentResolver.openFileDescriptor(blue, "w")) {
+        }
+    }
+
+    @Test
+    public void testMediaEscalation() throws Exception {
+        final Uri red = createImage(MediaStore.Images.Media.EXTERNAL_CONTENT_URI);
+        clearMediaOwner(red);
+
+        // Confirm that we get can take action to get write access
+        RecoverableSecurityException exception = null;
+        try (ParcelFileDescriptor pfd = mContentResolver.openFileDescriptor(red, "w")) {
+            fail("Expected write access to be blocked");
+        } catch (RecoverableSecurityException expected) {
+            exception = expected;
+        }
+
+        // Try launching the action to grant ourselves access
+        final Instrumentation inst = InstrumentationRegistry.getInstrumentation();
+        final Intent intent = new Intent(inst.getContext(), GetResultActivity.class);
+        intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+
+        // Wake up the device and dismiss the keyguard before the test starts
+        final UiDevice device = UiDevice.getInstance(inst);
+        device.executeShellCommand("input keyevent KEYCODE_WAKEUP");
+        device.executeShellCommand("wm dismiss-keyguard");
+
+        final GetResultActivity activity = (GetResultActivity) inst.startActivitySync(intent);
+        device.waitForIdle();
+        activity.clearResult();
+        activity.startIntentSenderForResult(
+                exception.getUserAction().getActionIntent().getIntentSender(),
+                42, null, 0, 0, 0);
+
+        device.waitForIdle();
+        device.findObject(new UiSelector().text("Allow")).click();
+
+        // Verify that we now have access
+        final GetResultActivity.Result res = activity.getResult();
+        assertEquals(Activity.RESULT_OK, res.resultCode);
+
+        try (ParcelFileDescriptor pfd = mContentResolver.openFileDescriptor(red, "w")) {
         }
     }
 
