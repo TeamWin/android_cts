@@ -33,6 +33,7 @@ interface ITest {
   float[] RepeatFloatArray(in float[] input, out float[] repeated);
   double[] RepeatDoubleArray(in double[] input, out double[] repeated);
   String[] RepeatStringArray(in String[] input, out String[] repeated);
+  RegularPolygon[] RepeatRegularPolygonArray(in RegularPolygon[] input, out RegularPolygon[] repeated);
   @nullable boolean[] RepeatNullableBooleanArray(in @nullable boolean[] input);
   @nullable byte[] RepeatNullableByteArray(in @nullable byte[] input);
   @nullable char[] RepeatNullableCharArray(in @nullable char[] input);
