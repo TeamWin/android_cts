@@ -90,7 +90,10 @@ public class OmapiTest {
             {(byte) 0x94, (byte) 0x0C, 0x00, 0x00, 0x01, (byte) 0xAA, 0x00}
     };
 
-    private final static byte[] CHECK_SELECT_P2_APDU = new byte[]{0x00, (byte) 0xF4, 0x00, 0x00};
+    /* Case 2 APDU command expects the P2 received in the SELECT command as 1-byte outgoing data */
+    private static final byte[] CHECK_SELECT_P2_APDU = new byte[] {
+            0x00, (byte) 0xF4, 0x00, 0x00, 0x00
+    };
 
     /* OMAPI APDU Test case 1 and 3 */
     private final static byte[][] SW_62xx_NO_DATA_APDU =
@@ -447,6 +450,27 @@ public class OmapiTest {
         return transmitResponse;
     }
 
+    private byte[] internalTransmitApduWithoutP2(Reader reader, byte[] apdu) throws IOException {
+        byte[] transmitResponse = null;
+        Session session = null;
+        Channel channel = null;
+        try {
+            assertTrue(reader.isSecureElementPresent());
+            session = reader.openSession();
+            assertNotNull("null session", session);
+            channel = session.openLogicalChannel(SELECTABLE_AID);
+            assertNotNull("Null Channel", channel);
+            byte[] selectResponse = channel.getSelectResponse();
+            assertNotNull("Null Select Response", selectResponse);
+            assertGreaterOrEqual(selectResponse.length, 2);
+            transmitResponse = channel.transmit(apdu);
+        } finally {
+            if (channel != null) channel.close();
+            if (session != null) session.close();
+        }
+        return transmitResponse;
+    }
+
     /**
      * Tests Transmit API for all readers.
      *
@@ -558,7 +582,11 @@ public class OmapiTest {
         }
     }
 
-    /** Test the P2 value of the select command sent by the underlying implementation */
+    /**
+     * Tests the P2 value of the select command.
+     *
+     * Verifies that the default P2 value (0x00) is not modified by the underlying implementation.
+     */
     @Test
     public void testP2Value() {
         try {
@@ -566,7 +594,7 @@ public class OmapiTest {
             Reader[] readers = seService.getReaders();
 
             for (Reader reader : readers) {
-                byte[] response = internalTransmitApdu(reader, CHECK_SELECT_P2_APDU);
+                byte[] response = internalTransmitApduWithoutP2(reader, CHECK_SELECT_P2_APDU);
                 assertGreaterOrEqual(response.length, 3);
                 assertThat(response[response.length - 1] & 0xFF, is(0x00));
                 assertThat(response[response.length - 2] & 0xFF, is(0x90));
