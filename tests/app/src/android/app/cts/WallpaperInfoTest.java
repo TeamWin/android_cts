@@ -52,6 +52,7 @@ public class WallpaperInfoTest {
         assertEquals("Context", wallpaperInfo.loadContextDescription(pm));
         assertEquals("http://android.com", wallpaperInfo.loadContextUri(pm).toString());
         assertEquals(true, wallpaperInfo.getShowMetadataInPreview());
+        assertEquals(true, wallpaperInfo.supportsMultipleDisplays());
         assertNotNull(wallpaperInfo.loadIcon(pm));
         assertNotNull(wallpaperInfo.loadThumbnail(pm));
     }
