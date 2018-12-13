@@ -119,6 +119,8 @@ public class JobThrottlingTest {
     public void setUp() throws Exception {
         mContext = InstrumentationRegistry.getTargetContext();
         mUiDevice = UiDevice.getInstance(InstrumentationRegistry.getInstrumentation());
+        // Lock thermal service to not throttling
+        mUiDevice.executeShellCommand("cmd thermalservice override-status 0");
         mPowerManager = mContext.getSystemService(PowerManager.class);
         mDeviceInDoze = mPowerManager.isDeviceIdleMode();
         mTestPackageUid = mContext.getPackageManager().getPackageUid(TEST_APP_PACKAGE, 0);
@@ -273,6 +275,8 @@ public class JobThrottlingTest {
 
         Thread.sleep(500); // To avoid any race between unregister and the next register in setUp
         waitUntilTestAppNotInTempWhitelist();
+        // Reset thermal service
+        mUiDevice.executeShellCommand("cmd thermalservice reset");
     }
 
     private boolean isTestAppTempWhitelisted() throws Exception {

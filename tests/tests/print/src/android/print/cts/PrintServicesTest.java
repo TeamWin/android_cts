@@ -291,11 +291,13 @@ public class PrintServicesTest extends BasePrintTest {
         // Click the print button.
         clickPrintButton();
 
-        // Answer the dialog for the print service cloud warning
-        answerPrintServicesWarning(true);
+        eventually(() -> {
+            // Answer the dialog for the print service cloud warning
+            answerPrintServicesWarning(true);
 
-        // Wait until the print job is queued and #sPrintJob is set
-        waitForServiceOnPrintJobQueuedCallbackCalled(1);
+            // Wait until the print job is queued and #sPrintJob is set
+            waitForServiceOnPrintJobQueuedCallbackCalled(1);
+        }, OPERATION_TIMEOUT_MILLIS * 2);
 
         // Progress print job and check for appropriate notifications
         progress(0, "printed 0");
@@ -497,17 +499,20 @@ public class PrintServicesTest extends BasePrintTest {
 
             // Init services
             waitForPrinterDiscoverySessionCreateCallbackCalled();
-            StubbablePrintService firstService = serviceCallbacks1.getService();
 
             waitForWriteAdapterCallback(1);
             selectPrinter("Printer1");
 
+            StubbablePrintService firstService = serviceCallbacks1.getService();
             // Job is not yet confirmed, hence it is not yet "active"
             runOnMainThread(() -> assertEquals(0, firstService.callGetActivePrintJobs().size()));
 
             clickPrintButton();
-            answerPrintServicesWarning(true);
-            onPrintJobQueuedCalled();
+
+            eventually(() -> {
+                answerPrintServicesWarning(true);
+                waitForServiceOnPrintJobQueuedCallbackCalled(1);
+            }, OPERATION_TIMEOUT_MILLIS * 2);
 
             eventually(() -> runOnMainThread(
                     () -> assertEquals(1, firstService.callGetActivePrintJobs().size())));
@@ -517,7 +522,7 @@ public class PrintServicesTest extends BasePrintTest {
             runOnMainThread(() -> pm.print("job2", adapter, null));
             waitForWriteAdapterCallback(1);
             clickPrintButton();
-            onPrintJobQueuedCalled();
+            waitForServiceOnPrintJobQueuedCallbackCalled(1);
 
             eventually(() -> runOnMainThread(
                     () -> assertEquals(2, firstService.callGetActivePrintJobs().size())));
@@ -528,14 +533,17 @@ public class PrintServicesTest extends BasePrintTest {
 
             waitForPrinterDiscoverySessionCreateCallbackCalled();
 
-            StubbablePrintService secondService = serviceCallbacks2.getService();
-            runOnMainThread(() -> assertEquals(0, secondService.callGetActivePrintJobs().size()));
-
             waitForWriteAdapterCallback(1);
             selectPrinter("Printer2");
             clickPrintButton();
-            answerPrintServicesWarning(true);
-            onPrintJobQueuedCalled();
+
+            StubbablePrintService secondService = serviceCallbacks2.getService();
+            runOnMainThread(() -> assertEquals(0, secondService.callGetActivePrintJobs().size()));
+
+            eventually(() -> {
+                answerPrintServicesWarning(true);
+                waitForServiceOnPrintJobQueuedCallbackCalled(1);
+            }, OPERATION_TIMEOUT_MILLIS * 2);
 
             eventually(() -> runOnMainThread(
                     () -> assertEquals(1, secondService.callGetActivePrintJobs().size())));

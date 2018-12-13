@@ -105,6 +105,7 @@ public abstract class ConstraintTest extends InstrumentationTestCase {
     @Override
     public void setUp() throws Exception {
         super.setUp();
+        SystemUtil.runShellCommand(getInstrumentation(), "cmd thermalservice override-status 0");
         kTestEnvironment.setUp();
         kTriggerTestEnvironment.setUp();
         mJobScheduler.cancelAll();
@@ -117,6 +118,7 @@ public abstract class ConstraintTest extends InstrumentationTestCase {
             SystemUtil.runShellCommand(getInstrumentation(), "cmd devicestoragemonitor reset");
             mStorageStateChanged = false;
         }
+        SystemUtil.runShellCommand(getInstrumentation(), "cmd thermalservice reset");
     }
 
     /**

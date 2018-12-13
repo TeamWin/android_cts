@@ -17,6 +17,7 @@
 package android.graphics.text.cts;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotNull;
 
 import android.content.Context;
 import android.content.res.AssetManager;
@@ -54,9 +55,44 @@ public class MeasuredTextTest {
                 .appendStyleRun(sPaint, text.length(), false /* isRtl */).build();
     }
 
+    @Test
+    public void testBuilder_FromExistingMeasuredText() {
+        String text = "Hello, World";
+        final MeasuredText mt = new MeasuredText.Builder(text.toCharArray())
+                .appendStyleRun(sPaint, text.length(), false /* isRtl */).build();
+        assertNotNull(new MeasuredText.Builder(mt)
+                .appendStyleRun(sPaint, text.length(), true /* isRtl */).build());
+    }
+
+    @Test(expected = IllegalArgumentException.class)
+    public void testBuilder_FromExistingMeasuredText_differentLayoutParam() {
+        String text = "Hello, World";
+        final MeasuredText mt = new MeasuredText.Builder(text.toCharArray())
+                .setComputeLayout(false)
+                .appendStyleRun(sPaint, text.length(), false /* isRtl */).build();
+        new MeasuredText.Builder(mt)
+                .appendStyleRun(sPaint, text.length(), true /* isRtl */).build();
+    }
+
+    @Test(expected = IllegalArgumentException.class)
+    public void testBuilder_FromExistingMeasuredText_differentHyphenationParam() {
+        String text = "Hello, World";
+        final MeasuredText mt = new MeasuredText.Builder(text.toCharArray())
+                .setComputeHyphenation(false)
+                .appendStyleRun(sPaint, text.length(), false /* isRtl */).build();
+        new MeasuredText.Builder(mt)
+                .setComputeHyphenation(true)
+                .appendStyleRun(sPaint, text.length(), true /* isRtl */).build();
+    }
+
     @Test(expected = NullPointerException.class)
     public void testBuilder_NullText() {
-        new MeasuredText.Builder(null);
+        new MeasuredText.Builder((char[]) null);
+    }
+
+    @Test(expected = NullPointerException.class)
+    public void testBuilder_NullMeasuredText() {
+        new MeasuredText.Builder((MeasuredText) null);
     }
 
     @Test(expected = NullPointerException.class)

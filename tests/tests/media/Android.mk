@@ -72,6 +72,7 @@ LOCAL_JNI_SHARED_LIBRARIES := \
 LOCAL_AAPT_FLAGS := -0 .vp9
 LOCAL_AAPT_FLAGS += -0 .ts
 LOCAL_AAPT_FLAGS += -0 .heic
+LOCAL_AAPT_FLAGS += -0 .trp
 
 LOCAL_SRC_FILES := $(call all-java-files-under, src)
 

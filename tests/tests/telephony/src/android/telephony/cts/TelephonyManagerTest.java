@@ -199,6 +199,9 @@ public class TelephonyManagerTest {
         mTelephonyManager.getCellLocation();
         mTelephonyManager.getSimCarrierId();
         mTelephonyManager.getSimCarrierIdName();
+        mTelephonyManager.getSimPreciseCarrierId();
+        mTelephonyManager.getSimPreciseCarrierIdName();
+        mTelephonyManager.getCarrierIdFromSimMccMnc();
         ShellIdentityUtils.invokeMethodWithShellPermissions(mTelephonyManager,
                 (tm) -> tm.getSimSerialNumber());
         mTelephonyManager.getSimOperator();

@@ -444,6 +444,20 @@ public class ExternalStorageHostTest extends BaseHostJUnit4Test {
         }
     }
 
+    @Test
+    public void testMediaEscalation() throws Exception {
+        // STOPSHIP: remove this once isolated storage is always enabled
+        Assume.assumeTrue(hasIsolatedStorage());
+
+        installPackage(MEDIA_APK);
+        for (int user : mUsers) {
+            updatePermission(MEDIA_PKG, user, PERM_READ_MEDIA_IMAGES, true);
+            updateRole(MEDIA_PKG, user, ROLE_GALLERY, false);
+
+            runDeviceTests(MEDIA_PKG, MEDIA_CLASS, "testMediaEscalation", user);
+        }
+    }
+
     private boolean access(String path) throws DeviceNotAvailableException {
         final long nonce = System.nanoTime();
         return getDevice().executeShellCommand("ls -la " + path + " && echo " + nonce)

@@ -21,6 +21,7 @@ import android.os.SystemClock;
 import android.util.Log;
 
 import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
 
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
@@ -36,12 +37,18 @@ final class Helper {
 
     public static final String MY_PACKAGE = "android.contentcaptureservice.cts";
 
+    public static final long MY_EPOCH = SystemClock.uptimeMillis();
 
-    public static void await(@NonNull CountDownLatch latch, @NonNull String errorMsg)
+    /**
+     * Awaits for a latch to be counted down.
+     */
+    public static void await(@NonNull CountDownLatch latch, @NonNull String fmt,
+            @Nullable Object... args)
             throws InterruptedException {
         final boolean called = latch.await(GENERIC_TIMEOUT_MS, TimeUnit.MILLISECONDS);
         if (!called) {
-            throw new IllegalStateException(errorMsg + " in " + GENERIC_TIMEOUT_MS + "ms");
+            throw new IllegalStateException(String.format(fmt, args)
+                    + " in " + GENERIC_TIMEOUT_MS + "ms");
         }
     }
 
@@ -64,6 +71,13 @@ final class Helper {
     public static void resetService() {
         Log.d(TAG, "Resetting back to default service");
         runShellCommand("cmd content_capture set temporary-service 0");
+    }
+
+    /**
+     * Sets {@link CtsSmartSuggestionsService} as the service for the current user.
+     */
+    public static void enableService() {
+        setService(CtsSmartSuggestionsService.SERVICE_NAME);
     }
 
     private Helper() {

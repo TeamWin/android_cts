@@ -15,8 +15,6 @@
  */
 package android.contentcaptureservice.cts;
 
-import android.app.Activity;
-
-public class BlankActivity extends Activity {
+public class BlankActivity extends AbstractContentCaptureActivity {
 
 }

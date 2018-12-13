@@ -21,5 +21,7 @@
          <disable-keyguard-features />
          <disable-camera />
          <encrypted-storage />
+         <force-lock />
+         <wipe-data />
     </uses-policies>
 </device-admin>

@@ -80,7 +80,9 @@ public class TextClassificationManagerTest {
                     .setExtras(BUNDLE)
                     .build();
     private static final ConversationActions.Message MESSAGE =
-            new ConversationActions.Message.Builder().setText(TEXT).build();
+            new ConversationActions.Message.Builder(ConversationActions.Message.PERSON_USER_REMOTE)
+                    .setText(TEXT)
+                    .build();
     private static final ConversationActions.Request CONVERSATION_ACTIONS_REQUEST =
             new ConversationActions.Request.Builder(Arrays.asList(MESSAGE)).build();
 

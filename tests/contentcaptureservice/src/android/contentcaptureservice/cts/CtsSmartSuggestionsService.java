@@ -18,6 +18,7 @@ package android.contentcaptureservice.cts;
 import static android.contentcaptureservice.cts.Helper.MY_PACKAGE;
 import static android.contentcaptureservice.cts.Helper.await;
 
+import android.app.Activity;
 import android.service.contentcapture.ContentCaptureEventsRequest;
 import android.service.contentcapture.ContentCaptureService;
 import android.service.contentcapture.InteractionContext;
@@ -25,8 +26,10 @@ import android.service.contentcapture.InteractionSessionId;
 import android.util.ArrayMap;
 import android.util.Log;
 import android.view.contentcapture.ContentCaptureEvent;
+import android.view.contentcapture.ViewNode;
 
 import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -56,10 +59,8 @@ public class CtsSmartSuggestionsService extends ContentCaptureService {
     }
 
     private final ArrayMap<InteractionSessionId, Session> mOpenSessions = new ArrayMap<>();
-
     private final ArrayMap<String, Session> mFinishedSessions = new ArrayMap<>();
-
-    private final CountDownLatch mAtLeastOneSessionFinished = new CountDownLatch(1);
+    private final ArrayMap<String, CountDownLatch> mUnfinishedSessionLatches = new ArrayMap<>();
 
     @Override
     public void onCreate() {
@@ -96,6 +97,8 @@ public class CtsSmartSuggestionsService extends ContentCaptureService {
                 throw new IllegalStateException("Already contains session for " + sessionId
                         + ": " + session);
             }
+            mUnfinishedSessionLatches.put(context.getActivityComponent().getClassName(),
+                    new CountDownLatch(1));
             mOpenSessions.put(sessionId, new Session(sessionId, context));
         });
     }
@@ -112,7 +115,8 @@ public class CtsSmartSuggestionsService extends ContentCaptureService {
                 throw new IllegalStateException("Already destroyed " + className);
             } else {
                 mFinishedSessions.put(className, session);
-                mAtLeastOneSessionFinished.countDown();
+                final CountDownLatch latch = getUnfinishedSessionLatch(className);
+                latch.countDown();
             }
         });
     }
@@ -121,8 +125,17 @@ public class CtsSmartSuggestionsService extends ContentCaptureService {
     public void onContentCaptureEventsRequest(InteractionSessionId sessionId,
             ContentCaptureEventsRequest request) {
         final List<ContentCaptureEvent> events = request.getEvents();
-        Log.d(TAG,
-                "onContentCaptureEventsRequest(" + sessionId + "): " + events.size() + " events");
+        final int size = events.size();
+        Log.d(TAG, "onContentCaptureEventsRequest(" + sessionId + "): " + size + " events");
+        for (int i = 0; i < size; i++) {
+            final ContentCaptureEvent event = events.get(i);
+            final StringBuilder msg = new StringBuilder("  ").append(i).append(": ").append(event);
+            final ViewNode node = event.getViewNode();
+            if (node != null) {
+                msg.append(", parent=").append(node.getParentAutofillId());
+            }
+            Log.v(TAG, msg.toString());
+        }
         safeRun(() -> {
             final Session session = getExistingSession(sessionId);
             session.mRequests.add(request);
@@ -135,17 +148,26 @@ public class CtsSmartSuggestionsService extends ContentCaptureService {
      * @throws IllegalStateException if the session didn't finish yet.
      */
     @NonNull
-    public Session getFinishedSession(@NonNull Class<BlankActivity> clazz)
+    public Session getFinishedSession(@NonNull Class<? extends Activity> clazz)
             throws InterruptedException {
-        await(mAtLeastOneSessionFinished, "no session finished yet");
-
         final String className = clazz.getName();
-        final Session session = mFinishedSessions.get(className);
+        final CountDownLatch latch = getUnfinishedSessionLatch(className);
+        await(latch, "session for %s not finished yet", className);
 
+        final Session session = mFinishedSessions.get(className);
         if (session == null) {
-            throw new IllegalStateException("No session for " + className + ": " + mOpenSessions);
+            throwIllegalSessionStateException("No finished session for %s", className);
         }
         return session;
+    }
+
+    @NonNull
+    private CountDownLatch getUnfinishedSessionLatch(final String className) {
+        final CountDownLatch latch = mUnfinishedSessionLatches.get(className);
+        if (latch == null) {
+            throwIllegalSessionStateException("no latch for %s", className);
+        }
+        return latch;
     }
 
     /**
@@ -160,10 +182,17 @@ public class CtsSmartSuggestionsService extends ContentCaptureService {
         throw new AssertionError("Multiple exceptions: " + sExceptions);
     }
 
+    private void throwIllegalSessionStateException(@NonNull String fmt, @Nullable Object...args) {
+        throw new IllegalStateException(String.format(fmt, args)
+                + ". Open=" + mOpenSessions
+                + ". Latches=" + mUnfinishedSessionLatches
+                + ". Finished=" + mFinishedSessions);
+    }
+
     private Session getExistingSession(@NonNull InteractionSessionId sessionId) {
         final Session session = mOpenSessions.get(sessionId);
         if (session == null) {
-            throw new IllegalStateException("No session with id" + sessionId);
+            throwIllegalSessionStateException("No open session with id %s", sessionId);
         }
         if (session.finished) {
             throw new IllegalStateException("session already finished: " + session);
