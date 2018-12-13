@@ -100,6 +100,52 @@ public class WallpaperManagerTest {
     }
 
     @Test
+    public void setBitmapTest_1x1Pixel() {
+        ensureCleanState();
+
+        Bitmap tmpWallpaper = Bitmap.createBitmap(1, 1, Bitmap.Config.ARGB_8888);
+        Canvas canvas = new Canvas(tmpWallpaper);
+        canvas.drawColor(Color.RED);
+
+        try {
+            int which = WallpaperManager.FLAG_SYSTEM;
+            int oldWallpaperId = mWallpaperManager.getWallpaperId(which);
+            mWallpaperManager.suggestDesiredDimensions(tmpWallpaper.getWidth(),
+                    tmpWallpaper.getHeight());
+            mWallpaperManager.setBitmap(tmpWallpaper);
+            int newWallpaperId = mWallpaperManager.getWallpaperId(which);
+            Assert.assertNotEquals(oldWallpaperId, newWallpaperId);
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        } finally {
+            tmpWallpaper.recycle();
+        }
+    }
+
+    @Test
+    public void setBitmapTest_1x1Pixel_FullscreenDesired() {
+        ensureCleanState();
+
+        Bitmap tmpWallpaper = Bitmap.createBitmap(1, 1, Bitmap.Config.ARGB_8888);
+        Canvas canvas = new Canvas(tmpWallpaper);
+        canvas.drawColor(Color.RED);
+
+        try {
+            int which = WallpaperManager.FLAG_SYSTEM;
+            int oldWallpaperId = mWallpaperManager.getWallpaperId(which);
+            final Point displaySize = getScreenSize();
+            mWallpaperManager.suggestDesiredDimensions(displaySize.x, displaySize.y);
+            mWallpaperManager.setBitmap(tmpWallpaper);
+            int newWallpaperId = mWallpaperManager.getWallpaperId(which);
+            Assert.assertNotEquals(oldWallpaperId, newWallpaperId);
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        } finally {
+            tmpWallpaper.recycle();
+        }
+    }
+
+    @Test
     public void setResourceTest() {
         try {
             int which = WallpaperManager.FLAG_SYSTEM;
