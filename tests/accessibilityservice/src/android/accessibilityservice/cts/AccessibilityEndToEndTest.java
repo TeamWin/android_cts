@@ -52,7 +52,6 @@ import android.content.res.Configuration;
 import android.os.Process;
 import android.platform.test.annotations.AppModeFull;
 import android.platform.test.annotations.Presubmit;
-import android.support.test.filters.FlakyTest;
 import android.test.suitebuilder.annotation.MediumTest;
 import android.text.TextUtils;
 import android.util.Log;
@@ -135,7 +134,6 @@ public class AccessibilityEndToEndTest extends
         assertNotNull("Did not receive expected event: " + expected, awaitedEvent);
     }
 
-    @FlakyTest(bugId = 116260122)
     @MediumTest
     @Presubmit
     public void testTypeViewClickedAccessibilityEvent() throws Throwable {
@@ -302,7 +300,6 @@ public class AccessibilityEndToEndTest extends
         assertNotNull("Did not receive expected event: " + expected, awaitedTextChangeEvent);
     }
 
-    @FlakyTest(bugId = 114543540)
     @MediumTest
     @Presubmit
     public void testTypeWindowStateChangedAccessibilityEvent() throws Throwable {
@@ -340,7 +337,6 @@ public class AccessibilityEndToEndTest extends
         assertNotNull("Did not receive expected event: " + expected, awaitedEvent);
     }
 
-    @FlakyTest(bugId = 114543540)
     @MediumTest
     @AppModeFull
     @SuppressWarnings("deprecation")
@@ -487,7 +483,6 @@ public class AccessibilityEndToEndTest extends
     }
 
     @AppModeFull
-    @FlakyTest(bugId = 116260122)
     @MediumTest
     @Presubmit
     public void testPackageNameCannotBeFakedAppWidget() throws Exception {
@@ -566,7 +561,6 @@ public class AccessibilityEndToEndTest extends
         }
     }
 
-    @FlakyTest(bugId = 114543540)
     @MediumTest
     @Presubmit
     public void testViewHeadingReportedToAccessibility() throws Exception {
@@ -597,7 +591,6 @@ public class AccessibilityEndToEndTest extends
                 editTextNode.isHeading());
     }
 
-    @FlakyTest(bugId = 116260122)
     @MediumTest
     @Presubmit
     public void testTooltipTextReportedToAccessibility() {
