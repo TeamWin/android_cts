@@ -95,5 +95,6 @@ public class LineHeightSpan_StandardTest {
 
         final LineHeightSpan.Standard parcelSpan = new LineHeightSpan.Standard(parcel);
         assertEquals(span.getHeight(), parcelSpan.getHeight());
+        assertEquals(span.getSpanTypeId(), parcelSpan.getSpanTypeId());
     }
 }
