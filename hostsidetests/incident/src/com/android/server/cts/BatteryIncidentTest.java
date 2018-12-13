@@ -48,7 +48,7 @@ public class BatteryIncidentTest extends ProtoDumpTestCase {
         assertTrue(scale > 0);
         int level = dump.getLevel();
         assertTrue(level >= 0 && level <= scale);
-        assertTrue(dump.getVoltage() > 0);
+        assertTrue(dump.getVoltage() >= 0);
         assertTrue(dump.getTemperature() > 0);
     }
 
