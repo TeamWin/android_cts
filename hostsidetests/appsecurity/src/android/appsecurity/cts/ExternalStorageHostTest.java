@@ -198,18 +198,45 @@ public class ExternalStorageHostTest extends BaseHostJUnit4Test {
             // verify that the daemon correctly invalidates any caches.
             assertNull(getDevice().installPackage(getTestAppFile(WRITE_APK), false, options));
             for (int user : mUsers) {
-                runDeviceTests(WRITE_PKG, WRITE_PKG + ".WriteGiftTest", user);
+                runDeviceTests(WRITE_PKG, WRITE_PKG + ".WriteGiftTest", "testGifts", user);
             }
 
             assertNull(getDevice().installPackage(getTestAppFile(NONE_APK), false, options));
             assertNull(getDevice().installPackage(getTestAppFile(READ_APK), false, options));
             for (int user : mUsers) {
-                runDeviceTests(READ_PKG, READ_PKG + ".ReadGiftTest", user);
-                runDeviceTests(NONE_PKG, NONE_PKG + ".GiftTest", user);
+                runDeviceTests(READ_PKG, READ_PKG + ".ReadGiftTest", "testGifts", user);
+                runDeviceTests(NONE_PKG, NONE_PKG + ".GiftTest", "testGifts", user);
             }
         } finally {
             getDevice().uninstallPackage(NONE_PKG);
             getDevice().uninstallPackage(READ_PKG);
+            getDevice().uninstallPackage(WRITE_PKG);
+        }
+    }
+
+    @Test
+    public void testExternalStorageObbGifts() throws Exception {
+        try {
+            wipePrimaryExternalStorage();
+
+            getDevice().uninstallPackage(NONE_PKG);
+            getDevice().uninstallPackage(WRITE_PKG);
+            final String[] options = {AbiUtils.createAbiFlag(getAbi().getName())};
+
+            // We purposefully delay the installation of the reading apps to
+            // verify that the daemon correctly invalidates any caches.
+            assertNull(getDevice().installPackage(getTestAppFile(WRITE_APK), false, options));
+            for (int user : mUsers) {
+                updateAppOp(WRITE_PKG, user, "android:request_install_packages", true);
+                runDeviceTests(WRITE_PKG, WRITE_PKG + ".WriteGiftTest", "testObbGifts", user);
+            }
+
+            assertNull(getDevice().installPackage(getTestAppFile(NONE_APK), false, options));
+            for (int user : mUsers) {
+                runDeviceTests(NONE_PKG, NONE_PKG + ".GiftTest", "testObbGifts", user);
+            }
+        } finally {
+            getDevice().uninstallPackage(NONE_PKG);
             getDevice().uninstallPackage(WRITE_PKG);
         }
     }
@@ -491,7 +518,8 @@ public class ExternalStorageHostTest extends BaseHostJUnit4Test {
     }
 
     private void wipePrimaryExternalStorage() throws DeviceNotAvailableException {
-        getDevice().executeShellCommand("rm -rf /sdcard/Android");
+        // Can't delete everything under /sdcard as that's going to remove the mounts.
+        getDevice().executeShellCommand("find /sdcard -type f -delete");
         getDevice().executeShellCommand("rm -rf /sdcard/DCIM");
         getDevice().executeShellCommand("rm -rf /sdcard/MUST_*");
     }
