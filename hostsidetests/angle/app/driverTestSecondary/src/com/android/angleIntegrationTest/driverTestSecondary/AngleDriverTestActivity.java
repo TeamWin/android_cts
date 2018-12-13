@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package com.android.angleIntegrationTest.developerOptionSecondary;
+package com.android.angleIntegrationTest.driverTestSecondary;
 
 import com.android.angleIntegrationTest.common.AngleIntegrationTestActivity;
 import com.android.angleIntegrationTest.common.GlesView;
@@ -35,7 +35,7 @@ import org.junit.runner.RunWith;
 import java.lang.Override;
 
 @RunWith(AndroidJUnit4.class)
-public class AngleDeveloperOptionActivityTest {
+public class AngleDriverTestActivity {
 
     private final String TAG = this.getClass().getSimpleName();
 
