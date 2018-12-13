@@ -2897,8 +2897,9 @@ You should be prompted to select credentials; choose the ones you just installed
     <string name="set_device_owner_button_label">Set up device owner</string>
     <string name="set_device_owner_dialog_title">Set up device owner</string>
     <string name="set_device_owner_dialog_text">
-            This test requires CtsEmptyDeviceOwner.apk to be installed on the device.
-            Please set the device owner by enabling USB debugging on the device and issuing the following command on the host:\n
+            For this test you need to install CtsEmptyDeviceOwner.apk by running\n
+            adb install -r -t /path/to/CtsEmptyDeviceOwner.apk\n
+            Then you need to set this app as the device owner by running\n
             adb shell dpm set-device-owner com.android.cts.emptydeviceowner/.EmptyDeviceAdmin
     </string>
     <string name="device_owner_remove_device_owner_test">Remove device owner</string>
