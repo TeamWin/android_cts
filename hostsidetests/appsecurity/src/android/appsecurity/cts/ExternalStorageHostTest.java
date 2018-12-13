@@ -270,6 +270,33 @@ public class ExternalStorageHostTest extends BaseHostJUnit4Test {
     }
 
     /**
+     * Test isolated external storage, ensuring that legacy apps behave as
+     * expected.
+     */
+    @Test
+    public void testExternalStorageIsolatedLegacy() throws Exception {
+        // TODO: remove this test once isolated storage is always enabled
+        Assume.assumeTrue(hasIsolatedStorage());
+
+        final int owner = mUsers[0];
+        try {
+            wipePrimaryExternalStorage();
+            getDevice().executeShellCommand("touch /sdcard/cts_top");
+
+            getDevice().uninstallPackage(PKG_A);
+            installPackage(APK_A);
+
+            updateAppOp(PKG_A, owner, "android:legacy_storage", true);
+            runDeviceTests(PKG_A, CLASS, "testExternalStorageIsolatedLegacy", owner);
+
+            updateAppOp(PKG_A, owner, "android:legacy_storage", false);
+            runDeviceTests(PKG_A, CLASS, "testExternalStorageIsolatedNonLegacy", owner);
+        } finally {
+            getDevice().uninstallPackage(PKG_A);
+        }
+    }
+
+    /**
      * Test multi-user emulated storage environment, ensuring that each user has
      * isolated storage.
      */
