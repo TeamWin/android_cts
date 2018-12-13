@@ -172,4 +172,6 @@
     <!-- b/69720253: GSI uses launcher2 in O -->
     <option name="compatibility:exclude-filter" value="CtsJankDeviceTestCases android.jank.cts.ui.CtsDeviceJankUi#testScrolling" />
 
+    <!-- b/119292624: (reference-on-aosp) 8.0_r13 - waiver request for CtsAppSecurityHostTestCases -->
+    <option name="compatibility:exclude-filter" value="CtsAppSecurityHostTestCases android.appsecurity.cts.DirectBootHostTest#testDirectBootNone" />
 </configuration>
