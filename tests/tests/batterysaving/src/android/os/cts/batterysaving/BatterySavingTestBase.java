@@ -17,12 +17,13 @@ package android.os.cts.batterysaving;
 
 import static com.android.compatibility.common.util.BatteryUtils.runDumpsysBatteryReset;
 import static com.android.compatibility.common.util.BatteryUtils.turnOnScreen;
-import static com.android.compatibility.common.util.SystemUtil.runCommandAndPrintOnLogcat;
+import static com.android.compatibility.common.util.SystemUtil.runCommandAndDump;
 import static com.android.compatibility.common.util.SystemUtil.runShellCommand;
 import static com.android.compatibility.common.util.TestUtils.waitUntil;
 
 import android.content.Context;
 import android.content.pm.PackageManager;
+import android.device.loggers.TestLogData;
 import android.location.LocationManager;
 import android.os.BatteryManager;
 import android.os.PowerManager;
@@ -48,13 +49,16 @@ public class BatterySavingTestBase {
 
     protected final BroadcastRpc mRpc = new BroadcastRpc();
 
+    @Rule
+    public TestLogData mLogs = new TestLogData();
+
     private final OnFailureRule mDumpOnFailureRule = new OnFailureRule(TAG) {
         @Override
         protected void onTestFailure(Statement base, Description description, Throwable t) {
-            runCommandAndPrintOnLogcat(TAG, "dumpsys power");
-            runCommandAndPrintOnLogcat(TAG, "dumpsys alarm");
-            runCommandAndPrintOnLogcat(TAG, "dumpsys jobscheduler");
-            runCommandAndPrintOnLogcat(TAG, "dumpsys content");
+            runCommandAndDump(TAG, "dumpsys power", mLogs, "test failure");
+            runCommandAndDump(TAG, "dumpsys alarm", mLogs, "test failure");
+            runCommandAndDump(TAG, "dumpsys jobscheduler", mLogs, "test failure");
+            runCommandAndDump(TAG, "dumpsys content", mLogs, "test failure");
         }
     };
 

@@ -27,6 +27,7 @@ java_library_static {
         "ub-uiautomator",
         "mockito-target-minus-junit4",
         "androidx.annotation_annotation",
+        "collector-device-lib",
     ],
 
     libs: [
