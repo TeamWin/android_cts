@@ -16,11 +16,14 @@
 
 package android.appsecurity.cts;
 
+import static android.appsecurity.cts.Utils.waitForBootCompleted;
+
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 
 import android.platform.test.annotations.AppModeFull;
 import android.platform.test.annotations.AppModeInstant;
+
 import com.android.ddmlib.Log;
 import com.android.tradefed.testtype.DeviceJUnit4ClassRunner;
 
@@ -77,6 +80,11 @@ public class AppSecurityTests extends BaseAppSecurityTest {
     private static final String PERMISSION_DIFF_CERT_APK = "CtsUsePermissionDiffCert.apk";
     private static final String PERMISSION_DIFF_CERT_PKG =
         "com.android.cts.usespermissiondiffcertapp";
+
+    private static final String DUPLICATE_DECLARE_PERMISSION_APK =
+            "CtsDuplicatePermissionDeclareApp.apk";
+    private static final String DUPLICATE_DECLARE_PERMISSION_PKG =
+            "com.android.cts.duplicatepermissiondeclareapp";
 
     private static final String LOG_TAG = "AppSecurityTests";
 
@@ -261,6 +269,27 @@ public class AppSecurityTests extends BaseAppSecurityTest {
             getDevice().uninstallPackage(DECLARE_PERMISSION_PKG);
             getDevice().uninstallPackage(DECLARE_PERMISSION_COMPAT_PKG);
             getDevice().uninstallPackage(PERMISSION_DIFF_CERT_PKG);
+        }
+    }
+
+    /**
+     * Test what happens if an app tried to take a permission away from another
+     */
+    @Test
+    public void rebootWithDuplicatePermission() throws Exception {
+        try {
+            new InstallMultiple(false).addApk(DECLARE_PERMISSION_APK).run();
+            new InstallMultiple(false).addApk(DUPLICATE_DECLARE_PERMISSION_APK).run();
+
+            runDeviceTests(DUPLICATE_DECLARE_PERMISSION_PKG, null);
+
+            // make sure behavior is preserved after reboot
+            getDevice().reboot();
+            waitForBootCompleted(getDevice());
+            runDeviceTests(DUPLICATE_DECLARE_PERMISSION_PKG, null);
+        } finally {
+            getDevice().uninstallPackage(DECLARE_PERMISSION_PKG);
+            getDevice().uninstallPackage(DUPLICATE_DECLARE_PERMISSION_PKG);
         }
     }
 
