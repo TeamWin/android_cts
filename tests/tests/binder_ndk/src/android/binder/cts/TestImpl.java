@@ -222,6 +222,12 @@ public class TestImpl extends ITest.Stub {
   }
 
   @Override
+  public RegularPolygon[] RepeatRegularPolygonArray(RegularPolygon[] in_value, RegularPolygon[] repeated) {
+    System.arraycopy(in_value, 0, repeated, 0, in_value.length);
+    return in_value;
+  }
+
+  @Override
   public boolean[] RepeatNullableBooleanArray(boolean[] in_value) {
     return in_value;
   }

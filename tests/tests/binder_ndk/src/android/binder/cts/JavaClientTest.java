@@ -217,6 +217,18 @@ public class JavaClientTest {
         assertEquals("foo", mInterface.RepeatNullableString("foo"));
     }
 
+    public void assertPolygonEquals(RegularPolygon lhs, RegularPolygon rhs) {
+        assertEquals(lhs.name, rhs.name);
+        assertEquals(lhs.numSides, rhs.numSides);
+        assertEquals(lhs.sideLength, rhs.sideLength, 0.0f);
+    }
+    public void assertPolygonEquals(RegularPolygon[] lhs, RegularPolygon[] rhs) {
+        assertEquals(lhs.length, rhs.length);
+        for (int i = 0; i < lhs.length; i++) {
+            assertPolygonEquals(lhs[i], rhs[i]);
+        }
+    }
+
     @Test
     public void testRepeatPolygon() throws RemoteException {
         RegularPolygon polygon = new RegularPolygon();
@@ -226,9 +238,7 @@ public class JavaClientTest {
 
         RegularPolygon result = mInterface.RepeatPolygon(polygon);
 
-        assertEquals(polygon.name, result.name);
-        assertEquals(polygon.numSides, result.numSides);
-        assertEquals(polygon.sideLength, result.sideLength, 0.0f);
+        assertPolygonEquals(polygon, result);
     }
 
     @Test
@@ -311,6 +321,20 @@ public class JavaClientTest {
 
             Assert.assertArrayEquals(value, out1);
             Assert.assertArrayEquals(value, out2);
+        }
+        {
+
+            RegularPolygon septagon = new RegularPolygon();
+            septagon.name = "septagon";
+            septagon.numSides = 7;
+            septagon.sideLength = 1.0f;
+
+            RegularPolygon[] value = {septagon, new RegularPolygon(), new RegularPolygon()};
+            RegularPolygon[] out1 = new RegularPolygon[value.length];
+            RegularPolygon[] out2 = mInterface.RepeatRegularPolygonArray(value, out1);
+
+            assertPolygonEquals(value, out1);
+            assertPolygonEquals(value, out2);
         }
     }
 
