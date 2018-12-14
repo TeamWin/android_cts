@@ -43,6 +43,7 @@ import android.telephony.ServiceState;
 import android.telephony.SubscriptionInfo;
 import android.telephony.SubscriptionManager;
 import android.telephony.TelephonyManager;
+import android.telephony.emergency.EmergencyNumber;
 import android.text.TextUtils;
 import android.util.Log;
 
@@ -55,6 +56,7 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 
 import java.util.List;
+import java.util.Map;
 import java.util.regex.Pattern;
 
 /**
@@ -703,5 +705,42 @@ public class TelephonyManagerTest {
             fail("Expected SecurityException. App does not have carrier privileges.");
         } catch (SecurityException expected) {
         }
+    }
+
+    /**
+     * Tests TelephonyManager.getCurrentEmergencyNumberList.
+     */
+    @Test
+    public void testGetCurrentEmergencyNumberList() {
+        if (!mPackageManager.hasSystemFeature(PackageManager.FEATURE_TELEPHONY)) {
+            return;
+        }
+        Map<Integer, List<EmergencyNumber>> emergencyNumberList
+          = mTelephonyManager.getCurrentEmergencyNumberList();
+        // TODO enhance it later
+    }
+
+    /**
+     * Tests TelephonyManager.isCurrentEmergencyNumber.
+     */
+    @Test
+    public void testIsCurrentEmergencyNumber() {
+        if (!mPackageManager.hasSystemFeature(PackageManager.FEATURE_TELEPHONY)) {
+            return;
+        }
+        boolean isEmergencyNumber = mTelephonyManager.isCurrentEmergencyNumber("911");
+        // TODO enhance it later
+    }
+
+    /**
+     * Tests TelephonyManager.isCurrentPotentialEmergencyNumber.
+     */
+    @Test
+    public void testIsCurrentPotentialEmergencyNumber() {
+        if (!mPackageManager.hasSystemFeature(PackageManager.FEATURE_TELEPHONY)) {
+            return;
+        }
+        boolean isEmergencyNumber = mTelephonyManager.isCurrentPotentialEmergencyNumber("911");
+        // TODO enhance it later
     }
 }
