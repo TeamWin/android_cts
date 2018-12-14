@@ -22,4 +22,5 @@
     android:showMetadataInPreview="true"
     android:contextDescription="@string/wallpaper_context"
     android:contextUri="@string/wallpaper_context_uri"
+    android:settingsSliceUri="@string/wallpaper_slice_uri"
 />
