@@ -33,6 +33,7 @@ import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assume.assumeTrue;
 
+import android.app.KeyguardManager;
 import android.content.ComponentName;
 
 import org.junit.Before;
@@ -66,6 +67,23 @@ public class KeyguardLockedTests extends KeyguardTestBase {
             mAmWmState.assertKeyguardGone();
             assertFalse(mKeyguardManager.isDeviceLocked());
             assertFalse(mKeyguardManager.isKeyguardLocked());
+        }
+    }
+
+    @Test
+    public void testDisableKeyguard_thenSettingCredential_reenablesKeyguard_b119322269() {
+        final KeyguardManager.KeyguardLock keyguardLock = mContext.getSystemService(
+                KeyguardManager.class).newKeyguardLock("KeyguardLockedTests");
+
+        try (final LockScreenSession lockScreenSession = new LockScreenSession()) {
+            lockScreenSession.gotoKeyguard();
+            keyguardLock.disableKeyguard();
+
+            lockScreenSession.setLockCredential();
+            mAmWmState.waitForKeyguardShowingAndNotOccluded();
+            mAmWmState.assertKeyguardShowingAndNotOccluded();
+        } finally {
+            keyguardLock.reenableKeyguard();
         }
     }
 
