@@ -1724,6 +1724,11 @@
     <string name="aware_status_lifecycle_failed">Discovery lifecycle FAILURE!</string>
     <string name="aware_status_lifecycle_ok">Discovery lifecycle validated!</string>
 
+    <string name="aware_status_socket_failure">Failure on socket connection setup!</string>
+    <string name="aware_status_socket_server_socket_started">ServerSocket started on port %1$d!</string>
+    <string name="aware_status_socket_server_info_rx">Peer server info: IPv6=%1$s @ port=%2$d!</string>
+    <string name="aware_status_socket_server_message_from_peer">Message from peer: \'%1$s\'</string>
+
     <string name="aware_data_path_open_unsolicited_publish">Data Path: Open: Unsolicited Publish</string>
     <string name="aware_data_path_open_unsolicited_publish_info">The publisher is now ready.\n\nOn the other device: start the \'Data Path: Open: Unsolicited/Passive\' / \'Subscribe\' test.</string>
     <string name="aware_data_path_open_passive_subscribe">Data Path: Open: Passive Subscribe</string>
