@@ -18,6 +18,8 @@ LOCAL_WHOLE_STATIC_LIBRARIES = \
 LOCAL_STATIC_LIBRARIES += \
   libbacktrace \
   libunwindstack \
+  libdexfile_support \
+  libdexfile_external \
   libdexfile \
   libziparchive \
   libz \
