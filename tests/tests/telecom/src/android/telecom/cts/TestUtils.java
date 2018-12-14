@@ -28,7 +28,9 @@ import android.os.Handler;
 import android.os.Looper;
 import android.os.Parcel;
 import android.os.ParcelFileDescriptor;
+import android.os.Process;
 import android.os.SystemClock;
+import android.os.UserManager;
 import android.support.test.InstrumentationRegistry;
 import android.telecom.PhoneAccount;
 import android.telecom.PhoneAccountHandle;
@@ -183,7 +185,6 @@ public class TestUtils {
 
     public static final String MERGE_CALLER_NAME = "calls-merged";
     public static final String SWAP_CALLER_NAME = "calls-swapped";
-    private static final String PRIMARY_USER_SN = "0";
 
     public static boolean shouldTestTelecom(Context context) {
         if (!HAS_TELECOM) {
@@ -210,17 +211,19 @@ public class TestUtils {
     public static void enablePhoneAccount(Instrumentation instrumentation,
             PhoneAccountHandle handle) throws Exception {
         final ComponentName component = handle.getComponentName();
+        final long currentUserSerial = getCurrentUserSerialNumber(instrumentation);
         executeShellCommand(instrumentation, COMMAND_ENABLE
                 + component.getPackageName() + "/" + component.getClassName() + " "
-                + handle.getId() + " " + PRIMARY_USER_SN);
+                + handle.getId() + " " + currentUserSerial);
     }
 
     public static void registerSimPhoneAccount(Instrumentation instrumentation,
             PhoneAccountHandle handle, String label, String address) throws Exception {
         final ComponentName component = handle.getComponentName();
+        final long currentUserSerial = getCurrentUserSerialNumber(instrumentation);
         executeShellCommand(instrumentation, COMMAND_REGISTER_SIM
                 + component.getPackageName() + "/" + component.getClassName() + " "
-                + handle.getId() + " " + PRIMARY_USER_SN + " " + label + " " + address);
+                + handle.getId() + " " + currentUserSerial + " " + label + " " + address);
     }
 
     public static void waitOnAllHandlers(Instrumentation instrumentation) throws Exception {
@@ -509,5 +512,11 @@ public class TestUtils {
                 }
             }
         }
+    }
+
+    private static long getCurrentUserSerialNumber(Instrumentation instrumentation) {
+        UserManager userManager =
+                instrumentation.getContext().getSystemService(UserManager.class);
+        return userManager.getSerialNumberForUser(Process.myUserHandle());
     }
 }
