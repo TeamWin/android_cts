@@ -22,7 +22,6 @@ import android.accessibilityservice.cts.activities.AccessibilityFocusAndInputFoc
 import android.app.Instrumentation;
 import android.app.UiAutomation;
 import android.platform.test.annotations.Presubmit;
-import android.support.test.filters.FlakyTest;
 import android.test.suitebuilder.annotation.MediumTest;
 import android.view.View;
 import android.view.accessibility.AccessibilityEvent;
@@ -45,7 +44,6 @@ public class AccessibilityFocusAndInputFocusSyncTest
         super(AccessibilityFocusAndInputFocusSyncActivity.class);
     }
 
-    @FlakyTest(bugId = 114543540)
     @MediumTest
     @Presubmit
     public void testFindAccessibilityFocus() throws Exception {
@@ -170,7 +168,6 @@ public class AccessibilityFocusAndInputFocusSyncTest
         assertFalse(rootLinearLayout.isAccessibilityFocused());
     }
 
-    @FlakyTest(bugId = 116260122)
     @MediumTest
     @Presubmit
     public void testOnlyOneNodeHasAccessibilityFocus() throws Exception {
