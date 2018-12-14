@@ -15,7 +15,7 @@
  */
 package android.contentcaptureservice.cts;
 
-import static com.android.compatibility.common.util.SystemUtil.runShellCommand;
+import static android.contentcaptureservice.cts.common.ShellHelper.runShellCommand;
 
 import android.os.SystemClock;
 import android.util.Log;
