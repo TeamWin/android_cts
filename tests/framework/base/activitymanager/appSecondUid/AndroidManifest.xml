@@ -20,6 +20,10 @@
 
     <application>
         <activity
+            android:name=".EmbeddingActivity"
+            android:resizeableActivity="true"
+            android:exported="true" />
+        <activity
             android:name=".SecondActivity"
             android:resizeableActivity="true"
             android:allowEmbedded="true"

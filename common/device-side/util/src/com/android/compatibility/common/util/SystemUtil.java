@@ -216,12 +216,34 @@ public class SystemUtil {
     }
 
     /**
+     * Runs a {@link ThrowingRunnable} adopting a subset of Shell's permissions.
+     */
+    public static void runWithShellPermissionIdentity(@NonNull ThrowingRunnable runnable,
+            String... permissions) {
+        final UiAutomation automan = InstrumentationRegistry.getInstrumentation().getUiAutomation();
+        runWithShellPermissionIdentity(automan, runnable, permissions);
+    }
+
+    /**
      * Runs a {@link ThrowingRunnable} adopting Shell's permissions, where you can specify the
      * uiAutomation used.
      */
     public static void runWithShellPermissionIdentity(
             @NonNull UiAutomation automan, @NonNull ThrowingRunnable runnable) {
-        automan.adoptShellPermissionIdentity();
+        runWithShellPermissionIdentity(automan, runnable, null /* permissions */);
+    }
+
+    /**
+     * Runs a {@link ThrowingRunnable} adopting Shell's permissions, where you can specify the
+     * uiAutomation used.
+     * @param automan UIAutomation to use.
+     * @param runnable The code to run with Shell's identity.
+     * @param permissions A subset of Shell's permissions. Passing {@code null} will use all
+     *                    available permissions.
+     */
+    public static void runWithShellPermissionIdentity(@NonNull UiAutomation automan,
+            @NonNull ThrowingRunnable runnable, String... permissions) {
+        automan.adoptShellPermissionIdentity(permissions);
         try {
             runnable.run();
         } catch (Exception e) {

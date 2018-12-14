@@ -54,8 +54,6 @@ import android.server.am.settings.SettingsSession;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 
-import com.android.compatibility.common.util.SystemUtil;
-
 import android.util.Size;
 
 import java.util.ArrayList;

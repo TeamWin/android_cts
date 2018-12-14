@@ -21,6 +21,15 @@ import android.server.am.component.ComponentsBase;
 
 public class Components extends ComponentsBase {
 
+    public static final ComponentName EMBEDDING_ACTIVITY = component("EmbeddingActivity");
+
+    public static class EmbeddingActivity {
+        public static final String ACTION_EMBEDDING_TEST_ACTIVITY_START =
+                "broadcast_test_activity_start";
+        public static final String EXTRA_EMBEDDING_COMPONENT_NAME = "component_name";
+        public static final String EXTRA_EMBEDDING_TARGET_DISPLAY = "target_display";
+    }
+
     public static final ComponentName SECOND_ACTIVITY = component("SecondActivity");
     public static final ComponentName SECOND_NO_EMBEDDING_ACTIVITY =
             component("SecondActivityNoEmbedding");
