@@ -50,8 +50,9 @@ public class LineBackgroundSpan_StandardTest {
         try {
             span.writeToParcel(p, 0);
             p.setDataPosition(0);
-            LineBackgroundSpan.Standard parcelSpan = new LineBackgroundSpan.Standard(p);
+            final LineBackgroundSpan.Standard parcelSpan = new LineBackgroundSpan.Standard(p);
             assertEquals(COLOR, parcelSpan.getColor());
+            assertEquals(span.getSpanTypeId(), parcelSpan.getSpanTypeId());
         } finally {
             p.recycle();
         }
@@ -72,7 +73,7 @@ public class LineBackgroundSpan_StandardTest {
 
         span.drawBackground(canvas, paint, left, right, top, baseline, bottom,
                 text, 0, text.length(), 0);
-        verify(canvas).drawRect(left, right, top, bottom, paint);
+        verify(canvas).drawRect(left, top, right, bottom, paint);
     }
 }
 
