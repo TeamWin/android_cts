@@ -16,6 +16,9 @@
 
 package android.appsecurity.cts;
 
+import com.android.ddmlib.AdbCommandRejectedException;
+import com.android.ddmlib.CollectingOutputReceiver;
+import com.android.ddmlib.Log;
 import com.android.ddmlib.testrunner.RemoteAndroidTestRunner;
 import com.android.ddmlib.testrunner.TestResult.TestStatus;
 import com.android.tradefed.device.DeviceNotAvailableException;
@@ -31,6 +34,8 @@ import java.util.Map;
 import java.util.concurrent.TimeUnit;
 
 public class Utils {
+    private static final String LOG_TAG = Utils.class.getSimpleName();
+
     public static final int USER_SYSTEM = 0;
 
     public static void runDeviceTests(ITestDevice device, String packageName, String testClassName,
@@ -157,4 +162,35 @@ public class Utils {
         }
         return users;
     }
+
+    public static void waitForBootCompleted(ITestDevice device) throws Exception {
+        for (int i = 0; i < 45; i++) {
+            if (isBootCompleted(device)) {
+                Log.d(LOG_TAG, "Yay, system is ready!");
+                // or is it really ready?
+                // guard against potential USB mode switch weirdness at boot
+                Thread.sleep(10 * 1000);
+                return;
+            }
+            Log.d(LOG_TAG, "Waiting for system ready...");
+            Thread.sleep(1000);
+        }
+        throw new AssertionError("System failed to become ready!");
+    }
+
+    private static boolean isBootCompleted(ITestDevice device) throws Exception {
+        CollectingOutputReceiver receiver = new CollectingOutputReceiver();
+        try {
+            device.getIDevice().executeShellCommand("getprop sys.boot_completed", receiver);
+        } catch (AdbCommandRejectedException e) {
+            // do nothing: device might be temporarily disconnected
+            Log.d(LOG_TAG, "Ignored AdbCommandRejectedException while `getprop sys.boot_completed`");
+        }
+        String output = receiver.getOutput();
+        if (output != null) {
+            output = output.trim();
+        }
+        return "1".equals(output);
+    }
+
 }
