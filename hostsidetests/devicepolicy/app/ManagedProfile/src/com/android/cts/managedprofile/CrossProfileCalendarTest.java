@@ -19,6 +19,8 @@ import static com.android.cts.managedprofile.BaseManagedProfileTest.ADMIN_RECEIV
 
 import static com.google.common.truth.Truth.assertThat;
 
+import static org.testng.Assert.assertThrows;
+
 import android.accounts.Account;
 import android.accounts.AccountManager;
 import android.app.admin.DevicePolicyManager;
@@ -61,14 +63,27 @@ public class CrossProfileCalendarTest extends AndroidTestCase {
 
     private static String WORK_EVENT_TITLE = "event_title1";
     private static String WORK_EVENT_TITLE_2= "event_title2";
+    private static final String WORK_EVENT_DTSTART_STRING = "2018-05-01T00:00:00";
+    private static final String WORK_EVENT_DTEND_STRING = "2018-05-01T20:00:00";
+    private static final String WORK_EVENT_DTSTART_STRING_2 = "2013-05-01T00:00:00";
+    private static final String WORK_EVENT_DTEND_STRING_2 = "2013-05-01T20:00:00";
     private static long WORK_EVENT_DTSTART = parseTimeStringToMillis(
-            "2018-05-01T00:00:00", WORK_TIMEZONE);
+            WORK_EVENT_DTSTART_STRING, WORK_TIMEZONE);
     private static long WORK_EVENT_DTEND = parseTimeStringToMillis(
-            "2018-05-01T20:00:00", WORK_TIMEZONE);
+            WORK_EVENT_DTEND_STRING, WORK_TIMEZONE);
     private final long WORK_EVENT_DTSTART_2 = parseTimeStringToMillis(
-            "2013-05-01T00:00:00", WORK_TIMEZONE);
+            WORK_EVENT_DTSTART_STRING_2, WORK_TIMEZONE);
     private final long WORK_EVENT_DTEND_2 = parseTimeStringToMillis(
-            "2013-05-01T20:00:00", WORK_TIMEZONE);
+            WORK_EVENT_DTEND_STRING_2, WORK_TIMEZONE);
+    private static long WORK_EVENT_DTSTART_JULIAN_DAY = parseTimeStringToJulianDay(
+            WORK_EVENT_DTSTART_STRING, WORK_TIMEZONE);
+    private static long WORK_EVENT_DTEND_JULIAN_DAY = parseTimeStringToJulianDay(
+            WORK_EVENT_DTEND_STRING, WORK_TIMEZONE);
+    private final long WORK_EVENT_DTSTART_2_JULIAN_DAY = parseTimeStringToJulianDay(
+            WORK_EVENT_DTSTART_STRING_2, WORK_TIMEZONE);
+    private final long WORK_EVENT_DTEND_2_JULIAN_DAY = parseTimeStringToJulianDay(
+            WORK_EVENT_DTEND_STRING_2, WORK_TIMEZONE);
+
     private static int WORK_EVENT_COLOR = 0xff123456;
     private static String WORK_EVENT_LOCATION = "Work event location.";
     private static String WORK_EVENT_DESCRIPTION = "This is a work event.";
@@ -95,6 +110,12 @@ public class CrossProfileCalendarTest extends AndroidTestCase {
         Time time = new Time(timeZone);
         time.parse3339(timeStr);
         return time.toMillis(/* ignoreDst= */false );
+    }
+
+    private static int parseTimeStringToJulianDay(String timeStr, String timeZone) {
+        Time time = new Time(timeZone);
+        time.parse3339(timeStr);
+        return Time.getJulianDay(time.toMillis(/* ignoreDst= */false), time.gmtoff);
     }
 
     @Override
@@ -247,6 +268,31 @@ public class CrossProfileCalendarTest extends AndroidTestCase {
 
     // This test should be run when the test package is whitelisted and cross-profile calendar
     // is enabled in settings.
+    public void testPrimaryProfile_getCorrectWorkInstancesByDayWhenEnabled() {
+        requireRunningOnPrimaryProfile();
+
+        // Test the return cursor is correct when the all checks are met.
+        final String[] projection = new String[]{
+                CalendarContract.Instances.TITLE,
+                CalendarContract.Instances.DTSTART,
+                CalendarContract.Instances.CALENDAR_DISPLAY_NAME,
+        };
+        final Cursor cursor = mResolver.query(
+                buildQueryInstancesUri(CalendarContract.Instances.ENTERPRISE_CONTENT_BY_DAY_URI,
+                        WORK_EVENT_DTSTART_JULIAN_DAY - 1,
+                        WORK_EVENT_DTEND_JULIAN_DAY + 1, null),
+                projection, null, null, null);
+
+        assertThat(cursor).isNotNull();
+        assertThat(cursor.getCount()).isEqualTo(1);
+        cursor.moveToFirst();
+        assertThat(cursor.getString(0)).isEqualTo(WORK_EVENT_TITLE);
+        assertThat(cursor.getLong(1)).isEqualTo(WORK_EVENT_DTSTART);
+        assertThat(cursor.getString(2)).isEqualTo(WORK_CALENDAR_TITLE);
+    }
+
+    // This test should be run when the test package is whitelisted and cross-profile calendar
+    // is enabled in settings.
     public void testPrimaryProfile_canAccessWorkInstancesSearch1() {
         requireRunningOnPrimaryProfile();
 
@@ -277,6 +323,24 @@ public class CrossProfileCalendarTest extends AndroidTestCase {
         assertThat(cursor.getCount()).isEqualTo(2);
     }
 
+    // This test should be run when the test package is whitelisted and cross-profile calendar
+    // is enabled in settings.
+    public void testPrimaryProfile_canAccessWorkInstancesSearchByDay() {
+        requireRunningOnPrimaryProfile();
+
+        // Test the return cursor is correct when the all checks are met.
+        final Cursor cursor = mResolver.query(
+                buildQueryInstancesUri(
+                        CalendarContract.Instances.ENTERPRISE_CONTENT_SEARCH_BY_DAY_URI,
+                        WORK_EVENT_DTSTART_2_JULIAN_DAY - 1,
+                        WORK_EVENT_DTEND_2_JULIAN_DAY + 1,
+                        WORK_EVENT_DESCRIPTION),
+                null, null, null, null);
+        // There are two events that meet the search criteria.
+        assertThat(cursor).isNotNull();
+        assertThat(cursor.getCount()).isEqualTo(1);
+    }
+
     // This test should be run when the test package is whitelisted.
     public void testViewEventCrossProfile_intentReceivedWhenWhitelisted() throws Exception {
         requireRunningOnPrimaryProfile();
@@ -298,6 +362,22 @@ public class CrossProfileCalendarTest extends AndroidTestCase {
                 TIMEOUT_SEC);
         assertThat(textView).isNotNull();
         assertThat(textView.getText()).isEqualTo(textviewString);
+    }
+
+    // This test should be run when the test package is whitelisted and cross-profile calendar
+    // is enabled in settings.
+    public void testPrimaryProfile_getExceptionWhenQueryNonWhitelistedColumns() {
+        requireRunningOnPrimaryProfile();
+
+        // Test the return cursor is correct when the all checks are met.
+        final String[] projection = new String[] {
+                CalendarContract.Calendars.CALENDAR_DISPLAY_NAME,
+                CalendarContract.Calendars.CALENDAR_COLOR,
+                CalendarContract.Calendars.OWNER_ACCOUNT
+        };
+        assertThrows(IllegalArgumentException.class, () -> mResolver.query(
+                CalendarContract.Calendars.ENTERPRISE_CONTENT_URI,
+                projection, SELECTION_ACCOUNT_TYPE, new String[]{TEST_ACCOUNT_TYPE}, null));
     }
 
     // This test should be run when the test package is not whitelisted.
