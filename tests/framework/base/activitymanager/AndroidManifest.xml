@@ -50,6 +50,23 @@
             android:label="MaxAspectRatioUnsetActivity"
             android:resizeableActivity="false" />
 
+        <activity
+            android:name="android.server.am.AspectRatioTests$MinAspectRatioActivity"
+            android:label="MinAspectRatioActivity"
+            android:minAspectRatio="5.0"
+            android:resizeableActivity="false" />
+
+        <activity
+            android:name="android.server.am.AspectRatioTests$MinAspectRatioResizeableActivity"
+            android:label="MinAspectRatioResizeableActivity"
+            android:minAspectRatio="5.0"
+            android:resizeableActivity="true" />
+
+        <activity
+            android:name="android.server.am.AspectRatioTests$MinAspectRatioUnsetActivity"
+            android:label="MinAspectRatioUnsetActivity"
+            android:resizeableActivity="false" />
+
         <activity android:name="android.server.am.ActivityManagerTestBase$SideActivity"
                   android:resizeableActivity="true"
                   android:taskAffinity="nobody.but.SideActivity"/>
