@@ -33,6 +33,8 @@
     <target_preparer class="com.android.tradefed.targetprep.RunCommandTargetPreparer">
         <option name="run-command" value="am set-standby-bucket android.os.cts.batterysaving.app_target_api_25      10" />
         <option name="run-command" value="am set-standby-bucket android.os.cts.batterysaving.app_target_api_current 10" />
+        <option name="run-command" value="cmd thermalservice override-status 0" />
+        <option name="teardown-command" value="cmd thermalservice reset" />
     </target_preparer>
 
     <test class="com.android.tradefed.testtype.AndroidJUnitTest" >

@@ -35,6 +35,8 @@
         <option name="run-command" value="am set-standby-bucket android.content.syncmanager.cts.app1 10" />
         <option name="run-command" value="am set-standby-bucket android.content.syncmanager.cts.app2 10" />
         <option name="run-command" value="setprop log.tag.SyncManager VERBOSE" />
+        <option name="run-command" value="cmd thermalservice override-status 0" />
+        <option name="teardown-command" value="cmd thermalservice reset" />
         <option name="teardown-command" value="setprop log.tag.SyncManager INFO" />
     </target_preparer>
     <test class="com.android.tradefed.testtype.AndroidJUnitTest" >
