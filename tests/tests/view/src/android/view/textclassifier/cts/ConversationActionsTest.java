@@ -45,6 +45,8 @@ import java.util.List;
 @SmallTest
 @RunWith(AndroidJUnit4.class)
 public class ConversationActionsTest {
+    private static final String ID = "ID";
+    private static final String CONVERSATION_ID = "conversation_id";
     private static final String TEXT = "TEXT";
     private static final Person PERSON = new Person.Builder().setKey(TEXT).build();
     private static final ZonedDateTime TIME =
@@ -170,6 +172,7 @@ public class ConversationActionsTest {
                         .build();
         ConversationActions.Request request =
                 new ConversationActions.Request.Builder(Collections.singletonList(message))
+                        .setConversationId(CONVERSATION_ID)
                         .setHints(Collections.singletonList(ConversationActions.HINT_FOR_IN_APP))
                         .setMaxSuggestions(10)
                         .setTypeConfig(typeConfig)
@@ -217,20 +220,37 @@ public class ConversationActionsTest {
     }
 
     @Test
-    public void testConversationActions() {
+    public void testConversationActions_full() {
         ConversationActions.ConversationAction conversationAction =
                 new ConversationActions.ConversationAction.Builder(
                         ConversationActions.TYPE_CALL_PHONE)
                         .build();
 
         ConversationActions conversationActions =
-                new ConversationActions(Arrays.asList(conversationAction));
+                new ConversationActions(Arrays.asList(conversationAction), ID);
 
         ConversationActions recovered =
                 parcelizeDeparcelize(conversationActions, ConversationActions.CREATOR);
 
-        assertConversationActions(conversationActions);
-        assertConversationActions(recovered);
+        assertFullConversationActions(conversationActions);
+        assertFullConversationActions(recovered);
+    }
+
+    @Test
+    public void testConversationActions_minimal() {
+        ConversationActions.ConversationAction conversationAction =
+                new ConversationActions.ConversationAction.Builder(
+                        ConversationActions.TYPE_CALL_PHONE)
+                        .build();
+
+        ConversationActions conversationActions =
+                new ConversationActions(Arrays.asList(conversationAction), null);
+
+        ConversationActions recovered =
+                parcelizeDeparcelize(conversationActions, ConversationActions.CREATOR);
+
+        assertMinimalConversationActions(conversationActions);
+        assertMinimalConversationActions(recovered);
     }
 
     private void assertFullMessage(ConversationActions.Message message) {
@@ -289,6 +309,7 @@ public class ConversationActionsTest {
         assertThat(request.getHints()).isEmpty();
         assertThat(request.getMaxSuggestions()).isEqualTo(0);
         assertThat(request.getTypeConfig()).isNotNull();
+        assertThat(request.getConversationId()).isNull();
     }
 
     private void assertFullRequest(ConversationActions.Request request) {
@@ -298,6 +319,7 @@ public class ConversationActionsTest {
         assertThat(request.getHints()).containsExactly(ConversationActions.HINT_FOR_IN_APP);
         assertThat(request.getMaxSuggestions()).isEqualTo(10);
         assertThat(request.getTypeConfig().shouldIncludeTypesFromTextClassifier()).isFalse();
+        assertThat(request.getConversationId()).isEqualTo(CONVERSATION_ID);
     }
 
     private void assertMinimalConversationAction(
@@ -316,10 +338,18 @@ public class ConversationActionsTest {
         assertThat(conversationAction.getExtras().keySet()).containsExactly(TEXT);
     }
 
-    private void assertConversationActions(ConversationActions conversationActions) {
+    private void assertMinimalConversationActions(ConversationActions conversationActions) {
         assertThat(conversationActions.getConversationActions()).hasSize(1);
         assertThat(conversationActions.getConversationActions().get(0).getType())
                 .isEqualTo(ConversationActions.TYPE_CALL_PHONE);
+        assertThat(conversationActions.getId()).isNull();
+    }
+
+    private void assertFullConversationActions(ConversationActions conversationActions) {
+        assertThat(conversationActions.getConversationActions()).hasSize(1);
+        assertThat(conversationActions.getConversationActions().get(0).getType())
+                .isEqualTo(ConversationActions.TYPE_CALL_PHONE);
+        assertThat(conversationActions.getId()).isEqualTo(ID);
     }
 
     private <T extends Parcelable> T parcelizeDeparcelize(
