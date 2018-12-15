@@ -232,6 +232,13 @@ class MyTest : public ::aidl::test_package::BnTest,
     *_aidl_return = in_value;
     return ::ndk::ScopedAStatus(AStatus_newOk());
   }
+  ::ndk::ScopedAStatus RepeatRegularPolygonArray(
+      const std::vector<RegularPolygon>& in_value, std::vector<RegularPolygon>* out_repeated,
+      std::vector<RegularPolygon>* _aidl_return) override {
+    *out_repeated = in_value;
+    *_aidl_return = in_value;
+    return ::ndk::ScopedAStatus(AStatus_newOk());
+  }
   ::ndk::ScopedAStatus RepeatNullableBooleanArray(
       const std::optional<std::vector<bool>>& in_value,
       std::optional<std::vector<bool>>* _aidl_return) override {
