@@ -316,6 +316,22 @@ template <typename T>
 using RepeatMethod = ScopedAStatus (ITest::*)(const std::vector<T>&,
                                               std::vector<T>*, std::vector<T>*);
 
+namespace aidl {
+namespace test_package {
+inline bool operator==(const RegularPolygon& lhs, const RegularPolygon& rhs) {
+  return lhs.name == rhs.name && lhs.numSides == rhs.numSides && lhs.sideLength == rhs.sideLength;
+}
+inline bool operator==(const std::vector<RegularPolygon>& lhs,
+                       const std::vector<RegularPolygon>& rhs) {
+  if (lhs.size() != rhs.size()) return false;
+  for (size_t i = 0; i < lhs.size(); i++) {
+    if (!(lhs[i] == rhs[i])) return false;
+  }
+  return true;
+}
+}  // namespace test_package
+}  // namespace aidl
+
 template <typename T>
 void testRepeat(const std::shared_ptr<ITest>& i, RepeatMethod<T> repeatMethod,
                 std::vector<std::vector<T>> tests) {
@@ -379,6 +395,12 @@ TEST_P(NdkBinderTest_Aidl, Arrays) {
                               {"asdf"},
                               {"", "aoeu", "lol", "brb"},
                           });
+  testRepeat<RegularPolygon>(iface, &ITest::RepeatRegularPolygonArray,
+                             {
+                                 {},
+                                 {{"hexagon", 6, 2.0f}},
+                                 {{"hexagon", 6, 2.0f}, {"square", 4, 7.0f}, {"pentagon", 5, 4.2f}},
+                             });
 }
 
 template <typename T>
@@ -493,9 +515,9 @@ TEST_P(NdkBinderTest_Aidl, NullableArrays) {
 }
 
 class DefaultImpl : public ::aidl::test_package::ITestDefault {
-public:
+ public:
   ::ndk::ScopedAStatus NewMethodThatReturns10(int32_t* _aidl_return) override {
-    *_aidl_return = 100; // default impl returns different value
+    *_aidl_return = 100;  // default impl returns different value
     return ::ndk::ScopedAStatus(AStatus_newOk());
   }
 };
@@ -567,9 +589,7 @@ std::shared_ptr<ITest> getNdkBinderTestJavaService(const std::string& method) {
 }
 
 INSTANTIATE_TEST_CASE_P(LocalNative, NdkBinderTest_Aidl,
-                        ::testing::Values(Params{getLocalService(),
-                                                 false /*shouldBeRemote*/,
-                                                 "CPP",
+                        ::testing::Values(Params{getLocalService(), false /*shouldBeRemote*/, "CPP",
                                                  false /*shouldBeOld*/}));
 INSTANTIATE_TEST_CASE_P(
     LocalNativeFromJava, NdkBinderTest_Aidl,
@@ -577,9 +597,9 @@ INSTANTIATE_TEST_CASE_P(
         getNdkBinderTestJavaService("getLocalNativeService"),
         false /*shouldBeRemote*/, "CPP", false /*shouldBeOld*/}));
 INSTANTIATE_TEST_CASE_P(LocalJava, NdkBinderTest_Aidl,
-                        ::testing::Values(Params{
-                            getNdkBinderTestJavaService("getLocalJavaService"),
-                            false /*shouldBeRemote*/, "JAVA", false /*shouldBeOld*/}));
+                        ::testing::Values(Params{getNdkBinderTestJavaService("getLocalJavaService"),
+                                                 false /*shouldBeRemote*/, "JAVA",
+                                                 false /*shouldBeOld*/}));
 INSTANTIATE_TEST_CASE_P(
     RemoteNative, NdkBinderTest_Aidl,
     ::testing::Values(Params{
