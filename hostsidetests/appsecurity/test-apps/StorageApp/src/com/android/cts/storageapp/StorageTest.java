@@ -308,4 +308,12 @@ public class StorageTest extends InstrumentationTestCase {
             }
         }
     }
+
+    public void testExternalStorageIsolatedLegacy() throws Exception {
+        assertTrue(new File("/sdcard/cts_top").exists());
+    }
+
+    public void testExternalStorageIsolatedNonLegacy() throws Exception {
+        assertFalse(new File("/sdcard/cts_top").exists());
+    }
 }

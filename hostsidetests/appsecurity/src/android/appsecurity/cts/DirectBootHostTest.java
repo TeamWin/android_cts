@@ -16,13 +16,13 @@
 
 package android.appsecurity.cts;
 
+import static android.appsecurity.cts.Utils.waitForBootCompleted;
+
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 
 import android.platform.test.annotations.RequiresDevice;
 
-import com.android.ddmlib.AdbCommandRejectedException;
-import com.android.ddmlib.CollectingOutputReceiver;
 import com.android.ddmlib.Log;
 import com.android.tradefed.device.DeviceNotAvailableException;
 import com.android.tradefed.testtype.DeviceJUnit4ClassRunner;
@@ -173,7 +173,7 @@ public class DirectBootHostTest extends BaseHostJUnit4Test {
             } else {
                 getDevice().rebootUntilOnline();
             }
-            waitForBootCompleted();
+            waitForBootCompleted(getDevice());
 
             if (doTest) {
                 if (MODE_NONE.equals(mode)) {
@@ -215,42 +215,12 @@ public class DirectBootHostTest extends BaseHostJUnit4Test {
         return getDevice().executeShellCommand("sm get-fbe-mode").trim();
     }
 
-    private boolean isBootCompleted() throws Exception {
-        CollectingOutputReceiver receiver = new CollectingOutputReceiver();
-        try {
-            getDevice().getIDevice().executeShellCommand("getprop sys.boot_completed", receiver);
-        } catch (AdbCommandRejectedException e) {
-            // do nothing: device might be temporarily disconnected
-            Log.d(TAG, "Ignored AdbCommandRejectedException while `getprop sys.boot_completed`");
-        }
-        String output = receiver.getOutput();
-        if (output != null) {
-            output = output.trim();
-        }
-        return "1".equals(output);
-    }
-
     private boolean isSupportedDevice() throws Exception {
         return getDevice().hasFeature(FEATURE_DEVICE_ADMIN);
     }
 
     private boolean isAutomotiveDevice() throws Exception {
         return getDevice().hasFeature(FEATURE_AUTOMOTIVE);
-    }
-
-    private void waitForBootCompleted() throws Exception {
-        for (int i = 0; i < 45; i++) {
-            if (isBootCompleted()) {
-                Log.d(TAG, "Yay, system is ready!");
-                // or is it really ready?
-                // guard against potential USB mode switch weirdness at boot
-                Thread.sleep(10 * 1000);
-                return;
-            }
-            Log.d(TAG, "Waiting for system ready...");
-            Thread.sleep(1000);
-        }
-        throw new AssertionError("System failed to become ready!");
     }
 
     private class InstallMultiple extends BaseInstallMultiple<InstallMultiple> {

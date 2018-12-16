@@ -1463,6 +1463,11 @@ public class AudioManagerTest extends InstrumentationTestCase {
         }
     }
 
+    public void testIsHapticPlaybackSupported() throws Exception {
+        // Calling the API to make sure it doesn't crash.
+        Log.i(TAG, "isHapticPlaybackSupported: " + AudioManager.isHapticPlaybackSupported());
+    }
+
     private void setInterruptionFilter(int filter) throws Exception {
         mNm.setInterruptionFilter(filter);
         for (int i = 0; i < 5; i++) {

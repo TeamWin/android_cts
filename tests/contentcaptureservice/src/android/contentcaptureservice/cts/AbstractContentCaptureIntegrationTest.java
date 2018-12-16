@@ -19,10 +19,6 @@ import static android.contentcaptureservice.cts.Helper.GENERIC_TIMEOUT_MS;
 import static android.contentcaptureservice.cts.Helper.TAG;
 import static android.contentcaptureservice.cts.Helper.resetService;
 
-import static com.android.compatibility.common.util.SystemUtil.runShellCommand;
-
-import static org.junit.Assume.assumeFalse;
-
 import android.app.Application;
 import android.content.Context;
 import android.content.Intent;
@@ -34,12 +30,15 @@ import android.util.Log;
 
 import androidx.annotation.NonNull;
 
+import com.android.compatibility.common.util.RequiredServiceRule;
+import com.android.compatibility.common.util.SafeCleanerRule;
+
 import org.junit.After;
 import org.junit.Before;
-import org.junit.BeforeClass;
 import org.junit.Rule;
 import org.junit.rules.RuleChain;
 import org.junit.runner.RunWith;
+
 
 /**
  * Base class for all (or most :-) integration tests in this CTS suite.
@@ -50,29 +49,39 @@ public abstract class AbstractContentCaptureIntegrationTest
 
     protected static final Context sContext = InstrumentationRegistry.getTargetContext();
 
-    @Rule
-    public final RuleChain mLookAllTheseRules = RuleChain
-            .outerRule(getActivityTestRule());
-
     protected ActivitiesWatcher mActivitiesWatcher;
 
     private final Class<A> mActivityClass;
 
+    private final RequiredServiceRule mRequiredServiceRule =
+            new RequiredServiceRule("content_capture");
+    private final ContentCaptureLoggingTestRule mLoggingRule =
+            new ContentCaptureLoggingTestRule(TAG);
+
+    protected final SafeCleanerRule mSafeCleanerRule = new SafeCleanerRule()
+            .setDumper(mLoggingRule)
+            .add(() -> {
+                return CtsSmartSuggestionsService.getExceptions();
+            });
+
+    @Rule
+    public final RuleChain mLookAllTheseRules = RuleChain
+            //
+            // mRequiredServiceRule should be first so the test can be skipped right away
+            .outerRule(mRequiredServiceRule)
+            //
+            // mLoggingRule wraps the test but doesn't interfere with it
+            .around(mLoggingRule)
+            //
+            // mSafeCleanerRule will catch errors
+            .around(mSafeCleanerRule)
+            //
+            // Finally, let subclasses set their ActivityTestRule
+            .around(getActivityTestRule());
+
+
     protected AbstractContentCaptureIntegrationTest(@NonNull Class<A> activityClass) {
         mActivityClass = activityClass;
-    }
-
-    @BeforeClass
-    public static void checkSupported() {
-        // TODO(b/119638958): use a @Rule to skip it and/or check for the Global Settings directly
-        final String checkService = runShellCommand("service check content_capture").trim();
-        final boolean notSupported = checkService.contains("not found");
-        if (notSupported) {
-            final String msg = "Skipping test because Content Capture is not supported on device";
-            Log.i(TAG, msg);
-            assumeFalse(msg, notSupported);
-            return;
-        }
     }
 
     @Before

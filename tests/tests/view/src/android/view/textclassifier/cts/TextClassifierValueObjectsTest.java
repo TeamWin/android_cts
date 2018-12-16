@@ -168,7 +168,7 @@ public class TextClassifierValueObjectsTest {
         final TextSelection.Request request = new TextSelection.Request.Builder(TEXT, START, END)
                 .setDefaultLocales(LOCALES)
                 .build();
-        assertEquals(TEXT, request.getText());
+        assertEquals(TEXT, request.getText().toString());
         assertEquals(START, request.getStartIndex());
         assertEquals(END, request.getEndIndex());
         assertEquals(LOCALES, request.getDefaultLocales());

@@ -35,6 +35,8 @@ import android.hardware.camera2.cts.testcases.Camera2AndroidTestCase;
 import android.hardware.camera2.params.InputConfiguration;
 import android.hardware.camera2.params.OisSample;
 import android.hardware.camera2.params.OutputConfiguration;
+import android.hardware.camera2.params.MandatoryStreamCombination;
+import android.hardware.camera2.params.MandatoryStreamCombination.MandatoryStreamInformation;
 import android.hardware.camera2.params.SessionConfiguration;
 import android.hardware.camera2.params.StreamConfigurationMap;
 import android.media.CamcorderProfile;
@@ -160,10 +162,10 @@ public class RobustnessTest extends Camera2AndroidTestCase {
     }
 
     /**
-     * Test for making sure the required output combinations for each hardware level and capability
-     * work as expected.
+     * Test for making sure the required logical output combinations for each hardware level and
+     * capability work as expected.
      */
-    public void testMandatoryOutputCombinations() throws Exception {
+    public void testMandatoryLogicalOutputCombinations() throws Exception {
         /**
          * Tables for maximum sizes to try for each hardware level and capability.
          *
@@ -172,59 +174,6 @@ public class RobustnessTest extends Camera2AndroidTestCase {
          *
          * Each row of the table is a set of (format, max resolution) pairs, using the below consts
          */
-
-        // Enum values are defined in MaxStreamSizes
-        final int[][] LEGACY_COMBINATIONS = {
-            // Simple preview, GPU video processing, or no-preview video recording
-            {PRIV, MAXIMUM},
-            // No-viewfinder still image capture
-            {JPEG, MAXIMUM},
-            // In-application video/image processing
-            {YUV,  MAXIMUM},
-            // Standard still imaging.
-            {PRIV, PREVIEW,  JPEG, MAXIMUM},
-            // In-app processing plus still capture.
-            {YUV,  PREVIEW,  JPEG, MAXIMUM},
-            // Standard recording.
-            {PRIV, PREVIEW,  PRIV, PREVIEW},
-            // Preview plus in-app processing.
-            {PRIV, PREVIEW,  YUV,  PREVIEW},
-            // Still capture plus in-app processing.
-            {PRIV, PREVIEW,  YUV,  PREVIEW,  JPEG, MAXIMUM}
-        };
-
-        final int[][] LIMITED_COMBINATIONS = {
-            // High-resolution video recording with preview.
-            {PRIV, PREVIEW,  PRIV, RECORD },
-            // High-resolution in-app video processing with preview.
-            {PRIV, PREVIEW,  YUV , RECORD },
-            // Two-input in-app video processing.
-            {YUV , PREVIEW,  YUV , RECORD },
-            // High-resolution recording with video snapshot.
-            {PRIV, PREVIEW,  PRIV, RECORD,   JPEG, RECORD  },
-            // High-resolution in-app processing with video snapshot.
-            {PRIV, PREVIEW,  YUV,  RECORD,   JPEG, RECORD  },
-            // Two-input in-app processing with still capture.
-            {YUV , PREVIEW,  YUV,  PREVIEW,  JPEG, MAXIMUM }
-        };
-
-        final int[][] BURST_COMBINATIONS = {
-            // Maximum-resolution GPU processing with preview.
-            {PRIV, PREVIEW,  PRIV, MAXIMUM },
-            // Maximum-resolution in-app processing with preview.
-            {PRIV, PREVIEW,  YUV,  MAXIMUM },
-            // Maximum-resolution two-input in-app processsing.
-            {YUV,  PREVIEW,  YUV,  MAXIMUM },
-        };
-
-        final int[][] FULL_COMBINATIONS = {
-            // Video recording with maximum-size video snapshot.
-            {PRIV, PREVIEW,  PRIV, PREVIEW,  JPEG, MAXIMUM },
-            // Standard video recording plus maximum-resolution in-app processing.
-            {YUV,  VGA,      PRIV, PREVIEW,  YUV,  MAXIMUM },
-            // Preview plus two-input maximum-resolution in-app processing.
-            {YUV,  VGA,      YUV,  PREVIEW,  YUV,  MAXIMUM }
-        };
 
         final int[][] RAW_COMBINATIONS = {
             // No-preview DNG capture.
@@ -245,16 +194,7 @@ public class RobustnessTest extends Camera2AndroidTestCase {
             {YUV,  PREVIEW,  JPEG, MAXIMUM,  RAW, MAXIMUM}
         };
 
-        final int[][] LEVEL_3_COMBINATIONS = {
-            // In-app viewfinder analysis with dynamic selection of output format
-            {PRIV, PREVIEW, PRIV, VGA, YUV, MAXIMUM, RAW, MAXIMUM},
-            // In-app viewfinder analysis with dynamic selection of output format
-            {PRIV, PREVIEW, PRIV, VGA, JPEG, MAXIMUM, RAW, MAXIMUM}
-        };
-
-        final int[][][] TABLES =
-                { LEGACY_COMBINATIONS, LIMITED_COMBINATIONS, BURST_COMBINATIONS, FULL_COMBINATIONS,
-                  RAW_COMBINATIONS, LEVEL_3_COMBINATIONS };
+        final int[][][] TABLES = { RAW_COMBINATIONS };
 
         sanityCheckConfigurationTables(TABLES);
 
@@ -271,56 +211,11 @@ public class RobustnessTest extends Camera2AndroidTestCase {
                 Log.v(TAG, "StreamConfigurationMap: " + streamConfigurationMapString);
             }
 
-            // Always run legacy-level tests for color-supporting devices
-
-            if (mStaticInfo.isColorOutputSupported()) {
-                for (int[] config : LEGACY_COMBINATIONS) {
-                    testOutputCombination(id, config, maxSizes);
-                }
-            }
-
             // Then run higher-level tests if applicable
-
             if (!mStaticInfo.isHardwareLevelLegacy()) {
-
-                // If not legacy, at least limited, so run limited-level tests
-
-                if (mStaticInfo.isColorOutputSupported()) {
-                    for (int[] config : LIMITED_COMBINATIONS) {
-                        testOutputCombination(id, config, maxSizes);
-                    }
-                }
-
-                // Check for BURST_CAPTURE, FULL and RAW and run those if appropriate
-
-                if (mStaticInfo.isCapabilitySupported(
-                        CameraCharacteristics.REQUEST_AVAILABLE_CAPABILITIES_BURST_CAPTURE)) {
-                    for (int[] config : BURST_COMBINATIONS) {
-                        testOutputCombination(id, config, maxSizes);
-                    }
-                }
-
-                if (mStaticInfo.isHardwareLevelAtLeastFull()) {
-                    for (int[] config : FULL_COMBINATIONS) {
-                        testOutputCombination(id, config, maxSizes);
-                    }
-                }
-
-                if (mStaticInfo.isCapabilitySupported(
-                        CameraCharacteristics.REQUEST_AVAILABLE_CAPABILITIES_RAW)) {
-                    for (int[] config : RAW_COMBINATIONS) {
-                        testOutputCombination(id, config, maxSizes);
-                    }
-                } else if (mStaticInfo.isLogicalMultiCamera()) {
+                if (mStaticInfo.isLogicalMultiCamera()) {
                     for (int[] config : RAW_COMBINATIONS) {
                         testMultiCameraOutputCombination(id, config, maxSizes);
-                    }
-                }
-
-                if (mStaticInfo.isHardwareLevelAtLeast(
-                        CameraCharacteristics.INFO_SUPPORTED_HARDWARE_LEVEL_3)) {
-                    for (int[] config: LEVEL_3_COMBINATIONS) {
-                        testOutputCombination(id, config, maxSizes);
                     }
                 }
             }
@@ -330,109 +225,590 @@ public class RobustnessTest extends Camera2AndroidTestCase {
     }
 
     /**
-     * Test for making sure the required reprocess input/output combinations for each hardware
-     * level and capability work as expected.
+     * Test for making sure the mandatory stream combinations work as expected.
      */
-    public void testMandatoryReprocessConfigurations() throws Exception {
-
-        /**
-         * For each stream combination, verify that
-         *    1. A reprocessable session can be created using the stream combination.
-         *    2. Reprocess capture requests targeting YUV and JPEG outputs are successful.
-         */
-        final int[][] LIMITED_COMBINATIONS = {
-            // Input           Outputs
-            {PRIV, MAXIMUM,    JPEG, MAXIMUM},
-            {YUV , MAXIMUM,    JPEG, MAXIMUM},
-            {PRIV, MAXIMUM,    PRIV, PREVIEW, JPEG, MAXIMUM},
-            {YUV , MAXIMUM,    PRIV, PREVIEW, JPEG, MAXIMUM},
-            {PRIV, MAXIMUM,    YUV , PREVIEW, JPEG, MAXIMUM},
-            {YUV , MAXIMUM,    YUV , PREVIEW, JPEG, MAXIMUM},
-            {PRIV, MAXIMUM,    YUV , PREVIEW, YUV , PREVIEW, JPEG, MAXIMUM},
-            {YUV,  MAXIMUM,    YUV , PREVIEW, YUV , PREVIEW, JPEG, MAXIMUM},
-        };
-
-        final int[][] FULL_COMBINATIONS = {
-            // Input           Outputs
-            {YUV , MAXIMUM,    PRIV, PREVIEW},
-            {YUV , MAXIMUM,    YUV , PREVIEW},
-            {PRIV, MAXIMUM,    PRIV, PREVIEW, YUV , RECORD},
-            {YUV , MAXIMUM,    PRIV, PREVIEW, YUV , RECORD},
-            {PRIV, MAXIMUM,    PRIV, PREVIEW, YUV , MAXIMUM},
-            {PRIV, MAXIMUM,    YUV , PREVIEW, YUV , MAXIMUM},
-            {PRIV, MAXIMUM,    PRIV, PREVIEW, YUV , PREVIEW, JPEG, MAXIMUM},
-            {YUV , MAXIMUM,    PRIV, PREVIEW, YUV , PREVIEW, JPEG, MAXIMUM},
-        };
-
-        final int[][] RAW_COMBINATIONS = {
-            // Input           Outputs
-            {PRIV, MAXIMUM,    YUV , PREVIEW, RAW , MAXIMUM},
-            {YUV , MAXIMUM,    YUV , PREVIEW, RAW , MAXIMUM},
-            {PRIV, MAXIMUM,    PRIV, PREVIEW, YUV , PREVIEW, RAW , MAXIMUM},
-            {YUV , MAXIMUM,    PRIV, PREVIEW, YUV , PREVIEW, RAW , MAXIMUM},
-            {PRIV, MAXIMUM,    YUV , PREVIEW, YUV , PREVIEW, RAW , MAXIMUM},
-            {YUV , MAXIMUM,    YUV , PREVIEW, YUV , PREVIEW, RAW , MAXIMUM},
-            {PRIV, MAXIMUM,    PRIV, PREVIEW, JPEG, MAXIMUM, RAW , MAXIMUM},
-            {YUV , MAXIMUM,    PRIV, PREVIEW, JPEG, MAXIMUM, RAW , MAXIMUM},
-            {PRIV, MAXIMUM,    YUV , PREVIEW, JPEG, MAXIMUM, RAW , MAXIMUM},
-            {YUV , MAXIMUM,    YUV , PREVIEW, JPEG, MAXIMUM, RAW , MAXIMUM},
-        };
-
-        final int[][] LEVEL_3_COMBINATIONS = {
-            // Input          Outputs
-            // In-app viewfinder analysis with YUV->YUV ZSL and RAW
-            {YUV , MAXIMUM,   PRIV, PREVIEW, PRIV, VGA, RAW, MAXIMUM},
-            // In-app viewfinder analysis with PRIV->JPEG ZSL and RAW
-            {PRIV, MAXIMUM,   PRIV, PREVIEW, PRIV, VGA, RAW, MAXIMUM, JPEG, MAXIMUM},
-            // In-app viewfinder analysis with YUV->JPEG ZSL and RAW
-            {YUV , MAXIMUM,   PRIV, PREVIEW, PRIV, VGA, RAW, MAXIMUM, JPEG, MAXIMUM},
-        };
-
-        final int[][][] TABLES =
-                { LIMITED_COMBINATIONS, FULL_COMBINATIONS, RAW_COMBINATIONS, LEVEL_3_COMBINATIONS };
-
-        sanityCheckConfigurationTables(TABLES);
-
+    public void testMandatoryOutputCombinations() throws Exception {
         for (String id : mCameraIds) {
-            CameraCharacteristics cc = mCameraManager.getCameraCharacteristics(id);
-            StaticMetadata staticInfo = new StaticMetadata(cc);
-            MaxStreamSizes maxSizes = new MaxStreamSizes(staticInfo, id, getContext());
-
-            // Skip the test for legacy devices.
-            if (staticInfo.isHardwareLevelLegacy()) {
+            openDevice(id);
+            MandatoryStreamCombination[] combinations =
+                    mStaticInfo.getCharacteristics().get(
+                            CameraCharacteristics.SCALER_MANDATORY_STREAM_COMBINATIONS);
+            if (combinations == null) {
+                Log.i(TAG, "No mandatory stream combinations for camera: " + id + " skip test");
+                closeDevice(id);
                 continue;
             }
 
-            openDevice(id);
-
             try {
-                for (int[] config : LIMITED_COMBINATIONS) {
-                    testReprocessStreamCombination(id, config, maxSizes, staticInfo);
-                }
-
-                // Check FULL devices
-                if (staticInfo.isHardwareLevelAtLeastFull()) {
-                    for (int[] config : FULL_COMBINATIONS) {
-                        testReprocessStreamCombination(id, config, maxSizes, staticInfo);
-                    }
-                }
-
-                // Check devices with RAW capability.
-                if (staticInfo.isCapabilitySupported(
-                        CameraCharacteristics.REQUEST_AVAILABLE_CAPABILITIES_RAW)) {
-                    for (int[] config : RAW_COMBINATIONS) {
-                        testReprocessStreamCombination(id, config, maxSizes, staticInfo);
-                    }
-                }
-
-                if (mStaticInfo.isHardwareLevelAtLeast(
-                        CameraCharacteristics.INFO_SUPPORTED_HARDWARE_LEVEL_3)) {
-                    for (int[] config: LEVEL_3_COMBINATIONS) {
-                        testReprocessStreamCombination(id, config, maxSizes, staticInfo);
+                for (MandatoryStreamCombination combination : combinations) {
+                    if (!combination.isReprocessable()) {
+                        testMandatoryStreamCombination(id, combination);
                     }
                 }
             } finally {
                 closeDevice(id);
+            }
+        }
+    }
+
+    private void setupConfigurationTargets(List<MandatoryStreamInformation> streamsInfo,
+            List<SurfaceTexture> privTargets, List<ImageReader> jpegTargets,
+            List<ImageReader> yuvTargets, List<ImageReader> y8Targets,
+            List<ImageReader> rawTargets, List<OutputConfiguration> outputConfigs,
+            int numBuffers, boolean substituteY8, MandatoryStreamInformation overrideStreamInfo,
+            List<String> overridePhysicalCameraIds, List<Size> overridePhysicalCameraSizes) {
+
+        ImageDropperListener imageDropperListener = new ImageDropperListener();
+
+        for (MandatoryStreamInformation streamInfo : streamsInfo) {
+            if (streamInfo.isInput()) {
+                continue;
+            }
+            int format = streamInfo.getFormat();
+            if (substituteY8 && (format == ImageFormat.YUV_420_888)) {
+                format = ImageFormat.Y8;
+            }
+            Surface newSurface;
+            Size[] availableSizes = new Size[streamInfo.getAvailableSizes().size()];
+            availableSizes = streamInfo.getAvailableSizes().toArray(availableSizes);
+            Size targetSize = CameraTestUtils.getMaxSize(availableSizes);
+
+            int numConfigs = 1;
+            if ((overrideStreamInfo == streamInfo) && overridePhysicalCameraIds != null &&
+                    overridePhysicalCameraIds.size() > 1) {
+                numConfigs = overridePhysicalCameraIds.size();
+            }
+            for (int j = 0; j < numConfigs; j++) {
+                targetSize = (numConfigs == 1) ? targetSize : overridePhysicalCameraSizes.get(j);
+                switch (format) {
+                    case ImageFormat.PRIVATE: {
+                        SurfaceTexture target = new SurfaceTexture(/*random int*/1);
+                        target.setDefaultBufferSize(targetSize.getWidth(), targetSize.getHeight());
+                        OutputConfiguration config = new OutputConfiguration(new Surface(target));
+                        if (numConfigs > 1) {
+                            config.setPhysicalCameraId(overridePhysicalCameraIds.get(j));
+                        }
+                        outputConfigs.add(config);
+                        privTargets.add(target);
+                        break;
+                    }
+                    case ImageFormat.JPEG: {
+                        ImageReader target = ImageReader.newInstance(targetSize.getWidth(),
+                                targetSize.getHeight(), format, numBuffers);
+                        target.setOnImageAvailableListener(imageDropperListener, mHandler);
+                        OutputConfiguration config = new OutputConfiguration(target.getSurface());
+                        if (numConfigs > 1) {
+                            config.setPhysicalCameraId(overridePhysicalCameraIds.get(j));
+                        }
+                        outputConfigs.add(config);
+                        jpegTargets.add(target);
+                        break;
+                    }
+                    case ImageFormat.YUV_420_888: {
+                        ImageReader target = ImageReader.newInstance(targetSize.getWidth(),
+                                targetSize.getHeight(), format, numBuffers);
+                        target.setOnImageAvailableListener(imageDropperListener, mHandler);
+                        OutputConfiguration config = new OutputConfiguration(target.getSurface());
+                        if (numConfigs > 1) {
+                            config.setPhysicalCameraId(overridePhysicalCameraIds.get(j));
+                        }
+                        outputConfigs.add(config);
+                        yuvTargets.add(target);
+                        break;
+                    }
+                    case ImageFormat.Y8: {
+                        ImageReader target = ImageReader.newInstance(targetSize.getWidth(),
+                                targetSize.getHeight(), format, numBuffers);
+                        target.setOnImageAvailableListener(imageDropperListener, mHandler);
+                        OutputConfiguration config = new OutputConfiguration(target.getSurface());
+                        if (numConfigs > 1) {
+                            config.setPhysicalCameraId(overridePhysicalCameraIds.get(j));
+                        }
+                        outputConfigs.add(config);
+                        y8Targets.add(target);
+                        break;
+                    }
+                    case ImageFormat.RAW_SENSOR: {
+                        // targetSize could be null in the logical camera case where only
+                        // physical camera supports RAW stream.
+                        if (targetSize != null) {
+                            ImageReader target = ImageReader.newInstance(targetSize.getWidth(),
+                                    targetSize.getHeight(), format, numBuffers);
+                            target.setOnImageAvailableListener(imageDropperListener, mHandler);
+                            OutputConfiguration config =
+                                    new OutputConfiguration(target.getSurface());
+                            if (numConfigs > 1) {
+                                config.setPhysicalCameraId(overridePhysicalCameraIds.get(j));
+                            }
+                            outputConfigs.add(config);
+                            rawTargets.add(target);
+                        }
+                        break;
+                    }
+                    default:
+                        fail("Unknown output format " + format);
+                }
+            }
+        }
+    }
+
+    private void testMandatoryStreamCombination(String cameraId,
+            MandatoryStreamCombination combination) throws Exception {
+        // Check whether substituting YUV_888 format with Y8 format
+        boolean substituteY8 = false;
+        if (mStaticInfo.isMonochromeWithY8()) {
+            List<MandatoryStreamInformation> streamsInfo = combination.getStreamsInformation();
+            for (MandatoryStreamInformation streamInfo : streamsInfo) {
+                if (streamInfo.getFormat() == ImageFormat.YUV_420_888) {
+                    substituteY8 = true;
+                    break;
+                }
+            }
+        }
+
+        // Test camera output combination
+        Log.i(TAG, "Testing mandatory stream combination: " + combination.getDescription() +
+                " on camera: " + cameraId);
+        testMandatoryStreamCombination(cameraId, combination, /*substituteY8*/false);
+
+        if (substituteY8) {
+            testMandatoryStreamCombination(cameraId, combination, substituteY8);
+        }
+
+        // Test substituting YUV_888/RAW with physical streams for logical camera
+        if (mStaticInfo.isLogicalMultiCamera()) {
+            Log.i(TAG, String.format("Testing logical Camera %s, combination: %s",
+                    cameraId, combination.getDescription()));
+
+            testMultiCameraOutputCombination(cameraId, combination, /*substituteY8*/false);
+
+            if (substituteY8) {
+                testMultiCameraOutputCombination(cameraId, combination, substituteY8);
+            }
+        }
+    }
+
+    private void testMultiCameraOutputCombination(String cameraId,
+            MandatoryStreamCombination combination, boolean substituteY8) throws Exception {
+
+        // Timeout is relaxed by 1 second for LEGACY devices to reduce false positive rate in CTS
+        final int TIMEOUT_FOR_RESULT_MS = (mStaticInfo.isHardwareLevelLegacy()) ? 2000 : 1000;
+        final int MIN_RESULT_COUNT = 3;
+        Set<String> physicalCameraIds = mStaticInfo.getCharacteristics().getPhysicalCameraIds();
+
+        List<MandatoryStreamInformation> streamsInfo = combination.getStreamsInformation();
+        for (MandatoryStreamInformation streamInfo : streamsInfo) {
+            int format = streamInfo.getFormat();
+            if (substituteY8 && (format == ImageFormat.YUV_420_888)) {
+                format = ImageFormat.Y8;
+            }
+            if (format != ImageFormat.YUV_420_888 && format != ImageFormat.Y8 &&
+                    format != ImageFormat.RAW_SENSOR) {
+                continue;
+            }
+
+            // Find physical cameras with matching size.
+            Size[] availableSizes = new Size[streamInfo.getAvailableSizes().size()];
+            availableSizes = streamInfo.getAvailableSizes().toArray(availableSizes);
+            Size targetSize = CameraTestUtils.getMaxSize(availableSizes);
+
+            List<String> physicalCamerasForSize = new ArrayList<String>();
+            List<Size> physicalCameraSizes = new ArrayList<Size>();
+            for (String physicalId : physicalCameraIds) {
+                Size[] sizes = mAllStaticInfo.get(physicalId).getAvailableSizesForFormatChecked(
+                        format, StaticMetadata.StreamDirection.Output);
+                if (targetSize != null) {
+                    if (Arrays.asList(sizes).contains(targetSize)) {
+                        physicalCameraSizes.add(targetSize);
+                        physicalCamerasForSize.add(physicalId);
+                    }
+                } else if (format == ImageFormat.RAW_SENSOR && sizes.length > 0) {
+                    physicalCamerasForSize.add(physicalId);
+                    physicalCameraSizes.add(CameraTestUtils.getMaxSize(sizes));
+                }
+                if (physicalCamerasForSize.size() == 2) {
+                    break;
+                }
+            }
+            if (physicalCamerasForSize.size() < 2) {
+                continue;
+            }
+
+            // Set up outputs
+            List<OutputConfiguration> outputConfigs = new ArrayList<OutputConfiguration>();
+            List<SurfaceTexture> privTargets = new ArrayList<SurfaceTexture>();
+            List<ImageReader> jpegTargets = new ArrayList<ImageReader>();
+            List<ImageReader> yuvTargets = new ArrayList<ImageReader>();
+            List<ImageReader> y8Targets = new ArrayList<ImageReader>();
+            List<ImageReader> rawTargets = new ArrayList<ImageReader>();
+
+            setupConfigurationTargets(streamsInfo, privTargets, jpegTargets, yuvTargets,
+                    y8Targets, rawTargets, outputConfigs, MIN_RESULT_COUNT, substituteY8,
+                    streamInfo, physicalCamerasForSize, physicalCameraSizes);
+
+            boolean haveSession = false;
+            try {
+                CaptureRequest.Builder requestBuilder =
+                        mCamera.createCaptureRequest(CameraDevice.TEMPLATE_PREVIEW);
+
+                for (OutputConfiguration c : outputConfigs) {
+                    requestBuilder.addTarget(c.getSurface());
+                }
+
+                CameraCaptureSession.CaptureCallback mockCaptureCallback =
+                        mock(CameraCaptureSession.CaptureCallback.class);
+
+                assertTrue(String.format("Session configuration query %s failed",
+                        combination.getDescription()),
+                        checkSessionConfiguration(mCamera, mHandler, outputConfigs,
+                        /*inputConfig*/ null, SessionConfiguration.SESSION_REGULAR,
+                        /*expectedResult*/ true));
+
+                createSessionByConfigs(outputConfigs);
+                haveSession = true;
+                CaptureRequest request = requestBuilder.build();
+                mCameraSession.setRepeatingRequest(request, mockCaptureCallback, mHandler);
+
+                verify(mockCaptureCallback,
+                        timeout(TIMEOUT_FOR_RESULT_MS * MIN_RESULT_COUNT).atLeast(MIN_RESULT_COUNT))
+                        .onCaptureCompleted(
+                            eq(mCameraSession),
+                            eq(request),
+                            isA(TotalCaptureResult.class));
+                verify(mockCaptureCallback, never()).
+                        onCaptureFailed(
+                            eq(mCameraSession),
+                            eq(request),
+                            isA(CaptureFailure.class));
+
+            } catch (Throwable e) {
+                mCollector.addMessage(String.format("Output combination: %s failed due to: %s",
+                        combination.getDescription(), e.getMessage()));
+            }
+            if (haveSession) {
+                try {
+                    Log.i(TAG, String.format("Done camera %s, combination: %s, closing session",
+                                    cameraId, combination.getDescription()));
+                    stopCapture(/*fast*/false);
+                } catch (Throwable e) {
+                    mCollector.addMessage(
+                        String.format("Closing down for output combination: %s failed due to: %s",
+                                combination.getDescription(), e.getMessage()));
+                }
+            }
+
+            for (SurfaceTexture target : privTargets) {
+                target.release();
+            }
+            for (ImageReader target : jpegTargets) {
+                target.close();
+            }
+            for (ImageReader target : yuvTargets) {
+                target.close();
+            }
+            for (ImageReader target : y8Targets) {
+                target.close();
+            }
+            for (ImageReader target : rawTargets) {
+                target.close();
+            }
+        }
+    }
+
+    private void testMandatoryStreamCombination(String cameraId,
+            MandatoryStreamCombination combination, boolean substituteY8) throws Exception {
+
+        // Timeout is relaxed by 1 second for LEGACY devices to reduce false positive rate in CTS
+        final int TIMEOUT_FOR_RESULT_MS = (mStaticInfo.isHardwareLevelLegacy()) ? 2000 : 1000;
+        final int MIN_RESULT_COUNT = 3;
+
+        // Set up outputs
+        List<OutputConfiguration> outputConfigs = new ArrayList<OutputConfiguration>();
+        List<SurfaceTexture> privTargets = new ArrayList<SurfaceTexture>();
+        List<ImageReader> jpegTargets = new ArrayList<ImageReader>();
+        List<ImageReader> yuvTargets = new ArrayList<ImageReader>();
+        List<ImageReader> y8Targets = new ArrayList<ImageReader>();
+        List<ImageReader> rawTargets = new ArrayList<ImageReader>();
+
+        setupConfigurationTargets(combination.getStreamsInformation(), privTargets, jpegTargets,
+                yuvTargets, y8Targets, rawTargets, outputConfigs, MIN_RESULT_COUNT, substituteY8,
+                null /*overrideStreamInfo*/, null /*overridePhysicalCameraIds*/,
+                null /* overridePhysicalCameraSizes) */);
+
+        boolean haveSession = false;
+        try {
+            CaptureRequest.Builder requestBuilder =
+                    mCamera.createCaptureRequest(CameraDevice.TEMPLATE_PREVIEW);
+
+            for (OutputConfiguration c : outputConfigs) {
+                requestBuilder.addTarget(c.getSurface());
+            }
+
+            CameraCaptureSession.CaptureCallback mockCaptureCallback =
+                    mock(CameraCaptureSession.CaptureCallback.class);
+
+            assertTrue(String.format("Session configuration query fro combination: %s failed",
+                    combination.getDescription()), checkSessionConfiguration(mCamera,
+                    mHandler, outputConfigs, /*inputConfig*/ null,
+                    SessionConfiguration.SESSION_REGULAR, /*expectedResult*/ true));
+
+            createSessionByConfigs(outputConfigs);
+            haveSession = true;
+            CaptureRequest request = requestBuilder.build();
+            mCameraSession.setRepeatingRequest(request, mockCaptureCallback, mHandler);
+
+            verify(mockCaptureCallback,
+                    timeout(TIMEOUT_FOR_RESULT_MS * MIN_RESULT_COUNT).atLeast(MIN_RESULT_COUNT))
+                    .onCaptureCompleted(
+                        eq(mCameraSession),
+                        eq(request),
+                        isA(TotalCaptureResult.class));
+            verify(mockCaptureCallback, never()).
+                    onCaptureFailed(
+                        eq(mCameraSession),
+                        eq(request),
+                        isA(CaptureFailure.class));
+
+        } catch (Throwable e) {
+            mCollector.addMessage(String.format("Mandatory stream combination: %s failed due: %s",
+                    combination.getDescription(), e.getMessage()));
+        }
+        if (haveSession) {
+            try {
+                Log.i(TAG, String.format("Done with camera %s, combination: %s, closing session",
+                                cameraId, combination.getDescription()));
+                stopCapture(/*fast*/false);
+            } catch (Throwable e) {
+                mCollector.addMessage(
+                    String.format("Closing down for combination: %s failed due to: %s",
+                            combination.getDescription(), e.getMessage()));
+            }
+        }
+
+        for (SurfaceTexture target : privTargets) {
+            target.release();
+        }
+        for (ImageReader target : jpegTargets) {
+            target.close();
+        }
+        for (ImageReader target : yuvTargets) {
+            target.close();
+        }
+        for (ImageReader target : y8Targets) {
+            target.close();
+        }
+        for (ImageReader target : rawTargets) {
+            target.close();
+        }
+    }
+
+    /**
+     * Test for making sure the required reprocess input/output combinations for each hardware
+     * level and capability work as expected.
+     */
+    public void testMandatoryReprocessConfigurations() throws Exception {
+        for (String id : mCameraIds) {
+            openDevice(id);
+            MandatoryStreamCombination[] combinations =
+                    mStaticInfo.getCharacteristics().get(
+                            CameraCharacteristics.SCALER_MANDATORY_STREAM_COMBINATIONS);
+            if (combinations == null) {
+                Log.i(TAG, "No mandatory stream combinations for camera: " + id + " skip test");
+                closeDevice(id);
+                continue;
+            }
+
+            try {
+                for (MandatoryStreamCombination combination : combinations) {
+                    if (combination.isReprocessable()) {
+                        Log.i(TAG, "Testing mandatory reprocessable stream combination: " +
+                                combination.getDescription() + " on camera: " + id);
+                        testMandatoryReprocessableStreamCombination(id, combination);
+                    }
+                }
+            } finally {
+                closeDevice(id);
+            }
+        }
+    }
+
+    private void testMandatoryReprocessableStreamCombination(String cameraId,
+            MandatoryStreamCombination combination) {
+        // Test reprocess stream combination
+        testMandatoryReprocessableStreamCombination(cameraId, combination, /*substituteY8*/false);
+
+        // Test substituting YUV_888 format with Y8 format in reprocess stream combination.
+        if (mStaticInfo.isMonochromeWithY8()) {
+            List<MandatoryStreamInformation> streamsInfo = combination.getStreamsInformation();
+            boolean hasY8 = false;
+            for (MandatoryStreamInformation streamInfo : streamsInfo) {
+                if (streamInfo.getFormat() == ImageFormat.YUV_420_888) {
+                    hasY8 = true;
+                    break;
+                }
+            }
+            if (hasY8) {
+                testMandatoryReprocessableStreamCombination(cameraId, combination, hasY8);
+            }
+        }
+    }
+
+    private void testMandatoryReprocessableStreamCombination(String cameraId,
+            MandatoryStreamCombination combination, boolean substituteY8) {
+
+        final int TIMEOUT_FOR_RESULT_MS = 3000;
+        final int NUM_REPROCESS_CAPTURES_PER_CONFIG = 3;
+
+        List<SurfaceTexture> privTargets = new ArrayList<>();
+        List<ImageReader> jpegTargets = new ArrayList<>();
+        List<ImageReader> yuvTargets = new ArrayList<>();
+        List<ImageReader> y8Targets = new ArrayList<>();
+        List<ImageReader> rawTargets = new ArrayList<>();
+        ArrayList<Surface> outputSurfaces = new ArrayList<>();
+        List<OutputConfiguration> outputConfigs = new ArrayList<OutputConfiguration>();
+        ImageReader inputReader = null;
+        ImageWriter inputWriter = null;
+        SimpleImageReaderListener inputReaderListener = new SimpleImageReaderListener();
+        SimpleCaptureCallback inputCaptureListener = new SimpleCaptureCallback();
+        SimpleCaptureCallback reprocessOutputCaptureListener = new SimpleCaptureCallback();
+
+        List<MandatoryStreamInformation> streamInfo = combination.getStreamsInformation();
+        assertTrue("Reprocessable stream combinations should have at least 3 or more streams",
+                    (streamInfo != null) && (streamInfo.size() >= 3));
+
+        assertTrue("The first mandatory stream information in a reprocessable combination must " +
+                "always be input", streamInfo.get(0).isInput());
+
+        List<Size> inputSizes = streamInfo.get(0).getAvailableSizes();
+        int inputFormat = streamInfo.get(0).getFormat();
+        if (substituteY8 && (inputFormat == ImageFormat.YUV_420_888)) {
+            inputFormat = ImageFormat.Y8;
+        }
+
+        try {
+            // The second stream information entry is the ZSL stream, which is configured
+            // separately.
+            setupConfigurationTargets(streamInfo.subList(2, streamInfo.size()), privTargets,
+                    jpegTargets, yuvTargets, y8Targets, rawTargets, outputConfigs,
+                    NUM_REPROCESS_CAPTURES_PER_CONFIG, substituteY8,  null /*overrideStreamInfo*/,
+                    null /*overridePhysicalCameraIds*/, null /* overridePhysicalCameraSizes) */);
+
+            outputSurfaces.ensureCapacity(outputConfigs.size());
+            for (OutputConfiguration config : outputConfigs) {
+                outputSurfaces.add(config.getSurface());
+            }
+
+            InputConfiguration inputConfig = new InputConfiguration(inputSizes.get(0).getWidth(),
+                    inputSizes.get(0).getHeight(), inputFormat);
+
+            // For each config, YUV and JPEG outputs will be tested. (For YUV/Y8 reprocessing,
+            // the YUV/Y8 ImageReader for input is also used for output.)
+            final boolean inputIsYuv = inputConfig.getFormat() == ImageFormat.YUV_420_888;
+            final boolean inputIsY8 = inputConfig.getFormat() == ImageFormat.Y8;
+            final boolean useYuv = inputIsYuv || yuvTargets.size() > 0;
+            final boolean useY8 = inputIsY8 || y8Targets.size() > 0;
+            final int totalNumReprocessCaptures =  NUM_REPROCESS_CAPTURES_PER_CONFIG * (
+                    ((inputIsYuv || inputIsY8) ? 1 : 0) +
+                    jpegTargets.size() + (useYuv ? yuvTargets.size() : y8Targets.size()));
+
+            // It needs 1 input buffer for each reprocess capture + the number of buffers
+            // that will be used as outputs.
+            inputReader = ImageReader.newInstance(inputConfig.getWidth(), inputConfig.getHeight(),
+                    inputConfig.getFormat(),
+                    totalNumReprocessCaptures + NUM_REPROCESS_CAPTURES_PER_CONFIG);
+            inputReader.setOnImageAvailableListener(inputReaderListener, mHandler);
+            outputSurfaces.add(inputReader.getSurface());
+
+            assertTrue(String.format("Session configuration query %s failed",
+                    combination.getDescription()),
+                    checkSessionConfigurationWithSurfaces(mCamera, mHandler, outputSurfaces,
+                    inputConfig, SessionConfiguration.SESSION_REGULAR, /*expectedResult*/ true));
+
+            // Verify we can create a reprocessable session with the input and all outputs.
+            BlockingSessionCallback sessionListener = new BlockingSessionCallback();
+            CameraCaptureSession session = configureReprocessableCameraSession(mCamera,
+                    inputConfig, outputSurfaces, sessionListener, mHandler);
+            inputWriter = ImageWriter.newInstance(session.getInputSurface(),
+                    totalNumReprocessCaptures);
+
+            // Prepare a request for reprocess input
+            CaptureRequest.Builder builder = mCamera.createCaptureRequest(
+                    CameraDevice.TEMPLATE_ZERO_SHUTTER_LAG);
+            builder.addTarget(inputReader.getSurface());
+
+            for (int i = 0; i < totalNumReprocessCaptures; i++) {
+                session.capture(builder.build(), inputCaptureListener, mHandler);
+            }
+
+            List<CaptureRequest> reprocessRequests = new ArrayList<>();
+            List<Surface> reprocessOutputs = new ArrayList<>();
+            if (inputIsYuv || inputIsY8) {
+                reprocessOutputs.add(inputReader.getSurface());
+            }
+
+            for (ImageReader reader : jpegTargets) {
+                reprocessOutputs.add(reader.getSurface());
+            }
+
+            for (ImageReader reader : yuvTargets) {
+                reprocessOutputs.add(reader.getSurface());
+            }
+
+            for (ImageReader reader : y8Targets) {
+                reprocessOutputs.add(reader.getSurface());
+            }
+
+            for (int i = 0; i < NUM_REPROCESS_CAPTURES_PER_CONFIG; i++) {
+                for (Surface output : reprocessOutputs) {
+                    TotalCaptureResult result = inputCaptureListener.getTotalCaptureResult(
+                            TIMEOUT_FOR_RESULT_MS);
+                    builder =  mCamera.createReprocessCaptureRequest(result);
+                    inputWriter.queueInputImage(
+                            inputReaderListener.getImage(TIMEOUT_FOR_RESULT_MS));
+                    builder.addTarget(output);
+                    reprocessRequests.add(builder.build());
+                }
+            }
+
+            session.captureBurst(reprocessRequests, reprocessOutputCaptureListener, mHandler);
+
+            for (int i = 0; i < reprocessOutputs.size() * NUM_REPROCESS_CAPTURES_PER_CONFIG; i++) {
+                TotalCaptureResult result = reprocessOutputCaptureListener.getTotalCaptureResult(
+                        TIMEOUT_FOR_RESULT_MS);
+            }
+        } catch (Throwable e) {
+            mCollector.addMessage(String.format("Reprocess stream combination %s failed due to: %s",
+                    combination.getDescription(), e.getMessage()));
+        } finally {
+            inputReaderListener.drain();
+            reprocessOutputCaptureListener.drain();
+
+            for (SurfaceTexture target : privTargets) {
+                target.release();
+            }
+
+            for (ImageReader target : jpegTargets) {
+                target.close();
+            }
+
+            for (ImageReader target : yuvTargets) {
+                target.close();
+            }
+
+            for (ImageReader target : y8Targets) {
+                target.close();
+            }
+
+            for (ImageReader target : rawTargets) {
+                target.close();
+            }
+
+            if (inputReader != null) {
+                inputReader.close();
+            }
+
+            if (inputWriter != null) {
+                inputWriter.close();
             }
         }
     }
@@ -1546,11 +1922,7 @@ public class RobustnessTest extends Camera2AndroidTestCase {
         static final int RECORD  = 1;
         static final int MAXIMUM = 2;
         static final int VGA = 3;
-        static final int VGA_FULL_FOV = 4;
-        static final int MAX_30FPS = 5;
-        static final int RESOLUTION_COUNT = 6;
-
-        static final long FRAME_DURATION_30FPS_NSEC = (long) 1e9 / 30;
+        static final int RESOLUTION_COUNT = 4;
 
         public MaxStreamSizes(StaticMetadata sm, String cameraId, Context context) {
             Size[] privSizes = sm.getAvailableSizesForFormatChecked(ImageFormat.PRIVATE,
@@ -1603,96 +1975,6 @@ public class RobustnessTest extends Camera2AndroidTestCase {
                     maxY8Sizes[MAXIMUM] = CameraTestUtils.getMaxSize(y8Sizes);
                     maxY8Sizes[VGA] = vgaSize;
                 }
-            }
-
-            if (sm.isColorOutputSupported() && !sm.isHardwareLevelLegacy()) {
-                // VGA resolution, but with aspect ratio matching full res FOV
-                float fullFovAspect = maxYuvSizes[MAXIMUM].getWidth() / (float) maxYuvSizes[MAXIMUM].getHeight();
-                Size vgaFullFovSize = new Size(640, (int) (640 / fullFovAspect));
-
-                maxPrivSizes[VGA_FULL_FOV] = vgaFullFovSize;
-                maxYuvSizes[VGA_FULL_FOV] = vgaFullFovSize;
-                maxJpegSizes[VGA_FULL_FOV] = vgaFullFovSize;
-                if (sm.isMonochromeWithY8()) {
-                    maxY8Sizes[VGA_FULL_FOV] = vgaFullFovSize;
-                }
-
-                // Max resolution that runs at 30fps
-
-                Size maxPriv30fpsSize = null;
-                Size maxYuv30fpsSize = null;
-                Size maxY830fpsSize = null;
-                Size maxJpeg30fpsSize = null;
-                Comparator<Size> comparator = new SizeComparator();
-                for (Map.Entry<Size, Long> e :
-                             sm.getAvailableMinFrameDurationsForFormatChecked(ImageFormat.PRIVATE).
-                             entrySet()) {
-                    Size s = e.getKey();
-                    Long minDuration = e.getValue();
-                    Log.d(TAG, String.format("Priv Size: %s, duration %d limit %d", s, minDuration, FRAME_DURATION_30FPS_NSEC));
-                    if (minDuration <= FRAME_DURATION_30FPS_NSEC) {
-                        if (maxPriv30fpsSize == null ||
-                                comparator.compare(maxPriv30fpsSize, s) < 0) {
-                            maxPriv30fpsSize = s;
-                        }
-                    }
-                }
-                assertTrue("No PRIVATE resolution available at 30fps!", maxPriv30fpsSize != null);
-
-                for (Map.Entry<Size, Long> e :
-                             sm.getAvailableMinFrameDurationsForFormatChecked(
-                                     ImageFormat.YUV_420_888).
-                             entrySet()) {
-                    Size s = e.getKey();
-                    Long minDuration = e.getValue();
-                    Log.d(TAG, String.format("YUV Size: %s, duration %d limit %d", s, minDuration, FRAME_DURATION_30FPS_NSEC));
-                    if (minDuration <= FRAME_DURATION_30FPS_NSEC) {
-                        if (maxYuv30fpsSize == null ||
-                                comparator.compare(maxYuv30fpsSize, s) < 0) {
-                            maxYuv30fpsSize = s;
-                        }
-                    }
-                }
-                assertTrue("No YUV_420_888 resolution available at 30fps!", maxYuv30fpsSize != null);
-
-                if (sm.isMonochromeWithY8()) {
-                    for (Map.Entry<Size, Long> e :
-                                 sm.getAvailableMinFrameDurationsForFormatChecked(
-                                         ImageFormat.Y8).
-                                 entrySet()) {
-                        Size s = e.getKey();
-                        Long minDuration = e.getValue();
-                        Log.d(TAG, String.format("Y8 Size: %s, duration %d limit %d",
-                                s, minDuration, FRAME_DURATION_30FPS_NSEC));
-                        if (minDuration <= FRAME_DURATION_30FPS_NSEC) {
-                            if (maxY830fpsSize == null ||
-                                    comparator.compare(maxY830fpsSize, s) < 0) {
-                                maxY830fpsSize = s;
-                            }
-                        }
-                    }
-                    assertTrue("No Y8 resolution available at 30fps!", maxY830fpsSize != null);
-                }
-
-                for (Map.Entry<Size, Long> e :
-                             sm.getAvailableMinFrameDurationsForFormatChecked(ImageFormat.JPEG).
-                             entrySet()) {
-                    Size s = e.getKey();
-                    Long minDuration = e.getValue();
-                    Log.d(TAG, String.format("JPEG Size: %s, duration %d limit %d", s, minDuration, FRAME_DURATION_30FPS_NSEC));
-                    if (minDuration <= FRAME_DURATION_30FPS_NSEC) {
-                        if (maxJpeg30fpsSize == null ||
-                                comparator.compare(maxJpeg30fpsSize, s) < 0) {
-                            maxJpeg30fpsSize = s;
-                        }
-                    }
-                }
-                assertTrue("No JPEG resolution available at 30fps!", maxJpeg30fpsSize != null);
-
-                maxPrivSizes[MAX_30FPS] = maxPriv30fpsSize;
-                maxYuvSizes[MAX_30FPS] = maxYuv30fpsSize;
-                maxY8Sizes[MAX_30FPS] = maxY830fpsSize;
-                maxJpegSizes[MAX_30FPS] = maxJpeg30fpsSize;
             }
 
             Size[] privInputSizes = configs.getInputSizes(ImageFormat.PRIVATE);
@@ -1782,349 +2064,10 @@ public class RobustnessTest extends Camera2AndroidTestCase {
                 case VGA:
                     b.append("VGA]");
                     break;
-                case VGA_FULL_FOV:
-                    b.append("VGA_FULL_FOV]");
-                    break;
-                case MAX_30FPS:
-                    b.append("MAX_30FPS]");
-                    break;
                 default:
                     b.append("UNK]");
                     break;
             }
-        }
-    }
-
-    /**
-     * Return an InputConfiguration for a given reprocess configuration.
-     */
-    private InputConfiguration getInputConfig(int[] reprocessConfig, MaxStreamSizes maxSizes) {
-        int format;
-        Size size;
-
-        if (reprocessConfig[1] != MAXIMUM) {
-            throw new IllegalArgumentException("Test only supports MAXIMUM input");
-        }
-
-        switch (reprocessConfig[0]) {
-            case PRIV:
-                format = ImageFormat.PRIVATE;
-                size = maxSizes.maxInputPrivSize;
-                break;
-            case YUV:
-                format = ImageFormat.YUV_420_888;
-                size = maxSizes.maxInputYuvSize;
-                break;
-            case Y8:
-                format = ImageFormat.Y8;
-                size = maxSizes.maxInputY8Size;
-                break;
-            default:
-                throw new IllegalArgumentException("Input format not supported: " +
-                        reprocessConfig[0]);
-        }
-
-        return new InputConfiguration(size.getWidth(), size.getHeight(), format);
-    }
-
-    private void testReprocessStreamCombination(String cameraId, int[] reprocessConfig,
-            MaxStreamSizes maxSizes, StaticMetadata staticInfo) throws Exception {
-        // Test reprocess stream combination
-        testSingleReprocessStreamCombination(cameraId, reprocessConfig, maxSizes, staticInfo);
-
-        // Test substituting YUV_888 format with Y8 format in reprocess stream combination.
-        if (mStaticInfo.isMonochromeWithY8()) {
-            int[] substitutedCfg = reprocessConfig.clone();
-            boolean hasY8 = false;
-            for (int i = 0; i < reprocessConfig.length; i += 2) {
-                if (substitutedCfg[i] == YUV) {
-                    substitutedCfg[i] = Y8;
-                    hasY8 = true;
-                }
-            }
-            if (hasY8) {
-                testSingleReprocessStreamCombination(cameraId, substitutedCfg, maxSizes, staticInfo);
-            }
-        }
-
-    }
-    private void testSingleReprocessStreamCombination(String cameraId, int[] reprocessConfig,
-            MaxStreamSizes maxSizes, StaticMetadata staticInfo) throws Exception {
-
-        Log.i(TAG, String.format("Testing Camera %s, reprocess config: %s", cameraId,
-                MaxStreamSizes.reprocessConfigToString(reprocessConfig)));
-
-        final int TIMEOUT_FOR_RESULT_MS = 3000;
-        final int NUM_REPROCESS_CAPTURES_PER_CONFIG = 3;
-
-        List<SurfaceTexture> privTargets = new ArrayList<>();
-        List<ImageReader> jpegTargets = new ArrayList<>();
-        List<ImageReader> yuvTargets = new ArrayList<>();
-        List<ImageReader> y8Targets = new ArrayList<>();
-        List<ImageReader> rawTargets = new ArrayList<>();
-        List<Surface> outputSurfaces = new ArrayList<>();
-        ImageReader inputReader = null;
-        ImageWriter inputWriter = null;
-        SimpleImageReaderListener inputReaderListener = new SimpleImageReaderListener();
-        SimpleCaptureCallback inputCaptureListener = new SimpleCaptureCallback();
-        SimpleCaptureCallback reprocessOutputCaptureListener = new SimpleCaptureCallback();
-
-        boolean supportYuvReprocess = staticInfo.isCapabilitySupported(
-                CameraCharacteristics.REQUEST_AVAILABLE_CAPABILITIES_YUV_REPROCESSING);
-        boolean supportOpaqueReprocess = staticInfo.isCapabilitySupported(
-                CameraCharacteristics.REQUEST_AVAILABLE_CAPABILITIES_PRIVATE_REPROCESSING);
-
-        // Skip the configuration if the format is not supported for reprocessing.
-        if (((reprocessConfig[0] == YUV || reprocessConfig[0] == Y8) && !supportYuvReprocess) ||
-                (reprocessConfig[0] == PRIV && !supportOpaqueReprocess)) {
-            return;
-        }
-
-        try {
-            // reprocessConfig[2..] are additional outputs
-            setupConfigurationTargets(
-                    Arrays.copyOfRange(reprocessConfig, 2, reprocessConfig.length),
-                    maxSizes, privTargets, jpegTargets, yuvTargets, y8Targets,
-                    rawTargets, outputSurfaces, NUM_REPROCESS_CAPTURES_PER_CONFIG);
-
-            // reprocessConfig[0:1] is input
-            InputConfiguration inputConfig = getInputConfig(
-                    Arrays.copyOfRange(reprocessConfig, 0, 2), maxSizes);
-
-            // For each config, YUV and JPEG outputs will be tested. (For YUV/Y8 reprocessing,
-            // the YUV/Y8 ImageReader for input is also used for output.)
-            final boolean inputIsYuv = inputConfig.getFormat() == ImageFormat.YUV_420_888;
-            final boolean inputIsY8 = inputConfig.getFormat() == ImageFormat.Y8;
-            final boolean useYuv = inputIsYuv || yuvTargets.size() > 0;
-            final boolean useY8 = inputIsY8 || y8Targets.size() > 0;
-            final int totalNumReprocessCaptures =  NUM_REPROCESS_CAPTURES_PER_CONFIG * (
-                    ((inputIsYuv || inputIsY8) ? 1 : 0) +
-                    jpegTargets.size() + (useYuv ? yuvTargets.size() : y8Targets.size()));
-
-            // It needs 1 input buffer for each reprocess capture + the number of buffers
-            // that will be used as outputs.
-            inputReader = ImageReader.newInstance(inputConfig.getWidth(), inputConfig.getHeight(),
-                    inputConfig.getFormat(),
-                    totalNumReprocessCaptures + NUM_REPROCESS_CAPTURES_PER_CONFIG);
-            inputReader.setOnImageAvailableListener(inputReaderListener, mHandler);
-            outputSurfaces.add(inputReader.getSurface());
-
-            assertTrue(String.format("Session configuration query %s failed",
-                    MaxStreamSizes.reprocessConfigToString(reprocessConfig)),
-                    checkSessionConfigurationWithSurfaces(mCamera, mHandler, outputSurfaces,
-                    inputConfig, SessionConfiguration.SESSION_REGULAR, /*expectedResult*/ true));
-
-            // Verify we can create a reprocessable session with the input and all outputs.
-            BlockingSessionCallback sessionListener = new BlockingSessionCallback();
-            CameraCaptureSession session = configureReprocessableCameraSession(mCamera,
-                    inputConfig, outputSurfaces, sessionListener, mHandler);
-            inputWriter = ImageWriter.newInstance(session.getInputSurface(),
-                    totalNumReprocessCaptures);
-
-            // Prepare a request for reprocess input
-            CaptureRequest.Builder builder = mCamera.createCaptureRequest(
-                    CameraDevice.TEMPLATE_ZERO_SHUTTER_LAG);
-            builder.addTarget(inputReader.getSurface());
-
-            for (int i = 0; i < totalNumReprocessCaptures; i++) {
-                session.capture(builder.build(), inputCaptureListener, mHandler);
-            }
-
-            List<CaptureRequest> reprocessRequests = new ArrayList<>();
-            List<Surface> reprocessOutputs = new ArrayList<>();
-            if (inputIsYuv || inputIsY8) {
-                reprocessOutputs.add(inputReader.getSurface());
-            }
-
-            for (ImageReader reader : jpegTargets) {
-                reprocessOutputs.add(reader.getSurface());
-            }
-
-            for (ImageReader reader : yuvTargets) {
-                reprocessOutputs.add(reader.getSurface());
-            }
-
-            for (ImageReader reader : y8Targets) {
-                reprocessOutputs.add(reader.getSurface());
-            }
-
-            for (int i = 0; i < NUM_REPROCESS_CAPTURES_PER_CONFIG; i++) {
-                for (Surface output : reprocessOutputs) {
-                    TotalCaptureResult result = inputCaptureListener.getTotalCaptureResult(
-                            TIMEOUT_FOR_RESULT_MS);
-                    builder =  mCamera.createReprocessCaptureRequest(result);
-                    inputWriter.queueInputImage(
-                            inputReaderListener.getImage(TIMEOUT_FOR_RESULT_MS));
-                    builder.addTarget(output);
-                    reprocessRequests.add(builder.build());
-                }
-            }
-
-            session.captureBurst(reprocessRequests, reprocessOutputCaptureListener, mHandler);
-
-            for (int i = 0; i < reprocessOutputs.size() * NUM_REPROCESS_CAPTURES_PER_CONFIG; i++) {
-                TotalCaptureResult result = reprocessOutputCaptureListener.getTotalCaptureResult(
-                        TIMEOUT_FOR_RESULT_MS);
-            }
-        } catch (Throwable e) {
-            mCollector.addMessage(String.format("Reprocess stream combination %s failed due to: %s",
-                    MaxStreamSizes.reprocessConfigToString(reprocessConfig), e.getMessage()));
-        } finally {
-            inputReaderListener.drain();
-            reprocessOutputCaptureListener.drain();
-
-            for (SurfaceTexture target : privTargets) {
-                target.release();
-            }
-
-            for (ImageReader target : jpegTargets) {
-                target.close();
-            }
-
-            for (ImageReader target : yuvTargets) {
-                target.close();
-            }
-
-            for (ImageReader target : y8Targets) {
-                target.close();
-            }
-
-            for (ImageReader target : rawTargets) {
-                target.close();
-            }
-
-            if (inputReader != null) {
-                inputReader.close();
-            }
-
-            if (inputWriter != null) {
-                inputWriter.close();
-            }
-        }
-    }
-
-    private void testOutputCombination(String cameraId, int[] config, MaxStreamSizes maxSizes)
-            throws Exception {
-
-
-        // Check whether substituting YUV_888 format with Y8 format
-        boolean substituteY8 = false;
-        int[] substitutedCfg = config.clone();
-        if (mStaticInfo.isMonochromeWithY8()) {
-            for (int i = 0; i < config.length; i += 2) {
-                if (substitutedCfg[i] == YUV) {
-                    substitutedCfg[i] = Y8;
-                    substituteY8 = true;
-                }
-            }
-        }
-
-        // Test camera output combination
-        Log.i(TAG, String.format("Testing single Camera %s, config %s",
-                cameraId, MaxStreamSizes.configToString(config)));
-        testSingleCameraOutputCombination(cameraId, config, maxSizes);
-
-        if (substituteY8) {
-            Log.i(TAG, String.format("Testing single Camera %s, config %s",
-                    cameraId, MaxStreamSizes.configToString(substitutedCfg)));
-            testSingleCameraOutputCombination(cameraId, substitutedCfg, maxSizes);
-        }
-
-        // Test substituting YUV_888/RAW with physical streams for logical camera
-        if (mStaticInfo.isLogicalMultiCamera()) {
-            Log.i(TAG, String.format("Testing logical Camera %s, config %s",
-                    cameraId, MaxStreamSizes.configToString(config)));
-
-            testMultiCameraOutputCombination(cameraId, config, maxSizes);
-
-            if (substituteY8) {
-                Log.i(TAG, String.format("Testing logical Camera %s, config %s",
-                        cameraId, MaxStreamSizes.configToString(substitutedCfg)));
-                testMultiCameraOutputCombination(cameraId, substitutedCfg, maxSizes);
-            }
-        }
-    }
-
-    private void testSingleCameraOutputCombination(String cameraId, int[] config,
-        MaxStreamSizes maxSizes) throws Exception {
-
-        // Timeout is relaxed by 1 second for LEGACY devices to reduce false positive rate in CTS
-        final int TIMEOUT_FOR_RESULT_MS = (mStaticInfo.isHardwareLevelLegacy()) ? 2000 : 1000;
-        final int MIN_RESULT_COUNT = 3;
-
-        // Set up outputs
-        List<OutputConfiguration> outputConfigs = new ArrayList<OutputConfiguration>();
-        List<SurfaceTexture> privTargets = new ArrayList<SurfaceTexture>();
-        List<ImageReader> jpegTargets = new ArrayList<ImageReader>();
-        List<ImageReader> yuvTargets = new ArrayList<ImageReader>();
-        List<ImageReader> rawTargets = new ArrayList<ImageReader>();
-        List<ImageReader> y8Targets = new ArrayList<ImageReader>();
-
-        setupConfigurationTargets(config, maxSizes, privTargets, jpegTargets, yuvTargets,
-                y8Targets, rawTargets, outputConfigs, MIN_RESULT_COUNT, -1 /*overrideStreamIndex*/,
-                null /*overridePhysicalCameraIds*/, null /*overridePhysicalCameraSizes*/);
-
-        boolean haveSession = false;
-        try {
-            CaptureRequest.Builder requestBuilder =
-                    mCamera.createCaptureRequest(CameraDevice.TEMPLATE_PREVIEW);
-
-            for (OutputConfiguration c : outputConfigs) {
-                requestBuilder.addTarget(c.getSurface());
-            }
-
-            CameraCaptureSession.CaptureCallback mockCaptureCallback =
-                    mock(CameraCaptureSession.CaptureCallback.class);
-
-            assertTrue(String.format("Session configuration query %s failed",
-                    MaxStreamSizes.configToString(config)), checkSessionConfiguration(mCamera,
-                    mHandler, outputConfigs, /*inputConfig*/ null,
-                    SessionConfiguration.SESSION_REGULAR, /*expectedResult*/ true));
-
-            createSessionByConfigs(outputConfigs);
-            haveSession = true;
-            CaptureRequest request = requestBuilder.build();
-            mCameraSession.setRepeatingRequest(request, mockCaptureCallback, mHandler);
-
-            verify(mockCaptureCallback,
-                    timeout(TIMEOUT_FOR_RESULT_MS * MIN_RESULT_COUNT).atLeast(MIN_RESULT_COUNT))
-                    .onCaptureCompleted(
-                        eq(mCameraSession),
-                        eq(request),
-                        isA(TotalCaptureResult.class));
-            verify(mockCaptureCallback, never()).
-                    onCaptureFailed(
-                        eq(mCameraSession),
-                        eq(request),
-                        isA(CaptureFailure.class));
-
-        } catch (Throwable e) {
-            mCollector.addMessage(String.format("Output combination %s failed due to: %s",
-                    MaxStreamSizes.configToString(config), e.getMessage()));
-        }
-        if (haveSession) {
-            try {
-                Log.i(TAG, String.format("Done with camera %s, config %s, closing session",
-                                cameraId, MaxStreamSizes.configToString(config)));
-                stopCapture(/*fast*/false);
-            } catch (Throwable e) {
-                mCollector.addMessage(
-                    String.format("Closing down for output combination %s failed due to: %s",
-                            MaxStreamSizes.configToString(config), e.getMessage()));
-            }
-        }
-
-        for (SurfaceTexture target : privTargets) {
-            target.release();
-        }
-        for (ImageReader target : jpegTargets) {
-            target.close();
-        }
-        for (ImageReader target : yuvTargets) {
-            target.close();
-        }
-        for (ImageReader target : rawTargets) {
-            target.close();
         }
     }
 
@@ -2247,21 +2190,6 @@ public class RobustnessTest extends Camera2AndroidTestCase {
             for (ImageReader target : rawTargets) {
                 target.close();
             }
-        }
-    }
-
-    private void setupConfigurationTargets(int[] configs, MaxStreamSizes maxSizes,
-            List<SurfaceTexture> privTargets, List<ImageReader> jpegTargets,
-            List<ImageReader> yuvTargets, List<ImageReader> y8Targets,
-            List<ImageReader> rawTargets, List<Surface> outputSurfaces, int numBuffers) {
-        List<OutputConfiguration> outputConfigs = new ArrayList<OutputConfiguration> ();
-
-        setupConfigurationTargets(configs, maxSizes, privTargets, jpegTargets, yuvTargets,
-                y8Targets, rawTargets, outputConfigs, numBuffers, -1 /*overrideStreamIndex*/,
-                null /*overridePhysicalCameraIds*/, null /* overridePhysicalCameraSizes) */);
-
-        for (OutputConfiguration outputConfig : outputConfigs) {
-            outputSurfaces.add(outputConfig.getSurface());
         }
     }
 

@@ -30,6 +30,7 @@ import static org.junit.Assert.assertTrue;
 import android.content.Context;
 import android.graphics.Bitmap;
 import android.graphics.BitmapShader;
+import android.graphics.BlendMode;
 import android.graphics.ColorFilter;
 import android.graphics.MaskFilter;
 import android.graphics.Matrix;
@@ -40,6 +41,8 @@ import android.graphics.Paint.Join;
 import android.graphics.Paint.Style;
 import android.graphics.Path;
 import android.graphics.PathEffect;
+import android.graphics.PorterDuff;
+import android.graphics.PorterDuffXfermode;
 import android.graphics.Rect;
 import android.graphics.Shader;
 import android.graphics.Typeface;
@@ -2025,5 +2028,42 @@ public class PaintTest {
         assertEquals(1, getTextRunCursor("a\u0061\u0302c", 2, CURSOR_BEFORE));
         assertEquals(1, getTextRunCursor("a\u0061\u0302c", 3, CURSOR_BEFORE));
         assertEquals(3, getTextRunCursor("a\u0061\u0302c", 4, CURSOR_BEFORE));
+    }
+
+    @Test
+    public void testGetBlendModeFromPorterDuffMode() {
+        Paint p = new Paint();
+        PorterDuff.Mode[] porterDuffModes = PorterDuff.Mode.values();
+        for (PorterDuff.Mode mode : porterDuffModes) {
+            p.setXfermode(new PorterDuffXfermode(mode));
+            assertEquals(getBlendModeFromPorterDuffMode(mode), p.getBlendMode());
+        }
+
+    }
+
+    private BlendMode getBlendModeFromPorterDuffMode(PorterDuff.Mode mode) {
+        switch (mode) {
+            case CLEAR: return BlendMode.CLEAR;
+            case SRC: return BlendMode.SRC;
+            case DST: return BlendMode.DST;
+            case SRC_OVER: return BlendMode.SRC_OVER;
+            case DST_OVER: return BlendMode.DST_OVER;
+            case SRC_IN: return BlendMode.SRC_IN;
+            case DST_IN: return BlendMode.DST_IN;
+            case SRC_OUT: return BlendMode.SRC_OUT;
+            case DST_OUT: return BlendMode.DST_OUT;
+            case SRC_ATOP: return BlendMode.SRC_ATOP;
+            case DST_ATOP: return BlendMode.DST_ATOP;
+            case XOR: return BlendMode.XOR;
+            case DARKEN: return BlendMode.DARKEN;
+            case LIGHTEN: return BlendMode.LIGHTEN;
+             // The odd one out, see b/73224934. PorterDuff.Mode.MULTIPLY was improperly mapped
+            // to Skia's modulate
+            case MULTIPLY: return BlendMode.MODULATE;
+            case SCREEN: return BlendMode.SCREEN;
+            case ADD: return BlendMode.PLUS;
+            case OVERLAY: return BlendMode.OVERLAY;
+            default: throw new IllegalArgumentException("Unknown PorterDuffmode: " + mode);
+        }
     }
 }

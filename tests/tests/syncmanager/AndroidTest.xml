@@ -35,10 +35,24 @@
         <option name="run-command" value="am set-standby-bucket android.content.syncmanager.cts.app1 10" />
         <option name="run-command" value="am set-standby-bucket android.content.syncmanager.cts.app2 10" />
         <option name="run-command" value="setprop log.tag.SyncManager VERBOSE" />
+        <option name="run-command" value="cmd thermalservice override-status 0" />
+        <option name="teardown-command" value="cmd thermalservice reset" />
         <option name="teardown-command" value="setprop log.tag.SyncManager INFO" />
     </target_preparer>
     <test class="com.android.tradefed.testtype.AndroidJUnitTest" >
         <option name="package" value="android.content.syncmanager.cts" />
         <option name="runtime-hint" value="10m00s" />
+
+        <!-- This is needed so that FilePullerLogCollector can read files in /sdcard/cts_text_dump/ -->
+        <option name="isolated-storage" value="false" />
     </test>
+
+    <!--
+      Pull out the dump files created by SystemUtil.runCommandAndDump().
+      Note in order for it to work, isolated-storage must be set to false in the test tag above.
+    -->
+    <metrics_collector class="com.android.tradefed.device.metric.FilePullerLogCollector">
+        <option name="directory-keys" value="/sdcard/cts_text_dump/" />
+    </metrics_collector>
+
 </configuration>

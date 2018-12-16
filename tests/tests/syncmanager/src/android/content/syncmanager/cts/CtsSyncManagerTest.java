@@ -22,7 +22,7 @@ import static android.content.syncmanager.cts.common.Values.APP1_PACKAGE;
 import static com.android.compatibility.common.util.BundleUtils.makeBundle;
 import static com.android.compatibility.common.util.ConnectivityUtils.assertNetworkConnected;
 import static com.android.compatibility.common.util.SettingsUtils.putGlobalSetting;
-import static com.android.compatibility.common.util.SystemUtil.runCommandAndPrintOnLogcat;
+import static com.android.compatibility.common.util.SystemUtil.runCommandAndDump;
 
 import static junit.framework.TestCase.assertEquals;
 
@@ -40,6 +40,7 @@ import android.content.syncmanager.cts.SyncManagerCtsProto.Payload.Request.SetRe
 import android.content.syncmanager.cts.SyncManagerCtsProto.Payload.Request.SetResult.Result;
 import android.content.syncmanager.cts.SyncManagerCtsProto.Payload.Response;
 import android.content.syncmanager.cts.SyncManagerCtsProto.Payload.SyncInvocation;
+import android.device.loggers.TestLogData;
 import android.os.Bundle;
 import android.support.test.InstrumentationRegistry;
 import android.support.test.filters.LargeTest;
@@ -76,11 +77,14 @@ public class CtsSyncManagerTest {
     private static final int TIMEOUT_MS = 10 * 60 * 1000;
 
     @Rule
+    public TestLogData mLogs = new TestLogData();
+
+    @Rule
     public final OnFailureRule mDumpOnFailureRule = new OnFailureRule(TAG) {
         @Override
         protected void onTestFailure(Statement base, Description description, Throwable t) {
-            runCommandAndPrintOnLogcat(TAG, "dumpsys content");
-            runCommandAndPrintOnLogcat(TAG, "dumpsys jobscheduler");
+            runCommandAndDump(TAG, "dumpsys content", mLogs, "test failure");
+            runCommandAndDump(TAG, "dumpsys jobscheduler", mLogs, "test failure");
         }
     };
 
@@ -91,6 +95,10 @@ public class CtsSyncManagerTest {
 
     @Before
     public void setUp() throws Exception {
+        Log.i(TAG, "Dumping initial state");
+        runCommandAndDump(TAG, "dumpsys content", mLogs, "setup");
+        runCommandAndDump(TAG, "dumpsys jobscheduler", mLogs, "setup");
+
         assertNetworkConnected(InstrumentationRegistry.getContext());
 
         BatteryUtils.runDumpsysBatteryUnplug();

@@ -19,6 +19,7 @@
     package="android.server.cts.am">
     <uses-permission android:name="android.permission.READ_LOGS" />
     <uses-permission android:name="android.permission.REQUEST_DELETE_PACKAGES" />
+    <uses-permission android:name="android.permission.DISABLE_KEYGUARD" />
 
     <application android:label="CtsActivityManagerDeviceTestCases">
         <uses-library android:name="android.test.runner" />
@@ -47,6 +48,23 @@
         <activity
             android:name="android.server.am.AspectRatioTests$MaxAspectRatioUnsetActivity"
             android:label="MaxAspectRatioUnsetActivity"
+            android:resizeableActivity="false" />
+
+        <activity
+            android:name="android.server.am.AspectRatioTests$MinAspectRatioActivity"
+            android:label="MinAspectRatioActivity"
+            android:minAspectRatio="5.0"
+            android:resizeableActivity="false" />
+
+        <activity
+            android:name="android.server.am.AspectRatioTests$MinAspectRatioResizeableActivity"
+            android:label="MinAspectRatioResizeableActivity"
+            android:minAspectRatio="5.0"
+            android:resizeableActivity="true" />
+
+        <activity
+            android:name="android.server.am.AspectRatioTests$MinAspectRatioUnsetActivity"
+            android:label="MinAspectRatioUnsetActivity"
             android:resizeableActivity="false" />
 
         <activity android:name="android.server.am.ActivityManagerTestBase$SideActivity"

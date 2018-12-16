@@ -30,6 +30,7 @@ import android.uirendering.cts.testinfrastructure.ViewInitializer;
 import com.android.compatibility.common.util.SystemUtil;
 
 import org.junit.AfterClass;
+import org.junit.Assert;
 import org.junit.BeforeClass;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -64,13 +65,15 @@ public class ForceDarkTests extends ActivityTestBase {
     public void testFgRect() {
         final Rect rect = new Rect(10, 10, 80, 80);
         createTest()
-                .addLayout(R.layout.simple_force_dark, (ViewInitializer) view ->
-                        ((CanvasClientView) view).setCanvasClient((canvas, width, height) -> {
-                            Paint p = new Paint();
-                            p.setAntiAlias(false);
-                            p.setColor(Color.BLACK);
-                            canvas.drawRect(rect, p);
-                        }), true)
+                .addLayout(R.layout.simple_force_dark, (ViewInitializer) view -> {
+                    Assert.assertTrue(view.isForceDarkAllowed());
+                    ((CanvasClientView) view).setCanvasClient((canvas, width, height) -> {
+                        Paint p = new Paint();
+                        p.setAntiAlias(false);
+                        p.setColor(Color.BLACK);
+                        canvas.drawRect(rect, p);
+                    });
+                }, true)
                 .runWithVerifier(new RectVerifier(Color.BLACK, Color.WHITE, rect, 100));
     }
 
@@ -80,6 +83,7 @@ public class ForceDarkTests extends ActivityTestBase {
         createTest()
                 .addLayout(R.layout.simple_force_dark, (ViewInitializer) view -> {
                     view.setForceDarkAllowed(false);
+                    Assert.assertFalse(view.isForceDarkAllowed());
                     ((CanvasClientView) view).setCanvasClient((canvas, width, height) -> {
                         Paint p = new Paint();
                         p.setAntiAlias(false);

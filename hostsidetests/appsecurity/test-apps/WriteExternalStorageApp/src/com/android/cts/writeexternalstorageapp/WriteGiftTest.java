@@ -21,6 +21,7 @@ import static com.android.cts.externalstorageapp.CommonExternalStorageTest.PACKA
 import static com.android.cts.externalstorageapp.CommonExternalStorageTest.PACKAGE_WRITE;
 import static com.android.cts.externalstorageapp.CommonExternalStorageTest.assertFileReadWriteAccess;
 import static com.android.cts.externalstorageapp.CommonExternalStorageTest.getAllPackageSpecificGiftPaths;
+import static com.android.cts.externalstorageapp.CommonExternalStorageTest.getAllPackageSpecificObbGiftPaths;
 import static com.android.cts.externalstorageapp.CommonExternalStorageTest.readInt;
 import static com.android.cts.externalstorageapp.CommonExternalStorageTest.writeInt;
 
@@ -62,6 +63,22 @@ public class WriteGiftTest extends AndroidTestCase {
 
             writeInt(write, 102);
             assertEquals(102, readInt(write));
+        }
+    }
+
+    /**
+     * Leave gifts for other packages in their obb directories.
+     */
+    public void testObbGifts() throws Exception {
+        final List<File> noneList = getAllPackageSpecificObbGiftPaths(getContext(), PACKAGE_NONE);
+        for (File none : noneList) {
+
+            none.getParentFile().mkdirs();
+            none.createNewFile();
+            assertFileReadWriteAccess(none);
+
+            writeInt(none, 100);
+            assertEquals(100, readInt(none));
         }
     }
 }

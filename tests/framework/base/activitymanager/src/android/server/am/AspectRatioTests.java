@@ -16,24 +16,16 @@
 
 package android.server.am;
 
-import static android.content.pm.PackageManager.FEATURE_WATCH;
-
-import static org.hamcrest.Matchers.greaterThanOrEqualTo;
 import static org.hamcrest.Matchers.is;
 import static org.hamcrest.Matchers.lessThanOrEqualTo;
 import static org.junit.Assert.assertThat;
-import static org.junit.Assert.fail;
 import static org.junit.Assume.assumeThat;
 
 import android.app.Activity;
-import android.content.Context;
 import android.platform.test.annotations.Presubmit;
-import android.support.test.InstrumentationRegistry;
 import android.support.test.rule.ActivityTestRule;
 import android.support.test.runner.AndroidJUnit4;
-import android.util.DisplayMetrics;
 import android.view.Display;
-import android.view.WindowManager;
 
 import org.junit.Rule;
 import org.junit.Test;
@@ -50,11 +42,8 @@ public class AspectRatioTests extends AspectRatioTestsBase {
     // The max. aspect ratio the test activities are using.
     private static final float MAX_ASPECT_RATIO = 1.0f;
 
-    // The minimum supported device aspect ratio.
-    private static final float MIN_DEVICE_ASPECT_RATIO = 1.333f;
-
-    // The minimum supported device aspect ratio for watches.
-    private static final float MIN_WATCH_DEVICE_ASPECT_RATIO = 1.0f;
+    // The min. aspect ratio the test activities are using.
+    private static final float MIN_ASPECT_RATIO = 5.0f;
 
     // Test target activity that has maxAspectRatio="true" and resizeableActivity="false".
     public static class MaxAspectRatioActivity extends Activity {
@@ -72,6 +61,18 @@ public class AspectRatioTests extends AspectRatioTestsBase {
     //   <meta-data android:name="android.max_aspect" android:value="1.0" />
     // and resizeableActivity="false".
     public static class MetaDataMaxAspectRatioActivity extends Activity {
+    }
+
+    // Test target activity that has minAspectRatio="true" and resizeableActivity="false".
+    public static class MinAspectRatioActivity extends Activity {
+    }
+
+    // Test target activity that has minAspectRatio="5.0" and resizeableActivity="true".
+    public static class MinAspectRatioResizeableActivity extends Activity {
+    }
+
+    // Test target activity that has no minAspectRatio defined and resizeableActivity="false".
+    public static class MinAspectRatioUnsetActivity extends Activity {
     }
 
     @Rule
@@ -94,22 +95,20 @@ public class AspectRatioTests extends AspectRatioTestsBase {
             new ActivityTestRule<>(MaxAspectRatioUnsetActivity.class,
                     false /* initialTouchMode */, false /* launchActivity */);
 
-    @Test
-    public void testDeviceAspectRatio() {
-        final Context context = InstrumentationRegistry.getInstrumentation().getContext();
-        final WindowManager wm = context.getSystemService(WindowManager.class);
-        final Display display = wm.getDefaultDisplay();
-        final DisplayMetrics metrics = new DisplayMetrics();
-        display.getRealMetrics(metrics);
+    @Rule
+    public ActivityTestRule<MinAspectRatioActivity> mMinAspectRatioActivity =
+            new ActivityTestRule<>(MinAspectRatioActivity.class,
+                    false /* initialTouchMode */, false /* launchActivity */);
 
-        float longSide = Math.max(metrics.widthPixels, metrics.heightPixels);
-        float shortSide = Math.min(metrics.widthPixels, metrics.heightPixels);
-        float deviceAspectRatio = longSide / shortSide;
-        float expectedMinAspectRatio = context.getPackageManager().hasSystemFeature(FEATURE_WATCH)
-                ? MIN_WATCH_DEVICE_ASPECT_RATIO : MIN_DEVICE_ASPECT_RATIO;
+    @Rule
+    public ActivityTestRule<MinAspectRatioResizeableActivity> mMinAspectRatioResizeableActivity =
+            new ActivityTestRule<>(MinAspectRatioResizeableActivity.class,
+                    false /* initialTouchMode */, false /* launchActivity */);
 
-        assertThat(deviceAspectRatio, greaterThanOrEqualTo(expectedMinAspectRatio));
-    }
+    @Rule
+    public ActivityTestRule<MinAspectRatioUnsetActivity> mMinAspectRatioUnsetActivity =
+            new ActivityTestRule<>(MinAspectRatioUnsetActivity.class,
+                    false /* initialTouchMode */, false /* launchActivity */);
 
     @Test
     public void testMaxAspectRatio() {
@@ -148,6 +147,37 @@ public class AspectRatioTests extends AspectRatioTestsBase {
             assumeThat(displayId, is(Display.DEFAULT_DISPLAY));
 
             assertThat(actual, greaterThanOrEqualToInexact(getDefaultDisplayAspectRatio()));
+        });
+    }
+
+    @Test
+    public void testMinAspectRatio() {
+        // Activity has a minAspectRatio, assert the ratio is at least that.
+        runAspectRatioTest(mMinAspectRatioActivity, (actual, displayId) -> {
+            assertThat(actual, greaterThanOrEqualToInexact(MIN_ASPECT_RATIO));
+        });
+    }
+
+    @Test
+    public void testMinAspectRatioResizeableActivity() {
+        // Since this activity is resizeable, the minAspectRatio should be ignored.
+        runAspectRatioTest(mMinAspectRatioResizeableActivity, (actual, displayId) -> {
+            // TODO(b/69982434): Add ability to get native aspect ratio non-default display.
+            assumeThat(displayId, is(Display.DEFAULT_DISPLAY));
+
+            assertThat(actual, lessThanOrEqualToInexact(getDefaultDisplayAspectRatio()));
+        });
+    }
+
+    @Test
+    public void testMinAspectRatioUnsetActivity() {
+        // Since this activity didn't set an explicit minAspectRatio, there should be no such
+        // ratio enforced.
+        runAspectRatioTest(mMinAspectRatioUnsetActivity, (actual, displayId) -> {
+            // TODO(b/69982434): Add ability to get native aspect ratio non-default display.
+            assumeThat(displayId, is(Display.DEFAULT_DISPLAY));
+
+            assertThat(actual, lessThanOrEqualToInexact(getDefaultDisplayAspectRatio()));
         });
     }
 }
