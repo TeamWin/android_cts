@@ -19,6 +19,9 @@ package android.inputmethodservice.cts.ime2;
 import android.inputmethodservice.cts.ime.CtsBaseInputMethod;
 import android.view.View;
 
+/**
+ * Implementation of test IME 2.
+ */
 public final class CtsInputMethod2 extends CtsBaseInputMethod {
 
     @Override

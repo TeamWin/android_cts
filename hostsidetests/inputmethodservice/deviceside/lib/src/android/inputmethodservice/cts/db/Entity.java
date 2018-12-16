@@ -28,6 +28,7 @@ import java.util.Map;
 
 /**
  * Abstraction of SQLite database row.
+ * @param <E> type of entities.
  */
 public final class Entity<E> {
 
@@ -43,7 +44,7 @@ public final class Entity<E> {
      * Returns SQL statement to create this entity/row, such that
      * "(_id INTEGER PRIMARY KEY AUTOINCREMENT, column2_name column2_type, ...)".
      */
-    public String createEntitySql() {
+    String createEntitySql() {
         final StringBuilder sb = new StringBuilder("(");
         for (Field field : mFields) {
             if (field.pos > 0) sb.append(", ");
@@ -55,27 +56,43 @@ public final class Entity<E> {
         return sb.append(")").toString();
     }
 
-    public Field getField(String fieldName) {
+    Field getField(String fieldName) {
         return mFieldMap.get(fieldName);
     }
 
     /**
      * {@link Entity} builder.
+     * @param <E> type of entities.
      */
     public static final class Builder<E> {
         private final List<Field> mFields = new ArrayList<>();
         private final Map<String, Field> mFieldMap = new HashMap<>();
         private int mPos = 0;
 
+        /**
+         * Constructor or {@link Builder}.
+         */
         public Builder() {
             addFieldInternal(BaseColumns._ID, Cursor.FIELD_TYPE_INTEGER);
         }
 
+        /**
+         * Add a new field with given name and type.
+         *
+         * @param name name of the field
+         * @param fieldType type enum of the field
+         * @return this builder, useful for chaining
+         */
         public Builder<E> addField(@NonNull String name, int fieldType) {
             addFieldInternal(name, fieldType);
             return this;
         }
 
+        /**
+         * Build {@link Entity}.
+         *
+         * @return a new instance of {@link Entity} built from this builder.
+         */
         public Entity<E> build() {
             return new Entity<>(this);
         }

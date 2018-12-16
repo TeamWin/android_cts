@@ -33,7 +33,7 @@ public abstract class Field {
     /** Field type of SQLite. */
     final String sqLiteType;
 
-    public static Field newInstance(int pos, String name, int fieldType) {
+    static Field newInstance(int pos, String name, int fieldType) {
         switch (fieldType) {
             case Cursor.FIELD_TYPE_INTEGER:
                 return new IntegerField(pos, name);
@@ -50,18 +50,42 @@ public abstract class Field {
         this.sqLiteType = toSqLiteType(fieldType);
     }
 
+    /**
+     * Read data from {@link Cursor}.
+     *
+     * @param cursor {@link Cursor} to read.
+     * @return long data read from {@code cursor}.
+     */
     public long getLong(Cursor cursor) {
         throw buildException(Cursor.FIELD_TYPE_INTEGER);
     }
 
+    /**
+     * Read data from {@link Cursor}.
+     *
+     * @param cursor {@link Cursor} to read.
+     * @return {@link String} data read from {@code cursor}.
+     */
     public String getString(Cursor cursor) {
         throw buildException(Cursor.FIELD_TYPE_STRING);
     }
 
+    /**
+     * Put data to {@link ContentValues}.
+     *
+     * @param values {@link ContentValues} to be updated.
+     * @param value long data to put.
+     */
     public void putLong(ContentValues values, long value) {
         throw buildException(Cursor.FIELD_TYPE_INTEGER);
     }
 
+    /**
+     * Put data to {@link ContentValues}.
+     *
+     * @param values {@link ContentValues} to be updated.
+     * @param value {@link String} data to put.
+     */
     public void putString(ContentValues values, String value) {
         throw buildException(Cursor.FIELD_TYPE_STRING);
     }

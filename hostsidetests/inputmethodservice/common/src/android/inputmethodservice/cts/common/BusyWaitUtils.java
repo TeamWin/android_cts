@@ -27,8 +27,18 @@ public final class BusyWaitUtils {
 
     private static final long POLLING_INTERVAL = TimeUnit.MILLISECONDS.toMillis(50);
 
+    /**
+     * Callback interface for {@link #pollingCheck(PollingCondition, long, String)} and
+     * {@link #waitFor(PollingCondition, long)}.
+     */
     @FunctionalInterface
     public interface PollingCondition {
+        /**
+         * Called back for polling check.
+         *
+         * @return {@code true} when the polling condition is met.
+         * @throws Exception when whatever unexpected problem happened.
+         */
         boolean check() throws Exception;
     }
 

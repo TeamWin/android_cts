@@ -47,6 +47,9 @@ import org.junit.runner.RunWith;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 
+/**
+ * Test general lifecycle events around InputMethodService.
+ */
 @RunWith(DeviceJUnit4ClassRunner.class)
 public class InputMethodServiceLifecycleTest extends BaseHostJUnit4Test {
 
@@ -54,6 +57,9 @@ public class InputMethodServiceLifecycleTest extends BaseHostJUnit4Test {
     private static final long PACKAGE_OP_TIMEOUT = TimeUnit.SECONDS.toMillis(7);
     private static final long POLLING_INTERVAL = 100;
 
+    /**
+     * Set up test case.
+     */
     @Before
     public void setUp() throws Exception {
         // Skip whole tests when DUT has no android.software.input_methods feature.
@@ -62,6 +68,9 @@ public class InputMethodServiceLifecycleTest extends BaseHostJUnit4Test {
         shell(ShellCommandUtils.deleteContent(EventTableConstants.CONTENT_URI));
     }
 
+    /**
+     * Tear down test case.
+     */
     @After
     public void tearDown() throws Exception {
         shell(ShellCommandUtils.resetImes());
@@ -126,12 +135,18 @@ public class InputMethodServiceLifecycleTest extends BaseHostJUnit4Test {
         assertTrue(runDeviceTestMethod(testSwitchIme1ToIme2));
     }
 
+    /**
+     * Test IME switching APIs for full (non-instant) apps.
+     */
     @AppModeFull
     @Test
     public void testSwitchImeFull() throws Exception {
         testSwitchIme(false);
     }
 
+    /**
+     * Test IME switching APIs for instant apps.
+     */
     @AppModeInstant
     @Test
     public void testSwitchImeInstant() throws Exception {
@@ -155,12 +170,18 @@ public class InputMethodServiceLifecycleTest extends BaseHostJUnit4Test {
         assertImeNotSelectedInSecureSettings(Ime1Constants.IME_ID, WAIT_TIMEOUT);
     }
 
+    /**
+     * Test uninstalling the currently selected IME for full (non-instant) apps.
+     */
     @AppModeFull
     @Test
     public void testUninstallCurrentImeFull() throws Exception {
         testUninstallCurrentIme(false);
     }
 
+    /**
+     * Test uninstalling the currently selected IME for instant apps.
+     */
     @AppModeInstant
     @Test
     public void testUninstallCurrentImeInstant() throws Exception {
@@ -183,12 +204,18 @@ public class InputMethodServiceLifecycleTest extends BaseHostJUnit4Test {
         assertImeNotSelectedInSecureSettings(Ime1Constants.IME_ID, WAIT_TIMEOUT);
     }
 
+    /**
+     * Test disabling the currently selected IME for full (non-instant) apps.
+     */
     @AppModeFull
     @Test
     public void testDisableCurrentImeFull() throws Exception {
         testDisableCurrentIme(false);
     }
 
+    /**
+     * Test disabling the currently selected IME for instant apps.
+     */
     @AppModeInstant
     @Test
     public void testDisableCurrentImeInstant() throws Exception {
@@ -212,12 +239,18 @@ public class InputMethodServiceLifecycleTest extends BaseHostJUnit4Test {
         assertTrue(runDeviceTestMethod(testSetInputMethod));
     }
 
+    /**
+     * Test "InputMethodService#switchInputMethod" API for full (non-instant) apps.
+     */
     @AppModeFull
     @Test
     public void testSwitchInputMethodFull() throws Exception {
         testSwitchInputMethod(false);
     }
 
+    /**
+     * Test "InputMethodService#switchInputMethod" API for instant apps.
+     */
     @AppModeInstant
     @Test
     public void testSwitchInputMethodInstant() throws Exception {
@@ -243,12 +276,18 @@ public class InputMethodServiceLifecycleTest extends BaseHostJUnit4Test {
         assertTrue(runDeviceTestMethod(testSwitchInputs));
     }
 
+    /**
+     * Test "InputMethodService#switchToNextInputMethod" API for full (non-instant) apps.
+     */
     @AppModeFull
     @Test
     public void testSwitchToNextInputFull() throws Exception {
         testSwitchToNextInput(false);
     }
 
+    /**
+     * Test "InputMethodService#switchToNextInputMethod" API for instant apps.
+     */
     @AppModeInstant
     @Test
     public void testSwitchToNextInputInstant() throws Exception {
@@ -272,12 +311,18 @@ public class InputMethodServiceLifecycleTest extends BaseHostJUnit4Test {
         assertTrue(runDeviceTestMethod(testSwitchInputs));
     }
 
+    /**
+     * Test "InputMethodService#switchToPreviousInputMethod" API for full (non-instant) apps.
+     */
     @AppModeFull
     @Test
     public void testSwitchToPreviousInputFull() throws Exception {
         testSwitchToPreviousInput(false);
     }
 
+    /**
+     * Test "InputMethodService#switchToPreviousInputMethod" API for instant apps.
+     */
     @AppModeInstant
     @Test
     public void testSwitchToPreviousInputInstant() throws Exception {
@@ -301,12 +346,20 @@ public class InputMethodServiceLifecycleTest extends BaseHostJUnit4Test {
         assertTrue(runDeviceTestMethod(testUnbind));
     }
 
+    /**
+     * Test if uninstalling the currently selected IME then selecting another IME triggers standard
+     * startInput/bindInput sequence for full (non-instant) apps.
+     */
     @AppModeFull
     @Test
     public void testInputUnbindsOnImeStoppedFull() throws Exception {
         testInputUnbindsOnImeStopped(false);
     }
 
+    /**
+     * Test if uninstalling the currently selected IME then selecting another IME triggers standard
+     * startInput/bindInput sequence for instant apps.
+     */
     @AppModeInstant
     @Test
     public void testInputUnbindsOnImeStoppedInstant() throws Exception {
@@ -328,12 +381,20 @@ public class InputMethodServiceLifecycleTest extends BaseHostJUnit4Test {
         assertTrue(runDeviceTestMethod(testUnbind));
     }
 
+    /**
+     * Test if uninstalling the currently running IME client triggers
+     * "InputMethodService#onUnbindInput" callback for full (non-instant) apps.
+     */
     @AppModeFull
     @Test
     public void testInputUnbindsOnAppStopFull() throws Exception {
         testInputUnbindsOnAppStop(false);
     }
 
+    /**
+     * Test if uninstalling the currently running IME client triggers
+     * "InputMethodService#onUnbindInput" callback for instant apps.
+     */
     @AppModeInstant
     @Test
     public void testInputUnbindsOnAppStopInstant() throws Exception {

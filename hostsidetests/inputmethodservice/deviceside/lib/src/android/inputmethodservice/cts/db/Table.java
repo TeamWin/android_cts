@@ -25,6 +25,7 @@ import java.util.stream.Stream;
 
 /**
  * Abstraction of SQLite database table.
+ * @param <E> type of table entities.
  */
 public abstract class Table<E> {
 
@@ -36,12 +37,27 @@ public abstract class Table<E> {
         mEntity = entity;
     }
 
+    /**
+     * @return name of this table.
+     */
     public String name() {
         return mName;
     }
 
+    /**
+     * Build {@link ContentValues} object from {@code entity}.
+     *
+     * @param entity an input data to be converted.
+     * @return a converted {@link ContentValues} object.
+     */
     public abstract ContentValues buildContentValues(E entity);
 
+    /**
+     * Build {@link Stream} object from {@link Cursor} comes from Content Provider.
+     *
+     * @param cursor a {@link Cursor} object to be converted.
+     * @return a converted {@link Stream} object.
+     */
     public abstract Stream<E> buildStream(Cursor cursor);
 
     /**

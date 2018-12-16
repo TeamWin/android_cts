@@ -18,6 +18,9 @@ package android.inputmethodservice.cts.edittextapp;
 import android.app.Activity;
 import android.os.Bundle;
 
+/**
+ * A test {@link Activity} that only hosts {@link android.widget.EditText}.
+ */
 public class MainActivity extends Activity {
     @Override
     protected void onCreate(Bundle savedInstanceState) {

@@ -44,6 +44,7 @@ import android.inputmethodservice.cts.common.test.ShellCommandUtils;
 import android.inputmethodservice.cts.devicetest.SequenceMatcher.MatchResult;
 import android.os.SystemClock;
 import android.support.test.runner.AndroidJUnit4;
+import android.view.inputmethod.InputMethodSubtype;
 
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -54,6 +55,9 @@ import java.util.function.IntFunction;
 import java.util.function.Predicate;
 import java.util.stream.Collector;
 
+/**
+ * Test general lifecycle events around InputMethodService.
+ */
 @RunWith(AndroidJUnit4.class)
 public class InputMethodServiceDeviceTest {
 
@@ -123,6 +127,10 @@ public class InputMethodServiceDeviceTest {
                         + " in sequence");
     }
 
+    /**
+     * Test {@link android.inputmethodservice.InputMethodService#switchInputMethod(String,
+     * InputMethodSubtype)}.
+     */
     @Test
     public void testSwitchInputMethod() throws Throwable {
         final TestHelper helper = new TestHelper(
@@ -151,6 +159,9 @@ public class InputMethodServiceDeviceTest {
                 TIMEOUT, "CtsInputMethod1.onDestroy is called");
     }
 
+    /**
+     * Test {@link android.inputmethodservice.InputMethodService#switchToNextInputMethod(boolean)}.
+     */
     @Test
     public void testSwitchToNextInputMethod() throws Throwable {
         final TestHelper helper = new TestHelper(
@@ -175,6 +186,9 @@ public class InputMethodServiceDeviceTest {
                 TIMEOUT, "CtsInputMethod1 shouldn't be current IME");
     }
 
+    /**
+     * Test {@link android.inputmethodservice.InputMethodService#switchToPreviousInputMethod()}.
+     */
     @Test
     public void switchToPreviousInputMethod() throws Throwable {
         final TestHelper helper = new TestHelper(
@@ -198,6 +212,10 @@ public class InputMethodServiceDeviceTest {
                 TIMEOUT, initialIme + " is current IME");
     }
 
+    /**
+     * Test if uninstalling the currently selected IME then selecting another IME triggers standard
+     * startInput/bindInput sequence.
+     */
     @Test
     public void testInputUnbindsOnImeStopped() throws Throwable {
         final TestHelper helper = new TestHelper(
@@ -231,6 +249,10 @@ public class InputMethodServiceDeviceTest {
                 TIMEOUT, "CtsInputMethod2.onBindInput is called");
     }
 
+    /**
+     * Test if uninstalling the currently running IME client triggers
+     * {@link android.inputmethodservice.InputMethodService#onUnbindInput()}.
+     */
     @Test
     public void testInputUnbindsOnAppStopped() throws Throwable {
         final TestHelper helper = new TestHelper(

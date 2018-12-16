@@ -28,6 +28,9 @@ import android.net.Uri;
 import android.os.SystemClock;
 import android.util.Log;
 
+/**
+ * An implementation of {@link BroadcastReceiver} to collect event logs on device.
+ */
 public final class EventReceiver extends BroadcastReceiver {
 
     private static final String TAG = EventReceiver.class.getSimpleName();

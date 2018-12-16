@@ -36,6 +36,9 @@ import android.view.inputmethod.InputConnection;
 
 import java.util.function.Consumer;
 
+/**
+ * Base class to create test {@link InputMethodService}.
+ */
 public abstract class CtsBaseInputMethod extends InputMethodService implements ImeCommandCallbacks {
 
     protected static final boolean DEBUG = false;

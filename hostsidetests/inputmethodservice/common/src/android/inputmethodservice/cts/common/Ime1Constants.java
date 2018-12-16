@@ -16,14 +16,29 @@
 
 package android.inputmethodservice.cts.common;
 
+/**
+ * Constant table for test IME 1.
+ */
 public final class Ime1Constants {
 
     // This is constants holding class, can't instantiate.
     private Ime1Constants() {}
 
+    /**
+     * Package name of test IME 1.
+     */
     public static final String PACKAGE = "android.inputmethodservice.cts.ime1";
+    /**
+     * Class name of test IME 1.
+     */
     public static final String CLASS =   "android.inputmethodservice.cts.ime1.CtsInputMethod1";
+    /**
+     * APK name that contains test IME 1.
+     */
     public static final String APK = "CtsInputMethod1.apk";
 
+    /**
+     * IME ID of test IME 1.
+     */
     public static final String IME_ID = ComponentNameUtils.buildComponentName(PACKAGE, CLASS);
 }
