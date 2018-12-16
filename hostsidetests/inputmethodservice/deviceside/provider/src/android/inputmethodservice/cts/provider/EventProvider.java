@@ -22,14 +22,15 @@ import android.content.ContentProvider;
 import android.content.ContentUris;
 import android.content.ContentValues;
 import android.database.Cursor;
+import android.inputmethodservice.cts.DeviceEvent;
 import android.inputmethodservice.cts.common.EventProviderConstants.EventTableConstants;
 import android.inputmethodservice.cts.db.Database;
 import android.inputmethodservice.cts.db.Table;
-import android.inputmethodservice.cts.DeviceEvent;
 import android.net.Uri;
+import android.util.Log;
+
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
-import android.util.Log;
 
 import java.util.Arrays;
 import java.util.Collections;

@@ -17,9 +17,9 @@
 package android.inputmethodservice.cts;
 
 import static android.inputmethodservice.cts.common.DeviceEventConstants.ACTION_DEVICE_EVENT;
+import static android.inputmethodservice.cts.common.DeviceEventConstants.EXTRA_EVENT_SENDER;
 import static android.inputmethodservice.cts.common.DeviceEventConstants.EXTRA_EVENT_TIME;
 import static android.inputmethodservice.cts.common.DeviceEventConstants.EXTRA_EVENT_TYPE;
-import static android.inputmethodservice.cts.common.DeviceEventConstants.EXTRA_EVENT_SENDER;
 import static android.inputmethodservice.cts.common.DeviceEventConstants.RECEIVER_CLASS;
 import static android.inputmethodservice.cts.common.DeviceEventConstants.RECEIVER_PACKAGE;
 
@@ -34,8 +34,9 @@ import android.inputmethodservice.cts.db.Entity;
 import android.inputmethodservice.cts.db.Field;
 import android.inputmethodservice.cts.db.Table;
 import android.os.SystemClock;
-import androidx.annotation.NonNull;
 import android.util.Log;
+
+import androidx.annotation.NonNull;
 
 import java.util.function.Predicate;
 import java.util.stream.Stream;

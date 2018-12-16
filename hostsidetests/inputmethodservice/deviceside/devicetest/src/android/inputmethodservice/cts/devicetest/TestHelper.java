@@ -29,7 +29,6 @@ import android.inputmethodservice.cts.common.DeviceEventConstants.DeviceEventTyp
 import android.inputmethodservice.cts.common.EventProviderConstants.EventTableConstants;
 import android.inputmethodservice.cts.common.test.TestInfo;
 import android.net.Uri;
-import androidx.annotation.IdRes;
 import android.support.test.InstrumentationRegistry;
 import android.support.test.uiautomator.By;
 import android.support.test.uiautomator.UiDevice;

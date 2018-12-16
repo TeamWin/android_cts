@@ -20,22 +20,16 @@ import static android.inputmethodservice.cts.DeviceEvent.isFrom;
 import static android.inputmethodservice.cts.DeviceEvent.isNewerThan;
 import static android.inputmethodservice.cts.DeviceEvent.isType;
 import static android.inputmethodservice.cts.common.BusyWaitUtils.pollingCheck;
-import static android.inputmethodservice.cts.common.DeviceEventConstants.DeviceEventType
-        .ON_BIND_INPUT;
+import static android.inputmethodservice.cts.common.DeviceEventConstants.DeviceEventType.ON_BIND_INPUT;
 import static android.inputmethodservice.cts.common.DeviceEventConstants.DeviceEventType.ON_CREATE;
 import static android.inputmethodservice.cts.common.DeviceEventConstants.DeviceEventType.ON_DESTROY;
 import static android.inputmethodservice.cts.common.DeviceEventConstants.DeviceEventType.ON_START_INPUT;
-
-import static android.inputmethodservice.cts.common.DeviceEventConstants.DeviceEventType
-        .ON_UNBIND_INPUT;
+import static android.inputmethodservice.cts.common.DeviceEventConstants.DeviceEventType.ON_UNBIND_INPUT;
 import static android.inputmethodservice.cts.common.ImeCommandConstants.ACTION_IME_COMMAND;
-import static android.inputmethodservice.cts.common.ImeCommandConstants
-        .COMMAND_SWITCH_INPUT_METHOD_WITH_SUBTYPE;
 import static android.inputmethodservice.cts.common.ImeCommandConstants.COMMAND_SWITCH_INPUT_METHOD;
-import static android.inputmethodservice.cts.common.ImeCommandConstants
-        .COMMAND_SWITCH_TO_PREVIOUS_INPUT;
-import static android.inputmethodservice.cts.common.ImeCommandConstants
-        .COMMAND_SWITCH_TO_NEXT_INPUT;
+import static android.inputmethodservice.cts.common.ImeCommandConstants.COMMAND_SWITCH_INPUT_METHOD_WITH_SUBTYPE;
+import static android.inputmethodservice.cts.common.ImeCommandConstants.COMMAND_SWITCH_TO_NEXT_INPUT;
+import static android.inputmethodservice.cts.common.ImeCommandConstants.COMMAND_SWITCH_TO_PREVIOUS_INPUT;
 import static android.inputmethodservice.cts.common.ImeCommandConstants.EXTRA_ARG_STRING1;
 import static android.inputmethodservice.cts.common.ImeCommandConstants.EXTRA_COMMAND;
 import static android.inputmethodservice.cts.devicetest.MoreCollectors.startingFrom;

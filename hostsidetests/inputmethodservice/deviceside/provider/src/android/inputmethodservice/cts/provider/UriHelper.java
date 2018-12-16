@@ -19,10 +19,11 @@ package android.inputmethodservice.cts.provider;
 import android.content.UriMatcher;
 import android.net.Uri;
 import android.provider.BaseColumns;
-import androidx.annotation.NonNull;
-import androidx.annotation.Nullable;
 import android.text.TextUtils;
 import android.util.SparseArray;
+
+import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
 
 import java.util.List;
 

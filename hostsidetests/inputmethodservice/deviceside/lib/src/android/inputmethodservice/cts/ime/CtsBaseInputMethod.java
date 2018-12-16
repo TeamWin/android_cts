@@ -16,18 +16,14 @@
 
 package android.inputmethodservice.cts.ime;
 
-import static android.inputmethodservice.cts.common.DeviceEventConstants.DeviceEventType
-        .ON_BIND_INPUT;
+import static android.inputmethodservice.cts.common.DeviceEventConstants.DeviceEventType.ON_BIND_INPUT;
 import static android.inputmethodservice.cts.common.DeviceEventConstants.DeviceEventType.ON_CREATE;
 import static android.inputmethodservice.cts.common.DeviceEventConstants.DeviceEventType.ON_DESTROY;
 import static android.inputmethodservice.cts.common.DeviceEventConstants.DeviceEventType.ON_FINISH_INPUT;
 import static android.inputmethodservice.cts.common.DeviceEventConstants.DeviceEventType.ON_FINISH_INPUT_VIEW;
 import static android.inputmethodservice.cts.common.DeviceEventConstants.DeviceEventType.ON_START_INPUT;
 import static android.inputmethodservice.cts.common.DeviceEventConstants.DeviceEventType.ON_START_INPUT_VIEW;
-
-
-import static android.inputmethodservice.cts.common.DeviceEventConstants.DeviceEventType
-        .ON_UNBIND_INPUT;
+import static android.inputmethodservice.cts.common.DeviceEventConstants.DeviceEventType.ON_UNBIND_INPUT;
 
 import android.content.Intent;
 import android.inputmethodservice.InputMethodService;

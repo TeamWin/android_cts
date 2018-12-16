@@ -16,12 +16,7 @@
 package android.inputmethodservice.cts.edittextapp;
 
 import android.app.Activity;
-import android.content.Context;
-import android.widget.EditText;
 import android.os.Bundle;
-import android.view.inputmethod.InputMethodManager;
-import android.view.View;
-import android.view.View.OnFocusChangeListener;
 
 public class MainActivity extends Activity {
     @Override
