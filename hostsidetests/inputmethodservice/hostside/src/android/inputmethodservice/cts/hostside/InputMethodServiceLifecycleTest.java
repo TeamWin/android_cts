@@ -92,9 +92,9 @@ public class InputMethodServiceLifecycleTest extends BaseHostJUnit4Test {
             String apkFileName, String packageName, String... options) throws Exception {
         installPackage(apkFileName, options);
         pollingCheck(() ->
-            shell(ShellCommandUtils.listPackage(packageName)).contains(packageName),
-            PACKAGE_OP_TIMEOUT,
-            packageName + " should be installed.");
+                        shell(ShellCommandUtils.listPackage(packageName)).contains(packageName),
+                PACKAGE_OP_TIMEOUT,
+                packageName + " should be installed.");
     }
 
     /**
@@ -111,7 +111,7 @@ public class InputMethodServiceLifecycleTest extends BaseHostJUnit4Test {
     }
 
     private void installPossibleInstantPackage(
-        String apkFileName, String packageName, boolean instant) throws Exception {
+            String apkFileName, String packageName, boolean instant) throws Exception {
         if (instant) {
             installPackageSync(apkFileName, packageName, "-r", "--instant");
         } else {
@@ -124,7 +124,7 @@ public class InputMethodServiceLifecycleTest extends BaseHostJUnit4Test {
                 DeviceTestConstants.TEST_CLASS, DeviceTestConstants.TEST_SWITCH_IME1_TO_IME2);
         sendTestStartEvent(testSwitchIme1ToIme2);
         installPossibleInstantPackage(
-            EditTextAppConstants.APK, EditTextAppConstants.PACKAGE, instant);
+                EditTextAppConstants.APK, EditTextAppConstants.PACKAGE, instant);
         installImePackageSync(Ime1Constants.APK, Ime1Constants.IME_ID);
         installImePackageSync(Ime2Constants.APK, Ime2Constants.IME_ID);
         shell(ShellCommandUtils.enableIme(Ime1Constants.IME_ID));
@@ -158,7 +158,7 @@ public class InputMethodServiceLifecycleTest extends BaseHostJUnit4Test {
                 DeviceTestConstants.TEST_CLASS, DeviceTestConstants.TEST_CREATE_IME1);
         sendTestStartEvent(testCreateIme1);
         installPossibleInstantPackage(
-            EditTextAppConstants.APK, EditTextAppConstants.PACKAGE, instant);
+                EditTextAppConstants.APK, EditTextAppConstants.PACKAGE, instant);
         installImePackageSync(Ime1Constants.APK, Ime1Constants.IME_ID);
         shell(ShellCommandUtils.enableIme(Ime1Constants.IME_ID));
         waitUntilImesAreEnabled(Ime1Constants.IME_ID);
@@ -193,7 +193,7 @@ public class InputMethodServiceLifecycleTest extends BaseHostJUnit4Test {
                 DeviceTestConstants.TEST_CLASS, DeviceTestConstants.TEST_CREATE_IME1);
         sendTestStartEvent(testCreateIme1);
         installPossibleInstantPackage(
-            EditTextAppConstants.APK, EditTextAppConstants.PACKAGE, instant);
+                EditTextAppConstants.APK, EditTextAppConstants.PACKAGE, instant);
         installImePackageSync(Ime1Constants.APK, Ime1Constants.IME_ID);
         shell(ShellCommandUtils.enableIme(Ime1Constants.IME_ID));
         waitUntilImesAreEnabled(Ime1Constants.IME_ID);
@@ -228,7 +228,7 @@ public class InputMethodServiceLifecycleTest extends BaseHostJUnit4Test {
                 DeviceTestConstants.TEST_SWITCH_INPUTMETHOD);
         sendTestStartEvent(testSetInputMethod);
         installPossibleInstantPackage(
-            EditTextAppConstants.APK, EditTextAppConstants.PACKAGE, instant);
+                EditTextAppConstants.APK, EditTextAppConstants.PACKAGE, instant);
         installImePackageSync(Ime1Constants.APK, Ime1Constants.IME_ID);
         installImePackageSync(Ime2Constants.APK, Ime2Constants.IME_ID);
         shell(ShellCommandUtils.enableIme(Ime1Constants.IME_ID));
@@ -263,7 +263,7 @@ public class InputMethodServiceLifecycleTest extends BaseHostJUnit4Test {
                 DeviceTestConstants.TEST_SWITCH_NEXT_INPUT);
         sendTestStartEvent(testSwitchInputs);
         installPossibleInstantPackage(
-            EditTextAppConstants.APK, EditTextAppConstants.PACKAGE, instant);
+                EditTextAppConstants.APK, EditTextAppConstants.PACKAGE, instant);
         installImePackageSync(Ime1Constants.APK, Ime1Constants.IME_ID);
         installImePackageSync(Ime2Constants.APK, Ime2Constants.IME_ID);
         shell(ShellCommandUtils.enableIme(Ime1Constants.IME_ID));
@@ -300,7 +300,7 @@ public class InputMethodServiceLifecycleTest extends BaseHostJUnit4Test {
                 DeviceTestConstants.TEST_SWITCH_PREVIOUS_INPUT);
         sendTestStartEvent(testSwitchInputs);
         installPossibleInstantPackage(
-            EditTextAppConstants.APK, EditTextAppConstants.PACKAGE, instant);
+                EditTextAppConstants.APK, EditTextAppConstants.PACKAGE, instant);
         installImePackageSync(Ime1Constants.APK, Ime1Constants.IME_ID);
         installImePackageSync(Ime2Constants.APK, Ime2Constants.IME_ID);
         shell(ShellCommandUtils.enableIme(Ime1Constants.IME_ID));
@@ -335,7 +335,7 @@ public class InputMethodServiceLifecycleTest extends BaseHostJUnit4Test {
                 DeviceTestConstants.TEST_INPUT_UNBINDS_ON_IME_STOPPED);
         sendTestStartEvent(testUnbind);
         installPossibleInstantPackage(
-            EditTextAppConstants.APK, EditTextAppConstants.PACKAGE, instant);
+                EditTextAppConstants.APK, EditTextAppConstants.PACKAGE, instant);
         installImePackageSync(Ime1Constants.APK, Ime1Constants.IME_ID);
         installImePackageSync(Ime2Constants.APK, Ime2Constants.IME_ID);
         shell(ShellCommandUtils.enableIme(Ime1Constants.IME_ID));
@@ -372,7 +372,7 @@ public class InputMethodServiceLifecycleTest extends BaseHostJUnit4Test {
                 DeviceTestConstants.TEST_INPUT_UNBINDS_ON_APP_STOPPED);
         sendTestStartEvent(testUnbind);
         installPossibleInstantPackage(
-            EditTextAppConstants.APK, EditTextAppConstants.PACKAGE, instant);
+                EditTextAppConstants.APK, EditTextAppConstants.PACKAGE, instant);
         installImePackageSync(Ime1Constants.APK, Ime1Constants.IME_ID);
         shell(ShellCommandUtils.enableIme(Ime1Constants.IME_ID));
         waitUntilImesAreEnabled(Ime1Constants.IME_ID);
@@ -426,9 +426,8 @@ public class InputMethodServiceLifecycleTest extends BaseHostJUnit4Test {
     private void uninstallPackageSyncIfExists(String packageName) throws Exception {
         if (isPackageInstalled(getDevice(), packageName)) {
             uninstallPackage(getDevice(), packageName);
-            pollingCheck(()-> !isPackageInstalled(getDevice(), packageName),
-                PACKAGE_OP_TIMEOUT,
-                packageName + " should be uninstalled.");
+            pollingCheck(() -> !isPackageInstalled(getDevice(), packageName), PACKAGE_OP_TIMEOUT,
+                    packageName + " should be uninstalled.");
         }
     }
 
@@ -469,14 +468,12 @@ public class InputMethodServiceLifecycleTest extends BaseHostJUnit4Test {
     }
 
     private void waitUntilImesAreAvailableOrEnabled(
-        boolean shouldBeEnabled, String... imeIds) throws Exception {
-        final String cmd = shouldBeEnabled ?
-                ShellCommandUtils.getEnabledImes() : ShellCommandUtils.getAvailableImes();
+            boolean shouldBeEnabled, String... imeIds) throws Exception {
+        final String cmd = shouldBeEnabled
+                ? ShellCommandUtils.getEnabledImes() : ShellCommandUtils.getAvailableImes();
         for (String imeId : imeIds) {
-            pollingCheck(() ->
-                    shell(cmd).contains(imeId),
-                    PACKAGE_OP_TIMEOUT,
-                    imeId + " should be " + (shouldBeEnabled? "enabled." : "available."));
+            pollingCheck(() -> shell(cmd).contains(imeId), PACKAGE_OP_TIMEOUT,
+                    imeId + " should be " + (shouldBeEnabled ? "enabled." : "available."));
         }
     }
 }

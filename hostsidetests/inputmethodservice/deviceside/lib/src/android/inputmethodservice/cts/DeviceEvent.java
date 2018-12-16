@@ -218,7 +218,7 @@ public final class DeviceEvent {
                         mTime.getLong(cursor));
                 builder.accept(event);
                 if (DEBUG_STREAM) {
-                    Log.d(LOG_TAG, " event=" +event);
+                    Log.d(LOG_TAG, " event=" + event);
                 }
             }
             return builder.build();
