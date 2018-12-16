@@ -136,7 +136,7 @@ public abstract class CtsBaseInputMethod extends InputMethodService implements I
     //
 
     @Override
-    public void commandCommitText(final CharSequence text, final int newCursorPosition) {
+    public void commandCommitText(CharSequence text, int newCursorPosition) {
         executeOnInputConnection(ic -> {
             // TODO: Log the return value of {@link InputConnection#commitText(CharSequence,int)}.
             ic.commitText(text, newCursorPosition);
@@ -144,16 +144,16 @@ public abstract class CtsBaseInputMethod extends InputMethodService implements I
     }
 
     @Override
-    public void commandSwitchInputMethod(final String imeId) {
+    public void commandSwitchInputMethod(String imeId) {
         switchInputMethod(imeId);
     }
 
     @Override
-    public void commandRequestHideSelf(final int flags) {
+    public void commandRequestHideSelf(int flags) {
         requestHideSelf(flags);
     }
 
-    private void executeOnInputConnection(final Consumer<InputConnection> consumer) {
+    private void executeOnInputConnection(Consumer<InputConnection> consumer) {
         final InputConnection ic = getCurrentInputConnection();
         // TODO: Check and log whether {@code ic} is null or equals to
         // {@link #getCurrentInputBindin().getConnection()}.
@@ -162,7 +162,7 @@ public abstract class CtsBaseInputMethod extends InputMethodService implements I
         }
     }
 
-    private void sendEvent(final DeviceEventType type, final Object... args) {
+    private void sendEvent(DeviceEventType type, Object... args) {
         final String sender = getClass().getName();
         final Intent intent = DeviceEvent.newDeviceEventIntent(sender, type);
         // TODO: Send arbitrary {@code args} in {@code intent}.

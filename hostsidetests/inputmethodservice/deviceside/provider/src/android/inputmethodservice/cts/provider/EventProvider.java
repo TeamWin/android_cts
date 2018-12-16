@@ -67,9 +67,8 @@ public final class EventProvider extends ContentProvider {
     }
 
     @Override
-    public Cursor query(@NonNull final Uri uri, @Nullable final String[] projection,
-            final @Nullable String selection, @Nullable final String[] selectionArgs,
-            @Nullable final String orderBy) {
+    public Cursor query(@NonNull Uri uri, @Nullable String[] projection, @Nullable String selection,
+            @Nullable String[] selectionArgs, @Nullable String orderBy) {
         final UriHelper uriHelper = mUriFactory.newInstance(uri);
         if (DEBUG) {
             Log.d(TAG, "query:"
@@ -91,7 +90,7 @@ public final class EventProvider extends ContentProvider {
     }
 
     @Override
-    public Uri insert(@NonNull final Uri uri, @Nullable final ContentValues values) {
+    public Uri insert(@NonNull Uri uri, @Nullable ContentValues values) {
         final UriHelper uriHelper = mUriFactory.newInstance(uri);
         if (DEBUG) {
             Log.d(TAG, "insert: uri=" + uri + " values={" + values + "}");
@@ -106,8 +105,8 @@ public final class EventProvider extends ContentProvider {
     }
 
     @Override
-    public int delete(@NonNull final Uri uri, @Nullable final String selection,
-            @Nullable final String[] selectionArgs) {
+    public int delete(@NonNull Uri uri, @Nullable String selection,
+            @Nullable String[] selectionArgs) {
         final UriHelper uriHelper = mUriFactory.newInstance(uri);
         if (DEBUG) {
             Log.d(TAG, "delete:"
@@ -126,8 +125,8 @@ public final class EventProvider extends ContentProvider {
     }
 
     @Override
-    public int update(@NonNull final Uri uri, @Nullable final ContentValues values,
-            final @Nullable String selection, @Nullable final String[] selectionArgs) {
+    public int update(@NonNull Uri uri, @Nullable ContentValues values, @Nullable String selection,
+            @Nullable String[] selectionArgs) {
         final UriHelper uriHelper = mUriFactory.newInstance(uri);
         if (DEBUG) {
             Log.d(TAG, "update:"
@@ -148,7 +147,7 @@ public final class EventProvider extends ContentProvider {
 
     @Override
     @Nullable
-    public String getType(@NonNull final Uri uri) {
+    public String getType(@NonNull Uri uri) {
         return mUriFactory.getTypeOf(uri);
     }
 

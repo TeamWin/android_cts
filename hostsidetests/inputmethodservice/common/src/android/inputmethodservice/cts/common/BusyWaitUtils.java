@@ -43,8 +43,8 @@ public final class BusyWaitUtils {
      *                this message.
      * @throws Exception
      */
-    public static void pollingCheck(final PollingCondition condition, final long timeout,
-            final String message) throws Exception {
+    public static void pollingCheck(PollingCondition condition, long timeout, String message)
+            throws Exception {
         if (waitFor(condition, timeout)) {
             return;
         }
@@ -58,7 +58,7 @@ public final class BusyWaitUtils {
      * @return true when {@code condition} returns {@code true}, false when timed out.
      * @throws Exception
      */
-    static boolean waitFor(final PollingCondition condition, final long timeout) throws Exception {
+    static boolean waitFor(PollingCondition condition, long timeout) throws Exception {
         for (long remaining = timeout; remaining > 0; remaining -= POLLING_INTERVAL) {
             if (condition.check()) {
                 return true;

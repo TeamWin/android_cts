@@ -33,13 +33,13 @@ public abstract class Database {
 
     private final SQLiteOpenHelper mHelper;
 
-    public Database(final Context context, final String name, final int version) {
+    public Database(Context context, String name, int version) {
         mHelper = new SQLiteOpenHelper(context, name, null /* factory */, version) {
             @Override
-            public void onCreate(final SQLiteDatabase db) {
+            public void onCreate(SQLiteDatabase db) {
                 db.beginTransaction();
                 try {
-                    for (final Table table : getTables()) {
+                    for (Table table : getTables()) {
                         db.execSQL(table.createTableSql());
                     }
                     db.setTransactionSuccessful();
@@ -49,8 +49,7 @@ public abstract class Database {
             }
 
             @Override
-            public void onUpgrade(final SQLiteDatabase db, final int oldVersion,
-                    final int newVersion) {
+            public void onUpgrade(SQLiteDatabase db, int oldVersion, int newVersion) {
                 // nothing to do so far.
             }
         };
@@ -59,23 +58,23 @@ public abstract class Database {
     @NonNull
     protected abstract List<Table> getTables();
 
-    public Cursor query(final String table, final String[] projection, final String selection,
-            final String[] selectionArgs, final String orderBy) {
+    public Cursor query(String table, String[] projection, String selection, String[] selectionArgs,
+            String orderBy) {
         return mHelper.getReadableDatabase()
                 .query(table, projection, selection, selectionArgs, null /* groupBy */,
                         null /* having */, orderBy);
     }
 
-    public long insert(final String table, final ContentValues values) {
+    public long insert(String table, ContentValues values) {
         return mHelper.getWritableDatabase().insert(table, null /* nullColumnHack */, values);
     }
 
-    public int delete(final String table, final String selection, final String[] selectionArgs) {
+    public int delete(String table, String selection, String[] selectionArgs) {
         return mHelper.getWritableDatabase().delete(table, selection, selectionArgs);
     }
 
-    public int update(final String table, final ContentValues values, final String selection,
-            final String[] selectionArgs) {
+    public int update(String table, ContentValues values, String selection,
+            String[] selectionArgs) {
         return mHelper.getWritableDatabase().update(table, values, selection, selectionArgs);
     }
 

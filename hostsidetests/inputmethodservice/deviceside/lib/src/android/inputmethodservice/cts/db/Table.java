@@ -31,7 +31,7 @@ public abstract class Table<E> {
     public final String mName;
     private final Entity<E> mEntity;
 
-    protected Table(final String name, final Entity<E> entity) {
+    protected Table(String name, Entity<E> entity) {
         mName = name;
         mEntity = entity;
     }
@@ -40,9 +40,9 @@ public abstract class Table<E> {
         return mName;
     }
 
-    public abstract ContentValues buildContentValues(final E entity);
+    public abstract ContentValues buildContentValues(E entity);
 
-    public abstract Stream<E> buildStream(final Cursor cursor);
+    public abstract Stream<E> buildStream(Cursor cursor);
 
     /**
      * Returns SQL statement to create this table, such that
@@ -54,7 +54,7 @@ public abstract class Table<E> {
         return "CREATE TABLE IF NOT EXISTS " + mName + " " + mEntity.createEntitySql();
     }
 
-    protected Field getField(final String fieldName) {
+    protected Field getField(String fieldName) {
         return mEntity.getField(fieldName);
     }
 }

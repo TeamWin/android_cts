@@ -36,7 +36,7 @@ public final class EventReceiver extends BroadcastReceiver {
     private static final Uri CONTENT_URI = Uri.parse(EventTableConstants.CONTENT_URI);
 
     @Override
-    public void onReceive(final Context context, final Intent intent) {
+    public void onReceive(Context context, Intent intent) {
         // Since {@code intent} which comes from host has no
         // {@link DeviceEventConstants#EXTRA_EVENT_TIME EXTRA_EVENT_TIME} extra, here we record the
         // time.

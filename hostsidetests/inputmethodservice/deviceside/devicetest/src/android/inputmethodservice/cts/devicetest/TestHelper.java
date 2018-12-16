@@ -60,7 +60,7 @@ final class TestHelper {
      * @param testClass a {@link Class} of test.
      * @param testMethod a name of test method.
      */
-    TestHelper(final Class<?> testClass, final String testMethod) {
+    TestHelper(Class<?> testClass, String testMethod) {
         final Context testContext = InstrumentationRegistry.getContext();
         mTestInfo = new TestInfo(testContext.getPackageName(), testClass.getName(), testMethod);
         mResolver = testContext.getContentResolver();
@@ -74,7 +74,7 @@ final class TestHelper {
      * @return command's standard output without ending newline.
      * @throws IOException
      */
-    String shell(final String command) throws IOException {
+    String shell(String command) throws IOException {
         return mUiDevice.executeShellCommand(command).trim();
     }
 
@@ -84,7 +84,7 @@ final class TestHelper {
      * @param className activity's class name.
      * @param uri uri to be handled.
      */
-    void launchActivity(final String packageName, final String className, final String uri) {
+    void launchActivity(String packageName, String className, String uri) {
         final Intent intent = new Intent()
                 .setAction(Intent.ACTION_VIEW)
                 .addCategory(Intent.CATEGORY_BROWSABLE)
@@ -111,7 +111,7 @@ final class TestHelper {
      * @return {@link Stream<DeviceEvent>} of all device events.
      */
     Stream<DeviceEvent> queryAllEvents() {
-        try (final Cursor cursor = mResolver.query(
+        try (Cursor cursor = mResolver.query(
                 DEVICE_EVENTS_CONTENT_URI,
                 null /* projection */,
                 null /* selection */,

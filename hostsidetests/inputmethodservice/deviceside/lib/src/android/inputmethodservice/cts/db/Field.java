@@ -33,7 +33,7 @@ public abstract class Field {
     /** Field type of SQLite. */
     final String sqLiteType;
 
-    public static Field newInstance(final int pos, final String name, final int fieldType) {
+    public static Field newInstance(int pos, String name, int fieldType) {
         switch (fieldType) {
             case Cursor.FIELD_TYPE_INTEGER:
                 return new IntegerField(pos, name);
@@ -44,34 +44,34 @@ public abstract class Field {
         }
     }
 
-    private Field(final int pos, final String name, final int fieldType) {
+    private Field(int pos, String name, int fieldType) {
         this.pos = pos;
         this.name = name;
         this.sqLiteType = toSqLiteType(fieldType);
     }
 
-    public long getLong(final Cursor cursor) {
+    public long getLong(Cursor cursor) {
         throw buildException(Cursor.FIELD_TYPE_INTEGER);
     }
 
-    public String getString(final Cursor cursor) {
+    public String getString(Cursor cursor) {
         throw buildException(Cursor.FIELD_TYPE_STRING);
     }
 
-    public void putLong(final ContentValues values, final long value) {
+    public void putLong(ContentValues values, long value) {
         throw buildException(Cursor.FIELD_TYPE_INTEGER);
     }
 
-    public void putString(final ContentValues values, final String value) {
+    public void putString(ContentValues values, String value) {
         throw buildException(Cursor.FIELD_TYPE_STRING);
     }
 
-    private UnsupportedOperationException buildException(final int expectedFieldType) {
+    private UnsupportedOperationException buildException(int expectedFieldType) {
         return new UnsupportedOperationException("Illegal type: " + name + " is " + sqLiteType
                 + ", expected " + toSqLiteType(expectedFieldType));
     }
 
-    private static String toSqLiteType(final int fieldType) {
+    private static String toSqLiteType(int fieldType) {
         switch (fieldType) {
             case Cursor.FIELD_TYPE_NULL:
                 return "NULL";
@@ -93,17 +93,17 @@ public abstract class Field {
      */
     private static final class IntegerField extends Field {
 
-        IntegerField(final int pos, final String name) {
+        IntegerField(int pos, String name) {
             super(pos, name, Cursor.FIELD_TYPE_INTEGER);
         }
 
         @Override
-        public long getLong(final Cursor cursor) {
+        public long getLong(Cursor cursor) {
             return cursor.getLong(pos);
         }
 
         @Override
-        public void putLong(final ContentValues values, final long value) {
+        public void putLong(ContentValues values, long value) {
             values.put(name, value);
         }
     }
@@ -113,17 +113,17 @@ public abstract class Field {
      */
     private static final class StringField extends Field {
 
-        StringField(final int pos, final String name) {
+        StringField(int pos, String name) {
             super(pos, name, Cursor.FIELD_TYPE_STRING);
         }
 
         @Override
-        public String getString(final Cursor cursor) {
+        public String getString(Cursor cursor) {
             return cursor.getString(pos);
         }
 
         @Override
-        public void putString(final ContentValues values, final String value) {
+        public void putString(ContentValues values, String value) {
             values.put(name, value);
         }
     }

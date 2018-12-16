@@ -59,8 +59,8 @@ public final class DeviceEvent {
      * @return an intent that has event {@code sender}, {@code type}, time from
      *         {@link SystemClock#uptimeMillis()}, and target component of event receiver.
      */
-    public static Intent newDeviceEventIntent(@NonNull final String sender,
-            @NonNull final DeviceEventType type) {
+    public static Intent newDeviceEventIntent(@NonNull String sender,
+            @NonNull DeviceEventType type) {
         return new Intent()
                 .setAction(ACTION_DEVICE_EVENT)
                 .setClassName(RECEIVER_PACKAGE, RECEIVER_CLASS)
@@ -75,7 +75,7 @@ public final class DeviceEvent {
      * @return {@link DeviceEvent} object that has event sender, type, and time form an
      *         {@code intent}.
      */
-    public static DeviceEvent newEvent(final Intent intent) {
+    public static DeviceEvent newEvent(Intent intent) {
         final String sender = intent.getStringExtra(EXTRA_EVENT_SENDER);
         if (sender == null) {
             throw new IllegalArgumentException(
@@ -102,7 +102,7 @@ public final class DeviceEvent {
      * @param event a {@link DeviceEvent} object to be converted.
      * @return a converted {@link ContentValues} object.
      */
-    public static ContentValues buildContentValues(final DeviceEvent event) {
+    public static ContentValues buildContentValues(DeviceEvent event) {
         return TABLE.buildContentValues(event);
     }
 
@@ -111,7 +111,7 @@ public final class DeviceEvent {
      * @param cursor a {@link Cursor} object to be converted.
      * @return a converted {@link Stream<DeviceEvent>} object.
      */
-    public static Stream<DeviceEvent> buildStream(final Cursor cursor) {
+    public static Stream<DeviceEvent> buildStream(Cursor cursor) {
         return TABLE.buildStream(cursor);
     }
 
@@ -121,7 +121,7 @@ public final class DeviceEvent {
      * @param sender event sender.
      * @return {@link Predicate<DeviceEvent>} object.
      */
-    public static Predicate<DeviceEvent> isFrom(final String sender) {
+    public static Predicate<DeviceEvent> isFrom(String sender) {
         return e -> e.sender.equals(sender);
     }
 
@@ -131,7 +131,7 @@ public final class DeviceEvent {
      * @param type a event type defined in {@link DeviceEventType}.
      * @return {@link Predicate<DeviceEvent>} object.
      */
-    public static Predicate<DeviceEvent> isType(final DeviceEventType type) {
+    public static Predicate<DeviceEvent> isType(DeviceEventType type) {
         return e -> e.type == type;
     }
 
@@ -142,7 +142,7 @@ public final class DeviceEvent {
      * @param time a time to compare against.
      * @return {@link Predicate<DeviceEvent>} object.
      */
-    public static Predicate<DeviceEvent> isNewerThan(final long time) {
+    public static Predicate<DeviceEvent> isNewerThan(long time) {
         return e -> e.time >= time;
     }
 
@@ -163,7 +163,7 @@ public final class DeviceEvent {
      */
     public final long time;
 
-    private DeviceEvent(final String sender, final DeviceEventType type, final long time) {
+    private DeviceEvent(String sender, DeviceEventType type, long time) {
         this.sender = sender;
         this.type = type;
         this.time = time;
@@ -185,7 +185,7 @@ public final class DeviceEvent {
         private final Field TYPE;
         private final Field TIME;
 
-        private DeviceEventTable(final String name) {
+        private DeviceEventTable(String name) {
             super(name, new Entity.Builder<DeviceEvent>()
                     .addField(EventTableConstants.SENDER, Cursor.FIELD_TYPE_STRING)
                     .addField(EventTableConstants.TYPE, Cursor.FIELD_TYPE_STRING)
@@ -197,7 +197,7 @@ public final class DeviceEvent {
         }
 
         @Override
-        public ContentValues buildContentValues(final DeviceEvent event) {
+        public ContentValues buildContentValues(DeviceEvent event) {
             final ContentValues values = new ContentValues();
             SENDER.putString(values, event.sender);
             TYPE.putString(values, event.type.name());

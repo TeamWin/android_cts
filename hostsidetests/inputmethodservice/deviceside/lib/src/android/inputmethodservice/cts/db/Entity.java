@@ -34,7 +34,7 @@ public final class Entity<E> {
     private final List<Field> mFields;
     private final Map<String, Field> mFieldMap;
 
-    private Entity(final Builder<E> builder) {
+    private Entity(Builder<E> builder) {
         mFields = builder.mFields;
         mFieldMap = builder.mFieldMap;
     }
@@ -45,7 +45,7 @@ public final class Entity<E> {
      */
     public String createEntitySql() {
         final StringBuilder sb = new StringBuilder("(");
-        for (final Field field : mFields) {
+        for (Field field : mFields) {
             if (field.pos > 0) sb.append(", ");
             sb.append(field.name).append(" ").append(field.sqLiteType);
             if (field.name.equals(BaseColumns._ID)) {
@@ -55,7 +55,7 @@ public final class Entity<E> {
         return sb.append(")").toString();
     }
 
-    public Field getField(final String fieldName) {
+    public Field getField(String fieldName) {
         return mFieldMap.get(fieldName);
     }
 
@@ -71,7 +71,7 @@ public final class Entity<E> {
             addFieldInternal(BaseColumns._ID, Cursor.FIELD_TYPE_INTEGER);
         }
 
-        public Builder<E> addField(@NonNull final String name, final int fieldType) {
+        public Builder<E> addField(@NonNull String name, int fieldType) {
             addFieldInternal(name, fieldType);
             return this;
         }
@@ -80,7 +80,7 @@ public final class Entity<E> {
             return new Entity<>(this);
         }
 
-        private void addFieldInternal(final String name, final int fieldType) {
+        private void addFieldInternal(String name, int fieldType) {
             if (mFieldMap.containsKey(name)) {
                 throw new IllegalArgumentException("Field " + name + " already exists at "
                         + mFieldMap.get(name).pos);

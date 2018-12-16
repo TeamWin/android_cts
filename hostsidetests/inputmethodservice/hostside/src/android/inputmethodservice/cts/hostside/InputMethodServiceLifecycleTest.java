@@ -340,7 +340,7 @@ public class InputMethodServiceLifecycleTest extends BaseHostJUnit4Test {
         testInputUnbindsOnAppStop(true);
     }
 
-    private void sendTestStartEvent(final TestInfo deviceTest) throws Exception {
+    private void sendTestStartEvent(TestInfo deviceTest) throws Exception {
         final String sender = deviceTest.getTestName();
         // {@link EventType#EXTRA_EVENT_TIME} will be recorded at device side.
         shell(ShellCommandUtils.broadcastIntent(
@@ -349,11 +349,11 @@ public class InputMethodServiceLifecycleTest extends BaseHostJUnit4Test {
                 "--es", EXTRA_EVENT_TYPE, TEST_START.name()));
     }
 
-    private boolean runDeviceTestMethod(final TestInfo deviceTest) throws Exception {
+    private boolean runDeviceTestMethod(TestInfo deviceTest) throws Exception {
         return runDeviceTests(deviceTest.testPackage, deviceTest.testClass, deviceTest.testMethod);
     }
 
-    private String shell(final String command) throws Exception {
+    private String shell(String command) throws Exception {
         return getDevice().executeShellCommand(command).trim();
     }
 
@@ -362,7 +362,7 @@ public class InputMethodServiceLifecycleTest extends BaseHostJUnit4Test {
         uninstallPackageSyncIfExists(Ime2Constants.PACKAGE);
     }
 
-    private void uninstallPackageSyncIfExists(final String packageName) throws Exception {
+    private void uninstallPackageSyncIfExists(String packageName) throws Exception {
         if (isPackageInstalled(getDevice(), packageName)) {
             uninstallPackage(getDevice(), packageName);
             pollingCheck(()-> !isPackageInstalled(getDevice(), packageName),

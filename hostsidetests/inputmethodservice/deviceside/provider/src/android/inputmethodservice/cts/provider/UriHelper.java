@@ -47,13 +47,13 @@ final class UriHelper {
             return new FactoryBuilder();
         }
 
-        private Factory(final FactoryBuilder builder) {
+        private Factory(FactoryBuilder builder) {
             mUriMatcher = builder.mUriMatcher;
             mUriTypeMap = builder.mUriTypeMap;
         }
 
         @NonNull
-        UriHelper newInstance(final Uri uri) {
+        UriHelper newInstance(Uri uri) {
             if (mUriMatcher.match(uri) == UriMatcher.NO_MATCH) {
                 throw new IllegalArgumentException("Unknown URI: " + uri);
             }
@@ -61,7 +61,7 @@ final class UriHelper {
         }
 
         @Nullable
-        String getTypeOf(final Uri uri) {
+        String getTypeOf(Uri uri) {
             return mUriTypeMap.get(mUriMatcher.match(uri), null);
         }
     }
@@ -75,7 +75,7 @@ final class UriHelper {
             mMatcherCode = 0;
         }
 
-        FactoryBuilder addUri(final String authority, final String path, final String type) {
+        FactoryBuilder addUri(String authority, String path, String type) {
             if (TextUtils.isEmpty(authority)) {
                 throw new IllegalArgumentException("Authority must not be empty");
             }
@@ -104,7 +104,7 @@ final class UriHelper {
     @Nullable
     private final String mId;
 
-    private UriHelper(final Uri uri) {
+    private UriHelper(Uri uri) {
         final List<String> segments = uri.getPathSegments();
         table = segments.get(0);
         mId = (segments.size() >= 2) ? segments.get(1) : null;
@@ -119,7 +119,7 @@ final class UriHelper {
      * @return composed selection SQL text, null if no selection specified.
      */
     @Nullable
-    String buildSelection(@Nullable final String selection) {
+    String buildSelection(@Nullable String selection) {
         if (mId == null) {
             return selection;
         }
@@ -142,7 +142,7 @@ final class UriHelper {
      * @return composed selection argument array, null if selection argument is unnecessary.
      */
     @Nullable
-    String[] buildSelectionArgs(@Nullable final String[] selectionArgs) {
+    String[] buildSelectionArgs(@Nullable String[] selectionArgs) {
         if (mId == null) {
             return selectionArgs;
         }
