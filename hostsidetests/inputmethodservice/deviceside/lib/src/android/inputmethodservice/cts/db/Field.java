@@ -25,13 +25,13 @@ import android.database.Cursor;
 public abstract class Field {
 
     /** Field position in a row. */
-    final int pos;
+    final int mPos;
 
     /** Column name of this field. */
-    final String name;
+    final String mName;
 
     /** Field type of SQLite. */
-    final String sqLiteType;
+    final String mSqLiteType;
 
     static Field newInstance(int pos, String name, int fieldType) {
         switch (fieldType) {
@@ -45,9 +45,9 @@ public abstract class Field {
     }
 
     private Field(int pos, String name, int fieldType) {
-        this.pos = pos;
-        this.name = name;
-        this.sqLiteType = toSqLiteType(fieldType);
+        this.mPos = pos;
+        this.mName = name;
+        this.mSqLiteType = toSqLiteType(fieldType);
     }
 
     /**
@@ -91,7 +91,7 @@ public abstract class Field {
     }
 
     private UnsupportedOperationException buildException(int expectedFieldType) {
-        return new UnsupportedOperationException("Illegal type: " + name + " is " + sqLiteType
+        return new UnsupportedOperationException("Illegal type: " + mName + " is " + mSqLiteType
                 + ", expected " + toSqLiteType(expectedFieldType));
     }
 
@@ -123,12 +123,12 @@ public abstract class Field {
 
         @Override
         public long getLong(Cursor cursor) {
-            return cursor.getLong(pos);
+            return cursor.getLong(mPos);
         }
 
         @Override
         public void putLong(ContentValues values, long value) {
-            values.put(name, value);
+            values.put(mName, value);
         }
     }
 
@@ -143,12 +143,12 @@ public abstract class Field {
 
         @Override
         public String getString(Cursor cursor) {
-            return cursor.getString(pos);
+            return cursor.getString(mPos);
         }
 
         @Override
         public void putString(ContentValues values, String value) {
-            values.put(name, value);
+            values.put(mName, value);
         }
     }
 }

@@ -181,9 +181,9 @@ public final class DeviceEvent {
 
         private static final String LOG_TAG = DeviceEventTable.class.getSimpleName();
 
-        private final Field SENDER;
-        private final Field TYPE;
-        private final Field TIME;
+        private final Field mSender;
+        private final Field mType;
+        private final Field mTime;
 
         private DeviceEventTable(String name) {
             super(name, new Entity.Builder<DeviceEvent>()
@@ -191,17 +191,17 @@ public final class DeviceEvent {
                     .addField(EventTableConstants.TYPE, Cursor.FIELD_TYPE_STRING)
                     .addField(EventTableConstants.TIME, Cursor.FIELD_TYPE_INTEGER)
                     .build());
-            SENDER = getField(EventTableConstants.SENDER);
-            TYPE = getField(EventTableConstants.TYPE);
-            TIME = getField(EventTableConstants.TIME);
+            mSender = getField(EventTableConstants.SENDER);
+            mType = getField(EventTableConstants.TYPE);
+            mTime = getField(EventTableConstants.TIME);
         }
 
         @Override
         public ContentValues buildContentValues(DeviceEvent event) {
             final ContentValues values = new ContentValues();
-            SENDER.putString(values, event.sender);
-            TYPE.putString(values, event.type.name());
-            TIME.putLong(values, event.time);
+            mSender.putString(values, event.sender);
+            mType.putString(values, event.type.name());
+            mTime.putLong(values, event.time);
             return values;
         }
 
@@ -213,9 +213,9 @@ public final class DeviceEvent {
             final Stream.Builder<DeviceEvent> builder = Stream.builder();
             for (cursor.moveToFirst(); !cursor.isAfterLast(); cursor.moveToNext()) {
                 final DeviceEvent event = new DeviceEvent(
-                        SENDER.getString(cursor),
-                        DeviceEventType.valueOf(TYPE.getString(cursor)),
-                        TIME.getLong(cursor));
+                        mSender.getString(cursor),
+                        DeviceEventType.valueOf(mType.getString(cursor)),
+                        mTime.getLong(cursor));
                 builder.accept(event);
                 if (DEBUG_STREAM) {
                     Log.d(LOG_TAG, " event=" +event);

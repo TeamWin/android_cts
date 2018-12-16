@@ -80,7 +80,7 @@ public final class EventProvider extends ContentProvider {
                     + " orderBy=" + orderBy);
         }
         final Cursor cursor = mDatabase.query(
-                uriHelper.table, projection, uriHelper.buildSelection(selection),
+                uriHelper.mTable, projection, uriHelper.buildSelection(selection),
                 uriHelper.buildSelectionArgs(selectionArgs), orderBy);
         if (DEBUG) {
             Log.d(TAG, "  query.count=" + cursor.getCount());
@@ -95,7 +95,7 @@ public final class EventProvider extends ContentProvider {
         if (DEBUG) {
             Log.d(TAG, "insert: uri=" + uri + " values={" + values + "}");
         }
-        final long rowId = mDatabase.insert(uriHelper.table, values);
+        final long rowId = mDatabase.insert(uriHelper.mTable, values);
         final Uri insertedUri = ContentUris.withAppendedId(uri, rowId);
         if (DEBUG) {
             Log.d(TAG, "  insert.uri=" + insertedUri);
@@ -115,7 +115,7 @@ public final class EventProvider extends ContentProvider {
                     + " selectionArgs=" + Arrays.toString(
                             uriHelper.buildSelectionArgs(selectionArgs)));
         }
-        final int count = mDatabase.delete(uriHelper.table, uriHelper.buildSelection(selection),
+        final int count = mDatabase.delete(uriHelper.mTable, uriHelper.buildSelection(selection),
                 uriHelper.buildSelectionArgs(selectionArgs));
         if (DEBUG) {
             Log.d(TAG, "  delete.count=" + count);
@@ -136,7 +136,7 @@ public final class EventProvider extends ContentProvider {
                     + " selectionArgs=" + Arrays.toString(
                             uriHelper.buildSelectionArgs(selectionArgs)));
         }
-        final int count = mDatabase.update(uriHelper.table, values,
+        final int count = mDatabase.update(uriHelper.mTable, values,
                 uriHelper.buildSelection(selection), uriHelper.buildSelectionArgs(selectionArgs));
         if (DEBUG) {
             Log.d(TAG, "  update.count=" + count);

@@ -98,7 +98,7 @@ final class UriHelper {
 
     /** Name of SQLite table specified by content uri. */
     @NonNull
-    final String table;
+    final String mTable;
 
     /** Primary id that is specified by content uri. Null if not. */
     @Nullable
@@ -106,7 +106,7 @@ final class UriHelper {
 
     private UriHelper(Uri uri) {
         final List<String> segments = uri.getPathSegments();
-        table = segments.get(0);
+        mTable = segments.get(0);
         mId = (segments.size() >= 2) ? segments.get(1) : null;
     }
 

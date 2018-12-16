@@ -47,9 +47,9 @@ public final class Entity<E> {
     String createEntitySql() {
         final StringBuilder sb = new StringBuilder("(");
         for (Field field : mFields) {
-            if (field.pos > 0) sb.append(", ");
-            sb.append(field.name).append(" ").append(field.sqLiteType);
-            if (field.name.equals(BaseColumns._ID)) {
+            if (field.mPos > 0) sb.append(", ");
+            sb.append(field.mName).append(" ").append(field.mSqLiteType);
+            if (field.mName.equals(BaseColumns._ID)) {
                 sb.append(" PRIMARY KEY AUTOINCREMENT");
             }
         }
@@ -100,11 +100,11 @@ public final class Entity<E> {
         private void addFieldInternal(String name, int fieldType) {
             if (mFieldMap.containsKey(name)) {
                 throw new IllegalArgumentException("Field " + name + " already exists at "
-                        + mFieldMap.get(name).pos);
+                        + mFieldMap.get(name).mPos);
             }
             final Field field = Field.newInstance(mPos++, name, fieldType);
             mFields.add(field);
-            mFieldMap.put(field.name, field);
+            mFieldMap.put(field.mName, field);
         }
     }
 }
