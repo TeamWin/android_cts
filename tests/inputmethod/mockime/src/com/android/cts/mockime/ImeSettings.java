@@ -18,6 +18,7 @@ package com.android.cts.mockime;
 
 import android.os.Parcel;
 import android.os.PersistableBundle;
+
 import androidx.annotation.ColorInt;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;

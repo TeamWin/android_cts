@@ -31,11 +31,12 @@ import android.os.Parcel;
 import android.os.ParcelFileDescriptor;
 import android.os.SystemClock;
 import android.provider.Settings;
+import android.text.TextUtils;
+import android.view.inputmethod.InputMethodManager;
+
 import androidx.annotation.GuardedBy;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
-import android.text.TextUtils;
-import android.view.inputmethod.InputMethodManager;
 
 import com.android.compatibility.common.util.PollingCheck;
 

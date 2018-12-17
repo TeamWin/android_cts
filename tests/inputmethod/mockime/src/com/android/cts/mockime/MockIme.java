@@ -36,11 +36,6 @@ import android.os.Parcel;
 import android.os.Process;
 import android.os.ResultReceiver;
 import android.os.SystemClock;
-import androidx.annotation.AnyThread;
-import androidx.annotation.CallSuper;
-import androidx.annotation.NonNull;
-import androidx.annotation.Nullable;
-import androidx.annotation.WorkerThread;
 import android.text.TextUtils;
 import android.util.Log;
 import android.util.TypedValue;
@@ -55,6 +50,12 @@ import android.view.inputmethod.InputMethod;
 import android.widget.LinearLayout;
 import android.widget.RelativeLayout;
 import android.widget.TextView;
+
+import androidx.annotation.AnyThread;
+import androidx.annotation.CallSuper;
+import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
+import androidx.annotation.WorkerThread;
 
 import java.io.IOException;
 import java.io.InputStream;
