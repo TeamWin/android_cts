@@ -23,7 +23,7 @@ import static android.contentcaptureservice.cts.common.ActivitiesWatcher.Activit
 
 import static com.google.common.truth.Truth.assertThat;
 
-import android.contentcaptureservice.cts.CtsSmartSuggestionsService.Session;
+import android.contentcaptureservice.cts.CtsContentCaptureService.Session;
 import android.contentcaptureservice.cts.common.ActivitiesWatcher.ActivityWatcher;
 import android.support.test.rule.ActivityTestRule;
 import android.util.Log;
@@ -60,7 +60,7 @@ public class BlankActivityTest extends AbstractContentCaptureIntegrationTest<Bla
         activity.finish();
         watcher.waitFor(DESTROYED);
 
-        final CtsSmartSuggestionsService service = CtsSmartSuggestionsService.getInstance();
+        final CtsContentCaptureService service = CtsContentCaptureService.getInstance();
         final Session session = service.getOnlyFinishedSession();
         Log.v(TAG, "session id: " + session.id);
 

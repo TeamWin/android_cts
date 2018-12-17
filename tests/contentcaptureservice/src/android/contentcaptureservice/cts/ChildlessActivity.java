@@ -16,24 +16,11 @@
 package android.contentcaptureservice.cts;
 
 import android.os.Bundle;
-import android.widget.EditText;
-import android.widget.TextView;
 
-public class LoginActivity extends AbstractRootViewActivity {
-
-    TextView mUsernameLabel;
-    EditText mUsername;
-    TextView mPasswordLabel;
-    EditText mPassword;
+public class ChildlessActivity extends AbstractRootViewActivity {
 
     @Override
     protected void setContentViewOnCreate(Bundle savedInstanceState) {
-        setContentView(R.layout.login_activity);
-
-        mRootView = findViewById(R.id.root_view);
-        mUsernameLabel = findViewById(R.id.username_label);
-        mUsername = findViewById(R.id.username);
-        mPasswordLabel = findViewById(R.id.password_label);
-        mPassword = findViewById(R.id.password);
+        setContentView(R.layout.childless_activity);
     }
 }

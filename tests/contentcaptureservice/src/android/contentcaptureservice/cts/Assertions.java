@@ -22,7 +22,7 @@ import static android.view.contentcapture.ContentCaptureEvent.TYPE_VIEW_DISAPPEA
 import static com.google.common.truth.Truth.assertThat;
 import static com.google.common.truth.Truth.assertWithMessage;
 
-import android.contentcaptureservice.cts.CtsSmartSuggestionsService.Session;
+import android.contentcaptureservice.cts.CtsContentCaptureService.Session;
 import android.view.View;
 import android.view.autofill.AutofillId;
 import android.view.contentcapture.ContentCaptureEvent;
@@ -52,10 +52,10 @@ final class Assertions {
     }
 
     /**
-     * Asserts the contents of a {@link #TYPE_VIEW_APPEARED} event.
+     * Asserts the contents of a {@link #TYPE_VIEW_APPEARED} event, without checking for parent id.
      */
-    public static void assertViewAppeared(@NonNull ContentCaptureEvent event,
-            @NonNull View expectedView, @Nullable AutofillId expectedParentId) {
+    public static ViewNode assertViewWithUnknownParentAppeared(@NonNull ContentCaptureEvent event,
+            @NonNull View expectedView) {
         assertWithMessage("wrong event: %s", event).that(event.getType())
                 .isEqualTo(TYPE_VIEW_APPEARED);
         final ViewNode node = event.getViewNode();
@@ -66,13 +66,21 @@ final class Assertions {
                 .isEqualTo(expectedView.getClass().getName());
         assertWithMessage("wrong autofill id on %s", node).that(node.getAutofillId())
                 .isEqualTo(expectedView.getAutofillId());
-        assertWithMessage("wrong parent autofill id on %s", node).that(node.getParentAutofillId())
-                .isEqualTo(expectedParentId);
         if (expectedView instanceof TextView) {
             assertWithMessage("wrong text id on %s", node).that(node.getText().toString())
                     .isEqualTo(((TextView) expectedView).getText().toString());
         }
         // TODO(b/119638958): test more fields, like resource id
+        return node;
+    }
+    /**
+     * Asserts the contents of a {@link #TYPE_VIEW_APPEARED} event.
+     */
+    public static void assertViewAppeared(@NonNull ContentCaptureEvent event,
+            @NonNull View expectedView, @Nullable AutofillId expectedParentId) {
+        final ViewNode node = assertViewWithUnknownParentAppeared(event, expectedView);
+        assertWithMessage("wrong parent autofill id on %s", node).that(node.getParentAutofillId())
+                .isEqualTo(expectedParentId);
     }
 
     /**
@@ -82,6 +90,16 @@ final class Assertions {
             @NonNull ContentCaptureSessionId expectedSessionId,
             @NonNull View expectedView, @Nullable AutofillId expectedParentId) {
         assertViewAppeared(event, expectedView, expectedParentId);
+        assertSessionId(expectedSessionId, expectedView);
+    }
+
+    /**
+     * Asserts the contents of a {@link #TYPE_VIEW_APPEARED} event, without checking for parent
+     */
+    public static void assertViewWithUnknownParentAppeared(@NonNull ContentCaptureEvent event,
+            @NonNull ContentCaptureSessionId expectedSessionId,
+            @NonNull View expectedView) {
+        assertViewWithUnknownParentAppeared(event, expectedView);
         assertSessionId(expectedSessionId, expectedView);
     }
 

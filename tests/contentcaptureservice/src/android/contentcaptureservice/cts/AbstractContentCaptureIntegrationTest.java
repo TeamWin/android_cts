@@ -18,6 +18,7 @@ package android.contentcaptureservice.cts;
 import static android.contentcaptureservice.cts.Helper.GENERIC_TIMEOUT_MS;
 import static android.contentcaptureservice.cts.Helper.TAG;
 import static android.contentcaptureservice.cts.Helper.resetService;
+import static android.contentcaptureservice.cts.common.ShellHelper.runShellCommand;
 
 import android.app.Application;
 import android.content.Context;
@@ -42,7 +43,6 @@ import org.junit.Rule;
 import org.junit.rules.RuleChain;
 import org.junit.runner.RunWith;
 
-
 /**
  * Base class for all (or most :-) integration tests in this CTS suite.
  */
@@ -64,7 +64,7 @@ public abstract class AbstractContentCaptureIntegrationTest
     protected final SafeCleanerRule mSafeCleanerRule = new SafeCleanerRule()
             .setDumper(mLoggingRule)
             .add(() -> {
-                return CtsSmartSuggestionsService.getExceptions();
+                return CtsContentCaptureService.getExceptions();
             });
 
     @Rule
@@ -87,13 +87,28 @@ public abstract class AbstractContentCaptureIntegrationTest
     }
 
     @Before
+    public void prepareDevice() throws Exception {
+        Log.v(TAG, "@Before: prepareDevice()");
+
+        // Unlock screen.
+        runShellCommand("input keyevent KEYCODE_WAKEUP");
+
+        // Dismiss keyguard, in case it's set as "Swipe to unlock".
+        runShellCommand("wm dismiss-keyguard");
+
+        // Collapse notifications.
+        runShellCommand("cmd statusbar collapse");
+    }
+
+    @Before
     public void clearState() {
-        CtsSmartSuggestionsService.resetStaticState();
+        Log.v(TAG, "@Before: clearState()");
+        CtsContentCaptureService.resetStaticState();
     }
 
     @Before
     public void registerLifecycleCallback() {
-        Log.d(TAG, "Registering lifecycle callback");
+        Log.v(TAG, "@Before: Registering lifecycle callback");
         final Application app = (Application) sContext.getApplicationContext();
         mActivitiesWatcher = new ActivitiesWatcher(GENERIC_TIMEOUT_MS);
         app.registerActivityLifecycleCallbacks(mActivitiesWatcher);
@@ -101,8 +116,8 @@ public abstract class AbstractContentCaptureIntegrationTest
 
     @After
     public void unregisterLifecycleCallback() {
+        Log.d(TAG, "@After: Unregistering lifecycle callback: " + mActivitiesWatcher);
         if (mActivitiesWatcher != null) {
-            Log.d(TAG, "Unregistering lifecycle callback");
             final Application app = (Application) sContext.getApplicationContext();
             app.unregisterActivityLifecycleCallbacks(mActivitiesWatcher);
         }
@@ -110,6 +125,7 @@ public abstract class AbstractContentCaptureIntegrationTest
 
     @After
     public void restoreDefaultService() {
+        Log.v(TAG, "@After: restoreDefaultService()");
         resetService();
     }
 
