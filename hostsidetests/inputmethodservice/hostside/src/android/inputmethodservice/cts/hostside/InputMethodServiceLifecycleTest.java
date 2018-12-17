@@ -47,6 +47,9 @@ import org.junit.runner.RunWith;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 
+/**
+ * Test general lifecycle events around InputMethodService.
+ */
 @RunWith(DeviceJUnit4ClassRunner.class)
 public class InputMethodServiceLifecycleTest extends BaseHostJUnit4Test {
 
@@ -54,6 +57,9 @@ public class InputMethodServiceLifecycleTest extends BaseHostJUnit4Test {
     private static final long PACKAGE_OP_TIMEOUT = TimeUnit.SECONDS.toMillis(7);
     private static final long POLLING_INTERVAL = 100;
 
+    /**
+     * Set up test case.
+     */
     @Before
     public void setUp() throws Exception {
         // Skip whole tests when DUT has no android.software.input_methods feature.
@@ -62,6 +68,9 @@ public class InputMethodServiceLifecycleTest extends BaseHostJUnit4Test {
         shell(ShellCommandUtils.deleteContent(EventTableConstants.CONTENT_URI));
     }
 
+    /**
+     * Tear down test case.
+     */
     @After
     public void tearDown() throws Exception {
         shell(ShellCommandUtils.resetImes());
@@ -83,9 +92,9 @@ public class InputMethodServiceLifecycleTest extends BaseHostJUnit4Test {
             String apkFileName, String packageName, String... options) throws Exception {
         installPackage(apkFileName, options);
         pollingCheck(() ->
-            shell(ShellCommandUtils.listPackage(packageName)).contains(packageName),
-            PACKAGE_OP_TIMEOUT,
-            packageName + " should be installed.");
+                        shell(ShellCommandUtils.listPackage(packageName)).contains(packageName),
+                PACKAGE_OP_TIMEOUT,
+                packageName + " should be installed.");
     }
 
     /**
@@ -102,7 +111,7 @@ public class InputMethodServiceLifecycleTest extends BaseHostJUnit4Test {
     }
 
     private void installPossibleInstantPackage(
-        String apkFileName, String packageName, boolean instant) throws Exception {
+            String apkFileName, String packageName, boolean instant) throws Exception {
         if (instant) {
             installPackageSync(apkFileName, packageName, "-r", "--instant");
         } else {
@@ -115,7 +124,7 @@ public class InputMethodServiceLifecycleTest extends BaseHostJUnit4Test {
                 DeviceTestConstants.TEST_CLASS, DeviceTestConstants.TEST_SWITCH_IME1_TO_IME2);
         sendTestStartEvent(testSwitchIme1ToIme2);
         installPossibleInstantPackage(
-            EditTextAppConstants.APK, EditTextAppConstants.PACKAGE, instant);
+                EditTextAppConstants.APK, EditTextAppConstants.PACKAGE, instant);
         installImePackageSync(Ime1Constants.APK, Ime1Constants.IME_ID);
         installImePackageSync(Ime2Constants.APK, Ime2Constants.IME_ID);
         shell(ShellCommandUtils.enableIme(Ime1Constants.IME_ID));
@@ -126,12 +135,18 @@ public class InputMethodServiceLifecycleTest extends BaseHostJUnit4Test {
         assertTrue(runDeviceTestMethod(testSwitchIme1ToIme2));
     }
 
+    /**
+     * Test IME switching APIs for full (non-instant) apps.
+     */
     @AppModeFull
     @Test
     public void testSwitchImeFull() throws Exception {
         testSwitchIme(false);
     }
 
+    /**
+     * Test IME switching APIs for instant apps.
+     */
     @AppModeInstant
     @Test
     public void testSwitchImeInstant() throws Exception {
@@ -143,7 +158,7 @@ public class InputMethodServiceLifecycleTest extends BaseHostJUnit4Test {
                 DeviceTestConstants.TEST_CLASS, DeviceTestConstants.TEST_CREATE_IME1);
         sendTestStartEvent(testCreateIme1);
         installPossibleInstantPackage(
-            EditTextAppConstants.APK, EditTextAppConstants.PACKAGE, instant);
+                EditTextAppConstants.APK, EditTextAppConstants.PACKAGE, instant);
         installImePackageSync(Ime1Constants.APK, Ime1Constants.IME_ID);
         shell(ShellCommandUtils.enableIme(Ime1Constants.IME_ID));
         waitUntilImesAreEnabled(Ime1Constants.IME_ID);
@@ -155,12 +170,18 @@ public class InputMethodServiceLifecycleTest extends BaseHostJUnit4Test {
         assertImeNotSelectedInSecureSettings(Ime1Constants.IME_ID, WAIT_TIMEOUT);
     }
 
+    /**
+     * Test uninstalling the currently selected IME for full (non-instant) apps.
+     */
     @AppModeFull
     @Test
     public void testUninstallCurrentImeFull() throws Exception {
         testUninstallCurrentIme(false);
     }
 
+    /**
+     * Test uninstalling the currently selected IME for instant apps.
+     */
     @AppModeInstant
     @Test
     public void testUninstallCurrentImeInstant() throws Exception {
@@ -172,7 +193,7 @@ public class InputMethodServiceLifecycleTest extends BaseHostJUnit4Test {
                 DeviceTestConstants.TEST_CLASS, DeviceTestConstants.TEST_CREATE_IME1);
         sendTestStartEvent(testCreateIme1);
         installPossibleInstantPackage(
-            EditTextAppConstants.APK, EditTextAppConstants.PACKAGE, instant);
+                EditTextAppConstants.APK, EditTextAppConstants.PACKAGE, instant);
         installImePackageSync(Ime1Constants.APK, Ime1Constants.IME_ID);
         shell(ShellCommandUtils.enableIme(Ime1Constants.IME_ID));
         waitUntilImesAreEnabled(Ime1Constants.IME_ID);
@@ -183,12 +204,18 @@ public class InputMethodServiceLifecycleTest extends BaseHostJUnit4Test {
         assertImeNotSelectedInSecureSettings(Ime1Constants.IME_ID, WAIT_TIMEOUT);
     }
 
+    /**
+     * Test disabling the currently selected IME for full (non-instant) apps.
+     */
     @AppModeFull
     @Test
     public void testDisableCurrentImeFull() throws Exception {
         testDisableCurrentIme(false);
     }
 
+    /**
+     * Test disabling the currently selected IME for instant apps.
+     */
     @AppModeInstant
     @Test
     public void testDisableCurrentImeInstant() throws Exception {
@@ -201,7 +228,7 @@ public class InputMethodServiceLifecycleTest extends BaseHostJUnit4Test {
                 DeviceTestConstants.TEST_SWITCH_INPUTMETHOD);
         sendTestStartEvent(testSetInputMethod);
         installPossibleInstantPackage(
-            EditTextAppConstants.APK, EditTextAppConstants.PACKAGE, instant);
+                EditTextAppConstants.APK, EditTextAppConstants.PACKAGE, instant);
         installImePackageSync(Ime1Constants.APK, Ime1Constants.IME_ID);
         installImePackageSync(Ime2Constants.APK, Ime2Constants.IME_ID);
         shell(ShellCommandUtils.enableIme(Ime1Constants.IME_ID));
@@ -212,12 +239,18 @@ public class InputMethodServiceLifecycleTest extends BaseHostJUnit4Test {
         assertTrue(runDeviceTestMethod(testSetInputMethod));
     }
 
+    /**
+     * Test "InputMethodService#switchInputMethod" API for full (non-instant) apps.
+     */
     @AppModeFull
     @Test
     public void testSwitchInputMethodFull() throws Exception {
         testSwitchInputMethod(false);
     }
 
+    /**
+     * Test "InputMethodService#switchInputMethod" API for instant apps.
+     */
     @AppModeInstant
     @Test
     public void testSwitchInputMethodInstant() throws Exception {
@@ -230,7 +263,7 @@ public class InputMethodServiceLifecycleTest extends BaseHostJUnit4Test {
                 DeviceTestConstants.TEST_SWITCH_NEXT_INPUT);
         sendTestStartEvent(testSwitchInputs);
         installPossibleInstantPackage(
-            EditTextAppConstants.APK, EditTextAppConstants.PACKAGE, instant);
+                EditTextAppConstants.APK, EditTextAppConstants.PACKAGE, instant);
         installImePackageSync(Ime1Constants.APK, Ime1Constants.IME_ID);
         installImePackageSync(Ime2Constants.APK, Ime2Constants.IME_ID);
         shell(ShellCommandUtils.enableIme(Ime1Constants.IME_ID));
@@ -243,12 +276,18 @@ public class InputMethodServiceLifecycleTest extends BaseHostJUnit4Test {
         assertTrue(runDeviceTestMethod(testSwitchInputs));
     }
 
+    /**
+     * Test "InputMethodService#switchToNextInputMethod" API for full (non-instant) apps.
+     */
     @AppModeFull
     @Test
     public void testSwitchToNextInputFull() throws Exception {
         testSwitchToNextInput(false);
     }
 
+    /**
+     * Test "InputMethodService#switchToNextInputMethod" API for instant apps.
+     */
     @AppModeInstant
     @Test
     public void testSwitchToNextInputInstant() throws Exception {
@@ -261,7 +300,7 @@ public class InputMethodServiceLifecycleTest extends BaseHostJUnit4Test {
                 DeviceTestConstants.TEST_SWITCH_PREVIOUS_INPUT);
         sendTestStartEvent(testSwitchInputs);
         installPossibleInstantPackage(
-            EditTextAppConstants.APK, EditTextAppConstants.PACKAGE, instant);
+                EditTextAppConstants.APK, EditTextAppConstants.PACKAGE, instant);
         installImePackageSync(Ime1Constants.APK, Ime1Constants.IME_ID);
         installImePackageSync(Ime2Constants.APK, Ime2Constants.IME_ID);
         shell(ShellCommandUtils.enableIme(Ime1Constants.IME_ID));
@@ -272,12 +311,18 @@ public class InputMethodServiceLifecycleTest extends BaseHostJUnit4Test {
         assertTrue(runDeviceTestMethod(testSwitchInputs));
     }
 
+    /**
+     * Test "InputMethodService#switchToPreviousInputMethod" API for full (non-instant) apps.
+     */
     @AppModeFull
     @Test
     public void testSwitchToPreviousInputFull() throws Exception {
         testSwitchToPreviousInput(false);
     }
 
+    /**
+     * Test "InputMethodService#switchToPreviousInputMethod" API for instant apps.
+     */
     @AppModeInstant
     @Test
     public void testSwitchToPreviousInputInstant() throws Exception {
@@ -290,7 +335,7 @@ public class InputMethodServiceLifecycleTest extends BaseHostJUnit4Test {
                 DeviceTestConstants.TEST_INPUT_UNBINDS_ON_IME_STOPPED);
         sendTestStartEvent(testUnbind);
         installPossibleInstantPackage(
-            EditTextAppConstants.APK, EditTextAppConstants.PACKAGE, instant);
+                EditTextAppConstants.APK, EditTextAppConstants.PACKAGE, instant);
         installImePackageSync(Ime1Constants.APK, Ime1Constants.IME_ID);
         installImePackageSync(Ime2Constants.APK, Ime2Constants.IME_ID);
         shell(ShellCommandUtils.enableIme(Ime1Constants.IME_ID));
@@ -301,12 +346,20 @@ public class InputMethodServiceLifecycleTest extends BaseHostJUnit4Test {
         assertTrue(runDeviceTestMethod(testUnbind));
     }
 
+    /**
+     * Test if uninstalling the currently selected IME then selecting another IME triggers standard
+     * startInput/bindInput sequence for full (non-instant) apps.
+     */
     @AppModeFull
     @Test
     public void testInputUnbindsOnImeStoppedFull() throws Exception {
         testInputUnbindsOnImeStopped(false);
     }
 
+    /**
+     * Test if uninstalling the currently selected IME then selecting another IME triggers standard
+     * startInput/bindInput sequence for instant apps.
+     */
     @AppModeInstant
     @Test
     public void testInputUnbindsOnImeStoppedInstant() throws Exception {
@@ -319,7 +372,7 @@ public class InputMethodServiceLifecycleTest extends BaseHostJUnit4Test {
                 DeviceTestConstants.TEST_INPUT_UNBINDS_ON_APP_STOPPED);
         sendTestStartEvent(testUnbind);
         installPossibleInstantPackage(
-            EditTextAppConstants.APK, EditTextAppConstants.PACKAGE, instant);
+                EditTextAppConstants.APK, EditTextAppConstants.PACKAGE, instant);
         installImePackageSync(Ime1Constants.APK, Ime1Constants.IME_ID);
         shell(ShellCommandUtils.enableIme(Ime1Constants.IME_ID));
         waitUntilImesAreEnabled(Ime1Constants.IME_ID);
@@ -328,19 +381,27 @@ public class InputMethodServiceLifecycleTest extends BaseHostJUnit4Test {
         assertTrue(runDeviceTestMethod(testUnbind));
     }
 
+    /**
+     * Test if uninstalling the currently running IME client triggers
+     * "InputMethodService#onUnbindInput" callback for full (non-instant) apps.
+     */
     @AppModeFull
     @Test
     public void testInputUnbindsOnAppStopFull() throws Exception {
         testInputUnbindsOnAppStop(false);
     }
 
+    /**
+     * Test if uninstalling the currently running IME client triggers
+     * "InputMethodService#onUnbindInput" callback for instant apps.
+     */
     @AppModeInstant
     @Test
     public void testInputUnbindsOnAppStopInstant() throws Exception {
         testInputUnbindsOnAppStop(true);
     }
 
-    private void sendTestStartEvent(final TestInfo deviceTest) throws Exception {
+    private void sendTestStartEvent(TestInfo deviceTest) throws Exception {
         final String sender = deviceTest.getTestName();
         // {@link EventType#EXTRA_EVENT_TIME} will be recorded at device side.
         shell(ShellCommandUtils.broadcastIntent(
@@ -349,11 +410,11 @@ public class InputMethodServiceLifecycleTest extends BaseHostJUnit4Test {
                 "--es", EXTRA_EVENT_TYPE, TEST_START.name()));
     }
 
-    private boolean runDeviceTestMethod(final TestInfo deviceTest) throws Exception {
+    private boolean runDeviceTestMethod(TestInfo deviceTest) throws Exception {
         return runDeviceTests(deviceTest.testPackage, deviceTest.testClass, deviceTest.testMethod);
     }
 
-    private String shell(final String command) throws Exception {
+    private String shell(String command) throws Exception {
         return getDevice().executeShellCommand(command).trim();
     }
 
@@ -362,12 +423,11 @@ public class InputMethodServiceLifecycleTest extends BaseHostJUnit4Test {
         uninstallPackageSyncIfExists(Ime2Constants.PACKAGE);
     }
 
-    private void uninstallPackageSyncIfExists(final String packageName) throws Exception {
+    private void uninstallPackageSyncIfExists(String packageName) throws Exception {
         if (isPackageInstalled(getDevice(), packageName)) {
             uninstallPackage(getDevice(), packageName);
-            pollingCheck(()-> !isPackageInstalled(getDevice(), packageName),
-                PACKAGE_OP_TIMEOUT,
-                packageName + " should be uninstalled.");
+            pollingCheck(() -> !isPackageInstalled(getDevice(), packageName), PACKAGE_OP_TIMEOUT,
+                    packageName + " should be uninstalled.");
         }
     }
 
@@ -408,14 +468,12 @@ public class InputMethodServiceLifecycleTest extends BaseHostJUnit4Test {
     }
 
     private void waitUntilImesAreAvailableOrEnabled(
-        boolean shouldBeEnabled, String... imeIds) throws Exception {
-        final String cmd = shouldBeEnabled ?
-                ShellCommandUtils.getEnabledImes() : ShellCommandUtils.getAvailableImes();
+            boolean shouldBeEnabled, String... imeIds) throws Exception {
+        final String cmd = shouldBeEnabled
+                ? ShellCommandUtils.getEnabledImes() : ShellCommandUtils.getAvailableImes();
         for (String imeId : imeIds) {
-            pollingCheck(() ->
-                    shell(cmd).contains(imeId),
-                    PACKAGE_OP_TIMEOUT,
-                    imeId + " should be " + (shouldBeEnabled? "enabled." : "available."));
+            pollingCheck(() -> shell(cmd).contains(imeId), PACKAGE_OP_TIMEOUT,
+                    imeId + " should be " + (shouldBeEnabled ? "enabled." : "available."));
         }
     }
 }

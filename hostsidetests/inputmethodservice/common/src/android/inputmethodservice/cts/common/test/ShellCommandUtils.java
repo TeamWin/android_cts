@@ -11,7 +11,7 @@
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
- * limitations under the License
+ * limitations under the License.
  */
 
 package android.inputmethodservice.cts.common.test;
@@ -37,7 +37,7 @@ public final class ShellCommandUtils {
     }
 
     /** Command to set current IME to {@code imeId} synchronously */
-    public static String setCurrentImeSync(final String imeId) {
+    public static String setCurrentImeSync(String imeId) {
         return "ime set " + imeId;
     }
 
@@ -53,12 +53,12 @@ public final class ShellCommandUtils {
     }
 
     /** Command to enable IME of {@code imeId}. */
-    public static String enableIme(final String imeId) {
+    public static String enableIme(String imeId) {
         return "ime enable " + imeId;
     }
 
     /** Command to disable IME of {@code imeId}. */
-    public static String disableIme(final String imeId) {
+    public static String disableIme(String imeId) {
         return "ime disable " + imeId;
     }
 
@@ -68,7 +68,7 @@ public final class ShellCommandUtils {
     }
 
     /** Command to delete all records of IME event provider. */
-    public static String deleteContent(final String contentUri) {
+    public static String deleteContent(String contentUri) {
         return "content delete --uri " + contentUri;
     }
 
@@ -84,8 +84,7 @@ public final class ShellCommandUtils {
      * @param extras extra of intent, must be specified as triplet of option flag, key, and value.
      * @return shell command to send broadcast intent.
      */
-    public static String broadcastIntent(final String action, final String targetComponent,
-            final String... extras) {
+    public static String broadcastIntent(String action, String targetComponent, String... extras) {
         if (extras.length % 3 != 0) {
             throw new IllegalArgumentException(
                     "extras must be triplets: " + Arrays.toString(extras));

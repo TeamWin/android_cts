@@ -39,7 +39,7 @@ public final class DeviceTestConstants {
      * Device test class name and methods name.
      */
     public static final String TEST_CLASS =
-           "android.inputmethodservice.cts.devicetest.InputMethodServiceDeviceTest";
+            "android.inputmethodservice.cts.devicetest.InputMethodServiceDeviceTest";
     public static final String TEST_CREATE_IME1 = "testCreateIme1";
     public static final String TEST_SWITCH_IME1_TO_IME2 = "testSwitchIme1ToIme2";
     public static final String TEST_SWITCH_INPUTMETHOD = "testSwitchInputMethod";

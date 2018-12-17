@@ -11,23 +11,19 @@
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
- * limitations under the License
+ * limitations under the License.
  */
 
 package android.inputmethodservice.cts.ime;
 
-import static android.inputmethodservice.cts.common.DeviceEventConstants.DeviceEventType
-        .ON_BIND_INPUT;
+import static android.inputmethodservice.cts.common.DeviceEventConstants.DeviceEventType.ON_BIND_INPUT;
 import static android.inputmethodservice.cts.common.DeviceEventConstants.DeviceEventType.ON_CREATE;
 import static android.inputmethodservice.cts.common.DeviceEventConstants.DeviceEventType.ON_DESTROY;
 import static android.inputmethodservice.cts.common.DeviceEventConstants.DeviceEventType.ON_FINISH_INPUT;
 import static android.inputmethodservice.cts.common.DeviceEventConstants.DeviceEventType.ON_FINISH_INPUT_VIEW;
 import static android.inputmethodservice.cts.common.DeviceEventConstants.DeviceEventType.ON_START_INPUT;
 import static android.inputmethodservice.cts.common.DeviceEventConstants.DeviceEventType.ON_START_INPUT_VIEW;
-
-
-import static android.inputmethodservice.cts.common.DeviceEventConstants.DeviceEventType
-        .ON_UNBIND_INPUT;
+import static android.inputmethodservice.cts.common.DeviceEventConstants.DeviceEventType.ON_UNBIND_INPUT;
 
 import android.content.Intent;
 import android.inputmethodservice.InputMethodService;
@@ -40,6 +36,9 @@ import android.view.inputmethod.InputConnection;
 
 import java.util.function.Consumer;
 
+/**
+ * Base class to create test {@link InputMethodService}.
+ */
 public abstract class CtsBaseInputMethod extends InputMethodService implements ImeCommandCallbacks {
 
     protected static final boolean DEBUG = false;
@@ -140,7 +139,7 @@ public abstract class CtsBaseInputMethod extends InputMethodService implements I
     //
 
     @Override
-    public void commandCommitText(final CharSequence text, final int newCursorPosition) {
+    public void commandCommitText(CharSequence text, int newCursorPosition) {
         executeOnInputConnection(ic -> {
             // TODO: Log the return value of {@link InputConnection#commitText(CharSequence,int)}.
             ic.commitText(text, newCursorPosition);
@@ -148,16 +147,16 @@ public abstract class CtsBaseInputMethod extends InputMethodService implements I
     }
 
     @Override
-    public void commandSwitchInputMethod(final String imeId) {
+    public void commandSwitchInputMethod(String imeId) {
         switchInputMethod(imeId);
     }
 
     @Override
-    public void commandRequestHideSelf(final int flags) {
+    public void commandRequestHideSelf(int flags) {
         requestHideSelf(flags);
     }
 
-    private void executeOnInputConnection(final Consumer<InputConnection> consumer) {
+    private void executeOnInputConnection(Consumer<InputConnection> consumer) {
         final InputConnection ic = getCurrentInputConnection();
         // TODO: Check and log whether {@code ic} is null or equals to
         // {@link #getCurrentInputBindin().getConnection()}.
@@ -166,7 +165,7 @@ public abstract class CtsBaseInputMethod extends InputMethodService implements I
         }
     }
 
-    private void sendEvent(final DeviceEventType type, final Object... args) {
+    private void sendEvent(DeviceEventType type, Object... args) {
         final String sender = getClass().getName();
         final Intent intent = DeviceEvent.newDeviceEventIntent(sender, type);
         // TODO: Send arbitrary {@code args} in {@code intent}.
