@@ -372,6 +372,7 @@ public class MediaMuxerTest extends AndroidTestCase {
 
         muxer.stop();
         muxer.release();
+        extractor.release();
         srcFd.close();
         return;
     }
@@ -403,7 +404,7 @@ public class MediaMuxerTest extends AndroidTestCase {
      * cloned media file matches the source file.
      */
     private void verifyAttributesMatch(int srcMedia, String testMediaPath,
-            int degrees) {
+            int degrees) throws IOException {
         AssetFileDescriptor testFd = mResources.openRawResourceFd(srcMedia);
 
         MediaMetadataRetriever retrieverSrc = new MediaMetadataRetriever();
@@ -443,6 +444,7 @@ public class MediaMuxerTest extends AndroidTestCase {
 
         retrieverSrc.release();
         retrieverTest.release();
+        testFd.close();
     }
 
     /**
@@ -491,6 +493,9 @@ public class MediaMuxerTest extends AndroidTestCase {
         if (!(byteBufSrc.equals(byteBufTest))) {
             fail("byteBuffer didn't match");
         }
+        extractorSrc.release();
+        extractorTest.release();
+        testFd.close();
     }
 
     private void verifyLocationInFile(String fileName) {
