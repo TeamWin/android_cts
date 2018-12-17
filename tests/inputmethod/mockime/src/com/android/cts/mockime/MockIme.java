@@ -18,8 +18,6 @@ package com.android.cts.mockime;
 
 import static android.view.WindowManager.LayoutParams.FLAG_DRAWS_SYSTEM_BAR_BACKGROUNDS;
 
-import static com.android.cts.mockime.MockImeSession.MOCK_IME_SETTINGS_FILE;
-
 import android.content.BroadcastReceiver;
 import android.content.ComponentName;
 import android.content.Context;
@@ -27,12 +25,12 @@ import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.res.Configuration;
 import android.inputmethodservice.InputMethodService;
+import android.os.Build;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.HandlerThread;
 import android.os.IBinder;
 import android.os.Looper;
-import android.os.Parcel;
 import android.os.Process;
 import android.os.ResultReceiver;
 import android.os.SystemClock;
@@ -57,8 +55,6 @@ import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.annotation.WorkerThread;
 
-import java.io.IOException;
-import java.io.InputStream;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.BooleanSupplier;
 import java.util.function.Consumer;
@@ -71,12 +67,14 @@ public final class MockIme extends InputMethodService {
 
     private static final String TAG = "MockIme";
 
-    static ComponentName getComponentName(@NonNull String packageName) {
-        return new ComponentName(packageName, MockIme.class.getName());
+    private static final String PACKAGE_NAME = "com.android.cts.mockime";
+
+    static ComponentName getComponentName() {
+        return new ComponentName(PACKAGE_NAME, MockIme.class.getName());
     }
 
-    static String getImeId(@NonNull String packageName) {
-        return new ComponentName(packageName, MockIme.class.getName()).flattenToShortString();
+    static String getImeId() {
+        return getComponentName().flattenToShortString();
     }
 
     static String getCommandActionName(@NonNull String eventActionName) {
@@ -168,6 +166,13 @@ public final class MockIme extends InputMethodService {
         return mImeEventActionName.get();
     }
 
+    private final AtomicReference<String> mClientPackageName = new AtomicReference<>();
+
+    @Nullable
+    String getClientPackageName() {
+        return mClientPackageName.get();
+    }
+
     private class MockInputMethodImpl extends InputMethodImpl {
         @Override
         public void showSoftInput(int flags, ResultReceiver resultReceiver) {
@@ -197,40 +202,15 @@ public final class MockIme extends InputMethodService {
         }
     }
 
-    @Nullable
-    private ImeSettings readSettings() {
-        try (InputStream is = openFileInput(MOCK_IME_SETTINGS_FILE)) {
-            Parcel parcel = null;
-            try {
-                parcel = Parcel.obtain();
-                final byte[] buffer = new byte[4096];
-                while (true) {
-                    final int numRead = is.read(buffer);
-                    if (numRead <= 0) {
-                        break;
-                    }
-                    parcel.unmarshall(buffer, 0, numRead);
-                }
-                parcel.setDataPosition(0);
-                return new ImeSettings(parcel);
-            } finally {
-                if (parcel != null) {
-                    parcel.recycle();
-                }
-            }
-        } catch (IOException e) {
-        }
-        return null;
-    }
-
     @Override
     public void onCreate() {
         // Initialize minimum settings to send events in Tracer#onCreate().
-        mSettings = readSettings();
+        mSettings = SettingsProvider.getSettings();
         if (mSettings == null) {
             throw new IllegalStateException("Settings file is not found. "
                     + "Make sure MockImeSession.create() is used to launch Mock IME.");
         }
+        mClientPackageName.set(mSettings.getClientPackageName());
         mImeEventActionName.set(mSettings.getEventCallbackActionName());
 
         getTracer().onCreate(() -> {
@@ -238,9 +218,14 @@ public final class MockIme extends InputMethodService {
             mHandlerThread.start();
             final String actionName = getCommandActionName(mSettings.getEventCallbackActionName());
             mCommandReceiver = new CommandReceiver(actionName, this::onReceiveCommand);
-            registerReceiver(mCommandReceiver,
-                    new IntentFilter(actionName), null /* broadcastPermission */,
-                    new Handler(mHandlerThread.getLooper()));
+            final IntentFilter filter = new IntentFilter(actionName);
+            final Handler handler = new Handler(mHandlerThread.getLooper());
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+                registerReceiver(mCommandReceiver, filter, null /* broadcastPermission */, handler,
+                        Context.RECEIVER_VISIBLE_TO_INSTANT_APPS);
+            } else {
+                registerReceiver(mCommandReceiver, filter, null /* broadcastPermission */, handler);
+            }
 
             final int windowFlags = mSettings.getWindowFlags(0);
             final int windowFlagsMask = mSettings.getWindowFlagsMask(0);
@@ -308,7 +293,7 @@ public final class MockIme extends InputMethodService {
                 textView.setLayoutParams(params);
                 textView.setTextSize(TypedValue.COMPLEX_UNIT_SP, 20);
                 textView.setGravity(Gravity.CENTER);
-                textView.setText(getImeId(getContext().getPackageName()));
+                textView.setText(getImeId());
                 layout.addView(textView);
                 addView(layout, LayoutParams.MATCH_PARENT, mainSpacerHeight);
             }
@@ -500,22 +485,29 @@ public final class MockIme extends InputMethodService {
 
         private String mImeEventActionName;
 
+        private String mClientPackageName;
+
         Tracer(@NonNull MockIme mockIme) {
             mIme = mockIme;
         }
 
         private void sendEventInternal(@NonNull ImeEvent event) {
-            final Intent intent = new Intent();
-            intent.setPackage(mIme.getPackageName());
             if (mImeEventActionName == null) {
                 mImeEventActionName = mIme.getImeEventActionName();
             }
-            if (mImeEventActionName == null) {
+            if (mClientPackageName == null) {
+                mClientPackageName = mIme.getClientPackageName();
+            }
+            if (mImeEventActionName == null || mClientPackageName == null) {
                 Log.e(TAG, "Tracer cannot be used before onCreate()");
                 return;
             }
-            intent.setAction(mImeEventActionName);
-            intent.putExtras(event.toBundle());
+            final Intent intent = new Intent()
+                    .setAction(mImeEventActionName)
+                    .setPackage(mClientPackageName)
+                    .putExtras(event.toBundle())
+                    .addFlags(Intent.FLAG_RECEIVER_REGISTERED_ONLY
+                            | Intent.FLAG_RECEIVER_VISIBLE_TO_INSTANT_APPS);
             mIme.sendBroadcast(intent);
         }
 

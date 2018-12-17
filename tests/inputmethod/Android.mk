@@ -32,7 +32,7 @@ LOCAL_STATIC_JAVA_LIBRARIES := \
     android-support-test \
     compatibility-device-util \
     ctstestrunner \
-    CtsMockInputMethod
+    CtsMockInputMethodLib
 
 LOCAL_SRC_FILES := \
     $(call all-java-files-under, src) \
