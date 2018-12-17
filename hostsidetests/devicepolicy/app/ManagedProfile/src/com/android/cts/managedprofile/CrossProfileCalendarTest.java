@@ -19,16 +19,24 @@ import static com.android.cts.managedprofile.BaseManagedProfileTest.ADMIN_RECEIV
 
 import static com.google.common.truth.Truth.assertThat;
 
+import static org.testng.Assert.assertThrows;
+
 import android.accounts.Account;
 import android.accounts.AccountManager;
 import android.app.admin.DevicePolicyManager;
 import android.content.ContentResolver;
 import android.content.ContentUris;
 import android.content.ContentValues;
+import android.content.Intent;
 import android.database.Cursor;
 import android.net.Uri;
 import android.provider.CalendarContract;
 import android.provider.Settings.Secure;
+import android.support.test.InstrumentationRegistry;
+import android.support.test.uiautomator.By;
+import android.support.test.uiautomator.UiDevice;
+import android.support.test.uiautomator.UiObject2;
+import android.support.test.uiautomator.Until;
 import android.test.AndroidTestCase;
 import android.text.TextUtils;
 import android.text.format.DateUtils;
@@ -55,14 +63,27 @@ public class CrossProfileCalendarTest extends AndroidTestCase {
 
     private static String WORK_EVENT_TITLE = "event_title1";
     private static String WORK_EVENT_TITLE_2= "event_title2";
+    private static final String WORK_EVENT_DTSTART_STRING = "2018-05-01T00:00:00";
+    private static final String WORK_EVENT_DTEND_STRING = "2018-05-01T20:00:00";
+    private static final String WORK_EVENT_DTSTART_STRING_2 = "2013-05-01T00:00:00";
+    private static final String WORK_EVENT_DTEND_STRING_2 = "2013-05-01T20:00:00";
     private static long WORK_EVENT_DTSTART = parseTimeStringToMillis(
-            "2018-05-01T00:00:00", WORK_TIMEZONE);
+            WORK_EVENT_DTSTART_STRING, WORK_TIMEZONE);
     private static long WORK_EVENT_DTEND = parseTimeStringToMillis(
-            "2018-05-01T20:00:00", WORK_TIMEZONE);
+            WORK_EVENT_DTEND_STRING, WORK_TIMEZONE);
     private final long WORK_EVENT_DTSTART_2 = parseTimeStringToMillis(
-            "2013-05-01T00:00:00", WORK_TIMEZONE);
+            WORK_EVENT_DTSTART_STRING_2, WORK_TIMEZONE);
     private final long WORK_EVENT_DTEND_2 = parseTimeStringToMillis(
-            "2013-05-01T20:00:00", WORK_TIMEZONE);
+            WORK_EVENT_DTEND_STRING_2, WORK_TIMEZONE);
+    private static long WORK_EVENT_DTSTART_JULIAN_DAY = parseTimeStringToJulianDay(
+            WORK_EVENT_DTSTART_STRING, WORK_TIMEZONE);
+    private static long WORK_EVENT_DTEND_JULIAN_DAY = parseTimeStringToJulianDay(
+            WORK_EVENT_DTEND_STRING, WORK_TIMEZONE);
+    private final long WORK_EVENT_DTSTART_2_JULIAN_DAY = parseTimeStringToJulianDay(
+            WORK_EVENT_DTSTART_STRING_2, WORK_TIMEZONE);
+    private final long WORK_EVENT_DTEND_2_JULIAN_DAY = parseTimeStringToJulianDay(
+            WORK_EVENT_DTEND_STRING_2, WORK_TIMEZONE);
+
     private static int WORK_EVENT_COLOR = 0xff123456;
     private static String WORK_EVENT_LOCATION = "Work event location.";
     private static String WORK_EVENT_DESCRIPTION = "This is a work event.";
@@ -73,6 +94,15 @@ public class CrossProfileCalendarTest extends AndroidTestCase {
     private static final String SELECTION_ACCOUNT_TYPE = "(" +
             CalendarContract.Calendars.ACCOUNT_TYPE + " = ? )";
 
+    private static final long TEST_VIEW_EVENT_ID = 1;
+    private static final long TEST_VIEW_EVENT_START = 100;
+    private static final long TEST_VIEW_EVENT_END = 10000;
+    private static final boolean TEST_VIEW_EVENT_ALL_DAY = false;
+    private static final int TEST_VIEW_EVENT_FLAG = Intent.FLAG_ACTIVITY_NEW_TASK;
+    private static final int TIMEOUT_SEC = 10;
+    private static final String ID_TEXTVIEW =
+            "com.android.cts.managedprofile:id/view_event_text";
+
     private ContentResolver mResolver;
     private DevicePolicyManager mDevicePolicyManager;
 
@@ -80,6 +110,12 @@ public class CrossProfileCalendarTest extends AndroidTestCase {
         Time time = new Time(timeZone);
         time.parse3339(timeStr);
         return time.toMillis(/* ignoreDst= */false );
+    }
+
+    private static int parseTimeStringToJulianDay(String timeStr, String timeZone) {
+        Time time = new Time(timeZone);
+        time.parse3339(timeStr);
+        return Time.getJulianDay(time.toMillis(/* ignoreDst= */false), time.gmtoff);
     }
 
     @Override
@@ -232,6 +268,31 @@ public class CrossProfileCalendarTest extends AndroidTestCase {
 
     // This test should be run when the test package is whitelisted and cross-profile calendar
     // is enabled in settings.
+    public void testPrimaryProfile_getCorrectWorkInstancesByDayWhenEnabled() {
+        requireRunningOnPrimaryProfile();
+
+        // Test the return cursor is correct when the all checks are met.
+        final String[] projection = new String[]{
+                CalendarContract.Instances.TITLE,
+                CalendarContract.Instances.DTSTART,
+                CalendarContract.Instances.CALENDAR_DISPLAY_NAME,
+        };
+        final Cursor cursor = mResolver.query(
+                buildQueryInstancesUri(CalendarContract.Instances.ENTERPRISE_CONTENT_BY_DAY_URI,
+                        WORK_EVENT_DTSTART_JULIAN_DAY - 1,
+                        WORK_EVENT_DTEND_JULIAN_DAY + 1, null),
+                projection, null, null, null);
+
+        assertThat(cursor).isNotNull();
+        assertThat(cursor.getCount()).isEqualTo(1);
+        cursor.moveToFirst();
+        assertThat(cursor.getString(0)).isEqualTo(WORK_EVENT_TITLE);
+        assertThat(cursor.getLong(1)).isEqualTo(WORK_EVENT_DTSTART);
+        assertThat(cursor.getString(2)).isEqualTo(WORK_CALENDAR_TITLE);
+    }
+
+    // This test should be run when the test package is whitelisted and cross-profile calendar
+    // is enabled in settings.
     public void testPrimaryProfile_canAccessWorkInstancesSearch1() {
         requireRunningOnPrimaryProfile();
 
@@ -260,6 +321,72 @@ public class CrossProfileCalendarTest extends AndroidTestCase {
         // There are two events that meet the search criteria.
         assertThat(cursor).isNotNull();
         assertThat(cursor.getCount()).isEqualTo(2);
+    }
+
+    // This test should be run when the test package is whitelisted and cross-profile calendar
+    // is enabled in settings.
+    public void testPrimaryProfile_canAccessWorkInstancesSearchByDay() {
+        requireRunningOnPrimaryProfile();
+
+        // Test the return cursor is correct when the all checks are met.
+        final Cursor cursor = mResolver.query(
+                buildQueryInstancesUri(
+                        CalendarContract.Instances.ENTERPRISE_CONTENT_SEARCH_BY_DAY_URI,
+                        WORK_EVENT_DTSTART_2_JULIAN_DAY - 1,
+                        WORK_EVENT_DTEND_2_JULIAN_DAY + 1,
+                        WORK_EVENT_DESCRIPTION),
+                null, null, null, null);
+        // There are two events that meet the search criteria.
+        assertThat(cursor).isNotNull();
+        assertThat(cursor.getCount()).isEqualTo(1);
+    }
+
+    // This test should be run when the test package is whitelisted.
+    public void testViewEventCrossProfile_intentReceivedWhenWhitelisted() throws Exception {
+        requireRunningOnPrimaryProfile();
+
+        // Get UiDevice and start view event activity.
+        final UiDevice device = UiDevice.getInstance(InstrumentationRegistry.getInstrumentation());
+        device.wakeUp();
+
+        assertThat(CalendarContract.startViewCalendarEventInManagedProfile(mContext,
+                TEST_VIEW_EVENT_ID, TEST_VIEW_EVENT_START, TEST_VIEW_EVENT_END,
+                TEST_VIEW_EVENT_ALL_DAY, TEST_VIEW_EVENT_FLAG)).isTrue();
+        final String textviewString = getViewEventCrossProfileString(TEST_VIEW_EVENT_ID,
+                TEST_VIEW_EVENT_START, TEST_VIEW_EVENT_END, TEST_VIEW_EVENT_ALL_DAY,
+                TEST_VIEW_EVENT_FLAG);
+
+        // Look for the text view to verify that activity is started in work profile.
+        UiObject2 textView = device.wait(
+                Until.findObject(By.res(ID_TEXTVIEW)),
+                TIMEOUT_SEC);
+        assertThat(textView).isNotNull();
+        assertThat(textView.getText()).isEqualTo(textviewString);
+    }
+
+    // This test should be run when the test package is whitelisted and cross-profile calendar
+    // is enabled in settings.
+    public void testPrimaryProfile_getExceptionWhenQueryNonWhitelistedColumns() {
+        requireRunningOnPrimaryProfile();
+
+        // Test the return cursor is correct when the all checks are met.
+        final String[] projection = new String[] {
+                CalendarContract.Calendars.CALENDAR_DISPLAY_NAME,
+                CalendarContract.Calendars.CALENDAR_COLOR,
+                CalendarContract.Calendars.OWNER_ACCOUNT
+        };
+        assertThrows(IllegalArgumentException.class, () -> mResolver.query(
+                CalendarContract.Calendars.ENTERPRISE_CONTENT_URI,
+                projection, SELECTION_ACCOUNT_TYPE, new String[]{TEST_ACCOUNT_TYPE}, null));
+    }
+
+    // This test should be run when the test package is not whitelisted.
+    public void testViewEventCrossProfile_intentFailedWhenNotWhitelisted() throws Exception {
+        requireRunningOnPrimaryProfile();
+
+        assertThat(CalendarContract.startViewCalendarEventInManagedProfile(mContext,
+                TEST_VIEW_EVENT_ID, TEST_VIEW_EVENT_START, TEST_VIEW_EVENT_END,
+                TEST_VIEW_EVENT_ALL_DAY, TEST_VIEW_EVENT_FLAG)).isFalse();
     }
 
     // Utils method, not a actual test. Ran from ManagedProfileTest.java to set up for actual tests.
@@ -322,6 +449,14 @@ public class CrossProfileCalendarTest extends AndroidTestCase {
             builder = builder.appendPath(query);
         }
         return builder.build();
+    }
+
+    // This method should align with
+    // DummyCrossProfileViewEventActivity#getViewEventCrossProfileString.
+    private String getViewEventCrossProfileString(long eventId, long start, long end,
+            boolean allDay, int flags) {
+        return String.format("id:%d, start:%d, end:%d, allday:%b, flag:%d", eventId,
+                start, end, allDay, flags);
     }
 
     // This method is to guard that particular tests are supposed to run on managed profile.

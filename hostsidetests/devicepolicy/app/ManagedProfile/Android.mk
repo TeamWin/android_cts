@@ -34,7 +34,8 @@ LOCAL_STATIC_JAVA_LIBRARIES = \
 	ub-uiautomator \
 	android-support-test \
 	guava \
-	truth-prebuilt
+	truth-prebuilt \
+	testng
 
 LOCAL_STATIC_ANDROID_LIBRARIES := \
     androidx.legacy_legacy-support-v4

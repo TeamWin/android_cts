@@ -1381,10 +1381,17 @@ public class ManagedProfileTest extends BaseDevicePolicyTest {
             runDeviceTestsAsUser(MANAGED_PROFILE_PKG, ".CrossProfileCalendarTest",
                     "testPrimaryProfile_getCorrectWorkInstancesWhenEnabled", mParentUserId);
             runDeviceTestsAsUser(MANAGED_PROFILE_PKG, ".CrossProfileCalendarTest",
+                    "testPrimaryProfile_getCorrectWorkInstancesByDayWhenEnabled", mParentUserId);
+            runDeviceTestsAsUser(MANAGED_PROFILE_PKG, ".CrossProfileCalendarTest",
                     "testPrimaryProfile_canAccessWorkInstancesSearch1", mParentUserId);
             runDeviceTestsAsUser(MANAGED_PROFILE_PKG, ".CrossProfileCalendarTest",
                     "testPrimaryProfile_canAccessWorkInstancesSearch2", mParentUserId);
-
+            runDeviceTestsAsUser(MANAGED_PROFILE_PKG, ".CrossProfileCalendarTest",
+                    "testPrimaryProfile_canAccessWorkInstancesSearchByDay", mParentUserId);
+            runDeviceTestsAsUser(MANAGED_PROFILE_PKG, ".CrossProfileCalendarTest",
+                    "testPrimaryProfile_getExceptionWhenQueryNonWhitelistedColumns", mParentUserId);
+            runDeviceTestsAsUser(MANAGED_PROFILE_PKG, ".CrossProfileCalendarTest",
+                    "testViewEventCrossProfile_intentReceivedWhenWhitelisted", mParentUserId);
         } finally {
             // Cleanup.
             runDeviceTestsAsUser(MANAGED_PROFILE_PKG, ".CrossProfileCalendarTest",
@@ -1443,6 +1450,8 @@ public class ManagedProfileTest extends BaseDevicePolicyTest {
                     "testPrimaryProfile_cannotAccessWorkEventsWhenDisabled", mParentUserId);
             runDeviceTestsAsUser(MANAGED_PROFILE_PKG, ".CrossProfileCalendarTest",
                     "testPrimaryProfile_cannotAccessWorkInstancesWhenDisabled", mParentUserId);
+            runDeviceTestsAsUser(MANAGED_PROFILE_PKG, ".CrossProfileCalendarTest",
+                    "testViewEventCrossProfile_intentFailedWhenNotWhitelisted", mParentUserId);
         } finally {
             // Cleanup.
             runDeviceTestsAsUser(MANAGED_PROFILE_PKG, ".CrossProfileCalendarTest",
