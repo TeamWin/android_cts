@@ -16,8 +16,6 @@
 
 package com.android.cts.mockime;
 
-import static android.content.Context.MODE_PRIVATE;
-
 import android.app.UiAutomation;
 import android.content.BroadcastReceiver;
 import android.content.ComponentName;
@@ -27,7 +25,6 @@ import android.content.IntentFilter;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.HandlerThread;
-import android.os.Parcel;
 import android.os.ParcelFileDescriptor;
 import android.os.SystemClock;
 import android.provider.Settings;
@@ -41,7 +38,6 @@ import androidx.annotation.Nullable;
 import com.android.compatibility.common.util.PollingCheck;
 
 import java.io.IOException;
-import java.io.OutputStream;
 import java.util.concurrent.TimeUnit;
 
 /**
@@ -54,9 +50,6 @@ import java.util.concurrent.TimeUnit;
 public class MockImeSession implements AutoCloseable {
     private final String mImeEventActionName =
             "com.android.cts.mockime.action.IME_EVENT." + SystemClock.elapsedRealtimeNanos();
-
-    /** Setting file name to store initialization settings for {@link MockIme}. */
-    static final String MOCK_IME_SETTINGS_FILE = "mockimesettings.data";
 
     private static final long TIMEOUT = TimeUnit.SECONDS.toMillis(10);
 
@@ -165,28 +158,16 @@ public class MockImeSession implements AutoCloseable {
     private static void writeMockImeSettings(@NonNull Context context,
             @NonNull String imeEventActionName,
             @Nullable ImeSettings.Builder imeSettings) throws Exception {
-        context.deleteFile(MOCK_IME_SETTINGS_FILE);
-        try (OutputStream os = context.openFileOutput(MOCK_IME_SETTINGS_FILE, MODE_PRIVATE)) {
-            Parcel parcel = null;
-            try {
-                parcel = Parcel.obtain();
-                ImeSettings.writeToParcel(parcel, imeEventActionName, imeSettings);
-                os.write(parcel.marshall());
-            } finally {
-                if (parcel != null) {
-                    parcel.recycle();
-                }
-            }
-            os.flush();
-        }
+        final Bundle bundle = ImeSettings.serializeToBundle(imeEventActionName, imeSettings);
+        context.getContentResolver().call(SettingsProvider.AUTHORITY, "write", null, bundle);
     }
 
     private ComponentName getMockImeComponentName() {
-        return MockIme.getComponentName(mContext.getPackageName());
+        return MockIme.getComponentName();
     }
 
     private String getMockImeId() {
-        return MockIme.getImeId(mContext.getPackageName());
+        return MockIme.getImeId();
     }
 
     private MockImeSession(@NonNull Context context, @NonNull UiAutomation uiAutomation) {
@@ -268,7 +249,7 @@ public class MockImeSession implements AutoCloseable {
 
         mContext.unregisterReceiver(mEventReceiver);
         mHandlerThread.quitSafely();
-        mContext.deleteFile(MOCK_IME_SETTINGS_FILE);
+        mContext.getContentResolver().call(SettingsProvider.AUTHORITY, "delete", null, null);
     }
 
     /**
@@ -292,7 +273,7 @@ public class MockImeSession implements AutoCloseable {
         final ImeCommand command = new ImeCommand(
                 "commitText", SystemClock.elapsedRealtimeNanos(), true, params);
         final Intent intent = new Intent();
-        intent.setPackage(mContext.getPackageName());
+        intent.setPackage(MockIme.getComponentName().getPackageName());
         intent.setAction(MockIme.getCommandActionName(mImeEventActionName));
         intent.putExtras(command.toBundle());
         mContext.sendBroadcast(intent);
@@ -306,7 +287,7 @@ public class MockImeSession implements AutoCloseable {
         final ImeCommand command = new ImeCommand(
                 "setBackDisposition", SystemClock.elapsedRealtimeNanos(), true, params);
         final Intent intent = new Intent();
-        intent.setPackage(mContext.getPackageName());
+        intent.setPackage(MockIme.getComponentName().getPackageName());
         intent.setAction(MockIme.getCommandActionName(mImeEventActionName));
         intent.putExtras(command.toBundle());
         mContext.sendBroadcast(intent);
@@ -320,7 +301,7 @@ public class MockImeSession implements AutoCloseable {
         final ImeCommand command = new ImeCommand(
                 "requestHideSelf", SystemClock.elapsedRealtimeNanos(), true, params);
         final Intent intent = new Intent();
-        intent.setPackage(mContext.getPackageName());
+        intent.setPackage(MockIme.getComponentName().getPackageName());
         intent.setAction(MockIme.getCommandActionName(mImeEventActionName));
         intent.putExtras(command.toBundle());
         mContext.sendBroadcast(intent);
@@ -334,7 +315,7 @@ public class MockImeSession implements AutoCloseable {
         final ImeCommand command = new ImeCommand(
                 "requestShowSelf", SystemClock.elapsedRealtimeNanos(), true, params);
         final Intent intent = new Intent();
-        intent.setPackage(mContext.getPackageName());
+        intent.setPackage(MockIme.getComponentName().getPackageName());
         intent.setAction(MockIme.getCommandActionName(mImeEventActionName));
         intent.putExtras(command.toBundle());
         mContext.sendBroadcast(intent);

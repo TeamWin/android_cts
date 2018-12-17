@@ -32,6 +32,7 @@
         <option name="test-file-name" value="CtsDevicePrereleaseSdkApp.apk" />
         <option name="test-file-name" value="CtsDeviceTranslucentTestApp.apk" />
         <option name="test-file-name" value="CtsDeviceTranslucentTestApp26.apk" />
+        <option name="test-file-name" value="CtsMockInputMethod.apk" />
     </target_preparer>
     <target_preparer class="com.android.tradefed.targetprep.RunCommandTargetPreparer">
         <!-- 120 seconds screen off timeout to prevent device sleep while long running test. -->
