@@ -141,6 +141,280 @@ public class NotificationManagerTest extends AndroidTestCase {
         }
     }
 
+    private StatusBarNotification findPostedNotification(int id) {
+        // notification is a bit asynchronous so it may take a few ms to appear in
+        // getActiveNotifications()
+        // we will check for it for up to 300ms before giving up
+        StatusBarNotification n = null;
+        for (int tries = 3; tries-- > 0; ) {
+            final StatusBarNotification[] sbns = mNotificationManager.getActiveNotifications();
+            for (StatusBarNotification sbn : sbns) {
+                Log.d(TAG, "Found " + sbn.getKey());
+                if (sbn.getId() == id) {
+                    n = sbn;
+                    break;
+                }
+            }
+            if (n != null) break;
+            try {
+                Thread.sleep(100);
+            } catch (InterruptedException ex) {
+                // pass
+            }
+        }
+        return n;
+    }
+
+    private PendingIntent getPendingIntent() {
+        return PendingIntent.getActivity(
+                getContext(), 0, new Intent(getContext(), this.getClass()), 0);
+    }
+
+    private boolean isGroupSummary(Notification n) {
+        return n.getGroup() != null && (n.flags & Notification.FLAG_GROUP_SUMMARY) != 0;
+    }
+
+    private void assertOnlySomeNotificationsAutogrouped(List<Integer> autoGroupedIds) {
+        String expectedGroupKey = null;
+        try {
+            // Posting can take ~100 ms
+            Thread.sleep(150);
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        }
+        StatusBarNotification[] sbns = mNotificationManager.getActiveNotifications();
+        for (StatusBarNotification sbn : sbns) {
+            if (isGroupSummary(sbn.getNotification())
+                    || autoGroupedIds.contains(sbn.getId())) {
+                assertTrue(sbn.getKey() + " is unexpectedly not autogrouped",
+                        sbn.getOverrideGroupKey() != null);
+                if (expectedGroupKey == null) {
+                    expectedGroupKey = sbn.getGroupKey();
+                }
+                assertEquals(expectedGroupKey, sbn.getGroupKey());
+            } else {
+                assertTrue(sbn.isGroup());
+                assertTrue(sbn.getKey() + " is unexpectedly autogrouped,",
+                        sbn.getOverrideGroupKey() == null);
+                assertTrue(sbn.getKey() + " has an unusual group key",
+                        sbn.getGroupKey() != expectedGroupKey);
+            }
+        }
+    }
+
+    private void assertAllPostedNotificationsAutogrouped() {
+        String expectedGroupKey = null;
+        try {
+            // Posting can take ~100 ms
+            Thread.sleep(150);
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        }
+        StatusBarNotification[] sbns = mNotificationManager.getActiveNotifications();
+        for (StatusBarNotification sbn : sbns) {
+            // all notis should be in a group determined by autogrouping
+            assertTrue(sbn.getOverrideGroupKey() != null);
+            if (expectedGroupKey == null) {
+                expectedGroupKey = sbn.getGroupKey();
+            }
+            // all notis should be in the same group
+            assertEquals(expectedGroupKey, sbn.getGroupKey());
+        }
+    }
+
+    private void cancelAndPoll(int id) {
+        mNotificationManager.cancel(id);
+
+        if (!checkNotificationExistence(id, /*shouldExist=*/ false)) {
+            fail("canceled notification was still alive, id=" + 1);
+        }
+    }
+
+    private void sendNotification(final int id, final int icon) throws Exception {
+        sendNotification(id, null, icon);
+    }
+
+    private void sendNotification(final int id, String groupKey, final int icon) throws Exception {
+        final Intent intent = new Intent(Intent.ACTION_MAIN, Threads.CONTENT_URI);
+
+        intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_SINGLE_TOP
+                | Intent.FLAG_ACTIVITY_CLEAR_TOP);
+        intent.setAction(Intent.ACTION_MAIN);
+
+        final PendingIntent pendingIntent = PendingIntent.getActivity(mContext, 0, intent, 0);
+        final Notification notification =
+                new Notification.Builder(mContext, NOTIFICATION_CHANNEL_ID)
+                        .setSmallIcon(icon)
+                        .setWhen(System.currentTimeMillis())
+                        .setContentTitle("notify#" + id)
+                        .setContentText("This is #" + id + "notification  ")
+                        .setContentIntent(pendingIntent)
+                        .setGroup(groupKey)
+                        .build();
+        mNotificationManager.notify(id, notification);
+
+        if (!checkNotificationExistence(id, /*shouldExist=*/ true)) {
+            fail("couldn't find posted notification id=" + id);
+        }
+    }
+
+    private boolean checkNotificationExistence(int id, boolean shouldExist) {
+        // notification is a bit asynchronous so it may take a few ms to appear in
+        // getActiveNotifications()
+        // we will check for it for up to 300ms before giving up
+        boolean found = false;
+        for (int tries = 3; tries--> 0;) {
+            // Need reset flag.
+            found = false;
+            final StatusBarNotification[] sbns = mNotificationManager.getActiveNotifications();
+            for (StatusBarNotification sbn : sbns) {
+                Log.d(TAG, "Found " + sbn.getKey());
+                if (sbn.getId() == id) {
+                    found = true;
+                    break;
+                }
+            }
+            if (found == shouldExist) break;
+            try {
+                Thread.sleep(100);
+            } catch (InterruptedException ex) {
+                // pass
+            }
+        }
+        return found == shouldExist;
+    }
+
+    private void assertNotificationCount(int expectedCount) {
+        // notification is a bit asynchronous so it may take a few ms to appear in
+        // getActiveNotifications()
+        // we will check for it for up to 400ms before giving up
+        int lastCount = 0;
+        for (int tries = 4; tries-- > 0;) {
+            final StatusBarNotification[] sbns = mNotificationManager.getActiveNotifications();
+            lastCount = sbns.length;
+            if (expectedCount == lastCount) return;
+            try {
+                Thread.sleep(100);
+            } catch (InterruptedException ex) {
+                // pass
+            }
+        }
+        fail("Expected " + expectedCount + " posted notifications, were " +  lastCount);
+    }
+
+    private void compareChannels(NotificationChannel expected, NotificationChannel actual) {
+        if (actual == null) {
+            fail("actual channel is null");
+            return;
+        }
+        if (expected == null) {
+            fail("expected channel is null");
+            return;
+        }
+        assertEquals(expected.getId(), actual.getId());
+        assertEquals(expected.getName(), actual.getName());
+        assertEquals(expected.getDescription(), actual.getDescription());
+        assertEquals(expected.shouldVibrate(), actual.shouldVibrate());
+        assertEquals(expected.shouldShowLights(), actual.shouldShowLights());
+        assertEquals(expected.getImportance(), actual.getImportance());
+        if (expected.getSound() == null) {
+            assertEquals(Settings.System.DEFAULT_NOTIFICATION_URI, actual.getSound());
+            assertEquals(Notification.AUDIO_ATTRIBUTES_DEFAULT, actual.getAudioAttributes());
+        } else {
+            assertEquals(expected.getSound(), actual.getSound());
+            assertEquals(expected.getAudioAttributes(), actual.getAudioAttributes());
+        }
+        assertTrue(Arrays.equals(expected.getVibrationPattern(), actual.getVibrationPattern()));
+        assertEquals(expected.getGroup(), actual.getGroup());
+    }
+
+    private void toggleNotificationPolicyAccess(String packageName,
+            Instrumentation instrumentation, boolean on) throws IOException {
+
+        String command = " cmd notification " + (on ? "allow_dnd " : "disallow_dnd ") + packageName;
+
+        runCommand(command, instrumentation);
+
+        NotificationManager nm = mContext.getSystemService(NotificationManager.class);
+        Assert.assertEquals("Notification Policy Access Grant is " +
+                        nm.isNotificationPolicyAccessGranted() + " not " + on, on,
+                nm.isNotificationPolicyAccessGranted());
+    }
+
+    private void suspendPackage(String packageName,
+            Instrumentation instrumentation, boolean suspend) throws IOException {
+        String command = " cmd package " + (suspend ? "suspend " : "unsuspend ") + packageName;
+
+        runCommand(command, instrumentation);
+    }
+
+    private void toggleListenerAccess(String componentName, Instrumentation instrumentation,
+            boolean on) throws IOException {
+
+        String command = " cmd notification " + (on ? "allow_listener " : "disallow_listener ")
+                + componentName;
+
+        runCommand(command, instrumentation);
+
+        final NotificationManager nm = mContext.getSystemService(NotificationManager.class);
+        final ComponentName listenerComponent = TestNotificationListener.getComponentName();
+        assertTrue(listenerComponent + " has not been granted access",
+                nm.isNotificationListenerAccessGranted(listenerComponent) == on);
+    }
+
+    private void runCommand(String command, Instrumentation instrumentation) throws IOException {
+        UiAutomation uiAutomation = instrumentation.getUiAutomation();
+        // Execute command
+        try (ParcelFileDescriptor fd = uiAutomation.executeShellCommand(command)) {
+            Assert.assertNotNull("Failed to execute shell command: " + command, fd);
+            // Wait for the command to finish by reading until EOF
+            try (InputStream in = new FileInputStream(fd.getFileDescriptor())) {
+                byte[] buffer = new byte[4096];
+                while (in.read(buffer) > 0) {}
+            } catch (IOException e) {
+                throw new IOException("Could not read stdout of command: " + command, e);
+            }
+        } finally {
+            uiAutomation.destroy();
+        }
+    }
+
+    private boolean areRulesSame(AutomaticZenRule a, AutomaticZenRule b) {
+        return a.isEnabled() == b.isEnabled()
+                && Objects.equals(a.getName(), b.getName())
+                && a.getInterruptionFilter() == b.getInterruptionFilter()
+                && Objects.equals(a.getConditionId(), b.getConditionId())
+                && Objects.equals(a.getOwner(), b.getOwner())
+                && Objects.equals(a.getZenPolicy(), b.getZenPolicy())
+                && Objects.equals(a.getConfigurationActivity(), b.getConfigurationActivity());
+    }
+
+    private AutomaticZenRule createRule(String name) {
+        return new AutomaticZenRule(name, null,
+                new ComponentName(mContext, AutomaticZenRuleActivity.class),
+                new Uri.Builder().scheme("scheme")
+                        .appendPath("path")
+                        .appendQueryParameter("fake_rule", "fake_value")
+                        .build(), null, NotificationManager.INTERRUPTION_FILTER_PRIORITY, true);
+    }
+
+    private void assertExpectedDndState(int expectedState) {
+        int tries = 3;
+        for (int i = tries; i >=0; i--) {
+            if (expectedState ==
+                    mNotificationManager.getCurrentInterruptionFilter()) {
+                break;
+            }
+            try {
+                Thread.sleep(100);
+            } catch (InterruptedException e) {
+                e.printStackTrace();
+            }
+        }
+
+        assertEquals(expectedState, mNotificationManager.getCurrentInterruptionFilter());
+    }
+
     public void testPostPCanToggleAlarmsMediaSystemTest() throws Exception {
         if (mActivityManager.isLowRamDevice()) {
             return;
@@ -1236,277 +1510,7 @@ public class NotificationManagerTest extends AndroidTestCase {
         }
     }
 
-    private StatusBarNotification findPostedNotification(int id) {
-        // notification is a bit asynchronous so it may take a few ms to appear in
-        // getActiveNotifications()
-        // we will check for it for up to 300ms before giving up
-        StatusBarNotification n = null;
-        for (int tries = 3; tries-- > 0; ) {
-            final StatusBarNotification[] sbns = mNotificationManager.getActiveNotifications();
-            for (StatusBarNotification sbn : sbns) {
-                Log.d(TAG, "Found " + sbn.getKey());
-                if (sbn.getId() == id) {
-                    n = sbn;
-                    break;
-                }
-            }
-            if (n != null) break;
-            try {
-                Thread.sleep(100);
-            } catch (InterruptedException ex) {
-                // pass
-            }
-        }
-        return n;
-    }
-
-    private PendingIntent getPendingIntent() {
-        return PendingIntent.getActivity(
-                getContext(), 0, new Intent(getContext(), this.getClass()), 0);
-    }
-
-    private boolean isGroupSummary(Notification n) {
-        return n.getGroup() != null && (n.flags & Notification.FLAG_GROUP_SUMMARY) != 0;
-    }
-
-    private void assertOnlySomeNotificationsAutogrouped(List<Integer> autoGroupedIds) {
-        String expectedGroupKey = null;
-        try {
-            // Posting can take ~100 ms
-            Thread.sleep(150);
-        } catch (InterruptedException e) {
-            e.printStackTrace();
-        }
-        StatusBarNotification[] sbns = mNotificationManager.getActiveNotifications();
-        for (StatusBarNotification sbn : sbns) {
-            if (isGroupSummary(sbn.getNotification())
-                    || autoGroupedIds.contains(sbn.getId())) {
-                assertTrue(sbn.getKey() + " is unexpectedly not autogrouped",
-                        sbn.getOverrideGroupKey() != null);
-                if (expectedGroupKey == null) {
-                    expectedGroupKey = sbn.getGroupKey();
-                }
-                assertEquals(expectedGroupKey, sbn.getGroupKey());
-            } else {
-                assertTrue(sbn.isGroup());
-                assertTrue(sbn.getKey() + " is unexpectedly autogrouped,",
-                        sbn.getOverrideGroupKey() == null);
-                assertTrue(sbn.getKey() + " has an unusual group key",
-                        sbn.getGroupKey() != expectedGroupKey);
-            }
-        }
-    }
-
-    private void assertAllPostedNotificationsAutogrouped() {
-        String expectedGroupKey = null;
-        try {
-            // Posting can take ~100 ms
-            Thread.sleep(150);
-        } catch (InterruptedException e) {
-            e.printStackTrace();
-        }
-        StatusBarNotification[] sbns = mNotificationManager.getActiveNotifications();
-        for (StatusBarNotification sbn : sbns) {
-            // all notis should be in a group determined by autogrouping
-            assertTrue(sbn.getOverrideGroupKey() != null);
-            if (expectedGroupKey == null) {
-                expectedGroupKey = sbn.getGroupKey();
-            }
-            // all notis should be in the same group
-            assertEquals(expectedGroupKey, sbn.getGroupKey());
-        }
-    }
-
-    private void cancelAndPoll(int id) {
-        mNotificationManager.cancel(id);
-
-        if (!checkNotificationExistence(id, /*shouldExist=*/ false)) {
-            fail("canceled notification was still alive, id=" + 1);
-        }
-    }
-
-    private void sendNotification(final int id, final int icon) throws Exception {
-        sendNotification(id, null, icon);
-    }
-
-    private void sendNotification(final int id, String groupKey, final int icon) throws Exception {
-        final Intent intent = new Intent(Intent.ACTION_MAIN, Threads.CONTENT_URI);
-
-        intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_SINGLE_TOP
-                | Intent.FLAG_ACTIVITY_CLEAR_TOP);
-        intent.setAction(Intent.ACTION_MAIN);
-
-        final PendingIntent pendingIntent = PendingIntent.getActivity(mContext, 0, intent, 0);
-        final Notification notification =
-                new Notification.Builder(mContext, NOTIFICATION_CHANNEL_ID)
-                        .setSmallIcon(icon)
-                        .setWhen(System.currentTimeMillis())
-                        .setContentTitle("notify#" + id)
-                        .setContentText("This is #" + id + "notification  ")
-                        .setContentIntent(pendingIntent)
-                        .setGroup(groupKey)
-                        .build();
-        mNotificationManager.notify(id, notification);
-
-        if (!checkNotificationExistence(id, /*shouldExist=*/ true)) {
-            fail("couldn't find posted notification id=" + id);
-        }
-    }
-
-    private boolean checkNotificationExistence(int id, boolean shouldExist) {
-        // notification is a bit asynchronous so it may take a few ms to appear in
-        // getActiveNotifications()
-        // we will check for it for up to 300ms before giving up
-        boolean found = false;
-        for (int tries = 3; tries--> 0;) {
-            // Need reset flag.
-            found = false;
-            final StatusBarNotification[] sbns = mNotificationManager.getActiveNotifications();
-            for (StatusBarNotification sbn : sbns) {
-                Log.d(TAG, "Found " + sbn.getKey());
-                if (sbn.getId() == id) {
-                    found = true;
-                    break;
-                }
-            }
-            if (found == shouldExist) break;
-            try {
-                Thread.sleep(100);
-            } catch (InterruptedException ex) {
-                // pass
-            }
-        }
-        return found == shouldExist;
-    }
-
-    private void assertNotificationCount(int expectedCount) {
-        // notification is a bit asynchronous so it may take a few ms to appear in
-        // getActiveNotifications()
-        // we will check for it for up to 400ms before giving up
-        int lastCount = 0;
-        for (int tries = 4; tries-- > 0;) {
-            final StatusBarNotification[] sbns = mNotificationManager.getActiveNotifications();
-            lastCount = sbns.length;
-            if (expectedCount == lastCount) return;
-            try {
-                Thread.sleep(100);
-            } catch (InterruptedException ex) {
-                // pass
-            }
-        }
-        fail("Expected " + expectedCount + " posted notifications, were " +  lastCount);
-    }
-
-    private void compareChannels(NotificationChannel expected, NotificationChannel actual) {
-        if (actual == null) {
-            fail("actual channel is null");
-            return;
-        }
-        if (expected == null) {
-            fail("expected channel is null");
-            return;
-        }
-        assertEquals(expected.getId(), actual.getId());
-        assertEquals(expected.getName(), actual.getName());
-        assertEquals(expected.getDescription(), actual.getDescription());
-        assertEquals(expected.shouldVibrate(), actual.shouldVibrate());
-        assertEquals(expected.shouldShowLights(), actual.shouldShowLights());
-        assertEquals(expected.getImportance(), actual.getImportance());
-        if (expected.getSound() == null) {
-            assertEquals(Settings.System.DEFAULT_NOTIFICATION_URI, actual.getSound());
-            assertEquals(Notification.AUDIO_ATTRIBUTES_DEFAULT, actual.getAudioAttributes());
-        } else {
-            assertEquals(expected.getSound(), actual.getSound());
-            assertEquals(expected.getAudioAttributes(), actual.getAudioAttributes());
-        }
-        assertTrue(Arrays.equals(expected.getVibrationPattern(), actual.getVibrationPattern()));
-        assertEquals(expected.getGroup(), actual.getGroup());
-    }
-
-    private void toggleNotificationPolicyAccess(String packageName,
-            Instrumentation instrumentation, boolean on) throws IOException {
-
-        String command = " cmd notification " + (on ? "allow_dnd " : "disallow_dnd ") + packageName;
-
-        runCommand(command, instrumentation);
-
-        NotificationManager nm = mContext.getSystemService(NotificationManager.class);
-        Assert.assertEquals("Notification Policy Access Grant is " +
-                        nm.isNotificationPolicyAccessGranted() + " not " + on, on,
-                nm.isNotificationPolicyAccessGranted());
-    }
-
-    private void suspendPackage(String packageName,
-            Instrumentation instrumentation, boolean suspend) throws IOException {
-        String command = " cmd package " + (suspend ? "suspend " : "unsuspend ") + packageName;
-
-        runCommand(command, instrumentation);
-    }
-
-    private void toggleListenerAccess(String componentName, Instrumentation instrumentation,
-            boolean on) throws IOException {
-
-        String command = " cmd notification " + (on ? "allow_listener " : "disallow_listener ")
-                + componentName;
-
-        runCommand(command, instrumentation);
-
-        final NotificationManager nm = mContext.getSystemService(NotificationManager.class);
-        final ComponentName listenerComponent = TestNotificationListener.getComponentName();
-        assertTrue(listenerComponent + " has not been granted access",
-                nm.isNotificationListenerAccessGranted(listenerComponent) == on);
-    }
-
-    private void runCommand(String command, Instrumentation instrumentation) throws IOException {
-        UiAutomation uiAutomation = instrumentation.getUiAutomation();
-        // Execute command
-        try (ParcelFileDescriptor fd = uiAutomation.executeShellCommand(command)) {
-            Assert.assertNotNull("Failed to execute shell command: " + command, fd);
-            // Wait for the command to finish by reading until EOF
-            try (InputStream in = new FileInputStream(fd.getFileDescriptor())) {
-                byte[] buffer = new byte[4096];
-                while (in.read(buffer) > 0) {}
-            } catch (IOException e) {
-                throw new IOException("Could not read stdout of command: " + command, e);
-            }
-        } finally {
-            uiAutomation.destroy();
-        }
-    }
-
-    private boolean areRulesSame(AutomaticZenRule a, AutomaticZenRule b) {
-        return a.isEnabled() == b.isEnabled()
-                && Objects.equals(a.getName(), b.getName())
-                && a.getInterruptionFilter() == b.getInterruptionFilter()
-                && Objects.equals(a.getConditionId(), b.getConditionId())
-                && Objects.equals(a.getOwner(), b.getOwner())
-                && Objects.equals(a.getZenPolicy(), b.getZenPolicy())
-                && Objects.equals(a.getConfigurationActivity(), b.getConfigurationActivity());
-    }
-
-    private AutomaticZenRule createRule(String name) {
-        return new AutomaticZenRule(name, null,
-                new ComponentName(mContext, AutomaticZenRuleActivity.class),
-                new Uri.Builder().scheme("scheme")
-                        .appendPath("path")
-                        .appendQueryParameter("fake_rule", "fake_value")
-                        .build(), null, NotificationManager.INTERRUPTION_FILTER_PRIORITY, true);
-    }
-
-    private void assertExpectedDndState(int expectedState) {
-        int tries = 3;
-        for (int i = tries; i >=0; i--) {
-            if (expectedState ==
-                    mNotificationManager.getCurrentInterruptionFilter()) {
-                break;
-            }
-            try {
-                Thread.sleep(100);
-            } catch (InterruptedException e) {
-                e.printStackTrace();
-            }
-        }
-
-        assertEquals(expectedState, mNotificationManager.getCurrentInterruptionFilter());
+    public void testAreAppOverlaysAllowed() {
+        assertTrue(mNotificationManager.areAppOverlaysAllowed());
     }
 }
