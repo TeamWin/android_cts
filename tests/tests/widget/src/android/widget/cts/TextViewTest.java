@@ -2274,6 +2274,34 @@ public class TextViewTest {
         mInstrumentation.waitForIdleSync();
     }
 
+    @Test
+    public void testCopyAndPaste_byCtrlInsert() throws Throwable {
+        // Test copy-and-paste by Ctrl-Insert and Shift-Insert.
+        initTextViewForTypingOnUiThread();
+
+        // Type "abc"
+        CtsKeyEventUtil.sendString(mInstrumentation, mTextView, "abc");
+        mActivityRule.runOnUiThread(() -> {
+            // Select "bc"
+            Selection.setSelection((Spannable) mTextView.getText(), 1, 3);
+        });
+        mInstrumentation.waitForIdleSync();
+
+        // Copy "bc"
+        CtsKeyEventUtil.sendKeyWhileHoldingModifier(mInstrumentation, mTextView,
+                KeyEvent.KEYCODE_INSERT, KeyEvent.KEYCODE_CTRL_LEFT);
+        mActivityRule.runOnUiThread(() -> {
+            // Set cursor between 'b' and 'c'
+            Selection.setSelection((Spannable) mTextView.getText(), 2, 2);
+        });
+        mInstrumentation.waitForIdleSync();
+
+        // Paste "bc"
+        CtsKeyEventUtil.sendKeyWhileHoldingModifier(mInstrumentation, mTextView,
+                KeyEvent.KEYCODE_INSERT, KeyEvent.KEYCODE_SHIFT_LEFT);
+        assertEquals("abbcc", mTextView.getText().toString());
+    }
+
     @UiThreadTest
     @Test
     public void testCutAndPaste() {
@@ -2342,6 +2370,35 @@ public class TextViewTest {
             assertEquals("bca", mTextView.getText().toString());
         });
         mInstrumentation.waitForIdleSync();
+    }
+
+    @Test
+    public void testCutAndPaste_byShiftDelete() throws Throwable {
+        // Test cut and paste by Shift-Delete and Shift-Insert
+        initTextViewForTypingOnUiThread();
+
+        // Type "abc".
+        CtsKeyEventUtil.sendString(mInstrumentation, mTextView, "abc");
+        mActivityRule.runOnUiThread(() -> {
+            // Select "bc"
+            Selection.setSelection((Spannable) mTextView.getText(), 1, 3);
+        });
+        mInstrumentation.waitForIdleSync();
+
+        // Cut "bc"
+        CtsKeyEventUtil.sendKeyWhileHoldingModifier(mInstrumentation, mTextView,
+                KeyEvent.KEYCODE_FORWARD_DEL, KeyEvent.KEYCODE_SHIFT_LEFT);
+        mActivityRule.runOnUiThread(() -> {
+            assertEquals("a", mTextView.getText().toString());
+            // Move cursor to the head
+            Selection.setSelection((Spannable) mTextView.getText(), 0, 0);
+        });
+        mInstrumentation.waitForIdleSync();
+
+        // Paste "bc"
+        CtsKeyEventUtil.sendKeyWhileHoldingModifier(mInstrumentation, mTextView,
+                KeyEvent.KEYCODE_INSERT, KeyEvent.KEYCODE_SHIFT_LEFT);
+        assertEquals("bca", mTextView.getText().toString());
     }
 
     private static boolean hasSpansAtMiddleOfText(final TextView textView, final Class<?> type) {
