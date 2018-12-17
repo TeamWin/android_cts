@@ -77,6 +77,10 @@ public class NotificationManagerTest extends AndroidTestCase {
     final boolean DEBUG = false;
     final String NOTIFICATION_CHANNEL_ID = "NotificationManagerTest";
 
+    private static final String DELEGATOR = "com.android.test.notificationdelegator";
+    private static final String REVOKE_CLASS = DELEGATOR + ".NotificationRevoker";
+    private static final int WAIT_TIME = 2000;
+
     private PackageManager mPackageManager;
     private NotificationManager mNotificationManager;
     private ActivityManager mActivityManager;
@@ -1178,6 +1182,58 @@ public class NotificationManagerTest extends AndroidTestCase {
                 SUPPRESSED_EFFECT_LIGHTS);
         assertFalse(policy.equals(policy2));
         assertFalse(policy2.equals(policy));
+    }
+
+    public void testNotificationDelegate_grantAndPost() throws Exception {
+        // grant this test permission to post
+        final Intent activityIntent = new Intent();
+        activityIntent.setPackage(DELEGATOR);
+        activityIntent.setAction(Intent.ACTION_MAIN);
+        activityIntent.addCategory(Intent.CATEGORY_LAUNCHER);
+        activityIntent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+
+        // wait for the activity to launch and finish
+        mContext.startActivity(activityIntent);
+        Thread.sleep(1000);
+
+        // send notification
+        Notification n = new Notification.Builder(mContext, "channel")
+                .setSmallIcon(android.R.id.icon)
+                .build();
+        mNotificationManager.notifyAsPackage(DELEGATOR, "tag", 0, n);
+
+        findPostedNotification(0);
+    }
+
+    public void testNotificationDelegate_grantAndRevoke() throws Exception {
+        // grant this test permission to post
+        final Intent activityIntent = new Intent();
+        activityIntent.setPackage(DELEGATOR);
+        activityIntent.setAction(Intent.ACTION_MAIN);
+        activityIntent.addCategory(Intent.CATEGORY_LAUNCHER);
+        activityIntent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+
+        mContext.startActivity(activityIntent);
+        Thread.sleep(1000);
+
+        assertTrue(mNotificationManager.canNotifyAsPackage(DELEGATOR));
+
+        final Intent revokeIntent = new Intent();
+        revokeIntent.setClassName(DELEGATOR, REVOKE_CLASS);
+        revokeIntent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+        mContext.startActivity(revokeIntent);
+        Thread.sleep(1000);
+
+        try {
+            // send notification
+            Notification n = new Notification.Builder(mContext, "channel")
+                    .setSmallIcon(android.R.id.icon)
+                    .build();
+            mNotificationManager.notifyAsPackage(DELEGATOR, "tag", 0, n);
+            fail("Should not be able to post as a delegate when permission revoked");
+        } catch (SecurityException e) {
+            // yay
+        }
     }
 
     private StatusBarNotification findPostedNotification(int id) {
