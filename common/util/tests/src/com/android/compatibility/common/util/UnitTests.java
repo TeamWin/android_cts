@@ -36,6 +36,7 @@ import org.junit.runners.Suite.SuiteClasses;
     ResultHandlerTest.class,
     StatTest.class,
     TestResultTest.class,
+    CrashUtilsTest.class,
 })
 public class UnitTests {
     // empty on purpose
