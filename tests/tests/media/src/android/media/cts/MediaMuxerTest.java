@@ -87,11 +87,32 @@ public class MediaMuxerTest extends AndroidTestCase {
     }
 
     /**
-     * Test: make sure the muxer handles video, audio and metadata tracks correctly.
+     * Test: make sure the muxer handles video, audio and non standard compliant metadata tracks
+     * that generated before API29 correctly. This test will use extractor to extract the video
+     * track, audio and the non standard compliant metadata track from the source file, then
+     * remuxes them into a new file with standard compliant metadata track. Finally, it will check
+     * to make sure the new file's metadata track matches the source file's metadata track for the
+     * mime format and data payload.
      */
-    public void testVideoAudioMedatadata() throws Exception {
+    public void testVideoAudioMedatadataWithNonCompliantMetadataTrack() throws Exception {
         int source =
-                R.raw.video_176x144_3gp_h263_300kbps_25fps_aac_stereo_128kbps_11025hz_metadata_gyro;
+                R.raw.video_176x144_3gp_h263_300kbps_25fps_aac_stereo_128kbps_11025hz_metadata_gyro_non_compliant;
+        String outputFile = File.createTempFile("MediaMuxerTest_testAudioVideoMetadata", ".mp4")
+                .getAbsolutePath();
+        cloneAndVerify(source, outputFile, 3, 90, MediaMuxer.OutputFormat.MUXER_OUTPUT_MPEG_4);
+    }
+
+    /**
+     * Test: make sure the muxer handles video, audio and standard compliant metadata tracks that
+     * generated from API29 correctly. This test will use extractor to extract the video track,
+     * audio and the standard compliant metadata track from the source file, then remuxes them
+     * into a new file with standard compliant metadata track. Finally, it will check to make sure
+     * the new file's metadata track matches the source file's metadata track for the mime format
+     * and data payload.
+     */
+     public void testVideoAudioMedatadataWithCompliantMetadataTrack() throws Exception {
+        int source =
+                R.raw.video_176x144_3gp_h263_300kbps_25fps_aac_stereo_128kbps_11025hz_metadata_gyro_compliant;
         String outputFile = File.createTempFile("MediaMuxerTest_testAudioVideoMetadata", ".mp4")
                 .getAbsolutePath();
         cloneAndVerify(source, outputFile, 3, 90, MediaMuxer.OutputFormat.MUXER_OUTPUT_MPEG_4);
