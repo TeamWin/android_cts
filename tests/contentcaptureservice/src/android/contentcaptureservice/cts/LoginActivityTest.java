@@ -18,6 +18,7 @@ package android.contentcaptureservice.cts;
 import static android.contentcaptureservice.cts.Assertions.assertRightActivity;
 import static android.contentcaptureservice.cts.Assertions.assertSessionId;
 import static android.contentcaptureservice.cts.Assertions.assertViewAppeared;
+import static android.contentcaptureservice.cts.Assertions.assertViewTextChanged;
 import static android.contentcaptureservice.cts.Helper.TAG;
 import static android.contentcaptureservice.cts.Helper.enableService;
 import static android.contentcaptureservice.cts.common.ActivitiesWatcher.ActivityLifecycle.DESTROYED;
@@ -191,6 +192,58 @@ public class LoginActivityTest extends AbstractContentCaptureIntegrationTest<Log
         // after the acitivty starts, then all of them disappear when it's finished
     }
 
+    @Test
+    public void testTextChanged() throws Exception {
+        enableService();
+
+        // TODO(b/119638958): move to super class
+        final ActivityWatcher watcher = mActivitiesWatcher.watch(LoginActivity.class);
+
+        LoginActivity.onRootView((activity, rootView) -> ((LoginActivity) activity).mUsername
+                .setText("user"));
+
+        final LoginActivity activity = launchActivity();
+        watcher.waitFor(RESUMED);
+
+        activity.syncRunOnUiThread(() -> activity.mUsername.setText("USER"));
+        activity.syncRunOnUiThread(() -> activity.mPassword.setText("PASS"));
+
+        activity.finish();
+        watcher.waitFor(DESTROYED);
+
+        final CtsContentCaptureService service = CtsContentCaptureService.getInstance();
+        final Session session = service.getOnlyFinishedSession();
+        final ContentCaptureSessionId sessionId = session.id;
+
+        assertRightActivity(session, sessionId, activity);
+
+        final List<ContentCaptureEvent> events = session.getEvents();
+        Log.v(TAG, "events: " + events);
+
+        final AutofillId rootId = activity.mRootView.getAutofillId();
+
+        assertThat(events).hasSize(9);
+        assertViewAppeared(events.get(0), activity.mUsernameLabel, rootId);
+        assertViewAppeared(events.get(1), activity.mUsername, rootId, "user");
+        assertViewAppeared(events.get(2), activity.mPasswordLabel, rootId);
+        assertViewAppeared(events.get(3), activity.mPassword, rootId, "");
+        // TODO(b/119638958): get rid of those intermediated parents
+        final View grandpa1 = (View) activity.mRootView.getParent();
+        final View grandpa2 = (View) grandpa1.getParent();
+        final View decorView = (View) grandpa2.getParent();
+
+        assertViewAppeared(events.get(4), activity.mRootView, grandpa1.getAutofillId());
+        assertViewAppeared(events.get(5), grandpa1, grandpa2.getAutofillId());
+        assertViewAppeared(events.get(6), grandpa2, decorView.getAutofillId());
+
+        // TODO(b/119638958): VIEW_DISAPPEARED events should be send before the activity
+        // stopped - if we don't deprecate the latter, we should change the manager to make sure
+        // they're send in that order (or dropped)
+
+        assertViewTextChanged(events.get(7), "USER", activity.mUsername.getAutofillId());
+        assertViewTextChanged(events.get(8), "PASS", activity.mUsername.getAutofillId());
+    }
+
     // TODO(b/119638958): add moar test cases for different sessions:
     // - session1 on rootView, session2 on children
     // - session1 on rootView, session2 on child1, session3 on child2
@@ -203,5 +256,4 @@ public class LoginActivityTest extends AbstractContentCaptureIntegrationTest<Log
     // - changing text
     // - FLAG_SECURE
     // - making sure events are flushed when activity pause / resume
-
 }
