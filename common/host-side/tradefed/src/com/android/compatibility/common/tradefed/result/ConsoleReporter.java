@@ -48,6 +48,7 @@ public class ConsoleReporter extends StubTestInvocationListener implements IShar
     private int mPassedTests;
     private int mFailedTests;
     private int mNotExecutedTests;
+    private CrashReporter mCrashReporter;
 
     /**
      * {@inheritDoc}
@@ -76,6 +77,8 @@ public class ConsoleReporter extends StubTestInvocationListener implements IShar
         mFailedTests = 0;
         mNotExecutedTests = 0;
         mTestFailed = false;
+        mCrashReporter = new CrashReporter(mDeviceSerial);
+        mCrashReporter.start();
         logMessage("%s %s with %d test%s", (isRepeatModule) ? "Continuing" : "Starting", id,
                 mTotalTestsInModule, (mTotalTestsInModule > 1) ? "s" : "");
     }
@@ -85,6 +88,7 @@ public class ConsoleReporter extends StubTestInvocationListener implements IShar
      */
     @Override
     public void testStarted(TestIdentifier test) {
+        mCrashReporter.testStarted(test.getTestName());
         mTestFailed = false;
         mCurrentTestNum++;
     }
@@ -141,6 +145,7 @@ public class ConsoleReporter extends StubTestInvocationListener implements IShar
      */
     @Override
     public void testRunEnded(long elapsedTime, Map<String, String> metrics) {
+        mCrashReporter.interrupt();
         mNotExecutedTests = Math.max(mTotalTestsInModule - mCurrentTestNum, 0);
         String status = mNotExecutedTests > 0 ? "failed" : "completed";
         logMessage("%s %s in %s. %d passed, %d failed, %d not executed",
@@ -157,6 +162,7 @@ public class ConsoleReporter extends StubTestInvocationListener implements IShar
      */
     @Override
     public void testRunStopped(long elapsedTime) {
+        mCrashReporter.interrupt();
         logMessage("%s stopped (%s)", mModuleId, TimeUtil.formatElapsedTime(elapsedTime));
     }
 
