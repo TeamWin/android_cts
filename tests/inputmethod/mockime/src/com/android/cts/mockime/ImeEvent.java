@@ -18,9 +18,10 @@ package com.android.cts.mockime;
 
 import android.inputmethodservice.AbstractInputMethodService;
 import android.os.Bundle;
+import android.view.View;
+
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
-import android.view.View;
 
 /**
  * An immutable object that stores event happened in the {@link MockIme}.

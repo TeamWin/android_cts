@@ -17,10 +17,11 @@
 package com.android.cts.mockime;
 
 import android.os.SystemClock;
-import androidx.annotation.NonNull;
 import android.text.TextUtils;
 import android.view.inputmethod.EditorInfo;
 import android.view.inputmethod.InputBinding;
+
+import androidx.annotation.NonNull;
 
 import java.util.Optional;
 import java.util.concurrent.TimeoutException;
@@ -148,7 +149,7 @@ public final class ImeEventStreamTestUtils {
      * @return true if event occurred.
      */
     public static Predicate<ImeEvent> editorMatcher(
-        @NonNull String eventName, @NonNull String marker) {
+            @NonNull String eventName, @NonNull String marker) {
         return event -> {
             if (!TextUtils.equals(eventName, event.getEventName())) {
                 return false;
