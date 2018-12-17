@@ -15,7 +15,6 @@
  */
 package android.media.cts;
 
-import android.media.BufferingParams;
 import android.media.MediaFormat;
 import android.media.MediaPlayer;
 import android.media.MediaPlayer.TrackInfo;
@@ -376,81 +375,6 @@ public class StreamingMediaPlayerTest extends MediaPlayerTestBase {
                 return;
             }
             fail("https playback should have failed");
-        } finally {
-            mServer.shutdown();
-        }
-    }
-
-    // TODO: unhide this test when we sort out how to expose buffering control API.
-    private void doTestBuffering() throws Throwable {
-        final String name = "ringer.mp3";
-        mServer = new CtsTestServer(mContext);
-        try {
-            String stream_url = mServer.getAssetUrl(name);
-
-            if (!MediaUtils.checkCodecsForPath(mContext, stream_url)) {
-                Log.w(TAG, "can not find stream " + stream_url + ", skipping test");
-                return; // skip
-            }
-
-            // getBufferingParams should be called after setDataSource.
-            try {
-                BufferingParams params = mMediaPlayer.getBufferingParams();
-                fail("MediaPlayer failed to check state for getBufferingParams");
-            } catch (IllegalStateException e) {
-                // expected
-            }
-
-            // setBufferingParams should be called after setDataSource.
-            try {
-                BufferingParams params = new BufferingParams.Builder()
-                        .setInitialMarkMs(2)
-                        .setResumePlaybackMarkMs(3)
-                        .build();
-                mMediaPlayer.setBufferingParams(params);
-                fail("MediaPlayer failed to check state for setBufferingParams");
-            } catch (IllegalStateException e) {
-                // expected
-            }
-
-            mMediaPlayer.setDataSource(stream_url);
-
-            mMediaPlayer.setDisplay(getActivity().getSurfaceHolder());
-            mMediaPlayer.setScreenOnWhilePlaying(true);
-
-            mOnBufferingUpdateCalled.reset();
-            mMediaPlayer.setOnBufferingUpdateListener(new MediaPlayer.OnBufferingUpdateListener() {
-                @Override
-                public void onBufferingUpdate(MediaPlayer mp, int percent) {
-                    mOnBufferingUpdateCalled.signal();
-                }
-            });
-            mMediaPlayer.setOnErrorListener(new MediaPlayer.OnErrorListener() {
-                @Override
-                public boolean onError(MediaPlayer mp, int what, int extra) {
-                    fail("Media player had error " + what + " playing " + name);
-                    return true;
-                }
-            });
-
-            assertFalse(mOnBufferingUpdateCalled.isSignalled());
-
-            BufferingParams params = mMediaPlayer.getBufferingParams();
-
-            int newMark = params.getInitialMarkMs() + 2;
-            BufferingParams newParams =
-                    new BufferingParams.Builder(params).setInitialMarkMs(newMark).build();
-
-            mMediaPlayer.setBufferingParams(newParams);
-
-            int checkMark = -1;
-            BufferingParams checkParams = mMediaPlayer.getBufferingParams();
-            checkMark = checkParams.getInitialMarkMs();
-            assertEquals("marks do not match", newMark, checkMark);
-
-            // TODO: add more dynamic checking, e.g., buffering shall not exceed pre-set mark.
-
-            mMediaPlayer.reset();
         } finally {
             mServer.shutdown();
         }
