@@ -23,6 +23,9 @@ import static org.junit.Assert.assertTrue;
 
 import android.graphics.Canvas;
 import android.graphics.Color;
+import android.graphics.ColorMatrix;
+import android.graphics.ColorMatrixColorFilter;
+import android.graphics.Paint;
 import android.graphics.RecordingCanvas;
 import android.graphics.Rect;
 import android.graphics.RenderNode;
@@ -42,11 +45,58 @@ import java.util.Set;
 public class RenderNodeTests extends ActivityTestBase {
 
     @Test
+    public void testDefaults() {
+        final RenderNode renderNode = new RenderNode(null);
+        assertEquals(0, renderNode.getLeft());
+        assertEquals(0, renderNode.getRight());
+        assertEquals(0, renderNode.getTop());
+        assertEquals(0, renderNode.getBottom());
+        assertEquals(0, renderNode.getWidth());
+        assertEquals(0, renderNode.getHeight());
+
+        assertEquals(0, renderNode.getTranslationX(), 0.01f);
+        assertEquals(0, renderNode.getTranslationY(), 0.01f);
+        assertEquals(0, renderNode.getTranslationZ(), 0.01f);
+        assertEquals(0, renderNode.getElevation(), 0.01f);
+
+        assertEquals(0, renderNode.getRotationX(), 0.01f);
+        assertEquals(0, renderNode.getRotationY(), 0.01f);
+        assertEquals(0, renderNode.getRotation(), 0.01f);
+
+        assertEquals(1, renderNode.getScaleX(), 0.01f);
+        assertEquals(1, renderNode.getScaleY(), 0.01f);
+
+        assertEquals(1, renderNode.getAlpha(), 0.01f);
+
+        assertEquals(0, renderNode.getPivotX(), 0.01f);
+        assertEquals(0, renderNode.getPivotY(), 0.01f);
+
+        assertEquals(Color.BLACK, renderNode.getAmbientShadowColor());
+        assertEquals(Color.BLACK, renderNode.getSpotShadowColor());
+
+        assertEquals(8, renderNode.getCameraDistance(), 0.01f);
+
+        assertTrue(renderNode.isForceDarkAllowed());
+        assertTrue(renderNode.hasIdentityMatrix());
+        assertTrue(renderNode.getClipToBounds());
+        assertFalse(renderNode.getClipToOutline());
+        assertFalse(renderNode.isPivotExplicitlySet());
+        assertFalse(renderNode.hasDisplayList());
+        assertFalse(renderNode.hasOverlappingRendering());
+        assertFalse(renderNode.hasShadow());
+        assertFalse(renderNode.getUseCompositingLayer());
+    }
+
+    @Test
     public void testBasicDraw() {
         final Rect rect = new Rect(10, 10, 80, 80);
 
         final RenderNode renderNode = new RenderNode("Blue rect");
         renderNode.setLeftTopRightBottom(rect.left, rect.top, rect.right, rect.bottom);
+        assertEquals(rect.left, renderNode.getLeft());
+        assertEquals(rect.top, renderNode.getTop());
+        assertEquals(rect.right, renderNode.getRight());
+        assertEquals(rect.bottom, renderNode.getBottom());
         renderNode.setClipToBounds(true);
 
         {
@@ -66,6 +116,99 @@ public class RenderNodeTests extends ActivityTestBase {
                     canvas.drawRenderNode(renderNode);
                 }, true)
                 .runWithVerifier(new RectVerifier(Color.WHITE, Color.BLUE, rect));
+    }
+
+    @Test
+    public void testAlphaOverlappingRendering() {
+        final Rect rect = new Rect(10, 10, 80, 80);
+        final RenderNode renderNode = new RenderNode(null);
+        renderNode.setLeftTopRightBottom(rect.left, rect.top, rect.right, rect.bottom);
+        renderNode.setHasOverlappingRendering(true);
+        assertTrue(renderNode.hasOverlappingRendering());
+        {
+            Canvas canvas = renderNode.startRecording();
+            canvas.drawColor(Color.RED);
+            canvas.drawColor(Color.BLUE);
+            renderNode.endRecording();
+        }
+        renderNode.setAlpha(.5f);
+        createTest()
+              .addCanvasClientWithoutUsingPicture((canvas, width, height) -> {
+                  canvas.drawRenderNode(renderNode);
+              }, true)
+              .runWithVerifier(new RectVerifier(Color.WHITE, 0xFF8080FF, rect));
+    }
+
+    @Test
+    public void testAlphaNonOverlappingRendering() {
+        final Rect rect = new Rect(10, 10, 80, 80);
+        final RenderNode renderNode = new RenderNode(null);
+        renderNode.setLeftTopRightBottom(rect.left, rect.top, rect.right, rect.bottom);
+        renderNode.setHasOverlappingRendering(false);
+        assertFalse(renderNode.hasOverlappingRendering());
+        {
+            Canvas canvas = renderNode.startRecording();
+            canvas.drawColor(Color.RED);
+            canvas.drawColor(Color.BLUE);
+            renderNode.endRecording();
+        }
+        renderNode.setAlpha(.5f);
+        createTest()
+                .addCanvasClientWithoutUsingPicture((canvas, width, height) -> {
+                    canvas.drawRenderNode(renderNode);
+                }, true)
+                .runWithVerifier(new RectVerifier(Color.WHITE, 0xFF8040BF, rect));
+    }
+
+    @Test
+    public void testUseCompositingLayer() {
+        final Rect rect = new Rect(10, 10, 80, 80);
+        final RenderNode renderNode = new RenderNode(null);
+        renderNode.setLeftTopRightBottom(rect.left, rect.top, rect.right, rect.bottom);
+        {
+            Canvas canvas = renderNode.startRecording();
+            canvas.drawColor(0xFF0000AF);
+            renderNode.endRecording();
+        }
+        // Construct & apply a Y'UV lightness invert color matrix to the layer paint
+        Paint paint = new Paint();
+        ColorMatrix matrix = new ColorMatrix();
+        ColorMatrix tmp = new ColorMatrix();
+        matrix.setRGB2YUV();
+        tmp.set(new float[] {
+                -1f, 0f, 0f, 0f, 255f,
+                0f, 1f, 0f, 0f, 0f,
+                0f, 0f, 1f, 0f, 0f,
+                0f, 0f, 0f, 1f, 0f,
+        });
+        matrix.postConcat(tmp);
+        tmp.setYUV2RGB();
+        matrix.postConcat(tmp);
+        paint.setColorFilter(new ColorMatrixColorFilter(matrix));
+        renderNode.setUseCompositingLayer(true, paint);
+        createTest()
+                .addCanvasClientWithoutUsingPicture((canvas, width, height) -> {
+                    canvas.drawRenderNode(renderNode);
+                }, true)
+                .runWithVerifier(new RectVerifier(Color.WHITE, 0xFFD7D7FF, rect));
+    }
+
+    @Test
+    public void testComputeApproximateMemoryUsage() {
+        final RenderNode renderNode = new RenderNode("sizeTest");
+        assertTrue(renderNode.computeApproximateMemoryUsage() > 500);
+        assertTrue(renderNode.computeApproximateMemoryUsage() < 1500);
+        int sizeBefore = renderNode.computeApproximateMemoryUsage();
+        {
+            Canvas canvas = renderNode.startRecording();
+            assertTrue(canvas.isHardwareAccelerated());
+            canvas.drawColor(Color.BLUE);
+            renderNode.endRecording();
+        }
+        int sizeAfter = renderNode.computeApproximateMemoryUsage();
+        assertTrue(sizeAfter > sizeBefore);
+        renderNode.discardDisplayList();
+        assertEquals(sizeBefore, renderNode.computeApproximateMemoryUsage());
     }
 
     @Test
