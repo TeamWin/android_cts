@@ -149,7 +149,7 @@ public final class ImeEventStreamTestUtils {
      * @return true if event occurred.
      */
     public static Predicate<ImeEvent> editorMatcher(
-        @NonNull String eventName, @NonNull String marker) {
+            @NonNull String eventName, @NonNull String marker) {
         return event -> {
             if (!TextUtils.equals(eventName, event.getEventName())) {
                 return false;

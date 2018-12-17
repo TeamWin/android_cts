@@ -165,17 +165,18 @@ public final class TestActivity extends Activity {
     @Override
     public void onEnterAnimationComplete() {
         synchronized (this) {
-           mEnterAnimationComplete = true;
-           notifyAll();
+            mEnterAnimationComplete = true;
+            notifyAll();
         }
     }
 
     private void waitForEnterAnimationComplete() {
-        synchronized(this) {
-            if (mEnterAnimationComplete == false) {
+        synchronized (this) {
+            if (!mEnterAnimationComplete) {
                 try {
                     wait(5000);
-                } catch (InterruptedException e) {}
+                } catch (InterruptedException e) {
+                }
             }
         }
     }
